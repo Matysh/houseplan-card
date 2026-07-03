@@ -9,7 +9,7 @@ import { FLOOR_BG, FLOOR_BG_RECT } from './data/backgrounds';
 import { EXCLUDED_DOMAINS, GROUP_TITLES, iconFor, DOMAIN_PRIORITY } from './rules';
 import './editor';
 
-const CARD_VERSION = '1.2.0';
+const CARD_VERSION = '1.2.1';
 const LS_KEY = 'houseplan_card_layout_v1';
 
 interface DevItem {
@@ -810,7 +810,6 @@ class HouseplanCard extends LitElement {
     .dev:hover {
       background: var(--hp-accent);
       color: var(--text-primary-color, #fff);
-      transform: scale(1.35);
       z-index: 5;
     }
     .dev.on {

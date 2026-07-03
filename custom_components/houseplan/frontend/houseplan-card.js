@@ -252,7 +252,6 @@ const I=globalThis,M=I.ShadowRoot&&(void 0===I.ShadyCSS||I.ShadyCSS.nativeShadow
     .dev:hover {
       background: var(--hp-accent);
       color: var(--text-primary-color, #fff);
-      transform: scale(1.35);
       z-index: 5;
     }
     .dev.on {
