@@ -4,12 +4,12 @@
  * через WS-команды интеграции `houseplan` (fallback — localStorage).
  */
 import { LitElement, html, svg, css, nothing, TemplateResult, PropertyValues } from 'lit';
-import { ROOMS, FLOOR_VB, FLOOR_TITLES, AREA_NAMES, IMG_W, IMG_H, Room } from './data/house';
-import { FLOOR_BG } from './data/backgrounds';
+import { ROOMS, FLOOR_VB, FLOOR_TITLES, AREA_NAMES, Room } from './data/house';
+import { FLOOR_BG, FLOOR_BG_RECT } from './data/backgrounds';
 import { EXCLUDED_DOMAINS, GROUP_TITLES, iconFor, DOMAIN_PRIORITY } from './rules';
 import './editor';
 
-const CARD_VERSION = '1.0.1';
+const CARD_VERSION = '1.1.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 
 interface DevItem {
@@ -100,7 +100,7 @@ class HouseplanCard extends LitElement {
   }
 
   public setConfig(config: CardConfig): void {
-    this._config = { icon_size: 22, show_temperature: true, live_states: true, ...config };
+    this._config = { icon_size: 2.5, show_temperature: true, live_states: true, ...config };
     if (config.default_floor) this._floor = config.default_floor;
   }
 
@@ -463,9 +463,12 @@ class HouseplanCard extends LitElement {
     if (!this._config || !this.hass) return nothing;
     const vb = FLOOR_VB[this._floor];
     const bg = FLOOR_BG[this._floor];
+    const bgRect = FLOOR_BG_RECT[this._floor];
     const rooms = this._rooms.filter((r) => r.floor === this._floor && r.area);
     const devs = this._devices.filter((d) => d.floor === this._floor);
-    const iconSize = this._config.icon_size || 22;
+    // размер иконки в % от ширины видимой области плана (legacy px-значения > 8 игнорируются)
+    const cfgSize = this._config.icon_size ?? 2.5;
+    const iconPct = cfgSize > 8 ? 2.5 : cfgSize;
 
     return html`
       <ha-card>
@@ -499,8 +502,8 @@ class HouseplanCard extends LitElement {
 
         <div class="stage ${this._edit ? 'edit' : ''}" style="aspect-ratio:${vb[2]}/${vb[3]}">
           <svg viewBox="${vb.join(' ')}" preserveAspectRatio="xMidYMid meet">
-            ${bg
-              ? svg`<image href="${bg}" x="0" y="0" width="${IMG_W}" height="${IMG_H}" preserveAspectRatio="none" />`
+            ${bg && bgRect
+              ? svg`<image href="${bg}" x="${bgRect[0]}" y="${bgRect[1]}" width="${bgRect[2]}" height="${bgRect[3]}" preserveAspectRatio="none" />`
               : nothing}
             ${rooms.map(
               (r) => svg`<rect
@@ -513,7 +516,7 @@ class HouseplanCard extends LitElement {
                 ${!bg ? svg`<text class="rlabel" x="${r.x + r.w / 2}" y="${r.y + 26}">${r.name}</text>` : nothing}`,
             )}
           </svg>
-          <div class="devlayer" style="--icon-size:${iconSize}px">
+          <div class="devlayer" style="--icon-size:${iconPct}cqw">
             ${devs.map((d) => this._renderDevice(d, vb))}
           </div>
         </div>
@@ -693,6 +696,7 @@ class HouseplanCard extends LitElement {
     .stage {
       position: relative;
       width: 100%;
+      container-type: inline-size; /* cqw = % ширины плана для размеров иконок */
     }
     .stage svg {
       position: absolute;
@@ -740,10 +744,10 @@ class HouseplanCard extends LitElement {
     }
     .dev {
       position: absolute;
-      width: var(--icon-size, 22px);
-      height: var(--icon-size, 22px);
-      margin: calc(var(--icon-size, 22px) / -2) 0 0 calc(var(--icon-size, 22px) / -2);
-      border-radius: 5px;
+      width: var(--icon-size, 2.5cqw);
+      height: var(--icon-size, 2.5cqw);
+      margin: calc(var(--icon-size, 2.5cqw) / -2) 0 0 calc(var(--icon-size, 2.5cqw) / -2);
+      border-radius: 22%;
       background: var(--hp-bg);
       border: 1px solid var(--hp-line);
       display: flex;
@@ -757,7 +761,7 @@ class HouseplanCard extends LitElement {
       z-index: 2;
     }
     .dev ha-icon {
-      --mdc-icon-size: calc(var(--icon-size, 22px) * 0.62);
+      --mdc-icon-size: calc(var(--icon-size, 2.5cqw) * 0.62);
     }
     .dev:hover {
       background: var(--hp-accent);
@@ -791,14 +795,14 @@ class HouseplanCard extends LitElement {
       left: 100%;
       top: 50%;
       transform: translateY(-50%);
-      margin-left: 2px;
+      margin-left: calc(var(--icon-size, 2.5cqw) * 0.1);
       background: rgba(4, 18, 31, 0.9);
       border: 1px solid var(--hp-accent);
-      border-radius: 4px;
-      padding: 0 3px;
-      font-size: 10px;
+      border-radius: calc(var(--icon-size, 2.5cqw) * 0.18);
+      padding: 0 calc(var(--icon-size, 2.5cqw) * 0.14);
+      font-size: calc(var(--icon-size, 2.5cqw) * 0.45);
       font-weight: 700;
-      line-height: 15px;
+      line-height: calc(var(--icon-size, 2.5cqw) * 0.68);
       color: #dff1ff;
       white-space: nowrap;
       pointer-events: none;
@@ -921,14 +925,4 @@ if (!customElements.get('houseplan-card')) {
   customElements.define('houseplan-card', HouseplanCard);
 }
 
-(window as any).customCards = (window as any).customCards || [];
-if (!(window as any).customCards.find((c: any) => c.type === 'houseplan-card')) {
-  (window as any).customCards.push({
-    type: 'houseplan-card',
-    name: 'House Plan Card',
-    description: 'Интерактивный план дома: этажи, комнаты, устройства с живыми состояниями и drag-раскладкой.',
-  });
-}
-
-// eslint-disable-next-line no-console
-console.info(`%c HOUSEPLAN-CARD %c v${CARD_VERSION} `, 'background:#3ea6ff;color:#04121f;font-weight:700', '')
+(wi

@@ -16,7 +16,7 @@ const SCHEMA = [
       },
     },
   },
-  { name: 'icon_size', selector: { number: { min: 14, max: 48, mode: 'box' } } },
+  { name: 'icon_size', selector: { number: { min: 1, max: 6, step: 0.1, mode: 'box' } } },
   { name: 'show_temperature', selector: { boolean: {} } },
   { name: 'live_states', selector: { boolean: {} } },
 ];
@@ -24,7 +24,7 @@ const SCHEMA = [
 const LABELS: Record<string, string> = {
   title: 'Заголовок',
   default_floor: 'Этаж по умолчанию',
-  icon_size: 'Размер иконок, px',
+  icon_size: 'Размер иконок, % ширины плана',
   show_temperature: 'Показывать температуру',
   live_states: 'Живые состояния (вкл/выкл, открыто…)',
 };
