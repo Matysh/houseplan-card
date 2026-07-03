@@ -1,0 +1,18 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "House Plan",
+        "data": { "admin_only": "Правка раскладки только администраторами" }
+      }
+    },
+    "abort": { "single_instance_allowed": "Уже настроено — допускается одна запись." }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": { "admin_only": "Правка раскладки только администраторами" }
+      }
+    }
+  }
+}
