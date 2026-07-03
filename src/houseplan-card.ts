@@ -9,7 +9,7 @@ import { FLOOR_BG, FLOOR_BG_RECT } from './data/backgrounds';
 import { EXCLUDED_DOMAINS, GROUP_TITLES, iconFor, DOMAIN_PRIORITY } from './rules';
 import './editor';
 
-const CARD_VERSION = '1.1.0';
+const CARD_VERSION = '1.2.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 
 interface DevItem {
@@ -34,8 +34,15 @@ interface CardConfig {
   icon_size?: number;
   show_temperature?: boolean;
   live_states?: boolean;
+  show_signal?: boolean;
   rooms?: Room[];
 }
+
+/** Цвет LQI: ≤40 — красный, ≥180 — зелёный, между — градиент. */
+const lqiColor = (lqi: number): string => {
+  const hue = Math.max(0, Math.min(120, ((lqi - 40) / 140) * 120));
+  return `hsl(${Math.round(hue)}, 85%, 55%)`;
+};
 
 const fireEvent = (node: EventTarget, type: string, detail?: unknown) => {
   const ev = new Event(type, { bubbles: true, composed: true }) as any;
@@ -70,7 +77,7 @@ class HouseplanCard extends LitElement {
   private _defPos: Record<string, { x: number; y: number }> = {};
   private _menuDev: DevItem | null = null;
   private _menuXY = { x: 0, y: 0 };
-  private _tip: { x: number; y: number; title: string; meta: string } | null = null;
+  private _tip: { x: number; y: number; title: string; meta: string; lqi?: number | null } | null = null;
   private _selId: string | null = null;
   private _toast = '';
   private _toastTimer?: number;
@@ -100,7 +107,7 @@ class HouseplanCard extends LitElement {
   }
 
   public setConfig(config: CardConfig): void {
-    this._config = { icon_size: 2.5, show_temperature: true, live_states: true, ...config };
+    this._config = { icon_size: 2.5, show_temperature: true, live_states: true, show_signal: true, ...config };
     if (config.default_floor) this._floor = config.default_floor;
   }
 
@@ -214,6 +221,32 @@ class HouseplanCard extends LitElement {
     );
   }
 
+  /** LQI zigbee-устройства: среднее по всем *_linkquality сущностям (для группы — по участникам). */
+  private _lqiFor(entIds: string[]): number | null {
+    const vals: number[] = [];
+    for (const eid of entIds) {
+      const st = this.hass.states[eid];
+      const isLqi = /_linkquality$/.test(eid) || (st?.attributes?.unit_of_measurement || '') === 'lqi';
+      if (!isLqi || !st) continue;
+      const v = parseFloat(st.state);
+      if (!isNaN(v)) vals.push(v);
+    }
+    if (!vals.length) return null;
+    return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
+  }
+
+  /** Средний LQI zigbee-устройств комнаты. */
+  private _roomLqi(area: string): number | null {
+    const vals: number[] = [];
+    for (const d of this._devices) {
+      if (d.area !== area) continue;
+      const l = this._lqiFor(d.entities);
+      if (l != null) vals.push(l);
+    }
+    if (!vals.length) return null;
+    return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
+  }
+
   private _tempFor(entIds: string[]): number | null {
     for (const eid of entIds) {
       if (!this._isTempEntity(eid)) continue;
@@ -251,7 +284,9 @@ class HouseplanCard extends LitElement {
       const key = name + '|' + area;
       if (seen[key]) continue;
       seen[key] = 1;
-      const icon = iconFor(name, dev.model);
+      let icon = iconFor(name, dev.model);
+      // устройство с сущностью lock.* — всегда «замочек», как бы оно ни называлось
+      if (entIds.some((e) => e.startsWith('lock.'))) icon = 'mdi:lock';
       const room = this._areaRoom(area)!;
       const item: DevItem = {
         id: dev.id,
@@ -453,9 +488,9 @@ class HouseplanCard extends LitElement {
     }, 3500);
   }
 
-  private _showTip(ev: MouseEvent, title: string, meta: string): void {
+  private _showTip(ev: MouseEvent, title: string, meta: string, lqi?: number | null): void {
     if (this._drag) return;
-    this._tip = { x: ev.clientX, y: ev.clientY, title, meta };
+    this._tip = { x: ev.clientX, y: ev.clientY, title, meta, lqi };
   }
 
   // ---------- рендер ----------
@@ -510,7 +545,9 @@ class HouseplanCard extends LitElement {
                   class="room ${bg ? 'overlay' : 'yard'}"
                   x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="8"
                   @click=${() => this._clickRoom(r)}
-                  @mousemove=${(e: MouseEvent) => this._showTip(e, r.name, 'комната — открыть зону')}
+                  @mousemove=${(e: MouseEvent) =>
+                    this._showTip(e, r.name, 'комната — открыть зону',
+                      this._config?.show_signal ? this._roomLqi(r.area) : null)}
                   @mouseleave=${() => (this._tip = null)}
                 ></rect>
                 ${!bg ? svg`<text class="rlabel" x="${r.x + r.w / 2}" y="${r.y + 26}">${r.name}</text>` : nothing}`,
@@ -526,6 +563,10 @@ class HouseplanCard extends LitElement {
         ${this._tip
           ? html`<div class="tip" style="left:${this._tip.x + 12}px;top:${this._tip.y + 12}px">
               <b>${this._tip.title}</b>${this._tip.meta ? html`<span class="m">${this._tip.meta}</span>` : nothing}
+              ${this._tip.lqi != null
+                ? html`<span class="m">средний сигнал zigbee:
+                    <b style="color:${lqiColor(this._tip.lqi)}">${this._tip.lqi}</b></span>`
+                : nothing}
             </div>`
           : nothing}
         ${this._toast ? html`<div class="toast">${this._toast}</div>` : nothing}
@@ -539,12 +580,14 @@ class HouseplanCard extends LitElement {
     const top = ((p.y - vb[1]) / vb[3]) * 100;
     const cls = this._stateClass(d);
     const temp = this._liveTemp(d);
+    const lqi = this._config?.show_signal ? this._lqiFor(d.entities) : null;
     return html`<div
       class="dev ${cls} ${this._selId === d.id ? 'sel' : ''}"
       style="left:${left}%;top:${top}%"
       @click=${(e: MouseEvent) => this._clickDevice(e, d)}
       @mousemove=${(e: MouseEvent) =>
-        this._showTip(e, d.name, d.model + (temp != null ? ' · ' + temp + '°' : ''))}
+        this._showTip(e, d.name,
+          d.model + (temp != null ? ' · ' + temp + '°' : '') + (lqi != null ? ' · LQI ' + lqi : ''))}
       @mouseleave=${() => (this._tip = null)}
       @pointerdown=${(e: PointerEvent) => this._pointerDown(e, d)}
       @pointermove=${(e: PointerEvent) => this._pointerMove(e, d)}
@@ -552,6 +595,7 @@ class HouseplanCard extends LitElement {
     >
       <ha-icon icon="${d.icon}"></ha-icon>
       ${temp != null ? html`<span class="tval">${temp}°</span>` : nothing}
+      ${lqi != null ? html`<span class="lqi" style="color:${lqiColor(lqi)}">${lqi}</span>` : nothing}
     </div>`;
   }
 
@@ -804,6 +848,19 @@ class HouseplanCard extends LitElement {
       font-weight: 700;
       line-height: calc(var(--icon-size, 2.5cqw) * 0.68);
       color: #dff1ff;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    .dev .lqi {
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      margin-top: calc(var(--icon-size, 2.5cqw) * 0.05);
+      font-size: calc(var(--icon-size, 2.5cqw) * 0.38);
+      font-weight: 700;
+      line-height: 1;
+      text-shadow: 0 0 3px rgba(0, 0, 0, 0.9), 0 0 2px rgba(0, 0, 0, 0.9);
       white-space: nowrap;
       pointer-events: none;
     }
