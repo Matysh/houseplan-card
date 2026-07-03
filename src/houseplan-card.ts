@@ -9,7 +9,7 @@ import { FLOOR_BG, FLOOR_BG_RECT } from './data/backgrounds';
 import { EXCLUDED_DOMAINS, GROUP_TITLES, iconFor, DOMAIN_PRIORITY } from './rules';
 import './editor';
 
-const CARD_VERSION = '1.2.1';
+const CARD_VERSION = '1.2.2';
 const LS_KEY = 'houseplan_card_layout_v1';
 
 interface DevItem {
@@ -656,7 +656,10 @@ class HouseplanCard extends LitElement {
       --hp-open: #ff9f43;
     }
     ha-card {
-      overflow: hidden;
+      overflow: visible; /* overflow:hidden ломает position:sticky у шапки */
+    }
+    .head {
+      border-radius: var(--ha-card-border-radius, 12px) var(--ha-card-border-radius, 12px) 0 0;
     }
     .head {
       display: flex;
@@ -665,6 +668,10 @@ class HouseplanCard extends LitElement {
       padding: 10px 14px;
       border-bottom: 1px solid var(--hp-line);
       flex-wrap: wrap;
+      position: sticky;
+      top: var(--header-height, 56px);
+      z-index: 20;
+      background: var(--card-background-color, var(--hp-bg));
     }
     .title {
       font-size: 15px;
