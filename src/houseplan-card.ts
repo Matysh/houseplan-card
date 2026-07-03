@@ -3,13 +3,13 @@
  * Работает от объекта `hass` (без токена). Раскладка иконок хранится на сервере
  * через WS-команды интеграции `houseplan` (fallback — localStorage).
  */
-import { LitElement, html, css, nothing, TemplateResult, PropertyValues } from 'lit';
+import { LitElement, html, svg, css, nothing, TemplateResult, PropertyValues } from 'lit';
 import { ROOMS, FLOOR_VB, FLOOR_TITLES, AREA_NAMES, IMG_W, IMG_H, Room } from './data/house';
 import { FLOOR_BG } from './data/backgrounds';
 import { EXCLUDED_DOMAINS, GROUP_TITLES, iconFor, DOMAIN_PRIORITY } from './rules';
 import './editor';
 
-const CARD_VERSION = '1.0.0';
+const CARD_VERSION = '1.0.1';
 const LS_KEY = 'houseplan_card_layout_v1';
 
 interface DevItem {
@@ -500,17 +500,17 @@ class HouseplanCard extends LitElement {
         <div class="stage ${this._edit ? 'edit' : ''}" style="aspect-ratio:${vb[2]}/${vb[3]}">
           <svg viewBox="${vb.join(' ')}" preserveAspectRatio="xMidYMid meet">
             ${bg
-              ? html`<image href="${bg}" x="0" y="0" width="${IMG_W}" height="${IMG_H}" preserveAspectRatio="none" />`
+              ? svg`<image href="${bg}" x="0" y="0" width="${IMG_W}" height="${IMG_H}" preserveAspectRatio="none" />`
               : nothing}
             ${rooms.map(
-              (r) => html`<rect
+              (r) => svg`<rect
                   class="room ${bg ? 'overlay' : 'yard'}"
                   x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="8"
                   @click=${() => this._clickRoom(r)}
                   @mousemove=${(e: MouseEvent) => this._showTip(e, r.name, 'комната — открыть зону')}
                   @mouseleave=${() => (this._tip = null)}
                 ></rect>
-                ${!bg ? html`<text class="rlabel" x="${r.x + r.w / 2}" y="${r.y + 26}">${r.name}</text>` : nothing}`,
+                ${!bg ? svg`<text class="rlabel" x="${r.x + r.w / 2}" y="${r.y + 26}">${r.name}</text>` : nothing}`,
             )}
           </svg>
           <div class="devlayer" style="--icon-size:${iconSize}px">
@@ -931,4 +931,4 @@ if (!(window as any).customCards.find((c: any) => c.type === 'houseplan-card')) 
 }
 
 // eslint-disable-next-line no-console
-console.info(`%c HOUSEPLAN-CARD %c v${CARD_VERSION} `, 'background:#3ea6ff;color:#04121f;font-weight:700', '');
+console.info(`%c HOUSEPLAN-CARD %c v${CARD_VERSION} `, 'background:#3ea6ff;color:#04121f;font-weight:700', '')
