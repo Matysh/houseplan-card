@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
 
 from . import websocket_api as hp_ws
-from .const import DOMAIN, FRONTEND_URL, STORAGE_KEY, STORAGE_VERSION
+from .const import DOMAIN, FRONTEND_URL, STORAGE_KEY, STORAGE_VERSION, VERSION
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -39,20 +39,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             )
         except ImportError:  # старые версии HA
             hass.http.register_static_path(FRONTEND_URL, str(card_path), cache_headers=False)
-        add_extra_js_url(hass, f"{FRONTEND_URL}?v={_manifest_version(hass)}")
+        add_extra_js_url(hass, f"{FRONTEND_URL}?v={VERSION}")
     else:
         _LOGGER.warning("houseplan-card.js не найден рядом с интеграцией: %s", card_path)
     return True
 
-
-def _manifest_version(hass: HomeAssistant) -> str:
-    try:
-        import json
-
-        manifest = Path(__file__).parent / "manifest.json"
-        return json.loads(manifest.read_text()).get("version", "0")
-    except Exception:  # noqa: BLE001
-        return "0"
 
 
 async def _update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
