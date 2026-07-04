@@ -9,10 +9,10 @@
 import { LitElement, html, svg, css, nothing, TemplateResult, PropertyValues } from 'lit';
 import { ROOMS, FLOOR_VB, FLOOR_TITLES, Room } from './data/house';
 import { FLOOR_BG, FLOOR_BG_RECT } from './data/backgrounds';
-import { EXCLUDED_DOMAINS, GROUP_TITLES, iconFor, DOMAIN_PRIORITY } from './rules';
+import { EXCLUDED_DOMAINS, iconFor, DOMAIN_PRIORITY } from './rules';
 import './editor';
 
-const CARD_VERSION = '1.4.4';
+const CARD_VERSION = '1.5.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const NORM_W = 1000; // ширина рендер-пространства для нормированных конфигов
 
@@ -72,9 +72,6 @@ interface DevItem {
   entities: string[];
   primary?: string;
   temp?: number | null;
-  members?: { id: string; name: string; primary?: string }[];
-  link?: string | null;
-  linkPrimary?: string;
   virtual?: VirtualDevice;
 }
 
@@ -129,8 +126,6 @@ class HouseplanCard extends LitElement {
   private _devices: DevItem[] = [];
   private _regSignature = '';
   private _defPos: Record<string, { x: number; y: number }> = {};
-  private _menuDev: DevItem | null = null;
-  private _menuXY = { x: 0, y: 0 };
   private _tip: { x: number; y: number; title: string; meta: string; lqi?: number | null } | null = null;
   private _selId: string | null = null;
   private _toast = '';
@@ -157,7 +152,6 @@ class HouseplanCard extends LitElement {
     _edit: { state: true },
     _layout: { state: true },
     _devices: { state: true },
-    _menuDev: { state: true },
     _tip: { state: true },
     _selId: { state: true },
     _toast: { state: true },
@@ -483,18 +477,44 @@ class HouseplanCard extends LitElement {
     return null;
   }
 
-  /** Курирование + группировка + оверрайды + виртуальные устройства. */
+  /** Групповые световые сущности: HA light-group (platform=group) и Z2M-группы (device model=Group). */
+  private _lightGroups(): { eid: string; name: string; area: string }[] {
+    if (this._settings.group_lights === false) return [];
+    const h = this.hass;
+    const res: { eid: string; name: string; area: string }[] = [];
+    for (const [eid, reg] of Object.entries<any>(h.entities)) {
+      if (!eid.startsWith('light.') || reg.hidden) continue;
+      let area: string | null = null;
+      if (reg.platform === 'group') {
+        area = reg.area_id || null;
+      } else if (reg.device_id) {
+        const dev = h.devices[reg.device_id];
+        if (dev?.model === 'Group') area = dev.area_id || reg.area_id || null;
+        else continue;
+      } else {
+        continue;
+      }
+      if (!area) continue;
+      const st = h.states[eid];
+      res.push({ eid, name: reg.name || st?.attributes?.friendly_name || eid, area });
+    }
+    return res;
+  }
+
+  /** Зоны, в которых есть группа света (одиночные лампы там скрываются). */
+  private _groupedLightAreas(): Set<string> {
+    return new Set(this._lightGroups().map((g) => g.area));
+  }
+
+  /** Курирование + группы света + оверрайды + виртуальные устройства. */
   private _buildDevices(): DevItem[] {
     const h = this.hass;
     const areaMap = this._areaToSpace;
     const overrides = this._serverCfg?.device_overrides || {};
     const groupLights = this._settings.group_lights !== false;
+    const groupedAreas = this._groupedLightAreas();
     const excluded = this._excluded;
     const entsBy = this._entitiesByDevice();
-    const groupByArea: Record<string, any> = {};
-    for (const dev of Object.values<any>(h.devices)) {
-      if (dev.model === 'Group' && dev.area_id) groupByArea[dev.area_id] = dev;
-    }
     const seen: Record<string, 1> = {};
     const out: DevItem[] = [];
     for (const dev of Object.values<any>(h.devices)) {
@@ -517,6 +537,8 @@ class HouseplanCard extends LitElement {
       let icon = iconFor(name, dev.model);
       if (entIds.some((e) => e.startsWith('lock.'))) icon = 'mdi:lock';
       if (ov.icon) icon = ov.icon;
+      // лампы в комнатах с группой света заменяются сущностью группы
+      if (groupLights && icon === 'mdi:lightbulb' && groupedAreas.has(area)) continue;
       const item: DevItem = {
         id: dev.id,
         name,
@@ -530,40 +552,20 @@ class HouseplanCard extends LitElement {
       if (icon === 'mdi:thermometer' || icon === 'mdi:air-filter') item.temp = this._tempFor(entIds);
       out.push(item);
     }
-    // группировка ламп
-    const rest: DevItem[] = [];
-    if (groupLights) {
-      const lamps: Record<string, DevItem[]> = {};
-      for (const d of out) {
-        if (d.icon === 'mdi:lightbulb') (lamps[d.area] = lamps[d.area] || []).push(d);
-        else rest.push(d);
-      }
-      for (const area of Object.keys(lamps)) {
-        const ms = lamps[area];
-        if (ms.length < 2) {
-          rest.push(...ms);
-          continue;
-        }
-        const grpDev = groupByArea[area];
-        const item: DevItem = {
-          id: 'grp_' + area,
-          name: GROUP_TITLES[area] || 'Лампы',
-          model: 'группа · ' + ms.length + ' шт',
-          area,
-          space: areaMap[area].space,
-          icon: 'mdi:lightbulb-group',
-          entities: ms.flatMap((m) => m.entities),
-          link: grpDev?.id || null,
-          members: ms.map((m) => ({ id: m.id, name: m.name, primary: m.primary })),
-        };
-        if (grpDev) {
-          const grpEnts = entsBy[grpDev.id] || [];
-          item.linkPrimary = this._primaryEntity(grpEnts, 'mdi:lightbulb');
-        }
-        rest.push(item);
-      }
-    } else {
-      rest.push(...out);
+    // группы света: реальные сущности групп HA (platform group) и Z2M (device model=Group)
+    const rest: DevItem[] = [...out];
+    for (const g of this._lightGroups()) {
+      if (!areaMap[g.area]) continue;
+      rest.push({
+        id: 'lg_' + g.eid,
+        name: g.name,
+        model: 'группа света',
+        area: g.area,
+        space: areaMap[g.area].space,
+        icon: 'mdi:lightbulb-group',
+        entities: [g.eid],
+        primary: g.eid,
+      });
     }
     // виртуальные устройства
     for (const v of this._serverCfg?.virtual_devices || []) {
@@ -654,13 +656,9 @@ class HouseplanCard extends LitElement {
 
   private _stateClass(d: DevItem): string {
     if (!this._config?.live_states) return '';
-    const st = (eid?: string) => (eid ? this.hass.states[eid] : undefined);
-    const list = d.members
-      ? (d.members.map((m) => st(m.primary)).filter(Boolean) as any[])
-      : ([st(d.primary)].filter(Boolean) as any[]);
-    if (!list.length) return '';
-    if (list.every((s) => s.state === 'unavailable')) return 'unavail';
-    const p = d.members ? list.find((s) => s.state === 'on') || list[0] : list[0];
+    const p = d.primary ? this.hass.states[d.primary] : undefined;
+    if (!p) return '';
+    if (p.state === 'unavailable') return 'unavail';
     const dom = p.entity_id.split('.')[0];
     if (['light', 'switch', 'fan', 'humidifier'].includes(dom)) return p.state === 'on' ? 'on' : '';
     if (dom === 'cover' || dom === 'valve') return ['open', 'opening'].includes(p.state) ? 'open' : '';
@@ -700,12 +698,6 @@ class HouseplanCard extends LitElement {
     }
     if (d.virtual && !d.primary) {
       this._showToast(d.name + (d.virtual.note ? ' — ' + d.virtual.note : ''));
-      return;
-    }
-    if (d.members) {
-      this._menuDev = d;
-      this._menuXY = { x: ev.clientX, y: ev.clientY };
-      this._tip = null;
       return;
     }
     this._openMoreInfo(d.primary);
@@ -1173,7 +1165,6 @@ class HouseplanCard extends LitElement {
           </div>
         </div>
 
-        ${this._menuDev ? this._renderMenu() : nothing}
         ${this._roomDialog ? this._renderRoomDialog() : nothing}
         ${this._tip
           ? html`<div class="tip" style="left:${this._tip.x + 12}px;top:${this._tip.y + 12}px">
@@ -1341,32 +1332,6 @@ class HouseplanCard extends LitElement {
       <button class="btn ghost" @click=${this._resetLayout} title="Сбросить всё">
         <ha-icon icon="mdi:backup-restore"></ha-icon>
       </button>
-    </div>`;
-  }
-
-  private _renderMenu(): TemplateResult {
-    const d = this._menuDev!;
-    return html`<div class="menuwrap" @click=${() => (this._menuDev = null)}>
-      <div class="menu" style="left:${this._menuXY.x}px;top:${this._menuXY.y}px" @click=${(e: Event) =>
-        e.stopPropagation()}>
-        <div class="hd"><ha-icon icon="mdi:lightbulb-group"></ha-icon>${d.name} · ${d.members!.length}</div>
-        ${d.linkPrimary
-          ? html`<div class="it all" @click=${() => {
-              this._menuDev = null;
-              this._openMoreInfo(d.linkPrimary);
-            }}>
-              <ha-icon icon="mdi:lightbulb-group"></ha-icon>Открыть группу целиком
-            </div>`
-          : nothing}
-        ${d.members!.map(
-          (m) => html`<div class="it" @click=${() => {
-            this._menuDev = null;
-            this._openMoreInfo(m.primary);
-          }}>
-            <ha-icon icon="mdi:lightbulb"></ha-icon>${m.name}
-          </div>`,
-        )}
-      </div>
     </div>`;
   }
 
