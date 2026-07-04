@@ -60,4 +60,5 @@ export const DOMAIN_PRIORITY = [
   'light', 'switch', 'cover', 'valve', 'lock', 'climate', 'fan',
   'media_player', 'camera', 'vacuum', 'humidifier', 'water_heater',
   'alarm_control_panel', 'sensor', 'binary_sensor', 'event', 'button',
-  'number', 'select', 
+  'number', 'select', 'update',
+];

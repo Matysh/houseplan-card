@@ -16,6 +16,16 @@
    ВСЕХ дашбордов HA (карточка грузится как extra_module на каждой странице!).
 3. `.git` на mount не создаётся («Operation not permitted» на dot-каталогах) — поэтому bundle.
 
+## Тесты
+
+- Фронт: `npm test` — компилит src/logic.ts+rules.ts (tsconfig.test.json) и гоняет node:test
+  (test/*.test.mjs). Строгая типизация: `npm run typecheck` (tsc --noEmit, входит в `npm run build`).
+- Бэк: `python -m pytest tests_backend/` — чистая валидация custom_components/houseplan/validation.py
+  (грузится по пути, без импорта HA-пакета).
+- ВАЖНО (аудит-урок): rollup-плагин typescript выдаёт синтаксическую ошибку как WARNING и всё равно
+  собирает бандл — обрезанный файл может «пройти». Поэтому в сборке первым идёт `tsc --noEmit`,
+  который падает на таких ошибках. Всегда собирать `npm run build`, не голый `rollup -c`.
+
 ## Сборка
 
 ```bash

@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import base64
 import binascii
-import re
 from pathlib import Path
 from typing import Any
 
@@ -16,105 +15,11 @@ from .const import (
     CONF_ADMIN_ONLY, DEFAULT_CONFIG, DOMAIN,
     FILES_DIR, FILES_URL, PLANS_DIR, PLANS_URL,
 )
-
-POS_SCHEMA = vol.Schema(
-    {vol.Required("x"): vol.Coerce(float), vol.Required("y"): vol.Coerce(float)},
-    extra=vol.ALLOW_EXTRA,  # v2-записи несут ключ "s" (space id)
-)
-LAYOUT_SCHEMA = vol.Schema({str: POS_SCHEMA})
-
-POINT = vol.All([vol.Coerce(float)], vol.Length(min=2, max=2))
-ROOM_SCHEMA = vol.All(
-    vol.Schema(
-        {
-            vol.Required("id"): str,
-            vol.Required("name"): str,
-            vol.Optional("area"): vol.Any(str, None),
-            # прямоугольная комната (legacy) …
-            vol.Optional("x"): vol.Coerce(float),
-            vol.Optional("y"): vol.Coerce(float),
-            vol.Optional("w"): vol.Coerce(float),
-            vol.Optional("h"): vol.Coerce(float),
-            # … или полигон (редактор разметки)
-            vol.Optional("poly"): vol.All([POINT], vol.Length(min=3)),
-        },
-        extra=vol.ALLOW_EXTRA,
-    ),
-    lambda r: r if ("poly" in r or all(k in r for k in ("x", "y", "w", "h")))
-    else (_ for _ in ()).throw(vol.Invalid("room: нужен poly или x/y/w/h")),
-)
-SPACE_SCHEMA = vol.Schema(
-    {
-        vol.Required("id"): str,
-        vol.Required("title"): str,
-        vol.Optional("plan_url"): vol.Any(str, None),
-        vol.Required("aspect"): vol.All(vol.Coerce(float), vol.Range(min=0.05, max=20)),
-        vol.Required("view_box"): vol.All([vol.Coerce(float)], vol.Length(min=4, max=4)),
-        vol.Required("rooms"): [ROOM_SCHEMA],
-        # сегменты-«стены» (разметочный каркас): [x1,y1,x2,y2], нормированные
-        vol.Optional("segments"): [vol.All([vol.Coerce(float)], vol.Length(min=4, max=4))],
-    },
-    extra=vol.ALLOW_EXTRA,
-)
-VIRTUAL_SCHEMA = vol.Schema(
-    {
-        vol.Required("id"): str,
-        vol.Required("space"): str,
-        vol.Required("name"): str,
-        vol.Required("icon"): str,
-        vol.Required("x"): vol.Coerce(float),
-        vol.Required("y"): vol.Coerce(float),
-        vol.Optional("note"): vol.Any(str, None),
-        vol.Optional("entity_id"): vol.Any(str, None),
-    },
-    extra=vol.ALLOW_EXTRA,
-)
-MARKER_SCHEMA = vol.Schema(
-    {
-        vol.Required("id"): str,
-        # 'device:<device_id>' | 'entity:<entity_id>' | 'virtual'
-        vol.Required("binding"): str,
-        vol.Optional("space"): vol.Any(str, None),
-        vol.Optional("area"): vol.Any(str, None),
-        vol.Optional("hidden"): bool,
-        vol.Optional("name"): vol.Any(str, None),
-        vol.Optional("icon"): vol.Any(str, None),
-        vol.Optional("model"): vol.Any(str, None),
-        vol.Optional("link"): vol.Any(str, None),
-        vol.Optional("description"): vol.Any(str, None),
-        vol.Optional("pdfs"): [
-            vol.Schema({vol.Required("name"): str, vol.Required("url"): str}, extra=vol.ALLOW_EXTRA)
-        ],
-    },
-    extra=vol.ALLOW_EXTRA,
+from .validation import (
+    CONFIG_SCHEMA, FILE_EXTENSIONS, LAYOUT_SCHEMA, MAX_FILE_BYTES, MAX_PLAN_BYTES,
+    PLAN_EXTENSIONS, POS_SCHEMA, file_ext, sanitize_filename, sanitize_marker_id, valid_space_id,
 )
 
-CONFIG_SCHEMA = vol.Schema(
-    {
-        vol.Required("spaces"): [SPACE_SCHEMA],
-        vol.Optional("device_overrides", default=dict): {
-            str: vol.Schema(
-                {
-                    vol.Optional("hidden"): bool,
-                    vol.Optional("icon"): vol.Any(str, None),
-                    vol.Optional("name"): vol.Any(str, None),
-                },
-                extra=vol.ALLOW_EXTRA,
-            )
-        },
-        vol.Optional("virtual_devices", default=list): [VIRTUAL_SCHEMA],
-        vol.Optional("markers", default=list): [MARKER_SCHEMA],
-        vol.Optional("settings", default=dict): vol.Schema({}, extra=vol.ALLOW_EXTRA),
-    },
-    extra=vol.ALLOW_EXTRA,
-)
-
-SPACE_ID_RE = re.compile(r"^[a-z0-9_-]{1,64}$")
-PLAN_EXTENSIONS = {"svg": "image/svg+xml", "png": "image/png", "jpg": "image/jpeg", "webp": "image/webp"}
-MAX_PLAN_BYTES = 8 * 1024 * 1024
-FILE_EXTENSIONS = {"pdf", "png", "jpg", "jpeg", "webp", "txt"}
-MAX_FILE_BYTES = 25 * 1024 * 1024
-_SAFE_NAME_RE = re.compile(r"[^A-Za-z0-9._-]+")
 
 
 @callback
@@ -251,7 +156,7 @@ async def ws_plan_set(hass: HomeAssistant, connection, msg: dict[str, Any]) -> N
         connection.send_error(msg["id"], "unauthorized", "Загрузка планов разрешена только администраторам")
         return
     space_id = msg["space_id"]
-    if not SPACE_ID_RE.match(space_id):
+    if not valid_space_id(space_id):
         connection.send_error(msg["id"], "invalid_space_id", "space_id: только [a-z0-9_-], до 64 символов")
         return
     try:
@@ -296,13 +201,13 @@ async def ws_file_set(hass: HomeAssistant, connection, msg: dict[str, Any]) -> N
     if not _check_write(hass, connection):
         connection.send_error(msg["id"], "unauthorized", "Загрузка файлов разрешена только администраторам")
         return
-    marker_id = _SAFE_NAME_RE.sub("_", msg["marker_id"])[:64] or "misc"
+    marker_id = sanitize_marker_id(msg["marker_id"])
     raw_name = msg["filename"].rsplit("/", 1)[-1].rsplit("\\", 1)[-1]
-    ext = raw_name.rsplit(".", 1)[-1].lower() if "." in raw_name else ""
+    ext = file_ext(raw_name)
     if ext not in FILE_EXTENSIONS:
         connection.send_error(msg["id"], "bad_ext", f"Разрешены: {', '.join(sorted(FILE_EXTENSIONS))}")
         return
-    safe_name = _SAFE_NAME_RE.sub("_", raw_name)[:120]
+    safe_name = sanitize_filename(raw_name)
     try:
         blob = base64.b64decode(msg["data"], validate=True)
     except (binascii.Error, ValueError):

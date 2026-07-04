@@ -7,20 +7,15 @@
  * Раскладка иконок хранится на сервере (houseplan/layout/*), fallback — localStorage.
  */
 import { LitElement, html, svg, css, nothing, TemplateResult, PropertyValues } from 'lit';
-import { ROOMS, FLOOR_VB, FLOOR_TITLES, Room } from './data/house';
-import { FLOOR_BG, FLOOR_BG_RECT } from './data/backgrounds';
 import { EXCLUDED_DOMAINS, iconFor, DOMAIN_PRIORITY } from './rules';
+import {
+  lqiColor, snapToGrid, segKey as segKeyOf, samePoint, pointInPolygon, markerIdForBinding,
+} from './logic';
 import './editor';
 
-const CARD_VERSION = '1.6.2';
+const CARD_VERSION = '1.7.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const NORM_W = 1000; // ширина рендер-пространства для нормированных конфигов
-
-// Натуральные размеры legacy-планов (для миграции): SVG viewBox РЕМПЛАННЕР
-const LEGACY_PLAN_SIZE: Record<string, [number, number]> = {
-  f1: [1196.6656, 1467.26],
-  f2: [1170.0986, 1073],
-};
 
 interface RoomCfg {
   id?: string;
@@ -42,17 +37,6 @@ interface SpaceModel {
   vb: number[]; // render units
   bg: { href: string; x: number; y: number; w: number; h: number } | null;
   rooms: RoomCfg[]; // render units
-}
-
-interface VirtualDevice {
-  id: string;
-  space: string;
-  name: string;
-  icon: string;
-  x: number; // normalized
-  y: number;
-  note?: string | null;
-  entity_id?: string | null;
 }
 
 interface PdfRef {
@@ -77,8 +61,6 @@ interface Marker {
 
 interface ServerConfig {
   spaces: any[];
-  device_overrides: Record<string, { hidden?: boolean; icon?: string | null; name?: string | null }>;
-  virtual_devices: VirtualDevice[];
   markers: Marker[];
   settings: { exclude_integrations?: string[]; group_lights?: boolean };
 }
@@ -93,7 +75,7 @@ interface DevItem {
   entities: string[];
   primary?: string;
   temp?: number | null;
-  virtual?: VirtualDevice;
+  virtual?: boolean;
   marker?: Marker; // связанный маркер конфига (метаданные, оверрайды)
   bindingKind?: 'device' | 'entity' | 'virtual';
   bindingRef?: string; // device_id / entity_id
@@ -110,14 +92,7 @@ interface CardConfig {
   show_temperature?: boolean;
   live_states?: boolean;
   show_signal?: boolean;
-  rooms?: Room[];
 }
-
-/** Цвет LQI: ≤40 — красный, ≥180 — зелёный, между — градиент. */
-const lqiColor = (lqi: number): string => {
-  const hue = Math.max(0, Math.min(120, ((lqi - 40) / 140) * 120));
-  return `hsl(${Math.round(hue)}, 85%, 55%)`;
-};
 
 const fireEvent = (node: EventTarget, type: string, detail?: unknown) => {
   const ev = new Event(type, { bubbles: true, composed: true }) as any;
@@ -157,7 +132,6 @@ class HouseplanCard extends LitElement {
   private _selId: string | null = null;
   private _toast = '';
   private _toastTimer?: number;
-  private _migrating = false;
 
   // --- редактор разметки комнат ---
   private _markup = false;
@@ -205,7 +179,6 @@ class HouseplanCard extends LitElement {
     _selId: { state: true },
     _toast: { state: true },
     _serverCfg: { state: true },
-    _migrating: { state: true },
     _markup: { state: true },
     _tool: { state: true },
     _path: { state: true },
@@ -294,49 +267,34 @@ class HouseplanCard extends LitElement {
     return 12;
   }
 
-  // ================= РЕЗОЛВ МОДЕЛИ (сервер или legacy) =================
+  // ================= РЕЗОЛВ МОДЕЛИ (серверная конфигурация) =================
 
+  /** Есть ли серверная конфигурация с пространствами (иначе — онбординг). */
   private get _norm(): boolean {
     return !!(this._serverCfg && this._serverCfg.spaces.length);
   }
 
-  /** Пространства в рендер-единицах: сервер → NORM_W×NORM_W/aspect; legacy → холст 1489×1053. */
+  /** Пространства в рендер-единицах (NORM_W × NORM_W/aspect). */
   private get _model(): SpaceModel[] {
-    if (this._norm) {
-      return this._serverCfg!.spaces.map((s: any) => {
-        const H = NORM_W / s.aspect;
-        const scale = (r: any) => ({
-          id: r.id,
-          name: r.name,
-          area: r.area ?? null,
-          x: r.x != null ? r.x * NORM_W : undefined,
-          y: r.y != null ? r.y * H : undefined,
-          w: r.w != null ? r.w * NORM_W : undefined,
-          h: r.h != null ? r.h * H : undefined,
-          poly: r.poly ? r.poly.map((p: number[]) => [p[0] * NORM_W, p[1] * H]) : undefined,
-        });
-        return {
-          id: s.id,
-          title: s.title,
-          vb: [s.view_box[0] * NORM_W, s.view_box[1] * H, s.view_box[2] * NORM_W, s.view_box[3] * H],
-          bg: s.plan_url ? { href: s.plan_url, x: 0, y: 0, w: NORM_W, h: H } : null,
-          rooms: s.rooms.map(scale),
-        };
+    if (!this._serverCfg) return [];
+    return this._serverCfg.spaces.map((s: any) => {
+      const H = NORM_W / s.aspect;
+      const scale = (r: any) => ({
+        id: r.id,
+        name: r.name,
+        area: r.area ?? null,
+        x: r.x != null ? r.x * NORM_W : undefined,
+        y: r.y != null ? r.y * H : undefined,
+        w: r.w != null ? r.w * NORM_W : undefined,
+        h: r.h != null ? r.h * H : undefined,
+        poly: r.poly ? r.poly.map((p: number[]) => [p[0] * NORM_W, p[1] * H]) : undefined,
       });
-    }
-    // legacy: вшитые данные
-    const legacyRooms = this._config?.rooms?.length ? this._config.rooms : ROOMS;
-    return Object.keys(FLOOR_VB).map((fl) => {
-      const rect = FLOOR_BG_RECT[fl];
-      const bgHref = FLOOR_BG[fl];
       return {
-        id: fl,
-        title: FLOOR_TITLES[fl] || fl,
-        vb: FLOOR_VB[fl],
-        bg: bgHref && rect ? { href: bgHref, x: rect[0], y: rect[1], w: rect[2], h: rect[3] } : null,
-        rooms: legacyRooms
-          .filter((r) => r.floor === fl)
-          .map((r) => ({ name: r.name, area: r.area || null, x: r.x, y: r.y, w: r.w, h: r.h })),
+        id: s.id,
+        title: s.title,
+        vb: [s.view_box[0] * NORM_W, s.view_box[1] * H, s.view_box[2] * NORM_W, s.view_box[3] * H],
+        bg: s.plan_url ? { href: s.plan_url, x: 0, y: 0, w: NORM_W, h: H } : null,
+        rooms: s.rooms.map(scale),
       };
     });
   }
@@ -596,7 +554,6 @@ class HouseplanCard extends LitElement {
   private _buildDevices(): DevItem[] {
     const h = this.hass;
     const areaMap = this._areaToSpace;
-    const overrides = this._serverCfg?.device_overrides || {};
     const groupLights = this._settings.group_lights !== false;
     const groupedAreas = this._groupedLightAreas();
     const excluded = this._excluded;
@@ -611,9 +568,8 @@ class HouseplanCard extends LitElement {
       if (!area || !areaMap[area]) continue;
       if (dev.entry_type === 'service') continue;
       if (claimed.has('device:' + dev.id)) continue; // маркер перекроет ниже
-      const ov = overrides[dev.id] || {};
       const marker = this._markerFor('device', dev.id);
-      if ((marker && marker.hidden) || ov.hidden) continue;
+      if (marker && marker.hidden) continue;
       const entIds = entsBy[dev.id] || [];
       const dom = this._domainOfDevice(dev, entIds);
       if (excluded.has(dom)) continue;
@@ -621,13 +577,12 @@ class HouseplanCard extends LitElement {
       if (/scene/i.test(dev.model || '')) continue;
       if (/bridge/i.test((dev.model || '') + (dev.name || ''))) continue;
       if (dom === 'myheat' && dev.via_device_id) continue;
-      const name = (ov.name || dev.name_by_user || dev.name || 'без имени').trim();
+      const name = (dev.name_by_user || dev.name || 'без имени').trim();
       const key = name + '|' + area;
       if (seen[key]) continue;
       seen[key] = 1;
       let icon = iconFor(name, dev.model);
       if (entIds.some((e) => e.startsWith('lock.'))) icon = 'mdi:lock';
-      if (ov.icon) icon = ov.icon;
       if (groupLights && icon === 'mdi:lightbulb' && groupedAreas.has(area)) continue;
       const item: DevItem = {
         id: dev.id,
@@ -723,7 +678,7 @@ class HouseplanCard extends LitElement {
           icon: m.icon || 'mdi:map-marker',
           entities: [],
           bindingKind: 'virtual',
-          virtual: { id: m.id, space, name: m.name || '', icon: m.icon || 'mdi:map-marker', x: 0, y: 0 },
+          virtual: true,
         };
         this._applyMarker(item, m);
         rest.push(item);
@@ -734,6 +689,18 @@ class HouseplanCard extends LitElement {
 
   // ================= позиции =================
 
+  /** Ограничивающий прямоугольник комнаты (rect или полигон) в рендер-единицах. */
+  private _roomBounds(r: RoomCfg): { x: number; y: number; w: number; h: number } {
+    if (r.poly && r.poly.length) {
+      const xs = r.poly.map((p) => p[0]);
+      const ys = r.poly.map((p) => p[1]);
+      const x = Math.min(...xs);
+      const y = Math.min(...ys);
+      return { x, y, w: Math.max(...xs) - x, h: Math.max(...ys) - y };
+    }
+    return { x: r.x ?? 0, y: r.y ?? 0, w: r.w ?? 0, h: r.h ?? 0 };
+  }
+
   private _defaultPositions(): Record<string, { x: number; y: number }> {
     const map: Record<string, { x: number; y: number }> = {};
     for (const s of this._model) {
@@ -741,9 +708,10 @@ class HouseplanCard extends LitElement {
         if (!r.area) continue;
         const ds = this._devices.filter((d) => d.area === r.area && d.space === s.id);
         if (!ds.length) continue;
-        const pad = Math.min(r.w, r.h) * 0.12;
-        const iw = r.w - pad * 2;
-        const ih = r.h - pad * 2;
+        const b = this._roomBounds(r);
+        const pad = Math.min(b.w, b.h) * 0.12;
+        const iw = b.w - pad * 2;
+        const ih = b.h - pad * 2;
         const cols = Math.max(1, Math.round(Math.sqrt((ds.length * iw) / Math.max(ih, 1))));
         const rows = Math.ceil(ds.length / cols);
         const cw = iw / cols;
@@ -751,7 +719,7 @@ class HouseplanCard extends LitElement {
         ds.forEach((d, i) => {
           const c = i % cols;
           const rw = Math.floor(i / cols);
-          map[d.id] = { x: r.x + pad + cw * (c + 0.5), y: r.y + pad + ch * (rw + 0.5) };
+          map[d.id] = { x: b.x + pad + cw * (c + 0.5), y: b.y + pad + ch * (rw + 0.5) };
         });
       }
     }
@@ -956,16 +924,15 @@ class HouseplanCard extends LitElement {
 
   private _snap(p: number[]): number[] {
     const g = this._gridPitch;
-    return [Math.round(p[0] / g) * g, Math.round(p[1] / g) * g];
+    return [snapToGrid(p[0], g), snapToGrid(p[1], g)];
   }
 
   private _samePt(a: number[], b: number[]): boolean {
-    return Math.abs(a[0] - b[0]) < 0.001 && Math.abs(a[1] - b[1]) < 0.001;
+    return samePoint(a, b);
   }
 
   private _segKey(a: number[], b: number[]): string {
-    const [p, q] = a[0] < b[0] || (a[0] === b[0] && a[1] <= b[1]) ? [a, b] : [b, a];
-    return `${p[0].toFixed(1)},${p[1].toFixed(1)}-${q[0].toFixed(1)},${q[1].toFixed(1)}`;
+    return segKeyOf(a, b);
   }
 
   private _saveConfig = debounce(() => {
@@ -1014,16 +981,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _pointInRoom(p: number[], r: RoomCfg): boolean {
-    if (r.poly) {
-      let inside = false;
-      const poly = r.poly;
-      for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-        const [xi, yi] = poly[i];
-        const [xj, yj] = poly[j];
-        if (yi > p[1] !== yj > p[1] && p[0] < ((xj - xi) * (p[1] - yi)) / (yj - yi) + xi) inside = !inside;
-      }
-      return inside;
-    }
+    if (r.poly) return pointInPolygon(p, r.poly);
     return (
       r.x != null && p[0] >= r.x! && p[0] <= r.x! + r.w! && p[1] >= r.y! && p[1] <= r.y! + r.h!
     );
@@ -1285,13 +1243,8 @@ class HouseplanCard extends LitElement {
       const [roomSp, roomAr] = dlg.room ? dlg.room.split('#') : ['', ''];
       let space: string | null = roomSp || null;
       let area: string | null = roomAr || null;
-      if (dlg.binding === 'virtual') {
-        if (!space) space = this._space;
-        id = dlg.devId && dlg.devId.startsWith('v_') ? dlg.devId : 'v_' + Date.now().toString(36);
-      } else {
-        const [kind, ref] = dlg.binding.split(':');
-        id = kind === 'device' ? ref : 'lg_' + ref;
-      }
+      if (dlg.binding === 'virtual' && !space) space = this._space;
+      id = markerIdForBinding(dlg.binding, dlg.devId, () => 'v_' + Date.now().toString(36));
       const oldId = dlg.devId;
       const marker: Marker = {
         id,
@@ -1379,8 +1332,8 @@ class HouseplanCard extends LitElement {
   // ================= УПРАВЛЕНИЕ ПРОСТРАНСТВАМИ =================
 
   private _openSpaceDialog(mode: 'edit' | 'create', spaceId?: string): void {
-    if (!this._norm) {
-      this._showToast('Управление пространствами доступно после переноса конфига на сервер');
+    if (!this._serverStorage || !this._serverCfg) {
+      this._showToast('Интеграция House Plan не установлена — управление недоступно');
       return;
     }
     if (mode === 'edit') {
@@ -1488,90 +1441,31 @@ class HouseplanCard extends LitElement {
     this._cfgRev = r?.rev ?? this._cfgRev + 1;
   }
 
-  // ================= МИГРАЦИЯ legacy → сервер =================
-
-  private async _migrateToServer(): Promise<void> {
-    if (!this._serverStorage || this._norm || this._migrating) return;
-    if (!confirm('Перенести текущую конфигурацию (планы, комнаты, раскладку) на сервер HA?')) return;
-    this._migrating = true;
-    try {
-      const spaces: any[] = [];
-      for (const fl of Object.keys(FLOOR_VB)) {
-        const vb = FLOOR_VB[fl];
-        const rect = FLOOR_BG_RECT[fl] || vb; // yard: нормируем относительно viewBox
-        const [rx, ry, rw, rh] = rect;
-        let planUrl: string | null = null;
-        let aspect = rw / rh;
-        const bg = FLOOR_BG[fl];
-        if (bg && FLOOR_BG_RECT[fl]) {
-          const nat = LEGACY_PLAN_SIZE[fl];
-          if (nat) aspect = nat[0] / nat[1];
-          const b64 = bg.split(',')[1];
-          const resp = await this.hass.callWS({
-            type: 'houseplan/plan/set',
-            space_id: fl,
-            ext: 'svg',
-            data: b64,
-          });
-          planUrl = resp.url;
-        }
-        const rooms = ROOMS.filter((r) => r.floor === fl).map((r, i) => ({
-          id: fl + '_r' + i,
-          name: r.name,
-          area: r.area || null,
-          x: (r.x - rx) / rw,
-          y: (r.y - ry) / rh,
-          w: r.w / rw,
-          h: r.h / rh,
-        }));
-        spaces.push({
-          id: fl,
-          title: FLOOR_TITLES[fl] || fl,
-          plan_url: planUrl,
-          aspect,
-          view_box: [(vb[0] - rx) / rw, (vb[1] - ry) / rh, vb[2] / rw, vb[3] / rh],
-          rooms,
-        });
-      }
-      const config = {
-        spaces,
-        device_overrides: {},
-        virtual_devices: [],
-        settings: { exclude_integrations: [...EXCLUDED_DOMAINS], group_lights: true },
-      };
-      // раскладка: канвас → нормированные координаты пространства
-      const layout: Record<string, any> = {};
-      for (const d of this._devices) {
-        if (d.virtual) continue;
-        const saved = this._layout[d.id] || this._defPos[d.id];
-        if (!saved) continue;
-        const rect = FLOOR_BG_RECT[d.space] || FLOOR_VB[d.space];
-        layout[d.id] = {
-          s: d.space,
-          x: (saved.x - rect[0]) / rect[2],
-          y: (saved.y - rect[1]) / rect[3],
-        };
-      }
-      await this.hass.callWS({ type: 'houseplan/config/set', config });
-      await this.hass.callWS({ type: 'houseplan/layout/set', layout });
-      this._serverCfg = config as any;
-      this._layout = layout;
-      this._regSignature = '';
-      this._maybeRebuildDevices();
-      this._showToast('Конфигурация перенесена на сервер — карта работает от server config');
-    } catch (e: any) {
-      this._showToast('Ошибка миграции: ' + (e?.message || e));
-    } finally {
-      this._migrating = false;
-    }
-  }
 
   // ================= рендер =================
 
   protected render(): TemplateResult | typeof nothing {
     if (!this._config || !this.hass) return nothing;
     const model = this._model;
-    if (!model.length) return html`<ha-card><div class="empty">Нет настроенных пространств</div></ha-card>`;
+    if (!model.length) {
+      return html`<ha-card>
+        <div class="head">
+          <div class="title"><ha-icon icon="mdi:home-city"></ha-icon>${this._config.title || 'План дома'}</div>
+        </div>
+        <div class="empty">
+          <ha-icon icon="mdi:floor-plan" class="big"></ha-icon>
+          <p>Пространств пока нет.</p>
+          ${this._serverStorage
+            ? html`<p class="muted">Добавьте первое пространство и загрузите план этажа.</p>
+                <button class="btn on" @click=${() => this._openSpaceDialog('create')}>
+                  <ha-icon icon="mdi:plus"></ha-icon>Добавить пространство
+                </button>`
+            : html`<p class="muted">Установите интеграцию House Plan и добавьте запись в «Устройства и службы».</p>`}
+        </div>
+        ${this._spaceDialog ? this._renderSpaceDialog() : nothing}
+        ${this._toast ? html`<div class="toast">${this._toast}</div>` : nothing}
+      </ha-card>`;
+    }
     const space = this._spaceModel();
     const vb = space.vb;
     const devs = this._devices.filter((d) => d.space === space.id);
@@ -2021,12 +1915,6 @@ class HouseplanCard extends LitElement {
             : 'раскладка: сервер · конфиг: встроенный'
           : 'сохранение: этот браузер'}
       </span>
-      ${this._serverStorage && !this._norm
-        ? html`<button class="btn" ?disabled=${this._migrating} @click=${this._migrateToServer}
-              title="Перенести планы, комнаты и раскладку в хранилище HA">
-              <ha-icon icon="mdi:cloud-upload"></ha-icon>${this._migrating ? '…' : 'На сервер'}
-            </button>`
-        : nothing}
       <button class="btn ghost" @click=${this._resetLayout} title="Сбросить всё">
         <ha-icon icon="mdi:backup-restore"></ha-icon>
       </button>
@@ -2047,9 +1935,26 @@ class HouseplanCard extends LitElement {
       overflow: visible; /* overflow:hidden ломает position:sticky у шапки */
     }
     .empty {
-      padding: 32px;
-      color: var(--hp-muted);
+      padding: 40px 24px;
+      color: var(--hp-txt);
       text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .empty .big {
+      --mdc-icon-size: 56px;
+      color: var(--hp-accent);
+      opacity: 0.7;
+    }
+    .empty .muted {
+      color: var(--hp-muted);
+      font-size: 13px;
+      margin: 0;
+    }
+    .empty .btn {
+      margin-top: 8px;
     }
     .hdr {
       position: sticky;

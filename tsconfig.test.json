@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "module": "esnext", "outDir": "test-build", "noEmit": false, "declaration": false },
+  "include": ["src/logic.ts", "src/rules.ts"]
+}

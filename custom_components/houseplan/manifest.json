@@ -1,13 +1,19 @@
 {
   "domain": "houseplan",
   "name": "House Plan",
-  "codeowners": ["@justbusiness"],
+  "codeowners": [
+    "@justbusiness"
+  ],
   "config_flow": true,
-  "dependencies": ["http", "frontend", "websocket_api"],
+  "dependencies": [
+    "http",
+    "frontend",
+    "websocket_api"
+  ],
   "documentation": "https://github.com/justbusiness/houseplan-card",
   "integration_type": "service",
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/justbusiness/houseplan-card/issues",
   "requirements": [],
-  "version": "1.4.0"
+  "version": "1.7.0"
 }

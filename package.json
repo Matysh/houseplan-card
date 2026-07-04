@@ -1,12 +1,14 @@
 {
   "name": "houseplan-card",
-  "version": "1.6.2",
+  "version": "1.7.0",
   "description": "Interactive house plan Lovelace card for Home Assistant (dacha Kirillovskoe)",
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "rollup -c",
-    "watch": "rollup -c --watch"
+    "build": "tsc --noEmit && rollup -c",
+    "watch": "rollup -c --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "tsc -p tsconfig.test.json && node --test test/*.test.mjs"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^15.2.3",
