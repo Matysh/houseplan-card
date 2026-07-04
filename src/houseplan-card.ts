@@ -12,7 +12,7 @@ import { FLOOR_BG, FLOOR_BG_RECT } from './data/backgrounds';
 import { EXCLUDED_DOMAINS, iconFor, DOMAIN_PRIORITY } from './rules';
 import './editor';
 
-const CARD_VERSION = '1.5.1';
+const CARD_VERSION = '1.6.1';
 const LS_KEY = 'houseplan_card_layout_v1';
 const NORM_W = 1000; // ширина рендер-пространства для нормированных конфигов
 
@@ -55,10 +55,31 @@ interface VirtualDevice {
   entity_id?: string | null;
 }
 
+interface PdfRef {
+  name: string;
+  url: string;
+}
+
+/** Маркер конфига: правит/дополняет авто-устройство ИЛИ описывает ручной/виртуальный значок. */
+interface Marker {
+  id: string;
+  binding: string; // 'device:<id>' | 'entity:<eid>' | 'virtual'
+  space?: string | null;
+  area?: string | null;
+  hidden?: boolean;
+  name?: string | null;
+  icon?: string | null;
+  model?: string | null;
+  link?: string | null;
+  description?: string | null;
+  pdfs?: PdfRef[];
+}
+
 interface ServerConfig {
   spaces: any[];
   device_overrides: Record<string, { hidden?: boolean; icon?: string | null; name?: string | null }>;
   virtual_devices: VirtualDevice[];
+  markers: Marker[];
   settings: { exclude_integrations?: string[]; group_lights?: boolean };
 }
 
@@ -73,6 +94,12 @@ interface DevItem {
   primary?: string;
   temp?: number | null;
   virtual?: VirtualDevice;
+  marker?: Marker; // связанный маркер конфига (метаданные, оверрайды)
+  bindingKind?: 'device' | 'entity' | 'virtual';
+  bindingRef?: string; // device_id / entity_id
+  link?: string | null;
+  description?: string | null;
+  pdfs?: PdfRef[];
 }
 
 interface CardConfig {
@@ -141,6 +168,20 @@ class HouseplanCard extends LitElement {
   private _areaSel = '';
   private _nameSel = '';
   private _roomDialog = false;
+  private _infoCard: DevItem | null = null;
+  private _markerDialog: {
+    devId?: string;      // редактируемый значок (если есть)
+    name: string;
+    binding: string;     // 'device:<id>' | 'entity:<eid>' | 'virtual'
+    bindingFilter: string;
+    icon: string;        // '' = авто
+    model: string;
+    link: string;
+    description: string;
+    pdfs: PdfRef[];
+    room: string;        // 'space#area' для виртуального
+    busy: boolean;
+  } | null = null;
   private _spaceDialog: {
     mode: 'edit' | 'create';
     spaceId?: string;
@@ -173,6 +214,8 @@ class HouseplanCard extends LitElement {
     _nameSel: { state: true },
     _roomDialog: { state: true },
     _spaceDialog: { state: true },
+    _infoCard: { state: true },
+    _markerDialog: { state: true },
   };
 
   public connectedCallback(): void {
@@ -190,6 +233,10 @@ class HouseplanCard extends LitElement {
   }
 
   private _onKey(e: KeyboardEvent): void {
+    if (e.key === 'Escape') {
+      if (this._infoCard) { this._infoCard = null; return; }
+      if (this._markerDialog) { this._markerDialog = null; return; }
+    }
     if (!this._markup) return;
     const undo = e.key === 'Escape' || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z');
     if (!undo) return;
@@ -516,6 +563,36 @@ class HouseplanCard extends LitElement {
   }
 
   /** Курирование + группы света + оверрайды + виртуальные устройства. */
+  private get _markers(): Marker[] {
+    return this._serverCfg?.markers || [];
+  }
+
+  /** Маркер по «claim key»: device:<id> / entity:<eid>. */
+  private _markerFor(kind: 'device' | 'entity', ref: string): Marker | undefined {
+    return this._markers.find((m) => m.binding === kind + ':' + ref);
+  }
+
+  /** Множество HA-ссылок (device_id/entity_id), «занятых» маркерами. */
+  private get _claimed(): Set<string> {
+    const set = new Set<string>();
+    for (const m of this._markers) {
+      const [kind, ref] = m.binding.split(':');
+      if ((kind === 'device' || kind === 'entity') && ref) set.add(m.binding);
+    }
+    return set;
+  }
+
+  private _applyMarker(item: DevItem, m: Marker): void {
+    item.marker = m;
+    if (m.name) item.name = m.name;
+    if (m.icon) item.icon = m.icon;
+    if (m.model != null) item.model = m.model;
+    item.link = m.link ?? null;
+    item.description = m.description ?? null;
+    item.pdfs = m.pdfs || [];
+  }
+
+  /** Курирование + группы света + маркеры (метаданные/перепривязка) + виртуальные. Гибрид. */
   private _buildDevices(): DevItem[] {
     const h = this.hass;
     const areaMap = this._areaToSpace;
@@ -524,14 +601,19 @@ class HouseplanCard extends LitElement {
     const groupedAreas = this._groupedLightAreas();
     const excluded = this._excluded;
     const entsBy = this._entitiesByDevice();
+    const claimed = this._claimed;
     const seen: Record<string, 1> = {};
-    const out: DevItem[] = [];
+    const rest: DevItem[] = [];
+
+    // 1) авто-устройства HA (не занятые маркером, не скрытые)
     for (const dev of Object.values<any>(h.devices)) {
       const area = dev.area_id;
       if (!area || !areaMap[area]) continue;
       if (dev.entry_type === 'service') continue;
+      if (claimed.has('device:' + dev.id)) continue; // маркер перекроет ниже
       const ov = overrides[dev.id] || {};
-      if (ov.hidden) continue;
+      const marker = this._markerFor('device', dev.id);
+      if ((marker && marker.hidden) || ov.hidden) continue;
       const entIds = entsBy[dev.id] || [];
       const dom = this._domainOfDevice(dev, entIds);
       if (excluded.has(dom)) continue;
@@ -546,7 +628,6 @@ class HouseplanCard extends LitElement {
       let icon = iconFor(name, dev.model);
       if (entIds.some((e) => e.startsWith('lock.'))) icon = 'mdi:lock';
       if (ov.icon) icon = ov.icon;
-      // лампы в комнатах с группой света заменяются сущностью группы
       if (groupLights && icon === 'mdi:lightbulb' && groupedAreas.has(area)) continue;
       const item: DevItem = {
         id: dev.id,
@@ -556,15 +637,19 @@ class HouseplanCard extends LitElement {
         space: areaMap[area].space,
         icon,
         entities: entIds,
+        bindingKind: 'device',
+        bindingRef: dev.id,
+        pdfs: [],
       };
       item.primary = this._primaryEntity(entIds, icon);
       if (icon === 'mdi:thermometer' || icon === 'mdi:air-filter') item.temp = this._tempFor(entIds);
-      out.push(item);
+      rest.push(item);
     }
-    // группы света: реальные сущности групп HA (platform group) и Z2M (device model=Group)
-    const rest: DevItem[] = [...out];
+
+    // 2) группы света (не занятые маркером)
     for (const g of this._lightGroups()) {
       if (!areaMap[g.area]) continue;
+      if (claimed.has('entity:' + g.eid)) continue;
       rest.push({
         id: 'lg_' + g.eid,
         name: g.name,
@@ -574,21 +659,75 @@ class HouseplanCard extends LitElement {
         icon: 'mdi:lightbulb-group',
         entities: [g.eid],
         primary: g.eid,
+        bindingKind: 'entity',
+        bindingRef: g.eid,
+        pdfs: [],
       });
     }
-    // виртуальные устройства
-    for (const v of this._serverCfg?.virtual_devices || []) {
-      rest.push({
-        id: 'virt_' + v.id,
-        name: v.name,
-        model: v.note || 'виртуальное устройство',
-        area: '',
-        space: v.space,
-        icon: v.icon,
-        entities: v.entity_id ? [v.entity_id] : [],
-        primary: v.entity_id || undefined,
-        virtual: v,
-      });
+
+    // 3) явные маркеры (перепривязка/метаданные/виртуальные)
+    for (const m of this._markers) {
+      if (m.hidden) continue;
+      const [kind, ref] = m.binding.split(':');
+      if (kind === 'device') {
+        const dev = h.devices[ref];
+        const area = dev?.area_id || m.area || '';
+        const space = (area && areaMap[area]?.space) || m.space || this._model[0]?.id || '';
+        const entIds = dev ? entsBy[dev.id] || [] : [];
+        let icon = dev ? iconFor(dev.name_by_user || dev.name || '', dev.model) : 'mdi:help-circle';
+        if (entIds.some((e) => e.startsWith('lock.'))) icon = 'mdi:lock';
+        const item: DevItem = {
+          id: m.id,
+          name: dev?.name_by_user || dev?.name || 'устройство',
+          model: dev?.model || '',
+          area,
+          space,
+          icon,
+          entities: entIds,
+          bindingKind: 'device',
+          bindingRef: ref,
+        };
+        item.primary = this._primaryEntity(entIds, icon);
+        if (icon === 'mdi:thermometer' || icon === 'mdi:air-filter') item.temp = this._tempFor(entIds);
+        this._applyMarker(item, m);
+        rest.push(item);
+      } else if (kind === 'entity') {
+        const reg = h.entities[ref];
+        const area = reg?.area_id || (reg?.device_id && h.devices[reg.device_id]?.area_id) || m.area || '';
+        const space = (area && areaMap[area]?.space) || m.space || this._model[0]?.id || '';
+        const st = h.states[ref];
+        const item: DevItem = {
+          id: m.id,
+          name: reg?.name || st?.attributes?.friendly_name || ref,
+          model: '',
+          area,
+          space,
+          icon: 'mdi:shape-outline',
+          entities: [ref],
+          primary: ref,
+          bindingKind: 'entity',
+          bindingRef: ref,
+        };
+        this._applyMarker(item, m);
+        rest.push(item);
+      } else {
+        // виртуальный
+        const area = m.area || '';
+        const space = m.space || (area && areaMap[area]?.space) || this._model[0]?.id || '';
+        const item: DevItem = {
+          id: m.id,
+          name: m.name || 'виртуальное устройство',
+          model: m.model || '',
+          area,
+          space,
+          icon: m.icon || 'mdi:map-marker',
+          entities: [],
+          bindingKind: 'virtual',
+          virtual: { id: m.id, space, name: m.name || '', icon: m.icon || 'mdi:map-marker', x: 0, y: 0 },
+        };
+        this._applyMarker(item, m);
+        rest.push(item);
+      }
     }
     return rest;
   }
@@ -622,11 +761,6 @@ class HouseplanCard extends LitElement {
   /** Позиция устройства в рендер-единицах текущего пространства. */
   private _pos(d: DevItem): { x: number; y: number } {
     const s = this._spaceModel(d.space);
-    const H = s.vb ? undefined : undefined;
-    if (d.virtual) {
-      const height = this._norm ? NORM_W / (this._serverCfg!.spaces.find((x: any) => x.id === d.space)?.aspect || 1) : 0;
-      return { x: d.virtual.x * (this._norm ? NORM_W : 1), y: d.virtual.y * (this._norm ? height : 1) };
-    }
     const saved = this._layout[d.id];
     if (saved) {
       if (this._norm) {
@@ -701,15 +835,13 @@ class HouseplanCard extends LitElement {
   private _clickDevice(ev: MouseEvent, d: DevItem): void {
     ev.stopPropagation();
     if (this._drag?.moved) return;
+    if (this._markup) return;
     if (this._edit) {
       this._selId = d.id;
+      this._openMarkerDialog(d);
       return;
     }
-    if (d.virtual && !d.primary) {
-      this._showToast(d.name + (d.virtual.note ? ' — ' + d.virtual.note : ''));
-      return;
-    }
-    this._openMoreInfo(d.primary);
+    this._infoCard = d;
   }
 
   private _clickRoom(r: RoomCfg): void {
@@ -718,7 +850,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _pointerDown(ev: PointerEvent, d: DevItem): void {
-    if (!this._edit || d.virtual) return;
+    if (!this._edit) return;
     ev.preventDefault();
     const p = this._pos(d);
     this._drag = { id: d.id, sx: ev.clientX, sy: ev.clientY, ox: p.x, oy: p.y, moved: false };
@@ -1012,6 +1144,234 @@ class HouseplanCard extends LitElement {
       .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   }
 
+  // ================= РЕДАКТОР УСТРОЙСТВ (маркеры) =================
+
+  private _openMarkerDialog(d?: DevItem): void {
+    if (!this._norm) {
+      this._showToast('Редактирование устройств доступно после переноса конфига на сервер');
+      return;
+    }
+    if (d) {
+      this._markerDialog = {
+        devId: d.id,
+        name: d.name,
+        binding: d.bindingKind === 'virtual' ? 'virtual' : d.bindingKind + ':' + d.bindingRef,
+        bindingFilter: '',
+        icon: d.marker?.icon || '',
+        model: d.model || '',
+        link: d.link || '',
+        description: d.description || '',
+        pdfs: [...(d.pdfs || [])],
+        room: d.space && d.area ? d.space + '#' + d.area : '',
+        busy: false,
+      };
+    } else {
+      this._markerDialog = {
+        name: '', binding: 'virtual', bindingFilter: '', icon: '', model: '',
+        link: '', description: '', pdfs: [], room: '', busy: false,
+      };
+    }
+  }
+
+  /** Кандидаты привязки: устройства HA + группы/хелпер-сущности, минус уже размещённые. */
+  private _bindingCandidates(): { value: string; label: string; sub: string }[] {
+    const h = this.hass;
+    const taken = new Set<string>();
+    for (const dev of this._devices) {
+      if (dev.id === this._markerDialog?.devId) continue;
+      if (dev.bindingKind === 'device' && dev.bindingRef) taken.add('device:' + dev.bindingRef);
+      if (dev.bindingKind === 'entity' && dev.bindingRef) taken.add('entity:' + dev.bindingRef);
+    }
+    // дедуп как на плане: скрыть устройства с тем же «имя|area», что уже показаны (дубли Tuya)
+    const shownKeys = new Set<string>();
+    for (const dev of this._devices) {
+      if (dev.bindingKind === 'device' && dev.name) shownKeys.add(dev.name.trim() + '|' + (dev.area || ''));
+    }
+    const list: { value: string; label: string; sub: string }[] = [];
+    // устройства (в т.ч. Z2M-группы model=Group)
+    for (const dev of Object.values<any>(h.devices)) {
+      if (dev.entry_type === 'service') continue;
+      const v = 'device:' + dev.id;
+      if (taken.has(v)) continue;
+      const name = (dev.name_by_user || dev.name || dev.id).trim();
+      if (v !== this._markerDialog?.binding && shownKeys.has(name + '|' + (dev.area_id || ''))) continue;
+      list.push({ value: v, label: name, sub: (dev.model || 'устройство') + (dev.model === 'Group' ? ' · Z2M-группа' : '') });
+    }
+    // group/helper-сущности без «своего» физического устройства
+    const helperPlatforms = new Set([
+      'group', 'template', 'derivative', 'min_max', 'threshold', 'integration',
+      'statistics', 'trend', 'utility_meter', 'tod', 'switch_as_x', 'schedule',
+    ]);
+    for (const [eid, reg] of Object.entries<any>(h.entities)) {
+      const v = 'entity:' + eid;
+      if (taken.has(v)) continue;
+      const isHelper = helperPlatforms.has(reg.platform);
+      const isGroupEntity = reg.platform === 'group';
+      if (!isHelper && !isGroupEntity) continue;
+      if (reg.hidden) continue;
+      const st = h.states[eid];
+      list.push({
+        value: v,
+        label: reg.name || st?.attributes?.friendly_name || eid,
+        sub: eid.split('.')[0] + ' · ' + (reg.platform === 'group' ? 'группа' : 'хелпер'),
+      });
+    }
+    const f = (this._markerDialog?.bindingFilter || '').toLowerCase().trim();
+    const filtered = f
+      ? list.filter((o) => (o.label + ' ' + o.sub + ' ' + o.value).toLowerCase().includes(f))
+      : list;
+    filtered.sort((a, b) => a.label.localeCompare(b.label));
+    return filtered.slice(0, 200);
+  }
+
+  /** Список комнат всех пространств для виртуального устройства. */
+  private _allRoomsFlat(): { value: string; label: string }[] {
+    const res: { value: string; label: string }[] = [];
+    for (const sp of this._serverCfg?.spaces || []) {
+      for (const r of sp.rooms || []) {
+        if (!r.area) continue;
+        res.push({ value: sp.id + '#' + r.area, label: (sp.title || sp.id) + ' · ' + r.name });
+      }
+    }
+    return res;
+  }
+
+  private async _pickMarkerFiles(ev: Event): Promise<void> {
+    const input = ev.target as HTMLInputElement;
+    const files = input.files ? [...input.files] : [];
+    if (!files.length || !this._markerDialog) return;
+    const mid = this._markerDialog.devId || 'new';
+    for (const file of files) {
+      try {
+        const buf = new Uint8Array(await file.arrayBuffer());
+        let bin = '';
+        for (let i = 0; i < buf.length; i += 32768) bin += String.fromCharCode(...buf.subarray(i, i + 32768));
+        const resp = await this.hass.callWS({
+          type: 'houseplan/file/set', marker_id: mid, filename: file.name, data: btoa(bin),
+        });
+        this._markerDialog = {
+          ...this._markerDialog!,
+          pdfs: [...this._markerDialog!.pdfs, { name: resp.name || file.name, url: resp.url }],
+        };
+      } catch (e: any) {
+        this._showToast('Файл не загружен: ' + (e?.message || e));
+      }
+    }
+    input.value = '';
+  }
+
+  private _removeMarkerPdf(url: string): void {
+    if (!this._markerDialog) return;
+    this._markerDialog = {
+      ...this._markerDialog,
+      pdfs: this._markerDialog.pdfs.filter((p) => p.url !== url),
+    };
+  }
+
+  private async _saveMarker(): Promise<void> {
+    const dlg = this._markerDialog;
+    if (!dlg || dlg.busy) return;
+    if (dlg.binding === 'virtual' && !dlg.name.trim()) {
+      this._showToast('Укажите имя виртуального устройства');
+      return;
+    }
+    this._markerDialog = { ...dlg, busy: true };
+    try {
+      const cfg = this._serverCfg!;
+      cfg.markers = cfg.markers || [];
+      // определить id маркера
+      let id: string;
+      let space: string | null = null;
+      let area: string | null = null;
+      if (dlg.binding === 'virtual') {
+        const [sp, ar] = dlg.room ? dlg.room.split('#') : ['', ''];
+        space = sp || this._space;
+        area = ar || null;
+        id = dlg.devId && dlg.devId.startsWith('v_') ? dlg.devId : 'v_' + Date.now().toString(36);
+      } else {
+        const [kind, ref] = dlg.binding.split(':');
+        id = kind === 'device' ? ref : 'lg_' + ref;
+      }
+      const oldId = dlg.devId;
+      const marker: Marker = {
+        id,
+        binding: dlg.binding,
+        name: dlg.name.trim() || null,
+        icon: dlg.icon || null,
+        model: dlg.model.trim() || null,
+        link: dlg.link.trim() || null,
+        description: dlg.description.trim() || null,
+        pdfs: dlg.pdfs,
+      };
+      if (dlg.binding === 'virtual') {
+        marker.space = space;
+        marker.area = area;
+      }
+      // удалить прежний маркер (по старому id и по новому id)
+      cfg.markers = cfg.markers.filter((m) => m.id !== id && m.id !== oldId);
+      cfg.markers.push(marker);
+      // позиция: если новый значок или сменилось пространство — поставить в центр комнаты/пространства
+      if (!this._layout[id]) {
+        const spm = this._spaceModel(space || undefined);
+        let cx = spm.vb[0] + spm.vb[2] / 2;
+        let cy = spm.vb[1] + spm.vb[3] / 2;
+        if (area) {
+          const room = spm.rooms.find((r) => r.area === area);
+          if (room) [cx, cy] = this._roomCenter(room);
+        }
+        this._layout[id] = this._normPos(space || this._space, cx, cy);
+      }
+      await this._saveConfigNow();
+      await this.hass.callWS({ type: 'houseplan/layout/set', layout: this._layout });
+      this._markerDialog = null;
+      this._regSignature = '';
+      this._maybeRebuildDevices();
+      this._showToast('Устройство сохранено');
+    } catch (e: any) {
+      this._markerDialog = { ...this._markerDialog!, busy: false };
+      this._showToast('Ошибка: ' + (e?.message || e));
+    }
+  }
+
+  private async _deleteMarker(): Promise<void> {
+    const dlg = this._markerDialog;
+    if (!dlg) return;
+    const d = dlg.devId ? this._devices.find((x) => x.id === dlg.devId) : null;
+    const label = dlg.name || 'устройство';
+    if (!confirm(`Убрать «${label}» с плана?`)) return;
+    const cfg = this._serverCfg!;
+    cfg.markers = cfg.markers || [];
+    if (d && d.bindingKind === 'virtual') {
+      cfg.markers = cfg.markers.filter((m) => m.id !== d.id);
+    } else if (d && d.marker) {
+      // был явный маркер → просто скрыть либо удалить: скрываем (авто вернётся если это авто-устройство)
+      cfg.markers = cfg.markers.filter((m) => m.id !== d.id);
+      if (d.bindingKind === 'device' && d.bindingRef) {
+        cfg.markers.push({ id: d.id, binding: 'device:' + d.bindingRef, hidden: true });
+      } else if (d.bindingKind === 'entity' && d.bindingRef) {
+        cfg.markers.push({ id: d.id, binding: 'entity:' + d.bindingRef, hidden: true });
+      }
+    } else if (d && d.bindingKind === 'device' && d.bindingRef) {
+      cfg.markers.push({ id: d.id, binding: 'device:' + d.bindingRef, hidden: true });
+    } else if (d && d.bindingKind === 'entity' && d.bindingRef) {
+      cfg.markers.push({ id: d.id, binding: 'entity:' + d.bindingRef, hidden: true });
+    }
+    try {
+      await this._saveConfigNow();
+      this._markerDialog = null;
+      this._regSignature = '';
+      this._maybeRebuildDevices();
+      this._showToast('Устройство убрано с плана');
+    } catch (e: any) {
+      this._showToast('Ошибка: ' + (e?.message || e));
+    }
+  }
+
+  private _normPos(space: string, x: number, y: number): { s: string; x: number; y: number } {
+    const aspect = this._serverCfg!.spaces.find((s: any) => s.id === space)?.aspect || 1;
+    return { s: space, x: x / NORM_W, y: y / (NORM_W / aspect) };
+  }
+
   // ================= УПРАВЛЕНИЕ ПРОСТРАНСТВАМИ =================
 
   private _openSpaceDialog(mode: 'edit' | 'create', spaceId?: string): void {
@@ -1250,11 +1610,17 @@ class HouseplanCard extends LitElement {
           </div>
           <span class="count">${devs.length} устр.</span>
           <span class="spacer"></span>
+          ${this._norm
+            ? html`<button class="btn" @click=${() => this._openMarkerDialog()}
+                title="Добавить устройство на план">
+                <ha-icon icon="mdi:plus"></ha-icon>
+              </button>`
+            : nothing}
           <button class="btn ${this._edit ? 'on' : ''}" @click=${() => {
             this._edit = !this._edit;
             this._markup = false;
             this._selId = null;
-          }} title="Режим правки: перетаскивание иконок">
+          }} title="Режим правки: клик по значку — карточка, перетаскивание — двигать">
             <ha-icon icon="mdi:cursor-move"></ha-icon>
           </button>
           <button class="btn ${this._markup ? 'on' : ''}" @click=${this._toggleMarkup}
@@ -1301,6 +1667,8 @@ class HouseplanCard extends LitElement {
 
         ${this._roomDialog ? this._renderRoomDialog() : nothing}
         ${this._spaceDialog ? this._renderSpaceDialog() : nothing}
+        ${this._markerDialog ? this._renderMarkerDialog() : nothing}
+        ${this._infoCard ? this._renderInfoCard() : nothing}
         ${this._tip
           ? html`<div class="tip" style="left:${this._tip.x + 12}px;top:${this._tip.y + 12}px">
               <b>${this._tip.title}</b>${this._tip.meta ? html`<span class="m">${this._tip.meta}</span>` : nothing}
@@ -1401,6 +1769,155 @@ class HouseplanCard extends LitElement {
               : 'кликните точку сетки, чтобы начать контур'}</span>
             ${this._path.length ? html`<button class="btn ghost" @click=${this._cancelPath}>Сброс</button>` : nothing}`
         : nothing}
+    </div>`;
+  }
+
+  private _renderInfoCard(): TemplateResult {
+    const d = this._infoCard!;
+    const st = d.primary ? this.hass.states[d.primary] : undefined;
+    const stateTxt = st ? this.hass.formatEntityState?.(st) ?? st.state : null;
+    return html`<div class="menuwrap dialogwrap" @click=${() => (this._infoCard = null)}>
+      <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
+        <div class="hd"><ha-icon icon="${d.icon}"></ha-icon>${d.name}</div>
+        <div class="body">
+          ${d.model ? html`<div class="inforow"><span class="k">Модель</span><span>${d.model}</span></div>` : nothing}
+          ${stateTxt ? html`<div class="inforow"><span class="k">Состояние</span><span>${stateTxt}</span></div>` : nothing}
+          ${d.link
+            ? html`<div class="inforow"><span class="k">Ссылка</span>
+                <a href="${d.link}" target="_blank" rel="noreferrer noopener">${d.link}</a></div>`
+            : nothing}
+          ${d.description ? html`<div class="infodesc">${d.description}</div>` : nothing}
+          ${d.pdfs && d.pdfs.length
+            ? html`<div class="inforow"><span class="k">Инструкции</span><span class="pdflist">
+                ${d.pdfs.map(
+                  (p) => html`<a class="pdf" href="${p.url}" target="_blank" rel="noreferrer noopener">
+                    <ha-icon icon="mdi:file-pdf-box"></ha-icon>${p.name}</a>`,
+                )}</span></div>`
+            : nothing}
+          ${!d.model && !stateTxt && !d.link && !d.description && !(d.pdfs && d.pdfs.length)
+            ? html`<div class="infodesc muted">Нет дополнительной информации</div>`
+            : nothing}
+        </div>
+        <div class="row">
+          ${d.primary
+            ? html`<button class="btn" @click=${() => { const p = d.primary; this._infoCard = null; this._openMoreInfo(p); }}>
+                <ha-icon icon="mdi:open-in-new"></ha-icon>Открыть в HA
+              </button>`
+            : nothing}
+          <span class="spacer"></span>
+          <button class="btn ghost" @click=${() => (this._infoCard = null)}>Закрыть</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  private _renderMarkerDialog(): TemplateResult {
+    const d = this._markerDialog!;
+    const isVirtual = d.binding === 'virtual';
+    const cands = this._bindingCandidates();
+    const curLabel = (() => {
+      if (isVirtual) return null;
+      const found = cands.find((c) => c.value === d.binding);
+      if (found) return found.label;
+      const [k, ref] = d.binding.split(':');
+      if (k === 'device') return this.hass.devices[ref]?.name_by_user || this.hass.devices[ref]?.name || ref;
+      return this.hass.states[ref]?.attributes?.friendly_name || ref;
+    })();
+    return html`<div class="menuwrap dialogwrap" @click=${() => (this._markerDialog = null)}>
+      <div class="dialog wide" @click=${(e: Event) => e.stopPropagation()}>
+        <div class="hd"><ha-icon icon="mdi:shape-plus"></ha-icon>
+          ${d.devId ? 'Устройство на плане' : 'Новое устройство'}</div>
+        <div class="body">
+          <label>Имя (отображается на плане)</label>
+          <input class="namein" type="text" placeholder="Название"
+            .value=${d.name}
+            @input=${(e: Event) => (this._markerDialog = { ...d, name: (e.target as HTMLInputElement).value })} />
+
+          <label>Привязка к устройству HA</label>
+          <div class="bindsel ${isVirtual ? 'virt' : ''}">
+            <button class="opt ${isVirtual ? 'on' : ''}"
+              @click=${() => (this._markerDialog = { ...d, binding: 'virtual' })}>
+              <ha-icon icon="mdi:map-marker-outline"></ha-icon>Виртуальное устройство (без привязки)
+            </button>
+            ${!isVirtual
+              ? html`<div class="curbind"><ha-icon icon="mdi:link-variant"></ha-icon>
+                  <b>${curLabel}</b><span class="ref">${d.binding}</span></div>`
+              : nothing}
+            <input class="namein" type="text" placeholder="Поиск устройства / группы…"
+              .value=${d.bindingFilter}
+              @input=${(e: Event) => (this._markerDialog = { ...d, bindingFilter: (e.target as HTMLInputElement).value })} />
+            <div class="candlist">
+              ${cands.map(
+                (c) => html`<div class="cand ${c.value === d.binding ? 'sel' : ''}"
+                  @click=${() => (this._markerDialog = { ...d, binding: c.value })}>
+                  <span class="cl">${c.label}</span><span class="cs">${c.sub}</span>
+                </div>`,
+              )}
+              ${!cands.length ? html`<div class="cand muted">ничего не найдено</div>` : nothing}
+            </div>
+          </div>
+
+          ${isVirtual
+            ? html`<label>Комната</label>
+                <select class="areasel"
+                  @change=${(e: Event) => (this._markerDialog = { ...d, room: (e.target as HTMLSelectElement).value })}>
+                  <option value="">— выберите комнату —</option>
+                  ${this._allRoomsFlat().map(
+                    (r) => html`<option value=${r.value} ?selected=${r.value === d.room}>${r.label}</option>`,
+                  )}
+                </select>`
+            : nothing}
+
+          <label>Иконка</label>
+          ${customElements.get('ha-icon-picker')
+            ? html`<ha-icon-picker .hass=${this.hass} .value=${d.icon}
+                @value-changed=${(e: any) => (this._markerDialog = { ...d, icon: e.detail.value || '' })}></ha-icon-picker>`
+            : html`<input class="namein" type="text" placeholder="mdi:… (пусто = авто)"
+                .value=${d.icon}
+                @input=${(e: Event) => (this._markerDialog = { ...d, icon: (e.target as HTMLInputElement).value })} />`}
+
+          <label>Модель</label>
+          <input class="namein" type="text" placeholder="напр. Aqara T&amp;H"
+            .value=${d.model}
+            @input=${(e: Event) => (this._markerDialog = { ...d, model: (e.target as HTMLInputElement).value })} />
+
+          <label>Ссылка</label>
+          <input class="namein" type="url" placeholder="https://…"
+            .value=${d.link}
+            @input=${(e: Event) => (this._markerDialog = { ...d, link: (e.target as HTMLInputElement).value })} />
+
+          <label>Описание</label>
+          <textarea class="descin" rows="3" placeholder="Заметки, характеристики…"
+            .value=${d.description}
+            @input=${(e: Event) => (this._markerDialog = { ...d, description: (e.target as HTMLTextAreaElement).value })}></textarea>
+
+          <label>Инструкции (PDF и т.п.)</label>
+          <div class="pdfedit">
+            ${d.pdfs.map(
+              (p) => html`<span class="pdftag"><ha-icon icon="mdi:file-pdf-box"></ha-icon>
+                <a href="${p.url}" target="_blank" rel="noreferrer noopener">${p.name}</a>
+                <ha-icon class="x" icon="mdi:close" @click=${() => this._removeMarkerPdf(p.url)}></ha-icon></span>`,
+            )}
+            <label class="btn filebtn">
+              <ha-icon icon="mdi:paperclip"></ha-icon>Прикрепить…
+              <input type="file" hidden multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,application/pdf"
+                @change=${(e: Event) => this._pickMarkerFiles(e)} />
+            </label>
+          </div>
+        </div>
+        <div class="row">
+          ${d.devId
+            ? html`<button class="btn danger" @click=${this._deleteMarker}>
+                <ha-icon icon="mdi:delete-outline"></ha-icon>Убрать
+              </button>`
+            : nothing}
+          <span class="spacer"></span>
+          <button class="btn ghost" @click=${() => (this._markerDialog = null)}>Отмена</button>
+          <button class="btn on" @click=${this._saveMarker} ?disabled=${d.busy}>
+            <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : 'Сохранить'}
+          </button>
+        </div>
+      </div>
     </div>`;
   }
 
@@ -1864,6 +2381,165 @@ class HouseplanCard extends LitElement {
     }
     .dialog .row .spacer {
       flex: 1;
+    }
+    .dialog.wide {
+      width: min(440px, 94vw);
+    }
+    .dialog .body {
+      max-height: 66vh;
+      overflow-y: auto;
+    }
+    .descin {
+      width: 100%;
+      box-sizing: border-box;
+      background: var(--hp-bg);
+      border: 1px solid var(--hp-line);
+      color: var(--hp-txt);
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 13px;
+      font-family: inherit;
+      resize: vertical;
+    }
+    .bindsel {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border: 1px solid var(--hp-line);
+      border-radius: 8px;
+      padding: 8px;
+    }
+    .bindsel .opt {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--hp-line);
+      background: transparent;
+      color: var(--hp-txt);
+      border-radius: 6px;
+      padding: 6px 8px;
+      cursor: pointer;
+      font-size: 12.5px;
+      font-family: inherit;
+    }
+    .bindsel .opt.on {
+      background: var(--hp-accent);
+      color: var(--text-primary-color, #fff);
+      border-color: var(--hp-accent);
+    }
+    .curbind {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12.5px;
+      color: var(--hp-txt);
+      flex-wrap: wrap;
+    }
+    .curbind .ref {
+      color: var(--hp-muted);
+      font-size: 11px;
+    }
+    .candlist {
+      max-height: 160px;
+      overflow-y: auto;
+      border-top: 1px solid var(--hp-line);
+    }
+    .cand {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 6px 8px;
+      cursor: pointer;
+      border-radius: 6px;
+      font-size: 12.5px;
+    }
+    .cand:hover {
+      background: rgba(127, 127, 127, 0.15);
+    }
+    .cand.sel {
+      background: var(--hp-accent);
+      color: var(--text-primary-color, #fff);
+    }
+    .cand .cs {
+      color: var(--hp-muted);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .cand.sel .cs {
+      color: var(--text-primary-color, #fff);
+      opacity: 0.85;
+    }
+    .cand.muted {
+      color: var(--hp-muted);
+      cursor: default;
+    }
+    .pdfedit {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+    .pdftag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border: 1px solid var(--hp-line);
+      border-radius: 6px;
+      padding: 3px 6px;
+      font-size: 12px;
+    }
+    .pdftag a {
+      color: var(--hp-txt);
+      text-decoration: none;
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .pdftag .x {
+      --mdc-icon-size: 15px;
+      cursor: pointer;
+      color: var(--hp-muted);
+    }
+    .pdftag .x:hover {
+      color: #ff7a5c;
+    }
+    .inforow {
+      display: flex;
+      gap: 10px;
+      font-size: 13px;
+      margin: 3px 0;
+    }
+    .inforow .k {
+      color: var(--hp-muted);
+      min-width: 84px;
+    }
+    .inforow a {
+      color: var(--hp-accent);
+      word-break: break-all;
+    }
+    .infodesc {
+      font-size: 13px;
+      white-space: pre-wrap;
+      margin-top: 6px;
+    }
+    .infodesc.muted {
+      color: var(--hp-muted);
+    }
+    .pdflist {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .pdf {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--hp-accent);
+      text-decoration: none;
+    }
+    ha-icon-picker {
+      display: block;
     }
     .dialogwrap {
       background: rgba(0, 0, 0, 0.45);

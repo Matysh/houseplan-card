@@ -83,6 +83,16 @@ more-info по приоритету доменов), temp, members[] (групп
 `.head { position: sticky; top: var(--header-height, 56px) }`; ОБЯЗАТЕЛЬНО
 `ha-card { overflow: visible }` — `overflow: hidden` ломает sticky.
 
+## Маркеры устройств (v1.6.0+)
+
+`config.markers[]`: `{id, binding:'device:<id>'|'entity:<eid>'|'virtual', space?, area?, hidden?,
+name?, icon?, model?, link?, description?, pdfs:[{name,url}]}`. Гибрид: авто-устройства HA
+появляются сами; маркер с `binding=device:<id>` их перекрывает (метаданные/перепривязка/скрытие),
+`entity:<eid>` — для групп/хелперов, `virtual` — ручной значок без HA. id маркера = device_id /
+`lg_<eid>` / `v_<rand>` (сохраняет позицию в layout). Пикер привязки исключает уже размещённые
+ссылки и дубли по имя|area. Файлы-инструкции: `houseplan/file/set` → `/config/houseplan/files/<id>/`,
+отдача `/houseplan_files/files/`.
+
 ## Серверная конфигурация (v1.3.0+)
 
 `.storage/houseplan.config` (Store):
@@ -116,3 +126,4 @@ more-info по приоритету доменов), temp, members[] (групп
 | `houseplan/config/get` | — | `{config, rev}` |
 | `houseplan/config/set` | `config`, `expected_rev?` | `{ok, rev}` / err `conflict`; событие `houseplan_config_updated` |
 | `houseplan/plan/set` | `space_id`, `ext` (svg/png/jpg/webp), `data` (b64, ≤8МБ) | `{ok, url}` |
+| `houseplan/file/set` | `marker_id`, `filename`, `data` (b64, ≤25МБ) | `{ok, url, name}` |

@@ -12,6 +12,8 @@ from homeassistant.helpers.storage import Store
 from . import websocket_api as hp_ws
 from .const import (
     DOMAIN,
+    FILES_DIR,
+    FILES_URL,
     FRONTEND_URL,
     PLANS_DIR,
     PLANS_URL,
@@ -41,7 +43,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     card_path = Path(__file__).parent / "frontend" / "houseplan-card.js"
     plans_path = Path(hass.config.path(PLANS_DIR))
-    await hass.async_add_executor_job(lambda: plans_path.mkdir(parents=True, exist_ok=True))
+    files_path = Path(hass.config.path(FILES_DIR))
+    await hass.async_add_executor_job(
+        lambda: (plans_path.mkdir(parents=True, exist_ok=True), files_path.mkdir(parents=True, exist_ok=True))
+    )
 
     static_paths = []
     try:
@@ -50,11 +55,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         if card_path.exists():
             static_paths.append(StaticPathConfig(FRONTEND_URL, str(card_path), cache_headers=False))
         static_paths.append(StaticPathConfig(PLANS_URL, str(plans_path), cache_headers=True))
+        static_paths.append(StaticPathConfig(FILES_URL, str(files_path), cache_headers=True))
         await hass.http.async_register_static_paths(static_paths)
     except ImportError:  # старые версии HA
         if card_path.exists():
             hass.http.register_static_path(FRONTEND_URL, str(card_path), cache_headers=False)
         hass.http.register_static_path(PLANS_URL, str(plans_path), cache_headers=True)
+        hass.http.register_static_path(FILES_URL, str(files_path), cache_headers=True)
 
     if card_path.exists():
         add_extra_js_url(hass, f"{FRONTEND_URL}?v={VERSION}")

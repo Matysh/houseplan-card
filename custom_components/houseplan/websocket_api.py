@@ -12,7 +12,10 @@ import voluptuous as vol
 from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
 
-from .const import CONF_ADMIN_ONLY, DEFAULT_CONFIG, DOMAIN, PLANS_DIR, PLANS_URL
+from .const import (
+    CONF_ADMIN_ONLY, DEFAULT_CONFIG, DOMAIN,
+    FILES_DIR, FILES_URL, PLANS_DIR, PLANS_URL,
+)
 
 POS_SCHEMA = vol.Schema(
     {vol.Required("x"): vol.Coerce(float), vol.Required("y"): vol.Coerce(float)},
@@ -66,6 +69,26 @@ VIRTUAL_SCHEMA = vol.Schema(
     },
     extra=vol.ALLOW_EXTRA,
 )
+MARKER_SCHEMA = vol.Schema(
+    {
+        vol.Required("id"): str,
+        # 'device:<device_id>' | 'entity:<entity_id>' | 'virtual'
+        vol.Required("binding"): str,
+        vol.Optional("space"): vol.Any(str, None),
+        vol.Optional("area"): vol.Any(str, None),
+        vol.Optional("hidden"): bool,
+        vol.Optional("name"): vol.Any(str, None),
+        vol.Optional("icon"): vol.Any(str, None),
+        vol.Optional("model"): vol.Any(str, None),
+        vol.Optional("link"): vol.Any(str, None),
+        vol.Optional("description"): vol.Any(str, None),
+        vol.Optional("pdfs"): [
+            vol.Schema({vol.Required("name"): str, vol.Required("url"): str}, extra=vol.ALLOW_EXTRA)
+        ],
+    },
+    extra=vol.ALLOW_EXTRA,
+)
+
 CONFIG_SCHEMA = vol.Schema(
     {
         vol.Required("spaces"): [SPACE_SCHEMA],
@@ -80,6 +103,7 @@ CONFIG_SCHEMA = vol.Schema(
             )
         },
         vol.Optional("virtual_devices", default=list): [VIRTUAL_SCHEMA],
+        vol.Optional("markers", default=list): [MARKER_SCHEMA],
         vol.Optional("settings", default=dict): vol.Schema({}, extra=vol.ALLOW_EXTRA),
     },
     extra=vol.ALLOW_EXTRA,
@@ -88,6 +112,9 @@ CONFIG_SCHEMA = vol.Schema(
 SPACE_ID_RE = re.compile(r"^[a-z0-9_-]{1,64}$")
 PLAN_EXTENSIONS = {"svg": "image/svg+xml", "png": "image/png", "jpg": "image/jpeg", "webp": "image/webp"}
 MAX_PLAN_BYTES = 8 * 1024 * 1024
+FILE_EXTENSIONS = {"pdf", "png", "jpg", "jpeg", "webp", "txt"}
+MAX_FILE_BYTES = 25 * 1024 * 1024
+_SAFE_NAME_RE = re.compile(r"[^A-Za-z0-9._-]+")
 
 
 @callback
@@ -99,6 +126,7 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_config_get)
     websocket_api.async_register_command(hass, ws_config_set)
     websocket_api.async_register_command(hass, ws_plan_set)
+    websocket_api.async_register_command(hass, ws_file_set)
 
 
 def _store(hass: HomeAssistant):
@@ -251,4 +279,47 @@ async def ws_plan_set(hass: HomeAssistant, connection, msg: dict[str, Any]) -> N
     mtime = int(path.stat().st_mtime)
     connection.send_result(
         msg["id"], {"ok": True, "url": f"{PLANS_URL}/{space_id}.{msg['ext']}?v={mtime}"}
+    )
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "houseplan/file/set",
+        vol.Required("marker_id"): str,
+        vol.Required("filename"): str,
+        vol.Required("data"): str,  # base64
+    }
+)
+@websocket_api.async_response
+async def ws_file_set(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
+    """Загрузить файл-инструкцию (PDF и т.п.) для маркера; вернуть URL."""
+    if not _check_write(hass, connection):
+        connection.send_error(msg["id"], "unauthorized", "Загрузка файлов разрешена только администраторам")
+        return
+    marker_id = _SAFE_NAME_RE.sub("_", msg["marker_id"])[:64] or "misc"
+    raw_name = msg["filename"].rsplit("/", 1)[-1].rsplit("\\", 1)[-1]
+    ext = raw_name.rsplit(".", 1)[-1].lower() if "." in raw_name else ""
+    if ext not in FILE_EXTENSIONS:
+        connection.send_error(msg["id"], "bad_ext", f"Разрешены: {', '.join(sorted(FILE_EXTENSIONS))}")
+        return
+    safe_name = _SAFE_NAME_RE.sub("_", raw_name)[:120]
+    try:
+        blob = base64.b64decode(msg["data"], validate=True)
+    except (binascii.Error, ValueError):
+        connection.send_error(msg["id"], "invalid_data", "data должен быть корректным base64")
+        return
+    if len(blob) > MAX_FILE_BYTES:
+        connection.send_error(msg["id"], "too_large", f"Файл больше {MAX_FILE_BYTES // 1024 // 1024} МБ")
+        return
+    target_dir = Path(hass.config.path(FILES_DIR)) / marker_id
+    path = target_dir / safe_name
+
+    def _write() -> None:
+        target_dir.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(blob)
+
+    await hass.async_add_executor_job(_write)
+    mtime = int(path.stat().st_mtime)
+    connection.send_result(
+        msg["id"], {"ok": True, "url": f"{FILES_URL}/{marker_id}/{safe_name}?v={mtime}", "name": raw_name}
     )
