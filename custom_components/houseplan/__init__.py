@@ -63,11 +63,58 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.http.register_static_path(PLANS_URL, str(plans_path), cache_headers=True)
         hass.http.register_static_path(FILES_URL, str(files_path), cache_headers=True)
 
-    if card_path.exists():
-        add_extra_js_url(hass, f"{FRONTEND_URL}?v={VERSION}")
-    else:
+    if not card_path.exists():
         _LOGGER.warning("houseplan-card.js не найден рядом с интеграцией: %s", card_path)
+        return True
+
+    # Подключаем карточку. Предпочтительно — как Lovelace-ресурс (его фронтенд ДОЖИДАЕТСЯ
+    # перед рендером дашбордов, поэтому карточка доступна даже на холодном старте мобильного
+    # приложения). Если реестр ресурсов недоступен (YAML-режим Lovelace, старые версии) —
+    # откатываемся на extra_module_url.
+    module_url = f"{FRONTEND_URL}?v={VERSION}"
+    if not await _register_lovelace_resource(hass, module_url):
+        add_extra_js_url(hass, module_url)
     return True
+
+
+async def _register_lovelace_resource(hass: HomeAssistant, module_url: str) -> bool:
+    """Зарегистрировать (или обновить) карточку в реестре Lovelace-ресурсов.
+
+    Возвращает True при успехе. Пишем идемпотентно: если ресурс с нашим путём уже есть —
+    обновляем URL при смене версии; отсутствует — создаём. Any-except → False (фолбэк на JS).
+    """
+    try:
+        lovelace = hass.data.get("lovelace")
+        resources = getattr(lovelace, "resources", None)
+        if resources is None and isinstance(lovelace, dict):
+            resources = lovelace.get("resources")
+        if resources is None:
+            return False
+        # реестр ресурсов должен быть загружен
+        if hasattr(resources, "loaded") and not resources.loaded:
+            await resources.async_load()
+            resources.loaded = True
+        elif hasattr(resources, "async_get_info"):
+            await resources.async_get_info()
+        # только storage-режим позволяет создавать элементы
+        if not hasattr(resources, "async_create_item"):
+            return False
+        base = FRONTEND_URL
+        existing = [
+            item for item in resources.async_items()
+            if str(item.get("url", "")).split("?", 1)[0] == base
+        ]
+        if existing:
+            item = existing[0]
+            if item.get("url") != module_url and hasattr(resources, "async_update_item"):
+                await resources.async_update_item(item["id"], {"url": module_url})
+            return True
+        await resources.async_create_item({"res_type": "module", "url": module_url})
+        _LOGGER.debug("House Plan card зарегистрирована как Lovelace-ресурс: %s", module_url)
+        return True
+    except Exception as err:  # noqa: BLE001 — любой сбой → фолбэк
+        _LOGGER.debug("Не удалось зарегистрировать Lovelace-ресурс (%s), фолбэк на extra_module_url", err)
+        return False
 
 
 async def _update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:

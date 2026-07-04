@@ -13,7 +13,7 @@ import {
 } from './logic';
 import './editor';
 
-const CARD_VERSION = '1.7.0';
+const CARD_VERSION = '1.7.2';
 const LS_KEY = 'houseplan_card_layout_v1';
 const NORM_W = 1000; // ширина рендер-пространства для нормированных конфигов
 
@@ -121,7 +121,9 @@ class HouseplanCard extends LitElement {
   private _edit = false;
   private _layout: Record<string, { x: number; y: number; s?: string }> = {};
   private _serverStorage = false;
-  private _loaded = false;
+  private _loadOk = false;
+  private _loading = false;
+  private _loadTries = 0;
   private _serverCfg: ServerConfig | null = null;
   private _cfgRev = 0;
   private _unsubCfg: (() => void) | null = null;
@@ -321,8 +323,7 @@ class HouseplanCard extends LitElement {
 
   protected willUpdate(changed: PropertyValues): void {
     if (changed.has('hass') && this.hass) {
-      if (!this._loaded) {
-        this._loaded = true;
+      if (!this._loadOk && !this._loading && this._loadTries < 8) {
         this._loadFromServer();
       }
       this._maybeRebuildDevices();
@@ -332,11 +333,14 @@ class HouseplanCard extends LitElement {
   // ================= сервер: конфиг + раскладка =================
 
   private async _loadFromServer(): Promise<void> {
+    this._loading = true;
+    this._loadTries++;
     try {
       const [cfgResp, layResp] = await Promise.all([
         this.hass.callWS({ type: 'houseplan/config/get' }),
         this.hass.callWS({ type: 'houseplan/layout/get' }),
       ]);
+      this._loadOk = true;
       this._serverStorage = true;
       const cfg = cfgResp?.config;
       this._serverCfg = cfg && Array.isArray(cfg.spaces) ? cfg : null;
@@ -352,14 +356,18 @@ class HouseplanCard extends LitElement {
         this._space = this._model[0]?.id || this._space;
       }
     } catch (e) {
-      this._serverStorage = false;
-      this._serverCfg = null;
-      try {
-        this._layout = JSON.parse(localStorage.getItem(LS_KEY) || '{}') || {};
-      } catch {
-        this._layout = {};
+      // не последняя попытка — молча ждём следующего обновления hass (прогрев WS)
+      if (this._loadTries >= 8) {
+        this._serverStorage = false;
+        this._serverCfg = null;
+        try {
+          this._layout = JSON.parse(localStorage.getItem(LS_KEY) || '{}') || {};
+        } catch {
+          this._layout = {};
+        }
       }
-      this._showToast('Интеграция houseplan не найдена — позиции сохраняются локально');
+    } finally {
+      this._loading = false;
     }
     this._regSignature = '';
     this.requestUpdate();

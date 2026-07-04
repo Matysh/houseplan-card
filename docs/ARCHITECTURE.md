@@ -28,9 +28,11 @@ houseplan-card/
 
 ## Ключевые решения
 
-1. **Один репозиторий — интеграция + карточка.** Интеграция сама раздаёт JS
-   (`hass.http.async_register_static_paths` + `frontend.add_extra_js_url`), пользователю не
-   нужно прописывать ресурс Lovelace. Паттерн как у browser_mod/xiaomi_vacuum_map.
+1. **Один репозиторий — интеграция + карточка.** Интеграция раздаёт JS
+   (`async_register_static_paths`) и регистрирует его как **Lovelace-ресурс** (module) —
+   фронтенд дожидается ресурсов перед рендером, поэтому карточка работает и на холодном старте
+   мобильного приложения (в отличие от `add_extra_js_url`, который остаётся фолбэком для
+   YAML-режима). Пользователю не нужно вручную добавлять ресурс.
 2. **Раскладка иконок — на сервере.** `helpers.storage.Store(1, "houseplan.layout")` →
    `.storage/houseplan.layout`. Карточка читает/пишет через `hass.callWS`
    (`houseplan/layout/get|set|update`). Fallback — localStorage (если интеграции нет).
