@@ -13,7 +13,7 @@ import {
 } from './logic';
 import './editor';
 
-const CARD_VERSION = '1.7.4';
+const CARD_VERSION = '1.8.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const NORM_W = 1000; // ширина рендер-пространства для нормированных конфигов
 
@@ -144,6 +144,14 @@ class HouseplanCard extends LitElement {
   private _areaSel = '';
   private _nameSel = '';
   private _roomDialog = false;
+  // зум/панорама плана
+  private _zoom = 1;
+  private _pan = { x: 0, y: 0 };
+  private _pointers = new Map<number, { x: number; y: number }>();
+  private _panStart: { sx: number; sy: number; ox: number; oy: number } | null = null;
+  private _pinchStart: { dist: number; zoom: number; cx: number; cy: number; px: number; py: number } | null = null;
+  private _suppressClick = false;
+
   private _infoCard: DevItem | null = null;
   private _markerDialog: {
     devId?: string;      // редактируемый значок (если есть)
@@ -191,6 +199,8 @@ class HouseplanCard extends LitElement {
     _spaceDialog: { state: true },
     _infoCard: { state: true },
     _markerDialog: { state: true },
+    _zoom: { state: true },
+    _pan: { state: true },
   };
 
   public connectedCallback(): void {
@@ -810,7 +820,7 @@ class HouseplanCard extends LitElement {
 
   private _clickDevice(ev: MouseEvent, d: DevItem): void {
     ev.stopPropagation();
-    if (this._drag?.moved) return;
+    if (this._drag?.moved || this._suppressClick) return;
     if (this._markup) return;
     if (this._edit) {
       this._selId = d.id;
@@ -820,8 +830,120 @@ class HouseplanCard extends LitElement {
     this._infoCard = d;
   }
 
+  private get _stageEl(): HTMLElement | null {
+    return this.renderRoot.querySelector('.stage') as HTMLElement | null;
+  }
+
+  /** Ограничить пан так, чтобы контент покрывал сцену (без «дыр» по краям). */
+  private _clampPan(): void {
+    const stage = this._stageEl;
+    if (!stage) return;
+    const w = stage.clientWidth;
+    const h = stage.clientHeight;
+    const minX = w * (1 - this._zoom);
+    const minY = h * (1 - this._zoom);
+    this._pan = {
+      x: Math.min(0, Math.max(minX, this._pan.x)),
+      y: Math.min(0, Math.max(minY, this._pan.y)),
+    };
+  }
+
+  /** Изменить зум с центром в точке (sx,sy) относительно сцены. */
+  private _zoomAt(sx: number, sy: number, newZoom: number): void {
+    const z = Math.min(8, Math.max(1, newZoom));
+    // точка под курсором остаётся на месте: pan' = s - (s - pan)/zoom * z
+    const lx = (sx - this._pan.x) / this._zoom;
+    const ly = (sy - this._pan.y) / this._zoom;
+    this._pan = { x: sx - lx * z, y: sy - ly * z };
+    this._zoom = z;
+    this._clampPan();
+  }
+
+  private _onWheel(ev: WheelEvent): void {
+    const stage = this._stageEl;
+    if (!stage) return;
+    ev.preventDefault();
+    const r = stage.getBoundingClientRect();
+    const factor = ev.deltaY < 0 ? 1.15 : 1 / 1.15;
+    this._zoomAt(ev.clientX - r.left, ev.clientY - r.top, this._zoom * factor);
+  }
+
+  private _stepZoom(delta: number): void {
+    const stage = this._stageEl;
+    if (!stage) return;
+    this._zoomAt(stage.clientWidth / 2, stage.clientHeight / 2, this._zoom * (delta > 0 ? 1.4 : 1 / 1.4));
+  }
+
+  private _resetZoom(): void {
+    this._zoom = 1;
+    this._pan = { x: 0, y: 0 };
+  }
+
+  private _stagePointerDown(ev: PointerEvent): void {
+    // не мешать перетаскиванию иконок и рисованию разметки
+    if (this._drag || this._markup) return;
+    if ((ev.target as HTMLElement).closest('.dev')) return;
+    this._pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    if (this._pointers.size === 1) {
+      this._panStart = { sx: ev.clientX, sy: ev.clientY, ox: this._pan.x, oy: this._pan.y };
+      this._suppressClick = false;
+    } else if (this._pointers.size === 2) {
+      const pts = [...this._pointers.values()];
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      const r = this._stageEl!.getBoundingClientRect();
+      this._pinchStart = {
+        dist,
+        zoom: this._zoom,
+        cx: (pts[0].x + pts[1].x) / 2 - r.left,
+        cy: (pts[0].y + pts[1].y) / 2 - r.top,
+        px: this._pan.x,
+        py: this._pan.y,
+      };
+      this._panStart = null;
+    }
+  }
+
+  private _stagePointerMove(ev: PointerEvent): void {
+    if (!this._pointers.has(ev.pointerId)) {
+      this._markupMove(ev);
+      return;
+    }
+    this._pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    if (this._pinchStart && this._pointers.size >= 2) {
+      const pts = [...this._pointers.values()];
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      const scale = dist / (this._pinchStart.dist || 1);
+      // зум относительно исходной середины щипка
+      const z = Math.min(8, Math.max(1, this._pinchStart.zoom * scale));
+      const lx = (this._pinchStart.cx - this._pinchStart.px) / this._pinchStart.zoom;
+      const ly = (this._pinchStart.cy - this._pinchStart.py) / this._pinchStart.zoom;
+      this._pan = { x: this._pinchStart.cx - lx * z, y: this._pinchStart.cy - ly * z };
+      this._zoom = z;
+      this._clampPan();
+      this._suppressClick = true;
+    } else if (this._panStart) {
+      const ddx = ev.clientX - this._panStart.sx;
+      const ddy = ev.clientY - this._panStart.sy;
+      if (Math.abs(ddx) + Math.abs(ddy) > 4) this._suppressClick = true;
+      if (this._zoom > 1) {
+        this._pan = { x: this._panStart.ox + ddx, y: this._panStart.oy + ddy };
+        this._clampPan();
+      }
+    }
+  }
+
+  private _stagePointerUp(ev: PointerEvent): void {
+    this._pointers.delete(ev.pointerId);
+    if (this._pointers.size < 2) this._pinchStart = null;
+    if (this._pointers.size === 0) {
+      this._panStart = null;
+      // сбросить подавление клика на следующий тик (чтобы click после pan не сработал)
+      setTimeout(() => (this._suppressClick = false), 0);
+    }
+  }
+
   private _clickRoom(r: RoomCfg): void {
-    if (this._edit || !r.area) return;
+    if (this._suppressClick || this._edit || !r.area) return;
     navigate('/config/areas/area/' + r.area);
   }
 
@@ -840,8 +962,8 @@ class HouseplanCard extends LitElement {
     if (!stage) return;
     const vb = this._spaceModel().vb;
     const rect = stage.getBoundingClientRect();
-    const dx = ((ev.clientX - this._drag.sx) / rect.width) * vb[2];
-    const dy = ((ev.clientY - this._drag.sy) / rect.height) * vb[3];
+    const dx = ((ev.clientX - this._drag.sx) / (rect.width * this._zoom)) * vb[2];
+    const dy = ((ev.clientY - this._drag.sy) / (rect.height * this._zoom)) * vb[3];
     if (Math.abs(ev.clientX - this._drag.sx) + Math.abs(ev.clientY - this._drag.sy) > 3) this._drag.moved = true;
     const m = Math.min(vb[2], vb[3]) * 0.008;
     const nx = Math.max(vb[0] + m, Math.min(vb[0] + vb[2] - m, this._drag.ox + dx));
@@ -927,7 +1049,10 @@ class HouseplanCard extends LitElement {
     const stage = this.renderRoot.querySelector('.stage') as HTMLElement;
     const vb = this._spaceModel().vb;
     const r = stage.getBoundingClientRect();
-    return [vb[0] + ((ev.clientX - r.left) / r.width) * vb[2], vb[1] + ((ev.clientY - r.top) / r.height) * vb[3]];
+    // экран → локальные координаты (отмена transform: translate(pan) scale(zoom))
+    const lx = (ev.clientX - r.left - this._pan.x) / this._zoom;
+    const ly = (ev.clientY - r.top - this._pan.y) / this._zoom;
+    return [vb[0] + (lx / r.width) * vb[2], vb[1] + (ly / r.height) * vb[3]];
   }
 
   private _snap(p: number[]): number[] {
@@ -1549,10 +1674,16 @@ class HouseplanCard extends LitElement {
           </div>
           <span class="count">${devs.length} устр.</span>
           <span class="spacer"></span>
+          <div class="zoomctl">
+            <button class="btn zb" @click=${() => this._stepZoom(-1)} title="Отдалить"><ha-icon icon="mdi:minus"></ha-icon></button>
+            <button class="btn zb" @click=${() => this._resetZoom()} ?disabled=${this._zoom === 1}
+              title="Сбросить масштаб"><ha-icon icon="mdi:fit-to-page-outline"></ha-icon></button>
+            <button class="btn zb" @click=${() => this._stepZoom(1)} title="Приблизить"><ha-icon icon="mdi:plus"></ha-icon></button>
+          </div>
           ${this._norm
             ? html`<button class="btn" @click=${() => this._openMarkerDialog()}
                 title="Добавить устройство на план">
-                <ha-icon icon="mdi:plus"></ha-icon>
+                <ha-icon icon="mdi:plus-box-outline"></ha-icon>
               </button>`
             : nothing}
           <button class="btn ${this._edit ? 'on' : ''}" @click=${() => {
@@ -1574,7 +1705,12 @@ class HouseplanCard extends LitElement {
         <div class="stage ${this._edit ? 'edit' : ''} ${this._markup ? 'markup' : ''}"
           style="aspect-ratio:${vb[2]}/${vb[3]}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
-          @mousemove=${(e: MouseEvent) => this._markupMove(e)}>
+          @wheel=${(e: WheelEvent) => this._onWheel(e)}
+          @pointerdown=${(e: PointerEvent) => this._stagePointerDown(e)}
+          @pointermove=${(e: PointerEvent) => this._stagePointerMove(e)}
+          @pointerup=${(e: PointerEvent) => this._stagePointerUp(e)}
+          @pointercancel=${(e: PointerEvent) => this._stagePointerUp(e)}>
+          <div class="zoomwrap" style="transform:translate(${this._pan.x}px,${this._pan.y}px) scale(${this._zoom});">
           <svg viewBox="${vb.join(' ')}" preserveAspectRatio="xMidYMid meet">
             ${this._markup ? this._renderMarkupDefs(vb) : nothing}
             ${space.bg
@@ -1602,6 +1738,10 @@ class HouseplanCard extends LitElement {
           <div class="devlayer" style="--icon-size:${iconPct}cqw">
             ${devs.map((d) => this._renderDevice(d, vb))}
           </div>
+          </div>
+          ${this._zoom > 1
+            ? html`<div class="zoombadge">${Math.round(this._zoom * 100)}%</div>`
+            : nothing}
         </div>
 
         ${this._roomDialog ? this._renderRoomDialog() : nothing}
@@ -2093,6 +2233,42 @@ class HouseplanCard extends LitElement {
       position: relative;
       width: 100%;
       container-type: inline-size;
+      overflow: hidden;
+      touch-action: none; /* свои жесты pinch/pan */
+    }
+    .zoomwrap {
+      position: absolute;
+      inset: 0;
+      transform-origin: 0 0;
+      will-change: transform;
+    }
+    .zoomctl {
+      display: inline-flex;
+      gap: 2px;
+      background: rgba(127, 127, 127, 0.12);
+      border-radius: 8px;
+      padding: 2px;
+    }
+    .zoomctl .zb {
+      border: none;
+      padding: 5px 7px;
+    }
+    .zoomctl .zb[disabled] {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+    .zoombadge {
+      position: absolute;
+      left: 8px;
+      bottom: 8px;
+      background: rgba(4, 18, 31, 0.8);
+      color: #dff1ff;
+      border: 1px solid var(--hp-accent);
+      border-radius: 8px;
+      padding: 2px 8px;
+      font-size: 12px;
+      font-weight: 600;
+      pointer-events: none;
     }
     .stage svg {
       position: absolute;
