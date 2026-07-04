@@ -12,7 +12,7 @@ import { FLOOR_BG, FLOOR_BG_RECT } from './data/backgrounds';
 import { EXCLUDED_DOMAINS, GROUP_TITLES, iconFor, DOMAIN_PRIORITY } from './rules';
 import './editor';
 
-const CARD_VERSION = '1.4.0';
+const CARD_VERSION = '1.4.1';
 const LS_KEY = 'houseplan_card_layout_v1';
 const NORM_W = 1000; // ширина рендер-пространства для нормированных конфигов
 
@@ -139,9 +139,12 @@ class HouseplanCard extends LitElement {
   private _markup = false;
   private _tool: MarkupTool = 'draw';
   private _path: number[][] = []; // текущий контур (рендер-единицы, вершины по сетке)
+  private _pathSegs: (string | null)[] = []; // ключи сегментов, добавленных шагами контура
   private _cursorPt: number[] | null = null;
   private _areaSel = '';
   private _nameSel = '';
+  private _roomDialog = false;
+  private _keyHandler = (e: KeyboardEvent) => this._onKey(e);
 
   private _drag: { id: string; sx: number; sy: number; ox: number; oy: number; moved: boolean } | null = null;
 
@@ -164,7 +167,59 @@ class HouseplanCard extends LitElement {
     _cursorPt: { state: true },
     _areaSel: { state: true },
     _nameSel: { state: true },
+    _roomDialog: { state: true },
   };
+
+  public connectedCallback(): void {
+    super.connectedCallback();
+    window.addEventListener('keydown', this._keyHandler);
+  }
+
+  public disconnectedCallback(): void {
+    window.removeEventListener('keydown', this._keyHandler);
+    super.disconnectedCallback();
+  }
+
+  private _onKey(e: KeyboardEvent): void {
+    if (!this._markup) return;
+    const undo = e.key === 'Escape' || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z');
+    if (!undo) return;
+    if (this._roomDialog) {
+      e.preventDefault();
+      this._roomDialogCancel();
+      return;
+    }
+    if (this._tool === 'draw' && this._path.length) {
+      e.preventDefault();
+      this._undoPoint();
+    }
+  }
+
+  /** Убрать последнюю поставленную точку (и её линию, если она была добавлена этим шагом). */
+  private _undoPoint(): void {
+    if (!this._path.length) return;
+    if (this._path.length === 1) {
+      this._path = [];
+      this._pathSegs = [];
+      return;
+    }
+    const segKey = this._pathSegs[this._pathSegs.length - 1];
+    this._pathSegs = this._pathSegs.slice(0, -1);
+    if (segKey) this._removeSegmentByKey(segKey);
+    this._path = this._path.slice(0, -1);
+  }
+
+  private _removeSegmentByKey(key: string): void {
+    const sp = this._curSpaceCfg;
+    if (!sp?.segments) return;
+    const idx = this._segments.findIndex(
+      (s) => this._segKey([s[0], s[1]], [s[2], s[3]]) === key,
+    );
+    if (idx >= 0) {
+      sp.segments.splice(idx, 1);
+      this._saveConfig();
+    }
+  }
 
   public static getConfigElement() {
     return document.createElement('houseplan-card-editor');
@@ -746,17 +801,18 @@ class HouseplanCard extends LitElement {
       .catch((e: any) => this._showToast('Не удалось сохранить конфиг: ' + (e?.message || e)));
   }, 500);
 
-  /** Добавить сегмент (рендер-единицы) в каркас пространства (без дублей). */
-  private _addSegment(a: number[], b: number[]): void {
+  /** Добавить сегмент (рендер-единицы) в каркас пространства (без дублей). true = новый. */
+  private _addSegment(a: number[], b: number[]): boolean {
     const sp = this._curSpaceCfg;
-    if (!sp) return;
+    if (!sp) return false;
     const H = this._spaceH;
     const key = this._segKey(a, b);
     const exists = this._segments.some((s) => this._segKey([s[0], s[1]], [s[2], s[3]]) === key);
-    if (exists) return;
+    if (exists) return false;
     sp.segments = sp.segments || [];
     sp.segments.push([a[0] / NORM_W, a[1] / H, b[0] / NORM_W, b[1] / H]);
     this._saveConfig();
+    return true;
   }
 
   private _distToSeg(p: number[], s: number[]): number {
@@ -828,19 +884,21 @@ class HouseplanCard extends LitElement {
     const pt = this._snap(raw);
     if (!this._path.length) {
       this._path = [pt];
+      this._pathSegs = [];
       return;
     }
     const last = this._path[this._path.length - 1];
     if (this._samePt(pt, last)) return; // повторный клик по той же точке
-    this._addSegment(last, pt);
-    // замыкание: клик по первой вершине
-    if (this._path.length >= 3 && this._samePt(pt, this._path[0])) {
-      this._path = [...this._path]; // контур закрыт — path остаётся, Save активен
-      this._cursorPt = null;
-      this._path.push(pt);
-      return;
-    }
+    const added = this._addSegment(last, pt);
+    this._pathSegs = [...this._pathSegs, added ? this._segKey(last, pt) : null];
     this._path = [...this._path, pt];
+    // замыкание: клик по первой вершине → диалог сохранения
+    if (this._path.length >= 4 && this._samePt(pt, this._path[0])) {
+      this._cursorPt = null;
+      this._nameSel = '';
+      this._areaSel = '';
+      this._roomDialog = true;
+    }
   }
 
   private get _contourClosed(): boolean {
@@ -869,8 +927,10 @@ class HouseplanCard extends LitElement {
     });
     this._saveConfig();
     this._path = [];
+    this._pathSegs = [];
     this._areaSel = '';
     this._nameSel = '';
+    this._roomDialog = false;
     this._regSignature = '';
     this._maybeRebuildDevices();
     this._showToast('Комната сохранена');
@@ -878,7 +938,25 @@ class HouseplanCard extends LitElement {
 
   private _cancelPath(): void {
     this._path = [];
+    this._pathSegs = [];
     this._cursorPt = null;
+    this._roomDialog = false;
+  }
+
+  /** Отмена в диалоге: контур снова открыт (замыкающая точка снимается). */
+  private _roomDialogCancel(): void {
+    this._roomDialog = false;
+    this._undoPoint();
+  }
+
+  /** Зоны HA, ещё не назначенные ни одной комнате конфига. */
+  private get _freeAreas(): any[] {
+    const used = new Set<string>();
+    for (const sp of this._serverCfg?.spaces || [])
+      for (const r of sp.rooms || []) if (r.area) used.add(r.area);
+    return Object.values<any>(this.hass?.areas || {})
+      .filter((a) => !used.has(a.area_id))
+      .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   }
 
   // ================= МИГРАЦИЯ legacy → сервер =================
@@ -973,6 +1051,7 @@ class HouseplanCard extends LitElement {
 
     return html`
       <ha-card>
+        <div class="hdr">
         <div class="head">
           <div class="title">
             <ha-icon icon="mdi:home-city"></ha-icon>
@@ -1004,6 +1083,9 @@ class HouseplanCard extends LitElement {
             title="Разметка комнат: сетка, линии, контуры">
             <ha-icon icon="mdi:vector-square-edit"></ha-icon>
           </button>
+        </div>
+        ${this._edit ? this._renderEditbar() : nothing}
+        ${this._markup ? this._renderMarkupBar() : nothing}
         </div>
 
         <div class="stage ${this._edit ? 'edit' : ''} ${this._markup ? 'markup' : ''}"
@@ -1039,9 +1121,8 @@ class HouseplanCard extends LitElement {
           </div>
         </div>
 
-        ${this._edit ? this._renderEditbar() : nothing}
-        ${this._markup ? this._renderMarkupBar() : nothing}
         ${this._menuDev ? this._renderMenu() : nothing}
+        ${this._roomDialog ? this._renderRoomDialog() : nothing}
         ${this._tip
           ? html`<div class="tip" style="left:${this._tip.x + 12}px;top:${this._tip.y + 12}px">
               <b>${this._tip.title}</b>${this._tip.meta ? html`<span class="m">${this._tip.meta}</span>` : nothing}
@@ -1121,10 +1202,6 @@ class HouseplanCard extends LitElement {
   }
 
   private _renderMarkupBar(): TemplateResult {
-    const areas = Object.values<any>(this.hass?.areas || {}).sort((a, b) =>
-      (a.name || '').localeCompare(b.name || ''),
-    );
-    const closed = this._contourClosed;
     return html`<div class="editbar">
       <ha-icon icon="mdi:vector-square-edit" class="warn"></ha-icon>
       <button class="btn ${this._tool === 'draw' ? 'on' : ''}" @click=${() => (this._tool = 'draw')}
@@ -1141,25 +1218,45 @@ class HouseplanCard extends LitElement {
       </button>
       <span class="spacer"></span>
       ${this._tool === 'draw'
-        ? closed
-          ? html`<select class="areasel" .value=${this._areaSel}
-                @change=${(e: Event) => (this._areaSel = (e.target as HTMLSelectElement).value)}>
-                <option value="">— зона HA —</option>
-                ${areas.map((a) => html`<option value=${a.area_id} ?selected=${a.area_id === this._areaSel}>${a.name}</option>`)}
-              </select>
-              <input class="namein" type="text" placeholder="Название"
-                .value=${this._nameSel}
-                @input=${(e: Event) => (this._nameSel = (e.target as HTMLInputElement).value)} />
-              <button class="btn on" @click=${this._saveRoom}
-                ?disabled=${!this._areaSel && !this._nameSel}>
-                <ha-icon icon="mdi:check"></ha-icon>Сохранить
-              </button>
-              <button class="btn ghost" @click=${this._cancelPath}>Отмена</button>`
-          : html`<span class="hint">${this._path.length
-                ? 'точек: ' + this._path.length + ' — замкните контур кликом по первой точке'
-                : 'кликните точку сетки, чтобы начать контур'}</span>
-              ${this._path.length ? html`<button class="btn ghost" @click=${this._cancelPath}>Сброс</button>` : nothing}`
+        ? html`<span class="hint">${this._path.length
+              ? 'точек: ' + this._path.length + ' · Esc/Ctrl+Z — убрать точку · замкните контур кликом по первой'
+              : 'кликните точку сетки, чтобы начать контур'}</span>
+            ${this._path.length ? html`<button class="btn ghost" @click=${this._cancelPath}>Сброс</button>` : nothing}`
         : nothing}
+    </div>`;
+  }
+
+  private _renderRoomDialog(): TemplateResult {
+    const areas = this._freeAreas;
+    return html`<div class="menuwrap dialogwrap" @click=${this._roomDialogCancel}>
+      <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
+        <div class="hd"><ha-icon icon="mdi:floor-plan"></ha-icon>Новая комната</div>
+        <div class="body">
+          <label>Отображаемое имя</label>
+          <input class="namein" type="text" placeholder="Например: Терраса"
+            .value=${this._nameSel}
+            @input=${(e: Event) => (this._nameSel = (e.target as HTMLInputElement).value)} />
+          <label>Зона Home Assistant (свободные)</label>
+          <select class="areasel"
+            @change=${(e: Event) => {
+              this._areaSel = (e.target as HTMLSelectElement).value;
+              if (!this._nameSel && this._areaSel)
+                this._nameSel = this.hass.areas[this._areaSel]?.name || '';
+              this.requestUpdate();
+            }}>
+            <option value="">— без зоны —</option>
+            ${areas.map(
+              (a) => html`<option value=${a.area_id} ?selected=${a.area_id === this._areaSel}>${a.name}</option>`,
+            )}
+          </select>
+        </div>
+        <div class="row">
+          <button class="btn ghost" @click=${this._roomDialogCancel}>Отмена</button>
+          <button class="btn on" @click=${this._saveRoom} ?disabled=${!this._areaSel && !this._nameSel}>
+            <ha-icon icon="mdi:check"></ha-icon>Сохранить
+          </button>
+        </div>
+      </div>
     </div>`;
   }
 
@@ -1239,18 +1336,20 @@ class HouseplanCard extends LitElement {
       color: var(--hp-muted);
       text-align: center;
     }
-    .head {
+    .hdr {
+      position: sticky;
+      top: var(--header-height, 56px);
+      z-index: 20;
+      background: var(--card-background-color, var(--hp-bg));
       border-radius: var(--ha-card-border-radius, 12px) var(--ha-card-border-radius, 12px) 0 0;
+    }
+    .head {
       display: flex;
       align-items: center;
       gap: 10px;
       padding: 10px 14px;
       border-bottom: 1px solid var(--hp-line);
       flex-wrap: wrap;
-      position: sticky;
-      top: var(--header-height, 56px);
-      z-index: 20;
-      background: var(--card-background-color, var(--hp-bg));
     }
     .title {
       font-size: 15px;
@@ -1520,9 +1619,58 @@ class HouseplanCard extends LitElement {
       align-items: center;
       gap: 10px;
       padding: 9px 14px;
-      border-top: 1px solid var(--hp-line);
+      border-bottom: 1px solid var(--hp-line);
       font-size: 13px;
       flex-wrap: wrap;
+    }
+    .dialogwrap {
+      background: rgba(0, 0, 0, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 90;
+    }
+    .dialog {
+      background: var(--card-background-color, var(--hp-bg));
+      border: 1px solid var(--hp-accent);
+      border-radius: 14px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+      width: min(360px, 92vw);
+      overflow: hidden;
+    }
+    .dialog .hd {
+      padding: 12px 16px;
+      font-weight: 600;
+      border-bottom: 1px solid var(--hp-line);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dialog .hd ha-icon {
+      color: var(--hp-accent);
+    }
+    .dialog .body {
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .dialog .body label {
+      font-size: 12px;
+      color: var(--hp-muted);
+      margin-top: 6px;
+    }
+    .dialog .body .namein,
+    .dialog .body .areasel {
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .dialog .row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--hp-line);
     }
     .editbar .warn {
       color: #ffc14d;
