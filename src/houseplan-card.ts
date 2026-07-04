@@ -12,7 +12,7 @@ import { FLOOR_BG, FLOOR_BG_RECT } from './data/backgrounds';
 import { EXCLUDED_DOMAINS, iconFor, DOMAIN_PRIORITY } from './rules';
 import './editor';
 
-const CARD_VERSION = '1.6.1';
+const CARD_VERSION = '1.6.2';
 const LS_KEY = 'houseplan_card_layout_v1';
 const NORM_W = 1000; // ширина рендер-пространства для нормированных конфигов
 
@@ -671,7 +671,7 @@ class HouseplanCard extends LitElement {
       const [kind, ref] = m.binding.split(':');
       if (kind === 'device') {
         const dev = h.devices[ref];
-        const area = dev?.area_id || m.area || '';
+        const area = m.area || dev?.area_id || '';
         const space = (area && areaMap[area]?.space) || m.space || this._model[0]?.id || '';
         const entIds = dev ? entsBy[dev.id] || [] : [];
         let icon = dev ? iconFor(dev.name_by_user || dev.name || '', dev.model) : 'mdi:help-circle';
@@ -693,7 +693,7 @@ class HouseplanCard extends LitElement {
         rest.push(item);
       } else if (kind === 'entity') {
         const reg = h.entities[ref];
-        const area = reg?.area_id || (reg?.device_id && h.devices[reg.device_id]?.area_id) || m.area || '';
+        const area = m.area || reg?.area_id || (reg?.device_id && h.devices[reg.device_id]?.area_id) || '';
         const space = (area && areaMap[area]?.space) || m.space || this._model[0]?.id || '';
         const st = h.states[ref];
         const item: DevItem = {
@@ -1281,12 +1281,12 @@ class HouseplanCard extends LitElement {
       cfg.markers = cfg.markers || [];
       // определить id маркера
       let id: string;
-      let space: string | null = null;
-      let area: string | null = null;
+      // комната (выбранная вручную) переопределяет пространство/зону для любого значка
+      const [roomSp, roomAr] = dlg.room ? dlg.room.split('#') : ['', ''];
+      let space: string | null = roomSp || null;
+      let area: string | null = roomAr || null;
       if (dlg.binding === 'virtual') {
-        const [sp, ar] = dlg.room ? dlg.room.split('#') : ['', ''];
-        space = sp || this._space;
-        area = ar || null;
+        if (!space) space = this._space;
         id = dlg.devId && dlg.devId.startsWith('v_') ? dlg.devId : 'v_' + Date.now().toString(36);
       } else {
         const [kind, ref] = dlg.binding.split(':');
@@ -1303,15 +1303,19 @@ class HouseplanCard extends LitElement {
         description: dlg.description.trim() || null,
         pdfs: dlg.pdfs,
       };
-      if (dlg.binding === 'virtual') {
+      // сохраняем выбор комнаты (для виртуальных всегда; для привязанных — если выбрана)
+      if (dlg.binding === 'virtual' || dlg.room) {
         marker.space = space;
         marker.area = area;
       }
+      // сменилась комната → переставить значок в её центр
+      const prevDev = oldId ? this._devices.find((x) => x.id === oldId) : null;
+      const roomChanged = !!dlg.room && prevDev != null && (prevDev.space !== space || prevDev.area !== area);
       // удалить прежний маркер (по старому id и по новому id)
       cfg.markers = cfg.markers.filter((m) => m.id !== id && m.id !== oldId);
       cfg.markers.push(marker);
-      // позиция: если новый значок или сменилось пространство — поставить в центр комнаты/пространства
-      if (!this._layout[id]) {
+      // позиция: новый значок ИЛИ сменилась комната → поставить в центр комнаты/пространства
+      if (!this._layout[id] || roomChanged) {
         const spm = this._spaceModel(space || undefined);
         let cx = spm.vb[0] + spm.vb[2] / 2;
         let cy = spm.vb[1] + spm.vb[3] / 2;
@@ -1799,6 +1803,9 @@ class HouseplanCard extends LitElement {
             : nothing}
         </div>
         <div class="row">
+          <button class="btn" @click=${() => { const dd = d; this._infoCard = null; this._openMarkerDialog(dd); }}>
+            <ha-icon icon="mdi:pencil"></ha-icon>Редактировать
+          </button>
           ${d.primary
             ? html`<button class="btn" @click=${() => { const p = d.primary; this._infoCard = null; this._openMoreInfo(p); }}>
                 <ha-icon icon="mdi:open-in-new"></ha-icon>Открыть в HA
@@ -1857,16 +1864,14 @@ class HouseplanCard extends LitElement {
             </div>
           </div>
 
-          ${isVirtual
-            ? html`<label>Комната</label>
-                <select class="areasel"
-                  @change=${(e: Event) => (this._markerDialog = { ...d, room: (e.target as HTMLSelectElement).value })}>
-                  <option value="">— выберите комнату —</option>
-                  ${this._allRoomsFlat().map(
-                    (r) => html`<option value=${r.value} ?selected=${r.value === d.room}>${r.label}</option>`,
-                  )}
-                </select>`
-            : nothing}
+          <label>Комната${isVirtual ? '' : ' (переопределить размещение)'}</label>
+          <select class="areasel"
+            @change=${(e: Event) => (this._markerDialog = { ...d, room: (e.target as HTMLSelectElement).value })}>
+            <option value="">${isVirtual ? '— выберите комнату —' : '— по зоне устройства (авто) —'}</option>
+            ${this._allRoomsFlat().map(
+              (r) => html`<option value=${r.value} ?selected=${r.value === d.room}>${r.label}</option>`,
+            )}
+          </select>
 
           <label>Иконка</label>
           ${customElements.get('ha-icon-picker')
