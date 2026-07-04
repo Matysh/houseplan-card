@@ -12,7 +12,7 @@ import { FLOOR_BG, FLOOR_BG_RECT } from './data/backgrounds';
 import { EXCLUDED_DOMAINS, GROUP_TITLES, iconFor, DOMAIN_PRIORITY } from './rules';
 import './editor';
 
-const CARD_VERSION = '1.4.2';
+const CARD_VERSION = '1.4.4';
 const LS_KEY = 'houseplan_card_layout_v1';
 const NORM_W = 1000; // ширина рендер-пространства для нормированных конфигов
 
@@ -124,6 +124,8 @@ class HouseplanCard extends LitElement {
   private _serverStorage = false;
   private _loaded = false;
   private _serverCfg: ServerConfig | null = null;
+  private _cfgRev = 0;
+  private _unsubCfg: (() => void) | null = null;
   private _devices: DevItem[] = [];
   private _regSignature = '';
   private _defPos: Record<string, { x: number; y: number }> = {};
@@ -177,6 +179,10 @@ class HouseplanCard extends LitElement {
 
   public disconnectedCallback(): void {
     window.removeEventListener('keydown', this._keyHandler);
+    if (this._unsubCfg) {
+      this._unsubCfg();
+      this._unsubCfg = null;
+    }
     super.disconnectedCallback();
   }
 
@@ -326,7 +332,14 @@ class HouseplanCard extends LitElement {
       this._serverStorage = true;
       const cfg = cfgResp?.config;
       this._serverCfg = cfg && Array.isArray(cfg.spaces) ? cfg : null;
+      this._cfgRev = cfgResp?.rev || 0;
       this._layout = layResp?.layout || {};
+      // live-синхронизация: конфиг изменён в другом окне → перечитать
+      if (!this._unsubCfg) {
+        this._unsubCfg = await this.hass.connection.subscribeEvents((ev: any) => {
+          if ((ev?.data?.rev ?? -1) !== this._cfgRev) this._reloadConfigOnly();
+        }, 'houseplan_config_updated');
+      }
       if (this._norm && !this._model.find((s) => s.id === this._space)) {
         this._space = this._model[0]?.id || this._space;
       }
@@ -344,11 +357,34 @@ class HouseplanCard extends LitElement {
     this.requestUpdate();
   }
 
+  private async _reloadConfigOnly(): Promise<void> {
+    try {
+      const resp = await this.hass.callWS({ type: 'houseplan/config/get' });
+      const cfg = resp?.config;
+      this._serverCfg = cfg && Array.isArray(cfg.spaces) ? cfg : null;
+      this._cfgRev = resp?.rev || 0;
+      this._regSignature = '';
+      this._maybeRebuildDevices();
+      this.requestUpdate();
+    } catch {
+      /* ignore */
+    }
+  }
+
+  private _dirtyPos = new Set<string>();
+
   private _persistLayout = debounce(() => {
     if (this._serverStorage) {
-      this.hass
-        .callWS({ type: 'houseplan/layout/set', layout: this._layout })
-        .catch((e: any) => this._showToast('Не удалось сохранить на сервере: ' + (e?.message || e)));
+      // точечные обновления: не затираем позиции, изменённые в других окнах
+      const ids = [...this._dirtyPos];
+      this._dirtyPos.clear();
+      for (const id of ids) {
+        const pos = this._layout[id];
+        if (!pos) continue;
+        this.hass
+          .callWS({ type: 'houseplan/layout/update', device_id: id, pos })
+          .catch((e: any) => this._showToast('Не удалось сохранить позицию: ' + (e?.message || e)));
+      }
     } else {
       localStorage.setItem(LS_KEY, JSON.stringify(this._layout));
     }
@@ -598,14 +634,19 @@ class HouseplanCard extends LitElement {
 
   private _savePos(d: DevItem, x: number, y: number): void {
     if (this._norm) {
+      // центр иконки привязывается к узлам той же сетки, что и разметка комнат
+      const g = this._gridPitch;
+      const gx = Math.round(x / g) * g;
+      const gy = Math.round(y / g) * g;
       const aspect = this._serverCfg!.spaces.find((s: any) => s.id === d.space)?.aspect || 1;
       this._layout = {
         ...this._layout,
-        [d.id]: { s: d.space, x: x / NORM_W, y: y / (NORM_W / aspect) },
+        [d.id]: { s: d.space, x: gx / NORM_W, y: gy / (NORM_W / aspect) },
       };
     } else {
       this._layout = { ...this._layout, [d.id]: { x: Math.round(x), y: Math.round(y) } };
     }
+    this._dirtyPos.add(d.id);
     this._persistLayout();
   }
 
@@ -797,8 +838,19 @@ class HouseplanCard extends LitElement {
   private _saveConfig = debounce(() => {
     if (!this._serverCfg) return;
     this.hass
-      .callWS({ type: 'houseplan/config/set', config: this._serverCfg })
-      .catch((e: any) => this._showToast('Не удалось сохранить конфиг: ' + (e?.message || e)));
+      .callWS({ type: 'houseplan/config/set', config: this._serverCfg, expected_rev: this._cfgRev })
+      .then((r: any) => {
+        this._cfgRev = r?.rev ?? this._cfgRev + 1;
+      })
+      .catch((e: any) => {
+        if (e?.code === 'conflict') {
+          this._showToast('Конфиг изменён в другом окне — данные обновлены, повторите последнее действие');
+          this._cancelPath();
+          this._reloadConfigOnly();
+        } else {
+          this._showToast('Не удалось сохранить конфиг: ' + (e?.message || e));
+        }
+      });
   }, 500);
 
   /** Добавить сегмент (рендер-единицы) в каркас пространства (без дублей). true = новый. */

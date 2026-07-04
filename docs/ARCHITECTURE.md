@@ -113,6 +113,6 @@ more-info по приоритету доменов), temp, members[] (групп
 | `houseplan/layout/get` | — | `{layout: {device_id: {x,y}}}` |
 | `houseplan/layout/set` | `layout` | `{ok}` (admin_only опционально) |
 | `houseplan/layout/update` | `device_id`, `pos` | `{ok}` |
-| `houseplan/config/get` | — | `{config}` |
-| `houseplan/config/set` | `config` (валидация vol) | `{ok}` |
+| `houseplan/config/get` | — | `{config, rev}` |
+| `houseplan/config/set` | `config`, `expected_rev?` | `{ok, rev}` / err `conflict`; событие `houseplan_config_updated` |
 | `houseplan/plan/set` | `space_id`, `ext` (svg/png/jpg/webp), `data` (b64, ≤8МБ) | `{ok, url}` |

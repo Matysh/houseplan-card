@@ -166,23 +166,43 @@ async def ws_layout_update(hass: HomeAssistant, connection, msg: dict[str, Any])
 @websocket_api.websocket_command({vol.Required("type"): "houseplan/config/get"})
 @websocket_api.async_response
 async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Вернуть конфигурацию (пространства, оверрайды, виртуальные устройства, настройки)."""
+    """Вернуть конфигурацию и её ревизию."""
     data = await _config_store(hass).async_load() or {}
     config = {**DEFAULT_CONFIG, **data.get("config", {})}
-    connection.send_result(msg["id"], {"config": config})
+    connection.send_result(msg["id"], {"config": config, "rev": data.get("rev", 0)})
 
 
 @websocket_api.websocket_command(
-    {vol.Required("type"): "houseplan/config/set", vol.Required("config"): CONFIG_SCHEMA}
+    {
+        vol.Required("type"): "houseplan/config/set",
+        vol.Required("config"): CONFIG_SCHEMA,
+        vol.Optional("expected_rev"): int,
+    }
 )
 @websocket_api.async_response
 async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Полностью заменить конфигурацию."""
+    """Заменить конфигурацию с оптимистичной блокировкой (expected_rev).
+
+    Защита от гонки нескольких открытых клиентов: если конфиг менялся с момента
+    последнего чтения клиентом — возвращается ошибка conflict, клиент обязан
+    перечитать конфиг и повторить правку поверх свежей версии.
+    """
     if not _check_write(hass, connection):
         connection.send_error(msg["id"], "unauthorized", "Правка конфигурации разрешена только администраторам")
         return
-    await _config_store(hass).async_save({"config": msg["config"]})
-    connection.send_result(msg["id"], {"ok": True})
+    store = _config_store(hass)
+    data = await store.async_load() or {}
+    current_rev = data.get("rev", 0)
+    if "expected_rev" in msg and msg["expected_rev"] != current_rev:
+        connection.send_error(
+            msg["id"], "conflict",
+            f"Конфигурация изменена в другом окне (rev {current_rev} != {msg['expected_rev']})",
+        )
+        return
+    new_rev = current_rev + 1
+    await store.async_save({"config": msg["config"], "rev": new_rev})
+    hass.bus.async_fire("houseplan_config_updated", {"rev": new_rev})
+    connection.send_result(msg["id"], {"ok": True, "rev": new_rev})
 
 
 # ---------------- загрузка планов ----------------
