@@ -13,7 +13,7 @@ import {
 } from './logic';
 import './editor';
 
-const CARD_VERSION = '1.7.2';
+const CARD_VERSION = '1.7.3';
 const LS_KEY = 'houseplan_card_layout_v1';
 const NORM_W = 1000; // ширина рендер-пространства для нормированных конфигов
 
@@ -1202,28 +1202,43 @@ class HouseplanCard extends LitElement {
     return res;
   }
 
+  /** base64 файла через FileReader — надёжно для любого размера (без спреда больших массивов). */
+  private _fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const res = String(reader.result || '');
+        const comma = res.indexOf(',');
+        resolve(comma >= 0 ? res.slice(comma + 1) : res);
+      };
+      reader.onerror = () => reject(reader.error || new Error('read error'));
+      reader.readAsDataURL(file);
+    });
+  }
+
   private async _pickMarkerFiles(ev: Event): Promise<void> {
     const input = ev.target as HTMLInputElement;
     const files = input.files ? [...input.files] : [];
+    input.value = '';
     if (!files.length || !this._markerDialog) return;
     const mid = this._markerDialog.devId || 'new';
+    const uploaded: PdfRef[] = [];
     for (const file of files) {
       try {
-        const buf = new Uint8Array(await file.arrayBuffer());
-        let bin = '';
-        for (let i = 0; i < buf.length; i += 32768) bin += String.fromCharCode(...buf.subarray(i, i + 32768));
+        const data = await this._fileToBase64(file);
         const resp = await this.hass.callWS({
-          type: 'houseplan/file/set', marker_id: mid, filename: file.name, data: btoa(bin),
+          type: 'houseplan/file/set', marker_id: mid, filename: file.name, data,
         });
-        this._markerDialog = {
-          ...this._markerDialog!,
-          pdfs: [...this._markerDialog!.pdfs, { name: resp.name || file.name, url: resp.url }],
-        };
+        uploaded.push({ name: resp.name || file.name, url: resp.url });
       } catch (e: any) {
-        this._showToast('Файл не загружен: ' + (e?.message || e));
+        this._showToast('Файл «' + file.name + '» не загружен: ' + (e?.code || e?.message || e));
       }
     }
-    input.value = '';
+    // диалог мог быть переоткрыт/закрыт за время загрузки — добавляем, только если он ещё открыт
+    if (uploaded.length && this._markerDialog) {
+      this._markerDialog = { ...this._markerDialog, pdfs: [...this._markerDialog.pdfs, ...uploaded] };
+      if (uploaded.length) this._showToast('Прикреплено файлов: ' + uploaded.length);
+    }
   }
 
   private _removeMarkerPdf(url: string): void {
@@ -1732,7 +1747,7 @@ class HouseplanCard extends LitElement {
       if (k === 'device') return this.hass.devices[ref]?.name_by_user || this.hass.devices[ref]?.name || ref;
       return this.hass.states[ref]?.attributes?.friendly_name || ref;
     })();
-    return html`<div class="menuwrap dialogwrap" @click=${() => (this._markerDialog = null)}>
+    return html`<div class="menuwrap dialogwrap" @click=${(e: Event) => e.stopPropagation()}>
       <div class="dialog wide" @click=${(e: Event) => e.stopPropagation()}>
         <div class="hd"><ha-icon icon="mdi:shape-plus"></ha-icon>
           ${d.devId ? 'Устройство на плане' : 'Новое устройство'}</div>
@@ -1830,7 +1845,7 @@ class HouseplanCard extends LitElement {
 
   private _renderSpaceDialog(): TemplateResult {
     const d = this._spaceDialog!;
-    return html`<div class="menuwrap dialogwrap" @click=${() => (this._spaceDialog = null)}>
+    return html`<div class="menuwrap dialogwrap" @click=${(e: Event) => e.stopPropagation()}>
       <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
         <div class="hd"><ha-icon icon="mdi:floor-plan"></ha-icon>
           ${d.mode === 'create' ? 'Новое пространство' : 'Пространство'}</div>
@@ -1871,7 +1886,7 @@ class HouseplanCard extends LitElement {
 
   private _renderRoomDialog(): TemplateResult {
     const areas = this._freeAreas;
-    return html`<div class="menuwrap dialogwrap" @click=${this._roomDialogCancel}>
+    return html`<div class="menuwrap dialogwrap" @click=${(e: Event) => e.stopPropagation()}>
       <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
         <div class="hd"><ha-icon icon="mdi:floor-plan"></ha-icon>Новая комната</div>
         <div class="body">
