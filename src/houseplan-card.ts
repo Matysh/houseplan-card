@@ -13,7 +13,7 @@ import {
 } from './logic';
 import './editor';
 
-const CARD_VERSION = '1.7.3';
+const CARD_VERSION = '1.7.4';
 const LS_KEY = 'houseplan_card_layout_v1';
 const NORM_W = 1000; // ширина рендер-пространства для нормированных конфигов
 
@@ -1202,42 +1202,60 @@ class HouseplanCard extends LitElement {
     return res;
   }
 
-  /** base64 файла через FileReader — надёжно для любого размера (без спреда больших массивов). */
-  private _fileToBase64(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const res = String(reader.result || '');
-        const comma = res.indexOf(',');
-        resolve(comma >= 0 ? res.slice(comma + 1) : res);
-      };
-      reader.onerror = () => reject(reader.error || new Error('read error'));
-      reader.readAsDataURL(file);
-    });
+  /** Читаемый текст ошибки (никогда не «[object Object]»). */
+  private _errText(e: any): string {
+    if (!e) return 'неизвестная ошибка';
+    if (typeof e === 'string') return e;
+    if (e.message) return e.message;
+    if (e.error) return e.error;
+    if (e.code != null) return 'код ' + e.code;
+    try {
+      return JSON.stringify(e);
+    } catch {
+      return String(e);
+    }
   }
 
+  /**
+   * Загрузка файлов-инструкций через HTTP (multipart) — не через WebSocket, у которого лимит
+   * размера сообщения рвёт соединение на больших PDF.
+   */
   private async _pickMarkerFiles(ev: Event): Promise<void> {
     const input = ev.target as HTMLInputElement;
     const files = input.files ? [...input.files] : [];
     input.value = '';
     if (!files.length || !this._markerDialog) return;
     const mid = this._markerDialog.devId || 'new';
+    const token = this.hass?.auth?.data?.access_token;
     const uploaded: PdfRef[] = [];
     for (const file of files) {
       try {
-        const data = await this._fileToBase64(file);
-        const resp = await this.hass.callWS({
-          type: 'houseplan/file/set', marker_id: mid, filename: file.name, data,
+        const fd = new FormData();
+        fd.append('marker_id', mid);
+        fd.append('file', file, file.name);
+        const resp = await fetch('/api/houseplan/upload', {
+          method: 'POST',
+          body: fd,
+          headers: token ? { authorization: `Bearer ${token}` } : {},
         });
-        uploaded.push({ name: resp.name || file.name, url: resp.url });
+        const json = await resp.json().catch(() => ({}));
+        if (!resp.ok || json.error) {
+          const map: Record<string, string> = {
+            too_large: 'файл больше ' + (json.max_mb || 25) + ' МБ',
+            bad_ext: 'недопустимый тип (нужен PDF/изображение)',
+            unauthorized: 'нужны права администратора',
+          };
+          throw new Error(map[json.error] || json.error || 'HTTP ' + resp.status);
+        }
+        uploaded.push({ name: json.name || file.name, url: json.url });
       } catch (e: any) {
-        this._showToast('Файл «' + file.name + '» не загружен: ' + (e?.code || e?.message || e));
+        this._showToast('Файл «' + file.name + '» не загружен: ' + this._errText(e));
       }
     }
-    // диалог мог быть переоткрыт/закрыт за время загрузки — добавляем, только если он ещё открыт
+    // диалог мог закрыться за время загрузки — добавляем, только если он ещё открыт
     if (uploaded.length && this._markerDialog) {
       this._markerDialog = { ...this._markerDialog, pdfs: [...this._markerDialog.pdfs, ...uploaded] };
-      if (uploaded.length) this._showToast('Прикреплено файлов: ' + uploaded.length);
+      this._showToast('Прикреплено файлов: ' + uploaded.length);
     }
   }
 

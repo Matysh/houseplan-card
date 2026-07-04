@@ -128,4 +128,7 @@ name?, icon?, model?, link?, description?, pdfs:[{name,url}]}`. Гибрид: а
 | `houseplan/config/get` | — | `{config, rev}` |
 | `houseplan/config/set` | `config`, `expected_rev?` | `{ok, rev}` / err `conflict`; событие `houseplan_config_updated` |
 | `houseplan/plan/set` | `space_id`, `ext` (svg/png/jpg/webp), `data` (b64, ≤8МБ) | `{ok, url}` |
-| `houseplan/file/set` | `marker_id`, `filename`, `data` (b64, ≤25МБ) | `{ok, url, name}` |
+| `houseplan/file/set` | `marker_id`, `filename`, `data` (b64) | `{ok,url,name}` (legacy, лимит WS) |
+
+**Загрузка файлов — HTTP** (не WS, у него лимит размера сообщения): `POST /api/houseplan/upload`
+(multipart: marker_id + file), HomeAssistantView, requires_auth. Отдача — `/houseplan_files/files/`.

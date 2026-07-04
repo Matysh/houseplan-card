@@ -27,11 +27,14 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup(hass: HomeAssistant, config) -> bool:
-    """Регистрируем WS-команды и хранилища на старте."""
+    """Регистрируем WS-команды, HTTP-загрузку и хранилища на старте."""
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN]["store"] = Store(hass, STORAGE_VERSION, STORAGE_KEY)
     hass.data[DOMAIN]["config_store"] = Store(hass, STORAGE_VERSION, STORAGE_CONFIG_KEY)
     hp_ws.async_register(hass)
+    from .http_api import HouseplanUploadView
+
+    hass.http.register_view(HouseplanUploadView())
     return True
 
 
