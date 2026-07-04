@@ -83,6 +83,21 @@ more-info по приоритету доменов), temp, members[] (групп
 `.head { position: sticky; top: var(--header-height, 56px) }`; ОБЯЗАТЕЛЬНО
 `ha-card { overflow: visible }` — `overflow: hidden` ломает sticky.
 
+## Серверная конфигурация (v1.3.0+)
+
+`.storage/houseplan.config` (Store):
+```json
+{ "spaces": [{ "id","title","plan_url","aspect","view_box":[4],"rooms":[{"id","name","area","x","y","w","h"}] }],
+  "device_overrides": {"<device_id>": {"hidden","icon","name"}},
+  "virtual_devices": [{"id","space","name","icon","x","y","note?","entity_id?"}],
+  "settings": {"exclude_integrations":[],"group_lights":true} }
+```
+Все координаты **нормированные (0..1 от плана пространства)**; рендер-пространство
+1000 × 1000/aspect. Раскладка v2: `{device_id: {"s": space, "x", "y"}}` (нормир.).
+Файлы планов: `<config>/houseplan/plans/<space>.<ext>` → URL `/houseplan_files/plans/…`.
+Если server config пуст — карточка работает от legacy-бандла (дача) и показывает кнопку
+миграции «На сервер» в режиме правки. Дача мигрирована 2026-07-04.
+
 ## WS API интеграции
 
 | Команда | Параметры | Ответ |
@@ -90,3 +105,6 @@ more-info по приоритету доменов), temp, members[] (групп
 | `houseplan/layout/get` | — | `{layout: {device_id: {x,y}}}` |
 | `houseplan/layout/set` | `layout` | `{ok}` (admin_only опционально) |
 | `houseplan/layout/update` | `device_id`, `pos` | `{ok}` |
+| `houseplan/config/get` | — | `{config}` |
+| `houseplan/config/set` | `config` (валидация vol) | `{ok}` |
+| `houseplan/plan/set` | `space_id`, `ext` (svg/png/jpg/webp), `data` (b64, ≤8МБ) | `{ok, url}` |

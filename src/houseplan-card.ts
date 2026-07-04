@@ -1,23 +1,69 @@
 /**
- * House Plan Card — интерактивный план дома (дача, Кирилловское) как нативная Lovelace-карточка.
- * Работает от объекта `hass` (без токена). Раскладка иконок хранится на сервере
- * через WS-команды интеграции `houseplan` (fallback — localStorage).
+ * House Plan Card — интерактивный план дома как нативная Lovelace-карточка.
+ * Источники конфигурации:
+ *  1) СЕРВЕР (интеграция houseplan, WS houseplan/config/get) — пространства, планы,
+ *     комнаты, оверрайды устройств, виртуальные устройства. Координаты НОРМИРОВАННЫЕ (0..1).
+ *  2) LEGACY-фолбэк — вшитые данные дачи (src/data/*), координаты в холсте 1489×1053.
+ * Раскладка иконок хранится на сервере (houseplan/layout/*), fallback — localStorage.
  */
 import { LitElement, html, svg, css, nothing, TemplateResult, PropertyValues } from 'lit';
-import { ROOMS, FLOOR_VB, FLOOR_TITLES, AREA_NAMES, Room } from './data/house';
+import { ROOMS, FLOOR_VB, FLOOR_TITLES, Room } from './data/house';
 import { FLOOR_BG, FLOOR_BG_RECT } from './data/backgrounds';
 import { EXCLUDED_DOMAINS, GROUP_TITLES, iconFor, DOMAIN_PRIORITY } from './rules';
 import './editor';
 
-const CARD_VERSION = '1.2.2';
+const CARD_VERSION = '1.3.0';
 const LS_KEY = 'houseplan_card_layout_v1';
+const NORM_W = 1000; // ширина рендер-пространства для нормированных конфигов
+
+// Натуральные размеры legacy-планов (для миграции): SVG viewBox РЕМПЛАННЕР
+const LEGACY_PLAN_SIZE: Record<string, [number, number]> = {
+  f1: [1196.6656, 1467.26],
+  f2: [1170.0986, 1073],
+};
+
+interface RoomCfg {
+  id?: string;
+  name: string;
+  area: string | null;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+interface SpaceModel {
+  id: string;
+  title: string;
+  vb: number[]; // render units
+  bg: { href: string; x: number; y: number; w: number; h: number } | null;
+  rooms: RoomCfg[]; // render units
+}
+
+interface VirtualDevice {
+  id: string;
+  space: string;
+  name: string;
+  icon: string;
+  x: number; // normalized
+  y: number;
+  note?: string | null;
+  entity_id?: string | null;
+}
+
+interface ServerConfig {
+  spaces: any[];
+  device_overrides: Record<string, { hidden?: boolean; icon?: string | null; name?: string | null }>;
+  virtual_devices: VirtualDevice[];
+  settings: { exclude_integrations?: string[]; group_lights?: boolean };
+}
 
 interface DevItem {
   id: string;
   name: string;
   model: string;
   area: string;
-  floor: string;
+  space: string;
   icon: string;
   entities: string[];
   primary?: string;
@@ -25,6 +71,7 @@ interface DevItem {
   members?: { id: string; name: string; primary?: string }[];
   link?: string | null;
   linkPrimary?: string;
+  virtual?: VirtualDevice;
 }
 
 interface CardConfig {
@@ -67,11 +114,12 @@ class HouseplanCard extends LitElement {
   public hass?: any;
   private _config?: CardConfig;
 
-  private _floor = 'f1';
+  private _space = 'f1';
   private _edit = false;
-  private _layout: Record<string, { x: number; y: number }> = {};
+  private _layout: Record<string, { x: number; y: number; s?: string }> = {};
   private _serverStorage = false;
-  private _layoutLoaded = false;
+  private _loaded = false;
+  private _serverCfg: ServerConfig | null = null;
   private _devices: DevItem[] = [];
   private _regSignature = '';
   private _defPos: Record<string, { x: number; y: number }> = {};
@@ -81,14 +129,14 @@ class HouseplanCard extends LitElement {
   private _selId: string | null = null;
   private _toast = '';
   private _toastTimer?: number;
+  private _migrating = false;
 
-  // drag state
   private _drag: { id: string; sx: number; sy: number; ox: number; oy: number; moved: boolean } | null = null;
 
   static properties = {
     hass: { attribute: false },
     _config: { state: true },
-    _floor: { state: true },
+    _space: { state: true },
     _edit: { state: true },
     _layout: { state: true },
     _devices: { state: true },
@@ -96,6 +144,8 @@ class HouseplanCard extends LitElement {
     _tip: { state: true },
     _selId: { state: true },
     _toast: { state: true },
+    _serverCfg: { state: true },
+    _migrating: { state: true },
   };
 
   public static getConfigElement() {
@@ -103,48 +153,112 @@ class HouseplanCard extends LitElement {
   }
 
   public static getStubConfig(): Partial<CardConfig> {
-    return { type: 'custom:houseplan-card', title: 'План дома · Кирилловское' };
+    return { type: 'custom:houseplan-card', title: 'План дома' };
   }
 
   public setConfig(config: CardConfig): void {
     this._config = { icon_size: 2.5, show_temperature: true, live_states: true, show_signal: true, ...config };
-    if (config.default_floor) this._floor = config.default_floor;
+    if (config.default_floor) this._space = config.default_floor;
   }
 
   public getCardSize(): number {
     return 12;
   }
 
-  private get _rooms(): Room[] {
-    return this._config?.rooms?.length ? this._config.rooms : ROOMS;
+  // ================= РЕЗОЛВ МОДЕЛИ (сервер или legacy) =================
+
+  private get _norm(): boolean {
+    return !!(this._serverCfg && this._serverCfg.spaces.length);
   }
 
-  private get _areaSet(): Set<string> {
-    return new Set(this._rooms.filter((r) => r.area).map((r) => r.area));
+  /** Пространства в рендер-единицах: сервер → NORM_W×NORM_W/aspect; legacy → холст 1489×1053. */
+  private get _model(): SpaceModel[] {
+    if (this._norm) {
+      return this._serverCfg!.spaces.map((s: any) => {
+        const H = NORM_W / s.aspect;
+        const scale = (r: any) => ({
+          id: r.id,
+          name: r.name,
+          area: r.area ?? null,
+          x: r.x * NORM_W,
+          y: r.y * H,
+          w: r.w * NORM_W,
+          h: r.h * H,
+        });
+        return {
+          id: s.id,
+          title: s.title,
+          vb: [s.view_box[0] * NORM_W, s.view_box[1] * H, s.view_box[2] * NORM_W, s.view_box[3] * H],
+          bg: s.plan_url ? { href: s.plan_url, x: 0, y: 0, w: NORM_W, h: H } : null,
+          rooms: s.rooms.map(scale),
+        };
+      });
+    }
+    // legacy: вшитые данные
+    const legacyRooms = this._config?.rooms?.length ? this._config.rooms : ROOMS;
+    return Object.keys(FLOOR_VB).map((fl) => {
+      const rect = FLOOR_BG_RECT[fl];
+      const bgHref = FLOOR_BG[fl];
+      return {
+        id: fl,
+        title: FLOOR_TITLES[fl] || fl,
+        vb: FLOOR_VB[fl],
+        bg: bgHref && rect ? { href: bgHref, x: rect[0], y: rect[1], w: rect[2], h: rect[3] } : null,
+        rooms: legacyRooms
+          .filter((r) => r.floor === fl)
+          .map((r) => ({ name: r.name, area: r.area || null, x: r.x, y: r.y, w: r.w, h: r.h })),
+      };
+    });
   }
 
-  private _areaRoom(area: string): Room | undefined {
-    return this._rooms.find((r) => r.area === area);
+  private _spaceModel(id?: string): SpaceModel {
+    const m = this._model;
+    return m.find((s) => s.id === (id ?? this._space)) || m[0];
+  }
+
+  private get _areaToSpace(): Record<string, { space: string; room: RoomCfg }> {
+    const map: Record<string, { space: string; room: RoomCfg }> = {};
+    for (const s of this._model) for (const r of s.rooms) if (r.area) map[r.area] = { space: s.id, room: r };
+    return map;
+  }
+
+  private get _settings(): ServerConfig['settings'] {
+    return this._serverCfg?.settings || {};
+  }
+
+  private get _excluded(): Set<string> {
+    const list = this._settings.exclude_integrations;
+    return list ? new Set(list) : EXCLUDED_DOMAINS;
   }
 
   protected willUpdate(changed: PropertyValues): void {
     if (changed.has('hass') && this.hass) {
-      if (!this._layoutLoaded) {
-        this._layoutLoaded = true;
-        this._loadLayout();
+      if (!this._loaded) {
+        this._loaded = true;
+        this._loadFromServer();
       }
       this._maybeRebuildDevices();
     }
   }
 
-  // ---------- раскладка: сервер (интеграция houseplan) или localStorage ----------
-  private async _loadLayout(): Promise<void> {
+  // ================= сервер: конфиг + раскладка =================
+
+  private async _loadFromServer(): Promise<void> {
     try {
-      const resp = await this.hass.callWS({ type: 'houseplan/layout/get' });
-      this._layout = (resp && resp.layout) || {};
+      const [cfgResp, layResp] = await Promise.all([
+        this.hass.callWS({ type: 'houseplan/config/get' }),
+        this.hass.callWS({ type: 'houseplan/layout/get' }),
+      ]);
       this._serverStorage = true;
+      const cfg = cfgResp?.config;
+      this._serverCfg = cfg && Array.isArray(cfg.spaces) ? cfg : null;
+      this._layout = layResp?.layout || {};
+      if (this._norm && !this._model.find((s) => s.id === this._space)) {
+        this._space = this._model[0]?.id || this._space;
+      }
     } catch (e) {
       this._serverStorage = false;
+      this._serverCfg = null;
       try {
         this._layout = JSON.parse(localStorage.getItem(LS_KEY) || '{}') || {};
       } catch {
@@ -152,6 +266,7 @@ class HouseplanCard extends LitElement {
       }
       this._showToast('Интеграция houseplan не найдена — позиции сохраняются локально');
     }
+    this._regSignature = '';
     this.requestUpdate();
   }
 
@@ -165,12 +280,14 @@ class HouseplanCard extends LitElement {
     }
   }, 600);
 
-  // ---------- построение списка устройств из реестров hass ----------
+  // ================= устройства из реестров =================
+
   private _maybeRebuildDevices(): void {
     const h = this.hass;
     if (!h?.devices || !h?.entities || !h?.areas) return;
     const sig =
-      Object.keys(h.devices).length + ':' + Object.keys(h.entities).length + ':' + Object.keys(h.areas).length;
+      Object.keys(h.devices).length + ':' + Object.keys(h.entities).length + ':' +
+      Object.keys(h.areas).length + ':' + (this._norm ? 'n' : 'l');
     if (sig === this._regSignature && this._devices.length) return;
     this._regSignature = sig;
     this._devices = this._buildDevices();
@@ -198,9 +315,8 @@ class HouseplanCard extends LitElement {
     const ents = entIds
       .map((eid) => ({ eid, reg: this.hass.entities[eid], st: this.hass.states[eid] }))
       .filter((e) => e.reg && !e.reg.hidden);
-    const usable = ents.filter((e) => !e.reg.entity_category); // без diagnostic/config
+    const usable = ents.filter((e) => !e.reg.entity_category);
     const pool = usable.length ? usable : ents;
-    // датчик температуры — сразу температурная сущность
     if (icon === 'mdi:thermometer' || icon === 'mdi:air-filter') {
       const t = pool.find((e) => this._isTempEntity(e.eid));
       if (t) return t.eid;
@@ -221,7 +337,6 @@ class HouseplanCard extends LitElement {
     );
   }
 
-  /** LQI zigbee-устройства: среднее по всем *_linkquality сущностям (для группы — по участникам). */
   private _lqiFor(entIds: string[]): number | null {
     const vals: number[] = [];
     for (const eid of entIds) {
@@ -235,11 +350,11 @@ class HouseplanCard extends LitElement {
     return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
   }
 
-  /** Средний LQI zigbee-устройств комнаты. */
-  private _roomLqi(area: string): number | null {
+  private _roomLqi(area: string | null): number | null {
+    if (!area) return null;
     const vals: number[] = [];
     for (const d of this._devices) {
-      if (d.area !== area) continue;
+      if (d.area !== area || d.virtual) continue;
       const l = this._lqiFor(d.entities);
       if (l != null) vals.push(l);
     }
@@ -258,10 +373,13 @@ class HouseplanCard extends LitElement {
     return null;
   }
 
-  /** Курирование + группировка — перенос buildDevices() из прототипа. */
+  /** Курирование + группировка + оверрайды + виртуальные устройства. */
   private _buildDevices(): DevItem[] {
     const h = this.hass;
-    const areaSet = this._areaSet;
+    const areaMap = this._areaToSpace;
+    const overrides = this._serverCfg?.device_overrides || {};
+    const groupLights = this._settings.group_lights !== false;
+    const excluded = this._excluded;
     const entsBy = this._entitiesByDevice();
     const groupByArea: Record<string, any> = {};
     for (const dev of Object.values<any>(h.devices)) {
@@ -271,29 +389,30 @@ class HouseplanCard extends LitElement {
     const out: DevItem[] = [];
     for (const dev of Object.values<any>(h.devices)) {
       const area = dev.area_id;
-      if (!area || !areaSet.has(area)) continue;
+      if (!area || !areaMap[area]) continue;
       if (dev.entry_type === 'service') continue;
+      const ov = overrides[dev.id] || {};
+      if (ov.hidden) continue;
       const entIds = entsBy[dev.id] || [];
       const dom = this._domainOfDevice(dev, entIds);
-      if (EXCLUDED_DOMAINS.has(dom)) continue;
+      if (excluded.has(dom)) continue;
       if (dev.model === 'Group') continue;
       if (/scene/i.test(dev.model || '')) continue;
       if (/bridge/i.test((dev.model || '') + (dev.name || ''))) continue;
       if (dom === 'myheat' && dev.via_device_id) continue;
-      const name = (dev.name_by_user || dev.name || 'без имени').trim();
+      const name = (ov.name || dev.name_by_user || dev.name || 'без имени').trim();
       const key = name + '|' + area;
       if (seen[key]) continue;
       seen[key] = 1;
       let icon = iconFor(name, dev.model);
-      // устройство с сущностью lock.* — всегда «замочек», как бы оно ни называлось
       if (entIds.some((e) => e.startsWith('lock.'))) icon = 'mdi:lock';
-      const room = this._areaRoom(area)!;
+      if (ov.icon) icon = ov.icon;
       const item: DevItem = {
         id: dev.id,
         name,
         model: dev.model || '',
         area,
-        floor: room.floor,
+        space: areaMap[area].space,
         icon,
         entities: entIds,
       };
@@ -301,68 +420,123 @@ class HouseplanCard extends LitElement {
       if (icon === 'mdi:thermometer' || icon === 'mdi:air-filter') item.temp = this._tempFor(entIds);
       out.push(item);
     }
-    // группировка ламп: ≥2 ламп в комнате → одна групповая иконка
-    const lamps: Record<string, DevItem[]> = {};
+    // группировка ламп
     const rest: DevItem[] = [];
-    for (const d of out) {
-      if (d.icon === 'mdi:lightbulb') (lamps[d.area] = lamps[d.area] || []).push(d);
-      else rest.push(d);
+    if (groupLights) {
+      const lamps: Record<string, DevItem[]> = {};
+      for (const d of out) {
+        if (d.icon === 'mdi:lightbulb') (lamps[d.area] = lamps[d.area] || []).push(d);
+        else rest.push(d);
+      }
+      for (const area of Object.keys(lamps)) {
+        const ms = lamps[area];
+        if (ms.length < 2) {
+          rest.push(...ms);
+          continue;
+        }
+        const grpDev = groupByArea[area];
+        const item: DevItem = {
+          id: 'grp_' + area,
+          name: GROUP_TITLES[area] || 'Лампы',
+          model: 'группа · ' + ms.length + ' шт',
+          area,
+          space: areaMap[area].space,
+          icon: 'mdi:lightbulb-group',
+          entities: ms.flatMap((m) => m.entities),
+          link: grpDev?.id || null,
+          members: ms.map((m) => ({ id: m.id, name: m.name, primary: m.primary })),
+        };
+        if (grpDev) {
+          const grpEnts = entsBy[grpDev.id] || [];
+          item.linkPrimary = this._primaryEntity(grpEnts, 'mdi:lightbulb');
+        }
+        rest.push(item);
+      }
+    } else {
+      rest.push(...out);
     }
-    for (const area of Object.keys(lamps)) {
-      const ms = lamps[area];
-      if (ms.length < 2) {
-        rest.push(...ms);
-        continue;
-      }
-      const grpDev = groupByArea[area];
-      const item: DevItem = {
-        id: 'grp_' + area,
-        name: GROUP_TITLES[area] || 'Лампы',
-        model: 'группа · ' + ms.length + ' шт',
-        area,
-        floor: this._areaRoom(area)!.floor,
-        icon: 'mdi:lightbulb-group',
-        entities: ms.flatMap((m) => m.entities),
-        link: grpDev?.id || null,
-        members: ms.map((m) => ({ id: m.id, name: m.name, primary: m.primary })),
-      };
-      if (grpDev) {
-        const grpEnts = this._entitiesByDevice()[grpDev.id] || [];
-        item.linkPrimary = this._primaryEntity(grpEnts, 'mdi:lightbulb');
-      }
-      rest.push(item);
+    // виртуальные устройства
+    for (const v of this._serverCfg?.virtual_devices || []) {
+      rest.push({
+        id: 'virt_' + v.id,
+        name: v.name,
+        model: v.note || 'виртуальное устройство',
+        area: '',
+        space: v.space,
+        icon: v.icon,
+        entities: v.entity_id ? [v.entity_id] : [],
+        primary: v.entity_id || undefined,
+        virtual: v,
+      });
     }
     return rest;
   }
 
-  // ---------- позиции ----------
+  // ================= позиции =================
+
   private _defaultPositions(): Record<string, { x: number; y: number }> {
     const map: Record<string, { x: number; y: number }> = {};
-    for (const r of this._rooms) {
-      const ds = this._devices.filter((d) => d.area === r.area && d.floor === r.floor && r.area);
-      if (!ds.length) continue;
-      const pad = 20;
-      const iw = r.w - pad * 2;
-      const ih = r.h - pad * 2;
-      const cols = Math.max(1, Math.round(Math.sqrt((ds.length * iw) / Math.max(ih, 1))));
-      const rows = Math.ceil(ds.length / cols);
-      const cw = iw / cols;
-      const ch = ih / Math.max(rows, 1);
-      ds.forEach((d, i) => {
-        const c = i % cols;
-        const rw = Math.floor(i / cols);
-        map[d.id] = { x: r.x + pad + cw * (c + 0.5), y: r.y + pad + ch * (rw + 0.5) };
-      });
+    for (const s of this._model) {
+      for (const r of s.rooms) {
+        if (!r.area) continue;
+        const ds = this._devices.filter((d) => d.area === r.area && d.space === s.id);
+        if (!ds.length) continue;
+        const pad = Math.min(r.w, r.h) * 0.12;
+        const iw = r.w - pad * 2;
+        const ih = r.h - pad * 2;
+        const cols = Math.max(1, Math.round(Math.sqrt((ds.length * iw) / Math.max(ih, 1))));
+        const rows = Math.ceil(ds.length / cols);
+        const cw = iw / cols;
+        const ch = ih / Math.max(rows, 1);
+        ds.forEach((d, i) => {
+          const c = i % cols;
+          const rw = Math.floor(i / cols);
+          map[d.id] = { x: r.x + pad + cw * (c + 0.5), y: r.y + pad + ch * (rw + 0.5) };
+        });
+      }
     }
     return map;
   }
 
+  /** Позиция устройства в рендер-единицах текущего пространства. */
   private _pos(d: DevItem): { x: number; y: number } {
-    const vb = FLOOR_VB[this._floor];
-    return this._layout[d.id] || this._defPos[d.id] || { x: vb[0] + vb[2] / 2, y: vb[1] + vb[3] / 2 };
+    const s = this._spaceModel(d.space);
+    const H = s.vb ? undefined : undefined;
+    if (d.virtual) {
+      const height = this._norm ? NORM_W / (this._serverCfg!.spaces.find((x: any) => x.id === d.space)?.aspect || 1) : 0;
+      return { x: d.virtual.x * (this._norm ? NORM_W : 1), y: d.virtual.y * (this._norm ? height : 1) };
+    }
+    const saved = this._layout[d.id];
+    if (saved) {
+      if (this._norm) {
+        if (saved.s === d.space) {
+          const aspect = this._serverCfg!.spaces.find((x: any) => x.id === d.space)?.aspect || 1;
+          return { x: saved.x * NORM_W, y: saved.y * (NORM_W / aspect) };
+        }
+      } else if (saved.s === undefined) {
+        return { x: saved.x, y: saved.y };
+      }
+    }
+    if (this._defPos[d.id]) return this._defPos[d.id];
+    const vb = s.vb;
+    return { x: vb[0] + vb[2] / 2, y: vb[1] + vb[3] / 2 };
   }
 
-  // ---------- живые состояния ----------
+  private _savePos(d: DevItem, x: number, y: number): void {
+    if (this._norm) {
+      const aspect = this._serverCfg!.spaces.find((s: any) => s.id === d.space)?.aspect || 1;
+      this._layout = {
+        ...this._layout,
+        [d.id]: { s: d.space, x: x / NORM_W, y: y / (NORM_W / aspect) },
+      };
+    } else {
+      this._layout = { ...this._layout, [d.id]: { x: Math.round(x), y: Math.round(y) } };
+    }
+    this._persistLayout();
+  }
+
+  // ================= живые состояния =================
+
   private _stateClass(d: DevItem): string {
     if (!this._config?.live_states) return '';
     const st = (eid?: string) => (eid ? this.hass.states[eid] : undefined);
@@ -392,7 +566,8 @@ class HouseplanCard extends LitElement {
     return this._tempFor(d.entities);
   }
 
-  // ---------- взаимодействие ----------
+  // ================= взаимодействие =================
+
   private _openMoreInfo(entityId?: string): void {
     if (!entityId) {
       this._showToast('У устройства нет подходящей сущности');
@@ -408,6 +583,10 @@ class HouseplanCard extends LitElement {
       this._selId = d.id;
       return;
     }
+    if (d.virtual && !d.primary) {
+      this._showToast(d.name + (d.virtual.note ? ' — ' + d.virtual.note : ''));
+      return;
+    }
     if (d.members) {
       this._menuDev = d;
       this._menuXY = { x: ev.clientX, y: ev.clientY };
@@ -417,14 +596,13 @@ class HouseplanCard extends LitElement {
     this._openMoreInfo(d.primary);
   }
 
-  private _clickRoom(r: Room): void {
-    if (this._edit) return;
+  private _clickRoom(r: RoomCfg): void {
+    if (this._edit || !r.area) return;
     navigate('/config/areas/area/' + r.area);
   }
 
-  // drag
   private _pointerDown(ev: PointerEvent, d: DevItem): void {
-    if (!this._edit) return;
+    if (!this._edit || d.virtual) return;
     ev.preventDefault();
     const p = this._pos(d);
     this._drag = { id: d.id, sx: ev.clientX, sy: ev.clientY, ox: p.x, oy: p.y, moved: false };
@@ -436,24 +614,22 @@ class HouseplanCard extends LitElement {
     if (!this._drag || this._drag.id !== d.id) return;
     const stage = this.renderRoot.querySelector('.stage') as HTMLElement;
     if (!stage) return;
-    const vb = FLOOR_VB[this._floor];
+    const vb = this._spaceModel().vb;
     const rect = stage.getBoundingClientRect();
     const dx = ((ev.clientX - this._drag.sx) / rect.width) * vb[2];
     const dy = ((ev.clientY - this._drag.sy) / rect.height) * vb[3];
     if (Math.abs(ev.clientX - this._drag.sx) + Math.abs(ev.clientY - this._drag.sy) > 3) this._drag.moved = true;
-    let nx = Math.round(this._drag.ox + dx);
-    let ny = Math.round(this._drag.oy + dy);
-    nx = Math.max(vb[0] + 6, Math.min(vb[0] + vb[2] - 6, nx));
-    ny = Math.max(vb[1] + 6, Math.min(vb[1] + vb[3] - 6, ny));
-    this._layout = { ...this._layout, [d.id]: { x: nx, y: ny } };
+    const m = Math.min(vb[2], vb[3]) * 0.008;
+    const nx = Math.max(vb[0] + m, Math.min(vb[0] + vb[2] - m, this._drag.ox + dx));
+    const ny = Math.max(vb[1] + m, Math.min(vb[1] + vb[3] - m, this._drag.oy + dy));
+    this._savePos(d, nx, ny);
   }
 
   private _pointerUp(_ev: PointerEvent, d: DevItem): void {
     if (!this._drag || this._drag.id !== d.id) return;
     const moved = this._drag.moved;
-    this._drag = moved ? this._drag : null; // click-обработчик проверит moved
+    this._drag = moved ? this._drag : null;
     if (moved) {
-      this._persistLayout();
       this._selId = d.id;
       window.setTimeout(() => (this._drag = null), 0);
     }
@@ -461,17 +637,13 @@ class HouseplanCard extends LitElement {
 
   private _applyXY(axis: 'x' | 'y', val: string): void {
     if (!this._selId) return;
-    const n = parseInt(val, 10);
+    const n = parseFloat(val);
     if (isNaN(n)) return;
     const d = this._devices.find((x) => x.id === this._selId);
-    if (!d) return;
-    const vb = FLOOR_VB[this._floor];
+    if (!d || d.virtual) return;
     const p = { ...this._pos(d) };
-    p[axis] = axis === 'x'
-      ? Math.max(vb[0] + 6, Math.min(vb[0] + vb[2] - 6, n))
-      : Math.max(vb[1] + 6, Math.min(vb[1] + vb[3] - 6, n));
-    this._layout = { ...this._layout, [d.id]: p };
-    this._persistLayout();
+    p[axis] = n;
+    this._savePos(d, p.x, p.y);
   }
 
   private _resetLayout(): void {
@@ -493,15 +665,93 @@ class HouseplanCard extends LitElement {
     this._tip = { x: ev.clientX, y: ev.clientY, title, meta, lqi };
   }
 
-  // ---------- рендер ----------
+  // ================= МИГРАЦИЯ legacy → сервер =================
+
+  private async _migrateToServer(): Promise<void> {
+    if (!this._serverStorage || this._norm || this._migrating) return;
+    if (!confirm('Перенести текущую конфигурацию (планы, комнаты, раскладку) на сервер HA?')) return;
+    this._migrating = true;
+    try {
+      const spaces: any[] = [];
+      for (const fl of Object.keys(FLOOR_VB)) {
+        const vb = FLOOR_VB[fl];
+        const rect = FLOOR_BG_RECT[fl] || vb; // yard: нормируем относительно viewBox
+        const [rx, ry, rw, rh] = rect;
+        let planUrl: string | null = null;
+        let aspect = rw / rh;
+        const bg = FLOOR_BG[fl];
+        if (bg && FLOOR_BG_RECT[fl]) {
+          const nat = LEGACY_PLAN_SIZE[fl];
+          if (nat) aspect = nat[0] / nat[1];
+          const b64 = bg.split(',')[1];
+          const resp = await this.hass.callWS({
+            type: 'houseplan/plan/set',
+            space_id: fl,
+            ext: 'svg',
+            data: b64,
+          });
+          planUrl = resp.url;
+        }
+        const rooms = ROOMS.filter((r) => r.floor === fl).map((r, i) => ({
+          id: fl + '_r' + i,
+          name: r.name,
+          area: r.area || null,
+          x: (r.x - rx) / rw,
+          y: (r.y - ry) / rh,
+          w: r.w / rw,
+          h: r.h / rh,
+        }));
+        spaces.push({
+          id: fl,
+          title: FLOOR_TITLES[fl] || fl,
+          plan_url: planUrl,
+          aspect,
+          view_box: [(vb[0] - rx) / rw, (vb[1] - ry) / rh, vb[2] / rw, vb[3] / rh],
+          rooms,
+        });
+      }
+      const config = {
+        spaces,
+        device_overrides: {},
+        virtual_devices: [],
+        settings: { exclude_integrations: [...EXCLUDED_DOMAINS], group_lights: true },
+      };
+      // раскладка: канвас → нормированные координаты пространства
+      const layout: Record<string, any> = {};
+      for (const d of this._devices) {
+        if (d.virtual) continue;
+        const saved = this._layout[d.id] || this._defPos[d.id];
+        if (!saved) continue;
+        const rect = FLOOR_BG_RECT[d.space] || FLOOR_VB[d.space];
+        layout[d.id] = {
+          s: d.space,
+          x: (saved.x - rect[0]) / rect[2],
+          y: (saved.y - rect[1]) / rect[3],
+        };
+      }
+      await this.hass.callWS({ type: 'houseplan/config/set', config });
+      await this.hass.callWS({ type: 'houseplan/layout/set', layout });
+      this._serverCfg = config as any;
+      this._layout = layout;
+      this._regSignature = '';
+      this._maybeRebuildDevices();
+      this._showToast('Конфигурация перенесена на сервер — карта работает от server config');
+    } catch (e: any) {
+      this._showToast('Ошибка миграции: ' + (e?.message || e));
+    } finally {
+      this._migrating = false;
+    }
+  }
+
+  // ================= рендер =================
+
   protected render(): TemplateResult | typeof nothing {
     if (!this._config || !this.hass) return nothing;
-    const vb = FLOOR_VB[this._floor];
-    const bg = FLOOR_BG[this._floor];
-    const bgRect = FLOOR_BG_RECT[this._floor];
-    const rooms = this._rooms.filter((r) => r.floor === this._floor && r.area);
-    const devs = this._devices.filter((d) => d.floor === this._floor);
-    // размер иконки в % от ширины видимой области плана (legacy px-значения > 8 игнорируются)
+    const model = this._model;
+    if (!model.length) return html`<ha-card><div class="empty">Нет настроенных пространств</div></ha-card>`;
+    const space = this._spaceModel();
+    const vb = space.vb;
+    const devs = this._devices.filter((d) => d.space === space.id);
     const cfgSize = this._config.icon_size ?? 2.5;
     const iconPct = cfgSize > 8 ? 2.5 : cfgSize;
 
@@ -513,15 +763,15 @@ class HouseplanCard extends LitElement {
             ${this._config.title || 'План дома'}
           </div>
           <div class="tabs">
-            ${Object.keys(FLOOR_VB).map(
-              (f) => html`<button
-                class="tab ${this._floor === f ? 'active' : ''}"
+            ${model.map(
+              (s) => html`<button
+                class="tab ${this._space === s.id ? 'active' : ''}"
                 @click=${() => {
-                  this._floor = f;
+                  this._space = s.id;
                   this._selId = null;
                 }}
               >
-                ${FLOOR_TITLES[f] || f}
+                ${s.title}
               </button>`,
             )}
           </div>
@@ -537,20 +787,20 @@ class HouseplanCard extends LitElement {
 
         <div class="stage ${this._edit ? 'edit' : ''}" style="aspect-ratio:${vb[2]}/${vb[3]}">
           <svg viewBox="${vb.join(' ')}" preserveAspectRatio="xMidYMid meet">
-            ${bg && bgRect
-              ? svg`<image href="${bg}" x="${bgRect[0]}" y="${bgRect[1]}" width="${bgRect[2]}" height="${bgRect[3]}" preserveAspectRatio="none" />`
+            ${space.bg
+              ? svg`<image href="${space.bg.href}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}" preserveAspectRatio="none" />`
               : nothing}
-            ${rooms.map(
+            ${space.rooms.filter((r) => r.area).map(
               (r) => svg`<rect
-                  class="room ${bg ? 'overlay' : 'yard'}"
-                  x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="8"
+                  class="room ${space.bg ? 'overlay' : 'yard'}"
+                  x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="${Math.min(r.w, r.h) * 0.03}"
                   @click=${() => this._clickRoom(r)}
                   @mousemove=${(e: MouseEvent) =>
                     this._showTip(e, r.name, 'комната — открыть зону',
                       this._config?.show_signal ? this._roomLqi(r.area) : null)}
                   @mouseleave=${() => (this._tip = null)}
                 ></rect>
-                ${!bg ? svg`<text class="rlabel" x="${r.x + r.w / 2}" y="${r.y + 26}">${r.name}</text>` : nothing}`,
+                ${!space.bg ? svg`<text class="rlabel" x="${r.x + r.w / 2}" y="${r.y + Math.min(r.w, r.h) * 0.1}">${r.name}</text>` : nothing}`,
             )}
           </svg>
           <div class="devlayer" style="--icon-size:${iconPct}cqw">
@@ -580,9 +830,9 @@ class HouseplanCard extends LitElement {
     const top = ((p.y - vb[1]) / vb[3]) * 100;
     const cls = this._stateClass(d);
     const temp = this._liveTemp(d);
-    const lqi = this._config?.show_signal ? this._lqiFor(d.entities) : null;
+    const lqi = this._config?.show_signal && !d.virtual ? this._lqiFor(d.entities) : null;
     return html`<div
-      class="dev ${cls} ${this._selId === d.id ? 'sel' : ''}"
+      class="dev ${cls} ${this._selId === d.id ? 'sel' : ''} ${d.virtual ? 'virtual' : ''}"
       style="left:${left}%;top:${top}%"
       @click=${(e: MouseEvent) => this._clickDevice(e, d)}
       @mousemove=${(e: MouseEvent) =>
@@ -612,7 +862,19 @@ class HouseplanCard extends LitElement {
               @change=${(e: Event) => this._applyXY('y', (e.target as HTMLInputElement).value)} />`
         : nothing}
       <span class="spacer"></span>
-      <span class="hint">${this._serverStorage ? 'сохранение: сервер (для всех)' : 'сохранение: этот браузер'}</span>
+      <span class="hint">
+        ${this._serverStorage
+          ? this._norm
+            ? 'конфиг и раскладка: сервер'
+            : 'раскладка: сервер · конфиг: встроенный'
+          : 'сохранение: этот браузер'}
+      </span>
+      ${this._serverStorage && !this._norm
+        ? html`<button class="btn" ?disabled=${this._migrating} @click=${this._migrateToServer}
+              title="Перенести планы, комнаты и раскладку в хранилище HA">
+              <ha-icon icon="mdi:cloud-upload"></ha-icon>${this._migrating ? '…' : 'На сервер'}
+            </button>`
+        : nothing}
       <button class="btn ghost" @click=${this._resetLayout} title="Сбросить всё">
         <ha-icon icon="mdi:backup-restore"></ha-icon>
       </button>
@@ -658,10 +920,13 @@ class HouseplanCard extends LitElement {
     ha-card {
       overflow: visible; /* overflow:hidden ломает position:sticky у шапки */
     }
-    .head {
-      border-radius: var(--ha-card-border-radius, 12px) var(--ha-card-border-radius, 12px) 0 0;
+    .empty {
+      padding: 32px;
+      color: var(--hp-muted);
+      text-align: center;
     }
     .head {
+      border-radius: var(--ha-card-border-radius, 12px) var(--ha-card-border-radius, 12px) 0 0;
       display: flex;
       align-items: center;
       gap: 10px;
@@ -729,6 +994,8 @@ class HouseplanCard extends LitElement {
       border-radius: 8px;
       cursor: pointer;
       transition: 0.15s;
+      font-family: inherit;
+      font-size: 12.5px;
     }
     .btn ha-icon {
       --mdc-icon-size: 17px;
@@ -744,10 +1011,14 @@ class HouseplanCard extends LitElement {
     .btn.ghost {
       border: none;
     }
+    .btn[disabled] {
+      opacity: 0.5;
+      pointer-events: none;
+    }
     .stage {
       position: relative;
       width: 100%;
-      container-type: inline-size; /* cqw = % ширины плана для размеров иконок */
+      container-type: inline-size;
     }
     .stage svg {
       position: absolute;
@@ -807,7 +1078,7 @@ class HouseplanCard extends LitElement {
       color: var(--hp-txt);
       cursor: pointer;
       pointer-events: auto;
-      transition: transform 0.08s, background 0.15s, border-color 0.15s, opacity 0.2s;
+      transition: background 0.15s, border-color 0.15s, opacity 0.2s;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
       z-index: 2;
     }
@@ -832,6 +1103,9 @@ class HouseplanCard extends LitElement {
     }
     .dev.unavail {
       opacity: 0.35;
+    }
+    .dev.virtual {
+      border-style: dashed;
     }
     .dev.sel {
       border-color: #ffc14d;
@@ -988,4 +1262,14 @@ if (!customElements.get('houseplan-card')) {
   customElements.define('houseplan-card', HouseplanCard);
 }
 
-(wi
+(window as any).customCards = (window as any).customCards || [];
+if (!(window as any).customCards.find((c: any) => c.type === 'houseplan-card')) {
+  (window as any).customCards.push({
+    type: 'houseplan-card',
+    name: 'House Plan Card',
+    description: 'Интерактивный план дома: пространства, комнаты, устройства с живыми состояниями и drag-раскладкой.',
+  });
+}
+
+// eslint-disable-next-line no-console
+console.info(`%c HOUSEPLAN-CARD %c v${CARD_VERSION} `, 'background:#3ea6ff;color:#04121f;font-weight:700', '');

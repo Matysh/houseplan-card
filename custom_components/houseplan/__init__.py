@@ -1,4 +1,4 @@
-"""House Plan: серверное хранилище раскладки + раздача Lovelace-карточки."""
+"""House Plan: серверная конфигурация плана дома + раздача Lovelace-карточки."""
 from __future__ import annotations
 
 import logging
@@ -10,40 +10,57 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
 
 from . import websocket_api as hp_ws
-from .const import DOMAIN, FRONTEND_URL, STORAGE_KEY, STORAGE_VERSION, VERSION
+from .const import (
+    DOMAIN,
+    FRONTEND_URL,
+    PLANS_DIR,
+    PLANS_URL,
+    STORAGE_CONFIG_KEY,
+    STORAGE_KEY,
+    STORAGE_VERSION,
+    VERSION,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup(hass: HomeAssistant, config) -> bool:
-    """Регистрируем WS-команды и хранилище на старте."""
+    """Регистрируем WS-команды и хранилища на старте."""
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN]["store"] = Store(hass, STORAGE_VERSION, STORAGE_KEY)
+    hass.data[DOMAIN]["config_store"] = Store(hass, STORAGE_VERSION, STORAGE_CONFIG_KEY)
     hp_ws.async_register(hass)
     return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Config entry: статика фронтенда + авто-подключение JS."""
+    """Config entry: статика фронтенда и планов + авто-подключение JS."""
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN]["entry"] = entry
     entry.async_on_unload(entry.add_update_listener(_update_listener))
 
     card_path = Path(__file__).parent / "frontend" / "houseplan-card.js"
-    if card_path.exists():
-        try:
-            from homeassistant.components.http import StaticPathConfig
+    plans_path = Path(hass.config.path(PLANS_DIR))
+    await hass.async_add_executor_job(lambda: plans_path.mkdir(parents=True, exist_ok=True))
 
-            await hass.http.async_register_static_paths(
-                [StaticPathConfig(FRONTEND_URL, str(card_path), cache_headers=False)]
-            )
-        except ImportError:  # старые версии HA
+    static_paths = []
+    try:
+        from homeassistant.components.http import StaticPathConfig
+
+        if card_path.exists():
+            static_paths.append(StaticPathConfig(FRONTEND_URL, str(card_path), cache_headers=False))
+        static_paths.append(StaticPathConfig(PLANS_URL, str(plans_path), cache_headers=True))
+        await hass.http.async_register_static_paths(static_paths)
+    except ImportError:  # старые версии HA
+        if card_path.exists():
             hass.http.register_static_path(FRONTEND_URL, str(card_path), cache_headers=False)
+        hass.http.register_static_path(PLANS_URL, str(plans_path), cache_headers=True)
+
+    if card_path.exists():
         add_extra_js_url(hass, f"{FRONTEND_URL}?v={VERSION}")
     else:
         _LOGGER.warning("houseplan-card.js не найден рядом с интеграцией: %s", card_path)
     return True
-
 
 
 async def _update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:

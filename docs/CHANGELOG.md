@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.3.0 — 2026-07-04 (Фаза 1: серверная конфигурация)
+- Store `houseplan.config`: spaces (план, aspect, view_box, комнаты), device_overrides
+  (hidden/icon/name), virtual_devices, settings (exclude_integrations, group_lights).
+- WS: `houseplan/config/get|set`, `houseplan/plan/set` (загрузка файла плана base64 →
+  `<config>/houseplan/plans/`, отдача через /houseplan_files/plans/).
+- Карточка: резолв-модель — server config (координаты НОРМИРОВАННЫЕ 0..1, рендер 1000×1000/aspect)
+  или legacy-бандл (холст 1489×1053). Раскладка v2: {device_id: {s, x, y}} нормированная.
+- Кнопка «На сервер» в режиме правки — миграция legacy-конфига в один клик (планы, комнаты,
+  view_box, раскладка). Выполнена на даче: .storage/houseplan.config + plans/f1.svg,f2.svg.
+- Read-side поддержка оверрайдов устройств и виртуальных устройств (UI управления — фазы 3–4).
+
 ## v1.2.2 — 2026-07-04
 - Тулбар карточки (вкладки этажей) закрепляется при скролле под шапкой HA
   (`position: sticky; top: var(--header-height)`; ha-card overflow: visible).
