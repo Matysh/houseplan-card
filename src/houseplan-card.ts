@@ -13,8 +13,9 @@ import {
 } from './logic';
 import './editor';
 
-const CARD_VERSION = '1.8.0';
+const CARD_VERSION = '1.8.1';
 const LS_KEY = 'houseplan_card_layout_v1';
+const LS_ZOOM = 'houseplan_card_zoom_v1';
 const NORM_W = 1000; // ширина рендер-пространства для нормированных конфигов
 
 interface RoomCfg {
@@ -144,9 +145,10 @@ class HouseplanCard extends LitElement {
   private _areaSel = '';
   private _nameSel = '';
   private _roomDialog = false;
-  // зум/панорама плана
+  // зум/панорама плана (зум сохраняется по пространству локально)
   private _zoom = 1;
   private _pan = { x: 0, y: 0 };
+  private _zoomBySpace: Record<string, number> = {};
   private _pointers = new Map<number, { x: number; y: number }>();
   private _panStart: { sx: number; sy: number; ox: number; oy: number } | null = null;
   private _pinchStart: { dist: number; zoom: number; cx: number; cy: number; px: number; py: number } | null = null;
@@ -273,6 +275,11 @@ class HouseplanCard extends LitElement {
   public setConfig(config: CardConfig): void {
     this._config = { icon_size: 2.5, show_temperature: true, live_states: true, show_signal: true, ...config };
     if (config.default_floor) this._space = config.default_floor;
+    try {
+      this._zoomBySpace = JSON.parse(localStorage.getItem(LS_ZOOM) || '{}') || {};
+    } catch {
+      this._zoomBySpace = {};
+    }
   }
 
   public getCardSize(): number {
@@ -365,6 +372,7 @@ class HouseplanCard extends LitElement {
       if (this._norm && !this._model.find((s) => s.id === this._space)) {
         this._space = this._model[0]?.id || this._space;
       }
+      this._restoreZoom();
     } catch (e) {
       // не последняя попытка — молча ждём следующего обновления hass (прогрев WS)
       if (this._loadTries >= 8) {
@@ -866,17 +874,48 @@ class HouseplanCard extends LitElement {
     const r = stage.getBoundingClientRect();
     const factor = ev.deltaY < 0 ? 1.15 : 1 / 1.15;
     this._zoomAt(ev.clientX - r.left, ev.clientY - r.top, this._zoom * factor);
+    this._saveZoom();
   }
 
   private _stepZoom(delta: number): void {
     const stage = this._stageEl;
     if (!stage) return;
     this._zoomAt(stage.clientWidth / 2, stage.clientHeight / 2, this._zoom * (delta > 0 ? 1.4 : 1 / 1.4));
+    this._saveZoom();
   }
 
   private _resetZoom(): void {
     this._zoom = 1;
     this._pan = { x: 0, y: 0 };
+    this._saveZoom();
+  }
+
+  /** Сохранить текущий зум пространства в localStorage. */
+  private _saveZoom(): void {
+    this._zoomBySpace = { ...this._zoomBySpace, [this._space]: this._zoom };
+    try {
+      localStorage.setItem(LS_ZOOM, JSON.stringify(this._zoomBySpace));
+    } catch {
+      /* ignore */
+    }
+  }
+
+  /** Восстановить сохранённый зум пространства и центрировать. */
+  private _restoreZoom(): void {
+    this._zoom = this._zoomBySpace[this._space] || 1;
+    this._pan = { x: 0, y: 0 };
+    // центрировать после применения размеров
+    requestAnimationFrame(() => {
+      const stage = this._stageEl;
+      if (stage) {
+        this._pan = {
+          x: (stage.clientWidth * (1 - this._zoom)) / 2,
+          y: (stage.clientHeight * (1 - this._zoom)) / 2,
+        };
+        this._clampPan();
+        this.requestUpdate();
+      }
+    });
   }
 
   private _stagePointerDown(ev: PointerEvent): void {
@@ -921,6 +960,7 @@ class HouseplanCard extends LitElement {
       this._zoom = z;
       this._clampPan();
       this._suppressClick = true;
+      this._saveZoom();
     } else if (this._panStart) {
       const ddx = ev.clientX - this._panStart.sx;
       const ddy = ev.clientY - this._panStart.sy;
@@ -1653,6 +1693,7 @@ class HouseplanCard extends LitElement {
                 @click=${() => {
                   this._space = s.id;
                   this._selId = null;
+                  this._restoreZoom();
                 }}
               >
                 ${s.title}${this._norm
@@ -1703,7 +1744,7 @@ class HouseplanCard extends LitElement {
         </div>
 
         <div class="stage ${this._edit ? 'edit' : ''} ${this._markup ? 'markup' : ''}"
-          style="aspect-ratio:${vb[2]}/${vb[3]}"
+          style="aspect-ratio:${vb[2]}/${vb[3]};width:min(100%,calc((100dvh - 118px) * ${(vb[2] / vb[3]).toFixed(4)}))"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
           @pointerdown=${(e: PointerEvent) => this._stagePointerDown(e)}
@@ -2231,7 +2272,8 @@ class HouseplanCard extends LitElement {
     }
     .stage {
       position: relative;
-      width: 100%;
+      max-width: 100%;
+      margin: 0 auto; /* центрировать, когда ширина ограничена высотой экрана */
       container-type: inline-size;
       overflow: hidden;
       touch-action: none; /* свои жесты pinch/pan */
