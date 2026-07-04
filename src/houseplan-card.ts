@@ -12,7 +12,7 @@ import { FLOOR_BG, FLOOR_BG_RECT } from './data/backgrounds';
 import { EXCLUDED_DOMAINS, iconFor, DOMAIN_PRIORITY } from './rules';
 import './editor';
 
-const CARD_VERSION = '1.5.0';
+const CARD_VERSION = '1.5.1';
 const LS_KEY = 'houseplan_card_layout_v1';
 const NORM_W = 1000; // ширина рендер-пространства для нормированных конфигов
 
@@ -141,6 +141,14 @@ class HouseplanCard extends LitElement {
   private _areaSel = '';
   private _nameSel = '';
   private _roomDialog = false;
+  private _spaceDialog: {
+    mode: 'edit' | 'create';
+    spaceId?: string;
+    title: string;
+    planUrl: string | null;
+    planFile: { ext: string; b64: string; aspect: number; name: string } | null;
+    busy: boolean;
+  } | null = null;
   private _keyHandler = (e: KeyboardEvent) => this._onKey(e);
 
   private _drag: { id: string; sx: number; sy: number; ox: number; oy: number; moved: boolean } | null = null;
@@ -164,6 +172,7 @@ class HouseplanCard extends LitElement {
     _areaSel: { state: true },
     _nameSel: { state: true },
     _roomDialog: { state: true },
+    _spaceDialog: { state: true },
   };
 
   public connectedCallback(): void {
@@ -1003,6 +1012,118 @@ class HouseplanCard extends LitElement {
       .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   }
 
+  // ================= УПРАВЛЕНИЕ ПРОСТРАНСТВАМИ =================
+
+  private _openSpaceDialog(mode: 'edit' | 'create', spaceId?: string): void {
+    if (!this._norm) {
+      this._showToast('Управление пространствами доступно после переноса конфига на сервер');
+      return;
+    }
+    if (mode === 'edit') {
+      const sp = this._serverCfg!.spaces.find((x: any) => x.id === spaceId);
+      if (!sp) return;
+      this._spaceDialog = { mode, spaceId, title: sp.title, planUrl: sp.plan_url || null, planFile: null, busy: false };
+    } else {
+      this._spaceDialog = { mode, title: '', planUrl: null, planFile: null, busy: false };
+    }
+  }
+
+  /** Выбор файла подложки: читаем base64 и определяем пропорции. */
+  private async _pickPlanFile(ev: Event): Promise<void> {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file || !this._spaceDialog) return;
+    const extMap: Record<string, string> = {
+      'image/svg+xml': 'svg', 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp',
+    };
+    const ext = extMap[file.type] || (file.name.toLowerCase().endsWith('.svg') ? 'svg' : '');
+    if (!ext) {
+      this._showToast('Поддерживаются SVG, PNG, JPG, WebP');
+      return;
+    }
+    const buf = new Uint8Array(await file.arrayBuffer());
+    let bin = '';
+    for (let i = 0; i < buf.length; i += 32768) bin += String.fromCharCode(...buf.subarray(i, i + 32768));
+    const b64 = btoa(bin);
+    // пропорции: рендерим в Image
+    const url = URL.createObjectURL(file);
+    const aspect = await new Promise<number>((res) => {
+      const img = new Image();
+      img.onload = () => res(img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : 1.414);
+      img.onerror = () => res(1.414);
+      img.src = url;
+    });
+    URL.revokeObjectURL(url);
+    this._spaceDialog = { ...this._spaceDialog, planFile: { ext, b64, aspect, name: file.name } };
+  }
+
+  private async _saveSpaceDialog(): Promise<void> {
+    const d = this._spaceDialog;
+    if (!d || d.busy || !d.title.trim()) return;
+    this._spaceDialog = { ...d, busy: true };
+    try {
+      const cfg = this._serverCfg!;
+      let sp: any;
+      if (d.mode === 'create') {
+        sp = {
+          id: 's' + Date.now().toString(36),
+          title: d.title.trim(),
+          plan_url: null,
+          aspect: 1.414,
+          view_box: [0, 0, 1, 1],
+          rooms: [],
+          segments: [],
+        };
+        cfg.spaces.push(sp);
+      } else {
+        sp = cfg.spaces.find((x: any) => x.id === d.spaceId);
+        sp.title = d.title.trim();
+      }
+      if (d.planFile) {
+        const resp = await this.hass.callWS({
+          type: 'houseplan/plan/set', space_id: sp.id, ext: d.planFile.ext, data: d.planFile.b64,
+        });
+        sp.plan_url = resp.url;
+        sp.aspect = d.planFile.aspect;
+      }
+      await this._saveConfigNow();
+      this._spaceDialog = null;
+      if (d.mode === 'create') this._space = sp.id;
+      this._regSignature = '';
+      this._maybeRebuildDevices();
+      this._showToast(d.mode === 'create' ? 'Пространство добавлено' : 'Пространство сохранено');
+    } catch (e: any) {
+      this._spaceDialog = { ...this._spaceDialog!, busy: false };
+      this._showToast('Ошибка: ' + (e?.message || e));
+    }
+  }
+
+  private async _deleteSpace(): Promise<void> {
+    const d = this._spaceDialog;
+    if (!d || d.mode !== 'edit') return;
+    const sp = this._serverCfg!.spaces.find((x: any) => x.id === d.spaceId);
+    if (!confirm(`Удалить пространство «${sp.title}» со всеми комнатами и разметкой?`)) return;
+    this._serverCfg!.spaces = this._serverCfg!.spaces.filter((x: any) => x.id !== d.spaceId);
+    try {
+      await this._saveConfigNow();
+      this._spaceDialog = null;
+      if (this._space === d.spaceId) this._space = this._serverCfg!.spaces[0]?.id || '';
+      this._regSignature = '';
+      this._maybeRebuildDevices();
+      this._showToast('Пространство удалено');
+    } catch (e: any) {
+      this._showToast('Ошибка удаления: ' + (e?.message || e));
+    }
+  }
+
+  /** Немедленное сохранение конфига с ревизией (без дебаунса). */
+  private async _saveConfigNow(): Promise<void> {
+    const r = await this.hass.callWS({
+      type: 'houseplan/config/set', config: this._serverCfg, expected_rev: this._cfgRev,
+    });
+    this._cfgRev = r?.rev ?? this._cfgRev + 1;
+  }
+
   // ================= МИГРАЦИЯ legacy → сервер =================
 
   private async _migrateToServer(): Promise<void> {
@@ -1110,9 +1231,22 @@ class HouseplanCard extends LitElement {
                   this._selId = null;
                 }}
               >
-                ${s.title}
+                ${s.title}${this._norm
+                  ? html`<ha-icon class="tabedit" icon="mdi:pencil"
+                      title="Настроить пространство"
+                      @click=${(e: Event) => {
+                        e.stopPropagation();
+                        this._openSpaceDialog('edit', s.id);
+                      }}></ha-icon>`
+                  : nothing}
               </button>`,
             )}
+            ${this._norm
+              ? html`<button class="tab tabadd" title="Добавить пространство"
+                  @click=${() => this._openSpaceDialog('create')}>
+                  <ha-icon icon="mdi:plus"></ha-icon>
+                </button>`
+              : nothing}
           </div>
           <span class="count">${devs.length} устр.</span>
           <span class="spacer"></span>
@@ -1166,6 +1300,7 @@ class HouseplanCard extends LitElement {
         </div>
 
         ${this._roomDialog ? this._renderRoomDialog() : nothing}
+        ${this._spaceDialog ? this._renderSpaceDialog() : nothing}
         ${this._tip
           ? html`<div class="tip" style="left:${this._tip.x + 12}px;top:${this._tip.y + 12}px">
               <b>${this._tip.title}</b>${this._tip.meta ? html`<span class="m">${this._tip.meta}</span>` : nothing}
@@ -1266,6 +1401,47 @@ class HouseplanCard extends LitElement {
               : 'кликните точку сетки, чтобы начать контур'}</span>
             ${this._path.length ? html`<button class="btn ghost" @click=${this._cancelPath}>Сброс</button>` : nothing}`
         : nothing}
+    </div>`;
+  }
+
+  private _renderSpaceDialog(): TemplateResult {
+    const d = this._spaceDialog!;
+    return html`<div class="menuwrap dialogwrap" @click=${() => (this._spaceDialog = null)}>
+      <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
+        <div class="hd"><ha-icon icon="mdi:floor-plan"></ha-icon>
+          ${d.mode === 'create' ? 'Новое пространство' : 'Пространство'}</div>
+        <div class="body">
+          <label>Название</label>
+          <input class="namein" type="text" placeholder="Например: Гараж"
+            .value=${d.title}
+            @input=${(e: Event) => (this._spaceDialog = { ...d, title: (e.target as HTMLInputElement).value })} />
+          <label>Подложка (план)</label>
+          <div class="planrow">
+            ${d.planFile
+              ? html`<span class="planname">${d.planFile.name}</span>`
+              : d.planUrl
+                ? html`<img class="planprev" src=${d.planUrl} alt="план" />`
+                : html`<span class="planname muted">нет подложки</span>`}
+            <label class="btn filebtn">
+              <ha-icon icon="mdi:upload"></ha-icon>${d.planUrl || d.planFile ? 'Заменить…' : 'Загрузить…'}
+              <input type="file" hidden accept=".svg,.png,.jpg,.jpeg,.webp,image/svg+xml,image/png,image/jpeg,image/webp"
+                @change=${(e: Event) => this._pickPlanFile(e)} />
+            </label>
+          </div>
+        </div>
+        <div class="row">
+          ${d.mode === 'edit'
+            ? html`<button class="btn danger" @click=${this._deleteSpace}>
+                <ha-icon icon="mdi:delete-outline"></ha-icon>Удалить
+              </button>`
+            : nothing}
+          <span class="spacer"></span>
+          <button class="btn ghost" @click=${() => (this._spaceDialog = null)}>Отмена</button>
+          <button class="btn on" @click=${this._saveSpaceDialog} ?disabled=${!d.title.trim() || d.busy}>
+            <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : 'Сохранить'}
+          </button>
+        </div>
+      </div>
     </div>`;
   }
 
@@ -1641,6 +1817,53 @@ class HouseplanCard extends LitElement {
       border-bottom: 1px solid var(--hp-line);
       font-size: 13px;
       flex-wrap: wrap;
+    }
+    .tab .tabedit {
+      --mdc-icon-size: 13px;
+      margin-left: 6px;
+      opacity: 0.4;
+      vertical-align: middle;
+    }
+    .tab:hover .tabedit {
+      opacity: 0.9;
+    }
+    .tab.tabadd {
+      padding: 6px 8px;
+    }
+    .tab.tabadd ha-icon {
+      --mdc-icon-size: 15px;
+    }
+    .planrow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .planprev {
+      max-width: 120px;
+      max-height: 70px;
+      border: 1px solid var(--hp-line);
+      border-radius: 6px;
+      background: #fff;
+    }
+    .planname {
+      font-size: 12.5px;
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .planname.muted {
+      color: var(--hp-muted);
+    }
+    .filebtn {
+      cursor: pointer;
+    }
+    .btn.danger {
+      border-color: #b3402a;
+      color: #ff7a5c;
+    }
+    .dialog .row .spacer {
+      flex: 1;
     }
     .dialogwrap {
       background: rgba(0, 0, 0, 0.45);
