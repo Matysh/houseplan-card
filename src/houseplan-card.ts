@@ -12,7 +12,7 @@ import { FLOOR_BG, FLOOR_BG_RECT } from './data/backgrounds';
 import { EXCLUDED_DOMAINS, GROUP_TITLES, iconFor, DOMAIN_PRIORITY } from './rules';
 import './editor';
 
-const CARD_VERSION = '1.3.0';
+const CARD_VERSION = '1.4.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const NORM_W = 1000; // ширина рендер-пространства для нормированных конфигов
 
@@ -26,11 +26,15 @@ interface RoomCfg {
   id?: string;
   name: string;
   area: string | null;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
+  x?: number;
+  y?: number;
+  w?: number;
+  h?: number;
+  poly?: number[][]; // полигон в рендер-единицах (модель) / нормированный (конфиг)
 }
+
+const GRID_N = 60; // точек сетки по ширине плана
+type MarkupTool = 'draw' | 'erase' | 'delroom';
 
 interface SpaceModel {
   id: string;
@@ -131,6 +135,14 @@ class HouseplanCard extends LitElement {
   private _toastTimer?: number;
   private _migrating = false;
 
+  // --- редактор разметки комнат ---
+  private _markup = false;
+  private _tool: MarkupTool = 'draw';
+  private _path: number[][] = []; // текущий контур (рендер-единицы, вершины по сетке)
+  private _cursorPt: number[] | null = null;
+  private _areaSel = '';
+  private _nameSel = '';
+
   private _drag: { id: string; sx: number; sy: number; ox: number; oy: number; moved: boolean } | null = null;
 
   static properties = {
@@ -146,6 +158,12 @@ class HouseplanCard extends LitElement {
     _toast: { state: true },
     _serverCfg: { state: true },
     _migrating: { state: true },
+    _markup: { state: true },
+    _tool: { state: true },
+    _path: { state: true },
+    _cursorPt: { state: true },
+    _areaSel: { state: true },
+    _nameSel: { state: true },
   };
 
   public static getConfigElement() {
@@ -180,10 +198,11 @@ class HouseplanCard extends LitElement {
           id: r.id,
           name: r.name,
           area: r.area ?? null,
-          x: r.x * NORM_W,
-          y: r.y * H,
-          w: r.w * NORM_W,
-          h: r.h * H,
+          x: r.x != null ? r.x * NORM_W : undefined,
+          y: r.y != null ? r.y * H : undefined,
+          w: r.w != null ? r.w * NORM_W : undefined,
+          h: r.h != null ? r.h * H : undefined,
+          poly: r.poly ? r.poly.map((p: number[]) => [p[0] * NORM_W, p[1] * H]) : undefined,
         });
         return {
           id: s.id,
@@ -665,6 +684,203 @@ class HouseplanCard extends LitElement {
     this._tip = { x: ev.clientX, y: ev.clientY, title, meta, lqi };
   }
 
+  // ================= РЕДАКТОР РАЗМЕТКИ КОМНАТ =================
+
+  private get _gridPitch(): number {
+    return NORM_W / GRID_N;
+  }
+
+  private get _curSpaceCfg(): any {
+    return this._serverCfg?.spaces.find((s: any) => s.id === this._space);
+  }
+
+  private get _spaceH(): number {
+    const sp = this._curSpaceCfg;
+    return sp ? NORM_W / sp.aspect : NORM_W;
+  }
+
+  /** Сегменты текущего пространства в рендер-единицах. */
+  private get _segments(): number[][] {
+    const sp = this._curSpaceCfg;
+    const H = this._spaceH;
+    return (sp?.segments || []).map((s: number[]) => [s[0] * NORM_W, s[1] * H, s[2] * NORM_W, s[3] * H]);
+  }
+
+  private _toggleMarkup(): void {
+    if (!this._norm) {
+      this._showToast('Разметка доступна после переноса конфига на сервер (режим правки → «На сервер»)');
+      return;
+    }
+    this._markup = !this._markup;
+    this._edit = false;
+    this._path = [];
+    this._cursorPt = null;
+    this._tool = 'draw';
+  }
+
+  private _svgPoint(ev: MouseEvent): number[] {
+    const stage = this.renderRoot.querySelector('.stage') as HTMLElement;
+    const vb = this._spaceModel().vb;
+    const r = stage.getBoundingClientRect();
+    return [vb[0] + ((ev.clientX - r.left) / r.width) * vb[2], vb[1] + ((ev.clientY - r.top) / r.height) * vb[3]];
+  }
+
+  private _snap(p: number[]): number[] {
+    const g = this._gridPitch;
+    return [Math.round(p[0] / g) * g, Math.round(p[1] / g) * g];
+  }
+
+  private _samePt(a: number[], b: number[]): boolean {
+    return Math.abs(a[0] - b[0]) < 0.001 && Math.abs(a[1] - b[1]) < 0.001;
+  }
+
+  private _segKey(a: number[], b: number[]): string {
+    const [p, q] = a[0] < b[0] || (a[0] === b[0] && a[1] <= b[1]) ? [a, b] : [b, a];
+    return `${p[0].toFixed(1)},${p[1].toFixed(1)}-${q[0].toFixed(1)},${q[1].toFixed(1)}`;
+  }
+
+  private _saveConfig = debounce(() => {
+    if (!this._serverCfg) return;
+    this.hass
+      .callWS({ type: 'houseplan/config/set', config: this._serverCfg })
+      .catch((e: any) => this._showToast('Не удалось сохранить конфиг: ' + (e?.message || e)));
+  }, 500);
+
+  /** Добавить сегмент (рендер-единицы) в каркас пространства (без дублей). */
+  private _addSegment(a: number[], b: number[]): void {
+    const sp = this._curSpaceCfg;
+    if (!sp) return;
+    const H = this._spaceH;
+    const key = this._segKey(a, b);
+    const exists = this._segments.some((s) => this._segKey([s[0], s[1]], [s[2], s[3]]) === key);
+    if (exists) return;
+    sp.segments = sp.segments || [];
+    sp.segments.push([a[0] / NORM_W, a[1] / H, b[0] / NORM_W, b[1] / H]);
+    this._saveConfig();
+  }
+
+  private _distToSeg(p: number[], s: number[]): number {
+    const [x, y] = p;
+    const [x1, y1, x2, y2] = s;
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const len2 = dx * dx + dy * dy || 1;
+    let t = ((x - x1) * dx + (y - y1) * dy) / len2;
+    t = Math.max(0, Math.min(1, t));
+    const px = x1 + t * dx;
+    const py = y1 + t * dy;
+    return Math.hypot(x - px, y - py);
+  }
+
+  private _pointInRoom(p: number[], r: RoomCfg): boolean {
+    if (r.poly) {
+      let inside = false;
+      const poly = r.poly;
+      for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const [xi, yi] = poly[i];
+        const [xj, yj] = poly[j];
+        if (yi > p[1] !== yj > p[1] && p[0] < ((xj - xi) * (p[1] - yi)) / (yj - yi) + xi) inside = !inside;
+      }
+      return inside;
+    }
+    return (
+      r.x != null && p[0] >= r.x! && p[0] <= r.x! + r.w! && p[1] >= r.y! && p[1] <= r.y! + r.h!
+    );
+  }
+
+  private _markupClick(ev: MouseEvent): void {
+    if (!this._markup) return;
+    const raw = this._svgPoint(ev);
+    if (this._tool === 'erase') {
+      const sp = this._curSpaceCfg;
+      if (!sp?.segments?.length) return;
+      const segs = this._segments;
+      let best = -1;
+      let bestD = this._gridPitch * 0.5;
+      segs.forEach((s, i) => {
+        const d = this._distToSeg(raw, s);
+        if (d < bestD) {
+          bestD = d;
+          best = i;
+        }
+      });
+      if (best >= 0) {
+        sp.segments.splice(best, 1);
+        this._saveConfig();
+        this.requestUpdate();
+      }
+      return;
+    }
+    if (this._tool === 'delroom') {
+      const space = this._spaceModel();
+      const room = [...space.rooms].reverse().find((r) => this._pointInRoom(raw, r));
+      if (!room) return;
+      if (!confirm(`Удалить комнату «${room.name}»?`)) return;
+      const sp = this._curSpaceCfg;
+      sp.rooms = sp.rooms.filter((r: any) => r.id !== room.id);
+      this._saveConfig();
+      this._regSignature = '';
+      this._maybeRebuildDevices();
+      this.requestUpdate();
+      return;
+    }
+    // draw: клики по точкам сетки, пары точек соединяются линией
+    const pt = this._snap(raw);
+    if (!this._path.length) {
+      this._path = [pt];
+      return;
+    }
+    const last = this._path[this._path.length - 1];
+    if (this._samePt(pt, last)) return; // повторный клик по той же точке
+    this._addSegment(last, pt);
+    // замыкание: клик по первой вершине
+    if (this._path.length >= 3 && this._samePt(pt, this._path[0])) {
+      this._path = [...this._path]; // контур закрыт — path остаётся, Save активен
+      this._cursorPt = null;
+      this._path.push(pt);
+      return;
+    }
+    this._path = [...this._path, pt];
+  }
+
+  private get _contourClosed(): boolean {
+    return this._path.length >= 4 && this._samePt(this._path[0], this._path[this._path.length - 1]);
+  }
+
+  private _markupMove(ev: MouseEvent): void {
+    if (!this._markup || this._tool !== 'draw' || !this._path.length || this._contourClosed) {
+      return;
+    }
+    this._cursorPt = this._snap(this._svgPoint(ev));
+  }
+
+  private _saveRoom(): void {
+    if (!this._contourClosed || !this._areaSel && !this._nameSel) return;
+    const sp = this._curSpaceCfg;
+    if (!sp) return;
+    const H = this._spaceH;
+    const verts = this._path.slice(0, -1); // без дублированной замыкающей
+    const areaName = this._areaSel ? this.hass.areas[this._areaSel]?.name : '';
+    sp.rooms.push({
+      id: 'r' + Date.now().toString(36),
+      name: this._nameSel || areaName || 'Комната',
+      area: this._areaSel || null,
+      poly: verts.map((p) => [p[0] / NORM_W, p[1] / H]),
+    });
+    this._saveConfig();
+    this._path = [];
+    this._areaSel = '';
+    this._nameSel = '';
+    this._regSignature = '';
+    this._maybeRebuildDevices();
+    this._showToast('Комната сохранена');
+  }
+
+  private _cancelPath(): void {
+    this._path = [];
+    this._cursorPt = null;
+  }
+
   // ================= МИГРАЦИЯ legacy → сервер =================
 
   private async _migrateToServer(): Promise<void> {
@@ -779,29 +995,44 @@ class HouseplanCard extends LitElement {
           <span class="spacer"></span>
           <button class="btn ${this._edit ? 'on' : ''}" @click=${() => {
             this._edit = !this._edit;
+            this._markup = false;
             this._selId = null;
           }} title="Режим правки: перетаскивание иконок">
             <ha-icon icon="mdi:cursor-move"></ha-icon>
           </button>
+          <button class="btn ${this._markup ? 'on' : ''}" @click=${this._toggleMarkup}
+            title="Разметка комнат: сетка, линии, контуры">
+            <ha-icon icon="mdi:vector-square-edit"></ha-icon>
+          </button>
         </div>
 
-        <div class="stage ${this._edit ? 'edit' : ''}" style="aspect-ratio:${vb[2]}/${vb[3]}">
+        <div class="stage ${this._edit ? 'edit' : ''} ${this._markup ? 'markup' : ''}"
+          style="aspect-ratio:${vb[2]}/${vb[3]}"
+          @click=${(e: MouseEvent) => this._markupClick(e)}
+          @mousemove=${(e: MouseEvent) => this._markupMove(e)}>
           <svg viewBox="${vb.join(' ')}" preserveAspectRatio="xMidYMid meet">
+            ${this._markup ? this._renderMarkupDefs(vb) : nothing}
             ${space.bg
               ? svg`<image href="${space.bg.href}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}" preserveAspectRatio="none" />`
               : nothing}
-            ${space.rooms.filter((r) => r.area).map(
-              (r) => svg`<rect
-                  class="room ${space.bg ? 'overlay' : 'yard'}"
-                  x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="${Math.min(r.w, r.h) * 0.03}"
-                  @click=${() => this._clickRoom(r)}
-                  @mousemove=${(e: MouseEvent) =>
-                    this._showTip(e, r.name, 'комната — открыть зону',
-                      this._config?.show_signal ? this._roomLqi(r.area) : null)}
-                  @mouseleave=${() => (this._tip = null)}
-                ></rect>
-                ${!space.bg ? svg`<text class="rlabel" x="${r.x + r.w / 2}" y="${r.y + Math.min(r.w, r.h) * 0.1}">${r.name}</text>` : nothing}`,
-            )}
+            ${space.rooms.filter((r) => r.area || this._markup).map((r) => {
+              const cls = 'room ' + (space.bg ? 'overlay' : 'yard') + (this._markup ? ' outlined' : '');
+              const tip = (e: MouseEvent) =>
+                this._showTip(e, r.name, 'комната — открыть зону',
+                  this._config?.show_signal ? this._roomLqi(r.area) : null);
+              const label = !space.bg || this._markup;
+              const c = this._roomCenter(r);
+              const shape = r.poly
+                ? svg`<polygon class="${cls}" points="${r.poly.map((p) => p.join(',')).join(' ')}"
+                    @click=${() => this._clickRoom(r)} @mousemove=${tip}
+                    @mouseleave=${() => (this._tip = null)}></polygon>`
+                : svg`<rect class="${cls}"
+                    x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="${Math.min(r.w!, r.h!) * 0.03}"
+                    @click=${() => this._clickRoom(r)} @mousemove=${tip}
+                    @mouseleave=${() => (this._tip = null)}></rect>`;
+              return svg`${shape}${label ? svg`<text class="rlabel" x="${c[0]}" y="${c[1]}">${r.name}</text>` : nothing}`;
+            })}
+            ${this._markup ? this._renderMarkupLayer(vb) : nothing}
           </svg>
           <div class="devlayer" style="--icon-size:${iconPct}cqw">
             ${devs.map((d) => this._renderDevice(d, vb))}
@@ -809,6 +1040,7 @@ class HouseplanCard extends LitElement {
         </div>
 
         ${this._edit ? this._renderEditbar() : nothing}
+        ${this._markup ? this._renderMarkupBar() : nothing}
         ${this._menuDev ? this._renderMenu() : nothing}
         ${this._tip
           ? html`<div class="tip" style="left:${this._tip.x + 12}px;top:${this._tip.y + 12}px">
@@ -846,6 +1078,88 @@ class HouseplanCard extends LitElement {
       <ha-icon icon="${d.icon}"></ha-icon>
       ${temp != null ? html`<span class="tval">${temp}°</span>` : nothing}
       ${lqi != null ? html`<span class="lqi" style="color:${lqiColor(lqi)}">${lqi}</span>` : nothing}
+    </div>`;
+  }
+
+  private _roomCenter(r: RoomCfg): number[] {
+    if (r.poly) {
+      const n = r.poly.length;
+      return [r.poly.reduce((a, p) => a + p[0], 0) / n, r.poly.reduce((a, p) => a + p[1], 0) / n];
+    }
+    return [r.x! + r.w! / 2, r.y! + Math.min(r.w!, r.h!) * 0.1];
+  }
+
+  private _renderMarkupDefs(vb: number[]): TemplateResult {
+    const g = this._gridPitch;
+    const dotR = g * 0.09;
+    return svg`<defs>
+        <pattern id="hp-grid" x="0" y="0" width="${g}" height="${g}" patternUnits="userSpaceOnUse">
+          <circle cx="0" cy="0" r="${dotR}" class="griddot"></circle>
+          <circle cx="${g}" cy="0" r="${dotR}" class="griddot"></circle>
+          <circle cx="0" cy="${g}" r="${dotR}" class="griddot"></circle>
+          <circle cx="${g}" cy="${g}" r="${dotR}" class="griddot"></circle>
+        </pattern>
+      </defs>
+      <rect x="${vb[0]}" y="${vb[1]}" width="${vb[2]}" height="${vb[3]}" fill="url(#hp-grid)" pointer-events="none"></rect>`;
+  }
+
+  private _renderMarkupLayer(_vb: number[]): TemplateResult {
+    const segs = this._segments;
+    const path = this._path;
+    const g = this._gridPitch;
+    return svg`
+      ${segs.map((s) => svg`<line class="seg" x1="${s[0]}" y1="${s[1]}" x2="${s[2]}" y2="${s[3]}"></line>`)}
+      ${path.length > 1
+        ? svg`<polyline class="pathline" points="${path.map((p) => p.join(',')).join(' ')}"></polyline>`
+        : nothing}
+      ${path.length && this._cursorPt && this._tool === 'draw' && !this._contourClosed
+        ? svg`<line class="preview" x1="${path[path.length - 1][0]}" y1="${path[path.length - 1][1]}"
+            x2="${this._cursorPt[0]}" y2="${this._cursorPt[1]}"></line>`
+        : nothing}
+      ${path.map((p, i) => svg`<circle class="vertex ${i === 0 ? 'first' : ''}" cx="${p[0]}" cy="${p[1]}" r="${g * 0.22}"></circle>`)}
+    `;
+  }
+
+  private _renderMarkupBar(): TemplateResult {
+    const areas = Object.values<any>(this.hass?.areas || {}).sort((a, b) =>
+      (a.name || '').localeCompare(b.name || ''),
+    );
+    const closed = this._contourClosed;
+    return html`<div class="editbar">
+      <ha-icon icon="mdi:vector-square-edit" class="warn"></ha-icon>
+      <button class="btn ${this._tool === 'draw' ? 'on' : ''}" @click=${() => (this._tool = 'draw')}
+        title="Добавить комнату: соединяйте точки сетки линиями до замкнутого контура">
+        <ha-icon icon="mdi:vector-polyline-plus"></ha-icon>Добавить
+      </button>
+      <button class="btn ${this._tool === 'erase' ? 'on' : ''}" @click=${() => (this._tool = 'erase')}
+        title="Стереть линию: клик по линии">
+        <ha-icon icon="mdi:eraser"></ha-icon>Стереть
+      </button>
+      <button class="btn ${this._tool === 'delroom' ? 'on' : ''}" @click=${() => (this._tool = 'delroom')}
+        title="Удалить комнату: клик внутри комнаты">
+        <ha-icon icon="mdi:delete-outline"></ha-icon>Удалить
+      </button>
+      <span class="spacer"></span>
+      ${this._tool === 'draw'
+        ? closed
+          ? html`<select class="areasel" .value=${this._areaSel}
+                @change=${(e: Event) => (this._areaSel = (e.target as HTMLSelectElement).value)}>
+                <option value="">— зона HA —</option>
+                ${areas.map((a) => html`<option value=${a.area_id} ?selected=${a.area_id === this._areaSel}>${a.name}</option>`)}
+              </select>
+              <input class="namein" type="text" placeholder="Название"
+                .value=${this._nameSel}
+                @input=${(e: Event) => (this._nameSel = (e.target as HTMLInputElement).value)} />
+              <button class="btn on" @click=${this._saveRoom}
+                ?disabled=${!this._areaSel && !this._nameSel}>
+                <ha-icon icon="mdi:check"></ha-icon>Сохранить
+              </button>
+              <button class="btn ghost" @click=${this._cancelPath}>Отмена</button>`
+          : html`<span class="hint">${this._path.length
+                ? 'точек: ' + this._path.length + ' — замкните контур кликом по первой точке'
+                : 'кликните точку сетки, чтобы начать контур'}</span>
+              ${this._path.length ? html`<button class="btn ghost" @click=${this._cancelPath}>Сброс</button>` : nothing}`
+        : nothing}
     </div>`;
   }
 
@@ -1058,6 +1372,63 @@ class HouseplanCard extends LitElement {
     }
     .stage.edit .room {
       pointer-events: none;
+    }
+    .stage.markup {
+      cursor: crosshair;
+    }
+    .stage.markup .room {
+      pointer-events: none;
+    }
+    .stage.markup .devlayer {
+      display: none; /* в разметке иконки не мешают */
+    }
+    .room.outlined {
+      stroke: rgba(62, 166, 255, 0.55);
+      fill: rgba(62, 166, 255, 0.06);
+    }
+    .griddot {
+      fill: var(--hp-accent);
+      opacity: 0.45;
+    }
+    .seg {
+      stroke: var(--hp-accent);
+      stroke-width: 2.5;
+      stroke-linecap: round;
+    }
+    .pathline {
+      stroke: #ffc14d;
+      stroke-width: 3;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .preview {
+      stroke: #ffc14d;
+      stroke-width: 2;
+      stroke-dasharray: 6 5;
+      opacity: 0.7;
+    }
+    .vertex {
+      fill: #ffc14d;
+      stroke: #4a2800;
+      stroke-width: 1;
+    }
+    .vertex.first {
+      fill: #4bd28f;
+      stroke: #04121f;
+    }
+    .areasel,
+    .namein {
+      background: var(--hp-bg);
+      border: 1px solid var(--hp-line);
+      color: var(--hp-txt);
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+    .namein {
+      width: 130px;
     }
     .devlayer {
       position: absolute;

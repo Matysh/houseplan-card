@@ -20,17 +20,25 @@ POS_SCHEMA = vol.Schema(
 )
 LAYOUT_SCHEMA = vol.Schema({str: POS_SCHEMA})
 
-ROOM_SCHEMA = vol.Schema(
-    {
-        vol.Required("id"): str,
-        vol.Required("name"): str,
-        vol.Optional("area"): vol.Any(str, None),
-        vol.Required("x"): vol.Coerce(float),
-        vol.Required("y"): vol.Coerce(float),
-        vol.Required("w"): vol.Coerce(float),
-        vol.Required("h"): vol.Coerce(float),
-    },
-    extra=vol.ALLOW_EXTRA,
+POINT = vol.All([vol.Coerce(float)], vol.Length(min=2, max=2))
+ROOM_SCHEMA = vol.All(
+    vol.Schema(
+        {
+            vol.Required("id"): str,
+            vol.Required("name"): str,
+            vol.Optional("area"): vol.Any(str, None),
+            # прямоугольная комната (legacy) …
+            vol.Optional("x"): vol.Coerce(float),
+            vol.Optional("y"): vol.Coerce(float),
+            vol.Optional("w"): vol.Coerce(float),
+            vol.Optional("h"): vol.Coerce(float),
+            # … или полигон (редактор разметки)
+            vol.Optional("poly"): vol.All([POINT], vol.Length(min=3)),
+        },
+        extra=vol.ALLOW_EXTRA,
+    ),
+    lambda r: r if ("poly" in r or all(k in r for k in ("x", "y", "w", "h")))
+    else (_ for _ in ()).throw(vol.Invalid("room: нужен poly или x/y/w/h")),
 )
 SPACE_SCHEMA = vol.Schema(
     {
@@ -40,6 +48,8 @@ SPACE_SCHEMA = vol.Schema(
         vol.Required("aspect"): vol.All(vol.Coerce(float), vol.Range(min=0.05, max=20)),
         vol.Required("view_box"): vol.All([vol.Coerce(float)], vol.Length(min=4, max=4)),
         vol.Required("rooms"): [ROOM_SCHEMA],
+        # сегменты-«стены» (разметочный каркас): [x1,y1,x2,y2], нормированные
+        vol.Optional("segments"): [vol.All([vol.Coerce(float)], vol.Length(min=4, max=4))],
     },
     extra=vol.ALLOW_EXTRA,
 )
