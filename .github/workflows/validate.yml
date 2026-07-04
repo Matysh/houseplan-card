@@ -1,0 +1,30 @@
+name: Validate
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 4 * * 1"
+jobs:
+  hacs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: HACS validation
+        uses: hacs/action@main
+        with:
+          category: integration
+  hassfest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Hassfest validation
+        uses: home-assistant/actions/hassfest@master
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci && npm run build
+      - name: Card bundle in sync with integration
+        run: cmp dist/houseplan-card.js custom_components/houseplan/frontend/houseplan-card.js
