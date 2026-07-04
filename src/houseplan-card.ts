@@ -12,7 +12,7 @@ import { FLOOR_BG, FLOOR_BG_RECT } from './data/backgrounds';
 import { EXCLUDED_DOMAINS, GROUP_TITLES, iconFor, DOMAIN_PRIORITY } from './rules';
 import './editor';
 
-const CARD_VERSION = '1.4.1';
+const CARD_VERSION = '1.4.2';
 const LS_KEY = 'houseplan_card_layout_v1';
 const NORM_W = 1000; // ширина рендер-пространства для нормированных конфигов
 
@@ -33,7 +33,7 @@ interface RoomCfg {
   poly?: number[][]; // полигон в рендер-единицах (модель) / нормированный (конфиг)
 }
 
-const GRID_N = 60; // точек сетки по ширине плана
+const GRID_N = 120; // точек сетки по ширине плана
 type MarkupTool = 'draw' | 'erase' | 'delroom';
 
 interface SpaceModel {
@@ -1170,9 +1170,9 @@ class HouseplanCard extends LitElement {
     return [r.x! + r.w! / 2, r.y! + Math.min(r.w!, r.h!) * 0.1];
   }
 
-  private _renderMarkupDefs(vb: number[]): TemplateResult {
+  private _renderMarkupDefs(_vb: number[]): TemplateResult {
     const g = this._gridPitch;
-    const dotR = g * 0.09;
+    const dotR = g * 0.14;
     return svg`<defs>
         <pattern id="hp-grid" x="0" y="0" width="${g}" height="${g}" patternUnits="userSpaceOnUse">
           <circle cx="0" cy="0" r="${dotR}" class="griddot"></circle>
@@ -1180,15 +1180,15 @@ class HouseplanCard extends LitElement {
           <circle cx="0" cy="${g}" r="${dotR}" class="griddot"></circle>
           <circle cx="${g}" cy="${g}" r="${dotR}" class="griddot"></circle>
         </pattern>
-      </defs>
-      <rect x="${vb[0]}" y="${vb[1]}" width="${vb[2]}" height="${vb[3]}" fill="url(#hp-grid)" pointer-events="none"></rect>`;
+      </defs>`;
   }
 
-  private _renderMarkupLayer(_vb: number[]): TemplateResult {
+  private _renderMarkupLayer(vb: number[]): TemplateResult {
     const segs = this._segments;
     const path = this._path;
     const g = this._gridPitch;
     return svg`
+      <rect x="${vb[0]}" y="${vb[1]}" width="${vb[2]}" height="${vb[3]}" fill="url(#hp-grid)" pointer-events="none"></rect>
       ${segs.map((s) => svg`<line class="seg" x1="${s[0]}" y1="${s[1]}" x2="${s[2]}" y2="${s[3]}"></line>`)}
       ${path.length > 1
         ? svg`<polyline class="pathline" points="${path.map((p) => p.join(',')).join(' ')}"></polyline>`
@@ -1487,7 +1487,9 @@ class HouseplanCard extends LitElement {
     }
     .griddot {
       fill: var(--hp-accent);
-      opacity: 0.45;
+      opacity: 0.75;
+      stroke: rgba(0, 0, 0, 0.35);
+      stroke-width: 0.4;
     }
     .seg {
       stroke: var(--hp-accent);

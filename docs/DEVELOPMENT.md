@@ -38,6 +38,15 @@ cp dist/houseplan-card.js custom_components/houseplan/frontend/
 - После деплоя JS — проверить в браузере (Ctrl+F5) и console (не должно быть ошибок из
   houseplan-card.js; битый бандл роняет все дашборды).
 
+## Кэш фронтенда и «пустой вид»
+
+- URL модуля карточки содержит `?v=<VERSION из const.py>`. Браузеры держат ES-модуль в
+  memory-cache: после деплоя нового JS **бампните VERSION в const.py и рестартуйте HA**,
+  иначе обычный F5 оставит старую версию.
+- После reload страницы HA-фронтенд (с kiosk-mode) иногда оставляет вид пустым
+  («InvalidStateError: Transition was aborted», hui-view не создаётся 1–2 мин).
+  Лечится повторной SPA-навигацией: pushState + событие location-changed, или подождать.
+
 ## Релиз
 
 Тег `vX.Y.Z` + GitHub Release → workflow `.github/workflows/release.yml` собирает и прикладывает

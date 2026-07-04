@@ -8,7 +8,7 @@ FRONTEND_URL = "/houseplan_files/houseplan-card.js"
 PLANS_URL = "/houseplan_files/plans"
 PLANS_DIR = "houseplan/plans"  # относительно каталога конфигурации HA
 CONF_ADMIN_ONLY = "admin_only"
-VERSION = "1.4.0"
+VERSION = "1.4.2"
 
 DEFAULT_CONFIG: dict = {
     "spaces": [],
