@@ -53,5 +53,8 @@ async def test_upload_traversal_sanitized(hass: HomeAssistant, hass_client: Clie
     resp = await client.post("/api/houseplan/upload", data=fd)
     assert resp.status == 200
     body = await resp.json()
-    # both the marker dir and the filename must be flattened to safe names
-    assert ".." not in body["url"]
+    # both the marker dir and the filename must be flattened to safe names:
+    # no path segment may be exactly ".." (dots inside a name are harmless)
+    path = body["url"].split("?", 1)[0]
+    assert all(seg != ".." for seg in path.split("/"))
+    assert path.startswith("/houseplan_files/files/")

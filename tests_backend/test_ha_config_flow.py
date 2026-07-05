@@ -46,8 +46,7 @@ async def test_options_flow(hass: HomeAssistant) -> None:
     )
     result = await hass.config_entries.flow.async_configure(result["flow_id"], user_input={})
     entry = hass.config_entries.async_entries(DOMAIN)[0]
-    await hass.config_entries.async_setup(entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done()  # entry is auto-set-up after the flow
 
     result = await hass.config_entries.options.async_init(entry.entry_id)
     assert result["type"] is FlowResultType.FORM
