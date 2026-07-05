@@ -1,21 +1,23 @@
 /**
- * Построение списка устройств из реестров HA: курирование, группы света,
- * маркеры (оверрайды/виртуальные). Без Lit/DOM — только hass-объект.
+ * Building the device list from HA registries: curation, light groups,
+ * markers (overrides/virtual). No Lit/DOM — only the hass object.
  */
 import { iconFor, DOMAIN_PRIORITY } from './rules';
 import { averageLqi } from './logic';
 import type { DevItem, Marker, ServerConfig } from './types';
 
-/** Контекст построения: срез hass + резолв конфига. */
+/** Build context: a slice of hass + config resolution. */
 export interface BuildCtx {
   hass: any;
-  /** area_id → space_id (только зоны, привязанные к комнатам). */
+  /** area_id → space_id (only zones bound to rooms). */
   areaToSpace: Record<string, string>;
   markers: Marker[];
   settings: ServerConfig['settings'];
   excluded: Set<string>;
   showAll: boolean;
   firstSpaceId: string;
+  /** Localized display strings for generated device names. */
+  loc: (key: 'device.unnamed' | 'device.light_group' | 'device.fallback' | 'device.virtual') => string;
 }
 
 export function entitiesByDevice(hass: any): Record<string, string[]> {
@@ -61,21 +63,21 @@ export function primaryEntity(hass: any, entIds: string[], icon: string): string
   return pool[0]?.eid;
 }
 
-/** Средний LQI zigbee по сущностям устройства (сенсоры *_linkquality/*_lqi либо атрибут). */
+/** Average zigbee LQI across the device's entities (*_linkquality/*_lqi sensors or an attribute). */
 export function lqiFor(hass: any, entIds: string[]): number | null {
   const vals: number[] = [];
   for (const eid of entIds) {
     const st = hass.states[eid];
     if (!st) continue;
     const unit = (st.attributes?.unit_of_measurement || '').toLowerCase();
-    // 1) выделенный сенсор сигнала: Z2M *_linkquality, ZHA *_lqi, либо единицы «lqi»
+    // 1) dedicated signal sensor: Z2M *_linkquality, ZHA *_lqi, or “lqi” units
     if (/_(linkquality|lqi)$/.test(eid) || unit === 'lqi') {
       const v = parseFloat(st.state);
       if (!isNaN(v)) vals.push(v);
       continue;
     }
-    // 2) сигнал как АТРИБУТ на любой сущности устройства (Z2M linkquality / ZHA lqi) —
-    //    покрывает устройства, у которых отдельный сенсор сигнала отключён
+    // 2) signal as an ATTRIBUTE on any entity of the device (Z2M linkquality / ZHA lqi) —
+    //    covers devices whose dedicated signal sensor is disabled
     const av = st.attributes?.linkquality ?? st.attributes?.lqi;
     if (av != null) {
       const v = parseFloat(av);
@@ -96,7 +98,7 @@ export function tempFor(hass: any, entIds: string[]): number | null {
   return null;
 }
 
-/** Групповые световые сущности: HA light-group (platform=group) и Z2M-группы (device model=Group). */
+/** Group light entities: HA light-group (platform=group) and Z2M groups (device model=Group). */
 export function lightGroups(hass: any, enabled: boolean): { eid: string; name: string; area: string }[] {
   if (!enabled) return [];
   const res: { eid: string; name: string; area: string }[] = [];
@@ -129,9 +131,9 @@ function applyMarker(item: DevItem, m: Marker): void {
   item.pdfs = m.pdfs || [];
 }
 
-/** Курирование + группы света + маркеры (метаданные/перепривязка) + виртуальные. Гибрид. */
+/** Curation + light groups + markers (metadata/rebinding) + virtual ones. A hybrid. */
 export function buildDevices(ctx: BuildCtx): DevItem[] {
-  const { hass: h, areaToSpace, markers, settings, excluded, showAll, firstSpaceId } = ctx;
+  const { hass: h, areaToSpace, markers, settings, excluded, showAll, firstSpaceId, loc } = ctx;
   const groupLights = settings.group_lights !== false;
   const groups = lightGroups(h, groupLights);
   const groupedAreas = new Set(groups.map((g) => g.area));
@@ -145,17 +147,17 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
   const seen: Record<string, number> = {};
   const rest: DevItem[] = [];
 
-  // 1) авто-устройства HA (не занятые маркером, не скрытые)
+  // 1) HA auto-discovered devices (not claimed by a marker, not hidden)
   for (const dev of Object.values<any>(h.devices)) {
     const area = dev.area_id;
     if (!area || !areaToSpace[area]) continue;
     if (dev.entry_type === 'service') continue;
-    if (claimed.has('device:' + dev.id)) continue; // маркер перекроет ниже
+    if (claimed.has('device:' + dev.id)) continue; // a marker will take over below
     const marker = markerFor('device', dev.id);
     if (marker && marker.hidden) continue;
     const entIds = entsBy[dev.id] || [];
     const dom = domainOfDevice(h, dev, entIds);
-    // курирование (можно отключить переключателем «показать все»)
+    // curation (can be turned off with the “show all” toggle)
     if (!showAll) {
       if (excluded.has(dom)) continue;
       if (dev.model === 'Group') continue;
@@ -163,12 +165,12 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
       if (/bridge/i.test((dev.model || '') + (dev.name || ''))) continue;
       if (dom === 'myheat' && dev.via_device_id) continue;
     }
-    const name = (dev.name_by_user || dev.name || 'без имени').trim();
+    const name = (dev.name_by_user || dev.name || loc('device.unnamed')).trim();
     const key = name + '|' + area;
     let icon = iconFor(name, dev.model);
     if (entIds.some((e) => e.startsWith('lock.'))) icon = 'mdi:lock';
     if (!showAll && groupLights && icon === 'mdi:lightbulb' && groupedAreas.has(area)) continue;
-    // дубли по «имя|зона» не скрываем, а нумеруем
+    // duplicates by “name|zone” are numbered rather than hidden
     seen[key] = (seen[key] || 0) + 1;
     const dispName = seen[key] > 1 ? name + ' ' + seen[key] : name;
     const item: DevItem = {
@@ -188,14 +190,14 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
     rest.push(item);
   }
 
-  // 2) группы света (не занятые маркером)
+  // 2) light groups (not claimed by a marker)
   for (const g of groups) {
     if (!areaToSpace[g.area]) continue;
     if (claimed.has('entity:' + g.eid)) continue;
     rest.push({
       id: 'lg_' + g.eid,
       name: g.name,
-      model: 'группа света',
+      model: loc('device.light_group'),
       area: g.area,
       space: areaToSpace[g.area],
       icon: 'mdi:lightbulb-group',
@@ -207,7 +209,7 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
     });
   }
 
-  // 3) явные маркеры (перепривязка/метаданные/виртуальные)
+  // 3) explicit markers (rebinding/metadata/virtual)
   for (const m of markers) {
     if (m.hidden) continue;
     const [kind, ref] = m.binding.split(':');
@@ -220,7 +222,7 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
       if (entIds.some((e) => e.startsWith('lock.'))) icon = 'mdi:lock';
       const item: DevItem = {
         id: m.id,
-        name: dev?.name_by_user || dev?.name || 'устройство',
+        name: dev?.name_by_user || dev?.name || loc('device.fallback'),
         model: dev?.model || '',
         area,
         space,
@@ -253,12 +255,12 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
       applyMarker(item, m);
       rest.push(item);
     } else {
-      // виртуальный
+      // virtual
       const area = m.area || '';
       const space = m.space || (area && areaToSpace[area]) || firstSpaceId;
       const item: DevItem = {
         id: m.id,
-        name: m.name || 'виртуальное устройство',
+        name: m.name || loc('device.virtual'),
         model: m.model || '',
         area,
         space,

@@ -1,73 +1,73 @@
-# Роадмап: от «карты дачи» к публикуемой универсальной интеграции
+# Roadmap: from a "dacha map" to a publishable universal integration
 
-Цель: опубликовать в HACS (сначала custom repository, затем PR в default) универсальную
-интеграцию «интерактивный план дома»: свои планы на пространство, ручная разметка комнат,
-полуавтоматическое размещение устройств, скрытие/переименование/смена иконок, виртуальные
-устройства. Никакого хардкода конкретного дома в коде.
+Goal: publish to HACS (first as a custom repository, then a PR into default) a universal
+"interactive house plan" integration: custom plans per space, manual room markup,
+semi-automatic device placement, hiding/renaming/changing icons, virtual
+devices. No hardcoding of a specific house in the code.
 
-## Принципы (зафиксировано)
-- Пишем полноценный компонент по паттернам HA dev docs, не захардкоженную фичу.
-- Все данные конкретного дома — это **конфигурация инстанса** (server-side Store),
-  а не код/бандл. Текущие данные дачи станут первым мигрированным инстансом.
-- Документировать всё сразу в docs/ (контекст сессий теряется).
-- Версионирование хранилищ (Store minor_version + async_migrate) с первого дня.
+## Principles (locked in)
+- We write a proper full component following HA dev docs patterns, not a hardcoded feature.
+- All data of a specific house is **instance configuration** (server-side Store),
+  not code/bundle. The current dacha data will become the first migrated instance.
+- Document everything immediately in docs/ (session context gets lost).
+- Storage versioning (Store minor_version + async_migrate) from day one.
 
-## Фаза 0 — Гигиена публикации (быстро, без новых фич)
-- [x] hacs.json, manifest с обязательными ключами, структура custom_components/*
-- [x] CI: hacs/action + hassfest (workflow validate.yml) — добавлено, проверить на GitHub
+## Phase 0 — Publication hygiene (quick, no new features)
+- [x] hacs.json, manifest with the required keys, custom_components/* structure
+- [x] CI: hacs/action + hassfest (workflow validate.yml) — added, verify on GitHub
 - [x] brand/icon.png
-- [ ] Публичный GitHub-репозиторий: description, topics, issues on; первый Release v1.2.x
-- [ ] README EN (основной) + README.ru.md; скриншоты/GIF (обязательны для витрины HACS)
-- [ ] Заменить codeowners/documentation/issue_tracker на реальные URL после создания репо
+- [ ] Public GitHub repository: description, topics, issues on; first Release v1.2.x
+- [ ] README EN (primary) + README.ru.md; screenshots/GIF (mandatory for the HACS storefront)
+- [ ] Replace codeowners/documentation/issue_tracker with real URLs after the repo is created
 
-## Фаза 1 — Конфиг на сервере (декаплинг от дачи) ← ✅ СДЕЛАНО в v1.3.0 (кроме выпиливания бандл-данных — оставлены как fallback до фазы 2)
-Новое хранилище `houseplan.config` (Store v1):
+## Phase 1 — Server-side config (decoupling from the dacha) ← ✅ DONE in v1.3.0 (except removing the bundle data — kept as a fallback until phase 2)
+New store `houseplan.config` (Store v1):
 ```json
-{ "spaces": [ { "id": "f1", "title": "1 этаж", "plan": {"media_id": "...", "type": "svg"},
+{ "spaces": [ { "id": "f1", "title": "1st floor", "plan": {"media_id": "...", "type": "svg"},
     "view_box": [x,y,w,h], "rooms": [{"id","name","area_id","x","y","w","h"}] } ],
   "device_overrides": { "<device_id>": {"hidden":bool,"icon":str,"name":str} },
   "virtual_devices": [ {"id","space","name","icon","x","y","note"?, "entity_id"?} ],
   "settings": {"exclude_integrations": [...], "group_lights": bool, ...} }
 ```
-- WS API v2: `houseplan/config/get|set`, `houseplan/plan/upload` (файл плана → 
-  `<config>/houseplan/` через process-executor, отдача через static path), layout как сейчас.
-- Карточка: при наличии server-config использует его; бандл-данные дачи становятся
-  **fallback-примером** и затем выпиливаются (миграционный скрипт зальёт их в Store).
-- Единицы координат: нормированные (0..1 от плана) для новых конфигов — независимость от
-  разрешения исходника; миграция дачи пересчитает 1489×1053 → нормированные.
+- WS API v2: `houseplan/config/get|set`, `houseplan/plan/upload` (plan file → 
+  `<config>/houseplan/` via the process executor, served through a static path), layout as today.
+- The card: when a server config exists it uses it; the dacha bundle data becomes a
+  **fallback example** and is then removed (a migration script will push it into the Store).
+- Coordinate units: normalized (0..1 of the plan) for new configs — independence from the
+  source resolution; the dacha migration will convert 1489×1053 → normalized.
 
-## Фаза 2 — Редактор разметки в карточке ← ✅ ЯДРО СДЕЛАНО в v1.4.0 (осталось: загрузка плана из UI, правка view_box, редактирование существующих комнат)
-- Режим «Настройка» (отдельно от drag-раскладки): рисование/ресайз прямоугольников комнат
-  поверх плана, привязка к area (селектор ha-area-picker), редактирование viewBox (кадр).
-- Позже: полигональные комнаты (SVG path), повороты планов.
-- Загрузка плана из UI (file upload → WS) + выбор существующего media.
+## Phase 2 — Markup editor in the card ← ✅ CORE DONE in v1.4.0 (remaining: plan upload from the UI, view_box editing, editing existing rooms)
+- A "Setup" mode (separate from drag layout): drawing/resizing room rectangles
+  on top of the plan, binding to an area (ha-area-picker selector), viewBox (frame) editing.
+- Later: polygonal rooms (SVG path), plan rotations.
+- Plan upload from the UI (file upload → WS) + picking existing media.
 
-## Фаза 3 — Управление устройствами ← ✅ СДЕЛАНО в v1.6.x (скрытие, иконка, имя, модель, ссылка, описание, PDF, перепривязка, «+», виртуальные)
-- Панель устройств в режиме настройки: список неразмещённых (с фильтрами), drag из панели
-  на план; авто-раскладка «сеткой по комнате» кнопкой.
-- Оверрайды per-device: скрыть, своя иконка (ha-icon-picker), своё имя. Хранение в config.
-- Настраиваемое курирование: исключения интеграций/доменов в options flow вместо хардкода.
+## Phase 3 — Device management ← ✅ DONE in v1.6.x (hiding, icon, name, model, link, description, PDF, rebinding, "+", virtual)
+- A device panel in setup mode: a list of unplaced devices (with filters), drag from the panel
+  onto the plan; auto-layout "grid over the room" by button.
+- Per-device overrides: hide, custom icon (ha-icon-picker), custom name. Stored in config.
+- Configurable curation: integration/domain exclusions in the options flow instead of hardcode.
 
-## Фаза 4 — Виртуальные устройства ← ✅ базово в v1.6.x (CRUD виртуальных маркеров в общем диалоге; отдельная доработка заметок/иконок по мере надобности)
-- CRUD виртуальных маркеров (имя, иконка, координаты, заметка; опционально ссылка на
-  entity/URL): септик, кран, счётчик без датчика и т.п. Рендер как обычные иконки,
-  клик → карточка с заметкой или more-info привязанной сущности.
+## Phase 4 — Virtual devices ← ✅ basics in v1.6.x (CRUD of virtual markers in the shared dialog; further note/icon polish as needed)
+- CRUD of virtual markers (name, icon, coordinates, note; optionally a link to an
+  entity/URL): septic tank, valve, a meter without a sensor, etc. Rendered like normal icons,
+  click → a card with the note or more-info of the bound entity.
 
-## Фаза 5 — Полировка UX/фич
-- Клик-действия по настройке: toggle для света/розеток, long-press → more-info.
-- Тюнинг live-индикации (цвета по теме, badge-и), light-тема.
-- Тултипы на тач-устройствах (long-press), доступность (клавиатура, aria).
-- Опция LQI: порог «плохого» сигнала, скрытие меток на не-zigbee инстансах.
+## Phase 5 — UX/feature polish
+- Configurable click actions: toggle for lights/outlets, long-press → more-info.
+- Live-indication tuning (theme-aware colors, badges), light theme.
+- Tooltips on touch devices (long-press), accessibility (keyboard, aria).
+- LQI option: "bad signal" threshold, hiding the labels on non-zigbee instances.
 
-## Фаза 6 — Качество и публикация
-- Тесты: pytest (config_flow, websocket_api, миграции Store) + hassfest/hacs action в CI;
-  фронт: vitest на rules/geometry-утилиты.
-- Типизация: strict TS-интерфейсы hass (custom-card-helpers или свои), mypy для python.
-- Переводы integration+card: en + ru (translations/, локализация строк карточки).
-- Quality scale bronze → silver чек-лист; PR в hacs/default; опционально PR в
-  home-assistant/brands (пока хватает brand/ в репо).
+## Phase 6 — Quality and publication
+- Tests: pytest (config_flow, websocket_api, Store migrations) + hassfest/hacs action in CI;
+  frontend: vitest for rules/geometry utilities.
+- Typing: strict TS interfaces for hass (custom-card-helpers or our own), mypy for python.
+- Translations for integration+card: en + ru (translations/, card string localization).
+- Quality scale bronze → silver checklist; PR into hacs/default; optionally a PR into
+  home-assistant/brands (the brand/ in the repo suffices for now).
 
-## Открытые вопросы
-- Имя для публикации: «House Plan Card»? домен `houseplan` не занят в HACS default — проверить.
-- Лицензия MIT (в package.json уже MIT) — добавить LICENSE файл.
-- Формат планов: SVG предпочтителен (вектор, вес), PNG поддержать обязательно.
+## Open questions
+- Publication name: "House Plan Card"? the `houseplan` domain is not taken in HACS default — verify.
+- MIT license (package.json is already MIT) — add a LICENSE file.
+- Plan formats: SVG preferred (vector, size), PNG support is mandatory.

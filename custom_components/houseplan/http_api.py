@@ -1,7 +1,7 @@
-"""HTTP-эндпоинт загрузки файлов-инструкций House Plan.
+"""HTTP endpoint for uploading House Plan manual files.
 
-Файлы (PDF и т.п.) грузятся не через WebSocket (у него лимит размера сообщения —
-большой PDF рвёт соединение), а обычным multipart POST — как медиа в самом HA.
+Files (PDF and the like) are uploaded not over WebSocket (its message size limit
+breaks the connection on a large PDF) but via a plain multipart POST — like media in HA itself.
 """
 from __future__ import annotations
 
@@ -12,9 +12,9 @@ from aiohttp import web
 
 from homeassistant.components.http import HomeAssistantView
 
-try:  # KEY_HASS — современный доступ к hass из aiohttp-приложения
+try:  # KEY_HASS — the modern way to access hass from the aiohttp application
     from homeassistant.components.http import KEY_HASS
-except ImportError:  # старые версии HA
+except ImportError:  # older HA versions
     KEY_HASS = "hass"  # type: ignore[assignment]
 from homeassistant.core import HomeAssistant
 
@@ -33,7 +33,7 @@ _CHUNK = 64 * 1024
 
 
 class HouseplanUploadView(HomeAssistantView):
-    """POST /api/houseplan/upload — сохранить файл маркера, вернуть URL."""
+    """POST /api/houseplan/upload — save a marker file, return its URL."""
 
     url = "/api/houseplan/upload"
     name = "api:houseplan:upload"
@@ -59,7 +59,7 @@ class HouseplanUploadView(HomeAssistantView):
                     marker_id = sanitize_marker_id(await part.text())
                 elif part.name == "file":
                     filename = part.filename or "file"
-                    # читаем чанками с обрывом по лимиту, а не весь файл в память
+                    # read in chunks, aborting at the limit, instead of loading the whole file into memory
                     chunks: list[bytes] = []
                     size = 0
                     while chunk := await part.read_chunk(_CHUNK):
@@ -72,7 +72,7 @@ class HouseplanUploadView(HomeAssistantView):
                         break
                     blob = b"".join(chunks)
         except Exception as err:  # noqa: BLE001
-            _LOGGER.warning("House Plan upload: ошибка чтения multipart: %s", err)
+            _LOGGER.warning("House Plan upload: multipart read error: %s", err)
             return web.json_response({"error": "bad_request"}, status=400)
 
         if too_large:

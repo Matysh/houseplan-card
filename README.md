@@ -1,163 +1,157 @@
-# 🏠 House Plan — интерактивный план дома для Home Assistant
+# 🏠 House Plan — an interactive house plan for Home Assistant
 
-**Живая карта вашего дома прямо в Home Assistant: этажи, комнаты и устройства на настоящем плане — с реальными состояниями, температурой и уровнем сигнала. Всё настраивается мышкой, без единой строчки YAML.**
+**A live map of your home right inside Home Assistant: floors, rooms and devices on a real floor plan — with live states, temperature and signal strength. Everything is configured with the mouse, without a single line of YAML.**
 
-![Интерактивный план дома с устройствами](docs/images/01-plan.png)
+![Interactive house plan with devices](docs/images/01-plan.png)
 
----
-
-## 🇬🇧 English summary
-
-**House Plan** is an interactive floor-plan for Home Assistant: a custom Lovelace card + a storage integration in one HACS package. Draw rooms right on top of your floor-plan image, bind them to HA areas, and your devices appear on the plan automatically — with live states (lights, locks, covers), temperature and Zigbee signal (LQI). Everything is configured with the mouse: drag icons, zoom/pan, attach manuals (PDF) and metadata to any device, add virtual markers. Layout and configuration are stored server-side (`.storage`), shared by all users and synced live between open tabs; multi-floor, editor with grid snapping, optimistic locking. No YAML required.
-
-**Install via HACS** (custom repository → `Matysh/houseplan-card`, category *Integration*), then add the *House Plan* integration in Settings → Devices & Services and put the `custom:houseplan-card` card on a dashboard. The card JS is served by the integration itself — no manual resource setup. Full documentation below is currently in Russian; open an issue if you need help in English.
+🇷🇺 [Документация на русском](README.ru.md)
 
 ---
 
-## Что это и зачем
+## What it is and why
 
-House Plan показывает ваш умный дом так, как он выглядит на самом деле — на плане этажей. Вместо длинных списков сущностей вы видите комнаты и устройства на своих местах: где протечка, какая температура в детской, включён ли свет в прихожей, открыты ли ворота.
+House Plan shows your smart home the way it actually looks — on a floor plan. Instead of long lists of entities, you see rooms and devices in their real places: where the leak is, what the temperature is in the kids' room, whether the light is on in the hallway, whether the gate is open.
 
-Это удобно, когда:
+This is convenient when:
 
-- устройств много, и списками пользоваться неудобно;
-- нужно быстро понять состояние дома «одним взглядом»;
-- хочется отдать доступ близким — по картинке разберётся любой;
-- вы хотите красивый обзорный экран для настенного планшета.
+- you have many devices and lists are awkward to use;
+- you need to grasp the state of the house "at a glance";
+- you want to give access to family members — anyone can figure out a picture;
+- you want a beautiful overview screen for a wall-mounted tablet.
 
-Интеграция состоит из двух частей, которые ставятся вместе:
+The integration consists of two parts that are installed together:
 
-- **карточка Lovelace** `houseplan-card` — сам интерактивный план;
-- **серверный компонент** — хранит разметку комнат и позиции иконок в Home Assistant, поэтому план одинаков во всех браузерах и на всех устройствах.
+- **the Lovelace card** `houseplan-card` — the interactive plan itself;
+- **the server-side component** — stores the room markup and icon positions in Home Assistant, so the plan is identical in all browsers and on all devices.
 
 ---
 
-## Чем отличается от аналогов
+## How it differs from alternatives
 
-Обычно план дома в Home Assistant делают через `picture-elements`, `ha-floorplan` и подобные решения. Там приходится вручную писать YAML, вычислять координаты каждой иконки и заново править конфиг при каждом изменении. House Plan устроен иначе:
+A house plan in Home Assistant is usually built with `picture-elements`, `ha-floorplan` and similar solutions. There you have to write YAML by hand, calculate the coordinates of every icon, and edit the config again after every change. House Plan works differently:
 
-| | House Plan | Обычные решения (picture-elements / ha-floorplan) |
+| | House Plan | Typical solutions (picture-elements / ha-floorplan) |
 |---|---|---|
-| **Настройка** | Полностью через интерфейс, мышкой | Ручной YAML и правка кода |
-| **Добавление устройств** | Автоматически по комнатам | Каждую сущность вписываете руками |
-| **Координаты иконок** | Перетаскиваете мышью | Считаете пиксели и пишете в конфиг |
-| **Разметка комнат** | Встроенный редактор контуров | Рисуете в стороннем редакторе SVG |
-| **Хранение** | На сервере HA (общее для всех устройств) | В YAML дашборда |
-| **Масштаб** | Плавный зум, всё остаётся чётким (вектор) | Обычно фиксированная картинка |
+| **Setup** | Entirely through the UI, with the mouse | Manual YAML and code editing |
+| **Adding devices** | Automatic, by room | You type in every entity by hand |
+| **Icon coordinates** | Drag with the mouse | You count pixels and write them into the config |
+| **Room markup** | Built-in outline editor | You draw in an external SVG editor |
+| **Storage** | On the HA server (shared by all devices) | In the dashboard YAML |
+| **Zoom** | Smooth zoom, everything stays crisp (vector) | Usually a fixed image |
 
-Ключевые преимущества коротко:
+Key advantages in short:
 
-- **Никакого кода.** Всё — пространства, комнаты, устройства — настраивается кликами.
-- **Автоматическое добавление устройств.** Обвели комнату и привязали её к зоне Home Assistant — устройства этой зоны сами появляются на плане.
-- **Ручное добавление своих.** Любое устройство, группу или даже «виртуальную» точку можно поставить на план вручную, задать имя, иконку, модель, ссылку и приложить PDF-инструкцию.
-- **Живые состояния.** Температура, уровень сигнала Zigbee, вкл/выкл, открыто/закрыто — всё обновляется в реальном времени.
-- **Чёткий зум.** Приближение не «мылит» картинку: план, подписи и иконки остаются векторно-чёткими на любом масштабе.
+- **No code at all.** Everything — spaces, rooms, devices — is configured with clicks.
+- **Automatic device placement.** Outline a room and bind it to a Home Assistant area — the devices of that area appear on the plan by themselves.
+- **Manual additions of your own.** Any device, group or even a "virtual" point can be placed on the plan manually, with a name, icon, model, link and an attached PDF manual.
+- **Live states.** Temperature, Zigbee signal strength, on/off, open/closed — everything updates in real time.
+- **Crisp zoom.** Zooming in does not "blur" the picture: the plan, labels and icons remain vector-sharp at any scale.
 
 ---
 
-## Установка
+## Installation
 
-### Через HACS (рекомендуется)
+### Via HACS (recommended)
 
-1. Откройте **HACS → меню (⋮) → Custom repositories**.
-2. Вставьте URL этого репозитория, категория — **Integration**, и нажмите **Add**.
-3. Найдите в списке **House Plan**, установите и **перезапустите Home Assistant**.
-4. Перейдите в **Настройки → Устройства и службы → Добавить интеграцию** и выберите **House Plan**.
+1. Open **HACS → menu (⋮) → Custom repositories**.
+2. Paste the URL of this repository, set the category to **Integration**, and click **Add**.
+3. Find **House Plan** in the list, install it and **restart Home Assistant**.
+4. Go to **Settings → Devices & Services → Add integration** and select **House Plan**.
 
-Карточка подключается автоматически — добавлять ресурс Lovelace вручную не нужно.
+The card is registered automatically — no need to add a Lovelace resource manually.
 
-### Вручную
+### Manually
 
-1. Скопируйте папку `custom_components/houseplan` в каталог `config/custom_components` вашего Home Assistant.
-2. Перезапустите Home Assistant.
-3. Добавьте интеграцию: **Настройки → Устройства и службы → Добавить интеграцию → House Plan**.
+1. Copy the `custom_components/houseplan` folder into the `config/custom_components` directory of your Home Assistant.
+2. Restart Home Assistant.
+3. Add the integration: **Settings → Devices & Services → Add integration → House Plan**.
 
-### Добавление экрана с планом
+### Adding a plan screen
 
-Создайте новую вкладку дашборда (удобнее всего — в режиме «Панель»/Panel) и добавьте карточку:
+Create a new dashboard tab (a "Panel" view works best) and add the card:
 
 ```yaml
 type: custom:houseplan-card
-title: План дома
+title: House plan
 ```
 
-Больше ничего указывать не нужно — всё остальное настраивается прямо на экране.
+Nothing else needs to be specified — everything else is configured right on the screen.
 
 ---
 
-## Как пользоваться
+## How to use
 
-### Шаг 1. Добавьте пространство (этаж)
+### Step 1. Add a space (floor)
 
-При первом открытии план ещё пуст — House Plan сразу предложит создать первое пространство.
+On first open the plan is still empty — House Plan immediately offers to create the first space.
 
-![Пустой план — предложение добавить пространство](docs/images/02-onboarding-empty.png)
+![Empty plan — prompt to add a space](docs/images/02-onboarding-empty.png)
 
-В диалоге задайте **название** (например, «1 этаж») и **загрузите подложку** — картинку плана этажа в формате SVG, PNG или JPG. Оба поля обязательны: без плана кнопка «Сохранить» неактивна.
+In the dialog, set a **name** (for example, "1st floor") and **upload a background** — a floor-plan image in SVG, PNG or JPG format. Both fields are required: without a plan the "Save" button stays disabled.
 
-![Диалог создания пространства](docs/images/03-space-dialog.png)
+![Space creation dialog](docs/images/03-space-dialog.png)
 
-> 💡 Подложку можно нарисовать в любом планировщике (например, РЕМПЛАННЕР) или сфотографировать бумажный план. Лучше всего SVG — он остаётся чётким при увеличении.
+> 💡 You can draw the background in any floor planner (for example, REMPLANNER) or photograph a paper plan. SVG works best — it stays crisp when zoomed in.
 
-Позже можно добавить сколько угодно пространств (этажи, двор, гараж) кнопкой **＋** рядом со вкладками.
+Later you can add as many spaces as you like (floors, yard, garage) with the **＋** button next to the tabs.
 
-### Шаг 2. Обведите комнаты
+### Step 2. Outline the rooms
 
-После добавления первого пространства карточка сама переходит в режим разметки. Кликайте по точкам сетки, соединяя их линиями, и замкните контур комнаты кликом по первой точке.
+After the first space is added, the card switches to markup mode by itself. Click grid points, connecting them with lines, and close the room outline by clicking the first point.
 
-Как только контур замкнётся, появится окно сохранения комнаты. Здесь нужно **привязать комнату к зоне Home Assistant** — именно это включает автоматику. Для служебных помещений без устройств (холл, сауна) есть кнопка **«Без зоны»**.
+As soon as the outline is closed, the room-save dialog appears. Here you need to **bind the room to a Home Assistant area** — this is exactly what enables the automation. For utility rooms with no devices (hall, sauna) there is a **"No area"** button.
 
-![Разметка комнаты и её сохранение](docs/images/05-room-dialog.png)
+![Marking up a room and saving it](docs/images/05-room-dialog.png)
 
-### Шаг 3. Устройства появляются сами
+### Step 3. Devices appear by themselves
 
-Как только вы сохранили комнату с привязкой к зоне, **устройства этой зоны автоматически расставляются внутри контура**. Берутся те же устройства, что показаны на странице **Настройки → Устройства → (фильтр по нужной комнате)** — только осмысленные, без служебных записей, мостов и дубликатов.
+As soon as you save a room bound to an area, **the devices of that area are automatically laid out inside the outline**. These are the same devices shown on the **Settings → Devices → (filtered by the room)** page — only the meaningful ones, without service records, bridges and duplicates.
 
-По умолчанию на план попадают только осмысленные устройства — служебные записи, мосты и дубликаты отфильтрованы. Если нужно видеть **вообще все** устройства зоны, включите в шапке кнопку **👁 «Показать все устройства»**.
+By default only meaningful devices make it onto the plan — service records, bridges and duplicates are filtered out. If you need to see **absolutely all** devices of the area, enable the **👁 "Show all devices"** button in the header.
 
-Дальше можно просто пользоваться планом: клик по иконке открывает карточку устройства с моделью, ссылкой и кнопкой перехода в Home Assistant.
+From here on you can just use the plan: clicking an icon opens the device card with the model, link and a button to jump into Home Assistant.
 
-![Карточка устройства по клику](docs/images/08-info.png)
+![Device card on click](docs/images/08-info.png)
 
-### Шаг 4. Масштаб
+### Step 4. Zoom
 
-Колесо мыши или кнопки **－ / ⊹ / ＋** приближают и отдаляют план; на сенсорном экране работает «щипок» двумя пальцами. При отдалении виден весь план целиком, при приближении — детали, и всё остаётся чётким. Масштаб запоминается отдельно для каждого пространства.
+The mouse wheel or the **－ / ⊹ / ＋** buttons zoom the plan in and out; on a touch screen the two-finger pinch works. Zoomed out you see the whole plan, zoomed in you see the details, and everything stays crisp. The zoom level is remembered separately for each space.
 
-![Приближённый план — всё остаётся чётким](docs/images/09-zoom.png)
+![Zoomed-in plan — everything stays crisp](docs/images/09-zoom.png)
 
-### Шаг 5. Расставьте значки по местам
+### Step 5. Put the icons in their places
 
-Значки устройств можно **перетаскивать мышью в любой момент** — отдельный «режим правки» включать не нужно. Позиции сохраняются на сервере и одинаковы во всех браузерах и устройствах. Кнопка **↺** в шапке возвращает автоматическую раскладку.
+Device icons can be **dragged with the mouse at any time** — no separate "edit mode" needs to be enabled. Positions are saved on the server and are identical in all browsers and devices. The **↺** button in the header restores the automatic layout.
 
-![Перетаскивание значков — доступно всегда](docs/images/06-edit.png)
+![Dragging icons — available at all times](docs/images/06-edit.png)
 
-### Шаг 6. Добавление своих устройств вручную
+### Step 6. Adding your own devices manually
 
-Не всё нужно оставлять на автоматику. Кнопкой **＋** в шапке можно поставить на план любое устройство, группу или **виртуальную точку** (например, «Вентиль на вводе», которого нет как устройства). Задайте имя, иконку, модель, ссылку, описание и при желании приложите **PDF-инструкцию**.
+Not everything has to be left to the automation. With the **＋** button in the header you can place any device, group or a **virtual point** on the plan (for example, an "Inlet valve" that does not exist as a device). Set a name, icon, model, link, description and, if you wish, attach a **PDF manual**.
 
-![Добавление устройства вручную](docs/images/07-marker-dialog.png)
-
----
-
-## Удаление
-
-1. Уберите карточку (или вкладку с планом) из дашборда.
-2. **Настройки → Устройства и службы → House Plan → Удалить** запись интеграции.
-3. Удалите интеграцию из **HACS** (или папку `custom_components/houseplan` при ручной установке) и перезапустите Home Assistant.
-4. При желании удалите сохранённые данные плана: файлы `config/houseplan/` (подложки и вложения) и записи `houseplan.config` / `houseplan.layout` в каталоге `config/.storage`.
+![Adding a device manually](docs/images/07-marker-dialog.png)
 
 ---
 
-## Часто задаваемые вопросы
+## Uninstalling
 
-**Нужно ли что-то писать в YAML?** Нет. Единственная строчка — это добавление карточки на дашборд; всё остальное делается мышкой.
-
-**Мои устройства не появились на плане.** Устройство появляется, только если его зона в Home Assistant привязана к нарисованной комнате. Проверьте, что у устройства задана комната (Настройки → Устройства), а комната обведена и привязана к этой зоне. Если устройство есть, но скрыто курированием (мосты, служебные, дубликаты) — включите в шапке кнопку **👁 «Показать все устройства»**.
-
-**Можно ли скрыть лишнее устройство или переименовать его?** Да — кликните по устройству на плане и в его карточке нажмите «Редактировать»: там можно сменить имя, иконку, модель или скрыть значок.
-
-**Данные хранятся в облаке?** Нет. Всё хранится локально в вашем Home Assistant.
+1. Remove the card (or the tab with the plan) from the dashboard.
+2. **Settings → Devices & Services → House Plan → Delete** the integration entry.
+3. Remove the integration from **HACS** (or delete the `custom_components/houseplan` folder if installed manually) and restart Home Assistant.
+4. Optionally delete the saved plan data: the `config/houseplan/` files (backgrounds and attachments) and the `houseplan.config` / `houseplan.layout` entries in the `config/.storage` directory.
 
 ---
 
-<p align="center"><sub>Скриншоты сделаны на реальной конфигурации Home Assistant.</sub></p>
+## Frequently asked questions
+
+**Do I need to write anything in YAML?** No. The only line is adding the card to the dashboard; everything else is done with the mouse.
+
+**My devices did not appear on the plan.** A device appears only if its Home Assistant area is bound to a drawn room. Check that the device has a room assigned (Settings → Devices) and that the room is outlined and bound to that area. If the device exists but is hidden by curation (bridges, service records, duplicates) — enable the **👁 "Show all devices"** button in the header.
+
+**Can I hide an unwanted device or rename it?** Yes — click the device on the plan and press "Edit" in its card: there you can change the name, icon, model or hide the icon.
+
+**Is the data stored in the cloud?** No. Everything is stored locally in your Home Assistant.
+
+---
+
+<p align="center"><sub>Screenshots were taken on a real Home Assistant configuration.</sub></p>

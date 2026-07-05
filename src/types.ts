@@ -1,4 +1,4 @@
-/** Общие типы карточки House Plan. */
+/** Shared types of the House Plan card. */
 
 export interface RoomCfg {
   id?: string;
@@ -8,7 +8,7 @@ export interface RoomCfg {
   y?: number;
   w?: number;
   h?: number;
-  poly?: number[][]; // полигон в рендер-единицах (модель) / нормированный (конфиг)
+  poly?: number[][]; // polygon in render units (model) / normalized (config)
 }
 
 export interface SpaceModel {
@@ -24,7 +24,7 @@ export interface PdfRef {
   url: string;
 }
 
-/** Маркер конфига: правит/дополняет авто-устройство ИЛИ описывает ручной/виртуальный значок. */
+/** Config marker: edits/augments an auto-discovered device OR describes a manual/virtual icon. */
 export interface Marker {
   id: string;
   binding: string; // 'device:<id>' | 'entity:<eid>' | 'virtual'
@@ -56,7 +56,7 @@ export interface DevItem {
   primary?: string;
   temp?: number | null;
   virtual?: boolean;
-  marker?: Marker; // связанный маркер конфига (метаданные, оверрайды)
+  marker?: Marker; // linked config marker (metadata, overrides)
   bindingKind?: 'device' | 'entity' | 'virtual';
   bindingRef?: string; // device_id / entity_id
   link?: string | null;
@@ -72,4 +72,5 @@ export interface CardConfig {
   show_temperature?: boolean;
   live_states?: boolean;
   show_signal?: boolean;
+  language?: string; // 'en' | 'ru' | '' (auto — HA profile)
 }

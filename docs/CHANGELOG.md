@@ -1,310 +1,328 @@
 # Changelog
 
-## v1.10.0 — 2026-07-05 (аудит: гонки записи, XSS, модульность)
-**Бэкенд**
-- **Гонка записи устранена**: все циклы load→modify→save (`layout/set|update|delete`,
-  `config/set`) сериализованы общим `asyncio.Lock` — параллельные WS-вызовы больше не теряют
-  изменения, проверка `expected_rev` стала атомарной.
-- Новая WS-команда `houseplan/layout/delete` — чистка позиции при удалении маркера
-  (раньше в `.storage/houseplan.layout` копились сироты).
-- Удалена мёртвая WS-команда `houseplan/file/set` — файлы грузятся только по HTTP
-  (`/api/houseplan/upload`), как и было в карточке.
-- HTTP-загрузка: лимит 25 МБ применяется ПО МЕРЕ чтения multipart (обрыв на лимите),
-  а не после чтения всего файла в память; `stat()` файлов ушёл в executor.
-- `request.app[KEY_HASS]` вместо устаревшего `request.app["hass"]` (с фолбэком для старых HA).
+## v1.11.0 — 2026-07-05 (full English translation + UI localization)
+- **UI localization (en/ru)**: every card string moved to `src/i18n.ts` dictionaries.
+  The language follows the HA user profile (`hass.locale`) automatically; a new
+  `language: en|ru` card option forces it. The GUI editor got the option and its own
+  localized labels. Generated device names (light group, unnamed, virtual device)
+  are localized via a `loc` callback in `BuildCtx`.
+- **English-only codebase**: all comments, docstrings, section banners, JSDoc, test
+  names, backend WS/HTTP error messages and log lines translated to English.
+  Russian remains only where it is functional or content: the `ru` i18n dictionary,
+  `translations/ru.json` (config flow), `iconFor` regex patterns matching Russian
+  device names (with their test fixtures), and the Russian documentation copy.
+- **Docs**: README is now English-first with a full Russian copy in `README.ru.md`;
+  `docs/ARCHITECTURE.md`, `DEVELOPMENT.md`, `ROADMAP.md` and the entire CHANGELOG
+  history translated to English. `translations/en.json` had Russian strings — fixed.
+- Removed obsolete `RELEASE_NOTES_v1.9.3.md` and `scripts_publish.sh` (publication
+  is done; the repo lives at github.com/Matysh/houseplan-card).
 
-**Фронтенд**
-- **God-component разобран**: `houseplan-card.ts` 3023 → ~1990 строк.
-  Стили → `styles.ts`; типы → `types.ts`; построение устройств из реестров HA
-  (курирование, группы света, маркеры, LQI/температура) → `devices.ts` (чистые функции).
-- **Last-writer-wins в раскладке устранён**: `_saveMarker` пишет позицию точечно
-  (`layout/update`), а не всей раскладкой (`layout/set`) — не затирает позиции из других
-  окон (регресс-класс инцидента v1.4.4). Перепривязка/удаление подчищают старую позицию.
-- **XSS закрыт**: `link` и `pdfs[].url` маркеров проходят `safeUrl()` (только http(s)
-  и относительные пути; `javascript:`/`data:` отбрасываются). +12 тестов.
-- Загрузка файлов через `hass.fetchWithAuth` (автообновление протухшего токена),
-  фолбэк на сырой токен.
-- **Хардкод дачи убран из GUI-редактора**: список «пространство по умолчанию» строится
-  из серверного конфига (WS `config/get`), а не зашитых f1/f2/yard.
-- `rules.ts`: удалён мёртвый экспорт `GROUP_TITLES`; регэкспы `iconFor` прекомпилированы.
-- Единый `_errText()` во всех обработчиках ошибок (никогда «[object Object]»).
+## v1.10.0 — 2026-07-05 (audit: write races, XSS, modularity)
+**Backend**
+- **Write race eliminated**: all load→modify→save cycles (`layout/set|update|delete`,
+  `config/set`) are serialized by a shared `asyncio.Lock` — concurrent WS calls no longer lose
+  changes, and the `expected_rev` check became atomic.
+- New WS command `houseplan/layout/delete` — cleans up a position when a marker is deleted
+  (previously orphans accumulated in `.storage/houseplan.layout`).
+- Removed the dead WS command `houseplan/file/set` — files are uploaded over HTTP only
+  (`/api/houseplan/upload`), as the card already did.
+- HTTP upload: the 25 MB limit is enforced WHILE reading the multipart stream (abort at the limit),
+  not after reading the whole file into memory; file `stat()` moved into the executor.
+- `request.app[KEY_HASS]` instead of the deprecated `request.app["hass"]` (with a fallback for older HA).
 
-## v1.9.3 — 2026-07-05 (аудит + рефакторинг + тесты)
-- Чистые функции `fitView` (contain-прямоугольник вьюпорта) и `declump` (расталкивание значков)
-  вынесены из карточки в `logic.ts` — покрыты юнит-тестами (было 9 → стало 14 тестов).
-- `_lqiFor` и `_roomLqi` теперь используют общую `averageLqi` (убрано дублирование усреднения).
-- Удалён мёртвый код после отказа от отдельного режима правки: поле `_edit` (писалось, но не
-  читалось), методы `_renderEditbar` и `_applyXY` (не вызывались).
-- Поведение не изменилось — только структура и покрытие тестами. Проверено: tsc, сборка,
-  14 фронт-тестов + 10 бэк-тестов зелёные, headless-дымтест (рендер/зум/устройства/declump) чист.
+**Frontend**
+- **The god-component was broken up**: `houseplan-card.ts` 3023 → ~1990 lines.
+  Styles → `styles.ts`; types → `types.ts`; building devices from the HA registries
+  (curation, light groups, markers, LQI/temperature) → `devices.ts` (pure functions).
+- **Last-writer-wins in the layout eliminated**: `_saveMarker` writes the position pointwise
+  (`layout/update`), not the whole layout (`layout/set`) — it no longer wipes positions from other
+  windows (the regression class of the v1.4.4 incident). Rebinding/deletion clean up the old position.
+- **XSS closed**: marker `link` and `pdfs[].url` go through `safeUrl()` (only http(s)
+  and relative paths; `javascript:`/`data:` are rejected). +12 tests.
+- File uploads via `hass.fetchWithAuth` (auto-refresh of an expired token),
+  fallback to the raw token.
+- **The dacha hardcode removed from the GUI editor**: the "default space" list is built
+  from the server config (WS `config/get`), not the baked-in f1/f2/yard.
+- `rules.ts`: removed the dead export `GROUP_TITLES`; the `iconFor` regexes are precompiled.
+- A single `_errText()` in all error handlers (never "[object Object]").
 
-## v1.9.2 — 2026-07-05 (сетка вдвое мельче)
-- Шаг сетки разметки/привязки уменьшен вдвое: `GRID_N` 120 → 240. Позиции устройств и контуры
-  комнат НЕ пересчитываются и не сдвигаются: координаты хранятся нормированными долями и снапятся
-  к узлам сетки, а старые узлы (кратные 1/120) — точное подмножество новых (кратных 1/240).
-  Проверено на живой раскладке (65 позиций — все уже на новой сетке). Перетаскивание теперь
-  позволяет более точное позиционирование.
+## v1.9.3 — 2026-07-05 (audit + refactoring + tests)
+- The pure functions `fitView` (viewport contain rectangle) and `declump` (icon push-apart)
+  were extracted from the card into `logic.ts` — covered by unit tests (was 9 → now 14 tests).
+- `_lqiFor` and `_roomLqi` now use the shared `averageLqi` (duplicate averaging removed).
+- Removed dead code left after dropping the separate edit mode: the `_edit` field (written but
+  never read), the methods `_renderEditbar` and `_applyXY` (never called).
+- No behavior change — only structure and test coverage. Verified: tsc, build,
+  14 frontend tests + 10 backend tests green, headless smoke test (render/zoom/devices/declump) clean.
 
-## v1.9.1 — 2026-07-05 (сигнал Zigbee: чтение из атрибута + ZHA)
-- Уровень сигнала теперь берётся не только из выделенного сенсора `*_linkquality` (Z2M), но и:
-  из сенсоров `*_lqi` (ZHA), и из АТРИБУТА `linkquality`/`lqi` на любой сущности устройства.
-  Это покрывает устройства, у которых отдельный сенсор сигнала отключён, но значение есть в атрибуте.
-- ПРИМЕЧАНИЕ: если у устройства сенсор `*_linkquality` отключён (disabled_by=integration) И значение
-  нигде не публикуется как атрибут — сигнал показать нельзя, нужно включить сенсор в реестре HA.
+## v1.9.2 — 2026-07-05 (grid twice as fine)
+- The markup/snapping grid step was halved: `GRID_N` 120 → 240. Device positions and room
+  outlines are NOT recomputed and do not shift: coordinates are stored as normalized fractions and snap
+  to grid nodes, and the old nodes (multiples of 1/120) are an exact subset of the new ones (multiples of 1/240).
+  Verified on the live layout (65 positions — all already on the new grid). Dragging now
+  allows more precise positioning.
 
-## v1.9.0 — 2026-07-05 (UX: перетаскивание всегда, расталкивание, показать все, адаптив)
-- **Перетаскивание значков доступно всегда** — отдельный «режим правки» убран (кнопка ✥ удалена).
-  Клик по значку открывает карточку устройства (правка метаданных — через кнопку «Редактировать»
-  в ней), перетаскивание работает в любой момент. `_pointerDown` больше не требует `_edit`.
-- **Значки не скучиваются** (`_declump`): после авто-раскладки по сетке выполняется расталкивание
-  в пределах комнаты, чтобы иконки не налезали друг на друга.
-- **Позиции фиксируются при сохранении комнаты**: авто-позиции устройств зоны один раз пишутся
-  в раскладку, поэтому при смене порядка в реестре HA значки не перетасовываются.
-- **Дубли не скрываются, а нумеруются**: устройства с одинаковым «имя|зона» получают суффикс
-  (« 2», « 3»…) вместо тихого исчезновения.
-- **Кнопка 👁 «Показать все устройства»** в шапке: временно отключает курирование и показывает
-  все устройства зоны (мосты, служебные, дубли) — на случай, если нужное скрыто. Флаг `show_all`
-  в настройках конфига.
-- **Подсказка продолжения разметки**: после сохранения комнаты тост показывает счётчик комнат и
-  предлагает обвести следующую или выйти из разметки.
-- **Адаптивная шапка**: тулбар переносится и ужимается на узких экранах (media-query ≤620px).
+## v1.9.1 — 2026-07-05 (Zigbee signal: reading from the attribute + ZHA)
+- The signal level is now taken not only from the dedicated `*_linkquality` sensor (Z2M), but also:
+  from `*_lqi` sensors (ZHA), and from the `linkquality`/`lqi` ATTRIBUTE on any entity of the device.
+  This covers devices whose dedicated signal sensor is disabled but the value is available in an attribute.
+- NOTE: if a device's `*_linkquality` sensor is disabled (disabled_by=integration) AND the value
+  is not published anywhere as an attribute — the signal cannot be shown; enable the sensor in the HA registry.
 
-## v1.8.4 — 2026-07-04 (онбординг: обязательные поля + ведение пользователя)
-- Первичная инициализация приведена к целевому сценарию: установка → диалог пространства →
-  комнаты → авто-значки устройств.
-- **Подложка обязательна** при создании пространства: «Сохранить» неактивна без загруженного
-  плана (раньше требовалось только название — можно было создать пустое пространство).
-- **Зона комнаты обязательна** с явным выходом: основная «Сохранить» требует привязку к зоне HA;
-  для декоративных комнат без устройств (холл, сауна) есть отдельная кнопка «Без зоны»
-  (нужно только имя). Раньше сохранить можно было по «имя ИЛИ зона».
-- **Ведение пользователя:** на пустом серверном конфиге диалог пространства открывается
-  автоматически; после добавления первого пространства карточка сама входит в режим разметки
-  комнат с подсказкой «обведите комнаты». 
-- При сохранении комнаты с зоной значки устройств этой зоны авто-расставляются внутри контура
-  (курируемый набор: без мостов/служебных/дублей/одиночных ламп из групп), тост показывает,
-  сколько устройств добавлено.
+## v1.9.0 — 2026-07-05 (UX: always-on dragging, declumping, show all, responsive)
+- **Icon dragging is available at all times** — the separate "edit mode" is gone (the ✥ button removed).
+  Clicking an icon opens the device card (metadata editing — via the "Edit" button
+  inside it), dragging works at any moment. `_pointerDown` no longer requires `_edit`.
+- **Icons no longer clump together** (`_declump`): after the automatic grid layout a push-apart pass
+  runs within the room so that icons do not overlap each other.
+- **Positions are pinned when a room is saved**: the auto-positions of the area's devices are written
+  into the layout once, so icons do not get reshuffled when the order in the HA registry changes.
+- **Duplicates are numbered instead of hidden**: devices with the same "name|area" get a suffix
+  (" 2", " 3"…) instead of silently disappearing.
+- **The 👁 "Show all devices" button** in the header: temporarily disables curation and shows
+  all devices of the area (bridges, service records, duplicates) — in case a needed one is hidden. The `show_all`
+  flag in the config settings.
+- **Markup continuation hint**: after saving a room a toast shows the room counter and
+  suggests outlining the next one or leaving markup mode.
+- **Responsive header**: the toolbar wraps and shrinks on narrow screens (media query ≤620px).
 
-## v1.8.3 — 2026-07-04 (мгновенный старт: кэш конфига, данные в фоне)
-- Иконки и план появлялись с задержкой — карточка ждала ответа сервера (WS `config/get`
-  + ретраи прогрева соединения), до этого модель пространств была пуста.
-- Внедрён кэш «stale-while-revalidate»: снимок серверного конфига + rev + раскладки
-  сохраняется в `localStorage['houseplan_card_cfg_v1']`. В `setConfig` (синхронно, до прихода
-  hass) он восстанавливается — план и значки рисуются сразу из кэша (проверено: setConfig
-  наполняет модель за 0.2 мс без сервера), а свежие данные догружаются в фоне и обновляют
-  карточку. Живые состояния/температуры/сигнал подтягиваются по мере прогрева hass.
-- Кэш обновляется после каждой успешной загрузки, live-ресинка и сохранения позиций иконок,
-  поэтому при следующем открытии виден актуальный снимок. При недоступном сервере показывается
-  последний известный план вместо пустого онбординга.
+## v1.8.4 — 2026-07-04 (onboarding: required fields + user guidance)
+- Initial setup brought to the target scenario: install → space dialog →
+  rooms → auto device icons.
+- **The background is mandatory** when creating a space: "Save" stays disabled without an uploaded
+  plan (previously only the name was required — an empty space could be created).
+- **The room area is mandatory**, with an explicit escape hatch: the main "Save" requires binding to an HA area;
+  for decorative rooms without devices (hall, sauna) there is a separate "No area" button
+  (only a name is needed). Previously saving was possible with "name OR area".
+- **User guidance:** with an empty server config the space dialog opens
+  automatically; after the first space is added the card enters room markup mode
+  by itself with an "outline the rooms" hint. 
+- When a room with an area is saved, the icons of that area's devices are auto-placed inside the outline
+  (the curated set: without bridges/service records/duplicates/individual lamps from groups), and a toast shows
+  how many devices were added.
 
-## v1.8.2 — 2026-07-04 (векторно-чёткий зум через viewBox + полная ширина сцены)
-- Зум переведён с CSS `transform: scale()` на манипуляцию `viewBox` SVG. Раньше слой
-  растрировался и потом масштабировался — при приближении всё «мылилось». Теперь браузер
-  перерисовывает вектор в целевом разрешении: иконки, подписи комнат, линии, штриховка и
-  векторная подложка остаются чёткими на любом масштабе (проверено на 274%).
-- Слой иконок (HTML) позиционируется и масштабируется по тому же `view`, а не общим
-  transform — иконки чёткие и растут вместе с планом.
-- Сцена теперь занимает всю ширину вьюпорта (модель «contain» по аспекту сцены): при
-  зум-ине контент заполняет ширину без чёрных полей по бокам. При полном отдалении виден
-  весь план (по ширине и высоте), поля вокруг залиты фоном карточки, а не чёрным.
-- Вся координатная математика (клик разметки `_svgPoint`, drag иконок, pan, pinch) переписана
-  в единых `view`-координатах — редактирование корректно на любом зуме. ResizeObserver сцены
-  пересчитывает `view` при изменении размеров (сайдбар, поворот). Пан/зум ограничены `fit`.
+## v1.8.3 — 2026-07-04 (instant start: config cache, data in the background)
+- Icons and the plan appeared with a delay — the card waited for the server response (WS `config/get`
+  + connection warm-up retries), and until then the space model was empty.
+- A "stale-while-revalidate" cache was introduced: a snapshot of the server config + rev + layout
+  is saved in `localStorage['houseplan_card_cfg_v1']`. In `setConfig` (synchronously, before
+  hass arrives) it is restored — the plan and icons are drawn immediately from the cache (verified: setConfig
+  populates the model in 0.2 ms without the server), while fresh data loads in the background and updates the
+  card. Live states/temperatures/signal come in as hass warms up.
+- The cache is refreshed after every successful load, live resync and icon position save,
+  so on the next open the current snapshot is visible. When the server is unavailable the
+  last known plan is shown instead of the empty onboarding.
 
-## v1.8.1 — 2026-07-04 (fit-to-viewport + сохранение зума по пространствам)
-- Уменьшение масштаба до полного вида: нижний предел зума = 100% совпадает с полностью
-  видимым планом. `.stage` теперь ограничена по высоте вьюпорта
-  (`width:min(100%, calc((100dvh − 118px) × aspect))`, `max-width:100%`, центрирование),
-  поэтому при сбросе/зум-ауте вся схема видна и по ширине, и по высоте без обрезки.
-- Масштаб запоминается для каждого пространства отдельно и локально на устройстве
-  (`localStorage['houseplan_card_zoom_v1']`, `_zoomBySpace`): переключение этажей
-  восстанавливает свой зум; при возврате пан центрируется и ограничивается.
-- Проверено на живом HA: f1→196%, f2→140%, двор нетронут — после переключений
-  значения восстанавливаются; сброс даёт 100% и полный план (874≤992 px по высоте).
+## v1.8.2 — 2026-07-04 (vector-crisp zoom via viewBox + full-width stage)
+- Zoom moved from CSS `transform: scale()` to manipulating the SVG `viewBox`. Previously the layer
+  was rasterized and then scaled — everything "blurred" when zooming in. Now the browser
+  redraws the vector at the target resolution: icons, room labels, lines, hatching and the
+  vector background remain crisp at any scale (verified at 274%).
+- The icon layer (HTML) is positioned and scaled by the same `view`, not a global
+  transform — the icons are crisp and grow together with the plan.
+- The stage now occupies the full viewport width (a "contain" model by the stage aspect): when
+  zoomed in the content fills the width without black bars on the sides. Fully zoomed out the
+  whole plan is visible (both width and height), the margins around it are filled with the card
+  background, not black.
+- All coordinate math (markup click `_svgPoint`, icon drag, pan, pinch) was rewritten
+  in unified `view` coordinates — editing is correct at any zoom. A ResizeObserver on the stage
+  recomputes the `view` when dimensions change (sidebar, rotation). Pan/zoom are constrained to `fit`.
+
+## v1.8.1 — 2026-07-04 (fit-to-viewport + per-space zoom persistence)
+- Zooming out to the full view: the lower zoom limit = 100% coincides with the fully
+  visible plan. `.stage` is now constrained by the viewport height
+  (`width:min(100%, calc((100dvh − 118px) × aspect))`, `max-width:100%`, centering),
+  so on reset/zoom-out the whole layout is visible both in width and height without clipping.
+- The zoom level is remembered per space and locally per device
+  (`localStorage['houseplan_card_zoom_v1']`, `_zoomBySpace`): switching floors
+  restores each floor's zoom; on return the pan is centered and constrained.
+- Verified on live HA: f1→196%, f2→140%, the yard untouched — after switching around the
+  values are restored; reset gives 100% and the full plan (874≤992 px in height).
 
 
-## v1.8.0 — 2026-07-04 (зумирование плана)
-- Зум и панорама схемы: колёсико мыши (к курсору), щипок двумя пальцами (pinch) на тач-экране,
-  перетаскивание фона одним пальцем при увеличении, кнопки −/сброс/+ в тулбаре, бейдж масштаба.
-- Реализовано через CSS-transform на `.zoomwrap` (translate+scale); координатная математика
-  (клик разметки, drag иконок, тултипы) пересчитана с учётом зума/пана — редактирование
-  работает и при увеличении. Пан ограничен, чтобы контент всегда покрывал сцену. Зум 100–800%.
-- `.stage`: overflow hidden + touch-action none (свои жесты вместо браузерных).
+## v1.8.0 — 2026-07-04 (plan zooming)
+- Zoom and pan of the layout: mouse wheel (towards the cursor), two-finger pinch on a touch screen,
+  one-finger background drag when zoomed in, −/reset/+ buttons in the toolbar, a zoom badge.
+- Implemented via a CSS transform on `.zoomwrap` (translate+scale); the coordinate math
+  (markup clicks, icon drag, tooltips) was recomputed with zoom/pan in mind — editing
+  works when zoomed in too. Pan is constrained so the content always covers the stage. Zoom 100–800%.
+- `.stage`: overflow hidden + touch-action none (custom gestures instead of the browser's).
 
-## v1.7.4 — 2026-07-04 (PDF по HTTP вместо WebSocket)
-- КОРНЕВАЯ ПРИЧИНА невозможности загрузить PDF: файл слался как base64 одним WebSocket-сообщением,
-  а у WS есть лимит размера — реальный мануал (>2–3 МБ) превышал его, соединение рвалось
-  («Connection lost»), из-за чего и падала загрузка, и закрывался диалог (обрыв WS → переподключение
-  → ре-рендер). Подтверждено тестом: 1 МБ по WS ок, 3 МБ → Connection lost.
-- Файлы-инструкции теперь грузятся через HTTP-эндпоинт `POST /api/houseplan/upload` (multipart,
-  HomeAssistantView, requires_auth, admin_only-проверка) — как медиа в самом HA. Проверено:
-  3 МБ (182мс) и 10 МБ (446мс) загружаются на ура.
-- Читаемые ошибки везде (`_errText`): больше никаких «[object Object]»; понятные тексты для
+## v1.7.4 — 2026-07-04 (PDF over HTTP instead of WebSocket)
+- THE ROOT CAUSE of being unable to upload a PDF: the file was sent as base64 in a single WebSocket
+  message, and WS has a message-size limit — a real manual (>2–3 MB) exceeded it, the connection dropped
+  ("Connection lost"), which both failed the upload and closed the dialog (WS drop → reconnect
+  → re-render). Confirmed by test: 1 MB over WS is fine, 3 MB → Connection lost.
+- Manual files are now uploaded through the HTTP endpoint `POST /api/houseplan/upload` (multipart,
+  HomeAssistantView, requires_auth, admin_only check) — like media in HA itself. Verified:
+  3 MB (182 ms) and 10 MB (446 ms) upload without a hitch.
+- Readable errors everywhere (`_errText`): no more "[object Object]"; clear texts for
   too_large / bad_ext / unauthorized.
-- WS-команда houseplan/file/set оставлена для совместимости, но фронт использует HTTP.
+- The WS command houseplan/file/set is kept for compatibility, but the frontend uses HTTP.
 
 
-## v1.7.3 — 2026-07-04 (фиксы диалога устройства)
-- PDF-инструкции не загружались: ручной base64 (`btoa(String.fromCharCode(...subarray))`) падал
-  на реальных файлах (RangeError при спреде больших массивов), а при закрытии диалога во время
-  await бросал null-доступ. Заменено на `FileReader.readAsDataURL` (надёжно для любого размера),
-  результаты аккумулируются и добавляются, только если диалог ещё открыт (без исключений).
-- Диалог редактирования устройства/пространства/комнаты закрывался по клику мимо и «сам»
-  (случайный клик по фон-оверлею, в т.ч. после закрытия системного выбора файла). Убрано
-  закрытие по клику на фон у диалогов-редакторов — только явные Отмена/Сохранить/Esc.
-  Инфо-карточка (только чтение) по-прежнему закрывается кликом мимо.
-- Проверено на живом HA: PDF прикрепляется; клик по фону и обновление данных диалог не закрывают.
+## v1.7.3 — 2026-07-04 (device dialog fixes)
+- PDF manuals failed to upload: the manual base64 (`btoa(String.fromCharCode(...subarray))`) crashed
+  on real files (RangeError when spreading large arrays), and when the dialog was closed during an
+  await it threw a null access. Replaced with `FileReader.readAsDataURL` (reliable for any size);
+  the results are accumulated and added only if the dialog is still open (no exceptions).
+- The device/space/room edit dialog closed on an outside click and "by itself"
+  (an accidental click on the background overlay, including after closing the system file picker). Removed
+  background-click closing for editor dialogs — only explicit Cancel/Save/Esc.
+  The info card (read-only) still closes on an outside click.
+- Verified on live HA: PDFs attach; a background click and dialog data refresh do not close the dialog.
 
-## v1.7.2 — 2026-07-04 (фикс мобильного «ошибка конфигурации»)
-- ПРИЧИНА: карточка подключалась только через `add_extra_js_url` (extra_module_url), загрузку
-  которого фронтенд НЕ дожидается — на холодном старте мобильного приложения дашборд рисовался
-  раньше регистрации элемента → «ошибка конфигурации». (Все рабочие HACS-карточки — Lovelace-ресурсы.)
-- ФИКС 1: интеграция регистрирует карточку как **Lovelace-ресурс** (module) — их фронтенд ждёт
-  перед рендером. Идемпотентно (обновляет URL при смене версии, без дублей); фолбэк на
-  extra_module_url для YAML-режима Lovelace. `_register_lovelace_resource` в __init__.py.
-- ФИКС 2: `_loadFromServer` ретраит (до 8 попыток по обновлениям hass) — если hass пришёл раньше
-  готовности WS, карточка не застревает на онбординге, а дожидается конфига.
-- Проверено: ресурс houseplan-card.js зарегистрирован, extra_module_url пуст (единый чистый
-  модуль), карточка рендерит план на свежей вкладке без ошибки.
+## v1.7.2 — 2026-07-04 (fix for the mobile "configuration error")
+- THE CAUSE: the card was hooked up only via `add_extra_js_url` (extra_module_url), whose loading the
+  frontend does NOT wait for — on a cold start of the mobile app the dashboard was drawn
+  before the element was registered → "configuration error". (All working HACS cards are Lovelace resources.)
+- FIX 1: the integration registers the card as a **Lovelace resource** (module) — the frontend waits for
+  those before rendering. Idempotent (updates the URL on a version change, no duplicates); a fallback to
+  extra_module_url for Lovelace YAML mode. `_register_lovelace_resource` in __init__.py.
+- FIX 2: `_loadFromServer` retries (up to 8 attempts on hass updates) — if hass arrived before
+  WS readiness, the card does not get stuck on the onboarding but waits for the config.
+- Verified: the houseplan-card.js resource is registered, extra_module_url is empty (a single clean
+  module), the card renders the plan on a fresh tab without the error.
 
-## v1.7.0 — 2026-07-04 (аудит + рефакторинг + тесты)
-- Удалён вшитый в бандл дом-образец (дача, ~245 КБ base64 планов + ROOMS/FLOOR_*): бандл
-  293 КБ → 83 КБ. Свежая установка показывает онбординг «Добавить пространство», а не чужой дом.
-- Удалён код миграции legacy→сервер (дача уже на server config) и мёртвые пути
-  device_overrides/virtual_devices (заменены markers[]).
-- Чистая логика вынесена в src/logic.ts (lqiColor, snapToGrid, segKey, pointInPolygon,
-  markerIdForBinding, averageLqi) — покрыта юнит-тестами (node:test, 9 тестов + iconFor).
-- Бэкенд: валидация/санитайзеры вынесены в validation.py (без HA-импортов) — pytest, 10 тестов.
-- БЕЗОПАСНОСТЬ: тест выявил, что санитайзер имён файлов/маркеров сохранял ведущие точки
-  (риск обхода каталогов через «..»); добавлено срезание ведущих точек, пустое → misc/file.
-- Исправлены реальные баги, ранее замаскированные обрезанным rules.ts: DOMAIN_PRIORITY был
-  усечён (ломало выбор more-info-сущности); _defaultPositions падал на полигон-комнатах
-  (теперь bbox). tsc --noEmit добавлен в сборку и CI — строгая типизация проходит.
-- Убраны дубли-мусор src/data/{editor,rules}.ts; версии синхронизированы (manifest застрял на 1.4.0).
-- CI: добавлены typecheck, юнит-тесты фронта и бэка.
+## v1.7.0 — 2026-07-04 (audit + refactoring + tests)
+- Removed the sample house baked into the bundle (the dacha, ~245 KB of base64 plans + ROOMS/FLOOR_*): the bundle
+  went 293 KB → 83 KB. A fresh install shows the "Add a space" onboarding, not someone else's house.
+- Removed the legacy→server migration code (the dacha is already on the server config) and the dead
+  device_overrides/virtual_devices paths (replaced by markers[]).
+- Pure logic extracted into src/logic.ts (lqiColor, snapToGrid, segKey, pointInPolygon,
+  markerIdForBinding, averageLqi) — covered by unit tests (node:test, 9 tests + iconFor).
+- Backend: validation/sanitizers extracted into validation.py (no HA imports) — pytest, 10 tests.
+- SECURITY: a test revealed that the file/marker name sanitizer preserved leading dots
+  (a directory traversal risk via ".."); leading-dot stripping added, empty → misc/file.
+- Fixed real bugs previously masked by the truncated rules.ts: DOMAIN_PRIORITY was
+  cut short (breaking the more-info entity selection); _defaultPositions crashed on polygon rooms
+  (now bbox). tsc --noEmit added to the build and CI — strict typing passes.
+- Removed the junk duplicates src/data/{editor,rules}.ts; versions synchronized (the manifest was stuck at 1.4.0).
+- CI: added typecheck, frontend and backend unit tests.
 
 ## v1.6.2 — 2026-07-04
-- Поле «Комната» в диалоге устройства теперь для ВСЕХ значков (не только виртуальных):
-  для привязанных — «переопределить размещение» (по умолчанию по зоне устройства); смена
-  комнаты переставляет значок в её центр. Сохраняется в marker.space/area и выигрывает у зоны HA.
-- В инфо-карточке добавлена кнопка «Редактировать» — открывает диалог редактирования устройства.
+- The "Room" field in the device dialog is now for ALL icons (not only virtual ones):
+  for bound ones it "overrides the placement" (by default, the device's area); changing the
+  room moves the icon to its center. Stored in marker.space/area and wins over the HA area.
+- An "Edit" button was added to the info card — it opens the device edit dialog.
 
-## v1.6.0 — 2026-07-04 (Фаза 3: редактор устройств)
-- Модель «маркеров» (config.markers[]): гибрид — авто-устройства HA появляются сами, маркеры
-  правят/перепривязывают/дополняют их и описывают ручные/виртуальные значки. id маркера
-  сохраняет позицию (device→device_id, entity→lg_<eid>, virtual→v_<rand>).
-- Клик по значку: обычный режим → инфо-карточка (имя, модель, состояние, ссылка, описание,
-  PDF-инструкции, кнопка «Открыть в HA»); режим правки → диалог редактирования.
-- Диалог устройства: имя, привязка (пикер всех устройств/групп HA+Z2M+хелперов с текстовым
-  фильтром, минус уже размещённые и дубли по имя|area, + «Виртуальное устройство»), MDI-иконка
-  (ha-icon-picker), модель, ссылка, описание, прикрепление файлов-инструкций (PDF на сервер),
-  комната (для виртуальных), Убрать/Отмена/Сохранить.
-- Тулбар: кнопка «+» (тултип «Добавить устройство») — пустой диалог.
-- Бэкенд: MARKER_SCHEMA в config; WS houseplan/file/set (файлы в /config/houseplan/files/,
-  ≤25 МБ, отдача /houseplan_files/files/); статика files зарегистрирована.
-- Виртуальные значки теперь перетаскиваются и позиционируются как обычные (layout по id).
+## v1.6.0 — 2026-07-04 (Phase 3: device editor)
+- The "markers" model (config.markers[]): a hybrid — auto-discovered HA devices appear by themselves, markers
+  edit/rebind/augment them and describe manual/virtual icons. The marker id
+  preserves the position (device→device_id, entity→lg_<eid>, virtual→v_<rand>).
+- Clicking an icon: normal mode → the info card (name, model, state, link, description,
+  PDF manuals, an "Open in HA" button); edit mode → the edit dialog.
+- The device dialog: name, binding (a picker of all HA+Z2M devices/groups+helpers with a text
+  filter, minus already-placed ones and duplicates by name|area, plus "Virtual device"), MDI icon
+  (ha-icon-picker), model, link, description, manual file attachment (PDF to the server),
+  room (for virtual ones), Remove/Cancel/Save.
+- Toolbar: a "+" button (tooltip "Add device") — an empty dialog.
+- Backend: MARKER_SCHEMA in the config; WS houseplan/file/set (files in /config/houseplan/files/,
+  ≤25 MB, served from /houseplan_files/files/); the files static path registered.
+- Virtual icons are now draggable and positioned like normal ones (layout by id).
 
 ## v1.6.1 — 2026-07-04
-- Пикер привязки прячет дубли устройств по «имя|area» (Tuya/LocalTuya), как дедуп на плане.
+- The binding picker hides device duplicates by "name|area" (Tuya/LocalTuya), same as the dedup on the plan.
 
-## v1.5.1 — 2026-07-04 (управление пространствами)
-- Иконка-карандаш справа от названия каждого пространства в верхнем тулбаре + кнопка «+»
-  (только при server config).
-- Диалог пространства: поле «Название», превью текущей подложки + «Загрузить/Заменить…»
-  (SVG/PNG/JPG/WebP, base64 → houseplan/plan/set, пропорции определяются из файла),
-  кнопки Удалить / Отмена / Сохранить. Создание пустого пространства и удаление (со всеми
-  комнатами и разметкой, с подтверждением). Сохранение через config/set с ревизией.
+## v1.5.1 — 2026-07-04 (space management)
+- A pencil icon to the right of each space name in the top toolbar + a "+" button
+  (only with a server config).
+- The space dialog: a "Name" field, a preview of the current background + "Upload/Replace…"
+  (SVG/PNG/JPG/WebP, base64 → houseplan/plan/set, the aspect ratio is detected from the file),
+  Delete / Cancel / Save buttons. Creating an empty space and deletion (together with all its
+  rooms and markup, with a confirmation). Saved via config/set with a revision.
 
-## v1.5.0 — 2026-07-04 (группы света = сущности)
-- Лампы заменены сущностями групп: HA light-groups (platform=group, area из реестра сущности)
-  и Z2M-группы (device model=Group) рендерятся иконкой mdi:lightbulb-group; клик → more-info
-  группы (управление всей группой и участниками штатно в HA).
-- Одиночные лампы скрываются в комнатах, где есть группа света (settings.group_lights=false
-  возвращает поштучный режим).
-- Выпилена старая визуальная группировка и кастомное меню участников (упрощение кода).
-- Позиции старых групп (grp_<area>) перенесены на новые id (lg_<entity_id>) в раскладке дачи.
+## v1.5.0 — 2026-07-04 (light groups = entities)
+- Lamps replaced by group entities: HA light groups (platform=group, area from the entity registry)
+  and Z2M groups (device model=Group) are rendered with the mdi:lightbulb-group icon; a click → the group's
+  more-info (controlling the whole group and its members natively in HA).
+- Individual lamps are hidden in rooms that have a light group (settings.group_lights=false
+  brings back the per-lamp mode).
+- The old visual grouping and the custom member menu were removed (code simplification).
+- The positions of the old groups (grp_<area>) were migrated to the new ids (lg_<entity_id>) in the dacha layout.
 
-## v1.4.4 — 2026-07-04 (КРИТИЧЕСКИЙ фикс: гонка конфигураций)
-- ИНЦИДЕНТ: config сохранялся целиком по принципу last-writer-wins — открытый клиент со
-  старой копией затирал чужие правки (потеряна первая итерация пользовательской разметки).
-- Фикс: оптимистичная блокировка — конфиг несёт `rev`; `config/set` принимает `expected_rev`
-  и возвращает ошибку `conflict` при несовпадении; клиент перечитывает конфиг.
-- Live-синхронизация: `config/set` рассылает событие `houseplan_config_updated`; все открытые
-  карточки подписаны и перечитывают конфиг автоматически (окна больше не расходятся).
-- Позиции при drag сохраняются точечно через `layout/update` (dirty-set), а не полным
-  `layout/set` — раскладка тоже больше не затирается между окнами.
-- Бэкап конфига перед деплоем: .storage/houseplan.config.bak-*.
+## v1.4.4 — 2026-07-04 (CRITICAL fix: configuration race)
+- INCIDENT: the config was saved wholesale on a last-writer-wins basis — an open client with a
+  stale copy wiped other clients' edits (the first iteration of the user's markup was lost).
+- Fix: optimistic locking — the config carries a `rev`; `config/set` accepts `expected_rev`
+  and returns a `conflict` error on mismatch; the client re-reads the config.
+- Live synchronization: `config/set` broadcasts a `houseplan_config_updated` event; all open
+  cards are subscribed and re-read the config automatically (windows no longer diverge).
+- Positions during drag are saved pointwise via `layout/update` (dirty set), not a full
+  `layout/set` — the layout is also no longer wiped between windows.
+- A config backup before deployment: .storage/houseplan.config.bak-*.
 
 ## v1.4.3 — 2026-07-04
-- Иконки устройств привязываются к той же сетке, что и разметка (центр иконки = узел, снап
-  при перетаскивании и вводе X/Y). Существующие 57 позиций в БД дачи снапнуты к узлам.
+- Device icons snap to the same grid as the markup (the icon center = a node, snapping
+  on drag and on X/Y input). The existing 57 positions in the dacha DB were snapped to the nodes.
 
-## v1.4.2 — 2026-07-04 (сетка разметки)
-- Шаг сетки уменьшен в 2 раза: GRID_N 60 → 120 (шаг 8.33 рендер-ед. ≈ 0.83% ширины плана).
-- Точки сетки рендерятся ПОВЕРХ плана и комнат (grid-rect перенесён из под-плана в верхний
-  markup-слой); точки контрастнее (r=0.14g, обводка).
-- Данные дачи: границы всех 13 комнат привязаны к узлам сетки (снап рёбер, сдвиги ≤ полшага;
-  правка только конфига инстанса через houseplan/config/set, код не менялся).
-- Кэш карточки: URL модуля ?v= берётся из const.VERSION — при обновлении фронтенда бампать
-  const.py и рестартовать HA, иначе браузеры держат старый модуль в memory-cache.
+## v1.4.2 — 2026-07-04 (markup grid)
+- The grid step was halved: GRID_N 60 → 120 (step 8.33 render units ≈ 0.83% of the plan width).
+- Grid points are rendered ON TOP of the plan and rooms (the grid-rect was moved from below the plan
+  into the top markup layer); the points are higher-contrast (r=0.14g, outline).
+- Dacha data: the boundaries of all 13 rooms were snapped to grid nodes (edge snapping, shifts ≤ half a step;
+  only the instance config was edited via houseplan/config/set, the code was untouched).
+- Card cache: the module URL ?v= is taken from const.VERSION — when updating the frontend, bump
+  const.py and restart HA, otherwise browsers keep the old module in memory cache.
 
-## v1.4.1 — 2026-07-04 (UX разметки)
-- Esc / Ctrl+Z при рисовании убирают последнюю точку (и её линию, если она была добавлена
-  этим шагом; переиспользованные чужие стены не трогаются).
-- Панель редактирования (разметка и правка раскладки) перенесена наверх под шапку карточки
-  и закреплена вместе с ней (общий sticky-контейнер .hdr).
-- Замыкание контура автоматически открывает модальный диалог «Новая комната»: отображаемое
-  имя, выпадающий список ТОЛЬКО свободных зон HA (не назначенных ни одной комнате конфига),
-  Сохранить/Отмена. Отмена (или Esc) снимает замыкающую точку — контур можно продолжить.
-  Выбор зоны при пустом имени подставляет название зоны.
+## v1.4.1 — 2026-07-04 (markup UX)
+- Esc / Ctrl+Z while drawing remove the last point (and its line, if it was added
+  by that step; reused walls belonging to others are untouched).
+- The editing panel (markup and layout editing) was moved to the top under the card header
+  and pinned together with it (a shared sticky container .hdr).
+- Closing the outline automatically opens the "New room" modal dialog: the display
+  name, a dropdown of ONLY the free HA areas (not assigned to any room of the config),
+  Save/Cancel. Cancel (or Esc) removes the closing point — the outline can be continued.
+  Choosing an area with an empty name fills in the area's name.
 
-## v1.4.0 — 2026-07-04 (Фаза 2: редактор разметки комнат)
-- Режим «Разметка» в карточке (кнопка mdi:vector-square-edit, только при server config):
-  сетка точек (60 узлов по ширине), линии парами кликов со снапом к узлам, полилиния-превью.
-- Замкнутый контур (клик по первой точке) активирует «Сохранить»: выбор зоны HA из
-  выпадающего списка + название; комната сохраняется полигоном (poly, нормированные вершины).
-- Инструменты: Добавить (рисование), Стереть линию (клик по линии), Удалить комнату
-  (клик внутри + confirm). Линии-«стены» хранятся в space.segments и переиспользуются
-  соседними комнатами (общие стены — кликами по существующим узлам).
-- Рендер комнат: полигоны наравне с прямоугольниками (hover, клик в зону, LQI-тултип,
-  подпись в центроиде); в режиме разметки контуры и названия всех комнат видимы.
-- Бэкенд: ROOM_SCHEMA принимает poly (≥3 вершин) или x/y/w/h; SPACE_SCHEMA — segments.
+## v1.4.0 — 2026-07-04 (Phase 2: room markup editor)
+- The "Markup" mode in the card (the mdi:vector-square-edit button, only with a server config):
+  a grid of points (60 nodes across the width), lines drawn by pairs of clicks with node snapping, a polyline preview.
+- A closed outline (a click on the first point) activates "Save": choosing an HA area from a
+  dropdown + a name; the room is saved as a polygon (poly, normalized vertices).
+- Tools: Add (drawing), Erase line (a click on a line), Delete room
+  (a click inside + confirm). The "wall" lines are stored in space.segments and reused by
+  neighboring rooms (shared walls — via clicks on existing nodes).
+- Room rendering: polygons on par with rectangles (hover, click into the area, LQI tooltip,
+  the label at the centroid); in markup mode the outlines and names of all rooms are visible.
+- Backend: ROOM_SCHEMA accepts poly (≥3 vertices) or x/y/w/h; SPACE_SCHEMA — segments.
 
-## v1.3.0 — 2026-07-04 (Фаза 1: серверная конфигурация)
-- Store `houseplan.config`: spaces (план, aspect, view_box, комнаты), device_overrides
+## v1.3.0 — 2026-07-04 (Phase 1: server-side configuration)
+- The `houseplan.config` Store: spaces (plan, aspect, view_box, rooms), device_overrides
   (hidden/icon/name), virtual_devices, settings (exclude_integrations, group_lights).
-- WS: `houseplan/config/get|set`, `houseplan/plan/set` (загрузка файла плана base64 →
-  `<config>/houseplan/plans/`, отдача через /houseplan_files/plans/).
-- Карточка: резолв-модель — server config (координаты НОРМИРОВАННЫЕ 0..1, рендер 1000×1000/aspect)
-  или legacy-бандл (холст 1489×1053). Раскладка v2: {device_id: {s, x, y}} нормированная.
-- Кнопка «На сервер» в режиме правки — миграция legacy-конфига в один клик (планы, комнаты,
-  view_box, раскладка). Выполнена на даче: .storage/houseplan.config + plans/f1.svg,f2.svg.
-- Read-side поддержка оверрайдов устройств и виртуальных устройств (UI управления — фазы 3–4).
+- WS: `houseplan/config/get|set`, `houseplan/plan/set` (plan file upload as base64 →
+  `<config>/houseplan/plans/`, served through /houseplan_files/plans/).
+- The card: a resolve model — the server config (coordinates NORMALIZED 0..1, render 1000×1000/aspect)
+  or the legacy bundle (canvas 1489×1053). Layout v2: {device_id: {s, x, y}} normalized.
+- The "To server" button in edit mode — a one-click migration of the legacy config (plans, rooms,
+  view_box, layout). Performed at the dacha: .storage/houseplan.config + plans/f1.svg,f2.svg.
+- Read-side support for device overrides and virtual devices (the management UI — phases 3–4).
 
 ## v1.2.2 — 2026-07-04
-- Тулбар карточки (вкладки этажей) закрепляется при скролле под шапкой HA
+- The card toolbar (floor tabs) pins under the HA header while scrolling
   (`position: sticky; top: var(--header-height)`; ha-card overflow: visible).
-- Инцидент: промежуточная сборка на нестабильном mount дала битый бандл, роняющий рендер
-  дашбордов; правило «собирать только в /tmp + md5-контроль» закреплено в DEVELOPMENT.md.
+- Incident: an intermediate build on the unstable mount produced a broken bundle that crashed the
+  dashboard rendering; the rule "build only in /tmp + md5 control" was locked into DEVELOPMENT.md.
 
 ## v1.2.1 — 2026-07-04
-- Иконки не увеличиваются при наведении/перетаскивании (убран transform: scale).
+- Icons no longer enlarge on hover/drag (transform: scale removed).
 
 ## v1.2.0 — 2026-07-03
-- Границы комнат сняппены к стенам векторного плана.
-- Zigbee LQI: значение под иконкой, среднее по комнате в тултипе, градиент красный→зелёный,
-  опция show_signal.
-- `mdi:lock` для любых устройств с сущностью lock.* (TTLock).
-- Выключатель прихожей: исправлена зона устройства в реестре HA (был в detskaia_elina).
+- Room boundaries snapped to the walls of the vector plan.
+- Zigbee LQI: the value under the icon, the room average in the tooltip, a red→green gradient,
+  the show_signal option.
+- `mdi:lock` for any devices with a lock.* entity (TTLock).
+- The hallway switch: the device's area in the HA registry was fixed (it was in detskaia_elina).
 
 ## v1.1.0 — 2026-07-03
-- Векторные подложки (SVG РЕМПЛАННЕР), автосовмещение масштаба/сдвига растровой корреляцией.
-- Размер иконок в % ширины плана (container queries, дефолт 2.5%).
+- Vector backgrounds (SVG from REMPLANNER), automatic scale/offset alignment via raster correlation.
+- Icon size as a % of the plan width (container queries, default 2.5%).
 
 ## v1.0.1 — 2026-07-03
-- fix: вложенные SVG-фрагменты через lit svg`` (подложка/комнаты не рендерились).
-- fix: версия из const вместо блокирующего чтения manifest.json в event loop.
+- fix: nested SVG fragments via lit svg`` (the background/rooms were not rendered).
+- fix: the version taken from const instead of a blocking manifest.json read in the event loop.
 
 ## v1.0.0 — 2026-07-03
-- Первый релиз: Lovelace-карточка (TS+Lit, без токена, от hass) + интеграция houseplan
-  (WS-хранилище раскладки, раздача JS). Перенос модели прототипа: курирование, группы ламп,
-  iconFor, температура, more-info, навигация в зоны, drag-раскладка.
+- First release: the Lovelace card (TS+Lit, no token, driven by hass) + the houseplan integration
+  (WS layout storage, JS serving). The prototype's model carried over: curation, lamp groups,
+  iconFor, temperature, more-info, area navigation, drag layout.

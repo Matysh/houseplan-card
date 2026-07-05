@@ -1,4 +1,4 @@
-/** Стили карточки House Plan (вынесены из компонента). */
+/** Styles of the House Plan card (extracted from the component). */
 import { css } from 'lit';
 
 export const cardStyles = css`
@@ -12,7 +12,7 @@ export const cardStyles = css`
       --hp-open: #ff9f43;
     }
     ha-card {
-      overflow: visible; /* overflow:hidden ломает position:sticky у шапки */
+      overflow: visible; /* overflow:hidden breaks position:sticky on the header */
     }
     .empty {
       padding: 40px 24px;
@@ -139,7 +139,7 @@ export const cardStyles = css`
       width: 100%;
       container-type: inline-size;
       overflow: hidden;
-      touch-action: none; /* свои жесты pinch/pan */
+      touch-action: none; /* custom pinch/pan gestures */
       background: var(--ha-card-background, var(--card-background-color, #111));
     }
     .zoomwrap {
@@ -220,7 +220,7 @@ export const cardStyles = css`
       pointer-events: none;
     }
     .stage.markup .devlayer {
-      display: none; /* в разметке иконки не мешают */
+      display: none; /* in markup mode icons must not get in the way */
     }
     .room.outlined {
       stroke: rgba(62, 166, 255, 0.55);

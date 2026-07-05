@@ -1,10 +1,10 @@
 /**
- * House Plan Card — интерактивный план дома как нативная Lovelace-карточка.
- * Источники конфигурации:
- *  1) СЕРВЕР (интеграция houseplan, WS houseplan/config/get) — пространства, планы,
- *     комнаты, оверрайды устройств, виртуальные устройства. Координаты НОРМИРОВАННЫЕ (0..1).
- *  2) LEGACY-фолбэк — вшитые данные дачи (src/data/*), координаты в холсте 1489×1053.
- * Раскладка иконок хранится на сервере (houseplan/layout/*), fallback — localStorage.
+ * House Plan Card — an interactive house plan as a native Lovelace card.
+ * Configuration sources:
+ *  1) SERVER (the houseplan integration, WS houseplan/config/get) — spaces, plans,
+ *     rooms, device overrides, virtual devices. Coordinates are NORMALIZED (0..1).
+ *  2) LEGACY fallback — baked-in country-house data (src/data/*), coordinates in a 1489×1053 canvas.
+ * The icon layout is stored on the server (houseplan/layout/*), fallback — localStorage.
  */
 import { LitElement, html, svg, nothing, TemplateResult, PropertyValues } from 'lit';
 import { EXCLUDED_DOMAINS } from './rules';
@@ -18,14 +18,15 @@ import type {
 } from './types';
 import './editor';
 import { cardStyles } from './styles';
+import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.10.0';
+const CARD_VERSION = '1.11.0';
 const LS_KEY = 'houseplan_card_layout_v1';
-const LS_CFG = 'houseplan_card_cfg_v1'; // кэш серверного конфига+раскладки для мгновенного рендера
+const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
-const NORM_W = 1000; // ширина рендер-пространства для нормированных конфигов
+const NORM_W = 1000; // width of the render space for normalized configs
 
-const GRID_N = 240; // точек сетки по ширине плана (шаг вдвое меньше; старые узлы — подмножество новых, позиции сохраняются)
+const GRID_N = 240; // grid points across the plan width (half the previous step; old nodes are a subset of the new ones, positions are preserved)
 type MarkupTool = 'draw' | 'erase' | 'delroom';
 
 const fireEvent = (node: EventTarget, type: string, detail?: unknown) => {
@@ -68,38 +69,38 @@ class HouseplanCard extends LitElement {
   private _toast = '';
   private _toastTimer?: number;
 
-  // --- редактор разметки комнат ---
+  // --- room markup editor ---
   private _markup = false;
   private _tool: MarkupTool = 'draw';
-  private _path: number[][] = []; // текущий контур (рендер-единицы, вершины по сетке)
-  private _pathSegs: (string | null)[] = []; // ключи сегментов, добавленных шагами контура
+  private _path: number[][] = []; // current outline (render units, vertices snapped to the grid)
+  private _pathSegs: (string | null)[] = []; // keys of the segments added by outline steps
   private _cursorPt: number[] | null = null;
   private _areaSel = '';
   private _nameSel = '';
   private _roomDialog = false;
-  // зум/панорама плана (зум сохраняется по пространству локально)
+  // plan zoom/pan (zoom is saved per space, locally)
   private _zoom = 1;
-  private _view: { x: number; y: number; w: number; h: number } | null = null; // текущий viewBox SVG (vb-координаты)
+  private _view: { x: number; y: number; w: number; h: number } | null = null; // current SVG viewBox (vb coordinates)
   private _zoomBySpace: Record<string, number> = {};
   private _pointers = new Map<number, { x: number; y: number }>();
   private _panStart: { sx: number; sy: number; vx: number; vy: number } | null = null;
   private _pinchStart: { dist: number; zoom: number } | null = null;
   private _suppressClick = false;
   private _roViewport?: ResizeObserver;
-  private _onboardingShown = false; // авто-диалог пространства показан один раз за сессию
+  private _onboardingShown = false; // the auto space dialog is shown once per session
 
   private _infoCard: DevItem | null = null;
   private _markerDialog: {
-    devId?: string;      // редактируемый значок (если есть)
+    devId?: string;      // the icon being edited (if any)
     name: string;
     binding: string;     // 'device:<id>' | 'entity:<eid>' | 'virtual'
     bindingFilter: string;
-    icon: string;        // '' = авто
+    icon: string;        // '' = auto
     model: string;
     link: string;
     description: string;
     pdfs: PdfRef[];
-    room: string;        // 'space#area' для виртуального
+    room: string;        // 'space#area' for a virtual one
     busy: boolean;
   } | null = null;
   private _spaceDialog: {
@@ -173,7 +174,7 @@ class HouseplanCard extends LitElement {
     }
   }
 
-  /** Убрать последнюю поставленную точку (и её линию, если она была добавлена этим шагом). */
+  /** Remove the last placed point (and its line, if it was added by that step). */
   private _undoPoint(): void {
     if (!this._path.length) return;
     if (this._path.length === 1) {
@@ -204,7 +205,7 @@ class HouseplanCard extends LitElement {
   }
 
   public static getStubConfig(): Partial<CardConfig> {
-    return { type: 'custom:houseplan-card', title: 'План дома' };
+    return { type: 'custom:houseplan-card' };
   }
 
   public setConfig(config: CardConfig): void {
@@ -215,8 +216,8 @@ class HouseplanCard extends LitElement {
     } catch {
       this._zoomBySpace = {};
     }
-    // мгновенный рендер из кэша (stale-while-revalidate): показать план и значки
-    // сразу, не дожидаясь ответа сервера — свежие данные догрузятся в фоне.
+    // instant render from cache (stale-while-revalidate): show the plan and icons
+    // right away, without waiting for the server response — fresh data will load in the background.
     try {
       const c = JSON.parse(localStorage.getItem(LS_CFG) || 'null');
       if (c && c.config && Array.isArray(c.config.spaces)) {
@@ -232,7 +233,7 @@ class HouseplanCard extends LitElement {
     }
   }
 
-  /** Сохранить снимок конфига+раскладки в localStorage для мгновенного старта. */
+  /** Save a snapshot of the config+layout to localStorage for an instant start. */
   private _cacheSnapshot(): void {
     if (!this._serverCfg) return;
     try {
@@ -246,14 +247,14 @@ class HouseplanCard extends LitElement {
     return 12;
   }
 
-  // ================= РЕЗОЛВ МОДЕЛИ (серверная конфигурация) =================
+  // ================= MODEL RESOLUTION (server configuration) =================
 
-  /** Есть ли серверная конфигурация с пространствами (иначе — онбординг). */
+  /** Whether a server configuration with spaces exists (otherwise — onboarding). */
   private get _norm(): boolean {
     return !!(this._serverCfg && this._serverCfg.spaces.length);
   }
 
-  /** Пространства в рендер-единицах (NORM_W × NORM_W/aspect). */
+  /** Spaces in render units (NORM_W × NORM_W/aspect). */
   private get _model(): SpaceModel[] {
     if (!this._serverCfg) return [];
     return this._serverCfg.spaces.map((s: any) => {
@@ -327,7 +328,7 @@ class HouseplanCard extends LitElement {
       this._roViewport.observe(stage);
     }
     if (stage && !this._view) this._refitView();
-    // онбординг: на пустом серверном конфиге сразу открываем диалог пространства
+    // onboarding: on an empty server config, open the space dialog right away
     if (
       this._serverStorage &&
       this._loadOk &&
@@ -340,7 +341,7 @@ class HouseplanCard extends LitElement {
     }
   }
 
-  // ================= сервер: конфиг + раскладка =================
+  // ================= server: config + layout =================
 
   private async _loadFromServer(): Promise<void> {
     this._loading = true;
@@ -356,7 +357,7 @@ class HouseplanCard extends LitElement {
       this._serverCfg = cfg && Array.isArray(cfg.spaces) ? cfg : null;
       this._cfgRev = cfgResp?.rev || 0;
       this._layout = layResp?.layout || {};
-      // live-синхронизация: конфиг изменён в другом окне → перечитать
+      // live sync: the config was changed in another window → re-read it
       if (!this._unsubCfg) {
         this._unsubCfg = await this.hass.connection.subscribeEvents((ev: any) => {
           if ((ev?.data?.rev ?? -1) !== this._cfgRev) this._reloadConfigOnly();
@@ -368,7 +369,7 @@ class HouseplanCard extends LitElement {
       this._cacheSnapshot();
       this._restoreZoom();
     } catch (e) {
-      // не последняя попытка — молча ждём следующего обновления hass (прогрев WS)
+      // not the last attempt — silently wait for the next hass update (WS warm-up)
       if (this._loadTries >= 8) {
         this._serverStorage = false;
         this._serverCfg = null;
@@ -404,7 +405,7 @@ class HouseplanCard extends LitElement {
 
   private _persistLayout = debounce(() => {
     if (this._serverStorage) {
-      // точечные обновления: не затираем позиции, изменённые в других окнах
+      // point-wise updates: do not overwrite positions changed in other windows
       const ids = [...this._dirtyPos];
       this._dirtyPos.clear();
       for (const id of ids) {
@@ -412,7 +413,7 @@ class HouseplanCard extends LitElement {
         if (!pos) continue;
         this.hass
           .callWS({ type: 'houseplan/layout/update', device_id: id, pos })
-          .catch((e: any) => this._showToast('Не удалось сохранить позицию: ' + (e?.message || e)));
+          .catch((e: any) => this._showToast(this._t('toast.pos_save_failed', { err: this._errText(e) })));
       }
       this._cacheSnapshot();
     } else {
@@ -420,14 +421,14 @@ class HouseplanCard extends LitElement {
     }
   }, 600);
 
-  // ================= устройства из реестров =================
+  // ================= devices from the registries =================
 
   private _maybeRebuildDevices(): void {
     const h = this.hass;
     if (!h?.devices || !h?.entities || !h?.areas) return;
     const sig =
       Object.keys(h.devices).length + ':' + Object.keys(h.entities).length + ':' +
-      Object.keys(h.areas).length + ':' + (this._norm ? 'n' : 'l');
+      Object.keys(h.areas).length + ':' + (this._norm ? 'n' : 'l') + ':' + langOf(h, this._config?.language);
     if (sig === this._regSignature && this._devices.length) return;
     this._regSignature = sig;
     this._devices = buildDevices({
@@ -440,11 +441,12 @@ class HouseplanCard extends LitElement {
       excluded: this._excluded,
       showAll: this._showAll,
       firstSpaceId: this._model[0]?.id || '',
+      loc: (k) => this._t(k),
     });
     this._defPos = this._defaultPositions();
   }
 
-  /** Курирование + группы света + оверрайды + виртуальные устройства. */
+  /** Curation + light groups + overrides + virtual devices. */
   private get _markers(): Marker[] {
     return this._serverCfg?.markers || [];
   }
@@ -460,9 +462,9 @@ class HouseplanCard extends LitElement {
     return averageLqi(vals);
   }
 
-  // ================= позиции =================
+  // ================= positions =================
 
-  /** Ограничивающий прямоугольник комнаты (rect или полигон) в рендер-единицах. */
+  /** Bounding rectangle of a room (rect or polygon) in render units. */
   private _roomBounds(r: RoomCfg): { x: number; y: number; w: number; h: number } {
     if (r.poly && r.poly.length) {
       const xs = r.poly.map((p) => p[0]);
@@ -477,7 +479,7 @@ class HouseplanCard extends LitElement {
   private _defaultPositions(): Record<string, { x: number; y: number }> {
     const map: Record<string, { x: number; y: number }> = {};
     const iconPct = this._config?.icon_size ?? 2.5;
-    const minDist = (iconPct / 100) * NORM_W * 1.3; // не ближе диаметра значка + запас
+    const minDist = (iconPct / 100) * NORM_W * 1.3; // no closer than the icon diameter + a margin
     for (const s of this._model) {
       for (const r of s.rooms) {
         if (!r.area) continue;
@@ -502,7 +504,7 @@ class HouseplanCard extends LitElement {
     return map;
   }
 
-  /** Позиция устройства в рендер-единицах текущего пространства. */
+  /** Device position in render units of the current space. */
   private _pos(d: DevItem): { x: number; y: number } {
     const s = this._spaceModel(d.space);
     const saved = this._layout[d.id];
@@ -523,7 +525,7 @@ class HouseplanCard extends LitElement {
 
   private _savePos(d: DevItem, x: number, y: number): void {
     if (this._norm) {
-      // центр иконки привязывается к узлам той же сетки, что и разметка комнат
+      // the icon center snaps to the nodes of the same grid as the room markup
       const g = this._gridPitch;
       const gx = Math.round(x / g) * g;
       const gy = Math.round(y / g) * g;
@@ -539,7 +541,7 @@ class HouseplanCard extends LitElement {
     this._persistLayout();
   }
 
-  // ================= живые состояния =================
+  // ================= live states =================
 
   private _stateClass(d: DevItem): string {
     if (!this._config?.live_states) return '';
@@ -566,11 +568,11 @@ class HouseplanCard extends LitElement {
     return tempFor(this.hass, d.entities);
   }
 
-  // ================= взаимодействие =================
+  // ================= interaction =================
 
   private _openMoreInfo(entityId?: string): void {
     if (!entityId) {
-      this._showToast('У устройства нет подходящей сущности');
+      this._showToast(this._t('toast.no_entity'));
       return;
     }
     fireEvent(this, 'hass-more-info', { entityId });
@@ -583,23 +585,28 @@ class HouseplanCard extends LitElement {
     this._infoCard = d;
   }
 
+  /** Translate a key in the card's current language. */
+  private _t(key: I18nKey, vars?: Record<string, string | number>): string {
+    return t(langOf(this.hass, this._config?.language), key, vars);
+  }
+
   private get _stageEl(): HTMLElement | null {
     return this.renderRoot.querySelector('.stage') as HTMLElement | null;
   }
 
-  /** Соотношение сторон сцены (ширина/высота, px). */
+  /** Aspect ratio of the scene (width/height, px). */
   private _stageAspect(): number {
     const s = this._stageEl;
     const vb = this._spaceModel().vb;
     return s && s.clientHeight ? s.clientWidth / s.clientHeight : vb[2] / vb[3];
   }
 
-  /** Текущий view с фолбэком на полный fit. */
+  /** Current view with a fallback to the full fit. */
   private _viewOr(vb: number[]): { x: number; y: number; w: number; h: number } {
     return this._view && this._view.w ? this._view : fitView(vb, this._stageAspect());
   }
 
-  /** Экран (sx,sy относительно сцены, px) → координаты vb по текущему view. */
+  /** Screen (sx,sy relative to the scene, px) → vb coordinates per the current view. */
   private _screenToVb(sx: number, sy: number): number[] {
     const s = this._stageEl;
     const v = this._viewOr(this._spaceModel().vb);
@@ -607,7 +614,7 @@ class HouseplanCard extends LitElement {
     return [v.x + (sx / w) * v.w, v.y + (sy / h) * v.h];
   }
 
-  /** Ограничить view пределами fit (контент всегда покрывает сцену). */
+  /** Clamp the view to the fit bounds (the content always covers the scene). */
   private _clampView(
     v: { x: number; y: number; w: number; h: number },
     fit: { x: number; y: number; w: number; h: number },
@@ -620,7 +627,7 @@ class HouseplanCard extends LitElement {
     };
   }
 
-  /** Установить зум (центр — точка vb cx,cy либо центр текущего view). */
+  /** Set the zoom (centered on vb point cx,cy, or on the center of the current view). */
   private _applyView(zoom: number, cx?: number, cy?: number): void {
     const vb = this._spaceModel().vb;
     const fit = fitView(vb, this._stageAspect());
@@ -633,7 +640,7 @@ class HouseplanCard extends LitElement {
     this._view = this._clampView({ x: ccx - w / 2, y: ccy - h / 2, w, h }, fit);
   }
 
-  /** Пересчитать view под новый размер сцены, сохранив зум и центр. */
+  /** Recompute the view for a new scene size, preserving zoom and center. */
   private _refitView(): void {
     if (!this._stageEl) return;
     const cur = this._view;
@@ -641,7 +648,7 @@ class HouseplanCard extends LitElement {
     this.requestUpdate();
   }
 
-  /** Изменить зум, удерживая точку (sx,sy относительно сцены) на месте. */
+  /** Change the zoom while keeping the point (sx,sy relative to the scene) in place. */
   private _zoomAt(sx: number, sy: number, newZoom: number): void {
     const stage = this._stageEl;
     if (!stage) return;
@@ -679,7 +686,7 @@ class HouseplanCard extends LitElement {
     this._saveZoom();
   }
 
-  /** Сохранить текущий зум пространства в localStorage. */
+  /** Save the current space zoom to localStorage. */
   private _saveZoom(): void {
     this._zoomBySpace = { ...this._zoomBySpace, [this._space]: this._zoom };
     try {
@@ -689,7 +696,7 @@ class HouseplanCard extends LitElement {
     }
   }
 
-  /** Восстановить сохранённый зум пространства и центрировать план. */
+  /** Restore the saved space zoom and center the plan. */
   private _restoreZoom(): void {
     const z = this._zoomBySpace[this._space] || 1;
     this._zoom = z;
@@ -703,7 +710,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _stagePointerDown(ev: PointerEvent): void {
-    // не мешать перетаскиванию иконок и рисованию разметки
+    // do not interfere with icon dragging and markup drawing
     if (this._drag || this._markup) return;
     if ((ev.target as HTMLElement).closest('.dev')) return;
     this._pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
@@ -761,7 +768,7 @@ class HouseplanCard extends LitElement {
     if (this._pointers.size < 2) this._pinchStart = null;
     if (this._pointers.size === 0) {
       this._panStart = null;
-      // сбросить подавление клика на следующий тик (чтобы click после pan не сработал)
+      // reset click suppression on the next tick (so that a click right after a pan does not fire)
       setTimeout(() => (this._suppressClick = false), 0);
     }
   }
@@ -772,7 +779,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _pointerDown(ev: PointerEvent, d: DevItem): void {
-    if (this._markup) return; // в режиме разметки значки не тащим
+    if (this._markup) return; // in markup mode icons are not dragged
     ev.preventDefault();
     const p = this._pos(d);
     this._drag = { id: d.id, sx: ev.clientX, sy: ev.clientY, ox: p.x, oy: p.y, moved: false };
@@ -807,7 +814,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _resetLayout(): void {
-    if (!confirm('Сбросить позиции всех иконок к авто-раскладке?')) return;
+    if (!confirm(this._t('confirm.reset_layout'))) return;
     this._layout = {};
     this._persistLayout();
   }
@@ -825,7 +832,7 @@ class HouseplanCard extends LitElement {
     this._tip = { x: ev.clientX, y: ev.clientY, title, meta, lqi };
   }
 
-  // ================= РЕДАКТОР РАЗМЕТКИ КОМНАТ =================
+  // ================= ROOM MARKUP EDITOR =================
 
   private get _gridPitch(): number {
     return NORM_W / GRID_N;
@@ -840,7 +847,7 @@ class HouseplanCard extends LitElement {
     return sp ? NORM_W / sp.aspect : NORM_W;
   }
 
-  /** Сегменты текущего пространства в рендер-единицах. */
+  /** Segments of the current space in render units. */
   private get _segments(): number[][] {
     const sp = this._curSpaceCfg;
     const H = this._spaceH;
@@ -849,7 +856,7 @@ class HouseplanCard extends LitElement {
 
   private _toggleMarkup(): void {
     if (!this._norm) {
-      this._showToast('Разметка доступна после переноса конфига на сервер (режим правки → «На сервер»)');
+      this._showToast(this._t('toast.markup_needs_server'));
       return;
     }
     this._markup = !this._markup;
@@ -886,16 +893,16 @@ class HouseplanCard extends LitElement {
       })
       .catch((e: any) => {
         if (e?.code === 'conflict') {
-          this._showToast('Конфиг изменён в другом окне — данные обновлены, повторите последнее действие');
+          this._showToast(this._t('toast.conflict'));
           this._cancelPath();
           this._reloadConfigOnly();
         } else {
-          this._showToast('Не удалось сохранить конфиг: ' + (e?.message || e));
+          this._showToast(this._t('toast.cfg_save_failed', { err: this._errText(e) }));
         }
       });
   }, 500);
 
-  /** Добавить сегмент (рендер-единицы) в каркас пространства (без дублей). true = новый. */
+  /** Add a segment (render units) to the space skeleton (no duplicates). true = new. */
   private _addSegment(a: number[], b: number[]): boolean {
     const sp = this._curSpaceCfg;
     if (!sp) return false;
@@ -956,7 +963,7 @@ class HouseplanCard extends LitElement {
       const space = this._spaceModel();
       const room = [...space.rooms].reverse().find((r) => this._pointInRoom(raw, r));
       if (!room) return;
-      if (!confirm(`Удалить комнату «${room.name}»?`)) return;
+      if (!confirm(this._t('confirm.delete_room', { name: room.name }))) return;
       const sp = this._curSpaceCfg;
       sp.rooms = sp.rooms.filter((r: any) => r.id !== room.id);
       this._saveConfig();
@@ -965,7 +972,7 @@ class HouseplanCard extends LitElement {
       this.requestUpdate();
       return;
     }
-    // draw: клики по точкам сетки, пары точек соединяются линией
+    // draw: clicks on grid points, pairs of points get connected with a line
     const pt = this._snap(raw);
     if (!this._path.length) {
       this._path = [pt];
@@ -973,11 +980,11 @@ class HouseplanCard extends LitElement {
       return;
     }
     const last = this._path[this._path.length - 1];
-    if (this._samePt(pt, last)) return; // повторный клик по той же точке
+    if (this._samePt(pt, last)) return; // repeated click on the same point
     const added = this._addSegment(last, pt);
     this._pathSegs = [...this._pathSegs, added ? this._segKey(last, pt) : null];
     this._path = [...this._path, pt];
-    // замыкание: клик по первой вершине → диалог сохранения
+    // closing the outline: a click on the first vertex → the save dialog
     if (this._path.length >= 4 && this._samePt(pt, this._path[0])) {
       this._cursorPt = null;
       this._nameSel = '';
@@ -997,13 +1004,13 @@ class HouseplanCard extends LitElement {
     this._cursorPt = this._snap(this._svgPoint(ev));
   }
 
-  /** Сохранить комнату с обязательной привязкой к зоне HA. */
+  /** Save a room with a mandatory binding to an HA area. */
   private _saveRoom(): void {
     if (!this._areaSel) return;
     this._commitRoom();
   }
 
-  /** Сохранить декоративную комнату без зоны (нужно только имя). */
+  /** Save a decorative room without an area (only a name is required). */
   private _saveRoomNoArea(): void {
     if (!this._nameSel.trim()) return;
     this._areaSel = '';
@@ -1015,11 +1022,11 @@ class HouseplanCard extends LitElement {
     const sp = this._curSpaceCfg;
     if (!sp) return;
     const H = this._spaceH;
-    const verts = this._path.slice(0, -1); // без дублированной замыкающей
+    const verts = this._path.slice(0, -1); // without the duplicated closing vertex
     const areaName = this._areaSel ? this.hass.areas[this._areaSel]?.name : '';
     sp.rooms.push({
       id: 'r' + Date.now().toString(36),
-      name: this._nameSel || areaName || 'Комната',
+      name: this._nameSel || areaName || this._t('room.default_name'),
       area: this._areaSel || null,
       poly: verts.map((p) => [p[0] / NORM_W, p[1] / H]),
     });
@@ -1032,8 +1039,8 @@ class HouseplanCard extends LitElement {
     this._roomDialog = false;
     this._regSignature = '';
     this._maybeRebuildDevices();
-    // авто-добавление значков устройств зоны + ФИКСАЦИЯ их позиций в раскладке,
-    // чтобы при смене порядка в реестре HA значки не перетасовывались.
+    // auto-add the area's device icons + PIN their positions in the layout,
+    // so that icons do not get reshuffled when the order in the HA registry changes.
     let added = 0;
     if (boundArea) {
       const aspect = this._serverCfg?.spaces.find((x: any) => x.id === this._space)?.aspect || 1;
@@ -1042,7 +1049,7 @@ class HouseplanCard extends LitElement {
       for (const d of this._devices) {
         if (d.area !== boundArea || d.space !== this._space) continue;
         added++;
-        if (this._layout[d.id]) continue; // размещено вручную — не трогаем
+        if (this._layout[d.id]) continue; // placed manually — leave it alone
         const dp = this._defPos[d.id];
         if (!dp) continue;
         next[d.id] = { s: this._space, x: dp.x / NORM_W, y: dp.y / H2 };
@@ -1054,8 +1061,8 @@ class HouseplanCard extends LitElement {
     const roomsN = this._model.find((s) => s.id === this._space)?.rooms.length || 0;
     this._showToast(
       boundArea
-        ? `Комната сохранена (${roomsN}). Устройств добавлено: ${added}. Обведите следующую или выйдите из разметки.`
-        : `Комната сохранена (${roomsN}, без зоны). Обведите следующую или выйдите из разметки.`,
+        ? this._t('toast.room_saved', { n: roomsN, added })
+        : this._t('toast.room_saved_no_area', { n: roomsN }),
     );
   }
 
@@ -1066,13 +1073,13 @@ class HouseplanCard extends LitElement {
     this._roomDialog = false;
   }
 
-  /** Отмена в диалоге: контур снова открыт (замыкающая точка снимается). */
+  /** Cancel in the dialog: the outline is open again (the closing point is removed). */
   private _roomDialogCancel(): void {
     this._roomDialog = false;
     this._undoPoint();
   }
 
-  /** Зоны HA, ещё не назначенные ни одной комнате конфига. */
+  /** HA areas not yet assigned to any room in the config. */
   private get _freeAreas(): any[] {
     const used = new Set<string>();
     for (const sp of this._serverCfg?.spaces || [])
@@ -1082,11 +1089,11 @@ class HouseplanCard extends LitElement {
       .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   }
 
-  // ================= РЕДАКТОР УСТРОЙСТВ (маркеры) =================
+  // ================= DEVICE EDITOR (markers) =================
 
   private _openMarkerDialog(d?: DevItem): void {
     if (!this._norm) {
-      this._showToast('Редактирование устройств доступно после переноса конфига на сервер');
+      this._showToast(this._t('toast.marker_needs_server'));
       return;
     }
     if (d) {
@@ -1111,7 +1118,7 @@ class HouseplanCard extends LitElement {
     }
   }
 
-  /** Кандидаты привязки: устройства HA + группы/хелпер-сущности, минус уже размещённые. */
+  /** Binding candidates: HA devices + group/helper entities, minus the ones already placed. */
   private _bindingCandidates(): { value: string; label: string; sub: string }[] {
     const h = this.hass;
     const taken = new Set<string>();
@@ -1120,22 +1127,22 @@ class HouseplanCard extends LitElement {
       if (dev.bindingKind === 'device' && dev.bindingRef) taken.add('device:' + dev.bindingRef);
       if (dev.bindingKind === 'entity' && dev.bindingRef) taken.add('entity:' + dev.bindingRef);
     }
-    // дедуп как на плане: скрыть устройства с тем же «имя|area», что уже показаны (дубли Tuya)
+    // dedup as on the plan: hide devices with the same “name|area” as already shown ones (Tuya duplicates)
     const shownKeys = new Set<string>();
     for (const dev of this._devices) {
       if (dev.bindingKind === 'device' && dev.name) shownKeys.add(dev.name.trim() + '|' + (dev.area || ''));
     }
     const list: { value: string; label: string; sub: string }[] = [];
-    // устройства (в т.ч. Z2M-группы model=Group)
+    // devices (incl. Z2M groups with model=Group)
     for (const dev of Object.values<any>(h.devices)) {
       if (dev.entry_type === 'service') continue;
       const v = 'device:' + dev.id;
       if (taken.has(v)) continue;
       const name = (dev.name_by_user || dev.name || dev.id).trim();
       if (v !== this._markerDialog?.binding && shownKeys.has(name + '|' + (dev.area_id || ''))) continue;
-      list.push({ value: v, label: name, sub: (dev.model || 'устройство') + (dev.model === 'Group' ? ' · Z2M-группа' : '') });
+      list.push({ value: v, label: name, sub: (dev.model || this._t('marker.sub_device')) + (dev.model === 'Group' ? this._t('marker.sub_z2m_group') : '') });
     }
-    // group/helper-сущности без «своего» физического устройства
+    // group/helper entities without a physical device of their own
     const helperPlatforms = new Set([
       'group', 'template', 'derivative', 'min_max', 'threshold', 'integration',
       'statistics', 'trend', 'utility_meter', 'tod', 'switch_as_x', 'schedule',
@@ -1151,7 +1158,7 @@ class HouseplanCard extends LitElement {
       list.push({
         value: v,
         label: reg.name || st?.attributes?.friendly_name || eid,
-        sub: eid.split('.')[0] + ' · ' + (reg.platform === 'group' ? 'группа' : 'хелпер'),
+        sub: eid.split('.')[0] + ' · ' + (reg.platform === 'group' ? this._t('marker.sub_group') : this._t('marker.sub_helper')),
       });
     }
     const f = (this._markerDialog?.bindingFilter || '').toLowerCase().trim();
@@ -1162,7 +1169,7 @@ class HouseplanCard extends LitElement {
     return filtered.slice(0, 200);
   }
 
-  /** Список комнат всех пространств для виртуального устройства. */
+  /** List of rooms across all spaces for a virtual device. */
   private _allRoomsFlat(): { value: string; label: string }[] {
     const res: { value: string; label: string }[] = [];
     for (const sp of this._serverCfg?.spaces || []) {
@@ -1174,13 +1181,13 @@ class HouseplanCard extends LitElement {
     return res;
   }
 
-  /** Читаемый текст ошибки (никогда не «[object Object]»). */
+  /** Readable error text (never “[object Object]”). */
   private _errText(e: any): string {
-    if (!e) return 'неизвестная ошибка';
+    if (!e) return this._t('err.unknown');
     if (typeof e === 'string') return e;
     if (e.message) return e.message;
     if (e.error) return e.error;
-    if (e.code != null) return 'код ' + e.code;
+    if (e.code != null) return this._t('err.code', { code: e.code });
     try {
       return JSON.stringify(e);
     } catch {
@@ -1189,8 +1196,8 @@ class HouseplanCard extends LitElement {
   }
 
   /**
-   * Загрузка файлов-инструкций через HTTP (multipart) — не через WebSocket, у которого лимит
-   * размера сообщения рвёт соединение на больших PDF.
+   * Manual files are uploaded via HTTP (multipart) — not via WebSocket, whose message size
+   * limit breaks the connection on large PDFs.
    */
   private async _pickMarkerFiles(ev: Event): Promise<void> {
     const input = ev.target as HTMLInputElement;
@@ -1204,7 +1211,7 @@ class HouseplanCard extends LitElement {
         const fd = new FormData();
         fd.append('marker_id', mid);
         fd.append('file', file, file.name);
-        // fetchWithAuth сам обновляет протухший access_token; фолбэк — сырой токен
+        // fetchWithAuth refreshes a stale access_token itself; the fallback is the raw token
         const resp: Response = this.hass?.fetchWithAuth
           ? await this.hass.fetchWithAuth('/api/houseplan/upload', { method: 'POST', body: fd })
           : await fetch('/api/houseplan/upload', {
@@ -1217,21 +1224,21 @@ class HouseplanCard extends LitElement {
         const json = await resp.json().catch(() => ({}));
         if (!resp.ok || json.error) {
           const map: Record<string, string> = {
-            too_large: 'файл больше ' + (json.max_mb || 25) + ' МБ',
-            bad_ext: 'недопустимый тип (нужен PDF/изображение)',
-            unauthorized: 'нужны права администратора',
+            too_large: this._t('err.too_large', { mb: json.max_mb || 25 }),
+            bad_ext: this._t('err.bad_ext'),
+            unauthorized: this._t('err.unauthorized'),
           };
           throw new Error(map[json.error] || json.error || 'HTTP ' + resp.status);
         }
         uploaded.push({ name: json.name || file.name, url: json.url });
       } catch (e: any) {
-        this._showToast('Файл «' + file.name + '» не загружен: ' + this._errText(e));
+        this._showToast(this._t('toast.file_failed', { name: file.name, err: this._errText(e) }));
       }
     }
-    // диалог мог закрыться за время загрузки — добавляем, только если он ещё открыт
+    // the dialog might have closed during the upload — add only if it is still open
     if (uploaded.length && this._markerDialog) {
       this._markerDialog = { ...this._markerDialog, pdfs: [...this._markerDialog.pdfs, ...uploaded] };
-      this._showToast('Прикреплено файлов: ' + uploaded.length);
+      this._showToast(this._t('toast.files_attached', { n: uploaded.length }));
     }
   }
 
@@ -1247,16 +1254,16 @@ class HouseplanCard extends LitElement {
     const dlg = this._markerDialog;
     if (!dlg || dlg.busy) return;
     if (dlg.binding === 'virtual' && !dlg.name.trim()) {
-      this._showToast('Укажите имя виртуального устройства');
+      this._showToast(this._t('toast.virtual_name_required'));
       return;
     }
     this._markerDialog = { ...dlg, busy: true };
     try {
       const cfg = this._serverCfg!;
       cfg.markers = cfg.markers || [];
-      // определить id маркера
+      // determine the marker id
       let id: string;
-      // комната (выбранная вручную) переопределяет пространство/зону для любого значка
+      // a manually chosen room overrides the space/area for any icon
       const [roomSp, roomAr] = dlg.room ? dlg.room.split('#') : ['', ''];
       let space: string | null = roomSp || null;
       let area: string | null = roomAr || null;
@@ -1273,20 +1280,20 @@ class HouseplanCard extends LitElement {
         description: dlg.description.trim() || null,
         pdfs: dlg.pdfs,
       };
-      // сохраняем выбор комнаты (для виртуальных всегда; для привязанных — если выбрана)
+      // save the room choice (always for virtual ones; for bound ones — if chosen)
       if (dlg.binding === 'virtual' || dlg.room) {
         marker.space = space;
         marker.area = area;
       }
-      // сменилась комната → переставить значок в её центр
+      // the room changed → move the icon to its center
       const prevDev = oldId ? this._devices.find((x) => x.id === oldId) : null;
       const roomChanged = !!dlg.room && prevDev != null && (prevDev.space !== space || prevDev.area !== area);
-      // удалить прежний маркер (по старому id и по новому id)
+      // remove the previous marker (by the old id and by the new id)
       cfg.markers = cfg.markers.filter((m) => m.id !== id && m.id !== oldId);
       cfg.markers.push(marker);
-      // позиция: новый значок ИЛИ сменилась комната → поставить в центр комнаты/пространства.
-      // Пишем ТОЧЕЧНО (layout/update), а не всей раскладкой — полный layout/set затирает
-      // позиции, изменённые в других окнах (инцидент v1.4.4).
+      // position: a new icon OR the room changed → place it at the center of the room/space.
+      // Write POINT-WISE (layout/update), not the whole layout — a full layout/set overwrites
+      // positions changed in other windows (the v1.4.4 incident).
       let newPos: { s: string; x: number; y: number } | null = null;
       if (!this._layout[id] || roomChanged) {
         const spm = this._spaceModel(space || undefined);
@@ -1302,17 +1309,17 @@ class HouseplanCard extends LitElement {
       await this._saveConfigNow();
       if (newPos) await this.hass.callWS({ type: 'houseplan/layout/update', device_id: id, pos: newPos });
       if (oldId && oldId !== id) {
-        // перепривязка сменила id значка — подчистить старую позицию
+        // rebinding changed the icon id — clean up the old position
         delete this._layout[oldId];
         await this.hass.callWS({ type: 'houseplan/layout/delete', device_id: oldId }).catch(() => undefined);
       }
       this._markerDialog = null;
       this._regSignature = '';
       this._maybeRebuildDevices();
-      this._showToast('Устройство сохранено');
+      this._showToast(this._t('toast.marker_saved'));
     } catch (e: any) {
       this._markerDialog = { ...this._markerDialog!, busy: false };
-      this._showToast('Ошибка: ' + this._errText(e));
+      this._showToast(this._t('toast.error', { err: this._errText(e) }));
     }
   }
 
@@ -1320,14 +1327,14 @@ class HouseplanCard extends LitElement {
     const dlg = this._markerDialog;
     if (!dlg) return;
     const d = dlg.devId ? this._devices.find((x) => x.id === dlg.devId) : null;
-    const label = dlg.name || 'устройство';
-    if (!confirm(`Убрать «${label}» с плана?`)) return;
+    const label = dlg.name || this._t('device.fallback');
+    if (!confirm(this._t('confirm.remove_marker', { name: label }))) return;
     const cfg = this._serverCfg!;
     cfg.markers = cfg.markers || [];
     if (d && d.bindingKind === 'virtual') {
       cfg.markers = cfg.markers.filter((m) => m.id !== d.id);
     } else if (d && d.marker) {
-      // был явный маркер → просто скрыть либо удалить: скрываем (авто вернётся если это авто-устройство)
+      // there was an explicit marker → either hide or delete: we hide (the auto entry comes back if it is an auto device)
       cfg.markers = cfg.markers.filter((m) => m.id !== d.id);
       if (d.bindingKind === 'device' && d.bindingRef) {
         cfg.markers.push({ id: d.id, binding: 'device:' + d.bindingRef, hidden: true });
@@ -1342,16 +1349,16 @@ class HouseplanCard extends LitElement {
     try {
       await this._saveConfigNow();
       if (d && d.bindingKind === 'virtual' && this._layout[d.id]) {
-        // виртуальный удалён совсем → его позиция больше не нужна
+        // the virtual one is deleted for good → its position is no longer needed
         delete this._layout[d.id];
         await this.hass.callWS({ type: 'houseplan/layout/delete', device_id: d.id }).catch(() => undefined);
       }
       this._markerDialog = null;
       this._regSignature = '';
       this._maybeRebuildDevices();
-      this._showToast('Устройство убрано с плана');
+      this._showToast(this._t('toast.marker_removed'));
     } catch (e: any) {
-      this._showToast('Ошибка: ' + this._errText(e));
+      this._showToast(this._t('toast.error', { err: this._errText(e) }));
     }
   }
 
@@ -1360,11 +1367,11 @@ class HouseplanCard extends LitElement {
     return { s: space, x: x / NORM_W, y: y / (NORM_W / aspect) };
   }
 
-  // ================= УПРАВЛЕНИЕ ПРОСТРАНСТВАМИ =================
+  // ================= SPACE MANAGEMENT =================
 
   private _openSpaceDialog(mode: 'edit' | 'create', spaceId?: string): void {
     if (!this._serverStorage || !this._serverCfg) {
-      this._showToast('Интеграция House Plan не установлена — управление недоступно');
+      this._showToast(this._t('toast.integration_missing'));
       return;
     }
     if (mode === 'edit') {
@@ -1376,7 +1383,7 @@ class HouseplanCard extends LitElement {
     }
   }
 
-  /** Выбор файла подложки: читаем base64 и определяем пропорции. */
+  /** Background file selection: read base64 and determine the aspect ratio. */
   private async _pickPlanFile(ev: Event): Promise<void> {
     const input = ev.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -1386,14 +1393,14 @@ class HouseplanCard extends LitElement {
     };
     const ext = extMap[file.type] || (file.name.toLowerCase().endsWith('.svg') ? 'svg' : '');
     if (!ext) {
-      this._showToast('Поддерживаются SVG, PNG, JPG, WebP');
+      this._showToast(this._t('toast.plan_formats'));
       return;
     }
     const buf = new Uint8Array(await file.arrayBuffer());
     let bin = '';
     for (let i = 0; i < buf.length; i += 32768) bin += String.fromCharCode(...buf.subarray(i, i + 32768));
     const b64 = btoa(bin);
-    // пропорции: рендерим в Image
+    // aspect ratio: render into an Image
     const url = URL.createObjectURL(file);
     const aspect = await new Promise<number>((res) => {
       const img = new Image();
@@ -1409,7 +1416,7 @@ class HouseplanCard extends LitElement {
     const d = this._spaceDialog;
     if (!d || d.busy || !d.title.trim()) return;
     if (!d.planFile && !d.planUrl) {
-      this._showToast('Загрузите подложку — план этажа обязателен');
+      this._showToast(this._t('toast.plan_required'));
       return;
     }
     const wasFirst = d.mode === 'create' && (this._serverCfg?.spaces.length || 0) === 0;
@@ -1445,18 +1452,18 @@ class HouseplanCard extends LitElement {
       this._regSignature = '';
       this._maybeRebuildDevices();
       if (wasFirst) {
-        // ведём пользователя дальше: сразу в режим разметки комнат
+        // guide the user onward: straight into room markup mode
         this._markup = true;
         this._tool = 'draw';
         this._path = [];
         this._cursorPt = null;
-        this._showToast('Пространство добавлено. Обведите комнаты: кликайте по точкам сетки и замкните контур.');
+        this._showToast(this._t('toast.space_added_onboard'));
       } else {
-        this._showToast(d.mode === 'create' ? 'Пространство добавлено' : 'Пространство сохранено');
+        this._showToast(d.mode === 'create' ? this._t('toast.space_added') : this._t('toast.space_saved'));
       }
     } catch (e: any) {
       this._spaceDialog = { ...this._spaceDialog!, busy: false };
-      this._showToast('Ошибка: ' + this._errText(e));
+      this._showToast(this._t('toast.error', { err: this._errText(e) }));
     }
   }
 
@@ -1464,7 +1471,7 @@ class HouseplanCard extends LitElement {
     const d = this._spaceDialog;
     if (!d || d.mode !== 'edit') return;
     const sp = this._serverCfg!.spaces.find((x: any) => x.id === d.spaceId);
-    if (!confirm(`Удалить пространство «${sp.title}» со всеми комнатами и разметкой?`)) return;
+    if (!confirm(this._t('confirm.delete_space', { title: sp.title }))) return;
     this._serverCfg!.spaces = this._serverCfg!.spaces.filter((x: any) => x.id !== d.spaceId);
     try {
       await this._saveConfigNow();
@@ -1472,13 +1479,13 @@ class HouseplanCard extends LitElement {
       if (this._space === d.spaceId) this._space = this._serverCfg!.spaces[0]?.id || '';
       this._regSignature = '';
       this._maybeRebuildDevices();
-      this._showToast('Пространство удалено');
+      this._showToast(this._t('toast.space_deleted'));
     } catch (e: any) {
-      this._showToast('Ошибка удаления: ' + this._errText(e));
+      this._showToast(this._t('toast.delete_failed', { err: this._errText(e) }));
     }
   }
 
-  /** Немедленное сохранение конфига с ревизией (без дебаунса). */
+  /** Immediate config save with a revision bump (no debounce). */
   private async _saveConfigNow(): Promise<void> {
     const r = await this.hass.callWS({
       type: 'houseplan/config/set', config: this._serverCfg, expected_rev: this._cfgRev,
@@ -1487,7 +1494,7 @@ class HouseplanCard extends LitElement {
   }
 
 
-  // ================= рендер =================
+  // ================= render =================
 
   protected render(): TemplateResult | typeof nothing {
     if (!this._config || !this.hass) return nothing;
@@ -1495,17 +1502,17 @@ class HouseplanCard extends LitElement {
     if (!model.length) {
       return html`<ha-card>
         <div class="head">
-          <div class="title"><ha-icon icon="mdi:home-city"></ha-icon>${this._config.title || 'План дома'}</div>
+          <div class="title"><ha-icon icon="mdi:home-city"></ha-icon>${this._config.title || this._t('card.title')}</div>
         </div>
         <div class="empty">
           <ha-icon icon="mdi:floor-plan" class="big"></ha-icon>
-          <p>Пространств пока нет.</p>
+          <p>${this._t('empty.no_spaces')}</p>
           ${this._serverStorage
-            ? html`<p class="muted">Добавьте первое пространство и загрузите план этажа.</p>
+            ? html`<p class="muted">${this._t('empty.add_first')}</p>
                 <button class="btn on" @click=${() => this._openSpaceDialog('create')}>
-                  <ha-icon icon="mdi:plus"></ha-icon>Добавить пространство
+                  <ha-icon icon="mdi:plus"></ha-icon>${this._t('btn.add_space')}
                 </button>`
-            : html`<p class="muted">Установите интеграцию House Plan и добавьте запись в «Устройства и службы».</p>`}
+            : html`<p class="muted">${this._t('empty.install')}</p>`}
         </div>
         ${this._spaceDialog ? this._renderSpaceDialog() : nothing}
         ${this._toast ? html`<div class="toast">${this._toast}</div>` : nothing}
@@ -1524,7 +1531,7 @@ class HouseplanCard extends LitElement {
         <div class="head">
           <div class="title">
             <ha-icon icon="mdi:home-city"></ha-icon>
-            ${this._config.title || 'План дома'}
+            ${this._config.title || this._t('card.title')}
           </div>
           <div class="tabs">
             ${model.map(
@@ -1538,7 +1545,7 @@ class HouseplanCard extends LitElement {
               >
                 ${s.title}${this._norm
                   ? html`<ha-icon class="tabedit" icon="mdi:pencil"
-                      title="Настроить пространство"
+                      title=${this._t('title.configure_space')}
                       @click=${(e: Event) => {
                         e.stopPropagation();
                         this._openSpaceDialog('edit', s.id);
@@ -1547,37 +1554,37 @@ class HouseplanCard extends LitElement {
               </button>`,
             )}
             ${this._norm
-              ? html`<button class="tab tabadd" title="Добавить пространство"
+              ? html`<button class="tab tabadd" title=${this._t('title.add_space')}
                   @click=${() => this._openSpaceDialog('create')}>
                   <ha-icon icon="mdi:plus"></ha-icon>
                 </button>`
               : nothing}
           </div>
-          <span class="count">${devs.length} устр.</span>
+          <span class="count">${this._t('count.devices', { n: devs.length })}</span>
           <span class="spacer"></span>
           <div class="zoomctl">
-            <button class="btn zb" @click=${() => this._stepZoom(-1)} title="Отдалить"><ha-icon icon="mdi:minus"></ha-icon></button>
+            <button class="btn zb" @click=${() => this._stepZoom(-1)} title=${this._t('title.zoom_out')}><ha-icon icon="mdi:minus"></ha-icon></button>
             <button class="btn zb" @click=${() => this._resetZoom()} ?disabled=${this._zoom === 1}
-              title="Сбросить масштаб"><ha-icon icon="mdi:fit-to-page-outline"></ha-icon></button>
-            <button class="btn zb" @click=${() => this._stepZoom(1)} title="Приблизить"><ha-icon icon="mdi:plus"></ha-icon></button>
+              title=${this._t('title.zoom_reset')}><ha-icon icon="mdi:fit-to-page-outline"></ha-icon></button>
+            <button class="btn zb" @click=${() => this._stepZoom(1)} title=${this._t('title.zoom_in')}><ha-icon icon="mdi:plus"></ha-icon></button>
           </div>
           ${this._norm
             ? html`<button class="btn" @click=${() => this._openMarkerDialog()}
-                title="Добавить устройство на план">
+                title=${this._t('title.add_device')}>
                 <ha-icon icon="mdi:plus-box-outline"></ha-icon>
               </button>`
             : nothing}
           ${this._norm
             ? html`<button class="btn ${this._showAll ? 'on' : ''}" @click=${this._toggleShowAll}
-                title="Показывать все устройства зоны (без курирования)">
+                title=${this._t('title.show_all')}>
                 <ha-icon icon="${this._showAll ? 'mdi:eye' : 'mdi:eye-off-outline'}"></ha-icon>
               </button>
-              <button class="btn" @click=${this._resetLayout} title="Сбросить позиции значков к авто-раскладке">
+              <button class="btn" @click=${this._resetLayout} title=${this._t('title.reset_layout')}>
                 <ha-icon icon="mdi:backup-restore"></ha-icon>
               </button>`
             : nothing}
           <button class="btn ${this._markup ? 'on' : ''}" @click=${this._toggleMarkup}
-            title="Разметка комнат: сетка, линии, контуры">
+            title=${this._t('title.markup')}>
             <ha-icon icon="mdi:vector-square-edit"></ha-icon>
           </button>
         </div>
@@ -1601,7 +1608,7 @@ class HouseplanCard extends LitElement {
             ${space.rooms.filter((r) => r.area || this._markup).map((r) => {
               const cls = 'room ' + (space.bg ? 'overlay' : 'yard') + (this._markup ? ' outlined' : '');
               const tip = (e: MouseEvent) =>
-                this._showTip(e, r.name, 'комната — открыть зону',
+                this._showTip(e, r.name, this._t('tip.room'),
                   this._config?.show_signal ? this._roomLqi(r.area) : null);
               const label = !space.bg || this._markup;
               const c = this._roomCenter(r);
@@ -1634,7 +1641,7 @@ class HouseplanCard extends LitElement {
           ? html`<div class="tip" style="left:${this._tip.x + 12}px;top:${this._tip.y + 12}px">
               <b>${this._tip.title}</b>${this._tip.meta ? html`<span class="m">${this._tip.meta}</span>` : nothing}
               ${this._tip.lqi != null
-                ? html`<span class="m">средний сигнал zigbee:
+                ? html`<span class="m">${this._t('tip.lqi')}
                     <b style="color:${lqiColor(this._tip.lqi)}">${this._tip.lqi}</b></span>`
                 : nothing}
             </div>`
@@ -1712,23 +1719,23 @@ class HouseplanCard extends LitElement {
     return html`<div class="editbar">
       <ha-icon icon="mdi:vector-square-edit" class="warn"></ha-icon>
       <button class="btn ${this._tool === 'draw' ? 'on' : ''}" @click=${() => (this._tool = 'draw')}
-        title="Добавить комнату: соединяйте точки сетки линиями до замкнутого контура">
-        <ha-icon icon="mdi:vector-polyline-plus"></ha-icon>Добавить
+        title=${this._t('title.markup_add')}>
+        <ha-icon icon="mdi:vector-polyline-plus"></ha-icon>${this._t('markup.add')}
       </button>
       <button class="btn ${this._tool === 'erase' ? 'on' : ''}" @click=${() => (this._tool = 'erase')}
-        title="Стереть линию: клик по линии">
-        <ha-icon icon="mdi:eraser"></ha-icon>Стереть
+        title=${this._t('title.markup_erase')}>
+        <ha-icon icon="mdi:eraser"></ha-icon>${this._t('markup.erase')}
       </button>
       <button class="btn ${this._tool === 'delroom' ? 'on' : ''}" @click=${() => (this._tool = 'delroom')}
-        title="Удалить комнату: клик внутри комнаты">
-        <ha-icon icon="mdi:delete-outline"></ha-icon>Удалить
+        title=${this._t('title.markup_delroom')}>
+        <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('markup.delete')}
       </button>
       <span class="spacer"></span>
       ${this._tool === 'draw'
         ? html`<span class="hint">${this._path.length
-              ? 'точек: ' + this._path.length + ' · Esc/Ctrl+Z — убрать точку · замкните контур кликом по первой'
-              : 'кликните точку сетки, чтобы начать контур'}</span>
-            ${this._path.length ? html`<button class="btn ghost" @click=${this._cancelPath}>Сброс</button>` : nothing}`
+              ? this._t('markup.hint_points', { n: this._path.length })
+              : this._t('markup.hint_start')}</span>
+            ${this._path.length ? html`<button class="btn ghost" @click=${this._cancelPath}>${this._t('btn.reset')}</button>` : nothing}`
         : nothing}
     </div>`;
   }
@@ -1741,35 +1748,35 @@ class HouseplanCard extends LitElement {
       <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
         <div class="hd"><ha-icon icon="${d.icon}"></ha-icon>${d.name}</div>
         <div class="body">
-          ${d.model ? html`<div class="inforow"><span class="k">Модель</span><span>${d.model}</span></div>` : nothing}
-          ${stateTxt ? html`<div class="inforow"><span class="k">Состояние</span><span>${stateTxt}</span></div>` : nothing}
+          ${d.model ? html`<div class="inforow"><span class="k">${this._t('info.model')}</span><span>${d.model}</span></div>` : nothing}
+          ${stateTxt ? html`<div class="inforow"><span class="k">${this._t('info.state')}</span><span>${stateTxt}</span></div>` : nothing}
           ${safeUrl(d.link)
-            ? html`<div class="inforow"><span class="k">Ссылка</span>
+            ? html`<div class="inforow"><span class="k">${this._t('info.link')}</span>
                 <a href="${safeUrl(d.link)}" target="_blank" rel="noreferrer noopener">${d.link}</a></div>`
             : nothing}
           ${d.description ? html`<div class="infodesc">${d.description}</div>` : nothing}
           ${d.pdfs && d.pdfs.length
-            ? html`<div class="inforow"><span class="k">Инструкции</span><span class="pdflist">
+            ? html`<div class="inforow"><span class="k">${this._t('info.manuals')}</span><span class="pdflist">
                 ${d.pdfs.map(
                   (p) => html`<a class="pdf" href="${safeUrl(p.url) || '#'}" target="_blank" rel="noreferrer noopener">
                     <ha-icon icon="mdi:file-pdf-box"></ha-icon>${p.name}</a>`,
                 )}</span></div>`
             : nothing}
           ${!d.model && !stateTxt && !d.link && !d.description && !(d.pdfs && d.pdfs.length)
-            ? html`<div class="infodesc muted">Нет дополнительной информации</div>`
+            ? html`<div class="infodesc muted">${this._t('info.none')}</div>`
             : nothing}
         </div>
         <div class="row">
           <button class="btn" @click=${() => { const dd = d; this._infoCard = null; this._openMarkerDialog(dd); }}>
-            <ha-icon icon="mdi:pencil"></ha-icon>Редактировать
+            <ha-icon icon="mdi:pencil"></ha-icon>${this._t('btn.edit')}
           </button>
           ${d.primary
             ? html`<button class="btn" @click=${() => { const p = d.primary; this._infoCard = null; this._openMoreInfo(p); }}>
-                <ha-icon icon="mdi:open-in-new"></ha-icon>Открыть в HA
+                <ha-icon icon="mdi:open-in-new"></ha-icon>${this._t('btn.open_in_ha')}
               </button>`
             : nothing}
           <span class="spacer"></span>
-          <button class="btn ghost" @click=${() => (this._infoCard = null)}>Закрыть</button>
+          <button class="btn ghost" @click=${() => (this._infoCard = null)}>${this._t('btn.close')}</button>
         </div>
       </div>
     </div>`;
@@ -1790,24 +1797,24 @@ class HouseplanCard extends LitElement {
     return html`<div class="menuwrap dialogwrap" @click=${(e: Event) => e.stopPropagation()}>
       <div class="dialog wide" @click=${(e: Event) => e.stopPropagation()}>
         <div class="hd"><ha-icon icon="mdi:shape-plus"></ha-icon>
-          ${d.devId ? 'Устройство на плане' : 'Новое устройство'}</div>
+          ${d.devId ? this._t('info.device_header') : this._t('marker.new_device')}</div>
         <div class="body">
-          <label>Имя (отображается на плане)</label>
-          <input class="namein" type="text" placeholder="Название"
+          <label>${this._t('marker.name_label')}</label>
+          <input class="namein" type="text" placeholder=${this._t('marker.name_ph')}
             .value=${d.name}
             @input=${(e: Event) => (this._markerDialog = { ...d, name: (e.target as HTMLInputElement).value })} />
 
-          <label>Привязка к устройству HA</label>
+          <label>${this._t('marker.binding_label')}</label>
           <div class="bindsel ${isVirtual ? 'virt' : ''}">
             <button class="opt ${isVirtual ? 'on' : ''}"
               @click=${() => (this._markerDialog = { ...d, binding: 'virtual' })}>
-              <ha-icon icon="mdi:map-marker-outline"></ha-icon>Виртуальное устройство (без привязки)
+              <ha-icon icon="mdi:map-marker-outline"></ha-icon>${this._t('marker.virtual_option')}
             </button>
             ${!isVirtual
               ? html`<div class="curbind"><ha-icon icon="mdi:link-variant"></ha-icon>
                   <b>${curLabel}</b><span class="ref">${d.binding}</span></div>`
               : nothing}
-            <input class="namein" type="text" placeholder="Поиск устройства / группы…"
+            <input class="namein" type="text" placeholder=${this._t('marker.search_ph')}
               .value=${d.bindingFilter}
               @input=${(e: Event) => (this._markerDialog = { ...d, bindingFilter: (e.target as HTMLInputElement).value })} />
             <div class="candlist">
@@ -1817,43 +1824,43 @@ class HouseplanCard extends LitElement {
                   <span class="cl">${c.label}</span><span class="cs">${c.sub}</span>
                 </div>`,
               )}
-              ${!cands.length ? html`<div class="cand muted">ничего не найдено</div>` : nothing}
+              ${!cands.length ? html`<div class="cand muted">${this._t('marker.nothing_found')}</div>` : nothing}
             </div>
           </div>
 
-          <label>Комната${isVirtual ? '' : ' (переопределить размещение)'}</label>
+          <label>${this._t('marker.room_label')}${isVirtual ? '' : this._t('marker.room_override')}</label>
           <select class="areasel"
             @change=${(e: Event) => (this._markerDialog = { ...d, room: (e.target as HTMLSelectElement).value })}>
-            <option value="">${isVirtual ? '— выберите комнату —' : '— по зоне устройства (авто) —'}</option>
+            <option value="">${isVirtual ? this._t('marker.room_choose') : this._t('marker.room_auto')}</option>
             ${this._allRoomsFlat().map(
               (r) => html`<option value=${r.value} ?selected=${r.value === d.room}>${r.label}</option>`,
             )}
           </select>
 
-          <label>Иконка</label>
+          <label>${this._t('marker.icon_label')}</label>
           ${customElements.get('ha-icon-picker')
             ? html`<ha-icon-picker .hass=${this.hass} .value=${d.icon}
                 @value-changed=${(e: any) => (this._markerDialog = { ...d, icon: e.detail.value || '' })}></ha-icon-picker>`
-            : html`<input class="namein" type="text" placeholder="mdi:… (пусто = авто)"
+            : html`<input class="namein" type="text" placeholder=${this._t('marker.icon_ph')}
                 .value=${d.icon}
                 @input=${(e: Event) => (this._markerDialog = { ...d, icon: (e.target as HTMLInputElement).value })} />`}
 
-          <label>Модель</label>
-          <input class="namein" type="text" placeholder="напр. Aqara T&amp;H"
+          <label>${this._t('marker.model_label')}</label>
+          <input class="namein" type="text" placeholder=${this._t('marker.model_ph')}
             .value=${d.model}
             @input=${(e: Event) => (this._markerDialog = { ...d, model: (e.target as HTMLInputElement).value })} />
 
-          <label>Ссылка</label>
+          <label>${this._t('marker.link_label')}</label>
           <input class="namein" type="url" placeholder="https://…"
             .value=${d.link}
             @input=${(e: Event) => (this._markerDialog = { ...d, link: (e.target as HTMLInputElement).value })} />
 
-          <label>Описание</label>
-          <textarea class="descin" rows="3" placeholder="Заметки, характеристики…"
+          <label>${this._t('marker.desc_label')}</label>
+          <textarea class="descin" rows="3" placeholder=${this._t('marker.desc_ph')}
             .value=${d.description}
             @input=${(e: Event) => (this._markerDialog = { ...d, description: (e.target as HTMLTextAreaElement).value })}></textarea>
 
-          <label>Инструкции (PDF и т.п.)</label>
+          <label>${this._t('marker.manuals_label')}</label>
           <div class="pdfedit">
             ${d.pdfs.map(
               (p) => html`<span class="pdftag"><ha-icon icon="mdi:file-pdf-box"></ha-icon>
@@ -1861,7 +1868,7 @@ class HouseplanCard extends LitElement {
                 <ha-icon class="x" icon="mdi:close" @click=${() => this._removeMarkerPdf(p.url)}></ha-icon></span>`,
             )}
             <label class="btn filebtn">
-              <ha-icon icon="mdi:paperclip"></ha-icon>Прикрепить…
+              <ha-icon icon="mdi:paperclip"></ha-icon>${this._t('btn.attach')}
               <input type="file" hidden multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,application/pdf"
                 @change=${(e: Event) => this._pickMarkerFiles(e)} />
             </label>
@@ -1870,13 +1877,13 @@ class HouseplanCard extends LitElement {
         <div class="row">
           ${d.devId
             ? html`<button class="btn danger" @click=${this._deleteMarker}>
-                <ha-icon icon="mdi:delete-outline"></ha-icon>Убрать
+                <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.remove')}
               </button>`
             : nothing}
           <span class="spacer"></span>
-          <button class="btn ghost" @click=${() => (this._markerDialog = null)}>Отмена</button>
+          <button class="btn ghost" @click=${() => (this._markerDialog = null)}>${this._t('btn.cancel')}</button>
           <button class="btn on" @click=${this._saveMarker} ?disabled=${d.busy}>
-            <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : 'Сохранить'}
+            <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this._t('btn.save')}
           </button>
         </div>
       </div>
@@ -1888,21 +1895,21 @@ class HouseplanCard extends LitElement {
     return html`<div class="menuwrap dialogwrap" @click=${(e: Event) => e.stopPropagation()}>
       <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
         <div class="hd"><ha-icon icon="mdi:floor-plan"></ha-icon>
-          ${d.mode === 'create' ? 'Новое пространство' : 'Пространство'}</div>
+          ${d.mode === 'create' ? this._t('space.new') : this._t('space.header')}</div>
         <div class="body">
-          <label>Название</label>
-          <input class="namein" type="text" placeholder="Например: Гараж"
+          <label>${this._t('space.title_label')}</label>
+          <input class="namein" type="text" placeholder=${this._t('space.title_ph')}
             .value=${d.title}
             @input=${(e: Event) => (this._spaceDialog = { ...d, title: (e.target as HTMLInputElement).value })} />
-          <label>Подложка (план)</label>
+          <label>${this._t('space.plan_label')}</label>
           <div class="planrow">
             ${d.planFile
               ? html`<span class="planname">${d.planFile.name}</span>`
               : d.planUrl
-                ? html`<img class="planprev" src=${d.planUrl} alt="план" />`
-                : html`<span class="planname muted">нет подложки</span>`}
+                ? html`<img class="planprev" src=${d.planUrl} alt=${this._t('space.plan_alt')} />`
+                : html`<span class="planname muted">${this._t('space.no_plan')}</span>`}
             <label class="btn filebtn">
-              <ha-icon icon="mdi:upload"></ha-icon>${d.planUrl || d.planFile ? 'Заменить…' : 'Загрузить…'}
+              <ha-icon icon="mdi:upload"></ha-icon>${d.planUrl || d.planFile ? this._t('btn.replace') : this._t('btn.upload')}
               <input type="file" hidden accept=".svg,.png,.jpg,.jpeg,.webp,image/svg+xml,image/png,image/jpeg,image/webp"
                 @change=${(e: Event) => this._pickPlanFile(e)} />
             </label>
@@ -1911,15 +1918,15 @@ class HouseplanCard extends LitElement {
         <div class="row">
           ${d.mode === 'edit'
             ? html`<button class="btn danger" @click=${this._deleteSpace}>
-                <ha-icon icon="mdi:delete-outline"></ha-icon>Удалить
+                <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.delete')}
               </button>`
             : nothing}
           <span class="spacer"></span>
-          <button class="btn ghost" @click=${() => (this._spaceDialog = null)}>Отмена</button>
+          <button class="btn ghost" @click=${() => (this._spaceDialog = null)}>${this._t('btn.cancel')}</button>
           <button class="btn on" @click=${this._saveSpaceDialog}
             ?disabled=${!d.title.trim() || !(d.planFile || d.planUrl) || d.busy}
-            title=${!(d.planFile || d.planUrl) ? 'Загрузите подложку (план этажа)' : ''}>
-            <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : 'Сохранить'}
+            title=${!(d.planFile || d.planUrl) ? this._t('title.need_plan') : ''}>
+            <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this._t('btn.save')}
           </button>
         </div>
       </div>
@@ -1930,13 +1937,13 @@ class HouseplanCard extends LitElement {
     const areas = this._freeAreas;
     return html`<div class="menuwrap dialogwrap" @click=${(e: Event) => e.stopPropagation()}>
       <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
-        <div class="hd"><ha-icon icon="mdi:floor-plan"></ha-icon>Новая комната</div>
+        <div class="hd"><ha-icon icon="mdi:floor-plan"></ha-icon>${this._t('room.new')}</div>
         <div class="body">
-          <label>Отображаемое имя</label>
-          <input class="namein" type="text" placeholder="Например: Терраса"
+          <label>${this._t('room.name_label')}</label>
+          <input class="namein" type="text" placeholder=${this._t('room.name_ph')}
             .value=${this._nameSel}
             @input=${(e: Event) => (this._nameSel = (e.target as HTMLInputElement).value)} />
-          <label>Зона Home Assistant (свободные)</label>
+          <label>${this._t('room.area_label')}</label>
           <select class="areasel"
             @change=${(e: Event) => {
               this._areaSel = (e.target as HTMLSelectElement).value;
@@ -1944,22 +1951,22 @@ class HouseplanCard extends LitElement {
                 this._nameSel = this.hass.areas[this._areaSel]?.name || '';
               this.requestUpdate();
             }}>
-            <option value="">— без зоны —</option>
+            <option value="">${this._t('room.no_area_option')}</option>
             ${areas.map(
               (a) => html`<option value=${a.area_id} ?selected=${a.area_id === this._areaSel}>${a.name}</option>`,
             )}
           </select>
         </div>
         <div class="row">
-          <button class="btn ghost" @click=${this._roomDialogCancel}>Отмена</button>
+          <button class="btn ghost" @click=${this._roomDialogCancel}>${this._t('btn.cancel')}</button>
           <span class="spacer"></span>
           <button class="btn ghost" @click=${this._saveRoomNoArea} ?disabled=${!this._nameSel.trim()}
-            title="Декоративная комната без привязки к зоне (например, холл)">
-            Без зоны
+            title=${this._t('title.no_area_room')}>
+            ${this._t('btn.no_area')}
           </button>
           <button class="btn on" @click=${this._saveRoom} ?disabled=${!this._areaSel}
-            title=${!this._areaSel ? 'Выберите зону Home Assistant' : ''}>
-            <ha-icon icon="mdi:check"></ha-icon>Сохранить
+            title=${!this._areaSel ? this._t('title.choose_area') : ''}>
+            <ha-icon icon="mdi:check"></ha-icon>${this._t('btn.save')}
           </button>
         </div>
       </div>
@@ -1978,7 +1985,7 @@ if (!(window as any).customCards.find((c: any) => c.type === 'houseplan-card')) 
   (window as any).customCards.push({
     type: 'houseplan-card',
     name: 'House Plan Card',
-    description: 'Интерактивный план дома: пространства, комнаты, устройства с живыми состояниями и drag-раскладкой.',
+    description: 'Interactive house plan: spaces, rooms and devices with live states and drag layout.',
   });
 }
 

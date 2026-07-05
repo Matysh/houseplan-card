@@ -3,15 +3,15 @@
     "step": {
       "user": {
         "title": "House Plan",
-        "data": { "admin_only": "Правка раскладки только администраторами" }
+        "data": { "admin_only": "Only administrators may edit the layout" }
       }
     },
-    "abort": { "single_instance_allowed": "Уже настроено — допускается одна запись." }
+    "abort": { "single_instance_allowed": "Already configured — only one entry is allowed." }
   },
   "options": {
     "step": {
       "init": {
-        "data": { "admin_only": "Правка раскладки только администраторами" }
+        "data": { "admin_only": "Only administrators may edit the layout" }
       }
     }
   }

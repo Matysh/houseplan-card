@@ -1,14 +1,6 @@
-/** Редактор конфигурации карточки (GUI в Lovelace). */
+/** Card configuration editor (Lovelace GUI). */
 import { LitElement, html, nothing } from 'lit';
-
-const LABELS: Record<string, string> = {
-  title: 'Заголовок',
-  default_floor: 'Пространство по умолчанию',
-  icon_size: 'Размер иконок, % ширины плана',
-  show_temperature: 'Показывать температуру',
-  live_states: 'Живые состояния (вкл/выкл, открыто…)',
-  show_signal: 'Показывать сигнал zigbee (LQI)',
-};
+import { langOf, t, type Lang } from './i18n';
 
 class HouseplanCardEditor extends LitElement {
   public hass?: any;
@@ -26,7 +18,7 @@ class HouseplanCardEditor extends LitElement {
     this._config = config;
   }
 
-  /** Пространства из серверного конфига интеграции — не хардкод. */
+  /** Spaces come from the integration's server config — never hard-coded. */
   private async _loadSpaces(): Promise<void> {
     if (this._spaces || this._spacesLoading || !this.hass) return;
     this._spacesLoading = true;
@@ -43,8 +35,13 @@ class HouseplanCardEditor extends LitElement {
     }
   }
 
+  private get _lang(): Lang {
+    return langOf(this.hass, this._config?.language);
+  }
+
   private get _schema(): any[] {
     const spaces = this._spaces || [];
+    const L = this._lang;
     return [
       { name: 'title', selector: { text: {} } },
       spaces.length
@@ -53,6 +50,19 @@ class HouseplanCardEditor extends LitElement {
             selector: { select: { mode: 'dropdown', options: spaces } },
           }
         : { name: 'default_floor', selector: { text: {} } },
+      {
+        name: 'language',
+        selector: {
+          select: {
+            mode: 'dropdown',
+            options: [
+              { value: '', label: t(L, 'editor.lang_auto') },
+              { value: 'en', label: t(L, 'editor.lang_en') },
+              { value: 'ru', label: t(L, 'editor.lang_ru') },
+            ],
+          },
+        },
+      },
       { name: 'icon_size', selector: { number: { min: 1, max: 6, step: 0.1, mode: 'box' } } },
       { name: 'show_temperature', selector: { boolean: {} } },
       { name: 'live_states', selector: { boolean: {} } },
@@ -63,11 +73,21 @@ class HouseplanCardEditor extends LitElement {
   protected render() {
     if (!this.hass || !this._config) return nothing;
     this._loadSpaces();
+    const L = this._lang;
+    const labels: Record<string, string> = {
+      title: t(L, 'editor.title'),
+      default_floor: t(L, 'editor.default_floor'),
+      language: t(L, 'editor.language'),
+      icon_size: t(L, 'editor.icon_size'),
+      show_temperature: t(L, 'editor.show_temperature'),
+      live_states: t(L, 'editor.live_states'),
+      show_signal: t(L, 'editor.show_signal'),
+    };
     return html`<ha-form
       .hass=${this.hass}
       .data=${this._config}
       .schema=${this._schema}
-      .computeLabel=${(s: any) => LABELS[s.name] || s.name}
+      .computeLabel=${(s: any) => labels[s.name] || s.name}
       @value-changed=${this._valueChanged}
     ></ha-form>`;
   }

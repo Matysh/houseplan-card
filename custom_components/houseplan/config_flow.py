@@ -1,4 +1,4 @@
-"""Config flow: одна запись без параметров."""
+"""Config flow: a single entry with no parameters."""
 from __future__ import annotations
 
 import voluptuous as vol
@@ -9,7 +9,7 @@ from .const import CONF_ADMIN_ONLY, DOMAIN
 
 
 class HouseplanConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Установка в один шаг."""
+    """One-step setup."""
 
     VERSION = 1
 
@@ -29,7 +29,7 @@ class HouseplanConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class HouseplanOptionsFlow(config_entries.OptionsFlow):
-    """Опция: правка раскладки только администраторами."""
+    """Option: layout editing by administrators only."""
 
     async def async_step_init(self, user_input=None):
         if user_input is not None:

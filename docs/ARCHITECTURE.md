@@ -1,101 +1,101 @@
-# Архитектура House Plan
+# House Plan architecture
 
-Обновлено: 2026-07-04 (v1.2.2). Репозиторий = HACS-интеграция (категория **Integration**),
-которая содержит и бэкенд (`custom_components/houseplan`), и Lovelace-карточку (`src/` → `dist/`).
+Updated: 2026-07-04 (v1.2.2). The repository = a HACS integration (category **Integration**)
+that contains both the backend (`custom_components/houseplan`) and the Lovelace card (`src/` → `dist/`).
 
-## Состав
+## Layout
 
 ```
 houseplan-card/
-├─ src/                          # исходники карточки (TypeScript + Lit 3)
-│  ├─ houseplan-card.ts          # карточка: рендер, состояния, drag, tooltip, sticky-шапка
-│  ├─ editor.ts                  # GUI-редактор конфига (ha-form + селекторы)
-│  ├─ rules.ts                   # правила иконок (iconFor), курирование, группы, приоритет доменов
+├─ src/                          # card sources (TypeScript + Lit 3)
+│  ├─ houseplan-card.ts          # the card: rendering, states, drag, tooltip, sticky header
+│  ├─ editor.ts                  # GUI config editor (ha-form + selectors)
+│  ├─ rules.ts                   # icon rules (iconFor), curation, groups, domain priority
 │  └─ data/
-│     ├─ house.ts                # геометрия: ROOMS (комнаты→area), FLOOR_VB (viewBox), названия
-│     └─ backgrounds.ts          # ВЕКТОРНЫЕ планы (SVG base64) + FLOOR_BG_RECT (позиционирование)
-├─ dist/houseplan-card.js        # сборка (rollup+terser), ~290 КБ, планы внутри
-├─ custom_components/houseplan/  # интеграция HA
-│  ├─ __init__.py                # setup: Store, WS-команды, раздача JS (add_extra_js_url)
+│     ├─ house.ts                # geometry: ROOMS (rooms→area), FLOOR_VB (viewBox), names
+│     └─ backgrounds.ts          # VECTOR plans (SVG base64) + FLOOR_BG_RECT (positioning)
+├─ dist/houseplan-card.js        # build (rollup+terser), ~290 KB, plans embedded
+├─ custom_components/houseplan/  # the HA integration
+│  ├─ __init__.py                # setup: Store, WS commands, JS serving (add_extra_js_url)
 │  ├─ websocket_api.py           # houseplan/layout/get|set|update
-│  ├─ config_flow.py             # одна запись; опция admin_only (правка только админам)
+│  ├─ config_flow.py             # single entry; admin_only option (editing restricted to admins)
 │  ├─ const.py                   # DOMAIN, STORAGE_KEY, VERSION, FRONTEND_URL
-│  └─ frontend/houseplan-card.js # копия dist, раздаётся как /houseplan_files/houseplan-card.js
-├─ assets/                       # исходники планов: f1_plan.svg, f2_plan.svg (РЕМПЛАННЕР), *_bg.png (старые растровые)
-├─ hacs.json                     # манифест HACS
-└─ docs/                         # эта документация
+│  └─ frontend/houseplan-card.js # copy of dist, served as /houseplan_files/houseplan-card.js
+├─ assets/                       # plan sources: f1_plan.svg, f2_plan.svg (REMPLANNER), *_bg.png (old raster versions)
+├─ hacs.json                     # HACS manifest
+└─ docs/                         # this documentation
 ```
 
-## Ключевые решения
+## Key decisions
 
-1. **Один репозиторий — интеграция + карточка.** Интеграция раздаёт JS
-   (`async_register_static_paths`) и регистрирует его как **Lovelace-ресурс** (module) —
-   фронтенд дожидается ресурсов перед рендером, поэтому карточка работает и на холодном старте
-   мобильного приложения (в отличие от `add_extra_js_url`, который остаётся фолбэком для
-   YAML-режима). Пользователю не нужно вручную добавлять ресурс.
-2. **Раскладка иконок — на сервере.** `helpers.storage.Store(1, "houseplan.layout")` →
-   `.storage/houseplan.layout`. Карточка читает/пишет через `hass.callWS`
-   (`houseplan/layout/get|set|update`). Fallback — localStorage (если интеграции нет).
-3. **Без токена.** Всё из объекта `hass` фронтенда: `hass.states` (реактивно),
-   `hass.devices/entities/areas` (реестры). Никаких прямых WS-подключений.
-4. **Реактивность.** Каждое изменение состояния в HA приводит к set hass → re-render.
-   Температуры/LQI/вкл-выкл live по определению (проверено подменой state).
+1. **One repository — integration + card.** The integration serves the JS
+   (`async_register_static_paths`) and registers it as a **Lovelace resource** (module) —
+   the frontend waits for resources before rendering, so the card also works on a cold start
+   of the mobile app (unlike `add_extra_js_url`, which remains a fallback for
+   YAML mode). The user does not need to add the resource manually.
+2. **Icon layout lives on the server.** `helpers.storage.Store(1, "houseplan.layout")` →
+   `.storage/houseplan.layout`. The card reads/writes via `hass.callWS`
+   (`houseplan/layout/get|set|update`). Fallback — localStorage (when the integration is absent).
+3. **No token.** Everything comes from the frontend `hass` object: `hass.states` (reactive),
+   `hass.devices/entities/areas` (registries). No direct WS connections.
+4. **Reactivity.** Every state change in HA leads to set hass → re-render.
+   Temperatures/LQI/on-off are live by definition (verified by substituting state).
 
-## Координатная система
+## Coordinate system
 
-- Базовое пространство: **1489×1053** («пиксели» старого PNG-рендера, 1 ед. = 1 px).
-  Все комнаты, позиции иконок и viewBox этажей — в нём. НЕ менять без миграции раскладки.
-- Векторные планы вставляются `<image href=svg>` в прямоугольник `FLOOR_BG_RECT`:
+- Base space: **1489×1053** ("pixels" of the old PNG render, 1 unit = 1 px).
+  All rooms, icon positions and floor viewBoxes live in it. DO NOT change without a layout migration.
+- Vector plans are inserted as `<image href=svg>` into the `FLOOR_BG_RECT` rectangle:
   - f1: scale **0.647**, offset **(490, 27)** → rect [490, 27, 774.2, 949.3]
   - f2: scale **0.896**, offset **(351, 21)** → rect [351, 21, 1048.4, 961.4]
-  - вычислено растровой корреляцией (cv2.matchTemplate по бинаризованным картам темноты)
-    рендера SVG с эталонным PNG; точность ~1 px. Скрипты воспроизводимы (docs/DEVELOPMENT.md).
-- Комнаты (`ROOMS`) сняппены к внутренним граням стен (полуавто: поиск ближайшей «тёмной линии»
-  по профилю + ручная доводка по overlay-рендерам).
+  - computed via raster correlation (cv2.matchTemplate on binarized darkness maps) of the
+    SVG render against the reference PNG; accuracy ~1 px. The scripts are reproducible (docs/DEVELOPMENT.md).
+- Rooms (`ROOMS`) are snapped to the inner faces of walls (semi-automatic: search for the nearest
+  "dark line" along the profile + manual fine-tuning against overlay renders).
 
-## Модель данных карточки (runtime)
+## Card data model (runtime)
 
-`DevItem`: id (device_id), name, model, area, floor, icon, entities[], primary (сущность для
-more-info по приоритету доменов), temp, members[] (группа ламп), link/linkPrimary (Z2M-группа).
+`DevItem`: id (device_id), name, model, area, floor, icon, entities[], primary (the entity used for
+more-info by domain priority), temp, members[] (light group), link/linkPrimary (Z2M group).
 
-Построение из реестров (`_buildDevices`), правила 1-в-1 из прототипа:
-- показываются только устройства с area из списка комнат;
-- скрываются: entry_type=service, интеграции из EXCLUDED_DOMAINS, model=Group, сцены, мосты,
-  под-устройства myheat, дубли по «имя|area»;
-- **устройство с сущностью `lock.*` всегда получает `mdi:lock`** (TTLock-замки в реестре
-  называются «Дом»/«Терраса»/«Кладовка» — по имени не распознать);
-- лампы (mdi:lightbulb) ≥2 в комнате схлопываются в группу `mdi:lightbulb-group`
-  (клик → меню: вся группа + отдельные).
+Built from the registries (`_buildDevices`), rules carried over 1-to-1 from the prototype:
+- only devices with an area from the room list are shown;
+- hidden: entry_type=service, integrations from EXCLUDED_DOMAINS, model=Group, scenes, bridges,
+  myheat sub-devices, duplicates by "name|area";
+- **a device with a `lock.*` entity always gets `mdi:lock`** (TTLock locks in the registry
+  are named "Dom"/"Terrasa"/"Kladovka" [House/Terrace/Storeroom] — unrecognizable by name);
+- lamps (mdi:lightbulb) with ≥2 in a room collapse into a group `mdi:lightbulb-group`
+  (click → menu: the whole group + individual lamps).
 
-## Живые данные
+## Live data
 
-- Температура: сущность с device_class=temperature / °C / `_temperature$` → метка справа.
-- LQI (zigbee): среднее по `*_linkquality`-сущностям → метка под иконкой; цвет
-  `lqiColor()`: ≤40 красный → ≥180 зелёный (hsl-градиент). Среднее по комнате — в тултипе комнаты.
-- Классы состояния иконки: on (жёлтый), open (оранжевый: cover/valve/lock/binary_sensor
-  проблемных классов), unavail (прозрачность).
+- Temperature: an entity with device_class=temperature / °C / `_temperature$` → label on the right.
+- LQI (zigbee): the average over `*_linkquality` entities → label under the icon; color via
+  `lqiColor()`: ≤40 red → ≥180 green (hsl gradient). The room average is shown in the room tooltip.
+- Icon state classes: on (yellow), open (orange: cover/valve/lock/binary_sensor
+  of problem classes), unavail (transparency).
 
-## Размеры
+## Sizes
 
-`icon_size` в конфиге = **% ширины видимой области плана** (дефолт 2.5). Реализация:
-`.stage { container-type: inline-size }` + размеры в `cqw`. Легаси px-значения (>8) игнорируются.
+`icon_size` in the config = **% of the visible plan area width** (default 2.5). Implementation:
+`.stage { container-type: inline-size }` + sizes in `cqw`. Legacy px values (>8) are ignored.
 
-## Sticky-шапка
+## Sticky header
 
-`.head { position: sticky; top: var(--header-height, 56px) }`; ОБЯЗАТЕЛЬНО
-`ha-card { overflow: visible }` — `overflow: hidden` ломает sticky.
+`.head { position: sticky; top: var(--header-height, 56px) }`; it is MANDATORY that
+`ha-card { overflow: visible }` — `overflow: hidden` breaks sticky.
 
-## Маркеры устройств (v1.6.0+)
+## Device markers (v1.6.0+)
 
 `config.markers[]`: `{id, binding:'device:<id>'|'entity:<eid>'|'virtual', space?, area?, hidden?,
-name?, icon?, model?, link?, description?, pdfs:[{name,url}]}`. Гибрид: авто-устройства HA
-появляются сами; маркер с `binding=device:<id>` их перекрывает (метаданные/перепривязка/скрытие),
-`entity:<eid>` — для групп/хелперов, `virtual` — ручной значок без HA. id маркера = device_id /
-`lg_<eid>` / `v_<rand>` (сохраняет позицию в layout). Пикер привязки исключает уже размещённые
-ссылки и дубли по имя|area. Файлы-инструкции: `houseplan/file/set` → `/config/houseplan/files/<id>/`,
-отдача `/houseplan_files/files/`.
+name?, icon?, model?, link?, description?, pdfs:[{name,url}]}`. A hybrid: auto-discovered HA devices
+appear on their own; a marker with `binding=device:<id>` overrides them (metadata/rebinding/hiding),
+`entity:<eid>` — for groups/helpers, `virtual` — a manual icon without HA. The marker id = device_id /
+`lg_<eid>` / `v_<rand>` (preserves the position in the layout). The binding picker excludes already-placed
+references and duplicates by name|area. Manual files: `houseplan/file/set` → `/config/houseplan/files/<id>/`,
+served from `/houseplan_files/files/`.
 
-## Серверная конфигурация (v1.3.0+)
+## Server-side configuration (v1.3.0+)
 
 `.storage/houseplan.config` (Store):
 ```json
@@ -104,31 +104,31 @@ name?, icon?, model?, link?, description?, pdfs:[{name,url}]}`. Гибрид: а
   "virtual_devices": [{"id","space","name","icon","x","y","note?","entity_id?"}],
   "settings": {"exclude_integrations":[],"group_lights":true} }
 ```
-Все координаты **нормированные (0..1 от плана пространства)**; рендер-пространство
-1000 × 1000/aspect. Раскладка v2: `{device_id: {"s": space, "x", "y"}}` (нормир.).
-Файлы планов: `<config>/houseplan/plans/<space>.<ext>` → URL `/houseplan_files/plans/…`.
-Если server config пуст — карточка работает от legacy-бандла (дача) и показывает кнопку
-миграции «На сервер» в режиме правки. Дача мигрирована 2026-07-04.
+All coordinates are **normalized (0..1 of the space plan)**; the render space is
+1000 × 1000/aspect. Layout v2: `{device_id: {"s": space, "x", "y"}}` (normalized).
+Plan files: `<config>/houseplan/plans/<space>.<ext>` → URL `/houseplan_files/plans/…`.
+If the server config is empty, the card falls back to the legacy bundle (the dacha) and shows a
+"To server" migration button in edit mode. The dacha was migrated on 2026-07-04.
 
-## Редактор разметки (v1.4.0+)
+## Markup editor (v1.4.0+)
 
-Состояние в карточке: `_markup` (режим), `_tool` (draw/erase/delroom), `_path` (текущий контур,
-вершины по сетке GRID_N=60). Клики по stage → `_svgPoint`→`_snap`. Каждая пара точек добавляет
-сегмент в `space.segments` (дедуп по ключу, сохранение config/set с дебаунсом). Контур замкнут
-= клик по первой вершине → селект зоны (hass.areas) + имя → room {poly}. Комнаты-полигоны и
-прямоугольники рендерятся единообразно (hit-test: point-in-polygon / rect).
+State inside the card: `_markup` (mode), `_tool` (draw/erase/delroom), `_path` (the current outline,
+vertices on the GRID_N=60 grid). Clicks on the stage → `_svgPoint`→`_snap`. Each pair of points adds a
+segment to `space.segments` (dedup by key, saved via config/set with debounce). The outline is closed
+= a click on the first vertex → area select (hass.areas) + name → room {poly}. Polygon rooms and
+rectangles are rendered uniformly (hit-test: point-in-polygon / rect).
 
-## WS API интеграции
+## Integration WS API
 
-| Команда | Параметры | Ответ |
+| Command | Parameters | Response |
 |---|---|---|
 | `houseplan/layout/get` | — | `{layout: {device_id: {x,y}}}` |
-| `houseplan/layout/set` | `layout` | `{ok}` (admin_only опционально) |
+| `houseplan/layout/set` | `layout` | `{ok}` (admin_only optional) |
 | `houseplan/layout/update` | `device_id`, `pos` | `{ok}` |
 | `houseplan/config/get` | — | `{config, rev}` |
-| `houseplan/config/set` | `config`, `expected_rev?` | `{ok, rev}` / err `conflict`; событие `houseplan_config_updated` |
-| `houseplan/plan/set` | `space_id`, `ext` (svg/png/jpg/webp), `data` (b64, ≤8МБ) | `{ok, url}` |
-| `houseplan/file/set` | `marker_id`, `filename`, `data` (b64) | `{ok,url,name}` (legacy, лимит WS) |
+| `houseplan/config/set` | `config`, `expected_rev?` | `{ok, rev}` / err `conflict`; event `houseplan_config_updated` |
+| `houseplan/plan/set` | `space_id`, `ext` (svg/png/jpg/webp), `data` (b64, ≤8 MB) | `{ok, url}` |
+| `houseplan/file/set` | `marker_id`, `filename`, `data` (b64) | `{ok,url,name}` (legacy, WS limit) |
 
-**Загрузка файлов — HTTP** (не WS, у него лимит размера сообщения): `POST /api/houseplan/upload`
-(multipart: marker_id + file), HomeAssistantView, requires_auth. Отдача — `/houseplan_files/files/`.
+**File uploads go over HTTP** (not WS, which has a message-size limit): `POST /api/houseplan/upload`
+(multipart: marker_id + file), HomeAssistantView, requires_auth. Served from `/houseplan_files/files/`.

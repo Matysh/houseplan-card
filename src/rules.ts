@@ -1,8 +1,8 @@
 /**
- * Правила прототипа — перенесены 1-в-1 из index.html/build_data.py (см. DOCUMENTATION.md §4.2–4.5).
+ * Prototype rules — ported 1-to-1 from index.html/build_data.py (see DOCUMENTATION.md §4.2–4.5).
  */
 
-/** Интеграции-домены, чьи устройства скрываются (курирование). */
+/** Integration domains whose devices are hidden (curation). */
 export const EXCLUDED_DOMAINS = new Set([
   'hacs', 'sun', 'backup', 'hassio', 'met', 'telegram_bot', 'mobile_app',
   'systemmonitor', 'better_thermostat', 'adaptive_lighting', 'yandex_pogoda',
@@ -38,7 +38,7 @@ const ICON_RULES: Array<[RegExp, string]> = [
   [/slzb|координат|zigbee/, 'mdi:zigbee'],
 ];
 
-/** Подбор MDI-иконки по имени/модели устройства. */
+/** Pick an MDI icon by device name/model. */
 export function iconFor(name?: string, model?: string): string {
   const s = ((name || '') + ' ' + (model || '')).toLowerCase();
   for (const [pat, icon] of ICON_RULES) {
@@ -47,7 +47,7 @@ export function iconFor(name?: string, model?: string): string {
   return 'mdi:chip';
 }
 
-/** Приоритет доменов для выбора «первичной» сущности устройства (more-info). */
+/** Domain priority for picking the device's “primary” entity (more-info). */
 export const DOMAIN_PRIORITY = [
   'light', 'switch', 'cover', 'valve', 'lock', 'climate', 'fan',
   'media_player', 'camera', 'vacuum', 'humidifier', 'water_heater',

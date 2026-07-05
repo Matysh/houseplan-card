@@ -1,5 +1,5 @@
-"""Юнит-тесты чистой валидации House Plan (загружаем validation.py по пути,
-без импорта пакета HA-интеграции)."""
+"""Unit tests for the pure House Plan validation (validation.py is loaded by path,
+without importing the HA integration package)."""
 import importlib.util
 import os
 
@@ -17,7 +17,7 @@ _spec.loader.exec_module(v)
 
 def test_sanitize_marker_id():
     assert v.sanitize_marker_id("../etc/passwd") == "_etc_passwd"
-    assert v.sanitize_marker_id("..") == "misc"       # чистый traversal → misc
+    assert v.sanitize_marker_id("..") == "misc"       # pure traversal → misc
     assert v.sanitize_marker_id(".") == "misc"
     assert v.sanitize_marker_id("") == "misc"
     assert len(v.sanitize_marker_id("a" * 200)) == 64
@@ -25,8 +25,8 @@ def test_sanitize_marker_id():
 
 def test_sanitize_filename_strips_path():
     assert v.sanitize_filename("/a/b/c/manual.pdf") == "manual.pdf"
-    assert v.sanitize_filename("..\\..\\evil.pdf") == "evil.pdf"   # обратные слэши = путь
-    assert v.sanitize_filename("...hidden.pdf") == "hidden.pdf"      # ведущие точки убраны
+    assert v.sanitize_filename("..\\..\\evil.pdf") == "evil.pdf"   # backslashes = a path
+    assert v.sanitize_filename("...hidden.pdf") == "hidden.pdf"      # leading dots stripped
 
 
 def test_file_ext():
@@ -79,9 +79,9 @@ def test_config_schema_defaults_and_extra():
 def test_config_schema_full_roundtrip():
     cfg = {
         "spaces": [{
-            "id": "f1", "title": "1 этаж", "plan_url": "/p/f1.svg",
+            "id": "f1", "title": "Floor 1", "plan_url": "/p/f1.svg",
             "aspect": 0.8, "view_box": [0, 0, 1, 1],
-            "rooms": [{"id": "r1", "name": "Зал", "area": "hall",
+            "rooms": [{"id": "r1", "name": "Hall", "area": "hall",
                        "poly": [[0, 0], [0.5, 0], [0.5, 0.5], [0, 0.5]]}],
             "segments": [[0, 0, 0.5, 0]],
         }],

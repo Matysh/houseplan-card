@@ -1,30 +1,30 @@
 /**
- * Чистые функции без зависимостей от Lit/DOM — легко покрываются юнит-тестами.
+ * Pure functions with no Lit/DOM dependencies — easy to cover with unit tests.
  */
 
-/** Цвет LQI zigbee: ≤40 — красный, ≥180 — зелёный, между — hsl-градиент. */
+/** Zigbee LQI color: ≤40 — red, ≥180 — green, in between — an hsl gradient. */
 export function lqiColor(lqi: number): string {
   const hue = Math.max(0, Math.min(120, ((lqi - 40) / 140) * 120));
   return `hsl(${Math.round(hue)}, 85%, 55%)`;
 }
 
-/** Привязать координату к ближайшему узлу сетки с шагом pitch. */
+/** Snap a coordinate to the nearest grid node with step pitch. */
 export function snapToGrid(v: number, pitch: number): number {
   return Math.round(v / pitch) * pitch;
 }
 
-/** Канонический ключ отрезка (независим от направления). */
+/** Canonical key of a segment (independent of direction). */
 export function segKey(a: number[], b: number[]): string {
   const [p, q] = a[0] < b[0] || (a[0] === b[0] && a[1] <= b[1]) ? [a, b] : [b, a];
   return `${p[0].toFixed(1)},${p[1].toFixed(1)}-${q[0].toFixed(1)},${q[1].toFixed(1)}`;
 }
 
-/** Совпадение точек с допуском. */
+/** Point equality within a tolerance. */
 export function samePoint(a: number[], b: number[], eps = 0.001): boolean {
   return Math.abs(a[0] - b[0]) < eps && Math.abs(a[1] - b[1]) < eps;
 }
 
-/** Точка внутри полигона (ray casting). */
+/** Point inside a polygon (ray casting). */
 export function pointInPolygon(p: number[], poly: number[][]): boolean {
   let inside = false;
   for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
@@ -36,8 +36,8 @@ export function pointInPolygon(p: number[], poly: number[][]): boolean {
 }
 
 /**
- * id маркера по привязке: device → device_id, entity → 'lg_'+entity_id,
- * virtual → переданный existing (если это уже v_-маркер) либо новый через newId().
+ * Marker id by binding: device → device_id, entity → 'lg_'+entity_id,
+ * virtual → the passed-in existing (if it is already a v_ marker) or a new one via newId().
  */
 export function markerIdForBinding(
   binding: string,
@@ -50,13 +50,13 @@ export function markerIdForBinding(
   return existingId && existingId.startsWith('v_') ? existingId : newId();
 }
 
-/** Средний LQI по набору значений (или null). */
+/** Average LQI over a set of values (or null). */
 export function averageLqi(values: number[]): number | null {
   if (!values.length) return null;
   return Math.round(values.reduce((a, b) => a + b, 0) / values.length);
 }
 
-/** Прямоугольник «contain» с заданным аспектом (w/h), вмещающий весь vb [x,y,w,h]. */
+/** “Contain” rectangle with the given aspect (w/h) that fits the whole vb [x,y,w,h]. */
 export function fitView(vb: number[], aspect: number): { x: number; y: number; w: number; h: number } {
   const planA = vb[2] / vb[3];
   if (aspect > planA) {
@@ -67,7 +67,7 @@ export function fitView(vb: number[], aspect: number): { x: number; y: number; w
   return { x: vb[0], y: vb[1] - (h - vb[3]) / 2, w, h };
 }
 
-/** Расталкивание точек: не ближе minDist друг к другу, в пределах прямоугольника b с отступом pad. Мутирует pts. */
+/** Push points apart: no closer than minDist to each other, within rectangle b with padding pad. Mutates pts. */
 export function declump(
   pts: { x: number; y: number }[],
   b: { x: number; y: number; w: number; h: number },
@@ -100,8 +100,8 @@ export function declump(
 }
 
 /**
- * Безопасный URL для <a href>: допускаются только http(s) и относительные пути.
- * Отсекает javascript:, data: и прочие опасные схемы (XSS через конфиг).
+ * Safe URL for <a href>: only http(s) and relative paths are allowed.
+ * Rejects javascript:, data: and other dangerous schemes (XSS via config).
  */
 export function safeUrl(url: string | null | undefined): string | null {
   if (!url) return null;
