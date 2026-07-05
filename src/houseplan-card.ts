@@ -13,7 +13,7 @@ import {
 } from './logic';
 import './editor';
 
-const CARD_VERSION = '1.9.1';
+const CARD_VERSION = '1.9.2';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // кэш серверного конфига+раскладки для мгновенного рендера
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -30,7 +30,7 @@ interface RoomCfg {
   poly?: number[][]; // полигон в рендер-единицах (модель) / нормированный (конфиг)
 }
 
-const GRID_N = 120; // точек сетки по ширине плана
+const GRID_N = 240; // точек сетки по ширине плана (шаг вдвое меньше; старые узлы — подмножество новых, позиции сохраняются)
 type MarkupTool = 'draw' | 'erase' | 'delroom';
 
 interface SpaceModel {
