@@ -13,7 +13,7 @@ import {
 } from './logic';
 import './editor';
 
-const CARD_VERSION = '1.8.3';
+const CARD_VERSION = '1.8.4';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // кэш серверного конфига+раскладки для мгновенного рендера
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -155,6 +155,7 @@ class HouseplanCard extends LitElement {
   private _pinchStart: { dist: number; zoom: number } | null = null;
   private _suppressClick = false;
   private _roViewport?: ResizeObserver;
+  private _onboardingShown = false; // авто-диалог пространства показан один раз за сессию
 
   private _infoCard: DevItem | null = null;
   private _markerDialog: {
@@ -383,6 +384,17 @@ class HouseplanCard extends LitElement {
       this._roViewport.observe(stage);
     }
     if (stage && !this._view) this._refitView();
+    // онбординг: на пустом серверном конфиге сразу открываем диалог пространства
+    if (
+      this._serverStorage &&
+      this._loadOk &&
+      this._model.length === 0 &&
+      !this._spaceDialog &&
+      !this._onboardingShown
+    ) {
+      this._onboardingShown = true;
+      this._openSpaceDialog('create');
+    }
   }
 
   // ================= сервер: конфиг + раскладка =================
@@ -1316,8 +1328,21 @@ class HouseplanCard extends LitElement {
     this._cursorPt = this._snap(this._svgPoint(ev));
   }
 
+  /** Сохранить комнату с обязательной привязкой к зоне HA. */
   private _saveRoom(): void {
-    if (!this._contourClosed || !this._areaSel && !this._nameSel) return;
+    if (!this._areaSel) return;
+    this._commitRoom();
+  }
+
+  /** Сохранить декоративную комнату без зоны (нужно только имя). */
+  private _saveRoomNoArea(): void {
+    if (!this._nameSel.trim()) return;
+    this._areaSel = '';
+    this._commitRoom();
+  }
+
+  private _commitRoom(): void {
+    if (!this._contourClosed) return;
     const sp = this._curSpaceCfg;
     if (!sp) return;
     const H = this._spaceH;
@@ -1332,12 +1357,19 @@ class HouseplanCard extends LitElement {
     this._saveConfig();
     this._path = [];
     this._pathSegs = [];
+    const boundArea = this._areaSel;
     this._areaSel = '';
     this._nameSel = '';
     this._roomDialog = false;
     this._regSignature = '';
     this._maybeRebuildDevices();
-    this._showToast('Комната сохранена');
+    // авто-добавление значков устройств зоны — через _defaultPositions (сетка внутри контура)
+    const added = boundArea ? this._devices.filter((d) => d.area === boundArea).length : 0;
+    this._showToast(
+      boundArea
+        ? `Комната сохранена — добавлено устройств: ${added}`
+        : 'Комната сохранена (без зоны)',
+    );
   }
 
   private _cancelPath(): void {
@@ -1671,6 +1703,11 @@ class HouseplanCard extends LitElement {
   private async _saveSpaceDialog(): Promise<void> {
     const d = this._spaceDialog;
     if (!d || d.busy || !d.title.trim()) return;
+    if (!d.planFile && !d.planUrl) {
+      this._showToast('Загрузите подложку — план этажа обязателен');
+      return;
+    }
+    const wasFirst = d.mode === 'create' && (this._serverCfg?.spaces.length || 0) === 0;
     this._spaceDialog = { ...d, busy: true };
     try {
       const cfg = this._serverCfg!;
@@ -1702,7 +1739,17 @@ class HouseplanCard extends LitElement {
       if (d.mode === 'create') this._space = sp.id;
       this._regSignature = '';
       this._maybeRebuildDevices();
-      this._showToast(d.mode === 'create' ? 'Пространство добавлено' : 'Пространство сохранено');
+      if (wasFirst) {
+        // ведём пользователя дальше: сразу в режим разметки комнат
+        this._edit = false;
+        this._markup = true;
+        this._tool = 'draw';
+        this._path = [];
+        this._cursorPt = null;
+        this._showToast('Пространство добавлено. Обведите комнаты: кликайте по точкам сетки и замкните контур.');
+      } else {
+        this._showToast(d.mode === 'create' ? 'Пространство добавлено' : 'Пространство сохранено');
+      }
     } catch (e: any) {
       this._spaceDialog = { ...this._spaceDialog!, busy: false };
       this._showToast('Ошибка: ' + (e?.message || e));
@@ -2164,7 +2211,9 @@ class HouseplanCard extends LitElement {
             : nothing}
           <span class="spacer"></span>
           <button class="btn ghost" @click=${() => (this._spaceDialog = null)}>Отмена</button>
-          <button class="btn on" @click=${this._saveSpaceDialog} ?disabled=${!d.title.trim() || d.busy}>
+          <button class="btn on" @click=${this._saveSpaceDialog}
+            ?disabled=${!d.title.trim() || !(d.planFile || d.planUrl) || d.busy}
+            title=${!(d.planFile || d.planUrl) ? 'Загрузите подложку (план этажа)' : ''}>
             <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : 'Сохранить'}
           </button>
         </div>
@@ -2198,7 +2247,13 @@ class HouseplanCard extends LitElement {
         </div>
         <div class="row">
           <button class="btn ghost" @click=${this._roomDialogCancel}>Отмена</button>
-          <button class="btn on" @click=${this._saveRoom} ?disabled=${!this._areaSel && !this._nameSel}>
+          <span class="spacer"></span>
+          <button class="btn ghost" @click=${this._saveRoomNoArea} ?disabled=${!this._nameSel.trim()}
+            title="Декоративная комната без привязки к зоне (например, холл)">
+            Без зоны
+          </button>
+          <button class="btn on" @click=${this._saveRoom} ?disabled=${!this._areaSel}
+            title=${!this._areaSel ? 'Выберите зону Home Assistant' : ''}>
             <ha-icon icon="mdi:check"></ha-icon>Сохранить
           </button>
         </div>
