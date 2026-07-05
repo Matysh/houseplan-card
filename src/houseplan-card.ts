@@ -13,7 +13,7 @@ import {
 } from './logic';
 import './editor';
 
-const CARD_VERSION = '1.8.4';
+const CARD_VERSION = '1.9.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // кэш серверного конфига+раскладки для мгновенного рендера
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -64,7 +64,7 @@ interface Marker {
 interface ServerConfig {
   spaces: any[];
   markers: Marker[];
-  settings: { exclude_integrations?: string[]; group_lights?: boolean };
+  settings: { exclude_integrations?: string[]; group_lights?: boolean; show_all?: boolean };
 }
 
 interface DevItem {
@@ -363,6 +363,19 @@ class HouseplanCard extends LitElement {
     return this._serverCfg?.settings || {};
   }
 
+  private get _showAll(): boolean {
+    return !!this._settings.show_all;
+  }
+
+  private _toggleShowAll(): void {
+    if (!this._serverCfg) return;
+    this._serverCfg = { ...this._serverCfg, settings: { ...this._serverCfg.settings, show_all: !this._showAll } };
+    this._regSignature = '';
+    this._maybeRebuildDevices();
+    this._saveConfig();
+    this.requestUpdate();
+  }
+
   private get _excluded(): Set<string> {
     const list = this._settings.exclude_integrations;
     return list ? new Set(list) : EXCLUDED_DOMAINS;
@@ -636,9 +649,10 @@ class HouseplanCard extends LitElement {
     const groupLights = this._settings.group_lights !== false;
     const groupedAreas = this._groupedLightAreas();
     const excluded = this._excluded;
+    const showAll = this._showAll;
     const entsBy = this._entitiesByDevice();
     const claimed = this._claimed;
-    const seen: Record<string, 1> = {};
+    const seen: Record<string, number> = {};
     const rest: DevItem[] = [];
 
     // 1) авто-устройства HA (не занятые маркером, не скрытые)
@@ -651,21 +665,25 @@ class HouseplanCard extends LitElement {
       if (marker && marker.hidden) continue;
       const entIds = entsBy[dev.id] || [];
       const dom = this._domainOfDevice(dev, entIds);
-      if (excluded.has(dom)) continue;
-      if (dev.model === 'Group') continue;
-      if (/scene/i.test(dev.model || '')) continue;
-      if (/bridge/i.test((dev.model || '') + (dev.name || ''))) continue;
-      if (dom === 'myheat' && dev.via_device_id) continue;
+      // курирование (можно отключить переключателем «показать все»)
+      if (!showAll) {
+        if (excluded.has(dom)) continue;
+        if (dev.model === 'Group') continue;
+        if (/scene/i.test(dev.model || '')) continue;
+        if (/bridge/i.test((dev.model || '') + (dev.name || ''))) continue;
+        if (dom === 'myheat' && dev.via_device_id) continue;
+      }
       const name = (dev.name_by_user || dev.name || 'без имени').trim();
       const key = name + '|' + area;
-      if (seen[key]) continue;
-      seen[key] = 1;
       let icon = iconFor(name, dev.model);
       if (entIds.some((e) => e.startsWith('lock.'))) icon = 'mdi:lock';
-      if (groupLights && icon === 'mdi:lightbulb' && groupedAreas.has(area)) continue;
+      if (!showAll && groupLights && icon === 'mdi:lightbulb' && groupedAreas.has(area)) continue;
+      // дубли по «имя|зона» не скрываем, а нумеруем
+      seen[key] = (seen[key] || 0) + 1;
+      const dispName = seen[key] > 1 ? name + ' ' + seen[key] : name;
       const item: DevItem = {
         id: dev.id,
-        name,
+        name: dispName,
         model: dev.model || '',
         area,
         space: areaMap[area].space,
@@ -782,27 +800,62 @@ class HouseplanCard extends LitElement {
 
   private _defaultPositions(): Record<string, { x: number; y: number }> {
     const map: Record<string, { x: number; y: number }> = {};
+    const iconPct = this._config?.icon_size ?? 2.5;
+    const minDist = (iconPct / 100) * NORM_W * 1.3; // не ближе диаметра значка + запас
     for (const s of this._model) {
       for (const r of s.rooms) {
         if (!r.area) continue;
         const ds = this._devices.filter((d) => d.area === r.area && d.space === s.id);
         if (!ds.length) continue;
         const b = this._roomBounds(r);
-        const pad = Math.min(b.w, b.h) * 0.12;
+        const pad = Math.min(b.w, b.h) * 0.1;
         const iw = b.w - pad * 2;
         const ih = b.h - pad * 2;
         const cols = Math.max(1, Math.round(Math.sqrt((ds.length * iw) / Math.max(ih, 1))));
         const rows = Math.ceil(ds.length / cols);
         const cw = iw / cols;
         const ch = ih / Math.max(rows, 1);
-        ds.forEach((d, i) => {
-          const c = i % cols;
-          const rw = Math.floor(i / cols);
-          map[d.id] = { x: b.x + pad + cw * (c + 0.5), y: b.y + pad + ch * (rw + 0.5) };
-        });
+        const pts = ds.map((_, i) => ({
+          x: b.x + pad + cw * ((i % cols) + 0.5),
+          y: b.y + pad + ch * (Math.floor(i / cols) + 0.5),
+        }));
+        this._declump(pts, b, minDist, pad * 0.5);
+        ds.forEach((d, i) => (map[d.id] = pts[i]));
       }
     }
     return map;
+  }
+
+  /** Расталкивание значков, чтобы не скучивались (в пределах комнаты). */
+  private _declump(
+    pts: { x: number; y: number }[],
+    b: { x: number; y: number; w: number; h: number },
+    minDist: number,
+    pad: number,
+  ): void {
+    if (pts.length < 2) return;
+    const minX = b.x + pad, maxX = b.x + b.w - pad, minY = b.y + pad, maxY = b.y + b.h - pad;
+    for (let it = 0; it < 60; it++) {
+      let moved = false;
+      for (let i = 0; i < pts.length; i++) {
+        for (let j = i + 1; j < pts.length; j++) {
+          const dx = pts[j].x - pts[i].x, dy = pts[j].y - pts[i].y;
+          const dist = Math.hypot(dx, dy) || 0.001;
+          if (dist < minDist) {
+            const push = (minDist - dist) / 2;
+            const ux = dx / dist, uy = dy / dist;
+            pts[i].x -= ux * push; pts[i].y -= uy * push;
+            pts[j].x += ux * push; pts[j].y += uy * push;
+            moved = true;
+          }
+        }
+      }
+      for (const q of pts) {
+        q.x = Math.max(minX, Math.min(maxX, q.x));
+        q.y = Math.max(minY, Math.min(maxY, q.y));
+      }
+      if (!moved) break;
+    }
   }
 
   /** Позиция устройства в рендер-единицах текущего пространства. */
@@ -883,11 +936,6 @@ class HouseplanCard extends LitElement {
     ev.stopPropagation();
     if (this._drag?.moved || this._suppressClick) return;
     if (this._markup) return;
-    if (this._edit) {
-      this._selId = d.id;
-      this._openMarkerDialog(d);
-      return;
-    }
     this._infoCard = d;
   }
 
@@ -1086,12 +1134,12 @@ class HouseplanCard extends LitElement {
   }
 
   private _clickRoom(r: RoomCfg): void {
-    if (this._suppressClick || this._edit || !r.area) return;
+    if (this._suppressClick || !r.area) return;
     navigate('/config/areas/area/' + r.area);
   }
 
   private _pointerDown(ev: PointerEvent, d: DevItem): void {
-    if (!this._edit) return;
+    if (this._markup) return; // в режиме разметки значки не тащим
     ev.preventDefault();
     const p = this._pos(d);
     this._drag = { id: d.id, sx: ev.clientX, sy: ev.clientY, ox: p.x, oy: p.y, moved: false };
@@ -1363,12 +1411,30 @@ class HouseplanCard extends LitElement {
     this._roomDialog = false;
     this._regSignature = '';
     this._maybeRebuildDevices();
-    // авто-добавление значков устройств зоны — через _defaultPositions (сетка внутри контура)
-    const added = boundArea ? this._devices.filter((d) => d.area === boundArea).length : 0;
+    // авто-добавление значков устройств зоны + ФИКСАЦИЯ их позиций в раскладке,
+    // чтобы при смене порядка в реестре HA значки не перетасовывались.
+    let added = 0;
+    if (boundArea) {
+      const aspect = this._serverCfg?.spaces.find((x: any) => x.id === this._space)?.aspect || 1;
+      const H2 = NORM_W / aspect;
+      const next = { ...this._layout };
+      for (const d of this._devices) {
+        if (d.area !== boundArea || d.space !== this._space) continue;
+        added++;
+        if (this._layout[d.id]) continue; // размещено вручную — не трогаем
+        const dp = this._defPos[d.id];
+        if (!dp) continue;
+        next[d.id] = { s: this._space, x: dp.x / NORM_W, y: dp.y / H2 };
+        this._dirtyPos.add(d.id);
+      }
+      this._layout = next;
+      this._persistLayout();
+    }
+    const roomsN = this._model.find((s) => s.id === this._space)?.rooms.length || 0;
     this._showToast(
       boundArea
-        ? `Комната сохранена — добавлено устройств: ${added}`
-        : 'Комната сохранена (без зоны)',
+        ? `Комната сохранена (${roomsN}). Устройств добавлено: ${added}. Обведите следующую или выйдите из разметки.`
+        : `Комната сохранена (${roomsN}, без зоны). Обведите следующую или выйдите из разметки.`,
     );
   }
 
@@ -1863,23 +1929,24 @@ class HouseplanCard extends LitElement {
                 <ha-icon icon="mdi:plus-box-outline"></ha-icon>
               </button>`
             : nothing}
-          <button class="btn ${this._edit ? 'on' : ''}" @click=${() => {
-            this._edit = !this._edit;
-            this._markup = false;
-            this._selId = null;
-          }} title="Режим правки: клик по значку — карточка, перетаскивание — двигать">
-            <ha-icon icon="mdi:cursor-move"></ha-icon>
-          </button>
+          ${this._norm
+            ? html`<button class="btn ${this._showAll ? 'on' : ''}" @click=${this._toggleShowAll}
+                title="Показывать все устройства зоны (без курирования)">
+                <ha-icon icon="${this._showAll ? 'mdi:eye' : 'mdi:eye-off-outline'}"></ha-icon>
+              </button>
+              <button class="btn" @click=${this._resetLayout} title="Сбросить позиции значков к авто-раскладке">
+                <ha-icon icon="mdi:backup-restore"></ha-icon>
+              </button>`
+            : nothing}
           <button class="btn ${this._markup ? 'on' : ''}" @click=${this._toggleMarkup}
             title="Разметка комнат: сетка, линии, контуры">
             <ha-icon icon="mdi:vector-square-edit"></ha-icon>
           </button>
         </div>
-        ${this._edit ? this._renderEditbar() : nothing}
         ${this._markup ? this._renderMarkupBar() : nothing}
         </div>
 
-        <div class="stage ${this._edit ? 'edit' : ''} ${this._markup ? 'markup' : ''}"
+        <div class="stage ${this._markup ? 'markup' : ''}"
           style="height:calc(100dvh - 118px)"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
@@ -2355,6 +2422,12 @@ class HouseplanCard extends LitElement {
       background: rgba(127, 127, 127, 0.12);
       padding: 3px;
       border-radius: 10px;
+      flex-wrap: wrap;
+    }
+    @media (max-width: 620px) {
+      .head { gap: 6px; padding: 8px 10px; }
+      .head .count { display: none; }
+      .head .title { font-size: 14px; }
     }
     .tab {
       border: 0;
@@ -2569,7 +2642,7 @@ class HouseplanCard extends LitElement {
       align-items: center;
       justify-content: center;
       color: var(--hp-txt);
-      cursor: pointer;
+      cursor: grab;
       pointer-events: auto;
       transition: background 0.15s, border-color 0.15s, opacity 0.2s;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
@@ -2577,6 +2650,9 @@ class HouseplanCard extends LitElement {
     }
     .dev ha-icon {
       --mdc-icon-size: calc(var(--icon-size, 2.5cqw) * 0.62);
+    }
+    .dev:active {
+      cursor: grabbing;
     }
     .dev:hover {
       background: var(--hp-accent);
@@ -2604,9 +2680,7 @@ class HouseplanCard extends LitElement {
       border-color: #ffc14d;
       box-shadow: 0 0 0 3px rgba(255, 193, 77, 0.35);
     }
-    .stage.edit .dev {
-      cursor: grab;
-    }
+
     .dev .tval {
       position: absolute;
       left: 100%;
