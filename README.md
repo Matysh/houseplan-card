@@ -2,7 +2,7 @@
 
 **A live map of your home right inside Home Assistant: floors, rooms and devices on a real floor plan — with live states, temperature and signal strength. Everything is configured with the mouse, without a single line of YAML.**
 
-![Interactive house plan with devices](docs/images/01-plan.png)
+![House Plan demo](docs/images/demo.gif)
 
 🇷🇺 [Документация на русском](README.ru.md)
 

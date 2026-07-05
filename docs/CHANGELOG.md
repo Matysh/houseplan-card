@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.13.1 — 2026-07-05 (distribution materials)
+- **Demo GIF** in the README — recorded on a fully synthetic demo home (no real
+  floor plans): live states, tap-to-toggle, drag, zoom, info card, space tabs.
+- GitHub issue templates (bug report with diagnostics hint, feature request),
+  `CONTRIBUTING.md` (5-minute setup, ground rules, architecture pointers),
+  Discussions enabled.
+
 ## v1.13.0 — 2026-07-05 (universality: floors import, icon rules, tap actions)
 - **Floors import wizard**: on first run, if the HA registry has floors, the card
   offers to create a space per floor — names prefilled, the (mandatory) plan image is

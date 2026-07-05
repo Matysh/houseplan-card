@@ -1,0 +1,36 @@
+name: Bug report
+description: Something in House Plan does not work as expected
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: House Plan version
+      placeholder: v1.13.0
+    validations:
+      required: true
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant version
+      placeholder: "2026.6"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened / what did you expect?
+      description: Steps to reproduce help a lot.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / browser console errors
+      description: "Settings → System → Logs (search: houseplan) and the browser console (F12)."
+      render: text
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: "Settings → Devices & services → House Plan → ⋯ → Download diagnostics (personal fields are redacted automatically)."

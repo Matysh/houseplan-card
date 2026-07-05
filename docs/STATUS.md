@@ -13,7 +13,7 @@
 
 | Item | State |
 |---|---|
-| Version | **v1.13.0** everywhere (manifest, const.py, package.json, CARD_VERSION) |
+| Version | **v1.13.1** everywhere (manifest, const.py, package.json, CARD_VERSION) |
 | GitHub | https://github.com/Matysh/houseplan-card — branch `main`, releases v1.9.3…v1.11.2 |
 | CI | `.github/workflows/validate.yml` (hacs + hassfest + frontend + backend) — **fully green** since v1.11.1; `release.yml` auto-attaches the card bundle (needs `permissions: contents: write`, fixed) |
 | HACS | Works as custom repository (id 1290210112 on the home instance). **Inclusion PR: https://github.com/hacs/default/pull/8995** (queue ≈2 months as of 2026-07) |
@@ -37,6 +37,9 @@
   uninstall cleanup, HA-harness tests in CI, quality_scale.yaml.
 - **v1.13.0** — universality: floors-import wizard, editable icon rules (+device_class
   fallback), tap actions with a security model, i18n dictionaries in JSON, light-theme pass.
+- **v1.13.1** — distribution: synthetic-home demo GIF in the README, issue templates,
+  CONTRIBUTING.md, Discussions. Forum/Reddit drafts are in the user folder
+  (`posts_drafts.md`) awaiting manual posting.
 
 ## Where things live
 
@@ -55,7 +58,11 @@
    `~/.git-credentials`. Revoke after the HACS queue clears, or re-issue when needed.
 3. Stale files on the mount that cannot be deleted from the sandbox: `src/data/` leftovers,
    `brand_preview.png`, old nested bundle copies — ignore, git is authoritative.
-4. Roadmap next: see ROADMAP.md (quality-scale conformance is the next big theme).
+4. Roadmap: phases 7–10 are DONE (v1.12.0 quality scale, v1.13.0 universality,
+   v1.13.1 distribution). Next candidates: replace the remaining real-house README
+   screenshots with synthetic ones; measure backend coverage (>95% goal); mypy strict.
+5. The demo harness lives in /tmp/demo (synthetic home: demo.html + capture.mjs) —
+   rebuildable from this repo + docs/DEVELOPMENT.md notes; frames → PIL → GIF.
 
 ## How to resume work in a fresh session (checklist)
 
