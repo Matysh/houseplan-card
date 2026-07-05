@@ -69,10 +69,10 @@ async def test_config_rev_conflict(hass: HomeAssistant, hass_ws_client: WebSocke
 
 async def test_not_ready_without_entry(hass: HomeAssistant, hass_ws_client: WebSocketGenerator) -> None:
     """WS commands answer not_ready when the integration has no loaded entry."""
-    # register commands without setting up an entry
-    from custom_components.houseplan import async_setup
+    # register only the WS commands, without an entry
+    from custom_components.houseplan import websocket_api as hp_ws
 
-    assert await async_setup(hass, {})
+    hp_ws.async_register(hass)
     client = await hass_ws_client(hass)
     await client.send_json_auto_id({"type": "houseplan/layout/get"})
     resp = await client.receive_json()
