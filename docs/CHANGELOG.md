@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.11.1 — 2026-07-05 (brand images shipped inside the integration)
+- Brand icon and logo (256/512, transparent background) now live in
+  `custom_components/houseplan/brand/` — the native mechanism for custom
+  integrations since Home Assistant 2026.3 (served via `/api/brands/...`,
+  local images take priority over the brands CDN). The former root `brand/`
+  directory is gone, and no home-assistant/brands PR is needed (theirs bot
+  closes such PRs as obsolete).
+
 ## v1.11.0 — 2026-07-05 (full English translation + UI localization)
 - **UI localization (en/ru)**: every card string moved to `src/i18n.ts` dictionaries.
   The language follows the HA user profile (`hass.locale`) automatically; a new
