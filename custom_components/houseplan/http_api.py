@@ -18,7 +18,8 @@ except ImportError:  # older HA versions
     KEY_HASS = "hass"  # type: ignore[assignment]
 from homeassistant.core import HomeAssistant
 
-from .const import CONF_ADMIN_ONLY, DOMAIN, FILES_DIR, FILES_URL
+from .const import CONF_ADMIN_ONLY, FILES_DIR, FILES_URL
+from .store import get_entry
 from .validation import (
     FILE_EXTENSIONS,
     MAX_FILE_BYTES,
@@ -41,7 +42,7 @@ class HouseplanUploadView(HomeAssistantView):
 
     async def post(self, request: web.Request) -> web.Response:
         hass: HomeAssistant = request.app[KEY_HASS]
-        entry = hass.data.get(DOMAIN, {}).get("entry")
+        entry = get_entry(hass)
         admin_only = bool(entry and entry.options.get(CONF_ADMIN_ONLY, False))
         if admin_only:
             user = request.get("hass_user")
