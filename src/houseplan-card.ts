@@ -13,7 +13,7 @@ import {
 } from './logic';
 import './editor';
 
-const CARD_VERSION = '1.9.0';
+const CARD_VERSION = '1.9.1';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // кэш серверного конфига+раскладки для мгновенного рендера
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -551,10 +551,21 @@ class HouseplanCard extends LitElement {
     const vals: number[] = [];
     for (const eid of entIds) {
       const st = this.hass.states[eid];
-      const isLqi = /_linkquality$/.test(eid) || (st?.attributes?.unit_of_measurement || '') === 'lqi';
-      if (!isLqi || !st) continue;
-      const v = parseFloat(st.state);
-      if (!isNaN(v)) vals.push(v);
+      if (!st) continue;
+      const unit = (st.attributes?.unit_of_measurement || '').toLowerCase();
+      // 1) выделенный сенсор сигнала: Z2M *_linkquality, ZHA *_lqi, либо единицы «lqi»
+      if (/_(linkquality|lqi)$/.test(eid) || unit === 'lqi') {
+        const v = parseFloat(st.state);
+        if (!isNaN(v)) vals.push(v);
+        continue;
+      }
+      // 2) сигнал как АТРИБУТ на любой сущности устройства (Z2M linkquality / ZHA lqi) —
+      //    покрывает устройства, у которых отдельный сенсор сигнала отключён
+      const av = st.attributes?.linkquality ?? st.attributes?.lqi;
+      if (av != null) {
+        const v = parseFloat(av);
+        if (!isNaN(v)) vals.push(v);
+      }
     }
     if (!vals.length) return null;
     return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
