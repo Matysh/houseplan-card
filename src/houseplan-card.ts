@@ -13,7 +13,7 @@ import {
 } from './logic';
 import './editor';
 
-const CARD_VERSION = '1.8.1';
+const CARD_VERSION = '1.8.2';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_ZOOM = 'houseplan_card_zoom_v1';
 const NORM_W = 1000; // ширина рендер-пространства для нормированных конфигов
@@ -147,12 +147,13 @@ class HouseplanCard extends LitElement {
   private _roomDialog = false;
   // зум/панорама плана (зум сохраняется по пространству локально)
   private _zoom = 1;
-  private _pan = { x: 0, y: 0 };
+  private _view: { x: number; y: number; w: number; h: number } | null = null; // текущий viewBox SVG (vb-координаты)
   private _zoomBySpace: Record<string, number> = {};
   private _pointers = new Map<number, { x: number; y: number }>();
-  private _panStart: { sx: number; sy: number; ox: number; oy: number } | null = null;
-  private _pinchStart: { dist: number; zoom: number; cx: number; cy: number; px: number; py: number } | null = null;
+  private _panStart: { sx: number; sy: number; vx: number; vy: number } | null = null;
+  private _pinchStart: { dist: number; zoom: number } | null = null;
   private _suppressClick = false;
+  private _roViewport?: ResizeObserver;
 
   private _infoCard: DevItem | null = null;
   private _markerDialog: {
@@ -202,7 +203,7 @@ class HouseplanCard extends LitElement {
     _infoCard: { state: true },
     _markerDialog: { state: true },
     _zoom: { state: true },
-    _pan: { state: true },
+    _view: { state: true },
   };
 
   public connectedCallback(): void {
@@ -212,6 +213,8 @@ class HouseplanCard extends LitElement {
 
   public disconnectedCallback(): void {
     window.removeEventListener('keydown', this._keyHandler);
+    this._roViewport?.disconnect();
+    this._roViewport = undefined;
     if (this._unsubCfg) {
       this._unsubCfg();
       this._unsubCfg = null;
@@ -345,6 +348,15 @@ class HouseplanCard extends LitElement {
       }
       this._maybeRebuildDevices();
     }
+  }
+
+  protected updated(): void {
+    const stage = this._stageEl;
+    if (stage && !this._roViewport) {
+      this._roViewport = new ResizeObserver(() => this._refitView());
+      this._roViewport.observe(stage);
+    }
+    if (stage && !this._view) this._refitView();
   }
 
   // ================= сервер: конфиг + раскладка =================
@@ -842,29 +854,83 @@ class HouseplanCard extends LitElement {
     return this.renderRoot.querySelector('.stage') as HTMLElement | null;
   }
 
-  /** Ограничить пан так, чтобы контент покрывал сцену (без «дыр» по краям). */
-  private _clampPan(): void {
-    const stage = this._stageEl;
-    if (!stage) return;
-    const w = stage.clientWidth;
-    const h = stage.clientHeight;
-    const minX = w * (1 - this._zoom);
-    const minY = h * (1 - this._zoom);
-    this._pan = {
-      x: Math.min(0, Math.max(minX, this._pan.x)),
-      y: Math.min(0, Math.max(minY, this._pan.y)),
+  /** Соотношение сторон сцены (ширина/высота, px). */
+  private _stageAspect(): number {
+    const s = this._stageEl;
+    const vb = this._spaceModel().vb;
+    return s && s.clientHeight ? s.clientWidth / s.clientHeight : vb[2] / vb[3];
+  }
+
+  /** Прямоугольник «contain» с аспектом сцены, вмещающий весь план (vb). */
+  private _fitView(vb: number[], aspect: number): { x: number; y: number; w: number; h: number } {
+    const planA = vb[2] / vb[3];
+    if (aspect > planA) {
+      const h = vb[3], w = vb[3] * aspect;
+      return { x: vb[0] - (w - vb[2]) / 2, y: vb[1], w, h };
+    }
+    const w = vb[2], h = vb[2] / aspect;
+    return { x: vb[0], y: vb[1] - (h - vb[3]) / 2, w, h };
+  }
+
+  /** Текущий view с фолбэком на полный fit. */
+  private _viewOr(vb: number[]): { x: number; y: number; w: number; h: number } {
+    return this._view && this._view.w ? this._view : this._fitView(vb, this._stageAspect());
+  }
+
+  /** Экран (sx,sy относительно сцены, px) → координаты vb по текущему view. */
+  private _screenToVb(sx: number, sy: number): number[] {
+    const s = this._stageEl;
+    const v = this._viewOr(this._spaceModel().vb);
+    const w = s?.clientWidth || 1, h = s?.clientHeight || 1;
+    return [v.x + (sx / w) * v.w, v.y + (sy / h) * v.h];
+  }
+
+  /** Ограничить view пределами fit (контент всегда покрывает сцену). */
+  private _clampView(
+    v: { x: number; y: number; w: number; h: number },
+    fit: { x: number; y: number; w: number; h: number },
+  ): { x: number; y: number; w: number; h: number } {
+    return {
+      w: v.w,
+      h: v.h,
+      x: Math.max(fit.x, Math.min(fit.x + fit.w - v.w, v.x)),
+      y: Math.max(fit.y, Math.min(fit.y + fit.h - v.h, v.y)),
     };
   }
 
-  /** Изменить зум с центром в точке (sx,sy) относительно сцены. */
-  private _zoomAt(sx: number, sy: number, newZoom: number): void {
-    const z = Math.min(8, Math.max(1, newZoom));
-    // точка под курсором остаётся на месте: pan' = s - (s - pan)/zoom * z
-    const lx = (sx - this._pan.x) / this._zoom;
-    const ly = (sy - this._pan.y) / this._zoom;
-    this._pan = { x: sx - lx * z, y: sy - ly * z };
+  /** Установить зум (центр — точка vb cx,cy либо центр текущего view). */
+  private _applyView(zoom: number, cx?: number, cy?: number): void {
+    const vb = this._spaceModel().vb;
+    const fit = this._fitView(vb, this._stageAspect());
+    const z = Math.min(8, Math.max(1, zoom));
+    const w = fit.w / z, h = fit.h / z;
+    const cur = this._viewOr(vb);
+    const ccx = cx ?? cur.x + cur.w / 2;
+    const ccy = cy ?? cur.y + cur.h / 2;
     this._zoom = z;
-    this._clampPan();
+    this._view = this._clampView({ x: ccx - w / 2, y: ccy - h / 2, w, h }, fit);
+  }
+
+  /** Пересчитать view под новый размер сцены, сохранив зум и центр. */
+  private _refitView(): void {
+    if (!this._stageEl) return;
+    const cur = this._view;
+    this._applyView(this._zoom, cur ? cur.x + cur.w / 2 : undefined, cur ? cur.y + cur.h / 2 : undefined);
+    this.requestUpdate();
+  }
+
+  /** Изменить зум, удерживая точку (sx,sy относительно сцены) на месте. */
+  private _zoomAt(sx: number, sy: number, newZoom: number): void {
+    const stage = this._stageEl;
+    if (!stage) return;
+    const vb = this._spaceModel().vb;
+    const fit = this._fitView(vb, this._stageAspect());
+    const z = Math.min(8, Math.max(1, newZoom));
+    const w = stage.clientWidth, h = stage.clientHeight;
+    const pt = this._screenToVb(sx, sy);
+    const nw = fit.w / z, nh = fit.h / z;
+    this._zoom = z;
+    this._view = this._clampView({ x: pt[0] - (sx / w) * nw, y: pt[1] - (sy / h) * nh, w: nw, h: nh }, fit);
   }
 
   private _onWheel(ev: WheelEvent): void {
@@ -885,8 +951,9 @@ class HouseplanCard extends LitElement {
   }
 
   private _resetZoom(): void {
+    const vb = this._spaceModel().vb;
     this._zoom = 1;
-    this._pan = { x: 0, y: 0 };
+    this._view = this._fitView(vb, this._stageAspect());
     this._saveZoom();
   }
 
@@ -900,21 +967,16 @@ class HouseplanCard extends LitElement {
     }
   }
 
-  /** Восстановить сохранённый зум пространства и центрировать. */
+  /** Восстановить сохранённый зум пространства и центрировать план. */
   private _restoreZoom(): void {
-    this._zoom = this._zoomBySpace[this._space] || 1;
-    this._pan = { x: 0, y: 0 };
-    // центрировать после применения размеров
+    const z = this._zoomBySpace[this._space] || 1;
+    this._zoom = z;
+    this._view = null;
     requestAnimationFrame(() => {
-      const stage = this._stageEl;
-      if (stage) {
-        this._pan = {
-          x: (stage.clientWidth * (1 - this._zoom)) / 2,
-          y: (stage.clientHeight * (1 - this._zoom)) / 2,
-        };
-        this._clampPan();
-        this.requestUpdate();
-      }
+      if (!this._stageEl) return;
+      const vb = this._spaceModel().vb;
+      this._applyView(z, vb[0] + vb[2] / 2, vb[1] + vb[3] / 2);
+      this.requestUpdate();
     });
   }
 
@@ -923,21 +985,14 @@ class HouseplanCard extends LitElement {
     if (this._drag || this._markup) return;
     if ((ev.target as HTMLElement).closest('.dev')) return;
     this._pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    const v = this._viewOr(this._spaceModel().vb);
     if (this._pointers.size === 1) {
-      this._panStart = { sx: ev.clientX, sy: ev.clientY, ox: this._pan.x, oy: this._pan.y };
+      this._panStart = { sx: ev.clientX, sy: ev.clientY, vx: v.x, vy: v.y };
       this._suppressClick = false;
     } else if (this._pointers.size === 2) {
       const pts = [...this._pointers.values()];
       const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-      const r = this._stageEl!.getBoundingClientRect();
-      this._pinchStart = {
-        dist,
-        zoom: this._zoom,
-        cx: (pts[0].x + pts[1].x) / 2 - r.left,
-        cy: (pts[0].y + pts[1].y) / 2 - r.top,
-        px: this._pan.x,
-        py: this._pan.y,
-      };
+      this._pinchStart = { dist, zoom: this._zoom };
       this._panStart = null;
     }
   }
@@ -952,22 +1007,29 @@ class HouseplanCard extends LitElement {
       const pts = [...this._pointers.values()];
       const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
       const scale = dist / (this._pinchStart.dist || 1);
-      // зум относительно исходной середины щипка
-      const z = Math.min(8, Math.max(1, this._pinchStart.zoom * scale));
-      const lx = (this._pinchStart.cx - this._pinchStart.px) / this._pinchStart.zoom;
-      const ly = (this._pinchStart.cy - this._pinchStart.py) / this._pinchStart.zoom;
-      this._pan = { x: this._pinchStart.cx - lx * z, y: this._pinchStart.cy - ly * z };
-      this._zoom = z;
-      this._clampPan();
+      const r = this._stageEl!.getBoundingClientRect();
+      const cx = (pts[0].x + pts[1].x) / 2 - r.left;
+      const cy = (pts[0].y + pts[1].y) / 2 - r.top;
+      this._zoomAt(cx, cy, this._pinchStart.zoom * scale);
       this._suppressClick = true;
       this._saveZoom();
     } else if (this._panStart) {
       const ddx = ev.clientX - this._panStart.sx;
       const ddy = ev.clientY - this._panStart.sy;
       if (Math.abs(ddx) + Math.abs(ddy) > 4) this._suppressClick = true;
-      if (this._zoom > 1) {
-        this._pan = { x: this._panStart.ox + ddx, y: this._panStart.oy + ddy };
-        this._clampPan();
+      if (this._zoom > 1 && this._view) {
+        const stage = this._stageEl!;
+        const v = this._view;
+        const fit = this._fitView(this._spaceModel().vb, this._stageAspect());
+        this._view = this._clampView(
+          {
+            x: this._panStart.vx - (ddx / stage.clientWidth) * v.w,
+            y: this._panStart.vy - (ddy / stage.clientHeight) * v.h,
+            w: v.w,
+            h: v.h,
+          },
+          fit,
+        );
       }
     }
   }
@@ -1002,8 +1064,9 @@ class HouseplanCard extends LitElement {
     if (!stage) return;
     const vb = this._spaceModel().vb;
     const rect = stage.getBoundingClientRect();
-    const dx = ((ev.clientX - this._drag.sx) / (rect.width * this._zoom)) * vb[2];
-    const dy = ((ev.clientY - this._drag.sy) / (rect.height * this._zoom)) * vb[3];
+    const v = this._viewOr(vb);
+    const dx = ((ev.clientX - this._drag.sx) / rect.width) * v.w;
+    const dy = ((ev.clientY - this._drag.sy) / rect.height) * v.h;
     if (Math.abs(ev.clientX - this._drag.sx) + Math.abs(ev.clientY - this._drag.sy) > 3) this._drag.moved = true;
     const m = Math.min(vb[2], vb[3]) * 0.008;
     const nx = Math.max(vb[0] + m, Math.min(vb[0] + vb[2] - m, this._drag.ox + dx));
@@ -1087,12 +1150,8 @@ class HouseplanCard extends LitElement {
 
   private _svgPoint(ev: MouseEvent): number[] {
     const stage = this.renderRoot.querySelector('.stage') as HTMLElement;
-    const vb = this._spaceModel().vb;
     const r = stage.getBoundingClientRect();
-    // экран → локальные координаты (отмена transform: translate(pan) scale(zoom))
-    const lx = (ev.clientX - r.left - this._pan.x) / this._zoom;
-    const ly = (ev.clientY - r.top - this._pan.y) / this._zoom;
-    return [vb[0] + (lx / r.width) * vb[2], vb[1] + (ly / r.height) * vb[3]];
+    return this._screenToVb(ev.clientX - r.left, ev.clientY - r.top);
   }
 
   private _snap(p: number[]): number[] {
@@ -1677,6 +1736,7 @@ class HouseplanCard extends LitElement {
     const devs = this._devices.filter((d) => d.space === space.id);
     const cfgSize = this._config.icon_size ?? 2.5;
     const iconPct = cfgSize > 8 ? 2.5 : cfgSize;
+    const view = this._viewOr(vb);
 
     return html`
       <ha-card>
@@ -1744,15 +1804,15 @@ class HouseplanCard extends LitElement {
         </div>
 
         <div class="stage ${this._edit ? 'edit' : ''} ${this._markup ? 'markup' : ''}"
-          style="aspect-ratio:${vb[2]}/${vb[3]};width:min(100%,calc((100dvh - 118px) * ${(vb[2] / vb[3]).toFixed(4)}))"
+          style="height:calc(100dvh - 118px)"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
           @pointerdown=${(e: PointerEvent) => this._stagePointerDown(e)}
           @pointermove=${(e: PointerEvent) => this._stagePointerMove(e)}
           @pointerup=${(e: PointerEvent) => this._stagePointerUp(e)}
           @pointercancel=${(e: PointerEvent) => this._stagePointerUp(e)}>
-          <div class="zoomwrap" style="transform:translate(${this._pan.x}px,${this._pan.y}px) scale(${this._zoom});">
-          <svg viewBox="${vb.join(' ')}" preserveAspectRatio="xMidYMid meet">
+          <div class="zoomwrap">
+          <svg viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="xMidYMid meet">
             ${this._markup ? this._renderMarkupDefs(vb) : nothing}
             ${space.bg
               ? svg`<image href="${space.bg.href}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}" preserveAspectRatio="none" />`
@@ -1776,8 +1836,8 @@ class HouseplanCard extends LitElement {
             })}
             ${this._markup ? this._renderMarkupLayer(vb) : nothing}
           </svg>
-          <div class="devlayer" style="--icon-size:${iconPct}cqw">
-            ${devs.map((d) => this._renderDevice(d, vb))}
+          <div class="devlayer" style="--icon-size:${((iconPct * vb[2]) / view.w).toFixed(3)}cqw">
+            ${devs.map((d) => this._renderDevice(d, view))}
           </div>
           </div>
           ${this._zoom > 1
@@ -1803,10 +1863,10 @@ class HouseplanCard extends LitElement {
     `;
   }
 
-  private _renderDevice(d: DevItem, vb: number[]): TemplateResult {
+  private _renderDevice(d: DevItem, view: { x: number; y: number; w: number; h: number }): TemplateResult {
     const p = this._pos(d);
-    const left = ((p.x - vb[0]) / vb[2]) * 100;
-    const top = ((p.y - vb[1]) / vb[3]) * 100;
+    const left = ((p.x - view.x) / view.w) * 100;
+    const top = ((p.y - view.y) / view.h) * 100;
     const cls = this._stateClass(d);
     const temp = this._liveTemp(d);
     const lqi = this._config?.show_signal && !d.virtual ? this._lqiFor(d.entities) : null;
@@ -2272,17 +2332,15 @@ class HouseplanCard extends LitElement {
     }
     .stage {
       position: relative;
-      max-width: 100%;
-      margin: 0 auto; /* центрировать, когда ширина ограничена высотой экрана */
+      width: 100%;
       container-type: inline-size;
       overflow: hidden;
       touch-action: none; /* свои жесты pinch/pan */
+      background: var(--ha-card-background, var(--card-background-color, #111));
     }
     .zoomwrap {
       position: absolute;
       inset: 0;
-      transform-origin: 0 0;
-      will-change: transform;
     }
     .zoomctl {
       display: inline-flex;
