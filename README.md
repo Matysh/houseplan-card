@@ -6,6 +6,14 @@
 
 ---
 
+## 🇬🇧 English summary
+
+**House Plan** is an interactive floor-plan for Home Assistant: a custom Lovelace card + a storage integration in one HACS package. Draw rooms right on top of your floor-plan image, bind them to HA areas, and your devices appear on the plan automatically — with live states (lights, locks, covers), temperature and Zigbee signal (LQI). Everything is configured with the mouse: drag icons, zoom/pan, attach manuals (PDF) and metadata to any device, add virtual markers. Layout and configuration are stored server-side (`.storage`), shared by all users and synced live between open tabs; multi-floor, editor with grid snapping, optimistic locking. No YAML required.
+
+**Install via HACS** (custom repository → `Matysh/houseplan-card`, category *Integration*), then add the *House Plan* integration in Settings → Devices & Services and put the `custom:houseplan-card` card on a dashboard. The card JS is served by the integration itself — no manual resource setup. Full documentation below is currently in Russian; open an issue if you need help in English.
+
+---
+
 ## Что это и зачем
 
 House Plan показывает ваш умный дом так, как он выглядит на самом деле — на плане этажей. Вместо длинных списков сущностей вы видите комнаты и устройства на своих местах: где протечка, какая температура в детской, включён ли свет в прихожей, открыты ли ворота.
