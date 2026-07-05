@@ -6,96 +6,27 @@
  *  2) LEGACY-фолбэк — вшитые данные дачи (src/data/*), координаты в холсте 1489×1053.
  * Раскладка иконок хранится на сервере (houseplan/layout/*), fallback — localStorage.
  */
-import { LitElement, html, svg, css, nothing, TemplateResult, PropertyValues } from 'lit';
-import { EXCLUDED_DOMAINS, iconFor, DOMAIN_PRIORITY } from './rules';
+import { LitElement, html, svg, nothing, TemplateResult, PropertyValues } from 'lit';
+import { EXCLUDED_DOMAINS } from './rules';
 import {
   lqiColor, snapToGrid, segKey as segKeyOf, samePoint, pointInPolygon, markerIdForBinding,
-  averageLqi, fitView, declump,
+  averageLqi, fitView, declump, safeUrl,
 } from './logic';
+import { buildDevices, lqiFor, tempFor } from './devices';
+import type {
+  RoomCfg, SpaceModel, PdfRef, Marker, ServerConfig, DevItem, CardConfig,
+} from './types';
 import './editor';
+import { cardStyles } from './styles';
 
-const CARD_VERSION = '1.9.3';
+const CARD_VERSION = '1.10.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // кэш серверного конфига+раскладки для мгновенного рендера
 const LS_ZOOM = 'houseplan_card_zoom_v1';
 const NORM_W = 1000; // ширина рендер-пространства для нормированных конфигов
 
-interface RoomCfg {
-  id?: string;
-  name: string;
-  area: string | null;
-  x?: number;
-  y?: number;
-  w?: number;
-  h?: number;
-  poly?: number[][]; // полигон в рендер-единицах (модель) / нормированный (конфиг)
-}
-
 const GRID_N = 240; // точек сетки по ширине плана (шаг вдвое меньше; старые узлы — подмножество новых, позиции сохраняются)
 type MarkupTool = 'draw' | 'erase' | 'delroom';
-
-interface SpaceModel {
-  id: string;
-  title: string;
-  vb: number[]; // render units
-  bg: { href: string; x: number; y: number; w: number; h: number } | null;
-  rooms: RoomCfg[]; // render units
-}
-
-interface PdfRef {
-  name: string;
-  url: string;
-}
-
-/** Маркер конфига: правит/дополняет авто-устройство ИЛИ описывает ручной/виртуальный значок. */
-interface Marker {
-  id: string;
-  binding: string; // 'device:<id>' | 'entity:<eid>' | 'virtual'
-  space?: string | null;
-  area?: string | null;
-  hidden?: boolean;
-  name?: string | null;
-  icon?: string | null;
-  model?: string | null;
-  link?: string | null;
-  description?: string | null;
-  pdfs?: PdfRef[];
-}
-
-interface ServerConfig {
-  spaces: any[];
-  markers: Marker[];
-  settings: { exclude_integrations?: string[]; group_lights?: boolean; show_all?: boolean };
-}
-
-interface DevItem {
-  id: string;
-  name: string;
-  model: string;
-  area: string;
-  space: string;
-  icon: string;
-  entities: string[];
-  primary?: string;
-  temp?: number | null;
-  virtual?: boolean;
-  marker?: Marker; // связанный маркер конфига (метаданные, оверрайды)
-  bindingKind?: 'device' | 'entity' | 'virtual';
-  bindingRef?: string; // device_id / entity_id
-  link?: string | null;
-  description?: string | null;
-  pdfs?: PdfRef[];
-}
-
-interface CardConfig {
-  type: string;
-  title?: string;
-  default_floor?: string;
-  icon_size?: number;
-  show_temperature?: boolean;
-  live_states?: boolean;
-  show_signal?: boolean;
-}
 
 const fireEvent = (node: EventTarget, type: string, detail?: unknown) => {
   const ev = new Event(type, { bubbles: true, composed: true }) as any;
@@ -499,125 +430,18 @@ class HouseplanCard extends LitElement {
       Object.keys(h.areas).length + ':' + (this._norm ? 'n' : 'l');
     if (sig === this._regSignature && this._devices.length) return;
     this._regSignature = sig;
-    this._devices = this._buildDevices();
+    this._devices = buildDevices({
+      hass: h,
+      areaToSpace: Object.fromEntries(
+        Object.entries(this._areaToSpace).map(([a, v]) => [a, v.space]),
+      ),
+      markers: this._markers,
+      settings: this._settings,
+      excluded: this._excluded,
+      showAll: this._showAll,
+      firstSpaceId: this._model[0]?.id || '',
+    });
     this._defPos = this._defaultPositions();
-  }
-
-  private _entitiesByDevice(): Record<string, string[]> {
-    const map: Record<string, string[]> = {};
-    for (const [eid, ent] of Object.entries<any>(this.hass.entities)) {
-      if (ent?.device_id) (map[ent.device_id] = map[ent.device_id] || []).push(eid);
-    }
-    return map;
-  }
-
-  private _domainOfDevice(dev: any, entIds: string[]): string {
-    if (dev.identifiers?.[0]?.[0]) return dev.identifiers[0][0];
-    for (const eid of entIds) {
-      const p = this.hass.entities[eid]?.platform;
-      if (p) return p;
-    }
-    return '';
-  }
-
-  private _primaryEntity(entIds: string[], icon: string): string | undefined {
-    const ents = entIds
-      .map((eid) => ({ eid, reg: this.hass.entities[eid], st: this.hass.states[eid] }))
-      .filter((e) => e.reg && !e.reg.hidden);
-    const usable = ents.filter((e) => !e.reg.entity_category);
-    const pool = usable.length ? usable : ents;
-    if (icon === 'mdi:thermometer' || icon === 'mdi:air-filter') {
-      const t = pool.find((e) => this._isTempEntity(e.eid));
-      if (t) return t.eid;
-    }
-    for (const dom of DOMAIN_PRIORITY) {
-      const found = pool.find((e) => e.eid.split('.')[0] === dom);
-      if (found) return found.eid;
-    }
-    return pool[0]?.eid;
-  }
-
-  private _isTempEntity(eid: string): boolean {
-    const st = this.hass.states[eid];
-    if (!st) return /_temperature$/.test(eid);
-    const a = st.attributes || {};
-    return (
-      a.device_class === 'temperature' || /°C|°F/.test(a.unit_of_measurement || '') || /_temperature$/.test(eid)
-    );
-  }
-
-  private _lqiFor(entIds: string[]): number | null {
-    const vals: number[] = [];
-    for (const eid of entIds) {
-      const st = this.hass.states[eid];
-      if (!st) continue;
-      const unit = (st.attributes?.unit_of_measurement || '').toLowerCase();
-      // 1) выделенный сенсор сигнала: Z2M *_linkquality, ZHA *_lqi, либо единицы «lqi»
-      if (/_(linkquality|lqi)$/.test(eid) || unit === 'lqi') {
-        const v = parseFloat(st.state);
-        if (!isNaN(v)) vals.push(v);
-        continue;
-      }
-      // 2) сигнал как АТРИБУТ на любой сущности устройства (Z2M linkquality / ZHA lqi) —
-      //    покрывает устройства, у которых отдельный сенсор сигнала отключён
-      const av = st.attributes?.linkquality ?? st.attributes?.lqi;
-      if (av != null) {
-        const v = parseFloat(av);
-        if (!isNaN(v)) vals.push(v);
-      }
-    }
-    return averageLqi(vals);
-  }
-
-  private _roomLqi(area: string | null): number | null {
-    if (!area) return null;
-    const vals: number[] = [];
-    for (const d of this._devices) {
-      if (d.area !== area || d.virtual) continue;
-      const l = this._lqiFor(d.entities);
-      if (l != null) vals.push(l);
-    }
-    return averageLqi(vals);
-  }
-
-  private _tempFor(entIds: string[]): number | null {
-    for (const eid of entIds) {
-      if (!this._isTempEntity(eid)) continue;
-      const st = this.hass.states[eid];
-      if (!st) continue;
-      const v = parseFloat(st.state);
-      if (!isNaN(v)) return Math.round(v * 10) / 10;
-    }
-    return null;
-  }
-
-  /** Групповые световые сущности: HA light-group (platform=group) и Z2M-группы (device model=Group). */
-  private _lightGroups(): { eid: string; name: string; area: string }[] {
-    if (this._settings.group_lights === false) return [];
-    const h = this.hass;
-    const res: { eid: string; name: string; area: string }[] = [];
-    for (const [eid, reg] of Object.entries<any>(h.entities)) {
-      if (!eid.startsWith('light.') || reg.hidden) continue;
-      let area: string | null = null;
-      if (reg.platform === 'group') {
-        area = reg.area_id || null;
-      } else if (reg.device_id) {
-        const dev = h.devices[reg.device_id];
-        if (dev?.model === 'Group') area = dev.area_id || reg.area_id || null;
-        else continue;
-      } else {
-        continue;
-      }
-      if (!area) continue;
-      const st = h.states[eid];
-      res.push({ eid, name: reg.name || st?.attributes?.friendly_name || eid, area });
-    }
-    return res;
-  }
-
-  /** Зоны, в которых есть группа света (одиночные лампы там скрываются). */
-  private _groupedLightAreas(): Set<string> {
-    return new Set(this._lightGroups().map((g) => g.area));
   }
 
   /** Курирование + группы света + оверрайды + виртуальные устройства. */
@@ -625,171 +449,15 @@ class HouseplanCard extends LitElement {
     return this._serverCfg?.markers || [];
   }
 
-  /** Маркер по «claim key»: device:<id> / entity:<eid>. */
-  private _markerFor(kind: 'device' | 'entity', ref: string): Marker | undefined {
-    return this._markers.find((m) => m.binding === kind + ':' + ref);
-  }
-
-  /** Множество HA-ссылок (device_id/entity_id), «занятых» маркерами. */
-  private get _claimed(): Set<string> {
-    const set = new Set<string>();
-    for (const m of this._markers) {
-      const [kind, ref] = m.binding.split(':');
-      if ((kind === 'device' || kind === 'entity') && ref) set.add(m.binding);
+  private _roomLqi(area: string | null): number | null {
+    if (!area) return null;
+    const vals: number[] = [];
+    for (const d of this._devices) {
+      if (d.area !== area || d.virtual) continue;
+      const l = lqiFor(this.hass, d.entities);
+      if (l != null) vals.push(l);
     }
-    return set;
-  }
-
-  private _applyMarker(item: DevItem, m: Marker): void {
-    item.marker = m;
-    if (m.name) item.name = m.name;
-    if (m.icon) item.icon = m.icon;
-    if (m.model != null) item.model = m.model;
-    item.link = m.link ?? null;
-    item.description = m.description ?? null;
-    item.pdfs = m.pdfs || [];
-  }
-
-  /** Курирование + группы света + маркеры (метаданные/перепривязка) + виртуальные. Гибрид. */
-  private _buildDevices(): DevItem[] {
-    const h = this.hass;
-    const areaMap = this._areaToSpace;
-    const groupLights = this._settings.group_lights !== false;
-    const groupedAreas = this._groupedLightAreas();
-    const excluded = this._excluded;
-    const showAll = this._showAll;
-    const entsBy = this._entitiesByDevice();
-    const claimed = this._claimed;
-    const seen: Record<string, number> = {};
-    const rest: DevItem[] = [];
-
-    // 1) авто-устройства HA (не занятые маркером, не скрытые)
-    for (const dev of Object.values<any>(h.devices)) {
-      const area = dev.area_id;
-      if (!area || !areaMap[area]) continue;
-      if (dev.entry_type === 'service') continue;
-      if (claimed.has('device:' + dev.id)) continue; // маркер перекроет ниже
-      const marker = this._markerFor('device', dev.id);
-      if (marker && marker.hidden) continue;
-      const entIds = entsBy[dev.id] || [];
-      const dom = this._domainOfDevice(dev, entIds);
-      // курирование (можно отключить переключателем «показать все»)
-      if (!showAll) {
-        if (excluded.has(dom)) continue;
-        if (dev.model === 'Group') continue;
-        if (/scene/i.test(dev.model || '')) continue;
-        if (/bridge/i.test((dev.model || '') + (dev.name || ''))) continue;
-        if (dom === 'myheat' && dev.via_device_id) continue;
-      }
-      const name = (dev.name_by_user || dev.name || 'без имени').trim();
-      const key = name + '|' + area;
-      let icon = iconFor(name, dev.model);
-      if (entIds.some((e) => e.startsWith('lock.'))) icon = 'mdi:lock';
-      if (!showAll && groupLights && icon === 'mdi:lightbulb' && groupedAreas.has(area)) continue;
-      // дубли по «имя|зона» не скрываем, а нумеруем
-      seen[key] = (seen[key] || 0) + 1;
-      const dispName = seen[key] > 1 ? name + ' ' + seen[key] : name;
-      const item: DevItem = {
-        id: dev.id,
-        name: dispName,
-        model: dev.model || '',
-        area,
-        space: areaMap[area].space,
-        icon,
-        entities: entIds,
-        bindingKind: 'device',
-        bindingRef: dev.id,
-        pdfs: [],
-      };
-      item.primary = this._primaryEntity(entIds, icon);
-      if (icon === 'mdi:thermometer' || icon === 'mdi:air-filter') item.temp = this._tempFor(entIds);
-      rest.push(item);
-    }
-
-    // 2) группы света (не занятые маркером)
-    for (const g of this._lightGroups()) {
-      if (!areaMap[g.area]) continue;
-      if (claimed.has('entity:' + g.eid)) continue;
-      rest.push({
-        id: 'lg_' + g.eid,
-        name: g.name,
-        model: 'группа света',
-        area: g.area,
-        space: areaMap[g.area].space,
-        icon: 'mdi:lightbulb-group',
-        entities: [g.eid],
-        primary: g.eid,
-        bindingKind: 'entity',
-        bindingRef: g.eid,
-        pdfs: [],
-      });
-    }
-
-    // 3) явные маркеры (перепривязка/метаданные/виртуальные)
-    for (const m of this._markers) {
-      if (m.hidden) continue;
-      const [kind, ref] = m.binding.split(':');
-      if (kind === 'device') {
-        const dev = h.devices[ref];
-        const area = m.area || dev?.area_id || '';
-        const space = (area && areaMap[area]?.space) || m.space || this._model[0]?.id || '';
-        const entIds = dev ? entsBy[dev.id] || [] : [];
-        let icon = dev ? iconFor(dev.name_by_user || dev.name || '', dev.model) : 'mdi:help-circle';
-        if (entIds.some((e) => e.startsWith('lock.'))) icon = 'mdi:lock';
-        const item: DevItem = {
-          id: m.id,
-          name: dev?.name_by_user || dev?.name || 'устройство',
-          model: dev?.model || '',
-          area,
-          space,
-          icon,
-          entities: entIds,
-          bindingKind: 'device',
-          bindingRef: ref,
-        };
-        item.primary = this._primaryEntity(entIds, icon);
-        if (icon === 'mdi:thermometer' || icon === 'mdi:air-filter') item.temp = this._tempFor(entIds);
-        this._applyMarker(item, m);
-        rest.push(item);
-      } else if (kind === 'entity') {
-        const reg = h.entities[ref];
-        const area = m.area || reg?.area_id || (reg?.device_id && h.devices[reg.device_id]?.area_id) || '';
-        const space = (area && areaMap[area]?.space) || m.space || this._model[0]?.id || '';
-        const st = h.states[ref];
-        const item: DevItem = {
-          id: m.id,
-          name: reg?.name || st?.attributes?.friendly_name || ref,
-          model: '',
-          area,
-          space,
-          icon: 'mdi:shape-outline',
-          entities: [ref],
-          primary: ref,
-          bindingKind: 'entity',
-          bindingRef: ref,
-        };
-        this._applyMarker(item, m);
-        rest.push(item);
-      } else {
-        // виртуальный
-        const area = m.area || '';
-        const space = m.space || (area && areaMap[area]?.space) || this._model[0]?.id || '';
-        const item: DevItem = {
-          id: m.id,
-          name: m.name || 'виртуальное устройство',
-          model: m.model || '',
-          area,
-          space,
-          icon: m.icon || 'mdi:map-marker',
-          entities: [],
-          bindingKind: 'virtual',
-          virtual: true,
-        };
-        this._applyMarker(item, m);
-        rest.push(item);
-      }
-    }
-    return rest;
+    return averageLqi(vals);
   }
 
   // ================= позиции =================
@@ -895,7 +563,7 @@ class HouseplanCard extends LitElement {
   private _liveTemp(d: DevItem): number | null {
     if (!this._config?.show_temperature) return null;
     if (d.icon !== 'mdi:thermometer' && d.icon !== 'mdi:air-filter') return null;
-    return this._tempFor(d.entities);
+    return tempFor(this.hass, d.entities);
   }
 
   // ================= взаимодействие =================
@@ -1530,18 +1198,22 @@ class HouseplanCard extends LitElement {
     input.value = '';
     if (!files.length || !this._markerDialog) return;
     const mid = this._markerDialog.devId || 'new';
-    const token = this.hass?.auth?.data?.access_token;
     const uploaded: PdfRef[] = [];
     for (const file of files) {
       try {
         const fd = new FormData();
         fd.append('marker_id', mid);
         fd.append('file', file, file.name);
-        const resp = await fetch('/api/houseplan/upload', {
-          method: 'POST',
-          body: fd,
-          headers: token ? { authorization: `Bearer ${token}` } : {},
-        });
+        // fetchWithAuth сам обновляет протухший access_token; фолбэк — сырой токен
+        const resp: Response = this.hass?.fetchWithAuth
+          ? await this.hass.fetchWithAuth('/api/houseplan/upload', { method: 'POST', body: fd })
+          : await fetch('/api/houseplan/upload', {
+              method: 'POST',
+              body: fd,
+              headers: this.hass?.auth?.data?.access_token
+                ? { authorization: `Bearer ${this.hass.auth.data.access_token}` }
+                : {},
+            });
         const json = await resp.json().catch(() => ({}));
         if (!resp.ok || json.error) {
           const map: Record<string, string> = {
@@ -1612,7 +1284,10 @@ class HouseplanCard extends LitElement {
       // удалить прежний маркер (по старому id и по новому id)
       cfg.markers = cfg.markers.filter((m) => m.id !== id && m.id !== oldId);
       cfg.markers.push(marker);
-      // позиция: новый значок ИЛИ сменилась комната → поставить в центр комнаты/пространства
+      // позиция: новый значок ИЛИ сменилась комната → поставить в центр комнаты/пространства.
+      // Пишем ТОЧЕЧНО (layout/update), а не всей раскладкой — полный layout/set затирает
+      // позиции, изменённые в других окнах (инцидент v1.4.4).
+      let newPos: { s: string; x: number; y: number } | null = null;
       if (!this._layout[id] || roomChanged) {
         const spm = this._spaceModel(space || undefined);
         let cx = spm.vb[0] + spm.vb[2] / 2;
@@ -1621,17 +1296,23 @@ class HouseplanCard extends LitElement {
           const room = spm.rooms.find((r) => r.area === area);
           if (room) [cx, cy] = this._roomCenter(room);
         }
-        this._layout[id] = this._normPos(space || this._space, cx, cy);
+        newPos = this._normPos(space || this._space, cx, cy);
+        this._layout = { ...this._layout, [id]: newPos };
       }
       await this._saveConfigNow();
-      await this.hass.callWS({ type: 'houseplan/layout/set', layout: this._layout });
+      if (newPos) await this.hass.callWS({ type: 'houseplan/layout/update', device_id: id, pos: newPos });
+      if (oldId && oldId !== id) {
+        // перепривязка сменила id значка — подчистить старую позицию
+        delete this._layout[oldId];
+        await this.hass.callWS({ type: 'houseplan/layout/delete', device_id: oldId }).catch(() => undefined);
+      }
       this._markerDialog = null;
       this._regSignature = '';
       this._maybeRebuildDevices();
       this._showToast('Устройство сохранено');
     } catch (e: any) {
       this._markerDialog = { ...this._markerDialog!, busy: false };
-      this._showToast('Ошибка: ' + (e?.message || e));
+      this._showToast('Ошибка: ' + this._errText(e));
     }
   }
 
@@ -1660,12 +1341,17 @@ class HouseplanCard extends LitElement {
     }
     try {
       await this._saveConfigNow();
+      if (d && d.bindingKind === 'virtual' && this._layout[d.id]) {
+        // виртуальный удалён совсем → его позиция больше не нужна
+        delete this._layout[d.id];
+        await this.hass.callWS({ type: 'houseplan/layout/delete', device_id: d.id }).catch(() => undefined);
+      }
       this._markerDialog = null;
       this._regSignature = '';
       this._maybeRebuildDevices();
       this._showToast('Устройство убрано с плана');
     } catch (e: any) {
-      this._showToast('Ошибка: ' + (e?.message || e));
+      this._showToast('Ошибка: ' + this._errText(e));
     }
   }
 
@@ -1770,7 +1456,7 @@ class HouseplanCard extends LitElement {
       }
     } catch (e: any) {
       this._spaceDialog = { ...this._spaceDialog!, busy: false };
-      this._showToast('Ошибка: ' + (e?.message || e));
+      this._showToast('Ошибка: ' + this._errText(e));
     }
   }
 
@@ -1788,7 +1474,7 @@ class HouseplanCard extends LitElement {
       this._maybeRebuildDevices();
       this._showToast('Пространство удалено');
     } catch (e: any) {
-      this._showToast('Ошибка удаления: ' + (e?.message || e));
+      this._showToast('Ошибка удаления: ' + this._errText(e));
     }
   }
 
@@ -1964,7 +1650,7 @@ class HouseplanCard extends LitElement {
     const top = ((p.y - view.y) / view.h) * 100;
     const cls = this._stateClass(d);
     const temp = this._liveTemp(d);
-    const lqi = this._config?.show_signal && !d.virtual ? this._lqiFor(d.entities) : null;
+    const lqi = this._config?.show_signal && !d.virtual ? lqiFor(this.hass, d.entities) : null;
     return html`<div
       class="dev ${cls} ${this._selId === d.id ? 'sel' : ''} ${d.virtual ? 'virtual' : ''}"
       style="left:${left}%;top:${top}%"
@@ -2057,15 +1743,15 @@ class HouseplanCard extends LitElement {
         <div class="body">
           ${d.model ? html`<div class="inforow"><span class="k">Модель</span><span>${d.model}</span></div>` : nothing}
           ${stateTxt ? html`<div class="inforow"><span class="k">Состояние</span><span>${stateTxt}</span></div>` : nothing}
-          ${d.link
+          ${safeUrl(d.link)
             ? html`<div class="inforow"><span class="k">Ссылка</span>
-                <a href="${d.link}" target="_blank" rel="noreferrer noopener">${d.link}</a></div>`
+                <a href="${safeUrl(d.link)}" target="_blank" rel="noreferrer noopener">${d.link}</a></div>`
             : nothing}
           ${d.description ? html`<div class="infodesc">${d.description}</div>` : nothing}
           ${d.pdfs && d.pdfs.length
             ? html`<div class="inforow"><span class="k">Инструкции</span><span class="pdflist">
                 ${d.pdfs.map(
-                  (p) => html`<a class="pdf" href="${p.url}" target="_blank" rel="noreferrer noopener">
+                  (p) => html`<a class="pdf" href="${safeUrl(p.url) || '#'}" target="_blank" rel="noreferrer noopener">
                     <ha-icon icon="mdi:file-pdf-box"></ha-icon>${p.name}</a>`,
                 )}</span></div>`
             : nothing}
@@ -2171,7 +1857,7 @@ class HouseplanCard extends LitElement {
           <div class="pdfedit">
             ${d.pdfs.map(
               (p) => html`<span class="pdftag"><ha-icon icon="mdi:file-pdf-box"></ha-icon>
-                <a href="${p.url}" target="_blank" rel="noreferrer noopener">${p.name}</a>
+                <a href="${safeUrl(p.url) || '#'}" target="_blank" rel="noreferrer noopener">${p.name}</a>
                 <ha-icon class="x" icon="mdi:close" @click=${() => this._removeMarkerPdf(p.url)}></ha-icon></span>`,
             )}
             <label class="btn filebtn">
@@ -2280,730 +1966,7 @@ class HouseplanCard extends LitElement {
     </div>`;
   }
 
-  static styles = css`
-    :host {
-      --hp-bg: var(--card-background-color, #16212e);
-      --hp-line: var(--divider-color, #2b3d4f);
-      --hp-txt: var(--primary-text-color, #e6edf3);
-      --hp-muted: var(--secondary-text-color, #8aa0b3);
-      --hp-accent: var(--primary-color, #3ea6ff);
-      --hp-on: #ffd45c;
-      --hp-open: #ff9f43;
-    }
-    ha-card {
-      overflow: visible; /* overflow:hidden ломает position:sticky у шапки */
-    }
-    .empty {
-      padding: 40px 24px;
-      color: var(--hp-txt);
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-    }
-    .empty .big {
-      --mdc-icon-size: 56px;
-      color: var(--hp-accent);
-      opacity: 0.7;
-    }
-    .empty .muted {
-      color: var(--hp-muted);
-      font-size: 13px;
-      margin: 0;
-    }
-    .empty .btn {
-      margin-top: 8px;
-    }
-    .hdr {
-      position: sticky;
-      top: var(--header-height, 56px);
-      z-index: 20;
-      background: var(--card-background-color, var(--hp-bg));
-      border-radius: var(--ha-card-border-radius, 12px) var(--ha-card-border-radius, 12px) 0 0;
-    }
-    .head {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 14px;
-      border-bottom: 1px solid var(--hp-line);
-      flex-wrap: wrap;
-    }
-    .title {
-      font-size: 15px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      white-space: nowrap;
-    }
-    .title ha-icon {
-      color: var(--hp-accent);
-      --mdc-icon-size: 18px;
-    }
-    .tabs {
-      display: flex;
-      gap: 4px;
-      background: rgba(127, 127, 127, 0.12);
-      padding: 3px;
-      border-radius: 10px;
-      flex-wrap: wrap;
-    }
-    @media (max-width: 620px) {
-      .head { gap: 6px; padding: 8px 10px; }
-      .head .count { display: none; }
-      .head .title { font-size: 14px; }
-    }
-    .tab {
-      border: 0;
-      background: transparent;
-      color: var(--hp-muted);
-      padding: 6px 13px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: 0.15s;
-      font-family: inherit;
-    }
-    .tab:hover {
-      color: var(--hp-txt);
-    }
-    .tab.active {
-      background: var(--hp-accent);
-      color: var(--text-primary-color, #fff);
-    }
-    .count {
-      font-size: 12px;
-      color: var(--hp-muted);
-    }
-    .spacer {
-      flex: 1;
-    }
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      border: 1px solid var(--hp-line);
-      background: transparent;
-      color: var(--hp-txt);
-      padding: 6px 10px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: 0.15s;
-      font-family: inherit;
-      font-size: 12.5px;
-    }
-    .btn ha-icon {
-      --mdc-icon-size: 17px;
-    }
-    .btn:hover {
-      border-color: var(--hp-accent);
-    }
-    .btn.on {
-      background: var(--hp-accent);
-      color: var(--text-primary-color, #fff);
-      border-color: var(--hp-accent);
-    }
-    .btn.ghost {
-      border: none;
-    }
-    .btn[disabled] {
-      opacity: 0.5;
-      pointer-events: none;
-    }
-    .stage {
-      position: relative;
-      width: 100%;
-      container-type: inline-size;
-      overflow: hidden;
-      touch-action: none; /* свои жесты pinch/pan */
-      background: var(--ha-card-background, var(--card-background-color, #111));
-    }
-    .zoomwrap {
-      position: absolute;
-      inset: 0;
-    }
-    .zoomctl {
-      display: inline-flex;
-      gap: 2px;
-      background: rgba(127, 127, 127, 0.12);
-      border-radius: 8px;
-      padding: 2px;
-    }
-    .zoomctl .zb {
-      border: none;
-      padding: 5px 7px;
-    }
-    .zoomctl .zb[disabled] {
-      opacity: 0.4;
-      pointer-events: none;
-    }
-    .zoombadge {
-      position: absolute;
-      left: 8px;
-      bottom: 8px;
-      background: rgba(4, 18, 31, 0.8);
-      color: #dff1ff;
-      border: 1px solid var(--hp-accent);
-      border-radius: 8px;
-      padding: 2px 8px;
-      font-size: 12px;
-      font-weight: 600;
-      pointer-events: none;
-    }
-    .stage svg {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
-    .room {
-      transition: 0.12s;
-      cursor: pointer;
-    }
-    .room.overlay {
-      fill: transparent;
-      stroke: transparent;
-      stroke-width: 2;
-    }
-    .room.overlay:hover {
-      fill: rgba(62, 166, 255, 0.18);
-      stroke: var(--hp-accent);
-    }
-    .room.yard {
-      fill: rgba(75, 140, 90, 0.14);
-      stroke: #4b8c5a;
-      stroke-width: 2;
-    }
-    .room.yard:hover {
-      fill: rgba(75, 140, 90, 0.24);
-      stroke: #6fbf86;
-    }
-    .rlabel {
-      fill: var(--hp-muted);
-      font-size: 15px;
-      font-weight: 600;
-      pointer-events: none;
-      text-anchor: middle;
-    }
-    .stage.edit .room {
-      pointer-events: none;
-    }
-    .stage.markup {
-      cursor: crosshair;
-    }
-    .stage.markup .room {
-      pointer-events: none;
-    }
-    .stage.markup .devlayer {
-      display: none; /* в разметке иконки не мешают */
-    }
-    .room.outlined {
-      stroke: rgba(62, 166, 255, 0.55);
-      fill: rgba(62, 166, 255, 0.06);
-    }
-    .griddot {
-      fill: var(--hp-accent);
-      opacity: 0.75;
-      stroke: rgba(0, 0, 0, 0.35);
-      stroke-width: 0.4;
-    }
-    .seg {
-      stroke: var(--hp-accent);
-      stroke-width: 2.5;
-      stroke-linecap: round;
-    }
-    .pathline {
-      stroke: #ffc14d;
-      stroke-width: 3;
-      fill: none;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-    .preview {
-      stroke: #ffc14d;
-      stroke-width: 2;
-      stroke-dasharray: 6 5;
-      opacity: 0.7;
-    }
-    .vertex {
-      fill: #ffc14d;
-      stroke: #4a2800;
-      stroke-width: 1;
-    }
-    .vertex.first {
-      fill: #4bd28f;
-      stroke: #04121f;
-    }
-    .areasel,
-    .namein {
-      background: var(--hp-bg);
-      border: 1px solid var(--hp-line);
-      color: var(--hp-txt);
-      border-radius: 6px;
-      padding: 6px 8px;
-      font-size: 13px;
-      font-family: inherit;
-    }
-    .namein {
-      width: 130px;
-    }
-    .devlayer {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-    }
-    .dev {
-      position: absolute;
-      width: var(--icon-size, 2.5cqw);
-      height: var(--icon-size, 2.5cqw);
-      margin: calc(var(--icon-size, 2.5cqw) / -2) 0 0 calc(var(--icon-size, 2.5cqw) / -2);
-      border-radius: 22%;
-      background: var(--hp-bg);
-      border: 1px solid var(--hp-line);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--hp-txt);
-      cursor: grab;
-      pointer-events: auto;
-      transition: background 0.15s, border-color 0.15s, opacity 0.2s;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
-      z-index: 2;
-    }
-    .dev ha-icon {
-      --mdc-icon-size: calc(var(--icon-size, 2.5cqw) * 0.62);
-    }
-    .dev:active {
-      cursor: grabbing;
-    }
-    .dev:hover {
-      background: var(--hp-accent);
-      color: var(--text-primary-color, #fff);
-      z-index: 5;
-    }
-    .dev.on {
-      background: var(--hp-on);
-      border-color: var(--hp-on);
-      color: #503c00;
-      box-shadow: 0 0 8px rgba(255, 212, 92, 0.7);
-    }
-    .dev.open {
-      background: var(--hp-open);
-      border-color: var(--hp-open);
-      color: #4a2800;
-    }
-    .dev.unavail {
-      opacity: 0.35;
-    }
-    .dev.virtual {
-      border-style: dashed;
-    }
-    .dev.sel {
-      border-color: #ffc14d;
-      box-shadow: 0 0 0 3px rgba(255, 193, 77, 0.35);
-    }
-
-    .dev .tval {
-      position: absolute;
-      left: 100%;
-      top: 50%;
-      transform: translateY(-50%);
-      margin-left: calc(var(--icon-size, 2.5cqw) * 0.1);
-      background: rgba(4, 18, 31, 0.9);
-      border: 1px solid var(--hp-accent);
-      border-radius: calc(var(--icon-size, 2.5cqw) * 0.18);
-      padding: 0 calc(var(--icon-size, 2.5cqw) * 0.14);
-      font-size: calc(var(--icon-size, 2.5cqw) * 0.45);
-      font-weight: 700;
-      line-height: calc(var(--icon-size, 2.5cqw) * 0.68);
-      color: #dff1ff;
-      white-space: nowrap;
-      pointer-events: none;
-    }
-    .dev .lqi {
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      margin-top: calc(var(--icon-size, 2.5cqw) * 0.05);
-      font-size: calc(var(--icon-size, 2.5cqw) * 0.38);
-      font-weight: 700;
-      line-height: 1;
-      text-shadow: 0 0 3px rgba(0, 0, 0, 0.9), 0 0 2px rgba(0, 0, 0, 0.9);
-      white-space: nowrap;
-      pointer-events: none;
-    }
-    .editbar {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 9px 14px;
-      border-bottom: 1px solid var(--hp-line);
-      font-size: 13px;
-      flex-wrap: wrap;
-    }
-    .tab .tabedit {
-      --mdc-icon-size: 13px;
-      margin-left: 6px;
-      opacity: 0.4;
-      vertical-align: middle;
-    }
-    .tab:hover .tabedit {
-      opacity: 0.9;
-    }
-    .tab.tabadd {
-      padding: 6px 8px;
-    }
-    .tab.tabadd ha-icon {
-      --mdc-icon-size: 15px;
-    }
-    .planrow {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .planprev {
-      max-width: 120px;
-      max-height: 70px;
-      border: 1px solid var(--hp-line);
-      border-radius: 6px;
-      background: #fff;
-    }
-    .planname {
-      font-size: 12.5px;
-      max-width: 150px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .planname.muted {
-      color: var(--hp-muted);
-    }
-    .filebtn {
-      cursor: pointer;
-    }
-    .btn.danger {
-      border-color: #b3402a;
-      color: #ff7a5c;
-    }
-    .dialog .row .spacer {
-      flex: 1;
-    }
-    .dialog.wide {
-      width: min(440px, 94vw);
-    }
-    .dialog .body {
-      max-height: 66vh;
-      overflow-y: auto;
-    }
-    .descin {
-      width: 100%;
-      box-sizing: border-box;
-      background: var(--hp-bg);
-      border: 1px solid var(--hp-line);
-      color: var(--hp-txt);
-      border-radius: 6px;
-      padding: 6px 8px;
-      font-size: 13px;
-      font-family: inherit;
-      resize: vertical;
-    }
-    .bindsel {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      border: 1px solid var(--hp-line);
-      border-radius: 8px;
-      padding: 8px;
-    }
-    .bindsel .opt {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      border: 1px solid var(--hp-line);
-      background: transparent;
-      color: var(--hp-txt);
-      border-radius: 6px;
-      padding: 6px 8px;
-      cursor: pointer;
-      font-size: 12.5px;
-      font-family: inherit;
-    }
-    .bindsel .opt.on {
-      background: var(--hp-accent);
-      color: var(--text-primary-color, #fff);
-      border-color: var(--hp-accent);
-    }
-    .curbind {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12.5px;
-      color: var(--hp-txt);
-      flex-wrap: wrap;
-    }
-    .curbind .ref {
-      color: var(--hp-muted);
-      font-size: 11px;
-    }
-    .candlist {
-      max-height: 160px;
-      overflow-y: auto;
-      border-top: 1px solid var(--hp-line);
-    }
-    .cand {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-      padding: 6px 8px;
-      cursor: pointer;
-      border-radius: 6px;
-      font-size: 12.5px;
-    }
-    .cand:hover {
-      background: rgba(127, 127, 127, 0.15);
-    }
-    .cand.sel {
-      background: var(--hp-accent);
-      color: var(--text-primary-color, #fff);
-    }
-    .cand .cs {
-      color: var(--hp-muted);
-      font-size: 11px;
-      white-space: nowrap;
-    }
-    .cand.sel .cs {
-      color: var(--text-primary-color, #fff);
-      opacity: 0.85;
-    }
-    .cand.muted {
-      color: var(--hp-muted);
-      cursor: default;
-    }
-    .pdfedit {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      align-items: center;
-    }
-    .pdftag {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      border: 1px solid var(--hp-line);
-      border-radius: 6px;
-      padding: 3px 6px;
-      font-size: 12px;
-    }
-    .pdftag a {
-      color: var(--hp-txt);
-      text-decoration: none;
-      max-width: 150px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .pdftag .x {
-      --mdc-icon-size: 15px;
-      cursor: pointer;
-      color: var(--hp-muted);
-    }
-    .pdftag .x:hover {
-      color: #ff7a5c;
-    }
-    .inforow {
-      display: flex;
-      gap: 10px;
-      font-size: 13px;
-      margin: 3px 0;
-    }
-    .inforow .k {
-      color: var(--hp-muted);
-      min-width: 84px;
-    }
-    .inforow a {
-      color: var(--hp-accent);
-      word-break: break-all;
-    }
-    .infodesc {
-      font-size: 13px;
-      white-space: pre-wrap;
-      margin-top: 6px;
-    }
-    .infodesc.muted {
-      color: var(--hp-muted);
-    }
-    .pdflist {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .pdf {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      color: var(--hp-accent);
-      text-decoration: none;
-    }
-    ha-icon-picker {
-      display: block;
-    }
-    .dialogwrap {
-      background: rgba(0, 0, 0, 0.45);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 90;
-    }
-    .dialog {
-      background: var(--card-background-color, var(--hp-bg));
-      border: 1px solid var(--hp-accent);
-      border-radius: 14px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-      width: min(360px, 92vw);
-      overflow: hidden;
-    }
-    .dialog .hd {
-      padding: 12px 16px;
-      font-weight: 600;
-      border-bottom: 1px solid var(--hp-line);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .dialog .hd ha-icon {
-      color: var(--hp-accent);
-    }
-    .dialog .body {
-      padding: 14px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .dialog .body label {
-      font-size: 12px;
-      color: var(--hp-muted);
-      margin-top: 6px;
-    }
-    .dialog .body .namein,
-    .dialog .body .areasel {
-      width: 100%;
-      box-sizing: border-box;
-    }
-    .dialog .row {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      padding: 12px 16px;
-      border-top: 1px solid var(--hp-line);
-    }
-    .editbar .warn {
-      color: #ffc14d;
-    }
-    .editbar .sname {
-      font-weight: 600;
-    }
-    .editbar input {
-      width: 74px;
-      background: transparent;
-      border: 1px solid var(--hp-line);
-      color: var(--hp-txt);
-      border-radius: 6px;
-      padding: 5px 7px;
-      font-size: 13px;
-    }
-    .editbar label,
-    .editbar .hint {
-      color: var(--hp-muted);
-      font-size: 12px;
-    }
-    .menuwrap {
-      position: fixed;
-      inset: 0;
-      z-index: 80;
-    }
-    .menu {
-      position: fixed;
-      background: var(--hp-bg);
-      border: 1px solid var(--hp-accent);
-      border-radius: 10px;
-      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
-      min-width: 210px;
-      max-width: 300px;
-      overflow: hidden;
-      transform: translate(0, 8px);
-    }
-    .menu .hd {
-      padding: 8px 12px;
-      font-weight: 600;
-      font-size: 12.5px;
-      border-bottom: 1px solid var(--hp-line);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .menu .hd ha-icon,
-    .menu .it.all ha-icon {
-      color: var(--hp-accent);
-      --mdc-icon-size: 16px;
-    }
-    .menu .it {
-      padding: 8px 12px;
-      font-size: 12.5px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .menu .it ha-icon {
-      --mdc-icon-size: 16px;
-      color: var(--hp-muted);
-    }
-    .menu .it:hover {
-      background: rgba(127, 127, 127, 0.15);
-    }
-    .menu .it.all {
-      color: var(--hp-accent);
-      font-weight: 600;
-    }
-    .tip {
-      position: fixed;
-      pointer-events: none;
-      background: var(--hp-bg);
-      border: 1px solid var(--hp-accent);
-      color: var(--hp-txt);
-      padding: 6px 10px;
-      border-radius: 8px;
-      font-size: 12.5px;
-      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
-      z-index: 99;
-      max-width: 260px;
-    }
-    .tip .m {
-      color: var(--hp-muted);
-      font-size: 11px;
-      display: block;
-    }
-    .toast {
-      position: fixed;
-      left: 50%;
-      bottom: 22px;
-      transform: translateX(-50%);
-      background: var(--hp-bg);
-      border: 1px solid var(--hp-accent);
-      color: var(--hp-txt);
-      padding: 9px 16px;
-      border-radius: 10px;
-      font-size: 13px;
-      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
-      z-index: 120;
-      max-width: 90vw;
-    }
-  `;
+  static styles = cardStyles;
 }
 
 if (!customElements.get('houseplan-card')) {

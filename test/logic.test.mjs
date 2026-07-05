@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   lqiColor, snapToGrid, segKey, samePoint, pointInPolygon, markerIdForBinding, averageLqi,
-  fitView, declump,
+  fitView, declump, safeUrl,
 } from '../test-build/logic.js';
 import { iconFor } from '../test-build/rules.js';
 
@@ -111,4 +111,19 @@ test('averageLqi: пусто → null, иначе округлённое сре�
   assert.equal(averageLqi([]), null);
   assert.equal(averageLqi([100, 200]), 150);
   assert.equal(averageLqi([1, 2, 2]), 2);
+});
+
+test('safeUrl: допускает http(s) и относительные, режет опасные схемы', () => {
+  assert.equal(safeUrl('https://example.com/a?b=1'), 'https://example.com/a?b=1');
+  assert.equal(safeUrl('http://x.ru'), 'http://x.ru');
+  assert.equal(safeUrl('//cdn.x.ru/f.pdf'), '//cdn.x.ru/f.pdf');
+  assert.equal(safeUrl('/houseplan_files/files/m1/doc.pdf?v=1'), '/houseplan_files/files/m1/doc.pdf?v=1');
+  assert.equal(safeUrl('docs/manual.pdf'), 'docs/manual.pdf');
+  assert.equal(safeUrl('javascript:alert(1)'), null);
+  assert.equal(safeUrl('data:text/html,<script>'), null);
+  assert.equal(safeUrl('vbscript:x'), null);
+  assert.equal(safeUrl(''), null);
+  assert.equal(safeUrl(null), null);
+  assert.equal(safeUrl(undefined), null);
+  assert.equal(safeUrl('  https://x.ru  '), 'https://x.ru');
 });

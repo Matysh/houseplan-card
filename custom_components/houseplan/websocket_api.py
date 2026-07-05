@@ -1,6 +1,7 @@
 """WS-команды House Plan: раскладка, конфигурация пространств, загрузка планов."""
 from __future__ import annotations
 
+import asyncio
 import base64
 import binascii
 from pathlib import Path
@@ -13,13 +14,12 @@ from homeassistant.core import HomeAssistant, callback
 
 from .const import (
     CONF_ADMIN_ONLY, DEFAULT_CONFIG, DOMAIN,
-    FILES_DIR, FILES_URL, PLANS_DIR, PLANS_URL,
+    PLANS_DIR, PLANS_URL,
 )
 from .validation import (
-    CONFIG_SCHEMA, FILE_EXTENSIONS, LAYOUT_SCHEMA, MAX_FILE_BYTES, MAX_PLAN_BYTES,
-    PLAN_EXTENSIONS, POS_SCHEMA, file_ext, sanitize_filename, sanitize_marker_id, valid_space_id,
+    CONFIG_SCHEMA, LAYOUT_SCHEMA, MAX_PLAN_BYTES,
+    PLAN_EXTENSIONS, POS_SCHEMA, valid_space_id,
 )
-
 
 
 @callback
@@ -28,10 +28,10 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_layout_get)
     websocket_api.async_register_command(hass, ws_layout_set)
     websocket_api.async_register_command(hass, ws_layout_update)
+    websocket_api.async_register_command(hass, ws_layout_delete)
     websocket_api.async_register_command(hass, ws_config_get)
     websocket_api.async_register_command(hass, ws_config_set)
     websocket_api.async_register_command(hass, ws_plan_set)
-    websocket_api.async_register_command(hass, ws_file_set)
 
 
 def _store(hass: HomeAssistant):
@@ -40,6 +40,15 @@ def _store(hass: HomeAssistant):
 
 def _config_store(hass: HomeAssistant):
     return hass.data[DOMAIN]["config_store"]
+
+
+def _write_lock(hass: HomeAssistant) -> asyncio.Lock:
+    """Единый лок на цикл load→modify→save обоих хранилищ.
+
+    Без него параллельные WS-вызовы теряют изменения (last-writer-wins),
+    а проверка expected_rev неатомарна.
+    """
+    return hass.data[DOMAIN].setdefault("write_lock", asyncio.Lock())
 
 
 def _check_write(hass: HomeAssistant, connection) -> bool:
@@ -68,7 +77,8 @@ async def ws_layout_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
     if not _check_write(hass, connection):
         connection.send_error(msg["id"], "unauthorized", "Правка раскладки разрешена только администраторам")
         return
-    await _store(hass).async_save({"layout": msg["layout"]})
+    async with _write_lock(hass):
+        await _store(hass).async_save({"layout": msg["layout"]})
     connection.send_result(msg["id"], {"ok": True})
 
 
@@ -86,10 +96,33 @@ async def ws_layout_update(hass: HomeAssistant, connection, msg: dict[str, Any])
         connection.send_error(msg["id"], "unauthorized", "Правка раскладки разрешена только администраторам")
         return
     store = _store(hass)
-    data = await store.async_load() or {}
-    layout = data.get("layout", {})
-    layout[msg["device_id"]] = msg["pos"]
-    await store.async_save({"layout": layout})
+    async with _write_lock(hass):
+        data = await store.async_load() or {}
+        layout = data.get("layout", {})
+        layout[msg["device_id"]] = msg["pos"]
+        await store.async_save({"layout": layout})
+    connection.send_result(msg["id"], {"ok": True})
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "houseplan/layout/delete",
+        vol.Required("device_id"): str,
+    }
+)
+@websocket_api.async_response
+async def ws_layout_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
+    """Удалить позицию одного устройства (чистка при удалении маркера)."""
+    if not _check_write(hass, connection):
+        connection.send_error(msg["id"], "unauthorized", "Правка раскладки разрешена только администраторам")
+        return
+    store = _store(hass)
+    async with _write_lock(hass):
+        data = await store.async_load() or {}
+        layout = data.get("layout", {})
+        if msg["device_id"] in layout:
+            del layout[msg["device_id"]]
+            await store.async_save({"layout": layout})
     connection.send_result(msg["id"], {"ok": True})
 
 
@@ -124,16 +157,17 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         connection.send_error(msg["id"], "unauthorized", "Правка конфигурации разрешена только администраторам")
         return
     store = _config_store(hass)
-    data = await store.async_load() or {}
-    current_rev = data.get("rev", 0)
-    if "expected_rev" in msg and msg["expected_rev"] != current_rev:
-        connection.send_error(
-            msg["id"], "conflict",
-            f"Конфигурация изменена в другом окне (rev {current_rev} != {msg['expected_rev']})",
-        )
-        return
-    new_rev = current_rev + 1
-    await store.async_save({"config": msg["config"], "rev": new_rev})
+    async with _write_lock(hass):
+        data = await store.async_load() or {}
+        current_rev = data.get("rev", 0)
+        if "expected_rev" in msg and msg["expected_rev"] != current_rev:
+            connection.send_error(
+                msg["id"], "conflict",
+                f"Конфигурация изменена в другом окне (rev {current_rev} != {msg['expected_rev']})",
+            )
+            return
+        new_rev = current_rev + 1
+        await store.async_save({"config": msg["config"], "rev": new_rev})
     hass.bus.async_fire("houseplan_config_updated", {"rev": new_rev})
     connection.send_result(msg["id"], {"ok": True, "rev": new_rev})
 
@@ -171,7 +205,7 @@ async def ws_plan_set(hass: HomeAssistant, connection, msg: dict[str, Any]) -> N
     plans_dir = Path(hass.config.path(PLANS_DIR))
     path = plans_dir / f"{space_id}.{msg['ext']}"
 
-    def _write() -> None:
+    def _write() -> int:
         plans_dir.mkdir(parents=True, exist_ok=True)
         # убрать старые варианты с другим расширением
         for old_ext in PLAN_EXTENSIONS:
@@ -179,52 +213,9 @@ async def ws_plan_set(hass: HomeAssistant, connection, msg: dict[str, Any]) -> N
             if old_ext != msg["ext"] and old.exists():
                 old.unlink()
         path.write_bytes(raw)
+        return int(path.stat().st_mtime)
 
-    await hass.async_add_executor_job(_write)
-    mtime = int(path.stat().st_mtime)
+    mtime = await hass.async_add_executor_job(_write)
     connection.send_result(
         msg["id"], {"ok": True, "url": f"{PLANS_URL}/{space_id}.{msg['ext']}?v={mtime}"}
-    )
-
-
-@websocket_api.websocket_command(
-    {
-        vol.Required("type"): "houseplan/file/set",
-        vol.Required("marker_id"): str,
-        vol.Required("filename"): str,
-        vol.Required("data"): str,  # base64
-    }
-)
-@websocket_api.async_response
-async def ws_file_set(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Загрузить файл-инструкцию (PDF и т.п.) для маркера; вернуть URL."""
-    if not _check_write(hass, connection):
-        connection.send_error(msg["id"], "unauthorized", "Загрузка файлов разрешена только администраторам")
-        return
-    marker_id = sanitize_marker_id(msg["marker_id"])
-    raw_name = msg["filename"].rsplit("/", 1)[-1].rsplit("\\", 1)[-1]
-    ext = file_ext(raw_name)
-    if ext not in FILE_EXTENSIONS:
-        connection.send_error(msg["id"], "bad_ext", f"Разрешены: {', '.join(sorted(FILE_EXTENSIONS))}")
-        return
-    safe_name = sanitize_filename(raw_name)
-    try:
-        blob = base64.b64decode(msg["data"], validate=True)
-    except (binascii.Error, ValueError):
-        connection.send_error(msg["id"], "invalid_data", "data должен быть корректным base64")
-        return
-    if len(blob) > MAX_FILE_BYTES:
-        connection.send_error(msg["id"], "too_large", f"Файл больше {MAX_FILE_BYTES // 1024 // 1024} МБ")
-        return
-    target_dir = Path(hass.config.path(FILES_DIR)) / marker_id
-    path = target_dir / safe_name
-
-    def _write() -> None:
-        target_dir.mkdir(parents=True, exist_ok=True)
-        path.write_bytes(blob)
-
-    await hass.async_add_executor_job(_write)
-    mtime = int(path.stat().st_mtime)
-    connection.send_result(
-        msg["id"], {"ok": True, "url": f"{FILES_URL}/{marker_id}/{safe_name}?v={mtime}", "name": raw_name}
     )

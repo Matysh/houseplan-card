@@ -1,0 +1,275 @@
+/**
+ * Построение списка устройств из реестров HA: курирование, группы света,
+ * маркеры (оверрайды/виртуальные). Без Lit/DOM — только hass-объект.
+ */
+import { iconFor, DOMAIN_PRIORITY } from './rules';
+import { averageLqi } from './logic';
+import type { DevItem, Marker, ServerConfig } from './types';
+
+/** Контекст построения: срез hass + резолв конфига. */
+export interface BuildCtx {
+  hass: any;
+  /** area_id → space_id (только зоны, привязанные к комнатам). */
+  areaToSpace: Record<string, string>;
+  markers: Marker[];
+  settings: ServerConfig['settings'];
+  excluded: Set<string>;
+  showAll: boolean;
+  firstSpaceId: string;
+}
+
+export function entitiesByDevice(hass: any): Record<string, string[]> {
+  const map: Record<string, string[]> = {};
+  for (const [eid, ent] of Object.entries<any>(hass.entities)) {
+    if (ent?.device_id) (map[ent.device_id] = map[ent.device_id] || []).push(eid);
+  }
+  return map;
+}
+
+export function domainOfDevice(hass: any, dev: any, entIds: string[]): string {
+  if (dev.identifiers?.[0]?.[0]) return dev.identifiers[0][0];
+  for (const eid of entIds) {
+    const p = hass.entities[eid]?.platform;
+    if (p) return p;
+  }
+  return '';
+}
+
+export function isTempEntity(hass: any, eid: string): boolean {
+  const st = hass.states[eid];
+  if (!st) return /_temperature$/.test(eid);
+  const a = st.attributes || {};
+  return (
+    a.device_class === 'temperature' || /°C|°F/.test(a.unit_of_measurement || '') || /_temperature$/.test(eid)
+  );
+}
+
+export function primaryEntity(hass: any, entIds: string[], icon: string): string | undefined {
+  const ents = entIds
+    .map((eid) => ({ eid, reg: hass.entities[eid], st: hass.states[eid] }))
+    .filter((e) => e.reg && !e.reg.hidden);
+  const usable = ents.filter((e) => !e.reg.entity_category);
+  const pool = usable.length ? usable : ents;
+  if (icon === 'mdi:thermometer' || icon === 'mdi:air-filter') {
+    const t = pool.find((e) => isTempEntity(hass, e.eid));
+    if (t) return t.eid;
+  }
+  for (const dom of DOMAIN_PRIORITY) {
+    const found = pool.find((e) => e.eid.split('.')[0] === dom);
+    if (found) return found.eid;
+  }
+  return pool[0]?.eid;
+}
+
+/** Средний LQI zigbee по сущностям устройства (сенсоры *_linkquality/*_lqi либо атрибут). */
+export function lqiFor(hass: any, entIds: string[]): number | null {
+  const vals: number[] = [];
+  for (const eid of entIds) {
+    const st = hass.states[eid];
+    if (!st) continue;
+    const unit = (st.attributes?.unit_of_measurement || '').toLowerCase();
+    // 1) выделенный сенсор сигнала: Z2M *_linkquality, ZHA *_lqi, либо единицы «lqi»
+    if (/_(linkquality|lqi)$/.test(eid) || unit === 'lqi') {
+      const v = parseFloat(st.state);
+      if (!isNaN(v)) vals.push(v);
+      continue;
+    }
+    // 2) сигнал как АТРИБУТ на любой сущности устройства (Z2M linkquality / ZHA lqi) —
+    //    покрывает устройства, у которых отдельный сенсор сигнала отключён
+    const av = st.attributes?.linkquality ?? st.attributes?.lqi;
+    if (av != null) {
+      const v = parseFloat(av);
+      if (!isNaN(v)) vals.push(v);
+    }
+  }
+  return averageLqi(vals);
+}
+
+export function tempFor(hass: any, entIds: string[]): number | null {
+  for (const eid of entIds) {
+    if (!isTempEntity(hass, eid)) continue;
+    const st = hass.states[eid];
+    if (!st) continue;
+    const v = parseFloat(st.state);
+    if (!isNaN(v)) return Math.round(v * 10) / 10;
+  }
+  return null;
+}
+
+/** Групповые световые сущности: HA light-group (platform=group) и Z2M-группы (device model=Group). */
+export function lightGroups(hass: any, enabled: boolean): { eid: string; name: string; area: string }[] {
+  if (!enabled) return [];
+  const res: { eid: string; name: string; area: string }[] = [];
+  for (const [eid, reg] of Object.entries<any>(hass.entities)) {
+    if (!eid.startsWith('light.') || reg.hidden) continue;
+    let area: string | null = null;
+    if (reg.platform === 'group') {
+      area = reg.area_id || null;
+    } else if (reg.device_id) {
+      const dev = hass.devices[reg.device_id];
+      if (dev?.model === 'Group') area = dev.area_id || reg.area_id || null;
+      else continue;
+    } else {
+      continue;
+    }
+    if (!area) continue;
+    const st = hass.states[eid];
+    res.push({ eid, name: reg.name || st?.attributes?.friendly_name || eid, area });
+  }
+  return res;
+}
+
+function applyMarker(item: DevItem, m: Marker): void {
+  item.marker = m;
+  if (m.name) item.name = m.name;
+  if (m.icon) item.icon = m.icon;
+  if (m.model != null) item.model = m.model;
+  item.link = m.link ?? null;
+  item.description = m.description ?? null;
+  item.pdfs = m.pdfs || [];
+}
+
+/** Курирование + группы света + маркеры (метаданные/перепривязка) + виртуальные. Гибрид. */
+export function buildDevices(ctx: BuildCtx): DevItem[] {
+  const { hass: h, areaToSpace, markers, settings, excluded, showAll, firstSpaceId } = ctx;
+  const groupLights = settings.group_lights !== false;
+  const groups = lightGroups(h, groupLights);
+  const groupedAreas = new Set(groups.map((g) => g.area));
+  const entsBy = entitiesByDevice(h);
+  const claimed = new Set<string>();
+  for (const m of markers) {
+    const [kind, ref] = m.binding.split(':');
+    if ((kind === 'device' || kind === 'entity') && ref) claimed.add(m.binding);
+  }
+  const markerFor = (kind: string, ref: string) => markers.find((m) => m.binding === kind + ':' + ref);
+  const seen: Record<string, number> = {};
+  const rest: DevItem[] = [];
+
+  // 1) авто-устройства HA (не занятые маркером, не скрытые)
+  for (const dev of Object.values<any>(h.devices)) {
+    const area = dev.area_id;
+    if (!area || !areaToSpace[area]) continue;
+    if (dev.entry_type === 'service') continue;
+    if (claimed.has('device:' + dev.id)) continue; // маркер перекроет ниже
+    const marker = markerFor('device', dev.id);
+    if (marker && marker.hidden) continue;
+    const entIds = entsBy[dev.id] || [];
+    const dom = domainOfDevice(h, dev, entIds);
+    // курирование (можно отключить переключателем «показать все»)
+    if (!showAll) {
+      if (excluded.has(dom)) continue;
+      if (dev.model === 'Group') continue;
+      if (/scene/i.test(dev.model || '')) continue;
+      if (/bridge/i.test((dev.model || '') + (dev.name || ''))) continue;
+      if (dom === 'myheat' && dev.via_device_id) continue;
+    }
+    const name = (dev.name_by_user || dev.name || 'без имени').trim();
+    const key = name + '|' + area;
+    let icon = iconFor(name, dev.model);
+    if (entIds.some((e) => e.startsWith('lock.'))) icon = 'mdi:lock';
+    if (!showAll && groupLights && icon === 'mdi:lightbulb' && groupedAreas.has(area)) continue;
+    // дубли по «имя|зона» не скрываем, а нумеруем
+    seen[key] = (seen[key] || 0) + 1;
+    const dispName = seen[key] > 1 ? name + ' ' + seen[key] : name;
+    const item: DevItem = {
+      id: dev.id,
+      name: dispName,
+      model: dev.model || '',
+      area,
+      space: areaToSpace[area],
+      icon,
+      entities: entIds,
+      bindingKind: 'device',
+      bindingRef: dev.id,
+      pdfs: [],
+    };
+    item.primary = primaryEntity(h, entIds, icon);
+    if (icon === 'mdi:thermometer' || icon === 'mdi:air-filter') item.temp = tempFor(h, entIds);
+    rest.push(item);
+  }
+
+  // 2) группы света (не занятые маркером)
+  for (const g of groups) {
+    if (!areaToSpace[g.area]) continue;
+    if (claimed.has('entity:' + g.eid)) continue;
+    rest.push({
+      id: 'lg_' + g.eid,
+      name: g.name,
+      model: 'группа света',
+      area: g.area,
+      space: areaToSpace[g.area],
+      icon: 'mdi:lightbulb-group',
+      entities: [g.eid],
+      primary: g.eid,
+      bindingKind: 'entity',
+      bindingRef: g.eid,
+      pdfs: [],
+    });
+  }
+
+  // 3) явные маркеры (перепривязка/метаданные/виртуальные)
+  for (const m of markers) {
+    if (m.hidden) continue;
+    const [kind, ref] = m.binding.split(':');
+    if (kind === 'device') {
+      const dev = h.devices[ref];
+      const area = m.area || dev?.area_id || '';
+      const space = (area && areaToSpace[area]) || m.space || firstSpaceId;
+      const entIds = dev ? entsBy[dev.id] || [] : [];
+      let icon = dev ? iconFor(dev.name_by_user || dev.name || '', dev.model) : 'mdi:help-circle';
+      if (entIds.some((e) => e.startsWith('lock.'))) icon = 'mdi:lock';
+      const item: DevItem = {
+        id: m.id,
+        name: dev?.name_by_user || dev?.name || 'устройство',
+        model: dev?.model || '',
+        area,
+        space,
+        icon,
+        entities: entIds,
+        bindingKind: 'device',
+        bindingRef: ref,
+      };
+      item.primary = primaryEntity(h, entIds, icon);
+      if (icon === 'mdi:thermometer' || icon === 'mdi:air-filter') item.temp = tempFor(h, entIds);
+      applyMarker(item, m);
+      rest.push(item);
+    } else if (kind === 'entity') {
+      const reg = h.entities[ref];
+      const area = m.area || reg?.area_id || (reg?.device_id && h.devices[reg.device_id]?.area_id) || '';
+      const space = (area && areaToSpace[area]) || m.space || firstSpaceId;
+      const st = h.states[ref];
+      const item: DevItem = {
+        id: m.id,
+        name: reg?.name || st?.attributes?.friendly_name || ref,
+        model: '',
+        area,
+        space,
+        icon: 'mdi:shape-outline',
+        entities: [ref],
+        primary: ref,
+        bindingKind: 'entity',
+        bindingRef: ref,
+      };
+      applyMarker(item, m);
+      rest.push(item);
+    } else {
+      // виртуальный
+      const area = m.area || '';
+      const space = m.space || (area && areaToSpace[area]) || firstSpaceId;
+      const item: DevItem = {
+        id: m.id,
+        name: m.name || 'виртуальное устройство',
+        model: m.model || '',
+        area,
+        space,
+        icon: m.icon || 'mdi:map-marker',
+        entities: [],
+        bindingKind: 'virtual',
+        virtual: true,
+      };
+      applyMarker(item, m);
+      rest.push(item);
+    }
+  }
+  return rest;
+}

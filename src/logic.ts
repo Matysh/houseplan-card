@@ -98,3 +98,17 @@ export function declump(
     if (!moved) break;
   }
 }
+
+/**
+ * Безопасный URL для <a href>: допускаются только http(s) и относительные пути.
+ * Отсекает javascript:, data: и прочие опасные схемы (XSS через конфиг).
+ */
+export function safeUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const u = url.trim();
+  if (/^(https?:)?\/\//i.test(u) || u.startsWith('/') || /^[\w./#?=&%~-]+$/i.test(u)) {
+    if (/^[a-z][\w+.-]*:/i.test(u) && !/^https?:/i.test(u)) return null;
+    return u;
+  }
+  return null;
+}
