@@ -13,8 +13,9 @@ import {
 } from './logic';
 import './editor';
 
-const CARD_VERSION = '1.8.2';
+const CARD_VERSION = '1.8.3';
 const LS_KEY = 'houseplan_card_layout_v1';
+const LS_CFG = 'houseplan_card_cfg_v1'; // кэш серверного конфига+раскладки для мгновенного рендера
 const LS_ZOOM = 'houseplan_card_zoom_v1';
 const NORM_W = 1000; // ширина рендер-пространства для нормированных конфигов
 
@@ -283,6 +284,31 @@ class HouseplanCard extends LitElement {
     } catch {
       this._zoomBySpace = {};
     }
+    // мгновенный рендер из кэша (stale-while-revalidate): показать план и значки
+    // сразу, не дожидаясь ответа сервера — свежие данные догрузятся в фоне.
+    try {
+      const c = JSON.parse(localStorage.getItem(LS_CFG) || 'null');
+      if (c && c.config && Array.isArray(c.config.spaces)) {
+        this._serverCfg = c.config;
+        this._cfgRev = c.rev || 0;
+        this._layout = c.layout || {};
+        this._serverStorage = true;
+        if (config.default_floor) this._space = config.default_floor;
+        else if (!this._model.find((sp) => sp.id === this._space)) this._space = this._model[0]?.id || this._space;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  /** Сохранить снимок конфига+раскладки в localStorage для мгновенного старта. */
+  private _cacheSnapshot(): void {
+    if (!this._serverCfg) return;
+    try {
+      localStorage.setItem(LS_CFG, JSON.stringify({ config: this._serverCfg, rev: this._cfgRev, layout: this._layout }));
+    } catch {
+      /* ignore */
+    }
   }
 
   public getCardSize(): number {
@@ -384,6 +410,7 @@ class HouseplanCard extends LitElement {
       if (this._norm && !this._model.find((s) => s.id === this._space)) {
         this._space = this._model[0]?.id || this._space;
       }
+      this._cacheSnapshot();
       this._restoreZoom();
     } catch (e) {
       // не последняя попытка — молча ждём следующего обновления hass (прогрев WS)
@@ -409,6 +436,7 @@ class HouseplanCard extends LitElement {
       const cfg = resp?.config;
       this._serverCfg = cfg && Array.isArray(cfg.spaces) ? cfg : null;
       this._cfgRev = resp?.rev || 0;
+      this._cacheSnapshot();
       this._regSignature = '';
       this._maybeRebuildDevices();
       this.requestUpdate();
@@ -431,6 +459,7 @@ class HouseplanCard extends LitElement {
           .callWS({ type: 'houseplan/layout/update', device_id: id, pos })
           .catch((e: any) => this._showToast('Не удалось сохранить позицию: ' + (e?.message || e)));
       }
+      this._cacheSnapshot();
     } else {
       localStorage.setItem(LS_KEY, JSON.stringify(this._layout));
     }
