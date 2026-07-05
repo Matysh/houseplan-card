@@ -1,4 +1,12 @@
 """Config flow tests (run in CI with pytest-homeassistant-custom-component)."""
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _enable_custom_integrations(enable_custom_integrations):
+    """Allow loading custom_components in the test hass."""
+    yield
+
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType

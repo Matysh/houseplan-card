@@ -1,4 +1,12 @@
 """Entry setup/unload tests (CI)."""
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _enable_custom_integrations(enable_custom_integrations):
+    """Allow loading custom_components in the test hass."""
+    yield
+
 from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
