@@ -432,6 +432,10 @@ export const cardStyles = css`
       font-size: 13px;
       font-family: inherit;
       resize: vertical;
+      /* flex column of the dialog body squeezes textareas — keep a usable height */
+      min-height: 92px;
+      flex-shrink: 0;
+      line-height: 1.35;
     }
     .bindsel {
       display: flex;

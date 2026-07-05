@@ -20,7 +20,7 @@ import './editor';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.11.1';
+const CARD_VERSION = '1.11.2';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -1856,7 +1856,7 @@ class HouseplanCard extends LitElement {
             @input=${(e: Event) => (this._markerDialog = { ...d, link: (e.target as HTMLInputElement).value })} />
 
           <label>${this._t('marker.desc_label')}</label>
-          <textarea class="descin" rows="3" placeholder=${this._t('marker.desc_ph')}
+          <textarea class="descin" rows="4" placeholder=${this._t('marker.desc_ph')}
             .value=${d.description}
             @input=${(e: Event) => (this._markerDialog = { ...d, description: (e.target as HTMLTextAreaElement).value })}></textarea>
 
