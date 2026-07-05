@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.11.2 — 2026-07-05 (device dialog: usable Description height)
+- The Description textarea in the device edit dialog was squeezed to ~2 lines by
+  the dialog body's flex column. Now `min-height: 92px`, `flex-shrink: 0`, `rows=4`;
+  still resizable vertically.
+
 ## v1.11.1 — 2026-07-05 (brand images shipped inside the integration)
 - Brand icon and logo (256/512, transparent background) now live in
   `custom_components/houseplan/brand/` — the native mechanism for custom
