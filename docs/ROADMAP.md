@@ -1,73 +1,82 @@
-# Roadmap: from a "dacha map" to a publishable universal integration
+# Roadmap: a universal, flexible floor-plan component
 
-Goal: publish to HACS (first as a custom repository, then a PR into default) a universal
-"interactive house plan" integration: custom plans per space, manual room markup,
-semi-automatic device placement, hiding/renaming/changing icons, virtual
-devices. No hardcoding of a specific house in the code.
+Goal: a **proper Home Assistant component** built to HA developer-docs patterns —
+not a hardcoded feature. Universal (any house, any language, any plan format),
+flexible (options instead of assumptions), and measured against the official
+**Integration Quality Scale** even though custom integrations are not formally graded
+(see `docs/PRODUCT.md` for the market rationale).
 
-## Principles (locked in)
-- We write a proper full component following HA dev docs patterns, not a hardcoded feature.
-- All data of a specific house is **instance configuration** (server-side Store),
-  not code/bundle. The current dacha data will become the first migrated instance.
-- Document everything immediately in docs/ (session context gets lost).
-- Storage versioning (Store minor_version + async_migrate) from day one.
+Phases 0–6 of the original plan (server-side config, room markup editor, device
+management, virtual devices, publication) are **done** — see CHANGELOG v1.3.0–v1.11.2.
+This roadmap replaces them.
 
-## Phase 0 — Publication hygiene (quick, no new features)
-- [x] hacs.json, manifest with the required keys, custom_components/* structure
-- [x] CI: hacs/action + hassfest (workflow validate.yml) — added, verify on GitHub
-- [x] brand/icon.png
-- [ ] Public GitHub repository: description, topics, issues on; first Release v1.2.x
-- [ ] README EN (primary) + README.ru.md; screenshots/GIF (mandatory for the HACS storefront)
-- [ ] Replace codeowners/documentation/issue_tracker with real URLs after the repo is created
+## Phase 7 — Quality Scale: Bronze-complete (structural correctness)
 
-## Phase 1 — Server-side config (decoupling from the dacha) ← ✅ DONE in v1.3.0 (except removing the bundle data — kept as a fallback until phase 2)
-New store `houseplan.config` (Store v1):
-```json
-{ "spaces": [ { "id": "f1", "title": "1st floor", "plan": {"media_id": "...", "type": "svg"},
-    "view_box": [x,y,w,h], "rooms": [{"id","name","area_id","x","y","w","h"}] } ],
-  "device_overrides": { "<device_id>": {"hidden":bool,"icon":str,"name":str} },
-  "virtual_devices": [ {"id","space","name","icon","x","y","note"?, "entity_id"?} ],
-  "settings": {"exclude_integrations": [...], "group_lights": bool, ...} }
-```
-- WS API v2: `houseplan/config/get|set`, `houseplan/plan/upload` (plan file → 
-  `<config>/houseplan/` via the process executor, served through a static path), layout as today.
-- The card: when a server config exists it uses it; the dacha bundle data becomes a
-  **fallback example** and is then removed (a migration script will push it into the Store).
-- Coordinate units: normalized (0..1 of the plan) for new configs — independence from the
-  source resolution; the dacha migration will convert 1489×1053 → normalized.
+Track progress in `custom_components/houseplan/quality_scale.yaml` (done/exempt + comment).
 
-## Phase 2 — Markup editor in the card ← ✅ CORE DONE in v1.4.0 (remaining: plan upload from the UI, view_box editing, editing existing rooms)
-- A "Setup" mode (separate from drag layout): drawing/resizing room rectangles
-  on top of the plan, binding to an area (ha-area-picker selector), viewBox (frame) editing.
-- Later: polygonal rooms (SVG path), plan rotations.
-- Plan upload from the UI (file upload → WS) + picking existing media.
+- [ ] `runtime-data`: move `hass.data[DOMAIN]` (stores, entry, write lock) to typed
+  `entry.runtime_data` (`type HouseplanConfigEntry = ConfigEntry[HouseplanData]`).
+  Keep WS command registration in `async_setup` (commands must survive entry reloads).
+- [ ] `config-entry-unloading` (Silver, do it now): real `async_unload_entry` — unregister
+  update listeners via `entry.async_on_unload`; document what stays (static paths cannot
+  be unregistered — exempt comment).
+- [ ] `test-before-setup`: verify storage is loadable/writable in `async_setup_entry`,
+  raise `ConfigEntryNotReady` on failure.
+- [ ] `unique-config-entry`: replace the manual `_async_current_entries()` check with
+  `single_config_entry: true` in manifest.
+- [ ] `config-flow-test-coverage` + backend tests for websocket_api (pytest-homeassistant-custom-component:
+  conflict/rev, admin_only enforcement, layout point ops, upload limits).
+- [ ] Storage versioning: `Store(minor_version=...)` + `_async_migrate_func` skeleton **now**,
+  before the config schema evolves further (Bronze-adjacent, cheap while schema is stable).
+- [ ] `quality_scale.yaml` with honest exempt list (no entities ⇒ entity rules N/A, no polling, no deps).
 
-## Phase 3 — Device management ← ✅ DONE in v1.6.x (hiding, icon, name, model, link, description, PDF, rebinding, "+", virtual)
-- A device panel in setup mode: a list of unplaced devices (with filters), drag from the panel
-  onto the plan; auto-layout "grid over the room" by button.
-- Per-device overrides: hide, custom icon (ha-icon-picker), custom name. Stored in config.
-- Configurable curation: integration/domain exclusions in the options flow instead of hardcode.
+## Phase 8 — Quality Scale: Silver + selected Gold
 
-## Phase 4 — Virtual devices ← ✅ basics in v1.6.x (CRUD of virtual markers in the shared dialog; further note/icon polish as needed)
-- CRUD of virtual markers (name, icon, coordinates, note; optionally a link to an
-  entity/URL): septic tank, valve, a meter without a sensor, etc. Rendered like normal icons,
-  click → a card with the note or more-info of the bound entity.
+- [ ] `test-coverage` ≥95% backend; frontend: extract remaining pure logic (view math,
+  marker resolution) into `logic.ts`/`devices.ts` and cover with node:test.
+- [ ] `diagnostics.py`: config + layout dump with `async_redact_data` (redact names/links/PDF paths).
+- [ ] `reconfiguration-flow` + richer **options flow**: admin_only, curation defaults
+  (exclude domains — UI editable, replacing the hardcoded EXCLUDED_DOMAINS fallback),
+  LQI thresholds, group_lights default.
+- [ ] `repair-issues`: broken plan file references, orphaned layout entries, storage
+  migration failures → Repairs UI instead of silent logs.
+- [ ] `system_health.py`: config rev, spaces/markers count, storage sizes.
+- [ ] `exception-translations` + `icon-translations` where applicable.
+- [ ] Frontend resource registration: adopt the community-consensus embedded-card pattern
+  end-to-end (we already do StaticPathConfig + storage-mode resource + `?v=` busting;
+  add resource cleanup on removal and document YAML-mode fallback).
 
-## Phase 5 — UX/feature polish
-- Configurable click actions: toggle for lights/outlets, long-press → more-info.
-- Live-indication tuning (theme-aware colors, badges), light theme.
-- Tooltips on touch devices (long-press), accessibility (keyboard, aria).
-- LQI option: "bad signal" threshold, hiding the labels on non-zigbee instances.
+## Phase 9 — Universality & flexibility (product depth)
 
-## Phase 6 — Quality and publication
-- Tests: pytest (config_flow, websocket_api, Store migrations) + hassfest/hacs action in CI;
-  frontend: vitest for rules/geometry utilities.
-- Typing: strict TS interfaces for hass (custom-card-helpers or our own), mypy for python.
-- Translations for integration+card: en + ru (translations/, card string localization).
-- Quality scale bronze → silver checklist; PR into hacs/default; optionally a PR into
-  home-assistant/brands (the brand/ in the repo suffices for now).
+- [ ] **Areas/floors registry integration**: import HA floors as spaces, suggest area
+  bindings from the registry, sync names (HA is moving this way — native Areas/Home
+  dashboard; riding the registry is our moat).
+- [ ] **Curation without hardcode**: icon rules (`iconFor`) become data — user-editable
+  mapping (regex/domain/device_class → mdi icon) stored in config, shipping EN+RU
+  defaults; drop dacha-specific patterns from code.
+- [ ] **Click actions** per device/domain: toggle / more-info / navigate / custom service
+  call (configurable, like standard card `tap_action`).
+- [ ] **Theming**: respect light themes (currently dark-leaning), use HA theme variables
+  everywhere, optional per-space background color.
+- [ ] Multi-instance question: keep single-instance (one house) but support **multiple
+  cards** with different default spaces (already works) — document as a decision.
+- [ ] Plan formats: keep SVG/PNG/JPG/WebP; add max dimensions guidance; optional
+  auto-downscale on upload.
+- [ ] More locales: extract i18n dictionaries to JSON so contributors can add languages
+  without touching TS.
 
-## Open questions
-- Publication name: "House Plan Card"? the `houseplan` domain is not taken in HACS default — verify.
-- MIT license (package.json is already MIT) — add a LICENSE file.
-- Plan formats: SVG preferred (vector, size), PNG support is mandatory.
+## Phase 10 — Community & distribution
+
+- [ ] hacs/default PR #8995 through moderation (expect drafting for fixes).
+- [ ] Demo GIF/video for README (the single biggest driver of adoption for dashboard cards).
+- [ ] Forum post in the Floorplan category + Reddit r/homeassistant showcase once
+  the demo assets exist.
+- [ ] GitHub: issue templates, discussions on, CONTRIBUTING.md (build/test in 5 minutes).
+- [ ] Semantic versioning discipline; keep release notes user-facing (they show in HACS).
+
+## Explicit non-goals (for now)
+
+- 3D plans (.glb) — separate market (3Dash), heavy dependencies.
+- Editing the plan image itself (walls/furniture drawing à la easy-floorplan) — we
+  consume existing plan images; the markup editor stays about *rooms/zones*, not drawing.
+- Cloud anything. Config stays in `.storage`, local-first.

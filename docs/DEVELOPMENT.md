@@ -2,10 +2,22 @@
 
 ## Environment (cowork sessions)
 
-- The source of truth for the code is the **git repository** (lives in `/tmp/hpc` during a session,
-  restored from `houseplan-card.git.bundle`: `git clone houseplan-card.git.bundle hpc`).
-- The user's folder `houseplan/houseplan-card/` is a mirror of the repo (rsync after every commit)
-  + an up-to-date `houseplan-card.git.bundle`.
+- The source of truth is **GitHub `main`** (https://github.com/Matysh/houseplan-card).
+  In a sandbox session restore from it or from `houseplan-card.git.bundle`
+  (`git clone houseplan-card.git.bundle hpcN` into a **fresh** /tmp directory).
+- The user's folder `houseplan/houseplan-card/` is a file mirror (synced after every commit)
+  + an up-to-date `houseplan-card.git.bundle`. The mount cannot delete files — stale
+  artifacts linger there; git is authoritative.
+- `/tmp` persists between sessions, **but files created in previous sessions belong to
+  `nobody` and are unreadable** (this hit `/tmp/hpc`, `/tmp/ha_jb`, `/tmp/shots/srv`).
+  Always clone into a new directory and re-run `npm ci`; ask the user to re-upload `ha_jb`.
+- Headless Chromium for smoke tests: `PLAYWRIGHT_BROWSERS_PATH=/tmp/pw npx playwright
+  install chromium-headless-shell`, then run with `LD_LIBRARY_PATH` pointing to the
+  extracted lib dirs (`libs/lib/x86_64-linux-gnu:libs/usr/lib/x86_64-linux-gnu:.../nss`).
+- Restart HA over SSH with `nohup ha core restart >/dev/null 2>&1 </dev/null &` —
+  a plain `ha core restart` holds the SSH session until the sandbox call times out.
+- GitHub pushes: classic PAT (repo+workflow scopes), created via the user's Chrome;
+  stored in `~/.git-credentials` for the session.
 
 ### ⚠️ File-sync pitfalls (critical)
 1. The network mount sometimes serves files **truncated/scrambled** — edits via the Edit tool
