@@ -1,5 +1,26 @@
 # Changelog
 
+## v1.13.0 — 2026-07-05 (universality: floors import, icon rules, tap actions)
+- **Floors import wizard**: on first run, if the HA registry has floors, the card
+  offers to create a space per floor — names prefilled, the (mandatory) plan image is
+  requested step by step, any floor can be skipped; after the last one the room-markup
+  mode opens automatically. No floors / old HA → the old single-dialog onboarding.
+- **Editable icon rules**: the built-in "name pattern → MDI icon" rules are now data
+  (`settings.icon_rules`) with an in-card editor (⬡ in the header): reorder, delete,
+  add, live test field, invalid-regex highlighting, one-click reset to the bilingual
+  (EN/RU) defaults. Fallback chain: rules → entity `device_class` → generic chip.
+  Invalid user regexes are skipped safely.
+- **Tap actions**: `tap_action` card option (`info` default | `more-info` | `toggle`)
+  plus a per-device override in the device dialog. Safety model: a card-wide toggle
+  only affects lights/switches/fans/humidifiers; covers/valves need a conscious
+  per-device toggle; locks and alarm panels never toggle from the plan. A long press
+  (600 ms) always opens the info card.
+- **i18n dictionaries moved to JSON** (`src/i18n/{en,ru}.json`) — new languages can be
+  contributed without touching TypeScript; tests enforce key and placeholder parity.
+- Light-theme pass: hardcoded dark badge backgrounds replaced with theme variables.
+- Tests: 28 frontend (was 15) — tap-action resolver incl. security cases, icon-rule
+  compilation/overrides/device-class fallback, floors sorting, i18n parity.
+
 ## v1.12.0 — 2026-07-05 (Quality Scale: Bronze + selected Silver/Gold)
 Backend brought to Integration Quality Scale patterns (custom integrations are not
 formally graded; progress is tracked in `custom_components/houseplan/quality_scale.yaml`):

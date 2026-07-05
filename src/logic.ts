@@ -112,3 +112,63 @@ export function safeUrl(url: string | null | undefined): string | null {
   }
   return null;
 }
+
+// ---------------- tap actions ----------------
+
+export type TapAction = 'info' | 'more-info' | 'toggle';
+
+/** Domains a card-wide `tap_action: toggle` may toggle (accidental-tap safe). */
+export const TOGGLE_SAFE_DOMAINS = new Set(['light', 'switch', 'fan', 'humidifier']);
+
+/**
+ * Domains that must NEVER toggle from a plan tap, even with an explicit
+ * per-device override: an accidental tap unlocking a door or disarming an
+ * alarm is a security incident, not a UX shortcut.
+ */
+export const TOGGLE_FORBIDDEN_DOMAINS = new Set(['lock', 'alarm_control_panel']);
+
+/**
+ * Resolve the effective tap action for a device icon.
+ *
+ * Order: per-device override → card-wide default → 'info'.
+ * 'toggle' is applied conservatively: a card-wide toggle only affects
+ * TOGGLE_SAFE_DOMAINS; an explicit per-device toggle affects any domain
+ * except TOGGLE_FORBIDDEN_DOMAINS. Everything else falls back to 'info'.
+ */
+export function resolveTapAction(
+  explicit: string | null | undefined,
+  cardDefault: string | null | undefined,
+  domain: string | null | undefined,
+): TapAction {
+  const want = explicit || cardDefault || 'info';
+  if (want === 'more-info') return 'more-info';
+  if (want !== 'toggle') return 'info';
+  if (!domain || TOGGLE_FORBIDDEN_DOMAINS.has(domain)) return 'info';
+  if (explicit === 'toggle') return 'toggle';
+  return TOGGLE_SAFE_DOMAINS.has(domain) ? 'toggle' : 'info';
+}
+
+// ---------------- floors import ----------------
+
+export interface FloorInfo {
+  id: string;
+  name: string;
+  level: number | null;
+}
+
+/** HA floor registry → a list ordered by level (unknown levels last), then name. */
+export function floorsOf(hass: any): FloorInfo[] {
+  const reg = hass?.floors;
+  if (!reg || typeof reg !== 'object') return [];
+  const list: FloorInfo[] = [];
+  for (const f of Object.values<any>(reg)) {
+    if (!f || !f.floor_id) continue;
+    list.push({ id: f.floor_id, name: f.name || f.floor_id, level: f.level ?? null });
+  }
+  list.sort((a, b) => {
+    const la = a.level ?? 1e9;
+    const lb = b.level ?? 1e9;
+    return la !== lb ? la - lb : a.name.localeCompare(b.name);
+  });
+  return list;
+}

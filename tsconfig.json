@@ -3,14 +3,21 @@
     "target": "es2021",
     "module": "esnext",
     "moduleResolution": "bundler",
-    "lib": ["es2021", "dom", "dom.iterable"],
+    "lib": [
+      "es2021",
+      "dom",
+      "dom.iterable"
+    ],
     "strict": true,
     "noImplicitAny": false,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "useDefineForClassFields": false,
-    "outDir": "tsout"
+    "outDir": "tsout",
+    "resolveJsonModule": true
   },
-  "include": ["src/**/*.ts"]
+  "include": [
+    "src/**/*.ts"
+  ]
 }

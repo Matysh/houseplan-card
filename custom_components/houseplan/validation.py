@@ -103,6 +103,7 @@ MARKER_SCHEMA = vol.Schema(
         vol.Optional("model"): vol.Any(str, None),
         vol.Optional("link"): vol.Any(str, None),
         vol.Optional("description"): vol.Any(str, None),
+        vol.Optional("tap_action"): vol.Any("info", "more-info", "toggle", None),
         vol.Optional("pdfs"): [
             vol.Schema({vol.Required("name"): str, vol.Required("url"): str}, extra=vol.ALLOW_EXTRA)
         ],

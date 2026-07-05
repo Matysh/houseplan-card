@@ -7,10 +7,13 @@
  * The icon layout is stored on the server (houseplan/layout/*), fallback — localStorage.
  */
 import { LitElement, html, svg, nothing, TemplateResult, PropertyValues } from 'lit';
-import { EXCLUDED_DOMAINS } from './rules';
+import {
+  EXCLUDED_DOMAINS, DEFAULT_ICON_RULES, compileIconRules, isValidPattern, iconFor,
+  type IconRule, type CompiledIconRule,
+} from './rules';
 import {
   lqiColor, snapToGrid, segKey as segKeyOf, samePoint, pointInPolygon, markerIdForBinding,
-  averageLqi, fitView, declump, safeUrl,
+  averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
 } from './logic';
 import { buildDevices, lqiFor, tempFor } from './devices';
 import type {
@@ -20,7 +23,7 @@ import './editor';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.12.0';
+const CARD_VERSION = '1.13.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -89,6 +92,13 @@ class HouseplanCard extends LitElement {
   private _roViewport?: ResizeObserver;
   private _onboardingShown = false; // the auto space dialog is shown once per session
 
+  private _rulesDialog: { rules: IconRule[]; test: string; busy: boolean } | null = null;
+  private _importDialog: { floors: (FloorInfo & { checked: boolean })[] } | null = null;
+  private _importQueue: string[] = []; // floor titles still to create
+  private _importTotal = 0;
+  private _rulesCompiledSrc = '';
+  private _rulesCompiled: CompiledIconRule[] | undefined;
+
   private _infoCard: DevItem | null = null;
   private _markerDialog: {
     devId?: string;      // the icon being edited (if any)
@@ -96,6 +106,7 @@ class HouseplanCard extends LitElement {
     binding: string;     // 'device:<id>' | 'entity:<eid>' | 'virtual'
     bindingFilter: string;
     icon: string;        // '' = auto
+    tapAction: string;   // '' = card default
     model: string;
     link: string;
     description: string;
@@ -114,6 +125,8 @@ class HouseplanCard extends LitElement {
   private _keyHandler = (e: KeyboardEvent) => this._onKey(e);
 
   private _drag: { id: string; sx: number; sy: number; ox: number; oy: number; moved: boolean } | null = null;
+  private _holdTimer?: number;
+  private _holdFired = false;
 
   static properties = {
     hass: { attribute: false },
@@ -134,6 +147,8 @@ class HouseplanCard extends LitElement {
     _roomDialog: { state: true },
     _spaceDialog: { state: true },
     _infoCard: { state: true },
+    _rulesDialog: { state: true },
+    _importDialog: { state: true },
     _markerDialog: { state: true },
     _zoom: { state: true },
     _view: { state: true },
@@ -146,6 +161,7 @@ class HouseplanCard extends LitElement {
 
   public disconnectedCallback(): void {
     window.removeEventListener('keydown', this._keyHandler);
+    clearTimeout(this._holdTimer);
     this._roViewport?.disconnect();
     this._roViewport = undefined;
     if (this._unsubCfg) {
@@ -307,6 +323,18 @@ class HouseplanCard extends LitElement {
     this.requestUpdate();
   }
 
+  /** Compiled icon rules: instance settings override the built-in defaults. */
+  private get _iconRules(): CompiledIconRule[] | undefined {
+    const custom = this._settings.icon_rules;
+    if (!custom || !Array.isArray(custom) || !custom.length) return undefined;
+    const src = JSON.stringify(custom);
+    if (src !== this._rulesCompiledSrc) {
+      this._rulesCompiledSrc = src;
+      this._rulesCompiled = compileIconRules(custom);
+    }
+    return this._rulesCompiled;
+  }
+
   private get _excluded(): Set<string> {
     const list = this._settings.exclude_integrations;
     return list ? new Set(list) : EXCLUDED_DOMAINS;
@@ -334,10 +362,16 @@ class HouseplanCard extends LitElement {
       this._loadOk &&
       this._model.length === 0 &&
       !this._spaceDialog &&
+      !this._importDialog &&
       !this._onboardingShown
     ) {
       this._onboardingShown = true;
-      this._openSpaceDialog('create');
+      const floors = floorsOf(this.hass);
+      if (floors.length) {
+        this._importDialog = { floors: floors.map((f) => ({ ...f, checked: true })) };
+      } else {
+        this._openSpaceDialog('create');
+      }
     }
   }
 
@@ -442,6 +476,7 @@ class HouseplanCard extends LitElement {
       showAll: this._showAll,
       firstSpaceId: this._model[0]?.id || '',
       loc: (k) => this._t(k),
+      iconRules: this._iconRules,
     });
     this._defPos = this._defaultPositions();
   }
@@ -580,8 +615,20 @@ class HouseplanCard extends LitElement {
 
   private _clickDevice(ev: MouseEvent, d: DevItem): void {
     ev.stopPropagation();
-    if (this._drag?.moved || this._suppressClick) return;
+    if (this._drag?.moved || this._suppressClick || this._holdFired) return;
     if (this._markup) return;
+    const domain = d.primary ? d.primary.split('.')[0] : null;
+    const action = resolveTapAction(d.tapAction, this._config?.tap_action, domain);
+    if (action === 'toggle' && d.primary) {
+      this.hass
+        .callService('homeassistant', 'toggle', { entity_id: d.primary })
+        .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
+      return;
+    }
+    if (action === 'more-info' && d.primary) {
+      this._openMoreInfo(d.primary);
+      return;
+    }
     this._infoCard = d;
   }
 
@@ -785,6 +832,17 @@ class HouseplanCard extends LitElement {
     this._drag = { id: d.id, sx: ev.clientX, sy: ev.clientY, ox: p.x, oy: p.y, moved: false };
     (ev.target as HTMLElement).setPointerCapture(ev.pointerId);
     this._tip = null;
+    // long-press always opens the info card — keeps metadata reachable
+    // even when the tap action is set to toggle
+    this._holdFired = false;
+    clearTimeout(this._holdTimer);
+    this._holdTimer = window.setTimeout(() => {
+      if (this._drag && this._drag.id === d.id && !this._drag.moved) {
+        this._holdFired = true;
+        this._drag = null;
+        this._infoCard = d;
+      }
+    }, 600);
   }
 
   private _pointerMove(ev: PointerEvent, d: DevItem): void {
@@ -796,7 +854,10 @@ class HouseplanCard extends LitElement {
     const v = this._viewOr(vb);
     const dx = ((ev.clientX - this._drag.sx) / rect.width) * v.w;
     const dy = ((ev.clientY - this._drag.sy) / rect.height) * v.h;
-    if (Math.abs(ev.clientX - this._drag.sx) + Math.abs(ev.clientY - this._drag.sy) > 3) this._drag.moved = true;
+    if (Math.abs(ev.clientX - this._drag.sx) + Math.abs(ev.clientY - this._drag.sy) > 3) {
+      this._drag.moved = true;
+      clearTimeout(this._holdTimer);
+    }
     const m = Math.min(vb[2], vb[3]) * 0.008;
     const nx = Math.max(vb[0] + m, Math.min(vb[0] + vb[2] - m, this._drag.ox + dx));
     const ny = Math.max(vb[1] + m, Math.min(vb[1] + vb[3] - m, this._drag.oy + dy));
@@ -804,6 +865,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _pointerUp(_ev: PointerEvent, d: DevItem): void {
+    clearTimeout(this._holdTimer);
     if (!this._drag || this._drag.id !== d.id) return;
     const moved = this._drag.moved;
     this._drag = moved ? this._drag : null;
@@ -1103,6 +1165,7 @@ class HouseplanCard extends LitElement {
         binding: d.bindingKind === 'virtual' ? 'virtual' : d.bindingKind + ':' + d.bindingRef,
         bindingFilter: '',
         icon: d.marker?.icon || '',
+        tapAction: d.marker?.tap_action || '',
         model: d.model || '',
         link: d.link || '',
         description: d.description || '',
@@ -1112,7 +1175,7 @@ class HouseplanCard extends LitElement {
       };
     } else {
       this._markerDialog = {
-        name: '', binding: 'virtual', bindingFilter: '', icon: '', model: '',
+        name: '', binding: 'virtual', bindingFilter: '', icon: '', tapAction: '', model: '',
         link: '', description: '', pdfs: [], room: '', busy: false,
       };
     }
@@ -1275,6 +1338,7 @@ class HouseplanCard extends LitElement {
         binding: dlg.binding,
         name: dlg.name.trim() || null,
         icon: dlg.icon || null,
+        tap_action: dlg.tapAction || null,
         model: dlg.model.trim() || null,
         link: dlg.link.trim() || null,
         description: dlg.description.trim() || null,
@@ -1451,13 +1515,18 @@ class HouseplanCard extends LitElement {
       if (d.mode === 'create') this._space = sp.id;
       this._regSignature = '';
       this._maybeRebuildDevices();
-      if (wasFirst) {
+      if (this._importQueue.length) {
+        // floors-import wizard: proceed to the next floor
+        this._openNextImport();
+      } else if (wasFirst || this._importTotal > 0) {
         // guide the user onward: straight into room markup mode
+        this._importTotal = 0;
+        this._space = this._serverCfg!.spaces[0]?.id || this._space;
         this._markup = true;
         this._tool = 'draw';
         this._path = [];
         this._cursorPt = null;
-        this._showToast(this._t('toast.space_added_onboard'));
+        this._showToast(this._t(wasFirst && !this._importTotal ? 'toast.space_added_onboard' : 'import.done'));
       } else {
         this._showToast(d.mode === 'create' ? this._t('toast.space_added') : this._t('toast.space_saved'));
       }
@@ -1494,6 +1563,179 @@ class HouseplanCard extends LitElement {
   }
 
 
+  // ================= FLOORS IMPORT WIZARD =================
+
+  private _startImport(): void {
+    const dlg = this._importDialog;
+    if (!dlg) return;
+    const titles = dlg.floors.filter((f) => f.checked).map((f) => f.name);
+    this._importDialog = null;
+    if (!titles.length) {
+      this._openSpaceDialog('create');
+      return;
+    }
+    this._importQueue = titles;
+    this._importTotal = titles.length;
+    this._openNextImport();
+  }
+
+  /** Open the space dialog for the next queued floor (title prefilled, plan required). */
+  private _openNextImport(): void {
+    const title = this._importQueue.shift();
+    if (title === undefined) return;
+    this._spaceDialog = { mode: 'create', title, planUrl: null, planFile: null, busy: false };
+  }
+
+  /** Skip the current floor of the wizard without creating a space. */
+  private _skipImport(): void {
+    this._spaceDialog = null;
+    if (this._importQueue.length) this._openNextImport();
+    else if (this._importTotal > 0 && this._model.length) {
+      this._importTotal = 0;
+      this._space = this._serverCfg!.spaces[0]?.id || this._space;
+      this._markup = true;
+      this._showToast(this._t('import.done'));
+    }
+  }
+
+  private _renderImportDialog(): TemplateResult {
+    const d = this._importDialog!;
+    const n = d.floors.filter((f) => f.checked).length;
+    return html`<div class="menuwrap dialogwrap" @click=${(e: Event) => e.stopPropagation()}>
+      <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
+        <div class="hd"><ha-icon icon="mdi:home-floor-1"></ha-icon>${this._t('import.title')}</div>
+        <div class="body">
+          <div class="rhint">${this._t('import.hint')}</div>
+          ${d.floors.map(
+            (f, i) => html`<label class="floorrow">
+              <input type="checkbox" .checked=${f.checked}
+                @change=${(e: Event) => {
+                  const floors = [...d.floors];
+                  floors[i] = { ...f, checked: (e.target as HTMLInputElement).checked };
+                  this._importDialog = { floors };
+                }} />
+              <span>${f.name}</span>
+              ${f.level != null ? html`<span class="floorlvl">L${f.level}</span>` : nothing}
+            </label>`,
+          )}
+        </div>
+        <div class="row">
+          <button class="btn ghost" @click=${() => { this._importDialog = null; this._openSpaceDialog('create'); }}>
+            ${this._t('import.manual')}
+          </button>
+          <span class="spacer"></span>
+          <button class="btn on" @click=${() => this._startImport()} ?disabled=${!n}>
+            <ha-icon icon="mdi:import"></ha-icon>${this._t('import.start', { n })}
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // ================= ICON RULES EDITOR =================
+
+  private _openRulesDialog = (): void => {
+    if (!this._norm) return;
+    const custom = this._settings.icon_rules;
+    const rules = (custom && custom.length ? custom : DEFAULT_ICON_RULES).map((r) => ({ ...r }));
+    this._rulesDialog = { rules, test: '', busy: false };
+  };
+
+  private _rulesSet(rules: IconRule[]): void {
+    this._rulesDialog = { ...this._rulesDialog!, rules };
+  }
+
+  private async _saveRules(): Promise<void> {
+    const dlg = this._rulesDialog;
+    if (!dlg || dlg.busy) return;
+    const cleaned = dlg.rules.filter((r) => r.pattern.trim() && r.icon.trim());
+    this._rulesDialog = { ...dlg, busy: true };
+    try {
+      const cfg = this._serverCfg!;
+      const isDefault = JSON.stringify(cleaned) === JSON.stringify(DEFAULT_ICON_RULES);
+      const settings: any = { ...cfg.settings };
+      if (isDefault) delete settings.icon_rules;
+      else settings.icon_rules = cleaned;
+      this._serverCfg = { ...cfg, settings };
+      await this._saveConfigNow();
+      this._rulesDialog = null;
+      this._regSignature = '';
+      this._maybeRebuildDevices();
+      this._showToast(this._t('rules.saved'));
+    } catch (e: any) {
+      this._rulesDialog = { ...this._rulesDialog!, busy: false };
+      this._showToast(this._t('toast.error', { err: this._errText(e) }));
+    }
+  }
+
+  private _renderRulesDialog(): TemplateResult {
+    const d = this._rulesDialog!;
+    const compiled = compileIconRules(d.rules);
+    const testIcon = d.test.trim() ? iconFor(d.test, '', compiled) : null;
+    const move = (i: number, delta: number) => {
+      const r = [...d.rules];
+      const j = i + delta;
+      if (j < 0 || j >= r.length) return;
+      [r[i], r[j]] = [r[j], r[i]];
+      this._rulesSet(r);
+    };
+    return html`<div class="menuwrap dialogwrap" @click=${(e: Event) => e.stopPropagation()}>
+      <div class="dialog wide" @click=${(e: Event) => e.stopPropagation()}>
+        <div class="hd"><ha-icon icon="mdi:shape-plus-outline"></ha-icon>${this._t('rules.title')}</div>
+        <div class="body">
+          <div class="rhint">${this._t('rules.hint')}</div>
+          <div class="rtest">
+            <input class="namein" type="text" placeholder=${this._t('rules.test_ph')}
+              .value=${d.test}
+              @input=${(e: Event) => (this._rulesDialog = { ...d, test: (e.target as HTMLInputElement).value })} />
+            ${testIcon ? html`<ha-icon icon=${testIcon}></ha-icon><span class="rtesticon">${testIcon}</span>` : nothing}
+          </div>
+          ${d.rules.map((r, i) => {
+            const bad = r.pattern.trim() !== '' && !isValidPattern(r.pattern);
+            return html`<div class="rrow">
+              <input class="namein rpat ${bad ? 'bad' : ''}" type="text"
+                placeholder=${this._t('rules.pattern_ph')}
+                title=${bad ? this._t('rules.invalid') : ''}
+                .value=${r.pattern}
+                @input=${(e: Event) => {
+                  const rules = [...d.rules];
+                  rules[i] = { ...r, pattern: (e.target as HTMLInputElement).value };
+                  this._rulesSet(rules);
+                }} />
+              <input class="namein ricon" type="text" placeholder=${this._t('rules.icon_ph')}
+                .value=${r.icon}
+                @input=${(e: Event) => {
+                  const rules = [...d.rules];
+                  rules[i] = { ...r, icon: (e.target as HTMLInputElement).value };
+                  this._rulesSet(rules);
+                }} />
+              <ha-icon class="rprev" icon=${r.icon || 'mdi:chip'}></ha-icon>
+              <ha-icon class="ract" icon="mdi:arrow-up" title=${this._t('btn.up')}
+                @click=${() => move(i, -1)}></ha-icon>
+              <ha-icon class="ract" icon="mdi:arrow-down" title=${this._t('btn.down')}
+                @click=${() => move(i, 1)}></ha-icon>
+              <ha-icon class="ract del" icon="mdi:close" title=${this._t('btn.delete')}
+                @click=${() => this._rulesSet(d.rules.filter((_, j) => j !== i))}></ha-icon>
+            </div>`;
+          })}
+          <button class="btn ghost" @click=${() => this._rulesSet([...d.rules, { pattern: '', icon: '' }])}>
+            <ha-icon icon="mdi:plus"></ha-icon>${this._t('rules.add')}
+          </button>
+        </div>
+        <div class="row">
+          <button class="btn ghost" @click=${() => this._rulesSet(DEFAULT_ICON_RULES.map((r) => ({ ...r })))}>
+            ${this._t('rules.reset')}
+          </button>
+          <span class="spacer"></span>
+          <button class="btn ghost" @click=${() => (this._rulesDialog = null)}>${this._t('btn.cancel')}</button>
+          <button class="btn on" @click=${this._saveRules} ?disabled=${d.busy}>
+            <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this._t('btn.save')}
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }
+
   // ================= render =================
 
   protected render(): TemplateResult | typeof nothing {
@@ -1515,6 +1757,7 @@ class HouseplanCard extends LitElement {
             : html`<p class="muted">${this._t('empty.install')}</p>`}
         </div>
         ${this._spaceDialog ? this._renderSpaceDialog() : nothing}
+        ${this._importDialog ? this._renderImportDialog() : nothing}
         ${this._toast ? html`<div class="toast">${this._toast}</div>` : nothing}
       </ha-card>`;
     }
@@ -1581,6 +1824,9 @@ class HouseplanCard extends LitElement {
               </button>
               <button class="btn" @click=${this._resetLayout} title=${this._t('title.reset_layout')}>
                 <ha-icon icon="mdi:backup-restore"></ha-icon>
+              </button>
+              <button class="btn" @click=${this._openRulesDialog} title=${this._t('title.icon_rules')}>
+                <ha-icon icon="mdi:shape-plus-outline"></ha-icon>
               </button>`
             : nothing}
           <button class="btn ${this._markup ? 'on' : ''}" @click=${this._toggleMarkup}
@@ -1637,6 +1883,8 @@ class HouseplanCard extends LitElement {
         ${this._spaceDialog ? this._renderSpaceDialog() : nothing}
         ${this._markerDialog ? this._renderMarkerDialog() : nothing}
         ${this._infoCard ? this._renderInfoCard() : nothing}
+        ${this._rulesDialog ? this._renderRulesDialog() : nothing}
+        ${this._importDialog ? this._renderImportDialog() : nothing}
         ${this._tip
           ? html`<div class="tip" style="left:${this._tip.x + 12}px;top:${this._tip.y + 12}px">
               <b>${this._tip.title}</b>${this._tip.meta ? html`<span class="m">${this._tip.meta}</span>` : nothing}
@@ -1837,6 +2085,14 @@ class HouseplanCard extends LitElement {
             )}
           </select>
 
+          <label>${this._t('marker.tap_label')}</label>
+          <select class="areasel"
+            @change=${(e: Event) => (this._markerDialog = { ...d, tapAction: (e.target as HTMLSelectElement).value })}>
+            ${[['', 'tap.auto'], ['info', 'tap.info'], ['more-info', 'tap.more_info'], ['toggle', 'tap.toggle']].map(
+              ([v, k]) => html`<option value=${v} ?selected=${(d.tapAction || '') === v}>${this._t(k as any)}</option>`,
+            )}
+          </select>
+
           <label>${this._t('marker.icon_label')}</label>
           ${customElements.get('ha-icon-picker')
             ? html`<ha-icon-picker .hass=${this.hass} .value=${d.icon}
@@ -1895,7 +2151,13 @@ class HouseplanCard extends LitElement {
     return html`<div class="menuwrap dialogwrap" @click=${(e: Event) => e.stopPropagation()}>
       <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
         <div class="hd"><ha-icon icon="mdi:floor-plan"></ha-icon>
-          ${d.mode === 'create' ? this._t('space.new') : this._t('space.header')}</div>
+          ${d.mode === 'create' ? this._t('space.new') : this._t('space.header')}
+          ${this._importTotal > 0 && d.mode === 'create'
+            ? html`<span class="importprog">${this._t('import.progress', {
+                i: this._importTotal - this._importQueue.length,
+                n: this._importTotal,
+              })}</span>`
+            : nothing}</div>
         <div class="body">
           <label>${this._t('space.title_label')}</label>
           <input class="namein" type="text" placeholder=${this._t('space.title_ph')}
@@ -1922,7 +2184,10 @@ class HouseplanCard extends LitElement {
               </button>`
             : nothing}
           <span class="spacer"></span>
-          <button class="btn ghost" @click=${() => (this._spaceDialog = null)}>${this._t('btn.cancel')}</button>
+          ${this._importTotal > 0 && d.mode === 'create'
+            ? html`<button class="btn ghost" @click=${() => this._skipImport()}>${this._t('btn.skip')}</button>`
+            : nothing}
+          <button class="btn ghost" @click=${() => { this._spaceDialog = null; this._importQueue = []; this._importTotal = 0; }}>${this._t('btn.cancel')}</button>
           <button class="btn on" @click=${this._saveSpaceDialog}
             ?disabled=${!d.title.trim() || !(d.planFile || d.planUrl) || d.busy}
             title=${!(d.planFile || d.planUrl) ? this._t('title.need_plan') : ''}>

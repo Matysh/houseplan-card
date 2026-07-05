@@ -165,8 +165,9 @@ export const cardStyles = css`
       position: absolute;
       left: 8px;
       bottom: 8px;
-      background: rgba(4, 18, 31, 0.8);
-      color: #dff1ff;
+      background: var(--card-background-color, var(--hp-bg));
+      opacity: 0.92;
+      color: var(--hp-txt);
       border: 1px solid var(--hp-accent);
       border-radius: 8px;
       padding: 2px 8px;
@@ -334,14 +335,14 @@ export const cardStyles = css`
       top: 50%;
       transform: translateY(-50%);
       margin-left: calc(var(--icon-size, 2.5cqw) * 0.1);
-      background: rgba(4, 18, 31, 0.9);
+      background: var(--card-background-color, var(--hp-bg));
       border: 1px solid var(--hp-accent);
       border-radius: calc(var(--icon-size, 2.5cqw) * 0.18);
       padding: 0 calc(var(--icon-size, 2.5cqw) * 0.14);
       font-size: calc(var(--icon-size, 2.5cqw) * 0.45);
       font-weight: 700;
       line-height: calc(var(--icon-size, 2.5cqw) * 0.68);
-      color: #dff1ff;
+      color: var(--hp-txt);
       white-space: nowrap;
       pointer-events: none;
     }
@@ -577,6 +578,59 @@ export const cardStyles = css`
     ha-icon-picker {
       display: block;
     }
+    .floorrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 4px;
+      font-size: 13.5px;
+      cursor: pointer;
+    }
+    .floorrow .floorlvl {
+      color: var(--hp-muted);
+      font-size: 11px;
+      border: 1px solid var(--hp-line);
+      border-radius: 5px;
+      padding: 0 5px;
+    }
+    .importprog {
+      margin-left: auto;
+      color: var(--hp-muted);
+      font-size: 12px;
+      font-weight: 400;
+    }
+    .rhint {
+      font-size: 12px;
+      color: var(--hp-muted);
+      margin-bottom: 6px;
+    }
+    .rtest {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .rtest .namein { flex: 1; }
+    .rtest ha-icon { color: var(--hp-accent); }
+    .rtesticon { font-size: 11px; color: var(--hp-muted); }
+    .rrow {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin: 2px 0;
+    }
+    .rrow .rpat { flex: 2; }
+    .rrow .ricon { flex: 1.4; }
+    .rrow .rpat.bad { border-color: #ff7a5c; }
+    .rrow .rprev { --mdc-icon-size: 18px; color: var(--hp-txt); min-width: 18px; }
+    .rrow .ract {
+      --mdc-icon-size: 16px;
+      color: var(--hp-muted);
+      cursor: pointer;
+    }
+    .rrow .ract:hover { color: var(--hp-txt); }
+    .rrow .ract.del:hover { color: #ff7a5c; }
+
     .dialogwrap {
       background: rgba(0, 0, 0, 0.45);
       display: flex;
