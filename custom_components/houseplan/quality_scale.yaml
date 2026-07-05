@@ -1,0 +1,112 @@
+# Integration Quality Scale self-assessment.
+# Custom integrations are not formally graded (they sit in the "Custom" tier),
+# but we track the official checklist here. done = implemented, exempt = not
+# applicable with the reason.
+rules:
+  # ---- Bronze ----
+  action-setup:
+    status: exempt
+    comment: The integration registers no service actions.
+  appropriate-polling:
+    status: exempt
+    comment: No polling — storage + WebSocket API + frontend serving only.
+  brands:
+    status: done
+    comment: Local brand images in custom_components/houseplan/brand/ (HA >=2026.3 mechanism).
+  common-modules:
+    status: done
+    comment: const.py, store.py (stores + runtime data), validation.py (pure schemas).
+  config-flow:
+    status: done
+  config-flow-test-coverage:
+    status: done
+    comment: tests_backend/test_config_flow.py (runs in CI on Python 3.13).
+  dependency-transparency:
+    status: done
+    comment: No external requirements.
+  docs-actions:
+    status: exempt
+    comment: No service actions.
+  docs-high-level-description:
+    status: done
+    comment: README.md.
+  docs-installation-instructions:
+    status: done
+    comment: README.md (HACS + manual).
+  docs-removal-instructions:
+    status: done
+    comment: README.md uninstall section.
+  entity-event-setup:
+    status: exempt
+    comment: No entities.
+  entity-unique-id:
+    status: exempt
+    comment: No entities.
+  has-entity-name:
+    status: exempt
+    comment: No entities.
+  runtime-data:
+    status: done
+    comment: entry.runtime_data holds HouseplanData (stores + write lock).
+  test-before-configure:
+    status: exempt
+    comment: No external device/service to validate during the flow.
+  test-before-setup:
+    status: done
+    comment: Storage load is verified in async_setup_entry (ConfigEntryNotReady on failure).
+  unique-config-entry:
+    status: done
+    comment: single_config_entry in manifest.
+  # ---- Silver ----
+  action-exceptions:
+    status: exempt
+    comment: No service actions; WS handlers reply with typed error codes.
+  config-entry-unloading:
+    status: done
+    comment: Unload supported; WS commands and static paths are global by design (documented in __init__).
+  docs-configuration-parameters:
+    status: done
+    comment: README documents the admin_only option and card options.
+  docs-installation-parameters:
+    status: done
+  entity-unavailable:
+    status: exempt
+    comment: No entities.
+  integration-owner:
+    status: done
+  log-when-unavailable:
+    status: exempt
+    comment: No external service.
+  parallel-updates:
+    status: exempt
+    comment: No entities/polling.
+  reauthentication-flow:
+    status: exempt
+    comment: No authentication against an external service.
+  test-coverage:
+    status: todo
+    comment: Backend covered by pure tests + HA-harness tests in CI; measuring >95% is planned.
+  # ---- Gold (selected; entity/device rules are exempt — no entities) ----
+  diagnostics:
+    status: done
+    comment: diagnostics.py with redaction of personal marker fields.
+  reconfiguration-flow:
+    status: exempt
+    comment: Nothing to reconfigure — no host/credentials; all data is edited in the card UI.
+  repair-issues:
+    status: done
+    comment: Missing plan files raise repair issues (translation_key broken_plan).
+  docs-troubleshooting:
+    status: todo
+  docs-examples:
+    status: todo
+  # ---- Platinum ----
+  strict-typing:
+    status: todo
+    comment: Python is annotated; mypy strict pass is planned.
+  async-dependency:
+    status: exempt
+    comment: No dependencies.
+  inject-websession:
+    status: exempt
+    comment: No outgoing HTTP.

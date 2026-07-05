@@ -13,14 +13,14 @@
 
 | Item | State |
 |---|---|
-| Version | **v1.11.2** everywhere (manifest, const.py, package.json, CARD_VERSION) |
+| Version | **v1.12.0** everywhere (manifest, const.py, package.json, CARD_VERSION) |
 | GitHub | https://github.com/Matysh/houseplan-card — branch `main`, releases v1.9.3…v1.11.2 |
 | CI | `.github/workflows/validate.yml` (hacs + hassfest + frontend + backend) — **fully green** since v1.11.1; `release.yml` auto-attaches the card bundle (needs `permissions: contents: write`, fixed) |
 | HACS | Works as custom repository (id 1290210112 on the home instance). **Inclusion PR: https://github.com/hacs/default/pull/8995** (queue ≈2 months as of 2026-07) |
 | Brands | Ships **inside the integration**: `custom_components/houseplan/brand/{icon,icon@2x,logo,logo@2x}.png` (HA ≥2026.3 local-brands mechanism). home-assistant/brands PR #10700 was auto-closed — that repo no longer accepts custom integrations |
 | Home instance | ha.jbstudio.pro (SSH port 323, key `ha_jb`), deployed v1.11.2, installed *via HACS* (custom repo) — updates flow through HACS now |
 | Localization | UI en/ru (`src/i18n.ts`), auto by `hass.locale` + `language` card option; codebase and docs are English-first (`README.ru.md` is the Russian copy) |
-| Tests | 15 frontend (node:test on logic/rules) + 10 backend (pytest on validation.py) |
+| Tests | 15 frontend (node:test) + 10 pure backend (anywhere) + 12 HA-harness backend (CI only, py3.13 + pytest-homeassistant-custom-component; skipped locally — sandbox has py3.10) |
 
 ## Recent milestones (details in CHANGELOG.md)
 
@@ -32,6 +32,9 @@
 - **v1.11.0** — full English translation + en/ru UI localization.
 - **v1.11.1** — brand images inside the integration; CI fully green for the first time.
 - **v1.11.2** — Description textarea fix in the device dialog.
+- **v1.12.0** — Quality Scale conformance: runtime_data, test-before-setup, unloading,
+  single_config_entry, Store migrations hook, diagnostics, repairs, system health,
+  uninstall cleanup, HA-harness tests in CI, quality_scale.yaml.
 
 ## Where things live
 

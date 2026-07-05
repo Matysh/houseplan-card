@@ -3,21 +3,15 @@
     "step": {
       "user": {
         "title": "House Plan",
-        "data": {
-          "admin_only": "Only administrators may edit the layout"
-        }
+        "data": { "admin_only": "Only administrators may edit the layout" }
       }
     },
-    "abort": {
-      "single_instance_allowed": "Already configured — only one entry is allowed."
-    }
+    "abort": { "single_instance_allowed": "Already configured — only one entry is allowed." }
   },
   "options": {
     "step": {
       "init": {
-        "data": {
-          "admin_only": "Only administrators may edit the layout"
-        }
+        "data": { "admin_only": "Only administrators may edit the layout" }
       }
     }
   },

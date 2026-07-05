@@ -1,5 +1,29 @@
 # Changelog
 
+## v1.12.0 — 2026-07-05 (Quality Scale: Bronze + selected Silver/Gold)
+Backend brought to Integration Quality Scale patterns (custom integrations are not
+formally graded; progress is tracked in `custom_components/houseplan/quality_scale.yaml`):
+
+- **`entry.runtime_data`** (typed `HouseplanData`: both stores + the write lock) replaces
+  `hass.data[DOMAIN]` for entry data; WS handlers resolve it per call and answer
+  `not_ready` while no entry is loaded. New `store.py` common module.
+- **test-before-setup**: storage readability is verified in `async_setup_entry`
+  (`ConfigEntryNotReady` on failure). **Unloading** is supported; WS commands and
+  static paths are global by design (documented).
+- **`single_config_entry: true`** in the manifest replaces the manual flow check.
+- **Store versioning**: stores now carry `minor_version` and a migration hook
+  (`HouseplanStore._async_migrate_func`) — schema changes get a single upgrade path.
+- **Diagnostics** (`diagnostics.py`): redacted dump (options, rev, per-space stats,
+  markers with personal fields redacted, layout size).
+- **Repairs**: a missing plan file raises a repair issue (`broken_plan`) with
+  en/ru translations; issues clear automatically when resolved.
+- **System health** (`system_health.py`): rev, spaces/rooms/markers/layout counters.
+- **Uninstall cleanup**: `async_remove_entry` deletes our Lovelace resource entry.
+- **Tests**: config flow, WS API (layout ops, rev conflict, not_ready, plan upload
+  validation), HTTP upload (ok/bad ext/traversal) on `pytest-homeassistant-custom-component`
+  — run in CI on Python 3.13; pure validation tests still run anywhere.
+- `strings.json` added; translations updated.
+
 ## v1.11.2 — 2026-07-05 (device dialog: usable Description height)
 - The Description textarea in the device edit dialog was squeezed to ~2 lines by
   the dialog body's flex column. Now `min-height: 92px`, `flex-shrink: 0`, `rows=4`;
