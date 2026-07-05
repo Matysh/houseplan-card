@@ -37,12 +37,18 @@ export interface Marker {
   link?: string | null;
   description?: string | null;
   pdfs?: PdfRef[];
+  tap_action?: string | null; // per-device override: 'info' | 'more-info' | 'toggle'
 }
 
 export interface ServerConfig {
   spaces: any[];
   markers: Marker[];
-  settings: { exclude_integrations?: string[]; group_lights?: boolean; show_all?: boolean };
+  settings: {
+    exclude_integrations?: string[];
+    group_lights?: boolean;
+    show_all?: boolean;
+    icon_rules?: { pattern: string; icon: string }[];
+  };
 }
 
 export interface DevItem {
@@ -62,6 +68,7 @@ export interface DevItem {
   link?: string | null;
   description?: string | null;
   pdfs?: PdfRef[];
+  tapAction?: string | null; // from the marker override
 }
 
 export interface CardConfig {
@@ -73,4 +80,5 @@ export interface CardConfig {
   live_states?: boolean;
   show_signal?: boolean;
   language?: string; // 'en' | 'ru' | '' (auto — HA profile)
+  tap_action?: string; // 'info' (default) | 'more-info' | 'toggle'
 }

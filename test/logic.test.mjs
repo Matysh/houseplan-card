@@ -2,9 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   lqiColor, snapToGrid, segKey, samePoint, pointInPolygon, markerIdForBinding, averageLqi,
-  fitView, declump, safeUrl,
+  fitView, declump, safeUrl, resolveTapAction, floorsOf,
 } from '../test-build/logic.js';
-import { iconFor } from '../test-build/rules.js';
+import {
+  iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
+} from '../test-build/rules.js';
 
 test('lqiColor: boundaries and midpoint', () => {
   assert.equal(lqiColor(40), 'hsl(0, 85%, 55%)');
@@ -127,4 +129,80 @@ test('safeUrl: allows http(s) and relative paths, cuts dangerous schemes', () =>
   assert.equal(safeUrl(null), null);
   assert.equal(safeUrl(undefined), null);
   assert.equal(safeUrl('  https://x.ru  '), 'https://x.ru');
+});
+
+test('icon rules: custom rules override defaults, first match wins', () => {
+  const custom = compileIconRules([
+    { pattern: 'plug|socket', icon: 'mdi:custom-plug' },
+    { pattern: 'plug deluxe', icon: 'mdi:never-reached' },
+  ]);
+  assert.equal(iconFor('Smart Plug deluxe', '', custom), 'mdi:custom-plug');
+  // defaults are NOT consulted when custom rules are provided
+  assert.equal(iconFor('Датчик протечки', '', custom), 'mdi:chip');
+});
+
+test('icon rules: invalid regex is skipped, the rest still work', () => {
+  const compiled = compileIconRules([
+    { pattern: '[unclosed', icon: 'mdi:broken' },
+    { pattern: 'camera', icon: 'mdi:cctv' },
+  ]);
+  assert.equal(compiled.length, 1);
+  assert.equal(iconFor('Backyard camera', '', compiled), 'mdi:cctv');
+});
+
+test('icon rules: isValidPattern flags bad regexes', () => {
+  assert.equal(isValidPattern('plug|socket'), true);
+  assert.equal(isValidPattern('[unclosed'), false);
+});
+
+test('icon rules: defaults are bilingual', () => {
+  assert.equal(iconFor('Water leak sensor'), 'mdi:water-alert');
+  assert.equal(iconFor('Датчик протечки кухня'), 'mdi:water-alert');
+  assert.equal(iconFor('Umidifier presence sensor'), 'mdi:motion-sensor');
+});
+
+test('icon rules: device_class fallback', () => {
+  assert.equal(iconFromDeviceClasses(['temperature']), 'mdi:thermometer');
+  assert.equal(iconFromDeviceClasses(['unknown', 'motion']), 'mdi:motion-sensor');
+  assert.equal(iconFromDeviceClasses(['unknown']), null);
+  assert.equal(iconFromDeviceClasses([]), null);
+});
+
+test('tap action: defaults to info', () => {
+  assert.equal(resolveTapAction(undefined, undefined, 'light'), 'info');
+  assert.equal(resolveTapAction(null, 'info', 'switch'), 'info');
+  assert.equal(resolveTapAction(null, 'more-info', 'sensor'), 'more-info');
+});
+
+test('tap action: card-wide toggle only touches safe domains', () => {
+  assert.equal(resolveTapAction(null, 'toggle', 'light'), 'toggle');
+  assert.equal(resolveTapAction(null, 'toggle', 'switch'), 'toggle');
+  assert.equal(resolveTapAction(null, 'toggle', 'cover'), 'info');   // garage stays shut
+  assert.equal(resolveTapAction(null, 'toggle', 'valve'), 'info');
+  assert.equal(resolveTapAction(null, 'toggle', 'sensor'), 'info');
+});
+
+test('tap action: explicit per-device toggle works for cover but never for lock/alarm', () => {
+  assert.equal(resolveTapAction('toggle', 'info', 'cover'), 'toggle'); // conscious choice
+  assert.equal(resolveTapAction('toggle', 'toggle', 'lock'), 'info'); // hard security block
+  assert.equal(resolveTapAction('toggle', 'toggle', 'alarm_control_panel'), 'info');
+  assert.equal(resolveTapAction('toggle', 'info', undefined), 'info'); // no entity → nothing to toggle
+});
+
+test('tap action: per-device override beats the card default', () => {
+  assert.equal(resolveTapAction('info', 'toggle', 'light'), 'info');
+  assert.equal(resolveTapAction('more-info', 'toggle', 'light'), 'more-info');
+});
+
+test('floorsOf: sorts by level, tolerates missing registry and odd entries', () => {
+  assert.deepEqual(floorsOf({}), []);
+  assert.deepEqual(floorsOf({ floors: null }), []);
+  const hass = { floors: {
+    a: { floor_id: 'attic', name: 'Attic', level: 2 },
+    g: { floor_id: 'ground', name: 'Ground', level: 0 },
+    x: { floor_id: 'x', name: 'No level' },
+    bad: null,
+  }};
+  const res = floorsOf(hass);
+  assert.deepEqual(res.map((f) => f.id), ['ground', 'attic', 'x']);
 });

@@ -2,7 +2,7 @@
  * Building the device list from HA registries: curation, light groups,
  * markers (overrides/virtual). No Lit/DOM — only the hass object.
  */
-import { iconFor, DOMAIN_PRIORITY } from './rules';
+import { iconFor, iconFromDeviceClasses, DOMAIN_PRIORITY, FALLBACK_ICON, type CompiledIconRule } from './rules';
 import { averageLqi } from './logic';
 import type { DevItem, Marker, ServerConfig } from './types';
 
@@ -18,6 +18,8 @@ export interface BuildCtx {
   firstSpaceId: string;
   /** Localized display strings for generated device names. */
   loc: (key: 'device.unnamed' | 'device.light_group' | 'device.fallback' | 'device.virtual') => string;
+  /** Compiled icon rules (instance overrides or built-in defaults). */
+  iconRules?: CompiledIconRule[];
 }
 
 export function entitiesByDevice(hass: any): Record<string, string[]> {
@@ -121,6 +123,18 @@ export function lightGroups(hass: any, enabled: boolean): { eid: string; name: s
   return res;
 }
 
+/** Icon with the full fallback chain: name rules → entity device_class → chip. */
+function resolveIcon(hass: any, name: string, model: string | undefined, entIds: string[], rules?: CompiledIconRule[]): string {
+  const byRules = iconFor(name, model, rules);
+  if (byRules !== FALLBACK_ICON) return byRules;
+  const classes: string[] = [];
+  for (const eid of entIds) {
+    const dc = hass.states[eid]?.attributes?.device_class;
+    if (dc) classes.push(dc);
+  }
+  return iconFromDeviceClasses(classes) ?? FALLBACK_ICON;
+}
+
 function applyMarker(item: DevItem, m: Marker): void {
   item.marker = m;
   if (m.name) item.name = m.name;
@@ -129,11 +143,12 @@ function applyMarker(item: DevItem, m: Marker): void {
   item.link = m.link ?? null;
   item.description = m.description ?? null;
   item.pdfs = m.pdfs || [];
+  item.tapAction = m.tap_action ?? null;
 }
 
 /** Curation + light groups + markers (metadata/rebinding) + virtual ones. A hybrid. */
 export function buildDevices(ctx: BuildCtx): DevItem[] {
-  const { hass: h, areaToSpace, markers, settings, excluded, showAll, firstSpaceId, loc } = ctx;
+  const { hass: h, areaToSpace, markers, settings, excluded, showAll, firstSpaceId, loc, iconRules } = ctx;
   const groupLights = settings.group_lights !== false;
   const groups = lightGroups(h, groupLights);
   const groupedAreas = new Set(groups.map((g) => g.area));
@@ -167,7 +182,7 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
     }
     const name = (dev.name_by_user || dev.name || loc('device.unnamed')).trim();
     const key = name + '|' + area;
-    let icon = iconFor(name, dev.model);
+    let icon = resolveIcon(h, name, dev.model, entIds, iconRules);
     if (entIds.some((e) => e.startsWith('lock.'))) icon = 'mdi:lock';
     if (!showAll && groupLights && icon === 'mdi:lightbulb' && groupedAreas.has(area)) continue;
     // duplicates by “name|zone” are numbered rather than hidden
@@ -218,7 +233,9 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
       const area = m.area || dev?.area_id || '';
       const space = (area && areaToSpace[area]) || m.space || firstSpaceId;
       const entIds = dev ? entsBy[dev.id] || [] : [];
-      let icon = dev ? iconFor(dev.name_by_user || dev.name || '', dev.model) : 'mdi:help-circle';
+      let icon = dev
+        ? resolveIcon(h, dev.name_by_user || dev.name || '', dev.model, entIds, iconRules)
+        : 'mdi:help-circle';
       if (entIds.some((e) => e.startsWith('lock.'))) icon = 'mdi:lock';
       const item: DevItem = {
         id: m.id,

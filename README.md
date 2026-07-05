@@ -84,6 +84,8 @@ Nothing else needs to be specified — everything else is configured right on th
 ### Step 1. Add a space (floor)
 
 On first open the plan is still empty — House Plan immediately offers to create the first space.
+If your Home Assistant already has **floors** configured, a wizard offers to create a space
+for each floor (names prefilled, a plan image is asked for one by one; any floor can be skipped).
 
 ![Empty plan — prompt to add a space](docs/images/02-onboarding-empty.png)
 
@@ -124,6 +126,22 @@ The mouse wheel or the **－ / ⊹ / ＋** buttons zoom the plan in and out; on 
 Device icons can be **dragged with the mouse at any time** — no separate "edit mode" needs to be enabled. Positions are saved on the server and are identical in all browsers and devices. The **↺** button in the header restores the automatic layout.
 
 ![Dragging icons — available at all times](docs/images/06-edit.png)
+
+### Tap actions: control devices from the plan
+
+By default a tap on an icon opens its info card. In the card settings you can switch
+**Tap on a device** to *Toggle* — a tap then switches lights, sockets, fans and
+humidifiers directly on the plan (wall-tablet style). For safety, a card-wide toggle
+never affects locks, alarms, covers or valves; you can consciously enable toggle for a
+specific device (except locks and alarms — those never toggle from the plan) in its
+edit dialog. A **long press** always opens the info card.
+
+### Icon rules
+
+Which MDI icon a device gets is decided by **icon rules** — editable right in the card
+(the ⬡ button in the header): an ordered list of “name pattern → icon” regexes with a
+live test field, bilingual defaults (EN/RU) and a one-click reset. When no rule
+matches, the entity *device class* decides (thermometer for temperature sensors, etc.).
 
 ### Step 6. Adding your own devices manually
 
