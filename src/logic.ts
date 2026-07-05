@@ -55,3 +55,46 @@ export function averageLqi(values: number[]): number | null {
   if (!values.length) return null;
   return Math.round(values.reduce((a, b) => a + b, 0) / values.length);
 }
+
+/** Прямоугольник «contain» с заданным аспектом (w/h), вмещающий весь vb [x,y,w,h]. */
+export function fitView(vb: number[], aspect: number): { x: number; y: number; w: number; h: number } {
+  const planA = vb[2] / vb[3];
+  if (aspect > planA) {
+    const h = vb[3], w = vb[3] * aspect;
+    return { x: vb[0] - (w - vb[2]) / 2, y: vb[1], w, h };
+  }
+  const w = vb[2], h = vb[2] / aspect;
+  return { x: vb[0], y: vb[1] - (h - vb[3]) / 2, w, h };
+}
+
+/** Расталкивание точек: не ближе minDist друг к другу, в пределах прямоугольника b с отступом pad. Мутирует pts. */
+export function declump(
+  pts: { x: number; y: number }[],
+  b: { x: number; y: number; w: number; h: number },
+  minDist: number,
+  pad: number,
+): void {
+  if (pts.length < 2) return;
+  const minX = b.x + pad, maxX = b.x + b.w - pad, minY = b.y + pad, maxY = b.y + b.h - pad;
+  for (let it = 0; it < 60; it++) {
+    let moved = false;
+    for (let i = 0; i < pts.length; i++) {
+      for (let j = i + 1; j < pts.length; j++) {
+        const dx = pts[j].x - pts[i].x, dy = pts[j].y - pts[i].y;
+        const dist = Math.hypot(dx, dy) || 0.001;
+        if (dist < minDist) {
+          const push = (minDist - dist) / 2;
+          const ux = dx / dist, uy = dy / dist;
+          pts[i].x -= ux * push; pts[i].y -= uy * push;
+          pts[j].x += ux * push; pts[j].y += uy * push;
+          moved = true;
+        }
+      }
+    }
+    for (const q of pts) {
+      q.x = Math.max(minX, Math.min(maxX, q.x));
+      q.y = Math.max(minY, Math.min(maxY, q.y));
+    }
+    if (!moved) break;
+  }
+}

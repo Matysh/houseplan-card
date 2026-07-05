@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   lqiColor, snapToGrid, segKey, samePoint, pointInPolygon, markerIdForBinding, averageLqi,
+  fitView, declump,
 } from '../test-build/logic.js';
 import { iconFor } from '../test-build/rules.js';
 
@@ -66,4 +67,48 @@ test('iconFor: ключевые правила', () => {
   assert.equal(iconFor('Ворота', 'Tuya Garage'), 'mdi:garage-variant');
   assert.equal(iconFor('Термоголовка', 'Aqara'), 'mdi:radiator');
   assert.equal(iconFor('Неизвестное', 'XYZ'), 'mdi:chip');
+});
+
+test('fitView: портретный план в широкой сцене — по бокам поля, весь план внутри', () => {
+  // vb 100x200 (аспект 0.5), сцена аспект 2 → view шире плана, высота = 200
+  const v = fitView([0, 0, 100, 200], 2);
+  assert.equal(v.h, 200);
+  assert.equal(v.w, 400); // 200*2
+  assert.equal(v.x, -150); // (100-400)/2 центрирование
+  assert.equal(v.y, 0);
+  // весь план внутри view
+  assert.ok(v.x <= 0 && v.x + v.w >= 100 && v.y <= 0 && v.y + v.h >= 200);
+});
+
+test('fitView: аспект сцены совпадает с планом — view == vb', () => {
+  const v = fitView([10, 20, 300, 150], 2); // планA = 2 == аспект
+  assert.equal(v.x, 10); assert.equal(v.y, 20); assert.equal(v.w, 300); assert.equal(v.h, 150);
+});
+
+test('declump: близкие точки расходятся не ближе minDist и остаются в границах', () => {
+  const b = { x: 0, y: 0, w: 100, h: 100 };
+  const pts = [ { x: 50, y: 50 }, { x: 51, y: 50 }, { x: 50, y: 51 } ];
+  declump(pts, b, 20, 5);
+  // все пары не ближе ~minDist (с допуском на кламп к границам)
+  for (let i = 0; i < pts.length; i++)
+    for (let j = i + 1; j < pts.length; j++) {
+      const d = Math.hypot(pts[i].x - pts[j].x, pts[i].y - pts[j].y);
+      assert.ok(d > 12, `пара ${i},${j} слишком близко: ${d}`);
+    }
+  // в границах [5..95]
+  for (const q of pts) {
+    assert.ok(q.x >= 5 && q.x <= 95 && q.y >= 5 && q.y <= 95);
+  }
+});
+
+test('declump: одна точка не двигается', () => {
+  const pts = [{ x: 30, y: 40 }];
+  declump(pts, { x: 0, y: 0, w: 100, h: 100 }, 20, 5);
+  assert.deepEqual(pts, [{ x: 30, y: 40 }]);
+});
+
+test('averageLqi: пусто → null, иначе округлённое среднее', () => {
+  assert.equal(averageLqi([]), null);
+  assert.equal(averageLqi([100, 200]), 150);
+  assert.equal(averageLqi([1, 2, 2]), 2);
 });

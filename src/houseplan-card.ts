@@ -10,10 +10,11 @@ import { LitElement, html, svg, css, nothing, TemplateResult, PropertyValues } f
 import { EXCLUDED_DOMAINS, iconFor, DOMAIN_PRIORITY } from './rules';
 import {
   lqiColor, snapToGrid, segKey as segKeyOf, samePoint, pointInPolygon, markerIdForBinding,
+  averageLqi, fitView, declump,
 } from './logic';
 import './editor';
 
-const CARD_VERSION = '1.9.2';
+const CARD_VERSION = '1.9.3';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // кэш серверного конфига+раскладки для мгновенного рендера
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -120,7 +121,6 @@ class HouseplanCard extends LitElement {
   private _config?: CardConfig;
 
   private _space = 'f1';
-  private _edit = false;
   private _layout: Record<string, { x: number; y: number; s?: string }> = {};
   private _serverStorage = false;
   private _loadOk = false;
@@ -187,7 +187,6 @@ class HouseplanCard extends LitElement {
     hass: { attribute: false },
     _config: { state: true },
     _space: { state: true },
-    _edit: { state: true },
     _layout: { state: true },
     _devices: { state: true },
     _tip: { state: true },
@@ -567,8 +566,7 @@ class HouseplanCard extends LitElement {
         if (!isNaN(v)) vals.push(v);
       }
     }
-    if (!vals.length) return null;
-    return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
+    return averageLqi(vals);
   }
 
   private _roomLqi(area: string | null): number | null {
@@ -579,8 +577,7 @@ class HouseplanCard extends LitElement {
       const l = this._lqiFor(d.entities);
       if (l != null) vals.push(l);
     }
-    if (!vals.length) return null;
-    return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
+    return averageLqi(vals);
   }
 
   private _tempFor(entIds: string[]): number | null {
@@ -830,43 +827,11 @@ class HouseplanCard extends LitElement {
           x: b.x + pad + cw * ((i % cols) + 0.5),
           y: b.y + pad + ch * (Math.floor(i / cols) + 0.5),
         }));
-        this._declump(pts, b, minDist, pad * 0.5);
+        declump(pts, b, minDist, pad * 0.5);
         ds.forEach((d, i) => (map[d.id] = pts[i]));
       }
     }
     return map;
-  }
-
-  /** Расталкивание значков, чтобы не скучивались (в пределах комнаты). */
-  private _declump(
-    pts: { x: number; y: number }[],
-    b: { x: number; y: number; w: number; h: number },
-    minDist: number,
-    pad: number,
-  ): void {
-    if (pts.length < 2) return;
-    const minX = b.x + pad, maxX = b.x + b.w - pad, minY = b.y + pad, maxY = b.y + b.h - pad;
-    for (let it = 0; it < 60; it++) {
-      let moved = false;
-      for (let i = 0; i < pts.length; i++) {
-        for (let j = i + 1; j < pts.length; j++) {
-          const dx = pts[j].x - pts[i].x, dy = pts[j].y - pts[i].y;
-          const dist = Math.hypot(dx, dy) || 0.001;
-          if (dist < minDist) {
-            const push = (minDist - dist) / 2;
-            const ux = dx / dist, uy = dy / dist;
-            pts[i].x -= ux * push; pts[i].y -= uy * push;
-            pts[j].x += ux * push; pts[j].y += uy * push;
-            moved = true;
-          }
-        }
-      }
-      for (const q of pts) {
-        q.x = Math.max(minX, Math.min(maxX, q.x));
-        q.y = Math.max(minY, Math.min(maxY, q.y));
-      }
-      if (!moved) break;
-    }
   }
 
   /** Позиция устройства в рендер-единицах текущего пространства. */
@@ -961,20 +926,9 @@ class HouseplanCard extends LitElement {
     return s && s.clientHeight ? s.clientWidth / s.clientHeight : vb[2] / vb[3];
   }
 
-  /** Прямоугольник «contain» с аспектом сцены, вмещающий весь план (vb). */
-  private _fitView(vb: number[], aspect: number): { x: number; y: number; w: number; h: number } {
-    const planA = vb[2] / vb[3];
-    if (aspect > planA) {
-      const h = vb[3], w = vb[3] * aspect;
-      return { x: vb[0] - (w - vb[2]) / 2, y: vb[1], w, h };
-    }
-    const w = vb[2], h = vb[2] / aspect;
-    return { x: vb[0], y: vb[1] - (h - vb[3]) / 2, w, h };
-  }
-
   /** Текущий view с фолбэком на полный fit. */
   private _viewOr(vb: number[]): { x: number; y: number; w: number; h: number } {
-    return this._view && this._view.w ? this._view : this._fitView(vb, this._stageAspect());
+    return this._view && this._view.w ? this._view : fitView(vb, this._stageAspect());
   }
 
   /** Экран (sx,sy относительно сцены, px) → координаты vb по текущему view. */
@@ -1001,7 +955,7 @@ class HouseplanCard extends LitElement {
   /** Установить зум (центр — точка vb cx,cy либо центр текущего view). */
   private _applyView(zoom: number, cx?: number, cy?: number): void {
     const vb = this._spaceModel().vb;
-    const fit = this._fitView(vb, this._stageAspect());
+    const fit = fitView(vb, this._stageAspect());
     const z = Math.min(8, Math.max(1, zoom));
     const w = fit.w / z, h = fit.h / z;
     const cur = this._viewOr(vb);
@@ -1024,7 +978,7 @@ class HouseplanCard extends LitElement {
     const stage = this._stageEl;
     if (!stage) return;
     const vb = this._spaceModel().vb;
-    const fit = this._fitView(vb, this._stageAspect());
+    const fit = fitView(vb, this._stageAspect());
     const z = Math.min(8, Math.max(1, newZoom));
     const w = stage.clientWidth, h = stage.clientHeight;
     const pt = this._screenToVb(sx, sy);
@@ -1053,7 +1007,7 @@ class HouseplanCard extends LitElement {
   private _resetZoom(): void {
     const vb = this._spaceModel().vb;
     this._zoom = 1;
-    this._view = this._fitView(vb, this._stageAspect());
+    this._view = fitView(vb, this._stageAspect());
     this._saveZoom();
   }
 
@@ -1120,7 +1074,7 @@ class HouseplanCard extends LitElement {
       if (this._zoom > 1 && this._view) {
         const stage = this._stageEl!;
         const v = this._view;
-        const fit = this._fitView(this._spaceModel().vb, this._stageAspect());
+        const fit = fitView(this._spaceModel().vb, this._stageAspect());
         this._view = this._clampView(
           {
             x: this._panStart.vx - (ddx / stage.clientWidth) * v.w,
@@ -1184,17 +1138,6 @@ class HouseplanCard extends LitElement {
     }
   }
 
-  private _applyXY(axis: 'x' | 'y', val: string): void {
-    if (!this._selId) return;
-    const n = parseFloat(val);
-    if (isNaN(n)) return;
-    const d = this._devices.find((x) => x.id === this._selId);
-    if (!d || d.virtual) return;
-    const p = { ...this._pos(d) };
-    p[axis] = n;
-    this._savePos(d, p.x, p.y);
-  }
-
   private _resetLayout(): void {
     if (!confirm('Сбросить позиции всех иконок к авто-раскладке?')) return;
     this._layout = {};
@@ -1242,7 +1185,6 @@ class HouseplanCard extends LitElement {
       return;
     }
     this._markup = !this._markup;
-    this._edit = false;
     this._path = [];
     this._cursorPt = null;
     this._tool = 'draw';
@@ -1818,7 +1760,6 @@ class HouseplanCard extends LitElement {
       this._maybeRebuildDevices();
       if (wasFirst) {
         // ведём пользователя дальше: сразу в режим разметки комнат
-        this._edit = false;
         this._markup = true;
         this._tool = 'draw';
         this._path = [];
@@ -2336,32 +2277,6 @@ class HouseplanCard extends LitElement {
           </button>
         </div>
       </div>
-    </div>`;
-  }
-
-  private _renderEditbar(): TemplateResult {
-    const sel = this._selId ? this._devices.find((d) => d.id === this._selId) : null;
-    const p = sel ? this._pos(sel) : null;
-    return html`<div class="editbar">
-      <ha-icon icon="mdi:cursor-move" class="warn"></ha-icon>
-      <span class="sname">${sel ? sel.name : 'Режим правки — тащите иконки мышью'}</span>
-      ${sel && p
-        ? html`<label>X</label><input type="number" .value=${String(Math.round(p.x))}
-              @change=${(e: Event) => this._applyXY('x', (e.target as HTMLInputElement).value)} />
-            <label>Y</label><input type="number" .value=${String(Math.round(p.y))}
-              @change=${(e: Event) => this._applyXY('y', (e.target as HTMLInputElement).value)} />`
-        : nothing}
-      <span class="spacer"></span>
-      <span class="hint">
-        ${this._serverStorage
-          ? this._norm
-            ? 'конфиг и раскладка: сервер'
-            : 'раскладка: сервер · конфиг: встроенный'
-          : 'сохранение: этот браузер'}
-      </span>
-      <button class="btn ghost" @click=${this._resetLayout} title="Сбросить всё">
-        <ha-icon icon="mdi:backup-restore"></ha-icon>
-      </button>
     </div>`;
   }
 
