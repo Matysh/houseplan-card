@@ -172,3 +172,11 @@ export function floorsOf(hass: any): FloorInfo[] {
   });
   return list;
 }
+
+/** Substitute every occurrence of {name} placeholders in a template string. */
+export function subst(s: string, vars?: Record<string, string | number>): string {
+  if (!vars) return s;
+  let out = s;
+  for (const [k, v] of Object.entries(vars)) out = out.split('{' + k + '}').join(String(v));
+  return out;
+}

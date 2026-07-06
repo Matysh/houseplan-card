@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.13.2 — 2026-07-05 (audit round 3: fixes + buildDevices test suite)
+- **buildDevices finally has a direct unit-test suite** (12 tests on a fake hass):
+  area filtering, curation incl. show-all, duplicate numbering, light-group folding
+  and its `group_lights=false` inverse, marker claim/metadata/hidden/virtual/entity
+  paths, custom icon rules + the deliberate lock override, device_class fallback,
+  primary-entity priority, LQI/temperature extraction. Frontend tests: 28 → 41.
+- Fix: `t()` now substitutes **every** occurrence of a placeholder (extracted as the
+  pure `subst()` helper with a regression test).
+- Fix: `_saveConfigNow` refreshes the local config on a rev conflict before
+  rethrowing — a retry no longer hits the same conflict (the debounced path already
+  did this; the immediate path did not).
+- Fix: `pointercancel` on a device icon clears the long-press timer — no phantom
+  info card after an aborted touch gesture.
+- Repairs check moved to `repairs.py` and now **re-runs after every config save**,
+  so a missing/restored plan file is reflected in the Repairs UI without a restart.
+- Documented the deliberate `mdi:lock` override in `devices.ts` (wins over custom
+  rules — a mislabeled lock icon is safety-relevant confusion).
+- Test infra: `tsconfig.test.json` also compiles `devices.ts`/`types.ts`;
+  `scripts/fix-test-build.mjs` appends `.js` to tsc's extensionless ESM imports.
+
 ## v1.13.1 — 2026-07-05 (distribution materials)
 - **Demo GIF** in the README — recorded on a fully synthetic demo home (no real
   floor plans): live states, tap-to-toggle, drag, zoom, info card, space tabs.

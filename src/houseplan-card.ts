@@ -23,7 +23,7 @@ import './editor';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.13.1';
+const CARD_VERSION = '1.13.2';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -1554,12 +1554,21 @@ class HouseplanCard extends LitElement {
     }
   }
 
-  /** Immediate config save with a revision bump (no debounce). */
+  /** Immediate config save with a revision bump (no debounce).
+
+  On a rev conflict the local copy is refreshed before rethrowing, so the
+  user's retry starts from the fresh config instead of hitting the same
+  conflict again. */
   private async _saveConfigNow(): Promise<void> {
-    const r = await this.hass.callWS({
-      type: 'houseplan/config/set', config: this._serverCfg, expected_rev: this._cfgRev,
-    });
-    this._cfgRev = r?.rev ?? this._cfgRev + 1;
+    try {
+      const r = await this.hass.callWS({
+        type: 'houseplan/config/set', config: this._serverCfg, expected_rev: this._cfgRev,
+      });
+      this._cfgRev = r?.rev ?? this._cfgRev + 1;
+    } catch (e: any) {
+      if (e?.code === 'conflict') await this._reloadConfigOnly();
+      throw e;
+    }
   }
 
 
@@ -1917,6 +1926,7 @@ class HouseplanCard extends LitElement {
       @pointerdown=${(e: PointerEvent) => this._pointerDown(e, d)}
       @pointermove=${(e: PointerEvent) => this._pointerMove(e, d)}
       @pointerup=${(e: PointerEvent) => this._pointerUp(e, d)}
+      @pointercancel=${(e: PointerEvent) => this._pointerUp(e, d)}
     >
       <ha-icon icon="${d.icon}"></ha-icon>
       ${temp != null ? html`<span class="tval">${temp}°</span>` : nothing}

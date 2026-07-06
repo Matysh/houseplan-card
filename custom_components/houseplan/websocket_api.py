@@ -180,6 +180,12 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         new_rev = current_rev + 1
         await rt.config_store.async_save({"config": msg["config"], "rev": new_rev})
     hass.bus.async_fire("houseplan_config_updated", {"rev": new_rev})
+    # refresh repair issues (broken plan references) without waiting for a restart
+    entry = get_entry(hass)
+    if entry is not None:
+        from .repairs import async_check_plan_files
+
+        hass.async_create_task(async_check_plan_files(hass, entry))
     connection.send_result(msg["id"], {"ok": True, "rev": new_rev})
 
 

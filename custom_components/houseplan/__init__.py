@@ -7,7 +7,6 @@ from pathlib import Path
 from homeassistant.components.frontend import add_extra_js_url
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers import issue_registry as ir
 
 from . import websocket_api as hp_ws
 from .const import (
@@ -19,6 +18,7 @@ from .const import (
     PLANS_URL,
     VERSION,
 )
+from .repairs import async_check_plan_files
 from .store import HouseplanConfigEntry, create_data
 
 _LOGGER = logging.getLogger(__name__)
@@ -82,45 +82,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
     if not await _register_lovelace_resource(hass, module_url):
         add_extra_js_url(hass, module_url)
 
-    await _check_plan_files(hass, entry)
+    await async_check_plan_files(hass, entry)
     return True
-
-
-async def _check_plan_files(hass: HomeAssistant, entry: HouseplanConfigEntry) -> None:
-    """Repairs: raise an issue for every space whose plan file is missing on disk."""
-    cfg_raw = await entry.runtime_data.config_store.async_load() or {}
-    spaces = cfg_raw.get("config", {}).get("spaces", [])
-    plans_dir = Path(hass.config.path(PLANS_DIR))
-
-    def _missing() -> list[tuple[str, str]]:
-        res = []
-        for sp in spaces:
-            url = sp.get("plan_url") or ""
-            if not url.startswith(PLANS_URL + "/"):
-                continue  # external/legacy URL — not ours to verify
-            fname = url[len(PLANS_URL) + 1 :].split("?", 1)[0]
-            if not (plans_dir / fname).is_file():
-                res.append((sp.get("id", "?"), fname))
-        return res
-
-    missing = await hass.async_add_executor_job(_missing)
-    seen = set()
-    for space_id, fname in missing:
-        seen.add(space_id)
-        ir.async_create_issue(
-            hass,
-            DOMAIN,
-            f"broken_plan_{space_id}",
-            is_fixable=False,
-            severity=ir.IssueSeverity.WARNING,
-            translation_key="broken_plan",
-            translation_placeholders={"space": space_id, "file": fname},
-        )
-    # clear stale issues for spaces that are fine again (or gone)
-    for sp in spaces:
-        sid = sp.get("id", "?")
-        if sid not in seen:
-            ir.async_delete_issue(hass, DOMAIN, f"broken_plan_{sid}")
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) -> bool:
