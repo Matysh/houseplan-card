@@ -16,7 +16,7 @@
 | Version | **v1.13.3** everywhere (manifest, const.py, package.json, CARD_VERSION) |
 | GitHub | https://github.com/Matysh/houseplan-card — branch `main`, releases v1.9.3…v1.11.2 |
 | CI | `.github/workflows/validate.yml` (hacs + hassfest + frontend + backend) — **fully green** since v1.11.1; `release.yml` auto-attaches the card bundle (needs `permissions: contents: write`, fixed) |
-| HACS | Works as custom repository (id 1290210112 on the home instance). **Inclusion PR: https://github.com/hacs/default/pull/8995** (queue ≈2 months as of 2026-07) |
+| HACS | Works as custom repository (id 1290210112 on the home instance). **Inclusion PR: https://github.com/hacs/default/pull/9004** (queue ≈2 months as of 2026-07). Lesson: #8995 was auto-closed by hacs-bot — the PR body MUST be their exact template with every checkbox ticked and all 3 links (release, HACS action run, hassfest run); a custom body gets closed without discussion |
 | Brands | Ships **inside the integration**: `custom_components/houseplan/brand/{icon,icon@2x,logo,logo@2x}.png` (HA ≥2026.3 local-brands mechanism). home-assistant/brands PR #10700 was auto-closed — that repo no longer accepts custom integrations |
 | Home instance | ha.jbstudio.pro (SSH port 323, key `ha_jb`), deployed v1.11.2, installed *via HACS* (custom repo) — updates flow through HACS now |
 | Localization | UI en/ru (`src/i18n.ts`), auto by `hass.locale` + `language` card option; codebase and docs are English-first (`README.ru.md` is the Russian copy) |
@@ -55,8 +55,8 @@
 
 ## Open items / watchlist
 
-1. **hacs/default PR #8995** — waiting for moderation (bot may draft the PR for minor fixes —
-   fix and re-ready; wrongly filled template ⇒ silent close).
+1. **hacs/default PR #9004** — accepted by the bot into the review queue ('New default
+   repository' label). Minor issues ⇒ the bot drafts the PR (fix and re-ready).
 2. GitHub PAT `houseplan-card-publish` (repo+workflow) expires ~2026-07-12; in sandbox
    `~/.git-credentials`. Revoke after the HACS queue clears, or re-issue when needed.
 3. Privacy: legacy real-house plan sources (`assets/`) removed from the tree in
