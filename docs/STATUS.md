@@ -13,14 +13,14 @@
 
 | Item | State |
 |---|---|
-| Version | **v1.13.1** everywhere (manifest, const.py, package.json, CARD_VERSION) |
+| Version | **v1.13.2** everywhere (manifest, const.py, package.json, CARD_VERSION) |
 | GitHub | https://github.com/Matysh/houseplan-card — branch `main`, releases v1.9.3…v1.11.2 |
 | CI | `.github/workflows/validate.yml` (hacs + hassfest + frontend + backend) — **fully green** since v1.11.1; `release.yml` auto-attaches the card bundle (needs `permissions: contents: write`, fixed) |
 | HACS | Works as custom repository (id 1290210112 on the home instance). **Inclusion PR: https://github.com/hacs/default/pull/8995** (queue ≈2 months as of 2026-07) |
 | Brands | Ships **inside the integration**: `custom_components/houseplan/brand/{icon,icon@2x,logo,logo@2x}.png` (HA ≥2026.3 local-brands mechanism). home-assistant/brands PR #10700 was auto-closed — that repo no longer accepts custom integrations |
 | Home instance | ha.jbstudio.pro (SSH port 323, key `ha_jb`), deployed v1.11.2, installed *via HACS* (custom repo) — updates flow through HACS now |
 | Localization | UI en/ru (`src/i18n.ts`), auto by `hass.locale` + `language` card option; codebase and docs are English-first (`README.ru.md` is the Russian copy) |
-| Tests | 28 frontend (node:test) + 10 pure backend (anywhere) + 12 HA-harness backend (CI only, py3.13; skipped locally — sandbox has py3.10) |
+| Tests | 41 frontend (node:test, incl. a 12-test buildDevices suite on a fake hass) + 10 pure backend (anywhere) + 12 HA-harness backend (CI only, py3.13; skipped locally — sandbox has py3.10) |
 
 ## Recent milestones (details in CHANGELOG.md)
 
@@ -40,6 +40,9 @@
 - **v1.13.1** — distribution: synthetic-home demo GIF in the README, issue templates,
   CONTRIBUTING.md, Discussions. Forum/Reddit drafts are in the user folder
   (`posts_drafts.md`) awaiting manual posting.
+- **v1.13.2** — audit round 3: buildDevices unit-test suite, multi-placeholder t(),
+  conflict resync in _saveConfigNow, pointercancel long-press fix, repairs re-check
+  on config save (repairs.py).
 
 ## Where things live
 

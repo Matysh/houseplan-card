@@ -5,6 +5,7 @@
  * HA user profile (hass.locale.language); anything that is not a known
  * language falls back to English.
  */
+import { subst } from './logic';
 import en from './i18n/en.json';
 import ru from './i18n/ru.json';
 
@@ -22,9 +23,7 @@ export function langOf(hass: any, configLang?: string | null): Lang {
 
 /** Translate a key with optional {placeholder} substitution. */
 export function t(lang: Lang, key: Key, vars?: Record<string, string | number>): string {
-  let s = DICTS[lang][key] ?? en[key] ?? key;
-  if (vars) for (const [k, v] of Object.entries(vars)) s = s.replace('{' + k + '}', String(v));
-  return s;
+  return subst(DICTS[lang][key] ?? en[key] ?? key, vars);
 }
 
 export type { Key as I18nKey };

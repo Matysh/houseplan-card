@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   lqiColor, snapToGrid, segKey, samePoint, pointInPolygon, markerIdForBinding, averageLqi,
-  fitView, declump, safeUrl, resolveTapAction, floorsOf,
+  fitView, declump, safeUrl, resolveTapAction, floorsOf, subst,
 } from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
@@ -205,4 +205,10 @@ test('floorsOf: sorts by level, tolerates missing registry and odd entries', () 
   }};
   const res = floorsOf(hass);
   assert.deepEqual(res.map((f) => f.id), ['ground', 'attic', 'x']);
+});
+
+test('subst: replaces every occurrence of a placeholder, ignores unknown', () => {
+  assert.equal(subst('{n} of {n} ({x})', { n: 2, x: 'y' }), '2 of 2 (y)');
+  assert.equal(subst('no vars'), 'no vars');
+  assert.equal(subst('keep {unknown}', { n: 1 }), 'keep {unknown}');
 });

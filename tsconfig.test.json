@@ -9,6 +9,8 @@
   },
   "include": [
     "src/logic.ts",
-    "src/rules.ts"
+    "src/rules.ts",
+    "src/devices.ts",
+    "src/types.ts"
   ]
 }
