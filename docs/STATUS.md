@@ -13,7 +13,7 @@
 
 | Item | State |
 |---|---|
-| Version | **v1.13.2** everywhere (manifest, const.py, package.json, CARD_VERSION) |
+| Version | **v1.13.3** everywhere (manifest, const.py, package.json, CARD_VERSION) |
 | GitHub | https://github.com/Matysh/houseplan-card — branch `main`, releases v1.9.3…v1.11.2 |
 | CI | `.github/workflows/validate.yml` (hacs + hassfest + frontend + backend) — **fully green** since v1.11.1; `release.yml` auto-attaches the card bundle (needs `permissions: contents: write`, fixed) |
 | HACS | Works as custom repository (id 1290210112 on the home instance). **Inclusion PR: https://github.com/hacs/default/pull/8995** (queue ≈2 months as of 2026-07) |
@@ -59,7 +59,12 @@
    fix and re-ready; wrongly filled template ⇒ silent close).
 2. GitHub PAT `houseplan-card-publish` (repo+workflow) expires ~2026-07-12; in sandbox
    `~/.git-credentials`. Revoke after the HACS queue clears, or re-issue when needed.
-3. Stale files on the mount that cannot be deleted from the sandbox: `src/data/` leftovers,
+3. Privacy: legacy real-house plan sources (`assets/`) removed from the tree in
+   v1.13.3, but they persist in git history and old release archives; 8 README
+   screenshots in docs/images are still from the real house (replacement with
+   synthetic ones is a standing watchlist item). History rewrite deliberately NOT
+   done — it would break existing release tags/HACS installs.
+4. Stale files on the mount that cannot be deleted from the sandbox: `src/data/` leftovers,
    `brand_preview.png`, old nested bundle copies — ignore, git is authoritative.
 4. Roadmap: phases 7–10 are DONE (v1.12.0 quality scale, v1.13.0 universality,
    v1.13.1 distribution). Next candidates: replace the remaining real-house README

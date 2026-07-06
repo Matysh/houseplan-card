@@ -21,7 +21,6 @@ houseplan-card/
 │  ├─ config_flow.py             # single entry; admin_only option (editing restricted to admins)
 │  ├─ const.py                   # DOMAIN, STORAGE_KEY, VERSION, FRONTEND_URL
 │  └─ frontend/houseplan-card.js # copy of dist, served as /houseplan_files/houseplan-card.js
-├─ assets/                       # plan sources: f1_plan.svg, f2_plan.svg (REMPLANNER), *_bg.png (old raster versions)
 ├─ hacs.json                     # HACS manifest
 └─ docs/                         # this documentation
 ```

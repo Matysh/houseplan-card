@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.13.3 — 2026-07-06 (privacy: drop legacy real-house plan sources)
+- Removed the legacy `assets/` directory (real floor-plan sources from the pre-v1.3
+  bundled-data era). Nothing in the build referenced it; instance data lives in
+  server-side config. Note: the files remain in old git history and release archives.
+
 ## v1.13.2 — 2026-07-05 (audit round 3: fixes + buildDevices test suite)
 - **buildDevices finally has a direct unit-test suite** (12 tests on a fake hass):
   area filtering, curation incl. show-all, duplicate numbering, light-group folding
