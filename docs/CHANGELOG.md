@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.15.0 — 2026-07-06 (temperature room fill)
+- New room fill mode **"Temperature"**: light blue below the comfort range, green
+  inside it, warm yellow above. The comfort bounds (default 20–25 °C) are editable
+  right in the space dialog and appear only when the mode is selected; bounds
+  entered in the wrong order are swapped automatically. A room's temperature is
+  the average of its devices' temperature readings; rooms without a reading stay
+  unfilled. (+`areaTemp` helper, 3 new frontend tests, backend schema fields.)
+
 ## v1.14.0 — 2026-07-06 (per-space display settings, hand-drawn spaces, testing checklist)
 - **Per-space "Display" settings** (space dialog): always-visible room borders,
   room name labels, a border/name color picker with an opacity slider, and a room

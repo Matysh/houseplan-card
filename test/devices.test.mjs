@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildDevices, lightGroups, primaryEntity, lqiFor, tempFor, areaLights } from '../test-build/devices.js';
+import { buildDevices, lightGroups, primaryEntity, lqiFor, tempFor, areaLights, areaTemp } from '../test-build/devices.js';
 import { compileIconRules } from '../test-build/rules.js';
 
 /** Minimal fake hass around the pieces buildDevices reads. */
@@ -169,4 +169,20 @@ test('areaLights: on / off / none tri-state', () => {
   assert.equal(areaLights(hass, devs, 'living'), 'on');
   assert.equal(areaLights(hass, devs, 'kitchen'), 'off');
   assert.equal(areaLights(hass, devs, 'bath'), 'none');
+});
+
+test('areaTemp: averages device temperatures, null when none report', () => {
+  const hass = mkHass({ states: {
+    'sensor.t1': { state: '20.0', attributes: { device_class: 'temperature' } },
+    'sensor.t2': { state: '23.1', attributes: { device_class: 'temperature' } },
+    'sensor.hum': { state: '55', attributes: { device_class: 'humidity' } },
+  }});
+  const devs = [
+    { area: 'living', entities: ['sensor.t1'] },
+    { area: 'living', entities: ['sensor.t2'] },
+    { area: 'bath', entities: ['sensor.hum'] },
+  ];
+  assert.equal(areaTemp(hass, devs, 'living'), 21.6); // (20+23.1)/2=21.55 → 21.6
+  assert.equal(areaTemp(hass, devs, 'bath'), null);
+  assert.equal(areaTemp(hass, devs, 'garage'), null);
 });

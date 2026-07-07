@@ -183,7 +183,7 @@ export function subst(s: string, vars?: Record<string, string | number>): string
 
 // ---------------- room fills & colors ----------------
 
-export type RoomFillMode = 'none' | 'lqi' | 'light';
+export type RoomFillMode = 'none' | 'lqi' | 'light' | 'temp';
 
 /** Per-space display settings with their defaults resolved. */
 export interface SpaceDisplay {
@@ -192,10 +192,14 @@ export interface SpaceDisplay {
   color: string;    // hex like #3ea6ff
   opacity: number;  // 0..1 — applied to borders, names and fills
   fill: RoomFillMode;
+  tempMin: number; // comfort range lower bound, °C
+  tempMax: number; // comfort range upper bound, °C
 }
 
 export const DEFAULT_ROOM_COLOR = '#3ea6ff';
 export const DEFAULT_ROOM_OPACITY = 0.55;
+export const DEFAULT_TEMP_MIN = 20;
+export const DEFAULT_TEMP_MAX = 25;
 
 /** Resolve a space's display settings; spaces without a plan default to visible markup. */
 export function spaceDisplayOf(spaceCfg: any): SpaceDisplay {
@@ -206,7 +210,9 @@ export function spaceDisplayOf(spaceCfg: any): SpaceDisplay {
     showNames: s.show_names ?? noPlan,
     color: typeof s.room_color === 'string' && /^#[0-9a-f]{6}$/i.test(s.room_color) ? s.room_color : DEFAULT_ROOM_COLOR,
     opacity: typeof s.room_opacity === 'number' ? Math.min(1, Math.max(0, s.room_opacity)) : DEFAULT_ROOM_OPACITY,
-    fill: s.fill_mode === 'lqi' || s.fill_mode === 'light' ? s.fill_mode : 'none',
+    fill: ['lqi', 'light', 'temp'].includes(s.fill_mode) ? s.fill_mode : 'none',
+    tempMin: typeof s.temp_min === 'number' ? s.temp_min : DEFAULT_TEMP_MIN,
+    tempMax: typeof s.temp_max === 'number' ? s.temp_max : DEFAULT_TEMP_MAX,
   };
 }
 
@@ -221,11 +227,24 @@ export function roomFillColor(
   mode: RoomFillMode,
   lqi: number | null,
   lights: 'on' | 'off' | 'none',
+  temp?: number | null,
+  tempMin: number = DEFAULT_TEMP_MIN,
+  tempMax: number = DEFAULT_TEMP_MAX,
 ): string | null {
   if (mode === 'lqi') return lqi == null ? null : lqiColor(lqi);
   if (mode === 'light') {
     if (lights === 'none') return null;
     return lights === 'on' ? '#ffd45c' : '#9aa0a6';
+  }
+  if (mode === 'temp') {
+    // blue below the comfort range, green inside, yellow above; no reading → no fill.
+    // Bounds are swapped automatically if entered in the wrong order.
+    if (temp == null) return null;
+    const lo = Math.min(tempMin, tempMax);
+    const hi = Math.max(tempMin, tempMax);
+    if (temp < lo) return '#4fc3f7';
+    if (temp > hi) return '#ffd45c';
+    return '#66d17a';
   }
   return null;
 }
