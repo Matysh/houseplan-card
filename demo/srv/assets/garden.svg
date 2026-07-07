@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700">
+<rect width="1000" height="700" fill="#eef3e6"/>
+<rect x="30" y="30" width="940" height="640" fill="none" stroke="#7c9c6b" stroke-width="10" stroke-dasharray="24 14"/>
+<circle cx="260" cy="240" r="90" fill="#dbe8cd" stroke="#9dba8a" stroke-width="4"/>
+<circle cx="700" cy="450" r="130" fill="#d3e4f2" stroke="#8fb6d8" stroke-width="4"/>
+<rect x="600" y="80" width="260" height="150" fill="#e7ddc8" stroke="#b8a888" stroke-width="5"/>
+<text x="730" y="165" font-family="Arial" font-size="26" letter-spacing="3" fill="#8b95a1" text-anchor="middle" opacity="0.6">GARAGE</text>
+<text x="260" y="248" font-family="Arial" font-size="22" letter-spacing="3" fill="#7d9169" text-anchor="middle" opacity="0.7">LAWN</text>
+<text x="700" y="458" font-family="Arial" font-size="22" letter-spacing="3" fill="#6f93ad" text-anchor="middle" opacity="0.7">POOL</text>
+</svg>

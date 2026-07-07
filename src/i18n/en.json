@@ -151,5 +151,20 @@
   "import.manual": "Start from scratch",
   "import.progress": "Floor {i} of {n}",
   "import.done": "Spaces created. Outline the rooms: click grid dots and close the contour.",
-  "btn.skip": "Skip"
+  "btn.skip": "Skip",
+  "space.display_section": "Display",
+  "space.show_borders": "Always show room borders",
+  "space.show_names": "Show room names (drag to move)",
+  "space.room_color": "Border & name color",
+  "space.opacity": "Opacity",
+  "space.fill_label": "Room fill",
+  "fill.none": "None",
+  "fill.lqi": "Zigbee signal (red → green)",
+  "fill.light": "Lights (yellow = on, grey = off)",
+  "space.source_file": "I have a floor-plan image",
+  "space.source_draw": "No image — I'll outline rooms by hand",
+  "space.orientation": "Canvas",
+  "orient.landscape": "Landscape",
+  "orient.portrait": "Portrait",
+  "orient.square": "Square"
 }

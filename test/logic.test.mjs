@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   lqiColor, snapToGrid, segKey, samePoint, pointInPolygon, markerIdForBinding, averageLqi,
-  fitView, declump, safeUrl, resolveTapAction, floorsOf, subst,
+  fitView, declump, safeUrl, resolveTapAction, floorsOf, subst, spaceDisplayOf, roomFillColor,
 } from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
@@ -211,4 +211,31 @@ test('subst: replaces every occurrence of a placeholder, ignores unknown', () =>
   assert.equal(subst('{n} of {n} ({x})', { n: 2, x: 'y' }), '2 of 2 (y)');
   assert.equal(subst('no vars'), 'no vars');
   assert.equal(subst('keep {unknown}', { n: 1 }), 'keep {unknown}');
+});
+
+test('spaceDisplayOf: defaults differ for spaces with and without a plan', () => {
+  const withPlan = spaceDisplayOf({ plan_url: '/x.svg' });
+  assert.equal(withPlan.showBorders, false);
+  assert.equal(withPlan.showNames, false);
+  assert.equal(withPlan.fill, 'none');
+  const noPlan = spaceDisplayOf({ plan_url: null });
+  assert.equal(noPlan.showBorders, true);
+  assert.equal(noPlan.showNames, true);
+  const s = spaceDisplayOf({ plan_url: null, settings: { show_borders: false, room_color: '#ff0000', room_opacity: 2, fill_mode: 'lqi' } });
+  assert.equal(s.showBorders, false);
+  assert.equal(s.color, '#ff0000');
+  assert.equal(s.opacity, 1);
+  assert.equal(s.fill, 'lqi');
+  const g = spaceDisplayOf({ settings: { room_color: 'javascript:alert(1)', fill_mode: 'weird' } });
+  assert.equal(g.color, '#3ea6ff');
+  assert.equal(g.fill, 'none');
+});
+
+test('roomFillColor: lqi gradient, light tri-state, none', () => {
+  assert.equal(roomFillColor('none', 200, 'on'), null);
+  assert.equal(roomFillColor('lqi', null, 'on'), null);
+  assert.equal(roomFillColor('lqi', 180, 'none'), 'hsl(120, 85%, 55%)');
+  assert.equal(roomFillColor('light', null, 'on'), '#ffd45c');
+  assert.equal(roomFillColor('light', null, 'off'), '#9aa0a6');
+  assert.equal(roomFillColor('light', null, 'none'), null);
 });
