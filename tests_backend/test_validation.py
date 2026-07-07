@@ -97,3 +97,22 @@ def test_layout_schema():
     v.LAYOUT_SCHEMA({"dev1": {"x": 0.1, "y": 0.2, "s": "f1"}})
     with pytest.raises(vol.Invalid):
         v.LAYOUT_SCHEMA({"dev1": {"x": 0.1}})
+
+
+def test_space_display_settings():
+    """Per-space display settings validate; garbage color/mode is rejected."""
+    ok = {
+        "id": "f1", "title": "Floor 1", "aspect": 1.0, "view_box": [0, 0, 1, 1],
+        "rooms": [], "settings": {
+            "show_borders": True, "show_names": False,
+            "room_color": "#3ea6ff", "room_opacity": 0.5, "fill_mode": "lqi",
+        },
+    }
+    v.SPACE_SCHEMA(ok)
+    import pytest as _pytest
+    bad_color = dict(ok, settings={"room_color": "javascript:x"})
+    with _pytest.raises(Exception):
+        v.SPACE_SCHEMA(bad_color)
+    bad_mode = dict(ok, settings={"fill_mode": "rainbow"})
+    with _pytest.raises(Exception):
+        v.SPACE_SCHEMA(bad_mode)

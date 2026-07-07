@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildDevices, lightGroups, primaryEntity, lqiFor, tempFor } from '../test-build/devices.js';
+import { buildDevices, lightGroups, primaryEntity, lqiFor, tempFor, areaLights } from '../test-build/devices.js';
 import { compileIconRules } from '../test-build/rules.js';
 
 /** Minimal fake hass around the pieces buildDevices reads. */
@@ -157,4 +157,16 @@ test('lqiFor: dedicated sensor wins over attribute duplication; tempFor rounds',
   }});
   assert.equal(lqiFor(h, ['sensor.x_linkquality', 'sensor.temp']), 119); // avg(120,118)
   assert.equal(tempFor(h, ['sensor.temp']), 22.5);
+});
+
+test('areaLights: on / off / none tri-state', () => {
+  const hass = mkHass({ states: { 'light.a': { state: 'on' }, 'light.b': { state: 'off' } } });
+  const devs = [
+    { area: 'living', entities: ['light.a', 'sensor.x'] },
+    { area: 'kitchen', entities: ['light.b'] },
+    { area: 'bath', entities: ['sensor.hum'] },
+  ];
+  assert.equal(areaLights(hass, devs, 'living'), 'on');
+  assert.equal(areaLights(hass, devs, 'kitchen'), 'off');
+  assert.equal(areaLights(hass, devs, 'bath'), 'none');
 });

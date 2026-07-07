@@ -180,3 +180,52 @@ export function subst(s: string, vars?: Record<string, string | number>): string
   for (const [k, v] of Object.entries(vars)) out = out.split('{' + k + '}').join(String(v));
   return out;
 }
+
+// ---------------- room fills & colors ----------------
+
+export type RoomFillMode = 'none' | 'lqi' | 'light';
+
+/** Per-space display settings with their defaults resolved. */
+export interface SpaceDisplay {
+  showBorders: boolean;
+  showNames: boolean;
+  color: string;    // hex like #3ea6ff
+  opacity: number;  // 0..1 — applied to borders, names and fills
+  fill: RoomFillMode;
+}
+
+export const DEFAULT_ROOM_COLOR = '#3ea6ff';
+export const DEFAULT_ROOM_OPACITY = 0.55;
+
+/** Resolve a space's display settings; spaces without a plan default to visible markup. */
+export function spaceDisplayOf(spaceCfg: any): SpaceDisplay {
+  const s = spaceCfg?.settings || {};
+  const noPlan = !spaceCfg?.plan_url;
+  return {
+    showBorders: s.show_borders ?? noPlan,
+    showNames: s.show_names ?? noPlan,
+    color: typeof s.room_color === 'string' && /^#[0-9a-f]{6}$/i.test(s.room_color) ? s.room_color : DEFAULT_ROOM_COLOR,
+    opacity: typeof s.room_opacity === 'number' ? Math.min(1, Math.max(0, s.room_opacity)) : DEFAULT_ROOM_OPACITY,
+    fill: s.fill_mode === 'lqi' || s.fill_mode === 'light' ? s.fill_mode : 'none',
+  };
+}
+
+/**
+ * Room fill color for the selected mode, or null for "no fill".
+ * - lqi: red→green gradient by the room's average zigbee signal (null LQI → no fill)
+ * - light: warm yellow when any light in the room is on, grey when all known
+ *   lights are off; rooms without lights get no fill (a bathroom without smart
+ *   bulbs should not look permanently "off").
+ */
+export function roomFillColor(
+  mode: RoomFillMode,
+  lqi: number | null,
+  lights: 'on' | 'off' | 'none',
+): string | null {
+  if (mode === 'lqi') return lqi == null ? null : lqiColor(lqi);
+  if (mode === 'light') {
+    if (lights === 'none') return null;
+    return lights === 'on' ? '#ffd45c' : '#9aa0a6';
+  }
+  return null;
+}

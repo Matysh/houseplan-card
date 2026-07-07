@@ -14,8 +14,9 @@ import {
 import {
   lqiColor, snapToGrid, segKey as segKeyOf, samePoint, pointInPolygon, markerIdForBinding,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
+  spaceDisplayOf, roomFillColor, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY, type SpaceDisplay,
 } from './logic';
-import { buildDevices, lqiFor, tempFor } from './devices';
+import { buildDevices, lqiFor, tempFor, areaLights } from './devices';
 import type {
   RoomCfg, SpaceModel, PdfRef, Marker, ServerConfig, DevItem, CardConfig,
 } from './types';
@@ -23,7 +24,7 @@ import './editor';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.13.3';
+const CARD_VERSION = '1.14.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -120,6 +121,13 @@ class HouseplanCard extends LitElement {
     title: string;
     planUrl: string | null;
     planFile: { ext: string; b64: string; aspect: number; name: string } | null;
+    source: 'file' | 'draw';       // draw = no background image, hand-drawn rooms
+    orientation: 'landscape' | 'portrait' | 'square';
+    showBorders: boolean;
+    showNames: boolean;
+    roomColor: string;
+    roomOpacity: number;           // 0..1
+    fillMode: 'none' | 'lqi' | 'light';
     busy: boolean;
   } | null = null;
   private _keyHandler = (e: KeyboardEvent) => this._onKey(e);
@@ -583,7 +591,10 @@ class HouseplanCard extends LitElement {
     const p = d.primary ? this.hass.states[d.primary] : undefined;
     if (!p) return '';
     if (p.state === 'unavailable') return 'unavail';
-    const dom = p.entity_id.split('.')[0];
+    // derive the domain from the entity id we looked the state up by — state
+    // objects are not guaranteed to carry entity_id (defensive; found by the
+    // TESTING.md edge-case run)
+    const dom = d.primary!.split('.')[0];
     if (['light', 'switch', 'fan', 'humidifier'].includes(dom)) return p.state === 'on' ? 'on' : '';
     if (dom === 'cover' || dom === 'valve') return ['open', 'opening'].includes(p.state) ? 'open' : '';
     if (dom === 'lock') return ['unlocked', 'open'].includes(p.state) ? 'open' : '';
@@ -1441,9 +1452,22 @@ class HouseplanCard extends LitElement {
     if (mode === 'edit') {
       const sp = this._serverCfg!.spaces.find((x: any) => x.id === spaceId);
       if (!sp) return;
-      this._spaceDialog = { mode, spaceId, title: sp.title, planUrl: sp.plan_url || null, planFile: null, busy: false };
+      const disp = spaceDisplayOf(sp);
+      this._spaceDialog = {
+        mode, spaceId, title: sp.title, planUrl: sp.plan_url || null, planFile: null,
+        source: sp.plan_url ? 'file' : 'draw', orientation: 'landscape',
+        showBorders: disp.showBorders, showNames: disp.showNames,
+        roomColor: disp.color, roomOpacity: disp.opacity, fillMode: disp.fill,
+        busy: false,
+      };
     } else {
-      this._spaceDialog = { mode, title: '', planUrl: null, planFile: null, busy: false };
+      this._spaceDialog = {
+        mode, title: '', planUrl: null, planFile: null,
+        source: 'file', orientation: 'landscape',
+        showBorders: false, showNames: false,
+        roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'none',
+        busy: false,
+      };
     }
   }
 
@@ -1479,7 +1503,7 @@ class HouseplanCard extends LitElement {
   private async _saveSpaceDialog(): Promise<void> {
     const d = this._spaceDialog;
     if (!d || d.busy || !d.title.trim()) return;
-    if (!d.planFile && !d.planUrl) {
+    if (d.source === 'file' && !d.planFile && !d.planUrl) {
       this._showToast(this._t('toast.plan_required'));
       return;
     }
@@ -1488,12 +1512,13 @@ class HouseplanCard extends LitElement {
     try {
       const cfg = this._serverCfg!;
       let sp: any;
+      const drawAspect = d.orientation === 'portrait' ? 0.707 : d.orientation === 'square' ? 1 : 1.414;
       if (d.mode === 'create') {
         sp = {
           id: 's' + Date.now().toString(36),
           title: d.title.trim(),
           plan_url: null,
-          aspect: 1.414,
+          aspect: d.source === 'draw' ? drawAspect : 1.414,
           view_box: [0, 0, 1, 1],
           rooms: [],
           segments: [],
@@ -1503,13 +1528,26 @@ class HouseplanCard extends LitElement {
         sp = cfg.spaces.find((x: any) => x.id === d.spaceId);
         sp.title = d.title.trim();
       }
-      if (d.planFile) {
+      if (d.source === 'file' && d.planFile) {
         const resp = await this.hass.callWS({
           type: 'houseplan/plan/set', space_id: sp.id, ext: d.planFile.ext, data: d.planFile.b64,
         });
         sp.plan_url = resp.url;
         sp.aspect = d.planFile.aspect;
       }
+      // switching an existing space to "draw" detaches its background image
+      // (the uploaded file stays on disk; only the reference is cleared)
+      if (d.source === 'draw') sp.plan_url = null;
+      // per-space display settings; hand-drawn spaces get borders+names on by default
+      const draw = d.source === 'draw';
+      sp.settings = {
+        ...(sp.settings || {}),
+        show_borders: draw && d.mode === 'create' ? true : d.showBorders,
+        show_names: draw && d.mode === 'create' ? true : d.showNames,
+        room_color: d.roomColor,
+        room_opacity: d.roomOpacity,
+        fill_mode: d.fillMode,
+      };
       await this._saveConfigNow();
       this._spaceDialog = null;
       if (d.mode === 'create') this._space = sp.id;
@@ -1592,7 +1630,13 @@ class HouseplanCard extends LitElement {
   private _openNextImport(): void {
     const title = this._importQueue.shift();
     if (title === undefined) return;
-    this._spaceDialog = { mode: 'create', title, planUrl: null, planFile: null, busy: false };
+    this._spaceDialog = {
+      mode: 'create', title, planUrl: null, planFile: null,
+      source: 'file', orientation: 'landscape',
+      showBorders: false, showNames: false,
+      roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'none',
+      busy: false,
+    };
   }
 
   /** Skip the current floor of the wizard without creating a space. */
@@ -1773,6 +1817,7 @@ class HouseplanCard extends LitElement {
     const space = this._spaceModel();
     const vb = space.vb;
     const devs = this._devices.filter((d) => d.space === space.id);
+    const disp = spaceDisplayOf(this._curSpaceCfg);
     const cfgSize = this._config.icon_size ?? 2.5;
     const iconPct = cfgSize > 8 ? 2.5 : cfgSize;
     const view = this._viewOr(vb);
@@ -1860,18 +1905,38 @@ class HouseplanCard extends LitElement {
             ${space.bg
               ? svg`<image href="${space.bg.href}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}" preserveAspectRatio="none" />`
               : nothing}
-            ${space.rooms.filter((r) => r.area || this._markup).map((r) => {
-              const cls = 'room ' + (space.bg ? 'overlay' : 'yard') + (this._markup ? ' outlined' : '');
+            ${space.rooms.filter((r) => r.area || this._markup || disp.showBorders).map((r) => {
+              let cls = 'room ' + (space.bg ? 'overlay' : 'yard') + (this._markup ? ' outlined' : '');
+              let style = '';
+              if (!this._markup && (disp.showBorders || disp.fill !== 'none')) {
+                cls += ' styled';
+                const st: string[] = [];
+                if (disp.showBorders) {
+                  st.push(`--room-stroke:${disp.color}`, `--room-stroke-op:${disp.opacity}`);
+                } else {
+                  st.push('--room-stroke:transparent', '--room-stroke-op:0');
+                }
+                const fillC = r.area
+                  ? roomFillColor(
+                      disp.fill,
+                      disp.fill === 'lqi' ? this._roomLqi(r.area) : null,
+                      disp.fill === 'light' ? areaLights(this.hass, this._devices, r.area) : 'none',
+                    )
+                  : null;
+                if (fillC) st.push(`--room-fill:${fillC}`, `--room-fill-op:${(0.3 * disp.opacity).toFixed(3)}`);
+                else st.push('--room-fill:transparent', '--room-fill-op:0');
+                style = st.join(';');
+              }
               const tip = (e: MouseEvent) =>
                 this._showTip(e, r.name, this._t('tip.room'),
                   this._config?.show_signal ? this._roomLqi(r.area) : null);
-              const label = !space.bg || this._markup;
+              const label = (!space.bg && !disp.showNames) || this._markup;
               const c = this._roomCenter(r);
               const shape = r.poly
-                ? svg`<polygon class="${cls}" points="${r.poly.map((p) => p.join(',')).join(' ')}"
+                ? svg`<polygon class="${cls}" style="${style}" points="${r.poly.map((p) => p.join(',')).join(' ')}"
                     @click=${() => this._clickRoom(r)} @mousemove=${tip}
                     @mouseleave=${() => (this._tip = null)}></polygon>`
-                : svg`<rect class="${cls}"
+                : svg`<rect class="${cls}" style="${style}"
                     x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="${Math.min(r.w!, r.h!) * 0.03}"
                     @click=${() => this._clickRoom(r)} @mousemove=${tip}
                     @mouseleave=${() => (this._tip = null)}></rect>`;
@@ -1881,6 +1946,9 @@ class HouseplanCard extends LitElement {
           </svg>
           <div class="devlayer" style="--icon-size:${((iconPct * vb[2]) / view.w).toFixed(3)}cqw">
             ${devs.map((d) => this._renderDevice(d, view))}
+            ${disp.showNames && !this._markup
+              ? space.rooms.map((r) => this._renderRoomLabel(r, space, view, disp))
+              : nothing}
           </div>
           </div>
           ${this._zoom > 1
@@ -1932,6 +2000,69 @@ class HouseplanCard extends LitElement {
       ${temp != null ? html`<span class="tval">${temp}°</span>` : nothing}
       ${lqi != null ? html`<span class="lqi" style="color:${lqiColor(lqi)}">${lqi}</span>` : nothing}
     </div>`;
+  }
+
+  /** Saved label position (layout key rl_<roomId>) or the room center. */
+  private _labelPos(r: RoomCfg, spaceId: string): { x: number; y: number } {
+    const saved = this._layout['rl_' + (r.id || '')];
+    if (saved && saved.s === spaceId) {
+      const aspect = this._serverCfg!.spaces.find((x: any) => x.id === spaceId)?.aspect || 1;
+      return { x: saved.x * NORM_W, y: saved.y * (NORM_W / aspect) };
+    }
+    const c = this._roomCenter(r);
+    return { x: c[0], y: c[1] };
+  }
+
+  /** Room-name labels are dragged exactly like device icons (same layout store). */
+  private _labelDown(ev: PointerEvent, r: RoomCfg, spaceId: string): void {
+    if (this._markup) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    const p = this._labelPos(r, spaceId);
+    this._drag = { id: 'rl_' + (r.id || ''), sx: ev.clientX, sy: ev.clientY, ox: p.x, oy: p.y, moved: false };
+    (ev.target as HTMLElement).setPointerCapture(ev.pointerId);
+    this._tip = null;
+  }
+
+  private _labelMove(ev: PointerEvent, r: RoomCfg, spaceId: string): void {
+    const id = 'rl_' + (r.id || '');
+    if (!this._drag || this._drag.id !== id) return;
+    const stage = this._stageEl;
+    if (!stage) return;
+    const vb = this._spaceModel(spaceId).vb;
+    const rect = stage.getBoundingClientRect();
+    const v = this._viewOr(vb);
+    const dx = ((ev.clientX - this._drag.sx) / rect.width) * v.w;
+    const dy = ((ev.clientY - this._drag.sy) / rect.height) * v.h;
+    if (Math.abs(ev.clientX - this._drag.sx) + Math.abs(ev.clientY - this._drag.sy) > 3) this._drag.moved = true;
+    const m = Math.min(vb[2], vb[3]) * 0.008;
+    const nx = Math.max(vb[0] + m, Math.min(vb[0] + vb[2] - m, this._drag.ox + dx));
+    const ny = Math.max(vb[1] + m, Math.min(vb[1] + vb[3] - m, this._drag.oy + dy));
+    this._savePos({ id, space: spaceId } as DevItem, nx, ny);
+  }
+
+  private _labelUp(r: RoomCfg): void {
+    const id = 'rl_' + (r.id || '');
+    if (!this._drag || this._drag.id !== id) return;
+    const moved = this._drag.moved;
+    this._drag = moved ? this._drag : null;
+    if (moved) window.setTimeout(() => (this._drag = null), 0);
+  }
+
+  private _renderRoomLabel(
+    r: RoomCfg, space: SpaceModel, view: { x: number; y: number; w: number; h: number }, disp: SpaceDisplay,
+  ): TemplateResult | typeof nothing {
+    if (!r.name) return nothing;
+    const p = this._labelPos(r, space.id);
+    const left = ((p.x - view.x) / view.w) * 100;
+    const top = ((p.y - view.y) / view.h) * 100;
+    const op = Math.min(1, disp.opacity + 0.25);
+    return html`<div class="roomlabel" style="left:${left}%;top:${top}%;color:${disp.color};opacity:${op}"
+      @pointerdown=${(e: PointerEvent) => this._labelDown(e, r, space.id)}
+      @pointermove=${(e: PointerEvent) => this._labelMove(e, r, space.id)}
+      @pointerup=${() => this._labelUp(r)}
+      @pointercancel=${() => this._labelUp(r)}
+    >${r.name}</div>`;
   }
 
   private _roomCenter(r: RoomCfg): number[] {
@@ -2174,18 +2305,67 @@ class HouseplanCard extends LitElement {
             .value=${d.title}
             @input=${(e: Event) => (this._spaceDialog = { ...d, title: (e.target as HTMLInputElement).value })} />
           <label>${this._t('space.plan_label')}</label>
-          <div class="planrow">
-            ${d.planFile
-              ? html`<span class="planname">${d.planFile.name}</span>`
-              : d.planUrl
-                ? html`<img class="planprev" src=${d.planUrl} alt=${this._t('space.plan_alt')} />`
-                : html`<span class="planname muted">${this._t('space.no_plan')}</span>`}
-            <label class="btn filebtn">
-              <ha-icon icon="mdi:upload"></ha-icon>${d.planUrl || d.planFile ? this._t('btn.replace') : this._t('btn.upload')}
-              <input type="file" hidden accept=".svg,.png,.jpg,.jpeg,.webp,image/svg+xml,image/png,image/jpeg,image/webp"
-                @change=${(e: Event) => this._pickPlanFile(e)} />
-            </label>
+          <label class="srcrow">
+            <input type="radio" name="plansrc" .checked=${d.source === 'file'}
+              @change=${() => (this._spaceDialog = { ...d, source: 'file' })} />
+            <span>${this._t('space.source_file')}</span>
+          </label>
+          ${d.source === 'file'
+            ? html`<div class="planrow">
+                ${d.planFile
+                  ? html`<span class="planname">${d.planFile.name}</span>`
+                  : d.planUrl
+                    ? html`<img class="planprev" src=${d.planUrl} alt=${this._t('space.plan_alt')} />`
+                    : html`<span class="planname muted">${this._t('space.no_plan')}</span>`}
+                <label class="btn filebtn">
+                  <ha-icon icon="mdi:upload"></ha-icon>${d.planUrl || d.planFile ? this._t('btn.replace') : this._t('btn.upload')}
+                  <input type="file" hidden accept=".svg,.png,.jpg,.jpeg,.webp,image/svg+xml,image/png,image/jpeg,image/webp"
+                    @change=${(e: Event) => this._pickPlanFile(e)} />
+                </label>
+              </div>`
+            : nothing}
+          <label class="srcrow">
+            <input type="radio" name="plansrc" .checked=${d.source === 'draw'}
+              @change=${() => (this._spaceDialog = { ...d, source: 'draw' })} />
+            <span>${this._t('space.source_draw')}</span>
+          </label>
+          ${d.source === 'draw' && d.mode === 'create'
+            ? html`<label>${this._t('space.orientation')}</label>
+              <select class="areasel"
+                @change=${(e: Event) => (this._spaceDialog = { ...d, orientation: (e.target as HTMLSelectElement).value as any })}>
+                ${[['landscape', 'orient.landscape'], ['portrait', 'orient.portrait'], ['square', 'orient.square']].map(
+                  ([v, k]) => html`<option value=${v} ?selected=${d.orientation === v}>${this._t(k as any)}</option>`,
+                )}
+              </select>`
+            : nothing}
+
+          <label class="dispsection">${this._t('space.display_section')}</label>
+          <label class="srcrow">
+            <input type="checkbox" .checked=${d.showBorders}
+              @change=${(e: Event) => (this._spaceDialog = { ...d, showBorders: (e.target as HTMLInputElement).checked })} />
+            <span>${this._t('space.show_borders')}</span>
+          </label>
+          <label class="srcrow">
+            <input type="checkbox" .checked=${d.showNames}
+              @change=${(e: Event) => (this._spaceDialog = { ...d, showNames: (e.target as HTMLInputElement).checked })} />
+            <span>${this._t('space.show_names')}</span>
+          </label>
+          <label>${this._t('space.room_color')}</label>
+          <div class="colorrow">
+            <input type="color" .value=${d.roomColor}
+              @input=${(e: Event) => (this._spaceDialog = { ...d, roomColor: (e.target as HTMLInputElement).value })} />
+            <span class="opl">${this._t('space.opacity')}</span>
+            <input type="range" min="0" max="100" .value=${String(Math.round(d.roomOpacity * 100))}
+              @input=${(e: Event) => (this._spaceDialog = { ...d, roomOpacity: Number((e.target as HTMLInputElement).value) / 100 })} />
+            <span class="opv">${Math.round(d.roomOpacity * 100)}%</span>
           </div>
+          <label>${this._t('space.fill_label')}</label>
+          <select class="areasel"
+            @change=${(e: Event) => (this._spaceDialog = { ...d, fillMode: (e.target as HTMLSelectElement).value as any })}>
+            ${[['none', 'fill.none'], ['lqi', 'fill.lqi'], ['light', 'fill.light']].map(
+              ([v, k]) => html`<option value=${v} ?selected=${d.fillMode === v}>${this._t(k as any)}</option>`,
+            )}
+          </select>
         </div>
         <div class="row">
           ${d.mode === 'edit'
@@ -2199,8 +2379,8 @@ class HouseplanCard extends LitElement {
             : nothing}
           <button class="btn ghost" @click=${() => { this._spaceDialog = null; this._importQueue = []; this._importTotal = 0; }}>${this._t('btn.cancel')}</button>
           <button class="btn on" @click=${this._saveSpaceDialog}
-            ?disabled=${!d.title.trim() || !(d.planFile || d.planUrl) || d.busy}
-            title=${!(d.planFile || d.planUrl) ? this._t('title.need_plan') : ''}>
+            ?disabled=${!d.title.trim() || (d.source === 'file' && !(d.planFile || d.planUrl)) || d.busy}
+            title=${d.source === 'file' && !(d.planFile || d.planUrl) ? this._t('title.need_plan') : ''}>
             <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this._t('btn.save')}
           </button>
         </div>

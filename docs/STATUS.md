@@ -13,7 +13,7 @@
 
 | Item | State |
 |---|---|
-| Version | **v1.13.3** everywhere (manifest, const.py, package.json, CARD_VERSION) |
+| Version | **v1.14.0** everywhere (manifest, const.py, package.json, CARD_VERSION) |
 | GitHub | https://github.com/Matysh/houseplan-card — branch `main`, releases v1.9.3…v1.11.2 |
 | CI | `.github/workflows/validate.yml` (hacs + hassfest + frontend + backend) — **fully green** since v1.11.1; `release.yml` auto-attaches the card bundle (needs `permissions: contents: write`, fixed) |
 | HACS | Works as custom repository (id 1290210112 on the home instance). **Inclusion PR: https://github.com/hacs/default/pull/9004** (queue ≈2 months as of 2026-07). Lesson: #8995 was auto-closed by hacs-bot — the PR body MUST be their exact template with every checkbox ticked and all 3 links (release, HACS action run, hassfest run); a custom body gets closed without discussion |
@@ -43,6 +43,10 @@
 - **v1.13.2** — audit round 3: buildDevices unit-test suite, multi-placeholder t(),
   conflict resync in _saveConfigNow, pointercancel long-press fix, repairs re-check
   on config save (repairs.py).
+- **v1.13.3** — privacy: legacy real-house assets/ removed; README screenshots synthetic.
+- **v1.14.0** — per-space display settings (borders/names/color/opacity/fills),
+  draggable room labels, hand-drawn spaces (no image required), demo/ harness in-repo,
+  docs/TESTING.md manual checklist (update with every functional change!).
 
 ## Where things live
 

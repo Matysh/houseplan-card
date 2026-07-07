@@ -204,6 +204,33 @@ export const cardStyles = css`
       fill: rgba(75, 140, 90, 0.24);
       stroke: #6fbf86;
     }
+    .room.styled {
+      stroke: var(--room-stroke, transparent);
+      stroke-opacity: var(--room-stroke-op, 0);
+      stroke-width: 2.5;
+      fill: var(--room-fill, transparent);
+      fill-opacity: var(--room-fill-op, 0);
+    }
+    .room.styled:hover {
+      fill: rgba(62, 166, 255, 0.18);
+      fill-opacity: 1;
+      stroke: var(--hp-accent);
+      stroke-opacity: 0.9;
+    }
+    .roomlabel {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      font-size: calc(var(--icon-size, 2.5cqw) * 0.5);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      cursor: grab;
+      pointer-events: auto;
+      user-select: none;
+      text-shadow: 0 0 4px var(--card-background-color, rgba(0, 0, 0, 0.6));
+      z-index: 1;
+    }
+    .roomlabel:active { cursor: grabbing; }
     .rlabel {
       fill: var(--hp-muted);
       font-size: 15px;
@@ -383,6 +410,38 @@ export const cardStyles = css`
     .tab.tabadd ha-icon {
       --mdc-icon-size: 15px;
     }
+    .srcrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      padding: 2px 0;
+    }
+    .dispsection {
+      margin-top: 12px !important;
+      padding-top: 8px;
+      border-top: 1px solid var(--hp-line);
+      font-weight: 600;
+      color: var(--hp-txt) !important;
+    }
+    .colorrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .colorrow input[type='color'] {
+      width: 42px;
+      height: 28px;
+      border: 1px solid var(--hp-line);
+      border-radius: 6px;
+      background: transparent;
+      padding: 1px;
+      cursor: pointer;
+    }
+    .colorrow input[type='range'] { flex: 1; }
+    .colorrow .opl { color: var(--hp-muted); font-size: 12px; }
+    .colorrow .opv { font-size: 12px; min-width: 34px; text-align: right; }
     .planrow {
       display: flex;
       align-items: center;

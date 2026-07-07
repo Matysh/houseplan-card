@@ -1,5 +1,28 @@
 # Changelog
 
+## v1.14.0 — 2026-07-06 (per-space display settings, hand-drawn spaces, testing checklist)
+- **Per-space "Display" settings** (space dialog): always-visible room borders,
+  room name labels, a border/name color picker with an opacity slider, and a room
+  fill mode — none / by zigbee signal (red→green) / by lights (yellow = something
+  is on, grey = all lights off; rooms without lights stay unfilled).
+- **Room name labels are draggable** like device icons; positions persist server-side
+  (layout keys `rl_<roomId>`), defaults to the room centre; hidden in markup mode.
+- **Hand-drawn spaces**: the space dialog got a "No image — I'll outline rooms by
+  hand" option with a canvas orientation choice (landscape/portrait/square). Such
+  spaces default to visible borders and names; switching an existing space to this
+  mode detaches its background image. The plan image is no longer mandatory.
+- Backend: explicit validation schema for the new per-space settings (+test).
+- **`demo/` harness moved into the repository** (synthetic home, host page, capture
+  and smoke scripts, icon-map generator) — public materials and smoke tests no
+  longer depend on a perishable sandbox.
+- **`docs/TESTING.md`**: a comprehensive manual-testing checklist (environments
+  matrix, every feature, edge cases); policy — updated in the same commit as any
+  functional change. The first self-run found and fixed two bugs:
+  `plan_url` not detached on image→draw switch, and a `_stateClass` crash on
+  state objects without `entity_id`.
+- Tests: 43 frontend + 11 pure backend; new smokes `smoke_space_settings` and
+  `smoke_edge_cases` (empty install, XSS names, legacy layout entries, 150-device perf).
+
 ## v1.13.3 — 2026-07-06 (privacy: drop legacy real-house plan sources)
 - Removed the legacy `assets/` directory (real floor-plan sources from the pre-v1.3
   bundled-data era). Nothing in the build referenced it; instance data lives in

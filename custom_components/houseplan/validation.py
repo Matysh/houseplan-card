@@ -78,10 +78,22 @@ ROOM_SCHEMA = vol.All(
     ),
     _require_geometry,
 )
+SPACE_DISPLAY_SCHEMA = vol.Schema(
+    {
+        vol.Optional("show_borders"): bool,
+        vol.Optional("show_names"): bool,
+        vol.Optional("room_color"): vol.Match(r"^#[0-9a-fA-F]{6}$"),
+        vol.Optional("room_opacity"): vol.All(vol.Coerce(float), vol.Range(min=0, max=1)),
+        vol.Optional("fill_mode"): vol.In(["none", "lqi", "light"]),
+    },
+    extra=vol.ALLOW_EXTRA,
+)
+
 SPACE_SCHEMA = vol.Schema(
     {
         vol.Required("id"): str,
         vol.Required("title"): str,
+        vol.Optional("settings"): SPACE_DISPLAY_SCHEMA,
         vol.Optional("plan_url"): vol.Any(str, None),
         vol.Required("aspect"): vol.All(vol.Coerce(float), vol.Range(min=0.05, max=20)),
         vol.Required("view_box"): vol.All([vol.Coerce(float)], vol.Length(min=4, max=4)),

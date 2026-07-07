@@ -292,3 +292,20 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
   }
   return rest;
 }
+
+/**
+ * Light situation of an area: 'on' if any light entity of the area's devices is on,
+ * 'off' if lights exist but none is on, 'none' when the area has no lights at all.
+ */
+export function areaLights(hass: any, devices: { area: string; entities: string[] }[], area: string): 'on' | 'off' | 'none' {
+  let seen = false;
+  for (const d of devices) {
+    if (d.area !== area) continue;
+    for (const eid of d.entities) {
+      if (!eid.startsWith('light.')) continue;
+      seen = true;
+      if (hass.states[eid]?.state === 'on') return 'on';
+    }
+  }
+  return seen ? 'off' : 'none';
+}

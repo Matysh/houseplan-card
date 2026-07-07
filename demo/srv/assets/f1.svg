@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 800">
+<rect width="1000" height="800" fill="#f4f1ea"/>
+<g opacity="0.35" stroke="#d9d2c4" stroke-width="1"><line x1="0" y1="0" x2="0" y2="800"/><line x1="50" y1="0" x2="50" y2="800"/><line x1="100" y1="0" x2="100" y2="800"/><line x1="150" y1="0" x2="150" y2="800"/><line x1="200" y1="0" x2="200" y2="800"/><line x1="250" y1="0" x2="250" y2="800"/><line x1="300" y1="0" x2="300" y2="800"/><line x1="350" y1="0" x2="350" y2="800"/><line x1="400" y1="0" x2="400" y2="800"/><line x1="450" y1="0" x2="450" y2="800"/><line x1="500" y1="0" x2="500" y2="800"/><line x1="550" y1="0" x2="550" y2="800"/><line x1="600" y1="0" x2="600" y2="800"/><line x1="650" y1="0" x2="650" y2="800"/><line x1="700" y1="0" x2="700" y2="800"/><line x1="750" y1="0" x2="750" y2="800"/><line x1="800" y1="0" x2="800" y2="800"/><line x1="850" y1="0" x2="850" y2="800"/><line x1="900" y1="0" x2="900" y2="800"/><line x1="950" y1="0" x2="950" y2="800"/><line x1="0" y1="0" x2="1000" y2="0"/><line x1="0" y1="50" x2="1000" y2="50"/><line x1="0" y1="100" x2="1000" y2="100"/><line x1="0" y1="150" x2="1000" y2="150"/><line x1="0" y1="200" x2="1000" y2="200"/><line x1="0" y1="250" x2="1000" y2="250"/><line x1="0" y1="300" x2="1000" y2="300"/><line x1="0" y1="350" x2="1000" y2="350"/><line x1="0" y1="400" x2="1000" y2="400"/><line x1="0" y1="450" x2="1000" y2="450"/><line x1="0" y1="500" x2="1000" y2="500"/><line x1="0" y1="550" x2="1000" y2="550"/><line x1="0" y1="600" x2="1000" y2="600"/><line x1="0" y1="650" x2="1000" y2="650"/><line x1="0" y1="700" x2="1000" y2="700"/><line x1="0" y1="750" x2="1000" y2="750"/></g>
+<rect x="40" y="40" width="920" height="720" fill="none" stroke="#3b4753" stroke-width="14"/>
+<line x1="550" y1="40" x2="550" y2="300" stroke="#3b4753" stroke-width="10"/>
+<line x1="550" y1="380" x2="550" y2="620" stroke="#3b4753" stroke-width="10"/>
+<line x1="550" y1="700" x2="550" y2="760" stroke="#3b4753" stroke-width="10"/>
+<line x1="550" y1="360" x2="820" y2="360" stroke="#3b4753" stroke-width="10"/>
+<line x1="900" y1="360" x2="960" y2="360" stroke="#3b4753" stroke-width="10"/>
+<line x1="40" y1="480" x2="300" y2="480" stroke="#3b4753" stroke-width="10"/>
+<line x1="380" y1="480" x2="550" y2="480" stroke="#3b4753" stroke-width="10"/>
+<rect x="120" y="46" width="180" height="10" fill="#a8c6e8"/>
+<rect x="640" y="46" width="140" height="10" fill="#a8c6e8"/>
+<rect x="700" y="744" width="140" height="10" fill="#a8c6e8"/>
+<text x="295" y="270" font-family="Arial" font-size="30" letter-spacing="4" fill="#8b95a1" text-anchor="middle" opacity="0.55">LIVING ROOM</text>
+<text x="775" y="200" font-family="Arial" font-size="30" letter-spacing="4" fill="#8b95a1" text-anchor="middle" opacity="0.55">KITCHEN</text>
+<text x="775" y="560" font-family="Arial" font-size="30" letter-spacing="4" fill="#8b95a1" text-anchor="middle" opacity="0.55">BEDROOM</text>
+<text x="295" y="640" font-family="Arial" font-size="30" letter-spacing="4" fill="#8b95a1" text-anchor="middle" opacity="0.55">HALLWAY</text>
+</svg>

@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>House Plan demo</title>
+<style>
+  :root{
+    --primary-color:#3ea6ff; --primary-text-color:#e1e1e1; --secondary-text-color:#9aa4ad;
+    --card-background-color:#1c2530; --ha-card-background:#1c2530;
+    --divider-color:#33404d; --text-primary-color:#fff; --mdc-icon-size:24px;
+    --header-height:0px;
+  }
+  html,body{margin:0;background:#0e1621;color:#e1e1e1;font-family:'Segoe UI',Roboto,Arial,sans-serif;}
+  #host{width:780px;margin:0 auto;padding:8px;}
+</style>
+</head>
+<body>
+<div id="host"></div>
+<script src="/assets/icons.js"></script>
+<script>
+class HaIcon extends HTMLElement{
+  static get observedAttributes(){return ['icon'];}
+  connectedCallback(){this._r();}
+  attributeChangedCallback(){this._r();}
+  set icon(v){this.setAttribute('icon',v);}
+  get icon(){return this.getAttribute('icon');}
+  _r(){
+    const p=(window.__ICONS||{})[this.getAttribute('icon')]||'';
+    if(!this.shadowRoot) this.attachShadow({mode:'open'});
+    this.shadowRoot.innerHTML='<style>:host{display:inline-flex;align-items:center;justify-content:center;'+
+      'width:var(--mdc-icon-size,24px);height:var(--mdc-icon-size,24px);vertical-align:middle}'+
+      'svg{width:100%;height:100%;fill:currentColor;display:block}</style>'+
+      '<svg viewBox="0 0 24 24"><path d="'+p+'"></path></svg>';
+  }
+}
+customElements.define('ha-icon',HaIcon);
+class HaCard extends HTMLElement{
+  connectedCallback(){
+    if(this.shadowRoot)return;
+    this.attachShadow({mode:'open'});
+    this.shadowRoot.innerHTML='<style>:host{display:block;background:var(--ha-card-background,#1c2530);'+
+      'border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.4);overflow:visible;color:var(--primary-text-color)}</style><slot></slot>';
+  }
+}
+customElements.define('ha-card',HaCard);
+</script>
+<script type="module">
+const CFG = {
+  spaces: [
+    { id:'f1', title:'Ground floor', plan_url:'/assets/f1.svg', aspect:1.25,
+      view_box:[0,0,1,1],
+      rooms:[
+        {id:'r1', name:'Living room', area:'living_room', poly:[[0.04,0.05],[0.55,0.05],[0.55,0.6],[0.04,0.6]]},
+        {id:'r2', name:'Kitchen', area:'kitchen', poly:[[0.55,0.05],[0.96,0.05],[0.96,0.45],[0.55,0.45]]},
+        {id:'r3', name:'Bedroom', area:'bedroom', poly:[[0.55,0.45],[0.96,0.45],[0.96,0.95],[0.55,0.95]]},
+        {id:'r4', name:'Hallway', area:'hallway', poly:[[0.04,0.6],[0.55,0.6],[0.55,0.95],[0.04,0.95]]}
+      ], segments:[] },
+    { id:'garden', title:'Garden', plan_url:'/assets/garden.svg', aspect:1.4286,
+      view_box:[0,0,1,1],
+      rooms:[ {id:'g1', name:'Garden', area:'garden', poly:[[0.03,0.04],[0.97,0.04],[0.97,0.96],[0.03,0.96]]} ], segments:[] }
+  ],
+  markers: [],
+  settings: {}
+};
+const LAYOUT = {
+  d_light1:{s:'f1',x:0.22,y:0.22}, d_lamp:{s:'f1',x:0.42,y:0.5}, d_tv:{s:'f1',x:0.13,y:0.5},
+  d_temp:{s:'f1',x:0.33,y:0.35}, d_kettle:{s:'f1',x:0.72,y:0.15}, d_leak:{s:'f1',x:0.88,y:0.34},
+  d_bedlight:{s:'f1',x:0.75,y:0.6}, d_window:{s:'f1',x:0.9,y:0.85}, d_lock:{s:'f1',x:0.1,y:0.88},
+  d_motion:{s:'f1',x:0.4,y:0.75}, d_mower:{s:'garden',x:0.25,y:0.35}, d_gate:{s:'garden',x:0.73,y:0.22}
+};
+const AREAS={living_room:{area_id:'living_room',name:'Living room'},kitchen:{area_id:'kitchen',name:'Kitchen'},
+  bedroom:{area_id:'bedroom',name:'Bedroom'},hallway:{area_id:'hallway',name:'Hallway'},garden:{area_id:'garden',name:'Garden'}};
+function dev(id,name,model,area){return [id,{id,name,model,area_id:area,identifiers:[['demo',id]],entry_type:null,via_device_id:null}];}
+const DEVICES=Object.fromEntries([
+  dev('d_light1','Ceiling light','Smart Bulb E27','living_room'),
+  dev('d_lamp','Floor lamp','Smart Bulb E14','living_room'),
+  dev('d_tv','TV','55U8HQ','living_room'),
+  dev('d_temp','Temperature sensor','TH01','living_room'),
+  dev('d_kettle','Kettle plug','Smart Plug','kitchen'),
+  dev('d_leak','Sink leak sensor','SJCGQ11LM','kitchen'),
+  dev('d_bedlight','Bedroom light','Smart Bulb E27','bedroom'),
+  dev('d_window','Window sensor','MCCGQ11LM','bedroom'),
+  dev('d_lock','Front door lock','Smart Lock S2','hallway'),
+  dev('d_motion','Motion sensor','RTCGQ11LM','hallway'),
+  dev('d_mower','Robot mower','Automower 305','garden'),
+  dev('d_gate','Gate','GDO-4','garden'),
+]);
+const ENTITIES={
+  'light.ceiling':{entity_id:'light.ceiling',device_id:'d_light1',platform:'demo'},
+  'light.floor_lamp':{entity_id:'light.floor_lamp',device_id:'d_lamp',platform:'demo'},
+  'media_player.tv':{entity_id:'media_player.tv',device_id:'d_tv',platform:'demo'},
+  'sensor.living_temp':{entity_id:'sensor.living_temp',device_id:'d_temp',platform:'demo'},
+  'switch.kettle':{entity_id:'switch.kettle',device_id:'d_kettle',platform:'demo'},
+  'binary_sensor.sink_leak':{entity_id:'binary_sensor.sink_leak',device_id:'d_leak',platform:'demo'},
+  'light.bedroom':{entity_id:'light.bedroom',device_id:'d_bedlight',platform:'demo'},
+  'binary_sensor.window':{entity_id:'binary_sensor.window',device_id:'d_window',platform:'demo'},
+  'lock.front_door':{entity_id:'lock.front_door',device_id:'d_lock',platform:'demo'},
+  'binary_sensor.hall_motion':{entity_id:'binary_sensor.hall_motion',device_id:'d_motion',platform:'demo'},
+  'vacuum.mower':{entity_id:'vacuum.mower',device_id:'d_mower',platform:'demo'},
+  'cover.gate':{entity_id:'cover.gate',device_id:'d_gate',platform:'demo'},
+};
+let STATES={
+  'light.ceiling':{entity_id:'light.ceiling',state:'on',attributes:{friendly_name:'Ceiling light'}},
+  'light.floor_lamp':{entity_id:'light.floor_lamp',state:'off',attributes:{friendly_name:'Floor lamp',linkquality:196}},
+  'media_player.tv':{entity_id:'media_player.tv',state:'playing',attributes:{friendly_name:'TV'}},
+  'sensor.living_temp':{entity_id:'sensor.living_temp',state:'22.4',attributes:{friendly_name:'Temperature',device_class:'temperature',unit_of_measurement:'°C',linkquality:154}},
+  'switch.kettle':{entity_id:'switch.kettle',state:'off',attributes:{friendly_name:'Kettle plug',linkquality:182}},
+  'binary_sensor.sink_leak':{entity_id:'binary_sensor.sink_leak',state:'off',attributes:{friendly_name:'Leak',device_class:'moisture',linkquality:117}},
+  'light.bedroom':{entity_id:'light.bedroom',state:'off',attributes:{friendly_name:'Bedroom light'}},
+  'binary_sensor.window':{entity_id:'binary_sensor.window',state:'on',attributes:{friendly_name:'Window',device_class:'window',linkquality:88}},
+  'lock.front_door':{entity_id:'lock.front_door',state:'locked',attributes:{friendly_name:'Front door',linkquality:143}},
+  'binary_sensor.hall_motion':{entity_id:'binary_sensor.hall_motion',state:'on',attributes:{friendly_name:'Motion',device_class:'motion',linkquality:64}},
+  'vacuum.mower':{entity_id:'vacuum.mower',state:'cleaning',attributes:{friendly_name:'Mower'}},
+  'cover.gate':{entity_id:'cover.gate',state:'closed',attributes:{friendly_name:'Gate'}},
+};
+function mkHass(){
+  return {
+    language:'en', locale:{language:'en'},
+    devices:DEVICES, entities:ENTITIES, areas:AREAS, states:STATES,
+    floors:{g:{floor_id:'g',name:'Ground floor',level:0},u:{floor_id:'u',name:'Upstairs',level:1}},
+    callWS:async (m)=>{
+      if(m.type==='houseplan/config/get')return{config:CFG,rev:1};
+      if(m.type==='houseplan/layout/get')return{layout:LAYOUT};
+      return {ok:true,rev:2};
+    },
+    callService:async (d,s,data)=>{
+      const eid=data.entity_id, st=STATES[eid];
+      if(st){const on=['on','playing','unlocked','open'].includes(st.state);
+        STATES={...STATES,[eid]:{...st,state:on?'off':'on'}};
+        card.hass=mkHass();}
+    },
+    connection:{subscribeEvents:async()=>()=>{}},
+    formatEntityState:(st)=>st.state,
+  };
+}
+await import('/assets/houseplan-card.js');
+const card=document.createElement('houseplan-card');
+card.setConfig({type:'custom:houseplan-card', title:'House Plan', icon_size:3.4});
+document.getElementById('host').appendChild(card);
+card.hass=mkHass();
+window.__card=card;
+window.__mkHass=mkHass;
+</script>
+</body></html>
