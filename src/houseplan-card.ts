@@ -14,9 +14,10 @@ import {
 import {
   lqiColor, snapToGrid, segKey as segKeyOf, samePoint, pointInPolygon, markerIdForBinding,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
-  spaceDisplayOf, roomFillColor, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY, type SpaceDisplay,
+  spaceDisplayOf, roomFillColor, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
+  DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
 } from './logic';
-import { buildDevices, lqiFor, tempFor, areaLights } from './devices';
+import { buildDevices, lqiFor, tempFor, areaLights, areaTemp } from './devices';
 import type {
   RoomCfg, SpaceModel, PdfRef, Marker, ServerConfig, DevItem, CardConfig,
 } from './types';
@@ -24,7 +25,7 @@ import './editor';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.14.0';
+const CARD_VERSION = '1.15.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -127,7 +128,9 @@ class HouseplanCard extends LitElement {
     showNames: boolean;
     roomColor: string;
     roomOpacity: number;           // 0..1
-    fillMode: 'none' | 'lqi' | 'light';
+    fillMode: 'none' | 'lqi' | 'light' | 'temp';
+    tempMin: number;
+    tempMax: number;
     busy: boolean;
   } | null = null;
   private _keyHandler = (e: KeyboardEvent) => this._onKey(e);
@@ -1458,6 +1461,7 @@ class HouseplanCard extends LitElement {
         source: sp.plan_url ? 'file' : 'draw', orientation: 'landscape',
         showBorders: disp.showBorders, showNames: disp.showNames,
         roomColor: disp.color, roomOpacity: disp.opacity, fillMode: disp.fill,
+        tempMin: disp.tempMin, tempMax: disp.tempMax,
         busy: false,
       };
     } else {
@@ -1466,6 +1470,7 @@ class HouseplanCard extends LitElement {
         source: 'file', orientation: 'landscape',
         showBorders: false, showNames: false,
         roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'none',
+        tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
         busy: false,
       };
     }
@@ -1547,6 +1552,8 @@ class HouseplanCard extends LitElement {
         room_color: d.roomColor,
         room_opacity: d.roomOpacity,
         fill_mode: d.fillMode,
+        temp_min: Math.min(d.tempMin, d.tempMax),
+        temp_max: Math.max(d.tempMin, d.tempMax),
       };
       await this._saveConfigNow();
       this._spaceDialog = null;
@@ -1635,6 +1642,7 @@ class HouseplanCard extends LitElement {
       source: 'file', orientation: 'landscape',
       showBorders: false, showNames: false,
       roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'none',
+      tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
       busy: false,
     };
   }
@@ -1921,6 +1929,9 @@ class HouseplanCard extends LitElement {
                       disp.fill,
                       disp.fill === 'lqi' ? this._roomLqi(r.area) : null,
                       disp.fill === 'light' ? areaLights(this.hass, this._devices, r.area) : 'none',
+                      disp.fill === 'temp' ? areaTemp(this.hass, this._devices, r.area) : null,
+                      disp.tempMin,
+                      disp.tempMax,
                     )
                   : null;
                 if (fillC) st.push(`--room-fill:${fillC}`, `--room-fill-op:${(0.3 * disp.opacity).toFixed(3)}`);
@@ -2362,10 +2373,21 @@ class HouseplanCard extends LitElement {
           <label>${this._t('space.fill_label')}</label>
           <select class="areasel"
             @change=${(e: Event) => (this._spaceDialog = { ...d, fillMode: (e.target as HTMLSelectElement).value as any })}>
-            ${[['none', 'fill.none'], ['lqi', 'fill.lqi'], ['light', 'fill.light']].map(
+            ${[['none', 'fill.none'], ['lqi', 'fill.lqi'], ['light', 'fill.light'], ['temp', 'fill.temp']].map(
               ([v, k]) => html`<option value=${v} ?selected=${d.fillMode === v}>${this._t(k as any)}</option>`,
             )}
           </select>
+          ${d.fillMode === 'temp'
+            ? html`<div class="colorrow">
+                <span class="opl">${this._t('space.temp_min')}</span>
+                <input class="namein tempin" type="number" step="0.5" .value=${String(d.tempMin)}
+                  @input=${(e: Event) => (this._spaceDialog = { ...d, tempMin: Number((e.target as HTMLInputElement).value) })} />
+                <span class="opl">${this._t('space.temp_max')}</span>
+                <input class="namein tempin" type="number" step="0.5" .value=${String(d.tempMax)}
+                  @input=${(e: Event) => (this._spaceDialog = { ...d, tempMax: Number((e.target as HTMLInputElement).value) })} />
+                <span class="opv">°C</span>
+              </div>`
+            : nothing}
         </div>
         <div class="row">
           ${d.mode === 'edit'

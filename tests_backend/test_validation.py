@@ -116,3 +116,12 @@ def test_space_display_settings():
     bad_mode = dict(ok, settings={"fill_mode": "rainbow"})
     with _pytest.raises(Exception):
         v.SPACE_SCHEMA(bad_mode)
+
+
+def test_space_temp_bounds():
+    """Temperature comfort bounds validate as floats; temp fill mode accepted."""
+    ok = {
+        "id": "f1", "title": "F", "aspect": 1.0, "view_box": [0, 0, 1, 1], "rooms": [],
+        "settings": {"fill_mode": "temp", "temp_min": 19.5, "temp_max": "24"},
+    }
+    v.SPACE_SCHEMA(ok)

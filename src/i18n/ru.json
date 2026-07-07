@@ -166,5 +166,8 @@
   "space.orientation": "Холст",
   "orient.landscape": "Альбомный",
   "orient.portrait": "Портретный",
-  "orient.square": "Квадрат"
+  "orient.square": "Квадрат",
+  "fill.temp": "По температуре (голубая = холодно, зелёная = комфорт, жёлтая = жарко)",
+  "space.temp_min": "Комфорт от",
+  "space.temp_max": "до"
 }

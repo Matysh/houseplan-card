@@ -166,5 +166,8 @@
   "space.orientation": "Canvas",
   "orient.landscape": "Landscape",
   "orient.portrait": "Portrait",
-  "orient.square": "Square"
+  "orient.square": "Square",
+  "fill.temp": "Temperature (blue = cold, green = comfy, yellow = hot)",
+  "space.temp_min": "Comfort from",
+  "space.temp_max": "to"
 }

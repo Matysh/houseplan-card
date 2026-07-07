@@ -239,3 +239,22 @@ test('roomFillColor: lqi gradient, light tri-state, none', () => {
   assert.equal(roomFillColor('light', null, 'off'), '#9aa0a6');
   assert.equal(roomFillColor('light', null, 'none'), null);
 });
+
+test('roomFillColor temp: blue/green/yellow bands, swapped bounds tolerated, no reading → no fill', () => {
+  assert.equal(roomFillColor('temp', null, 'none', 18, 20, 25), '#4fc3f7');  // cold
+  assert.equal(roomFillColor('temp', null, 'none', 20, 20, 25), '#66d17a');  // lower bound inclusive
+  assert.equal(roomFillColor('temp', null, 'none', 25, 20, 25), '#66d17a');  // upper bound inclusive
+  assert.equal(roomFillColor('temp', null, 'none', 26.5, 20, 25), '#ffd45c'); // hot
+  assert.equal(roomFillColor('temp', null, 'none', 18, 25, 20), '#4fc3f7');  // swapped bounds
+  assert.equal(roomFillColor('temp', null, 'none', null, 20, 25), null);
+  assert.equal(roomFillColor('temp', null, 'none', undefined, 20, 25), null);
+});
+
+test('spaceDisplayOf: temp bounds default to 20..25 and accept overrides', () => {
+  const d = spaceDisplayOf({ plan_url: '/x.svg' });
+  assert.equal(d.tempMin, 20);
+  assert.equal(d.tempMax, 25);
+  const o = spaceDisplayOf({ settings: { temp_min: 18.5, temp_max: 23 } });
+  assert.equal(o.tempMin, 18.5);
+  assert.equal(o.tempMax, 23);
+});

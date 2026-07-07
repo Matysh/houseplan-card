@@ -309,3 +309,15 @@ export function areaLights(hass: any, devices: { area: string; entities: string[
   }
   return seen ? 'off' : 'none';
 }
+
+/** Average temperature across the area's devices (null when nothing reports one). */
+export function areaTemp(hass: any, devices: { area: string; entities: string[] }[], area: string): number | null {
+  const vals: number[] = [];
+  for (const d of devices) {
+    if (d.area !== area) continue;
+    const t = tempFor(hass, d.entities);
+    if (t != null) vals.push(t);
+  }
+  if (!vals.length) return null;
+  return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10;
+}

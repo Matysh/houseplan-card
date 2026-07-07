@@ -440,6 +440,7 @@ export const cardStyles = css`
       cursor: pointer;
     }
     .colorrow input[type='range'] { flex: 1; }
+    .colorrow .tempin { width: 70px; flex: none; }
     .colorrow .opl { color: var(--hp-muted); font-size: 12px; }
     .colorrow .opv { font-size: 12px; min-width: 34px; text-align: right; }
     .planrow {
