@@ -312,10 +312,10 @@ export const cardStyles = css`
     }
     .dev {
       position: absolute;
-      box-sizing: border-box; /* рамка 1px не должна смещать центр значка от точки привязки */
+      /* центр квадрата (включая рамку 1px) точно на точке привязки: -(size/2 + border) */
       width: var(--icon-size, 2.5cqw);
       height: var(--icon-size, 2.5cqw);
-      margin: calc(var(--icon-size, 2.5cqw) / -2) 0 0 calc(var(--icon-size, 2.5cqw) / -2);
+      margin: calc(var(--icon-size, 2.5cqw) / -2 - 1px) 0 0 calc(var(--icon-size, 2.5cqw) / -2 - 1px);
       border-radius: 22%;
       background: var(--hp-bg);
       border: 1px solid var(--hp-line);
@@ -331,6 +331,10 @@ export const cardStyles = css`
     }
     .dev ha-icon {
       --mdc-icon-size: calc(var(--icon-size, 2.5cqw) * 0.62);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 0;
     }
     .dev:active {
       cursor: grabbing;

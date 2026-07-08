@@ -57,6 +57,7 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       smart-plug chip temperatures (`*_device_temperature`) and diagnostic-category temps are excluded [auto]
 - [ ] Space dialog is 500 px wide; the comfort-bounds inputs are compact (56 px)
 - [ ] Device icon badge is centred exactly on its point (no 1 px down-right drift) [auto]
+- [ ] Device glyph is centred within its badge (no vertical drift — real ha-icon is block+line-height) [auto]
 - [ ] Room hover highlight still works when custom borders/fills are on
 - [ ] Settings persist across reload and other browsers (server-side)
 

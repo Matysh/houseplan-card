@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.15.4 — 2026-07-08 (fix: device icon vertical centering — proper root cause)
+- **Root cause of the off-centre icon, found in the live app** (the demo stub hid it):
+  HA's real `<ha-icon>` host is `display:block` with a large inherited `line-height`
+  (~22 px for a ~12 px glyph), so the SVG sat ~1.8 px **below** the badge centre.
+  Fix: `.dev ha-icon` is now a zero-line-height flex box — the glyph centres exactly.
+- Reverted the v1.15.3 `box-sizing: border-box` (it shrank the badge by 2 px and made the
+  vertical offset *more* visible — "worse"). The 1 px anchor drift is instead corrected by
+  the centering margin (`-(size/2 + 1px)`), keeping the original badge size.
+- Verified in the real dashboard: anchor offset 0, glyph offset 0, badge size unchanged.
+- Demo `ha-icon` stub made faithful to HA (block + line-height) so `smoke_icon_center`
+  now actually reproduces and guards this; the smoke also asserts glyph-in-badge centering.
+
 ## v1.15.3 — 2026-07-08 (fix: device icon 1px off its anchor point)
 - Device icon badges were sitting **1 px down-and-right of their true point**: `.dev`
   used the default `content-box`, so the 1 px border made the rendered square 2 px

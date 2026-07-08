@@ -11,9 +11,15 @@ const bad = await page.evaluate(() => {
     const ax = lr.left + (parseFloat(d.style.left) / 100) * lr.width;
     const ay = lr.top + (parseFloat(d.style.top) / 100) * lr.height;
     const r = d.getBoundingClientRect();
-    const offX = r.left + r.width / 2 - ax, offY = r.top + r.height / 2 - ay;
-    if (Math.abs(offX) > 0.6 || Math.abs(offY) > 0.6)
-      bad.push({ icon: d.querySelector('ha-icon')?.getAttribute('icon'), offX: +offX.toFixed(2), offY: +offY.toFixed(2) });
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const offX = cx - ax, offY = cy - ay;
+    // glyph centred within the badge
+    const icon = d.querySelector('ha-icon');
+    const svg = icon?.shadowRoot?.querySelector('svg') || icon?.shadowRoot?.querySelector('ha-svg-icon')?.shadowRoot?.querySelector('svg');
+    let gX = 0, gY = 0;
+    if (svg) { const sr = svg.getBoundingClientRect(); gX = sr.left + sr.width / 2 - cx; gY = sr.top + sr.height / 2 - cy; }
+    if (Math.abs(offX) > 0.6 || Math.abs(offY) > 0.6 || Math.abs(gX) > 0.6 || Math.abs(gY) > 0.6)
+      bad.push({ icon: icon?.getAttribute('icon'), offX: +offX.toFixed(2), offY: +offY.toFixed(2), glyphX: +gX.toFixed(2), glyphY: +gY.toFixed(2) });
   }
   return bad;
 });

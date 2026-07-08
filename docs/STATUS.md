@@ -13,7 +13,7 @@
 
 | Item | State |
 |---|---|
-| Version | **v1.15.3** everywhere (manifest, const.py, package.json, CARD_VERSION) |
+| Version | **v1.15.4** everywhere (manifest, const.py, package.json, CARD_VERSION) |
 | GitHub | https://github.com/Matysh/houseplan-card — branch `main`, releases v1.9.3…v1.11.2 |
 | CI | `.github/workflows/validate.yml` (hacs + hassfest + frontend + backend) — **fully green** since v1.11.1; `release.yml` auto-attaches the card bundle (needs `permissions: contents: write`, fixed) |
 | HACS | Works as custom repository (id 1290210112 on the home instance). **Inclusion PR: https://github.com/hacs/default/pull/9004** (queue ≈2 months as of 2026-07). Lesson: #8995 was auto-closed by hacs-bot — the PR body MUST be their exact template with every checkbox ticked and all 3 links (release, HACS action run, hassfest run); a custom body gets closed without discussion |
@@ -55,6 +55,9 @@
   (fridges/TRVs/chip `*_device_temperature`/diagnostic); now thermometer/air-monitor only.
 - **v1.15.3** — fix: device icon badge sat 1 px off its anchor (content-box + 1 px
   border); `box-sizing: border-box` centres it exactly on the device point.
+- **v1.15.4** — fix: real `ha-icon` (block + big line-height) put the glyph ~1.8 px low;
+  `.dev ha-icon` is now a zero-line-height flex box. Reverted v1.15.3 border-box (shrank the
+  badge). Verified live. Demo stub made faithful so the smoke guards it.
 
 ## Where things live
 

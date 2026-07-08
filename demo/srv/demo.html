@@ -27,9 +27,13 @@ class HaIcon extends HTMLElement{
   _r(){
     const p=(window.__ICONS||{})[this.getAttribute('icon')]||'';
     if(!this.shadowRoot) this.attachShadow({mode:'open'});
-    this.shadowRoot.innerHTML='<style>:host{display:inline-flex;align-items:center;justify-content:center;'+
-      'width:var(--mdc-icon-size,24px);height:var(--mdc-icon-size,24px);vertical-align:middle}'+
-      'svg{width:100%;height:100%;fill:currentColor;display:block}</style>'+
+    // Faithful to HA's ha-icon: host is display:block with a large inherited line-height,
+    // which pushes the (smaller) svg off-centre unless the consumer neutralises it.
+    this.shadowRoot.innerHTML='<style>:host{display:block;line-height:1.8;'+
+      'width:var(--mdc-icon-size,24px);height:var(--mdc-icon-size,24px);'+
+      'fill:currentColor;vertical-align:middle}'+
+      'svg{width:var(--mdc-icon-size,24px);height:var(--mdc-icon-size,24px);fill:currentColor;'+
+      'display:inline-block;vertical-align:baseline}</style>'+
       '<svg viewBox="0 0 24 24"><path d="'+p+'"></path></svg>';
   }
 }

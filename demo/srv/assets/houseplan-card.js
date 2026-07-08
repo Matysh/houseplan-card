@@ -315,10 +315,10 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
     }
     .dev {
       position: absolute;
-      box-sizing: border-box; /* рамка 1px не должна смещать центр значка от точки привязки */
+      /* центр квадрата (включая рамку 1px) точно на точке привязки: -(size/2 + border) */
       width: var(--icon-size, 2.5cqw);
       height: var(--icon-size, 2.5cqw);
-      margin: calc(var(--icon-size, 2.5cqw) / -2) 0 0 calc(var(--icon-size, 2.5cqw) / -2);
+      margin: calc(var(--icon-size, 2.5cqw) / -2 - 1px) 0 0 calc(var(--icon-size, 2.5cqw) / -2 - 1px);
       border-radius: 22%;
       background: var(--hp-bg);
       border: 1px solid var(--hp-line);
@@ -334,6 +334,10 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
     }
     .dev ha-icon {
       --mdc-icon-size: calc(var(--icon-size, 2.5cqw) * 0.62);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 0;
     }
     .dev:active {
       cursor: grabbing;
@@ -1311,4 +1315,4 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
           </button>
         </div>
       </div>
-    </div>`}}Yt.properties={hass:{attribute:!1},_config:{state:!0},_space:{state:!0},_layout:{state:!0},_devices:{state:!0},_tip:{state:!0},_selId:{state:!0},_toast:{state:!0},_serverCfg:{state:!0},_markup:{state:!0},_tool:{state:!0},_path:{state:!0},_cursorPt:{state:!0},_areaSel:{state:!0},_nameSel:{state:!0},_roomDialog:{state:!0},_spaceDialog:{state:!0},_infoCard:{state:!0},_rulesDialog:{state:!0},_importDialog:{state:!0},_markerDialog:{state:!0},_zoom:{state:!0},_view:{state:!0}},Yt.styles=Lt,customElements.get("houseplan-card")||customElements.define("houseplan-card",Yt),window.customCards=window.customCards||[],window.customCards.find(t=>"houseplan-card"===t.type)||window.customCards.push({type:"houseplan-card",name:"House Plan Card",description:"Interactive house plan: spaces, rooms and devices with live states and drag layout."}),console.info("%c HOUSEPLAN-CARD %c v1.15.2 ","background:#3ea6ff;color:#04121f;font-weight:700","");
+    </div>`}}Yt.properties={hass:{attribute:!1},_config:{state:!0},_space:{state:!0},_layout:{state:!0},_devices:{state:!0},_tip:{state:!0},_selId:{state:!0},_toast:{state:!0},_serverCfg:{state:!0},_markup:{state:!0},_tool:{state:!0},_path:{state:!0},_cursorPt:{state:!0},_areaSel:{state:!0},_nameSel:{state:!0},_roomDialog:{state:!0},_spaceDialog:{state:!0},_infoCard:{state:!0},_rulesDialog:{state:!0},_importDialog:{state:!0},_markerDialog:{state:!0},_zoom:{state:!0},_view:{state:!0}},Yt.styles=Lt,customElements.get("houseplan-card")||customElements.define("houseplan-card",Yt),window.customCards=window.customCards||[],window.customCards.find(t=>"houseplan-card"===t.type)||window.customCards.push({type:"houseplan-card",name:"House Plan Card",description:"Interactive house plan: spaces, rooms and devices with live states and drag layout."}),console.info("%c HOUSEPLAN-CARD %c v1.15.3 ","background:#3ea6ff;color:#04121f;font-weight:700","");
