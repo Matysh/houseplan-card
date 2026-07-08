@@ -192,8 +192,9 @@ export const cardStyles = css`
       stroke-width: 2;
     }
     .room.overlay:hover {
-      fill: rgba(62, 166, 255, 0.18);
-      stroke: var(--hp-accent);
+      fill: #9aa0a6;
+      fill-opacity: 0.22;
+      stroke: var(--hp-muted);
     }
     .room.yard {
       fill: rgba(75, 140, 90, 0.14);
@@ -211,11 +212,15 @@ export const cardStyles = css`
       fill: var(--room-fill, transparent);
       fill-opacity: var(--room-fill-op, 0);
     }
-    .room.styled:hover {
-      fill: rgba(62, 166, 255, 0.18);
-      fill-opacity: 1;
-      stroke: var(--hp-accent);
-      stroke-opacity: 0.9;
+    /* hover: darken the current fill instead of recoloring; grey when unfilled */
+    .room.styled.filled:hover {
+      filter: brightness(0.78);
+      stroke-opacity: 1;
+    }
+    .room.styled:not(.filled):hover {
+      fill: #9aa0a6;
+      fill-opacity: 0.22;
+      stroke-opacity: 1;
     }
     .roomlabel {
       position: absolute;
@@ -441,6 +446,18 @@ export const cardStyles = css`
     }
     .colorrow input[type='range'] { flex: 1; }
     .colorrow .tempin { width: 70px; flex: none; }
+    .temprange {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-left: auto;
+      color: var(--hp-muted);
+      font-size: 12px;
+    }
+    /* beat the generic .dialog .body .namein { width:100% } rule */
+    .dialog .body .temprange .tempin { width: 56px; flex: none; padding: 3px 6px; }
+    .srcrow { flex-wrap: nowrap; }
+    .srcrow > span:first-of-type { white-space: nowrap; }
     .colorrow .opl { color: var(--hp-muted); font-size: 12px; }
     .colorrow .opv { font-size: 12px; min-width: 34px; text-align: right; }
     .planrow {
@@ -476,7 +493,7 @@ export const cardStyles = css`
       flex: 1;
     }
     .dialog.wide {
-      width: min(440px, 94vw);
+      width: min(500px, 94vw);
     }
     .dialog .body {
       max-height: 66vh;

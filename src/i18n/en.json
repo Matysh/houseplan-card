@@ -159,15 +159,16 @@
   "space.opacity": "Opacity",
   "space.fill_label": "Room fill",
   "fill.none": "None",
-  "fill.lqi": "Zigbee signal (red → green)",
-  "fill.light": "Lights (yellow = on, grey = off)",
+  "fill.lqi": "Zigbee signal",
+  "fill.light": "Lights",
   "space.source_file": "I have a floor-plan image",
   "space.source_draw": "No image — I'll outline rooms by hand",
   "space.orientation": "Canvas",
   "orient.landscape": "Landscape",
   "orient.portrait": "Portrait",
   "orient.square": "Square",
-  "fill.temp": "Temperature (blue = cold, green = comfy, yellow = hot)",
+  "fill.temp": "Temperature",
   "space.temp_min": "Comfort from",
-  "space.temp_max": "to"
+  "space.temp_max": "to",
+  "tip.temp_avg": "average temperature:"
 }

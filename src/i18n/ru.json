@@ -159,15 +159,16 @@
   "space.opacity": "Прозрачность",
   "space.fill_label": "Заливка комнат",
   "fill.none": "Нет",
-  "fill.lqi": "По силе зигби-сигнала (красный → зелёный)",
-  "fill.light": "По освещению (жёлтая = включено, серая = выключено)",
+  "fill.lqi": "По силе зигби-сигнала",
+  "fill.light": "По освещению",
   "space.source_file": "У меня есть картинка плана",
   "space.source_draw": "Нет подложки — нарисую комнаты вручную",
   "space.orientation": "Холст",
   "orient.landscape": "Альбомный",
   "orient.portrait": "Портретный",
   "orient.square": "Квадрат",
-  "fill.temp": "По температуре (голубая = холодно, зелёная = комфорт, жёлтая = жарко)",
+  "fill.temp": "По температуре",
   "space.temp_min": "Комфорт от",
-  "space.temp_max": "до"
+  "space.temp_max": "до",
+  "tip.temp_avg": "средняя температура:"
 }
