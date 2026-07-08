@@ -170,5 +170,13 @@
   "fill.temp": "Temperature",
   "space.temp_min": "Comfort from",
   "space.temp_max": "to",
-  "tip.temp_avg": "average temperature:"
+  "tip.temp_avg": "average temperature:",
+  "space_card.button": "Open the space plan",
+  "space_card.not_found": "Space “{id}” not found",
+  "space_card.loading": "Loading…",
+  "editor.space": "Space",
+  "editor.show_button": "Show button",
+  "editor.button_label": "Button label",
+  "editor.button_target": "Target dashboard path",
+  "editor.aspect_ratio": "Aspect ratio (e.g. 16:9 or auto)"
 }

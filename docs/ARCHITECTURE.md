@@ -131,3 +131,33 @@ rectangles are rendered uniformly (hit-test: point-in-polygon / rect).
 
 **File uploads go over HTTP** (not WS, which has a message-size limit): `POST /api/houseplan/upload`
 (multipart: marker_id + file), HomeAssistantView, requires_auth. Served from `/houseplan_files/files/`.
+
+
+## Second card: houseplan-space-card (read-only, v1.16.0)
+
+The bundle registers **two** custom elements from one entry (`src/houseplan-card.ts`
+imports `./space-card`):
+
+- `houseplan-card` — the full interactive card.
+- `houseplan-space-card` — a static, read-only schematic of ONE space for embedding.
+
+Shared, framework-light modules keep the two views from diverging:
+
+- `src/space-geometry.ts` — pure model/position math (`spaceModels`, `roomBounds`,
+  `roomCenter`, `defaultPositions`, `markerPos`, `labelPos`; no Lit import) — unit-tested,
+  mirrors the full card's private geometry.
+- `src/space-render.ts` — `renderSpaceStatic()` draws the plan + configured room
+  borders/names + device markers (via `buildDevices`, same curation) with NO handlers,
+  NO live states, NO status/temperature fills. Uses the same CSS classes as the full card
+  (the space-card imports `cardStyles`) for visual parity.
+- `src/config-store.ts` — module-level `{config, rev, layout}` cache shared by all embedded
+  cards (dedupes `houseplan/config/get`), seeded synchronously from the full card's
+  localStorage snapshot (`houseplan_card_cfg_v1`) and invalidated on `houseplan_config_updated`.
+
+**Static contract:** the schematic layer (`.hp-static-stage`) is `pointer-events:none`; the
+footer button lives outside it and stays clickable.
+
+**Deep-link contract:** the footer button calls `navigate(button_target + "#space=<id>")`
+(default target `/plan-doma`). The full card reads `#space=<id>` on load (a valid id wins over
+`default_floor`) and on `hashchange`, without blocking manual space switching; an invalid/absent
+hash falls back to the default.

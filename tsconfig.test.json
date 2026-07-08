@@ -11,6 +11,7 @@
     "src/logic.ts",
     "src/rules.ts",
     "src/devices.ts",
-    "src/types.ts"
+    "src/types.ts",
+    "src/space-geometry.ts"
   ]
 }

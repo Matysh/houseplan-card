@@ -170,5 +170,13 @@
   "fill.temp": "По температуре",
   "space.temp_min": "Комфорт от",
   "space.temp_max": "до",
-  "tip.temp_avg": "средняя температура:"
+  "tip.temp_avg": "средняя температура:",
+  "space_card.button": "Перейти к пространству",
+  "space_card.not_found": "Пространство «{id}» не найдено",
+  "space_card.loading": "Загрузка…",
+  "editor.space": "Пространство",
+  "editor.show_button": "Показывать кнопку",
+  "editor.button_label": "Текст кнопки",
+  "editor.button_target": "Путь дашборда (куда вести)",
+  "editor.aspect_ratio": "Соотношение сторон (напр. 16:9 или auto)"
 }

@@ -22,10 +22,11 @@ import type {
   RoomCfg, SpaceModel, PdfRef, Marker, ServerConfig, DevItem, CardConfig,
 } from './types';
 import './editor';
+import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.15.6';
+const CARD_VERSION = '1.16.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -134,6 +135,21 @@ class HouseplanCard extends LitElement {
     busy: boolean;
   } | null = null;
   private _keyHandler = (e: KeyboardEvent) => this._onKey(e);
+  private _hashApplied = false;
+  /** Deep-link: read `#space=<id>` from the URL (used by embedded houseplan-space-card). */
+  private _hashSpace(): string {
+    const m = /(?:^|[#&])space=([^&]+)/.exec(window.location.hash || '');
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+  private _onHashChange = (): void => {
+    const id = this._hashSpace();
+    if (id && this._model.find((sp) => sp.id === id) && id !== this._space) {
+      this._space = id;
+      this._selId = null;
+      this._restoreZoom();
+      this.requestUpdate();
+    }
+  };
 
   private _drag: { id: string; sx: number; sy: number; ox: number; oy: number; moved: boolean } | null = null;
   private _holdTimer?: number;
@@ -168,10 +184,12 @@ class HouseplanCard extends LitElement {
   public connectedCallback(): void {
     super.connectedCallback();
     window.addEventListener('keydown', this._keyHandler);
+    window.addEventListener('hashchange', this._onHashChange);
   }
 
   public disconnectedCallback(): void {
     window.removeEventListener('keydown', this._keyHandler);
+    window.removeEventListener('hashchange', this._onHashChange);
     clearTimeout(this._holdTimer);
     this._roViewport?.disconnect();
     this._roViewport = undefined;
@@ -252,7 +270,9 @@ class HouseplanCard extends LitElement {
         this._cfgRev = c.rev || 0;
         this._layout = c.layout || {};
         this._serverStorage = true;
-        if (config.default_floor) this._space = config.default_floor;
+        const hs = this._hashSpace();
+        if (hs && this._model.find((sp) => sp.id === hs)) { this._space = hs; this._hashApplied = true; }
+        else if (config.default_floor) this._space = config.default_floor;
         else if (!this._model.find((sp) => sp.id === this._space)) this._space = this._model[0]?.id || this._space;
       }
     } catch {
@@ -408,7 +428,11 @@ class HouseplanCard extends LitElement {
           if ((ev?.data?.rev ?? -1) !== this._cfgRev) this._reloadConfigOnly();
         }, 'houseplan_config_updated');
       }
-      if (this._norm && !this._model.find((s) => s.id === this._space)) {
+      const hs = this._hashSpace();
+      if (!this._hashApplied && hs && this._model.find((s) => s.id === hs)) {
+        this._space = hs;
+        this._hashApplied = true;
+      } else if (this._norm && !this._model.find((s) => s.id === this._space)) {
         this._space = this._model[0]?.id || this._space;
       }
       this._cacheSnapshot();

@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.16.0 — 2026-07-08 (new: houseplan-space-card + deep-link)
+- **New second card `custom:houseplan-space-card`** — a READ-ONLY, static schematic of a
+  single space, embeddable on any dashboard. Draws the configured plan + room borders/names +
+  device markers at their saved positions, with **no interactivity** (the schematic layer is
+  `pointer-events:none` — no clicks/hover/tooltips/drag/more-info) and **no live states**
+  (no state subscription, no status/temperature fills). A footer button opens the space in the
+  full component via a **deep-link** (`#space=<id>`). Config: `space` (required), `title`,
+  `show_button`, `button_label`, `button_target`, `aspect_ratio`, `icon_size`; unknown space → a
+  tidy error card. GUI editor with a space dropdown from the integration config.
+- **Deep-link in the full card**: on load it reads `#space=<id>` (valid id wins over
+  `default_floor`) and listens to `hashchange`, without blocking manual space switching.
+- **Shared rendering**: pure geometry in `space-geometry.ts` (unit-tested), the static drawer in
+  `space-render.ts`, and a **module-level config cache** (`config-store.ts`, rev-keyed, seeded from
+  the full card's localStorage snapshot, invalidated on `houseplan_config_updated`) so N embedded
+  cards on one board share a single WS request. Both cards ship in the one bundle.
+- Tests: 48 → 54 frontend (space geometry) + demo smokes `smoke_space_card` and `smoke_deeplink`.
+- Note: status/temperature fills are intentionally omitted from the static card (they are live);
+  it shows configured room borders/names + neutral icons. Marker/position edits reflect after the
+  config event or a reload.
+
 ## v1.15.6 — 2026-07-08 (room hover also reveals the border)
 - Hovering a room now **shows its outline** even when borders are turned off. The stroke
   colour (`--room-stroke`) is now always set to the room colour and only hidden via
