@@ -312,6 +312,7 @@ export const cardStyles = css`
     }
     .dev {
       position: absolute;
+      box-sizing: border-box; /* рамка 1px не должна смещать центр значка от точки привязки */
       width: var(--icon-size, 2.5cqw);
       height: var(--icon-size, 2.5cqw);
       margin: calc(var(--icon-size, 2.5cqw) / -2) 0 0 calc(var(--icon-size, 2.5cqw) / -2);

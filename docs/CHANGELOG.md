@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.15.3 — 2026-07-08 (fix: device icon 1px off its anchor point)
+- Device icon badges were sitting **1 px down-and-right of their true point**: `.dev`
+  used the default `content-box`, so the 1 px border made the rendered square 2 px
+  wider than the width the centering margin assumed. Added `box-sizing: border-box` —
+  the badge centre now lands exactly on the device coordinate (verified in the demo:
+  anchor offset 1 px → 0). The glyph itself was already centred within the square.
+
 ## v1.15.2 — 2026-07-08 (fix: room average temperature counted non-thermometers)
 - **Average room temperature now uses only devices the card treats as thermometers**
   (`mdi:thermometer` / `mdi:air-filter`). Previously `areaTemp` swept every device in the

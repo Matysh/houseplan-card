@@ -56,6 +56,7 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] Average room temperature counts ONLY thermometer/air-monitor devices — fridges, TRV heads,
       smart-plug chip temperatures (`*_device_temperature`) and diagnostic-category temps are excluded [auto]
 - [ ] Space dialog is 500 px wide; the comfort-bounds inputs are compact (56 px)
+- [ ] Device icon badge is centred exactly on its point (no 1 px down-right drift) [auto]
 - [ ] Room hover highlight still works when custom borders/fills are on
 - [ ] Settings persist across reload and other browsers (server-side)
 
