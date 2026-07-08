@@ -49,7 +49,11 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] Display settings: borders toggle, names toggle, color picker + opacity slider live-preview after save, fill selector [auto]
 - [ ] Fill "zigbee": rooms tint red→green by average LQI; rooms without zigbee stay unfilled [auto]
 - [ ] Fill "lights": yellow when any light on, grey when all off, unfilled when the room has no lights [auto]; toggling a light from the plan recolors the room
-- [ ] Fill "temperature": blue below the comfort range, green inside, yellow above [auto]; comfort bounds editable in the dialog (swapped bounds tolerated [auto]); rooms without a temperature reading stay unfilled [auto]; bound fields appear only when the mode is selected
+- [ ] Fill "temperature": blue below the comfort range, green inside, yellow above [auto]; comfort bounds editable inline on the radio row (swapped bounds tolerated [auto], clearing a field cannot zero a bound [auto]); rooms without a temperature reading stay unfilled [auto]
+- [ ] Fill mode is a radio group (no dropdown); labels carry no color legend
+- [ ] Room hover darkens the current fill (no recolor to blue); unfilled rooms hover light grey
+- [ ] Room tooltip shows the average room temperature when any thermometer reports [auto]
+- [ ] Space dialog is 500 px wide; the comfort-bounds inputs are compact (56 px)
 - [ ] Room hover highlight still works when custom borders/fills are on
 - [ ] Settings persist across reload and other browsers (server-side)
 

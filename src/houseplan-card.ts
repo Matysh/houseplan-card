@@ -25,7 +25,7 @@ import './editor';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.15.0';
+const CARD_VERSION = '1.15.1';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -69,7 +69,7 @@ class HouseplanCard extends LitElement {
   private _devices: DevItem[] = [];
   private _regSignature = '';
   private _defPos: Record<string, { x: number; y: number }> = {};
-  private _tip: { x: number; y: number; title: string; meta: string; lqi?: number | null } | null = null;
+  private _tip: { x: number; y: number; title: string; meta: string; lqi?: number | null; temp?: number | null } | null = null;
   private _selId: string | null = null;
   private _toast = '';
   private _toastTimer?: number;
@@ -903,9 +903,9 @@ class HouseplanCard extends LitElement {
     }, 3500);
   }
 
-  private _showTip(ev: MouseEvent, title: string, meta: string, lqi?: number | null): void {
+  private _showTip(ev: MouseEvent, title: string, meta: string, lqi?: number | null, temp?: number | null): void {
     if (this._drag) return;
-    this._tip = { x: ev.clientX, y: ev.clientY, title, meta, lqi };
+    this._tip = { x: ev.clientX, y: ev.clientY, title, meta, lqi, temp };
   }
 
   // ================= ROOM MARKUP EDITOR =================
@@ -1552,8 +1552,8 @@ class HouseplanCard extends LitElement {
         room_color: d.roomColor,
         room_opacity: d.roomOpacity,
         fill_mode: d.fillMode,
-        temp_min: Math.min(d.tempMin, d.tempMax),
-        temp_max: Math.max(d.tempMin, d.tempMax),
+        temp_min: Number.isFinite(d.tempMin) ? Math.min(d.tempMin, d.tempMax) : DEFAULT_TEMP_MIN,
+        temp_max: Number.isFinite(d.tempMax) ? Math.max(d.tempMin, d.tempMax) : DEFAULT_TEMP_MAX,
       };
       await this._saveConfigNow();
       this._spaceDialog = null;
@@ -1934,13 +1934,16 @@ class HouseplanCard extends LitElement {
                       disp.tempMax,
                     )
                   : null;
-                if (fillC) st.push(`--room-fill:${fillC}`, `--room-fill-op:${(0.3 * disp.opacity).toFixed(3)}`);
-                else st.push('--room-fill:transparent', '--room-fill-op:0');
+                if (fillC) {
+                  cls += ' filled';
+                  st.push(`--room-fill:${fillC}`, `--room-fill-op:${(0.3 * disp.opacity).toFixed(3)}`);
+                } else st.push('--room-fill:transparent', '--room-fill-op:0');
                 style = st.join(';');
               }
               const tip = (e: MouseEvent) =>
                 this._showTip(e, r.name, this._t('tip.room'),
-                  this._config?.show_signal ? this._roomLqi(r.area) : null);
+                  this._config?.show_signal ? this._roomLqi(r.area) : null,
+                  r.area ? areaTemp(this.hass, this._devices, r.area) : null);
               const label = (!space.bg && !disp.showNames) || this._markup;
               const c = this._roomCenter(r);
               const shape = r.poly
@@ -1976,6 +1979,9 @@ class HouseplanCard extends LitElement {
         ${this._tip
           ? html`<div class="tip" style="left:${this._tip.x + 12}px;top:${this._tip.y + 12}px">
               <b>${this._tip.title}</b>${this._tip.meta ? html`<span class="m">${this._tip.meta}</span>` : nothing}
+              ${this._tip.temp != null
+                ? html`<span class="m">${this._t('tip.temp_avg')} <b>${this._tip.temp}°</b></span>`
+                : nothing}
               ${this._tip.lqi != null
                 ? html`<span class="m">${this._t('tip.lqi')}
                     <b style="color:${lqiColor(this._tip.lqi)}">${this._tip.lqi}</b></span>`
@@ -2301,7 +2307,7 @@ class HouseplanCard extends LitElement {
   private _renderSpaceDialog(): TemplateResult {
     const d = this._spaceDialog!;
     return html`<div class="menuwrap dialogwrap" @click=${(e: Event) => e.stopPropagation()}>
-      <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
+      <div class="dialog wide" @click=${(e: Event) => e.stopPropagation()}>
         <div class="hd"><ha-icon icon="mdi:floor-plan"></ha-icon>
           ${d.mode === 'create' ? this._t('space.new') : this._t('space.header')}
           ${this._importTotal > 0 && d.mode === 'create'
@@ -2371,23 +2377,29 @@ class HouseplanCard extends LitElement {
             <span class="opv">${Math.round(d.roomOpacity * 100)}%</span>
           </div>
           <label>${this._t('space.fill_label')}</label>
-          <select class="areasel"
-            @change=${(e: Event) => (this._spaceDialog = { ...d, fillMode: (e.target as HTMLSelectElement).value as any })}>
-            ${[['none', 'fill.none'], ['lqi', 'fill.lqi'], ['light', 'fill.light'], ['temp', 'fill.temp']].map(
-              ([v, k]) => html`<option value=${v} ?selected=${d.fillMode === v}>${this._t(k as any)}</option>`,
-            )}
-          </select>
-          ${d.fillMode === 'temp'
-            ? html`<div class="colorrow">
-                <span class="opl">${this._t('space.temp_min')}</span>
-                <input class="namein tempin" type="number" step="0.5" .value=${String(d.tempMin)}
-                  @input=${(e: Event) => (this._spaceDialog = { ...d, tempMin: Number((e.target as HTMLInputElement).value) })} />
-                <span class="opl">${this._t('space.temp_max')}</span>
-                <input class="namein tempin" type="number" step="0.5" .value=${String(d.tempMax)}
-                  @input=${(e: Event) => (this._spaceDialog = { ...d, tempMax: Number((e.target as HTMLInputElement).value) })} />
-                <span class="opv">°C</span>
-              </div>`
-            : nothing}
+          ${[['none', 'fill.none'], ['lqi', 'fill.lqi'], ['light', 'fill.light'], ['temp', 'fill.temp']].map(
+            ([v, k]) => html`<label class="srcrow">
+              <input type="radio" name="fillmode" .checked=${d.fillMode === v}
+                @change=${() => (this._spaceDialog = { ...d, fillMode: v as any })} />
+              <span>${this._t(k as any)}</span>
+              ${v === 'temp' && d.fillMode === 'temp'
+                ? html`<span class="temprange">
+                    <input class="namein tempin" type="number" step="0.5" .value=${String(d.tempMin)}
+                      @input=${(e: Event) => {
+                        const n = parseFloat((e.target as HTMLInputElement).value);
+                        if (Number.isFinite(n)) this._spaceDialog = { ...d, tempMin: n };
+                      }} />
+                    –
+                    <input class="namein tempin" type="number" step="0.5" .value=${String(d.tempMax)}
+                      @input=${(e: Event) => {
+                        const n = parseFloat((e.target as HTMLInputElement).value);
+                        if (Number.isFinite(n)) this._spaceDialog = { ...d, tempMax: n };
+                      }} />
+                    °C
+                  </span>`
+                : nothing}
+            </label>`,
+          )}
         </div>
         <div class="row">
           ${d.mode === 'edit'

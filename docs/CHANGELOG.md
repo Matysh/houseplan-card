@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.15.1 — 2026-07-06 (display-settings UX round from live usage)
+- **Comfort-bounds input hardening**: clearing a temperature field can no longer
+  collapse a bound to 0 (`Number('') === 0` — this silently turned "comfort from
+  25" into a 0–25 range after the auto-swap, showing green at 24°). Inputs now
+  parse with `parseFloat` + `isFinite` guard and the save path falls back to the
+  defaults for non-finite values.
+- Room tooltip now shows the **average room temperature** (what the temperature
+  fill actually uses — averages every thermometer in the area, including TRVs).
+- **Hover no longer recolors rooms blue**: filled rooms darken their current fill
+  (`brightness(0.78)`), unfilled rooms get a light grey tint.
+- Fill mode selector is a **radio group** with short labels (no color legend);
+  the comfort bounds sit compactly inline on the temperature row (56 px inputs).
+- The space dialog is wider (500 px) — the settings no longer feel cramped.
+
 ## v1.15.0 — 2026-07-06 (temperature room fill)
 - New room fill mode **"Temperature"**: light blue below the comfort range, green
   inside it, warm yellow above. The comfort bounds (default 20–25 °C) are editable
