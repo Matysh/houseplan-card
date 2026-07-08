@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.15.6 — 2026-07-08 (room hover also reveals the border)
+- Hovering a room now **shows its outline** even when borders are turned off. The stroke
+  colour (`--room-stroke`) is now always set to the room colour and only hidden via
+  `--room-stroke-op` — so the existing `stroke-opacity: 1` on hover reveals a crisp border
+  (previously the stroke was `transparent` when borders were off, so hover showed nothing).
+
 ## v1.15.5 — 2026-07-08 (fix: room hover was always grey even when filled)
 - Room hover now **darkens the current fill** for filled rooms and only greys **unfilled**
   ones (as intended since v1.15.1). The legacy `.room.overlay:hover` / `.room.yard:hover`

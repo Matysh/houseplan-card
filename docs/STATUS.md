@@ -13,7 +13,7 @@
 
 | Item | State |
 |---|---|
-| Version | **v1.15.5** everywhere (manifest, const.py, package.json, CARD_VERSION) |
+| Version | **v1.15.6** everywhere (manifest, const.py, package.json, CARD_VERSION) |
 | GitHub | https://github.com/Matysh/houseplan-card — branch `main`, releases v1.9.3…v1.11.2 |
 | CI | `.github/workflows/validate.yml` (hacs + hassfest + frontend + backend) — **fully green** since v1.11.1; `release.yml` auto-attaches the card bundle (needs `permissions: contents: write`, fixed) |
 | HACS | Works as custom repository (id 1290210112 on the home instance). **Inclusion PR: https://github.com/hacs/default/pull/9004** (queue ≈2 months as of 2026-07). Lesson: #8995 was auto-closed by hacs-bot — the PR body MUST be their exact template with every checkbox ticked and all 3 links (release, HACS action run, hassfest run); a custom body gets closed without discussion |
@@ -60,6 +60,8 @@
   badge). Verified live. Demo stub made faithful so the smoke guards it.
 - **v1.15.5** — fix: room hover was always grey; legacy overlay/yard hover rules scoped
   with `:not(.styled)` so filled rooms darken their fill, unfilled ones grey.
+- **v1.15.6** — room hover also reveals the border (stroke colour kept, hidden via
+  opacity) even when borders are off.
 
 ## Where things live
 

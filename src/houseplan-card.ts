@@ -25,7 +25,7 @@ import './editor';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.15.5';
+const CARD_VERSION = '1.15.6';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -1919,11 +1919,8 @@ class HouseplanCard extends LitElement {
               if (!this._markup && (disp.showBorders || disp.fill !== 'none')) {
                 cls += ' styled';
                 const st: string[] = [];
-                if (disp.showBorders) {
-                  st.push(`--room-stroke:${disp.color}`, `--room-stroke-op:${disp.opacity}`);
-                } else {
-                  st.push('--room-stroke:transparent', '--room-stroke-op:0');
-                }
+                // keep the stroke colour even when borders are hidden, so hover can reveal it
+                st.push(`--room-stroke:${disp.color}`, `--room-stroke-op:${disp.showBorders ? disp.opacity : 0}`);
                 const fillC = r.area
                   ? roomFillColor(
                       disp.fill,
