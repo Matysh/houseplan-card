@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.16.1 — 2026-07-08 (space-card shows room fills as configured)
+- **The static `houseplan-space-card` now renders room fills exactly as configured on the
+  full card** (temperature / signal / lights coloring), as a snapshot of the states passed
+  in via `hass` — reverting the v1.16.0 omission. The card still does not subscribe to state
+  changes itself and stays non-interactive (`pointer-events:none`); fills refresh when HA
+  hands the card an updated `hass`. Added shared `areaLqi()` in devices.ts.
+
 ## v1.16.0 — 2026-07-08 (new: houseplan-space-card + deep-link)
 - **New second card `custom:houseplan-space-card`** — a READ-ONLY, static schematic of a
   single space, embeddable on any dashboard. Draws the configured plan + room borders/names +

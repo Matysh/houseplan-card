@@ -315,6 +315,17 @@ export function areaLights(hass: any, devices: { area: string; entities: string[
 }
 
 /** Average temperature across the area's devices (null when nothing reports one). */
+/** Average zigbee signal (LQI) across an area's non-virtual devices, or null. */
+export function areaLqi(hass: any, devices: { area: string; virtual?: boolean; entities: string[] }[], area: string): number | null {
+  const vals: number[] = [];
+  for (const d of devices) {
+    if (d.area !== area || d.virtual) continue;
+    const l = lqiFor(hass, d.entities);
+    if (l != null) vals.push(l);
+  }
+  return averageLqi(vals);
+}
+
 export function areaTemp(
   hass: any,
   devices: { area: string; icon?: string; entities: string[] }[],

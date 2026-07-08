@@ -171,7 +171,7 @@ require hands on real hardware — they remain for the human pass.
 
 ## houseplan-space-card (read-only embedded)
 - [ ] `type: custom:houseplan-space-card, space: <id>` renders the space identical to the full
-      card's plan (background + configured borders/names + icons), no header/controls [auto]
+      card's plan (background + configured borders/names + room fills + icons), no header/controls [auto]
 - [ ] The schematic is fully non-interactive: click/hover anywhere does nothing — no more-info,
       no tooltip, no drag (`.hp-static-stage` is pointer-events:none) [auto]
 - [ ] Footer button opens the full component already showing that space (deep-link `#space=<id>`) [auto]
