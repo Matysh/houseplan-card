@@ -171,18 +171,56 @@ test('areaLights: on / off / none tri-state', () => {
   assert.equal(areaLights(hass, devs, 'bath'), 'none');
 });
 
-test('areaTemp: averages device temperatures, null when none report', () => {
+test('areaTemp: averages only thermometer devices, null when none report', () => {
   const hass = mkHass({ states: {
     'sensor.t1': { state: '20.0', attributes: { device_class: 'temperature' } },
     'sensor.t2': { state: '23.1', attributes: { device_class: 'temperature' } },
     'sensor.hum': { state: '55', attributes: { device_class: 'humidity' } },
   }});
   const devs = [
-    { area: 'living', entities: ['sensor.t1'] },
-    { area: 'living', entities: ['sensor.t2'] },
-    { area: 'bath', entities: ['sensor.hum'] },
+    { area: 'living', icon: 'mdi:thermometer', entities: ['sensor.t1'] },
+    { area: 'living', icon: 'mdi:thermometer', entities: ['sensor.t2'] },
+    { area: 'bath', icon: 'mdi:water-percent', entities: ['sensor.hum'] },
   ];
   assert.equal(areaTemp(hass, devs, 'living'), 21.6); // (20+23.1)/2=21.55 → 21.6
   assert.equal(areaTemp(hass, devs, 'bath'), null);
   assert.equal(areaTemp(hass, devs, 'garage'), null);
+});
+
+test('areaTemp: ignores non-thermometer devices that expose a temperature (fridge, TRV, chip)', () => {
+  const hass = mkHass({
+    entities: { 'sensor.plug_device_temperature': { entity_id: 'sensor.plug_device_temperature', entity_category: 'diagnostic' } },
+    states: {
+      'sensor.room': { state: '22.0', attributes: { device_class: 'temperature' } },
+      'sensor.fridge_t': { state: '4.5', attributes: { device_class: 'temperature', unit_of_measurement: '°C' } },
+      'sensor.trv_current': { state: '8.3', attributes: { device_class: 'temperature', unit_of_measurement: '°C' } },
+      'sensor.plug_device_temperature': { state: '31', attributes: { device_class: 'temperature', unit_of_measurement: '°C' } },
+    },
+  });
+  const devs = [
+    { area: 'living', icon: 'mdi:thermometer', entities: ['sensor.room'] },
+    { area: 'living', icon: 'mdi:fridge', entities: ['sensor.fridge_t'] },
+    { area: 'living', icon: 'mdi:radiator', entities: ['sensor.trv_current'] },
+    { area: 'living', icon: 'mdi:power-socket-de', entities: ['sensor.plug_device_temperature'] },
+  ];
+  // только настоящий термометр (22.0), холодильник/термоголовка/чип игнорируются
+  assert.equal(areaTemp(hass, devs, 'living'), 22.0);
+});
+
+test('isTempEntity: excludes chip temperature and diagnostic-category entities', () => {
+  const hass = mkHass({
+    entities: { 'sensor.calibrated': { entity_id: 'sensor.calibrated', entity_category: 'diagnostic' } },
+    states: {
+      'sensor.room_temperature': { state: '21', attributes: { device_class: 'temperature' } },
+      'sensor.plug_device_temperature': { state: '30', attributes: { device_class: 'temperature' } },
+      'sensor.calibrated': { state: '19', attributes: { device_class: 'temperature' } },
+    },
+  });
+  // настоящий комнатный датчик проходит
+  assert.equal(tempFor(hass, ['sensor.room_temperature']), 21);
+  // чип и диагностика — нет
+  assert.equal(tempFor(hass, ['sensor.plug_device_temperature']), null);
+  assert.equal(tempFor(hass, ['sensor.calibrated']), null);
+  // если в устройстве и чип, и настоящий — берётся настоящий
+  assert.equal(tempFor(hass, ['sensor.plug_device_temperature', 'sensor.room_temperature']), 21);
 });

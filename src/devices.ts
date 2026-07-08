@@ -40,6 +40,10 @@ export function domainOfDevice(hass: any, dev: any, entIds: string[]): string {
 }
 
 export function isTempEntity(hass: any, eid: string): boolean {
+  // Температура чипа самого устройства — это диагностика, не комнатная температура.
+  if (/_device_temperature$/.test(eid)) return false;
+  // Диагностические/конфигурационные сущности (чип, батарея, калибровки) — не комната.
+  if (hass.entities?.[eid]?.entity_category) return false;
   const st = hass.states[eid];
   if (!st) return /_temperature$/.test(eid);
   const a = st.attributes || {};
@@ -311,10 +315,17 @@ export function areaLights(hass: any, devices: { area: string; entities: string[
 }
 
 /** Average temperature across the area's devices (null when nothing reports one). */
-export function areaTemp(hass: any, devices: { area: string; entities: string[] }[], area: string): number | null {
+export function areaTemp(
+  hass: any,
+  devices: { area: string; icon?: string; entities: string[] }[],
+  area: string,
+): number | null {
   const vals: number[] = [];
   for (const d of devices) {
     if (d.area !== area) continue;
+    // Учитываем только устройства, которые сама карточка считает термометрами —
+    // не холодильники, термоголовки, розетки с температурой чипа и т.п.
+    if (d.icon !== 'mdi:thermometer' && d.icon !== 'mdi:air-filter') continue;
     const t = tempFor(hass, d.entities);
     if (t != null) vals.push(t);
   }

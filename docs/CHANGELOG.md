@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.15.2 — 2026-07-08 (fix: room average temperature counted non-thermometers)
+- **Average room temperature now uses only devices the card treats as thermometers**
+  (`mdi:thermometer` / `mdi:air-filter`). Previously `areaTemp` swept every device in the
+  area through `tempFor`, so fridges, TRV heads and smart plugs leaked their readings into
+  the average (e.g. a 8.3 °C valve/appliance temperature dragging a room down).
+- **`isTempEntity` now excludes chip/diagnostic temperatures**: `*_device_temperature`
+  sensors and any entity in the `config`/`diagnostic` category are no longer treated as a
+  room temperature — so even a genuine thermometer no longer reports its chip temperature.
+- Affects the temperature room fill and the room tooltip average. (+3 frontend tests: 46 → 48.)
+
 ## v1.15.1 — 2026-07-06 (display-settings UX round from live usage)
 - **Comfort-bounds input hardening**: clearing a temperature field can no longer
   collapse a bound to 0 (`Number('') === 0` — this silently turned "comfort from
