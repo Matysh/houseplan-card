@@ -194,7 +194,7 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
       stroke: transparent;
       stroke-width: 2;
     }
-    .room.overlay:hover {
+    .room.overlay:not(.styled):hover {
       fill: #9aa0a6;
       fill-opacity: 0.22;
       stroke: var(--hp-muted);
@@ -204,7 +204,7 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
       stroke: #4b8c5a;
       stroke-width: 2;
     }
-    .room.yard:hover {
+    .room.yard:not(.styled):hover {
       fill: rgba(75, 140, 90, 0.24);
       stroke: #6fbf86;
     }
@@ -1315,4 +1315,4 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
           </button>
         </div>
       </div>
-    </div>`}}Yt.properties={hass:{attribute:!1},_config:{state:!0},_space:{state:!0},_layout:{state:!0},_devices:{state:!0},_tip:{state:!0},_selId:{state:!0},_toast:{state:!0},_serverCfg:{state:!0},_markup:{state:!0},_tool:{state:!0},_path:{state:!0},_cursorPt:{state:!0},_areaSel:{state:!0},_nameSel:{state:!0},_roomDialog:{state:!0},_spaceDialog:{state:!0},_infoCard:{state:!0},_rulesDialog:{state:!0},_importDialog:{state:!0},_markerDialog:{state:!0},_zoom:{state:!0},_view:{state:!0}},Yt.styles=Lt,customElements.get("houseplan-card")||customElements.define("houseplan-card",Yt),window.customCards=window.customCards||[],window.customCards.find(t=>"houseplan-card"===t.type)||window.customCards.push({type:"houseplan-card",name:"House Plan Card",description:"Interactive house plan: spaces, rooms and devices with live states and drag layout."}),console.info("%c HOUSEPLAN-CARD %c v1.15.4 ","background:#3ea6ff;color:#04121f;font-weight:700","");
+    </div>`}}Yt.properties={hass:{attribute:!1},_config:{state:!0},_space:{state:!0},_layout:{state:!0},_devices:{state:!0},_tip:{state:!0},_selId:{state:!0},_toast:{state:!0},_serverCfg:{state:!0},_markup:{state:!0},_tool:{state:!0},_path:{state:!0},_cursorPt:{state:!0},_areaSel:{state:!0},_nameSel:{state:!0},_roomDialog:{state:!0},_spaceDialog:{state:!0},_infoCard:{state:!0},_rulesDialog:{state:!0},_importDialog:{state:!0},_markerDialog:{state:!0},_zoom:{state:!0},_view:{state:!0}},Yt.styles=Lt,customElements.get("houseplan-card")||customElements.define("houseplan-card",Yt),window.customCards=window.customCards||[],window.customCards.find(t=>"houseplan-card"===t.type)||window.customCards.push({type:"houseplan-card",name:"House Plan Card",description:"Interactive house plan: spaces, rooms and devices with live states and drag layout."}),console.info("%c HOUSEPLAN-CARD %c v1.15.5 ","background:#3ea6ff;color:#04121f;font-weight:700","");

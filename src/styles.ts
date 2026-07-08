@@ -191,7 +191,7 @@ export const cardStyles = css`
       stroke: transparent;
       stroke-width: 2;
     }
-    .room.overlay:hover {
+    .room.overlay:not(.styled):hover {
       fill: #9aa0a6;
       fill-opacity: 0.22;
       stroke: var(--hp-muted);
@@ -201,7 +201,7 @@ export const cardStyles = css`
       stroke: #4b8c5a;
       stroke-width: 2;
     }
-    .room.yard:hover {
+    .room.yard:not(.styled):hover {
       fill: rgba(75, 140, 90, 0.24);
       stroke: #6fbf86;
     }

@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.15.5 — 2026-07-08 (fix: room hover was always grey even when filled)
+- Room hover now **darkens the current fill** for filled rooms and only greys **unfilled**
+  ones (as intended since v1.15.1). The legacy `.room.overlay:hover` / `.room.yard:hover`
+  grey rules were still matching styled rooms and, being applied to `fill` directly, beat
+  the `--room-fill` variable — so a temperature/light/zigbee-filled room turned grey on
+  hover. Scoped those legacy rules with `:not(.styled)`; styled rooms are now governed only
+  by `.styled.filled:hover` (brightness 0.78) and `.styled:not(.filled):hover` (grey).
+
 ## v1.15.4 — 2026-07-08 (fix: device icon vertical centering — proper root cause)
 - **Root cause of the off-centre icon, found in the live app** (the demo stub hid it):
   HA's real `<ha-icon>` host is `display:block` with a large inherited `line-height`
