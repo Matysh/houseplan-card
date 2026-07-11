@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.16.2 — 2026-07-11 (docs+log: correct card resource URL — fixes "Custom element doesn't exist")
+- **Support issue #2**: users adding a Lovelace resource that points at the on-disk path
+  `/custom_components/houseplan/frontend/houseplan-card.js` get a `text/plain` MIME error and
+  "Custom element doesn't exist: houseplan-card" — HA does not serve `custom_components/` over
+  HTTP. The integration serves the card at **`/houseplan_files/houseplan-card.js`** (verified:
+  `200 text/javascript`) and auto-registers it as a Lovelace resource in storage mode.
+- README (en+ru) now documents the correct URL and the common mistake, incl. a YAML-mode
+  `resources:` snippet.
+- On setup the integration logs (INFO) the exact served URL and, when Lovelace resources are
+  YAML-managed, how to add it manually — so the fix is discoverable from the logs.
+
 ## v1.16.1 — 2026-07-08 (space-card shows room fills as configured)
 - **The static `houseplan-space-card` now renders room fills exactly as configured on the
   full card** (temperature / signal / lights coloring), as a snapshot of the states passed

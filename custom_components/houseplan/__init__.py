@@ -79,8 +79,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
     # start of the mobile app). If the resource registry is unavailable (YAML-mode
     # Lovelace, old versions) — fall back to extra_module_url.
     module_url = f"{FRONTEND_URL}?v={VERSION}"
-    if not await _register_lovelace_resource(hass, module_url):
+    registered = await _register_lovelace_resource(hass, module_url)
+    if not registered:
         add_extra_js_url(hass, module_url)
+    # Tell the user exactly where the card lives — the #1 support issue is people adding a
+    # Lovelace resource pointing at the on-disk path (/custom_components/...), which HA does
+    # not serve (wrong MIME → "Custom element doesn't exist"). The correct served URL is below.
+    if registered:
+        _LOGGER.info("House Plan card auto-registered as a Lovelace resource: %s", module_url)
+    else:
+        _LOGGER.info(
+            "House Plan card is served at %s . Lovelace resources look YAML-managed — add it "
+            "manually under `resources:` as { url: %s, type: module }. Do NOT use the on-disk "
+            "path /custom_components/houseplan/frontend/houseplan-card.js (HA does not serve it).",
+            module_url, module_url,
+        )
 
     await async_check_plan_files(hass, entry)
     return True

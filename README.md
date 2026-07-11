@@ -60,6 +60,21 @@ Key advantages in short:
 
 The card is registered automatically — no need to add a Lovelace resource manually.
 
+> **Card doesn't load (`Custom element doesn't exist: houseplan-card`) or you manage Lovelace
+> resources in YAML?** Add the resource manually pointing at the URL the integration *serves*:
+>
+> ```yaml
+> resources:
+>   - url: /houseplan_files/houseplan-card.js
+>     type: module
+> ```
+>
+> Do **not** use `/custom_components/houseplan/frontend/houseplan-card.js` — that is the file
+> on disk, which Home Assistant does not serve over HTTP (you'll get a `text/plain` MIME error
+> and the element never registers). The correct, integration-served URL is
+> `/houseplan_files/houseplan-card.js`. Both cards (`houseplan-card` and
+> `houseplan-space-card`) ship in that one file — no separate resource is needed.
+
 ### Manually
 
 1. Copy the `custom_components/houseplan` folder into the `config/custom_components` directory of your Home Assistant.
