@@ -17,7 +17,7 @@ import {
   spaceDisplayOf, roomFillColor, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
 } from './logic';
-import { buildDevices, lqiFor, tempFor, humFor, areaLights, areaTemp } from './devices';
+import { buildDevices, lqiFor, tempFor, humFor, isHumEntity, areaLights, areaTemp } from './devices';
 import type {
   RoomCfg, SpaceModel, PdfRef, Marker, ServerConfig, DevItem, CardConfig,
 } from './types';
@@ -26,7 +26,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.17.1';
+const CARD_VERSION = '1.17.2';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -643,7 +643,7 @@ class HouseplanCard extends LitElement {
 
   private _liveHum(d: DevItem): number | null {
     if (!this._config?.show_temperature) return null; // same "sensor values" toggle as temperature
-    if (d.icon !== 'mdi:water-percent') return null;
+    if (!d.primary || !isHumEntity(this.hass, d.primary)) return null;
     return humFor(this.hass, d.entities);
   }
 

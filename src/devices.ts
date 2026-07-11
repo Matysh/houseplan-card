@@ -227,7 +227,7 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
     };
     item.primary = primaryEntity(h, entIds, icon);
     if (icon === 'mdi:thermometer' || icon === 'mdi:air-filter') item.temp = tempFor(h, entIds);
-    if (icon === 'mdi:water-percent') item.hum = humFor(h, entIds);
+    if (item.primary && isHumEntity(h, item.primary)) item.hum = humFor(h, entIds);
     rest.push(item);
   }
 
@@ -276,8 +276,8 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
       };
       item.primary = primaryEntity(h, entIds, icon);
       if (icon === 'mdi:thermometer' || icon === 'mdi:air-filter') item.temp = tempFor(h, entIds);
-      if (icon === 'mdi:water-percent') item.hum = humFor(h, entIds);
-    if (icon === 'mdi:water-percent') item.hum = humFor(h, entIds);
+      if (item.primary && isHumEntity(h, item.primary)) item.hum = humFor(h, entIds);
+    if (item.primary && isHumEntity(h, item.primary)) item.hum = humFor(h, entIds);
       applyMarker(item, m);
       rest.push(item);
     } else if (kind === 'entity') {
@@ -301,7 +301,7 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
         bindingRef: ref,
       };
       if (icon === 'mdi:thermometer' || icon === 'mdi:air-filter') item.temp = tempFor(h, [ref]);
-      if (icon === 'mdi:water-percent') item.hum = humFor(h, [ref]);
+      if (isHumEntity(h, ref)) item.hum = humFor(h, [ref]);
       applyMarker(item, m);
       rest.push(item);
     } else {

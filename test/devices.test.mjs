@@ -269,3 +269,14 @@ test('buildDevices: humidity entity marker shows a humidity badge (item.hum), wa
   assert.equal(hum.hum, 55);
   assert.equal(hum.temp, undefined);
 });
+
+test('buildDevices: humidity badge is gated on device_class, not the icon (name may force another icon)', () => {
+  const h = mkHass({
+    entities: { 'sensor.mh_hum': { entity_id: 'sensor.mh_hum', device_id: 'mh', platform: 'demo' } },
+    // name contains "myheat" → icon rule resolves to water-boiler, NOT water-percent…
+    states: { 'sensor.mh_hum': { state: '45.2', attributes: { device_class: 'humidity', friendly_name: 'Myheat Влажность 1 этаж' } } },
+  });
+  const d = buildDevices(baseCtx(h, { markers: [{ id: 'e', binding: 'entity:sensor.mh_hum' }] })).find((x) => x.id === 'e');
+  assert.notEqual(d.icon, 'mdi:water-percent'); // name rule won the icon
+  assert.equal(d.hum, 45); // …but the humidity value is still shown (gated on device_class)
+});

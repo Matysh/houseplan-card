@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.17.2 — 2026-07-11 (humidity badge: gate on the sensor, not the icon)
+- Fix on top of v1.17.1: the humidity `%` badge is now shown whenever the marker's primary
+  entity is a humidity sensor (`device_class: humidity`), regardless of the resolved icon.
+  Previously it required the `mdi:water-percent` icon, so a humidity sensor whose name matched
+  another icon rule (e.g. a "Myheat Влажность …" sensor → boiler icon) showed no value.
+  Verified live (45.2 → 45%). (+1 test: 57 → 58.)
+
 ## v1.17.1 — 2026-07-11 (humidity value next to the icon, like temperature)
 - **Humidity sensors now show their value (%) next to the icon**, mirroring the temperature
   badge. Any marker resolved to the humidity icon (`mdi:water-percent`) — a humidity device or a
