@@ -26,7 +26,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.16.2';
+const CARD_VERSION = '1.17.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -1261,6 +1261,23 @@ class HouseplanCard extends LitElement {
         label: reg.name || st?.attributes?.friendly_name || eid,
         sub: eid.split('.')[0] + ' · ' + (reg.platform === 'group' ? this._t('marker.sub_group') : this._t('marker.sub_helper')),
       });
+    }
+    // Individual entities — surfaced only while searching (avoids a huge default list); lets you
+    // place a single entity of a multi-entity device (e.g. the humidity of a climate sensor) as
+    // its own icon. Uses the same entity: binding as helpers/groups.
+    const q = (this._markerDialog?.bindingFilter || '').toLowerCase().trim();
+    if (q) {
+      const seen = new Set(list.map((o) => o.value));
+      for (const [eid, reg] of Object.entries<any>(h.entities)) {
+        const v = 'entity:' + eid;
+        if (taken.has(v) || seen.has(v) || reg.hidden) continue;
+        const stt = h.states[eid];
+        const label = reg.name || stt?.attributes?.friendly_name || eid;
+        const dev = reg.device_id ? h.devices[reg.device_id] : null;
+        const devName = dev ? (dev.name_by_user || dev.name || '') : '';
+        if (!(label + ' ' + eid + ' ' + devName).toLowerCase().includes(q)) continue;
+        list.push({ value: v, label, sub: eid.split('.')[0] + ' · ' + this._t('marker.sub_entity') + (devName ? ' · ' + devName : '') });
+      }
     }
     const f = (this._markerDialog?.bindingFilter || '').toLowerCase().trim();
     const filtered = f

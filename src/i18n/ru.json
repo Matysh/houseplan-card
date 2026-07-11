@@ -178,5 +178,6 @@
   "editor.show_button": "Показывать кнопку",
   "editor.button_label": "Текст кнопки",
   "editor.button_target": "Путь дашборда (куда вести)",
-  "editor.aspect_ratio": "Соотношение сторон (напр. 16:9 или auto)"
+  "editor.aspect_ratio": "Соотношение сторон (напр. 16:9 или auto)",
+  "marker.sub_entity": "сущность"
 }

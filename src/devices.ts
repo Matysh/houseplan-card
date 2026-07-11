@@ -261,18 +261,22 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
       const area = m.area || reg?.area_id || (reg?.device_id && h.devices[reg.device_id]?.area_id) || '';
       const space = (area && areaToSpace[area]) || m.space || firstSpaceId;
       const st = h.states[ref];
+      const nm = reg?.name || st?.attributes?.friendly_name || ref;
+      let icon = resolveIcon(h, nm, '', [ref], iconRules);
+      if (ref.startsWith('lock.')) icon = 'mdi:lock';
       const item: DevItem = {
         id: m.id,
-        name: reg?.name || st?.attributes?.friendly_name || ref,
+        name: nm,
         model: '',
         area,
         space,
-        icon: 'mdi:shape-outline',
+        icon,
         entities: [ref],
         primary: ref,
         bindingKind: 'entity',
         bindingRef: ref,
       };
+      if (icon === 'mdi:thermometer' || icon === 'mdi:air-filter') item.temp = tempFor(h, [ref]);
       applyMarker(item, m);
       rest.push(item);
     } else {

@@ -224,3 +224,28 @@ test('isTempEntity: excludes chip temperature and diagnostic-category entities',
   // если в устройстве и чип, и настоящий — берётся настоящий
   assert.equal(tempFor(hass, ['sensor.plug_device_temperature', 'sensor.room_temperature']), 21);
 });
+
+test('buildDevices: entity marker gets an auto icon + temperature (split a multi-entity device)', () => {
+  const h = mkHass({
+    entities: {
+      'sensor.clim_temp': { entity_id: 'sensor.clim_temp', device_id: 'clim', platform: 'demo' },
+      'sensor.clim_hum': { entity_id: 'sensor.clim_hum', device_id: 'clim', platform: 'demo' },
+    },
+    states: {
+      'sensor.clim_temp': { state: '22.5', attributes: { device_class: 'temperature', friendly_name: 'Climate Temperature' } },
+      'sensor.clim_hum': { state: '55', attributes: { device_class: 'humidity', friendly_name: 'Climate Humidity' } },
+    },
+  });
+  const ctx = baseCtx(h, { markers: [
+    { id: 'e1', binding: 'entity:sensor.clim_temp' },
+    { id: 'e2', binding: 'entity:sensor.clim_hum' },
+  ] });
+  const devs = buildDevices(ctx);
+  const t = devs.find((d) => d.id === 'e1');
+  const hum = devs.find((d) => d.id === 'e2');
+  assert.equal(t.icon, 'mdi:thermometer');
+  assert.equal(t.temp, 22.5);
+  // humidity resolves to a real icon (device_class fallback), not the old generic shape
+  assert.ok(hum && hum.icon && hum.icon !== 'mdi:shape-outline');
+  assert.equal(hum.primary, 'sensor.clim_hum'); // more-info target
+});

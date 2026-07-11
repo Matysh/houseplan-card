@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.17.0 — 2026-07-11 (place individual entities, not just whole devices — issue #1)
+- **You can now put a single entity on the plan as its own icon** — e.g. a climate sensor
+  exposes temperature AND humidity; add the device (shows temperature) and separately add the
+  humidity entity as a second icon. In the "add device" dialog, start typing in the binding
+  search and individual entities now appear alongside devices/helpers (surfaced only while
+  searching, so the default list stays clean); the sub-label shows the domain and parent device.
+- Entity markers now get a **sensible auto icon** (name rules → `device_class` → chip) instead of
+  the generic shape, and a **temperature value** when the entity is a thermometer/air-monitor.
+  The `entity:<eid>` binding already existed (used by helpers/light groups); this exposes it for
+  any entity. (+1 test: 54 → 55.)
+
 ## v1.16.2 — 2026-07-11 (docs+log: correct card resource URL — fixes "Custom element doesn't exist")
 - **Support issue #2**: users adding a Lovelace resource that points at the on-disk path
   `/custom_components/houseplan/frontend/houseplan-card.js` get a `text/plain` MIME error and

@@ -160,6 +160,9 @@ matches, the entity *device class* decides (thermometer for temperature sensors,
 
 ### Step 6. Adding your own devices manually
 
+You can also place a **single entity** (not just a whole device): start typing in the binding search and individual entities appear next to devices — handy when one device exposes several values (e.g. temperature and humidity) and you want each as its own icon.
+
+
 Not everything has to be left to the automation. With the **＋** button in the header you can place any device, group or a **virtual point** on the plan (for example, an "Inlet valve" that does not exist as a device). Set a name, icon, model, link, description and, if you wish, attach a **PDF manual**.
 
 ![Adding a device manually](docs/images/07-marker-dialog.png)

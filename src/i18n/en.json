@@ -178,5 +178,6 @@
   "editor.show_button": "Show button",
   "editor.button_label": "Button label",
   "editor.button_target": "Target dashboard path",
-  "editor.aspect_ratio": "Aspect ratio (e.g. 16:9 or auto)"
+  "editor.aspect_ratio": "Aspect ratio (e.g. 16:9 or auto)",
+  "marker.sub_entity": "entity"
 }
