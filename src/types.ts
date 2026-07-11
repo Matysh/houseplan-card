@@ -61,6 +61,7 @@ export interface DevItem {
   entities: string[];
   primary?: string;
   temp?: number | null;
+  hum?: number | null;
   virtual?: boolean;
   marker?: Marker; // linked config marker (metadata, overrides)
   bindingKind?: 'device' | 'entity' | 'virtual';

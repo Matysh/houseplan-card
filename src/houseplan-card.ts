@@ -17,7 +17,7 @@ import {
   spaceDisplayOf, roomFillColor, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
 } from './logic';
-import { buildDevices, lqiFor, tempFor, areaLights, areaTemp } from './devices';
+import { buildDevices, lqiFor, tempFor, humFor, areaLights, areaTemp } from './devices';
 import type {
   RoomCfg, SpaceModel, PdfRef, Marker, ServerConfig, DevItem, CardConfig,
 } from './types';
@@ -26,7 +26,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.17.0';
+const CARD_VERSION = '1.17.1';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -639,6 +639,12 @@ class HouseplanCard extends LitElement {
     if (!this._config?.show_temperature) return null;
     if (d.icon !== 'mdi:thermometer' && d.icon !== 'mdi:air-filter') return null;
     return tempFor(this.hass, d.entities);
+  }
+
+  private _liveHum(d: DevItem): number | null {
+    if (!this._config?.show_temperature) return null; // same "sensor values" toggle as temperature
+    if (d.icon !== 'mdi:water-percent') return null;
+    return humFor(this.hass, d.entities);
   }
 
   // ================= interaction =================
@@ -2037,6 +2043,7 @@ class HouseplanCard extends LitElement {
     const top = ((p.y - view.y) / view.h) * 100;
     const cls = this._stateClass(d);
     const temp = this._liveTemp(d);
+    const hum = this._liveHum(d);
     const lqi = this._config?.show_signal && !d.virtual ? lqiFor(this.hass, d.entities) : null;
     return html`<div
       class="dev ${cls} ${this._selId === d.id ? 'sel' : ''} ${d.virtual ? 'virtual' : ''}"
@@ -2044,7 +2051,7 @@ class HouseplanCard extends LitElement {
       @click=${(e: MouseEvent) => this._clickDevice(e, d)}
       @mousemove=${(e: MouseEvent) =>
         this._showTip(e, d.name,
-          d.model + (temp != null ? ' · ' + temp + '°' : '') + (lqi != null ? ' · LQI ' + lqi : ''))}
+          d.model + (temp != null ? ' · ' + temp + '°' : '') + (hum != null ? ' · ' + hum + '%' : '') + (lqi != null ? ' · LQI ' + lqi : ''))}
       @mouseleave=${() => (this._tip = null)}
       @pointerdown=${(e: PointerEvent) => this._pointerDown(e, d)}
       @pointermove=${(e: PointerEvent) => this._pointerMove(e, d)}
@@ -2053,6 +2060,7 @@ class HouseplanCard extends LitElement {
     >
       <ha-icon icon="${d.icon}"></ha-icon>
       ${temp != null ? html`<span class="tval">${temp}°</span>` : nothing}
+      ${hum != null ? html`<span class="hval">${hum}%</span>` : nothing}
       ${lqi != null ? html`<span class="lqi" style="color:${lqiColor(lqi)}">${lqi}</span>` : nothing}
     </div>`;
   }

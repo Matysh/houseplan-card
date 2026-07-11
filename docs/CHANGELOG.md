@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.17.1 — 2026-07-11 (humidity value next to the icon, like temperature)
+- **Humidity sensors now show their value (%) next to the icon**, mirroring the temperature
+  badge. Any marker resolved to the humidity icon (`mdi:water-percent`) — a humidity device or a
+  humidity entity placed on its own (v1.17.0) — gets an integer `%` badge and the value in its
+  tooltip. New `isHumEntity`/`humFor` (diagnostic entities excluded), `DevItem.hum`, `.hval`
+  badge, gated by the same "sensor values" option as temperature. (+2 tests: 55 → 57.)
+
 ## v1.17.0 — 2026-07-11 (place individual entities, not just whole devices — issue #1)
 - **You can now put a single entity on the plan as its own icon** — e.g. a climate sensor
   exposes temperature AND humidity; add the device (shows temperature) and separately add the

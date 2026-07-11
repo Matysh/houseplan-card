@@ -104,6 +104,27 @@ export function tempFor(hass: any, entIds: string[]): number | null {
   return null;
 }
 
+/** A humidity-measuring entity (device_class humidity or *_humidity), excluding diagnostics. */
+export function isHumEntity(hass: any, eid: string): boolean {
+  if (hass.entities?.[eid]?.entity_category) return false;
+  const st = hass.states[eid];
+  if (!st) return /_humidity$/.test(eid);
+  const a = st.attributes || {};
+  return a.device_class === 'humidity' || (a.unit_of_measurement === '%' && /_humidity$/.test(eid)) || /_humidity$/.test(eid);
+}
+
+/** First readable humidity value (integer %) among the entities, or null. */
+export function humFor(hass: any, entIds: string[]): number | null {
+  for (const eid of entIds) {
+    if (!isHumEntity(hass, eid)) continue;
+    const st = hass.states[eid];
+    if (!st) continue;
+    const v = parseFloat(st.state);
+    if (!isNaN(v)) return Math.round(v);
+  }
+  return null;
+}
+
 /** Group light entities: HA light-group (platform=group) and Z2M groups (device model=Group). */
 export function lightGroups(hass: any, enabled: boolean): { eid: string; name: string; area: string }[] {
   if (!enabled) return [];
@@ -206,6 +227,7 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
     };
     item.primary = primaryEntity(h, entIds, icon);
     if (icon === 'mdi:thermometer' || icon === 'mdi:air-filter') item.temp = tempFor(h, entIds);
+    if (icon === 'mdi:water-percent') item.hum = humFor(h, entIds);
     rest.push(item);
   }
 
@@ -254,6 +276,8 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
       };
       item.primary = primaryEntity(h, entIds, icon);
       if (icon === 'mdi:thermometer' || icon === 'mdi:air-filter') item.temp = tempFor(h, entIds);
+      if (icon === 'mdi:water-percent') item.hum = humFor(h, entIds);
+    if (icon === 'mdi:water-percent') item.hum = humFor(h, entIds);
       applyMarker(item, m);
       rest.push(item);
     } else if (kind === 'entity') {
@@ -277,6 +301,7 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
         bindingRef: ref,
       };
       if (icon === 'mdi:thermometer' || icon === 'mdi:air-filter') item.temp = tempFor(h, [ref]);
+      if (icon === 'mdi:water-percent') item.hum = humFor(h, [ref]);
       applyMarker(item, m);
       rest.push(item);
     } else {

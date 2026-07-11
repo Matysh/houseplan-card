@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildDevices, lightGroups, primaryEntity, lqiFor, tempFor, areaLights, areaTemp } from '../test-build/devices.js';
+import { buildDevices, lightGroups, primaryEntity, lqiFor, tempFor, humFor, areaLights, areaTemp } from '../test-build/devices.js';
 import { compileIconRules } from '../test-build/rules.js';
 
 /** Minimal fake hass around the pieces buildDevices reads. */
@@ -248,4 +248,24 @@ test('buildDevices: entity marker gets an auto icon + temperature (split a multi
   // humidity resolves to a real icon (device_class fallback), not the old generic shape
   assert.ok(hum && hum.icon && hum.icon !== 'mdi:shape-outline');
   assert.equal(hum.primary, 'sensor.clim_hum'); // more-info target
+});
+
+test('humFor: reads a humidity entity as an integer %, ignores non-humidity', () => {
+  const h = mkHass({ states: {
+    'sensor.h': { state: '54.7', attributes: { device_class: 'humidity' } },
+    'sensor.t': { state: '22', attributes: { device_class: 'temperature' } },
+  }});
+  assert.equal(humFor(h, ['sensor.t', 'sensor.h']), 55); // rounded
+  assert.equal(humFor(h, ['sensor.t']), null);
+});
+
+test('buildDevices: humidity entity marker shows a humidity badge (item.hum), water-percent icon', () => {
+  const h = mkHass({
+    entities: { 'sensor.clim_hum': { entity_id: 'sensor.clim_hum', device_id: 'clim', platform: 'demo' } },
+    states: { 'sensor.clim_hum': { state: '54.7', attributes: { device_class: 'humidity', friendly_name: 'Climate Humidity' } } },
+  });
+  const hum = buildDevices(baseCtx(h, { markers: [{ id: 'e2', binding: 'entity:sensor.clim_hum' }] })).find((d) => d.id === 'e2');
+  assert.equal(hum.icon, 'mdi:water-percent');
+  assert.equal(hum.hum, 55);
+  assert.equal(hum.temp, undefined);
 });

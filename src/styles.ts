@@ -383,6 +383,23 @@ export const cardStyles = css`
       white-space: nowrap;
       pointer-events: none;
     }
+.dev .hval {
+      position: absolute;
+      left: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      margin-left: calc(var(--icon-size, 2.5cqw) * 0.1);
+      background: var(--card-background-color, var(--hp-bg));
+      border: 1px solid #4fc3f7;
+      border-radius: calc(var(--icon-size, 2.5cqw) * 0.18);
+      padding: 0 calc(var(--icon-size, 2.5cqw) * 0.14);
+      font-size: calc(var(--icon-size, 2.5cqw) * 0.45);
+      font-weight: 700;
+      line-height: calc(var(--icon-size, 2.5cqw) * 0.68);
+      color: var(--hp-txt);
+      white-space: nowrap;
+      pointer-events: none;
+    }
     .dev .lqi {
       position: absolute;
       top: 100%;
