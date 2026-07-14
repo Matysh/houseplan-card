@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   lqiColor, snapToGrid, segKey, samePoint, pointInPolygon, markerIdForBinding, averageLqi,
   fitView, declump, safeUrl, resolveTapAction, floorsOf, subst, spaceDisplayOf, roomFillColor,
+  segmentCm, formatLength,
 } from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
@@ -257,4 +258,21 @@ test('spaceDisplayOf: temp bounds default to 20..25 and accept overrides', () =>
   const o = spaceDisplayOf({ settings: { temp_min: 18.5, temp_max: 23 } });
   assert.equal(o.tempMin, 18.5);
   assert.equal(o.tempMax, 23);
+});
+
+test('segmentCm: cells scaled by cm-per-cell', () => {
+  assert.equal(segmentCm([0, 0], [30, 40], 10, 5), 25); // 50 units / pitch 10 = 5 cells * 5cm
+  assert.ok(Math.abs(segmentCm([0, 0], [240, 0], 1000 / 240, 5) - 288) < 1e-9);
+});
+
+test('formatLength: metric metres with 2 decimals', () => {
+  assert.equal(formatLength(25, false), '0.25 m');
+  assert.equal(formatLength(125, false), '1.25 m');
+  assert.equal(formatLength(0, false), '0.00 m');
+});
+
+test('formatLength: imperial feet + inches, with inch rollover', () => {
+  assert.equal(formatLength(124.46, true), '4′ 1″');
+  assert.equal(formatLength(30.48, true), '1′ 0″');
+  assert.equal(formatLength(29.464, true), '1′ 0″');
 });

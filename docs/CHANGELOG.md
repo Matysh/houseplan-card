@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.18.0 — 2026-07-14 (live measurements while drawing rooms + per-space scale)
+- **Ruler while drawing.** In room-markup "draw" mode, a badge follows the cursor showing the
+  length of the current segment (last placed vertex → cursor). Units come from the HA unit
+  system: metric → metres ("1.25 m"), imperial → feet+inches ("4′ 1″").
+- **Per-space scale.** New "Scale (grid cell size)" field in the space dialog — cm represented
+  by one grid cell (default **5 cm**, i.e. 240 cells ≈ 12 m). Stored as `space.cell_cm`; each
+  plan can have its own real-world size.
+- Pure helpers `segmentCm` / `formatLength` in logic.ts (unit-tested); `_fmtLen` +
+  `_renderMeasureLabel` in the card; `.measurelabel` style; i18n `space.scale_label`/`scale_unit`.
+  (+3 tests: 58 → 61 frontend.)
+
 ## v1.17.2 — 2026-07-11 (humidity badge: gate on the sensor, not the icon)
 - Fix on top of v1.17.1: the humidity `%` badge is now shown whenever the marker's primary
   entity is a humidity sensor (`device_class: humidity`), regardless of the resolved icon.

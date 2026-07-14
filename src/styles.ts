@@ -236,6 +236,20 @@ export const cardStyles = css`
       z-index: 1;
     }
     .roomlabel:active { cursor: grabbing; }
+    .measurelabel {
+      position: absolute;
+      transform: translate(12px, -150%);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.72);
+      color: #fff;
+      white-space: nowrap;
+      pointer-events: none;
+      user-select: none;
+      z-index: 3;
+    }
     .rlabel {
       fill: var(--hp-muted);
       font-size: 15px;

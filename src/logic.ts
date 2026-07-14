@@ -13,6 +13,24 @@ export function snapToGrid(v: number, pitch: number): number {
   return Math.round(v / pitch) * pitch;
 }
 
+/** Real-world length (cm) of a segment given the grid pitch (render units per cell) and cm per cell. */
+export function segmentCm(a: number[], b: number[], gridPitch: number, cellCm: number): number {
+  const cells = Math.hypot(b[0] - a[0], b[1] - a[1]) / gridPitch;
+  return cells * cellCm;
+}
+
+/** Format a length (cm) for display: metric metres ("1.25 m") or imperial feet+inches ("4′ 1″"). */
+export function formatLength(cm: number, imperial: boolean): string {
+  if (imperial) {
+    const totalIn = cm / 2.54;
+    let ft = Math.floor(totalIn / 12);
+    let inch = Math.round(totalIn - ft * 12);
+    if (inch === 12) { ft += 1; inch = 0; }
+    return `${ft}′ ${inch}″`;
+  }
+  return `${(cm / 100).toFixed(2)} m`;
+}
+
 /** Canonical key of a segment (independent of direction). */
 export function segKey(a: number[], b: number[]): string {
   const [p, q] = a[0] < b[0] || (a[0] === b[0] && a[1] <= b[1]) ? [a, b] : [b, a];

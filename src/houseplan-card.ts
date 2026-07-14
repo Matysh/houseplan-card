@@ -13,6 +13,7 @@ import {
 } from './rules';
 import {
   lqiColor, snapToGrid, segKey as segKeyOf, samePoint, pointInPolygon, markerIdForBinding,
+  segmentCm, formatLength,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
   spaceDisplayOf, roomFillColor, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
@@ -26,7 +27,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.17.2';
+const CARD_VERSION = '1.18.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -132,6 +133,7 @@ class HouseplanCard extends LitElement {
     fillMode: 'none' | 'lqi' | 'light' | 'temp';
     tempMin: number;
     tempMax: number;
+    cellCm: number;                // real-world cm represented by one grid cell
     busy: boolean;
   } | null = null;
   private _keyHandler = (e: KeyboardEvent) => this._onKey(e);
@@ -944,6 +946,18 @@ class HouseplanCard extends LitElement {
     return NORM_W / GRID_N;
   }
 
+  /** cm represented by one grid cell for the current space (default 5). */
+  private get _cellCm(): number {
+    const v = Number(this._curSpaceCfg?.cell_cm);
+    return Number.isFinite(v) && v > 0 ? v : 5;
+  }
+
+  /** Human-readable length of a segment (render units) using the HA unit system. */
+  private _fmtLen(a: number[], b: number[]): string {
+    const cm = segmentCm(a, b, this._gridPitch, this._cellCm);
+    return formatLength(cm, this.hass?.config?.unit_system?.length === 'mi');
+  }
+
   private get _curSpaceCfg(): any {
     return this._serverCfg?.spaces.find((s: any) => s.id === this._space);
   }
@@ -1509,6 +1523,7 @@ class HouseplanCard extends LitElement {
         showBorders: disp.showBorders, showNames: disp.showNames,
         roomColor: disp.color, roomOpacity: disp.opacity, fillMode: disp.fill,
         tempMin: disp.tempMin, tempMax: disp.tempMax,
+        cellCm: Number(sp.cell_cm) > 0 ? Number(sp.cell_cm) : 5,
         busy: false,
       };
     } else {
@@ -1518,6 +1533,7 @@ class HouseplanCard extends LitElement {
         showBorders: false, showNames: false,
         roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'none',
         tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
+        cellCm: 5,
         busy: false,
       };
     }
@@ -1602,6 +1618,7 @@ class HouseplanCard extends LitElement {
         temp_min: Number.isFinite(d.tempMin) ? Math.min(d.tempMin, d.tempMax) : DEFAULT_TEMP_MIN,
         temp_max: Number.isFinite(d.tempMax) ? Math.max(d.tempMin, d.tempMax) : DEFAULT_TEMP_MAX,
       };
+      sp.cell_cm = Number.isFinite(d.cellCm) && d.cellCm > 0 ? d.cellCm : 5;
       await this._saveConfigNow();
       this._spaceDialog = null;
       if (d.mode === 'create') this._space = sp.id;
@@ -1690,6 +1707,7 @@ class HouseplanCard extends LitElement {
       showBorders: false, showNames: false,
       roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'none',
       tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
+      cellCm: 5,
       busy: false,
     };
   }
@@ -2007,6 +2025,9 @@ class HouseplanCard extends LitElement {
             ${disp.showNames && !this._markup
               ? space.rooms.map((r) => this._renderRoomLabel(r, space, view, disp))
               : nothing}
+            ${this._markup && this._tool === 'draw' && this._path.length && this._cursorPt && !this._contourClosed
+              ? this._renderMeasureLabel(view)
+              : nothing}
           </div>
           </div>
           ${this._zoom > 1
@@ -2126,6 +2147,15 @@ class HouseplanCard extends LitElement {
       @pointerup=${() => this._labelUp(r)}
       @pointercancel=${() => this._labelUp(r)}
     >${r.name}</div>`;
+  }
+
+  /** Length badge that follows the cursor while drawing the current segment. */
+  private _renderMeasureLabel(view: { x: number; y: number; w: number; h: number }): TemplateResult {
+    const a = this._path[this._path.length - 1];
+    const b = this._cursorPt!;
+    const left = ((b[0] - view.x) / view.w) * 100;
+    const top = ((b[1] - view.y) / view.h) * 100;
+    return html`<div class="measurelabel" style="left:${left}%;top:${top}%">${this._fmtLen(a, b)}</div>`;
   }
 
   private _roomCenter(r: RoomCfg): number[] {
@@ -2401,6 +2431,16 @@ class HouseplanCard extends LitElement {
                 )}
               </select>`
             : nothing}
+
+          <label>${this._t('space.scale_label')}</label>
+          <div class="colorrow">
+            <input class="namein tempin" type="number" min="0.1" step="0.1" .value=${String(d.cellCm)}
+              @input=${(e: Event) => {
+                const n = parseFloat((e.target as HTMLInputElement).value);
+                this._spaceDialog = { ...d, cellCm: Number.isFinite(n) && n > 0 ? n : d.cellCm };
+              }} />
+            <span class="opl">${this._t('space.scale_unit')}</span>
+          </div>
 
           <label class="dispsection">${this._t('space.display_section')}</label>
           <label class="srcrow">

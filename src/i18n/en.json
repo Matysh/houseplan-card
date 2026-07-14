@@ -152,6 +152,8 @@
   "import.progress": "Floor {i} of {n}",
   "import.done": "Spaces created. Outline the rooms: click grid dots and close the contour.",
   "btn.skip": "Skip",
+  "space.scale_label": "Scale (grid cell size)",
+  "space.scale_unit": "cm per cell",
   "space.display_section": "Display",
   "space.show_borders": "Always show room borders",
   "space.show_names": "Show room names (drag to move)",
