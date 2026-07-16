@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.21.1 — 2026-07-16 (audit: split snaps to the wall, docs for merge/split)
+- **Fix (found in audit):** Split required each click to land on a grid node, so it
+  silently refused rooms whose walls are not grid-aligned (imported or older polygons)
+  — the "pick a wall" toast fired no matter where you clicked. The click now snaps to
+  the room's nearest wall (`closestPointOnBoundary`) instead of the grid, with the pull
+  capped at ~6 grid cells so an accidental click in the middle of a room stays a miss
+  rather than becoming a wall point the user never meant; `splitRoom()` still rejects
+  a cut that is not a clean wall-to-wall chord. Also makes aiming easier on the fine
+  (240-cell) grid.
+- **Docs:** README (en + ru) now documents room Merge, Split, the drawing ruler and the
+  per-space scale — these v1.18–v1.21 features were shipped without user-facing docs.
+  `docs/TESTING.md` gained merge/split rows and a fresh self-run record.
+- New smokes `demo/smoke_merge_split.mjs` and `smoke_split_nonsnap.mjs`;
+  `closestPointOnBoundary` unit-tested. (+1 test: 72 → 73.)
+
 ## v1.21.0 — 2026-07-16 (merge and split rooms)
 - **Merge** (toolbar "Merge"): click a room, then a neighbour. Only rooms that **share a wall**
   can merge — and that is decided by the result rather than a heuristic: `mergeRooms` unions the

@@ -120,6 +120,14 @@ As soon as the outline is closed, the room-save dialog appears. Here you need to
 
 ![Marking up a room and saving it](docs/images/05-room-dialog.png)
 
+While drawing, a ruler follows the cursor showing the current segment's real length (metres, or feet + inches on an imperial Home Assistant). The scale is set per space — the **"Scale (grid cell size)"** field in the space dialog says how many centimetres one grid cell represents (default 5 cm).
+
+Rooms may not overlap: a click strictly inside an existing room, or an outline that would swallow one, is refused. Two more tools help you reshape the plan later:
+
+- **Merge** — click a room, then a neighbour that shares a wall; they fuse into one. A dialog picks which name and area survive.
+- **Split** — click a room, then two points on its walls; the chord cuts it in two. The bigger part stays the room it was (name, area, devices); the smaller one asks for a new name and area.
+
+
 ### Step 3. Devices appear by themselves
 
 As soon as you save a room bound to an area, **the devices of that area are automatically laid out inside the outline**. These are the same devices shown on the **Settings → Devices → (filtered by the room)** page — only the meaningful ones, without service records, bridges and duplicates.

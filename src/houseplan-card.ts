@@ -14,7 +14,7 @@ import {
 import {
   lqiColor, snapToGrid, samePoint, pointInPolygon, markerIdForBinding,
   segmentCm, formatLength, roomEdges, roomPoly, pointStrictlyInside, roomsOverlap,
-  pointOnBoundary, mergeRooms, splitRoom, polygonArea,
+  pointOnBoundary, mergeRooms, splitRoom, polygonArea, closestPointOnBoundary,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
   spaceDisplayOf, roomFillColor, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
@@ -28,7 +28,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.21.0';
+const CARD_VERSION = '1.21.1';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -1171,9 +1171,17 @@ class HouseplanCard extends LitElement {
       this._splitSel = null;
       return;
     }
+    // A split point lands on the room's nearest wall — the user aims at a wall,
+    // and rooms need not be grid-aligned (imported/legacy polygons), so snapping
+    // to the grid would miss the outline. The pull is capped: a click far from
+    // any wall (e.g. an accidental one in the middle of the room) is a miss and
+    // gets the toast, not a wall the user never meant. splitRoom() still rejects
+    // any cut that is not a clean wall-to-wall chord.
     const eps = this._gridPitch * 0.02;
-    const pt = this._snap(raw);
-    if (!pointOnBoundary(pt, poly, eps)) {
+    const pull = this._gridPitch * 6; // ≈2.5% of the plan width — generous but intentional
+    const near = closestPointOnBoundary(raw, poly);
+    const pt = near && Math.hypot(near[0] - raw[0], near[1] - raw[1]) <= pull ? near : null;
+    if (!pt || !pointOnBoundary(pt, poly, eps)) {
       this._showToast(this._t('toast.split_pick_wall'));
       return;
     }
