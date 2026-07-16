@@ -79,6 +79,10 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] Split (v1.21.0): click a room, then two points on its walls — the bigger part keeps the
       name/area/devices, the smaller opens the new-room dialog; Cancel leaves the room whole
 - [ ] Split: a cut with an end off the wall, or along a wall, is refused with a toast
+- [ ] Split: the click snaps to the nearest wall, so it works on non-grid-aligned rooms
+      (imported/legacy polygons), not only on rooms drawn on the current grid [auto]
+- [ ] Split: a click far from any wall (middle of the room) is a miss with a toast —
+      the wall-snap pull is capped, accidental clicks do not pick a wall [auto]
 - [ ] Esc / Ctrl+Z removes the last dot (and its line); Reset clears the path
 - [ ] Closing the contour (click the first dot, ≥4 points) opens the room dialog
 - [ ] Room dialog: area list shows only unassigned areas; picking an area prefills the name
@@ -169,6 +173,16 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 ---
 
 ## Last self-run
+
+**v1.21.1 (2026-07-16), full audit of v1.16–v1.21.** All `[auto]` items pass (73 frontend
+tests, 12 backend). New smokes on the synthetic home: `smoke_merge_split` (merge fuses
+adjacent rooms keeping the survivor's id; non-adjacent refused with a toast; split creates
+the new room, cancel keeps the room whole, along-wall cut refused) and `smoke_split_nonsnap`.
+Finding turned into a fix (shipped this release): **Split required the click to land on a grid
+node**, so it silently failed on rooms whose walls are not grid-aligned (imported/legacy
+polygons) — the click now snaps to the nearest wall instead of the grid, and `splitRoom()`
+still rejects a bad cut. README (en+ru) gained the merge/split/ruler/scale documentation it
+was missing. The earlier self-run record follows.
 
 **v1.14.0 (2026-07-06), headless demo harness + unit suites.** All `[auto]` items pass
 (43 frontend tests, 11 pure + 12 HA-harness backend tests, `smoke_space_settings`,

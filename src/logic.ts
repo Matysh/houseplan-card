@@ -105,6 +105,29 @@ function distToSeg(p: number[], a: number[], b: number[]): number {
  * neighbouring rooms share walls, so their vertices sit on each other's outlines —
  * including mid-span, since real walls overlap collinearly rather than match exactly.
  */
+/**
+ * Project a point onto the nearest edge of a polygon and return that point,
+ * or null when the polygon has no edges. Used to snap a Split click onto the
+ * actual wall (rooms may not be grid-aligned — imported polygons, older configs),
+ * so cutting no longer requires hitting a grid node exactly on the outline.
+ */
+export function closestPointOnBoundary(p: number[], poly: number[][]): number[] | null {
+  if (!poly || poly.length < 2) return null;
+  let best: number[] | null = null;
+  let bestD = Infinity;
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i], b = poly[(i + 1) % poly.length];
+    const dx = b[0] - a[0], dy = b[1] - a[1];
+    const len2 = dx * dx + dy * dy;
+    let t = len2 ? ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / len2 : 0;
+    t = Math.max(0, Math.min(1, t));
+    const q = [a[0] + t * dx, a[1] + t * dy];
+    const d = Math.hypot(p[0] - q[0], p[1] - q[1]);
+    if (d < bestD) { bestD = d; best = q; }
+  }
+  return best;
+}
+
 export function pointOnBoundary(p: number[], poly: number[][], eps = 1e-6): boolean {
   if (!poly || poly.length < 2) return false;
   for (let i = 0; i < poly.length; i++)

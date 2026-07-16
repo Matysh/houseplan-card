@@ -4,7 +4,7 @@ import {
   lqiColor, snapToGrid, segKey, samePoint, pointInPolygon, markerIdForBinding, averageLqi,
   fitView, declump, safeUrl, resolveTapAction, floorsOf, subst, spaceDisplayOf, roomFillColor,
   segmentCm, formatLength, roomEdges, roomPoly, pointOnBoundary, pointStrictlyInside, roomsOverlap,
-  mergeRooms, splitRoom, polygonArea,
+  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary,
 } from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
@@ -386,4 +386,12 @@ test('splitRoom: refuses cuts that are not clean wall-to-wall chords', () => {
   // an L-shaped room: a chord that would leave the room is refused
   const L = [[0, 0], [4, 0], [4, 2], [2, 2], [2, 4], [0, 4]];
   assert.equal(splitRoom(L, [4, 1], [1, 4]), null);
+});
+
+test('closestPointOnBoundary: projects a click onto the nearest wall', () => {
+  const sq = [[0, 0], [10, 0], [10, 10], [0, 10]];
+  assert.deepEqual(closestPointOnBoundary([5, -3], sq), [5, 0]);   // above the bottom edge
+  assert.deepEqual(closestPointOnBoundary([13, 5], sq), [10, 5]);  // right of the right edge
+  assert.deepEqual(closestPointOnBoundary([5, 4], sq), [5, 0]);    // inside → nearest edge (bottom)
+  assert.equal(closestPointOnBoundary([0, 0], [[0, 0]]), null);    // no edges
 });
