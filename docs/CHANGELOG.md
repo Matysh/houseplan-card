@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.21.3 — 2026-07-16 (room labels: no text shadow)
+- Room name labels no longer carry a text shadow — crisper look on both the white
+  hand-drawn canvas and plan images.
+
 ## v1.21.2 — 2026-07-16 (space-dialog polish)
 - The **"Scale (cm per cell)" input is compact** again — a generic `width:100%`
   dialog rule was stretching it across the row.
