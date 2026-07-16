@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.21.0 — 2026-07-16 (merge and split rooms)
+- **Merge** (toolbar "Merge"): click a room, then a neighbour. Only rooms that **share a wall**
+  can merge — and that is decided by the result rather than a heuristic: `mergeRooms` unions the
+  outlines and accepts the pair only when they collapse into ONE hole-free outline. A corner
+  touch, rooms apart, or a union enclosing a hole are refused. A dialog picks which name and
+  area survive; the kept room keeps its id, so its label position and devices stay put. The
+  dialog warns that the other area is released.
+- **Split** (toolbar "Split"): click the room, then two points on its walls — the chord cuts it
+  in two, with the live ruler on the cut. **The bigger part stays the room it was** (name, area,
+  devices); the smaller becomes a new room and its dialog asks for name/area. Cancelling the
+  dialog leaves the room whole — the cut is applied only on confirm. Cuts that do not run
+  wall-to-wall inside the room (ends off the wall, chord leaving a concave room, a chord along a
+  wall) are refused.
+- Boolean geometry via **polyclip-ts** (proper ESM + native types; `polygon-clipping` ships named
+  types but a default-only ESM build, which breaks either tsc or the runtime). Verified against
+  the real plan, where neighbouring walls overlap collinearly instead of matching exactly —
+  the case a hand-rolled union gets wrong. Bundle: 151 KB → 202 KB.
+- New pure helpers: `polygonArea`, `mergeRooms`, `splitRoom`. (+5 tests: 67 → 72.)
+
 ## v1.20.0 — 2026-07-16 (rooms may not overlap)
 - **A click strictly inside an existing room is refused** while drawing (toast names the room).
   Being *on* a wall stays legal — neighbouring rooms share walls, and real walls overlap

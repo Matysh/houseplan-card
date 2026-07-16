@@ -74,6 +74,11 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] Rooms never overlap (v1.20.0): a click strictly inside an existing room is refused with a
       toast; a click ON a shared wall (including mid-span of a longer neighbour wall) still works
 - [ ] Closing an outline drawn AROUND an existing room is refused; the outline stays open
+- [ ] Merge (v1.21.0): two rooms sharing a wall merge into one; the dialog picks the surviving
+      name/area; rooms touching only at a corner or apart are refused with a toast
+- [ ] Split (v1.21.0): click a room, then two points on its walls — the bigger part keeps the
+      name/area/devices, the smaller opens the new-room dialog; Cancel leaves the room whole
+- [ ] Split: a cut with an end off the wall, or along a wall, is refused with a toast
 - [ ] Esc / Ctrl+Z removes the last dot (and its line); Reset clears the path
 - [ ] Closing the contour (click the first dot, ≥4 points) opens the room dialog
 - [ ] Room dialog: area list shows only unassigned areas; picking an area prefills the name

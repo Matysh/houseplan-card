@@ -4,6 +4,7 @@ import {
   lqiColor, snapToGrid, segKey, samePoint, pointInPolygon, markerIdForBinding, averageLqi,
   fitView, declump, safeUrl, resolveTapAction, floorsOf, subst, spaceDisplayOf, roomFillColor,
   segmentCm, formatLength, roomEdges, roomPoly, pointOnBoundary, pointStrictlyInside, roomsOverlap,
+  mergeRooms, splitRoom, polygonArea,
 } from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
@@ -337,4 +338,52 @@ test('roomPoly: polygon rooms as-is, legacy rect rooms as four corners', () => {
   assert.equal(roomPoly({ poly: SQ }), SQ);
   assert.deepEqual(roomPoly({ x: 0, y: 0, w: 2, h: 2 }), SQ);
   assert.equal(roomPoly({}), null);
+});
+
+test('polygonArea: shoelace, orientation-independent', () => {
+  assert.equal(polygonArea([[0, 0], [2, 0], [2, 2], [0, 2]]), 4);
+  assert.equal(polygonArea([[0, 0], [0, 2], [2, 2], [2, 0]]), 4); // reversed winding
+  assert.equal(polygonArea([[0, 0], [1, 1]]), 0);
+});
+
+test('mergeRooms: only rooms sharing a wall merge; the union is one simple outline', () => {
+  const a = [[0, 0], [2, 0], [2, 2], [0, 2]];
+  const full = mergeRooms(a, [[2, 0], [4, 0], [4, 2], [2, 2]]);   // whole wall shared
+  assert.equal(polygonArea(full), 8);
+  assert.equal(full.length, 4);                                    // collapses to one rectangle
+  // the neighbour's wall is LONGER than ours — the real dacha case
+  const partial = mergeRooms(a, [[2, -1], [4, -1], [4, 3], [2, 3]]);
+  assert.equal(polygonArea(partial), 4 + 8);
+  assert.ok(partial.length >= 6);                                  // an L/T-shaped outline
+});
+
+test('mergeRooms: refuses a corner touch, rooms apart, and a union with a hole', () => {
+  const a = [[0, 0], [2, 0], [2, 2], [0, 2]];
+  assert.equal(mergeRooms(a, [[2, 2], [4, 2], [4, 4], [2, 4]]), null); // corner only
+  assert.equal(mergeRooms(a, [[5, 5], [6, 5], [6, 6], [5, 6]]), null); // apart
+  const u = [[0, 0], [6, 0], [6, 2], [4, 2], [4, 6], [6, 6], [6, 8], [0, 8]];
+  assert.equal(mergeRooms(u, [[6, 2], [8, 2], [8, 6], [6, 6]]), null); // would enclose a hole
+});
+
+test('splitRoom: a wall-to-wall chord cuts the room in two, areas are preserved', () => {
+  const sq = [[0, 0], [4, 0], [4, 4], [0, 4]];
+  const parts = splitRoom(sq, [0, 2], [4, 2]);            // straight across
+  assert.ok(parts);
+  assert.equal(polygonArea(parts[0]) + polygonArea(parts[1]), polygonArea(sq));
+  assert.equal(polygonArea(parts[0]), 8);
+  assert.equal(polygonArea(parts[1]), 8);
+  // an off-centre cut → a bigger and a smaller part (the bigger one keeps the room)
+  const off = splitRoom(sq, [0, 1], [4, 1]);
+  const areas = [polygonArea(off[0]), polygonArea(off[1])].sort((x, y) => x - y);
+  assert.deepEqual(areas, [4, 12]);
+});
+
+test('splitRoom: refuses cuts that are not clean wall-to-wall chords', () => {
+  const sq = [[0, 0], [4, 0], [4, 4], [0, 4]];
+  assert.equal(splitRoom(sq, [1, 1], [3, 3]), null);   // ends not on a wall
+  assert.equal(splitRoom(sq, [0, 2], [0, 2]), null);   // same point
+  assert.equal(splitRoom(sq, [0, 0], [4, 0]), null);   // along a wall → zero-area sliver
+  // an L-shaped room: a chord that would leave the room is refused
+  const L = [[0, 0], [4, 0], [4, 2], [2, 2], [2, 4], [0, 4]];
+  assert.equal(splitRoom(L, [4, 1], [1, 4]), null);
 });

@@ -274,6 +274,11 @@ export const cardStyles = css`
     .stage.markup .devlayer {
       display: none; /* in markup mode icons must not get in the way */
     }
+    .room.picked {
+      stroke: #ffc14d;
+      stroke-width: 3;
+      fill: rgba(255, 193, 77, 0.25);
+    }
     .room.outlined {
       stroke: rgba(62, 166, 255, 0.55);
       fill: rgba(62, 166, 255, 0.06);

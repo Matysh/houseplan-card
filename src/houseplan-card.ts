@@ -14,6 +14,7 @@ import {
 import {
   lqiColor, snapToGrid, samePoint, pointInPolygon, markerIdForBinding,
   segmentCm, formatLength, roomEdges, roomPoly, pointStrictlyInside, roomsOverlap,
+  pointOnBoundary, mergeRooms, splitRoom, polygonArea,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
   spaceDisplayOf, roomFillColor, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
@@ -27,14 +28,14 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.20.0';
+const CARD_VERSION = '1.21.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
 const NORM_W = 1000; // width of the render space for normalized configs
 
 const GRID_N = 240; // grid points across the plan width (half the previous step; old nodes are a subset of the new ones, positions are preserved)
-type MarkupTool = 'draw' | 'delroom';
+type MarkupTool = 'draw' | 'merge' | 'split' | 'delroom';
 
 const fireEvent = (node: EventTarget, type: string, detail?: unknown) => {
   const ev = new Event(type, { bubbles: true, composed: true }) as any;
@@ -81,6 +82,11 @@ class HouseplanCard extends LitElement {
   private _tool: MarkupTool = 'draw';
   private _path: number[][] = []; // current outline (render units, vertices snapped to the grid)
   private _cursorPt: number[] | null = null;
+  private _mergeSel: string | null = null;                       // first room picked for a merge
+  private _mergeDialog: { aId: string; bId: string; poly: number[][]; pick: 'a' | 'b' } | null = null;
+  private _splitSel: { roomId: string; a: number[] | null } | null = null; // room being cut + first wall point
+  // a split is applied only when the new room's dialog is confirmed — cancel leaves the room intact
+  private _pendingSplit: { roomId: string; mainPoly: number[][]; newPoly: number[][] } | null = null;
   private _areaSel = '';
   private _nameSel = '';
   private _roomDialog = false;
@@ -170,6 +176,9 @@ class HouseplanCard extends LitElement {
     _tool: { state: true },
     _path: { state: true },
     _cursorPt: { state: true },
+    _mergeSel: { state: true },
+    _mergeDialog: { state: true },
+    _splitSel: { state: true },
     _areaSel: { state: true },
     _nameSel: { state: true },
     _roomDialog: { state: true },
@@ -966,6 +975,10 @@ class HouseplanCard extends LitElement {
     this._path = [];
     this._cursorPt = null;
     this._tool = 'draw';
+    this._mergeSel = null;
+    this._mergeDialog = null;
+    this._splitSel = null;
+    this._pendingSplit = null;
   }
 
   private _svgPoint(ev: MouseEvent): number[] {
@@ -1052,6 +1065,14 @@ class HouseplanCard extends LitElement {
       this.requestUpdate();
       return;
     }
+    if (this._tool === 'merge') {
+      this._mergeClick(raw);
+      return;
+    }
+    if (this._tool === 'split') {
+      this._splitClick(raw);
+      return;
+    }
     // draw: clicks on grid points build the outline. Nothing is written to the config
     // until the contour closes — an abandoned outline leaves no lines behind.
     const pt = this._snap(raw);
@@ -1088,14 +1109,103 @@ class HouseplanCard extends LitElement {
     this._path = [...this._path, pt];
   }
 
+  /** Merge: first click picks a room, second picks the room to merge it with. */
+  private _mergeClick(raw: number[]): void {
+    const rooms = this._spaceModel().rooms;
+    const hit = [...rooms].reverse().find((r) => this._pointInRoom(raw, r));
+    if (!hit?.id) return;
+    const hitId = hit.id;
+    if (!this._mergeSel || this._mergeSel === hitId) {
+      this._mergeSel = this._mergeSel === hitId ? null : hitId; // click again = deselect
+      return;
+    }
+    const a = rooms.find((r) => r.id === this._mergeSel);
+    const pa = a ? roomPoly(a) : null;
+    const pb = roomPoly(hit);
+    const merged = pa && pb ? mergeRooms(pa, pb) : null;
+    if (!merged) {
+      // only rooms sharing a wall collapse into one outline (see mergeRooms)
+      this._showToast(this._t('toast.merge_not_adjacent'));
+      this._mergeSel = null;
+      return;
+    }
+    this._mergeDialog = { aId: this._mergeSel, bId: hitId, poly: merged, pick: 'a' };
+    this._mergeSel = null;
+  }
+
+  private _commitMerge(): void {
+    const d = this._mergeDialog;
+    const sp = this._curSpaceCfg;
+    if (!d || !sp) return;
+    const H = this._spaceH;
+    const keepId = d.pick === 'a' ? d.aId : d.bId;
+    const dropId = d.pick === 'a' ? d.bId : d.aId;
+    const keep = sp.rooms.find((r: any) => r.id === keepId);
+    if (!keep) {
+      this._mergeDialog = null;
+      return;
+    }
+    // the kept room keeps its id, so its label position and devices stay put
+    keep.poly = d.poly.map((p) => [p[0] / NORM_W, p[1] / H]);
+    delete keep.x; delete keep.y; delete keep.w; delete keep.h; // a merged room is never a rect
+    sp.rooms = sp.rooms.filter((r: any) => r.id !== dropId);
+    this._saveConfig();
+    this._mergeDialog = null;
+    this._regSignature = '';
+    this._maybeRebuildDevices();
+    this._showToast(this._t('toast.rooms_merged', { name: keep.name || '' }));
+  }
+
+  /** Split: click the room, then two points on its walls. */
+  private _splitClick(raw: number[]): void {
+    const rooms = this._spaceModel().rooms;
+    if (!this._splitSel) {
+      const hit = [...rooms].reverse().find((r) => this._pointInRoom(raw, r));
+      if (!hit?.id) return;
+      this._splitSel = { roomId: hit.id, a: null };
+      return;
+    }
+    const room = rooms.find((r) => r.id === this._splitSel!.roomId);
+    const poly = room ? roomPoly(room) : null;
+    if (!room || !poly) {
+      this._splitSel = null;
+      return;
+    }
+    const eps = this._gridPitch * 0.02;
+    const pt = this._snap(raw);
+    if (!pointOnBoundary(pt, poly, eps)) {
+      this._showToast(this._t('toast.split_pick_wall'));
+      return;
+    }
+    if (!this._splitSel.a) {
+      this._splitSel = { ...this._splitSel, a: pt };
+      return;
+    }
+    const parts = splitRoom(poly, this._splitSel.a, pt, eps);
+    if (!parts) {
+      this._showToast(this._t('toast.split_bad_cut'));
+      return;
+    }
+    // the bigger part stays the room it was — name, area and devices go with it
+    const [p1, p2] = parts;
+    const main = polygonArea(p1) >= polygonArea(p2) ? p1 : p2;
+    const fresh = main === p1 ? p2 : p1;
+    this._pendingSplit = { roomId: room.id!, mainPoly: main, newPoly: fresh };
+    this._cursorPt = null;
+    this._nameSel = '';
+    this._areaSel = '';
+    this._roomDialog = true;
+  }
+
   private get _contourClosed(): boolean {
     return this._path.length >= 4 && this._samePt(this._path[0], this._path[this._path.length - 1]);
   }
 
   private _markupMove(ev: MouseEvent): void {
-    if (!this._markup || this._tool !== 'draw' || !this._path.length || this._contourClosed) {
-      return;
-    }
+    if (!this._markup) return;
+    const drawing = this._tool === 'draw' && this._path.length && !this._contourClosed;
+    const cutting = this._tool === 'split' && !!this._splitSel?.a;
+    if (!drawing && !cutting) return;
     this._cursorPt = this._snap(this._svgPoint(ev));
   }
 
@@ -1113,11 +1223,26 @@ class HouseplanCard extends LitElement {
   }
 
   private _commitRoom(): void {
-    if (!this._contourClosed) return;
     const sp = this._curSpaceCfg;
     if (!sp) return;
     const H = this._spaceH;
-    const verts = this._path.slice(0, -1); // without the duplicated closing vertex
+    let verts: number[][];
+    if (this._pendingSplit) {
+      // apply the cut now: the bigger part keeps the original room, this dialog names the rest
+      const main = sp.rooms.find((r: any) => r.id === this._pendingSplit!.roomId);
+      if (!main) {
+        this._pendingSplit = null;
+        this._splitSel = null;
+        this._roomDialog = false;
+        return;
+      }
+      main.poly = this._pendingSplit.mainPoly.map((p) => [p[0] / NORM_W, p[1] / H]);
+      delete main.x; delete main.y; delete main.w; delete main.h;
+      verts = this._pendingSplit.newPoly;
+    } else {
+      if (!this._contourClosed) return;
+      verts = this._path.slice(0, -1); // without the duplicated closing vertex
+    }
     const areaName = this._areaSel ? this.hass.areas[this._areaSel]?.name : '';
     sp.rooms.push({
       id: 'r' + Date.now().toString(36),
@@ -1127,6 +1252,8 @@ class HouseplanCard extends LitElement {
     });
     this._saveConfig();
     this._path = [];
+    this._pendingSplit = null;
+    this._splitSel = null;
     const boundArea = this._areaSel;
     this._areaSel = '';
     this._nameSel = '';
@@ -1164,11 +1291,21 @@ class HouseplanCard extends LitElement {
     this._path = [];
     this._cursorPt = null;
     this._roomDialog = false;
+    this._pendingSplit = null;
+    this._splitSel = null;
+    this._mergeSel = null;
+    this._mergeDialog = null;
   }
 
   /** Cancel in the dialog: the outline is open again (the closing point is removed). */
   private _roomDialogCancel(): void {
     this._roomDialog = false;
+    if (this._pendingSplit) {
+      // nothing was applied yet — drop the cut entirely, the room stays whole
+      this._pendingSplit = null;
+      this._splitSel = null;
+      return;
+    }
     this._undoPoint();
   }
 
@@ -1953,6 +2090,8 @@ class HouseplanCard extends LitElement {
               : nothing}
             ${space.rooms.filter((r) => r.area || this._markup || disp.showBorders).map((r) => {
               let cls = 'room ' + (space.bg ? 'overlay' : 'yard') + (this._markup ? ' outlined' : '');
+              if (this._markup && (r.id === this._mergeSel || r.id === this._splitSel?.roomId))
+                cls += ' picked';
               let style = '';
               if (!this._markup && (disp.showBorders || disp.fill !== 'none')) {
                 cls += ' styled';
@@ -1999,7 +2138,7 @@ class HouseplanCard extends LitElement {
               ? space.rooms.map((r) => this._renderRoomLabel(r, space, view, disp))
               : nothing}
           </div>
-          ${this._markup && this._tool === 'draw' && this._path.length && this._cursorPt && !this._contourClosed
+          ${this._measureAnchor
             ? html`<div class="measurelayer">${this._renderMeasureLabel(view)}</div>`
             : nothing}
           </div>
@@ -2009,6 +2148,7 @@ class HouseplanCard extends LitElement {
         </div>
 
         ${this._roomDialog ? this._renderRoomDialog() : nothing}
+        ${this._mergeDialog ? this._renderMergeDialog() : nothing}
         ${this._spaceDialog ? this._renderSpaceDialog() : nothing}
         ${this._markerDialog ? this._renderMarkerDialog() : nothing}
         ${this._infoCard ? this._renderInfoCard() : nothing}
@@ -2122,9 +2262,18 @@ class HouseplanCard extends LitElement {
     >${r.name}</div>`;
   }
 
-  /** Length badge that follows the cursor while drawing the current segment. */
+  /** Where the live measurement starts: the last outline point, or the first split point. */
+  private get _measureAnchor(): number[] | null {
+    if (!this._markup || !this._cursorPt) return null;
+    if (this._tool === 'draw' && this._path.length && !this._contourClosed)
+      return this._path[this._path.length - 1];
+    if (this._tool === 'split' && this._splitSel?.a) return this._splitSel.a;
+    return null;
+  }
+
+  /** Length badge that follows the cursor while drawing a segment or a cut. */
   private _renderMeasureLabel(view: { x: number; y: number; w: number; h: number }): TemplateResult {
-    const a = this._path[this._path.length - 1];
+    const a = this._measureAnchor!;
     const b = this._cursorPt!;
     const left = ((b[0] - view.x) / view.w) * 100;
     const top = ((b[1] - view.y) / view.h) * 100;
@@ -2167,6 +2316,13 @@ class HouseplanCard extends LitElement {
             x2="${this._cursorPt[0]}" y2="${this._cursorPt[1]}"></line>`
         : nothing}
       ${path.map((p, i) => svg`<circle class="vertex ${i === 0 ? 'first' : ''}" cx="${p[0]}" cy="${p[1]}" r="${g * 0.22}"></circle>`)}
+      ${this._tool === 'split' && this._splitSel?.a
+        ? svg`<circle class="vertex first" cx="${this._splitSel.a[0]}" cy="${this._splitSel.a[1]}" r="${g * 0.22}"></circle>
+            ${this._cursorPt
+              ? svg`<line class="preview" x1="${this._splitSel.a[0]}" y1="${this._splitSel.a[1]}"
+                  x2="${this._cursorPt[0]}" y2="${this._cursorPt[1]}"></line>`
+              : nothing}`
+        : nothing}
     `;
   }
 
@@ -2176,6 +2332,16 @@ class HouseplanCard extends LitElement {
       <button class="btn ${this._tool === 'draw' ? 'on' : ''}" @click=${() => (this._tool = 'draw')}
         title=${this._t('title.markup_add')}>
         <ha-icon icon="mdi:vector-polyline-plus"></ha-icon>${this._t('markup.add')}
+      </button>
+      <button class="btn ${this._tool === 'merge' ? 'on' : ''}"
+        @click=${() => { this._tool = 'merge'; this._cancelPath(); this._tool = 'merge'; }}
+        title=${this._t('title.markup_merge')}>
+        <ha-icon icon="mdi:vector-union"></ha-icon>${this._t('markup.merge')}
+      </button>
+      <button class="btn ${this._tool === 'split' ? 'on' : ''}"
+        @click=${() => { this._tool = 'split'; this._cancelPath(); this._tool = 'split'; }}
+        title=${this._t('title.markup_split')}>
+        <ha-icon icon="mdi:vector-polyline-remove"></ha-icon>${this._t('markup.split')}
       </button>
       <button class="btn ${this._tool === 'delroom' ? 'on' : ''}" @click=${() => (this._tool = 'delroom')}
         title=${this._t('title.markup_delroom')}>
@@ -2471,6 +2637,38 @@ class HouseplanCard extends LitElement {
             ?disabled=${!d.title.trim() || (d.source === 'file' && !(d.planFile || d.planUrl)) || d.busy}
             title=${d.source === 'file' && !(d.planFile || d.planUrl) ? this._t('title.need_plan') : ''}>
             <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this._t('btn.save')}
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  private _renderMergeDialog(): TemplateResult {
+    const d = this._mergeDialog!;
+    const rooms = this._spaceModel().rooms;
+    const opt = (id: string, key: 'a' | 'b') => {
+      const r = rooms.find((x) => x.id === id);
+      const area = r?.area ? this.hass.areas[r.area]?.name : null;
+      return html`<label class="srcrow">
+        <input type="radio" name="mergekeep" .checked=${d.pick === key}
+          @change=${() => (this._mergeDialog = { ...d, pick: key })} />
+        <span>${r?.name || ''} <span class="muted">· ${area || this._t('merge.no_area')}</span></span>
+      </label>`;
+    };
+    return html`<div class="menuwrap dialogwrap" @click=${(e: Event) => e.stopPropagation()}>
+      <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
+        <div class="hd"><ha-icon icon="mdi:vector-union"></ha-icon>${this._t('merge.header')}</div>
+        <div class="body">
+          <p class="muted">${this._t('merge.hint')}</p>
+          <label>${this._t('merge.keep')}</label>
+          ${opt(d.aId, 'a')}
+          ${opt(d.bId, 'b')}
+        </div>
+        <div class="row">
+          <span class="spacer"></span>
+          <button class="btn ghost" @click=${() => (this._mergeDialog = null)}>${this._t('btn.cancel')}</button>
+          <button class="btn on" @click=${this._commitMerge}>
+            <ha-icon icon="mdi:check"></ha-icon>${this._t('btn.save')}
           </button>
         </div>
       </div>

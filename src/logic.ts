@@ -1,6 +1,7 @@
 /**
  * Pure functions with no Lit/DOM dependencies — easy to cover with unit tests.
  */
+import { union } from 'polyclip-ts';
 
 /** Zigbee LQI color: ≤40 — red, ≥180 — green, in between — an hsl gradient. */
 export function lqiColor(lqi: number): string {
@@ -168,6 +169,88 @@ export function roomsOverlap(a: number[][], b: number[][], eps = 1e-6): boolean 
     for (let j = 0; j < b.length; j++)
       if (segmentsProperlyCross(a[i], a[(i + 1) % a.length], b[j], b[(j + 1) % b.length])) return true;
   return coversArea(a, b, eps) || coversArea(b, a, eps);
+}
+
+/** Shoelace area of an outline (absolute value). */
+export function polygonArea(poly: number[][]): number {
+  if (!poly || poly.length < 3) return 0;
+  let s = 0;
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i];
+    const b = poly[(i + 1) % poly.length];
+    s += a[0] * b[1] - b[0] * a[1];
+  }
+  return Math.abs(s) / 2;
+}
+
+function closedRing(poly: number[][]): number[][][] {
+  return [[...poly.map((p) => [p[0], p[1]]), [poly[0][0], poly[0][1]]]];
+}
+
+/**
+ * Union of two room outlines, or null when they may not be merged.
+ *
+ * "Adjacent" is decided by the result rather than by a separate heuristic: only rooms that
+ * genuinely share a wall (fully or partially — real walls overlap collinearly rather than
+ * match exactly) collapse into ONE hole-free outline. Rooms that merely touch at a corner,
+ * that are apart, or whose union would enclose a hole do not, and are refused.
+ */
+export function mergeRooms(a: number[][], b: number[][]): number[][] | null {
+  if (!a || !b || a.length < 3 || b.length < 3) return null;
+  const res = union(closedRing(a) as any, closedRing(b) as any);
+  if (res.length !== 1) return null;      // two pieces → not adjacent
+  if (res[0].length !== 1) return null;   // a ring plus holes → not a simple room
+  const pts = res[0][0].slice(0, -1).map((p: number[]) => [p[0], p[1]]); // drop the closing point
+  return pts.length >= 3 ? pts : null;
+}
+
+/** Index of the outline edge that p sits on, or -1. */
+function edgeIndexOf(poly: number[][], p: number[], eps: number): number {
+  for (let i = 0; i < poly.length; i++)
+    if (distToSeg(p, poly[i], poly[(i + 1) % poly.length]) <= eps) return i;
+  return -1;
+}
+
+function dropRepeats(pts: number[][], eps: number): number[][] {
+  const out: number[][] = [];
+  for (const p of pts) if (!out.length || !samePoint(out[out.length - 1], p, eps)) out.push(p);
+  if (out.length > 1 && samePoint(out[0], out[out.length - 1], eps)) out.pop();
+  return out;
+}
+
+/**
+ * Cut a room in two with a straight chord between two points on its walls.
+ * Returns the two parts, or null when the cut is not a clean wall-to-wall chord:
+ * an end that is not on a wall, a chord that leaves the room (concave outlines) or that
+ * runs along a wall and would carve off a zero-area sliver.
+ */
+export function splitRoom(
+  poly: number[][], a: number[], b: number[], eps = 1e-6,
+): [number[][], number[][]] | null {
+  if (!poly || poly.length < 3 || samePoint(a, b, eps)) return null;
+  const ia = edgeIndexOf(poly, a, eps);
+  const ib = edgeIndexOf(poly, b, eps);
+  if (ia < 0 || ib < 0) return null;                       // an end is not on a wall
+  for (let i = 0; i < poly.length; i++)
+    if (segmentsProperlyCross(a, b, poly[i], poly[(i + 1) % poly.length])) return null; // leaves the room
+  // a chord lying along a wall has its midpoint ON the outline, not inside it
+  if (!pointStrictlyInside([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], poly, eps)) return null;
+  const walk = (from: number[], fromIdx: number, to: number[], toIdx: number): number[][] => {
+    const pts: number[][] = [from];
+    let i = (fromIdx + 1) % poly.length;
+    for (let guard = 0; guard <= poly.length; guard++) {
+      pts.push(poly[i]);
+      if (i === toIdx) break;
+      i = (i + 1) % poly.length;
+    }
+    pts.push(to);
+    return dropRepeats(pts, eps);
+  };
+  const p1 = walk(a, ia, b, ib);
+  const p2 = walk(b, ib, a, ia);
+  if (p1.length < 3 || p2.length < 3) return null;
+  if (polygonArea(p1) <= eps || polygonArea(p2) <= eps) return null;
+  return [p1, p2];
 }
 
 /**
