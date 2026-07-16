@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.20.0 — 2026-07-16 (rooms may not overlap)
+- **A click strictly inside an existing room is refused** while drawing (toast names the room).
+  Being *on* a wall stays legal — neighbouring rooms share walls, and real walls overlap
+  collinearly rather than match exactly, so new vertices land on existing outlines mid-span
+  all the time. `pointStrictlyInside` excludes the boundary explicitly (ray casting alone is
+  unreliable exactly on an edge).
+- **Closing an outline that overlaps an existing room is refused** — vertex checks alone are not
+  enough: an outline drawn *around* a room has every vertex outside it. The outline stays open
+  so it can be corrected. Nesting one room inside another counts as an overlap.
+- New pure geometry in logic.ts: `roomPoly`, `pointOnBoundary`, `pointStrictlyInside`,
+  `segmentsProperlyCross` (touching/collinear is deliberately not a crossing), `roomsOverlap`
+  (edge crossings + containment probe, which also catches duplicate outlines). (+4 tests: 63 → 67.)
+
 ## v1.19.0 — 2026-07-16 (a line is never a thing of its own)
 **Model change.** A wall can only exist as an edge of a closed room. Consequences:
 - **Walls are derived from room outlines** (`roomEdges` in logic.ts), not stored. A wall

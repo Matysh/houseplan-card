@@ -13,7 +13,7 @@ import {
 } from './rules';
 import {
   lqiColor, snapToGrid, samePoint, pointInPolygon, markerIdForBinding,
-  segmentCm, formatLength, roomEdges,
+  segmentCm, formatLength, roomEdges, roomPoly, pointStrictlyInside, roomsOverlap,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
   spaceDisplayOf, roomFillColor, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
@@ -27,7 +27,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.19.0';
+const CARD_VERSION = '1.20.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -1010,6 +1010,25 @@ class HouseplanCard extends LitElement {
       });
   }, 500);
 
+  /**
+   * The room that strictly contains p. Being ON a wall does not count: neighbouring
+   * rooms share walls, so new vertices legitimately land on existing outlines.
+   */
+  private _roomAt(p: number[]): RoomCfg | undefined {
+    return this._spaceModel().rooms.find((r) => {
+      const poly = roomPoly(r);
+      return !!poly && pointStrictlyInside(p, poly);
+    });
+  }
+
+  /** The first existing room the outline would overlap (rooms must not overlap). */
+  private _overlapRoom(verts: number[][]): RoomCfg | undefined {
+    return this._spaceModel().rooms.find((r) => {
+      const poly = roomPoly(r);
+      return !!poly && roomsOverlap(verts, poly);
+    });
+  }
+
   private _pointInRoom(p: number[], r: RoomCfg): boolean {
     if (r.poly) return pointInPolygon(p, r.poly);
     return (
@@ -1036,20 +1055,37 @@ class HouseplanCard extends LitElement {
     // draw: clicks on grid points build the outline. Nothing is written to the config
     // until the contour closes — an abandoned outline leaves no lines behind.
     const pt = this._snap(raw);
+    const closing = this._path.length >= 3 && this._samePt(pt, this._path[0]);
+    // rooms must not overlap: a vertex may sit on a wall (shared walls are normal),
+    // never strictly inside another room
+    if (!closing) {
+      const busy = this._roomAt(pt);
+      if (busy) {
+        this._showToast(this._t('toast.point_in_room', { name: busy.name || '' }));
+        return;
+      }
+    }
     if (!this._path.length) {
       this._path = [pt];
       return;
     }
     const last = this._path[this._path.length - 1];
     if (this._samePt(pt, last)) return; // repeated click on the same point
-    this._path = [...this._path, pt];
-    // closing the outline: a click on the first vertex → the save dialog
-    if (this._path.length >= 4 && this._samePt(pt, this._path[0])) {
+    if (closing) {
+      // a contour can enclose an existing room without any vertex inside it
+      const clash = this._overlapRoom(this._path);
+      if (clash) {
+        this._showToast(this._t('toast.room_overlap', { name: clash.name || '' }));
+        return; // leave the outline open so it can be corrected
+      }
+      this._path = [...this._path, pt];
       this._cursorPt = null;
       this._nameSel = '';
       this._areaSel = '';
       this._roomDialog = true;
+      return;
     }
+    this._path = [...this._path, pt];
   }
 
   private get _contourClosed(): boolean {

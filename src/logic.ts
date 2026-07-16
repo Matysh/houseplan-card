@@ -48,15 +48,19 @@ export function segKey(a: number[], b: number[], prec = 1): string {
  * room. Shared walls are emitted once, which is what makes deleting a room keep the
  * borders its neighbours still contribute — the neighbour's polygon still yields them.
  */
+export function roomPoly(r: any): number[][] | null {
+  if (r?.poly?.length >= 3) return r.poly;
+  if (r && r.x != null && r.y != null && r.w != null && r.h != null)
+    return [[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.h], [r.x, r.y + r.h]];
+  return null;
+}
+
 export function roomEdges(rooms: any[]): number[][] {
   const out: number[][] = [];
   const seen = new Set<string>();
   for (const r of rooms || []) {
-    let pts: number[][] | null = null;
-    if (r?.poly?.length) pts = r.poly;
-    else if (r && r.x != null && r.y != null && r.w != null && r.h != null)
-      pts = [[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.h], [r.x, r.y + r.h]];
-    if (!pts || pts.length < 3) continue;
+    const pts = roomPoly(r);
+    if (!pts) continue;
     for (let i = 0; i < pts.length; i++) {
       const a = pts[i];
       const b = pts[(i + 1) % pts.length];
@@ -83,6 +87,87 @@ export function pointInPolygon(p: number[], poly: number[][]): boolean {
     if (yi > p[1] !== yj > p[1] && p[0] < ((xj - xi) * (p[1] - yi)) / (yj - yi) + xi) inside = !inside;
   }
   return inside;
+}
+
+/** Distance from p to segment ab. */
+function distToSeg(p: number[], a: number[], b: number[]): number {
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const len2 = dx * dx + dy * dy;
+  let t = len2 ? ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / len2 : 0;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
+}
+
+/**
+ * Is p on the outline itself (within eps)? This is the normal case, not an anomaly:
+ * neighbouring rooms share walls, so their vertices sit on each other's outlines —
+ * including mid-span, since real walls overlap collinearly rather than match exactly.
+ */
+export function pointOnBoundary(p: number[], poly: number[][], eps = 1e-6): boolean {
+  if (!poly || poly.length < 2) return false;
+  for (let i = 0; i < poly.length; i++)
+    if (distToSeg(p, poly[i], poly[(i + 1) % poly.length]) <= eps) return true;
+  return false;
+}
+
+/** Inside the outline AND not on it — a point on a shared wall is not "inside". */
+export function pointStrictlyInside(p: number[], poly: number[][], eps = 1e-6): boolean {
+  if (!poly || poly.length < 3) return false;
+  if (pointOnBoundary(p, poly, eps)) return false;
+  return pointInPolygon(p, poly);
+}
+
+function cross3(a: number[], b: number[], c: number[]): number {
+  return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+}
+
+/**
+ * Do two segments cross transversally? Touching at an endpoint and collinear overlap
+ * deliberately do NOT count — that is what sharing a wall looks like.
+ */
+export function segmentsProperlyCross(
+  p1: number[], p2: number[], p3: number[], p4: number[], eps = 1e-9,
+): boolean {
+  const d1 = cross3(p3, p4, p1);
+  const d2 = cross3(p3, p4, p2);
+  const d3 = cross3(p1, p2, p3);
+  const d4 = cross3(p1, p2, p4);
+  return (
+    ((d1 > eps && d2 < -eps) || (d1 < -eps && d2 > eps)) &&
+    ((d3 > eps && d4 < -eps) || (d3 < -eps && d4 > eps))
+  );
+}
+
+/** Is any area of outline `a` strictly inside `b`? Also catches nested and duplicate outlines. */
+function coversArea(a: number[][], b: number[][], eps: number): boolean {
+  let allOnBoundary = true;
+  for (const v of a) {
+    if (pointStrictlyInside(v, b, eps)) return true;
+    if (!pointOnBoundary(v, b, eps)) allOnBoundary = false;
+  }
+  // every vertex sits on b's outline → a duplicate or traced outline: probe the middle
+  if (allOnBoundary) {
+    const c = [
+      a.reduce((s, p) => s + p[0], 0) / a.length,
+      a.reduce((s, p) => s + p[1], 0) / a.length,
+    ];
+    return pointStrictlyInside(c, b, eps);
+  }
+  return false;
+}
+
+/**
+ * Do two room outlines share floor area? Rooms must never overlap, but sharing a wall
+ * (fully or partially) and touching at a corner are normal and stay legal. A room nested
+ * inside another counts as an overlap.
+ */
+export function roomsOverlap(a: number[][], b: number[][], eps = 1e-6): boolean {
+  if (!a || !b || a.length < 3 || b.length < 3) return false;
+  for (let i = 0; i < a.length; i++)
+    for (let j = 0; j < b.length; j++)
+      if (segmentsProperlyCross(a[i], a[(i + 1) % a.length], b[j], b[(j + 1) % b.length])) return true;
+  return coversArea(a, b, eps) || coversArea(b, a, eps);
 }
 
 /**

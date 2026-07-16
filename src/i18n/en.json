@@ -92,6 +92,8 @@
   "toast.markup_needs_server": "Markup is available after the config is moved to the server",
   "toast.conflict": "Config was changed in another window — data refreshed, repeat your last action",
   "toast.cfg_save_failed": "Failed to save config: {err}",
+  "toast.point_in_room": "That point is inside room “{name}” — rooms must not overlap",
+  "toast.room_overlap": "The outline overlaps room “{name}” — rooms must not overlap",
   "toast.room_saved": "Room saved ({n}). Devices added: {added}. Outline the next one or exit markup.",
   "toast.room_saved_no_area": "Room saved ({n}, no area). Outline the next one or exit markup.",
   "toast.marker_needs_server": "Device editing is available after the config is moved to the server",

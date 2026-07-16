@@ -71,6 +71,9 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] Deleting a room removes its walls, EXCEPT those shared with a neighbouring room
       (the neighbour still yields them); deleting the neighbour too removes them as well
 - [ ] There is no "Erase" tool in the markup toolbar (removed in v1.19.0)
+- [ ] Rooms never overlap (v1.20.0): a click strictly inside an existing room is refused with a
+      toast; a click ON a shared wall (including mid-span of a longer neighbour wall) still works
+- [ ] Closing an outline drawn AROUND an existing room is refused; the outline stays open
 - [ ] Esc / Ctrl+Z removes the last dot (and its line); Reset clears the path
 - [ ] Closing the contour (click the first dot, ≥4 points) opens the room dialog
 - [ ] Room dialog: area list shows only unassigned areas; picking an area prefills the name

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   lqiColor, snapToGrid, segKey, samePoint, pointInPolygon, markerIdForBinding, averageLqi,
   fitView, declump, safeUrl, resolveTapAction, floorsOf, subst, spaceDisplayOf, roomFillColor,
-  segmentCm, formatLength, roomEdges,
+  segmentCm, formatLength, roomEdges, roomPoly, pointOnBoundary, pointStrictlyInside, roomsOverlap,
 } from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
@@ -296,4 +296,45 @@ test('roomEdges: a wall shared by two rooms is emitted once, and survives deleti
   assert.ok(shared(roomEdges([right])));
   // deleting both → no lines remain
   assert.equal(roomEdges([]).length, 0);
+});
+
+const SQ = [[0, 0], [2, 0], [2, 2], [0, 2]];
+
+test('pointStrictlyInside: a point on a wall is NOT inside (shared walls are normal)', () => {
+  assert.ok(pointStrictlyInside([1, 1], SQ));        // middle
+  assert.ok(!pointStrictlyInside([2, 1], SQ));       // on a wall mid-span (T-junction vertex)
+  assert.ok(!pointStrictlyInside([0, 0], SQ));       // on a corner
+  assert.ok(!pointStrictlyInside([3, 1], SQ));       // outside
+  assert.ok(pointOnBoundary([2, 1], SQ));
+  assert.ok(!pointOnBoundary([1, 1], SQ));
+});
+
+test('roomsOverlap: sharing a wall or a corner is legal; real overlap is not', () => {
+  const right = [[2, 0], [4, 0], [4, 2], [2, 2]];       // shares the whole x=2 wall
+  assert.ok(!roomsOverlap(SQ, right));
+  // neighbour's wall is LONGER than ours — the real dacha case (collinear partial overlap)
+  const tall = [[2, -1], [4, -1], [4, 3], [2, 3]];
+  assert.ok(!roomsOverlap(SQ, tall));
+  // touching only at a corner
+  assert.ok(!roomsOverlap(SQ, [[2, 2], [3, 2], [3, 3], [2, 3]]));
+  // apart
+  assert.ok(!roomsOverlap(SQ, [[5, 5], [6, 5], [6, 6], [5, 6]]));
+  // genuine partial overlap
+  assert.ok(roomsOverlap(SQ, [[1, 1], [3, 1], [3, 3], [1, 3]]));
+});
+
+test('roomsOverlap: nested, identical and enclosing outlines all count as overlap', () => {
+  assert.ok(roomsOverlap(SQ, [[0.5, 0.5], [1.5, 0.5], [1.5, 1.5], [0.5, 1.5]])); // nested
+  assert.ok(roomsOverlap(SQ, SQ));                                                // duplicate
+  // drawn AROUND an existing room: every vertex outside, no vertex of ours inside it
+  assert.ok(roomsOverlap([[-1, -1], [3, -1], [3, 3], [-1, 3]], SQ));
+  // a cross: no vertex of either lies inside the other, but the edges cross
+  assert.ok(roomsOverlap([[0, 0.5], [3, 0.5], [3, 1.5], [0, 1.5]],
+                         [[0.5, -1], [1.5, -1], [1.5, 3], [0.5, 3]]));
+});
+
+test('roomPoly: polygon rooms as-is, legacy rect rooms as four corners', () => {
+  assert.equal(roomPoly({ poly: SQ }), SQ);
+  assert.deepEqual(roomPoly({ x: 0, y: 0, w: 2, h: 2 }), SQ);
+  assert.equal(roomPoly({}), null);
 });
