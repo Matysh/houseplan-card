@@ -27,7 +27,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.18.0';
+const CARD_VERSION = '1.18.1';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -2025,10 +2025,10 @@ class HouseplanCard extends LitElement {
             ${disp.showNames && !this._markup
               ? space.rooms.map((r) => this._renderRoomLabel(r, space, view, disp))
               : nothing}
-            ${this._markup && this._tool === 'draw' && this._path.length && this._cursorPt && !this._contourClosed
-              ? this._renderMeasureLabel(view)
-              : nothing}
           </div>
+          ${this._markup && this._tool === 'draw' && this._path.length && this._cursorPt && !this._contourClosed
+            ? html`<div class="measurelayer">${this._renderMeasureLabel(view)}</div>`
+            : nothing}
           </div>
           ${this._zoom > 1
             ? html`<div class="zoombadge">${Math.round(this._zoom * 100)}%</div>`

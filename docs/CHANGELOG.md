@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.18.1 — 2026-07-16 (fix: the drawing ruler was invisible)
+- Fix on top of v1.18.0: the length badge never showed up while drawing. It was rendered
+  inside `.devlayer`, and `.stage.markup .devlayer { display: none }` hides that whole layer
+  in markup mode (so icons do not get in the way) — the badge was in the DOM but invisible.
+  It now lives in its own `.measurelayer` (absolute, `pointer-events: none`), which markup
+  mode does not hide. Verified visually on a real drawn segment ("3.60 m" on screen).
+- Testing lesson (see docs/TESTING.md): asserting on `textContent` is not enough — a DOM
+  query passes on elements hidden by an ancestor. Check `offsetParent`/rect or look at a
+  screenshot.
+
 ## v1.18.0 — 2026-07-14 (live measurements while drawing rooms + per-space scale)
 - **Ruler while drawing.** In room-markup "draw" mode, a badge follows the cursor showing the
   length of the current segment (last placed vertex → cursor). Units come from the HA unit

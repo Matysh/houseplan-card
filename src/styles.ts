@@ -236,6 +236,11 @@ export const cardStyles = css`
       z-index: 1;
     }
     .roomlabel:active { cursor: grabbing; }
+    .measurelayer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
     .measurelabel {
       position: absolute;
       transform: translate(12px, -150%);
