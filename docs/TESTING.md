@@ -43,7 +43,7 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] Create with an image (SVG, PNG, JPG, WebP) → correct aspect, crisp at zoom (SVG)
 - [ ] Oversized plan (>8 MB) → readable error toast, dialog stays open
 - [ ] Create with "No image — I'll outline rooms by hand": orientation landscape/portrait/square respected [auto]; borders+names default ON [auto]
-- [ ] Draw-space renders an empty canvas (no black hole), markup works on it
+- [ ] Draw-space (no background) renders a WHITE canvas (paper-like), markup works on it; room borders/names stay legible on white [auto]
 - [ ] Edit: rename; replace image; **switch image→draw detaches the plan** [auto]
 - [ ] Delete space with rooms/devices → tab disappears, layout of other spaces untouched
 - [ ] Display settings: borders toggle, names toggle, color picker + opacity slider live-preview after save, fill selector [auto]
@@ -56,6 +56,7 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] Average room temperature counts ONLY thermometer/air-monitor devices — fridges, TRV heads,
       smart-plug chip temperatures (`*_device_temperature`) and diagnostic-category temps are excluded [auto]
 - [ ] Space dialog is 500 px wide; the comfort-bounds inputs are compact (56 px)
+- [ ] The scale (cm per cell) input is compact (72 px), not full-width [auto]
 - [ ] Device icon badge is centred exactly on its point (no 1 px down-right drift) [auto]
 - [ ] Device glyph is centred within its badge (no vertical drift — real ha-icon is block+line-height) [auto]
 - [ ] Room hover highlight still works when custom borders/fills are on

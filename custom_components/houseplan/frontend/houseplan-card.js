@@ -137,6 +137,9 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
       opacity: 0.5;
       pointer-events: none;
     }
+    .stage.noplan {
+      background: #ffffff;
+    }
     .stage {
       position: relative;
       width: 100%;
@@ -505,6 +508,7 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
     }
     /* beat the generic .dialog .body .namein { width:100% } rule */
     .dialog .body .temprange .tempin { width: 56px; flex: none; padding: 3px 6px; }
+    .dialog .body .colorrow .tempin { width: 72px; flex: none; }
     .srcrow { flex-wrap: nowrap; }
     .srcrow > span:first-of-type { white-space: nowrap; }
     .colorrow .opl { color: var(--hp-muted); font-size: 12px; }
@@ -1113,7 +1117,7 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
         ${this._markup?this._renderMarkupBar():W}
         </div>
 
-        <div class="stage ${this._markup?"markup":""}"
+        <div class="stage ${this._markup?"markup":""} ${e.bg?"":"noplan"}"
           style="height:calc(100dvh - 118px)"
           @click=${t=>this._markupClick(t)}
           @wheel=${t=>this._onWheel(t)}
@@ -1469,4 +1473,4 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
           </button>
         </div>
       </div>
-    </div>`}}Mi.properties={hass:{attribute:!1},_config:{state:!0},_space:{state:!0},_layout:{state:!0},_devices:{state:!0},_tip:{state:!0},_selId:{state:!0},_toast:{state:!0},_serverCfg:{state:!0},_markup:{state:!0},_tool:{state:!0},_path:{state:!0},_cursorPt:{state:!0},_mergeSel:{state:!0},_mergeDialog:{state:!0},_splitSel:{state:!0},_areaSel:{state:!0},_nameSel:{state:!0},_roomDialog:{state:!0},_spaceDialog:{state:!0},_infoCard:{state:!0},_rulesDialog:{state:!0},_importDialog:{state:!0},_markerDialog:{state:!0},_zoom:{state:!0},_view:{state:!0}},Mi.styles=li,customElements.get("houseplan-card")||customElements.define("houseplan-card",Mi),window.customCards=window.customCards||[],window.customCards.find(t=>"houseplan-card"===t.type)||window.customCards.push({type:"houseplan-card",name:"House Plan Card",description:"Interactive house plan: spaces, rooms and devices with live states and drag layout."}),console.info("%c HOUSEPLAN-CARD %c v1.21.1 ","background:#3ea6ff;color:#04121f;font-weight:700","");
+    </div>`}}Mi.properties={hass:{attribute:!1},_config:{state:!0},_space:{state:!0},_layout:{state:!0},_devices:{state:!0},_tip:{state:!0},_selId:{state:!0},_toast:{state:!0},_serverCfg:{state:!0},_markup:{state:!0},_tool:{state:!0},_path:{state:!0},_cursorPt:{state:!0},_mergeSel:{state:!0},_mergeDialog:{state:!0},_splitSel:{state:!0},_areaSel:{state:!0},_nameSel:{state:!0},_roomDialog:{state:!0},_spaceDialog:{state:!0},_infoCard:{state:!0},_rulesDialog:{state:!0},_importDialog:{state:!0},_markerDialog:{state:!0},_zoom:{state:!0},_view:{state:!0}},Mi.styles=li,customElements.get("houseplan-card")||customElements.define("houseplan-card",Mi),window.customCards=window.customCards||[],window.customCards.find(t=>"houseplan-card"===t.type)||window.customCards.push({type:"houseplan-card",name:"House Plan Card",description:"Interactive house plan: spaces, rooms and devices with live states and drag layout."}),console.info("%c HOUSEPLAN-CARD %c v1.21.2 ","background:#3ea6ff;color:#04121f;font-weight:700","");
