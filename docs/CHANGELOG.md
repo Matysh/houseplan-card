@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.19.0 — 2026-07-16 (a line is never a thing of its own)
+**Model change.** A wall can only exist as an edge of a closed room. Consequences:
+- **Walls are derived from room outlines** (`roomEdges` in logic.ts), not stored. A wall
+  shared by two rooms is emitted once, so **deleting a room keeps the borders its neighbours
+  still contribute** — and drops the walls nobody else uses. This falls out of the model
+  instead of needing bookkeeping.
+- **An abandoned outline leaves nothing behind.** Previously every click pair was written to
+  `space.segments` immediately, so a contour you never closed left orphan lines on the plan.
+  Now nothing is persisted until the room is saved.
+- **The "Erase line" tool is gone** — there is no standalone line to erase. Mis-clicks are
+  undone with Esc / Ctrl+Z as before.
+- **`space.segments` is dropped on every save** (legacy configs shed it on first write).
+  Validation still tolerates the field so a stale browser tab cannot fail a save; diagnostics
+  no longer reports it. Lines that belonged to no room disappear on upgrade — by design.
+- Dead code removed: `_addSegment`, `_removeSegmentByKey`, `_distToSeg`, `_pathSegs`, `_segKey`.
+  `segKey(a, b, prec)` gained a precision argument (normalized coords need more than render
+  units). (+2 tests: 61 → 63.)
+
 ## v1.18.1 — 2026-07-16 (fix: the drawing ruler was invisible)
 - Fix on top of v1.18.0: the length badge never showed up while drawing. It was rendered
   inside `.devlayer`, and `.stage.markup .devlayer { display: none }` hides that whole layer

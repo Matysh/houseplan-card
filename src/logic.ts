@@ -31,10 +31,42 @@ export function formatLength(cm: number, imperial: boolean): string {
   return `${(cm / 100).toFixed(2)} m`;
 }
 
-/** Canonical key of a segment (independent of direction). */
-export function segKey(a: number[], b: number[]): string {
+/**
+ * Canonical key of a segment (independent of direction).
+ * `prec` = decimals used to compare coordinates: the default 1 suits render units,
+ * normalized (0..1) coordinates need more (see roomEdges).
+ */
+export function segKey(a: number[], b: number[], prec = 1): string {
   const [p, q] = a[0] < b[0] || (a[0] === b[0] && a[1] <= b[1]) ? [a, b] : [b, a];
-  return `${p[0].toFixed(1)},${p[1].toFixed(1)}-${q[0].toFixed(1)},${q[1].toFixed(1)}`;
+  return `${p[0].toFixed(prec)},${p[1].toFixed(prec)}-${q[0].toFixed(prec)},${q[1].toFixed(prec)}`;
+}
+
+/**
+ * Wall segments derived from room outlines (normalized coordinates in and out).
+ *
+ * A line has no independent existence on the plan: it can only be an edge of a closed
+ * room. Shared walls are emitted once, which is what makes deleting a room keep the
+ * borders its neighbours still contribute — the neighbour's polygon still yields them.
+ */
+export function roomEdges(rooms: any[]): number[][] {
+  const out: number[][] = [];
+  const seen = new Set<string>();
+  for (const r of rooms || []) {
+    let pts: number[][] | null = null;
+    if (r?.poly?.length) pts = r.poly;
+    else if (r && r.x != null && r.y != null && r.w != null && r.h != null)
+      pts = [[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.h], [r.x, r.y + r.h]];
+    if (!pts || pts.length < 3) continue;
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i];
+      const b = pts[(i + 1) % pts.length];
+      const k = segKey(a, b, 5);
+      if (seen.has(k)) continue;
+      seen.add(k);
+      out.push([a[0], a[1], b[0], b[1]]);
+    }
+  }
+  return out;
 }
 
 /** Point equality within a tolerance. */

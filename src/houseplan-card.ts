@@ -12,8 +12,8 @@ import {
   type IconRule, type CompiledIconRule,
 } from './rules';
 import {
-  lqiColor, snapToGrid, segKey as segKeyOf, samePoint, pointInPolygon, markerIdForBinding,
-  segmentCm, formatLength,
+  lqiColor, snapToGrid, samePoint, pointInPolygon, markerIdForBinding,
+  segmentCm, formatLength, roomEdges,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
   spaceDisplayOf, roomFillColor, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
@@ -27,14 +27,14 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.18.1';
+const CARD_VERSION = '1.19.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
 const NORM_W = 1000; // width of the render space for normalized configs
 
 const GRID_N = 240; // grid points across the plan width (half the previous step; old nodes are a subset of the new ones, positions are preserved)
-type MarkupTool = 'draw' | 'erase' | 'delroom';
+type MarkupTool = 'draw' | 'delroom';
 
 const fireEvent = (node: EventTarget, type: string, detail?: unknown) => {
   const ev = new Event(type, { bubbles: true, composed: true }) as any;
@@ -80,7 +80,6 @@ class HouseplanCard extends LitElement {
   private _markup = false;
   private _tool: MarkupTool = 'draw';
   private _path: number[][] = []; // current outline (render units, vertices snapped to the grid)
-  private _pathSegs: (string | null)[] = []; // keys of the segments added by outline steps
   private _cursorPt: number[] | null = null;
   private _areaSel = '';
   private _nameSel = '';
@@ -221,30 +220,10 @@ class HouseplanCard extends LitElement {
     }
   }
 
-  /** Remove the last placed point (and its line, if it was added by that step). */
+  /** Remove the last placed point. An unfinished outline is never persisted. */
   private _undoPoint(): void {
     if (!this._path.length) return;
-    if (this._path.length === 1) {
-      this._path = [];
-      this._pathSegs = [];
-      return;
-    }
-    const segKey = this._pathSegs[this._pathSegs.length - 1];
-    this._pathSegs = this._pathSegs.slice(0, -1);
-    if (segKey) this._removeSegmentByKey(segKey);
     this._path = this._path.slice(0, -1);
-  }
-
-  private _removeSegmentByKey(key: string): void {
-    const sp = this._curSpaceCfg;
-    if (!sp?.segments) return;
-    const idx = this._segments.findIndex(
-      (s) => this._segKey([s[0], s[1]], [s[2], s[3]]) === key,
-    );
-    if (idx >= 0) {
-      sp.segments.splice(idx, 1);
-      this._saveConfig();
-    }
   }
 
   public static getConfigElement() {
@@ -967,11 +946,15 @@ class HouseplanCard extends LitElement {
     return sp ? NORM_W / sp.aspect : NORM_W;
   }
 
-  /** Segments of the current space in render units. */
+  /**
+   * Walls of the current space in render units — DERIVED from the room outlines.
+   * There is no standalone "line" entity: every wall belongs to a closed room, and a
+   * wall shared with a neighbour survives deleting either room (the other still yields it).
+   */
   private get _segments(): number[][] {
     const sp = this._curSpaceCfg;
     const H = this._spaceH;
-    return (sp?.segments || []).map((s: number[]) => [s[0] * NORM_W, s[1] * H, s[2] * NORM_W, s[3] * H]);
+    return roomEdges(sp?.rooms || []).map((s) => [s[0] * NORM_W, s[1] * H, s[2] * NORM_W, s[3] * H]);
   }
 
   private _toggleMarkup(): void {
@@ -1000,12 +983,17 @@ class HouseplanCard extends LitElement {
     return samePoint(a, b);
   }
 
-  private _segKey(a: number[], b: number[]): string {
-    return segKeyOf(a, b);
+  /**
+   * Walls are derived from rooms, so the legacy per-space `segments` array is dead
+   * weight: drop it on every save. Configs written before v1.19.0 shed it on first write.
+   */
+  private _dropLegacySegments(): void {
+    for (const sp of this._serverCfg?.spaces || []) delete (sp as any).segments;
   }
 
   private _saveConfig = debounce(() => {
     if (!this._serverCfg) return;
+    this._dropLegacySegments();
     this.hass
       .callWS({ type: 'houseplan/config/set', config: this._serverCfg, expected_rev: this._cfgRev })
       .then((r: any) => {
@@ -1022,33 +1010,6 @@ class HouseplanCard extends LitElement {
       });
   }, 500);
 
-  /** Add a segment (render units) to the space skeleton (no duplicates). true = new. */
-  private _addSegment(a: number[], b: number[]): boolean {
-    const sp = this._curSpaceCfg;
-    if (!sp) return false;
-    const H = this._spaceH;
-    const key = this._segKey(a, b);
-    const exists = this._segments.some((s) => this._segKey([s[0], s[1]], [s[2], s[3]]) === key);
-    if (exists) return false;
-    sp.segments = sp.segments || [];
-    sp.segments.push([a[0] / NORM_W, a[1] / H, b[0] / NORM_W, b[1] / H]);
-    this._saveConfig();
-    return true;
-  }
-
-  private _distToSeg(p: number[], s: number[]): number {
-    const [x, y] = p;
-    const [x1, y1, x2, y2] = s;
-    const dx = x2 - x1;
-    const dy = y2 - y1;
-    const len2 = dx * dx + dy * dy || 1;
-    let t = ((x - x1) * dx + (y - y1) * dy) / len2;
-    t = Math.max(0, Math.min(1, t));
-    const px = x1 + t * dx;
-    const py = y1 + t * dy;
-    return Math.hypot(x - px, y - py);
-  }
-
   private _pointInRoom(p: number[], r: RoomCfg): boolean {
     if (r.poly) return pointInPolygon(p, r.poly);
     return (
@@ -1059,26 +1020,6 @@ class HouseplanCard extends LitElement {
   private _markupClick(ev: MouseEvent): void {
     if (!this._markup) return;
     const raw = this._svgPoint(ev);
-    if (this._tool === 'erase') {
-      const sp = this._curSpaceCfg;
-      if (!sp?.segments?.length) return;
-      const segs = this._segments;
-      let best = -1;
-      let bestD = this._gridPitch * 0.5;
-      segs.forEach((s, i) => {
-        const d = this._distToSeg(raw, s);
-        if (d < bestD) {
-          bestD = d;
-          best = i;
-        }
-      });
-      if (best >= 0) {
-        sp.segments.splice(best, 1);
-        this._saveConfig();
-        this.requestUpdate();
-      }
-      return;
-    }
     if (this._tool === 'delroom') {
       const space = this._spaceModel();
       const room = [...space.rooms].reverse().find((r) => this._pointInRoom(raw, r));
@@ -1092,17 +1033,15 @@ class HouseplanCard extends LitElement {
       this.requestUpdate();
       return;
     }
-    // draw: clicks on grid points, pairs of points get connected with a line
+    // draw: clicks on grid points build the outline. Nothing is written to the config
+    // until the contour closes — an abandoned outline leaves no lines behind.
     const pt = this._snap(raw);
     if (!this._path.length) {
       this._path = [pt];
-      this._pathSegs = [];
       return;
     }
     const last = this._path[this._path.length - 1];
     if (this._samePt(pt, last)) return; // repeated click on the same point
-    const added = this._addSegment(last, pt);
-    this._pathSegs = [...this._pathSegs, added ? this._segKey(last, pt) : null];
     this._path = [...this._path, pt];
     // closing the outline: a click on the first vertex → the save dialog
     if (this._path.length >= 4 && this._samePt(pt, this._path[0])) {
@@ -1152,7 +1091,6 @@ class HouseplanCard extends LitElement {
     });
     this._saveConfig();
     this._path = [];
-    this._pathSegs = [];
     const boundArea = this._areaSel;
     this._areaSel = '';
     this._nameSel = '';
@@ -1188,7 +1126,6 @@ class HouseplanCard extends LitElement {
 
   private _cancelPath(): void {
     this._path = [];
-    this._pathSegs = [];
     this._cursorPt = null;
     this._roomDialog = false;
   }
@@ -1589,7 +1526,6 @@ class HouseplanCard extends LitElement {
           aspect: d.source === 'draw' ? drawAspect : 1.414,
           view_box: [0, 0, 1, 1],
           rooms: [],
-          segments: [],
         };
         cfg.spaces.push(sp);
       } else {
@@ -1669,6 +1605,7 @@ class HouseplanCard extends LitElement {
   user's retry starts from the fresh config instead of hitting the same
   conflict again. */
   private async _saveConfigNow(): Promise<void> {
+    this._dropLegacySegments();
     try {
       const r = await this.hass.callWS({
         type: 'houseplan/config/set', config: this._serverCfg, expected_rev: this._cfgRev,
@@ -2203,10 +2140,6 @@ class HouseplanCard extends LitElement {
       <button class="btn ${this._tool === 'draw' ? 'on' : ''}" @click=${() => (this._tool = 'draw')}
         title=${this._t('title.markup_add')}>
         <ha-icon icon="mdi:vector-polyline-plus"></ha-icon>${this._t('markup.add')}
-      </button>
-      <button class="btn ${this._tool === 'erase' ? 'on' : ''}" @click=${() => (this._tool = 'erase')}
-        title=${this._t('title.markup_erase')}>
-        <ha-icon icon="mdi:eraser"></ha-icon>${this._t('markup.erase')}
       </button>
       <button class="btn ${this._tool === 'delroom' ? 'on' : ''}" @click=${() => (this._tool = 'delroom')}
         title=${this._t('title.markup_delroom')}>

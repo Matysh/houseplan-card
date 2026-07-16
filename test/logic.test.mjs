@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   lqiColor, snapToGrid, segKey, samePoint, pointInPolygon, markerIdForBinding, averageLqi,
   fitView, declump, safeUrl, resolveTapAction, floorsOf, subst, spaceDisplayOf, roomFillColor,
-  segmentCm, formatLength,
+  segmentCm, formatLength, roomEdges,
 } from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
@@ -275,4 +275,25 @@ test('formatLength: imperial feet + inches, with inch rollover', () => {
   assert.equal(formatLength(124.46, true), '4′ 1″');
   assert.equal(formatLength(30.48, true), '1′ 0″');
   assert.equal(formatLength(29.464, true), '1′ 0″');
+});
+
+test('roomEdges: a line exists only as a room edge; polygons and rects both yield walls', () => {
+  const sq = { poly: [[0, 0], [1, 0], [1, 1], [0, 1]] };
+  assert.equal(roomEdges([sq]).length, 4);          // closed outline → 4 walls
+  assert.equal(roomEdges([{ x: 0, y: 0, w: 1, h: 1 }]).length, 4); // legacy rect room
+  assert.equal(roomEdges([]).length, 0);            // no rooms → no lines at all
+  assert.equal(roomEdges([{ poly: [[0, 0], [1, 1]] }]).length, 0); // not a closed room → nothing
+});
+
+test('roomEdges: a wall shared by two rooms is emitted once, and survives deleting either room', () => {
+  const left = { id: 'a', poly: [[0, 0], [0.5, 0], [0.5, 1], [0, 1]] };
+  const right = { id: 'b', poly: [[0.5, 0], [1, 0], [1, 1], [0.5, 1]] }; // shares x=0.5 wall
+  const both = roomEdges([left, right]);
+  assert.equal(both.length, 7); // 4 + 4 - 1 shared, deduped regardless of direction
+  const shared = (segs) => segs.some((s) => s[0] === 0.5 && s[2] === 0.5);
+  assert.ok(shared(both));
+  // deleting 'left' → the shared wall stays, because 'right' still contributes it
+  assert.ok(shared(roomEdges([right])));
+  // deleting both → no lines remain
+  assert.equal(roomEdges([]).length, 0);
 });

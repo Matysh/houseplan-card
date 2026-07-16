@@ -111,11 +111,21 @@ If the server config is empty, the card falls back to the legacy bundle (the dac
 
 ## Markup editor (v1.4.0+)
 
-State inside the card: `_markup` (mode), `_tool` (draw/erase/delroom), `_path` (the current outline,
-vertices on the GRID_N=60 grid). Clicks on the stage → `_svgPoint`→`_snap`. Each pair of points adds a
-segment to `space.segments` (dedup by key, saved via config/set with debounce). The outline is closed
+State inside the card: `_markup` (mode), `_tool` (draw/delroom), `_path` (the current outline,
+vertices on the GRID_N=240 grid). Clicks on the stage → `_svgPoint`→`_snap`. The outline is closed
 = a click on the first vertex → area select (hass.areas) + name → room {poly}. Polygon rooms and
 rectangles are rendered uniformly (hit-test: point-in-polygon / rect).
+
+**A line is never an entity of its own (v1.19.0).** Nothing is persisted while you draw: an
+outline you never close leaves no trace. Walls are *derived* from the room outlines by
+`roomEdges(rooms)` (logic.ts) and deduped by `segKey`, so a wall shared by two rooms is emitted
+once — deleting a room therefore keeps the borders its neighbours still contribute and drops the
+rest, with no bookkeeping. The legacy `space.segments` array is stripped on every save (validation
+still tolerates it on read; see CHANGELOG v1.19.0).
+
+While drawing, the length of the current segment follows the cursor (`_fmtLen` → `segmentCm`/
+`formatLength`): metres, or feet+inches when `hass.config.unit_system` is imperial. The scale is
+per-space `cell_cm` — cm represented by one grid cell (default 5, so 240 cells ≈ 12 m).
 
 ## Integration WS API
 

@@ -63,7 +63,14 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 
 ## Room markup editor ★
 
-- [ ] Grid appears; dots snap; segments draw pair-by-pair; shared walls reused
+- [ ] Grid appears; dots snap; the outline draws pair-by-pair; shared walls reused
+- [ ] Ruler: while drawing, the length of the current segment follows the cursor
+      (metres, or feet+inches on an imperial HA); scale = space "cm per cell" (default 5)
+- [ ] A line cannot exist on its own: start an outline, do NOT close it, leave markup —
+      no lines are left behind (nothing was written to the config)
+- [ ] Deleting a room removes its walls, EXCEPT those shared with a neighbouring room
+      (the neighbour still yields them); deleting the neighbour too removes them as well
+- [ ] There is no "Erase" tool in the markup toolbar (removed in v1.19.0)
 - [ ] Esc / Ctrl+Z removes the last dot (and its line); Reset clears the path
 - [ ] Closing the contour (click the first dot, ≥4 points) opens the room dialog
 - [ ] Room dialog: area list shows only unassigned areas; picking an area prefills the name

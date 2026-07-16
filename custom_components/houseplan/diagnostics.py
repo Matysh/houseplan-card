@@ -31,7 +31,6 @@ async def async_get_config_entry_diagnostics(
                 "has_plan": bool(s.get("plan_url")),
                 "rooms": len(s.get("rooms", [])),
                 "rooms_with_area": sum(1 for r in s.get("rooms", []) if r.get("area")),
-                "segments": len(s.get("segments", [])),
             }
             for s in config.get("spaces", [])
         ],

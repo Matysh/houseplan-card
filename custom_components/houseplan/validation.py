@@ -100,6 +100,9 @@ SPACE_SCHEMA = vol.Schema(
         vol.Required("aspect"): vol.All(vol.Coerce(float), vol.Range(min=0.05, max=20)),
         vol.Required("view_box"): vol.All([vol.Coerce(float)], vol.Length(min=4, max=4)),
         vol.Required("rooms"): [ROOM_SCHEMA],
+        # Legacy: walls are derived from room outlines since v1.19.0 — a line has no
+        # independent existence. Still accepted so a stale browser tab cannot fail a save;
+        # the card strips the field on every write.
         vol.Optional("segments"): [vol.All([vol.Coerce(float)], vol.Length(min=4, max=4))],
     },
     extra=vol.ALLOW_EXTRA,
