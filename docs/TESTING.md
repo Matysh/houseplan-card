@@ -140,7 +140,7 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] Zoom level persists per space (localStorage), restored on reload
 - [ ] Window resize / sidebar collapse refits without distortion
 - [ ] Room name labels: default at room center; dragging moves and persists (server layout, `rl_*`) [auto]; hidden in markup mode
-- [ ] Labels legible on light plans (text shadow) at min/max zoom
+- [ ] Labels legible on light and dark plans (no text shadow) at min/max zoom
 
 ## Multi-client & concurrency ★
 

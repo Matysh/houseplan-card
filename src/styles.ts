@@ -235,7 +235,6 @@ export const cardStyles = css`
       cursor: grab;
       pointer-events: auto;
       user-select: none;
-      text-shadow: 0 0 4px var(--card-background-color, rgba(0, 0, 0, 0.6));
       z-index: 1;
     }
     .roomlabel:active { cursor: grabbing; }
