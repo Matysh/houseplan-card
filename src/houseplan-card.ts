@@ -28,7 +28,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.21.1';
+const CARD_VERSION = '1.21.2';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -2082,7 +2082,7 @@ class HouseplanCard extends LitElement {
         ${this._markup ? this._renderMarkupBar() : nothing}
         </div>
 
-        <div class="stage ${this._markup ? 'markup' : ''}"
+        <div class="stage ${this._markup ? 'markup' : ''} ${space.bg ? '' : 'noplan'}"
           style="height:calc(100dvh - 118px)"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}

@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.21.2 — 2026-07-16 (space-dialog polish)
+- The **"Scale (cm per cell)" input is compact** again — a generic `width:100%`
+  dialog rule was stretching it across the row.
+- **A space with no background image now gets a white "paper" canvas** instead of
+  the dark stage, so hand-drawn rooms read like a floor plan on paper.
+
 ## v1.21.1 — 2026-07-16 (audit: split snaps to the wall, docs for merge/split)
 - **Fix (found in audit):** Split required each click to land on a grid node, so it
   silently refused rooms whose walls are not grid-aligned (imported or older polygons)

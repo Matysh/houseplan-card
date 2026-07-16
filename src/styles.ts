@@ -134,6 +134,9 @@ export const cardStyles = css`
       opacity: 0.5;
       pointer-events: none;
     }
+    .stage.noplan {
+      background: #ffffff;
+    }
     .stage {
       position: relative;
       width: 100%;
@@ -502,6 +505,7 @@ export const cardStyles = css`
     }
     /* beat the generic .dialog .body .namein { width:100% } rule */
     .dialog .body .temprange .tempin { width: 56px; flex: none; padding: 3px 6px; }
+    .dialog .body .colorrow .tempin { width: 72px; flex: none; }
     .srcrow { flex-wrap: nowrap; }
     .srcrow > span:first-of-type { white-space: nowrap; }
     .colorrow .opl { color: var(--hp-muted); font-size: 12px; }

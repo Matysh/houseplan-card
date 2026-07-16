@@ -137,6 +137,9 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
       opacity: 0.5;
       pointer-events: none;
     }
+    .stage.noplan {
+      background: #ffffff;
+    }
     .stage {
       position: relative;
       width: 100%;
@@ -505,6 +508,7 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
     }
     /* beat the generic .dialog .body .namein { width:100% } rule */
     .dialog .body .temprange .tempin { width: 56px; flex: none; padding: 3px 6px; }
+    .dialog .body .colorrow .tempin { width: 72px; flex: none; }
     .srcrow { flex-wrap: nowrap; }
     .srcrow > span:first-of-type { white-space: nowrap; }
     .colorrow .opl { color: var(--hp-muted); font-size: 12px; }
@@ -1113,7 +1117,7 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
         ${this._markup?this._renderMarkupBar():W}
         </div>
 
-        <div class="stage ${this._markup?"markup":""}"
+        <div class="stage ${this._markup?"markup":""} ${e.bg?"":"noplan"}"
           style="height:calc(100dvh - 118px)"
           @click=${t=>this._markupClick(t)}
           @wheel=${t=>this._onWheel(t)}
