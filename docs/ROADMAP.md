@@ -14,27 +14,27 @@ This roadmap replaces them.
 
 Track progress in `custom_components/houseplan/quality_scale.yaml` (done/exempt + comment).
 
-- [ ] `runtime-data`: move `hass.data[DOMAIN]` (stores, entry, write lock) to typed
+- [x] `runtime-data`: move `hass.data[DOMAIN]` (stores, entry, write lock) to typed
   `entry.runtime_data` (`type HouseplanConfigEntry = ConfigEntry[HouseplanData]`).
   Keep WS command registration in `async_setup` (commands must survive entry reloads).
-- [ ] `config-entry-unloading` (Silver, do it now): real `async_unload_entry` — unregister
+- [x] `config-entry-unloading` (Silver, do it now): real `async_unload_entry` — unregister
   update listeners via `entry.async_on_unload`; document what stays (static paths cannot
   be unregistered — exempt comment).
-- [ ] `test-before-setup`: verify storage is loadable/writable in `async_setup_entry`,
+- [x] `test-before-setup`: verify storage is loadable/writable in `async_setup_entry`,
   raise `ConfigEntryNotReady` on failure.
-- [ ] `unique-config-entry`: replace the manual `_async_current_entries()` check with
+- [x] `unique-config-entry`: replace the manual `_async_current_entries()` check with
   `single_config_entry: true` in manifest.
-- [ ] `config-flow-test-coverage` + backend tests for websocket_api (pytest-homeassistant-custom-component:
+- [x] `config-flow-test-coverage` + backend tests for websocket_api (pytest-homeassistant-custom-component:
   conflict/rev, admin_only enforcement, layout point ops, upload limits).
-- [ ] Storage versioning: `Store(minor_version=...)` + `_async_migrate_func` skeleton **now**,
+- [x] Storage versioning: `Store(minor_version=...)` + `_async_migrate_func` skeleton **now**,
   before the config schema evolves further (Bronze-adjacent, cheap while schema is stable).
-- [ ] `quality_scale.yaml` with honest exempt list (no entities ⇒ entity rules N/A, no polling, no deps).
+- [x] `quality_scale.yaml` with honest exempt list (no entities ⇒ entity rules N/A, no polling, no deps).
 
 ## Phase 8 — Quality Scale: Silver + selected Gold
 
 - [ ] `test-coverage` ≥95% backend; frontend: extract remaining pure logic (view math,
   marker resolution) into `logic.ts`/`devices.ts` and cover with node:test.
-- [ ] `diagnostics.py`: config + layout dump with `async_redact_data` (redact names/links/PDF paths).
+- [x] `diagnostics.py`: config + layout dump with `async_redact_data` (redact names/links/PDF paths).
 - [ ] `reconfiguration-flow` + richer **options flow**: admin_only, curation defaults
   (exclude domains — UI editable, replacing the hardcoded EXCLUDED_DOMAINS fallback),
   LQI thresholds, group_lights default.

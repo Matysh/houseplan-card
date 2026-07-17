@@ -210,6 +210,18 @@ require hands on real hardware — they remain for the human pass.
 - [ ] `show_button: false` hides the footer
 - [ ] Full card honours `#space=<id>` on load and on hashchange; invalid id ignored [auto]
 
+## Presence ripples / per-device icon (v1.22.0)
+
+- [ ] Marker dialog → Display = "Ripple only": the icon badge disappears, rings pulse while the
+      entity is on, and collapse to a faint dot when it goes off
+- [ ] Display = "Icon + ripple": both the icon and the rings are drawn
+- [ ] Ripple colour and size (×2..×8) apply per device
+- [ ] An entity going `unavailable` stops the pulsing (idle dot), never leaves it running
+- [ ] Icon size ×0.5..×3 and rotation 0..350° apply per device; the temp/humidity badges
+      scale with the icon
+- [ ] Ripples still work with the card-wide "live states" toggle OFF (they are opt-in per device)
+- [ ] With OS "reduce motion" enabled, rings do not animate
+
 ## Doors & windows (v1.23.0)
 
 - [ ] Markup → "Opening": a click away from any wall shows a toast; near a wall — the dialog

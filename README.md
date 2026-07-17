@@ -133,6 +133,21 @@ Rooms may not overlap: a click strictly inside an existing room, or an outline t
 - **Split** — click a room, then two points on its walls; the chord cuts it in two. The bigger part stays the room it was (name, area, devices); the smaller one asks for a new name and area.
 
 
+### Doors, windows and locks
+
+In markup mode the **"Opening"** tool places doors and windows: click next to a wall and the
+opening snaps onto it. Pick the type, the **length in real centimetres** (defaults: door 90 cm,
+window 120 cm), an open/close sensor and — for doors — a **lock entity**.
+
+With a sensor bound, the plan comes alive: the door leaf swings on its hinge and the swing arc
+draws itself in as the real door opens; a window opens its two casements. While open, the moving
+parts take an accent colour. A door with a lock shows a padlock badge next to it — green when
+locked, orange when unlocked. For safety the lock can **not** be toggled from the plan; a click
+on the opening shows a status card with both states instead.
+
+Openings are easy to adjust later: hovering one highlights it, you can **drag it along the
+walls** (it slides around corners too), and a **double click opens its properties**.
+
 ### Step 3. Devices appear by themselves
 
 As soon as you save a room bound to an area, **the devices of that area are automatically laid out inside the outline**. These are the same devices shown on the **Settings → Devices → (filtered by the room)** page — only the meaningful ones, without service records, bridges and duplicates.
@@ -177,6 +192,12 @@ You can also place a **single entity** (not just a whole device): start typing i
 
 
 Not everything has to be left to the automation. With the **＋** button in the header you can place any device, group or a **virtual point** on the plan (for example, an "Inlet valve" that does not exist as a device). Set a name, icon, model, link, description and, if you wish, attach a **PDF manual**.
+
+The same dialog controls how the device looks on the plan. **Display** switches between the
+icon badge, an animated **presence ripple** (pulsing rings while the entity is active, a faint
+dot when idle — great for motion sensors) or both, with a per-device ring colour and size. The
+**icon size** (×0.5–3) and **rotation** are also per-device, so a wall valve can be small and
+turned the way it is mounted.
 
 ![Adding a device manually](docs/images/07-marker-dialog.png)
 

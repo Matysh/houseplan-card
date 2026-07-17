@@ -86,6 +86,15 @@ Built from the registries (`_buildDevices`), rules carried over 1-to-1 from the 
 
 ## Device markers (v1.6.0+)
 
+Per-marker appearance (v1.22.0): `display: badge|ripple|icon_ripple` (+`ripple_color`,
+`ripple_size`) draws presence-style pulsing rings gated by the pure `isActiveState` —
+deliberately independent of the card-wide `live_states` toggle, with `unavailable` counting as
+idle. `size` (icon multiplier via the `--dev-size` CSS var — value badges scale along) and
+`angle` rotate/scale a single icon. Room drawing shows a live **ruler** (`segmentCm` +
+`formatLength`, metres or feet+inches by `hass.config.unit_system`); the scale is per-space
+`cell_cm` (default 5 cm per grid cell).
+
+
 `config.markers[]`: `{id, binding:'device:<id>'|'entity:<eid>'|'virtual', space?, area?, hidden?,
 name?, icon?, model?, link?, description?, pdfs:[{name,url}]}`. A hybrid: auto-discovered HA devices
 appear on their own; a marker with `binding=device:<id>` overrides them (metadata/rebinding/hiding),
@@ -109,6 +118,18 @@ Plan files: `<config>/houseplan/plans/<space>.<ext>` → URL `/houseplan_files/p
 If the server config is empty, the card falls back to the legacy bundle (the dacha) and shows a
 "To server" migration button in edit mode. The dacha was migrated on 2026-07-04.
 
+## Room geometry rules (v1.19–v1.21)
+
+A **line is never an entity of its own**: walls are *derived* from room outlines
+(`roomEdges`, deduped by `segKey`), so an abandoned outline leaves nothing behind and deleting
+a room keeps the walls its neighbours still contribute. Rooms may not overlap
+(`pointStrictlyInside` + `roomsOverlap`; being ON a shared wall is legal — real neighbouring
+walls overlap collinearly rather than match exactly). **Merge/Split** use boolean geometry from
+**polyclip-ts** (chosen over `polygon-clipping`, whose ESM build exports only a default while
+its types declare named exports — breaking either tsc or the runtime): merge accepts a pair only
+when the union collapses into one hole-free outline; split cuts wall-to-wall with a chord, the
+bigger part keeps the room identity (name/area/devices).
+
 ## Markup editor (v1.4.0+)
 
 State inside the card: `_markup` (mode), `_tool` (draw/delroom), `_path` (the current outline,
@@ -126,6 +147,26 @@ still tolerates it on read; see CHANGELOG v1.19.0).
 While drawing, the length of the current segment follows the cursor (`_fmtLen` → `segmentCm`/
 `formatLength`): metres, or feet+inches when `hass.config.unit_system` is imperial. The scale is
 per-space `cell_cm` — cm represented by one grid cell (default 5, so 240 cells ≈ 12 m).
+
+## Doors & windows (v1.23.0+)
+
+`space.openings[]` — plan geometry, **not** markers: an opening needs an angle, a length and a
+wall, while markers are free points whose positions live in the layout store. Model:
+`{id, type: door|window, x, y, angle, length, contact?, lock?, invert?, flip_h?, flip_v?}`
+(normalized coords; `length` normalized by plan width). Placement snaps onto the nearest
+**derived** wall via `snapToWall` (logic.ts) — the angle is normalized to [-90, 90) because two
+rooms share a wall with opposite edge directions, and without that a drag across segment
+boundaries flips the hinge. The opening then keeps **absolute coordinates**, so editing, merging
+or deleting rooms never breaks it.
+
+Rendering (after easy-floorplan, MIT): SVG symbol at the origin (jambs + hinged leaf + a
+quarter-circle arc revealed via `stroke-dashoffset`), translated/rotated onto the wall; windows
+are two casement leaves. `openingAmount` (pure) maps the contact state to 0..1: no sensor →
+door drawn open / window closed (static-plan convention); `unavailable`/`unknown` freeze that
+default. The lock renders as an HTML padlock badge (`.oplock`) in the device layer; a lock is
+**never** toggled from the plan (TOGGLE_FORBIDDEN_DOMAINS rule). View-mode UX: hover outline,
+drag along walls (continuous re-snap, saved on release), click → status card (250 ms timer),
+double click → properties dialog. In markup mode the "Opening" tool handles clicks instead.
 
 ## Integration WS API
 

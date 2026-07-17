@@ -69,6 +69,15 @@ cp dist/houseplan-card.js custom_components/houseplan/frontend/
   ("InvalidStateError: Transition was aborted", hui-view is not created for 1–2 min).
   Cured by repeating the SPA navigation: pushState + a location-changed event, or just waiting.
 
+## Dependency and cache gotchas
+
+- **polygon-clipping is a trap**: its `.d.ts` declares named exports but the ESM build has only
+  a default export — tsc or the runtime breaks, whichever you appease. Use **polyclip-ts**
+  (proper ESM + native types; same results, +~50 KB bundle via bignumber.js).
+- **Redeploying the same version keeps the resource URL** (`/houseplan_files/houseplan-card.js?v=X`),
+  so browsers may serve the previous bundle from cache. Bump the version for anything users must
+  pick up, or hard-refresh (Ctrl+Shift+R) when testing a hotfix redeploy.
+
 ## Release
 
 Tag `vX.Y.Z` + GitHub Release → the workflow `.github/workflows/release.yml` builds and attaches
