@@ -223,3 +223,9 @@ require hands on real hardware — they remain for the human pass.
       the lock can NOT be toggled from the plan
 - [ ] Flip toggles mirror the hinge side and the swing side
 - [ ] Click an existing opening with the tool → edit dialog; Delete removes it
+- [ ] (v1.23.1) Hovering an opening in view mode shows the accent outline + grab cursor
+- [ ] Dragging an opening slides it along walls (re-snapping, incl. around corners) and saves
+      on release; dragging far away from walls leaves it in place; hinge does not flip while
+      crossing wall-segment boundaries
+- [ ] Single click still opens the status card; double click opens the properties dialog;
+      a drag does NOT open either

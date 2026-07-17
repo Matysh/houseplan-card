@@ -97,7 +97,13 @@ export function snapToWall(
     const d = Math.hypot(p[0] - q[0], p[1] - q[1]);
     if (d < bestD) {
       bestD = d;
-      best = { x: q[0], y: q[1], angle: (Math.atan2(dy, dx) * 180) / Math.PI };
+      // normalize to [-90, 90): two rooms sharing a wall yield the same edge in
+      // OPPOSITE directions — without this, dragging an opening across segment
+      // boundaries would flip its hinge side back and forth
+      let angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+      if (angle >= 90) angle -= 180;
+      else if (angle < -90) angle += 180;
+      best = { x: q[0], y: q[1], angle };
     }
   }
   return best;

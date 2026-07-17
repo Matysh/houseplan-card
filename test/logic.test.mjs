@@ -432,3 +432,15 @@ test('openingAmount: doors default open, windows closed; outages freeze the defa
   assert.equal(openingAmount('door', 'off', true), 1);
   assert.equal(openingAmount('door', 'unavailable', true), 1);
 });
+
+test('snapToWall: the angle is normalized to [-90, 90) so opposite edge directions cannot flip a dragged opening', () => {
+  // the same wall as seen from two neighbouring rooms (opposite winding)
+  const a = [{ poly: [[0, 0], [10, 0], [10, 10], [0, 10]] }];
+  const b = [{ poly: [[10, 0], [0, 0], [0, 10], [10, 10]] }]; // reversed
+  const sa = snapToWall([5, 0.4], a, 1);
+  const sb = snapToWall([5, 0.4], b, 1);
+  assert.equal(sa.angle, sb.angle);
+  assert.ok(sa.angle >= -90 && sa.angle < 90);
+  const v = snapToWall([10.3, 5], a, 1); // vertical wall
+  assert.ok(v.angle >= -90 && v.angle < 90);
+});

@@ -233,10 +233,26 @@ export const cardStyles = css`
       stroke-width: 1.5;
       transition: stroke-dashoffset 0.6s ease;
     }
+    /* hover affordance: a rounded outline hugging the wall strip + a grab cursor */
+    .op-outline {
+      fill: none;
+      stroke: var(--hp-accent);
+      stroke-width: 1.5;
+      opacity: 0;
+      transition: opacity 0.15s;
+      pointer-events: none;
+    }
+    g.opening:hover .op-outline {
+      opacity: 0.9;
+    }
     .op-hit {
       fill: transparent;
-      cursor: pointer;
+      cursor: grab;
       pointer-events: auto;
+      touch-action: none; /* drags, not scrolls, on touch */
+    }
+    .op-hit:active {
+      cursor: grabbing;
     }
     .stage.markup .op-hit {
       pointer-events: none; /* markup clicks go to the stage tools */

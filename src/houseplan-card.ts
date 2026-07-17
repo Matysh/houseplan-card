@@ -30,7 +30,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.23.0';
+const CARD_VERSION = '1.23.1';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -96,7 +96,9 @@ class HouseplanCard extends LitElement {
     flipV: boolean;
     x: number; y: number; angle: number; // render units (from the wall snap)
   } | null = null;
-  private _openingInfo: OpeningCfg | null = null;                       // first room picked for a merge
+  private _openingInfo: OpeningCfg | null = null;
+  private _opDrag: { id: string; moved: boolean } | null = null;
+  private _opClickTimer: number | null = null;                       // first room picked for a merge
   private _mergeDialog: { aId: string; bId: string; poly: number[][]; pick: 'a' | 'b' } | null = null;
   private _splitSel: { roomId: string; a: number[] | null } | null = null; // room being cut + first wall point
   // a split is applied only when the new room's dialog is confirmed — cancel leaves the room intact
@@ -1155,17 +1157,7 @@ class HouseplanCard extends LitElement {
       (o) => Math.hypot(raw[0] - o.rx, raw[1] - o.ry) <= Math.max(o.rlen / 2, eps),
     );
     if (hit) {
-      this._openingDialog = {
-        id: hit.id,
-        type: hit.type,
-        lengthCm: Math.round((hit.rlen / this._gridPitch) * this._cellCm),
-        contact: hit.contact || '',
-        lock: hit.lock || '',
-        invert: !!hit.invert,
-        flipH: !!hit.flip_h,
-        flipV: !!hit.flip_v,
-        x: hit.rx, y: hit.ry, angle: hit.angle,
-      };
+      this._editOpening(hit);
       return;
     }
     const snap = snapToWall(raw, this._spaceModel().rooms, eps);
@@ -1178,6 +1170,82 @@ class HouseplanCard extends LitElement {
       invert: false, flipH: false, flipV: false,
       x: snap.x, y: snap.y, angle: snap.angle,
     };
+  }
+
+  /** Open the properties dialog for an existing opening. */
+  private _editOpening(o: OpeningCfg & { rx: number; ry: number; rlen: number }): void {
+    this._openingDialog = {
+      id: o.id,
+      type: o.type,
+      lengthCm: Math.round((o.rlen / this._gridPitch) * this._cellCm),
+      contact: o.contact || '',
+      lock: o.lock || '',
+      invert: !!o.invert,
+      flipH: !!o.flip_h,
+      flipV: !!o.flip_v,
+      x: o.rx, y: o.ry, angle: o.angle,
+    };
+  }
+
+  /** Drag an opening along the walls (view mode): it re-snaps continuously. */
+  private _opPointerDown(ev: PointerEvent, o: OpeningCfg): void {
+    if (this._markup) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    try {
+      (ev.target as Element).setPointerCapture?.(ev.pointerId);
+    } catch {
+      /* an inactive pointerId (synthetic events, some browsers) must not kill the drag */
+    }
+    this._opDrag = { id: o.id, moved: false };
+  }
+
+  private _opPointerMove(ev: PointerEvent, o: OpeningCfg): void {
+    if (!this._opDrag || this._opDrag.id !== o.id) return;
+    const raw = this._svgPoint(ev);
+    const snap = snapToWall(raw, this._spaceModel().rooms, this._gridPitch * 4);
+    if (!snap) return; // too far from any wall: the opening stays where it was
+    this._opDrag.moved = true;
+    const sp = this._curSpaceCfg;
+    const cfg = sp?.openings?.find((x: OpeningCfg) => x.id === o.id);
+    if (!cfg) return;
+    cfg.x = snap.x / NORM_W;
+    cfg.y = snap.y / this._spaceH;
+    cfg.angle = snap.angle;
+    this.requestUpdate();
+  }
+
+  private _opPointerUp(ev: PointerEvent, o: OpeningCfg): void {
+    if (!this._opDrag || this._opDrag.id !== o.id) return;
+    const moved = this._opDrag.moved;
+    if (moved) this._saveConfig();
+    // keep the flag until the click event that follows pointerup, then let it go
+    if (moved) window.setTimeout(() => (this._opDrag = null), 0);
+    else this._opDrag = null;
+  }
+
+  /** Click: the status card (delayed so a double click can cancel it). */
+  private _opClick(ev: MouseEvent, o: OpeningCfg & { rx: number; ry: number; rlen: number }): void {
+    ev.stopPropagation();
+    if (this._markup) return;
+    if (this._opDrag?.moved) return; // that click was the tail of a drag
+    if (this._opClickTimer) window.clearTimeout(this._opClickTimer);
+    this._opClickTimer = window.setTimeout(() => {
+      this._opClickTimer = null;
+      this._openingInfo = o;
+    }, 250);
+  }
+
+  /** Double click: the properties dialog. */
+  private _opDblClick(ev: MouseEvent, o: OpeningCfg & { rx: number; ry: number; rlen: number }): void {
+    ev.stopPropagation();
+    if (this._markup) return;
+    if (this._opClickTimer) {
+      window.clearTimeout(this._opClickTimer);
+      this._opClickTimer = null;
+    }
+    this._openingInfo = null;
+    this._editOpening(o);
   }
 
   private _saveOpening(): void {
@@ -2517,14 +2585,20 @@ class HouseplanCard extends LitElement {
             </g>
           </g>`;
       }
-      return svg`<g transform="translate(${o.rx} ${o.ry}) rotate(${o.angle})">
+      return svg`<g class="opening" transform="translate(${o.rx} ${o.ry}) rotate(${o.angle})">
         <g transform="scale(${sx} ${sy})">
           <line x1="${-half}" y1="${-jamb / 2}" x2="${-half}" y2="${jamb / 2}" stroke="${base}" stroke-width="2.5"></line>
           <line x1="${half}" y1="${-jamb / 2}" x2="${half}" y2="${jamb / 2}" stroke="${base}" stroke-width="2.5"></line>
           ${body}
         </g>
-        <rect class="op-hit" x="${-half - 6}" y="${-o.rlen - 8}" width="${o.rlen + 12}" height="${o.rlen * 2 + 16}"
-          @click=${(e: MouseEvent) => { e.stopPropagation(); if (!this._markup) this._openingInfo = o; }}></rect>
+        <rect class="op-outline" x="${-half - 10}" y="-16" width="${o.rlen + 20}" height="32" rx="6"></rect>
+        <rect class="op-hit" x="${-half - 12}" y="-20" width="${o.rlen + 24}" height="40"
+          @click=${(e: MouseEvent) => this._opClick(e, o)}
+          @dblclick=${(e: MouseEvent) => this._opDblClick(e, o)}
+          @pointerdown=${(e: PointerEvent) => this._opPointerDown(e, o)}
+          @pointermove=${(e: PointerEvent) => this._opPointerMove(e, o)}
+          @pointerup=${(e: PointerEvent) => this._opPointerUp(e, o)}
+          @pointercancel=${(e: PointerEvent) => this._opPointerUp(e, o)}></rect>
       </g>`;
     })}`;
   }

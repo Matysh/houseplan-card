@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.23.1 — 2026-07-17 (openings: hover, drag along walls, double-click properties)
+- **Hover affordance**: an accent outline hugs the opening's wall strip on hover, with a
+  grab cursor — placed openings now look grabbable.
+- **Drag along walls** (view mode): an opening re-snaps continuously to the nearest derived
+  wall while dragged; too far from any wall → it stays put. `snapToWall` now normalizes the
+  angle to [-90, 90) — two rooms share a wall with OPPOSITE edge directions, and without this
+  a drag across segment boundaries flipped the hinge side back and forth. Saved on release.
+- **Click / double click**: a single click still opens the status card (now via a 250 ms
+  timer); a **double click opens the properties dialog** right from view mode. The markup
+  "Opening" tool behaves as before. Hit zone made slightly thicker and is now a strip along
+  the wall (previously it covered the whole swing square, causing accidental hovers).
+- (+1 test: 76 → 77.)
+
 ## v1.23.0 — 2026-07-17 (doors & windows with live open/lock state)
 Visual language after easy-floorplan (MIT); the placement model is ours.
 - **New markup tool "Opening"**: click next to a wall → the opening snaps onto the nearest
