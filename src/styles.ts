@@ -225,6 +225,57 @@ export const cardStyles = css`
       fill-opacity: 0.22;
       stroke-opacity: 1;
     }
+    /* doors & windows */
+    .op-leaf {
+      transition: transform 0.6s ease;
+    }
+    .op-arc {
+      stroke-width: 1.5;
+      transition: stroke-dashoffset 0.6s ease;
+    }
+    .op-hit {
+      fill: transparent;
+      cursor: pointer;
+      pointer-events: auto;
+    }
+    .stage.markup .op-hit {
+      pointer-events: none; /* markup clicks go to the stage tools */
+    }
+    .oplock {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      width: calc(var(--icon-size, 2.5cqw) * 0.62);
+      height: calc(var(--icon-size, 2.5cqw) * 0.62);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--hp-bg);
+      border: 1px solid var(--hp-line);
+      pointer-events: auto;
+      cursor: pointer;
+      z-index: 1;
+    }
+    .oplock ha-icon {
+      --mdc-icon-size: calc(var(--icon-size, 2.5cqw) * 0.4);
+      display: flex;
+      line-height: 0;
+    }
+    .oplock.locked { color: #66d17a; border-color: #66d17a; }
+    .oplock.unlocked { color: var(--hp-open); border-color: var(--hp-open); }
+    .oplock.unknown { color: var(--hp-muted); }
+    .oprow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+    }
+    .oprow b { margin-left: auto; }
+    .oprow.ok b { color: #66d17a; }
+    .oprow.warn b { color: var(--hp-open); }
+    @media (prefers-reduced-motion: reduce) {
+      .op-leaf, .op-arc { transition: none; }
+    }
     /* presence ripples: opted into per device, drawn around the anchor point */
     .dev.noicon {
       background: transparent;

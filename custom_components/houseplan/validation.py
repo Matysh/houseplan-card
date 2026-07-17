@@ -100,6 +100,24 @@ SPACE_SCHEMA = vol.Schema(
         vol.Required("aspect"): vol.All(vol.Coerce(float), vol.Range(min=0.05, max=20)),
         vol.Required("view_box"): vol.All([vol.Coerce(float)], vol.Length(min=4, max=4)),
         vol.Required("rooms"): [ROOM_SCHEMA],
+        vol.Optional("openings"): [
+            vol.Schema(
+                {
+                    vol.Required("id"): str,
+                    vol.Required("type"): vol.Any("door", "window"),
+                    vol.Required("x"): vol.Coerce(float),
+                    vol.Required("y"): vol.Coerce(float),
+                    vol.Required("angle"): vol.Coerce(float),
+                    vol.Required("length"): vol.All(vol.Coerce(float), vol.Range(min=0.001, max=1)),
+                    vol.Optional("contact"): vol.Any(str, None),
+                    vol.Optional("lock"): vol.Any(str, None),
+                    vol.Optional("invert"): bool,
+                    vol.Optional("flip_h"): bool,
+                    vol.Optional("flip_v"): bool,
+                },
+                extra=vol.ALLOW_EXTRA,
+            )
+        ],
         # Legacy: walls are derived from room outlines since v1.19.0 — a line has no
         # independent existence. Still accepted so a stale browser tab cannot fail a save;
         # the card strips the field on every write.

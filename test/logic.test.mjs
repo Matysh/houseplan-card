@@ -4,7 +4,7 @@ import {
   lqiColor, snapToGrid, segKey, samePoint, pointInPolygon, markerIdForBinding, averageLqi,
   fitView, declump, safeUrl, resolveTapAction, floorsOf, subst, spaceDisplayOf, roomFillColor,
   segmentCm, formatLength, roomEdges, roomPoly, pointOnBoundary, pointStrictlyInside, roomsOverlap,
-  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState,
+  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount,
 } from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
@@ -406,4 +406,29 @@ test('isActiveState: a sensor outage calms the plan down, it never pulses foreve
   assert.ok(!isActiveState('unknown'));
   assert.ok(!isActiveState(undefined));
   assert.ok(!isActiveState(null));
+});
+
+test('snapToWall: projects onto the nearest derived wall with its angle; misses return null', () => {
+  const rooms = [{ poly: [[0, 0], [10, 0], [10, 10], [0, 10]] }];
+  const s = snapToWall([4, 0.6], rooms, 1);        // near the top wall
+  assert.deepEqual([s.x, s.y], [4, 0]);
+  assert.equal(Math.abs(s.angle) % 180, 0);         // horizontal wall
+  const v = snapToWall([10.4, 7], rooms, 1);        // near the right wall
+  assert.deepEqual([v.x, v.y], [10, 7]);
+  assert.equal(Math.abs(v.angle), 90);
+  assert.equal(snapToWall([5, 5], rooms, 1), null); // middle of the room: no wall within reach
+});
+
+test('openingAmount: doors default open, windows closed; outages freeze the default', () => {
+  assert.equal(openingAmount('door', null), 1);
+  assert.equal(openingAmount('window', null), 0);
+  assert.equal(openingAmount('door', 'unavailable'), 1);
+  assert.equal(openingAmount('window', 'unknown'), 0);
+  assert.equal(openingAmount('door', 'on'), 1);
+  assert.equal(openingAmount('door', 'off'), 0);
+  assert.equal(openingAmount('window', 'open'), 1);
+  // invert flips on/off but never the outage default
+  assert.equal(openingAmount('door', 'on', true), 0);
+  assert.equal(openingAmount('door', 'off', true), 1);
+  assert.equal(openingAmount('door', 'unavailable', true), 1);
 });

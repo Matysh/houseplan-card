@@ -15,12 +15,14 @@ import {
   lqiColor, snapToGrid, samePoint, pointInPolygon, markerIdForBinding,
   segmentCm, formatLength, roomEdges, roomPoly, pointStrictlyInside, roomsOverlap,
   pointOnBoundary, mergeRooms, splitRoom, polygonArea, closestPointOnBoundary,
+  snapToWall, openingAmount,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
   spaceDisplayOf, roomFillColor, isActiveState, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
 } from './logic';
 import { buildDevices, lqiFor, tempFor, humFor, isHumEntity, areaLights, areaTemp } from './devices';
 import type {
+  OpeningCfg,
   RoomCfg, SpaceModel, PdfRef, Marker, ServerConfig, DevItem, CardConfig,
 } from './types';
 import './editor';
@@ -28,14 +30,14 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.22.0';
+const CARD_VERSION = '1.23.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
 const NORM_W = 1000; // width of the render space for normalized configs
 
 const GRID_N = 240; // grid points across the plan width (half the previous step; old nodes are a subset of the new ones, positions are preserved)
-type MarkupTool = 'draw' | 'merge' | 'split' | 'delroom';
+type MarkupTool = 'draw' | 'merge' | 'split' | 'opening' | 'delroom';
 
 const fireEvent = (node: EventTarget, type: string, detail?: unknown) => {
   const ev = new Event(type, { bubbles: true, composed: true }) as any;
@@ -82,7 +84,19 @@ class HouseplanCard extends LitElement {
   private _tool: MarkupTool = 'draw';
   private _path: number[][] = []; // current outline (render units, vertices snapped to the grid)
   private _cursorPt: number[] | null = null;
-  private _mergeSel: string | null = null;                       // first room picked for a merge
+  private _mergeSel: string | null = null;
+  private _openingDialog: {
+    id?: string;                 // editing an existing opening
+    type: 'door' | 'window';
+    lengthCm: number;
+    contact: string;
+    lock: string;
+    invert: boolean;
+    flipH: boolean;
+    flipV: boolean;
+    x: number; y: number; angle: number; // render units (from the wall snap)
+  } | null = null;
+  private _openingInfo: OpeningCfg | null = null;                       // first room picked for a merge
   private _mergeDialog: { aId: string; bId: string; poly: number[][]; pick: 'a' | 'b' } | null = null;
   private _splitSel: { roomId: string; a: number[] | null } | null = null; // room being cut + first wall point
   // a split is applied only when the new room's dialog is confirmed — cancel leaves the room intact
@@ -182,6 +196,8 @@ class HouseplanCard extends LitElement {
     _path: { state: true },
     _cursorPt: { state: true },
     _mergeSel: { state: true },
+    _openingDialog: { state: true },
+    _openingInfo: { state: true },
     _mergeDialog: { state: true },
     _splitSel: { state: true },
     _areaSel: { state: true },
@@ -1070,6 +1086,10 @@ class HouseplanCard extends LitElement {
       this.requestUpdate();
       return;
     }
+    if (this._tool === 'opening') {
+      this._openingClick(raw);
+      return;
+    }
     if (this._tool === 'merge') {
       this._mergeClick(raw);
       return;
@@ -1112,6 +1132,113 @@ class HouseplanCard extends LitElement {
       return;
     }
     this._path = [...this._path, pt];
+  }
+
+  /** Openings of the current space in render units. */
+  private get _openingsR(): (OpeningCfg & { rx: number; ry: number; rlen: number })[] {
+    const sp = this._curSpaceCfg;
+    const H = this._spaceH;
+    return (sp?.openings || []).map((o: OpeningCfg) => ({
+      ...o, rx: o.x * NORM_W, ry: o.y * H, rlen: o.length * NORM_W,
+    }));
+  }
+
+  /** cm → render units via the space scale (cm per grid cell). */
+  private _cmToUnits(cm: number): number {
+    return (cm / this._cellCm) * this._gridPitch;
+  }
+
+  /** Opening tool: click an existing opening to edit it, or a wall to place one. */
+  private _openingClick(raw: number[]): void {
+    const eps = this._gridPitch * 1.5;
+    const hit = this._openingsR.find(
+      (o) => Math.hypot(raw[0] - o.rx, raw[1] - o.ry) <= Math.max(o.rlen / 2, eps),
+    );
+    if (hit) {
+      this._openingDialog = {
+        id: hit.id,
+        type: hit.type,
+        lengthCm: Math.round((hit.rlen / this._gridPitch) * this._cellCm),
+        contact: hit.contact || '',
+        lock: hit.lock || '',
+        invert: !!hit.invert,
+        flipH: !!hit.flip_h,
+        flipV: !!hit.flip_v,
+        x: hit.rx, y: hit.ry, angle: hit.angle,
+      };
+      return;
+    }
+    const snap = snapToWall(raw, this._spaceModel().rooms, eps);
+    if (!snap) {
+      this._showToast(this._t('toast.opening_no_wall'));
+      return;
+    }
+    this._openingDialog = {
+      type: 'door', lengthCm: 90, contact: '', lock: '',
+      invert: false, flipH: false, flipV: false,
+      x: snap.x, y: snap.y, angle: snap.angle,
+    };
+  }
+
+  private _saveOpening(): void {
+    const d = this._openingDialog;
+    const sp = this._curSpaceCfg;
+    if (!d || !sp) return;
+    const H = this._spaceH;
+    const o: OpeningCfg = {
+      id: d.id || 'o' + Date.now().toString(36),
+      type: d.type,
+      x: d.x / NORM_W,
+      y: d.y / H,
+      angle: d.angle,
+      length: this._cmToUnits(Math.max(20, d.lengthCm)) / NORM_W,
+      contact: d.contact || null,
+      lock: d.type === 'door' ? d.lock || null : null,
+      invert: d.invert || undefined,
+      flip_h: d.flipH || undefined,
+      flip_v: d.flipV || undefined,
+    };
+    sp.openings = sp.openings || [];
+    const i = sp.openings.findIndex((x: OpeningCfg) => x.id === o.id);
+    if (i >= 0) sp.openings[i] = o;
+    else sp.openings.push(o);
+    this._saveConfig();
+    this._openingDialog = null;
+    this.requestUpdate();
+  }
+
+  private _deleteOpening(): void {
+    const d = this._openingDialog;
+    const sp = this._curSpaceCfg;
+    if (!d?.id || !sp?.openings) return;
+    sp.openings = sp.openings.filter((x: OpeningCfg) => x.id !== d.id);
+    this._saveConfig();
+    this._openingDialog = null;
+    this.requestUpdate();
+  }
+
+  /** Contact-sensor candidates: door/window-like classes first, then the rest. */
+  private _contactCandidates(): { value: string; label: string }[] {
+    const out: [string, string, number][] = [];
+    for (const eid of Object.keys(this.hass.states)) {
+      const dom = eid.split('.')[0];
+      if (dom !== 'binary_sensor' && dom !== 'cover') continue;
+      const st = this.hass.states[eid];
+      const dc = st?.attributes?.device_class || '';
+      const doorish = ['door', 'window', 'opening', 'garage_door', 'garage'].includes(dc);
+      if (dom === 'cover' && !doorish) continue;
+      out.push([eid, st?.attributes?.friendly_name || eid, doorish ? 0 : 1]);
+    }
+    return out
+      .sort((a, b) => a[2] - b[2] || a[1].localeCompare(b[1]))
+      .map(([value, label]) => ({ value, label }));
+  }
+
+  private _lockCandidates(): { value: string; label: string }[] {
+    return Object.keys(this.hass.states)
+      .filter((eid) => eid.startsWith('lock.'))
+      .map((eid) => ({ value: eid, label: this.hass.states[eid]?.attributes?.friendly_name || eid }))
+      .sort((a, b) => a.label.localeCompare(b.label));
   }
 
   /** Merge: first click picks a room, second picks the room to merge it with. */
@@ -2156,9 +2283,11 @@ class HouseplanCard extends LitElement {
               return svg`${shape}${label ? svg`<text class="rlabel" x="${c[0]}" y="${c[1]}">${r.name}</text>` : nothing}`;
             })}
             ${this._markup ? this._renderMarkupLayer(vb) : nothing}
+            ${this._renderOpenings(disp)}
           </svg>
           <div class="devlayer" style="--icon-size:${((iconPct * vb[2]) / view.w).toFixed(3)}cqw">
             ${devs.map((d) => this._renderDevice(d, view))}
+            ${this._renderOpeningLocks(view)}
             ${disp.showNames && !this._markup
               ? space.rooms.map((r) => this._renderRoomLabel(r, space, view, disp))
               : nothing}
@@ -2174,6 +2303,8 @@ class HouseplanCard extends LitElement {
 
         ${this._roomDialog ? this._renderRoomDialog() : nothing}
         ${this._mergeDialog ? this._renderMergeDialog() : nothing}
+        ${this._openingDialog ? this._renderOpeningDialog() : nothing}
+        ${this._openingInfo ? this._renderOpeningInfoCard() : nothing}
         ${this._spaceDialog ? this._renderSpaceDialog() : nothing}
         ${this._markerDialog ? this._renderMarkerDialog() : nothing}
         ${this._infoCard ? this._renderInfoCard() : nothing}
@@ -2331,6 +2462,197 @@ class HouseplanCard extends LitElement {
     return [r.x! + r.w! / 2, r.y! + Math.min(r.w!, r.h!) * 0.1];
   }
 
+  /** Live state of an opening's contact, 0..1 drawn amount. */
+  private _openingAmt(o: OpeningCfg): number {
+    const st = o.contact ? this.hass.states[o.contact]?.state : null;
+    return openingAmount(o.type, st, !!o.invert);
+  }
+
+  /**
+   * Doors and windows, drawn in plan (SVG) coordinates so they scale and pan with
+   * the plan. Symbol geometry after easy-floorplan (MIT): jambs, a leaf that swings
+   * around its hinge, and a quarter-circle arc that "draws on" via stroke-dashoffset.
+   */
+  private _renderOpenings(disp: SpaceDisplay): TemplateResult {
+    const items = this._openingsR;
+    if (!items.length) return svg``;
+    const base = disp.color;
+    return svg`${items.map((o) => {
+      const half = o.rlen / 2;
+      const amt = this._openingAmt(o);
+      const active = amt > 0 && !!o.contact;
+      const tone = active ? 'var(--hp-open)' : base;
+      const jamb = 8;
+      const sx = o.flip_h ? -1 : 1;
+      const sy = o.flip_v ? -1 : 1;
+      let body;
+      if (o.type === 'window') {
+        // two casement leaves hinged at the jambs, meeting in the middle
+        const arcLen = (Math.PI / 2) * half;
+        body = svg`
+          <path class="op-arc" d="M 0 0 A ${half} ${half} 0 0 0 ${-half} ${-half}" fill="none"
+            stroke="${tone}" stroke-dasharray="${arcLen}" stroke-dashoffset="${arcLen * (1 - amt)}"></path>
+          <path class="op-arc" d="M 0 0 A ${half} ${half} 0 0 1 ${half} ${-half}" fill="none"
+            stroke="${tone}" stroke-dasharray="${arcLen}" stroke-dashoffset="${arcLen * (1 - amt)}"></path>
+          <g transform="translate(${-half} 0)">
+            <g class="op-leaf" style="transform:rotate(${-90 * amt}deg)">
+              <rect x="0" y="-1.5" width="${half}" height="3" fill="${tone}"></rect>
+            </g>
+          </g>
+          <g transform="translate(${half} 0)">
+            <g class="op-leaf" style="transform:rotate(${90 * amt}deg)">
+              <rect x="${-half}" y="-1.5" width="${half}" height="3" fill="${tone}"></rect>
+            </g>
+          </g>`;
+      } else {
+        // door leaf hinged at the left jamb, swinging up; arc from tip to tip
+        const L = o.rlen;
+        const arcLen = (Math.PI / 2) * L;
+        body = svg`
+          <path class="op-arc" d="M ${half} 0 A ${L} ${L} 0 0 0 ${-half} ${-L}" fill="none"
+            stroke="${tone}" stroke-dasharray="${arcLen}" stroke-dashoffset="${arcLen * (1 - amt)}"></path>
+          <g transform="translate(${-half} 0)">
+            <g class="op-leaf" style="transform:rotate(${-90 * amt}deg)">
+              <rect x="0" y="-1.75" width="${L}" height="3.5" fill="${tone}"></rect>
+            </g>
+          </g>`;
+      }
+      return svg`<g transform="translate(${o.rx} ${o.ry}) rotate(${o.angle})">
+        <g transform="scale(${sx} ${sy})">
+          <line x1="${-half}" y1="${-jamb / 2}" x2="${-half}" y2="${jamb / 2}" stroke="${base}" stroke-width="2.5"></line>
+          <line x1="${half}" y1="${-jamb / 2}" x2="${half}" y2="${jamb / 2}" stroke="${base}" stroke-width="2.5"></line>
+          ${body}
+        </g>
+        <rect class="op-hit" x="${-half - 6}" y="${-o.rlen - 8}" width="${o.rlen + 12}" height="${o.rlen * 2 + 16}"
+          @click=${(e: MouseEvent) => { e.stopPropagation(); if (!this._markup) this._openingInfo = o; }}></rect>
+      </g>`;
+    })}`;
+  }
+
+  /** Padlock badges for doors with a lock entity (HTML, so ha-icon just works). */
+  private _renderOpeningLocks(view: { x: number; y: number; w: number; h: number }): TemplateResult {
+    const items = this._openingsR.filter((o) => o.type === 'door' && o.lock);
+    if (!items.length) return html``;
+    return html`${items.map((o) => {
+      const st = this.hass.states[o.lock!]?.state;
+      const locked = st === 'locked';
+      const known = locked || ['unlocked', 'open', 'opening', 'unlocking', 'locking'].includes(String(st));
+      // perpendicular offset from the opening center, away from the swing side
+      const rad = ((o.angle + 90) * Math.PI) / 180;
+      const off = 16 * (o.flip_v ? -1 : 1);
+      const px = o.rx + Math.cos(rad) * off;
+      const py = o.ry + Math.sin(rad) * off;
+      const left = ((px - view.x) / view.w) * 100;
+      const top = ((py - view.y) / view.h) * 100;
+      return html`<div class="oplock ${locked ? 'locked' : known ? 'unlocked' : 'unknown'}"
+        style="left:${left}%;top:${top}%"
+        @click=${(e: MouseEvent) => { e.stopPropagation(); if (!this._markup) this._openingInfo = o; }}>
+        <ha-icon icon="${locked ? 'mdi:lock' : known ? 'mdi:lock-open-variant' : 'mdi:lock-question'}"></ha-icon>
+      </div>`;
+    })}`;
+  }
+
+  private _renderOpeningInfoCard(): TemplateResult {
+    const o = this._openingInfo!;
+    const cSt = o.contact ? this.hass.states[o.contact]?.state : null;
+    const amt = this._openingAmt(o);
+    const lSt = o.lock ? this.hass.states[o.lock]?.state : null;
+    const row = (icon: string, label: string, value: string, cls = '') =>
+      html`<div class="oprow ${cls}"><ha-icon icon=${icon}></ha-icon><span>${label}</span><b>${value}</b></div>`;
+    return html`<div class="menuwrap dialogwrap" @click=${() => (this._openingInfo = null)}>
+      <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
+        <div class="hd"><ha-icon icon=${o.type === 'door' ? 'mdi:door' : 'mdi:window-closed-variant'}></ha-icon>
+          ${this._t(o.type === 'door' ? 'opening.door' : 'opening.window')}</div>
+        <div class="body">
+          ${o.contact
+            ? row(amt > 0 ? 'mdi:door-open' : 'mdi:door-closed',
+                this._t('opening.contact_label'),
+                cSt === 'unavailable' || cSt == null
+                  ? this._t('opening.state_unknown')
+                  : this._t(amt > 0 ? 'opening.open' : 'opening.closed'),
+                amt > 0 ? 'warn' : 'ok')
+            : nothing}
+          ${o.lock
+            ? row(lSt === 'locked' ? 'mdi:lock' : 'mdi:lock-open-variant',
+                this._t('opening.lock_label'),
+                lSt === 'locked' ? this._t('opening.locked')
+                  : ['unlocked', 'open'].includes(String(lSt)) ? this._t('opening.unlocked')
+                  : this._t('opening.state_unknown'),
+                lSt === 'locked' ? 'ok' : 'warn')
+            : nothing}
+          ${!o.contact && !o.lock ? html`<p class="muted">${this._t('opening.no_entities')}</p>` : nothing}
+        </div>
+        <div class="row">
+          <span class="spacer"></span>
+          <button class="btn ghost" @click=${() => (this._openingInfo = null)}>${this._t('btn.close')}</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  private _renderOpeningDialog(): TemplateResult {
+    const d = this._openingDialog!;
+    const opt = (list: { value: string; label: string }[], cur: string, set: (v: string) => void) =>
+      html`<select class="areasel" @change=${(e: Event) => set((e.target as HTMLSelectElement).value)}>
+        <option value="" ?selected=${!cur}>${this._t('opening.none')}</option>
+        ${list.map((c) => html`<option value=${c.value} ?selected=${c.value === cur}>${c.label}</option>`)}
+      </select>`;
+    return html`<div class="menuwrap dialogwrap" @click=${(e: Event) => e.stopPropagation()}>
+      <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
+        <div class="hd"><ha-icon icon="mdi:door"></ha-icon>
+          ${d.id ? this._t('opening.edit') : this._t('opening.new')}</div>
+        <div class="body">
+          <label>${this._t('opening.type_label')}</label>
+          <label class="srcrow"><input type="radio" name="optype" .checked=${d.type === 'door'}
+            @change=${() => (this._openingDialog = { ...d, type: 'door', lengthCm: d.id ? d.lengthCm : 90 })} />
+            <span>${this._t('opening.door')}</span></label>
+          <label class="srcrow"><input type="radio" name="optype" .checked=${d.type === 'window'}
+            @change=${() => (this._openingDialog = { ...d, type: 'window', lengthCm: d.id ? d.lengthCm : 120 })} />
+            <span>${this._t('opening.window')}</span></label>
+
+          <label>${this._t('opening.length_label')}</label>
+          <input class="namein tempin" type="number" min="20" max="600" step="5" .value=${String(d.lengthCm)}
+            @input=${(e: Event) => {
+              const n = parseFloat((e.target as HTMLInputElement).value);
+              if (Number.isFinite(n)) this._openingDialog = { ...d, lengthCm: n };
+            }} />
+
+          <label>${this._t('opening.contact_label')}</label>
+          ${opt(this._contactCandidates(), d.contact, (v) => (this._openingDialog = { ...d, contact: v }))}
+          ${d.contact
+            ? html`<label class="srcrow"><input type="checkbox" .checked=${d.invert}
+                @change=${(e: Event) => (this._openingDialog = { ...d, invert: (e.target as HTMLInputElement).checked })} />
+                <span>${this._t('opening.invert')}</span></label>`
+            : nothing}
+
+          ${d.type === 'door'
+            ? html`<label>${this._t('opening.lock_label')}</label>
+                ${opt(this._lockCandidates(), d.lock, (v) => (this._openingDialog = { ...d, lock: v }))}`
+            : nothing}
+
+          <label class="srcrow"><input type="checkbox" .checked=${d.flipH}
+            @change=${(e: Event) => (this._openingDialog = { ...d, flipH: (e.target as HTMLInputElement).checked })} />
+            <span>${this._t('opening.flip_h')}</span></label>
+          <label class="srcrow"><input type="checkbox" .checked=${d.flipV}
+            @change=${(e: Event) => (this._openingDialog = { ...d, flipV: (e.target as HTMLInputElement).checked })} />
+            <span>${this._t('opening.flip_v')}</span></label>
+        </div>
+        <div class="row">
+          ${d.id
+            ? html`<button class="btn danger" @click=${this._deleteOpening}>
+                <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.delete')}
+              </button>`
+            : nothing}
+          <span class="spacer"></span>
+          <button class="btn ghost" @click=${() => (this._openingDialog = null)}>${this._t('btn.cancel')}</button>
+          <button class="btn on" @click=${this._saveOpening}>
+            <ha-icon icon="mdi:check"></ha-icon>${this._t('btn.save')}
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }
+
   private _renderMarkupDefs(_vb: number[]): TemplateResult {
     const g = this._gridPitch;
     const dotR = g * 0.14;
@@ -2385,6 +2707,11 @@ class HouseplanCard extends LitElement {
         @click=${() => { this._tool = 'split'; this._cancelPath(); this._tool = 'split'; }}
         title=${this._t('title.markup_split')}>
         <ha-icon icon="mdi:vector-polyline-remove"></ha-icon>${this._t('markup.split')}
+      </button>
+      <button class="btn ${this._tool === 'opening' ? 'on' : ''}"
+        @click=${() => { this._cancelPath(); this._tool = 'opening'; }}
+        title=${this._t('title.markup_opening')}>
+        <ha-icon icon="mdi:door"></ha-icon>${this._t('markup.opening')}
       </button>
       <button class="btn ${this._tool === 'delroom' ? 'on' : ''}" @click=${() => (this._tool = 'delroom')}
         title=${this._t('title.markup_delroom')}>

@@ -75,6 +75,50 @@ export function roomEdges(rooms: any[]): number[][] {
 }
 
 /**
+ * Snap a point onto the nearest wall of any room, returning the snapped point and
+ * the wall's angle (degrees), or null when no wall is within maxDist. Walls are the
+ * DERIVED room edges (a line has no independent existence on the plan), so an opening
+ * placed with this stays valid however rooms are later edited — it keeps absolute
+ * coordinates and is not tied to a room id or edge index.
+ */
+export function snapToWall(
+  p: number[], rooms: any[], maxDist: number,
+): { x: number; y: number; angle: number } | null {
+  let best: { x: number; y: number; angle: number } | null = null;
+  let bestD = maxDist;
+  for (const e of roomEdges(rooms)) {
+    const [x1, y1, x2, y2] = e;
+    const dx = x2 - x1, dy = y2 - y1;
+    const len2 = dx * dx + dy * dy;
+    if (!len2) continue;
+    let t = ((p[0] - x1) * dx + (p[1] - y1) * dy) / len2;
+    t = Math.max(0, Math.min(1, t));
+    const q = [x1 + t * dx, y1 + t * dy];
+    const d = Math.hypot(p[0] - q[0], p[1] - q[1]);
+    if (d < bestD) {
+      bestD = d;
+      best = { x: q[0], y: q[1], angle: (Math.atan2(dy, dx) * 180) / Math.PI };
+    }
+  }
+  return best;
+}
+
+/**
+ * How far open an opening is drawn, 0..1, from its contact sensor state.
+ * No sensor bound → doors default to open (the familiar swing symbol), windows to
+ * closed (intact glass) — same convention as a static architectural plan.
+ * `unavailable`/`unknown` freeze the default too: an outage must not fake motion.
+ */
+export function openingAmount(
+  type: 'door' | 'window', state: string | null | undefined, invert = false,
+): number {
+  if (state == null || state === 'unavailable' || state === 'unknown')
+    return type === 'door' ? 1 : 0;
+  const open = isActiveState(state) !== !!invert;
+  return open ? 1 : 0;
+}
+
+/**
  * Is an entity "active / detected"? Used by presence ripples, which are opted into per
  * device and therefore must not depend on the card-wide live_states toggle.
  * Anything unknown — including `unavailable` — counts as idle: a sensor outage should

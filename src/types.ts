@@ -45,6 +45,21 @@ export interface Marker {
   angle?: number | null;       // icon rotation, degrees
 }
 
+/** A door or window: plan geometry (normalized coords), optionally live via entities. */
+export interface OpeningCfg {
+  id: string;
+  type: 'door' | 'window';
+  x: number;       // center, normalized by plan width
+  y: number;       // center, normalized by plan height
+  angle: number;   // wall angle, degrees
+  length: number;  // along the wall, normalized by plan width
+  contact?: string | null; // binary_sensor / cover driving open-closed
+  lock?: string | null;    // lock entity (doors only)
+  invert?: boolean;
+  flip_h?: boolean; // hinge on the other jamb
+  flip_v?: boolean; // opens to the other side of the wall
+}
+
 export interface ServerConfig {
   spaces: any[];
   markers: Marker[];

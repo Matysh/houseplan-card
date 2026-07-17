@@ -1,5 +1,27 @@
 # Changelog
 
+## v1.23.0 — 2026-07-17 (doors & windows with live open/lock state)
+Visual language after easy-floorplan (MIT); the placement model is ours.
+- **New markup tool "Opening"**: click next to a wall → the opening snaps onto the nearest
+  DERIVED room wall (walls have no independent existence — v1.19.0) and takes its angle, then a
+  dialog asks for type (door/window), **length in real cm** (defaults: door 90, window 120 —
+  the per-space scale makes this honest), an open/close sensor (door/window-class
+  `binary_sensor`/`cover`, invertible) and, for doors, a **lock entity**. The opening keeps
+  absolute coordinates, so editing/merging/deleting rooms never breaks it. Click an existing
+  opening with the tool to edit or delete it.
+- **Live rendering**: a door is a leaf hinged at the jamb with a quarter-circle swing arc that
+  "draws on" (stroke-dashoffset) as it opens; a window is two casement leaves meeting in the
+  middle. Открыто → the moving parts take the accent colour and animate (CSS transitions,
+  `prefers-reduced-motion` honoured). No sensor → the classic static plan: doors drawn open,
+  windows closed. `unavailable`/`unknown` freeze that default — an outage must not fake motion
+  (pure `openingAmount`, unit-tested). Hinge side / swing side via flip toggles.
+- **Locks**: a padlock badge beside the door — green closed when `locked`, orange open when
+  unlocked, grey question when unknown. The lock is NEVER toggled from the plan (the card's
+  standing security rule); clicking the opening or the badge shows an **info card** with both
+  states.
+- New pure helpers `snapToWall` (projection + wall angle over derived edges) and
+  `openingAmount`; `space.openings[]` validated server-side. (+2 tests: 74 → 76.)
+
 ## v1.22.0 — 2026-07-17 (presence ripples, per-device icon size/rotation, one-click install)
 Ideas borrowed from [easy-floorplan](https://github.com/nicosandller/easy-floorplan) — the visuals,
 not the model.

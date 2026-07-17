@@ -209,3 +209,17 @@ require hands on real hardware — they remain for the human pass.
 - [ ] Unknown `space` → tidy error card [auto]
 - [ ] `show_button: false` hides the footer
 - [ ] Full card honours `#space=<id>` on load and on hashchange; invalid id ignored [auto]
+
+## Doors & windows (v1.23.0)
+
+- [ ] Markup → "Opening": a click away from any wall shows a toast; near a wall — the dialog
+- [ ] A door placed on a wall renders jambs + leaf + swing arc at the wall's angle; length in cm
+      matches the ruler/scale of the space
+- [ ] Bind a contact sensor: open → leaf swings and the arc draws on in the accent colour;
+      closed → leaf lies along the wall, arc hidden; invert flips this
+- [ ] Sensor unavailable → the opening freezes at its static default (door open / window closed)
+- [ ] A door with a lock shows the padlock badge: green locked / orange unlocked / grey unknown
+- [ ] Clicking an opening (or the padlock) in view mode opens the info card with both states;
+      the lock can NOT be toggled from the plan
+- [ ] Flip toggles mirror the hinge side and the swing side
+- [ ] Click an existing opening with the tool → edit dialog; Delete removes it
