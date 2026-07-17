@@ -1,6 +1,6 @@
 {
   "name": "houseplan-card",
-  "version": "1.21.3",
+  "version": "1.22.0",
   "description": "Interactive house plan Lovelace card for Home Assistant",
   "license": "MIT",
   "type": "module",

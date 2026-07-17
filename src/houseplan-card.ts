@@ -16,7 +16,7 @@ import {
   segmentCm, formatLength, roomEdges, roomPoly, pointStrictlyInside, roomsOverlap,
   pointOnBoundary, mergeRooms, splitRoom, polygonArea, closestPointOnBoundary,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
-  spaceDisplayOf, roomFillColor, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
+  spaceDisplayOf, roomFillColor, isActiveState, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
 } from './logic';
 import { buildDevices, lqiFor, tempFor, humFor, isHumEntity, areaLights, areaTemp } from './devices';
@@ -28,7 +28,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.21.3';
+const CARD_VERSION = '1.22.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -115,6 +115,11 @@ class HouseplanCard extends LitElement {
     binding: string;     // 'device:<id>' | 'entity:<eid>' | 'virtual'
     bindingFilter: string;
     icon: string;        // '' = auto
+    display: 'badge' | 'ripple' | 'icon_ripple';
+    rippleColor: string; // '' = accent
+    rippleSize: number;  // in icon diameters
+    size: number;        // icon size multiplier
+    angle: number;       // icon rotation, degrees
     tapAction: string;   // '' = card default
     model: string;
     link: string;
@@ -1341,6 +1346,11 @@ class HouseplanCard extends LitElement {
         binding: d.bindingKind === 'virtual' ? 'virtual' : d.bindingKind + ':' + d.bindingRef,
         bindingFilter: '',
         icon: d.marker?.icon || '',
+        display: d.marker?.display || 'badge',
+        rippleColor: d.marker?.ripple_color || '',
+        rippleSize: Number(d.marker?.ripple_size) > 0 ? Number(d.marker!.ripple_size) : 3,
+        size: Number(d.marker?.size) > 0 ? Number(d.marker!.size) : 1,
+        angle: Number(d.marker?.angle) || 0,
         tapAction: d.marker?.tap_action || '',
         model: d.model || '',
         link: d.link || '',
@@ -1351,7 +1361,9 @@ class HouseplanCard extends LitElement {
       };
     } else {
       this._markerDialog = {
-        name: '', binding: 'virtual', bindingFilter: '', icon: '', tapAction: '', model: '',
+        name: '', binding: 'virtual', bindingFilter: '', icon: '',
+        display: 'badge', rippleColor: '', rippleSize: 3, size: 1, angle: 0,
+        tapAction: '', model: '',
         link: '', description: '', pdfs: [], room: '', busy: false,
       };
     }
@@ -1531,6 +1543,11 @@ class HouseplanCard extends LitElement {
         binding: dlg.binding,
         name: dlg.name.trim() || null,
         icon: dlg.icon || null,
+        display: dlg.display !== 'badge' ? dlg.display : null,
+        ripple_color: dlg.display !== 'badge' && dlg.rippleColor ? dlg.rippleColor : null,
+        ripple_size: dlg.display !== 'badge' && dlg.rippleSize !== 3 ? dlg.rippleSize : null,
+        size: dlg.size !== 1 ? dlg.size : null,
+        angle: dlg.angle ? dlg.angle : null,
         tap_action: dlg.tapAction || null,
         model: dlg.model.trim() || null,
         link: dlg.link.trim() || null,
@@ -2187,9 +2204,22 @@ class HouseplanCard extends LitElement {
     const temp = this._liveTemp(d);
     const hum = this._liveHum(d);
     const lqi = this._config?.show_signal && !d.virtual ? lqiFor(this.hass, d.entities) : null;
+    const m = d.marker;
+    const disp = m?.display || 'badge';
+    const ripple = disp === 'ripple' || disp === 'icon_ripple';
+    const active = ripple && !!d.primary && isActiveState(this.hass.states[d.primary]?.state);
+    const scale = Number(m?.size) > 0 ? Number(m!.size) : 1;
+    const angle = Number(m?.angle) || 0;
+    const rScale = Number(m?.ripple_size) > 0 ? Number(m!.ripple_size) : 3;
+    const st = [`left:${left}%`, `top:${top}%`];
+    if (scale !== 1) st.push(`--dev-scale:${scale}`);
+    if (ripple) {
+      st.push(`--ripple-scale:${rScale}`);
+      if (m?.ripple_color) st.push(`--ripple-color:${m.ripple_color}`);
+    }
     return html`<div
-      class="dev ${cls} ${this._selId === d.id ? 'sel' : ''} ${d.virtual ? 'virtual' : ''}"
-      style="left:${left}%;top:${top}%"
+      class="dev ${cls} ${this._selId === d.id ? 'sel' : ''} ${d.virtual ? 'virtual' : ''} ${disp === 'ripple' ? 'noicon' : ''}"
+      style="${st.join(';')}"
       @click=${(e: MouseEvent) => this._clickDevice(e, d)}
       @mousemove=${(e: MouseEvent) =>
         this._showTip(e, d.name,
@@ -2200,7 +2230,12 @@ class HouseplanCard extends LitElement {
       @pointerup=${(e: PointerEvent) => this._pointerUp(e, d)}
       @pointercancel=${(e: PointerEvent) => this._pointerUp(e, d)}
     >
-      <ha-icon icon="${d.icon}"></ha-icon>
+      ${ripple
+        ? html`<span class="ripple ${active ? 'active' : ''}"><i></i><i></i><i></i></span>`
+        : nothing}
+      ${disp !== 'ripple'
+        ? html`<ha-icon icon="${d.icon}" style=${angle ? `transform:rotate(${angle}deg)` : nothing}></ha-icon>`
+        : nothing}
       ${temp != null ? html`<span class="tval">${temp}°</span>` : nothing}
       ${hum != null ? html`<span class="hval">${hum}%</span>` : nothing}
       ${lqi != null ? html`<span class="lqi" style="color:${lqiColor(lqi)}">${lqi}</span>` : nothing}
@@ -2477,6 +2512,35 @@ class HouseplanCard extends LitElement {
             : html`<input class="namein" type="text" placeholder=${this._t('marker.icon_ph')}
                 .value=${d.icon}
                 @input=${(e: Event) => (this._markerDialog = { ...d, icon: (e.target as HTMLInputElement).value })} />`}
+
+          <label>${this._t('marker.display_label')}</label>
+          <select class="areasel"
+            @change=${(e: Event) => (this._markerDialog = { ...d, display: (e.target as HTMLSelectElement).value as any })}>
+            ${[['badge', 'display.badge'], ['ripple', 'display.ripple'], ['icon_ripple', 'display.icon_ripple']].map(
+              ([v, k]) => html`<option value=${v} ?selected=${d.display === v}>${this._t(k as any)}</option>`,
+            )}
+          </select>
+          ${d.display !== 'badge'
+            ? html`<div class="colorrow">
+                <input type="color" .value=${d.rippleColor || '#3ea6ff'}
+                  @input=${(e: Event) => (this._markerDialog = { ...d, rippleColor: (e.target as HTMLInputElement).value })} />
+                <span class="opl">${this._t('marker.ripple_size')}</span>
+                <input type="range" min="2" max="8" step="0.5" .value=${String(d.rippleSize)}
+                  @input=${(e: Event) => (this._markerDialog = { ...d, rippleSize: Number((e.target as HTMLInputElement).value) })} />
+                <span class="opv">×${d.rippleSize}</span>
+              </div>`
+            : nothing}
+
+          <label>${this._t('marker.size_label')}</label>
+          <div class="colorrow">
+            <input type="range" min="0.5" max="3" step="0.1" .value=${String(d.size)}
+              @input=${(e: Event) => (this._markerDialog = { ...d, size: Number((e.target as HTMLInputElement).value) })} />
+            <span class="opv">×${d.size.toFixed(1)}</span>
+            <span class="opl">${this._t('marker.angle_label')}</span>
+            <input type="range" min="0" max="350" step="10" .value=${String(d.angle)}
+              @input=${(e: Event) => (this._markerDialog = { ...d, angle: Number((e.target as HTMLInputElement).value) })} />
+            <span class="opv">${d.angle}°</span>
+          </div>
 
           <label>${this._t('marker.model_label')}</label>
           <input class="namein" type="text" placeholder=${this._t('marker.model_ph')}

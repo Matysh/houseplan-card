@@ -74,6 +74,16 @@ export function roomEdges(rooms: any[]): number[][] {
   return out;
 }
 
+/**
+ * Is an entity "active / detected"? Used by presence ripples, which are opted into per
+ * device and therefore must not depend on the card-wide live_states toggle.
+ * Anything unknown — including `unavailable` — counts as idle: a sensor outage should
+ * calm the plan down, never leave a ring pulsing forever.
+ */
+export function isActiveState(state?: string | null): boolean {
+  return ['on', 'open', 'home', 'detected', 'playing', 'cleaning'].includes(String(state));
+}
+
 /** Point equality within a tolerance. */
 export function samePoint(a: number[], b: number[], eps = 0.001): boolean {
   return Math.abs(a[0] - b[0]) < eps && Math.abs(a[1] - b[1]) < eps;

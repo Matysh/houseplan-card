@@ -225,6 +225,54 @@ export const cardStyles = css`
       fill-opacity: 0.22;
       stroke-opacity: 1;
     }
+    /* presence ripples: opted into per device, drawn around the anchor point */
+    .dev.noicon {
+      background: transparent;
+      border-color: transparent;
+      box-shadow: none;
+    }
+    .dev ha-icon {
+      position: relative;
+      z-index: 1;
+    }
+    .ripple {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: calc(var(--dev-size) * var(--ripple-scale, 3));
+      height: calc(var(--dev-size) * var(--ripple-scale, 3));
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .ripple i {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 2px solid var(--ripple-color, var(--hp-accent));
+      opacity: 0;
+    }
+    .ripple.active i {
+      animation: hp-ripple 2.4s ease-out infinite;
+    }
+    .ripple.active i:nth-child(2) { animation-delay: 0.8s; }
+    .ripple.active i:nth-child(3) { animation-delay: 1.6s; }
+    /* idle: a faint dot keeps the spot marked without pulling the eye */
+    .ripple:not(.active) i:nth-child(n + 2) { display: none; }
+    .ripple:not(.active) i {
+      inset: calc(50% - 0.15 * var(--dev-size));
+      opacity: 0.3;
+      animation: none;
+    }
+    @keyframes hp-ripple {
+      0% { transform: scale(0.18); opacity: 0.7; }
+      70% { opacity: 0.22; }
+      100% { transform: scale(1); opacity: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .ripple.active i { animation: none; opacity: 0.3; }
+      .ripple.active i:nth-child(n + 2) { display: none; }
+    }
     .roomlabel {
       position: absolute;
       transform: translate(-50%, -50%);
@@ -338,10 +386,12 @@ export const cardStyles = css`
     }
     .dev {
       position: absolute;
+      /* per-device multiplier on top of the card-wide icon size */
+      --dev-size: calc(var(--icon-size, 2.5cqw) * var(--dev-scale, 1));
       /* центр квадрата (включая рамку 1px) точно на точке привязки: -(size/2 + border) */
-      width: var(--icon-size, 2.5cqw);
-      height: var(--icon-size, 2.5cqw);
-      margin: calc(var(--icon-size, 2.5cqw) / -2 - 1px) 0 0 calc(var(--icon-size, 2.5cqw) / -2 - 1px);
+      width: var(--dev-size);
+      height: var(--dev-size);
+      margin: calc(var(--dev-size) / -2 - 1px) 0 0 calc(var(--dev-size) / -2 - 1px);
       border-radius: 22%;
       background: var(--hp-bg);
       border: 1px solid var(--hp-line);
@@ -402,7 +452,7 @@ export const cardStyles = css`
       border: 1px solid var(--hp-accent);
       border-radius: calc(var(--icon-size, 2.5cqw) * 0.18);
       padding: 0 calc(var(--icon-size, 2.5cqw) * 0.14);
-      font-size: calc(var(--icon-size, 2.5cqw) * 0.45);
+      font-size: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.45);
       font-weight: 700;
       line-height: calc(var(--icon-size, 2.5cqw) * 0.68);
       color: var(--hp-txt);
@@ -419,7 +469,7 @@ export const cardStyles = css`
       border: 1px solid #4fc3f7;
       border-radius: calc(var(--icon-size, 2.5cqw) * 0.18);
       padding: 0 calc(var(--icon-size, 2.5cqw) * 0.14);
-      font-size: calc(var(--icon-size, 2.5cqw) * 0.45);
+      font-size: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.45);
       font-weight: 700;
       line-height: calc(var(--icon-size, 2.5cqw) * 0.68);
       color: var(--hp-txt);

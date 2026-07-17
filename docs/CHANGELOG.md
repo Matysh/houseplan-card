@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.22.0 — 2026-07-17 (presence ripples, per-device icon size/rotation, one-click install)
+Ideas borrowed from [easy-floorplan](https://github.com/nicosandller/easy-floorplan) — the visuals,
+not the model.
+- **Presence ripples**: `display: badge | ripple | icon_ripple` per marker, with `ripple_color`
+  and `ripple_size`. Active → pulsing rings; idle → a faint dot. Gated by the pure
+  `isActiveState` — independent of the card-wide live_states toggle, and `unavailable`/`unknown`
+  count as idle so an outage never leaves a ring pulsing. Honours `prefers-reduced-motion`.
+- **Per-device icon `size` (×0.5–3) and `angle`** — sizing now hangs off `--dev-size`, so value
+  badges scale with the device.
+- **One-click install badge** (My Home Assistant → HACS) in both READMEs.
+- (+1 test.)
+
 ## v1.21.3 — 2026-07-16 (room labels: no text shadow)
 - Room name labels no longer carry a text shadow — crisper look on both the white
   hand-drawn canvas and plan images.

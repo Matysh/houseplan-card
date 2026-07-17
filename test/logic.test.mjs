@@ -4,7 +4,7 @@ import {
   lqiColor, snapToGrid, segKey, samePoint, pointInPolygon, markerIdForBinding, averageLqi,
   fitView, declump, safeUrl, resolveTapAction, floorsOf, subst, spaceDisplayOf, roomFillColor,
   segmentCm, formatLength, roomEdges, roomPoly, pointOnBoundary, pointStrictlyInside, roomsOverlap,
-  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary,
+  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState,
 } from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
@@ -394,4 +394,16 @@ test('closestPointOnBoundary: projects a click onto the nearest wall', () => {
   assert.deepEqual(closestPointOnBoundary([13, 5], sq), [10, 5]);  // right of the right edge
   assert.deepEqual(closestPointOnBoundary([5, 4], sq), [5, 0]);    // inside → nearest edge (bottom)
   assert.equal(closestPointOnBoundary([0, 0], [[0, 0]]), null);    // no edges
+});
+
+test('isActiveState: a sensor outage calms the plan down, it never pulses forever', () => {
+  assert.ok(isActiveState('on'));
+  assert.ok(isActiveState('open'));
+  assert.ok(isActiveState('home'));
+  assert.ok(isActiveState('detected'));
+  assert.ok(!isActiveState('off'));
+  assert.ok(!isActiveState('unavailable'));
+  assert.ok(!isActiveState('unknown'));
+  assert.ok(!isActiveState(undefined));
+  assert.ok(!isActiveState(null));
 });
