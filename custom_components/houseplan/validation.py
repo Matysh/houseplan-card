@@ -12,7 +12,7 @@ import voluptuous as vol
 PLAN_EXTENSIONS = {"svg": "image/svg+xml", "png": "image/png", "jpg": "image/jpeg", "webp": "image/webp"}
 MAX_PLAN_BYTES = 8 * 1024 * 1024
 FILE_EXTENSIONS = {"pdf", "png", "jpg", "jpeg", "webp", "txt"}
-MAX_FILE_BYTES = 25 * 1024 * 1024
+MAX_FILE_BYTES = 50 * 1024 * 1024
 
 SPACE_ID_RE = re.compile(r"^[a-z0-9_-]{1,64}$")
 _SAFE_NAME_RE = re.compile(r"[^A-Za-z0-9._-]+")

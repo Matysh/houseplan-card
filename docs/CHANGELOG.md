@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.23.2 — 2026-07-16 (manual upload limit raised to 50 MB)
+- The per-file limit for attached manuals (PDF etc.) is now **50 MB** (was 25).
+  The limit is still enforced while the multipart body streams in, so an oversized
+  upload is cut off early rather than buffered whole; the error toast reads the
+  actual limit from the server response.
+
 ## v1.23.1 — 2026-07-17 (openings: hover, drag along walls, double-click properties)
 - **Hover affordance**: an accent outline hugs the opening's wall strip on hover, with a
   grab cursor — placed openings now look grabbable.
