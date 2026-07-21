@@ -30,7 +30,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.23.1';
+const CARD_VERSION = '1.23.2';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -1687,7 +1687,7 @@ class HouseplanCard extends LitElement {
         const json = await resp.json().catch(() => ({}));
         if (!resp.ok || json.error) {
           const map: Record<string, string> = {
-            too_large: this._t('err.too_large', { mb: json.max_mb || 25 }),
+            too_large: this._t('err.too_large', { mb: json.max_mb || 50 }),
             bad_ext: this._t('err.bad_ext'),
             unauthorized: this._t('err.unauthorized'),
           };

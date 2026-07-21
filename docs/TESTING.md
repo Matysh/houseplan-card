@@ -112,7 +112,7 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] Virtual device: requires name; room required; renders dashed
 - [ ] Room override moves the icon to the room center
 - [ ] Tap-action override select (default/info/more-info/toggle) saves and applies
-- [ ] PDF/manual upload: ok path; >25 MB → readable error; .exe → bad-ext error [auto backend]; traversal names sanitized [auto backend]
+- [ ] PDF/manual upload: ok path; >50 MB → readable error; .exe → bad-ext error [auto backend]; traversal names sanitized [auto backend]
 - [ ] `javascript:` in the link field is not rendered as a clickable link [auto]
 - [ ] Remove: auto device → hidden marker (reappears via dialog "show all"? no — stays hidden until re-added); virtual → gone incl. its layout entry [auto backend]
 
