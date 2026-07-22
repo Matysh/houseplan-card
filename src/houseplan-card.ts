@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.32.0';
+const CARD_VERSION = '1.32.1';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -1535,10 +1535,30 @@ class HouseplanCard extends LitElement {
 
   private _markupMove(ev: MouseEvent): void {
     if (!this._markup) return;
+    if (this._tool === 'opening') {
+      // hover preview: where the opening would land (raw point, wall-snapped later)
+      this._cursorPt = this._svgPoint(ev);
+      return;
+    }
     const drawing = this._tool === 'draw' && this._path.length && !this._contourClosed;
     const cutting = this._tool === 'split' && !!this._splitSel?.pts?.length;
     if (!drawing && !cutting) return;
     this._cursorPt = this._snap(this._svgPoint(ev));
+  }
+
+  /** Dashed hover preview of an opening: same snap and default length as the click. */
+  private get _openingPreview(): { x: number; y: number; angle: number; rlen: number } | null {
+    if (this._tool !== 'opening' || !this._cursorPt) return null;
+    const raw = this._cursorPt;
+    // an existing opening under the cursor will be edited, not added — no preview
+    const eps = this._gridPitch * 1.5;
+    const hit = this._openingsR.find(
+      (o) => Math.hypot(raw[0] - o.rx, raw[1] - o.ry) <= Math.max(o.rlen / 2, eps),
+    );
+    if (hit) return null;
+    const snap = snapToWall(raw, this._spaceModel().rooms, eps);
+    if (!snap) return null;
+    return { ...snap, rlen: this._cmToUnits(90) };
   }
 
   /** Save a room with a mandatory binding to an HA area. */
@@ -3125,6 +3145,16 @@ class HouseplanCard extends LitElement {
             x2="${this._cursorPt[0]}" y2="${this._cursorPt[1]}"></line>`
         : nothing}
       ${path.map((p, i) => svg`<circle class="vertex ${i === 0 ? 'first' : ''}" cx="${p[0]}" cy="${p[1]}" r="${g * 0.22}"></circle>`)}
+      ${(() => {
+        const op = this._openingPreview;
+        if (!op) return nothing;
+        const rad = (op.angle * Math.PI) / 180;
+        const dx = (Math.cos(rad) * op.rlen) / 2;
+        const dy = (Math.sin(rad) * op.rlen) / 2;
+        return svg`<line class="opghost" x1="${op.x - dx}" y1="${op.y - dy}"
+          x2="${op.x + dx}" y2="${op.y + dy}"></line>
+          <circle class="opghost-dot" cx="${op.x}" cy="${op.y}" r="${g * 0.18}"></circle>`;
+      })()}
       ${this._tool === 'split' && this._splitSel?.pts?.length
         ? svg`${this._splitSel.pts.length > 1
               ? svg`<polyline class="pathline" points="${this._splitSel.pts.map((p) => p.join(',')).join(' ')}"></polyline>`

@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.32.1 — 2026-07-22
+- Opening tool: hovering near a wall now shows a **dashed preview** of where
+  the opening would land — snapped onto the wall, default door length (90 cm),
+  with a center dot. No preview far from walls or over an existing opening
+  (a click there edits it instead).
+
 ## v1.32.0 — 2026-07-22 (split polyline, tool cursors, Esc)
 - **Split can now cut along a polyline**, not just a straight chord: start on
   a wall, click intermediate points inside the room, finish on another wall.

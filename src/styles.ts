@@ -432,6 +432,19 @@ export const cardStyles = css`
       user-select: none;
       z-index: 3;
     }
+    .opghost {
+      stroke: var(--hp-open, #ff9800);
+      stroke-width: 5;
+      stroke-linecap: round;
+      stroke-dasharray: 7 6;
+      opacity: 0.85;
+      pointer-events: none;
+    }
+    .opghost-dot {
+      fill: var(--hp-open, #ff9800);
+      opacity: 0.85;
+      pointer-events: none;
+    }
     .rlabel {
       fill: var(--hp-muted);
       font-size: 15px;

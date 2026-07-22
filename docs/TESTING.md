@@ -140,6 +140,10 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Opening hover preview (v1.32.1): with the Opening tool, hovering near a
+      wall shows a dashed 90 cm ghost snapped onto the wall (with a center
+      dot); no ghost far from walls, over an existing opening (click = edit),
+      or in other tools [auto]
 - [ ] Split polyline + cursors + Esc (v1.32.0): Merge shows a pointer cursor,
       Split shows pointer until a room is picked then crosshair; the cut can be
       a polyline — start on a wall, intermediate clicks inside the room, finish
