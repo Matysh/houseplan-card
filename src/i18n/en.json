@@ -128,8 +128,8 @@
   "toast.room_overlap": "The outline overlaps room “{name}” — rooms must not overlap",
   "toast.merge_not_adjacent": "Only rooms that share a wall can be merged",
   "toast.rooms_merged": "Rooms merged into “{name}”",
-  "toast.split_pick_wall": "Click a grid dot on the room’s wall",
-  "toast.split_bad_cut": "The cut must be a straight line from wall to wall, inside the room",
+  "toast.split_pick_wall": "Start the cut on the room’s wall",
+  "toast.split_bad_cut": "The cut must run wall to wall inside the room, without crossing walls or itself",
   "merge.header": "Merge rooms",
   "merge.hint": "The merged room keeps one name and one area. The other area is released — its devices leave the plan until another room claims it.",
   "merge.keep": "Keep",
@@ -260,5 +260,6 @@
   "space.label_light": "Lights on/off",
   "roomcard.light_on": "On",
   "roomcard.light_off": "Off",
-  "roomcard.light_partial": "{on} of {total}"
+  "roomcard.light_partial": "{on} of {total}",
+  "toast.split_pick_inside": "Intermediate cut points must be inside the room"
 }

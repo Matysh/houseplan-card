@@ -140,6 +140,12 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Split polyline + cursors + Esc (v1.32.0): Merge shows a pointer cursor,
+      Split shows pointer until a room is picked then crosshair; the cut can be
+      a polyline — start on a wall, intermediate clicks inside the room, finish
+      on a wall (path drawn live, walls/self-crossing rejected); Esc walks back:
+      last cut point → room pick → back to the Draw tool (same for Merge:
+      selection → tool) [auto]
 - [ ] Merge/split pick highlight (v1.31.2): the first room clicked with the
       Merge tool (and the split-selected room) gets an amber outline + fill;
       visible over the blue markup outlines [auto]

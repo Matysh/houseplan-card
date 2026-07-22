@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   lqiColor, snapToGrid, segKey, samePoint, pointInPolygon, markerIdForBinding, averageLqi,
   fitView, declump, safeUrl, resolveTapAction, floorsOf, subst, spaceDisplayOf, roomFillColor,
+  splitRoomPath,
   segmentCm, formatLength, roomEdges, roomPoly, pointOnBoundary, pointStrictlyInside, roomsOverlap,
   mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices,
 } from '../test-build/logic.js';
@@ -543,4 +544,39 @@ test('spaceDisplayOf: room-card metric flags default to off', () => {
   assert.deepEqual([d0.labelTemp, d0.labelHum, d0.labelLqi, d0.labelLight], [false, false, false, false]);
   const d1 = spaceDisplayOf({ plan_url: 'x', settings: { label_temp: true, label_light: true } });
   assert.deepEqual([d1.labelTemp, d1.labelHum, d1.labelLqi, d1.labelLight], [true, false, false, true]);
+});
+
+test('splitRoomPath: polyline cut of a square', () => {
+  const sq = [[0, 0], [10, 0], [10, 10], [0, 10]];
+  // Г-образный разрез: верхняя стена (4,0) → внутрь (4,6) → правая стена (10,6)
+  const parts = splitRoomPath(sq, [[4, 0], [4, 6], [10, 6]], 1e-6);
+  assert.ok(parts);
+  const [p1, p2] = parts;
+  const area = (p) => Math.abs(p.reduce((a, _, i) => {
+    const [x1, y1] = p[i], [x2, y2] = p[(i + 1) % p.length];
+    return a + x1 * y2 - x2 * y1;
+  }, 0)) / 2;
+  assert.ok(Math.abs(area(p1) + area(p2) - 100) < 1e-6);
+  // меньшая часть — прямоугольник 6x6 минус... фактически площадь 4*6+... проверим что обе > 0
+  assert.ok(area(p1) > 0 && area(p2) > 0);
+});
+
+test('splitRoomPath: two points == classic straight chord', () => {
+  const sq = [[0, 0], [10, 0], [10, 10], [0, 10]];
+  const parts = splitRoomPath(sq, [[5, 0], [5, 10]], 1e-6);
+  assert.ok(parts);
+});
+
+test('splitRoomPath rejects bad paths', () => {
+  const sq = [[0, 0], [10, 0], [10, 10], [0, 10]];
+  // промежуточная точка снаружи
+  assert.equal(splitRoomPath(sq, [[4, 0], [4, -3], [10, 6]], 1e-6), null);
+  // сегмент пересекает стену (выходит и возвращается)
+  assert.equal(splitRoomPath(sq, [[4, 0], [14, 5], [10, 6]], 1e-6), null);
+  // конец не на стене
+  assert.equal(splitRoomPath(sq, [[4, 0], [5, 5]], 1e-6), null);
+  // самопересечение пути
+  assert.equal(splitRoomPath(sq, [[2, 0], [8, 8], [8, 2], [2, 8], [0, 4]], 1e-6), null);
+  // менее двух точек
+  assert.equal(splitRoomPath(sq, [[4, 0]], 1e-6), null);
 });

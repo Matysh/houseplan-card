@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.32.0 — 2026-07-22 (split polyline, tool cursors, Esc)
+- **Split can now cut along a polyline**, not just a straight chord: start on
+  a wall, click intermediate points inside the room, finish on another wall.
+  The path is validated (no wall crossings, no self-intersection) and drawn
+  live with vertices and a preview segment. Two clicks still work as before.
+- **Tool cursors**: Merge and delete-room show a pointer; Split shows a
+  pointer while picking the room, then a crosshair while cutting.
+- **Esc walks back out of Merge/Split** step by step: last cut point → first
+  point → room selection → back to the Draw tool. Merge: selection → tool.
+
 ## v1.31.2 — 2026-07-22
 - Plan editor: the room picked with the **Merge** tool (and the room selected
   for **Split**) is highlighted amber again. The `.outlined` markup style,

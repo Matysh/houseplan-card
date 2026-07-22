@@ -14,7 +14,7 @@ import {
 import {
   lqiColor, snapToGrid, samePoint, pointInPolygon, markerIdForBinding,
   segmentCm, formatLength, roomEdges, roomPoly, pointStrictlyInside, roomsOverlap,
-  pointOnBoundary, mergeRooms, splitRoom, polygonArea, closestPointOnBoundary,
+  pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside,
   snapToWall, openingAmount,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
   stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices,
@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.31.2';
+const CARD_VERSION = '1.32.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -115,7 +115,7 @@ class HouseplanCard extends LitElement {
   private _openingInfo: OpeningCfg | null = null;
   private _opDrag: { id: string; moved: boolean } | null = null;
   private _mergeDialog: { aId: string; bId: string; poly: number[][]; pick: 'a' | 'b' } | null = null;
-  private _splitSel: { roomId: string; a: number[] | null } | null = null; // room being cut + first wall point
+  private _splitSel: { roomId: string; pts: number[][] } | null = null; // room being cut + the cut path so far
   // a split is applied only when the new room's dialog is confirmed — cancel leaves the room intact
   private _pendingSplit: { roomId: string; mainPoly: number[][]; newPoly: number[][] } | null = null;
   private _areaSel = '';
@@ -284,6 +284,27 @@ class HouseplanCard extends LitElement {
     if (this._tool === 'draw' && this._path.length) {
       e.preventDefault();
       this._undoPoint();
+      return;
+    }
+    if (!undo) return;
+    // Esc walks back out of merge/split: point by point, then the room pick,
+    // then the tool itself (back to the neutral draw tool)
+    if (this._tool === 'split') {
+      e.preventDefault();
+      if (this._splitSel?.pts?.length) {
+        this._splitSel = { ...this._splitSel, pts: this._splitSel.pts.slice(0, -1) };
+        if (!this._splitSel.pts.length) this._cursorPt = null;
+      } else if (this._splitSel) {
+        this._splitSel = null;
+      } else {
+        this._tool = 'draw';
+      }
+      return;
+    }
+    if (this._tool === 'merge') {
+      e.preventDefault();
+      if (this._mergeSel) this._mergeSel = null;
+      else this._tool = 'draw';
     }
   }
 
@@ -1451,7 +1472,7 @@ class HouseplanCard extends LitElement {
     if (!this._splitSel) {
       const hit = [...rooms].reverse().find((r) => this._pointInRoom(raw, r));
       if (!hit?.id) return;
-      this._splitSel = { roomId: hit.id, a: null };
+      this._splitSel = { roomId: hit.id, pts: [] };
       return;
     }
     const room = rooms.find((r) => r.id === this._splitSel!.roomId);
@@ -1469,16 +1490,30 @@ class HouseplanCard extends LitElement {
     const eps = this._gridPitch * 0.02;
     const pull = this._gridPitch * 6; // ≈2.5% of the plan width — generous but intentional
     const near = closestPointOnBoundary(raw, poly);
-    const pt = near && Math.hypot(near[0] - raw[0], near[1] - raw[1]) <= pull ? near : null;
-    if (!pt || !pointOnBoundary(pt, poly, eps)) {
-      this._showToast(this._t('toast.split_pick_wall'));
+    const wallPt = near && Math.hypot(near[0] - raw[0], near[1] - raw[1]) <= pull ? near : null;
+    const onWall = !!wallPt && pointOnBoundary(wallPt, poly, eps);
+    const cur = this._splitSel.pts;
+    if (!cur.length) {
+      // the cut starts on a wall
+      if (!onWall) {
+        this._showToast(this._t('toast.split_pick_wall'));
+        return;
+      }
+      this._splitSel = { ...this._splitSel, pts: [wallPt!] };
       return;
     }
-    if (!this._splitSel.a) {
-      this._splitSel = { ...this._splitSel, a: pt };
+    if (!onWall) {
+      // an interior click adds an intermediate vertex of the cut path
+      const mid = this._snap(raw);
+      if (!ptInside(mid, poly, eps)) {
+        this._showToast(this._t('toast.split_pick_inside'));
+        return;
+      }
+      this._splitSel = { ...this._splitSel, pts: [...cur, mid] };
       return;
     }
-    const parts = splitRoom(poly, this._splitSel.a, pt, eps);
+    // a wall point finishes the cut
+    const parts = splitRoomPath(poly, [...cur, wallPt!], eps);
     if (!parts) {
       this._showToast(this._t('toast.split_bad_cut'));
       return;
@@ -1501,7 +1536,7 @@ class HouseplanCard extends LitElement {
   private _markupMove(ev: MouseEvent): void {
     if (!this._markup) return;
     const drawing = this._tool === 'draw' && this._path.length && !this._contourClosed;
-    const cutting = this._tool === 'split' && !!this._splitSel?.a;
+    const cutting = this._tool === 'split' && !!this._splitSel?.pts?.length;
     if (!drawing && !cutting) return;
     this._cursorPt = this._snap(this._svgPoint(ev));
   }
@@ -2490,7 +2525,7 @@ class HouseplanCard extends LitElement {
         ${this._markup ? this._renderMarkupBar() : this._mode === 'devices' ? this._renderDevicesBar() : nothing}
         </div>
 
-        <div class="stage ${this._markup ? 'markup' : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}"
+        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}"
           style="height:calc(100dvh - 118px)"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
@@ -2822,7 +2857,8 @@ class HouseplanCard extends LitElement {
     if (!this._markup || !this._cursorPt) return null;
     if (this._tool === 'draw' && this._path.length && !this._contourClosed)
       return this._path[this._path.length - 1];
-    if (this._tool === 'split' && this._splitSel?.a) return this._splitSel.a;
+    if (this._tool === 'split' && this._splitSel?.pts?.length)
+      return this._splitSel.pts[this._splitSel.pts.length - 1];
     return null;
   }
 
@@ -3089,10 +3125,13 @@ class HouseplanCard extends LitElement {
             x2="${this._cursorPt[0]}" y2="${this._cursorPt[1]}"></line>`
         : nothing}
       ${path.map((p, i) => svg`<circle class="vertex ${i === 0 ? 'first' : ''}" cx="${p[0]}" cy="${p[1]}" r="${g * 0.22}"></circle>`)}
-      ${this._tool === 'split' && this._splitSel?.a
-        ? svg`<circle class="vertex first" cx="${this._splitSel.a[0]}" cy="${this._splitSel.a[1]}" r="${g * 0.22}"></circle>
+      ${this._tool === 'split' && this._splitSel?.pts?.length
+        ? svg`${this._splitSel.pts.length > 1
+              ? svg`<polyline class="pathline" points="${this._splitSel.pts.map((p) => p.join(',')).join(' ')}"></polyline>`
+              : nothing}
+            ${this._splitSel.pts.map((p, i) => svg`<circle class="vertex ${i === 0 ? 'first' : ''}" cx="${p[0]}" cy="${p[1]}" r="${g * 0.22}"></circle>`)}
             ${this._cursorPt
-              ? svg`<line class="preview" x1="${this._splitSel.a[0]}" y1="${this._splitSel.a[1]}"
+              ? svg`<line class="preview" x1="${this._splitSel.pts[this._splitSel.pts.length - 1][0]}" y1="${this._splitSel.pts[this._splitSel.pts.length - 1][1]}"
                   x2="${this._cursorPt[0]}" y2="${this._cursorPt[1]}"></line>`
               : nothing}`
         : nothing}

@@ -310,27 +310,50 @@ function dropRepeats(pts: number[][], eps: number): number[][] {
 export function splitRoom(
   poly: number[][], a: number[], b: number[], eps = 1e-6,
 ): [number[][], number[][]] | null {
-  if (!poly || poly.length < 3 || samePoint(a, b, eps)) return null;
+  return splitRoomPath(poly, [a, b], eps);
+}
+
+/**
+ * Split a room along a polyline: first and last points on walls, intermediate
+ * vertices strictly inside the room. A two-point path is the classic straight
+ * chord. Returns the two parts, or null when the path is not a clean cut.
+ */
+export function splitRoomPath(
+  poly: number[][], pts: number[][], eps = 1e-6,
+): [number[][], number[][]] | null {
+  if (!poly || poly.length < 3 || !pts || pts.length < 2) return null;
+  const a = pts[0];
+  const b = pts[pts.length - 1];
+  if (samePoint(a, b, eps)) return null;
   const ia = edgeIndexOf(poly, a, eps);
   const ib = edgeIndexOf(poly, b, eps);
   if (ia < 0 || ib < 0) return null;                       // an end is not on a wall
-  for (let i = 0; i < poly.length; i++)
-    if (segmentsProperlyCross(a, b, poly[i], poly[(i + 1) % poly.length])) return null; // leaves the room
-  // a chord lying along a wall has its midpoint ON the outline, not inside it
-  if (!pointStrictlyInside([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], poly, eps)) return null;
+  const mids = pts.slice(1, -1);
+  for (const m of mids) if (!pointStrictlyInside(m, poly, eps)) return null;
+  // no path segment may cross a wall
+  for (let sI = 0; sI < pts.length - 1; sI++)
+    for (let i = 0; i < poly.length; i++)
+      if (segmentsProperlyCross(pts[sI], pts[sI + 1], poly[i], poly[(i + 1) % poly.length])) return null;
+  // the path may not properly self-intersect
+  for (let sI = 0; sI < pts.length - 1; sI++)
+    for (let t = sI + 2; t < pts.length - 1; t++)
+      if (segmentsProperlyCross(pts[sI], pts[sI + 1], pts[t], pts[t + 1])) return null;
+  // a straight chord lying along a wall has its midpoint ON the outline, not inside
+  if (pts.length === 2 && !pointStrictlyInside([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], poly, eps))
+    return null;
   const walk = (from: number[], fromIdx: number, to: number[], toIdx: number): number[][] => {
-    const pts: number[][] = [from];
+    const acc: number[][] = [from];
     let i = (fromIdx + 1) % poly.length;
     for (let guard = 0; guard <= poly.length; guard++) {
-      pts.push(poly[i]);
+      acc.push(poly[i]);
       if (i === toIdx) break;
       i = (i + 1) % poly.length;
     }
-    pts.push(to);
-    return dropRepeats(pts, eps);
+    acc.push(to);
+    return dropRepeats(acc, eps);
   };
-  const p1 = walk(a, ia, b, ib);
-  const p2 = walk(b, ib, a, ia);
+  const p1 = dropRepeats([...walk(a, ia, b, ib), ...[...mids].reverse()], eps);
+  const p2 = dropRepeats([...walk(b, ib, a, ia), ...mids], eps);
   if (p1.length < 3 || p2.length < 3) return null;
   if (polygonArea(p1) <= eps || polygonArea(p2) <= eps) return null;
   return [p1, p2];

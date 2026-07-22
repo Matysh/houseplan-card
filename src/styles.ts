@@ -445,6 +445,12 @@ export const cardStyles = css`
     .stage.markup {
       cursor: crosshair;
     }
+    /* room-picking stages: merge (both clicks) and split before a room is chosen */
+    .stage.markup.tool-merge,
+    .stage.markup.tool-split.pickstage,
+    .stage.markup.tool-delroom {
+      cursor: pointer;
+    }
     .stage.markup .room {
       pointer-events: none;
     }
