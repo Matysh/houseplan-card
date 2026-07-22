@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.29.0 — 2026-07-22 (the "new device" flag)
+- **Devices that appear in HA after installation no longer show up silently**:
+  an auto-placed device (or light group) gets a big red dot at the top-right of
+  its icon. The flag is stored server-side (`settings.new_device_ids`), so every
+  client sees it — and it disappears everywhere the first time someone opens
+  that device's editor.
+- The baseline of known devices is seeded silently on the first run after the
+  update, so **existing devices never flood the plan with dots**. Hand-made
+  markers (virtual/rebindings) are never flagged — the user just created them.
+  (Pure `diffNewDevices`, unit-tested; backend schema for the two new settings.)
+
 ## v1.28.1 — 2026-07-22 (View-mode polish: cursors and inert openings)
 - **Device icons in View no longer show the grab cursor** (drag lives in the
   Devices mode); they show a pointer — clicking still works exactly as before.

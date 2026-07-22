@@ -158,6 +158,8 @@ CONFIG_SCHEMA = vol.Schema(
         vol.Optional("markers", default=list): [MARKER_SCHEMA],
         vol.Optional("settings", default=dict): vol.Schema(
             {
+                vol.Optional("known_devices"): [str],
+                vol.Optional("new_device_ids"): [str],
                 vol.Optional("fill_colors"): vol.Schema(
                     {
                         str: vol.Schema(

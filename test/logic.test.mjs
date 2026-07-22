@@ -4,7 +4,7 @@ import {
   lqiColor, snapToGrid, segKey, samePoint, pointInPolygon, markerIdForBinding, averageLqi,
   fitView, declump, safeUrl, resolveTapAction, floorsOf, subst, spaceDisplayOf, roomFillColor,
   segmentCm, formatLength, roomEdges, roomPoly, pointOnBoundary, pointStrictlyInside, roomsOverlap,
-  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef,
+  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices,
 } from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
@@ -522,4 +522,18 @@ test('parseRoomRef: area rooms, sub-area rooms by id, malformed refs', () => {
   assert.equal(parseRoomRef('f1#@'), null);
   assert.equal(parseRoomRef('#kitchen'), null);
   assert.equal(parseRoomRef(null), null);
+});
+
+test('diffNewDevices: first run seeds the baseline silently; later additions are fresh', () => {
+  const first = diffNewDevices(['a', 'b'], undefined);
+  assert.deepEqual(first, { fresh: [], known: ['a', 'b'] });
+  const none = diffNewDevices(['a', 'b'], ['a', 'b']);
+  assert.deepEqual(none.fresh, []);
+  assert.equal(none.known.length, 2);
+  const added = diffNewDevices(['a', 'b', 'c'], ['a', 'b']);
+  assert.deepEqual(added.fresh, ['c']);
+  assert.deepEqual(added.known, ['a', 'b', 'c']);
+  // removed devices stay in known (harmless, keeps the list append-only)
+  const removed = diffNewDevices(['a'], ['a', 'b']);
+  assert.deepEqual(removed.fresh, []);
 });

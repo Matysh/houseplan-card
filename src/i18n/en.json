@@ -244,5 +244,6 @@
   "mode.plan": "Plan",
   "mode.devices": "Devices",
   "display.value": "Value instead of an icon",
-  "marker.subarea": "no area, manual"
+  "marker.subarea": "no area, manual",
+  "device.new": "New device — open its editor to dismiss"
 }

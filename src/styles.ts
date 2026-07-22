@@ -526,6 +526,18 @@ export const cardStyles = css`
     @media (prefers-reduced-motion: reduce) {
       .dev.alarm::after { animation: none; opacity: 0.9; }
     }
+    .dev .newdot {
+      position: absolute;
+      top: calc(var(--icon-size, 2.5cqw) * -0.12);
+      right: calc(var(--icon-size, 2.5cqw) * -0.12);
+      width: calc(var(--icon-size, 2.5cqw) * 0.34);
+      height: calc(var(--icon-size, 2.5cqw) * 0.34);
+      border-radius: 50%;
+      background: #f0301f;
+      border: 2px solid var(--card-background-color, var(--hp-bg));
+      pointer-events: none;
+      z-index: 2;
+    }
     .devlayer {
       position: absolute;
       inset: 0;

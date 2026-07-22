@@ -17,7 +17,7 @@ import {
   pointOnBoundary, mergeRooms, splitRoom, polygonArea, closestPointOnBoundary,
   snapToWall, openingAmount,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
-  stateIcon, lightColorOf, isAlarmState, parseRoomRef,
+  stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices,
   spaceDisplayOf, roomFillStyle, fillColorsOf, DEFAULT_FILL_COLORS, type FillColors,
   isActiveState, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.28.1';
+const CARD_VERSION = '1.29.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -76,6 +76,7 @@ class HouseplanCard extends LitElement {
   private _devices: DevItem[] = [];
   private _regSignature = '';
   private _defPos: Record<string, { x: number; y: number }> = {};
+  private _newSyncKey = '';
   private _tip: { x: number; y: number; title: string; meta: string; lqi?: number | null; temp?: number | null } | null = null;
   private _selId: string | null = null;
   private _toast = '';
@@ -549,6 +550,51 @@ class HouseplanCard extends LitElement {
       iconRules: this._iconRules,
     });
     this._defPos = this._defaultPositions();
+    this._syncNewDevices();
+  }
+
+  /**
+   * "New device" flag (server-side, shared by every client): an auto device
+   * that appears after the known baseline was recorded gets a red dot until
+   * someone opens its editor. The baseline is seeded silently on first run,
+   * so an upgrade never floods the plan with dots.
+   */
+  private _syncNewDevices(): void {
+    if (!this._norm || !this._loadOk || !this._serverCfg) return;
+    // only auto-appearing icons: area devices and light groups; markers are user-made
+    const autoIds = this._devices.filter((d) => !d.marker && !d.virtual).map((d) => d.id).sort();
+    const key = autoIds.join(',');
+    if (key === this._newSyncKey) return; // same registry picture — nothing to do
+    this._newSyncKey = key;
+    const st: any = this._settings;
+    const { fresh, known } = diffNewDevices(autoIds, st.known_devices);
+    if (!Array.isArray(st.known_devices) || fresh.length) {
+      const newIds = [...new Set([...(st.new_device_ids || []), ...fresh])];
+      this._serverCfg = {
+        ...this._serverCfg,
+        settings: { ...st, known_devices: known, new_device_ids: newIds },
+      };
+      // best-effort persist: non-admins under admin_only just keep the local view
+      this._saveConfig();
+    }
+  }
+
+  /** Ids currently flagged as new (drawn with the red dot). */
+  private get _newIds(): Set<string> {
+    const list = (this._settings as any).new_device_ids;
+    return new Set(Array.isArray(list) ? list : []);
+  }
+
+  /** First visit to the device's editor acknowledges its "new" flag. */
+  private _ackNewDevice(id: string): void {
+    if (!this._newIds.has(id) || !this._serverCfg) return;
+    const st: any = this._settings;
+    this._serverCfg = {
+      ...this._serverCfg,
+      settings: { ...st, new_device_ids: (st.new_device_ids || []).filter((x: string) => x !== id) },
+    };
+    this._saveConfig();
+    this.requestUpdate();
   }
 
   /** Curation + light groups + overrides + virtual devices. */
@@ -1548,6 +1594,7 @@ class HouseplanCard extends LitElement {
   // ================= DEVICE EDITOR (markers) =================
 
   private _openMarkerDialog(d?: DevItem): void {
+    if (d) this._ackNewDevice(d.id);
     if (!this._norm) {
       this._showToast(this._t('toast.marker_needs_server'));
       return;
@@ -2583,6 +2630,7 @@ class HouseplanCard extends LitElement {
       ${ripple
         ? html`<span class="ripple ${active ? 'active' : ''}"><i></i><i></i><i></i></span>`
         : nothing}
+      ${this._newIds.has(d.id) ? html`<span class="newdot" title=${this._t('device.new')}></span>` : nothing}
       ${valText != null
         ? html`<span class="valtext">${valText}</span>`
         : disp !== 'ripple'
