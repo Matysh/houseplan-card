@@ -128,6 +128,10 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       lock locked↔unlocked, bulb on; custom icons and unavailable states never morph [auto]
 - [ ] display "Value instead of an icon": the marker shows the measurement (°/%/unit)
       as its body, small badges hidden; non-numeric fallback keeps the icon [auto]
+- [ ] RGB lights (v1.27.0): an on light with a color tints its icon/glow and the ripple
+      (explicit ripple color still wins); off/white lights unchanged [auto]
+- [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
+      display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
 - [ ] No devices at all in HA (fresh instance) → plan renders, "0 dev.", no console errors [auto]
 
 ## Device dialog (markers) ★
