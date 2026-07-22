@@ -277,5 +277,6 @@
   "decor.text_size": "Size",
   "decor.size_s": "Small",
   "decor.size_m": "Medium",
-  "decor.size_l": "Large"
+  "decor.size_l": "Large",
+  "marker.icon_auto": "Auto: {icon} (by icon rules; pick one to override)"
 }

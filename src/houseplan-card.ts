@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.33.2';
+const CARD_VERSION = '1.33.3';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -159,6 +159,7 @@ class HouseplanCard extends LitElement {
     binding: string;     // 'device:<id>' | 'entity:<eid>' | 'virtual'
     bindingFilter: string;
     icon: string;        // '' = auto
+    autoIcon: string;    // the icon the rules would give — picker placeholder
     display: 'badge' | 'ripple' | 'icon_ripple' | 'value';
     rippleColor: string; // '' = accent
     rippleSize: number;  // in icon diameters
@@ -1984,6 +1985,7 @@ class HouseplanCard extends LitElement {
         binding: d.bindingKind === 'virtual' ? 'virtual' : d.bindingKind + ':' + d.bindingRef,
         bindingFilter: '',
         icon: d.marker?.icon || '',
+        autoIcon: d.icon || '',
         display: d.marker?.display || 'badge',
         rippleColor: d.marker?.ripple_color || '',
         rippleSize: Number(d.marker?.ripple_size) > 0 ? Number(d.marker!.ripple_size) : 3,
@@ -2001,7 +2003,7 @@ class HouseplanCard extends LitElement {
       };
     } else {
       this._markerDialog = {
-        name: '', binding: 'virtual', bindingFilter: '', icon: '',
+        name: '', binding: 'virtual', bindingFilter: '', icon: '', autoIcon: '',
         display: 'badge', rippleColor: '', rippleSize: 3, size: 1, angle: 0,
         tapAction: '', model: '',
         link: '', description: '', pdfs: [], room: '', busy: false,
@@ -3640,10 +3642,17 @@ class HouseplanCard extends LitElement {
           <label>${this._t('marker.icon_label')}</label>
           ${customElements.get('ha-icon-picker')
             ? html`<ha-icon-picker .hass=${this.hass} .value=${d.icon}
+                .placeholder=${d.autoIcon || undefined}
+                .fallbackPath=${undefined}
                 @value-changed=${(e: any) => (this._markerDialog = { ...d, icon: e.detail.value || '' })}></ha-icon-picker>`
-            : html`<input class="namein" type="text" placeholder=${this._t('marker.icon_ph')}
+            : html`<input class="namein" type="text"
+                placeholder=${d.autoIcon || this._t('marker.icon_ph')}
                 .value=${d.icon}
                 @input=${(e: Event) => (this._markerDialog = { ...d, icon: (e.target as HTMLInputElement).value })} />`}
+          ${!d.icon && d.autoIcon
+            ? html`<p class="muted iconauto"><ha-icon icon=${d.autoIcon}></ha-icon>
+                ${this._t('marker.icon_auto', { icon: d.autoIcon })}</p>`
+            : nothing}
 
           <label>${this._t('marker.display_label')}</label>
           <select class="areasel"

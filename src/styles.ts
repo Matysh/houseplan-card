@@ -396,6 +396,14 @@ export const cardStyles = css`
       display: inline-flex;
     }
     .roomlabel .rlm.lit { opacity: 1; }
+    .iconauto {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      margin: 4px 0 0;
+    }
+    .iconauto ha-icon { --mdc-icon-size: 18px; }
     .rlhandle {
       display: none;
       position: absolute;

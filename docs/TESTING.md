@@ -140,6 +140,10 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Icon picker placeholder (v1.33.3): with no explicit icon the device
+      dialog's icon picker shows the auto-derived icon as its placeholder, plus
+      an "Auto: mdi:..." hint line with the icon preview; the hint disappears
+      once an explicit icon is picked [auto]
 - [ ] No Reset button (v1.33.2): the Device editor toolbar has three tools —
       add, show all, icon rules; the layout-wiping Reset is gone [auto]
 - [ ] Grid in all editors + decor fade (v1.33.1): the dot grid shows in the

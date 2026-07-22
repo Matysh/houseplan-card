@@ -277,5 +277,6 @@
   "decor.text_size": "Размер",
   "decor.size_s": "Мелкий",
   "decor.size_m": "Средний",
-  "decor.size_l": "Крупный"
+  "decor.size_l": "Крупный",
+  "marker.icon_auto": "Авто: {icon} (по правилам иконок; выберите свою, чтобы заменить)"
 }

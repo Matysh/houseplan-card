@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.33.3 — 2026-07-22
+- Device dialog: when no icon is set explicitly, the icon picker no longer
+  looks empty — it shows the **auto-derived icon** (from the icon rules /
+  device class) as a placeholder, with an "Auto: mdi:…" hint line underneath.
+  Picking an explicit icon replaces it as before; clearing returns to auto.
+
 ## v1.33.2 — 2026-07-22
 - Removed the **Reset** button from the Device editor. It wiped the entire
   layout — positions of all devices, room cards and their scales across every
