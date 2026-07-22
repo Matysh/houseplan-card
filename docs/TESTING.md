@@ -29,6 +29,20 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] Removal: delete entry → Lovelace resource entry disappears; `.storage/houseplan.*` survives; reinstall picks the old config up
 - [ ] Diagnostics download works; personal fields (name/link/description/pdfs) are `**REDACTED**` [auto]
 
+## Modes (v1.25.0) ★
+
+- [ ] The card always loads in **View**; edit modes are never restored [auto]
+- [ ] View: pan/zoom/space-switch/tap/long-press/tooltips only — dragging an icon,
+      label or opening does nothing; panning may start on top of an icon [auto]
+- [ ] View header: space tabs + count + zoom + mode tabs, ZERO edit buttons [auto]
+- [ ] Plan: markup toolbar, space gears, +space, ⚙ palette; device icons hidden,
+      labels/openings draggable; orange stage frame [auto]
+- [ ] Devices: icon drag works, click opens the marker editor directly; +/👁/↺/⬡
+      buttons; accent stage frame [auto]
+- [ ] Mode tabs hidden for non-admin users; segmented control highlights the active mode
+- [ ] Opening: single click in View shows the info card; in Plan a click edits it;
+      double-click no longer does anything special [auto]
+
 ## Onboarding ★
 
 - [ ] Empty config, HA has floors → floors-import wizard offers them sorted by level [auto]

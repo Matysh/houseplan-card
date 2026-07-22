@@ -341,6 +341,7 @@ export const cardStyles = css`
       .ripple.active i:nth-child(n + 2) { display: none; }
     }
     .roomlabel {
+      pointer-events: none; /* draggable only in plan mode (rule below) */
       position: absolute;
       transform: translate(-50%, -50%);
       font-size: calc(var(--icon-size, 2.5cqw) * 0.5);
@@ -348,10 +349,10 @@ export const cardStyles = css`
       letter-spacing: 0.04em;
       white-space: nowrap;
       cursor: grab;
-      pointer-events: auto;
       user-select: none;
       z-index: 1;
     }
+    .stage.markup .roomlabel { pointer-events: auto; }
     .roomlabel:active { cursor: grabbing; }
     .measurelayer {
       position: absolute;
@@ -388,8 +389,46 @@ export const cardStyles = css`
     .stage.markup .room {
       pointer-events: none;
     }
-    .stage.markup .devlayer {
-      display: none; /* in markup mode icons must not get in the way */
+    .stage.markup .devlayer .dev {
+      display: none; /* in plan mode the icons do not get in the way; labels stay */
+    }
+    /* mode frames: the edit modes are visible at a glance */
+    .stage.mode-plan {
+      outline: 2px solid #ffc14d;
+      outline-offset: -2px;
+    }
+    .stage.mode-devices {
+      outline: 2px solid var(--hp-accent);
+      outline-offset: -2px;
+    }
+    .modes {
+      display: inline-flex;
+      gap: 2px;
+      background: rgba(127, 127, 127, 0.12);
+      border-radius: 10px;
+      padding: 3px;
+    }
+    .modetab {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border: 0;
+      background: transparent;
+      color: var(--hp-muted);
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .modetab ha-icon { --mdc-icon-size: 15px; }
+    .modetab.active {
+      background: var(--hp-accent);
+      color: var(--text-primary-color, #fff);
+    }
+    @media (max-width: 720px) {
+      .modetab .ml { display: none; }
     }
     .room.picked {
       stroke: #ffc14d;

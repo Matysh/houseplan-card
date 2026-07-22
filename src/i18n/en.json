@@ -239,5 +239,8 @@
   "gs.reset": "Reset to defaults",
   "gs.saved": "General settings saved",
   "space.show_lqi": "Show zigbee signal (LQI) next to devices",
-  "gs.light_none": "No light sources"
+  "gs.light_none": "No light sources",
+  "mode.view": "View",
+  "mode.plan": "Plan",
+  "mode.devices": "Devices"
 }
