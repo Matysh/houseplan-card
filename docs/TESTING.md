@@ -140,6 +140,10 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Icon stays on edit (v1.33.4): rebinding a device (HA device/entity) or
+      changing its room within the same space never moves the icon — the saved
+      or auto position migrates to the new marker id; only a brand-new icon or
+      a move to another space centers it in the target room [auto]
 - [ ] Icon picker placeholder (v1.33.3): with no explicit icon the device
       dialog's icon picker shows the auto-derived icon as its placeholder, plus
       an "Auto: mdi:..." hint line with the icon preview; the hint disappears

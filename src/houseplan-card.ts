@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.33.3';
+const CARD_VERSION = '1.33.4';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -2218,11 +2218,29 @@ class HouseplanCard extends LitElement {
       // remove the previous marker (by the old id and by the new id)
       cfg.markers = cfg.markers.filter((m) => m.id !== id && m.id !== oldId);
       cfg.markers.push(marker);
-      // position: a new icon OR the room changed → place it at the center of the room/space.
-      // Write POINT-WISE (layout/update), not the whole layout — a full layout/set overwrites
-      // positions changed in other windows (the v1.4.4 incident).
+      // Position rule (owner's decision, v1.33.4): editing an existing icon —
+      // rebinding it to another HA device/entity or to another room — must NOT
+      // move it. Its current position (saved or the ephemeral auto one) is
+      // migrated to the new marker id. Only two cases still center the icon:
+      // a truly NEW icon, and a move to a room in a DIFFERENT space (keeping
+      // the old coordinates there would be meaningless).
+      // Write POINT-WISE (layout/update), not the whole layout — a full layout/set
+      // overwrites positions changed in other windows (the v1.4.4 incident).
       let newPos: { s: string; x: number; y: number } | null = null;
-      if (!this._layout[id] || roomChanged) {
+      const targetSpace = space || prevDev?.space || this._space;
+      const prevRec = oldId ? this._layout[oldId] : null;
+      const prevPos = prevRec
+        ? { s: prevRec.s || prevDev?.space || this._space, x: prevRec.x, y: prevRec.y }
+        : oldId && prevDev && this._defPos[oldId]
+          ? this._normPos(prevDev.space, this._defPos[oldId].x, this._defPos[oldId].y)
+          : null;
+      if (prevPos && prevPos.s === targetSpace) {
+        // stays in place; pin it under the (possibly new) id
+        if (id !== oldId || !this._layout[id] || roomChanged) {
+          newPos = { s: prevPos.s, x: prevPos.x, y: prevPos.y };
+          this._layout = { ...this._layout, [id]: newPos };
+        }
+      } else if (!this._layout[id] || roomChanged) {
         const spm = this._spaceModel(space || undefined);
         let cx = spm.vb[0] + spm.vb[2] / 2;
         let cy = spm.vb[1] + spm.vb[3] / 2;

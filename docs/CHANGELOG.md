@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.33.4 — 2026-07-22
+- Editing a device no longer makes its icon jump. Changing the HA binding
+  (which changes the marker id) migrates the saved position to the new id;
+  changing the room within the same space keeps the icon exactly where it
+  stands (previously it re-centered in the new room). Only a brand-new icon,
+  or a move to a room in a different space, is centered.
+
 ## v1.33.3 — 2026-07-22
 - Device dialog: when no icon is set explicitly, the icon picker no longer
   looks empty — it shows the **auto-derived icon** (from the icon rules /
