@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.31.0';
+const CARD_VERSION = '1.31.2';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -1171,6 +1171,13 @@ class HouseplanCard extends LitElement {
 
   private _markupClick(ev: MouseEvent): void {
     if (!this._markup) return;
+    // Room cards swallow markup clicks: dragging, resizing or just clicking a
+    // card must not feed the active tool (draw point, delete room, merge/split
+    // pick, opening placement). The drag itself already stops pointer events,
+    // but the synthesized `click` afterwards still bubbles to the stage.
+    if (this._drag || this._rlResize) return;
+    const path = (ev.composedPath?.() || []) as any[];
+    if (path.some((n) => n?.classList?.contains?.('roomlabel') || n?.classList?.contains?.('rlhandle'))) return;
     const raw = this._svgPoint(ev);
     if (this._tool === 'delroom') {
       const space = this._spaceModel();
