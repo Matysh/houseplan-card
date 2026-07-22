@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.29.0';
+const CARD_VERSION = '1.30.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -2826,6 +2826,16 @@ class HouseplanCard extends LitElement {
     })}`;
   }
 
+  /**
+   * Explicit lock/unlock from the opening info card. This does NOT violate the
+   * "locks never toggle from the plan" rule: that rule guards against ACCIDENTAL
+   * taps on plan icons; here the user has opened the info card and pressed a
+   * clearly labeled action button — same interaction contract as HA's more-info.
+   */
+  private _lockAction(entityId: string, action: 'lock' | 'unlock'): void {
+    this.hass?.callService?.('lock', action, { entity_id: entityId });
+  }
+
   private _renderOpeningInfoCard(): TemplateResult {
     const o = this._openingInfo!;
     const cSt = o.contact ? this.hass.states[o.contact]?.state : null;
@@ -2854,6 +2864,18 @@ class HouseplanCard extends LitElement {
                   : this._t('opening.state_unknown'),
                 lSt === 'locked' ? 'ok' : 'warn')
             : nothing}
+          ${o.lock && (lSt === 'locked' || ['unlocked', 'open'].includes(String(lSt)))
+            ? html`<button
+                class="btn lockact ${lSt === 'locked' ? 'warn' : ''}"
+                @click=${() => this._lockAction(o.lock!, lSt === 'locked' ? 'unlock' : 'lock')}>
+                <ha-icon icon=${lSt === 'locked' ? 'mdi:lock-open-variant' : 'mdi:lock'}></ha-icon>
+                ${this._t(lSt === 'locked' ? 'opening.unlock_action' : 'opening.lock_action')}
+              </button>`
+            : o.lock && ['locking', 'unlocking'].includes(String(lSt))
+              ? html`<button class="btn lockact" disabled>
+                  <ha-icon icon="mdi:timer-sand"></ha-icon>${this._t('opening.lock_pending')}
+                </button>`
+              : nothing}
           ${!o.contact && !o.lock ? html`<p class="muted">${this._t('opening.no_entities')}</p>` : nothing}
         </div>
         <div class="row">

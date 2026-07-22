@@ -286,6 +286,18 @@ export const cardStyles = css`
     .oplock.locked { color: #66d17a; border-color: #66d17a; }
     .oplock.unlocked { color: var(--hp-open); border-color: var(--hp-open); }
     .oplock.unknown { color: var(--hp-muted); }
+    .btn.lockact {
+      width: 100%;
+      justify-content: center;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .btn.lockact.warn {
+      color: var(--error-color, #d33);
+      border-color: var(--error-color, #d33);
+    }
     .oprow {
       display: flex;
       align-items: center;

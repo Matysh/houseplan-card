@@ -245,5 +245,8 @@
   "mode.devices": "Devices",
   "display.value": "Value instead of an icon",
   "marker.subarea": "no area, manual",
-  "device.new": "New device — open its editor to dismiss"
+  "device.new": "New device — open its editor to dismiss",
+  "opening.unlock_action": "Unlock",
+  "opening.lock_action": "Lock",
+  "opening.lock_pending": "Working…"
 }
