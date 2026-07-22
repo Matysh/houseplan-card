@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.33.4';
+const CARD_VERSION = '1.33.5';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -2835,7 +2835,7 @@ class HouseplanCard extends LitElement {
             ? html`<div class="modes">
                 ${([['plan', 'mdi:floor-plan'], ['devices', 'mdi:tune-variant'], ['decor', 'mdi:draw']] as const).map(
                   ([m, ic]) => html`<button class="modetab ${this._mode === m ? 'active' : ''}"
-                    title=${this._t(('mode.' + m) as any)}
+                    title=${this._t(('mode.' + m + '_tip') as any)}
                     @click=${() => { if (this._mode !== m) this._setMode(m); }}>
                     <ha-icon icon=${ic}></ha-icon><span class="ml">${this._t(('mode.' + m) as any)}</span>
                     ${this._mode === m

@@ -278,5 +278,8 @@
   "decor.size_s": "Small",
   "decor.size_m": "Medium",
   "decor.size_l": "Large",
-  "marker.icon_auto": "Auto: {icon} (by icon rules; pick one to override)"
+  "marker.icon_auto": "Auto: {icon} (by icon rules; pick one to override)",
+  "mode.plan_tip": "Plan editor — the geometry of the home: draw and split/merge rooms, bind them to HA areas, place doors and windows, move room cards, set the scale",
+  "mode.devices_tip": "Device editor — everything about icons: drag to position, click to edit binding/icon/display, add virtual devices, icon rules",
+  "mode.decor_tip": "Background editor — purely visual decor under the plan: lines, rectangles, ovals and text labels that never react to clicks"
 }

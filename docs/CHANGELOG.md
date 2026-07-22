@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.33.5 — 2026-07-22
+- Editor tabs got extended tooltips explaining what each editor is for (plan
+  geometry vs device icons vs visual decor).
+
 ## v1.33.4 — 2026-07-22
 - Editing a device no longer makes its icon jump. Changing the HA binding
   (which changes the marker id) migrates the saved position to the new id;
