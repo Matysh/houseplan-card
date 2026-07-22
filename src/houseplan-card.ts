@@ -22,7 +22,7 @@ import {
   isActiveState, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
 } from './logic';
-import { buildDevices, lqiFor, tempFor, humFor, isHumEntity, areaLights, areaTemp } from './devices';
+import { buildDevices, lqiFor, tempFor, humFor, isHumEntity, areaLights, areaTemp, areaHum, areaLightStats } from './devices';
 import type {
   OpeningCfg,
   RoomCfg, SpaceModel, PdfRef, Marker, ServerConfig, DevItem, CardConfig,
@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.30.4';
+const CARD_VERSION = '1.31.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -65,7 +65,7 @@ class HouseplanCard extends LitElement {
   private _config?: CardConfig;
 
   private _space = 'f1';
-  private _layout: Record<string, { x: number; y: number; s?: string }> = {};
+  private _layout: Record<string, { x: number; y: number; s?: string; k?: number }> = {};
   private _serverStorage = false;
   private _loadOk = false;
   private _loading = false;
@@ -176,6 +176,10 @@ class HouseplanCard extends LitElement {
     tempMin: number;
     tempMax: number;
     showLqi: boolean;
+    labelTemp: boolean;
+    labelHum: boolean;
+    labelLqi: boolean;
+    labelLight: boolean;
     cellCm: number;                // real-world cm represented by one grid cell
     busy: boolean;
   } | null = null;
@@ -197,6 +201,7 @@ class HouseplanCard extends LitElement {
   };
 
   private _drag: { id: string; sx: number; sy: number; ox: number; oy: number; moved: boolean } | null = null;
+  private _rlResize: { id: string; space: string; k0: number; cx: number; cy: number; d0: number } | null = null;
   private _holdTimer?: number;
   private _holdFired = false;
 
@@ -693,9 +698,10 @@ class HouseplanCard extends LitElement {
       const gx = Math.round(x / g) * g;
       const gy = Math.round(y / g) * g;
       const aspect = this._serverCfg!.spaces.find((s: any) => s.id === d.space)?.aspect || 1;
+      const prevK = (this._layout[d.id] as any)?.k;
       this._layout = {
         ...this._layout,
-        [d.id]: { s: d.space, x: gx / NORM_W, y: gy / (NORM_W / aspect) },
+        [d.id]: { s: d.space, x: gx / NORM_W, y: gy / (NORM_W / aspect), ...(prevK ? { k: prevK } : {}) },
       };
     } else {
       this._layout = { ...this._layout, [d.id]: { x: Math.round(x), y: Math.round(y) } };
@@ -1946,6 +1952,8 @@ class HouseplanCard extends LitElement {
         roomColor: disp.color, roomOpacity: disp.opacity, fillMode: disp.fill,
         tempMin: disp.tempMin, tempMax: disp.tempMax,
         showLqi: disp.showLqi ?? this._config?.show_signal ?? true,
+        labelTemp: disp.labelTemp, labelHum: disp.labelHum,
+        labelLqi: disp.labelLqi, labelLight: disp.labelLight,
         cellCm: Number(sp.cell_cm) > 0 ? Number(sp.cell_cm) : 5,
         busy: false,
       };
@@ -1957,6 +1965,7 @@ class HouseplanCard extends LitElement {
         roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'none',
         tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
         showLqi: this._config?.show_signal ?? true,
+        labelTemp: false, labelHum: false, labelLqi: false, labelLight: false,
         cellCm: 5,
         busy: false,
       };
@@ -2041,6 +2050,10 @@ class HouseplanCard extends LitElement {
         temp_min: Number.isFinite(d.tempMin) ? Math.min(d.tempMin, d.tempMax) : DEFAULT_TEMP_MIN,
         temp_max: Number.isFinite(d.tempMax) ? Math.max(d.tempMin, d.tempMax) : DEFAULT_TEMP_MAX,
         show_lqi: d.showLqi,
+        label_temp: d.labelTemp,
+        label_hum: d.labelHum,
+        label_lqi: d.labelLqi,
+        label_light: d.labelLight,
       };
       sp.cell_cm = Number.isFinite(d.cellCm) && d.cellCm > 0 ? d.cellCm : 5;
       await this._saveConfigNow();
@@ -2133,6 +2146,7 @@ class HouseplanCard extends LitElement {
       roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'none',
       tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
       showLqi: this._config?.show_signal ?? true,
+      labelTemp: false, labelHum: false, labelLqi: false, labelLight: false,
       cellCm: 5,
       busy: false,
     };
@@ -2514,7 +2528,7 @@ class HouseplanCard extends LitElement {
                 this._showTip(e, r.name, this._t('tip.room'),
                   showLqi ? this._roomLqi(r.area) : null,
                   r.area ? areaTemp(this.hass, this._devices, r.area) : null);
-              const label = (!space.bg && !disp.showNames) || this._markup;
+              const label = !space.bg && !disp.showNames && !this._markup;
               const c = this._roomCenter(r);
               const shape = r.poly
                 ? svg`<polygon class="${cls}" style="${style}" points="${r.poly.map((p) => p.join(',')).join(' ')}"
@@ -2532,7 +2546,7 @@ class HouseplanCard extends LitElement {
           <div class="devlayer" style="--icon-size:${((iconPct * vb[2]) / view.w).toFixed(3)}cqw">
             ${devs.map((d) => this._renderDevice(d, view, showLqi))}
             ${this._renderOpeningLocks(view)}
-            ${disp.showNames && !this._markup
+            ${disp.showNames || this._markup
               ? space.rooms.map((r) => this._renderRoomLabel(r, space, view, disp))
               : nothing}
           </div>
@@ -2689,6 +2703,57 @@ class HouseplanCard extends LitElement {
     if (moved) window.setTimeout(() => (this._drag = null), 0);
   }
 
+  /** Saved room-card scale (layout key rl_<roomId>, field k), clamped 0.5..3. */
+  private _labelScale(r: RoomCfg): number {
+    const k = (this._layout['rl_' + (r.id || '')] as any)?.k;
+    return typeof k === 'number' && Number.isFinite(k) ? Math.min(3, Math.max(0.5, k)) : 1;
+  }
+
+  private _rlResizeDown(ev: PointerEvent, r: RoomCfg, spaceId: string): void {
+    if (this._mode !== 'plan') return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    const card = (ev.target as HTMLElement).closest('.roomlabel') as HTMLElement | null;
+    if (!card) return;
+    const b = card.getBoundingClientRect();
+    const cx = b.left + b.width / 2;
+    const cy = b.top + b.height / 2;
+    const d0 = Math.max(8, Math.hypot(ev.clientX - cx, ev.clientY - cy));
+    this._rlResize = { id: 'rl_' + (r.id || ''), space: spaceId, k0: this._labelScale(r), cx, cy, d0 };
+    (ev.target as HTMLElement).setPointerCapture(ev.pointerId);
+  }
+
+  private _rlResizeMove(ev: PointerEvent): void {
+    const rs = this._rlResize;
+    if (!rs) return;
+    ev.stopPropagation();
+    const dist = Math.max(8, Math.hypot(ev.clientX - rs.cx, ev.clientY - rs.cy));
+    const k = Math.min(3, Math.max(0.5, rs.k0 * (dist / rs.d0)));
+    const rec: any = this._layout[rs.id];
+    if (!rec) {
+      // the card was never dragged: pin its current default position first
+      const roomId = rs.id.slice(3);
+      const sp = this._spaceModel(rs.space);
+      const room = sp.rooms.find((x) => x.id === roomId);
+      if (!room) return;
+      const p = this._labelPos(room, rs.space);
+      const aspect = this._serverCfg!.spaces.find((x: any) => x.id === rs.space)?.aspect || 1;
+      this._layout = {
+        ...this._layout,
+        [rs.id]: { s: rs.space, x: p.x / NORM_W, y: p.y / (NORM_W / aspect), k },
+      };
+    } else {
+      this._layout = { ...this._layout, [rs.id]: { ...rec, k } };
+    }
+    this._dirtyPos.add(rs.id);
+  }
+
+  private _rlResizeUp(): void {
+    if (!this._rlResize) return;
+    this._rlResize = null;
+    this._persistLayout();
+  }
+
   private _renderRoomLabel(
     r: RoomCfg, space: SpaceModel, view: { x: number; y: number; w: number; h: number }, disp: SpaceDisplay,
   ): TemplateResult | typeof nothing {
@@ -2697,12 +2762,52 @@ class HouseplanCard extends LitElement {
     const left = ((p.x - view.x) / view.w) * 100;
     const top = ((p.y - view.y) / view.h) * 100;
     const op = Math.min(1, disp.opacity + 0.25);
-    return html`<div class="roomlabel" style="left:${left}%;top:${top}%;color:${disp.color};opacity:${op}"
+    const k = this._labelScale(r);
+    // optional metrics row (needs an HA area; sub-area rooms show the name only)
+    const rows: TemplateResult[] = [];
+    if (r.area && !this._markup) {
+      if (disp.labelTemp) {
+        const t = areaTemp(this.hass, this._devices, r.area);
+        if (t != null) rows.push(html`<span class="rlm"><ha-icon icon="mdi:thermometer"></ha-icon>${t}°</span>`);
+      }
+      if (disp.labelHum) {
+        const hm = areaHum(this.hass, this._devices, r.area);
+        if (hm != null) rows.push(html`<span class="rlm"><ha-icon icon="mdi:water-percent"></ha-icon>${hm}%</span>`);
+      }
+      if (disp.labelLqi) {
+        const l = this._roomLqi(r.area);
+        if (l != null) rows.push(html`<span class="rlm"><ha-icon icon="mdi:zigbee"></ha-icon>${l}</span>`);
+      }
+      if (disp.labelLight) {
+        const ls = areaLightStats(this.hass, this._devices, r.area);
+        if (ls) {
+          const txt = ls.on === 0
+            ? this._t('roomcard.light_off')
+            : ls.on === ls.total
+              ? this._t('roomcard.light_on')
+              : this._t('roomcard.light_partial', { on: ls.on, total: ls.total });
+          rows.push(html`<span class="rlm ${ls.on ? 'lit' : ''}"><ha-icon icon=${ls.on ? 'mdi:lightbulb-on' : 'mdi:lightbulb-outline'}></ha-icon>${txt}</span>`);
+        }
+      }
+    }
+    return html`<div class="roomlabel ${rows.length ? 'card' : ''}"
+      style="left:${left}%;top:${top}%;color:${disp.color};opacity:${op};--rl-scale:${k}"
       @pointerdown=${(e: PointerEvent) => this._labelDown(e, r, space.id)}
       @pointermove=${(e: PointerEvent) => this._labelMove(e, r, space.id)}
       @pointerup=${() => this._labelUp(r)}
       @pointercancel=${() => this._labelUp(r)}
-    >${r.name}</div>`;
+    ><span class="rlname">${r.name}</span>
+      ${rows.length ? html`<span class="rlmetrics">${rows}</span>` : nothing}
+      ${this._mode === 'plan'
+        ? ['tl', 'tr', 'bl', 'br'].map(
+            (c) => html`<span class="rlhandle ${c}"
+              @pointerdown=${(e: PointerEvent) => this._rlResizeDown(e, r, space.id)}
+              @pointermove=${(e: PointerEvent) => this._rlResizeMove(e)}
+              @pointerup=${() => this._rlResizeUp()}
+              @pointercancel=${() => this._rlResizeUp()}></span>`,
+          )
+        : nothing}
+    </div>`;
   }
 
   /** Where the live measurement starts: the last outline point, or the first split point. */
@@ -3316,6 +3421,15 @@ class HouseplanCard extends LitElement {
               @change=${(e: Event) => (this._spaceDialog = { ...d, showLqi: (e.target as HTMLInputElement).checked })} />
             <span>${this._t('space.show_lqi')}</span>
           </label>
+          <label class="dispsection">${this._t('space.roomcard_section')}</label>
+          ${([['labelTemp', 'space.label_temp'], ['labelHum', 'space.label_hum'],
+              ['labelLqi', 'space.label_lqi'], ['labelLight', 'space.label_light']] as const).map(
+            ([f, k]) => html`<label class="srcrow">
+              <input type="checkbox" .checked=${d[f]}
+                @change=${(e: Event) => (this._spaceDialog = { ...d, [f]: (e.target as HTMLInputElement).checked })} />
+              <span>${this._t(k)}</span>
+            </label>`,
+          )}
           <label>${this._t('space.room_color')}</label>
           <div class="colorrow">
             <input type="color" .value=${d.roomColor}

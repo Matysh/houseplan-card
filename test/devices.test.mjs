@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildDevices, lightGroups, primaryEntity, lqiFor, tempFor, humFor, areaLights, areaTemp } from '../test-build/devices.js';
+import { buildDevices, lightGroups, primaryEntity, lqiFor, tempFor, humFor, areaLights, areaTemp, areaHum, areaLightStats } from '../test-build/devices.js';
 import { compileIconRules } from '../test-build/rules.js';
 
 /** Minimal fake hass around the pieces buildDevices reads. */
@@ -279,4 +279,33 @@ test('buildDevices: humidity badge is gated on device_class, not the icon (name 
   const d = buildDevices(baseCtx(h, { markers: [{ id: 'e', binding: 'entity:sensor.mh_hum' }] })).find((x) => x.id === 'e');
   assert.notEqual(d.icon, 'mdi:water-percent'); // name rule won the icon
   assert.equal(d.hum, 45); // …but the humidity value is still shown (gated on device_class)
+});
+
+test('areaLightStats: counts unique lights that are on', () => {
+  const hass = { states: {
+    'light.a': { state: 'on' }, 'light.b': { state: 'off' }, 'light.c': { state: 'on' },
+  } };
+  const devs = [
+    { area: 'living', entities: ['light.a', 'sensor.x'] },
+    { area: 'living', entities: ['light.b', 'light.a'] }, // light.a duplicated on purpose
+    { area: 'other', entities: ['light.c'] },
+  ];
+  assert.deepEqual(areaLightStats(hass, devs, 'living'), { on: 1, total: 2 });
+  assert.deepEqual(areaLightStats(hass, devs, 'other'), { on: 1, total: 1 });
+  assert.equal(areaLightStats(hass, devs, 'empty'), null);
+});
+
+test('areaHum: averages climate sensors only, integer %', () => {
+  const hass = { states: {
+    'sensor.t1_humidity': { state: '41', attributes: { device_class: 'humidity', unit_of_measurement: '%' } },
+    'sensor.t2_humidity': { state: '46', attributes: { device_class: 'humidity', unit_of_measurement: '%' } },
+    'sensor.fridge_humidity': { state: '90', attributes: { device_class: 'humidity', unit_of_measurement: '%' } },
+  } };
+  const devs = [
+    { area: 'living', icon: 'mdi:thermometer', entities: ['sensor.t1_humidity'] },
+    { area: 'living', icon: 'mdi:air-filter', entities: ['sensor.t2_humidity'] },
+    { area: 'living', icon: 'mdi:fridge', entities: ['sensor.fridge_humidity'] }, // curated out
+  ];
+  assert.equal(areaHum(hass, devs, 'living'), 44);
+  assert.equal(areaHum(hass, devs, 'nothing'), null);
 });

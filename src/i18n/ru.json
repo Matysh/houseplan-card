@@ -252,5 +252,13 @@
   "devbar.add": "Добавить",
   "devbar.show_all": "Показать все",
   "devbar.reset": "Сброс",
-  "devbar.rules": "Правила иконок"
+  "devbar.rules": "Правила иконок",
+  "space.roomcard_section": "В карточке комнаты:",
+  "space.label_temp": "Температура",
+  "space.label_hum": "Влажность",
+  "space.label_lqi": "Средний Zigbee-сигнал",
+  "space.label_light": "Свет вкл/выкл",
+  "roomcard.light_on": "Вкл",
+  "roomcard.light_off": "Выкл",
+  "roomcard.light_partial": "{on} из {total}"
 }

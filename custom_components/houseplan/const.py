@@ -11,7 +11,7 @@ PLANS_DIR = "houseplan/plans"  # relative to the HA configuration directory
 FILES_URL = "/houseplan_files/files"
 FILES_DIR = "houseplan/files"
 CONF_ADMIN_ONLY = "admin_only"
-VERSION = "1.30.4"
+VERSION = "1.31.0"
 
 DEFAULT_CONFIG: dict = {
     "spaces": [],

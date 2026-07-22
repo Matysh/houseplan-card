@@ -364,14 +364,53 @@ export const cardStyles = css`
       pointer-events: none; /* draggable only in plan mode (rule below) */
       position: absolute;
       transform: translate(-50%, -50%);
-      font-size: calc(var(--icon-size, 2.5cqw) * 0.5);
+      font-size: calc(var(--icon-size, 2.5cqw) * 0.5 * var(--rl-scale, 1));
       font-weight: 700;
       letter-spacing: 0.04em;
       white-space: nowrap;
       cursor: grab;
       user-select: none;
       z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.15em;
+      text-align: center;
     }
+    .roomlabel .rlmetrics {
+      display: flex;
+      align-items: center;
+      gap: 0.55em;
+      font-size: 0.62em;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      opacity: 0.9;
+    }
+    .roomlabel .rlm {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.12em;
+    }
+    .roomlabel .rlm ha-icon {
+      --mdc-icon-size: 1.05em;
+      display: inline-flex;
+    }
+    .roomlabel .rlm.lit { opacity: 1; }
+    .rlhandle {
+      display: none;
+      position: absolute;
+      width: 9px;
+      height: 9px;
+      border-radius: 2px;
+      background: var(--hp-accent);
+      border: 1px solid var(--card-background-color, #fff);
+      z-index: 2;
+    }
+    .rlhandle.tl { left: -6px; top: -6px; cursor: nwse-resize; }
+    .rlhandle.br { right: -6px; bottom: -6px; cursor: nwse-resize; }
+    .rlhandle.tr { right: -6px; top: -6px; cursor: nesw-resize; }
+    .rlhandle.bl { left: -6px; bottom: -6px; cursor: nesw-resize; }
+    .stage.markup .roomlabel:hover .rlhandle { display: block; }
     .stage.markup .roomlabel { pointer-events: auto; }
     .roomlabel:active { cursor: grabbing; }
     .measurelayer {

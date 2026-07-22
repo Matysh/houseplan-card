@@ -88,6 +88,10 @@ SPACE_DISPLAY_SCHEMA = vol.Schema(
         vol.Optional("temp_min"): vol.Coerce(float),
         vol.Optional("temp_max"): vol.Coerce(float),
         vol.Optional("show_lqi"): bool,
+        vol.Optional("label_temp"): bool,
+        vol.Optional("label_hum"): bool,
+        vol.Optional("label_lqi"): bool,
+        vol.Optional("label_light"): bool,
     },
     extra=vol.ALLOW_EXTRA,
 )

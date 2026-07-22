@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.31.0 — 2026-07-22 (room cards)
+- Room labels grew into **room cards**: the name on top, and an optional
+  smaller metrics line below — temperature, humidity, average Zigbee signal
+  and lights, each behind its own checkbox in the space settings (all off by
+  default). Lights show On/Off, or **"1 of 3"** when only part of the room is
+  lit. Rooms without an HA area keep showing just the name.
+- Cards are **resizable** in the Plan editor: hovering shows corner handles;
+  dragging one scales the whole card uniformly (0.5×–3×). The scale is stored
+  in the layout next to the card position, and dragging keeps it.
+- Fixed a latent v1.25 regression: room labels were not rendered as draggable
+  HTML in the Plan editor at all (only a static SVG name), so moving them was
+  impossible. The Plan editor now renders real cards (name only) that can be
+  dragged and resized.
+- Two markup smokes (merge/split) still called a method removed in v1.25 —
+  repaired.
+
 ## v1.30.4 — 2026-07-22
 - **Escape now closes every dialog** (general settings, icon rules, device
   editor, space dialog, opening editor, info cards), topmost first when

@@ -252,5 +252,13 @@
   "devbar.add": "Add",
   "devbar.show_all": "Show all",
   "devbar.reset": "Reset",
-  "devbar.rules": "Icon rules"
+  "devbar.rules": "Icon rules",
+  "space.roomcard_section": "Room card shows:",
+  "space.label_temp": "Temperature",
+  "space.label_hum": "Humidity",
+  "space.label_lqi": "Average Zigbee signal",
+  "space.label_light": "Lights on/off",
+  "roomcard.light_on": "On",
+  "roomcard.light_off": "Off",
+  "roomcard.light_partial": "{on} of {total}"
 }

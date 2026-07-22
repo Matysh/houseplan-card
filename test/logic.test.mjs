@@ -537,3 +537,10 @@ test('diffNewDevices: first run seeds the baseline silently; later additions are
   const removed = diffNewDevices(['a'], ['a', 'b']);
   assert.deepEqual(removed.fresh, []);
 });
+
+test('spaceDisplayOf: room-card metric flags default to off', () => {
+  const d0 = spaceDisplayOf({ plan_url: 'x', settings: {} });
+  assert.deepEqual([d0.labelTemp, d0.labelHum, d0.labelLqi, d0.labelLight], [false, false, false, false]);
+  const d1 = spaceDisplayOf({ plan_url: 'x', settings: { label_temp: true, label_light: true } });
+  assert.deepEqual([d1.labelTemp, d1.labelHum, d1.labelLqi, d1.labelLight], [true, false, false, true]);
+});
