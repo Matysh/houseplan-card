@@ -732,3 +732,20 @@ export function parseRoomRef(
   }
   return { space, area: rest, roomId: null };
 }
+
+// ---------------- new-device detection ----------------
+
+/**
+ * Which auto-appearing device ids are NEW against the known baseline.
+ * No baseline yet (first run / upgrade) → nothing is new: every current id
+ * becomes the baseline silently, so an update never floods the plan with dots.
+ */
+export function diffNewDevices(
+  currentIds: string[],
+  known: string[] | null | undefined,
+): { fresh: string[]; known: string[] } {
+  if (!Array.isArray(known)) return { fresh: [], known: [...currentIds] };
+  const knownSet = new Set(known);
+  const fresh = currentIds.filter((id) => !knownSet.has(id));
+  return { fresh, known: fresh.length ? [...known, ...fresh] : known };
+}

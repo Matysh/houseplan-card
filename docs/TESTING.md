@@ -140,6 +140,9 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] New-device flag (v1.29.0): a device added to HA after install gets a big red
+      dot top-right of its icon (all clients); opening its editor clears it
+      everywhere; upgrade/first-run seeds the baseline silently — no dot flood [auto]
 - [ ] No devices at all in HA (fresh instance) → plan renders, "0 dev.", no console errors [auto]
 
 ## Device dialog (markers) ★
