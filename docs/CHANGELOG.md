@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.30.4 — 2026-07-22
+- **Escape now closes every dialog** (general settings, icon rules, device
+  editor, space dialog, opening editor, info cards), topmost first when
+  stacked. Closing the space dialog with Esc abandons a floor-import queue,
+  same as its Cancel button. Esc while drawing an outline still undoes the
+  last point (dialogs take priority).
+
 ## v1.30.3 — 2026-07-22
 - The **General settings** (fill palette) gear in the header is now visible in
   every mode for users who can edit, not just in the Plan editor.

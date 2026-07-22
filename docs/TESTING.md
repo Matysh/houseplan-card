@@ -140,6 +140,10 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Esc closes dialogs (v1.30.4): Escape closes the topmost dialog (opening
+      info, device info, icon rules, general settings, device editor, opening
+      editor, space dialog incl. abandoning an import queue); stacked dialogs
+      close one per press; Esc while drawing still undoes the last point [auto]
 - [ ] General settings gear (v1.30.3): the header cog is visible in every mode
       (admins), opens the palette dialog from View too [auto]
 - [ ] Editor tabs (v1.30.2): only two tabs — "Plan editor" / "Device editor"

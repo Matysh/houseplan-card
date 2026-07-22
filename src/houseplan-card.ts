@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.30.3';
+const CARD_VERSION = '1.30.4';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -253,8 +253,20 @@ class HouseplanCard extends LitElement {
 
   private _onKey(e: KeyboardEvent): void {
     if (e.key === 'Escape') {
+      // close the topmost open dialog; info popups first, then editors
+      if (this._openingInfo) { this._openingInfo = null; return; }
       if (this._infoCard) { this._infoCard = null; return; }
+      if (this._rulesDialog) { this._rulesDialog = null; return; }
+      if (this._settingsDialog) { this._settingsDialog = null; return; }
       if (this._markerDialog) { this._markerDialog = null; return; }
+      if (this._openingDialog) { this._openingDialog = null; return; }
+      if (this._spaceDialog && !this._roomDialog) {
+        // same semantics as the dialog's Cancel: an import queue is abandoned
+        this._spaceDialog = null;
+        this._importQueue = [];
+        this._importTotal = 0;
+        return;
+      }
     }
     if (!this._markup) return;
     const undo = e.key === 'Escape' || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z');
