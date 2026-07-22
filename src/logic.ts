@@ -531,6 +531,8 @@ export interface FillColorEntry {
 export interface FillColors {
   light_on: FillColorEntry;
   light_off: FillColorEntry;
+  /** Rooms with no light sources at all; alpha 0 (default) = no fill, as before. */
+  light_none: FillColorEntry;
   temp_cold: FillColorEntry;
   temp_ok: FillColorEntry;
   temp_hot: FillColorEntry;
@@ -541,6 +543,7 @@ export interface FillColors {
 export const DEFAULT_FILL_COLORS: FillColors = {
   light_on: { c: '#ffd45c', a: 0.18 },
   light_off: { c: '#9aa0a6', a: 0.14 },
+  light_none: { c: '#6b7480', a: 0 },
   temp_cold: { c: '#4fc3f7', a: 0.18 },
   temp_ok: { c: '#66d17a', a: 0.18 },
   temp_hot: { c: '#ffd45c', a: 0.18 },
@@ -595,7 +598,12 @@ export function roomFillStyle(
              a: colors.lqi_low.a + (colors.lqi_high.a - colors.lqi_low.a) * Math.min(1, Math.max(0, t)) };
   }
   if (mode === 'light') {
-    if (lights === 'none') return null;
+    if (lights === 'none') {
+      // configurable "no light sources" color; alpha 0 keeps the historical
+      // no-fill behavior (and the unfilled hover), so nothing changes until
+      // the user assigns an opacity
+      return colors.light_none.a > 0 ? colors.light_none : null;
+    }
     return lights === 'on' ? colors.light_on : colors.light_off;
   }
   if (mode === 'temp') {

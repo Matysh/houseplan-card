@@ -238,5 +238,6 @@
   "gs.lqi_high": "Strong signal",
   "gs.reset": "Reset to defaults",
   "gs.saved": "General settings saved",
-  "space.show_lqi": "Show zigbee signal (LQI) next to devices"
+  "space.show_lqi": "Show zigbee signal (LQI) next to devices",
+  "gs.light_none": "No light sources"
 }

@@ -476,3 +476,10 @@ test('spaceDisplayOf: show_lqi tri-state (null = follow the card option)', () =>
   assert.equal(spaceDisplayOf({ settings: { show_lqi: false } }).showLqi, false);
   assert.equal(spaceDisplayOf({ settings: { show_lqi: true } }).showLqi, true);
 });
+
+test('roomFillStyle light_none: alpha 0 keeps no-fill; a custom color fills lightless rooms', () => {
+  const def = fillColorsOf({});
+  assert.equal(roomFillStyle('light', null, 'none', null, 20, 25, def), null); // default: unchanged
+  const c = fillColorsOf({ fill_colors: { light_none: { c: '#123456', a: 0.2 } } });
+  assert.deepEqual(roomFillStyle('light', null, 'none', null, 20, 25, c), { c: '#123456', a: 0.2 });
+});

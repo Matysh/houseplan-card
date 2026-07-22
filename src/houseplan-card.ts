@@ -31,7 +31,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.24.1';
+const CARD_VERSION = '1.24.2';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -2157,6 +2157,7 @@ class HouseplanCard extends LitElement {
           <label class="dispsection">${this._t('gs.light_group')}</label>
           ${this._renderColorRow('light_on', 'gs.light_on')}
           ${this._renderColorRow('light_off', 'gs.light_off')}
+          ${this._renderColorRow('light_none', 'gs.light_none')}
           <label class="dispsection">${this._t('gs.temp_group')}</label>
           ${this._renderColorRow('temp_cold', 'gs.temp_cold')}
           ${this._renderColorRow('temp_ok', 'gs.temp_ok')}

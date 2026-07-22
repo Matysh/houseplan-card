@@ -13,7 +13,7 @@
 
 | Item | State |
 |---|---|
-| Version | **v1.24.1** everywhere (manifest, const.py, package.json, CARD_VERSION) |
+| Version | **v1.24.2** everywhere (manifest, const.py, package.json, CARD_VERSION) |
 | GitHub | https://github.com/Matysh/houseplan-card — branch `main`, releases v1.9.3…**v1.23.1** (latest published 2026-07-17, bundle auto-attached by release.yml) |
 | CI | `.github/workflows/validate.yml` (hacs + hassfest + frontend + backend) — **fully green** since v1.11.1; `release.yml` auto-attaches the card bundle (needs `permissions: contents: write`, fixed) |
 | HACS | Works as custom repository (id 1290210112 on the home instance). **Inclusion PR: https://github.com/hacs/default/pull/9004** (queue ≈2 months as of 2026-07). Lesson: #8995 was auto-closed by hacs-bot — the PR body MUST be their exact template with every checkbox ticked and all 3 links (release, HACS action run, hassfest run); a custom body gets closed without discussion |

@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.24.2 — 2026-07-16 (lights fill: a color for rooms with no light sources)
+- The "Fill: lights" group in General settings gained a third color — **"No light
+  sources"**. Its default opacity is 0, so rooms without any lights stay unfilled
+  exactly as before; give it an opacity and such rooms get their own tint,
+  distinguishable from "all lights off".
+
 ## v1.24.1 — 2026-07-16 (space tab: gear instead of pencil)
 - The small icon next to a space name in the tabs is now a gear (was a pencil) —
   the dialog it opens is space *settings* (plan, display, scale), not just renaming.
