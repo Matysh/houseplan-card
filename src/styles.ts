@@ -495,6 +495,31 @@ export const cardStyles = css`
       font-weight: 700;
       white-space: nowrap;
     }
+    /* RGB lights: the bulb takes the light's actual color */
+    .dev.rgb ha-icon { color: var(--light-color); }
+    .dev.rgb.on {
+      box-shadow: 0 0 10px var(--light-color);
+      border-color: var(--light-color);
+      background: var(--hp-bg);
+      color: var(--light-color);
+    }
+    /* alarms pulse red over everything */
+    .dev.alarm::after {
+      content: '';
+      position: absolute;
+      inset: calc(var(--icon-size, 2.5cqw) * -0.35);
+      border: 3px solid #f25a4a;
+      border-radius: 50%;
+      animation: hp-alarm 1s ease-out infinite;
+      pointer-events: none;
+    }
+    @keyframes hp-alarm {
+      0% { transform: scale(0.7); opacity: 1; }
+      100% { transform: scale(1.25); opacity: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .dev.alarm::after { animation: none; opacity: 0.9; }
+    }
     .devlayer {
       position: absolute;
       inset: 0;

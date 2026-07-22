@@ -674,3 +674,37 @@ export function stateIcon(
   if (domain === 'light' && base === 'mdi:lightbulb') return state === 'on' ? 'mdi:lightbulb-on' : base;
   return base;
 }
+
+// ---------------- light color & alarm states ----------------
+
+/**
+ * The current color of a light entity as a CSS color, or null when it is off,
+ * unavailable or reports no usable color. rgb_color is the source of truth
+ * (HA normalizes hs/xy into it); brightness is deliberately ignored — a dim
+ * red bulb should still read as red on the plan.
+ */
+export function lightColorOf(state: any): string | null {
+  if (!state || state.state !== 'on') return null;
+  const rgb = state.attributes?.rgb_color;
+  if (Array.isArray(rgb) && rgb.length >= 3 && rgb.every((v: any) => Number.isFinite(v))) {
+    return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+  }
+  return null;
+}
+
+/** Device classes whose active state is an emergency, not a status. */
+const ALARM_CLASSES = new Set(['smoke', 'gas', 'carbon_monoxide', 'moisture', 'safety', 'tamper', 'problem']);
+
+/**
+ * An alarm is firing: leak/smoke/gas/CO/safety binary sensors in `on`, or a
+ * siren that is on. Unavailable/unknown never alarm (an outage is not a fire).
+ */
+export function isAlarmState(
+  domain: string | null | undefined,
+  deviceClass: string | null | undefined,
+  state: string | null | undefined,
+): boolean {
+  if (state !== 'on') return false;
+  if (domain === 'siren') return true;
+  return domain === 'binary_sensor' && !!deviceClass && ALARM_CLASSES.has(deviceClass);
+}

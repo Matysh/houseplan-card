@@ -17,7 +17,7 @@ import {
   pointOnBoundary, mergeRooms, splitRoom, polygonArea, closestPointOnBoundary,
   snapToWall, openingAmount,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
-  stateIcon,
+  stateIcon, lightColorOf, isAlarmState,
   spaceDisplayOf, roomFillStyle, fillColorsOf, DEFAULT_FILL_COLORS, type FillColors,
   isActiveState, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.26.0';
+const CARD_VERSION = '1.27.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -2537,10 +2537,15 @@ class HouseplanCard extends LitElement {
           : null)
       : null;
     // live state variants of the auto icon (doors, locks, bulbs), like core HA
+    const domain = d.primary ? d.primary.split('.')[0] : null;
     const icon = this._config?.live_states
-      ? stateIcon(d.icon, d.primary ? d.primary.split('.')[0] : null,
-          primarySt?.attributes?.device_class, primarySt?.state, !!m?.icon)
+      ? stateIcon(d.icon, domain, primarySt?.attributes?.device_class, primarySt?.state, !!m?.icon)
       : d.icon;
+    // RGB lights color the icon (and the ripple, unless a custom ripple color is set)
+    const lightC = this._config?.live_states && domain === 'light' ? lightColorOf(primarySt) : null;
+    // emergencies (leak/smoke/gas/CO/siren) pulse red regardless of display mode
+    const alarm = this._config?.live_states
+      && isAlarmState(domain, primarySt?.attributes?.device_class, primarySt?.state);
     const active = ripple && !!d.primary && isActiveState(this.hass.states[d.primary]?.state);
     const scale = Number(m?.size) > 0 ? Number(m!.size) : 1;
     const angle = Number(m?.angle) || 0;
@@ -2550,9 +2555,11 @@ class HouseplanCard extends LitElement {
     if (ripple) {
       st.push(`--ripple-scale:${rScale}`);
       if (m?.ripple_color) st.push(`--ripple-color:${m.ripple_color}`);
+      else if (lightC) st.push(`--ripple-color:${lightC}`);
     }
+    if (lightC) st.push(`--light-color:${lightC}`);
     return html`<div
-      class="dev ${cls} ${this._selId === d.id ? 'sel' : ''} ${d.virtual ? 'virtual' : ''} ${disp === 'ripple' ? 'noicon' : ''} ${valText != null ? 'valonly' : ''}"
+      class="dev ${cls} ${this._selId === d.id ? 'sel' : ''} ${d.virtual ? 'virtual' : ''} ${disp === 'ripple' ? 'noicon' : ''} ${valText != null ? 'valonly' : ''} ${lightC ? 'rgb' : ''} ${alarm ? 'alarm' : ''}"
       style="${st.join(';')}"
       @click=${(e: MouseEvent) => this._clickDevice(e, d)}
       @mousemove=${(e: MouseEvent) =>

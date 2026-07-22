@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.27.0 — 2026-07-21 (RGB light colors + alarm pulse; issue #3)
+- **RGB lights show their actual color**: an "on" light with a color tints its
+  bulb icon, glow and — unless a custom ripple color is set — its presence ripple.
+  Brightness is deliberately ignored (a dim red bulb still reads red); off,
+  white-only and unavailable lights look as before. (Pure `lightColorOf`.)
+- **Emergencies pulse red**: leak / smoke / gas / CO / safety / tamper / problem
+  binary sensors and sirens in `on` get a red pulsing ring over any display mode.
+  `unavailable`/`unknown` never alarm — an outage is not a fire. Honours
+  `prefers-reduced-motion`. (Pure `isAlarmState`.)
+
 ## v1.26.0 — 2026-07-21 (state-reflecting icons + value display; issue #3)
 - **Auto icons now reflect live state**, like core HA: door/window/garage sensors
   swap open↔closed variants, locks show locked/unlocked, a bulb lights up as

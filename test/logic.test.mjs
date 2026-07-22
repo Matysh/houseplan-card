@@ -4,7 +4,7 @@ import {
   lqiColor, snapToGrid, segKey, samePoint, pointInPolygon, markerIdForBinding, averageLqi,
   fitView, declump, safeUrl, resolveTapAction, floorsOf, subst, spaceDisplayOf, roomFillColor,
   segmentCm, formatLength, roomEdges, roomPoly, pointOnBoundary, pointStrictlyInside, roomsOverlap,
-  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle, stateIcon,
+  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState,
 } from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
@@ -495,4 +495,21 @@ test('stateIcon: doors/locks/bulbs reflect state; custom icons and outages never
   assert.equal(stateIcon('mdi:door', 'binary_sensor', 'door', 'unavailable', false), 'mdi:door');
   assert.equal(stateIcon('mdi:custom', 'lock', undefined, 'unlocked', true), 'mdi:custom'); // user icon wins
   assert.equal(stateIcon('mdi:cctv', 'camera', undefined, 'recording', false), 'mdi:cctv'); // unknown pair
+});
+
+test('lightColorOf: rgb of an on light; off/unavailable/no-color → null', () => {
+  assert.equal(lightColorOf({ state: 'on', attributes: { rgb_color: [255, 20, 40] } }), 'rgb(255, 20, 40)');
+  assert.equal(lightColorOf({ state: 'off', attributes: { rgb_color: [255, 20, 40] } }), null);
+  assert.equal(lightColorOf({ state: 'on', attributes: {} }), null);
+  assert.equal(lightColorOf({ state: 'unavailable', attributes: { rgb_color: [1, 2, 3] } }), null);
+  assert.equal(lightColorOf(undefined), null);
+});
+
+test('isAlarmState: leak/smoke/gas/siren fire; doors and outages do not', () => {
+  assert.ok(isAlarmState('binary_sensor', 'moisture', 'on'));
+  assert.ok(isAlarmState('binary_sensor', 'smoke', 'on'));
+  assert.ok(isAlarmState('siren', undefined, 'on'));
+  assert.ok(!isAlarmState('binary_sensor', 'door', 'on'));
+  assert.ok(!isAlarmState('binary_sensor', 'smoke', 'off'));
+  assert.ok(!isAlarmState('binary_sensor', 'smoke', 'unavailable'));
 });
