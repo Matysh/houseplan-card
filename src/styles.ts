@@ -242,22 +242,26 @@ export const cardStyles = css`
       transition: opacity 0.15s;
       pointer-events: none;
     }
-    g.opening:hover .op-outline {
+    .stage.markup g.opening:hover .op-outline {
       opacity: 0.9;
     }
+    /* openings are pure status graphics outside Plan mode: no cursor, no hover,
+       no hit target — View must not interact with them at all */
     .op-hit {
       fill: transparent;
-      cursor: grab;
-      pointer-events: auto;
-      touch-action: none; /* drags, not scrolls, on touch */
-    }
-    .op-hit:active {
-      cursor: grabbing;
+      pointer-events: none;
+      cursor: default;
     }
     .stage.markup .op-hit {
-      pointer-events: none; /* markup clicks go to the stage tools */
+      pointer-events: auto;
+      cursor: grab;
+      touch-action: none; /* drags, not scrolls, on touch */
+    }
+    .stage.markup .op-hit:active {
+      cursor: grabbing;
     }
     .oplock {
+      pointer-events: none; /* a status badge, not a control */
       position: absolute;
       transform: translate(-50%, -50%);
       width: calc(var(--icon-size, 2.5cqw) * 0.62);

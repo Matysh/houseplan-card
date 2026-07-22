@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.28.0';
+const CARD_VERSION = '1.28.1';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -1261,15 +1261,9 @@ class HouseplanCard extends LitElement {
   private _opClick(ev: MouseEvent, o: OpeningCfg & { rx: number; ry: number; rlen: number }): void {
     ev.stopPropagation();
     if (this._opDrag?.moved) return; // that click was the tail of a drag
-    if (this._mode === 'view') {
-      // view: an opening is a status object — show the door/lock info card
-      this._openingInfo = o;
-      return;
-    }
-    if (this._mode === 'plan' && this._tool !== 'opening') {
-      // plan: any click on an opening edits it (the Opening tool also does)
-      this._editOpening(o);
-    }
+    // openings are inert outside Plan mode (owner's decision: View must not
+    // interact with them at all); in Plan any click on an opening edits it
+    if (this._mode === 'plan') this._editOpening(o);
   }
 
   private _saveOpening(): void {
@@ -2778,7 +2772,7 @@ class HouseplanCard extends LitElement {
       const top = ((py - view.y) / view.h) * 100;
       return html`<div class="oplock ${locked ? 'locked' : known ? 'unlocked' : 'unknown'}"
         style="left:${left}%;top:${top}%"
-        @click=${(e: MouseEvent) => { e.stopPropagation(); if (this._mode === 'view') this._openingInfo = o; }}>
+>
         <ha-icon icon="${locked ? 'mdi:lock' : known ? 'mdi:lock-open-variant' : 'mdi:lock-question'}"></ha-icon>
       </div>`;
     })}`;

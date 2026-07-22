@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.28.1 — 2026-07-21 (openings are fully inert in View)
+- In View mode doors and windows are now **pure status graphics**: no grab
+  cursor, no hover outline, no hit target, no click — nothing interacts (the
+  v1.25.0 pass left the hit target and the info-card click behind; the lock
+  badge also reacted). The lock badge is a pure indicator now.
+- In Plan an opening is fully interactive: grab cursor + hover outline are back
+  there, dragging along walls works, and a click with ANY tool opens its
+  properties dialog.
+
 ## v1.28.0 — 2026-07-21 (sub-area rooms: manual placement without an HA area; issue #3)
 - **Devices can now be placed into rooms that have no Home Assistant area.**
   The marker dialog's room list includes area-less rooms (marked "no area,

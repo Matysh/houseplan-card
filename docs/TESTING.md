@@ -40,8 +40,11 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] Devices: icon drag works, click opens the marker editor directly; +/👁/↺/⬡
       buttons; accent stage frame [auto]
 - [ ] Mode tabs hidden for non-admin users; segmented control highlights the active mode
-- [ ] Opening: single click in View shows the info card; in Plan a click edits it;
-      double-click no longer does anything special [auto]
+- [ ] Openings are FULLY inert in View (v1.28.1): no cursor change, no hover outline,
+      no hit target, no click — pure status graphics; the lock badge is a pure
+      indicator too [auto]
+- [ ] In Plan an opening is interactive: grab cursor, hover outline, drag along
+      walls, click (any tool) opens its properties [auto]
 
 ## Onboarding ★
 
