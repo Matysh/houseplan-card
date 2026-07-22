@@ -4,7 +4,7 @@ import {
   lqiColor, snapToGrid, segKey, samePoint, pointInPolygon, markerIdForBinding, averageLqi,
   fitView, declump, safeUrl, resolveTapAction, floorsOf, subst, spaceDisplayOf, roomFillColor,
   segmentCm, formatLength, roomEdges, roomPoly, pointOnBoundary, pointStrictlyInside, roomsOverlap,
-  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle,
+  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle, stateIcon,
 } from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
@@ -482,4 +482,17 @@ test('roomFillStyle light_none: alpha 0 keeps no-fill; a custom color fills ligh
   assert.equal(roomFillStyle('light', null, 'none', null, 20, 25, def), null); // default: unchanged
   const c = fillColorsOf({ fill_colors: { light_none: { c: '#123456', a: 0.2 } } });
   assert.deepEqual(roomFillStyle('light', null, 'none', null, 20, 25, c), { c: '#123456', a: 0.2 });
+});
+
+test('stateIcon: doors/locks/bulbs reflect state; custom icons and outages never morph', () => {
+  assert.equal(stateIcon('mdi:door', 'binary_sensor', 'door', 'on', false), 'mdi:door-open');
+  assert.equal(stateIcon('mdi:door', 'binary_sensor', 'door', 'off', false), 'mdi:door-closed');
+  assert.equal(stateIcon('mdi:window-closed', 'binary_sensor', 'window', 'on', false), 'mdi:window-open');
+  assert.equal(stateIcon('mdi:garage-variant', 'binary_sensor', 'garage_door', 'on', false), 'mdi:garage-open-variant');
+  assert.equal(stateIcon('mdi:lock', 'lock', undefined, 'unlocked', false), 'mdi:lock-open-variant');
+  assert.equal(stateIcon('mdi:lightbulb', 'light', undefined, 'on', false), 'mdi:lightbulb-on');
+  assert.equal(stateIcon('mdi:lightbulb', 'light', undefined, 'off', false), 'mdi:lightbulb');
+  assert.equal(stateIcon('mdi:door', 'binary_sensor', 'door', 'unavailable', false), 'mdi:door');
+  assert.equal(stateIcon('mdi:custom', 'lock', undefined, 'unlocked', true), 'mdi:custom'); // user icon wins
+  assert.equal(stateIcon('mdi:cctv', 'camera', undefined, 'recording', false), 'mdi:cctv'); // unknown pair
 });

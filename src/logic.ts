@@ -649,3 +649,28 @@ export function roomFillColor(
   }
   return null;
 }
+
+// ---------------- state-reflecting icons ----------------
+
+/**
+ * Swap the auto icon for a state variant (open door, unlocked lock…), like core
+ * HA does. Conservative: only well-known pairs, only when the user has NOT set
+ * a custom icon, and unknown/unavailable states keep the base icon.
+ */
+export function stateIcon(
+  base: string,
+  domain: string | null | undefined,
+  deviceClass: string | null | undefined,
+  state: string | null | undefined,
+  hasCustomIcon: boolean,
+): string {
+  if (hasCustomIcon || !state || state === 'unavailable' || state === 'unknown') return base;
+  if (domain === 'binary_sensor') {
+    if (deviceClass === 'door') return state === 'on' ? 'mdi:door-open' : 'mdi:door-closed';
+    if (deviceClass === 'window') return state === 'on' ? 'mdi:window-open' : 'mdi:window-closed';
+    if (deviceClass === 'garage_door') return state === 'on' ? 'mdi:garage-open-variant' : 'mdi:garage-variant';
+  }
+  if (domain === 'lock') return state === 'locked' ? 'mdi:lock' : 'mdi:lock-open-variant';
+  if (domain === 'light' && base === 'mdi:lightbulb') return state === 'on' ? 'mdi:lightbulb-on' : base;
+  return base;
+}

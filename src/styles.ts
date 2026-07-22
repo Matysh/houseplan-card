@@ -485,6 +485,16 @@ export const cardStyles = css`
     .namein {
       width: 130px;
     }
+    .dev.valonly {
+      width: auto;
+      min-width: var(--dev-size, var(--icon-size, 2.5cqw));
+      padding: 0 calc(var(--icon-size, 2.5cqw) * 0.16);
+    }
+    .dev.valonly .valtext {
+      font-size: calc(var(--icon-size, 2.5cqw) * 0.45);
+      font-weight: 700;
+      white-space: nowrap;
+    }
     .devlayer {
       position: absolute;
       inset: 0;

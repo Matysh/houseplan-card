@@ -242,5 +242,6 @@
   "gs.light_none": "Нет источников света",
   "mode.view": "Просмотр",
   "mode.plan": "План",
-  "mode.devices": "Устройства"
+  "mode.devices": "Устройства",
+  "display.value": "Значение вместо иконки"
 }
