@@ -4,7 +4,7 @@ import {
   lqiColor, snapToGrid, segKey, samePoint, pointInPolygon, markerIdForBinding, averageLqi,
   fitView, declump, safeUrl, resolveTapAction, floorsOf, subst, spaceDisplayOf, roomFillColor,
   segmentCm, formatLength, roomEdges, roomPoly, pointOnBoundary, pointStrictlyInside, roomsOverlap,
-  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount,
+  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle,
 } from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
@@ -443,4 +443,36 @@ test('snapToWall: the angle is normalized to [-90, 90) so opposite edge directio
   assert.ok(sa.angle >= -90 && sa.angle < 90);
   const v = snapToWall([10.3, 5], a, 1); // vertical wall
   assert.ok(v.angle >= -90 && v.angle < 90);
+});
+
+test('fillColorsOf: defaults, merge, malformed entries dropped', () => {
+  const d = fillColorsOf({});
+  assert.equal(d.light_on.c, '#ffd45c');
+  const o = fillColorsOf({ fill_colors: { light_on: { c: '#ff0000', a: 0.5 }, temp_hot: { c: 'javascript:x', a: 9 } } });
+  assert.equal(o.light_on.c, '#ff0000');
+  assert.equal(o.light_on.a, 0.5);
+  assert.equal(o.temp_hot.c, '#ffd45c'); // malformed hex → default
+  assert.equal(o.temp_hot.a, 1);         // clamped
+});
+
+test('lerpColor: endpoints and midpoint', () => {
+  assert.equal(lerpColor('#000000', '#ffffff', 0), '#000000');
+  assert.equal(lerpColor('#000000', '#ffffff', 1), '#ffffff');
+  assert.equal(lerpColor('#000000', '#ffffff', 0.5), '#808080');
+  assert.equal(lerpColor('#000000', '#ffffff', -5), '#000000'); // clamped
+});
+
+test('roomFillStyle: palette-driven fills, lqi gradient between custom endpoints', () => {
+  const colors = fillColorsOf({ fill_colors: { lqi_low: { c: '#000000', a: 0.1 }, lqi_high: { c: '#ffffff', a: 0.3 } } });
+  assert.equal(roomFillStyle('lqi', 110, 'none', null, 20, 25, colors).c, '#808080'); // mid of 40..180
+  assert.equal(roomFillStyle('lqi', null, 'none', null, 20, 25, colors), null);
+  assert.deepEqual(roomFillStyle('light', null, 'on', null, 20, 25, colors), colors.light_on);
+  assert.deepEqual(roomFillStyle('temp', 18, 'none', 18, 20, 25, colors), colors.temp_cold);
+  assert.equal(roomFillStyle('none', 100, 'on', 22, 20, 25, colors), null);
+});
+
+test('spaceDisplayOf: show_lqi tri-state (null = follow the card option)', () => {
+  assert.equal(spaceDisplayOf({}).showLqi, null);
+  assert.equal(spaceDisplayOf({ settings: { show_lqi: false } }).showLqi, false);
+  assert.equal(spaceDisplayOf({ settings: { show_lqi: true } }).showLqi, true);
 });

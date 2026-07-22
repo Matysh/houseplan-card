@@ -874,6 +874,11 @@ export const cardStyles = css`
     .rrow .ract:hover { color: var(--hp-txt); }
     .rrow .ract.del:hover { color: #ff7a5c; }
 
+    .gsrow .gsl {
+      min-width: 150px;
+      font-size: 12.5px;
+      color: var(--hp-muted);
+    }
     .dialogwrap {
       background: rgba(0, 0, 0, 0.45);
       display: flex;

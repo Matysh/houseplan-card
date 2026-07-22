@@ -8,7 +8,7 @@
  */
 import { html, svg, nothing, type TemplateResult } from 'lit';
 import { buildDevices, areaLqi, areaLights, areaTemp } from './devices';
-import { spaceDisplayOf, roomFillColor } from './logic';
+import { spaceDisplayOf, roomFillStyle, fillColorsOf } from './logic';
 import { DEFAULT_ICON_RULES, compileIconRules, EXCLUDED_DOMAINS } from './rules';
 import { t, type Lang } from './i18n';
 import type { ServerConfig } from './types';
@@ -71,18 +71,19 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
         const parts = [`--room-stroke:${disp.color}`, `--room-stroke-op:${disp.showBorders ? disp.opacity : 0}`];
         // fill rendered exactly as configured on the full card (snapshot of current states)
         const fillC = r.area
-          ? roomFillColor(
+          ? roomFillStyle(
               disp.fill,
               disp.fill === 'lqi' ? areaLqi(o.hass, devs, r.area) : null,
               disp.fill === 'light' ? areaLights(o.hass, devs, r.area) : 'none',
               disp.fill === 'temp' ? areaTemp(o.hass, devs, r.area) : null,
               disp.tempMin,
               disp.tempMax,
+              fillColorsOf(o.cfg?.settings),
             )
           : null;
         if (fillC) {
           cls += ' filled';
-          parts.push(`--room-fill:${fillC}`, `--room-fill-op:${(0.3 * disp.opacity).toFixed(3)}`);
+          parts.push(`--room-fill:${fillC.c}`, `--room-fill-op:${fillC.a.toFixed(3)}`);
         } else {
           parts.push('--room-fill:transparent', '--room-fill-op:0');
         }
