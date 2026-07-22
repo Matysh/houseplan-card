@@ -463,6 +463,13 @@ export const cardStyles = css`
     }
     .stage.mode-decor .room, .stage.mode-decor .devlayer { pointer-events: none; }
     .stage.mode-decor .oplock { pointer-events: none; }
+    /* decor mode: everything but the decor itself fades back */
+    .stage.mode-decor .room,
+    .stage.mode-decor .devlayer,
+    .stage.mode-decor .opening,
+    .stage.mode-decor .rlabel {
+      opacity: 0.35;
+    }
     .decorbar .dcolor {
       width: 30px; height: 26px; padding: 0; border: none; background: none; cursor: pointer;
     }

@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.33.1 — 2026-07-22
+- The dot grid is now shown in **every editor** (Plan, Devices, Background),
+  not just Plan — an instant visual cue that you are editing.
+- In the Background editor, rooms, devices, openings and labels fade to 35%
+  opacity so the decor you are drawing stands out; decor itself stays fully
+  opaque. Other modes are unaffected.
+
 ## v1.33.0 — 2026-07-22 (background editor)
 - New third mode: **Background editor**. Draw purely visual decor on the plan —
   lines, rectangles, ovals and text labels that never interact with rooms,

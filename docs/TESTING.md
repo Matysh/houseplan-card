@@ -140,6 +140,10 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Grid in all editors + decor fade (v1.33.1): the dot grid shows in the
+      Device and Background editors too (instant "I'm editing" cue), not in
+      View; in the Background editor rooms/devices/openings/labels fade to 35%
+      while decor shapes stay fully opaque; no fade in the other editors [auto]
 - [ ] Background editor (v1.33.0): third tab with its own toolbar (select /
       line / rect / oval / text / erase + color, width, fill, X); shapes drag-
       drawn with grid snap and live preview; degenerate shapes dropped; text

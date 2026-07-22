@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.33.0';
+const CARD_VERSION = '1.33.1';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -101,6 +101,11 @@ class HouseplanCard extends LitElement {
   }
 
   /** Legacy alias: markup machinery is active exactly in plan mode. */
+  /** Any edit mode is active (plan / devices / decor). */
+  private get _editing(): boolean {
+    return this._mode === 'plan' || this._mode === 'devices' || this._mode === 'decor';
+  }
+
   private get _markup(): boolean {
     return this._mode === 'plan';
   }
@@ -2854,7 +2859,10 @@ class HouseplanCard extends LitElement {
           @pointercancel=${(e: PointerEvent) => this._stagePointerUp(e)}>
           <div class="zoomwrap">
           <svg viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="xMidYMid meet">
-            ${this._markup ? this._renderMarkupDefs(vb) : nothing}
+            ${this._editing ? this._renderMarkupDefs(vb) : nothing}
+            ${this._editing && !this._markup
+              ? svg`<rect x="${vb[0]}" y="${vb[1]}" width="${vb[2]}" height="${vb[3]}" fill="url(#hp-grid)" pointer-events="none"></rect>`
+              : nothing}
             ${space.bg
               ? svg`<image href="${space.bg.href}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}" preserveAspectRatio="none" />`
               : nothing}
