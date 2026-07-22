@@ -140,6 +140,9 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Space gear (v1.30.1): the cog next to the space name is visible in every
+      mode (admins only), vertically centered with the tab text; clicking it
+      opens space settings without switching the tab; "+" tab stays Plan-only [auto]
 - [ ] Lock action (v1.30.0): opening info card (View) shows Unlock (red) when
       locked / Lock when unlocked; button calls the lock service; disabled while
       locking/unlocking; hidden when unavailable; plan-icon tap still never

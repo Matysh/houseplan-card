@@ -80,6 +80,8 @@ export const cardStyles = css`
       border: 0;
       background: transparent;
       color: var(--hp-muted);
+      display: inline-flex;
+      align-items: center;
       padding: 6px 13px;
       border-radius: 8px;
       font-size: 13px;
@@ -670,9 +672,10 @@ export const cardStyles = css`
     }
     .tab .tabedit {
       --mdc-icon-size: 13px;
+      display: inline-flex;
+      align-items: center;
       margin-left: 6px;
       opacity: 0.4;
-      vertical-align: middle;
     }
     .tab:hover .tabedit {
       opacity: 0.9;

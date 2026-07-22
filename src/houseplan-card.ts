@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.30.0';
+const CARD_VERSION = '1.30.1';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -2408,7 +2408,7 @@ class HouseplanCard extends LitElement {
                   this._restoreZoom();
                 }}
               >
-                ${s.title}${this._norm && this._mode === 'plan'
+                ${s.title}${this._norm && this._canEdit
                   ? html`<ha-icon class="tabedit" icon="mdi:cog-outline"
                       title=${this._t('title.configure_space')}
                       @click=${(e: Event) => {
