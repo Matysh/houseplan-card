@@ -243,5 +243,6 @@
   "mode.view": "Просмотр",
   "mode.plan": "План",
   "mode.devices": "Устройства",
-  "display.value": "Значение вместо иконки"
+  "display.value": "Значение вместо иконки",
+  "marker.subarea": "без зоны, вручную"
 }

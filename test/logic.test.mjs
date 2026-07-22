@@ -4,7 +4,7 @@ import {
   lqiColor, snapToGrid, segKey, samePoint, pointInPolygon, markerIdForBinding, averageLqi,
   fitView, declump, safeUrl, resolveTapAction, floorsOf, subst, spaceDisplayOf, roomFillColor,
   segmentCm, formatLength, roomEdges, roomPoly, pointOnBoundary, pointStrictlyInside, roomsOverlap,
-  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState,
+  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef,
 } from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
@@ -512,4 +512,14 @@ test('isAlarmState: leak/smoke/gas/siren fire; doors and outages do not', () => 
   assert.ok(!isAlarmState('binary_sensor', 'door', 'on'));
   assert.ok(!isAlarmState('binary_sensor', 'smoke', 'off'));
   assert.ok(!isAlarmState('binary_sensor', 'smoke', 'unavailable'));
+});
+
+test('parseRoomRef: area rooms, sub-area rooms by id, malformed refs', () => {
+  assert.deepEqual(parseRoomRef('f1#kitchen'), { space: 'f1', area: 'kitchen', roomId: null });
+  assert.deepEqual(parseRoomRef('f1#@r7'), { space: 'f1', area: null, roomId: 'r7' });
+  assert.equal(parseRoomRef(''), null);
+  assert.equal(parseRoomRef('f1#'), null);
+  assert.equal(parseRoomRef('f1#@'), null);
+  assert.equal(parseRoomRef('#kitchen'), null);
+  assert.equal(parseRoomRef(null), null);
 });

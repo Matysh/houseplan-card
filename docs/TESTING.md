@@ -139,6 +139,9 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] Open via info card → Edit; all fields persist (name, icon, model, link, description)
 - [ ] Rebind to another device/entity/helper: search filters; already-placed candidates excluded; old position cleaned up [auto backend]
 - [ ] Virtual device: requires name; room required; renders dashed
+- [ ] Sub-area rooms (v1.28.0): a room WITHOUT an HA area appears in the marker
+      room list ("no area, manual"); a device placed there lands at its centre,
+      the marker stores room_id, reopening the dialog restores the choice [auto]
 - [ ] Room override moves the icon to the room center
 - [ ] Tap-action override select (default/info/more-info/toggle) saves and applies
 - [ ] PDF/manual upload: ok path; >50 MB → readable error; .exe → bad-ext error [auto backend]; traversal names sanitized [auto backend]
