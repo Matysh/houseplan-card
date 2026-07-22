@@ -12,7 +12,10 @@ A segmented control in the card header with three tabs; the active one is visual
 highlighted, and edit modes add a colored frame around the stage so the mode is
 obvious at a glance:
 
-**[ 📐 Plan editor ] [ 🔧 Device editor ]** — View has NO tab (since v1.30.2).
+**[ 📐 Plan editor ] [ 🔧 Device editor ] [ ✏️ Background editor ]** — View has
+NO tab (since v1.30.2). The Background editor (v1.33.0) manages a purely visual
+decor layer (lines/rects/ovals/text in `space.decor`, drawn under the rooms,
+inert everywhere outside its editor).
 
 - **View** is the implicit default state: no editor tab is active. It is the only
   state after every load (edit modes are never restored across reloads).

@@ -96,6 +96,29 @@ SPACE_DISPLAY_SCHEMA = vol.Schema(
     extra=vol.ALLOW_EXTRA,
 )
 
+_DECOR_COMMON = {
+    vol.Required("id"): str,
+    vol.Optional("color"): vol.Match(r"^#[0-9a-fA-F]{6}$"),
+    vol.Optional("width"): vol.All(vol.Coerce(float), vol.Range(min=0.1, max=30)),
+}
+_NORM = vol.All(vol.Coerce(float), vol.Range(min=-1, max=2))
+DECOR_SCHEMA = vol.Any(
+    vol.Schema({**_DECOR_COMMON, vol.Required("kind"): "line",
+                vol.Required("x1"): _NORM, vol.Required("y1"): _NORM,
+                vol.Required("x2"): _NORM, vol.Required("y2"): _NORM},
+               extra=vol.ALLOW_EXTRA),
+    vol.Schema({**_DECOR_COMMON, vol.Required("kind"): vol.In(["rect", "ellipse"]),
+                vol.Required("x"): _NORM, vol.Required("y"): _NORM,
+                vol.Required("w"): _NORM, vol.Required("h"): _NORM,
+                vol.Optional("fill"): bool},
+               extra=vol.ALLOW_EXTRA),
+    vol.Schema({**_DECOR_COMMON, vol.Required("kind"): "text",
+                vol.Required("x"): _NORM, vol.Required("y"): _NORM,
+                vol.Required("text"): vol.All(str, vol.Length(min=1, max=200)),
+                vol.Optional("size"): vol.In(["s", "m", "l"])},
+               extra=vol.ALLOW_EXTRA),
+)
+
 SPACE_SCHEMA = vol.Schema(
     {
         vol.Required("id"): str,
@@ -105,6 +128,7 @@ SPACE_SCHEMA = vol.Schema(
         vol.Required("aspect"): vol.All(vol.Coerce(float), vol.Range(min=0.05, max=20)),
         vol.Required("view_box"): vol.All([vol.Coerce(float)], vol.Length(min=4, max=4)),
         vol.Required("rooms"): [ROOM_SCHEMA],
+        vol.Optional("decor"): [DECOR_SCHEMA],
         vol.Optional("openings"): [
             vol.Schema(
                 {

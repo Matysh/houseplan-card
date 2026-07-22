@@ -140,6 +140,13 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Background editor (v1.33.0): third tab with its own toolbar (select /
+      line / rect / oval / text / erase + color, width, fill, X); shapes drag-
+      drawn with grid snap and live preview; degenerate shapes dropped; text
+      via dialog (S/M/L, color; dblclick re-edits); Select moves (snap), Delete
+      removes, Erase deletes on click; Esc: draft → selection → select tool →
+      View; decor renders under rooms, visible everywhere, inert outside the
+      editor; stored in space.decor (rev/lock, backend schema) [auto]
 - [ ] Opening hover preview (v1.32.1): with the Opening tool, hovering near a
       wall shows a dashed 90 cm ghost snapped onto the wall (with a center
       dot); no ghost far from walls, over an existing opening (click = edit),

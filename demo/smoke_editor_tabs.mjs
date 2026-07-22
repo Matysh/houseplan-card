@@ -6,7 +6,7 @@ const res = await page.evaluate(async () => {
   const sr = () => c.shadowRoot || c.renderRoot;
   const tabs = () => [...sr().querySelectorAll('.modetab')];
   // 1) две вкладки, Просмотра нет, крестиков в неактивных нет
-  out.twoTabs = tabs().length === 2;
+  out.twoTabs = tabs().length === 3; // третья — Редактор подложки (v1.33.0)
   out.labels = tabs().map((t) => t.textContent.trim());
   out.noCrossIdle = sr().querySelectorAll('.modetab .closex').length === 0;
   out.startView = c._mode === 'view';

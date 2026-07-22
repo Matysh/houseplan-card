@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.33.0 — 2026-07-22 (background editor)
+- New third mode: **Background editor**. Draw purely visual decor on the plan —
+  lines, rectangles, ovals and text labels that never interact with rooms,
+  devices or fills. Shapes are drag-drawn with grid snap and a live preview;
+  text is placed via a small dialog (size S/M/L, color; double-click to edit).
+  Toolbar: Select (move, Delete key), Erase, color, three line widths and an
+  optional 25% fill for rects/ovals. Esc walks back: draft → selection →
+  Select tool → View.
+- The decor layer renders **under rooms** (a true underlay), is visible in all
+  modes and completely click-transparent outside the editor. Stored per space
+  in the server config (`space.decor`, validated on the backend, shared across
+  clients with the usual rev/optimistic locking).
+
 ## v1.32.1 — 2026-07-22
 - Opening tool: hovering near a wall now shows a **dashed preview** of where
   the opening would land — snapped onto the wall, default door length (90 cm),
