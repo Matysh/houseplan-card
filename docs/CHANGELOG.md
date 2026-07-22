@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.28.1 — 2026-07-22 (View-mode polish: cursors and inert openings)
+- **Device icons in View no longer show the grab cursor** (drag lives in the
+  Devices mode); they show a pointer — clicking still works exactly as before.
+- **Doors and windows in View are pure drawings**: no grab cursor, no hover
+  outline, no hit target, no click — regardless of what is bound to them.
+- **The lock badge is the one exception**: when a lock is bound, the badge is
+  shown and clickable in View (pointer cursor, click opens the door/lock info
+  card). It stays inert in Plan so it does not fight editing.
+- In Plan an opening remains fully interactive: grab cursor + hover outline,
+  dragging along walls, and a click with ANY tool opens its properties dialog.
+
 ## v1.28.0 — 2026-07-21 (sub-area rooms: manual placement without an HA area; issue #3)
 - **Devices can now be placed into rooms that have no Home Assistant area.**
   The marker dialog's room list includes area-less rooms (marked "no area,

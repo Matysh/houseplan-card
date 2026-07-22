@@ -242,22 +242,26 @@ export const cardStyles = css`
       transition: opacity 0.15s;
       pointer-events: none;
     }
-    g.opening:hover .op-outline {
+    .stage.markup g.opening:hover .op-outline {
       opacity: 0.9;
     }
+    /* openings are pure status graphics outside Plan mode: no cursor, no hover,
+       no hit target — View must not interact with them at all */
     .op-hit {
       fill: transparent;
-      cursor: grab;
-      pointer-events: auto;
-      touch-action: none; /* drags, not scrolls, on touch */
-    }
-    .op-hit:active {
-      cursor: grabbing;
+      pointer-events: none;
+      cursor: default;
     }
     .stage.markup .op-hit {
-      pointer-events: none; /* markup clicks go to the stage tools */
+      pointer-events: auto;
+      cursor: grab;
+      touch-action: none; /* drags, not scrolls, on touch */
+    }
+    .stage.markup .op-hit:active {
+      cursor: grabbing;
     }
     .oplock {
+      pointer-events: none; /* inert while editing; clickable in View (rule below) */
       position: absolute;
       transform: translate(-50%, -50%);
       width: calc(var(--icon-size, 2.5cqw) * 0.62);
@@ -268,9 +272,11 @@ export const cardStyles = css`
       justify-content: center;
       background: var(--hp-bg);
       border: 1px solid var(--hp-line);
+      z-index: 1;
+    }
+    .stage.mode-view .oplock {
       pointer-events: auto;
       cursor: pointer;
-      z-index: 1;
     }
     .oplock ha-icon {
       --mdc-icon-size: calc(var(--icon-size, 2.5cqw) * 0.4);
@@ -540,7 +546,7 @@ export const cardStyles = css`
       align-items: center;
       justify-content: center;
       color: var(--hp-txt);
-      cursor: grab;
+      cursor: pointer;
       pointer-events: auto;
       transition: background 0.15s, border-color 0.15s, opacity 0.2s;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
@@ -553,9 +559,8 @@ export const cardStyles = css`
       justify-content: center;
       line-height: 0;
     }
-    .dev:active {
-      cursor: grabbing;
-    }
+    .stage.mode-devices .dev { cursor: grab; }
+    .stage.mode-devices .dev:active { cursor: grabbing; }
     .dev:hover {
       background: var(--hp-accent);
       color: var(--text-primary-color, #fff);
