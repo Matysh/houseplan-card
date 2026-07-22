@@ -503,14 +503,15 @@ export const cardStyles = css`
     @media (max-width: 720px) {
       .modetab .ml { display: none; }
     }
+    .room.outlined {
+      stroke: rgba(62, 166, 255, 0.55);
+      fill: rgba(62, 166, 255, 0.06);
+    }
+    /* AFTER .outlined: same specificity — source order decides (gotcha x4) */
     .room.picked {
       stroke: #ffc14d;
       stroke-width: 3;
       fill: rgba(255, 193, 77, 0.25);
-    }
-    .room.outlined {
-      stroke: rgba(62, 166, 255, 0.55);
-      fill: rgba(62, 166, 255, 0.06);
     }
     .griddot {
       fill: var(--hp-accent);

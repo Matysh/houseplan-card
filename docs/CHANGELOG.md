@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.31.2 — 2026-07-22
+- Plan editor: the room picked with the **Merge** tool (and the room selected
+  for **Split**) is highlighted amber again. The `.outlined` markup style,
+  added later in the stylesheet, was silently overriding the `.picked`
+  highlight at equal specificity (source-order gotcha #4 — rule order fixed
+  and documented in the stylesheet).
+
 ## v1.31.1 — 2026-07-22
 - Plan editor: interacting with a room card (drag, corner-resize or a plain
   click) no longer leaks into the active markup tool — previously the click

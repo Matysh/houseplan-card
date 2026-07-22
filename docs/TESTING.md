@@ -140,6 +140,9 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Merge/split pick highlight (v1.31.2): the first room clicked with the
+      Merge tool (and the split-selected room) gets an amber outline + fill;
+      visible over the blue markup outlines [auto]
 - [ ] Card vs tool conflict (v1.31.1): in the Plan editor, dragging/resizing or
       clicking a room card never feeds the active tool (no draw point, no
       delete-room confirm, no merge/split pick); clicks past the card work [auto]
