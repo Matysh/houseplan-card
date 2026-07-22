@@ -242,5 +242,6 @@
   "gs.light_none": "No light sources",
   "mode.view": "View",
   "mode.plan": "Plan",
-  "mode.devices": "Devices"
+  "mode.devices": "Devices",
+  "display.value": "Value instead of an icon"
 }

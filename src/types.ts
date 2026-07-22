@@ -38,7 +38,7 @@ export interface Marker {
   description?: string | null;
   pdfs?: PdfRef[];
   tap_action?: string | null; // per-device override: 'info' | 'more-info' | 'toggle'
-  display?: 'badge' | 'ripple' | 'icon_ripple' | null; // how the device is drawn
+  display?: 'badge' | 'ripple' | 'icon_ripple' | 'value' | null; // how the device is drawn
   ripple_color?: string | null;
   ripple_size?: number | null; // max ring diameter, in icon diameters (default 3)
   size?: number | null;        // icon size multiplier (default 1)

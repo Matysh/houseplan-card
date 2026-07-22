@@ -124,6 +124,10 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] ↺ reset restores auto layout after confirm
 - [ ] Temperature badge on thermometers; LQI value under zigbee icons with red→green color
 - [ ] Live states: light on = yellow, open cover/lock/door = orange, unavailable = faded
+- [ ] State icons (v1.26.0): auto icons morph with state — door/window/garage open↔closed,
+      lock locked↔unlocked, bulb on; custom icons and unavailable states never morph [auto]
+- [ ] display "Value instead of an icon": the marker shows the measurement (°/%/unit)
+      as its body, small badges hidden; non-numeric fallback keeps the icon [auto]
 - [ ] No devices at all in HA (fresh instance) → plan renders, "0 dev.", no console errors [auto]
 
 ## Device dialog (markers) ★

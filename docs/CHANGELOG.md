@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.26.0 — 2026-07-21 (state-reflecting icons + value display; issue #3)
+- **Auto icons now reflect live state**, like core HA: door/window/garage sensors
+  swap open↔closed variants, locks show locked/unlocked, a bulb lights up as
+  `lightbulb-on`. Conservative by design: only well-known pairs, never when the
+  user picked a custom icon, and `unavailable`/`unknown` keep the base icon.
+  Gated by the existing "live states" card option. (Pure `stateIcon`, unit-tested.)
+- **New marker display mode "Value instead of an icon"**: the measurement itself
+  (temperature °, humidity %, or any numeric state with its unit) becomes the
+  marker body — the small corner badges disappear for such markers. Direct
+  request from issue #3. Non-numeric entities fall back to the icon.
+
 ## v1.25.0 — 2026-07-21 (three interaction modes: View / Plan / Devices)
 The approved UX redesign (docs/UX-MODES.md), confirmed by user feedback (#3):
 
