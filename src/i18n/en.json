@@ -222,5 +222,21 @@
   "editor.button_label": "Button label",
   "editor.button_target": "Target dashboard path",
   "editor.aspect_ratio": "Aspect ratio (e.g. 16:9 or auto)",
-  "marker.sub_entity": "entity"
+  "marker.sub_entity": "entity",
+  "title.general_settings": "General settings",
+  "gs.title": "General settings",
+  "gs.hint": "Fill colors apply to every space; each color has its own opacity. Which fill mode a space uses is set in that space's dialog.",
+  "gs.light_group": "Fill: lights",
+  "gs.light_on": "Lights on",
+  "gs.light_off": "All lights off",
+  "gs.temp_group": "Fill: temperature",
+  "gs.temp_cold": "Cold",
+  "gs.temp_ok": "Comfortable",
+  "gs.temp_hot": "Hot",
+  "gs.lqi_group": "Fill: zigbee signal",
+  "gs.lqi_low": "Weak signal",
+  "gs.lqi_high": "Strong signal",
+  "gs.reset": "Reset to defaults",
+  "gs.saved": "General settings saved",
+  "space.show_lqi": "Show zigbee signal (LQI) next to devices"
 }

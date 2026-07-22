@@ -17,7 +17,8 @@ import {
   pointOnBoundary, mergeRooms, splitRoom, polygonArea, closestPointOnBoundary,
   snapToWall, openingAmount,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
-  spaceDisplayOf, roomFillColor, isActiveState, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
+  spaceDisplayOf, roomFillStyle, fillColorsOf, DEFAULT_FILL_COLORS, type FillColors,
+  isActiveState, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
 } from './logic';
 import { buildDevices, lqiFor, tempFor, humFor, isHumEntity, areaLights, areaTemp } from './devices';
@@ -30,7 +31,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.23.2';
+const CARD_VERSION = '1.24.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -118,6 +119,7 @@ class HouseplanCard extends LitElement {
   private _onboardingShown = false; // the auto space dialog is shown once per session
 
   private _rulesDialog: { rules: IconRule[]; test: string; busy: boolean } | null = null;
+  private _settingsDialog: { colors: FillColors; busy: boolean } | null = null;
   private _importDialog: { floors: (FloorInfo & { checked: boolean })[] } | null = null;
   private _importQueue: string[] = []; // floor titles still to create
   private _importTotal = 0;
@@ -159,6 +161,7 @@ class HouseplanCard extends LitElement {
     fillMode: 'none' | 'lqi' | 'light' | 'temp';
     tempMin: number;
     tempMax: number;
+    showLqi: boolean;
     cellCm: number;                // real-world cm represented by one grid cell
     busy: boolean;
   } | null = null;
@@ -208,6 +211,7 @@ class HouseplanCard extends LitElement {
     _spaceDialog: { state: true },
     _infoCard: { state: true },
     _rulesDialog: { state: true },
+    _settingsDialog: { state: true },
     _importDialog: { state: true },
     _markerDialog: { state: true },
     _zoom: { state: true },
@@ -377,6 +381,11 @@ class HouseplanCard extends LitElement {
       this._rulesCompiled = compileIconRules(custom);
     }
     return this._rulesCompiled;
+  }
+
+  /** Global fill palette (config.settings.fill_colors over the defaults). */
+  private get _fillColors(): FillColors {
+    return fillColorsOf(this._settings);
   }
 
   private get _excluded(): Set<string> {
@@ -1853,6 +1862,7 @@ class HouseplanCard extends LitElement {
         showBorders: disp.showBorders, showNames: disp.showNames,
         roomColor: disp.color, roomOpacity: disp.opacity, fillMode: disp.fill,
         tempMin: disp.tempMin, tempMax: disp.tempMax,
+        showLqi: disp.showLqi ?? this._config?.show_signal ?? true,
         cellCm: Number(sp.cell_cm) > 0 ? Number(sp.cell_cm) : 5,
         busy: false,
       };
@@ -1863,6 +1873,7 @@ class HouseplanCard extends LitElement {
         showBorders: false, showNames: false,
         roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'none',
         tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
+        showLqi: this._config?.show_signal ?? true,
         cellCm: 5,
         busy: false,
       };
@@ -1946,6 +1957,7 @@ class HouseplanCard extends LitElement {
         fill_mode: d.fillMode,
         temp_min: Number.isFinite(d.tempMin) ? Math.min(d.tempMin, d.tempMax) : DEFAULT_TEMP_MIN,
         temp_max: Number.isFinite(d.tempMax) ? Math.max(d.tempMin, d.tempMax) : DEFAULT_TEMP_MAX,
+        show_lqi: d.showLqi,
       };
       sp.cell_cm = Number.isFinite(d.cellCm) && d.cellCm > 0 ? d.cellCm : 5;
       await this._saveConfigNow();
@@ -2037,6 +2049,7 @@ class HouseplanCard extends LitElement {
       showBorders: false, showNames: false,
       roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'none',
       tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
+      showLqi: this._config?.show_signal ?? true,
       cellCm: 5,
       busy: false,
     };
@@ -2082,6 +2095,85 @@ class HouseplanCard extends LitElement {
           <span class="spacer"></span>
           <button class="btn on" @click=${() => this._startImport()} ?disabled=${!n}>
             <ha-icon icon="mdi:import"></ha-icon>${this._t('import.start', { n })}
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // ================= GENERAL SETTINGS =================
+
+  private _openSettingsDialog = (): void => {
+    if (!this._norm) return;
+    // deep copy so the dialog edits do not leak into the live palette
+    this._settingsDialog = { colors: JSON.parse(JSON.stringify(this._fillColors)), busy: false };
+  };
+
+  private _setFillColor(key: keyof FillColors, patch: Partial<{ c: string; a: number }>): void {
+    const d = this._settingsDialog!;
+    this._settingsDialog = { ...d, colors: { ...d.colors, [key]: { ...d.colors[key], ...patch } } };
+  }
+
+  private async _saveSettingsDialog(): Promise<void> {
+    const d = this._settingsDialog;
+    if (!d || d.busy) return;
+    this._settingsDialog = { ...d, busy: true };
+    try {
+      const cfg = this._serverCfg!;
+      const isDefault = JSON.stringify(d.colors) === JSON.stringify(DEFAULT_FILL_COLORS);
+      const settings: any = { ...cfg.settings };
+      if (isDefault) delete settings.fill_colors;
+      else settings.fill_colors = d.colors;
+      this._serverCfg = { ...cfg, settings };
+      await this._saveConfigNow();
+      this._settingsDialog = null;
+      this.requestUpdate();
+      this._showToast(this._t('gs.saved'));
+    } catch (e: any) {
+      this._settingsDialog = { ...this._settingsDialog!, busy: false };
+      this._showToast(this._t('toast.error', { err: this._errText(e) }));
+    }
+  }
+
+  private _renderColorRow(key: keyof FillColors, labelKey: string): TemplateResult {
+    const d = this._settingsDialog!;
+    const v = d.colors[key];
+    return html`<div class="colorrow gsrow">
+      <span class="gsl">${this._t(labelKey as any)}</span>
+      <input type="color" .value=${v.c}
+        @input=${(e: Event) => this._setFillColor(key, { c: (e.target as HTMLInputElement).value })} />
+      <input type="range" min="0" max="100" .value=${String(Math.round(v.a * 100))}
+        @input=${(e: Event) => this._setFillColor(key, { a: Number((e.target as HTMLInputElement).value) / 100 })} />
+      <span class="opv">${Math.round(v.a * 100)}%</span>
+    </div>`;
+  }
+
+  private _renderSettingsDialog(): TemplateResult {
+    return html`<div class="menuwrap dialogwrap" @click=${(e: Event) => e.stopPropagation()}>
+      <div class="dialog wide" @click=${(e: Event) => e.stopPropagation()}>
+        <div class="hd"><ha-icon icon="mdi:cog-outline"></ha-icon>${this._t('gs.title')}</div>
+        <div class="body">
+          <div class="rhint">${this._t('gs.hint')}</div>
+          <label class="dispsection">${this._t('gs.light_group')}</label>
+          ${this._renderColorRow('light_on', 'gs.light_on')}
+          ${this._renderColorRow('light_off', 'gs.light_off')}
+          <label class="dispsection">${this._t('gs.temp_group')}</label>
+          ${this._renderColorRow('temp_cold', 'gs.temp_cold')}
+          ${this._renderColorRow('temp_ok', 'gs.temp_ok')}
+          ${this._renderColorRow('temp_hot', 'gs.temp_hot')}
+          <label class="dispsection">${this._t('gs.lqi_group')}</label>
+          ${this._renderColorRow('lqi_low', 'gs.lqi_low')}
+          ${this._renderColorRow('lqi_high', 'gs.lqi_high')}
+        </div>
+        <div class="row">
+          <button class="btn ghost" @click=${() =>
+            (this._settingsDialog = { ...this._settingsDialog!, colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)) })}>
+            ${this._t('gs.reset')}
+          </button>
+          <span class="spacer"></span>
+          <button class="btn ghost" @click=${() => (this._settingsDialog = null)}>${this._t('btn.cancel')}</button>
+          <button class="btn on" @click=${this._saveSettingsDialog} ?disabled=${this._settingsDialog!.busy}>
+            <ha-icon icon="mdi:check"></ha-icon>${this._settingsDialog!.busy ? '…' : this._t('btn.save')}
           </button>
         </div>
       </div>
@@ -2221,6 +2313,7 @@ class HouseplanCard extends LitElement {
     const vb = space.vb;
     const devs = this._devices.filter((d) => d.space === space.id);
     const disp = spaceDisplayOf(this._curSpaceCfg);
+    const showLqi = disp.showLqi ?? this._config.show_signal ?? true;
     const cfgSize = this._config.icon_size ?? 2.5;
     const iconPct = cfgSize > 8 ? 2.5 : cfgSize;
     const view = this._viewOr(vb);
@@ -2284,6 +2377,9 @@ class HouseplanCard extends LitElement {
               </button>
               <button class="btn" @click=${this._openRulesDialog} title=${this._t('title.icon_rules')}>
                 <ha-icon icon="mdi:shape-plus-outline"></ha-icon>
+              </button>
+              <button class="btn" @click=${this._openSettingsDialog} title=${this._t('title.general_settings')}>
+                <ha-icon icon="mdi:cog-outline"></ha-icon>
               </button>`
             : nothing}
           <button class="btn ${this._markup ? 'on' : ''}" @click=${this._toggleMarkup}
@@ -2319,24 +2415,25 @@ class HouseplanCard extends LitElement {
                 // keep the stroke colour even when borders are hidden, so hover can reveal it
                 st.push(`--room-stroke:${disp.color}`, `--room-stroke-op:${disp.showBorders ? disp.opacity : 0}`);
                 const fillC = r.area
-                  ? roomFillColor(
+                  ? roomFillStyle(
                       disp.fill,
                       disp.fill === 'lqi' ? this._roomLqi(r.area) : null,
                       disp.fill === 'light' ? areaLights(this.hass, this._devices, r.area) : 'none',
                       disp.fill === 'temp' ? areaTemp(this.hass, this._devices, r.area) : null,
                       disp.tempMin,
                       disp.tempMax,
+                      this._fillColors,
                     )
                   : null;
                 if (fillC) {
                   cls += ' filled';
-                  st.push(`--room-fill:${fillC}`, `--room-fill-op:${(0.3 * disp.opacity).toFixed(3)}`);
+                  st.push(`--room-fill:${fillC.c}`, `--room-fill-op:${fillC.a.toFixed(3)}`);
                 } else st.push('--room-fill:transparent', '--room-fill-op:0');
                 style = st.join(';');
               }
               const tip = (e: MouseEvent) =>
                 this._showTip(e, r.name, this._t('tip.room'),
-                  this._config?.show_signal ? this._roomLqi(r.area) : null,
+                  showLqi ? this._roomLqi(r.area) : null,
                   r.area ? areaTemp(this.hass, this._devices, r.area) : null);
               const label = (!space.bg && !disp.showNames) || this._markup;
               const c = this._roomCenter(r);
@@ -2354,7 +2451,7 @@ class HouseplanCard extends LitElement {
             ${this._renderOpenings(disp)}
           </svg>
           <div class="devlayer" style="--icon-size:${((iconPct * vb[2]) / view.w).toFixed(3)}cqw">
-            ${devs.map((d) => this._renderDevice(d, view))}
+            ${devs.map((d) => this._renderDevice(d, view, showLqi))}
             ${this._renderOpeningLocks(view)}
             ${disp.showNames && !this._markup
               ? space.rooms.map((r) => this._renderRoomLabel(r, space, view, disp))
@@ -2377,6 +2474,7 @@ class HouseplanCard extends LitElement {
         ${this._markerDialog ? this._renderMarkerDialog() : nothing}
         ${this._infoCard ? this._renderInfoCard() : nothing}
         ${this._rulesDialog ? this._renderRulesDialog() : nothing}
+        ${this._settingsDialog ? this._renderSettingsDialog() : nothing}
         ${this._importDialog ? this._renderImportDialog() : nothing}
         ${this._tip
           ? html`<div class="tip" style="left:${this._tip.x + 12}px;top:${this._tip.y + 12}px">
@@ -2395,14 +2493,14 @@ class HouseplanCard extends LitElement {
     `;
   }
 
-  private _renderDevice(d: DevItem, view: { x: number; y: number; w: number; h: number }): TemplateResult {
+  private _renderDevice(d: DevItem, view: { x: number; y: number; w: number; h: number }, showLqi = true): TemplateResult {
     const p = this._pos(d);
     const left = ((p.x - view.x) / view.w) * 100;
     const top = ((p.y - view.y) / view.h) * 100;
     const cls = this._stateClass(d);
     const temp = this._liveTemp(d);
     const hum = this._liveHum(d);
-    const lqi = this._config?.show_signal && !d.virtual ? lqiFor(this.hass, d.entities) : null;
+    const lqi = showLqi && !d.virtual ? lqiFor(this.hass, d.entities) : null;
     const m = d.marker;
     const disp = m?.display || 'badge';
     const ripple = disp === 'ripple' || disp === 'icon_ripple';
@@ -3060,6 +3158,11 @@ class HouseplanCard extends LitElement {
             <input type="checkbox" .checked=${d.showNames}
               @change=${(e: Event) => (this._spaceDialog = { ...d, showNames: (e.target as HTMLInputElement).checked })} />
             <span>${this._t('space.show_names')}</span>
+          </label>
+          <label class="srcrow">
+            <input type="checkbox" .checked=${d.showLqi}
+              @change=${(e: Event) => (this._spaceDialog = { ...d, showLqi: (e.target as HTMLInputElement).checked })} />
+            <span>${this._t('space.show_lqi')}</span>
           </label>
           <label>${this._t('space.room_color')}</label>
           <div class="colorrow">

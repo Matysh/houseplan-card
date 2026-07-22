@@ -495,6 +495,8 @@ export interface SpaceDisplay {
   fill: RoomFillMode;
   tempMin: number; // comfort range lower bound, °C
   tempMax: number; // comfort range upper bound, °C
+  /** Per-space LQI badges near zigbee devices; null = follow the card option. */
+  showLqi: boolean | null;
 }
 
 export const DEFAULT_ROOM_COLOR = '#3ea6ff';
@@ -514,7 +516,97 @@ export function spaceDisplayOf(spaceCfg: any): SpaceDisplay {
     fill: ['lqi', 'light', 'temp'].includes(s.fill_mode) ? s.fill_mode : 'none',
     tempMin: typeof s.temp_min === 'number' ? s.temp_min : DEFAULT_TEMP_MIN,
     tempMax: typeof s.temp_max === 'number' ? s.temp_max : DEFAULT_TEMP_MAX,
+    showLqi: typeof s.show_lqi === 'boolean' ? s.show_lqi : null,
   };
+}
+
+// ---------------- global fill colors ----------------
+
+export interface FillColorEntry {
+  c: string; // #rrggbb
+  a: number; // 0..1 fill opacity
+}
+
+/** Global fill palette, grouped by fill mode; stored in config.settings.fill_colors. */
+export interface FillColors {
+  light_on: FillColorEntry;
+  light_off: FillColorEntry;
+  temp_cold: FillColorEntry;
+  temp_ok: FillColorEntry;
+  temp_hot: FillColorEntry;
+  lqi_low: FillColorEntry;
+  lqi_high: FillColorEntry;
+}
+
+export const DEFAULT_FILL_COLORS: FillColors = {
+  light_on: { c: '#ffd45c', a: 0.18 },
+  light_off: { c: '#9aa0a6', a: 0.14 },
+  temp_cold: { c: '#4fc3f7', a: 0.18 },
+  temp_ok: { c: '#66d17a', a: 0.18 },
+  temp_hot: { c: '#ffd45c', a: 0.18 },
+  lqi_low: { c: '#f25a4a', a: 0.18 },
+  lqi_high: { c: '#4bd28f', a: 0.18 },
+};
+
+const HEX_RE = /^#[0-9a-f]{6}$/i;
+
+/** Merge stored overrides over the defaults, dropping malformed entries. */
+export function fillColorsOf(settings: any): FillColors {
+  const out: any = {};
+  const src = settings?.fill_colors || {};
+  for (const k of Object.keys(DEFAULT_FILL_COLORS) as (keyof FillColors)[]) {
+    const d = DEFAULT_FILL_COLORS[k];
+    const v = src[k];
+    out[k] = {
+      c: v && typeof v.c === 'string' && HEX_RE.test(v.c) ? v.c : d.c,
+      a: v && typeof v.a === 'number' ? Math.min(1, Math.max(0, v.a)) : d.a,
+    };
+  }
+  return out as FillColors;
+}
+
+/** Linear RGB interpolation between two hex colors, t clamped to 0..1. */
+export function lerpColor(a: string, b: string, t: number): string {
+  const tt = Math.min(1, Math.max(0, t));
+  const pa = [1, 3, 5].map((i) => parseInt(a.slice(i, i + 2), 16));
+  const pb = [1, 3, 5].map((i) => parseInt(b.slice(i, i + 2), 16));
+  const mix = pa.map((v, i) => Math.round(v + (pb[i] - v) * tt));
+  return '#' + mix.map((v) => v.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Room fill (color + opacity) for the selected mode, or null for "no fill",
+ * using the global palette. The LQI gradient interpolates lqi_low → lqi_high
+ * over the 40..180 LQI window (same thresholds as the badge color).
+ */
+export function roomFillStyle(
+  mode: RoomFillMode,
+  lqi: number | null,
+  lights: 'on' | 'off' | 'none',
+  temp: number | null | undefined,
+  tempMin: number,
+  tempMax: number,
+  colors: FillColors,
+): FillColorEntry | null {
+  if (mode === 'lqi') {
+    if (lqi == null) return null;
+    const t = (lqi - 40) / 140;
+    return { c: lerpColor(colors.lqi_low.c, colors.lqi_high.c, t),
+             a: colors.lqi_low.a + (colors.lqi_high.a - colors.lqi_low.a) * Math.min(1, Math.max(0, t)) };
+  }
+  if (mode === 'light') {
+    if (lights === 'none') return null;
+    return lights === 'on' ? colors.light_on : colors.light_off;
+  }
+  if (mode === 'temp') {
+    if (temp == null) return null;
+    const lo = Math.min(tempMin, tempMax);
+    const hi = Math.max(tempMin, tempMax);
+    if (temp < lo) return colors.temp_cold;
+    if (temp > hi) return colors.temp_hot;
+    return colors.temp_ok;
+  }
+  return null;
 }
 
 /**

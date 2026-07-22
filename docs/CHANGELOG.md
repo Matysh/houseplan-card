@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.24.0 — 2026-07-16 (general settings: fill palette; per-space LQI toggle)
+- **New "General settings" dialog** (⚙ in the header): the fill colors used by every
+  space, grouped by mode — lights (on / all off), temperature (cold / comfortable /
+  hot) and zigbee signal (weak / strong endpoints of the gradient). Every color has
+  its **own opacity slider**; the zigbee fill interpolates between the two configured
+  endpoint colors. Stored server-side in `settings.fill_colors` (defaults are not
+  persisted); the static `houseplan-space-card` uses the same palette.
+- **Per-space "Show zigbee signal (LQI)" toggle** in the space dialog: hides or shows
+  the LQI badges next to zigbee devices (and the signal line in room tooltips) for
+  that space; when never touched, the card-level `show_signal` option applies as before.
+- Fill opacity is now governed by the per-color setting; the space "Opacity" slider
+  keeps controlling borders and names.
+- New pure helpers `fillColorsOf` / `lerpColor` / `roomFillStyle` (+4 tests: 77 → 81);
+  backend schema for `fill_colors` and `show_lqi`; smoke `smoke_general_settings`.
+
 ## v1.23.2 — 2026-07-16 (manual upload limit raised to 50 MB)
 - The per-file limit for attached manuals (PDF etc.) is now **50 MB** (was 25).
   The limit is still enforced while the multipart body streams in, so an oversized

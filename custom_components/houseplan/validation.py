@@ -87,6 +87,7 @@ SPACE_DISPLAY_SCHEMA = vol.Schema(
         vol.Optional("fill_mode"): vol.In(["none", "lqi", "light", "temp"]),
         vol.Optional("temp_min"): vol.Coerce(float),
         vol.Optional("temp_max"): vol.Coerce(float),
+        vol.Optional("show_lqi"): bool,
     },
     extra=vol.ALLOW_EXTRA,
 )
@@ -154,7 +155,21 @@ CONFIG_SCHEMA = vol.Schema(
     {
         vol.Required("spaces"): [SPACE_SCHEMA],
         vol.Optional("markers", default=list): [MARKER_SCHEMA],
-        vol.Optional("settings", default=dict): vol.Schema({}, extra=vol.ALLOW_EXTRA),
+        vol.Optional("settings", default=dict): vol.Schema(
+            {
+                vol.Optional("fill_colors"): vol.Schema(
+                    {
+                        str: vol.Schema(
+                            {
+                                vol.Required("c"): vol.Match(r"^#[0-9a-fA-F]{6}$"),
+                                vol.Required("a"): vol.All(vol.Coerce(float), vol.Range(min=0, max=1)),
+                            }
+                        )
+                    }
+                ),
+            },
+            extra=vol.ALLOW_EXTRA,
+        ),
     },
     extra=vol.ALLOW_EXTRA,  # unknown (legacy) keys do not break loading
 )

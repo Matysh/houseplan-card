@@ -57,6 +57,13 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       smart-plug chip temperatures (`*_device_temperature`) and diagnostic-category temps are excluded [auto]
 - [ ] Space dialog is 500 px wide; the comfort-bounds inputs are compact (56 px)
 - [ ] The scale (cm per cell) input is compact (72 px), not full-width [auto]
+- [ ] General settings (⚙ in the header): fill colors grouped by mode (lights on/off,
+      temp cold/comfy/hot, LQI weak/strong), each with its own opacity slider [auto];
+      Reset restores defaults; saving defaults stores nothing [auto]
+- [ ] Custom fill colors apply to the full card AND the static space-card
+- [ ] LQI gradient interpolates between the configured weak/strong colors [auto]
+- [ ] Per-space "Show zigbee signal (LQI)" toggle hides/shows the badges next to
+      devices and the signal line in room tooltips for that space only [auto]
 - [ ] Device icon badge is centred exactly on its point (no 1 px down-right drift) [auto]
 - [ ] Device glyph is centred within its badge (no vertical drift — real ha-icon is block+line-height) [auto]
 - [ ] Room hover highlight still works when custom borders/fills are on
