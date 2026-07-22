@@ -31,7 +31,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.24.2';
+const CARD_VERSION = '1.25.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -81,7 +81,20 @@ class HouseplanCard extends LitElement {
   private _toastTimer?: number;
 
   // --- room markup editor ---
-  private _markup = false;
+  /** Interaction mode (docs/UX-MODES.md): view = display only, plan = geometry
+   * editing, devices = marker placement/config. Never persisted — every load
+   * starts in view. */
+  private _mode: 'view' | 'plan' | 'devices' = 'view';
+
+  /** Edit tabs are offered to admins only (hass.user missing → assume admin). */
+  private get _canEdit(): boolean {
+    return this._norm && this.hass?.user?.is_admin !== false;
+  }
+
+  /** Legacy alias: markup machinery is active exactly in plan mode. */
+  private get _markup(): boolean {
+    return this._mode === 'plan';
+  }
   private _tool: MarkupTool = 'draw';
   private _path: number[][] = []; // current outline (render units, vertices snapped to the grid)
   private _cursorPt: number[] | null = null;
@@ -99,7 +112,6 @@ class HouseplanCard extends LitElement {
   } | null = null;
   private _openingInfo: OpeningCfg | null = null;
   private _opDrag: { id: string; moved: boolean } | null = null;
-  private _opClickTimer: number | null = null;                       // first room picked for a merge
   private _mergeDialog: { aId: string; bId: string; poly: number[][]; pick: 'a' | 'b' } | null = null;
   private _splitSel: { roomId: string; a: number[] | null } | null = null; // room being cut + first wall point
   // a split is applied only when the new room's dialog is confirmed — cancel leaves the room intact
@@ -196,7 +208,7 @@ class HouseplanCard extends LitElement {
     _selId: { state: true },
     _toast: { state: true },
     _serverCfg: { state: true },
-    _markup: { state: true },
+    _mode: { state: true },
     _tool: { state: true },
     _path: { state: true },
     _cursorPt: { state: true },
@@ -682,7 +694,11 @@ class HouseplanCard extends LitElement {
   private _clickDevice(ev: MouseEvent, d: DevItem): void {
     ev.stopPropagation();
     if (this._drag?.moved || this._suppressClick || this._holdFired) return;
-    if (this._markup) return;
+    if (this._mode === 'plan') return;
+    if (this._mode === 'devices') {
+      this._openMarkerDialog(d);
+      return;
+    }
     const domain = d.primary ? d.primary.split('.')[0] : null;
     const action = resolveTapAction(d.tapAction, this._config?.tap_action, domain);
     if (action === 'toggle' && d.primary) {
@@ -825,7 +841,7 @@ class HouseplanCard extends LitElement {
   private _stagePointerDown(ev: PointerEvent): void {
     // do not interfere with icon dragging and markup drawing
     if (this._drag || this._markup) return;
-    if ((ev.target as HTMLElement).closest('.dev')) return;
+    if (this._mode === 'devices' && (ev.target as HTMLElement).closest('.dev')) return;
     this._pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
     const v = this._viewOr(this._spaceModel().vb);
     if (this._pointers.size === 1) {
@@ -858,7 +874,10 @@ class HouseplanCard extends LitElement {
     } else if (this._panStart) {
       const ddx = ev.clientX - this._panStart.sx;
       const ddy = ev.clientY - this._panStart.sy;
-      if (Math.abs(ddx) + Math.abs(ddy) > 4) this._suppressClick = true;
+      if (Math.abs(ddx) + Math.abs(ddy) > 4) {
+        this._suppressClick = true;
+        clearTimeout(this._holdTimer);
+      }
       if (this._zoom > 1 && this._view) {
         const stage = this._stageEl!;
         const v = this._view;
@@ -892,23 +911,23 @@ class HouseplanCard extends LitElement {
   }
 
   private _pointerDown(ev: PointerEvent, d: DevItem): void {
-    if (this._markup) return; // in markup mode icons are not dragged
+    if (this._mode === 'plan') return; // icons are hidden in plan mode anyway
+    if (this._mode === 'view') {
+      // view: no drag, no capture — panning may start on an icon; only the
+      // long-press timer runs (cancelled by stage movement)
+      this._holdFired = false;
+      clearTimeout(this._holdTimer);
+      this._holdTimer = window.setTimeout(() => {
+        this._holdFired = true;
+        this._infoCard = d;
+      }, 600);
+      return;
+    }
     ev.preventDefault();
     const p = this._pos(d);
     this._drag = { id: d.id, sx: ev.clientX, sy: ev.clientY, ox: p.x, oy: p.y, moved: false };
     (ev.target as HTMLElement).setPointerCapture(ev.pointerId);
     this._tip = null;
-    // long-press always opens the info card — keeps metadata reachable
-    // even when the tap action is set to toggle
-    this._holdFired = false;
-    clearTimeout(this._holdTimer);
-    this._holdTimer = window.setTimeout(() => {
-      if (this._drag && this._drag.id === d.id && !this._drag.moved) {
-        this._holdFired = true;
-        this._drag = null;
-        this._infoCard = d;
-      }
-    }, 600);
   }
 
   private _pointerMove(ev: PointerEvent, d: DevItem): void {
@@ -998,12 +1017,13 @@ class HouseplanCard extends LitElement {
     return roomEdges(sp?.rooms || []).map((s) => [s[0] * NORM_W, s[1] * H, s[2] * NORM_W, s[3] * H]);
   }
 
-  private _toggleMarkup(): void {
-    if (!this._norm) {
+  private _setMode(mode: 'view' | 'plan' | 'devices'): void {
+    if (this._mode === mode) return;
+    if (mode === 'plan' && !this._norm) {
       this._showToast(this._t('toast.markup_needs_server'));
       return;
     }
-    this._markup = !this._markup;
+    this._mode = mode;
     this._path = [];
     this._cursorPt = null;
     this._tool = 'draw';
@@ -1011,7 +1031,10 @@ class HouseplanCard extends LitElement {
     this._mergeDialog = null;
     this._splitSel = null;
     this._pendingSplit = null;
+    this._selId = null;
+    this._tip = null;
   }
+
 
   private _svgPoint(ev: MouseEvent): number[] {
     const stage = this.renderRoot.querySelector('.stage') as HTMLElement;
@@ -1198,7 +1221,7 @@ class HouseplanCard extends LitElement {
 
   /** Drag an opening along the walls (view mode): it re-snaps continuously. */
   private _opPointerDown(ev: PointerEvent, o: OpeningCfg): void {
-    if (this._markup) return;
+    if (this._mode !== 'plan') return;
     ev.preventDefault();
     ev.stopPropagation();
     try {
@@ -1236,25 +1259,16 @@ class HouseplanCard extends LitElement {
   /** Click: the status card (delayed so a double click can cancel it). */
   private _opClick(ev: MouseEvent, o: OpeningCfg & { rx: number; ry: number; rlen: number }): void {
     ev.stopPropagation();
-    if (this._markup) return;
     if (this._opDrag?.moved) return; // that click was the tail of a drag
-    if (this._opClickTimer) window.clearTimeout(this._opClickTimer);
-    this._opClickTimer = window.setTimeout(() => {
-      this._opClickTimer = null;
+    if (this._mode === 'view') {
+      // view: an opening is a status object — show the door/lock info card
       this._openingInfo = o;
-    }, 250);
-  }
-
-  /** Double click: the properties dialog. */
-  private _opDblClick(ev: MouseEvent, o: OpeningCfg & { rx: number; ry: number; rlen: number }): void {
-    ev.stopPropagation();
-    if (this._markup) return;
-    if (this._opClickTimer) {
-      window.clearTimeout(this._opClickTimer);
-      this._opClickTimer = null;
+      return;
     }
-    this._openingInfo = null;
-    this._editOpening(o);
+    if (this._mode === 'plan' && this._tool !== 'opening') {
+      // plan: any click on an opening edits it (the Opening tool also does)
+      this._editOpening(o);
+    }
   }
 
   private _saveOpening(): void {
@@ -1972,7 +1986,7 @@ class HouseplanCard extends LitElement {
         // guide the user onward: straight into room markup mode
         this._importTotal = 0;
         this._space = this._serverCfg!.spaces[0]?.id || this._space;
-        this._markup = true;
+        this._mode = 'plan';
         this._tool = 'draw';
         this._path = [];
         this._cursorPt = null;
@@ -2062,7 +2076,7 @@ class HouseplanCard extends LitElement {
     else if (this._importTotal > 0 && this._model.length) {
       this._importTotal = 0;
       this._space = this._serverCfg!.spaces[0]?.id || this._space;
-      this._markup = true;
+      this._mode = 'plan';
       this._showToast(this._t('import.done'));
     }
   }
@@ -2337,7 +2351,7 @@ class HouseplanCard extends LitElement {
                   this._restoreZoom();
                 }}
               >
-                ${s.title}${this._norm
+                ${s.title}${this._norm && this._mode === 'plan'
                   ? html`<ha-icon class="tabedit" icon="mdi:cog-outline"
                       title=${this._t('title.configure_space')}
                       @click=${(e: Event) => {
@@ -2347,13 +2361,24 @@ class HouseplanCard extends LitElement {
                   : nothing}
               </button>`,
             )}
-            ${this._norm
+            ${this._norm && this._mode === 'plan'
               ? html`<button class="tab tabadd" title=${this._t('title.add_space')}
                   @click=${() => this._openSpaceDialog('create')}>
                   <ha-icon icon="mdi:plus"></ha-icon>
                 </button>`
               : nothing}
           </div>
+          ${this._canEdit
+            ? html`<div class="modes">
+                ${([['view', 'mdi:eye-outline'], ['plan', 'mdi:floor-plan'], ['devices', 'mdi:tune-variant']] as const).map(
+                  ([m, ic]) => html`<button class="modetab ${this._mode === m ? 'active' : ''}"
+                    title=${this._t(('mode.' + m) as any)}
+                    @click=${() => this._setMode(m)}>
+                    <ha-icon icon=${ic}></ha-icon><span class="ml">${this._t(('mode.' + m) as any)}</span>
+                  </button>`,
+                )}
+              </div>`
+            : nothing}
           <span class="count">${this._t('count.devices', { n: devs.length })}</span>
           <span class="spacer"></span>
           <div class="zoomctl">
@@ -2362,14 +2387,12 @@ class HouseplanCard extends LitElement {
               title=${this._t('title.zoom_reset')}><ha-icon icon="mdi:fit-to-page-outline"></ha-icon></button>
             <button class="btn zb" @click=${() => this._stepZoom(1)} title=${this._t('title.zoom_in')}><ha-icon icon="mdi:plus"></ha-icon></button>
           </div>
-          ${this._norm
+          ${this._norm && this._mode === 'devices'
             ? html`<button class="btn" @click=${() => this._openMarkerDialog()}
                 title=${this._t('title.add_device')}>
                 <ha-icon icon="mdi:plus-box-outline"></ha-icon>
-              </button>`
-            : nothing}
-          ${this._norm
-            ? html`<button class="btn ${this._showAll ? 'on' : ''}" @click=${this._toggleShowAll}
+              </button>
+              <button class="btn ${this._showAll ? 'on' : ''}" @click=${this._toggleShowAll}
                 title=${this._t('title.show_all')}>
                 <ha-icon icon="${this._showAll ? 'mdi:eye' : 'mdi:eye-off-outline'}"></ha-icon>
               </button>
@@ -2378,20 +2401,18 @@ class HouseplanCard extends LitElement {
               </button>
               <button class="btn" @click=${this._openRulesDialog} title=${this._t('title.icon_rules')}>
                 <ha-icon icon="mdi:shape-plus-outline"></ha-icon>
-              </button>
-              <button class="btn" @click=${this._openSettingsDialog} title=${this._t('title.general_settings')}>
+              </button>`
+            : nothing}
+          ${this._norm && this._mode === 'plan'
+            ? html`<button class="btn" @click=${this._openSettingsDialog} title=${this._t('title.general_settings')}>
                 <ha-icon icon="mdi:cog-outline"></ha-icon>
               </button>`
             : nothing}
-          <button class="btn ${this._markup ? 'on' : ''}" @click=${this._toggleMarkup}
-            title=${this._t('title.markup')}>
-            <ha-icon icon="mdi:vector-square-edit"></ha-icon>
-          </button>
         </div>
         ${this._markup ? this._renderMarkupBar() : nothing}
         </div>
 
-        <div class="stage ${this._markup ? 'markup' : ''} ${space.bg ? '' : 'noplan'}"
+        <div class="stage ${this._markup ? 'markup' : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}"
           style="height:calc(100dvh - 118px)"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
@@ -2553,7 +2574,7 @@ class HouseplanCard extends LitElement {
 
   /** Room-name labels are dragged exactly like device icons (same layout store). */
   private _labelDown(ev: PointerEvent, r: RoomCfg, spaceId: string): void {
-    if (this._markup) return;
+    if (this._mode !== 'plan') return;
     ev.preventDefault();
     ev.stopPropagation();
     const p = this._labelPos(r, spaceId);
@@ -2693,7 +2714,6 @@ class HouseplanCard extends LitElement {
         <rect class="op-outline" x="${-half - 10}" y="-16" width="${o.rlen + 20}" height="32" rx="6"></rect>
         <rect class="op-hit" x="${-half - 12}" y="-20" width="${o.rlen + 24}" height="40"
           @click=${(e: MouseEvent) => this._opClick(e, o)}
-          @dblclick=${(e: MouseEvent) => this._opDblClick(e, o)}
           @pointerdown=${(e: PointerEvent) => this._opPointerDown(e, o)}
           @pointermove=${(e: PointerEvent) => this._opPointerMove(e, o)}
           @pointerup=${(e: PointerEvent) => this._opPointerUp(e, o)}
@@ -2719,7 +2739,7 @@ class HouseplanCard extends LitElement {
       const top = ((py - view.y) / view.h) * 100;
       return html`<div class="oplock ${locked ? 'locked' : known ? 'unlocked' : 'unknown'}"
         style="left:${left}%;top:${top}%"
-        @click=${(e: MouseEvent) => { e.stopPropagation(); if (!this._markup) this._openingInfo = o; }}>
+        @click=${(e: MouseEvent) => { e.stopPropagation(); if (this._mode === 'view') this._openingInfo = o; }}>
         <ha-icon icon="${locked ? 'mdi:lock' : known ? 'mdi:lock-open-variant' : 'mdi:lock-question'}"></ha-icon>
       </div>`;
     })}`;

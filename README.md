@@ -119,7 +119,7 @@ Later you can add as many spaces as you like (floors, yard, garage) with the **�
 
 ### Step 2. Outline the rooms
 
-After the first space is added, the card switches to markup mode by itself. Click grid points, connecting them with lines, and close the room outline by clicking the first point.
+After the first space is added, the card switches to the **Plan** tab by itself. The card has three mode tabs in the header — **View** (default: display and device control only, nothing can be moved or edited), **Plan** (rooms, openings, labels, space settings) and **Devices** (placing and configuring markers); the edit tabs are shown to administrators. In Plan, click grid points, connecting them with lines, and close the room outline by clicking the first point.
 
 As soon as the outline is closed, the room-save dialog appears. Here you need to **bind the room to a Home Assistant area** — this is exactly what enables the automation. For utility rooms with no devices (hall, sauna) there is a **"No area"** button.
 
@@ -166,7 +166,7 @@ The mouse wheel or the **－ / ⊹ / ＋** buttons zoom the plan in and out; on 
 
 ### Step 5. Put the icons in their places
 
-Device icons can be **dragged with the mouse at any time** — no separate "edit mode" needs to be enabled. Positions are saved on the server and are identical in all browsers and devices. The **↺** button in the header restores the automatic layout.
+Switch to the **Devices** tab to arrange icons: drag them with the mouse, click one to open its editor. In **View** mode nothing can be moved — panning the map never displaces a sensor (a top user request). Positions are saved on the server and are identical in all browsers and devices. The **↺** button restores the automatic layout.
 
 ![Dragging icons — available at all times](docs/images/06-edit.png)
 

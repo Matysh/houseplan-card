@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.25.0 — 2026-07-21 (three interaction modes: View / Plan / Devices)
+The approved UX redesign (docs/UX-MODES.md), confirmed by user feedback (#3):
+
+- **View** (default, and the only mode after every load): display and device
+  interaction only — tap/long-press/tooltips/pan/zoom. Nothing can be dragged or
+  edited; panning may start on top of an icon and never displaces it. The header
+  carries only space tabs, the counter, zoom and the mode switcher.
+- **Plan**: everything about geometry and appearance — room outline/delete/merge/
+  split tools, openings (placement, drag along walls, click-to-edit), room-label
+  dragging, per-space gear dialog, add space, the ⚙ fill palette. Orange stage frame.
+- **Devices**: marker work — icon dragging lives ONLY here, a click opens the
+  editor directly; add device, show-all curation, reset layout, icon rules. Accent frame.
+- The mode switcher is a segmented control shown to administrators; the standalone
+  markup toggle button is gone, "drag anywhere" (v1.9) is consciously reversed,
+  and the v1.23.1 view-mode opening drag/double-click moved into Plan.
+
 ## v1.24.2 — 2026-07-16 (lights fill: a color for rooms with no light sources)
 - The "Fill: lights" group in General settings gained a third color — **"No light
   sources"**. Its default opacity is 0, so rooms without any lights stay unfilled
