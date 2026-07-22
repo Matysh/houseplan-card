@@ -56,14 +56,14 @@ out.splitPending = (await S()).pendingSplit;
 out.splitDialog = (await S()).roomDlg;
 // cancel keeps it whole
 await page.evaluate(()=>window.__card._roomDialogCancel());
-out.cancelWhole = (await S()).rooms.length===4;
+out.cancelWhole = (await S()).rooms.length===5; // 4 базовых + rg
 // redo + confirm with a name (no area)
 await page.evaluate((p)=>window.__card._splitClick(p), await R(0.28,0.28));
 await page.evaluate((p)=>window.__card._splitClick(p), await R(0.25,0.0625));
 await page.evaluate((p)=>window.__card._splitClick(p), await R(0.25,0.5));
 await page.evaluate(()=>{const c=window.__card; c._nameSel='Cabinet'; c._saveRoomNoArea();});
 s = await S();
-out.splitRooms = s.rooms.length;                          // 5
+out.splitRooms = s.rooms.length===6;                      // 4 базовых + rg разрезанная надвое
 out.bigKeepsLiving = s.rooms.some(r=>r.id==='r1' && r.area==='living_room');
 out.newRoom = s.rooms.find(r=>!['r1','r2','r3','r4','rg'].includes(r.id))?.name;
 await restore();

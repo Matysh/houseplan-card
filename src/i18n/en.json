@@ -122,7 +122,6 @@
   "toast.markup_needs_server": "Markup is available after the config is moved to the server",
   "toast.conflict": "Config was changed in another window — data refreshed, repeat your last action",
   "toast.cfg_save_failed": "Failed to save config: {err}",
-  "toast.point_in_room": "That point is inside room “{name}” — rooms must not overlap",
   "toast.room_overlap": "The outline overlaps room “{name}” — rooms must not overlap",
   "toast.merge_not_adjacent": "Only rooms that share a wall can be merged",
   "toast.rooms_merged": "Rooms merged into “{name}”",

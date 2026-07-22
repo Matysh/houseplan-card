@@ -140,6 +140,11 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Island rooms (v1.34.0): a contour drawn fully inside an existing room
+      (or around one) saves as a nested room — column in a ring, inner room;
+      the parent's fill renders with an evenodd hole so the ring paints
+      correctly; the island stays clickable; partial overlaps and duplicate
+      outlines are still rejected at closing [auto]
 - [ ] Icon stays on edit (v1.33.4): rebinding a device (HA device/entity) or
       changing its room within the same space never moves the icon — the saved
       or auto position migrates to the new marker id; only a brand-new icon or

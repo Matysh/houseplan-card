@@ -241,17 +241,45 @@ function coversArea(a: number[][], b: number[][], eps: number): boolean {
   return false;
 }
 
+/** Is `inner` fully contained in `outer` (edges may touch, never cross)? */
+export function polyContainsPoly(outer: number[][], inner: number[][], eps = 1e-6): boolean {
+  if (!outer || !inner || outer.length < 3 || inner.length < 3) return false;
+  for (let i = 0; i < inner.length; i++)
+    for (let j = 0; j < outer.length; j++)
+      if (segmentsProperlyCross(inner[i], inner[(i + 1) % inner.length], outer[j], outer[(j + 1) % outer.length]))
+        return false;
+  for (const v of inner)
+    if (!pointStrictlyInside(v, outer, eps) && !pointOnBoundary(v, outer, eps)) return false;
+  // identical/traced outlines are NOT containment — probe the centroid strictness both ways
+  const c = [
+    inner.reduce((s, p) => s + p[0], 0) / inner.length,
+    inner.reduce((s, p) => s + p[1], 0) / inner.length,
+  ];
+  return pointStrictlyInside(c, outer, eps) && polygonArea(inner) < polygonArea(outer) - eps;
+}
+
 /**
- * Do two room outlines share floor area? Rooms must never overlap, but sharing a wall
- * (fully or partially) and touching at a corner are normal and stay legal. A room nested
- * inside another counts as an overlap.
+ * Do two room outlines ILLEGALLY share floor area? Sharing a wall (fully or
+ * partially) and touching at a corner are normal. Since v1.34.0 full nesting is
+ * legal too (island rooms: a column inside a ring, an inner room) — only edge
+ * crossings and PARTIAL overlaps are rejected.
  */
 export function roomsOverlap(a: number[][], b: number[][], eps = 1e-6): boolean {
   if (!a || !b || a.length < 3 || b.length < 3) return false;
   for (let i = 0; i < a.length; i++)
     for (let j = 0; j < b.length; j++)
       if (segmentsProperlyCross(a[i], a[(i + 1) % a.length], b[j], b[(j + 1) % b.length])) return true;
+  if (polyContainsPoly(a, b, eps) || polyContainsPoly(b, a, eps)) return false;
   return coversArea(a, b, eps) || coversArea(b, a, eps);
+}
+
+/**
+ * Direct islands of `poly` among `others`: outlines fully inside it that are not
+ * themselves inside a bigger island (those are subtracted by their parent).
+ */
+export function islandsOf(poly: number[][], others: number[][][], eps = 1e-6): number[][][] {
+  const inside = others.filter((o) => polyContainsPoly(poly, o, eps));
+  return inside.filter((o) => !inside.some((p) => p !== o && polyContainsPoly(p, o, eps)));
 }
 
 /** Shoelace area of an outline (absolute value). */

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   lqiColor, snapToGrid, segKey, samePoint, pointInPolygon, markerIdForBinding, averageLqi,
   fitView, declump, safeUrl, resolveTapAction, floorsOf, subst, spaceDisplayOf, roomFillColor,
-  splitRoomPath,
+  splitRoomPath, polyContainsPoly, islandsOf,
   segmentCm, formatLength, roomEdges, roomPoly, pointOnBoundary, pointStrictlyInside, roomsOverlap,
   mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices,
 } from '../test-build/logic.js';
@@ -325,14 +325,32 @@ test('roomsOverlap: sharing a wall or a corner is legal; real overlap is not', (
   assert.ok(roomsOverlap(SQ, [[1, 1], [3, 1], [3, 3], [1, 3]]));
 });
 
-test('roomsOverlap: nested, identical and enclosing outlines all count as overlap', () => {
-  assert.ok(roomsOverlap(SQ, [[0.5, 0.5], [1.5, 0.5], [1.5, 1.5], [0.5, 1.5]])); // nested
-  assert.ok(roomsOverlap(SQ, SQ));                                                // duplicate
-  // drawn AROUND an existing room: every vertex outside, no vertex of ours inside it
-  assert.ok(roomsOverlap([[-1, -1], [3, -1], [3, 3], [-1, 3]], SQ));
+test('roomsOverlap v1.34: nesting is legal (islands), duplicates and crossings are not', () => {
+  // nested & enclosing — legal since island rooms
+  assert.ok(!roomsOverlap(SQ, [[0.5, 0.5], [1.5, 0.5], [1.5, 1.5], [0.5, 1.5]]));
+  assert.ok(!roomsOverlap([[-1, -1], [3, -1], [3, 3], [-1, 3]], SQ));
+  // a duplicate outline is still an overlap
+  assert.ok(roomsOverlap(SQ, SQ));
   // a cross: no vertex of either lies inside the other, but the edges cross
   assert.ok(roomsOverlap([[0, 0.5], [3, 0.5], [3, 1.5], [0, 1.5]],
                          [[0.5, -1], [1.5, -1], [1.5, 3], [0.5, 3]]));
+  // genuine partial overlap is still rejected
+  assert.ok(roomsOverlap(SQ, [[1, 1], [3, 1], [3, 3], [1, 3]]));
+});
+
+test('polyContainsPoly & islandsOf', () => {
+  const outer = [[0, 0], [10, 0], [10, 10], [0, 10]];
+  const col = [[4, 4], [6, 4], [6, 6], [4, 6]];
+  const tiny = [[4.5, 4.5], [5, 4.5], [5, 5], [4.5, 5]]; // внутри col
+  const partial = [[8, 8], [12, 8], [12, 12], [8, 12]];
+  assert.ok(polyContainsPoly(outer, col));
+  assert.ok(!polyContainsPoly(col, outer));
+  assert.ok(!polyContainsPoly(outer, outer));    // дубликат — не вложенность
+  assert.ok(!polyContainsPoly(outer, partial));
+  // прямые острова: col — да; tiny — нет (он остров col, не outer)
+  const isl = islandsOf(outer, [col, tiny, partial]);
+  assert.deepEqual(isl, [col]);
+  assert.deepEqual(islandsOf(col, [tiny]), [tiny]);
 });
 
 test('roomPoly: polygon rooms as-is, legacy rect rooms as four corners', () => {

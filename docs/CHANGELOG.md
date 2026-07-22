@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.34.0 — 2026-07-22 (island rooms)
+- **Nested rooms are now legal**: draw a contour fully inside an existing room
+  (or around one) — a column in a ring-shaped room, an inner room, a wardrobe
+  island. The parent room's fill is rendered with an evenodd hole, so a ring
+  paints as a ring; the island itself stays clickable and can carry its own
+  area, fill and devices. Partial overlaps and duplicate outlines are still
+  rejected (`roomsOverlap` reworked; `polyContainsPoly`/`islandsOf` helpers,
+  unit-tested). The per-click "point inside a room" rejection is gone —
+  validation happens once, when the outline closes.
+
 ## v1.33.5 — 2026-07-22
 - Editor tabs got extended tooltips explaining what each editor is for (plan
   geometry vs device icons vs visual decor).

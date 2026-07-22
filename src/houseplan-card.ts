@@ -14,7 +14,7 @@ import {
 import {
   lqiColor, snapToGrid, samePoint, pointInPolygon, markerIdForBinding,
   segmentCm, formatLength, roomEdges, roomPoly, pointStrictlyInside, roomsOverlap,
-  pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside,
+  pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf,
   snapToWall, openingAmount,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
   stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices,
@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.33.5';
+const CARD_VERSION = '1.34.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -1279,15 +1279,10 @@ class HouseplanCard extends LitElement {
     // until the contour closes — an abandoned outline leaves no lines behind.
     const pt = this._snap(raw);
     const closing = this._path.length >= 3 && this._samePt(pt, this._path[0]);
-    // rooms must not overlap: a vertex may sit on a wall (shared walls are normal),
-    // never strictly inside another room
-    if (!closing) {
-      const busy = this._roomAt(pt);
-      if (busy) {
-        this._showToast(this._t('toast.point_in_room', { name: busy.name || '' }));
-        return;
-      }
-    }
+    // Island rooms (v1.34.0): drawing INSIDE an existing room is legal — the
+    // contour may become a nested room (a column, an inner room). Partial
+    // overlaps are still rejected, but only at closing time, when the whole
+    // outline is known (roomsOverlap treats full nesting as legal).
     if (!this._path.length) {
       this._path = [pt];
       return;
@@ -2914,7 +2909,19 @@ class HouseplanCard extends LitElement {
                   r.area ? areaTemp(this.hass, this._devices, r.area) : null);
               const label = !space.bg && !disp.showNames && !this._markup;
               const c = this._roomCenter(r);
-              const shape = r.poly
+              // island rooms punch holes in their parent's fill (evenodd)
+              const myPoly = roomPoly(r);
+              const holes = myPoly
+                ? islandsOf(myPoly, space.rooms.filter((o) => o !== r).map((o) => roomPoly(o)!).filter(Boolean))
+                : [];
+              const pathD = (pts: number[][]) =>
+                'M ' + pts.map((p) => p[0] + ' ' + p[1]).join(' L ') + ' Z';
+              const shape = holes.length && myPoly
+                ? svg`<path class="${cls}" style="${style}" fill-rule="evenodd"
+                    d="${[myPoly, ...holes].map(pathD).join(' ')}"
+                    @click=${() => this._clickRoom(r)} @mousemove=${tip}
+                    @mouseleave=${() => (this._tip = null)}></path>`
+                : r.poly
                 ? svg`<polygon class="${cls}" style="${style}" points="${r.poly.map((p) => p.join(',')).join(' ')}"
                     @click=${() => this._clickRoom(r)} @mousemove=${tip}
                     @mouseleave=${() => (this._tip = null)}></polygon>`
