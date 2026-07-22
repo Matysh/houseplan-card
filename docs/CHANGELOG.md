@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.30.1 — 2026-07-22 (space gear polish)
+- The gear icon next to the space name is now visible in **every mode** (not
+  just Plan) for users who can edit, so space settings are always one click
+  away. The "+" (add space) tab remains Plan-only.
+- Fixed the gear's vertical alignment — it sat noticeably lower than the space
+  name (baseline-aligned web component); tabs are now flex-centered.
+
 ## v1.30.0 — 2026-07-22 (lock action in the opening info card)
 - The door/window info card (View mode) now offers an explicit **Unlock/Lock
   button** when a lock entity is bound and available. Unlock is styled red as a

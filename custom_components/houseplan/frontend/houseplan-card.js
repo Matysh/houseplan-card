@@ -83,6 +83,8 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
       border: 0;
       background: transparent;
       color: var(--hp-muted);
+      display: inline-flex;
+      align-items: center;
       padding: 6px 13px;
       border-radius: 8px;
       font-size: 13px;
@@ -673,9 +675,10 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
     }
     .tab .tabedit {
       --mdc-icon-size: 13px;
+      display: inline-flex;
+      align-items: center;
       margin-left: 6px;
       opacity: 0.4;
-      vertical-align: middle;
     }
     .tab:hover .tabedit {
       opacity: 0.9;
@@ -1337,7 +1340,7 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
                 class="tab ${this._space===t.id?"active":""}"
                 @click=${()=>{this._space=t.id,this._selId=null,this._restoreZoom()}}
               >
-                ${t.title}${this._norm&&"plan"===this._mode?H`<ha-icon class="tabedit" icon="mdi:cog-outline"
+                ${t.title}${this._norm&&this._canEdit?H`<ha-icon class="tabedit" icon="mdi:cog-outline"
                       title=${this._t("title.configure_space")}
                       @click=${e=>{e.stopPropagation(),this._openSpaceDialog("edit",t.id)}}></ha-icon>`:W}
               </button>`)}
@@ -1887,4 +1890,4 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
           </button>
         </div>
       </div>
-    </div>`}}Ii.properties={hass:{attribute:!1},_config:{state:!0},_space:{state:!0},_layout:{state:!0},_devices:{state:!0},_tip:{state:!0},_selId:{state:!0},_toast:{state:!0},_serverCfg:{state:!0},_mode:{state:!0},_tool:{state:!0},_path:{state:!0},_cursorPt:{state:!0},_mergeSel:{state:!0},_openingDialog:{state:!0},_openingInfo:{state:!0},_mergeDialog:{state:!0},_splitSel:{state:!0},_areaSel:{state:!0},_nameSel:{state:!0},_roomDialog:{state:!0},_spaceDialog:{state:!0},_infoCard:{state:!0},_rulesDialog:{state:!0},_settingsDialog:{state:!0},_importDialog:{state:!0},_markerDialog:{state:!0},_zoom:{state:!0},_view:{state:!0}},Ii.styles=mi,customElements.get("houseplan-card")||customElements.define("houseplan-card",Ii),window.customCards=window.customCards||[],window.customCards.find(t=>"houseplan-card"===t.type)||window.customCards.push({type:"houseplan-card",name:"House Plan Card",description:"Interactive house plan: spaces, rooms and devices with live states and drag layout."}),console.info("%c HOUSEPLAN-CARD %c v1.30.0 ","background:#3ea6ff;color:#04121f;font-weight:700","");
+    </div>`}}Ii.properties={hass:{attribute:!1},_config:{state:!0},_space:{state:!0},_layout:{state:!0},_devices:{state:!0},_tip:{state:!0},_selId:{state:!0},_toast:{state:!0},_serverCfg:{state:!0},_mode:{state:!0},_tool:{state:!0},_path:{state:!0},_cursorPt:{state:!0},_mergeSel:{state:!0},_openingDialog:{state:!0},_openingInfo:{state:!0},_mergeDialog:{state:!0},_splitSel:{state:!0},_areaSel:{state:!0},_nameSel:{state:!0},_roomDialog:{state:!0},_spaceDialog:{state:!0},_infoCard:{state:!0},_rulesDialog:{state:!0},_settingsDialog:{state:!0},_importDialog:{state:!0},_markerDialog:{state:!0},_zoom:{state:!0},_view:{state:!0}},Ii.styles=mi,customElements.get("houseplan-card")||customElements.define("houseplan-card",Ii),window.customCards=window.customCards||[],window.customCards.find(t=>"houseplan-card"===t.type)||window.customCards.push({type:"houseplan-card",name:"House Plan Card",description:"Interactive house plan: spaces, rooms and devices with live states and drag layout."}),console.info("%c HOUSEPLAN-CARD %c v1.30.1 ","background:#3ea6ff;color:#04121f;font-weight:700","");
