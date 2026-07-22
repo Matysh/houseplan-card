@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.24.1 — 2026-07-16 (space tab: gear instead of pencil)
+- The small icon next to a space name in the tabs is now a gear (was a pencil) —
+  the dialog it opens is space *settings* (plan, display, scale), not just renaming.
+
 ## v1.24.0 — 2026-07-16 (general settings: fill palette; per-space LQI toggle)
 - **New "General settings" dialog** (⚙ in the header): the fill colors used by every
   space, grouped by mode — lights (on / all off), temperature (cold / comfortable /
