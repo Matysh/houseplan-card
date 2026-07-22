@@ -23,7 +23,7 @@ const res = await page.evaluate(async () => {
   tabs()[1].click(); await c.updateComplete;
   out.directSwitch = c._mode === 'devices';
   out.devBar = !!sr().querySelector('.editbar.devbar');
-  out.devBarBtns = sr().querySelectorAll('.editbar.devbar .btn:not(.barclose)').length;
+  out.devBarBtns = sr().querySelectorAll('.editbar.devbar .btn:not(.barclose)').length === 3; // add/show-all/rules (v1.33.2: Reset removed)
   // 5) инструменты устройств из шапки исчезли (в .bar их больше нет)
   out.headerCleanInDev = !sr().querySelector('.bar > .btn[title*="' + (c._t('title.add_device')) + '"]');
   // 6) крестик на панели → Просмотр

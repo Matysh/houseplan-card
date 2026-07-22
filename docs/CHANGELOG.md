@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.33.2 — 2026-07-22
+- Removed the **Reset** button from the Device editor. It wiped the entire
+  layout — positions of all devices, room cards and their scales across every
+  space — behind a single confirm. Low value, high blast radius.
+
 ## v1.33.1 — 2026-07-22
 - The dot grid is now shown in **every editor** (Plan, Devices, Background),
   not just Plan — an instant visual cue that you are editing.

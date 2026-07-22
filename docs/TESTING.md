@@ -140,6 +140,8 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] No Reset button (v1.33.2): the Device editor toolbar has three tools —
+      add, show all, icon rules; the layout-wiping Reset is gone [auto]
 - [ ] Grid in all editors + decor fade (v1.33.1): the dot grid shows in the
       Device and Background editors too (instant "I'm editing" cue), not in
       View; in the Background editor rooms/devices/openings/labels fade to 35%

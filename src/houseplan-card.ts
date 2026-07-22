@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.33.1';
+const CARD_VERSION = '1.33.2';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -1096,12 +1096,6 @@ class HouseplanCard extends LitElement {
       this._selId = d.id;
       window.setTimeout(() => (this._drag = null), 0);
     }
-  }
-
-  private _resetLayout(): void {
-    if (!confirm(this._t('confirm.reset_layout'))) return;
-    this._layout = {};
-    this._persistLayout();
   }
 
   private _showToast(msg: string): void {
@@ -3526,9 +3520,6 @@ class HouseplanCard extends LitElement {
       <button class="btn ${this._showAll ? 'on' : ''}" @click=${this._toggleShowAll}
         title=${this._t('title.show_all')}>
         <ha-icon icon="${this._showAll ? 'mdi:eye' : 'mdi:eye-off-outline'}"></ha-icon>${this._t('devbar.show_all')}
-      </button>
-      <button class="btn" @click=${this._resetLayout} title=${this._t('title.reset_layout')}>
-        <ha-icon icon="mdi:backup-restore"></ha-icon>${this._t('devbar.reset')}
       </button>
       <button class="btn" @click=${this._openRulesDialog} title=${this._t('title.icon_rules')}>
         <ha-icon icon="mdi:shape-plus-outline"></ha-icon>${this._t('devbar.rules')}
