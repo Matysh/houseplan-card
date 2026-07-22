@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.30.0 — 2026-07-22 (lock action in the opening info card)
+- The door/window info card (View mode) now offers an explicit **Unlock/Lock
+  button** when a lock entity is bound and available. Unlock is styled red as a
+  security-sensitive action; the button is disabled during locking/unlocking and
+  hidden when the lock is unavailable.
+- The security rule is untouched: **tapping a lock icon on the plan still never
+  toggles it** — the action lives only behind a deliberate, clearly labeled
+  button, same interaction contract as HA's more-info dialog.
+
 ## v1.29.0 — 2026-07-22 (the "new device" flag)
 - **Devices that appear in HA after installation no longer show up silently**:
   an auto-placed device (or light group) gets a big red dot at the top-right of
