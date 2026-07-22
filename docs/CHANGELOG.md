@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.30.3 — 2026-07-22
+- The **General settings** (fill palette) gear in the header is now visible in
+  every mode for users who can edit, not just in the Plan editor.
+
 ## v1.30.2 — 2026-07-22 (editor tabs redesign)
 - Mode tabs renamed and reduced to two: **"Plan editor"** and **"Device
   editor"**. View is no longer a tab — it is the implicit default state.
