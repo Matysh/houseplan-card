@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.28.0 — 2026-07-21 (sub-area rooms: manual placement without an HA area; issue #3)
+- **Devices can now be placed into rooms that have no Home Assistant area.**
+  The marker dialog's room list includes area-less rooms (marked "no area,
+  manual"); pick one and the device/virtual marker lands at its centre. The
+  marker stores `room_id`, so the choice survives edits and re-opens. The
+  laundry-cupboard case from issue #3: a decorative room inside a larger area
+  can now hold its own door sensor and light.
+- Room reference parsing extracted as pure `parseRoomRef` (`space#area` /
+  `space#@roomId`), unit-tested; backend schema for `room_id`.
+
 ## v1.27.0 — 2026-07-21 (RGB light colors + alarm pulse; issue #3)
 - **RGB lights show their actual color**: an "on" light with a color tints its
   bulb icon, glow and — unless a custom ripple color is set — its presence ripple.

@@ -243,5 +243,6 @@
   "mode.view": "View",
   "mode.plan": "Plan",
   "mode.devices": "Devices",
-  "display.value": "Value instead of an icon"
+  "display.value": "Value instead of an icon",
+  "marker.subarea": "no area, manual"
 }

@@ -17,7 +17,7 @@ import {
   pointOnBoundary, mergeRooms, splitRoom, polygonArea, closestPointOnBoundary,
   snapToWall, openingAmount,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
-  stateIcon, lightColorOf, isAlarmState,
+  stateIcon, lightColorOf, isAlarmState, parseRoomRef,
   spaceDisplayOf, roomFillStyle, fillColorsOf, DEFAULT_FILL_COLORS, type FillColors,
   isActiveState, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.27.0';
+const CARD_VERSION = '1.28.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -1575,7 +1575,9 @@ class HouseplanCard extends LitElement {
         link: d.link || '',
         description: d.description || '',
         pdfs: [...(d.pdfs || [])],
-        room: d.space && d.area ? d.space + '#' + d.area : '',
+        room: d.marker?.room_id
+          ? d.space + '#@' + d.marker.room_id
+          : d.space && d.area ? d.space + '#' + d.area : '',
         busy: false,
       };
     } else {
@@ -1661,8 +1663,15 @@ class HouseplanCard extends LitElement {
     const res: { value: string; label: string }[] = [];
     for (const sp of this._serverCfg?.spaces || []) {
       for (const r of sp.rooms || []) {
-        if (!r.area) continue;
-        res.push({ value: sp.id + '#' + r.area, label: (sp.title || sp.id) + ' · ' + r.name });
+        if (r.area) {
+          res.push({ value: sp.id + '#' + r.area, label: (sp.title || sp.id) + ' · ' + r.name });
+        } else if (r.id) {
+          // sub-area room (no HA area): manual placement by room id — issue #3
+          res.push({
+            value: sp.id + '#@' + r.id,
+            label: (sp.title || sp.id) + ' · ' + r.name + ' · ' + this._t('marker.subarea'),
+          });
+        }
       }
     }
     return res;
@@ -1751,9 +1760,10 @@ class HouseplanCard extends LitElement {
       // determine the marker id
       let id: string;
       // a manually chosen room overrides the space/area for any icon
-      const [roomSp, roomAr] = dlg.room ? dlg.room.split('#') : ['', ''];
-      let space: string | null = roomSp || null;
-      let area: string | null = roomAr || null;
+      const roomRef = parseRoomRef(dlg.room);
+      let space: string | null = roomRef?.space || null;
+      let area: string | null = roomRef?.area || null;
+      const roomId: string | null = roomRef?.roomId || null;
       if (dlg.binding === 'virtual' && !space) space = this._space;
       id = markerIdForBinding(dlg.binding, dlg.devId, () => 'v_' + Date.now().toString(36));
       const oldId = dlg.devId;
@@ -1777,10 +1787,13 @@ class HouseplanCard extends LitElement {
       if (dlg.binding === 'virtual' || dlg.room) {
         marker.space = space;
         marker.area = area;
+        marker.room_id = roomId;
       }
       // the room changed → move the icon to its center
       const prevDev = oldId ? this._devices.find((x) => x.id === oldId) : null;
-      const roomChanged = !!dlg.room && prevDev != null && (prevDev.space !== space || prevDev.area !== area);
+      const prevRoomId = prevDev?.marker?.room_id ?? null;
+      const roomChanged = !!dlg.room && prevDev != null
+        && (prevDev.space !== space || prevDev.area !== area || prevRoomId !== roomId);
       // remove the previous marker (by the old id and by the new id)
       cfg.markers = cfg.markers.filter((m) => m.id !== id && m.id !== oldId);
       cfg.markers.push(marker);
@@ -1792,10 +1805,12 @@ class HouseplanCard extends LitElement {
         const spm = this._spaceModel(space || undefined);
         let cx = spm.vb[0] + spm.vb[2] / 2;
         let cy = spm.vb[1] + spm.vb[3] / 2;
-        if (area) {
-          const room = spm.rooms.find((r) => r.area === area);
-          if (room) [cx, cy] = this._roomCenter(room);
-        }
+        const room = roomId
+          ? spm.rooms.find((r) => r.id === roomId)
+          : area
+            ? spm.rooms.find((r) => r.area === area)
+            : undefined;
+        if (room) [cx, cy] = this._roomCenter(room);
         newPos = this._normPos(space || this._space, cx, cy);
         this._layout = { ...this._layout, [id]: newPos };
       }

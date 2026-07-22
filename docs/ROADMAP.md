@@ -74,12 +74,12 @@ Track progress in `custom_components/houseplan/quality_scale.yaml` (done/exempt 
 - [ ] GitHub: issue templates, discussions on, CONTRIBUTING.md (build/test in 5 minutes).
 - [ ] Semantic versioning discipline; keep release notes user-facing (they show in HACS).
 
-## Phase 11 — UX modes redesign (approved, see docs/UX-MODES.md)
+## Phase 11 — UX modes redesign ✅ DONE (v1.25.0–v1.28.0, see docs/UX-MODES.md)
 
-Three-tab interaction model (View / Plan / Devices): view mode is display-only —
-no dragging or editing; all editing splits between a Plan tab and a Devices tab.
-Deprecates "drag anywhere" and view-mode opening drag. Follow-ups from issue #3:
-state-reflecting icons, value display, RGB light colors, alarm visuals, sub-area rooms.
+Shipped: the three-tab interaction model (View / Plan / Devices, v1.25.0),
+state-reflecting icons + value display (v1.26.0), RGB light colors + alarm pulse
+(v1.27.0), sub-area rooms (v1.28.0). Remaining backlog from issue #3: music
+notes for players, directional TV ripples (not planned).
 
 ## Explicit non-goals (for now)
 

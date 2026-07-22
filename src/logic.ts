@@ -708,3 +708,27 @@ export function isAlarmState(
   if (domain === 'siren') return true;
   return domain === 'binary_sensor' && !!deviceClass && ALARM_CLASSES.has(deviceClass);
 }
+
+// ---------------- room references ----------------
+
+/**
+ * Parse a marker's room reference. Two shapes:
+ * - `space#area`   — a room bound to an HA area (historical form)
+ * - `space#@roomId` — a room WITHOUT an area (sub-area rooms, issue #3):
+ *   devices are placed into it manually, by room id.
+ */
+export function parseRoomRef(
+  v: string | null | undefined,
+): { space: string; area: string | null; roomId: string | null } | null {
+  if (!v) return null;
+  const i = v.indexOf('#');
+  if (i <= 0) return null;
+  const space = v.slice(0, i);
+  const rest = v.slice(i + 1);
+  if (!rest) return null;
+  if (rest.startsWith('@')) {
+    const roomId = rest.slice(1);
+    return roomId ? { space, area: null, roomId } : null;
+  }
+  return { space, area: rest, roomId: null };
+}

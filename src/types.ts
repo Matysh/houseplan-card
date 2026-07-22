@@ -38,6 +38,7 @@ export interface Marker {
   description?: string | null;
   pdfs?: PdfRef[];
   tap_action?: string | null; // per-device override: 'info' | 'more-info' | 'toggle'
+  room_id?: string | null; // manual placement into a room WITHOUT an HA area (sub-area rooms)
   display?: 'badge' | 'ripple' | 'icon_ripple' | 'value' | null; // how the device is drawn
   ripple_color?: string | null;
   ripple_size?: number | null; // max ring diameter, in icon diameters (default 3)
