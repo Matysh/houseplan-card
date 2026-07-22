@@ -140,6 +140,9 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Card vs tool conflict (v1.31.1): in the Plan editor, dragging/resizing or
+      clicking a room card never feeds the active tool (no draw point, no
+      delete-room confirm, no merge/split pick); clicks past the card work [auto]
 - [ ] Room cards (v1.31.0): with metrics enabled in space settings (4
       checkboxes: temperature, humidity, avg Zigbee, lights) the room name gets
       a smaller metrics line under it; lights show On/Off or "1 of 3" when

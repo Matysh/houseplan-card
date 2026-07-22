@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.31.1 — 2026-07-22
+- Plan editor: interacting with a room card (drag, corner-resize or a plain
+  click) no longer leaks into the active markup tool — previously the click
+  after a resize could add an outline point, pick a merge/split room or even
+  prompt to delete the room under the card.
+
 ## v1.31.0 — 2026-07-22 (room cards)
 - Room labels grew into **room cards**: the name on top, and an optional
   smaller metrics line below — temperature, humidity, average Zigbee signal
