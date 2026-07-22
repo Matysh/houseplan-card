@@ -14,7 +14,7 @@ const res = await page.evaluate(async () => {
   out.amberStroke = cs ? cs.stroke.includes('255, 193, 77') : null;
   out.amberFill = cs ? cs.fill.includes('255, 193, 77') : null;
   // split-выбор подсвечивается так же
-  c._mergeSel = null; c._tool = 'split'; c._splitSel = { roomId: room.id }; c.requestUpdate(); await c.updateComplete;
+  c._mergeSel = null; c._tool = 'split'; c._splitSel = { roomId: room.id, pts: [] }; c.requestUpdate(); await c.updateComplete;
   await new Promise((r) => setTimeout(r, 250));
   const el2 = [...sr().querySelectorAll('.room')].find((e) => e.classList.contains('picked'));
   out.splitPicked = !!el2 && getComputedStyle(el2).stroke.includes('255, 193, 77');

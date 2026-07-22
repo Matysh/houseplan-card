@@ -396,6 +396,14 @@ export const cardStyles = css`
       display: inline-flex;
     }
     .roomlabel .rlm.lit { opacity: 1; }
+    .iconauto {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      margin: 4px 0 0;
+    }
+    .iconauto ha-icon { --mdc-icon-size: 18px; }
     .rlhandle {
       display: none;
       position: absolute;
@@ -432,6 +440,68 @@ export const cardStyles = css`
       user-select: none;
       z-index: 3;
     }
+    /* decor (background) layer */
+    .decorlayer .dshape { pointer-events: none; }
+    .stage.mode-decor .decorlayer .dshape {
+      pointer-events: visiblePainted;
+      cursor: pointer;
+    }
+    .stage.mode-decor.dtool-select .decorlayer .dshape { cursor: move; }
+    .decorlayer .dsel {
+      filter: drop-shadow(0 0 3px var(--hp-accent));
+    }
+    .decorlayer .ddraft {
+      opacity: 0.75;
+      stroke-dasharray: 6 5;
+      pointer-events: none;
+    }
+    .decorlayer text {
+      font-weight: 600;
+      user-select: none;
+      dominant-baseline: middle;
+      text-anchor: middle;
+    }
+    .stage.mode-decor {
+      outline: 2px solid #26a69a;
+      outline-offset: -2px;
+    }
+    .stage.mode-decor.dtool-line, .stage.mode-decor.dtool-rect,
+    .stage.mode-decor.dtool-ellipse, .stage.mode-decor.dtool-text {
+      cursor: crosshair;
+    }
+    .stage.mode-decor .room, .stage.mode-decor .devlayer { pointer-events: none; }
+    .stage.mode-decor .oplock { pointer-events: none; }
+    /* decor mode: everything but the decor itself fades back */
+    .stage.mode-decor .room,
+    .stage.mode-decor .devlayer,
+    .stage.mode-decor .opening,
+    .stage.mode-decor .rlabel {
+      opacity: 0.35;
+    }
+    .decorbar .dcolor {
+      width: 30px; height: 26px; padding: 0; border: none; background: none; cursor: pointer;
+    }
+    .decorbar .dwidth {
+      font-family: inherit; font-size: 12px; border-radius: 6px;
+      background: var(--hp-bg2, transparent); color: var(--hp-txt); border: 1px solid var(--hp-muted);
+      padding: 3px 5px;
+    }
+    .decorbar .dfill {
+      display: inline-flex; align-items: center; gap: 4px; font-size: 12px; cursor: pointer;
+    }
+    .opghost {
+      stroke: var(--hp-open, #ff9800);
+      stroke-width: 5;
+      stroke-linecap: round;
+      stroke-dasharray: 7 6;
+      opacity: 0.85;
+      pointer-events: none;
+    }
+    .opghost-dot {
+      fill: var(--hp-open, #ff9800);
+      opacity: 0.85;
+      pointer-events: none;
+    }
     .rlabel {
       fill: var(--hp-muted);
       font-size: 15px;
@@ -444,6 +514,12 @@ export const cardStyles = css`
     }
     .stage.markup {
       cursor: crosshair;
+    }
+    /* room-picking stages: merge (both clicks) and split before a room is chosen */
+    .stage.markup.tool-merge,
+    .stage.markup.tool-split.pickstage,
+    .stage.markup.tool-delroom {
+      cursor: pointer;
     }
     .stage.markup .room {
       pointer-events: none;

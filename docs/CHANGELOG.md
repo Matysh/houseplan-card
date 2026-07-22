@@ -1,5 +1,63 @@
 # Changelog
 
+## v1.33.5 — 2026-07-22
+- Editor tabs got extended tooltips explaining what each editor is for (plan
+  geometry vs device icons vs visual decor).
+
+## v1.33.4 — 2026-07-22
+- Editing a device no longer makes its icon jump. Changing the HA binding
+  (which changes the marker id) migrates the saved position to the new id;
+  changing the room within the same space keeps the icon exactly where it
+  stands (previously it re-centered in the new room). Only a brand-new icon,
+  or a move to a room in a different space, is centered.
+
+## v1.33.3 — 2026-07-22
+- Device dialog: when no icon is set explicitly, the icon picker no longer
+  looks empty — it shows the **auto-derived icon** (from the icon rules /
+  device class) as a placeholder, with an "Auto: mdi:…" hint line underneath.
+  Picking an explicit icon replaces it as before; clearing returns to auto.
+
+## v1.33.2 — 2026-07-22
+- Removed the **Reset** button from the Device editor. It wiped the entire
+  layout — positions of all devices, room cards and their scales across every
+  space — behind a single confirm. Low value, high blast radius.
+
+## v1.33.1 — 2026-07-22
+- The dot grid is now shown in **every editor** (Plan, Devices, Background),
+  not just Plan — an instant visual cue that you are editing.
+- In the Background editor, rooms, devices, openings and labels fade to 35%
+  opacity so the decor you are drawing stands out; decor itself stays fully
+  opaque. Other modes are unaffected.
+
+## v1.33.0 — 2026-07-22 (background editor)
+- New third mode: **Background editor**. Draw purely visual decor on the plan —
+  lines, rectangles, ovals and text labels that never interact with rooms,
+  devices or fills. Shapes are drag-drawn with grid snap and a live preview;
+  text is placed via a small dialog (size S/M/L, color; double-click to edit).
+  Toolbar: Select (move, Delete key), Erase, color, three line widths and an
+  optional 25% fill for rects/ovals. Esc walks back: draft → selection →
+  Select tool → View.
+- The decor layer renders **under rooms** (a true underlay), is visible in all
+  modes and completely click-transparent outside the editor. Stored per space
+  in the server config (`space.decor`, validated on the backend, shared across
+  clients with the usual rev/optimistic locking).
+
+## v1.32.1 — 2026-07-22
+- Opening tool: hovering near a wall now shows a **dashed preview** of where
+  the opening would land — snapped onto the wall, default door length (90 cm),
+  with a center dot. No preview far from walls or over an existing opening
+  (a click there edits it instead).
+
+## v1.32.0 — 2026-07-22 (split polyline, tool cursors, Esc)
+- **Split can now cut along a polyline**, not just a straight chord: start on
+  a wall, click intermediate points inside the room, finish on another wall.
+  The path is validated (no wall crossings, no self-intersection) and drawn
+  live with vertices and a preview segment. Two clicks still work as before.
+- **Tool cursors**: Merge and delete-room show a pointer; Split shows a
+  pointer while picking the room, then a crosshair while cutting.
+- **Esc walks back out of Merge/Split** step by step: last cut point → first
+  point → room selection → back to the Draw tool. Merge: selection → tool.
+
 ## v1.31.2 — 2026-07-22
 - Plan editor: the room picked with the **Merge** tool (and the room selected
   for **Split**) is highlighted amber again. The `.outlined` markup style,

@@ -14,7 +14,7 @@ import {
 import {
   lqiColor, snapToGrid, samePoint, pointInPolygon, markerIdForBinding,
   segmentCm, formatLength, roomEdges, roomPoly, pointStrictlyInside, roomsOverlap,
-  pointOnBoundary, mergeRooms, splitRoom, polygonArea, closestPointOnBoundary,
+  pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside,
   snapToWall, openingAmount,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
   stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices,
@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.31.2';
+const CARD_VERSION = '1.33.5';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -86,7 +86,14 @@ class HouseplanCard extends LitElement {
   /** Interaction mode (docs/UX-MODES.md): view = display only, plan = geometry
    * editing, devices = marker placement/config. Never persisted — every load
    * starts in view. */
-  private _mode: 'view' | 'plan' | 'devices' = 'view';
+  private _mode: 'view' | 'plan' | 'devices' | 'decor' = 'view';
+  // ---- decor (background) editor ----
+  private _decorTool: 'select' | 'line' | 'rect' | 'ellipse' | 'text' | 'erase' = 'select';
+  private _decorStyle: { color: string; width: number; fill: boolean } = { color: '#607d8b', width: 3, fill: false };
+  private _decorDraft: { kind: 'line' | 'rect' | 'ellipse'; a: number[]; b: number[]; pid: number } | null = null;
+  private _decorMove: { id: string; start: number[]; orig: any; pid: number; moved: boolean } | null = null;
+  private _decorSel: string | null = null;
+  private _decorTextDialog: { id?: string; x: number; y: number; text: string; size: 's' | 'm' | 'l'; color: string } | null = null;
 
   /** Edit tabs are offered to admins only (hass.user missing → assume admin). */
   private get _canEdit(): boolean {
@@ -94,6 +101,11 @@ class HouseplanCard extends LitElement {
   }
 
   /** Legacy alias: markup machinery is active exactly in plan mode. */
+  /** Any edit mode is active (plan / devices / decor). */
+  private get _editing(): boolean {
+    return this._mode === 'plan' || this._mode === 'devices' || this._mode === 'decor';
+  }
+
   private get _markup(): boolean {
     return this._mode === 'plan';
   }
@@ -115,7 +127,7 @@ class HouseplanCard extends LitElement {
   private _openingInfo: OpeningCfg | null = null;
   private _opDrag: { id: string; moved: boolean } | null = null;
   private _mergeDialog: { aId: string; bId: string; poly: number[][]; pick: 'a' | 'b' } | null = null;
-  private _splitSel: { roomId: string; a: number[] | null } | null = null; // room being cut + first wall point
+  private _splitSel: { roomId: string; pts: number[][] } | null = null; // room being cut + the cut path so far
   // a split is applied only when the new room's dialog is confirmed — cancel leaves the room intact
   private _pendingSplit: { roomId: string; mainPoly: number[][]; newPoly: number[][] } | null = null;
   private _areaSel = '';
@@ -147,6 +159,7 @@ class HouseplanCard extends LitElement {
     binding: string;     // 'device:<id>' | 'entity:<eid>' | 'virtual'
     bindingFilter: string;
     icon: string;        // '' = auto
+    autoIcon: string;    // the icon the rules would give — picker placeholder
     display: 'badge' | 'ripple' | 'icon_ripple' | 'value';
     rippleColor: string; // '' = accent
     rippleSize: number;  // in icon diameters
@@ -224,6 +237,11 @@ class HouseplanCard extends LitElement {
     _openingInfo: { state: true },
     _mergeDialog: { state: true },
     _splitSel: { state: true },
+    _decorTool: { state: true },
+    _decorStyle: { state: true },
+    _decorDraft: { state: true },
+    _decorSel: { state: true },
+    _decorTextDialog: { state: true },
     _areaSel: { state: true },
     _nameSel: { state: true },
     _roomDialog: { state: true },
@@ -265,6 +283,7 @@ class HouseplanCard extends LitElement {
       if (this._settingsDialog) { this._settingsDialog = null; return; }
       if (this._markerDialog) { this._markerDialog = null; return; }
       if (this._openingDialog) { this._openingDialog = null; return; }
+      if (this._decorTextDialog) { this._decorTextDialog = null; return; }
       if (this._spaceDialog && !this._roomDialog) {
         // same semantics as the dialog's Cancel: an import queue is abandoned
         this._spaceDialog = null;
@@ -272,6 +291,22 @@ class HouseplanCard extends LitElement {
         this._importTotal = 0;
         return;
       }
+    }
+    if (this._mode === 'decor') {
+      if ((e.key === 'Delete' || e.key === 'Backspace') && this._decorSel &&
+          !(e.target as HTMLElement)?.closest?.('input, textarea, select')) {
+        e.preventDefault();
+        this._decorDeleteSel();
+        return;
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (this._decorDraft) this._decorDraft = null;
+        else if (this._decorSel) this._decorSel = null;
+        else if (this._decorTool !== 'select') this._decorTool = 'select';
+        else this._setMode('view');
+      }
+      return;
     }
     if (!this._markup) return;
     const undo = e.key === 'Escape' || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z');
@@ -284,6 +319,27 @@ class HouseplanCard extends LitElement {
     if (this._tool === 'draw' && this._path.length) {
       e.preventDefault();
       this._undoPoint();
+      return;
+    }
+    if (!undo) return;
+    // Esc walks back out of merge/split: point by point, then the room pick,
+    // then the tool itself (back to the neutral draw tool)
+    if (this._tool === 'split') {
+      e.preventDefault();
+      if (this._splitSel?.pts?.length) {
+        this._splitSel = { ...this._splitSel, pts: this._splitSel.pts.slice(0, -1) };
+        if (!this._splitSel.pts.length) this._cursorPt = null;
+      } else if (this._splitSel) {
+        this._splitSel = null;
+      } else {
+        this._tool = 'draw';
+      }
+      return;
+    }
+    if (this._tool === 'merge') {
+      e.preventDefault();
+      if (this._mergeSel) this._mergeSel = null;
+      else this._tool = 'draw';
     }
   }
 
@@ -907,6 +963,7 @@ class HouseplanCard extends LitElement {
     // do not interfere with icon dragging and markup drawing
     if (this._drag || this._markup) return;
     if (this._mode === 'devices' && (ev.target as HTMLElement).closest('.dev')) return;
+    if (this._mode === 'decor' && this._decorPointerDown(ev)) return;
     this._pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
     const v = this._viewOr(this._spaceModel().vb);
     if (this._pointers.size === 1) {
@@ -921,6 +978,14 @@ class HouseplanCard extends LitElement {
   }
 
   private _stagePointerMove(ev: PointerEvent): void {
+    if (this._decorDraft?.pid === ev.pointerId) {
+      this._decorDraft = { ...this._decorDraft, b: this._snap(this._svgPoint(ev)) };
+      return;
+    }
+    if (this._decorMove?.pid === ev.pointerId) {
+      this._decorMoveUpdate(ev);
+      return;
+    }
     if (!this._pointers.has(ev.pointerId)) {
       this._markupMove(ev);
       return;
@@ -961,6 +1026,15 @@ class HouseplanCard extends LitElement {
   }
 
   private _stagePointerUp(ev: PointerEvent): void {
+    if (this._decorDraft?.pid === ev.pointerId) {
+      this._decorCommitDraft();
+      return;
+    }
+    if (this._decorMove?.pid === ev.pointerId) {
+      if (this._decorMove.moved) this._saveConfig();
+      this._decorMove = null;
+      return;
+    }
     this._pointers.delete(ev.pointerId);
     if (this._pointers.size < 2) this._pinchStart = null;
     if (this._pointers.size === 0) {
@@ -1025,12 +1099,6 @@ class HouseplanCard extends LitElement {
     }
   }
 
-  private _resetLayout(): void {
-    if (!confirm(this._t('confirm.reset_layout'))) return;
-    this._layout = {};
-    this._persistLayout();
-  }
-
   private _showToast(msg: string): void {
     this._toast = msg;
     clearTimeout(this._toastTimer);
@@ -1082,9 +1150,9 @@ class HouseplanCard extends LitElement {
     return roomEdges(sp?.rooms || []).map((s) => [s[0] * NORM_W, s[1] * H, s[2] * NORM_W, s[3] * H]);
   }
 
-  private _setMode(mode: 'view' | 'plan' | 'devices'): void {
+  private _setMode(mode: 'view' | 'plan' | 'devices' | 'decor'): void {
     if (this._mode === mode) return;
-    if (mode === 'plan' && !this._norm) {
+    if ((mode === 'plan' || mode === 'decor') && !this._norm) {
       this._showToast(this._t('toast.markup_needs_server'));
       return;
     }
@@ -1098,6 +1166,9 @@ class HouseplanCard extends LitElement {
     this._pendingSplit = null;
     this._selId = null;
     this._tip = null;
+    this._decorDraft = null;
+    this._decorSel = null;
+    this._decorTool = 'select';
   }
 
 
@@ -1252,6 +1323,255 @@ class HouseplanCard extends LitElement {
   /** cm → render units via the space scale (cm per grid cell). */
   private _cmToUnits(cm: number): number {
     return (cm / this._cellCm) * this._gridPitch;
+  }
+
+  // ================= decor (background) layer =================
+
+  private get _decorList(): any[] {
+    const sp = this._curSpaceCfg;
+    return Array.isArray(sp?.decor) ? sp.decor : [];
+  }
+
+  private get _decorH(): number {
+    return NORM_W / (this._curSpaceCfg?.aspect || 1);
+  }
+
+  /** Begin a decor gesture. Returns true when the event is consumed (no pan). */
+  private _decorPointerDown(ev: PointerEvent): boolean {
+    const t = this._decorTool;
+    const onShape = (ev.target as HTMLElement).closest?.('.dshape') as SVGElement | null;
+    if (onShape) return true; // the shape's own handler deals with it
+    if (t === 'line' || t === 'rect' || t === 'ellipse') {
+      ev.preventDefault();
+      const p = this._snap(this._svgPoint(ev));
+      this._decorDraft = { kind: t, a: p, b: p, pid: ev.pointerId };
+      (ev.target as HTMLElement).setPointerCapture?.(ev.pointerId);
+      return true;
+    }
+    if (t === 'text') {
+      const p = this._snap(this._svgPoint(ev));
+      this._decorTextDialog = {
+        x: p[0] / NORM_W, y: p[1] / this._decorH,
+        text: '', size: 'm', color: this._decorStyle.color,
+      };
+      return true;
+    }
+    this._decorSel = null; // select/erase on empty space clears the selection
+    return false; // pan is allowed
+  }
+
+  /** Commit the dragged shape (ignore degenerate ones) and persist. */
+  private _decorCommitDraft(): void {
+    const d = this._decorDraft;
+    this._decorDraft = null;
+    if (!d) return;
+    const min = this._gridPitch * 0.5;
+    if (Math.hypot(d.b[0] - d.a[0], d.b[1] - d.a[1]) < min) return;
+    const W = NORM_W, H = this._decorH;
+    const st = this._decorStyle;
+    const id = 'dc' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+    let shape: any;
+    if (d.kind === 'line') {
+      shape = { id, kind: 'line', x1: d.a[0] / W, y1: d.a[1] / H, x2: d.b[0] / W, y2: d.b[1] / H,
+        color: st.color, width: st.width };
+    } else {
+      const x = Math.min(d.a[0], d.b[0]) / W, y = Math.min(d.a[1], d.b[1]) / H;
+      const w = Math.abs(d.b[0] - d.a[0]) / W, h = Math.abs(d.b[1] - d.a[1]) / H;
+      shape = { id, kind: d.kind, x, y, w, h, color: st.color, width: st.width, fill: st.fill };
+    }
+    const sp = this._curSpaceCfg;
+    sp.decor = [...this._decorList, shape];
+    this._decorSel = id;
+    this._saveConfig();
+    this.requestUpdate();
+  }
+
+  /** Select tool: pointerdown on a shape starts moving it. */
+  private _decorShapeDown(ev: PointerEvent, shape: any): void {
+    if (this._mode !== 'decor') return;
+    ev.stopPropagation();
+    ev.preventDefault();
+    if (this._decorTool === 'erase') {
+      const sp = this._curSpaceCfg;
+      sp.decor = this._decorList.filter((x) => x.id !== shape.id);
+      if (this._decorSel === shape.id) this._decorSel = null;
+      this._saveConfig();
+      this.requestUpdate();
+      return;
+    }
+    if (this._decorTool !== 'select') return;
+    this._decorSel = shape.id;
+    this._decorMove = {
+      id: shape.id, start: this._svgPoint(ev), orig: JSON.parse(JSON.stringify(shape)),
+      pid: ev.pointerId, moved: false,
+    };
+    (ev.target as HTMLElement).setPointerCapture?.(ev.pointerId);
+  }
+
+  private _decorMoveUpdate(ev: PointerEvent): void {
+    const m = this._decorMove!;
+    const p = this._svgPoint(ev);
+    const g = this._gridPitch;
+    const dx = snapToGrid(p[0] - m.start[0], g) / NORM_W;
+    const dy = snapToGrid(p[1] - m.start[1], g) / this._decorH;
+    if (dx || dy) m.moved = true;
+    const sp = this._curSpaceCfg;
+    sp.decor = this._decorList.map((x) => {
+      if (x.id !== m.id) return x;
+      const o = m.orig;
+      if (x.kind === 'line') return { ...x, x1: o.x1 + dx, y1: o.y1 + dy, x2: o.x2 + dx, y2: o.y2 + dy };
+      return { ...x, x: o.x + dx, y: o.y + dy };
+    });
+    this.requestUpdate();
+  }
+
+  /** Double click on a text shape (select tool) re-opens its dialog. */
+  private _decorShapeDbl(shape: any): void {
+    if (this._mode !== 'decor' || shape.kind !== 'text') return;
+    this._decorTextDialog = { id: shape.id, x: shape.x, y: shape.y,
+      text: shape.text, size: shape.size || 'm', color: shape.color };
+  }
+
+  private _decorSaveText(): void {
+    const d = this._decorTextDialog;
+    if (!d || !d.text.trim()) { this._decorTextDialog = null; return; }
+    const sp = this._curSpaceCfg;
+    if (d.id) {
+      sp.decor = this._decorList.map((x) => x.id === d.id
+        ? { ...x, text: d.text.trim(), size: d.size, color: d.color } : x);
+    } else {
+      const id = 'dc' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+      sp.decor = [...this._decorList, { id, kind: 'text', x: d.x, y: d.y,
+        text: d.text.trim(), size: d.size, color: d.color }];
+    }
+    this._decorTextDialog = null;
+    this._saveConfig();
+    this.requestUpdate();
+  }
+
+  private _decorDeleteSel(): void {
+    if (!this._decorSel) return;
+    const sp = this._curSpaceCfg;
+    sp.decor = this._decorList.filter((x) => x.id !== this._decorSel);
+    this._decorSel = null;
+    this._saveConfig();
+    this.requestUpdate();
+  }
+
+  private _renderDecorLayer(): TemplateResult {
+    const W = NORM_W, H = this._decorH;
+    const TXT = { s: 14, m: 20, l: 30 } as Record<string, number>;
+    const editing = this._mode === 'decor';
+    const shapes = this._decorList.map((sh) => {
+      const cls = 'dshape' + (editing && this._decorSel === sh.id ? ' dsel' : '');
+      const down = (e: PointerEvent) => this._decorShapeDown(e, sh);
+      const dbl = () => this._decorShapeDbl(sh);
+      if (sh.kind === 'line')
+        return svg`<line class="${cls}" x1="${sh.x1 * W}" y1="${sh.y1 * H}" x2="${sh.x2 * W}" y2="${sh.y2 * H}"
+          stroke="${sh.color}" stroke-width="${sh.width}" @pointerdown=${down}></line>`;
+      if (sh.kind === 'rect')
+        return svg`<rect class="${cls}" x="${sh.x * W}" y="${sh.y * H}" width="${sh.w * W}" height="${sh.h * H}"
+          stroke="${sh.color}" stroke-width="${sh.width}"
+          fill="${sh.fill ? sh.color : 'none'}" fill-opacity="${sh.fill ? 0.25 : 0}" @pointerdown=${down}></rect>`;
+      if (sh.kind === 'ellipse')
+        return svg`<ellipse class="${cls}" cx="${(sh.x + sh.w / 2) * W}" cy="${(sh.y + sh.h / 2) * H}"
+          rx="${(sh.w / 2) * W}" ry="${(sh.h / 2) * H}" stroke="${sh.color}" stroke-width="${sh.width}"
+          fill="${sh.fill ? sh.color : 'none'}" fill-opacity="${sh.fill ? 0.25 : 0}" @pointerdown=${down}></ellipse>`;
+      if (sh.kind === 'text')
+        return svg`<text class="${cls} dtext" x="${sh.x * W}" y="${sh.y * H}" fill="${sh.color}"
+          font-size="${TXT[sh.size] || TXT.m}" @pointerdown=${down} @dblclick=${dbl}>${sh.text}</text>`;
+      return nothing;
+    });
+    // живое превью рисуемой фигуры
+    let draft: unknown = nothing;
+    const d = this._decorDraft;
+    if (d) {
+      const st = this._decorStyle;
+      if (d.kind === 'line')
+        draft = svg`<line class="ddraft" x1="${d.a[0]}" y1="${d.a[1]}" x2="${d.b[0]}" y2="${d.b[1]}"
+          stroke="${st.color}" stroke-width="${st.width}"></line>`;
+      else {
+        const x = Math.min(d.a[0], d.b[0]), y = Math.min(d.a[1], d.b[1]);
+        const w = Math.abs(d.b[0] - d.a[0]), h = Math.abs(d.b[1] - d.a[1]);
+        draft = d.kind === 'rect'
+          ? svg`<rect class="ddraft" x="${x}" y="${y}" width="${w}" height="${h}" stroke="${st.color}"
+              stroke-width="${st.width}" fill="${st.fill ? st.color : 'none'}" fill-opacity="${st.fill ? 0.15 : 0}"></rect>`
+          : svg`<ellipse class="ddraft" cx="${x + w / 2}" cy="${y + h / 2}" rx="${w / 2}" ry="${h / 2}"
+              stroke="${st.color}" stroke-width="${st.width}" fill="${st.fill ? st.color : 'none'}" fill-opacity="${st.fill ? 0.15 : 0}"></ellipse>`;
+      }
+    }
+    return svg`<g class="decorlayer">${shapes}${draft}</g>` as unknown as TemplateResult;
+  }
+
+  private _renderDecorBar(): TemplateResult {
+    const tools = [
+      ['select', 'mdi:cursor-default-outline', 'decor.select'],
+      ['line', 'mdi:vector-line', 'decor.line'],
+      ['rect', 'mdi:rectangle-outline', 'decor.rect'],
+      ['ellipse', 'mdi:ellipse-outline', 'decor.ellipse'],
+      ['text', 'mdi:format-text', 'decor.text'],
+      ['erase', 'mdi:eraser', 'decor.erase'],
+    ] as const;
+    return html`<div class="editbar decorbar">
+      <ha-icon icon="mdi:draw" class="warn"></ha-icon>
+      ${tools.map(
+        ([t, ic, k]) => html`<button class="btn ${this._decorTool === t ? 'on' : ''}"
+          @click=${() => { this._decorTool = t; this._decorDraft = null; }}
+          title=${this._t(k)}>
+          <ha-icon icon=${ic}></ha-icon><span class="ml">${this._t(k)}</span>
+        </button>`,
+      )}
+      <input type="color" class="dcolor" .value=${this._decorStyle.color}
+        title=${this._t('decor.color')}
+        @input=${(e: Event) => (this._decorStyle = { ...this._decorStyle, color: (e.target as HTMLInputElement).value })} />
+      <select class="dwidth" title=${this._t('decor.width')}
+        @change=${(e: Event) => (this._decorStyle = { ...this._decorStyle, width: Number((e.target as HTMLSelectElement).value) })}>
+        ${[[1.5, 'decor.w_thin'], [3, 'decor.w_mid'], [6, 'decor.w_thick']].map(
+          ([v, k]) => html`<option value=${v} ?selected=${this._decorStyle.width === v}>${this._t(k as any)}</option>`,
+        )}
+      </select>
+      <label class="dfill"><input type="checkbox" .checked=${this._decorStyle.fill}
+        @change=${(e: Event) => (this._decorStyle = { ...this._decorStyle, fill: (e.target as HTMLInputElement).checked })} />
+        ${this._t('decor.fill')}</label>
+      <span class="spacer"></span>
+      <button class="btn barclose" title=${this._t('title.close_editor')}
+        @click=${() => this._setMode('view')}>
+        <ha-icon icon="mdi:close"></ha-icon>
+      </button>
+    </div>`;
+  }
+
+  private _renderDecorTextDialog(): TemplateResult {
+    const d = this._decorTextDialog!;
+    return html`<div class="menuwrap dialogwrap" @click=${() => (this._decorTextDialog = null)}>
+      <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
+        <div class="hd"><ha-icon icon="mdi:format-text"></ha-icon>${this._t('decor.text_title')}</div>
+        <div class="body">
+          <label>${this._t('decor.text_label')}</label>
+          <input class="namein" .value=${d.text} autofocus
+            @input=${(e: Event) => (this._decorTextDialog = { ...d, text: (e.target as HTMLInputElement).value })}
+            @keydown=${(e: KeyboardEvent) => { if (e.key === 'Enter') this._decorSaveText(); }} />
+          <label>${this._t('decor.text_size')}</label>
+          <div class="radiorow">
+            ${(['s', 'm', 'l'] as const).map(
+              (sz) => html`<label class="srcrow inline">
+                <input type="radio" name="dtsize" .checked=${d.size === sz}
+                  @change=${() => (this._decorTextDialog = { ...d, size: sz })} />
+                <span>${this._t(('decor.size_' + sz) as any)}</span>
+              </label>`,
+            )}
+          </div>
+          <label>${this._t('decor.color')}</label>
+          <input type="color" .value=${d.color}
+            @input=${(e: Event) => (this._decorTextDialog = { ...d, color: (e.target as HTMLInputElement).value })} />
+        </div>
+        <div class="row">
+          <span class="spacer"></span>
+          <button class="btn ghost" @click=${() => (this._decorTextDialog = null)}>${this._t('btn.cancel')}</button>
+          <button class="btn primary" ?disabled=${!d.text.trim()} @click=${() => this._decorSaveText()}>${this._t('btn.save')}</button>
+        </div>
+      </div>
+    </div>`;
   }
 
   /** Opening tool: click an existing opening to edit it, or a wall to place one. */
@@ -1451,7 +1771,7 @@ class HouseplanCard extends LitElement {
     if (!this._splitSel) {
       const hit = [...rooms].reverse().find((r) => this._pointInRoom(raw, r));
       if (!hit?.id) return;
-      this._splitSel = { roomId: hit.id, a: null };
+      this._splitSel = { roomId: hit.id, pts: [] };
       return;
     }
     const room = rooms.find((r) => r.id === this._splitSel!.roomId);
@@ -1469,16 +1789,30 @@ class HouseplanCard extends LitElement {
     const eps = this._gridPitch * 0.02;
     const pull = this._gridPitch * 6; // ≈2.5% of the plan width — generous but intentional
     const near = closestPointOnBoundary(raw, poly);
-    const pt = near && Math.hypot(near[0] - raw[0], near[1] - raw[1]) <= pull ? near : null;
-    if (!pt || !pointOnBoundary(pt, poly, eps)) {
-      this._showToast(this._t('toast.split_pick_wall'));
+    const wallPt = near && Math.hypot(near[0] - raw[0], near[1] - raw[1]) <= pull ? near : null;
+    const onWall = !!wallPt && pointOnBoundary(wallPt, poly, eps);
+    const cur = this._splitSel.pts;
+    if (!cur.length) {
+      // the cut starts on a wall
+      if (!onWall) {
+        this._showToast(this._t('toast.split_pick_wall'));
+        return;
+      }
+      this._splitSel = { ...this._splitSel, pts: [wallPt!] };
       return;
     }
-    if (!this._splitSel.a) {
-      this._splitSel = { ...this._splitSel, a: pt };
+    if (!onWall) {
+      // an interior click adds an intermediate vertex of the cut path
+      const mid = this._snap(raw);
+      if (!ptInside(mid, poly, eps)) {
+        this._showToast(this._t('toast.split_pick_inside'));
+        return;
+      }
+      this._splitSel = { ...this._splitSel, pts: [...cur, mid] };
       return;
     }
-    const parts = splitRoom(poly, this._splitSel.a, pt, eps);
+    // a wall point finishes the cut
+    const parts = splitRoomPath(poly, [...cur, wallPt!], eps);
     if (!parts) {
       this._showToast(this._t('toast.split_bad_cut'));
       return;
@@ -1500,10 +1834,30 @@ class HouseplanCard extends LitElement {
 
   private _markupMove(ev: MouseEvent): void {
     if (!this._markup) return;
+    if (this._tool === 'opening') {
+      // hover preview: where the opening would land (raw point, wall-snapped later)
+      this._cursorPt = this._svgPoint(ev);
+      return;
+    }
     const drawing = this._tool === 'draw' && this._path.length && !this._contourClosed;
-    const cutting = this._tool === 'split' && !!this._splitSel?.a;
+    const cutting = this._tool === 'split' && !!this._splitSel?.pts?.length;
     if (!drawing && !cutting) return;
     this._cursorPt = this._snap(this._svgPoint(ev));
+  }
+
+  /** Dashed hover preview of an opening: same snap and default length as the click. */
+  private get _openingPreview(): { x: number; y: number; angle: number; rlen: number } | null {
+    if (this._tool !== 'opening' || !this._cursorPt) return null;
+    const raw = this._cursorPt;
+    // an existing opening under the cursor will be edited, not added — no preview
+    const eps = this._gridPitch * 1.5;
+    const hit = this._openingsR.find(
+      (o) => Math.hypot(raw[0] - o.rx, raw[1] - o.ry) <= Math.max(o.rlen / 2, eps),
+    );
+    if (hit) return null;
+    const snap = snapToWall(raw, this._spaceModel().rooms, eps);
+    if (!snap) return null;
+    return { ...snap, rlen: this._cmToUnits(90) };
   }
 
   /** Save a room with a mandatory binding to an HA area. */
@@ -1631,6 +1985,7 @@ class HouseplanCard extends LitElement {
         binding: d.bindingKind === 'virtual' ? 'virtual' : d.bindingKind + ':' + d.bindingRef,
         bindingFilter: '',
         icon: d.marker?.icon || '',
+        autoIcon: d.icon || '',
         display: d.marker?.display || 'badge',
         rippleColor: d.marker?.ripple_color || '',
         rippleSize: Number(d.marker?.ripple_size) > 0 ? Number(d.marker!.ripple_size) : 3,
@@ -1648,7 +2003,7 @@ class HouseplanCard extends LitElement {
       };
     } else {
       this._markerDialog = {
-        name: '', binding: 'virtual', bindingFilter: '', icon: '',
+        name: '', binding: 'virtual', bindingFilter: '', icon: '', autoIcon: '',
         display: 'badge', rippleColor: '', rippleSize: 3, size: 1, angle: 0,
         tapAction: '', model: '',
         link: '', description: '', pdfs: [], room: '', busy: false,
@@ -1863,11 +2218,29 @@ class HouseplanCard extends LitElement {
       // remove the previous marker (by the old id and by the new id)
       cfg.markers = cfg.markers.filter((m) => m.id !== id && m.id !== oldId);
       cfg.markers.push(marker);
-      // position: a new icon OR the room changed → place it at the center of the room/space.
-      // Write POINT-WISE (layout/update), not the whole layout — a full layout/set overwrites
-      // positions changed in other windows (the v1.4.4 incident).
+      // Position rule (owner's decision, v1.33.4): editing an existing icon —
+      // rebinding it to another HA device/entity or to another room — must NOT
+      // move it. Its current position (saved or the ephemeral auto one) is
+      // migrated to the new marker id. Only two cases still center the icon:
+      // a truly NEW icon, and a move to a room in a DIFFERENT space (keeping
+      // the old coordinates there would be meaningless).
+      // Write POINT-WISE (layout/update), not the whole layout — a full layout/set
+      // overwrites positions changed in other windows (the v1.4.4 incident).
       let newPos: { s: string; x: number; y: number } | null = null;
-      if (!this._layout[id] || roomChanged) {
+      const targetSpace = space || prevDev?.space || this._space;
+      const prevRec = oldId ? this._layout[oldId] : null;
+      const prevPos = prevRec
+        ? { s: prevRec.s || prevDev?.space || this._space, x: prevRec.x, y: prevRec.y }
+        : oldId && prevDev && this._defPos[oldId]
+          ? this._normPos(prevDev.space, this._defPos[oldId].x, this._defPos[oldId].y)
+          : null;
+      if (prevPos && prevPos.s === targetSpace) {
+        // stays in place; pin it under the (possibly new) id
+        if (id !== oldId || !this._layout[id] || roomChanged) {
+          newPos = { s: prevPos.s, x: prevPos.x, y: prevPos.y };
+          this._layout = { ...this._layout, [id]: newPos };
+        }
+      } else if (!this._layout[id] || roomChanged) {
         const spm = this._spaceModel(space || undefined);
         let cx = spm.vb[0] + spm.vb[2] / 2;
         let cy = spm.vb[1] + spm.vb[3] / 2;
@@ -2460,9 +2833,9 @@ class HouseplanCard extends LitElement {
           </div>
           ${this._canEdit
             ? html`<div class="modes">
-                ${([['plan', 'mdi:floor-plan'], ['devices', 'mdi:tune-variant']] as const).map(
+                ${([['plan', 'mdi:floor-plan'], ['devices', 'mdi:tune-variant'], ['decor', 'mdi:draw']] as const).map(
                   ([m, ic]) => html`<button class="modetab ${this._mode === m ? 'active' : ''}"
-                    title=${this._t(('mode.' + m) as any)}
+                    title=${this._t(('mode.' + m + '_tip') as any)}
                     @click=${() => { if (this._mode !== m) this._setMode(m); }}>
                     <ha-icon icon=${ic}></ha-icon><span class="ml">${this._t(('mode.' + m) as any)}</span>
                     ${this._mode === m
@@ -2487,10 +2860,10 @@ class HouseplanCard extends LitElement {
               </button>`
             : nothing}
         </div>
-        ${this._markup ? this._renderMarkupBar() : this._mode === 'devices' ? this._renderDevicesBar() : nothing}
+        ${this._markup ? this._renderMarkupBar() : this._mode === 'devices' ? this._renderDevicesBar() : this._mode === 'decor' ? this._renderDecorBar() : nothing}
         </div>
 
-        <div class="stage ${this._markup ? 'markup' : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}"
+        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}"
           style="height:calc(100dvh - 118px)"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
@@ -2500,10 +2873,14 @@ class HouseplanCard extends LitElement {
           @pointercancel=${(e: PointerEvent) => this._stagePointerUp(e)}>
           <div class="zoomwrap">
           <svg viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="xMidYMid meet">
-            ${this._markup ? this._renderMarkupDefs(vb) : nothing}
+            ${this._editing ? this._renderMarkupDefs(vb) : nothing}
+            ${this._editing && !this._markup
+              ? svg`<rect x="${vb[0]}" y="${vb[1]}" width="${vb[2]}" height="${vb[3]}" fill="url(#hp-grid)" pointer-events="none"></rect>`
+              : nothing}
             ${space.bg
               ? svg`<image href="${space.bg.href}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}" preserveAspectRatio="none" />`
               : nothing}
+            ${this._renderDecorLayer()}
             ${space.rooms.filter((r) => r.area || this._markup || disp.showBorders).map((r) => {
               let cls = 'room ' + (space.bg ? 'overlay' : 'yard') + (this._markup ? ' outlined' : '');
               if (this._markup && (r.id === this._mergeSel || r.id === this._splitSel?.roomId))
@@ -2570,6 +2947,7 @@ class HouseplanCard extends LitElement {
         ${this._mergeDialog ? this._renderMergeDialog() : nothing}
         ${this._openingDialog ? this._renderOpeningDialog() : nothing}
         ${this._openingInfo ? this._renderOpeningInfoCard() : nothing}
+        ${this._decorTextDialog ? this._renderDecorTextDialog() : nothing}
         ${this._spaceDialog ? this._renderSpaceDialog() : nothing}
         ${this._markerDialog ? this._renderMarkerDialog() : nothing}
         ${this._infoCard ? this._renderInfoCard() : nothing}
@@ -2822,7 +3200,8 @@ class HouseplanCard extends LitElement {
     if (!this._markup || !this._cursorPt) return null;
     if (this._tool === 'draw' && this._path.length && !this._contourClosed)
       return this._path[this._path.length - 1];
-    if (this._tool === 'split' && this._splitSel?.a) return this._splitSel.a;
+    if (this._tool === 'split' && this._splitSel?.pts?.length)
+      return this._splitSel.pts[this._splitSel.pts.length - 1];
     return null;
   }
 
@@ -3089,10 +3468,23 @@ class HouseplanCard extends LitElement {
             x2="${this._cursorPt[0]}" y2="${this._cursorPt[1]}"></line>`
         : nothing}
       ${path.map((p, i) => svg`<circle class="vertex ${i === 0 ? 'first' : ''}" cx="${p[0]}" cy="${p[1]}" r="${g * 0.22}"></circle>`)}
-      ${this._tool === 'split' && this._splitSel?.a
-        ? svg`<circle class="vertex first" cx="${this._splitSel.a[0]}" cy="${this._splitSel.a[1]}" r="${g * 0.22}"></circle>
+      ${(() => {
+        const op = this._openingPreview;
+        if (!op) return nothing;
+        const rad = (op.angle * Math.PI) / 180;
+        const dx = (Math.cos(rad) * op.rlen) / 2;
+        const dy = (Math.sin(rad) * op.rlen) / 2;
+        return svg`<line class="opghost" x1="${op.x - dx}" y1="${op.y - dy}"
+          x2="${op.x + dx}" y2="${op.y + dy}"></line>
+          <circle class="opghost-dot" cx="${op.x}" cy="${op.y}" r="${g * 0.18}"></circle>`;
+      })()}
+      ${this._tool === 'split' && this._splitSel?.pts?.length
+        ? svg`${this._splitSel.pts.length > 1
+              ? svg`<polyline class="pathline" points="${this._splitSel.pts.map((p) => p.join(',')).join(' ')}"></polyline>`
+              : nothing}
+            ${this._splitSel.pts.map((p, i) => svg`<circle class="vertex ${i === 0 ? 'first' : ''}" cx="${p[0]}" cy="${p[1]}" r="${g * 0.22}"></circle>`)}
             ${this._cursorPt
-              ? svg`<line class="preview" x1="${this._splitSel.a[0]}" y1="${this._splitSel.a[1]}"
+              ? svg`<line class="preview" x1="${this._splitSel.pts[this._splitSel.pts.length - 1][0]}" y1="${this._splitSel.pts[this._splitSel.pts.length - 1][1]}"
                   x2="${this._cursorPt[0]}" y2="${this._cursorPt[1]}"></line>`
               : nothing}`
         : nothing}
@@ -3148,9 +3540,6 @@ class HouseplanCard extends LitElement {
       <button class="btn ${this._showAll ? 'on' : ''}" @click=${this._toggleShowAll}
         title=${this._t('title.show_all')}>
         <ha-icon icon="${this._showAll ? 'mdi:eye' : 'mdi:eye-off-outline'}"></ha-icon>${this._t('devbar.show_all')}
-      </button>
-      <button class="btn" @click=${this._resetLayout} title=${this._t('title.reset_layout')}>
-        <ha-icon icon="mdi:backup-restore"></ha-icon>${this._t('devbar.reset')}
       </button>
       <button class="btn" @click=${this._openRulesDialog} title=${this._t('title.icon_rules')}>
         <ha-icon icon="mdi:shape-plus-outline"></ha-icon>${this._t('devbar.rules')}
@@ -3271,10 +3660,17 @@ class HouseplanCard extends LitElement {
           <label>${this._t('marker.icon_label')}</label>
           ${customElements.get('ha-icon-picker')
             ? html`<ha-icon-picker .hass=${this.hass} .value=${d.icon}
+                .placeholder=${d.autoIcon || undefined}
+                .fallbackPath=${undefined}
                 @value-changed=${(e: any) => (this._markerDialog = { ...d, icon: e.detail.value || '' })}></ha-icon-picker>`
-            : html`<input class="namein" type="text" placeholder=${this._t('marker.icon_ph')}
+            : html`<input class="namein" type="text"
+                placeholder=${d.autoIcon || this._t('marker.icon_ph')}
                 .value=${d.icon}
                 @input=${(e: Event) => (this._markerDialog = { ...d, icon: (e.target as HTMLInputElement).value })} />`}
+          ${!d.icon && d.autoIcon
+            ? html`<p class="muted iconauto"><ha-icon icon=${d.autoIcon}></ha-icon>
+                ${this._t('marker.icon_auto', { icon: d.autoIcon })}</p>`
+            : nothing}
 
           <label>${this._t('marker.display_label')}</label>
           <select class="areasel"

@@ -140,6 +140,37 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Icon stays on edit (v1.33.4): rebinding a device (HA device/entity) or
+      changing its room within the same space never moves the icon — the saved
+      or auto position migrates to the new marker id; only a brand-new icon or
+      a move to another space centers it in the target room [auto]
+- [ ] Icon picker placeholder (v1.33.3): with no explicit icon the device
+      dialog's icon picker shows the auto-derived icon as its placeholder, plus
+      an "Auto: mdi:..." hint line with the icon preview; the hint disappears
+      once an explicit icon is picked [auto]
+- [ ] No Reset button (v1.33.2): the Device editor toolbar has three tools —
+      add, show all, icon rules; the layout-wiping Reset is gone [auto]
+- [ ] Grid in all editors + decor fade (v1.33.1): the dot grid shows in the
+      Device and Background editors too (instant "I'm editing" cue), not in
+      View; in the Background editor rooms/devices/openings/labels fade to 35%
+      while decor shapes stay fully opaque; no fade in the other editors [auto]
+- [ ] Background editor (v1.33.0): third tab with its own toolbar (select /
+      line / rect / oval / text / erase + color, width, fill, X); shapes drag-
+      drawn with grid snap and live preview; degenerate shapes dropped; text
+      via dialog (S/M/L, color; dblclick re-edits); Select moves (snap), Delete
+      removes, Erase deletes on click; Esc: draft → selection → select tool →
+      View; decor renders under rooms, visible everywhere, inert outside the
+      editor; stored in space.decor (rev/lock, backend schema) [auto]
+- [ ] Opening hover preview (v1.32.1): with the Opening tool, hovering near a
+      wall shows a dashed 90 cm ghost snapped onto the wall (with a center
+      dot); no ghost far from walls, over an existing opening (click = edit),
+      or in other tools [auto]
+- [ ] Split polyline + cursors + Esc (v1.32.0): Merge shows a pointer cursor,
+      Split shows pointer until a room is picked then crosshair; the cut can be
+      a polyline — start on a wall, intermediate clicks inside the room, finish
+      on a wall (path drawn live, walls/self-crossing rejected); Esc walks back:
+      last cut point → room pick → back to the Draw tool (same for Merge:
+      selection → tool) [auto]
 - [ ] Merge/split pick highlight (v1.31.2): the first room clicked with the
       Merge tool (and the split-selected room) gets an amber outline + fill;
       visible over the blue markup outlines [auto]

@@ -6,7 +6,7 @@ const res = await page.evaluate(async () => {
   const sr = () => c.shadowRoot || c.renderRoot;
   const tabs = () => [...sr().querySelectorAll('.modetab')];
   // 1) две вкладки, Просмотра нет, крестиков в неактивных нет
-  out.twoTabs = tabs().length === 2;
+  out.twoTabs = tabs().length === 3; // третья — Редактор подложки (v1.33.0)
   out.labels = tabs().map((t) => t.textContent.trim());
   out.noCrossIdle = sr().querySelectorAll('.modetab .closex').length === 0;
   out.startView = c._mode === 'view';
@@ -23,7 +23,7 @@ const res = await page.evaluate(async () => {
   tabs()[1].click(); await c.updateComplete;
   out.directSwitch = c._mode === 'devices';
   out.devBar = !!sr().querySelector('.editbar.devbar');
-  out.devBarBtns = sr().querySelectorAll('.editbar.devbar .btn:not(.barclose)').length;
+  out.devBarBtns = sr().querySelectorAll('.editbar.devbar .btn:not(.barclose)').length === 3; // add/show-all/rules (v1.33.2: Reset removed)
   // 5) инструменты устройств из шапки исчезли (в .bar их больше нет)
   out.headerCleanInDev = !sr().querySelector('.bar > .btn[title*="' + (c._t('title.add_device')) + '"]');
   // 6) крестик на панели → Просмотр
