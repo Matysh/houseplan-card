@@ -2772,7 +2772,7 @@ class HouseplanCard extends LitElement {
       const top = ((py - view.y) / view.h) * 100;
       return html`<div class="oplock ${locked ? 'locked' : known ? 'unlocked' : 'unknown'}"
         style="left:${left}%;top:${top}%"
->
+        @click=${(e: MouseEvent) => { e.stopPropagation(); if (this._mode === 'view') this._openingInfo = o; }}>
         <ha-icon icon="${locked ? 'mdi:lock' : known ? 'mdi:lock-open-variant' : 'mdi:lock-question'}"></ha-icon>
       </div>`;
     })}`;

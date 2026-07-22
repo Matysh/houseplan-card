@@ -40,9 +40,14 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] Devices: icon drag works, click opens the marker editor directly; +/👁/↺/⬡
       buttons; accent stage frame [auto]
 - [ ] Mode tabs hidden for non-admin users; segmented control highlights the active mode
-- [ ] Openings are FULLY inert in View (v1.28.1): no cursor change, no hover outline,
-      no hit target, no click — pure status graphics; the lock badge is a pure
-      indicator too [auto]
+- [ ] Openings in View (v1.28.1): the door/window itself is a pure drawing — no
+      cursor change, no hover outline, no hit target, no click, regardless of
+      bindings [auto]
+- [ ] The LOCK BADGE is the one exception: when a lock is bound it is shown and
+      clickable in View (pointer cursor, click → door/lock info card); inert in
+      Plan so it does not fight editing [auto]
+- [ ] Device icons in View show a pointer cursor (no grab); grab only in the
+      Devices mode [auto]
 - [ ] In Plan an opening is interactive: grab cursor, hover outline, drag along
       walls, click (any tool) opens its properties [auto]
 

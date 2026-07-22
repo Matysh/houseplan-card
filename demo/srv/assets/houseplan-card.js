@@ -264,7 +264,7 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
       cursor: grabbing;
     }
     .oplock {
-      pointer-events: none; /* a status badge, not a control */
+      pointer-events: none; /* inert while editing; clickable in View (rule below) */
       position: absolute;
       transform: translate(-50%, -50%);
       width: calc(var(--icon-size, 2.5cqw) * 0.62);
@@ -275,9 +275,11 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
       justify-content: center;
       background: var(--hp-bg);
       border: 1px solid var(--hp-line);
+      z-index: 1;
+    }
+    .stage.mode-view .oplock {
       pointer-events: auto;
       cursor: pointer;
-      z-index: 1;
     }
     .oplock ha-icon {
       --mdc-icon-size: calc(var(--icon-size, 2.5cqw) * 0.4);
@@ -547,7 +549,7 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
       align-items: center;
       justify-content: center;
       color: var(--hp-txt);
-      cursor: grab;
+      cursor: pointer;
       pointer-events: auto;
       transition: background 0.15s, border-color 0.15s, opacity 0.2s;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
@@ -560,9 +562,8 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
       justify-content: center;
       line-height: 0;
     }
-    .dev:active {
-      cursor: grabbing;
-    }
+    .stage.mode-devices .dev { cursor: grab; }
+    .stage.mode-devices .dev:active { cursor: grabbing; }
     .dev:hover {
       background: var(--hp-accent);
       color: var(--text-primary-color, #fff);
@@ -1463,7 +1464,7 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
           @pointercancel=${e=>this._opPointerUp(e,t)}></rect>
       </g>`})}`}_renderOpeningLocks(t){const e=this._openingsR.filter(t=>"door"===t.type&&t.lock);return e.length?H`${e.map(e=>{const i=this.hass.states[e.lock]?.state,s="locked"===i,o=s||["unlocked","open","opening","unlocking","locking"].includes(String(i)),n=(e.angle+90)*Math.PI/180,r=16*(e.flip_v?-1:1),a=e.rx+Math.cos(n)*r,l=e.ry+Math.sin(n)*r,c=(a-t.x)/t.w*100,h=(l-t.y)/t.h*100;return H`<div class="oplock ${s?"locked":o?"unlocked":"unknown"}"
         style="left:${c}%;top:${h}%"
->
+        @click=${t=>{t.stopPropagation(),"view"===this._mode&&(this._openingInfo=e)}}>
         <ha-icon icon="${s?"mdi:lock":o?"mdi:lock-open-variant":"mdi:lock-question"}"></ha-icon>
       </div>`})}`:H``}_renderOpeningInfoCard(){const t=this._openingInfo,e=t.contact?this.hass.states[t.contact]?.state:null,i=this._openingAmt(t),s=t.lock?this.hass.states[t.lock]?.state:null,o=(t,e,i,s="")=>H`<div class="oprow ${s}"><ha-icon icon=${t}></ha-icon><span>${e}</span><b>${i}</b></div>`;return H`<div class="menuwrap dialogwrap" @click=${()=>this._openingInfo=null}>
       <div class="dialog" @click=${t=>t.stopPropagation()}>
