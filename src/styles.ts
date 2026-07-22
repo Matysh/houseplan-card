@@ -443,6 +443,20 @@ export const cardStyles = css`
       font-family: inherit;
     }
     .modetab ha-icon { --mdc-icon-size: 15px; }
+    .modetab .closex {
+      --mdc-icon-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      margin-left: 2px;
+      opacity: 0.75;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .modetab .closex:hover { opacity: 1; }
+    .editbar .barclose {
+      padding: 4px 6px;
+      margin-left: 6px;
+    }
     .modetab.active {
       background: var(--hp-accent);
       color: var(--text-primary-color, #fff);

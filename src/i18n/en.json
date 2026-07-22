@@ -240,13 +240,17 @@
   "gs.saved": "General settings saved",
   "space.show_lqi": "Show zigbee signal (LQI) next to devices",
   "gs.light_none": "No light sources",
-  "mode.view": "View",
-  "mode.plan": "Plan",
-  "mode.devices": "Devices",
+  "mode.plan": "Plan editor",
+  "mode.devices": "Device editor",
   "display.value": "Value instead of an icon",
   "marker.subarea": "no area, manual",
   "device.new": "New device — open its editor to dismiss",
   "opening.unlock_action": "Unlock",
   "opening.lock_action": "Lock",
-  "opening.lock_pending": "Working…"
+  "opening.lock_pending": "Working…",
+  "title.close_editor": "Close editor (back to view)",
+  "devbar.add": "Add",
+  "devbar.show_all": "Show all",
+  "devbar.reset": "Reset",
+  "devbar.rules": "Icon rules"
 }

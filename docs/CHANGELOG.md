@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.30.2 — 2026-07-22 (editor tabs redesign)
+- Mode tabs renamed and reduced to two: **"Plan editor"** and **"Device
+  editor"**. View is no longer a tab — it is the implicit default state.
+- The Device editor now has its own bottom toolbar (add / show all / reset
+  layout / icon rules moved out of the header), mirroring the Plan toolbar.
+- Both toolbars and the active tab itself got an **X** button that closes the
+  editor and returns to View. Re-clicking the active tab does nothing;
+  switching Plan↔Devices is direct.
+
 ## v1.30.1 — 2026-07-22 (space gear polish)
 - The gear icon next to the space name is now visible in **every mode** (not
   just Plan) for users who can edit, so space settings are always one click

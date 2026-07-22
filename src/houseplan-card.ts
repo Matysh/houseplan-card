@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.30.1';
+const CARD_VERSION = '1.30.2';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -2427,11 +2427,15 @@ class HouseplanCard extends LitElement {
           </div>
           ${this._canEdit
             ? html`<div class="modes">
-                ${([['view', 'mdi:eye-outline'], ['plan', 'mdi:floor-plan'], ['devices', 'mdi:tune-variant']] as const).map(
+                ${([['plan', 'mdi:floor-plan'], ['devices', 'mdi:tune-variant']] as const).map(
                   ([m, ic]) => html`<button class="modetab ${this._mode === m ? 'active' : ''}"
                     title=${this._t(('mode.' + m) as any)}
-                    @click=${() => this._setMode(m)}>
+                    @click=${() => { if (this._mode !== m) this._setMode(m); }}>
                     <ha-icon icon=${ic}></ha-icon><span class="ml">${this._t(('mode.' + m) as any)}</span>
+                    ${this._mode === m
+                      ? html`<ha-icon class="closex" icon="mdi:close" title=${this._t('title.close_editor')}
+                          @click=${(e: Event) => { e.stopPropagation(); this._setMode('view'); }}></ha-icon>`
+                      : nothing}
                   </button>`,
                 )}
               </div>`
@@ -2444,29 +2448,13 @@ class HouseplanCard extends LitElement {
               title=${this._t('title.zoom_reset')}><ha-icon icon="mdi:fit-to-page-outline"></ha-icon></button>
             <button class="btn zb" @click=${() => this._stepZoom(1)} title=${this._t('title.zoom_in')}><ha-icon icon="mdi:plus"></ha-icon></button>
           </div>
-          ${this._norm && this._mode === 'devices'
-            ? html`<button class="btn" @click=${() => this._openMarkerDialog()}
-                title=${this._t('title.add_device')}>
-                <ha-icon icon="mdi:plus-box-outline"></ha-icon>
-              </button>
-              <button class="btn ${this._showAll ? 'on' : ''}" @click=${this._toggleShowAll}
-                title=${this._t('title.show_all')}>
-                <ha-icon icon="${this._showAll ? 'mdi:eye' : 'mdi:eye-off-outline'}"></ha-icon>
-              </button>
-              <button class="btn" @click=${this._resetLayout} title=${this._t('title.reset_layout')}>
-                <ha-icon icon="mdi:backup-restore"></ha-icon>
-              </button>
-              <button class="btn" @click=${this._openRulesDialog} title=${this._t('title.icon_rules')}>
-                <ha-icon icon="mdi:shape-plus-outline"></ha-icon>
-              </button>`
-            : nothing}
           ${this._norm && this._mode === 'plan'
             ? html`<button class="btn" @click=${this._openSettingsDialog} title=${this._t('title.general_settings')}>
                 <ha-icon icon="mdi:cog-outline"></ha-icon>
               </button>`
             : nothing}
         </div>
-        ${this._markup ? this._renderMarkupBar() : nothing}
+        ${this._markup ? this._renderMarkupBar() : this._mode === 'devices' ? this._renderDevicesBar() : nothing}
         </div>
 
         <div class="stage ${this._markup ? 'markup' : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}"
@@ -3020,6 +3008,34 @@ class HouseplanCard extends LitElement {
               : this._t('markup.hint_start')}</span>
             ${this._path.length ? html`<button class="btn ghost" @click=${this._cancelPath}>${this._t('btn.reset')}</button>` : nothing}`
         : nothing}
+      <button class="btn barclose" title=${this._t('title.close_editor')}
+        @click=${() => this._setMode('view')}>
+        <ha-icon icon="mdi:close"></ha-icon>
+      </button>
+    </div>`;
+  }
+
+  private _renderDevicesBar(): TemplateResult {
+    return html`<div class="editbar devbar">
+      <ha-icon icon="mdi:tune-variant" class="warn"></ha-icon>
+      <button class="btn" @click=${() => this._openMarkerDialog()} title=${this._t('title.add_device')}>
+        <ha-icon icon="mdi:plus-box-outline"></ha-icon>${this._t('devbar.add')}
+      </button>
+      <button class="btn ${this._showAll ? 'on' : ''}" @click=${this._toggleShowAll}
+        title=${this._t('title.show_all')}>
+        <ha-icon icon="${this._showAll ? 'mdi:eye' : 'mdi:eye-off-outline'}"></ha-icon>${this._t('devbar.show_all')}
+      </button>
+      <button class="btn" @click=${this._resetLayout} title=${this._t('title.reset_layout')}>
+        <ha-icon icon="mdi:backup-restore"></ha-icon>${this._t('devbar.reset')}
+      </button>
+      <button class="btn" @click=${this._openRulesDialog} title=${this._t('title.icon_rules')}>
+        <ha-icon icon="mdi:shape-plus-outline"></ha-icon>${this._t('devbar.rules')}
+      </button>
+      <span class="spacer"></span>
+      <button class="btn barclose" title=${this._t('title.close_editor')}
+        @click=${() => this._setMode('view')}>
+        <ha-icon icon="mdi:close"></ha-icon>
+      </button>
     </div>`;
   }
 

@@ -12,11 +12,16 @@ A segmented control in the card header with three tabs; the active one is visual
 highlighted, and edit modes add a colored frame around the stage so the mode is
 obvious at a glance:
 
-**[ 👁 View ] [ 📐 Plan ] [ 🔧 Devices ]**
+**[ 📐 Plan editor ] [ 🔧 Device editor ]** — View has NO tab (since v1.30.2).
 
-- **View** is the default and the only mode after every load (edit modes are never
-  restored across reloads).
-- **Plan** and **Devices** are shown only to admins when `admin_only` is on.
+- **View** is the implicit default state: no editor tab is active. It is the only
+  state after every load (edit modes are never restored across reloads).
+- Activating an editor tab highlights it and opens that editor's bottom toolbar
+  (both editors have one since v1.30.2). The toolbar and the active tab each
+  carry an **X** that closes the editor back to View; re-clicking the active tab
+  does nothing; Plan↔Devices switches directly.
+- **Plan editor** and **Device editor** are shown only to admins when
+  `admin_only` is on.
 
 ## View — display and device interaction only
 

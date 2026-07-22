@@ -240,13 +240,17 @@
   "gs.saved": "Общие настройки сохранены",
   "space.show_lqi": "Показывать зигби-сигнал (LQI) у устройств",
   "gs.light_none": "Нет источников света",
-  "mode.view": "Просмотр",
-  "mode.plan": "План",
-  "mode.devices": "Устройства",
+  "mode.plan": "Редактор плана",
+  "mode.devices": "Редактор устройств",
   "display.value": "Значение вместо иконки",
   "marker.subarea": "без зоны, вручную",
   "device.new": "Новое устройство — откройте его редактор, чтобы снять отметку",
   "opening.unlock_action": "Открыть замок",
   "opening.lock_action": "Закрыть замок",
-  "opening.lock_pending": "Выполняется…"
+  "opening.lock_pending": "Выполняется…",
+  "title.close_editor": "Закрыть редактор (вернуться к просмотру)",
+  "devbar.add": "Добавить",
+  "devbar.show_all": "Показать все",
+  "devbar.reset": "Сброс",
+  "devbar.rules": "Правила иконок"
 }
