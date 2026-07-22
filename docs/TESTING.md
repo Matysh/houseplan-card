@@ -57,7 +57,7 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       smart-plug chip temperatures (`*_device_temperature`) and diagnostic-category temps are excluded [auto]
 - [ ] Space dialog is 500 px wide; the comfort-bounds inputs are compact (56 px)
 - [ ] The scale (cm per cell) input is compact (72 px), not full-width [auto]
-- [ ] General settings (⚙ in the header): fill colors grouped by mode (lights on/off,
+- [ ] General settings (⚙ in the header): fill colors grouped by mode (lights on/off/none,
       temp cold/comfy/hot, LQI weak/strong), each with its own opacity slider [auto];
       Reset restores defaults; saving defaults stores nothing [auto]
 - [ ] Custom fill colors apply to the full card AND the static space-card
