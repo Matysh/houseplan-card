@@ -1,5 +1,41 @@
 # Changelog
 
+## v1.31.0 — 2026-07-22 (room cards)
+- Room labels grew into **room cards**: the name on top, and an optional
+  smaller metrics line below — temperature, humidity, average Zigbee signal
+  and lights, each behind its own checkbox in the space settings (all off by
+  default). Lights show On/Off, or **"1 of 3"** when only part of the room is
+  lit. Rooms without an HA area keep showing just the name.
+- Cards are **resizable** in the Plan editor: hovering shows corner handles;
+  dragging one scales the whole card uniformly (0.5×–3×). The scale is stored
+  in the layout next to the card position, and dragging keeps it.
+- Fixed a latent v1.25 regression: room labels were not rendered as draggable
+  HTML in the Plan editor at all (only a static SVG name), so moving them was
+  impossible. The Plan editor now renders real cards (name only) that can be
+  dragged and resized.
+- Two markup smokes (merge/split) still called a method removed in v1.25 —
+  repaired.
+
+## v1.30.4 — 2026-07-22
+- **Escape now closes every dialog** (general settings, icon rules, device
+  editor, space dialog, opening editor, info cards), topmost first when
+  stacked. Closing the space dialog with Esc abandons a floor-import queue,
+  same as its Cancel button. Esc while drawing an outline still undoes the
+  last point (dialogs take priority).
+
+## v1.30.3 — 2026-07-22
+- The **General settings** (fill palette) gear in the header is now visible in
+  every mode for users who can edit, not just in the Plan editor.
+
+## v1.30.2 — 2026-07-22 (editor tabs redesign)
+- Mode tabs renamed and reduced to two: **"Plan editor"** and **"Device
+  editor"**. View is no longer a tab — it is the implicit default state.
+- The Device editor now has its own bottom toolbar (add / show all / reset
+  layout / icon rules moved out of the header), mirroring the Plan toolbar.
+- Both toolbars and the active tab itself got an **X** button that closes the
+  editor and returns to View. Re-clicking the active tab does nothing;
+  switching Plan↔Devices is direct.
+
 ## v1.30.1 — 2026-07-22 (space gear polish)
 - The gear icon next to the space name is now visible in **every mode** (not
   just Plan) for users who can edit, so space settings are always one click

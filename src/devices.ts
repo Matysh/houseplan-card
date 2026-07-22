@@ -343,6 +343,43 @@ export function areaLights(hass: any, devices: { area: string; entities: string[
   return seen ? 'off' : 'none';
 }
 
+/** Average humidity across the area's climate-ish devices (integer %, or null). */
+export function areaHum(
+  hass: any,
+  devices: { area: string; icon?: string; entities: string[] }[],
+  area: string,
+): number | null {
+  const vals: number[] = [];
+  for (const dv of devices) {
+    if (dv.area !== area) continue;
+    // same curation idea as areaTemp: climate sensors only, not fridges/plugs
+    if (dv.icon !== 'mdi:thermometer' && dv.icon !== 'mdi:air-filter' && dv.icon !== 'mdi:water-percent') continue;
+    const h = humFor(hass, dv.entities);
+    if (h != null) vals.push(h);
+  }
+  if (!vals.length) return null;
+  return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
+}
+
+/** How many of the area's lights are on: {on, total}, or null without lights. */
+export function areaLightStats(
+  hass: any,
+  devices: { area: string; entities: string[] }[],
+  area: string,
+): { on: number; total: number } | null {
+  const seen = new Set<string>();
+  let on = 0;
+  for (const dv of devices) {
+    if (dv.area !== area) continue;
+    for (const eid of dv.entities) {
+      if (!eid.startsWith('light.') || seen.has(eid)) continue;
+      seen.add(eid);
+      if (hass.states[eid]?.state === 'on') on++;
+    }
+  }
+  return seen.size ? { on, total: seen.size } : null;
+}
+
 /** Average temperature across the area's devices (null when nothing reports one). */
 /** Average zigbee signal (LQI) across an area's non-virtual devices, or null. */
 export function areaLqi(hass: any, devices: { area: string; virtual?: boolean; entities: string[] }[], area: string): number | null {

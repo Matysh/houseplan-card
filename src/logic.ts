@@ -497,6 +497,11 @@ export interface SpaceDisplay {
   tempMax: number; // comfort range upper bound, °C
   /** Per-space LQI badges near zigbee devices; null = follow the card option. */
   showLqi: boolean | null;
+  /** Room-card metrics under the room name (all default off). */
+  labelTemp: boolean;
+  labelHum: boolean;
+  labelLqi: boolean;
+  labelLight: boolean;
 }
 
 export const DEFAULT_ROOM_COLOR = '#3ea6ff';
@@ -517,6 +522,10 @@ export function spaceDisplayOf(spaceCfg: any): SpaceDisplay {
     tempMin: typeof s.temp_min === 'number' ? s.temp_min : DEFAULT_TEMP_MIN,
     tempMax: typeof s.temp_max === 'number' ? s.temp_max : DEFAULT_TEMP_MAX,
     showLqi: typeof s.show_lqi === 'boolean' ? s.show_lqi : null,
+    labelTemp: s.label_temp === true,
+    labelHum: s.label_hum === true,
+    labelLqi: s.label_lqi === true,
+    labelLight: s.label_light === true,
   };
 }
 

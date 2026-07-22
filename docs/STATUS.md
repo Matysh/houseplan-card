@@ -129,3 +129,9 @@
    md5-verify after every deploy, restart HA via
    `nohup ha core restart >/dev/null 2>&1 </dev/null &` (otherwise the SSH session hangs).
 5. GitHub pushes need a PAT (create via the user's Chrome: settings/tokens, repo+workflow scope).
+
+## Product scope
+
+docs/SCOPE.md (fixed 2026-07-22) is the guard rail for all feature work: mission,
+personas, jobs J1–J7, partial/out-of-scope lists, excess audit. Check it before
+accepting or proposing any feature.

@@ -140,6 +140,24 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Room cards (v1.31.0): with metrics enabled in space settings (4
+      checkboxes: temperature, humidity, avg Zigbee, lights) the room name gets
+      a smaller metrics line under it; lights show On/Off or "1 of 3" when
+      partially lit; rooms without an HA area show the name only; in the Plan
+      editor cards show the name only, are draggable and resizable via corner
+      handles on hover (uniform scale 0.5–3, stored in layout, survives drag);
+      View mode has no handles/hover [auto]
+- [ ] Esc closes dialogs (v1.30.4): Escape closes the topmost dialog (opening
+      info, device info, icon rules, general settings, device editor, opening
+      editor, space dialog incl. abandoning an import queue); stacked dialogs
+      close one per press; Esc while drawing still undoes the last point [auto]
+- [ ] General settings gear (v1.30.3): the header cog is visible in every mode
+      (admins), opens the palette dialog from View too [auto]
+- [ ] Editor tabs (v1.30.2): only two tabs — "Plan editor" / "Device editor"
+      (no View button; View is the default state); clicking a tab opens its
+      bottom toolbar (Devices got its own bar with add/show-all/reset/rules);
+      the bar and the active tab both show an X that returns to View; re-click
+      on the active tab does nothing; Plan↔Devices switches directly [auto]
 - [ ] Space gear (v1.30.1): the cog next to the space name is visible in every
       mode (admins only), vertically centered with the tab text; clicking it
       opens space settings without switching the tab; "+" tab stays Plan-only [auto]

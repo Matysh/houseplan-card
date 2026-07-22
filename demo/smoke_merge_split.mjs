@@ -16,7 +16,7 @@ const S = () => page.evaluate(() => {
   return { rooms: c._serverCfg.spaces.find((s) => s.id==='f1').rooms.map((r)=>({id:r.id,name:r.name,area:r.area})),
     mergeDlg: !!c._mergeDialog, roomDlg: !!c._roomDialog, pendingSplit: !!c._pendingSplit, toast: c._toast };
 });
-const enter = (t) => page.evaluate((t)=>{const c=window.__card; if(!c._markup)c._toggleMarkup(); c._tool=t; return true;}, t);
+const enter = (t) => page.evaluate((t)=>{const c=window.__card; if(!c._markup)c._setMode('plan'); c._tool=t; return true;}, t);
 const out = {};
 
 // MERGE living(r1)+kitchen(r2) — share wall x=0.55, y∈[0.05..0.45]

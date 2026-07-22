@@ -5,7 +5,7 @@ const R = (nx, ny) => page.evaluate(([nx, ny]) => {
   const c = window.__card; const H = 1000 / c._curSpaceCfg.aspect; return [nx * 1000, ny * H];
 }, [nx, ny]);
 const out = {};
-await page.evaluate(()=>{const c=window.__card; if(!c._markup)c._toggleMarkup(); c._tool='split';});
+await page.evaluate(()=>{const c=window.__card; if(!c._markup)c._setMode('plan'); c._tool='split';});
 // living room (r1) has walls at y=0.05 which are NOT grid nodes; click near the wall
 await page.evaluate((p)=>window.__card._splitClick(p), await R(0.3,0.3));   // pick living
 await page.evaluate((p)=>window.__card._splitClick(p), await R(0.3,0.052)); // near top wall (off grid)
