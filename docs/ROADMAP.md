@@ -74,6 +74,13 @@ Track progress in `custom_components/houseplan/quality_scale.yaml` (done/exempt 
 - [ ] GitHub: issue templates, discussions on, CONTRIBUTING.md (build/test in 5 minutes).
 - [ ] Semantic versioning discipline; keep release notes user-facing (they show in HACS).
 
+## Phase 11 — UX modes redesign (approved, see docs/UX-MODES.md)
+
+Three-tab interaction model (View / Plan / Devices): view mode is display-only —
+no dragging or editing; all editing splits between a Plan tab and a Devices tab.
+Deprecates "drag anywhere" and view-mode opening drag. Follow-ups from issue #3:
+state-reflecting icons, value display, RGB light colors, alarm visuals, sub-area rooms.
+
 ## Explicit non-goals (for now)
 
 - 3D plans (.glb) — separate market (3Dash), heavy dependencies.
