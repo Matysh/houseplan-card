@@ -965,6 +965,30 @@ export function outlineWithout(poly: number[][], cuts: number[][], eps = 1e-6): 
   return cutSegments(edges, cuts, eps);
 }
 
+// ---------------- kiosk gestures ----------------
+
+/**
+ * Kiosk swipe: which neighbouring space a horizontal gesture selects.
+ * Only fires at 1:1 zoom (owner's decision — when zoomed the gesture pans),
+ * needs a mostly-horizontal move of at least minPx. Wraps around.
+ */
+export function swipeTarget(
+  dx: number, dy: number, zoom: number, spaceIds: string[], current: string, minPx = 60,
+): string | null {
+  if (zoom > 1.001 || spaceIds.length < 2) return null;
+  if (Math.abs(dx) < minPx || Math.abs(dx) < Math.abs(dy) * 1.5) return null;
+  const i = spaceIds.indexOf(current);
+  if (i < 0) return null;
+  const n = spaceIds.length;
+  return dx < 0 ? spaceIds[(i + 1) % n] : spaceIds[(i - 1 + n) % n];
+}
+
+/** Clamp a per-screen size multiplier (icons / room-card font). */
+export function clampScale(v: unknown, def = 1): number {
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? Math.min(3, Math.max(0.5, n)) : def;
+}
+
 // ---------------- alignment guides ----------------
 
 export interface AlignGuide {

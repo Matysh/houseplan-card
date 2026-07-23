@@ -8,6 +8,23 @@
 
 ---
 
+## Wall tablet / TV (kiosk mode)
+
+Add the card to a dedicated dashboard with a **panel view** and set `kiosk: true`
+(or tick "Wall device (kiosk) mode" in the card editor):
+
+```yaml
+type: custom:houseplan-card
+kiosk: true
+cycle: 0   # seconds between auto space switches, 0 = off (nice for TVs)
+```
+
+No header, no editors — just the live plan. Swipe to change floors (at 1:1),
+pinch to zoom, double-tap to reset. Long-press an empty spot for 3 seconds to
+tune icon and text sizes for THIS screen (saved per device). To hide Home
+Assistant's own header use the companion app's kiosk settings or the
+[kiosk-mode](https://github.com/NemesisRE/kiosk-mode) plugin.
+
 ## What it is and why
 
 House Plan shows your smart home the way it actually looks — on a floor plan. Instead of long lists of entities, you see rooms and devices in their real places: where the leak is, what the temperature is in the kids' room, whether the light is on in the hallway, whether the gate is open.

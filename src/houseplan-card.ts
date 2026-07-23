@@ -14,7 +14,7 @@ import {
 import {
   lqiColor, snapToGrid, samePoint, pointInPolygon, markerIdForBinding,
   segmentCm, formatLength, roomEdges, roomPoly, pointStrictlyInside, roomsOverlap,
-  pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, openZoneOf, distToSegment, outlineWithout, cutSegments, alignGuides, segmentAngle, is45, type AlignGuide,
+  pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, openZoneOf, distToSegment, outlineWithout, cutSegments, alignGuides, segmentAngle, is45, type AlignGuide, swipeTarget, clampScale,
   snapToWall, openingAmount,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
   stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, glowColorOf, doorSector, hasRoomBehind, controlsAction, isControllable,
@@ -32,11 +32,12 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.40.2';
+const CARD_VERSION = '1.41.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
 const LS_NAV = 'houseplan_card_nav_v1'; // last space + editor mode (owner: restore where you were)
+const LS_KIOSK = 'houseplan_card_kiosk_v1'; // per-SCREEN size multipliers (each wall tablet differs)
 const NORM_W = 1000; // width of the render space for normalized configs
 
 const GRID_N = 240; // grid points across the plan width (half the previous step; old nodes are a subset of the new ones, positions are preserved)
@@ -102,6 +103,28 @@ class HouseplanCard extends LitElement {
   }
 
   /** Legacy alias: markup machinery is active exactly in plan mode. */
+  private get _kiosk(): boolean {
+    return !!this._config?.kiosk;
+  }
+
+  private _showKioskDots(): void {
+    this._kioskDots = true;
+    clearTimeout(this._kioskDotsTimer);
+    this._kioskDotsTimer = window.setTimeout(() => (this._kioskDots = false), 2500);
+  }
+
+  /** Kiosk auto-carousel: advance to the next space every `cycle` seconds. */
+  private _cycleTick(): void {
+    if (!this._kiosk || !(Number(this._config?.cycle) > 0)) return;
+    if (Date.now() >= this._cyclePausedUntil && this._model.length > 1 && this._zoom <= 1.001) {
+      const ids = this._model.map((m) => m.id);
+      const i = ids.indexOf(this._space);
+      this._space = ids[(i + 1) % ids.length];
+      this._restoreZoom();
+      this._showKioskDots();
+    }
+  }
+
   /** Any edit mode is active (plan / devices / decor). */
   private get _editing(): boolean {
     return this._mode === 'plan' || this._mode === 'devices' || this._mode === 'decor';
@@ -207,6 +230,16 @@ class HouseplanCard extends LitElement {
   private _keyHandler = (e: KeyboardEvent) => this._onKey(e);
   private _hashApplied = false;
   private _navApplied = false; // the saved space was restored (or the user navigated)
+  // ---- kiosk (wall device) mode ----
+  private _kioskScale: { icon: number; font: number } = { icon: 1, font: 1 };
+  private _kioskDialog = false;
+  private _kioskDots = false;
+  private _kioskDotsTimer?: number;
+  private _kioskHoldTimer?: number;
+  private _cycleTimer?: number;
+  private _cyclePausedUntil = 0;
+  private _swipeStart: { x: number; y: number; id: number } | null = null;
+  private _lastTap = 0;
   /** Deep-link: read `#space=<id>` from the URL (used by embedded houseplan-space-card). */
   private _hashSpace(): string {
     const m = /(?:^|[#&])space=([^&]+)/.exec(window.location.hash || '');
@@ -251,6 +284,8 @@ class HouseplanCard extends LitElement {
     _decorDraft: { state: true },
     _decorSel: { state: true },
     _decorTextDialog: { state: true },
+    _kioskDialog: { state: true },
+    _kioskDots: { state: true },
     _areaSel: { state: true },
     _nameSel: { state: true },
     _roomDialog: { state: true },
@@ -267,11 +302,18 @@ class HouseplanCard extends LitElement {
   public connectedCallback(): void {
     super.connectedCallback();
     window.addEventListener('keydown', this._keyHandler);
+    if (this._config?.kiosk && Number(this._config?.cycle) > 0) {
+      clearInterval(this._cycleTimer);
+      this._cycleTimer = window.setInterval(() => this._cycleTick(), Number(this._config.cycle) * 1000);
+    }
     window.addEventListener('hashchange', this._onHashChange);
   }
 
   public disconnectedCallback(): void {
     window.removeEventListener('keydown', this._keyHandler);
+    clearInterval(this._cycleTimer);
+    clearTimeout(this._kioskDotsTimer);
+    clearTimeout(this._kioskHoldTimer);
     window.removeEventListener('hashchange', this._onHashChange);
     clearTimeout(this._holdTimer);
     this._roViewport?.disconnect();
@@ -379,6 +421,12 @@ class HouseplanCard extends LitElement {
     } catch {
       this._zoomBySpace = {};
     }
+    try {
+      const ks = JSON.parse(localStorage.getItem(LS_KIOSK) || 'null');
+      this._kioskScale = { icon: clampScale(ks?.icon), font: clampScale(ks?.font) };
+    } catch {
+      /* defaults */
+    }
     // instant render from cache (stale-while-revalidate): show the plan and icons
     // right away, without waiting for the server response — fresh data will load in the background.
     try {
@@ -394,8 +442,9 @@ class HouseplanCard extends LitElement {
         else if (nav?.space && this._model.find((sp) => sp.id === nav.space)) { this._space = nav.space; this._navApplied = true; }
         else if (config.default_floor) this._space = config.default_floor;
         else if (!this._model.find((sp) => sp.id === this._space)) this._space = this._model[0]?.id || this._space;
-        // reopenning the tab lands you in the same editor you left (admins only)
-        if (nav?.mode && nav.mode !== 'view' && this._canEdit) this._mode = nav.mode;
+        // reopenning the tab lands you in the same editor you left (admins only);
+        // kiosk screens always stay in View
+        if (nav?.mode && nav.mode !== 'view' && this._canEdit && !config.kiosk) this._mode = nav.mode;
       }
     } catch {
       /* ignore */
@@ -1011,6 +1060,23 @@ class HouseplanCard extends LitElement {
   }
 
   private _stagePointerDown(ev: PointerEvent): void {
+    if (this._kiosk) {
+      this._cyclePausedUntil = Date.now() + 60000;
+      if (this._pointers.size === 0) {
+        this._swipeStart = { x: ev.clientX, y: ev.clientY, id: ev.pointerId };
+        // long-press on EMPTY stage opens the per-screen size popover
+        if (!(ev.target as HTMLElement).closest?.('.dev, .roomlabel, .oplock')) {
+          clearTimeout(this._kioskHoldTimer);
+          this._kioskHoldTimer = window.setTimeout(() => {
+            this._kioskDialog = true;
+            this._swipeStart = null;
+          }, 3000);
+        }
+      } else {
+        this._swipeStart = null; // second finger = pinch, not a swipe
+        clearTimeout(this._kioskHoldTimer);
+      }
+    }
     // do not interfere with icon dragging and markup drawing
     if (this._drag || this._markup) return;
     if (this._mode === 'devices' && (ev.target as HTMLElement).closest('.dev')) return;
@@ -1077,6 +1143,31 @@ class HouseplanCard extends LitElement {
   }
 
   private _stagePointerUp(ev: PointerEvent): void {
+    if (this._kiosk) {
+      clearTimeout(this._kioskHoldTimer);
+      const ss = this._swipeStart;
+      this._swipeStart = null;
+      if (ss && ss.id === ev.pointerId) {
+        const dx = ev.clientX - ss.x;
+        const dy = ev.clientY - ss.y;
+        // double tap (no movement) resets the zoom to 1:1
+        if (Math.abs(dx) + Math.abs(dy) < 8) {
+          const now = Date.now();
+          if (now - this._lastTap < 350) this._resetZoom();
+          this._lastTap = now;
+        }
+        const target = swipeTarget(dx, dy, this._zoom, this._model.map((m) => m.id), this._space);
+        if (target) {
+          this._space = target;
+          this._selId = null;
+          this._restoreZoom();
+          this._saveNav();
+          this._suppressClick = true;
+          setTimeout(() => (this._suppressClick = false), 0);
+          this._showKioskDots();
+        }
+      }
+    }
     if (this._decorDraft?.pid === ev.pointerId) {
       this._decorCommitDraft();
       return;
@@ -1218,6 +1309,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _setMode(mode: 'view' | 'plan' | 'devices' | 'decor'): void {
+    if (this._kiosk && mode !== 'view') return; // wall devices never edit
     if (this._mode === mode) return;
     if ((mode === 'plan' || mode === 'decor') && !this._norm) {
       this._showToast(this._t('toast.markup_needs_server'));
@@ -3045,6 +3137,42 @@ class HouseplanCard extends LitElement {
     </div>`;
   }
 
+  private _saveKioskScale(patch: Partial<{ icon: number; font: number }>): void {
+    this._kioskScale = { ...this._kioskScale, ...patch };
+    try {
+      localStorage.setItem(LS_KIOSK, JSON.stringify(this._kioskScale));
+    } catch {
+      /* ignore */
+    }
+    this.requestUpdate();
+  }
+
+  /** Per-SCREEN size settings (wall tablets differ) — stored locally. */
+  private _renderKioskDialog(): TemplateResult {
+    const k = this._kioskScale;
+    const row = (key: 'icon' | 'font', label: string) => html`<label>${label}</label>
+      <div class="colorrow">
+        <input type="range" min="50" max="300" step="5" .value=${String(Math.round(k[key] * 100))}
+          @input=${(e: Event) => this._saveKioskScale({ [key]: Number((e.target as HTMLInputElement).value) / 100 })} />
+        <span class="opv">${Math.round(k[key] * 100)}%</span>
+      </div>`;
+    return html`<div class="menuwrap dialogwrap" @click=${() => (this._kioskDialog = false)}>
+      <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
+        <div class="hd"><ha-icon icon="mdi:tablet"></ha-icon>${this._t('kiosk.title')}</div>
+        <div class="body">
+          <div class="rhint">${this._t('kiosk.hint')}</div>
+          ${row('icon', this._t('kiosk.icon_scale'))}
+          ${row('font', this._t('kiosk.font_scale'))}
+        </div>
+        <div class="row">
+          <button class="btn ghost" @click=${() => this._saveKioskScale({ icon: 1, font: 1 })}>${this._t('gs.reset')}</button>
+          <span class="spacer"></span>
+          <button class="btn on" @click=${() => (this._kioskDialog = false)}>${this._t('btn.close')}</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
   // ================= render =================
 
   protected render(): TemplateResult | typeof nothing {
@@ -3081,7 +3209,7 @@ class HouseplanCard extends LitElement {
 
     return html`
       <ha-card>
-        <div class="hdr">
+        <div class="hdr ${this._kiosk ? 'kioskhide' : ''}">
         <div class="head">
           <div class="title">
             <ha-icon icon="mdi:home-city"></ha-icon>
@@ -3149,7 +3277,7 @@ class HouseplanCard extends LitElement {
         </div>
 
         <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'openwall' && this._openWallHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}"
-          style="height:calc(100dvh - 118px)"
+          style="height:${this._kiosk ? '100dvh' : 'calc(100dvh - 118px)'}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
           @pointerdown=${(e: PointerEvent) => this._stagePointerDown(e)}
@@ -3249,7 +3377,7 @@ class HouseplanCard extends LitElement {
             ${this._markup ? this._renderMarkupLayer(vb) : nothing}
             ${this._renderOpenings(disp)}
           </svg>
-          <div class="devlayer" style="--icon-size:${((iconPct * vb[2]) / view.w).toFixed(3)}cqw">
+          <div class="devlayer" style="--icon-size:${((iconPct * vb[2] * (this._kiosk ? this._kioskScale.icon : 1)) / view.w).toFixed(3)}cqw;--rl-font:${this._kiosk ? this._kioskScale.font : 1}">
             ${devs.map((d) => this._renderDevice(d, view, showLqi))}
             ${this._renderOpeningLocks(view)}
             ${disp.showNames || this._markup
@@ -3288,6 +3416,12 @@ class HouseplanCard extends LitElement {
                 : nothing}
             </div>`
           : nothing}
+        ${this._kiosk && this._kioskDots && this._model.length > 1
+          ? html`<div class="kioskdots">
+              ${this._model.map((m) => html`<span class="kdot ${m.id === this._space ? 'on' : ''}"></span>`)}
+            </div>`
+          : nothing}
+        ${this._kioskDialog ? this._renderKioskDialog() : nothing}
         ${this._toast ? html`<div class="toast">${this._toast}</div>` : nothing}
       </ha-card>
     `;

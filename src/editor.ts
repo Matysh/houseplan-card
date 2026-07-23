@@ -67,6 +67,8 @@ class HouseplanCardEditor extends LitElement {
       { name: 'show_temperature', selector: { boolean: {} } },
       { name: 'live_states', selector: { boolean: {} } },
       { name: 'show_signal', selector: { boolean: {} } },
+      { name: 'kiosk', selector: { boolean: {} } },
+      { name: 'cycle', selector: { number: { min: 0, max: 3600, step: 5, mode: 'box' } } },
     ];
   }
 
@@ -82,6 +84,8 @@ class HouseplanCardEditor extends LitElement {
       show_temperature: t(L, 'editor.show_temperature'),
       live_states: t(L, 'editor.live_states'),
       show_signal: t(L, 'editor.show_signal'),
+      kiosk: t(L, 'editor.kiosk'),
+      cycle: t(L, 'editor.cycle'),
     };
     return html`<ha-form
       .hass=${this.hass}

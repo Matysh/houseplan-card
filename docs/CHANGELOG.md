@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.41.0 — 2026-07-24 (kiosk mode for wall devices)
+- New card option **`kiosk: true`** (also in the GUI editor): the full View
+  experience — live states, glow, lamp taps, info cards, locks — with no
+  header and no editors at all, sized for a wall tablet or TV.
+- **Swipe** left/right switches spaces at 1:1 zoom (wrap-around, dots
+  indicator); while zoomed the gesture pans as usual; **double tap** resets
+  zoom. **`cycle: N`** auto-advances spaces every N seconds (pauses for a
+  minute after any touch) — for TVs and against OLED burn-in.
+- **Per-screen sizes**: long-press an empty spot (3 s) to open a popover with
+  icon and room-card-font multipliers, stored in this device's localStorage —
+  every tablet/TV tunes itself once.
+- Recipe for a full-screen wall dashboard (panel view + kiosk-mode/companion
+  settings) added to the README.
+
 ## v1.40.2 — 2026-07-24
 - Default icon rules: smart speakers (Yandex/Alice stations, «колонка»,
   generic speakers) now get **mdi:speaker**; mdi:soundbar stays for actual
