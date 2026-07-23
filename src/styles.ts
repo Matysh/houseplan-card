@@ -396,6 +396,39 @@ export const cardStyles = css`
       display: inline-flex;
     }
     .roomlabel .rlm.lit { opacity: 1; }
+    .bindharow {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .bindharow .entcheck { opacity: 0.9; }
+    .dropbtn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--hp-muted);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--hp-txt);
+      padding: 8px 10px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 13px;
+      margin-top: 6px;
+    }
+    .dropbtn .ref { color: var(--hp-muted); font-size: 11px; margin-left: auto; }
+    .dropbtn ha-icon { --mdc-icon-size: 18px; margin-left: 4px; }
+    .dropbtn.open { border-color: var(--hp-accent); }
+    .droppanel {
+      border: 1px solid var(--hp-accent);
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      padding: 6px;
+      margin-top: -4px;
+    }
     .ctrlchips { display: flex; flex-wrap: wrap; gap: 5px; margin: 4px 0; }
     .ctrlchip {
       display: inline-flex; align-items: center; gap: 4px;

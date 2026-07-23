@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.37.3';
+const CARD_VERSION = '1.38.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -156,7 +156,10 @@ class HouseplanCard extends LitElement {
   private _markerDialog: {
     devId?: string;      // the icon being edited (if any)
     name: string;
-    binding: string;     // 'device:<id>' | 'entity:<eid>' | 'virtual'
+    binding: string;     // 'device:<id>' | 'entity:<eid>' | 'virtual' | '' (not chosen yet)
+    bindingMode: 'virtual' | 'ha';
+    bindingOpen: boolean;   // the HA-list dropdown is expanded
+    showEntities: boolean;  // list entities of devices too
     bindingFilter: string;
     icon: string;        // '' = auto
     autoIcon: string;    // the icon the rules would give — picker placeholder
@@ -2096,6 +2099,10 @@ class HouseplanCard extends LitElement {
         devId: d.id,
         name: d.name,
         binding: d.bindingKind === 'virtual' ? 'virtual' : d.bindingKind + ':' + d.bindingRef,
+        bindingMode: d.bindingKind === 'virtual' ? 'virtual' : 'ha',
+        bindingOpen: false,
+        // a marker bound to an ENTITY of a device only shows up with the box on
+        showEntities: d.bindingKind === 'entity' && !!this.hass.entities[d.bindingRef || '']?.device_id,
         bindingFilter: '',
         icon: d.marker?.icon || '',
         autoIcon: d.icon || '',
@@ -2123,7 +2130,8 @@ class HouseplanCard extends LitElement {
       };
     } else {
       this._markerDialog = {
-        name: '', binding: 'virtual', bindingFilter: '', icon: '', autoIcon: '',
+        name: '', binding: 'virtual', bindingMode: 'virtual', bindingOpen: false,
+        showEntities: false, bindingFilter: '', icon: '', autoIcon: '',
         display: 'badge', rippleColor: '', rippleSize: 3, size: 1, angle: 0,
         tapAction: '', controls: [], controlsFilter: '', glowRadius: '', model: '',
         link: '', description: '', pdfs: [], room: '', busy: false,
@@ -2174,11 +2182,9 @@ class HouseplanCard extends LitElement {
         sub: eid.split('.')[0] + ' · ' + (reg.platform === 'group' ? this._t('marker.sub_group') : this._t('marker.sub_helper')),
       });
     }
-    // Individual entities — surfaced only while searching (avoids a huge default list); lets you
-    // place a single entity of a multi-entity device (e.g. the humidity of a climate sensor) as
-    // its own icon. Uses the same entity: binding as helpers/groups.
-    const q = (this._markerDialog?.bindingFilter || '').toLowerCase().trim();
-    if (q) {
+    // Individual entities of devices — behind the "show entities" checkbox
+    // (groups/helpers above are ALWAYS listed: they are standalone objects).
+    if (this._markerDialog?.showEntities) {
       const seen = new Set(list.map((o) => o.value));
       for (const [eid, reg] of Object.entries<any>(h.entities)) {
         const v = 'entity:' + eid;
@@ -2187,7 +2193,6 @@ class HouseplanCard extends LitElement {
         const label = reg.name || stt?.attributes?.friendly_name || eid;
         const dev = reg.device_id ? h.devices[reg.device_id] : null;
         const devName = dev ? (dev.name_by_user || dev.name || '') : '';
-        if (!(label + ' ' + eid + ' ' + devName).toLowerCase().includes(q)) continue;
         list.push({ value: v, label, sub: eid.split('.')[0] + ' · ' + this._t('marker.sub_entity') + (devName ? ' · ' + devName : '') });
       }
     }
@@ -2290,6 +2295,7 @@ class HouseplanCard extends LitElement {
   private async _saveMarker(): Promise<void> {
     const dlg = this._markerDialog;
     if (!dlg || dlg.busy) return;
+    if (dlg.bindingMode === 'ha' && (!dlg.binding || dlg.binding === 'virtual')) return;
     if (dlg.binding === 'virtual' && !dlg.name.trim()) {
       this._showToast(this._t('toast.virtual_name_required'));
       return;
@@ -3888,7 +3894,7 @@ class HouseplanCard extends LitElement {
 
   private _renderMarkerDialog(): TemplateResult {
     const d = this._markerDialog!;
-    const isVirtual = d.binding === 'virtual';
+    const isVirtual = d.bindingMode === 'virtual';
     const cands = this._bindingCandidates();
     const curLabel = (() => {
       if (isVirtual) return null;
@@ -3909,27 +3915,54 @@ class HouseplanCard extends LitElement {
             @input=${(e: Event) => (this._markerDialog = { ...d, name: (e.target as HTMLInputElement).value })} />
 
           <label>${this._t('marker.binding_label')}</label>
-          <div class="bindsel ${isVirtual ? 'virt' : ''}">
-            <button class="opt ${isVirtual ? 'on' : ''}"
-              @click=${() => (this._markerDialog = { ...d, binding: 'virtual' })}>
-              <ha-icon icon="mdi:map-marker-outline"></ha-icon>${this._t('marker.virtual_option')}
-            </button>
-            ${!isVirtual
-              ? html`<div class="curbind"><ha-icon icon="mdi:link-variant"></ha-icon>
-                  <b>${curLabel}</b><span class="ref">${d.binding}</span></div>`
-              : nothing}
-            <input class="namein" type="text" placeholder=${this._t('marker.search_ph')}
-              .value=${d.bindingFilter}
-              @input=${(e: Event) => (this._markerDialog = { ...d, bindingFilter: (e.target as HTMLInputElement).value })} />
-            <div class="candlist">
-              ${cands.map(
-                (c) => html`<div class="cand ${c.value === d.binding ? 'sel' : ''}"
-                  @click=${() => (this._markerDialog = { ...d, binding: c.value })}>
-                  <span class="cl">${c.label}</span><span class="cs">${c.sub}</span>
-                </div>`,
-              )}
-              ${!cands.length ? html`<div class="cand muted">${this._t('marker.nothing_found')}</div>` : nothing}
+          <div class="bindsel">
+            <label class="srcrow">
+              <input type="radio" name="bmode" .checked=${d.bindingMode === 'virtual'}
+                @change=${() => (this._markerDialog = { ...d, bindingMode: 'virtual', binding: 'virtual', bindingOpen: false })} />
+              <span>${this._t('marker.virtual_option')}</span>
+            </label>
+            <div class="bindharow">
+              <label class="srcrow">
+                <input type="radio" name="bmode" .checked=${d.bindingMode === 'ha'}
+                  @change=${() => (this._markerDialog = {
+                    ...d, bindingMode: 'ha',
+                    binding: d.binding === 'virtual' ? '' : d.binding,
+                    bindingOpen: d.binding === 'virtual' || !d.binding,
+                  })} />
+                <span>${this._t('marker.from_ha_option')}</span>
+              </label>
+              <label class="srcrow inline entcheck" title=${this._t('marker.show_entities_tip')}>
+                <input type="checkbox" .checked=${d.showEntities}
+                  ?disabled=${d.bindingMode !== 'ha'}
+                  @change=${(e: Event) => (this._markerDialog = { ...d, showEntities: (e.target as HTMLInputElement).checked })} />
+                <span>${this._t('marker.show_entities')}</span>
+              </label>
             </div>
+            ${d.bindingMode === 'ha'
+              ? html`<button class="dropbtn ${d.bindingOpen ? 'open' : ''}"
+                    @click=${() => (this._markerDialog = { ...d, bindingOpen: !d.bindingOpen })}>
+                    ${curLabel
+                      ? html`<b>${curLabel}</b><span class="ref">${d.binding}</span>`
+                      : html`<span class="muted">${this._t('marker.pick_ph')}</span>`}
+                    <ha-icon icon=${d.bindingOpen ? 'mdi:chevron-up' : 'mdi:chevron-down'}></ha-icon>
+                  </button>
+                  ${d.bindingOpen
+                    ? html`<div class="droppanel">
+                        <input class="namein" type="text" placeholder=${this._t('marker.search_ph')}
+                          .value=${d.bindingFilter}
+                          @input=${(e: Event) => (this._markerDialog = { ...d, bindingFilter: (e.target as HTMLInputElement).value })} />
+                        <div class="candlist">
+                          ${cands.map(
+                            (c) => html`<div class="cand ${c.value === d.binding ? 'sel' : ''}"
+                              @click=${() => (this._markerDialog = { ...d, binding: c.value, bindingOpen: false })}>
+                              <span class="cl">${c.label}</span><span class="cs">${c.sub}</span>
+                            </div>`,
+                          )}
+                          ${!cands.length ? html`<div class="cand muted">${this._t('marker.nothing_found')}</div>` : nothing}
+                        </div>
+                      </div>`
+                    : nothing}`
+              : nothing}
           </div>
 
           <label>${this._t('marker.room_label')}${isVirtual ? '' : this._t('marker.room_override')}</label>
@@ -4073,7 +4106,9 @@ class HouseplanCard extends LitElement {
             : nothing}
           <span class="spacer"></span>
           <button class="btn ghost" @click=${() => (this._markerDialog = null)}>${this._t('btn.cancel')}</button>
-          <button class="btn on" @click=${this._saveMarker} ?disabled=${d.busy}>
+          <button class="btn on" @click=${this._saveMarker}
+            ?disabled=${d.busy || (d.bindingMode === 'ha' && (!d.binding || d.binding === 'virtual'))}
+            title=${d.bindingMode === 'ha' && (!d.binding || d.binding === 'virtual') ? this._t('marker.pick_ph') : ''}>
             <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this._t('btn.save')}
           </button>
         </div>

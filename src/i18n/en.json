@@ -298,5 +298,9 @@
   "title.markup_openwall": "Open boundary — click a wall shared by two rooms to make it virtual: light flows through, the line turns dashed. Click again to close it.",
   "toast.openwall_pick": "Click a wall shared by two rooms",
   "toast.openwall_opened": "Boundary “{a}” ↔ “{b}” is now open",
-  "toast.openwall_closed": "Boundary “{a}” ↔ “{b}” is closed again"
+  "toast.openwall_closed": "Boundary “{a}” ↔ “{b}” is closed again",
+  "marker.from_ha_option": "Pick from the HA list",
+  "marker.show_entities": "Show entities",
+  "marker.show_entities_tip": "Adds not only devices to the list, but all their entities too",
+  "marker.pick_ph": "Choose a device…"
 }

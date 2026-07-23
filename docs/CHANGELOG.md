@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.38.0 — 2026-07-23 (binding section redesign)
+- The device dialog's binding section is compact now: two radio buttons —
+  **Virtual device** and **Pick from the HA list** — with a **Show entities**
+  checkbox (adds every entity of the devices to the list; groups and helpers
+  are always listed). The searchable dropdown appears only in HA mode and
+  collapses once you pick. Save is disabled until a binding is chosen.
+  The binding logic itself is unchanged.
+
 ## v1.37.3 — 2026-07-23
 - Open boundaries now render as a **true dash**: the rooms' solid outlines are
   trimmed under the open stretch (outlineWithout) instead of dashes being
