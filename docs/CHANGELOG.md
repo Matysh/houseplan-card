@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.40.2 — 2026-07-24
+- Default icon rules: smart speakers (Yandex/Alice stations, «колонка»,
+  generic speakers) now get **mdi:speaker**; mdi:soundbar stays for actual
+  soundbars. Applies where the icon rules haven't been customized.
+
 ## v1.40.1 — 2026-07-23
 - Rooms are no longer clickable in View (default cursor, empty space does
   nothing). Instead the room card shows a small **open-in-new icon** after
