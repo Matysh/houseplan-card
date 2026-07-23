@@ -287,5 +287,9 @@
   "gs.glow_light": "Default light color / intensity",
   "gs.glow_radius": "Glow radius",
   "gs.unit_m": "m",
-  "gs.unit_ft": "ft"
+  "gs.unit_ft": "ft",
+  "marker.controls_label": "Controls light sources",
+  "marker.controls_hint": "With tap action “Toggle”, a click flips all bound lights at once (any on → all off). The icon mirrors their state.",
+  "marker.controls_filter": "Search lights and switches…",
+  "info.controls": "Controls"
 }

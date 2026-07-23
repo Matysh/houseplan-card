@@ -838,6 +838,19 @@ export function hasRoomBehind(
   return polys.some((poly) => pointStrictlyInside(p, poly, 1e-9));
 }
 
+/**
+ * Group toggle for a switch's controlled entities, HA-group semantics:
+ * any target on -> turn everything off; all off -> turn everything on.
+ */
+export function controlsAction(states: (string | undefined)[]): 'turn_on' | 'turn_off' {
+  return states.some((st) => st === 'on') ? 'turn_off' : 'turn_on';
+}
+
+/** Only lights and plain switches may be group-controlled from the plan. */
+export function isControllable(entityId: string): boolean {
+  return entityId.startsWith('light.') || entityId.startsWith('switch.');
+}
+
 /** Device classes whose active state is an emergency, not a status. */
 const ALARM_CLASSES = new Set(['smoke', 'gas', 'carbon_monoxide', 'moisture', 'safety', 'tamper', 'problem']);
 

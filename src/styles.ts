@@ -396,6 +396,26 @@ export const cardStyles = css`
       display: inline-flex;
     }
     .roomlabel .rlm.lit { opacity: 1; }
+    .ctrlchips { display: flex; flex-wrap: wrap; gap: 5px; margin: 4px 0; }
+    .ctrlchip {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: var(--hp-accent); color: var(--text-primary-color, #fff);
+      border-radius: 12px; padding: 3px 8px; font-size: 12px;
+    }
+    .ctrlchip ha-icon { --mdc-icon-size: 14px; cursor: pointer; }
+    .ctrllist { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
+    .ctrlopt {
+      display: flex; align-items: center; gap: 7px; text-align: left;
+      border: 0; background: transparent; color: var(--hp-txt);
+      padding: 5px 7px; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 13px;
+    }
+    .ctrlopt:hover { background: var(--secondary-background-color, rgba(128,128,128,0.15)); }
+    .ctrlopt .sub { color: var(--hp-muted); font-size: 11px; margin-left: auto; }
+    .ctrlopt ha-icon { --mdc-icon-size: 16px; }
+    .ctrlstates { display: flex; flex-direction: column; gap: 3px; }
+    .ctrlstate { display: inline-flex; align-items: center; gap: 5px; color: var(--hp-muted); }
+    .ctrlstate.on { color: var(--hp-txt); }
+    .ctrlstate ha-icon { --mdc-icon-size: 15px; }
     .iconauto {
       display: flex;
       align-items: center;

@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.36.0 — 2026-07-23 (wall switches that really switch)
+- Markers gained **"Controls light sources"**: bind any set of `light.*` /
+  `switch.*` entities to an icon. With tap action **Toggle**, a click flips
+  them all with HA-group semantics — any on → all off, all off → all on — in
+  one service call. Covers stateless remotes, one-switch-many-lights and
+  dumb wall switches (place a virtual marker; no HA entity needed).
+- The icon mirrors its targets: on when any target is on, tinted by the first
+  lit RGB light. The info card lists every target with its state. Controls
+  fire only on the explicit per-marker Toggle (owner's decision); locks and
+  other domains can never be group-controlled.
+
 ## v1.35.0 — 2026-07-23 (glow fill: dark house, glowing lamps)
 - New fill mode **"Light sources"**: the whole house is painted with a single
   configurable darkness color, and every lit lamp casts a radial pool of light

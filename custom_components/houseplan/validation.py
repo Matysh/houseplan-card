@@ -168,6 +168,7 @@ MARKER_SCHEMA = vol.Schema(
         vol.Optional("link"): vol.Any(str, None),
         vol.Optional("description"): vol.Any(str, None),
         vol.Optional("tap_action"): vol.Any("info", "more-info", "toggle", None),
+        vol.Optional("controls"): vol.Any([str], None),
         vol.Optional("room_id"): vol.Any(str, None),
         vol.Optional("display"): vol.Any("badge", "ripple", "icon_ripple", None),
         vol.Optional("ripple_color"): vol.Any(str, None),

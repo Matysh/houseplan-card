@@ -17,7 +17,7 @@ import {
   pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf,
   snapToWall, openingAmount,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
-  stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, glowColorOf, doorSector, hasRoomBehind,
+  stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, glowColorOf, doorSector, hasRoomBehind, controlsAction, isControllable,
   spaceDisplayOf, roomFillStyle, fillColorsOf, DEFAULT_FILL_COLORS, type FillColors,
   isActiveState, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.35.0';
+const CARD_VERSION = '1.36.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -166,6 +166,8 @@ class HouseplanCard extends LitElement {
     size: number;        // icon size multiplier
     angle: number;       // icon rotation, degrees
     tapAction: string;   // '' = card default
+    controls: string[];  // entities this icon toggles as a group
+    controlsFilter: string;
     model: string;
     link: string;
     description: string;
@@ -770,6 +772,11 @@ class HouseplanCard extends LitElement {
 
   private _stateClass(d: DevItem): string {
     if (!this._config?.live_states) return '';
+    // an icon with controlled targets mirrors THEM, not its own entity
+    // (stateless remotes and virtual wall switches have nothing else to show)
+    const controls = (d.marker?.controls || []).filter(isControllable);
+    if (controls.length)
+      return controls.some((e) => this.hass.states[e]?.state === 'on') ? 'on' : '';
     const p = d.primary ? this.hass.states[d.primary] : undefined;
     if (!p) return '';
     if (p.state === 'unavailable') return 'unavail';
@@ -821,6 +828,17 @@ class HouseplanCard extends LitElement {
       return;
     }
     const domain = d.primary ? d.primary.split('.')[0] : null;
+    // a switch with bound targets: the EXPLICIT per-marker toggle flips them
+    // all with HA-group semantics (any on -> all off). Owner's decision:
+    // controls never fire on the card-wide default action.
+    const controls = (d.marker?.controls || []).filter(isControllable);
+    if (d.tapAction === 'toggle' && controls.length) {
+      const act = controlsAction(controls.map((e) => this.hass.states[e]?.state));
+      this.hass
+        .callService('homeassistant', act, { entity_id: controls })
+        .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
+      return;
+    }
     const action = resolveTapAction(d.tapAction, this._config?.tap_action, domain);
     if (action === 'toggle' && d.primary) {
       this.hass
@@ -1987,6 +2005,8 @@ class HouseplanCard extends LitElement {
         size: Number(d.marker?.size) > 0 ? Number(d.marker!.size) : 1,
         angle: Number(d.marker?.angle) || 0,
         tapAction: d.marker?.tap_action || '',
+        controls: [...(d.marker?.controls || [])],
+        controlsFilter: '',
         model: d.model || '',
         link: d.link || '',
         description: d.description || '',
@@ -2000,7 +2020,7 @@ class HouseplanCard extends LitElement {
       this._markerDialog = {
         name: '', binding: 'virtual', bindingFilter: '', icon: '', autoIcon: '',
         display: 'badge', rippleColor: '', rippleSize: 3, size: 1, angle: 0,
-        tapAction: '', model: '',
+        tapAction: '', controls: [], controlsFilter: '', model: '',
         link: '', description: '', pdfs: [], room: '', busy: false,
       };
     }
@@ -2194,6 +2214,7 @@ class HouseplanCard extends LitElement {
         size: dlg.size !== 1 ? dlg.size : null,
         angle: dlg.angle ? dlg.angle : null,
         tap_action: dlg.tapAction || null,
+        controls: dlg.controls.length ? dlg.controls : null,
         model: dlg.model.trim() || null,
         link: dlg.link.trim() || null,
         description: dlg.description.trim() || null,
@@ -3095,8 +3116,14 @@ class HouseplanCard extends LitElement {
     const icon = this._config?.live_states
       ? stateIcon(d.icon, domain, primarySt?.attributes?.device_class, primarySt?.state, !!m?.icon)
       : d.icon;
-    // RGB lights color the icon (and the ripple, unless a custom ripple color is set)
-    const lightC = this._config?.live_states && domain === 'light' ? lightColorOf(primarySt) : null;
+    // RGB lights color the icon (and the ripple, unless a custom ripple color is set);
+    // an icon with controlled targets takes the color of its first lit RGB target
+    const ctrl = (m?.controls || []).filter(isControllable);
+    const lightC = this._config?.live_states
+      ? ctrl.length
+        ? ctrl.map((e) => lightColorOf(this.hass.states[e])).find((v) => v) || null
+        : domain === 'light' ? lightColorOf(primarySt) : null
+      : null;
     // emergencies (leak/smoke/gas/CO/siren) pulse red regardless of display mode
     const alarm = this._config?.live_states
       && isAlarmState(domain, primarySt?.attributes?.device_class, primarySt?.state);
@@ -3655,6 +3682,7 @@ class HouseplanCard extends LitElement {
     const d = this._infoCard!;
     const st = d.primary ? this.hass.states[d.primary] : undefined;
     const stateTxt = st ? this.hass.formatEntityState?.(st) ?? st.state : null;
+    const controls = (d.marker?.controls || []).filter(isControllable);
     return html`<div class="menuwrap dialogwrap" @click=${() => (this._infoCard = null)}>
       <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
         <div class="hd"><ha-icon icon="${d.icon}"></ha-icon>${d.name}</div>
@@ -3673,7 +3701,19 @@ class HouseplanCard extends LitElement {
                     <ha-icon icon="mdi:file-pdf-box"></ha-icon>${p.name}</a>`,
                 )}</span></div>`
             : nothing}
-          ${!d.model && !stateTxt && !d.link && !d.description && !(d.pdfs && d.pdfs.length)
+          ${controls.length
+            ? html`<div class="inforow"><span class="k">${this._t('info.controls')}</span>
+                <span class="ctrlstates">
+                  ${controls.map((eid) => {
+                    const cs = this.hass.states[eid];
+                    const on = cs?.state === 'on';
+                    return html`<span class="ctrlstate ${on ? 'on' : ''}">
+                      <ha-icon icon=${on ? 'mdi:lightbulb-on' : 'mdi:lightbulb-outline'}></ha-icon>
+                      ${cs?.attributes?.friendly_name || eid}</span>`;
+                  })}
+                </span></div>`
+            : nothing}
+          ${!d.model && !stateTxt && !d.link && !d.description && !(d.pdfs && d.pdfs.length) && !controls.length
             ? html`<div class="infodesc muted">${this._t('info.none')}</div>`
             : nothing}
         </div>
@@ -3755,6 +3795,39 @@ class HouseplanCard extends LitElement {
               ([v, k]) => html`<option value=${v} ?selected=${(d.tapAction || '') === v}>${this._t(k as any)}</option>`,
             )}
           </select>
+
+          <label>${this._t('marker.controls_label')}</label>
+          <div class="rhint">${this._t('marker.controls_hint')}</div>
+          ${d.controls.length
+            ? html`<div class="ctrlchips">
+                ${d.controls.map((eid) => html`<span class="ctrlchip">
+                  ${this.hass.states[eid]?.attributes?.friendly_name || eid}
+                  <ha-icon icon="mdi:close" @click=${() =>
+                    (this._markerDialog = { ...d, controls: d.controls.filter((x) => x !== eid) })}></ha-icon>
+                </span>`)}
+              </div>`
+            : nothing}
+          <input class="namein" type="text" placeholder=${this._t('marker.controls_filter')}
+            .value=${d.controlsFilter}
+            @input=${(e: Event) => (this._markerDialog = { ...d, controlsFilter: (e.target as HTMLInputElement).value })} />
+          ${d.controlsFilter.trim()
+            ? html`<div class="ctrllist">
+                ${Object.keys(this.hass.states)
+                  .filter((eid) => isControllable(eid) && !d.controls.includes(eid))
+                  .filter((eid) => {
+                    const q = d.controlsFilter.trim().toLowerCase();
+                    const name = String(this.hass.states[eid]?.attributes?.friendly_name || '');
+                    return eid.toLowerCase().includes(q) || name.toLowerCase().includes(q);
+                  })
+                  .slice(0, 8)
+                  .map((eid) => html`<button class="ctrlopt"
+                    @click=${() => (this._markerDialog = { ...d, controls: [...d.controls, eid], controlsFilter: '' })}>
+                    <ha-icon icon=${eid.startsWith('light.') ? 'mdi:lightbulb' : 'mdi:toggle-switch'}></ha-icon>
+                    ${this.hass.states[eid]?.attributes?.friendly_name || eid}
+                    <span class="sub">${eid}</span>
+                  </button>`)}
+              </div>`
+            : nothing}
 
           <label>${this._t('marker.icon_label')}</label>
           ${customElements.get('ha-icon-picker')

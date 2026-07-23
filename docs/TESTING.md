@@ -140,6 +140,12 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Marker controls (v1.36.0): a marker with "Controls light sources" and
+      tap action Toggle flips all bound lights/switches at once (any on → all
+      off, all off → all on, one service call); the icon and its RGB tint
+      mirror the targets, not the marker's own entity; without explicit Toggle
+      the click opens info as usual; the info card lists targets with states;
+      locks/other domains are filtered out of controls [auto]
 - [ ] Glow fill (v1.35.0): fill mode "Light sources" — every room painted with
       one uniform darkness color; lit lamps glow with a radial gradient
       (rgb_color → color temp → default color; brightness scales opacity),

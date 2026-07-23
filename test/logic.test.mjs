@@ -5,6 +5,7 @@ import {
   fitView, declump, safeUrl, resolveTapAction, floorsOf, subst, spaceDisplayOf, roomFillColor,
   splitRoomPath, polyContainsPoly, islandsOf,
   kelvinToRgb, glowColorOf, doorSector, hasRoomBehind,
+  controlsAction, isControllable,
   segmentCm, formatLength, roomEdges, roomPoly, pointOnBoundary, pointStrictlyInside, roomsOverlap,
   mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices,
 } from '../test-build/logic.js';
@@ -648,4 +649,20 @@ test('hasRoomBehind: neighbour room yes, street no', () => {
   // за дверью пусто
   assert.ok(!hasRoomBehind([10, 0], 90, [5, 0], [], 1));
   assert.ok(!hasRoomBehind([10, 0], 90, [5, 0], [[[30, 30], [40, 30], [40, 40], [30, 40]]], 1));
+});
+
+test('controlsAction: HA-group semantics', () => {
+  assert.equal(controlsAction(['off', 'off']), 'turn_on');
+  assert.equal(controlsAction(['off', 'on']), 'turn_off');
+  assert.equal(controlsAction(['on', 'on']), 'turn_off');
+  assert.equal(controlsAction([undefined, 'off']), 'turn_on');
+  assert.equal(controlsAction([]), 'turn_on');
+});
+
+test('isControllable: lights and switches only', () => {
+  assert.ok(isControllable('light.kitchen'));
+  assert.ok(isControllable('switch.pump'));
+  assert.ok(!isControllable('lock.front'));
+  assert.ok(!isControllable('cover.gate'));
+  assert.ok(!isControllable('alarm_control_panel.home'));
 });
