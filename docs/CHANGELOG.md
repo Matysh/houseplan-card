@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.38.1 — 2026-07-23 (tap action cleanup, right-click more-info)
+- The per-device action is now one of three: **Device card** (renamed from
+  "Info card", the default), HA more-info, Toggle. The confusing "As the card
+  default" option is gone — along with the card editor's global tap setting
+  (it is ignored if present in old configs). Explicit per-device choices are
+  untouched. RU wording: «по нажатию» instead of «по тапу».
+- **Right click** on a device icon in View mode always opens HA's more-info
+  dialog (editors keep the native browser menu; a virtual marker without an
+  entity opens its device card).
+
 ## v1.38.0 — 2026-07-23 (binding section redesign)
 - The device dialog's binding section is compact now: two radio buttons —
   **Virtual device** and **Pick from the HA list** — with a **Show entities**

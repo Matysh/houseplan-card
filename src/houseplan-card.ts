@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.38.0';
+const CARD_VERSION = '1.38.1';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -829,6 +829,15 @@ class HouseplanCard extends LitElement {
     fireEvent(this, 'hass-more-info', { entityId });
   }
 
+  /** Right click in VIEW mode always opens HA's more-info (owner's decision). */
+  private _ctxDevice(ev: MouseEvent, d: DevItem): void {
+    if (this._mode !== 'view') return; // editors keep the native context menu
+    ev.preventDefault();
+    ev.stopPropagation();
+    if (d.primary) this._openMoreInfo(d.primary);
+    else this._infoCard = d;
+  }
+
   private _clickDevice(ev: MouseEvent, d: DevItem): void {
     ev.stopPropagation();
     if (this._drag?.moved || this._suppressClick || this._holdFired) return;
@@ -849,7 +858,7 @@ class HouseplanCard extends LitElement {
         .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
       return;
     }
-    const action = resolveTapAction(d.tapAction, this._config?.tap_action, domain);
+    const action = resolveTapAction(d.tapAction, undefined, domain);
     if (action === 'toggle' && d.primary) {
       this.hass
         .callService('homeassistant', 'toggle', { entity_id: d.primary })
@@ -3297,6 +3306,7 @@ class HouseplanCard extends LitElement {
       class="dev ${cls} ${this._selId === d.id ? 'sel' : ''} ${d.virtual ? 'virtual' : ''} ${disp === 'ripple' ? 'noicon' : ''} ${valText != null ? 'valonly' : ''} ${lightC ? 'rgb' : ''} ${alarm ? 'alarm' : ''}"
       style="${st.join(';')}"
       @click=${(e: MouseEvent) => this._clickDevice(e, d)}
+      @contextmenu=${(e: MouseEvent) => this._ctxDevice(e, d)}
       @mousemove=${(e: MouseEvent) =>
         this._showTip(e, d.name,
           d.model + (temp != null ? ' · ' + temp + '°' : '') + (hum != null ? ' · ' + hum + '%' : '') + (lqi != null ? ' · LQI ' + lqi : ''))}
@@ -3977,8 +3987,8 @@ class HouseplanCard extends LitElement {
           <label>${this._t('marker.tap_label')}</label>
           <select class="areasel"
             @change=${(e: Event) => (this._markerDialog = { ...d, tapAction: (e.target as HTMLSelectElement).value })}>
-            ${[['', 'tap.auto'], ['info', 'tap.info'], ['more-info', 'tap.more_info'], ['toggle', 'tap.toggle']].map(
-              ([v, k]) => html`<option value=${v} ?selected=${(d.tapAction || '') === v}>${this._t(k as any)}</option>`,
+            ${[['info', 'tap.info'], ['more-info', 'tap.more_info'], ['toggle', 'tap.toggle']].map(
+              ([v, k]) => html`<option value=${v} ?selected=${(d.tapAction || 'info') === v}>${this._t(k as any)}</option>`,
             )}
           </select>
 

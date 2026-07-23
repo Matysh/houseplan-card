@@ -140,6 +140,11 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Tap action cleanup + right click (v1.38.1): the per-device action list
+      has three options (Device card / HA more-info / Toggle), no "card
+      default" — the card editor's global tap option is gone and ignored;
+      right click on an icon in VIEW opens HA more-info (native menu kept in
+      editors; virtual w/o entity → device card) [auto]
 - [ ] Binding section redesign (v1.38.0): two radios — Virtual / Pick from
       the HA list — with a "Show entities" checkbox (tooltip) next to the
       second; the dropdown (search inside) appears only in HA mode, opens
