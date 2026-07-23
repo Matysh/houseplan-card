@@ -9,6 +9,7 @@ import {
   sharedBoundary, openZoneOf, distToSegment,
   outlineWithout,
   alignGuides, segmentAngle, is45,
+  swipeTarget, clampScale,
   segmentCm, formatLength, roomEdges, roomPoly, pointOnBoundary, pointStrictlyInside, roomsOverlap,
   mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices,
 } from '../test-build/logic.js';
@@ -762,4 +763,27 @@ test('segmentAngle & is45', () => {
   assert.ok(is45(45) && is45(90) && is45(315) && is45(0));
   assert.ok(is45(44.8) && is45(45.3));
   assert.ok(!is45(30) && !is45(52));
+});
+
+test('swipeTarget: kiosk swipe rules', () => {
+  const ids = ['f1', 'f2', 'garden'];
+  // влево → следующее, вправо → предыдущее, по кругу
+  assert.equal(swipeTarget(-100, 5, 1, ids, 'f1'), 'f2');
+  assert.equal(swipeTarget(100, 5, 1, ids, 'f1'), 'garden');
+  assert.equal(swipeTarget(-100, 0, 1, ids, 'garden'), 'f1');
+  // при зуме — не свайп
+  assert.equal(swipeTarget(-100, 0, 2, ids, 'f1'), null);
+  // короткий или диагональный жест — не свайп
+  assert.equal(swipeTarget(-30, 0, 1, ids, 'f1'), null);
+  assert.equal(swipeTarget(-80, 70, 1, ids, 'f1'), null);
+  // одно пространство — некуда
+  assert.equal(swipeTarget(-100, 0, 1, ['f1'], 'f1'), null);
+});
+
+test('clampScale', () => {
+  assert.equal(clampScale(2), 2);
+  assert.equal(clampScale(9), 3);
+  assert.equal(clampScale(0.1), 0.5);
+  assert.equal(clampScale('x'), 1);
+  assert.equal(clampScale(undefined, 1.5), 1.5);
 });

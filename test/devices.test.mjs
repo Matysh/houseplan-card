@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildDevices, lightGroups, primaryEntity, lqiFor, tempFor, humFor, areaLights, areaTemp, areaHum, areaLightStats } from '../test-build/devices.js';
-import { compileIconRules } from '../test-build/rules.js';
+import { compileIconRules, iconFor } from '../test-build/rules.js';
 
 /** Minimal fake hass around the pieces buildDevices reads. */
 function mkHass({ devices = {}, entities = {}, states = {}, areas = {} } = {}) {
@@ -329,4 +329,11 @@ test('primaryEntity: hidden light beats visible config switch (grouped lamps)', 
     states: {},
   };
   assert.equal(primaryEntity(hass2, ['light.a', 'light.b'], 'mdi:lightbulb'), 'light.b');
+});
+
+test('icon rules: soundbars vs smart speakers (v1.40.2)', () => {
+  assert.equal(iconFor('Sony soundbar', ''), 'mdi:soundbar');
+  assert.equal(iconFor('Яндекс Станция Мини', ''), 'mdi:speaker');
+  assert.equal(iconFor('Колонка Алисы', ''), 'mdi:speaker');
+  assert.equal(iconFor('Kitchen speaker', ''), 'mdi:speaker');
 });

@@ -140,6 +140,13 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Kiosk mode (v1.41.0): kiosk: true hides the whole header, blocks every
+      editor (admins incl.), full-height stage; swipe left/right switches
+      spaces at 1:1 (dots indicator, wraps), never while zoomed; double tap
+      resets zoom; long-press (3 s) on empty plan opens the per-screen size
+      popover (icon ×0.5–3, room-card font; localStorage per device);
+      cycle: N auto-advances spaces with a 60 s pause after any touch;
+      manual: walk the real wall tablet [auto+manual]
 - [ ] Room link icon (v1.40.1): clicking empty room space in View does
       nothing (default cursor); an open-in-new icon after the room name (rooms
       with an HA area, View only) navigates to the area; no icon in editors or

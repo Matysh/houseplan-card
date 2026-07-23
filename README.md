@@ -1,10 +1,39 @@
-# 🏠 House Plan — an interactive house plan for Home Assistant
+# 🏠 House Plan — interactive floor plan card for Home Assistant
 
-**A live map of your home right inside Home Assistant: floors, rooms and devices on a real floor plan — with live states, temperature and signal strength. Everything is configured with the mouse, without a single line of YAML.**
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
+[![GitHub release](https://img.shields.io/github/v/release/Matysh/houseplan-card)](https://github.com/Matysh/houseplan-card/releases)
+[![GitHub stars](https://img.shields.io/github/stars/Matysh/houseplan-card)](https://github.com/Matysh/houseplan-card/stargazers)
+[![CI](https://github.com/Matysh/houseplan-card/actions/workflows/validate.yml/badge.svg)](https://github.com/Matysh/houseplan-card/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-![House Plan demo](docs/images/demo.gif)
+**Turn Home Assistant into a live, interactive map of your home.** Upload or draw
+a floor plan, outline the rooms with your mouse — and every smart device appears
+in its real place: live states, tap-to-toggle lights, temperature and humidity per
+room, Zigbee signal maps, glowing light pools and a fullscreen kiosk mode for wall
+tablets. No YAML, no Inkscape, no external editors — the whole floorplan lives
+right on your Lovelace dashboard.
+
+![Interactive Home Assistant floor plan: live rooms, devices, lights and climate on a real floorplan card](docs/images/demo.gif)
 
 🇷🇺 [Документация на русском](README.ru.md)
+
+**Feature highlights**
+
+- 🖱 **GUI-first floorplan editor** — rooms, doors & windows, island rooms,
+  virtual walls and a visual decor layer, all drawn with clicks; smart
+  alignment guides and a live ruler in real meters/feet.
+- 💡 **Lights toggle on click** out of the box; wall-switch markers can control
+  whole groups of lights (works for dumb switches and stateless remotes too).
+- 🌒 **“Light sources” fill** — a dark house where every lit lamp casts a pool
+  of its own color that spills through doorways and open zone boundaries.
+- 🌡 **Room cards** with temperature, humidity, Zigbee LQI and light count;
+  comfort-range temperature fills, per-room signal heatmap.
+- 🚪 **Doors, windows and locks** with contact sensors — unlocking is always an
+  explicit button, never an accidental tap.
+- 📺 **Kiosk mode** for wall tablets and TVs: fullscreen, swipe between floors,
+  auto-carousel, per-screen icon sizes.
+- 🔔 New devices appear automatically with a red “new” dot; the layout is stored
+  **server-side** — one shared plan for every user and screen, synced live.
 
 ---
 
@@ -48,6 +77,23 @@ Key advantages in short:
 - **Crisp zoom.** Zooming in does not "blur" the picture: the plan, labels and icons remain vector-sharp at any scale.
 
 ---
+
+## Wall tablet / TV (kiosk mode)
+
+Add the card to a dedicated dashboard with a **panel view** and set `kiosk: true`
+(or tick "Wall device (kiosk) mode" in the card editor):
+
+```yaml
+type: custom:houseplan-card
+kiosk: true
+cycle: 0   # seconds between auto space switches, 0 = off (nice for TVs)
+```
+
+No header, no editors — just the live plan. Swipe to change floors (at 1:1),
+pinch to zoom, double-tap to reset. Long-press an empty spot for 3 seconds to
+tune icon and text sizes for THIS screen (saved per device). To hide Home
+Assistant's own header use the companion app's kiosk settings or the
+[kiosk-mode](https://github.com/NemesisRE/kiosk-mode) plugin.
 
 ## Installation
 

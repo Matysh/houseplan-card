@@ -364,7 +364,7 @@ export const cardStyles = css`
       pointer-events: none; /* draggable only in plan mode (rule below) */
       position: absolute;
       transform: translate(-50%, -50%);
-      font-size: calc(var(--icon-size, 2.5cqw) * 0.5 * var(--rl-scale, 1));
+      font-size: calc(var(--icon-size, 2.5cqw) * 0.5 * var(--rl-scale, 1) * var(--rl-font, 1));
       font-weight: 700;
       letter-spacing: 0.04em;
       white-space: nowrap;
@@ -505,6 +505,25 @@ export const cardStyles = css`
       color: #4bd28f;
       border-color: #4bd28f;
     }
+    .hdr.kioskhide { display: none; }
+    .kioskdots {
+      position: absolute;
+      left: 50%;
+      bottom: 14px;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      z-index: 5;
+      pointer-events: none;
+    }
+    .kdot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--hp-muted);
+      opacity: 0.55;
+    }
+    .kdot.on { background: var(--hp-accent); opacity: 1; }
     .measurelabel {
       position: absolute;
       transform: translate(12px, -150%);

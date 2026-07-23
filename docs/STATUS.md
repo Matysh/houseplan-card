@@ -9,18 +9,42 @@
 > (versions, publication, infrastructure), DEVELOPMENT.md for new gotchas,
 > ARCHITECTURE.md for design changes, ROADMAP.md when plans move.
 
-## Snapshot (2026-07-17)
+## Snapshot (2026-07-24)
 
 | Item | State |
 |---|---|
-| Version | **v1.27.0** everywhere (manifest, const.py, package.json, CARD_VERSION) |
-| GitHub | https://github.com/Matysh/houseplan-card — branch `main`, releases v1.9.3…**v1.23.1** (latest published 2026-07-17, bundle auto-attached by release.yml) |
-| CI | `.github/workflows/validate.yml` (hacs + hassfest + frontend + backend) — **fully green** since v1.11.1; `release.yml` auto-attaches the card bundle (needs `permissions: contents: write`, fixed) |
-| HACS | Works as custom repository (id 1290210112 on the home instance). **Inclusion PR: https://github.com/hacs/default/pull/9004** (queue ≈2 months as of 2026-07). Lesson: #8995 was auto-closed by hacs-bot — the PR body MUST be their exact template with every checkbox ticked and all 3 links (release, HACS action run, hassfest run); a custom body gets closed without discussion |
-| Brands | Ships **inside the integration**: `custom_components/houseplan/brand/{icon,icon@2x,logo,logo@2x}.png` (HA ≥2026.3 local-brands mechanism). home-assistant/brands PR #10700 was auto-closed — that repo no longer accepts custom integrations |
-| Home instance | ha.jbstudio.pro (SSH port 323, key `ha_jb`), deployed **v1.23.1**, installed *via HACS* (custom repo). The user has real rooms, 12 openings (doors/windows with TTLock locks and contact sensors) and live fills configured |
-| Localization | UI en/ru (`src/i18n.ts`), auto by `hass.locale` + `language` card option; codebase and docs are English-first (`README.ru.md` is the Russian copy) |
-| Tests | 77 frontend (node:test, incl. a 12-test buildDevices suite on a fake hass) + 10 pure backend (anywhere) + 12 HA-harness backend (CI only, py3.13; skipped locally — sandbox has py3.10) |
+| Version | **v1.41.0** everywhere (manifest, const.py, package.json, CARD_VERSION); deployed to the home instance |
+| Workflow | Since 2026-07-22: minor changes go to branch **`dev`** (build + smokes → deploy home → commit → push, NO release); releases are batched on the owner's command (merge dev→main, one tag, one release with a summary changelog, CI checked on dev beforehand) |
+| GitHub | https://github.com/Matysh/houseplan-card — `main` = releases up to **v1.40.1**; `dev` ahead with v1.40.2+ (speaker icons, kiosk). Push via SSH key `ha_jb` (remote git@github.com:…); API releases via the fine-grained PAT in `~/.git-credentials` (Contents R/W, issued 2026-07-23) |
+| CI | validate.yml (hacs + hassfest + frontend + backend) green; release.yml attaches the bundle on release publish |
+| HACS | Custom repository works. **Inclusion PR: hacs/default#9004** — open, valid, labeled; ~864 older open PRs but merge rate ≈180/mo; realistic ETA 1–3 months (checked 2026-07-24) |
+| Home instance | ha.jbstudio.pro (SSH port 323, key `ha_jb`), deployed **v1.41.0** via direct copy (HACS custom repo also installed) |
+| Localization | UI en/ru (src/i18n/*.json), everything user-visible localized incl. kiosk popover |
+| Tests | 111 frontend (node:test) + 12 pure backend + 12 HA-harness (CI, py3.13); ~30 demo smoke suites (headless chromium) |
+| Product scope | docs/SCOPE.md (2026-07-22) is the feature guard rail — check before accepting any feature |
+
+## Current feature surface (since the 2026-07-17 snapshot)
+
+- **Three editors + View**: Plan / Devices / Background (decor layer v1.33) as
+  tabs with an X to close; View is the default; nav (space+mode) persists
+  across reloads (v1.38.2). **Kiosk mode** (v1.41.0): `kiosk: true` — no
+  header/editors, swipe between spaces, double-tap zoom reset, `cycle: N`
+  carousel, per-screen size multipliers in localStorage.
+- **Glow fill** (v1.35–v1.37): dark house + per-source light pools (rgb/color
+  temp/default; per-source radius), door sectors, open boundaries
+  (`room.open_to`, virtual walls, dashed, transitive light zones).
+- **Real switches** (v1.36): `marker.controls[]` group-toggle with HA-group
+  semantics; icon mirrors targets; hidden grouped lamps fixed (tiered
+  primaryEntity). **Lights toggle by default** (v1.39): primary domain light
+  → tap toggles, kettle-style devices keep the card default.
+- **Plan geometry**: polyline split (v1.32), island rooms w/ evenodd holes
+  (v1.34), smart guides + 45° angle badge (v1.40), opening hover preview.
+- **Rooms**: room cards with metrics (temp/hum/lqi/light "1 of 3") and
+  proportional resize (v1.31); link icon to the HA area (v1.40.1, room taps
+  removed). **New-device red dot** (v1.29), lock action button (v1.30).
+- **Dialog UX**: binding radios + entities checkbox + search dropdown
+  (v1.38.0); tap actions simplified to Device card / more-info / Toggle,
+  right-click → more-info (v1.38.1); Esc closes every dialog (v1.30.4).
 
 ## Recent milestones (details in CHANGELOG.md)
 
