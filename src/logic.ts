@@ -912,14 +912,13 @@ export function openZoneOf(roomId: string, rooms: { id?: string; open_to?: strin
 }
 
 /**
- * Room outline pieces with the given collinear stretches removed — used to
- * draw a TRUE dashed open boundary (the solid stroke must not run beneath).
- * Returns segments [x1,y1,x2,y2].
+ * Segments with the given collinear stretches removed — the workhorse behind
+ * TRUE dashed open boundaries (derived walls and room outlines alike).
  */
-export function outlineWithout(poly: number[][], cuts: number[][], eps = 1e-6): number[][] {
+export function cutSegments(segs: number[][], cuts: number[][], eps = 1e-6): number[][] {
   const out: number[][] = [];
-  for (let i = 0; i < poly.length; i++) {
-    const p1 = poly[i], p2 = poly[(i + 1) % poly.length];
+  for (const seg of segs) {
+    const p1 = [seg[0], seg[1]], p2 = [seg[2], seg[3]];
     const dx = p2[0] - p1[0], dy = p2[1] - p1[1];
     const len = Math.hypot(dx, dy);
     if (len < eps) continue;
@@ -950,6 +949,16 @@ export function outlineWithout(poly: number[][], cuts: number[][], eps = 1e-6): 
     if (len - cur > eps) out.push([p1[0] + ux * cur, p1[1] + uy * cur, p2[0], p2[1]]);
   }
   return out;
+}
+
+/** Room outline pieces with the given collinear stretches removed. */
+export function outlineWithout(poly: number[][], cuts: number[][], eps = 1e-6): number[][] {
+  const edges: number[][] = [];
+  for (let i = 0; i < poly.length; i++) {
+    const p1 = poly[i], p2 = poly[(i + 1) % poly.length];
+    edges.push([p1[0], p1[1], p2[0], p2[1]]);
+  }
+  return cutSegments(edges, cuts, eps);
 }
 
 /** Distance from a point to a segment [x1,y1,x2,y2]. */

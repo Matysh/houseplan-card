@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.38.4 — 2026-07-23
+- Plan editor: the DERIVED wall segments (the markup layer's solid lines)
+  are now trimmed under open boundaries as well — v1.38.3 only trimmed the
+  room outlines, so the virtual wall still looked solid in the editor.
+  (`cutSegments` extracted as the shared workhorse; outlineWithout reuses it.)
+
 ## v1.38.3 — 2026-07-23
 - The Plan editor now shows open boundaries as a true dash as well: the blue
   markup outlines are trimmed under the open stretches (rooms picked for

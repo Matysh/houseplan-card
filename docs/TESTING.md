@@ -140,6 +140,9 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Derived walls cut too (v1.38.4): in the Plan editor the derived wall
+      segments (.seg) no longer run solid through an open stretch — only the
+      dash remains there [auto]
 - [ ] Dashed boundaries in the Plan editor (v1.38.3): open stretches render as
       a true dash in markup too (blue trimmed outlines); merge/split-picked
       rooms keep their full amber highlight [auto]
