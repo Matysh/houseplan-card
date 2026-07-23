@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.38.3 — 2026-07-23
+- The Plan editor now shows open boundaries as a true dash as well: the blue
+  markup outlines are trimmed under the open stretches (rooms picked for
+  merge/split keep their full amber highlight).
+
 ## v1.38.2 — 2026-07-23
 - The card now **remembers where you were**: the selected space and the active
   editor survive navigation and closing the tab (localStorage; edit modes are

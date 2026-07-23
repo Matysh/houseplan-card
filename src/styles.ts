@@ -595,6 +595,11 @@ export const cardStyles = css`
       stroke-width: 2.5;
       pointer-events: none;
     }
+    /* Plan editor: trimmed outlines use the markup blue */
+    .room-outline.outlined {
+      stroke: rgba(62, 166, 255, 0.55);
+      stroke-opacity: 1;
+    }
     .openwalls.hot .openwall {
       stroke: #ffc14d;
       opacity: 1;

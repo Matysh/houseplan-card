@@ -24,7 +24,12 @@ const res = await page.evaluate(async () => {
   const gi = order.indexOf('glowlayer');
   const oi = order.indexOf('openwalls');
   out.dashAboveGlow = gi === -1 || oi > gi;
-  c._setMode('plan'); c._tool = 'openwall'; await c.updateComplete;
+  // в редакторе плана: пунктир виден, штрих комнат вырезан, контур синий
+  c._setMode('plan'); c._tool = 'draw'; await c.updateComplete;
+  out.planDashes = sr().querySelectorAll('.openwall').length > 0;
+  out.planNoedge = sr().querySelectorAll('.room.noedge').length >= 2;
+  out.planBlueOutline = sr().querySelectorAll('.room-outline.outlined').length >= 2;
+  c._tool = 'openwall'; await c.updateComplete;
   // повторный клик закрывает
   c._openWallClick([550, 0.25 * H]); await c.updateComplete;
   out.toggledOff = !(c._curSpaceCfg.rooms.find((r) => r.id === 'r1').open_to || []).includes('r2');

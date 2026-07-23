@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.38.2';
+const CARD_VERSION = '1.38.3';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -3201,8 +3201,11 @@ class HouseplanCard extends LitElement {
               const label = !space.bg && !disp.showNames && !this._markup;
               const c = this._roomCenter(r);
               // open boundaries: this room's solid stroke must not run beneath
-              // the dashed stretches — suppress it and draw a trimmed outline
-              const openCuts = !this._markup && r.id
+              // the dashed stretches — suppress it and draw a trimmed outline.
+              // Applies in the Plan editor too (picked rooms keep their full
+              // amber highlight — the merge/split selection must stay visible).
+              const isPicked = this._markup && (r.id === this._mergeSel || r.id === this._splitSel?.roomId);
+              const openCuts = r.id && !isPicked
                 ? this._openPairs()
                     .filter((pp) => pp.a.id === r.id || pp.b.id === r.id)
                     .flatMap((pp) => pp.segs)
@@ -3232,8 +3235,9 @@ class HouseplanCard extends LitElement {
                 ? outlineWithout(myPoly, openCuts, this._gridPitch * 0.02)
                 : null;
               const outline = trimmed
-                ? svg`<path class="room-outline" d="${trimmed.map((sg) => `M ${sg[0]} ${sg[1]} L ${sg[2]} ${sg[3]}`).join(' ')}"
-                    style="stroke:${disp.color};stroke-opacity:${disp.showBorders && !this._markup ? disp.opacity : 0}"></path>`
+                ? svg`<path class="room-outline ${this._markup ? 'outlined' : ''}"
+                    d="${trimmed.map((sg) => `M ${sg[0]} ${sg[1]} L ${sg[2]} ${sg[3]}`).join(' ')}"
+                    style=${this._markup ? nothing : `stroke:${disp.color};stroke-opacity:${disp.showBorders ? disp.opacity : 0}`}></path>`
                 : nothing;
               return svg`${shape}${outline}${label ? svg`<text class="rlabel" x="${c[0]}" y="${c[1]}">${r.name}</text>` : nothing}`;
             })}

@@ -140,6 +140,9 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Dashed boundaries in the Plan editor (v1.38.3): open stretches render as
+      a true dash in markup too (blue trimmed outlines); merge/split-picked
+      rooms keep their full amber highlight [auto]
 - [ ] Nav persistence (v1.38.2): closing/reopening the tab restores the last
       space AND editor mode (admins; localStorage); a #space= deep link beats
       the saved space; a stale cache without the saved space retries after the
