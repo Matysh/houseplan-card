@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.38.4';
+const CARD_VERSION = '1.39.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -169,7 +169,8 @@ class HouseplanCard extends LitElement {
     rippleSize: number;  // in icon diameters
     size: number;        // icon size multiplier
     angle: number;       // icon rotation, degrees
-    tapAction: string;   // '' = card default
+    tapAction: string;   // '' = the effective default (defaultTap)
+    defaultTap: 'info' | 'toggle';
     controls: string[];  // entities this icon toggles as a group
     controlsFilter: string;
     glowRadius: string;  // per-device glow radius in display units; '' = global default
@@ -2151,6 +2152,7 @@ class HouseplanCard extends LitElement {
         size: Number(d.marker?.size) > 0 ? Number(d.marker!.size) : 1,
         angle: Number(d.marker?.angle) || 0,
         tapAction: d.marker?.tap_action || '',
+        defaultTap: d.primary?.split('.')[0] === 'light' ? 'toggle' : 'info',
         controls: [...(d.marker?.controls || [])],
         controlsFilter: '',
         glowRadius: Number(d.marker?.glow_radius_cm) > 0
@@ -2172,7 +2174,7 @@ class HouseplanCard extends LitElement {
         name: '', binding: 'virtual', bindingMode: 'virtual', bindingOpen: false,
         showEntities: false, bindingFilter: '', icon: '', autoIcon: '',
         display: 'badge', rippleColor: '', rippleSize: 3, size: 1, angle: 0,
-        tapAction: '', controls: [], controlsFilter: '', glowRadius: '', model: '',
+        tapAction: '', defaultTap: 'info', controls: [], controlsFilter: '', glowRadius: '', model: '',
         link: '', description: '', pdfs: [], room: '', busy: false,
       };
     }
@@ -4028,7 +4030,7 @@ class HouseplanCard extends LitElement {
           <select class="areasel"
             @change=${(e: Event) => (this._markerDialog = { ...d, tapAction: (e.target as HTMLSelectElement).value })}>
             ${[['info', 'tap.info'], ['more-info', 'tap.more_info'], ['toggle', 'tap.toggle']].map(
-              ([v, k]) => html`<option value=${v} ?selected=${(d.tapAction || 'info') === v}>${this._t(k as any)}</option>`,
+              ([v, k]) => html`<option value=${v} ?selected=${(d.tapAction || d.defaultTap) === v}>${this._t(k as any)}</option>`,
             )}
           </select>
 

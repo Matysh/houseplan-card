@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.39.0 — 2026-07-23 (lights toggle by default)
+- Pure light sources — devices whose primary entity is a `light` (bulbs,
+  chandeliers, night lights, light groups) — now **toggle on click by
+  default**, right from auto-placement, no per-device setting needed.
+  Devices where light is a side function (a kettle's backlight: its primary
+  is a sensor) keep the Device-card default. An explicit per-device choice
+  always wins. The device dialog shows the effective default.
+
 ## v1.38.4 — 2026-07-23
 - Plan editor: the DERIVED wall segments (the markup layer's solid lines)
   are now trimmed under open boundaries as well — v1.38.3 only trimmed the

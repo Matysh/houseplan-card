@@ -175,8 +175,9 @@ test('icon rules: device_class fallback', () => {
   assert.equal(iconFromDeviceClasses([]), null);
 });
 
-test('tap action: defaults to info', () => {
-  assert.equal(resolveTapAction(undefined, undefined, 'light'), 'info');
+test('tap action: defaults — info everywhere except pure lights (v1.39.0)', () => {
+  assert.equal(resolveTapAction(undefined, undefined, 'light'), 'toggle'); // лампы кликабельны из коробки
+  assert.equal(resolveTapAction(undefined, undefined, 'switch'), 'info');
   assert.equal(resolveTapAction(null, 'info', 'switch'), 'info');
   assert.equal(resolveTapAction(null, 'more-info', 'sensor'), 'more-info');
 });
@@ -720,4 +721,16 @@ test('outlineWithout: removes the cut stretch, keeps the rest', () => {
   assert.ok(Math.abs(p2.reduce((a, s) => a + len(s), 0) - 30) < 1e-6);
   // без вырезов — весь периметр
   assert.ok(Math.abs(outlineWithout(sq, []).reduce((a, s) => a + len(s), 0) - 40) < 1e-6);
+});
+
+test('resolveTapAction: pure lights toggle by default (v1.39.0)', () => {
+  assert.equal(resolveTapAction(null, null, 'light'), 'toggle');
+  assert.equal(resolveTapAction('', undefined, 'light'), 'toggle');
+  // явный выбор пользователя сильнее дефолта
+  assert.equal(resolveTapAction('info', null, 'light'), 'info');
+  // не-световые домены не трогаем
+  assert.equal(resolveTapAction(null, null, 'switch'), 'info');
+  assert.equal(resolveTapAction(null, null, 'sensor'), 'info');
+  // замок никогда
+  assert.equal(resolveTapAction('toggle', null, 'lock'), 'info');
 });

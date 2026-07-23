@@ -140,6 +140,12 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Lights toggle by default (v1.39.0): a device whose PRIMARY entity is a
+      light (bulbs, chandeliers, night lights, light groups) toggles on click
+      out of the box — no per-device setting needed; the device dialog shows
+      "Toggle" as its effective default; devices where light is a side
+      function (kettle: primary = sensor) keep the Device-card default;
+      explicit per-device "Device card" wins over the default [auto]
 - [ ] Derived walls cut too (v1.38.4): in the Plan editor the derived wall
       segments (.seg) no longer run solid through an open stretch — only the
       dash remains there [auto]

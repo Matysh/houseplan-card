@@ -492,7 +492,11 @@ export function resolveTapAction(
   cardDefault: string | null | undefined,
   domain: string | null | undefined,
 ): TapAction {
-  const want = explicit || cardDefault || 'info';
+  // Pure light sources (the device's PRIMARY function is a lamp: bulbs,
+  // chandeliers, night lights, light groups) toggle by default — no explicit
+  // setting needed. Devices where light is a side function (a kettle's
+  // backlight) have a non-light primary and keep the info default.
+  const want = explicit || cardDefault || (domain === 'light' ? 'toggle' : 'info');
   if (want === 'more-info') return 'more-info';
   if (want !== 'toggle') return 'info';
   if (!domain || TOGGLE_FORBIDDEN_DOMAINS.has(domain)) return 'info';
