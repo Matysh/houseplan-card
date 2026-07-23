@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.36.3 — 2026-07-23
+- Glow: fixed dark wedges appearing INSIDE a lit room near some doorways.
+  The room outline and the door sectors were subpaths of a single clip path;
+  with opposite winding directions the nonzero fill rule cancelled their
+  overlap. Each contour is now its own clipPath child (children always
+  union), so sectors only ever ADD light.
+
 ## v1.36.2 — 2026-07-23
 - **Glow radius is now per source**: every device dialog gained a "Glow
   radius" field (in your HA units; empty = the global default from general

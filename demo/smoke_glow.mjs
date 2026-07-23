@@ -63,16 +63,20 @@ const res = await page.evaluate(async () => {
   // радиус 6 м, чтобы дверь заведомо была в зоне досягаемости
   c._serverCfg = { ...c._serverCfg, settings: { ...(c._serverCfg.settings || {}), glow_radius_cm: 600 } };
   c.requestUpdate(); await c.updateComplete;
-  const clips = [...sr().querySelectorAll('defs clipPath[id^="hp-glowclip"] path')];
-  out.sectorAdded = clips.some((p) => ((p.getAttribute('d') || '').match(/M /g) || []).length >= 2);
+  // теперь каждый под-контур — отдельный path внутри clipPath
+  const clipEls = [...sr().querySelectorAll('defs clipPath[id^="hp-glowclip"]')];
+  out.sectorAdded = clipEls.some((cp) => cp.querySelectorAll('path').length >= 2);
+  // и сектор в том же направлении обхода не выедает комнату: каждый path — один контур
+  out.singleSubpathPerPath = clipEls.every((cp) => [...cp.querySelectorAll('path')]
+    .every((p) => ((p.getAttribute('d') || '').match(/M /g) || []).length === 1));
   // у входной двери (наружу) сектора нет: дверь на внешней стене r1 (x=min)
   const minX = Math.min(...poly1.map((p) => p[0]));
   const yMid = (Math.min(...poly1.map((p) => p[1])) + Math.max(...poly1.map((p) => p[1]))) / 2;
   c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== spId ? s : ({
     ...s, openings: [{ id: 'gd2', type: 'door', x: minX / 1000, y: yMid / (1000 / aspect), angle: 90, length: 0.09 }] })) };
   c.requestUpdate(); await c.updateComplete;
-  const clips2 = [...sr().querySelectorAll('defs clipPath[id^="hp-glowclip"] path')];
-  out.entranceNoSector = clips2.every((p) => ((p.getAttribute('d') || '').match(/M /g) || []).length === 1);
+  const clipEls2 = [...sr().querySelectorAll('defs clipPath[id^="hp-glowclip"]')];
+  out.entranceNoSector = clipEls2.every((cp) => cp.querySelectorAll('path').length === 1);
   // 7а) персональный радиус источника перекрывает глобальный
   const litMarkerId = litLight.id;
   c._serverCfg = { ...c._serverCfg, markers: [

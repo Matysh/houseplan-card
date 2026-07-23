@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.36.2';
+const CARD_VERSION = '1.36.3';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -2683,7 +2683,7 @@ class HouseplanCard extends LitElement {
       .map((r) => ({ r, poly: roomPoly(r) }))
       .filter((x): x is { r: RoomCfg; poly: number[][] } => !!x.poly);
     const doors = this._openingsR.filter((o) => o.type === 'door');
-    const spots: { pos: { x: number; y: number }; c: string; alpha: number; clip: string | null; r: number }[] = [];
+    const spots: { pos: { x: number; y: number }; c: string; alpha: number; clip: string[] | null; r: number }[] = [];
     for (const d of this._devices) {
       if (d.space !== space.id) continue;
       const lightEid = d.entities.find(
@@ -2698,7 +2698,7 @@ class HouseplanCard extends LitElement {
       const pos = this._pos(d);
       // innermost room under the source (islands win — reverse order)
       const home = [...polys].reverse().find((x) => this._pointInRoom([pos.x, pos.y], x.r));
-      let clip: string | null = null;
+      let clip: string[] | null = null;
       if (home) {
         const shapes: string[] = ['M ' + home.poly.map((p) => p[0] + ' ' + p[1]).join(' L ') + ' Z'];
         // doorways of this room spill light into neighbouring rooms only
@@ -2713,7 +2713,11 @@ class HouseplanCard extends LitElement {
           const sector = doorSector([pos.x, pos.y], [o.rx - dx, o.ry - dy], [o.rx + dx, o.ry + dy], R);
           if (sector) shapes.push('M ' + sector.map((p) => p[0] + ' ' + p[1]).join(' L ') + ' Z');
         }
-        clip = shapes.join(' ');
+        // IMPORTANT: separate <path> children — clipPath children always
+        // UNION. Joining the room and a sector into ONE path made the default
+        // nonzero fill-rule cancel their overlap when the windings opposed,
+        // punching a dark wedge INSIDE the room (field report + screenshot).
+        clip = shapes;
       }
       spots.push({ pos, c: glow.c, alpha: colors.glow_light.a * glow.bri, clip, r: R });
     }
@@ -2725,7 +2729,7 @@ class HouseplanCard extends LitElement {
             <stop offset="55%" stop-color="${sp.c}" stop-opacity="${(sp.alpha * 0.45).toFixed(3)}"></stop>
             <stop offset="100%" stop-color="${sp.c}" stop-opacity="0"></stop>
           </radialGradient>
-          ${sp.clip ? svg`<clipPath id="hp-glowclip-${i}"><path d="${sp.clip}"></path></clipPath>` : nothing}`)}
+          ${sp.clip ? svg`<clipPath id="hp-glowclip-${i}">${sp.clip.map((d) => svg`<path d="${d}"></path>`)}</clipPath>` : nothing}`)}
       </defs>
       <g class="glowlayer">
         ${spots.map((sp, i) => svg`<circle cx="${sp.pos.x}" cy="${sp.pos.y}" r="${sp.r}"
