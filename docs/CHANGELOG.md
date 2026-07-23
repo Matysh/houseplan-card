@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.37.2 — 2026-07-23
+- Glow falloff tuned: full brightness for the inner 70% of the radius,
+  gradient on the outer 30% (was 80/20).
+
 ## v1.37.1 — 2026-07-23
 - Open-boundary tool polish: the cursor stays default and only turns into a
   pointer near a wall shared by two rooms; hovering previews the exact
