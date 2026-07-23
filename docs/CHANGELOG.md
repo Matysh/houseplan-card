@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.38.2 — 2026-07-23
+- The card now **remembers where you were**: the selected space and the active
+  editor survive navigation and closing the tab (localStorage; edit modes are
+  restored for admins only). A `#space=` deep link still wins over the saved
+  space. This reverses the earlier "always start in View" rule — the owner's
+  call.
+
 ## v1.38.1 — 2026-07-23 (tap action cleanup, right-click more-info)
 - The per-device action is now one of three: **Device card** (renamed from
   "Info card", the default), HA more-info, Toggle. The confusing "As the card

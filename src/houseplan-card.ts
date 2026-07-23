@@ -32,10 +32,11 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.38.1';
+const CARD_VERSION = '1.38.2';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
+const LS_NAV = 'houseplan_card_nav_v1'; // last space + editor mode (owner: restore where you were)
 const NORM_W = 1000; // width of the render space for normalized configs
 
 const GRID_N = 240; // grid points across the plan width (half the previous step; old nodes are a subset of the new ones, positions are preserved)
@@ -204,6 +205,7 @@ class HouseplanCard extends LitElement {
   } | null = null;
   private _keyHandler = (e: KeyboardEvent) => this._onKey(e);
   private _hashApplied = false;
+  private _navApplied = false; // the saved space was restored (or the user navigated)
   /** Deep-link: read `#space=<id>` from the URL (used by embedded houseplan-space-card). */
   private _hashSpace(): string {
     const m = /(?:^|[#&])space=([^&]+)/.exec(window.location.hash || '');
@@ -386,9 +388,13 @@ class HouseplanCard extends LitElement {
         this._layout = c.layout || {};
         this._serverStorage = true;
         const hs = this._hashSpace();
+        const nav = this._savedNav();
         if (hs && this._model.find((sp) => sp.id === hs)) { this._space = hs; this._hashApplied = true; }
+        else if (nav?.space && this._model.find((sp) => sp.id === nav.space)) { this._space = nav.space; this._navApplied = true; }
         else if (config.default_floor) this._space = config.default_floor;
         else if (!this._model.find((sp) => sp.id === this._space)) this._space = this._model[0]?.id || this._space;
+        // reopenning the tab lands you in the same editor you left (admins only)
+        if (nav?.mode && nav.mode !== 'view' && this._canEdit) this._mode = nav.mode;
       }
     } catch {
       /* ignore */
@@ -550,9 +556,16 @@ class HouseplanCard extends LitElement {
         }, 'houseplan_config_updated');
       }
       const hs = this._hashSpace();
+      const nav = this._savedNav();
       if (!this._hashApplied && hs && this._model.find((s) => s.id === hs)) {
         this._space = hs;
         this._hashApplied = true;
+      } else if (nav?.space && !this._navApplied && !this._hashApplied
+          && this._model.find((s) => s.id === nav.space)) {
+        // the cached config might have been stale (no such space) — retry once
+        // the live config is in
+        this._space = nav.space;
+        this._navApplied = true;
       } else if (this._norm && !this._model.find((s) => s.id === this._space)) {
         this._space = this._model[0]?.id || this._space;
       }
@@ -1187,6 +1200,22 @@ class HouseplanCard extends LitElement {
     return roomEdges(sp?.rooms || []).map((s) => [s[0] * NORM_W, s[1] * H, s[2] * NORM_W, s[3] * H]);
   }
 
+  private _savedNav(): { space?: string; mode?: 'view' | 'plan' | 'devices' | 'decor' } | null {
+    try {
+      return JSON.parse(localStorage.getItem(LS_NAV) || 'null');
+    } catch {
+      return null;
+    }
+  }
+
+  private _saveNav(): void {
+    try {
+      localStorage.setItem(LS_NAV, JSON.stringify({ space: this._space, mode: this._mode }));
+    } catch {
+      /* private mode etc. */
+    }
+  }
+
   private _setMode(mode: 'view' | 'plan' | 'devices' | 'decor'): void {
     if (this._mode === mode) return;
     if ((mode === 'plan' || mode === 'decor') && !this._norm) {
@@ -1206,6 +1235,7 @@ class HouseplanCard extends LitElement {
     this._decorDraft = null;
     this._decorSel = null;
     this._decorTool = 'select';
+    this._saveNav();
   }
 
 
@@ -3062,7 +3092,9 @@ class HouseplanCard extends LitElement {
                 @click=${() => {
                   this._space = s.id;
                   this._selId = null;
+                  this._navApplied = true;
                   this._restoreZoom();
+                  this._saveNav();
                 }}
               >
                 ${s.title}${this._norm && this._canEdit

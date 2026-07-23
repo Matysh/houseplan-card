@@ -140,6 +140,10 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Nav persistence (v1.38.2): closing/reopening the tab restores the last
+      space AND editor mode (admins; localStorage); a #space= deep link beats
+      the saved space; a stale cache without the saved space retries after the
+      live config loads [auto]
 - [ ] Tap action cleanup + right click (v1.38.1): the per-device action list
       has three options (Device card / HA more-info / Toggle), no "card
       default" — the card editor's global tap option is gone and ignored;
