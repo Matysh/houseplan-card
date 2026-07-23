@@ -140,6 +140,10 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Hidden-light primary (v1.36.1): a lamp whose light entity is HIDDEN in
+      the registry (folded into a light group) still toggles/reflects the lamp,
+      not its do-not-disturb switch or identify button; visible entities of the
+      same domain still win over hidden ones [manual: click hallway lamps]
 - [ ] Marker controls (v1.36.0): a marker with "Controls light sources" and
       tap action Toggle flips all bound lights/switches at once (any on → all
       off, all off → all on, one service call); the icon and its RGB tint

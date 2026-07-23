@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.36.1 — 2026-07-23
+- Fixed tap-toggle "doing nothing" on lamps whose individual `light.*` entity
+  is **hidden in the registry** (the usual setup when lamps are folded into a
+  light group): the primary entity fell through to a visible config switch
+  (do-not-disturb) or an identify button, and the click toggled THAT.
+  Primary selection now works in tiers — domain priority beats hiddenness,
+  so a hidden light still wins over a visible config switch, while visible
+  entities of the same domain keep winning over hidden ones.
+
 ## v1.36.0 — 2026-07-23 (wall switches that really switch)
 - Markers gained **"Controls light sources"**: bind any set of `light.*` /
   `switch.*` entities to an icon. With tap action **Toggle**, a click flips

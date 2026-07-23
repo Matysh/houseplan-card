@@ -309,3 +309,24 @@ test('areaHum: averages climate sensors only, integer %', () => {
   assert.equal(areaHum(hass, devs, 'living'), 44);
   assert.equal(areaHum(hass, devs, 'nothing'), null);
 });
+
+test('primaryEntity: hidden light beats visible config switch (grouped lamps)', () => {
+  const hass = {
+    entities: {
+      'light.lamp': { hidden: true },
+      'switch.lamp_do_not_disturb': { entity_category: 'config' },
+      'button.lamp_identify': { entity_category: 'diagnostic' },
+    },
+    states: {},
+  };
+  assert.equal(
+    primaryEntity(hass, ['switch.lamp_do_not_disturb', 'light.lamp', 'button.lamp_identify'], 'mdi:lightbulb'),
+    'light.lamp',
+  );
+  // видимая сущность того же домена всё равно приоритетнее скрытой
+  const hass2 = {
+    entities: { 'light.a': { hidden: true }, 'light.b': {} },
+    states: {},
+  };
+  assert.equal(primaryEntity(hass2, ['light.a', 'light.b'], 'mdi:lightbulb'), 'light.b');
+});
