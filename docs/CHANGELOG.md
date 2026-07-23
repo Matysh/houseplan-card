@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.35.0 — 2026-07-23 (glow fill: dark house, glowing lamps)
+- New fill mode **"Light sources"**: the whole house is painted with a single
+  configurable darkness color, and every lit lamp casts a radial pool of light
+  around itself. The pool color comes from the lamp's `rgb_color`, else its
+  color temperature (blackbody conversion), else a configurable default;
+  brightness scales the intensity.
+- Pools are clipped by the source's room — **plus the sector through each
+  doorway** (rays from the source to the door edges, out to the glow radius),
+  so light spills into neighbouring rooms through doors. Entrance doors (no
+  room behind) spill nothing; windows don't spill. No shadow casting: islands
+  and furniture do not block light (deliberate limitation).
+- The glow radius is configured in General settings in your HA unit system
+  (meters or feet; stored in cm, default 3 m). The palette gained a "glow"
+  group: house darkness + default light color/intensity.
+
 ## v1.34.0 — 2026-07-22 (island rooms)
 - **Nested rooms are now legal**: draw a contour fully inside an existing room
   (or around one) — a column in a ring-shaped room, an inner room, a wardrobe

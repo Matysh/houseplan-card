@@ -84,7 +84,7 @@ SPACE_DISPLAY_SCHEMA = vol.Schema(
         vol.Optional("show_names"): bool,
         vol.Optional("room_color"): vol.Match(r"^#[0-9a-fA-F]{6}$"),
         vol.Optional("room_opacity"): vol.All(vol.Coerce(float), vol.Range(min=0, max=1)),
-        vol.Optional("fill_mode"): vol.In(["none", "lqi", "light", "temp"]),
+        vol.Optional("fill_mode"): vol.In(["none", "lqi", "light", "temp", "glow"]),
         vol.Optional("temp_min"): vol.Coerce(float),
         vol.Optional("temp_max"): vol.Coerce(float),
         vol.Optional("show_lqi"): bool,
@@ -186,6 +186,7 @@ CONFIG_SCHEMA = vol.Schema(
         vol.Optional("markers", default=list): [MARKER_SCHEMA],
         vol.Optional("settings", default=dict): vol.Schema(
             {
+                vol.Optional("glow_radius_cm"): vol.All(vol.Coerce(float), vol.Range(min=10, max=10000)),
                 vol.Optional("known_devices"): [str],
                 vol.Optional("new_device_ids"): [str],
                 vol.Optional("fill_colors"): vol.Schema(

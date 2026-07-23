@@ -535,7 +535,7 @@ export function subst(s: string, vars?: Record<string, string | number>): string
 
 // ---------------- room fills & colors ----------------
 
-export type RoomFillMode = 'none' | 'lqi' | 'light' | 'temp';
+export type RoomFillMode = 'none' | 'lqi' | 'light' | 'temp' | 'glow';
 
 /** Per-space display settings with their defaults resolved. */
 export interface SpaceDisplay {
@@ -569,7 +569,7 @@ export function spaceDisplayOf(spaceCfg: any): SpaceDisplay {
     showNames: s.show_names ?? noPlan,
     color: typeof s.room_color === 'string' && /^#[0-9a-f]{6}$/i.test(s.room_color) ? s.room_color : DEFAULT_ROOM_COLOR,
     opacity: typeof s.room_opacity === 'number' ? Math.min(1, Math.max(0, s.room_opacity)) : DEFAULT_ROOM_OPACITY,
-    fill: ['lqi', 'light', 'temp'].includes(s.fill_mode) ? s.fill_mode : 'none',
+    fill: ['lqi', 'light', 'temp', 'glow'].includes(s.fill_mode) ? s.fill_mode : 'none',
     tempMin: typeof s.temp_min === 'number' ? s.temp_min : DEFAULT_TEMP_MIN,
     tempMax: typeof s.temp_max === 'number' ? s.temp_max : DEFAULT_TEMP_MAX,
     showLqi: typeof s.show_lqi === 'boolean' ? s.show_lqi : null,
@@ -598,6 +598,9 @@ export interface FillColors {
   temp_hot: FillColorEntry;
   lqi_low: FillColorEntry;
   lqi_high: FillColorEntry;
+  /** Glow mode: uniform "darkness" over every room + default light color. */
+  glow_base: FillColorEntry;
+  glow_light: FillColorEntry;
 }
 
 export const DEFAULT_FILL_COLORS: FillColors = {
@@ -609,6 +612,8 @@ export const DEFAULT_FILL_COLORS: FillColors = {
   temp_hot: { c: '#ffd45c', a: 0.18 },
   lqi_low: { c: '#f25a4a', a: 0.18 },
   lqi_high: { c: '#4bd28f', a: 0.18 },
+  glow_base: { c: '#0d1b2a', a: 0.5 },
+  glow_light: { c: '#ffd9a0', a: 0.85 },
 };
 
 const HEX_RE = /^#[0-9a-f]{6}$/i;
@@ -750,6 +755,87 @@ export function lightColorOf(state: any): string | null {
     return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
   }
   return null;
+}
+
+// ---------------- glow fill (light sources) ----------------
+
+/** Blackbody color temperature → RGB (Tanner Helland approximation). */
+export function kelvinToRgb(kelvin: number): [number, number, number] {
+  const t = Math.min(40000, Math.max(1000, kelvin)) / 100;
+  const r = t <= 66 ? 255 : 329.698727446 * Math.pow(t - 60, -0.1332047592);
+  const g = t <= 66
+    ? 99.4708025861 * Math.log(t) - 161.1195681661
+    : 288.1221695283 * Math.pow(t - 60, -0.0755148492);
+  const b = t >= 66 ? 255 : t <= 19 ? 0 : 138.5177312231 * Math.log(t - 10) - 305.0447927307;
+  const cl = (v: number) => Math.round(Math.min(255, Math.max(0, v)));
+  return [cl(r), cl(g), cl(b)];
+}
+
+/**
+ * Color and relative brightness of a light's glow: rgb_color as is, else the
+ * color temperature via blackbody, else the configured fallback. Off → null.
+ */
+export function glowColorOf(state: any, fallback: string): { c: string; bri: number } | null {
+  if (!state || state.state !== 'on') return null;
+  const a = state.attributes || {};
+  const briRaw = Number(a.brightness);
+  const bri = Number.isFinite(briRaw) && briRaw > 0 ? Math.max(0.15, Math.min(1, briRaw / 255)) : 1;
+  const rgb = a.rgb_color;
+  if (Array.isArray(rgb) && rgb.length >= 3 && rgb.every((v: any) => Number.isFinite(v)))
+    return { c: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`, bri };
+  const kelvin = Number(a.color_temp_kelvin) || (Number(a.color_temp) > 0 ? 1e6 / Number(a.color_temp) : NaN);
+  if (Number.isFinite(kelvin) && kelvin > 0) {
+    const [r, g, b] = kelvinToRgb(kelvin);
+    return { c: `rgb(${r}, ${g}, ${b})`, bri };
+  }
+  return { c: fallback, bri };
+}
+
+/**
+ * Light spilling through a doorway: the sector of the glow circle between the
+ * rays source→A and source→B (door edge points), out to radius r. This part of
+ * the circle is intentionally NOT clipped by the room (owner's spec: no shadow
+ * casting — just the unclipped sector). Null when the door is out of reach or
+ * the source sits on a door edge; the sweep is clamped to maxDeg.
+ */
+export function doorSector(
+  src: number[], a: number[], b: number[], r: number, maxDeg = 170,
+): number[][] | null {
+  const la = Math.hypot(a[0] - src[0], a[1] - src[1]);
+  const lb = Math.hypot(b[0] - src[0], b[1] - src[1]);
+  if (la < 1e-6 || lb < 1e-6 || Math.min(la, lb) >= r) return null;
+  let aa = Math.atan2(a[1] - src[1], a[0] - src[0]);
+  let sweep = Math.atan2(b[1] - src[1], b[0] - src[0]) - aa;
+  while (sweep > Math.PI) sweep -= 2 * Math.PI;
+  while (sweep < -Math.PI) sweep += 2 * Math.PI;
+  const max = (maxDeg * Math.PI) / 180;
+  if (Math.abs(sweep) > max) {
+    const mid = aa + sweep / 2;
+    sweep = max * Math.sign(sweep);
+    aa = mid - sweep / 2;
+  }
+  const steps = 8;
+  const pts: number[][] = [[src[0], src[1]]];
+  for (let i = 0; i <= steps; i++) {
+    const ang = aa + (sweep * i) / steps;
+    pts.push([src[0] + Math.cos(ang) * r, src[1] + Math.sin(ang) * r]);
+  }
+  return pts;
+}
+
+/**
+ * Is there a room on the far side of an opening (relative to the light source)?
+ * Entrance doors lead outside — light must not spill there.
+ */
+export function hasRoomBehind(
+  center: number[], angleDeg: number, src: number[], polys: number[][][], probe: number,
+): boolean {
+  const rad = (angleDeg * Math.PI) / 180;
+  const n = [-Math.sin(rad), Math.cos(rad)];
+  const toSrc = (src[0] - center[0]) * n[0] + (src[1] - center[1]) * n[1];
+  const sgn = toSrc > 0 ? -1 : 1;
+  const p = [center[0] + n[0] * probe * sgn, center[1] + n[1] * probe * sgn];
+  return polys.some((poly) => pointStrictlyInside(p, poly, 1e-9));
 }
 
 /** Device classes whose active state is an emergency, not a status. */

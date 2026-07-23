@@ -17,7 +17,7 @@ import {
   pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf,
   snapToWall, openingAmount,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
-  stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices,
+  stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, glowColorOf, doorSector, hasRoomBehind,
   spaceDisplayOf, roomFillStyle, fillColorsOf, DEFAULT_FILL_COLORS, type FillColors,
   isActiveState, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.34.0';
+const CARD_VERSION = '1.35.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -145,7 +145,7 @@ class HouseplanCard extends LitElement {
   private _onboardingShown = false; // the auto space dialog is shown once per session
 
   private _rulesDialog: { rules: IconRule[]; test: string; busy: boolean } | null = null;
-  private _settingsDialog: { colors: FillColors; busy: boolean } | null = null;
+  private _settingsDialog: { colors: FillColors; glowRadius: number; busy: boolean } | null = null;
   private _importDialog: { floors: (FloorInfo & { checked: boolean })[] } | null = null;
   private _importQueue: string[] = []; // floor titles still to create
   private _importTotal = 0;
@@ -185,7 +185,7 @@ class HouseplanCard extends LitElement {
     showNames: boolean;
     roomColor: string;
     roomOpacity: number;           // 0..1
-    fillMode: 'none' | 'lqi' | 'light' | 'temp';
+    fillMode: 'none' | 'lqi' | 'light' | 'temp' | 'glow';
     tempMin: number;
     tempMax: number;
     showLqi: boolean;
@@ -2578,7 +2578,11 @@ class HouseplanCard extends LitElement {
   private _openSettingsDialog = (): void => {
     if (!this._norm) return;
     // deep copy so the dialog edits do not leak into the live palette
-    this._settingsDialog = { colors: JSON.parse(JSON.stringify(this._fillColors)), busy: false };
+    const cm = this._glowRadiusCm;
+    const glowRadius = this._imperial
+      ? Math.round((cm / 30.48) * 10) / 10
+      : Math.round(cm) / 100;
+    this._settingsDialog = { colors: JSON.parse(JSON.stringify(this._fillColors)), glowRadius, busy: false };
   };
 
   private _setFillColor(key: keyof FillColors, patch: Partial<{ c: string; a: number }>): void {
@@ -2596,6 +2600,9 @@ class HouseplanCard extends LitElement {
       const settings: any = { ...cfg.settings };
       if (isDefault) delete settings.fill_colors;
       else settings.fill_colors = d.colors;
+      const cm = this._imperial ? d.glowRadius * 30.48 : d.glowRadius * 100;
+      if (Number.isFinite(cm) && cm > 0 && Math.round(cm) !== 300) settings.glow_radius_cm = Math.round(cm);
+      else delete settings.glow_radius_cm;
       this._serverCfg = { ...cfg, settings };
       await this._saveConfigNow();
       this._settingsDialog = null;
@@ -2620,6 +2627,73 @@ class HouseplanCard extends LitElement {
     </div>`;
   }
 
+  /** Glow radius: stored in cm (config.settings.glow_radius_cm), default 3 m. */
+  private get _glowRadiusCm(): number {
+    const v = Number((this._settings as any).glow_radius_cm);
+    return Number.isFinite(v) && v > 0 ? v : 300;
+  }
+
+  private get _imperial(): boolean {
+    return this.hass?.config?.unit_system?.length === 'mi';
+  }
+
+  /** Light pools of the current space: dark house, glowing sources. */
+  private _renderGlowLayer(space: SpaceModel): TemplateResult {
+    const colors = this._fillColors;
+    const R = (this._glowRadiusCm / this._cellCm) * this._gridPitch;
+    const g = this._gridPitch;
+    const polys = space.rooms
+      .map((r) => ({ r, poly: roomPoly(r) }))
+      .filter((x): x is { r: RoomCfg; poly: number[][] } => !!x.poly);
+    const doors = this._openingsR.filter((o) => o.type === 'door');
+    const spots: { pos: { x: number; y: number }; c: string; alpha: number; clip: string | null }[] = [];
+    for (const d of this._devices) {
+      if (d.space !== space.id) continue;
+      const lightEid = d.entities.find(
+        (e) => e.startsWith('light.') && this.hass.states[e]?.state === 'on',
+      );
+      if (!lightEid) continue;
+      const glow = glowColorOf(this.hass.states[lightEid], colors.glow_light.c);
+      if (!glow) continue;
+      const pos = this._pos(d);
+      // innermost room under the source (islands win — reverse order)
+      const home = [...polys].reverse().find((x) => this._pointInRoom([pos.x, pos.y], x.r));
+      let clip: string | null = null;
+      if (home) {
+        const shapes: string[] = ['M ' + home.poly.map((p) => p[0] + ' ' + p[1]).join(' L ') + ' Z'];
+        // doorways of this room spill light into neighbouring rooms only
+        for (const o of doors) {
+          const near = closestPointOnBoundary([o.rx, o.ry], home.poly);
+          if (!near || Math.hypot(near[0] - o.rx, near[1] - o.ry) > g * 0.75) continue;
+          const rad = (o.angle * Math.PI) / 180;
+          const dx = (Math.cos(rad) * o.rlen) / 2;
+          const dy = (Math.sin(rad) * o.rlen) / 2;
+          const others = polys.filter((x) => x !== home).map((x) => x.poly);
+          if (!hasRoomBehind([o.rx, o.ry], o.angle, [pos.x, pos.y], others, g * 0.6)) continue;
+          const sector = doorSector([pos.x, pos.y], [o.rx - dx, o.ry - dy], [o.rx + dx, o.ry + dy], R);
+          if (sector) shapes.push('M ' + sector.map((p) => p[0] + ' ' + p[1]).join(' L ') + ' Z');
+        }
+        clip = shapes.join(' ');
+      }
+      spots.push({ pos, c: glow.c, alpha: colors.glow_light.a * glow.bri, clip });
+    }
+    if (!spots.length) return svg`` as unknown as TemplateResult;
+    return svg`<defs>
+        ${spots.map((sp, i) => svg`
+          <radialGradient id="hp-glow-${i}">
+            <stop offset="0%" stop-color="${sp.c}" stop-opacity="${sp.alpha.toFixed(3)}"></stop>
+            <stop offset="55%" stop-color="${sp.c}" stop-opacity="${(sp.alpha * 0.45).toFixed(3)}"></stop>
+            <stop offset="100%" stop-color="${sp.c}" stop-opacity="0"></stop>
+          </radialGradient>
+          ${sp.clip ? svg`<clipPath id="hp-glowclip-${i}"><path d="${sp.clip}"></path></clipPath>` : nothing}`)}
+      </defs>
+      <g class="glowlayer">
+        ${spots.map((sp, i) => svg`<circle cx="${sp.pos.x}" cy="${sp.pos.y}" r="${R}"
+          fill="url(#hp-glow-${i})" ${''}
+          clip-path=${sp.clip ? `url(#hp-glowclip-${i})` : nothing}></circle>`)}
+      </g>` as unknown as TemplateResult;
+  }
+
   private _renderSettingsDialog(): TemplateResult {
     return html`<div class="menuwrap dialogwrap" @click=${(e: Event) => e.stopPropagation()}>
       <div class="dialog wide" @click=${(e: Event) => e.stopPropagation()}>
@@ -2637,10 +2711,24 @@ class HouseplanCard extends LitElement {
           <label class="dispsection">${this._t('gs.lqi_group')}</label>
           ${this._renderColorRow('lqi_low', 'gs.lqi_low')}
           ${this._renderColorRow('lqi_high', 'gs.lqi_high')}
+          <label class="dispsection">${this._t('gs.glow_group')}</label>
+          ${this._renderColorRow('glow_base', 'gs.glow_base')}
+          ${this._renderColorRow('glow_light', 'gs.glow_light')}
+          <div class="colorrow gsrow">
+            <span class="gsl">${this._t('gs.glow_radius')}</span>
+            <input type="number" class="tempin" min="0.5" step="0.5"
+              .value=${String(this._settingsDialog!.glowRadius)}
+              @input=${(e: Event) => {
+                const v = parseFloat((e.target as HTMLInputElement).value);
+                if (Number.isFinite(v) && v > 0)
+                  this._settingsDialog = { ...this._settingsDialog!, glowRadius: v };
+              }} />
+            <span class="opl">${this._imperial ? this._t('gs.unit_ft') : this._t('gs.unit_m')}</span>
+          </div>
         </div>
         <div class="row">
           <button class="btn ghost" @click=${() =>
-            (this._settingsDialog = { ...this._settingsDialog!, colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)) })}>
+            (this._settingsDialog = { ...this._settingsDialog!, colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: this._imperial ? 9.8 : 3 })}>
             ${this._t('gs.reset')}
           </button>
           <span class="spacer"></span>
@@ -2886,7 +2974,10 @@ class HouseplanCard extends LitElement {
                 const st: string[] = [];
                 // keep the stroke colour even when borders are hidden, so hover can reveal it
                 st.push(`--room-stroke:${disp.color}`, `--room-stroke-op:${disp.showBorders ? disp.opacity : 0}`);
-                const fillC = r.area
+                const fillC = disp.fill === 'glow'
+                  // glow: uniform darkness over EVERY room (area or not, lit or not)
+                  ? this._fillColors.glow_base
+                  : r.area
                   ? roomFillStyle(
                       disp.fill,
                       disp.fill === 'lqi' ? this._roomLqi(r.area) : null,
@@ -2931,6 +3022,7 @@ class HouseplanCard extends LitElement {
                     @mouseleave=${() => (this._tip = null)}></rect>`;
               return svg`${shape}${label ? svg`<text class="rlabel" x="${c[0]}" y="${c[1]}">${r.name}</text>` : nothing}`;
             })}
+            ${disp.fill === 'glow' && !this._markup ? this._renderGlowLayer(space) : nothing}
             ${this._markup ? this._renderMarkupLayer(vb) : nothing}
             ${this._renderOpenings(disp)}
           </svg>
@@ -3850,7 +3942,7 @@ class HouseplanCard extends LitElement {
             <span class="opv">${Math.round(d.roomOpacity * 100)}%</span>
           </div>
           <label>${this._t('space.fill_label')}</label>
-          ${[['none', 'fill.none'], ['lqi', 'fill.lqi'], ['light', 'fill.light'], ['temp', 'fill.temp']].map(
+          ${[['none', 'fill.none'], ['lqi', 'fill.lqi'], ['light', 'fill.light'], ['temp', 'fill.temp'], ['glow', 'fill.glow']].map(
             ([v, k]) => html`<label class="srcrow">
               <input type="radio" name="fillmode" .checked=${d.fillMode === v}
                 @change=${() => (this._spaceDialog = { ...d, fillMode: v as any })} />

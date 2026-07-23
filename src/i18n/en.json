@@ -280,5 +280,12 @@
   "marker.icon_auto": "Auto: {icon} (by icon rules; pick one to override)",
   "mode.plan_tip": "Plan editor — the geometry of the home: draw and split/merge rooms, bind them to HA areas, place doors and windows, move room cards, set the scale",
   "mode.devices_tip": "Device editor — everything about icons: drag to position, click to edit binding/icon/display, add virtual devices, icon rules",
-  "mode.decor_tip": "Background editor — purely visual decor under the plan: lines, rectangles, ovals and text labels that never react to clicks"
+  "mode.decor_tip": "Background editor — purely visual decor under the plan: lines, rectangles, ovals and text labels that never react to clicks",
+  "fill.glow": "Light sources (dark house, glowing lamps)",
+  "gs.glow_group": "Light-sources fill",
+  "gs.glow_base": "House darkness",
+  "gs.glow_light": "Default light color / intensity",
+  "gs.glow_radius": "Glow radius",
+  "gs.unit_m": "m",
+  "gs.unit_ft": "ft"
 }

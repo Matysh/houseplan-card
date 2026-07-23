@@ -140,6 +140,13 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Glow fill (v1.35.0): fill mode "Light sources" — every room painted with
+      one uniform darkness color; lit lamps glow with a radial gradient
+      (rgb_color → color temp → default color; brightness scales opacity),
+      clipped by the source's room plus door sectors into NEIGHBOUR rooms
+      (entrance doors leak nothing; windows don't spill); radius set in
+      general settings in HA units (m/ft, stored in cm); no shadow casting —
+      islands don't block light (documented limitation) [auto]
 - [ ] Island rooms (v1.34.0): a contour drawn fully inside an existing room
       (or around one) saves as a nested room — column in a ring, inner room;
       the parent's fill renders with an evenodd hole so the ring paints
