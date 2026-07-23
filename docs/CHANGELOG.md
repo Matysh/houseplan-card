@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.36.2 — 2026-07-23
+- **Glow radius is now per source**: every device dialog gained a "Glow
+  radius" field (in your HA units; empty = the global default from general
+  settings, shown as the placeholder). A kettle's night light can glow half
+  a meter while the ceiling lamp floods the room. Door sectors use the same
+  per-source radius.
+
 ## v1.36.1 — 2026-07-23
 - Fixed tap-toggle "doing nothing" on lamps whose individual `light.*` entity
   is **hidden in the registry** (the usual setup when lamps are folded into a

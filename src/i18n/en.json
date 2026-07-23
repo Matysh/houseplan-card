@@ -291,5 +291,7 @@
   "marker.controls_label": "Controls light sources",
   "marker.controls_hint": "With tap action “Toggle”, a click flips all bound lights at once (any on → all off). The icon mirrors their state.",
   "marker.controls_filter": "Search lights and switches…",
-  "info.controls": "Controls"
+  "info.controls": "Controls",
+  "marker.glow_radius_label": "Glow radius (light-sources fill)",
+  "marker.glow_radius_hint": "empty = default from general settings"
 }

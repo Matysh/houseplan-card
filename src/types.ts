@@ -46,6 +46,8 @@ export interface Marker {
   angle?: number | null;       // icon rotation, degrees
   /** Entities this icon toggles as a group (wall switch → its lights). */
   controls?: string[] | null;
+  /** Per-source glow radius in cm (glow fill); null = the global default. */
+  glow_radius_cm?: number | null;
 }
 
 /** A door or window: plan geometry (normalized coords), optionally live via entities. */

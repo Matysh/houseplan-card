@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.36.1';
+const CARD_VERSION = '1.36.2';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -168,6 +168,7 @@ class HouseplanCard extends LitElement {
     tapAction: string;   // '' = card default
     controls: string[];  // entities this icon toggles as a group
     controlsFilter: string;
+    glowRadius: string;  // per-device glow radius in display units; '' = global default
     model: string;
     link: string;
     description: string;
@@ -2007,6 +2008,11 @@ class HouseplanCard extends LitElement {
         tapAction: d.marker?.tap_action || '',
         controls: [...(d.marker?.controls || [])],
         controlsFilter: '',
+        glowRadius: Number(d.marker?.glow_radius_cm) > 0
+          ? String(this._imperial
+              ? Math.round((Number(d.marker!.glow_radius_cm) / 30.48) * 10) / 10
+              : Math.round(Number(d.marker!.glow_radius_cm)) / 100)
+          : '',
         model: d.model || '',
         link: d.link || '',
         description: d.description || '',
@@ -2020,7 +2026,7 @@ class HouseplanCard extends LitElement {
       this._markerDialog = {
         name: '', binding: 'virtual', bindingFilter: '', icon: '', autoIcon: '',
         display: 'badge', rippleColor: '', rippleSize: 3, size: 1, angle: 0,
-        tapAction: '', controls: [], controlsFilter: '', model: '',
+        tapAction: '', controls: [], controlsFilter: '', glowRadius: '', model: '',
         link: '', description: '', pdfs: [], room: '', busy: false,
       };
     }
@@ -2215,6 +2221,11 @@ class HouseplanCard extends LitElement {
         angle: dlg.angle ? dlg.angle : null,
         tap_action: dlg.tapAction || null,
         controls: dlg.controls.length ? dlg.controls : null,
+        glow_radius_cm: (() => {
+          const v = parseFloat(dlg.glowRadius);
+          if (!Number.isFinite(v) || v <= 0) return null;
+          return Math.round(this._imperial ? v * 30.48 : v * 100);
+        })(),
         model: dlg.model.trim() || null,
         link: dlg.link.trim() || null,
         description: dlg.description.trim() || null,
@@ -2658,16 +2669,21 @@ class HouseplanCard extends LitElement {
     return this.hass?.config?.unit_system?.length === 'mi';
   }
 
+  private get _glowRadiusPlaceholder(): string {
+    const cm = this._glowRadiusCm;
+    return this._imperial ? String(Math.round((cm / 30.48) * 10) / 10) : String(cm / 100);
+  }
+
   /** Light pools of the current space: dark house, glowing sources. */
   private _renderGlowLayer(space: SpaceModel): TemplateResult {
     const colors = this._fillColors;
-    const R = (this._glowRadiusCm / this._cellCm) * this._gridPitch;
+    const defaultR = (this._glowRadiusCm / this._cellCm) * this._gridPitch;
     const g = this._gridPitch;
     const polys = space.rooms
       .map((r) => ({ r, poly: roomPoly(r) }))
       .filter((x): x is { r: RoomCfg; poly: number[][] } => !!x.poly);
     const doors = this._openingsR.filter((o) => o.type === 'door');
-    const spots: { pos: { x: number; y: number }; c: string; alpha: number; clip: string | null }[] = [];
+    const spots: { pos: { x: number; y: number }; c: string; alpha: number; clip: string | null; r: number }[] = [];
     for (const d of this._devices) {
       if (d.space !== space.id) continue;
       const lightEid = d.entities.find(
@@ -2676,6 +2692,9 @@ class HouseplanCard extends LitElement {
       if (!lightEid) continue;
       const glow = glowColorOf(this.hass.states[lightEid], colors.glow_light.c);
       if (!glow) continue;
+      // per-source radius (owner's decision v1.36.2): marker override, else global
+      const ownCm = Number(d.marker?.glow_radius_cm);
+      const R = Number.isFinite(ownCm) && ownCm > 0 ? (ownCm / this._cellCm) * this._gridPitch : defaultR;
       const pos = this._pos(d);
       // innermost room under the source (islands win — reverse order)
       const home = [...polys].reverse().find((x) => this._pointInRoom([pos.x, pos.y], x.r));
@@ -2696,7 +2715,7 @@ class HouseplanCard extends LitElement {
         }
         clip = shapes.join(' ');
       }
-      spots.push({ pos, c: glow.c, alpha: colors.glow_light.a * glow.bri, clip });
+      spots.push({ pos, c: glow.c, alpha: colors.glow_light.a * glow.bri, clip, r: R });
     }
     if (!spots.length) return svg`` as unknown as TemplateResult;
     return svg`<defs>
@@ -2709,7 +2728,7 @@ class HouseplanCard extends LitElement {
           ${sp.clip ? svg`<clipPath id="hp-glowclip-${i}"><path d="${sp.clip}"></path></clipPath>` : nothing}`)}
       </defs>
       <g class="glowlayer">
-        ${spots.map((sp, i) => svg`<circle cx="${sp.pos.x}" cy="${sp.pos.y}" r="${R}"
+        ${spots.map((sp, i) => svg`<circle cx="${sp.pos.x}" cy="${sp.pos.y}" r="${sp.r}"
           fill="url(#hp-glow-${i})" ${''}
           clip-path=${sp.clip ? `url(#hp-glowclip-${i})` : nothing}></circle>`)}
       </g>` as unknown as TemplateResult;
@@ -3828,6 +3847,16 @@ class HouseplanCard extends LitElement {
                   </button>`)}
               </div>`
             : nothing}
+
+          <label>${this._t('marker.glow_radius_label')}</label>
+          <div class="colorrow">
+            <input class="tempin" type="number" min="0.5" step="0.5"
+              placeholder=${this._glowRadiusPlaceholder}
+              .value=${d.glowRadius}
+              @input=${(e: Event) => (this._markerDialog = { ...d, glowRadius: (e.target as HTMLInputElement).value })} />
+            <span class="opl">${this._imperial ? this._t('gs.unit_ft') : this._t('gs.unit_m')}</span>
+            <span class="opl muted">${this._t('marker.glow_radius_hint')}</span>
+          </div>
 
           <label>${this._t('marker.icon_label')}</label>
           ${customElements.get('ha-icon-picker')

@@ -73,6 +73,17 @@ const res = await page.evaluate(async () => {
   c.requestUpdate(); await c.updateComplete;
   const clips2 = [...sr().querySelectorAll('defs clipPath[id^="hp-glowclip"] path')];
   out.entranceNoSector = clips2.every((p) => ((p.getAttribute('d') || '').match(/M /g) || []).length === 1);
+  // 7а) персональный радиус источника перекрывает глобальный
+  const litMarkerId = litLight.id;
+  c._serverCfg = { ...c._serverCfg, markers: [
+    ...(c._serverCfg.markers || []).filter((m) => m.id !== litMarkerId),
+    { id: litMarkerId, binding: litLight.bindingKind === 'virtual' ? 'virtual' : litLight.bindingKind + ':' + litLight.bindingRef, glow_radius_cm: 150 },
+  ] };
+  c._regSignature = ''; c._maybeRebuildDevices(); c.requestUpdate(); await c.updateComplete;
+  const rOwn = Number(sr().querySelector('.glowlayer circle')?.getAttribute('r'));
+  out.perSourceRadius = Math.abs(rOwn - c._cmToUnits(150)) < 0.5;
+  c._serverCfg = { ...c._serverCfg, markers: (c._serverCfg.markers || []).filter((m) => m.id !== litMarkerId) };
+  c._regSignature = ''; c._maybeRebuildDevices(); c.requestUpdate(); await c.updateComplete;
   // 7) радиус из настроек: 600 см против 300 см — вдвое больше
   const r600 = Number(sr().querySelector('.glowlayer circle')?.getAttribute('r'));
   c._serverCfg = { ...c._serverCfg, settings: { ...(c._serverCfg.settings || {}), glow_radius_cm: 300 } };
