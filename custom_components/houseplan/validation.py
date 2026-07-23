@@ -68,6 +68,7 @@ ROOM_SCHEMA = vol.All(
             vol.Required("id"): str,
             vol.Required("name"): str,
             vol.Optional("area"): vol.Any(str, None),
+            vol.Optional("open_to"): [str],
             vol.Optional("x"): vol.Coerce(float),
             vol.Optional("y"): vol.Coerce(float),
             vol.Optional("w"): vol.Coerce(float),

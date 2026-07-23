@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.37.0 — 2026-07-23 (open boundaries — virtual walls)
+- Rooms divided only by zoning can now share an **open boundary**: the new
+  "Open boundary" tool in the Plan editor toggles it with a click on the wall
+  two rooms share. The stretch renders dashed; while the tool is active open
+  boundaries highlight amber. Stored as `room.open_to` links by room id, so
+  redrawing/merging neighbours doesn't break them.
+- In the light-sources fill, light flows through open boundaries freely —
+  transitively across the whole connected zone (kitchen ↔ living ↔ hall as
+  one open space), still limited by the glow radius. Door sectors now work
+  from any outer wall of the zone.
+
 ## v1.36.4 — 2026-07-23
 - Glow: sharper light edge — the pool is fully lit for the inner 80% of the
   radius, the gradient falloff lives only in the outer 20%.

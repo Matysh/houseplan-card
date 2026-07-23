@@ -1,6 +1,8 @@
 /** Shared types of the House Plan card. */
 
 export interface RoomCfg {
+  /** Rooms this one has an OPEN (virtual) boundary with — light flows through. */
+  open_to?: string[] | null;
   id?: string;
   name: string;
   area: string | null;

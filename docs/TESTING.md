@@ -140,6 +140,12 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Open boundaries (v1.37.0): the Plan editor's "Open boundary" tool
+      toggles a virtual wall between two rooms by clicking their shared wall
+      (pull like Split; miss → toast); open stretches render dashed (amber
+      highlight while the tool is active); glow light floods the whole
+      connected open zone transitively, door sectors work from the zone's
+      outer walls; merge/split keep links by room id [auto]
 - [ ] Sector wedge fix (v1.36.3): door sectors never darken the light INSIDE
       the room — room outline and sectors are separate clipPath children
       (union), not subpaths of one nonzero path [auto]

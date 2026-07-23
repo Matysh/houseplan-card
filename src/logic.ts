@@ -851,6 +851,76 @@ export function isControllable(entityId: string): boolean {
   return entityId.startsWith('light.') || entityId.startsWith('switch.');
 }
 
+// ---------------- open (virtual) boundaries ----------------
+
+/**
+ * Collinear overlapping stretches of two room outlines — their shared
+ * boundary. Handles the real-house case where neighbouring walls only
+ * PARTIALLY overlap (collinear, different lengths). Returns segments
+ * [x1,y1,x2,y2] with length > eps.
+ */
+export function sharedBoundary(a: number[][], b: number[][], eps = 1e-6): number[][] {
+  const res: number[][] = [];
+  if (!a || !b || a.length < 3 || b.length < 3) return res;
+  for (let i = 0; i < a.length; i++) {
+    const p1 = a[i], p2 = a[(i + 1) % a.length];
+    const dx = p2[0] - p1[0], dy = p2[1] - p1[1];
+    const len = Math.hypot(dx, dy);
+    if (len < eps) continue;
+    const ux = dx / len, uy = dy / len;
+    for (let j = 0; j < b.length; j++) {
+      const q1 = b[j], q2 = b[(j + 1) % b.length];
+      // both q endpoints must lie on the line of p1-p2
+      const d1 = Math.abs((q1[0] - p1[0]) * uy - (q1[1] - p1[1]) * ux);
+      const d2 = Math.abs((q2[0] - p1[0]) * uy - (q2[1] - p1[1]) * ux);
+      const tol = Math.max(eps, len * 1e-6);
+      if (d1 > tol || d2 > tol) continue;
+      // overlap of parameter intervals along the line
+      const t1 = (q1[0] - p1[0]) * ux + (q1[1] - p1[1]) * uy;
+      const t2 = (q2[0] - p1[0]) * ux + (q2[1] - p1[1]) * uy;
+      const lo = Math.max(0, Math.min(t1, t2));
+      const hi = Math.min(len, Math.max(t1, t2));
+      if (hi - lo > eps) {
+        res.push([p1[0] + ux * lo, p1[1] + uy * lo, p1[0] + ux * hi, p1[1] + uy * hi]);
+      }
+    }
+  }
+  return res;
+}
+
+/**
+ * Connected component of rooms joined by open (virtual) boundaries — the
+ * "open zone" light flows through. The open_to link counts in either
+ * direction. Returns a set of room ids including the start.
+ */
+export function openZoneOf(roomId: string, rooms: { id?: string; open_to?: string[] | null }[]): Set<string> {
+  const zone = new Set<string>([roomId]);
+  const linked = (x: any, y: any) =>
+    (x.open_to || []).includes(y.id) || (y.open_to || []).includes(x.id);
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const r of rooms) {
+      if (!r.id || zone.has(r.id)) continue;
+      for (const z of rooms) {
+        if (!z.id || !zone.has(z.id)) continue;
+        if (linked(r, z)) { zone.add(r.id); grew = true; break; }
+      }
+    }
+  }
+  return zone;
+}
+
+/** Distance from a point to a segment [x1,y1,x2,y2]. */
+export function distToSegment(p: number[], s: number[]): number {
+  const dx = s[2] - s[0], dy = s[3] - s[1];
+  const len2 = dx * dx + dy * dy;
+  if (!len2) return Math.hypot(p[0] - s[0], p[1] - s[1]);
+  let t = ((p[0] - s[0]) * dx + (p[1] - s[1]) * dy) / len2;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(p[0] - (s[0] + t * dx), p[1] - (s[1] + t * dy));
+}
+
 /** Device classes whose active state is an emergency, not a status. */
 const ALARM_CLASSES = new Set(['smoke', 'gas', 'carbon_monoxide', 'moisture', 'safety', 'tamper', 'problem']);
 

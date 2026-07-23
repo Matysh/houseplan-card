@@ -6,6 +6,7 @@ import {
   splitRoomPath, polyContainsPoly, islandsOf,
   kelvinToRgb, glowColorOf, doorSector, hasRoomBehind,
   controlsAction, isControllable,
+  sharedBoundary, openZoneOf, distToSegment,
   segmentCm, formatLength, roomEdges, roomPoly, pointOnBoundary, pointStrictlyInside, roomsOverlap,
   mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices,
 } from '../test-build/logic.js';
@@ -665,4 +666,40 @@ test('isControllable: lights and switches only', () => {
   assert.ok(!isControllable('lock.front'));
   assert.ok(!isControllable('cover.gate'));
   assert.ok(!isControllable('alarm_control_panel.home'));
+});
+
+test('sharedBoundary: exact, partial-collinear and none', () => {
+  const A = [[0, 0], [2, 0], [2, 2], [0, 2]];
+  // точное общее ребро x=2
+  const B = [[2, 0], [4, 0], [4, 2], [2, 2]];
+  const s1 = sharedBoundary(A, B);
+  assert.equal(s1.length >= 1, true);
+  const len = (s) => Math.hypot(s[2] - s[0], s[3] - s[1]);
+  assert.ok(Math.abs(Math.max(...s1.map(len)) - 2) < 1e-6);
+  // частичное коллинеарное наложение (дачный случай): стена соседа длиннее
+  const C = [[2, -1], [4, -1], [4, 3], [2, 3]];
+  const s2 = sharedBoundary(A, C);
+  assert.ok(Math.abs(Math.max(...s2.map(len)) - 2) < 1e-6); // перекрытие = наша стена
+  // нет наложения
+  assert.equal(sharedBoundary(A, [[5, 5], [6, 5], [6, 6], [5, 6]]).length, 0);
+  // перпендикулярное касание — не граница
+  assert.equal(sharedBoundary(A, [[2, 2], [3, 2], [3, 3], [2, 3]]).filter((s) => len(s) > 1e-6).length, 0);
+});
+
+test('openZoneOf: transitive, either-direction links', () => {
+  const rooms = [
+    { id: 'a', open_to: ['b'] },
+    { id: 'b' },                    // связь только со стороны a
+    { id: 'c', open_to: ['b'] },    // b↔c со стороны c
+    { id: 'd' },                    // не связан
+  ];
+  const z = openZoneOf('a', rooms);
+  assert.deepEqual([...z].sort(), ['a', 'b', 'c']);
+  assert.deepEqual([...openZoneOf('d', rooms)], ['d']);
+});
+
+test('distToSegment', () => {
+  assert.equal(distToSegment([0, 5], [0, 0, 0, 10]), 0);
+  assert.equal(distToSegment([3, 5], [0, 0, 0, 10]), 3);
+  assert.ok(Math.abs(distToSegment([-3, -4], [0, 0, 0, 10]) - 5) < 1e-9);
 });

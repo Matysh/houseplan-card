@@ -538,8 +538,20 @@ export const cardStyles = css`
     /* room-picking stages: merge (both clicks) and split before a room is chosen */
     .stage.markup.tool-merge,
     .stage.markup.tool-split.pickstage,
+    .stage.markup.tool-openwall,
     .stage.markup.tool-delroom {
       cursor: pointer;
+    }
+    .openwall {
+      stroke: var(--card-background-color, var(--hp-bg, #fff));
+      stroke-width: 3.2;
+      stroke-dasharray: 7 7;
+      pointer-events: none;
+      opacity: 0.9;
+    }
+    .openwalls.hot .openwall {
+      stroke: #ffc14d;
+      opacity: 1;
     }
     .stage.markup .room {
       pointer-events: none;

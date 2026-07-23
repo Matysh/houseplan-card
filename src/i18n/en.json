@@ -293,5 +293,10 @@
   "marker.controls_filter": "Search lights and switches…",
   "info.controls": "Controls",
   "marker.glow_radius_label": "Glow radius (light-sources fill)",
-  "marker.glow_radius_hint": "empty = default from general settings"
+  "marker.glow_radius_hint": "empty = default from general settings",
+  "markup.openwall": "Open boundary",
+  "title.markup_openwall": "Open boundary — click a wall shared by two rooms to make it virtual: light flows through, the line turns dashed. Click again to close it.",
+  "toast.openwall_pick": "Click a wall shared by two rooms",
+  "toast.openwall_opened": "Boundary “{a}” ↔ “{b}” is now open",
+  "toast.openwall_closed": "Boundary “{a}” ↔ “{b}” is closed again"
 }

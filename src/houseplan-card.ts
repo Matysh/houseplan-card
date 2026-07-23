@@ -14,7 +14,7 @@ import {
 import {
   lqiColor, snapToGrid, samePoint, pointInPolygon, markerIdForBinding,
   segmentCm, formatLength, roomEdges, roomPoly, pointStrictlyInside, roomsOverlap,
-  pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf,
+  pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, openZoneOf, distToSegment,
   snapToWall, openingAmount,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
   stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, glowColorOf, doorSector, hasRoomBehind, controlsAction, isControllable,
@@ -32,14 +32,14 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.36.4';
+const CARD_VERSION = '1.37.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
 const NORM_W = 1000; // width of the render space for normalized configs
 
 const GRID_N = 240; // grid points across the plan width (half the previous step; old nodes are a subset of the new ones, positions are preserved)
-type MarkupTool = 'draw' | 'merge' | 'split' | 'opening' | 'delroom';
+type MarkupTool = 'draw' | 'merge' | 'split' | 'opening' | 'openwall' | 'delroom';
 
 const fireEvent = (node: EventTarget, type: string, detail?: unknown) => {
   const ev = new Event(type, { bubbles: true, composed: true }) as any;
@@ -343,6 +343,11 @@ class HouseplanCard extends LitElement {
       e.preventDefault();
       if (this._mergeSel) this._mergeSel = null;
       else this._tool = 'draw';
+      return;
+    }
+    if (this._tool === 'openwall' || this._tool === 'opening' || this._tool === 'delroom') {
+      e.preventDefault();
+      this._tool = 'draw';
     }
   }
 
@@ -417,6 +422,7 @@ class HouseplanCard extends LitElement {
         id: r.id,
         name: r.name,
         area: r.area ?? null,
+        open_to: r.open_to || undefined,
         x: r.x != null ? r.x * NORM_W : undefined,
         y: r.y != null ? r.y * H : undefined,
         w: r.w != null ? r.w * NORM_W : undefined,
@@ -1290,6 +1296,10 @@ class HouseplanCard extends LitElement {
       this._mergeClick(raw);
       return;
     }
+    if (this._tool === 'openwall') {
+      this._openWallClick(raw);
+      return;
+    }
     if (this._tool === 'split') {
       this._splitClick(raw);
       return;
@@ -1586,6 +1596,73 @@ class HouseplanCard extends LitElement {
         </div>
       </div>
     </div>`;
+  }
+
+  /** Dashed strokes over open (virtual) boundaries; highlighted in the tool. */
+  private _renderOpenWalls(): TemplateResult {
+    const pairs = this._openPairs();
+    if (!pairs.length) return svg`` as unknown as TemplateResult;
+    const hot = this._markup && this._tool === 'openwall';
+    return svg`<g class="openwalls ${hot ? 'hot' : ''}">
+      ${pairs.flatMap((p) => p.segs.map((sg) => svg`<line class="openwall"
+        x1="${sg[0]}" y1="${sg[1]}" x2="${sg[2]}" y2="${sg[3]}"></line>`))}
+    </g>` as unknown as TemplateResult;
+  }
+
+  /** All open-boundary pairs of the current space with their shared segments. */
+  private _openPairs(): { a: RoomCfg; b: RoomCfg; segs: number[][] }[] {
+    const rooms = this._spaceModel().rooms.filter((r) => r.id);
+    const res: { a: RoomCfg; b: RoomCfg; segs: number[][] }[] = [];
+    for (let i = 0; i < rooms.length; i++)
+      for (let j = i + 1; j < rooms.length; j++) {
+        const a = rooms[i], b = rooms[j];
+        const linked = ((a as any).open_to || []).includes(b.id) || ((b as any).open_to || []).includes(a.id);
+        if (!linked) continue;
+        const pa = roomPoly(a), pb = roomPoly(b);
+        if (!pa || !pb) continue;
+        const segs = sharedBoundary(pa, pb, this._gridPitch * 0.02);
+        if (segs.length) res.push({ a, b, segs });
+      }
+    return res;
+  }
+
+  /** Open-boundary tool: a click on a shared wall toggles its "virtual" state. */
+  private _openWallClick(raw: number[]): void {
+    const rooms = this._spaceModel().rooms.filter((r) => r.id);
+    const pull = this._gridPitch * 6;
+    let best: { a: RoomCfg; b: RoomCfg; d: number } | null = null;
+    for (let i = 0; i < rooms.length; i++)
+      for (let j = i + 1; j < rooms.length; j++) {
+        const pa = roomPoly(rooms[i]), pb = roomPoly(rooms[j]);
+        if (!pa || !pb) continue;
+        const segs = sharedBoundary(pa, pb, this._gridPitch * 0.02);
+        for (const seg of segs) {
+          const d = distToSegment(raw, seg);
+          if (d <= pull && (!best || d < best.d)) best = { a: rooms[i], b: rooms[j], d };
+        }
+      }
+    if (!best) {
+      this._showToast(this._t('toast.openwall_pick'));
+      return;
+    }
+    const sp = this._curSpaceCfg;
+    const ra = sp.rooms.find((r: any) => r.id === best!.a.id);
+    const rb = sp.rooms.find((r: any) => r.id === best!.b.id);
+    if (!ra || !rb) return;
+    const linked = (ra.open_to || []).includes(rb.id) || (rb.open_to || []).includes(ra.id);
+    if (linked) {
+      ra.open_to = (ra.open_to || []).filter((x: string) => x !== rb.id);
+      rb.open_to = (rb.open_to || []).filter((x: string) => x !== ra.id);
+      if (!ra.open_to.length) delete ra.open_to;
+      if (!rb.open_to.length) delete rb.open_to;
+      this._showToast(this._t('toast.openwall_closed', { a: ra.name || '', b: rb.name || '' }));
+    } else {
+      ra.open_to = [...(ra.open_to || []), rb.id];
+      rb.open_to = [...(rb.open_to || []), ra.id];
+      this._showToast(this._t('toast.openwall_opened', { a: ra.name || '', b: rb.name || '' }));
+    }
+    this._saveConfig();
+    this.requestUpdate();
   }
 
   /** Opening tool: click an existing opening to edit it, or a wall to place one. */
@@ -2700,15 +2777,25 @@ class HouseplanCard extends LitElement {
       const home = [...polys].reverse().find((x) => this._pointInRoom([pos.x, pos.y], x.r));
       let clip: string[] | null = null;
       if (home) {
-        const shapes: string[] = ['M ' + home.poly.map((p) => p[0] + ' ' + p[1]).join(' L ') + ' Z'];
-        // doorways of this room spill light into neighbouring rooms only
+        // open (virtual) boundaries: light flows through the whole connected
+        // zone of rooms, not just the source's own room (owner's spec)
+        const zoneIds = home.r.id ? openZoneOf(home.r.id, space.rooms) : new Set([home.r.id]);
+        const zone = polys.filter((x) => x.r.id && zoneIds.has(x.r.id));
+        const zoneList = zone.length ? zone : [home];
+        const shapes: string[] = zoneList.map(
+          (z) => 'M ' + z.poly.map((p) => p[0] + ' ' + p[1]).join(' L ') + ' Z',
+        );
+        // doorways on the ZONE's walls spill light into rooms outside the zone
+        const others = polys.filter((x) => !zoneList.includes(x)).map((x) => x.poly);
         for (const o of doors) {
-          const near = closestPointOnBoundary([o.rx, o.ry], home.poly);
-          if (!near || Math.hypot(near[0] - o.rx, near[1] - o.ry) > g * 0.75) continue;
+          const onZoneWall = zoneList.some((z) => {
+            const near = closestPointOnBoundary([o.rx, o.ry], z.poly);
+            return near && Math.hypot(near[0] - o.rx, near[1] - o.ry) <= g * 0.75;
+          });
+          if (!onZoneWall) continue;
           const rad = (o.angle * Math.PI) / 180;
           const dx = (Math.cos(rad) * o.rlen) / 2;
           const dy = (Math.sin(rad) * o.rlen) / 2;
-          const others = polys.filter((x) => x !== home).map((x) => x.poly);
           if (!hasRoomBehind([o.rx, o.ry], o.angle, [pos.x, pos.y], others, g * 0.6)) continue;
           const sector = doorSector([pos.x, pos.y], [o.rx - dx, o.ry - dy], [o.rx + dx, o.ry + dy], R);
           if (sector) shapes.push('M ' + sector.map((p) => p[0] + ' ' + p[1]).join(' L ') + ' Z');
@@ -3066,6 +3153,7 @@ class HouseplanCard extends LitElement {
                     @mouseleave=${() => (this._tip = null)}></rect>`;
               return svg`${shape}${label ? svg`<text class="rlabel" x="${c[0]}" y="${c[1]}">${r.name}</text>` : nothing}`;
             })}
+            ${this._renderOpenWalls()}
             ${disp.fill === 'glow' && !this._markup ? this._renderGlowLayer(space) : nothing}
             ${this._markup ? this._renderMarkupLayer(vb) : nothing}
             ${this._renderOpenings(disp)}
@@ -3661,6 +3749,11 @@ class HouseplanCard extends LitElement {
         @click=${() => { this._cancelPath(); this._tool = 'opening'; }}
         title=${this._t('title.markup_opening')}>
         <ha-icon icon="mdi:door"></ha-icon>${this._t('markup.opening')}
+      </button>
+      <button class="btn ${this._tool === 'openwall' ? 'on' : ''}"
+        @click=${() => { this._cancelPath(); this._tool = 'openwall'; }}
+        title=${this._t('title.markup_openwall')}>
+        <ha-icon icon="mdi:border-none-variant"></ha-icon>${this._t('markup.openwall')}
       </button>
       <button class="btn ${this._tool === 'delroom' ? 'on' : ''}" @click=${() => (this._tool = 'delroom')}
         title=${this._t('title.markup_delroom')}>
