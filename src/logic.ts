@@ -492,7 +492,11 @@ export function resolveTapAction(
   cardDefault: string | null | undefined,
   domain: string | null | undefined,
 ): TapAction {
-  const want = explicit || cardDefault || 'info';
+  // Pure light sources (the device's PRIMARY function is a lamp: bulbs,
+  // chandeliers, night lights, light groups) toggle by default — no explicit
+  // setting needed. Devices where light is a side function (a kettle's
+  // backlight) have a non-light primary and keep the info default.
+  const want = explicit || cardDefault || (domain === 'light' ? 'toggle' : 'info');
   if (want === 'more-info') return 'more-info';
   if (want !== 'toggle') return 'info';
   if (!domain || TOGGLE_FORBIDDEN_DOMAINS.has(domain)) return 'info';
@@ -912,14 +916,13 @@ export function openZoneOf(roomId: string, rooms: { id?: string; open_to?: strin
 }
 
 /**
- * Room outline pieces with the given collinear stretches removed — used to
- * draw a TRUE dashed open boundary (the solid stroke must not run beneath).
- * Returns segments [x1,y1,x2,y2].
+ * Segments with the given collinear stretches removed — the workhorse behind
+ * TRUE dashed open boundaries (derived walls and room outlines alike).
  */
-export function outlineWithout(poly: number[][], cuts: number[][], eps = 1e-6): number[][] {
+export function cutSegments(segs: number[][], cuts: number[][], eps = 1e-6): number[][] {
   const out: number[][] = [];
-  for (let i = 0; i < poly.length; i++) {
-    const p1 = poly[i], p2 = poly[(i + 1) % poly.length];
+  for (const seg of segs) {
+    const p1 = [seg[0], seg[1]], p2 = [seg[2], seg[3]];
     const dx = p2[0] - p1[0], dy = p2[1] - p1[1];
     const len = Math.hypot(dx, dy);
     if (len < eps) continue;
@@ -950,6 +953,65 @@ export function outlineWithout(poly: number[][], cuts: number[][], eps = 1e-6): 
     if (len - cur > eps) out.push([p1[0] + ux * cur, p1[1] + uy * cur, p2[0], p2[1]]);
   }
   return out;
+}
+
+/** Room outline pieces with the given collinear stretches removed. */
+export function outlineWithout(poly: number[][], cuts: number[][], eps = 1e-6): number[][] {
+  const edges: number[][] = [];
+  for (let i = 0; i < poly.length; i++) {
+    const p1 = poly[i], p2 = poly[(i + 1) % poly.length];
+    edges.push([p1[0], p1[1], p2[0], p2[1]]);
+  }
+  return cutSegments(edges, cuts, eps);
+}
+
+// ---------------- alignment guides ----------------
+
+export interface AlignGuide {
+  axis: 'x' | 'y';
+  /** The candidate's aligned coordinate (x for axis x, y for axis y). */
+  at: number;
+  /** The candidate point the guide is drawn from. */
+  from: number[];
+}
+
+/**
+ * Alignment guides for a point being drawn/dragged: the nearest candidate
+ * sharing its X and the nearest sharing its Y (within tol). Indication only —
+ * no magnetism, the grid owns the actual position (owner's decision).
+ */
+export function alignGuides(pt: number[], candidates: number[][], tol: number): AlignGuide[] {
+  let bestX: { d: number; c: number[] } | null = null;
+  let bestY: { d: number; c: number[] } | null = null;
+  for (const c of candidates) {
+    const same = Math.abs(c[0] - pt[0]) < 1e-6 && Math.abs(c[1] - pt[1]) < 1e-6;
+    if (same) continue;
+    if (Math.abs(c[0] - pt[0]) <= tol) {
+      const d = Math.abs(c[1] - pt[1]);
+      if (d > 1e-6 && (!bestX || d < bestX.d)) bestX = { d, c };
+    }
+    if (Math.abs(c[1] - pt[1]) <= tol) {
+      const d = Math.abs(c[0] - pt[0]);
+      if (d > 1e-6 && (!bestY || d < bestY.d)) bestY = { d, c };
+    }
+  }
+  const out: AlignGuide[] = [];
+  if (bestX) out.push({ axis: 'x', at: bestX.c[0], from: bestX.c });
+  if (bestY) out.push({ axis: 'y', at: bestY.c[1], from: bestY.c });
+  return out;
+}
+
+/** Segment angle in degrees, normalized to [0, 360). */
+export function segmentAngle(a: number[], b: number[]): number {
+  let deg = (Math.atan2(b[1] - a[1], b[0] - a[0]) * 180) / Math.PI;
+  if (deg < 0) deg += 360;
+  return deg;
+}
+
+/** Is the angle a multiple of 45° (within tolerance)? */
+export function is45(deg: number, tol = 0.5): boolean {
+  const m = ((deg % 45) + 45) % 45;
+  return m <= tol || 45 - m <= tol;
 }
 
 /** Distance from a point to a segment [x1,y1,x2,y2]. */

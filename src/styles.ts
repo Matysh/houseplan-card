@@ -189,7 +189,7 @@ export const cardStyles = css`
     }
     .room {
       transition: 0.12s;
-      cursor: pointer;
+      cursor: default; /* v1.40.1: rooms are not clickable — the label's link icon is */
     }
     .room.overlay {
       fill: transparent;
@@ -377,6 +377,17 @@ export const cardStyles = css`
       gap: 0.15em;
       text-align: center;
     }
+    .rlname { display: inline-flex; align-items: center; gap: 0.25em; }
+    .rlgo {
+      --mdc-icon-size: 0.85em;
+      display: inline-flex;
+      opacity: 0.55;
+    }
+    .stage.mode-view .rlgo {
+      pointer-events: auto;
+      cursor: pointer;
+    }
+    .stage.mode-view .rlgo:hover { opacity: 1; }
     .roomlabel .rlmetrics {
       display: flex;
       align-items: center;
@@ -478,6 +489,21 @@ export const cardStyles = css`
       position: absolute;
       inset: 0;
       pointer-events: none;
+    }
+    .alignline {
+      stroke: var(--hp-accent);
+      stroke-width: 1.2;
+      stroke-dasharray: 4 4;
+      pointer-events: none;
+      opacity: 0.9;
+    }
+    .aligndot {
+      fill: var(--hp-accent);
+      pointer-events: none;
+    }
+    .measurelabel.on45 {
+      color: #4bd28f;
+      border-color: #4bd28f;
     }
     .measurelabel {
       position: absolute;
@@ -594,6 +620,11 @@ export const cardStyles = css`
       fill: none;
       stroke-width: 2.5;
       pointer-events: none;
+    }
+    /* Plan editor: trimmed outlines use the markup blue */
+    .room-outline.outlined {
+      stroke: rgba(62, 166, 255, 0.55);
+      stroke-opacity: 1;
     }
     .openwalls.hot .openwall {
       stroke: #ffc14d;

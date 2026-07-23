@@ -300,5 +300,6 @@
   "marker.from_ha_option": "Pick from the HA list",
   "marker.show_entities": "Show entities",
   "marker.show_entities_tip": "Adds not only devices to the list, but all their entities too",
-  "marker.pick_ph": "Choose a device…"
+  "marker.pick_ph": "Choose a device…",
+  "room.open_area": "Open the HA area"
 }

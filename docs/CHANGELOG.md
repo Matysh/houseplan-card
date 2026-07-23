@@ -1,5 +1,43 @@
 # Changelog
 
+## v1.40.1 — 2026-07-23
+- Rooms are no longer clickable in View (default cursor, empty space does
+  nothing). Instead the room card shows a small **open-in-new icon** after
+  the name — clicking it opens the HA area. Rooms without an area (and all
+  editors) have no icon.
+
+## v1.40.0 — 2026-07-23 (smart guides)
+- **Alignment helper in every editor**: while drawing an outline, a cut or a
+  decor shape, and while dragging icons, room cards or decor, thin dashed
+  guides appear from the nearest object sharing your X and/or Y (one per
+  axis, with a marker dot at the source) — lamps line up, lines end exactly
+  above the end of a parallel line. Candidates follow the context: room
+  vertices and path points in the Plan editor, other icons in the Device
+  editor, decor endpoints/corners plus room vertices in the Background
+  editor, other room cards while dragging one.
+- The cursor badge now shows **length · angle** and turns green when the
+  segment's angle is a multiple of 45°. Guides are pure indication — the
+  grid keeps owning the actual position.
+
+## v1.39.0 — 2026-07-23 (lights toggle by default)
+- Pure light sources — devices whose primary entity is a `light` (bulbs,
+  chandeliers, night lights, light groups) — now **toggle on click by
+  default**, right from auto-placement, no per-device setting needed.
+  Devices where light is a side function (a kettle's backlight: its primary
+  is a sensor) keep the Device-card default. An explicit per-device choice
+  always wins. The device dialog shows the effective default.
+
+## v1.38.4 — 2026-07-23
+- Plan editor: the DERIVED wall segments (the markup layer's solid lines)
+  are now trimmed under open boundaries as well — v1.38.3 only trimmed the
+  room outlines, so the virtual wall still looked solid in the editor.
+  (`cutSegments` extracted as the shared workhorse; outlineWithout reuses it.)
+
+## v1.38.3 — 2026-07-23
+- The Plan editor now shows open boundaries as a true dash as well: the blue
+  markup outlines are trimmed under the open stretches (rooms picked for
+  merge/split keep their full amber highlight).
+
 ## v1.38.2 — 2026-07-23
 - The card now **remembers where you were**: the selected space and the active
   editor survive navigation and closing the tab (localStorage; edit modes are
