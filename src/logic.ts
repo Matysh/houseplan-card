@@ -535,7 +535,7 @@ export function subst(s: string, vars?: Record<string, string | number>): string
 
 // ---------------- room fills & colors ----------------
 
-export type RoomFillMode = 'none' | 'lqi' | 'light' | 'temp';
+export type RoomFillMode = 'none' | 'lqi' | 'light' | 'temp' | 'glow';
 
 /** Per-space display settings with their defaults resolved. */
 export interface SpaceDisplay {
@@ -569,7 +569,7 @@ export function spaceDisplayOf(spaceCfg: any): SpaceDisplay {
     showNames: s.show_names ?? noPlan,
     color: typeof s.room_color === 'string' && /^#[0-9a-f]{6}$/i.test(s.room_color) ? s.room_color : DEFAULT_ROOM_COLOR,
     opacity: typeof s.room_opacity === 'number' ? Math.min(1, Math.max(0, s.room_opacity)) : DEFAULT_ROOM_OPACITY,
-    fill: ['lqi', 'light', 'temp'].includes(s.fill_mode) ? s.fill_mode : 'none',
+    fill: ['lqi', 'light', 'temp', 'glow'].includes(s.fill_mode) ? s.fill_mode : 'none',
     tempMin: typeof s.temp_min === 'number' ? s.temp_min : DEFAULT_TEMP_MIN,
     tempMax: typeof s.temp_max === 'number' ? s.temp_max : DEFAULT_TEMP_MAX,
     showLqi: typeof s.show_lqi === 'boolean' ? s.show_lqi : null,
@@ -598,6 +598,9 @@ export interface FillColors {
   temp_hot: FillColorEntry;
   lqi_low: FillColorEntry;
   lqi_high: FillColorEntry;
+  /** Glow mode: uniform "darkness" over every room + default light color. */
+  glow_base: FillColorEntry;
+  glow_light: FillColorEntry;
 }
 
 export const DEFAULT_FILL_COLORS: FillColors = {
@@ -609,6 +612,8 @@ export const DEFAULT_FILL_COLORS: FillColors = {
   temp_hot: { c: '#ffd45c', a: 0.18 },
   lqi_low: { c: '#f25a4a', a: 0.18 },
   lqi_high: { c: '#4bd28f', a: 0.18 },
+  glow_base: { c: '#0d1b2a', a: 0.5 },
+  glow_light: { c: '#ffd9a0', a: 0.85 },
 };
 
 const HEX_RE = /^#[0-9a-f]{6}$/i;
@@ -750,6 +755,211 @@ export function lightColorOf(state: any): string | null {
     return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
   }
   return null;
+}
+
+// ---------------- glow fill (light sources) ----------------
+
+/** Blackbody color temperature → RGB (Tanner Helland approximation). */
+export function kelvinToRgb(kelvin: number): [number, number, number] {
+  const t = Math.min(40000, Math.max(1000, kelvin)) / 100;
+  const r = t <= 66 ? 255 : 329.698727446 * Math.pow(t - 60, -0.1332047592);
+  const g = t <= 66
+    ? 99.4708025861 * Math.log(t) - 161.1195681661
+    : 288.1221695283 * Math.pow(t - 60, -0.0755148492);
+  const b = t >= 66 ? 255 : t <= 19 ? 0 : 138.5177312231 * Math.log(t - 10) - 305.0447927307;
+  const cl = (v: number) => Math.round(Math.min(255, Math.max(0, v)));
+  return [cl(r), cl(g), cl(b)];
+}
+
+/**
+ * Color and relative brightness of a light's glow: rgb_color as is, else the
+ * color temperature via blackbody, else the configured fallback. Off → null.
+ */
+export function glowColorOf(state: any, fallback: string): { c: string; bri: number } | null {
+  if (!state || state.state !== 'on') return null;
+  const a = state.attributes || {};
+  const briRaw = Number(a.brightness);
+  const bri = Number.isFinite(briRaw) && briRaw > 0 ? Math.max(0.15, Math.min(1, briRaw / 255)) : 1;
+  const rgb = a.rgb_color;
+  if (Array.isArray(rgb) && rgb.length >= 3 && rgb.every((v: any) => Number.isFinite(v)))
+    return { c: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`, bri };
+  const kelvin = Number(a.color_temp_kelvin) || (Number(a.color_temp) > 0 ? 1e6 / Number(a.color_temp) : NaN);
+  if (Number.isFinite(kelvin) && kelvin > 0) {
+    const [r, g, b] = kelvinToRgb(kelvin);
+    return { c: `rgb(${r}, ${g}, ${b})`, bri };
+  }
+  return { c: fallback, bri };
+}
+
+/**
+ * Light spilling through a doorway: the sector of the glow circle between the
+ * rays source→A and source→B (door edge points), out to radius r. This part of
+ * the circle is intentionally NOT clipped by the room (owner's spec: no shadow
+ * casting — just the unclipped sector). Null when the door is out of reach or
+ * the source sits on a door edge; the sweep is clamped to maxDeg.
+ */
+export function doorSector(
+  src: number[], a: number[], b: number[], r: number, maxDeg = 170,
+): number[][] | null {
+  const la = Math.hypot(a[0] - src[0], a[1] - src[1]);
+  const lb = Math.hypot(b[0] - src[0], b[1] - src[1]);
+  if (la < 1e-6 || lb < 1e-6 || Math.min(la, lb) >= r) return null;
+  let aa = Math.atan2(a[1] - src[1], a[0] - src[0]);
+  let sweep = Math.atan2(b[1] - src[1], b[0] - src[0]) - aa;
+  while (sweep > Math.PI) sweep -= 2 * Math.PI;
+  while (sweep < -Math.PI) sweep += 2 * Math.PI;
+  const max = (maxDeg * Math.PI) / 180;
+  if (Math.abs(sweep) > max) {
+    const mid = aa + sweep / 2;
+    sweep = max * Math.sign(sweep);
+    aa = mid - sweep / 2;
+  }
+  const steps = 8;
+  const pts: number[][] = [[src[0], src[1]]];
+  for (let i = 0; i <= steps; i++) {
+    const ang = aa + (sweep * i) / steps;
+    pts.push([src[0] + Math.cos(ang) * r, src[1] + Math.sin(ang) * r]);
+  }
+  return pts;
+}
+
+/**
+ * Is there a room on the far side of an opening (relative to the light source)?
+ * Entrance doors lead outside — light must not spill there.
+ */
+export function hasRoomBehind(
+  center: number[], angleDeg: number, src: number[], polys: number[][][], probe: number,
+): boolean {
+  const rad = (angleDeg * Math.PI) / 180;
+  const n = [-Math.sin(rad), Math.cos(rad)];
+  const toSrc = (src[0] - center[0]) * n[0] + (src[1] - center[1]) * n[1];
+  const sgn = toSrc > 0 ? -1 : 1;
+  const p = [center[0] + n[0] * probe * sgn, center[1] + n[1] * probe * sgn];
+  return polys.some((poly) => pointStrictlyInside(p, poly, 1e-9));
+}
+
+/**
+ * Group toggle for a switch's controlled entities, HA-group semantics:
+ * any target on -> turn everything off; all off -> turn everything on.
+ */
+export function controlsAction(states: (string | undefined)[]): 'turn_on' | 'turn_off' {
+  return states.some((st) => st === 'on') ? 'turn_off' : 'turn_on';
+}
+
+/** Only lights and plain switches may be group-controlled from the plan. */
+export function isControllable(entityId: string): boolean {
+  return entityId.startsWith('light.') || entityId.startsWith('switch.');
+}
+
+// ---------------- open (virtual) boundaries ----------------
+
+/**
+ * Collinear overlapping stretches of two room outlines — their shared
+ * boundary. Handles the real-house case where neighbouring walls only
+ * PARTIALLY overlap (collinear, different lengths). Returns segments
+ * [x1,y1,x2,y2] with length > eps.
+ */
+export function sharedBoundary(a: number[][], b: number[][], eps = 1e-6): number[][] {
+  const res: number[][] = [];
+  if (!a || !b || a.length < 3 || b.length < 3) return res;
+  for (let i = 0; i < a.length; i++) {
+    const p1 = a[i], p2 = a[(i + 1) % a.length];
+    const dx = p2[0] - p1[0], dy = p2[1] - p1[1];
+    const len = Math.hypot(dx, dy);
+    if (len < eps) continue;
+    const ux = dx / len, uy = dy / len;
+    for (let j = 0; j < b.length; j++) {
+      const q1 = b[j], q2 = b[(j + 1) % b.length];
+      // both q endpoints must lie on the line of p1-p2
+      const d1 = Math.abs((q1[0] - p1[0]) * uy - (q1[1] - p1[1]) * ux);
+      const d2 = Math.abs((q2[0] - p1[0]) * uy - (q2[1] - p1[1]) * ux);
+      const tol = Math.max(eps, len * 1e-6);
+      if (d1 > tol || d2 > tol) continue;
+      // overlap of parameter intervals along the line
+      const t1 = (q1[0] - p1[0]) * ux + (q1[1] - p1[1]) * uy;
+      const t2 = (q2[0] - p1[0]) * ux + (q2[1] - p1[1]) * uy;
+      const lo = Math.max(0, Math.min(t1, t2));
+      const hi = Math.min(len, Math.max(t1, t2));
+      if (hi - lo > eps) {
+        res.push([p1[0] + ux * lo, p1[1] + uy * lo, p1[0] + ux * hi, p1[1] + uy * hi]);
+      }
+    }
+  }
+  return res;
+}
+
+/**
+ * Connected component of rooms joined by open (virtual) boundaries — the
+ * "open zone" light flows through. The open_to link counts in either
+ * direction. Returns a set of room ids including the start.
+ */
+export function openZoneOf(roomId: string, rooms: { id?: string; open_to?: string[] | null }[]): Set<string> {
+  const zone = new Set<string>([roomId]);
+  const linked = (x: any, y: any) =>
+    (x.open_to || []).includes(y.id) || (y.open_to || []).includes(x.id);
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const r of rooms) {
+      if (!r.id || zone.has(r.id)) continue;
+      for (const z of rooms) {
+        if (!z.id || !zone.has(z.id)) continue;
+        if (linked(r, z)) { zone.add(r.id); grew = true; break; }
+      }
+    }
+  }
+  return zone;
+}
+
+/**
+ * Room outline pieces with the given collinear stretches removed — used to
+ * draw a TRUE dashed open boundary (the solid stroke must not run beneath).
+ * Returns segments [x1,y1,x2,y2].
+ */
+export function outlineWithout(poly: number[][], cuts: number[][], eps = 1e-6): number[][] {
+  const out: number[][] = [];
+  for (let i = 0; i < poly.length; i++) {
+    const p1 = poly[i], p2 = poly[(i + 1) % poly.length];
+    const dx = p2[0] - p1[0], dy = p2[1] - p1[1];
+    const len = Math.hypot(dx, dy);
+    if (len < eps) continue;
+    const ux = dx / len, uy = dy / len;
+    // collect cut intervals on this edge
+    const iv: [number, number][] = [];
+    for (const c of cuts) {
+      const d1 = Math.abs((c[0] - p1[0]) * uy - (c[1] - p1[1]) * ux);
+      const d2 = Math.abs((c[2] - p1[0]) * uy - (c[3] - p1[1]) * ux);
+      const tol = Math.max(eps, len * 1e-6);
+      if (d1 > tol || d2 > tol) continue;
+      const t1 = (c[0] - p1[0]) * ux + (c[1] - p1[1]) * uy;
+      const t2 = (c[2] - p1[0]) * ux + (c[3] - p1[1]) * uy;
+      const lo = Math.max(0, Math.min(t1, t2));
+      const hi = Math.min(len, Math.max(t1, t2));
+      if (hi - lo > eps) iv.push([lo, hi]);
+    }
+    if (!iv.length) {
+      out.push([p1[0], p1[1], p2[0], p2[1]]);
+      continue;
+    }
+    iv.sort((a, b) => a[0] - b[0]);
+    let cur = 0;
+    for (const [lo, hi] of iv) {
+      if (lo - cur > eps) out.push([p1[0] + ux * cur, p1[1] + uy * cur, p1[0] + ux * lo, p1[1] + uy * lo]);
+      cur = Math.max(cur, hi);
+    }
+    if (len - cur > eps) out.push([p1[0] + ux * cur, p1[1] + uy * cur, p2[0], p2[1]]);
+  }
+  return out;
+}
+
+/** Distance from a point to a segment [x1,y1,x2,y2]. */
+export function distToSegment(p: number[], s: number[]): number {
+  const dx = s[2] - s[0], dy = s[3] - s[1];
+  const len2 = dx * dx + dy * dy;
+  if (!len2) return Math.hypot(p[0] - s[0], p[1] - s[1]);
+  let t = ((p[0] - s[0]) * dx + (p[1] - s[1]) * dy) / len2;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(p[0] - (s[0] + t * dx), p[1] - (s[1] + t * dy));
 }
 
 /** Device classes whose active state is an emergency, not a status. */

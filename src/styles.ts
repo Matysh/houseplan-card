@@ -396,6 +396,59 @@ export const cardStyles = css`
       display: inline-flex;
     }
     .roomlabel .rlm.lit { opacity: 1; }
+    .bindharow {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .bindharow .entcheck { opacity: 0.9; }
+    .dropbtn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--hp-muted);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--hp-txt);
+      padding: 8px 10px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 13px;
+      margin-top: 6px;
+    }
+    .dropbtn .ref { color: var(--hp-muted); font-size: 11px; margin-left: auto; }
+    .dropbtn ha-icon { --mdc-icon-size: 18px; margin-left: 4px; }
+    .dropbtn.open { border-color: var(--hp-accent); }
+    .droppanel {
+      border: 1px solid var(--hp-accent);
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      padding: 6px;
+      margin-top: -4px;
+    }
+    .ctrlchips { display: flex; flex-wrap: wrap; gap: 5px; margin: 4px 0; }
+    .ctrlchip {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: var(--hp-accent); color: var(--text-primary-color, #fff);
+      border-radius: 12px; padding: 3px 8px; font-size: 12px;
+    }
+    .ctrlchip ha-icon { --mdc-icon-size: 14px; cursor: pointer; }
+    .ctrllist { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
+    .ctrlopt {
+      display: flex; align-items: center; gap: 7px; text-align: left;
+      border: 0; background: transparent; color: var(--hp-txt);
+      padding: 5px 7px; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 13px;
+    }
+    .ctrlopt:hover { background: var(--secondary-background-color, rgba(128,128,128,0.15)); }
+    .ctrlopt .sub { color: var(--hp-muted); font-size: 11px; margin-left: auto; }
+    .ctrlopt ha-icon { --mdc-icon-size: 16px; }
+    .ctrlstates { display: flex; flex-direction: column; gap: 3px; }
+    .ctrlstate { display: inline-flex; align-items: center; gap: 5px; color: var(--hp-muted); }
+    .ctrlstate.on { color: var(--hp-txt); }
+    .ctrlstate ha-icon { --mdc-icon-size: 15px; }
     .iconauto {
       display: flex;
       align-items: center;
@@ -520,6 +573,44 @@ export const cardStyles = css`
     .stage.markup.tool-split.pickstage,
     .stage.markup.tool-delroom {
       cursor: pointer;
+    }
+    /* open-wall tool: default until a shared wall is under the cursor */
+    .stage.markup.tool-openwall { cursor: default; }
+    .stage.markup.tool-openwall.wallhot { cursor: pointer; }
+    .openwall {
+      stroke: var(--ow-stroke, var(--hp-muted));
+      stroke-width: 2.5;
+      stroke-dasharray: 7 7;
+      stroke-linecap: butt;
+      pointer-events: none;
+      opacity: 0.9;
+    }
+    /* rooms with open stretches: the polygon's own stroke is fully off
+       (hover included) — the trimmed .room-outline path draws the walls */
+    .room.noedge {
+      stroke-opacity: 0 !important;
+    }
+    .room-outline {
+      fill: none;
+      stroke-width: 2.5;
+      pointer-events: none;
+    }
+    .openwalls.hot .openwall {
+      stroke: #ffc14d;
+      opacity: 1;
+    }
+    .openwall-preview {
+      stroke: #ffc14d;
+      stroke-width: 5;
+      stroke-dasharray: 7 7;
+      stroke-linecap: round;
+      pointer-events: none;
+      opacity: 0.95;
+    }
+    /* an already-open boundary under the cursor: the click will CLOSE it */
+    .openwall-preview.willclose {
+      stroke: #f25a4a;
+      stroke-dasharray: none;
     }
     .stage.markup .room {
       pointer-events: none;

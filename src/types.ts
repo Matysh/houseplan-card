@@ -1,6 +1,8 @@
 /** Shared types of the House Plan card. */
 
 export interface RoomCfg {
+  /** Rooms this one has an OPEN (virtual) boundary with — light flows through. */
+  open_to?: string[] | null;
   id?: string;
   name: string;
   area: string | null;
@@ -44,6 +46,10 @@ export interface Marker {
   ripple_size?: number | null; // max ring diameter, in icon diameters (default 3)
   size?: number | null;        // icon size multiplier (default 1)
   angle?: number | null;       // icon rotation, degrees
+  /** Entities this icon toggles as a group (wall switch → its lights). */
+  controls?: string[] | null;
+  /** Per-source glow radius in cm (glow fill); null = the global default. */
+  glow_radius_cm?: number | null;
 }
 
 /** A door or window: plan geometry (normalized coords), optionally live via entities. */

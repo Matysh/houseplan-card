@@ -14,10 +14,10 @@ import {
 import {
   lqiColor, snapToGrid, samePoint, pointInPolygon, markerIdForBinding,
   segmentCm, formatLength, roomEdges, roomPoly, pointStrictlyInside, roomsOverlap,
-  pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf,
+  pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, openZoneOf, distToSegment, outlineWithout,
   snapToWall, openingAmount,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
-  stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices,
+  stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, glowColorOf, doorSector, hasRoomBehind, controlsAction, isControllable,
   spaceDisplayOf, roomFillStyle, fillColorsOf, DEFAULT_FILL_COLORS, type FillColors,
   isActiveState, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
@@ -32,14 +32,15 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.34.0';
+const CARD_VERSION = '1.38.2';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
+const LS_NAV = 'houseplan_card_nav_v1'; // last space + editor mode (owner: restore where you were)
 const NORM_W = 1000; // width of the render space for normalized configs
 
 const GRID_N = 240; // grid points across the plan width (half the previous step; old nodes are a subset of the new ones, positions are preserved)
-type MarkupTool = 'draw' | 'merge' | 'split' | 'opening' | 'delroom';
+type MarkupTool = 'draw' | 'merge' | 'split' | 'opening' | 'openwall' | 'delroom';
 
 const fireEvent = (node: EventTarget, type: string, detail?: unknown) => {
   const ev = new Event(type, { bubbles: true, composed: true }) as any;
@@ -145,7 +146,7 @@ class HouseplanCard extends LitElement {
   private _onboardingShown = false; // the auto space dialog is shown once per session
 
   private _rulesDialog: { rules: IconRule[]; test: string; busy: boolean } | null = null;
-  private _settingsDialog: { colors: FillColors; busy: boolean } | null = null;
+  private _settingsDialog: { colors: FillColors; glowRadius: number; busy: boolean } | null = null;
   private _importDialog: { floors: (FloorInfo & { checked: boolean })[] } | null = null;
   private _importQueue: string[] = []; // floor titles still to create
   private _importTotal = 0;
@@ -156,7 +157,10 @@ class HouseplanCard extends LitElement {
   private _markerDialog: {
     devId?: string;      // the icon being edited (if any)
     name: string;
-    binding: string;     // 'device:<id>' | 'entity:<eid>' | 'virtual'
+    binding: string;     // 'device:<id>' | 'entity:<eid>' | 'virtual' | '' (not chosen yet)
+    bindingMode: 'virtual' | 'ha';
+    bindingOpen: boolean;   // the HA-list dropdown is expanded
+    showEntities: boolean;  // list entities of devices too
     bindingFilter: string;
     icon: string;        // '' = auto
     autoIcon: string;    // the icon the rules would give — picker placeholder
@@ -166,6 +170,9 @@ class HouseplanCard extends LitElement {
     size: number;        // icon size multiplier
     angle: number;       // icon rotation, degrees
     tapAction: string;   // '' = card default
+    controls: string[];  // entities this icon toggles as a group
+    controlsFilter: string;
+    glowRadius: string;  // per-device glow radius in display units; '' = global default
     model: string;
     link: string;
     description: string;
@@ -185,7 +192,7 @@ class HouseplanCard extends LitElement {
     showNames: boolean;
     roomColor: string;
     roomOpacity: number;           // 0..1
-    fillMode: 'none' | 'lqi' | 'light' | 'temp';
+    fillMode: 'none' | 'lqi' | 'light' | 'temp' | 'glow';
     tempMin: number;
     tempMax: number;
     showLqi: boolean;
@@ -198,6 +205,7 @@ class HouseplanCard extends LitElement {
   } | null = null;
   private _keyHandler = (e: KeyboardEvent) => this._onKey(e);
   private _hashApplied = false;
+  private _navApplied = false; // the saved space was restored (or the user navigated)
   /** Deep-link: read `#space=<id>` from the URL (used by embedded houseplan-space-card). */
   private _hashSpace(): string {
     const m = /(?:^|[#&])space=([^&]+)/.exec(window.location.hash || '');
@@ -340,6 +348,11 @@ class HouseplanCard extends LitElement {
       e.preventDefault();
       if (this._mergeSel) this._mergeSel = null;
       else this._tool = 'draw';
+      return;
+    }
+    if (this._tool === 'openwall' || this._tool === 'opening' || this._tool === 'delroom') {
+      e.preventDefault();
+      this._tool = 'draw';
     }
   }
 
@@ -375,9 +388,13 @@ class HouseplanCard extends LitElement {
         this._layout = c.layout || {};
         this._serverStorage = true;
         const hs = this._hashSpace();
+        const nav = this._savedNav();
         if (hs && this._model.find((sp) => sp.id === hs)) { this._space = hs; this._hashApplied = true; }
+        else if (nav?.space && this._model.find((sp) => sp.id === nav.space)) { this._space = nav.space; this._navApplied = true; }
         else if (config.default_floor) this._space = config.default_floor;
         else if (!this._model.find((sp) => sp.id === this._space)) this._space = this._model[0]?.id || this._space;
+        // reopenning the tab lands you in the same editor you left (admins only)
+        if (nav?.mode && nav.mode !== 'view' && this._canEdit) this._mode = nav.mode;
       }
     } catch {
       /* ignore */
@@ -414,6 +431,7 @@ class HouseplanCard extends LitElement {
         id: r.id,
         name: r.name,
         area: r.area ?? null,
+        open_to: r.open_to || undefined,
         x: r.x != null ? r.x * NORM_W : undefined,
         y: r.y != null ? r.y * H : undefined,
         w: r.w != null ? r.w * NORM_W : undefined,
@@ -538,9 +556,16 @@ class HouseplanCard extends LitElement {
         }, 'houseplan_config_updated');
       }
       const hs = this._hashSpace();
+      const nav = this._savedNav();
       if (!this._hashApplied && hs && this._model.find((s) => s.id === hs)) {
         this._space = hs;
         this._hashApplied = true;
+      } else if (nav?.space && !this._navApplied && !this._hashApplied
+          && this._model.find((s) => s.id === nav.space)) {
+        // the cached config might have been stale (no such space) — retry once
+        // the live config is in
+        this._space = nav.space;
+        this._navApplied = true;
       } else if (this._norm && !this._model.find((s) => s.id === this._space)) {
         this._space = this._model[0]?.id || this._space;
       }
@@ -770,6 +795,11 @@ class HouseplanCard extends LitElement {
 
   private _stateClass(d: DevItem): string {
     if (!this._config?.live_states) return '';
+    // an icon with controlled targets mirrors THEM, not its own entity
+    // (stateless remotes and virtual wall switches have nothing else to show)
+    const controls = (d.marker?.controls || []).filter(isControllable);
+    if (controls.length)
+      return controls.some((e) => this.hass.states[e]?.state === 'on') ? 'on' : '';
     const p = d.primary ? this.hass.states[d.primary] : undefined;
     if (!p) return '';
     if (p.state === 'unavailable') return 'unavail';
@@ -812,6 +842,15 @@ class HouseplanCard extends LitElement {
     fireEvent(this, 'hass-more-info', { entityId });
   }
 
+  /** Right click in VIEW mode always opens HA's more-info (owner's decision). */
+  private _ctxDevice(ev: MouseEvent, d: DevItem): void {
+    if (this._mode !== 'view') return; // editors keep the native context menu
+    ev.preventDefault();
+    ev.stopPropagation();
+    if (d.primary) this._openMoreInfo(d.primary);
+    else this._infoCard = d;
+  }
+
   private _clickDevice(ev: MouseEvent, d: DevItem): void {
     ev.stopPropagation();
     if (this._drag?.moved || this._suppressClick || this._holdFired) return;
@@ -821,7 +860,18 @@ class HouseplanCard extends LitElement {
       return;
     }
     const domain = d.primary ? d.primary.split('.')[0] : null;
-    const action = resolveTapAction(d.tapAction, this._config?.tap_action, domain);
+    // a switch with bound targets: the EXPLICIT per-marker toggle flips them
+    // all with HA-group semantics (any on -> all off). Owner's decision:
+    // controls never fire on the card-wide default action.
+    const controls = (d.marker?.controls || []).filter(isControllable);
+    if (d.tapAction === 'toggle' && controls.length) {
+      const act = controlsAction(controls.map((e) => this.hass.states[e]?.state));
+      this.hass
+        .callService('homeassistant', act, { entity_id: controls })
+        .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
+      return;
+    }
+    const action = resolveTapAction(d.tapAction, undefined, domain);
     if (action === 'toggle' && d.primary) {
       this.hass
         .callService('homeassistant', 'toggle', { entity_id: d.primary })
@@ -1150,6 +1200,22 @@ class HouseplanCard extends LitElement {
     return roomEdges(sp?.rooms || []).map((s) => [s[0] * NORM_W, s[1] * H, s[2] * NORM_W, s[3] * H]);
   }
 
+  private _savedNav(): { space?: string; mode?: 'view' | 'plan' | 'devices' | 'decor' } | null {
+    try {
+      return JSON.parse(localStorage.getItem(LS_NAV) || 'null');
+    } catch {
+      return null;
+    }
+  }
+
+  private _saveNav(): void {
+    try {
+      localStorage.setItem(LS_NAV, JSON.stringify({ space: this._space, mode: this._mode }));
+    } catch {
+      /* private mode etc. */
+    }
+  }
+
   private _setMode(mode: 'view' | 'plan' | 'devices' | 'decor'): void {
     if (this._mode === mode) return;
     if ((mode === 'plan' || mode === 'decor') && !this._norm) {
@@ -1169,6 +1235,7 @@ class HouseplanCard extends LitElement {
     this._decorDraft = null;
     this._decorSel = null;
     this._decorTool = 'select';
+    this._saveNav();
   }
 
 
@@ -1269,6 +1336,10 @@ class HouseplanCard extends LitElement {
     }
     if (this._tool === 'merge') {
       this._mergeClick(raw);
+      return;
+    }
+    if (this._tool === 'openwall') {
+      this._openWallClick(raw);
       return;
     }
     if (this._tool === 'split') {
@@ -1569,6 +1640,95 @@ class HouseplanCard extends LitElement {
     </div>`;
   }
 
+  /** Boundary under the cursor in the open-wall tool (hover preview). */
+  private get _openWallHover(): { segs: number[][]; open: boolean } | null {
+    if (!this._markup || this._tool !== 'openwall' || !this._cursorPt) return null;
+    const hit = this._openWallHit(this._cursorPt);
+    return hit ? { segs: hit.segs, open: hit.open } : null;
+  }
+
+  /** Dashed strokes over open (virtual) boundaries; highlighted in the tool. */
+  private _renderOpenWalls(disp?: SpaceDisplay): TemplateResult {
+    const pairs = this._openPairs();
+    const hover = this._openWallHover;
+    if (!pairs.length && !hover) return svg`` as unknown as TemplateResult;
+    const hot = this._markup && this._tool === 'openwall';
+    const stroke = disp?.color || 'var(--hp-muted)';
+    return svg`<g class="openwalls ${hot ? 'hot' : ''}" style="--ow-stroke:${stroke}">
+      ${pairs.flatMap((p) => p.segs.map((sg) => svg`<line class="openwall"
+        x1="${sg[0]}" y1="${sg[1]}" x2="${sg[2]}" y2="${sg[3]}"></line>`))}
+      ${hover
+        ? hover.segs.map((sg) => svg`<line class="openwall-preview ${hover.open ? 'willclose' : ''}"
+            x1="${sg[0]}" y1="${sg[1]}" x2="${sg[2]}" y2="${sg[3]}"></line>`)
+        : nothing}
+    </g>` as unknown as TemplateResult;
+  }
+
+  /** All open-boundary pairs of the current space with their shared segments. */
+  private _openPairs(): { a: RoomCfg; b: RoomCfg; segs: number[][] }[] {
+    const rooms = this._spaceModel().rooms.filter((r) => r.id);
+    const res: { a: RoomCfg; b: RoomCfg; segs: number[][] }[] = [];
+    for (let i = 0; i < rooms.length; i++)
+      for (let j = i + 1; j < rooms.length; j++) {
+        const a = rooms[i], b = rooms[j];
+        const linked = ((a as any).open_to || []).includes(b.id) || ((b as any).open_to || []).includes(a.id);
+        if (!linked) continue;
+        const pa = roomPoly(a), pb = roomPoly(b);
+        if (!pa || !pb) continue;
+        const segs = sharedBoundary(pa, pb, this._gridPitch * 0.02);
+        if (segs.length) res.push({ a, b, segs });
+      }
+    return res;
+  }
+
+  /** The shared boundary nearest to the cursor (both the tool's click and hover). */
+  private _openWallHit(raw: number[]): { a: RoomCfg; b: RoomCfg; segs: number[][]; open: boolean } | null {
+    const rooms = this._spaceModel().rooms.filter((r) => r.id);
+    const pull = this._gridPitch * 6;
+    let best: { a: RoomCfg; b: RoomCfg; segs: number[][]; d: number } | null = null;
+    for (let i = 0; i < rooms.length; i++)
+      for (let j = i + 1; j < rooms.length; j++) {
+        const pa = roomPoly(rooms[i]), pb = roomPoly(rooms[j]);
+        if (!pa || !pb) continue;
+        const segs = sharedBoundary(pa, pb, this._gridPitch * 0.02);
+        for (const seg of segs) {
+          const d = distToSegment(raw, seg);
+          if (d <= pull && (!best || d < best.d)) best = { a: rooms[i], b: rooms[j], segs, d };
+        }
+      }
+    if (!best) return null;
+    const open = (((best.a as any).open_to || []).includes(best.b.id))
+      || (((best.b as any).open_to || []).includes(best.a.id));
+    return { a: best.a, b: best.b, segs: best.segs, open };
+  }
+
+  /** Open-boundary tool: a click on a shared wall toggles its "virtual" state. */
+  private _openWallClick(raw: number[]): void {
+    const best = this._openWallHit(raw);
+    if (!best) {
+      this._showToast(this._t('toast.openwall_pick'));
+      return;
+    }
+    const sp = this._curSpaceCfg;
+    const ra = sp.rooms.find((r: any) => r.id === best.a.id);
+    const rb = sp.rooms.find((r: any) => r.id === best.b.id);
+    if (!ra || !rb) return;
+    const linked = (ra.open_to || []).includes(rb.id) || (rb.open_to || []).includes(ra.id);
+    if (linked) {
+      ra.open_to = (ra.open_to || []).filter((x: string) => x !== rb.id);
+      rb.open_to = (rb.open_to || []).filter((x: string) => x !== ra.id);
+      if (!ra.open_to.length) delete ra.open_to;
+      if (!rb.open_to.length) delete rb.open_to;
+      this._showToast(this._t('toast.openwall_closed', { a: ra.name || '', b: rb.name || '' }));
+    } else {
+      ra.open_to = [...(ra.open_to || []), rb.id];
+      rb.open_to = [...(rb.open_to || []), ra.id];
+      this._showToast(this._t('toast.openwall_opened', { a: ra.name || '', b: rb.name || '' }));
+    }
+    this._saveConfig();
+    this.requestUpdate();
+  }
+
   /** Opening tool: click an existing opening to edit it, or a wall to place one. */
   private _openingClick(raw: number[]): void {
     const eps = this._gridPitch * 1.5;
@@ -1829,8 +1989,8 @@ class HouseplanCard extends LitElement {
 
   private _markupMove(ev: MouseEvent): void {
     if (!this._markup) return;
-    if (this._tool === 'opening') {
-      // hover preview: where the opening would land (raw point, wall-snapped later)
+    if (this._tool === 'opening' || this._tool === 'openwall') {
+      // hover preview: raw cursor point; snapping happens in the preview getters
       this._cursorPt = this._svgPoint(ev);
       return;
     }
@@ -1978,6 +2138,10 @@ class HouseplanCard extends LitElement {
         devId: d.id,
         name: d.name,
         binding: d.bindingKind === 'virtual' ? 'virtual' : d.bindingKind + ':' + d.bindingRef,
+        bindingMode: d.bindingKind === 'virtual' ? 'virtual' : 'ha',
+        bindingOpen: false,
+        // a marker bound to an ENTITY of a device only shows up with the box on
+        showEntities: d.bindingKind === 'entity' && !!this.hass.entities[d.bindingRef || '']?.device_id,
         bindingFilter: '',
         icon: d.marker?.icon || '',
         autoIcon: d.icon || '',
@@ -1987,6 +2151,13 @@ class HouseplanCard extends LitElement {
         size: Number(d.marker?.size) > 0 ? Number(d.marker!.size) : 1,
         angle: Number(d.marker?.angle) || 0,
         tapAction: d.marker?.tap_action || '',
+        controls: [...(d.marker?.controls || [])],
+        controlsFilter: '',
+        glowRadius: Number(d.marker?.glow_radius_cm) > 0
+          ? String(this._imperial
+              ? Math.round((Number(d.marker!.glow_radius_cm) / 30.48) * 10) / 10
+              : Math.round(Number(d.marker!.glow_radius_cm)) / 100)
+          : '',
         model: d.model || '',
         link: d.link || '',
         description: d.description || '',
@@ -1998,9 +2169,10 @@ class HouseplanCard extends LitElement {
       };
     } else {
       this._markerDialog = {
-        name: '', binding: 'virtual', bindingFilter: '', icon: '', autoIcon: '',
+        name: '', binding: 'virtual', bindingMode: 'virtual', bindingOpen: false,
+        showEntities: false, bindingFilter: '', icon: '', autoIcon: '',
         display: 'badge', rippleColor: '', rippleSize: 3, size: 1, angle: 0,
-        tapAction: '', model: '',
+        tapAction: '', controls: [], controlsFilter: '', glowRadius: '', model: '',
         link: '', description: '', pdfs: [], room: '', busy: false,
       };
     }
@@ -2049,11 +2221,9 @@ class HouseplanCard extends LitElement {
         sub: eid.split('.')[0] + ' · ' + (reg.platform === 'group' ? this._t('marker.sub_group') : this._t('marker.sub_helper')),
       });
     }
-    // Individual entities — surfaced only while searching (avoids a huge default list); lets you
-    // place a single entity of a multi-entity device (e.g. the humidity of a climate sensor) as
-    // its own icon. Uses the same entity: binding as helpers/groups.
-    const q = (this._markerDialog?.bindingFilter || '').toLowerCase().trim();
-    if (q) {
+    // Individual entities of devices — behind the "show entities" checkbox
+    // (groups/helpers above are ALWAYS listed: they are standalone objects).
+    if (this._markerDialog?.showEntities) {
       const seen = new Set(list.map((o) => o.value));
       for (const [eid, reg] of Object.entries<any>(h.entities)) {
         const v = 'entity:' + eid;
@@ -2062,7 +2232,6 @@ class HouseplanCard extends LitElement {
         const label = reg.name || stt?.attributes?.friendly_name || eid;
         const dev = reg.device_id ? h.devices[reg.device_id] : null;
         const devName = dev ? (dev.name_by_user || dev.name || '') : '';
-        if (!(label + ' ' + eid + ' ' + devName).toLowerCase().includes(q)) continue;
         list.push({ value: v, label, sub: eid.split('.')[0] + ' · ' + this._t('marker.sub_entity') + (devName ? ' · ' + devName : '') });
       }
     }
@@ -2165,6 +2334,7 @@ class HouseplanCard extends LitElement {
   private async _saveMarker(): Promise<void> {
     const dlg = this._markerDialog;
     if (!dlg || dlg.busy) return;
+    if (dlg.bindingMode === 'ha' && (!dlg.binding || dlg.binding === 'virtual')) return;
     if (dlg.binding === 'virtual' && !dlg.name.trim()) {
       this._showToast(this._t('toast.virtual_name_required'));
       return;
@@ -2194,6 +2364,12 @@ class HouseplanCard extends LitElement {
         size: dlg.size !== 1 ? dlg.size : null,
         angle: dlg.angle ? dlg.angle : null,
         tap_action: dlg.tapAction || null,
+        controls: dlg.controls.length ? dlg.controls : null,
+        glow_radius_cm: (() => {
+          const v = parseFloat(dlg.glowRadius);
+          if (!Number.isFinite(v) || v <= 0) return null;
+          return Math.round(this._imperial ? v * 30.48 : v * 100);
+        })(),
         model: dlg.model.trim() || null,
         link: dlg.link.trim() || null,
         description: dlg.description.trim() || null,
@@ -2578,7 +2754,11 @@ class HouseplanCard extends LitElement {
   private _openSettingsDialog = (): void => {
     if (!this._norm) return;
     // deep copy so the dialog edits do not leak into the live palette
-    this._settingsDialog = { colors: JSON.parse(JSON.stringify(this._fillColors)), busy: false };
+    const cm = this._glowRadiusCm;
+    const glowRadius = this._imperial
+      ? Math.round((cm / 30.48) * 10) / 10
+      : Math.round(cm) / 100;
+    this._settingsDialog = { colors: JSON.parse(JSON.stringify(this._fillColors)), glowRadius, busy: false };
   };
 
   private _setFillColor(key: keyof FillColors, patch: Partial<{ c: string; a: number }>): void {
@@ -2596,6 +2776,9 @@ class HouseplanCard extends LitElement {
       const settings: any = { ...cfg.settings };
       if (isDefault) delete settings.fill_colors;
       else settings.fill_colors = d.colors;
+      const cm = this._imperial ? d.glowRadius * 30.48 : d.glowRadius * 100;
+      if (Number.isFinite(cm) && cm > 0 && Math.round(cm) !== 300) settings.glow_radius_cm = Math.round(cm);
+      else delete settings.glow_radius_cm;
       this._serverCfg = { ...cfg, settings };
       await this._saveConfigNow();
       this._settingsDialog = null;
@@ -2620,6 +2803,95 @@ class HouseplanCard extends LitElement {
     </div>`;
   }
 
+  /** Glow radius: stored in cm (config.settings.glow_radius_cm), default 3 m. */
+  private get _glowRadiusCm(): number {
+    const v = Number((this._settings as any).glow_radius_cm);
+    return Number.isFinite(v) && v > 0 ? v : 300;
+  }
+
+  private get _imperial(): boolean {
+    return this.hass?.config?.unit_system?.length === 'mi';
+  }
+
+  private get _glowRadiusPlaceholder(): string {
+    const cm = this._glowRadiusCm;
+    return this._imperial ? String(Math.round((cm / 30.48) * 10) / 10) : String(cm / 100);
+  }
+
+  /** Light pools of the current space: dark house, glowing sources. */
+  private _renderGlowLayer(space: SpaceModel): TemplateResult {
+    const colors = this._fillColors;
+    const defaultR = (this._glowRadiusCm / this._cellCm) * this._gridPitch;
+    const g = this._gridPitch;
+    const polys = space.rooms
+      .map((r) => ({ r, poly: roomPoly(r) }))
+      .filter((x): x is { r: RoomCfg; poly: number[][] } => !!x.poly);
+    const doors = this._openingsR.filter((o) => o.type === 'door');
+    const spots: { pos: { x: number; y: number }; c: string; alpha: number; clip: string[] | null; r: number }[] = [];
+    for (const d of this._devices) {
+      if (d.space !== space.id) continue;
+      const lightEid = d.entities.find(
+        (e) => e.startsWith('light.') && this.hass.states[e]?.state === 'on',
+      );
+      if (!lightEid) continue;
+      const glow = glowColorOf(this.hass.states[lightEid], colors.glow_light.c);
+      if (!glow) continue;
+      // per-source radius (owner's decision v1.36.2): marker override, else global
+      const ownCm = Number(d.marker?.glow_radius_cm);
+      const R = Number.isFinite(ownCm) && ownCm > 0 ? (ownCm / this._cellCm) * this._gridPitch : defaultR;
+      const pos = this._pos(d);
+      // innermost room under the source (islands win — reverse order)
+      const home = [...polys].reverse().find((x) => this._pointInRoom([pos.x, pos.y], x.r));
+      let clip: string[] | null = null;
+      if (home) {
+        // open (virtual) boundaries: light flows through the whole connected
+        // zone of rooms, not just the source's own room (owner's spec)
+        const zoneIds = home.r.id ? openZoneOf(home.r.id, space.rooms) : new Set([home.r.id]);
+        const zone = polys.filter((x) => x.r.id && zoneIds.has(x.r.id));
+        const zoneList = zone.length ? zone : [home];
+        const shapes: string[] = zoneList.map(
+          (z) => 'M ' + z.poly.map((p) => p[0] + ' ' + p[1]).join(' L ') + ' Z',
+        );
+        // doorways on the ZONE's walls spill light into rooms outside the zone
+        const others = polys.filter((x) => !zoneList.includes(x)).map((x) => x.poly);
+        for (const o of doors) {
+          const onZoneWall = zoneList.some((z) => {
+            const near = closestPointOnBoundary([o.rx, o.ry], z.poly);
+            return near && Math.hypot(near[0] - o.rx, near[1] - o.ry) <= g * 0.75;
+          });
+          if (!onZoneWall) continue;
+          const rad = (o.angle * Math.PI) / 180;
+          const dx = (Math.cos(rad) * o.rlen) / 2;
+          const dy = (Math.sin(rad) * o.rlen) / 2;
+          if (!hasRoomBehind([o.rx, o.ry], o.angle, [pos.x, pos.y], others, g * 0.6)) continue;
+          const sector = doorSector([pos.x, pos.y], [o.rx - dx, o.ry - dy], [o.rx + dx, o.ry + dy], R);
+          if (sector) shapes.push('M ' + sector.map((p) => p[0] + ' ' + p[1]).join(' L ') + ' Z');
+        }
+        // IMPORTANT: separate <path> children — clipPath children always
+        // UNION. Joining the room and a sector into ONE path made the default
+        // nonzero fill-rule cancel their overlap when the windings opposed,
+        // punching a dark wedge INSIDE the room (field report + screenshot).
+        clip = shapes;
+      }
+      spots.push({ pos, c: glow.c, alpha: colors.glow_light.a * glow.bri, clip, r: R });
+    }
+    if (!spots.length) return svg`` as unknown as TemplateResult;
+    return svg`<defs>
+        ${spots.map((sp, i) => svg`
+          <radialGradient id="hp-glow-${i}">
+            <stop offset="0%" stop-color="${sp.c}" stop-opacity="${sp.alpha.toFixed(3)}"></stop>
+            <stop offset="70%" stop-color="${sp.c}" stop-opacity="${sp.alpha.toFixed(3)}"></stop>
+            <stop offset="100%" stop-color="${sp.c}" stop-opacity="0"></stop>
+          </radialGradient>
+          ${sp.clip ? svg`<clipPath id="hp-glowclip-${i}">${sp.clip.map((d) => svg`<path d="${d}"></path>`)}</clipPath>` : nothing}`)}
+      </defs>
+      <g class="glowlayer">
+        ${spots.map((sp, i) => svg`<circle cx="${sp.pos.x}" cy="${sp.pos.y}" r="${sp.r}"
+          fill="url(#hp-glow-${i})" ${''}
+          clip-path=${sp.clip ? `url(#hp-glowclip-${i})` : nothing}></circle>`)}
+      </g>` as unknown as TemplateResult;
+  }
+
   private _renderSettingsDialog(): TemplateResult {
     return html`<div class="menuwrap dialogwrap" @click=${(e: Event) => e.stopPropagation()}>
       <div class="dialog wide" @click=${(e: Event) => e.stopPropagation()}>
@@ -2637,10 +2909,24 @@ class HouseplanCard extends LitElement {
           <label class="dispsection">${this._t('gs.lqi_group')}</label>
           ${this._renderColorRow('lqi_low', 'gs.lqi_low')}
           ${this._renderColorRow('lqi_high', 'gs.lqi_high')}
+          <label class="dispsection">${this._t('gs.glow_group')}</label>
+          ${this._renderColorRow('glow_base', 'gs.glow_base')}
+          ${this._renderColorRow('glow_light', 'gs.glow_light')}
+          <div class="colorrow gsrow">
+            <span class="gsl">${this._t('gs.glow_radius')}</span>
+            <input type="number" class="tempin" min="0.5" step="0.5"
+              .value=${String(this._settingsDialog!.glowRadius)}
+              @input=${(e: Event) => {
+                const v = parseFloat((e.target as HTMLInputElement).value);
+                if (Number.isFinite(v) && v > 0)
+                  this._settingsDialog = { ...this._settingsDialog!, glowRadius: v };
+              }} />
+            <span class="opl">${this._imperial ? this._t('gs.unit_ft') : this._t('gs.unit_m')}</span>
+          </div>
         </div>
         <div class="row">
           <button class="btn ghost" @click=${() =>
-            (this._settingsDialog = { ...this._settingsDialog!, colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)) })}>
+            (this._settingsDialog = { ...this._settingsDialog!, colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: this._imperial ? 9.8 : 3 })}>
             ${this._t('gs.reset')}
           </button>
           <span class="spacer"></span>
@@ -2806,7 +3092,9 @@ class HouseplanCard extends LitElement {
                 @click=${() => {
                   this._space = s.id;
                   this._selId = null;
+                  this._navApplied = true;
                   this._restoreZoom();
+                  this._saveNav();
                 }}
               >
                 ${s.title}${this._norm && this._canEdit
@@ -2858,7 +3146,7 @@ class HouseplanCard extends LitElement {
         ${this._markup ? this._renderMarkupBar() : this._mode === 'devices' ? this._renderDevicesBar() : this._mode === 'decor' ? this._renderDecorBar() : nothing}
         </div>
 
-        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}"
+        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'openwall' && this._openWallHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}"
           style="height:calc(100dvh - 118px)"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
@@ -2886,7 +3174,10 @@ class HouseplanCard extends LitElement {
                 const st: string[] = [];
                 // keep the stroke colour even when borders are hidden, so hover can reveal it
                 st.push(`--room-stroke:${disp.color}`, `--room-stroke-op:${disp.showBorders ? disp.opacity : 0}`);
-                const fillC = r.area
+                const fillC = disp.fill === 'glow'
+                  // glow: uniform darkness over EVERY room (area or not, lit or not)
+                  ? this._fillColors.glow_base
+                  : r.area
                   ? roomFillStyle(
                       disp.fill,
                       disp.fill === 'lqi' ? this._roomLqi(r.area) : null,
@@ -2909,6 +3200,14 @@ class HouseplanCard extends LitElement {
                   r.area ? areaTemp(this.hass, this._devices, r.area) : null);
               const label = !space.bg && !disp.showNames && !this._markup;
               const c = this._roomCenter(r);
+              // open boundaries: this room's solid stroke must not run beneath
+              // the dashed stretches — suppress it and draw a trimmed outline
+              const openCuts = !this._markup && r.id
+                ? this._openPairs()
+                    .filter((pp) => pp.a.id === r.id || pp.b.id === r.id)
+                    .flatMap((pp) => pp.segs)
+                : [];
+              if (openCuts.length) cls += ' noedge';
               // island rooms punch holes in their parent's fill (evenodd)
               const myPoly = roomPoly(r);
               const holes = myPoly
@@ -2929,8 +3228,17 @@ class HouseplanCard extends LitElement {
                     x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="${Math.min(r.w!, r.h!) * 0.03}"
                     @click=${() => this._clickRoom(r)} @mousemove=${tip}
                     @mouseleave=${() => (this._tip = null)}></rect>`;
-              return svg`${shape}${label ? svg`<text class="rlabel" x="${c[0]}" y="${c[1]}">${r.name}</text>` : nothing}`;
+              const trimmed = openCuts.length && myPoly
+                ? outlineWithout(myPoly, openCuts, this._gridPitch * 0.02)
+                : null;
+              const outline = trimmed
+                ? svg`<path class="room-outline" d="${trimmed.map((sg) => `M ${sg[0]} ${sg[1]} L ${sg[2]} ${sg[3]}`).join(' ')}"
+                    style="stroke:${disp.color};stroke-opacity:${disp.showBorders && !this._markup ? disp.opacity : 0}"></path>`
+                : nothing;
+              return svg`${shape}${outline}${label ? svg`<text class="rlabel" x="${c[0]}" y="${c[1]}">${r.name}</text>` : nothing}`;
             })}
+            ${disp.fill === 'glow' && !this._markup ? this._renderGlowLayer(space) : nothing}
+            ${this._renderOpenWalls(disp)}
             ${this._markup ? this._renderMarkupLayer(vb) : nothing}
             ${this._renderOpenings(disp)}
           </svg>
@@ -3003,8 +3311,14 @@ class HouseplanCard extends LitElement {
     const icon = this._config?.live_states
       ? stateIcon(d.icon, domain, primarySt?.attributes?.device_class, primarySt?.state, !!m?.icon)
       : d.icon;
-    // RGB lights color the icon (and the ripple, unless a custom ripple color is set)
-    const lightC = this._config?.live_states && domain === 'light' ? lightColorOf(primarySt) : null;
+    // RGB lights color the icon (and the ripple, unless a custom ripple color is set);
+    // an icon with controlled targets takes the color of its first lit RGB target
+    const ctrl = (m?.controls || []).filter(isControllable);
+    const lightC = this._config?.live_states
+      ? ctrl.length
+        ? ctrl.map((e) => lightColorOf(this.hass.states[e])).find((v) => v) || null
+        : domain === 'light' ? lightColorOf(primarySt) : null
+      : null;
     // emergencies (leak/smoke/gas/CO/siren) pulse red regardless of display mode
     const alarm = this._config?.live_states
       && isAlarmState(domain, primarySt?.attributes?.device_class, primarySt?.state);
@@ -3024,6 +3338,7 @@ class HouseplanCard extends LitElement {
       class="dev ${cls} ${this._selId === d.id ? 'sel' : ''} ${d.virtual ? 'virtual' : ''} ${disp === 'ripple' ? 'noicon' : ''} ${valText != null ? 'valonly' : ''} ${lightC ? 'rgb' : ''} ${alarm ? 'alarm' : ''}"
       style="${st.join(';')}"
       @click=${(e: MouseEvent) => this._clickDevice(e, d)}
+      @contextmenu=${(e: MouseEvent) => this._ctxDevice(e, d)}
       @mousemove=${(e: MouseEvent) =>
         this._showTip(e, d.name,
           d.model + (temp != null ? ' · ' + temp + '°' : '') + (hum != null ? ' · ' + hum + '%' : '') + (lqi != null ? ' · LQI ' + lqi : ''))}
@@ -3520,6 +3835,11 @@ class HouseplanCard extends LitElement {
         title=${this._t('title.markup_opening')}>
         <ha-icon icon="mdi:door"></ha-icon>${this._t('markup.opening')}
       </button>
+      <button class="btn ${this._tool === 'openwall' ? 'on' : ''}"
+        @click=${() => { this._cancelPath(); this._tool = 'openwall'; }}
+        title=${this._t('title.markup_openwall')}>
+        <ha-icon icon="mdi:border-none-variant"></ha-icon>${this._t('markup.openwall')}
+      </button>
       <button class="btn ${this._tool === 'delroom' ? 'on' : ''}" @click=${() => (this._tool = 'delroom')}
         title=${this._t('title.markup_delroom')}>
         <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('markup.delete')}
@@ -3563,6 +3883,7 @@ class HouseplanCard extends LitElement {
     const d = this._infoCard!;
     const st = d.primary ? this.hass.states[d.primary] : undefined;
     const stateTxt = st ? this.hass.formatEntityState?.(st) ?? st.state : null;
+    const controls = (d.marker?.controls || []).filter(isControllable);
     return html`<div class="menuwrap dialogwrap" @click=${() => (this._infoCard = null)}>
       <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
         <div class="hd"><ha-icon icon="${d.icon}"></ha-icon>${d.name}</div>
@@ -3581,7 +3902,19 @@ class HouseplanCard extends LitElement {
                     <ha-icon icon="mdi:file-pdf-box"></ha-icon>${p.name}</a>`,
                 )}</span></div>`
             : nothing}
-          ${!d.model && !stateTxt && !d.link && !d.description && !(d.pdfs && d.pdfs.length)
+          ${controls.length
+            ? html`<div class="inforow"><span class="k">${this._t('info.controls')}</span>
+                <span class="ctrlstates">
+                  ${controls.map((eid) => {
+                    const cs = this.hass.states[eid];
+                    const on = cs?.state === 'on';
+                    return html`<span class="ctrlstate ${on ? 'on' : ''}">
+                      <ha-icon icon=${on ? 'mdi:lightbulb-on' : 'mdi:lightbulb-outline'}></ha-icon>
+                      ${cs?.attributes?.friendly_name || eid}</span>`;
+                  })}
+                </span></div>`
+            : nothing}
+          ${!d.model && !stateTxt && !d.link && !d.description && !(d.pdfs && d.pdfs.length) && !controls.length
             ? html`<div class="infodesc muted">${this._t('info.none')}</div>`
             : nothing}
         </div>
@@ -3603,7 +3936,7 @@ class HouseplanCard extends LitElement {
 
   private _renderMarkerDialog(): TemplateResult {
     const d = this._markerDialog!;
-    const isVirtual = d.binding === 'virtual';
+    const isVirtual = d.bindingMode === 'virtual';
     const cands = this._bindingCandidates();
     const curLabel = (() => {
       if (isVirtual) return null;
@@ -3624,27 +3957,54 @@ class HouseplanCard extends LitElement {
             @input=${(e: Event) => (this._markerDialog = { ...d, name: (e.target as HTMLInputElement).value })} />
 
           <label>${this._t('marker.binding_label')}</label>
-          <div class="bindsel ${isVirtual ? 'virt' : ''}">
-            <button class="opt ${isVirtual ? 'on' : ''}"
-              @click=${() => (this._markerDialog = { ...d, binding: 'virtual' })}>
-              <ha-icon icon="mdi:map-marker-outline"></ha-icon>${this._t('marker.virtual_option')}
-            </button>
-            ${!isVirtual
-              ? html`<div class="curbind"><ha-icon icon="mdi:link-variant"></ha-icon>
-                  <b>${curLabel}</b><span class="ref">${d.binding}</span></div>`
-              : nothing}
-            <input class="namein" type="text" placeholder=${this._t('marker.search_ph')}
-              .value=${d.bindingFilter}
-              @input=${(e: Event) => (this._markerDialog = { ...d, bindingFilter: (e.target as HTMLInputElement).value })} />
-            <div class="candlist">
-              ${cands.map(
-                (c) => html`<div class="cand ${c.value === d.binding ? 'sel' : ''}"
-                  @click=${() => (this._markerDialog = { ...d, binding: c.value })}>
-                  <span class="cl">${c.label}</span><span class="cs">${c.sub}</span>
-                </div>`,
-              )}
-              ${!cands.length ? html`<div class="cand muted">${this._t('marker.nothing_found')}</div>` : nothing}
+          <div class="bindsel">
+            <label class="srcrow">
+              <input type="radio" name="bmode" .checked=${d.bindingMode === 'virtual'}
+                @change=${() => (this._markerDialog = { ...d, bindingMode: 'virtual', binding: 'virtual', bindingOpen: false })} />
+              <span>${this._t('marker.virtual_option')}</span>
+            </label>
+            <div class="bindharow">
+              <label class="srcrow">
+                <input type="radio" name="bmode" .checked=${d.bindingMode === 'ha'}
+                  @change=${() => (this._markerDialog = {
+                    ...d, bindingMode: 'ha',
+                    binding: d.binding === 'virtual' ? '' : d.binding,
+                    bindingOpen: d.binding === 'virtual' || !d.binding,
+                  })} />
+                <span>${this._t('marker.from_ha_option')}</span>
+              </label>
+              <label class="srcrow inline entcheck" title=${this._t('marker.show_entities_tip')}>
+                <input type="checkbox" .checked=${d.showEntities}
+                  ?disabled=${d.bindingMode !== 'ha'}
+                  @change=${(e: Event) => (this._markerDialog = { ...d, showEntities: (e.target as HTMLInputElement).checked })} />
+                <span>${this._t('marker.show_entities')}</span>
+              </label>
             </div>
+            ${d.bindingMode === 'ha'
+              ? html`<button class="dropbtn ${d.bindingOpen ? 'open' : ''}"
+                    @click=${() => (this._markerDialog = { ...d, bindingOpen: !d.bindingOpen })}>
+                    ${curLabel
+                      ? html`<b>${curLabel}</b><span class="ref">${d.binding}</span>`
+                      : html`<span class="muted">${this._t('marker.pick_ph')}</span>`}
+                    <ha-icon icon=${d.bindingOpen ? 'mdi:chevron-up' : 'mdi:chevron-down'}></ha-icon>
+                  </button>
+                  ${d.bindingOpen
+                    ? html`<div class="droppanel">
+                        <input class="namein" type="text" placeholder=${this._t('marker.search_ph')}
+                          .value=${d.bindingFilter}
+                          @input=${(e: Event) => (this._markerDialog = { ...d, bindingFilter: (e.target as HTMLInputElement).value })} />
+                        <div class="candlist">
+                          ${cands.map(
+                            (c) => html`<div class="cand ${c.value === d.binding ? 'sel' : ''}"
+                              @click=${() => (this._markerDialog = { ...d, binding: c.value, bindingOpen: false })}>
+                              <span class="cl">${c.label}</span><span class="cs">${c.sub}</span>
+                            </div>`,
+                          )}
+                          ${!cands.length ? html`<div class="cand muted">${this._t('marker.nothing_found')}</div>` : nothing}
+                        </div>
+                      </div>`
+                    : nothing}`
+              : nothing}
           </div>
 
           <label>${this._t('marker.room_label')}${isVirtual ? '' : this._t('marker.room_override')}</label>
@@ -3659,10 +4019,53 @@ class HouseplanCard extends LitElement {
           <label>${this._t('marker.tap_label')}</label>
           <select class="areasel"
             @change=${(e: Event) => (this._markerDialog = { ...d, tapAction: (e.target as HTMLSelectElement).value })}>
-            ${[['', 'tap.auto'], ['info', 'tap.info'], ['more-info', 'tap.more_info'], ['toggle', 'tap.toggle']].map(
-              ([v, k]) => html`<option value=${v} ?selected=${(d.tapAction || '') === v}>${this._t(k as any)}</option>`,
+            ${[['info', 'tap.info'], ['more-info', 'tap.more_info'], ['toggle', 'tap.toggle']].map(
+              ([v, k]) => html`<option value=${v} ?selected=${(d.tapAction || 'info') === v}>${this._t(k as any)}</option>`,
             )}
           </select>
+
+          <label>${this._t('marker.controls_label')}</label>
+          <div class="rhint">${this._t('marker.controls_hint')}</div>
+          ${d.controls.length
+            ? html`<div class="ctrlchips">
+                ${d.controls.map((eid) => html`<span class="ctrlchip">
+                  ${this.hass.states[eid]?.attributes?.friendly_name || eid}
+                  <ha-icon icon="mdi:close" @click=${() =>
+                    (this._markerDialog = { ...d, controls: d.controls.filter((x) => x !== eid) })}></ha-icon>
+                </span>`)}
+              </div>`
+            : nothing}
+          <input class="namein" type="text" placeholder=${this._t('marker.controls_filter')}
+            .value=${d.controlsFilter}
+            @input=${(e: Event) => (this._markerDialog = { ...d, controlsFilter: (e.target as HTMLInputElement).value })} />
+          ${d.controlsFilter.trim()
+            ? html`<div class="ctrllist">
+                ${Object.keys(this.hass.states)
+                  .filter((eid) => isControllable(eid) && !d.controls.includes(eid))
+                  .filter((eid) => {
+                    const q = d.controlsFilter.trim().toLowerCase();
+                    const name = String(this.hass.states[eid]?.attributes?.friendly_name || '');
+                    return eid.toLowerCase().includes(q) || name.toLowerCase().includes(q);
+                  })
+                  .slice(0, 8)
+                  .map((eid) => html`<button class="ctrlopt"
+                    @click=${() => (this._markerDialog = { ...d, controls: [...d.controls, eid], controlsFilter: '' })}>
+                    <ha-icon icon=${eid.startsWith('light.') ? 'mdi:lightbulb' : 'mdi:toggle-switch'}></ha-icon>
+                    ${this.hass.states[eid]?.attributes?.friendly_name || eid}
+                    <span class="sub">${eid}</span>
+                  </button>`)}
+              </div>`
+            : nothing}
+
+          <label>${this._t('marker.glow_radius_label')}</label>
+          <div class="colorrow">
+            <input class="tempin" type="number" min="0.5" step="0.5"
+              placeholder=${this._glowRadiusPlaceholder}
+              .value=${d.glowRadius}
+              @input=${(e: Event) => (this._markerDialog = { ...d, glowRadius: (e.target as HTMLInputElement).value })} />
+            <span class="opl">${this._imperial ? this._t('gs.unit_ft') : this._t('gs.unit_m')}</span>
+            <span class="opl muted">${this._t('marker.glow_radius_hint')}</span>
+          </div>
 
           <label>${this._t('marker.icon_label')}</label>
           ${customElements.get('ha-icon-picker')
@@ -3745,7 +4148,9 @@ class HouseplanCard extends LitElement {
             : nothing}
           <span class="spacer"></span>
           <button class="btn ghost" @click=${() => (this._markerDialog = null)}>${this._t('btn.cancel')}</button>
-          <button class="btn on" @click=${this._saveMarker} ?disabled=${d.busy}>
+          <button class="btn on" @click=${this._saveMarker}
+            ?disabled=${d.busy || (d.bindingMode === 'ha' && (!d.binding || d.binding === 'virtual'))}
+            title=${d.bindingMode === 'ha' && (!d.binding || d.binding === 'virtual') ? this._t('marker.pick_ph') : ''}>
             <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this._t('btn.save')}
           </button>
         </div>
@@ -3850,7 +4255,7 @@ class HouseplanCard extends LitElement {
             <span class="opv">${Math.round(d.roomOpacity * 100)}%</span>
           </div>
           <label>${this._t('space.fill_label')}</label>
-          ${[['none', 'fill.none'], ['lqi', 'fill.lqi'], ['light', 'fill.light'], ['temp', 'fill.temp']].map(
+          ${[['none', 'fill.none'], ['lqi', 'fill.lqi'], ['light', 'fill.light'], ['temp', 'fill.temp'], ['glow', 'fill.glow']].map(
             ([v, k]) => html`<label class="srcrow">
               <input type="radio" name="fillmode" .checked=${d.fillMode === v}
                 @change=${() => (this._spaceDialog = { ...d, fillMode: v as any })} />

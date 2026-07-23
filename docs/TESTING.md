@@ -140,6 +140,59 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Nav persistence (v1.38.2): closing/reopening the tab restores the last
+      space AND editor mode (admins; localStorage); a #space= deep link beats
+      the saved space; a stale cache without the saved space retries after the
+      live config loads [auto]
+- [ ] Tap action cleanup + right click (v1.38.1): the per-device action list
+      has three options (Device card / HA more-info / Toggle), no "card
+      default" — the card editor's global tap option is gone and ignored;
+      right click on an icon in VIEW opens HA more-info (native menu kept in
+      editors; virtual w/o entity → device card) [auto]
+- [ ] Binding section redesign (v1.38.0): two radios — Virtual / Pick from
+      the HA list — with a "Show entities" checkbox (tooltip) next to the
+      second; the dropdown (search inside) appears only in HA mode, opens
+      itself when nothing is chosen, closes on pick; Save is blocked until a
+      binding is chosen in HA mode; groups/helpers listed always, device
+      entities only with the checkbox; editing pre-selects everything [auto]
+- [ ] True dashed boundary (v1.37.3): the open stretch is a REAL dash — the
+      rooms' solid strokes are trimmed out beneath it (hover doesn't bring
+      them back), walls elsewhere stay solid; the dashes render ABOVE the
+      glow pools [auto]
+- [ ] Open-wall hover (v1.37.1): with the tool active the cursor is default;
+      near a shared wall it turns pointer and the exact stretch that would
+      open is previewed (amber dashed); an already-open boundary previews red
+      solid (the click will close it); preview follows the cursor and clears
+      on miss [auto]
+- [ ] Open boundaries (v1.37.0): the Plan editor's "Open boundary" tool
+      toggles a virtual wall between two rooms by clicking their shared wall
+      (pull like Split; miss → toast); open stretches render dashed (amber
+      highlight while the tool is active); glow light floods the whole
+      connected open zone transitively, door sectors work from the zone's
+      outer walls; merge/split keep links by room id [auto]
+- [ ] Sector wedge fix (v1.36.3): door sectors never darken the light INSIDE
+      the room — room outline and sectors are separate clipPath children
+      (union), not subpaths of one nonzero path [auto]
+- [ ] Per-source glow radius (v1.36.2): the device dialog has a "Glow radius"
+      field (HA units; empty = general-settings default shown as placeholder);
+      an override changes that source's pool and door sectors only [auto]
+- [ ] Hidden-light primary (v1.36.1): a lamp whose light entity is HIDDEN in
+      the registry (folded into a light group) still toggles/reflects the lamp,
+      not its do-not-disturb switch or identify button; visible entities of the
+      same domain still win over hidden ones [manual: click hallway lamps]
+- [ ] Marker controls (v1.36.0): a marker with "Controls light sources" and
+      tap action Toggle flips all bound lights/switches at once (any on → all
+      off, all off → all on, one service call); the icon and its RGB tint
+      mirror the targets, not the marker's own entity; without explicit Toggle
+      the click opens info as usual; the info card lists targets with states;
+      locks/other domains are filtered out of controls [auto]
+- [ ] Glow fill (v1.35.0): fill mode "Light sources" — every room painted with
+      one uniform darkness color; lit lamps glow with a radial gradient
+      (rgb_color → color temp → default color; brightness scales opacity),
+      clipped by the source's room plus door sectors into NEIGHBOUR rooms
+      (entrance doors leak nothing; windows don't spill); radius set in
+      general settings in HA units (m/ft, stored in cm); no shadow casting —
+      islands don't block light (documented limitation) [auto]
 - [ ] Island rooms (v1.34.0): a contour drawn fully inside an existing room
       (or around one) saves as a nested room — column in a ring, inner room;
       the parent's fill renders with an evenodd hole so the ring paints

@@ -4,6 +4,10 @@ import {
   lqiColor, snapToGrid, segKey, samePoint, pointInPolygon, markerIdForBinding, averageLqi,
   fitView, declump, safeUrl, resolveTapAction, floorsOf, subst, spaceDisplayOf, roomFillColor,
   splitRoomPath, polyContainsPoly, islandsOf,
+  kelvinToRgb, glowColorOf, doorSector, hasRoomBehind,
+  controlsAction, isControllable,
+  sharedBoundary, openZoneOf, distToSegment,
+  outlineWithout,
   segmentCm, formatLength, roomEdges, roomPoly, pointOnBoundary, pointStrictlyInside, roomsOverlap,
   mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices,
 } from '../test-build/logic.js';
@@ -597,4 +601,123 @@ test('splitRoomPath rejects bad paths', () => {
   assert.equal(splitRoomPath(sq, [[2, 0], [8, 8], [8, 2], [2, 8], [0, 4]], 1e-6), null);
   // менее двух точек
   assert.equal(splitRoomPath(sq, [[4, 0]], 1e-6), null);
+});
+
+test('kelvinToRgb: warm is orange-ish, cool is blue-ish white', () => {
+  const warm = kelvinToRgb(2700);
+  assert.equal(warm[0], 255);
+  assert.ok(warm[2] < 200 && warm[1] < 230);
+  const cool = kelvinToRgb(6600);
+  assert.ok(cool[0] > 245 && cool[1] > 240 && cool[2] > 245);
+  // clamps
+  assert.ok(kelvinToRgb(100)[0] === 255);
+});
+
+test('glowColorOf: rgb wins, then color temp, then fallback; off = null', () => {
+  assert.equal(glowColorOf({ state: 'off', attributes: {} }, '#fff'), null);
+  assert.equal(glowColorOf(null, '#fff'), null);
+  const rgb = glowColorOf({ state: 'on', attributes: { rgb_color: [10, 20, 30], brightness: 128 } }, '#fff');
+  assert.equal(rgb.c, 'rgb(10, 20, 30)');
+  assert.ok(Math.abs(rgb.bri - 0.5) < 0.01);
+  const ct = glowColorOf({ state: 'on', attributes: { color_temp_kelvin: 2700 } }, '#fff');
+  assert.ok(ct.c.startsWith('rgb(255'));
+  const mireds = glowColorOf({ state: 'on', attributes: { color_temp: 370 } }, '#fff'); // ~2700K
+  assert.ok(mireds.c.startsWith('rgb(255'));
+  const fb = glowColorOf({ state: 'on', attributes: {} }, '#abcdef');
+  assert.equal(fb.c, '#abcdef');
+  assert.equal(fb.bri, 1);
+});
+
+test('doorSector: sector through a door, clamped and guarded', () => {
+  const s = [0, 0];
+  const sec = doorSector(s, [10, -2], [10, 2], 50);
+  assert.ok(sec && sec.length === 10 + 0); // вершина + 9 точек дуги
+  assert.deepEqual(sec[0], [0, 0]);
+  for (const p of sec.slice(1)) {
+    const d = Math.hypot(p[0], p[1]);
+    assert.ok(Math.abs(d - 50) < 1e-6);
+    assert.ok(p[0] > 0); // сектор смотрит в сторону двери
+  }
+  // дверь за радиусом
+  assert.equal(doorSector(s, [60, -2], [60, 2], 50), null);
+  // источник на краю двери
+  assert.equal(doorSector(s, [0, 0], [10, 2], 50), null);
+});
+
+test('hasRoomBehind: neighbour room yes, street no', () => {
+  const neighbour = [[10, -5], [20, -5], [20, 5], [10, 5]];
+  // дверь в стене x=10 (стена вертикальна: угол 90°), источник слева в (5,0)
+  assert.ok(hasRoomBehind([10, 0], 90, [5, 0], [neighbour], 1));
+  // за дверью пусто
+  assert.ok(!hasRoomBehind([10, 0], 90, [5, 0], [], 1));
+  assert.ok(!hasRoomBehind([10, 0], 90, [5, 0], [[[30, 30], [40, 30], [40, 40], [30, 40]]], 1));
+});
+
+test('controlsAction: HA-group semantics', () => {
+  assert.equal(controlsAction(['off', 'off']), 'turn_on');
+  assert.equal(controlsAction(['off', 'on']), 'turn_off');
+  assert.equal(controlsAction(['on', 'on']), 'turn_off');
+  assert.equal(controlsAction([undefined, 'off']), 'turn_on');
+  assert.equal(controlsAction([]), 'turn_on');
+});
+
+test('isControllable: lights and switches only', () => {
+  assert.ok(isControllable('light.kitchen'));
+  assert.ok(isControllable('switch.pump'));
+  assert.ok(!isControllable('lock.front'));
+  assert.ok(!isControllable('cover.gate'));
+  assert.ok(!isControllable('alarm_control_panel.home'));
+});
+
+test('sharedBoundary: exact, partial-collinear and none', () => {
+  const A = [[0, 0], [2, 0], [2, 2], [0, 2]];
+  // точное общее ребро x=2
+  const B = [[2, 0], [4, 0], [4, 2], [2, 2]];
+  const s1 = sharedBoundary(A, B);
+  assert.equal(s1.length >= 1, true);
+  const len = (s) => Math.hypot(s[2] - s[0], s[3] - s[1]);
+  assert.ok(Math.abs(Math.max(...s1.map(len)) - 2) < 1e-6);
+  // частичное коллинеарное наложение (дачный случай): стена соседа длиннее
+  const C = [[2, -1], [4, -1], [4, 3], [2, 3]];
+  const s2 = sharedBoundary(A, C);
+  assert.ok(Math.abs(Math.max(...s2.map(len)) - 2) < 1e-6); // перекрытие = наша стена
+  // нет наложения
+  assert.equal(sharedBoundary(A, [[5, 5], [6, 5], [6, 6], [5, 6]]).length, 0);
+  // перпендикулярное касание — не граница
+  assert.equal(sharedBoundary(A, [[2, 2], [3, 2], [3, 3], [2, 3]]).filter((s) => len(s) > 1e-6).length, 0);
+});
+
+test('openZoneOf: transitive, either-direction links', () => {
+  const rooms = [
+    { id: 'a', open_to: ['b'] },
+    { id: 'b' },                    // связь только со стороны a
+    { id: 'c', open_to: ['b'] },    // b↔c со стороны c
+    { id: 'd' },                    // не связан
+  ];
+  const z = openZoneOf('a', rooms);
+  assert.deepEqual([...z].sort(), ['a', 'b', 'c']);
+  assert.deepEqual([...openZoneOf('d', rooms)], ['d']);
+});
+
+test('distToSegment', () => {
+  assert.equal(distToSegment([0, 5], [0, 0, 0, 10]), 0);
+  assert.equal(distToSegment([3, 5], [0, 0, 0, 10]), 3);
+  assert.ok(Math.abs(distToSegment([-3, -4], [0, 0, 0, 10]) - 5) < 1e-9);
+});
+
+test('outlineWithout: removes the cut stretch, keeps the rest', () => {
+  const sq = [[0, 0], [10, 0], [10, 10], [0, 10]];
+  // вырез середины нижней стены: 3..7
+  const pieces = outlineWithout(sq, [[3, 0, 7, 0]]);
+  const len = (s) => Math.hypot(s[2] - s[0], s[3] - s[1]);
+  const total = pieces.reduce((a, s) => a + len(s), 0);
+  assert.ok(Math.abs(total - (40 - 4)) < 1e-6);
+  // куски нижней стены: 0..3 и 7..10
+  const bottom = pieces.filter((s) => s[1] === 0 && s[3] === 0);
+  assert.equal(bottom.length, 2);
+  // вырез целого ребра
+  const p2 = outlineWithout(sq, [[0, 0, 10, 0]]);
+  assert.ok(Math.abs(p2.reduce((a, s) => a + len(s), 0) - 30) < 1e-6);
+  // без вырезов — весь периметр
+  assert.ok(Math.abs(outlineWithout(sq, []).reduce((a, s) => a + len(s), 0) - 40) < 1e-6);
 });

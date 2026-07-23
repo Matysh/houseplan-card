@@ -68,6 +68,7 @@ ROOM_SCHEMA = vol.All(
             vol.Required("id"): str,
             vol.Required("name"): str,
             vol.Optional("area"): vol.Any(str, None),
+            vol.Optional("open_to"): [str],
             vol.Optional("x"): vol.Coerce(float),
             vol.Optional("y"): vol.Coerce(float),
             vol.Optional("w"): vol.Coerce(float),
@@ -84,7 +85,7 @@ SPACE_DISPLAY_SCHEMA = vol.Schema(
         vol.Optional("show_names"): bool,
         vol.Optional("room_color"): vol.Match(r"^#[0-9a-fA-F]{6}$"),
         vol.Optional("room_opacity"): vol.All(vol.Coerce(float), vol.Range(min=0, max=1)),
-        vol.Optional("fill_mode"): vol.In(["none", "lqi", "light", "temp"]),
+        vol.Optional("fill_mode"): vol.In(["none", "lqi", "light", "temp", "glow"]),
         vol.Optional("temp_min"): vol.Coerce(float),
         vol.Optional("temp_max"): vol.Coerce(float),
         vol.Optional("show_lqi"): bool,
@@ -168,6 +169,8 @@ MARKER_SCHEMA = vol.Schema(
         vol.Optional("link"): vol.Any(str, None),
         vol.Optional("description"): vol.Any(str, None),
         vol.Optional("tap_action"): vol.Any("info", "more-info", "toggle", None),
+        vol.Optional("controls"): vol.Any([str], None),
+        vol.Optional("glow_radius_cm"): vol.Any(vol.All(vol.Coerce(float), vol.Range(min=10, max=10000)), None),
         vol.Optional("room_id"): vol.Any(str, None),
         vol.Optional("display"): vol.Any("badge", "ripple", "icon_ripple", None),
         vol.Optional("ripple_color"): vol.Any(str, None),
@@ -186,6 +189,7 @@ CONFIG_SCHEMA = vol.Schema(
         vol.Optional("markers", default=list): [MARKER_SCHEMA],
         vol.Optional("settings", default=dict): vol.Schema(
             {
+                vol.Optional("glow_radius_cm"): vol.All(vol.Coerce(float), vol.Range(min=10, max=10000)),
                 vol.Optional("known_devices"): [str],
                 vol.Optional("new_device_ids"): [str],
                 vol.Optional("fill_colors"): vol.Schema(

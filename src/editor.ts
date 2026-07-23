@@ -63,19 +63,6 @@ class HouseplanCardEditor extends LitElement {
           },
         },
       },
-      {
-        name: 'tap_action',
-        selector: {
-          select: {
-            mode: 'dropdown',
-            options: [
-              { value: 'info', label: t(L, 'tap.info') },
-              { value: 'more-info', label: t(L, 'tap.more_info') },
-              { value: 'toggle', label: t(L, 'tap.toggle') },
-            ],
-          },
-        },
-      },
       { name: 'icon_size', selector: { number: { min: 1, max: 6, step: 0.1, mode: 'box' } } },
       { name: 'show_temperature', selector: { boolean: {} } },
       { name: 'live_states', selector: { boolean: {} } },
@@ -91,7 +78,6 @@ class HouseplanCardEditor extends LitElement {
       title: t(L, 'editor.title'),
       default_floor: t(L, 'editor.default_floor'),
       language: t(L, 'editor.language'),
-      tap_action: t(L, 'editor.tap_action'),
       icon_size: t(L, 'editor.icon_size'),
       show_temperature: t(L, 'editor.show_temperature'),
       live_states: t(L, 'editor.live_states'),

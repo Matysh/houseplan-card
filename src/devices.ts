@@ -53,20 +53,33 @@ export function isTempEntity(hass: any, eid: string): boolean {
 }
 
 export function primaryEntity(hass: any, entIds: string[], icon: string): string | undefined {
-  const ents = entIds
+  const all = entIds
     .map((eid) => ({ eid, reg: hass.entities[eid], st: hass.states[eid] }))
-    .filter((e) => e.reg && !e.reg.hidden);
-  const usable = ents.filter((e) => !e.reg.entity_category);
-  const pool = usable.length ? usable : ents;
+    .filter((e) => e.reg);
+  // Tiers: visible primary entities first, but a HIDDEN light still beats a
+  // visible config switch. Real case: individual lamps folded into a light
+  // group get hidden in the registry — the device's main function is still
+  // the lamp, and tap-toggle must flip IT, not the do-not-disturb switch.
+  const tiers = [
+    all.filter((e) => !e.reg.hidden && !e.reg.entity_category),
+    all.filter((e) => !e.reg.hidden),
+    all.filter((e) => !e.reg.entity_category),
+    all,
+  ];
   if (icon === 'mdi:thermometer' || icon === 'mdi:air-filter') {
-    const t = pool.find((e) => isTempEntity(hass, e.eid));
-    if (t) return t.eid;
+    for (const tier of tiers) {
+      const t = tier.find((e) => isTempEntity(hass, e.eid));
+      if (t) return t.eid;
+    }
   }
   for (const dom of DOMAIN_PRIORITY) {
-    const found = pool.find((e) => e.eid.split('.')[0] === dom);
-    if (found) return found.eid;
+    for (const tier of tiers) {
+      const found = tier.find((e) => e.eid.split('.')[0] === dom);
+      if (found) return found.eid;
+    }
   }
-  return pool[0]?.eid;
+  for (const tier of tiers) if (tier.length) return tier[0].eid;
+  return undefined;
 }
 
 /** Average zigbee LQI across the device's entities (*_linkquality/*_lqi sensors or an attribute). */

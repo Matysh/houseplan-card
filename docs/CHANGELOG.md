@@ -1,5 +1,110 @@
 # Changelog
 
+## v1.38.2 — 2026-07-23
+- The card now **remembers where you were**: the selected space and the active
+  editor survive navigation and closing the tab (localStorage; edit modes are
+  restored for admins only). A `#space=` deep link still wins over the saved
+  space. This reverses the earlier "always start in View" rule — the owner's
+  call.
+
+## v1.38.1 — 2026-07-23 (tap action cleanup, right-click more-info)
+- The per-device action is now one of three: **Device card** (renamed from
+  "Info card", the default), HA more-info, Toggle. The confusing "As the card
+  default" option is gone — along with the card editor's global tap setting
+  (it is ignored if present in old configs). Explicit per-device choices are
+  untouched. RU wording: «по нажатию» instead of «по тапу».
+- **Right click** on a device icon in View mode always opens HA's more-info
+  dialog (editors keep the native browser menu; a virtual marker without an
+  entity opens its device card).
+
+## v1.38.0 — 2026-07-23 (binding section redesign)
+- The device dialog's binding section is compact now: two radio buttons —
+  **Virtual device** and **Pick from the HA list** — with a **Show entities**
+  checkbox (adds every entity of the devices to the list; groups and helpers
+  are always listed). The searchable dropdown appears only in HA mode and
+  collapses once you pick. Save is disabled until a binding is chosen.
+  The binding logic itself is unchanged.
+
+## v1.37.3 — 2026-07-23
+- Open boundaries now render as a **true dash**: the rooms' solid outlines are
+  trimmed under the open stretch (outlineWithout) instead of dashes being
+  painted over a solid line, and the dashed layer moved **above the glow
+  pools** so light never covers it.
+
+## v1.37.2 — 2026-07-23
+- Glow falloff tuned: full brightness for the inner 70% of the radius,
+  gradient on the outer 30% (was 80/20).
+
+## v1.37.1 — 2026-07-23
+- Open-boundary tool polish: the cursor stays default and only turns into a
+  pointer near a wall shared by two rooms; hovering previews the exact
+  stretch that would become open (amber dashed) — or red solid when the
+  boundary is already open and the click would close it.
+
+## v1.37.0 — 2026-07-23 (open boundaries — virtual walls)
+- Rooms divided only by zoning can now share an **open boundary**: the new
+  "Open boundary" tool in the Plan editor toggles it with a click on the wall
+  two rooms share. The stretch renders dashed; while the tool is active open
+  boundaries highlight amber. Stored as `room.open_to` links by room id, so
+  redrawing/merging neighbours doesn't break them.
+- In the light-sources fill, light flows through open boundaries freely —
+  transitively across the whole connected zone (kitchen ↔ living ↔ hall as
+  one open space), still limited by the glow radius. Door sectors now work
+  from any outer wall of the zone.
+
+## v1.36.4 — 2026-07-23
+- Glow: sharper light edge — the pool is fully lit for the inner 80% of the
+  radius, the gradient falloff lives only in the outer 20%.
+
+## v1.36.3 — 2026-07-23
+- Glow: fixed dark wedges appearing INSIDE a lit room near some doorways.
+  The room outline and the door sectors were subpaths of a single clip path;
+  with opposite winding directions the nonzero fill rule cancelled their
+  overlap. Each contour is now its own clipPath child (children always
+  union), so sectors only ever ADD light.
+
+## v1.36.2 — 2026-07-23
+- **Glow radius is now per source**: every device dialog gained a "Glow
+  radius" field (in your HA units; empty = the global default from general
+  settings, shown as the placeholder). A kettle's night light can glow half
+  a meter while the ceiling lamp floods the room. Door sectors use the same
+  per-source radius.
+
+## v1.36.1 — 2026-07-23
+- Fixed tap-toggle "doing nothing" on lamps whose individual `light.*` entity
+  is **hidden in the registry** (the usual setup when lamps are folded into a
+  light group): the primary entity fell through to a visible config switch
+  (do-not-disturb) or an identify button, and the click toggled THAT.
+  Primary selection now works in tiers — domain priority beats hiddenness,
+  so a hidden light still wins over a visible config switch, while visible
+  entities of the same domain keep winning over hidden ones.
+
+## v1.36.0 — 2026-07-23 (wall switches that really switch)
+- Markers gained **"Controls light sources"**: bind any set of `light.*` /
+  `switch.*` entities to an icon. With tap action **Toggle**, a click flips
+  them all with HA-group semantics — any on → all off, all off → all on — in
+  one service call. Covers stateless remotes, one-switch-many-lights and
+  dumb wall switches (place a virtual marker; no HA entity needed).
+- The icon mirrors its targets: on when any target is on, tinted by the first
+  lit RGB light. The info card lists every target with its state. Controls
+  fire only on the explicit per-marker Toggle (owner's decision); locks and
+  other domains can never be group-controlled.
+
+## v1.35.0 — 2026-07-23 (glow fill: dark house, glowing lamps)
+- New fill mode **"Light sources"**: the whole house is painted with a single
+  configurable darkness color, and every lit lamp casts a radial pool of light
+  around itself. The pool color comes from the lamp's `rgb_color`, else its
+  color temperature (blackbody conversion), else a configurable default;
+  brightness scales the intensity.
+- Pools are clipped by the source's room — **plus the sector through each
+  doorway** (rays from the source to the door edges, out to the glow radius),
+  so light spills into neighbouring rooms through doors. Entrance doors (no
+  room behind) spill nothing; windows don't spill. No shadow casting: islands
+  and furniture do not block light (deliberate limitation).
+- The glow radius is configured in General settings in your HA unit system
+  (meters or feet; stored in cm, default 3 m). The palette gained a "glow"
+  group: house darkness + default light color/intensity.
+
 ## v1.34.0 — 2026-07-22 (island rooms)
 - **Nested rooms are now legal**: draw a contour fully inside an existing room
   (or around one) — a column in a ring-shaped room, an inner room, a wardrobe
