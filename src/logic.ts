@@ -965,6 +965,55 @@ export function outlineWithout(poly: number[][], cuts: number[][], eps = 1e-6): 
   return cutSegments(edges, cuts, eps);
 }
 
+// ---------------- alignment guides ----------------
+
+export interface AlignGuide {
+  axis: 'x' | 'y';
+  /** The candidate's aligned coordinate (x for axis x, y for axis y). */
+  at: number;
+  /** The candidate point the guide is drawn from. */
+  from: number[];
+}
+
+/**
+ * Alignment guides for a point being drawn/dragged: the nearest candidate
+ * sharing its X and the nearest sharing its Y (within tol). Indication only —
+ * no magnetism, the grid owns the actual position (owner's decision).
+ */
+export function alignGuides(pt: number[], candidates: number[][], tol: number): AlignGuide[] {
+  let bestX: { d: number; c: number[] } | null = null;
+  let bestY: { d: number; c: number[] } | null = null;
+  for (const c of candidates) {
+    const same = Math.abs(c[0] - pt[0]) < 1e-6 && Math.abs(c[1] - pt[1]) < 1e-6;
+    if (same) continue;
+    if (Math.abs(c[0] - pt[0]) <= tol) {
+      const d = Math.abs(c[1] - pt[1]);
+      if (d > 1e-6 && (!bestX || d < bestX.d)) bestX = { d, c };
+    }
+    if (Math.abs(c[1] - pt[1]) <= tol) {
+      const d = Math.abs(c[0] - pt[0]);
+      if (d > 1e-6 && (!bestY || d < bestY.d)) bestY = { d, c };
+    }
+  }
+  const out: AlignGuide[] = [];
+  if (bestX) out.push({ axis: 'x', at: bestX.c[0], from: bestX.c });
+  if (bestY) out.push({ axis: 'y', at: bestY.c[1], from: bestY.c });
+  return out;
+}
+
+/** Segment angle in degrees, normalized to [0, 360). */
+export function segmentAngle(a: number[], b: number[]): number {
+  let deg = (Math.atan2(b[1] - a[1], b[0] - a[0]) * 180) / Math.PI;
+  if (deg < 0) deg += 360;
+  return deg;
+}
+
+/** Is the angle a multiple of 45° (within tolerance)? */
+export function is45(deg: number, tol = 0.5): boolean {
+  const m = ((deg % 45) + 45) % 45;
+  return m <= tol || 45 - m <= tol;
+}
+
 /** Distance from a point to a segment [x1,y1,x2,y2]. */
 export function distToSegment(p: number[], s: number[]): number {
   const dx = s[2] - s[0], dy = s[3] - s[1];

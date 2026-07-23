@@ -14,7 +14,7 @@ import {
 import {
   lqiColor, snapToGrid, samePoint, pointInPolygon, markerIdForBinding,
   segmentCm, formatLength, roomEdges, roomPoly, pointStrictlyInside, roomsOverlap,
-  pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, openZoneOf, distToSegment, outlineWithout, cutSegments,
+  pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, openZoneOf, distToSegment, outlineWithout, cutSegments, alignGuides, segmentAngle, is45, type AlignGuide,
   snapToWall, openingAmount,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
   stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, glowColorOf, doorSector, hasRoomBehind, controlsAction, isControllable,
@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.39.0';
+const CARD_VERSION = '1.40.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -3245,6 +3245,7 @@ class HouseplanCard extends LitElement {
             })}
             ${disp.fill === 'glow' && !this._markup ? this._renderGlowLayer(space) : nothing}
             ${this._renderOpenWalls(disp)}
+            ${this._editing ? this._renderAlignGuides() : nothing}
             ${this._markup ? this._renderMarkupLayer(vb) : nothing}
             ${this._renderOpenings(disp)}
           </svg>
@@ -3539,7 +3540,121 @@ class HouseplanCard extends LitElement {
     const b = this._cursorPt!;
     const left = ((b[0] - view.x) / view.w) * 100;
     const top = ((b[1] - view.y) / view.h) * 100;
-    return html`<div class="measurelabel" style="left:${left}%;top:${top}%">${this._fmtLen(a, b)}</div>`;
+    // angle badge: length · angle, both green when the angle is a 45° multiple
+    const deg = segmentAngle(a, b);
+    const shown = Math.round(deg * 10) / 10;
+    const on45 = is45(deg);
+    return html`<div class="measurelabel ${on45 ? 'on45' : ''}" style="left:${left}%;top:${top}%">
+      ${this._fmtLen(a, b)} · ${shown}°</div>`;
+  }
+
+  // ================= alignment guides (smart guides) =================
+
+  /** The point being drawn/dragged right now, or null (per editor context). */
+  private get _alignPoint(): number[] | null {
+    if (this._markup) {
+      if (this._tool === 'draw' && this._path.length && !this._contourClosed && this._cursorPt)
+        return this._cursorPt;
+      if (this._tool === 'split' && this._splitSel?.pts?.length && this._cursorPt)
+        return this._cursorPt;
+      if (this._drag?.id.startsWith('rl_') && this._drag.moved) {
+        const roomId = this._drag.id.slice(3);
+        const room = this._spaceModel().rooms.find((r) => r.id === roomId);
+        return room ? (() => { const p = this._labelPos(room, this._space); return [p.x, p.y]; })() : null;
+      }
+      return null;
+    }
+    if (this._mode === 'devices' && this._drag?.moved) {
+      const d = this._devices.find((x) => x.id === this._drag!.id);
+      return d ? (() => { const p = this._pos(d); return [p.x, p.y]; })() : null;
+    }
+    if (this._mode === 'decor') {
+      if (this._decorDraft) return this._decorDraft.b;
+      if (this._decorMove) {
+        const sh = this._decorList.find((x) => x.id === this._decorMove!.id);
+        if (!sh) return null;
+        const W = NORM_W, H = this._decorH;
+        if (sh.kind === 'line') return [sh.x1 * W, sh.y1 * H];
+        return [sh.x * W, sh.y * H];
+      }
+      return null;
+    }
+    return null;
+  }
+
+  /** Alignment candidates for the current context (owner's matrix). */
+  private _alignCandidates(): number[][] {
+    const out: number[][] = [];
+    const spm = this._spaceModel();
+    if (this._markup) {
+      if (this._drag?.id.startsWith('rl_')) {
+        // room-card drag: centers of the OTHER room cards
+        const dragged = this._drag.id.slice(3);
+        for (const r of spm.rooms) {
+          if (!r.name || r.id === dragged) continue;
+          const p = this._labelPos(r, this._space);
+          out.push([p.x, p.y]);
+        }
+        return out;
+      }
+      // drawing: room vertices + current path/split points
+      for (const r of spm.rooms) {
+        const poly = roomPoly(r);
+        if (poly) for (const p of poly) out.push(p);
+      }
+      if (this._tool === 'draw') for (const p of this._path) out.push(p);
+      if (this._tool === 'split' && this._splitSel?.pts) for (const p of this._splitSel.pts) out.push(p);
+      return out;
+    }
+    if (this._mode === 'devices') {
+      // other icons of this space only (owner's decision)
+      for (const d of this._devices) {
+        if (d.space !== this._space || d.id === this._drag?.id) continue;
+        const p = this._pos(d);
+        out.push([p.x, p.y]);
+      }
+      return out;
+    }
+    if (this._mode === 'decor') {
+      const W = NORM_W, H = this._decorH;
+      const movingId = this._decorMove?.id;
+      for (const sh of this._decorList) {
+        if (sh.id === movingId) continue;
+        if (sh.kind === 'line') { out.push([sh.x1 * W, sh.y1 * H], [sh.x2 * W, sh.y2 * H]); }
+        else if (sh.kind === 'text') out.push([sh.x * W, sh.y * H]);
+        else {
+          out.push([sh.x * W, sh.y * H], [(sh.x + sh.w) * W, sh.y * H],
+            [sh.x * W, (sh.y + sh.h) * H], [(sh.x + sh.w) * W, (sh.y + sh.h) * H]);
+        }
+      }
+      if (this._decorDraft) out.push(this._decorDraft.a);
+      for (const r of spm.rooms) {
+        const poly = roomPoly(r);
+        if (poly) for (const p of poly) out.push(p);
+      }
+      return out;
+    }
+    return out;
+  }
+
+  private _renderAlignGuides(): TemplateResult {
+    const pt = this._alignPoint;
+    if (!pt) return svg`` as unknown as TemplateResult;
+    // exact node match for grid-snapped things; half a cell for free-moving cards
+    const tol = this._drag?.id.startsWith('rl_') ? this._gridPitch * 0.5 : this._gridPitch * 0.05;
+    const guides = alignGuides(pt, this._alignCandidates(), tol);
+    if (!guides.length) return svg`` as unknown as TemplateResult;
+    const g = this._gridPitch;
+    const over = g * 1.5; // extend a little past the point
+    return svg`<g class="alignguides">
+      ${guides.map((gd: AlignGuide) => {
+        const [x1, y1, x2, y2] = gd.axis === 'x'
+          ? [gd.at, gd.from[1], gd.at, pt[1] + Math.sign(pt[1] - gd.from[1]) * over]
+          : [gd.from[0], gd.at, pt[0] + Math.sign(pt[0] - gd.from[0]) * over, gd.at];
+        return svg`<line class="alignline" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"></line>
+          <circle class="aligndot" cx="${gd.from[0]}" cy="${gd.from[1]}" r="${g * 0.18}"></circle>`;
+      })}
+    </g>` as unknown as TemplateResult;
   }
 
   private _roomCenter(r: RoomCfg): number[] {

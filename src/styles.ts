@@ -479,6 +479,21 @@ export const cardStyles = css`
       inset: 0;
       pointer-events: none;
     }
+    .alignline {
+      stroke: var(--hp-accent);
+      stroke-width: 1.2;
+      stroke-dasharray: 4 4;
+      pointer-events: none;
+      opacity: 0.9;
+    }
+    .aligndot {
+      fill: var(--hp-accent);
+      pointer-events: none;
+    }
+    .measurelabel.on45 {
+      color: #4bd28f;
+      border-color: #4bd28f;
+    }
     .measurelabel {
       position: absolute;
       transform: translate(12px, -150%);

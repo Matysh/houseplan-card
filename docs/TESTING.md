@@ -140,6 +140,11 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Smart guides (v1.40.0): while drawing (outline, cut, decor shapes) or
+      dragging (icons, room cards, decor) dashed accent guides appear from the
+      nearest object sharing the X and/or Y (max two, with a dot at the
+      source); the cursor badge shows length · angle and turns green on 45°
+      multiples; indication only — no magnetism; nothing in View mode [auto]
 - [ ] Lights toggle by default (v1.39.0): a device whose PRIMARY entity is a
       light (bulbs, chandeliers, night lights, light groups) toggles on click
       out of the box — no per-device setting needed; the device dialog shows

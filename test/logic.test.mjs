@@ -8,6 +8,7 @@ import {
   controlsAction, isControllable,
   sharedBoundary, openZoneOf, distToSegment,
   outlineWithout,
+  alignGuides, segmentAngle, is45,
   segmentCm, formatLength, roomEdges, roomPoly, pointOnBoundary, pointStrictlyInside, roomsOverlap,
   mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices,
 } from '../test-build/logic.js';
@@ -733,4 +734,32 @@ test('resolveTapAction: pure lights toggle by default (v1.39.0)', () => {
   assert.equal(resolveTapAction(null, null, 'sensor'), 'info');
   // замок никогда
   assert.equal(resolveTapAction('toggle', null, 'lock'), 'info');
+});
+
+test('alignGuides: nearest per axis, indication only', () => {
+  const cands = [[10, 50], [10, 90], [70, 20], [40, 40]];
+  const g = alignGuides([10, 60], cands, 0.5);
+  const gx = g.find((x) => x.axis === 'x');
+  assert.ok(gx && gx.at === 10 && gx.from[1] === 50); // ближайший по Y из выровненных по X
+  // выравнивание по Y
+  const g2 = alignGuides([30, 20], cands, 0.5);
+  const gy = g2.find((x) => x.axis === 'y');
+  assert.ok(gy && gy.at === 20 && gy.from[0] === 70);
+  // вне допуска — пусто
+  assert.equal(alignGuides([11, 60], cands, 0.5).length, 0);
+  // совпадающая точка не гид сама себе
+  assert.equal(alignGuides([10, 50], [[10, 50]], 0.5).length, 0);
+  // максимум два гида
+  const g3 = alignGuides([10, 20], cands, 0.5);
+  assert.ok(g3.length <= 2);
+});
+
+test('segmentAngle & is45', () => {
+  assert.equal(segmentAngle([0, 0], [10, 0]), 0);
+  assert.equal(segmentAngle([0, 0], [0, 10]), 90);
+  assert.equal(segmentAngle([0, 0], [10, 10]), 45);
+  assert.equal(segmentAngle([0, 0], [-10, 0]), 180);
+  assert.ok(is45(45) && is45(90) && is45(315) && is45(0));
+  assert.ok(is45(44.8) && is45(45.3));
+  assert.ok(!is45(30) && !is45(52));
 });

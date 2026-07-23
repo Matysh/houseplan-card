@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.40.0 — 2026-07-23 (smart guides)
+- **Alignment helper in every editor**: while drawing an outline, a cut or a
+  decor shape, and while dragging icons, room cards or decor, thin dashed
+  guides appear from the nearest object sharing your X and/or Y (one per
+  axis, with a marker dot at the source) — lamps line up, lines end exactly
+  above the end of a parallel line. Candidates follow the context: room
+  vertices and path points in the Plan editor, other icons in the Device
+  editor, decor endpoints/corners plus room vertices in the Background
+  editor, other room cards while dragging one.
+- The cursor badge now shows **length · angle** and turns green when the
+  segment's angle is a multiple of 45°. Guides are pure indication — the
+  grid keeps owning the actual position.
+
 ## v1.39.0 — 2026-07-23 (lights toggle by default)
 - Pure light sources — devices whose primary entity is a `light` (bulbs,
   chandeliers, night lights, light groups) — now **toggle on click by
