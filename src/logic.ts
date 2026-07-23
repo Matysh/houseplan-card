@@ -911,6 +911,47 @@ export function openZoneOf(roomId: string, rooms: { id?: string; open_to?: strin
   return zone;
 }
 
+/**
+ * Room outline pieces with the given collinear stretches removed — used to
+ * draw a TRUE dashed open boundary (the solid stroke must not run beneath).
+ * Returns segments [x1,y1,x2,y2].
+ */
+export function outlineWithout(poly: number[][], cuts: number[][], eps = 1e-6): number[][] {
+  const out: number[][] = [];
+  for (let i = 0; i < poly.length; i++) {
+    const p1 = poly[i], p2 = poly[(i + 1) % poly.length];
+    const dx = p2[0] - p1[0], dy = p2[1] - p1[1];
+    const len = Math.hypot(dx, dy);
+    if (len < eps) continue;
+    const ux = dx / len, uy = dy / len;
+    // collect cut intervals on this edge
+    const iv: [number, number][] = [];
+    for (const c of cuts) {
+      const d1 = Math.abs((c[0] - p1[0]) * uy - (c[1] - p1[1]) * ux);
+      const d2 = Math.abs((c[2] - p1[0]) * uy - (c[3] - p1[1]) * ux);
+      const tol = Math.max(eps, len * 1e-6);
+      if (d1 > tol || d2 > tol) continue;
+      const t1 = (c[0] - p1[0]) * ux + (c[1] - p1[1]) * uy;
+      const t2 = (c[2] - p1[0]) * ux + (c[3] - p1[1]) * uy;
+      const lo = Math.max(0, Math.min(t1, t2));
+      const hi = Math.min(len, Math.max(t1, t2));
+      if (hi - lo > eps) iv.push([lo, hi]);
+    }
+    if (!iv.length) {
+      out.push([p1[0], p1[1], p2[0], p2[1]]);
+      continue;
+    }
+    iv.sort((a, b) => a[0] - b[0]);
+    let cur = 0;
+    for (const [lo, hi] of iv) {
+      if (lo - cur > eps) out.push([p1[0] + ux * cur, p1[1] + uy * cur, p1[0] + ux * lo, p1[1] + uy * lo]);
+      cur = Math.max(cur, hi);
+    }
+    if (len - cur > eps) out.push([p1[0] + ux * cur, p1[1] + uy * cur, p2[0], p2[1]]);
+  }
+  return out;
+}
+
 /** Distance from a point to a segment [x1,y1,x2,y2]. */
 export function distToSegment(p: number[], s: number[]): number {
   const dx = s[2] - s[0], dy = s[3] - s[1];

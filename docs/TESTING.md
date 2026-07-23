@@ -140,6 +140,10 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] True dashed boundary (v1.37.3): the open stretch is a REAL dash — the
+      rooms' solid strokes are trimmed out beneath it (hover doesn't bring
+      them back), walls elsewhere stay solid; the dashes render ABOVE the
+      glow pools [auto]
 - [ ] Open-wall hover (v1.37.1): with the tool active the cursor is default;
       near a shared wall it turns pointer and the exact stretch that would
       open is previewed (amber dashed); an already-open boundary previews red

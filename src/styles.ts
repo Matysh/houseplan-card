@@ -545,11 +545,22 @@ export const cardStyles = css`
     .stage.markup.tool-openwall { cursor: default; }
     .stage.markup.tool-openwall.wallhot { cursor: pointer; }
     .openwall {
-      stroke: var(--card-background-color, var(--hp-bg, #fff));
-      stroke-width: 3.2;
+      stroke: var(--ow-stroke, var(--hp-muted));
+      stroke-width: 2.5;
       stroke-dasharray: 7 7;
+      stroke-linecap: butt;
       pointer-events: none;
       opacity: 0.9;
+    }
+    /* rooms with open stretches: the polygon's own stroke is fully off
+       (hover included) — the trimmed .room-outline path draws the walls */
+    .room.noedge {
+      stroke-opacity: 0 !important;
+    }
+    .room-outline {
+      fill: none;
+      stroke-width: 2.5;
+      pointer-events: none;
     }
     .openwalls.hot .openwall {
       stroke: #ffc14d;

@@ -15,6 +15,16 @@ const res = await page.evaluate(async () => {
   // пунктир отрисован
   out.dashes = sr().querySelectorAll('.openwall').length > 0;
   out.hotClass = !!sr().querySelector('.openwalls.hot');
+  // в Просмотре: сплошной штрих комнаты снят, контур без выреза + пунктир ПОВЕРХ glow
+  c._setMode('view'); await c.updateComplete;
+  out.noedge = sr().querySelectorAll('.room.noedge').length >= 2;
+  out.trimmedOutline = sr().querySelectorAll('.room-outline').length >= 2;
+  const svgEl = sr().querySelector('svg');
+  const order = [...svgEl.children].map((el) => el.classList?.[0] || el.tagName);
+  const gi = order.indexOf('glowlayer');
+  const oi = order.indexOf('openwalls');
+  out.dashAboveGlow = gi === -1 || oi > gi;
+  c._setMode('plan'); c._tool = 'openwall'; await c.updateComplete;
   // повторный клик закрывает
   c._openWallClick([550, 0.25 * H]); await c.updateComplete;
   out.toggledOff = !(c._curSpaceCfg.rooms.find((r) => r.id === 'r1').open_to || []).includes('r2');

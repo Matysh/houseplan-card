@@ -7,6 +7,7 @@ import {
   kelvinToRgb, glowColorOf, doorSector, hasRoomBehind,
   controlsAction, isControllable,
   sharedBoundary, openZoneOf, distToSegment,
+  outlineWithout,
   segmentCm, formatLength, roomEdges, roomPoly, pointOnBoundary, pointStrictlyInside, roomsOverlap,
   mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices,
 } from '../test-build/logic.js';
@@ -702,4 +703,21 @@ test('distToSegment', () => {
   assert.equal(distToSegment([0, 5], [0, 0, 0, 10]), 0);
   assert.equal(distToSegment([3, 5], [0, 0, 0, 10]), 3);
   assert.ok(Math.abs(distToSegment([-3, -4], [0, 0, 0, 10]) - 5) < 1e-9);
+});
+
+test('outlineWithout: removes the cut stretch, keeps the rest', () => {
+  const sq = [[0, 0], [10, 0], [10, 10], [0, 10]];
+  // вырез середины нижней стены: 3..7
+  const pieces = outlineWithout(sq, [[3, 0, 7, 0]]);
+  const len = (s) => Math.hypot(s[2] - s[0], s[3] - s[1]);
+  const total = pieces.reduce((a, s) => a + len(s), 0);
+  assert.ok(Math.abs(total - (40 - 4)) < 1e-6);
+  // куски нижней стены: 0..3 и 7..10
+  const bottom = pieces.filter((s) => s[1] === 0 && s[3] === 0);
+  assert.equal(bottom.length, 2);
+  // вырез целого ребра
+  const p2 = outlineWithout(sq, [[0, 0, 10, 0]]);
+  assert.ok(Math.abs(p2.reduce((a, s) => a + len(s), 0) - 30) < 1e-6);
+  // без вырезов — весь периметр
+  assert.ok(Math.abs(outlineWithout(sq, []).reduce((a, s) => a + len(s), 0) - 40) < 1e-6);
 });

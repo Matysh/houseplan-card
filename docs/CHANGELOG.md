@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.37.3 — 2026-07-23
+- Open boundaries now render as a **true dash**: the rooms' solid outlines are
+  trimmed under the open stretch (outlineWithout) instead of dashes being
+  painted over a solid line, and the dashed layer moved **above the glow
+  pools** so light never covers it.
+
 ## v1.37.2 — 2026-07-23
 - Glow falloff tuned: full brightness for the inner 70% of the radius,
   gradient on the outer 30% (was 80/20).

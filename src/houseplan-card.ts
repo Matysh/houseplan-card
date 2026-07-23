@@ -14,7 +14,7 @@ import {
 import {
   lqiColor, snapToGrid, samePoint, pointInPolygon, markerIdForBinding,
   segmentCm, formatLength, roomEdges, roomPoly, pointStrictlyInside, roomsOverlap,
-  pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, openZoneOf, distToSegment,
+  pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, openZoneOf, distToSegment, outlineWithout,
   snapToWall, openingAmount,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
   stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, glowColorOf, doorSector, hasRoomBehind, controlsAction, isControllable,
@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.37.2';
+const CARD_VERSION = '1.37.3';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -1606,12 +1606,13 @@ class HouseplanCard extends LitElement {
   }
 
   /** Dashed strokes over open (virtual) boundaries; highlighted in the tool. */
-  private _renderOpenWalls(): TemplateResult {
+  private _renderOpenWalls(disp?: SpaceDisplay): TemplateResult {
     const pairs = this._openPairs();
     const hover = this._openWallHover;
     if (!pairs.length && !hover) return svg`` as unknown as TemplateResult;
     const hot = this._markup && this._tool === 'openwall';
-    return svg`<g class="openwalls ${hot ? 'hot' : ''}">
+    const stroke = disp?.color || 'var(--hp-muted)';
+    return svg`<g class="openwalls ${hot ? 'hot' : ''}" style="--ow-stroke:${stroke}">
       ${pairs.flatMap((p) => p.segs.map((sg) => svg`<line class="openwall"
         x1="${sg[0]}" y1="${sg[1]}" x2="${sg[2]}" y2="${sg[3]}"></line>`))}
       ${hover
@@ -3152,6 +3153,14 @@ class HouseplanCard extends LitElement {
                   r.area ? areaTemp(this.hass, this._devices, r.area) : null);
               const label = !space.bg && !disp.showNames && !this._markup;
               const c = this._roomCenter(r);
+              // open boundaries: this room's solid stroke must not run beneath
+              // the dashed stretches — suppress it and draw a trimmed outline
+              const openCuts = !this._markup && r.id
+                ? this._openPairs()
+                    .filter((pp) => pp.a.id === r.id || pp.b.id === r.id)
+                    .flatMap((pp) => pp.segs)
+                : [];
+              if (openCuts.length) cls += ' noedge';
               // island rooms punch holes in their parent's fill (evenodd)
               const myPoly = roomPoly(r);
               const holes = myPoly
@@ -3172,10 +3181,17 @@ class HouseplanCard extends LitElement {
                     x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="${Math.min(r.w!, r.h!) * 0.03}"
                     @click=${() => this._clickRoom(r)} @mousemove=${tip}
                     @mouseleave=${() => (this._tip = null)}></rect>`;
-              return svg`${shape}${label ? svg`<text class="rlabel" x="${c[0]}" y="${c[1]}">${r.name}</text>` : nothing}`;
+              const trimmed = openCuts.length && myPoly
+                ? outlineWithout(myPoly, openCuts, this._gridPitch * 0.02)
+                : null;
+              const outline = trimmed
+                ? svg`<path class="room-outline" d="${trimmed.map((sg) => `M ${sg[0]} ${sg[1]} L ${sg[2]} ${sg[3]}`).join(' ')}"
+                    style="stroke:${disp.color};stroke-opacity:${disp.showBorders && !this._markup ? disp.opacity : 0}"></path>`
+                : nothing;
+              return svg`${shape}${outline}${label ? svg`<text class="rlabel" x="${c[0]}" y="${c[1]}">${r.name}</text>` : nothing}`;
             })}
-            ${this._renderOpenWalls()}
             ${disp.fill === 'glow' && !this._markup ? this._renderGlowLayer(space) : nothing}
+            ${this._renderOpenWalls(disp)}
             ${this._markup ? this._renderMarkupLayer(vb) : nothing}
             ${this._renderOpenings(disp)}
           </svg>
