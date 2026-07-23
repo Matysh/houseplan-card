@@ -87,3 +87,13 @@ Header in View: space tabs, device count, zoom cluster. Nothing else.
   editing under Plan; colored frame indicator.
 - **It.3 — Devices tab:** drag + direct-edit click + curation tools under Devices.
 - **It.4+:** follow-up features 1–5 above, each its own release.
+
+
+## Kiosk mode (v1.41.0)
+
+`kiosk: true` on the card is the fourth interaction surface: the full View
+experience with the header removed and editors hard-blocked (even for
+admins). Swipe switches spaces at 1:1 zoom only (zoomed gestures pan;
+double tap resets zoom); `cycle: N` auto-advances spaces with a 60 s pause
+after any touch; a 3 s long-press on empty plan opens the per-screen size
+popover (localStorage). Nav persistence never restores an editor here.

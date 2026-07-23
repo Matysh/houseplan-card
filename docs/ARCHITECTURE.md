@@ -212,3 +212,34 @@ footer button lives outside it and stays clickable.
 (default target `/plan-doma`). The full card reads `#space=<id>` on load (a valid id wins over
 `default_floor`) and on `hashchange`, without blocking manual space switching; an invalid/absent
 hash falls back to the default.
+
+
+## Additions v1.28–v1.41 (2026-07-24)
+
+- **Decor layer** (`space.decor[]`, v1.33): purely visual shapes
+  (line/rect/ellipse/text, normalized coords, per-shape style) drawn in the
+  SVG right above the background image and BELOW rooms; pointer-events only
+  inside the Background editor. Validated by `DECOR_SCHEMA` (vol.Any of the
+  four kinds).
+- **Glow fill** (v1.35+): `fill_mode: 'glow'` paints every room with
+  `fill_colors.glow_base` and renders per-source radial gradients clipped by
+  a per-light `clipPath` = zone polygons + doorway sectors, each contour a
+  SEPARATE clipPath child (children union; subpaths of one nonzero path
+  cancel on opposite windings — field bug v1.36.3). Radius: global
+  `settings.glow_radius_cm` + per-marker `glow_radius_cm`.
+- **Open boundaries** (v1.37): `room.open_to: [roomId]` symmetric links;
+  light zones are connected components (`openZoneOf`); shared stretches
+  computed by collinear-overlap math (`sharedBoundary`) and drawn as a TRUE
+  dash — both room outlines and derived wall segments are trimmed
+  (`outlineWithout`/`cutSegments`).
+- **Marker controls** (v1.36): `marker.controls[]` (lights/switches only)
+  toggled as one HA-group-semantics service call on the marker's EXPLICIT
+  tap_action=toggle; icon state/tint mirrors the targets. `primaryEntity`
+  picks in tiers so domain priority beats registry `hidden` (grouped lamps).
+- **Island rooms** (v1.34): full nesting is legal (`polyContainsPoly`);
+  parents render as evenodd paths with holes (`islandsOf`).
+- **Kiosk mode** (v1.41): a card-config flag, not a mode — `_setMode` is
+  hard-blocked, header hidden, swipe/carousel handled in the stage pointer
+  pipeline (`swipeTarget`), per-screen multipliers in `LS_KIOSK`.
+- **Nav persistence** (v1.38.2): `LS_NAV` stores {space, mode}; hash
+  deep-link > saved > default_floor; stale-cache retry after the live load.
