@@ -189,7 +189,7 @@ export const cardStyles = css`
     }
     .room {
       transition: 0.12s;
-      cursor: pointer;
+      cursor: default; /* v1.40.1: rooms are not clickable — the label's link icon is */
     }
     .room.overlay {
       fill: transparent;
@@ -377,6 +377,17 @@ export const cardStyles = css`
       gap: 0.15em;
       text-align: center;
     }
+    .rlname { display: inline-flex; align-items: center; gap: 0.25em; }
+    .rlgo {
+      --mdc-icon-size: 0.85em;
+      display: inline-flex;
+      opacity: 0.55;
+    }
+    .stage.mode-view .rlgo {
+      pointer-events: auto;
+      cursor: pointer;
+    }
+    .stage.mode-view .rlgo:hover { opacity: 1; }
     .roomlabel .rlmetrics {
       display: flex;
       align-items: center;

@@ -35,7 +35,7 @@ Allowed: pan/zoom (wheel, pinch, buttons), switching spaces, device tap
 (info / more-info / toggle per settings), long-press → info card, opening tap →
 door/lock info card (with an explicit Unlock/Lock button when a lock is bound —
 the only way to operate a lock from the card; plan-icon taps never toggle locks),
-room tap → HA area, hover tooltips (name, temperature, signal).
+room-card link icon → HA area (room taps do nothing since v1.40.1), hover tooltips (name, temperature, signal).
 
 Removed from this mode (they move, not die):
 - icon dragging ("drag anywhere", v1.9 — consciously reversed),

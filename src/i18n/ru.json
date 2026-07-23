@@ -300,5 +300,6 @@
   "marker.from_ha_option": "Выбрать из списка HA",
   "marker.show_entities": "Отображать сущности",
   "marker.show_entities_tip": "Добавляет в список не только устройства, но и все их сущности",
-  "marker.pick_ph": "Выберите устройство…"
+  "marker.pick_ph": "Выберите устройство…",
+  "room.open_area": "Открыть зону в HA"
 }

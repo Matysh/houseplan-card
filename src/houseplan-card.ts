@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.40.0';
+const CARD_VERSION = '1.40.1';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -3223,15 +3223,15 @@ class HouseplanCard extends LitElement {
               const shape = holes.length && myPoly
                 ? svg`<path class="${cls}" style="${style}" fill-rule="evenodd"
                     d="${[myPoly, ...holes].map(pathD).join(' ')}"
-                    @click=${() => this._clickRoom(r)} @mousemove=${tip}
+                    @mousemove=${tip}
                     @mouseleave=${() => (this._tip = null)}></path>`
                 : r.poly
                 ? svg`<polygon class="${cls}" style="${style}" points="${r.poly.map((p) => p.join(',')).join(' ')}"
-                    @click=${() => this._clickRoom(r)} @mousemove=${tip}
+                    @mousemove=${tip}
                     @mouseleave=${() => (this._tip = null)}></polygon>`
                 : svg`<rect class="${cls}" style="${style}"
                     x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="${Math.min(r.w!, r.h!) * 0.03}"
-                    @click=${() => this._clickRoom(r)} @mousemove=${tip}
+                    @mousemove=${tip}
                     @mouseleave=${() => (this._tip = null)}></rect>`;
               const trimmed = openCuts.length && myPoly
                 ? outlineWithout(myPoly, openCuts, this._gridPitch * 0.02)
@@ -3510,7 +3510,12 @@ class HouseplanCard extends LitElement {
       @pointermove=${(e: PointerEvent) => this._labelMove(e, r, space.id)}
       @pointerup=${() => this._labelUp(r)}
       @pointercancel=${() => this._labelUp(r)}
-    ><span class="rlname">${r.name}</span>
+    ><span class="rlname">${r.name}${!this._markup && r.area
+        ? html`<ha-icon class="rlgo" icon="mdi:open-in-new"
+            title=${this._t('room.open_area')}
+            @click=${(e: Event) => { e.stopPropagation(); this._clickRoom(r); }}
+            @pointerdown=${(e: Event) => e.stopPropagation()}></ha-icon>`
+        : nothing}</span>
       ${rows.length ? html`<span class="rlmetrics">${rows}</span>` : nothing}
       ${this._mode === 'plan'
         ? ['tl', 'tr', 'bl', 'br'].map(

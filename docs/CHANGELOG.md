@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.40.1 — 2026-07-23
+- Rooms are no longer clickable in View (default cursor, empty space does
+  nothing). Instead the room card shows a small **open-in-new icon** after
+  the name — clicking it opens the HA area. Rooms without an area (and all
+  editors) have no icon.
+
 ## v1.40.0 — 2026-07-23 (smart guides)
 - **Alignment helper in every editor**: while drawing an outline, a cut or a
   decor shape, and while dragging icons, room cards or decor, thin dashed

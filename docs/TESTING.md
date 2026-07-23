@@ -140,6 +140,10 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Room link icon (v1.40.1): clicking empty room space in View does
+      nothing (default cursor); an open-in-new icon after the room name (rooms
+      with an HA area, View only) navigates to the area; no icon in editors or
+      on area-less rooms [auto]
 - [ ] Smart guides (v1.40.0): while drawing (outline, cut, decor shapes) or
       dragging (icons, room cards, decor) dashed accent guides appear from the
       nearest object sharing the X and/or Y (max two, with a dot at the
