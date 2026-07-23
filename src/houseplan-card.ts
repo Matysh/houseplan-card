@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.37.0';
+const CARD_VERSION = '1.37.1';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -1598,14 +1598,26 @@ class HouseplanCard extends LitElement {
     </div>`;
   }
 
+  /** Boundary under the cursor in the open-wall tool (hover preview). */
+  private get _openWallHover(): { segs: number[][]; open: boolean } | null {
+    if (!this._markup || this._tool !== 'openwall' || !this._cursorPt) return null;
+    const hit = this._openWallHit(this._cursorPt);
+    return hit ? { segs: hit.segs, open: hit.open } : null;
+  }
+
   /** Dashed strokes over open (virtual) boundaries; highlighted in the tool. */
   private _renderOpenWalls(): TemplateResult {
     const pairs = this._openPairs();
-    if (!pairs.length) return svg`` as unknown as TemplateResult;
+    const hover = this._openWallHover;
+    if (!pairs.length && !hover) return svg`` as unknown as TemplateResult;
     const hot = this._markup && this._tool === 'openwall';
     return svg`<g class="openwalls ${hot ? 'hot' : ''}">
       ${pairs.flatMap((p) => p.segs.map((sg) => svg`<line class="openwall"
         x1="${sg[0]}" y1="${sg[1]}" x2="${sg[2]}" y2="${sg[3]}"></line>`))}
+      ${hover
+        ? hover.segs.map((sg) => svg`<line class="openwall-preview ${hover.open ? 'willclose' : ''}"
+            x1="${sg[0]}" y1="${sg[1]}" x2="${sg[2]}" y2="${sg[3]}"></line>`)
+        : nothing}
     </g>` as unknown as TemplateResult;
   }
 
@@ -1626,11 +1638,11 @@ class HouseplanCard extends LitElement {
     return res;
   }
 
-  /** Open-boundary tool: a click on a shared wall toggles its "virtual" state. */
-  private _openWallClick(raw: number[]): void {
+  /** The shared boundary nearest to the cursor (both the tool's click and hover). */
+  private _openWallHit(raw: number[]): { a: RoomCfg; b: RoomCfg; segs: number[][]; open: boolean } | null {
     const rooms = this._spaceModel().rooms.filter((r) => r.id);
     const pull = this._gridPitch * 6;
-    let best: { a: RoomCfg; b: RoomCfg; d: number } | null = null;
+    let best: { a: RoomCfg; b: RoomCfg; segs: number[][]; d: number } | null = null;
     for (let i = 0; i < rooms.length; i++)
       for (let j = i + 1; j < rooms.length; j++) {
         const pa = roomPoly(rooms[i]), pb = roomPoly(rooms[j]);
@@ -1638,16 +1650,25 @@ class HouseplanCard extends LitElement {
         const segs = sharedBoundary(pa, pb, this._gridPitch * 0.02);
         for (const seg of segs) {
           const d = distToSegment(raw, seg);
-          if (d <= pull && (!best || d < best.d)) best = { a: rooms[i], b: rooms[j], d };
+          if (d <= pull && (!best || d < best.d)) best = { a: rooms[i], b: rooms[j], segs, d };
         }
       }
+    if (!best) return null;
+    const open = (((best.a as any).open_to || []).includes(best.b.id))
+      || (((best.b as any).open_to || []).includes(best.a.id));
+    return { a: best.a, b: best.b, segs: best.segs, open };
+  }
+
+  /** Open-boundary tool: a click on a shared wall toggles its "virtual" state. */
+  private _openWallClick(raw: number[]): void {
+    const best = this._openWallHit(raw);
     if (!best) {
       this._showToast(this._t('toast.openwall_pick'));
       return;
     }
     const sp = this._curSpaceCfg;
-    const ra = sp.rooms.find((r: any) => r.id === best!.a.id);
-    const rb = sp.rooms.find((r: any) => r.id === best!.b.id);
+    const ra = sp.rooms.find((r: any) => r.id === best.a.id);
+    const rb = sp.rooms.find((r: any) => r.id === best.b.id);
     if (!ra || !rb) return;
     const linked = (ra.open_to || []).includes(rb.id) || (rb.open_to || []).includes(ra.id);
     if (linked) {
@@ -1925,8 +1946,8 @@ class HouseplanCard extends LitElement {
 
   private _markupMove(ev: MouseEvent): void {
     if (!this._markup) return;
-    if (this._tool === 'opening') {
-      // hover preview: where the opening would land (raw point, wall-snapped later)
+    if (this._tool === 'opening' || this._tool === 'openwall') {
+      // hover preview: raw cursor point; snapping happens in the preview getters
       this._cursorPt = this._svgPoint(ev);
       return;
     }
@@ -3077,7 +3098,7 @@ class HouseplanCard extends LitElement {
         ${this._markup ? this._renderMarkupBar() : this._mode === 'devices' ? this._renderDevicesBar() : this._mode === 'decor' ? this._renderDecorBar() : nothing}
         </div>
 
-        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}"
+        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'openwall' && this._openWallHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}"
           style="height:calc(100dvh - 118px)"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}

@@ -538,10 +538,12 @@ export const cardStyles = css`
     /* room-picking stages: merge (both clicks) and split before a room is chosen */
     .stage.markup.tool-merge,
     .stage.markup.tool-split.pickstage,
-    .stage.markup.tool-openwall,
     .stage.markup.tool-delroom {
       cursor: pointer;
     }
+    /* open-wall tool: default until a shared wall is under the cursor */
+    .stage.markup.tool-openwall { cursor: default; }
+    .stage.markup.tool-openwall.wallhot { cursor: pointer; }
     .openwall {
       stroke: var(--card-background-color, var(--hp-bg, #fff));
       stroke-width: 3.2;
@@ -552,6 +554,19 @@ export const cardStyles = css`
     .openwalls.hot .openwall {
       stroke: #ffc14d;
       opacity: 1;
+    }
+    .openwall-preview {
+      stroke: #ffc14d;
+      stroke-width: 5;
+      stroke-dasharray: 7 7;
+      stroke-linecap: round;
+      pointer-events: none;
+      opacity: 0.95;
+    }
+    /* an already-open boundary under the cursor: the click will CLOSE it */
+    .openwall-preview.willclose {
+      stroke: #f25a4a;
+      stroke-dasharray: none;
     }
     .stage.markup .room {
       pointer-events: none;

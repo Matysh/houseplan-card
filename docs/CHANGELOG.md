@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.37.1 — 2026-07-23
+- Open-boundary tool polish: the cursor stays default and only turns into a
+  pointer near a wall shared by two rooms; hovering previews the exact
+  stretch that would become open (amber dashed) — or red solid when the
+  boundary is already open and the click would close it.
+
 ## v1.37.0 — 2026-07-23 (open boundaries — virtual walls)
 - Rooms divided only by zoning can now share an **open boundary**: the new
   "Open boundary" tool in the Plan editor toggles it with a click on the wall

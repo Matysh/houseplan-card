@@ -140,6 +140,11 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Open-wall hover (v1.37.1): with the tool active the cursor is default;
+      near a shared wall it turns pointer and the exact stretch that would
+      open is previewed (amber dashed); an already-open boundary previews red
+      solid (the click will close it); preview follows the cursor and clears
+      on miss [auto]
 - [ ] Open boundaries (v1.37.0): the Plan editor's "Open boundary" tool
       toggles a virtual wall between two rooms by clicking their shared wall
       (pull like Split; miss → toast); open stretches render dashed (amber
