@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.36.4 — 2026-07-23
+- Glow: sharper light edge — the pool is fully lit for the inner 80% of the
+  radius, the gradient falloff lives only in the outer 20%.
+
 ## v1.36.3 — 2026-07-23
 - Glow: fixed dark wedges appearing INSIDE a lit room near some doorways.
   The room outline and the door sectors were subpaths of a single clip path;

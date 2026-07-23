@@ -77,6 +77,11 @@ const res = await page.evaluate(async () => {
   c.requestUpdate(); await c.updateComplete;
   const clipEls2 = [...sr().querySelectorAll('defs clipPath[id^="hp-glowclip"]')];
   out.entranceNoSector = clipEls2.every((cp) => cp.querySelectorAll('path').length === 1);
+  // 6б) профиль градиента: плато до 80%, спад на внешних 20%
+  const stops = [...sr().querySelectorAll('defs radialGradient')][0];
+  const offs = stops ? [...stops.querySelectorAll('stop')].map((st2) => [st2.getAttribute('offset'), st2.getAttribute('stop-opacity')]) : [];
+  out.plateau80 = offs.length === 3 && offs[0][0] === '0%' && offs[1][0] === '80%'
+    && offs[0][1] === offs[1][1] && offs[2][1] === '0';
   // 7а) персональный радиус источника перекрывает глобальный
   const litMarkerId = litLight.id;
   c._serverCfg = { ...c._serverCfg, markers: [

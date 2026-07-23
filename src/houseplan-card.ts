@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.36.3';
+const CARD_VERSION = '1.36.4';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -2726,7 +2726,7 @@ class HouseplanCard extends LitElement {
         ${spots.map((sp, i) => svg`
           <radialGradient id="hp-glow-${i}">
             <stop offset="0%" stop-color="${sp.c}" stop-opacity="${sp.alpha.toFixed(3)}"></stop>
-            <stop offset="55%" stop-color="${sp.c}" stop-opacity="${(sp.alpha * 0.45).toFixed(3)}"></stop>
+            <stop offset="80%" stop-color="${sp.c}" stop-opacity="${sp.alpha.toFixed(3)}"></stop>
             <stop offset="100%" stop-color="${sp.c}" stop-opacity="0"></stop>
           </radialGradient>
           ${sp.clip ? svg`<clipPath id="hp-glowclip-${i}">${sp.clip.map((d) => svg`<path d="${d}"></path>`)}</clipPath>` : nothing}`)}
