@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.41.1 — 2026-07-24 (docs)
+- README (en/ru) reworked for discoverability: keyword-rich hero ("interactive
+  floor plan card for Home Assistant"), badges, a feature-highlights list
+  covering glow, controls, kiosk, virtual walls and room cards; the kiosk
+  recipe moved next to Installation. Demo GIF slot ready for the new capture.
+
 ## v1.41.0 — 2026-07-24 (kiosk mode for wall devices)
 - New card option **`kiosk: true`** (also in the GUI editor): the full View
   experience — live states, glow, lamp taps, info cards, locks — with no
