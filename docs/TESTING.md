@@ -140,6 +140,9 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] PDF survival on rebinding (v1.41.2): rebind a marker with attached
+      PDFs to another device — the server moves /files/<oldId>/ to the new id
+      and the links keep opening; the old folder disappears (no orphans) [auto]
 - [ ] Kiosk mode (v1.41.0): kiosk: true hides the whole header, blocks every
       editor (admins incl.), full-height stage; swipe left/right switches
       spaces at 1:1 (dots indicator, wraps), never while zoomed; double tap

@@ -32,6 +32,7 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_config_get)
     websocket_api.async_register_command(hass, ws_config_set)
     websocket_api.async_register_command(hass, ws_plan_set)
+    websocket_api.async_register_command(hass, ws_files_migrate)
 
 
 def _runtime(hass: HomeAssistant, connection, msg_id: int) -> HouseplanData | None:
@@ -106,6 +107,61 @@ async def ws_layout_update(hass: HomeAssistant, connection, msg: dict[str, Any])
         layout[msg["device_id"]] = msg["pos"]
         await rt.store.async_save({"layout": layout})
     connection.send_result(msg["id"], {"ok": True})
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "houseplan/files/migrate",
+        vol.Required("from_id"): str,
+        vol.Required("to_id"): str,
+    }
+)
+@websocket_api.async_response
+async def ws_files_migrate(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
+    """Move a marker's uploaded files to its new id (rebinding changes the id).
+
+    Without this the PDF urls keep pointing at the OLD id's folder, which then
+    looks orphaned and is one cleanup away from deletion — the exact way the
+    owner lost the sauna heater manuals (field incident, 2026-07-26).
+    """
+    if not _check_write(hass, connection):
+        connection.send_error(msg["id"], "unauthorized", "Only administrators may edit files")
+        return
+    from pathlib import Path
+    import shutil
+
+    from .const import FILES_DIR
+    from .validation import sanitize_marker_id
+
+    src_id = sanitize_marker_id(msg["from_id"])
+    dst_id = sanitize_marker_id(msg["to_id"])
+    if not src_id or not dst_id or src_id == dst_id:
+        connection.send_result(msg["id"], {"ok": True, "moved": 0})
+        return
+    base = Path(hass.config.path(FILES_DIR))
+    src = base / src_id
+    dst = base / dst_id
+
+    def _move() -> int:
+        if not src.is_dir():
+            return 0
+        dst.mkdir(parents=True, exist_ok=True)
+        n = 0
+        for f in src.iterdir():
+            if not f.is_file():
+                continue
+            target = dst / f.name
+            if not target.exists():
+                shutil.move(str(f), str(target))
+                n += 1
+        try:
+            src.rmdir()  # only when empty
+        except OSError:
+            pass
+        return n
+
+    moved = await hass.async_add_executor_job(_move)
+    connection.send_result(msg["id"], {"ok": True, "moved": moved})
 
 
 @websocket_api.websocket_command(

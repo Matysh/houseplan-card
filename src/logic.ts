@@ -965,6 +965,21 @@ export function outlineWithout(poly: number[][], cuts: number[][], eps = 1e-6): 
   return cutSegments(edges, cuts, eps);
 }
 
+// ---------------- marker files ----------------
+
+/**
+ * Rewrite attached-file urls when a marker's id changes (rebinding): the
+ * server moves /files/<oldId>/ to /files/<newId>/, the urls must follow.
+ */
+export function migratePdfUrls<T extends { url: string }>(
+  pdfs: T[], oldId: string, newId: string,
+): T[] {
+  if (!oldId || !newId || oldId === newId) return pdfs;
+  const from = '/files/' + oldId + '/';
+  const to = '/files/' + newId + '/';
+  return pdfs.map((p) => (p.url.includes(from) ? { ...p, url: p.url.split(from).join(to) } : p));
+}
+
 // ---------------- kiosk gestures ----------------
 
 /**

@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.41.2 — 2026-07-26
+- Fixed attached PDF manuals breaking after a marker is rebound to another
+  device: the id changes, but the uploaded files stayed in the OLD id's
+  folder — orphaned and eventually lost (that is exactly how the sauna
+  heater's manuals died). Rebinding now moves the files server-side
+  (`houseplan/files/migrate`) and rewrites the attached urls.
+
 ## v1.41.1 — 2026-07-24 (docs)
 - README (en/ru) reworked for discoverability: keyword-rich hero ("interactive
   floor plan card for Home Assistant"), badges, a feature-highlights list
