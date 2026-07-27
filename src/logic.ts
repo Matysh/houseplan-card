@@ -531,6 +531,24 @@ export function safeUrl(url: string | null | undefined): string | null {
 export type TapAction = 'info' | 'more-info' | 'toggle';
 
 /** Domains a card-wide `tap_action: toggle` may toggle (accidental-tap safe). */
+/**
+ * The option lists the editors offer, in one place — and the reason they are
+ * here rather than inline in the templates.
+ *
+ * `display` gained 'value' in v1.26.0 ("show the measurement instead of the
+ * icon") but the backend schema still only accepted badge/ripple/icon_ripple,
+ * so saving any marker configured that way was rejected outright — the feature
+ * was unusable for a year and a half and only surfaced through a user's error
+ * message (issue #3, 2026-07-27). The lists are exported so a backend test can
+ * read them and assert the schema accepts every value a user can pick.
+ * Adding an option here and forgetting the schema now fails the test suite.
+ */
+export const DISPLAY_MODES = ['badge', 'ripple', 'icon_ripple', 'value'] as const;
+export const TAP_ACTIONS = ['info', 'more-info', 'toggle'] as const;
+/** Space-level fill: 'glow' is a whole-space light model, not a per-room one. */
+export const SPACE_FILL_MODES = ['none', 'lqi', 'light', 'temp', 'glow'] as const;
+export const ROOM_FILL_MODES = ['none', 'lqi', 'light', 'temp'] as const;
+
 export const TOGGLE_SAFE_DOMAINS = new Set(['light', 'switch', 'fan', 'humidifier']);
 
 /**

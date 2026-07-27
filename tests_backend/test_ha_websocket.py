@@ -396,6 +396,31 @@ async def test_collection_ignores_files_that_are_not_plans(
     assert (plans / "readme").is_file()
 
 
+async def test_a_marker_showing_its_value_can_be_saved(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """issue #3: display='value' was rejected, and one bad marker fails the lot.
+
+    A user could not save the configuration at all after setting any sensor to
+    "value instead of an icon" — the editor offered the option, the schema had
+    never heard of it.
+    """
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+
+    cfg = await _cfg([{"id": "f1", "plan_url": None}])
+    cfg["markers"] = [
+        {"id": "sensor.t", "binding": "entity:sensor.t", "display": "value"},
+        {"id": "sensor.h", "binding": "entity:sensor.h", "display": "badge"},
+    ]
+    ok = await _save(client, cfg, 0)
+    assert ok["success"], ok.get("error")
+
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    got = await client.receive_json()
+    assert [m["display"] for m in got["result"]["config"]["markers"]] == ["value", "badge"]
+
+
 async def test_a_failing_collector_does_not_undo_an_accepted_save(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator, monkeypatch
 ) -> None:

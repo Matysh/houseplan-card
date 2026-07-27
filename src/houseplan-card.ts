@@ -22,6 +22,7 @@ import {
   isActiveState, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
   referencedContentUrls,
+  DISPLAY_MODES, TAP_ACTIONS, SPACE_FILL_MODES, ROOM_FILL_MODES,
 } from './logic';
 import { ContentSigner } from './signing';
 import { buildDevices, lqiFor, tempFor, humFor, isHumEntity, areaLights, areaTemp, areaHum, areaLightStats, sourceValue, areaClimateMap, type AreaClimate } from './devices';
@@ -34,7 +35,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.45.2';
+const CARD_VERSION = '1.45.3';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -4824,7 +4825,7 @@ class HouseplanCard extends LitElement {
           <label>${this._t('marker.tap_label')}</label>
           <select class="areasel"
             @change=${(e: Event) => (this._markerDialog = { ...d, tapAction: (e.target as HTMLSelectElement).value })}>
-            ${[['info', 'tap.info'], ['more-info', 'tap.more_info'], ['toggle', 'tap.toggle']].map(
+            ${TAP_ACTIONS.map((v) => [v, 'tap.' + v.replace('-', '_')] as const).map(
               ([v, k]) => html`<option value=${v} ?selected=${(d.tapAction || d.defaultTap) === v}>${this._t(k as any)}</option>`,
             )}
           </select>
@@ -4895,7 +4896,7 @@ class HouseplanCard extends LitElement {
           <label>${this._t('marker.display_label')}</label>
           <select class="areasel"
             @change=${(e: Event) => (this._markerDialog = { ...d, display: (e.target as HTMLSelectElement).value as any })}>
-            ${[['badge', 'display.badge'], ['ripple', 'display.ripple'], ['icon_ripple', 'display.icon_ripple'], ['value', 'display.value']].map(
+            ${DISPLAY_MODES.map((v) => [v, 'display.' + v] as const).map(
               ([v, k]) => html`<option value=${v} ?selected=${d.display === v}>${this._t(k as any)}</option>`,
             )}
           </select>
@@ -5072,7 +5073,7 @@ class HouseplanCard extends LitElement {
             <span class="opv">${Math.round(d.roomOpacity * 100)}%</span>
           </div>
           <label>${this._t('space.fill_label')}</label>
-          ${[['none', 'fill.none'], ['lqi', 'fill.lqi'], ['light', 'fill.light'], ['temp', 'fill.temp'], ['glow', 'fill.glow']].map(
+          ${SPACE_FILL_MODES.map((v) => [v, 'fill.' + v] as const).map(
             ([v, k]) => html`<label class="srcrow">
               <input type="radio" name="fillmode" .checked=${d.fillMode === v}
                 @change=${() => (this._spaceDialog = { ...d, fillMode: v as any })} />
@@ -5243,7 +5244,7 @@ class HouseplanCard extends LitElement {
 
           <label class="dispsection">${this._t('room.settings_section')}</label>
           <label>${this._t('room.fill_label')}</label>
-          ${([['', 'fill.inherit'], ['none', 'fill.none'], ['lqi', 'fill.lqi'], ['light', 'fill.light'], ['temp', 'fill.temp']] as const).map(
+          ${([['', 'fill.inherit'], ...ROOM_FILL_MODES.map((v) => [v, 'fill.' + v])] as const).map(
             ([v, k]) => html`<label class="srcrow inline">
               <input type="radio" name="rfill" .checked=${this._roomFill === v}
                 @change=${() => { this._roomFill = v as any; this.requestUpdate(); }} />

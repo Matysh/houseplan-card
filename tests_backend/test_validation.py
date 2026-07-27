@@ -305,3 +305,79 @@ def test_collect_plans_never_raises_when_the_directory_disappears(tmp_path, monk
 
     monkeypatch.setattr(type(d), "iterdir", _boom, raising=False)
     assert collect_plans(d, _cfg("/p/a.png"), _cfg("/p/b.png")) == 0
+
+
+# ---------- the editor's options must be storable (issue #3) ----------
+
+
+def _ts_list(name):
+    """Read one `export const NAME = [...] as const;` list out of src/logic.ts.
+
+    Deliberately reads the TypeScript source rather than duplicating the values:
+    a list that lives in two places drifts, which is exactly what happened here.
+    """
+    import re
+
+    src = os.path.join(os.path.dirname(os.path.dirname(__file__)), "src", "logic.ts")
+    with open(src, encoding="utf-8") as fh:
+        text = fh.read()
+    m = re.search(rf"export const {name} = \[(.*?)\] as const;", text, re.S)
+    assert m, f"{name} not found in src/logic.ts"
+    return re.findall(r"'([^']+)'", m.group(1))
+
+
+def _marker(**extra):
+    return {"id": "m1", "binding": "entity:sensor.x", **extra}
+
+
+def test_every_display_mode_the_editor_offers_is_accepted():
+    """issue #3: 'value' was added to the card in v1.26.0 and never to the schema.
+
+    Saving a sensor set to "value instead of an icon" failed with
+    "not a valid value for dictionary value @ data['config']['markers'][n]['display']",
+    and because one bad marker rejects the whole config, the user could not save
+    at all. Reported 2026-07-27.
+    """
+    modes = _ts_list("DISPLAY_MODES")
+    assert "value" in modes, "the regression this test exists for"
+    for mode in modes:
+        v.MARKER_SCHEMA(_marker(display=mode))
+    v.MARKER_SCHEMA(_marker(display=None))
+    with pytest.raises(vol.Invalid):
+        v.MARKER_SCHEMA(_marker(display="wat"))
+
+
+def test_every_tap_action_the_editor_offers_is_accepted():
+    for action in _ts_list("TAP_ACTIONS"):
+        v.MARKER_SCHEMA(_marker(tap_action=action))
+    with pytest.raises(vol.Invalid):
+        v.MARKER_SCHEMA(_marker(tap_action="launch-missiles"))
+
+
+def _space(**settings):
+    return {
+        "id": "f1", "title": "F1", "aspect": 1.4, "view_box": [0, 0, 1, 1],
+        "rooms": [], "settings": settings,
+    }
+
+
+def test_every_fill_mode_the_editor_offers_is_accepted():
+    for mode in _ts_list("SPACE_FILL_MODES"):
+        v.SPACE_SCHEMA(_space(fill_mode=mode))
+    with pytest.raises(vol.Invalid):
+        v.SPACE_SCHEMA(_space(fill_mode="rainbow"))
+
+
+def test_every_room_fill_mode_the_editor_offers_is_accepted():
+    def room(mode):
+        return {
+            "id": "f1", "title": "F1", "aspect": 1.4, "view_box": [0, 0, 1, 1],
+            "rooms": [{"id": "r1", "name": "R", "x": 0.1, "y": 0.1, "w": 0.2, "h": 0.2,
+                       "settings": {"fill_mode": mode}}],
+        }
+
+    for mode in _ts_list("ROOM_FILL_MODES"):
+        v.SPACE_SCHEMA(room(mode))
+    v.SPACE_SCHEMA(room(None))  # inherit from the space
+    with pytest.raises(vol.Invalid):
+        v.SPACE_SCHEMA(room("rainbow"))
