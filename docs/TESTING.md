@@ -65,6 +65,14 @@
       pointer through the tolerant helper; decor shapes cannot be dragged more
       than a quarter of the plan outside the viewBox [auto: smoke_decor]
 
+- [ ] Room climate counts hidden sensors (v1.44.5): a thermometer that is NOT
+      placed on the plan (hidden by curation or by the user) still feeds the
+      room card, the tooltip and the temperature fill; fridges/TRVs still do
+      not; an explicit per-room source still wins [auto: unit devices.test]
+- [ ] Room tooltip wording (v1.44.5): hovering a room shows its name (plus
+      temperature/signal when available) and no longer claims "open the area" —
+      room clicks were removed in v1.40.1 [manual]
+
 ## Environments matrix
 
 Run the *core flows* (marked ★ below) in each environment at least once per minor release:

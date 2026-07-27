@@ -59,7 +59,6 @@
   "markup.delete": "Delete",
   "markup.hint_points": "points: {n} · Esc/Ctrl+Z — undo a dot · close the outline by clicking the first one",
   "markup.hint_start": "click a grid dot to start the outline",
-  "tip.room": "room — open the area",
   "tip.lqi": "average zigbee signal:",
   "info.device_header": "Device on the plan",
   "info.model": "Model",

@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.44.5 — 2026-07-27
+- **Room climate now counts every sensor in the area**, including devices that
+  are not placed on the plan (hidden by curation or by you). Previously the
+  average was taken over the visible icons only, so hiding a thermometer
+  silently removed it from the room card, the tooltip and the temperature fill.
+  Curation still applies (fridges, TRVs and chip-temperature plugs stay out),
+  and an explicit per-room source still wins.
+- The room tooltip no longer says "open the area" — clicking a room stopped
+  navigating in v1.40.1; the link icon on the room card does that.
+
+
 ## v1.44.4 — 2026-07-27 (audit follow-up: B2, B5, L4)
 - **One authorization policy (B2).** The HTTP upload view still failed **open**
   when the config entry was unavailable while the WebSocket path failed closed —

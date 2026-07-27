@@ -22,7 +22,7 @@ import {
   isActiveState, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
 } from './logic';
-import { buildDevices, lqiFor, tempFor, humFor, isHumEntity, areaLights, areaTemp, areaHum, areaLightStats, sourceValue } from './devices';
+import { buildDevices, lqiFor, tempFor, humFor, isHumEntity, areaLights, areaTemp, areaHum, areaLightStats, sourceValue, areaClimate } from './devices';
 import type {
   OpeningCfg,
   RoomCfg, SpaceModel, PdfRef, Marker, ServerConfig, DevItem, CardConfig,
@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.44.4';
+const CARD_VERSION = '1.44.5';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -3654,7 +3654,7 @@ class HouseplanCard extends LitElement {
                 style = st.join(';');
               }
               const tip = (e: MouseEvent) =>
-                this._showTip(e, r.name, this._t('tip.room'),
+                this._showTip(e, r.name, '',
                   showLqi ? this._roomLqi(r.area) : null,
                   this._roomTemp(r));
               const label = !space.bg && !disp.showNames && !this._markup;
@@ -3834,14 +3834,15 @@ class HouseplanCard extends LitElement {
   private _roomTemp(r: RoomCfg): number | null {
     const src = r.settings?.temp_source;
     if (src) return sourceValue(this.hass, src, 'temp');
-    return r.area ? areaTemp(this.hass, this._devices, r.area) : null;
+    // every sensor of the area, placed on the plan or not (field report)
+    return r.area ? areaClimate(this.hass, r.area, 'temp', this._iconRules) : null;
   }
 
   /** Room humidity honouring the tier-3 source override. */
   private _roomHum(r: RoomCfg): number | null {
     const src = r.settings?.hum_source;
     if (src) return sourceValue(this.hass, src, 'hum');
-    return r.area ? areaHum(this.hass, this._devices, r.area) : null;
+    return r.area ? areaClimate(this.hass, r.area, 'hum', this._iconRules) : null;
   }
 
   private _resetRoomDialogFields(): void {

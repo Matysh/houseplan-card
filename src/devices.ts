@@ -162,7 +162,7 @@ export function lightGroups(hass: any, enabled: boolean): { eid: string; name: s
 }
 
 /** Icon with the full fallback chain: name rules → entity device_class → chip. */
-function resolveIcon(hass: any, name: string, model: string | undefined, entIds: string[], rules?: CompiledIconRule[]): string {
+export function resolveIcon(hass: any, name: string, model: string | undefined, entIds: string[], rules?: CompiledIconRule[]): string {
   const byRules = iconFor(name, model, rules);
   if (byRules !== FALLBACK_ICON) return byRules;
   const classes: string[] = [];
@@ -398,6 +398,52 @@ export function areaHum(
   }
   if (!vals.length) return null;
   return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
+}
+
+/**
+ * Room climate from EVERY sensor of the area — including devices that are not
+ * placed on the plan (hidden by curation or by the user). The old helpers read
+ * the visible-icon list, so hiding a thermometer silently removed it from the
+ * room card (field report, 2026-07-27).
+ *
+ * Curation is kept: only devices the card itself recognises as thermometers /
+ * air monitors count, so fridges, TRVs and chip-temperature plugs stay out.
+ * The AUTO icon is used on purpose — a custom marker icon must not change what
+ * a device measures.
+ */
+export function areaClimate(
+  hass: any, area: string, kind: 'temp' | 'hum', rules?: CompiledIconRule[],
+): number | null {
+  if (!area || !hass?.entities) return null;
+  const groups = new Map<string, { name: string; model?: string; ents: string[] }>();
+  for (const [eid, reg] of Object.entries<any>(hass.entities)) {
+    const dev = reg.device_id ? hass.devices?.[reg.device_id] : null;
+    const entArea = reg.area_id || dev?.area_id || null;
+    if (entArea !== area) continue;
+    const key = reg.device_id || eid;
+    if (!groups.has(key)) {
+      const st = hass.states?.[eid];
+      groups.set(key, {
+        name: (dev ? dev.name_by_user || dev.name : reg.name || st?.attributes?.friendly_name || eid) || eid,
+        model: dev?.model,
+        ents: [],
+      });
+    }
+    groups.get(key)!.ents.push(eid);
+  }
+  const vals: number[] = [];
+  for (const g of groups.values()) {
+    const icon = resolveIcon(hass, g.name, g.model, g.ents, rules);
+    const ok = kind === 'temp'
+      ? icon === 'mdi:thermometer' || icon === 'mdi:air-filter'
+      : icon === 'mdi:thermometer' || icon === 'mdi:air-filter' || icon === 'mdi:water-percent';
+    if (!ok) continue;
+    const v = kind === 'temp' ? tempFor(hass, g.ents) : humFor(hass, g.ents);
+    if (v != null) vals.push(v);
+  }
+  if (!vals.length) return null;
+  const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+  return kind === 'temp' ? Math.round(avg * 10) / 10 : Math.round(avg);
 }
 
 /** How many of the area's lights are on: {on, total}, or null without lights. */
