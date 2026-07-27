@@ -29,6 +29,8 @@ export const DEFAULT_ICON_RULES: IconRule[] = [
   { pattern: 'клапан|valve', icon: 'mdi:pipe-valve' },
   { pattern: 'дым|smoke', icon: 'mdi:smoke-detector' },
   { pattern: 'термоголов|trv|radiator', icon: 'mdi:radiator' },
+  { pattern: 'чайник|kettle|термопот', icon: 'mdi:kettle' },
+  { pattern: 'сауна|sauna|harvia|парная|парилк', icon: 'mdi:hot-tub' },
   { pattern: 'температ|temperature|climate sensor', icon: 'mdi:thermometer' },
   { pattern: 'qingping|air monitor|молекул|air quality', icon: 'mdi:air-filter' },
   { pattern: 'штор|curtain|blind|shade', icon: 'mdi:roller-shade' },

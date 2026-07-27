@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.44.5';
+const CARD_VERSION = '1.44.8';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -366,10 +366,7 @@ class HouseplanCard extends LitElement {
     window.addEventListener('keydown', this._keyHandler);
     // signatures expire (24 h); refresh well before that on long-lived screens
     clearInterval(this._resignTimer);
-    this._resignTimer = window.setInterval(() => {
-      this._signed = {};
-      this.requestUpdate();
-    }, 12 * 3600 * 1000);
+    this._resignTimer = window.setInterval(() => this._resign(), 12 * 3600 * 1000);
     if (this._config?.kiosk && Number(this._config?.cycle) > 0) {
       clearInterval(this._cycleTimer);
       this._cycleTimer = window.setInterval(() => this._cycleTick(), Number(this._config.cycle) * 1000);
@@ -596,7 +593,11 @@ class HouseplanCard extends LitElement {
         id: s.id,
         title: s.title,
         vb: [s.view_box[0] * NORM_W, s.view_box[1] * H, s.view_box[2] * NORM_W, s.view_box[3] * H],
-        bg: s.plan_url ? { href: this._display(s.plan_url), x: 0, y: 0, w: NORM_W, h: H } : null,
+        // raw url on purpose: the model is memoized on the config fingerprint,
+        // so a signed url baked in here would freeze BEFORE the signature
+        // arrives and the plan would never load (bug found 2026-07-27).
+        // _display() is called at render time instead.
+        bg: s.plan_url ? { href: s.plan_url, x: 0, y: 0, w: NORM_W, h: H } : null,
         rooms: s.rooms.map(scale),
       };
     });
@@ -797,7 +798,10 @@ class HouseplanCard extends LitElement {
     if (!u.startsWith('/api/houseplan/content/')) return u;
     if (this._signed[u]) return this._signed[u];
     this._requestSignature(u);
-    return u; // first paint may 401; the signature lands and re-renders
+    // Empty, NOT the plain path: an unsigned request to a `requires_auth` view
+    // returns 401 and Home Assistant raises a "failed login attempt" for the
+    // viewer's own IP. Callers skip rendering until the signature lands.
+    return '';
   }
 
   private _requestSignature(url: string): void {
@@ -819,8 +823,25 @@ class HouseplanCard extends LitElement {
     }, 30);
   }
 
-  /** Re-sign everything periodically: a wall tablet outlives a signature. */
+  /**
+   * Re-sign everything periodically: a wall tablet outlives a signature.
+   * The old urls are kept until the new ones arrive — dropping them first would
+   * blank the plan for a round trip (and, if the socket is down, until it heals).
+   */
   private _resignTimer?: number;
+
+  private _resign(): void {
+    const paths = Object.keys(this._signed);
+    if (!paths.length || !this.hass?.callWS) return;
+    this.hass
+      .callWS({ type: 'houseplan/content/sign', paths })
+      .then((r: any) => {
+        if (!r?.urls) return;
+        this._signed = { ...this._signed, ...r.urls };
+        this.requestUpdate();
+      })
+      .catch(() => undefined);
+  }
   private _dirtyPos = new Set<string>();
 
   private _persistLayout = debounce(() => {
@@ -2948,12 +2969,30 @@ class HouseplanCard extends LitElement {
     const wasFirst = d.mode === 'create' && (this._serverCfg?.spaces.length || 0) === 0;
     this._spaceDialog = { ...d, busy: true };
     try {
+      const drawAspect = d.orientation === 'portrait' ? 0.707 : d.orientation === 'square' ? 1 : 1.414;
+      const spaceId = d.mode === 'create' ? 's' + Date.now().toString(36) : d.spaceId!;
+
+      /* Upload BEFORE touching the config, and never hold a reference to a
+         config object across an await. `houseplan/config/get` runs on every
+         `houseplan_config_updated` event and REPLACES `_serverCfg`; a space
+         object captured before the upload is then detached, so plan_url,
+         aspect and settings were written into an orphan and the save shipped
+         the untouched config. Symptom: the file lands on disk, the plan never
+         appears, and re-saving does not help (owner's install, 2026-07-27). */
+      let uploaded: { url: string; aspect: number } | null = null;
+      if (d.source === 'file' && d.planFile) {
+        const resp = await this.hass.callWS({
+          type: 'houseplan/plan/set', space_id: spaceId, ext: d.planFile.ext, data: d.planFile.b64,
+        });
+        uploaded = { url: resp.url, aspect: d.planFile.aspect };
+      }
+
+      // from here on: no awaits until the save, so `sp` cannot be orphaned
       const cfg = this._serverCfg!;
       let sp: any;
-      const drawAspect = d.orientation === 'portrait' ? 0.707 : d.orientation === 'square' ? 1 : 1.414;
       if (d.mode === 'create') {
         sp = {
-          id: 's' + Date.now().toString(36),
+          id: spaceId,
           title: d.title.trim(),
           plan_url: null,
           aspect: d.source === 'draw' ? drawAspect : 1.414,
@@ -2962,15 +3001,13 @@ class HouseplanCard extends LitElement {
         };
         cfg.spaces.push(sp);
       } else {
-        sp = cfg.spaces.find((x: any) => x.id === d.spaceId);
+        sp = cfg.spaces.find((x: any) => x.id === spaceId);
+        if (!sp) throw new Error('space ' + spaceId + ' is gone from the config');
         sp.title = d.title.trim();
       }
-      if (d.source === 'file' && d.planFile) {
-        const resp = await this.hass.callWS({
-          type: 'houseplan/plan/set', space_id: sp.id, ext: d.planFile.ext, data: d.planFile.b64,
-        });
-        sp.plan_url = resp.url;
-        sp.aspect = d.planFile.aspect;
+      if (uploaded) {
+        sp.plan_url = uploaded.url;
+        sp.aspect = uploaded.aspect;
       }
       // switching an existing space to "draw" detaches its background image
       // (the uploaded file stays on disk; only the reference is cleared)
@@ -3050,14 +3087,23 @@ class HouseplanCard extends LitElement {
   private async _saveConfigNow(): Promise<void> {
     this._dropLegacySegments();
     this._cfgEpoch++;
+    // same flag the debounced writer uses: while it is set, an incoming
+    // `houseplan_config_updated` defers its reload instead of replacing the
+    // config under an unfinished write (audit L2, extended to this path)
+    this._cfgWriting = true;
     try {
       const r = await this.hass.callWS({
         type: 'houseplan/config/set', config: this._serverCfg, expected_rev: this._cfgRev,
       });
       this._cfgRev = r?.rev ?? this._cfgRev + 1;
     } catch (e: any) {
-      if (e?.code === 'conflict') await this._reloadConfigOnly();
+      if (e?.code === 'conflict') {
+        this._cfgWriting = false;
+        await this._reloadConfigOnly();
+      }
       throw e;
+    } finally {
+      this._cfgWriting = false;
     }
   }
 
@@ -3603,8 +3649,8 @@ class HouseplanCard extends LitElement {
             ${this._editing && !this._markup
               ? svg`<rect x="${vb[0]}" y="${vb[1]}" width="${vb[2]}" height="${vb[3]}" fill="url(#hp-grid)" pointer-events="none"></rect>`
               : nothing}
-            ${space.bg
-              ? svg`<image href="${space.bg.href}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}" preserveAspectRatio="none" />`
+            ${space.bg && this._display(space.bg.href)
+              ? svg`<image href="${this._display(space.bg.href)}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}" preserveAspectRatio="none" />`
               : nothing}
             ${this._renderDecorLayer()}
             ${(() => {

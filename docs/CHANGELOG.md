@@ -1,5 +1,59 @@
 # Changelog
 
+## v1.44.8 — 2026-07-27
+- **An uploaded plan is actually attached to the space.** `_saveSpaceDialog`
+  held a reference to the space object across the `await` that uploads the
+  image. Every `houseplan_config_updated` event runs `_reloadConfigOnly()`,
+  which *replaces* `_serverCfg` — so the reference became an orphan and
+  `plan_url`, `aspect`, the title and all display settings were written into a
+  detached object while the save shipped the untouched config. The file landed
+  on disk, the plan never appeared, and re-saving could not help. Creating a
+  space in that window lost the space entirely.
+  The upload now happens *before* the config is touched, and nothing is held
+  across an await.
+- **`_saveConfigNow` marks the write in flight** (`_cfgWriting`), like the
+  debounced writer already did, so a remote revision arriving mid-save defers
+  its reload instead of replacing the config underneath it (audit L2 extended
+  to this path).
+- Regression test `demo/smoke_plan_upload_race.mjs` fails on v1.44.7 and passes
+  here.
+
+## v1.44.7 — 2026-07-27
+- **Plan backgrounds are visible again (regression from v1.44.5).** Since the
+  content endpoint requires authentication, the card asks the backend to sign
+  the plan's url — but the signing happened inside the *memoized* space model,
+  which is cached on the config fingerprint. The unsigned url froze in that
+  cache, so the signature never reached the `<image>` element and the plan never
+  loaded. The url is now resolved at render time, outside the cache. (PDF links
+  were unaffected — they already resolved at render time.)
+- **No more "failed login attempt" from your own IP.** While the plan was
+  broken the browser kept requesting the unsigned path, which returns 401 and
+  makes Home Assistant raise a login-attempt warning for the viewer's own
+  address. The card now renders nothing until the signature is in hand, so an
+  unsigned request is never made.
+- **Long-lived screens no longer blink.** The 12-hour re-signing used to drop
+  every signature and wait for new ones; it now keeps the current urls until the
+  replacements arrive, so a wall tablet never shows an empty plan.
+- Regression test `demo/smoke_plan_signed.mjs` fails on v1.44.6 and passes here.
+
+## v1.44.6 — 2026-07-27
+- **Only room *air* counts as room climate.** After v1.44.5 started reading the
+  area registry instead of the visible icons, every hidden temperature entity in
+  the area became a candidate — including ones that measure something other than
+  the air. Three guards now run before averaging: entities marked
+  diagnostic/config are skipped, entities from curated-out integrations are
+  skipped, and entity ids naming a non-air medium are skipped
+  (`water`, `coolant`, `flow_temp`, `return_temp`, `target`, `setpoint`, `chip`,
+  `cpu`, `processor`, `board`, `device_temp`, `batter`, `freezer`, `fridge`,
+  `oven`, `kettle`, `boiler`).
+  On a live 60-area install this removed four real false positives: a NAS
+  processor temperature, the water in a smart kettle, a 90 °C sauna heater and a
+  virtual `better_thermostat` duplicating the real sensor.
+- **New icon rules:** kettles/thermopots get `mdi:kettle`, saunas
+  (`sauna`, `harvia`, `парная`) get `mdi:hot-tub` — previously both fell through
+  to the generic thermometer rule, which is also what made them count as room
+  climate.
+
 ## v1.44.5 — 2026-07-27
 - **Room climate now counts every sensor in the area**, including devices that
   are not placed on the plan (hidden by curation or by you). Previously the

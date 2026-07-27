@@ -400,3 +400,39 @@ test('areaClimate: counts sensors that are NOT on the plan (field report)', () =
   };
   assert.equal(areaClimate(hass2, 'kitchen', 'temp'), null);
 });
+
+test('areaClimate: only ROOM AIR counts (field question, 2026-07-27)', () => {
+  const hass = {
+    devices: {
+      good: { id: 'good', name: 'Датчик температуры спальня', area_id: 'bed' },
+      kettle: { id: 'kettle', name: 'Polaris PWK-1725CGLD', model: 'Kettle', area_id: 'bed' },
+      nas: { id: 'nas', name: 'System Monitor', area_id: 'bed' },
+      sauna: { id: 'sauna', name: 'Сауна Harvia', area_id: 'bed' },
+      trv: { id: 'trv', name: 'Термоголовка в спальне', area_id: 'bed' },
+      bt: { id: 'bt', name: 'Спальня better thermostat', area_id: 'bed' },
+      zb: { id: 'zb', name: 'SLZB-06MU', area_id: 'bed' },
+    },
+    entities: {
+      'sensor.good_t': { device_id: 'good', platform: 'mqtt' },
+      // вода в чайнике
+      'sensor.kettle_current_temperature': { device_id: 'kettle', platform: 'syncleo_kettle' },
+      // температура процессора: и diagnostic, и исключённая интеграция
+      'sensor.nas_processor_temperature': { device_id: 'nas', platform: 'systemmonitor', entity_category: 'diagnostic' },
+      'sensor.sauna_temperature': { device_id: 'sauna', platform: 'harvia_sauna' },
+      'sensor.trv_local_temperature': { device_id: 'trv', platform: 'mqtt' },
+      'sensor.bt_temperature': { device_id: 'bt', platform: 'better_thermostat' },
+      'sensor.zb_core_chip_temp': { device_id: 'zb', platform: 'smlight', entity_category: 'diagnostic' },
+    },
+    states: {
+      'sensor.good_t': { state: '22.0', attributes: { device_class: 'temperature', unit_of_measurement: '°C' } },
+      'sensor.kettle_current_temperature': { state: '95', attributes: { device_class: 'temperature', unit_of_measurement: '°C' } },
+      'sensor.nas_processor_temperature': { state: '61', attributes: { device_class: 'temperature', unit_of_measurement: '°C' } },
+      'sensor.sauna_temperature': { state: '90', attributes: { device_class: 'temperature', unit_of_measurement: '°C' } },
+      'sensor.trv_local_temperature': { state: '24', attributes: { device_class: 'temperature', unit_of_measurement: '°C' } },
+      'sensor.bt_temperature': { state: '22.0', attributes: { device_class: 'temperature', unit_of_measurement: '°C' } },
+      'sensor.zb_core_chip_temp': { state: '48', attributes: { device_class: 'temperature', unit_of_measurement: '°C' } },
+    },
+  };
+  // остаётся ровно один настоящий датчик воздуха
+  assert.equal(areaClimate(hass, 'bed', 'temp'), 22);
+});

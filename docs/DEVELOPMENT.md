@@ -51,9 +51,19 @@ cp dist/houseplan-card.js custom_components/houseplan/frontend/
 
 - SSH: port **323**, root, key `ha_jb` (the user uploads it to the chat; in the sandbox /tmp/ha_jb, chmod 600).
 - JS: `scp -P 323 -i /tmp/ha_jb dist/houseplan-card.js root@ha.jbstudio.pro:/config/custom_components/houseplan/frontend/`
+- **The `frontend/` subfolder is not optional.** `__init__.py` registers
+  `Path(__file__).parent / "frontend" / "houseplan-card.js"` as the static path.
+  A copy dropped next to `__init__.py` (…/houseplan/houseplan-card.js) is served
+  by nobody: md5 on the server matches, the browser still gets the old bundle,
+  and hours go into debugging a bug that was already fixed. Cost this mistake
+  once: 2026-07-27, two releases deployed into the void.
 - The whole integration: tar c custom_components/houseplan (--exclude __pycache__) → tar x on the server.
-- **Verification is mandatory**: `md5sum` locally == on the server == `curl http://homeassistant:8123/houseplan_files/houseplan-card.js | md5sum`
-  (inside the SSH add-on `localhost` is NOT HA, use the host `homeassistant`).
+- **Verification is mandatory, and it must go over HTTP** — comparing md5 against
+  the file you just copied proves nothing about what the browser receives. The
+  one check that counts:
+  `curl -s https://ha.jbstudio.pro/houseplan_files/houseplan-card.js | grep -o '1\.[0-9]*\.[0-9]*' | sort -u`
+  must print the version just built. (Inside the SSH add-on `localhost` is NOT
+  HA — use the host `homeassistant`.)
 - Python changes require an HA restart (`ha core restart`, holds the connection until it finishes, HTTP
   comes back up in 1–3 min). JS changes — just a page refresh (the static path is served
   with no-cache).
