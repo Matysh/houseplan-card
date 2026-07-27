@@ -207,7 +207,9 @@ MARKER_SCHEMA = vol.Schema(
         vol.Optional("glow_radius_cm"): vol.Any(vol.All(vol.Coerce(float), vol.Range(min=10, max=10000)), None),
         vol.Optional("is_light"): vol.Any(bool, None),
         vol.Optional("room_id"): vol.Any(str, None),
-        vol.Optional("display"): vol.Any("badge", "ripple", "icon_ripple", None),
+        # keep in sync with DISPLAY_MODES in src/logic.ts — a cross-language test
+        # asserts every option the editor offers is accepted here (issue #3)
+        vol.Optional("display"): vol.Any("badge", "ripple", "icon_ripple", "value", None),
         vol.Optional("ripple_color"): vol.Any(str, None),
         vol.Optional("ripple_size"): vol.Any(vol.All(vol.Coerce(float), vol.Range(min=1, max=20)), None),
         vol.Optional("size"): vol.Any(vol.All(vol.Coerce(float), vol.Range(min=0.2, max=6)), None),
