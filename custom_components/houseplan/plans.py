@@ -63,14 +63,23 @@ def collect_plans(
       * any other unreferenced plan file is a rejected or abandoned upload, and
         is removed only once PLAN_ORPHAN_TTL_S has passed: a fresh one may
         belong to a transaction that has not committed yet.
+
+    Never raises: the configuration is already stored by the time this runs, so
+    a file-system problem must not turn a durable commit into a failed call.
     """
-    if not plans_dir.is_dir():
-        return 0
     new_refs = plan_refs(new_cfg)
     old_refs = plan_refs(old_cfg)
     cutoff = (time.time() if now is None else now) - PLAN_ORPHAN_TTL_S
     removed = 0
-    for item in sorted(plans_dir.iterdir()):
+    try:
+        items = sorted(plans_dir.iterdir()) if plans_dir.is_dir() else []
+    except OSError as err:
+        # The directory can vanish or turn unreadable between the check and the
+        # walk. This is housekeeping running behind a commit that is already
+        # durable, so it reports "nothing collected" instead of failing (R4-1).
+        _LOGGER.warning("House Plan: could not list %s: %s", plans_dir, err)
+        return 0
+    for item in items:
         if not item.is_file() or item.name in new_refs or not is_plan_file(item.name):
             continue
         superseded = item.name in old_refs

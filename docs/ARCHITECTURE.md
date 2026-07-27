@@ -194,7 +194,7 @@ to a transaction still in flight. The `.` between id and token is load-bearing â
 a space id cannot contain one, so `<space>.<token>.<ext>` can never be confused
 with the files of a space whose name merely starts the same way.
 
-**Signed content urls are batched and aged** (reviews R2-2, R3-2). `ContentSigner`
+**Signed content urls are batched, aged and deduplicated** (reviews R2-2, R3-2, R4-2). `ContentSigner`
 in `src/signing.ts` is the single implementation, used by both cards; the
 duplicate inside houseplan-space-card signed correctly and never handed the
 result to its renderer, which is the failure mode a second copy invites. `MAX_SIGN_PATHS`
@@ -204,6 +204,10 @@ signatures carry the time they were issued â€” an aging one keeps rendering whil
 its replacement is fetched, an expired one is dropped rather than served (it
 would 401 and raise a failed-login warning). The cache is pruned to the urls the
 live config references, so it cannot grow past the cap through history alone.
+Queued and in-flight are distinct states: a render happening while a request is
+out must not queue the same url again, a failure backs off rather than retrying
+on the next frame, and an in-flight entry expires after `SIGN_INFLIGHT_MS` so a
+promise that never settles cannot block retries forever.
 
 **Room climate is one pass per hass snapshot** (review R2-3). `areaClimateMap()`
 classifies the whole registry once and returns `Map<area, {temp, hum}>`; the

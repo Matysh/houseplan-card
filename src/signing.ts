@@ -1,5 +1,11 @@
 import { contentUrl, chunk, MAX_SIGN_PATHS, SIGN_TTL_MS, SIGN_REFRESH_MS } from './logic';
 
+/** A request older than this is presumed lost, and the url may be asked again. */
+export const SIGN_INFLIGHT_MS = 15000;
+/** After a failure, wait before retrying; doubles up to the cap. */
+export const SIGN_BACKOFF_MIN_MS = 2000;
+export const SIGN_BACKOFF_MAX_MS = 60000;
+
 /**
  * Signed urls for the authenticated content endpoint, shared by both cards.
  *
@@ -19,14 +25,23 @@ import { contentUrl, chunk, MAX_SIGN_PATHS, SIGN_TTL_MS, SIGN_REFRESH_MS } from 
  *   replacement is fetched while the old url keeps rendering, past SIGN_TTL_MS
  *   the entry is dropped rather than served (it would 401 and raise a
  *   failed-login warning for the viewer's own IP);
- * - `pending` is always released, so one failed request does not wedge a url
- *   forever.
+ * - a url that is queued or already in flight is not asked for again: renders
+ *   are frequent and a slow socket used to turn every one of them into another
+ *   `content/sign` call (review R4-2). An in-flight entry expires after
+ *   SIGN_INFLIGHT_MS so a promise that never settles cannot block retries
+ *   forever, and a failure backs off instead of retrying on the next frame.
  */
 export class ContentSigner {
   private signed: Record<string, { url: string; at: number }> = {};
-  private pending = new Set<string>();
+  /** Waiting for the batch timer to fire. */
+  private queued = new Set<string>();
+  /** Sent and not settled yet: url -> when the request went out. */
+  private inFlight = new Map<string, number>();
+  /** After a failure: when this url may be asked again, and the current delay. */
+  private retry = new Map<string, { notBefore: number; delay: number }>();
   private batchTimer?: ReturnType<typeof setTimeout>;
   private resignTimer?: ReturnType<typeof setInterval>;
+  private disposed = false;
 
   /**
    * @param onUpdate schedule a re-render (a signature arriving changes the DOM)
@@ -36,15 +51,18 @@ export class ContentSigner {
 
   /** Start the periodic re-sign. `referenced` prunes the cache on each tick. */
   start(hass: () => any, referenced: () => Set<string>): void {
+    this.disposed = false; // an element can be reconnected after a disconnect
     this.stopTimer();
     this.resignTimer = setInterval(() => this.resign(hass(), referenced()), SIGN_REFRESH_MS / 2);
   }
 
   /** Release every timer; the cache survives a reconnect, the timers must not. */
   dispose(): void {
+    this.disposed = true;
     this.stopTimer();
     clearTimeout(this.batchTimer);
-    this.pending.clear();
+    this.queued.clear();
+    this.inFlight.clear();
   }
 
   private stopTimer(): void {
@@ -72,13 +90,18 @@ export class ContentSigner {
   }
 
   private request(hass: any, url: string): void {
-    if (this.pending.has(url) || !hass?.callWS) return;
-    this.pending.add(url);
+    if (!hass?.callWS || this.queued.has(url)) return;
+    const now = this.now();
+    const sent = this.inFlight.get(url);
+    if (sent !== undefined && now - sent < SIGN_INFLIGHT_MS) return; // already asking
+    const back = this.retry.get(url);
+    if (back && now < back.notBefore) return;                        // still backing off
+    this.queued.add(url);
     clearTimeout(this.batchTimer);
     // batch: switching space asks for several urls in the same tick
     this.batchTimer = setTimeout(() => {
-      const paths = [...this.pending];
-      this.pending.clear();
+      const paths = [...this.queued];
+      this.queued.clear();
       this.sign(hass, paths);
     }, 30);
   }
@@ -86,21 +109,32 @@ export class ContentSigner {
   private sign(hass: any, paths: string[]): void {
     if (!paths.length || !hass?.callWS) return;
     for (const batch of chunk(paths, MAX_SIGN_PATHS)) {
+      const sentAt = this.now();
+      for (const p of batch) this.inFlight.set(p, sentAt);
       hass
         .callWS({ type: 'houseplan/content/sign', paths: batch })
         .then((r: any) => {
-          if (!r?.urls) return;
+          for (const p of batch) this.retry.delete(p);
+          if (!r?.urls || this.disposed) return;
           const at = this.now();
           const next = { ...this.signed };
           for (const [k, v] of Object.entries<string>(r.urls)) next[k] = { url: v, at };
           this.signed = next;
           this.onUpdate();
         })
-        .catch(() => undefined) // a retry happens on the next render
+        .catch(() => {
+          // back off rather than retry on the very next frame: a socket that
+          // is refusing sign requests would otherwise be hammered per render
+          const now = this.now();
+          for (const p of batch) {
+            const prev = this.retry.get(p)?.delay || 0;
+            const delay = Math.min(SIGN_BACKOFF_MAX_MS, prev ? prev * 2 : SIGN_BACKOFF_MIN_MS);
+            this.retry.set(p, { notBefore: now + delay, delay });
+          }
+        })
         .finally(() => {
-          // never leave a url wedged in `pending`: the first failure would
-          // otherwise make it unrequestable for the life of the page (R3-2)
-          for (const p of batch) this.pending.delete(p);
+          // release only our own attempt: a later one may have superseded it
+          for (const p of batch) if (this.inFlight.get(p) === sentAt) this.inFlight.delete(p);
         });
     }
   }
@@ -117,11 +151,17 @@ export class ContentSigner {
       if (referenced.has(k) && now - v.at < SIGN_TTL_MS) kept[k] = v;
     }
     this.signed = kept;
+    this.retry.clear(); // a scheduled refresh is a fresh chance for everything
     this.sign(hass, Object.keys(kept));
   }
 
   /** Test/debug view of the cache. */
   get entries(): Record<string, { url: string; at: number }> {
     return this.signed;
+  }
+
+  /** Test/debug view of what is currently being asked for. */
+  get inFlightUrls(): string[] {
+    return [...this.inFlight.keys()];
   }
 }

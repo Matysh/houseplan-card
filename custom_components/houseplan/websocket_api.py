@@ -363,11 +363,18 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             return
         new_rev = current_rev + 1
         await rt.config_store.async_save({"config": msg["config"], "rev": new_rev})
-        # still holding the lock: the file system is not part of the store's
-        # transaction, so collection has to be pinned to this commit (R3-1)
-        await hass.async_add_executor_job(
-            collect_plans, Path(hass.config.path(PLANS_DIR)), data.get("config"), msg["config"]
-        )
+        # Still holding the lock: the file system is not part of the store's
+        # transaction, so collection has to be pinned to this commit (R3-1).
+        # It is best-effort housekeeping behind an already durable write — a
+        # failure here must not withhold the event and the success response,
+        # or the client retries an edit the server has already accepted and
+        # gets a conflict for its trouble (R4-1).
+        try:
+            await hass.async_add_executor_job(
+                collect_plans, Path(hass.config.path(PLANS_DIR)), data.get("config"), msg["config"]
+            )
+        except Exception:  # noqa: BLE001 — see above: the commit stands regardless
+            _LOGGER.exception("House Plan: collecting superseded plan files failed")
     hass.bus.async_fire("houseplan_config_updated", {"rev": new_rev})
     # refresh repair issues (broken plan references) without waiting for a restart
     entry = get_entry(hass)

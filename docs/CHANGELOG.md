@@ -1,5 +1,27 @@
 # Changelog
 
+## v1.45.2 — 2026-07-27 (hardening from the v1.45.1 review: R4-1, R4-2)
+- **A failed cleanup no longer reports an accepted save as an error (R4-1).**
+  Collecting superseded plan files runs after the configuration is already
+  stored, but an error while listing the directory — it can vanish or turn
+  unreadable between the check and the walk — propagated out of `config/set`.
+  The client then saw a failure for a revision the server had committed, and its
+  retry came back as a conflict. The collector now reports "nothing collected"
+  instead of raising, and `config/set` logs and proceeds: the event fires and
+  the new revision is returned.
+- **One signing request per url instead of one per render (R4-2).** The pending
+  set was cleared when the batch went out rather than when it came back, so
+  while a `content/sign` call was in flight every re-render queued another one —
+  six calls where one was needed, and far worse on a socket that is slow rather
+  than merely busy. Queued and in-flight are now separate states, a failure
+  backs off (2 s doubling to 60 s) instead of retrying on the next frame, and a
+  request that never settles stops blocking retries after 15 s. A late answer
+  arriving after the card was torn down no longer triggers a render.
+- Tests: eight unit tests for the signer with hand-settled promises (four fail
+  on v1.45.1), a backend test asserting a broken collector still yields a
+  successful save with a usable revision, and the pure-collector test extended
+  to a disappearing directory.
+
 ## v1.45.1 — 2026-07-27 (follow-up review of v1.45.0: R3-1, R3-2)
 - **Collecting old plan files moved into the config transaction (R3-1, high).**
   v1.45.0 made the upload safe but handed the deletion to the client: after a

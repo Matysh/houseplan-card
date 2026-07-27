@@ -51,19 +51,26 @@ const res = await page.evaluate(async () => {
   await new Promise((r) => setTimeout(r, 120));
   out.hrefAfterFailedSign = await href();
 
-  // 2) повтор после ошибки: pending освобождён, вторая попытка проходит
+  // 2) сразу повтора нет: после ошибки подпись уходит в backoff (ревью R4-2),
+  //    иначе нестабильный сокет получал бы по запросу на каждый рендер
+  for (let i = 0; i < 5; i++) { card.requestUpdate(); await card.updateComplete; }
+  await new Promise((r) => setTimeout(r, 150));
+  out.noRetryStorm = signCalls === 1;
+
+  // 3) после выдержки повтор проходит
+  await new Promise((r) => setTimeout(r, 2100));
   card.requestUpdate(); await card.updateComplete;
   await new Promise((r) => setTimeout(r, 150));
   out.hrefAfterRetry = await href();
-  out.retried = signCalls >= 2;
+  out.retried = signCalls === 2;
 
-  // 3) повторный рендер не теряет подпись и не просит её заново
+  // 4) повторный рендер не теряет подпись и не просит её заново
   const before = signCalls;
   card.requestUpdate(); await card.updateComplete;
   out.hrefStable = await href();
   out.noExtraSignOnRerender = signCalls === before;
 
-  // 4) протухшая подпись не отдаётся, стареющая — отдаётся, пока едет замена
+  // 5) протухшая подпись не отдаётся, стареющая — отдаётся, пока едет замена
   const ent = card._signer.entries;
   ent[raw] = { url: raw + '?authSig=OLD', at: Date.now() - 25 * 3600 * 1000 };
   card.requestUpdate(); await card.updateComplete;
@@ -80,6 +87,7 @@ const res = await page.evaluate(async () => {
 // зафиксировано прогоном на v1.45.1 и сверено с кодом
 checkAll(res, {
   hrefAfterFailedSign: null,
+  noRetryStorm: true,
   hrefAfterRetry: '/api/houseplan/content/plans/_/f1.tok.svg?authSig=SIG2',
   retried: true,
   hrefStable: '/api/houseplan/content/plans/_/f1.tok.svg?authSig=SIG2',

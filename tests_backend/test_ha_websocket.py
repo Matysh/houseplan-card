@@ -396,6 +396,47 @@ async def test_collection_ignores_files_that_are_not_plans(
     assert (plans / "readme").is_file()
 
 
+async def test_a_failing_collector_does_not_undo_an_accepted_save(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, monkeypatch
+) -> None:
+    """review R4-1: garbage collection runs behind an already durable write.
+
+    If it raised, the client got an error for a revision the store had already
+    accepted — and its retry then failed with `conflict`, because the server had
+    moved on. The commit stands and the event fires regardless.
+    """
+    from custom_components.houseplan import websocket_api as wsapi
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+
+    events = []
+    hass.bus.async_listen("houseplan_config_updated", lambda ev: events.append(ev.data))
+
+    def _boom(*_a, **_k):
+        raise OSError("the plans directory is on fire")
+
+    monkeypatch.setattr(wsapi, "collect_plans", _boom)
+
+    cfg = await _cfg([{"id": "r5", "plan_url": None}])
+    ok = await _save(client, cfg, 0)
+    assert ok["success"], "an accepted revision must be reported as accepted"
+    rev = ok["result"]["rev"]
+
+    await hass.async_block_till_done()
+    assert events and events[-1]["rev"] == rev, "the update event still fires"
+
+    # the store really holds the new revision, and the reported rev is usable
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    got = await client.receive_json()
+    assert got["result"]["rev"] == rev
+    assert [sp["id"] for sp in got["result"]["config"]["spaces"]] == ["r5"]
+
+    monkeypatch.undo()
+    again = await _save(client, cfg, rev)
+    assert again["success"], "the next CAS on the reported revision goes through"
+
+
 async def test_content_signed_path_opens_without_a_bearer_header(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator, hass_client_no_auth
 ) -> None:
