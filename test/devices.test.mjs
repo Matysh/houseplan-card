@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildDevices, lightGroups, primaryEntity, lqiFor, tempFor, humFor, areaLights, areaTemp, areaHum, areaLightStats, sourceValue , areaClimate } from '../test-build/devices.js';
+import { buildDevices, lightGroups, primaryEntity, lqiFor, tempFor, humFor, areaLights, areaTemp, areaHum, areaLightStats, sourceValue , areaClimate, areaClimateMap } from '../test-build/devices.js';
 import { compileIconRules, iconFor } from '../test-build/rules.js';
 
 /** Minimal fake hass around the pieces buildDevices reads. */
@@ -435,4 +435,51 @@ test('areaClimate: only ROOM AIR counts (field question, 2026-07-27)', () => {
   };
   // остаётся ровно один настоящий датчик воздуха
   assert.equal(areaClimate(hass, 'bed', 'temp'), 22);
+});
+
+test('areaClimateMap: one registry pass for all areas (review R2-3)', () => {
+  // 60 зон × 2000 сущностей — размер боевой установки из отчёта
+  const devices = {}; const entities = {}; const states = {};
+  for (let a = 0; a < 60; a++) {
+    for (let i = 0; i < 33; i++) {
+      const dev = `d${a}_${i}`;
+      const eid = `sensor.d${a}_${i}_temperature`;
+      devices[dev] = { id: dev, name: `Датчик температуры ${a}.${i}`, area_id: `area${a}` };
+      entities[eid] = { device_id: dev, platform: 'mqtt' };
+      states[eid] = { state: String(20 + a * 0.1), attributes: { device_class: 'temperature', unit_of_measurement: '°C' } };
+    }
+  }
+  // считаем ОБХОДЫ реестра: Object.entries дёргает ownKeys ровно один раз
+  let scans = 0;
+  const traced = new Proxy(entities, { ownKeys(t) { scans++; return Reflect.ownKeys(t); } });
+  const hass = { devices, states, entities: traced };
+
+
+  const map = areaClimateMap(hass);
+  assert.equal(scans, 1, 'реестр обходится один раз на снимок hass');
+  assert.equal(map.size, 60);
+  assert.equal(map.get('area0').temp, 20);
+  assert.equal(map.get('area59').temp, 25.9);
+  assert.equal(map.get('area0').hum, null);
+  assert.equal(map.get('nope'), undefined);
+
+  // старый путь: отдельный обход на каждую комнату и каждую величину
+  scans = 0;
+  for (let a = 0; a < 60; a++) { areaClimate(hass, `area${a}`, 'temp'); areaClimate(hass, `area${a}`, 'hum'); }
+  assert.equal(scans, 120, 'wrapper считает по одной зоне — им нельзя пользоваться в рендере');
+});
+
+test('areaClimateMap: температура и влажность живут в одной записи', () => {
+  const hass = {
+    devices: { q: { id: 'q', name: 'Qingping Air Monitor', area_id: 'hall' } },
+    entities: {
+      'sensor.q_t': { device_id: 'q', platform: 'xiaomi' },
+      'sensor.q_h': { device_id: 'q', platform: 'xiaomi' },
+    },
+    states: {
+      'sensor.q_t': { state: '21.4', attributes: { device_class: 'temperature', unit_of_measurement: '°C' } },
+      'sensor.q_h': { state: '48', attributes: { device_class: 'humidity', unit_of_measurement: '%' } },
+    },
+  };
+  assert.deepEqual(areaClimateMap(hass).get('hall'), { temp: 21.4, hum: 48 });
 });

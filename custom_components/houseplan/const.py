@@ -11,9 +11,14 @@ PLANS_DIR = "houseplan/plans"  # relative to the HA configuration directory
 FILES_URL = "/houseplan_files/files"
 # authenticated read path (audit B1): /api/houseplan/content/<plans|files>/<sub>/<name>
 CONTENT_URL = "/api/houseplan/content"
+
+# How many paths one houseplan/content/sign call may carry. The card batches to
+# the same number; a client that sends more used to get a partial answer with no
+# way to tell which paths were dropped (review R2-2).
+MAX_SIGN_PATHS = 200
 FILES_DIR = "houseplan/files"
 CONF_ADMIN_ONLY = "admin_only"
-VERSION = "1.44.8"
+VERSION = "1.45.0"
 
 DEFAULT_CONFIG: dict = {
     "spaces": [],

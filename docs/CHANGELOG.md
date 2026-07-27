@@ -1,5 +1,38 @@
 # Changelog
 
+## v1.45.0 — 2026-07-27 (external review of v1.44.8: R2-1, R2-2, R2-3)
+- **A rejected save can no longer damage a working plan (R2-1, high).** The
+  plan file was written to its final name — deleting the previous extension on
+  the way — *before* the revision-checked config write. If that write was then
+  rejected (revision conflict, validation, lost connection), the live plan had
+  already been replaced, or the stored config was left pointing at a file that
+  no longer existed. Uploads now go to a versioned name
+  (`<space>.<token>.<ext>`) and nothing is deleted; the card asks the backend to
+  drop the superseded files only after the config write is accepted. A crash in
+  between leaves one orphan, which the next successful upload collects.
+- **Signed urls no longer expire for good on long-lived screens (R2-2).** The
+  backend signs at most 200 paths per request and silently ignores the rest,
+  while the card sent its whole cache in one call and treated any cached entry
+  as valid forever. Past 200 attachments the later ones stopped being refreshed
+  and, 24 hours in, quietly broke. Requests are now batched to the shared limit,
+  entries carry their age (aging urls keep working while a replacement is
+  fetched, expired ones are never served), and the cache is pruned to the urls
+  the current config still references.
+- **Room climate is computed once per update instead of once per room (R2-3).**
+  Each room asked for temperature and humidity separately, and every ask
+  rescanned the entire entity registry: with 60 rooms and 2000 entities that is
+  ~120 traversals per render, enough to spend a whole frame on metadata that had
+  not changed. One pass now builds a map for all areas, keyed on the Home
+  Assistant snapshot, so fresh states are always observed while unrelated
+  re-renders cost nothing. Measured in the smoke: 133 registry scans per update
+  before, 2 after — and no longer growing with the number of rooms.
+- `smoke_ux_fixes` wrote its screenshot to a hard-coded `/tmp` path and could
+  not run on Windows; it uses the OS temp directory now.
+- New tests: `smoke_plan_upload_reject` (cleanup happens only after an accepted
+  save), `smoke_sign_cap` (201 urls, batching, pruning, expiry),
+  `smoke_climate_once` (scan count does not grow with rooms), plus backend
+  coverage for the versioned plan names and unit tests for the new helpers.
+
 ## v1.44.8 — 2026-07-27
 - **An uploaded plan is actually attached to the space.** `_saveSpaceDialog`
   held a reference to the space object across the `await` that uploads the

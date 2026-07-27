@@ -1036,6 +1036,48 @@ export function outlineWithout(poly: number[][], cuts: number[][], eps = 1e-6): 
  * authenticated content endpoint (audit B1). Applied on READ, so stored
  * configs keep working without a migration.
  */
+/**
+ * How many paths one `houseplan/content/sign` call may carry. The backend caps
+ * the request at the same number and silently ignores the rest, so a client
+ * that sends more gets a partial answer with no way to tell which paths were
+ * dropped — on a wall tablet those entries then expire for good (review R2-2).
+ * Keep in sync with MAX_SIGN_PATHS in custom_components/houseplan/const.py.
+ */
+export const MAX_SIGN_PATHS = 200;
+
+/** A signature is valid for 24 h; refresh once two thirds of it is gone. */
+export const SIGN_TTL_MS = 24 * 3600 * 1000;
+export const SIGN_REFRESH_MS = 16 * 3600 * 1000;
+
+/** Split a list into chunks of at most `size` (used for signing batches). */
+export function chunk<T>(items: T[], size: number): T[][] {
+  const n = Math.max(1, Math.floor(size));
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += n) out.push(items.slice(i, i + n));
+  return out;
+}
+
+/**
+ * Every content url the given config still refers to, normalised through
+ * `contentUrl`. The signature cache is pruned to this set: without it the cache
+ * only grows — replaced plans and deleted attachments keep their entries, and
+ * the total can cross the per-request cap even when the live config is small.
+ */
+export function referencedContentUrls(cfg: any): Set<string> {
+  const out = new Set<string>();
+  const add = (u: unknown) => {
+    if (typeof u !== 'string' || !u) return;
+    const c = contentUrl(u);
+    if (c.startsWith('/api/houseplan/content/')) out.add(c);
+  };
+  for (const sp of cfg?.spaces || []) {
+    add(sp?.plan_url);
+    for (const m of sp?.markers || []) for (const p of m?.pdfs || []) add(p?.url);
+  }
+  for (const m of cfg?.markers || []) for (const p of m?.pdfs || []) add(p?.url);
+  return out;
+}
+
 export function contentUrl(url: string | null | undefined): string {
   if (!url) return '';
   if (url.startsWith('/houseplan_files/plans/')) {

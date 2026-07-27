@@ -12,7 +12,7 @@ import {
   swipeTarget, clampScale,
   migratePdfUrls,
   roomFillModeOf,
-  contentUrl,
+  contentUrl, chunk, referencedContentUrls, MAX_SIGN_PATHS,
   interiorPoint,
   segmentCm, formatLength, roomEdges, roomPoly, pointOnBoundary, pointStrictlyInside, roomsOverlap,
   mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices,
@@ -880,4 +880,31 @@ test('segKey: one wall, one key at any precision (audit G3)', () => {
   assert.equal(segKey([0, 0], [1, 1], 3), segKey([1, 1], [0, 0], 3));
   // разные стены — разные ключи
   assert.notEqual(segKey([0, 0], [1, 1]), segKey([0, 0], [2, 2]));
+});
+
+test('chunk / referencedContentUrls: signing batches and cache pruning (review R2-2)', () => {
+  assert.deepEqual(chunk([1, 2, 3, 4, 5], 2), [[1, 2], [3, 4], [5]]);
+  assert.deepEqual(chunk([], 200), []);
+  assert.equal(chunk(new Array(201).fill(0), MAX_SIGN_PATHS).length, 2);
+  assert.deepEqual(chunk([1, 2, 3], 0), [[1], [2], [3]]); // never an infinite loop
+
+  const cfg = {
+    spaces: [
+      { id: 'f1', plan_url: '/houseplan_files/plans/f1.svg' },   // legacy, rewritten on read
+      { id: 'f2', plan_url: '/api/houseplan/content/plans/_/f2.abc.png' },
+      { id: 'f3', plan_url: null },
+      { id: 'f4', plan_url: '/local/not-ours.png' },             // not our endpoint
+    ],
+    markers: [
+      { id: 'm1', pdfs: [{ url: '/houseplan_files/files/m1/manual.pdf' }, { url: '' }] },
+      { id: 'm2' },
+    ],
+  };
+  assert.deepEqual([...referencedContentUrls(cfg)].sort(), [
+    '/api/houseplan/content/files/m1/manual.pdf',
+    '/api/houseplan/content/plans/_/f1.svg',
+    '/api/houseplan/content/plans/_/f2.abc.png',
+  ]);
+  assert.equal(referencedContentUrls(null).size, 0);
+  assert.equal(referencedContentUrls({}).size, 0);
 });
