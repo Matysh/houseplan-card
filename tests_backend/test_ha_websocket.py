@@ -106,101 +106,6 @@ async def test_plan_set_validates(hass: HomeAssistant, hass_ws_client: WebSocket
     assert name.startswith("s1.") and name.endswith(".png") and len(name.split(".")) == 3
 
 
-async def test_plan_upload_does_not_touch_the_previous_file(
-    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
-) -> None:
-    """review R2-1: a rejected config write must leave the stored plan intact.
-
-    The upload used to overwrite "<space>.<ext>" (and unlink the other
-    extension) BEFORE the revision-checked config write, so a conflict left the
-    live plan replaced — or, with a new extension, pointing at a deleted file.
-    """
-    from pathlib import Path
-
-    from custom_components.houseplan.const import PLANS_DIR
-
-    await _setup(hass)
-    client = await hass_ws_client(hass)
-    plans = Path(hass.config.path(PLANS_DIR))
-    plans.mkdir(parents=True, exist_ok=True)
-    # the HA test config dir is shared across a module: start from a known state
-    for stale in plans.glob("s9.*"):
-        stale.unlink()
-    legacy = plans / "s9.svg"  # what an older version stored, still referenced
-    legacy.write_bytes(b"<svg>old</svg>")
-
-    await client.send_json_auto_id(
-        {"type": "houseplan/plan/set", "space_id": "s9", "ext": "png", "data": "aGVsbG8="}
-    )
-    first = (await client.receive_json())["result"]["url"].rsplit("/", 1)[-1]
-
-    # pretend the config write was rejected: no cleanup call follows
-    assert legacy.read_bytes() == b"<svg>old</svg>"
-    assert (plans / first).is_file()
-
-    # a second attempt neither overwrites the first nor the legacy file
-    await client.send_json_auto_id(
-        {"type": "houseplan/plan/set", "space_id": "s9", "ext": "png", "data": "d29ybGQ="}
-    )
-    second = (await client.receive_json())["result"]["url"].rsplit("/", 1)[-1]
-    assert second != first
-    assert (plans / first).read_bytes() == b"hello"
-    assert (plans / second).read_bytes() == b"world"
-    assert legacy.is_file()
-
-    # config accepted → cleanup keeps exactly the referenced file
-    await client.send_json_auto_id(
-        {"type": "houseplan/plan/cleanup", "space_id": "s9", "keep": second}
-    )
-    resp = await client.receive_json()
-    assert resp["success"] and resp["result"]["removed"] == 2
-    assert (plans / second).is_file()
-    assert not legacy.exists() and not (plans / first).exists()
-
-
-async def test_plan_cleanup_never_reaches_another_space(
-    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
-) -> None:
-    """A space id cannot contain '.', so "<space>.<token>.<ext>" is unambiguous.
-
-    With '-' as the separator, cleaning "f1" would have eaten the files of a
-    space called "f1-attic".
-    """
-    from pathlib import Path
-
-    from custom_components.houseplan.const import PLANS_DIR
-
-    await _setup(hass)
-    client = await hass_ws_client(hass)
-    plans = Path(hass.config.path(PLANS_DIR))
-    plans.mkdir(parents=True, exist_ok=True)
-    for name in ("f1.aaaa1111.png", "f1.bbbb2222.png", "f1-attic.cccc3333.png", "f1-attic.png", "notes.txt"):
-        (plans / name).write_bytes(b"x")
-
-    await client.send_json_auto_id(
-        {"type": "houseplan/plan/cleanup", "space_id": "f1", "keep": "f1.bbbb2222.png"}
-    )
-    resp = await client.receive_json()
-    assert resp["success"] and resp["result"]["removed"] == 1
-    assert not (plans / "f1.aaaa1111.png").exists()
-    assert (plans / "f1.bbbb2222.png").is_file()
-    assert (plans / "f1-attic.cccc3333.png").is_file()
-    assert (plans / "f1-attic.png").is_file()
-    assert (plans / "notes.txt").is_file()
-
-
-async def test_plan_cleanup_rejects_a_bad_space_id(
-    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
-) -> None:
-    await _setup(hass)
-    client = await hass_ws_client(hass)
-    await client.send_json_auto_id(
-        {"type": "houseplan/plan/cleanup", "space_id": "../evil", "keep": "x.png"}
-    )
-    resp = await client.receive_json()
-    assert not resp["success"] and resp["error"]["code"] == "invalid_space_id"
-
-
 async def test_admin_check_fails_closed(hass, hass_ws_client):
     """audit B2/T4: with no config entry the policy is unknown — deny writes.
 
@@ -276,6 +181,219 @@ async def test_files_migrate_copies_and_reports_mapping(
     resp2 = await client.receive_json()
     assert resp2["success"] and resp2["result"]["removed"] is True
     assert not await hass.async_add_executor_job(lambda: os.path.isdir(src))
+
+
+async def _cfg(spaces: list[dict]) -> dict:
+    """Minimal accepted configuration with the given spaces."""
+    return {
+        "spaces": [
+            {"id": sp["id"], "title": sp["id"], "plan_url": sp.get("plan_url"),
+             "aspect": 1.4, "view_box": [0, 0, 1, 1], "rooms": []}
+            for sp in spaces
+        ],
+        "markers": [],
+    }
+
+
+async def _save(client, config, expected_rev):
+    await client.send_json_auto_id(
+        {"type": "houseplan/config/set", "config": config, "expected_rev": expected_rev}
+    )
+    return await client.receive_json()
+
+
+async def _upload(client, space_id, data=b"x", ext="png"):
+    import base64 as _b64
+
+    await client.send_json_auto_id({
+        "type": "houseplan/plan/set", "space_id": space_id, "ext": ext,
+        "data": _b64.b64encode(data).decode(),
+    })
+    resp = await client.receive_json()
+    return resp["result"]["url"], resp["result"]["url"].rsplit("/", 1)[-1]
+
+
+async def test_plan_upload_does_not_touch_the_previous_file(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """review R2-1: a rejected config write must leave the stored plan intact.
+
+    The upload used to overwrite "<space>.<ext>" (and unlink the other
+    extension) BEFORE the revision-checked config write, so a conflict left the
+    live plan replaced — or, with a new extension, pointing at a deleted file.
+    """
+    from pathlib import Path
+
+    from custom_components.houseplan.const import PLANS_DIR
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    plans = Path(hass.config.path(PLANS_DIR))
+    plans.mkdir(parents=True, exist_ok=True)
+    for stale in plans.glob("s9.*"):
+        stale.unlink()
+    legacy = plans / "s9.svg"  # what an older version stored, still referenced
+    legacy.write_bytes(b"<svg>old</svg>")
+
+    url0 = "/api/houseplan/content/plans/_/s9.svg"
+    resp = await _save(client, await _cfg([{"id": "s9", "plan_url": url0}]), 0)
+    rev = resp["result"]["rev"]
+    assert legacy.is_file()
+
+    url1, first = await _upload(client, "s9", b"hello")
+    # config write rejected (stale revision): nothing on disk may change
+    bad = await _save(client, await _cfg([{"id": "s9", "plan_url": url1}]), rev - 1)
+    assert not bad["success"] and bad["error"]["code"] == "conflict"
+    assert legacy.read_bytes() == b"<svg>old</svg>"
+    assert (plans / first).read_bytes() == b"hello"
+
+    # a second attempt neither overwrites the first nor the legacy file
+    url2, second = await _upload(client, "s9", b"world")
+    assert second != first
+    assert (plans / first).read_bytes() == b"hello"
+    assert legacy.is_file()
+
+    # config accepted → the superseded file goes, the referenced one stays.
+    # `first` is a rejected upload: it is young, so it is kept for now.
+    ok = await _save(client, await _cfg([{"id": "s9", "plan_url": url2}]), rev)
+    assert ok["success"]
+    assert (plans / second).read_bytes() == b"world"
+    assert not legacy.exists(), "the superseded plan is collected"
+    assert (plans / first).is_file(), "a fresh unreferenced upload is NOT collected"
+
+
+async def test_late_commit_of_one_client_never_deletes_another_client_s_plan(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """review R3-1: collection belongs to the commit, not to a client's request.
+
+    With the previous `plan/cleanup(keep=...)` command, this interleaving left
+    the accepted configuration pointing at a file that had just been deleted:
+
+        A: upload PA, config/set(PA) accepted
+        B: upload PB, config/set(PB) accepted
+        A: cleanup(keep=PA)  ->  removes PB
+
+    Collection now runs inside config/set under the write lock, so a late
+    client cannot express an opinion about a revision it never saw.
+    """
+    from pathlib import Path
+
+    from custom_components.houseplan.const import PLANS_DIR
+
+    await _setup(hass)
+    a = await hass_ws_client(hass)
+    b = await hass_ws_client(hass)
+    plans = Path(hass.config.path(PLANS_DIR))
+    plans.mkdir(parents=True, exist_ok=True)
+    for stale in plans.glob("r1.*"):
+        stale.unlink()
+
+    url0, p0 = await _upload(a, "r1", b"zero")
+    rev = (await _save(a, await _cfg([{"id": "r1", "plan_url": url0}]), 0))["result"]["rev"]
+
+    url_a, pa = await _upload(a, "r1", b"aaa")
+    rev_a = (await _save(a, await _cfg([{"id": "r1", "plan_url": url_a}]), rev))["result"]["rev"]
+    assert not (plans / p0).exists(), "P0 was superseded by A"
+
+    url_b, pb = await _upload(b, "r1", b"bbb")
+    ok = await _save(b, await _cfg([{"id": "r1", "plan_url": url_b}]), rev_a)
+    assert ok["success"]
+
+    # the accepted configuration points at PB, and PB is on disk
+    assert (plans / pb).read_bytes() == b"bbb"
+    assert not (plans / pa).exists(), "PA was superseded by B's commit"
+
+
+async def test_commit_does_not_collect_another_client_s_uncommitted_upload(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """review R3-1, second interleaving: B uploads, A commits, then B commits.
+
+    A's commit must not remove PB — B has not written its configuration yet, so
+    PB is unreferenced but belongs to a live transaction. Age is the guard.
+    """
+    from pathlib import Path
+
+    from custom_components.houseplan.const import PLANS_DIR
+
+    await _setup(hass)
+    a = await hass_ws_client(hass)
+    b = await hass_ws_client(hass)
+    plans = Path(hass.config.path(PLANS_DIR))
+    plans.mkdir(parents=True, exist_ok=True)
+    for stale in plans.glob("r2.*"):
+        stale.unlink()
+
+    url0, _p0 = await _upload(a, "r2", b"zero")
+    rev = (await _save(a, await _cfg([{"id": "r2", "plan_url": url0}]), 0))["result"]["rev"]
+
+    _url_b, pb = await _upload(b, "r2", b"bbb")     # B uploads, does not commit
+    url_a, pa = await _upload(a, "r2", b"aaa")
+    rev_a = (await _save(a, await _cfg([{"id": "r2", "plan_url": url_a}]), rev))["result"]["rev"]
+    assert (plans / pb).is_file(), "an uncommitted upload survives someone else's commit"
+
+    # B now commits on top of A's revision — its file is still there
+    ok = await _save(b, await _cfg([{"id": "r2", "plan_url": "/api/houseplan/content/plans/_/" + pb}]), rev_a)
+    assert ok["success"]
+    assert (plans / pb).read_bytes() == b"bbb"
+    assert not (plans / pa).exists()
+
+
+async def test_abandoned_uploads_are_collected_once_old(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """A rejected upload must not accumulate forever — but only age may free it."""
+    import os
+    import time
+    from pathlib import Path
+
+    from custom_components.houseplan.const import PLANS_DIR, PLAN_ORPHAN_TTL_S
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    plans = Path(hass.config.path(PLANS_DIR))
+    plans.mkdir(parents=True, exist_ok=True)
+    for stale in plans.glob("r3.*"):
+        stale.unlink()
+
+    url0, p0 = await _upload(client, "r3", b"zero")
+    rev = (await _save(client, await _cfg([{"id": "r3", "plan_url": url0}]), 0))["result"]["rev"]
+
+    _url, orphan = await _upload(client, "r3", b"abandoned")
+    old = time.time() - PLAN_ORPHAN_TTL_S - 60
+    os.utime(plans / orphan, (old, old))
+
+    ok = await _save(client, await _cfg([{"id": "r3", "plan_url": url0}]), rev)
+    assert ok["success"]
+    assert not (plans / orphan).exists(), "an aged, unreferenced upload is collected"
+    assert (plans / p0).is_file(), "the referenced plan is never touched"
+
+
+async def test_collection_ignores_files_that_are_not_plans(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """The plans directory may hold nothing else, but be sure we only take ours."""
+    import os
+    import time
+    from pathlib import Path
+
+    from custom_components.houseplan.const import PLANS_DIR, PLAN_ORPHAN_TTL_S
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    plans = Path(hass.config.path(PLANS_DIR))
+    plans.mkdir(parents=True, exist_ok=True)
+    old = time.time() - PLAN_ORPHAN_TTL_S - 60
+    for name in ("notes.txt", "deep.name.with.dots.png", "readme"):
+        (plans / name).write_bytes(b"x")
+        os.utime(plans / name, (old, old))
+
+    rev = (await _save(client, await _cfg([{"id": "r4", "plan_url": None}]), 0))["result"]["rev"]
+    assert rev
+    assert (plans / "notes.txt").is_file()
+    assert (plans / "deep.name.with.dots.png").is_file()
+    assert (plans / "readme").is_file()
 
 
 async def test_content_signed_path_opens_without_a_bearer_header(

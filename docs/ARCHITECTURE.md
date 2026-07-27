@@ -178,19 +178,26 @@ double click → properties dialog. In markup mode the "Opening" tool handles cl
 | `houseplan/config/get` | — | `{config, rev}` |
 | `houseplan/config/set` | `config`, `expected_rev?` | `{ok, rev}` / err `conflict`; event `houseplan_config_updated` |
 | `houseplan/plan/set` | `space_id`, `ext` (svg/png/jpg/webp), `data` (b64, ≤8 MB) | `{ok, url}` — writes `<space>.<token>.<ext>`, deletes nothing |
-| `houseplan/plan/cleanup` | `space_id`, `keep` | `{ok, removed}` — call ONLY after the config write referencing `keep` was accepted |
 | `houseplan/file/set` | `marker_id`, `filename`, `data` (b64) | `{ok,url,name}` (legacy, WS limit) |
 
-**Plan uploads are copy-on-write** (review R2-1). The file system is not part
-of the config's optimistic-locking transaction, so nothing that is currently
-referenced may be overwritten or deleted before the config CAS succeeds: the
-upload writes a new versioned name, the card commits the url, and only then
-asks for `plan/cleanup`. A crash between the two leaves one orphan file, which
-the next successful upload removes. The `.` between id and token is load-bearing
-— a space id cannot contain one, so `<space>.<token>.<ext>` can never be
-confused with the files of a space whose name merely starts the same way.
+**Plan uploads are copy-on-write, and collection belongs to the commit**
+(reviews R2-1, R3-1). The file system is not part of the config's
+optimistic-locking transaction, so nothing referenced may be overwritten or
+deleted before the CAS succeeds: the upload writes a new versioned name and
+removes nothing. Deciding what may then go is *not* a client's call — a cleanup
+request cannot be ordered against another client's commit, and a delayed one
+deletes a plan that was just saved. So `config/set` collects itself, inside its
+write lock, from the pair of configurations that bracket the commit
+(`plans.collect_plans`): superseded files go immediately, other unreferenced
+uploads only once `PLAN_ORPHAN_TTL_S` has passed, since a fresh one may belong
+to a transaction still in flight. The `.` between id and token is load-bearing —
+a space id cannot contain one, so `<space>.<token>.<ext>` can never be confused
+with the files of a space whose name merely starts the same way.
 
-**Signed content urls are batched and aged** (review R2-2). `MAX_SIGN_PATHS`
+**Signed content urls are batched and aged** (reviews R2-2, R3-2). `ContentSigner`
+in `src/signing.ts` is the single implementation, used by both cards; the
+duplicate inside houseplan-space-card signed correctly and never handed the
+result to its renderer, which is the failure mode a second copy invites. `MAX_SIGN_PATHS`
 (200) is a shared contract between `logic.ts` and `const.py`: the backend caps a
 request there and says nothing about the rest, so the card must chunk. Cached
 signatures carry the time they were issued — an aging one keeps rendering while

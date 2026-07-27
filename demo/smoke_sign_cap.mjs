@@ -32,7 +32,7 @@ const res = await page.evaluate(async () => {
   for (const p of pdfs) c._display(p.url);
   await new Promise((r) => setTimeout(r, 120));
   out.firstBatches = [...batchSizes];
-  out.signedAfterFirst = Object.keys(c._signed).length;
+  out.signedAfterFirst = Object.keys(c._signer.entries).length;
 
   // переподписывание: все 201, снова батчами, ни одна запись не остаётся старой
   batchSizes.length = 0;
@@ -40,7 +40,7 @@ const res = await page.evaluate(async () => {
   c._resign();
   await new Promise((r) => setTimeout(r, 120));
   out.resignBatches = [...batchSizes];
-  const vals = Object.values(c._signed).map((v) => v.url);
+  const vals = Object.values(c._signer.entries).map((v) => v.url);
   out.allRefreshed = vals.length === 201 && vals.every((u) => u.endsWith('authSig=R2'));
 
   // ссылка, исчезнувшая из конфига, выбывает из кэша и не занимает слот
@@ -50,15 +50,16 @@ const res = await page.evaluate(async () => {
   round = 3;
   c._resign();
   await new Promise((r) => setTimeout(r, 120));
-  out.prunedTo = Object.keys(c._signed).length;
+  out.prunedTo = Object.keys(c._signer.entries).length;
   out.pruneBatches = [...batchSizes];
 
   // протухшая подпись не отдаётся: она вернула бы 401 и «попытку входа»
   const one = pdfs[0].url;
-  c._signed = { ...c._signed, [one]: { url: one + '?authSig=OLD', at: Date.now() - 25 * 3600 * 1000 } };
+  c._signer.entries[one] = { url: one + '?authSig=OLD', at: Date.now() - 25 * 3600 * 1000 };
   out.expiredNotServed = c._display(one) === '';
+  out.expiredDropped = c._signer.entries[one] === undefined;
   // а стареющая, но ещё живая — отдаётся, пока едет замена
-  c._signed = { ...c._signed, [one]: { url: one + '?authSig=AGING', at: Date.now() - 20 * 3600 * 1000 } };
+  c._signer.entries[one] = { url: one + '?authSig=AGING', at: Date.now() - 20 * 3600 * 1000 };
   out.agingStillServed = c._display(one) === one + '?authSig=AGING';
   return out;
 });
@@ -71,6 +72,7 @@ checkAll(res, {
   prunedTo: 5,
   pruneBatches: [5],
   expiredNotServed: true,
+  expiredDropped: true,
   agingStillServed: true,
 });
 await finish(browser);

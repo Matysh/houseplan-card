@@ -234,6 +234,18 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       are only reachable through /api/houseplan/content/… with a session; the
       old /houseplan_files/plans|files paths return 404 after a restart; old
       stored URLs keep working (rewritten on read) [auto+manual]
+- [ ] Two editors, one plan (v1.45.1, review R3-1): with the same space open in
+      two tabs, attach a background in each in turn — the plan last saved is the
+      one served, and neither commit deletes the other's file. A rejected upload
+      disappears on a later save, not immediately
+      [auto: backend test_late_commit_of_one_client_never_deletes_another_client_s_plan,
+      test_commit_does_not_collect_another_client_s_uncommitted_upload,
+      test_abandoned_uploads_are_collected_once_old]
+- [ ] Static card background (v1.45.1, review R3-2): a houseplan-space-card on a
+      dashboard shows the plan image, not an empty stage; the browser never
+      requests the unsigned path and Home Assistant logs no failed login. A
+      failed signing request is retried on the next render
+      [auto: smoke_space_card_bg]
 - [ ] Rejected save leaves the plan intact (v1.45.0, review R2-1): attach a new
       background, make the config write fail (a second tab saving first is
       enough) — the previously stored plan is still served, with the same or a

@@ -1,5 +1,32 @@
 # Changelog
 
+## v1.45.1 — 2026-07-27 (follow-up review of v1.45.0: R3-1, R3-2)
+- **Collecting old plan files moved into the config transaction (R3-1, high).**
+  v1.45.0 made the upload safe but handed the deletion to the client: after a
+  successful save the card asked the backend to remove everything except the
+  file it had just committed. Two open editors could not be ordered — a delayed
+  request from one client deleted the plan the other had just saved, and the
+  accepted configuration was left pointing at nothing, which is the exact damage
+  copy-on-write was added to prevent. The `houseplan/plan/cleanup` command is
+  gone. `config/set` now collects inside its own write lock, comparing the
+  configuration it replaced with the one it accepted: a file the old revision
+  referenced and the new one does not is removed, and any other unreferenced
+  upload is left alone until it is an hour old, because a fresh one may belong
+  to a transaction that has not committed yet.
+- **The static space card shows its plan background again (R3-2).** It signed
+  the url and then threw the result away — `getCardSize()` mutated a throwaway
+  model while `render()` rebuilt its own from the config — so the `<image>` kept
+  requesting the protected path and got a 401 on every render. Both cards now
+  share one signer, which also gives the static card the batching, the
+  expiry handling and the periodic re-signing the main card already had. Its
+  pending set is released in `finally`, so a single failed request no longer
+  wedges a url for the life of the page.
+- New tests: five backend cases for the two-client interleavings from the report
+  (late commit, uncommitted upload, aged orphan, foreign files, rejected save),
+  the collector extracted to a pure module and unit-tested, and
+  `smoke_space_card_bg` for the signed background — it fails on v1.45.0 with the
+  raw url in the DOM.
+
 ## v1.45.0 — 2026-07-27 (external review of v1.44.8: R2-1, R2-2, R2-3)
 - **A rejected save can no longer damage a working plan (R2-1, high).** The
   plan file was written to its final name — deleting the previous extension on

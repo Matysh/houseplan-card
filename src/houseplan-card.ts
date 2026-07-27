@@ -21,8 +21,9 @@ import {
   spaceDisplayOf, roomFillStyle, fillColorsOf, DEFAULT_FILL_COLORS, type FillColors,
   isActiveState, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
-  MAX_SIGN_PATHS, SIGN_TTL_MS, SIGN_REFRESH_MS, chunk, referencedContentUrls,
+  referencedContentUrls,
 } from './logic';
+import { ContentSigner } from './signing';
 import { buildDevices, lqiFor, tempFor, humFor, isHumEntity, areaLights, areaTemp, areaHum, areaLightStats, sourceValue, areaClimateMap, type AreaClimate } from './devices';
 import type {
   OpeningCfg,
@@ -33,7 +34,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.45.0';
+const CARD_VERSION = '1.45.1';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -366,8 +367,7 @@ class HouseplanCard extends LitElement {
     super.connectedCallback();
     window.addEventListener('keydown', this._keyHandler);
     // signatures expire (24 h); refresh well before that on long-lived screens
-    clearInterval(this._resignTimer);
-    this._resignTimer = window.setInterval(() => this._resign(), 12 * 3600 * 1000);
+    this._signer.start(() => this.hass, () => referencedContentUrls(this._serverCfg));
     if (this._config?.kiosk && Number(this._config?.cycle) > 0) {
       clearInterval(this._cycleTimer);
       this._cycleTimer = window.setInterval(() => this._cycleTick(), Number(this._config.cycle) * 1000);
@@ -381,8 +381,7 @@ class HouseplanCard extends LitElement {
     clearTimeout(this._kioskDotsTimer);
     clearTimeout(this._kioskHoldTimer);
     clearTimeout(this._reloadRetry);
-    clearTimeout(this._signTimer);
-    clearInterval(this._resignTimer);
+    this._signer.dispose();
     clearTimeout(this._toastTimer);
     this._saveConfigDebounced.flush(); // never leave an edit unsent on teardown
     window.removeEventListener('hashchange', this._onHashChange);
@@ -789,85 +788,18 @@ class HouseplanCard extends LitElement {
    * Bearer header or an `authSig` signed path, and an element sends neither.
    * So the card asks the backend to sign what it is about to display.
    */
-  private _signed: Record<string, { url: string; at: number }> = {};
-  private _signPending = new Set<string>();
-  private _signTimer?: number;
+  private _signer = new ContentSigner(() => this.requestUpdate());
 
   /** Display url: a signature we hold and still trust, else nothing. */
   private _display(url: string | null | undefined): string {
-    const u = contentUrl(url);
-    if (!u.startsWith('/api/houseplan/content/')) return u;
-    const hit = this._signed[u];
-    const age = hit ? Date.now() - hit.at : Infinity;
-    // Past its lifetime the signature is worthless: serving it would 401 and
-    // raise a failed-login warning, exactly what an unsigned path does.
-    if (age >= SIGN_TTL_MS) delete this._signed[u];
-    else if (age < SIGN_REFRESH_MS) return hit.url;
-    else {
-      // aging but still valid: keep showing it while a fresh one is fetched
-      this._requestSignature(u);
-      return hit.url;
-    }
-    this._requestSignature(u);
-    // Empty, NOT the plain path: an unsigned request to a `requires_auth` view
-    // returns 401 and Home Assistant raises a "failed login attempt" for the
-    // viewer's own IP. Callers skip rendering until the signature lands.
-    return '';
+    return this._signer.display(this.hass, url);
   }
 
-  private _requestSignature(url: string): void {
-    if (this._signPending.has(url) || !this.hass?.callWS) return;
-    this._signPending.add(url);
-    clearTimeout(this._signTimer);
-    // batch: a plan switch asks for several urls in the same tick
-    this._signTimer = window.setTimeout(() => {
-      const paths = [...this._signPending];
-      this._signPending.clear();
-      this._signBatches(paths);
-    }, 30);
-  }
-
-  /**
-   * Sign in batches the backend will actually answer in full. It caps a request
-   * at MAX_SIGN_PATHS and drops the rest without saying so, so one oversized
-   * call leaves entries that never get refreshed and silently expire (R2-2).
-   */
-  private _signBatches(paths: string[]): void {
-    if (!paths.length || !this.hass?.callWS) return;
-    for (const batch of chunk(paths, MAX_SIGN_PATHS)) {
-      this.hass
-        .callWS({ type: 'houseplan/content/sign', paths: batch })
-        .then((r: any) => {
-          if (!r?.urls) return;
-          const now = Date.now();
-          const next = { ...this._signed };
-          for (const [k, v] of Object.entries<string>(r.urls)) next[k] = { url: v, at: now };
-          this._signed = next;
-          this.requestUpdate();
-        })
-        .catch(() => undefined); // unsigned urls simply keep failing; no loop
-    }
-  }
-
-  /**
-   * Re-sign periodically: a wall tablet outlives a signature.
-   * The old urls are kept until the new ones arrive — dropping them first would
-   * blank the plan for a round trip (and, if the socket is down, until it heals).
-   */
-  private _resignTimer?: number;
-
+  /** Re-sign what the live config still references (wall tablets outlive one). */
   private _resign(): void {
-    // prune first: an entry for a plan that was replaced months ago must not
-    // consume a slot in the (capped) signing request
-    const live = referencedContentUrls(this._serverCfg);
-    const now = Date.now();
-    const kept: Record<string, { url: string; at: number }> = {};
-    for (const [k, v] of Object.entries(this._signed)) {
-      if (live.has(k) && now - v.at < SIGN_TTL_MS) kept[k] = v;
-    }
-    this._signed = kept;
-    this._signBatches(Object.keys(kept));
+    this._signer.resign(this.hass, referencedContentUrls(this._serverCfg));
   }
+
   private _dirtyPos = new Set<string>();
 
   private _persistLayout = debounce(() => {
@@ -3057,11 +2989,11 @@ class HouseplanCard extends LitElement {
         label_light: d.labelLight,
       };
       sp.cell_cm = Number.isFinite(d.cellCm) && d.cellCm > 0 ? d.cellCm : 5;
+      // Nothing to clean up from here: the backend collects the superseded
+      // file inside the same locked transaction that accepted this config
+      // (review R3-1). A cleanup driven from the client could not be ordered
+      // against another client's commit and deleted its freshly saved plan.
       await this._saveConfigNow();
-      // Only now is the new file authoritative: the config write was accepted,
-      // so the previous plan can go. Before this point nothing on disk was
-      // touched, which is what makes a rejected save harmless (review R2-1).
-      if (uploaded) this._cleanupPlanFiles(spaceId, uploaded.url);
       this._spaceDialog = null;
       if (d.mode === 'create') this._space = sp.id;
       this._regSignature = '';
@@ -3137,19 +3069,6 @@ class HouseplanCard extends LitElement {
     }
   }
 
-
-  /**
-   * Remove plan files superseded by `keepUrl`. Fire-and-forget on purpose: the
-   * user's edit is already saved, and a failed cleanup only leaves a stray file
-   * that the next successful upload collects (review R2-1).
-   */
-  private _cleanupPlanFiles(spaceId: string, keepUrl: string): void {
-    const keep = keepUrl.split('?')[0].split('/').pop();
-    if (!keep || !this.hass?.callWS) return;
-    this.hass
-      .callWS({ type: 'houseplan/plan/cleanup', space_id: spaceId, keep })
-      .catch(() => undefined);
-  }
 
   // ================= FLOORS IMPORT WIZARD =================
 

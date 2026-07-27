@@ -1,8 +1,10 @@
-// Граница транзакции загрузки подложки (ревью R2-1).
+// Граница транзакции загрузки подложки (ревью R2-1, уточнено в R3-1).
 // Файл плана пишется на диск ДО проверки ревизии конфига, поэтому отвергнутое
-// сохранение не имеет права трогать сохранённый план. Проверяем контракт со
-// стороны карточки: удаление старых файлов (houseplan/plan/cleanup) уходит
-// ТОЛЬКО после принятого config/set — и никогда после отказа.
+// сохранение не имеет права трогать сохранённый план. Со стороны карточки
+// контракт теперь такой: она НЕ управляет удалением файлов вообще — уборку
+// делает сам config/set под блокировкой (клиент не может упорядочить свою
+// уборку относительно чужого коммита, R3-1). Здесь проверяем, что карточка
+// не отправляет никаких команд удаления и корректно ведёт себя при отказе.
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 const res = await page.evaluate(async () => {
@@ -18,7 +20,8 @@ const res = await page.evaluate(async () => {
       uploads++;
       return { ok: true, url: '/api/houseplan/content/plans/_/' + m.space_id + '.tok' + uploads + '.png' };
     }
-    if (m.type === 'houseplan/plan/cleanup') { cleanups.push(m); return { ok: true, removed: 1 }; }
+    // любая команда удаления файлов от клиента — нарушение контракта R3-1
+    if (m.type === 'houseplan/plan/cleanup' || m.type === 'houseplan/plan/delete') { cleanups.push(m); return { ok: true }; }
     if (m.type === 'houseplan/config/set') {
       if (rejectSave) { const e = new Error('conflict'); e.code = 'conflict'; throw e; }
       c.__sent = m.config; return { ok: true, rev: 77 };
@@ -48,11 +51,11 @@ const res = await page.evaluate(async () => {
   c._spaceDialog = null; await c.updateComplete;
   await attach();
   out.cleanupsAfterAccept = cleanups.length;
-  out.cleanupSpace = cleanups[0]?.space_id;
-  out.cleanupKeep = cleanups[0]?.keep;
   const f1 = (c.__sent?.spaces || []).find((s) => s.id === 'f1');
   out.savedPlanUrl = f1?.plan_url;
-  out.keepMatchesSavedUrl = !!f1 && f1.plan_url.endsWith('/' + cleanups[0]?.keep);
+  out.dialogClosedOnAccept = c._spaceDialog === null;
+  // вторая загрузка не переиспользует имя первой: старый файл жив до коммита
+  out.versionedNames = uploads === 2;
   return out;
 });
 // зафиксировано прогоном на v1.45.0 и сверено с кодом
@@ -60,10 +63,9 @@ checkAll(res, {
   uploadedOnReject: true,
   cleanupsAfterReject: 0,
   dialogStaysOpenOnReject: true,
-  cleanupsAfterAccept: 1,
-  cleanupSpace: 'f1',
-  cleanupKeep: 'f1.tok2.png',
+  cleanupsAfterAccept: 0,
   savedPlanUrl: '/api/houseplan/content/plans/_/f1.tok2.png',
-  keepMatchesSavedUrl: true,
+  dialogClosedOnAccept: true,
+  versionedNames: true,
 });
 await finish(browser);

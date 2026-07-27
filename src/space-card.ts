@@ -10,6 +10,8 @@ import { cardStyles } from './styles';
 import { renderSpaceStatic, spaceModels } from './space-render';
 import { getConfig, onConfigChange, cachedSnapshot, type HpConfigSnapshot } from './config-store';
 import { t, langOf, type Lang } from './i18n';
+import { ContentSigner } from './signing';
+import { referencedContentUrls } from './logic';
 import './space-editor';
 
 const fireEvent = (node: EventTarget, type: string, detail?: unknown) => {
@@ -73,11 +75,14 @@ class HouseplanSpaceCard extends LitElement {
       this._snap = null;
       this.requestUpdate();
     });
+    // a dashboard on a wall tablet outlives a 24 h signature
+    this._signer.start(() => this.hass, () => this._referenced());
   }
 
   public disconnectedCallback(): void {
     this._unsub?.();
     this._unsub = undefined;
+    this._signer.dispose();
     super.disconnectedCallback();
   }
 
@@ -109,8 +114,6 @@ class HouseplanSpaceCard extends LitElement {
 
   public getCardSize(): number {
     const models = spaceModels(this._snap?.config || null);
-    // B1 follow-up: the plan <image> needs a signed url in a browser session
-    for (const m of models) if (m.bg?.href) this._signBg(m.bg);
     const sp = models.find((s) => s.id === this._config?.space);
     if (sp) {
       const ratio = sp.vb[3] / sp.vb[2]; // h/w
@@ -123,25 +126,16 @@ class HouseplanSpaceCard extends LitElement {
     return html`<ha-card><div class="hp-static-error">${msg}</div></ha-card>`;
   }
 
-  private _signedBg: Record<string, string> = {};
-  private _signBgPending = new Set<string>();
+  /**
+   * Same signer as the main card (review R3-2). The previous copy here signed
+   * the url and then threw it away: `getCardSize()` mutated a throwaway model
+   * while `render()` rebuilt its own from the config, so the <image> kept
+   * asking for the raw protected path and got a 401 on every render.
+   */
+  private _signer = new ContentSigner(() => this.requestUpdate());
 
-  /** Ask the backend for a signed content url and swap it in when it arrives. */
-  private _signBg(bg: { href: string }): void {
-    const raw = bg.href.split('?authSig=')[0];
-    if (!raw.startsWith('/api/houseplan/content/')) return;
-    if (this._signedBg[raw]) { bg.href = this._signedBg[raw]; return; }
-    if (this._signBgPending.has(raw) || !this.hass?.callWS) return;
-    this._signBgPending.add(raw);
-    this.hass
-      .callWS({ type: 'houseplan/content/sign', paths: [raw] })
-      .then((r: any) => {
-        const url = r?.urls?.[raw];
-        if (!url) return;
-        this._signedBg = { ...this._signedBg, [raw]: url };
-        this.requestUpdate();
-      })
-      .catch(() => undefined);
+  private _referenced(): Set<string> {
+    return referencedContentUrls(this._snap?.config);
   }
 
   protected render(): TemplateResult | typeof nothing {
@@ -159,6 +153,8 @@ class HouseplanSpaceCard extends LitElement {
       spaceId,
       iconSize: this._config.icon_size,
       lang: this._lang,
+      // resolved at render time: a url baked in earlier would be the unsigned one
+      displayUrl: (raw) => this._signer.display(this.hass, raw),
     });
     if (!stage) {
       return this._errorCard(t(this._lang, 'space_card.not_found', { id: spaceId }));

@@ -16,9 +16,15 @@ CONTENT_URL = "/api/houseplan/content"
 # the same number; a client that sends more used to get a partial answer with no
 # way to tell which paths were dropped (review R2-2).
 MAX_SIGN_PATHS = 200
+
+# An uploaded plan that no accepted configuration references is collected only
+# once it is this old. Age is a race guard, not a policy: a plan uploaded
+# seconds ago may belong to another client's transaction that has not written
+# its configuration yet (review R3-1).
+PLAN_ORPHAN_TTL_S = 3600
 FILES_DIR = "houseplan/files"
 CONF_ADMIN_ONLY = "admin_only"
-VERSION = "1.45.0"
+VERSION = "1.45.1"
 
 DEFAULT_CONFIG: dict = {
     "spaces": [],
