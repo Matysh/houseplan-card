@@ -39,6 +39,7 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_plan_set)
     websocket_api.async_register_command(hass, ws_files_migrate)
     websocket_api.async_register_command(hass, ws_files_cleanup)
+    websocket_api.async_register_command(hass, ws_content_sign)
 
 
 def _runtime(hass: HomeAssistant, connection, msg_id: int) -> HouseplanData | None:
@@ -208,6 +209,46 @@ async def ws_files_migrate(hass: HomeAssistant, connection, msg: dict[str, Any])
         connection.send_error(msg["id"], "io_error", f"Could not copy marker files: {err}")
         return
     connection.send_result(msg["id"], {"ok": True, "mapping": mapping, "copied": len(mapping)})
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "houseplan/content/sign",
+        vol.Required("paths"): [str],
+    }
+)
+@websocket_api.async_response
+async def ws_content_sign(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
+    """Sign content paths so the BROWSER can fetch them.
+
+    Home Assistant authenticates HTTP requests by a Bearer header or an
+    `authSig` signed path — there is no cookie auth. An <image href> inside SVG
+    and a plain <a href> can send neither, so after the content endpoint became
+    `requires_auth` the plan backgrounds and PDF links returned 401 (audit
+    follow-up B1 regression, 2026-07-27 — reproduced live).
+
+    The card asks for signatures and uses the signed urls for display.
+    """
+    from datetime import timedelta
+
+    from homeassistant.components.http.auth import async_sign_path
+
+    out: dict[str, str] = {}
+    token_id = getattr(connection, "refresh_token_id", None)
+    for path in msg["paths"][:200]:
+        if not isinstance(path, str) or not path.startswith(CONTENT_URL + "/"):
+            continue  # only ever sign our own content endpoint
+        clean = path.split("?", 1)[0]
+        try:
+            try:
+                signed = async_sign_path(hass, clean, timedelta(hours=24), refresh_token_id=token_id)
+            except TypeError:  # older HA signature: (hass, refresh_token_id, path, expiration)
+                signed = async_sign_path(hass, token_id, clean, timedelta(hours=24))
+        except Exception as err:  # noqa: BLE001 — signing must never break the card
+            _LOGGER.warning("House Plan: could not sign %s: %s", clean, err)
+            continue
+        out[path] = signed
+    connection.send_result(msg["id"], {"urls": out})
 
 
 @websocket_api.websocket_command(

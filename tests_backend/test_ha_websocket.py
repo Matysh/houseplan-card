@@ -177,3 +177,47 @@ async def test_files_migrate_copies_and_reports_mapping(
     resp2 = await client.receive_json()
     assert resp2["success"] and resp2["result"]["removed"] is True
     assert not await hass.async_add_executor_job(lambda: os.path.isdir(src))
+
+
+async def test_content_signed_path_opens_without_a_bearer_header(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, hass_client_no_auth
+) -> None:
+    """B1 follow-up: a browser <image>/<a> sends no Authorization header.
+
+    The unsigned url must be refused and the signed one must work — otherwise
+    plan backgrounds and PDF links 401 on a real dashboard (reproduced live,
+    2026-07-27).
+    """
+    import os
+
+    from custom_components.houseplan.const import CONTENT_URL, PLANS_DIR
+
+    await _setup(hass)
+    plans = hass.config.path(PLANS_DIR)
+
+    def _write() -> None:
+        os.makedirs(plans, exist_ok=True)
+        with open(os.path.join(plans, "s1.png"), "wb") as fh:
+            fh.write(b"PNGDATA")
+
+    await hass.async_add_executor_job(_write)
+    path = f"{CONTENT_URL}/plans/_/s1.png"
+
+    client = await hass_ws_client(hass)
+    await client.send_json_auto_id({"type": "houseplan/content/sign", "paths": [path]})
+    resp = await client.receive_json()
+    assert resp["success"], resp
+    signed = resp["result"]["urls"][path]
+    assert "authSig=" in signed
+
+    http = await hass_client_no_auth()
+    assert (await http.get(path)).status == 401          # unsigned: refused
+    ok = await http.get(signed)
+    assert ok.status == 200 and await ok.read() == b"PNGDATA"
+
+    # only our own endpoint may be signed
+    await client.send_json_auto_id(
+        {"type": "houseplan/content/sign", "paths": ["/api/other/secret"]}
+    )
+    resp2 = await client.receive_json()
+    assert resp2["success"] and resp2["result"]["urls"] == {}

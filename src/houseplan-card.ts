@@ -348,6 +348,12 @@ class HouseplanCard extends LitElement {
   public connectedCallback(): void {
     super.connectedCallback();
     window.addEventListener('keydown', this._keyHandler);
+    // signatures expire (24 h); refresh well before that on long-lived screens
+    clearInterval(this._resignTimer);
+    this._resignTimer = window.setInterval(() => {
+      this._signed = {};
+      this.requestUpdate();
+    }, 12 * 3600 * 1000);
     if (this._config?.kiosk && Number(this._config?.cycle) > 0) {
       clearInterval(this._cycleTimer);
       this._cycleTimer = window.setInterval(() => this._cycleTick(), Number(this._config.cycle) * 1000);
@@ -361,6 +367,9 @@ class HouseplanCard extends LitElement {
     clearTimeout(this._kioskDotsTimer);
     clearTimeout(this._kioskHoldTimer);
     clearTimeout(this._reloadRetry);
+    clearTimeout(this._signTimer);
+    clearInterval(this._resignTimer);
+    clearTimeout(this._toastTimer);
     this._saveConfigDebounced.flush(); // never leave an edit unsent on teardown
     window.removeEventListener('hashchange', this._onHashChange);
     clearTimeout(this._holdTimer);
@@ -571,7 +580,7 @@ class HouseplanCard extends LitElement {
         id: s.id,
         title: s.title,
         vb: [s.view_box[0] * NORM_W, s.view_box[1] * H, s.view_box[2] * NORM_W, s.view_box[3] * H],
-        bg: s.plan_url ? { href: contentUrl(s.plan_url), x: 0, y: 0, w: NORM_W, h: H } : null,
+        bg: s.plan_url ? { href: this._display(s.plan_url), x: 0, y: 0, w: NORM_W, h: H } : null,
         rooms: s.rooms.map(scale),
       };
     });
@@ -756,6 +765,46 @@ class HouseplanCard extends LitElement {
   }
 
   private _reloadRetry?: number;
+  /**
+   * Signed urls for the content endpoint (audit follow-up B1 regression).
+   * A browser cannot authenticate an <image href> or an <a href>: HA takes a
+   * Bearer header or an `authSig` signed path, and an element sends neither.
+   * So the card asks the backend to sign what it is about to display.
+   */
+  private _signed: Record<string, string> = {};
+  private _signPending = new Set<string>();
+  private _signTimer?: number;
+
+  /** Display url: the signed variant when we have one, else the plain path. */
+  private _display(url: string | null | undefined): string {
+    const u = contentUrl(url);
+    if (!u.startsWith('/api/houseplan/content/')) return u;
+    if (this._signed[u]) return this._signed[u];
+    this._requestSignature(u);
+    return u; // first paint may 401; the signature lands and re-renders
+  }
+
+  private _requestSignature(url: string): void {
+    if (this._signPending.has(url) || !this.hass?.callWS) return;
+    this._signPending.add(url);
+    clearTimeout(this._signTimer);
+    // batch: a plan switch asks for several urls in the same tick
+    this._signTimer = window.setTimeout(() => {
+      const paths = [...this._signPending];
+      this._signPending.clear();
+      this.hass
+        .callWS({ type: 'houseplan/content/sign', paths })
+        .then((r: any) => {
+          if (!r?.urls) return;
+          this._signed = { ...this._signed, ...r.urls };
+          this.requestUpdate();
+        })
+        .catch(() => undefined); // unsigned urls simply keep failing; no loop
+    }, 30);
+  }
+
+  /** Re-sign everything periodically: a wall tablet outlives a signature. */
+  private _resignTimer?: number;
   private _dirtyPos = new Set<string>();
 
   private _persistLayout = debounce(() => {
@@ -4602,7 +4651,7 @@ class HouseplanCard extends LitElement {
           ${d.pdfs && d.pdfs.length
             ? html`<div class="inforow"><span class="k">${this._t('info.manuals')}</span><span class="pdflist">
                 ${d.pdfs.map(
-                  (p) => html`<a class="pdf" href="${safeUrl(contentUrl(p.url)) || '#'}" target="_blank" rel="noreferrer noopener">
+                  (p) => html`<a class="pdf" href="${safeUrl(this._display(p.url)) || '#'}" target="_blank" rel="noreferrer noopener">
                     <ha-icon icon="mdi:file-pdf-box"></ha-icon>${p.name}</a>`,
                 )}</span></div>`
             : nothing}
@@ -4839,7 +4888,7 @@ class HouseplanCard extends LitElement {
           <div class="pdfedit">
             ${d.pdfs.map(
               (p) => html`<span class="pdftag"><ha-icon icon="mdi:file-pdf-box"></ha-icon>
-                <a href="${safeUrl(contentUrl(p.url)) || '#'}" target="_blank" rel="noreferrer noopener">${p.name}</a>
+                <a href="${safeUrl(this._display(p.url)) || '#'}" target="_blank" rel="noreferrer noopener">${p.name}</a>
                 <ha-icon class="x" icon="mdi:close" @click=${() => this._removeMarkerPdf(p.url)}></ha-icon></span>`,
             )}
             <label class="btn filebtn">
