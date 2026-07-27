@@ -323,5 +323,7 @@
   "room.name_scale": "Room name size",
   "room.label_scale": "Metrics size",
   "preview.room_name": "Living room",
-  "toast.cfg_reload_failed": "Could not reload the plan from the server: {err}"
+  "toast.cfg_reload_failed": "Could not reload the plan from the server: {err}",
+  "room.settings_short": "Room",
+  "room.unnamed": "Unnamed room"
 }

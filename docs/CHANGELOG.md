@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.43.3 — 2026-07-27 (user feedback: discoverability and touch)
+
+- **Room settings were unfindable.** The gear added in v1.42.0 lived inside the
+  room label at 0.9em of its font and 60% opacity — a few pale pixels on a
+  normal plan. It is now a pill button "⚙ Room" of a fixed, readable size that
+  does not shrink with the card font, and it appears on **unnamed rooms too**
+  (that is where you name them). This also unblocks the font-size sliders,
+  which nobody could reach.
+- **Metrics line enlarged** from 0.62 to 0.75 of the room name — the reporter
+  could scale the name but the sensor line stayed unreadable on a tablet. The
+  per-room and per-space multipliers still apply on top.
+- **Touch tooltips, take two.** The `(hover: none)` guard was not enough: some
+  devices, skins, styluses and paired mice report `hover: hover`, so tips still
+  stuck under the finger. The card now also latches on the first touch/pen
+  pointer event and drops any open tooltip on touch.
+
 ## v1.43.2 — 2026-07-27 (external audit: the test layer)
 
 - **The smoke suite can finally fail (T1).** All 48 headless-browser smokes used

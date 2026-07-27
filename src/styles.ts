@@ -383,6 +383,27 @@ export const cardStyles = css`
       gap: 0.25em;
       font-size: calc(1em * var(--rl-name, 1));
     }
+    .rlgearbtn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 3px;
+      padding: 3px 8px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--hp-accent);
+      color: var(--text-primary-color, #fff);
+      font: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1;
+      cursor: pointer;
+      pointer-events: auto;
+      opacity: 0.92;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+    }
+    .rlgearbtn:hover { opacity: 1; }
+    .rlgearbtn ha-icon { --mdc-icon-size: 14px; display: inline-flex; }
     .rlgear {
       --mdc-icon-size: 0.9em;
       display: inline-flex;
@@ -406,7 +427,7 @@ export const cardStyles = css`
       display: flex;
       align-items: center;
       gap: 0.55em;
-      font-size: calc(0.62em * var(--rl-meta, 1));
+      font-size: calc(0.75em * var(--rl-meta, 1)); /* feedback: 0.62 was unreadable on a tablet */
       font-weight: 600;
       letter-spacing: 0.02em;
       opacity: 0.9;

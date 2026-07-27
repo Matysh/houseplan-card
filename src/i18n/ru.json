@@ -323,5 +323,7 @@
   "room.name_scale": "Размер названия",
   "room.label_scale": "Размер подписей",
   "preview.room_name": "Гостиная",
-  "toast.cfg_reload_failed": "Не удалось перечитать план с сервера: {err}"
+  "toast.cfg_reload_failed": "Не удалось перечитать план с сервера: {err}",
+  "room.settings_short": "Комната",
+  "room.unnamed": "Комната без имени"
 }

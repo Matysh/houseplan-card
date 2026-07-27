@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.43.2';
+const CARD_VERSION = '1.43.3';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -1350,17 +1350,35 @@ class HouseplanCard extends LitElement {
     }, 3500);
   }
 
-  /** True on touch-first devices (tablets/phones): no real hover there. */
-  private static readonly _noHover =
+  /**
+   * Touch-first surface: no hover tooltips.
+   *
+   * The media query alone was not enough (field report, 2026-07-27: tooltips
+   * still stuck on a OnePlus). Some devices/skins report `hover: hover`, and a
+   * stylus or a paired mouse flips it too. So this also latches on the FIRST
+   * touch pointer event and never unlatches for that session — a device that
+   * has been touched once is a touch device.
+   */
+  private static _touchSeen = false;
+  private static readonly _noHoverMq =
     typeof window !== 'undefined' &&
     typeof window.matchMedia === 'function' &&
     window.matchMedia('(hover: none)').matches;
 
+  private get _noHover(): boolean {
+    return HouseplanCard._noHoverMq || HouseplanCard._touchSeen;
+  }
+
+  /** Any touch anywhere marks the session as touch-first and kills open tips. */
+  private _notePointer(ev: PointerEvent): void {
+    if (ev.pointerType === 'touch' || ev.pointerType === 'pen') {
+      HouseplanCard._touchSeen = true;
+      if (this._tip) this._tip = null;
+    }
+  }
+
   private _showTip(ev: MouseEvent, title: string, meta: string, lqi?: number | null, temp?: number | null): void {
-    // Field feedback: on tablets every tap synthesized a mousemove and popped
-    // the hover tooltip over the finger. Touch devices get NO hover tooltips —
-    // the same data lives in room cards and the long-press device card.
-    if (HouseplanCard._noHover) return;
+    if (this._noHover) return;
     if (this._drag) return;
     this._tip = { x: ev.clientX, y: ev.clientY, title, meta, lqi, temp };
   }
@@ -3475,7 +3493,7 @@ class HouseplanCard extends LitElement {
           style="height:${this._kiosk ? '100dvh' : 'calc(100dvh - 118px)'}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
-          @pointerdown=${(e: PointerEvent) => this._stagePointerDown(e)}
+          @pointerdown=${(e: PointerEvent) => { this._notePointer(e); this._stagePointerDown(e); }}
           @pointermove=${(e: PointerEvent) => this._stagePointerMove(e)}
           @pointerup=${(e: PointerEvent) => this._stagePointerUp(e)}
           @pointercancel=${(e: PointerEvent) => this._stagePointerUp(e)}>
@@ -3920,7 +3938,9 @@ class HouseplanCard extends LitElement {
   private _renderRoomLabel(
     r: RoomCfg, space: SpaceModel, view: { x: number; y: number; w: number; h: number }, disp: SpaceDisplay,
   ): TemplateResult | typeof nothing {
-    if (!r.name) return nothing;
+    // audit/feedback: rooms without a name still need their gear in the Plan
+    // editor — that is where you name them (field report, 2026-07-27)
+    if (!r.name && !this._markup) return nothing;
     const p = this._labelPos(r, space.id);
     const left = ((p.x - view.x) / view.w) * 100;
     const top = ((p.y - view.y) / view.h) * 100;
@@ -3959,12 +3979,14 @@ class HouseplanCard extends LitElement {
       @pointermove=${(e: PointerEvent) => this._labelMove(e, r, space.id)}
       @pointerup=${() => this._labelUp(r)}
       @pointercancel=${() => this._labelUp(r)}
-    ><span class="rlname">${this._markup && r.id
-        ? html`<ha-icon class="rlgear" icon="mdi:cog-outline"
-            title=${this._t('room.settings_title')}
+    >${this._markup && r.id
+        ? html`<button class="rlgearbtn" title=${this._t('room.settings_title')}
             @pointerdown=${(e: Event) => e.stopPropagation()}
-            @click=${(e: Event) => { e.stopPropagation(); this._openRoomEdit(r); }}></ha-icon>`
-        : nothing}${r.name}${!this._markup && r.area
+            @click=${(e: Event) => { e.stopPropagation(); this._openRoomEdit(r); }}>
+            <ha-icon icon="mdi:cog-outline"></ha-icon>
+            <span class="rlgeartext">${this._t('room.settings_short')}</span>
+          </button>`
+        : nothing}<span class="rlname">${r.name || (this._markup ? this._t('room.unnamed') : '')}${!this._markup && r.area
         ? html`<ha-icon class="rlgo" icon="mdi:open-in-new"
             title=${this._t('room.open_area')}
             @click=${(e: Event) => { e.stopPropagation(); this._clickRoom(r); }}

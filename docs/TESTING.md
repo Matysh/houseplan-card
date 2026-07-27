@@ -20,6 +20,16 @@
       bundle. Sanity ritual: break one invariant on purpose (e.g. remove the
       kiosk editor guard) and confirm the matching smoke goes red [auto: CI job "smoke"]
 
+- [ ] Room gear discoverability (v1.43.3, user feedback): in the Plan editor
+      every room card carries a pill button "⚙ Room" of a FIXED readable size
+      (independent of the card font) — including rooms without a name; it opens
+      Room settings [auto: smoke_feedback_v2]
+- [ ] Metrics readability (v1.43.3): the metrics line is 0.75 of the room name
+      (was 0.62 — unreadable on tablets); per-room sliders still apply on top [auto: smoke_feedback_v2]
+- [ ] Touch tooltips, take two (v1.43.3): a hover tooltip never appears after
+      ANY touch/pen pointer event, even if the browser claims `hover: hover`
+      (stylus, paired mouse, vendor skins) [auto: smoke_feedback_v2]
+
 ## Environments matrix
 
 Run the *core flows* (marked ★ below) in each environment at least once per minor release:
