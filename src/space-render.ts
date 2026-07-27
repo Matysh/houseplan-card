@@ -25,6 +25,13 @@ export interface StaticRenderOpts {
   spaceId: string;
   iconSize?: number;
   lang: Lang;
+  /**
+   * Resolve a stored content url to what the DOM may actually request — the
+   * plan lives behind `requires_auth`, so it needs an `authSig` signature.
+   * Returning '' means "not signed yet": the caller must render no <image>
+   * rather than an unsigned one, which would 401 (review R3-2).
+   */
+  displayUrl?: (raw: string) => string;
 }
 
 /**
@@ -118,11 +125,13 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
         })
     : [];
 
+  const bgHref = space.bg ? (o.displayUrl ? o.displayUrl(space.bg.href) : space.bg.href) : '';
+
   return html`
     <div class="hp-static-stage" style="aspect-ratio:${vb[2]}/${vb[3]}">
       <svg viewBox="${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}" preserveAspectRatio="xMidYMid meet">
-        ${space.bg
-          ? svg`<image href="${space.bg.href}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}" preserveAspectRatio="none" />`
+        ${bgHref
+          ? svg`<image href="${bgHref}" x="${space.bg!.x}" y="${space.bg!.y}" width="${space.bg!.w}" height="${space.bg!.h}" preserveAspectRatio="none" />`
           : nothing}
         ${roomShapes}
       </svg>

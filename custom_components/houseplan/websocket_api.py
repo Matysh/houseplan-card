@@ -19,10 +19,11 @@ from .const import (
     CONTENT_URL, MAX_SIGN_PATHS, PLANS_DIR, PLANS_URL,
 )
 from .auth import may_write
+from .plans import collect_plans
 from .store import HouseplanData, get_data, get_entry
 from .validation import (
     CONFIG_SCHEMA, LAYOUT_SCHEMA, MAX_PLAN_BYTES,
-    PLAN_EXTENSIONS, POS_SCHEMA, sanitize_filename, valid_space_id,
+    PLAN_EXTENSIONS, POS_SCHEMA, valid_space_id,
 )
 
 
@@ -39,7 +40,6 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_config_get)
     websocket_api.async_register_command(hass, ws_config_set)
     websocket_api.async_register_command(hass, ws_plan_set)
-    websocket_api.async_register_command(hass, ws_plan_cleanup)
     websocket_api.async_register_command(hass, ws_files_migrate)
     websocket_api.async_register_command(hass, ws_files_cleanup)
     websocket_api.async_register_command(hass, ws_content_sign)
@@ -321,6 +321,7 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
     connection.send_result(msg["id"], {"config": config, "rev": data.get("rev", 0)})
 
 
+
 @websocket_api.websocket_command(
     {
         vol.Required("type"): "houseplan/config/set",
@@ -362,6 +363,11 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             return
         new_rev = current_rev + 1
         await rt.config_store.async_save({"config": msg["config"], "rev": new_rev})
+        # still holding the lock: the file system is not part of the store's
+        # transaction, so collection has to be pinned to this commit (R3-1)
+        await hass.async_add_executor_job(
+            collect_plans, Path(hass.config.path(PLANS_DIR)), data.get("config"), msg["config"]
+        )
     hass.bus.async_fire("houseplan_config_updated", {"rev": new_rev})
     # refresh repair issues (broken plan references) without waiting for a restart
     entry = get_entry(hass)
@@ -406,8 +412,10 @@ async def ws_plan_set(hass: HomeAssistant, connection, msg: dict[str, Any]) -> N
     # deleted here (review R2-1). The old name stays readable, so a config write
     # that is later rejected — revision conflict, validation, lost connection —
     # leaves the stored plan exactly as it was. The card calls
-    # `houseplan/plan/cleanup` only after its config CAS succeeds; a crash in
-    # between leaves an orphan file that the next successful save removes.
+    # nothing here; the superseded file is collected by `config/set` itself,
+    # inside the write lock, once a revision that no longer references it has
+    # been accepted (review R3-1). A crash in between leaves an orphan, which
+    # the same collector removes on a later commit once it is old enough.
     #
     # `.` separates the id from the token because a space id cannot contain one
     # (SPACE_ID_RE), so "<space>.<token>.<ext>" can never be confused with the
@@ -422,61 +430,3 @@ async def ws_plan_set(hass: HomeAssistant, connection, msg: dict[str, Any]) -> N
 
     await hass.async_add_executor_job(_write)
     connection.send_result(msg["id"], {"ok": True, "url": f"{CONTENT_URL}/plans/_/{name}"})
-
-
-def _plan_files(plans_dir: Path, space_id: str) -> list[Path]:
-    """Every plan file belonging to a space: the legacy flat name and versioned ones."""
-    out: list[Path] = []
-    if not plans_dir.is_dir():
-        return out
-    for item in plans_dir.iterdir():
-        if not item.is_file():
-            continue
-        parts = item.name.split(".")
-        # "<space>.<ext>" (legacy) or "<space>.<token>.<ext>"
-        if len(parts) in (2, 3) and parts[0] == space_id and parts[-1].lower() in PLAN_EXTENSIONS:
-            out.append(item)
-    return out
-
-
-@websocket_api.websocket_command(
-    {
-        vol.Required("type"): "houseplan/plan/cleanup",
-        vol.Required("space_id"): str,
-        vol.Required("keep"): str,
-    }
-)
-@websocket_api.async_response
-async def ws_plan_cleanup(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Drop superseded plan files for a space (review R2-1).
-
-    Called by the card ONLY after the config write that references `keep` has
-    been accepted. Until then every previous file is still on disk, which is
-    what makes a rejected save harmless. Deleting nothing is always a safe
-    outcome here — the orphans are bounded by one per rejected upload and are
-    collected by the next successful one.
-    """
-    if not _check_write(hass, connection):
-        connection.send_error(msg["id"], "unauthorized", "Only administrators may manage plans")
-        return
-    space_id = msg["space_id"]
-    if not valid_space_id(space_id):
-        connection.send_error(msg["id"], "invalid_space_id", "space_id: only [a-z0-9_-], up to 64 characters")
-        return
-    keep = sanitize_filename(msg["keep"])
-    plans_dir = Path(hass.config.path(PLANS_DIR))
-
-    def _clean() -> int:
-        removed = 0
-        for item in _plan_files(plans_dir, space_id):
-            if item.name == keep:
-                continue
-            try:
-                item.unlink()
-                removed += 1
-            except OSError as err:  # noqa: PERF203 — a stuck file must not fail the save
-                _LOGGER.warning("House Plan: could not remove the old plan %s: %s", item, err)
-        return removed
-
-    removed = await hass.async_add_executor_job(_clean)
-    connection.send_result(msg["id"], {"ok": True, "removed": removed})
