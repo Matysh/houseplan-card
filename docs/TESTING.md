@@ -234,6 +234,11 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       are only reachable through /api/houseplan/content/… with a session; the
       old /houseplan_files/plans|files paths return 404 after a restart; old
       stored URLs keep working (rewritten on read) [auto+manual]
+- [ ] Plan upload survives a concurrent config revision (v1.44.8): with a second
+      tab open on the same plan, attach a background image in space settings —
+      the plan shows immediately, `plan_url` is in `.storage/houseplan.config`,
+      and the same holds when the space is being CREATED, not edited
+      [auto: smoke_plan_upload_race]
 - [ ] Signed plan background (v1.44.7): a space whose plan lives on the content
       endpoint renders its background image with an `authSig` query — the plan is
       visible after a plain page load, and Home Assistant logs NO failed-login

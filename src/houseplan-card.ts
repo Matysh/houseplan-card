@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.44.7';
+const CARD_VERSION = '1.44.8';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -2969,12 +2969,30 @@ class HouseplanCard extends LitElement {
     const wasFirst = d.mode === 'create' && (this._serverCfg?.spaces.length || 0) === 0;
     this._spaceDialog = { ...d, busy: true };
     try {
+      const drawAspect = d.orientation === 'portrait' ? 0.707 : d.orientation === 'square' ? 1 : 1.414;
+      const spaceId = d.mode === 'create' ? 's' + Date.now().toString(36) : d.spaceId!;
+
+      /* Upload BEFORE touching the config, and never hold a reference to a
+         config object across an await. `houseplan/config/get` runs on every
+         `houseplan_config_updated` event and REPLACES `_serverCfg`; a space
+         object captured before the upload is then detached, so plan_url,
+         aspect and settings were written into an orphan and the save shipped
+         the untouched config. Symptom: the file lands on disk, the plan never
+         appears, and re-saving does not help (owner's install, 2026-07-27). */
+      let uploaded: { url: string; aspect: number } | null = null;
+      if (d.source === 'file' && d.planFile) {
+        const resp = await this.hass.callWS({
+          type: 'houseplan/plan/set', space_id: spaceId, ext: d.planFile.ext, data: d.planFile.b64,
+        });
+        uploaded = { url: resp.url, aspect: d.planFile.aspect };
+      }
+
+      // from here on: no awaits until the save, so `sp` cannot be orphaned
       const cfg = this._serverCfg!;
       let sp: any;
-      const drawAspect = d.orientation === 'portrait' ? 0.707 : d.orientation === 'square' ? 1 : 1.414;
       if (d.mode === 'create') {
         sp = {
-          id: 's' + Date.now().toString(36),
+          id: spaceId,
           title: d.title.trim(),
           plan_url: null,
           aspect: d.source === 'draw' ? drawAspect : 1.414,
@@ -2983,15 +3001,13 @@ class HouseplanCard extends LitElement {
         };
         cfg.spaces.push(sp);
       } else {
-        sp = cfg.spaces.find((x: any) => x.id === d.spaceId);
+        sp = cfg.spaces.find((x: any) => x.id === spaceId);
+        if (!sp) throw new Error('space ' + spaceId + ' is gone from the config');
         sp.title = d.title.trim();
       }
-      if (d.source === 'file' && d.planFile) {
-        const resp = await this.hass.callWS({
-          type: 'houseplan/plan/set', space_id: sp.id, ext: d.planFile.ext, data: d.planFile.b64,
-        });
-        sp.plan_url = resp.url;
-        sp.aspect = d.planFile.aspect;
+      if (uploaded) {
+        sp.plan_url = uploaded.url;
+        sp.aspect = uploaded.aspect;
       }
       // switching an existing space to "draw" detaches its background image
       // (the uploaded file stays on disk; only the reference is cleared)
@@ -3071,14 +3087,23 @@ class HouseplanCard extends LitElement {
   private async _saveConfigNow(): Promise<void> {
     this._dropLegacySegments();
     this._cfgEpoch++;
+    // same flag the debounced writer uses: while it is set, an incoming
+    // `houseplan_config_updated` defers its reload instead of replacing the
+    // config under an unfinished write (audit L2, extended to this path)
+    this._cfgWriting = true;
     try {
       const r = await this.hass.callWS({
         type: 'houseplan/config/set', config: this._serverCfg, expected_rev: this._cfgRev,
       });
       this._cfgRev = r?.rev ?? this._cfgRev + 1;
     } catch (e: any) {
-      if (e?.code === 'conflict') await this._reloadConfigOnly();
+      if (e?.code === 'conflict') {
+        this._cfgWriting = false;
+        await this._reloadConfigOnly();
+      }
       throw e;
+    } finally {
+      this._cfgWriting = false;
     }
   }
 

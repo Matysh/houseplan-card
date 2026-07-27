@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.44.8 — 2026-07-27
+- **An uploaded plan is actually attached to the space.** `_saveSpaceDialog`
+  held a reference to the space object across the `await` that uploads the
+  image. Every `houseplan_config_updated` event runs `_reloadConfigOnly()`,
+  which *replaces* `_serverCfg` — so the reference became an orphan and
+  `plan_url`, `aspect`, the title and all display settings were written into a
+  detached object while the save shipped the untouched config. The file landed
+  on disk, the plan never appeared, and re-saving could not help. Creating a
+  space in that window lost the space entirely.
+  The upload now happens *before* the config is touched, and nothing is held
+  across an await.
+- **`_saveConfigNow` marks the write in flight** (`_cfgWriting`), like the
+  debounced writer already did, so a remote revision arriving mid-save defers
+  its reload instead of replacing the config underneath it (audit L2 extended
+  to this path).
+- Regression test `demo/smoke_plan_upload_race.mjs` fails on v1.44.7 and passes
+  here.
+
 ## v1.44.7 — 2026-07-27
 - **Plan backgrounds are visible again (regression from v1.44.5).** Since the
   content endpoint requires authentication, the card asks the backend to sign
