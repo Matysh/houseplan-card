@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.44.1 — 2026-07-27
+- Added the community chat everywhere users look: **https://t.me/ha_houseplan**
+  (badge and header line in both READMEs, a "Getting help" section, the issue
+  template contact links, CONTRIBUTING, STATUS and SCOPE).
+
 ## v1.44.0 — 2026-07-27 (user feedback: control first)
 
 - **The device card is now a control surface.** It opens with the device's

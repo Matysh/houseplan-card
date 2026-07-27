@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Telegram chat (@ha_houseplan)
+    url: https://t.me/ha_houseplan
+    about: Questions, setup help, ideas and screenshots — the fastest way to get an answer.
+  - name: 💡 GitHub discussions
+    url: https://github.com/Matysh/houseplan-card/discussions
+    about: Longer-form ideas and show-and-tell.

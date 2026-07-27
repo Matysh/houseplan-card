@@ -91,6 +91,9 @@ Editors are admin-only tools and must never leak interactions into View
 unlocked/new device) · safe quick actions · per-room climate · Zigbee mesh
 health · zero-to-plan GUI onboarding · keeping the plan true over years.
 
+**Where users are:** Telegram chat https://t.me/ha_houseplan (support, feature
+signals, screenshots) — treat it as the primary source of field feedback.
+
 **Pains it removes:** hand-crafted SVG + YAML floorplans · entity-list
 dashboards that hide *where* things happen · silent device sprawl · accidental
 toggles of security devices · per-device dashboards that non-technical family
