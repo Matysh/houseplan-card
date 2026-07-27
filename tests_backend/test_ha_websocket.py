@@ -123,11 +123,14 @@ async def test_plan_upload_does_not_touch_the_previous_file(
     client = await hass_ws_client(hass)
     plans = Path(hass.config.path(PLANS_DIR))
     plans.mkdir(parents=True, exist_ok=True)
-    legacy = plans / "s1.svg"  # what an older version stored, still referenced
+    # the HA test config dir is shared across a module: start from a known state
+    for stale in plans.glob("s9.*"):
+        stale.unlink()
+    legacy = plans / "s9.svg"  # what an older version stored, still referenced
     legacy.write_bytes(b"<svg>old</svg>")
 
     await client.send_json_auto_id(
-        {"type": "houseplan/plan/set", "space_id": "s1", "ext": "png", "data": "aGVsbG8="}
+        {"type": "houseplan/plan/set", "space_id": "s9", "ext": "png", "data": "aGVsbG8="}
     )
     first = (await client.receive_json())["result"]["url"].rsplit("/", 1)[-1]
 
@@ -137,7 +140,7 @@ async def test_plan_upload_does_not_touch_the_previous_file(
 
     # a second attempt neither overwrites the first nor the legacy file
     await client.send_json_auto_id(
-        {"type": "houseplan/plan/set", "space_id": "s1", "ext": "png", "data": "d29ybGQ="}
+        {"type": "houseplan/plan/set", "space_id": "s9", "ext": "png", "data": "d29ybGQ="}
     )
     second = (await client.receive_json())["result"]["url"].rsplit("/", 1)[-1]
     assert second != first
@@ -147,7 +150,7 @@ async def test_plan_upload_does_not_touch_the_previous_file(
 
     # config accepted → cleanup keeps exactly the referenced file
     await client.send_json_auto_id(
-        {"type": "houseplan/plan/cleanup", "space_id": "s1", "keep": second}
+        {"type": "houseplan/plan/cleanup", "space_id": "s9", "keep": second}
     )
     resp = await client.receive_json()
     assert resp["success"] and resp["result"]["removed"] == 2
