@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.44.7 — 2026-07-27
+- **Plan backgrounds are visible again (regression from v1.44.5).** Since the
+  content endpoint requires authentication, the card asks the backend to sign
+  the plan's url — but the signing happened inside the *memoized* space model,
+  which is cached on the config fingerprint. The unsigned url froze in that
+  cache, so the signature never reached the `<image>` element and the plan never
+  loaded. The url is now resolved at render time, outside the cache. (PDF links
+  were unaffected — they already resolved at render time.)
+- **No more "failed login attempt" from your own IP.** While the plan was
+  broken the browser kept requesting the unsigned path, which returns 401 and
+  makes Home Assistant raise a login-attempt warning for the viewer's own
+  address. The card now renders nothing until the signature is in hand, so an
+  unsigned request is never made.
+- **Long-lived screens no longer blink.** The 12-hour re-signing used to drop
+  every signature and wait for new ones; it now keeps the current urls until the
+  replacements arrive, so a wall tablet never shows an empty plan.
+- Regression test `demo/smoke_plan_signed.mjs` fails on v1.44.6 and passes here.
+
 ## v1.44.6 — 2026-07-27
 - **Only room *air* counts as room climate.** After v1.44.5 started reading the
   area registry instead of the visible icons, every hidden temperature entity in

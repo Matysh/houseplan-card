@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.44.6';
+const CARD_VERSION = '1.44.7';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -366,10 +366,7 @@ class HouseplanCard extends LitElement {
     window.addEventListener('keydown', this._keyHandler);
     // signatures expire (24 h); refresh well before that on long-lived screens
     clearInterval(this._resignTimer);
-    this._resignTimer = window.setInterval(() => {
-      this._signed = {};
-      this.requestUpdate();
-    }, 12 * 3600 * 1000);
+    this._resignTimer = window.setInterval(() => this._resign(), 12 * 3600 * 1000);
     if (this._config?.kiosk && Number(this._config?.cycle) > 0) {
       clearInterval(this._cycleTimer);
       this._cycleTimer = window.setInterval(() => this._cycleTick(), Number(this._config.cycle) * 1000);
@@ -596,7 +593,11 @@ class HouseplanCard extends LitElement {
         id: s.id,
         title: s.title,
         vb: [s.view_box[0] * NORM_W, s.view_box[1] * H, s.view_box[2] * NORM_W, s.view_box[3] * H],
-        bg: s.plan_url ? { href: this._display(s.plan_url), x: 0, y: 0, w: NORM_W, h: H } : null,
+        // raw url on purpose: the model is memoized on the config fingerprint,
+        // so a signed url baked in here would freeze BEFORE the signature
+        // arrives and the plan would never load (bug found 2026-07-27).
+        // _display() is called at render time instead.
+        bg: s.plan_url ? { href: s.plan_url, x: 0, y: 0, w: NORM_W, h: H } : null,
         rooms: s.rooms.map(scale),
       };
     });
@@ -797,7 +798,10 @@ class HouseplanCard extends LitElement {
     if (!u.startsWith('/api/houseplan/content/')) return u;
     if (this._signed[u]) return this._signed[u];
     this._requestSignature(u);
-    return u; // first paint may 401; the signature lands and re-renders
+    // Empty, NOT the plain path: an unsigned request to a `requires_auth` view
+    // returns 401 and Home Assistant raises a "failed login attempt" for the
+    // viewer's own IP. Callers skip rendering until the signature lands.
+    return '';
   }
 
   private _requestSignature(url: string): void {
@@ -819,8 +823,25 @@ class HouseplanCard extends LitElement {
     }, 30);
   }
 
-  /** Re-sign everything periodically: a wall tablet outlives a signature. */
+  /**
+   * Re-sign everything periodically: a wall tablet outlives a signature.
+   * The old urls are kept until the new ones arrive — dropping them first would
+   * blank the plan for a round trip (and, if the socket is down, until it heals).
+   */
   private _resignTimer?: number;
+
+  private _resign(): void {
+    const paths = Object.keys(this._signed);
+    if (!paths.length || !this.hass?.callWS) return;
+    this.hass
+      .callWS({ type: 'houseplan/content/sign', paths })
+      .then((r: any) => {
+        if (!r?.urls) return;
+        this._signed = { ...this._signed, ...r.urls };
+        this.requestUpdate();
+      })
+      .catch(() => undefined);
+  }
   private _dirtyPos = new Set<string>();
 
   private _persistLayout = debounce(() => {
@@ -3603,8 +3624,8 @@ class HouseplanCard extends LitElement {
             ${this._editing && !this._markup
               ? svg`<rect x="${vb[0]}" y="${vb[1]}" width="${vb[2]}" height="${vb[3]}" fill="url(#hp-grid)" pointer-events="none"></rect>`
               : nothing}
-            ${space.bg
-              ? svg`<image href="${space.bg.href}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}" preserveAspectRatio="none" />`
+            ${space.bg && this._display(space.bg.href)
+              ? svg`<image href="${this._display(space.bg.href)}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}" preserveAspectRatio="none" />`
               : nothing}
             ${this._renderDecorLayer()}
             ${(() => {

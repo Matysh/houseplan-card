@@ -234,6 +234,12 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       are only reachable through /api/houseplan/content/… with a session; the
       old /houseplan_files/plans|files paths return 404 after a restart; old
       stored URLs keep working (rewritten on read) [auto+manual]
+- [ ] Signed plan background (v1.44.7): a space whose plan lives on the content
+      endpoint renders its background image with an `authSig` query — the plan is
+      visible after a plain page load, and Home Assistant logs NO failed-login
+      attempt from the viewer's own IP. Nothing is requested before the signature
+      arrives; a 12 h re-sign keeps the previous url until the new one lands
+      [auto: smoke_plan_signed]
 - [ ] Dialog zombies (v1.43.0, audit L3): close a dialog (Esc) while its save is
       in flight and let the save fail — the dialog stays closed, the card keeps
       rendering, the error toast still fires [auto: unit: logic.test + manual]
