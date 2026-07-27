@@ -537,10 +537,13 @@ export type TapAction = 'info' | 'more-info' | 'toggle';
  *
  * `display` gained 'value' in v1.26.0 ("show the measurement instead of the
  * icon") but the backend schema still only accepted badge/ripple/icon_ripple,
- * so saving any marker configured that way was rejected outright — the feature
- * was unusable for a year and a half and only surfaced through a user's error
- * message (issue #3, 2026-07-27). The lists are exported so a backend test can
- * read them and assert the schema accepts every value a user can pick.
+ * so saving any marker configured that way was rejected outright — and since
+ * one bad marker fails the whole config write, the plan could not be saved at
+ * all. Shipped 2026-07-21, found by a user on 2026-07-27: six days, and only
+ * because they pasted the error text. Nothing in the suite could have caught
+ * it, because the option list and the schema that stores it were written in
+ * two languages and never compared. They are exported here so a backend test
+ * can read them and assert the schema accepts every value a user can pick.
  * Adding an option here and forgetting the schema now fails the test suite.
  */
 export const DISPLAY_MODES = ['badge', 'ripple', 'icon_ripple', 'value'] as const;

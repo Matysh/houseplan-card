@@ -12,8 +12,8 @@
   `DISPLAY_MODES`, `TAP_ACTIONS`, `SPACE_FILL_MODES` and `ROOM_FILL_MODES` are
   exported from the card and read by a backend test that asserts the schema
   accepts every value a user can actually pick. Adding an option to an editor
-  and forgetting the schema now fails the test suite instead of surfacing a year
-  later through somebody's error message.
+  and forgetting the schema now fails the test suite instead of surfacing
+  through somebody's error message.
 
 ## v1.45.2 — 2026-07-27 (hardening from the v1.45.1 review: R4-1, R4-2)
 - **A failed cleanup no longer reports an accepted save as an error (R4-1).**
