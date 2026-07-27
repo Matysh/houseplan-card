@@ -21,7 +21,7 @@ const res = await page.evaluate(async () => {
   const sp = c._curSpaceCfg;
   sp.rooms.push({ id: 'race_room', name: 'RACE', area: null, poly: [[0.8, 0.8], [0.9, 0.8], [0.9, 0.9], [0.8, 0.9]] });
   c._saveConfig();
-  out.pending = c._saveConfig.pending();
+  out.pending = c._saveConfigDebounced.pending();
   // через 100 мс приходит событие о чужой ревизии — раньше это стирало правку
   c._cfgRev = server.rev; // симулируем: наша ревизия отстала
   await c._reloadConfigOnly();

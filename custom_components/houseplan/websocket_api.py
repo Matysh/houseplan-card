@@ -1,6 +1,8 @@
 """House Plan WS commands: layout, space configuration, plan uploads."""
 from __future__ import annotations
 
+import logging
+
 import base64
 import binascii
 from pathlib import Path
@@ -20,6 +22,9 @@ from .validation import (
     CONFIG_SCHEMA, LAYOUT_SCHEMA, MAX_PLAN_BYTES,
     PLAN_EXTENSIONS, POS_SCHEMA, valid_space_id,
 )
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 @callback
@@ -49,8 +54,17 @@ def _runtime(hass: HomeAssistant, connection, msg_id: int) -> HouseplanData | No
 
 
 def _check_write(hass: HomeAssistant, connection) -> bool:
+    """May this connection write?
+
+    Fails CLOSED (audit B2): when the entry cannot be read — during a reload or
+    while the integration is disabled — the policy is unknown, and "unknown" is
+    not the same as "permissive". Previously this returned True and ws_plan_set,
+    which never touches the runtime helper, accepted uploads in that window.
+    """
     entry = get_entry(hass)
-    admin_only = bool(entry and entry.options.get(CONF_ADMIN_ONLY, False))
+    if entry is None:
+        return bool(getattr(connection.user, "is_admin", False))
+    admin_only = bool(entry.options.get(CONF_ADMIN_ONLY, False))
     return connection.user.is_admin if admin_only else True
 
 
@@ -69,11 +83,21 @@ async def ws_layout_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
 
 
 @websocket_api.websocket_command(
-    {vol.Required("type"): "houseplan/layout/set", vol.Required("layout"): LAYOUT_SCHEMA}
+    {
+        vol.Required("type"): "houseplan/layout/set",
+        vol.Required("layout"): LAYOUT_SCHEMA,
+        vol.Optional("expected_rev"): int,
+    }
 )
 @websocket_api.async_response
 async def ws_layout_set(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Replace the layout entirely."""
+    """Replace the layout entirely, with optimistic locking (audit B3).
+
+    Wholesale layout writes used to have no revision check at all, so two
+    clients silently overwrote each other. `expected_rev` is optional for
+    backwards compatibility with older cards, but when supplied it is enforced
+    exactly like the config store does.
+    """
     if not _check_write(hass, connection):
         connection.send_error(msg["id"], "unauthorized", "Only administrators may edit the layout")
         return
@@ -81,8 +105,15 @@ async def ws_layout_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
     if rt is None:
         return
     async with rt.write_lock:
-        await rt.store.async_save({"layout": msg["layout"]})
-    connection.send_result(msg["id"], {"ok": True})
+        data = await rt.store.async_load() or {}
+        current_rev = int(data.get("rev", 0))
+        if "expected_rev" in msg and msg["expected_rev"] != current_rev:
+            connection.send_error(
+                msg["id"], "conflict", f"Layout changed elsewhere (rev {current_rev})"
+            )
+            return
+        await rt.store.async_save({"layout": msg["layout"], "rev": current_rev + 1})
+    connection.send_result(msg["id"], {"ok": True, "rev": current_rev + 1})
 
 
 @websocket_api.websocket_command(
@@ -227,6 +258,15 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
     async with rt.write_lock:
         data = await rt.config_store.async_load() or {}
         current_rev = data.get("rev", 0)
+        if "expected_rev" not in msg and current_rev:
+            # audit B4: expected_rev stays optional for old cards mid-upgrade,
+            # but a blind overwrite of a non-empty store is worth a warning —
+            # it is exactly how a stale client silently discards someone's work.
+            _LOGGER.warning(
+                "House Plan: config/set without expected_rev over rev %s — "
+                "the client bypasses conflict detection (outdated card?)",
+                current_rev,
+            )
         if "expected_rev" in msg and msg["expected_rev"] != current_rev:
             connection.send_error(
                 msg["id"], "conflict",

@@ -1,5 +1,32 @@
 # Changelog
 
+## v1.43.1 — 2026-07-27 (external audit: P1 fixes)
+
+- **Render cost (L1).** Home Assistant replaces `hass` on every state change in
+  the home, and each of those renders recomputed the whole plan geometry —
+  `_openPairs()` ran once per room (O(rooms³) collinear-overlap math) and the
+  space model was rebuilt twice. Both are now memoized on the config's
+  structural fingerprint and hoisted out of the per-room loop; cache
+  invalidation happens synchronously at mutation time, not inside the debounce.
+- **Opening tap vs drag (L4).** Dragging a door/window had no movement
+  threshold, so any pointer jitter counted as a drag: the properties dialog
+  never opened and an unchanged config was written (which then fed the L2 race).
+  Now the same 3 px threshold as every other drag pipeline, and the write only
+  happens when the geometry actually changed.
+- **Concave rooms (G2).** Containment used the arithmetic mean of the vertices
+  as an "interior point" — which lies OUTSIDE U- and L-shaped rooms, so island
+  rooms in them were rejected as overlaps and their holes never rendered. A
+  real interior point is computed instead (`interiorPoint`).
+- **Wall dedup (G3).** `segKey` ordered endpoints by raw floats but printed
+  rounded ones, so one shared wall could produce two keys and be drawn twice.
+  Rounds first, then orders.
+- **Backend hardening (B2–B5).** The write-authorization check now fails
+  **closed** when the config entry is unavailable (it used to allow writes
+  during a reload); `layout/set` supports `expected_rev` and conflicts like the
+  config store; a `config/set` without `expected_rev` over a non-empty store
+  logs a warning; coordinates reject NaN/Infinity, and spaces/rooms/markers/
+  decor/layout have generous size caps.
+
 ## v1.43.0 — 2026-07-27 (external audit: P0 fixes)
 
 An external code audit of v1.41.1 found four critical issues. All four are fixed

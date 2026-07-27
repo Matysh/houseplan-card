@@ -13,6 +13,7 @@ import {
   migratePdfUrls,
   roomFillModeOf,
   contentUrl,
+  interiorPoint,
   segmentCm, formatLength, roomEdges, roomPoly, pointOnBoundary, pointStrictlyInside, roomsOverlap,
   mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices,
 } from '../test-build/logic.js';
@@ -843,4 +844,26 @@ test('contentUrl: legacy static paths become authenticated ones (audit B1)', () 
   assert.equal(contentUrl('https://example.com/a.pdf'), 'https://example.com/a.pdf');
   assert.equal(contentUrl(''), '');
   assert.equal(contentUrl(null), '');
+});
+
+test('interiorPoint / polyContainsPoly on concave rooms (audit G2)', () => {
+  // U-образная комната: среднее вершин лежит СНАРУЖИ
+  const u = [[0, 0], [10, 0], [10, 10], [9, 10], [9, 2], [1, 2], [1, 10], [0, 10]];
+  const mean = [u.reduce((s, p) => s + p[0], 0) / u.length, u.reduce((s, p) => s + p[1], 0) / u.length];
+  assert.equal(pointStrictlyInside(mean, u), false, 'предпосылка: среднее снаружи');
+  const ip = interiorPoint(u);
+  assert.ok(ip && pointStrictlyInside(ip, u), 'interiorPoint обязана быть внутри');
+  // вложенность вогнутых теперь распознаётся
+  const outer = [[-1, -1], [11, -1], [11, 11], [8.5, 11], [8.5, 2.5], [1.5, 2.5], [1.5, 11], [-1, 11]];
+  assert.equal(polyContainsPoly(outer, u), true);
+  assert.equal(roomsOverlap(outer, u), false);
+  // дубликат по-прежнему НЕ вложенность
+  assert.equal(polyContainsPoly(u, u), false);
+});
+
+test('segKey: one wall, one key at any precision (audit G3)', () => {
+  assert.equal(segKey([1.000001, 1], [1.000002, 2]), segKey([1.000002, 1], [1.000001, 2]));
+  assert.equal(segKey([0, 0], [1, 1], 3), segKey([1, 1], [0, 0], 3));
+  // разные стены — разные ключи
+  assert.notEqual(segKey([0, 0], [1, 1]), segKey([0, 0], [2, 2]));
 });

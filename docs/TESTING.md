@@ -140,6 +140,20 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Render cost (v1.43.1, audit L1): geometry (space model, open pairs) is
+      computed once per config change, not per HA state push — smoke asserts
+      zero recomputations across 10 state pushes and recomputation after an
+      edit; the plan still renders dashes/islands correctly [auto]
+- [ ] Opening tap vs drag (v1.43.1, audit L4): a tap on a door in the Plan
+      editor opens its properties (3 px threshold like the other pipelines) and
+      writes nothing; a real drag that ends where it started also writes nothing [auto]
+- [ ] Concave containment (v1.43.1, audit G2): an island room inside a U- or
+      L-shaped parent is accepted and punches the evenodd hole; a traced
+      duplicate outline is still NOT containment [auto]
+- [ ] Backend hardening (v1.43.1, audit B2-B5): the admin check fails closed
+      when the entry is unavailable; layout/set honours expected_rev; a
+      config/set without expected_rev over a non-empty store logs a warning;
+      NaN/Infinity coordinates and oversized collections are rejected [auto]
 - [ ] Save race (v1.43.0, audit L2): make a markup edit, then press Save in any
       dialog within 500 ms (or let another client save) — the markup edit must
       survive and reach the server; a failed reload now shows a toast [auto]
