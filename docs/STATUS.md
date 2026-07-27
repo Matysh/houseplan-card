@@ -5,7 +5,9 @@
 > state, where everything lives, and how to continue safely.
 >
 > **Documentation policy (mandatory):** every change is documented *in the same
-> commit* — CHANGELOG entry for anything user-visible, STATUS.md for state changes
+> commit* — a CHANGELOG entry for anything user-visible **in BOTH
+> `docs/CHANGELOG.md` (English) and `docs/CHANGELOG.ru.md` (Russian, since
+> v1.42.0 — the user base is largely Russian-speaking, see the Telegram chat)**, STATUS.md for state changes
 > (versions, publication, infrastructure), DEVELOPMENT.md for new gotchas,
 > ARCHITECTURE.md for design changes, ROADMAP.md when plans move.
 

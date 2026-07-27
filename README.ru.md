@@ -271,6 +271,7 @@ title: План дома
   и запросы фич (пожалуйста, указывайте версию House Plan).
 - 💡 [Discussions](https://github.com/Matysh/houseplan-card/discussions) — для
   развёрнутых обсуждений.
+- 📜 [История изменений](docs/CHANGELOG.ru.md) — что менялось в каждой версии.
 
 Версия видна в консоли браузера при загрузке (`HOUSEPLAN-CARD vX.Y.Z`) и в
 **Настройки → Устройства и службы → House Plan** — с ней разбираться сильно

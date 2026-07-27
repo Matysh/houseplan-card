@@ -1,5 +1,7 @@
 # Changelog
 
+> 🇷🇺 Русская версия: [CHANGELOG.ru.md](CHANGELOG.ru.md) (записи с v1.42.0).
+
 ## v1.44.2 — 2026-07-27 (external code review: CR-1…CR-3)
 
 A second, adversarial review (of v1.44.0) produced three findings; all are
