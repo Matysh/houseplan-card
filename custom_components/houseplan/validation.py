@@ -69,6 +69,17 @@ ROOM_SCHEMA = vol.All(
             vol.Required("name"): str,
             vol.Optional("area"): vol.Any(str, None),
             vol.Optional("open_to"): [str],
+            vol.Optional("settings"): vol.Any(
+                None,
+                vol.Schema(
+                    {
+                        vol.Optional("fill_mode"): vol.Any(None, vol.In(["none", "lqi", "light", "temp"])),
+                        vol.Optional("temp_source"): vol.Any(str, None),
+                        vol.Optional("hum_source"): vol.Any(str, None),
+                    },
+                    extra=vol.ALLOW_EXTRA,
+                ),
+            ),
             vol.Optional("x"): vol.Coerce(float),
             vol.Optional("y"): vol.Coerce(float),
             vol.Optional("w"): vol.Coerce(float),

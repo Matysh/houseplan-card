@@ -11,6 +11,7 @@ import {
   alignGuides, segmentAngle, is45,
   swipeTarget, clampScale,
   migratePdfUrls,
+  roomFillModeOf,
   segmentCm, formatLength, roomEdges, roomPoly, pointOnBoundary, pointStrictlyInside, roomsOverlap,
   mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices,
 } from '../test-build/logic.js';
@@ -799,4 +800,12 @@ test('migratePdfUrls: rebinding rewrites file urls', () => {
   assert.equal(out[1].url, pdfs[1].url); // чужие пути не трогаем
   // без смены id — как есть
   assert.equal(migratePdfUrls(pdfs, 'x', 'x'), pdfs);
+});
+
+test('roomFillModeOf: tier-3 override beats the space, junk inherits', () => {
+  assert.equal(roomFillModeOf('temp', { settings: { fill_mode: 'light' } }), 'light');
+  assert.equal(roomFillModeOf('glow', { settings: { fill_mode: 'none' } }), 'none'); // выход из тьмы
+  assert.equal(roomFillModeOf('temp', {}), 'temp');
+  assert.equal(roomFillModeOf('temp', null), 'temp');
+  assert.equal(roomFillModeOf('temp', { settings: { fill_mode: 'glow' } }), 'temp'); // glow нельзя выбрать per-room
 });

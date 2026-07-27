@@ -243,3 +243,15 @@ hash falls back to the default.
   pipeline (`swipeTarget`), per-screen multipliers in `LS_KIOSK`.
 - **Nav persistence** (v1.38.2): `LS_NAV` stores {space, mode}; hash
   deep-link > saved > default_floor; stale-cache retry after the live load.
+
+
+## Settings tiers (owner's principle, 2026-07-26)
+
+Four levels: **global (config.settings) → space (space.settings) → room
+(room.settings) → device (marker.*)**. Duplicated options are deliberate: the
+more specific tier overrides the more general one; "unset" always means
+"inherit". Resolution lives in pure helpers (`spaceDisplayOf`,
+`roomFillModeOf`, `sourceValue`, `resolveTapAction`) — never inline in render.
+The UI will later be unified around this model; until then each tier keeps its
+own dialog (general settings gear / space gear / room-card gear / marker
+dialog).

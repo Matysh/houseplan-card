@@ -378,6 +378,15 @@ export const cardStyles = css`
       text-align: center;
     }
     .rlname { display: inline-flex; align-items: center; gap: 0.25em; }
+    .rlgear {
+      --mdc-icon-size: 0.9em;
+      display: inline-flex;
+      margin-right: 0.2em;
+      opacity: 0.6;
+      cursor: pointer;
+      pointer-events: auto;
+    }
+    .rlgear:hover { opacity: 1; }
     .rlgo {
       --mdc-icon-size: 0.85em;
       display: inline-flex;

@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.42.0 — 2026-07-26 (room settings — the third tier)
+- **Settings now have four tiers**: global → space → room → device; the more
+  specific tier overrides the more general one (owner's principle, fixed in
+  ARCHITECTURE). This release adds the ROOM tier.
+- Every room card in the Plan editor gained a **gear**: rename the room,
+  change its HA area, override the **fill type** for this room only (works
+  in glow spaces too — 'none' pulls the room out of the darkness), and pick
+  an explicit **temperature / humidity source** — any HA device or entity —
+  instead of the default room average. The source feeds the room card, the
+  tooltip and the temperature fill, and works for rooms without an HA area
+  (the user-feedback case: a custom template sensor bound to a room).
+- The same settings section appears in the room dialog right after closing a
+  contour.
+
 ## v1.41.2 — 2026-07-26
 - Fixed attached PDF manuals breaking after a marker is rebound to another
   device: the id changes, but the uploaded files stayed in the OLD id's

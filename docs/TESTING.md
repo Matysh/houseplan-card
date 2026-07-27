@@ -140,6 +140,13 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Room settings, tier 3 (v1.42.0): a gear on every room card in the Plan
+      editor opens Room settings (name, HA area incl. the current one, fill
+      override, temp/hum source); the creation dialog has the same section;
+      fill override repaints only that room (incl. opting OUT of the glow
+      darkness); a temp/hum source (device or entity) feeds the room card,
+      tooltip and temperature fill — works for rooms without an HA area;
+      renaming/rebinding an existing room now possible [auto]
 - [ ] PDF survival on rebinding (v1.41.2): rebind a marker with attached
       PDFs to another device — the server moves /files/<oldId>/ to the new id
       and the links keep opening; the old folder disappears (no orphans) [auto]

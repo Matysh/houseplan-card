@@ -307,5 +307,15 @@
   "kiosk.icon_scale": "Device icon size",
   "kiosk.font_scale": "Room card text size",
   "editor.kiosk": "Wall device (kiosk) mode",
-  "editor.cycle": "Auto-switch spaces every N seconds (kiosk, 0 = off)"
+  "editor.cycle": "Auto-switch spaces every N seconds (kiosk, 0 = off)",
+  "room.settings_title": "Room settings",
+  "room.settings_section": "Room settings (override the space)",
+  "room.fill_label": "Fill in THIS room",
+  "fill.inherit": "As the space",
+  "room.temp_src_label": "Temperature source",
+  "room.hum_src_label": "Humidity source",
+  "room.src_average": "Average over the room's sensors (default)",
+  "room.src_pick": "A specific HA device or entity",
+  "room.src_ph": "Choose a source…",
+  "toast.room_updated": "Room updated"
 }

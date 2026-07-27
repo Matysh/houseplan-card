@@ -356,6 +356,32 @@ export function areaLights(hass: any, devices: { area: string; entities: string[
   return seen ? 'off' : 'none';
 }
 
+/**
+ * Explicit room measurement source: 'entity:<eid>' reads the state as a
+ * number; 'device:<id>' aggregates over that device's entities (tempFor /
+ * humFor). Used by the room-settings override (tier 3).
+ */
+export function sourceValue(hass: any, src: string | null | undefined, kind: 'temp' | 'hum'): number | null {
+  if (!src) return null;
+  const i = src.indexOf(':');
+  if (i < 0) return null;
+  const k = src.slice(0, i);
+  const ref = src.slice(i + 1);
+  if (!ref) return null;
+  if (k === 'entity') {
+    const v = parseFloat(hass.states[ref]?.state);
+    if (!Number.isFinite(v)) return null;
+    return kind === 'temp' ? Math.round(v * 10) / 10 : Math.round(v);
+  }
+  if (k === 'device') {
+    const entIds = Object.entries(hass.entities as Record<string, any>)
+      .filter(([, r]) => (r as any).device_id === ref)
+      .map(([eid]) => eid);
+    return kind === 'temp' ? tempFor(hass, entIds) : humFor(hass, entIds);
+  }
+  return null;
+}
+
 /** Average humidity across the area's climate-ish devices (integer %, or null). */
 export function areaHum(
   hass: any,

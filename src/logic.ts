@@ -965,6 +965,22 @@ export function outlineWithout(poly: number[][], cuts: number[][], eps = 1e-6): 
   return cutSegments(edges, cuts, eps);
 }
 
+// ---------------- room-level settings (tier 3) ----------------
+
+/**
+ * Effective fill mode of a room: its own override wins, otherwise the space's.
+ * Four settings tiers (owner's principle, 2026-07-26): global > space > room >
+ * device; the more specific tier overrides the more general one. A room may
+ * override even in a glow space ('none' pulls it out of the darkness).
+ */
+export function roomFillModeOf(
+  spaceFill: RoomFillMode,
+  room: { settings?: { fill_mode?: string | null } | null } | null | undefined,
+): RoomFillMode {
+  const o = room?.settings?.fill_mode;
+  return o === 'none' || o === 'lqi' || o === 'light' || o === 'temp' ? o : spaceFill;
+}
+
 // ---------------- marker files ----------------
 
 /**

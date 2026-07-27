@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildDevices, lightGroups, primaryEntity, lqiFor, tempFor, humFor, areaLights, areaTemp, areaHum, areaLightStats } from '../test-build/devices.js';
+import { buildDevices, lightGroups, primaryEntity, lqiFor, tempFor, humFor, areaLights, areaTemp, areaHum, areaLightStats, sourceValue } from '../test-build/devices.js';
 import { compileIconRules, iconFor } from '../test-build/rules.js';
 
 /** Minimal fake hass around the pieces buildDevices reads. */
@@ -336,4 +336,26 @@ test('icon rules: soundbars vs smart speakers (v1.40.2)', () => {
   assert.equal(iconFor('Яндекс Станция Мини', ''), 'mdi:speaker');
   assert.equal(iconFor('Колонка Алисы', ''), 'mdi:speaker');
   assert.equal(iconFor('Kitchen speaker', ''), 'mdi:speaker');
+});
+
+test('sourceValue: explicit entity and device sources (tier 3)', () => {
+  const hass = {
+    states: {
+      'sensor.custom_temp': { state: '23.456' },
+      'sensor.custom_hum': { state: '47.8' },
+      'sensor.bad': { state: 'unknown' },
+      'sensor.dev_t': { state: '21.5', attributes: { device_class: 'temperature', unit_of_measurement: '°C' } },
+    },
+    entities: {
+      'sensor.dev_t': { device_id: 'dev1' },
+      'sensor.custom_temp': {}, 'sensor.custom_hum': {}, 'sensor.bad': {},
+    },
+  };
+  assert.equal(sourceValue(hass, 'entity:sensor.custom_temp', 'temp'), 23.5);
+  assert.equal(sourceValue(hass, 'entity:sensor.custom_hum', 'hum'), 48);
+  assert.equal(sourceValue(hass, 'entity:sensor.bad', 'temp'), null);
+  assert.equal(sourceValue(hass, 'device:dev1', 'temp'), 21.5);
+  assert.equal(sourceValue(hass, 'device:nope', 'temp'), null);
+  assert.equal(sourceValue(hass, '', 'temp'), null);
+  assert.equal(sourceValue(hass, 'garbage', 'temp'), null);
 });
