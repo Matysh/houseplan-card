@@ -10,6 +10,9 @@ export interface RoomCfg {
     /** 'device:<id>' or 'entity:<eid>'; unset = average over the room sensors. */
     temp_source?: string | null;
     hum_source?: string | null;
+    /** Font multipliers for THIS room's card (0.5-3, unset = 1). */
+    name_scale?: number | null;
+    label_scale?: number | null;
   } | null;
   id?: string;
   name: string;

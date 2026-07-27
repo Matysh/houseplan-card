@@ -317,5 +317,10 @@
   "room.src_average": "Average over the room's sensors (default)",
   "room.src_pick": "A specific HA device or entity",
   "room.src_ph": "Choose a source…",
-  "toast.room_updated": "Room updated"
+  "toast.room_updated": "Room updated",
+  "space.card_font": "Room-card font size (whole space)",
+  "room.sizes_section": "Font sizes",
+  "room.name_scale": "Room name size",
+  "room.label_scale": "Metrics size",
+  "preview.room_name": "Living room"
 }

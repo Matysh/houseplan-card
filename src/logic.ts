@@ -552,6 +552,8 @@ export interface SpaceDisplay {
   tempMax: number; // comfort range upper bound, °C
   /** Per-space LQI badges near zigbee devices; null = follow the card option. */
   showLqi: boolean | null;
+  /** Base font multiplier for room cards (tier 2; rooms multiply on top). */
+  cardFontScale: number;
   /** Room-card metrics under the room name (all default off). */
   labelTemp: boolean;
   labelHum: boolean;
@@ -577,6 +579,9 @@ export function spaceDisplayOf(spaceCfg: any): SpaceDisplay {
     tempMin: typeof s.temp_min === 'number' ? s.temp_min : DEFAULT_TEMP_MIN,
     tempMax: typeof s.temp_max === 'number' ? s.temp_max : DEFAULT_TEMP_MAX,
     showLqi: typeof s.show_lqi === 'boolean' ? s.show_lqi : null,
+    cardFontScale: typeof s.card_font_scale === 'number' && s.card_font_scale > 0
+      ? Math.min(3, Math.max(0.5, s.card_font_scale))
+      : 1,
     labelTemp: s.label_temp === true,
     labelHum: s.label_hum === true,
     labelLqi: s.label_lqi === true,

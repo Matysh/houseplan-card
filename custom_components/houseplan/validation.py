@@ -76,6 +76,8 @@ ROOM_SCHEMA = vol.All(
                         vol.Optional("fill_mode"): vol.Any(None, vol.In(["none", "lqi", "light", "temp"])),
                         vol.Optional("temp_source"): vol.Any(str, None),
                         vol.Optional("hum_source"): vol.Any(str, None),
+                        vol.Optional("name_scale"): vol.Any(None, vol.All(vol.Coerce(float), vol.Range(min=0.5, max=3))),
+                        vol.Optional("label_scale"): vol.Any(None, vol.All(vol.Coerce(float), vol.Range(min=0.5, max=3))),
                     },
                     extra=vol.ALLOW_EXTRA,
                 ),
@@ -104,6 +106,7 @@ SPACE_DISPLAY_SCHEMA = vol.Schema(
         vol.Optional("label_hum"): bool,
         vol.Optional("label_lqi"): bool,
         vol.Optional("label_light"): bool,
+        vol.Optional("card_font_scale"): vol.All(vol.Coerce(float), vol.Range(min=0.5, max=3)),
     },
     extra=vol.ALLOW_EXTRA,
 )

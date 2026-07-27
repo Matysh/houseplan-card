@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.42.0';
+const CARD_VERSION = '1.42.1';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -163,6 +163,8 @@ class HouseplanCard extends LitElement {
   private _roomHumSrc = '';
   private _roomSrcOpen: 'temp' | 'hum' | null = null;
   private _roomSrcFilter = '';
+  private _roomNameScale = 1;
+  private _roomLabelScale = 1;
   // plan zoom/pan (zoom is saved per space, locally)
   private _zoom = 1;
   private _view: { x: number; y: number; w: number; h: number } | null = null; // current SVG viewBox (vb coordinates)
@@ -226,6 +228,7 @@ class HouseplanCard extends LitElement {
     tempMin: number;
     tempMax: number;
     showLqi: boolean;
+    cardFontScale: number;
     labelTemp: boolean;
     labelHum: boolean;
     labelLqi: boolean;
@@ -301,6 +304,8 @@ class HouseplanCard extends LitElement {
     _roomHumSrc: { state: true },
     _roomSrcOpen: { state: true },
     _roomSrcFilter: { state: true },
+    _roomNameScale: { state: true },
+    _roomLabelScale: { state: true },
     _spaceDialog: { state: true },
     _infoCard: { state: true },
     _rulesDialog: { state: true },
@@ -2629,6 +2634,7 @@ class HouseplanCard extends LitElement {
         roomColor: disp.color, roomOpacity: disp.opacity, fillMode: disp.fill,
         tempMin: disp.tempMin, tempMax: disp.tempMax,
         showLqi: disp.showLqi ?? this._config?.show_signal ?? true,
+        cardFontScale: disp.cardFontScale,
         labelTemp: disp.labelTemp, labelHum: disp.labelHum,
         labelLqi: disp.labelLqi, labelLight: disp.labelLight,
         cellCm: Number(sp.cell_cm) > 0 ? Number(sp.cell_cm) : 5,
@@ -2642,6 +2648,7 @@ class HouseplanCard extends LitElement {
         roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'none',
         tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
         showLqi: this._config?.show_signal ?? true,
+        cardFontScale: 1,
         labelTemp: false, labelHum: false, labelLqi: false, labelLight: false,
         cellCm: 5,
         busy: false,
@@ -2727,6 +2734,7 @@ class HouseplanCard extends LitElement {
         temp_min: Number.isFinite(d.tempMin) ? Math.min(d.tempMin, d.tempMax) : DEFAULT_TEMP_MIN,
         temp_max: Number.isFinite(d.tempMax) ? Math.max(d.tempMin, d.tempMax) : DEFAULT_TEMP_MAX,
         show_lqi: d.showLqi,
+        card_font_scale: d.cardFontScale !== 1 ? d.cardFontScale : undefined,
         label_temp: d.labelTemp,
         label_hum: d.labelHum,
         label_lqi: d.labelLqi,
@@ -2823,6 +2831,7 @@ class HouseplanCard extends LitElement {
       roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'none',
       tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
       showLqi: this._config?.show_signal ?? true,
+      cardFontScale: 1,
       labelTemp: false, labelHum: false, labelLqi: false, labelLight: false,
       cellCm: 5,
       busy: false,
@@ -3562,6 +3571,8 @@ class HouseplanCard extends LitElement {
     this._roomHumSrc = '';
     this._roomSrcOpen = null;
     this._roomSrcFilter = '';
+    this._roomNameScale = 1;
+    this._roomLabelScale = 1;
   }
 
   /** Open the room dialog for an EXISTING room (the gear on its card). */
@@ -3573,6 +3584,8 @@ class HouseplanCard extends LitElement {
     this._roomFill = (r.settings?.fill_mode as any) || '';
     this._roomTempSrc = r.settings?.temp_source || '';
     this._roomHumSrc = r.settings?.hum_source || '';
+    this._roomNameScale = clampScale(r.settings?.name_scale);
+    this._roomLabelScale = clampScale(r.settings?.label_scale);
     this._roomSrcOpen = null;
     this._roomSrcFilter = '';
     this._roomDialog = true;
@@ -3584,6 +3597,8 @@ class HouseplanCard extends LitElement {
     if (this._roomFill) st.fill_mode = this._roomFill;
     if (this._roomTempSrc) st.temp_source = this._roomTempSrc;
     if (this._roomHumSrc) st.hum_source = this._roomHumSrc;
+    if (this._roomNameScale !== 1) st.name_scale = this._roomNameScale;
+    if (this._roomLabelScale !== 1) st.label_scale = this._roomLabelScale;
     return Object.keys(st).length ? st : null;
   }
 
@@ -3777,7 +3792,7 @@ class HouseplanCard extends LitElement {
       }
     }
     return html`<div class="roomlabel ${rows.length ? 'card' : ''}"
-      style="left:${left}%;top:${top}%;color:${disp.color};opacity:${op};--rl-scale:${k}"
+      style="left:${left}%;top:${top}%;color:${disp.color};opacity:${op};--rl-scale:${k};--rl-space:${disp.cardFontScale};--rl-name:${clampScale(r.settings?.name_scale)};--rl-meta:${clampScale(r.settings?.label_scale)}"
       @pointerdown=${(e: PointerEvent) => this._labelDown(e, r, space.id)}
       @pointermove=${(e: PointerEvent) => this._labelMove(e, r, space.id)}
       @pointerup=${() => this._labelUp(r)}
@@ -4652,6 +4667,13 @@ class HouseplanCard extends LitElement {
               <span>${this._t(k)}</span>
             </label>`,
           )}
+          <label>${this._t('space.card_font')}</label>
+          <div class="colorrow gsrow">
+            <input type="range" min="50" max="300" step="5" .value=${String(Math.round(d.cardFontScale * 100))}
+              @input=${(e: Event) => (this._spaceDialog = { ...d, cardFontScale: Number((e.target as HTMLInputElement).value) / 100 })} />
+            <span class="opv">${Math.round(d.cardFontScale * 100)}%</span>
+          </div>
+          ${this._renderCardPreview(d.cardFontScale, 1, 1)}
           <label>${this._t('space.room_color')}</label>
           <div class="colorrow">
             <input type="color" .value=${d.roomColor}
@@ -4736,6 +4758,20 @@ class HouseplanCard extends LitElement {
           </button>
         </div>
       </div>
+    </div>`;
+  }
+
+  /** Live sample of a room card at the given multipliers (dialog preview). */
+  private _renderCardPreview(spaceScale: number, nameScale: number, labelScale: number): TemplateResult {
+    const base = 18 * spaceScale;
+    return html`<div class="cardpreview">
+      <span class="cpname" style="font-size:${(base * nameScale).toFixed(1)}px">
+        ${this._t('preview.room_name')}</span>
+      <span class="cpmeta" style="font-size:${(base * 0.62 * labelScale).toFixed(1)}px">
+        <ha-icon icon="mdi:thermometer"></ha-icon>22.4° ·
+        <ha-icon icon="mdi:water-percent"></ha-icon>45% ·
+        <ha-icon icon="mdi:lightbulb-on"></ha-icon>${this._t('roomcard.light_partial', { on: 1, total: 3 })}
+      </span>
     </div>`;
   }
 
@@ -4828,6 +4864,25 @@ class HouseplanCard extends LitElement {
           )}
           ${this._renderRoomSource('temp')}
           ${this._renderRoomSource('hum')}
+
+          <label class="dispsection">${this._t('room.sizes_section')}</label>
+          <label>${this._t('room.name_scale')}</label>
+          <div class="colorrow gsrow">
+            <input type="range" min="50" max="300" step="5" .value=${String(Math.round(this._roomNameScale * 100))}
+              @input=${(e: Event) => { this._roomNameScale = Number((e.target as HTMLInputElement).value) / 100; this.requestUpdate(); }} />
+            <span class="opv">${Math.round(this._roomNameScale * 100)}%</span>
+          </div>
+          <label>${this._t('room.label_scale')}</label>
+          <div class="colorrow gsrow">
+            <input type="range" min="50" max="300" step="5" .value=${String(Math.round(this._roomLabelScale * 100))}
+              @input=${(e: Event) => { this._roomLabelScale = Number((e.target as HTMLInputElement).value) / 100; this.requestUpdate(); }} />
+            <span class="opv">${Math.round(this._roomLabelScale * 100)}%</span>
+          </div>
+          ${this._renderCardPreview(
+            spaceDisplayOf(this._curSpaceCfg).cardFontScale,
+            this._roomNameScale,
+            this._roomLabelScale,
+          )}
         </div>
         <div class="row">
           <button class="btn ghost" @click=${this._roomDialogCancel}>${this._t('btn.cancel')}</button>

@@ -140,6 +140,11 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Card font scales (v1.42.1): three sliders — space-level base (space
+      dialog) plus per-room name and metrics sizes (room settings), 50–300%,
+      multiplied together and on top of resize-k and kiosk multipliers; the
+      live sample card in both dialogs follows the sliders instantly; name and
+      metrics scale independently [auto]
 - [ ] Room settings, tier 3 (v1.42.0): a gear on every room card in the Plan
       editor opens Room settings (name, HA area incl. the current one, fill
       override, temp/hum source); the creation dialog has the same section;

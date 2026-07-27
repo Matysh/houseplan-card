@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.42.1 — 2026-07-26 (room-card font sizes)
+- Closing the "can't change the font size" feedback: **three sliders**.
+  Space settings gained a base room-card font size for the whole space;
+  Room settings gained independent sizes for the room NAME and the METRICS
+  line (50–300% each). Effects multiply — and stack with the card's corner
+  resize and the kiosk per-screen multiplier as before.
+- Both dialogs show a **live sample card** that follows the sliders as you
+  drag them.
+
 ## v1.42.0 — 2026-07-26 (room settings — the third tier)
 - **Settings now have four tiers**: global → space → room → device; the more
   specific tier overrides the more general one (owner's principle, fixed in
