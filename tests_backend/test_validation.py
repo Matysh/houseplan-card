@@ -292,3 +292,16 @@ def test_collect_plans_survives_a_missing_directory(tmp_path):
     collect_plans = plans.collect_plans
 
     assert collect_plans(tmp_path / "nope", _cfg(), _cfg()) == 0
+
+
+def test_collect_plans_never_raises_when_the_directory_disappears(tmp_path, monkeypatch):
+    """review R4-1: it runs behind a durable commit, so it may only report 0."""
+    collect_plans = plans.collect_plans
+    d = tmp_path / "plans"
+    d.mkdir()
+
+    def _boom(self):
+        raise OSError("gone")
+
+    monkeypatch.setattr(type(d), "iterdir", _boom, raising=False)
+    assert collect_plans(d, _cfg("/p/a.png"), _cfg("/p/b.png")) == 0

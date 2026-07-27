@@ -12,6 +12,7 @@
     "src/rules.ts",
     "src/devices.ts",
     "src/types.ts",
-    "src/space-geometry.ts"
+    "src/space-geometry.ts",
+    "src/signing.ts"
   ]
 }

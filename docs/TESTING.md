@@ -234,6 +234,15 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       are only reachable through /api/houseplan/content/… with a session; the
       old /houseplan_files/plans|files paths return 404 after a restart; old
       stored URLs keep working (rewritten on read) [auto+manual]
+- [ ] Signing does not amplify on a bad connection (v1.45.2, review R4-2): with
+      the WebSocket slow or refusing, the card issues ONE sign request per url
+      and backs off after a failure instead of asking again on every render; a
+      request that never answers stops blocking retries after 15 s
+      [auto: unit: signing.test + smoke_space_card_bg]
+- [ ] A broken plans directory does not fail a save (v1.45.2, review R4-1): make
+      the plans folder unreadable and save the configuration — the save
+      succeeds, the revision is usable, and the next save does not conflict
+      [auto: backend test_a_failing_collector_does_not_undo_an_accepted_save]
 - [ ] Two editors, one plan (v1.45.1, review R3-1): with the same space open in
       two tabs, attach a background in each in turn — the plan last saved is the
       one served, and neither commit deletes the other's file. A rejected upload
