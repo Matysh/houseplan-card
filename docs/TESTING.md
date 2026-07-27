@@ -40,6 +40,16 @@
       below; config/diagnostic entities are not listed; locks never toggle from
       the card [auto: smoke_card_controls]
 
+- [ ] Lock invariant, all paths (v1.44.2, review CR-1): icon tap, controls[],
+      device card and _cardToggle refuse locks/alarm panels entirely; the door
+      card's Unlock asks for confirmation, Lock does not [auto: smoke_lock_invariant]
+- [ ] Attachment migration is transactional (v1.44.2, review CR-2/CR-3):
+      rebinding COPIES files, saves the config, and only then deletes the old
+      folder; a rejected save leaves the old files and urls intact; a name
+      collision in the destination gets a unique name (the pre-existing file is
+      never silently linked); urls are rewritten only for confirmed copies
+      [auto: unit logic.test + tests_backend]
+
 ## Environments matrix
 
 Run the *core flows* (marked ★ below) in each environment at least once per minor release:

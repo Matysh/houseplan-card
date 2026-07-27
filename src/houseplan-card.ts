@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.44.1';
+const CARD_VERSION = '1.44.2';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -2667,14 +2667,23 @@ class HouseplanCard extends LitElement {
       const prevRoomId = prevDev?.marker?.room_id ?? null;
       const roomChanged = !!dlg.room && prevDev != null
         && (prevDev.space !== space || prevDev.area !== area || prevRoomId !== roomId);
-      // rebinding changed the id → move the uploaded files along (server-side)
-      // and rewrite the attached urls; otherwise the old-id folder goes orphan
-      // (that is how the sauna manuals were lost — incident 2026-07-26)
+      // Rebinding changes the marker id, so the uploaded files must follow.
+      // Order matters (review CR-2): COPY first, save the config, and only then
+      // delete the old folder. If the save is rejected, the old urls in the
+      // stored config still resolve — the files never left. A failed copy
+      // leaves the urls untouched and tells the user (review CR-3).
+      let cleanupOldFiles = false;
       if (oldId && oldId !== id && marker.pdfs?.length) {
-        await this.hass
-          .callWS({ type: 'houseplan/files/migrate', from_id: oldId, to_id: id })
-          .catch(() => undefined);
-        marker.pdfs = migratePdfUrls(marker.pdfs, oldId, id);
+        try {
+          const res: any = await this.hass.callWS({
+            type: 'houseplan/files/migrate', from_id: oldId, to_id: id,
+          });
+          const mapping = res?.mapping || {};
+          marker.pdfs = migratePdfUrls(marker.pdfs, oldId, id, mapping);
+          cleanupOldFiles = Object.keys(mapping).length > 0;
+        } catch (e: any) {
+          this._showToast(this._t('toast.files_migrate_failed', { err: this._errText(e) }));
+        }
       }
       // remove the previous marker (by the old id and by the new id)
       cfg.markers = cfg.markers.filter((m) => m.id !== id && m.id !== oldId);
@@ -2720,6 +2729,12 @@ class HouseplanCard extends LitElement {
         // rebinding changed the icon id — clean up the old position
         delete this._layout[oldId];
         await this.hass.callWS({ type: 'houseplan/layout/delete', device_id: oldId }).catch(() => undefined);
+      }
+      // the config is committed — now it is safe to drop the old folder
+      if (cleanupOldFiles && oldId) {
+        await this.hass
+          .callWS({ type: 'houseplan/files/cleanup', marker_id: oldId })
+          .catch(() => undefined); // leftovers are harmless; broken links are not
       }
       this._markerDialog = null;
       this._regSignature = '';
@@ -4258,6 +4273,16 @@ class HouseplanCard extends LitElement {
    * clearly labeled action button — same interaction contract as HA's more-info.
    */
   private _lockAction(entityId: string, action: 'lock' | 'unlock'): void {
+    // THE ONLY sanctioned lock actuation surface (review CR-1, 2026-07-27).
+    // The invariant is "no lock or alarm panel is ever actuated by a TAP on the
+    // plan" — icons, badges, controls[] and the device card all refuse. This
+    // button is a deliberate, labeled control inside an opened card, the same
+    // contract as Home Assistant's own more-info dialog. Unlocking additionally
+    // asks for confirmation; locking does not (locking is never destructive).
+    if (action === 'unlock') {
+      const name = this.hass?.states?.[entityId]?.attributes?.friendly_name || entityId;
+      if (!confirm(this._t('confirm.unlock', { name }))) return;
+    }
     this.hass?.callService?.('lock', action, { entity_id: entityId });
   }
 

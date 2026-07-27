@@ -5,6 +5,7 @@ const res = await page.evaluate(async () => {
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
   const calls = [];
+  window.confirm = () => true; // review CR-1: unlocking now confirms
   c.hass = { ...c.hass, callService: (d, s, data) => calls.push([d, s, data.entity_id]) };
   await c.updateComplete;
   // добавить дверь с замком на f1

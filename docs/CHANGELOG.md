@@ -1,5 +1,28 @@
 # Changelog
 
+## v1.44.2 — 2026-07-27 (external code review: CR-1…CR-3)
+
+A second, adversarial review (of v1.44.0) produced three findings; all are
+addressed.
+
+- **The lock invariant is now precise and enforced (CR-1).** The reviewer was
+  right that "locks can never be actuated from the plan" was too absolute a
+  claim: the door card's Unlock button does call the service. That button is a
+  deliberate product decision, so the invariant is restated where it belongs
+  ("never by an accidental tap; exactly one labeled surface"), unlocking now
+  **asks for confirmation**, and a new smoke exercises all five actuation paths
+  to prove icons, `controls[]` and the device card still refuse locks outright.
+- **Attachment migration became transactional (CR-2).** Rebinding a marker used
+  to MOVE its files before the revision-checked config save — if that save was
+  rejected, the stored config kept the old urls while the files had already
+  left. Now the server **copies**, the config is committed, and only then the
+  old folder is removed (`houseplan/files/cleanup`).
+- **Failed or partial migrations no longer rewrite urls (CR-3).** The copy
+  reports an exact `{source: written}` mapping; only confirmed copies are
+  rewritten, name collisions get a unique name instead of silently linking a
+  pre-existing file, and a failed migration surfaces as a toast with the links
+  left pointing at the still-existing originals.
+
 ## v1.44.1 — 2026-07-27
 - Added the community chat everywhere users look: **https://t.me/ha_houseplan**
   (badge and header line in both READMEs, a "Getting help" section, the issue

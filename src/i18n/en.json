@@ -327,5 +327,7 @@
   "room.settings_short": "Room",
   "room.unnamed": "Unnamed room",
   "marker.is_light": "This device is a light source",
-  "marker.is_light_tip": "Makes the icon glow in the “Light sources” fill even without a light entity — for a smart switch driving ordinary fixtures. The glow follows the switch (or the lights bound above)."
+  "marker.is_light_tip": "Makes the icon glow in the “Light sources” fill even without a light entity — for a smart switch driving ordinary fixtures. The glow follows the switch (or the lights bound above).",
+  "confirm.unlock": "Unlock “{name}”?",
+  "toast.files_migrate_failed": "Attachments could not be moved to the new binding, links keep pointing at the old files: {err}"
 }

@@ -125,3 +125,42 @@ async def test_admin_check_fails_closed(hass, hass_ws_client):
         user = _Admin()
 
     assert wsapi._check_write(hass, _AdminConn()) is True
+
+
+async def test_files_migrate_copies_and_reports_mapping(hass, hass_ws_client, tmp_path):
+    """review CR-2/CR-3: migrate COPIES, never overwrites, and reports the mapping."""
+    import os
+    from custom_components.houseplan.const import FILES_DIR
+
+    base = os.path.join(hass.config.path(FILES_DIR))
+    src = os.path.join(base, "old1")
+    dst = os.path.join(base, "new1")
+    await hass.async_add_executor_job(lambda: os.makedirs(src, exist_ok=True))
+    await hass.async_add_executor_job(lambda: os.makedirs(dst, exist_ok=True))
+    await hass.async_add_executor_job(
+        lambda: open(os.path.join(src, "m.pdf"), "wb").write(b"SOURCE")
+    )
+    # коллизия: в целевой папке уже есть ДРУГОЙ файл с тем же именем
+    await hass.async_add_executor_job(
+        lambda: open(os.path.join(dst, "m.pdf"), "wb").write(b"OTHER")
+    )
+
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 1, "type": "houseplan/files/migrate",
+                            "from_id": "old1", "to_id": "new1"})
+    resp = await client.receive_json()
+    assert resp["success"]
+    mapping = resp["result"]["mapping"]
+    assert mapping["m.pdf"] != "m.pdf"          # переименован, а не перезаписан
+    # источник ещё на месте (копия, не перенос) и чужой файл не тронут
+    assert await hass.async_add_executor_job(lambda: os.path.isfile(os.path.join(src, "m.pdf")))
+    assert await hass.async_add_executor_job(
+        lambda: open(os.path.join(dst, "m.pdf"), "rb").read()) == b"OTHER"
+    assert await hass.async_add_executor_job(
+        lambda: open(os.path.join(dst, mapping["m.pdf"]), "rb").read()) == b"SOURCE"
+
+    # cleanup удаляет исходную папку — вызывается только после успешного сохранения
+    await client.send_json({"id": 2, "type": "houseplan/files/cleanup", "marker_id": "old1"})
+    resp2 = await client.receive_json()
+    assert resp2["success"] and resp2["result"]["removed"] is True
+    assert not await hass.async_add_executor_job(lambda: os.path.isdir(src))

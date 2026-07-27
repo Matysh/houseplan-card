@@ -1070,12 +1070,25 @@ export function roomFillModeOf(
  * server moves /files/<oldId>/ to /files/<newId>/, the urls must follow.
  */
 export function migratePdfUrls<T extends { url: string }>(
-  pdfs: T[], oldId: string, newId: string,
+  pdfs: T[], oldId: string, newId: string, mapping?: Record<string, string>,
 ): T[] {
   if (!oldId || !newId || oldId === newId) return pdfs;
   const from = '/files/' + oldId + '/';
   const to = '/files/' + newId + '/';
-  return pdfs.map((p) => (p.url.includes(from) ? { ...p, url: p.url.split(from).join(to) } : p));
+  return pdfs.map((p) => {
+    if (!p.url.includes(from)) return p;
+    const tail = p.url.split(from)[1] || '';
+    const [name, query] = [tail.split('?')[0], tail.includes('?') ? '?' + tail.split('?')[1] : ''];
+    if (mapping) {
+      // review CR-3: rewrite ONLY files the server confirmed it copied, and use
+      // the name it actually wrote (collisions get a unique name). A url that
+      // was not copied keeps pointing at the still-existing old folder.
+      const dst = mapping[decodeURIComponent(name)] ?? mapping[name];
+      if (!dst) return p;
+      return { ...p, url: p.url.split(from + name)[0] + to + encodeURIComponent(dst) + query };
+    }
+    return { ...p, url: p.url.split(from).join(to) };
+  });
 }
 
 // ---------------- kiosk gestures ----------------

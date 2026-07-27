@@ -38,6 +38,7 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_config_set)
     websocket_api.async_register_command(hass, ws_plan_set)
     websocket_api.async_register_command(hass, ws_files_migrate)
+    websocket_api.async_register_command(hass, ws_files_cleanup)
 
 
 def _runtime(hass: HomeAssistant, connection, msg_id: int) -> HouseplanData | None:
@@ -149,17 +150,24 @@ async def ws_layout_update(hass: HomeAssistant, connection, msg: dict[str, Any])
 )
 @websocket_api.async_response
 async def ws_files_migrate(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Move a marker's uploaded files to its new id (rebinding changes the id).
+    """COPY a marker's uploaded files to its new id and report the exact mapping.
 
-    Without this the PDF urls keep pointing at the OLD id's folder, which then
-    looks orphaned and is one cleanup away from deletion — the exact way the
-    owner lost the sauna heater manuals (field incident, 2026-07-26).
+    Rebinding changes the marker id, so the files must follow (that is how the
+    owner lost a set of manuals, 2026-07-26). This used to MOVE them before the
+    revision-checked config save: when that save was rejected, the server kept
+    the old urls while the files had already left the old folder — a permanent
+    broken link (review CR-2, 2026-07-27).
+
+    Now it copies, never overwrites, and returns {src: dst} for every file so
+    the client can rewrite EXACTLY the urls that made it (review CR-3). The old
+    folder is removed later by houseplan/files/cleanup, once the config is
+    safely committed.
     """
     if not _check_write(hass, connection):
         connection.send_error(msg["id"], "unauthorized", "Only administrators may edit files")
         return
-    from pathlib import Path
     import shutil
+    from pathlib import Path
 
     from .const import FILES_DIR
     from .validation import sanitize_marker_id
@@ -167,32 +175,77 @@ async def ws_files_migrate(hass: HomeAssistant, connection, msg: dict[str, Any])
     src_id = sanitize_marker_id(msg["from_id"])
     dst_id = sanitize_marker_id(msg["to_id"])
     if not src_id or not dst_id or src_id == dst_id:
-        connection.send_result(msg["id"], {"ok": True, "moved": 0})
+        connection.send_result(msg["id"], {"ok": True, "mapping": {}, "copied": 0})
         return
     base = Path(hass.config.path(FILES_DIR))
     src = base / src_id
     dst = base / dst_id
 
-    def _move() -> int:
+    def _copy() -> dict[str, str]:
         if not src.is_dir():
-            return 0
+            return {}
         dst.mkdir(parents=True, exist_ok=True)
-        n = 0
-        for f in src.iterdir():
+        mapping: dict[str, str] = {}
+        for f in sorted(src.iterdir()):
             if not f.is_file():
                 continue
             target = dst / f.name
-            if not target.exists():
-                shutil.move(str(f), str(target))
-                n += 1
-        try:
-            src.rmdir()  # only when empty
-        except OSError:
-            pass
-        return n
+            if target.exists():
+                # a different file already owns this name — do NOT silently
+                # point the url at it; give the copy a unique name instead
+                stem, suffix = f.stem, f.suffix
+                i = 2
+                while (dst / f"{stem} ({i}){suffix}").exists():
+                    i += 1
+                target = dst / f"{stem} ({i}){suffix}"
+            shutil.copy2(str(f), str(target))
+            mapping[f.name] = target.name
+        return mapping
 
-    moved = await hass.async_add_executor_job(_move)
-    connection.send_result(msg["id"], {"ok": True, "moved": moved})
+    try:
+        mapping = await hass.async_add_executor_job(_copy)
+    except OSError as err:
+        connection.send_error(msg["id"], "io_error", f"Could not copy marker files: {err}")
+        return
+    connection.send_result(msg["id"], {"ok": True, "mapping": mapping, "copied": len(mapping)})
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "houseplan/files/cleanup",
+        vol.Required("marker_id"): str,
+    }
+)
+@websocket_api.async_response
+async def ws_files_cleanup(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
+    """Delete a marker's file folder — called only AFTER the config is committed."""
+    if not _check_write(hass, connection):
+        connection.send_error(msg["id"], "unauthorized", "Only administrators may edit files")
+        return
+    import shutil
+    from pathlib import Path
+
+    from .const import FILES_DIR
+    from .validation import sanitize_marker_id
+
+    mid = sanitize_marker_id(msg["marker_id"])
+    if not mid:
+        connection.send_result(msg["id"], {"ok": True, "removed": False})
+        return
+    base = Path(hass.config.path(FILES_DIR)).resolve()
+    target = (base / mid).resolve()
+    if not str(target).startswith(str(base)) or target == base:
+        connection.send_result(msg["id"], {"ok": True, "removed": False})
+        return
+
+    def _rm() -> bool:
+        if not target.is_dir():
+            return False
+        shutil.rmtree(target, ignore_errors=True)
+        return True
+
+    removed = await hass.async_add_executor_job(_rm)
+    connection.send_result(msg["id"], {"ok": True, "removed": removed})
 
 
 @websocket_api.websocket_command(
