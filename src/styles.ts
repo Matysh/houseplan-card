@@ -364,7 +364,7 @@ export const cardStyles = css`
       pointer-events: none; /* draggable only in plan mode (rule below) */
       position: absolute;
       transform: translate(-50%, -50%);
-      font-size: calc(var(--icon-size, 2.5cqw) * 0.5 * var(--rl-scale, 1) * var(--rl-font, 1));
+      font-size: calc(var(--icon-size, 2.5cqw) * 0.5 * var(--rl-scale, 1) * var(--rl-font, 1) * var(--rl-space, 1));
       font-weight: 700;
       letter-spacing: 0.04em;
       white-space: nowrap;
@@ -377,7 +377,21 @@ export const cardStyles = css`
       gap: 0.15em;
       text-align: center;
     }
-    .rlname { display: inline-flex; align-items: center; gap: 0.25em; }
+    .rlname {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25em;
+      font-size: calc(1em * var(--rl-name, 1));
+    }
+    .rlgear {
+      --mdc-icon-size: 0.9em;
+      display: inline-flex;
+      margin-right: 0.2em;
+      opacity: 0.6;
+      cursor: pointer;
+      pointer-events: auto;
+    }
+    .rlgear:hover { opacity: 1; }
     .rlgo {
       --mdc-icon-size: 0.85em;
       display: inline-flex;
@@ -392,7 +406,7 @@ export const cardStyles = css`
       display: flex;
       align-items: center;
       gap: 0.55em;
-      font-size: 0.62em;
+      font-size: calc(0.62em * var(--rl-meta, 1));
       font-weight: 600;
       letter-spacing: 0.02em;
       opacity: 0.9;
@@ -460,6 +474,25 @@ export const cardStyles = css`
     .ctrlstate { display: inline-flex; align-items: center; gap: 5px; color: var(--hp-muted); }
     .ctrlstate.on { color: var(--hp-txt); }
     .ctrlstate ha-icon { --mdc-icon-size: 15px; }
+    .cardpreview {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      margin: 8px 0 2px;
+      padding: 10px;
+      border: 1px dashed var(--hp-muted);
+      border-radius: 8px;
+    }
+    .cardpreview .cpname { font-weight: 700; letter-spacing: 0.04em; }
+    .cardpreview .cpmeta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3em;
+      font-weight: 600;
+      opacity: 0.85;
+    }
+    .cardpreview .cpmeta ha-icon { --mdc-icon-size: 1.05em; }
     .iconauto {
       display: flex;
       align-items: center;

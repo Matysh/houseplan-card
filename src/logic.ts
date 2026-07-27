@@ -552,6 +552,8 @@ export interface SpaceDisplay {
   tempMax: number; // comfort range upper bound, °C
   /** Per-space LQI badges near zigbee devices; null = follow the card option. */
   showLqi: boolean | null;
+  /** Base font multiplier for room cards (tier 2; rooms multiply on top). */
+  cardFontScale: number;
   /** Room-card metrics under the room name (all default off). */
   labelTemp: boolean;
   labelHum: boolean;
@@ -577,6 +579,9 @@ export function spaceDisplayOf(spaceCfg: any): SpaceDisplay {
     tempMin: typeof s.temp_min === 'number' ? s.temp_min : DEFAULT_TEMP_MIN,
     tempMax: typeof s.temp_max === 'number' ? s.temp_max : DEFAULT_TEMP_MAX,
     showLqi: typeof s.show_lqi === 'boolean' ? s.show_lqi : null,
+    cardFontScale: typeof s.card_font_scale === 'number' && s.card_font_scale > 0
+      ? Math.min(3, Math.max(0.5, s.card_font_scale))
+      : 1,
     labelTemp: s.label_temp === true,
     labelHum: s.label_hum === true,
     labelLqi: s.label_lqi === true,
@@ -963,6 +968,37 @@ export function outlineWithout(poly: number[][], cuts: number[][], eps = 1e-6): 
     edges.push([p1[0], p1[1], p2[0], p2[1]]);
   }
   return cutSegments(edges, cuts, eps);
+}
+
+// ---------------- room-level settings (tier 3) ----------------
+
+/**
+ * Effective fill mode of a room: its own override wins, otherwise the space's.
+ * Four settings tiers (owner's principle, 2026-07-26): global > space > room >
+ * device; the more specific tier overrides the more general one. A room may
+ * override even in a glow space ('none' pulls it out of the darkness).
+ */
+export function roomFillModeOf(
+  spaceFill: RoomFillMode,
+  room: { settings?: { fill_mode?: string | null } | null } | null | undefined,
+): RoomFillMode {
+  const o = room?.settings?.fill_mode;
+  return o === 'none' || o === 'lqi' || o === 'light' || o === 'temp' ? o : spaceFill;
+}
+
+// ---------------- marker files ----------------
+
+/**
+ * Rewrite attached-file urls when a marker's id changes (rebinding): the
+ * server moves /files/<oldId>/ to /files/<newId>/, the urls must follow.
+ */
+export function migratePdfUrls<T extends { url: string }>(
+  pdfs: T[], oldId: string, newId: string,
+): T[] {
+  if (!oldId || !newId || oldId === newId) return pdfs;
+  const from = '/files/' + oldId + '/';
+  const to = '/files/' + newId + '/';
+  return pdfs.map((p) => (p.url.includes(from) ? { ...p, url: p.url.split(from).join(to) } : p));
 }
 
 // ---------------- kiosk gestures ----------------

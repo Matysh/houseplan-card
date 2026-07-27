@@ -1,5 +1,41 @@
 # Changelog
 
+## v1.42.2 — 2026-07-26
+- Touch devices no longer pop hover tooltips on every tap (field feedback:
+  "extra labels appear and get in the way on a tablet"). Hover tooltips are
+  desktop-only now; on touch the same data lives in room cards and the
+  long-press device card.
+
+## v1.42.1 — 2026-07-26 (room-card font sizes)
+- Closing the "can't change the font size" feedback: **three sliders**.
+  Space settings gained a base room-card font size for the whole space;
+  Room settings gained independent sizes for the room NAME and the METRICS
+  line (50–300% each). Effects multiply — and stack with the card's corner
+  resize and the kiosk per-screen multiplier as before.
+- Both dialogs show a **live sample card** that follows the sliders as you
+  drag them.
+
+## v1.42.0 — 2026-07-26 (room settings — the third tier)
+- **Settings now have four tiers**: global → space → room → device; the more
+  specific tier overrides the more general one (owner's principle, fixed in
+  ARCHITECTURE). This release adds the ROOM tier.
+- Every room card in the Plan editor gained a **gear**: rename the room,
+  change its HA area, override the **fill type** for this room only (works
+  in glow spaces too — 'none' pulls the room out of the darkness), and pick
+  an explicit **temperature / humidity source** — any HA device or entity —
+  instead of the default room average. The source feeds the room card, the
+  tooltip and the temperature fill, and works for rooms without an HA area
+  (the user-feedback case: a custom template sensor bound to a room).
+- The same settings section appears in the room dialog right after closing a
+  contour.
+
+## v1.41.2 — 2026-07-26
+- Fixed attached PDF manuals breaking after a marker is rebound to another
+  device: the id changes, but the uploaded files stayed in the OLD id's
+  folder — orphaned and eventually lost (that is exactly how the sauna
+  heater's manuals died). Rebinding now moves the files server-side
+  (`houseplan/files/migrate`) and rewrites the attached urls.
+
 ## v1.41.1 — 2026-07-24 (docs)
 - README (en/ru) reworked for discoverability: keyword-rich hero ("interactive
   floor plan card for Home Assistant"), badges, a feature-highlights list

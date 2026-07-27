@@ -14,7 +14,7 @@ import {
 import {
   lqiColor, snapToGrid, samePoint, pointInPolygon, markerIdForBinding,
   segmentCm, formatLength, roomEdges, roomPoly, pointStrictlyInside, roomsOverlap,
-  pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, openZoneOf, distToSegment, outlineWithout, cutSegments, alignGuides, segmentAngle, is45, type AlignGuide, swipeTarget, clampScale,
+  pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, openZoneOf, distToSegment, outlineWithout, cutSegments, alignGuides, segmentAngle, is45, type AlignGuide, swipeTarget, clampScale, migratePdfUrls, roomFillModeOf,
   snapToWall, openingAmount,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
   stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, glowColorOf, doorSector, hasRoomBehind, controlsAction, isControllable,
@@ -22,7 +22,7 @@ import {
   isActiveState, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
 } from './logic';
-import { buildDevices, lqiFor, tempFor, humFor, isHumEntity, areaLights, areaTemp, areaHum, areaLightStats } from './devices';
+import { buildDevices, lqiFor, tempFor, humFor, isHumEntity, areaLights, areaTemp, areaHum, areaLightStats, sourceValue } from './devices';
 import type {
   OpeningCfg,
   RoomCfg, SpaceModel, PdfRef, Marker, ServerConfig, DevItem, CardConfig,
@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.41.1';
+const CARD_VERSION = '1.42.2';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -157,6 +157,14 @@ class HouseplanCard extends LitElement {
   private _areaSel = '';
   private _nameSel = '';
   private _roomDialog = false;
+  private _roomEditId: string | null = null; // gear on a room card (edit mode)
+  private _roomFill: '' | 'none' | 'lqi' | 'light' | 'temp' = ''; // '' = inherit
+  private _roomTempSrc = ''; // '' = average
+  private _roomHumSrc = '';
+  private _roomSrcOpen: 'temp' | 'hum' | null = null;
+  private _roomSrcFilter = '';
+  private _roomNameScale = 1;
+  private _roomLabelScale = 1;
   // plan zoom/pan (zoom is saved per space, locally)
   private _zoom = 1;
   private _view: { x: number; y: number; w: number; h: number } | null = null; // current SVG viewBox (vb coordinates)
@@ -220,6 +228,7 @@ class HouseplanCard extends LitElement {
     tempMin: number;
     tempMax: number;
     showLqi: boolean;
+    cardFontScale: number;
     labelTemp: boolean;
     labelHum: boolean;
     labelLqi: boolean;
@@ -289,6 +298,14 @@ class HouseplanCard extends LitElement {
     _areaSel: { state: true },
     _nameSel: { state: true },
     _roomDialog: { state: true },
+    _roomEditId: { state: true },
+    _roomFill: { state: true },
+    _roomTempSrc: { state: true },
+    _roomHumSrc: { state: true },
+    _roomSrcOpen: { state: true },
+    _roomSrcFilter: { state: true },
+    _roomNameScale: { state: true },
+    _roomLabelScale: { state: true },
     _spaceDialog: { state: true },
     _infoCard: { state: true },
     _rulesDialog: { state: true },
@@ -482,6 +499,7 @@ class HouseplanCard extends LitElement {
         name: r.name,
         area: r.area ?? null,
         open_to: r.open_to || undefined,
+        settings: r.settings || undefined,
         x: r.x != null ? r.x * NORM_W : undefined,
         y: r.y != null ? r.y * H : undefined,
         w: r.w != null ? r.w * NORM_W : undefined,
@@ -1249,7 +1267,17 @@ class HouseplanCard extends LitElement {
     }, 3500);
   }
 
+  /** True on touch-first devices (tablets/phones): no real hover there. */
+  private static readonly _noHover =
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(hover: none)').matches;
+
   private _showTip(ev: MouseEvent, title: string, meta: string, lqi?: number | null, temp?: number | null): void {
+    // Field feedback: on tablets every tap synthesized a mousemove and popped
+    // the hover tooltip over the finger. Touch devices get NO hover tooltips —
+    // the same data lives in room cards and the long-press device card.
+    if (HouseplanCard._noHover) return;
     if (this._drag) return;
     this._tip = { x: ev.clientX, y: ev.clientY, title, meta, lqi, temp };
   }
@@ -1464,6 +1492,7 @@ class HouseplanCard extends LitElement {
       this._cursorPt = null;
       this._nameSel = '';
       this._areaSel = '';
+      this._resetRoomDialogFields();
       this._roomDialog = true;
       return;
     }
@@ -2065,6 +2094,7 @@ class HouseplanCard extends LitElement {
       this._showToast(this._t('toast.split_bad_cut'));
       return;
     }
+    this._resetRoomDialogFields();
     // the bigger part stays the room it was — name, area and devices go with it
     const [p1, p2] = parts;
     const main = polygonArea(p1) >= polygonArea(p2) ? p1 : p2;
@@ -2148,6 +2178,7 @@ class HouseplanCard extends LitElement {
       name: this._nameSel || areaName || this._t('room.default_name'),
       area: this._areaSel || null,
       poly: verts.map((p) => [p[0] / NORM_W, p[1] / H]),
+      ...(this._roomSettingsFromDialog() ? { settings: this._roomSettingsFromDialog() } : {}),
     });
     this._saveConfig();
     this._path = [];
@@ -2199,6 +2230,12 @@ class HouseplanCard extends LitElement {
   /** Cancel in the dialog: the outline is open again (the closing point is removed). */
   private _roomDialogCancel(): void {
     this._roomDialog = false;
+    if (this._roomEditId) {
+      this._roomEditId = null;
+      this._nameSel = '';
+      this._areaSel = '';
+      return;
+    }
     if (this._pendingSplit) {
       // nothing was applied yet — drop the cut entirely, the room stays whole
       this._pendingSplit = null;
@@ -2459,6 +2496,7 @@ class HouseplanCard extends LitElement {
         angle: dlg.angle ? dlg.angle : null,
         tap_action: dlg.tapAction || null,
         controls: dlg.controls.length ? dlg.controls : null,
+        // pdfs may be rewritten below when rebinding changes the marker id
         glow_radius_cm: (() => {
           const v = parseFloat(dlg.glowRadius);
           if (!Number.isFinite(v) || v <= 0) return null;
@@ -2480,6 +2518,15 @@ class HouseplanCard extends LitElement {
       const prevRoomId = prevDev?.marker?.room_id ?? null;
       const roomChanged = !!dlg.room && prevDev != null
         && (prevDev.space !== space || prevDev.area !== area || prevRoomId !== roomId);
+      // rebinding changed the id → move the uploaded files along (server-side)
+      // and rewrite the attached urls; otherwise the old-id folder goes orphan
+      // (that is how the sauna manuals were lost — incident 2026-07-26)
+      if (oldId && oldId !== id && marker.pdfs?.length) {
+        await this.hass
+          .callWS({ type: 'houseplan/files/migrate', from_id: oldId, to_id: id })
+          .catch(() => undefined);
+        marker.pdfs = migratePdfUrls(marker.pdfs, oldId, id);
+      }
       // remove the previous marker (by the old id and by the new id)
       cfg.markers = cfg.markers.filter((m) => m.id !== id && m.id !== oldId);
       cfg.markers.push(marker);
@@ -2597,6 +2644,7 @@ class HouseplanCard extends LitElement {
         roomColor: disp.color, roomOpacity: disp.opacity, fillMode: disp.fill,
         tempMin: disp.tempMin, tempMax: disp.tempMax,
         showLqi: disp.showLqi ?? this._config?.show_signal ?? true,
+        cardFontScale: disp.cardFontScale,
         labelTemp: disp.labelTemp, labelHum: disp.labelHum,
         labelLqi: disp.labelLqi, labelLight: disp.labelLight,
         cellCm: Number(sp.cell_cm) > 0 ? Number(sp.cell_cm) : 5,
@@ -2610,6 +2658,7 @@ class HouseplanCard extends LitElement {
         roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'none',
         tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
         showLqi: this._config?.show_signal ?? true,
+        cardFontScale: 1,
         labelTemp: false, labelHum: false, labelLqi: false, labelLight: false,
         cellCm: 5,
         busy: false,
@@ -2695,6 +2744,7 @@ class HouseplanCard extends LitElement {
         temp_min: Number.isFinite(d.tempMin) ? Math.min(d.tempMin, d.tempMax) : DEFAULT_TEMP_MIN,
         temp_max: Number.isFinite(d.tempMax) ? Math.max(d.tempMin, d.tempMax) : DEFAULT_TEMP_MAX,
         show_lqi: d.showLqi,
+        card_font_scale: d.cardFontScale !== 1 ? d.cardFontScale : undefined,
         label_temp: d.labelTemp,
         label_hum: d.labelHum,
         label_lqi: d.labelLqi,
@@ -2791,6 +2841,7 @@ class HouseplanCard extends LitElement {
       roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'none',
       tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
       showLqi: this._config?.show_signal ?? true,
+      cardFontScale: 1,
       labelTemp: false, labelHum: false, labelLqi: false, labelLight: false,
       cellCm: 5,
       busy: false,
@@ -3299,20 +3350,25 @@ class HouseplanCard extends LitElement {
               if (this._markup && (r.id === this._mergeSel || r.id === this._splitSel?.roomId))
                 cls += ' picked';
               let style = '';
-              if (!this._markup && (disp.showBorders || disp.fill !== 'none')) {
+              const effFill = roomFillModeOf(disp.fill, r);
+              if (!this._markup && (disp.showBorders || effFill !== 'none')) {
                 cls += ' styled';
                 const st: string[] = [];
                 // keep the stroke colour even when borders are hidden, so hover can reveal it
                 st.push(`--room-stroke:${disp.color}`, `--room-stroke-op:${disp.showBorders ? disp.opacity : 0}`);
-                const fillC = disp.fill === 'glow'
-                  // glow: uniform darkness over EVERY room (area or not, lit or not)
+                const fillC = effFill === 'glow'
+                  // glow: uniform darkness (a room override may opt OUT of it)
                   ? this._fillColors.glow_base
+                  : effFill === 'temp'
+                  // temp works without an HA area when a tier-3 source is set
+                  ? roomFillStyle('temp', null, 'none', this._roomTemp(r),
+                      disp.tempMin, disp.tempMax, this._fillColors)
                   : r.area
                   ? roomFillStyle(
-                      disp.fill,
-                      disp.fill === 'lqi' ? this._roomLqi(r.area) : null,
-                      disp.fill === 'light' ? areaLights(this.hass, this._devices, r.area) : 'none',
-                      disp.fill === 'temp' ? areaTemp(this.hass, this._devices, r.area) : null,
+                      effFill,
+                      effFill === 'lqi' ? this._roomLqi(r.area) : null,
+                      effFill === 'light' ? areaLights(this.hass, this._devices, r.area) : 'none',
+                      null,
                       disp.tempMin,
                       disp.tempMax,
                       this._fillColors,
@@ -3327,7 +3383,7 @@ class HouseplanCard extends LitElement {
               const tip = (e: MouseEvent) =>
                 this._showTip(e, r.name, this._t('tip.room'),
                   showLqi ? this._roomLqi(r.area) : null,
-                  r.area ? areaTemp(this.hass, this._devices, r.area) : null);
+                  this._roomTemp(r));
               const label = !space.bg && !disp.showNames && !this._markup;
               const c = this._roomCenter(r);
               // open boundaries: this room's solid stroke must not run beneath
@@ -3504,6 +3560,113 @@ class HouseplanCard extends LitElement {
     </div>`;
   }
 
+  /** Room temperature honouring the tier-3 source override. */
+  private _roomTemp(r: RoomCfg): number | null {
+    const src = r.settings?.temp_source;
+    if (src) return sourceValue(this.hass, src, 'temp');
+    return r.area ? areaTemp(this.hass, this._devices, r.area) : null;
+  }
+
+  /** Room humidity honouring the tier-3 source override. */
+  private _roomHum(r: RoomCfg): number | null {
+    const src = r.settings?.hum_source;
+    if (src) return sourceValue(this.hass, src, 'hum');
+    return r.area ? areaHum(this.hass, this._devices, r.area) : null;
+  }
+
+  private _resetRoomDialogFields(): void {
+    this._roomEditId = null;
+    this._roomFill = '';
+    this._roomTempSrc = '';
+    this._roomHumSrc = '';
+    this._roomSrcOpen = null;
+    this._roomSrcFilter = '';
+    this._roomNameScale = 1;
+    this._roomLabelScale = 1;
+  }
+
+  /** Open the room dialog for an EXISTING room (the gear on its card). */
+  private _openRoomEdit(r: RoomCfg): void {
+    if (!r.id) return;
+    this._roomEditId = r.id;
+    this._nameSel = r.name || '';
+    this._areaSel = r.area || '';
+    this._roomFill = (r.settings?.fill_mode as any) || '';
+    this._roomTempSrc = r.settings?.temp_source || '';
+    this._roomHumSrc = r.settings?.hum_source || '';
+    this._roomNameScale = clampScale(r.settings?.name_scale);
+    this._roomLabelScale = clampScale(r.settings?.label_scale);
+    this._roomSrcOpen = null;
+    this._roomSrcFilter = '';
+    this._roomDialog = true;
+  }
+
+  /** Collect the room settings object from the dialog state (null = all inherited). */
+  private _roomSettingsFromDialog(): RoomCfg['settings'] {
+    const st: any = {};
+    if (this._roomFill) st.fill_mode = this._roomFill;
+    if (this._roomTempSrc) st.temp_source = this._roomTempSrc;
+    if (this._roomHumSrc) st.hum_source = this._roomHumSrc;
+    if (this._roomNameScale !== 1) st.name_scale = this._roomNameScale;
+    if (this._roomLabelScale !== 1) st.label_scale = this._roomLabelScale;
+    return Object.keys(st).length ? st : null;
+  }
+
+  /** Save the room edited via the gear (name, area, tier-3 settings). */
+  private _saveRoomEdit(): void {
+    const sp = this._curSpaceCfg;
+    const room = sp?.rooms.find((x: any) => x.id === this._roomEditId);
+    if (!room) {
+      this._roomDialog = false;
+      this._roomEditId = null;
+      return;
+    }
+    room.name = this._nameSel.trim() || room.name;
+    room.area = this._areaSel || null;
+    const st = this._roomSettingsFromDialog();
+    if (st) room.settings = st;
+    else delete room.settings;
+    this._saveConfig();
+    this._roomDialog = false;
+    this._roomEditId = null;
+    this._nameSel = '';
+    this._areaSel = '';
+    this._regSignature = '';
+    this._maybeRebuildDevices();
+    this.requestUpdate();
+    this._showToast(this._t('toast.room_updated'));
+  }
+
+  /** Devices + sensor entities for the measurement-source picker. */
+  private _roomSrcCandidates(): { value: string; label: string; sub: string }[] {
+    const h = this.hass;
+    const q = this._roomSrcFilter.trim().toLowerCase();
+    const list: { value: string; label: string; sub: string }[] = [];
+    for (const dev of Object.values<any>(h.devices)) {
+      if (dev.entry_type === 'service') continue;
+      const name = (dev.name_by_user || dev.name || dev.id).trim();
+      if (q && !name.toLowerCase().includes(q)) continue;
+      list.push({ value: 'device:' + dev.id, label: name, sub: dev.model || this._t('marker.sub_device') });
+    }
+    for (const [eid, reg] of Object.entries<any>(h.entities)) {
+      if (!eid.startsWith('sensor.') || reg.hidden) continue;
+      const label = reg.name || h.states[eid]?.attributes?.friendly_name || eid;
+      if (q && !(label + ' ' + eid).toLowerCase().includes(q)) continue;
+      list.push({ value: 'entity:' + eid, label, sub: eid });
+    }
+    list.sort((a, b) => a.label.localeCompare(b.label));
+    return list.slice(0, 200);
+  }
+
+  /** Human label of a picked measurement source. */
+  private _roomSrcLabel(src: string): string {
+    const i = src.indexOf(':');
+    const k = src.slice(0, i);
+    const ref = src.slice(i + 1);
+    if (k === 'device') return this.hass.devices[ref]?.name_by_user || this.hass.devices[ref]?.name || ref;
+    return this.hass.entities[ref]?.name || this.hass.states[ref]?.attributes?.friendly_name || ref;
+  }
+
   /** Saved label position (layout key rl_<roomId>) or the room center. */
   private _labelPos(r: RoomCfg, spaceId: string): { x: number; y: number } {
     const saved = this._layout['rl_' + (r.id || '')];
@@ -3613,20 +3776,20 @@ class HouseplanCard extends LitElement {
     const k = this._labelScale(r);
     // optional metrics row (needs an HA area; sub-area rooms show the name only)
     const rows: TemplateResult[] = [];
-    if (r.area && !this._markup) {
+    if ((r.area || r.settings?.temp_source || r.settings?.hum_source) && !this._markup) {
       if (disp.labelTemp) {
-        const t = areaTemp(this.hass, this._devices, r.area);
+        const t = this._roomTemp(r);
         if (t != null) rows.push(html`<span class="rlm"><ha-icon icon="mdi:thermometer"></ha-icon>${t}°</span>`);
       }
       if (disp.labelHum) {
-        const hm = areaHum(this.hass, this._devices, r.area);
+        const hm = this._roomHum(r);
         if (hm != null) rows.push(html`<span class="rlm"><ha-icon icon="mdi:water-percent"></ha-icon>${hm}%</span>`);
       }
-      if (disp.labelLqi) {
+      if (disp.labelLqi && r.area) {
         const l = this._roomLqi(r.area);
         if (l != null) rows.push(html`<span class="rlm"><ha-icon icon="mdi:zigbee"></ha-icon>${l}</span>`);
       }
-      if (disp.labelLight) {
+      if (disp.labelLight && r.area) {
         const ls = areaLightStats(this.hass, this._devices, r.area);
         if (ls) {
           const txt = ls.on === 0
@@ -3639,12 +3802,17 @@ class HouseplanCard extends LitElement {
       }
     }
     return html`<div class="roomlabel ${rows.length ? 'card' : ''}"
-      style="left:${left}%;top:${top}%;color:${disp.color};opacity:${op};--rl-scale:${k}"
+      style="left:${left}%;top:${top}%;color:${disp.color};opacity:${op};--rl-scale:${k};--rl-space:${disp.cardFontScale};--rl-name:${clampScale(r.settings?.name_scale)};--rl-meta:${clampScale(r.settings?.label_scale)}"
       @pointerdown=${(e: PointerEvent) => this._labelDown(e, r, space.id)}
       @pointermove=${(e: PointerEvent) => this._labelMove(e, r, space.id)}
       @pointerup=${() => this._labelUp(r)}
       @pointercancel=${() => this._labelUp(r)}
-    ><span class="rlname">${r.name}${!this._markup && r.area
+    ><span class="rlname">${this._markup && r.id
+        ? html`<ha-icon class="rlgear" icon="mdi:cog-outline"
+            title=${this._t('room.settings_title')}
+            @pointerdown=${(e: Event) => e.stopPropagation()}
+            @click=${(e: Event) => { e.stopPropagation(); this._openRoomEdit(r); }}></ha-icon>`
+        : nothing}${r.name}${!this._markup && r.area
         ? html`<ha-icon class="rlgo" icon="mdi:open-in-new"
             title=${this._t('room.open_area')}
             @click=${(e: Event) => { e.stopPropagation(); this._clickRoom(r); }}
@@ -4509,6 +4677,13 @@ class HouseplanCard extends LitElement {
               <span>${this._t(k)}</span>
             </label>`,
           )}
+          <label>${this._t('space.card_font')}</label>
+          <div class="colorrow gsrow">
+            <input type="range" min="50" max="300" step="5" .value=${String(Math.round(d.cardFontScale * 100))}
+              @input=${(e: Event) => (this._spaceDialog = { ...d, cardFontScale: Number((e.target as HTMLInputElement).value) / 100 })} />
+            <span class="opv">${Math.round(d.cardFontScale * 100)}%</span>
+          </div>
+          ${this._renderCardPreview(d.cardFontScale, 1, 1)}
           <label>${this._t('space.room_color')}</label>
           <div class="colorrow">
             <input type="color" .value=${d.roomColor}
@@ -4596,11 +4771,79 @@ class HouseplanCard extends LitElement {
     </div>`;
   }
 
+  /** Live sample of a room card at the given multipliers (dialog preview). */
+  private _renderCardPreview(spaceScale: number, nameScale: number, labelScale: number): TemplateResult {
+    const base = 18 * spaceScale;
+    return html`<div class="cardpreview">
+      <span class="cpname" style="font-size:${(base * nameScale).toFixed(1)}px">
+        ${this._t('preview.room_name')}</span>
+      <span class="cpmeta" style="font-size:${(base * 0.62 * labelScale).toFixed(1)}px">
+        <ha-icon icon="mdi:thermometer"></ha-icon>22.4° ·
+        <ha-icon icon="mdi:water-percent"></ha-icon>45% ·
+        <ha-icon icon="mdi:lightbulb-on"></ha-icon>${this._t('roomcard.light_partial', { on: 1, total: 3 })}
+      </span>
+    </div>`;
+  }
+
+  /** One measurement-source control (average vs an explicit device/entity). */
+  private _renderRoomSource(kind: 'temp' | 'hum'): TemplateResult {
+    const val = kind === 'temp' ? this._roomTempSrc : this._roomHumSrc;
+    const setVal = (v: string) => {
+      if (kind === 'temp') this._roomTempSrc = v;
+      else this._roomHumSrc = v;
+      this.requestUpdate();
+    };
+    const open = this._roomSrcOpen === kind;
+    return html`
+      <label>${this._t(kind === 'temp' ? 'room.temp_src_label' : 'room.hum_src_label')}</label>
+      <label class="srcrow">
+        <input type="radio" name="rsrc-${kind}" .checked=${!val}
+          @change=${() => { setVal(''); this._roomSrcOpen = null; }} />
+        <span>${this._t('room.src_average')}</span>
+      </label>
+      <label class="srcrow">
+        <input type="radio" name="rsrc-${kind}" .checked=${!!val}
+          @change=${() => { this._roomSrcOpen = kind; this._roomSrcFilter = ''; this.requestUpdate(); }} />
+        <span>${this._t('room.src_pick')}</span>
+      </label>
+      ${val || open
+        ? html`<button class="dropbtn ${open ? 'open' : ''}"
+              @click=${() => { this._roomSrcOpen = open ? null : kind; this._roomSrcFilter = ''; }}>
+              ${val
+                ? html`<b>${this._roomSrcLabel(val)}</b><span class="ref">${val}</span>`
+                : html`<span class="muted">${this._t('room.src_ph')}</span>`}
+              <ha-icon icon=${open ? 'mdi:chevron-up' : 'mdi:chevron-down'}></ha-icon>
+            </button>
+            ${open
+              ? html`<div class="droppanel">
+                  <input class="namein" type="text" placeholder=${this._t('marker.search_ph')}
+                    .value=${this._roomSrcFilter}
+                    @input=${(e: Event) => { this._roomSrcFilter = (e.target as HTMLInputElement).value; this.requestUpdate(); }} />
+                  <div class="candlist">
+                    ${this._roomSrcCandidates().map(
+                      (c) => html`<div class="cand ${c.value === val ? 'sel' : ''}"
+                        @click=${() => { setVal(c.value); this._roomSrcOpen = null; }}>
+                        <span class="cl">${c.label}</span><span class="cs">${c.sub}</span>
+                      </div>`,
+                    )}
+                  </div>
+                </div>`
+              : nothing}`
+        : nothing}`;
+  }
+
   private _renderRoomDialog(): TemplateResult {
-    const areas = this._freeAreas;
+    const edit = !!this._roomEditId;
+    // the free-areas list must include the edited room's CURRENT area
+    const areas = [...this._freeAreas];
+    if (edit && this._areaSel && !areas.some((a) => a.area_id === this._areaSel)) {
+      const cur = this.hass.areas[this._areaSel];
+      if (cur) areas.unshift(cur);
+    }
     return html`<div class="menuwrap dialogwrap" @click=${(e: Event) => e.stopPropagation()}>
       <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
-        <div class="hd"><ha-icon icon="mdi:floor-plan"></ha-icon>${this._t('room.new')}</div>
+        <div class="hd"><ha-icon icon=${edit ? 'mdi:cog-outline' : 'mdi:floor-plan'}></ha-icon>
+          ${edit ? this._t('room.settings_title') : this._t('room.new')}</div>
         <div class="body">
           <label>${this._t('room.name_label')}</label>
           <input class="namein" type="text" placeholder=${this._t('room.name_ph')}
@@ -4619,18 +4862,53 @@ class HouseplanCard extends LitElement {
               (a) => html`<option value=${a.area_id} ?selected=${a.area_id === this._areaSel}>${a.name}</option>`,
             )}
           </select>
+
+          <label class="dispsection">${this._t('room.settings_section')}</label>
+          <label>${this._t('room.fill_label')}</label>
+          ${([['', 'fill.inherit'], ['none', 'fill.none'], ['lqi', 'fill.lqi'], ['light', 'fill.light'], ['temp', 'fill.temp']] as const).map(
+            ([v, k]) => html`<label class="srcrow inline">
+              <input type="radio" name="rfill" .checked=${this._roomFill === v}
+                @change=${() => { this._roomFill = v as any; this.requestUpdate(); }} />
+              <span>${this._t(k as any)}</span>
+            </label>`,
+          )}
+          ${this._renderRoomSource('temp')}
+          ${this._renderRoomSource('hum')}
+
+          <label class="dispsection">${this._t('room.sizes_section')}</label>
+          <label>${this._t('room.name_scale')}</label>
+          <div class="colorrow gsrow">
+            <input type="range" min="50" max="300" step="5" .value=${String(Math.round(this._roomNameScale * 100))}
+              @input=${(e: Event) => { this._roomNameScale = Number((e.target as HTMLInputElement).value) / 100; this.requestUpdate(); }} />
+            <span class="opv">${Math.round(this._roomNameScale * 100)}%</span>
+          </div>
+          <label>${this._t('room.label_scale')}</label>
+          <div class="colorrow gsrow">
+            <input type="range" min="50" max="300" step="5" .value=${String(Math.round(this._roomLabelScale * 100))}
+              @input=${(e: Event) => { this._roomLabelScale = Number((e.target as HTMLInputElement).value) / 100; this.requestUpdate(); }} />
+            <span class="opv">${Math.round(this._roomLabelScale * 100)}%</span>
+          </div>
+          ${this._renderCardPreview(
+            spaceDisplayOf(this._curSpaceCfg).cardFontScale,
+            this._roomNameScale,
+            this._roomLabelScale,
+          )}
         </div>
         <div class="row">
           <button class="btn ghost" @click=${this._roomDialogCancel}>${this._t('btn.cancel')}</button>
           <span class="spacer"></span>
-          <button class="btn ghost" @click=${this._saveRoomNoArea} ?disabled=${!this._nameSel.trim()}
-            title=${this._t('title.no_area_room')}>
-            ${this._t('btn.no_area')}
-          </button>
-          <button class="btn on" @click=${this._saveRoom} ?disabled=${!this._areaSel}
-            title=${!this._areaSel ? this._t('title.choose_area') : ''}>
-            <ha-icon icon="mdi:check"></ha-icon>${this._t('btn.save')}
-          </button>
+          ${edit
+            ? html`<button class="btn on" @click=${() => this._saveRoomEdit()} ?disabled=${!this._nameSel.trim()}>
+                <ha-icon icon="mdi:check"></ha-icon>${this._t('btn.save')}
+              </button>`
+            : html`<button class="btn ghost" @click=${this._saveRoomNoArea} ?disabled=${!this._nameSel.trim()}
+                title=${this._t('title.no_area_room')}>
+                ${this._t('btn.no_area')}
+              </button>
+              <button class="btn on" @click=${this._saveRoom} ?disabled=${!this._areaSel}
+                title=${!this._areaSel ? this._t('title.choose_area') : ''}>
+                <ha-icon icon="mdi:check"></ha-icon>${this._t('btn.save')}
+              </button>`}
         </div>
       </div>
     </div>`;

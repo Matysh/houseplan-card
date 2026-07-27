@@ -10,6 +10,8 @@ import {
   outlineWithout,
   alignGuides, segmentAngle, is45,
   swipeTarget, clampScale,
+  migratePdfUrls,
+  roomFillModeOf,
   segmentCm, formatLength, roomEdges, roomPoly, pointOnBoundary, pointStrictlyInside, roomsOverlap,
   mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices,
 } from '../test-build/logic.js';
@@ -786,4 +788,24 @@ test('clampScale', () => {
   assert.equal(clampScale(0.1), 0.5);
   assert.equal(clampScale('x'), 1);
   assert.equal(clampScale(undefined, 1.5), 1.5);
+});
+
+test('migratePdfUrls: rebinding rewrites file urls', () => {
+  const pdfs = [
+    { name: 'a.pdf', url: '/houseplan_files/files/v_old1/a.pdf?v=1' },
+    { name: 'b.pdf', url: '/houseplan_files/files/other/b.pdf?v=2' },
+  ];
+  const out = migratePdfUrls(pdfs, 'v_old1', 'dev99');
+  assert.equal(out[0].url, '/houseplan_files/files/dev99/a.pdf?v=1');
+  assert.equal(out[1].url, pdfs[1].url); // чужие пути не трогаем
+  // без смены id — как есть
+  assert.equal(migratePdfUrls(pdfs, 'x', 'x'), pdfs);
+});
+
+test('roomFillModeOf: tier-3 override beats the space, junk inherits', () => {
+  assert.equal(roomFillModeOf('temp', { settings: { fill_mode: 'light' } }), 'light');
+  assert.equal(roomFillModeOf('glow', { settings: { fill_mode: 'none' } }), 'none'); // выход из тьмы
+  assert.equal(roomFillModeOf('temp', {}), 'temp');
+  assert.equal(roomFillModeOf('temp', null), 'temp');
+  assert.equal(roomFillModeOf('temp', { settings: { fill_mode: 'glow' } }), 'temp'); // glow нельзя выбрать per-room
 });

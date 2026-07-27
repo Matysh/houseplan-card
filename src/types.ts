@@ -1,8 +1,19 @@
 /** Shared types of the House Plan card. */
 
 export interface RoomCfg {
-  /** Rooms this one has an OPEN (virtual) boundary with — light flows through. */
+  /** Rooms this one has an OPEN (virtual) boundary with - light flows through. */
   open_to?: string[] | null;
+  /** Room-level settings (tier 3 of 4: global > space > ROOM > device). */
+  settings?: {
+    /** Fill override; unset = inherit the space fill mode. */
+    fill_mode?: 'none' | 'lqi' | 'light' | 'temp' | null;
+    /** 'device:<id>' or 'entity:<eid>'; unset = average over the room sensors. */
+    temp_source?: string | null;
+    hum_source?: string | null;
+    /** Font multipliers for THIS room's card (0.5-3, unset = 1). */
+    name_scale?: number | null;
+    label_scale?: number | null;
+  } | null;
   id?: string;
   name: string;
   area: string | null;
