@@ -9,9 +9,11 @@ FRONTEND_URL = "/houseplan_files/houseplan-card.js"
 PLANS_URL = "/houseplan_files/plans"
 PLANS_DIR = "houseplan/plans"  # relative to the HA configuration directory
 FILES_URL = "/houseplan_files/files"
+# authenticated read path (audit B1): /api/houseplan/content/<plans|files>/<sub>/<name>
+CONTENT_URL = "/api/houseplan/content"
 FILES_DIR = "houseplan/files"
 CONF_ADMIN_ONLY = "admin_only"
-VERSION = "1.42.2"
+VERSION = "1.43.0"
 
 DEFAULT_CONFIG: dict = {
     "spaces": [],

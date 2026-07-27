@@ -1,5 +1,32 @@
 # Changelog
 
+## v1.43.0 — 2026-07-27 (external audit: P0 fixes)
+
+An external code audit of v1.41.1 found four critical issues. All four are fixed
+and covered by regression tests.
+
+- **Silent data loss on save (L2).** A debounced config write read the config at
+  fire time, so a `houseplan_config_updated` event arriving in between replaced
+  it and the user's edit vanished with no error — reproducible in a single tab.
+  The debounce now supports `flush()`/`pending()`, a reload flushes the pending
+  write first and defers while a write is in flight, and a failed reload finally
+  reports instead of staying silent.
+- **Split corrupted room geometry (G1).** A cut starting and ending on the SAME
+  wall (carving a niche — a natural action) produced two overlapping,
+  self-intersecting rooms whose areas summed to twice the original, and the
+  overlap guard did not catch it. Same-edge cuts now carve the niche correctly,
+  and a partition invariant (parts must sum to the original) rejects anything
+  else.
+- **Plans and uploaded files were served without authentication (B1).** Anyone
+  who could reach the HA endpoint could fetch floor plans and attached manuals
+  without logging in. They are now served by an authenticated view; stored
+  legacy URLs are rewritten on read, so nothing breaks. **The old public paths
+  disappear after a Home Assistant restart.**
+- **Dialogs could resurrect and blank the card (L3).** Closing a dialog while
+  its save was in flight, on a failed save, spread `null` into a truthy husk;
+  the renderer then threw and the card went blank until reload. Guarded in all
+  four save routines; the error toast still fires.
+
 ## v1.42.2 — 2026-07-26
 - Touch devices no longer pop hover tooltips on every tap (field feedback:
   "extra labels appear and get in the way on a tablet"). Hover tooltips are

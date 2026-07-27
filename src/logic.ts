@@ -380,10 +380,40 @@ export function splitRoomPath(
     acc.push(to);
     return dropRepeats(acc, eps);
   };
-  const p1 = dropRepeats([...walk(a, ia, b, ib), ...[...mids].reverse()], eps);
-  const p2 = dropRepeats([...walk(b, ib, a, ia), ...mids], eps);
+  let p1: number[][];
+  let p2: number[][];
+  if (ia === ib) {
+    // BOTH ends on the SAME edge — carving an alcove out of one wall. The walk
+    // above would traverse the whole outline twice and return two overlapping,
+    // self-intersecting rooms whose areas sum to 2x the original (audit G1,
+    // 2026-07-27). The niche is simply the path closed along that edge; the
+    // remainder is the outline with that stretch replaced by the path.
+    const niche = dropRepeats([...pts], eps);
+    if (niche.length < 3 || polygonArea(niche) <= eps) return null;
+    // the niche must not swallow other geometry: it stays inside the room
+    const rest: number[][] = [];
+    for (let i = 0; i < poly.length; i++) {
+      rest.push(poly[i]);
+      if (i === ia) {
+        // walk the cut from a to b along the edge direction
+        const dir = (poly[(ia + 1) % poly.length][0] - poly[ia][0]) * (b[0] - a[0])
+          + (poly[(ia + 1) % poly.length][1] - poly[ia][1]) * (b[1] - a[1]);
+        const path = dir >= 0 ? pts : [...pts].reverse();
+        for (const p of path) rest.push(p);
+      }
+    }
+    p1 = dropRepeats(rest, eps);
+    p2 = niche;
+  } else {
+    p1 = dropRepeats([...walk(a, ia, b, ib), ...[...mids].reverse()], eps);
+    p2 = dropRepeats([...walk(b, ib, a, ia), ...mids], eps);
+  }
   if (p1.length < 3 || p2.length < 3) return null;
   if (polygonArea(p1) <= eps || polygonArea(p2) <= eps) return null;
+  // INVARIANT (audit G1): a split partitions the room — the parts must sum to
+  // the original. Anything else means the walk produced overlapping garbage.
+  if (Math.abs(polygonArea(p1) + polygonArea(p2) - polygonArea(poly)) > Math.max(eps, polygonArea(poly) * 1e-6))
+    return null;
   return [p1, p2];
 }
 
@@ -968,6 +998,22 @@ export function outlineWithout(poly: number[][], cuts: number[][], eps = 1e-6): 
     edges.push([p1[0], p1[1], p2[0], p2[1]]);
   }
   return cutSegments(edges, cuts, eps);
+}
+
+/**
+ * Legacy static URLs (/houseplan_files/plans|files/...) are rewritten to the
+ * authenticated content endpoint (audit B1). Applied on READ, so stored
+ * configs keep working without a migration.
+ */
+export function contentUrl(url: string | null | undefined): string {
+  if (!url) return '';
+  if (url.startsWith('/houseplan_files/plans/')) {
+    return '/api/houseplan/content/plans/_/' + url.slice('/houseplan_files/plans/'.length);
+  }
+  if (url.startsWith('/houseplan_files/files/')) {
+    return '/api/houseplan/content/files/' + url.slice('/houseplan_files/files/'.length);
+  }
+  return url;
 }
 
 // ---------------- room-level settings (tier 3) ----------------

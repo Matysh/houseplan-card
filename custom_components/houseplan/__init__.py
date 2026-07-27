@@ -28,9 +28,10 @@ async def async_setup(hass: HomeAssistant, config) -> bool:
     """Register global handlers (survive config-entry reloads): WS commands, HTTP view."""
     hass.data.setdefault(DOMAIN, {})
     hp_ws.async_register(hass)
-    from .http_api import HouseplanUploadView
+    from .http_api import HouseplanContentView, HouseplanUploadView
 
     hass.http.register_view(HouseplanUploadView())
+    hass.http.register_view(HouseplanContentView())
     return True
 
 
@@ -61,14 +62,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
 
             if card_path.exists():
                 static_paths.append(StaticPathConfig(FRONTEND_URL, str(card_path), cache_headers=False))
-            static_paths.append(StaticPathConfig(PLANS_URL, str(plans_path), cache_headers=True))
-            static_paths.append(StaticPathConfig(FILES_URL, str(files_path), cache_headers=True))
-            await hass.http.async_register_static_paths(static_paths)
+            # NOTE (audit B1): plans and marker files are NO LONGER static.
+            # They are served by HouseplanContentView, which requires auth.
+            # Only the card bundle stays public — Lovelace resources must be.
+            if static_paths:
+                await hass.http.async_register_static_paths(static_paths)
         except ImportError:  # very old HA versions
             if card_path.exists():
                 hass.http.register_static_path(FRONTEND_URL, str(card_path), cache_headers=False)
-            hass.http.register_static_path(PLANS_URL, str(plans_path), cache_headers=True)
-            hass.http.register_static_path(FILES_URL, str(files_path), cache_headers=True)
 
     if not card_path.exists():
         _LOGGER.warning("houseplan-card.js not found next to the integration: %s", card_path)

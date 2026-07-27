@@ -11,7 +11,7 @@ from pathlib import Path
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import issue_registry as ir
 
-from .const import DOMAIN, PLANS_DIR, PLANS_URL
+from .const import CONTENT_URL, DOMAIN, PLANS_DIR, PLANS_URL
 from .store import HouseplanConfigEntry
 
 
@@ -25,9 +25,15 @@ async def async_check_plan_files(hass: HomeAssistant, entry: HouseplanConfigEntr
         res = []
         for sp in spaces:
             url = sp.get("plan_url") or ""
-            if not url.startswith(PLANS_URL + "/"):
+            # both the legacy static URL and the authenticated content URL
+            prefix = None
+            if url.startswith(PLANS_URL + "/"):
+                prefix = PLANS_URL + "/"
+            elif url.startswith(CONTENT_URL + "/plans/_/"):
+                prefix = CONTENT_URL + "/plans/_/"
+            if prefix is None:
                 continue  # external/legacy URL — not ours to verify
-            fname = url[len(PLANS_URL) + 1 :].split("?", 1)[0]
+            fname = url[len(prefix) :].split("?", 1)[0]
             if not (plans_dir / fname).is_file():
                 res.append((sp.get("id", "?"), fname))
         return res

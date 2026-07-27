@@ -140,6 +140,19 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       (explicit ripple color still wins); off/white lights unchanged [auto]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+- [ ] Save race (v1.43.0, audit L2): make a markup edit, then press Save in any
+      dialog within 500 ms (or let another client save) — the markup edit must
+      survive and reach the server; a failed reload now shows a toast [auto]
+- [ ] Niche split (v1.43.0, audit G1): a cut that starts AND ends on the same
+      wall carves a niche; the two parts' areas must sum to the original (the
+      invariant is enforced in code and asserted for every split test) [auto]
+- [ ] Authenticated content (v1.43.0, audit B1): plan images and marker files
+      are only reachable through /api/houseplan/content/… with a session; the
+      old /houseplan_files/plans|files paths return 404 after a restart; old
+      stored URLs keep working (rewritten on read) [auto+manual]
+- [ ] Dialog zombies (v1.43.0, audit L3): close a dialog (Esc) while its save is
+      in flight and let the save fail — the dialog stays closed, the card keeps
+      rendering, the error toast still fires [auto]
 - [ ] No hover tooltips on touch (v1.42.2): on hover-less devices (tablets,
       phones) taps never pop the room/device tooltip — the data lives in room
       cards and long-press; desktop hover tooltips unchanged [auto]

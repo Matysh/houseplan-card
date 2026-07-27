@@ -255,3 +255,20 @@ more specific tier overrides the more general one; "unset" always means
 The UI will later be unified around this model; until then each tier keeps its
 own dialog (general settings gear / space gear / room-card gear / marker
 dialog).
+
+
+## Audit follow-ups (2026-07-27)
+
+- **Content is authenticated.** `/houseplan_files/…` now serves ONLY the card
+  bundle (a Lovelace resource must be public). Plans and marker files go
+  through `HouseplanContentView` (`/api/houseplan/content/<plans|files>/…`,
+  `requires_auth`). `contentUrl()` rewrites legacy stored URLs on read, so no
+  storage migration is needed. Static paths cannot be unregistered — the old
+  routes survive until the next HA restart.
+- **Optimistic UI, stated explicitly (audit L7).** `_serverCfg` is mutated in
+  place before a fallible save in ~22 places and there is no rollback: after a
+  rejected save the UI shows the edit until the next reload. This is a
+  deliberate optimistic-UI choice, not drift. Paths where it is unacceptable
+  need their own rollback.
+- **Split invariant.** `splitRoomPath` guarantees a partition: the two parts'
+  areas sum to the original (within epsilon) or the cut is rejected.

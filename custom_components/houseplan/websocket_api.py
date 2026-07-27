@@ -13,7 +13,7 @@ from homeassistant.core import HomeAssistant, callback
 
 from .const import (
     CONF_ADMIN_ONLY, DEFAULT_CONFIG,
-    PLANS_DIR, PLANS_URL,
+    CONTENT_URL, PLANS_DIR, PLANS_URL,
 )
 from .store import HouseplanData, get_data, get_entry
 from .validation import (
@@ -290,5 +290,5 @@ async def ws_plan_set(hass: HomeAssistant, connection, msg: dict[str, Any]) -> N
 
     mtime = await hass.async_add_executor_job(_write)
     connection.send_result(
-        msg["id"], {"ok": True, "url": f"{PLANS_URL}/{space_id}.{msg['ext']}?v={mtime}"}
+        msg["id"], {"ok": True, "url": f"{CONTENT_URL}/plans/_/{space_id}.{msg['ext']}?v={mtime}"}
     )

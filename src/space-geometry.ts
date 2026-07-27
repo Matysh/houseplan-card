@@ -3,7 +3,7 @@
  * are directly unit-tested. Shared by the static renderer (space-render.ts) and
  * mirror the full card's private math.
  */
-import { declump } from './logic';
+import { declump, contentUrl } from './logic';
 import type { ServerConfig, SpaceModel, RoomCfg, DevItem } from './types';
 
 export const NORM_W = 1000; // width of the render space for normalized configs
@@ -30,7 +30,7 @@ export function spaceModels(cfg: ServerConfig | null): SpaceModel[] {
       id: s.id,
       title: s.title,
       vb: [s.view_box[0] * NORM_W, s.view_box[1] * H, s.view_box[2] * NORM_W, s.view_box[3] * H],
-      bg: s.plan_url ? { href: s.plan_url, x: 0, y: 0, w: NORM_W, h: H } : null,
+      bg: s.plan_url ? { href: contentUrl(s.plan_url), x: 0, y: 0, w: NORM_W, h: H } : null,
       rooms: (s.rooms || []).map(scale),
     } as SpaceModel;
   });
