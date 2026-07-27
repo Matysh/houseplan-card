@@ -1,4 +1,4 @@
-import { launch } from './serve.mjs';
+import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 const res = await page.evaluate(async () => {
   const out = {};
@@ -26,5 +26,13 @@ const res = await page.evaluate(async () => {
   c._spaceDialog = null;
   return out;
 });
-console.log(JSON.stringify(res, null, 1));
-await browser.close();
+// значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
+checkAll(res, {
+  "comfy": ["#66d17a", "transparent", "transparent", "transparent"],
+  "cold": ["#4fc3f7", "transparent", "transparent", "transparent"],
+  "hot": ["#ffd45c", "transparent", "transparent", "transparent"],
+  "swapped": ["#66d17a", "transparent", "transparent", "transparent"],
+  "dialogTempFields": 3,
+  "dialogHiddenWhenNone": 1,
+});
+await finish(browser, res);

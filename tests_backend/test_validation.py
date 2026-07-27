@@ -125,3 +125,18 @@ def test_space_temp_bounds():
         "settings": {"fill_mode": "temp", "temp_min": 19.5, "temp_max": "24"},
     }
     v.SPACE_SCHEMA(ok)
+
+
+def test_finite_coordinates_rejected():
+    """audit B5: NaN/Infinity coordinates must not reach storage."""
+    for bad in ("NaN", "Infinity", "-Infinity", float("nan"), float("inf")):
+        with pytest.raises(vol.Invalid):
+            v.LAYOUT_SCHEMA({"dev1": {"x": bad, "y": 0.5}})
+    assert v.LAYOUT_SCHEMA({"dev1": {"x": 0.5, "y": 0.25}})
+
+
+def test_collection_caps():
+    """audit B5: unbounded collections are capped."""
+    big = {f"d{i}": {"x": 0.1, "y": 0.1} for i in range(v.MAX_LAYOUT + 1)}
+    with pytest.raises(vol.Invalid):
+        v.LAYOUT_SCHEMA(big)

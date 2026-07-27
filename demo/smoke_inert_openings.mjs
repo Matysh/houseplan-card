@@ -1,4 +1,4 @@
-import { launch } from './serve.mjs';
+import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 const res = await page.evaluate(async () => {
   const out = {};
@@ -43,5 +43,10 @@ const res = await page.evaluate(async () => {
   c._openingDialog = null; c._setMode('view');
   return out;
 });
-console.log(JSON.stringify(res, null, 1));
-await browser.close();
+// значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
+checkAll(res, {
+  "lockBadgeInert": "no-badge",
+  "viewDevCursor": "pointer",
+  "devModeCursor": "grab",
+});
+await finish(browser, res);

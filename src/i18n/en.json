@@ -322,5 +322,6 @@
   "room.sizes_section": "Font sizes",
   "room.name_scale": "Room name size",
   "room.label_scale": "Metrics size",
-  "preview.room_name": "Living room"
+  "preview.room_name": "Living room",
+  "toast.cfg_reload_failed": "Could not reload the plan from the server: {err}"
 }

@@ -1,4 +1,4 @@
-import { launch } from './serve.mjs';
+import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 const res = await page.evaluate(async () => {
   const out = {};
@@ -30,5 +30,14 @@ const res = await page.evaluate(async () => {
   out.noSmallBadge = !vd[0]?.querySelector('.tval');
   return out;
 });
-console.log(JSON.stringify(res, null, 1));
-await browser.close();
+// значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
+checkAll(res, {
+  "lockLocked": "mdi:lock",
+  "lockUnlocked": "mdi:lock-open-variant",
+  "windowOpen": "mdi:window-open",
+  "windowClosed": "mdi:window-closed",
+  "bulbOn": "mdi:lightbulb-on",
+  "valonly": 1,
+  "valText": "22.4°",
+});
+await finish(browser, res);

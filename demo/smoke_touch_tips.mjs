@@ -1,4 +1,4 @@
-import { launch } from './serve.mjs';
+import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 // эмуляция тач-устройства: переопределяем matchMedia ДО загрузки бандла
 await page.addInitScript(() => {
@@ -19,5 +19,5 @@ const res = await page.evaluate(async () => {
   out.noTipOnTouch = c._tip === null || c._tip === undefined || !c._tip;
   return out;
 });
-console.log(JSON.stringify(res));
-await browser.close();
+checkAll(res);
+await finish(browser, res);

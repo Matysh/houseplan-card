@@ -38,8 +38,14 @@ export function formatLength(cm: number, imperial: boolean): string {
  * normalized (0..1) coordinates need more (see roomEdges).
  */
 export function segKey(a: number[], b: number[], prec = 1): string {
-  const [p, q] = a[0] < b[0] || (a[0] === b[0] && a[1] <= b[1]) ? [a, b] : [b, a];
-  return `${p[0].toFixed(prec)},${p[1].toFixed(prec)}-${q[0].toFixed(prec)},${q[1].toFixed(prec)}`;
+  // audit G3: ROUND FIRST, then order. Ordering on raw floats while printing
+  // rounded ones let one wall produce two different keys, so shared walls were
+  // emitted twice and the dedup invariant quietly broke.
+  const ax = a[0].toFixed(prec), ay = a[1].toFixed(prec);
+  const bx = b[0].toFixed(prec), by = b[1].toFixed(prec);
+  const first = ax < bx || (ax === bx && ay <= by);
+  const [px, py, qx, qy] = first ? [ax, ay, bx, by] : [bx, by, ax, ay];
+  return `${px},${py}-${qx},${qy}`;
 }
 
 /**
@@ -224,6 +230,36 @@ export function segmentsProperlyCross(
 }
 
 /** Is any area of outline `a` strictly inside `b`? Also catches nested and duplicate outlines. */
+/**
+ * A point guaranteed to lie strictly inside the polygon (audit G2).
+ * The arithmetic mean of the vertices lies OUTSIDE concave shapes (U/L rooms
+ * are common in hand-drawn plans), which made containment tests misfire.
+ * Strategy: try the midpoints of the diagonals from each vertex, then a
+ * triangle centroid of consecutive vertices — the first point that passes
+ * pointStrictlyInside wins.
+ */
+export function interiorPoint(poly: number[][], eps = 1e-6): number[] | null {
+  if (!poly || poly.length < 3) return null;
+  const n = poly.length;
+  const mean = [
+    poly.reduce((s, p) => s + p[0], 0) / n,
+    poly.reduce((s, p) => s + p[1], 0) / n,
+  ];
+  if (pointStrictlyInside(mean, poly, eps)) return mean;
+  for (let i = 0; i < n; i++) {
+    // centroid of the ear at vertex i
+    const a = poly[(i - 1 + n) % n], b = poly[i], c = poly[(i + 1) % n];
+    const cand = [(a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3];
+    if (pointStrictlyInside(cand, poly, eps)) return cand;
+  }
+  for (let i = 0; i < n; i++)
+    for (let j = i + 2; j < n; j++) {
+      const cand = [(poly[i][0] + poly[j][0]) / 2, (poly[i][1] + poly[j][1]) / 2];
+      if (pointStrictlyInside(cand, poly, eps)) return cand;
+    }
+  return null;
+}
+
 function coversArea(a: number[][], b: number[][], eps: number): boolean {
   let allOnBoundary = true;
   for (const v of a) {
@@ -232,11 +268,8 @@ function coversArea(a: number[][], b: number[][], eps: number): boolean {
   }
   // every vertex sits on b's outline → a duplicate or traced outline: probe the middle
   if (allOnBoundary) {
-    const c = [
-      a.reduce((s, p) => s + p[0], 0) / a.length,
-      a.reduce((s, p) => s + p[1], 0) / a.length,
-    ];
-    return pointStrictlyInside(c, b, eps);
+    const c = interiorPoint(a, eps); // audit G2: NOT the vertex mean
+    return !!c && pointStrictlyInside(c, b, eps);
   }
   return false;
 }
@@ -250,12 +283,10 @@ export function polyContainsPoly(outer: number[][], inner: number[][], eps = 1e-
         return false;
   for (const v of inner)
     if (!pointStrictlyInside(v, outer, eps) && !pointOnBoundary(v, outer, eps)) return false;
-  // identical/traced outlines are NOT containment — probe the centroid strictness both ways
-  const c = [
-    inner.reduce((s, p) => s + p[0], 0) / inner.length,
-    inner.reduce((s, p) => s + p[1], 0) / inner.length,
-  ];
-  return pointStrictlyInside(c, outer, eps) && polygonArea(inner) < polygonArea(outer) - eps;
+  // identical/traced outlines are NOT containment — probe a real interior point
+  // (audit G2: the vertex mean lies outside concave rooms)
+  const c = interiorPoint(inner, eps);
+  return !!c && pointStrictlyInside(c, outer, eps) && polygonArea(inner) < polygonArea(outer) - eps;
 }
 
 /**
@@ -380,10 +411,40 @@ export function splitRoomPath(
     acc.push(to);
     return dropRepeats(acc, eps);
   };
-  const p1 = dropRepeats([...walk(a, ia, b, ib), ...[...mids].reverse()], eps);
-  const p2 = dropRepeats([...walk(b, ib, a, ia), ...mids], eps);
+  let p1: number[][];
+  let p2: number[][];
+  if (ia === ib) {
+    // BOTH ends on the SAME edge — carving an alcove out of one wall. The walk
+    // above would traverse the whole outline twice and return two overlapping,
+    // self-intersecting rooms whose areas sum to 2x the original (audit G1,
+    // 2026-07-27). The niche is simply the path closed along that edge; the
+    // remainder is the outline with that stretch replaced by the path.
+    const niche = dropRepeats([...pts], eps);
+    if (niche.length < 3 || polygonArea(niche) <= eps) return null;
+    // the niche must not swallow other geometry: it stays inside the room
+    const rest: number[][] = [];
+    for (let i = 0; i < poly.length; i++) {
+      rest.push(poly[i]);
+      if (i === ia) {
+        // walk the cut from a to b along the edge direction
+        const dir = (poly[(ia + 1) % poly.length][0] - poly[ia][0]) * (b[0] - a[0])
+          + (poly[(ia + 1) % poly.length][1] - poly[ia][1]) * (b[1] - a[1]);
+        const path = dir >= 0 ? pts : [...pts].reverse();
+        for (const p of path) rest.push(p);
+      }
+    }
+    p1 = dropRepeats(rest, eps);
+    p2 = niche;
+  } else {
+    p1 = dropRepeats([...walk(a, ia, b, ib), ...[...mids].reverse()], eps);
+    p2 = dropRepeats([...walk(b, ib, a, ia), ...mids], eps);
+  }
   if (p1.length < 3 || p2.length < 3) return null;
   if (polygonArea(p1) <= eps || polygonArea(p2) <= eps) return null;
+  // INVARIANT (audit G1): a split partitions the room — the parts must sum to
+  // the original. Anything else means the walk produced overlapping garbage.
+  if (Math.abs(polygonArea(p1) + polygonArea(p2) - polygonArea(poly)) > Math.max(eps, polygonArea(poly) * 1e-6))
+    return null;
   return [p1, p2];
 }
 
@@ -968,6 +1029,22 @@ export function outlineWithout(poly: number[][], cuts: number[][], eps = 1e-6): 
     edges.push([p1[0], p1[1], p2[0], p2[1]]);
   }
   return cutSegments(edges, cuts, eps);
+}
+
+/**
+ * Legacy static URLs (/houseplan_files/plans|files/...) are rewritten to the
+ * authenticated content endpoint (audit B1). Applied on READ, so stored
+ * configs keep working without a migration.
+ */
+export function contentUrl(url: string | null | undefined): string {
+  if (!url) return '';
+  if (url.startsWith('/houseplan_files/plans/')) {
+    return '/api/houseplan/content/plans/_/' + url.slice('/houseplan_files/plans/'.length);
+  }
+  if (url.startsWith('/houseplan_files/files/')) {
+    return '/api/houseplan/content/files/' + url.slice('/houseplan_files/files/'.length);
+  }
+  return url;
 }
 
 // ---------------- room-level settings (tier 3) ----------------

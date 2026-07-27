@@ -1,5 +1,78 @@
 # Changelog
 
+## v1.43.2 — 2026-07-27 (external audit: the test layer)
+
+- **The smoke suite can finally fail (T1).** All 48 headless-browser smokes used
+  to print booleans and exit 0 — a regression was visible in their own output
+  and still reported success. `demo/serve.mjs` now exports `check`/`checkAll`/
+  `finish`: every fact is asserted by name, mismatches and uncaught exceptions
+  inside the card set a non-zero exit code. Verified by deliberately breaking
+  the kiosk editor guard: the matching smoke went red.
+- **The suite runs in CI (T2)** as a `smoke` job gated on `frontend`, against a
+  freshly built bundle (the committed `demo/srv/assets` copy is a snapshot and
+  would have tested stale code), uploading per-file logs on failure.
+- **`docs/TESTING.md` reconciled (T3).** `[auto]` now means "a named check
+  exists that fails when this breaks", and each such line names it; 72 lines
+  whose automation was aspirational are honestly marked `[manual]`. Two
+  long-standing contradictions fixed: the "ZERO edit buttons in View" line
+  (wrong since v1.30.1) and the opening-click line (true again since v1.43.1).
+- Three smokes carried expectations that predate v1.39.0/v1.25 and quietly
+  described old behaviour; they now test the current contract.
+
+## v1.43.1 — 2026-07-27 (external audit: P1 fixes)
+
+- **Render cost (L1).** Home Assistant replaces `hass` on every state change in
+  the home, and each of those renders recomputed the whole plan geometry —
+  `_openPairs()` ran once per room (O(rooms³) collinear-overlap math) and the
+  space model was rebuilt twice. Both are now memoized on the config's
+  structural fingerprint and hoisted out of the per-room loop; cache
+  invalidation happens synchronously at mutation time, not inside the debounce.
+- **Opening tap vs drag (L4).** Dragging a door/window had no movement
+  threshold, so any pointer jitter counted as a drag: the properties dialog
+  never opened and an unchanged config was written (which then fed the L2 race).
+  Now the same 3 px threshold as every other drag pipeline, and the write only
+  happens when the geometry actually changed.
+- **Concave rooms (G2).** Containment used the arithmetic mean of the vertices
+  as an "interior point" — which lies OUTSIDE U- and L-shaped rooms, so island
+  rooms in them were rejected as overlaps and their holes never rendered. A
+  real interior point is computed instead (`interiorPoint`).
+- **Wall dedup (G3).** `segKey` ordered endpoints by raw floats but printed
+  rounded ones, so one shared wall could produce two keys and be drawn twice.
+  Rounds first, then orders.
+- **Backend hardening (B2–B5).** The write-authorization check now fails
+  **closed** when the config entry is unavailable (it used to allow writes
+  during a reload); `layout/set` supports `expected_rev` and conflicts like the
+  config store; a `config/set` without `expected_rev` over a non-empty store
+  logs a warning; coordinates reject NaN/Infinity, and spaces/rooms/markers/
+  decor/layout have generous size caps.
+
+## v1.43.0 — 2026-07-27 (external audit: P0 fixes)
+
+An external code audit of v1.41.1 found four critical issues. All four are fixed
+and covered by regression tests.
+
+- **Silent data loss on save (L2).** A debounced config write read the config at
+  fire time, so a `houseplan_config_updated` event arriving in between replaced
+  it and the user's edit vanished with no error — reproducible in a single tab.
+  The debounce now supports `flush()`/`pending()`, a reload flushes the pending
+  write first and defers while a write is in flight, and a failed reload finally
+  reports instead of staying silent.
+- **Split corrupted room geometry (G1).** A cut starting and ending on the SAME
+  wall (carving a niche — a natural action) produced two overlapping,
+  self-intersecting rooms whose areas summed to twice the original, and the
+  overlap guard did not catch it. Same-edge cuts now carve the niche correctly,
+  and a partition invariant (parts must sum to the original) rejects anything
+  else.
+- **Plans and uploaded files were served without authentication (B1).** Anyone
+  who could reach the HA endpoint could fetch floor plans and attached manuals
+  without logging in. They are now served by an authenticated view; stored
+  legacy URLs are rewritten on read, so nothing breaks. **The old public paths
+  disappear after a Home Assistant restart.**
+- **Dialogs could resurrect and blank the card (L3).** Closing a dialog while
+  its save was in flight, on a failed save, spread `null` into a truthy husk;
+  the renderer then threw and the card went blank until reload. Guarded in all
+  four save routines; the error toast still fires.
+
 ## v1.42.2 — 2026-07-26
 - Touch devices no longer pop hover tooltips on every tap (field feedback:
   "extra labels appear and get in the way on a tablet"). Hover tooltips are

@@ -34,6 +34,44 @@ jobs:
         run: npm run build
       - name: Card bundle in sync with integration
         run: cmp dist/houseplan-card.js custom_components/houseplan/frontend/houseplan-card.js
+  smoke:
+    # audit T2: the end-to-end layer used to run only when a human remembered.
+    # Gated on `frontend` so a typecheck failure does not burn browser minutes.
+    needs: frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Build a FRESH bundle for the smokes
+        # the committed demo/srv/assets copy is a snapshot; testing it would
+        # report green about code that no longer exists (audit T2)
+        run: npm run build && cp dist/houseplan-card.js demo/srv/assets/houseplan-card.js
+      - name: Smoke suite
+        run: |
+          fail=0
+          mkdir -p /tmp/smoke-logs
+          for f in demo/smoke_*.mjs; do
+            name=$(basename "$f" .mjs)
+            if node "$f" > "/tmp/smoke-logs/$name.log" 2>&1; then
+              echo "ok   $name"
+            else
+              echo "FAIL $name"
+              tail -20 "/tmp/smoke-logs/$name.log"
+              fail=1
+            fi
+          done
+          exit $fail
+      - name: Upload smoke logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-logs
+          path: /tmp/smoke-logs
+
   backend:
     runs-on: ubuntu-latest
     steps:

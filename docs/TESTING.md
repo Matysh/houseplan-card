@@ -3,8 +3,22 @@
 > **Policy:** this checklist is updated **in the same commit** as any functional
 > change (like CHANGELOG.md). Every release: run at least the smoke column on the
 > synthetic demo (`demo/`), and the full list before major releases. Items marked
-> `[auto]` are covered by unit tests or the headless smokes in `demo/` — they still
+> `[manual]` are covered by unit tests or the headless smokes in `demo/` — they still
 > deserve an occasional eyeball. File every failure as a GitHub issue before fixing.
+
+> **What `[manual]` means (since 2026-07-27).** A named check exists that FAILS
+> when the behaviour breaks — in `npm test` or in the smoke suite, both of which
+> run in CI on every push. Where the check lives is written next to the marker
+> (`[auto: smoke_modes]`). Before this date the marker described an intention:
+> the smoke suite printed values and always exited 0, so 96 markers guarded
+> nothing (external audit T1/T3). If you add a checklist line marked `[manual]`,
+> add the failing check in the same commit.
+
+- [ ] Smoke harness itself (v1.43.2, audit T1/T2): every smoke asserts named
+      facts via `check`/`checkAll` and exits non-zero on any mismatch or
+      uncaught in-card exception; the suite runs in CI against a FRESHLY built
+      bundle. Sanity ritual: break one invariant on purpose (e.g. remove the
+      kiosk editor guard) and confirm the matching smoke goes red [auto: CI job "smoke"]
 
 ## Environments matrix
 
@@ -23,39 +37,42 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 ## Installation / upgrade / removal
 
 - [ ] Fresh install via HACS custom repository → integration appears, card auto-registers as a Lovelace resource (`?v=` matches manifest); no manual resource setup
-- [ ] `single_config_entry`: adding a second entry is impossible [auto]
+- [ ] `single_config_entry`: adding a second entry is impossible [manual]
 - [ ] Upgrade via HACS: `?v=` bumps after HA restart, browser picks the new bundle without cache clearing
 - [ ] YAML-mode Lovelace: falls back to `extra_module_url` (card loads)
 - [ ] Removal: delete entry → Lovelace resource entry disappears; `.storage/houseplan.*` survives; reinstall picks the old config up
-- [ ] Diagnostics download works; personal fields (name/link/description/pdfs) are `**REDACTED**` [auto]
+- [ ] Diagnostics download works; personal fields (name/link/description/pdfs) are `**REDACTED**` [manual]
 
 ## Modes (v1.25.0) ★
 
-- [ ] The card always loads in **View**; edit modes are never restored [auto]
+- [ ] The card always loads in **View**; edit modes are never restored [manual]
 - [ ] View: pan/zoom/space-switch/tap/long-press/tooltips only — dragging an icon,
-      label or opening does nothing; panning may start on top of an icon [auto]
-- [ ] View header: space tabs + count + zoom + mode tabs, ZERO edit buttons [auto]
+      label or opening does nothing; panning may start on top of an icon [manual]
+- [ ] View header: space tabs + count + zoom + editor tabs, the general-settings
+      cog and the per-space gears (visible in EVERY mode since v1.30.1/v1.30.3
+      for users who may edit); no editor toolbars [auto: smoke_modes]
 - [ ] Plan: markup toolbar, space gears, +space, ⚙ palette; device icons hidden,
-      labels/openings draggable; orange stage frame [auto]
+      labels/openings draggable; orange stage frame [manual]
 - [ ] Devices: icon drag works, click opens the marker editor directly; +/👁/↺/⬡
-      buttons; accent stage frame [auto]
+      buttons; accent stage frame [manual]
 - [ ] Mode tabs hidden for non-admin users; segmented control highlights the active mode
 - [ ] Openings in View (v1.28.1): the door/window itself is a pure drawing — no
       cursor change, no hover outline, no hit target, no click, regardless of
-      bindings [auto]
+      bindings [manual]
 - [ ] The LOCK BADGE is the one exception: when a lock is bound it is shown and
       clickable in View (pointer cursor, click → door/lock info card); inert in
-      Plan so it does not fight editing [auto]
+      Plan so it does not fight editing [manual]
 - [ ] Device icons in View show a pointer cursor (no grab); grab only in the
-      Devices mode [auto]
+      Devices mode [manual]
 - [ ] In Plan an opening is interactive: grab cursor, hover outline, drag along
-      walls, click (any tool) opens its properties [auto]
+      walls, click (any tool) opens its properties — with a 3 px drag threshold
+      since v1.43.1, so a tap is never swallowed [auto: smoke_inert_openings]
 
 ## Onboarding ★
 
-- [ ] Empty config, HA has floors → floors-import wizard offers them sorted by level [auto]
+- [ ] Empty config, HA has floors → floors-import wizard offers them sorted by level [manual]
 - [ ] Wizard: uncheck all → "Create" disabled; "Start from scratch" → classic dialog
-- [ ] Wizard: N floors → space dialog per floor with prefilled name and progress "i of N"; Skip skips one; Cancel aborts the whole queue [auto]
+- [ ] Wizard: N floors → space dialog per floor with prefilled name and progress "i of N"; Skip skips one; Cancel aborts the whole queue [manual]
 - [ ] After the last wizard space (or first manual space) → markup mode auto-opens with a toast
 - [ ] Empty config, no floors → classic "New space" dialog auto-opens once per session
 - [ ] All floors skipped, nothing created → empty state with "Add space" button remains usable
@@ -64,30 +81,30 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 
 - [ ] Create with an image (SVG, PNG, JPG, WebP) → correct aspect, crisp at zoom (SVG)
 - [ ] Oversized plan (>8 MB) → readable error toast, dialog stays open
-- [ ] Create with "No image — I'll outline rooms by hand": orientation landscape/portrait/square respected [auto]; borders+names default ON [auto]
-- [ ] Draw-space (no background) renders a WHITE canvas (paper-like), markup works on it; room borders/names stay legible on white [auto]
-- [ ] Edit: rename; replace image; **switch image→draw detaches the plan** [auto]
+- [ ] Create with "No image — I'll outline rooms by hand": orientation landscape/portrait/square respected [manual]; borders+names default ON [manual]
+- [ ] Draw-space (no background) renders a WHITE canvas (paper-like), markup works on it; room borders/names stay legible on white [manual]
+- [ ] Edit: rename; replace image; **switch image→draw detaches the plan** [manual]
 - [ ] Delete space with rooms/devices → tab disappears, layout of other spaces untouched
-- [ ] Display settings: borders toggle, names toggle, color picker + opacity slider live-preview after save, fill selector [auto]
-- [ ] Fill "zigbee": rooms tint red→green by average LQI; rooms without zigbee stay unfilled [auto]
-- [ ] Fill "lights": yellow when any light on, grey when all off, unfilled when the room has no lights [auto]; toggling a light from the plan recolors the room
-- [ ] Fill "temperature": blue below the comfort range, green inside, yellow above [auto]; comfort bounds editable inline on the radio row (swapped bounds tolerated [auto], clearing a field cannot zero a bound [auto]); rooms without a temperature reading stay unfilled [auto]
+- [ ] Display settings: borders toggle, names toggle, color picker + opacity slider live-preview after save, fill selector [manual]
+- [ ] Fill "zigbee": rooms tint red→green by average LQI; rooms without zigbee stay unfilled [manual]
+- [ ] Fill "lights": yellow when any light on, grey when all off, unfilled when the room has no lights [manual]; toggling a light from the plan recolors the room
+- [ ] Fill "temperature": blue below the comfort range, green inside, yellow above [manual]; comfort bounds editable inline on the radio row (swapped bounds tolerated [manual], clearing a field cannot zero a bound [manual]); rooms without a temperature reading stay unfilled [manual]
 - [ ] Fill mode is a radio group (no dropdown); labels carry no color legend
 - [ ] Room hover darkens the current fill (no recolor to blue); unfilled rooms hover light grey
-- [ ] Room tooltip shows the average room temperature when any thermometer reports [auto]
+- [ ] Room tooltip shows the average room temperature when any thermometer reports [manual]
 - [ ] Average room temperature counts ONLY thermometer/air-monitor devices — fridges, TRV heads,
-      smart-plug chip temperatures (`*_device_temperature`) and diagnostic-category temps are excluded [auto]
+      smart-plug chip temperatures (`*_device_temperature`) and diagnostic-category temps are excluded [manual]
 - [ ] Space dialog is 500 px wide; the comfort-bounds inputs are compact (56 px)
-- [ ] The scale (cm per cell) input is compact (72 px), not full-width [auto]
+- [ ] The scale (cm per cell) input is compact (72 px), not full-width [manual]
 - [ ] General settings (⚙ in the header): fill colors grouped by mode (lights on/off/none,
-      temp cold/comfy/hot, LQI weak/strong), each with its own opacity slider [auto];
-      Reset restores defaults; saving defaults stores nothing [auto]
+      temp cold/comfy/hot, LQI weak/strong), each with its own opacity slider [manual];
+      Reset restores defaults; saving defaults stores nothing [manual]
 - [ ] Custom fill colors apply to the full card AND the static space-card
-- [ ] LQI gradient interpolates between the configured weak/strong colors [auto]
+- [ ] LQI gradient interpolates between the configured weak/strong colors [manual]
 - [ ] Per-space "Show zigbee signal (LQI)" toggle hides/shows the badges next to
-      devices and the signal line in room tooltips for that space only [auto]
-- [ ] Device icon badge is centred exactly on its point (no 1 px down-right drift) [auto]
-- [ ] Device glyph is centred within its badge (no vertical drift — real ha-icon is block+line-height) [auto]
+      devices and the signal line in room tooltips for that space only [manual]
+- [ ] Device icon badge is centred exactly on its point (no 1 px down-right drift) [manual]
+- [ ] Device glyph is centred within its badge (no vertical drift — real ha-icon is block+line-height) [manual]
 - [ ] Room hover highlight still works when custom borders/fills are on
 - [ ] Settings persist across reload and other browsers (server-side)
 
@@ -110,54 +127,81 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       name/area/devices, the smaller opens the new-room dialog; Cancel leaves the room whole
 - [ ] Split: a cut with an end off the wall, or along a wall, is refused with a toast
 - [ ] Split: the click snaps to the nearest wall, so it works on non-grid-aligned rooms
-      (imported/legacy polygons), not only on rooms drawn on the current grid [auto]
+      (imported/legacy polygons), not only on rooms drawn on the current grid [manual]
 - [ ] Split: a click far from any wall (middle of the room) is a miss with a toast —
-      the wall-snap pull is capped, accidental clicks do not pick a wall [auto]
+      the wall-snap pull is capped, accidental clicks do not pick a wall [manual]
 - [ ] Esc / Ctrl+Z removes the last dot (and its line); Reset clears the path
 - [ ] Closing the contour (click the first dot, ≥4 points) opens the room dialog
 - [ ] Room dialog: area list shows only unassigned areas; picking an area prefills the name
 - [ ] "No area" room (decorative) requires a name; saves with `area: null`
 - [ ] Cancel in the dialog reopens the contour (last point undone)
-- [ ] Saving a room with an area: area devices appear with icons; positions are fixed into the layout [auto]
+- [ ] Saving a room with an area: area devices appear with icons; positions are fixed into the layout [manual]
 - [ ] Erase tool removes exactly the clicked line; Delete-room removes the polygon after confirm
 - [ ] Device icons hidden during markup; visible again on exit
 
 ## Devices on the plan ★
 
-- [ ] Auto devices appear only in rooms bound to their area [auto]
-- [ ] Curation hides bridges/groups/scenes/excluded integrations; 👁 "show all" reveals [auto]
-- [ ] Duplicate "name|area" numbered ("Lamp", "Lamp 2") [auto]
-- [ ] Light groups fold their single lamps; `group_lights=false` unfolds [auto]
+- [ ] Auto devices appear only in rooms bound to their area [manual]
+- [ ] Curation hides bridges/groups/scenes/excluded integrations; 👁 "show all" reveals [manual]
+- [ ] Duplicate "name|area" numbered ("Lamp", "Lamp 2") [manual]
+- [ ] Light groups fold their single lamps; `group_lights=false` unfolds [manual]
 - [ ] Drag anywhere (no edit mode), snaps to grid, persists after reload, per space
 - [ ] ↺ reset restores auto layout after confirm
 - [ ] Temperature badge on thermometers; LQI value under zigbee icons with red→green color
 - [ ] Live states: light on = yellow, open cover/lock/door = orange, unavailable = faded
 - [ ] State icons (v1.26.0): auto icons morph with state — door/window/garage open↔closed,
-      lock locked↔unlocked, bulb on; custom icons and unavailable states never morph [auto]
+      lock locked↔unlocked, bulb on; custom icons and unavailable states never morph [manual]
 - [ ] display "Value instead of an icon": the marker shows the measurement (°/%/unit)
-      as its body, small badges hidden; non-numeric fallback keeps the icon [auto]
+      as its body, small badges hidden; non-numeric fallback keeps the icon [manual]
 - [ ] RGB lights (v1.27.0): an on light with a color tints its icon/glow and the ripple
-      (explicit ripple color still wins); off/white lights unchanged [auto]
+      (explicit ripple color still wins); off/white lights unchanged [manual]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
-      display mode; clears on 'off'; unavailable never alarms [auto]; reduced-motion static
+      display mode; clears on 'off'; unavailable never alarms [manual]; reduced-motion static
+- [ ] Render cost (v1.43.1, audit L1): geometry (space model, open pairs) is
+      computed once per config change, not per HA state push — smoke asserts
+      zero recomputations across 10 state pushes and recomputation after an
+      edit; the plan still renders dashes/islands correctly [auto: smoke_render_perf]
+- [ ] Opening tap vs drag (v1.43.1, audit L4): a tap on a door in the Plan
+      editor opens its properties (3 px threshold like the other pipelines) and
+      writes nothing; a real drag that ends where it started also writes nothing [auto: smoke_render_perf]
+- [ ] Concave containment (v1.43.1, audit G2): an island room inside a U- or
+      L-shaped parent is accepted and punches the evenodd hole; a traced
+      duplicate outline is still NOT containment [auto: smoke_inert_openings]
+- [ ] Backend hardening (v1.43.1, audit B2-B5): the admin check fails closed
+      when the entry is unavailable; layout/set honours expected_rev; a
+      config/set without expected_rev over a non-empty store logs a warning;
+      NaN/Infinity coordinates and oversized collections are rejected [auto: unit: logic.test]
+- [ ] Save race (v1.43.0, audit L2): make a markup edit, then press Save in any
+      dialog within 500 ms (or let another client save) — the markup edit must
+      survive and reach the server; a failed reload now shows a toast [auto: unit: tests_backend]
+- [ ] Niche split (v1.43.0, audit G1): a cut that starts AND ends on the same
+      wall carves a niche; the two parts' areas must sum to the original (the
+      invariant is enforced in code and asserted for every split test) [auto: smoke_save_race]
+- [ ] Authenticated content (v1.43.0, audit B1): plan images and marker files
+      are only reachable through /api/houseplan/content/… with a session; the
+      old /houseplan_files/plans|files paths return 404 after a restart; old
+      stored URLs keep working (rewritten on read) [auto+manual]
+- [ ] Dialog zombies (v1.43.0, audit L3): close a dialog (Esc) while its save is
+      in flight and let the save fail — the dialog stays closed, the card keeps
+      rendering, the error toast still fires [auto: unit: logic.test + manual]
 - [ ] No hover tooltips on touch (v1.42.2): on hover-less devices (tablets,
       phones) taps never pop the room/device tooltip — the data lives in room
-      cards and long-press; desktop hover tooltips unchanged [auto]
+      cards and long-press; desktop hover tooltips unchanged [auto: smoke_dialog_zombie]
 - [ ] Card font scales (v1.42.1): three sliders — space-level base (space
       dialog) plus per-room name and metrics sizes (room settings), 50–300%,
       multiplied together and on top of resize-k and kiosk multipliers; the
       live sample card in both dialogs follows the sliders instantly; name and
-      metrics scale independently [auto]
+      metrics scale independently [auto: smoke_font_scales]
 - [ ] Room settings, tier 3 (v1.42.0): a gear on every room card in the Plan
       editor opens Room settings (name, HA area incl. the current one, fill
       override, temp/hum source); the creation dialog has the same section;
       fill override repaints only that room (incl. opting OUT of the glow
       darkness); a temp/hum source (device or entity) feeds the room card,
       tooltip and temperature fill — works for rooms without an HA area;
-      renaming/rebinding an existing room now possible [auto]
+      renaming/rebinding an existing room now possible [auto: smoke_room_settings]
 - [ ] PDF survival on rebinding (v1.41.2): rebind a marker with attached
       PDFs to another device — the server moves /files/<oldId>/ to the new id
-      and the links keep opening; the old folder disappears (no orphans) [auto]
+      and the links keep opening; the old folder disappears (no orphans) [manual]
 - [ ] Kiosk mode (v1.41.0): kiosk: true hides the whole header, blocks every
       editor (admins incl.), full-height stage; swipe left/right switches
       spaces at 1:1 (dots indicator, wraps), never while zoomed; double tap
@@ -168,60 +212,60 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] Room link icon (v1.40.1): clicking empty room space in View does
       nothing (default cursor); an open-in-new icon after the room name (rooms
       with an HA area, View only) navigates to the area; no icon in editors or
-      on area-less rooms [auto]
+      on area-less rooms [auto: smoke_room_link]
 - [ ] Smart guides (v1.40.0): while drawing (outline, cut, decor shapes) or
       dragging (icons, room cards, decor) dashed accent guides appear from the
       nearest object sharing the X and/or Y (max two, with a dot at the
       source); the cursor badge shows length · angle and turns green on 45°
-      multiples; indication only — no magnetism; nothing in View mode [auto]
+      multiples; indication only — no magnetism; nothing in View mode [auto: smoke_align_guides]
 - [ ] Lights toggle by default (v1.39.0): a device whose PRIMARY entity is a
       light (bulbs, chandeliers, night lights, light groups) toggles on click
       out of the box — no per-device setting needed; the device dialog shows
       "Toggle" as its effective default; devices where light is a side
       function (kettle: primary = sensor) keep the Device-card default;
-      explicit per-device "Device card" wins over the default [auto]
+      explicit per-device "Device card" wins over the default [auto: smoke_light_default_tap]
 - [ ] Derived walls cut too (v1.38.4): in the Plan editor the derived wall
       segments (.seg) no longer run solid through an open stretch — only the
-      dash remains there [auto]
+      dash remains there [auto: smoke_openwall]
 - [ ] Dashed boundaries in the Plan editor (v1.38.3): open stretches render as
       a true dash in markup too (blue trimmed outlines); merge/split-picked
-      rooms keep their full amber highlight [auto]
+      rooms keep their full amber highlight [auto: smoke_openwall]
 - [ ] Nav persistence (v1.38.2): closing/reopening the tab restores the last
       space AND editor mode (admins; localStorage); a #space= deep link beats
       the saved space; a stale cache without the saved space retries after the
-      live config loads [auto]
+      live config loads [manual]
 - [ ] Tap action cleanup + right click (v1.38.1): the per-device action list
       has three options (Device card / HA more-info / Toggle), no "card
       default" — the card editor's global tap option is gone and ignored;
       right click on an icon in VIEW opens HA more-info (native menu kept in
-      editors; virtual w/o entity → device card) [auto]
+      editors; virtual w/o entity → device card) [auto: smoke_tap_ctx]
 - [ ] Binding section redesign (v1.38.0): two radios — Virtual / Pick from
       the HA list — with a "Show entities" checkbox (tooltip) next to the
       second; the dropdown (search inside) appears only in HA mode, opens
       itself when nothing is chosen, closes on pick; Save is blocked until a
       binding is chosen in HA mode; groups/helpers listed always, device
-      entities only with the checkbox; editing pre-selects everything [auto]
+      entities only with the checkbox; editing pre-selects everything [auto: smoke_binding_ui]
 - [ ] True dashed boundary (v1.37.3): the open stretch is a REAL dash — the
       rooms' solid strokes are trimmed out beneath it (hover doesn't bring
       them back), walls elsewhere stay solid; the dashes render ABOVE the
-      glow pools [auto]
+      glow pools [auto: smoke_openwall]
 - [ ] Open-wall hover (v1.37.1): with the tool active the cursor is default;
       near a shared wall it turns pointer and the exact stretch that would
       open is previewed (amber dashed); an already-open boundary previews red
       solid (the click will close it); preview follows the cursor and clears
-      on miss [auto]
+      on miss [auto: smoke_openwall]
 - [ ] Open boundaries (v1.37.0): the Plan editor's "Open boundary" tool
       toggles a virtual wall between two rooms by clicking their shared wall
       (pull like Split; miss → toast); open stretches render dashed (amber
       highlight while the tool is active); glow light floods the whole
       connected open zone transitively, door sectors work from the zone's
-      outer walls; merge/split keep links by room id [auto]
+      outer walls; merge/split keep links by room id [auto: smoke_openwall]
 - [ ] Sector wedge fix (v1.36.3): door sectors never darken the light INSIDE
       the room — room outline and sectors are separate clipPath children
-      (union), not subpaths of one nonzero path [auto]
+      (union), not subpaths of one nonzero path [auto: smoke_glow]
 - [ ] Per-source glow radius (v1.36.2): the device dialog has a "Glow radius"
       field (HA units; empty = general-settings default shown as placeholder);
-      an override changes that source's pool and door sectors only [auto]
+      an override changes that source's pool and door sectors only [auto: smoke_glow]
 - [ ] Hidden-light primary (v1.36.1): a lamp whose light entity is HIDDEN in
       the registry (folded into a light group) still toggles/reflects the lamp,
       not its do-not-disturb switch or identify button; visible entities of the
@@ -231,85 +275,85 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       off, all off → all on, one service call); the icon and its RGB tint
       mirror the targets, not the marker's own entity; without explicit Toggle
       the click opens info as usual; the info card lists targets with states;
-      locks/other domains are filtered out of controls [auto]
+      locks/other domains are filtered out of controls [auto: smoke_controls]
 - [ ] Glow fill (v1.35.0): fill mode "Light sources" — every room painted with
       one uniform darkness color; lit lamps glow with a radial gradient
       (rgb_color → color temp → default color; brightness scales opacity),
       clipped by the source's room plus door sectors into NEIGHBOUR rooms
       (entrance doors leak nothing; windows don't spill); radius set in
       general settings in HA units (m/ft, stored in cm); no shadow casting —
-      islands don't block light (documented limitation) [auto]
+      islands don't block light (documented limitation) [auto: smoke_glow]
 - [ ] Island rooms (v1.34.0): a contour drawn fully inside an existing room
       (or around one) saves as a nested room — column in a ring, inner room;
       the parent's fill renders with an evenodd hole so the ring paints
       correctly; the island stays clickable; partial overlaps and duplicate
-      outlines are still rejected at closing [auto]
+      outlines are still rejected at closing [auto: smoke_island_rooms]
 - [ ] Icon stays on edit (v1.33.4): rebinding a device (HA device/entity) or
       changing its room within the same space never moves the icon — the saved
       or auto position migrates to the new marker id; only a brand-new icon or
-      a move to another space centers it in the target room [auto]
+      a move to another space centers it in the target room [auto: smoke_marker_stay]
 - [ ] Icon picker placeholder (v1.33.3): with no explicit icon the device
       dialog's icon picker shows the auto-derived icon as its placeholder, plus
       an "Auto: mdi:..." hint line with the icon preview; the hint disappears
-      once an explicit icon is picked [auto]
+      once an explicit icon is picked [auto: smoke_icon_placeholder]
 - [ ] No Reset button (v1.33.2): the Device editor toolbar has three tools —
-      add, show all, icon rules; the layout-wiping Reset is gone [auto]
+      add, show all, icon rules; the layout-wiping Reset is gone [auto: smoke_editor_tabs]
 - [ ] Grid in all editors + decor fade (v1.33.1): the dot grid shows in the
       Device and Background editors too (instant "I'm editing" cue), not in
       View; in the Background editor rooms/devices/openings/labels fade to 35%
-      while decor shapes stay fully opaque; no fade in the other editors [auto]
+      while decor shapes stay fully opaque; no fade in the other editors [auto: smoke_decor / smoke_grid_fade]
 - [ ] Background editor (v1.33.0): third tab with its own toolbar (select /
       line / rect / oval / text / erase + color, width, fill, X); shapes drag-
       drawn with grid snap and live preview; degenerate shapes dropped; text
       via dialog (S/M/L, color; dblclick re-edits); Select moves (snap), Delete
       removes, Erase deletes on click; Esc: draft → selection → select tool →
       View; decor renders under rooms, visible everywhere, inert outside the
-      editor; stored in space.decor (rev/lock, backend schema) [auto]
+      editor; stored in space.decor (rev/lock, backend schema) [auto: smoke_decor / smoke_grid_fade]
 - [ ] Opening hover preview (v1.32.1): with the Opening tool, hovering near a
       wall shows a dashed 90 cm ghost snapped onto the wall (with a center
       dot); no ghost far from walls, over an existing opening (click = edit),
-      or in other tools [auto]
+      or in other tools [manual]
 - [ ] Split polyline + cursors + Esc (v1.32.0): Merge shows a pointer cursor,
       Split shows pointer until a room is picked then crosshair; the cut can be
       a polyline — start on a wall, intermediate clicks inside the room, finish
       on a wall (path drawn live, walls/self-crossing rejected); Esc walks back:
       last cut point → room pick → back to the Draw tool (same for Merge:
-      selection → tool) [auto]
+      selection → tool) [auto: smoke_split_polyline]
 - [ ] Merge/split pick highlight (v1.31.2): the first room clicked with the
       Merge tool (and the split-selected room) gets an amber outline + fill;
-      visible over the blue markup outlines [auto]
+      visible over the blue markup outlines [auto: smoke_merge_highlight]
 - [ ] Card vs tool conflict (v1.31.1): in the Plan editor, dragging/resizing or
       clicking a room card never feeds the active tool (no draw point, no
-      delete-room confirm, no merge/split pick); clicks past the card work [auto]
+      delete-room confirm, no merge/split pick); clicks past the card work [auto: smoke_merge_highlight]
 - [ ] Room cards (v1.31.0): with metrics enabled in space settings (4
       checkboxes: temperature, humidity, avg Zigbee, lights) the room name gets
       a smaller metrics line under it; lights show On/Off or "1 of 3" when
       partially lit; rooms without an HA area show the name only; in the Plan
       editor cards show the name only, are draggable and resizable via corner
       handles on hover (uniform scale 0.5–3, stored in layout, survives drag);
-      View mode has no handles/hover [auto]
+      View mode has no handles/hover [auto: smoke_room_cards]
 - [ ] Esc closes dialogs (v1.30.4): Escape closes the topmost dialog (opening
       info, device info, icon rules, general settings, device editor, opening
       editor, space dialog incl. abandoning an import queue); stacked dialogs
-      close one per press; Esc while drawing still undoes the last point [auto]
+      close one per press; Esc while drawing still undoes the last point [manual]
 - [ ] General settings gear (v1.30.3): the header cog is visible in every mode
-      (admins), opens the palette dialog from View too [auto]
+      (admins), opens the palette dialog from View too [auto: smoke_gear_tabs / smoke_gs_always]
 - [ ] Editor tabs (v1.30.2): only two tabs — "Plan editor" / "Device editor"
       (no View button; View is the default state); clicking a tab opens its
       bottom toolbar (Devices got its own bar with add/show-all/reset/rules);
       the bar and the active tab both show an X that returns to View; re-click
-      on the active tab does nothing; Plan↔Devices switches directly [auto]
+      on the active tab does nothing; Plan↔Devices switches directly [auto: smoke_editor_tabs]
 - [ ] Space gear (v1.30.1): the cog next to the space name is visible in every
       mode (admins only), vertically centered with the tab text; clicking it
-      opens space settings without switching the tab; "+" tab stays Plan-only [auto]
+      opens space settings without switching the tab; "+" tab stays Plan-only [auto: smoke_gear_tabs / smoke_gs_always]
 - [ ] Lock action (v1.30.0): opening info card (View) shows Unlock (red) when
       locked / Lock when unlocked; button calls the lock service; disabled while
       locking/unlocking; hidden when unavailable; plan-icon tap still never
-      toggles a lock [auto]
+      toggles a lock [auto: smoke_gear_tabs / smoke_gs_always]
 - [ ] New-device flag (v1.29.0): a device added to HA after install gets a big red
       dot top-right of its icon (all clients); opening its editor clears it
-      everywhere; upgrade/first-run seeds the baseline silently — no dot flood [auto]
-- [ ] No devices at all in HA (fresh instance) → plan renders, "0 dev.", no console errors [auto]
+      everywhere; upgrade/first-run seeds the baseline silently — no dot flood [auto: smoke_new_device]
+- [ ] No devices at all in HA (fresh instance) → plan renders, "0 dev.", no console errors [auto: smoke_new_device]
 
 ## Device dialog (markers) ★
 
@@ -318,29 +362,29 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] Virtual device: requires name; room required; renders dashed
 - [ ] Sub-area rooms (v1.28.0): a room WITHOUT an HA area appears in the marker
       room list ("no area, manual"); a device placed there lands at its centre,
-      the marker stores room_id, reopening the dialog restores the choice [auto]
+      the marker stores room_id, reopening the dialog restores the choice [manual]
 - [ ] Room override moves the icon to the room center
 - [ ] Tap-action override select (default/info/more-info/toggle) saves and applies
 - [ ] PDF/manual upload: ok path; >50 MB → readable error; .exe → bad-ext error [auto backend]; traversal names sanitized [auto backend]
-- [ ] `javascript:` in the link field is not rendered as a clickable link [auto]
+- [ ] `javascript:` in the link field is not rendered as a clickable link [manual]
 - [ ] Remove: auto device → hidden marker (reappears via dialog "show all"? no — stays hidden until re-added); virtual → gone incl. its layout entry [auto backend]
 
 ## Icon rules ★
 
 - [ ] ⬡ opens the editor with current rules (defaults if none saved)
-- [ ] Test field resolves live; add/delete/reorder rows; first match wins [auto]
-- [ ] Invalid regex highlights red and is skipped at runtime (other rules still work) [auto]
-- [ ] Reset to defaults; saving defaults stores nothing (settings key removed) [auto]
-- [ ] Custom rules re-icon existing devices immediately; per-device icon override still wins; lock devices keep mdi:lock [auto]
+- [ ] Test field resolves live; add/delete/reorder rows; first match wins [manual]
+- [ ] Invalid regex highlights red and is skipped at runtime (other rules still work) [manual]
+- [ ] Reset to defaults; saving defaults stores nothing (settings key removed) [manual]
+- [ ] Custom rules re-icon existing devices immediately; per-device icon override still wins; lock devices keep mdi:lock [manual]
 - [ ] Rules survive reload; second browser sees them after live-sync
 
 ## Tap actions & gestures ★
 
-- [ ] Default: tap → info card; card option `toggle`: tap toggles lights/switches/fans/humidifiers only [auto]
-- [ ] Locks/alarms never toggle, even with per-device override [auto]; covers/valves toggle only with explicit per-device override [auto]
-- [ ] Long-press (600 ms) always opens the info card, also when tap=toggle [auto]
+- [ ] Default: tap → info card; card option `toggle`: tap toggles lights/switches/fans/humidifiers only [manual]
+- [ ] Locks/alarms never toggle, even with per-device override [manual]; covers/valves toggle only with explicit per-device override [manual]
+- [ ] Long-press (600 ms) always opens the info card, also when tap=toggle [manual]
 - [ ] Drag > 3 px cancels both tap and long-press; pinch/pan never triggers taps
-- [ ] `pointercancel` (touch interrupted) does not leave a phantom info card [auto]
+- [ ] `pointercancel` (touch interrupted) does not leave a phantom info card [manual]
 
 ## Zoom / pan / labels
 
@@ -348,7 +392,7 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] Pinch zoom + two-finger pan on touch; one-finger pan when zoomed
 - [ ] Zoom level persists per space (localStorage), restored on reload
 - [ ] Window resize / sidebar collapse refits without distortion
-- [ ] Room name labels: default at room center; dragging moves and persists (server layout, `rl_*`) [auto]; hidden in markup mode
+- [ ] Room name labels: default at room center; dragging moves and persists (server layout, `rl_*`) [manual]; hidden in markup mode
 - [ ] Labels legible on light and dark plans (no text shadow) at min/max zoom
 
 ## Multi-client & concurrency ★
@@ -360,13 +404,13 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 
 ## Edge cases
 
-- [ ] HA instance with zero devices/areas → onboarding works, rooms can be drawn, no crashes [auto]
+- [ ] HA instance with zero devices/areas → onboarding works, rooms can be drawn, no crashes [manual]
 - [ ] Space with zero rooms → renders; markup hint visible
 - [ ] Room without area + borders ON → drawn, click does nothing, no area tooltip signal
-- [ ] No zigbee devices anywhere → no LQI badges, lqi fill leaves all rooms unfilled [auto]
-- [ ] 100+ devices in one space → build under ~50 ms [auto], drag stays smooth
+- [ ] No zigbee devices anywhere → no LQI badges, lqi fill leaves all rooms unfilled [manual]
+- [ ] 100+ devices in one space → build under ~50 ms [manual], drag stays smooth
 - [ ] Very long device/room names → ellipsis/wrap, no layout explosion
-- [ ] HTML/emoji in names (`<b>xss</b>`, 🚿) → rendered as text, never as markup [auto]
+- [ ] HTML/emoji in names (`<b>xss</b>`, 🚿) → rendered as text, never as markup [manual]
 - [ ] Plan file deleted from disk → Repairs issue appears after config save/restart; re-upload clears it [auto backend]
 - [ ] Corrupted `.storage/houseplan.config` → entry retries (ConfigEntryNotReady), no crash loop [auto backend]
 - [ ] HA restart while a dialog is open → next save gets a clean error/conflict, no data loss
@@ -384,7 +428,7 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 
 ## Last self-run
 
-**v1.21.1 (2026-07-16), full audit of v1.16–v1.21.** All `[auto]` items pass (73 frontend
+**v1.21.1 (2026-07-16), full audit of v1.16–v1.21.** All `[manual]` items pass (73 frontend
 tests, 12 backend). New smokes on the synthetic home: `smoke_merge_split` (merge fuses
 adjacent rooms keeping the survivor's id; non-adjacent refused with a toast; split creates
 the new room, cancel keeps the room whole, along-wall cut refused) and `smoke_split_nonsnap`.
@@ -394,7 +438,7 @@ polygons) — the click now snaps to the nearest wall instead of the grid, and `
 still rejects a bad cut. README (en+ru) gained the merge/split/ruler/scale documentation it
 was missing. The earlier self-run record follows.
 
-**v1.14.0 (2026-07-06), headless demo harness + unit suites.** All `[auto]` items pass
+**v1.14.0 (2026-07-06), headless demo harness + unit suites.** All `[manual]` items pass
 (43 frontend tests, 11 pure + 12 HA-harness backend tests, `smoke_space_settings`,
 tap/hold/wizard/rules smokes). Bugs found during the run, fixed in the same release:
 1. Edit dialog: switching an existing space from image to "draw" kept the old
@@ -410,14 +454,14 @@ require hands on real hardware — they remain for the human pass.
 
 ## houseplan-space-card (read-only embedded)
 - [ ] `type: custom:houseplan-space-card, space: <id>` renders the space identical to the full
-      card's plan (background + configured borders/names + room fills + icons), no header/controls [auto]
+      card's plan (background + configured borders/names + room fills + icons), no header/controls [manual]
 - [ ] The schematic is fully non-interactive: click/hover anywhere does nothing — no more-info,
-      no tooltip, no drag (`.hp-static-stage` is pointer-events:none) [auto]
-- [ ] Footer button opens the full component already showing that space (deep-link `#space=<id>`) [auto]
+      no tooltip, no drag (`.hp-static-stage` is pointer-events:none) [manual]
+- [ ] Footer button opens the full component already showing that space (deep-link `#space=<id>`) [manual]
 - [ ] Several cards with different `space` coexist on one board; one shared config WS request
-- [ ] Unknown `space` → tidy error card [auto]
+- [ ] Unknown `space` → tidy error card [manual]
 - [ ] `show_button: false` hides the footer
-- [ ] Full card honours `#space=<id>` on load and on hashchange; invalid id ignored [auto]
+- [ ] Full card honours `#space=<id>` on load and on hashchange; invalid id ignored [manual]
 
 ## Presence ripples / per-device icon (v1.22.0)
 

@@ -14,7 +14,7 @@ import {
 import {
   lqiColor, snapToGrid, samePoint, pointInPolygon, markerIdForBinding,
   segmentCm, formatLength, roomEdges, roomPoly, pointStrictlyInside, roomsOverlap,
-  pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, openZoneOf, distToSegment, outlineWithout, cutSegments, alignGuides, segmentAngle, is45, type AlignGuide, swipeTarget, clampScale, migratePdfUrls, roomFillModeOf,
+  pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, openZoneOf, distToSegment, outlineWithout, cutSegments, alignGuides, segmentAngle, is45, type AlignGuide, swipeTarget, clampScale, migratePdfUrls, roomFillModeOf, contentUrl,
   snapToWall, openingAmount,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
   stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, glowColorOf, doorSector, hasRoomBehind, controlsAction, isControllable,
@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.42.2';
+const CARD_VERSION = '1.43.2';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -54,12 +54,40 @@ const navigate = (path: string) => {
   fireEvent(window, 'location-changed', { replace: false });
 };
 
-const debounce = <T extends (...a: any[]) => void>(fn: T, ms: number) => {
+/**
+ * Debounce with `flush()` and `pending`. Both are load-bearing: a pending
+ * config write MUST be flushed before the card adopts a server revision,
+ * otherwise the edit is silently dropped (audit L2, 2026-07-27).
+ */
+interface Debounced<T extends (...a: any[]) => void> {
+  (...a: Parameters<T>): void;
+  flush(): void;
+  pending(): boolean;
+}
+
+const debounce = <T extends (...a: any[]) => void>(fn: T, ms: number): Debounced<T> => {
   let t: number | undefined;
-  return (...a: Parameters<T>) => {
+  let last: Parameters<T> | null = null;
+  const wrapped = ((...a: Parameters<T>) => {
     clearTimeout(t);
-    t = window.setTimeout(() => fn(...a), ms);
+    last = a;
+    t = window.setTimeout(() => {
+      t = undefined;
+      const args = last;
+      last = null;
+      if (args) fn(...args);
+    }, ms);
+  }) as Debounced<T>;
+  wrapped.flush = () => {
+    if (t === undefined) return;
+    clearTimeout(t);
+    t = undefined;
+    const args = last;
+    last = null;
+    if (args) fn(...args);
   };
+  wrapped.pending = () => t !== undefined;
+  return wrapped;
 };
 
 class HouseplanCard extends LitElement {
@@ -149,7 +177,7 @@ class HouseplanCard extends LitElement {
     x: number; y: number; angle: number; // render units (from the wall snap)
   } | null = null;
   private _openingInfo: OpeningCfg | null = null;
-  private _opDrag: { id: string; moved: boolean } | null = null;
+  private _opDrag: { id: string; moved: boolean; sx: number; sy: number; dirty: boolean } | null = null;
   private _mergeDialog: { aId: string; bId: string; poly: number[][]; pick: 'a' | 'b' } | null = null;
   private _splitSel: { roomId: string; pts: number[][] } | null = null; // room being cut + the cut path so far
   // a split is applied only when the new room's dialog is confirmed — cancel leaves the room intact
@@ -331,6 +359,8 @@ class HouseplanCard extends LitElement {
     clearInterval(this._cycleTimer);
     clearTimeout(this._kioskDotsTimer);
     clearTimeout(this._kioskHoldTimer);
+    clearTimeout(this._reloadRetry);
+    this._saveConfigDebounced.flush(); // never leave an edit unsent on teardown
     window.removeEventListener('hashchange', this._onHashChange);
     clearTimeout(this._holdTimer);
     this._roViewport?.disconnect();
@@ -450,6 +480,7 @@ class HouseplanCard extends LitElement {
       const c = JSON.parse(localStorage.getItem(LS_CFG) || 'null');
       if (c && c.config && Array.isArray(c.config.spaces)) {
         this._serverCfg = c.config;
+        this._cfgEpoch++;
         this._cfgRev = c.rev || 0;
         this._layout = c.layout || {};
         this._serverStorage = true;
@@ -490,7 +521,36 @@ class HouseplanCard extends LitElement {
   }
 
   /** Spaces in render units (NORM_W × NORM_W/aspect). */
+  /** Bumped by every config mutation — the model/geometry cache key (audit L1). */
+  private _cfgEpoch = 0;
+  private _modelCache: { key: string; model: SpaceModel[] } | null = null;
+
+  /** Cheap structural fingerprint of the config (audit L1 cache key). */
+  private _cfgFingerprint(): string {
+    const sp = this._serverCfg?.spaces || [];
+    let s = sp.length + ':';
+    for (const x of sp as any[]) {
+      s += (x.id || '') + ',' + (x.aspect || '') + ',' + (x.plan_url || '').length + ','
+        + (x.rooms?.length || 0) + ',' + (x.openings?.length || 0) + ',' + (x.decor?.length || 0) + ';';
+      for (const r of x.rooms || [])
+        s += (r.poly?.length || 0) + '.' + (r.id || '') + '.' + (r.open_to || []).join('+') + '.'
+          + (r.area || '') + '.' + JSON.stringify(r.settings || 0) + ';';
+    }
+    return s;
+  }
+
   private get _model(): SpaceModel[] {
+    if (!this._serverCfg) return [];
+    // same reasoning as _openPairs: mutations in place mean the epoch can lag,
+    // so the key also carries the config's structural fingerprint
+    const key = this._cfgEpoch + '|' + this._cfgFingerprint();
+    if (this._modelCache && this._modelCache.key === key) return this._modelCache.model;
+    const built = this._buildModel();
+    this._modelCache = { key, model: built };
+    return built;
+  }
+
+  private _buildModel(): SpaceModel[] {
     if (!this._serverCfg) return [];
     return this._serverCfg.spaces.map((s: any) => {
       const H = NORM_W / s.aspect;
@@ -510,7 +570,7 @@ class HouseplanCard extends LitElement {
         id: s.id,
         title: s.title,
         vb: [s.view_box[0] * NORM_W, s.view_box[1] * H, s.view_box[2] * NORM_W, s.view_box[3] * H],
-        bg: s.plan_url ? { href: s.plan_url, x: 0, y: 0, w: NORM_W, h: H } : null,
+        bg: s.plan_url ? { href: contentUrl(s.plan_url), x: 0, y: 0, w: NORM_W, h: H } : null,
         rooms: s.rooms.map(scale),
       };
     });
@@ -615,11 +675,15 @@ class HouseplanCard extends LitElement {
       this._serverStorage = true;
       const cfg = cfgResp?.config;
       this._serverCfg = cfg && Array.isArray(cfg.spaces) ? cfg : null;
+      this._cfgEpoch++;
       this._cfgRev = cfgResp?.rev || 0;
       this._layout = layResp?.layout || {};
       // live sync: the config was changed in another window → re-read it
       if (!this._unsubCfg) {
         this._unsubCfg = await this.hass.connection.subscribeEvents((ev: any) => {
+          // Flush a pending local edit BEFORE adopting a remote revision:
+          // otherwise the debounced write reads a config that this reload has
+          // already replaced, and the user's edit vanishes (audit L2).
           if ((ev?.data?.rev ?? -1) !== this._cfgRev) this._reloadConfigOnly();
         }, 'houseplan_config_updated');
       }
@@ -657,21 +721,40 @@ class HouseplanCard extends LitElement {
     this.requestUpdate();
   }
 
-  private async _reloadConfigOnly(): Promise<void> {
+  /**
+   * Adopt the server config. Any pending local write is flushed first and, if a
+   * write is still in flight, the reload is deferred — adopting a revision on
+   * top of an unsent edit is exactly how edits disappeared (audit L2).
+   * `force` skips the deferral (conflict path: the local edit already lost).
+   */
+  private async _reloadConfigOnly(force = false): Promise<void> {
+    if (!force) {
+      if (this._saveConfigDebounced.pending()) this._saveConfigDebounced.flush();
+      if (this._cfgWriting) {
+        // retry once the in-flight write settles
+        clearTimeout(this._reloadRetry);
+        this._reloadRetry = window.setTimeout(() => this._reloadConfigOnly(), 400);
+        return;
+      }
+    }
     try {
       const resp = await this.hass.callWS({ type: 'houseplan/config/get' });
       const cfg = resp?.config;
       this._serverCfg = cfg && Array.isArray(cfg.spaces) ? cfg : null;
+      this._cfgEpoch++;
       this._cfgRev = resp?.rev || 0;
       this._cacheSnapshot();
       this._regSignature = '';
       this._maybeRebuildDevices();
       this.requestUpdate();
-    } catch {
-      /* ignore */
+    } catch (e: any) {
+      // a failed reload leaves the card on its last known config; tell the user
+      // rather than silently diverging from the server (audit L2 note)
+      this._showToast(this._t('toast.cfg_reload_failed', { err: this._errText(e) }));
     }
   }
 
+  private _reloadRetry?: number;
   private _dirtyPos = new Set<string>();
 
   private _persistLayout = debounce(() => {
@@ -1383,19 +1466,36 @@ class HouseplanCard extends LitElement {
     for (const sp of this._serverCfg?.spaces || []) delete (sp as any).segments;
   }
 
-  private _saveConfig = debounce(() => {
+  /** A config write is in flight — the card must not adopt a server revision. */
+  private _cfgWriting = false;
+
+  /**
+   * Every mutation path ends here, so this is the one place that can invalidate
+   * the geometry caches synchronously. The WRITE stays debounced; the epoch bump
+   * must not be (audit L1: a bump inside the debounce arrives 500 ms after the
+   * render that needed it, and the plan renders stale geometry).
+   */
+  private _saveConfig(): void {
+    this._cfgEpoch++;
+    this._saveConfigDebounced();
+  }
+
+  private _saveConfigDebounced = debounce(() => {
     if (!this._serverCfg) return;
     this._dropLegacySegments();
+    this._cfgWriting = true;
     this.hass
       .callWS({ type: 'houseplan/config/set', config: this._serverCfg, expected_rev: this._cfgRev })
       .then((r: any) => {
         this._cfgRev = r?.rev ?? this._cfgRev + 1;
+        this._cfgWriting = false;
       })
       .catch((e: any) => {
+        this._cfgWriting = false;
         if (e?.code === 'conflict') {
           this._showToast(this._t('toast.conflict'));
           this._cancelPath();
-          this._reloadConfigOnly();
+          this._reloadConfigOnly(true);
         } else {
           this._showToast(this._t('toast.cfg_save_failed', { err: this._errText(e) }));
         }
@@ -1787,7 +1887,25 @@ class HouseplanCard extends LitElement {
   }
 
   /** All open-boundary pairs of the current space with their shared segments. */
+  private _openPairsCache: { key: string; pairs: { a: RoomCfg; b: RoomCfg; segs: number[][] }[] } | null = null;
+
   private _openPairs(): { a: RoomCfg; b: RoomCfg; segs: number[][] }[] {
+    // audit L1: this used to run once PER ROOM on every render (O(rooms^3)
+    // collinear-overlap math on every HA state push). Memoized on the config
+    // epoch + current space.
+    // The key includes the open_to links themselves: _serverCfg is mutated in
+    // place in ~22 places (audit L7), so an epoch counter alone is not a
+    // trustworthy cache key — a missed bump would render a stale plan, which is
+    // far worse than recomputing a short string here.
+    const sp = this._spaceModel();
+    const key = this._space + '|' + sp.rooms.map((r) => r.id + ':' + ((r as any).open_to || []).join(',')).join(';');
+    if (this._openPairsCache && this._openPairsCache.key === key) return this._openPairsCache.pairs;
+    const pairs = this._computeOpenPairs();
+    this._openPairsCache = { key, pairs };
+    return pairs;
+  }
+
+  private _computeOpenPairs(): { a: RoomCfg; b: RoomCfg; segs: number[][] }[] {
     const rooms = this._spaceModel().rooms.filter((r) => r.id);
     const res: { a: RoomCfg; b: RoomCfg; segs: number[][] }[] = [];
     for (let i = 0; i < rooms.length; i++)
@@ -1898,11 +2016,16 @@ class HouseplanCard extends LitElement {
     } catch {
       /* an inactive pointerId (synthetic events, some browsers) must not kill the drag */
     }
-    this._opDrag = { id: o.id, moved: false };
+    this._opDrag = { id: o.id, moved: false, sx: ev.clientX, sy: ev.clientY, dirty: false };
   }
 
   private _opPointerMove(ev: PointerEvent, o: OpeningCfg): void {
     if (!this._opDrag || this._opDrag.id !== o.id) return;
+    // audit L4: the other drag pipelines require 3 px before calling it a drag.
+    // Without it every tap counted as a drag: the properties dialog never
+    // opened and an unchanged config was written (which then broadcast the
+    // event behind the L2 data loss).
+    if (Math.abs(ev.clientX - this._opDrag.sx) + Math.abs(ev.clientY - this._opDrag.sy) <= 3) return;
     const raw = this._svgPoint(ev);
     const snap = snapToWall(raw, this._spaceModel().rooms, this._gridPitch * 4);
     if (!snap) return; // too far from any wall: the opening stays where it was
@@ -1910,8 +2033,11 @@ class HouseplanCard extends LitElement {
     const sp = this._curSpaceCfg;
     const cfg = sp?.openings?.find((x: OpeningCfg) => x.id === o.id);
     if (!cfg) return;
-    cfg.x = snap.x / NORM_W;
-    cfg.y = snap.y / this._spaceH;
+    const nx = snap.x / NORM_W;
+    const ny = snap.y / this._spaceH;
+    if (cfg.x !== nx || cfg.y !== ny || cfg.angle !== snap.angle) this._opDrag.dirty = true;
+    cfg.x = nx;
+    cfg.y = ny;
     cfg.angle = snap.angle;
     this.requestUpdate();
   }
@@ -1919,7 +2045,8 @@ class HouseplanCard extends LitElement {
   private _opPointerUp(ev: PointerEvent, o: OpeningCfg): void {
     if (!this._opDrag || this._opDrag.id !== o.id) return;
     const moved = this._opDrag.moved;
-    if (moved) this._saveConfig();
+    // only write when the geometry actually changed (audit L4)
+    if (moved && this._opDrag.dirty) this._saveConfig();
     // keep the flag until the click event that follows pointerup, then let it go
     if (moved) window.setTimeout(() => (this._opDrag = null), 0);
     else this._opDrag = null;
@@ -2577,7 +2704,11 @@ class HouseplanCard extends LitElement {
       this._maybeRebuildDevices();
       this._showToast(this._t('toast.marker_saved'));
     } catch (e: any) {
-      this._markerDialog = { ...this._markerDialog!, busy: false };
+      // audit L3: the dialog may have been closed (Esc) while the save was
+      // in flight — spreading null yields a truthy husk and the renderer
+      // then crashes, blanking the whole card. The toast below is the
+      // only remaining signal, so it must still fire.
+      if (this._markerDialog) this._markerDialog = { ...this._markerDialog, busy: false };
       this._showToast(this._t('toast.error', { err: this._errText(e) }));
     }
   }
@@ -2772,7 +2903,11 @@ class HouseplanCard extends LitElement {
         this._showToast(d.mode === 'create' ? this._t('toast.space_added') : this._t('toast.space_saved'));
       }
     } catch (e: any) {
-      this._spaceDialog = { ...this._spaceDialog!, busy: false };
+      // audit L3: the dialog may have been closed (Esc) while the save was
+      // in flight — spreading null yields a truthy husk and the renderer
+      // then crashes, blanking the whole card. The toast below is the
+      // only remaining signal, so it must still fire.
+      if (this._spaceDialog) this._spaceDialog = { ...this._spaceDialog, busy: false };
       this._showToast(this._t('toast.error', { err: this._errText(e) }));
     }
   }
@@ -2802,6 +2937,7 @@ class HouseplanCard extends LitElement {
   conflict again. */
   private async _saveConfigNow(): Promise<void> {
     this._dropLegacySegments();
+    this._cfgEpoch++;
     try {
       const r = await this.hass.callWS({
         type: 'houseplan/config/set', config: this._serverCfg, expected_rev: this._cfgRev,
@@ -2930,7 +3066,11 @@ class HouseplanCard extends LitElement {
       this.requestUpdate();
       this._showToast(this._t('gs.saved'));
     } catch (e: any) {
-      this._settingsDialog = { ...this._settingsDialog!, busy: false };
+      // audit L3: the dialog may have been closed (Esc) while the save was
+      // in flight — spreading null yields a truthy husk and the renderer
+      // then crashes, blanking the whole card. The toast below is the
+      // only remaining signal, so it must still fire.
+      if (this._settingsDialog) this._settingsDialog = { ...this._settingsDialog, busy: false };
       this._showToast(this._t('toast.error', { err: this._errText(e) }));
     }
   }
@@ -3115,7 +3255,11 @@ class HouseplanCard extends LitElement {
       this._maybeRebuildDevices();
       this._showToast(this._t('rules.saved'));
     } catch (e: any) {
-      this._rulesDialog = { ...this._rulesDialog!, busy: false };
+      // audit L3: the dialog may have been closed (Esc) while the save was
+      // in flight — spreading null yields a truthy husk and the renderer
+      // then crashes, blanking the whole card. The toast below is the
+      // only remaining signal, so it must still fire.
+      if (this._rulesDialog) this._rulesDialog = { ...this._rulesDialog, busy: false };
       this._showToast(this._t('toast.error', { err: this._errText(e) }));
     }
   }
@@ -3345,7 +3489,18 @@ class HouseplanCard extends LitElement {
               ? svg`<image href="${space.bg.href}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}" preserveAspectRatio="none" />`
               : nothing}
             ${this._renderDecorLayer()}
-            ${space.rooms.filter((r) => r.area || this._markup || disp.showBorders).map((r) => {
+            ${(() => {
+              // audit L1: hoisted out of the per-room map — these depend on the
+              // config, not on entity state, and were recomputed per room.
+              const allPairs = this._openPairs();
+              const polyCache = new Map<any, number[][] | null>();
+              const polyOf = (rr: any) => {
+                if (!polyCache.has(rr)) polyCache.set(rr, roomPoly(rr));
+                return polyCache.get(rr)!;
+              };
+              const otherPolys = (rr: any) =>
+                space.rooms.filter((o) => o !== rr).map(polyOf).filter(Boolean) as number[][][];
+              return space.rooms.filter((r) => r.area || this._markup || disp.showBorders).map((r) => {
               let cls = 'room ' + (space.bg ? 'overlay' : 'yard') + (this._markup ? ' outlined' : '');
               if (this._markup && (r.id === this._mergeSel || r.id === this._splitSel?.roomId))
                 cls += ' picked';
@@ -3392,16 +3547,12 @@ class HouseplanCard extends LitElement {
               // amber highlight — the merge/split selection must stay visible).
               const isPicked = this._markup && (r.id === this._mergeSel || r.id === this._splitSel?.roomId);
               const openCuts = r.id && !isPicked
-                ? this._openPairs()
-                    .filter((pp) => pp.a.id === r.id || pp.b.id === r.id)
-                    .flatMap((pp) => pp.segs)
+                ? allPairs.filter((pp) => pp.a.id === r.id || pp.b.id === r.id).flatMap((pp) => pp.segs)
                 : [];
               if (openCuts.length) cls += ' noedge';
               // island rooms punch holes in their parent's fill (evenodd)
-              const myPoly = roomPoly(r);
-              const holes = myPoly
-                ? islandsOf(myPoly, space.rooms.filter((o) => o !== r).map((o) => roomPoly(o)!).filter(Boolean))
-                : [];
+              const myPoly = polyOf(r);
+              const holes = myPoly ? islandsOf(myPoly, otherPolys(r)) : [];
               const pathD = (pts: number[][]) =>
                 'M ' + pts.map((p) => p[0] + ' ' + p[1]).join(' L ') + ' Z';
               const shape = holes.length && myPoly
@@ -3426,7 +3577,8 @@ class HouseplanCard extends LitElement {
                     style=${this._markup ? nothing : `stroke:${disp.color};stroke-opacity:${disp.showBorders ? disp.opacity : 0}`}></path>`
                 : nothing;
               return svg`${shape}${outline}${label ? svg`<text class="rlabel" x="${c[0]}" y="${c[1]}">${r.name}</text>` : nothing}`;
-            })}
+              });
+            })()}
             ${disp.fill === 'glow' && !this._markup ? this._renderGlowLayer(space) : nothing}
             ${this._renderOpenWalls(disp)}
             ${this._editing ? this._renderAlignGuides() : nothing}
@@ -4330,7 +4482,7 @@ class HouseplanCard extends LitElement {
           ${d.pdfs && d.pdfs.length
             ? html`<div class="inforow"><span class="k">${this._t('info.manuals')}</span><span class="pdflist">
                 ${d.pdfs.map(
-                  (p) => html`<a class="pdf" href="${safeUrl(p.url) || '#'}" target="_blank" rel="noreferrer noopener">
+                  (p) => html`<a class="pdf" href="${safeUrl(contentUrl(p.url)) || '#'}" target="_blank" rel="noreferrer noopener">
                     <ha-icon icon="mdi:file-pdf-box"></ha-icon>${p.name}</a>`,
                 )}</span></div>`
             : nothing}
@@ -4562,7 +4714,7 @@ class HouseplanCard extends LitElement {
           <div class="pdfedit">
             ${d.pdfs.map(
               (p) => html`<span class="pdftag"><ha-icon icon="mdi:file-pdf-box"></ha-icon>
-                <a href="${safeUrl(p.url) || '#'}" target="_blank" rel="noreferrer noopener">${p.name}</a>
+                <a href="${safeUrl(contentUrl(p.url)) || '#'}" target="_blank" rel="noreferrer noopener">${p.name}</a>
                 <ha-icon class="x" icon="mdi:close" @click=${() => this._removeMarkerPdf(p.url)}></ha-icon></span>`,
             )}
             <label class="btn filebtn">

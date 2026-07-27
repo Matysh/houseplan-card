@@ -1,4 +1,4 @@
-import { launch } from './serve.mjs';
+import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 const res = await page.evaluate(async () => {
   const out = {};
@@ -101,5 +101,8 @@ const res = await page.evaluate(async () => {
   out.radiusReacts = Math.abs(r600 / r300 - 2) < 0.01;
   return out;
 });
-console.log(JSON.stringify(res, null, 1));
-await browser.close();
+// значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
+checkAll(res, {
+  "spots": 1,
+});
+await finish(browser, res);

@@ -18,7 +18,7 @@ except ImportError:  # older HA versions
     KEY_HASS = "hass"  # type: ignore[assignment]
 from homeassistant.core import HomeAssistant
 
-from .const import CONF_ADMIN_ONLY, FILES_DIR, FILES_URL
+from .const import CONF_ADMIN_ONLY, CONTENT_URL, FILES_DIR, FILES_URL, PLANS_DIR
 from .store import get_entry
 from .validation import (
     FILE_EXTENSIONS,
@@ -31,6 +31,59 @@ from .validation import (
 _LOGGER = logging.getLogger(__name__)
 
 _CHUNK = 64 * 1024
+
+_MIME = {
+    ".pdf": "application/pdf",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".svg": "image/svg+xml",
+    ".webp": "image/webp",
+    ".gif": "image/gif",
+    ".txt": "text/plain",
+}
+
+
+class HouseplanContentView(HomeAssistantView):
+    """Authenticated read access to plans and marker files (audit B1).
+
+    The directories used to be exposed as unauthenticated static paths, so
+    anyone who could reach the HA endpoint could pull floor plans and uploaded
+    manuals without logging in. This view keeps the same URLs but requires a
+    Home Assistant session (or a signed path, which the frontend uses for
+    <image href> inside the SVG).
+    """
+
+    url = "/api/houseplan/content/{kind}/{sub}/{name}"
+    name = "api:houseplan:content"
+    requires_auth = True
+
+    async def get(self, request: web.Request, kind: str, sub: str, name: str) -> web.StreamResponse:
+        hass: HomeAssistant = request.app[KEY_HASS]
+        if kind not in ("plans", "files"):
+            return web.Response(status=404)
+        safe_sub = sanitize_marker_id(sub)
+        safe_name = sanitize_filename(name)
+        if not safe_sub or not safe_name:
+            return web.Response(status=404)
+        base = Path(hass.config.path(PLANS_DIR if kind == "plans" else FILES_DIR)).resolve()
+        # plans live flat in one directory: the sub segment is a placeholder ("_")
+        path = (base / safe_name if kind == "plans" else base / safe_sub / safe_name).resolve()
+        # defence in depth: the sanitizers already strip separators
+        if not str(path).startswith(str(base)):
+            return web.Response(status=404)
+
+        def _read() -> bytes | None:
+            return path.read_bytes() if path.is_file() else None
+
+        blob = await hass.async_add_executor_job(_read)
+        if blob is None:
+            return web.Response(status=404)
+        return web.Response(
+            body=blob,
+            content_type=_MIME.get(path.suffix.lower(), "application/octet-stream"),
+            headers={"Cache-Control": "private, max-age=3600"},
+        )
 
 
 class HouseplanUploadView(HomeAssistantView):
@@ -99,5 +152,5 @@ class HouseplanUploadView(HomeAssistantView):
 
         mtime = await hass.async_add_executor_job(_write)
         return web.json_response(
-            {"ok": True, "url": f"{FILES_URL}/{marker_id}/{safe_name}?v={mtime}", "name": filename}
+            {"ok": True, "url": f"{CONTENT_URL}/files/{marker_id}/{safe_name}?v={mtime}", "name": filename}
         )

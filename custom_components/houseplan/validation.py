@@ -47,11 +47,31 @@ def valid_space_id(value: str) -> bool:
 
 
 # ---------- voluptuous schemas ----------
+def _finite(value):
+    """Coerce to float and reject NaN/Infinity (audit B5).
+
+    'NaN' and 'Infinity' pass Coerce(float) and serialize to null on write,
+    silently corrupting a stored position forever.
+    """
+    f = float(value)
+    if f != f or f in (float("inf"), float("-inf")):
+        raise vol.Invalid("coordinate must be a finite number")
+    return f
+
+
+# generous caps: the product targets 20-200 devices and a handful of floors
+MAX_SPACES = 50
+MAX_ROOMS = 400
+MAX_MARKERS = 2000
+MAX_OPENINGS = 500
+MAX_DECOR = 1000
+MAX_LAYOUT = 5000
+
 POS_SCHEMA = vol.Schema(
-    {vol.Required("x"): vol.Coerce(float), vol.Required("y"): vol.Coerce(float)},
+    {vol.Required("x"): _finite, vol.Required("y"): _finite},
     extra=vol.ALLOW_EXTRA,  # v2 records carry the "s" key (space id)
 )
-LAYOUT_SCHEMA = vol.Schema({str: POS_SCHEMA})
+LAYOUT_SCHEMA = vol.All(vol.Schema({str: POS_SCHEMA}), vol.Length(max=MAX_LAYOUT))
 
 POINT = vol.All([vol.Coerce(float)], vol.Length(min=2, max=2))
 
@@ -142,8 +162,8 @@ SPACE_SCHEMA = vol.Schema(
         vol.Optional("plan_url"): vol.Any(str, None),
         vol.Required("aspect"): vol.All(vol.Coerce(float), vol.Range(min=0.05, max=20)),
         vol.Required("view_box"): vol.All([vol.Coerce(float)], vol.Length(min=4, max=4)),
-        vol.Required("rooms"): [ROOM_SCHEMA],
-        vol.Optional("decor"): [DECOR_SCHEMA],
+        vol.Required("rooms"): vol.All([ROOM_SCHEMA], vol.Length(max=MAX_ROOMS)),
+        vol.Optional("decor"): vol.All([DECOR_SCHEMA], vol.Length(max=MAX_DECOR)),
         vol.Optional("openings"): [
             vol.Schema(
                 {
@@ -199,8 +219,8 @@ MARKER_SCHEMA = vol.Schema(
 )
 CONFIG_SCHEMA = vol.Schema(
     {
-        vol.Required("spaces"): [SPACE_SCHEMA],
-        vol.Optional("markers", default=list): [MARKER_SCHEMA],
+        vol.Required("spaces"): vol.All([SPACE_SCHEMA], vol.Length(max=MAX_SPACES)),
+        vol.Optional("markers", default=list): vol.All([MARKER_SCHEMA], vol.Length(max=MAX_MARKERS)),
         vol.Optional("settings", default=dict): vol.Schema(
             {
                 vol.Optional("glow_radius_cm"): vol.All(vol.Coerce(float), vol.Range(min=10, max=10000)),

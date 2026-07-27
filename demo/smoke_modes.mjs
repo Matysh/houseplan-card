@@ -1,5 +1,5 @@
 // UX modes shell (v1.25.0): view is display-only; plan/devices gate the tools.
-import { launch } from './serve.mjs';
+import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 const out = {};
 const q = (sel) => page.evaluate((s) => (window.__card.shadowRoot || window.__card.renderRoot).querySelectorAll(s).length, sel);
@@ -75,5 +75,12 @@ out.devClickOpensEditor = await page.evaluate(async () => {
 // 5) назад в view
 await page.evaluate(() => window.__card._setMode('view'));
 out.backToView = (await st()).mode;
-console.log(JSON.stringify(out, null, 1));
-await browser.close();
+// значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
+checkAll(out, {
+  "start": {"mode": "view", "modeTabs": 3, "editBtns": 1, "gears": 2, "markupBar": false, "stageClass": "stage    mode-view"},
+  "viewDragMoved": false,
+  "plan": {"mode": "plan", "modeTabs": 3, "active": "Plan editor", "editBtns": 1, "gears": 2, "markupBar": true, "stageClass": "stage markup tool-draw   mode-plan"},
+  "devices": {"mode": "devices", "modeTabs": 3, "active": "Device editor", "editBtns": 1, "gears": 2, "markupBar": true, "stageClass": "stage    mode-devices"},
+  "backToView": "view",
+});
+await finish(browser, out);
