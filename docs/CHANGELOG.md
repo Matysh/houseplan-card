@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.44.6 — 2026-07-27
+- **Only room *air* counts as room climate.** After v1.44.5 started reading the
+  area registry instead of the visible icons, every hidden temperature entity in
+  the area became a candidate — including ones that measure something other than
+  the air. Three guards now run before averaging: entities marked
+  diagnostic/config are skipped, entities from curated-out integrations are
+  skipped, and entity ids naming a non-air medium are skipped
+  (`water`, `coolant`, `flow_temp`, `return_temp`, `target`, `setpoint`, `chip`,
+  `cpu`, `processor`, `board`, `device_temp`, `batter`, `freezer`, `fridge`,
+  `oven`, `kettle`, `boiler`).
+  On a live 60-area install this removed four real false positives: a NAS
+  processor temperature, the water in a smart kettle, a 90 °C sauna heater and a
+  virtual `better_thermostat` duplicating the real sensor.
+- **New icon rules:** kettles/thermopots get `mdi:kettle`, saunas
+  (`sauna`, `harvia`, `парная`) get `mdi:hot-tub` — previously both fell through
+  to the generic thermometer rule, which is also what made them count as room
+  climate.
+
 ## v1.44.5 — 2026-07-27
 - **Room climate now counts every sensor in the area**, including devices that
   are not placed on the plan (hidden by curation or by you). Previously the

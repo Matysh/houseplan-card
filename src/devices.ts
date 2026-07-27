@@ -2,7 +2,7 @@
  * Building the device list from HA registries: curation, light groups,
  * markers (overrides/virtual). No Lit/DOM — only the hass object.
  */
-import { iconFor, iconFromDeviceClasses, DOMAIN_PRIORITY, FALLBACK_ICON, type CompiledIconRule } from './rules';
+import { iconFor, iconFromDeviceClasses, DOMAIN_PRIORITY, FALLBACK_ICON, type CompiledIconRule, EXCLUDED_DOMAINS } from './rules';
 import { averageLqi } from './logic';
 import type { DevItem, Marker, ServerConfig } from './types';
 
@@ -401,6 +401,20 @@ export function areaHum(
 }
 
 /**
+ * Entity ids that measure something other than room air, however honest their
+ * device_class is: water and coolant loops, chip/CPU/board temperatures,
+ * battery temperature, setpoints (target/external) and the like.
+ */
+const NON_AIR_RE = new RegExp(
+  [
+    'water', 'voda', 'coolant', 'flow_?temp', 'return_?temp', 'target', 'setpoint',
+    'chip', 'cpu', 'processor', 'board', 'core_temp', 'device_temp',
+    'batter', 'akkum', 'freezer', 'fridge', 'oven', 'kettle', 'boiler',
+  ].join('|'),
+  'i',
+);
+
+/**
  * Room climate from EVERY sensor of the area — including devices that are not
  * placed on the plan (hidden by curation or by the user). The old helpers read
  * the visible-icon list, so hiding a thermometer silently removed it from the
@@ -420,6 +434,13 @@ export function areaClimate(
     const dev = reg.device_id ? hass.devices?.[reg.device_id] : null;
     const entArea = reg.area_id || dev?.area_id || null;
     if (entArea !== area) continue;
+    // Not every "temperature" is room air. Real finds on a live install: the
+    // NAS processor temperature, the water in a smart kettle, a sauna heater at
+    // 90 C and a virtual better_thermostat duplicating the real sensor (field
+    // question, 2026-07-27). Three guards, cheapest first:
+    if (reg.entity_category) continue;              // diagnostic/config readings
+    if (EXCLUDED_DOMAINS.has(reg.platform)) continue; // curated-out integrations
+    if (NON_AIR_RE.test(eid)) continue;             // water/chip/flow/target/...
     const key = reg.device_id || eid;
     if (!groups.has(key)) {
       const st = hass.states?.[eid];
