@@ -234,6 +234,20 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       are only reachable through /api/houseplan/content/… with a session; the
       old /houseplan_files/plans|files paths return 404 after a restart; old
       stored URLs keep working (rewritten on read) [auto+manual]
+- [ ] Rejected save leaves the plan intact (v1.45.0, review R2-1): attach a new
+      background, make the config write fail (a second tab saving first is
+      enough) — the previously stored plan is still served, with the same or a
+      different extension; after a successful save the old files are gone
+      [auto: smoke_plan_upload_reject + backend test_plan_upload_does_not_touch_the_previous_file]
+- [ ] Signature cache on a wall tablet (v1.45.0, review R2-2): with more than
+      200 signed urls every one of them is refreshed (batched), entries for
+      files no longer in the config are dropped, an expired signature is never
+      served and an aging one keeps working while its replacement arrives
+      [auto: smoke_sign_cap]
+- [ ] Climate cost does not grow with rooms (v1.45.0, review R2-3): on a plan
+      with dozens of rooms an unrelated HA state update triggers ONE registry
+      pass, repeated renders on the same snapshot trigger none, and a changed
+      sensor value is still visible immediately [auto: smoke_climate_once]
 - [ ] Plan upload survives a concurrent config revision (v1.44.8): with a second
       tab open on the same plan, attach a background image in space settings —
       the plan shows immediately, `plan_url` is in `.storage/houseplan.config`,

@@ -177,8 +177,33 @@ double click → properties dialog. In markup mode the "Opening" tool handles cl
 | `houseplan/layout/update` | `device_id`, `pos` | `{ok}` |
 | `houseplan/config/get` | — | `{config, rev}` |
 | `houseplan/config/set` | `config`, `expected_rev?` | `{ok, rev}` / err `conflict`; event `houseplan_config_updated` |
-| `houseplan/plan/set` | `space_id`, `ext` (svg/png/jpg/webp), `data` (b64, ≤8 MB) | `{ok, url}` |
+| `houseplan/plan/set` | `space_id`, `ext` (svg/png/jpg/webp), `data` (b64, ≤8 MB) | `{ok, url}` — writes `<space>.<token>.<ext>`, deletes nothing |
+| `houseplan/plan/cleanup` | `space_id`, `keep` | `{ok, removed}` — call ONLY after the config write referencing `keep` was accepted |
 | `houseplan/file/set` | `marker_id`, `filename`, `data` (b64) | `{ok,url,name}` (legacy, WS limit) |
+
+**Plan uploads are copy-on-write** (review R2-1). The file system is not part
+of the config's optimistic-locking transaction, so nothing that is currently
+referenced may be overwritten or deleted before the config CAS succeeds: the
+upload writes a new versioned name, the card commits the url, and only then
+asks for `plan/cleanup`. A crash between the two leaves one orphan file, which
+the next successful upload removes. The `.` between id and token is load-bearing
+— a space id cannot contain one, so `<space>.<token>.<ext>` can never be
+confused with the files of a space whose name merely starts the same way.
+
+**Signed content urls are batched and aged** (review R2-2). `MAX_SIGN_PATHS`
+(200) is a shared contract between `logic.ts` and `const.py`: the backend caps a
+request there and says nothing about the rest, so the card must chunk. Cached
+signatures carry the time they were issued — an aging one keeps rendering while
+its replacement is fetched, an expired one is dropped rather than served (it
+would 401 and raise a failed-login warning). The cache is pruned to the urls the
+live config references, so it cannot grow past the cap through history alone.
+
+**Room climate is one pass per hass snapshot** (review R2-3). `areaClimateMap()`
+classifies the whole registry once and returns `Map<area, {temp, hum}>`; the
+card memoizes it on `hass` identity, which Home Assistant replaces on every
+state change. Per-room lookups are O(1). `areaClimate()` survives as a
+single-area wrapper for tests — using it in a render reintroduces the
+O(rooms × entities) cost it was extracted from.
 
 **File uploads go over HTTP** (not WS, which has a message-size limit): `POST /api/houseplan/upload`
 (multipart: marker_id + file), HomeAssistantView, requires_auth. Served from `/houseplan_files/files/`.

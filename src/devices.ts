@@ -425,15 +425,27 @@ const NON_AIR_RE = new RegExp(
  * The AUTO icon is used on purpose — a custom marker icon must not change what
  * a device measures.
  */
-export function areaClimate(
-  hass: any, area: string, kind: 'temp' | 'hum', rules?: CompiledIconRule[],
-): number | null {
-  if (!area || !hass?.entities) return null;
-  const groups = new Map<string, { name: string; model?: string; ents: string[] }>();
+export interface AreaClimate { temp: number | null; hum: number | null }
+
+/**
+ * Climate for EVERY area in one registry pass (review R2-3).
+ *
+ * The per-area version below rescanned the whole registry for each room and
+ * each measurement: with 60 rooms and 2000 entities that is 120 traversals per
+ * render — an entire frame spent re-reading metadata that did not change. The
+ * caller computes this map once per `hass` snapshot and looks rooms up in O(1).
+ */
+export function areaClimateMap(
+  hass: any, rules?: CompiledIconRule[],
+): Map<string, AreaClimate> {
+  const out = new Map<string, AreaClimate>();
+  if (!hass?.entities) return out;
+  // area -> device (or lone entity) -> the entities that belong to it
+  const byArea = new Map<string, Map<string, { name: string; model?: string; ents: string[] }>>();
   for (const [eid, reg] of Object.entries<any>(hass.entities)) {
     const dev = reg.device_id ? hass.devices?.[reg.device_id] : null;
-    const entArea = reg.area_id || dev?.area_id || null;
-    if (entArea !== area) continue;
+    const area = reg.area_id || dev?.area_id || null;
+    if (!area) continue;
     // Not every "temperature" is room air. Real finds on a live install: the
     // NAS processor temperature, the water in a smart kettle, a sauna heater at
     // 90 C and a virtual better_thermostat duplicating the real sensor (field
@@ -441,30 +453,51 @@ export function areaClimate(
     if (reg.entity_category) continue;              // diagnostic/config readings
     if (EXCLUDED_DOMAINS.has(reg.platform)) continue; // curated-out integrations
     if (NON_AIR_RE.test(eid)) continue;             // water/chip/flow/target/...
+    let groups = byArea.get(area);
+    if (!groups) { groups = new Map(); byArea.set(area, groups); }
     const key = reg.device_id || eid;
-    if (!groups.has(key)) {
+    let g = groups.get(key);
+    if (!g) {
       const st = hass.states?.[eid];
-      groups.set(key, {
+      g = {
         name: (dev ? dev.name_by_user || dev.name : reg.name || st?.attributes?.friendly_name || eid) || eid,
         model: dev?.model,
         ents: [],
-      });
+      };
+      groups.set(key, g);
     }
-    groups.get(key)!.ents.push(eid);
+    g.ents.push(eid);
   }
-  const vals: number[] = [];
-  for (const g of groups.values()) {
-    const icon = resolveIcon(hass, g.name, g.model, g.ents, rules);
-    const ok = kind === 'temp'
-      ? icon === 'mdi:thermometer' || icon === 'mdi:air-filter'
-      : icon === 'mdi:thermometer' || icon === 'mdi:air-filter' || icon === 'mdi:water-percent';
-    if (!ok) continue;
-    const v = kind === 'temp' ? tempFor(hass, g.ents) : humFor(hass, g.ents);
-    if (v != null) vals.push(v);
+  for (const [area, groups] of byArea) {
+    const temps: number[] = [];
+    const hums: number[] = [];
+    for (const g of groups.values()) {
+      const icon = resolveIcon(hass, g.name, g.model, g.ents, rules);
+      const air = icon === 'mdi:thermometer' || icon === 'mdi:air-filter';
+      if (air) {
+        const t = tempFor(hass, g.ents);
+        if (t != null) temps.push(t);
+      }
+      if (air || icon === 'mdi:water-percent') {
+        const h = humFor(hass, g.ents);
+        if (h != null) hums.push(h);
+      }
+    }
+    if (!temps.length && !hums.length) continue;
+    out.set(area, {
+      temp: temps.length ? Math.round((temps.reduce((a, b) => a + b, 0) / temps.length) * 10) / 10 : null,
+      hum: hums.length ? Math.round(hums.reduce((a, b) => a + b, 0) / hums.length) : null,
+    });
   }
-  if (!vals.length) return null;
-  const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
-  return kind === 'temp' ? Math.round(avg * 10) / 10 : Math.round(avg);
+  return out;
+}
+
+/** One area's reading. Convenience wrapper — prefer the map for many areas. */
+export function areaClimate(
+  hass: any, area: string, kind: 'temp' | 'hum', rules?: CompiledIconRule[],
+): number | null {
+  if (!area) return null;
+  return areaClimateMap(hass, rules).get(area)?.[kind] ?? null;
 }
 
 /** How many of the area's lights are on: {on, total}, or null without lights. */

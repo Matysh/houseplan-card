@@ -1,3 +1,5 @@
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch({ width: 640, height: 980 }, 2);
 const res = await page.evaluate(async () => {
@@ -33,7 +35,10 @@ const res = await page.evaluate(async () => {
   out.nanGuard = !Number.isFinite(n) && c._spaceDialog.tempMax === before;
   return out;
 });
-await page.screenshot({ path: '/tmp/ux_dialog.png' });
+// артефакт для глазами: путь берём у ОС, а не хардкодим unix-овый — на Windows
+// '/tmp/...' указывает в несуществующий C:\tmp и смоук падал, не дойдя до
+// ассертов (портируемость, ревью 2026-07-27)
+await page.screenshot({ path: join(tmpdir(), 'houseplan_ux_dialog.png') }).catch(() => {});
 // значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
 checkAll(res, {
   "filledClass": 1,

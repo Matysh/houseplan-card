@@ -99,7 +99,106 @@ async def test_plan_set_validates(hass: HomeAssistant, hass_ws_client: WebSocket
         {"type": "houseplan/plan/set", "space_id": "s1", "ext": "png", "data": "aGVsbG8="}
     )
     resp = await client.receive_json()
-    assert resp["success"] and resp["result"]["url"].startswith("/api/houseplan/content/plans/_/s1.png?v=")
+    url = resp["result"]["url"]
+    assert resp["success"]
+    # versioned name: "<space>.<token>.<ext>" (review R2-1)
+    name = url.rsplit("/", 1)[-1]
+    assert name.startswith("s1.") and name.endswith(".png") and len(name.split(".")) == 3
+
+
+async def test_plan_upload_does_not_touch_the_previous_file(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """review R2-1: a rejected config write must leave the stored plan intact.
+
+    The upload used to overwrite "<space>.<ext>" (and unlink the other
+    extension) BEFORE the revision-checked config write, so a conflict left the
+    live plan replaced — or, with a new extension, pointing at a deleted file.
+    """
+    from pathlib import Path
+
+    from custom_components.houseplan.const import PLANS_DIR
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    plans = Path(hass.config.path(PLANS_DIR))
+    plans.mkdir(parents=True, exist_ok=True)
+    # the HA test config dir is shared across a module: start from a known state
+    for stale in plans.glob("s9.*"):
+        stale.unlink()
+    legacy = plans / "s9.svg"  # what an older version stored, still referenced
+    legacy.write_bytes(b"<svg>old</svg>")
+
+    await client.send_json_auto_id(
+        {"type": "houseplan/plan/set", "space_id": "s9", "ext": "png", "data": "aGVsbG8="}
+    )
+    first = (await client.receive_json())["result"]["url"].rsplit("/", 1)[-1]
+
+    # pretend the config write was rejected: no cleanup call follows
+    assert legacy.read_bytes() == b"<svg>old</svg>"
+    assert (plans / first).is_file()
+
+    # a second attempt neither overwrites the first nor the legacy file
+    await client.send_json_auto_id(
+        {"type": "houseplan/plan/set", "space_id": "s9", "ext": "png", "data": "d29ybGQ="}
+    )
+    second = (await client.receive_json())["result"]["url"].rsplit("/", 1)[-1]
+    assert second != first
+    assert (plans / first).read_bytes() == b"hello"
+    assert (plans / second).read_bytes() == b"world"
+    assert legacy.is_file()
+
+    # config accepted → cleanup keeps exactly the referenced file
+    await client.send_json_auto_id(
+        {"type": "houseplan/plan/cleanup", "space_id": "s9", "keep": second}
+    )
+    resp = await client.receive_json()
+    assert resp["success"] and resp["result"]["removed"] == 2
+    assert (plans / second).is_file()
+    assert not legacy.exists() and not (plans / first).exists()
+
+
+async def test_plan_cleanup_never_reaches_another_space(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """A space id cannot contain '.', so "<space>.<token>.<ext>" is unambiguous.
+
+    With '-' as the separator, cleaning "f1" would have eaten the files of a
+    space called "f1-attic".
+    """
+    from pathlib import Path
+
+    from custom_components.houseplan.const import PLANS_DIR
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    plans = Path(hass.config.path(PLANS_DIR))
+    plans.mkdir(parents=True, exist_ok=True)
+    for name in ("f1.aaaa1111.png", "f1.bbbb2222.png", "f1-attic.cccc3333.png", "f1-attic.png", "notes.txt"):
+        (plans / name).write_bytes(b"x")
+
+    await client.send_json_auto_id(
+        {"type": "houseplan/plan/cleanup", "space_id": "f1", "keep": "f1.bbbb2222.png"}
+    )
+    resp = await client.receive_json()
+    assert resp["success"] and resp["result"]["removed"] == 1
+    assert not (plans / "f1.aaaa1111.png").exists()
+    assert (plans / "f1.bbbb2222.png").is_file()
+    assert (plans / "f1-attic.cccc3333.png").is_file()
+    assert (plans / "f1-attic.png").is_file()
+    assert (plans / "notes.txt").is_file()
+
+
+async def test_plan_cleanup_rejects_a_bad_space_id(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    await client.send_json_auto_id(
+        {"type": "houseplan/plan/cleanup", "space_id": "../evil", "keep": "x.png"}
+    )
+    resp = await client.receive_json()
+    assert not resp["success"] and resp["error"]["code"] == "invalid_space_id"
 
 
 async def test_admin_check_fails_closed(hass, hass_ws_client):

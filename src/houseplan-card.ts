@@ -21,8 +21,9 @@ import {
   spaceDisplayOf, roomFillStyle, fillColorsOf, DEFAULT_FILL_COLORS, type FillColors,
   isActiveState, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
+  MAX_SIGN_PATHS, SIGN_TTL_MS, SIGN_REFRESH_MS, chunk, referencedContentUrls,
 } from './logic';
-import { buildDevices, lqiFor, tempFor, humFor, isHumEntity, areaLights, areaTemp, areaHum, areaLightStats, sourceValue, areaClimate } from './devices';
+import { buildDevices, lqiFor, tempFor, humFor, isHumEntity, areaLights, areaTemp, areaHum, areaLightStats, sourceValue, areaClimateMap, type AreaClimate } from './devices';
 import type {
   OpeningCfg,
   RoomCfg, SpaceModel, PdfRef, Marker, ServerConfig, DevItem, CardConfig,
@@ -32,7 +33,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.44.8';
+const CARD_VERSION = '1.45.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -788,15 +789,25 @@ class HouseplanCard extends LitElement {
    * Bearer header or an `authSig` signed path, and an element sends neither.
    * So the card asks the backend to sign what it is about to display.
    */
-  private _signed: Record<string, string> = {};
+  private _signed: Record<string, { url: string; at: number }> = {};
   private _signPending = new Set<string>();
   private _signTimer?: number;
 
-  /** Display url: the signed variant when we have one, else the plain path. */
+  /** Display url: a signature we hold and still trust, else nothing. */
   private _display(url: string | null | undefined): string {
     const u = contentUrl(url);
     if (!u.startsWith('/api/houseplan/content/')) return u;
-    if (this._signed[u]) return this._signed[u];
+    const hit = this._signed[u];
+    const age = hit ? Date.now() - hit.at : Infinity;
+    // Past its lifetime the signature is worthless: serving it would 401 and
+    // raise a failed-login warning, exactly what an unsigned path does.
+    if (age >= SIGN_TTL_MS) delete this._signed[u];
+    else if (age < SIGN_REFRESH_MS) return hit.url;
+    else {
+      // aging but still valid: keep showing it while a fresh one is fetched
+      this._requestSignature(u);
+      return hit.url;
+    }
     this._requestSignature(u);
     // Empty, NOT the plain path: an unsigned request to a `requires_auth` view
     // returns 401 and Home Assistant raises a "failed login attempt" for the
@@ -812,35 +823,50 @@ class HouseplanCard extends LitElement {
     this._signTimer = window.setTimeout(() => {
       const paths = [...this._signPending];
       this._signPending.clear();
-      this.hass
-        .callWS({ type: 'houseplan/content/sign', paths })
-        .then((r: any) => {
-          if (!r?.urls) return;
-          this._signed = { ...this._signed, ...r.urls };
-          this.requestUpdate();
-        })
-        .catch(() => undefined); // unsigned urls simply keep failing; no loop
+      this._signBatches(paths);
     }, 30);
   }
 
   /**
-   * Re-sign everything periodically: a wall tablet outlives a signature.
+   * Sign in batches the backend will actually answer in full. It caps a request
+   * at MAX_SIGN_PATHS and drops the rest without saying so, so one oversized
+   * call leaves entries that never get refreshed and silently expire (R2-2).
+   */
+  private _signBatches(paths: string[]): void {
+    if (!paths.length || !this.hass?.callWS) return;
+    for (const batch of chunk(paths, MAX_SIGN_PATHS)) {
+      this.hass
+        .callWS({ type: 'houseplan/content/sign', paths: batch })
+        .then((r: any) => {
+          if (!r?.urls) return;
+          const now = Date.now();
+          const next = { ...this._signed };
+          for (const [k, v] of Object.entries<string>(r.urls)) next[k] = { url: v, at: now };
+          this._signed = next;
+          this.requestUpdate();
+        })
+        .catch(() => undefined); // unsigned urls simply keep failing; no loop
+    }
+  }
+
+  /**
+   * Re-sign periodically: a wall tablet outlives a signature.
    * The old urls are kept until the new ones arrive — dropping them first would
    * blank the plan for a round trip (and, if the socket is down, until it heals).
    */
   private _resignTimer?: number;
 
   private _resign(): void {
-    const paths = Object.keys(this._signed);
-    if (!paths.length || !this.hass?.callWS) return;
-    this.hass
-      .callWS({ type: 'houseplan/content/sign', paths })
-      .then((r: any) => {
-        if (!r?.urls) return;
-        this._signed = { ...this._signed, ...r.urls };
-        this.requestUpdate();
-      })
-      .catch(() => undefined);
+    // prune first: an entry for a plan that was replaced months ago must not
+    // consume a slot in the (capped) signing request
+    const live = referencedContentUrls(this._serverCfg);
+    const now = Date.now();
+    const kept: Record<string, { url: string; at: number }> = {};
+    for (const [k, v] of Object.entries(this._signed)) {
+      if (live.has(k) && now - v.at < SIGN_TTL_MS) kept[k] = v;
+    }
+    this._signed = kept;
+    this._signBatches(Object.keys(kept));
   }
   private _dirtyPos = new Set<string>();
 
@@ -3032,6 +3058,10 @@ class HouseplanCard extends LitElement {
       };
       sp.cell_cm = Number.isFinite(d.cellCm) && d.cellCm > 0 ? d.cellCm : 5;
       await this._saveConfigNow();
+      // Only now is the new file authoritative: the config write was accepted,
+      // so the previous plan can go. Before this point nothing on disk was
+      // touched, which is what makes a rejected save harmless (review R2-1).
+      if (uploaded) this._cleanupPlanFiles(spaceId, uploaded.url);
       this._spaceDialog = null;
       if (d.mode === 'create') this._space = sp.id;
       this._regSignature = '';
@@ -3107,6 +3137,19 @@ class HouseplanCard extends LitElement {
     }
   }
 
+
+  /**
+   * Remove plan files superseded by `keepUrl`. Fire-and-forget on purpose: the
+   * user's edit is already saved, and a failed cleanup only leaves a stray file
+   * that the next successful upload collects (review R2-1).
+   */
+  private _cleanupPlanFiles(spaceId: string, keepUrl: string): void {
+    const keep = keepUrl.split('?')[0].split('/').pop();
+    if (!keep || !this.hass?.callWS) return;
+    this.hass
+      .callWS({ type: 'houseplan/plan/cleanup', space_id: spaceId, keep })
+      .catch(() => undefined);
+  }
 
   // ================= FLOORS IMPORT WIZARD =================
 
@@ -3881,14 +3924,31 @@ class HouseplanCard extends LitElement {
     const src = r.settings?.temp_source;
     if (src) return sourceValue(this.hass, src, 'temp');
     // every sensor of the area, placed on the plan or not (field report)
-    return r.area ? areaClimate(this.hass, r.area, 'temp', this._iconRules) : null;
+    return r.area ? this._climate().get(r.area)?.temp ?? null : null;
   }
 
   /** Room humidity honouring the tier-3 source override. */
   private _roomHum(r: RoomCfg): number | null {
     const src = r.settings?.hum_source;
     if (src) return sourceValue(this.hass, src, 'hum');
-    return r.area ? areaClimate(this.hass, r.area, 'hum', this._iconRules) : null;
+    return r.area ? this._climate().get(r.area)?.hum ?? null : null;
+  }
+
+  private _climateCache: { h: any; r: any; m: Map<string, AreaClimate> } | null = null;
+
+  /**
+   * Climate for every area, computed ONCE per hass snapshot (review R2-3).
+   * Home Assistant hands out a new `hass` object on every state change, so
+   * identity is exactly the right cache key: fresh states always recompute,
+   * and the 60 rooms of one render share a single registry pass instead of
+   * triggering one each (two, with humidity on).
+   */
+  private _climate(): Map<string, AreaClimate> {
+    const c = this._climateCache;
+    if (c && c.h === this.hass && c.r === this._iconRules) return c.m;
+    const m = areaClimateMap(this.hass, this._iconRules);
+    this._climateCache = { h: this.hass, r: this._iconRules, m };
+    return m;
   }
 
   private _resetRoomDialogFields(): void {
