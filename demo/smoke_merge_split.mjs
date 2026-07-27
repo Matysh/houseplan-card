@@ -1,5 +1,5 @@
 // Merge & split room ops (v1.21.0) via the card's markup handlers (norm coords).
-import { launch } from './serve.mjs';
+import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 const snap = await page.evaluate(() => JSON.stringify(window.__card._serverCfg));
 const restore = () => page.evaluate((s) => {
@@ -79,5 +79,9 @@ await page.evaluate((p)=>window.__card._splitClick(p), await R(0.4,0.0625));
 s = await S();
 out.alongWallRefused = !s.roomDlg && !s.pendingSplit;
 
-console.log(JSON.stringify(out,null,1));
-await browser.close();
+// значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
+checkAll(out, {
+  "mergeRooms": 3,
+  "newRoom": "Cabinet",
+});
+await finish(browser, out);

@@ -96,3 +96,22 @@ Tag `vX.Y.Z` + GitHub Release → the workflow `.github/workflows/release.yml` b
 - The houseplan integration: entry loaded, `.storage/houseplan.layout` — the layout (server-side).
 - The old prototype `/config/www/houseplan/` (iframe) is kept as a fallback, do not touch.
 - configuration.yaml backups: `.bak-avgtemp` (before the average-temperature sensor edit).
+
+
+## Smoke tests (since 2026-07-27)
+
+Every `demo/smoke_*.mjs` ends with:
+
+```js
+checkAll(out);            // every key must be true...
+checkAll(out, { n: 4 });  // ...unless an expected value is given
+await finish(browser, out);
+```
+
+`finish` prints the JSON dump (useful on failure), reports named mismatches and
+sets a non-zero exit code — including when the card threw during the run. The
+suite runs in CI (`smoke` job) against a freshly built bundle; never test the
+committed `demo/srv/assets/houseplan-card.js` snapshot.
+
+When adding a checklist line marked `[auto: ...]` in docs/TESTING.md, add the
+failing check in the same commit — that is what the marker now promises.

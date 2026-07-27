@@ -1,4 +1,4 @@
-import { launch } from './serve.mjs';
+import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch({ width: 640, height: 980 }, 2);
 const res = await page.evaluate(async () => {
   const out = {};
@@ -34,5 +34,13 @@ const res = await page.evaluate(async () => {
   return out;
 });
 await page.screenshot({ path: '/tmp/ux_dialog.png' });
-console.log(JSON.stringify(res, null, 1));
-await browser.close();
+// значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
+checkAll(res, {
+  "filledClass": 1,
+  "unfilled": 3,
+  "tipTemp": 22.4,
+  "fillRadios": 5,
+  "tempInputs": 2,
+  "dialogWidth": 502,
+});
+await finish(browser, res);

@@ -1,4 +1,4 @@
-import { launch } from './serve.mjs';
+import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 const res = await page.evaluate(async () => {
   const out = {};
@@ -6,7 +6,9 @@ const res = await page.evaluate(async () => {
   const sr = () => c.shadowRoot || c.renderRoot;
   // 1) в селекте действий 3 опции, дефолт «Карточка устройства»
   c._setMode('devices'); await c.updateComplete;
-  const dev = c._devices.find((d) => !d.virtual && d.primary);
+  // v1.39.0: у ЛАМП дефолт 'toggle', поэтому для проверки дефолта 'info'
+  // берём заведомо не-световое устройство
+  const dev = c._devices.find((d) => !d.virtual && d.primary && !d.primary.startsWith('light.'));
   c._openMarkerDialog(dev); await c.updateComplete;
   const sel = [...sr().querySelectorAll('.dialog select')].find((s) =>
     [...s.options].some((o) => o.textContent === c._t('tap.toggle')));
@@ -41,14 +43,19 @@ const res = await page.evaluate(async () => {
   const calls = [];
   c.hass = { ...c.hass, callService: (d2, s2, data) => { calls.push([d2, s2, data]); return Promise.resolve(); } };
   await c.updateComplete;
-  const plain = c._devices.find((d) => !d.virtual && d.primary?.startsWith('light.') && !d.tapAction);
+  // card-wide tap_action игнорируется: НЕ-световое устройство остаётся на инфо
+  const plain = c._devices.find((d) => !d.virtual && d.primary
+    && !d.primary.startsWith('light.') && !d.tapAction && !d.marker?.controls?.length);
   if (plain) {
     c._infoCard = null;
     c._clickDevice(new MouseEvent('click'), plain);
     out.cardTapIgnored = calls.length === 0 && !!c._infoCard;
     c._infoCard = null;
-  } else out.cardTapIgnored = 'no-plain-light';
+  } else out.cardTapIgnored = 'no-plain-device';
   return out;
 });
-console.log(JSON.stringify(res, null, 1));
-await browser.close();
+// значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
+checkAll(res, {
+  "virtInfo": "no-virt",
+});
+await finish(browser, res);

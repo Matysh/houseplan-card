@@ -1,4 +1,4 @@
-import { launch } from './serve.mjs';
+import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 const res = await page.evaluate(async () => {
   const out = {};
@@ -20,5 +20,5 @@ const res = await page.evaluate(async () => {
   out.splitPicked = !!el2 && getComputedStyle(el2).stroke.includes('255, 193, 77');
   return out;
 });
-console.log(JSON.stringify(res));
-await browser.close();
+checkAll(res);
+await finish(browser, res);

@@ -1,4 +1,4 @@
-import { launch } from './serve.mjs';
+import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 const res = await page.evaluate(async () => {
   const out = {};
@@ -57,5 +57,11 @@ const res = await page.evaluate(async () => {
   out.dragKeepsScale = c._layout['rl_' + room.id].k <= 3 && c._layout['rl_' + room.id].k >= 2.9;
   return out;
 });
-console.log(JSON.stringify(res, null, 1));
-await browser.close();
+// значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
+checkAll(res, {
+  "labels": 4,
+  "cardsWithMetrics": 4,
+  "sampleMetrics": ["22.4°", "175", "1 of 2"],
+  "partialText": "1 of 2",
+});
+await finish(browser, res);

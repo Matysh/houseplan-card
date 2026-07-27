@@ -1,4 +1,4 @@
-import { launch } from './serve.mjs';
+import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 const res = await page.evaluate(async () => {
   const out = {};
@@ -27,7 +27,8 @@ const res = await page.evaluate(async () => {
   })};
   c.requestUpdate(); await c.updateComplete;
   out.lqiFills = [...sr().querySelectorAll('.room.styled')].filter((r) => (r.getAttribute('style') || '').includes('hsl(')).length;
-  // 4) drag лейбла → layout rl_
+  // 4) drag лейбла → layout rl_ (только в редакторе плана, с v1.25)
+  c._setMode('plan'); await c.updateComplete;
   const lbl = sr().querySelector('.roomlabel');
   c._labelDown({ preventDefault(){}, stopPropagation(){}, clientX: 100, clientY: 100, target: { setPointerCapture(){} }, pointerId: 5 },
     c._spaceModel().rooms[0], 'f1');
@@ -46,5 +47,15 @@ const res = await page.evaluate(async () => {
   out.atticNoPlan = attic ? attic.plan_url === null : null;
   return out;
 });
-console.log(JSON.stringify(res, null, 1));
-await browser.close();
+// значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
+checkAll(res, {
+  "defaultStyled": 0,
+  "defaultLabels": 0,
+  "styled": 4,
+  "labels": ["Living room", "Kitchen", "Bedroom", "Hallway"],
+  "livingStyle": "--room-stroke:#ff8800;--room-stroke-op:0.8;--room-fill:#ffd45c;--room-fill-op:0.180",
+  "lqiFills": 0,
+  "atticAspect": 1,
+  "atticSettings": {"show_borders": true, "show_names": true, "room_color": "#3ea6ff", "room_opacity": 0.55, "fill_mode": "none", "temp_min": 20, "temp_max": 25, "show_lqi": true, "label_temp": false, "label_hum": false, "label_lqi": false, "label_light": false},
+});
+await finish(browser, res);

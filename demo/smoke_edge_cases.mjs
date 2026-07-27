@@ -1,4 +1,4 @@
-import { launch } from './serve.mjs';
+import { launch, check, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 const res = await page.evaluate(async () => {
   const out = {};
@@ -70,5 +70,18 @@ const res = await page.evaluate(async () => {
   out.bigRenderMs = Math.round(performance.now() - t1);
   return out;
 });
-console.log(JSON.stringify(res, null, 1));
-await browser.close();
+// значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
+// сборка 100+ устройств должна укладываться в бюджет (docs/TESTING.md)
+// timings are asserted as budgets, not frozen values (CI machines vary)
+check("bigBuildMs under 200ms", res.bigBuildMs < 200);
+check("bigRenderMs under 100ms", res.bigRenderMs < 100);
+delete res.bigBuildMs;
+delete res.bigRenderMs;
+checkAll(res, {
+  "emptyDevices": 0,
+  "emptyCount": "0 dev.",
+  "xssPwned": false,
+  "xssDeviceRendered": 1,
+  "bigCount": 162,
+});
+await finish(browser, res);

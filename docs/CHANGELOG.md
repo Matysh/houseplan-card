@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.43.2 — 2026-07-27 (external audit: the test layer)
+
+- **The smoke suite can finally fail (T1).** All 48 headless-browser smokes used
+  to print booleans and exit 0 — a regression was visible in their own output
+  and still reported success. `demo/serve.mjs` now exports `check`/`checkAll`/
+  `finish`: every fact is asserted by name, mismatches and uncaught exceptions
+  inside the card set a non-zero exit code. Verified by deliberately breaking
+  the kiosk editor guard: the matching smoke went red.
+- **The suite runs in CI (T2)** as a `smoke` job gated on `frontend`, against a
+  freshly built bundle (the committed `demo/srv/assets` copy is a snapshot and
+  would have tested stale code), uploading per-file logs on failure.
+- **`docs/TESTING.md` reconciled (T3).** `[auto]` now means "a named check
+  exists that fails when this breaks", and each such line names it; 72 lines
+  whose automation was aspirational are honestly marked `[manual]`. Two
+  long-standing contradictions fixed: the "ZERO edit buttons in View" line
+  (wrong since v1.30.1) and the opening-click line (true again since v1.43.1).
+- Three smokes carried expectations that predate v1.39.0/v1.25 and quietly
+  described old behaviour; they now test the current contract.
+
 ## v1.43.1 — 2026-07-27 (external audit: P1 fixes)
 
 - **Render cost (L1).** Home Assistant replaces `hass` on every state change in

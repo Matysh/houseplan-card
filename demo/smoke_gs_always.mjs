@@ -1,4 +1,4 @@
-import { launch } from './serve.mjs';
+import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 const res = await page.evaluate(async () => {
   const out = {};
@@ -14,5 +14,5 @@ const res = await page.evaluate(async () => {
   out.opensInView = !!c._settingsDialog;
   return out;
 });
-console.log(JSON.stringify(res));
-await browser.close();
+checkAll(res);
+await finish(browser, res);

@@ -1,4 +1,4 @@
-import { launch } from './serve.mjs';
+import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 const res = await page.evaluate(async () => {
   const out = {};
@@ -42,5 +42,5 @@ const res = await page.evaluate(async () => {
   out.newCentered = vpos && Math.abs(vpos.x * 1000 - center[0]) < 1 && Math.abs(vpos.y * (1000 / aspect) - center[1]) < 1;
   return out;
 });
-console.log(JSON.stringify(res, null, 1));
-await browser.close();
+checkAll(res);
+await finish(browser, res);

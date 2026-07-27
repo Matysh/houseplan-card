@@ -1,4 +1,4 @@
-import { launch } from './serve.mjs';
+import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 const res = await page.evaluate(async () => {
   const out = {};
@@ -54,5 +54,5 @@ const res = await page.evaluate(async () => {
   c._spaceDialog = null; await c.updateComplete;
   return out;
 });
-console.log(JSON.stringify(res, null, 1));
-await browser.close();
+checkAll(res);
+await finish(browser, res);

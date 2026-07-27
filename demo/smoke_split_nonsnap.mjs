@@ -1,5 +1,5 @@
 // Split now works on a non-grid-aligned room (imported/legacy polygons).
-import { launch } from './serve.mjs';
+import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 const R = (nx, ny) => page.evaluate(([nx, ny]) => {
   const c = window.__card; const H = 1000 / c._curSpaceCfg.aspect; return [nx * 1000, ny * H];
@@ -17,5 +17,5 @@ await page.evaluate(()=>{const c=window.__card; c._roomDialog=false; c._pendingS
 await page.evaluate((p)=>window.__card._splitClick(p), await R(0.3,0.3));   // pick again
 await page.evaluate((p)=>window.__card._splitClick(p), await R(0.3,0.3));   // centre click = miss
 out.centreRefused = await page.evaluate(()=>window.__card._splitSel?.a == null);
-console.log(JSON.stringify(out));
-await browser.close();
+checkAll(out);
+await finish(browser, out);

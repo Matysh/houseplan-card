@@ -1,4 +1,4 @@
-import { launch } from './serve.mjs';
+import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 const res = await page.evaluate(async () => {
   const out = {};
@@ -33,5 +33,5 @@ const res = await page.evaluate(async () => {
   out.notFadedInView = room3 ? Number(getComputedStyle(room3).opacity) > 0.9 : null;
   return out;
 });
-console.log(JSON.stringify(res, null, 1));
-await browser.close();
+checkAll(res);
+await finish(browser, res);
