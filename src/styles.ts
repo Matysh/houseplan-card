@@ -1215,6 +1215,42 @@ export const cardStyles = css`
     .pdftag .x:hover {
       color: #ff7a5c;
     }
+    .entlist {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 10px;
+    }
+    .entrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      background: var(--secondary-background-color, rgba(128, 128, 128, 0.12));
+    }
+    .entrow ha-icon { --mdc-icon-size: 20px; color: var(--hp-muted); }
+    .entrow.on ha-icon { color: var(--hp-accent); }
+    .entrow .en { flex: 1; font-size: 13px; }
+    .entrow .ev { font-size: 13px; color: var(--hp-muted); }
+    .entbtn {
+      min-width: 74px;
+      min-height: 32px;
+      padding: 4px 12px;
+      border: 1px solid var(--hp-muted);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--hp-txt);
+      font: inherit;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .entbtn.on {
+      background: var(--hp-accent);
+      border-color: var(--hp-accent);
+      color: var(--text-primary-color, #fff);
+      font-weight: 600;
+    }
     .inforow {
       display: flex;
       gap: 10px;

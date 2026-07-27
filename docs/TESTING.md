@@ -30,6 +30,16 @@
       ANY touch/pen pointer event, even if the browser claims `hover: hover`
       (stylus, paired mouse, vendor skins) [auto: smoke_feedback_v2]
 
+- [ ] Light-source flag (v1.44.0, user feedback): a smart SWITCH driving dumb
+      fixtures glows in the "Light sources" fill once "This device is a light
+      source" is ticked (its own entity or the lights bound under "Controls");
+      unticked devices without a light entity never glow [auto: smoke_glow]
+- [ ] Device card controls (v1.44.0): the device card opens with its
+      controllable entities FIRST — toggles right there (≥30 px tap targets),
+      cover/lock/climate open HA more-info; model, links and manuals moved
+      below; config/diagnostic entities are not listed; locks never toggle from
+      the card [auto: smoke_card_controls]
+
 ## Environments matrix
 
 Run the *core flows* (marked ★ below) in each environment at least once per minor release:

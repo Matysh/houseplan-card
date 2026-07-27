@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.43.3';
+const CARD_VERSION = '1.44.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -233,6 +233,7 @@ class HouseplanCard extends LitElement {
     controls: string[];  // entities this icon toggles as a group
     controlsFilter: string;
     glowRadius: string;  // per-device glow radius in display units; '' = global default
+    isLight: boolean;    // force this marker to glow (dumb fixtures behind a switch)
     model: string;
     link: string;
     description: string;
@@ -2429,6 +2430,7 @@ class HouseplanCard extends LitElement {
         defaultTap: d.primary?.split('.')[0] === 'light' ? 'toggle' : 'info',
         controls: [...(d.marker?.controls || [])],
         controlsFilter: '',
+        isLight: d.marker?.is_light === true,
         glowRadius: Number(d.marker?.glow_radius_cm) > 0
           ? String(this._imperial
               ? Math.round((Number(d.marker!.glow_radius_cm) / 30.48) * 10) / 10
@@ -2448,7 +2450,8 @@ class HouseplanCard extends LitElement {
         name: '', binding: 'virtual', bindingMode: 'virtual', bindingOpen: false,
         showEntities: false, bindingFilter: '', icon: '', autoIcon: '',
         display: 'badge', rippleColor: '', rippleSize: 3, size: 1, angle: 0,
-        tapAction: '', defaultTap: 'info', controls: [], controlsFilter: '', glowRadius: '', model: '',
+        tapAction: '', defaultTap: 'info', controls: [], controlsFilter: '', isLight: false,
+        glowRadius: '', model: '',
         link: '', description: '', pdfs: [], room: '', busy: false,
       };
     }
@@ -2642,6 +2645,7 @@ class HouseplanCard extends LitElement {
         tap_action: dlg.tapAction || null,
         controls: dlg.controls.length ? dlg.controls : null,
         // pdfs may be rewritten below when rebinding changes the marker id
+        is_light: dlg.isLight ? true : null,
         glow_radius_cm: (() => {
           const v = parseFloat(dlg.glowRadius);
           if (!Number.isFinite(v) || v <= 0) return null;
@@ -3133,9 +3137,15 @@ class HouseplanCard extends LitElement {
     const spots: { pos: { x: number; y: number }; c: string; alpha: number; clip: string[] | null; r: number }[] = [];
     for (const d of this._devices) {
       if (d.space !== space.id) continue;
-      const lightEid = d.entities.find(
-        (e) => e.startsWith('light.') && this.hass.states[e]?.state === 'on',
-      );
+      // A light source is normally a device with a lit light.* entity. With the
+      // "is a light source" flag (field request: a smart SWITCH driving dumb
+      // fixtures) any lit entity counts — the switch itself, or the lights it
+      // controls when they are bound.
+      const forced = d.marker?.is_light === true;
+      const pool = forced
+        ? [...(d.marker?.controls || []), ...d.entities]
+        : d.entities.filter((e) => e.startsWith('light.'));
+      const lightEid = pool.find((e) => this.hass.states[e]?.state === 'on');
       if (!lightEid) continue;
       const glow = glowColorOf(this.hass.states[lightEid], colors.glow_light.c);
       if (!glow) continue;
@@ -4485,6 +4495,39 @@ class HouseplanCard extends LitElement {
     </div>`;
   }
 
+  /** Entities of a device worth CONTROLLING or reading, in a sensible order. */
+  private _cardEntities(d: DevItem): { eid: string; kind: 'toggle' | 'value' | 'open' }[] {
+    const h = this.hass;
+    const out: { eid: string; kind: 'toggle' | 'value' | 'open' }[] = [];
+    const seen = new Set<string>();
+    const push = (eid: string) => {
+      if (!eid || seen.has(eid) || !h.states[eid]) return;
+      const reg = h.entities[eid];
+      if (reg?.entity_category === 'config' || reg?.entity_category === 'diagnostic') return;
+      seen.add(eid);
+      const dom = eid.split('.')[0];
+      if (['light', 'switch', 'fan', 'humidifier', 'siren', 'input_boolean'].includes(dom))
+        out.push({ eid, kind: 'toggle' });
+      else if (['cover', 'valve', 'lock', 'climate', 'media_player', 'vacuum', 'water_heater'].includes(dom))
+        out.push({ eid, kind: 'open' }); // needs the full more-info UI
+      else if (['sensor', 'binary_sensor', 'number', 'select'].includes(dom))
+        out.push({ eid, kind: 'value' });
+    };
+    for (const e of d.marker?.controls || []) push(e);
+    if (d.primary) push(d.primary);
+    for (const e of d.entities) push(e);
+    return out.slice(0, 12);
+  }
+
+  /** Toggle straight from the device card (safe domains only). */
+  private _cardToggle(eid: string): void {
+    const dom = eid.split('.')[0];
+    if (dom === 'lock' || dom === 'alarm_control_panel') return; // never from a card tap
+    this.hass
+      .callService('homeassistant', 'toggle', { entity_id: eid })
+      .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
+  }
+
   private _renderInfoCard(): TemplateResult {
     const d = this._infoCard!;
     const st = d.primary ? this.hass.states[d.primary] : undefined;
@@ -4494,8 +4537,38 @@ class HouseplanCard extends LitElement {
       <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
         <div class="hd"><ha-icon icon="${d.icon}"></ha-icon>${d.name}</div>
         <div class="body">
+          ${(() => {
+            // Field feedback: on a wall tablet this card is for CONTROLLING the
+            // home; model/links/manuals are reference material and belong below.
+            const ents = this._cardEntities(d);
+            if (!ents.length) return nothing;
+            return html`<div class="entlist">
+              ${ents.map(({ eid, kind }) => {
+                const est = this.hass.states[eid];
+                const name = this.hass.entities[eid]?.name
+                  || est?.attributes?.friendly_name || eid;
+                const val = est ? this.hass.formatEntityState?.(est) ?? est.state : '';
+                const on = est?.state === 'on' || ['open', 'unlocked', 'playing', 'cleaning'].includes(est?.state);
+                return html`<div class="entrow ${on ? 'on' : ''}">
+                  <ha-icon icon=${stateIcon(
+                    iconFor(name, '', this._iconRules), eid.split('.')[0],
+                    est?.attributes?.device_class, est?.state, false,
+                  )}></ha-icon>
+                  <span class="en">${name}</span>
+                  ${kind === 'toggle'
+                    ? html`<button class="entbtn ${on ? 'on' : ''}"
+                        @click=${() => this._cardToggle(eid)}>${val}</button>`
+                    : kind === 'open'
+                      ? html`<button class="entbtn"
+                          @click=${() => { this._infoCard = null; this._openMoreInfo(eid); }}>${val}</button>`
+                      : html`<span class="ev">${val}</span>`}
+                </div>`;
+              })}
+            </div>`;
+          })()}
           ${d.model ? html`<div class="inforow"><span class="k">${this._t('info.model')}</span><span>${d.model}</span></div>` : nothing}
-          ${stateTxt ? html`<div class="inforow"><span class="k">${this._t('info.state')}</span><span>${stateTxt}</span></div>` : nothing}
+          ${stateTxt && !this._cardEntities(d).length
+            ? html`<div class="inforow"><span class="k">${this._t('info.state')}</span><span>${stateTxt}</span></div>` : nothing}
           ${safeUrl(d.link)
             ? html`<div class="inforow"><span class="k">${this._t('info.link')}</span>
                 <a href="${safeUrl(d.link)}" target="_blank" rel="noreferrer noopener">${d.link}</a></div>`
@@ -4663,6 +4736,11 @@ class HouseplanCard extends LitElement {
               </div>`
             : nothing}
 
+          <label class="srcrow" title=${this._t('marker.is_light_tip')}>
+            <input type="checkbox" .checked=${d.isLight}
+              @change=${(e: Event) => (this._markerDialog = { ...d, isLight: (e.target as HTMLInputElement).checked })} />
+            <span>${this._t('marker.is_light')}</span>
+          </label>
           <label>${this._t('marker.glow_radius_label')}</label>
           <div class="colorrow">
             <input class="tempin" type="number" min="0.5" step="0.5"

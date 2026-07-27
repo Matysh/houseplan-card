@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.44.0 — 2026-07-27 (user feedback: control first)
+
+- **The device card is now a control surface.** It opens with the device's
+  controllable entities: lights, switches and fans toggle straight from the
+  card with finger-sized buttons, covers/locks/climate open Home Assistant's
+  own more-info. Model, links and PDF manuals moved below — on a wall tablet
+  this card is for running the home, not for reading documentation (field
+  report). Config and diagnostic entities are not listed; locks still never
+  toggle from a card tap.
+- **"This device is a light source"** — a new per-device flag. A smart switch
+  driving ordinary (dumb) fixtures now casts a glow in the "Light sources"
+  fill without inventing a light-group helper: the glow follows the switch, or
+  the lights bound under "Controls light sources" when they are set.
+
 ## v1.43.3 — 2026-07-27 (user feedback: discoverability and touch)
 
 - **Room settings were unfindable.** The gear added in v1.42.0 lived inside the

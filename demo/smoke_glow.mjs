@@ -93,6 +93,22 @@ const res = await page.evaluate(async () => {
   out.perSourceRadius = Math.abs(rOwn - c._cmToUnits(150)) < 0.5;
   c._serverCfg = { ...c._serverCfg, markers: (c._serverCfg.markers || []).filter((m) => m.id !== litMarkerId) };
   c._regSignature = ''; c._maybeRebuildDevices(); c.requestUpdate(); await c.updateComplete;
+  // 6в) флаг «источник света»: умный выключатель с обычными светильниками
+  const swDev = c._devices.find((d) => d.space === spId && d.entities.some((e) => e.startsWith('switch.')));
+  if (swDev) {
+    const swEid = swDev.entities.find((e) => e.startsWith('switch.'));
+    c.hass = { ...c.hass, states: { ...c.hass.states, [swEid]: { ...c.hass.states[swEid], state: 'on' } } };
+    const spotsBefore = sr().querySelectorAll('.glowlayer circle').length;
+    c._serverCfg = { ...c._serverCfg, markers: [
+      ...(c._serverCfg.markers || []).filter((m) => m.id !== swDev.id),
+      { id: swDev.id, binding: swDev.bindingKind + ':' + swDev.bindingRef, is_light: true },
+    ] };
+    c._regSignature = ''; c._maybeRebuildDevices(); c._saveConfig(); c.requestUpdate(); await c.updateComplete;
+    out.switchGlows = sr().querySelectorAll('.glowlayer circle').length === spotsBefore + 1;
+    c._serverCfg = { ...c._serverCfg, markers: (c._serverCfg.markers || []).filter((m) => m.id !== swDev.id) };
+    c._regSignature = ''; c._maybeRebuildDevices(); c._saveConfig(); c.requestUpdate(); await c.updateComplete;
+    out.switchGlowsOffByDefault = sr().querySelectorAll('.glowlayer circle').length === spotsBefore;
+  } else { out.switchGlows = 'no-switch'; out.switchGlowsOffByDefault = 'no-switch'; }
   // 7) радиус из настроек: 600 см против 300 см — вдвое больше
   const r600 = Number(sr().querySelector('.glowlayer circle')?.getAttribute('r'));
   c._serverCfg = { ...c._serverCfg, settings: { ...(c._serverCfg.settings || {}), glow_radius_cm: 300 } };
