@@ -73,7 +73,7 @@ POS_SCHEMA = vol.Schema(
 )
 LAYOUT_SCHEMA = vol.All(vol.Schema({str: POS_SCHEMA}), vol.Length(max=MAX_LAYOUT))
 
-POINT = vol.All([vol.Coerce(float)], vol.Length(min=2, max=2))
+POINT = vol.All([_finite], vol.Length(min=2, max=2))
 
 
 def _require_geometry(room: dict) -> dict:
@@ -102,10 +102,10 @@ ROOM_SCHEMA = vol.All(
                     extra=vol.ALLOW_EXTRA,
                 ),
             ),
-            vol.Optional("x"): vol.Coerce(float),
-            vol.Optional("y"): vol.Coerce(float),
-            vol.Optional("w"): vol.Coerce(float),
-            vol.Optional("h"): vol.Coerce(float),
+            vol.Optional("x"): _finite,
+            vol.Optional("y"): _finite,
+            vol.Optional("w"): _finite,
+            vol.Optional("h"): _finite,
             vol.Optional("poly"): vol.All([POINT], vol.Length(min=3)),
         },
         extra=vol.ALLOW_EXTRA,
@@ -161,17 +161,17 @@ SPACE_SCHEMA = vol.Schema(
         vol.Optional("settings"): SPACE_DISPLAY_SCHEMA,
         vol.Optional("plan_url"): vol.Any(str, None),
         vol.Required("aspect"): vol.All(vol.Coerce(float), vol.Range(min=0.05, max=20)),
-        vol.Required("view_box"): vol.All([vol.Coerce(float)], vol.Length(min=4, max=4)),
+        vol.Required("view_box"): vol.All([_finite], vol.Length(min=4, max=4)),
         vol.Required("rooms"): vol.All([ROOM_SCHEMA], vol.Length(max=MAX_ROOMS)),
         vol.Optional("decor"): vol.All([DECOR_SCHEMA], vol.Length(max=MAX_DECOR)),
-        vol.Optional("openings"): [
+        vol.Optional("openings"): vol.All([
             vol.Schema(
                 {
                     vol.Required("id"): str,
                     vol.Required("type"): vol.Any("door", "window"),
-                    vol.Required("x"): vol.Coerce(float),
-                    vol.Required("y"): vol.Coerce(float),
-                    vol.Required("angle"): vol.Coerce(float),
+                    vol.Required("x"): _finite,
+                    vol.Required("y"): _finite,
+                    vol.Required("angle"): _finite,
                     vol.Required("length"): vol.All(vol.Coerce(float), vol.Range(min=0.001, max=1)),
                     vol.Optional("contact"): vol.Any(str, None),
                     vol.Optional("lock"): vol.Any(str, None),
@@ -181,7 +181,7 @@ SPACE_SCHEMA = vol.Schema(
                 },
                 extra=vol.ALLOW_EXTRA,
             )
-        ],
+        ], vol.Length(max=MAX_OPENINGS)),
         # Legacy: walls are derived from room outlines since v1.19.0 — a line has no
         # independent existence. Still accepted so a stale browser tab cannot fail a save;
         # the card strips the field on every write.

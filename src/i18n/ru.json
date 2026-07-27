@@ -59,7 +59,6 @@
   "markup.delete": "Удалить",
   "markup.hint_points": "точек: {n} · Esc/Ctrl+Z — убрать точку · замкните контур кликом по первой",
   "markup.hint_start": "кликните точку сетки, чтобы начать контур",
-  "tip.room": "комната — открыть зону",
   "tip.lqi": "средний сигнал zigbee:",
   "info.device_header": "Устройство на плане",
   "info.model": "Модель",

@@ -50,6 +50,29 @@
       never silently linked); urls are rewritten only for confirmed copies
       [auto: unit logic.test + tests_backend]
 
+- [ ] Plans and PDFs load in a real browser (v1.44.3, B1 regression): open a
+      dashboard with an uploaded plan — the background renders and a manual link
+      opens; DevTools shows /api/houseplan/content/... returning 200 via a
+      signed url, while the same url without authSig returns 401
+      [auto: tests_backend + manual]
+- [ ] Auth policy is single-sourced (v1.44.4, B2): the HTTP upload and every WS
+      write use the same `may_write`, which denies non-admins when the config
+      entry is unavailable [auto: tests_backend]
+- [ ] Coordinates and caps (v1.44.4, B5): NaN/Infinity are refused on room
+      rects, polygon vertices, view_box and openings — not only in layout; the
+      openings list honours MAX_OPENINGS [auto: tests_backend]
+- [ ] Drag hardening (v1.44.4, L4 sub-item): every drag pipeline captures the
+      pointer through the tolerant helper; decor shapes cannot be dragged more
+      than a quarter of the plan outside the viewBox [auto: smoke_decor]
+
+- [ ] Room climate counts hidden sensors (v1.44.5): a thermometer that is NOT
+      placed on the plan (hidden by curation or by the user) still feeds the
+      room card, the tooltip and the temperature fill; fridges/TRVs still do
+      not; an explicit per-room source still wins [auto: unit devices.test]
+- [ ] Room tooltip wording (v1.44.5): hovering a room shows its name (plus
+      temperature/signal when available) and no longer claims "open the area" —
+      room clicks were removed in v1.40.1 [manual]
+
 ## Environments matrix
 
 Run the *core flows* (marked ★ below) in each environment at least once per minor release:

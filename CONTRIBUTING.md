@@ -3,6 +3,12 @@
 Thanks for your interest! The project is one HACS package: a storage **integration**
 (`custom_components/houseplan/`, Python) and a **Lovelace card** (`src/`, TypeScript + Lit).
 
+## Changelog
+
+User-visible changes go into **both** changelogs in the same commit:
+`docs/CHANGELOG.md` (English) and `docs/CHANGELOG.ru.md` (Russian). Entries
+older than v1.42.0 exist only in the English file — no need to backfill them.
+
 ## Where to ask
 
 Not sure whether something is a bug, or just want to discuss an idea before

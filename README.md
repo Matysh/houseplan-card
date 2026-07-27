@@ -268,6 +268,8 @@ turned the way it is mounted.
   reports and feature requests (please attach your House Plan version).
 - 💡 [GitHub discussions](https://github.com/Matysh/houseplan-card/discussions) —
   longer-form ideas.
+- 📜 [Changelog](docs/CHANGELOG.md) — what changed in every version
+  ([на русском](docs/CHANGELOG.ru.md)).
 
 When reporting a problem, the version number helps a lot: it is shown in the
 browser console on load (`HOUSEPLAN-CARD vX.Y.Z`) and in **Settings → Devices &

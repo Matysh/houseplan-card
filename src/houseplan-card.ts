@@ -22,7 +22,7 @@ import {
   isActiveState, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
 } from './logic';
-import { buildDevices, lqiFor, tempFor, humFor, isHumEntity, areaLights, areaTemp, areaHum, areaLightStats, sourceValue } from './devices';
+import { buildDevices, lqiFor, tempFor, humFor, isHumEntity, areaLights, areaTemp, areaHum, areaLightStats, sourceValue, areaClimate } from './devices';
 import type {
   OpeningCfg,
   RoomCfg, SpaceModel, PdfRef, Marker, ServerConfig, DevItem, CardConfig,
@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.44.2';
+const CARD_VERSION = '1.44.5';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -88,6 +88,22 @@ const debounce = <T extends (...a: any[]) => void>(fn: T, ms: number): Debounced
   };
   wrapped.pending = () => t !== undefined;
   return wrapped;
+};
+
+/**
+ * Capture the pointer for a drag, tolerating an inactive pointerId.
+ *
+ * `setPointerCapture` throws for synthetic events and for pointers some
+ * browsers consider gone; that killed a drag outright. The opening pipeline
+ * was hardened for this, the device/label/resize ones were not (audit
+ * follow-up L4 sub-item) — now they all go through here.
+ */
+const capturePointer = (ev: PointerEvent): void => {
+  try {
+    (ev.target as Element | null)?.setPointerCapture?.(ev.pointerId);
+  } catch {
+    /* an inactive pointerId must never kill the drag */
+  }
 };
 
 class HouseplanCard extends LitElement {
@@ -348,6 +364,12 @@ class HouseplanCard extends LitElement {
   public connectedCallback(): void {
     super.connectedCallback();
     window.addEventListener('keydown', this._keyHandler);
+    // signatures expire (24 h); refresh well before that on long-lived screens
+    clearInterval(this._resignTimer);
+    this._resignTimer = window.setInterval(() => {
+      this._signed = {};
+      this.requestUpdate();
+    }, 12 * 3600 * 1000);
     if (this._config?.kiosk && Number(this._config?.cycle) > 0) {
       clearInterval(this._cycleTimer);
       this._cycleTimer = window.setInterval(() => this._cycleTick(), Number(this._config.cycle) * 1000);
@@ -361,6 +383,9 @@ class HouseplanCard extends LitElement {
     clearTimeout(this._kioskDotsTimer);
     clearTimeout(this._kioskHoldTimer);
     clearTimeout(this._reloadRetry);
+    clearTimeout(this._signTimer);
+    clearInterval(this._resignTimer);
+    clearTimeout(this._toastTimer);
     this._saveConfigDebounced.flush(); // never leave an edit unsent on teardown
     window.removeEventListener('hashchange', this._onHashChange);
     clearTimeout(this._holdTimer);
@@ -571,7 +596,7 @@ class HouseplanCard extends LitElement {
         id: s.id,
         title: s.title,
         vb: [s.view_box[0] * NORM_W, s.view_box[1] * H, s.view_box[2] * NORM_W, s.view_box[3] * H],
-        bg: s.plan_url ? { href: contentUrl(s.plan_url), x: 0, y: 0, w: NORM_W, h: H } : null,
+        bg: s.plan_url ? { href: this._display(s.plan_url), x: 0, y: 0, w: NORM_W, h: H } : null,
         rooms: s.rooms.map(scale),
       };
     });
@@ -756,6 +781,46 @@ class HouseplanCard extends LitElement {
   }
 
   private _reloadRetry?: number;
+  /**
+   * Signed urls for the content endpoint (audit follow-up B1 regression).
+   * A browser cannot authenticate an <image href> or an <a href>: HA takes a
+   * Bearer header or an `authSig` signed path, and an element sends neither.
+   * So the card asks the backend to sign what it is about to display.
+   */
+  private _signed: Record<string, string> = {};
+  private _signPending = new Set<string>();
+  private _signTimer?: number;
+
+  /** Display url: the signed variant when we have one, else the plain path. */
+  private _display(url: string | null | undefined): string {
+    const u = contentUrl(url);
+    if (!u.startsWith('/api/houseplan/content/')) return u;
+    if (this._signed[u]) return this._signed[u];
+    this._requestSignature(u);
+    return u; // first paint may 401; the signature lands and re-renders
+  }
+
+  private _requestSignature(url: string): void {
+    if (this._signPending.has(url) || !this.hass?.callWS) return;
+    this._signPending.add(url);
+    clearTimeout(this._signTimer);
+    // batch: a plan switch asks for several urls in the same tick
+    this._signTimer = window.setTimeout(() => {
+      const paths = [...this._signPending];
+      this._signPending.clear();
+      this.hass
+        .callWS({ type: 'houseplan/content/sign', paths })
+        .then((r: any) => {
+          if (!r?.urls) return;
+          this._signed = { ...this._signed, ...r.urls };
+          this.requestUpdate();
+        })
+        .catch(() => undefined); // unsigned urls simply keep failing; no loop
+    }, 30);
+  }
+
+  /** Re-sign everything periodically: a wall tablet outlives a signature. */
+  private _resignTimer?: number;
   private _dirtyPos = new Set<string>();
 
   private _persistLayout = debounce(() => {
@@ -1309,7 +1374,7 @@ class HouseplanCard extends LitElement {
     ev.preventDefault();
     const p = this._pos(d);
     this._drag = { id: d.id, sx: ev.clientX, sy: ev.clientY, ox: p.x, oy: p.y, moved: false };
-    (ev.target as HTMLElement).setPointerCapture(ev.pointerId);
+    capturePointer(ev);
     this._tip = null;
   }
 
@@ -1652,7 +1717,7 @@ class HouseplanCard extends LitElement {
       ev.preventDefault();
       const p = this._snap(this._svgPoint(ev));
       this._decorDraft = { kind: t, a: p, b: p, pid: ev.pointerId };
-      (ev.target as HTMLElement).setPointerCapture?.(ev.pointerId);
+      capturePointer(ev);
       return true;
     }
     if (t === 'text') {
@@ -1712,15 +1777,25 @@ class HouseplanCard extends LitElement {
       id: shape.id, start: this._svgPoint(ev), orig: JSON.parse(JSON.stringify(shape)),
       pid: ev.pointerId, moved: false,
     };
-    (ev.target as HTMLElement).setPointerCapture?.(ev.pointerId);
+    capturePointer(ev);
   }
 
   private _decorMoveUpdate(ev: PointerEvent): void {
     const m = this._decorMove!;
     const p = this._svgPoint(ev);
     const g = this._gridPitch;
-    const dx = snapToGrid(p[0] - m.start[0], g) / NORM_W;
-    const dy = snapToGrid(p[1] - m.start[1], g) / this._decorH;
+    let dx = snapToGrid(p[0] - m.start[0], g) / NORM_W;
+    let dy = snapToGrid(p[1] - m.start[1], g) / this._decorH;
+    // audit follow-up L4: decor had neither a threshold nor a bounds clamp, so
+    // a shape could be dragged far outside the viewBox and persisted there.
+    const o = m.orig;
+    const curX = o.kind === 'line' ? Math.min(o.x1, o.x2) : o.x;
+    const curY = o.kind === 'line' ? Math.min(o.y1, o.y2) : o.y;
+    const w = o.kind === 'line' ? Math.abs(o.x2 - o.x1) : (o.w || 0);
+    const h = o.kind === 'line' ? Math.abs(o.y2 - o.y1) : (o.h || 0);
+    const lim = 0.25; // a quarter of the plan may hang outside, no more
+    dx = Math.max(-curX - lim, Math.min(1 + lim - curX - w, dx));
+    dy = Math.max(-curY - lim, Math.min(1 + lim - curY - h, dy));
     if (dx || dy) m.moved = true;
     const sp = this._curSpaceCfg;
     sp.decor = this._decorList.map((x) => {
@@ -2031,7 +2106,7 @@ class HouseplanCard extends LitElement {
     ev.preventDefault();
     ev.stopPropagation();
     try {
-      (ev.target as Element).setPointerCapture?.(ev.pointerId);
+      capturePointer(ev);
     } catch {
       /* an inactive pointerId (synthetic events, some browsers) must not kill the drag */
     }
@@ -3579,7 +3654,7 @@ class HouseplanCard extends LitElement {
                 style = st.join(';');
               }
               const tip = (e: MouseEvent) =>
-                this._showTip(e, r.name, this._t('tip.room'),
+                this._showTip(e, r.name, '',
                   showLqi ? this._roomLqi(r.area) : null,
                   this._roomTemp(r));
               const label = !space.bg && !disp.showNames && !this._markup;
@@ -3759,14 +3834,15 @@ class HouseplanCard extends LitElement {
   private _roomTemp(r: RoomCfg): number | null {
     const src = r.settings?.temp_source;
     if (src) return sourceValue(this.hass, src, 'temp');
-    return r.area ? areaTemp(this.hass, this._devices, r.area) : null;
+    // every sensor of the area, placed on the plan or not (field report)
+    return r.area ? areaClimate(this.hass, r.area, 'temp', this._iconRules) : null;
   }
 
   /** Room humidity honouring the tier-3 source override. */
   private _roomHum(r: RoomCfg): number | null {
     const src = r.settings?.hum_source;
     if (src) return sourceValue(this.hass, src, 'hum');
-    return r.area ? areaHum(this.hass, this._devices, r.area) : null;
+    return r.area ? areaClimate(this.hass, r.area, 'hum', this._iconRules) : null;
   }
 
   private _resetRoomDialogFields(): void {
@@ -3880,7 +3956,7 @@ class HouseplanCard extends LitElement {
     ev.stopPropagation();
     const p = this._labelPos(r, spaceId);
     this._drag = { id: 'rl_' + (r.id || ''), sx: ev.clientX, sy: ev.clientY, ox: p.x, oy: p.y, moved: false };
-    (ev.target as HTMLElement).setPointerCapture(ev.pointerId);
+    capturePointer(ev);
     this._tip = null;
   }
 
@@ -3926,7 +4002,7 @@ class HouseplanCard extends LitElement {
     const cy = b.top + b.height / 2;
     const d0 = Math.max(8, Math.hypot(ev.clientX - cx, ev.clientY - cy));
     this._rlResize = { id: 'rl_' + (r.id || ''), space: spaceId, k0: this._labelScale(r), cx, cy, d0 };
-    (ev.target as HTMLElement).setPointerCapture(ev.pointerId);
+    capturePointer(ev);
   }
 
   private _rlResizeMove(ev: PointerEvent): void {
@@ -4602,7 +4678,7 @@ class HouseplanCard extends LitElement {
           ${d.pdfs && d.pdfs.length
             ? html`<div class="inforow"><span class="k">${this._t('info.manuals')}</span><span class="pdflist">
                 ${d.pdfs.map(
-                  (p) => html`<a class="pdf" href="${safeUrl(contentUrl(p.url)) || '#'}" target="_blank" rel="noreferrer noopener">
+                  (p) => html`<a class="pdf" href="${safeUrl(this._display(p.url)) || '#'}" target="_blank" rel="noreferrer noopener">
                     <ha-icon icon="mdi:file-pdf-box"></ha-icon>${p.name}</a>`,
                 )}</span></div>`
             : nothing}
@@ -4839,7 +4915,7 @@ class HouseplanCard extends LitElement {
           <div class="pdfedit">
             ${d.pdfs.map(
               (p) => html`<span class="pdftag"><ha-icon icon="mdi:file-pdf-box"></ha-icon>
-                <a href="${safeUrl(contentUrl(p.url)) || '#'}" target="_blank" rel="noreferrer noopener">${p.name}</a>
+                <a href="${safeUrl(this._display(p.url)) || '#'}" target="_blank" rel="noreferrer noopener">${p.name}</a>
                 <ha-icon class="x" icon="mdi:close" @click=${() => this._removeMarkerPdf(p.url)}></ha-icon></span>`,
             )}
             <label class="btn filebtn">

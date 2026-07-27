@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildDevices, lightGroups, primaryEntity, lqiFor, tempFor, humFor, areaLights, areaTemp, areaHum, areaLightStats, sourceValue } from '../test-build/devices.js';
+import { buildDevices, lightGroups, primaryEntity, lqiFor, tempFor, humFor, areaLights, areaTemp, areaHum, areaLightStats, sourceValue , areaClimate } from '../test-build/devices.js';
 import { compileIconRules, iconFor } from '../test-build/rules.js';
 
 /** Minimal fake hass around the pieces buildDevices reads. */
@@ -358,4 +358,45 @@ test('sourceValue: explicit entity and device sources (tier 3)', () => {
   assert.equal(sourceValue(hass, 'device:nope', 'temp'), null);
   assert.equal(sourceValue(hass, '', 'temp'), null);
   assert.equal(sourceValue(hass, 'garbage', 'temp'), null);
+});
+
+test('areaClimate: counts sensors that are NOT on the plan (field report)', () => {
+  const hass = {
+    devices: {
+      d1: { id: 'd1', name: 'Датчик температуры спальня', area_id: 'bed' },
+      d2: { id: 'd2', name: 'Холодильник', model: 'LG', area_id: 'bed' },
+      d3: { id: 'd3', name: 'Qingping air monitor', area_id: 'bed' },
+      d4: { id: 'd4', name: 'Датчик температуры кухня', area_id: 'kitchen' },
+    },
+    entities: {
+      'sensor.bed_t': { device_id: 'd1' },
+      'sensor.bed_h': { device_id: 'd1' },
+      'sensor.fridge_t': { device_id: 'd2' },
+      'sensor.air_t': { device_id: 'd3' },
+      'sensor.air_h': { device_id: 'd3' },
+      'sensor.kitchen_t': { device_id: 'd4' },
+    },
+    states: {
+      'sensor.bed_t': { state: '21.0', attributes: { device_class: 'temperature', unit_of_measurement: '°C' } },
+      'sensor.bed_h': { state: '40', attributes: { device_class: 'humidity', unit_of_measurement: '%' } },
+      'sensor.fridge_t': { state: '4', attributes: { device_class: 'temperature', unit_of_measurement: '°C' } },
+      'sensor.air_t': { state: '23.0', attributes: { device_class: 'temperature', unit_of_measurement: '°C' } },
+      'sensor.air_h': { state: '50', attributes: { device_class: 'humidity', unit_of_measurement: '%' } },
+      'sensor.kitchen_t': { state: '30.0', attributes: { device_class: 'temperature', unit_of_measurement: '°C' } },
+    },
+  };
+  // среднее по двум термометрам зоны; ни одно устройство не «размещено» на плане
+  assert.equal(areaClimate(hass, 'bed', 'temp'), 22);
+  assert.equal(areaClimate(hass, 'bed', 'hum'), 45);
+  // холодильник по-прежнему не считается климатом комнаты
+  assert.notEqual(areaClimate(hass, 'bed', 'temp'), (21 + 4 + 23) / 3);
+  // чужая зона не подмешивается
+  assert.equal(areaClimate(hass, 'kitchen', 'temp'), 30);
+  assert.equal(areaClimate(hass, 'nowhere', 'temp'), null);
+  // сущность со своей area_id учитывается, даже если устройство в другой зоне
+  const hass2 = {
+    ...hass,
+    entities: { ...hass.entities, 'sensor.kitchen_t': { device_id: 'd4', area_id: 'bed' } },
+  };
+  assert.equal(areaClimate(hass2, 'kitchen', 'temp'), null);
 });

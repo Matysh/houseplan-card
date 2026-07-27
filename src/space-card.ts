@@ -109,6 +109,8 @@ class HouseplanSpaceCard extends LitElement {
 
   public getCardSize(): number {
     const models = spaceModels(this._snap?.config || null);
+    // B1 follow-up: the plan <image> needs a signed url in a browser session
+    for (const m of models) if (m.bg?.href) this._signBg(m.bg);
     const sp = models.find((s) => s.id === this._config?.space);
     if (sp) {
       const ratio = sp.vb[3] / sp.vb[2]; // h/w
@@ -119,6 +121,27 @@ class HouseplanSpaceCard extends LitElement {
 
   private _errorCard(msg: string): TemplateResult {
     return html`<ha-card><div class="hp-static-error">${msg}</div></ha-card>`;
+  }
+
+  private _signedBg: Record<string, string> = {};
+  private _signBgPending = new Set<string>();
+
+  /** Ask the backend for a signed content url and swap it in when it arrives. */
+  private _signBg(bg: { href: string }): void {
+    const raw = bg.href.split('?authSig=')[0];
+    if (!raw.startsWith('/api/houseplan/content/')) return;
+    if (this._signedBg[raw]) { bg.href = this._signedBg[raw]; return; }
+    if (this._signBgPending.has(raw) || !this.hass?.callWS) return;
+    this._signBgPending.add(raw);
+    this.hass
+      .callWS({ type: 'houseplan/content/sign', paths: [raw] })
+      .then((r: any) => {
+        const url = r?.urls?.[raw];
+        if (!url) return;
+        this._signedBg = { ...this._signedBg, [raw]: url };
+        this.requestUpdate();
+      })
+      .catch(() => undefined);
   }
 
   protected render(): TemplateResult | typeof nothing {
