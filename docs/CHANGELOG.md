@@ -1,5 +1,35 @@
 # Changelog
 
+## v1.44.4 — 2026-07-27 (audit follow-up: B2, B5, L4)
+- **One authorization policy (B2).** The HTTP upload view still failed **open**
+  when the config entry was unavailable while the WebSocket path failed closed —
+  the two had drifted apart. Both now call the same `may_write` helper, which
+  denies non-admins whenever the policy cannot be read.
+- **NaN/Infinity refused on every coordinate (B5).** The finite-number check
+  guarded only layout positions; room rects, polygon vertices, `view_box` and
+  opening coordinates accepted `"NaN"`, which serializes to `null` and corrupts
+  the stored geometry permanently. The `MAX_OPENINGS` cap was defined but never
+  wired in — the openings list was unbounded.
+- **Drag hardening (L4 sub-item).** The tolerant `setPointerCapture` wrapper is
+  now used by every drag pipeline (device, label, resize), not just openings —
+  an inactive pointer id could kill a drag outright. Decor shapes gained a
+  bounds clamp: they can no longer be dragged far outside the plan and saved
+  there.
+
+## v1.44.3 — 2026-07-27 (fix: plans and manuals load again)
+- **The authenticated content endpoint had no working browser path.** v1.43.0
+  closed the security hole correctly, but Home Assistant authenticates HTTP
+  requests by a Bearer header or an `authSig` signed path — and an SVG
+  `<image href>` or a plain `<a href>` sends neither. Plan backgrounds and PDF
+  links returned **401** on a real dashboard (reproduced live before the fix).
+  The card now asks the backend to sign what it displays
+  (`houseplan/content/sign`, 24 h, bound to the session's refresh token, only
+  for our own endpoint), re-renders when signatures arrive, and refreshes them
+  every 12 hours so wall tablets keep working. A backend test fetches a signed
+  url **without** an Authorization header and asserts 200, and 401 without the
+  signature.
+
+
 > 🇷🇺 Русская версия: [CHANGELOG.ru.md](CHANGELOG.ru.md) (записи с v1.42.0).
 
 ## v1.44.2 — 2026-07-27 (external code review: CR-1…CR-3)

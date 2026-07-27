@@ -140,3 +140,36 @@ def test_collection_caps():
     big = {f"d{i}": {"x": 0.1, "y": 0.1} for i in range(v.MAX_LAYOUT + 1)}
     with pytest.raises(vol.Invalid):
         v.LAYOUT_SCHEMA(big)
+
+
+def test_finite_on_every_coordinate():
+    """audit follow-up B5: NaN/Infinity must be refused everywhere, not only in layout."""
+    base = {"id": "s1", "title": "S", "aspect": 1.0, "view_box": [0, 0, 100, 100], "rooms": []}
+    # view_box
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA({"spaces": [{**base, "view_box": [0, 0, "NaN", 100]}]})
+    # room rect coordinates
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA({"spaces": [{**base, "rooms": [
+            {"id": "r", "name": "R", "x": "Infinity", "y": 0, "w": 1, "h": 1}]}]})
+    # polygon vertices
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA({"spaces": [{**base, "rooms": [
+            {"id": "r", "name": "R", "poly": [[0, 0], [1, "NaN"], [1, 1]]}]}]})
+    # opening coordinates
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA({"spaces": [{**base, "openings": [
+            {"id": "o", "type": "door", "x": "NaN", "y": 0.5, "angle": 0, "length": 0.1}]}]})
+    # a sane config still validates
+    assert v.CONFIG_SCHEMA({"spaces": [{**base, "rooms": [
+        {"id": "r", "name": "R", "poly": [[0, 0], [1, 0], [1, 1]]}]}]})
+
+
+def test_openings_cap_enforced():
+    """audit follow-up B5: MAX_OPENINGS was defined but never wired in."""
+    many = [{"id": f"o{i}", "type": "door", "x": 0.1, "y": 0.1, "angle": 0, "length": 0.1}
+            for i in range(v.MAX_OPENINGS + 1)]
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA({"spaces": [{"id": "s1", "title": "S", "aspect": 1.0,
+                                     "view_box": [0, 0, 100, 100], "rooms": [],
+                                     "openings": many}]})

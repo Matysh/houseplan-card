@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.44.2';
+const CARD_VERSION = '1.44.4';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -88,6 +88,22 @@ const debounce = <T extends (...a: any[]) => void>(fn: T, ms: number): Debounced
   };
   wrapped.pending = () => t !== undefined;
   return wrapped;
+};
+
+/**
+ * Capture the pointer for a drag, tolerating an inactive pointerId.
+ *
+ * `setPointerCapture` throws for synthetic events and for pointers some
+ * browsers consider gone; that killed a drag outright. The opening pipeline
+ * was hardened for this, the device/label/resize ones were not (audit
+ * follow-up L4 sub-item) — now they all go through here.
+ */
+const capturePointer = (ev: PointerEvent): void => {
+  try {
+    (ev.target as Element | null)?.setPointerCapture?.(ev.pointerId);
+  } catch {
+    /* an inactive pointerId must never kill the drag */
+  }
 };
 
 class HouseplanCard extends LitElement {
@@ -1358,7 +1374,7 @@ class HouseplanCard extends LitElement {
     ev.preventDefault();
     const p = this._pos(d);
     this._drag = { id: d.id, sx: ev.clientX, sy: ev.clientY, ox: p.x, oy: p.y, moved: false };
-    (ev.target as HTMLElement).setPointerCapture(ev.pointerId);
+    capturePointer(ev);
     this._tip = null;
   }
 
@@ -1701,7 +1717,7 @@ class HouseplanCard extends LitElement {
       ev.preventDefault();
       const p = this._snap(this._svgPoint(ev));
       this._decorDraft = { kind: t, a: p, b: p, pid: ev.pointerId };
-      (ev.target as HTMLElement).setPointerCapture?.(ev.pointerId);
+      capturePointer(ev);
       return true;
     }
     if (t === 'text') {
@@ -1761,15 +1777,25 @@ class HouseplanCard extends LitElement {
       id: shape.id, start: this._svgPoint(ev), orig: JSON.parse(JSON.stringify(shape)),
       pid: ev.pointerId, moved: false,
     };
-    (ev.target as HTMLElement).setPointerCapture?.(ev.pointerId);
+    capturePointer(ev);
   }
 
   private _decorMoveUpdate(ev: PointerEvent): void {
     const m = this._decorMove!;
     const p = this._svgPoint(ev);
     const g = this._gridPitch;
-    const dx = snapToGrid(p[0] - m.start[0], g) / NORM_W;
-    const dy = snapToGrid(p[1] - m.start[1], g) / this._decorH;
+    let dx = snapToGrid(p[0] - m.start[0], g) / NORM_W;
+    let dy = snapToGrid(p[1] - m.start[1], g) / this._decorH;
+    // audit follow-up L4: decor had neither a threshold nor a bounds clamp, so
+    // a shape could be dragged far outside the viewBox and persisted there.
+    const o = m.orig;
+    const curX = o.kind === 'line' ? Math.min(o.x1, o.x2) : o.x;
+    const curY = o.kind === 'line' ? Math.min(o.y1, o.y2) : o.y;
+    const w = o.kind === 'line' ? Math.abs(o.x2 - o.x1) : (o.w || 0);
+    const h = o.kind === 'line' ? Math.abs(o.y2 - o.y1) : (o.h || 0);
+    const lim = 0.25; // a quarter of the plan may hang outside, no more
+    dx = Math.max(-curX - lim, Math.min(1 + lim - curX - w, dx));
+    dy = Math.max(-curY - lim, Math.min(1 + lim - curY - h, dy));
     if (dx || dy) m.moved = true;
     const sp = this._curSpaceCfg;
     sp.decor = this._decorList.map((x) => {
@@ -2080,7 +2106,7 @@ class HouseplanCard extends LitElement {
     ev.preventDefault();
     ev.stopPropagation();
     try {
-      (ev.target as Element).setPointerCapture?.(ev.pointerId);
+      capturePointer(ev);
     } catch {
       /* an inactive pointerId (synthetic events, some browsers) must not kill the drag */
     }
@@ -3929,7 +3955,7 @@ class HouseplanCard extends LitElement {
     ev.stopPropagation();
     const p = this._labelPos(r, spaceId);
     this._drag = { id: 'rl_' + (r.id || ''), sx: ev.clientX, sy: ev.clientY, ox: p.x, oy: p.y, moved: false };
-    (ev.target as HTMLElement).setPointerCapture(ev.pointerId);
+    capturePointer(ev);
     this._tip = null;
   }
 
@@ -3975,7 +4001,7 @@ class HouseplanCard extends LitElement {
     const cy = b.top + b.height / 2;
     const d0 = Math.max(8, Math.hypot(ev.clientX - cx, ev.clientY - cy));
     this._rlResize = { id: 'rl_' + (r.id || ''), space: spaceId, k0: this._labelScale(r), cx, cy, d0 };
-    (ev.target as HTMLElement).setPointerCapture(ev.pointerId);
+    capturePointer(ev);
   }
 
   private _rlResizeMove(ev: PointerEvent): void {

@@ -19,7 +19,7 @@ except ImportError:  # older HA versions
 from homeassistant.core import HomeAssistant
 
 from .const import CONF_ADMIN_ONLY, CONTENT_URL, FILES_DIR, FILES_URL, PLANS_DIR
-from .store import get_entry
+from .auth import may_write
 from .validation import (
     FILE_EXTENSIONS,
     MAX_FILE_BYTES,
@@ -95,12 +95,8 @@ class HouseplanUploadView(HomeAssistantView):
 
     async def post(self, request: web.Request) -> web.Response:
         hass: HomeAssistant = request.app[KEY_HASS]
-        entry = get_entry(hass)
-        admin_only = bool(entry and entry.options.get(CONF_ADMIN_ONLY, False))
-        if admin_only:
-            user = request.get("hass_user")
-            if user is None or not user.is_admin:
-                return web.json_response({"error": "unauthorized"}, status=403)
+        if not may_write(hass, request.get("hass_user")):
+            return web.json_response({"error": "unauthorized"}, status=403)
 
         marker_id = "misc"
         filename: str | None = None

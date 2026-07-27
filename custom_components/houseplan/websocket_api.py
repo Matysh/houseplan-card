@@ -17,6 +17,7 @@ from .const import (
     CONF_ADMIN_ONLY, DEFAULT_CONFIG,
     CONTENT_URL, PLANS_DIR, PLANS_URL,
 )
+from .auth import may_write
 from .store import HouseplanData, get_data, get_entry
 from .validation import (
     CONFIG_SCHEMA, LAYOUT_SCHEMA, MAX_PLAN_BYTES,
@@ -56,18 +57,8 @@ def _runtime(hass: HomeAssistant, connection, msg_id: int) -> HouseplanData | No
 
 
 def _check_write(hass: HomeAssistant, connection) -> bool:
-    """May this connection write?
-
-    Fails CLOSED (audit B2): when the entry cannot be read — during a reload or
-    while the integration is disabled — the policy is unknown, and "unknown" is
-    not the same as "permissive". Previously this returned True and ws_plan_set,
-    which never touches the runtime helper, accepted uploads in that window.
-    """
-    entry = get_entry(hass)
-    if entry is None:
-        return bool(getattr(connection.user, "is_admin", False))
-    admin_only = bool(entry.options.get(CONF_ADMIN_ONLY, False))
-    return connection.user.is_admin if admin_only else True
+    """May this connection write? Thin wrapper over the shared policy."""
+    return may_write(hass, getattr(connection, "user", None))
 
 
 # ---------------- layout ----------------
