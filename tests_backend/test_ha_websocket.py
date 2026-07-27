@@ -125,3 +125,55 @@ async def test_admin_check_fails_closed(hass, hass_ws_client):
         user = _Admin()
 
     assert wsapi._check_write(hass, _AdminConn()) is True
+
+
+async def test_files_migrate_copies_and_reports_mapping(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """review CR-2/CR-3: migrate COPIES, never overwrites, and reports the mapping."""
+    import os
+
+    from custom_components.houseplan.const import FILES_DIR
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+
+    base = hass.config.path(FILES_DIR)
+    src = os.path.join(base, "old1")
+    dst = os.path.join(base, "new1")
+
+    def _prepare() -> None:
+        os.makedirs(src, exist_ok=True)
+        os.makedirs(dst, exist_ok=True)
+        with open(os.path.join(src, "m.pdf"), "wb") as fh:
+            fh.write(b"SOURCE")
+        # a DIFFERENT file already owns the name in the destination
+        with open(os.path.join(dst, "m.pdf"), "wb") as fh:
+            fh.write(b"OTHER")
+
+    await hass.async_add_executor_job(_prepare)
+
+    await client.send_json_auto_id(
+        {"type": "houseplan/files/migrate", "from_id": "old1", "to_id": "new1"}
+    )
+    resp = await client.receive_json()
+    assert resp["success"], resp
+    mapping = resp["result"]["mapping"]
+    assert mapping["m.pdf"] != "m.pdf"  # renamed instead of overwriting
+
+    def _read_all() -> tuple[bool, bytes, bytes]:
+        with open(os.path.join(dst, "m.pdf"), "rb") as fh:
+            other = fh.read()
+        with open(os.path.join(dst, mapping["m.pdf"]), "rb") as fh:
+            copied = fh.read()
+        return os.path.isfile(os.path.join(src, "m.pdf")), other, copied
+
+    src_kept, other, copied = await hass.async_add_executor_job(_read_all)
+    assert src_kept, "migrate must COPY, not move (review CR-2)"
+    assert other == b"OTHER" and copied == b"SOURCE"
+
+    # cleanup runs only after the config is safely committed
+    await client.send_json_auto_id({"type": "houseplan/files/cleanup", "marker_id": "old1"})
+    resp2 = await client.receive_json()
+    assert resp2["success"] and resp2["result"]["removed"] is True
+    assert not await hass.async_add_executor_job(lambda: os.path.isdir(src))

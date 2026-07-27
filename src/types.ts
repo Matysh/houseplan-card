@@ -61,6 +61,12 @@ export interface Marker {
   controls?: string[] | null;
   /** Per-source glow radius in cm (glow fill); null = the global default. */
   glow_radius_cm?: number | null;
+  /**
+   * Treat this marker as a light source in the glow fill even when it has no
+   * light.* entity (a smart switch driving dumb fixtures — field request).
+   * null/undefined = auto: any light.* entity of the device.
+   */
+  is_light?: boolean | null;
 }
 
 /** A door or window: plan geometry (normalized coords), optionally live via entities. */

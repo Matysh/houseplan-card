@@ -10,7 +10,7 @@ const res = await page.evaluate(async () => {
     ...s, settings: { ...(s.settings || {}), show_names: true, fill_mode: 'temp', label_temp: true } })) };
   c._setMode('plan'); c.requestUpdate(); await c.updateComplete;
   // 1) шестерёнка на карточке комнаты в редакторе плана
-  const gear = sr().querySelector('.rlgear');
+  const gear = sr().querySelector('.rlgearbtn');
   out.gearShown = !!gear;
   gear.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
   await c.updateComplete;

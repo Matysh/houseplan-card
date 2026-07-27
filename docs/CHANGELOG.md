@@ -1,5 +1,63 @@
 # Changelog
 
+## v1.44.2 — 2026-07-27 (external code review: CR-1…CR-3)
+
+A second, adversarial review (of v1.44.0) produced three findings; all are
+addressed.
+
+- **The lock invariant is now precise and enforced (CR-1).** The reviewer was
+  right that "locks can never be actuated from the plan" was too absolute a
+  claim: the door card's Unlock button does call the service. That button is a
+  deliberate product decision, so the invariant is restated where it belongs
+  ("never by an accidental tap; exactly one labeled surface"), unlocking now
+  **asks for confirmation**, and a new smoke exercises all five actuation paths
+  to prove icons, `controls[]` and the device card still refuse locks outright.
+- **Attachment migration became transactional (CR-2).** Rebinding a marker used
+  to MOVE its files before the revision-checked config save — if that save was
+  rejected, the stored config kept the old urls while the files had already
+  left. Now the server **copies**, the config is committed, and only then the
+  old folder is removed (`houseplan/files/cleanup`).
+- **Failed or partial migrations no longer rewrite urls (CR-3).** The copy
+  reports an exact `{source: written}` mapping; only confirmed copies are
+  rewritten, name collisions get a unique name instead of silently linking a
+  pre-existing file, and a failed migration surfaces as a toast with the links
+  left pointing at the still-existing originals.
+
+## v1.44.1 — 2026-07-27
+- Added the community chat everywhere users look: **https://t.me/ha_houseplan**
+  (badge and header line in both READMEs, a "Getting help" section, the issue
+  template contact links, CONTRIBUTING, STATUS and SCOPE).
+
+## v1.44.0 — 2026-07-27 (user feedback: control first)
+
+- **The device card is now a control surface.** It opens with the device's
+  controllable entities: lights, switches and fans toggle straight from the
+  card with finger-sized buttons, covers/locks/climate open Home Assistant's
+  own more-info. Model, links and PDF manuals moved below — on a wall tablet
+  this card is for running the home, not for reading documentation (field
+  report). Config and diagnostic entities are not listed; locks still never
+  toggle from a card tap.
+- **"This device is a light source"** — a new per-device flag. A smart switch
+  driving ordinary (dumb) fixtures now casts a glow in the "Light sources"
+  fill without inventing a light-group helper: the glow follows the switch, or
+  the lights bound under "Controls light sources" when they are set.
+
+## v1.43.3 — 2026-07-27 (user feedback: discoverability and touch)
+
+- **Room settings were unfindable.** The gear added in v1.42.0 lived inside the
+  room label at 0.9em of its font and 60% opacity — a few pale pixels on a
+  normal plan. It is now a pill button "⚙ Room" of a fixed, readable size that
+  does not shrink with the card font, and it appears on **unnamed rooms too**
+  (that is where you name them). This also unblocks the font-size sliders,
+  which nobody could reach.
+- **Metrics line enlarged** from 0.62 to 0.75 of the room name — the reporter
+  could scale the name but the sensor line stayed unreadable on a tablet. The
+  per-room and per-space multipliers still apply on top.
+- **Touch tooltips, take two.** The `(hover: none)` guard was not enough: some
+  devices, skins, styluses and paired mice report `hover: hover`, so tips still
+  stuck under the finger. The card now also latches on the first touch/pen
+  pointer event and drops any open tooltip on touch.
+
 ## v1.43.2 — 2026-07-27 (external audit: the test layer)
 
 - **The smoke suite can finally fail (T1).** All 48 headless-browser smokes used

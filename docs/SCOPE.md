@@ -33,7 +33,7 @@ Editors are admin-only tools and must never leak interactions into View
 |---|---|---|
 | J1 | "Show the whole home and what's happening right now" — live spatial overview: device states, room fills (light/temp/LQI), values, multi-floor tabs | **Closed** |
 | J2 | "Something is wrong — show me *where*" — leak/smoke/gas pulse, open doors/windows, unlocked locks, red dot on devices HA added silently | **Closed** |
-| J3 | "Let me act on the obvious right from the plan" — tap-to-toggle for safe domains, info cards, guarded lock action (explicit button only, never a plan tap) | **Closed** |
+| J3 | "Let me act on the obvious right from the plan" — tap-to-toggle for safe domains, info cards, guarded lock action | **Closed** |
 | J4 | "From zero to a working plan in one evening, no Inkscape/YAML" — image/PDF/draw, floors-import wizard, room polygons bound to areas, curated auto-placement, editable icon rules | **Closed**; onboarding polish is *partial* (no registry-driven room suggestions) |
 | J5 | "Room climate at a glance" — per-room temperature/humidity, comfort-range fills, room-card metrics | **Closed** |
 | J6 | "Keep the plan true as the home evolves" — new-device flag, two editors, drag/resize, merge/split, multi-client live sync, optimistic locking | **Closed** |
@@ -52,6 +52,17 @@ Editors are admin-only tools and must never leak interactions into View
 ## Known gaps that fit the mission (build only on owner's request)
 
 - Person/presence shown in rooms (classic floorplan ask; pure J1).
+### The lock invariant, stated precisely (review CR-1)
+
+No lock or alarm panel is ever actuated **by a tap on the plan**: icons, lock
+badges, `marker.controls[]` and the device card all refuse (`resolveTapAction`
++ `TOGGLE_FORBIDDEN_DOMAINS`, `isControllable`, `_cardToggle`). There is exactly
+**one** sanctioned actuation surface: the labeled Unlock/Lock button inside an
+opened door card, which additionally confirms before unlocking. That is a
+product decision (2026-07-22), not an oversight — but it means the invariant is
+"never by accident", not "never at all". Any new actuation path must either
+refuse locks or be added to this paragraph.
+
 - Plan-level "security glance": one badge for "all locked / N open" (J2).
 - Threshold colouring for room-card metrics (J5).
 
@@ -90,6 +101,9 @@ Editors are admin-only tools and must never leak interactions into View
 **Tasks it closes:** whole-home live overview · spatial alerts (leak/smoke/open/
 unlocked/new device) · safe quick actions · per-room climate · Zigbee mesh
 health · zero-to-plan GUI onboarding · keeping the plan true over years.
+
+**Where users are:** Telegram chat https://t.me/ha_houseplan (support, feature
+signals, screenshots) — treat it as the primary source of field feedback.
 
 **Pains it removes:** hand-crafted SVG + YAML floorplans · entity-list
 dashboards that hide *where* things happen · silent device sprawl · accidental

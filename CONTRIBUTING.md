@@ -3,6 +3,13 @@
 Thanks for your interest! The project is one HACS package: a storage **integration**
 (`custom_components/houseplan/`, Python) and a **Lovelace card** (`src/`, TypeScript + Lit).
 
+## Where to ask
+
+Not sure whether something is a bug, or just want to discuss an idea before
+writing code? The **[Telegram chat @ha_houseplan](https://t.me/ha_houseplan)**
+is the quickest route to the author and other users. Bugs and concrete feature
+requests still belong in [issues](https://github.com/Matysh/houseplan-card/issues).
+
 ## Five-minute setup
 
 ```bash

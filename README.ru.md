@@ -3,6 +3,7 @@
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
 [![GitHub release](https://img.shields.io/github/v/release/Matysh/houseplan-card)](https://github.com/Matysh/houseplan-card/releases)
 [![GitHub stars](https://img.shields.io/github/stars/Matysh/houseplan-card)](https://github.com/Matysh/houseplan-card/stargazers)
+[![Telegram chat](https://img.shields.io/badge/Telegram-чат-2CA5E0?logo=telegram&logoColor=white)](https://t.me/ha_houseplan)
 
 **Превратите Home Assistant в живую интерактивную карту дома.** Загрузите или
 нарисуйте план этажа, обведите комнаты мышкой — и умные устройства появятся на
@@ -13,7 +14,7 @@
 
 ![Интерактивный план дома для Home Assistant: комнаты, устройства, свет и климат на реальном поэтажном плане](docs/images/demo.gif)
 
-🇬🇧 [Documentation in English](README.md)
+🇬🇧 [Documentation in English](README.md) · 💬 [Чат в Telegram: **@ha_houseplan**](https://t.me/ha_houseplan)
 
 **Главное**
 
@@ -258,6 +259,22 @@ title: План дома
 2. **Настройки → Устройства и службы → House Plan → Удалить** запись интеграции.
 3. Удалите интеграцию из **HACS** (или папку `custom_components/houseplan` при ручной установке) и перезапустите Home Assistant.
 4. При желании удалите сохранённые данные плана: файлы `config/houseplan/` (подложки и вложения) и записи `houseplan.config` / `houseplan.layout` в каталоге `config/.storage`.
+
+---
+
+## Помощь и обмен опытом
+
+- 💬 **[Чат в Telegram — @ha_houseplan](https://t.me/ha_houseplan)** — вопросы,
+  помощь с настройкой, идеи и скриншоты ваших планов. Самый быстрый способ
+  связаться с автором и другими пользователями.
+- 🐞 [Issues на GitHub](https://github.com/Matysh/houseplan-card/issues) — баги
+  и запросы фич (пожалуйста, указывайте версию House Plan).
+- 💡 [Discussions](https://github.com/Matysh/houseplan-card/discussions) — для
+  развёрнутых обсуждений.
+
+Версия видна в консоли браузера при загрузке (`HOUSEPLAN-CARD vX.Y.Z`) и в
+**Настройки → Устройства и службы → House Plan** — с ней разбираться сильно
+быстрее.
 
 ---
 

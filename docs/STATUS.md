@@ -21,6 +21,7 @@
 | Home instance | ha.jbstudio.pro (SSH port 323, key `ha_jb`), deployed **v1.41.0** via direct copy (HACS custom repo also installed) |
 | Localization | UI en/ru (src/i18n/*.json), everything user-visible localized incl. kiosk popover |
 | Tests | 111 frontend (node:test) + 12 pure backend + 12 HA-harness (CI, py3.13); ~30 demo smoke suites (headless chromium) |
+| Community | **Telegram chat: https://t.me/ha_houseplan** (created 2026-07-27) — the primary user-facing support channel; GitHub issues stay for bugs/features. Link it from any new release notes and posts |
 | Product scope | docs/SCOPE.md (2026-07-22) is the feature guard rail — check before accepting any feature |
 
 ## Current feature surface (since the 2026-07-17 snapshot)

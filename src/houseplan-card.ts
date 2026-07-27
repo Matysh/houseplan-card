@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.43.2';
+const CARD_VERSION = '1.44.2';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -233,6 +233,7 @@ class HouseplanCard extends LitElement {
     controls: string[];  // entities this icon toggles as a group
     controlsFilter: string;
     glowRadius: string;  // per-device glow radius in display units; '' = global default
+    isLight: boolean;    // force this marker to glow (dumb fixtures behind a switch)
     model: string;
     link: string;
     description: string;
@@ -1350,17 +1351,35 @@ class HouseplanCard extends LitElement {
     }, 3500);
   }
 
-  /** True on touch-first devices (tablets/phones): no real hover there. */
-  private static readonly _noHover =
+  /**
+   * Touch-first surface: no hover tooltips.
+   *
+   * The media query alone was not enough (field report, 2026-07-27: tooltips
+   * still stuck on a OnePlus). Some devices/skins report `hover: hover`, and a
+   * stylus or a paired mouse flips it too. So this also latches on the FIRST
+   * touch pointer event and never unlatches for that session — a device that
+   * has been touched once is a touch device.
+   */
+  private static _touchSeen = false;
+  private static readonly _noHoverMq =
     typeof window !== 'undefined' &&
     typeof window.matchMedia === 'function' &&
     window.matchMedia('(hover: none)').matches;
 
+  private get _noHover(): boolean {
+    return HouseplanCard._noHoverMq || HouseplanCard._touchSeen;
+  }
+
+  /** Any touch anywhere marks the session as touch-first and kills open tips. */
+  private _notePointer(ev: PointerEvent): void {
+    if (ev.pointerType === 'touch' || ev.pointerType === 'pen') {
+      HouseplanCard._touchSeen = true;
+      if (this._tip) this._tip = null;
+    }
+  }
+
   private _showTip(ev: MouseEvent, title: string, meta: string, lqi?: number | null, temp?: number | null): void {
-    // Field feedback: on tablets every tap synthesized a mousemove and popped
-    // the hover tooltip over the finger. Touch devices get NO hover tooltips —
-    // the same data lives in room cards and the long-press device card.
-    if (HouseplanCard._noHover) return;
+    if (this._noHover) return;
     if (this._drag) return;
     this._tip = { x: ev.clientX, y: ev.clientY, title, meta, lqi, temp };
   }
@@ -2411,6 +2430,7 @@ class HouseplanCard extends LitElement {
         defaultTap: d.primary?.split('.')[0] === 'light' ? 'toggle' : 'info',
         controls: [...(d.marker?.controls || [])],
         controlsFilter: '',
+        isLight: d.marker?.is_light === true,
         glowRadius: Number(d.marker?.glow_radius_cm) > 0
           ? String(this._imperial
               ? Math.round((Number(d.marker!.glow_radius_cm) / 30.48) * 10) / 10
@@ -2430,7 +2450,8 @@ class HouseplanCard extends LitElement {
         name: '', binding: 'virtual', bindingMode: 'virtual', bindingOpen: false,
         showEntities: false, bindingFilter: '', icon: '', autoIcon: '',
         display: 'badge', rippleColor: '', rippleSize: 3, size: 1, angle: 0,
-        tapAction: '', defaultTap: 'info', controls: [], controlsFilter: '', glowRadius: '', model: '',
+        tapAction: '', defaultTap: 'info', controls: [], controlsFilter: '', isLight: false,
+        glowRadius: '', model: '',
         link: '', description: '', pdfs: [], room: '', busy: false,
       };
     }
@@ -2624,6 +2645,7 @@ class HouseplanCard extends LitElement {
         tap_action: dlg.tapAction || null,
         controls: dlg.controls.length ? dlg.controls : null,
         // pdfs may be rewritten below when rebinding changes the marker id
+        is_light: dlg.isLight ? true : null,
         glow_radius_cm: (() => {
           const v = parseFloat(dlg.glowRadius);
           if (!Number.isFinite(v) || v <= 0) return null;
@@ -2645,14 +2667,23 @@ class HouseplanCard extends LitElement {
       const prevRoomId = prevDev?.marker?.room_id ?? null;
       const roomChanged = !!dlg.room && prevDev != null
         && (prevDev.space !== space || prevDev.area !== area || prevRoomId !== roomId);
-      // rebinding changed the id → move the uploaded files along (server-side)
-      // and rewrite the attached urls; otherwise the old-id folder goes orphan
-      // (that is how the sauna manuals were lost — incident 2026-07-26)
+      // Rebinding changes the marker id, so the uploaded files must follow.
+      // Order matters (review CR-2): COPY first, save the config, and only then
+      // delete the old folder. If the save is rejected, the old urls in the
+      // stored config still resolve — the files never left. A failed copy
+      // leaves the urls untouched and tells the user (review CR-3).
+      let cleanupOldFiles = false;
       if (oldId && oldId !== id && marker.pdfs?.length) {
-        await this.hass
-          .callWS({ type: 'houseplan/files/migrate', from_id: oldId, to_id: id })
-          .catch(() => undefined);
-        marker.pdfs = migratePdfUrls(marker.pdfs, oldId, id);
+        try {
+          const res: any = await this.hass.callWS({
+            type: 'houseplan/files/migrate', from_id: oldId, to_id: id,
+          });
+          const mapping = res?.mapping || {};
+          marker.pdfs = migratePdfUrls(marker.pdfs, oldId, id, mapping);
+          cleanupOldFiles = Object.keys(mapping).length > 0;
+        } catch (e: any) {
+          this._showToast(this._t('toast.files_migrate_failed', { err: this._errText(e) }));
+        }
       }
       // remove the previous marker (by the old id and by the new id)
       cfg.markers = cfg.markers.filter((m) => m.id !== id && m.id !== oldId);
@@ -2698,6 +2729,12 @@ class HouseplanCard extends LitElement {
         // rebinding changed the icon id — clean up the old position
         delete this._layout[oldId];
         await this.hass.callWS({ type: 'houseplan/layout/delete', device_id: oldId }).catch(() => undefined);
+      }
+      // the config is committed — now it is safe to drop the old folder
+      if (cleanupOldFiles && oldId) {
+        await this.hass
+          .callWS({ type: 'houseplan/files/cleanup', marker_id: oldId })
+          .catch(() => undefined); // leftovers are harmless; broken links are not
       }
       this._markerDialog = null;
       this._regSignature = '';
@@ -3115,9 +3152,15 @@ class HouseplanCard extends LitElement {
     const spots: { pos: { x: number; y: number }; c: string; alpha: number; clip: string[] | null; r: number }[] = [];
     for (const d of this._devices) {
       if (d.space !== space.id) continue;
-      const lightEid = d.entities.find(
-        (e) => e.startsWith('light.') && this.hass.states[e]?.state === 'on',
-      );
+      // A light source is normally a device with a lit light.* entity. With the
+      // "is a light source" flag (field request: a smart SWITCH driving dumb
+      // fixtures) any lit entity counts — the switch itself, or the lights it
+      // controls when they are bound.
+      const forced = d.marker?.is_light === true;
+      const pool = forced
+        ? [...(d.marker?.controls || []), ...d.entities]
+        : d.entities.filter((e) => e.startsWith('light.'));
+      const lightEid = pool.find((e) => this.hass.states[e]?.state === 'on');
       if (!lightEid) continue;
       const glow = glowColorOf(this.hass.states[lightEid], colors.glow_light.c);
       if (!glow) continue;
@@ -3475,7 +3518,7 @@ class HouseplanCard extends LitElement {
           style="height:${this._kiosk ? '100dvh' : 'calc(100dvh - 118px)'}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
-          @pointerdown=${(e: PointerEvent) => this._stagePointerDown(e)}
+          @pointerdown=${(e: PointerEvent) => { this._notePointer(e); this._stagePointerDown(e); }}
           @pointermove=${(e: PointerEvent) => this._stagePointerMove(e)}
           @pointerup=${(e: PointerEvent) => this._stagePointerUp(e)}
           @pointercancel=${(e: PointerEvent) => this._stagePointerUp(e)}>
@@ -3920,7 +3963,9 @@ class HouseplanCard extends LitElement {
   private _renderRoomLabel(
     r: RoomCfg, space: SpaceModel, view: { x: number; y: number; w: number; h: number }, disp: SpaceDisplay,
   ): TemplateResult | typeof nothing {
-    if (!r.name) return nothing;
+    // audit/feedback: rooms without a name still need their gear in the Plan
+    // editor — that is where you name them (field report, 2026-07-27)
+    if (!r.name && !this._markup) return nothing;
     const p = this._labelPos(r, space.id);
     const left = ((p.x - view.x) / view.w) * 100;
     const top = ((p.y - view.y) / view.h) * 100;
@@ -3959,12 +4004,14 @@ class HouseplanCard extends LitElement {
       @pointermove=${(e: PointerEvent) => this._labelMove(e, r, space.id)}
       @pointerup=${() => this._labelUp(r)}
       @pointercancel=${() => this._labelUp(r)}
-    ><span class="rlname">${this._markup && r.id
-        ? html`<ha-icon class="rlgear" icon="mdi:cog-outline"
-            title=${this._t('room.settings_title')}
+    >${this._markup && r.id
+        ? html`<button class="rlgearbtn" title=${this._t('room.settings_title')}
             @pointerdown=${(e: Event) => e.stopPropagation()}
-            @click=${(e: Event) => { e.stopPropagation(); this._openRoomEdit(r); }}></ha-icon>`
-        : nothing}${r.name}${!this._markup && r.area
+            @click=${(e: Event) => { e.stopPropagation(); this._openRoomEdit(r); }}>
+            <ha-icon icon="mdi:cog-outline"></ha-icon>
+            <span class="rlgeartext">${this._t('room.settings_short')}</span>
+          </button>`
+        : nothing}<span class="rlname">${r.name || (this._markup ? this._t('room.unnamed') : '')}${!this._markup && r.area
         ? html`<ha-icon class="rlgo" icon="mdi:open-in-new"
             title=${this._t('room.open_area')}
             @click=${(e: Event) => { e.stopPropagation(); this._clickRoom(r); }}
@@ -4226,6 +4273,16 @@ class HouseplanCard extends LitElement {
    * clearly labeled action button — same interaction contract as HA's more-info.
    */
   private _lockAction(entityId: string, action: 'lock' | 'unlock'): void {
+    // THE ONLY sanctioned lock actuation surface (review CR-1, 2026-07-27).
+    // The invariant is "no lock or alarm panel is ever actuated by a TAP on the
+    // plan" — icons, badges, controls[] and the device card all refuse. This
+    // button is a deliberate, labeled control inside an opened card, the same
+    // contract as Home Assistant's own more-info dialog. Unlocking additionally
+    // asks for confirmation; locking does not (locking is never destructive).
+    if (action === 'unlock') {
+      const name = this.hass?.states?.[entityId]?.attributes?.friendly_name || entityId;
+      if (!confirm(this._t('confirm.unlock', { name }))) return;
+    }
     this.hass?.callService?.('lock', action, { entity_id: entityId });
   }
 
@@ -4463,6 +4520,39 @@ class HouseplanCard extends LitElement {
     </div>`;
   }
 
+  /** Entities of a device worth CONTROLLING or reading, in a sensible order. */
+  private _cardEntities(d: DevItem): { eid: string; kind: 'toggle' | 'value' | 'open' }[] {
+    const h = this.hass;
+    const out: { eid: string; kind: 'toggle' | 'value' | 'open' }[] = [];
+    const seen = new Set<string>();
+    const push = (eid: string) => {
+      if (!eid || seen.has(eid) || !h.states[eid]) return;
+      const reg = h.entities[eid];
+      if (reg?.entity_category === 'config' || reg?.entity_category === 'diagnostic') return;
+      seen.add(eid);
+      const dom = eid.split('.')[0];
+      if (['light', 'switch', 'fan', 'humidifier', 'siren', 'input_boolean'].includes(dom))
+        out.push({ eid, kind: 'toggle' });
+      else if (['cover', 'valve', 'lock', 'climate', 'media_player', 'vacuum', 'water_heater'].includes(dom))
+        out.push({ eid, kind: 'open' }); // needs the full more-info UI
+      else if (['sensor', 'binary_sensor', 'number', 'select'].includes(dom))
+        out.push({ eid, kind: 'value' });
+    };
+    for (const e of d.marker?.controls || []) push(e);
+    if (d.primary) push(d.primary);
+    for (const e of d.entities) push(e);
+    return out.slice(0, 12);
+  }
+
+  /** Toggle straight from the device card (safe domains only). */
+  private _cardToggle(eid: string): void {
+    const dom = eid.split('.')[0];
+    if (dom === 'lock' || dom === 'alarm_control_panel') return; // never from a card tap
+    this.hass
+      .callService('homeassistant', 'toggle', { entity_id: eid })
+      .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
+  }
+
   private _renderInfoCard(): TemplateResult {
     const d = this._infoCard!;
     const st = d.primary ? this.hass.states[d.primary] : undefined;
@@ -4472,8 +4562,38 @@ class HouseplanCard extends LitElement {
       <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
         <div class="hd"><ha-icon icon="${d.icon}"></ha-icon>${d.name}</div>
         <div class="body">
+          ${(() => {
+            // Field feedback: on a wall tablet this card is for CONTROLLING the
+            // home; model/links/manuals are reference material and belong below.
+            const ents = this._cardEntities(d);
+            if (!ents.length) return nothing;
+            return html`<div class="entlist">
+              ${ents.map(({ eid, kind }) => {
+                const est = this.hass.states[eid];
+                const name = this.hass.entities[eid]?.name
+                  || est?.attributes?.friendly_name || eid;
+                const val = est ? this.hass.formatEntityState?.(est) ?? est.state : '';
+                const on = est?.state === 'on' || ['open', 'unlocked', 'playing', 'cleaning'].includes(est?.state);
+                return html`<div class="entrow ${on ? 'on' : ''}">
+                  <ha-icon icon=${stateIcon(
+                    iconFor(name, '', this._iconRules), eid.split('.')[0],
+                    est?.attributes?.device_class, est?.state, false,
+                  )}></ha-icon>
+                  <span class="en">${name}</span>
+                  ${kind === 'toggle'
+                    ? html`<button class="entbtn ${on ? 'on' : ''}"
+                        @click=${() => this._cardToggle(eid)}>${val}</button>`
+                    : kind === 'open'
+                      ? html`<button class="entbtn"
+                          @click=${() => { this._infoCard = null; this._openMoreInfo(eid); }}>${val}</button>`
+                      : html`<span class="ev">${val}</span>`}
+                </div>`;
+              })}
+            </div>`;
+          })()}
           ${d.model ? html`<div class="inforow"><span class="k">${this._t('info.model')}</span><span>${d.model}</span></div>` : nothing}
-          ${stateTxt ? html`<div class="inforow"><span class="k">${this._t('info.state')}</span><span>${stateTxt}</span></div>` : nothing}
+          ${stateTxt && !this._cardEntities(d).length
+            ? html`<div class="inforow"><span class="k">${this._t('info.state')}</span><span>${stateTxt}</span></div>` : nothing}
           ${safeUrl(d.link)
             ? html`<div class="inforow"><span class="k">${this._t('info.link')}</span>
                 <a href="${safeUrl(d.link)}" target="_blank" rel="noreferrer noopener">${d.link}</a></div>`
@@ -4641,6 +4761,11 @@ class HouseplanCard extends LitElement {
               </div>`
             : nothing}
 
+          <label class="srcrow" title=${this._t('marker.is_light_tip')}>
+            <input type="checkbox" .checked=${d.isLight}
+              @change=${(e: Event) => (this._markerDialog = { ...d, isLight: (e.target as HTMLInputElement).checked })} />
+            <span>${this._t('marker.is_light')}</span>
+          </label>
           <label>${this._t('marker.glow_radius_label')}</label>
           <div class="colorrow">
             <input class="tempin" type="number" min="0.5" step="0.5"

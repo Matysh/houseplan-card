@@ -792,6 +792,20 @@ test('clampScale', () => {
   assert.equal(clampScale(undefined, 1.5), 1.5);
 });
 
+test('migratePdfUrls: only confirmed copies are rewritten (review CR-3)', () => {
+  const pdfs = [
+    { name: 'a.pdf', url: '/houseplan_files/files/v_old1/a.pdf?v=1' },
+    { name: 'b.pdf', url: '/houseplan_files/files/v_old1/b.pdf?v=2' },
+  ];
+  // сервер скопировал только a.pdf, причём переименовал из-за коллизии
+  const out = migratePdfUrls(pdfs, 'v_old1', 'dev99', { 'a.pdf': 'a (2).pdf' });
+  assert.equal(out[0].url, '/houseplan_files/files/dev99/a%20(2).pdf?v=1');
+  assert.equal(out[1].url, pdfs[1].url, 'нескопированный файл ссылается на старую папку');
+  // пустой маппинг = ничего не переносим
+  assert.deepEqual(migratePdfUrls(pdfs, 'v_old1', 'dev99', {}).map((p) => p.url),
+    pdfs.map((p) => p.url));
+});
+
 test('migratePdfUrls: rebinding rewrites file urls', () => {
   const pdfs = [
     { name: 'a.pdf', url: '/houseplan_files/files/v_old1/a.pdf?v=1' },

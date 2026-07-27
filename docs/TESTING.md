@@ -20,6 +20,36 @@
       bundle. Sanity ritual: break one invariant on purpose (e.g. remove the
       kiosk editor guard) and confirm the matching smoke goes red [auto: CI job "smoke"]
 
+- [ ] Room gear discoverability (v1.43.3, user feedback): in the Plan editor
+      every room card carries a pill button "⚙ Room" of a FIXED readable size
+      (independent of the card font) — including rooms without a name; it opens
+      Room settings [auto: smoke_feedback_v2]
+- [ ] Metrics readability (v1.43.3): the metrics line is 0.75 of the room name
+      (was 0.62 — unreadable on tablets); per-room sliders still apply on top [auto: smoke_feedback_v2]
+- [ ] Touch tooltips, take two (v1.43.3): a hover tooltip never appears after
+      ANY touch/pen pointer event, even if the browser claims `hover: hover`
+      (stylus, paired mouse, vendor skins) [auto: smoke_feedback_v2]
+
+- [ ] Light-source flag (v1.44.0, user feedback): a smart SWITCH driving dumb
+      fixtures glows in the "Light sources" fill once "This device is a light
+      source" is ticked (its own entity or the lights bound under "Controls");
+      unticked devices without a light entity never glow [auto: smoke_glow]
+- [ ] Device card controls (v1.44.0): the device card opens with its
+      controllable entities FIRST — toggles right there (≥30 px tap targets),
+      cover/lock/climate open HA more-info; model, links and manuals moved
+      below; config/diagnostic entities are not listed; locks never toggle from
+      the card [auto: smoke_card_controls]
+
+- [ ] Lock invariant, all paths (v1.44.2, review CR-1): icon tap, controls[],
+      device card and _cardToggle refuse locks/alarm panels entirely; the door
+      card's Unlock asks for confirmation, Lock does not [auto: smoke_lock_invariant]
+- [ ] Attachment migration is transactional (v1.44.2, review CR-2/CR-3):
+      rebinding COPIES files, saves the config, and only then deletes the old
+      folder; a rejected save leaves the old files and urls intact; a name
+      collision in the destination gets a unique name (the pre-existing file is
+      never silently linked); urls are rewritten only for confirmed copies
+      [auto: unit logic.test + tests_backend]
+
 ## Environments matrix
 
 Run the *core flows* (marked ★ below) in each environment at least once per minor release:

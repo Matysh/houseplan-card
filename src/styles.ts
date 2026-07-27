@@ -383,6 +383,27 @@ export const cardStyles = css`
       gap: 0.25em;
       font-size: calc(1em * var(--rl-name, 1));
     }
+    .rlgearbtn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 3px;
+      padding: 3px 8px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--hp-accent);
+      color: var(--text-primary-color, #fff);
+      font: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1;
+      cursor: pointer;
+      pointer-events: auto;
+      opacity: 0.92;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+    }
+    .rlgearbtn:hover { opacity: 1; }
+    .rlgearbtn ha-icon { --mdc-icon-size: 14px; display: inline-flex; }
     .rlgear {
       --mdc-icon-size: 0.9em;
       display: inline-flex;
@@ -406,7 +427,7 @@ export const cardStyles = css`
       display: flex;
       align-items: center;
       gap: 0.55em;
-      font-size: calc(0.62em * var(--rl-meta, 1));
+      font-size: calc(0.75em * var(--rl-meta, 1)); /* feedback: 0.62 was unreadable on a tablet */
       font-weight: 600;
       letter-spacing: 0.02em;
       opacity: 0.9;
@@ -1193,6 +1214,42 @@ export const cardStyles = css`
     }
     .pdftag .x:hover {
       color: #ff7a5c;
+    }
+    .entlist {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 10px;
+    }
+    .entrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      background: var(--secondary-background-color, rgba(128, 128, 128, 0.12));
+    }
+    .entrow ha-icon { --mdc-icon-size: 20px; color: var(--hp-muted); }
+    .entrow.on ha-icon { color: var(--hp-accent); }
+    .entrow .en { flex: 1; font-size: 13px; }
+    .entrow .ev { font-size: 13px; color: var(--hp-muted); }
+    .entbtn {
+      min-width: 74px;
+      min-height: 32px;
+      padding: 4px 12px;
+      border: 1px solid var(--hp-muted);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--hp-txt);
+      font: inherit;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .entbtn.on {
+      background: var(--hp-accent);
+      border-color: var(--hp-accent);
+      color: var(--text-primary-color, #fff);
+      font-weight: 600;
     }
     .inforow {
       display: flex;

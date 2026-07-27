@@ -5,6 +5,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/Matysh/houseplan-card)](https://github.com/Matysh/houseplan-card/stargazers)
 [![CI](https://github.com/Matysh/houseplan-card/actions/workflows/validate.yml/badge.svg)](https://github.com/Matysh/houseplan-card/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Telegram chat](https://img.shields.io/badge/Telegram-chat-2CA5E0?logo=telegram&logoColor=white)](https://t.me/ha_houseplan)
 
 **Turn Home Assistant into a live, interactive map of your home.** Upload or draw
 a floor plan, outline the rooms with your mouse — and every smart device appears
@@ -15,7 +16,7 @@ right on your Lovelace dashboard.
 
 ![Interactive Home Assistant floor plan: live rooms, devices, lights and climate on a real floorplan card](docs/images/demo.gif)
 
-🇷🇺 [Документация на русском](README.ru.md)
+🇷🇺 [Документация на русском](README.ru.md) · 💬 [Telegram chat: **@ha_houseplan**](https://t.me/ha_houseplan)
 
 **Feature highlights**
 
@@ -255,6 +256,22 @@ turned the way it is mounted.
 2. **Settings → Devices & Services → House Plan → Delete** the integration entry.
 3. Remove the integration from **HACS** (or delete the `custom_components/houseplan` folder if installed manually) and restart Home Assistant.
 4. Optionally delete the saved plan data: the `config/houseplan/` files (backgrounds and attachments) and the `houseplan.config` / `houseplan.layout` entries in the `config/.storage` directory.
+
+---
+
+## Getting help & sharing your plan
+
+- 💬 **[Telegram chat — @ha_houseplan](https://t.me/ha_houseplan)** — questions,
+  setup help, feature ideas, and screenshots of your plans. The fastest way to
+  reach the author and other users.
+- 🐞 [GitHub issues](https://github.com/Matysh/houseplan-card/issues) — bug
+  reports and feature requests (please attach your House Plan version).
+- 💡 [GitHub discussions](https://github.com/Matysh/houseplan-card/discussions) —
+  longer-form ideas.
+
+When reporting a problem, the version number helps a lot: it is shown in the
+browser console on load (`HOUSEPLAN-CARD vX.Y.Z`) and in **Settings → Devices &
+Services → House Plan**.
 
 ---
 
