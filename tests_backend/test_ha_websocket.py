@@ -99,4 +99,29 @@ async def test_plan_set_validates(hass: HomeAssistant, hass_ws_client: WebSocket
         {"type": "houseplan/plan/set", "space_id": "s1", "ext": "png", "data": "aGVsbG8="}
     )
     resp = await client.receive_json()
-    assert resp["success"] and resp["result"]["url"].startswith("/houseplan_files/plans/s1.png?v=")
+    assert resp["success"] and resp["result"]["url"].startswith("/api/houseplan/content/plans/_/s1.png?v=")
+
+
+async def test_admin_check_fails_closed(hass, hass_ws_client):
+    """audit B2/T4: with no config entry the policy is unknown — deny writes.
+
+    This used to allow them: plan uploads slipped through during a reload.
+    """
+    from custom_components.houseplan import websocket_api as wsapi
+
+    class _User:
+        is_admin = False
+
+    class _Conn:
+        user = _User()
+
+    # no entry at all → non-admin must be refused
+    assert wsapi._check_write(hass, _Conn()) is False
+
+    class _Admin:
+        is_admin = True
+
+    class _AdminConn:
+        user = _Admin()
+
+    assert wsapi._check_write(hass, _AdminConn()) is True

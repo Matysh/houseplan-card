@@ -31,7 +31,8 @@ async def test_upload_ok(hass: HomeAssistant, hass_client: ClientSessionGenerato
     resp = await client.post("/api/houseplan/upload", data=fd)
     assert resp.status == 200
     body = await resp.json()
-    assert body["ok"] and body["url"].startswith("/houseplan_files/files/m1/manual.pdf?v=")
+    # audit B1: uploads now return the AUTHENTICATED content URL
+    assert body["ok"] and body["url"].startswith("/api/houseplan/content/files/m1/manual.pdf?v=")
 
 
 async def test_upload_bad_ext(hass: HomeAssistant, hass_client: ClientSessionGenerator) -> None:
@@ -57,4 +58,4 @@ async def test_upload_traversal_sanitized(hass: HomeAssistant, hass_client: Clie
     # no path segment may be exactly ".." (dots inside a name are harmless)
     path = body["url"].split("?", 1)[0]
     assert all(seg != ".." for seg in path.split("/"))
-    assert path.startswith("/houseplan_files/files/")
+    assert path.startswith("/api/houseplan/content/files/")
