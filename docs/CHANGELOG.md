@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.42.2 — 2026-07-26
+- Touch devices no longer pop hover tooltips on every tap (field feedback:
+  "extra labels appear and get in the way on a tablet"). Hover tooltips are
+  desktop-only now; on touch the same data lives in room cards and the
+  long-press device card.
+
 ## v1.42.1 — 2026-07-26 (room-card font sizes)
 - Closing the "can't change the font size" feedback: **three sliders**.
   Space settings gained a base room-card font size for the whole space;

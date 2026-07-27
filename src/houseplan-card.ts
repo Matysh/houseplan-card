@@ -32,7 +32,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.42.1';
+const CARD_VERSION = '1.42.2';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -1267,7 +1267,17 @@ class HouseplanCard extends LitElement {
     }, 3500);
   }
 
+  /** True on touch-first devices (tablets/phones): no real hover there. */
+  private static readonly _noHover =
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(hover: none)').matches;
+
   private _showTip(ev: MouseEvent, title: string, meta: string, lqi?: number | null, temp?: number | null): void {
+    // Field feedback: on tablets every tap synthesized a mousemove and popped
+    // the hover tooltip over the finger. Touch devices get NO hover tooltips —
+    // the same data lives in room cards and the long-press device card.
+    if (HouseplanCard._noHover) return;
     if (this._drag) return;
     this._tip = { x: ev.clientX, y: ev.clientY, title, meta, lqi, temp };
   }
