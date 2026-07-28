@@ -123,3 +123,25 @@ test('contentBounds: devices outside every room stretch the frame', () => {
   // and junk coordinates are ignored, not spread across the canvas
   assert.deepEqual(contentBounds(one, 0.05, [[NaN, 5]]), contentBounds(one));
 });
+
+test('contentBounds: never degenerate, never unbounded (HP-1500-03)', () => {
+  const empty = spaceModels({ spaces: [{ id: 's', view_box: [0, 0, 1, 1], rooms: [] }], markers: [] })[0];
+  // a single marker has no area — the frame gets a floor instead of a 0x0 viewBox
+  const one = contentBounds(empty, 0.05, [[500, 500]]);
+  assert.ok(one.w >= 200 && one.h >= 200, 'a lone marker still frames some canvas');
+  assert.ok(Math.abs(one.x + one.w / 2 - 500) < 1, 'centred on the marker');
+  // a collinear row: the flat axis gets the floor, the long one keeps its span
+  const row = contentBounds(empty, 0.05, [[100, 500], [900, 500]]);
+  assert.ok(row.h >= 200, 'the flat axis is opened up');
+  assert.ok(row.w > 800, 'the long axis is untouched');
+  // an absurd stored coordinate does not command the frame...
+  const room = spaceModels({ spaces: [{
+    id: 's', view_box: [0, 0, 1, 1],
+    rooms: [{ id: 'r', poly: [[0.4, 0.4], [0.6, 0.4], [0.6, 0.6], [0.4, 0.6]] }],
+  }], markers: [] })[0];
+  assert.deepEqual(contentBounds(room, 0.05, [[1e100, 500]]), contentBounds(room));
+  assert.deepEqual(contentBounds(room, 0.05, [[-1e100, -1e100]]), contentBounds(room));
+  // ...but a device a bit past the canvas edge still counts (the gate sensor)
+  const near = contentBounds(room, 0.05, [[1100, 500]]);
+  assert.ok(near.x + near.w > 1050, 'slightly outside the canvas still stretches the frame');
+});

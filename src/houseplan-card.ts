@@ -36,7 +36,7 @@ import { cardStyles } from './styles';
 import { fitInSquare, contentBounds } from './space-geometry';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.50.0';
+const CARD_VERSION = '1.50.1';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -246,6 +246,7 @@ class HouseplanCard extends LitElement {
   private _suppressClick = false;
   private _roViewport?: ResizeObserver;
   private _roHdr?: ResizeObserver;
+  private _onWinResize?: () => void;
   private _hdrH = 118; // measured px above the stage (see the observer in updated())
   private _onboardingShown = false; // the auto space dialog is shown once per session
 
@@ -436,6 +437,10 @@ class HouseplanCard extends LitElement {
     this._roViewport = undefined;
     this._roHdr?.disconnect();
     this._roHdr = undefined;
+    if (this._onWinResize) {
+      window.removeEventListener('resize', this._onWinResize);
+      this._onWinResize = undefined;
+    }
     if (this._unsubCfg) {
       this._unsubCfg();
       this._unsubCfg = null;
@@ -729,15 +734,23 @@ class HouseplanCard extends LitElement {
       this._roViewport = new ResizeObserver(() => this._refitView());
       this._roViewport.observe(stage);
     }
-    // The stage fills the rest of the viewport. What sits above it — the HA
-    // toolbar, card margins, our own header — DEPENDS ON THE MODE: the editor
-    // bars used to be billed against a hard-coded 118px, so entering an editor
-    // pushed the plan down by the difference and cut its bottom off below the
-    // fold. Measure where the stage actually starts instead of assuming.
+    // The stage fills the rest of the viewport. What sits above it inside the
+    // CARD depends on the mode — the editor bars used to be billed against a
+    // hard-coded 118px, so entering an editor pushed the plan down by the
+    // difference. Measure our own chrome (stage top relative to the card) and
+    // allow a BOUNDED amount for what the dashboard puts above us (HA's
+    // toolbar). The first version used the absolute document coordinate here:
+    // put anything tall before the card and the "header budget" swallowed the
+    // whole viewport, leaving a 0px stage (HP-1500-02). Content above the card
+    // is the dashboard's business — it scrolls; it is not header.
     const hdr = this.renderRoot.querySelector('.hdr') as HTMLElement | null;
     if (hdr && stage && !this._roHdr) {
       const measure = () => {
-        const t = Math.round(stage.getBoundingClientRect().top + (window.scrollY || 0));
+        const card = this.renderRoot.querySelector('ha-card');
+        if (!card) return;
+        const own = stage.getBoundingClientRect().top - card.getBoundingClientRect().top;
+        const above = Math.min(Math.max(card.getBoundingClientRect().top, 0), 120);
+        const t = Math.round(own + above);
         if (t >= 0 && Math.abs(t - this._hdrH) > 1) this._hdrH = t;
       };
       // a frame later: setting state straight from the observer callback makes
@@ -745,6 +758,8 @@ class HouseplanCard extends LitElement {
       // notifications" — the render it triggers resizes the stage again
       this._roHdr = new ResizeObserver(() => requestAnimationFrame(measure));
       this._roHdr.observe(hdr);
+      this._onWinResize = () => requestAnimationFrame(measure);
+      window.addEventListener('resize', this._onWinResize);
       measure();
     }
     if (stage && !this._view) this._refitView();

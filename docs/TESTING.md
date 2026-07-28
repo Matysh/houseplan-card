@@ -239,6 +239,16 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       on the plan after a reload. Same for each tap action and each fill mode
       [auto: backend test_every_display_mode_the_editor_offers_is_accepted and
       neighbours, test_a_marker_showing_its_value_can_be_saved]
+- [ ] Card below other dashboard content (v1.50.1, HP-1500-02): place the card
+      after a tall card in a normal dashboard — the plan still gets most of the
+      viewport instead of a zero-height stage [auto: smoke_zoom_out]
+- [ ] Frame never degenerate (v1.50.1, HP-1500-03): a space with one lone
+      marker opens with canvas around it, not an empty scene; an absurd stored
+      coordinate neither hides the plan nor is accepted by the server
+      [auto: unit contentBounds + backend test_layout_coordinates_are_bounded]
+- [ ] Stranded migration repair (v1.50.1, HP-1500-01): geometry/repair with
+      dry_run previews, applies with a backup, undo restores; wrong space is
+      recoverable [auto: test_geometry_repair_is_explicit_previewable_and_undoable]
 - [ ] Editors see the whole canvas (v1.50.0, HP-1490-03): a hand-drawn space
       with one small room opens content-fit in View; switching to the plan
       editor shows the full square with room to draw a second room far away;
