@@ -47,11 +47,17 @@ async function fetchFresh(hass: any): Promise<HpConfigSnapshot> {
   };
   if (!subscribed && hass.connection?.subscribeEvents) {
     subscribed = true;
+    const invalidate = () => {
+      cache = null; // invalidate; listeners reload
+      listeners.forEach((l) => l());
+    };
     try {
-      await hass.connection.subscribeEvents(() => {
-        cache = null; // invalidate; listeners reload
-        listeners.forEach((l) => l());
-      }, 'houseplan_config_updated');
+      await hass.connection.subscribeEvents(invalidate, 'houseplan_config_updated');
+      // Layout is separate state: dragging an icon on the full card writes only
+      // the layout, so a static card on the same dashboard kept showing the old
+      // position until the config changed or the page was reloaded — possibly
+      // forever on a wall tablet (HP-1454-08).
+      await hass.connection.subscribeEvents(invalidate, 'houseplan_layout_updated');
     } catch {
       subscribed = false;
     }

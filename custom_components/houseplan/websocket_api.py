@@ -5,6 +5,7 @@ import logging
 
 import base64
 import binascii
+import json
 import secrets
 from pathlib import Path
 from typing import Any
@@ -16,13 +17,13 @@ from homeassistant.core import HomeAssistant, callback
 
 from .const import (
     CONF_ADMIN_ONLY, DEFAULT_CONFIG,
-    CONTENT_URL, MAX_SIGN_PATHS, PLANS_DIR, PLANS_URL,
+    CONTENT_URL, FILES_DIR, MAX_SIGN_PATHS, PLANS_DIR, PLANS_URL,
 )
 from .auth import may_write
-from .plans import collect_plans
+from .plans import collect_attachments, collect_plans
 from .store import HouseplanData, get_data, get_entry
 from .validation import (
-    CONFIG_SCHEMA, LAYOUT_SCHEMA, MAX_PLAN_BYTES,
+    CONFIG_SCHEMA, LAYOUT_SCHEMA, MAX_CONFIG_BYTES, MAX_PLAN_BYTES,
     PLAN_EXTENSIONS, POS_SCHEMA, valid_space_id,
 )
 
@@ -74,7 +75,9 @@ async def ws_layout_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
     if rt is None:
         return
     data = await rt.store.async_load() or {}
-    connection.send_result(msg["id"], {"layout": data.get("layout", {})})
+    connection.send_result(
+        msg["id"], {"layout": data.get("layout", {}), "rev": int(data.get("rev", 0))}
+    )
 
 
 @websocket_api.websocket_command(
@@ -107,8 +110,10 @@ async def ws_layout_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
                 msg["id"], "conflict", f"Layout changed elsewhere (rev {current_rev})"
             )
             return
-        await rt.store.async_save({"layout": msg["layout"], "rev": current_rev + 1})
-    connection.send_result(msg["id"], {"ok": True, "rev": current_rev + 1})
+        new_rev = current_rev + 1
+        await rt.store.async_save({"layout": msg["layout"], "rev": new_rev})
+    hass.bus.async_fire("houseplan_layout_updated", {"rev": new_rev})
+    connection.send_result(msg["id"], {"ok": True, "rev": new_rev})
 
 
 @websocket_api.websocket_command(
@@ -131,8 +136,13 @@ async def ws_layout_update(hass: HomeAssistant, connection, msg: dict[str, Any])
         data = await rt.store.async_load() or {}
         layout = data.get("layout", {})
         layout[msg["device_id"]] = msg["pos"]
-        await rt.store.async_save({"layout": layout})
-    connection.send_result(msg["id"], {"ok": True})
+        # keep the revision: a point-wise write used to drop it, which made the
+        # optimistic locking on layout/set meaningless — every drag reset the
+        # counter to 0 (HP-1454-08)
+        new_rev = int(data.get("rev", 0)) + 1
+        await rt.store.async_save({"layout": layout, "rev": new_rev})
+    hass.bus.async_fire("houseplan_layout_updated", {"rev": new_rev})
+    connection.send_result(msg["id"], {"ok": True, "rev": new_rev})
 
 
 @websocket_api.websocket_command(
@@ -297,13 +307,17 @@ async def ws_layout_delete(hass: HomeAssistant, connection, msg: dict[str, Any])
     rt = _runtime(hass, connection, msg["id"])
     if rt is None:
         return
+    new_rev: int | None = None
     async with rt.write_lock:
         data = await rt.store.async_load() or {}
         layout = data.get("layout", {})
         if msg["device_id"] in layout:
             del layout[msg["device_id"]]
-            await rt.store.async_save({"layout": layout})
-    connection.send_result(msg["id"], {"ok": True})
+            new_rev = int(data.get("rev", 0)) + 1
+            await rt.store.async_save({"layout": layout, "rev": new_rev})
+    if new_rev is not None:
+        hass.bus.async_fire("houseplan_layout_updated", {"rev": new_rev})
+    connection.send_result(msg["id"], {"ok": True, "rev": new_rev})
 
 
 # ---------------- space configuration ----------------
@@ -343,6 +357,16 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
     rt = _runtime(hass, connection, msg["id"])
     if rt is None:
         return
+    # Per-field limits bound each list; this bounds their product (HP-1454-05).
+    # Everything below the caps can still add up to something no dashboard can
+    # render, and the store writes it to disk on every save.
+    size = len(json.dumps(msg["config"], separators=(",", ":")))
+    if size > MAX_CONFIG_BYTES:
+        connection.send_error(
+            msg["id"], "too_large",
+            f"Configuration is {size // 1024} KB, the limit is {MAX_CONFIG_BYTES // 1024} KB",
+        )
+        return
     async with rt.write_lock:
         data = await rt.config_store.async_load() or {}
         current_rev = data.get("rev", 0)
@@ -369,12 +393,14 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         # failure here must not withhold the event and the success response,
         # or the client retries an edit the server has already accepted and
         # gets a conflict for its trouble (R4-1).
+        def _collect() -> None:
+            collect_plans(Path(hass.config.path(PLANS_DIR)), data.get("config"), msg["config"])
+            collect_attachments(Path(hass.config.path(FILES_DIR)), data.get("config"), msg["config"])
+
         try:
-            await hass.async_add_executor_job(
-                collect_plans, Path(hass.config.path(PLANS_DIR)), data.get("config"), msg["config"]
-            )
+            await hass.async_add_executor_job(_collect)
         except Exception:  # noqa: BLE001 — see above: the commit stands regardless
-            _LOGGER.exception("House Plan: collecting superseded plan files failed")
+            _LOGGER.exception("House Plan: collecting superseded files failed")
     hass.bus.async_fire("houseplan_config_updated", {"rev": new_rev})
     # refresh repair issues (broken plan references) without waiting for a restart
     entry = get_entry(hass)

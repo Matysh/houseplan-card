@@ -1,5 +1,79 @@
 # Changelog
 
+## v1.46.0 — 2026-07-28 (full external audit of v1.45.4: HP-1454-01 … -10)
+
+**Security**
+
+- **An uploaded SVG plan is no longer a live document of your Home Assistant
+  origin (HP-1454-01, high — release blocker).** Inside the card a plan is
+  referenced by `<image>`, where scripts never run; but the same url opened
+  directly became a top-level document of HA's own origin, and a `<script>` in
+  it could read the session's `localStorage` and call the API. Uploading needs
+  write access, which by default every authenticated user has, and a signed url
+  is easy to hand to an administrator. Plan responses for SVG now carry a
+  `sandbox` Content-Security-Policy, which drops the document into an opaque
+  origin. Only SVG gets it — a CSP on a PDF can break the browser's built-in
+  viewer, and a raster image cannot execute anything. Nothing changes for
+  existing plans: the card renders them exactly as before.
+
+**Data integrity**
+
+- **A manual attached to a device no longer overwrites the previous one
+  (HP-1454-02).** The upload wrote straight to `<marker>/<filename>`, outside
+  the configuration transaction: cancelling the dialog, or a rejected save, left
+  the stored url serving the new bytes. And every new icon uploaded into one
+  shared folder, so two of them attaching `manual.pdf` ended up pointing at the
+  same physical file. Uploads now take a free name and never overwrite, a new
+  icon gets its own staging folder whose files move to the real icon when the
+  save is accepted, and an upload nobody saved is collected an hour later.
+- **Two quick edits can no longer lose the second one (HP-1454-03).** The
+  debounce spaced out the starts of a save, not the saves themselves. If one
+  took longer than half a second — a busy instance, a slow link — the next edit
+  went out with the same revision, the server accepted the first and rejected
+  the second, and the conflict handler reloaded the server copy over the local
+  one. The edit was gone, with a message blaming another window when there was
+  none. Writes are now serialized: one at a time, each carrying the revision the
+  previous one returned.
+
+**Correctness and limits**
+
+- **Open boundaries follow the geometry again (HP-1454-04).** Their cache was
+  keyed on room ids and links only, so changing a space's aspect ratio or
+  dragging a vertex left the open boundaries — and the light spilling through
+  them — at their old coordinates until a reload. The cache is now keyed on the
+  rendered model itself, which is exactly what it is computed from.
+- **The configuration can no longer be made arbitrarily heavy (HP-1454-05).**
+  The outer collections were capped; the ones inside them were not. A polygon
+  with 150 000 points, or a list of 100 000 device ids, validated fine and then
+  made every render walk it. There are now limits on polygon vertices, open-to
+  links, controls, attachments, text and url lengths, plus a cap on the whole
+  serialized configuration. The obsolete `segments` field is dropped by the
+  server instead of trusting the card to strip it.
+- **Large files stream instead of being held in memory (HP-1454-06).** A 50 MB
+  manual was read whole into memory on the way in and again on the way out; a
+  couple of parallel downloads were real pressure on a small Home Assistant
+  host. Uploads stream to a temporary file, downloads stream from disk.
+
+**Consistency**
+
+- **The static space card honours per-room fill settings (HP-1454-07).** It
+  builds its model with a different function, and room settings were not carried
+  into it, so a room you had set to "no fill" was still painted.
+- **Moving an icon updates the static card immediately (HP-1454-08).** Layout is
+  separate state with no revision and no event: a drag on the full card left a
+  static card next to it showing the old position until the configuration
+  changed or the page was reloaded. Layout writes now keep a revision, return
+  it, and announce themselves — which also makes the optimistic locking on a
+  wholesale layout write mean something, since a point-wise write used to reset
+  the counter.
+- **A repair warning about a missing plan disappears with its space
+  (HP-1454-09).** The cleanup only looked at spaces that still exist, so
+  deleting or renaming one left its warning in Repairs with nothing able to
+  clear it.
+- Build chain: `serialize-javascript` pinned past two advisories (HP-1454-10).
+  Not reachable at runtime and production dependencies were already clean, but
+  it is one line.
+
 ## v1.45.4 — 2026-07-28 (review of v1.45.3: R5-1, R5-2)
 - **A partly successful signing answer no longer skips the backoff (R5-1).**
   The backend signs each path independently: one it cannot sign is logged,

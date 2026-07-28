@@ -66,6 +66,26 @@ MAX_MARKERS = 2000
 MAX_OPENINGS = 500
 MAX_DECOR = 1000
 MAX_LAYOUT = 5000
+# Inner limits (HP-1454-05). The outer collections were capped, the collections
+# INSIDE them were not: a 150 000-point polygon or a 100 000-entry known_devices
+# list passed validation, then made the card build gigantic SVG attributes and
+# walk them on every render. Any authenticated writer could store one, and with
+# `admin_only` off that is every user. These are product limits, not guesses: a
+# hand-drawn room does not need 500 vertices, and no home has 200 lights behind
+# one switch.
+MAX_POLY_POINTS = 500
+MAX_OPEN_TO = 50
+MAX_CONTROLS = 200
+MAX_PDFS = 50
+MAX_KNOWN_DEVICES = 20000
+MAX_TEXT = 500          # names, models, ids
+MAX_DESCRIPTION = 4000
+MAX_URL = 2000
+MAX_CONFIG_BYTES = 12 * 1024 * 1024
+
+_TEXT = vol.All(str, vol.Length(max=MAX_TEXT))
+_TEXT_OR_NONE = vol.Any(None, _TEXT)
+_URL = vol.All(str, vol.Length(max=MAX_URL))
 
 POS_SCHEMA = vol.Schema(
     {vol.Required("x"): _finite, vol.Required("y"): _finite},
@@ -85,10 +105,10 @@ def _require_geometry(room: dict) -> dict:
 ROOM_SCHEMA = vol.All(
     vol.Schema(
         {
-            vol.Required("id"): str,
-            vol.Required("name"): str,
-            vol.Optional("area"): vol.Any(str, None),
-            vol.Optional("open_to"): [str],
+            vol.Required("id"): _TEXT,
+            vol.Required("name"): _TEXT,
+            vol.Optional("area"): _TEXT_OR_NONE,
+            vol.Optional("open_to"): vol.All([_TEXT], vol.Length(max=MAX_OPEN_TO)),
             vol.Optional("settings"): vol.Any(
                 None,
                 vol.Schema(
@@ -106,7 +126,7 @@ ROOM_SCHEMA = vol.All(
             vol.Optional("y"): _finite,
             vol.Optional("w"): _finite,
             vol.Optional("h"): _finite,
-            vol.Optional("poly"): vol.All([POINT], vol.Length(min=3)),
+            vol.Optional("poly"): vol.All([POINT], vol.Length(min=3, max=MAX_POLY_POINTS)),
         },
         extra=vol.ALLOW_EXTRA,
     ),
@@ -185,7 +205,10 @@ SPACE_SCHEMA = vol.Schema(
         # Legacy: walls are derived from room outlines since v1.19.0 — a line has no
         # independent existence. Still accepted so a stale browser tab cannot fail a save;
         # the card strips the field on every write.
-        vol.Optional("segments"): [vol.All([vol.Coerce(float)], vol.Length(min=4, max=4))],
+        # Accepted so a stale browser tab cannot fail a save, then DROPPED here
+        # (HP-1454-05): relying on a modern client to strip an unbounded legacy
+        # list is not a limit, it is a hope. `Remove` returns the key stripped.
+        vol.Remove("segments"): object,
     },
     extra=vol.ALLOW_EXTRA,
 )
@@ -197,13 +220,13 @@ MARKER_SCHEMA = vol.Schema(
         vol.Optional("space"): vol.Any(str, None),
         vol.Optional("area"): vol.Any(str, None),
         vol.Optional("hidden"): bool,
-        vol.Optional("name"): vol.Any(str, None),
-        vol.Optional("icon"): vol.Any(str, None),
-        vol.Optional("model"): vol.Any(str, None),
-        vol.Optional("link"): vol.Any(str, None),
-        vol.Optional("description"): vol.Any(str, None),
+        vol.Optional("name"): _TEXT_OR_NONE,
+        vol.Optional("icon"): _TEXT_OR_NONE,
+        vol.Optional("model"): _TEXT_OR_NONE,
+        vol.Optional("link"): vol.Any(None, _URL),
+        vol.Optional("description"): vol.Any(None, vol.All(str, vol.Length(max=MAX_DESCRIPTION))),
         vol.Optional("tap_action"): vol.Any("info", "more-info", "toggle", None),
-        vol.Optional("controls"): vol.Any([str], None),
+        vol.Optional("controls"): vol.Any(None, vol.All([_TEXT], vol.Length(max=MAX_CONTROLS))),
         vol.Optional("glow_radius_cm"): vol.Any(vol.All(vol.Coerce(float), vol.Range(min=10, max=10000)), None),
         vol.Optional("is_light"): vol.Any(bool, None),
         vol.Optional("room_id"): vol.Any(str, None),
@@ -214,9 +237,10 @@ MARKER_SCHEMA = vol.Schema(
         vol.Optional("ripple_size"): vol.Any(vol.All(vol.Coerce(float), vol.Range(min=1, max=20)), None),
         vol.Optional("size"): vol.Any(vol.All(vol.Coerce(float), vol.Range(min=0.2, max=6)), None),
         vol.Optional("angle"): vol.Any(vol.All(vol.Coerce(float), vol.Range(min=-360, max=360)), None),
-        vol.Optional("pdfs"): [
-            vol.Schema({vol.Required("name"): str, vol.Required("url"): str}, extra=vol.ALLOW_EXTRA)
-        ],
+        vol.Optional("pdfs"): vol.All(
+            [vol.Schema({vol.Required("name"): _TEXT, vol.Required("url"): _URL}, extra=vol.ALLOW_EXTRA)],
+            vol.Length(max=MAX_PDFS),
+        ),
     },
     extra=vol.ALLOW_EXTRA,
 )
@@ -227,8 +251,8 @@ CONFIG_SCHEMA = vol.Schema(
         vol.Optional("settings", default=dict): vol.Schema(
             {
                 vol.Optional("glow_radius_cm"): vol.All(vol.Coerce(float), vol.Range(min=10, max=10000)),
-                vol.Optional("known_devices"): [str],
-                vol.Optional("new_device_ids"): [str],
+                vol.Optional("known_devices"): vol.All([_TEXT], vol.Length(max=MAX_KNOWN_DEVICES)),
+                vol.Optional("new_device_ids"): vol.All([_TEXT], vol.Length(max=MAX_KNOWN_DEVICES)),
                 vol.Optional("fill_colors"): vol.Schema(
                     {
                         str: vol.Schema(

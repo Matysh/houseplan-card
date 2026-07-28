@@ -545,3 +545,151 @@ async def test_signing_one_path_may_fail_without_failing_the_request(
     urls = resp["result"]["urls"]
     assert good in urls and "authSig=" in urls[good]
     assert bad not in urls, "an unsignable path is absent, never an unsigned url"
+
+
+async def test_config_write_is_capped_by_total_size(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """HP-1454-05: per-field limits bound each list, this bounds their product."""
+    from custom_components.houseplan.validation import MAX_CONFIG_BYTES, MAX_TEXT
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    cfg = await _cfg([{"id": "f1", "plan_url": None}])
+    # every field inside the caps, the whole thing far past them
+    blob = "d" * MAX_TEXT
+    cfg["settings"] = {"known_devices": [blob] * (MAX_CONFIG_BYTES // MAX_TEXT + 10)}
+    resp = await _save(client, cfg, 0)
+    assert not resp["success"] and resp["error"]["code"] == "too_large"
+
+    cfg["settings"] = {"known_devices": ["ok"]}
+    assert (await _save(client, cfg, 0))["success"]
+
+
+async def test_layout_keeps_its_revision_and_announces_changes(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """HP-1454-08: point-wise writes used to drop the revision and say nothing.
+
+    layout/set offered optimistic locking, but every drag wrote {"layout": …}
+    and reset the counter to 0, so the lock protected nothing; and a static card
+    on the same dashboard never learned that a marker had moved.
+    """
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    events: list[dict] = []
+    hass.bus.async_listen("houseplan_layout_updated", lambda ev: events.append(ev.data))
+
+    await client.send_json_auto_id({"type": "houseplan/layout/get"})
+    assert (await client.receive_json())["result"]["rev"] == 0
+
+    await client.send_json_auto_id(
+        {"type": "houseplan/layout/set", "layout": {"a": {"x": 1, "y": 2}}, "expected_rev": 0}
+    )
+    rev = (await client.receive_json())["result"]["rev"]
+    assert rev == 1
+
+    await client.send_json_auto_id(
+        {"type": "houseplan/layout/update", "device_id": "b", "pos": {"x": 3, "y": 4}}
+    )
+    assert (await client.receive_json())["result"]["rev"] == 2
+
+    await client.send_json_auto_id({"type": "houseplan/layout/delete", "device_id": "b"})
+    assert (await client.receive_json())["result"]["rev"] == 3
+
+    await client.send_json_auto_id({"type": "houseplan/layout/get"})
+    got = await client.receive_json()
+    assert got["result"]["rev"] == 3 and got["result"]["layout"] == {"a": {"x": 1, "y": 2}}
+
+    # a stale wholesale write is refused, which it could not be before
+    await client.send_json_auto_id(
+        {"type": "houseplan/layout/set", "layout": {}, "expected_rev": 1}
+    )
+    bad = await client.receive_json()
+    assert not bad["success"] and bad["error"]["code"] == "conflict"
+
+    await hass.async_block_till_done()
+    assert [e["rev"] for e in events] == [1, 2, 3]
+
+
+async def test_uploaded_svg_is_sandboxed_and_a_pdf_is_not(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, hass_client
+) -> None:
+    """HP-1454-01: user SVG served from HA's origin must not be a live document.
+
+    Only SVG gets the header: a CSP on a PDF response can break the browser's
+    built-in viewer, and a raster image cannot execute anything anyway.
+    """
+    import os
+
+    from custom_components.houseplan.const import CONTENT_URL, FILES_DIR, PLANS_DIR
+
+    await _setup(hass)
+    plans = hass.config.path(PLANS_DIR)
+    files = os.path.join(hass.config.path(FILES_DIR), "m1")
+
+    def _write() -> None:
+        os.makedirs(plans, exist_ok=True)
+        os.makedirs(files, exist_ok=True)
+        with open(os.path.join(plans, "x.svg"), "wb") as fh:
+            fh.write(b"<svg xmlns='http://www.w3.org/2000/svg'/>")
+        with open(os.path.join(plans, "x.png"), "wb") as fh:
+            fh.write(b"PNG")
+        with open(os.path.join(files, "m.pdf"), "wb") as fh:
+            fh.write(b"%PDF-1.4")
+
+    await hass.async_add_executor_job(_write)
+    http = await hass_client()
+
+    svg = await http.get(f"{CONTENT_URL}/plans/_/x.svg")
+    assert svg.status == 200
+    csp = svg.headers.get("Content-Security-Policy", "")
+    assert "sandbox" in csp and "script-src 'none'" in csp
+    assert svg.headers["Content-Type"].startswith("image/svg+xml")
+
+    png = await http.get(f"{CONTENT_URL}/plans/_/x.png")
+    assert png.status == 200 and "Content-Security-Policy" not in png.headers
+
+    pdf = await http.get(f"{CONTENT_URL}/files/m1/m.pdf")
+    assert pdf.status == 200 and "Content-Security-Policy" not in pdf.headers
+    assert await pdf.read() == b"%PDF-1.4"
+
+
+async def test_upload_never_overwrites_an_existing_attachment(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, hass_client
+) -> None:
+    """HP-1454-02: an upload is not part of the config transaction.
+
+    Writing straight to `<marker>/<filename>` meant a cancelled dialog — or a
+    rejected save — left the stored url serving the new bytes. And two new
+    markers both uploading `manual.pdf` shared one physical file.
+    """
+    import os
+
+    from custom_components.houseplan.const import CONTENT_URL, FILES_DIR
+
+    await _setup(hass)
+    http = await hass_client()
+
+    async def upload(marker_id: str, name: str, data: bytes) -> str:
+        import aiohttp
+
+        writer = aiohttp.FormData()
+        writer.add_field("marker_id", marker_id)
+        writer.add_field("file", data, filename=name)
+        resp = await http.post("/api/houseplan/upload", data=writer)
+        assert resp.status == 200, await resp.text()
+        return (await resp.json())["url"]
+
+    first = await upload("m1", "manual.pdf", b"ONE")
+    second = await upload("m1", "manual.pdf", b"TWO")
+    assert first != second, "the second upload must not take the first name"
+
+    folder = os.path.join(hass.config.path(FILES_DIR), "m1")
+    names = sorted(await hass.async_add_executor_job(os.listdir, folder))
+    assert names == ["manual (2).pdf", "manual.pdf"]
+
+    got = await http.get(first.replace(CONTENT_URL, CONTENT_URL))
+    assert await got.read() == b"ONE", "the first file is untouched"
+    got2 = await http.get(second)
+    assert await got2.read() == b"TWO"

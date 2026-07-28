@@ -381,3 +381,112 @@ def test_every_room_fill_mode_the_editor_offers_is_accepted():
     v.SPACE_SCHEMA(room(None))  # inherit from the space
     with pytest.raises(vol.Invalid):
         v.SPACE_SCHEMA(room("rainbow"))
+
+
+# ---------- attachments & inner limits (HP-1454-02, -05) ----------
+
+
+def test_unique_filename_never_returns_a_taken_name(tmp_path):
+    unique_filename = plans.unique_filename
+    d = tmp_path / "m1"
+    d.mkdir()
+    assert unique_filename(d, "manual.pdf") == "manual.pdf"
+    (d / "manual.pdf").write_bytes(b"x")
+    assert unique_filename(d, "manual.pdf") == "manual (2).pdf"
+    (d / "manual (2).pdf").write_bytes(b"x")
+    assert unique_filename(d, "manual.pdf") == "manual (3).pdf"
+    # no extension, and a name that needs sanitising
+    (d / "readme").write_bytes(b"x")
+    assert unique_filename(d, "readme") == "readme (2)"
+    assert unique_filename(d, "../../etc/passwd") == "passwd"
+
+
+def _acfg(*pairs):
+    return {"markers": [{"id": f"m{i}", "pdfs": [{"url": f"/api/houseplan/content/files/{p}"}]}
+                        for i, p in enumerate(pairs)]}
+
+
+def test_attachment_refs_reads_marker_urls():
+    attachment_refs = plans.attachment_refs
+    assert attachment_refs(None) == set()
+    assert attachment_refs(_acfg("m1/a.pdf", "m2/b.pdf")) == {"m1/a.pdf", "m2/b.pdf"}
+    # legacy and foreign urls are not ours to collect against
+    cfg = {"markers": [{"id": "m", "pdfs": [{"url": "/local/x.pdf"}, {"url": "/api/houseplan/content/files/deep/a/b.pdf"}]}]}
+    assert plans.attachment_refs(cfg) == set()
+
+
+def test_collect_attachments_supersedes_and_ages(tmp_path):
+    import os
+    import time
+
+    collect_attachments = plans.collect_attachments
+    files = tmp_path / "files"
+    (files / "m1").mkdir(parents=True)
+    for n in ("old.pdf", "new.pdf", "cancelled.pdf"):
+        (files / "m1" / n).write_bytes(b"x")
+
+    # the commit swapped old.pdf for new.pdf; cancelled.pdf is a fresh upload
+    # nobody saved — it may belong to a dialog that is still open
+    removed = collect_attachments(files, _acfg("m1/old.pdf"), _acfg("m1/new.pdf"))
+    assert removed == 1
+    assert not (files / "m1" / "old.pdf").exists()
+    assert (files / "m1" / "new.pdf").is_file()
+    assert (files / "m1" / "cancelled.pdf").is_file()
+
+    old = time.time() - const.PLAN_ORPHAN_TTL_S - 60
+    os.utime(files / "m1" / "cancelled.pdf", (old, old))
+    assert collect_attachments(files, _acfg("m1/new.pdf"), _acfg("m1/new.pdf")) == 1
+    assert not (files / "m1" / "cancelled.pdf").exists()
+    assert (files / "m1" / "new.pdf").is_file()
+
+
+def test_collect_attachments_removes_the_empty_folder_and_never_raises(tmp_path):
+    import os
+    import time
+
+    files = tmp_path / "files"
+    (files / "up_x").mkdir(parents=True)
+    f = files / "up_x" / "orphan.pdf"
+    f.write_bytes(b"x")
+    old = time.time() - const.PLAN_ORPHAN_TTL_S - 60
+    os.utime(f, (old, old))
+    assert plans.collect_attachments(files, {}, {}) == 1
+    assert not (files / "up_x").exists(), "the staging folder goes with its last file"
+    assert plans.collect_attachments(tmp_path / "nope", {}, {}) == 0
+
+
+def test_inner_collection_limits():
+    room = {"id": "r", "name": "R", "poly": [[0.1, 0.1]] * v.MAX_POLY_POINTS}
+    v.ROOM_SCHEMA(room)
+    with pytest.raises(vol.Invalid):
+        v.ROOM_SCHEMA({**room, "poly": [[0.1, 0.1]] * (v.MAX_POLY_POINTS + 1)})
+
+    rect = {"id": "r", "name": "R", "x": 0.1, "y": 0.1, "w": 0.2, "h": 0.2}
+    v.ROOM_SCHEMA({**rect, "open_to": ["x"] * v.MAX_OPEN_TO})
+    with pytest.raises(vol.Invalid):
+        v.ROOM_SCHEMA({**rect, "open_to": ["x"] * (v.MAX_OPEN_TO + 1)})
+
+    m = {"id": "m", "binding": "virtual"}
+    v.MARKER_SCHEMA({**m, "controls": ["light.x"] * v.MAX_CONTROLS})
+    with pytest.raises(vol.Invalid):
+        v.MARKER_SCHEMA({**m, "controls": ["light.x"] * (v.MAX_CONTROLS + 1)})
+
+    pdf = {"name": "n", "url": "/api/houseplan/content/files/m/a.pdf"}
+    v.MARKER_SCHEMA({**m, "pdfs": [pdf] * v.MAX_PDFS})
+    with pytest.raises(vol.Invalid):
+        v.MARKER_SCHEMA({**m, "pdfs": [pdf] * (v.MAX_PDFS + 1)})
+
+    v.MARKER_SCHEMA({**m, "name": "n" * v.MAX_TEXT})
+    with pytest.raises(vol.Invalid):
+        v.MARKER_SCHEMA({**m, "name": "n" * (v.MAX_TEXT + 1)})
+    with pytest.raises(vol.Invalid):
+        v.MARKER_SCHEMA({**m, "link": "u" * (v.MAX_URL + 1)})
+
+
+def test_legacy_segments_are_dropped_by_the_server():
+    """A limit that depends on the client stripping the field is not a limit."""
+    out = v.SPACE_SCHEMA({
+        "id": "f1", "title": "F", "aspect": 1.4, "view_box": [0, 0, 1, 1], "rooms": [],
+        "segments": [[1, 2, 3, 4]] * 100000,
+    })
+    assert "segments" not in out

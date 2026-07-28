@@ -1,9 +1,10 @@
-"""Plan-file collection — pure, so it is unit-testable without Home Assistant.
+"""Blob lifecycle — pure, so it is unit-testable without Home Assistant.
 
 The file system is not part of the configuration store's transaction, so who
-may delete a plan file, and when, is a correctness question rather than a
-housekeeping one. It lives here, apart from the WebSocket plumbing, precisely
-because it is the part that has to be reasoned about and tested.
+may write or delete a plan or an attachment, and when, is a correctness
+question rather than housekeeping. It lives here, apart from the WebSocket and
+HTTP plumbing, precisely because it is the part that has to be reasoned about
+and tested.
 """
 from __future__ import annotations
 
@@ -13,9 +14,100 @@ from pathlib import Path
 from typing import Any
 
 from .const import PLAN_ORPHAN_TTL_S
-from .validation import PLAN_EXTENSIONS
+from .validation import PLAN_EXTENSIONS, sanitize_filename
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def unique_filename(directory: Path, name: str) -> str:
+    """A name inside `directory` that is not taken, deriving from `name`.
+
+    Uploads never overwrite. The bytes already under a name may be referenced by
+    the stored configuration, and an upload is not part of that transaction: a
+    cancelled dialog or a rejected save would otherwise leave a live url serving
+    someone else's file (HP-1454-02).
+    """
+    safe = sanitize_filename(name)
+    if not (directory / safe).exists():
+        return safe
+    stem, dot, suffix = safe.rpartition(".")
+    if not dot:
+        stem, suffix = safe, ""
+    i = 2
+    while True:
+        candidate = f"{stem} ({i}){'.' + suffix if suffix else ''}"
+        if not (directory / candidate).exists():
+            return candidate
+        i += 1
+
+
+def attachment_refs(cfg: dict[str, Any] | None) -> set[str]:
+    """"<marker>/<file>" for every attachment a configuration references."""
+    out: set[str] = set()
+    for m in (cfg or {}).get("markers") or []:
+        for pdf in m.get("pdfs") or []:
+            url = pdf.get("url") if isinstance(pdf, dict) else None
+            if not isinstance(url, str) or "/files/" not in url:
+                continue
+            rel = url.split("?", 1)[0].split("/files/", 1)[1]
+            if rel.count("/") == 1:
+                out.add(rel)
+    return out
+
+
+def collect_attachments(
+    files_dir: Path,
+    old_cfg: dict[str, Any] | None,
+    new_cfg: dict[str, Any],
+    now: float | None = None,
+) -> int:
+    """The same commit-scoped rule as `collect_plans`, for marker attachments.
+
+    A file the old revision referenced and the new one does not was superseded
+    by this commit and goes. Anything else unreferenced is an upload that was
+    never saved — a cancelled dialog, a rejected write — and waits out
+    PLAN_ORPHAN_TTL_S first, because a fresh one may belong to a dialog the user
+    still has open. Never raises: it runs behind a durable write.
+    """
+    new_refs = attachment_refs(new_cfg)
+    old_refs = attachment_refs(old_cfg)
+    cutoff = (time.time() if now is None else now) - PLAN_ORPHAN_TTL_S
+    removed = 0
+    try:
+        folders = sorted(p for p in files_dir.iterdir() if p.is_dir()) if files_dir.is_dir() else []
+    except OSError as err:
+        _LOGGER.warning("House Plan: could not list %s: %s", files_dir, err)
+        return 0
+    for folder in folders:
+        try:
+            items = sorted(p for p in folder.iterdir() if p.is_file())
+        except OSError:
+            continue
+        for item in items:
+            rel = f"{folder.name}/{item.name}"
+            if rel in new_refs:
+                continue
+            try:
+                stale = item.stat().st_mtime < cutoff
+            except OSError:
+                stale = False
+            if rel not in old_refs and not stale:
+                continue
+            try:
+                item.unlink()
+                removed += 1
+            except OSError as err:
+                _LOGGER.warning("House Plan: could not remove the attachment %s: %s", item, err)
+        try:
+            next(folder.iterdir())
+        except StopIteration:
+            try:
+                folder.rmdir()
+            except OSError:
+                pass
+        except OSError:
+            pass
+    return removed
 
 
 def plan_basename(url: Any) -> str:

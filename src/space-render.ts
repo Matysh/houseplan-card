@@ -8,7 +8,7 @@
  */
 import { html, svg, nothing, type TemplateResult } from 'lit';
 import { buildDevices, areaLqi, areaLights, areaTemp } from './devices';
-import { spaceDisplayOf, roomFillStyle, fillColorsOf } from './logic';
+import { spaceDisplayOf, roomFillStyle, fillColorsOf, roomFillModeOf } from './logic';
 import { DEFAULT_ICON_RULES, compileIconRules, EXCLUDED_DOMAINS } from './rules';
 import { t, type Lang } from './i18n';
 import type { ServerConfig } from './types';
@@ -73,16 +73,18 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     .map((r) => {
       let cls = 'room ' + (space.bg ? 'overlay' : 'yard');
       let style = '';
-      if (disp.showBorders || disp.fill !== 'none') {
+      // tier 3 wins over the space, exactly as on the full card (HP-1454-07)
+      const fill = roomFillModeOf(disp.fill, r);
+      if (disp.showBorders || fill !== 'none') {
         cls += ' styled';
         const parts = [`--room-stroke:${disp.color}`, `--room-stroke-op:${disp.showBorders ? disp.opacity : 0}`];
         // fill rendered exactly as configured on the full card (snapshot of current states)
         const fillC = r.area
           ? roomFillStyle(
-              disp.fill,
-              disp.fill === 'lqi' ? areaLqi(o.hass, devs, r.area) : null,
-              disp.fill === 'light' ? areaLights(o.hass, devs, r.area) : 'none',
-              disp.fill === 'temp' ? areaTemp(o.hass, devs, r.area) : null,
+              fill,
+              fill === 'lqi' ? areaLqi(o.hass, devs, r.area) : null,
+              fill === 'light' ? areaLights(o.hass, devs, r.area) : 'none',
+              fill === 'temp' ? areaTemp(o.hass, devs, r.area) : null,
               disp.tempMin,
               disp.tempMax,
               fillColorsOf(o.cfg?.settings),

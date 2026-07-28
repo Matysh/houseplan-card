@@ -51,8 +51,17 @@ async def async_check_plan_files(hass: HomeAssistant, entry: HouseplanConfigEntr
             translation_key="broken_plan",
             translation_placeholders={"space": space_id, "file": fname},
         )
-    # clear stale issues for spaces that are fine again (or gone)
-    for sp in spaces:
-        sid = sp.get("id", "?")
-        if sid not in broken:
-            ir.async_delete_issue(hass, DOMAIN, f"broken_plan_{sid}")
+    # Clear stale issues. Iterating the CURRENT spaces could only ever clear
+    # issues for spaces that still exist, so deleting or renaming a space with a
+    # missing plan left its warning in Repairs forever, with nothing left to fix
+    # it (HP-1454-09). Enumerate what we actually published instead.
+    registry = ir.async_get(hass)
+    stale = [
+        issue_id
+        for (domain, issue_id) in list(registry.issues)
+        if domain == DOMAIN
+        and issue_id.startswith("broken_plan_")
+        and issue_id[len("broken_plan_") :] not in broken
+    ]
+    for issue_id in stale:
+        ir.async_delete_issue(hass, DOMAIN, issue_id)
