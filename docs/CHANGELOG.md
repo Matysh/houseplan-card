@@ -14,6 +14,12 @@
 - **A plan whose space was deleted is kept**, rather than the thirty days
   v1.46.5 promised — thirty days measured from the file's age is meaningless
   anyway, since it was usually uploaded months earlier.
+- **Nothing is deleted for being old any more**, except a per-dialog staging
+  folder. The rule that aged out "rejected uploads" turned out to race a retry:
+  the cleanup removed the file from a failed save while the next attempt was
+  committing a reference to it. A rule that can delete a file somebody is about
+  to point at is not worth the disk it reclaims. Files therefore go when an
+  action says so, and otherwise stay.
 
 ## v1.46.5 — 2026-07-28 (audit of every automatic deletion)
 - **A detached plan is never deleted, at any age.** v1.46.4 gave it a month;

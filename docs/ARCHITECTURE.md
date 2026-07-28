@@ -225,11 +225,11 @@ was detached, under documentation promising the opposite (HP-1465-01).
 | Space in both, plan A → plan B | the user picked another image | removed immediately |
 | Space in both, plan → none | detached; one click undoes it | **kept** |
 | Space gone | deliberate, but the image was imported and may be nowhere else | **kept** |
-| Space has a plan, plus another file of its own | an upload whose save was rejected | `PLAN_ORPHAN_TTL_S` (1 h) |
+| Space has a plan, plus another file of its own | an upload whose save was rejected | **kept** — ageing these out raced the retry that referenced them |
 | Marker in both, attachment dropped from its list | a trash button, promising nothing | removed immediately |
 | Marker gone | same call as a deleted space's plan | **kept** |
 | Attachment in `up_*` | a dialog that was never saved; no device owns it | `PLAN_ORPHAN_TTL_S` (1 h) |
-| Marker there, file it never listed | a rejected upload | `SCHEDULED_GRACE_S` (30 d) |
+| Marker there, file it never listed | a rejected upload | **kept**, same reason |
 
 **Config writes are serialized** (HP-1454-03). `_writeConfig()` chains onto a
 single promise: one `config/set` in flight, each carrying the revision the

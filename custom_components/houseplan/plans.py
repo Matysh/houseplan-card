@@ -14,7 +14,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from .const import PLAN_ORPHAN_TTL_S, SCHEDULED_GRACE_S
+from .const import PLAN_ORPHAN_TTL_S
 from .validation import MAX_FILENAME, PLAN_EXTENSIONS, sanitize_filename
 
 _LOGGER = logging.getLogger(__name__)
@@ -123,11 +123,10 @@ def collect_attachments(
 
     A file the old revision referenced and the new one does not, whose marker
     still exists, was removed on purpose — the dialog has a trash button and
-    promises nothing. It goes. If the marker itself is gone, that is a different
-    transition and the files are kept, like a deleted space's plan. A staging
-    folder (`up_*` — only ever a dialog that was never saved) is collected after
-    PLAN_ORPHAN_TTL_S, anything else after SCHEDULED_GRACE_S. Never raises: it
-    runs behind a durable write.
+    promises nothing. It goes. Everything else is kept, except a staging folder
+    (`up_*`), which by construction only ever holds an upload from a dialog that
+    was never saved: those go after PLAN_ORPHAN_TTL_S. Never raises: it runs
+    behind a durable write.
     """
     new_refs = attachment_refs(new_cfg)
     old_refs = attachment_refs(old_cfg)
@@ -141,7 +140,6 @@ def collect_attachments(
     # rule is exactly right there even on the timer.
     now_s = time.time() if now is None else now
     staging_cutoff = now_s - PLAN_ORPHAN_TTL_S
-    cutoff = now_s - SCHEDULED_GRACE_S
     removed = 0
     try:
         folders = sorted(p for p in files_dir.iterdir() if p.is_dir()) if files_dir.is_dir() else []
@@ -153,7 +151,6 @@ def collect_attachments(
         # A staging folder only ever holds an upload from a dialog that was never
         # saved — unambiguous, so an hour is right, and no device owns it.
         staging = folder.name.startswith("up_")
-        limit = staging_cutoff if staging else cutoff
         try:
             items = sorted(p for p in folder.iterdir() if p.is_file())
         except OSError:
@@ -164,15 +161,14 @@ def collect_attachments(
                 continue
             dropped = rel in old_refs and folder.name in live_markers
             if not dropped:
-                if not staging and folder.name not in live_markers:
-                    # No device owns this folder any more. Whether the file was
-                    # attached once or is a leftover upload we cannot tell, and
-                    # by the standing rule that means we keep it. (A staging
-                    # folder is exempt above: it has no device by construction.)
+                if not staging:
+                    # Same rule as for plans: not asked for, so kept. A file in
+                    # a device's folder that the device does not list is an
+                    # upload whose save was rejected — and ageing those out
+                    # raced the retry that was about to reference them.
                     continue
-                # the device is there and never listed this file: a rejected upload
                 try:
-                    if item.stat().st_mtime >= limit:
+                    if item.stat().st_mtime >= staging_cutoff:
                         continue
                 except OSError:
                     continue
@@ -275,8 +271,6 @@ def collect_plans(
         name for space, name in old_by_space.items()
         if new_by_space.get(space) and new_by_space[space] != name
     }
-    now_s = time.time() if now is None else now
-    reject_cutoff = now_s - PLAN_ORPHAN_TTL_S
     removed = 0
     try:
         items = sorted(plans_dir.iterdir()) if plans_dir.is_dir() else []
@@ -290,26 +284,21 @@ def collect_plans(
         if not item.is_file() or item.name in new_refs or not is_plan_file(item.name):
             continue
         if item.name not in replaced:
-            # Not a replacement. PRODUCT RULE (owner's decision, 2026-07-28):
-            # a file we were not told to delete is kept, however long it sits
-            # there. Detaching a plan is one click to undo and the editor says
-            # the image stays; deleting a space is deliberate but the image is
-            # usually something the user imported and may not have elsewhere.
-            # The two errors are not symmetrical — a few unnecessary megabytes
-            # can always be removed by hand, a file we should not have removed
-            # cannot be brought back.
+            # PRODUCT RULE (owner's decision, 2026-07-28): a plan file we were
+            # not told to delete is kept, however long it sits there. Detaching
+            # is one click to undo and the editor says the image stays; deleting
+            # a space is deliberate but the image was imported and may be
+            # nowhere else. The errors are not symmetrical — unnecessary
+            # megabytes can be removed by hand, a deleted file cannot be
+            # brought back.
             #
-            # The single exception: a space that HAS a plan, and another file of
-            # its own that has never been the plan. That can only be an upload
-            # whose save was rejected, and an hour is plenty for it.
-            space = item.name.split(".")[0]
-            if not new_by_space.get(space) or item.name in old_by_space.values():
-                continue
-            try:
-                if item.stat().st_mtime >= reject_cutoff:
-                    continue
-            except OSError:
-                continue
+            # There is deliberately no age rule here. An earlier version aged
+            # out "rejected uploads" — a file of a space that has a plan, which
+            # was never the plan — and that raced a save: the sweep deleted the
+            # upload from the failed attempt while a retry was committing a
+            # reference to it. A rule that can delete a file somebody is about
+            # to point at is not worth the disk it reclaims.
+            continue
         try:
             item.unlink()
             removed += 1

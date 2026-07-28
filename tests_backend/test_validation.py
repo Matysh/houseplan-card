@@ -570,16 +570,13 @@ def test_plan_collection_matrix(tmp_path):
     assert collect(d, cfg, cfg) == 0
     assert (d / "f2.png").is_file() and (d / "f3.png").is_file()
 
-    # 5. a rejected upload: the space HAS a plan, this file never was one
+    # 5. an upload whose save was rejected is kept too, at any age. Ageing those
+    #    out raced the retry: the sweep deleted a file the save was committing a
+    #    reference to (caught by test_sweep_and_a_config_write_do_not_race).
     seed("f4.current.png", "f4.reject.png")
     live = {"spaces": [_sp("f4", "f4.current.png")]}
-    assert collect(d, live, live) == 1
-    assert (d / "f4.current.png").is_file() and not (d / "f4.reject.png").exists()
-
-    # …but only once it is old; a fresh one may be a transaction in flight
-    (d / "f4.fresh.png").write_bytes(b"x")
     assert collect(d, live, live) == 0
-    assert (d / "f4.fresh.png").is_file()
+    assert (d / "f4.current.png").is_file() and (d / "f4.reject.png").is_file()
 
     # 6. the same file still referenced by another space is never touched
     seed("shared.png")
@@ -634,44 +631,38 @@ def test_attachment_collection_matrix(tmp_path):
     assert collect(d, cfg(), cfg()) == 1
     assert not (d / "up_x").exists()
 
-    # 4. an upload into a live device's folder whose save was rejected
+    # 4. an upload into a live device's folder whose save was rejected: kept,
+    #    for the same reason as a plan's — a retry may be about to reference it
     d = case("reject")
     seed(d, "m3", "current.pdf")
     seed(d, "m3", "rejected.pdf", age=const.SCHEDULED_GRACE_S + 60)
     live = cfg(("m3", ["current.pdf"]))
-    assert collect(d, live, live) == 1
+    assert collect(d, live, live) == 0
     assert (d / "m3" / "current.pdf").is_file()
-    assert not (d / "m3" / "rejected.pdf").exists()
+    assert (d / "m3" / "rejected.pdf").is_file()
 
 
-def test_attachment_grace_is_a_month_outside_a_staging_folder(tmp_path):
-    """A staging folder is unambiguous; a marker folder is not.
-
-    `up_*` only ever holds an upload from a dialog that was never saved, so an
-    hour is right there. A marker's own folder may hold a file that is merely
-    unreferenced at the moment, and one hour of that turned out to be a way to
-    lose data (2026-07-28).
-    """
+def test_only_a_staging_folder_ages_out(tmp_path):
+    """The one age rule left. Everything else waits for the user to say so."""
     import os
     import time
 
     files = tmp_path / "files"
     (files / "m1").mkdir(parents=True)
     (files / "up_abandoned").mkdir(parents=True)
+    ancient = time.time() - const.SCHEDULED_GRACE_S * 12
     hour_ago = time.time() - const.PLAN_ORPHAN_TTL_S - 60
-    month_ago = time.time() - const.SCHEDULED_GRACE_S - 60
 
     for path, when in (
-        ((files / "m1" / "recent.pdf"), hour_ago),
-        ((files / "m1" / "ancient.pdf"), month_ago),
+        ((files / "m1" / "ancient.pdf"), ancient),
         ((files / "up_abandoned" / "manual.pdf"), hour_ago),
     ):
         path.write_bytes(b"x")
         os.utime(path, (when, when))
 
     cfg = {"markers": [{"id": "m1", "pdfs": []}]}
-    removed = plans.collect_attachments(files, cfg, cfg)
-    assert (files / "m1" / "recent.pdf").is_file(), "an hour is not enough for a marker file"
-    assert not (files / "m1" / "ancient.pdf").exists(), "a month is"
-    assert not (files / "up_abandoned").exists(), "a cancelled dialog still goes after an hour"
-    assert removed == 2
+    assert plans.collect_attachments(files, cfg, cfg) == 1
+    assert (files / "m1" / "ancient.pdf").is_file(), "age alone is never a reason"
+    assert not (files / "up_abandoned").exists(), "a cancelled dialog goes after an hour"
+
+

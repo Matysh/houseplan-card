@@ -23,14 +23,11 @@ MAX_SIGN_PATHS = 200
 # its configuration yet (review R3-1).
 PLAN_ORPHAN_TTL_S = 3600
 
-# The scheduled sweep is a different judgement from a commit's. A commit knows
-# it replaced a file; the timer only knows nobody points at one right now — and
-# "nobody points at it" is a normal, reversible state. Detaching a plan (switch
-# a space to "draw") leaves the image on disk on purpose, and re-attaching it
-# later is a thing people do. On 2026-07-28 the hourly rule applied to that case
-# and removed two plans the owner had detached weeks earlier; they were not
-# recoverable. So the timer waits a month, and never touches a plan or an
-# attachment that still belongs to something in the configuration.
+# Kept for compatibility with anything reading it; the collectors no longer use
+# a long grace at all. Every attempt to age files out ended badly — first by
+# deleting detached plans, then by racing the save that was about to reference a
+# retried upload. What is left is deliberately simple: files go when the user's
+# action says so, plus staging folders after PLAN_ORPHAN_TTL_S.
 SCHEDULED_GRACE_S = 30 * 24 * 3600
 FILES_DIR = "houseplan/files"
 CONF_ADMIN_ONLY = "admin_only"
