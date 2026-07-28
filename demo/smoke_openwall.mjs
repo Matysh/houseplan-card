@@ -6,7 +6,7 @@ const res = await page.evaluate(async () => {
   const sr = () => c.shadowRoot || c.renderRoot;
   c._setMode('plan'); c._tool = 'openwall'; await c.updateComplete;
   // r1|r2 делят стену x=0.55 → клик по ней открывает границу
-  const H = 1000 / (c._curSpaceCfg.aspect || 1);
+  const H = 1000;   // square canvas
   c._openWallClick([550, 0.25 * H]);
   await c.updateComplete;
   const r1 = c._curSpaceCfg.rooms.find((r) => r.id === 'r1');
@@ -53,8 +53,7 @@ const res = await page.evaluate(async () => {
     ...s, settings: { ...(s.settings || {}), fill_mode: 'glow' } })) };
   const litLight = c._devices.find((d) => d.space === c._space && d.entities.some((e) => e.startsWith('light.') && c.hass.states[e]?.state === 'on'));
   const c1 = c._roomCenter(c._spaceModel().rooms.find((r) => r.id === 'r1'));
-  const aspect = c._curSpaceCfg.aspect || 1;
-  c._layout = { ...c._layout, [litLight.id]: { s: c._space, x: c1[0] / 1000, y: c1[1] / (1000 / aspect) } };
+  c._layout = { ...c._layout, [litLight.id]: { s: c._space, x: c1[0] / 1000, y: c1[1] / 1000 } };
   c.requestUpdate(); await c.updateComplete;
   const clip = sr().querySelector('defs clipPath[id^="hp-glowclip"]');
   out.zoneClip = clip ? clip.querySelectorAll('path').length >= 2 : false;

@@ -14,7 +14,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from .const import PLAN_ORPHAN_TTL_S
+from .const import MIN_FREE_BYTES, PLAN_ORPHAN_TTL_S
 from .validation import MAX_FILENAME, PLAN_EXTENSIONS, sanitize_filename
 
 _LOGGER = logging.getLogger(__name__)
@@ -189,6 +189,56 @@ def collect_attachments(
     return removed
 
 
+class QuotaError(Exception):
+    """A store limit would be exceeded. Carries what to tell the user."""
+
+    def __init__(self, reason: str, detail: str) -> None:
+        super().__init__(detail)
+        self.reason = reason
+        self.detail = detail
+
+
+def dir_usage(path: Path) -> tuple[int, int]:
+    """(bytes, files) below `path`, ignoring what we cannot read."""
+    total = count = 0
+    if not path.is_dir():
+        return 0, 0
+    for item in path.rglob("*"):
+        try:
+            if item.is_file():
+                total += item.stat().st_size
+                count += 1
+        except OSError:
+            continue
+    return total, count
+
+
+def check_quota(path: Path, incoming: int, max_bytes: int, max_files: int) -> None:
+    """Raise QuotaError unless `incoming` more bytes fit.
+
+    Deliberately not an age rule. Files are never removed for getting old — that
+    cost real plans twice — so the limit sits where a decision is being made
+    anyway: at the moment somebody asks to store something new.
+    """
+    import shutil
+
+    used, count = dir_usage(path)
+    if count + 1 > max_files:
+        raise QuotaError("too_many_files", f"{count} files already stored, the limit is {max_files}")
+    if used + incoming > max_bytes:
+        raise QuotaError(
+            "quota_exceeded",
+            f"{(used + incoming) // 1024 // 1024} MB would be stored, the limit is "
+            f"{max_bytes // 1024 // 1024} MB",
+        )
+    try:
+        free = shutil.disk_usage(str(path if path.is_dir() else path.parent)).free
+    except OSError:
+        return
+    if free - incoming < MIN_FREE_BYTES:
+        raise QuotaError("low_disk_space", f"only {free // 1024 // 1024} MB free on the disk")
+
+
 def plan_basename(url: Any) -> str:
     """File name a stored plan_url points at ('' when there is none)."""
     if not isinstance(url, str) or not url:
@@ -240,7 +290,7 @@ def collect_plans(
       * a file the OLD configuration referenced and the new one does not was
         authoritative and has been superseded — remove it;
       * any other unreferenced plan file is a rejected or abandoned upload, and
-        is removed only once PLAN_ORPHAN_TTL_S has passed: a fresh one may
+        is KEPT — see the rule above; only a staging folder ages out: a fresh one may
         belong to a transaction that has not committed yet.
 
     Never raises: the configuration is already stored by the time this runs, so

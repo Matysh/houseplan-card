@@ -9,7 +9,7 @@ const restore = () => page.evaluate((s) => {
 }, snap);
 // norm→render helper mirrors what _markupClick passes to handlers
 const R = (nx, ny) => page.evaluate(([nx, ny]) => {
-  const c = window.__card; const H = 1000 / c._curSpaceCfg.aspect; return [nx * 1000, ny * H];
+  return [nx * 1000, ny * 1000];   // the canvas is square (v1.48.0)
 }, [nx, ny]);
 const S = () => page.evaluate(() => {
   const c = window.__card;

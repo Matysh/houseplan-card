@@ -34,7 +34,7 @@ Editors are admin-only tools and must never leak interactions into View
 | J1 | "Show the whole home and what's happening right now" — live spatial overview: device states, room fills (light/temp/LQI), values, multi-floor tabs | **Closed** |
 | J2 | "Something is wrong — show me *where*" — leak/smoke/gas pulse, open doors/windows, unlocked locks, red dot on devices HA added silently | **Closed** |
 | J3 | "Let me act on the obvious right from the plan" — tap-to-toggle for safe domains, info cards, guarded lock action | **Closed** |
-| J4 | "From zero to a working plan in one evening, no Inkscape/YAML" — image/PDF/draw, floors-import wizard, room polygons bound to areas, curated auto-placement, editable icon rules | **Closed**; onboarding polish is *partial* (no registry-driven room suggestions) |
+| J4 | "From zero to a working plan in one evening, no Inkscape/YAML" — image/PDF/draw, floors-import wizard, room polygons bound to areas, filtered auto-placement, editable icon rules | **Closed**; onboarding polish is *partial* (no registry-driven room suggestions) |
 | J5 | "Room climate at a glance" — per-room temperature/humidity, comfort-range fills, room-card metrics | **Closed** |
 | J6 | "Keep the plan true as the home evolves" — new-device flag, two editors, drag/resize, merge/split, multi-client live sync, optimistic locking | **Closed** |
 | J7 | "Is my Zigbee mesh healthy *here*?" — LQI badges, per-room average, LQI fill | **Closed** (kept deliberately: cheap, spatial by nature, no in-plan competitor) |

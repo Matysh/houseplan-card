@@ -20,6 +20,7 @@ from .const import (
     PLANS_URL,
     VERSION,
 )
+from .geometry_migration import migrate_config
 from .plans import collect_attachments, collect_plans, sweep_upload_temps
 from .repairs import async_check_plan_files
 from .store import HouseplanConfigEntry, create_data
@@ -98,6 +99,26 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
             "path /custom_components/houseplan/frontend/houseplan-card.js (HA does not serve it).",
             module_url, module_url,
         )
+
+    # One-time move to the square canvas (v1.48.0). Coordinates used to be
+    # normalised against a per-space aspect ratio; the canvas is now always
+    # square and a plan is centred inside it. Nothing about the drawing changes
+    # — the box is padded and the numbers re-expressed against it.
+    async with data.write_lock:
+        stored = await data.config_store.async_load() or {}
+        cfg = stored.get("config")
+        lay_stored = await data.store.async_load() or {}
+        layout = lay_stored.get("layout") or {}
+        if cfg and migrate_config(cfg, layout):
+            rev = int(stored.get("rev", 0)) + 1
+            await data.config_store.async_save({"config": cfg, "rev": rev})
+            await data.store.async_save(
+                {"layout": layout, "rev": int(lay_stored.get("rev", 0)) + 1}
+            )
+            _LOGGER.info(
+                "House Plan: migrated %s space(s) to the square canvas", len(cfg.get("spaces") or [])
+            )
+            hass.bus.async_fire("houseplan_config_updated", {"rev": rev})
 
     await async_check_plan_files(hass, entry)
 

@@ -281,7 +281,7 @@ Services → House Plan**.
 
 **Do I need to write anything in YAML?** No. The only line is adding the card to the dashboard; everything else is done with the mouse.
 
-**My devices did not appear on the plan.** A device appears only if its Home Assistant area is bound to a drawn room. Check that the device has a room assigned (Settings → Devices) and that the room is outlined and bound to that area. If the device exists but is hidden by curation (bridges, service records, duplicates) — enable the **👁 "Show all devices"** button in the header.
+**My devices did not appear on the plan.** A device appears only if its Home Assistant area is bound to a drawn room. Check that the device has a room assigned (Settings → Devices) and that the room is outlined and bound to that area. If the device exists but is hidden by filtering (bridges, service records, duplicates) — enable the **👁 "Show all devices"** button in the header.
 
 **Can I hide an unwanted device or rename it?** Yes — click the device on the plan and press "Edit" in its card: there you can change the name, icon, model or hide the icon.
 

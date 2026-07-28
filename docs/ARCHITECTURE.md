@@ -10,7 +10,7 @@ houseplan-card/
 ├─ src/                          # card sources (TypeScript + Lit 3)
 │  ├─ houseplan-card.ts          # the card: rendering, states, drag, tooltip, sticky header
 │  ├─ editor.ts                  # GUI config editor (ha-form + selectors)
-│  ├─ rules.ts                   # icon rules (iconFor), curation, groups, domain priority
+│  ├─ rules.ts                   # icon rules (iconFor), filtering, groups, domain priority
 │  └─ data/
 │     ├─ house.ts                # geometry: ROOMS (rooms→area), FLOOR_VB (viewBox), names
 │     └─ backgrounds.ts          # VECTOR plans (SVG base64) + FLOOR_BG_RECT (positioning)
@@ -182,6 +182,17 @@ double click → properties dialog. In markup mode the "Opening" tool handles cl
 | `houseplan/plans/delete` | `name` | `{ok, removed}` / err `in_use` |
 | `houseplan/file/set` | `marker_id`, `filename`, `data` (b64) | `{ok,url,name}` (legacy, WS limit) |
 
+**The canvas is square, the image is not** (v1.48.0). A space used to carry an
+`aspect`, and coordinates were normalised against it — x by the width, y by the
+height. That made every geometric question depend on a per-space number for no
+benefit. Now the render space is `NORM_W × NORM_W` and a plan image is fitted
+inside it by its own ratio (`fitInSquare`, shared by both renderers), which is
+stored as `plan_aspect` so the layout does not jump before the file loads.
+Upgrading runs `geometry_migration.migrate_config` once: it pads the old box out
+to a square and re-expresses every coordinate against it — a uniform scale plus
+an offset in render units, so angles and proportions are exact — and scales
+`cell_cm` for tall plans, since the grid pitch is a fraction of the width.
+
 **User content is served inert** (HP-1454-01). An uploaded SVG is the only
 thing here that a browser will happily treat as a *document* rather than an
 image, and it would be a document of Home Assistant's own origin. Inside the
@@ -255,11 +266,20 @@ removes nothing. Deciding what may then go is *not* a client's call — a cleanu
 request cannot be ordered against another client's commit, and a delayed one
 deletes a plan that was just saved. So `config/set` collects itself, inside its
 write lock, from the pair of configurations that bracket the commit
-(`plans.collect_plans`): superseded files go immediately, other unreferenced
-uploads only once `PLAN_ORPHAN_TTL_S` has passed, since a fresh one may belong
-to a transaction still in flight. The `.` between id and token is load-bearing —
+(`plans.collect_plans`): a file the commit REPLACED goes immediately, and
+nothing else goes at all — see the table above; only a per-dialog staging folder
+ages out. Growth is bounded at the door instead, by `plans.check_quota` on every
+upload (store size, file count, free disk), because a limit that deletes is how
+plans were lost twice. The `.` between id and token is load-bearing —
 a space id cannot contain one, so `<space>.<token>.<ext>` can never be confused
 with the files of a space whose name merely starts the same way.
+
+**An internal plan url must exist when it is stored** (HP-1470-02). The picker
+can attach a plan and then delete it, and two clients can do the same in either
+order — the write lock orders the requests but says nothing about whether the
+file survived. `config/set` therefore checks every `/api/houseplan/content/plans/`
+url against the disk before saving, and refuses with `missing_plan`. External and
+legacy urls are the user's own and are never second-guessed.
 
 **Signed content urls are batched, aged and deduplicated** (reviews R2-2, R3-2, R4-2). `ContentSigner`
 in `src/signing.ts` is the single implementation, used by both cards; the
@@ -301,7 +321,7 @@ Shared, framework-light modules keep the two views from diverging:
   `roomCenter`, `defaultPositions`, `markerPos`, `labelPos`; no Lit import) — unit-tested,
   mirrors the full card's private geometry.
 - `src/space-render.ts` — `renderSpaceStatic()` draws the plan + configured room
-  borders/names + device markers (via `buildDevices`, same curation) with NO handlers,
+  borders/names + device markers (via `buildDevices`, same filtering) with NO handlers,
   NO live states, NO status/temperature fills. Uses the same CSS classes as the full card
   (the space-card imports `cardStyles`) for visual parity.
 - `src/config-store.ts` — module-level `{config, rev, layout}` cache shared by all embedded

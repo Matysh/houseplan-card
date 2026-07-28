@@ -1,34 +1,47 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  NORM_W, spaceModels, roomBounds, roomCenter, defaultPositions, markerPos, labelPos,
+  NORM_W, spaceModels, roomBounds, roomCenter, defaultPositions, markerPos, labelPos, fitInSquare, contentBounds,
 } from '../test-build/space-geometry.js';
 
 const cfg = {
   spaces: [{
-    id: 'f1', title: '1st', aspect: 2, plan_url: '/plans/f1.svg', view_box: [0, 0, 1, 1],
+    id: 'f1', title: '1st', plan_aspect: 2, plan_url: '/plans/f1.svg', view_box: [0, 0, 1, 1],
     rooms: [{ id: 'r1', name: 'Room', area: 'a1', poly: [[0.1, 0.1], [0.5, 0.1], [0.5, 0.5], [0.1, 0.5]] }],
   }, {
-    id: 'yard', title: 'Yard', aspect: 1, view_box: [0, 0, 1, 1], rooms: [],
+    id: 'yard', title: 'Yard', view_box: [0, 0, 1, 1], rooms: [],
   }],
   markers: [], settings: {},
 };
 
-test('spaceModels: scales vb/rooms by NORM_W and H=NORM_W/aspect; bg only with plan_url', () => {
+test('spaceModels: the canvas is square; the image is centred by its own ratio', () => {
   const m = spaceModels(cfg);
   assert.equal(m.length, 2);
   const f1 = m[0];
-  assert.deepEqual(f1.vb, [0, 0, 1000, 500]); // aspect 2 → H 500
+  assert.deepEqual(f1.vb, [0, 0, 1000, 1000]);
   assert.equal(f1.bg.href, '/plans/f1.svg');
-  assert.deepEqual(f1.rooms[0].poly, [[100, 50], [500, 50], [500, 250], [100, 250]]);
+  // a plan twice as wide as it is tall: full width, half height, margins above
+  // and below — the canvas has no proportions of its own any more (v1.48.0)
+  assert.deepEqual(f1.bg, { href: '/plans/f1.svg', x: 0, y: 250, w: 1000, h: 500 });
+  assert.deepEqual(f1.rooms[0].poly, [[100, 100], [500, 100], [500, 500], [100, 500]]);
   assert.equal(m[1].bg, null); // no plan_url
   assert.equal(spaceModels(null).length, 0);
 });
 
+test('fitInSquare: wide gets top/bottom margins, tall gets side margins', () => {
+  assert.deepEqual(fitInSquare(2, 1000), { x: 0, y: 250, w: 1000, h: 500 });
+  assert.deepEqual(fitInSquare(0.5, 1000), { x: 250, y: 0, w: 500, h: 1000 });
+  assert.deepEqual(fitInSquare(1, 1000), { x: 0, y: 0, w: 1000, h: 1000 });
+  // unknown ratio (image not loaded yet, old config): assume square
+  for (const bad of [null, undefined, 0, -3, NaN, 'x']) {
+    assert.deepEqual(fitInSquare(bad, 1000), { x: 0, y: 0, w: 1000, h: 1000 });
+  }
+});
+
 test('roomBounds + roomCenter for a polygon', () => {
   const r = spaceModels(cfg)[0].rooms[0];
-  assert.deepEqual(roomBounds(r), { x: 100, y: 50, w: 400, h: 200 });
-  assert.deepEqual(roomCenter(r), [300, 150]);
+  assert.deepEqual(roomBounds(r), { x: 100, y: 100, w: 400, h: 400 });
+  assert.deepEqual(roomCenter(r), [300, 300]);
 });
 
 test('markerPos: saved layout → default grid → space centre', () => {
@@ -37,7 +50,7 @@ test('markerPos: saved layout → default grid → space centre', () => {
   // saved layout (normalized) → render units
   assert.deepEqual(
     markerPos(dev, { d1: { s: 'f1', x: 0.2, y: 0.3 } }, cfg, {}, model),
-    { x: 200, y: 150 }, // 0.2*1000, 0.3*(1000/2)
+    { x: 200, y: 300 }, // 0.2*1000, 0.3*1000
   );
   // default grid position (inside the room)
   const defPos = defaultPositions([dev], model, 2.5);
@@ -46,14 +59,14 @@ test('markerPos: saved layout → default grid → space centre', () => {
   const b = roomBounds(model.rooms[0]);
   assert.ok(defPos.d1.x >= b.x && defPos.d1.x <= b.x + b.w && defPos.d1.y >= b.y && defPos.d1.y <= b.y + b.h);
   // no layout, no defPos → space centre
-  assert.deepEqual(markerPos(dev, {}, cfg, {}, model), { x: 500, y: 250 });
+  assert.deepEqual(markerPos(dev, {}, cfg, {}, model), { x: 500, y: 500 });
 });
 
 test('labelPos: saved rl_<id> → render units; else room centre', () => {
   const model = spaceModels(cfg)[0];
   const r = model.rooms[0];
-  assert.deepEqual(labelPos(r, 'f1', { rl_r1: { s: 'f1', x: 0.3, y: 0.4 } }, cfg), { x: 300, y: 200 });
-  assert.deepEqual(labelPos(r, 'f1', {}, cfg), { x: 300, y: 150 }); // room centre
+  assert.deepEqual(labelPos(r, 'f1', { rl_r1: { s: 'f1', x: 0.3, y: 0.4 } }, cfg), { x: 300, y: 400 });
+  assert.deepEqual(labelPos(r, 'f1', {}, cfg), { x: 300, y: 300 }); // room centre
 });
 
 test('defaultPositions: several devices in one room are spread (declumped, distinct)', () => {
@@ -70,3 +83,26 @@ test('defaultPositions: several devices in one room are spread (declumped, disti
 });
 
 test('NORM_W is 1000', () => assert.equal(NORM_W, 1000));
+
+test('contentBounds: fits what is drawn, with a 5% margin', () => {
+  const one = spaceModels({ spaces: [{
+    id: 's', view_box: [0, 0, 1, 1],
+    rooms: [{ id: 'r', poly: [[0.4, 0.4], [0.6, 0.4], [0.6, 0.6], [0.4, 0.6]] }],
+  }], markers: [] })[0];
+  // 200x200 render units in the middle of a 1000x1000 canvas, +5% of 200 each side
+  assert.deepEqual(contentBounds(one), { x: 390, y: 390, w: 220, h: 220 });
+
+  // rectangles count too, and the margin follows the LARGER side
+  const rect = spaceModels({ spaces: [{
+    id: 's', view_box: [0, 0, 1, 1],
+    rooms: [{ id: 'r', x: 0.1, y: 0.4, w: 0.6, h: 0.1 }],
+  }], markers: [] })[0];
+  const b = contentBounds(rect);
+  assert.equal(Math.round(b.w), 660);   // 600 + 2 * 5% of 600
+  assert.equal(Math.round(b.h), 160);   // 100 + the same absolute margin
+  assert.equal(Math.round(b.x), 70);
+
+  // nothing drawn → the caller keeps the whole canvas
+  const empty = spaceModels({ spaces: [{ id: 's', view_box: [0, 0, 1, 1], rooms: [] }], markers: [] })[0];
+  assert.equal(contentBounds(empty), null);
+});

@@ -39,7 +39,7 @@ const res = await page.evaluate(async () => {
   const sentF1 = (c.__sent?.spaces || []).find((s) => s.id === 'f1');
   const liveF1 = (c._serverCfg?.spaces || []).find((s) => s.id === 'f1');
   out.sentPlanUrl = sentF1?.plan_url;
-  out.sentAspect = sentF1?.aspect;
+  out.sentPlanAspect = sentF1?.plan_aspect;   // the IMAGE's ratio; the canvas is square
   out.sentTitle = sentF1?.title;
   out.livePlanUrl = liveF1?.plan_url;
   out.dialogClosed = c._spaceDialog === null;
@@ -52,19 +52,19 @@ const res = await page.evaluate(async () => {
   const attic = (c.__sent?.spaces || []).find((s) => s.title === 'Attic');
   out.atticSaved = !!attic;
   out.atticHasPlan = !!attic && typeof attic.plan_url === 'string' && attic.plan_url.includes('/content/plans/');
-  out.atticAspect = attic?.aspect;
+  out.atticPlanAspect = attic?.plan_aspect;
   return out;
 });
 // зафиксировано прогоном на v1.44.8 и сверено с кодом
 checkAll(res, {
   reloadHappened: true,
   sentPlanUrl: '/api/houseplan/content/plans/_/f1.png?v=42',
-  sentAspect: 1.6,
+  sentPlanAspect: 1.6,
   sentTitle: 'Ground',
   livePlanUrl: '/api/houseplan/content/plans/_/f1.png?v=42',
   dialogClosed: true,
   atticSaved: true,
   atticHasPlan: true,
-  atticAspect: 0.8,
+  atticPlanAspect: 0.8,
 });
 await finish(browser);

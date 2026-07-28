@@ -784,8 +784,22 @@ async def test_repair_issue_goes_when_its_space_does(
     client = await hass_ws_client(hass)
     registry = ir.async_get(hass)
 
-    gone = "/api/houseplan/content/plans/_/nosuchfile.png"
-    rev = (await _save(client, await _cfg([{"id": "r7", "plan_url": gone}]), 0))["result"]["rev"]
+    # A reference can only go bad AFTER it is stored — config/set refuses a new
+    # one that is already broken (HP-1470-02). So: attach a real plan, then let
+    # the file disappear the way it does in life, from outside Home Assistant.
+    import os
+
+    from custom_components.houseplan.const import PLANS_DIR
+
+    url, name = await _upload(client, "r7", b"PLAN")
+    rev = (await _save(client, await _cfg([{"id": "r7", "plan_url": url}]), 0))["result"]["rev"]
+    await hass.async_block_till_done()
+    assert registry.async_get_issue(HP_DOMAIN, "broken_plan_r7") is None, "the file is there"
+
+    await hass.async_add_executor_job(
+        os.remove, os.path.join(hass.config.path(PLANS_DIR), name)
+    )
+    rev = (await _save(client, await _cfg([{"id": "r7", "plan_url": url}]), rev))["result"]["rev"]
     await hass.async_block_till_done()
     assert registry.async_get_issue(HP_DOMAIN, "broken_plan_r7") is not None
 
@@ -940,6 +954,9 @@ async def test_startup_sweep_collects_what_no_commit_will(
     await _setup(hass)
     client = await hass_ws_client(hass)
     files, _plans, p = _paths(hass)
+    # the plan it names has to exist: config/set refuses a NEW broken
+    # reference (HP-1470-02). The orphans still arrive after the save.
+    await _seed_aged(hass, [p["kept_plan"]])
     assert (await _save(client, await _referenced_config(), 0))["success"]
 
     await _seed_aged(hass, list(p.values()))
@@ -967,6 +984,9 @@ async def test_periodic_sweep_collects_too(
     await _setup(hass)
     client = await hass_ws_client(hass)
     _files, _plans, p = _paths(hass)
+    # the plan it names has to exist: config/set refuses a NEW broken
+    # reference (HP-1470-02). The orphans still arrive after the save.
+    await _seed_aged(hass, [p["kept_plan"]])
     assert (await _save(client, await _referenced_config(), 0))["success"]
 
     await _seed_aged(hass, list(p.values()))
@@ -994,6 +1014,9 @@ async def test_sweep_and_a_config_write_do_not_race(
     await _setup(hass)
     client = await hass_ws_client(hass)
     _files, plans, p = _paths(hass)
+    # the plan it names has to exist: config/set refuses a NEW broken
+    # reference (HP-1470-02). The orphans still arrive after the save.
+    await _seed_aged(hass, [p["kept_plan"]])
     rev = (await _save(client, await _referenced_config(), 0))["result"]["rev"]
 
     # an aged, currently unreferenced plan that the commit below adopts
@@ -1161,3 +1184,59 @@ async def test_stored_plans_can_be_listed_and_deleted_on_request(
     )
     bad = await client.receive_json()
     assert not bad["success"] and bad["error"]["code"] == "invalid_name"
+
+
+async def test_config_set_refuses_a_plan_that_no_longer_exists(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """HP-1470-02: a stored internal plan url must name a file that exists.
+
+    The card can pick a plan and delete it from the same dialog, and two clients
+    can do the same in either order. The lock serialises them; it says nothing
+    about whether the file survived, so the check has to be here.
+    """
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+
+    url, name = await _upload(client, "x1", b"PLAN", ext="png")
+    await client.send_json_auto_id({"type": "houseplan/plans/delete", "name": name})
+    assert (await client.receive_json())["result"]["removed"] is True
+
+    resp = await _save(client, await _cfg([{"id": "x1", "plan_url": url}]), 0)
+    assert not resp["success"] and resp["error"]["code"] == "missing_plan"
+
+    # an external or legacy url is the user's business, not ours to verify
+    assert (await _save(client, await _cfg([{"id": "x1", "plan_url": "/local/mine.png"}]), 0))["success"]
+
+
+async def test_uploads_are_bounded_by_a_store_quota(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, monkeypatch
+) -> None:
+    """HP-1470-01: nothing is deleted for being old, so growth stops at the door."""
+    from custom_components.houseplan import websocket_api as wsapi
+
+    from pathlib import Path
+
+    from custom_components.houseplan.const import PLANS_DIR
+    from custom_components.houseplan.plans import dir_usage
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    # every test in this module shares one config directory, so the plans folder
+    # is not empty here — budget two more from whatever is already stored
+    stored, _b = await hass.async_add_executor_job(
+        lambda: dir_usage(Path(hass.config.path(PLANS_DIR)))[::-1]
+    )
+    monkeypatch.setattr(wsapi, "MAX_PLANS_FILES", stored + 2)
+
+    await _upload(client, "q1", b"one")
+    await _upload(client, "q1", b"two")
+
+    import base64
+
+    await client.send_json_auto_id({
+        "type": "houseplan/plan/set", "space_id": "q1", "ext": "png",
+        "data": base64.b64encode(b"three").decode(),
+    })
+    resp = await client.receive_json()
+    assert not resp["success"] and resp["error"]["code"] == "too_many_files"

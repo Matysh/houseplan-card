@@ -6,16 +6,32 @@
 import { declump, contentUrl } from './logic';
 import type { ServerConfig, SpaceModel, RoomCfg, DevItem } from './types';
 
-export const NORM_W = 1000; // width of the render space for normalized configs
+export const NORM_W = 1000; // side of the render space — the canvas is square
+
+/**
+ * Where a plan image sits inside the square canvas (v1.48.0).
+ *
+ * The canvas has no proportions of its own any more; the image keeps its own
+ * and is centred, so a wide plan gets margins above and below and a tall one
+ * gets them at the sides. `ratio` is the image's width/height; without it we
+ * assume square, which is only ever a brief guess before the file loads.
+ */
+export function fitInSquare(ratio: number | null | undefined, side: number) {
+  const r = Number(ratio);
+  const a = Number.isFinite(r) && r > 0 ? r : 1;
+  const w = a >= 1 ? side : side * a;
+  const h = a >= 1 ? side / a : side;
+  return { x: (side - w) / 2, y: (side - h) / 2, w, h };
+}
 
 export type Pt = { x: number; y: number };
 export type Layout = Record<string, { s?: string; x: number; y: number } | undefined>;
 
-/** Build render-space models (NORM_W × NORM_W/aspect) from a server config. */
+/** Build render-space models (NORM_W × NORM_W) from a server config. */
 export function spaceModels(cfg: ServerConfig | null): SpaceModel[] {
   if (!cfg || !Array.isArray(cfg.spaces)) return [];
   return cfg.spaces.map((s: any) => {
-    const H = NORM_W / s.aspect;
+    const H = NORM_W; // square canvas
     const scale = (r: any): RoomCfg => ({
       id: r.id,
       name: r.name,
@@ -35,13 +51,48 @@ export function spaceModels(cfg: ServerConfig | null): SpaceModel[] {
       id: s.id,
       title: s.title,
       vb: [s.view_box[0] * NORM_W, s.view_box[1] * H, s.view_box[2] * NORM_W, s.view_box[3] * H],
-      bg: s.plan_url ? { href: contentUrl(s.plan_url), x: 0, y: 0, w: NORM_W, h: H } : null,
+      bg: s.plan_url ? { href: contentUrl(s.plan_url), ...fitInSquare(s.plan_aspect, NORM_W) } : null,
       rooms: (s.rooms || []).map(scale),
     } as SpaceModel;
   });
 }
 
-/** Bounding rectangle of a room (rect or polygon) in render units. */
+/**
+ * What the plan actually occupies, padded by `pad` of the larger side.
+ *
+ * The canvas is a square big enough for any house, so a small hand-drawn plan
+ * used to open as a speck in the middle of it. Zooming to the CONTENT instead
+ * of the canvas is what people expect — but only when there is no background
+ * image: with one, the image is the plan, and cropping to the rooms would hide
+ * the parts of it nobody has outlined yet.
+ *
+ * Returns null when there is nothing drawn, so the caller keeps the full canvas.
+ */
+export function contentBounds(
+  space: SpaceModel, pad = 0.05,
+): { x: number; y: number; w: number; h: number } | null {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  const add = (x: number, y: number) => {
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+    if (x < minX) minX = x;
+    if (y < minY) minY = y;
+    if (x > maxX) maxX = x;
+    if (y > maxY) maxY = y;
+  };
+  for (const r of space.rooms || []) {
+    if (r.poly) for (const p of r.poly) add(p[0], p[1]);
+    else if (r.x != null && r.y != null) {
+      add(r.x, r.y);
+      add(r.x + (r.w || 0), r.y + (r.h || 0));
+    }
+  }
+  if (minX > maxX || minY > maxY) return null;
+  const m = Math.max(maxX - minX, maxY - minY) * pad;
+  const x = minX - m, y = minY - m;
+  return { x, y, w: (maxX - minX) + m * 2, h: (maxY - minY) + m * 2 };
+}
+
+/** Bounding rectangle of a room (rect or polygon) in render units. *//** Bounding rectangle of a room (rect or polygon) in render units. */
 export function roomBounds(r: RoomCfg): { x: number; y: number; w: number; h: number } {
   if (r.poly && r.poly.length) {
     const xs = r.poly.map((p) => p[0]);
@@ -91,8 +142,7 @@ export function defaultPositions(devs: DevItem[], model: SpaceModel, iconPct: nu
 export function markerPos(d: DevItem, layout: Layout, cfg: ServerConfig, defPos: Record<string, Pt>, model: SpaceModel): Pt {
   const saved = layout[d.id];
   if (saved && saved.s === d.space) {
-    const aspect = cfg.spaces.find((x: any) => x.id === d.space)?.aspect || 1;
-    return { x: saved.x * NORM_W, y: saved.y * (NORM_W / aspect) };
+    return { x: saved.x * NORM_W, y: saved.y * NORM_W };
   }
   if (defPos[d.id]) return defPos[d.id];
   const vb = model.vb;
@@ -103,8 +153,7 @@ export function markerPos(d: DevItem, layout: Layout, cfg: ServerConfig, defPos:
 export function labelPos(r: RoomCfg, spaceId: string, layout: Layout, cfg: ServerConfig): Pt {
   const saved = layout['rl_' + (r.id || '')];
   if (saved && saved.s === spaceId) {
-    const aspect = cfg.spaces.find((x: any) => x.id === spaceId)?.aspect || 1;
-    return { x: saved.x * NORM_W, y: saved.y * (NORM_W / aspect) };
+    return { x: saved.x * NORM_W, y: saved.y * NORM_W };
   }
   const c = roomCenter(r);
   return { x: c[0], y: c[1] };

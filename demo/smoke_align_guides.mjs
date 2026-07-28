@@ -33,7 +33,7 @@ const res = await page.evaluate(async () => {
   const a = devs[0], b = devs[1];
   const pa = c._pos(a);
   // поставим b на тот же Y, начнём drag
-  c._layout = { ...c._layout, [b.id]: { s: c._space, x: (pa.x + g * 12) / 1000, y: pa.y / (1000 / (c._curSpaceCfg.aspect || 1)) } };
+  c._layout = { ...c._layout, [b.id]: { s: c._space, x: (pa.x + g * 12) / 1000, y: pa.y / 1000 } };
   c._drag = { id: b.id, sx: 0, sy: 0, ox: 0, oy: 0, moved: true };
   c.requestUpdate(); await c.updateComplete;
   out.devGuide = guides() >= 1;
@@ -42,7 +42,7 @@ const res = await page.evaluate(async () => {
   // 4) подложка: рисование прямоугольника с углом на одном X с углом другой фигуры
   c._setMode('decor'); await c.updateComplete;
   c._curSpaceCfg.decor = [{ id: 'd1', kind: 'rect', x: 0.2, y: 0.2, w: 0.1, h: 0.1, color: '#ff0000', width: 3 }];
-  const W = 1000, H = 1000 / (c._curSpaceCfg.aspect || 1);
+  const W = 1000, H = 1000;   // square canvas
   c._decorDraft = { kind: 'rect', a: [0.5 * W, 0.5 * H], b: [0.2 * W, 0.6 * H], pid: 9 }; // b.x == углу d1
   c.requestUpdate(); await c.updateComplete;
   out.decorGuide = guides() >= 1;

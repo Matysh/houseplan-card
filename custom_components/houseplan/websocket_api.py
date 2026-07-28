@@ -17,12 +17,14 @@ from homeassistant.core import HomeAssistant, callback
 
 from .const import (
     CONF_ADMIN_ONLY, DEFAULT_CONFIG,
-    CONTENT_URL, FILES_DIR, MAX_SIGN_PATHS, PLANS_DIR, PLANS_URL,
+    CONTENT_URL, FILES_DIR, MAX_PLANS_BYTES, MAX_PLANS_FILES, MAX_PLANS_LISTED,
+    MAX_SIGN_PATHS,
+    PLANS_DIR, PLANS_URL,
 )
 from .auth import may_write
 from .plans import (
-    collect_attachments, collect_plans, is_plan_file, plan_basename, plan_refs,
-    reserve_filename,
+    QuotaError, check_quota, collect_attachments, collect_plans, is_plan_file,
+    plan_basename, plan_refs, reserve_filename,
 )
 from .store import HouseplanData, get_data, get_entry
 from .validation import (
@@ -263,7 +265,12 @@ async def ws_plans_list(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         out.sort(key=lambda x: -x["modified"])
         return out
 
-    connection.send_result(msg["id"], {"plans": await hass.async_add_executor_job(_scan)})
+    plans = await hass.async_add_executor_job(_scan)
+    # newest first and capped: a folder with thousands of files would otherwise
+    # become one huge message, one huge list and a signing request per row
+    connection.send_result(
+        msg["id"], {"plans": plans[:MAX_PLANS_LISTED], "total": len(plans)}
+    )
 
 
 @websocket_api.websocket_command(
@@ -470,6 +477,46 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
 
 
 
+def _internal_plan_names(config: dict[str, Any]) -> set[str]:
+    """Plan file names a configuration names through OUR urls.
+
+    Only `/api/houseplan/content/plans/_/<name>` and the legacy static path
+    count. Anything else belongs to the user and may point wherever they like.
+    """
+    out: set[str] = set()
+    for space in (config or {}).get("spaces") or []:
+        url = space.get("plan_url")
+        if not isinstance(url, str) or not url:
+            continue
+        if not (url.startswith(CONTENT_URL + "/plans/") or url.startswith(PLANS_URL + "/")):
+            continue
+        name = plan_basename(url)
+        if name:
+            out.add(name)
+    return out
+
+
+def _missing_internal_plans(
+    plans_dir: Path, config: dict[str, Any], previous: dict[str, Any] | None = None
+) -> set[str]:
+    """Newly named plan files that are not on disk.
+
+    Guards the pick-then-save window: another client may delete a plan between
+    the moment this one chose it and the moment it saves, which would otherwise
+    store a url with nothing behind it (HP-1470-02).
+
+    A name the stored configuration already carries is deliberately let through.
+    It is already broken — repairs says so — and refusing the write would lock
+    the owner out of every other edit, including the one that detaches it.
+    """
+    known = _internal_plan_names(previous or {})
+    return {
+        name
+        for name in _internal_plan_names(config)
+        if name not in known and not (plans_dir / name).is_file()
+    }
+
+
 @websocket_api.websocket_command(
     {
         vol.Required("type"): "houseplan/config/set",
@@ -517,6 +564,23 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             connection.send_error(
                 msg["id"], "conflict",
                 f"Configuration was changed in another window (rev {current_rev} != {msg['expected_rev']})",
+            )
+            return
+        # An internal plan url must name a file that exists. The card can pick a
+        # plan and then delete it from the same dialog, and two clients can do
+        # the same thing in either order — the lock serialises them but says
+        # nothing about whether the file survived (HP-1470-02). External and
+        # legacy urls are not ours to check and are left alone.
+        missing = await hass.async_add_executor_job(
+            _missing_internal_plans,
+            Path(hass.config.path(PLANS_DIR)),
+            msg["config"],
+            data.get("config"),
+        )
+        if missing:
+            connection.send_error(
+                msg["id"], "missing_plan",
+                "Plan file no longer exists: " + ", ".join(sorted(missing)),
             )
             return
         new_rev = current_rev + 1
@@ -589,6 +653,13 @@ async def ws_plan_set(hass: HomeAssistant, connection, msg: dict[str, Any]) -> N
     # (SPACE_ID_RE), so "<space>.<token>.<ext>" can never be confused with the
     # files of a differently named space.
     plans_dir = Path(hass.config.path(PLANS_DIR))
+    try:
+        await hass.async_add_executor_job(
+            check_quota, plans_dir, len(raw), MAX_PLANS_BYTES, MAX_PLANS_FILES
+        )
+    except QuotaError as err:
+        connection.send_error(msg["id"], err.reason, err.detail)
+        return
     name = f"{space_id}.{secrets.token_hex(4)}.{msg['ext']}"
     path = plans_dir / name
 

@@ -66,7 +66,7 @@
       than a quarter of the plan outside the viewBox [auto: smoke_decor]
 
 - [ ] Room climate counts hidden sensors (v1.44.5): a thermometer that is NOT
-      placed on the plan (hidden by curation or by the user) still feeds the
+      placed on the plan (hidden by filtering or by the user) still feeds the
       room card, the tooltip and the temperature fill; fridges/TRVs still do
       not; an explicit per-room source still wins [auto: unit devices.test]
 - [ ] Room tooltip wording (v1.44.5): hovering a room shows its name (plus
@@ -195,7 +195,7 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 ## Devices on the plan ★
 
 - [ ] Auto devices appear only in rooms bound to their area [manual]
-- [ ] Curation hides bridges/groups/scenes/excluded integrations; 👁 "show all" reveals [manual]
+- [ ] Filtering hides bridges/groups/scenes/excluded integrations; 👁 "show all" reveals [manual]
 - [ ] Duplicate "name|area" numbered ("Lamp", "Lamp 2") [manual]
 - [ ] Light groups fold their single lamps; `group_lights=false` unfolds [manual]
 - [ ] Drag anywhere (no edit mode), snaps to grid, persists after reload, per space
@@ -239,6 +239,29 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       on the plan after a reload. Same for each tap action and each fill mode
       [auto: backend test_every_display_mode_the_editor_offers_is_accepted and
       neighbours, test_a_marker_showing_its_value_can_be_saved]
+- [ ] Zoom opens on the content (v1.49.0): a space with no background and one
+      small room opens with that room filling the screen, with a small margin.
+      With a background it still fits the whole image
+      [auto: unit: contentBounds]
+- [ ] Deleting a picked plan is refused (v1.49.0, HP-1470-02): pick a saved
+      plan, reopen the list — its delete button is disabled. Ask the server to
+      store a plan url whose file is gone: `missing_plan`, and the revision does
+      not move [auto: smoke_saved_plans + backend
+      test_config_set_refuses_a_plan_that_no_longer_exists]
+- [ ] Uploads are bounded (v1.49.0, HP-1470-01): past the store quota an upload
+      is refused with a clear error and the disk does not grow; the plan list
+      returns the newest 60 with a total
+      [auto: unit: test_check_quota_counts_the_whole_store_not_one_request,
+      backend test_uploads_are_bounded_by_a_store_quota]
+- [ ] Square canvas migration (v1.48.0): after the upgrade every existing plan
+      looks exactly as before, just with margins where the canvas was extended.
+      Measure a wall in the plan editor — the length in cm is unchanged. Marker
+      positions, doors, decor and the saved zoom are all where they were
+      [auto: unit: test_a_wide_plan_gains_margins_above_and_below and neighbours,
+      test_migration_preserves_real_lengths_and_shapes]
+- [ ] A plan image is centred (v1.48.0): a wide image sits in the middle with
+      empty bands above and below, a tall one with bands at the sides, and it is
+      never stretched [auto: unit: fitInSquare + smoke_space_settings]
 - [ ] Re-attaching a detached plan (v1.47.0): detach a plan, save, RELOAD THE
       PAGE, open space settings → "Already uploaded" → the image is listed with
       its size and no "in use" note → attach it → it renders. The one a space

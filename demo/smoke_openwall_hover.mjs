@@ -6,7 +6,7 @@ const res = await page.evaluate(async () => {
   const sr = () => c.shadowRoot || c.renderRoot;
   const stage = () => sr().querySelector('.stage');
   c._setMode('plan'); c._tool = 'openwall'; await c.updateComplete;
-  const H = 1000 / (c._curSpaceCfg.aspect || 1);
+  const H = 1000;   // square canvas
   // 1) без наведения: курсор default, превью нет
   c._cursorPt = null; c.requestUpdate(); await c.updateComplete;
   out.idleCursor = getComputedStyle(stage()).cursor === 'default';
