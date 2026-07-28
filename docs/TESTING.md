@@ -239,6 +239,11 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       on the plan after a reload. Same for each tap action and each fill mode
       [auto: backend test_every_display_mode_the_editor_offers_is_accepted and
       neighbours, test_a_marker_showing_its_value_can_be_saved]
+- [ ] A path the backend cannot sign does not become a request loop (v1.45.4,
+      review R5-1): when `content/sign` answers successfully but omits a path,
+      the card backs that path off individually and keeps the urls it did get;
+      a re-render asks only for what is still missing, and only after the wait
+      [auto: unit: signing.test + backend test_signing_one_path_may_fail_without_failing_the_request]
 - [ ] Signing does not amplify on a bad connection (v1.45.2, review R4-2): with
       the WebSocket slow or refusing, the card issues ONE sign request per url
       and backs off after a failure instead of asking again on every render; a

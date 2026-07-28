@@ -504,3 +504,44 @@ async def test_content_signed_path_opens_without_a_bearer_header(
     )
     resp2 = await client.receive_json()
     assert resp2["success"] and resp2["result"]["urls"] == {}
+
+
+async def test_signing_one_path_may_fail_without_failing_the_request(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, monkeypatch
+) -> None:
+    """review R5-1: pin the contract the card now codes against.
+
+    One unsignable path must NOT fail the whole call — a single bad url would
+    otherwise block the signatures of every other file in the batch. The answer
+    is a partial map, and the card treats a path missing from it as a failure
+    for that path (backing off) rather than as success.
+    """
+    from custom_components.houseplan import websocket_api as wsapi
+    from custom_components.houseplan.const import CONTENT_URL
+
+    await _setup(hass)
+    good = f"{CONTENT_URL}/plans/_/good.png"
+    bad = f"{CONTENT_URL}/plans/_/bad.png"
+
+    real = wsapi.async_sign_path if hasattr(wsapi, "async_sign_path") else None
+    assert real is None  # imported inside the handler, so patch the source module
+
+    import homeassistant.components.http.auth as ha_auth
+
+    original = ha_auth.async_sign_path
+
+    def _sign(hass_, *args, **kwargs):
+        path = next((a for a in args if isinstance(a, str) and a.startswith("/")), "")
+        if path == bad:
+            raise ValueError("cannot sign this one")
+        return original(hass_, *args, **kwargs)
+
+    monkeypatch.setattr(ha_auth, "async_sign_path", _sign)
+
+    client = await hass_ws_client(hass)
+    await client.send_json_auto_id({"type": "houseplan/content/sign", "paths": [good, bad]})
+    resp = await client.receive_json()
+    assert resp["success"], "one bad path must not fail the batch"
+    urls = resp["result"]["urls"]
+    assert good in urls and "authSig=" in urls[good]
+    assert bad not in urls, "an unsignable path is absent, never an unsigned url"

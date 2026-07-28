@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.45.4 — 2026-07-28 (review of v1.45.3: R5-1, R5-2)
+- **A partly successful signing answer no longer skips the backoff (R5-1).**
+  The backend signs each path independently: one it cannot sign is logged,
+  skipped, and the call still succeeds with the remaining urls. The card took
+  any successful call as "the whole batch is done", cleared the backoff for
+  every path in it, and then wrote only the urls that came back — so a path the
+  backend kept skipping was requested again on every single render, which is
+  exactly the amplification v1.45.2 added the backoff to prevent. A path is now
+  counted as signed only if the answer actually carries a url for it; the rest
+  back off individually, keys nobody asked for are ignored, and a re-render is
+  only triggered when at least one new signature arrived.
+- **The status snapshot no longer contradicts the repository (R5-2).** It still
+  described `main` as carrying releases up to v1.40.1 and quoted test counts
+  from several releases back, while the version line right beside them was kept
+  current — a maintainer or an agent reading it for handoff got a wrong branch
+  model and a smaller picture of the coverage than exists. The branch roles are
+  described accurately, and the counts are gone: `npm run inventory` prints them
+  from the tree, so there is nothing left to go stale.
+
 ## v1.45.3 — 2026-07-27
 - **"Value instead of an icon" could not be saved (issue #3).** The option was
   added to the device editor in v1.26.0, but the server-side schema only ever
@@ -12,8 +31,8 @@
   `DISPLAY_MODES`, `TAP_ACTIONS`, `SPACE_FILL_MODES` and `ROOM_FILL_MODES` are
   exported from the card and read by a backend test that asserts the schema
   accepts every value a user can actually pick. Adding an option to an editor
-  and forgetting the schema now fails the test suite instead of surfacing a year
-  later through somebody's error message.
+  and forgetting the schema now fails the test suite instead of surfacing
+  through somebody's error message.
 
 ## v1.45.2 — 2026-07-27 (hardening from the v1.45.1 review: R4-1, R4-2)
 - **A failed cleanup no longer reports an accepted save as an error (R4-1).**

@@ -183,3 +183,63 @@ test('dispose(): a late answer neither renders nor throws, start() revives it', 
   assert.equal(s.display(hass, URL_A), URL_A + '?authSig=NEW');
   s.dispose();
 });
+
+test('R5-1: an empty but successful answer still backs off', async () => {
+  let t = 1_000_000;
+  const { hass, calls } = makeHass();
+  const { s, updates } = signer(() => t);
+  s.display(hass, URL_A);
+  await tick();
+  calls[0].res({ urls: {} }); // the backend skipped the path it could not sign
+  await tick();
+  assert.equal(updates(), 0, 'nothing was signed, so nothing to re-render for');
+
+  for (let i = 0; i < 5; i++) { s.display(hass, URL_A); await tick(); }
+  assert.equal(calls.length, 1, 'five renders, still one request');
+
+  t += SIGN_BACKOFF_MIN_MS + 1;
+  s.display(hass, URL_A);
+  await tick();
+  assert.equal(calls.length, 2, 'retried after the backoff');
+});
+
+test('R5-1: a partial answer backs off only the path that is missing', async () => {
+  let t = 1_000_000;
+  const { hass, calls } = makeHass();
+  const { s } = signer(() => t);
+  s.display(hass, URL_A);
+  s.display(hass, URL_B);
+  await tick();
+  assert.deepEqual(calls[0].paths.sort(), [URL_B, URL_A].sort());
+
+  calls[0].res({ urls: { [URL_A]: URL_A + '?authSig=OK' } }); // B was skipped
+  await tick();
+  assert.equal(s.display(hass, URL_A), URL_A + '?authSig=OK');
+  assert.equal(s.display(hass, URL_B), '');
+  await tick();
+  assert.equal(calls.length, 1, 'the missing path is in backoff, not re-asked');
+
+  t += SIGN_BACKOFF_MIN_MS + 1;
+  s.display(hass, URL_A);
+  s.display(hass, URL_B);
+  await tick();
+  assert.deepEqual(calls[1].paths, [URL_B], 'only the missing path is retried');
+
+  calls[1].res({ urls: { [URL_B]: URL_B + '?authSig=OK' } });
+  await tick();
+  assert.equal(s.display(hass, URL_B), URL_B + '?authSig=OK');
+  t += SIGN_BACKOFF_MIN_MS * 8;
+  s.display(hass, URL_B);
+  await tick();
+  assert.equal(calls.length, 2, 'a success clears the backoff state, no stray retry');
+});
+
+test('R5-1: a key we never asked for is ignored', async () => {
+  const { hass, calls } = makeHass();
+  const { s } = signer();
+  s.display(hass, URL_A);
+  await tick();
+  calls[0].res({ urls: { [URL_A]: URL_A + '?authSig=OK', '/api/houseplan/content/files/x/evil.pdf': 'nope' } });
+  await tick();
+  assert.deepEqual(Object.keys(s.entries), [URL_A]);
+});
