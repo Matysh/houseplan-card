@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.47.0 — 2026-07-28 (pick a plan you already uploaded)
+- **The space dialog can now show the plans stored on the server.** Detaching a
+  plan keeps the image on disk — that has been the rule since v1.46.4, but until
+  now the only way back was to find the original file on your computer and
+  upload it again. "Already uploaded" lists what is there, with a thumbnail, the
+  file size and which space uses it. One click attaches it; the aspect ratio is
+  read from the image, exactly as on upload.
+- **And it is where you delete one.** A plan file is never removed automatically
+  — not for being detached, not for being old — which is only a sensible policy
+  if you can see what is being kept and get rid of it deliberately. The trash
+  button does that, and refuses while a space still uses the plan: the answer to
+  "may this go" comes from the stored configuration, not from the browser.
+- Documentation caught up with the code: several comments still described the
+  age-based collection that v1.46.6 removed.
+
 ## v1.46.6 — 2026-07-28 (the detach promise, actually kept this time)
 - **Switching a space to "draw" no longer deletes its image.** v1.46.4 and
   v1.46.5 said it did not, and the scheduled cleanup indeed left detached plans

@@ -178,6 +178,8 @@ double click → properties dialog. In markup mode the "Opening" tool handles cl
 | `houseplan/config/get` | — | `{config, rev}` |
 | `houseplan/config/set` | `config`, `expected_rev?` | `{ok, rev}` / err `conflict`; event `houseplan_config_updated` |
 | `houseplan/plan/set` | `space_id`, `ext` (svg/png/jpg/webp), `data` (b64, ≤8 MB) | `{ok, url}` — writes `<space>.<token>.<ext>`, deletes nothing |
+| `houseplan/plans/list` | — | `{plans: [{name, url, size, modified, used_by}]}` |
+| `houseplan/plans/delete` | `name` | `{ok, removed}` / err `in_use` |
 | `houseplan/file/set` | `marker_id`, `filename`, `data` (b64) | `{ok,url,name}` (legacy, WS limit) |
 
 **User content is served inert** (HP-1454-01). An uploaded SVG is the only
@@ -230,6 +232,14 @@ was detached, under documentation promising the opposite (HP-1465-01).
 | Marker gone | same call as a deleted space's plan | **kept** |
 | Attachment in `up_*` | a dialog that was never saved; no device owns it | `PLAN_ORPHAN_TTL_S` (1 h) |
 | Marker there, file it never listed | a rejected upload | **kept**, same reason |
+
+Nothing is deleted for being old, with one exception: a per-dialog staging
+folder (`up_*`), which by construction can only hold an upload from a dialog
+that was never saved. The disk therefore stays bounded by the user, not by a
+timer — `houseplan/plans/list` shows every stored plan with its size and which
+space uses it, and `houseplan/plans/delete` removes one on request, refusing
+while a space still references it. That listing is what makes "we never delete"
+livable: a detached plan is not lost, it is one click away in the space dialog.
 
 **Config writes are serialized** (HP-1454-03). `_writeConfig()` chains onto a
 single promise: one `config/set` in flight, each carrying the revision the

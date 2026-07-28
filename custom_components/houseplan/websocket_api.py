@@ -20,11 +20,14 @@ from .const import (
     CONTENT_URL, FILES_DIR, MAX_SIGN_PATHS, PLANS_DIR, PLANS_URL,
 )
 from .auth import may_write
-from .plans import collect_attachments, collect_plans, reserve_filename
+from .plans import (
+    collect_attachments, collect_plans, is_plan_file, plan_basename, plan_refs,
+    reserve_filename,
+)
 from .store import HouseplanData, get_data, get_entry
 from .validation import (
     CONFIG_SCHEMA, LAYOUT_SCHEMA, MAX_CONFIG_BYTES, MAX_PLAN_BYTES,
-    PLAN_EXTENSIONS, POS_SCHEMA, valid_space_id,
+    PLAN_EXTENSIONS, POS_SCHEMA, sanitize_filename, valid_space_id,
 )
 
 
@@ -41,6 +44,8 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_config_get)
     websocket_api.async_register_command(hass, ws_config_set)
     websocket_api.async_register_command(hass, ws_plan_set)
+    websocket_api.async_register_command(hass, ws_plans_list)
+    websocket_api.async_register_command(hass, ws_plans_delete)
     websocket_api.async_register_command(hass, ws_files_migrate)
     websocket_api.async_register_command(hass, ws_files_cleanup)
     websocket_api.async_register_command(hass, ws_content_sign)
@@ -213,6 +218,100 @@ async def ws_files_migrate(hass: HomeAssistant, connection, msg: dict[str, Any])
         connection.send_error(msg["id"], "io_error", f"Could not copy marker files: {err}")
         return
     connection.send_result(msg["id"], {"ok": True, "mapping": mapping, "copied": len(mapping)})
+
+
+@websocket_api.websocket_command({vol.Required("type"): "houseplan/plans/list"})
+@websocket_api.async_response
+async def ws_plans_list(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
+    """Plan images on the server, with what still uses them.
+
+    Files are never removed for being unreferenced (docs/SCOPE.md), which only
+    works as a policy if the user can see them: detaching a plan keeps the
+    image, and this is how it gets picked up again — or deleted on purpose.
+    """
+    rt = _runtime(hass, connection, msg["id"])
+    if rt is None:
+        return
+    stored = await rt.config_store.async_load() or {}
+    cfg = stored.get("config") or {}
+    used: dict[str, list[str]] = {}
+    for space in cfg.get("spaces") or []:
+        name = plan_basename(space.get("plan_url"))
+        if name:
+            used.setdefault(name, []).append(space.get("title") or space.get("id") or "?")
+
+    plans_dir = Path(hass.config.path(PLANS_DIR))
+
+    def _scan() -> list[dict[str, Any]]:
+        out: list[dict[str, Any]] = []
+        if not plans_dir.is_dir():
+            return out
+        for item in sorted(plans_dir.iterdir()):
+            if not item.is_file() or not is_plan_file(item.name):
+                continue
+            try:
+                st = item.stat()
+            except OSError:
+                continue
+            out.append({
+                "name": item.name,
+                "url": f"{CONTENT_URL}/plans/_/{item.name}",
+                "size": st.st_size,
+                "modified": int(st.st_mtime),
+                "used_by": used.get(item.name, []),
+            })
+        out.sort(key=lambda x: -x["modified"])
+        return out
+
+    connection.send_result(msg["id"], {"plans": await hass.async_add_executor_job(_scan)})
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "houseplan/plans/delete",
+        vol.Required("name"): str,
+    }
+)
+@websocket_api.async_response
+async def ws_plans_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
+    """Delete a plan image because the user asked — the only way one goes.
+
+    Refuses while a space still references it: the answer to "can I delete this"
+    is the stored configuration's, not the client's.
+    """
+    if not _check_write(hass, connection):
+        connection.send_error(msg["id"], "unauthorized", "Only administrators may delete plans")
+        return
+    rt = _runtime(hass, connection, msg["id"])
+    if rt is None:
+        return
+    name = sanitize_filename(msg["name"])
+    if not is_plan_file(name):
+        connection.send_error(msg["id"], "invalid_name", "Not a plan file")
+        return
+
+    async with rt.write_lock:
+        stored = await rt.config_store.async_load() or {}
+        cfg = stored.get("config") or {}
+        if name in plan_refs(cfg):
+            connection.send_error(
+                msg["id"], "in_use", "A space still uses this plan — detach it first"
+            )
+            return
+        path = Path(hass.config.path(PLANS_DIR)) / name
+
+        def _rm() -> bool:
+            try:
+                path.unlink()
+                return True
+            except FileNotFoundError:
+                return False
+            except OSError as err:
+                _LOGGER.warning("House Plan: could not delete %s: %s", path, err)
+                return False
+
+        removed = await hass.async_add_executor_job(_rm)
+    connection.send_result(msg["id"], {"ok": True, "removed": removed})
 
 
 @websocket_api.websocket_command(
@@ -480,10 +579,11 @@ async def ws_plan_set(hass: HomeAssistant, connection, msg: dict[str, Any]) -> N
     # deleted here (review R2-1). The old name stays readable, so a config write
     # that is later rejected — revision conflict, validation, lost connection —
     # leaves the stored plan exactly as it was. The card calls
-    # nothing here; the superseded file is collected by `config/set` itself,
-    # inside the write lock, once a revision that no longer references it has
-    # been accepted (review R3-1). A crash in between leaves an orphan, which
-    # the same collector removes on a later commit once it is old enough.
+    # nothing here; the file a commit REPLACES is collected by `config/set`
+    # itself, inside the write lock (review R3-1). An upload that never gets
+    # committed is not collected at all — it is offered back in the space
+    # dialog's "already uploaded" list, where the user can attach or delete it.
+    # Every attempt to age these out ended in data loss or a race (v1.46.4-6).
     #
     # `.` separates the id from the token because a space id cannot contain one
     # (SPACE_ID_RE), so "<space>.<token>.<ext>" can never be confused with the

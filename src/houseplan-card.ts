@@ -35,7 +35,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.46.6';
+const CARD_VERSION = '1.47.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -277,6 +277,15 @@ class HouseplanCard extends LitElement {
     title: string;
     planUrl: string | null;
     planFile: { ext: string; b64: string; aspect: number; name: string } | null;
+    /**
+     * The "already uploaded" list, its contents, and the aspect of whatever was
+     * picked from it. Plans are never deleted for being unreferenced, which is
+     * only a sane policy if they can be found again (docs/SCOPE.md).
+     */
+    pickSaved?: boolean;
+    saved?: { name: string; url: string; size: number; modified: number; used_by: string[] }[] | null;
+    savedBusy?: boolean;
+    savedAspect?: number;
     source: 'file' | 'draw';       // draw = no background image, hand-drawn rooms
     orientation: 'landscape' | 'portrait' | 'square';
     showBorders: boolean;
@@ -3060,6 +3069,89 @@ class HouseplanCard extends LitElement {
     this._spaceDialog = { ...this._spaceDialog, planFile: { ext, b64, aspect, name: file.name } };
   }
 
+  /**
+   * Plans that are on the server but not attached anywhere are not garbage —
+   * the component never deletes them (docs/SCOPE.md), which only makes sense if
+   * they can be found again. This is that: detach a plan, come back later, pick
+   * it out of the list. It is also the only way one is ever deleted.
+   */
+  private _toggleServerPlans = async (): Promise<void> => {
+    const d = this._spaceDialog;
+    if (!d) return;
+    if (d.pickSaved) {
+      this._spaceDialog = { ...d, pickSaved: false };
+      return;
+    }
+    this._spaceDialog = { ...d, pickSaved: true, savedBusy: true };
+    try {
+      const r: any = await this.hass.callWS({ type: 'houseplan/plans/list' });
+      const cur = this._spaceDialog;
+      if (cur) this._spaceDialog = { ...cur, saved: r?.plans || [], savedBusy: false };
+    } catch (e: any) {
+      const cur = this._spaceDialog;
+      if (cur) this._spaceDialog = { ...cur, saved: [], savedBusy: false };
+      this._showToast(this._t('toast.plans_list_failed', { err: this._errText(e) }));
+    }
+  };
+
+  private _useServerPlan(url: string): void {
+    const d = this._spaceDialog;
+    if (!d) return;
+    // the aspect ratio is read from the image itself, exactly as on upload
+    const img = new Image();
+    img.onload = () => {
+      const cur = this._spaceDialog;
+      if (!cur) return;
+      const ratio = img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : 1.414;
+      this._spaceDialog = {
+        ...cur, planUrl: url, planFile: null, pickSaved: false,
+        savedAspect: Number.isFinite(ratio) && ratio > 0 ? ratio : 1.414,
+      };
+    };
+    img.onerror = () => {
+      const cur = this._spaceDialog;
+      if (cur) this._spaceDialog = { ...cur, planUrl: url, planFile: null, pickSaved: false, savedAspect: 1.414 };
+    };
+    img.src = this._display(url);
+  }
+
+  private async _deleteServerPlan(name: string): Promise<void> {
+    if (!confirm(this._t('confirm.delete_plan', { name }))) return;
+    try {
+      await this.hass.callWS({ type: 'houseplan/plans/delete', name });
+      const d = this._spaceDialog;
+      if (d?.saved) this._spaceDialog = { ...d, saved: d.saved.filter((p) => p.name !== name) };
+    } catch (e: any) {
+      this._showToast(this._t('toast.plan_delete_failed', { err: this._errText(e) }));
+    }
+  }
+
+  private _renderServerPlans(d: NonNullable<typeof this._spaceDialog>): TemplateResult {
+    if (d.savedBusy) return html`<div class="savedplans muted">${this._t('space.loading')}</div>`;
+    const list = d.saved || [];
+    if (!list.length) return html`<div class="savedplans muted">${this._t('space.no_saved')}</div>`;
+    const kb = (n: number) => (n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.round(n / 1024) + ' KB');
+    return html`<div class="savedplans">
+      ${list.map((p) => html`
+        <div class="savedplan ${p.url === d.planUrl ? 'cur' : ''}">
+          <img src=${this._display(p.url)} alt="" />
+          <div class="savedmeta">
+            <b>${p.name}</b>
+            <span class="muted">${kb(p.size)}${p.used_by.length
+              ? ' · ' + this._t('space.used_by', { list: p.used_by.join(', ') })
+              : ''}</span>
+          </div>
+          <button class="btn ghost" @click=${() => this._useServerPlan(p.url)}
+            ?disabled=${p.url === d.planUrl}>${this._t('btn.use')}</button>
+          <button class="btn ghost danger" title=${p.used_by.length ? this._t('space.in_use') : this._t('btn.delete')}
+            ?disabled=${p.used_by.length > 0}
+            @click=${() => this._deleteServerPlan(p.name)}>
+            <ha-icon icon="mdi:trash-can-outline"></ha-icon>
+          </button>
+        </div>`)}
+    </div>`;
+  }
+
   private async _saveSpaceDialog(): Promise<void> {
     const d = this._spaceDialog;
     if (!d || d.busy || !d.title.trim()) return;
@@ -3109,6 +3201,10 @@ class HouseplanCard extends LitElement {
       if (uploaded) {
         sp.plan_url = uploaded.url;
         sp.aspect = uploaded.aspect;
+      } else if (d.source === 'file' && d.planUrl && d.planUrl !== sp.plan_url) {
+        // picked from the server list: no upload, just a reference
+        sp.plan_url = d.planUrl;
+        if (d.savedAspect) sp.aspect = d.savedAspect;
       }
       // switching an existing space to "draw" detaches its background image
       // (the uploaded file stays on disk; only the reference is cleared)
@@ -5135,7 +5231,12 @@ class HouseplanCard extends LitElement {
                   <input type="file" hidden accept=".svg,.png,.jpg,.jpeg,.webp,image/svg+xml,image/png,image/jpeg,image/webp"
                     @change=${(e: Event) => this._pickPlanFile(e)} />
                 </label>
-              </div>`
+                <button class="btn ghost" @click=${this._toggleServerPlans}
+                  title=${this._t('space.pick_saved_hint')}>
+                  <ha-icon icon="mdi:folder-image"></ha-icon>${this._t('space.pick_saved')}
+                </button>
+              </div>
+              ${d.pickSaved ? this._renderServerPlans(d) : nothing}`
             : nothing}
           <label class="srcrow">
             <input type="radio" name="plansrc" .checked=${d.source === 'draw'}
