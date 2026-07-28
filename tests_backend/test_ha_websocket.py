@@ -342,35 +342,41 @@ async def test_commit_does_not_collect_another_client_s_uncommitted_upload(
     assert not (plans / pa).exists()
 
 
-async def test_abandoned_uploads_are_collected_once_old(
+async def test_a_rejected_upload_is_kept_not_aged_out(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator
 ) -> None:
-    """A rejected upload must not accumulate forever — but only age may free it."""
+    """v1.46.6: age is never a reason to delete a plan file.
+
+    It used to be, for "a file of a space that has a plan and never was one" —
+    an upload whose save had failed. That raced the retry: the sweep removed the
+    file while the next save was committing a reference to it. Keeping it costs
+    a few megabytes nobody can lose.
+    """
     import os
     import time
-    from pathlib import Path
 
-    from custom_components.houseplan.const import PLANS_DIR, PLAN_ORPHAN_TTL_S
+    from custom_components.houseplan.const import PLANS_DIR, SCHEDULED_GRACE_S
+    from custom_components.houseplan.store import get_data
 
     await _setup(hass)
     client = await hass_ws_client(hass)
-    plans = Path(hass.config.path(PLANS_DIR))
-    plans.mkdir(parents=True, exist_ok=True)
-    for stale in plans.glob("r3.*"):
-        stale.unlink()
+    plans = hass.config.path(PLANS_DIR)
 
     url0, p0 = await _upload(client, "r3", b"zero")
     rev = (await _save(client, await _cfg([{"id": "r3", "plan_url": url0}]), 0))["result"]["rev"]
 
-    _url, orphan = await _upload(client, "r3", b"abandoned")
-    old = time.time() - PLAN_ORPHAN_TTL_S - 60
-    os.utime(plans / orphan, (old, old))
-    # r3 still HAS a plan, so this really is a rejected upload — collectable
+    _url, orphan = await _upload(client, "r3", b"never saved")
+    old = time.time() - SCHEDULED_GRACE_S * 12
+    os.utime(os.path.join(plans, orphan), (old, old))
 
-    ok = await _save(client, await _cfg([{"id": "r3", "plan_url": url0}]), rev)
-    assert ok["success"]
-    assert not (plans / orphan).exists(), "an aged, unreferenced upload is collected"
-    assert (plans / p0).is_file(), "the referenced plan is never touched"
+    # a commit, and the scheduled pass, and any amount of age: it stays
+    assert (await _save(client, await _cfg([{"id": "r3", "plan_url": url0}]), rev))["success"]
+    data = get_data(hass)
+    await data.sweep()
+    await hass.async_block_till_done()
+
+    assert await hass.async_add_executor_job(os.path.isfile, os.path.join(plans, orphan))
+    assert await hass.async_add_executor_job(os.path.isfile, os.path.join(plans, p0))
 
 
 async def test_collection_ignores_files_that_are_not_plans(
@@ -889,7 +895,9 @@ def _paths(hass):
         "kept_file": os.path.join(files, "m5", "kept.pdf"),
         "kept_plan": os.path.join(plans, "s5.tok.png"),
         "orphan_file": os.path.join(files, "up_cancelled", "manual.pdf"),
-        "orphan_plan": os.path.join(plans, "s5.reject.png"),
+        # a plan file is never collected by age any more; keep one around and
+        # assert exactly that
+        "kept_reject": os.path.join(plans, "s5.reject.png"),
     }
 
 
@@ -907,8 +915,12 @@ async def _assert_swept(hass, p) -> None:
 
     assert await hass.async_add_executor_job(os.path.isfile, p["kept_file"]), "referenced file kept"
     assert await hass.async_add_executor_job(os.path.isfile, p["kept_plan"]), "referenced plan kept"
-    assert not await hass.async_add_executor_job(os.path.isfile, p["orphan_file"])
-    assert not await hass.async_add_executor_job(os.path.isfile, p["orphan_plan"])
+    assert not await hass.async_add_executor_job(os.path.isfile, p["orphan_file"]), (
+        "a staging folder from a dialog nobody saved is the one thing age collects"
+    )
+    assert await hass.async_add_executor_job(os.path.isfile, p["kept_reject"]), (
+        "a plan file is never removed for being old"
+    )
 
 
 async def test_startup_sweep_collects_what_no_commit_will(
