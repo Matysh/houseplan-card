@@ -782,6 +782,50 @@ def test_migration_runs_once_and_only_when_needed():
     assert repr(cfg) == snapshot
 
 
+def test_migration_survives_a_crash_between_the_two_store_writes():
+    """HP-1490-01: the two stores are written independently and either write
+    can fail. The intent (space -> old aspect) is saved BEFORE anything moves
+    and cleared with the layout write, so whichever half is missing after a
+    crash, the next start finishes exactly it — once.
+    """
+    cfg = {"spaces": [{"id": "f1", "aspect": 2.0, "rooms": []}]}
+    layout = {"m": {"s": "f1", "x": 0.1, "y": 0.1}}
+
+    # start of the migration: the intent is computed from the config
+    pending = gm.pending_from_config(cfg)
+    assert pending == {"f1": 2.0}
+
+    # the config half commits; the process dies before the layout half
+    assert gm.migrate_config(cfg) is True
+    assert gm.pending_from_config(cfg) == {}, "the trigger left with the config write"
+
+    # next start: the config offers nothing, the SAVED intent still knows
+    assert gm.migrate_layout(layout, pending) is True
+    assert layout["m"] == {"s": "f1", "x": 0.1, "y": 0.3}, "y is re-centred for a wide plan"
+
+    # and the layout half never runs twice, because the intent is cleared by
+    # the same write that stores the migrated layout — with no intent there is
+    # nothing to apply
+    assert gm.migrate_layout(layout, {}) is False
+    assert layout["m"] == {"s": "f1", "x": 0.1, "y": 0.3}
+
+
+def test_migration_intent_is_the_union_of_saved_and_current():
+    """A crash BEFORE the config write leaves both the intent and the aspects;
+    merging them must not double anything, and a space added to the config
+    since (there cannot be one mid-crash, but the code should not care) still
+    migrates."""
+    cfg = {"spaces": [{"id": "f1", "aspect": 2.0, "rooms": []}]}
+    saved = {"f1": 2.0}
+    merged = {**saved, **gm.pending_from_config(cfg)}
+    assert merged == {"f1": 2.0}
+    layout = {"m": {"s": "f1", "x": 0.1, "y": 0.1}}
+    gm.migrate_config(cfg)
+    gm.migrate_layout(layout, merged)
+    assert layout["m"]["y"] == 0.3
+    assert cfg["spaces"][0]["view_box"] == [0.0, 0.0, 1.0, 1.0]
+
+
 # ---------- store-wide limits (HP-1470-01) ----------
 
 

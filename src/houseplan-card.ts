@@ -36,7 +36,7 @@ import { cardStyles } from './styles';
 import { fitInSquare, contentBounds } from './space-geometry';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.49.0';
+const CARD_VERSION = '1.50.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -245,6 +245,8 @@ class HouseplanCard extends LitElement {
   private _pinchStart: { dist: number; zoom: number } | null = null;
   private _suppressClick = false;
   private _roViewport?: ResizeObserver;
+  private _roHdr?: ResizeObserver;
+  private _hdrH = 118; // measured px above the stage (see the observer in updated())
   private _onboardingShown = false; // the auto space dialog is shown once per session
 
   private _rulesDialog: { rules: IconRule[]; test: string; busy: boolean } | null = null;
@@ -359,6 +361,7 @@ class HouseplanCard extends LitElement {
   private _holdFired = false;
 
   static properties = {
+    _hdrH: { state: true },
     hass: { attribute: false },
     _config: { state: true },
     _space: { state: true },
@@ -431,6 +434,8 @@ class HouseplanCard extends LitElement {
     clearTimeout(this._holdTimer);
     this._roViewport?.disconnect();
     this._roViewport = undefined;
+    this._roHdr?.disconnect();
+    this._roHdr = undefined;
     if (this._unsubCfg) {
       this._unsubCfg();
       this._unsubCfg = null;
@@ -723,6 +728,24 @@ class HouseplanCard extends LitElement {
     if (stage && !this._roViewport) {
       this._roViewport = new ResizeObserver(() => this._refitView());
       this._roViewport.observe(stage);
+    }
+    // The stage fills the rest of the viewport. What sits above it — the HA
+    // toolbar, card margins, our own header — DEPENDS ON THE MODE: the editor
+    // bars used to be billed against a hard-coded 118px, so entering an editor
+    // pushed the plan down by the difference and cut its bottom off below the
+    // fold. Measure where the stage actually starts instead of assuming.
+    const hdr = this.renderRoot.querySelector('.hdr') as HTMLElement | null;
+    if (hdr && stage && !this._roHdr) {
+      const measure = () => {
+        const t = Math.round(stage.getBoundingClientRect().top + (window.scrollY || 0));
+        if (t >= 0 && Math.abs(t - this._hdrH) > 1) this._hdrH = t;
+      };
+      // a frame later: setting state straight from the observer callback makes
+      // the browser report "ResizeObserver loop completed with undelivered
+      // notifications" — the render it triggers resizes the stage again
+      this._roHdr = new ResizeObserver(() => requestAnimationFrame(measure));
+      this._roHdr.observe(hdr);
+      measure();
     }
     if (stage && !this._view) this._refitView();
     // onboarding: on an empty server config, open the space dialog right away
@@ -1235,7 +1258,15 @@ class HouseplanCard extends LitElement {
   private _baseVb(): number[] {
     const m = this._spaceModel();
     if (m.bg) return m.vb;
-    const b = contentBounds(m);
+    // The EDITORS get the whole square: the content frame also bounds pan,
+    // zoom and pointer maths, and inside it there is nowhere to draw the next
+    // room or drag a marker away from the first one (HP-1490-03).
+    if (this._mode !== 'view') return m.vb;
+    // devices are content too — they may stand outside every room
+    const pts = this._devices
+      .filter((d) => d.space === m.id)
+      .map((d) => { const p = this._pos(d); return [p.x, p.y] as const; });
+    const b = contentBounds(m, 0.05, pts);
     return b ? [b.x, b.y, b.w, b.h] : m.vb;
   }
 
@@ -1259,7 +1290,14 @@ class HouseplanCard extends LitElement {
     return [v.x + (sx / w) * v.w, v.y + (sy / h) * v.h];
   }
 
-  /** Clamp the view to the fit bounds (the content always covers the scene). */
+  /** Zoom limits: 8× in, 0.4× out (zoomed out, the plan floats centred). */
+  private static readonly ZOOM_MAX = 8;
+  private static readonly ZOOM_MIN = 0.4;
+
+  /** Clamp the view to the fit bounds (the content always covers the scene).
+   *  Zoomed OUT the view is larger than the content on an axis — then there is
+   *  nothing to clamp against and the content is centred on that axis instead
+   *  of being pinned to a corner. */
   private _clampView(
     v: { x: number; y: number; w: number; h: number },
     fit: { x: number; y: number; w: number; h: number },
@@ -1267,8 +1305,12 @@ class HouseplanCard extends LitElement {
     return {
       w: v.w,
       h: v.h,
-      x: Math.max(fit.x, Math.min(fit.x + fit.w - v.w, v.x)),
-      y: Math.max(fit.y, Math.min(fit.y + fit.h - v.h, v.y)),
+      x: v.w >= fit.w
+        ? fit.x + (fit.w - v.w) / 2
+        : Math.max(fit.x, Math.min(fit.x + fit.w - v.w, v.x)),
+      y: v.h >= fit.h
+        ? fit.y + (fit.h - v.h) / 2
+        : Math.max(fit.y, Math.min(fit.y + fit.h - v.h, v.y)),
     };
   }
 
@@ -1276,7 +1318,7 @@ class HouseplanCard extends LitElement {
   private _applyView(zoom: number, cx?: number, cy?: number): void {
     const vb = this._baseVb();
     const fit = fitView(vb, this._stageAspect());
-    const z = Math.min(8, Math.max(1, zoom));
+    const z = Math.min(HouseplanCard.ZOOM_MAX, Math.max(HouseplanCard.ZOOM_MIN, zoom));
     const w = fit.w / z, h = fit.h / z;
     const cur = this._viewOr(vb);
     const ccx = cx ?? cur.x + cur.w / 2;
@@ -1299,7 +1341,7 @@ class HouseplanCard extends LitElement {
     if (!stage) return;
     const vb = this._baseVb();
     const fit = fitView(vb, this._stageAspect());
-    const z = Math.min(8, Math.max(1, newZoom));
+    const z = Math.min(HouseplanCard.ZOOM_MAX, Math.max(HouseplanCard.ZOOM_MIN, newZoom));
     const w = stage.clientWidth, h = stage.clientHeight;
     const pt = this._screenToVb(sx, sy);
     const nw = fit.w / z, nh = fit.h / z;
@@ -1638,7 +1680,15 @@ class HouseplanCard extends LitElement {
       this._showToast(this._t('toast.markup_needs_server'));
       return;
     }
+    const baseChanges = !this._spaceModel().bg && (mode === 'view') !== (this._mode === 'view');
     this._mode = mode;
+    if (baseChanges) {
+      // refit against the new base: the editors measure from the full square,
+      // the view from the content frame — a view clamped to one is nonsense
+      // against the other (HP-1490-03)
+      this._zoom = 1;
+      this._view = null; // updated() refits on the next frame
+    }
     this._path = [];
     this._cursorPt = null;
     this._tool = 'draw';
@@ -3126,12 +3176,18 @@ class HouseplanCard extends LitElement {
     }
   };
 
+  /** The in-flight proportions read for the last picked saved plan. Save
+   *  awaits it rather than shipping whatever was there before (HP-1490-04). */
+  private _aspectJob: Promise<number> | null = null;
+
   private _useServerPlan(url: string): void {
     const d = this._spaceDialog;
     if (!d) return;
-    // Attach immediately — the click should not wait for anything.
-    this._spaceDialog = { ...d, planUrl: url, planFile: null, pickSaved: false };
-    void this._readPlanAspect(url);
+    // Attach immediately — the click should not wait for anything. The OLD
+    // file's proportions go right away: they describe the previous image, and
+    // a Save racing the read must get "unknown", never "the wrong shape".
+    this._spaceDialog = { ...d, planUrl: url, planFile: null, pickSaved: false, savedAspect: undefined };
+    this._aspectJob = this._readPlanAspect(url);
   }
 
   /**
@@ -3144,7 +3200,7 @@ class HouseplanCard extends LitElement {
    * signature, and bind the result to THIS dialog and THIS url, or a late
    * answer would reshape whatever the user opened next.
    */
-  private async _readPlanAspect(url: string): Promise<void> {
+  private async _readPlanAspect(url: string): Promise<number> {
     for (let i = 0; i < 40; i++) {           // ~6 s, then give up quietly
       const src = this._display(url);
       if (src) {
@@ -3158,12 +3214,14 @@ class HouseplanCard extends LitElement {
         const cur = this._spaceDialog;
         if (cur && cur.planUrl === url && Number.isFinite(ratio) && ratio > 0) {
           this._spaceDialog = { ...cur, savedAspect: ratio };
+          return ratio;
         }
-        return;
+        return 0;
       }
       await new Promise((r) => setTimeout(r, 150));
-      if (this._spaceDialog?.planUrl !== url) return;   // the user moved on
+      if (this._spaceDialog?.planUrl !== url) return 0;   // the user moved on
     }
+    return 0;
   }
 
   private async _deleteServerPlan(name: string): Promise<void> {
@@ -3231,6 +3289,17 @@ class HouseplanCard extends LitElement {
         uploaded = { url: resp.url, aspect: d.planFile.aspect };
       }
 
+      // A plan picked from the server list reads its proportions from the
+      // image, and Save used to outrun that read: the snapshot still carried
+      // the PREVIOUS file's ratio and a wide plan came out at the old shape
+      // for good (HP-1490-04). Wait for the read — it is bounded (~6 s) and
+      // the dialog is already busy. Unknown stays unknown, never the old
+      // value: a square fallback is honest, an inherited ratio is not.
+      let pickedAspect: number | null = d.savedAspect || null;
+      if (!uploaded && d.source === 'file' && d.planUrl && !pickedAspect && this._aspectJob) {
+        pickedAspect = (await this._aspectJob) || null;
+      }
+
       // from here on: no awaits until the save, so `sp` cannot be orphaned
       const cfg = this._serverCfg!;
       let sp: any;
@@ -3254,9 +3323,10 @@ class HouseplanCard extends LitElement {
         // the image's own proportions, so it can be centred before it loads
         sp.plan_aspect = uploaded.aspect;
       } else if (d.source === 'file' && d.planUrl && d.planUrl !== sp.plan_url) {
-        // picked from the server list: no upload, just a reference
+        // picked from the server list: no upload, just a reference — and the
+        // previous image's proportions never survive the switch
         sp.plan_url = d.planUrl;
-        if (d.savedAspect) sp.plan_aspect = d.savedAspect;
+        sp.plan_aspect = pickedAspect;
       }
       // switching an existing space to "draw" detaches its background image
       // (the uploaded file stays on disk; only the reference is cleared)
@@ -3878,7 +3948,7 @@ class HouseplanCard extends LitElement {
         </div>
 
         <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'openwall' && this._openWallHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}"
-          style="height:${this._kiosk ? '100dvh' : 'calc(100dvh - 118px)'}"
+          style="height:${this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
           @pointerdown=${(e: PointerEvent) => { this._notePointer(e); this._stagePointerDown(e); }}

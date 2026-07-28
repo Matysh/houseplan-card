@@ -69,7 +69,7 @@ export function spaceModels(cfg: ServerConfig | null): SpaceModel[] {
  * Returns null when there is nothing drawn, so the caller keeps the full canvas.
  */
 export function contentBounds(
-  space: SpaceModel, pad = 0.05,
+  space: SpaceModel, pad = 0.05, extra?: ReadonlyArray<readonly [number, number]>,
 ): { x: number; y: number; w: number; h: number } | null {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   const add = (x: number, y: number) => {
@@ -86,13 +86,16 @@ export function contentBounds(
       add(r.x + (r.w || 0), r.y + (r.h || 0));
     }
   }
+  // things that live outside any room still count as content — a gate sensor
+  // by the fence, a camera on a pole (the card passes device positions here)
+  for (const p of extra || []) add(p[0], p[1]);
   if (minX > maxX || minY > maxY) return null;
   const m = Math.max(maxX - minX, maxY - minY) * pad;
   const x = minX - m, y = minY - m;
   return { x, y, w: (maxX - minX) + m * 2, h: (maxY - minY) + m * 2 };
 }
 
-/** Bounding rectangle of a room (rect or polygon) in render units. *//** Bounding rectangle of a room (rect or polygon) in render units. */
+/** Bounding rectangle of a room (rect or polygon) in render units. */
 export function roomBounds(r: RoomCfg): { x: number; y: number; w: number; h: number } {
   if (r.poly && r.poly.length) {
     const xs = r.poly.map((p) => p[0]);
