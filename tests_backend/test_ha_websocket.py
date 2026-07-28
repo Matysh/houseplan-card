@@ -681,12 +681,12 @@ async def test_upload_never_overwrites_an_existing_attachment(
         assert resp.status == 200, await resp.text()
         return (await resp.json())["url"]
 
-    first = await upload("m1", "manual.pdf", b"ONE")
-    second = await upload("m1", "manual.pdf", b"TWO")
+    first = await upload("m9", "manual.pdf", b"ONE")
+    second = await upload("m9", "manual.pdf", b"TWO")
     assert first != second, "the second upload must not take the first name"
 
-    folder = os.path.join(hass.config.path(FILES_DIR), "m1")
-    # the HA test config dir is shared across the module — look only at ours
+    folder = os.path.join(hass.config.path(FILES_DIR), "m9")
+    # the HA test config dir is shared across the module — hence our own marker id
     names = sorted(
         n for n in await hass.async_add_executor_job(os.listdir, folder) if n.startswith("manual")
     )

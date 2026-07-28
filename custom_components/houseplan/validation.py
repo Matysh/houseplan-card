@@ -81,10 +81,12 @@ MAX_KNOWN_DEVICES = 20000
 MAX_TEXT = 500          # names, models, ids
 MAX_DESCRIPTION = 4000
 MAX_URL = 2000
-# Below the WebSocket frame limit on purpose: a payload larger than that never
-# reaches the handler at all — the socket closes with 1009 and the user sees a
-# dropped connection instead of an error they can act on.
-MAX_CONFIG_BYTES = 4 * 1024 * 1024
+# Comfortably below the WebSocket frame limit (aiohttp's default is 4 MB): a
+# payload larger than the frame never reaches the handler at all — the socket
+# closes with 1009 and the user sees a dropped connection instead of an error
+# they can act on. For scale, a real three-floor home with ~200 devices stores
+# about 70 KB, so this is ~30x headroom.
+MAX_CONFIG_BYTES = 2 * 1024 * 1024
 
 _TEXT = vol.All(str, vol.Length(max=MAX_TEXT))
 _TEXT_OR_NONE = vol.Any(None, _TEXT)
