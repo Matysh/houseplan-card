@@ -214,14 +214,22 @@ we should not have removed cannot be brought back.** When the evidence is weak,
 keep the file. Owner's decision, 2026-07-28, after the one-hour rule applied to
 every unreferenced file destroyed two detached plans.
 
+The classification is by **owner**, not by "is it referenced". A file leaving
+the configuration looks identical whether the plan was replaced, detached, or
+its space deleted — and only the first is a deletion the user asked for. Reading
+`old_refs - new_refs` and calling it "superseded" deleted a plan the moment it
+was detached, under documentation promising the opposite (HP-1465-01).
+
 | Case | What it means | Rule |
 |---|---|---|
-| In the old revision, not in the new | a save replaced it | removed immediately |
-| Space exists, has **no** plan | detached, one click to undo | **never removed** |
-| Space exists, has a plan | its own rejected upload | `PLAN_ORPHAN_TTL_S` (1 h) |
-| Space no longer exists | deliberate deletion, but people misclick | `SCHEDULED_GRACE_S` (30 d) |
-| Attachment in `up_*` | a dialog that was never saved | `PLAN_ORPHAN_TTL_S` (1 h) |
-| Attachment in a marker folder | unreferenced, but may come back | `SCHEDULED_GRACE_S` (30 d) |
+| Space in both, plan A → plan B | the user picked another image | removed immediately |
+| Space in both, plan → none | detached; one click undoes it | **kept** |
+| Space gone | deliberate, but the image was imported and may be nowhere else | **kept** |
+| Space has a plan, plus another file of its own | an upload whose save was rejected | `PLAN_ORPHAN_TTL_S` (1 h) |
+| Marker in both, attachment dropped from its list | a trash button, promising nothing | removed immediately |
+| Marker gone | same call as a deleted space's plan | **kept** |
+| Attachment in `up_*` | a dialog that was never saved; no device owns it | `PLAN_ORPHAN_TTL_S` (1 h) |
+| Marker there, file it never listed | a rejected upload | `SCHEDULED_GRACE_S` (30 d) |
 
 **Config writes are serialized** (HP-1454-03). `_writeConfig()` chains onto a
 single promise: one `config/set` in flight, each carrying the revision the

@@ -265,17 +265,6 @@ def test_collect_plans_keeps_a_fresh_unreferenced_upload(tmp_path):
     assert (d / "f1.inflight.png").is_file()
 
 
-def test_collect_plans_takes_an_aged_orphan(tmp_path):
-    collect_plans = plans.collect_plans
-
-    d = _plans(tmp_path, ["f1.keep.png"])
-    # past the long grace, and belonging to no space in the config
-    _plans(tmp_path, ["f1.abandoned.png"], age=const.SCHEDULED_GRACE_S + 60)
-    removed = collect_plans(d, _cfg("/p/f1.keep.png"), _cfg("/p/f1.keep.png"))
-    assert removed == 1
-    assert (d / "f1.keep.png").is_file() and not (d / "f1.abandoned.png").exists()
-
-
 def test_collect_plans_never_touches_a_referenced_or_foreign_file(tmp_path):
     PLAN_ORPHAN_TTL_S = const.PLAN_ORPHAN_TTL_S
     collect_plans = plans.collect_plans
@@ -477,31 +466,6 @@ def test_attachment_refs_reads_marker_urls():
     assert plans.attachment_refs(cfg) == set()
 
 
-def test_collect_attachments_supersedes_and_ages(tmp_path):
-    import os
-    import time
-
-    collect_attachments = plans.collect_attachments
-    files = tmp_path / "files"
-    (files / "m1").mkdir(parents=True)
-    for n in ("old.pdf", "new.pdf", "cancelled.pdf"):
-        (files / "m1" / n).write_bytes(b"x")
-
-    # the commit swapped old.pdf for new.pdf; cancelled.pdf is a fresh upload
-    # nobody saved — it may belong to a dialog that is still open
-    removed = collect_attachments(files, _acfg("m1/old.pdf"), _acfg("m1/new.pdf"))
-    assert removed == 1
-    assert not (files / "m1" / "old.pdf").exists()
-    assert (files / "m1" / "new.pdf").is_file()
-    assert (files / "m1" / "cancelled.pdf").is_file()
-
-    old = time.time() - const.SCHEDULED_GRACE_S - 60
-    os.utime(files / "m1" / "cancelled.pdf", (old, old))
-    assert collect_attachments(files, _acfg("m1/new.pdf"), _acfg("m1/new.pdf")) == 1
-    assert not (files / "m1" / "cancelled.pdf").exists()
-    assert (files / "m1" / "new.pdf").is_file()
-
-
 def test_collect_attachments_removes_the_empty_folder_and_never_raises(tmp_path):
     import os
     import time
@@ -554,53 +518,130 @@ def test_legacy_segments_are_dropped_by_the_server():
     assert "segments" not in out
 
 
-def test_scheduled_collection_never_takes_a_detached_plan(tmp_path):
-    """2026-07-28, on the author's own instance: two plans were deleted.
-
-    Detaching a plan (switching a space to "draw") is reversible and the editor
-    says the file stays on disk. The timer only knows "nothing points at it",
-    applied the one-hour orphan rule, and removed images that had been detached
-    weeks earlier. A commit may still collect what it superseded — it knows it
-    replaced something. The timer may not.
-    """
+def _aged(path, seconds):
     import os
     import time
 
+    t = time.time() - seconds
+    os.utime(path, (t, t))
+
+
+def _sp(sid, url):
+    return {"id": sid, "plan_url": f"/api/houseplan/content/plans/_/{url}" if url else None}
+
+
+def test_plan_collection_matrix(tmp_path):
+    """Which config transition means "the user asked for this file to go"?
+
+    `old_refs - new_refs` cannot tell replace, detach and delete-space apart —
+    they look identical. v1.46.4/v1.46.5 added guards for detach and only ever
+    reached them on the scheduled pass, so the commit itself still deleted a
+    detached plan the moment it was detached (HP-1465-01). One case is a
+    deletion the user asked for; the rest are kept.
+    """
+    collect = plans.collect_plans
     d = tmp_path / "plans"
     d.mkdir()
-    for n in ("f1.svg", "f2.tok.png", "gone.old.png"):
-        (d / n).write_bytes(b"x")
-        t = time.time() - const.SCHEDULED_GRACE_S - 60
-        os.utime(d / n, (t, t))
 
-    cfg = {"spaces": [{"id": "f1", "plan_url": None},          # detached, space alive
-                      {"id": "f2", "plan_url": None}]}         # same
-    assert plans.collect_plans(d, cfg, cfg) == 1
-    assert (d / "f1.svg").is_file(), "a detached plan of a live space is kept, at any age"
-    assert (d / "f2.tok.png").is_file()
-    assert not (d / "gone.old.png").exists(), "a plan of a deleted space ages out after a month"
+    def seed(*names):
+        for n in names:
+            (d / n).write_bytes(b"x")
+            _aged(d / n, const.SCHEDULED_GRACE_S * 2)  # old enough for any rule
 
-    # a space that HAS a plan: its other files can only be its own rejects
-    import os
-    import time
+    # 1. replace: the user picked a different image for the same space
+    seed("f1.old.png", "f1.new.png")
+    assert collect(d, {"spaces": [_sp("f1", "f1.old.png")]},
+                      {"spaces": [_sp("f1", "f1.new.png")]}) == 1
+    assert not (d / "f1.old.png").exists() and (d / "f1.new.png").is_file()
 
-    (d / "f9.current.png").write_bytes(b"x")
-    (d / "f9.reject.png").write_bytes(b"x")
-    hour = time.time() - const.PLAN_ORPHAN_TTL_S - 60
-    os.utime(d / "f9.reject.png", (hour, hour))
-    live = {"spaces": [{"id": "f1", "plan_url": None}, {"id": "f2", "plan_url": None},
-                       {"id": "f9", "plan_url": "/p/f9.current.png"}]}
-    assert plans.collect_plans(d, live, live) == 1
-    assert (d / "f9.current.png").is_file()
-    assert not (d / "f9.reject.png").exists()
+    # 2. detach: same space, switched to "draw"
+    seed("f2.png")
+    assert collect(d, {"spaces": [_sp("f2", "f2.png")]},
+                      {"spaces": [_sp("f2", None)]}) == 0
+    assert (d / "f2.png").is_file(), "the editor says the file stays — it stays"
 
-    # a commit still removes what it SUPERSEDED — that it knows for certain
-    old = {"spaces": [{"id": "f1", "plan_url": "/p/f1.svg"}, {"id": "f2", "plan_url": None}]}
-    new = {"spaces": [{"id": "f1", "plan_url": "/p/f1.new.png"}, {"id": "f2", "plan_url": None}]}
-    (d / "f1.new.png").write_bytes(b"x")
-    assert plans.collect_plans(d, old, new) == 1
-    assert not (d / "f1.svg").exists()
-    assert (d / "f2.tok.png").is_file(), "and still touches nothing else of a live space"
+    # 3. the space is deleted outright
+    seed("f3.png")
+    assert collect(d, {"spaces": [_sp("f3", "f3.png")]}, {"spaces": []}) == 0
+    assert (d / "f3.png").is_file()
+
+    # 4. the scheduled pass, later, still keeps both
+    cfg = {"spaces": [_sp("f2", None)]}
+    assert collect(d, cfg, cfg) == 0
+    assert (d / "f2.png").is_file() and (d / "f3.png").is_file()
+
+    # 5. a rejected upload: the space HAS a plan, this file never was one
+    seed("f4.current.png", "f4.reject.png")
+    live = {"spaces": [_sp("f4", "f4.current.png")]}
+    assert collect(d, live, live) == 1
+    assert (d / "f4.current.png").is_file() and not (d / "f4.reject.png").exists()
+
+    # …but only once it is old; a fresh one may be a transaction in flight
+    (d / "f4.fresh.png").write_bytes(b"x")
+    assert collect(d, live, live) == 0
+    assert (d / "f4.fresh.png").is_file()
+
+    # 6. the same file still referenced by another space is never touched
+    seed("shared.png")
+    assert collect(d, {"spaces": [_sp("a", "shared.png"), _sp("b", "shared.png")]},
+                      {"spaces": [_sp("a", None), _sp("b", "shared.png")]}) == 0
+    assert (d / "shared.png").is_file()
+
+
+def test_attachment_collection_matrix(tmp_path):
+    """Removing an attachment is a trash button; deleting the device is not."""
+    collect = plans.collect_attachments
+
+    def case(name):
+        d = tmp_path / name
+        d.mkdir()
+        return d
+
+    def seed(root, folder, fname, age=None):
+        (root / folder).mkdir(parents=True, exist_ok=True)
+        p = root / folder / fname
+        p.write_bytes(b"x")
+        if age:
+            _aged(p, age)
+        return p
+
+    def cfg(*markers):
+        return {"markers": [
+            {"id": mid, "pdfs": [{"url": f"/api/houseplan/content/files/{mid}/{n}"} for n in names]}
+            for mid, names in markers
+        ]}
+
+    # 1. the user removed one attachment from a device that still exists
+    d = case("dropped")
+    seed(d, "m1", "dropped.pdf")
+    seed(d, "m1", "kept.pdf")
+    assert collect(d, cfg(("m1", ["dropped.pdf", "kept.pdf"])), cfg(("m1", ["kept.pdf"]))) == 1
+    assert not (d / "m1" / "dropped.pdf").exists()
+    assert (d / "m1" / "kept.pdf").is_file()
+
+    # 2. the device itself is gone: its manuals are not ours to throw away
+    d = case("device_gone")
+    seed(d, "m2", "manual.pdf", age=const.SCHEDULED_GRACE_S * 2)
+    assert collect(d, cfg(("m2", ["manual.pdf"])), cfg()) == 0
+    assert (d / "m2" / "manual.pdf").is_file()
+    # and the scheduled pass, later, agrees
+    assert collect(d, cfg(), cfg()) == 0
+    assert (d / "m2" / "manual.pdf").is_file()
+
+    # 3. a dialog that was never saved, in its own staging folder
+    d = case("staging")
+    seed(d, "up_x", "manual.pdf", age=const.PLAN_ORPHAN_TTL_S + 60)
+    assert collect(d, cfg(), cfg()) == 1
+    assert not (d / "up_x").exists()
+
+    # 4. an upload into a live device's folder whose save was rejected
+    d = case("reject")
+    seed(d, "m3", "current.pdf")
+    seed(d, "m3", "rejected.pdf", age=const.SCHEDULED_GRACE_S + 60)
+    live = cfg(("m3", ["current.pdf"]))
+    assert collect(d, live, live) == 1
+    assert (d / "m3" / "current.pdf").is_file()
+    assert not (d / "m3" / "rejected.pdf").exists()
 
 
 def test_attachment_grace_is_a_month_outside_a_staging_folder(tmp_path):

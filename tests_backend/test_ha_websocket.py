@@ -889,7 +889,7 @@ def _paths(hass):
         "kept_file": os.path.join(files, "m5", "kept.pdf"),
         "kept_plan": os.path.join(plans, "s5.tok.png"),
         "orphan_file": os.path.join(files, "up_cancelled", "manual.pdf"),
-        "orphan_plan": os.path.join(plans, "deleted_space.orphan.png"),
+        "orphan_plan": os.path.join(plans, "s5.reject.png"),
     }
 
 
@@ -992,18 +992,21 @@ async def test_sweep_and_a_config_write_do_not_race(
     cfg2["spaces"][0]["plan_url"] = "/api/houseplan/content/plans/_/s5.newcomer.png"
 
     entry = hass.config_entries.async_entries(DOMAIN)[0]
-    await asyncio.gather(
+    _reload, saved = await asyncio.gather(
         hass.config_entries.async_reload(entry.entry_id),   # runs the sweep
         _save(client, cfg2, rev),
     )
     await hass.async_block_till_done()
 
+    # assert the CONCRETE outcome: a save that came back `not_ready` would leave
+    # the old config pointing at the old file and satisfy a vaguer check
+    assert saved["success"], saved.get("error")
     await client.send_json_auto_id({"type": "houseplan/config/get"})
     stored = (await client.receive_json())["result"]["config"]
-    referenced = stored["spaces"][0]["plan_url"].rsplit("/", 1)[-1]
+    assert stored["spaces"][0]["plan_url"].endswith("s5.newcomer.png")
     assert await hass.async_add_executor_job(
-        os.path.isfile, os.path.join(plans, referenced)
-    ), f"the accepted config points at {referenced}, which must exist"
+        os.path.isfile, os.path.join(plans, "s5.newcomer.png")
+    ), "the file the accepted config points at must exist"
 
 
 async def test_files_cleanup_keeps_referenced_files(
@@ -1048,3 +1051,49 @@ async def test_files_cleanup_keeps_referenced_files(
         "a file the configuration still references survives a cleanup of its folder"
     )
     assert not await hass.async_add_executor_job(os.path.isfile, os.path.join(folder, "orphan.pdf"))
+
+
+async def test_detaching_a_plan_keeps_the_file(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """HP-1465-01, through the real save — where the earlier tests never looked.
+
+    Every check for this lived in the pure collector with old and new config
+    equal, i.e. the scheduled pass. The transition that matters is a save, and
+    there the file was deleted the moment the reference was cleared.
+    """
+    import os
+
+    from custom_components.houseplan.const import PLANS_DIR
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    plans = hass.config.path(PLANS_DIR)
+
+    url, name = await _upload(client, "d1", b"PLAN", ext="png")
+    rev = (await _save(client, await _cfg([{"id": "d1", "plan_url": url}]), 0))["result"]["rev"]
+    assert await hass.async_add_executor_job(os.path.isfile, os.path.join(plans, name))
+
+    # detach: the space stays, its plan does not
+    rev = (await _save(client, await _cfg([{"id": "d1", "plan_url": None}]), rev))["result"]["rev"]
+    assert await hass.async_add_executor_job(os.path.isfile, os.path.join(plans, name)), (
+        "the editor says the image stays on disk — it has to actually stay"
+    )
+
+    # a restart does not change its mind either
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    assert await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+    assert await hass.async_add_executor_job(os.path.isfile, os.path.join(plans, name))
+
+    # re-attach, then replace: THAT removes the one it replaced
+    rev = (await _save(client, await _cfg([{"id": "d1", "plan_url": url}]), rev))["result"]["rev"]
+    url2, name2 = await _upload(client, "d1", b"NEWPLAN", ext="png")
+    rev = (await _save(client, await _cfg([{"id": "d1", "plan_url": url2}]), rev))["result"]["rev"]
+    assert await hass.async_add_executor_job(os.path.isfile, os.path.join(plans, name2))
+    assert not await hass.async_add_executor_job(os.path.isfile, os.path.join(plans, name))
+
+    # and deleting the space keeps its plan
+    await _save(client, await _cfg([]), rev)
+    await hass.async_block_till_done()
+    assert await hass.async_add_executor_job(os.path.isfile, os.path.join(plans, name2))
