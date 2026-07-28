@@ -114,29 +114,46 @@ export class ContentSigner {
       hass
         .callWS({ type: 'houseplan/content/sign', paths: batch })
         .then((r: any) => {
-          for (const p of batch) this.retry.delete(p);
-          if (!r?.urls || this.disposed) return;
+          if (this.disposed) return;
+          // A successful call does NOT mean every path was signed: the backend
+          // skips a path it cannot sign, logs it and still answers `{urls: …}`
+          // with the rest. Treating the whole batch as done then cleared the
+          // backoff for the missing ones, so every later render asked again —
+          // the very amplification the backoff exists to stop (review R5-1).
           const at = this.now();
           const next = { ...this.signed };
-          for (const [k, v] of Object.entries<string>(r.urls)) next[k] = { url: v, at };
+          let accepted = 0;
+          for (const p of batch) {
+            const url = r?.urls?.[p];              // only keys we asked for
+            if (typeof url === 'string' && url) {
+              next[p] = { url, at };
+              this.retry.delete(p);
+              accepted++;
+            } else {
+              this.backOff(p);
+            }
+          }
+          if (!accepted) return;
           this.signed = next;
           this.onUpdate();
         })
         .catch(() => {
           // back off rather than retry on the very next frame: a socket that
           // is refusing sign requests would otherwise be hammered per render
-          const now = this.now();
-          for (const p of batch) {
-            const prev = this.retry.get(p)?.delay || 0;
-            const delay = Math.min(SIGN_BACKOFF_MAX_MS, prev ? prev * 2 : SIGN_BACKOFF_MIN_MS);
-            this.retry.set(p, { notBefore: now + delay, delay });
-          }
+          for (const p of batch) this.backOff(p);
         })
         .finally(() => {
           // release only our own attempt: a later one may have superseded it
           for (const p of batch) if (this.inFlight.get(p) === sentAt) this.inFlight.delete(p);
         });
     }
+  }
+
+  /** Next attempt for this url waits, and each failure waits twice as long. */
+  private backOff(url: string): void {
+    const prev = this.retry.get(url)?.delay || 0;
+    const delay = Math.min(SIGN_BACKOFF_MAX_MS, prev ? prev * 2 : SIGN_BACKOFF_MIN_MS);
+    this.retry.set(url, { notBefore: this.now() + delay, delay });
   }
 
   /**
