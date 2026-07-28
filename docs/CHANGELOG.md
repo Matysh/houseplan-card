@@ -23,9 +23,11 @@
   (HP-1470-02).** It was not saved yet, so the server correctly considered it
   free — and the save then stored a url with no file behind it. The button is
   disabled now, and, because two clients can do the same in either order, the
-  server checks every internal plan url against the disk before storing a
-  configuration and refuses one that is missing. Urls that are not ours are left
-  alone.
+  server checks every internal plan url a configuration adds against the disk
+  and refuses a new reference that is already broken. A url the stored
+  configuration already carries is let through — a file can vanish from outside
+  Home Assistant, and refusing then would block the very edit that detaches it.
+  Urls that are not ours are left alone.
 - **Uploads are bounded (HP-1470-01).** Nothing is deleted for being old — that
   cost real plans twice — so the limit sits where a decision is being made
   anyway: an upload is refused if the store would pass 256 MB or 200 plans
