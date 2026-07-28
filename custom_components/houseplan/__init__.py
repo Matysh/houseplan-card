@@ -22,7 +22,7 @@ from .const import (
 )
 from .plans import collect_attachments, collect_plans, sweep_upload_temps
 from .repairs import async_check_plan_files
-from .store import HouseplanConfigEntry, create_data, get_data
+from .store import HouseplanConfigEntry, create_data
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -118,10 +118,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
         files_dir = Path(hass.config.path(FILES_DIR))
         plans_dir = Path(hass.config.path(PLANS_DIR))
         try:
-            data = get_data(hass)
-            if data is None:  # entry unloaded — nothing authoritative to compare against
-                await hass.async_add_executor_job(sweep_upload_temps, files_dir)
-                return
+            # `data` from the closure, NOT get_data(hass): during
+            # async_setup_entry the entry is still SETUP_IN_PROGRESS, so
+            # async_loaded_entries() does not list it and the lookup returned
+            # None. The startup pass then silently degraded to removing
+            # streaming temporaries only, and the real collection waited a full
+            # day — restarting more often than that meant it never ran at all
+            # (HP-1462-01). The callback is unregistered with the entry, so
+            # closing over its runtime data matches the lifecycle exactly.
             async with data.write_lock:
                 stored = await data.config_store.async_load() or {}
                 cfg = stored.get("config") or {}

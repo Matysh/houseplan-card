@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.46.3 — 2026-07-28 (re-check of v1.46.2: HP-1462-01)
+- **The cleanup at startup now actually cleans up.** It looked its own runtime
+  data up by domain, and during startup Home Assistant does not yet consider
+  the integration loaded — so the lookup came back empty and the pass quietly
+  degraded to removing half-finished transfers, leaving the real work to a timer
+  24 hours away. Restart more often than that and it never ran at all. It uses
+  the object it was given at startup now.
+- **The test that was supposed to prove this was passing for the wrong
+  reason.** It created the stray files *before* saving the configuration — and
+  saving collects too, so everything was already gone by the time the restart
+  happened. Rewritten to seed after the save, plus a second test that fires the
+  scheduled timer on its own, and a third that runs a restart and a save at the
+  same time and asserts the accepted configuration never points at a file the
+  cleanup removed.
+
 ## v1.46.2 — 2026-07-28 (re-check of v1.46.1: HP-1461-01, -02)
 - **A file nobody ended up using is now cleaned up even if nothing is ever
   saved again (HP-1461-01).** Collection is tied to a configuration write,
