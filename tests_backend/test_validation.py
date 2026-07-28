@@ -688,6 +688,17 @@ def _sq(space, layout=None):
     return cfg["spaces"][0]
 
 
+def test_the_viewport_becomes_the_whole_square():
+    """The grid is drawn over the view box, and the fit fits it.
+
+    Transforming the old rectangle instead would leave the new margins outside
+    the canvas — no grid there and nothing to draw on — which is the room the
+    square canvas was meant to add.
+    """
+    sp = _sq({"id": "f1", "aspect": 0.5, "view_box": [0.1, 0.2, 0.5, 0.5], "rooms": []})
+    assert sp["view_box"] == [0.0, 0.0, 1.0, 1.0]
+
+
 def test_a_wide_plan_gains_margins_above_and_below():
     sp = _sq({
         "id": "f1", "aspect": 2.0, "cell_cm": 5, "view_box": [0, 0, 1, 1],
@@ -718,7 +729,7 @@ def test_a_square_plan_is_left_alone():
     }
     sp = _sq({**before, "rooms": [dict(before["rooms"][0])]})
     assert sp["rooms"][0] == before["rooms"][0]
-    assert sp["cell_cm"] == 5 and sp["view_box"] == [0, 0, 1, 1]
+    assert sp["cell_cm"] == 5 and sp["view_box"] == [0.0, 0.0, 1.0, 1.0]
 
 
 def test_migration_preserves_real_lengths_and_shapes():

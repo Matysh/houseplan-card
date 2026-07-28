@@ -82,12 +82,12 @@ def migrate_space(space: dict[str, Any]) -> bool:
         if shape.get("h") is not None:
             shape["h"] = float(shape["h"]) * ky
 
-    vb = space.get("view_box")
-    if isinstance(vb, list) and len(vb) == 4:
-        space["view_box"] = [
-            dx + float(vb[0]) * kx, dy + float(vb[1]) * ky,
-            float(vb[2]) * kx, float(vb[3]) * ky,
-        ]
+    # The viewport becomes the whole square rather than the transformed old
+    # rectangle. It is what the grid is drawn over and what "fit to screen"
+    # fits, so keeping the old box would leave the new margins outside the
+    # canvas — no dots, nothing to draw on — which is exactly the room this
+    # change was meant to give.
+    space["view_box"] = [0.0, 0.0, 1.0, 1.0]
 
     # The grid pitch is a fraction of the WIDTH. A tall plan just got a wider
     # canvas, so a wall now covers fewer cells; without this every measurement
