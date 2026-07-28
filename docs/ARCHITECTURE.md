@@ -207,15 +207,17 @@ happen when somebody saves, and a file uploaded into a dialog that was then
 cancelled would wait for a write that may never come. A new icon has no id yet, so its
 files go to a per-dialog staging folder and move to the real id once the config
 write is accepted — the same copy → save → cleanup order as a rebind.
-`config/set` collects what its commit superseded — and only that, because
-supersession is the one thing a commit knows for certain. *Unreferenced* is a
-much weaker signal: detaching a plan is reversible and the editor promises the
-file stays. So a file belonging to a space or marker that still exists is never
-collected, and anything else waits `SCHEDULED_GRACE_S` (30 days). The exception
-is a per-dialog staging folder, which by construction only holds an upload from
-a dialog that was never saved — `PLAN_ORPHAN_TTL_S` (1 hour) is right there.
-This is not theoretical caution: the one-hour rule applied to unreferenced files
-destroyed two detached plans on 2026-07-28.
+`config/set` collects what its commit superseded — that much a commit knows for
+certain. *Unreferenced* is a far weaker signal, and how weak depends on the
+case. A space with `plan_url = null` had its image **detached**, which is
+reversible and which the editor promises leaves the file alone: those are never
+collected. A space that does have a plan can only be holding its own rejected
+uploads, so `PLAN_ORPHAN_TTL_S` (1 hour) still applies to them. For attachments,
+a per-dialog staging folder holds nothing but an upload from a dialog that was
+never saved — one hour again — while a marker's own folder waits
+`SCHEDULED_GRACE_S` (30 days). This is not theoretical caution: applying the
+one-hour rule to every unreferenced file destroyed two detached plans on
+2026-07-28.
 
 **Config writes are serialized** (HP-1454-03). `_writeConfig()` chains onto a
 single promise: one `config/set` in flight, each carrying the revision the

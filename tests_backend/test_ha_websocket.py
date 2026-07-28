@@ -363,6 +363,7 @@ async def test_abandoned_uploads_are_collected_once_old(
     _url, orphan = await _upload(client, "r3", b"abandoned")
     old = time.time() - PLAN_ORPHAN_TTL_S - 60
     os.utime(plans / orphan, (old, old))
+    # r3 still HAS a plan, so this really is a rejected upload — collectable
 
     ok = await _save(client, await _cfg([{"id": "r3", "plan_url": url0}]), rev)
     assert ok["success"]
@@ -609,7 +610,8 @@ async def test_layout_keeps_its_revision_and_announces_changes(
     assert not bad["success"] and bad["error"]["code"] == "conflict"
 
     await hass.async_block_till_done()
-    assert [e["rev"] for e in events] == [1, 2, 3]
+    # the bus does not promise ordering between separately fired events
+    assert sorted(e["rev"] for e in events) == [1, 2, 3]
 
 
 async def test_uploaded_svg_is_sandboxed_and_a_pdf_is_not(
@@ -862,7 +864,7 @@ async def _seed_aged(hass, names) -> None:
 
     from custom_components.houseplan.const import SCHEDULED_GRACE_S
 
-    old = time.time() - SCHEDULED_GRACE_S - 60
+    old = time.time() - SCHEDULED_GRACE_S - 60  # past every grace
 
     def _do() -> None:
         for path in names:

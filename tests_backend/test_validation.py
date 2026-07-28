@@ -589,26 +589,34 @@ def test_scheduled_collection_never_takes_a_detached_plan(tmp_path):
     assert (d / "f2.tok.png").is_file(), "and still touches nothing else of a live space"
 
 
-def test_scheduled_collection_keeps_a_live_marker_s_files(tmp_path):
+def test_attachment_grace_is_a_month_outside_a_staging_folder(tmp_path):
+    """A staging folder is unambiguous; a marker folder is not.
+
+    `up_*` only ever holds an upload from a dialog that was never saved, so an
+    hour is right there. A marker's own folder may hold a file that is merely
+    unreferenced at the moment, and one hour of that turned out to be a way to
+    lose data (2026-07-28).
+    """
     import os
     import time
 
     files = tmp_path / "files"
     (files / "m1").mkdir(parents=True)
     (files / "up_abandoned").mkdir(parents=True)
-    (files / "dead").mkdir(parents=True)
-    old = time.time() - const.SCHEDULED_GRACE_S - 60
-    for p in ((files / "m1" / "unlinked.pdf"), (files / "dead" / "x.pdf")):
-        p.write_bytes(b"x")
-        os.utime(p, (old, old))
-    staging = files / "up_abandoned" / "manual.pdf"
-    staging.write_bytes(b"x")
     hour_ago = time.time() - const.PLAN_ORPHAN_TTL_S - 60
-    os.utime(staging, (hour_ago, hour_ago))
+    month_ago = time.time() - const.SCHEDULED_GRACE_S - 60
+
+    for path, when in (
+        ((files / "m1" / "recent.pdf"), hour_ago),
+        ((files / "m1" / "ancient.pdf"), month_ago),
+        ((files / "up_abandoned" / "manual.pdf"), hour_ago),
+    ):
+        path.write_bytes(b"x")
+        os.utime(path, (when, when))
 
     cfg = {"markers": [{"id": "m1", "pdfs": []}]}
     removed = plans.collect_attachments(files, cfg, cfg)
-    assert (files / "m1" / "unlinked.pdf").is_file(), "the marker exists; leave its files alone"
-    assert not staging.exists(), "a cancelled dialog is still collected after an hour"
-    assert not (files / "dead" / "x.pdf").exists(), "a marker that is gone ages out"
+    assert (files / "m1" / "recent.pdf").is_file(), "an hour is not enough for a marker file"
+    assert not (files / "m1" / "ancient.pdf").exists(), "a month is"
+    assert not (files / "up_abandoned").exists(), "a cancelled dialog still goes after an hour"
     assert removed == 2

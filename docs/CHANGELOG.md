@@ -12,11 +12,13 @@
   `config/houseplan/plans/` before updating anything else — and please report it
   in the Telegram chat if a file is missing.
   The rule now: **a commit still removes exactly what it replaced**, because
-  that it knows for certain. Everything else is only *unreferenced*, which is a
-  reversible state — a file belonging to a space or a device that still exists
-  is never collected, and anything else waits thirty days instead of an hour.
-  The one unambiguous case keeps the short rule: a per-dialog staging folder
-  only ever holds an upload from a dialog that was never saved.
+  that it knows for certain. Beyond that the question is whether "unreferenced"
+  means "abandoned", and the answer depends on the case. A space with no plan at
+  all has had one detached and may want it back — its files are never collected.
+  A space that does have a plan can only be holding rejected uploads of its own,
+  so those still go after an hour. Attachments outside a per-dialog staging
+  folder wait a month; a staging folder, which by construction only ever holds
+  an upload from a dialog that was never saved, keeps the one-hour rule.
 
 ## v1.46.3 — 2026-07-28 (re-check of v1.46.2: HP-1462-01)
 - **The cleanup at startup now actually cleans up.** It looked its own runtime

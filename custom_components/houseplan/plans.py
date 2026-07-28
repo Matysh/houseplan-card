@@ -122,17 +122,16 @@ def collect_attachments(
     """The same commit-scoped rule as `collect_plans`, for marker attachments.
 
     A file the old revision referenced and the new one does not was superseded
-    by this commit and goes. Otherwise: files of a marker that still exists are
-    left alone, a staging folder (`up_*`, only ever a dialog that was never
-    saved) is collected after PLAN_ORPHAN_TTL_S, and anything else waits out
-    SCHEDULED_GRACE_S. Never raises: it runs behind a durable write.
+    by this commit and goes. Otherwise a staging folder (`up_*` — only ever a
+    dialog that was never saved) is collected after PLAN_ORPHAN_TTL_S, and
+    anything else waits out SCHEDULED_GRACE_S. Never raises: it runs behind a
+    durable write.
     """
     new_refs = attachment_refs(new_cfg)
     old_refs = attachment_refs(old_cfg)
     # Same distinction as for plans. A staging folder (`up_*`) is different: it
     # only ever holds an upload from a dialog that was never saved, so the short
     # rule is exactly right there even on the timer.
-    live_markers = {str(m.get("id")) for m in (new_cfg or {}).get("markers") or []}
     now_s = time.time() if now is None else now
     staging_cutoff = now_s - PLAN_ORPHAN_TTL_S
     cutoff = now_s - SCHEDULED_GRACE_S
@@ -144,10 +143,10 @@ def collect_attachments(
         return 0
     removed += sweep_upload_temps(files_dir, now)
     for folder in folders:
-        if folder.name in live_markers:
-            continue  # the marker is still there; its files are its own business
-        # a staging folder only ever holds an upload from a dialog that was
-        # never saved — unambiguous, so the short rule is right there
+        # A staging folder only ever holds an upload from a dialog that was never
+        # saved — unambiguous, so an hour is right. A marker's own folder is not:
+        # removing an attachment is deliberate, but so is re-adding one, and the
+        # file may have been detached rather than abandoned. Give it a month.
         limit = staging_cutoff if folder.name.startswith("up_") else cutoff
         try:
             items = sorted(p for p in folder.iterdir() if p.is_file())
@@ -236,8 +235,16 @@ def collect_plans(
     # editor detaches the image when a space switches to "draw" and says the
     # file stays on disk. So the scheduled pass keeps anything belonging to a
     # space that still exists, and waits a month for the rest.
-    live_spaces = {str(sp.get("id")) for sp in (new_cfg or {}).get("spaces") or []}
-    cutoff = (time.time() if now is None else now) - SCHEDULED_GRACE_S
+    # A space with NO plan_url has had its image detached — reversible, and the
+    # editor promises the file stays. A space that HAS one is different: any
+    # other file of its own is a superseded or rejected upload, so the short
+    # rule is right for those. Getting this distinction wrong (protecting
+    # nothing) destroyed two detached plans on 2026-07-28.
+    detached = {
+        str(sp.get("id")) for sp in (new_cfg or {}).get("spaces") or []
+        if not sp.get("plan_url")
+    }
+    cutoff = (time.time() if now is None else now) - PLAN_ORPHAN_TTL_S
     removed = 0
     try:
         items = sorted(plans_dir.iterdir()) if plans_dir.is_dir() else []
@@ -252,8 +259,8 @@ def collect_plans(
             continue
         superseded = item.name in old_refs
         if not superseded:
-            if item.name.split(".")[0] in live_spaces:
-                continue  # detached, not abandoned — the space is still there
+            if item.name.split(".")[0] in detached:
+                continue  # detached, not abandoned — the space is waiting for it
             try:
                 if item.stat().st_mtime >= cutoff:
                     continue
