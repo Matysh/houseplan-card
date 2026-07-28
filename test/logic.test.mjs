@@ -798,8 +798,10 @@ test('migratePdfUrls: only confirmed copies are rewritten (review CR-3)', () => 
     { name: 'b.pdf', url: '/houseplan_files/files/v_old1/b.pdf?v=2' },
   ];
   // сервер скопировал только a.pdf, причём переименовал из-за коллизии
-  const out = migratePdfUrls(pdfs, 'v_old1', 'dev99', { 'a.pdf': 'a (2).pdf' });
-  assert.equal(out[0].url, '/houseplan_files/files/dev99/a%20(2).pdf?v=1');
+  // collision names use only characters the content view accepts back in a
+  // request: ' (2)' was sanitised to '_2_' server-side and 404'd (v1.46.0)
+  const out = migratePdfUrls(pdfs, 'v_old1', 'dev99', { 'a.pdf': 'a-2.pdf' });
+  assert.equal(out[0].url, '/houseplan_files/files/dev99/a-2.pdf?v=1');
   assert.equal(out[1].url, pdfs[1].url, 'нескопированный файл ссылается на старую папку');
   // пустой маппинг = ничего не переносим
   assert.deepEqual(migratePdfUrls(pdfs, 'v_old1', 'dev99', {}).map((p) => p.url),

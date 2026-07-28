@@ -35,7 +35,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.45.4';
+const CARD_VERSION = '1.46.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -234,6 +234,15 @@ class HouseplanCard extends LitElement {
   private _infoCard: DevItem | null = null;
   private _markerDialog: {
     devId?: string;      // the icon being edited (if any)
+    /**
+     * Folder attachments are uploaded into while this dialog is open. For a NEW
+     * icon there is no marker id yet; every one of them used to upload into a
+     * shared `files/new/`, so two markers attaching `manual.pdf` ended up
+     * pointing at the same bytes (HP-1454-02). A per-dialog id keeps them
+     * apart, and the files are moved to the real marker id once the config
+     * write is accepted — the same copy→save→cleanup order as a rebind.
+     */
+    uploadId?: string;
     name: string;
     binding: string;     // 'device:<id>' | 'entity:<eid>' | 'virtual' | '' (not chosen yet)
     bindingMode: 'virtual' | 'ha';
@@ -556,9 +565,17 @@ class HouseplanCard extends LitElement {
     for (const x of sp as any[]) {
       s += (x.id || '') + ',' + (x.aspect || '') + ',' + (x.plan_url || '').length + ','
         + (x.rooms?.length || 0) + ',' + (x.openings?.length || 0) + ',' + (x.decor?.length || 0) + ';';
-      for (const r of x.rooms || [])
+      for (const r of x.rooms || []) {
+        // O(1) geometry roll-up per room: the count alone said nothing about
+        // where the room actually is, so a moved rectangle or a dragged first/
+        // last vertex looked identical (HP-1454-04). The epoch remains the
+        // primary signal — this is the belt for a mutation that forgot to bump it.
+        const p0 = r.poly?.[0], pn = r.poly?.[r.poly.length - 1];
         s += (r.poly?.length || 0) + '.' + (r.id || '') + '.' + (r.open_to || []).join('+') + '.'
-          + (r.area || '') + '.' + JSON.stringify(r.settings || 0) + ';';
+          + (r.area || '') + '.' + JSON.stringify(r.settings || 0) + '.'
+          + (r.x ?? '') + ',' + (r.y ?? '') + ',' + (r.w ?? '') + ',' + (r.h ?? '') + ','
+          + (p0 ? p0[0] + '/' + p0[1] : '') + ',' + (pn ? pn[0] + '/' + pn[1] : '') + ';';
+      }
     }
     return s;
   }
@@ -1530,8 +1547,44 @@ class HouseplanCard extends LitElement {
     for (const sp of this._serverCfg?.spaces || []) delete (sp as any).segments;
   }
 
+  /**
+   * Config writes are serialized (HP-1454-03).
+   *
+   * The debounce only spaced out the *starts*. If a write took longer than
+   * 500 ms — a busy instance, a slow link — the next edit went out with the
+   * same `expected_rev`, the server accepted the first and rejected the second
+   * as a conflict, and the conflict handler reloaded the server copy over the
+   * local one. The user's second edit was gone, with a toast that blamed
+   * another window when there was none.
+   *
+   * One chain, one write in flight. A write always reads `_serverCfg` at the
+   * moment it runs, so edits made while another write was out are carried by
+   * the next one, with the revision that write returned.
+   */
+  private _writesPending = 0;
+  private _writeChain: Promise<void> = Promise.resolve();
+
   /** A config write is in flight — the card must not adopt a server revision. */
-  private _cfgWriting = false;
+  private get _cfgWriting(): boolean {
+    return this._writesPending > 0;
+  }
+
+  private _writeConfig(): Promise<void> {
+    this._writesPending++;
+    this._writeChain = this._writeChain
+      .catch(() => undefined) // a failed write must not poison the queue
+      .then(async () => {
+        if (!this._serverCfg) return;
+        this._dropLegacySegments();
+        const r = await this.hass.callWS({
+          type: 'houseplan/config/set', config: this._serverCfg, expected_rev: this._cfgRev,
+        });
+        this._cfgRev = r?.rev ?? this._cfgRev + 1;
+      });
+    const mine = this._writeChain.finally(() => { this._writesPending--; });
+    // keep the chain itself unadorned so the next link waits for the write only
+    return mine;
+  }
 
   /**
    * Every mutation path ends here, so this is the one place that can invalidate
@@ -1546,24 +1599,16 @@ class HouseplanCard extends LitElement {
 
   private _saveConfigDebounced = debounce(() => {
     if (!this._serverCfg) return;
-    this._dropLegacySegments();
-    this._cfgWriting = true;
-    this.hass
-      .callWS({ type: 'houseplan/config/set', config: this._serverCfg, expected_rev: this._cfgRev })
-      .then((r: any) => {
-        this._cfgRev = r?.rev ?? this._cfgRev + 1;
-        this._cfgWriting = false;
-      })
-      .catch((e: any) => {
-        this._cfgWriting = false;
-        if (e?.code === 'conflict') {
-          this._showToast(this._t('toast.conflict'));
-          this._cancelPath();
-          this._reloadConfigOnly(true);
-        } else {
-          this._showToast(this._t('toast.cfg_save_failed', { err: this._errText(e) }));
-        }
-      });
+    this._writeConfig().catch((e: any) => {
+      if (e?.code === 'conflict') {
+        // a real one now: another window wrote between our read and our write
+        this._showToast(this._t('toast.conflict'));
+        this._cancelPath();
+        this._reloadConfigOnly(true);
+      } else {
+        this._showToast(this._t('toast.cfg_save_failed', { err: this._errText(e) }));
+      }
+    });
   }, 500);
 
   /**
@@ -1961,21 +2006,24 @@ class HouseplanCard extends LitElement {
   }
 
   /** All open-boundary pairs of the current space with their shared segments. */
-  private _openPairsCache: { key: string; pairs: { a: RoomCfg; b: RoomCfg; segs: number[][] }[] } | null = null;
+  private _openPairsCache: { model: SpaceModel; pairs: { a: RoomCfg; b: RoomCfg; segs: number[][] }[] } | null = null;
 
   private _openPairs(): { a: RoomCfg; b: RoomCfg; segs: number[][] }[] {
     // audit L1: this used to run once PER ROOM on every render (O(rooms^3)
-    // collinear-overlap math on every HA state push). Memoized on the config
-    // epoch + current space.
-    // The key includes the open_to links themselves: _serverCfg is mutated in
-    // place in ~22 places (audit L7), so an epoch counter alone is not a
-    // trustworthy cache key — a missed bump would render a stale plan, which is
-    // far worse than recomputing a short string here.
+    // collinear-overlap math on every HA state push), so it is memoized.
+    //
+    // The key is the SPACE MODEL OBJECT ITSELF (HP-1454-04). It used to be a
+    // string of room ids and open_to links, which said nothing about geometry:
+    // change the space's aspect, or drag a vertex, and the shared segments were
+    // recomputed for the outlines but the open boundaries — and the glow cuts
+    // that follow them — kept their old coordinates until a full reload.
+    // `_model` is already rebuilt whenever the epoch or the config fingerprint
+    // moves, and everything below derives from it, so its identity is an exact
+    // and cheaper key. One cache invalidation strategy, not two.
     const sp = this._spaceModel();
-    const key = this._space + '|' + sp.rooms.map((r) => r.id + ':' + ((r as any).open_to || []).join(',')).join(';');
-    if (this._openPairsCache && this._openPairsCache.key === key) return this._openPairsCache.pairs;
+    if (this._openPairsCache && this._openPairsCache.model === sp) return this._openPairsCache.pairs;
     const pairs = this._computeOpenPairs();
-    this._openPairsCache = { key, pairs };
+    this._openPairsCache = { model: sp, pairs };
     return pairs;
   }
 
@@ -2508,6 +2556,7 @@ class HouseplanCard extends LitElement {
         tapAction: '', defaultTap: 'info', controls: [], controlsFilter: '', isLight: false,
         glowRadius: '', model: '',
         link: '', description: '', pdfs: [], room: '', busy: false,
+        uploadId: 'up_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       };
     }
   }
@@ -2619,7 +2668,7 @@ class HouseplanCard extends LitElement {
     const files = input.files ? [...input.files] : [];
     input.value = '';
     if (!files.length || !this._markerDialog) return;
-    const mid = this._markerDialog.devId || 'new';
+    const mid = this._markerDialog.uploadId || this._markerDialog.devId || 'new';
     const uploaded: PdfRef[] = [];
     for (const file of files) {
       try {
@@ -2728,13 +2777,16 @@ class HouseplanCard extends LitElement {
       // stored config still resolve — the files never left. A failed copy
       // leaves the urls untouched and tells the user (review CR-3).
       let cleanupOldFiles = false;
-      if (oldId && oldId !== id && marker.pdfs?.length) {
+      // a new icon uploaded into its own staging folder; an edited one into its
+      // own id. Either way the files move to the final id here.
+      const fileSrc = dlg.uploadId || oldId;
+      if (fileSrc && fileSrc !== id && marker.pdfs?.length) {
         try {
           const res: any = await this.hass.callWS({
-            type: 'houseplan/files/migrate', from_id: oldId, to_id: id,
+            type: 'houseplan/files/migrate', from_id: fileSrc, to_id: id,
           });
           const mapping = res?.mapping || {};
-          marker.pdfs = migratePdfUrls(marker.pdfs, oldId, id, mapping);
+          marker.pdfs = migratePdfUrls(marker.pdfs, fileSrc, id, mapping);
           cleanupOldFiles = Object.keys(mapping).length > 0;
         } catch (e: any) {
           this._showToast(this._t('toast.files_migrate_failed', { err: this._errText(e) }));
@@ -2786,9 +2838,9 @@ class HouseplanCard extends LitElement {
         await this.hass.callWS({ type: 'houseplan/layout/delete', device_id: oldId }).catch(() => undefined);
       }
       // the config is committed — now it is safe to drop the old folder
-      if (cleanupOldFiles && oldId) {
+      if (cleanupOldFiles && fileSrc) {
         await this.hass
-          .callWS({ type: 'houseplan/files/cleanup', marker_id: oldId })
+          .callWS({ type: 'houseplan/files/cleanup', marker_id: fileSrc })
           .catch(() => undefined); // leftovers are harmless; broken links are not
       }
       this._markerDialog = null;
@@ -3048,25 +3100,14 @@ class HouseplanCard extends LitElement {
   user's retry starts from the fresh config instead of hitting the same
   conflict again. */
   private async _saveConfigNow(): Promise<void> {
-    this._dropLegacySegments();
     this._cfgEpoch++;
-    // same flag the debounced writer uses: while it is set, an incoming
-    // `houseplan_config_updated` defers its reload instead of replacing the
-    // config under an unfinished write (audit L2, extended to this path)
-    this._cfgWriting = true;
     try {
-      const r = await this.hass.callWS({
-        type: 'houseplan/config/set', config: this._serverCfg, expected_rev: this._cfgRev,
-      });
-      this._cfgRev = r?.rev ?? this._cfgRev + 1;
+      // same queue as the debounced writer: a dialog saving while a background
+      // write is still out must not race it into a self-inflicted conflict
+      await this._writeConfig();
     } catch (e: any) {
-      if (e?.code === 'conflict') {
-        this._cfgWriting = false;
-        await this._reloadConfigOnly();
-      }
+      if (e?.code === 'conflict') await this._reloadConfigOnly();
       throw e;
-    } finally {
-      this._cfgWriting = false;
     }
   }
 

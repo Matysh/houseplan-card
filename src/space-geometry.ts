@@ -20,6 +20,11 @@ export function spaceModels(cfg: ServerConfig | null): SpaceModel[] {
       id: r.id,
       name: r.name,
       area: r.area ?? null,
+      // carried, not dropped: the static card renders from this model too, and
+      // without them it ignored the room-level fill override and drew a room the
+      // full card leaves transparent (HP-1454-07)
+      open_to: r.open_to || undefined,
+      settings: r.settings || undefined,
       x: r.x != null ? r.x * NORM_W : undefined,
       y: r.y != null ? r.y * H : undefined,
       w: r.w != null ? r.w * NORM_W : undefined,

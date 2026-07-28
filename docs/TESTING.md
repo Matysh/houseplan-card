@@ -239,6 +239,39 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       on the plan after a reload. Same for each tap action and each fill mode
       [auto: backend test_every_display_mode_the_editor_offers_is_accepted and
       neighbours, test_a_marker_showing_its_value_can_be_saved]
+- [ ] Uploaded SVG is inert as a document (v1.46.0, HP-1454-01): open a plan's
+      signed url directly in a tab — a `<script>` inside it must not run and must
+      not reach the HA session's localStorage; the same plan still renders in the
+      card. PDFs still open in the browser viewer
+      [auto: smoke_svg_sandbox + backend test_uploaded_svg_is_sandboxed_and_a_pdf_is_not]
+- [ ] An attachment never overwrites another (v1.46.0, HP-1454-02): attach a file,
+      cancel the dialog — the previously stored file is byte-identical. Attach
+      `manual.pdf` to two NEW icons — two independent files. A cancelled upload is
+      gone an hour later
+      [auto: backend test_upload_never_overwrites_an_existing_attachment + unit: collect_attachments]
+- [ ] Two quick edits both survive (v1.46.0, HP-1454-03): with a slow connection,
+      make an edit and another one before the first save answers — both are in the
+      stored config, only one write is ever in flight, and no conflict toast fires
+      [auto: smoke_config_writer]
+- [ ] Open boundaries follow geometry (v1.46.0, HP-1454-04): change a space's
+      aspect or drag a room vertex — the open boundary and the light through it
+      move with the walls, without a reload [auto: smoke via model-identity key]
+- [ ] Inner limits (v1.46.0, HP-1454-05): max and max+1 for polygon points,
+      open_to, controls, pdfs, text and url lengths; an oversized config as a
+      whole is refused with `too_large`
+      [auto: unit: test_inner_collection_limits + backend test_config_write_is_capped_by_total_size]
+- [ ] Big files stream (v1.46.0, HP-1454-06): upload a ~50 MB manual and download
+      it twice in parallel — HA's memory does not grow by a file per transfer
+      [manual]
+- [ ] Static card parity (v1.46.0, HP-1454-07): a room whose fill is set to "none"
+      under a space filled by light is transparent on BOTH cards
+      [auto: smoke_render_parity]
+- [ ] Layout reaches the static card (v1.46.0, HP-1454-08): drag an icon on the
+      full card — a static card on the same dashboard moves it too, with no
+      config write and no reload
+      [auto: backend test_layout_keeps_its_revision_and_announces_changes + manual]
+- [ ] Repair issues are not immortal (v1.46.0, HP-1454-09): create a missing-plan
+      warning, then delete the space — the warning disappears [manual]
 - [ ] A path the backend cannot sign does not become a request loop (v1.45.4,
       review R5-1): when `content/sign` answers successfully but omits a path,
       the card backs that path off individually and keeps the urls it did get;

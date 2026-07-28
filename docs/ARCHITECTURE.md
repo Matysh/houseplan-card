@@ -172,13 +172,37 @@ double click → properties dialog. In markup mode the "Opening" tool handles cl
 
 | Command | Parameters | Response |
 |---|---|---|
-| `houseplan/layout/get` | — | `{layout: {device_id: {x,y}}}` |
-| `houseplan/layout/set` | `layout` | `{ok}` (admin_only optional) |
-| `houseplan/layout/update` | `device_id`, `pos` | `{ok}` |
+| `houseplan/layout/get` | — | `{layout: {device_id: {x,y}}, rev}` |
+| `houseplan/layout/set` | `layout`, `expected_rev?` | `{ok, rev}` / err `conflict`; event `houseplan_layout_updated` |
+| `houseplan/layout/update` | `device_id`, `pos` | `{ok, rev}`; event `houseplan_layout_updated` |
 | `houseplan/config/get` | — | `{config, rev}` |
 | `houseplan/config/set` | `config`, `expected_rev?` | `{ok, rev}` / err `conflict`; event `houseplan_config_updated` |
 | `houseplan/plan/set` | `space_id`, `ext` (svg/png/jpg/webp), `data` (b64, ≤8 MB) | `{ok, url}` — writes `<space>.<token>.<ext>`, deletes nothing |
 | `houseplan/file/set` | `marker_id`, `filename`, `data` (b64) | `{ok,url,name}` (legacy, WS limit) |
+
+**User content is served inert** (HP-1454-01). An uploaded SVG is the only
+thing here that a browser will happily treat as a *document* rather than an
+image, and it would be a document of Home Assistant's own origin. Inside the
+card that never matters — `<image>` does not run scripts — but the url is
+reachable directly, and uploading needs only write access, which by default
+every user has. `HouseplanContentView` therefore sends a `sandbox` CSP with SVG
+and only with SVG: a CSP on a PDF response can break the browser's built-in
+viewer, and a raster image has no execution model to disable.
+
+**Attachments follow the same commit-scoped lifecycle as plans** (HP-1454-02).
+An upload takes a free name (`unique_filename`) and never overwrites, because
+the bytes under an existing name may be referenced by the stored configuration
+and an upload is not part of that transaction. A new icon has no id yet, so its
+files go to a per-dialog staging folder and move to the real id once the config
+write is accepted — the same copy → save → cleanup order as a rebind.
+`config/set` collects what its commit superseded, and anything unreferenced and
+older than `PLAN_ORPHAN_TTL_S`.
+
+**Config writes are serialized** (HP-1454-03). `_writeConfig()` chains onto a
+single promise: one `config/set` in flight, each carrying the revision the
+previous one returned. The debounce still spaces out *when* a write starts;
+what it cannot do — and used to be relied on for — is keep two writes from
+overlapping, which produced a self-inflicted conflict and lost the newer edit.
 
 **Plan uploads are copy-on-write, and collection belongs to the commit**
 (reviews R2-1, R3-1). The file system is not part of the config's
