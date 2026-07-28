@@ -576,9 +576,23 @@ def test_scheduled_collection_never_takes_a_detached_plan(tmp_path):
     cfg = {"spaces": [{"id": "f1", "plan_url": None},          # detached, space alive
                       {"id": "f2", "plan_url": None}]}         # same
     assert plans.collect_plans(d, cfg, cfg) == 1
-    assert (d / "f1.svg").is_file(), "a detached plan of a live space is kept"
+    assert (d / "f1.svg").is_file(), "a detached plan of a live space is kept, at any age"
     assert (d / "f2.tok.png").is_file()
-    assert not (d / "gone.old.png").exists(), "a plan of a space that no longer exists ages out"
+    assert not (d / "gone.old.png").exists(), "a plan of a deleted space ages out after a month"
+
+    # a space that HAS a plan: its other files can only be its own rejects
+    import os
+    import time
+
+    (d / "f9.current.png").write_bytes(b"x")
+    (d / "f9.reject.png").write_bytes(b"x")
+    hour = time.time() - const.PLAN_ORPHAN_TTL_S - 60
+    os.utime(d / "f9.reject.png", (hour, hour))
+    live = {"spaces": [{"id": "f1", "plan_url": None}, {"id": "f2", "plan_url": None},
+                       {"id": "f9", "plan_url": "/p/f9.current.png"}]}
+    assert plans.collect_plans(d, live, live) == 1
+    assert (d / "f9.current.png").is_file()
+    assert not (d / "f9.reject.png").exists()
 
     # a commit still removes what it SUPERSEDED — that it knows for certain
     old = {"spaces": [{"id": "f1", "plan_url": "/p/f1.svg"}, {"id": "f2", "plan_url": None}]}

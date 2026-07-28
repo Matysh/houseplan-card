@@ -66,6 +66,18 @@ refuse locks or be added to this paragraph.
 - Plan-level "security glance": one badge for "all locked / N open" (J2).
 - Threshold colouring for room-card metrics (J5).
 
+## Standing rule: never delete a user's file on an inference
+
+Fixed with the owner on 2026-07-28, after automatic collection removed two
+detached floor plans. The component may delete a file only when the user's
+action says so — replacing a plan, removing an attachment, deleting a device.
+"Nothing points at this any more" is not such an action: detaching a plan is one
+click and reversible, and the editor tells the user the file stays.
+
+The asymmetry is the whole argument. Wasted disk is visible, cheap and
+reversible; a deleted file is none of those. Where the evidence is weak, keep
+the file — and if a future version wants to reclaim that space, it asks.
+
 ## Out of scope — never build, point users to the right tool
 
 - Automations, scenes, scripts, notifications → HA core.

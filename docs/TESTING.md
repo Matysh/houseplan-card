@@ -239,10 +239,15 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       on the plan after a reload. Same for each tap action and each fill mode
       [auto: backend test_every_display_mode_the_editor_offers_is_accepted and
       neighbours, test_a_marker_showing_its_value_can_be_saved]
-- [ ] Detaching a plan keeps the file (v1.46.4): switch a space to "draw",
-      restart, wait a day — the image is still in `config/houseplan/plans/` and
-      can be re-attached. Replacing a plan still removes the one it replaced,
-      immediately [auto: unit: test_scheduled_collection_never_takes_a_detached_plan]
+- [ ] Detaching a plan keeps the file (v1.46.4/v1.46.5): switch a space to
+      "draw", restart, wait — the image stays in `config/houseplan/plans/`
+      indefinitely and can be re-attached. Replacing a plan still removes the one
+      it replaced, immediately
+      [auto: unit: test_scheduled_collection_never_takes_a_detached_plan]
+- [ ] Rebinding a device does not eat its manuals (v1.46.5): attach two files to
+      a device, rebind it to another HA device — both are readable afterwards.
+      If a copy failed, the file it failed on is still there rather than deleted
+      with the folder [auto: backend test_files_cleanup_keeps_referenced_files]
 - [ ] Nothing accumulates on an idle instance (v1.46.2/v1.46.3, HP-1461-01,
       HP-1462-01): attach a file, cancel the dialog, and do not save anything
       else — the file is gone after a restart AND after the daily pass, while

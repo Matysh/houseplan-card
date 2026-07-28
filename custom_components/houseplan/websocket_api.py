@@ -263,34 +263,68 @@ async def ws_content_sign(hass: HomeAssistant, connection, msg: dict[str, Any]) 
 )
 @websocket_api.async_response
 async def ws_files_cleanup(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Delete a marker's file folder — called only AFTER the config is committed."""
+    """Drop a marker folder's leftovers after its files moved elsewhere.
+
+    Called after a rebind: the files were copied to the new marker id and the
+    config that references them is committed, so the source folder is spent.
+
+    It used to `rmtree` the folder on the client's word alone. Two ways that
+    ends badly: a partial copy leaves some urls still pointing INTO this folder
+    (the migration deliberately does not rewrite those), and a wrong or stale
+    id from any client deletes a live marker's attachments outright. So the
+    server checks for itself — under the config lock — and removes only files
+    the stored configuration does not reference. Same principle as the
+    collector: a client may say what it no longer needs, never what may go.
+    """
     if not _check_write(hass, connection):
         connection.send_error(msg["id"], "unauthorized", "Only administrators may edit files")
         return
-    import shutil
-    from pathlib import Path
-
+    rt = _runtime(hass, connection, msg["id"])
+    if rt is None:
+        return
     from .const import FILES_DIR
+    from .plans import attachment_refs
     from .validation import sanitize_marker_id
 
     mid = sanitize_marker_id(msg["marker_id"])
-    if not mid:
-        connection.send_result(msg["id"], {"ok": True, "removed": False})
-        return
     base = Path(hass.config.path(FILES_DIR)).resolve()
-    target = (base / mid).resolve()
-    if not str(target).startswith(str(base)) or target == base:
-        connection.send_result(msg["id"], {"ok": True, "removed": False})
+    target = (base / mid).resolve() if mid else base
+    if not mid or not str(target).startswith(str(base)) or target == base:
+        connection.send_result(msg["id"], {"ok": True, "removed": 0, "kept": 0})
         return
 
-    def _rm() -> bool:
-        if not target.is_dir():
-            return False
-        shutil.rmtree(target, ignore_errors=True)
-        return True
+    async with rt.write_lock:
+        stored = await rt.config_store.async_load() or {}
+        refs = attachment_refs(stored.get("config") or {})
 
-    removed = await hass.async_add_executor_job(_rm)
-    connection.send_result(msg["id"], {"ok": True, "removed": removed})
+        def _rm() -> tuple[int, int]:
+            if not target.is_dir():
+                return 0, 0
+            removed = kept = 0
+            for item in sorted(target.iterdir()):
+                if not item.is_file():
+                    continue
+                if f"{mid}/{item.name}" in refs:
+                    kept += 1
+                    continue
+                try:
+                    item.unlink()
+                    removed += 1
+                except OSError as err:
+                    _LOGGER.warning("House Plan: could not remove %s: %s", item, err)
+            if not kept:
+                try:
+                    target.rmdir()
+                except OSError:
+                    pass
+            return removed, kept
+
+        removed, kept = await hass.async_add_executor_job(_rm)
+    if kept:
+        _LOGGER.info(
+            "House Plan: kept %s file(s) in %s — the configuration still references them", kept, mid
+        )
+    connection.send_result(msg["id"], {"ok": True, "removed": removed, "kept": kept})
 
 
 @websocket_api.websocket_command(
