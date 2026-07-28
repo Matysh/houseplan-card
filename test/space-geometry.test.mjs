@@ -106,3 +106,20 @@ test('contentBounds: fits what is drawn, with a 5% margin', () => {
   const empty = spaceModels({ spaces: [{ id: 's', view_box: [0, 0, 1, 1], rooms: [] }], markers: [] })[0];
   assert.equal(contentBounds(empty), null);
 });
+
+test('contentBounds: devices outside every room stretch the frame', () => {
+  const one = spaceModels({ spaces: [{
+    id: 's', view_box: [0, 0, 1, 1],
+    rooms: [{ id: 'r', poly: [[0.4, 0.4], [0.6, 0.4], [0.6, 0.6], [0.4, 0.6]] }],
+  }], markers: [] })[0];
+  // a gate sensor far to the right of the room
+  const b = contentBounds(one, 0.05, [[900, 500]]);
+  // span 400..900 wide, 400..600 tall; margin 5% of the larger side (500)
+  assert.deepEqual(b, { x: 375, y: 375, w: 550, h: 250 });
+  // devices alone are content enough — an empty yard with two cameras
+  const empty = spaceModels({ spaces: [{ id: 's', view_box: [0, 0, 1, 1], rooms: [] }], markers: [] })[0];
+  const only = contentBounds(empty, 0.05, [[100, 100], [300, 200]]);
+  assert.equal(Math.round(only.w), 220);
+  // and junk coordinates are ignored, not spread across the canvas
+  assert.deepEqual(contentBounds(one, 0.05, [[NaN, 5]]), contentBounds(one));
+});

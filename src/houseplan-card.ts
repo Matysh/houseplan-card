@@ -245,6 +245,8 @@ class HouseplanCard extends LitElement {
   private _pinchStart: { dist: number; zoom: number } | null = null;
   private _suppressClick = false;
   private _roViewport?: ResizeObserver;
+  private _roHdr?: ResizeObserver;
+  private _hdrH = 118; // measured px above the stage (see the observer in updated())
   private _onboardingShown = false; // the auto space dialog is shown once per session
 
   private _rulesDialog: { rules: IconRule[]; test: string; busy: boolean } | null = null;
@@ -359,6 +361,7 @@ class HouseplanCard extends LitElement {
   private _holdFired = false;
 
   static properties = {
+    _hdrH: { state: true },
     hass: { attribute: false },
     _config: { state: true },
     _space: { state: true },
@@ -431,6 +434,8 @@ class HouseplanCard extends LitElement {
     clearTimeout(this._holdTimer);
     this._roViewport?.disconnect();
     this._roViewport = undefined;
+    this._roHdr?.disconnect();
+    this._roHdr = undefined;
     if (this._unsubCfg) {
       this._unsubCfg();
       this._unsubCfg = null;
@@ -723,6 +728,24 @@ class HouseplanCard extends LitElement {
     if (stage && !this._roViewport) {
       this._roViewport = new ResizeObserver(() => this._refitView());
       this._roViewport.observe(stage);
+    }
+    // The stage fills the rest of the viewport. What sits above it — the HA
+    // toolbar, card margins, our own header — DEPENDS ON THE MODE: the editor
+    // bars used to be billed against a hard-coded 118px, so entering an editor
+    // pushed the plan down by the difference and cut its bottom off below the
+    // fold. Measure where the stage actually starts instead of assuming.
+    const hdr = this.renderRoot.querySelector('.hdr') as HTMLElement | null;
+    if (hdr && stage && !this._roHdr) {
+      const measure = () => {
+        const t = Math.round(stage.getBoundingClientRect().top + (window.scrollY || 0));
+        if (t >= 0 && Math.abs(t - this._hdrH) > 1) this._hdrH = t;
+      };
+      // a frame later: setting state straight from the observer callback makes
+      // the browser report "ResizeObserver loop completed with undelivered
+      // notifications" — the render it triggers resizes the stage again
+      this._roHdr = new ResizeObserver(() => requestAnimationFrame(measure));
+      this._roHdr.observe(hdr);
+      measure();
     }
     if (stage && !this._view) this._refitView();
     // onboarding: on an empty server config, open the space dialog right away
@@ -1235,7 +1258,11 @@ class HouseplanCard extends LitElement {
   private _baseVb(): number[] {
     const m = this._spaceModel();
     if (m.bg) return m.vb;
-    const b = contentBounds(m);
+    // devices are content too — they may stand outside every room
+    const pts = this._devices
+      .filter((d) => d.space === m.id)
+      .map((d) => { const p = this._pos(d); return [p.x, p.y] as const; });
+    const b = contentBounds(m, 0.05, pts);
     return b ? [b.x, b.y, b.w, b.h] : m.vb;
   }
 
@@ -1259,7 +1286,14 @@ class HouseplanCard extends LitElement {
     return [v.x + (sx / w) * v.w, v.y + (sy / h) * v.h];
   }
 
-  /** Clamp the view to the fit bounds (the content always covers the scene). */
+  /** Zoom limits: 8× in, 0.4× out (zoomed out, the plan floats centred). */
+  private static readonly ZOOM_MAX = 8;
+  private static readonly ZOOM_MIN = 0.4;
+
+  /** Clamp the view to the fit bounds (the content always covers the scene).
+   *  Zoomed OUT the view is larger than the content on an axis — then there is
+   *  nothing to clamp against and the content is centred on that axis instead
+   *  of being pinned to a corner. */
   private _clampView(
     v: { x: number; y: number; w: number; h: number },
     fit: { x: number; y: number; w: number; h: number },
@@ -1267,8 +1301,12 @@ class HouseplanCard extends LitElement {
     return {
       w: v.w,
       h: v.h,
-      x: Math.max(fit.x, Math.min(fit.x + fit.w - v.w, v.x)),
-      y: Math.max(fit.y, Math.min(fit.y + fit.h - v.h, v.y)),
+      x: v.w >= fit.w
+        ? fit.x + (fit.w - v.w) / 2
+        : Math.max(fit.x, Math.min(fit.x + fit.w - v.w, v.x)),
+      y: v.h >= fit.h
+        ? fit.y + (fit.h - v.h) / 2
+        : Math.max(fit.y, Math.min(fit.y + fit.h - v.h, v.y)),
     };
   }
 
@@ -1276,7 +1314,7 @@ class HouseplanCard extends LitElement {
   private _applyView(zoom: number, cx?: number, cy?: number): void {
     const vb = this._baseVb();
     const fit = fitView(vb, this._stageAspect());
-    const z = Math.min(8, Math.max(1, zoom));
+    const z = Math.min(HouseplanCard.ZOOM_MAX, Math.max(HouseplanCard.ZOOM_MIN, zoom));
     const w = fit.w / z, h = fit.h / z;
     const cur = this._viewOr(vb);
     const ccx = cx ?? cur.x + cur.w / 2;
@@ -1299,7 +1337,7 @@ class HouseplanCard extends LitElement {
     if (!stage) return;
     const vb = this._baseVb();
     const fit = fitView(vb, this._stageAspect());
-    const z = Math.min(8, Math.max(1, newZoom));
+    const z = Math.min(HouseplanCard.ZOOM_MAX, Math.max(HouseplanCard.ZOOM_MIN, newZoom));
     const w = stage.clientWidth, h = stage.clientHeight;
     const pt = this._screenToVb(sx, sy);
     const nw = fit.w / z, nh = fit.h / z;
@@ -3878,7 +3916,7 @@ class HouseplanCard extends LitElement {
         </div>
 
         <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'openwall' && this._openWallHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}"
-          style="height:${this._kiosk ? '100dvh' : 'calc(100dvh - 118px)'}"
+          style="height:${this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
           @pointerdown=${(e: PointerEvent) => { this._notePointer(e); this._stagePointerDown(e); }}
