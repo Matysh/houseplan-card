@@ -558,7 +558,7 @@ async def test_config_write_is_capped_by_total_size(
     cfg = await _cfg([{"id": "f1", "plan_url": None}])
     # every field inside the caps, the whole thing far past them
     blob = "d" * MAX_TEXT
-    cfg["settings"] = {"known_devices": [blob] * (MAX_CONFIG_BYTES // MAX_TEXT + 10)}
+    cfg["settings"] = {"known_devices": [blob] * (MAX_CONFIG_BYTES // MAX_TEXT + 100)}
     resp = await _save(client, cfg, 0)
     assert not resp["success"] and resp["error"]["code"] == "too_large"
 
@@ -686,7 +686,10 @@ async def test_upload_never_overwrites_an_existing_attachment(
     assert first != second, "the second upload must not take the first name"
 
     folder = os.path.join(hass.config.path(FILES_DIR), "m1")
-    names = sorted(await hass.async_add_executor_job(os.listdir, folder))
+    # the HA test config dir is shared across the module — look only at ours
+    names = sorted(
+        n for n in await hass.async_add_executor_job(os.listdir, folder) if n.startswith("manual")
+    )
     assert names == ["manual (2).pdf", "manual.pdf"]
 
     got = await http.get(first.replace(CONTENT_URL, CONTENT_URL))

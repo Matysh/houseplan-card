@@ -32,7 +32,10 @@ async def test_upload_ok(hass: HomeAssistant, hass_client: ClientSessionGenerato
     assert resp.status == 200
     body = await resp.json()
     # audit B1: uploads now return the AUTHENTICATED content URL
-    assert body["ok"] and body["url"].startswith("/api/houseplan/content/files/m1/manual.pdf?v=")
+    # HP-1454-02: uploads take a FREE name and never overwrite, so the url is
+    # the name that was actually used — no cache-busting query needed any more
+    assert body["ok"] and body["url"].startswith("/api/houseplan/content/files/m1/manual")
+    assert body["url"].endswith(".pdf") and "?" not in body["url"]
 
 
 async def test_upload_bad_ext(hass: HomeAssistant, hass_client: ClientSessionGenerator) -> None:
