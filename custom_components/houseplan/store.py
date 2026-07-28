@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -42,6 +43,11 @@ class HouseplanData:
     # One lock for every load→modify→save cycle of both stores: prevents
     # lost updates from concurrent WS calls and makes the rev check atomic.
     write_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
+    # Collect files nothing references any more. Set during setup, which also
+    # runs it once and schedules it daily. Exposed so it can be invoked
+    # directly — a test that fakes a 24 h jump proves the timer fires, not that
+    # the work happens, and those are different claims.
+    sweep: Callable[[], Awaitable[None]] | None = None
 
 
 HouseplanConfigEntry = ConfigEntry[HouseplanData]

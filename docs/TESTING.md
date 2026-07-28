@@ -239,11 +239,14 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       on the plan after a reload. Same for each tap action and each fill mode
       [auto: backend test_every_display_mode_the_editor_offers_is_accepted and
       neighbours, test_a_marker_showing_its_value_can_be_saved]
-- [ ] Nothing accumulates on an idle instance (v1.46.2, HP-1461-01): attach a
-      file, cancel the dialog, and do not save anything else — an hour later (or
-      after a restart) the file is gone, while every file the configuration
-      still references is untouched
-      [auto: backend test_scheduled_sweep_collects_what_no_commit_will]
+- [ ] Nothing accumulates on an idle instance (v1.46.2/v1.46.3, HP-1461-01,
+      HP-1462-01): attach a file, cancel the dialog, and do not save anything
+      else — the file is gone after a restart AND after the daily pass, while
+      every file the configuration still references is untouched. Seed the
+      strays AFTER the last save, or `config/set` collects them and the check
+      proves nothing
+      [auto: backend test_startup_sweep_collects_what_no_commit_will,
+      test_daily_sweep_callback_collects_too, test_sweep_and_a_config_write_do_not_race]
 - [ ] A drag wins over a concurrent remote move (v1.46.2, HP-1461-02): drag an
       icon and, while the save is still in flight, have another window move a
       different icon — your icon stays where you put it and the other one

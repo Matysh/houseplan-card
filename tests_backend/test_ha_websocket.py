@@ -855,61 +855,148 @@ async def test_cancelling_an_upload_takes_its_temporary_with_it(
     assert entry
 
 
-async def test_scheduled_sweep_collects_what_no_commit_will(
-    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
-) -> None:
-    """HP-1461-01: a commit collects what it superseded — but only when it runs.
-
-    Cancel a dialog after the file uploaded, or lose the connection right after,
-    and nothing references the file and no future write notices it. The daily
-    sweep used to remove only streaming temporaries, so the promise that a
-    cancelled attachment goes after an hour did not hold on an instance nobody
-    edits.
-    """
+async def _seed_aged(hass, names) -> None:
+    """Create the given files and backdate them past the orphan TTL."""
     import os
     import time
 
-    from custom_components.houseplan.const import FILES_DIR, PLANS_DIR, PLAN_ORPHAN_TTL_S
+    from custom_components.houseplan.const import PLAN_ORPHAN_TTL_S
 
-    await _setup(hass)
-    client = await hass_ws_client(hass)
-    files = hass.config.path(FILES_DIR)
-    plans = hass.config.path(PLANS_DIR)
     old = time.time() - PLAN_ORPHAN_TTL_S - 60
 
-    def _seed() -> None:
-        os.makedirs(os.path.join(files, "m5"), exist_ok=True)
-        os.makedirs(os.path.join(files, "up_cancelled"), exist_ok=True)
-        os.makedirs(plans, exist_ok=True)
-        for path in (
-            os.path.join(files, "m5", "kept.pdf"),
-            os.path.join(files, "up_cancelled", "manual.pdf"),
-            os.path.join(plans, "s5.tok.png"),
-            os.path.join(plans, "s5.orphan.png"),
-        ):
+    def _do() -> None:
+        for path in names:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
             with open(path, "wb") as fh:
                 fh.write(b"x")
             os.utime(path, (old, old))
 
-    await hass.async_add_executor_job(_seed)
+    await hass.async_add_executor_job(_do)
 
+
+def _paths(hass):
+    import os
+
+    from custom_components.houseplan.const import FILES_DIR, PLANS_DIR
+
+    files = hass.config.path(FILES_DIR)
+    plans = hass.config.path(PLANS_DIR)
+    return files, plans, {
+        "kept_file": os.path.join(files, "m5", "kept.pdf"),
+        "kept_plan": os.path.join(plans, "s5.tok.png"),
+        "orphan_file": os.path.join(files, "up_cancelled", "manual.pdf"),
+        "orphan_plan": os.path.join(plans, "s5.orphan.png"),
+    }
+
+
+async def _referenced_config() -> dict:
     cfg = await _cfg([{"id": "s5", "plan_url": "/api/houseplan/content/plans/_/s5.tok.png"}])
     cfg["markers"] = [
         {"id": "m5", "binding": "virtual",
          "pdfs": [{"name": "k", "url": "/api/houseplan/content/files/m5/kept.pdf"}]}
     ]
-    assert (await _save(client, cfg, 0))["success"]
+    return cfg
 
-    # reload the entry: that is what runs the sweep at startup
+
+async def _assert_swept(hass, p) -> None:
+    import os
+
+    assert await hass.async_add_executor_job(os.path.isfile, p["kept_file"]), "referenced file kept"
+    assert await hass.async_add_executor_job(os.path.isfile, p["kept_plan"]), "referenced plan kept"
+    assert not await hass.async_add_executor_job(os.path.isfile, p["orphan_file"])
+    assert not await hass.async_add_executor_job(os.path.isfile, p["orphan_plan"])
+
+
+async def test_startup_sweep_collects_what_no_commit_will(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """HP-1461-01 / HP-1462-01: collection must not depend on a future save.
+
+    The files are seeded AFTER the configuration is stored. The previous version
+    of this test seeded them before, and `config/set` collects too — so it
+    passed without the startup pass doing anything, hiding HP-1462-01: during
+    setup the entry is not "loaded" yet, so looking its runtime data up by
+    domain returned None and the pass degraded to removing streaming
+    temporaries only.
+    """
+    import os
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    files, _plans, p = _paths(hass)
+    assert (await _save(client, await _referenced_config(), 0))["success"]
+
+    await _seed_aged(hass, list(p.values()))
+
     entry = hass.config_entries.async_entries(DOMAIN)[0]
     assert await hass.config_entries.async_reload(entry.entry_id)
     await hass.async_block_till_done()
 
-    exists = lambda p: os.path.isfile(p)  # noqa: E731
-    assert await hass.async_add_executor_job(exists, os.path.join(files, "m5", "kept.pdf"))
-    assert await hass.async_add_executor_job(exists, os.path.join(plans, "s5.tok.png"))
+    await _assert_swept(hass, p)
     assert not await hass.async_add_executor_job(
-        exists, os.path.join(files, "up_cancelled", "manual.pdf")
-    ), "an aged cancelled attachment is collected without any further config write"
-    assert not await hass.async_add_executor_job(exists, os.path.join(plans, "s5.orphan.png"))
-    assert not await hass.async_add_executor_job(os.path.isdir, os.path.join(files, "up_cancelled"))
+        os.path.isdir, os.path.join(files, "up_cancelled")
+    ), "the emptied staging folder goes with its last file"
+
+
+async def test_periodic_sweep_collects_too(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """The scheduled pass, invoked directly rather than by faking a 24 h jump.
+
+    Firing a time change proves the timer fires; awaiting the callback proves it
+    does the work. This asserts the second, which is the part that regressed.
+    """
+    from custom_components.houseplan.store import get_data
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    _files, _plans, p = _paths(hass)
+    assert (await _save(client, await _referenced_config(), 0))["success"]
+
+    await _seed_aged(hass, list(p.values()))
+
+    data = get_data(hass)
+    assert data is not None and data.sweep is not None, "setup must publish the sweep"
+    await data.sweep()
+    await hass.async_block_till_done()
+
+    await _assert_swept(hass, p)
+
+
+async def test_sweep_and_a_config_write_do_not_race(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """Both take the same write lock, so an accepted config cannot lose a file.
+
+    Without it the sweep could decide a file is unreferenced, a commit could
+    start referencing it, and the file would go — leaving the accepted revision
+    pointing at nothing.
+    """
+    import asyncio
+    import os
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    _files, plans, p = _paths(hass)
+    rev = (await _save(client, await _referenced_config(), 0))["result"]["rev"]
+
+    # an aged, currently unreferenced plan that the commit below adopts
+    newcomer = os.path.join(plans, "s5.newcomer.png")
+    await _seed_aged(hass, [p["kept_file"], p["kept_plan"], newcomer])
+
+    cfg2 = await _referenced_config()
+    cfg2["spaces"][0]["plan_url"] = "/api/houseplan/content/plans/_/s5.newcomer.png"
+
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    await asyncio.gather(
+        hass.config_entries.async_reload(entry.entry_id),   # runs the sweep
+        _save(client, cfg2, rev),
+    )
+    await hass.async_block_till_done()
+
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    stored = (await client.receive_json())["result"]["config"]
+    referenced = stored["spaces"][0]["plan_url"].rsplit("/", 1)[-1]
+    assert await hass.async_add_executor_job(
+        os.path.isfile, os.path.join(plans, referenced)
+    ), f"the accepted config points at {referenced}, which must exist"
