@@ -386,25 +386,81 @@ def test_every_room_fill_mode_the_editor_offers_is_accepted():
 # ---------- attachments & inner limits (HP-1454-02, -05) ----------
 
 
-def test_unique_filename_never_returns_a_taken_name(tmp_path):
-    unique_filename = plans.unique_filename
-    d = tmp_path / "m1"
-    d.mkdir()
-    assert unique_filename(d, "manual.pdf") == "manual.pdf"
-    (d / "manual.pdf").write_bytes(b"x")
-    assert unique_filename(d, "manual.pdf") == "manual-2.pdf"
-    (d / "manual-2.pdf").write_bytes(b"x")
-    assert unique_filename(d, "manual.pdf") == "manual-3.pdf"
-    # no extension, and a name that needs sanitising
-    (d / "readme").write_bytes(b"x")
-    assert unique_filename(d, "readme") == "readme-2"
-    assert unique_filename(d, "../../etc/passwd") == "passwd"
+def test_reserve_filename_claims_the_name_atomically(tmp_path):
+    """HP-1460-01: choosing a name and taking it must be one operation.
 
-    # A generated name has to survive the sanitiser the CONTENT VIEW applies to
-    # the request, or the file is written and then never served: " (2)" became
-    # "_2_" and every collision-renamed attachment 404'd.
-    for candidate in ("manual-2.pdf", "manual-3.pdf", "readme-2"):
-        assert v.sanitize_filename(candidate) == candidate
+    The old helper asked `exists()` and returned a string; two uploads racing
+    between the check and the write agreed on the same name and one overwrote
+    the other, both reporting success.
+    """
+    reserve = plans.reserve_filename
+    d = tmp_path / "m1"
+
+    first = reserve(d, "manual.pdf")
+    assert first == "manual.pdf"
+    assert (d / first).is_file(), "the name is taken, not merely picked"
+    second = reserve(d, "manual.pdf")
+    assert second == "manual-2.pdf" and (d / second).is_file()
+    assert reserve(d, "manual.pdf") == "manual-3.pdf"
+
+    assert reserve(d, "readme") == "readme"
+    assert reserve(d, "readme") == "readme-2"
+    assert reserve(d, "../../etc/passwd") == "passwd"
+
+
+def test_reserve_filename_result_survives_the_content_sanitizer(tmp_path):
+    """A name the view would rewrite is a file written and then never served."""
+    reserve = plans.reserve_filename
+    d = tmp_path / "m2"
+    long_stem = "x" * 200                      # far past the limit
+    names = [reserve(d, f"{long_stem}.pdf") for _ in range(12)]
+    assert len(set(names)) == 12, "each call takes its own name"
+    for n in names:
+        assert len(n) <= v.MAX_FILENAME
+        assert v.sanitize_filename(n) == n, n
+        assert n.endswith(".pdf")
+
+    # a name already exactly at the limit still leaves room for the tag
+    exact = "y" * (v.MAX_FILENAME - 4) + ".pdf"
+    assert len(exact) == v.MAX_FILENAME
+    a = reserve(d, exact)
+    b = reserve(d, exact)
+    assert a != b and len(b) <= v.MAX_FILENAME and v.sanitize_filename(b) == b
+
+
+def test_reserve_filename_is_safe_under_concurrency(tmp_path):
+    """Twenty threads, one filename: twenty distinct files, nothing overwritten."""
+    from concurrent.futures import ThreadPoolExecutor
+
+    reserve = plans.reserve_filename
+    d = tmp_path / "m3"
+    d.mkdir(parents=True)
+    with ThreadPoolExecutor(max_workers=20) as pool:
+        names = list(pool.map(lambda _: reserve(d, "manual.pdf"), range(20)))
+    assert len(set(names)) == 20
+    assert sorted(p.name for p in d.iterdir()) == sorted(names)
+
+
+def test_sweep_upload_temps(tmp_path):
+    """HP-1460-02: a crashed transfer leaves a temp no other collector sees."""
+    import os
+    import time
+
+    files = tmp_path / "files"
+    files.mkdir()
+    fresh = files / f"{plans.TMP_PREFIX}fresh"
+    old = files / f"{plans.TMP_PREFIX}old"
+    keep = files / "notes.txt"
+    for f in (fresh, old, keep):
+        f.write_bytes(b"x")
+    t = time.time() - const.PLAN_ORPHAN_TTL_S - 60
+    os.utime(old, (t, t))
+
+    assert plans.sweep_upload_temps(files) == 1
+    assert not old.exists(), "an aged temporary goes"
+    assert fresh.is_file(), "a fresh one may belong to a request in flight"
+    assert keep.is_file(), "nothing else is touched"
+    assert plans.sweep_upload_temps(tmp_path / "nope") == 0
 
 
 def _acfg(*pairs):

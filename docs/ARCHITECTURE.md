@@ -190,9 +190,16 @@ and only with SVG: a CSP on a PDF response can break the browser's built-in
 viewer, and a raster image has no execution model to disable.
 
 **Attachments follow the same commit-scoped lifecycle as plans** (HP-1454-02).
-An upload takes a free name (`unique_filename`) and never overwrites, because
-the bytes under an existing name may be referenced by the stored configuration
-and an upload is not part of that transaction. A new icon has no id yet, so its
+An upload takes a free name and never overwrites, because the bytes under an
+existing name may be referenced by the stored configuration and an upload is
+not part of that transaction. `reserve_filename` *claims* the name as it picks
+it (`O_CREAT | O_EXCL`) — asking `exists()` and returning a string let two
+uploads agree on one name and quietly overwrite each other. It also budgets the
+length so the result survives the sanitiser the content view applies to the
+request, since a name the view rewrites is a file written and never served.
+Streaming temporaries live in the files root under `.upload-`, are removed on
+every exit path of the request, and are swept at startup and daily for the
+cases a process death leaves behind. A new icon has no id yet, so its
 files go to a per-dialog staging folder and move to the real id once the config
 write is accepted — the same copy → save → cleanup order as a rebind.
 `config/set` collects what its commit superseded, and anything unreferenced and

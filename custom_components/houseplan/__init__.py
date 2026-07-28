@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 import logging
+from datetime import timedelta
 from pathlib import Path
 
 from homeassistant.components.frontend import add_extra_js_url
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers.event import async_track_time_interval
 
 from . import websocket_api as hp_ws
 from .const import (
@@ -18,6 +20,7 @@ from .const import (
     PLANS_URL,
     VERSION,
 )
+from .plans import sweep_upload_temps
 from .repairs import async_check_plan_files
 from .store import HouseplanConfigEntry, create_data
 
@@ -97,6 +100,25 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
         )
 
     await async_check_plan_files(hass, entry)
+
+    # Abandoned upload temporaries (HP-1460-02). A request cleans up after
+    # itself; a hard kill mid-upload does not, and the commit-scoped collector
+    # only walks marker folders — so without this a `.upload-*` from a crashed
+    # transfer would sit there for good, and on an instance nobody edits, so
+    # would a cancelled attachment. Once at startup, then daily.
+    async def _sweep(_now=None) -> None:
+        files_dir = Path(hass.config.path(FILES_DIR))
+        try:
+            n = await hass.async_add_executor_job(sweep_upload_temps, files_dir)
+            if n:
+                _LOGGER.info("House Plan: removed %s abandoned upload temporaries", n)
+        except Exception:  # noqa: BLE001 — housekeeping must never fail a setup
+            _LOGGER.exception("House Plan: sweeping upload temporaries failed")
+
+    await _sweep()
+    entry.async_on_unload(
+        async_track_time_interval(hass, _sweep, timedelta(hours=24))
+    )
     return True
 
 

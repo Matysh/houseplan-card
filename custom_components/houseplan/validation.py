@@ -16,6 +16,9 @@ MAX_FILE_BYTES = 50 * 1024 * 1024
 
 SPACE_ID_RE = re.compile(r"^[a-z0-9_-]{1,64}$")
 _SAFE_NAME_RE = re.compile(r"[^A-Za-z0-9._-]+")
+# The name length the content view will accept back in a request. Anything a
+# generated name must fit inside, collision tag included (HP-1460-01).
+MAX_FILENAME = 120
 
 # ---------- sanitizers ----------
 
@@ -33,7 +36,7 @@ def sanitize_marker_id(value: str) -> str:
 def sanitize_filename(value: str) -> str:
     """Drop the path and leading dots, keep a safe file name."""
     raw = value.rsplit("/", 1)[-1].rsplit("\\", 1)[-1]
-    return _SAFE_NAME_RE.sub("_", raw).lstrip(".")[:120] or "file"
+    return _SAFE_NAME_RE.sub("_", raw).lstrip(".")[:MAX_FILENAME] or "file"
 
 
 def file_ext(filename: str) -> str:
