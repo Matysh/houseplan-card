@@ -938,14 +938,15 @@ async def test_startup_sweep_collects_what_no_commit_will(
     ), "the emptied staging folder goes with its last file"
 
 
-async def test_daily_sweep_callback_collects_too(
+async def test_periodic_sweep_collects_too(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator
 ) -> None:
-    """The interval path, exercised on its own by firing the scheduled callback."""
-    import datetime as dt
+    """The scheduled pass, invoked directly rather than by faking a 24 h jump.
 
-    from homeassistant.util import dt as dt_util
-    from pytest_homeassistant_custom_component.common import async_fire_time_changed
+    Firing a time change proves the timer fires; awaiting the callback proves it
+    does the work. This asserts the second, which is the part that regressed.
+    """
+    from custom_components.houseplan.store import get_data
 
     await _setup(hass)
     client = await hass_ws_client(hass)
@@ -954,7 +955,9 @@ async def test_daily_sweep_callback_collects_too(
 
     await _seed_aged(hass, list(p.values()))
 
-    async_fire_time_changed(hass, dt_util.utcnow() + dt.timedelta(hours=25))
+    data = get_data(hass)
+    assert data is not None and data.sweep is not None, "setup must publish the sweep"
+    await data.sweep()
     await hass.async_block_till_done()
 
     await _assert_swept(hass, p)

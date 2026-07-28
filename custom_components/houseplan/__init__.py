@@ -142,6 +142,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
         except Exception:  # noqa: BLE001 — housekeeping must never fail a setup
             _LOGGER.exception("House Plan: sweeping unreferenced files failed")
 
+    data.sweep = _sweep
     await _sweep()
     entry.async_on_unload(
         async_track_time_interval(hass, _sweep, timedelta(hours=24))
