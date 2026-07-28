@@ -198,8 +198,13 @@ uploads agree on one name and quietly overwrite each other. It also budgets the
 length so the result survives the sanitiser the content view applies to the
 request, since a name the view rewrites is a file written and never served.
 Streaming temporaries live in the files root under `.upload-`, are removed on
-every exit path of the request, and are swept at startup and daily for the
-cases a process death leaves behind. A new icon has no id yet, so its
+every exit path of the request (including cancellation, which is a
+BaseException and slips past `except Exception`), and are swept at startup and
+daily. That scheduled pass also runs the two collectors with the stored
+configuration as *both* sides — nothing superseded, so every referenced file is
+kept and only aged unreferenced ones go. Without it, collection would only ever
+happen when somebody saves, and a file uploaded into a dialog that was then
+cancelled would wait for a write that may never come. A new icon has no id yet, so its
 files go to a per-dialog staging folder and move to the real id once the config
 write is accepted — the same copy → save → cleanup order as a rebind.
 `config/set` collects what its commit superseded, and anything unreferenced and

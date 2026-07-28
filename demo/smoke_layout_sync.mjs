@@ -56,14 +56,35 @@ const res = await page.evaluate(async () => {
   out.ownWriteNoReload = gets === before;
   out.ownWriteKept = JSON.stringify(c._layout.dev_b) === JSON.stringify({ x: 31, y: 32 });
 
-  // 3) чужая ревизия во время неотправленного перетаскивания не съедает его
+  // 3) НАСТОЯЩЕЕ перетаскивание: debounce запланирован, запись задержана, а
+  //    layout/get отвечает мгновенно. Именно этот порядок и терял позицию:
+  //    flush() внутри перечитывания опустошал _dirtyPos ДО снятия снимка.
+  let releaseUpdate;
+  const updateGate = new Promise((r) => { releaseUpdate = r; });
+  let delayUpdate = true;
+  const plain = hass.callWS;
+  c.hass = { ...hass, callWS: async (m) => {
+    if (m.type === 'houseplan/layout/update' && delayUpdate) {
+      delayUpdate = false;
+      await updateGate;
+    }
+    return plain(m);
+  } };
+
   c._layout = { ...c._layout, dev_a: { x: 5, y: 6 } };
-  c._dirtyPos.add('dev_a');                       // локально подвинули, ещё не отправили
+  c._dirtyPos.add('dev_a');
+  c._persistLayout();                              // debounce запланирован, не сброшен вручную
   layout = { ...layout, dev_b: { x: 99, y: 99 } }; rev += 1;
   subs.forEach((f) => f({ data: { rev } }));
   await new Promise((r) => setTimeout(r, 400));
-  out.localDragSurvived = JSON.stringify(c._layout.dev_a) === JSON.stringify({ x: 5, y: 6 });
+  out.dragKeptWhileWriteInFlight = JSON.stringify(c._layout.dev_a) === JSON.stringify({ x: 5, y: 6 });
   out.remoteChangeApplied = JSON.stringify(c._layout.dev_b) === JSON.stringify({ x: 99, y: 99 });
+
+  releaseUpdate();
+  await new Promise((r) => setTimeout(r, 350));
+  out.localDragSurvived = JSON.stringify(c._layout.dev_a) === JSON.stringify({ x: 5, y: 6 });
+  out.serverAgrees = JSON.stringify(layout.dev_a) === JSON.stringify({ x: 5, y: 6 });
+  out.sentPosDrained = c._sentPos.size === 0;
   return out;
 });
 // зафиксировано прогоном на v1.46.1 и сверено с кодом
@@ -73,7 +94,10 @@ checkAll(res, {
   revFollowed: true,
   ownWriteNoReload: true,
   ownWriteKept: true,
-  localDragSurvived: true,
+  dragKeptWhileWriteInFlight: true,
   remoteChangeApplied: true,
+  localDragSurvived: true,
+  serverAgrees: true,
+  sentPosDrained: true,
 });
 await finish(browser);

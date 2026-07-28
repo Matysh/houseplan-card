@@ -1,5 +1,30 @@
 # Changelog
 
+## v1.46.2 — 2026-07-28 (re-check of v1.46.1: HP-1461-01, -02)
+- **A file nobody ended up using is now cleaned up even if nothing is ever
+  saved again (HP-1461-01).** Collection is tied to a configuration write,
+  which is right for what a write supersedes but leaves a gap: cancel a dialog
+  after the file has already uploaded, lose the connection just after, or call
+  the upload API directly, and nothing references the file and no future write
+  notices it. The daily sweep added in v1.46.1 only removed half-finished
+  transfers, so the promise that a cancelled attachment disappears after an hour
+  did not hold on an instance nobody edits. The sweep now compares against the
+  stored configuration — under the same lock a write uses — and collects aged
+  unreferenced attachments and plans as well.
+- **A drag is no longer undone by someone else's move (HP-1461-02).** When the
+  full card learned to follow position changes in v1.46.1, it protected the
+  positions you had moved but not yet sent — except it read that list *after*
+  flushing the pending write, and flushing empties it first. In a real drag,
+  where a write is already scheduled, the list was therefore empty and the
+  server's older position was painted over your move. The card now takes the
+  snapshot before flushing and also holds on to positions that are sent but not
+  yet acknowledged: until the server confirms a position, the card that moved it
+  is the authority on it.
+- Two tests grew up to their docstrings: the upload test now actually cancels
+  the request task instead of only exercising error paths, and the position-sync
+  smoke schedules a real debounced write and delays it, which is the ordering
+  that lost the drag.
+
 ## v1.46.1 — 2026-07-28 (re-check of v1.46.0: HP-1460-01 … -03)
 - **Two uploads of the same file name can no longer collide (HP-1460-01).**
   v1.46.0 stopped overwriting attachments, but choosing a free name and taking

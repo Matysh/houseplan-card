@@ -20,9 +20,9 @@ from .const import (
     PLANS_URL,
     VERSION,
 )
-from .plans import sweep_upload_temps
+from .plans import collect_attachments, collect_plans, sweep_upload_temps
 from .repairs import async_check_plan_files
-from .store import HouseplanConfigEntry, create_data
+from .store import HouseplanConfigEntry, create_data, get_data
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -101,19 +101,42 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
 
     await async_check_plan_files(hass, entry)
 
-    # Abandoned upload temporaries (HP-1460-02). A request cleans up after
-    # itself; a hard kill mid-upload does not, and the commit-scoped collector
-    # only walks marker folders — so without this a `.upload-*` from a crashed
-    # transfer would sit there for good, and on an instance nobody edits, so
-    # would a cancelled attachment. Once at startup, then daily.
+    # Scheduled collection of everything nobody ended up referencing.
+    #
+    # A commit collects what that commit superseded, which is the right rule for
+    # a commit — but it only ever runs when somebody saves. Cancel a dialog
+    # after the file has already uploaded, lose the connection after the upload
+    # succeeded, or call the API directly, and the file is unreferenced with no
+    # future write to notice it (HP-1461-01). The earlier version of this sweep
+    # only removed streaming temporaries, which are a different, narrower case.
+    #
+    # Passing the CURRENT configuration as both sides means "nothing was
+    # superseded": every referenced file is preserved and only unreferenced ones
+    # past PLAN_ORPHAN_TTL_S go. It runs under the same lock as a config write,
+    # so it cannot decide from a snapshot that a commit is about to replace.
     async def _sweep(_now=None) -> None:
         files_dir = Path(hass.config.path(FILES_DIR))
+        plans_dir = Path(hass.config.path(PLANS_DIR))
         try:
-            n = await hass.async_add_executor_job(sweep_upload_temps, files_dir)
+            data = get_data(hass)
+            if data is None:  # entry unloaded — nothing authoritative to compare against
+                await hass.async_add_executor_job(sweep_upload_temps, files_dir)
+                return
+            async with data.write_lock:
+                stored = await data.config_store.async_load() or {}
+                cfg = stored.get("config") or {}
+
+                def _collect() -> int:
+                    n = sweep_upload_temps(files_dir)
+                    n += collect_attachments(files_dir, cfg, cfg)
+                    n += collect_plans(plans_dir, cfg, cfg)
+                    return n
+
+                n = await hass.async_add_executor_job(_collect)
             if n:
-                _LOGGER.info("House Plan: removed %s abandoned upload temporaries", n)
+                _LOGGER.info("House Plan: removed %s unreferenced file(s)", n)
         except Exception:  # noqa: BLE001 — housekeeping must never fail a setup
-            _LOGGER.exception("House Plan: sweeping upload temporaries failed")
+            _LOGGER.exception("House Plan: sweeping unreferenced files failed")
 
     await _sweep()
     entry.async_on_unload(

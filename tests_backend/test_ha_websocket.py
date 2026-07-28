@@ -783,3 +783,133 @@ async def test_repair_issue_goes_when_its_space_does(
     await _save(client, await _cfg([{"id": "other", "plan_url": None}]), rev)
     await hass.async_block_till_done()
     assert registry.async_get_issue(HP_DOMAIN, "broken_plan_r7") is None
+
+
+async def test_cancelling_an_upload_takes_its_temporary_with_it(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """HP-1460-02, properly this time: cancellation, not an ordinary error.
+
+    `asyncio.CancelledError` is a BaseException, so the old `except Exception`
+    never saw it and an aborted transfer stranded its `.upload-*`. The previous
+    test claimed to cover this and did not — it only exercised error paths.
+    """
+    import asyncio
+    import os
+
+    from custom_components.houseplan.const import FILES_DIR
+    from custom_components.houseplan.http_api import HouseplanUploadView
+    from custom_components.houseplan.plans import TMP_PREFIX
+
+    entry = await _setup(hass)
+    root = hass.config.path(FILES_DIR)
+    os.makedirs(root, exist_ok=True)
+
+    started = asyncio.Event()
+
+    class _Part:
+        name = "file"
+        filename = "big.pdf"
+
+        async def read_chunk(self, _size):
+            started.set()
+            await asyncio.sleep(3600)  # the client stopped sending; we wait
+
+    class _Reader:
+        def __aiter__(self):
+            return self
+
+        async def __anext__(self):
+            if getattr(self, "_done", False):
+                raise StopAsyncIteration
+            self._done = True
+            return _Part()
+
+    from custom_components.houseplan import http_api as hp_http
+
+    class _User:
+        is_admin = True
+
+    class _Request:
+        app = {hp_http.KEY_HASS: hass}
+
+        def get(self, _key, default=None):
+            return _User()
+
+        async def multipart(self):
+            return _Reader()
+
+    task = hass.async_create_task(HouseplanUploadView().post(_Request()))
+    await started.wait()
+    await asyncio.sleep(0)
+    assert [n for n in os.listdir(root) if n.startswith(TMP_PREFIX)], "temp exists mid-upload"
+
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    await hass.async_block_till_done()
+
+    assert [n for n in os.listdir(root) if n.startswith(TMP_PREFIX)] == [], (
+        "a cancelled upload must not leave its temporary behind"
+    )
+    assert entry
+
+
+async def test_scheduled_sweep_collects_what_no_commit_will(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """HP-1461-01: a commit collects what it superseded — but only when it runs.
+
+    Cancel a dialog after the file uploaded, or lose the connection right after,
+    and nothing references the file and no future write notices it. The daily
+    sweep used to remove only streaming temporaries, so the promise that a
+    cancelled attachment goes after an hour did not hold on an instance nobody
+    edits.
+    """
+    import os
+    import time
+
+    from custom_components.houseplan.const import FILES_DIR, PLANS_DIR, PLAN_ORPHAN_TTL_S
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    files = hass.config.path(FILES_DIR)
+    plans = hass.config.path(PLANS_DIR)
+    old = time.time() - PLAN_ORPHAN_TTL_S - 60
+
+    def _seed() -> None:
+        os.makedirs(os.path.join(files, "m5"), exist_ok=True)
+        os.makedirs(os.path.join(files, "up_cancelled"), exist_ok=True)
+        os.makedirs(plans, exist_ok=True)
+        for path in (
+            os.path.join(files, "m5", "kept.pdf"),
+            os.path.join(files, "up_cancelled", "manual.pdf"),
+            os.path.join(plans, "s5.tok.png"),
+            os.path.join(plans, "s5.orphan.png"),
+        ):
+            with open(path, "wb") as fh:
+                fh.write(b"x")
+            os.utime(path, (old, old))
+
+    await hass.async_add_executor_job(_seed)
+
+    cfg = await _cfg([{"id": "s5", "plan_url": "/api/houseplan/content/plans/_/s5.tok.png"}])
+    cfg["markers"] = [
+        {"id": "m5", "binding": "virtual",
+         "pdfs": [{"name": "k", "url": "/api/houseplan/content/files/m5/kept.pdf"}]}
+    ]
+    assert (await _save(client, cfg, 0))["success"]
+
+    # reload the entry: that is what runs the sweep at startup
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    assert await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+
+    exists = lambda p: os.path.isfile(p)  # noqa: E731
+    assert await hass.async_add_executor_job(exists, os.path.join(files, "m5", "kept.pdf"))
+    assert await hass.async_add_executor_job(exists, os.path.join(plans, "s5.tok.png"))
+    assert not await hass.async_add_executor_job(
+        exists, os.path.join(files, "up_cancelled", "manual.pdf")
+    ), "an aged cancelled attachment is collected without any further config write"
+    assert not await hass.async_add_executor_job(exists, os.path.join(plans, "s5.orphan.png"))
+    assert not await hass.async_add_executor_job(os.path.isdir, os.path.join(files, "up_cancelled"))
