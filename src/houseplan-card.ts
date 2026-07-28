@@ -36,7 +36,7 @@ import { cardStyles } from './styles';
 import { fitInSquare, contentBounds } from './space-geometry';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.49.0';
+const CARD_VERSION = '1.50.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -1258,6 +1258,10 @@ class HouseplanCard extends LitElement {
   private _baseVb(): number[] {
     const m = this._spaceModel();
     if (m.bg) return m.vb;
+    // The EDITORS get the whole square: the content frame also bounds pan,
+    // zoom and pointer maths, and inside it there is nowhere to draw the next
+    // room or drag a marker away from the first one (HP-1490-03).
+    if (this._mode !== 'view') return m.vb;
     // devices are content too — they may stand outside every room
     const pts = this._devices
       .filter((d) => d.space === m.id)
@@ -1676,7 +1680,15 @@ class HouseplanCard extends LitElement {
       this._showToast(this._t('toast.markup_needs_server'));
       return;
     }
+    const baseChanges = !this._spaceModel().bg && (mode === 'view') !== (this._mode === 'view');
     this._mode = mode;
+    if (baseChanges) {
+      // refit against the new base: the editors measure from the full square,
+      // the view from the content frame — a view clamped to one is nonsense
+      // against the other (HP-1490-03)
+      this._zoom = 1;
+      this._view = null; // updated() refits on the next frame
+    }
     this._path = [];
     this._cursorPt = null;
     this._tool = 'draw';
@@ -3164,12 +3176,18 @@ class HouseplanCard extends LitElement {
     }
   };
 
+  /** The in-flight proportions read for the last picked saved plan. Save
+   *  awaits it rather than shipping whatever was there before (HP-1490-04). */
+  private _aspectJob: Promise<number> | null = null;
+
   private _useServerPlan(url: string): void {
     const d = this._spaceDialog;
     if (!d) return;
-    // Attach immediately — the click should not wait for anything.
-    this._spaceDialog = { ...d, planUrl: url, planFile: null, pickSaved: false };
-    void this._readPlanAspect(url);
+    // Attach immediately — the click should not wait for anything. The OLD
+    // file's proportions go right away: they describe the previous image, and
+    // a Save racing the read must get "unknown", never "the wrong shape".
+    this._spaceDialog = { ...d, planUrl: url, planFile: null, pickSaved: false, savedAspect: undefined };
+    this._aspectJob = this._readPlanAspect(url);
   }
 
   /**
@@ -3182,7 +3200,7 @@ class HouseplanCard extends LitElement {
    * signature, and bind the result to THIS dialog and THIS url, or a late
    * answer would reshape whatever the user opened next.
    */
-  private async _readPlanAspect(url: string): Promise<void> {
+  private async _readPlanAspect(url: string): Promise<number> {
     for (let i = 0; i < 40; i++) {           // ~6 s, then give up quietly
       const src = this._display(url);
       if (src) {
@@ -3196,12 +3214,14 @@ class HouseplanCard extends LitElement {
         const cur = this._spaceDialog;
         if (cur && cur.planUrl === url && Number.isFinite(ratio) && ratio > 0) {
           this._spaceDialog = { ...cur, savedAspect: ratio };
+          return ratio;
         }
-        return;
+        return 0;
       }
       await new Promise((r) => setTimeout(r, 150));
-      if (this._spaceDialog?.planUrl !== url) return;   // the user moved on
+      if (this._spaceDialog?.planUrl !== url) return 0;   // the user moved on
     }
+    return 0;
   }
 
   private async _deleteServerPlan(name: string): Promise<void> {
@@ -3269,6 +3289,17 @@ class HouseplanCard extends LitElement {
         uploaded = { url: resp.url, aspect: d.planFile.aspect };
       }
 
+      // A plan picked from the server list reads its proportions from the
+      // image, and Save used to outrun that read: the snapshot still carried
+      // the PREVIOUS file's ratio and a wide plan came out at the old shape
+      // for good (HP-1490-04). Wait for the read — it is bounded (~6 s) and
+      // the dialog is already busy. Unknown stays unknown, never the old
+      // value: a square fallback is honest, an inherited ratio is not.
+      let pickedAspect: number | null = d.savedAspect || null;
+      if (!uploaded && d.source === 'file' && d.planUrl && !pickedAspect && this._aspectJob) {
+        pickedAspect = (await this._aspectJob) || null;
+      }
+
       // from here on: no awaits until the save, so `sp` cannot be orphaned
       const cfg = this._serverCfg!;
       let sp: any;
@@ -3292,9 +3323,10 @@ class HouseplanCard extends LitElement {
         // the image's own proportions, so it can be centred before it loads
         sp.plan_aspect = uploaded.aspect;
       } else if (d.source === 'file' && d.planUrl && d.planUrl !== sp.plan_url) {
-        // picked from the server list: no upload, just a reference
+        // picked from the server list: no upload, just a reference — and the
+        // previous image's proportions never survive the switch
         sp.plan_url = d.planUrl;
-        if (d.savedAspect) sp.plan_aspect = d.savedAspect;
+        sp.plan_aspect = pickedAspect;
       }
       // switching an existing space to "draw" detaches its background image
       // (the uploaded file stays on disk; only the reference is cleared)

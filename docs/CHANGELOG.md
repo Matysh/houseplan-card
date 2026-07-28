@@ -1,5 +1,46 @@
 # Changelog
 
+## v1.50.0 — 2026-07-28
+
+**Owner's batch**
+
+- **The default zoom counts devices as content.** They are allowed to stand
+  outside every room — a gate sensor by the fence, a camera on a pole — and the
+  opening view now includes them, even on a space with no rooms at all.
+- **Entering an editor no longer shifts the plan.** The stage height assumed a
+  fixed 118px of header, and the editor header is taller: the scene slid down
+  by the difference and its bottom went below the fold. The card measures where
+  the stage actually starts and gives it the rest of the viewport.
+- **The zoom goes out as well as in.** Down to 0.4×, and zoomed out the plan
+  floats centred instead of being pinned to a corner.
+
+**From the v1.49.0 review**
+
+- **The square-canvas migration survives a crash between its two writes
+  (HP-1490-01).** Config and layout live in separate stores, written one after
+  the other, and the first write deleted the very fields the second needed — a
+  failure between them stranded markers in the old coordinates for good. The
+  migration intent is durable now, saved before anything moves and cleared by
+  the layout write itself; whichever half is missing after a crash, the next
+  start finishes exactly that half, once.
+- **Parallel uploads cannot slip past the store quota together (HP-1490-02).**
+  N uploads all measured the store before any of them wrote, and all passed a
+  limit only one of them fit under. The measure-and-write pair is one atomic
+  step under its own lock — separate from the config lock, so a slow directory
+  scan does not stall saves.
+- **The editors see the whole canvas again (HP-1490-03).** The content frame
+  also bounded pan, zoom and pointer maths, so after the first room there was
+  nowhere left to draw the second one. Edit modes now measure from the full
+  square; the view keeps its content fit, and switching modes refits instead of
+  carrying a view clamped against the wrong base.
+- **Save waits for the proportions of a picked plan (HP-1490-04).** Saving
+  before the image had answered used to ship the PREVIOUS file's ratio, and the
+  new plan kept the old shape for good. Picking a plan clears the old ratio at
+  once, and Save awaits the bounded read; if it fails, "unknown" is stored —
+  a square fallback is honest, an inherited ratio is not.
+- Release hygiene from §5: package-lock.json caught up with the package
+  version, and a duplicated comment in space-geometry.ts is gone.
+
 ## v1.49.0 — 2026-07-28
 
 **The canvas is square** (see v1.48.0, released together with this one).

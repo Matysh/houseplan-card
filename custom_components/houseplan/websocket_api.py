@@ -653,19 +653,25 @@ async def ws_plan_set(hass: HomeAssistant, connection, msg: dict[str, Any]) -> N
     # (SPACE_ID_RE), so "<space>.<token>.<ext>" can never be confused with the
     # files of a differently named space.
     plans_dir = Path(hass.config.path(PLANS_DIR))
-    try:
-        await hass.async_add_executor_job(
-            check_quota, plans_dir, len(raw), MAX_PLANS_BYTES, MAX_PLANS_FILES
-        )
-    except QuotaError as err:
-        connection.send_error(msg["id"], err.reason, err.detail)
-        return
     name = f"{space_id}.{secrets.token_hex(4)}.{msg['ext']}"
     path = plans_dir / name
 
-    def _write() -> None:
+    def _check_and_write() -> None:
+        # one executor job for the pair, under upload_lock: the measurement
+        # is only a bound if nothing else writes between it and our write
+        # (HP-1490-02). A failed write reserves nothing — the file either
+        # exists and is counted by the next scan, or does not and is not.
+        check_quota(plans_dir, len(raw), MAX_PLANS_BYTES, MAX_PLANS_FILES)
         plans_dir.mkdir(parents=True, exist_ok=True)
         path.write_bytes(raw)
 
-    await hass.async_add_executor_job(_write)
+    data = _runtime(hass, connection, msg["id"])
+    if data is None:
+        return
+    async with data.upload_lock:
+        try:
+            await hass.async_add_executor_job(_check_and_write)
+        except QuotaError as err:
+            connection.send_error(msg["id"], err.reason, err.detail)
+            return
     connection.send_result(msg["id"], {"ok": True, "url": f"{CONTENT_URL}/plans/_/{name}"})

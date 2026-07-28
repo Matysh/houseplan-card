@@ -95,7 +95,7 @@ export function contentBounds(
   return { x, y, w: (maxX - minX) + m * 2, h: (maxY - minY) + m * 2 };
 }
 
-/** Bounding rectangle of a room (rect or polygon) in render units. *//** Bounding rectangle of a room (rect or polygon) in render units. */
+/** Bounding rectangle of a room (rect or polygon) in render units. */
 export function roomBounds(r: RoomCfg): { x: number; y: number; w: number; h: number } {
   if (r.poly && r.poly.length) {
     const xs = r.poly.map((p) => p[0]);

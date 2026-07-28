@@ -239,6 +239,23 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       on the plan after a reload. Same for each tap action and each fill mode
       [auto: backend test_every_display_mode_the_editor_offers_is_accepted and
       neighbours, test_a_marker_showing_its_value_can_be_saved]
+- [ ] Editors see the whole canvas (v1.50.0, HP-1490-03): a hand-drawn space
+      with one small room opens content-fit in View; switching to the plan
+      editor shows the full square with room to draw a second room far away;
+      back to View restores the content fit [auto: smoke_audit_1490]
+- [ ] Save waits for a picked plan's proportions (v1.50.0, HP-1490-04): pick a
+      saved plan and hit Save before the thumbnail loads — the stored aspect is
+      the real one, never the previous file's [auto: smoke_audit_1490]
+- [ ] Zoom goes below the fit (v1.50.0): minus past 100% floats the plan
+      centred, floor at 0.4x; entering an editor keeps the stage inside the
+      viewport [auto: smoke_zoom_out]
+- [ ] Migration crash recovery (v1.50.0, HP-1490-01): kill HA between the two
+      store writes of the square migration — the next start finishes the layout
+      half from the saved intent
+      [auto: test_square_migration_finishes_after_a_crash_between_the_writes]
+- [ ] Parallel upload quota (v1.50.0, HP-1490-02): two simultaneous uploads
+      with one slot left — exactly one succeeds
+      [auto: test_parallel_uploads_cannot_slip_past_the_quota_together]
 - [ ] Zoom opens on the content (v1.49.0): a space with no background and one
       small room opens with that room filling the screen, with a small margin.
       With a background it still fits the whole image

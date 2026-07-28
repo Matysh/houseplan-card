@@ -1240,3 +1240,46 @@ async def test_uploads_are_bounded_by_a_store_quota(
     })
     resp = await client.receive_json()
     assert not resp["success"] and resp["error"]["code"] == "too_many_files"
+
+
+async def test_parallel_uploads_cannot_slip_past_the_quota_together(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, monkeypatch
+) -> None:
+    """HP-1490-02: N uploads used to measure the store before any of them
+    wrote, so all N passed a quota only one of them fits under. The
+    check→write pair is one job under upload_lock now, so whatever the
+    interleaving, at most ONE of two competing uploads can take the last slot.
+    """
+    import asyncio
+    import base64
+
+    from custom_components.houseplan import websocket_api as wsapi
+    from custom_components.houseplan.const import PLANS_DIR
+    from custom_components.houseplan.plans import dir_usage
+    from pathlib import Path
+
+    await _setup(hass)
+    c1 = await hass_ws_client(hass)
+    c2 = await hass_ws_client(hass)
+    _bytes, stored = await hass.async_add_executor_job(
+        dir_usage, Path(hass.config.path(PLANS_DIR))
+    )
+    monkeypatch.setattr(wsapi, "MAX_PLANS_FILES", stored + 1)  # room for ONE
+
+    payload = base64.b64encode(b"PLAN").decode()
+
+    async def upload(client, sid):
+        await client.send_json_auto_id({
+            "type": "houseplan/plan/set", "space_id": sid, "ext": "png", "data": payload,
+        })
+        return await client.receive_json()
+
+    r1, r2 = await asyncio.gather(upload(c1, "pa"), upload(c2, "pb"))
+    oks = [r for r in (r1, r2) if r["success"]]
+    errs = [r for r in (r1, r2) if not r["success"]]
+    assert len(oks) == 1, "exactly one takes the last slot"
+    assert errs and errs[0]["error"]["code"] == "too_many_files"
+    _bytes2, after = await hass.async_add_executor_job(
+        dir_usage, Path(hass.config.path(PLANS_DIR))
+    )
+    assert after == stored + 1, "the store holds what the quota promised, not more"

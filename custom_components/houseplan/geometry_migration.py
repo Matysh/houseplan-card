@@ -106,28 +106,56 @@ def migrate_space(space: dict[str, Any]) -> bool:
     return True
 
 
+def pending_from_config(config: dict[str, Any] | None) -> dict[str, float]:
+    """{space_id: old aspect} for every space still carrying one.
+
+    This is the migration INTENT. The two stores are written independently and
+    either write can fail, so the intent has to survive on its own: it is saved
+    into the layout store BEFORE anything changes (HP-1490-01), and cleared by
+    the same write that stores the migrated layout. A crash between the writes
+    leaves the intent behind, and the next start finishes the missing half —
+    each half is idempotent because its trigger (`aspect` in the config, the
+    saved intent for the layout) travels with that half's own write.
+    """
+    out: dict[str, float] = {}
+    for space in (config or {}).get("spaces") or []:
+        if "aspect" not in space:
+            continue
+        try:
+            out[str(space.get("id"))] = float(space.get("aspect") or 1) or 1.0
+        except (TypeError, ValueError):
+            out[str(space.get("id"))] = 1.0
+    return out
+
+
 def migrate_config(config: dict[str, Any], layout: dict[str, Any] | None = None) -> bool:
-    """Migrate every space, and the marker positions that belong to them."""
-    spaces = config.get("spaces") or []
-    factors = {}
-    for space in spaces:
-        if "aspect" in space:
-            factors[str(space.get("id"))] = transform_for(space.get("aspect") or 1)
+    """The config half: migrate every space still carrying an `aspect`.
+
+    `layout` is accepted for backward compatibility and migrated with the
+    factors found in the config — callers that can crash between store writes
+    should use `pending_from_config()` + `migrate_layout()` instead, so the
+    layout half does not depend on state the config half just deleted.
+    """
+    factors = pending_from_config(config)
     if not factors:
         return False
-
-    for space in spaces:
+    for space in config.get("spaces") or []:
         migrate_space(space)
+    if layout:
+        migrate_layout(layout, factors)
+    return True
 
+
+def migrate_layout(layout: dict[str, Any] | None, pending: dict[str, float]) -> bool:
+    """The layout half: marker and label positions of the spaces in `pending`."""
+    changed = False
     for pos in (layout or {}).values():
-        if not isinstance(pos, dict):
+        if not isinstance(pos, dict) or str(pos.get("s")) not in pending:
             continue
-        f = factors.get(str(pos.get("s")))
-        if not f:
-            continue
-        dx, dy, kx, ky = f
+        dx, dy, kx, ky = transform_for(pending[str(pos.get("s"))])
         if pos.get("x") is not None:
             pos["x"] = dx + float(pos["x"]) * kx
         if pos.get("y") is not None:
             pos["y"] = dy + float(pos["y"]) * ky
-    return True
+        changed = True
+    return changed

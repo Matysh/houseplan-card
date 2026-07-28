@@ -20,7 +20,7 @@ from .const import (
     PLANS_URL,
     VERSION,
 )
-from .geometry_migration import migrate_config
+from .geometry_migration import migrate_config, migrate_layout, pending_from_config
 from .plans import collect_attachments, collect_plans, sweep_upload_temps
 from .repairs import async_check_plan_files
 from .store import HouseplanConfigEntry, create_data
@@ -104,20 +104,40 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
     # normalised against a per-space aspect ratio; the canvas is now always
     # square and a plan is centred inside it. Nothing about the drawing changes
     # — the box is padded and the numbers re-expressed against it.
+    # The two stores are written independently, and the lock is no transaction:
+    # a crash between the writes used to leave the config in square coordinates
+    # with the layout still in the old ones — permanently, because the config
+    # write had already deleted the `aspect` fields the layout half needed
+    # (HP-1490-01). So the intent is made durable FIRST, in the layout store,
+    # and each half carries its own trigger with its own write: the config half
+    # removes `aspect`, the layout half removes the saved intent. Whatever
+    # half is missing after a crash, the next start finishes exactly it.
     async with data.write_lock:
         stored = await data.config_store.async_load() or {}
         cfg = stored.get("config")
         lay_stored = await data.store.async_load() or {}
         layout = lay_stored.get("layout") or {}
-        if cfg and migrate_config(cfg, layout):
-            rev = int(stored.get("rev", 0)) + 1
-            await data.config_store.async_save({"config": cfg, "rev": rev})
-            await data.store.async_save(
-                {"layout": layout, "rev": int(lay_stored.get("rev", 0)) + 1}
-            )
+        pending = {
+            str(k): v for k, v in (lay_stored.get("geom_pending") or {}).items()
+        }
+        merged = {**pending, **pending_from_config(cfg)}
+        if merged:
+            lay_rev = int(lay_stored.get("rev", 0))
+            if merged != pending:  # 1. the durable intent, before anything moves
+                await data.store.async_save(
+                    {"layout": layout, "rev": lay_rev, "geom_pending": merged}
+                )
+            rev = int(stored.get("rev", 0))
+            if cfg and migrate_config(cfg):  # 2. the config half
+                rev += 1
+                await data.config_store.async_save({"config": cfg, "rev": rev})
+            migrate_layout(layout, merged)  # 3. the layout half + intent cleared
+            await data.store.async_save({"layout": layout, "rev": lay_rev + 1})
             _LOGGER.info(
-                "House Plan: migrated %s space(s) to the square canvas", len(cfg.get("spaces") or [])
+                "House Plan: migrated %s space(s) to the square canvas", len(merged)
             )
+            # only once both halves are durable — a client refetching on this
+            # event must never see one migrated half and one old one
             hass.bus.async_fire("houseplan_config_updated", {"rev": rev})
 
     await async_check_plan_files(hass, entry)
