@@ -176,10 +176,12 @@ async def test_files_migrate_copies_and_reports_mapping(
     assert src_kept, "migrate must COPY, not move (review CR-2)"
     assert other == b"OTHER" and copied == b"SOURCE"
 
-    # cleanup runs only after the config is safely committed
+    # cleanup runs only after the config is safely committed, and since v1.46.5
+    # reports how many files it removed rather than a bare boolean — it now also
+    # keeps anything the stored configuration still references
     await client.send_json_auto_id({"type": "houseplan/files/cleanup", "marker_id": "old1"})
     resp2 = await client.receive_json()
-    assert resp2["success"] and resp2["result"]["removed"] is True
+    assert resp2["success"] and resp2["result"]["removed"] >= 1 and resp2["result"]["kept"] == 0
     assert not await hass.async_add_executor_job(lambda: os.path.isdir(src))
 
 
