@@ -1,5 +1,26 @@
 # Changelog
 
+## v1.46.6 — 2026-07-28 (the detach promise, actually kept this time)
+- **Switching a space to "draw" no longer deletes its image.** v1.46.4 and
+  v1.46.5 said it did not, and the scheduled cleanup indeed left detached plans
+  alone — but the save itself deleted the file the moment the reference was
+  cleared, before any of those guards were reached. The cause: a file that left
+  the configuration was called "superseded", and from that difference alone
+  replacing a plan, detaching one and deleting its space are indistinguishable.
+  Only the first is a deletion anybody asked for. The transition is now
+  classified by the space that owned the file, and the same distinction applies
+  to attachments: dropping one from a device that still exists removes it,
+  deleting the device keeps its manuals.
+- **A plan whose space was deleted is kept**, rather than the thirty days
+  v1.46.5 promised — thirty days measured from the file's age is meaningless
+  anyway, since it was usually uploaded months earlier.
+- **Nothing is deleted for being old any more**, except a per-dialog staging
+  folder. The rule that aged out "rejected uploads" turned out to race a retry:
+  the cleanup removed the file from a failed save while the next attempt was
+  committing a reference to it. A rule that can delete a file somebody is about
+  to point at is not worth the disk it reclaims. Files therefore go when an
+  action says so, and otherwise stay.
+
 ## v1.46.5 — 2026-07-28 (audit of every automatic deletion)
 - **A detached plan is never deleted, at any age.** v1.46.4 gave it a month;
   this makes it permanent and writes the reason down where the next change will

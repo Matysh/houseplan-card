@@ -342,35 +342,41 @@ async def test_commit_does_not_collect_another_client_s_uncommitted_upload(
     assert not (plans / pa).exists()
 
 
-async def test_abandoned_uploads_are_collected_once_old(
+async def test_a_rejected_upload_is_kept_not_aged_out(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator
 ) -> None:
-    """A rejected upload must not accumulate forever — but only age may free it."""
+    """v1.46.6: age is never a reason to delete a plan file.
+
+    It used to be, for "a file of a space that has a plan and never was one" —
+    an upload whose save had failed. That raced the retry: the sweep removed the
+    file while the next save was committing a reference to it. Keeping it costs
+    a few megabytes nobody can lose.
+    """
     import os
     import time
-    from pathlib import Path
 
-    from custom_components.houseplan.const import PLANS_DIR, PLAN_ORPHAN_TTL_S
+    from custom_components.houseplan.const import PLANS_DIR, SCHEDULED_GRACE_S
+    from custom_components.houseplan.store import get_data
 
     await _setup(hass)
     client = await hass_ws_client(hass)
-    plans = Path(hass.config.path(PLANS_DIR))
-    plans.mkdir(parents=True, exist_ok=True)
-    for stale in plans.glob("r3.*"):
-        stale.unlink()
+    plans = hass.config.path(PLANS_DIR)
 
     url0, p0 = await _upload(client, "r3", b"zero")
     rev = (await _save(client, await _cfg([{"id": "r3", "plan_url": url0}]), 0))["result"]["rev"]
 
-    _url, orphan = await _upload(client, "r3", b"abandoned")
-    old = time.time() - PLAN_ORPHAN_TTL_S - 60
-    os.utime(plans / orphan, (old, old))
-    # r3 still HAS a plan, so this really is a rejected upload — collectable
+    _url, orphan = await _upload(client, "r3", b"never saved")
+    old = time.time() - SCHEDULED_GRACE_S * 12
+    os.utime(os.path.join(plans, orphan), (old, old))
 
-    ok = await _save(client, await _cfg([{"id": "r3", "plan_url": url0}]), rev)
-    assert ok["success"]
-    assert not (plans / orphan).exists(), "an aged, unreferenced upload is collected"
-    assert (plans / p0).is_file(), "the referenced plan is never touched"
+    # a commit, and the scheduled pass, and any amount of age: it stays
+    assert (await _save(client, await _cfg([{"id": "r3", "plan_url": url0}]), rev))["success"]
+    data = get_data(hass)
+    await data.sweep()
+    await hass.async_block_till_done()
+
+    assert await hass.async_add_executor_job(os.path.isfile, os.path.join(plans, orphan))
+    assert await hass.async_add_executor_job(os.path.isfile, os.path.join(plans, p0))
 
 
 async def test_collection_ignores_files_that_are_not_plans(
@@ -889,7 +895,9 @@ def _paths(hass):
         "kept_file": os.path.join(files, "m5", "kept.pdf"),
         "kept_plan": os.path.join(plans, "s5.tok.png"),
         "orphan_file": os.path.join(files, "up_cancelled", "manual.pdf"),
-        "orphan_plan": os.path.join(plans, "deleted_space.orphan.png"),
+        # a plan file is never collected by age any more; keep one around and
+        # assert exactly that
+        "kept_reject": os.path.join(plans, "s5.reject.png"),
     }
 
 
@@ -907,8 +915,12 @@ async def _assert_swept(hass, p) -> None:
 
     assert await hass.async_add_executor_job(os.path.isfile, p["kept_file"]), "referenced file kept"
     assert await hass.async_add_executor_job(os.path.isfile, p["kept_plan"]), "referenced plan kept"
-    assert not await hass.async_add_executor_job(os.path.isfile, p["orphan_file"])
-    assert not await hass.async_add_executor_job(os.path.isfile, p["orphan_plan"])
+    assert not await hass.async_add_executor_job(os.path.isfile, p["orphan_file"]), (
+        "a staging folder from a dialog nobody saved is the one thing age collects"
+    )
+    assert await hass.async_add_executor_job(os.path.isfile, p["kept_reject"]), (
+        "a plan file is never removed for being old"
+    )
 
 
 async def test_startup_sweep_collects_what_no_commit_will(
@@ -991,19 +1003,25 @@ async def test_sweep_and_a_config_write_do_not_race(
     cfg2 = await _referenced_config()
     cfg2["spaces"][0]["plan_url"] = "/api/houseplan/content/plans/_/s5.newcomer.png"
 
-    entry = hass.config_entries.async_entries(DOMAIN)[0]
-    await asyncio.gather(
-        hass.config_entries.async_reload(entry.entry_id),   # runs the sweep
-        _save(client, cfg2, rev),
-    )
+    # Drive the sweep directly rather than through a reload: an entry reload has
+    # an unload window in which any WS call legitimately answers `not_ready`, so
+    # a save racing THAT proves nothing about the lock and fails at random.
+    from custom_components.houseplan.store import get_data
+
+    data = get_data(hass)
+    assert data is not None and data.sweep is not None
+    _swept, saved = await asyncio.gather(data.sweep(), _save(client, cfg2, rev))
     await hass.async_block_till_done()
 
+    # assert the CONCRETE outcome: a save that came back `not_ready` would leave
+    # the old config pointing at the old file and satisfy a vaguer check
+    assert saved["success"], saved.get("error")
     await client.send_json_auto_id({"type": "houseplan/config/get"})
     stored = (await client.receive_json())["result"]["config"]
-    referenced = stored["spaces"][0]["plan_url"].rsplit("/", 1)[-1]
+    assert stored["spaces"][0]["plan_url"].endswith("s5.newcomer.png")
     assert await hass.async_add_executor_job(
-        os.path.isfile, os.path.join(plans, referenced)
-    ), f"the accepted config points at {referenced}, which must exist"
+        os.path.isfile, os.path.join(plans, "s5.newcomer.png")
+    ), "the file the accepted config points at must exist"
 
 
 async def test_files_cleanup_keeps_referenced_files(
@@ -1048,3 +1066,49 @@ async def test_files_cleanup_keeps_referenced_files(
         "a file the configuration still references survives a cleanup of its folder"
     )
     assert not await hass.async_add_executor_job(os.path.isfile, os.path.join(folder, "orphan.pdf"))
+
+
+async def test_detaching_a_plan_keeps_the_file(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """HP-1465-01, through the real save — where the earlier tests never looked.
+
+    Every check for this lived in the pure collector with old and new config
+    equal, i.e. the scheduled pass. The transition that matters is a save, and
+    there the file was deleted the moment the reference was cleared.
+    """
+    import os
+
+    from custom_components.houseplan.const import PLANS_DIR
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    plans = hass.config.path(PLANS_DIR)
+
+    url, name = await _upload(client, "d1", b"PLAN", ext="png")
+    rev = (await _save(client, await _cfg([{"id": "d1", "plan_url": url}]), 0))["result"]["rev"]
+    assert await hass.async_add_executor_job(os.path.isfile, os.path.join(plans, name))
+
+    # detach: the space stays, its plan does not
+    rev = (await _save(client, await _cfg([{"id": "d1", "plan_url": None}]), rev))["result"]["rev"]
+    assert await hass.async_add_executor_job(os.path.isfile, os.path.join(plans, name)), (
+        "the editor says the image stays on disk — it has to actually stay"
+    )
+
+    # a restart does not change its mind either
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    assert await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+    assert await hass.async_add_executor_job(os.path.isfile, os.path.join(plans, name))
+
+    # re-attach, then replace: THAT removes the one it replaced
+    rev = (await _save(client, await _cfg([{"id": "d1", "plan_url": url}]), rev))["result"]["rev"]
+    url2, name2 = await _upload(client, "d1", b"NEWPLAN", ext="png")
+    rev = (await _save(client, await _cfg([{"id": "d1", "plan_url": url2}]), rev))["result"]["rev"]
+    assert await hass.async_add_executor_job(os.path.isfile, os.path.join(plans, name2))
+    assert not await hass.async_add_executor_job(os.path.isfile, os.path.join(plans, name))
+
+    # and deleting the space keeps its plan
+    await _save(client, await _cfg([]), rev)
+    await hass.async_block_till_done()
+    assert await hass.async_add_executor_job(os.path.isfile, os.path.join(plans, name2))
