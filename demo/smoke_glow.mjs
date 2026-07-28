@@ -44,7 +44,7 @@ const res = await page.evaluate(async () => {
   const c2 = c._roomCenter(r2);
   const poly1 = r1.poly || [[r1.x, r1.y], [r1.x + r1.w, r1.y], [r1.x + r1.w, r1.y + r1.h], [r1.x, r1.y + r1.h]];
   // общая стена вертикальная — дверь ставим на неё
-  const H = 1000 / (c._curSpaceCfg.aspect || 1);
+  const H = 1000;   // square canvas
   const doorPt = (() => {
     let best = null, bd = 1e9;
     for (const [x, y] of [[550, 150], [550, 200], [550, 250]]) {
@@ -57,9 +57,8 @@ const res = await page.evaluate(async () => {
     ...s, openings: [{ id: 'gd', type: 'door', x: doorPt[0] / 1000, y: doorPt[1] / H, angle: 90, length: 0.09 }] })) };
   c.requestUpdate(); await c.updateComplete;
   // источник детерминированно ставим в центр r1 (двигаем реальную включённую лампу)
-  const aspect = c._curSpaceCfg.aspect || 1;
   const c1 = c._roomCenter(r1);
-  c._layout = { ...c._layout, [litLight.id]: { s: spId, x: c1[0] / 1000, y: c1[1] / (1000 / aspect) } };
+  c._layout = { ...c._layout, [litLight.id]: { s: spId, x: c1[0] / 1000, y: c1[1] / 1000 } };
   // радиус 6 м, чтобы дверь заведомо была в зоне досягаемости
   c._serverCfg = { ...c._serverCfg, settings: { ...(c._serverCfg.settings || {}), glow_radius_cm: 600 } };
   c.requestUpdate(); await c.updateComplete;
@@ -73,7 +72,7 @@ const res = await page.evaluate(async () => {
   const minX = Math.min(...poly1.map((p) => p[0]));
   const yMid = (Math.min(...poly1.map((p) => p[1])) + Math.max(...poly1.map((p) => p[1]))) / 2;
   c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== spId ? s : ({
-    ...s, openings: [{ id: 'gd2', type: 'door', x: minX / 1000, y: yMid / (1000 / aspect), angle: 90, length: 0.09 }] })) };
+    ...s, openings: [{ id: 'gd2', type: 'door', x: minX / 1000, y: yMid / 1000, angle: 90, length: 0.09 }] })) };
   c.requestUpdate(); await c.updateComplete;
   const clipEls2 = [...sr().querySelectorAll('defs clipPath[id^="hp-glowclip"]')];
   out.entranceNoSector = clipEls2.every((cp) => cp.querySelectorAll('path').length === 1);

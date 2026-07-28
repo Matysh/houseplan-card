@@ -182,6 +182,17 @@ double click → properties dialog. In markup mode the "Opening" tool handles cl
 | `houseplan/plans/delete` | `name` | `{ok, removed}` / err `in_use` |
 | `houseplan/file/set` | `marker_id`, `filename`, `data` (b64) | `{ok,url,name}` (legacy, WS limit) |
 
+**The canvas is square, the image is not** (v1.48.0). A space used to carry an
+`aspect`, and coordinates were normalised against it — x by the width, y by the
+height. That made every geometric question depend on a per-space number for no
+benefit. Now the render space is `NORM_W × NORM_W` and a plan image is fitted
+inside it by its own ratio (`fitInSquare`, shared by both renderers), which is
+stored as `plan_aspect` so the layout does not jump before the file loads.
+Upgrading runs `geometry_migration.migrate_config` once: it pads the old box out
+to a square and re-expresses every coordinate against it — a uniform scale plus
+an offset in render units, so angles and proportions are exact — and scales
+`cell_cm` for tall plans, since the grid pitch is a fraction of the width.
+
 **User content is served inert** (HP-1454-01). An uploaded SVG is the only
 thing here that a browser will happily treat as a *document* rather than an
 image, and it would be a document of Home Assistant's own origin. Inside the

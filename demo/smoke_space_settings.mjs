@@ -42,7 +42,7 @@ const res = await page.evaluate(async () => {
   out.saveEnabled = !sr().querySelector('.dialog .btn.on[disabled]');
   await c._saveSpaceDialog(); await c.updateComplete;
   const attic = c._serverCfg.spaces.find((s) => s.title === 'Attic');
-  out.atticAspect = attic?.aspect;
+  out.atticSquare = attic?.aspect === undefined;  // no per-space ratio any more
   out.atticSettings = attic?.settings;
   out.atticNoPlan = attic ? attic.plan_url === null : null;
   return out;
@@ -55,7 +55,7 @@ checkAll(res, {
   "labels": ["Living room", "Kitchen", "Bedroom", "Hallway"],
   "livingStyle": "--room-stroke:#ff8800;--room-stroke-op:0.8;--room-fill:#ffd45c;--room-fill-op:0.180",
   "lqiFills": 0,
-  "atticAspect": 1,
+  "atticSquare": true,
   "atticSettings": {"show_borders": true, "show_names": true, "room_color": "#3ea6ff", "room_opacity": 0.55, "fill_mode": "none", "temp_min": 20, "temp_max": 25, "show_lqi": true, "label_temp": false, "label_hum": false, "label_lqi": false, "label_light": false},
 });
 await finish(browser, res);

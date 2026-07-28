@@ -11,7 +11,7 @@ const res = await page.evaluate(async () => {
   document.body.appendChild(c1);
   c1.hass = { language:'en', locale:{language:'en'}, devices:{}, entities:{}, areas:{}, states:{},
     callWS: async (m) => m.type==='houseplan/config/get'
-      ? { config:{ spaces:[{ id:'s1', title:'Empty', plan_url:null, aspect:1.4, view_box:[0,0,1,1], rooms:[], segments:[] }], markers:[], settings:{} }, rev:1 }
+      ? { config:{ spaces:[{ id:'s1', title:'Empty', plan_url:null, view_box:[0,0,1,1], rooms:[], segments:[] }], markers:[], settings:{} }, rev:1 }
       : { layout:{} },
     connection:{ subscribeEvents: async()=>()=>{} } };
   await new Promise(r=>setTimeout(r,150));
@@ -31,7 +31,7 @@ const res = await page.evaluate(async () => {
     devices:{ d1:{ id:'d1', name: evil, model:'M<script>1</script>', area_id:'a1', identifiers:[['x','1']] } },
     entities:{}, areas:{ a1:{ area_id:'a1', name:'A1' } }, states:{},
     callWS: async (m) => m.type==='houseplan/config/get'
-      ? { config:{ spaces:[{ id:'s1', title:'S', plan_url:null, aspect:1, view_box:[0,0,1,1],
+      ? { config:{ spaces:[{ id:'s1', title:'S', plan_url:null, view_box:[0,0,1,1],
           rooms:[{ id:'r1', name: evil, area:'a1', poly:[[0.1,0.1],[0.9,0.1],[0.9,0.9],[0.1,0.9]] }], segments:[] }], markers:[], settings:{} }, rev:1 }
       : { layout:{} },
     connection:{ subscribeEvents: async()=>()=>{} } };

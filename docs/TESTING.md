@@ -239,6 +239,15 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       on the plan after a reload. Same for each tap action and each fill mode
       [auto: backend test_every_display_mode_the_editor_offers_is_accepted and
       neighbours, test_a_marker_showing_its_value_can_be_saved]
+- [ ] Square canvas migration (v1.48.0): after the upgrade every existing plan
+      looks exactly as before, just with margins where the canvas was extended.
+      Measure a wall in the plan editor — the length in cm is unchanged. Marker
+      positions, doors, decor and the saved zoom are all where they were
+      [auto: unit: test_a_wide_plan_gains_margins_above_and_below and neighbours,
+      test_migration_preserves_real_lengths_and_shapes]
+- [ ] A plan image is centred (v1.48.0): a wide image sits in the middle with
+      empty bands above and below, a tall one with bands at the sides, and it is
+      never stretched [auto: unit: fitInSquare + smoke_space_settings]
 - [ ] Re-attaching a detached plan (v1.47.0): detach a plan, save, RELOAD THE
       PAGE, open space settings → "Already uploaded" → the image is listed with
       its size and no "in use" note → attach it → it renders. The one a space

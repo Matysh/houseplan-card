@@ -38,8 +38,7 @@ const res = await page.evaluate(async () => {
   const vid = c._serverCfg.markers.find((m) => m.name === 'Тест')?.id;
   const center = c._roomCenter(room);
   const vpos = c._layout[vid];
-  const aspect = c._curSpaceCfg.aspect || 1;
-  out.newCentered = vpos && Math.abs(vpos.x * 1000 - center[0]) < 1 && Math.abs(vpos.y * (1000 / aspect) - center[1]) < 1;
+  out.newCentered = vpos && Math.abs(vpos.x * 1000 - center[0]) < 1 && Math.abs(vpos.y * 1000 - center[1]) < 1;
   return out;
 });
 checkAll(res);

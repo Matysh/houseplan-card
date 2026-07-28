@@ -51,17 +51,17 @@ customElements.define('ha-card',HaCard);
 <script type="module">
 const CFG = {
   spaces: [
-    { id:'f1', title:'Ground floor', plan_url:'/assets/f1.svg', aspect:1.25,
+    { id:'f1', title:'Ground floor', plan_url:'/assets/f1.svg', plan_aspect:1.25,
       view_box:[0,0,1,1],
       rooms:[
-        {id:'r1', name:'Living room', area:'living_room', poly:[[0.04,0.05],[0.55,0.05],[0.55,0.6],[0.04,0.6]]},
-        {id:'r2', name:'Kitchen', area:'kitchen', poly:[[0.55,0.05],[0.96,0.05],[0.96,0.45],[0.55,0.45]]},
-        {id:'r3', name:'Bedroom', area:'bedroom', poly:[[0.55,0.45],[0.96,0.45],[0.96,0.95],[0.55,0.95]]},
-        {id:'r4', name:'Hallway', area:'hallway', poly:[[0.04,0.6],[0.55,0.6],[0.55,0.95],[0.04,0.95]]}
+        {id:'r1', name:'Living room', area:'living_room', poly:[[0.04,0.14],[0.55,0.14],[0.55,0.58],[0.04,0.58]]},
+        {id:'r2', name:'Kitchen', area:'kitchen', poly:[[0.55,0.14],[0.96,0.14],[0.96,0.46],[0.55,0.46]]},
+        {id:'r3', name:'Bedroom', area:'bedroom', poly:[[0.55,0.46],[0.96,0.46],[0.96,0.86],[0.55,0.86]]},
+        {id:'r4', name:'Hallway', area:'hallway', poly:[[0.04,0.58],[0.55,0.58],[0.55,0.86],[0.04,0.86]]}
       ], segments:[] },
-    { id:'garden', title:'Garden', plan_url:'/assets/garden.svg', aspect:1.4286,
+    { id:'garden', title:'Garden', plan_url:'/assets/garden.svg', plan_aspect:1.4286,
       view_box:[0,0,1,1],
-      rooms:[ {id:'g1', name:'Garden', area:'garden', poly:[[0.03,0.04],[0.97,0.04],[0.97,0.96],[0.03,0.96]]} ], segments:[] }
+      rooms:[ {id:'g1', name:'Garden', area:'garden', poly:[[0.03,0.178],[0.97,0.178],[0.97,0.822],[0.03,0.822]]} ], segments:[] }
   ],
   markers: [],
   settings: {}

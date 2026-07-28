@@ -31,7 +31,7 @@ PLAN_ORPHAN_TTL_S = 3600
 SCHEDULED_GRACE_S = 30 * 24 * 3600
 FILES_DIR = "houseplan/files"
 CONF_ADMIN_ONLY = "admin_only"
-VERSION = "1.47.0"
+VERSION = "1.48.0"
 
 DEFAULT_CONFIG: dict = {
     "spaces": [],

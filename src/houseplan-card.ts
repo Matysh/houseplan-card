@@ -33,15 +33,16 @@ import type {
 import './editor';
 import './space-card';
 import { cardStyles } from './styles';
+import { fitInSquare } from './space-geometry';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.47.0';
+const CARD_VERSION = '1.48.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
 const LS_NAV = 'houseplan_card_nav_v1'; // last space + editor mode (owner: restore where you were)
 const LS_KIOSK = 'houseplan_card_kiosk_v1'; // per-SCREEN size multipliers (each wall tablet differs)
-const NORM_W = 1000; // width of the render space for normalized configs
+const NORM_W = 1000; // side of the render space — the canvas is square (v1.48.0)
 
 const GRID_N = 240; // grid points across the plan width (half the previous step; old nodes are a subset of the new ones, positions are preserved)
 type MarkupTool = 'draw' | 'merge' | 'split' | 'opening' | 'openwall' | 'delroom';
@@ -287,7 +288,6 @@ class HouseplanCard extends LitElement {
     savedBusy?: boolean;
     savedAspect?: number;
     source: 'file' | 'draw';       // draw = no background image, hand-drawn rooms
-    orientation: 'landscape' | 'portrait' | 'square';
     showBorders: boolean;
     showNames: boolean;
     roomColor: string;
@@ -569,7 +569,7 @@ class HouseplanCard extends LitElement {
     return !!(this._serverCfg && this._serverCfg.spaces.length);
   }
 
-  /** Spaces in render units (NORM_W × NORM_W/aspect). */
+  /** Spaces in render units (NORM_W × NORM_W — the canvas is square). */
   /** Bumped by every config mutation — the model/geometry cache key (audit L1). */
   private _cfgEpoch = 0;
   private _modelCache: { key: string; model: SpaceModel[] } | null = null;
@@ -579,7 +579,7 @@ class HouseplanCard extends LitElement {
     const sp = this._serverCfg?.spaces || [];
     let s = sp.length + ':';
     for (const x of sp as any[]) {
-      s += (x.id || '') + ',' + (x.aspect || '') + ',' + (x.plan_url || '').length + ','
+      s += (x.id || '') + ',' + (x.plan_aspect || '') + ',' + (x.plan_url || '').length + ','
         + (x.rooms?.length || 0) + ',' + (x.openings?.length || 0) + ',' + (x.decor?.length || 0) + ';';
       for (const r of x.rooms || []) {
         // O(1) geometry roll-up per room: the count alone said nothing about
@@ -610,7 +610,7 @@ class HouseplanCard extends LitElement {
   private _buildModel(): SpaceModel[] {
     if (!this._serverCfg) return [];
     return this._serverCfg.spaces.map((s: any) => {
-      const H = NORM_W / s.aspect;
+      const H = NORM_W; // the canvas is always square (v1.48.0)
       const scale = (r: any) => ({
         id: r.id,
         name: r.name,
@@ -631,7 +631,7 @@ class HouseplanCard extends LitElement {
         // so a signed url baked in here would freeze BEFORE the signature
         // arrives and the plan would never load (bug found 2026-07-27).
         // _display() is called at render time instead.
-        bg: s.plan_url ? { href: s.plan_url, x: 0, y: 0, w: NORM_W, h: H } : null,
+        bg: s.plan_url ? { href: s.plan_url, ...fitInSquare(s.plan_aspect, NORM_W) } : null,
         rooms: s.rooms.map(scale),
       };
     });
@@ -1071,8 +1071,7 @@ class HouseplanCard extends LitElement {
     if (saved) {
       if (this._norm) {
         if (saved.s === d.space) {
-          const aspect = this._serverCfg!.spaces.find((x: any) => x.id === d.space)?.aspect || 1;
-          return { x: saved.x * NORM_W, y: saved.y * (NORM_W / aspect) };
+          return { x: saved.x * NORM_W, y: saved.y * NORM_W };
         }
       } else if (saved.s === undefined) {
         return { x: saved.x, y: saved.y };
@@ -1089,11 +1088,11 @@ class HouseplanCard extends LitElement {
       const g = this._gridPitch;
       const gx = Math.round(x / g) * g;
       const gy = Math.round(y / g) * g;
-      const aspect = this._serverCfg!.spaces.find((s: any) => s.id === d.space)?.aspect || 1;
+
       const prevK = (this._layout[d.id] as any)?.k;
       this._layout = {
         ...this._layout,
-        [d.id]: { s: d.space, x: gx / NORM_W, y: gy / (NORM_W / aspect), ...(prevK ? { k: prevK } : {}) },
+        [d.id]: { s: d.space, x: gx / NORM_W, y: gy / NORM_W, ...(prevK ? { k: prevK } : {}) },
       };
     } else {
       this._layout = { ...this._layout, [d.id]: { x: Math.round(x), y: Math.round(y) } };
@@ -1567,7 +1566,7 @@ class HouseplanCard extends LitElement {
 
   private get _spaceH(): number {
     const sp = this._curSpaceCfg;
-    return sp ? NORM_W / sp.aspect : NORM_W;
+    return NORM_W; // square canvas
   }
 
   /**
@@ -1827,7 +1826,7 @@ class HouseplanCard extends LitElement {
   }
 
   private get _decorH(): number {
-    return NORM_W / (this._curSpaceCfg?.aspect || 1);
+    return NORM_W;
   }
 
   /** Begin a decor gesture. Returns true when the event is consumed (no pan). */
@@ -2111,7 +2110,7 @@ class HouseplanCard extends LitElement {
     //
     // The key is the SPACE MODEL OBJECT ITSELF (HP-1454-04). It used to be a
     // string of room ids and open_to links, which said nothing about geometry:
-    // change the space's aspect, or drag a vertex, and the shared segments were
+    // change the plan, or drag a vertex, and the shared segments were
     // recomputed for the outlines but the open boundaries — and the glow cuts
     // that follow them — kept their old coordinates until a full reload.
     // `_model` is already rebuilt whenever the epoch or the config fingerprint
@@ -2540,8 +2539,7 @@ class HouseplanCard extends LitElement {
     // so that icons do not get reshuffled when the order in the HA registry changes.
     let added = 0;
     if (boundArea) {
-      const aspect = this._serverCfg?.spaces.find((x: any) => x.id === this._space)?.aspect || 1;
-      const H2 = NORM_W / aspect;
+      const H2 = NORM_W;
       const next = { ...this._layout };
       for (const d of this._devices) {
         if (d.area !== boundArea || d.space !== this._space) continue;
@@ -2996,8 +2994,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _normPos(space: string, x: number, y: number): { s: string; x: number; y: number } {
-    const aspect = this._serverCfg!.spaces.find((s: any) => s.id === space)?.aspect || 1;
-    return { s: space, x: x / NORM_W, y: y / (NORM_W / aspect) };
+    return { s: space, x: x / NORM_W, y: y / NORM_W };
   }
 
   // ================= SPACE MANAGEMENT =================
@@ -3013,7 +3010,7 @@ class HouseplanCard extends LitElement {
       const disp = spaceDisplayOf(sp);
       this._spaceDialog = {
         mode, spaceId, title: sp.title, planUrl: sp.plan_url || null, planFile: null,
-        source: sp.plan_url ? 'file' : 'draw', orientation: 'landscape',
+        source: sp.plan_url ? 'file' : 'draw',
         showBorders: disp.showBorders, showNames: disp.showNames,
         roomColor: disp.color, roomOpacity: disp.opacity, fillMode: disp.fill,
         tempMin: disp.tempMin, tempMax: disp.tempMax,
@@ -3027,7 +3024,7 @@ class HouseplanCard extends LitElement {
     } else {
       this._spaceDialog = {
         mode, title: '', planUrl: null, planFile: null,
-        source: 'file', orientation: 'landscape',
+        source: 'file',
         showBorders: false, showNames: false,
         roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'none',
         tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
@@ -3162,7 +3159,6 @@ class HouseplanCard extends LitElement {
     const wasFirst = d.mode === 'create' && (this._serverCfg?.spaces.length || 0) === 0;
     this._spaceDialog = { ...d, busy: true };
     try {
-      const drawAspect = d.orientation === 'portrait' ? 0.707 : d.orientation === 'square' ? 1 : 1.414;
       const spaceId = d.mode === 'create' ? 's' + Date.now().toString(36) : d.spaceId!;
 
       /* Upload BEFORE touching the config, and never hold a reference to a
@@ -3188,7 +3184,7 @@ class HouseplanCard extends LitElement {
           id: spaceId,
           title: d.title.trim(),
           plan_url: null,
-          aspect: d.source === 'draw' ? drawAspect : 1.414,
+
           view_box: [0, 0, 1, 1],
           rooms: [],
         };
@@ -3200,15 +3196,16 @@ class HouseplanCard extends LitElement {
       }
       if (uploaded) {
         sp.plan_url = uploaded.url;
-        sp.aspect = uploaded.aspect;
+        // the image's own proportions, so it can be centred before it loads
+        sp.plan_aspect = uploaded.aspect;
       } else if (d.source === 'file' && d.planUrl && d.planUrl !== sp.plan_url) {
         // picked from the server list: no upload, just a reference
         sp.plan_url = d.planUrl;
-        if (d.savedAspect) sp.aspect = d.savedAspect;
+        if (d.savedAspect) sp.plan_aspect = d.savedAspect;
       }
       // switching an existing space to "draw" detaches its background image
       // (the uploaded file stays on disk; only the reference is cleared)
-      if (d.source === 'draw') sp.plan_url = null;
+      if (d.source === 'draw') { sp.plan_url = null; sp.plan_aspect = null; }
       // per-space display settings; hand-drawn spaces get borders+names on by default
       const draw = d.source === 'draw';
       sp.settings = {
@@ -3320,7 +3317,7 @@ class HouseplanCard extends LitElement {
     if (title === undefined) return;
     this._spaceDialog = {
       mode: 'create', title, planUrl: null, planFile: null,
-      source: 'file', orientation: 'landscape',
+      source: 'file',
       showBorders: false, showNames: false,
       roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'none',
       tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
@@ -4195,8 +4192,7 @@ class HouseplanCard extends LitElement {
   private _labelPos(r: RoomCfg, spaceId: string): { x: number; y: number } {
     const saved = this._layout['rl_' + (r.id || '')];
     if (saved && saved.s === spaceId) {
-      const aspect = this._serverCfg!.spaces.find((x: any) => x.id === spaceId)?.aspect || 1;
-      return { x: saved.x * NORM_W, y: saved.y * (NORM_W / aspect) };
+      return { x: saved.x * NORM_W, y: saved.y * NORM_W };
     }
     const c = this._roomCenter(r);
     return { x: c[0], y: c[1] };
@@ -4272,10 +4268,10 @@ class HouseplanCard extends LitElement {
       const room = sp.rooms.find((x) => x.id === roomId);
       if (!room) return;
       const p = this._labelPos(room, rs.space);
-      const aspect = this._serverCfg!.spaces.find((x: any) => x.id === rs.space)?.aspect || 1;
+
       this._layout = {
         ...this._layout,
-        [rs.id]: { s: rs.space, x: p.x / NORM_W, y: p.y / (NORM_W / aspect), k },
+        [rs.id]: { s: rs.space, x: p.x / NORM_W, y: p.y / NORM_W, k },
       };
     } else {
       this._layout = { ...this._layout, [rs.id]: { ...rec, k } };
@@ -5243,15 +5239,6 @@ class HouseplanCard extends LitElement {
               @change=${() => (this._spaceDialog = { ...d, source: 'draw' })} />
             <span>${this._t('space.source_draw')}</span>
           </label>
-          ${d.source === 'draw' && d.mode === 'create'
-            ? html`<label>${this._t('space.orientation')}</label>
-              <select class="areasel"
-                @change=${(e: Event) => (this._spaceDialog = { ...d, orientation: (e.target as HTMLSelectElement).value as any })}>
-                ${[['landscape', 'orient.landscape'], ['portrait', 'orient.portrait'], ['square', 'orient.square']].map(
-                  ([v, k]) => html`<option value=${v} ?selected=${d.orientation === v}>${this._t(k as any)}</option>`,
-                )}
-              </select>`
-            : nothing}
 
           <label>${this._t('space.scale_label')}</label>
           <div class="colorrow">

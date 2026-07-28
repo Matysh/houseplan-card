@@ -90,11 +90,19 @@ def test_room_schema_poly_or_rect():
         v.ROOM_SCHEMA({"id": "r4", "name": "D", "poly": [[0, 0], [1, 1]]})
 
 
-def test_space_schema_aspect_range():
-    ok = {"id": "f1", "title": "1", "aspect": 1.4, "view_box": [0, 0, 1, 1], "rooms": []}
-    v.SPACE_SCHEMA(ok)
+def test_space_schema_drops_the_old_aspect_and_bounds_the_image_ratio():
+    """v1.48.0: the canvas is square; only the IMAGE keeps proportions.
+
+    A stale tab may still send `aspect`. It is dropped rather than trusted —
+    the coordinates it arrives with were normalised against a different box, so
+    honouring the field would not make them right anyway.
+    """
+    ok = {"id": "f1", "title": "1", "view_box": [0, 0, 1, 1], "rooms": []}
+    assert "aspect" not in v.SPACE_SCHEMA({**ok, "aspect": 1.4})
+    v.SPACE_SCHEMA({**ok, "plan_aspect": 1.4})
+    v.SPACE_SCHEMA({**ok, "plan_aspect": None})
     with pytest.raises(vol.Invalid):
-        v.SPACE_SCHEMA({**ok, "aspect": 0})
+        v.SPACE_SCHEMA({**ok, "plan_aspect": 0})
     with pytest.raises(vol.Invalid):
         v.SPACE_SCHEMA({**ok, "view_box": [0, 0, 1]})
 
@@ -666,3 +674,98 @@ def test_only_a_staging_folder_ages_out(tmp_path):
     assert not (files / "up_abandoned").exists(), "a cancelled dialog goes after an hour"
 
 
+
+
+# ---------- square canvas migration (v1.48.0) ----------
+
+
+gm = _load_pure("geometry_migration")
+
+
+def _sq(space, layout=None):
+    cfg = {"spaces": [space]}
+    gm.migrate_config(cfg, layout if layout is not None else {})
+    return cfg["spaces"][0]
+
+
+def test_a_wide_plan_gains_margins_above_and_below():
+    sp = _sq({
+        "id": "f1", "aspect": 2.0, "cell_cm": 5, "view_box": [0, 0, 1, 1],
+        "rooms": [{"id": "r", "x": 0.0, "y": 0.0, "w": 1.0, "h": 1.0}],
+    })
+    r = sp["rooms"][0]
+    assert (r["x"], r["w"]) == (0.0, 1.0), "the width is untouched"
+    assert r["y"] == 0.25 and r["h"] == 0.5, "half the height, centred"
+    assert sp["cell_cm"] == 5, "the grid is tied to the width, which did not change"
+    assert "aspect" not in sp
+
+
+def test_a_tall_plan_gains_margins_on_the_sides_and_rescales_the_grid():
+    sp = _sq({
+        "id": "f1", "aspect": 0.5, "cell_cm": 5, "view_box": [0, 0, 1, 1],
+        "rooms": [{"id": "r", "poly": [[0, 0], [1, 0], [1, 1], [0, 1]]}],
+    })
+    poly = sp["rooms"][0]["poly"]
+    assert [round(c, 6) for c in poly[0]] == [0.25, 0.0]
+    assert [round(c, 6) for c in poly[2]] == [0.75, 1.0], "half the width, centred"
+    assert sp["cell_cm"] == 10, "the canvas got twice as wide, so a cell is twice the cm"
+
+
+def test_a_square_plan_is_left_alone():
+    before = {
+        "id": "f1", "aspect": 1.0, "cell_cm": 5, "view_box": [0, 0, 1, 1],
+        "rooms": [{"id": "r", "x": 0.1, "y": 0.2, "w": 0.3, "h": 0.4}],
+    }
+    sp = _sq({**before, "rooms": [dict(before["rooms"][0])]})
+    assert sp["rooms"][0] == before["rooms"][0]
+    assert sp["cell_cm"] == 5 and sp["view_box"] == [0, 0, 1, 1]
+
+
+def test_migration_preserves_real_lengths_and_shapes():
+    """A wall keeps its length in centimetres, and a square stays square."""
+    GRID = 1000.0
+
+    def wall_cm(space, p, q):
+        # render units per normalised unit is the canvas width, always 1000
+        dx = (q[0] - p[0]) * GRID
+        dy = (q[1] - p[1]) * GRID
+        pitch = GRID / 40  # whatever the grid is, the same constant both sides
+        return ((dx * dx + dy * dy) ** 0.5 / pitch) * float(space["cell_cm"])
+
+    for aspect in (2.0, 0.5, 0.8155784250916674, 1.4142):
+        # a square room, 0.2 x 0.2 of the OLD box, i.e. 200 x 200/aspect render
+        old = {"id": "f", "aspect": aspect, "cell_cm": 5,
+               "rooms": [{"id": "r", "poly": [[0.2, 0.2], [0.4, 0.2], [0.4, 0.4], [0.2, 0.4]]}]}
+        before_w = 0.2 * GRID
+        before_h = 0.2 * GRID / aspect
+        before_cm_w = (before_w / (GRID / 40)) * 5
+        sp = _sq(old)
+        poly = sp["rooms"][0]["poly"]
+        after_w = (poly[1][0] - poly[0][0]) * GRID
+        after_h = (poly[2][1] - poly[1][1]) * GRID
+        assert abs(after_w / after_h - before_w / before_h) < 1e-9, "shape preserved"
+        # cell_cm is stored rounded — a user reads it — so allow 0.01 cm on a
+        # 40 cm wall rather than pretending the scale is infinitely precise
+        assert abs(wall_cm(sp, poly[0], poly[1]) - before_cm_w) < 1e-2, "length in cm preserved"
+
+
+def test_migration_moves_marker_positions_of_that_space_only():
+    layout = {
+        "a": {"s": "f1", "x": 0.5, "y": 0.5},
+        "b": {"s": "other", "x": 0.5, "y": 0.5},
+        "c": "not a dict",
+    }
+    cfg = {"spaces": [{"id": "f1", "aspect": 2.0, "rooms": []},
+                      {"id": "other", "rooms": []}]}
+    assert gm.migrate_config(cfg, layout) is True
+    assert layout["a"] == {"s": "f1", "x": 0.5, "y": 0.5}, "x untouched for a wide plan"
+    assert layout["a"]["y"] == 0.5
+    assert layout["b"] == {"s": "other", "x": 0.5, "y": 0.5}, "another space is not touched"
+
+
+def test_migration_runs_once_and_only_when_needed():
+    cfg = {"spaces": [{"id": "f1", "aspect": 2.0, "rooms": [], "cell_cm": 5}]}
+    assert gm.migrate_config(cfg, {}) is True
+    snapshot = repr(cfg)
+    assert gm.migrate_config(cfg, {}) is False, "already square: nothing to do"
+    assert repr(cfg) == snapshot

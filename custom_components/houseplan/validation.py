@@ -188,7 +188,15 @@ SPACE_SCHEMA = vol.Schema(
         vol.Required("title"): str,
         vol.Optional("settings"): SPACE_DISPLAY_SCHEMA,
         vol.Optional("plan_url"): vol.Any(str, None),
-        vol.Required("aspect"): vol.All(vol.Coerce(float), vol.Range(min=0.05, max=20)),
+        # The canvas is square since v1.48.0. What used to be the space's own
+        # `aspect` is gone; the background image keeps its own proportions and
+        # is centred, so only the IMAGE's ratio is stored. A stale tab may still
+        # send the old field — it is dropped rather than trusted, because the
+        # coordinates it comes with were normalised against a different box.
+        vol.Remove("aspect"): object,
+        vol.Optional("plan_aspect"): vol.Any(
+            None, vol.All(vol.Coerce(float), vol.Range(min=0.05, max=20))
+        ),
         vol.Required("view_box"): vol.All([_finite], vol.Length(min=4, max=4)),
         vol.Required("rooms"): vol.All([ROOM_SCHEMA], vol.Length(max=MAX_ROOMS)),
         vol.Optional("decor"): vol.All([DECOR_SCHEMA], vol.Length(max=MAX_DECOR)),
