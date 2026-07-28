@@ -1132,8 +1132,9 @@ async def test_stored_plans_can_be_listed_and_deleted_on_request(
     rev = (await _save(client, await _cfg([{"id": "p1", "plan_url": used_url}]), 0))["result"]["rev"]
 
     await client.send_json_auto_id({"type": "houseplan/plans/list"})
+    # the HA test config dir is shared across the module: look at ours, not all
     plans = {p["name"]: p for p in (await client.receive_json())["result"]["plans"]}
-    assert set(plans) == {used, free}
+    assert {used, free} <= set(plans)
     assert plans[used]["used_by"] and not plans[free]["used_by"]
     assert plans[used]["size"] == 4 and plans[free]["url"].endswith(free)
 
@@ -1150,8 +1151,9 @@ async def test_stored_plans_can_be_listed_and_deleted_on_request(
     await _save(client, await _cfg([{"id": "p1", "plan_url": None}]), rev)
     await client.send_json_auto_id({"type": "houseplan/plans/list"})
     plans = {p["name"]: p for p in (await client.receive_json())["result"]["plans"]}
-    assert list(plans) == [used], "the detached plan is still there, ready to re-attach"
+    assert used in plans, "the detached plan is still there, ready to re-attach"
     assert not plans[used]["used_by"]
+    assert free not in plans, "and the one we deleted is gone"
 
     # nothing outside the plans folder can be reached through the name
     await client.send_json_auto_id(
