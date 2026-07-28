@@ -477,12 +477,11 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
 
 
 
-def _missing_internal_plans(plans_dir: Path, config: dict[str, Any]) -> set[str]:
-    """Plan files a configuration names that are not on disk.
+def _internal_plan_names(config: dict[str, Any]) -> set[str]:
+    """Plan file names a configuration names through OUR urls.
 
-    Only OUR urls are checked — `/api/houseplan/content/plans/_/<name>` and the
-    legacy static path. Anything else belongs to the user and may point wherever
-    they like.
+    Only `/api/houseplan/content/plans/_/<name>` and the legacy static path
+    count. Anything else belongs to the user and may point wherever they like.
     """
     out: set[str] = set()
     for space in (config or {}).get("spaces") or []:
@@ -492,9 +491,30 @@ def _missing_internal_plans(plans_dir: Path, config: dict[str, Any]) -> set[str]
         if not (url.startswith(CONTENT_URL + "/plans/") or url.startswith(PLANS_URL + "/")):
             continue
         name = plan_basename(url)
-        if name and not (plans_dir / name).is_file():
+        if name:
             out.add(name)
     return out
+
+
+def _missing_internal_plans(
+    plans_dir: Path, config: dict[str, Any], previous: dict[str, Any] | None = None
+) -> set[str]:
+    """Newly named plan files that are not on disk.
+
+    Guards the pick-then-save window: another client may delete a plan between
+    the moment this one chose it and the moment it saves, which would otherwise
+    store a url with nothing behind it (HP-1470-02).
+
+    A name the stored configuration already carries is deliberately let through.
+    It is already broken — repairs says so — and refusing the write would lock
+    the owner out of every other edit, including the one that detaches it.
+    """
+    known = _internal_plan_names(previous or {})
+    return {
+        name
+        for name in _internal_plan_names(config)
+        if name not in known and not (plans_dir / name).is_file()
+    }
 
 
 @websocket_api.websocket_command(
@@ -552,7 +572,10 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         # nothing about whether the file survived (HP-1470-02). External and
         # legacy urls are not ours to check and are left alone.
         missing = await hass.async_add_executor_job(
-            _missing_internal_plans, Path(hass.config.path(PLANS_DIR)), msg["config"]
+            _missing_internal_plans,
+            Path(hass.config.path(PLANS_DIR)),
+            msg["config"],
+            data.get("config"),
         )
         if missing:
             connection.send_error(
