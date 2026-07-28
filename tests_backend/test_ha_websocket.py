@@ -991,11 +991,14 @@ async def test_sweep_and_a_config_write_do_not_race(
     cfg2 = await _referenced_config()
     cfg2["spaces"][0]["plan_url"] = "/api/houseplan/content/plans/_/s5.newcomer.png"
 
-    entry = hass.config_entries.async_entries(DOMAIN)[0]
-    _reload, saved = await asyncio.gather(
-        hass.config_entries.async_reload(entry.entry_id),   # runs the sweep
-        _save(client, cfg2, rev),
-    )
+    # Drive the sweep directly rather than through a reload: an entry reload has
+    # an unload window in which any WS call legitimately answers `not_ready`, so
+    # a save racing THAT proves nothing about the lock and fails at random.
+    from custom_components.houseplan.store import get_data
+
+    data = get_data(hass)
+    assert data is not None and data.sweep is not None
+    _swept, saved = await asyncio.gather(data.sweep(), _save(client, cfg2, rev))
     await hass.async_block_till_done()
 
     # assert the CONCRETE outcome: a save that came back `not_ready` would leave
