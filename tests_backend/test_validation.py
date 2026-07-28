@@ -266,11 +266,11 @@ def test_collect_plans_keeps_a_fresh_unreferenced_upload(tmp_path):
 
 
 def test_collect_plans_takes_an_aged_orphan(tmp_path):
-    PLAN_ORPHAN_TTL_S = const.PLAN_ORPHAN_TTL_S
     collect_plans = plans.collect_plans
 
     d = _plans(tmp_path, ["f1.keep.png"])
-    _plans(tmp_path, ["f1.abandoned.png"], age=PLAN_ORPHAN_TTL_S + 60)
+    # past the long grace, and belonging to no space in the config
+    _plans(tmp_path, ["f1.abandoned.png"], age=const.SCHEDULED_GRACE_S + 60)
     removed = collect_plans(d, _cfg("/p/f1.keep.png"), _cfg("/p/f1.keep.png"))
     assert removed == 1
     assert (d / "f1.keep.png").is_file() and not (d / "f1.abandoned.png").exists()
@@ -495,7 +495,7 @@ def test_collect_attachments_supersedes_and_ages(tmp_path):
     assert (files / "m1" / "new.pdf").is_file()
     assert (files / "m1" / "cancelled.pdf").is_file()
 
-    old = time.time() - const.PLAN_ORPHAN_TTL_S - 60
+    old = time.time() - const.SCHEDULED_GRACE_S - 60
     os.utime(files / "m1" / "cancelled.pdf", (old, old))
     assert collect_attachments(files, _acfg("m1/new.pdf"), _acfg("m1/new.pdf")) == 1
     assert not (files / "m1" / "cancelled.pdf").exists()
@@ -552,3 +552,63 @@ def test_legacy_segments_are_dropped_by_the_server():
         "segments": [[1, 2, 3, 4]] * 100000,
     })
     assert "segments" not in out
+
+
+def test_scheduled_collection_never_takes_a_detached_plan(tmp_path):
+    """2026-07-28, on the author's own instance: two plans were deleted.
+
+    Detaching a plan (switching a space to "draw") is reversible and the editor
+    says the file stays on disk. The timer only knows "nothing points at it",
+    applied the one-hour orphan rule, and removed images that had been detached
+    weeks earlier. A commit may still collect what it superseded — it knows it
+    replaced something. The timer may not.
+    """
+    import os
+    import time
+
+    d = tmp_path / "plans"
+    d.mkdir()
+    for n in ("f1.svg", "f2.tok.png", "gone.old.png"):
+        (d / n).write_bytes(b"x")
+        t = time.time() - const.SCHEDULED_GRACE_S - 60
+        os.utime(d / n, (t, t))
+
+    cfg = {"spaces": [{"id": "f1", "plan_url": None},          # detached, space alive
+                      {"id": "f2", "plan_url": None}]}         # same
+    assert plans.collect_plans(d, cfg, cfg) == 1
+    assert (d / "f1.svg").is_file(), "a detached plan of a live space is kept"
+    assert (d / "f2.tok.png").is_file()
+    assert not (d / "gone.old.png").exists(), "a plan of a space that no longer exists ages out"
+
+    # a commit still removes what it SUPERSEDED — that it knows for certain
+    old = {"spaces": [{"id": "f1", "plan_url": "/p/f1.svg"}, {"id": "f2", "plan_url": None}]}
+    new = {"spaces": [{"id": "f1", "plan_url": "/p/f1.new.png"}, {"id": "f2", "plan_url": None}]}
+    (d / "f1.new.png").write_bytes(b"x")
+    assert plans.collect_plans(d, old, new) == 1
+    assert not (d / "f1.svg").exists()
+    assert (d / "f2.tok.png").is_file(), "and still touches nothing else of a live space"
+
+
+def test_scheduled_collection_keeps_a_live_marker_s_files(tmp_path):
+    import os
+    import time
+
+    files = tmp_path / "files"
+    (files / "m1").mkdir(parents=True)
+    (files / "up_abandoned").mkdir(parents=True)
+    (files / "dead").mkdir(parents=True)
+    old = time.time() - const.SCHEDULED_GRACE_S - 60
+    for p in ((files / "m1" / "unlinked.pdf"), (files / "dead" / "x.pdf")):
+        p.write_bytes(b"x")
+        os.utime(p, (old, old))
+    staging = files / "up_abandoned" / "manual.pdf"
+    staging.write_bytes(b"x")
+    hour_ago = time.time() - const.PLAN_ORPHAN_TTL_S - 60
+    os.utime(staging, (hour_ago, hour_ago))
+
+    cfg = {"markers": [{"id": "m1", "pdfs": []}]}
+    removed = plans.collect_attachments(files, cfg, cfg)
+    assert (files / "m1" / "unlinked.pdf").is_file(), "the marker exists; leave its files alone"
+    assert not staging.exists(), "a cancelled dialog is still collected after an hour"
+    assert not (files / "dead" / "x.pdf").exists(), "a marker that is gone ages out"
+    assert removed == 2

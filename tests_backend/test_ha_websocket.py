@@ -860,9 +860,9 @@ async def _seed_aged(hass, names) -> None:
     import os
     import time
 
-    from custom_components.houseplan.const import PLAN_ORPHAN_TTL_S
+    from custom_components.houseplan.const import SCHEDULED_GRACE_S
 
-    old = time.time() - PLAN_ORPHAN_TTL_S - 60
+    old = time.time() - SCHEDULED_GRACE_S - 60
 
     def _do() -> None:
         for path in names:
@@ -885,7 +885,7 @@ def _paths(hass):
         "kept_file": os.path.join(files, "m5", "kept.pdf"),
         "kept_plan": os.path.join(plans, "s5.tok.png"),
         "orphan_file": os.path.join(files, "up_cancelled", "manual.pdf"),
-        "orphan_plan": os.path.join(plans, "s5.orphan.png"),
+        "orphan_plan": os.path.join(plans, "deleted_space.orphan.png"),
     }
 
 

@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.46.4 — 2026-07-28 (data loss: detached plans were collected as garbage)
+- **A plan you detach is no longer deleted an hour later.** Switching a space to
+  "draw" clears the reference and, as the editor has always said, leaves the
+  image on disk so you can put it back. The collection added in v1.46.0 did not
+  make that distinction: it treated "nothing points at this right now" as
+  abandoned and applied a one-hour rule. On the author's own instance the
+  scheduled pass then removed two floor plans that had been detached weeks
+  earlier, with no way to get them back. If you have detached a plan since
+  v1.46.0 and your instance restarted or ran for a day, check
+  `config/houseplan/plans/` before updating anything else — and please report it
+  in the Telegram chat if a file is missing.
+  The rule now: **a commit still removes exactly what it replaced**, because
+  that it knows for certain. Everything else is only *unreferenced*, which is a
+  reversible state — a file belonging to a space or a device that still exists
+  is never collected, and anything else waits thirty days instead of an hour.
+  The one unambiguous case keeps the short rule: a per-dialog staging folder
+  only ever holds an upload from a dialog that was never saved.
+
 ## v1.46.3 — 2026-07-28 (re-check of v1.46.2: HP-1462-01)
 - **The cleanup at startup now actually cleans up.** It looked its own runtime
   data up by domain, and during startup Home Assistant does not yet consider

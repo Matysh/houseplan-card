@@ -207,8 +207,15 @@ happen when somebody saves, and a file uploaded into a dialog that was then
 cancelled would wait for a write that may never come. A new icon has no id yet, so its
 files go to a per-dialog staging folder and move to the real id once the config
 write is accepted — the same copy → save → cleanup order as a rebind.
-`config/set` collects what its commit superseded, and anything unreferenced and
-older than `PLAN_ORPHAN_TTL_S`.
+`config/set` collects what its commit superseded — and only that, because
+supersession is the one thing a commit knows for certain. *Unreferenced* is a
+much weaker signal: detaching a plan is reversible and the editor promises the
+file stays. So a file belonging to a space or marker that still exists is never
+collected, and anything else waits `SCHEDULED_GRACE_S` (30 days). The exception
+is a per-dialog staging folder, which by construction only holds an upload from
+a dialog that was never saved — `PLAN_ORPHAN_TTL_S` (1 hour) is right there.
+This is not theoretical caution: the one-hour rule applied to unreferenced files
+destroyed two detached plans on 2026-07-28.
 
 **Config writes are serialized** (HP-1454-03). `_writeConfig()` chains onto a
 single promise: one `config/set` in flight, each carrying the revision the

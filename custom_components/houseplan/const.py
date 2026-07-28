@@ -22,9 +22,19 @@ MAX_SIGN_PATHS = 200
 # seconds ago may belong to another client's transaction that has not written
 # its configuration yet (review R3-1).
 PLAN_ORPHAN_TTL_S = 3600
+
+# The scheduled sweep is a different judgement from a commit's. A commit knows
+# it replaced a file; the timer only knows nobody points at one right now — and
+# "nobody points at it" is a normal, reversible state. Detaching a plan (switch
+# a space to "draw") leaves the image on disk on purpose, and re-attaching it
+# later is a thing people do. On 2026-07-28 the hourly rule applied to that case
+# and removed two plans the owner had detached weeks earlier; they were not
+# recoverable. So the timer waits a month, and never touches a plan or an
+# attachment that still belongs to something in the configuration.
+SCHEDULED_GRACE_S = 30 * 24 * 3600
 FILES_DIR = "houseplan/files"
 CONF_ADMIN_ONLY = "admin_only"
-VERSION = "1.46.3"
+VERSION = "1.46.4"
 
 DEFAULT_CONFIG: dict = {
     "spaces": [],

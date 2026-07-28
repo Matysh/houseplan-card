@@ -132,6 +132,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
 
                 def _collect() -> int:
                     n = sweep_upload_temps(files_dir)
+                    # same config on both sides: nothing is superseded, so this
+                    # only ever collects what the shared rules call abandoned
                     n += collect_attachments(files_dir, cfg, cfg)
                     n += collect_plans(plans_dir, cfg, cfg)
                     return n

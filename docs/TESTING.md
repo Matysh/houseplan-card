@@ -239,6 +239,10 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       on the plan after a reload. Same for each tap action and each fill mode
       [auto: backend test_every_display_mode_the_editor_offers_is_accepted and
       neighbours, test_a_marker_showing_its_value_can_be_saved]
+- [ ] Detaching a plan keeps the file (v1.46.4): switch a space to "draw",
+      restart, wait a day — the image is still in `config/houseplan/plans/` and
+      can be re-attached. Replacing a plan still removes the one it replaced,
+      immediately [auto: unit: test_scheduled_collection_never_takes_a_detached_plan]
 - [ ] Nothing accumulates on an idle instance (v1.46.2/v1.46.3, HP-1461-01,
       HP-1462-01): attach a file, cancel the dialog, and do not save anything
       else — the file is gone after a restart AND after the daily pass, while

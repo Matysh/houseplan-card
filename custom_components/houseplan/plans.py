@@ -14,7 +14,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from .const import PLAN_ORPHAN_TTL_S
+from .const import PLAN_ORPHAN_TTL_S, SCHEDULED_GRACE_S
 from .validation import MAX_FILENAME, PLAN_EXTENSIONS, sanitize_filename
 
 _LOGGER = logging.getLogger(__name__)
@@ -122,14 +122,20 @@ def collect_attachments(
     """The same commit-scoped rule as `collect_plans`, for marker attachments.
 
     A file the old revision referenced and the new one does not was superseded
-    by this commit and goes. Anything else unreferenced is an upload that was
-    never saved — a cancelled dialog, a rejected write — and waits out
-    PLAN_ORPHAN_TTL_S first, because a fresh one may belong to a dialog the user
-    still has open. Never raises: it runs behind a durable write.
+    by this commit and goes. Otherwise: files of a marker that still exists are
+    left alone, a staging folder (`up_*`, only ever a dialog that was never
+    saved) is collected after PLAN_ORPHAN_TTL_S, and anything else waits out
+    SCHEDULED_GRACE_S. Never raises: it runs behind a durable write.
     """
     new_refs = attachment_refs(new_cfg)
     old_refs = attachment_refs(old_cfg)
-    cutoff = (time.time() if now is None else now) - PLAN_ORPHAN_TTL_S
+    # Same distinction as for plans. A staging folder (`up_*`) is different: it
+    # only ever holds an upload from a dialog that was never saved, so the short
+    # rule is exactly right there even on the timer.
+    live_markers = {str(m.get("id")) for m in (new_cfg or {}).get("markers") or []}
+    now_s = time.time() if now is None else now
+    staging_cutoff = now_s - PLAN_ORPHAN_TTL_S
+    cutoff = now_s - SCHEDULED_GRACE_S
     removed = 0
     try:
         folders = sorted(p for p in files_dir.iterdir() if p.is_dir()) if files_dir.is_dir() else []
@@ -138,6 +144,11 @@ def collect_attachments(
         return 0
     removed += sweep_upload_temps(files_dir, now)
     for folder in folders:
+        if folder.name in live_markers:
+            continue  # the marker is still there; its files are its own business
+        # a staging folder only ever holds an upload from a dialog that was
+        # never saved — unambiguous, so the short rule is right there
+        limit = staging_cutoff if folder.name.startswith("up_") else cutoff
         try:
             items = sorted(p for p in folder.iterdir() if p.is_file())
         except OSError:
@@ -146,12 +157,12 @@ def collect_attachments(
             rel = f"{folder.name}/{item.name}"
             if rel in new_refs:
                 continue
-            try:
-                stale = item.stat().st_mtime < cutoff
-            except OSError:
-                stale = False
-            if rel not in old_refs and not stale:
-                continue
+            if rel not in old_refs:  # not superseded: absence alone is weak evidence
+                try:
+                    if item.stat().st_mtime >= limit:
+                        continue
+                except OSError:
+                    continue
             try:
                 item.unlink()
                 removed += 1
@@ -220,7 +231,13 @@ def collect_plans(
     """
     new_refs = plan_refs(new_cfg)
     old_refs = plan_refs(old_cfg)
-    cutoff = (time.time() if now is None else now) - PLAN_ORPHAN_TTL_S
+    # A commit knows what it superseded. The timer only knows what nothing
+    # points at *right now*, and for a plan that is a reversible state: the
+    # editor detaches the image when a space switches to "draw" and says the
+    # file stays on disk. So the scheduled pass keeps anything belonging to a
+    # space that still exists, and waits a month for the rest.
+    live_spaces = {str(sp.get("id")) for sp in (new_cfg or {}).get("spaces") or []}
+    cutoff = (time.time() if now is None else now) - SCHEDULED_GRACE_S
     removed = 0
     try:
         items = sorted(plans_dir.iterdir()) if plans_dir.is_dir() else []
@@ -234,12 +251,14 @@ def collect_plans(
         if not item.is_file() or item.name in new_refs or not is_plan_file(item.name):
             continue
         superseded = item.name in old_refs
-        try:
-            stale = item.stat().st_mtime < cutoff
-        except OSError:
-            stale = False
-        if not superseded and not stale:
-            continue
+        if not superseded:
+            if item.name.split(".")[0] in live_spaces:
+                continue  # detached, not abandoned — the space is still there
+            try:
+                if item.stat().st_mtime >= cutoff:
+                    continue
+            except OSError:
+                continue
         try:
             item.unlink()
             removed += 1
