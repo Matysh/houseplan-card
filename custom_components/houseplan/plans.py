@@ -35,7 +35,11 @@ def unique_filename(directory: Path, name: str) -> str:
         stem, suffix = safe, ""
     i = 2
     while True:
-        candidate = f"{stem} ({i}){'.' + suffix if suffix else ''}"
+        # "-2", not " (2)": the content view sanitizes the name in the REQUEST
+        # too, and a space or a bracket there turns into "_", so a file called
+        # "manual (2).pdf" was written and then never served. Only characters
+        # that survive sanitize_filename may be used to build a name.
+        candidate = f"{stem}-{i}{'.' + suffix if suffix else ''}"
         if not (directory / candidate).exists():
             return candidate
         i += 1

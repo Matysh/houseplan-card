@@ -25,7 +25,11 @@
   shared folder, so two of them attaching `manual.pdf` ended up pointing at the
   same physical file. Uploads now take a free name and never overwrite, a new
   icon gets its own staging folder whose files move to the real icon when the
-  save is accepted, and an upload nobody saved is collected an hour later.
+  save is accepted, and an upload nobody saved is collected an hour later. The
+  name a collision falls back to changed from `manual (2).pdf` to `manual-2.pdf`
+  — the old one was sanitised on the way back in, so a renamed attachment was
+  written and then never served (found by the new test, and it applied to
+  rebind collisions before this release too).
 - **Two quick edits can no longer lose the second one (HP-1454-03).** The
   debounce spaced out the starts of a save, not the saves themselves. If one
   took longer than half a second — a busy instance, a slow link — the next edit

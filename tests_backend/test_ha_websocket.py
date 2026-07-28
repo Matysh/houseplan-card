@@ -690,7 +690,7 @@ async def test_upload_never_overwrites_an_existing_attachment(
     names = sorted(
         n for n in await hass.async_add_executor_job(os.listdir, folder) if n.startswith("manual")
     )
-    assert names == ["manual (2).pdf", "manual.pdf"]
+    assert names == ["manual-2.pdf", "manual.pdf"]
 
     got = await http.get(first.replace(CONTENT_URL, CONTENT_URL))
     assert await got.read() == b"ONE", "the first file is untouched"

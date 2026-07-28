@@ -392,13 +392,19 @@ def test_unique_filename_never_returns_a_taken_name(tmp_path):
     d.mkdir()
     assert unique_filename(d, "manual.pdf") == "manual.pdf"
     (d / "manual.pdf").write_bytes(b"x")
-    assert unique_filename(d, "manual.pdf") == "manual (2).pdf"
-    (d / "manual (2).pdf").write_bytes(b"x")
-    assert unique_filename(d, "manual.pdf") == "manual (3).pdf"
+    assert unique_filename(d, "manual.pdf") == "manual-2.pdf"
+    (d / "manual-2.pdf").write_bytes(b"x")
+    assert unique_filename(d, "manual.pdf") == "manual-3.pdf"
     # no extension, and a name that needs sanitising
     (d / "readme").write_bytes(b"x")
-    assert unique_filename(d, "readme") == "readme (2)"
+    assert unique_filename(d, "readme") == "readme-2"
     assert unique_filename(d, "../../etc/passwd") == "passwd"
+
+    # A generated name has to survive the sanitiser the CONTENT VIEW applies to
+    # the request, or the file is written and then never served: " (2)" became
+    # "_2_" and every collision-renamed attachment 404'd.
+    for candidate in ("manual-2.pdf", "manual-3.pdf", "readme-2"):
+        assert v.sanitize_filename(candidate) == candidate
 
 
 def _acfg(*pairs):

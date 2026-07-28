@@ -20,7 +20,7 @@ from .const import (
     CONTENT_URL, FILES_DIR, MAX_SIGN_PATHS, PLANS_DIR, PLANS_URL,
 )
 from .auth import may_write
-from .plans import collect_attachments, collect_plans
+from .plans import collect_attachments, collect_plans, unique_filename
 from .store import HouseplanData, get_data, get_entry
 from .validation import (
     CONFIG_SCHEMA, LAYOUT_SCHEMA, MAX_CONFIG_BYTES, MAX_PLAN_BYTES,
@@ -193,15 +193,10 @@ async def ws_files_migrate(hass: HomeAssistant, connection, msg: dict[str, Any])
         for f in sorted(src.iterdir()):
             if not f.is_file():
                 continue
-            target = dst / f.name
-            if target.exists():
-                # a different file already owns this name — do NOT silently
-                # point the url at it; give the copy a unique name instead
-                stem, suffix = f.stem, f.suffix
-                i = 2
-                while (dst / f"{stem} ({i}){suffix}").exists():
-                    i += 1
-                target = dst / f"{stem} ({i}){suffix}"
+            # a different file may already own this name — do NOT silently point
+            # the url at it; the shared helper picks a free one, using only
+            # characters the content view will accept back in a request
+            target = dst / unique_filename(dst, f.name)
             shutil.copy2(str(f), str(target))
             mapping[f.name] = target.name
         return mapping
