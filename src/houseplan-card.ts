@@ -35,7 +35,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.46.1';
+const CARD_VERSION = '1.46.2';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -873,13 +873,23 @@ class HouseplanCard extends LitElement {
    */
   private async _reloadLayoutOnly(): Promise<void> {
     if (!this._serverStorage || !this.hass?.callWS) return;
+    // Snapshot BEFORE flushing. `flush()` runs the debounced writer
+    // synchronously, and the first thing that does is empty `_dirtyPos` — so
+    // reading the dirty set afterwards found nothing to protect and the server's
+    // older position was painted over the drag the user had just made
+    // (HP-1461-02). Positions are captured by value for the same reason.
+    const mine = new Map<string, any>();
+    for (const id of this._dirtyPos) if (this._layout[id]) mine.set(id, this._layout[id]);
     if (this._persistLayout.pending()) this._persistLayout.flush();
-    const mine = new Set(this._dirtyPos);
+    // …and again after the flush: what was dirty is now in flight, and a write
+    // sent before this reload was even scheduled is in there too. Until the
+    // server acknowledges a position, this card is the authority on it.
+    for (const [id, pos] of this._sentPos) mine.set(id, pos);
     try {
       const resp = await this.hass.callWS({ type: 'houseplan/layout/get' });
       const remote = resp?.layout || {};
       const merged: Record<string, any> = { ...remote };
-      for (const id of mine) if (this._layout[id]) merged[id] = this._layout[id];
+      for (const [id, pos] of mine) merged[id] = pos;
       this._layout = merged;
       this._layoutRev = resp?.rev ?? this._layoutRev;
       this._cacheSnapshot();
@@ -890,6 +900,8 @@ class HouseplanCard extends LitElement {
   }
 
   private _dirtyPos = new Set<string>();
+  /** Positions sent to the server and not acknowledged yet (HP-1461-02). */
+  private _sentPos = new Map<string, { s?: string; x: number; y: number }>();
 
   private _persistLayout = debounce(() => {
     if (this._serverStorage) {
@@ -899,10 +911,14 @@ class HouseplanCard extends LitElement {
       for (const id of ids) {
         const pos = this._layout[id];
         if (!pos) continue;
+        // in flight until the server answers: a layout reload triggered in the
+        // meantime must keep this position, not the one the server still has
+        this._sentPos.set(id, pos);
         this.hass
           .callWS({ type: 'houseplan/layout/update', device_id: id, pos })
           .then((r: any) => this._noteLayoutRev(r))
-          .catch((e: any) => this._showToast(this._t('toast.pos_save_failed', { err: this._errText(e) })));
+          .catch((e: any) => this._showToast(this._t('toast.pos_save_failed', { err: this._errText(e) })))
+          .finally(() => { if (this._sentPos.get(id) === pos) this._sentPos.delete(id); });
       }
       this._cacheSnapshot();
     } else {
