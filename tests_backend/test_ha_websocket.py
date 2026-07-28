@@ -176,10 +176,12 @@ async def test_files_migrate_copies_and_reports_mapping(
     assert src_kept, "migrate must COPY, not move (review CR-2)"
     assert other == b"OTHER" and copied == b"SOURCE"
 
-    # cleanup runs only after the config is safely committed
+    # cleanup runs only after the config is safely committed, and since v1.46.5
+    # reports how many files it removed rather than a bare boolean — it now also
+    # keeps anything the stored configuration still references
     await client.send_json_auto_id({"type": "houseplan/files/cleanup", "marker_id": "old1"})
     resp2 = await client.receive_json()
-    assert resp2["success"] and resp2["result"]["removed"] is True
+    assert resp2["success"] and resp2["result"]["removed"] >= 1 and resp2["result"]["kept"] == 0
     assert not await hass.async_add_executor_job(lambda: os.path.isdir(src))
 
 
@@ -1002,3 +1004,47 @@ async def test_sweep_and_a_config_write_do_not_race(
     assert await hass.async_add_executor_job(
         os.path.isfile, os.path.join(plans, referenced)
     ), f"the accepted config points at {referenced}, which must exist"
+
+
+async def test_files_cleanup_keeps_referenced_files(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """v1.46.5: the client may say what it no longer needs, never what may go.
+
+    `files/cleanup` used to rmtree the folder it was handed. A partial migration
+    leaves some urls pointing into that folder — the copy deliberately does not
+    rewrite the ones it could not confirm — so those were live links to files
+    being deleted. A wrong id from any client had the same effect on a device's
+    manuals.
+    """
+    import os
+
+    from custom_components.houseplan.const import FILES_DIR
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    folder = os.path.join(hass.config.path(FILES_DIR), "m7")
+
+    def _seed() -> None:
+        os.makedirs(folder, exist_ok=True)
+        for n in ("kept.pdf", "orphan.pdf"):
+            with open(os.path.join(folder, n), "wb") as fh:
+                fh.write(b"x")
+
+    await hass.async_add_executor_job(_seed)
+
+    cfg = await _cfg([{"id": "s7", "plan_url": None}])
+    cfg["markers"] = [
+        {"id": "other", "binding": "virtual",
+         "pdfs": [{"name": "k", "url": "/api/houseplan/content/files/m7/kept.pdf"}]}
+    ]
+    assert (await _save(client, cfg, 0))["success"]
+
+    await client.send_json_auto_id({"type": "houseplan/files/cleanup", "marker_id": "m7"})
+    resp = await client.receive_json()
+    assert resp["success"] and resp["result"] == {"ok": True, "removed": 1, "kept": 1}
+
+    assert await hass.async_add_executor_job(os.path.isfile, os.path.join(folder, "kept.pdf")), (
+        "a file the configuration still references survives a cleanup of its folder"
+    )
+    assert not await hass.async_add_executor_job(os.path.isfile, os.path.join(folder, "orphan.pdf"))

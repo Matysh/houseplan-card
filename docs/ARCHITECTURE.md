@@ -208,16 +208,20 @@ cancelled would wait for a write that may never come. A new icon has no id yet, 
 files go to a per-dialog staging folder and move to the real id once the config
 write is accepted — the same copy → save → cleanup order as a rebind.
 `config/set` collects what its commit superseded — that much a commit knows for
-certain. *Unreferenced* is a far weaker signal, and how weak depends on the
-case. A space with `plan_url = null` had its image **detached**, which is
-reversible and which the editor promises leaves the file alone: those are never
-collected. A space that does have a plan can only be holding its own rejected
-uploads, so `PLAN_ORPHAN_TTL_S` (1 hour) still applies to them. For attachments,
-a per-dialog staging folder holds nothing but an upload from a dialog that was
-never saved — one hour again — while a marker's own folder waits
-`SCHEDULED_GRACE_S` (30 days). This is not theoretical caution: applying the
-one-hour rule to every unreferenced file destroyed two detached plans on
-2026-07-28.
+certain. *Unreferenced* is a far weaker signal, and the policy follows from one
+asymmetry: **a few unnecessary megabytes can always be removed by hand; a file
+we should not have removed cannot be brought back.** When the evidence is weak,
+keep the file. Owner's decision, 2026-07-28, after the one-hour rule applied to
+every unreferenced file destroyed two detached plans.
+
+| Case | What it means | Rule |
+|---|---|---|
+| In the old revision, not in the new | a save replaced it | removed immediately |
+| Space exists, has **no** plan | detached, one click to undo | **never removed** |
+| Space exists, has a plan | its own rejected upload | `PLAN_ORPHAN_TTL_S` (1 h) |
+| Space no longer exists | deliberate deletion, but people misclick | `SCHEDULED_GRACE_S` (30 d) |
+| Attachment in `up_*` | a dialog that was never saved | `PLAN_ORPHAN_TTL_S` (1 h) |
+| Attachment in a marker folder | unreferenced, but may come back | `SCHEDULED_GRACE_S` (30 d) |
 
 **Config writes are serialized** (HP-1454-03). `_writeConfig()` chains onto a
 single promise: one `config/set` in flight, each carrying the revision the

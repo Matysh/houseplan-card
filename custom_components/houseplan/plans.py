@@ -240,11 +240,12 @@ def collect_plans(
     # other file of its own is a superseded or rejected upload, so the short
     # rule is right for those. Getting this distinction wrong (protecting
     # nothing) destroyed two detached plans on 2026-07-28.
-    detached = {
-        str(sp.get("id")) for sp in (new_cfg or {}).get("spaces") or []
-        if not sp.get("plan_url")
-    }
-    cutoff = (time.time() if now is None else now) - PLAN_ORPHAN_TTL_S
+    # The short rule fits exactly one case: a space that HAS a plan, where any
+    # other file of its own can only be a superseded or rejected upload.
+    spaces = {str(sp.get("id")): sp.get("plan_url") for sp in (new_cfg or {}).get("spaces") or []}
+    now_s = time.time() if now is None else now
+    reject_cutoff = now_s - PLAN_ORPHAN_TTL_S
+    cutoff = now_s - SCHEDULED_GRACE_S
     removed = 0
     try:
         items = sorted(plans_dir.iterdir()) if plans_dir.is_dir() else []
@@ -259,10 +260,19 @@ def collect_plans(
             continue
         superseded = item.name in old_refs
         if not superseded:
-            if item.name.split(".")[0] in detached:
-                continue  # detached, not abandoned — the space is waiting for it
+            space = item.name.split(".")[0]
+            if space in spaces and not spaces[space]:
+                # PRODUCT RULE (owner's decision, 2026-07-28): a detached plan
+                # is never deleted, at any age. The space is there and currently
+                # has no plan — the image was detached, one click undoes that,
+                # and the editor says the file stays. The two errors are not
+                # symmetrical: a few megabytes we did not need can always be
+                # removed by hand, a file we should not have removed cannot be
+                # brought back. When in doubt, keep it.
+                continue
+            limit = reject_cutoff if space in spaces else cutoff
             try:
-                if item.stat().st_mtime >= cutoff:
+                if item.stat().st_mtime >= limit:
                     continue
             except OSError:
                 continue

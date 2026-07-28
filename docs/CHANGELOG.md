@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.46.5 — 2026-07-28 (audit of every automatic deletion)
+- **A detached plan is never deleted, at any age.** v1.46.4 gave it a month;
+  this makes it permanent and writes the reason down where the next change will
+  see it. The rule, now in docs/SCOPE.md: the component may delete a file only
+  when a user action says so — replacing a plan, removing an attachment,
+  deleting a device. "Nothing points at this any more" is not such an action.
+  The errors are not symmetrical: wasted disk is visible, cheap and reversible;
+  a deleted file is none of those.
+- **`houseplan/files/cleanup` no longer takes a folder on the client's word.**
+  After a device is rebound its files are copied to the new id and the old
+  folder is dropped — with `rmtree`, on whatever id the card sent. Two ways that
+  ends badly: a partial copy leaves some urls still pointing into that folder
+  (the migration deliberately does not rewrite those, so they were live links to
+  files being deleted), and a wrong or stale id from any client would destroy a
+  live device's manuals. The server now checks the stored configuration itself,
+  under the config lock, and removes only files nothing references.
+- **A plan of a space that was deleted waits thirty days instead of an hour.**
+  Deleting a space is deliberate, but an hour is a short window in which to
+  notice it was a misclick.
+
 ## v1.46.4 — 2026-07-28 (data loss: detached plans were collected as garbage)
 - **A plan you detach is no longer deleted an hour later.** Switching a space to
   "draw" clears the reference and, as the editor has always said, leaves the
