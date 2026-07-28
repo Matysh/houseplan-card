@@ -41,6 +41,7 @@ def async_register(hass: HomeAssistant) -> None:
     """Register the WS commands."""
     websocket_api.async_register_command(hass, ws_layout_get)
     websocket_api.async_register_command(hass, ws_layout_set)
+    websocket_api.async_register_command(hass, ws_geometry_repair)
     websocket_api.async_register_command(hass, ws_layout_update)
     websocket_api.async_register_command(hass, ws_layout_delete)
     websocket_api.async_register_command(hass, ws_config_get)
@@ -118,7 +119,8 @@ async def ws_layout_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             )
             return
         new_rev = current_rev + 1
-        await rt.store.async_save({"layout": msg["layout"], "rev": new_rev})
+        await rt.store.async_save({**{k: v for k, v in data.items() if k not in ("layout", "rev")},
+                                   "layout": msg["layout"], "rev": new_rev})
     hass.bus.async_fire("houseplan_layout_updated", {"rev": new_rev})
     connection.send_result(msg["id"], {"ok": True, "rev": new_rev})
 
@@ -147,9 +149,88 @@ async def ws_layout_update(hass: HomeAssistant, connection, msg: dict[str, Any])
         # optimistic locking on layout/set meaningless — every drag reset the
         # counter to 0 (HP-1454-08)
         new_rev = int(data.get("rev", 0)) + 1
-        await rt.store.async_save({"layout": layout, "rev": new_rev})
+        await rt.store.async_save({**{k: v for k, v in data.items() if k not in ("layout", "rev")},
+                                   "layout": layout, "rev": new_rev})
     hass.bus.async_fire("houseplan_layout_updated", {"rev": new_rev})
     connection.send_result(msg["id"], {"ok": True, "rev": new_rev})
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "houseplan/geometry/repair",
+        vol.Required("space_id"): str,
+        vol.Required("aspect"): vol.All(vol.Coerce(float), vol.Range(min=0.05, max=20)),
+        vol.Optional("dry_run"): bool,
+        vol.Optional("undo"): bool,
+    }
+)
+@websocket_api.async_response
+async def ws_geometry_repair(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
+    """Re-apply the square-canvas transform to ONE space's layout, explicitly.
+
+    For installations that hit the v1.48/v1.49 crash window: the config write
+    of the migration landed, the layout write did not, and the trigger fields
+    were already gone — markers and labels of that space are stranded in the
+    old coordinates with nothing able to tell (HP-1500-01). Nothing can be
+    detected reliably after the fact, and re-running a transform on a layout
+    that is already correct would corrupt it, so this NEVER runs by itself:
+    an administrator names the space and its old aspect, may preview with
+    `dry_run`, and gets a one-deep backup written in the same store write —
+    `undo` restores it.
+    """
+    if not _check_write(hass, connection):
+        connection.send_error(msg["id"], "unauthorized", "Only administrators may repair the layout")
+        return
+    rt = _runtime(hass, connection, msg["id"])
+    if rt is None:
+        return
+    from .geometry_migration import migrate_layout
+
+    space_id = msg["space_id"]
+    if not valid_space_id(space_id):
+        connection.send_error(msg["id"], "invalid_space_id", "space_id: only [a-z0-9_-], up to 64 characters")
+        return
+    async with rt.write_lock:
+        data = await rt.store.async_load() or {}
+        layout = data.get("layout") or {}
+        current_rev = int(data.get("rev", 0))
+        if msg.get("undo"):
+            backup = data.get("repair_backup")
+            if not isinstance(backup, dict) or backup.get("space") != space_id:
+                connection.send_error(msg["id"], "no_backup", "No repair backup stored for this space")
+                return
+            restored = dict(layout)
+            for key, pos in (backup.get("positions") or {}).items():
+                restored[key] = pos
+            new_rev = current_rev + 1
+            await rt.store.async_save({"layout": restored, "rev": new_rev})
+            hass.bus.async_fire("houseplan_layout_updated", {"rev": new_rev})
+            connection.send_result(msg["id"], {"ok": True, "rev": new_rev,
+                                               "restored": len(backup.get("positions") or {})})
+            return
+        touched = {
+            k: dict(v) for k, v in layout.items()
+            if isinstance(v, dict) and str(v.get("s")) == space_id
+        }
+        preview = {k: dict(v) for k, v in touched.items()}
+        migrate_layout(preview, {space_id: msg["aspect"]})
+        if msg.get("dry_run"):
+            connection.send_result(msg["id"], {
+                "ok": True, "dry_run": True, "moved": len(preview),
+                "before": touched, "after": preview,
+            })
+            return
+        new_layout = {**layout, **preview}
+        new_rev = current_rev + 1
+        # the backup rides the same store write: either both are durable or
+        # neither — the deletion-shy rules of this project apply to positions
+        # too
+        await rt.store.async_save({
+            "layout": new_layout, "rev": new_rev,
+            "repair_backup": {"space": space_id, "positions": touched},
+        })
+    hass.bus.async_fire("houseplan_layout_updated", {"rev": new_rev})
+    connection.send_result(msg["id"], {"ok": True, "rev": new_rev, "moved": len(preview)})
 
 
 @websocket_api.websocket_command(
@@ -455,7 +536,8 @@ async def ws_layout_delete(hass: HomeAssistant, connection, msg: dict[str, Any])
         if msg["device_id"] in layout:
             del layout[msg["device_id"]]
             new_rev = int(data.get("rev", 0)) + 1
-            await rt.store.async_save({"layout": layout, "rev": new_rev})
+            await rt.store.async_save({**{k: v for k, v in data.items() if k not in ("layout", "rev")},
+                                       "layout": layout, "rev": new_rev})
     if new_rev is not None:
         hass.bus.async_fire("houseplan_layout_updated", {"rev": new_rev})
     connection.send_result(msg["id"], {"ok": True, "rev": new_rev})

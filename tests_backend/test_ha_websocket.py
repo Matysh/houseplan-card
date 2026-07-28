@@ -1283,3 +1283,94 @@ async def test_parallel_uploads_cannot_slip_past_the_quota_together(
         dir_usage, Path(hass.config.path(PLANS_DIR))
     )
     assert after == stored + 1, "the store holds what the quota promised, not more"
+
+
+async def test_layout_coordinates_are_bounded(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """HP-1500-03: any finite float used to pass, and one stored 1e100
+    stretched every client's frame until the plan was invisible. Positions are
+    normalised to the canvas; +-4 is generous slack for an icon dragged past an
+    edge, not an envelope for absurdity."""
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+
+    await client.send_json_auto_id({
+        "type": "houseplan/layout/update", "device_id": "d1",
+        "pos": {"s": "f1", "x": 1e100, "y": 0.5},
+    })
+    resp = await client.receive_json()
+    assert not resp["success"], "an absurd coordinate is refused at the door"
+
+    await client.send_json_auto_id({
+        "type": "houseplan/layout/update", "device_id": "d1",
+        "pos": {"s": "f1", "x": -1.2, "y": 0.5},
+    })
+    resp = await client.receive_json()
+    assert resp["success"], "a bit past the edge is a dragged icon, not an attack"
+
+
+async def test_geometry_repair_is_explicit_previewable_and_undoable(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """HP-1500-01: an install that crashed in the v1.48 migration window has a
+    square config and an old-coordinates layout, and NOTHING left to tell —
+    both triggers went with the write that succeeded. No automation can fix
+    that safely (a correct layout looks the same), so the repair is a person
+    saying "this space, this old aspect": preview first, one-deep backup with
+    the write, undo restores it."""
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+
+    # the stranded state: nothing in the layout says it is old
+    await client.send_json_auto_id({
+        "type": "houseplan/layout/set",
+        "layout": {"lamp": {"s": "wide", "x": 0.2, "y": 0.1},
+                   "other": {"s": "elsewhere", "x": 0.9, "y": 0.9}},
+    })
+    assert (await client.receive_json())["success"]
+
+    # preview does not touch the store
+    await client.send_json_auto_id({
+        "type": "houseplan/geometry/repair", "space_id": "wide", "aspect": 2.0, "dry_run": True,
+    })
+    dry = (await client.receive_json())["result"]
+    assert dry["moved"] == 1 and dry["after"]["lamp"]["y"] == 0.3
+    await client.send_json_auto_id({"type": "houseplan/layout/get"})
+    assert (await client.receive_json())["result"]["layout"]["lamp"]["y"] == 0.1
+
+    # the repair itself
+    await client.send_json_auto_id({
+        "type": "houseplan/geometry/repair", "space_id": "wide", "aspect": 2.0,
+    })
+    res = (await client.receive_json())["result"]
+    assert res["moved"] == 1
+    await client.send_json_auto_id({"type": "houseplan/layout/get"})
+    lay = (await client.receive_json())["result"]["layout"]
+    assert lay["lamp"] == {"s": "wide", "x": 0.2, "y": 0.3}
+    assert lay["other"] == {"s": "elsewhere", "x": 0.9, "y": 0.9}, "another space untouched"
+
+    # a routine drag must not eat the backup...
+    await client.send_json_auto_id({
+        "type": "houseplan/layout/update", "device_id": "other",
+        "pos": {"s": "elsewhere", "x": 0.5, "y": 0.5},
+    })
+    assert (await client.receive_json())["success"]
+
+    # ...because undo is the safety net for repairing the WRONG space
+    await client.send_json_auto_id({
+        "type": "houseplan/geometry/repair", "space_id": "wide", "aspect": 2.0, "undo": True,
+    })
+    res = (await client.receive_json())["result"]
+    assert res["restored"] == 1
+    await client.send_json_auto_id({"type": "houseplan/layout/get"})
+    lay = (await client.receive_json())["result"]["layout"]
+    assert lay["lamp"] == {"s": "wide", "x": 0.2, "y": 0.1}, "back to before the repair"
+    assert lay["other"]["x"] == 0.5, "the drag after the repair survives the undo"
+
+    # undo without a backup for that space is a clean error
+    await client.send_json_auto_id({
+        "type": "houseplan/geometry/repair", "space_id": "nosuch", "aspect": 2.0, "undo": True,
+    })
+    bad = await client.receive_json()
+    assert not bad["success"] and bad["error"]["code"] == "no_backup"

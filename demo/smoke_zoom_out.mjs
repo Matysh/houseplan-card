@@ -61,4 +61,21 @@ out.devicesStretchFrame = await page.evaluate(() => {
   return after[0] + after[2] > before[0] + before[2] + 20; // right edge follows the lamp
 });
 
+// -- a card BELOW other dashboard content still gets a stage (HP-1500-02) --
+out.stageSurvivesContentAbove = await page.evaluate(async () => {
+  const spacer = document.createElement('div');
+  spacer.style.height = '900px';
+  document.body.insertBefore(spacer, document.body.firstChild);
+  window.dispatchEvent(new Event('resize'));
+  await new Promise((r) => setTimeout(r, 120));
+  const c = window.__card;
+  const sr = c.shadowRoot || c.renderRoot;
+  const h = sr.querySelector('.stage').getBoundingClientRect().height;
+  spacer.remove();
+  window.dispatchEvent(new Event('resize'));
+  await new Promise((r) => setTimeout(r, 120));
+  // the old code billed the 900px spacer as "header" and left a 0px stage
+  return h > 300;
+});
+
 await finish(browser, checkAll(out));

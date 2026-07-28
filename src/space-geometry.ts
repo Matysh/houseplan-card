@@ -86,10 +86,28 @@ export function contentBounds(
       add(r.x + (r.w || 0), r.y + (r.h || 0));
     }
   }
-  // things that live outside any room still count as content — a gate sensor
-  // by the fence, a camera on a pole (the card passes device positions here)
-  for (const p of extra || []) add(p[0], p[1]);
+  // Things that live outside any room still count as content — a gate sensor
+  // by the fence, a camera on a pole (the card passes device positions here).
+  // But only within a bounded envelope around the canvas: a stored position is
+  // any finite number the layout schema took, and one absurd coordinate used
+  // to stretch the frame until the plan was a dot (HP-1500-03). A point past
+  // the envelope is still rendered wherever it is — it just does not command
+  // the opening view.
+  const lo = -NORM_W * 0.25, hi = NORM_W * 1.25;
+  for (const p of extra || []) {
+    if (p[0] >= lo && p[0] <= hi && p[1] >= lo && p[1] <= hi) add(p[0], p[1]);
+  }
   if (minX > maxX || minY > maxY) return null;
+  // A single marker (or a collinear row of them) has no area, and an SVG
+  // viewBox with a zero axis draws nothing at all (HP-1500-03). An axis with
+  // essentially no span — nothing there but icons — opens up to a floor:
+  // enough canvas around a lone marker to see where it stands. A REAL thin
+  // shape (a 100-unit corridor) keeps its tight frame; only the degenerate
+  // case is padded, so the threshold sits at about an icon's size.
+  const FLOOR = NORM_W * 0.2;
+  const DEGENERATE = NORM_W * 0.03;
+  if (maxX - minX < DEGENERATE) { const c = (minX + maxX) / 2; minX = c - FLOOR / 2; maxX = c + FLOOR / 2; }
+  if (maxY - minY < DEGENERATE) { const c = (minY + maxY) / 2; minY = c - FLOOR / 2; maxY = c + FLOOR / 2; }
   const m = Math.max(maxX - minX, maxY - minY) * pad;
   const x = minX - m, y = minY - m;
   return { x, y, w: (maxX - minX) + m * 2, h: (maxY - minY) + m * 2 };

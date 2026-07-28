@@ -95,8 +95,14 @@ _TEXT = vol.All(str, vol.Length(max=MAX_TEXT))
 _TEXT_OR_NONE = vol.Any(None, _TEXT)
 _URL = vol.All(str, vol.Length(max=MAX_URL))
 
+# Positions are normalised to the canvas (0..1). Allow generous slack for an
+# icon dragged past an edge, but not arbitrary magnitudes: any finite float
+# used to pass, and a single stored 1e100 stretched every client's view of the
+# space until the plan was invisible (HP-1500-03).
+_COORD = vol.All(_finite, vol.Range(min=-4.0, max=4.0))
+
 POS_SCHEMA = vol.Schema(
-    {vol.Required("x"): _finite, vol.Required("y"): _finite},
+    {vol.Required("x"): _COORD, vol.Required("y"): _COORD},
     extra=vol.ALLOW_EXTRA,  # v2 records carry the "s" key (space id)
 )
 LAYOUT_SCHEMA = vol.All(vol.Schema({str: POS_SCHEMA}), vol.Length(max=MAX_LAYOUT))

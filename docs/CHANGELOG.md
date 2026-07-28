@@ -1,5 +1,36 @@
 # Changelog
 
+## v1.50.1 — 2026-07-29
+
+**From the v1.50.0 review**
+
+- **A card below other dashboard content gets its stage back (HP-1500-02).**
+  The v1.50.0 height measurement used the absolute document coordinate, so a
+  tall card before this one was billed as "header" and the stage collapsed to
+  zero. The card now measures only its own chrome plus a bounded allowance for
+  what the dashboard keeps above it, and re-measures on window resize; the
+  listener is removed on teardown.
+- **The content frame can no longer be degenerate or absurd (HP-1500-03).**
+  A lone marker in an empty space produced a zero-area viewBox — a blank
+  scene; a single stored coordinate like 1e100 (any finite float passed
+  validation) stretched the frame until the plan was a dot, for every viewer
+  of the space. A near-zero axis now opens up to a floor of canvas around the
+  marker, points far outside the canvas envelope no longer command the frame
+  (they still render where they are), and the server refuses layout
+  coordinates outside ±4 — generous slack for an icon dragged past an edge,
+  not an envelope for absurdity. A real thin room keeps its tight frame, and
+  the gate sensor slightly past the edge still counts.
+- **A repair path for installs stranded by the v1.48 migration window
+  (HP-1500-01).** If the old migration crashed between its two writes, the
+  markers of a space are left in the old coordinates with nothing in the data
+  able to prove it — and re-transforming a correct layout would corrupt it, so
+  nothing automatic is safe. `houseplan/geometry/repair {space_id, aspect}` is
+  the explicit answer: `dry_run` previews the exact moves, the previous
+  positions ride the same store write as a one-deep backup, `undo` restores
+  them, and routine drags no longer erase that backup. The v1.50.0
+  `geom_pending` protocol already protects every future migration; this covers
+  the installs it was too late for.
+
 ## v1.50.0 — 2026-07-28
 
 **Owner's batch**

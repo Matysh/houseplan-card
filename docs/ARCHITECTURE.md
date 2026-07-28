@@ -182,6 +182,17 @@ double click → properties dialog. In markup mode the "Opening" tool handles cl
 | `houseplan/plans/delete` | `name` | `{ok, removed}` / err `in_use` |
 | `houseplan/file/set` | `marker_id`, `filename`, `data` (b64) | `{ok,url,name}` (legacy, WS limit) |
 
+**If the v1.48 migration crashed halfway** (HP-1500-01): the config write
+landed, the layout write did not, and both triggers are gone — markers of that
+space sit in the old coordinates and nothing in the data can prove it. The
+`geom_pending` intent (v1.50.0) prevents this for any future migration, but
+cannot help an install that was already stranded. There is no safe automatic
+answer — re-transforming a layout that is actually correct would corrupt it —
+so the fix is explicit: `houseplan/geometry/repair {space_id, aspect}`
+re-applies the transform to that one space's positions. `dry_run: true`
+previews, the previous positions ride the same store write as a one-deep
+backup, and `undo: true` restores them. Admin-gated like every other write.
+
 **The canvas is square, the image is not** (v1.48.0). A space used to carry an
 `aspect`, and coordinates were normalised against it — x by the width, y by the
 height. That made every geometric question depend on a per-space number for no
