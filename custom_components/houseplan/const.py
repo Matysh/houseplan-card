@@ -24,7 +24,7 @@ MAX_SIGN_PATHS = 200
 PLAN_ORPHAN_TTL_S = 3600
 FILES_DIR = "houseplan/files"
 CONF_ADMIN_ONLY = "admin_only"
-VERSION = "1.46.0"
+VERSION = "1.46.1"
 
 DEFAULT_CONFIG: dict = {
     "spaces": [],

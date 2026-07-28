@@ -1,5 +1,31 @@
 # Changelog
 
+## v1.46.1 — 2026-07-28 (re-check of v1.46.0: HP-1460-01 … -03)
+- **Two uploads of the same file name can no longer collide (HP-1460-01).**
+  v1.46.0 stopped overwriting attachments, but choosing a free name and taking
+  it were two steps: two uploads racing between them agreed on the same name,
+  both reported success, and one set of bytes replaced the other. The name is
+  now claimed atomically as it is chosen — twenty simultaneous uploads of
+  `manual.pdf` produce twenty files. The same helper is used when rebinding
+  moves files, which had the same gap.
+  Also fixed there: a name at the length limit lost its extension, and the
+  collision suffix pushed it past the limit, so the attachment was stored under
+  a name the server would not serve back — a permanent 404 on a file the UI
+  reported as attached.
+- **An interrupted upload no longer leaves a temporary file forever
+  (HP-1460-02).** Cleanup ran in an `except Exception`, which a cancelled
+  request walks straight past, and the collector only ever looks inside marker
+  folders — so an aborted transfer left a `.upload-*` in place with nothing able
+  to remove it. Every exit path now cleans up, a request carrying two files is
+  refused outright, and abandoned temporaries are swept at startup and daily.
+  Uploads also write in 1 MB batches instead of one disk task per 64 KB.
+- **Two full cards side by side keep the same positions (HP-1460-03).** v1.46.0
+  taught the static card to follow position changes and left the full one
+  behind, so dragging an icon in one window did not move it in another until a
+  reload. It follows now, without disturbing a drag of its own: a revision
+  arriving mid-drag is merged rather than applied over the top, and a card does
+  not re-read what it just wrote itself.
+
 ## v1.46.0 — 2026-07-28 (full external audit of v1.45.4: HP-1454-01 … -10)
 
 **Security**

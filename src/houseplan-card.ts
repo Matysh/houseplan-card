@@ -35,7 +35,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.46.0';
+const CARD_VERSION = '1.46.1';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -122,6 +122,8 @@ class HouseplanCard extends LitElement {
   private _serverCfg: ServerConfig | null = null;
   private _cfgRev = 0;
   private _unsubCfg: (() => void) | null = null;
+  private _unsubLayout: (() => void) | null = null;
+  private _layoutRev = 0;
   private _devices: DevItem[] = [];
   private _regSignature = '';
   private _defPos: Record<string, { x: number; y: number }> = {};
@@ -402,6 +404,11 @@ class HouseplanCard extends LitElement {
       this._unsubCfg();
       this._unsubCfg = null;
     }
+    if (this._unsubLayout) {
+      this._unsubLayout();
+      this._unsubLayout = null;
+    }
+    clearTimeout(this._layoutSyncTimer);
     super.disconnectedCallback();
   }
 
@@ -723,6 +730,7 @@ class HouseplanCard extends LitElement {
       this._cfgEpoch++;
       this._cfgRev = cfgResp?.rev || 0;
       this._layout = layResp?.layout || {};
+      this._layoutRev = layResp?.rev ?? 0;
       // live sync: the config was changed in another window → re-read it
       if (!this._unsubCfg) {
         this._unsubCfg = await this.hass.connection.subscribeEvents((ev: any) => {
@@ -731,6 +739,15 @@ class HouseplanCard extends LitElement {
           // already replaced, and the user's edit vanishes (audit L2).
           if ((ev?.data?.rev ?? -1) !== this._cfgRev) this._reloadConfigOnly();
         }, 'houseplan_config_updated');
+      }
+      if (!this._unsubLayout) {
+        // Positions are separate state. The static card learned to follow them
+        // in v1.46.0 and the full one did not, so two full cards side by side
+        // stayed out of sync until a reload (HP-1460-03).
+        this._unsubLayout = await this.hass.connection.subscribeEvents(
+          (ev: any) => this._onLayoutEvent(Number(ev?.data?.rev ?? -1)),
+          'houseplan_layout_updated',
+        );
       }
       const hs = this._hashSpace();
       const nav = this._savedNav();
@@ -818,6 +835,60 @@ class HouseplanCard extends LitElement {
     this._signer.resign(this.hass, referencedContentUrls(this._serverCfg));
   }
 
+  private _layoutSyncTimer?: number;
+
+  /**
+   * A layout revision appeared. It may well be ours: the event travels over the
+   * same socket as the reply to our own write and can arrive first, so
+   * reacting immediately means re-reading what we just sent — and, worse,
+   * racing a drag that has not been flushed yet. Wait a beat; if our own reply
+   * lands in the meantime, `_layoutRev` catches up and there is nothing to do.
+   */
+  private _onLayoutEvent(rev: number): void {
+    if (rev <= this._layoutRev) return;
+    clearTimeout(this._layoutSyncTimer);
+    this._layoutSyncTimer = window.setTimeout(() => {
+      if (rev <= this._layoutRev) return; // it was ours after all
+      this._reloadLayoutOnly();
+    }, 200);
+  }
+
+  /**
+   * Remember a revision this card produced, so its own `layout_updated` event
+   * is not mistaken for someone else's and does not trigger a pointless
+   * re-read of what we just wrote.
+   */
+  private _noteLayoutRev(r: any): void {
+    const rev = r?.rev;
+    if (typeof rev === 'number' && rev > this._layoutRev) this._layoutRev = rev;
+  }
+
+  /**
+   * Adopt positions written elsewhere, without dropping our own (HP-1460-03).
+   *
+   * Only the layout is re-read — the config is untouched, so this cannot
+   * disturb an edit in progress. Positions this card has moved but not yet
+   * sent are flushed first and then kept on top of the server's answer: a fix
+   * for a stale UI must not turn into a lost drag.
+   */
+  private async _reloadLayoutOnly(): Promise<void> {
+    if (!this._serverStorage || !this.hass?.callWS) return;
+    if (this._persistLayout.pending()) this._persistLayout.flush();
+    const mine = new Set(this._dirtyPos);
+    try {
+      const resp = await this.hass.callWS({ type: 'houseplan/layout/get' });
+      const remote = resp?.layout || {};
+      const merged: Record<string, any> = { ...remote };
+      for (const id of mine) if (this._layout[id]) merged[id] = this._layout[id];
+      this._layout = merged;
+      this._layoutRev = resp?.rev ?? this._layoutRev;
+      this._cacheSnapshot();
+      this.requestUpdate();
+    } catch {
+      /* a failed refresh just leaves the positions we already had */
+    }
+  }
+
   private _dirtyPos = new Set<string>();
 
   private _persistLayout = debounce(() => {
@@ -830,6 +901,7 @@ class HouseplanCard extends LitElement {
         if (!pos) continue;
         this.hass
           .callWS({ type: 'houseplan/layout/update', device_id: id, pos })
+          .then((r: any) => this._noteLayoutRev(r))
           .catch((e: any) => this._showToast(this._t('toast.pos_save_failed', { err: this._errText(e) })));
       }
       this._cacheSnapshot();
@@ -2831,11 +2903,12 @@ class HouseplanCard extends LitElement {
         this._layout = { ...this._layout, [id]: newPos };
       }
       await this._saveConfigNow();
-      if (newPos) await this.hass.callWS({ type: 'houseplan/layout/update', device_id: id, pos: newPos });
+      if (newPos) this._noteLayoutRev(await this.hass.callWS({ type: 'houseplan/layout/update', device_id: id, pos: newPos }));
       if (oldId && oldId !== id) {
         // rebinding changed the icon id — clean up the old position
         delete this._layout[oldId];
-        await this.hass.callWS({ type: 'houseplan/layout/delete', device_id: oldId }).catch(() => undefined);
+        await this.hass.callWS({ type: 'houseplan/layout/delete', device_id: oldId })
+          .then((r: any) => this._noteLayoutRev(r)).catch(() => undefined);
       }
       // the config is committed — now it is safe to drop the old folder
       if (cleanupOldFiles && fileSrc) {
@@ -2885,7 +2958,8 @@ class HouseplanCard extends LitElement {
       if (d && d.bindingKind === 'virtual' && this._layout[d.id]) {
         // the virtual one is deleted for good → its position is no longer needed
         delete this._layout[d.id];
-        await this.hass.callWS({ type: 'houseplan/layout/delete', device_id: d.id }).catch(() => undefined);
+        await this.hass.callWS({ type: 'houseplan/layout/delete', device_id: d.id })
+          .then((r: any) => this._noteLayoutRev(r)).catch(() => undefined);
       }
       this._markerDialog = null;
       this._regSignature = '';

@@ -696,3 +696,90 @@ async def test_upload_never_overwrites_an_existing_attachment(
     assert await got.read() == b"ONE", "the first file is untouched"
     got2 = await http.get(second)
     assert await got2.read() == b"TWO"
+
+
+async def test_upload_leaves_no_temporary_behind(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, hass_client, monkeypatch
+) -> None:
+    """HP-1460-02: every exit path must take its temporary file with it.
+
+    The streaming rewrite kept one `tmp_path` and cleaned it in an
+    `except Exception`, which cancellation (a BaseException) walks straight
+    past — and the attachment collector only ever looks inside marker folders,
+    so a stranded `.upload-*` was never seen again.
+    """
+    import os
+
+    from custom_components.houseplan import http_api
+    from custom_components.houseplan.const import FILES_DIR
+    from custom_components.houseplan.plans import TMP_PREFIX
+
+    await _setup(hass)
+    http = await hass_client()
+    root = hass.config.path(FILES_DIR)
+
+    def temps() -> list[str]:
+        return [n for n in os.listdir(root) if n.startswith(TMP_PREFIX)]
+
+    import aiohttp
+
+    def form(*files, marker="m8"):
+        w = aiohttp.FormData()
+        w.add_field("marker_id", marker)
+        for name, data in files:
+            w.add_field("file", data, filename=name)
+        return w
+
+    # two file parts: refused, and nothing left over
+    resp = await http.post("/api/houseplan/upload", data=form(("a.pdf", b"A"), ("b.pdf", b"B")))
+    assert resp.status == 400 and (await resp.json())["error"] == "one_file_only"
+    assert temps() == []
+
+    # a rejected extension after the temporary already exists
+    resp = await http.post("/api/houseplan/upload", data=form(("evil.exe", b"X")))
+    assert resp.status == 400
+    assert temps() == []
+
+    # promotion itself blows up
+    real = http_api.reserve_filename
+
+    def _boom(*_a, **_k):
+        raise OSError("disk on fire")
+
+    monkeypatch.setattr(http_api, "reserve_filename", _boom)
+    resp = await http.post("/api/houseplan/upload", data=form(("c.pdf", b"C")))
+    assert resp.status == 500
+    assert temps() == [], "a failed promotion must not strand the upload"
+    monkeypatch.setattr(http_api, "reserve_filename", real)
+
+    # and the happy path leaves nothing either
+    resp = await http.post("/api/houseplan/upload", data=form(("d.pdf", b"D")))
+    assert resp.status == 200
+    assert temps() == []
+
+
+async def test_repair_issue_goes_when_its_space_does(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """HP-1454-09: the cleanup used to walk only spaces that still exist.
+
+    So deleting or renaming a space with a missing plan left its warning in
+    Repairs with nothing able to clear it.
+    """
+    from homeassistant.helpers import issue_registry as ir
+
+    from custom_components.houseplan.const import DOMAIN as HP_DOMAIN
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    registry = ir.async_get(hass)
+
+    gone = "/api/houseplan/content/plans/_/nosuchfile.png"
+    rev = (await _save(client, await _cfg([{"id": "r7", "plan_url": gone}]), 0))["result"]["rev"]
+    await hass.async_block_till_done()
+    assert registry.async_get_issue(HP_DOMAIN, "broken_plan_r7") is not None
+
+    # the space is deleted entirely — the warning must not outlive it
+    await _save(client, await _cfg([{"id": "other", "plan_url": None}]), rev)
+    await hass.async_block_till_done()
+    assert registry.async_get_issue(HP_DOMAIN, "broken_plan_r7") is None

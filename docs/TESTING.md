@@ -239,6 +239,18 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       on the plan after a reload. Same for each tap action and each fill mode
       [auto: backend test_every_display_mode_the_editor_offers_is_accepted and
       neighbours, test_a_marker_showing_its_value_can_be_saved]
+- [ ] Concurrent uploads of one name (v1.46.1, HP-1460-01): attach the same
+      file from two browser tabs at once — two attachments, two sets of bytes,
+      neither lost. A file whose name is at the length limit still downloads
+      [auto: unit: test_reserve_filename_is_safe_under_concurrency and neighbours]
+- [ ] No temporary files survive (v1.46.1, HP-1460-02): abort a large upload
+      mid-transfer, send two files in one request, make promotion fail — in each
+      case the files folder holds no `.upload-*`. An old one is swept at startup
+      [auto: backend test_upload_leaves_no_temporary_behind + unit: sweep_upload_temps]
+- [ ] Two full cards agree on positions (v1.46.1, HP-1460-03): open the plan in
+      two windows, drag an icon in one — it moves in the other without a reload;
+      a drag in progress in the second window is not thrown away
+      [auto: smoke_layout_sync]
 - [ ] Uploaded SVG is inert as a document (v1.46.0, HP-1454-01): open a plan's
       signed url directly in a tab — a `<script>` inside it must not run and must
       not reach the HA session's localStorage; the same plan still renders in the

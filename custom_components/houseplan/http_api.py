@@ -22,7 +22,7 @@ from homeassistant.core import HomeAssistant
 
 from .const import CONF_ADMIN_ONLY, CONTENT_URL, FILES_DIR, FILES_URL, PLANS_DIR
 from .auth import may_write
-from .plans import unique_filename
+from .plans import TMP_PREFIX, reserve_filename
 from .validation import (
     FILE_EXTENSIONS,
     MAX_FILE_BYTES,
@@ -34,6 +34,8 @@ from .validation import (
 _LOGGER = logging.getLogger(__name__)
 
 _CHUNK = 64 * 1024
+# batch disk writes: one executor job per megabyte instead of per chunk
+_FLUSH_AT = 1024 * 1024
 
 _MIME = {
     ".pdf": "application/pdf",
@@ -119,92 +121,122 @@ class HouseplanUploadView(HomeAssistantView):
         if not may_write(hass, request.get("hass_user")):
             return web.json_response({"error": "unauthorized"}, status=403)
 
+        files_root = Path(hass.config.path(FILES_DIR))
         marker_id = "misc"
         filename: str | None = None
-        tmp_path: Path | None = None
-        too_large = False
-        bad_ext = False
-        files_root = Path(hass.config.path(FILES_DIR))
+        # Every temporary file this request creates, promoted or not. The outer
+        # `finally` removes whatever is left: a dropped connection, a second
+        # `file` part or a failure while promoting used to leave a `.upload-*`
+        # behind for good, and the collector only ever walks marker folders, so
+        # nothing would have picked it up (HP-1460-02).
+        temps: list[Path] = []
+        error: tuple[dict, int] | None = None
 
-        def _open_tmp() -> Path:
+        def _new_tmp() -> Path:
             files_root.mkdir(parents=True, exist_ok=True)
-            fd, name = tempfile.mkstemp(prefix=".upload-", dir=str(files_root))
+            fd, name = tempfile.mkstemp(prefix=TMP_PREFIX, dir=str(files_root))
             os.close(fd)
             return Path(name)
 
-        def _append(target: Path, data: bytes) -> None:
+        def _flush(target: Path, blocks: list[bytes]) -> None:
             with open(target, "ab") as fh:
-                fh.write(data)
+                for block in blocks:
+                    fh.write(block)
 
-        def _discard(target: Path) -> None:
-            try:
-                target.unlink()
-            except OSError:
-                pass
+        def _cleanup(paths: list[Path]) -> None:
+            for path in paths:
+                try:
+                    path.unlink()
+                except OSError:
+                    pass
 
         try:
-            reader = await request.multipart()
-            async for part in reader:
-                if part.name == "marker_id":
-                    marker_id = sanitize_marker_id(await part.text())
-                elif part.name == "file":
-                    filename = part.filename or "file"
-                    if file_ext(filename) not in FILE_EXTENSIONS:
-                        bad_ext = True
-                        break
-                    # Stream to a temporary file instead of collecting the whole
-                    # upload in memory and copying it again into one buffer: a
-                    # 50 MB manual used to cost ~100 MB of RSS mid-request, and
-                    # a few of those at once is real pressure on a small Home
-                    # Assistant host (HP-1454-06).
-                    tmp_path = await hass.async_add_executor_job(_open_tmp)
-                    size = 0
-                    while chunk := await part.read_chunk(_CHUNK):
-                        size += len(chunk)
-                        if size > MAX_FILE_BYTES:
-                            too_large = True
+            try:
+                reader = await request.multipart()
+                async for part in reader:
+                    if part.name == "marker_id":
+                        marker_id = sanitize_marker_id(await part.text())
+                    elif part.name == "file":
+                        if filename is not None:
+                            # one upload per request: a second part would strand
+                            # the first temporary file and make the response
+                            # ambiguous about which url was returned
+                            error = ({"error": "one_file_only"}, 400)
                             break
-                        await hass.async_add_executor_job(_append, tmp_path, chunk)
-                    if too_large:
-                        break
-        except Exception as err:  # noqa: BLE001
-            _LOGGER.warning("House Plan upload: multipart read error: %s", err)
-            if tmp_path is not None:
-                await hass.async_add_executor_job(_discard, tmp_path)
-            return web.json_response({"error": "bad_request"}, status=400)
+                        filename = part.filename or "file"
+                        if file_ext(filename) not in FILE_EXTENSIONS:
+                            error = ({"error": "bad_ext", "allowed": sorted(FILE_EXTENSIONS)}, 400)
+                            break
+                        # Stream to a temporary file instead of collecting the
+                        # whole upload in memory and copying it again into one
+                        # buffer: a 50 MB manual used to cost ~100 MB of RSS
+                        # mid-request (HP-1454-06). Blocks are batched so this
+                        # is one executor job per megabyte, not per 64 KB.
+                        tmp = await hass.async_add_executor_job(_new_tmp)
+                        temps.append(tmp)
+                        size = 0
+                        pending: list[bytes] = []
+                        buffered = 0
+                        while chunk := await part.read_chunk(_CHUNK):
+                            size += len(chunk)
+                            if size > MAX_FILE_BYTES:
+                                error = (
+                                    {"error": "too_large", "max_mb": MAX_FILE_BYTES // 1024 // 1024},
+                                    413,
+                                )
+                                break
+                            pending.append(chunk)
+                            buffered += len(chunk)
+                            if buffered >= _FLUSH_AT:
+                                await hass.async_add_executor_job(_flush, tmp, pending)
+                                pending, buffered = [], 0
+                        if error:
+                            break
+                        if pending:
+                            await hass.async_add_executor_job(_flush, tmp, pending)
+            except Exception as err:  # noqa: BLE001
+                _LOGGER.warning("House Plan upload: multipart read error: %s", err)
+                error = ({"error": "bad_request"}, 400)
 
-        if bad_ext:
-            if tmp_path is not None:
-                await hass.async_add_executor_job(_discard, tmp_path)
+            if error:
+                return web.json_response(error[0], status=error[1])
+            if not temps or not filename:
+                return web.json_response({"error": "no_file"}, status=400)
+
+            tmp_path = temps[0]
+            target_dir = files_root / marker_id
+            safe_name = filename
+
+            def _promote() -> str:
+                """Claim a free name, then move the finished upload onto it.
+
+                Never overwrite an existing attachment: its bytes may be
+                referenced by the stored configuration, and this upload is not
+                part of that transaction — a cancelled dialog or a rejected save
+                would leave the old url serving the new content (HP-1454-02).
+                The name is reserved atomically, so two uploads racing on the
+                same filename cannot agree on it (HP-1460-01).
+                """
+                name = reserve_filename(target_dir, safe_name)
+                try:
+                    os.replace(tmp_path, target_dir / name)
+                except OSError:
+                    (target_dir / name).unlink(missing_ok=True)
+                    raise
+                return name
+
+            try:
+                name = await hass.async_add_executor_job(_promote)
+            except OSError as err:
+                _LOGGER.warning("House Plan upload: could not store the file: %s", err)
+                return web.json_response({"error": "io_error"}, status=500)
+            temps.remove(tmp_path)  # it is the attachment now, not a temporary
             return web.json_response(
-                {"error": "bad_ext", "allowed": sorted(FILE_EXTENSIONS)}, status=400
+                {"ok": True, "url": f"{CONTENT_URL}/files/{marker_id}/{name}", "name": filename}
             )
-        if too_large:
-            await hass.async_add_executor_job(_discard, tmp_path)
-            return web.json_response(
-                {"error": "too_large", "max_mb": MAX_FILE_BYTES // 1024 // 1024}, status=413
-            )
-        if tmp_path is None or not filename:
-            return web.json_response({"error": "no_file"}, status=400)
-
-        safe_name = sanitize_filename(filename)
-        target_dir = files_root / marker_id
-
-        def _promote() -> str:
-            """Move the finished upload in under a name that is free.
-
-            Never overwrite: the previous bytes may be referenced by the stored
-            configuration, and this upload is not part of that transaction — a
-            cancelled dialog or a rejected save would leave the old url pointing
-            at the new content (HP-1454-02). An unreferenced upload is collected
-            later by config/set, once it is old enough.
-            """
-            target_dir.mkdir(parents=True, exist_ok=True)
-            name = unique_filename(target_dir, safe_name)
-            os.replace(tmp_path, target_dir / name)
-            return name
-
-        name = await hass.async_add_executor_job(_promote)
-        return web.json_response(
-            {"ok": True, "url": f"{CONTENT_URL}/files/{marker_id}/{name}", "name": filename}
-        )
+        finally:
+            # BaseException too: cancelling the request task raises
+            # asyncio.CancelledError, which an `except Exception` never saw —
+            # an aborted large upload leaked its temporary file every time
+            if temps:
+                await hass.async_add_executor_job(_cleanup, list(temps))
