@@ -57,7 +57,42 @@ export function spaceModels(cfg: ServerConfig | null): SpaceModel[] {
   });
 }
 
-/** Bounding rectangle of a room (rect or polygon) in render units. */
+/**
+ * What the plan actually occupies, padded by `pad` of the larger side.
+ *
+ * The canvas is a square big enough for any house, so a small hand-drawn plan
+ * used to open as a speck in the middle of it. Zooming to the CONTENT instead
+ * of the canvas is what people expect — but only when there is no background
+ * image: with one, the image is the plan, and cropping to the rooms would hide
+ * the parts of it nobody has outlined yet.
+ *
+ * Returns null when there is nothing drawn, so the caller keeps the full canvas.
+ */
+export function contentBounds(
+  space: SpaceModel, pad = 0.05,
+): { x: number; y: number; w: number; h: number } | null {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  const add = (x: number, y: number) => {
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+    if (x < minX) minX = x;
+    if (y < minY) minY = y;
+    if (x > maxX) maxX = x;
+    if (y > maxY) maxY = y;
+  };
+  for (const r of space.rooms || []) {
+    if (r.poly) for (const p of r.poly) add(p[0], p[1]);
+    else if (r.x != null && r.y != null) {
+      add(r.x, r.y);
+      add(r.x + (r.w || 0), r.y + (r.h || 0));
+    }
+  }
+  if (minX > maxX || minY > maxY) return null;
+  const m = Math.max(maxX - minX, maxY - minY) * pad;
+  const x = minX - m, y = minY - m;
+  return { x, y, w: (maxX - minX) + m * 2, h: (maxY - minY) + m * 2 };
+}
+
+/** Bounding rectangle of a room (rect or polygon) in render units. *//** Bounding rectangle of a room (rect or polygon) in render units. */
 export function roomBounds(r: RoomCfg): { x: number; y: number; w: number; h: number } {
   if (r.poly && r.poly.length) {
     const xs = r.poly.map((p) => p[0]);

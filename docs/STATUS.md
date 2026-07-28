@@ -15,12 +15,12 @@
 
 | Item | State |
 |---|---|
-| Version | **v1.48.0** everywhere (manifest, const.py, package.json, CARD_VERSION); deployed to the home instance |
+| Version | **v1.49.0** everywhere (manifest, const.py, package.json, CARD_VERSION); deployed to the home instance |
 | Workflow | Since 2026-07-22: minor changes go to branch **`dev`** (build + smokes → deploy home → commit → push, NO release); releases are batched on the owner's command (merge dev→main, one tag, one release with a summary changelog, CI checked on dev beforehand) |
 | GitHub | https://github.com/Matysh/houseplan-card — **`main` carries every published release, the latest tag is the current version above**; `dev` is where work lands and is merged into `main` at release time (so `dev` is normally equal to or ahead of `main`, never behind). Push via SSH key `ha_jb` (remote git@github.com:…); API releases via the fine-grained PAT in `~/.git-credentials` (Contents R/W, issued 2026-07-23) |
 | CI | validate.yml (hacs + hassfest + frontend + backend) green; release.yml attaches the bundle on release publish |
 | HACS | Custom repository works. **Inclusion PR: hacs/default#9004** — open, valid, labeled; ~864 older open PRs but merge rate ≈180/mo; realistic ETA 1–3 months (checked 2026-07-24) |
-| Home instance | ha.jbstudio.pro (SSH port 323, key `ha_jb`), deployed **v1.48.0** via direct copy (HACS custom repo also installed) |
+| Home instance | ha.jbstudio.pro (SSH port 323, key `ha_jb`), deployed **v1.49.0** via direct copy (HACS custom repo also installed) |
 | Localization | UI en/ru (src/i18n/*.json), everything user-visible localized incl. kiosk popover |
 | Tests | Four layers: frontend unit (`npm test`, node:test over `test-build/`), pure backend (`pytest tests_backend`, runs anywhere), HA-harness backend (same folder, CI only — needs py3.13 + pytest-homeassistant-custom-component), and browser smokes (`demo/smoke_*.mjs`, headless chromium). **Counts are not written down here** — they went stale within two releases while the version line beside them was kept current, which reads as less coverage than exists (review R5-2). Run `npm run inventory` for the current numbers, or read them off the last CI run |
 | Community | **Telegram chat: https://t.me/ha_houseplan** (created 2026-07-27) — the primary user-facing support channel; GitHub issues stay for bugs/features. Link it from any new release notes and posts |

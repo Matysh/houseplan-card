@@ -17,6 +17,20 @@ CONTENT_URL = "/api/houseplan/content"
 # way to tell which paths were dropped (review R2-2).
 MAX_SIGN_PATHS = 200
 
+# Nothing is ever deleted for being old (docs/SCOPE.md), so growth has to be
+# stopped at the door instead. These bound the whole store, not one request: by
+# default any authenticated user may upload, and a per-request cap of 8/50 MB
+# says nothing about how many requests there are (HP-1470-01).
+MAX_PLANS_BYTES = 256 * 1024 * 1024
+MAX_PLANS_FILES = 200
+# How many the picker asks for at once — newest first.
+MAX_PLANS_LISTED = 60
+MAX_FILES_BYTES = 1024 * 1024 * 1024
+MAX_FILES_COUNT = 1000
+# Refuse to write when the disk is nearly full: filling the config partition
+# breaks .storage, the recorder and backups, not just this card.
+MIN_FREE_BYTES = 512 * 1024 * 1024
+
 # An uploaded plan that no accepted configuration references is collected only
 # once it is this old. Age is a race guard, not a policy: a plan uploaded
 # seconds ago may belong to another client's transaction that has not written
@@ -31,7 +45,7 @@ PLAN_ORPHAN_TTL_S = 3600
 SCHEDULED_GRACE_S = 30 * 24 * 3600
 FILES_DIR = "houseplan/files"
 CONF_ADMIN_ONLY = "admin_only"
-VERSION = "1.48.0"
+VERSION = "1.49.0"
 
 DEFAULT_CONFIG: dict = {
     "spaces": [],

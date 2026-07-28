@@ -1161,3 +1161,49 @@ async def test_stored_plans_can_be_listed_and_deleted_on_request(
     )
     bad = await client.receive_json()
     assert not bad["success"] and bad["error"]["code"] == "invalid_name"
+
+
+async def test_config_set_refuses_a_plan_that_no_longer_exists(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """HP-1470-02: a stored internal plan url must name a file that exists.
+
+    The card can pick a plan and delete it from the same dialog, and two clients
+    can do the same in either order. The lock serialises them; it says nothing
+    about whether the file survived, so the check has to be here.
+    """
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+
+    url, name = await _upload(client, "x1", b"PLAN", ext="png")
+    await client.send_json_auto_id({"type": "houseplan/plans/delete", "name": name})
+    assert (await client.receive_json())["result"]["removed"] is True
+
+    resp = await _save(client, await _cfg([{"id": "x1", "plan_url": url}]), 0)
+    assert not resp["success"] and resp["error"]["code"] == "missing_plan"
+
+    # an external or legacy url is the user's business, not ours to verify
+    assert (await _save(client, await _cfg([{"id": "x1", "plan_url": "/local/mine.png"}]), 0))["success"]
+
+
+async def test_uploads_are_bounded_by_a_store_quota(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, monkeypatch
+) -> None:
+    """HP-1470-01: nothing is deleted for being old, so growth stops at the door."""
+    from custom_components.houseplan import websocket_api as wsapi
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    monkeypatch.setattr(wsapi, "MAX_PLANS_FILES", 2)
+
+    await _upload(client, "q1", b"one")
+    await _upload(client, "q1", b"two")
+
+    import base64
+
+    await client.send_json_auto_id({
+        "type": "houseplan/plan/set", "space_id": "q1", "ext": "png",
+        "data": base64.b64encode(b"three").decode(),
+    })
+    resp = await client.receive_json()
+    assert not resp["success"] and resp["error"]["code"] == "too_many_files"

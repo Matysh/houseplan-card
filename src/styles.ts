@@ -383,6 +383,21 @@ export const cardStyles = css`
       gap: 0.25em;
       font-size: calc(1em * var(--rl-name, 1));
     }
+    /* Switching spaces by swipe or on the kiosk carousel: the plan flies out
+       the way the finger went and the next one arrives from the other side. */
+    @keyframes hp-slide-left {
+      0%   { transform: translateX(22%); opacity: 0; }
+      100% { transform: translateX(0);   opacity: 1; }
+    }
+    @keyframes hp-slide-right {
+      0%   { transform: translateX(-22%); opacity: 0; }
+      100% { transform: translateX(0);    opacity: 1; }
+    }
+    .zoomwrap.slide-left  { animation: hp-slide-left 0.26s cubic-bezier(0.22, 0.61, 0.36, 1); }
+    .zoomwrap.slide-right { animation: hp-slide-right 0.26s cubic-bezier(0.22, 0.61, 0.36, 1); }
+    @media (prefers-reduced-motion: reduce) {
+      .zoomwrap.slide-left, .zoomwrap.slide-right { animation: none; }
+    }
     .rlgearbtn {
       display: inline-flex;
       align-items: center;
@@ -402,7 +417,8 @@ export const cardStyles = css`
       opacity: 0.92;
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
     }
-    .rlgearbtn:hover { opacity: 1; }
+    .rlgearbtn { transition: opacity 0.15s, filter 0.15s; }
+    .rlgearbtn:hover { opacity: 1; filter: brightness(1.18); }
     .rlgearbtn ha-icon { --mdc-icon-size: 14px; display: inline-flex; }
     .rlgear {
       --mdc-icon-size: 0.9em;

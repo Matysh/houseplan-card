@@ -1,5 +1,5 @@
 /**
- * Building the device list from HA registries: curation, light groups,
+ * Building the device list from HA registries: filtering, light groups,
  * markers (overrides/virtual). No Lit/DOM — only the hass object.
  */
 import { iconFor, iconFromDeviceClasses, DOMAIN_PRIORITY, FALLBACK_ICON, type CompiledIconRule, EXCLUDED_DOMAINS } from './rules';
@@ -184,7 +184,7 @@ function applyMarker(item: DevItem, m: Marker): void {
   item.tapAction = m.tap_action ?? null;
 }
 
-/** Curation + light groups + markers (metadata/rebinding) + virtual ones. A hybrid. */
+/** Filtering + light groups + markers (metadata/rebinding) + virtual ones. A hybrid. */
 export function buildDevices(ctx: BuildCtx): DevItem[] {
   const { hass: h, areaToSpace, markers, settings, excluded, showAll, firstSpaceId, loc, iconRules } = ctx;
   const groupLights = settings.group_lights !== false;
@@ -210,7 +210,7 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
     if (marker && marker.hidden) continue;
     const entIds = entsBy[dev.id] || [];
     const dom = domainOfDevice(h, dev, entIds);
-    // curation (can be turned off with the “show all” toggle)
+    // filtering (can be turned off with the “show all” toggle)
     if (!showAll) {
       if (excluded.has(dom)) continue;
       if (dev.model === 'Group') continue;
@@ -391,7 +391,7 @@ export function areaHum(
   const vals: number[] = [];
   for (const dv of devices) {
     if (dv.area !== area) continue;
-    // same curation idea as areaTemp: climate sensors only, not fridges/plugs
+    // same filtering idea as areaTemp: climate sensors only, not fridges/plugs
     if (dv.icon !== 'mdi:thermometer' && dv.icon !== 'mdi:air-filter' && dv.icon !== 'mdi:water-percent') continue;
     const h = humFor(hass, dv.entities);
     if (h != null) vals.push(h);
@@ -416,11 +416,11 @@ const NON_AIR_RE = new RegExp(
 
 /**
  * Room climate from EVERY sensor of the area — including devices that are not
- * placed on the plan (hidden by curation or by the user). The old helpers read
+ * placed on the plan (hidden by filtering or by the user). The old helpers read
  * the visible-icon list, so hiding a thermometer silently removed it from the
  * room card (field report, 2026-07-27).
  *
- * Curation is kept: only devices the card itself recognises as thermometers /
+ * Filtering is kept: only devices the card itself recognises as thermometers /
  * air monitors count, so fridges, TRVs and chip-temperature plugs stay out.
  * The AUTO icon is used on purpose — a custom marker icon must not change what
  * a device measures.
@@ -451,7 +451,7 @@ export function areaClimateMap(
     // 90 C and a virtual better_thermostat duplicating the real sensor (field
     // question, 2026-07-27). Three guards, cheapest first:
     if (reg.entity_category) continue;              // diagnostic/config readings
-    if (EXCLUDED_DOMAINS.has(reg.platform)) continue; // curated-out integrations
+    if (EXCLUDED_DOMAINS.has(reg.platform)) continue; // filtered-out integrations
     if (NON_AIR_RE.test(eid)) continue;             // water/chip/flow/target/...
     let groups = byArea.get(area);
     if (!groups) { groups = new Map(); byArea.set(area, groups); }

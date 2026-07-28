@@ -1,5 +1,42 @@
 # Changelog
 
+## v1.49.0 — 2026-07-28
+
+**The canvas is square** (see v1.48.0, released together with this one).
+
+- **Zoom opens on what is drawn, not on the whole canvas.** A space without a
+  background image now fits its rooms with a 5% margin, so a small plan on a big
+  canvas fills the screen instead of sitting in the middle of it as a speck.
+  With a background image nothing changes: the image is the plan, and cropping
+  to the rooms would hide the parts nobody has outlined yet.
+- **Switching spaces by swipe, or on the kiosk carousel, slides.** The plan
+  leaves the way the finger went and the next one arrives from the other side.
+  Respects "reduce motion".
+- The room settings button says "Room settings" rather than just "Room", and
+  lightens slightly under the cursor.
+- "Curation" is called filtering everywhere — the interface, the documentation
+  and the code.
+
+**From the v1.47.0 review**
+
+- **A plan you have just picked can no longer be deleted from the same dialog
+  (HP-1470-02).** It was not saved yet, so the server correctly considered it
+  free — and the save then stored a url with no file behind it. The button is
+  disabled now, and, because two clients can do the same in either order, the
+  server checks every internal plan url against the disk before storing a
+  configuration and refuses one that is missing. Urls that are not ours are left
+  alone.
+- **Uploads are bounded (HP-1470-01).** Nothing is deleted for being old — that
+  cost real plans twice — so the limit sits where a decision is being made
+  anyway: an upload is refused if the store would pass 256 MB or 200 plans
+  (1 GB / 1000 for attachments), or if the disk would drop below 512 MB free.
+  The plan list is capped at the 60 newest and its thumbnails load lazily.
+- **Picking a saved plan reads its real proportions (HP-1470-03).** The card
+  waited for nothing and, when the signature for the protected url had not
+  arrived yet, saved a fallback ratio — a square plan came out stretched. It now
+  waits for the signature, ties the result to the dialog that asked, and the
+  preview in the dialog is signed like everything else.
+
 ## v1.48.0 — 2026-07-28 (the canvas is always square)
 - **A space no longer has proportions of its own.** The drawing area is a square;
   a plan image keeps its own shape and is centred inside it, so a wide plan gets

@@ -1,5 +1,5 @@
 /**
- * Device curation and icon rules.
+ * Device filtering and icon rules.
  *
  * Icon rules are DATA, not code: the built-in defaults below can be overridden
  * per instance via `config.settings.icon_rules` (edited in the card UI).
@@ -8,7 +8,7 @@
  * skipped silently at compile time (and flagged in the rules editor).
  */
 
-/** Integration domains whose devices are hidden by default (curation). */
+/** Integration domains whose devices are hidden by default (filtering). */
 export const EXCLUDED_DOMAINS = new Set([
   'hacs', 'sun', 'backup', 'hassio', 'met', 'telegram_bot', 'mobile_app',
   'systemmonitor', 'better_thermostat', 'adaptive_lighting', 'yandex_pogoda',

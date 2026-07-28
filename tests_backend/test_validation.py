@@ -780,3 +780,46 @@ def test_migration_runs_once_and_only_when_needed():
     snapshot = repr(cfg)
     assert gm.migrate_config(cfg, {}) is False, "already square: nothing to do"
     assert repr(cfg) == snapshot
+
+
+# ---------- store-wide limits (HP-1470-01) ----------
+
+
+def test_check_quota_counts_the_whole_store_not_one_request(tmp_path):
+    """Per-request caps say nothing about how many requests there are."""
+    d = tmp_path / "plans"
+    d.mkdir()
+    for i in range(3):
+        (d / f"p{i}.png").write_bytes(b"x" * 1000)
+
+    plans.check_quota(d, 1000, max_bytes=10_000, max_files=10)   # fits
+
+    with pytest.raises(plans.QuotaError) as e:
+        plans.check_quota(d, 8000, max_bytes=10_000, max_files=10)
+    assert e.value.reason == "quota_exceeded" and "MB" in e.value.detail
+
+    with pytest.raises(plans.QuotaError) as e:
+        plans.check_quota(d, 1, max_bytes=10_000, max_files=3)
+    assert e.value.reason == "too_many_files"
+
+
+def test_dir_usage_walks_subfolders_and_ignores_the_unreadable(tmp_path):
+    d = tmp_path / "files"
+    (d / "m1").mkdir(parents=True)
+    (d / "m1" / "a.pdf").write_bytes(b"x" * 10)
+    (d / "b.pdf").write_bytes(b"x" * 5)
+    assert plans.dir_usage(d) == (15, 2)
+    assert plans.dir_usage(tmp_path / "nope") == (0, 0)
+
+
+def test_check_quota_refuses_when_the_disk_is_nearly_full(tmp_path, monkeypatch):
+    import shutil
+
+    d = tmp_path / "plans"
+    d.mkdir()
+    monkeypatch.setattr(
+        shutil, "disk_usage", lambda _p: type("U", (), {"free": const.MIN_FREE_BYTES // 2})()
+    )
+    with pytest.raises(plans.QuotaError) as e:
+        plans.check_quota(d, 1, max_bytes=10 ** 12, max_files=10 ** 6)
+    assert e.value.reason == "low_disk_space"

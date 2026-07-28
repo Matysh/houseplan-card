@@ -20,9 +20,12 @@ except ImportError:  # older HA versions
     KEY_HASS = "hass"  # type: ignore[assignment]
 from homeassistant.core import HomeAssistant
 
-from .const import CONF_ADMIN_ONLY, CONTENT_URL, FILES_DIR, FILES_URL, PLANS_DIR
+from .const import (
+    CONF_ADMIN_ONLY, CONTENT_URL, FILES_DIR, FILES_URL, MAX_FILES_BYTES,
+    MAX_FILES_COUNT, PLANS_DIR,
+)
 from .auth import may_write
-from .plans import TMP_PREFIX, reserve_filename
+from .plans import TMP_PREFIX, QuotaError, check_quota, reserve_filename
 from .validation import (
     FILE_EXTENSIONS,
     MAX_FILE_BYTES,
@@ -204,6 +207,16 @@ class HouseplanUploadView(HomeAssistantView):
                 return web.json_response({"error": "no_file"}, status=400)
 
             tmp_path = temps[0]
+            try:
+                await hass.async_add_executor_job(
+                    check_quota, files_root, tmp_path.stat().st_size,
+                    MAX_FILES_BYTES, MAX_FILES_COUNT,
+                )
+            except QuotaError as err:
+                _LOGGER.warning("House Plan upload refused: %s", err.detail)
+                return web.json_response({"error": err.reason, "detail": err.detail}, status=507)
+            except OSError:
+                pass
             target_dir = files_root / marker_id
             safe_name = filename
 

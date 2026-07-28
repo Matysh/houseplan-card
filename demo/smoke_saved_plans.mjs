@@ -56,9 +56,16 @@ const res = await page.evaluate(async () => {
   out.listClosed = !c._spaceDialog.pickSaved;
   out.saveEnabledAfterPick = !sr().querySelector('.dialog .btn.on[disabled]');
 
-  // удаление: занятый нельзя, свободный можно
+  // выбранный в этом же диалоге удалить нельзя: сохранение записало бы ссылку
+  // на несуществующий файл (HP-1470-02)
   await c._toggleServerPlans();
   await new Promise((r) => setTimeout(r, 60));
+  await c.updateComplete;
+  const rows2 = [...sr().querySelectorAll('.savedplan')];
+  const picked = rows2.find((r) => r.textContent.includes('f1.aaa.png'));
+  out.deleteDisabledForPicked = !!picked?.querySelector('.btn.danger[disabled]');
+  c._spaceDialog = { ...c._spaceDialog, planUrl: null };
+  await c.updateComplete;
   await c._deleteServerPlan('f2.bbb.png').catch(() => {});
   out.usedNotDeleted = !deleted.includes('f2.bbb.png');
   await c._deleteServerPlan('f1.aaa.png');
@@ -78,6 +85,7 @@ checkAll(res, {
   picked: true,
   listClosed: true,
   saveEnabledAfterPick: true,
+  deleteDisabledForPicked: true,
   usedNotDeleted: true,
   freeDeleted: true,
   rowGone: true,

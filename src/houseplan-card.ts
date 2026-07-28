@@ -33,10 +33,10 @@ import type {
 import './editor';
 import './space-card';
 import { cardStyles } from './styles';
-import { fitInSquare } from './space-geometry';
+import { fitInSquare, contentBounds } from './space-geometry';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.48.0';
+const CARD_VERSION = '1.49.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -164,13 +164,34 @@ class HouseplanCard extends LitElement {
   }
 
   /** Kiosk auto-carousel: advance to the next space every `cycle` seconds. */
+  /**
+   * Which way the plan should fly out when the space changes. Empty means no
+   * animation — a direct pick from the tabs should not slide anywhere.
+   */
+  private _slide: '' | 'left' | 'right' = '';
+  private _slideTimer?: number;
+
+  /** Change the space with the usual sideways transition. */
+  private _slideTo(id: string, dir: 'left' | 'right'): void {
+    if (id === this._space) return;
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    this._space = id;
+    this._selId = null;
+    this._restoreZoom();
+    if (reduce) return;
+    this._slide = dir;
+    clearTimeout(this._slideTimer);
+    // long enough to be read as motion, short enough not to be in the way
+    this._slideTimer = window.setTimeout(() => { this._slide = ''; this.requestUpdate(); }, 260);
+    this.requestUpdate();
+  }
+
   private _cycleTick(): void {
     if (!this._kiosk || !(Number(this._config?.cycle) > 0)) return;
     if (Date.now() >= this._cyclePausedUntil && this._model.length > 1 && this._zoom <= 1.001) {
       const ids = this._model.map((m) => m.id);
       const i = ids.indexOf(this._space);
-      this._space = ids[(i + 1) % ids.length];
-      this._restoreZoom();
+      this._slideTo(ids[(i + 1) % ids.length], 'left');
       this._showKioskDots();
     }
   }
@@ -404,6 +425,7 @@ class HouseplanCard extends LitElement {
     clearTimeout(this._reloadRetry);
     this._signer.dispose();
     clearTimeout(this._toastTimer);
+    clearTimeout(this._slideTimer);
     this._saveConfigDebounced.flush(); // never leave an edit unsent on teardown
     window.removeEventListener('hashchange', this._onHashChange);
     clearTimeout(this._holdTimer);
@@ -1006,7 +1028,7 @@ class HouseplanCard extends LitElement {
     this.requestUpdate();
   }
 
-  /** Curation + light groups + overrides + virtual devices. */
+  /** Filtering + light groups + overrides + virtual devices. */
   private get _markers(): Marker[] {
     return this._serverCfg?.markers || [];
   }
@@ -1204,10 +1226,23 @@ class HouseplanCard extends LitElement {
     return this.renderRoot.querySelector('.stage') as HTMLElement | null;
   }
 
+  /**
+   * The rectangle "fit to screen" fits. With a background image that is the
+   * whole canvas — the image IS the plan. Without one it is what has been
+   * drawn, plus a small margin, so a single room on a big canvas fills the
+   * screen instead of sitting in it as a speck.
+   */
+  private _baseVb(): number[] {
+    const m = this._spaceModel();
+    if (m.bg) return m.vb;
+    const b = contentBounds(m);
+    return b ? [b.x, b.y, b.w, b.h] : m.vb;
+  }
+
   /** Aspect ratio of the scene (width/height, px). */
   private _stageAspect(): number {
     const s = this._stageEl;
-    const vb = this._spaceModel().vb;
+    const vb = this._baseVb();
     return s && s.clientHeight ? s.clientWidth / s.clientHeight : vb[2] / vb[3];
   }
 
@@ -1219,7 +1254,7 @@ class HouseplanCard extends LitElement {
   /** Screen (sx,sy relative to the scene, px) → vb coordinates per the current view. */
   private _screenToVb(sx: number, sy: number): number[] {
     const s = this._stageEl;
-    const v = this._viewOr(this._spaceModel().vb);
+    const v = this._viewOr(this._baseVb());
     const w = s?.clientWidth || 1, h = s?.clientHeight || 1;
     return [v.x + (sx / w) * v.w, v.y + (sy / h) * v.h];
   }
@@ -1239,7 +1274,7 @@ class HouseplanCard extends LitElement {
 
   /** Set the zoom (centered on vb point cx,cy, or on the center of the current view). */
   private _applyView(zoom: number, cx?: number, cy?: number): void {
-    const vb = this._spaceModel().vb;
+    const vb = this._baseVb();
     const fit = fitView(vb, this._stageAspect());
     const z = Math.min(8, Math.max(1, zoom));
     const w = fit.w / z, h = fit.h / z;
@@ -1262,7 +1297,7 @@ class HouseplanCard extends LitElement {
   private _zoomAt(sx: number, sy: number, newZoom: number): void {
     const stage = this._stageEl;
     if (!stage) return;
-    const vb = this._spaceModel().vb;
+    const vb = this._baseVb();
     const fit = fitView(vb, this._stageAspect());
     const z = Math.min(8, Math.max(1, newZoom));
     const w = stage.clientWidth, h = stage.clientHeight;
@@ -1290,7 +1325,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _resetZoom(): void {
-    const vb = this._spaceModel().vb;
+    const vb = this._baseVb();
     this._zoom = 1;
     this._view = fitView(vb, this._stageAspect());
     this._saveZoom();
@@ -1313,7 +1348,7 @@ class HouseplanCard extends LitElement {
     this._view = null;
     requestAnimationFrame(() => {
       if (!this._stageEl) return;
-      const vb = this._spaceModel().vb;
+      const vb = this._baseVb();
       this._applyView(z, vb[0] + vb[2] / 2, vb[1] + vb[3] / 2);
       this.requestUpdate();
     });
@@ -1342,7 +1377,7 @@ class HouseplanCard extends LitElement {
     if (this._mode === 'devices' && (ev.target as HTMLElement).closest('.dev')) return;
     if (this._mode === 'decor' && this._decorPointerDown(ev)) return;
     this._pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
-    const v = this._viewOr(this._spaceModel().vb);
+    const v = this._viewOr(this._baseVb());
     if (this._pointers.size === 1) {
       this._panStart = { sx: ev.clientX, sy: ev.clientY, vx: v.x, vy: v.y };
       this._suppressClick = false;
@@ -1388,7 +1423,7 @@ class HouseplanCard extends LitElement {
       if (this._zoom > 1 && this._view) {
         const stage = this._stageEl!;
         const v = this._view;
-        const fit = fitView(this._spaceModel().vb, this._stageAspect());
+        const fit = fitView(this._baseVb(), this._stageAspect());
         this._view = this._clampView(
           {
             x: this._panStart.vx - (ddx / stage.clientWidth) * v.w,
@@ -1418,9 +1453,9 @@ class HouseplanCard extends LitElement {
         }
         const target = swipeTarget(dx, dy, this._zoom, this._model.map((m) => m.id), this._space);
         if (target) {
-          this._space = target;
-          this._selId = null;
-          this._restoreZoom();
+          // the plan follows the finger: swiping left brings the next one in
+          // from the right, so the current one leaves to the left
+          this._slideTo(target, dx < 0 ? 'left' : 'right');
           this._saveNav();
           this._suppressClick = true;
           setTimeout(() => (this._suppressClick = false), 0);
@@ -1475,7 +1510,7 @@ class HouseplanCard extends LitElement {
     if (!this._drag || this._drag.id !== d.id) return;
     const stage = this.renderRoot.querySelector('.stage') as HTMLElement;
     if (!stage) return;
-    const vb = this._spaceModel().vb;
+    const vb = this._baseVb();
     const rect = stage.getBoundingClientRect();
     const v = this._viewOr(vb);
     const dx = ((ev.clientX - this._drag.sx) / rect.width) * v.w;
@@ -3094,22 +3129,41 @@ class HouseplanCard extends LitElement {
   private _useServerPlan(url: string): void {
     const d = this._spaceDialog;
     if (!d) return;
-    // the aspect ratio is read from the image itself, exactly as on upload
-    const img = new Image();
-    img.onload = () => {
-      const cur = this._spaceDialog;
-      if (!cur) return;
-      const ratio = img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : 1.414;
-      this._spaceDialog = {
-        ...cur, planUrl: url, planFile: null, pickSaved: false,
-        savedAspect: Number.isFinite(ratio) && ratio > 0 ? ratio : 1.414,
-      };
-    };
-    img.onerror = () => {
-      const cur = this._spaceDialog;
-      if (cur) this._spaceDialog = { ...cur, planUrl: url, planFile: null, pickSaved: false, savedAspect: 1.414 };
-    };
-    img.src = this._display(url);
+    // Attach immediately — the click should not wait for anything.
+    this._spaceDialog = { ...d, planUrl: url, planFile: null, pickSaved: false };
+    void this._readPlanAspect(url);
+  }
+
+  /**
+   * Read a stored plan's proportions from the image itself.
+   *
+   * The content endpoint needs a signature, and `_display()` deliberately
+   * returns nothing until one arrives. Loading too early therefore failed and
+   * an earlier version treated that as "unknown ratio" and saved a fallback of
+   * 1.414 — a square plan came out stretched (HP-1470-03). So wait for the
+   * signature, and bind the result to THIS dialog and THIS url, or a late
+   * answer would reshape whatever the user opened next.
+   */
+  private async _readPlanAspect(url: string): Promise<void> {
+    for (let i = 0; i < 40; i++) {           // ~6 s, then give up quietly
+      const src = this._display(url);
+      if (src) {
+        const ratio = await new Promise<number>((res) => {
+          const img = new Image();
+          img.onload = () => res(img.naturalWidth && img.naturalHeight
+            ? img.naturalWidth / img.naturalHeight : 0);
+          img.onerror = () => res(0);
+          img.src = src;
+        });
+        const cur = this._spaceDialog;
+        if (cur && cur.planUrl === url && Number.isFinite(ratio) && ratio > 0) {
+          this._spaceDialog = { ...cur, savedAspect: ratio };
+        }
+        return;
+      }
+      await new Promise((r) => setTimeout(r, 150));
+      if (this._spaceDialog?.planUrl !== url) return;   // the user moved on
+    }
   }
 
   private async _deleteServerPlan(name: string): Promise<void> {
@@ -3131,7 +3185,7 @@ class HouseplanCard extends LitElement {
     return html`<div class="savedplans">
       ${list.map((p) => html`
         <div class="savedplan ${p.url === d.planUrl ? 'cur' : ''}">
-          <img src=${this._display(p.url)} alt="" />
+          <img src=${this._display(p.url)} alt="" loading="lazy" decoding="async" />
           <div class="savedmeta">
             <b>${p.name}</b>
             <span class="muted">${kb(p.size)}${p.used_by.length
@@ -3140,8 +3194,9 @@ class HouseplanCard extends LitElement {
           </div>
           <button class="btn ghost" @click=${() => this._useServerPlan(p.url)}
             ?disabled=${p.url === d.planUrl}>${this._t('btn.use')}</button>
-          <button class="btn ghost danger" title=${p.used_by.length ? this._t('space.in_use') : this._t('btn.delete')}
-            ?disabled=${p.used_by.length > 0}
+          <button class="btn ghost danger"
+            title=${p.used_by.length || p.url === d.planUrl ? this._t('space.in_use') : this._t('btn.delete')}
+            ?disabled=${p.used_by.length > 0 || p.url === d.planUrl}
             @click=${() => this._deleteServerPlan(p.name)}>
             <ha-icon icon="mdi:trash-can-outline"></ha-icon>
           </button>
@@ -3830,7 +3885,7 @@ class HouseplanCard extends LitElement {
           @pointermove=${(e: PointerEvent) => this._stagePointerMove(e)}
           @pointerup=${(e: PointerEvent) => this._stagePointerUp(e)}
           @pointercancel=${(e: PointerEvent) => this._stagePointerUp(e)}>
-          <div class="zoomwrap">
+          <div class="zoomwrap ${this._slide ? 'slide-' + this._slide : ''}">
           <svg viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="xMidYMid meet">
             ${this._editing ? this._renderMarkupDefs(vb) : nothing}
             ${this._editing && !this._markup
@@ -5220,7 +5275,7 @@ class HouseplanCard extends LitElement {
                 ${d.planFile
                   ? html`<span class="planname">${d.planFile.name}</span>`
                   : d.planUrl
-                    ? html`<img class="planprev" src=${d.planUrl} alt=${this._t('space.plan_alt')} />`
+                    ? html`<img class="planprev" src=${this._display(d.planUrl)} alt=${this._t('space.plan_alt')} />`
                     : html`<span class="planname muted">${this._t('space.no_plan')}</span>`}
                 <label class="btn filebtn">
                   <ha-icon icon="mdi:upload"></ha-icon>${d.planUrl || d.planFile ? this._t('btn.replace') : this._t('btn.upload')}

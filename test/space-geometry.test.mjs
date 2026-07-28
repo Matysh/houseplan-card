@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  NORM_W, spaceModels, roomBounds, roomCenter, defaultPositions, markerPos, labelPos, fitInSquare,
+  NORM_W, spaceModels, roomBounds, roomCenter, defaultPositions, markerPos, labelPos, fitInSquare, contentBounds,
 } from '../test-build/space-geometry.js';
 
 const cfg = {
@@ -83,3 +83,26 @@ test('defaultPositions: several devices in one room are spread (declumped, disti
 });
 
 test('NORM_W is 1000', () => assert.equal(NORM_W, 1000));
+
+test('contentBounds: fits what is drawn, with a 5% margin', () => {
+  const one = spaceModels({ spaces: [{
+    id: 's', view_box: [0, 0, 1, 1],
+    rooms: [{ id: 'r', poly: [[0.4, 0.4], [0.6, 0.4], [0.6, 0.6], [0.4, 0.6]] }],
+  }], markers: [] })[0];
+  // 200x200 render units in the middle of a 1000x1000 canvas, +5% of 200 each side
+  assert.deepEqual(contentBounds(one), { x: 390, y: 390, w: 220, h: 220 });
+
+  // rectangles count too, and the margin follows the LARGER side
+  const rect = spaceModels({ spaces: [{
+    id: 's', view_box: [0, 0, 1, 1],
+    rooms: [{ id: 'r', x: 0.1, y: 0.4, w: 0.6, h: 0.1 }],
+  }], markers: [] })[0];
+  const b = contentBounds(rect);
+  assert.equal(Math.round(b.w), 660);   // 600 + 2 * 5% of 600
+  assert.equal(Math.round(b.h), 160);   // 100 + the same absolute margin
+  assert.equal(Math.round(b.x), 70);
+
+  // nothing drawn → the caller keeps the whole canvas
+  const empty = spaceModels({ spaces: [{ id: 's', view_box: [0, 0, 1, 1], rooms: [] }], markers: [] })[0];
+  assert.equal(contentBounds(empty), null);
+});
