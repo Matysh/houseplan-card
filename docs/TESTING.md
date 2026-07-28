@@ -239,6 +239,12 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       on the plan after a reload. Same for each tap action and each fill mode
       [auto: backend test_every_display_mode_the_editor_offers_is_accepted and
       neighbours, test_a_marker_showing_its_value_can_be_saved]
+- [ ] Re-attaching a detached plan (v1.47.0): detach a plan, save, RELOAD THE
+      PAGE, open space settings → "Already uploaded" → the image is listed with
+      its size and no "in use" note → attach it → it renders. The one a space
+      uses shows that space and cannot be deleted; a free one can, with a
+      confirm, and disappears from the list
+      [auto: smoke_saved_plans + backend test_stored_plans_can_be_listed_and_deleted_on_request]
 - [ ] Detaching a plan keeps the file (v1.46.6): switch a space to "draw" and
       SAVE — the image is still in `config/houseplan/plans/` right afterwards,
       and after a restart, and can be re-attached. Deleting the space keeps it

@@ -1112,3 +1112,50 @@ async def test_detaching_a_plan_keeps_the_file(
     await _save(client, await _cfg([]), rev)
     await hass.async_block_till_done()
     assert await hass.async_add_executor_job(os.path.isfile, os.path.join(plans, name2))
+
+
+async def test_stored_plans_can_be_listed_and_deleted_on_request(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """HP-1466-01/-02: "we never delete" needs the files to be findable.
+
+    A detached plan stays on disk. Without a way to see it, that is neither a
+    recovery path nor a disk policy — it is just accumulation. Listing gives
+    both: the user attaches it again, or deletes it on purpose, which is the
+    only way a plan file is ever removed.
+    """
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+
+    used_url, used = await _upload(client, "p1", b"USED", ext="png")
+    _free_url, free = await _upload(client, "p2", b"FREE", ext="png")
+    rev = (await _save(client, await _cfg([{"id": "p1", "plan_url": used_url}]), 0))["result"]["rev"]
+
+    await client.send_json_auto_id({"type": "houseplan/plans/list"})
+    plans = {p["name"]: p for p in (await client.receive_json())["result"]["plans"]}
+    assert set(plans) == {used, free}
+    assert plans[used]["used_by"] and not plans[free]["used_by"]
+    assert plans[used]["size"] == 4 and plans[free]["url"].endswith(free)
+
+    # a plan a space still uses is refused — the config decides, not the client
+    await client.send_json_auto_id({"type": "houseplan/plans/delete", "name": used})
+    resp = await client.receive_json()
+    assert not resp["success"] and resp["error"]["code"] == "in_use"
+
+    # an unused one goes on request
+    await client.send_json_auto_id({"type": "houseplan/plans/delete", "name": free})
+    assert (await client.receive_json())["result"]["removed"] is True
+
+    # detach the other, and now it is deletable — and listed as free until then
+    await _save(client, await _cfg([{"id": "p1", "plan_url": None}]), rev)
+    await client.send_json_auto_id({"type": "houseplan/plans/list"})
+    plans = {p["name"]: p for p in (await client.receive_json())["result"]["plans"]}
+    assert list(plans) == [used], "the detached plan is still there, ready to re-attach"
+    assert not plans[used]["used_by"]
+
+    # nothing outside the plans folder can be reached through the name
+    await client.send_json_auto_id(
+        {"type": "houseplan/plans/delete", "name": "../../configuration.yaml"}
+    )
+    bad = await client.receive_json()
+    assert not bad["success"] and bad["error"]["code"] == "invalid_name"

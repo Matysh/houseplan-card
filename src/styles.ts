@@ -1062,6 +1062,40 @@ export const cardStyles = css`
       align-items: center;
       gap: 10px;
     }
+    /* the "already uploaded" picker: a plan is never deleted for being
+       unreferenced, so it has to be findable again */
+    .savedplans {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 240px;
+      overflow: auto;
+      margin: 6px 0 2px;
+      padding: 6px;
+      border: 1px solid var(--hp-line);
+      border-radius: 8px;
+      background: var(--hp-bg2, rgba(255, 255, 255, 0.03));
+    }
+    .savedplan {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .savedplan.cur { outline: 1px solid var(--hp-accent); border-radius: 6px; }
+    .savedplan img {
+      width: 56px;
+      height: 40px;
+      object-fit: contain;
+      border: 1px solid var(--hp-line);
+      border-radius: 4px;
+      background: #fff;
+      flex: none;
+    }
+    .savedmeta { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+    .savedmeta b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .savedmeta .muted { font-size: 11px; }
+    .savedplan .btn.danger ha-icon { color: #f25a4a; }
+    .savedplan .btn[disabled] { opacity: 0.4; pointer-events: none; }
     .planprev {
       max-width: 120px;
       max-height: 70px;

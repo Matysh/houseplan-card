@@ -328,5 +328,15 @@
   "marker.is_light": "This device is a light source",
   "marker.is_light_tip": "Makes the icon glow in the “Light sources” fill even without a light entity — for a smart switch driving ordinary fixtures. The glow follows the switch (or the lights bound above).",
   "confirm.unlock": "Unlock “{name}”?",
-  "toast.files_migrate_failed": "Attachments could not be moved to the new binding, links keep pointing at the old files: {err}"
+  "toast.files_migrate_failed": "Attachments could not be moved to the new binding, links keep pointing at the old files: {err}",
+  "space.pick_saved": "Already uploaded",
+  "space.pick_saved_hint": "Plans stored on the server, including ones you detached earlier",
+  "space.no_saved": "No plans stored on the server yet.",
+  "space.loading": "Loading…",
+  "space.used_by": "in use: {list}",
+  "space.in_use": "A space still uses this plan — detach it first",
+  "btn.use": "Use",
+  "confirm.delete_plan": "Delete the plan file \"{name}\" from the server? This cannot be undone.",
+  "toast.plans_list_failed": "Could not list the stored plans: {err}",
+  "toast.plan_delete_failed": "Could not delete the plan: {err}"
 }
