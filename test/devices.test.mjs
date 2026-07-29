@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildDevices, lightGroups, primaryEntity, lqiFor, tempFor, humFor, areaLights, areaTemp, areaHum, areaLightStats, sourceValue , areaClimate, areaClimateMap } from '../test-build/devices.js';
+import { buildDevices, lightGroups, primaryEntity, lqiFor, tempFor, humFor, areaLights, areaTemp, areaHum, areaLightStats, sourceValue , areaClimate, areaClimateMap, litLightEntity } from '../test-build/devices.js';
 import { compileIconRules, iconFor } from '../test-build/rules.js';
 
 /** Minimal fake hass around the pieces buildDevices reads. */
@@ -482,4 +482,45 @@ test('areaClimateMap: температура и влажность живут в
     },
   };
   assert.deepEqual(areaClimateMap(hass).get('hall'), { temp: 21.4, hum: 48 });
+});
+
+
+test('primaryEntity: a service switch never beats the visible main function (TRV)', () => {
+  // the owner's radiator heads, verified live: switch outranks climate in the
+  // domain list, and the old inner-tier loop let a CONFIG switch (anti
+  // scaling, child lock) become primary — the icon glowed yellow because
+  // scale protection was on, while the head actually heating stayed dark
+  const hass = {
+    entities: {
+      'climate.trv': {},
+      'sensor.trv_temp': {},
+      'switch.trv_anti_scaling': { entity_category: 'config' },
+      'switch.trv_child_lock': { entity_category: 'config' },
+    },
+    states: {},
+  };
+  assert.equal(
+    primaryEntity(hass, ['switch.trv_anti_scaling', 'switch.trv_child_lock', 'climate.trv', 'sensor.trv_temp'], 'mdi:thermostat'),
+    'climate.trv',
+  );
+  // but a device whose only functional entity IS a switch keeps it
+  const plug = { entities: { 'switch.plug': {}, 'sensor.plug_power': {} }, states: {} };
+  assert.equal(primaryEntity(plug, ['sensor.plug_power', 'switch.plug'], 'mdi:power-socket'), 'switch.plug');
+});
+
+test('litLightEntity: one truth for "this thing is shining"', () => {
+  const hass = { states: {
+    'light.a': { state: 'off' }, 'light.b': { state: 'on' },
+    'switch.wall': { state: 'on' }, 'sensor.x': { state: '5' },
+  } };
+  // a lit light.* anywhere in the device
+  assert.equal(litLightEntity(hass, { entities: ['light.a', 'light.b'] }), 'light.b');
+  assert.equal(litLightEntity(hass, { entities: ['light.a'] }), null);
+  // without the flag a lit switch is NOT a light
+  assert.equal(litLightEntity(hass, { entities: ['switch.wall'] }), null);
+  // with "is a light source" any lit entity counts, controls first
+  assert.equal(
+    litLightEntity(hass, { entities: ['sensor.x'], marker: { is_light: true, controls: ['switch.wall'] } }),
+    'switch.wall',
+  );
 });

@@ -56,14 +56,22 @@ export function primaryEntity(hass: any, entIds: string[], icon: string): string
   const all = entIds
     .map((eid) => ({ eid, reg: hass.entities[eid], st: hass.states[eid] }))
     .filter((e) => e.reg);
-  // Tiers: visible primary entities first, but a HIDDEN light still beats a
-  // visible config switch. Real case: individual lamps folded into a light
-  // group get hidden in the registry — the device's main function is still
-  // the lamp, and tap-toggle must flip IT, not the do-not-disturb switch.
+  // Tiers, in order: functional and visible; functional but hidden (lamps
+  // folded into a light group get hidden in the registry — the device's main
+  // function is still the lamp, and tap-toggle must flip IT, not the
+  // do-not-disturb switch); config/diagnostic but visible; everything.
+  //
+  // The TIER loop is the OUTER one. It used to be inner, which made the
+  // domain priority stronger than visibility — and `switch` outranks
+  // `climate`, so a TRV's primary was whatever service switch the vendor
+  // ships (child lock, anti-scaling): the icon glowed yellow because scale
+  // protection was on, while the head that was actually HEATING stayed dark
+  // (owner's install, verified live 2026-07-29). A service entity must never
+  // beat the device's visible main function.
   const tiers = [
     all.filter((e) => !e.reg.hidden && !e.reg.entity_category),
-    all.filter((e) => !e.reg.hidden),
     all.filter((e) => !e.reg.entity_category),
+    all.filter((e) => !e.reg.hidden),
     all,
   ];
   if (icon === 'mdi:thermometer' || icon === 'mdi:air-filter') {
@@ -72,14 +80,33 @@ export function primaryEntity(hass: any, entIds: string[], icon: string): string
       if (t) return t.eid;
     }
   }
-  for (const dom of DOMAIN_PRIORITY) {
-    for (const tier of tiers) {
+  for (const tier of tiers) {
+    for (const dom of DOMAIN_PRIORITY) {
       const found = tier.find((e) => e.eid.split('.')[0] === dom);
       if (found) return found.eid;
     }
   }
+  // no known domain anywhere — first entity of the best non-empty tier
   for (const tier of tiers) if (tier.length) return tier[0].eid;
   return undefined;
+}
+
+/**
+ * The lit light entity of a device, or null — ONE truth for "this thing is
+ * shining": the glow-mode pool and the yellow icon both ask here, so the
+ * light pool and the icon can never disagree (owner's principle, 2026-07-29).
+ * Normally that is a lit `light.*`; with the "is a light source" flag (a smart
+ * switch driving dumb fixtures) any lit entity counts — the switch itself, or
+ * the lights it controls when they are bound.
+ */
+export function litLightEntity(
+  hass: any, d: { entities: string[]; marker?: { is_light?: boolean | null; controls?: string[] | null } | null },
+): string | null {
+  const forced = d.marker?.is_light === true;
+  const pool = forced
+    ? [...(d.marker?.controls || []), ...d.entities]
+    : d.entities.filter((e) => e.startsWith('light.'));
+  return pool.find((e) => hass.states[e]?.state === 'on') || null;
 }
 
 /** Average zigbee LQI across the device's entities (*_linkquality/*_lqi sensors or an attribute). */

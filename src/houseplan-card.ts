@@ -25,7 +25,7 @@ import {
   DISPLAY_MODES, TAP_ACTIONS, SPACE_FILL_MODES, ROOM_FILL_MODES,
 } from './logic';
 import { ContentSigner } from './signing';
-import { buildDevices, lqiFor, tempFor, humFor, isHumEntity, areaLights, areaTemp, areaHum, areaLightStats, sourceValue, areaClimateMap, type AreaClimate } from './devices';
+import { buildDevices, lqiFor, tempFor, humFor, isHumEntity, areaLights, areaTemp, areaHum, areaLightStats, sourceValue, areaClimateMap, litLightEntity, type AreaClimate } from './devices';
 import type {
   OpeningCfg,
   RoomCfg, SpaceModel, PdfRef, Marker, ServerConfig, DevItem, CardConfig,
@@ -1157,6 +1157,10 @@ class HouseplanCard extends LitElement {
     const controls = (d.marker?.controls || []).filter(isControllable);
     if (controls.length)
       return controls.some((e) => this.hass.states[e]?.state === 'on') ? 'on' : '';
+    // A shining light makes its icon yellow in EVERY fill mode — and it is
+    // the same condition that lights the glow pool, so the pool and the icon
+    // cannot disagree (they used to read different entities).
+    if (litLightEntity(this.hass, d)) return 'on';
     const p = d.primary ? this.hass.states[d.primary] : undefined;
     if (!p) return '';
     if (p.state === 'unavailable') return 'unavail';
@@ -1165,6 +1169,14 @@ class HouseplanCard extends LitElement {
     // TESTING.md edge-case run)
     const dom = d.primary!.split('.')[0];
     if (['light', 'switch', 'fan', 'humidifier'].includes(dom)) return p.state === 'on' ? 'on' : '';
+    if (dom === 'climate') {
+      // yellow = actually working right now ("which radiators are heating"),
+      // not "enabled for the winter": hvac_action when the integration
+      // reports one, the coarser state only as a fallback
+      const act = p.attributes?.hvac_action;
+      if (act != null) return ['heating', 'cooling', 'drying', 'fan'].includes(act) ? 'on' : '';
+      return ['off', 'unknown'].includes(p.state) ? '' : 'on';
+    }
     if (dom === 'cover' || dom === 'valve') return ['open', 'opening'].includes(p.state) ? 'open' : '';
     if (dom === 'lock') return ['unlocked', 'open'].includes(p.state) ? 'open' : '';
     if (dom === 'binary_sensor') {
@@ -3604,11 +3616,8 @@ class HouseplanCard extends LitElement {
       // "is a light source" flag (field request: a smart SWITCH driving dumb
       // fixtures) any lit entity counts — the switch itself, or the lights it
       // controls when they are bound.
-      const forced = d.marker?.is_light === true;
-      const pool = forced
-        ? [...(d.marker?.controls || []), ...d.entities]
-        : d.entities.filter((e) => e.startsWith('light.'));
-      const lightEid = pool.find((e) => this.hass.states[e]?.state === 'on');
+      // the SAME condition that turns the icon yellow (devices.ts)
+      const lightEid = litLightEntity(this.hass, d);
       if (!lightEid) continue;
       const glow = glowColorOf(this.hass.states[lightEid], colors.glow_light.c);
       if (!glow) continue;

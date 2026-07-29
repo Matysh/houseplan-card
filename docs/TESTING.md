@@ -239,6 +239,11 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       on the plan after a reload. Same for each tap action and each fill mode
       [auto: backend test_every_display_mode_the_editor_offers_is_accepted and
       neighbours, test_a_marker_showing_its_value_can_be_saved]
+- [ ] Yellow means working (dev): a TRV whose hvac_action is heating glows
+      yellow; one that is merely enabled (idle) or has a service switch on
+      (anti-scaling, child lock) stays dark; a lit light yellows its icon in
+      every fill mode by the same condition that lights the glow pool
+      [auto: smoke_yellow_principle + unit primaryEntity/litLightEntity]
 - [ ] Editor gestures on touch (dev): in the plan editor on a phone, pinch
       zooms and a moving finger pans; releasing after a gesture does not draw
       a point, a clean tap still does [auto: smoke_editor_gestures]
