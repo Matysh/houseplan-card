@@ -939,7 +939,11 @@ export const cardStyles = css`
       z-index: 2;
     }
     .dev ha-icon {
-      --mdc-icon-size: calc(var(--icon-size, 2.5cqw) * 0.62);
+      /* from --dev-size, NOT --icon-size: the per-device size multiplier must
+         scale the GLYPH with its badge. Pinned to the base size, "make this
+         icon bigger" grew an empty box around a default-size glyph (user
+         report via the owner, 2026-07-29). */
+      --mdc-icon-size: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.62);
       display: flex;
       align-items: center;
       justify-content: center;

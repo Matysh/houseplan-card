@@ -244,6 +244,9 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       at 70% of a device icon and zooming WITH the plan; the small metric rows
       under the room name now show in the plan editor too
       [auto: smoke_room_cards gearDetached/plainInPlan]
+- [ ] Icon size multiplier scales the glyph (dev): set a marker's size to 3 —
+      the icon inside grows with the badge instead of staying default
+      [auto: smoke_icon_scale]
 - [ ] Auto-grid parity (v1.51.2, HP-1511-01): with an empty layout, a visible
       device among hidden ones sits at the same spot on both cards
       [auto: smoke_hidden_flag autoGridParity]
