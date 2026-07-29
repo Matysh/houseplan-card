@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.52.0 — 2026-07-29
+
+**One look for light sources, whatever flipped them** (owner's rule)
+
+- **A lamp's colour lives only in its glow.** The RGB tint of the icon,
+  border and shadow is gone: depending on whether the state carried colour
+  data, the same lamp used to land in the "coloured icon on a dark badge" or
+  the "plain yellow badge" branch — turning one lamp off by tap and the rest
+  by the wall switch produced visibly different results. The branch is gone.
+- **In glow fill the indicator IS the glow spot.** A light source's badge
+  stays standard, lit or not — the pool of light around it says everything.
+  A lit socket, fan or kettle keeps its yellow even in glow fill: they cast
+  no light, the rule is for sources only.
+- **In every other fill a lit source is plain yellow**, like a heating
+  radiator valve — RGB and white lamps alike.
+- Icon morphing (the shining-bulb outline) stays in every mode, and the
+  ripple colour still falls back to the lamp's light colour.
+
 ## v1.51.3 — 2026-07-29
 
 - **The icon size multiplier scales the glyph, not just the badge.** Changing

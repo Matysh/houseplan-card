@@ -36,7 +36,7 @@ import { cardStyles } from './styles';
 import { fitInSquare, contentBounds, spaceModels } from './space-geometry';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.51.3';
+const CARD_VERSION = '1.52.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -4152,7 +4152,7 @@ class HouseplanCard extends LitElement {
             ${this._renderOpenings(disp)}
           </svg>
           <div class="devlayer" style="--icon-size:${((iconPct * vb[2] * (this._kiosk ? this._kioskScale.icon : 1)) / view.w).toFixed(3)}cqw;--rl-font:${this._kiosk ? this._kioskScale.font : 1}">
-            ${devs.map((d) => this._renderDevice(d, view, showLqi))}
+            ${devs.map((d) => this._renderDevice(d, view, showLqi, disp.fill === 'glow'))}
             ${this._renderOpeningLocks(view)}
             ${disp.showNames || this._markup
               ? space.rooms.map((r) => this._renderRoomLabel(r, space, view, disp))
@@ -4202,7 +4202,7 @@ class HouseplanCard extends LitElement {
     `;
   }
 
-  private _renderDevice(d: DevItem, view: { x: number; y: number; w: number; h: number }, showLqi = true): TemplateResult {
+  private _renderDevice(d: DevItem, view: { x: number; y: number; w: number; h: number }, showLqi = true, glowFill = false): TemplateResult {
     const p = this._pos(d);
     const left = ((p.x - view.x) / view.w) * 100;
     const top = ((p.y - view.y) / view.h) * 100;
@@ -4210,7 +4210,13 @@ class HouseplanCard extends LitElement {
     // and no live numbers either (HP-1510-02): no value text, no temperature,
     // no humidity, no LQI badge, no state-morphed icon. The base icon and the
     // name stay — enough to recognise the device and open its dialog.
-    const cls = d.hidden ? '' : this._stateClass(d);
+    // The owner's rule for LIGHT SOURCES (2026-07-29): in glow fill the
+    // indicator IS the glow spot — the badge stays standard, on or off; in
+    // every other fill a lit source goes plain yellow like a heating TRV.
+    // "Source" is exactly the litLightEntity condition that casts the spot,
+    // so a lit socket or fan keeps its yellow even in glow fill.
+    let cls = d.hidden ? '' : this._stateClass(d);
+    if (glowFill && cls === 'on' && litLightEntity(this.hass, d)) cls = '';
     const temp = d.hidden ? null : this._liveTemp(d);
     const hum = d.hidden ? null : this._liveHum(d);
     const lqi = showLqi && !d.virtual && !d.hidden ? lqiFor(this.hass, d.entities) : null;
@@ -4256,9 +4262,9 @@ class HouseplanCard extends LitElement {
       if (m?.ripple_color) st.push(`--ripple-color:${m.ripple_color}`);
       else if (lightC) st.push(`--ripple-color:${lightC}`);
     }
-    if (lightC) st.push(`--light-color:${lightC}`);
+
     return html`<div
-      class="dev ${cls} ${this._selId === d.id ? 'sel' : ''} ${d.virtual ? 'virtual' : ''} ${d.hidden ? 'ghost' : ''} ${disp === 'ripple' && !d.hidden ? 'noicon' : ''} ${valText != null ? 'valonly' : ''} ${lightC ? 'rgb' : ''} ${alarm ? 'alarm' : ''}"
+      class="dev ${cls} ${this._selId === d.id ? 'sel' : ''} ${d.virtual ? 'virtual' : ''} ${d.hidden ? 'ghost' : ''} ${disp === 'ripple' && !d.hidden ? 'noicon' : ''} ${valText != null ? 'valonly' : ''} ${alarm ? 'alarm' : ''}"
       style="${st.join(';')}"
       @click=${(e: MouseEvent) => this._clickDevice(e, d)}
       @contextmenu=${(e: MouseEvent) => this._ctxDevice(e, d)}

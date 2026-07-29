@@ -876,13 +876,9 @@ export const cardStyles = css`
       white-space: nowrap;
     }
     /* RGB lights: the bulb takes the light's actual color */
-    .dev.rgb ha-icon { color: var(--light-color); }
-    .dev.rgb.on {
-      box-shadow: 0 0 10px var(--light-color);
-      border-color: var(--light-color);
-      background: var(--hp-bg);
-      color: var(--light-color);
-    }
+    /* v1.52.0: the RGB tint of the icon/border is gone — a lamp's colour
+       lives ONLY in its glow spot (owner's rule). The ripple-color fallback
+       keeps using the light colour; that is set inline via --ripple-color. */
     /* alarms pulse red over everything */
     .dev.alarm::after {
       content: '';
