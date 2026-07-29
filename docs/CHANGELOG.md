@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.52.1 — 2026-07-29
+
+**From the v1.52.0 review**
+
+- **A lit lamp always has exactly one indicator (HP-1520-01).** The glow
+  layer is hidden in the plan editor, but the yellow suppression still
+  applied there — a lit lamp showed neither the spot nor the badge. The
+  suppression gate now equals the layer's actual visibility: wherever the
+  spot is not drawn, the yellow badge returns.
+- **The static card honours a marker's size and rotation (HP-1513-01).** The
+  same stored marker rendered at base size, unrotated, on the read-only
+  card. It now mirrors the full card's --dev-scale and angle — geometry
+  only, still a schematic.
+- Documentation caught up with the v1.52.0 colour contract (HP-1520-02):
+  the RGB-tint expectations in TESTING/UX-MODES and a stale inline comment.
+
 ## v1.52.0 — 2026-07-29
 
 **One look for light sources, whatever flipped them** (owner's rule)

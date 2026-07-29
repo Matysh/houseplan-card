@@ -121,8 +121,15 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     const p = markerPos(d, o.layout, o.cfg, defPos, space);
     const left = ((p.x - vb[0]) / vb[2]) * 100;
     const top = ((p.y - vb[1]) / vb[3]) * 100;
-    return html`<div class="dev ${d.virtual ? 'virtual' : ''}" style="left:${left}%;top:${top}%">
-      <ha-icon icon="${d.icon}"></ha-icon>
+    // per-marker size and rotation, exactly as on the full card (HP-1513-01):
+    // the same stored marker must look the same on both cards. Geometry only —
+    // no live-state dressing here, the static card stays a schematic.
+    const scale = Number(d.marker?.size) > 0 ? Number(d.marker!.size) : 1;
+    const angle = Number(d.marker?.angle) || 0;
+    const st = [`left:${left}%`, `top:${top}%`];
+    if (scale !== 1) st.push(`--dev-scale:${scale}`);
+    return html`<div class="dev ${d.virtual ? 'virtual' : ''}" style="${st.join(';')}">
+      <ha-icon icon="${d.icon}" style=${angle ? `transform:rotate(${angle}deg)` : nothing}></ha-icon>
     </div>`;
   });
 
