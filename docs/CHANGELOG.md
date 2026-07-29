@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.51.2 — 2026-07-29
+
+**From the v1.51.1 review**
+
+- **The auto grid is the same on both cards (HP-1511-01).** The full card
+  reserves grid cells for hidden devices (their ghosts keep a place in the
+  device editor); the static card compacted the grid over visible ones only,
+  so a freshly discovered marker with no saved position landed in different
+  spots on the two cards. The static card now feeds the full roster to the
+  same grid and still draws only the visible.
+- **A ripple-display ghost keeps its base icon (HP-1511-02).** Hidden markers
+  with the "ripple" presentation rendered as an icon-less inactive pulse —
+  unrecognisable in the editor. A ghost now drops the display dressing
+  entirely: base icon and name, whatever the display mode.
+
 ## v1.51.1 — 2026-07-29
 
 **From the v1.51.0 review**

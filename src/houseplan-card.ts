@@ -36,7 +36,7 @@ import { cardStyles } from './styles';
 import { fitInSquare, contentBounds, spaceModels } from './space-geometry';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.51.1';
+const CARD_VERSION = '1.51.2';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -4216,7 +4216,10 @@ class HouseplanCard extends LitElement {
     const lqi = showLqi && !d.virtual && !d.hidden ? lqiFor(this.hass, d.entities) : null;
     const m = d.marker;
     const disp = m?.display || 'badge';
-    const ripple = disp === 'ripple' || disp === 'icon_ripple';
+    // a ghost drops the ripple presentation entirely (HP-1511-02): an
+    // icon-less pulse is unrecognisable, and the release contract says a
+    // ghost keeps the base icon and name — display modes are status dressing
+    const ripple = (disp === 'ripple' || disp === 'icon_ripple') && !d.hidden;
     // value-only display: the measurement IS the marker
     const primarySt = d.primary ? this.hass.states[d.primary] : undefined;
     const valText = disp === 'value' && !d.hidden
@@ -4255,7 +4258,7 @@ class HouseplanCard extends LitElement {
     }
     if (lightC) st.push(`--light-color:${lightC}`);
     return html`<div
-      class="dev ${cls} ${this._selId === d.id ? 'sel' : ''} ${d.virtual ? 'virtual' : ''} ${d.hidden ? 'ghost' : ''} ${disp === 'ripple' ? 'noicon' : ''} ${valText != null ? 'valonly' : ''} ${lightC ? 'rgb' : ''} ${alarm ? 'alarm' : ''}"
+      class="dev ${cls} ${this._selId === d.id ? 'sel' : ''} ${d.virtual ? 'virtual' : ''} ${d.hidden ? 'ghost' : ''} ${disp === 'ripple' && !d.hidden ? 'noicon' : ''} ${valText != null ? 'valonly' : ''} ${lightC ? 'rgb' : ''} ${alarm ? 'alarm' : ''}"
       style="${st.join(';')}"
       @click=${(e: MouseEvent) => this._clickDevice(e, d)}
       @contextmenu=${(e: MouseEvent) => this._ctxDevice(e, d)}
@@ -4274,7 +4277,7 @@ class HouseplanCard extends LitElement {
       ${this._newIds.has(d.id) ? html`<span class="newdot" title=${this._t('device.new')}></span>` : nothing}
       ${valText != null
         ? html`<span class="valtext">${valText}</span>`
-        : disp !== 'ripple'
+        : disp !== 'ripple' || d.hidden
           ? html`<ha-icon icon="${icon}" style=${angle ? `transform:rotate(${angle}deg)` : nothing}></ha-icon>`
           : nothing}
       ${temp != null && valText == null ? html`<span class="tval">${temp}°</span>` : nothing}
