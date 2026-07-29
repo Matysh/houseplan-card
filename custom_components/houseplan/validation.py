@@ -269,7 +269,12 @@ MARKER_SCHEMA = vol.Schema(
         vol.Optional("model"): _TEXT_OR_NONE,
         vol.Optional("link"): vol.Any(None, _URL),
         vol.Optional("description"): vol.Any(None, vol.All(str, vol.Length(max=MAX_DESCRIPTION))),
-        vol.Optional("tap_action"): vol.Any("info", "more-info", "toggle", None),
+        vol.Optional("tap_action"): vol.Any("info", "more-info", "toggle", "run", None),
+        # the 'run' target: only the runnable domains, nothing else is callable
+        vol.Optional("tap_target"): vol.Any(
+            None, vol.All(str, vol.Length(max=MAX_TEXT), vol.Match(r"^(automation|script|scene)\.[A-Za-z0-9_]+$"))
+        ),
+        vol.Optional("tap_confirm"): vol.Any(bool, None),
         vol.Optional("controls"): vol.Any(None, vol.All([_TEXT], vol.Length(max=MAX_CONTROLS))),
         vol.Optional("glow_radius_cm"): vol.Any(vol.All(vol.Coerce(float), vol.Range(min=10, max=10000)), None),
         vol.Optional("is_light"): vol.Any(bool, None),

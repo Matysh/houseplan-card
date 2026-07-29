@@ -252,6 +252,15 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       [auto: smoke_light_badges]
 - [ ] Size/angle parity (v1.52.1, HP-1513-01): a marker with size 3 / angle 37
       scales x3 and rotates on BOTH cards [auto: smoke_size_angle_parity]
+- [ ] Tap runs an automation (dev, owner's spec 2026-07-29): the tap-action
+      list has "Run automation/script/scene" with a searchable picker; saving
+      without a target is refused; the confirm checkbox guards toggle AND run
+      (our dialog, Esc/cancel = no call); automation.trigger / script.turn_on /
+      scene.turn_on per domain; a deleted target toasts and calls nothing;
+      covers/valves joined the card-wide toggle EXCEPT garage/door/gate
+      device classes (explicit per-device toggle still works for them)
+      [auto: smoke_tap_run + unit resolveTapAction/runServiceFor + backend
+      test_run_target_is_bounded_to_runnable_domains]
 - [ ] Light-source badges (v1.52.0): in glow fill a lit lamp's badge stays
       standard (the spot is the indicator) and a lit socket stays yellow; in
       other fills a lit lamp is plain yellow with no RGB tint; morphing and

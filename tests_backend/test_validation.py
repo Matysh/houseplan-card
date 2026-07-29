@@ -390,6 +390,16 @@ def test_every_display_mode_the_editor_offers_is_accepted():
         v.MARKER_SCHEMA(_marker(display="wat"))
 
 
+def test_run_target_is_bounded_to_runnable_domains():
+    """Owner's spec 2026-07-29: a tap may RUN automations, scripts and scenes —
+    and nothing else. The target rides the marker, so the schema is the door."""
+    for ok in ("automation.morning", "script.curtains", "scene.movie"):
+        v.MARKER_SCHEMA(_marker(tap_action="run", tap_target=ok, tap_confirm=True))
+    for bad in ("light.lamp", "lock.front_door", "shell_command.rm", "automation.", "x"):
+        with pytest.raises(vol.Invalid):
+            v.MARKER_SCHEMA(_marker(tap_action="run", tap_target=bad))
+
+
 def test_every_tap_action_the_editor_offers_is_accepted():
     for action in _ts_list("TAP_ACTIONS"):
         v.MARKER_SCHEMA(_marker(tap_action=action))

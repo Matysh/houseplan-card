@@ -596,7 +596,7 @@ export function safeUrl(url: string | null | undefined): string | null {
 
 // ---------------- tap actions ----------------
 
-export type TapAction = 'info' | 'more-info' | 'toggle';
+export type TapAction = 'info' | 'more-info' | 'toggle' | 'run';
 
 /** Domains a card-wide `tap_action: toggle` may toggle (accidental-tap safe). */
 /**
@@ -615,12 +615,12 @@ export type TapAction = 'info' | 'more-info' | 'toggle';
  * Adding an option here and forgetting the schema now fails the test suite.
  */
 export const DISPLAY_MODES = ['badge', 'ripple', 'icon_ripple', 'value'] as const;
-export const TAP_ACTIONS = ['info', 'more-info', 'toggle'] as const;
+export const TAP_ACTIONS = ['info', 'more-info', 'toggle', 'run'] as const;
 /** Space-level fill: 'glow' is a whole-space light model, not a per-room one. */
 export const SPACE_FILL_MODES = ['none', 'lqi', 'light', 'temp', 'glow'] as const;
 export const ROOM_FILL_MODES = ['none', 'lqi', 'light', 'temp'] as const;
 
-export const TOGGLE_SAFE_DOMAINS = new Set(['light', 'switch', 'fan', 'humidifier']);
+export const TOGGLE_SAFE_DOMAINS = new Set(['light', 'switch', 'fan', 'humidifier', 'cover', 'valve']);
 
 /**
  * Domains that must NEVER toggle from a plan tap, even with an explicit
@@ -637,10 +637,16 @@ export const TOGGLE_FORBIDDEN_DOMAINS = new Set(['lock', 'alarm_control_panel'])
  * TOGGLE_SAFE_DOMAINS; an explicit per-device toggle affects any domain
  * except TOGGLE_FORBIDDEN_DOMAINS. Everything else falls back to 'info'.
  */
+/** Cover classes that stay OUT of the card-wide toggle: an accidental tap
+ *  opening the garage or the driveway gate is a security matter, like locks.
+ *  An explicit per-device toggle remains the owner's conscious choice. */
+export const COVER_GUARDED_CLASSES = new Set(['garage', 'door', 'gate']);
+
 export function resolveTapAction(
   explicit: string | null | undefined,
   cardDefault: string | null | undefined,
   domain: string | null | undefined,
+  deviceClass?: string | null,
 ): TapAction {
   // Pure light sources (the device's PRIMARY function is a lamp: bulbs,
   // chandeliers, night lights, light groups) toggle by default — no explicit
@@ -648,10 +654,30 @@ export function resolveTapAction(
   // backlight) have a non-light primary and keep the info default.
   const want = explicit || cardDefault || (domain === 'light' ? 'toggle' : 'info');
   if (want === 'more-info') return 'more-info';
+  // 'run' is EXPLICIT-only by construction: it needs a per-marker target, so
+  // it can never arrive as a card-wide default
+  if (want === 'run') return explicit === 'run' ? 'run' : 'info';
   if (want !== 'toggle') return 'info';
   if (!domain || TOGGLE_FORBIDDEN_DOMAINS.has(domain)) return 'info';
   if (explicit === 'toggle') return 'toggle';
-  return TOGGLE_SAFE_DOMAINS.has(domain) ? 'toggle' : 'info';
+  if (!TOGGLE_SAFE_DOMAINS.has(domain)) return 'info';
+  // covers joined the safe set for curtains and blinds (owner, 2026-07-29) —
+  // but the garage door is a cover too, and it stays shut on a default tap
+  if (domain === 'cover' && COVER_GUARDED_CLASSES.has(String(deviceClass || ''))) return 'info';
+  return 'toggle';
+}
+
+/** Domains a tap may RUN (owner's spec 2026-07-29): the runnable units of
+ *  HA. An automation is triggered, a script and a scene are turned on. */
+export const RUN_TARGET_DOMAINS = ['automation', 'script', 'scene'] as const;
+
+/** Service to start a runnable target, or null when the id is not runnable. */
+export function runServiceFor(target: string | null | undefined): { domain: string; service: string } | null {
+  const dom = String(target || '').split('.')[0];
+  if (dom === 'automation') return { domain: 'automation', service: 'trigger' };
+  if (dom === 'script') return { domain: 'script', service: 'turn_on' };
+  if (dom === 'scene') return { domain: 'scene', service: 'turn_on' };
+  return null;
 }
 
 // ---------------- floors import ----------------

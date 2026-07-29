@@ -51,6 +51,10 @@ export interface Marker {
   description?: string | null;
   pdfs?: PdfRef[];
   tap_action?: string | null; // per-device override: 'info' | 'more-info' | 'toggle'
+  /** 'run' target: automation./script./scene. entity id. */
+  tap_target?: string | null;
+  /** Ask before toggle/run — accidental-tap guard (owner's spec). */
+  tap_confirm?: boolean | null;
   room_id?: string | null; // manual placement into a room WITHOUT an HA area (sub-area rooms)
   display?: 'badge' | 'ripple' | 'icon_ripple' | 'value' | null; // how the device is drawn
   ripple_color?: string | null;
