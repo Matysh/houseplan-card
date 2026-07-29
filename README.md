@@ -75,6 +75,11 @@ Key advantages in short:
 - **Automatic device placement.** Outline a room and bind it to a Home Assistant area — the devices of that area appear on the plan by themselves.
 - **Manual additions of your own.** Any device, group or even a "virtual" point can be placed on the plan manually, with a name, icon, model, link and an attached PDF manual.
 - **Live states.** Temperature, Zigbee signal strength, on/off, open/closed — everything updates in real time.
+  Icon colors follow one principle — **yellow means the device is doing its main job right now**:
+  a light is shining, a socket is powering, a fan is spinning, media is playing, a vacuum is
+  cleaning, a radiator valve is actually heating (not merely enabled). Orange = open / unlocked.
+  A pulsing red ring = an emergency (leak, smoke, gas). RGB bulbs color their icon with the real
+  light color. A translucent icon = unavailable. Dark = idle.
 - **Crisp zoom.** Zooming in does not "blur" the picture: the plan, labels and icons remain vector-sharp at any scale.
 
 ---

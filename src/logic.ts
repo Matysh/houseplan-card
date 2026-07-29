@@ -238,6 +238,74 @@ export function segmentsProperlyCross(
  * triangle centroid of consecutive vertices — the first point that passes
  * pointStrictlyInside wins.
  */
+/**
+ * The visual centre of a polygon: the centre of the largest inscribed circle
+ * (pole of inaccessibility). `interiorPoint` only promises "inside", and for
+ * an L-shaped room it lands near the seam — the owner's kitchen-living room
+ * got its settings button visibly off-centre (2026-07-29). Grid search with
+ * one refinement pass; exact enough for a button, cheap enough to cache.
+ */
+export function poleOfInaccessibility(poly: number[][], steps = 24): number[] {
+  const xs = poly.map((p) => p[0]);
+  const ys = poly.map((p) => p[1]);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const span = Math.max(maxX - minX, maxY - minY) || 1;
+  // Area centroid (shoelace-weighted). Clearance alone has a PLATEAU on any
+  // elongated room — every point of the long midline fits the same circle —
+  // and a plain argmax took the first plateau point: left of centre on the
+  // owner's kitchen, above centre in the sauna. A soft pull toward the
+  // centroid breaks the tie along the plateau without ever dragging the
+  // point into a thinner limb (clearance differences dominate the score).
+  let a2 = 0, cx = 0, cy = 0;
+  for (let i = 0; i < poly.length; i++) {
+    const p = poly[i], q = poly[(i + 1) % poly.length];
+    const cross = p[0] * q[1] - q[0] * p[1];
+    a2 += cross;
+    cx += (p[0] + q[0]) * cross;
+    cy += (p[1] + q[1]) * cross;
+  }
+  const centroid = Math.abs(a2) > 1e-9
+    ? [cx / (3 * a2), cy / (3 * a2)]
+    : [(minX + maxX) / 2, (minY + maxY) / 2];
+  const clearance = (x: number, y: number): number => {
+    if (!pointInPolygon([x, y], poly)) return -Infinity;
+    let d = Infinity;
+    for (let i = 0; i < poly.length; i++) {
+      const a = poly[i], b = poly[(i + 1) % poly.length];
+      d = Math.min(d, distToSegment([x, y], [a[0], a[1], b[0], b[1]]));
+    }
+    return d;
+  };
+  const score = (x: number, y: number): number => {
+    const d = clearance(x, y);
+    if (d === -Infinity) return d;
+    return d - 0.08 * Math.hypot(x - centroid[0], y - centroid[1]) - 0.0001 * span;
+  };
+  let best: number[] | null = null;
+  let bestS = -Infinity;
+  for (let i = 1; i < steps; i++) {
+    for (let j = 1; j < steps; j++) {
+      const x = minX + ((maxX - minX) * i) / steps;
+      const y = minY + ((maxY - minY) * j) / steps;
+      const sc = score(x, y);
+      if (sc > bestS) { bestS = sc; best = [x, y]; }
+    }
+  }
+  if (best) {
+    const [bx, by] = best;
+    const cw = (maxX - minX) / steps, ch = (maxY - minY) / steps;
+    for (let i = -4; i <= 4; i++) {
+      for (let j = -4; j <= 4; j++) {
+        const x = bx + (cw * i) / 4, y = by + (ch * j) / 4;
+        const sc = score(x, y);
+        if (sc > bestS) { bestS = sc; best = [x, y]; }
+      }
+    }
+  }
+  return best || interiorPoint(poly) || poly[0];
+}
+
 export function interiorPoint(poly: number[][], eps = 1e-6): number[] | null {
   if (!poly || poly.length < 3) return null;
   const n = poly.length;

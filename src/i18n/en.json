@@ -21,7 +21,7 @@
   "title.zoom_out": "Zoom out",
   "title.zoom_reset": "Reset zoom",
   "title.add_device": "Add a device to the plan",
-  "title.show_all": "Show all area devices (no filtering)",
+  "title.show_all": "Show hidden devices (ghosted, this tab only)",
   "title.markup": "Room markup: grid, lines, outlines",
   "title.configure_space": "Configure space",
   "title.add_space": "Add space",
@@ -244,7 +244,7 @@
   "opening.lock_pending": "Working…",
   "title.close_editor": "Close editor (back to view)",
   "devbar.add": "Add",
-  "devbar.show_all": "Show all",
+  "devbar.show_all": "Show hidden",
   "devbar.rules": "Icon rules",
   "space.roomcard_section": "Room card shows:",
   "space.label_temp": "Temperature",
@@ -338,5 +338,7 @@
   "btn.use": "Use",
   "confirm.delete_plan": "Delete the plan file \"{name}\" from the server? This cannot be undone.",
   "toast.plans_list_failed": "Could not list the stored plans: {err}",
-  "toast.plan_delete_failed": "Could not delete the plan: {err}"
+  "toast.plan_delete_failed": "Could not delete the plan: {err}",
+  "marker.hide": "Hide device from plan",
+  "marker.hide_tip": "The device is not drawn on the plan but still counts toward the room signal. To see it: the \"Show hidden\" button in the device editor."
 }

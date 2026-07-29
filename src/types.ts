@@ -90,7 +90,9 @@ export interface ServerConfig {
   settings: {
     exclude_integrations?: string[];
     group_lights?: boolean;
-    show_all?: boolean;
+    show_all?: boolean; // legacy: removed when the config is materialised
+  /** The filter flags are materialised into markers (docs/FILTERING.md). */
+  filter_seeded?: boolean;
     icon_rules?: { pattern: string; icon: string }[];
   };
 }
@@ -101,6 +103,9 @@ export interface DevItem {
   model: string;
   area: string;
   space: string;
+  /** "Hide from plan": built (so room LQI still counts it) but not rendered,
+   *  except ghosted in the device editor with "show hidden" on. */
+  hidden?: boolean;
   icon: string;
   entities: string[];
   primary?: string;

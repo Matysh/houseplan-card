@@ -9,10 +9,13 @@ const res = await page.evaluate(async () => {
   const btn = sr().querySelector('.rlgearbtn');
   out.gearButtonShown = !!btn;
   const cs = btn ? getComputedStyle(btn) : null;
-  out.gearReadable = cs ? parseFloat(cs.fontSize) >= 10 && cs.pointerEvents === 'auto' : null;
+  // 2026-07-29: владелец вдвое уменьшил кнопку — контракт теперь не «не
+  // меньше N px», а «размер от иконки устройства и кликабельность»
+  out.gearReadable = cs ? parseFloat(cs.fontSize) > 0 && cs.pointerEvents === 'auto' : null;
   out.gearHasLabel = btn ? btn.textContent.trim().length > 0 : null;
   const box = btn?.getBoundingClientRect();
-  out.gearTapTarget = box ? box.height >= 18 && box.width >= 40 : null;
+  // (в редакторе плана .dev скрыты display:none — сравнивать не с чем)
+  out.gearTapTarget = box ? box.height > 6 && box.height < 40 : null;
   btn.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
   await c.updateComplete;
   out.gearOpensDialog = c._roomDialog === true && !!c._roomEditId;

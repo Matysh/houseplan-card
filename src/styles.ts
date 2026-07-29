@@ -403,31 +403,37 @@ export const cardStyles = css`
        and the metrics hang below as absolutes — the name renders in exactly
        the same place in view mode and in the plan editor (owner's request),
        and the button sits at the very bottom of the card. */
+    /* Standalone, centred on the room, sized from the device icon: icon-size
+       already rescales with the view, so the button zooms WITH the plan
+       instead of keeping a constant screen size (owner's spec). */
     .rlgearbtn {
+      --gear-h: calc(var(--icon-size, 2.5cqw) * 0.77); /* owner: half the previous size */
       position: absolute;
-      top: calc(100% + 0.35em);
-      left: 50%;
-      transform: translateX(-50%);
+      /* dead-centred on the room, both axes (owner's spec) */
+      transform: translate(-50%, -50%);
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      padding: 3px 8px;
+      gap: 0.35em;
+      height: var(--gear-h);
+      padding: 0 calc(var(--gear-h) * 0.38);
       border: 0;
       border-radius: 999px;
       background: var(--hp-accent);
       color: var(--text-primary-color, #fff);
       font: inherit;
-      font-size: 11px;
+      font-size: calc(var(--gear-h) * 0.42);
       font-weight: 600;
       line-height: 1;
+      white-space: nowrap;
       cursor: pointer;
       pointer-events: auto;
       opacity: 0.92;
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+      z-index: 2;
     }
     .rlgearbtn { transition: opacity 0.15s, filter 0.15s; }
     .rlgearbtn:hover { opacity: 1; filter: brightness(1.18); }
-    .rlgearbtn ha-icon { --mdc-icon-size: 14px; display: inline-flex; }
+    .rlgearbtn ha-icon { --mdc-icon-size: calc(var(--gear-h) * 0.55); display: inline-flex; }
     .rlgear {
       --mdc-icon-size: 0.9em;
       display: inline-flex;
@@ -962,6 +968,20 @@ export const cardStyles = css`
     }
     .dev.virtual {
       border-style: dashed;
+    }
+    /* "hide from plan" flag, shown only in the device editor with the
+       "show hidden devices" toggle on (docs/FILTERING.md). BLUE, so a hidden
+       device cannot be mistaken for an unavailable one (translucent dark) —
+       and no live-state paint at all: a ghost is configuration, not status
+       (owner's request). */
+    .dev.ghost {
+      opacity: 0.6;
+      border-style: dashed;
+      border-color: var(--hp-accent);
+      background: rgba(62, 166, 255, 0.22); /* fallback for old WebViews */
+      background: color-mix(in srgb, var(--hp-accent) 30%, var(--card-background-color, #1c2530));
+      color: var(--hp-accent);
+      box-shadow: none;
     }
     .dev.sel {
       border-color: #ffc14d;

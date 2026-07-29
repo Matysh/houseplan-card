@@ -15,7 +15,7 @@ import {
   lqiColor, snapToGrid, samePoint, pointInPolygon, markerIdForBinding,
   segmentCm, formatLength, roomEdges, roomPoly, pointStrictlyInside, roomsOverlap,
   pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, openZoneOf, distToSegment, outlineWithout, cutSegments, alignGuides, segmentAngle, is45, type AlignGuide, swipeTarget, clampScale, migratePdfUrls, roomFillModeOf, contentUrl,
-  snapToWall, openingAmount,
+  snapToWall, openingAmount, interiorPoint, poleOfInaccessibility,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
   stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, glowColorOf, doorSector, hasRoomBehind, controlsAction, isControllable,
   spaceDisplayOf, roomFillStyle, fillColorsOf, DEFAULT_FILL_COLORS, type FillColors,
@@ -25,7 +25,7 @@ import {
   DISPLAY_MODES, TAP_ACTIONS, SPACE_FILL_MODES, ROOM_FILL_MODES,
 } from './logic';
 import { ContentSigner } from './signing';
-import { buildDevices, lqiFor, tempFor, humFor, isHumEntity, areaLights, areaTemp, areaHum, areaLightStats, sourceValue, areaClimateMap, type AreaClimate } from './devices';
+import { buildDevices, seedHiddenBindings, lqiFor, tempFor, humFor, isHumEntity, areaLights, areaTemp, areaHum, areaLightStats, sourceValue, areaClimateMap, litLightEntity, type AreaClimate } from './devices';
 import type {
   OpeningCfg,
   RoomCfg, SpaceModel, PdfRef, Marker, ServerConfig, DevItem, CardConfig,
@@ -36,7 +36,7 @@ import { cardStyles } from './styles';
 import { fitInSquare, contentBounds, spaceModels } from './space-geometry';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.50.4';
+const CARD_VERSION = '1.51.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -293,7 +293,8 @@ class HouseplanCard extends LitElement {
     link: string;
     description: string;
     pdfs: PdfRef[];
-    room: string;        // 'space#area' for a virtual one
+    room: string;
+    hideFromPlan: boolean;        // 'space#area' for a virtual one
     busy: boolean;
   } | null = null;
   private _spaceDialog: {
@@ -671,13 +672,67 @@ class HouseplanCard extends LitElement {
     return this._serverCfg?.settings || {};
   }
 
+  /** LOCAL editor tool (docs/FILTERING.md): show the hidden devices ghosted.
+   *  The old toggle wrote settings.show_all — shared state that flipped the
+   *  plan for every wall tablet at once. Legacy configs still honour it
+   *  through buildDevices until they are seeded. */
+  private _showHidden = false;
+
   private get _showAll(): boolean {
-    return !!this._settings.show_all;
+    return this._settings.filter_seeded ? this._showHidden : !!this._settings.show_all;
   }
 
   private _toggleShowAll(): void {
     if (!this._serverCfg) return;
-    this._serverCfg = { ...this._serverCfg, settings: { ...this._serverCfg.settings, show_all: !this._showAll } };
+    if (this._settings.filter_seeded) {
+      this._showHidden = !this._showHidden;
+      this.requestUpdate();
+      return;
+    }
+    // legacy config: the old shared behaviour until an editor materialises it
+    this._serverCfg = { ...this._serverCfg, settings: { ...this._serverCfg.settings, show_all: !this._settings.show_all } };
+    this._regSignature = '';
+    this._maybeRebuildDevices();
+    this._saveConfig();
+    this.requestUpdate();
+  }
+
+  /**
+   * The seeder (docs/FILTERING.md): materialise the filter into explicit
+   * hidden flags. Runs after every device rebuild on a client that may write;
+   * idempotent — a device with ANY marker is never revisited, so an unticked
+   * checkbox (a marker with hidden: false) is re-seed protection. Also
+   * removes freshly hidden ids from the red-dot list: a dot on an invisible
+   * device would wait forever.
+   */
+  private _seedHiddenDevices(): void {
+    if (!this._serverCfg || !this._norm || !this._canEdit) return;
+    const cfg = this._serverCfg;
+    const bindings = seedHiddenBindings({
+      hass: this.hass,
+      areaToSpace: Object.fromEntries(
+        Object.entries(this._areaToSpace).map(([a, v]) => [a, v.space]),
+      ),
+      markers: this._markers,
+      settings: this._settings,
+      excluded: this._excluded,
+      firstSpaceId: this._model[0]?.id || '',
+      iconRules: this._iconRules,
+    });
+    if (!bindings.length && cfg.settings?.filter_seeded) return;
+    cfg.markers = cfg.markers || [];
+    const hiddenIds: string[] = [];
+    for (const b of bindings) {
+      const id = 'h' + b.slice(b.indexOf(':') + 1);
+      cfg.markers.push({ id, binding: b, hidden: true });
+      hiddenIds.push(b.slice(b.indexOf(':') + 1));
+    }
+    const st = { ...(cfg.settings || {}), filter_seeded: true } as any;
+    delete st.show_all; // the shared toggle retires with the runtime filter
+    if (hiddenIds.length && Array.isArray(st.new_device_ids)) {
+      st.new_device_ids = st.new_device_ids.filter((x: string) => !hiddenIds.includes(x));
+    }
+    cfg.settings = st;
     this._regSignature = '';
     this._maybeRebuildDevices();
     this._saveConfig();
@@ -1007,6 +1062,7 @@ class HouseplanCard extends LitElement {
     });
     this._defPos = this._defaultPositions();
     this._syncNewDevices();
+    this._seedHiddenDevices();
   }
 
   /**
@@ -1157,6 +1213,10 @@ class HouseplanCard extends LitElement {
     const controls = (d.marker?.controls || []).filter(isControllable);
     if (controls.length)
       return controls.some((e) => this.hass.states[e]?.state === 'on') ? 'on' : '';
+    // A shining light makes its icon yellow in EVERY fill mode — and it is
+    // the same condition that lights the glow pool, so the pool and the icon
+    // cannot disagree (they used to read different entities).
+    if (litLightEntity(this.hass, d)) return 'on';
     const p = d.primary ? this.hass.states[d.primary] : undefined;
     if (!p) return '';
     if (p.state === 'unavailable') return 'unavail';
@@ -1165,6 +1225,14 @@ class HouseplanCard extends LitElement {
     // TESTING.md edge-case run)
     const dom = d.primary!.split('.')[0];
     if (['light', 'switch', 'fan', 'humidifier'].includes(dom)) return p.state === 'on' ? 'on' : '';
+    if (dom === 'climate') {
+      // yellow = actually working right now ("which radiators are heating"),
+      // not "enabled for the winter": hvac_action when the integration
+      // reports one, the coarser state only as a fallback
+      const act = p.attributes?.hvac_action;
+      if (act != null) return ['heating', 'cooling', 'drying', 'fan'].includes(act) ? 'on' : '';
+      return ['off', 'unknown'].includes(p.state) ? '' : 'on';
+    }
     if (dom === 'cover' || dom === 'valve') return ['open', 'opening'].includes(p.state) ? 'open' : '';
     if (dom === 'lock') return ['unlocked', 'open'].includes(p.state) ? 'open' : '';
     if (dom === 'binary_sensor') {
@@ -1416,8 +1484,17 @@ class HouseplanCard extends LitElement {
         clearTimeout(this._kioskHoldTimer);
       }
     }
-    // do not interfere with icon dragging and markup drawing
-    if (this._drag || this._markup) return;
+    // do not interfere with icon and label dragging
+    if (this._drag) return;
+    if (this._markup) {
+      // Drawing is CLICK-based, so gestures coexist with it: a finger that
+      // MOVES pans, two fingers pinch, and _suppressClick keeps the release
+      // from feeding the active tool. The editor used to opt out of gestures
+      // entirely, which left a phone with no way to zoom or pan the plan
+      // (owner's report). Pointers that begin on interactive children still
+      // stay out — labels and handles run their own drags.
+      if ((ev.target as HTMLElement).closest?.('.roomlabel, .rlhandle, .dev, .oplock, .op-hit, button')) return;
+    }
     if (this._mode === 'devices' && (ev.target as HTMLElement).closest('.dev')) return;
     if (this._mode === 'decor' && this._decorPointerDown(ev)) return;
     this._pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
@@ -1447,6 +1524,8 @@ class HouseplanCard extends LitElement {
       return;
     }
     this._pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    // the tool preview (snap dot, measure label) keeps following the finger
+    if (this._markup && this._pointers.size === 1) this._markupMove(ev);
     if (this._pinchStart && this._pointers.size >= 2) {
       const pts = [...this._pointers.values()];
       const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
@@ -1822,6 +1901,8 @@ class HouseplanCard extends LitElement {
 
   private _markupClick(ev: MouseEvent): void {
     if (!this._markup) return;
+    // a pan or pinch just happened — the synthesized click is not a draw
+    if (this._suppressClick) return;
     // Room cards swallow markup clicks: dragging, resizing or just clicking a
     // card must not feed the active tool (draw point, delete room, merge/split
     // pick, opening placement). The drag itself already stops pointer events,
@@ -2728,6 +2809,7 @@ class HouseplanCard extends LitElement {
         room: d.marker?.room_id
           ? d.space + '#@' + d.marker.room_id
           : d.space && d.area ? d.space + '#' + d.area : '',
+        hideFromPlan: d.marker?.hidden === true,
         busy: false,
       };
     } else {
@@ -2737,7 +2819,7 @@ class HouseplanCard extends LitElement {
         display: 'badge', rippleColor: '', rippleSize: 3, size: 1, angle: 0,
         tapAction: '', defaultTap: 'info', controls: [], controlsFilter: '', isLight: false,
         glowRadius: '', model: '',
-        link: '', description: '', pdfs: [], room: '', busy: false,
+        link: '', description: '', pdfs: [], room: '', hideFromPlan: false, busy: false,
         uploadId: 'up_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       };
     }
@@ -2941,6 +3023,10 @@ class HouseplanCard extends LitElement {
         link: dlg.link.trim() || null,
         description: dlg.description.trim() || null,
         pdfs: dlg.pdfs,
+        // Explicit false, not absence: a marker of any kind is what tells the
+        // seeder "the user decided" — unticking must not invite a re-hide
+        // (docs/FILTERING.md).
+        hidden: dlg.hideFromPlan ? true : false,
       };
       // save the room choice (always for virtual ones; for bound ones — if chosen)
       if (dlg.binding === 'virtual' || dlg.room) {
@@ -3587,15 +3673,13 @@ class HouseplanCard extends LitElement {
     const spots: { pos: { x: number; y: number }; c: string; alpha: number; clip: string[] | null; r: number }[] = [];
     for (const d of this._devices) {
       if (d.space !== space.id) continue;
+      if (d.hidden) continue; // an invisible device casts no visible light (docs/FILTERING.md)
       // A light source is normally a device with a lit light.* entity. With the
       // "is a light source" flag (field request: a smart SWITCH driving dumb
       // fixtures) any lit entity counts — the switch itself, or the lights it
       // controls when they are bound.
-      const forced = d.marker?.is_light === true;
-      const pool = forced
-        ? [...(d.marker?.controls || []), ...d.entities]
-        : d.entities.filter((e) => e.startsWith('light.'));
-      const lightEid = pool.find((e) => this.hass.states[e]?.state === 'on');
+      // the SAME condition that turns the icon yellow (devices.ts)
+      const lightEid = litLightEntity(this.hass, d);
       if (!lightEid) continue;
       const glow = glowColorOf(this.hass.states[lightEid], colors.glow_light.c);
       if (!glow) continue;
@@ -3873,7 +3957,11 @@ class HouseplanCard extends LitElement {
     }
     const space = this._spaceModel();
     const vb = space.vb;
-    const devs = this._devices.filter((d) => d.space === space.id);
+    // hidden devices render ONLY in the device editor with "show hidden" on
+    // (ghosted); everywhere else the flag removes them from sight — but not
+    // from the build, so room LQI still counts them (docs/FILTERING.md)
+    const showGhosts = this._mode === 'devices' && this._showAll;
+    const devs = this._devices.filter((d) => d.space === space.id && (!d.hidden || showGhosts));
     const disp = spaceDisplayOf(this._curSpaceCfg);
     const showLqi = disp.showLqi ?? this._config.show_signal ?? true;
     const cfgSize = this._config.icon_size ?? 2.5;
@@ -3932,7 +4020,7 @@ class HouseplanCard extends LitElement {
                 )}
               </div>`
             : nothing}
-          <span class="count">${this._t('count.devices', { n: devs.length })}</span>
+          <span class="count">${this._t('count.devices', { n: devs.filter((d) => !d.hidden).length })}</span>
           <span class="spacer"></span>
           <div class="zoomctl">
             <button class="btn zb" @click=${() => this._stepZoom(-1)} title=${this._t('title.zoom_out')}><ha-icon icon="mdi:minus"></ha-icon></button>
@@ -4069,6 +4157,7 @@ class HouseplanCard extends LitElement {
             ${disp.showNames || this._markup
               ? space.rooms.map((r) => this._renderRoomLabel(r, space, view, disp))
               : nothing}
+            ${this._markup ? space.rooms.map((r) => this._renderRoomGear(r, space, view)) : nothing}
           </div>
           ${this._measureAnchor
             ? html`<div class="measurelayer">${this._renderMeasureLabel(view)}</div>`
@@ -4117,7 +4206,8 @@ class HouseplanCard extends LitElement {
     const p = this._pos(d);
     const left = ((p.x - view.x) / view.w) * 100;
     const top = ((p.y - view.y) / view.h) * 100;
-    const cls = this._stateClass(d);
+    // a ghost is configuration, not status: no yellow, no open, no unavail
+    const cls = d.hidden ? '' : this._stateClass(d);
     const temp = this._liveTemp(d);
     const hum = this._liveHum(d);
     const lqi = showLqi && !d.virtual ? lqiFor(this.hass, d.entities) : null;
@@ -4141,15 +4231,15 @@ class HouseplanCard extends LitElement {
     // RGB lights color the icon (and the ripple, unless a custom ripple color is set);
     // an icon with controlled targets takes the color of its first lit RGB target
     const ctrl = (m?.controls || []).filter(isControllable);
-    const lightC = this._config?.live_states
+    const lightC = this._config?.live_states && !d.hidden
       ? ctrl.length
         ? ctrl.map((e) => lightColorOf(this.hass.states[e])).find((v) => v) || null
         : domain === 'light' ? lightColorOf(primarySt) : null
       : null;
     // emergencies (leak/smoke/gas/CO/siren) pulse red regardless of display mode
-    const alarm = this._config?.live_states
+    const alarm = this._config?.live_states && !d.hidden
       && isAlarmState(domain, primarySt?.attributes?.device_class, primarySt?.state);
-    const active = ripple && !!d.primary && isActiveState(this.hass.states[d.primary]?.state);
+    const active = ripple && !d.hidden && !!d.primary && isActiveState(this.hass.states[d.primary]?.state);
     const scale = Number(m?.size) > 0 ? Number(m!.size) : 1;
     const angle = Number(m?.angle) || 0;
     const rScale = Number(m?.ripple_size) > 0 ? Number(m!.ripple_size) : 3;
@@ -4162,7 +4252,7 @@ class HouseplanCard extends LitElement {
     }
     if (lightC) st.push(`--light-color:${lightC}`);
     return html`<div
-      class="dev ${cls} ${this._selId === d.id ? 'sel' : ''} ${d.virtual ? 'virtual' : ''} ${disp === 'ripple' ? 'noicon' : ''} ${valText != null ? 'valonly' : ''} ${lightC ? 'rgb' : ''} ${alarm ? 'alarm' : ''}"
+      class="dev ${cls} ${this._selId === d.id ? 'sel' : ''} ${d.virtual ? 'virtual' : ''} ${d.hidden ? 'ghost' : ''} ${disp === 'ripple' ? 'noicon' : ''} ${valText != null ? 'valonly' : ''} ${lightC ? 'rgb' : ''} ${alarm ? 'alarm' : ''}"
       style="${st.join(';')}"
       @click=${(e: MouseEvent) => this._clickDevice(e, d)}
       @contextmenu=${(e: MouseEvent) => this._ctxDevice(e, d)}
@@ -4412,6 +4502,37 @@ class HouseplanCard extends LitElement {
     this._persistLayout();
   }
 
+  /** The room-settings button: detached from the (movable) label, always at
+   *  the geometric CENTRE of the room, sized at 70% of a device icon and
+   *  therefore zooming with the plan (owner's spec, 2026-07-29). */
+  private _gearPtCache = new WeakMap<number[][], number[]>();
+
+  private _renderRoomGear(
+    r: RoomCfg, space: SpaceModel, view: { x: number; y: number; w: number; h: number },
+  ): TemplateResult | typeof nothing {
+    if (!r.id) return nothing;
+    let c: number[] | null = null;
+    if (r.poly) {
+      // the VISUAL centre (largest inscribed circle) — interiorPoint only
+      // promises "inside", which sat visibly off-centre on an L-shaped room.
+      // The model is memoized, so the poly array is a stable cache key.
+      c = this._gearPtCache.get(r.poly) || null;
+      if (!c) { c = poleOfInaccessibility(r.poly); this._gearPtCache.set(r.poly, c); }
+    } else if (r.x != null && r.y != null) {
+      c = [r.x + (r.w || 0) / 2, r.y + (r.h || 0) / 2];
+    }
+    if (!c) return nothing;
+    const left = ((c[0] - view.x) / view.w) * 100;
+    const top = ((c[1] - view.y) / view.h) * 100;
+    return html`<button class="rlgearbtn" style="left:${left}%;top:${top}%"
+      title=${this._t('room.settings_title')}
+      @pointerdown=${(e: Event) => e.stopPropagation()}
+      @click=${(e: Event) => { e.stopPropagation(); this._openRoomEdit(r); }}>
+      <ha-icon icon="mdi:cog-outline"></ha-icon>
+      <span class="rlgeartext">${this._t('room.settings_short')}</span>
+    </button>`;
+  }
+
   private _renderRoomLabel(
     r: RoomCfg, space: SpaceModel, view: { x: number; y: number; w: number; h: number }, disp: SpaceDisplay,
   ): TemplateResult | typeof nothing {
@@ -4425,7 +4546,7 @@ class HouseplanCard extends LitElement {
     const k = this._labelScale(r);
     // optional metrics row (needs an HA area; sub-area rooms show the name only)
     const rows: TemplateResult[] = [];
-    if ((r.area || r.settings?.temp_source || r.settings?.hum_source) && !this._markup) {
+    if (r.area || r.settings?.temp_source || r.settings?.hum_source) {
       if (disp.labelTemp) {
         const t = this._roomTemp(r);
         if (t != null) rows.push(html`<span class="rlm"><ha-icon icon="mdi:thermometer"></ha-icon>${t}°</span>`);
@@ -4463,14 +4584,6 @@ class HouseplanCard extends LitElement {
             @pointerdown=${(e: Event) => e.stopPropagation()}></ha-icon>`
         : nothing}</span>
       ${rows.length ? html`<span class="rlmetrics">${rows}</span>` : nothing}
-      ${this._markup && r.id
-        ? html`<button class="rlgearbtn" title=${this._t('room.settings_title')}
-            @pointerdown=${(e: Event) => e.stopPropagation()}
-            @click=${(e: Event) => { e.stopPropagation(); this._openRoomEdit(r); }}>
-            <ha-icon icon="mdi:cog-outline"></ha-icon>
-            <span class="rlgeartext">${this._t('room.settings_short')}</span>
-          </button>`
-        : nothing}
       ${this._mode === 'plan'
         ? ['tl', 'tr', 'bl', 'br'].map(
             (c) => html`<span class="rlhandle ${c}"
@@ -5219,6 +5332,11 @@ class HouseplanCard extends LitElement {
               @change=${(e: Event) => (this._markerDialog = { ...d, isLight: (e.target as HTMLInputElement).checked })} />
             <span>${this._t('marker.is_light')}</span>
           </label>
+          <label class="srcrow" title=${this._t('marker.hide_tip')}>
+            <input type="checkbox" .checked=${d.hideFromPlan}
+              @change=${(e: Event) => (this._markerDialog = { ...d, hideFromPlan: (e.target as HTMLInputElement).checked })} />
+            <span>${this._t('marker.hide')}</span>
+          </label>
           <label>${this._t('marker.glow_radius_label')}</label>
           <div class="colorrow">
             <input class="tempin" type="number" min="0.5" step="0.5"
@@ -5303,7 +5421,7 @@ class HouseplanCard extends LitElement {
           </div>
         </div>
         <div class="row">
-          ${d.devId
+          ${d.devId && d.binding === 'virtual'
             ? html`<button class="btn danger" @click=${this._deleteMarker}>
                 <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.remove')}
               </button>`

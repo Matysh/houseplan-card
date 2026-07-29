@@ -14,6 +14,8 @@ export interface BuildCtx {
   markers: Marker[];
   settings: ServerConfig['settings'];
   excluded: Set<string>;
+  /** LEGACY only: honoured while the config has no settings.filter_seeded.
+   *  Seeded configs hide by explicit marker flags (docs/FILTERING.md). */
   showAll: boolean;
   firstSpaceId: string;
   /** Localized display strings for generated device names. */
@@ -56,14 +58,22 @@ export function primaryEntity(hass: any, entIds: string[], icon: string): string
   const all = entIds
     .map((eid) => ({ eid, reg: hass.entities[eid], st: hass.states[eid] }))
     .filter((e) => e.reg);
-  // Tiers: visible primary entities first, but a HIDDEN light still beats a
-  // visible config switch. Real case: individual lamps folded into a light
-  // group get hidden in the registry — the device's main function is still
-  // the lamp, and tap-toggle must flip IT, not the do-not-disturb switch.
+  // Tiers, in order: functional and visible; functional but hidden (lamps
+  // folded into a light group get hidden in the registry — the device's main
+  // function is still the lamp, and tap-toggle must flip IT, not the
+  // do-not-disturb switch); config/diagnostic but visible; everything.
+  //
+  // The TIER loop is the OUTER one. It used to be inner, which made the
+  // domain priority stronger than visibility — and `switch` outranks
+  // `climate`, so a TRV's primary was whatever service switch the vendor
+  // ships (child lock, anti-scaling): the icon glowed yellow because scale
+  // protection was on, while the head that was actually HEATING stayed dark
+  // (owner's install, verified live 2026-07-29). A service entity must never
+  // beat the device's visible main function.
   const tiers = [
     all.filter((e) => !e.reg.hidden && !e.reg.entity_category),
-    all.filter((e) => !e.reg.hidden),
     all.filter((e) => !e.reg.entity_category),
+    all.filter((e) => !e.reg.hidden),
     all,
   ];
   if (icon === 'mdi:thermometer' || icon === 'mdi:air-filter') {
@@ -72,14 +82,33 @@ export function primaryEntity(hass: any, entIds: string[], icon: string): string
       if (t) return t.eid;
     }
   }
-  for (const dom of DOMAIN_PRIORITY) {
-    for (const tier of tiers) {
+  for (const tier of tiers) {
+    for (const dom of DOMAIN_PRIORITY) {
       const found = tier.find((e) => e.eid.split('.')[0] === dom);
       if (found) return found.eid;
     }
   }
+  // no known domain anywhere — first entity of the best non-empty tier
   for (const tier of tiers) if (tier.length) return tier[0].eid;
   return undefined;
+}
+
+/**
+ * The lit light entity of a device, or null — ONE truth for "this thing is
+ * shining": the glow-mode pool and the yellow icon both ask here, so the
+ * light pool and the icon can never disagree (owner's principle, 2026-07-29).
+ * Normally that is a lit `light.*`; with the "is a light source" flag (a smart
+ * switch driving dumb fixtures) any lit entity counts — the switch itself, or
+ * the lights it controls when they are bound.
+ */
+export function litLightEntity(
+  hass: any, d: { entities: string[]; marker?: { is_light?: boolean | null; controls?: string[] | null } | null },
+): string | null {
+  const forced = d.marker?.is_light === true;
+  const pool = forced
+    ? [...(d.marker?.controls || []), ...d.entities]
+    : d.entities.filter((e) => e.startsWith('light.'));
+  return pool.find((e) => hass.states[e]?.state === 'on') || null;
 }
 
 /** Average zigbee LQI across the device's entities (*_linkquality/*_lqi sensors or an attribute). */
@@ -175,6 +204,7 @@ export function resolveIcon(hass: any, name: string, model: string | undefined, 
 
 function applyMarker(item: DevItem, m: Marker): void {
   item.marker = m;
+  if (m.hidden) item.hidden = true;
   if (m.name) item.name = m.name;
   if (m.icon) item.icon = m.icon;
   if (m.model != null) item.model = m.model;
@@ -182,6 +212,43 @@ function applyMarker(item: DevItem, m: Marker): void {
   item.description = m.description ?? null;
   item.pdfs = m.pdfs || [];
   item.tapAction = m.tap_action ?? null;
+}
+
+/**
+ * The SEEDER (docs/FILTERING.md): bindings of non-physical devices in bound
+ * areas that have no marker yet. The editing client turns each into a
+ * `hidden: true` stub marker — after that the flag belongs to the user, and a
+ * marker of ANY kind (even `hidden: false`) makes the device invisible to
+ * this function forever. Idempotent by construction.
+ */
+export function seedHiddenBindings(ctx: Omit<BuildCtx, 'showAll' | 'loc'>): string[] {
+  const { hass: h, areaToSpace, markers, settings, excluded, iconRules } = ctx;
+  const groupLights = settings.group_lights !== false;
+  const groups = lightGroups(h, groupLights);
+  const groupedAreas = new Set(groups.map((g) => g.area));
+  const entsBy = entitiesByDevice(h);
+  const marked = new Set(markers.map((m) => m.binding));
+  const out: string[] = [];
+  for (const dev of Object.values<any>(h.devices)) {
+    const area = dev.area_id;
+    if (!area || !areaToSpace[area]) continue;
+    if (dev.entry_type === 'service') continue;
+    if (marked.has('device:' + dev.id)) continue;
+    const entIds = entsBy[dev.id] || [];
+    const dom = domainOfDevice(h, dev, entIds);
+    let nonPhysical =
+      excluded.has(dom)
+      || dev.model === 'Group'
+      || /scene/i.test(dev.model || '')
+      || /bridge/i.test((dev.model || '') + (dev.name || ''))
+      || (dom === 'myheat' && !!dev.via_device_id);
+    if (!nonPhysical && groupLights && groupedAreas.has(area)) {
+      const name = (dev.name_by_user || dev.name || '').trim();
+      if (resolveIcon(h, name, dev.model, entIds, iconRules) === 'mdi:lightbulb') nonPhysical = true;
+    }
+    if (nonPhysical) out.push('device:' + dev.id);
+  }
+  return out;
 }
 
 /** Filtering + light groups + markers (metadata/rebinding) + virtual ones. A hybrid. */
@@ -207,11 +274,13 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
     if (dev.entry_type === 'service') continue;
     if (claimed.has('device:' + dev.id)) continue; // a marker will take over below
     const marker = markerFor('device', dev.id);
-    if (marker && marker.hidden) continue;
+    if (marker && marker.hidden && !settings.filter_seeded) continue; // legacy: dropped entirely
     const entIds = entsBy[dev.id] || [];
     const dom = domainOfDevice(h, dev, entIds);
-    // filtering (can be turned off with the “show all” toggle)
-    if (!showAll) {
+    // LEGACY runtime filter: only while the config is not yet materialised
+    // (docs/FILTERING.md). A seeded config hides by explicit marker flags.
+    const legacy = !settings.filter_seeded;
+    if (legacy && !showAll) {
       if (excluded.has(dom)) continue;
       if (dev.model === 'Group') continue;
       if (/scene/i.test(dev.model || '')) continue;
@@ -222,7 +291,7 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
     const key = name + '|' + area;
     let icon = resolveIcon(h, name, dev.model, entIds, iconRules);
     if (entIds.some((e) => e.startsWith('lock.'))) icon = 'mdi:lock';
-    if (!showAll && groupLights && icon === 'mdi:lightbulb' && groupedAreas.has(area)) continue;
+    if (legacy && !showAll && groupLights && icon === 'mdi:lightbulb' && groupedAreas.has(area)) continue;
     // duplicates by “name|zone” are numbered rather than hidden
     seen[key] = (seen[key] || 0) + 1;
     const dispName = seen[key] > 1 ? name + ' ' + seen[key] : name;
@@ -265,7 +334,10 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
 
   // 3) explicit markers (rebinding/metadata/virtual)
   for (const m of markers) {
-    if (m.hidden) continue;
+    // Hidden is a FLAG now, not an absence: the device is built (room LQI
+    // still counts it) and the renderer decides. Legacy configs keep the old
+    // "hidden = gone" until they are seeded (docs/FILTERING.md).
+    if (m.hidden && !settings.filter_seeded) continue;
     const [kind, ref] = m.binding.split(':');
     if (kind === 'device') {
       const dev = h.devices[ref];
@@ -343,10 +415,10 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
  * Light situation of an area: 'on' if any light entity of the area's devices is on,
  * 'off' if lights exist but none is on, 'none' when the area has no lights at all.
  */
-export function areaLights(hass: any, devices: { area: string; entities: string[] }[], area: string): 'on' | 'off' | 'none' {
+export function areaLights(hass: any, devices: { area: string; entities: string[]; hidden?: boolean }[], area: string): 'on' | 'off' | 'none' {
   let seen = false;
   for (const d of devices) {
-    if (d.area !== area) continue;
+    if (d.area !== area || d.hidden) continue; // an invisible device casts no visible light
     for (const eid of d.entities) {
       if (!eid.startsWith('light.')) continue;
       seen = true;
@@ -503,13 +575,13 @@ export function areaClimate(
 /** How many of the area's lights are on: {on, total}, or null without lights. */
 export function areaLightStats(
   hass: any,
-  devices: { area: string; entities: string[] }[],
+  devices: { area: string; entities: string[]; hidden?: boolean }[],
   area: string,
 ): { on: number; total: number } | null {
   const seen = new Set<string>();
   let on = 0;
   for (const dv of devices) {
-    if (dv.area !== area) continue;
+    if (dv.area !== area || dv.hidden) continue; // hidden lights are not part of the picture
     for (const eid of dv.entities) {
       if (!eid.startsWith('light.') || seen.has(eid)) continue;
       seen.add(eid);

@@ -15,8 +15,7 @@ import {
   contentUrl, chunk, referencedContentUrls, MAX_SIGN_PATHS,
   interiorPoint,
   segmentCm, formatLength, roomEdges, roomPoly, pointOnBoundary, pointStrictlyInside, roomsOverlap,
-  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices,
-} from '../test-build/logic.js';
+  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, poleOfInaccessibility } from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
 } from '../test-build/rules.js';
@@ -909,4 +908,31 @@ test('chunk / referencedContentUrls: signing batches and cache pruning (review R
   ]);
   assert.equal(referencedContentUrls(null).size, 0);
   assert.equal(referencedContentUrls({}).size, 0);
+});
+
+
+test('poleOfInaccessibility: the VISUAL centre, not just any interior point', () => {
+  // a square: the pole is the centre
+  const sq = [[0, 0], [10, 0], [10, 10], [0, 10]];
+  const p = poleOfInaccessibility(sq);
+  assert.ok(Math.abs(p[0] - 5) < 0.6 && Math.abs(p[1] - 5) < 0.6);
+
+  // an ELONGATED rectangle: clearance is a plateau along the midline, and a
+  // plain argmax used to take its first point — left of centre on the
+  // owner's kitchen, above centre in the sauna. The centroid pull centres it.
+  const wide = [[0, 0], [30, 0], [30, 10], [0, 10]];
+  const w = poleOfInaccessibility(wide);
+  assert.ok(Math.abs(w[0] - 15) < 1.2 && Math.abs(w[1] - 5) < 1.2, 'centred both axes: ' + w);
+  const tall = [[0, 0], [8, 0], [8, 28], [0, 28]];
+  const tl = poleOfInaccessibility(tall);
+  assert.ok(Math.abs(tl[0] - 4) < 1 && Math.abs(tl[1] - 14) < 1.2, 'sauna case, centred vertically: ' + tl);
+
+  // the owner's kitchen-living room shape: a THICK top slab with a narrower
+  // column hanging off the right side. The button belongs near the middle of
+  // the slab — pulled toward the area centroid, never down the thin column.
+  const L = [[0, 0], [20, 0], [20, 16], [16, 16], [16, 8], [0, 8]];
+  const q = poleOfInaccessibility(L);
+  assert.ok(pointInPolygon(q, L), 'inside, always');
+  assert.ok(q[1] < 8, 'in the thick slab (y < 8), not down the column: ' + q);
+  assert.ok(Math.abs(q[0] - 11.3) < 2.5, 'near the centroid x within the slab: ' + q);
 });

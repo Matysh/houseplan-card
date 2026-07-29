@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildDevices, lightGroups, primaryEntity, lqiFor, tempFor, humFor, areaLights, areaTemp, areaHum, areaLightStats, sourceValue , areaClimate, areaClimateMap } from '../test-build/devices.js';
+import { buildDevices, lightGroups, primaryEntity, lqiFor, tempFor, humFor, areaLights, areaTemp, areaHum, areaLightStats, sourceValue , areaClimate, areaClimateMap, litLightEntity, seedHiddenBindings } from '../test-build/devices.js';
 import { compileIconRules, iconFor } from '../test-build/rules.js';
 
 /** Minimal fake hass around the pieces buildDevices reads. */
@@ -482,4 +482,106 @@ test('areaClimateMap: температура и влажность живут в
     },
   };
   assert.deepEqual(areaClimateMap(hass).get('hall'), { temp: 21.4, hum: 48 });
+});
+
+
+test('primaryEntity: a service switch never beats the visible main function (TRV)', () => {
+  // the owner's radiator heads, verified live: switch outranks climate in the
+  // domain list, and the old inner-tier loop let a CONFIG switch (anti
+  // scaling, child lock) become primary — the icon glowed yellow because
+  // scale protection was on, while the head actually heating stayed dark
+  const hass = {
+    entities: {
+      'climate.trv': {},
+      'sensor.trv_temp': {},
+      'switch.trv_anti_scaling': { entity_category: 'config' },
+      'switch.trv_child_lock': { entity_category: 'config' },
+    },
+    states: {},
+  };
+  assert.equal(
+    primaryEntity(hass, ['switch.trv_anti_scaling', 'switch.trv_child_lock', 'climate.trv', 'sensor.trv_temp'], 'mdi:thermostat'),
+    'climate.trv',
+  );
+  // but a device whose only functional entity IS a switch keeps it
+  const plug = { entities: { 'switch.plug': {}, 'sensor.plug_power': {} }, states: {} };
+  assert.equal(primaryEntity(plug, ['sensor.plug_power', 'switch.plug'], 'mdi:power-socket'), 'switch.plug');
+});
+
+test('litLightEntity: one truth for "this thing is shining"', () => {
+  const hass = { states: {
+    'light.a': { state: 'off' }, 'light.b': { state: 'on' },
+    'switch.wall': { state: 'on' }, 'sensor.x': { state: '5' },
+  } };
+  // a lit light.* anywhere in the device
+  assert.equal(litLightEntity(hass, { entities: ['light.a', 'light.b'] }), 'light.b');
+  assert.equal(litLightEntity(hass, { entities: ['light.a'] }), null);
+  // without the flag a lit switch is NOT a light
+  assert.equal(litLightEntity(hass, { entities: ['switch.wall'] }), null);
+  // with "is a light source" any lit entity counts, controls first
+  assert.equal(
+    litLightEntity(hass, { entities: ['sensor.x'], marker: { is_light: true, controls: ['switch.wall'] } }),
+    'switch.wall',
+  );
+});
+
+
+// ---------- explicit hide-from-plan flags (docs/FILTERING.md) ----------
+
+test('seedHiddenBindings: non-physical devices in bound areas, unmarked only', () => {
+  const h = mkHass({ devices: {
+    lamp: dev('lamp', 'Lamp', 'Bulb', 'living'),
+    bridge: dev('bridge', 'Z2M Bridge', 'Bridge', 'living'),
+    grp: dev('grp', 'All lights', 'Group', 'living'),
+    scn: dev('scn', 'Evening', 'Scene switch', 'living'),
+    faraway: dev('faraway', 'Bridge 2', 'Bridge', 'garage'), // unbound area
+  }});
+  const ctx = { hass: h, areaToSpace: { living: 'f1' }, markers: [], settings: {},
+    excluded: new Set(['hacs']), firstSpaceId: 'f1' };
+  assert.deepEqual(seedHiddenBindings(ctx).sort(), ['device:bridge', 'device:grp', 'device:scn']);
+  // a marker of ANY kind — even hidden: false — is the user's decision
+  const marked = { ...ctx, markers: [
+    { id: 'x', binding: 'device:bridge', hidden: false },
+    { id: 'y', binding: 'device:grp', hidden: true },
+  ] };
+  assert.deepEqual(seedHiddenBindings(marked), ['device:scn'], 'marked devices are never revisited');
+});
+
+test('seeded config: hidden is a flag, not an absence', () => {
+  const h = mkHass({ devices: {
+    lamp: dev('lamp', 'Lamp', 'Bulb', 'living'),
+    plug: dev('plug', 'Plug', 'Socket', 'living'),
+  }});
+  const res = buildDevices(baseCtx(h, {
+    settings: { filter_seeded: true },
+    markers: [{ id: 'hplug', binding: 'device:plug', hidden: true }],
+  }));
+  const plug = res.find((d) => d.bindingRef === 'plug');
+  assert.ok(plug, 'the hidden device is BUILT — room LQI still counts it');
+  assert.equal(plug.hidden, true, 'and flagged for the renderer');
+  assert.ok(!res.find((d) => d.id === 'lamp').hidden);
+});
+
+test('legacy config (no filter_seeded): the runtime filter still applies', () => {
+  const h = mkHass({ devices: {
+    lamp: dev('lamp', 'Lamp', 'Bulb', 'living'),
+    bridge: dev('bridge', 'Hub', 'Bridge', 'living'),
+  }});
+  const res = buildDevices(baseCtx(h));
+  assert.deepEqual(res.map((d) => d.id), ['lamp'], 'a read-only client on an old config sees the old behaviour');
+  // and a hidden marker still removes the device entirely, as before
+  const res2 = buildDevices(baseCtx(h, { markers: [{ id: 'x', binding: 'device:lamp', hidden: true }] }));
+  assert.deepEqual(res2.map((d) => d.id), []);
+});
+
+test('hidden lights cast no visible light, but count toward LQI', () => {
+  const h = mkHass({
+    devices: {},
+    states: { 'light.a': { state: 'on', attributes: {} } },
+  });
+  const devices = [
+    { area: 'living', entities: ['light.a'], hidden: true },
+  ];
+  assert.equal(areaLights(h, devices, 'living'), 'none', 'an invisible device casts no visible light');
+  assert.equal(areaLightStats(h, devices, 'living'), null);
 });

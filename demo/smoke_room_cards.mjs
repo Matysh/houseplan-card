@@ -36,8 +36,14 @@ const res = await page.evaluate(async () => {
   c._setMode('plan'); await c.updateComplete;
   const planLbl = sr().querySelector('.roomlabel');
   out.handlesInPlan = planLbl?.querySelectorAll('.rlhandle').length === 4;
-  // метрики скрыты в редакторе плана (карточка = имя, чтобы не мешать разметке)
-  out.plainInPlan = sr().querySelectorAll('.roomlabel.card').length === 0;
+  // метрики видны и в редакторе плана (решение владельца, 2026-07-29)
+  out.plainInPlan = sr().querySelectorAll('.roomlabel.card').length > 0;
+  // кнопка настроек — отдельно от подписи, в центре комнаты, с размером от иконки
+  out.gearDetached = (() => {
+    const g = sr().querySelector('.rlgearbtn');
+    if (!g || g.closest('.roomlabel')) return false;
+    return getComputedStyle(g).height !== 'auto';
+  })();
   // масштаб: сымитируем resize через прямой вызов
   const room = c._spaceModel().rooms.find((r) => r.name);
   c._rlResize = { id: 'rl_' + room.id, space: spId, k0: 1, cx: 100, cy: 100, d0: 50 };
