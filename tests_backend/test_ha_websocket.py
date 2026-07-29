@@ -1374,3 +1374,46 @@ async def test_geometry_repair_is_explicit_previewable_and_undoable(
     })
     bad = await client.receive_json()
     assert not bad["success"] and bad["error"]["code"] == "no_backup"
+
+
+async def test_a_noop_repair_does_not_eat_the_backup(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """HP-1501-02: a repair that matches nothing used to answer moved: 0 and
+    replace the one-deep backup with an empty one — a typo after a wrong
+    repair destroyed the only way back. Now it is an error, the revision does
+    not move, and the previous repair is still undoable."""
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+
+    await client.send_json_auto_id({
+        "type": "houseplan/layout/set",
+        "layout": {"lamp": {"s": "wide", "x": 0.2, "y": 0.1}},
+    })
+    assert (await client.receive_json())["success"]
+
+    await client.send_json_auto_id({
+        "type": "houseplan/geometry/repair", "space_id": "wide", "aspect": 2.0,
+    })
+    rev = (await client.receive_json())["result"]["rev"]
+
+    # the typo: syntactically valid, matches nothing
+    await client.send_json_auto_id({
+        "type": "houseplan/geometry/repair", "space_id": "wid", "aspect": 2.0,
+    })
+    bad = await client.receive_json()
+    assert not bad["success"] and bad["error"]["code"] == "nothing_to_repair"
+
+    await client.send_json_auto_id({"type": "houseplan/layout/get"})
+    got = (await client.receive_json())["result"]
+    assert got["rev"] == rev, "a refused repair moves nothing, including the revision"
+
+    # the wrong-space repair from before the typo is STILL undoable
+    await client.send_json_auto_id({
+        "type": "houseplan/geometry/repair", "space_id": "wide", "aspect": 2.0, "undo": True,
+    })
+    res = (await client.receive_json())["result"]
+    assert res["restored"] == 1
+    await client.send_json_auto_id({"type": "houseplan/layout/get"})
+    lay = (await client.receive_json())["result"]["layout"]
+    assert lay["lamp"] == {"s": "wide", "x": 0.2, "y": 0.1}

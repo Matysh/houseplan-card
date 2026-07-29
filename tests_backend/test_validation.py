@@ -190,7 +190,7 @@ def test_collection_caps():
 
 def test_finite_on_every_coordinate():
     """audit follow-up B5: NaN/Infinity must be refused everywhere, not only in layout."""
-    base = {"id": "s1", "title": "S", "aspect": 1.0, "view_box": [0, 0, 100, 100], "rooms": []}
+    base = {"id": "s1", "title": "S", "aspect": 1.0, "view_box": [0, 0, 1, 1], "rooms": []}
     # view_box
     with pytest.raises(vol.Invalid):
         v.CONFIG_SCHEMA({"spaces": [{**base, "view_box": [0, 0, "NaN", 100]}]})
@@ -211,13 +211,38 @@ def test_finite_on_every_coordinate():
         {"id": "r", "name": "R", "poly": [[0, 0], [1, 0], [1, 1]]}]}]})
 
 
+def test_geometry_magnitudes_are_bounded():
+    """HP-1501-01: any finite float used to pass, and one schema-valid 1e100
+    room vertex made the space unviewable for every client — the exact failure
+    HP-1500-03 closed for layout positions, one schema over. ±4 is slack for a
+    vertex nudged past an edge, not an envelope for absurdity."""
+    base = {"id": "s1", "title": "S", "view_box": [0, 0, 1, 1], "rooms": []}
+    huge = 1e100
+    for cfg in (
+        {**base, "rooms": [{"id": "r", "name": "R", "poly": [[0, 0], [huge, 0], [1, 1]]}]},
+        {**base, "rooms": [{"id": "r", "name": "R", "poly": [[0, 0], [-huge, 0], [1, 1]]}]},
+        {**base, "rooms": [{"id": "r", "name": "R", "x": huge, "y": 0, "w": 1, "h": 1}]},
+        {**base, "rooms": [{"id": "r", "name": "R", "x": 0, "y": 0, "w": huge, "h": 1}]},
+        {**base, "view_box": [0, 0, huge, 1]},
+        {**base, "openings": [{"id": "o", "type": "door", "x": huge, "y": 0.5,
+                               "angle": 0, "length": 0.1}]},
+        {**base, "openings": [{"id": "o", "type": "door", "x": 0.5, "y": 0.5,
+                               "angle": 1e6, "length": 0.1}]},
+    ):
+        with pytest.raises(vol.Invalid):
+            v.CONFIG_SCHEMA({"spaces": [cfg]})
+    # a vertex a bit past the canvas edge is a drawing, not an attack
+    assert v.CONFIG_SCHEMA({"spaces": [{**base, "rooms": [
+        {"id": "r", "name": "R", "poly": [[-0.2, 0], [1.3, 0], [1, 1]]}]}]})
+
+
 def test_openings_cap_enforced():
     """audit follow-up B5: MAX_OPENINGS was defined but never wired in."""
     many = [{"id": f"o{i}", "type": "door", "x": 0.1, "y": 0.1, "angle": 0, "length": 0.1}
             for i in range(v.MAX_OPENINGS + 1)]
     with pytest.raises(vol.Invalid):
         v.CONFIG_SCHEMA({"spaces": [{"id": "s1", "title": "S", "aspect": 1.0,
-                                     "view_box": [0, 0, 100, 100], "rooms": [],
+                                     "view_box": [0, 0, 1, 1], "rooms": [],
                                      "openings": many}]})
 
 

@@ -144,4 +144,24 @@ test('contentBounds: never degenerate, never unbounded (HP-1500-03)', () => {
   // ...but a device a bit past the canvas edge still counts (the gate sensor)
   const near = contentBounds(room, 0.05, [[1100, 500]]);
   assert.ok(near.x + near.w > 1050, 'slightly outside the canvas still stretches the frame');
+
+  // HP-1501-01: the same envelope guards ROOM GEOMETRY — the server refuses
+  // absurd vertices now, but a store may hold one from before that door
+  // existed, and a legacy 1e100 vertex must not frame the plan into a dot
+  const legacy = spaceModels({ spaces: [{
+    id: 's', view_box: [0, 0, 1, 1],
+    rooms: [
+      { id: 'ok', poly: [[0.4, 0.4], [0.6, 0.4], [0.6, 0.6], [0.4, 0.6]] },
+      { id: 'bad', poly: [[0, 0], [1e100, 0], [1, 1]] },
+    ],
+  }], markers: [] })[0];
+  const lb = contentBounds(legacy);
+  assert.ok(lb.w < 1500 && lb.h < 1500, 'the absurd vertex does not command the frame');
+  assert.ok(lb.x <= 400 && lb.x + lb.w >= 600, 'the sane room is still inside it');
+  // a space where EVERY point is absurd falls back to the whole canvas
+  const allBad = spaceModels({ spaces: [{
+    id: 's', view_box: [0, 0, 1, 1],
+    rooms: [{ id: 'b', poly: [[1e100, 1e100], [2e100, 1e100], [2e100, 2e100]] }],
+  }], markers: [] })[0];
+  assert.equal(contentBounds(allBad), null, 'the caller keeps the full canvas');
 });
