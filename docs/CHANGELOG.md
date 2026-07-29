@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.52.2 — 2026-07-29
+
+**From the v1.52.1 review** (no runtime changes — test and wording quality)
+
+- The plan-editor regression check now targets THE lamp (HP-1521-01): the
+  old assertion accepted any yellow badge, and the lit socket in the same
+  fixture would have satisfied it with the lamp fix removed. Verified by
+  mutation: reverting the v1.52.1 gate makes the smoke fail.
+- The one remaining "yellow in every fill mode" wording — the checklist
+  entry and the _stateClass comment — now states the actual contract: the
+  lit-source state is computed by the glow-pool condition, and the yellow
+  badge shows only where the glow spot is not drawn (HP-1521-02).
+
 ## v1.52.1 — 2026-07-29
 
 **From the v1.52.0 review**

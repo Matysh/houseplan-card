@@ -56,8 +56,11 @@ const out = await page.evaluate(async () => {
   o.devicesEditorLampDark = !!le && !le.classList.contains('on');
   o.devicesEditorHasGlow = !!sr().querySelector('.stage svg radialGradient, .stage svg [id*=glow]');
   c._setMode('plan'); c.requestUpdate(); await c.updateComplete;
-  const planLamp = [...sr().querySelectorAll('.dev')].find((e) => e.classList.contains('on'));
-  o.planEditorLampYellow = !!planLamp; // слой скрыт — жёлтый вернулся
+  // ИМЕННО лампа (mutation-проверка аудита HP-1521-01: розетка тоже on и
+  // удовлетворяла бы поиску «любой .dev.on», пряча регресс самой лампы)
+  le = devEl('d_lamp');
+  o.planEditorLampYellow = !!le && le.classList.contains('on'); // слой скрыт — жёлтый вернулся
+  o.planEditorKettleStillOn = !!devEl('d_kettle')?.classList.contains('on');
   o.planEditorNoGlow = !sr().querySelector('.stage svg radialGradient, .stage svg [id*=glow]');
   c._setMode('view'); c.requestUpdate(); await c.updateComplete;
 

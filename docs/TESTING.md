@@ -283,9 +283,11 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       [auto: smoke_hidden_flag + unit seedHiddenBindings/seeded/legacy]
 - [ ] Yellow means working (dev): a TRV whose hvac_action is heating glows
       yellow; one that is merely enabled (idle) or has a service switch on
-      (anti-scaling, child lock) stays dark; a lit light yellows its icon in
-      every fill mode by the same condition that lights the glow pool
-      [auto: smoke_yellow_principle + unit primaryEntity/litLightEntity]
+      (anti-scaling, child lock) stays dark; a lit light turns its state on by
+      the same condition that lights the glow pool — and shows the yellow
+      badge only where the glow spot is NOT drawn: with the glow layer
+      visible the spot is the one indicator (v1.52.0)
+      [auto: smoke_yellow_principle + smoke_light_badges]
 - [ ] Editor gestures on touch (dev): in the plan editor on a phone, pinch
       zooms and a moving finger pans; releasing after a gesture does not draw
       a point, a clean tap still does [auto: smoke_editor_gestures]
