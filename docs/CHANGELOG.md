@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.50.4 — 2026-07-29
+
+**From the v1.50.3 review**
+
+- **Both cards build their model with the same code now (HP-1503-01).** The
+  full card carried a hand-copied twin of the shared model builder, and the
+  twin missed the legacy-store fallbacks v1.50.3 added — the same broken
+  store rendered fine in the static card and as a blank `viewBox="0 0 0 0"`
+  in the main one. The duplicate is gone: the full card calls the shared
+  builder and only swaps in the raw plan url its signing flow needs. A new
+  smoke runs the audit's exact legacy vector through both models and both
+  DOM trees and asserts parity.
+
 ## v1.50.3 — 2026-07-29
 
 **From the v1.50.2 review**
