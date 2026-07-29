@@ -917,12 +917,22 @@ test('poleOfInaccessibility: the VISUAL centre, not just any interior point', ()
   const p = poleOfInaccessibility(sq);
   assert.ok(Math.abs(p[0] - 5) < 0.6 && Math.abs(p[1] - 5) < 0.6);
 
+  // an ELONGATED rectangle: clearance is a plateau along the midline, and a
+  // plain argmax used to take its first point — left of centre on the
+  // owner's kitchen, above centre in the sauna. The centroid pull centres it.
+  const wide = [[0, 0], [30, 0], [30, 10], [0, 10]];
+  const w = poleOfInaccessibility(wide);
+  assert.ok(Math.abs(w[0] - 15) < 1.2 && Math.abs(w[1] - 5) < 1.2, 'centred both axes: ' + w);
+  const tall = [[0, 0], [8, 0], [8, 28], [0, 28]];
+  const tl = poleOfInaccessibility(tall);
+  assert.ok(Math.abs(tl[0] - 4) < 1 && Math.abs(tl[1] - 14) < 1.2, 'sauna case, centred vertically: ' + tl);
+
   // the owner's kitchen-living room shape: a THICK top slab with a narrower
-  // column hanging off the right side. The button belongs in the middle of
-  // the slab — the widest open space — not near the seam or down the column.
+  // column hanging off the right side. The button belongs near the middle of
+  // the slab — pulled toward the area centroid, never down the thin column.
   const L = [[0, 0], [20, 0], [20, 16], [16, 16], [16, 8], [0, 8]];
   const q = poleOfInaccessibility(L);
   assert.ok(pointInPolygon(q, L), 'inside, always');
   assert.ok(q[1] < 8, 'in the thick slab (y < 8), not down the column: ' + q);
-  assert.ok(q[0] > 2 && q[0] < 16, 'horizontally inside the slab body: ' + q);
+  assert.ok(Math.abs(q[0] - 11.3) < 2.5, 'near the centroid x within the slab: ' + q);
 });
