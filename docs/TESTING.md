@@ -244,6 +244,11 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       at 70% of a device icon and zooming WITH the plan; the small metric rows
       under the room name now show in the plan editor too
       [auto: smoke_room_cards gearDetached/plainInPlan]
+- [ ] Auto-grid parity (v1.51.2, HP-1511-01): with an empty layout, a visible
+      device among hidden ones sits at the same spot on both cards
+      [auto: smoke_hidden_flag autoGridParity]
+- [ ] Ripple ghost (v1.51.2, HP-1511-02): a hidden ripple-display marker shows
+      its base icon, no pulse [auto: smoke_hidden_flag rippleGhost*]
 - [ ] Hidden LQI parity (v1.51.1, HP-1510-01): a room whose only Zigbee
       devices are hidden paints the same lqi fill on the full and the static
       card [auto: smoke_hidden_flag lqiParity]

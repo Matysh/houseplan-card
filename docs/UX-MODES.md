@@ -59,8 +59,10 @@ Header in View: space tabs, device count, zoom cluster. Nothing else.
 - Icon dragging (ONLY here). Click on a device opens the **edit dialog directly**
   (binding, name, icon, size/angle, display badge/ripple + colors, tap override,
   model/link/description/PDFs, room).
-- + add device/entity/virtual, hide device, ↺ reset layout, 👁 show-all (curation
-  tool), ⬡ icon rules.
+- + add device/entity/virtual, the "Hide device from plan" checkbox (since
+  v1.51.0 the one hiding mechanism, docs/FILTERING.md), ↺ reset layout,
+  👁 "Show hidden" (local editor tool; replaced the shared show-all toggle),
+  ⬡ icon rules.
 
 ## Deprecations decided
 
@@ -85,7 +87,7 @@ Header in View: space tabs, device count, zoom cluster. Nothing else.
   edit interactions/buttons (biggest UX win, smallest surface).
 - **It.2 — Plan tab:** move markup tools + space dialogs + labels drag + openings
   editing under Plan; colored frame indicator.
-- **It.3 — Devices tab:** drag + direct-edit click + curation tools under Devices.
+- **It.3 — Devices tab:** drag + direct-edit click + filtering tools under Devices.
 - **It.4+:** follow-up features 1–5 above, each its own release.
 
 

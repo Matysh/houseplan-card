@@ -11,16 +11,16 @@
 > (versions, publication, infrastructure), DEVELOPMENT.md for new gotchas,
 > ARCHITECTURE.md for design changes, ROADMAP.md when plans move.
 
-## Snapshot (2026-07-28)
+## Snapshot (2026-07-29)
 
 | Item | State |
 |---|---|
-| Version | **v1.51.1** everywhere (manifest, const.py, package.json, CARD_VERSION); deployed to the home instance |
+| Version | **v1.51.2** everywhere (manifest, const.py, package.json, CARD_VERSION); deployed to the home instance |
 | Workflow | Since 2026-07-22: minor changes go to branch **`dev`** (build + smokes → deploy home → commit → push, NO release); releases are batched on the owner's command (merge dev→main, one tag, one release with a summary changelog, CI checked on dev beforehand) |
 | GitHub | https://github.com/Matysh/houseplan-card — **`main` carries every published release, the latest tag is the current version above**; `dev` is where work lands and is merged into `main` at release time (so `dev` is normally equal to or ahead of `main`, never behind). Push via SSH key `ha_jb` (remote git@github.com:…); API releases via the fine-grained PAT in `~/.git-credentials` (Contents R/W, issued 2026-07-23) |
 | CI | validate.yml (hacs + hassfest + frontend + backend) green; release.yml attaches the bundle on release publish |
 | HACS | Custom repository works. **Inclusion PR: hacs/default#9004** — open, valid, labeled; ~864 older open PRs but merge rate ≈180/mo; realistic ETA 1–3 months (checked 2026-07-24) |
-| Home instance | ha.jbstudio.pro (SSH port 323, key `ha_jb`), deployed **v1.51.1** via direct copy (HACS custom repo also installed) |
+| Home instance | ha.jbstudio.pro (SSH port **22222**, key `ha_jb`; HA config root is `/mnt/data/supervisor/homeassistant` — `/config` does NOT exist in this SSH environment), deployed **v1.51.2** via direct copy (HACS custom repo also installed) |
 | Localization | UI en/ru (src/i18n/*.json), everything user-visible localized incl. kiosk popover |
 | Tests | Four layers: frontend unit (`npm test`, node:test over `test-build/`), pure backend (`pytest tests_backend`, runs anywhere), HA-harness backend (same folder, CI only — needs py3.13 + pytest-homeassistant-custom-component), and browser smokes (`demo/smoke_*.mjs`, headless chromium). **Counts are not written down here** — they went stale within two releases while the version line beside them was kept current, which reads as less coverage than exists (review R5-2). Run `npm run inventory` for the current numbers, or read them off the last CI run |
 | Community | **Telegram chat: https://t.me/ha_houseplan** (created 2026-07-27) — the primary user-facing support channel; GitHub issues stay for bugs/features. Link it from any new release notes and posts |
@@ -48,6 +48,24 @@
 - **Dialog UX**: binding radios + entities checkbox + search dropdown
   (v1.38.0); tap actions simplified to Device card / more-info / Toggle,
   right-click → more-info (v1.38.1); Esc closes every dialog (v1.30.4).
+- **Room settings, tier 3** (v1.42.0): per-room fill/temp-source/label sizes;
+  the settings button sits at the room's VISUAL centre (inscribed circle +
+  centroid pull), icon-derived size, zooms with the plan (v1.51.0).
+- **Files & plans** (v1.44–v1.50): signed content urls with sandbox CSP,
+  copy-on-write plan files, "already uploaded" picker + explicit delete
+  (v1.47.0), store quotas instead of any age-based deletion (v1.49.0),
+  nothing is ever deleted on an inference (docs/SCOPE.md rule).
+- **Square canvas** (v1.48.0) with a crash-safe two-store migration
+  (geom_pending, v1.50.0) and an explicit geometry/repair command (v1.50.1);
+  content-fit default zoom with devices as content, zoom out to 0.4×,
+  measured stage height (v1.49–v1.50.2).
+- **Explicit hide flags** (v1.51.0, docs/FILTERING.md): per-device
+  "Hide from plan" checkbox seeded once from the old filter; local
+  "Show hidden" ghosts; hidden counts toward room LQI on both cards, casts
+  no light (v1.51.1).
+- **Yellow = working right now** (v1.51.0): climate by hvac_action, service
+  switches can no longer become primary, glow pool and icon share one
+  condition. Editor gestures on touch (pinch/pan) landed the same release.
 
 ## Recent milestones (details in CHANGELOG.md)
 
@@ -129,8 +147,9 @@
 
 1. **hacs/default PR #9004** — accepted by the bot into the review queue ('New default
    repository' label). Minor issues ⇒ the bot drafts the PR (fix and re-ready).
-2. GitHub PAT `houseplan-card-publish` (repo+workflow) expires ~2026-07-12; in sandbox
-   `~/.git-credentials`. Revoke after the HACS queue clears, or re-issue when needed.
+2. GitHub auth: fine-grained PAT (Contents R/W, issued 2026-07-23) in the sandbox
+   `~/.git-credentials`; pushes go over SSH with the `ha_jb` key. The old classic PAT
+   expired and is gone.
 3. Privacy: legacy real-house plan sources (`assets/`) removed from the tree in
    v1.13.3, but they persist in git history and old release archives; 8 README
    screenshots in docs/images are still from the real house (replacement with
@@ -150,12 +169,14 @@
 2. Restore the repo: `git clone <user-folder>/houseplan-card.git.bundle hpcN` in `/tmp`
    (files from *previous* sandbox sessions in `/tmp` belong to `nobody` and are unreadable —
    always clone into a fresh directory; `npm ci` again).
-3. Deployment needs the `ha_jb` SSH key — ask the user to upload it (uploads are readable
-   only in the session they were uploaded in).
+3. Deployment needs the `ha_jb` SSH key — it lives in the user folder at
+   `houseplan/.secrets/ha_jb` (outside git) and often survives in the sandbox home
+   `~/.ssh/ha_jb`; copy with chmod 600. Only ask the user if both are gone.
 4. Build only in `/tmp` (never on the mount), `npm run build` (starts with `tsc --noEmit`),
    md5-verify after every deploy, restart HA via
    `nohup ha core restart >/dev/null 2>&1 </dev/null &` (otherwise the SSH session hangs).
-5. GitHub pushes need a PAT (create via the user's Chrome: settings/tokens, repo+workflow scope).
+5. GitHub pushes: SSH remote with the `ha_jb` key; API releases with the fine-grained
+   PAT from `~/.git-credentials` (see the watchlist).
 
 ## Product scope
 

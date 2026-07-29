@@ -93,8 +93,94 @@ Object.assign(out, await page.evaluate(async () => {
   o.ghostHidesValue = pm === null; // «42 kW» не отрисован
   o.ghostNoLiveBadges = ghosts.every((g) =>
     !g.querySelector('.valtext') && !g.querySelector('.tval') && !g.querySelector('.hval') && !g.querySelector('.lqi'));
-  o.ghostKeepsIcon = ghosts.every((g) => !!g.querySelector('ha-icon') || g.classList.contains('noicon'));
+  // у КАЖДОГО призрака есть базовая иконка — «noicon» не оправдание
+  // (HP-1511-02: ripple-призрак был безликим пульсом)
+  o.ghostKeepsIcon = ghosts.every((g) => !!g.querySelector('ha-icon') && !g.classList.contains('noicon'));
   c._setMode('view'); c._showHidden = false;
+  return o;
+}));
+
+// --- HP-1511-02: ripple-призрак с базовой иконкой, без пульса -------------
+Object.assign(out, await page.evaluate(async () => {
+  const o = {};
+  const c = window.__card;
+  const sr = () => c.shadowRoot || c.renderRoot;
+  const lamp = c._devices.find((x) => x.space === 'f1' && x.bindingKind === 'device' && !x.hidden);
+  c._serverCfg.markers = c._serverCfg.markers || [];
+  c._serverCfg.markers = c._serverCfg.markers.filter((m) => m.id !== lamp.id);
+  c._serverCfg.markers.push({ id: lamp.id, binding: 'device:' + lamp.bindingRef,
+    display: 'ripple', hidden: true });
+  c._cfgEpoch++; c._regSignature = '';
+  c._maybeRebuildDevices();
+  c._setMode('devices'); c._showHidden = true;
+  c.requestUpdate(); await c.updateComplete;
+  const g = [...sr().querySelectorAll('.dev.ghost')].find((x) => x.querySelector('.ripple') || !x.classList.contains('noicon'));
+  const ghosts = [...sr().querySelectorAll('.dev.ghost')];
+  o.rippleGhostHasIcon = ghosts.length > 0 && ghosts.every((x) => !!x.querySelector('ha-icon'));
+  o.rippleGhostNoNoicon = ghosts.every((x) => !x.classList.contains('noicon'));
+  o.rippleGhostNoRipple = ghosts.every((x) => !x.querySelector('.ripple'));
+  c._serverCfg.markers = c._serverCfg.markers.filter((m) => m.id !== lamp.id);
+  c._cfgEpoch++; c._regSignature = ''; c._maybeRebuildDevices();
+  c._setMode('view'); c._showHidden = false;
+  return o;
+}));
+
+// --- HP-1511-01: авто-сетка одинакова на обеих карточках ------------------
+Object.assign(out, await page.evaluate(async () => {
+  const o = {};
+  const c = window.__card;
+  await customElements.whenDefined('houseplan-space-card');
+  const cfg = JSON.parse(JSON.stringify(c._serverCfg));
+  const f1 = cfg.spaces.find((s) => s.id === 'f1');
+  // один видимый, остальные зоны living_room скрыты; layout пуст
+  const vis = c._devices.filter((x) => x.area === 'living_room' && !x.virtual);
+  const keep = vis[0];
+  for (const d of vis.slice(1)) {
+    cfg.markers = (cfg.markers || []).filter((m) => m.id !== d.id);
+    cfg.markers.push({ id: d.id, binding: d.bindingKind + ':' + d.bindingRef, hidden: true });
+  }
+  cfg.markers = cfg.markers.filter((m) => m.id !== keep.id || !m.hidden);
+  c._serverCfg = cfg; c._cfgEpoch++; c._regSignature = '';
+  c._layout = {}; // пустой layout: работают только авто-позиции
+  c._maybeRebuildDevices(); c.requestUpdate(); await c.updateComplete;
+  const full = [...(c.shadowRoot || c.renderRoot).querySelectorAll('.dev')]
+    .find((el) => el.style.left && !el.classList.contains('ghost'));
+  // проценты полной карточки считаются от content-fit view — переводим в vb
+  const v = c._viewOr(c._baseVb());
+  const fullVb = full && [
+    v.x + (parseFloat(full.style.left) / 100) * v.w,
+    v.y + (parseFloat(full.style.top) / 100) * v.h,
+  ];
+
+  const hass = { ...c.hass, callWS: async (m) => {
+    // rev уникален: у статичной карточки модульный кэш конфига по rev,
+    // и одинаковый rev в соседних тестах подсовывает чужой конфиг
+    if (m.type === 'houseplan/config/get') return { config: cfg, rev: 31 };
+    if (m.type === 'houseplan/layout/get') return { layout: {}, rev: 31 };
+    return { ok: true };
+  },
+  // модульный кэш конфига инвалидируется только через это событие — стаб
+  // сохраняет колбэк, чтобы следующий тест мог сбросить кэш
+  connection: { subscribeEvents: async (cb) => { window.__hpInvalidate = cb; return () => {}; } } };
+  const host = document.createElement('div');
+  document.body.appendChild(host);
+  const card = document.createElement('houseplan-space-card');
+  card.setConfig({ type: 'custom:houseplan-space-card', space: 'f1' });
+  card.hass = hass;
+  host.appendChild(card);
+  const t0 = Date.now();
+  while (!card.renderRoot?.querySelector('[style*="left"]') && Date.now() - t0 < 6000) {
+    await new Promise((r) => setTimeout(r, 60));
+  }
+  await card.updateComplete;
+  const st = [...card.renderRoot.querySelectorAll('[style*="left"]')]
+    .find((el) => /%$/.test(el.style.left || '') && el.style.top);
+  // статичная карточка рендерит от полного квадрата 0..1000
+  const stVb = st && [parseFloat(st.style.left) * 10, parseFloat(st.style.top) * 10];
+  o.autoGridParity = !!fullVb && !!stVb
+    && Math.abs(fullVb[0] - stVb[0]) < 6 && Math.abs(fullVb[1] - stVb[1]) < 6;
+  if (!o.autoGridParity) console.log('full', fullVb, 'static', stVb);
+  host.remove();
   return o;
 }));
 
@@ -120,11 +206,13 @@ Object.assign(out, await page.evaluate(async () => {
     .find((r) => (r.getAttribute('style') || '').includes('--room-fill'));
   const fullFill = fullRoom ? (fullRoom.getAttribute('style').match(/--room-fill:([^;]+)/) || [])[1] : null;
 
+  window.__hpInvalidate?.(); // сбросить модульный кэш от предыдущей карточки
   const hass = { ...c.hass, callWS: async (m) => {
-    if (m.type === 'houseplan/config/get') return { config: cfg, rev: 1 };
-    if (m.type === 'houseplan/layout/get') return { layout: {}, rev: 1 };
+    if (m.type === 'houseplan/config/get') return { config: cfg, rev: 57 };
+    if (m.type === 'houseplan/layout/get') return { layout: {}, rev: 57 };
     return { ok: true };
-  } };
+  },
+  connection: { subscribeEvents: async () => () => {} } };
   const host = document.createElement('div');
   document.body.appendChild(host);
   const card = document.createElement('houseplan-space-card');

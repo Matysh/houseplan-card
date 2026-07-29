@@ -49,8 +49,13 @@ cp dist/houseplan-card.js custom_components/houseplan/frontend/
 
 ## Deployment to the dacha (ha.jbstudio.pro)
 
-- SSH: port **323**, root, key `ha_jb` (the user uploads it to the chat; in the sandbox /tmp/ha_jb, chmod 600).
-- JS: `scp -P 323 -i /tmp/ha_jb dist/houseplan-card.js root@ha.jbstudio.pro:/config/custom_components/houseplan/frontend/`
+- SSH: port **22222**, root, key `ha_jb` (lives in the user folder `houseplan/.secrets/ha_jb`,
+  outside git; copy into the sandbox with chmod 600 — only ask the user if it is gone).
+- **The HA config root is `/mnt/data/supervisor/homeassistant`** — in this SSH
+  environment `/config` does not exist; a deploy aimed at `/config/...` fails
+  with "No such file or directory".
+- JS: `scp -P 22222 -i <key> dist/houseplan-card.js root@ha.jbstudio.pro:/mnt/data/supervisor/homeassistant/custom_components/houseplan/frontend/`
+- Cache busting: `sed` the `?v=` version in `.storage/lovelace_resources`, then restart HA.
 - **The `frontend/` subfolder is not optional.** `__init__.py` registers
   `Path(__file__).parent / "frontend" / "houseplan-card.js"` as the static path.
   A copy dropped next to `__init__.py` (…/houseplan/houseplan-card.js) is served

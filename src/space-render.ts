@@ -72,7 +72,12 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   // the same room show different Zigbee health on the two cards.
   const spaceDevs = all.filter((d) => d.space === o.spaceId);
   const devs = spaceDevs.filter((d) => !d.hidden);
-  const defPos = defaultPositions(devs, space, iconPct);
+  // The auto grid is computed over the FULL roster, hidden included — the
+  // full card reserves grid cells for hidden devices (their ghosts keep a
+  // place in the device editor), so the static card must too, or the same
+  // visible marker with no saved position lands in different spots on the
+  // two cards (HP-1511-01). Rendering still draws `devs` only.
+  const defPos = defaultPositions(spaceDevs, space, iconPct);
 
   const roomShapes = space.rooms
     .filter((r) => r.area || disp.showBorders)
