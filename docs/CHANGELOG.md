@@ -1,5 +1,28 @@
 # Changelog
 
+## v1.53.0 — 2026-07-30
+
+**A tap can run your automation** (owner's spec)
+
+- **New tap action: "Run automation/script/scene".** We cannot know every
+  exotic device, but you know what a tap on it should do: pick any
+  automation, script or scene from a searchable list, and the tap runs it —
+  `automation.trigger`, `script.turn_on` or `scene.turn_on` per kind, with a
+  "Started" toast. A script is the idiomatic HA "action", so all three
+  runnable kinds are offered — no trigger-less dummy automations needed.
+  Saving refuses a run action without a target; a target deleted later warns
+  in the dialog and toasts safely on tap.
+- **"Ask for confirmation" checkbox** — the accidental-tap guard, available
+  for any state-changing action: toggle and run alike, wall-switch markers
+  with bound targets included. The dialog is the card's own (Esc, backdrop
+  or Cancel = nothing happens), so it works on a wall tablet.
+- **Curtains toggle natively:** covers and valves joined the card-wide
+  toggle domains — with one deliberate exception: garage doors, doors and
+  gates (cover device classes garage/door/gate) stay OUT of the default
+  toggle, an accidental tap must not open the driveway. An explicit
+  per-device toggle remains the owner's conscious choice, and locks/alarm
+  panels stay untouchable from the plan, as always.
+
 ## v1.52.2 — 2026-07-29
 
 **From the v1.52.1 review** (no runtime changes — test and wording quality)
