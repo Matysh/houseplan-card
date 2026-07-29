@@ -36,7 +36,7 @@ import { cardStyles } from './styles';
 import { fitInSquare, contentBounds, spaceModels } from './space-geometry';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.52.0';
+const CARD_VERSION = '1.52.1';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -4152,7 +4152,7 @@ class HouseplanCard extends LitElement {
             ${this._renderOpenings(disp)}
           </svg>
           <div class="devlayer" style="--icon-size:${((iconPct * vb[2] * (this._kiosk ? this._kioskScale.icon : 1)) / view.w).toFixed(3)}cqw;--rl-font:${this._kiosk ? this._kioskScale.font : 1}">
-            ${devs.map((d) => this._renderDevice(d, view, showLqi, disp.fill === 'glow'))}
+            ${devs.map((d) => this._renderDevice(d, view, showLqi, disp.fill === 'glow' && !this._markup))}
             ${this._renderOpeningLocks(view)}
             ${disp.showNames || this._markup
               ? space.rooms.map((r) => this._renderRoomLabel(r, space, view, disp))
@@ -4210,11 +4210,13 @@ class HouseplanCard extends LitElement {
     // and no live numbers either (HP-1510-02): no value text, no temperature,
     // no humidity, no LQI badge, no state-morphed icon. The base icon and the
     // name stay — enough to recognise the device and open its dialog.
-    // The owner's rule for LIGHT SOURCES (2026-07-29): in glow fill the
-    // indicator IS the glow spot — the badge stays standard, on or off; in
-    // every other fill a lit source goes plain yellow like a heating TRV.
-    // "Source" is exactly the litLightEntity condition that casts the spot,
-    // so a lit socket or fan keeps its yellow even in glow fill.
+    // The owner's rule for LIGHT SOURCES (2026-07-29): where the glow layer
+    // is VISIBLE, the indicator IS the glow spot — the badge stays standard,
+    // on or off; wherever the spot is not drawn (other fills, the plan
+    // editor) a lit source goes plain yellow like a heating TRV. The gate
+    // must equal the layer's visibility, or a mode ends up with neither
+    // indicator (HP-1520-01). "Source" is exactly the litLightEntity
+    // condition that casts the spot, so a lit socket keeps its yellow.
     let cls = d.hidden ? '' : this._stateClass(d);
     if (glowFill && cls === 'on' && litLightEntity(this.hass, d)) cls = '';
     const temp = d.hidden ? null : this._liveTemp(d);
@@ -4240,8 +4242,10 @@ class HouseplanCard extends LitElement {
     const icon = this._config?.live_states && !d.hidden
       ? stateIcon(d.icon, domain, primarySt?.attributes?.device_class, primarySt?.state, !!m?.icon)
       : d.icon;
-    // RGB lights color the icon (and the ripple, unless a custom ripple color is set);
-    // an icon with controlled targets takes the color of its first lit RGB target
+    // v1.52.0: a lamp's colour lives in its GLOW and in the ripple fallback
+    // only — the icon/border tint is gone. lightC is still computed (from the
+    // marker's first lit RGB target, else the primary light) purely to feed
+    // --ripple-color when no explicit ripple colour is set.
     const ctrl = (m?.controls || []).filter(isControllable);
     const lightC = this._config?.live_states && !d.hidden
       ? ctrl.length

@@ -48,6 +48,19 @@ const out = await page.evaluate(async () => {
   o.socketStaysYellowInGlow = !!ke && ke.classList.contains('on');
   o.morphInGlow = le?.querySelector('ha-icon')?.getAttribute('icon')?.includes('lightbulb') ?? false;
 
+  // --- HP-1520-01: в редакторах, где glow-слой скрыт, индикатор возвращается
+  // (лампа горит; в devices-редакторе слой рисуется — там лампа тёмная,
+  // в plan-редакторе слоя нет — там класс on должен вернуться)
+  c._setMode('devices'); c.requestUpdate(); await c.updateComplete;
+  le = devEl('d_lamp');
+  o.devicesEditorLampDark = !!le && !le.classList.contains('on');
+  o.devicesEditorHasGlow = !!sr().querySelector('.stage svg radialGradient, .stage svg [id*=glow]');
+  c._setMode('plan'); c.requestUpdate(); await c.updateComplete;
+  const planLamp = [...sr().querySelectorAll('.dev')].find((e) => e.classList.contains('on'));
+  o.planEditorLampYellow = !!planLamp; // слой скрыт — жёлтый вернулся
+  o.planEditorNoGlow = !sr().querySelector('.stage svg radialGradient, .stage svg [id*=glow]');
+  c._setMode('view'); c.requestUpdate(); await c.updateComplete;
+
   // --- выключенная лампа тёмная в обоих режимах ---------------------------
   c.hass = { ...c.hass, states: { ...c.hass.states,
     [lamp.primary]: { ...c.hass.states[lamp.primary], state: 'off' } } };

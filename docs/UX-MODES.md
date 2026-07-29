@@ -76,7 +76,9 @@ Header in View: space tabs, device count, zoom cluster. Nothing else.
 
 1. State-reflecting icons (open/closed door variants etc., like core HA).
 2. `display: value` — show the measurement instead of an icon.
-3. Light color in the icon/ripple (RGB lights).
+3. Light color in the icon/ripple (RGB lights). *(Shipped in v1.27.0;
+   superseded in v1.52.0: the colour lives in the glow spot and the ripple
+   fallback only, the icon tint was removed by the owner's rule.)*
 4. Alarm visual (leak/smoke/doorbell): red pulse overlay.
 5. Rooms as sub-areas without an HA area + manual device placement by room id.
 6. Backlog (not planned): music notes for players, directional TV ripples.

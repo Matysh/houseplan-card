@@ -206,8 +206,10 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       lock locked↔unlocked, bulb on; custom icons and unavailable states never morph [manual]
 - [ ] display "Value instead of an icon": the marker shows the measurement (°/%/unit)
       as its body, small badges hidden; non-numeric fallback keeps the icon [manual]
-- [ ] RGB lights (v1.27.0): an on light with a color tints its icon/glow and the ripple
-      (explicit ripple color still wins); off/white lights unchanged [manual]
+- [ ] RGB lights (v1.27.0, contract changed in v1.52.0): a lamp's colour lives
+      in its glow spot and the ripple fallback ONLY — the icon/badge/border get
+      no RGB tint; explicit ripple color still wins; off lights unchanged
+      [auto: smoke_light_badges + smoke_rgb_alarm]
 - [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
       display mode; clears on 'off'; unavailable never alarms [manual]; reduced-motion static
 - [ ] Render cost (v1.43.1, audit L1): geometry (space model, open pairs) is
@@ -244,6 +246,12 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       at 70% of a device icon and zooming WITH the plan; the small metric rows
       under the room name now show in the plan editor too
       [auto: smoke_room_cards gearDetached/plainInPlan]
+- [ ] One indicator always (v1.52.1, HP-1520-01): in a glow space the plan
+      editor (no glow layer) shows the lit lamp yellow again; the devices
+      editor draws the layer and keeps the badge standard
+      [auto: smoke_light_badges]
+- [ ] Size/angle parity (v1.52.1, HP-1513-01): a marker with size 3 / angle 37
+      scales x3 and rotates on BOTH cards [auto: smoke_size_angle_parity]
 - [ ] Light-source badges (v1.52.0): in glow fill a lit lamp's badge stays
       standard (the spot is the indicator) and a lit socket stays yellow; in
       other fills a lit lamp is plain yellow with no RGB tint; morphing and
@@ -565,8 +573,9 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       same domain still win over hidden ones [manual: click hallway lamps]
 - [ ] Marker controls (v1.36.0): a marker with "Controls light sources" and
       tap action Toggle flips all bound lights/switches at once (any on → all
-      off, all off → all on, one service call); the icon and its RGB tint
-      mirror the targets, not the marker's own entity; without explicit Toggle
+      off, all off → all on, one service call); the icon state (yellow badge)
+      mirrors the targets, not the marker's own entity — the RGB tint is gone
+      since v1.52.0, target colours reach only the glow/ripple; without explicit Toggle
       the click opens info as usual; the info card lists targets with states;
       locks/other domains are filtered out of controls [auto: smoke_controls]
 - [ ] Glow fill (v1.35.0): fill mode "Light sources" — every room painted with
