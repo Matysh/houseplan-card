@@ -238,6 +238,51 @@ export function segmentsProperlyCross(
  * triangle centroid of consecutive vertices — the first point that passes
  * pointStrictlyInside wins.
  */
+/**
+ * The visual centre of a polygon: the centre of the largest inscribed circle
+ * (pole of inaccessibility). `interiorPoint` only promises "inside", and for
+ * an L-shaped room it lands near the seam — the owner's kitchen-living room
+ * got its settings button visibly off-centre (2026-07-29). Grid search with
+ * one refinement pass; exact enough for a button, cheap enough to cache.
+ */
+export function poleOfInaccessibility(poly: number[][], steps = 24): number[] {
+  const xs = poly.map((p) => p[0]);
+  const ys = poly.map((p) => p[1]);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const clearance = (x: number, y: number): number => {
+    if (!pointInPolygon([x, y], poly)) return -Infinity;
+    let d = Infinity;
+    for (let i = 0; i < poly.length; i++) {
+      const a = poly[i], b = poly[(i + 1) % poly.length];
+      d = Math.min(d, distToSegment([x, y], [a[0], a[1], b[0], b[1]]));
+    }
+    return d;
+  };
+  let best: number[] | null = null;
+  let bestD = -Infinity;
+  for (let i = 1; i < steps; i++) {
+    for (let j = 1; j < steps; j++) {
+      const x = minX + ((maxX - minX) * i) / steps;
+      const y = minY + ((maxY - minY) * j) / steps;
+      const d = clearance(x, y);
+      if (d > bestD) { bestD = d; best = [x, y]; }
+    }
+  }
+  if (best) {
+    const [bx, by] = best;
+    const cw = (maxX - minX) / steps, ch = (maxY - minY) / steps;
+    for (let i = -4; i <= 4; i++) {
+      for (let j = -4; j <= 4; j++) {
+        const x = bx + (cw * i) / 4, y = by + (ch * j) / 4;
+        const d = clearance(x, y);
+        if (d > bestD) { bestD = d; best = [x, y]; }
+      }
+    }
+  }
+  return best || interiorPoint(poly) || poly[0];
+}
+
 export function interiorPoint(poly: number[][], eps = 1e-6): number[] | null {
   if (!poly || poly.length < 3) return null;
   const n = poly.length;

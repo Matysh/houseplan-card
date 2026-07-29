@@ -15,8 +15,7 @@ import {
   contentUrl, chunk, referencedContentUrls, MAX_SIGN_PATHS,
   interiorPoint,
   segmentCm, formatLength, roomEdges, roomPoly, pointOnBoundary, pointStrictlyInside, roomsOverlap,
-  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices,
-} from '../test-build/logic.js';
+  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, poleOfInaccessibility } from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
 } from '../test-build/rules.js';
@@ -909,4 +908,21 @@ test('chunk / referencedContentUrls: signing batches and cache pruning (review R
   ]);
   assert.equal(referencedContentUrls(null).size, 0);
   assert.equal(referencedContentUrls({}).size, 0);
+});
+
+
+test('poleOfInaccessibility: the VISUAL centre, not just any interior point', () => {
+  // a square: the pole is the centre
+  const sq = [[0, 0], [10, 0], [10, 10], [0, 10]];
+  const p = poleOfInaccessibility(sq);
+  assert.ok(Math.abs(p[0] - 5) < 0.6 && Math.abs(p[1] - 5) < 0.6);
+
+  // the owner's kitchen-living room shape: a THICK top slab with a narrower
+  // column hanging off the right side. The button belongs in the middle of
+  // the slab — the widest open space — not near the seam or down the column.
+  const L = [[0, 0], [20, 0], [20, 16], [16, 16], [16, 8], [0, 8]];
+  const q = poleOfInaccessibility(L);
+  assert.ok(pointInPolygon(q, L), 'inside, always');
+  assert.ok(q[1] < 8, 'in the thick slab (y < 8), not down the column: ' + q);
+  assert.ok(q[0] > 2 && q[0] < 16, 'horizontally inside the slab body: ' + q);
 });
