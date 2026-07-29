@@ -15,7 +15,7 @@ import {
   lqiColor, snapToGrid, samePoint, pointInPolygon, markerIdForBinding,
   segmentCm, formatLength, roomEdges, roomPoly, pointStrictlyInside, roomsOverlap,
   pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, openZoneOf, distToSegment, outlineWithout, cutSegments, alignGuides, segmentAngle, is45, type AlignGuide, swipeTarget, clampScale, migratePdfUrls, roomFillModeOf, contentUrl,
-  snapToWall, openingAmount,
+  snapToWall, openingAmount, interiorPoint,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
   stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, glowColorOf, doorSector, hasRoomBehind, controlsAction, isControllable,
   spaceDisplayOf, roomFillStyle, fillColorsOf, DEFAULT_FILL_COLORS, type FillColors,
@@ -4157,6 +4157,7 @@ class HouseplanCard extends LitElement {
             ${disp.showNames || this._markup
               ? space.rooms.map((r) => this._renderRoomLabel(r, space, view, disp))
               : nothing}
+            ${this._markup ? space.rooms.map((r) => this._renderRoomGear(r, space, view)) : nothing}
           </div>
           ${this._measureAnchor
             ? html`<div class="measurelayer">${this._renderMeasureLabel(view)}</div>`
@@ -4501,6 +4502,28 @@ class HouseplanCard extends LitElement {
     this._persistLayout();
   }
 
+  /** The room-settings button: detached from the (movable) label, always at
+   *  the geometric CENTRE of the room, sized at 70% of a device icon and
+   *  therefore zooming with the plan (owner's spec, 2026-07-29). */
+  private _renderRoomGear(
+    r: RoomCfg, space: SpaceModel, view: { x: number; y: number; w: number; h: number },
+  ): TemplateResult | typeof nothing {
+    if (!r.id) return nothing;
+    const c = r.poly
+      ? (interiorPoint(r.poly) || [r.poly[0][0], r.poly[0][1]])
+      : r.x != null && r.y != null ? [r.x + (r.w || 0) / 2, r.y + (r.h || 0) / 2] : null;
+    if (!c) return nothing;
+    const left = ((c[0] - view.x) / view.w) * 100;
+    const top = ((c[1] - view.y) / view.h) * 100;
+    return html`<button class="rlgearbtn" style="left:${left}%;top:${top}%"
+      title=${this._t('room.settings_title')}
+      @pointerdown=${(e: Event) => e.stopPropagation()}
+      @click=${(e: Event) => { e.stopPropagation(); this._openRoomEdit(r); }}>
+      <ha-icon icon="mdi:cog-outline"></ha-icon>
+      <span class="rlgeartext">${this._t('room.settings_short')}</span>
+    </button>`;
+  }
+
   private _renderRoomLabel(
     r: RoomCfg, space: SpaceModel, view: { x: number; y: number; w: number; h: number }, disp: SpaceDisplay,
   ): TemplateResult | typeof nothing {
@@ -4514,7 +4537,7 @@ class HouseplanCard extends LitElement {
     const k = this._labelScale(r);
     // optional metrics row (needs an HA area; sub-area rooms show the name only)
     const rows: TemplateResult[] = [];
-    if ((r.area || r.settings?.temp_source || r.settings?.hum_source) && !this._markup) {
+    if (r.area || r.settings?.temp_source || r.settings?.hum_source) {
       if (disp.labelTemp) {
         const t = this._roomTemp(r);
         if (t != null) rows.push(html`<span class="rlm"><ha-icon icon="mdi:thermometer"></ha-icon>${t}°</span>`);
@@ -4552,14 +4575,6 @@ class HouseplanCard extends LitElement {
             @pointerdown=${(e: Event) => e.stopPropagation()}></ha-icon>`
         : nothing}</span>
       ${rows.length ? html`<span class="rlmetrics">${rows}</span>` : nothing}
-      ${this._markup && r.id
-        ? html`<button class="rlgearbtn" title=${this._t('room.settings_title')}
-            @pointerdown=${(e: Event) => e.stopPropagation()}
-            @click=${(e: Event) => { e.stopPropagation(); this._openRoomEdit(r); }}>
-            <ha-icon icon="mdi:cog-outline"></ha-icon>
-            <span class="rlgeartext">${this._t('room.settings_short')}</span>
-          </button>`
-        : nothing}
       ${this._mode === 'plan'
         ? ['tl', 'tr', 'bl', 'br'].map(
             (c) => html`<span class="rlhandle ${c}"

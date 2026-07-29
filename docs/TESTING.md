@@ -239,6 +239,11 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       on the plan after a reload. Same for each tap action and each fill mode
       [auto: backend test_every_display_mode_the_editor_offers_is_accepted and
       neighbours, test_a_marker_showing_its_value_can_be_saved]
+- [ ] Room settings button (dev): detached from the (movable) name label —
+      always at the room's geometric centre, one button-height below it; sized
+      at 70% of a device icon and zooming WITH the plan; the small metric rows
+      under the room name now show in the plan editor too
+      [auto: smoke_room_cards gearDetached/plainInPlan]
 - [ ] Hide-from-plan flag (dev, docs/FILTERING.md): every device dialog has
       the checkbox, incl. virtual; hidden devices vanish from every mode and
       the count, still count toward room LQI, cast no glow/light fill; the

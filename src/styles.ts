@@ -403,31 +403,39 @@ export const cardStyles = css`
        and the metrics hang below as absolutes — the name renders in exactly
        the same place in view mode and in the plan editor (owner's request),
        and the button sits at the very bottom of the card. */
+    /* Standalone, centred on the room, sized from the device icon: icon-size
+       already rescales with the view, so the button zooms WITH the plan
+       instead of keeping a constant screen size (owner's spec). */
     .rlgearbtn {
+      --gear-h: calc(var(--icon-size, 2.5cqw) * 0.7 * 2.2); /* 70% of the icon BOX (icon + padding) */
       position: absolute;
-      top: calc(100% + 0.35em);
-      left: 50%;
-      transform: translateX(-50%);
+      /* anchored to the room centre, sitting one button-height below it: the
+         room NAME defaults to the same centre, and dead-centred the button
+         covered it. The offset is in button units, so it zooms along. */
+      transform: translate(-50%, calc(-50% + var(--gear-h) * 0.95));
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      padding: 3px 8px;
+      gap: 0.35em;
+      height: var(--gear-h);
+      padding: 0 calc(var(--gear-h) * 0.38);
       border: 0;
       border-radius: 999px;
       background: var(--hp-accent);
       color: var(--text-primary-color, #fff);
       font: inherit;
-      font-size: 11px;
+      font-size: calc(var(--gear-h) * 0.42);
       font-weight: 600;
       line-height: 1;
+      white-space: nowrap;
       cursor: pointer;
       pointer-events: auto;
       opacity: 0.92;
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+      z-index: 2;
     }
     .rlgearbtn { transition: opacity 0.15s, filter 0.15s; }
     .rlgearbtn:hover { opacity: 1; filter: brightness(1.18); }
-    .rlgearbtn ha-icon { --mdc-icon-size: 14px; display: inline-flex; }
+    .rlgearbtn ha-icon { --mdc-icon-size: calc(var(--gear-h) * 0.55); display: inline-flex; }
     .rlgear {
       --mdc-icon-size: 0.9em;
       display: inline-flex;
