@@ -244,6 +244,11 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       at 70% of a device icon and zooming WITH the plan; the small metric rows
       under the room name now show in the plan editor too
       [auto: smoke_room_cards gearDetached/plainInPlan]
+- [ ] Light-source badges (v1.52.0): in glow fill a lit lamp's badge stays
+      standard (the spot is the indicator) and a lit socket stays yellow; in
+      other fills a lit lamp is plain yellow with no RGB tint; morphing and
+      the ripple colour fallback survive [auto: smoke_light_badges +
+      smoke_rgb_alarm]
 - [ ] Icon size multiplier scales the glyph (dev): set a marker's size to 3 —
       the icon inside grows with the badge instead of staying default
       [auto: smoke_icon_scale]

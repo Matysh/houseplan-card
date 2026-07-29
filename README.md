@@ -78,8 +78,9 @@ Key advantages in short:
   Icon colors follow one principle — **yellow means the device is doing its main job right now**:
   a light is shining, a socket is powering, a fan is spinning, media is playing, a vacuum is
   cleaning, a radiator valve is actually heating (not merely enabled). Orange = open / unlocked.
-  A pulsing red ring = an emergency (leak, smoke, gas). RGB bulbs color their icon with the real
-  light color. A translucent icon = unavailable. Dark = idle.
+  A pulsing red ring = an emergency (leak, smoke, gas). An RGB bulb's colour lives in its glow
+  spot (glow fill), where the spot itself is the on/off indicator and the badge stays standard.
+  A translucent icon = unavailable. Dark = idle.
 - **Crisp zoom.** Zooming in does not "blur" the picture: the plan, labels and icons remain vector-sharp at any scale.
 
 ---
