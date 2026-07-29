@@ -72,8 +72,17 @@ export function contentBounds(
   space: SpaceModel, pad = 0.05, extra?: ReadonlyArray<readonly [number, number]>,
 ): { x: number; y: number; w: number; h: number } | null {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  // Only points within a bounded envelope around the canvas command the
+  // opening view. The server bounds what it ACCEPTS now (±4 normalised,
+  // HP-1501-01), but a store may already hold an absurd coordinate from
+  // before that door existed — and one 1e100 vertex framed the space so wide
+  // the plan was a dot for every client. An out-of-envelope point is still
+  // rendered wherever it is; it just does not decide the frame. This applies
+  // to ROOM GEOMETRY and device positions alike (HP-1500-03, HP-1501-01).
+  const lo = -NORM_W * 0.25, hi = NORM_W * 1.25;
   const add = (x: number, y: number) => {
     if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+    if (x < lo || x > hi || y < lo || y > hi) return;
     if (x < minX) minX = x;
     if (y < minY) minY = y;
     if (x > maxX) maxX = x;
@@ -86,17 +95,9 @@ export function contentBounds(
       add(r.x + (r.w || 0), r.y + (r.h || 0));
     }
   }
-  // Things that live outside any room still count as content — a gate sensor
-  // by the fence, a camera on a pole (the card passes device positions here).
-  // But only within a bounded envelope around the canvas: a stored position is
-  // any finite number the layout schema took, and one absurd coordinate used
-  // to stretch the frame until the plan was a dot (HP-1500-03). A point past
-  // the envelope is still rendered wherever it is — it just does not command
-  // the opening view.
-  const lo = -NORM_W * 0.25, hi = NORM_W * 1.25;
-  for (const p of extra || []) {
-    if (p[0] >= lo && p[0] <= hi && p[1] >= lo && p[1] <= hi) add(p[0], p[1]);
-  }
+  // things that live outside any room still count as content — a gate sensor
+  // by the fence, a camera on a pole (the card passes device positions here)
+  for (const p of extra || []) add(p[0], p[1]);
   if (minX > maxX || minY > maxY) return null;
   // A single marker (or a collinear row of them) has no area, and an SVG
   // viewBox with a zero axis draws nothing at all (HP-1500-03). An axis with

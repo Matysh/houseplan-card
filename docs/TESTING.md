@@ -239,6 +239,13 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       on the plan after a reload. Same for each tap action and each fill mode
       [auto: backend test_every_display_mode_the_editor_offers_is_accepted and
       neighbours, test_a_marker_showing_its_value_can_be_saved]
+- [ ] Geometry bounds (v1.50.2, HP-1501-01): a config with a 1e100 room
+      vertex is refused by the server; one already stored still renders with a
+      sane frame [auto: test_geometry_magnitudes_are_bounded + unit
+      contentBounds legacy case]
+- [ ] No-op repair (v1.50.2, HP-1501-02): geometry/repair with a typo'd space
+      id errors, moves no revision and keeps the previous backup undoable
+      [auto: test_a_noop_repair_does_not_eat_the_backup]
 - [ ] Card below other dashboard content (v1.50.1, HP-1500-02): place the card
       after a tall card in a normal dashboard — the plan still gets most of the
       viewport instead of a zero-height stage [auto: smoke_zoom_out]

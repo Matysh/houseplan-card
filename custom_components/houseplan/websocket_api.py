@@ -212,6 +212,16 @@ async def ws_geometry_repair(hass: HomeAssistant, connection, msg: dict[str, Any
             k: dict(v) for k, v in layout.items()
             if isinstance(v, dict) and str(v.get("s")) == space_id
         }
+        if not touched:
+            # A typo'd space id used to "succeed" with moved: 0 — and its
+            # empty result REPLACED the one-deep backup, destroying the very
+            # undo this endpoint promises (HP-1501-02). Nothing to move means
+            # nothing to save: no write, no revision bump, the backup stays.
+            connection.send_error(
+                msg["id"], "nothing_to_repair",
+                f"No stored positions belong to space '{space_id}'",
+            )
+            return
         preview = {k: dict(v) for k, v in touched.items()}
         migrate_layout(preview, {space_id: msg["aspect"]})
         if msg.get("dry_run"):

@@ -107,7 +107,14 @@ POS_SCHEMA = vol.Schema(
 )
 LAYOUT_SCHEMA = vol.All(vol.Schema({str: POS_SCHEMA}), vol.Length(max=MAX_LAYOUT))
 
-POINT = vol.All([_finite], vol.Length(min=2, max=2))
+# Geometry is normalised to the canvas (0..1). ±4 is generous slack for a
+# vertex nudged past an edge, not an envelope for arbitrary magnitudes: any
+# finite float used to pass here, and a single 1e100 room vertex stretched the
+# frame until the whole space was unviewable for every client (HP-1501-01) —
+# the exact failure HP-1500-03 closed for layout positions, one schema over.
+_GEOM = vol.All(_finite, vol.Range(min=-4.0, max=4.0))
+
+POINT = vol.All([_GEOM], vol.Length(min=2, max=2))
 
 
 def _require_geometry(room: dict) -> dict:
@@ -136,10 +143,10 @@ ROOM_SCHEMA = vol.All(
                     extra=vol.ALLOW_EXTRA,
                 ),
             ),
-            vol.Optional("x"): _finite,
-            vol.Optional("y"): _finite,
-            vol.Optional("w"): _finite,
-            vol.Optional("h"): _finite,
+            vol.Optional("x"): _GEOM,
+            vol.Optional("y"): _GEOM,
+            vol.Optional("w"): _GEOM,
+            vol.Optional("h"): _GEOM,
             vol.Optional("poly"): vol.All([POINT], vol.Length(min=3, max=MAX_POLY_POINTS)),
         },
         extra=vol.ALLOW_EXTRA,
@@ -203,7 +210,7 @@ SPACE_SCHEMA = vol.Schema(
         vol.Optional("plan_aspect"): vol.Any(
             None, vol.All(vol.Coerce(float), vol.Range(min=0.05, max=20))
         ),
-        vol.Required("view_box"): vol.All([_finite], vol.Length(min=4, max=4)),
+        vol.Required("view_box"): vol.All([_GEOM], vol.Length(min=4, max=4)),
         vol.Required("rooms"): vol.All([ROOM_SCHEMA], vol.Length(max=MAX_ROOMS)),
         vol.Optional("decor"): vol.All([DECOR_SCHEMA], vol.Length(max=MAX_DECOR)),
         vol.Optional("openings"): vol.All([
@@ -211,9 +218,9 @@ SPACE_SCHEMA = vol.Schema(
                 {
                     vol.Required("id"): str,
                     vol.Required("type"): vol.Any("door", "window"),
-                    vol.Required("x"): _finite,
-                    vol.Required("y"): _finite,
-                    vol.Required("angle"): _finite,
+                    vol.Required("x"): _GEOM,
+                    vol.Required("y"): _GEOM,
+                    vol.Required("angle"): vol.All(_finite, vol.Range(min=-360.0, max=360.0)),
                     vol.Required("length"): vol.All(vol.Coerce(float), vol.Range(min=0.001, max=1)),
                     vol.Optional("contact"): vol.Any(str, None),
                     vol.Optional("lock"): vol.Any(str, None),

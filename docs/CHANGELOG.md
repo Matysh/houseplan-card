@@ -1,5 +1,27 @@
 # Changelog
 
+## v1.50.2 — 2026-07-29
+
+**From the v1.50.1 review**
+
+- **Geometry magnitudes are bounded on both layers (HP-1501-01).** v1.50.1
+  bounded layout positions, but room rectangles, polygon vertices, view_box
+  and opening coordinates still took any finite float — one schema-valid 1e100
+  vertex framed the space so wide the plan was a dot, for every client, and
+  the server stored it as a perfectly good configuration. The config schema
+  now bounds geometry to ±4 (angles to ±360°), and the content frame applies
+  the same canvas envelope to room vertices it already applied to device
+  positions — so a store that already holds an absurd coordinate from before
+  this door existed still renders: the point draws wherever it is, it just no
+  longer commands the frame. A vertex a bit past the canvas edge keeps
+  working.
+- **A no-op repair no longer eats the undo backup (HP-1501-02).** A typo'd
+  space id "succeeded" with moved: 0 — and its empty result replaced the
+  one-deep backup, destroying the only way back exactly when it was needed
+  most: right after repairing the wrong space. Matching nothing is an error
+  now (`nothing_to_repair`); nothing is written, the revision does not move,
+  and the previous repair stays undoable.
+
 ## v1.50.1 — 2026-07-29
 
 **From the v1.50.0 review**
