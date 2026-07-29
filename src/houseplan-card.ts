@@ -36,7 +36,7 @@ import { cardStyles } from './styles';
 import { fitInSquare, contentBounds, spaceModels } from './space-geometry';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.51.0';
+const CARD_VERSION = '1.51.1';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -4206,17 +4206,20 @@ class HouseplanCard extends LitElement {
     const p = this._pos(d);
     const left = ((p.x - view.x) / view.w) * 100;
     const top = ((p.y - view.y) / view.h) * 100;
-    // a ghost is configuration, not status: no yellow, no open, no unavail
+    // a ghost is configuration, not status: no yellow, no open, no unavail —
+    // and no live numbers either (HP-1510-02): no value text, no temperature,
+    // no humidity, no LQI badge, no state-morphed icon. The base icon and the
+    // name stay — enough to recognise the device and open its dialog.
     const cls = d.hidden ? '' : this._stateClass(d);
-    const temp = this._liveTemp(d);
-    const hum = this._liveHum(d);
-    const lqi = showLqi && !d.virtual ? lqiFor(this.hass, d.entities) : null;
+    const temp = d.hidden ? null : this._liveTemp(d);
+    const hum = d.hidden ? null : this._liveHum(d);
+    const lqi = showLqi && !d.virtual && !d.hidden ? lqiFor(this.hass, d.entities) : null;
     const m = d.marker;
     const disp = m?.display || 'badge';
     const ripple = disp === 'ripple' || disp === 'icon_ripple';
     // value-only display: the measurement IS the marker
     const primarySt = d.primary ? this.hass.states[d.primary] : undefined;
-    const valText = disp === 'value'
+    const valText = disp === 'value' && !d.hidden
       ? (temp != null ? temp + '°'
         : hum != null ? hum + '%'
         : primarySt && !isNaN(parseFloat(primarySt.state))
@@ -4225,7 +4228,7 @@ class HouseplanCard extends LitElement {
       : null;
     // live state variants of the auto icon (doors, locks, bulbs), like core HA
     const domain = d.primary ? d.primary.split('.')[0] : null;
-    const icon = this._config?.live_states
+    const icon = this._config?.live_states && !d.hidden
       ? stateIcon(d.icon, domain, primarySt?.attributes?.device_class, primarySt?.state, !!m?.icon)
       : d.icon;
     // RGB lights color the icon (and the ripple, unless a custom ripple color is set);

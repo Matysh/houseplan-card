@@ -65,8 +65,13 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     loc,
     iconRules,
   });
-  // the static card never shows hidden devices — there is no editor here
-  const devs = all.filter((d) => d.space === o.spaceId && !d.hidden);
+  // Two lists, two jobs (HP-1510-01): AGGREGATION sees every device of the
+  // space — hidden ones still count toward room LQI, same as the full card —
+  // while RENDERING sees only the visible ones (there is no editor here, so
+  // hidden devices are never drawn). Filtering one list for both jobs made
+  // the same room show different Zigbee health on the two cards.
+  const spaceDevs = all.filter((d) => d.space === o.spaceId);
+  const devs = spaceDevs.filter((d) => !d.hidden);
   const defPos = defaultPositions(devs, space, iconPct);
 
   const roomShapes = space.rooms
@@ -83,9 +88,9 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
         const fillC = r.area
           ? roomFillStyle(
               fill,
-              fill === 'lqi' ? areaLqi(o.hass, devs, r.area) : null,
-              fill === 'light' ? areaLights(o.hass, devs, r.area) : 'none',
-              fill === 'temp' ? areaTemp(o.hass, devs, r.area) : null,
+              fill === 'lqi' ? areaLqi(o.hass, spaceDevs, r.area) : null,
+              fill === 'light' ? areaLights(o.hass, spaceDevs, r.area) : 'none',
+              fill === 'temp' ? areaTemp(o.hass, spaceDevs, r.area) : null,
               disp.tempMin,
               disp.tempMax,
               fillColorsOf(o.cfg?.settings),
