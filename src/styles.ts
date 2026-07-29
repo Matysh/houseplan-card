@@ -963,6 +963,13 @@ export const cardStyles = css`
     .dev.virtual {
       border-style: dashed;
     }
+    /* "hide from plan" flag, shown only in the device editor with the
+       "show hidden devices" toggle on (docs/FILTERING.md) */
+    .dev.ghost {
+      opacity: 0.4;
+      border-style: dashed;
+      filter: saturate(0.4);
+    }
     .dev.sel {
       border-color: #ffc14d;
       box-shadow: 0 0 0 3px rgba(255, 193, 77, 0.35);

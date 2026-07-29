@@ -14,6 +14,8 @@ export interface BuildCtx {
   markers: Marker[];
   settings: ServerConfig['settings'];
   excluded: Set<string>;
+  /** LEGACY only: honoured while the config has no settings.filter_seeded.
+   *  Seeded configs hide by explicit marker flags (docs/FILTERING.md). */
   showAll: boolean;
   firstSpaceId: string;
   /** Localized display strings for generated device names. */
@@ -202,6 +204,7 @@ export function resolveIcon(hass: any, name: string, model: string | undefined, 
 
 function applyMarker(item: DevItem, m: Marker): void {
   item.marker = m;
+  if (m.hidden) item.hidden = true;
   if (m.name) item.name = m.name;
   if (m.icon) item.icon = m.icon;
   if (m.model != null) item.model = m.model;
@@ -209,6 +212,43 @@ function applyMarker(item: DevItem, m: Marker): void {
   item.description = m.description ?? null;
   item.pdfs = m.pdfs || [];
   item.tapAction = m.tap_action ?? null;
+}
+
+/**
+ * The SEEDER (docs/FILTERING.md): bindings of non-physical devices in bound
+ * areas that have no marker yet. The editing client turns each into a
+ * `hidden: true` stub marker — after that the flag belongs to the user, and a
+ * marker of ANY kind (even `hidden: false`) makes the device invisible to
+ * this function forever. Idempotent by construction.
+ */
+export function seedHiddenBindings(ctx: Omit<BuildCtx, 'showAll' | 'loc'>): string[] {
+  const { hass: h, areaToSpace, markers, settings, excluded, iconRules } = ctx;
+  const groupLights = settings.group_lights !== false;
+  const groups = lightGroups(h, groupLights);
+  const groupedAreas = new Set(groups.map((g) => g.area));
+  const entsBy = entitiesByDevice(h);
+  const marked = new Set(markers.map((m) => m.binding));
+  const out: string[] = [];
+  for (const dev of Object.values<any>(h.devices)) {
+    const area = dev.area_id;
+    if (!area || !areaToSpace[area]) continue;
+    if (dev.entry_type === 'service') continue;
+    if (marked.has('device:' + dev.id)) continue;
+    const entIds = entsBy[dev.id] || [];
+    const dom = domainOfDevice(h, dev, entIds);
+    let nonPhysical =
+      excluded.has(dom)
+      || dev.model === 'Group'
+      || /scene/i.test(dev.model || '')
+      || /bridge/i.test((dev.model || '') + (dev.name || ''))
+      || (dom === 'myheat' && !!dev.via_device_id);
+    if (!nonPhysical && groupLights && groupedAreas.has(area)) {
+      const name = (dev.name_by_user || dev.name || '').trim();
+      if (resolveIcon(h, name, dev.model, entIds, iconRules) === 'mdi:lightbulb') nonPhysical = true;
+    }
+    if (nonPhysical) out.push('device:' + dev.id);
+  }
+  return out;
 }
 
 /** Filtering + light groups + markers (metadata/rebinding) + virtual ones. A hybrid. */
@@ -234,11 +274,13 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
     if (dev.entry_type === 'service') continue;
     if (claimed.has('device:' + dev.id)) continue; // a marker will take over below
     const marker = markerFor('device', dev.id);
-    if (marker && marker.hidden) continue;
+    if (marker && marker.hidden && !settings.filter_seeded) continue; // legacy: dropped entirely
     const entIds = entsBy[dev.id] || [];
     const dom = domainOfDevice(h, dev, entIds);
-    // filtering (can be turned off with the “show all” toggle)
-    if (!showAll) {
+    // LEGACY runtime filter: only while the config is not yet materialised
+    // (docs/FILTERING.md). A seeded config hides by explicit marker flags.
+    const legacy = !settings.filter_seeded;
+    if (legacy && !showAll) {
       if (excluded.has(dom)) continue;
       if (dev.model === 'Group') continue;
       if (/scene/i.test(dev.model || '')) continue;
@@ -249,7 +291,7 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
     const key = name + '|' + area;
     let icon = resolveIcon(h, name, dev.model, entIds, iconRules);
     if (entIds.some((e) => e.startsWith('lock.'))) icon = 'mdi:lock';
-    if (!showAll && groupLights && icon === 'mdi:lightbulb' && groupedAreas.has(area)) continue;
+    if (legacy && !showAll && groupLights && icon === 'mdi:lightbulb' && groupedAreas.has(area)) continue;
     // duplicates by “name|zone” are numbered rather than hidden
     seen[key] = (seen[key] || 0) + 1;
     const dispName = seen[key] > 1 ? name + ' ' + seen[key] : name;
@@ -292,7 +334,10 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
 
   // 3) explicit markers (rebinding/metadata/virtual)
   for (const m of markers) {
-    if (m.hidden) continue;
+    // Hidden is a FLAG now, not an absence: the device is built (room LQI
+    // still counts it) and the renderer decides. Legacy configs keep the old
+    // "hidden = gone" until they are seeded (docs/FILTERING.md).
+    if (m.hidden && !settings.filter_seeded) continue;
     const [kind, ref] = m.binding.split(':');
     if (kind === 'device') {
       const dev = h.devices[ref];
@@ -370,10 +415,10 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
  * Light situation of an area: 'on' if any light entity of the area's devices is on,
  * 'off' if lights exist but none is on, 'none' when the area has no lights at all.
  */
-export function areaLights(hass: any, devices: { area: string; entities: string[] }[], area: string): 'on' | 'off' | 'none' {
+export function areaLights(hass: any, devices: { area: string; entities: string[]; hidden?: boolean }[], area: string): 'on' | 'off' | 'none' {
   let seen = false;
   for (const d of devices) {
-    if (d.area !== area) continue;
+    if (d.area !== area || d.hidden) continue; // an invisible device casts no visible light
     for (const eid of d.entities) {
       if (!eid.startsWith('light.')) continue;
       seen = true;
@@ -530,13 +575,13 @@ export function areaClimate(
 /** How many of the area's lights are on: {on, total}, or null without lights. */
 export function areaLightStats(
   hass: any,
-  devices: { area: string; entities: string[] }[],
+  devices: { area: string; entities: string[]; hidden?: boolean }[],
   area: string,
 ): { on: number; total: number } | null {
   const seen = new Set<string>();
   let on = 0;
   for (const dv of devices) {
-    if (dv.area !== area) continue;
+    if (dv.area !== area || dv.hidden) continue; // hidden lights are not part of the picture
     for (const eid of dv.entities) {
       if (!eid.startsWith('light.') || seen.has(eid)) continue;
       seen.add(eid);

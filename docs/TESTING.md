@@ -239,6 +239,14 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       on the plan after a reload. Same for each tap action and each fill mode
       [auto: backend test_every_display_mode_the_editor_offers_is_accepted and
       neighbours, test_a_marker_showing_its_value_can_be_saved]
+- [ ] Hide-from-plan flag (dev, docs/FILTERING.md): every device dialog has
+      the checkbox, incl. virtual; hidden devices vanish from every mode and
+      the count, still count toward room LQI, cast no glow/light fill; the
+      device editor's "Show hidden" (local, per tab) shows them ghosted;
+      unticking keeps a hidden:false marker (re-seed protection); an old
+      config materialises on first load by an editing client and legacy
+      clients keep the old behaviour until then
+      [auto: smoke_hidden_flag + unit seedHiddenBindings/seeded/legacy]
 - [ ] Yellow means working (dev): a TRV whose hvac_action is heating glows
       yellow; one that is merely enabled (idle) or has a service switch on
       (anti-scaling, child lock) stays dark; a lit light yellows its icon in

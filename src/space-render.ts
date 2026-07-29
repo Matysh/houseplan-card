@@ -65,7 +65,8 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     loc,
     iconRules,
   });
-  const devs = all.filter((d) => d.space === o.spaceId);
+  // the static card never shows hidden devices — there is no editor here
+  const devs = all.filter((d) => d.space === o.spaceId && !d.hidden);
   const defPos = defaultPositions(devs, space, iconPct);
 
   const roomShapes = space.rooms

@@ -25,7 +25,7 @@ import {
   DISPLAY_MODES, TAP_ACTIONS, SPACE_FILL_MODES, ROOM_FILL_MODES,
 } from './logic';
 import { ContentSigner } from './signing';
-import { buildDevices, lqiFor, tempFor, humFor, isHumEntity, areaLights, areaTemp, areaHum, areaLightStats, sourceValue, areaClimateMap, litLightEntity, type AreaClimate } from './devices';
+import { buildDevices, seedHiddenBindings, lqiFor, tempFor, humFor, isHumEntity, areaLights, areaTemp, areaHum, areaLightStats, sourceValue, areaClimateMap, litLightEntity, type AreaClimate } from './devices';
 import type {
   OpeningCfg,
   RoomCfg, SpaceModel, PdfRef, Marker, ServerConfig, DevItem, CardConfig,
@@ -293,7 +293,8 @@ class HouseplanCard extends LitElement {
     link: string;
     description: string;
     pdfs: PdfRef[];
-    room: string;        // 'space#area' for a virtual one
+    room: string;
+    hideFromPlan: boolean;        // 'space#area' for a virtual one
     busy: boolean;
   } | null = null;
   private _spaceDialog: {
@@ -671,13 +672,67 @@ class HouseplanCard extends LitElement {
     return this._serverCfg?.settings || {};
   }
 
+  /** LOCAL editor tool (docs/FILTERING.md): show the hidden devices ghosted.
+   *  The old toggle wrote settings.show_all — shared state that flipped the
+   *  plan for every wall tablet at once. Legacy configs still honour it
+   *  through buildDevices until they are seeded. */
+  private _showHidden = false;
+
   private get _showAll(): boolean {
-    return !!this._settings.show_all;
+    return this._settings.filter_seeded ? this._showHidden : !!this._settings.show_all;
   }
 
   private _toggleShowAll(): void {
     if (!this._serverCfg) return;
-    this._serverCfg = { ...this._serverCfg, settings: { ...this._serverCfg.settings, show_all: !this._showAll } };
+    if (this._settings.filter_seeded) {
+      this._showHidden = !this._showHidden;
+      this.requestUpdate();
+      return;
+    }
+    // legacy config: the old shared behaviour until an editor materialises it
+    this._serverCfg = { ...this._serverCfg, settings: { ...this._serverCfg.settings, show_all: !this._settings.show_all } };
+    this._regSignature = '';
+    this._maybeRebuildDevices();
+    this._saveConfig();
+    this.requestUpdate();
+  }
+
+  /**
+   * The seeder (docs/FILTERING.md): materialise the filter into explicit
+   * hidden flags. Runs after every device rebuild on a client that may write;
+   * idempotent — a device with ANY marker is never revisited, so an unticked
+   * checkbox (a marker with hidden: false) is re-seed protection. Also
+   * removes freshly hidden ids from the red-dot list: a dot on an invisible
+   * device would wait forever.
+   */
+  private _seedHiddenDevices(): void {
+    if (!this._serverCfg || !this._norm || !this._canEdit) return;
+    const cfg = this._serverCfg;
+    const bindings = seedHiddenBindings({
+      hass: this.hass,
+      areaToSpace: Object.fromEntries(
+        Object.entries(this._areaToSpace).map(([a, v]) => [a, v.space]),
+      ),
+      markers: this._markers,
+      settings: this._settings,
+      excluded: this._excluded,
+      firstSpaceId: this._model[0]?.id || '',
+      iconRules: this._iconRules,
+    });
+    if (!bindings.length && cfg.settings?.filter_seeded) return;
+    cfg.markers = cfg.markers || [];
+    const hiddenIds: string[] = [];
+    for (const b of bindings) {
+      const id = 'h' + b.slice(b.indexOf(':') + 1);
+      cfg.markers.push({ id, binding: b, hidden: true });
+      hiddenIds.push(b.slice(b.indexOf(':') + 1));
+    }
+    const st = { ...(cfg.settings || {}), filter_seeded: true } as any;
+    delete st.show_all; // the shared toggle retires with the runtime filter
+    if (hiddenIds.length && Array.isArray(st.new_device_ids)) {
+      st.new_device_ids = st.new_device_ids.filter((x: string) => !hiddenIds.includes(x));
+    }
+    cfg.settings = st;
     this._regSignature = '';
     this._maybeRebuildDevices();
     this._saveConfig();
@@ -1007,6 +1062,7 @@ class HouseplanCard extends LitElement {
     });
     this._defPos = this._defaultPositions();
     this._syncNewDevices();
+    this._seedHiddenDevices();
   }
 
   /**
@@ -2753,6 +2809,7 @@ class HouseplanCard extends LitElement {
         room: d.marker?.room_id
           ? d.space + '#@' + d.marker.room_id
           : d.space && d.area ? d.space + '#' + d.area : '',
+        hideFromPlan: d.marker?.hidden === true,
         busy: false,
       };
     } else {
@@ -2762,7 +2819,7 @@ class HouseplanCard extends LitElement {
         display: 'badge', rippleColor: '', rippleSize: 3, size: 1, angle: 0,
         tapAction: '', defaultTap: 'info', controls: [], controlsFilter: '', isLight: false,
         glowRadius: '', model: '',
-        link: '', description: '', pdfs: [], room: '', busy: false,
+        link: '', description: '', pdfs: [], room: '', hideFromPlan: false, busy: false,
         uploadId: 'up_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       };
     }
@@ -2966,6 +3023,10 @@ class HouseplanCard extends LitElement {
         link: dlg.link.trim() || null,
         description: dlg.description.trim() || null,
         pdfs: dlg.pdfs,
+        // Explicit false, not absence: a marker of any kind is what tells the
+        // seeder "the user decided" — unticking must not invite a re-hide
+        // (docs/FILTERING.md).
+        hidden: dlg.hideFromPlan ? true : false,
       };
       // save the room choice (always for virtual ones; for bound ones — if chosen)
       if (dlg.binding === 'virtual' || dlg.room) {
@@ -3612,6 +3673,7 @@ class HouseplanCard extends LitElement {
     const spots: { pos: { x: number; y: number }; c: string; alpha: number; clip: string[] | null; r: number }[] = [];
     for (const d of this._devices) {
       if (d.space !== space.id) continue;
+      if (d.hidden) continue; // an invisible device casts no visible light (docs/FILTERING.md)
       // A light source is normally a device with a lit light.* entity. With the
       // "is a light source" flag (field request: a smart SWITCH driving dumb
       // fixtures) any lit entity counts — the switch itself, or the lights it
@@ -3895,7 +3957,11 @@ class HouseplanCard extends LitElement {
     }
     const space = this._spaceModel();
     const vb = space.vb;
-    const devs = this._devices.filter((d) => d.space === space.id);
+    // hidden devices render ONLY in the device editor with "show hidden" on
+    // (ghosted); everywhere else the flag removes them from sight — but not
+    // from the build, so room LQI still counts them (docs/FILTERING.md)
+    const showGhosts = this._mode === 'devices' && this._showAll;
+    const devs = this._devices.filter((d) => d.space === space.id && (!d.hidden || showGhosts));
     const disp = spaceDisplayOf(this._curSpaceCfg);
     const showLqi = disp.showLqi ?? this._config.show_signal ?? true;
     const cfgSize = this._config.icon_size ?? 2.5;
@@ -3954,7 +4020,7 @@ class HouseplanCard extends LitElement {
                 )}
               </div>`
             : nothing}
-          <span class="count">${this._t('count.devices', { n: devs.length })}</span>
+          <span class="count">${this._t('count.devices', { n: devs.filter((d) => !d.hidden).length })}</span>
           <span class="spacer"></span>
           <div class="zoomctl">
             <button class="btn zb" @click=${() => this._stepZoom(-1)} title=${this._t('title.zoom_out')}><ha-icon icon="mdi:minus"></ha-icon></button>
@@ -4184,7 +4250,7 @@ class HouseplanCard extends LitElement {
     }
     if (lightC) st.push(`--light-color:${lightC}`);
     return html`<div
-      class="dev ${cls} ${this._selId === d.id ? 'sel' : ''} ${d.virtual ? 'virtual' : ''} ${disp === 'ripple' ? 'noicon' : ''} ${valText != null ? 'valonly' : ''} ${lightC ? 'rgb' : ''} ${alarm ? 'alarm' : ''}"
+      class="dev ${cls} ${this._selId === d.id ? 'sel' : ''} ${d.virtual ? 'virtual' : ''} ${d.hidden ? 'ghost' : ''} ${disp === 'ripple' ? 'noicon' : ''} ${valText != null ? 'valonly' : ''} ${lightC ? 'rgb' : ''} ${alarm ? 'alarm' : ''}"
       style="${st.join(';')}"
       @click=${(e: MouseEvent) => this._clickDevice(e, d)}
       @contextmenu=${(e: MouseEvent) => this._ctxDevice(e, d)}
@@ -5241,6 +5307,11 @@ class HouseplanCard extends LitElement {
               @change=${(e: Event) => (this._markerDialog = { ...d, isLight: (e.target as HTMLInputElement).checked })} />
             <span>${this._t('marker.is_light')}</span>
           </label>
+          <label class="srcrow" title=${this._t('marker.hide_tip')}>
+            <input type="checkbox" .checked=${d.hideFromPlan}
+              @change=${(e: Event) => (this._markerDialog = { ...d, hideFromPlan: (e.target as HTMLInputElement).checked })} />
+            <span>${this._t('marker.hide')}</span>
+          </label>
           <label>${this._t('marker.glow_radius_label')}</label>
           <div class="colorrow">
             <input class="tempin" type="number" min="0.5" step="0.5"
@@ -5325,7 +5396,7 @@ class HouseplanCard extends LitElement {
           </div>
         </div>
         <div class="row">
-          ${d.devId
+          ${d.devId && d.binding === 'virtual'
             ? html`<button class="btn danger" @click=${this._deleteMarker}>
                 <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.remove')}
               </button>`
