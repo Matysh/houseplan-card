@@ -36,7 +36,7 @@ import { cardStyles } from './styles';
 import { fitInSquare, contentBounds, spaceModels } from './space-geometry';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.52.1';
+const CARD_VERSION = '1.52.2';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -1213,9 +1213,12 @@ class HouseplanCard extends LitElement {
     const controls = (d.marker?.controls || []).filter(isControllable);
     if (controls.length)
       return controls.some((e) => this.hass.states[e]?.state === 'on') ? 'on' : '';
-    // A shining light makes its icon yellow in EVERY fill mode — and it is
-    // the same condition that lights the glow pool, so the pool and the icon
-    // cannot disagree (they used to read different entities).
+    // A shining light yields 'on' here by the SAME condition that lights the
+    // glow pool, so the pool and the state cannot disagree. Note the renderer
+    // then STRIPS the class wherever the glow layer is actually visible —
+    // there the spot is the one indicator (v1.52.0, owner's rule); the badge
+    // stays yellow only where the spot is not drawn (other fills, the plan
+    // editor).
     if (litLightEntity(this.hass, d)) return 'on';
     const p = d.primary ? this.hass.states[d.primary] : undefined;
     if (!p) return '';
