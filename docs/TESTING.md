@@ -239,6 +239,9 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       on the plan after a reload. Same for each tap action and each fill mode
       [auto: backend test_every_display_mode_the_editor_offers_is_accepted and
       neighbours, test_a_marker_showing_its_value_can_be_saved]
+- [ ] Legacy geometry parity (v1.50.4, HP-1503-01): a store with a zero
+      viewport and a negative rect renders identically sane in BOTH cards —
+      full canvas fallback, normalised rectangle [auto: smoke_legacy_geometry]
 - [ ] Sizes are positive (v1.50.3, HP-1502-01): view_box or room w/h of zero
       or below is refused; a store that already holds one opens on the full
       canvas, not a blank screen [auto: test_sizes_are_not_coordinates + unit

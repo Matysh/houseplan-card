@@ -33,10 +33,10 @@ import type {
 import './editor';
 import './space-card';
 import { cardStyles } from './styles';
-import { fitInSquare, contentBounds } from './space-geometry';
+import { fitInSquare, contentBounds, spaceModels } from './space-geometry';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.50.3';
+const CARD_VERSION = '1.50.4';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -641,31 +641,18 @@ class HouseplanCard extends LitElement {
 
   private _buildModel(): SpaceModel[] {
     if (!this._serverCfg) return [];
-    return this._serverCfg.spaces.map((s: any) => {
-      const H = NORM_W; // the canvas is always square (v1.48.0)
-      const scale = (r: any) => ({
-        id: r.id,
-        name: r.name,
-        area: r.area ?? null,
-        open_to: r.open_to || undefined,
-        settings: r.settings || undefined,
-        x: r.x != null ? r.x * NORM_W : undefined,
-        y: r.y != null ? r.y * H : undefined,
-        w: r.w != null ? r.w * NORM_W : undefined,
-        h: r.h != null ? r.h * H : undefined,
-        poly: r.poly ? r.poly.map((p: number[]) => [p[0] * NORM_W, p[1] * H]) : undefined,
-      });
-      return {
-        id: s.id,
-        title: s.title,
-        vb: [s.view_box[0] * NORM_W, s.view_box[1] * H, s.view_box[2] * NORM_W, s.view_box[3] * H],
-        // raw url on purpose: the model is memoized on the config fingerprint,
-        // so a signed url baked in here would freeze BEFORE the signature
-        // arrives and the plan would never load (bug found 2026-07-27).
-        // _display() is called at render time instead.
-        bg: s.plan_url ? { href: s.plan_url, ...fitInSquare(s.plan_aspect, NORM_W) } : null,
-        rooms: s.rooms.map(scale),
-      };
+    // ONE model builder for both cards. This used to be a hand-copied twin of
+    // spaceModels(), and the twin missed the legacy-store fallbacks the shared
+    // one gained (safeViewBox, normRect) — the same broken store rendered fine
+    // in the static card and as viewBox="0 0 0 0" here (HP-1503-01). The only
+    // difference this card needs is the url: raw on purpose, because the model
+    // is memoized on the config fingerprint, so a signed url baked in here
+    // would freeze BEFORE the signature arrives and the plan would never load
+    // (bug found 2026-07-27). _display() is called at render time instead.
+    const cfg = this._serverCfg;
+    return spaceModels(cfg).map((m, i) => {
+      const raw = (cfg.spaces[i] as any)?.plan_url;
+      return m.bg && raw ? { ...m, bg: { ...m.bg, href: raw } } : m;
     });
   }
 
