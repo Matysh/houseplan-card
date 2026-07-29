@@ -161,7 +161,7 @@ for each floor (names prefilled, a plan image is asked for one by one; any floor
 
 ![Empty plan — prompt to add a space](docs/images/02-onboarding-empty.png)
 
-In the dialog, set a **name** (for example, "1st floor") and **upload a background** — a floor-plan image in SVG, PNG or JPG format. Both fields are required: without a plan the "Save" button stays disabled.
+In the dialog, set a **name** (for example, "1st floor") and pick the background: **upload** a floor-plan image (SVG, PNG, JPG, WebP), **choose one already uploaded** to the server earlier, or select **"no background, I'll draw the rooms"** for a hand-drawn space. The canvas is always square; an image keeps its own proportions and is centred inside it.
 
 ![Space creation dialog](docs/images/03-space-dialog.png)
 
@@ -204,7 +204,7 @@ walls** (it slides around corners too), and a **double click opens its propertie
 
 As soon as you save a room bound to an area, **the devices of that area are automatically laid out inside the outline**. These are the same devices shown on the **Settings → Devices → (filtered by the room)** page — only the meaningful ones, without service records, bridges and duplicates.
 
-By default only meaningful devices make it onto the plan — service records, bridges and duplicates are filtered out. If you need to see **absolutely all** devices of the area, enable the **👁 "Show all devices"** button in the header.
+By default only meaningful devices make it onto the plan: non-physical ones (service records, bridges, scenes, individual lamps folded into a light group) arrive with the **"Hide device from plan"** checkbox already ticked. The checkbox is yours from then on — every device dialog has it, virtual devices included. To see and un-hide them, open the device editor and press **"Show hidden"**: hidden devices appear as translucent blue ghosts, a click opens the dialog. Hidden devices still count toward the room's Zigbee signal, but cast no light.
 
 From here on you can just use the plan: clicking an icon opens the device card with the model, link and a button to jump into Home Assistant.
 
@@ -286,7 +286,7 @@ Services → House Plan**.
 
 **Do I need to write anything in YAML?** No. The only line is adding the card to the dashboard; everything else is done with the mouse.
 
-**My devices did not appear on the plan.** A device appears only if its Home Assistant area is bound to a drawn room. Check that the device has a room assigned (Settings → Devices) and that the room is outlined and bound to that area. If the device exists but is hidden by filtering (bridges, service records, duplicates) — enable the **👁 "Show all devices"** button in the header.
+**My devices did not appear on the plan.** A device appears only if its Home Assistant area is bound to a drawn room. Check that the device has a room assigned (Settings → Devices) and that the room is outlined and bound to that area. If the device exists but is hidden (the "Hide device from plan" checkbox — set automatically for bridges, scenes and other non-physical records) — open the device editor, press **"Show hidden"** and untick the box in its dialog.
 
 **Can I hide an unwanted device or rename it?** Yes — click the device on the plan and press "Edit" in its card: there you can change the name, icon, model or hide the icon.
 

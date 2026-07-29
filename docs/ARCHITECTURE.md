@@ -100,23 +100,36 @@ name?, icon?, model?, link?, description?, pdfs:[{name,url}]}`. A hybrid: auto-d
 appear on their own; a marker with `binding=device:<id>` overrides them (metadata/rebinding/hiding),
 `entity:<eid>` — for groups/helpers, `virtual` — a manual icon without HA. The marker id = device_id /
 `lg_<eid>` / `v_<rand>` (preserves the position in the layout). The binding picker excludes already-placed
-references and duplicates by name|area. Manual files: `houseplan/file/set` → `/config/houseplan/files/<id>/`,
-served from `/houseplan_files/files/`.
+references and duplicates by name|area. Manual files: transactional HTTP upload into `<config>/houseplan/files/<id>/`
+(staging `up_*` folders promoted on save), served via signed
+`/api/houseplan/content/files/…` urls.
 
-## Server-side configuration (v1.3.0+)
+## Server-side configuration (current shape, v1.51+)
 
 `.storage/houseplan.config` (Store):
 ```json
-{ "spaces": [{ "id","title","plan_url","aspect","view_box":[4],"rooms":[{"id","name","area","x","y","w","h"}] }],
-  "device_overrides": {"<device_id>": {"hidden","icon","name"}},
-  "virtual_devices": [{"id","space","name","icon","x","y","note?","entity_id?"}],
-  "settings": {"exclude_integrations":[],"group_lights":true} }
+{ "spaces": [{ "id","title","plan_url","plan_aspect","view_box":[4],
+               "rooms":[{"id","name","area","poly|x/y/w/h","open_to","settings"}],
+               "openings":[…], "decor":[…], "settings":{…} }],
+  "markers": [{ "id","binding":"device:<id>|entity:<eid>|virtual","hidden",
+                "name","icon","display","controls","is_light","tap_action",
+                "room_id","pdfs",… }],
+  "settings": { "exclude_integrations":[], "group_lights":true,
+                "filter_seeded":true, "fill_colors":{…}, "icon_rules":[…],
+                "known_devices":[…], "new_device_ids":[…] } }
 ```
-All coordinates are **normalized (0..1 of the space plan)**; the render space is
-1000 × 1000/aspect. Layout v2: `{device_id: {"s": space, "x", "y"}}` (normalized).
-Plan files: `<config>/houseplan/plans/<space>.<ext>` → URL `/houseplan_files/plans/…`.
-If the server config is empty, the card falls back to the legacy bundle (the dacha) and shows a
-"To server" migration button in edit mode. The dacha was migrated on 2026-07-04.
+All coordinates are **normalized (0..1 of the canvas)**; the canvas is always
+**square** (v1.48.0), render space `NORM_W × NORM_W` (1000×1000). A space has no
+proportions of its own — `plan_aspect` is the IMAGE's ratio, used to letterbox
+it centred on the square. The schema bounds geometry to ±4 with strictly
+positive sizes (HP-1501/1502). `device_overrides`/`virtual_devices` are long
+gone — markers carry everything, `marker.hidden` is the explicit
+"hide from plan" flag seeded once by the old filter (docs/FILTERING.md).
+Layout v2: `{device_id | rl_<roomId>: {"s": space, "x", "y"}}` (normalized,
+bounded ±4). Plan files: `<config>/houseplan/plans/<space>.<token>.<ext>`
+(copy-on-write, never overwritten), served via signed
+`/api/houseplan/content/plans/_/<name>` urls; growth is bounded by store
+quotas, nothing is ever deleted for being old (docs/SCOPE.md).
 
 ## Room geometry rules (v1.19–v1.21)
 
@@ -178,9 +191,16 @@ double click → properties dialog. In markup mode the "Opening" tool handles cl
 | `houseplan/config/get` | — | `{config, rev}` |
 | `houseplan/config/set` | `config`, `expected_rev?` | `{ok, rev}` / err `conflict`; event `houseplan_config_updated` |
 | `houseplan/plan/set` | `space_id`, `ext` (svg/png/jpg/webp), `data` (b64, ≤8 MB) | `{ok, url}` — writes `<space>.<token>.<ext>`, deletes nothing |
-| `houseplan/plans/list` | — | `{plans: [{name, url, size, modified, used_by}]}` |
+| `houseplan/plans/list` | — | `{plans: [{name, url, size, modified, used_by}], total}` (newest 60) |
 | `houseplan/plans/delete` | `name` | `{ok, removed}` / err `in_use` |
-| `houseplan/file/set` | `marker_id`, `filename`, `data` (b64) | `{ok,url,name}` (legacy, WS limit) |
+| `houseplan/layout/delete` | `device_id` | `{ok, rev}`; event `houseplan_layout_updated` |
+| `houseplan/geometry/repair` | `space_id`, `aspect`, `dry_run?`, `undo?` | preview / `{ok, rev, moved}` / `{restored}`; errs `nothing_to_repair`, `no_backup` |
+| `houseplan/files/migrate` | `from_id`, `to_id` | `{mapping}` — COPY, never move |
+| `houseplan/files/cleanup` | `marker_id`, `keep?` | replacement-only collection |
+| `houseplan/content/sign` | `paths[]` | `{urls}` — authSig for `<image>`/`<a>` fetches |
+
+Manual attachments upload over HTTP (streaming, transactional staging), not WS —
+the old `houseplan/file/set` was removed in v1.10.0.
 
 **If the v1.48 migration crashed halfway** (HP-1500-01): the config write
 landed, the layout write did not, and both triggers are gone — markers of that

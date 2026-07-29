@@ -35,12 +35,12 @@ Track progress in `custom_components/houseplan/quality_scale.yaml` (done/exempt 
 - [ ] `test-coverage` ≥95% backend; frontend: extract remaining pure logic (view math,
   marker resolution) into `logic.ts`/`devices.ts` and cover with node:test.
 - [x] `diagnostics.py`: config + layout dump with `async_redact_data` (redact names/links/PDF paths).
-- [ ] `reconfiguration-flow` + richer **options flow**: admin_only, curation defaults
+- [ ] `reconfiguration-flow` + richer **options flow**: admin_only, filtering defaults
   (exclude domains — UI editable, replacing the hardcoded EXCLUDED_DOMAINS fallback),
   LQI thresholds, group_lights default.
-- [ ] `repair-issues`: broken plan file references, orphaned layout entries, storage
-  migration failures → Repairs UI instead of silent logs.
-- [ ] `system_health.py`: config rev, spaces/markers count, storage sizes.
+- [x] `repair-issues`: broken plan references in Repairs (repairs.py, re-checked on
+  every config save); geometry/repair WS command for stranded migrations (v1.50.1).
+- [x] `system_health.py` (v1.12.0).
 - [ ] `exception-translations` + `icon-translations` where applicable.
 - [ ] Frontend resource registration: adopt the community-consensus embedded-card pattern
   end-to-end (we already do StaticPathConfig + storage-mode resource + `?v=` busting;
@@ -48,26 +48,28 @@ Track progress in `custom_components/houseplan/quality_scale.yaml` (done/exempt 
 
 ## Phase 9 — Universality & flexibility (product depth)
 
-- [ ] **Areas/floors registry integration**: import HA floors as spaces, suggest area
+- [x] **Areas/floors registry integration**: floors-import wizard (v1.13.0); further: suggest area
   bindings from the registry, sync names (HA is moving this way — native Areas/Home
   dashboard; riding the registry is our moat).
-- [ ] **Curation without hardcode**: icon rules (`iconFor`) become data — user-editable
+- [x] **Filtering without hardcode**: icon rules became data (v1.13.0); the runtime
+  filter itself became explicit per-device hide flags in v1.51.0 (docs/FILTERING.md);
+  icon rules are user-editable
   mapping (regex/domain/device_class → mdi icon) stored in config, shipping EN+RU
   defaults; drop dacha-specific patterns from code.
-- [ ] **Click actions** per device/domain: toggle / more-info / navigate / custom service
-  call (configurable, like standard card `tap_action`).
-- [ ] **Theming**: respect light themes (currently dark-leaning), use HA theme variables
+- [x] **Click actions** per device (v1.13.0, simplified v1.38.1): card / more-info /
+  toggle, with the lock/alarm safety model.
+- [x] **Theming**: light-theme pass done in v1.13.0; HA theme variables
   everywhere, optional per-space background color.
 - [ ] Multi-instance question: keep single-instance (one house) but support **multiple
   cards** with different default spaces (already works) — document as a decision.
 - [ ] Plan formats: keep SVG/PNG/JPG/WebP; add max dimensions guidance; optional
   auto-downscale on upload.
-- [ ] More locales: extract i18n dictionaries to JSON so contributors can add languages
-  without touching TS.
+- [x] More locales: i18n dictionaries are JSON since v1.13.0 (src/i18n/*.json).
 
 ## Phase 10 — Community & distribution
 
-- [ ] hacs/default PR #8995 through moderation (expect drafting for fixes).
+- [ ] hacs/default PR **#9004** through moderation (#8995 was bot-closed for a
+  non-template body; #9004 is queued with the label since 2026-07-22).
 - [ ] Demo GIF/video for README (the single biggest driver of adoption for dashboard cards).
 - [ ] Forum post in the Floorplan category + Reddit r/homeassistant showcase once
   the demo assets exist.
