@@ -1,5 +1,61 @@
 # Changelog
 
+## v1.51.0 — 2026-07-29
+
+**Hiding is an explicit flag now** (docs/FILTERING.md)
+
+- **Every device dialog — virtual ones included — has a "Hide device from
+  plan" checkbox.** The old on-the-fly filter survives only as the SEEDER of
+  those flags: on first load by an editing client the config is materialised
+  once — non-physical devices (bridges, scenes, service integrations, lamps
+  folded into a light group) get the flag, and from then on the flag belongs
+  to you. Unticking it is final: the seeder never revisits a device you have
+  decided about. New non-physical devices hide silently; physical ones keep
+  the red-dot flow.
+- **"Show all" became "Show hidden"** — a local tool of the device editor
+  (nothing flips on the wall tablets), showing hidden devices as translucent
+  BLUE dashed ghosts: clearly apart from a grey unavailable icon, and with no
+  live-state paint at all — a ghost is configuration, not status. Click one
+  to untick the box. "Remove from plan" is gone for bound devices (the
+  checkbox is the way); a virtual device's Delete still deletes.
+- Hidden devices still count toward the room's Zigbee signal, but cast no
+  glow and no light fill — an invisible device casts no visible light. Room
+  climate is unchanged. Old configs behave exactly as before until an
+  editing client materialises them.
+
+**Yellow means working right now**
+
+- One principle for the glowing icon: a light is shining, a socket is
+  powering, a fan is spinning, media is playing, a vacuum is cleaning — or a
+  radiator valve is ACTUALLY heating (hvac_action), not merely enabled for
+  the winter. Previously a TRV could glow yellow because its anti-scaling
+  service switch was on while the actually-heating one stayed dark: the
+  primary-entity search let a vendor's config switch outrank the visible
+  climate entity. Fixed — a service entity never beats the device's visible
+  main function (this also fixes tap-toggle and icon morphing on such
+  devices).
+- The glow pool and the icon color now ask the same question: a lit light
+  yellows its icon in every fill mode, by exactly the condition that lights
+  its glow spot. The README (en+ru) documents the color language.
+
+**The editors, on a phone**
+
+- Pinch zoom and pan gestures now work in every editor: drawing is
+  click-based, so the two coexist — a moving finger pans, two fingers pinch,
+  releasing after a gesture never draws a point, a clean tap still does.
+
+**The room settings button**
+
+- Detached from the (movable) room name: it sits at the VISUAL centre of the
+  room — the centre of the largest inscribed circle with a pull toward the
+  area centroid, so an elongated room centres it on both axes and an L-shaped
+  one keeps it in the middle of its widest part, never down a thin limb.
+- Half its former size, sized from the device icon (70% of the icon box) and
+  zooming WITH the plan instead of keeping a constant screen size.
+- The small metric rows under the room name (temperature, humidity, signal,
+  lights) now show in the plan editor too, and the name renders in exactly
+  the same spot in view mode and in the editor.
+
 ## v1.50.4 — 2026-07-29
 
 **From the v1.50.3 review**
