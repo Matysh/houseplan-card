@@ -1237,6 +1237,13 @@ export const cardStyles = css`
       max-height: 160px;
       overflow-y: auto;
       border-top: 1px solid var(--hp-line);
+      /* A scrollable box is a flex item that HAPPILY collapses: inside the
+         dialog body (a flex column) this list rendered its rows into a 1px
+         sliver — the DOM had 26 candidates and the user saw nothing. In the
+         binding dropdown it sits inside .droppanel (block context) and never
+         showed the bug. Field report, 2026-07-30. */
+      flex: 0 0 auto;
+      min-height: 2.6em;
     }
     .cand {
       display: flex;
