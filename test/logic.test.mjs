@@ -15,7 +15,7 @@ import {
   contentUrl, chunk, referencedContentUrls, MAX_SIGN_PATHS,
   interiorPoint,
   segmentCm, formatLength, roomEdges, roomPoly, pointOnBoundary, pointStrictlyInside, roomsOverlap,
-  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, poleOfInaccessibility } from '../test-build/logic.js';
+  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, poleOfInaccessibility, runServiceFor, TOGGLE_SAFE_DOMAINS } from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
 } from '../test-build/rules.js';
@@ -190,8 +190,13 @@ test('tap action: defaults — info everywhere except pure lights (v1.39.0)', ()
 test('tap action: card-wide toggle only touches safe domains', () => {
   assert.equal(resolveTapAction(null, 'toggle', 'light'), 'toggle');
   assert.equal(resolveTapAction(null, 'toggle', 'switch'), 'toggle');
-  assert.equal(resolveTapAction(null, 'toggle', 'cover'), 'info');   // garage stays shut
-  assert.equal(resolveTapAction(null, 'toggle', 'valve'), 'info');
+  // covers/valves joined the safe set for curtains (owner, 2026-07-29)…
+  assert.equal(resolveTapAction(null, 'toggle', 'cover', 'curtain'), 'toggle');
+  assert.equal(resolveTapAction(null, 'toggle', 'valve'), 'toggle');
+  // …but the garage door is a cover too, and it STAYS SHUT on a default tap
+  assert.equal(resolveTapAction(null, 'toggle', 'cover', 'garage'), 'info');
+  assert.equal(resolveTapAction(null, 'toggle', 'cover', 'gate'), 'info');
+  assert.equal(resolveTapAction('toggle', null, 'cover', 'garage'), 'toggle', 'explicit stays a conscious choice');
   assert.equal(resolveTapAction(null, 'toggle', 'sensor'), 'info');
 });
 
@@ -935,4 +940,22 @@ test('poleOfInaccessibility: the VISUAL centre, not just any interior point', ()
   assert.ok(pointInPolygon(q, L), 'inside, always');
   assert.ok(q[1] < 8, 'in the thick slab (y < 8), not down the column: ' + q);
   assert.ok(Math.abs(q[0] - 11.3) < 2.5, 'near the centroid x within the slab: ' + q);
+});
+
+
+test('tap action run: explicit-only, with runnable targets (owner spec 2026-07-29)', () => {
+  // 'run' resolves only as an explicit per-marker action
+  assert.equal(resolveTapAction('run', undefined, 'switch'), 'run');
+  assert.equal(resolveTapAction(null, 'run', 'switch'), 'info', 'never a card-wide default');
+  // runnable domains map to their services; anything else is not runnable
+  assert.deepEqual(runServiceFor('automation.morning'), { domain: 'automation', service: 'trigger' });
+  assert.deepEqual(runServiceFor('script.curtains'), { domain: 'script', service: 'turn_on' });
+  assert.deepEqual(runServiceFor('scene.movie'), { domain: 'scene', service: 'turn_on' });
+  assert.equal(runServiceFor('light.lamp'), null);
+  assert.equal(runServiceFor(''), null);
+  // covers and valves joined the card-wide toggle domains
+  assert.ok(TOGGLE_SAFE_DOMAINS.has('cover') && TOGGLE_SAFE_DOMAINS.has('valve'));
+  assert.equal(resolveTapAction(null, 'toggle', 'cover', 'shutter'), 'toggle');
+  // locks and alarms stay forbidden, run or not
+  assert.equal(resolveTapAction('toggle', undefined, 'lock'), 'info');
 });

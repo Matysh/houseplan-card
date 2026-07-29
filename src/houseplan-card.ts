@@ -18,7 +18,7 @@ import {
   snapToWall, openingAmount, interiorPoint, poleOfInaccessibility,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
   stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, glowColorOf, doorSector, hasRoomBehind, controlsAction, isControllable,
-  spaceDisplayOf, roomFillStyle, fillColorsOf, DEFAULT_FILL_COLORS, type FillColors,
+  spaceDisplayOf, roomFillStyle, fillColorsOf, DEFAULT_FILL_COLORS, type FillColors, runServiceFor, RUN_TARGET_DOMAINS,
   isActiveState, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
   referencedContentUrls,
@@ -36,7 +36,7 @@ import { cardStyles } from './styles';
 import { fitInSquare, contentBounds, spaceModels } from './space-geometry';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.52.2';
+const CARD_VERSION = '1.53.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -248,6 +248,8 @@ class HouseplanCard extends LitElement {
   private _roHdr?: ResizeObserver;
   private _onWinResize?: () => void;
   private _hdrH = 118; // measured px above the stage (see the observer in updated())
+  /** The accidental-tap guard: pending confirmation for a toggle/run tap. */
+  private _tapConfirm: { text: string; exec: () => void } | null = null;
   private _onboardingShown = false; // the auto space dialog is shown once per session
 
   private _rulesDialog: { rules: IconRule[]; test: string; busy: boolean } | null = null;
@@ -283,7 +285,10 @@ class HouseplanCard extends LitElement {
     rippleSize: number;  // in icon diameters
     size: number;        // icon size multiplier
     angle: number;       // icon rotation, degrees
-    tapAction: string;   // '' = the effective default (defaultTap)
+    tapAction: string;
+    tapTarget: string;    // 'run': automation./script./scene. entity id
+    tapConfirm: boolean;  // ask before toggle/run
+    runFilter: string;   // '' = the effective default (defaultTap)
     defaultTap: 'info' | 'toggle';
     controls: string[];  // entities this icon toggles as a group
     controlsFilter: string;
@@ -364,6 +369,7 @@ class HouseplanCard extends LitElement {
 
   static properties = {
     _hdrH: { state: true },
+    _tapConfirm: { state: true },
     hass: { attribute: false },
     _config: { state: true },
     _space: { state: true },
@@ -457,6 +463,7 @@ class HouseplanCard extends LitElement {
   private _onKey(e: KeyboardEvent): void {
     if (e.key === 'Escape') {
       // close the topmost open dialog; info popups first, then editors
+      if (this._tapConfirm) { this._tapConfirm = null; return; }
       if (this._openingInfo) { this._openingInfo = null; return; }
       if (this._infoCard) { this._infoCard = null; return; }
       if (this._rulesDialog) { this._rulesDialog = null; return; }
@@ -1288,22 +1295,53 @@ class HouseplanCard extends LitElement {
       return;
     }
     const domain = d.primary ? d.primary.split('.')[0] : null;
+    // the accidental-tap guard (owner's spec 2026-07-29): any state-changing
+    // action — toggle or run — may ask first. The dialog is ours, not the
+    // browser confirm(), so it works and looks right on a wall tablet.
+    const guarded = (text: string, exec: () => void): void => {
+      if (d.marker?.tap_confirm) this._tapConfirm = { text, exec };
+      else exec();
+    };
     // a switch with bound targets: the EXPLICIT per-marker toggle flips them
     // all with HA-group semantics (any on -> all off). Owner's decision:
     // controls never fire on the card-wide default action.
     const controls = (d.marker?.controls || []).filter(isControllable);
     if (d.tapAction === 'toggle' && controls.length) {
       const act = controlsAction(controls.map((e) => this.hass.states[e]?.state));
-      this.hass
-        .callService('homeassistant', act, { entity_id: controls })
-        .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
+      guarded(this._t('confirm.tap_toggle', { name: d.name }), () => {
+        this.hass
+          .callService('homeassistant', act, { entity_id: controls })
+          .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
+      });
       return;
     }
-    const action = resolveTapAction(d.tapAction, undefined, domain);
+    const action = resolveTapAction(
+      d.tapAction, undefined, domain,
+      d.primary ? this.hass.states[d.primary]?.attributes?.device_class : null,
+    );
+    if (action === 'run') {
+      const target = d.marker?.tap_target || '';
+      const svc = runServiceFor(target);
+      const st = this.hass.states[target];
+      if (!svc || !st) {
+        this._showToast(this._t('toast.run_target_missing'));
+        return;
+      }
+      const name = st.attributes?.friendly_name || target;
+      guarded(this._t('confirm.tap_run', { name }), () => {
+        this.hass
+          .callService(svc.domain, svc.service, { entity_id: target })
+          .then(() => this._showToast(this._t('toast.run_started', { name })))
+          .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
+      });
+      return;
+    }
     if (action === 'toggle' && d.primary) {
-      this.hass
-        .callService('homeassistant', 'toggle', { entity_id: d.primary })
-        .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
+      guarded(this._t('confirm.tap_toggle', { name: d.name }), () => {
+        this.hass
+          .callService('homeassistant', 'toggle', { entity_id: d.primary })
+          .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
+      });
       return;
     }
     if (action === 'more-info' && d.primary) {
@@ -2796,6 +2834,9 @@ class HouseplanCard extends LitElement {
         size: Number(d.marker?.size) > 0 ? Number(d.marker!.size) : 1,
         angle: Number(d.marker?.angle) || 0,
         tapAction: d.marker?.tap_action || '',
+        tapTarget: d.marker?.tap_target || '',
+        tapConfirm: d.marker?.tap_confirm === true,
+        runFilter: '',
         defaultTap: d.primary?.split('.')[0] === 'light' ? 'toggle' : 'info',
         controls: [...(d.marker?.controls || [])],
         controlsFilter: '',
@@ -2820,12 +2861,29 @@ class HouseplanCard extends LitElement {
         name: '', binding: 'virtual', bindingMode: 'virtual', bindingOpen: false,
         showEntities: false, bindingFilter: '', icon: '', autoIcon: '',
         display: 'badge', rippleColor: '', rippleSize: 3, size: 1, angle: 0,
-        tapAction: '', defaultTap: 'info', controls: [], controlsFilter: '', isLight: false,
+        tapAction: '', tapTarget: '', tapConfirm: false, runFilter: '',
+        defaultTap: 'info', controls: [], controlsFilter: '', isLight: false,
         glowRadius: '', model: '',
         link: '', description: '', pdfs: [], room: '', hideFromPlan: false, busy: false,
         uploadId: 'up_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       };
     }
+  }
+
+  /** Runnable targets for the 'run' tap action: automations, scripts, scenes. */
+  private _runCandidates(): { value: string; label: string; sub: string }[] {
+    const out: { value: string; label: string; sub: string }[] = [];
+    for (const dom of RUN_TARGET_DOMAINS) {
+      for (const [eid, st] of Object.entries<any>(this.hass.states)) {
+        if (!eid.startsWith(dom + '.')) continue;
+        out.push({
+          value: eid,
+          label: st?.attributes?.friendly_name || eid,
+          sub: this._t(('run.' + dom) as any),
+        });
+      }
+    }
+    return out.sort((a, b) => a.sub.localeCompare(b.sub) || a.label.localeCompare(b.label));
   }
 
   /** Binding candidates: HA devices + group/helper entities, minus the ones already placed. */
@@ -2989,6 +3047,10 @@ class HouseplanCard extends LitElement {
       this._showToast(this._t('toast.virtual_name_required'));
       return;
     }
+    if (dlg.tapAction === 'run' && !dlg.tapTarget) {
+      this._showToast(this._t('toast.run_target_required'));
+      return;
+    }
     this._markerDialog = { ...dlg, busy: true };
     try {
       const cfg = this._serverCfg!;
@@ -3014,6 +3076,8 @@ class HouseplanCard extends LitElement {
         size: dlg.size !== 1 ? dlg.size : null,
         angle: dlg.angle ? dlg.angle : null,
         tap_action: dlg.tapAction || null,
+        tap_target: dlg.tapAction === 'run' ? dlg.tapTarget || null : null,
+        tap_confirm: dlg.tapConfirm ? true : null,
         controls: dlg.controls.length ? dlg.controls : null,
         // pdfs may be rewritten below when rebinding changes the marker id
         is_light: dlg.isLight ? true : null,
@@ -4200,6 +4264,20 @@ class HouseplanCard extends LitElement {
             </div>`
           : nothing}
         ${this._kioskDialog ? this._renderKioskDialog() : nothing}
+        ${this._tapConfirm
+          ? html`<div class="menuwrap dialogwrap" @click=${() => (this._tapConfirm = null)}>
+              <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
+                <div class="body"><p>${this._tapConfirm.text}</p></div>
+                <div class="row">
+                  <span class="spacer"></span>
+                  <button class="btn ghost" @click=${() => (this._tapConfirm = null)}>${this._t('btn.cancel')}</button>
+                  <button class="btn on" @click=${() => { const c = this._tapConfirm!; this._tapConfirm = null; c.exec(); }}>
+                    <ha-icon icon="mdi:check"></ha-icon>${this._t('btn.run')}
+                  </button>
+                </div>
+              </div>
+            </div>`
+          : nothing}
         ${this._toast ? html`<div class="toast">${this._toast}</div>` : nothing}
       </ha-card>
     `;
@@ -5312,6 +5390,42 @@ class HouseplanCard extends LitElement {
               ([v, k]) => html`<option value=${v} ?selected=${(d.tapAction || d.defaultTap) === v}>${this._t(k as any)}</option>`,
             )}
           </select>
+          ${d.tapAction === 'run'
+            ? (() => {
+                const q = d.runFilter.trim().toLowerCase();
+                const cands = this._runCandidates().filter(
+                  (c) => !q || c.label.toLowerCase().includes(q) || c.value.includes(q),
+                );
+                const cur = d.tapTarget ? this._runCandidates().find((c) => c.value === d.tapTarget) : null;
+                return html`
+                  <label>${this._t('marker.run_target_label')}</label>
+                  ${d.tapTarget && !cur
+                    ? html`<div class="rhint">${this._t('marker.run_target_gone', { id: d.tapTarget })}</div>`
+                    : nothing}
+                  <input class="namein" type="text" placeholder=${this._t('marker.run_search_ph')}
+                    .value=${cur ? cur.label : d.runFilter}
+                    @focus=${(e: Event) => { (e.target as HTMLInputElement).select(); }}
+                    @input=${(e: Event) => (this._markerDialog = { ...d, runFilter: (e.target as HTMLInputElement).value, tapTarget: '' })} />
+                  ${!cur
+                    ? html`<div class="candlist">
+                        ${cands.slice(0, 40).map(
+                          (c) => html`<div class="cand ${c.value === d.tapTarget ? 'sel' : ''}"
+                            @click=${() => (this._markerDialog = { ...d, tapTarget: c.value, runFilter: '' })}>
+                            <span class="cl">${c.label}</span><span class="cs">${c.sub}</span>
+                          </div>`,
+                        )}
+                        ${!cands.length ? html`<div class="cand muted">${this._t('marker.nothing_found')}</div>` : nothing}
+                      </div>`
+                    : nothing}`;
+              })()
+            : nothing}
+          ${d.tapAction === 'run' || d.tapAction === 'toggle' || (!d.tapAction && d.defaultTap === 'toggle')
+            ? html`<label class="srcrow" title=${this._t('marker.tap_confirm_tip')}>
+                <input type="checkbox" .checked=${d.tapConfirm}
+                  @change=${(e: Event) => (this._markerDialog = { ...d, tapConfirm: (e.target as HTMLInputElement).checked })} />
+                <span>${this._t('marker.tap_confirm')}</span>
+              </label>`
+            : nothing}
 
           <label>${this._t('marker.controls_label')}</label>
           <div class="rhint">${this._t('marker.controls_hint')}</div>
