@@ -1416,8 +1416,17 @@ class HouseplanCard extends LitElement {
         clearTimeout(this._kioskHoldTimer);
       }
     }
-    // do not interfere with icon dragging and markup drawing
-    if (this._drag || this._markup) return;
+    // do not interfere with icon and label dragging
+    if (this._drag) return;
+    if (this._markup) {
+      // Drawing is CLICK-based, so gestures coexist with it: a finger that
+      // MOVES pans, two fingers pinch, and _suppressClick keeps the release
+      // from feeding the active tool. The editor used to opt out of gestures
+      // entirely, which left a phone with no way to zoom or pan the plan
+      // (owner's report). Pointers that begin on interactive children still
+      // stay out — labels and handles run their own drags.
+      if ((ev.target as HTMLElement).closest?.('.roomlabel, .rlhandle, .dev, .oplock, .op-hit, button')) return;
+    }
     if (this._mode === 'devices' && (ev.target as HTMLElement).closest('.dev')) return;
     if (this._mode === 'decor' && this._decorPointerDown(ev)) return;
     this._pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
@@ -1447,6 +1456,8 @@ class HouseplanCard extends LitElement {
       return;
     }
     this._pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    // the tool preview (snap dot, measure label) keeps following the finger
+    if (this._markup && this._pointers.size === 1) this._markupMove(ev);
     if (this._pinchStart && this._pointers.size >= 2) {
       const pts = [...this._pointers.values()];
       const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
@@ -1822,6 +1833,8 @@ class HouseplanCard extends LitElement {
 
   private _markupClick(ev: MouseEvent): void {
     if (!this._markup) return;
+    // a pan or pinch just happened — the synthesized click is not a draw
+    if (this._suppressClick) return;
     // Room cards swallow markup clicks: dragging, resizing or just clicking a
     // card must not feed the active tool (draw point, delete room, merge/split
     // pick, opening placement). The drag itself already stops pointer events,
