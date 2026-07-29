@@ -114,6 +114,21 @@ LAYOUT_SCHEMA = vol.All(vol.Schema({str: POS_SCHEMA}), vol.Length(max=MAX_LAYOUT
 # the exact failure HP-1500-03 closed for layout positions, one schema over.
 _GEOM = vol.All(_finite, vol.Range(min=-4.0, max=4.0))
 
+# A SIZE is not a coordinate (HP-1502-01): SVG requires positive width/height,
+# and the clients divide by these. `view_box: [0,0,0,0]` passed the shared
+# validator and serialised into viewBox="0 0 0 0" — a blank plan on every
+# client. The floor is one thousandth of the canvas (1 render unit): far below
+# any real room, but keeps the maths finite.
+_EXTENT = vol.All(_finite, vol.Range(min=0.001, max=4.0))
+
+
+def _view_box(value):
+    """[x, y, w, h]: the first two are coordinates, the last two are sizes."""
+    if not isinstance(value, (list, tuple)) or len(value) != 4:
+        raise vol.Invalid("view_box must be [x, y, w, h]")
+    return [_GEOM(value[0]), _GEOM(value[1]), _EXTENT(value[2]), _EXTENT(value[3])]
+
+
 POINT = vol.All([_GEOM], vol.Length(min=2, max=2))
 
 
@@ -145,8 +160,8 @@ ROOM_SCHEMA = vol.All(
             ),
             vol.Optional("x"): _GEOM,
             vol.Optional("y"): _GEOM,
-            vol.Optional("w"): _GEOM,
-            vol.Optional("h"): _GEOM,
+            vol.Optional("w"): _EXTENT,
+            vol.Optional("h"): _EXTENT,
             vol.Optional("poly"): vol.All([POINT], vol.Length(min=3, max=MAX_POLY_POINTS)),
         },
         extra=vol.ALLOW_EXTRA,
@@ -210,7 +225,7 @@ SPACE_SCHEMA = vol.Schema(
         vol.Optional("plan_aspect"): vol.Any(
             None, vol.All(vol.Coerce(float), vol.Range(min=0.05, max=20))
         ),
-        vol.Required("view_box"): vol.All([_GEOM], vol.Length(min=4, max=4)),
+        vol.Required("view_box"): _view_box,
         vol.Required("rooms"): vol.All([ROOM_SCHEMA], vol.Length(max=MAX_ROOMS)),
         vol.Optional("decor"): vol.All([DECOR_SCHEMA], vol.Length(max=MAX_DECOR)),
         vol.Optional("openings"): vol.All([

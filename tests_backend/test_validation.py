@@ -236,6 +236,27 @@ def test_geometry_magnitudes_are_bounded():
         {"id": "r", "name": "R", "poly": [[-0.2, 0], [1.3, 0], [1, 1]]}]}]})
 
 
+def test_sizes_are_not_coordinates():
+    """HP-1502-01: a size must be strictly positive — SVG refuses zero and
+    negative width/height, and the clients divide by these. view_box [0,0,0,0]
+    used to pass the shared validator and blank the plan on every client.
+    Coordinates may still be negative: a crop origin can sit past the edge."""
+    base = {"id": "s1", "title": "S", "view_box": [0, 0, 1, 1], "rooms": []}
+    for cfg in (
+        {**base, "view_box": [0, 0, 0, 0]},
+        {**base, "view_box": [0, 0, -1, -2]},
+        {**base, "view_box": [0, 0, 1, 0.0001]},  # below the 0.001 floor
+        {**base, "rooms": [{"id": "r", "name": "R", "x": 0.1, "y": 0.1, "w": 0, "h": 0.5}]},
+        {**base, "rooms": [{"id": "r", "name": "R", "x": 0.1, "y": 0.1, "w": 0.5, "h": -1}]},
+    ):
+        with pytest.raises(vol.Invalid):
+            v.CONFIG_SCHEMA({"spaces": [cfg]})
+    # negative COORDINATES stay legal, and a normal crop viewport passes
+    assert v.CONFIG_SCHEMA({"spaces": [{**base, "view_box": [-0.2, -0.1, 1.4, 1.2]}]})
+    assert v.CONFIG_SCHEMA({"spaces": [{**base, "rooms": [
+        {"id": "r", "name": "R", "x": -0.1, "y": -0.1, "w": 0.4, "h": 0.3}]}]})
+
+
 def test_openings_cap_enforced():
     """audit follow-up B5: MAX_OPENINGS was defined but never wired in."""
     many = [{"id": f"o{i}", "type": "door", "x": 0.1, "y": 0.1, "angle": 0, "length": 0.1}
