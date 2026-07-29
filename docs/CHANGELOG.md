@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.51.3 — 2026-07-29
+
+- **The icon size multiplier scales the glyph, not just the badge.** Changing
+  a device's size grew the badge, the ripple and the value badges but left
+  the icon itself at its default size — a big empty box around a small glyph
+  (user report). The glyph now derives from the same per-device size as
+  everything else and keeps its proportion at any multiplier and zoom.
+
 ## v1.51.2 — 2026-07-29
 
 **From the v1.51.1 review**
