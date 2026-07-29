@@ -244,6 +244,12 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       at 70% of a device icon and zooming WITH the plan; the small metric rows
       under the room name now show in the plan editor too
       [auto: smoke_room_cards gearDetached/plainInPlan]
+- [ ] Hidden LQI parity (v1.51.1, HP-1510-01): a room whose only Zigbee
+      devices are hidden paints the same lqi fill on the full and the static
+      card [auto: smoke_hidden_flag lqiParity]
+- [ ] Ghost shows no numbers (v1.51.1, HP-1510-02): a hidden value-display
+      device renders as a plain ghost — no value/temp/hum/LQI, no icon morph
+      [auto: smoke_hidden_flag ghostHidesValue]
 - [ ] Hide-from-plan flag (dev, docs/FILTERING.md): every device dialog has
       the checkbox, incl. virtual; hidden devices vanish from every mode and
       the count, still count toward room LQI, cast no glow/light fill; the

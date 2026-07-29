@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.51.1 — 2026-07-29
+
+**From the v1.51.0 review**
+
+- **The static card counts hidden devices in room LQI again (HP-1510-01).**
+  Its visibility filter had quietly become the aggregation filter: the same
+  room showed different Zigbee health on the two cards. Aggregation and
+  rendering use separate lists now — hidden devices count toward signal on
+  both cards, are drawn on neither, and still cast no light.
+- **A ghost shows no live numbers (HP-1510-02).** A hidden device in "Show
+  hidden" suppressed the state colors but still painted its value text,
+  temperature, humidity, LQI badge and state-morphed icon. All of that is
+  gone: the ghost keeps only the base icon and name — enough to recognise it
+  and open the dialog.
+
 ## v1.51.0 — 2026-07-29
 
 **Hiding is an explicit flag now** (docs/FILTERING.md)
