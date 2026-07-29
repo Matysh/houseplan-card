@@ -964,11 +964,18 @@ export const cardStyles = css`
       border-style: dashed;
     }
     /* "hide from plan" flag, shown only in the device editor with the
-       "show hidden devices" toggle on (docs/FILTERING.md) */
+       "show hidden devices" toggle on (docs/FILTERING.md). BLUE, so a hidden
+       device cannot be mistaken for an unavailable one (translucent dark) —
+       and no live-state paint at all: a ghost is configuration, not status
+       (owner's request). */
     .dev.ghost {
-      opacity: 0.4;
+      opacity: 0.6;
       border-style: dashed;
-      filter: saturate(0.4);
+      border-color: var(--hp-accent);
+      background: rgba(62, 166, 255, 0.22); /* fallback for old WebViews */
+      background: color-mix(in srgb, var(--hp-accent) 30%, var(--card-background-color, #1c2530));
+      color: var(--hp-accent);
+      box-shadow: none;
     }
     .dev.sel {
       border-color: #ffc14d;

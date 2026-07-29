@@ -242,7 +242,9 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] Hide-from-plan flag (dev, docs/FILTERING.md): every device dialog has
       the checkbox, incl. virtual; hidden devices vanish from every mode and
       the count, still count toward room LQI, cast no glow/light fill; the
-      device editor's "Show hidden" (local, per tab) shows them ghosted;
+      device editor's "Show hidden" (local, per tab) shows them as BLUE
+      dashed ghosts — distinct from a grey unavailable icon — with NO live
+      state paint (no yellow, no alarm, no ripple);
       unticking keeps a hidden:false marker (re-seed protection); an old
       config materialises on first load by an editing client and legacy
       clients keep the old behaviour until then

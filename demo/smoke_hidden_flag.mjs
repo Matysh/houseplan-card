@@ -39,6 +39,13 @@ Object.assign(out, await page.evaluate(async () => {
   o.noGhostsInView = !sr().querySelector('.dev.ghost');
   c._setMode('devices'); c.requestUpdate(); await c.updateComplete;
   o.ghostInEditor = !!sr().querySelector('.dev.ghost');
+  // призрак — конфигурация, не статус: ни жёлтого, ни unavail, ни тревоги
+  const g = sr().querySelector('.dev.ghost');
+  o.ghostHasNoState = !!g && !g.classList.contains('on') && !g.classList.contains('open')
+    && !g.classList.contains('unavail') && !g.classList.contains('alarm');
+  // и он синий, а не тёмный — отличим от недоступного устройства
+  o.ghostIsBlue = !!g && getComputedStyle(g).borderStyle.includes('dashed')
+    && getComputedStyle(g).borderColor !== 'rgb(255, 255, 255)';
   // тумблер локальный: конфиг не трогается
   o.toggleIsLocal = c._serverCfg.settings.show_all === undefined;
 

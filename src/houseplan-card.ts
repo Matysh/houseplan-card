@@ -4205,7 +4205,8 @@ class HouseplanCard extends LitElement {
     const p = this._pos(d);
     const left = ((p.x - view.x) / view.w) * 100;
     const top = ((p.y - view.y) / view.h) * 100;
-    const cls = this._stateClass(d);
+    // a ghost is configuration, not status: no yellow, no open, no unavail
+    const cls = d.hidden ? '' : this._stateClass(d);
     const temp = this._liveTemp(d);
     const hum = this._liveHum(d);
     const lqi = showLqi && !d.virtual ? lqiFor(this.hass, d.entities) : null;
@@ -4229,15 +4230,15 @@ class HouseplanCard extends LitElement {
     // RGB lights color the icon (and the ripple, unless a custom ripple color is set);
     // an icon with controlled targets takes the color of its first lit RGB target
     const ctrl = (m?.controls || []).filter(isControllable);
-    const lightC = this._config?.live_states
+    const lightC = this._config?.live_states && !d.hidden
       ? ctrl.length
         ? ctrl.map((e) => lightColorOf(this.hass.states[e])).find((v) => v) || null
         : domain === 'light' ? lightColorOf(primarySt) : null
       : null;
     // emergencies (leak/smoke/gas/CO/siren) pulse red regardless of display mode
-    const alarm = this._config?.live_states
+    const alarm = this._config?.live_states && !d.hidden
       && isAlarmState(domain, primarySt?.attributes?.device_class, primarySt?.state);
-    const active = ripple && !!d.primary && isActiveState(this.hass.states[d.primary]?.state);
+    const active = ripple && !d.hidden && !!d.primary && isActiveState(this.hass.states[d.primary]?.state);
     const scale = Number(m?.size) > 0 ? Number(m!.size) : 1;
     const angle = Number(m?.angle) || 0;
     const rScale = Number(m?.ripple_size) > 0 ? Number(m!.ripple_size) : 3;
