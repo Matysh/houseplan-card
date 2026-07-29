@@ -19,10 +19,18 @@ const out = await page.evaluate(async () => {
   c._setMode('devices'); await c.updateComplete;
   c._openMarkerDialog(d); await c.updateComplete;
   c._markerDialog = { ...c._markerDialog, tapAction: 'run' }; await c.updateComplete;
-  o.pickerShown = !!sr().querySelector('.dialog .candlist');
+  // ВИДИМОСТЬ, не просто наличие в DOM: список — flex-item со скроллом и
+  // однажды схлопнулся в полоску 1px при 26 кандидатах внутри (репорт
+  // пользователя 2026-07-30, поймано только замером высоты)
+  const listEl = () => sr().querySelector('.dialog .candlist');
+  o.pickerShown = !!listEl() && listEl().getBoundingClientRect().height > 30;
   c._markerDialog = { ...c._markerDialog, runFilter: 'штор' }; await c.updateComplete;
   const cands = [...sr().querySelectorAll('.dialog .cand')].map((x) => x.textContent);
   o.searchWorks = cands.length >= 1 && cands.some((t) => t.includes('Шторы'));
+  // и найденная строка реально нарисована, а не сплющена
+  const row = sr().querySelector('.dialog .cand');
+  o.resultRowVisible = !!row && row.getBoundingClientRect().height > 10
+    && row.getBoundingClientRect().bottom <= listEl().getBoundingClientRect().bottom + 1;
   // сохранение без цели блокируется
   await c._saveMarker(); await c.updateComplete;
   o.saveBlockedWithoutTarget = !!c._markerDialog;

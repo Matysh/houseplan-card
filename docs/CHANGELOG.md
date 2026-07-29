@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.53.1 — 2026-07-30
+
+- **Fix: the "what to run" search showed no results.** The results were
+  there — the list is a scrollable box, and as a flex item inside the dialog
+  body it collapsed into a 1px sliver, so 26 matching automations rendered
+  into nothing visible. Reported within minutes of v1.53.0 by the owner. The
+  list keeps its height now; the smoke measures that height instead of
+  merely counting DOM rows, which is why it passed the broken build.
+
 ## v1.53.0 — 2026-07-30
 
 **A tap can run your automation** (owner's spec)
