@@ -410,12 +410,10 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
        already rescales with the view, so the button zooms WITH the plan
        instead of keeping a constant screen size (owner's spec). */
     .rlgearbtn {
-      --gear-h: calc(var(--icon-size, 2.5cqw) * 0.7 * 2.2); /* 70% of the icon BOX (icon + padding) */
+      --gear-h: calc(var(--icon-size, 2.5cqw) * 0.77); /* owner: half the previous size */
       position: absolute;
-      /* anchored to the room centre, sitting one button-height below it: the
-         room NAME defaults to the same centre, and dead-centred the button
-         covered it. The offset is in button units, so it zooms along. */
-      transform: translate(-50%, calc(-50% + var(--gear-h) * 0.95));
+      /* dead-centred on the room, both axes (owner's spec) */
+      transform: translate(-50%, -50%);
       display: inline-flex;
       align-items: center;
       gap: 0.35em;
