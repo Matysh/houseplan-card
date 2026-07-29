@@ -1,5 +1,27 @@
 # Changelog
 
+## v1.50.3 — 2026-07-29
+
+**From the v1.50.2 review**
+
+- **A size is not a coordinate (HP-1502-01).** The ±4 bound from v1.50.2
+  treated all four view_box elements and room w/h alike, so `[0, 0, 0, 0]`
+  and negative sizes still passed — and a zero axis serialises into
+  `viewBox="0 0 0 0"`, a blank plan on every client, with the static card
+  computing `aspect-ratio: 0 / 0` on top. Sizes now get their own validator:
+  strictly positive, floored at one thousandth of the canvas; coordinates may
+  still be negative, because a crop origin legitimately sits past the edge.
+  And since a store may already hold a broken viewport from before, both
+  cards fall back to the whole canvas instead of a blank screen, and a legacy
+  rectangle with a negative size is read as the same rectangle drawn from the
+  other corner.
+
+**Also in this release**
+
+- The room settings button moved to the bottom of the room card, and the room
+  name renders in exactly the same spot in view mode and in the plan editor —
+  the button and the metrics no longer take part in the label's centring.
+
 ## v1.50.2 — 2026-07-29
 
 **From the v1.50.1 review**

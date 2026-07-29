@@ -36,7 +36,7 @@ import { cardStyles } from './styles';
 import { fitInSquare, contentBounds } from './space-geometry';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.50.2';
+const CARD_VERSION = '1.50.3';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -4469,20 +4469,21 @@ class HouseplanCard extends LitElement {
       @pointermove=${(e: PointerEvent) => this._labelMove(e, r, space.id)}
       @pointerup=${() => this._labelUp(r)}
       @pointercancel=${() => this._labelUp(r)}
-    >${this._markup && r.id
-        ? html`<button class="rlgearbtn" title=${this._t('room.settings_title')}
-            @pointerdown=${(e: Event) => e.stopPropagation()}
-            @click=${(e: Event) => { e.stopPropagation(); this._openRoomEdit(r); }}>
-            <ha-icon icon="mdi:cog-outline"></ha-icon>
-            <span class="rlgeartext">${this._t('room.settings_short')}</span>
-          </button>`
-        : nothing}<span class="rlname">${r.name || (this._markup ? this._t('room.unnamed') : '')}${!this._markup && r.area
+    ><span class="rlname">${r.name || (this._markup ? this._t('room.unnamed') : '')}${!this._markup && r.area
         ? html`<ha-icon class="rlgo" icon="mdi:open-in-new"
             title=${this._t('room.open_area')}
             @click=${(e: Event) => { e.stopPropagation(); this._clickRoom(r); }}
             @pointerdown=${(e: Event) => e.stopPropagation()}></ha-icon>`
         : nothing}</span>
       ${rows.length ? html`<span class="rlmetrics">${rows}</span>` : nothing}
+      ${this._markup && r.id
+        ? html`<button class="rlgearbtn" title=${this._t('room.settings_title')}
+            @pointerdown=${(e: Event) => e.stopPropagation()}
+            @click=${(e: Event) => { e.stopPropagation(); this._openRoomEdit(r); }}>
+            <ha-icon icon="mdi:cog-outline"></ha-icon>
+            <span class="rlgeartext">${this._t('room.settings_short')}</span>
+          </button>`
+        : nothing}
       ${this._mode === 'plan'
         ? ['tl', 'tr', 'bl', 'br'].map(
             (c) => html`<span class="rlhandle ${c}"

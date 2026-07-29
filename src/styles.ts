@@ -398,11 +398,19 @@ export const cardStyles = css`
     @media (prefers-reduced-motion: reduce) {
       .zoomwrap.slide-left, .zoomwrap.slide-right { animation: none; }
     }
+    /* The name is the anchor: the label box is centred on the room point, so
+       anything that takes part in its layout SHIFTS THE NAME. The gear button
+       and the metrics hang below as absolutes — the name renders in exactly
+       the same place in view mode and in the plan editor (owner's request),
+       and the button sits at the very bottom of the card. */
     .rlgearbtn {
+      position: absolute;
+      top: calc(100% + 0.35em);
+      left: 50%;
+      transform: translateX(-50%);
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      margin-bottom: 3px;
       padding: 3px 8px;
       border: 0;
       border-radius: 999px;
@@ -440,6 +448,11 @@ export const cardStyles = css`
     }
     .stage.mode-view .rlgo:hover { opacity: 1; }
     .roomlabel .rlmetrics {
+      position: absolute; /* below the name, outside the centring math */
+      top: calc(100% + 0.15em);
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
       display: flex;
       align-items: center;
       gap: 0.55em;

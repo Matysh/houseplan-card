@@ -239,6 +239,13 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       on the plan after a reload. Same for each tap action and each fill mode
       [auto: backend test_every_display_mode_the_editor_offers_is_accepted and
       neighbours, test_a_marker_showing_its_value_can_be_saved]
+- [ ] Sizes are positive (v1.50.3, HP-1502-01): view_box or room w/h of zero
+      or below is refused; a store that already holds one opens on the full
+      canvas, not a blank screen [auto: test_sizes_are_not_coordinates + unit
+      safeViewBox fallback]
+- [ ] Room card layout (v1.50.3): the settings button is the bottom row of the
+      card and the room name sits in the same spot in view and plan modes
+      [manual; verified by vb-coordinate measurement]
 - [ ] Geometry bounds (v1.50.2, HP-1501-01): a config with a 1e100 room
       vertex is refused by the server; one already stored still renders with a
       sane frame [auto: test_geometry_magnitudes_are_bounded + unit

@@ -28,11 +28,37 @@ export type Pt = { x: number; y: number };
 export type Layout = Record<string, { s?: string; x: number; y: number } | undefined>;
 
 /** Build render-space models (NORM_W × NORM_W) from a server config. */
+/** A stored view_box the render can trust: 4 finite numbers, positive sizes.
+ *  The server refuses anything else NOW (HP-1502-01), but a store may already
+ *  hold [0,0,0,0] or negative sizes from before — and a zero axis serialises
+ *  into viewBox="0 0 0 0", which draws nothing on every client. Bad input
+ *  falls back to the whole canvas rather than to a blank screen. */
+function safeViewBox(vb: any): [number, number, number, number] {
+  if (
+    Array.isArray(vb) && vb.length === 4 && vb.every((n: any) => Number.isFinite(n))
+    && vb[2] > 1e-6 && vb[3] > 1e-6
+  ) return vb as [number, number, number, number];
+  return [0, 0, 1, 1];
+}
+
+/** Legacy rectangle rooms, normalised: a negative size is the same rectangle
+ *  drawn from the other corner; the maths downstream assumes w/h >= 0. */
+function normRect(r: any): { x?: number; y?: number; w?: number; h?: number } {
+  if (r.x == null || r.y == null) return { x: r.x, y: r.y, w: r.w, h: r.h };
+  const w = Number(r.w) || 0, h = Number(r.h) || 0;
+  return {
+    x: w < 0 ? r.x + w : r.x,
+    y: h < 0 ? r.y + h : r.y,
+    w: Math.abs(w),
+    h: Math.abs(h),
+  };
+}
+
 export function spaceModels(cfg: ServerConfig | null): SpaceModel[] {
   if (!cfg || !Array.isArray(cfg.spaces)) return [];
   return cfg.spaces.map((s: any) => {
     const H = NORM_W; // square canvas
-    const scale = (r: any): RoomCfg => ({
+    const scale = (raw: any): RoomCfg => { const r = { ...raw, ...normRect(raw) }; return {
       id: r.id,
       name: r.name,
       area: r.area ?? null,
@@ -46,11 +72,12 @@ export function spaceModels(cfg: ServerConfig | null): SpaceModel[] {
       w: r.w != null ? r.w * NORM_W : undefined,
       h: r.h != null ? r.h * H : undefined,
       poly: r.poly ? r.poly.map((p: number[]) => [p[0] * NORM_W, p[1] * H]) : undefined,
-    });
+    }; };
+    const vb = safeViewBox(s.view_box);
     return {
       id: s.id,
       title: s.title,
-      vb: [s.view_box[0] * NORM_W, s.view_box[1] * H, s.view_box[2] * NORM_W, s.view_box[3] * H],
+      vb: [vb[0] * NORM_W, vb[1] * H, vb[2] * NORM_W, vb[3] * H],
       bg: s.plan_url ? { href: contentUrl(s.plan_url), ...fitInSquare(s.plan_aspect, NORM_W) } : null,
       rooms: (s.rooms || []).map(scale),
     } as SpaceModel;

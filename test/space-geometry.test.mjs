@@ -165,3 +165,21 @@ test('contentBounds: never degenerate, never unbounded (HP-1500-03)', () => {
   }], markers: [] })[0];
   assert.equal(contentBounds(allBad), null, 'the caller keeps the full canvas');
 });
+
+test('spaceModels: a stored broken view_box falls back to the canvas (HP-1502-01)', () => {
+  // the server refuses these now, but a store may already hold one
+  for (const vb of [[0, 0, 0, 0], [0, 0, -1, -2], [0, 0, 1], null, [0, 0, NaN, 1]]) {
+    const m = spaceModels({ spaces: [{ id: 's', view_box: vb, rooms: [] }], markers: [] })[0];
+    assert.deepEqual(m.vb, [0, 0, 1000, 1000], JSON.stringify(vb) + ' falls back');
+  }
+  // a legitimate crop viewport is preserved
+  const crop = spaceModels({ spaces: [{ id: 's', view_box: [0.1, 0.2, 0.5, 0.4], rooms: [] }], markers: [] })[0];
+  assert.deepEqual(crop.vb, [100, 200, 500, 400]);
+  // a legacy rect with a negative size is the same rectangle from the other corner
+  const m = spaceModels({ spaces: [{
+    id: 's', view_box: [0, 0, 1, 1],
+    rooms: [{ id: 'r', x: 0.6, y: 0.7, w: -0.2, h: -0.3 }],
+  }], markers: [] })[0];
+  const r = m.rooms[0];
+  assert.deepEqual([r.x, r.y, r.w, r.h].map(Math.round), [400, 400, 200, 300]);
+});
