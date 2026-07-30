@@ -5,6 +5,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/Matysh/houseplan-card)](https://github.com/Matysh/houseplan-card/stargazers)
 [![CI](https://github.com/Matysh/houseplan-card/actions/workflows/validate.yml/badge.svg)](https://github.com/Matysh/houseplan-card/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Live demo](https://img.shields.io/badge/demo-try_it_live-00c853?logo=homeassistant&logoColor=white)](https://demo.houseplan.tech)
 [![Telegram chat](https://img.shields.io/badge/Telegram-chat-2CA5E0?logo=telegram&logoColor=white)](https://t.me/ha_houseplan)
 
 **Turn Home Assistant into a live, interactive map of your home.** Upload or draw
