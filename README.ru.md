@@ -14,6 +14,12 @@
 
 ![Интерактивный план дома для Home Assistant: комнаты, устройства, свет и климат на реальном поэтажном плане](docs/images/demo.gif)
 
+> ### 🚀 Попробовать вживую — без установки
+> **[demo.houseplan.tech](https://demo.houseplan.tech)** — настоящий Home
+> Assistant с готовым планом. Вход **`demo`** / **`demo`**, можно нажимать всё:
+> включать свет, открывать редакторы, ломать что угодно. Каждый час стенд сам
+> возвращается в исходное состояние.
+
 🇬🇧 [Documentation in English](README.md) · 💬 [Чат в Telegram: **@ha_houseplan**](https://t.me/ha_houseplan)
 
 **Главное**

@@ -16,6 +16,12 @@ right on your Lovelace dashboard.
 
 ![Interactive Home Assistant floor plan: live rooms, devices, lights and climate on a real floorplan card](docs/images/demo.gif)
 
+> ### 🚀 Try it live — no install needed
+> **[demo.houseplan.tech](https://demo.houseplan.tech)** — a real Home Assistant
+> with a ready-made plan. Log in as **`demo`** / **`demo`** and click anything:
+> toggle lights, open the editors, break things. The stand resets itself to a
+> pristine state every hour.
+
 🇷🇺 [Документация на русском](README.ru.md) · 💬 [Telegram chat: **@ha_houseplan**](https://t.me/ha_houseplan)
 
 **Feature highlights**
