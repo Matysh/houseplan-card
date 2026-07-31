@@ -360,7 +360,6 @@
   "vac.status_found": "Position source found: {name}",
   "vac.status_none": "The integration reports no coordinates — the robot will only be shown at its base",
   "vac.autocal": "Set up automatically",
-  "vac.wizard": "Three-point calibration",
   "vac.live": "Live position on the plan",
   "vac.trail": "Show the cleaning trail",
   "vac.cal_maps": "Calibrated maps: {maps}",
@@ -368,10 +367,11 @@
   "vac.autocal_no_match": "Room names did not match (need ≥3 in common) — use point calibration",
   "vac.autocal_res_warn": "Matched {rooms} rooms but the fit is rough — verify and refine with points if needed",
   "vac.autocal_done": "Done: bound via {rooms} rooms. Start a cleanup and check",
-  "vac.cal_point": "Point {n} of 3: click the spot on the plan where the robot is standing right now",
   "vac.cal_need_pos": "The robot is not reporting coordinates — start a cleanup and pause it",
-  "vac.cal_degenerate": "Points are too close or collinear — pick another spot",
-  "vac.cal_res_warn": "The fit is imprecise — add a fourth point in another corner",
   "vac.cal_done": "Calibration saved. Start a cleanup and check",
-  "vac.cal_cancelled": "Calibration cancelled"
+  "vac.cal_cancelled": "Calibration cancelled",
+  "vac.fit": "Fit manually",
+  "vac.fit_hint": "Drag the robot map into place, stretch by the corners",
+  "vac.fit_rotate": "Rotate 90°",
+  "vac.fit_mirror": "Mirror"
 }

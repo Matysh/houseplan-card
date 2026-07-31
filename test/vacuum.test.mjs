@@ -108,3 +108,30 @@ test('isVacMoving', () => {
   assert.ok(!isVacMoving('idle'));
   assert.ok(!isVacMoving(undefined));
 });
+
+test('fitMatrix/fitFromMatrix round-trip, mirror and quarters', async () => {
+  const { fitMatrix, fitFromMatrix, initialFit, reanchorFit } = await import('../test-build/vacuum.js');
+  for (const rot of [0, 90, 180, 270]) for (const mir of [false, true]) {
+    const p = { ox: 123.4, oy: -55.5, s: 0.083, rot, mir };
+    const q = fitFromMatrix(fitMatrix(p));
+    assert.equal(q.rot, rot, `rot ${rot} mir ${mir}`);
+    assert.equal(q.mir, mir);
+    assert.ok(Math.abs(q.s - p.s) < 1e-9 && Math.abs(q.ox - p.ox) < 1e-9 && Math.abs(q.oy - p.oy) < 1e-9);
+  }
+  // the real X50 matrix shape: X forward, Y flipped == mir + 180? decompose sanity
+  const q = fitFromMatrix([0.08, 0, 590, 0, -0.08, 677]);
+  assert.equal(q.mir, true);
+  // initialFit centres the map bbox on the canvas
+  const rooms = [{ id: '1', name: 'A', cx: 500, cy: 500, x0: 0, y0: 0, x1: 1000, y1: 1000 }];
+  const f = initialFit(rooms, [0, 0, 1000, 1000]);
+  const m = fitMatrix(f);
+  const c = applyAffine(m, 500, 500);
+  assert.ok(Math.abs(c[0] - 500) < 1e-6 && Math.abs(c[1] - 500) < 1e-6);
+  assert.ok(Math.abs(1000 * f.s - 600) < 1e-6); // 60% of the canvas
+  assert.equal(f.mir, true);
+  // reanchor keeps the chosen source point fixed through a rotation
+  const p2 = { ...f, rot: 90 };
+  const r2 = reanchorFit(p2, f, 500, 500);
+  const c2 = applyAffine(fitMatrix(r2), 500, 500);
+  assert.ok(Math.abs(c2[0] - c[0]) < 1e-6 && Math.abs(c2[1] - c[1]) < 1e-6);
+});

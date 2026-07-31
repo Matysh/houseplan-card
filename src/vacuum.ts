@@ -67,7 +67,8 @@ export function affineResidual(m: Affine, pairs: Array<[Pt, Pt]>): number {
 
 // ---------------- telemetry adapters ----------------
 
-export interface VacRoom { id: string; name: string; cx: number; cy: number }
+export interface VacRoom { id: string; name: string; cx: number; cy: number;
+  x0?: number; y0?: number; x1?: number; y1?: number }
 export interface VacTelemetry {
   pos: { x: number; y: number; a: number | null } | null;
   path: Pt[] | null;      // integration-provided full path, vacuum coords
@@ -123,7 +124,15 @@ export function readVacTelemetry(attrs: Record<string, any> | null | undefined):
     // Tasshack dreame-vacuum: the room centre is plain x/y (verified against
     // a live X50 Master; x/y sits within its own x0..x1 bbox)
     if (cx == null || cy == null) { cx = num(r.x); cy = num(r.y); }
-    if (name && cx != null && cy != null) rooms.push({ id, name, cx, cy });
+    if (name && cx != null && cy != null) {
+      const room: VacRoom = { id, name, cx, cy };
+      const x0 = num(r.x0), y0 = num(r.y0), x1 = num(r.x1), y1 = num(r.y1);
+      if (x0 != null && y0 != null && x1 != null && y1 != null) {
+        room.x0 = Math.min(x0, x1); room.y0 = Math.min(y0, y1);
+        room.x1 = Math.max(x0, x1); room.y1 = Math.max(y0, y1);
+      }
+      rooms.push(room);
+    }
   }
   const mapId = String(attrs.map_name ?? attrs.current_map ?? attrs.map_index ?? attrs.selected_map ?? 'default');
   if (!pos && !rooms.length && !path) return null;
@@ -212,4 +221,72 @@ export function pushTrailPoint(buf: Pt[], p: Pt, epsHint: number): Pt[] {
 /** true → the robot is actively driving (a puck should exist). */
 export function isVacMoving(state: string | undefined): boolean {
   return state === 'cleaning' || state === 'returning' || state === 'on';
+}
+
+// ---------------- the fit panel (drag + corner-stretch calibration) ----------------
+
+/** What the user manipulates; folds into the same stored 6-number matrix. */
+export interface FitParams {
+  ox: number; oy: number;   // translation, canvas units
+  s: number;                // uniform scale, canvas units per robot unit
+  rot: 0 | 90 | 180 | 270;  // whole-quarter rotation
+  mir: boolean;             // mirror (robots' Y usually grows the other way)
+}
+
+const ROT_CS: Record<number, [number, number]> = { 0: [1, 0], 90: [0, 1], 180: [-1, 0], 270: [0, -1] };
+
+/** target = S · R(rot) · diag(mir ? −1 : 1, 1) · source + (ox, oy) */
+export function fitMatrix(p: FitParams): Affine {
+  const [c, s_] = ROT_CS[p.rot] || [1, 0];
+  const mx = p.mir ? -1 : 1;
+  return [p.s * c * mx, -p.s * s_, p.ox, p.s * s_ * mx, p.s * c, p.oy];
+}
+
+/**
+ * Decompose a stored matrix back into panel params. Rotation snaps to the
+ * nearest quarter — a legacy 3-point matrix reopens as an editable start,
+ * not verbatim, and that is fine: the ghost shows the result live.
+ */
+export function fitFromMatrix(m: Affine): FitParams | null {
+  const det = m[0] * m[4] - m[1] * m[3];
+  if (!Number.isFinite(det) || Math.abs(det) < 1e-12) return null;
+  const mir = det < 0;
+  const s = Math.sqrt(Math.abs(det));
+  // the second column (b, e) = S·(−sin, cos) is mirror-free
+  let ang = Math.atan2(-m[1], m[4]) * 180 / Math.PI;
+  ang = ((Math.round(ang / 90) * 90) % 360 + 360) % 360;
+  return { ox: m[2], oy: m[5], s, rot: ang as FitParams['rot'], mir };
+}
+
+/** A sane opening position: the robot map centred over the plan at 60% size. */
+export function initialFit(
+  rooms: VacRoom[],
+  vb: [number, number, number, number],
+): FitParams {
+  const bx: number[] = [], by: number[] = [];
+  for (const r of rooms) {
+    if (r.x0 != null) { bx.push(r.x0, r.x1!); by.push(r.y0!, r.y1!); }
+    else { bx.push(r.cx); by.push(r.cy); }
+  }
+  // no rooms at all: an arbitrary honest guess the user will drag anyway
+  if (!bx.length) return { ox: vb[0] + vb[2] / 2, oy: vb[1] + vb[3] / 2, s: vb[2] / 10000, rot: 0, mir: true };
+  const minX = Math.min(...bx), maxX = Math.max(...bx);
+  const minY = Math.min(...by), maxY = Math.max(...by);
+  const span = Math.max(maxX - minX, maxY - minY) || 1;
+  const s = (Math.min(vb[2], vb[3]) * 0.6) / span;
+  // mirror on by default: every robot map seen so far has Y flipped vs screen
+  const p: FitParams = { ox: 0, oy: 0, s, rot: 0, mir: true };
+  const m = fitMatrix(p);
+  const [ccx, ccy] = applyAffine(m, (minX + maxX) / 2, (minY + maxY) / 2);
+  p.ox = vb[0] + vb[2] / 2 - ccx;
+  p.oy = vb[1] + vb[3] / 2 - ccy;
+  return p;
+}
+
+/** Re-anchor params so the source point (sx, sy) stays at the same target spot. */
+export function reanchorFit(p: FitParams, prev: FitParams, sx: number, sy: number): FitParams {
+  const [px, py] = applyAffine(fitMatrix(prev), sx, sy);
+  const trial = fitMatrix({ ...p, ox: 0, oy: 0 });
+  const [qx, qy] = applyAffine(trial, sx, sy);
+  return { ...p, ox: px - qx, oy: py - qy };
 }

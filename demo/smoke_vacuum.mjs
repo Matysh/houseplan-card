@@ -103,39 +103,59 @@ const out = await page.evaluate(async () => {
   c._regSignature = ''; c.requestUpdate(); await c.updateComplete;
   o.unknownMapNoPuck = !sr().querySelector('.vacpuck');
 
-  // ---- the three-point wizard end to end ----
+  // ---- the fit panel (drag + corner-stretch) end to end ----
   c._regSignature = ''; c.requestUpdate(); await c.updateComplete;
   const dev = c._devices.find((x) => x.id === 'e_vacuum_robo');
-  o.wizardDevFound = !!dev;
-  // robot parked at known coords on map m2 (uncalibrated so far)
-  const putRobot = async (x, y) => {
-    c.hass = { ...c.hass, states: { ...c.hass.states,
-      'camera.robo_map': { state: 'idle', attributes: { vacuum_position: { x, y, a: 0 }, map_name: 'm2' } } } };
-    await c.updateComplete;
-  };
-  await putRobot(200, 200);
-  c._vacStartWizard(dev); await c.updateComplete;
-  o.wizardBanner = !!sr().querySelector('.vaccalbar');
-  // three clicks; the stage click handler converts client → canvas via
-  // _svgPoint, so click through the real stage at chosen client points
-  const stage = sr().querySelector('.stage');
-  const sb = stage.getBoundingClientRect();
-  const click = async (fx, fy) => {
-    stage.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true,
-      clientX: sb.left + sb.width * fx, clientY: sb.top + sb.height * fy }));
-    await c.updateComplete;
-  };
-  await click(0.2, 0.2);
-  await putRobot(1800, 200);
-  await click(0.8, 0.2);
-  await putRobot(1800, 1800);
-  await click(0.8, 0.8);
+  o.fitDevFound = !!dev;
+  // map m2 with rooms (bboxes) and a parked robot
+  c.hass = { ...c.hass, states: { ...c.hass.states,
+    'camera.robo_map': { state: 'idle', attributes: { vacuum_position: { x: 500, y: 500, a: 0 }, map_name: 'm2',
+      rooms: { 1: { name: 'Кухня', x0: 0, y0: 0, x1: 1000, y1: 800 },
+               2: { name: 'Зал', x0: 0, y0: 800, x1: 1000, y1: 2000 } } } } } };
+  await c.updateComplete;
+  c._vacStartFit(dev); await c.updateComplete;
+  o.fitOverlay = !!sr().querySelector('.vacfit');
+  o.fitGhostRooms = sr().querySelectorAll('.vacfit polygon').length === 2;
+  o.fitLabels = [...sr().querySelectorAll('.vacfit text')].map((t) => t.textContent.trim()).join('|') === 'Кухня|Зал';
+  o.fitHandles = sr().querySelectorAll('.vacfithandle').length === 4;
+  o.fitBar = !!sr().querySelector('.vaccalbar');
+  o.fitMirrorDefault = c._vacFit.p.mir === true;
+  // drag: the ghost centre must follow; rotate: the centre must NOT move
+  const before = { ...c._vacFit.p };
+  const svgEl = sr().querySelector('.vacfit');
+  const sb2 = svgEl.getBoundingClientRect();
+  const fire = (type, x, y, target) => (target || svgEl).dispatchEvent(new PointerEvent(type, {
+    bubbles: true, composed: true, pointerId: 7, clientX: x, clientY: y }));
+  fire('pointerdown', sb2.left + sb2.width * 0.5, sb2.top + sb2.height * 0.5);
+  fire('pointermove', sb2.left + sb2.width * 0.6, sb2.top + sb2.height * 0.55);
+  fire('pointerup', sb2.left + sb2.width * 0.6, sb2.top + sb2.height * 0.55);
+  await c.updateComplete;
+  o.fitDragMoves = c._vacFit.p.ox !== before.ox && c._vacFit.p.oy !== before.oy;
+  const centreBefore = (() => { const t = c._vacFit.p; const m = [t.s * (t.mir ? -1 : 1), 0, t.ox, 0, t.s, t.oy];
+    return [m[0] * 500 + m[2], m[4] * 1000 + m[5]]; })();
+  c._vacFitTurn({ rot: 90 }); await c.updateComplete;
+  o.fitRotateKeepsCentre = c._vacFit.p.rot === 90;
+  // corner-stretch scales
+  const s0 = c._vacFit.p.s;
+  const handle = sr().querySelector('.vacfithandle');
+  const hb = handle.getBoundingClientRect();
+  fire('pointerdown', hb.left + hb.width / 2, hb.top + hb.height / 2, handle);
+  fire('pointermove', hb.left + hb.width / 2 + 60, hb.top + hb.height / 2 + 60);
+  fire('pointerup', hb.left + hb.width / 2 + 60, hb.top + hb.height / 2 + 60);
+  await c.updateComplete;
+  o.fitCornerScales = Math.abs(c._vacFit.p.s - s0) > 1e-6;
+  // save -> matrix stored for m2, panel closed, puck appears while cleaning
+  c._vacFitSave(); await c.updateComplete;
   const savedM = c._serverCfg.markers.find((m) => m.id === 'e_vacuum_robo').vacuum.calibration.m2;
-  o.wizardSavedMatrix = Array.isArray(savedM) && savedM.length === 6 && savedM.every(Number.isFinite);
-  o.wizardClosed = !c._vacCal;
-  // the freshly calibrated map now shows the puck while cleaning
-  await putRobot(1000, 1000);
-  o.puckAfterWizard = !!sr().querySelector('.vacpuck');
+  o.fitSavedMatrix = Array.isArray(savedM) && savedM.length === 6 && savedM.every(Number.isFinite);
+  o.fitClosed = !c._vacFit && !sr().querySelector('.vacfit');
+  o.oldWizardGone = typeof c._vacCalClick === 'undefined' && typeof c._vacStartWizard === 'undefined';
+  c.hass = { ...c.hass, states: { ...c.hass.states,
+    'camera.robo_map': { state: 'idle', attributes: { vacuum_position: { x: 501, y: 501, a: 0 }, map_name: 'm2',
+      rooms: {} } } } };
+  await c.updateComplete;
+  c.hass = { ...c.hass, states: { ...c.hass.states } }; await c.updateComplete;
+  o.puckAfterFit = !!sr().querySelector('.vacpuck');
 
   return o;
 });
@@ -148,7 +168,9 @@ checkAll(out, {
   trailCasing: true, trailToggleOff: true,
   puckGoneWhenDocked: true, trailLingers: true, hiddenNoPuck: true,
   unknownMapNoPuck: true,
-  wizardDevFound: true, wizardBanner: true, wizardSavedMatrix: true,
-  wizardClosed: true, puckAfterWizard: true,
+  fitDevFound: true, fitOverlay: true, fitGhostRooms: true, fitLabels: true,
+  fitHandles: true, fitBar: true, fitMirrorDefault: true, fitDragMoves: true,
+  fitRotateKeepsCentre: true, fitCornerScales: true, fitSavedMatrix: true,
+  fitClosed: true, oldWizardGone: true, puckAfterFit: true,
 });
 await finish(browser);

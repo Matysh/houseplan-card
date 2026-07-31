@@ -49,11 +49,18 @@ per map; an active map without a matrix falls back to Tier C.
   expose the robot's room list with coordinates; our rooms carry HA
   area bindings. Match by name, take centroids of ≥3 matches, solve,
   show a live preview («робот сейчас здесь») — one click to confirm.
-- **Path 2, manual 3-point wizard (Tier B or when auto fails):** pause
-  the robot somewhere recognisable → drag the ghost puck to the true
-  spot → next; three points in different corners, live preview, done.
-- Residual over ~40 cm → warn and ask for a fourth point. Mirrored maps
-  are covered by the affine automatically (negative determinant).
+- **Path 2, the fit panel (replaced the 3-point wizard, owner call
+  2026-07-31):** the robot's rooms render as a translucent dashed ghost
+  over the plan; the user DRAGS the ghost into place and stretches it by
+  its four corner handles (uniform scale about the opposite corner, like
+  a graphics-editor frame). Rotation is quarter-turn buttons, mirror is
+  one toggle — both re-anchor about the ghost centre. Mirror defaults ON:
+  every robot map seen so far has Y flipped versus the screen. No numeric
+  fields; the old park-the-robot-three-times wizard is gone entirely —
+  it was the most fragile part of the feature.
+- The panel folds into the same stored 6-number matrix
+  (S·R(rot)·mirror + offset); legacy matrices reopen in the panel with
+  the rotation snapped to the nearest quarter.
 
 ## Puck behaviour
 

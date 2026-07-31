@@ -28,6 +28,7 @@ import { ContentSigner } from './signing';
 import {
   Affine, applyAffine, solveAffine, affineResidual, readVacTelemetry, isVacSourceState,
   autoCalibrate, pushTrailPoint, isVacMoving, VAC_TELEPORT_GAP_MS, VAC_STALE_MS,
+  FitParams, fitMatrix, fitFromMatrix, initialFit, reanchorFit, VacRoom,
   VAC_TRAIL_LINGER_MS, Pt as VacPt,
 } from './vacuum';
 import { buildDevices, seedHiddenBindings, lqiFor, tempFor, humFor, isHumEntity, areaLights, areaTemp, areaHum, areaLightStats, sourceValue, areaClimateMap, litLightEntity, type AreaClimate } from './devices';
@@ -359,8 +360,9 @@ class HouseplanCard extends LitElement {
       this.requestUpdate();
     }
   };
-  private _vacCal: { markerId: string; source: string; mapId: string;
-    pairs: Array<[VacPt, VacPt]> } | null = null;
+  private _vacFit: { markerId: string; source: string; mapId: string; p: FitParams;
+    drag: null | { kind: 'move' | 'scale'; sx: number; sy: number; p0: FitParams;
+      fx: number; fy: number } } | null = null;
   private _kioskDots = false;
   private _kioskDotsTimer?: number;
   private _kioskHoldTimer?: number;
@@ -415,7 +417,7 @@ class HouseplanCard extends LitElement {
     _decorSel: { state: true },
     _decorTextDialog: { state: true },
     _kioskDialog: { state: true },
-    _vacCal: { state: true },
+    _vacFit: { state: true },
     _kioskDots: { state: true },
     _areaSel: { state: true },
     _nameSel: { state: true },
@@ -485,8 +487,8 @@ class HouseplanCard extends LitElement {
   }
 
   private _onKey(e: KeyboardEvent): void {
-    if (e.key === 'Escape' && this._vacCal) {
-      this._vacCal = null;
+    if (e.key === 'Escape' && this._vacFit) {
+      this._vacFit = null;
       this._showToast(this._t('vac.cal_cancelled'));
       e.stopPropagation();
       return;
@@ -1539,6 +1541,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _stagePointerDown(ev: PointerEvent): void {
+    if (this._vacFit) return; // no pan/swipe while fitting the robot map
     if (this._kiosk) {
       this._cyclePausedUntil = Date.now() + 60000;
       if (this._pointers.size === 0) {
@@ -1972,7 +1975,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _markupClick(ev: MouseEvent): void {
-    if (this._vacCal) { this._vacCalClick(ev); return; }
+    if (this._vacFit) return; // the fit overlay owns all pointer input
     if (!this._markup) return;
     // a pan or pinch just happened — the synthesized click is not a draw
     if (this._suppressClick) return;
@@ -4257,6 +4260,7 @@ class HouseplanCard extends LitElement {
           <div class="devlayer" style="--icon-size:${((iconPct * vb[2] * (this._kiosk ? this._kioskScale.icon : 1)) / view.w).toFixed(3)}cqw;--rl-font:${this._kiosk ? this._kioskScale.font : 1}">
             ${devs.map((d) => this._renderDevice(d, view, showLqi, disp.fill === 'glow' && !this._markup))}
             ${this._renderVacuums(devs, view)}
+            ${this._renderVacFit(view)}
             ${this._renderOpeningLocks(view)}
             ${disp.showNames || this._markup
               ? space.rooms.map((r) => this._renderRoomLabel(r, space, view, disp))
@@ -4301,9 +4305,12 @@ class HouseplanCard extends LitElement {
             </div>`
           : nothing}
         ${this._kioskDialog ? this._renderKioskDialog() : nothing}
-        ${this._vacCal ? html`<div class="vaccalbar">
-          <span>${subst(this._t('vac.cal_point'), { n: String(this._vacCal.pairs.length + 1) })}</span>
-          <button class="btn ghostbtn" @click=${() => { this._vacCal = null; }}>${this._t('btn.cancel')}</button>
+        ${this._vacFit ? html`<div class="vaccalbar">
+          <span>${this._t('vac.fit_hint')}</span>
+          <button class="btn ghostbtn" @click=${() => this._vacFitTurn({ rot: ((this._vacFit!.p.rot + 90) % 360) as any })}>${this._t('vac.fit_rotate')}</button>
+          <button class="btn ghostbtn" @click=${() => this._vacFitTurn({ mir: !this._vacFit!.p.mir })}>${this._t('vac.fit_mirror')}</button>
+          <button class="btn" @click=${() => this._vacFitSave()}>${this._t('btn.save')}</button>
+          <button class="btn ghostbtn" @click=${() => { this._vacFit = null; }}>${this._t('btn.cancel')}</button>
         </div>` : nothing}
         ${this._tapConfirm
           ? html`<div class="menuwrap dialogwrap" @click=${() => (this._tapConfirm = null)}>
@@ -4424,7 +4431,7 @@ class HouseplanCard extends LitElement {
         ${tele ? html`
           <div class="vacbtns">
             ${tierA ? html`<button class="btn" @click=${() => this._vacAutoCalibrate(dev)}>${this._t('vac.autocal')}</button>` : nothing}
-            <button class="btn ghostbtn" @click=${() => this._vacStartWizard(dev)}>${this._t('vac.wizard')}</button>
+            <button class="btn ghostbtn" @click=${() => this._vacStartFit(dev)}>${this._t('vac.fit')}</button>
           </div>
           <label class="srcrow">
             <input type="checkbox" .checked=${v.live !== false}
@@ -4495,47 +4502,154 @@ class HouseplanCard extends LitElement {
     this._showToast(subst(this._t('vac.autocal_done'), { rooms: String(res.matched.length) }));
   }
 
-  /** «Калибровка по трём точкам»: arm the wizard and leave the dialog. */
-  private _vacStartWizard(d: DevItem): void {
+  /** «Подогнать вручную»: open the fit overlay and leave the dialog. */
+  private _vacStartFit(d: DevItem): void {
     const src = this._vacSource(d);
     const tele = src ? readVacTelemetry(this.hass?.states[src]?.attributes) : null;
-    if (!src || !tele?.pos) {
+    if (!src || !tele) {
       this._showToast(this._t('vac.cal_need_pos'));
       return;
     }
+    const mapId = this._vacMapId(d, tele);
+    const existing = d.marker?.vacuum?.calibration?.[mapId] as Affine | undefined;
+    const sp = this._spaceModel(d.space);
+    const vb = (sp?.vb || [0, 0, NORM_W, NORM_W]) as [number, number, number, number];
+    const p = (existing && existing.length === 6 && fitFromMatrix(existing))
+      || initialFit(tele.rooms, vb);
     this._markerDialog = null;
-    this._vacCal = { markerId: d.id, source: src, mapId: this._vacMapId(d, tele), pairs: [] };
+    if (d.space !== this._space) this._space = d.space;
+    this._vacFit = { markerId: d.id, source: src, mapId, p, drag: null };
   }
 
-  private _vacCalClick(ev: MouseEvent): void {
-    const cal = this._vacCal;
-    if (!cal) return;
-    const tele = readVacTelemetry(this.hass?.states[cal.source]?.attributes);
-    if (!tele?.pos) {
-      this._showToast(this._t('vac.cal_need_pos'));
-      return;
-    }
-    const pt = this._svgPoint(ev);
-    const pairs = [...cal.pairs, [[tele.pos.x, tele.pos.y], [pt[0], pt[1]]] as [VacPt, VacPt]];
-    if (pairs.length < 3) {
-      this._vacCal = { ...cal, pairs };
-      return;
-    }
-    const matrix = solveAffine(pairs);
-    if (!matrix) {
-      // collinear or repeated points — drop the last one and ask again
-      this._vacCal = { ...cal, pairs: pairs.slice(0, -1) };
-      this._showToast(this._t('vac.cal_degenerate'));
-      return;
-    }
-    if (affineResidual(matrix, pairs) > NORM_W * 0.05 && pairs.length < 4) {
-      this._vacCal = { ...cal, pairs };
-      this._showToast(this._t('vac.cal_res_warn'));
-      return;
-    }
-    this._vacSaveMatrix(cal.markerId, cal.source, cal.mapId, matrix);
-    this._vacCal = null;
+  private _vacFitSave(): void {
+    const f = this._vacFit;
+    if (!f) return;
+    this._vacSaveMatrix(f.markerId, f.source, f.mapId, fitMatrix(f.p));
+    this._vacFit = null;
     this._showToast(this._t('vac.cal_done'));
+  }
+
+  /** Rotate/mirror around the ghost centre so the map does not fly away. */
+  private _vacFitTurn(patch: Partial<FitParams>): void {
+    const f = this._vacFit;
+    if (!f) return;
+    const tele = readVacTelemetry(this.hass?.states[f.source]?.attributes);
+    const c = this._vacGhostCentre(tele?.rooms || []);
+    const next = { ...f.p, ...patch } as FitParams;
+    this._vacFit = { ...f, p: reanchorFit(next, f.p, c[0], c[1]) };
+  }
+
+  private _vacGhostCentre(rooms: VacRoom[]): VacPt {
+    const xs: number[] = [], ys: number[] = [];
+    for (const r of rooms) {
+      xs.push(r.x0 ?? r.cx, r.x1 ?? r.cx);
+      ys.push(r.y0 ?? r.cy, r.y1 ?? r.cy);
+    }
+    if (!xs.length) return [0, 0];
+    return [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2];
+  }
+
+  /** px→canvas-units for a pointer delta, via the current stage size. */
+  private _vacDelta(view: { w: number; h: number }, dxPx: number, dyPx: number): VacPt {
+    const st = this._stageEl;
+    const w = st?.clientWidth || 1, h = st?.clientHeight || 1;
+    return [(dxPx / w) * view.w, (dyPx / h) * view.h];
+  }
+
+  private _vacFitPointer(ev: PointerEvent, view: { x: number; y: number; w: number; h: number }): void {
+    const f = this._vacFit;
+    if (!f) return;
+    ev.stopPropagation();
+    if (ev.type === 'pointerdown') {
+      const t = ev.target as HTMLElement;
+      const corner = t.getAttribute?.('data-corner');
+      try {
+        (ev.currentTarget as HTMLElement).setPointerCapture?.(ev.pointerId);
+      } catch { /* synthetic pointers (tests) have no active id — capture is a nicety */ }
+      this._vacFit = { ...f, drag: corner
+        ? { kind: 'scale', sx: ev.clientX, sy: ev.clientY, p0: { ...f.p },
+            fx: Number(corner.split(',')[0]), fy: Number(corner.split(',')[1]) }
+        : { kind: 'move', sx: ev.clientX, sy: ev.clientY, p0: { ...f.p }, fx: 0, fy: 0 } };
+      return;
+    }
+    const d = f.drag;
+    if (!d) return;
+    if (ev.type === 'pointermove') {
+      const [dx, dy] = this._vacDelta(view, ev.clientX - d.sx, ev.clientY - d.sy);
+      if (d.kind === 'move') {
+        this._vacFit = { ...f, p: { ...d.p0, ox: d.p0.ox + dx, oy: d.p0.oy + dy } };
+      } else {
+        // corner-stretch: uniform scale about the OPPOSITE corner (fx, fy —
+        // the fixed corner in robot coords), like a graphics-editor frame
+        const tele = readVacTelemetry(this.hass?.states[f.source]?.attributes);
+        const c = this._vacGhostCentre(tele?.rooms || []);
+        const m0 = fitMatrix(d.p0);
+        const [gx, gy] = applyAffine(m0, c[0], c[1]);
+        const [px0, py0] = applyAffine(m0, d.fx, d.fy);
+        const span0 = Math.hypot(gx - px0, gy - py0) || 1;
+        // distance change of the dragged corner (opposite of fixed) from centre
+        const [cx0, cy0] = [2 * gx - px0, 2 * gy - py0];
+        const span1 = Math.hypot(cx0 + dx * 2 - px0, cy0 + dy * 2 - py0) / 2;
+        const k = Math.max(0.05, span1 / span0);
+        const next = { ...d.p0, s: d.p0.s * k } as FitParams;
+        this._vacFit = { ...f, p: reanchorFit(next, d.p0, d.fx, d.fy) };
+      }
+      return;
+    }
+    if (ev.type === 'pointerup' || ev.type === 'pointercancel') {
+      this._vacFit = { ...f, drag: null };
+    }
+  }
+
+  /** The translucent robot map over the plan while fitting. */
+  private _renderVacFit(view: { x: number; y: number; w: number; h: number }): TemplateResult | typeof nothing {
+    const f = this._vacFit;
+    if (!f) return nothing;
+    const tele = readVacTelemetry(this.hass?.states[f.source]?.attributes);
+    if (!tele) return nothing;
+    const m = fitMatrix(f.p);
+    const rects: TemplateResult[] = [];
+    const xs: number[] = [], ys: number[] = [];
+    for (const r of tele.rooms) {
+      if (r.x0 == null) continue;
+      const cs = [[r.x0!, r.y0!], [r.x1!, r.y0!], [r.x1!, r.y1!], [r.x0!, r.y1!]]
+        .map(([x, y]) => applyAffine(m, x, y));
+      cs.forEach(([x, y]) => { xs.push(x); ys.push(y); });
+      const [lx, ly] = applyAffine(m, r.cx, r.cy);
+      rects.push(svg`<polygon points="${cs.map((q) => q[0].toFixed(1) + ',' + q[1].toFixed(1)).join(' ')}"></polygon>
+        <text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}">${r.name}</text>`);
+    }
+    let dot: TemplateResult | typeof nothing = nothing;
+    if (tele.pos) {
+      const [dx2, dy2] = applyAffine(m, tele.pos.x, tele.pos.y);
+      dot = svg`<circle class="vacfitdot" cx="${dx2.toFixed(1)}" cy="${dy2.toFixed(1)}" r="${(view.w * 0.012).toFixed(1)}"></circle>`;
+    }
+    // corner handles on the ghost bbox; data-corner carries the FIXED corner
+    // (the opposite one) in robot coordinates
+    const handles: TemplateResult[] = [];
+    if (xs.length) {
+      const inv = ((): ((x: number, y: number) => VacPt) => {
+        const det = m[0] * m[4] - m[1] * m[3];
+        return (x, y) => [
+          (m[4] * (x - m[2]) - m[1] * (y - m[5])) / det,
+          (-m[3] * (x - m[2]) + m[0] * (y - m[5])) / det,
+        ];
+      })();
+      const x0 = Math.min(...xs), x1 = Math.max(...xs);
+      const y0 = Math.min(...ys), y1 = Math.max(...ys);
+      const r = view.w * 0.014;
+      for (const [hx, hy, ox2, oy2] of [[x0, y0, x1, y1], [x1, y0, x0, y1], [x1, y1, x0, y0], [x0, y1, x1, y0]] as number[][]) {
+        const fixed = inv(ox2, oy2);
+        handles.push(svg`<circle class="vacfithandle" data-corner="${fixed[0] + ',' + fixed[1]}"
+          cx="${hx.toFixed(1)}" cy="${hy.toFixed(1)}" r="${r.toFixed(1)}"></circle>`);
+      }
+    }
+    return html`<svg class="vacfit" viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
+        preserveAspectRatio="none"
+        @pointerdown=${(e: PointerEvent) => this._vacFitPointer(e, view)}
+        @pointermove=${(e: PointerEvent) => this._vacFitPointer(e, view)}
+        @pointerup=${(e: PointerEvent) => this._vacFitPointer(e, view)}
+        @pointercancel=${(e: PointerEvent) => this._vacFitPointer(e, view)}>${rects}${dot}${handles}</svg>`;
   }
 
   /** Puck + trail for every live vacuum of the space. */

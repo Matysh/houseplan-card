@@ -1306,6 +1306,40 @@ export const cardStyles = css`
       stroke-width: 1.8;
     }
     .vacbox .vacbtns { display: flex; gap: 8px; margin: 6px 0; flex-wrap: wrap; }
+    .vacfit {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 12;
+      overflow: visible;
+      touch-action: none;
+      cursor: grab;
+    }
+    .vacfit:active { cursor: grabbing; }
+    .vacfit polygon {
+      fill: color-mix(in srgb, var(--hp-accent) 16%, transparent);
+      stroke: var(--hp-accent);
+      stroke-width: 2;
+      vector-effect: non-scaling-stroke;
+      stroke-dasharray: 6 4;
+    }
+    .vacfit text {
+      fill: var(--hp-accent);
+      font-size: 26px;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+      user-select: none;
+    }
+    .vacfitdot { fill: var(--hp-accent); pointer-events: none; }
+    .vacfithandle {
+      fill: var(--hp-bg);
+      stroke: var(--hp-accent);
+      stroke-width: 2;
+      vector-effect: non-scaling-stroke;
+      cursor: nwse-resize;
+    }
     .vaccalbar {
       position: fixed;
       left: 50%;
