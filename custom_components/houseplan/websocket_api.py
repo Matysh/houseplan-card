@@ -16,6 +16,7 @@ from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
 
 from .const import (
+    DOMAIN,
     CONF_ADMIN_ONLY, DEFAULT_CONFIG,
     CONTENT_URL, FILES_DIR, MAX_PLANS_BYTES, MAX_PLANS_FILES, MAX_PLANS_LISTED,
     MAX_SIGN_PATHS,
