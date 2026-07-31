@@ -54,7 +54,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
     from .trails import TrailRecorder
     recorder = TrailRecorder(hass, data)
     await recorder.async_setup()
-    hass.data[DOMAIN]["trail_recorder"] = recorder
+    # setdefault: the CI harness sets entries up without async_setup, so
+    # hass.data[DOMAIN] may not exist yet — a KeyError here failed EVERY
+    # downstream WS test with unknown_error
+    hass.data.setdefault(DOMAIN, {})["trail_recorder"] = recorder
 
     card_path = Path(__file__).parent / "frontend" / "houseplan-card.js"
     plans_path = Path(hass.config.path(PLANS_DIR))
