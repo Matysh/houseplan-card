@@ -40,7 +40,7 @@ const out = await page.evaluate(async () => {
     && pcs.borderTopColor === dcs.borderTopColor;
   o.puck80pct = Math.abs(puck.getBoundingClientRect().width
     - devEl.getBoundingClientRect().width * 0.8) < 2;
-  o.puckHasWedge = !!sr().querySelector('.vacwedge');
+  o.noWedge = !sr().querySelector('.vacwedge'); // owner 2026-07-31: no heading arrow
   o.baseStaysDuringCleaning = !!sr().querySelector('.dev');
 
   // drive: two more points -> trail polyline grows; puck moves
@@ -54,9 +54,6 @@ const out = await page.evaluate(async () => {
   o.trailDrawn = !!trail && trail.getAttribute('points').split(' ').length >= 3;
   o.trailScaledByMatrix = !!trail && trail.getAttribute('points').startsWith('300.0,400.0');
 
-  // heading wedge rotates by a + matrix rotation (rotation=0 here)
-  const wedge = sr().querySelector('.vacwedge');
-  o.wedgeRotated = wedge && wedge.style.transform.includes('45');
 
   // trail off via marker option
   cfg.markers.find((m) => m.id === 'e_vacuum_robo').vacuum.trail = false;
@@ -125,8 +122,8 @@ const out = await page.evaluate(async () => {
 checkAll(out, {
   dockedNoPuck: true, baseMarkerThere: true, puckAppears: true, puckRound: true,
   puckPlateMatchesDev: true, puck80pct: true,
-  puckHasWedge: true, baseStaysDuringCleaning: true, trailDrawn: true,
-  trailScaledByMatrix: true, wedgeRotated: true, trailToggleOff: true,
+  noWedge: true, baseStaysDuringCleaning: true, trailDrawn: true,
+  trailScaledByMatrix: true, trailToggleOff: true,
   puckGoneWhenDocked: true, trailLingers: true, hiddenNoPuck: true,
   unknownMapNoPuck: true,
   wizardDevFound: true, wizardBanner: true, wizardSavedMatrix: true,

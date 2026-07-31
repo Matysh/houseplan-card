@@ -1260,21 +1260,6 @@ export const cardStyles = css`
     .vacpuck.jump { transition: none; }
     .vacpuck.stale { opacity: 0.45; animation: none; }
     .vacpuck ha-icon { --mdc-icon-size: calc(var(--puck-size) * 0.68); color: var(--hp-txt); }
-    .vacwedge {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-    }
-    .vacwedge::before {
-      content: '';
-      position: absolute;
-      top: -5px;
-      left: 50%;
-      margin-left: -3.5px;
-      border-left: 3.5px solid transparent;
-      border-right: 3.5px solid transparent;
-      border-bottom: 6px solid var(--hp-accent);
-    }
     @keyframes vacpulse {
       0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--hp-accent) 45%, transparent); }
       70% { box-shadow: 0 0 0 12px transparent; }

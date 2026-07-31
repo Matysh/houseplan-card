@@ -812,8 +812,8 @@ require hands on real hardware — they remain for the human pass.
 
 - Docked robot: only the base marker, at the user-placed spot. No puck.
 - Cleaning + calibrated map: a round pulsing puck (no badge plate) drives the
-  plan; the base marker never moves. Heading wedge follows angle+matrix
-  rotation; no angle attribute — no wedge.
+  plan; the base marker never moves. No heading arrow on the puck
+  (owner removed it 2026-07-31).
 - Trail: integration `path` preferred, else self-recorded; lingers 10 min
   after docking; a new run clears it; `trail: false` hides it.
 - Hidden marker: neither puck nor trail. Uncalibrated active map: no puck.

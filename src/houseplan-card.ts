@@ -4549,17 +4549,12 @@ class HouseplanCard extends LitElement {
       const left = ((cx - view.x) / view.w) * 100;
       const top = ((cy - view.y) / view.h) * 100;
       const stale = rt && rt.lastTs > 0 && Date.now() - rt.lastTs > VAC_STALE_MS;
-      // heading follows the map rotation baked into the matrix
-      const wedge = tele.pos.a != null
-        ? tele.pos.a + (Math.atan2(matrix[3], matrix[0]) * 180) / Math.PI
-        : null;
       const icon = d.marker?.icon || d.icon || 'mdi:robot-vacuum';
       pucks.push(html`<div
         class="vacpuck ${rt?.jump ? 'jump' : ''} ${stale ? 'stale' : ''}"
         style="left:${left}%;top:${top}%"
         title=${d.name}
         @click=${(e: Event) => { e.stopPropagation(); const ve = this._vacEntity(d); if (ve) this._openMoreInfo(ve); }}>
-        ${wedge != null ? html`<div class="vacwedge" style="transform:rotate(${wedge}deg)"></div>` : nothing}
         <ha-icon .icon=${icon}></ha-icon>
       </div>`);
     }

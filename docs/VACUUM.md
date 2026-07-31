@@ -61,8 +61,7 @@ Appears when the robot leaves `docked` AND live coords flow; CSS
 interpolation ~1.2 s between updates; a data gap over 10 s teleports
 without animation (no gliding through walls on sparse cloud updates).
 Soft pulse always while visible (respects prefers-reduced-motion: the
-pulse freezes, position still animates). A small heading wedge rotates
-by `angle` on the puck rim; no angle — no wedge. Size: same --icon-size
+pulse freezes, position still animates). Size: same --icon-size
 system as devices, circle, transparent background, no badge plate.
 Stale coords (>60 s while «cleaning»): puck freezes and dims. On
 `docked`/`idle`-at-base the puck rides home and fades out. Hidden
@@ -119,8 +118,7 @@ multi-robot collision avoidance — v2 candidates.
 ## Phases
 
 - **P1:** adapter framework + all three Tier-A adapters +
-  auto-calibration by rooms + manual 3-point wizard + the puck +
-  heading wedge + trail (both sources).
+  auto-calibration by rooms + manual 3-point wizard + the puck + trail (both sources).
 - **P2:** Tier C room highlight + the demo-stand scripted robot.
 - **P3:** Tier B zoo (Roomba, raw Valetudo MQTT), Deebot, multi-map
   polish by feedback.
