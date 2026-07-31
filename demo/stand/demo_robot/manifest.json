@@ -1,0 +1,10 @@
+{
+  "domain": "demo_robot",
+  "name": "Demo Robot Vacuum",
+  "codeowners": [],
+  "dependencies": [],
+  "documentation": "https://github.com/Matysh/houseplan-card/tree/dev/demo/stand/demo_robot",
+  "iot_class": "calculated",
+  "requirements": [],
+  "version": "1.0.0"
+}
