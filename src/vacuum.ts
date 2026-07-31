@@ -82,6 +82,19 @@ const num = (v: unknown): number | null => {
 };
 
 /**
+ * Map-id normalisation contract, shared with the backend recorder
+ * (custom_components/houseplan/trails.py: resolve_map_id). The FIRST value
+ * that is not null/undefined wins — truthiness is wrong here, because a
+ * zero-based `map_index: 0` is a perfectly valid first map and an empty
+ * string is still an id. The backend used an `or`-chain and dropped the
+ * zero, so server trails were stored under a key the renderer never looked
+ * up (HP-1540-02).
+ */
+export function vacMapIdFromAttrs(attrs: Record<string, any>): string {
+  return String(attrs.map_name ?? attrs.current_map ?? attrs.map_index ?? attrs.selected_map ?? 'default');
+}
+
+/**
  * Normalise the attribute zoo. One parser instead of per-brand classes: the
  * three Tier-A integrations (Xiaomi Cloud Map Extractor, Tasshack
  * dreame-vacuum, Valetudo camera) all descend from the map-card conventions
@@ -134,7 +147,7 @@ export function readVacTelemetry(attrs: Record<string, any> | null | undefined):
       rooms.push(room);
     }
   }
-  const mapId = String(attrs.map_name ?? attrs.current_map ?? attrs.map_index ?? attrs.selected_map ?? 'default');
+  const mapId = vacMapIdFromAttrs(attrs);
   if (!pos && !rooms.length && !path) return null;
   return { pos, path, rooms, mapId };
 }

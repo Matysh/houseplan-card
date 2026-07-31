@@ -42,7 +42,7 @@ import { cardStyles } from './styles';
 import { fitInSquare, contentBounds, spaceModels } from './space-geometry';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.54.0';
+const CARD_VERSION = '1.54.1';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -4423,6 +4423,35 @@ class HouseplanCard extends LitElement {
 
 
 
+  /**
+   * HP-1540-01: an auto-discovered vacuum has NO config marker until the first
+   * general Save of its dialog, yet the «Живая позиция» section is already
+   * interactive. Every vacuum handler used to `cfg.markers.find(...)` and
+   * silently no-op without one — auto-calibration even toasted success while
+   * saving nothing. Materialise a minimal marker (same id/binding the dialog
+   * Save would produce — see _saveMarker/markerIdForBinding) before any
+   * vacuum write, so the write has somewhere real to land.
+   */
+  private _vacEnsureMarker(d: DevItem): Marker | null {
+    const cfg = this._serverCfg;
+    if (!cfg) return null;
+    cfg.markers = cfg.markers || [];
+    const existing = cfg.markers.find((x: Marker) => x.id === d.id);
+    if (existing) return existing;
+    if ((d.bindingKind !== 'device' && d.bindingKind !== 'entity') || !d.bindingRef) return null;
+    const m: Marker = {
+      id: d.id,
+      binding: d.bindingKind + ':' + d.bindingRef,
+      space: d.space || null,
+      area: d.area || null,
+      // explicit like _saveMarker: a marker of any kind tells the seeder
+      // "the user decided" (docs/FILTERING.md)
+      hidden: d.hidden ? true : false,
+    };
+    cfg.markers.push(m);
+    return m;
+  }
+
   /** «Живая позиция» in the device dialog — vacuum markers only. */
   private _renderVacSection(dlg: any): TemplateResult | typeof nothing {
     const dev = this._devices.find((x) => x.id === dlg.devId);
@@ -4436,8 +4465,9 @@ class HouseplanCard extends LitElement {
       : this._t('vac.status_none');
     const cals = Object.keys(v.calibration || {});
     const setVac = (patch: Record<string, unknown>) => {
-      const cfg = this._serverCfg;
-      const m = cfg?.markers?.find((x: Marker) => x.id === dev.id);
+      // HP-1540-01: materialise the marker first — find() alone silently
+      // dropped every edit for a vacuum that had never been saved
+      const m = this._vacEnsureMarker(dev);
       if (!m) return;
       m.vacuum = { ...(m.vacuum || {}), ...patch };
       this._regSignature = '';
@@ -4481,11 +4511,15 @@ class HouseplanCard extends LitElement {
     return sel ? String(sel) : 'default';
   }
 
-  /** Persist a solved matrix into marker.vacuum.calibration[mapId]. */
-  private _vacSaveMatrix(markerId: string, source: string, mapId: string, matrix: Affine): void {
-    const cfg = this._serverCfg;
-    const m = cfg?.markers?.find((x: Marker) => x.id === markerId);
-    if (!m) return;
+  /** Persist a solved matrix into marker.vacuum.calibration[mapId].
+   *  Returns whether the write actually landed — callers must not toast
+   *  success otherwise (HP-1540-01). */
+  private _vacSaveMatrix(markerId: string, source: string, mapId: string, matrix: Affine): boolean {
+    // HP-1540-01: a first-use vacuum has no marker yet — materialise it
+    const dev = this._devices.find((x) => x.id === markerId);
+    const m = dev ? this._vacEnsureMarker(dev)
+      : this._serverCfg?.markers?.find((x: Marker) => x.id === markerId);
+    if (!m) return false;
     const v = { ...(m.vacuum || {}) };
     v.source = source;
     v.calibration = { ...(v.calibration || {}), [mapId]: matrix.map((n) => Number(n.toFixed(6))) };
@@ -4493,6 +4527,7 @@ class HouseplanCard extends LitElement {
     this._regSignature = '';
     this._saveConfig();
     this.requestUpdate();
+    return true;
   }
 
   /** «Настроить автоматически»: robot rooms ↔ plan rooms by name. */
@@ -4505,9 +4540,14 @@ class HouseplanCard extends LitElement {
     }
     const sp = this._spaceModel(d.space);
     const planRooms = (sp?.rooms || [])
-      .filter((r: any) => r.name && r.poly?.length >= 3)
-      .map((r: any) => {
-        const c = poleOfInaccessibility(r.poly);
+      // HP-1540-04: legacy rectangle rooms (x/y/w/h) are still first-class
+      // everywhere else — roomPoly() gives the same 4-corner outline the
+      // renderer uses, so they must count for name-matching too. The old
+      // r.poly?.length filter dropped them and then blamed the room names.
+      .map((r: any) => ({ r, poly: roomPoly(r) }))
+      .filter(({ r, poly }: any) => r.name && poly)
+      .map(({ r, poly }: any) => {
+        const c = poleOfInaccessibility(poly);
         return { name: r.name, cx: c[0], cy: c[1] };
       });
     const res = autoCalibrate(tele.rooms, planRooms);
@@ -4516,10 +4556,12 @@ class HouseplanCard extends LitElement {
       return;
     }
     // residual gate: 5% of the canvas ≈ 40 cm in a typical house
+    // HP-1540-01: toast success ONLY after the matrix verifiably landed in
+    // the config — the old code always claimed victory, even as a no-op
+    if (!this._vacSaveMatrix(d.id, src, this._vacMapId(d, tele), res.matrix)) return;
     if (res.residual > NORM_W * 0.05) {
       this._showToast(subst(this._t('vac.autocal_res_warn'), { rooms: String(res.matched.length) }));
     }
-    this._vacSaveMatrix(d.id, src, this._vacMapId(d, tele), res.matrix);
     this._showToast(subst(this._t('vac.autocal_done'), { rooms: String(res.matched.length) }));
   }
 
@@ -4545,9 +4587,10 @@ class HouseplanCard extends LitElement {
   private _vacFitSave(): void {
     const f = this._vacFit;
     if (!f) return;
-    this._vacSaveMatrix(f.markerId, f.source, f.mapId, fitMatrix(f.p));
+    // HP-1540-01: no success toast for a save that did not happen
+    const ok = this._vacSaveMatrix(f.markerId, f.source, f.mapId, fitMatrix(f.p));
     this._vacFit = null;
-    this._showToast(this._t('vac.cal_done'));
+    if (ok) this._showToast(this._t('vac.cal_done'));
   }
 
   /** Rotate/mirror around the ghost centre so the map does not fly away. */

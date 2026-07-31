@@ -25,3 +25,11 @@ test('i18n: placeholders match between languages', () => {
     assert.equal(ph(en[k]), ph(ru[k]), `placeholder mismatch in ${k}`);
   }
 });
+
+test('vac toasts never mention the removed point calibration (HP-1540-06)', () => {
+  for (const [lang, d] of [['en', en], ['ru', ru]]) {
+    for (const k of ['vac.autocal_no_rooms', 'vac.autocal_no_match', 'vac.autocal_res_warn']) {
+      assert.ok(!/point|точк/i.test(d[k]), `${lang}:${k} still points at point calibration`);
+    }
+  }
+});
