@@ -122,10 +122,31 @@ Commands of any kind (owner decision: display only) — no tap-to-clean,
 no zone sending. No-go zones, cleaned-area polygons, cleaning history,
 multi-robot collision avoidance — v2 candidates.
 
+## Trail display modes
+
+`marker.vacuum.trail_mode`: `never` | `cleaning` (default — the line hides
+the instant the run ends) | `always` (the only mode that also draws the
+previous run, at 40% opacity). The legacy boolean `trail` still maps in
+(`false` → never). Recording is independent of the mode: the server always
+records, the mode only decides what is drawn.
+
+The last segment is a rAF-driven tip line whose endpoint is glued to the
+puck's animated centre every frame, so the path pours out from under the
+icon instead of popping in when the next telemetry point lands.
+
 ## Phases
 
 - **P1:** adapter framework + all three Tier-A adapters +
   auto-calibration by rooms + manual 3-point wizard + the puck + trail (both sources).
-- **P2:** Tier C room highlight + the demo-stand scripted robot.
+- **P2 (next):** Tier C room highlight + the demo-stand scripted robot.
 - **P3:** Tier B zoo (Roomba, raw Valetudo MQTT), Deebot, multi-map
   polish by feedback.
+
+## Shipped in P1
+
+Adapters for the three Tier-A integrations, auto-calibration by room
+names, the drag-and-stretch fit panel, the puck, server-side trails
+(current + previous run) with the three display modes. Verified against a
+live Dreame X50 Master: room centres arrive as plain x/y, the active map
+name lives on the vacuum entity (`selected_map`), and the robot's Y axis
+is flipped versus the screen — hence mirror-on by default.
