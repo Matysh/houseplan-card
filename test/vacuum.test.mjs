@@ -48,6 +48,19 @@ test('readVacTelemetry: Valetudo/Tasshack shapes + junk safety', () => {
   assert.ok(!isVacSourceState({ attributes: { battery: 1 } }));
 });
 
+test('readVacTelemetry: Tasshack room centres come as plain x/y', () => {
+  // shape captured from a live Dreame X50 Master (dacha, 2026-07-31)
+  const t = readVacTelemetry({
+    vacuum_position: { x: 1399, y: -55, a: 181 },
+    rooms: { 2: { room_id: 2, name: 'Кладовка', x0: 800, y0: -2000, x1: 4200, y1: 300, x: 2575, y: -825 } },
+  });
+  assert.equal(t.rooms[0].name, 'Кладовка');
+  // bbox wins when present (both are valid anchors); x/y covers bbox-less dialects
+  assert.equal(t.rooms[0].cx, 2500);
+  const t2 = readVacTelemetry({ vacuum_position: { x: 0, y: 0 }, rooms: { 2: { name: 'Кладовка', x: 2575, y: -825 } } });
+  assert.equal(t2.rooms[0].cx, 2575);
+});
+
 test('autoCalibrate matches by name and solves', () => {
   const f = ([x, y]) => [0.01 * x + 100, -0.01 * y + 900];
   const vac = [

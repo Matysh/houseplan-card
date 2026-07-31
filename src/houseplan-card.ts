@@ -4420,6 +4420,18 @@ class HouseplanCard extends LitElement {
       </div>`;
   }
 
+  /**
+   * The active-map id. The camera rarely names its map; Dreame keeps the
+   * human-readable one on the vacuum entity (selected_map, verified against a
+   * live X50 Master) — without this both floors would share one matrix.
+   */
+  private _vacMapId(d: DevItem, tele: { mapId: string }): string {
+    if (tele.mapId !== 'default') return tele.mapId;
+    const ve = this._vacEntity(d);
+    const sel = ve ? this.hass?.states[ve]?.attributes?.selected_map : null;
+    return sel ? String(sel) : 'default';
+  }
+
   /** Persist a solved matrix into marker.vacuum.calibration[mapId]. */
   private _vacSaveMatrix(markerId: string, source: string, mapId: string, matrix: Affine): void {
     const cfg = this._serverCfg;
@@ -4458,7 +4470,7 @@ class HouseplanCard extends LitElement {
     if (res.residual > NORM_W * 0.05) {
       this._showToast(subst(this._t('vac.autocal_res_warn'), { rooms: String(res.matched.length) }));
     }
-    this._vacSaveMatrix(d.id, src, tele.mapId, res.matrix);
+    this._vacSaveMatrix(d.id, src, this._vacMapId(d, tele), res.matrix);
     this._showToast(subst(this._t('vac.autocal_done'), { rooms: String(res.matched.length) }));
   }
 
@@ -4471,7 +4483,7 @@ class HouseplanCard extends LitElement {
       return;
     }
     this._markerDialog = null;
-    this._vacCal = { markerId: d.id, source: src, mapId: tele.mapId, pairs: [] };
+    this._vacCal = { markerId: d.id, source: src, mapId: this._vacMapId(d, tele), pairs: [] };
   }
 
   private _vacCalClick(ev: MouseEvent): void {
@@ -4516,7 +4528,7 @@ class HouseplanCard extends LitElement {
       if (!src) continue;
       const tele = readVacTelemetry(this.hass?.states[src]?.attributes);
       if (!tele) continue;
-      const matrix = d.marker?.vacuum?.calibration?.[tele.mapId] as Affine | undefined;
+      const matrix = d.marker?.vacuum?.calibration?.[this._vacMapId(d, tele)] as Affine | undefined;
       if (!matrix || matrix.length !== 6) continue;
       const rt = this._vacRt.get(d.id);
       const moving = rt?.moving ?? false;

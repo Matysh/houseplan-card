@@ -120,6 +120,9 @@ export function readVacTelemetry(attrs: Record<string, any> | null | undefined):
         cx = (x0 + x1) / 2; cy = (y0 + y1) / 2;
       }
     }
+    // Tasshack dreame-vacuum: the room centre is plain x/y (verified against
+    // a live X50 Master; x/y sits within its own x0..x1 bbox)
+    if (cx == null || cy == null) { cx = num(r.x); cy = num(r.y); }
     if (name && cx != null && cy != null) rooms.push({ id, name, cx, cy });
   }
   const mapId = String(attrs.map_name ?? attrs.current_map ?? attrs.map_index ?? attrs.selected_map ?? 'default');
