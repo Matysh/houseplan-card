@@ -75,7 +75,7 @@ marker is edited as usual.
   draw as-is, includes history from before the card was opened.
 - Otherwise self-recorded: client-side ring buffer, ~600 points with
   Douglas-Peucker thinning, one SVG polyline.
-- Style fixed (translucent accent line), no styling options. Lifecycle:
+- Style fixed, no options: cartography casing — a dark translucent halo under a light core. Neutral (pure black/white alphas) and readable over any room fill; blend modes were rejected: each has a blind luminance where the line vanishes, and mix-blend-mode is costly on old kiosk WebViews. Lifecycle:
   appears on cleaning start, lives until dock + 10 min, dissolves;
   `docked → cleaning` clears the old trail. Ephemeral, never stored.
 - Marker option «Показывать след уборки», on by default where data

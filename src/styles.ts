@@ -1291,12 +1291,19 @@ export const cardStyles = css`
     }
     .vactrail polyline {
       fill: none;
-      stroke: var(--hp-accent);
-      stroke-opacity: 0.35;
-      stroke-width: 3;
       stroke-linejoin: round;
       stroke-linecap: round;
       vector-effect: non-scaling-stroke;
+    }
+    /* dark halo + light core: neutral, and one of the two always contrasts
+       with whatever fill is underneath */
+    .vactrail .case {
+      stroke: rgba(0, 0, 0, 0.4);
+      stroke-width: 4.5;
+    }
+    .vactrail .core {
+      stroke: rgba(255, 255, 255, 0.82);
+      stroke-width: 1.8;
     }
     .vacbox .vacbtns { display: flex; gap: 8px; margin: 6px 0; flex-wrap: wrap; }
     .vaccalbar {

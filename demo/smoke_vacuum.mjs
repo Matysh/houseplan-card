@@ -58,6 +58,15 @@ const out = await page.evaluate(async () => {
   const trail = sr().querySelector('.vactrail polyline');
   o.trailDrawn = !!trail && trail.getAttribute('points').split(' ').length >= 3;
   o.trailScaledByMatrix = !!trail && trail.getAttribute('points').startsWith('300.0,400.0');
+  // casing pair: dark halo + light core with identical geometry — the trail
+  // must survive any room fill underneath (owner 2026-07-31)
+  const tcase = sr().querySelector('.vactrail .case');
+  const tcore = sr().querySelector('.vactrail .core');
+  o.trailCasing = !!tcase && !!tcore
+    && tcase.getAttribute('points') === tcore.getAttribute('points')
+    && parseFloat(getComputedStyle(tcase).strokeWidth) > parseFloat(getComputedStyle(tcore).strokeWidth)
+    && getComputedStyle(tcase).stroke.includes('0, 0, 0')
+    && getComputedStyle(tcore).stroke.includes('255, 255, 255');
 
 
   // trail off via marker option
@@ -128,7 +137,7 @@ checkAll(out, {
   dockedNoPuck: true, baseMarkerThere: true, puckAppears: true, puckRound: true,
   puckPlateMatchesDev: true, puck80pct: true,
   noWedge: true, iconCentred: true, baseStaysDuringCleaning: true, trailDrawn: true,
-  trailScaledByMatrix: true, trailToggleOff: true,
+  trailScaledByMatrix: true, trailCasing: true, trailToggleOff: true,
   puckGoneWhenDocked: true, trailLingers: true, hiddenNoPuck: true,
   unknownMapNoPuck: true,
   wizardDevFound: true, wizardBanner: true, wizardSavedMatrix: true,

@@ -4541,7 +4541,10 @@ class HouseplanCard extends LitElement {
             const [cx, cy] = applyAffine(matrix, x, y);
             return cx.toFixed(1) + ',' + cy.toFixed(1);
           }).join(' ');
-          trails.push(svg`<polyline points="${ptsStr}"></polyline>`);
+          // cartography casing: a dark halo under a light core. Neutral and
+          // visible over ANY room fill — blend modes all have a blind
+          // luminance where the line vanishes (owner request 2026-07-31).
+          trails.push(svg`<polyline class="case" points="${ptsStr}"></polyline><polyline class="core" points="${ptsStr}"></polyline>`);
         }
       }
       if (!moving || !tele.pos) continue;
