@@ -15,7 +15,7 @@ import {
   lqiColor, snapToGrid, samePoint, pointInPolygon, markerIdForBinding,
   segmentCm, formatLength, roomEdges, roomPoly, pointStrictlyInside, roomsOverlap,
   pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, openZoneOf, distToSegment, outlineWithout, cutSegments, alignGuides, segmentAngle, is45, type AlignGuide, swipeTarget, clampScale, migratePdfUrls, roomFillModeOf, contentUrl,
-  snapToWall, openingAmount, interiorPoint, poleOfInaccessibility,
+  snapToWall, openingAmount, interiorPoint, poleOfInaccessibility, subst,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
   stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, glowColorOf, doorSector, hasRoomBehind, controlsAction, isControllable,
   spaceDisplayOf, roomFillStyle, fillColorsOf, DEFAULT_FILL_COLORS, type FillColors, runServiceFor, RUN_TARGET_DOMAINS,
@@ -25,6 +25,11 @@ import {
   DISPLAY_MODES, TAP_ACTIONS, SPACE_FILL_MODES, ROOM_FILL_MODES,
 } from './logic';
 import { ContentSigner } from './signing';
+import {
+  Affine, applyAffine, solveAffine, affineResidual, readVacTelemetry, isVacSourceState,
+  autoCalibrate, pushTrailPoint, isVacMoving, VAC_TELEPORT_GAP_MS, VAC_STALE_MS,
+  VAC_TRAIL_LINGER_MS, Pt as VacPt,
+} from './vacuum';
 import { buildDevices, seedHiddenBindings, lqiFor, tempFor, humFor, isHumEntity, areaLights, areaTemp, areaHum, areaLightStats, sourceValue, areaClimateMap, litLightEntity, type AreaClimate } from './devices';
 import type {
   OpeningCfg,
@@ -340,6 +345,11 @@ class HouseplanCard extends LitElement {
   // ---- kiosk (wall device) mode ----
   private _kioskScale: { icon: number; font: number } = { icon: 1, font: 1 };
   private _kioskDialog = false;
+  /** live-vacuum runtime per marker: RAW robot coords (matrix applied at render) */
+  private _vacRt = new Map<string, { trail: VacPt[]; lastKey: string; lastTs: number;
+    moving: boolean; jump: boolean; endedTs: number }>();
+  private _vacCal: { markerId: string; source: string; mapId: string;
+    pairs: Array<[VacPt, VacPt]> } | null = null;
   private _kioskDots = false;
   private _kioskDotsTimer?: number;
   private _kioskHoldTimer?: number;
@@ -394,6 +404,7 @@ class HouseplanCard extends LitElement {
     _decorSel: { state: true },
     _decorTextDialog: { state: true },
     _kioskDialog: { state: true },
+    _vacCal: { state: true },
     _kioskDots: { state: true },
     _areaSel: { state: true },
     _nameSel: { state: true },
@@ -461,6 +472,12 @@ class HouseplanCard extends LitElement {
   }
 
   private _onKey(e: KeyboardEvent): void {
+    if (e.key === 'Escape' && this._vacCal) {
+      this._vacCal = null;
+      this._showToast(this._t('vac.cal_cancelled'));
+      e.stopPropagation();
+      return;
+    }
     if (e.key === 'Escape') {
       // close the topmost open dialog; info popups first, then editors
       if (this._tapConfirm) { this._tapConfirm = null; return; }
@@ -769,6 +786,7 @@ class HouseplanCard extends LitElement {
   }
 
   protected willUpdate(changed: PropertyValues): void {
+    if (changed?.has?.('hass')) this._vacTick();
     if (changed.has('hass') && this.hass) {
       if (!this._loadOk && !this._loading && this._loadTries < 8) {
         this._loadFromServer();
@@ -1941,6 +1959,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _markupClick(ev: MouseEvent): void {
+    if (this._vacCal) { this._vacCalClick(ev); return; }
     if (!this._markup) return;
     // a pan or pinch just happened — the synthesized click is not a draw
     if (this._suppressClick) return;
@@ -3065,8 +3084,12 @@ class HouseplanCard extends LitElement {
       if (dlg.binding === 'virtual' && !space) space = this._space;
       id = markerIdForBinding(dlg.binding, dlg.devId, () => 'v_' + Date.now().toString(36));
       const oldId = dlg.devId;
+      // the vacuum block is edited live outside the dialog transaction —
+      // the rebuild below must carry it over, not erase it
+      const prevVac = cfg.markers.find((m0: Marker) => m0.id === id || m0.id === oldId)?.vacuum || null;
       const marker: Marker = {
         id,
+        vacuum: prevVac,
         binding: dlg.binding,
         name: dlg.name.trim() || null,
         icon: dlg.icon || null,
@@ -4220,6 +4243,7 @@ class HouseplanCard extends LitElement {
           </svg>
           <div class="devlayer" style="--icon-size:${((iconPct * vb[2] * (this._kiosk ? this._kioskScale.icon : 1)) / view.w).toFixed(3)}cqw;--rl-font:${this._kiosk ? this._kioskScale.font : 1}">
             ${devs.map((d) => this._renderDevice(d, view, showLqi, disp.fill === 'glow' && !this._markup))}
+            ${this._renderVacuums(devs, view)}
             ${this._renderOpeningLocks(view)}
             ${disp.showNames || this._markup
               ? space.rooms.map((r) => this._renderRoomLabel(r, space, view, disp))
@@ -4264,6 +4288,10 @@ class HouseplanCard extends LitElement {
             </div>`
           : nothing}
         ${this._kioskDialog ? this._renderKioskDialog() : nothing}
+        ${this._vacCal ? html`<div class="vaccalbar">
+          <span>${subst(this._t('vac.cal_point'), { n: String(this._vacCal.pairs.length + 1) })}</span>
+          <button class="btn ghostbtn" @click=${() => { this._vacCal = null; }}>${this._t('btn.cancel')}</button>
+        </div>` : nothing}
         ${this._tapConfirm
           ? html`<div class="menuwrap dialogwrap" @click=${() => (this._tapConfirm = null)}>
               <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
@@ -4281,6 +4309,252 @@ class HouseplanCard extends LitElement {
         ${this._toast ? html`<div class="toast">${this._toast}</div>` : nothing}
       </ha-card>
     `;
+  }
+
+
+  // ---------------- live robot vacuums (docs/VACUUM.md) ----------------
+
+  /** The live-position source entity for a vacuum device, or null. */
+  private _vacSource(d: DevItem): string | null {
+    const v = d.marker?.vacuum;
+    if (v?.live === false) return null;
+    if (v?.source && this.hass?.states[v.source]) return v.source;
+    for (const eid of d.entities || []) {
+      if (isVacSourceState(this.hass?.states[eid])) return eid;
+    }
+    return null;
+  }
+
+  private _vacEntity(d: DevItem): string | null {
+    if (d.primary?.startsWith('vacuum.')) return d.primary;
+    return (d.entities || []).find((e) => e.startsWith('vacuum.')) || null;
+  }
+
+  private _isVacDev(d: DevItem): boolean {
+    return !!this._vacEntity(d);
+  }
+
+  /**
+   * Trail buffers live OUTSIDE render: every hass tick appends the raw robot
+   * position, so the trail survives view switches and zoom without ever being
+   * part of reactive state (600 points re-rendering the world would hurt).
+   */
+  private _vacTick(): void {
+    if (!this.hass) return;
+    for (const d of this._devices) {
+      if (d.hidden || !this._isVacDev(d)) continue;
+      const src = this._vacSource(d);
+      if (!src) continue;
+      const vacEnt = this._vacEntity(d);
+      const moving = isVacMoving(this.hass.states[vacEnt || '']?.state);
+      const tele = readVacTelemetry(this.hass.states[src]?.attributes);
+      let rt = this._vacRt.get(d.id);
+      if (!rt) {
+        rt = { trail: [], lastKey: '', lastTs: 0, moving: false, jump: false, endedTs: 0 };
+        this._vacRt.set(d.id, rt);
+      }
+      if (moving && !rt.moving) rt.trail = []; // a fresh run clears the old trail
+      if (!moving && rt.moving) rt.endedTs = Date.now();
+      rt.moving = moving;
+      const pos = tele?.pos;
+      if (moving && pos) {
+        const key = pos.x + ':' + pos.y;
+        if (key !== rt.lastKey) {
+          const now = Date.now();
+          // a long silence then a far point = sparse cloud data: teleport, no glide
+          rt.jump = rt.lastTs > 0 && now - rt.lastTs > VAC_TELEPORT_GAP_MS;
+          rt.lastKey = key;
+          rt.lastTs = now;
+          if (d.marker?.vacuum?.trail !== false && !tele!.path) {
+            rt.trail = pushTrailPoint(rt.trail, [pos.x, pos.y], 40);
+          }
+        }
+      }
+    }
+  }
+
+
+
+  /** «Живая позиция» in the device dialog — vacuum markers only. */
+  private _renderVacSection(dlg: any): TemplateResult | typeof nothing {
+    const dev = this._devices.find((x) => x.id === dlg.devId);
+    if (!dev || !this._isVacDev(dev)) return nothing;
+    const v = dev.marker?.vacuum || {};
+    const src = this._vacSource(dev);
+    const tele = src ? readVacTelemetry(this.hass?.states[src]?.attributes) : null;
+    const tierA = !!(tele && tele.rooms.length >= 3);
+    const status = tele?.pos
+      ? subst(this._t('vac.status_found'), { name: src || '' })
+      : this._t('vac.status_none');
+    const cals = Object.keys(v.calibration || {});
+    const setVac = (patch: Record<string, unknown>) => {
+      const cfg = this._serverCfg;
+      const m = cfg?.markers?.find((x: Marker) => x.id === dev.id);
+      if (!m) return;
+      m.vacuum = { ...(m.vacuum || {}), ...patch };
+      this._regSignature = '';
+      this._saveConfig();
+      this.requestUpdate();
+    };
+    return html`
+      <label>${this._t('vac.section')}</label>
+      <div class="bindbox vacbox">
+        <div class="rhint">${status}</div>
+        ${tele ? html`
+          <div class="vacbtns">
+            ${tierA ? html`<button class="btn" @click=${() => this._vacAutoCalibrate(dev)}>${this._t('vac.autocal')}</button>` : nothing}
+            <button class="btn ghostbtn" @click=${() => this._vacStartWizard(dev)}>${this._t('vac.wizard')}</button>
+          </div>
+          <label class="srcrow">
+            <input type="checkbox" .checked=${v.live !== false}
+              @change=${(e: Event) => setVac({ live: (e.target as HTMLInputElement).checked ? null : false })} />
+            <span>${this._t('vac.live')}</span>
+          </label>
+          <label class="srcrow">
+            <input type="checkbox" .checked=${v.trail !== false}
+              @change=${(e: Event) => setVac({ trail: (e.target as HTMLInputElement).checked ? null : false })} />
+            <span>${this._t('vac.trail')}</span>
+          </label>
+          ${cals.length ? html`<div class="rhint">${subst(this._t('vac.cal_maps'), { maps: cals.join(', ') })}</div>` : nothing}
+        ` : nothing}
+      </div>`;
+  }
+
+  /** Persist a solved matrix into marker.vacuum.calibration[mapId]. */
+  private _vacSaveMatrix(markerId: string, source: string, mapId: string, matrix: Affine): void {
+    const cfg = this._serverCfg;
+    const m = cfg?.markers?.find((x: Marker) => x.id === markerId);
+    if (!m) return;
+    const v = { ...(m.vacuum || {}) };
+    v.source = source;
+    v.calibration = { ...(v.calibration || {}), [mapId]: matrix.map((n) => Number(n.toFixed(6))) };
+    m.vacuum = v;
+    this._regSignature = '';
+    this._saveConfig();
+    this.requestUpdate();
+  }
+
+  /** «Настроить автоматически»: robot rooms ↔ plan rooms by name. */
+  private _vacAutoCalibrate(d: DevItem): void {
+    const src = this._vacSource(d);
+    const tele = src ? readVacTelemetry(this.hass?.states[src]?.attributes) : null;
+    if (!src || !tele || tele.rooms.length < 3) {
+      this._showToast(this._t('vac.autocal_no_rooms'));
+      return;
+    }
+    const sp = this._spaceModel(d.space);
+    const planRooms = (sp?.rooms || [])
+      .filter((r: any) => r.name && r.poly?.length >= 3)
+      .map((r: any) => {
+        const c = poleOfInaccessibility(r.poly);
+        return { name: r.name, cx: c[0], cy: c[1] };
+      });
+    const res = autoCalibrate(tele.rooms, planRooms);
+    if (!res) {
+      this._showToast(this._t('vac.autocal_no_match'));
+      return;
+    }
+    // residual gate: 5% of the canvas ≈ 40 cm in a typical house
+    if (res.residual > NORM_W * 0.05) {
+      this._showToast(subst(this._t('vac.autocal_res_warn'), { rooms: String(res.matched.length) }));
+    }
+    this._vacSaveMatrix(d.id, src, tele.mapId, res.matrix);
+    this._showToast(subst(this._t('vac.autocal_done'), { rooms: String(res.matched.length) }));
+  }
+
+  /** «Калибровка по трём точкам»: arm the wizard and leave the dialog. */
+  private _vacStartWizard(d: DevItem): void {
+    const src = this._vacSource(d);
+    const tele = src ? readVacTelemetry(this.hass?.states[src]?.attributes) : null;
+    if (!src || !tele?.pos) {
+      this._showToast(this._t('vac.cal_need_pos'));
+      return;
+    }
+    this._markerDialog = null;
+    this._vacCal = { markerId: d.id, source: src, mapId: tele.mapId, pairs: [] };
+  }
+
+  private _vacCalClick(ev: MouseEvent): void {
+    const cal = this._vacCal;
+    if (!cal) return;
+    const tele = readVacTelemetry(this.hass?.states[cal.source]?.attributes);
+    if (!tele?.pos) {
+      this._showToast(this._t('vac.cal_need_pos'));
+      return;
+    }
+    const pt = this._svgPoint(ev);
+    const pairs = [...cal.pairs, [[tele.pos.x, tele.pos.y], [pt[0], pt[1]]] as [VacPt, VacPt]];
+    if (pairs.length < 3) {
+      this._vacCal = { ...cal, pairs };
+      return;
+    }
+    const matrix = solveAffine(pairs);
+    if (!matrix) {
+      // collinear or repeated points — drop the last one and ask again
+      this._vacCal = { ...cal, pairs: pairs.slice(0, -1) };
+      this._showToast(this._t('vac.cal_degenerate'));
+      return;
+    }
+    if (affineResidual(matrix, pairs) > NORM_W * 0.05 && pairs.length < 4) {
+      this._vacCal = { ...cal, pairs };
+      this._showToast(this._t('vac.cal_res_warn'));
+      return;
+    }
+    this._vacSaveMatrix(cal.markerId, cal.source, cal.mapId, matrix);
+    this._vacCal = null;
+    this._showToast(this._t('vac.cal_done'));
+  }
+
+  /** Puck + trail for every live vacuum of the space. */
+  private _renderVacuums(devs: DevItem[], view: { x: number; y: number; w: number; h: number }): TemplateResult | typeof nothing {
+    if (this._markup || this._mode === 'decor') return nothing;
+    const pucks: TemplateResult[] = [];
+    const trails: TemplateResult[] = [];
+    for (const d of devs) {
+      if (d.hidden || !this._isVacDev(d)) continue;
+      const src = this._vacSource(d);
+      if (!src) continue;
+      const tele = readVacTelemetry(this.hass?.states[src]?.attributes);
+      if (!tele) continue;
+      const matrix = d.marker?.vacuum?.calibration?.[tele.mapId] as Affine | undefined;
+      if (!matrix || matrix.length !== 6) continue;
+      const rt = this._vacRt.get(d.id);
+      const moving = rt?.moving ?? false;
+      const lingering = !moving && rt?.endedTs && Date.now() - rt.endedTs < VAC_TRAIL_LINGER_MS;
+      // trail: integration path wins (it predates the card being opened)
+      if (d.marker?.vacuum?.trail !== false && (moving || lingering)) {
+        const raw: VacPt[] = tele.path || rt?.trail || [];
+        if (raw.length > 1) {
+          const ptsStr = raw.map(([x, y]) => {
+            const [cx, cy] = applyAffine(matrix, x, y);
+            return cx.toFixed(1) + ',' + cy.toFixed(1);
+          }).join(' ');
+          trails.push(svg`<polyline points="${ptsStr}"></polyline>`);
+        }
+      }
+      if (!moving || !tele.pos) continue;
+      const [cx, cy] = applyAffine(matrix, tele.pos.x, tele.pos.y);
+      const left = ((cx - view.x) / view.w) * 100;
+      const top = ((cy - view.y) / view.h) * 100;
+      const stale = rt && rt.lastTs > 0 && Date.now() - rt.lastTs > VAC_STALE_MS;
+      // heading follows the map rotation baked into the matrix
+      const wedge = tele.pos.a != null
+        ? tele.pos.a + (Math.atan2(matrix[3], matrix[0]) * 180) / Math.PI
+        : null;
+      const icon = d.marker?.icon || d.icon || 'mdi:robot-vacuum';
+      pucks.push(html`<div
+        class="vacpuck ${rt?.jump ? 'jump' : ''} ${stale ? 'stale' : ''}"
+        style="left:${left}%;top:${top}%"
+        title=${d.name}
+        @click=${(e: Event) => { e.stopPropagation(); const ve = this._vacEntity(d); if (ve) this._openMoreInfo(ve); }}>
+        ${wedge != null ? html`<div class="vacwedge" style="transform:rotate(${wedge}deg)"></div>` : nothing}
+        <ha-icon .icon=${icon}></ha-icon>
+      </div>`);
+    }
+    if (!pucks.length && !trails.length) return nothing;
+    return html`
+      ${trails.length ? svg`<svg class="vactrail" viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="none">${trails}</svg>` : nothing}
+      ${pucks}`;
   }
 
   private _renderDevice(d: DevItem, view: { x: number; y: number; w: number; h: number }, showLqi = true, glowFill = false): TemplateResult {
@@ -5382,6 +5656,8 @@ class HouseplanCard extends LitElement {
               (r) => html`<option value=${r.value} ?selected=${r.value === d.room}>${r.label}</option>`,
             )}
           </select>
+
+          ${this._renderVacSection(d)}
 
           <label>${this._t('marker.tap_label')}</label>
           <select class="areasel"

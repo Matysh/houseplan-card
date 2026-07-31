@@ -1233,6 +1233,86 @@ export const cardStyles = css`
       color: var(--hp-muted);
       font-size: 11px;
     }
+    /* live vacuum: a round puck, no badge plate, soft pulse (docs/VACUUM.md) */
+    .vacpuck {
+      position: absolute;
+      width: var(--dev-size);
+      height: var(--dev-size);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      background: color-mix(in srgb, var(--hp-accent) 20%, transparent);
+      border: 1.5px solid var(--hp-accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 6;
+      /* glide between sparse position updates; .jump disables it so the robot
+         never appears to drive through walls after a data gap */
+      transition: left 1.2s linear, top 1.2s linear;
+      animation: vacpulse 2.2s ease-out infinite;
+    }
+    .vacpuck.jump { transition: none; }
+    .vacpuck.stale { opacity: 0.45; animation: none; }
+    .vacpuck ha-icon { --mdc-icon-size: calc(var(--dev-size) * 0.6); color: var(--hp-accent); }
+    .vacwedge {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .vacwedge::before {
+      content: '';
+      position: absolute;
+      top: -5px;
+      left: 50%;
+      margin-left: -3.5px;
+      border-left: 3.5px solid transparent;
+      border-right: 3.5px solid transparent;
+      border-bottom: 6px solid var(--hp-accent);
+    }
+    @keyframes vacpulse {
+      0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--hp-accent) 45%, transparent); }
+      70% { box-shadow: 0 0 0 12px transparent; }
+      100% { box-shadow: 0 0 0 0 transparent; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .vacpuck { animation: none; }
+    }
+    .vactrail {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+      overflow: visible;
+    }
+    .vactrail polyline {
+      fill: none;
+      stroke: var(--hp-accent);
+      stroke-opacity: 0.35;
+      stroke-width: 3;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+      vector-effect: non-scaling-stroke;
+    }
+    .vacbox .vacbtns { display: flex; gap: 8px; margin: 6px 0; flex-wrap: wrap; }
+    .vaccalbar {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      background: var(--hp-panel, #16212e);
+      color: var(--hp-fg, #e7eef7);
+      border: 1px solid var(--hp-accent);
+      border-radius: 10px;
+      padding: 10px 14px;
+      z-index: 60;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+    }
     .candlist {
       max-height: 160px;
       overflow-y: auto;

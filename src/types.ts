@@ -55,6 +55,15 @@ export interface Marker {
   tap_target?: string | null;
   /** Ask before toggle/run — accidental-tap guard (owner's spec). */
   tap_confirm?: boolean | null;
+  /** live robot vacuum (docs/VACUUM.md); absent on non-vacuum markers */
+  vacuum?: {
+    live?: boolean | null;
+    trail?: boolean | null;
+    room_highlight?: boolean | null;
+    source?: string | null;
+    calibration?: Record<string, number[]>;
+    segment_map?: Record<string, string>;
+  } | null;
   room_id?: string | null; // manual placement into a room WITHOUT an HA area (sub-area rooms)
   display?: 'badge' | 'ripple' | 'icon_ripple' | 'value' | null; // how the device is drawn
   ripple_color?: string | null;

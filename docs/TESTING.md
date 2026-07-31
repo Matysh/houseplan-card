@@ -807,3 +807,16 @@ require hands on real hardware — they remain for the human pass.
       crossing wall-segment boundaries
 - [ ] Single click still opens the status card; double click opens the properties dialog;
       a drag does NOT open either
+
+## Live vacuums (docs/VACUUM.md, P1)
+
+- Docked robot: only the base marker, at the user-placed spot. No puck.
+- Cleaning + calibrated map: a round pulsing puck (no badge plate) drives the
+  plan; the base marker never moves. Heading wedge follows angle+matrix
+  rotation; no angle attribute — no wedge.
+- Trail: integration `path` preferred, else self-recorded; lingers 10 min
+  after docking; a new run clears it; `trail: false` hides it.
+- Hidden marker: neither puck nor trail. Uncalibrated active map: no puck.
+- Wizard: 3 stage clicks with the robot parked at 3 spots → matrix saved per
+  map id; Esc cancels; collinear points are rejected with a toast.
+- Auto-calibration needs ≥3 rooms matched by name between the robot and plan.

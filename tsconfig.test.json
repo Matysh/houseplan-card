@@ -8,7 +8,7 @@
     "resolveJsonModule": true
   },
   "include": [
-    "src/logic.ts",
+    "src/logic.ts", "src/vacuum.ts",
     "src/rules.ts",
     "src/devices.ts",
     "src/types.ts",
