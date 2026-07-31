@@ -1297,6 +1297,7 @@ export const cardStyles = css`
     }
     /* dark halo + light core: neutral, and one of the two always contrasts
        with whatever fill is underneath */
+    .vactrail g.prev { opacity: 0.4; }
     .vactrail .case {
       stroke: rgba(0, 0, 0, 0.4);
       stroke-width: 2.25;

@@ -84,7 +84,7 @@ marker is edited as usual.
   Douglas-Peucker thinning, one SVG polyline.
 - Style fixed, no options: cartography casing — a dark translucent halo under a light core. Neutral (pure black/white alphas) and readable over any room fill; blend modes were rejected: each has a blind luminance where the line vanishes, and mix-blend-mode is costly on old kiosk WebViews. Lifecycle:
   appears on cleaning start, lives until dock + 10 min, dissolves;
-  `docked → cleaning` clears the old trail. Ephemeral on the server; the raw points snapshot into localStorage per marker so a page reload mid-run keeps the whole trail (freshness-gated by the same linger window; a new run or another map discards the snapshot).
+  `docked → cleaning` clears the old trail. Recorded SERVER-SIDE by the integration itself (trails.py): it watches the source entity, so the path records with zero cards open and every screen sees the same line. Stored per marker: the current run and ONE previous run (owner call — users compare cleaned vs uncleaned). The previous run renders at 40% opacity even at rest; the current run trims its live tail while moving. Rotation on run start or map switch; 2000-point cap with decimation; store writes debounced 10 s; houseplan_trail_updated notifies live cards.
 - Marker option «Показывать след уборки», on by default where data
   exists.
 

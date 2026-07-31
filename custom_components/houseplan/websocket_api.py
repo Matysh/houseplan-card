@@ -40,6 +40,7 @@ _LOGGER = logging.getLogger(__name__)
 def async_register(hass: HomeAssistant) -> None:
     """Register the WS commands."""
     websocket_api.async_register_command(hass, ws_layout_get)
+    websocket_api.async_register_command(hass, ws_trail_get)
     websocket_api.async_register_command(hass, ws_layout_set)
     websocket_api.async_register_command(hass, ws_geometry_repair)
     websocket_api.async_register_command(hass, ws_layout_update)
@@ -692,6 +693,7 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         except Exception:  # noqa: BLE001 — see above: the commit stands regardless
             _LOGGER.exception("House Plan: collecting superseded files failed")
     hass.bus.async_fire("houseplan_config_updated", {"rev": new_rev})
+    _refresh_trail_recorder(hass)
     # refresh repair issues (broken plan references) without waiting for a restart
     entry = get_entry(hass)
     if entry is not None:
@@ -767,3 +769,18 @@ async def ws_plan_set(hass: HomeAssistant, connection, msg: dict[str, Any]) -> N
             connection.send_error(msg["id"], err.reason, err.detail)
             return
     connection.send_result(msg["id"], {"ok": True, "url": f"{CONTENT_URL}/plans/_/{name}"})
+
+
+def _refresh_trail_recorder(hass: HomeAssistant) -> None:
+    """Markers changed — the trail recorder must re-resolve what it watches."""
+    rec = hass.data.get(DOMAIN, {}).get("trail_recorder")
+    if rec:
+        hass.async_create_task(rec.async_refresh())
+
+
+@websocket_api.websocket_command({vol.Required("type"): "houseplan/trail/get"})
+@websocket_api.async_response
+async def ws_trail_get(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict) -> None:
+    """Current + previous cleanup runs per marker, raw robot coordinates."""
+    rec = hass.data.get(DOMAIN, {}).get("trail_recorder")
+    connection.send_result(msg["id"], {"trails": rec.book.data if rec else {}})

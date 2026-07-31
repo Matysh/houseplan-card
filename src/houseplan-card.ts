@@ -353,6 +353,9 @@ class HouseplanCard extends LitElement {
       space switch) or a tab return must TELEPORT the puck — animating left/top
       through a viewport change reads as «едет через весь план» (owner). */
   private _vacViewKey = '';
+  /** server-recorded runs per marker: {current, previous} in raw robot coords */
+  private _vacSrvTrails: Record<string, any> = {};
+  private _unsubTrail?: () => void;
   private _vacJumpOnce = false;
   private _vacVisHandler = () => {
     if (document.visibilityState === 'visible') {
@@ -890,6 +893,20 @@ class HouseplanCard extends LitElement {
           // already replaced, and the user's edit vanishes (audit L2).
           if ((ev?.data?.rev ?? -1) !== this._cfgRev) this._reloadConfigOnly();
         }, 'houseplan_config_updated');
+      }
+      // server-side trails are additive: an older backend without the WS
+      // command just leaves the map empty and the card shows live-only trails
+      this.hass.callWS({ type: 'houseplan/trail/get' })
+        .then((r: any) => { this._vacSrvTrails = r?.trails || {}; this.requestUpdate(); })
+        .catch(() => undefined);
+      if (!this._unsubTrail) {
+        this._unsubTrail = await this.hass.connection.subscribeEvents(async () => {
+          try {
+            const r: any = await this.hass.callWS({ type: 'houseplan/trail/get' });
+            this._vacSrvTrails = r?.trails || {};
+            this.requestUpdate();
+          } catch { /* transient WS hiccup — the next event retries */ }
+        }, 'houseplan_trail_updated');
       }
       if (!this._unsubLayout) {
         // Positions are separate state. The static card learned to follow them
@@ -4371,34 +4388,15 @@ class HouseplanCard extends LitElement {
       let rt = this._vacRt.get(d.id);
       if (!rt) {
         rt = { trail: [], lastKey: '', lastTs: 0, moving: false, jump: false, endedTs: 0, lastPos: null };
-        // a page reload must not eat the run's trail (owner request): the raw
-        // points live in localStorage per marker, freshness-gated by the same
-        // linger window the on-screen trail obeys
-        try {
-          const raw = JSON.parse(localStorage.getItem('hp_vactrail_' + d.id) || 'null');
-          if (raw && Array.isArray(raw.t) && Date.now() - raw.ts < VAC_TRAIL_LINGER_MS
-              && raw.mapId === (tele?.mapId ?? raw.mapId)
-              // moving now but the snapshot had already ended → that is a NEW
-              // run, the old trail must not leak into it
-              && !(moving && !raw.moving)) {
-            rt.trail = raw.t.filter((q: unknown) => Array.isArray(q) && q.length === 2);
-            rt.moving = moving && raw.moving;
-            rt.endedTs = raw.moving ? 0 : raw.ts;
-          }
-        } catch { /* corrupt snapshot — start clean */ }
         this._vacRt.set(d.id, rt);
       }
-      if (moving && !rt.moving) {
-        rt.trail = []; rt.lastPos = null; // a fresh run
-        try { localStorage.removeItem('hp_vactrail_' + d.id); } catch { /* quota */ }
-      }
+      if (moving && !rt.moving) { rt.trail = []; rt.lastPos = null; } // a fresh run
       const wantTrail = d.marker?.vacuum?.trail !== false && !tele?.path;
       if (!moving && rt.moving) {
         rt.endedTs = Date.now();
         // the run is over: the puck has arrived everywhere it was going
         if (wantTrail && rt.lastPos) rt.trail = pushTrailPoint(rt.trail, rt.lastPos, 40);
         rt.lastPos = null;
-        this._vacPersistTrail(d.id, rt, tele?.mapId);
       }
       rt.moving = moving;
       const pos = tele?.pos;
@@ -4413,10 +4411,7 @@ class HouseplanCard extends LitElement {
           // the trail lags ONE point behind: when a new target arrives the puck
           // has just (visually) reached the previous one — a segment must never
           // outrun the icon (owner report 2026-07-31)
-          if (wantTrail && rt.lastPos) {
-            rt.trail = pushTrailPoint(rt.trail, rt.lastPos, 40);
-            this._vacPersistTrail(d.id, rt, tele!.mapId);
-          }
+          if (wantTrail && rt.lastPos) rt.trail = pushTrailPoint(rt.trail, rt.lastPos, 40);
           rt.lastPos = [pos.x, pos.y];
         }
       }
@@ -4674,13 +4669,6 @@ class HouseplanCard extends LitElement {
         @pointercancel=${(e: PointerEvent) => this._vacFitPointer(e, view)}>${rects}${dot}${handles}</svg>`;
   }
 
-  private _vacPersistTrail(id: string, rt: { trail: VacPt[]; moving: boolean }, mapId?: string): void {
-    try {
-      localStorage.setItem('hp_vactrail_' + id,
-        JSON.stringify({ t: rt.trail, ts: Date.now(), moving: rt.moving, mapId: mapId ?? 'default' }));
-    } catch { /* quota/private mode — the trail just will not survive a reload */ }
-  }
-
   /** Puck + trail for every live vacuum of the space. */
   private _renderVacuums(devs: DevItem[], view: { x: number; y: number; w: number; h: number }): TemplateResult | typeof nothing {
     if (this._markup || this._mode === 'decor') return nothing;
@@ -4701,13 +4689,27 @@ class HouseplanCard extends LitElement {
       const rt = this._vacRt.get(d.id);
       const moving = rt?.moving ?? false;
       const lingering = !moving && rt?.endedTs && Date.now() - rt.endedTs < VAC_TRAIL_LINGER_MS;
-      // trail: integration path wins (it predates the card being opened)
-      if (d.marker?.vacuum?.trail !== false && (moving || lingering)) {
-        // an integration path ends at the CURRENT target — trim the live
-        // tail while moving so the line never runs ahead of the puck
-        const raw: VacPt[] = tele.path
-          ? (moving && tele.path.length > 1 ? tele.path.slice(0, -1) : tele.path)
-          : rt?.trail || [];
+      const srv = this._vacSrvTrails[d.id];
+      const mapNow = this._vacMapId(d, tele);
+      const srvCur = srv?.current?.map_id === mapNow && Array.isArray(srv.current.points) ? srv.current : null;
+      const srvPrev = srv?.previous?.map_id === mapNow && Array.isArray(srv.previous.points) ? srv.previous : null;
+      // the PREVIOUS run stays visible even at rest: users compare where the
+      // robot has been against where it has not (owner call 2026-07-31)
+      if (d.marker?.vacuum?.trail !== false && srvPrev && srvPrev.points.length > 1) {
+        const pts = srvPrev.points.map(([x, y]: number[]) => {
+          const [cx2, cy2] = applyAffine(matrix, x, y);
+          return cx2.toFixed(1) + ',' + cy2.toFixed(1);
+        }).join(' ');
+        trails.push(svg`<g class="prev"><polyline class="case" points="${pts}"></polyline><polyline class="core" points="${pts}"></polyline></g>`);
+      }
+      // trail source order: server current run (survives reloads, shared by
+      // every screen) → integration path → the local live buffer
+      if (d.marker?.vacuum?.trail !== false && (moving || lingering || srvCur)) {
+        // any server/integration path ends at the CURRENT target — trim the
+        // live tail while moving so the line never runs ahead of the puck
+        const full: VacPt[] = (srvCur?.points as VacPt[]) || tele.path || rt?.trail || [];
+        const trim = moving && (srvCur || tele.path) && full.length > 1;
+        const raw: VacPt[] = trim ? full.slice(0, -1) : full;
         if (raw.length > 1) {
           const ptsStr = raw.map(([x, y]) => {
             const [cx, cy] = applyAffine(matrix, x, y);
