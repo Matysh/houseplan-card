@@ -347,7 +347,18 @@ class HouseplanCard extends LitElement {
   private _kioskDialog = false;
   /** live-vacuum runtime per marker: RAW robot coords (matrix applied at render) */
   private _vacRt = new Map<string, { trail: VacPt[]; lastKey: string; lastTs: number;
-    moving: boolean; jump: boolean; endedTs: number }>();
+    moving: boolean; jump: boolean; endedTs: number; lastPos: VacPt | null }>();
+  /** view signature of the previous vacuum render: a changed view (zoom, pan,
+      space switch) or a tab return must TELEPORT the puck — animating left/top
+      through a viewport change reads as «едет через весь план» (owner). */
+  private _vacViewKey = '';
+  private _vacJumpOnce = false;
+  private _vacVisHandler = () => {
+    if (document.visibilityState === 'visible') {
+      this._vacJumpOnce = true;
+      this.requestUpdate();
+    }
+  };
   private _vacCal: { markerId: string; source: string; mapId: string;
     pairs: Array<[VacPt, VacPt]> } | null = null;
   private _kioskDots = false;
@@ -428,6 +439,7 @@ class HouseplanCard extends LitElement {
   };
 
   public connectedCallback(): void {
+    document.addEventListener('visibilitychange', this._vacVisHandler);
     super.connectedCallback();
     window.addEventListener('keydown', this._keyHandler);
     // signatures expire (24 h); refresh well before that on long-lived screens
@@ -440,6 +452,7 @@ class HouseplanCard extends LitElement {
   }
 
   public disconnectedCallback(): void {
+    document.removeEventListener('visibilitychange', this._vacVisHandler);
     window.removeEventListener('keydown', this._keyHandler);
     clearInterval(this._cycleTimer);
     clearTimeout(this._kioskDotsTimer);
@@ -4350,11 +4363,17 @@ class HouseplanCard extends LitElement {
       const tele = readVacTelemetry(this.hass.states[src]?.attributes);
       let rt = this._vacRt.get(d.id);
       if (!rt) {
-        rt = { trail: [], lastKey: '', lastTs: 0, moving: false, jump: false, endedTs: 0 };
+        rt = { trail: [], lastKey: '', lastTs: 0, moving: false, jump: false, endedTs: 0, lastPos: null };
         this._vacRt.set(d.id, rt);
       }
-      if (moving && !rt.moving) rt.trail = []; // a fresh run clears the old trail
-      if (!moving && rt.moving) rt.endedTs = Date.now();
+      if (moving && !rt.moving) { rt.trail = []; rt.lastPos = null; } // a fresh run
+      const wantTrail = d.marker?.vacuum?.trail !== false && !tele?.path;
+      if (!moving && rt.moving) {
+        rt.endedTs = Date.now();
+        // the run is over: the puck has arrived everywhere it was going
+        if (wantTrail && rt.lastPos) rt.trail = pushTrailPoint(rt.trail, rt.lastPos, 40);
+        rt.lastPos = null;
+      }
       rt.moving = moving;
       const pos = tele?.pos;
       if (moving && pos) {
@@ -4365,9 +4384,11 @@ class HouseplanCard extends LitElement {
           rt.jump = rt.lastTs > 0 && now - rt.lastTs > VAC_TELEPORT_GAP_MS;
           rt.lastKey = key;
           rt.lastTs = now;
-          if (d.marker?.vacuum?.trail !== false && !tele!.path) {
-            rt.trail = pushTrailPoint(rt.trail, [pos.x, pos.y], 40);
-          }
+          // the trail lags ONE point behind: when a new target arrives the puck
+          // has just (visually) reached the previous one — a segment must never
+          // outrun the icon (owner report 2026-07-31)
+          if (wantTrail && rt.lastPos) rt.trail = pushTrailPoint(rt.trail, rt.lastPos, 40);
+          rt.lastPos = [pos.x, pos.y];
         }
       }
     }
@@ -4520,6 +4541,10 @@ class HouseplanCard extends LitElement {
   /** Puck + trail for every live vacuum of the space. */
   private _renderVacuums(devs: DevItem[], view: { x: number; y: number; w: number; h: number }): TemplateResult | typeof nothing {
     if (this._markup || this._mode === 'decor') return nothing;
+    const viewKey = this._space + '|' + view.x + '|' + view.y + '|' + view.w + '|' + view.h;
+    const jumpAll = this._vacJumpOnce || viewKey !== this._vacViewKey;
+    this._vacViewKey = viewKey;
+    this._vacJumpOnce = false;
     const pucks: TemplateResult[] = [];
     const trails: TemplateResult[] = [];
     for (const d of devs) {
@@ -4535,7 +4560,11 @@ class HouseplanCard extends LitElement {
       const lingering = !moving && rt?.endedTs && Date.now() - rt.endedTs < VAC_TRAIL_LINGER_MS;
       // trail: integration path wins (it predates the card being opened)
       if (d.marker?.vacuum?.trail !== false && (moving || lingering)) {
-        const raw: VacPt[] = tele.path || rt?.trail || [];
+        // an integration path ends at the CURRENT target — trim the live
+        // tail while moving so the line never runs ahead of the puck
+        const raw: VacPt[] = tele.path
+          ? (moving && tele.path.length > 1 ? tele.path.slice(0, -1) : tele.path)
+          : rt?.trail || [];
         if (raw.length > 1) {
           const ptsStr = raw.map(([x, y]) => {
             const [cx, cy] = applyAffine(matrix, x, y);
@@ -4554,7 +4583,7 @@ class HouseplanCard extends LitElement {
       const stale = rt && rt.lastTs > 0 && Date.now() - rt.lastTs > VAC_STALE_MS;
       const icon = d.marker?.icon || d.icon || 'mdi:robot-vacuum';
       pucks.push(html`<div
-        class="vacpuck ${rt?.jump ? 'jump' : ''} ${stale ? 'stale' : ''}"
+        class="vacpuck ${rt?.jump || jumpAll ? 'jump' : ''} ${stale ? 'stale' : ''}"
         style="left:${left}%;top:${top}%"
         title=${d.name}
         @click=${(e: Event) => { e.stopPropagation(); const ve = this._vacEntity(d); if (ve) this._openMoreInfo(ve); }}>

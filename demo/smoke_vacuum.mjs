@@ -56,8 +56,15 @@ const out = await page.evaluate(async () => {
     await c.updateComplete; await new Promise((r) => setTimeout(r, 30));
   }
   const trail = sr().querySelector('.vactrail polyline');
-  o.trailDrawn = !!trail && trail.getAttribute('points').split(' ').length >= 3;
+  // the trail LAGS one point behind the puck: after 3 telemetry points only
+  // the first two are drawn — a segment never outruns the icon (owner)
+  o.trailDrawn = !!trail && trail.getAttribute('points').split(' ').length === 2;
   o.trailScaledByMatrix = !!trail && trail.getAttribute('points').startsWith('300.0,400.0');
+  o.trailBehindPuck = !!trail && !trail.getAttribute('points').includes('450.0,550.0');
+  // a zoom/view change TELEPORTS the puck instead of gliding across the plan
+  c._applyView(1.35); c.requestUpdate(); await c.updateComplete;
+  o.zoomTeleports = sr().querySelector('.vacpuck').classList.contains('jump');
+  c._applyView(1); c.requestUpdate(); await c.updateComplete;
   // casing pair: dark halo + light core with identical geometry — the trail
   // must survive any room fill underneath (owner 2026-07-31)
   const tcase = sr().querySelector('.vactrail .case');
@@ -137,7 +144,8 @@ checkAll(out, {
   dockedNoPuck: true, baseMarkerThere: true, puckAppears: true, puckRound: true,
   puckPlateMatchesDev: true, puck80pct: true,
   noWedge: true, iconCentred: true, baseStaysDuringCleaning: true, trailDrawn: true,
-  trailScaledByMatrix: true, trailCasing: true, trailToggleOff: true,
+  trailScaledByMatrix: true, trailBehindPuck: true, zoomTeleports: true,
+  trailCasing: true, trailToggleOff: true,
   puckGoneWhenDocked: true, trailLingers: true, hiddenNoPuck: true,
   unknownMapNoPuck: true,
   wizardDevFound: true, wizardBanner: true, wizardSavedMatrix: true,
