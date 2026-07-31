@@ -156,6 +156,23 @@ def test_unavailable_vacuum_is_no_verdict():
 
 # ---------------- v1.54.0 audit regressions ----------------
 
+def _run_isolated(coro):
+    """Run a coroutine on a private loop WITHOUT touching the ambient one.
+
+    asyncio.run() clears the thread's current-loop slot when it finishes; in
+    the CI HA harness (pytest-asyncio keeps a session event loop) that
+    poisoned the setup of every test that followed — 'There is no current
+    event loop in thread MainThread' across whole files.
+    """
+    import asyncio
+    loop = asyncio.new_event_loop()
+    try:
+        return loop.run_until_complete(coro)
+    finally:
+        loop.close()
+
+
+
 
 def test_map_index_zero_matches_frontend_contract():
     # HP-1540-02: `map_index: 0` is a VALID first map. The old or-chain
@@ -235,7 +252,7 @@ def test_refresh_builds_pair_lists_and_dedups_subscription():
             "camera.map": S("idle", {}),
         })
         rec = trails.TrailRecorder(hass, RT())
-        asyncio.run(rec.async_refresh())
+        _run_isolated(rec.async_refresh())
         assert rec.pairs == {"camera.map": [("m_f1", "vacuum.x50"), ("m_f2", "vacuum.x50")]}
         assert tracked == [["camera.map", "vacuum.x50"]]
     finally:
@@ -297,6 +314,6 @@ def test_overlapping_refreshes_leave_one_subscription_teardown_zero():
             await t3
             assert active == [], f"teardown must leave zero subscriptions, got {active}"
 
-        asyncio.run(scenario())
+        _run_isolated(scenario())
     finally:
         trails.async_track_state_change_event = old_track
