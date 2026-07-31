@@ -1299,11 +1299,11 @@ export const cardStyles = css`
        with whatever fill is underneath */
     .vactrail .case {
       stroke: rgba(0, 0, 0, 0.4);
-      stroke-width: 4.5;
+      stroke-width: 2.25;
     }
     .vactrail .core {
       stroke: rgba(255, 255, 255, 0.82);
-      stroke-width: 1.8;
+      stroke-width: 0.9;
     }
     .vacbox .vacbtns { display: flex; gap: 8px; margin: 6px 0; flex-wrap: wrap; }
     .vacfit {
