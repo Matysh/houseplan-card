@@ -27,7 +27,7 @@ import {
 import { ContentSigner } from './signing';
 import {
   Affine, applyAffine, solveAffine, affineResidual, readVacTelemetry, isVacSourceState,
-  autoCalibrate, pushTrailPoint, isVacMoving, vacTrailMode, VAC_TELEPORT_GAP_MS, VAC_STALE_MS,
+  autoCalibrate, pushTrailPoint, isVacMoving, vacTrailMode, vacMapIdWithFallback, VAC_TELEPORT_GAP_MS, VAC_STALE_MS,
   FitParams, fitMatrix, fitFromMatrix, initialFit, reanchorFit, VacRoom,
   VAC_TRAIL_LINGER_MS, Pt as VacPt,
 } from './vacuum';
@@ -42,7 +42,7 @@ import { cardStyles } from './styles';
 import { fitInSquare, contentBounds, spaceModels } from './space-geometry';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.54.1';
+const CARD_VERSION = '1.54.2';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -4505,10 +4505,11 @@ class HouseplanCard extends LitElement {
    * live X50 Master) — without this both floors would share one matrix.
    */
   private _vacMapId(d: DevItem, tele: { mapId: string }): string {
-    if (tele.mapId !== 'default') return tele.mapId;
+    // HP-1541-01: nullish, not truthy — selected_map: 0 is a real map id and
+    // must equal what trails.py resolve_map_id stores server-side.
     const ve = this._vacEntity(d);
     const sel = ve ? this.hass?.states[ve]?.attributes?.selected_map : null;
-    return sel ? String(sel) : 'default';
+    return vacMapIdWithFallback(tele.mapId, sel);
   }
 
   /** Persist a solved matrix into marker.vacuum.calibration[mapId].
