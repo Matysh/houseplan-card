@@ -1,48 +1,79 @@
-"""Does TrailRecorder._on_state actually record? (the untested link)"""
-import sys, types, pathlib, time
+"""TrailRecorder wiring: subscription callback, dialects, run end.
 
-# minimal HA stubs so trails.py imports without Home Assistant installed
-ha = types.ModuleType("homeassistant"); sys.modules["homeassistant"] = ha
-core = types.ModuleType("homeassistant.core")
-core.HomeAssistant = object
-core.callback = lambda f: f
-sys.modules["homeassistant.core"] = core
-helpers = types.ModuleType("homeassistant.helpers"); sys.modules["homeassistant.helpers"] = helpers
-er = types.ModuleType("homeassistant.helpers.entity_registry")
-er.async_get = lambda hass: None
-er.async_entries_for_device = lambda reg, dev: []
-sys.modules["homeassistant.helpers.entity_registry"] = er
-ev = types.ModuleType("homeassistant.helpers.event")
-ev.async_call_later = lambda hass, delay, cb: (lambda: None)
-ev.async_track_state_change_event = lambda hass, ents, cb: (lambda: None)
-sys.modules["homeassistant.helpers.event"] = ev
-st = types.ModuleType("homeassistant.helpers.storage")
-class Store:
-    def __init__(self, *a, **k): pass
-    async def async_load(self): return None
-    async def async_save(self, d): pass
-st.Store = Store
-sys.modules["homeassistant.helpers.storage"] = st
-const = types.ModuleType("custom_components.houseplan.const")
+Loads trails.py with STUBBED Home Assistant modules — but only inside a
+snapshot of sys.modules that is restored immediately afterwards. Injecting
+fake `homeassistant` modules globally poisons the real HA harness running in
+the same pytest session (it did, once).
+"""
+import sys, types, pathlib, importlib.util
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "custom_components"))
-pkg = types.ModuleType("houseplan"); pkg.__path__ = [str(ROOT / "custom_components" / "houseplan")]
-sys.modules["houseplan"] = pkg
-c = types.ModuleType("houseplan.const"); c.DOMAIN = "houseplan"; sys.modules["houseplan.const"] = c
-import importlib.util
-spec = importlib.util.spec_from_file_location("houseplan.trails", str(ROOT / "custom_components" / "houseplan" / "trails.py"))
-trails = importlib.util.module_from_spec(spec); sys.modules["houseplan.trails"] = trails
-spec.loader.exec_module(trails)
+
+
+def _load_trails():
+    saved = {k: v for k, v in sys.modules.items() if k == "homeassistant" or k.startswith(("homeassistant.", "houseplan"))}
+    try:
+        for name in list(sys.modules):
+            if name == "homeassistant" or name.startswith(("homeassistant.", "houseplan")):
+                del sys.modules[name]
+        ha = types.ModuleType("homeassistant"); sys.modules["homeassistant"] = ha
+        core = types.ModuleType("homeassistant.core")
+        core.HomeAssistant = object
+        core.callback = lambda f: f
+        sys.modules["homeassistant.core"] = core
+        sys.modules["homeassistant.helpers"] = types.ModuleType("homeassistant.helpers")
+        er = types.ModuleType("homeassistant.helpers.entity_registry")
+        er.async_get = lambda hass: None
+        er.async_entries_for_device = lambda reg, dev: []
+        sys.modules["homeassistant.helpers.entity_registry"] = er
+        ev = types.ModuleType("homeassistant.helpers.event")
+        ev.async_call_later = lambda hass, delay, cb: (lambda: None)
+        ev.async_track_state_change_event = lambda hass, ents, cb: (lambda: None)
+        sys.modules["homeassistant.helpers.event"] = ev
+        stm = types.ModuleType("homeassistant.helpers.storage")
+
+        class _Store:
+            def __init__(self, *a, **k): pass
+            async def async_load(self): return None
+            async def async_save(self, d): pass
+
+        stm.Store = _Store
+        sys.modules["homeassistant.helpers.storage"] = stm
+        pkg = types.ModuleType("houseplan"); pkg.__path__ = [str(ROOT / "custom_components" / "houseplan")]
+        sys.modules["houseplan"] = pkg
+        c = types.ModuleType("houseplan.const"); c.DOMAIN = "houseplan"
+        sys.modules["houseplan.const"] = c
+        spec = importlib.util.spec_from_file_location(
+            "houseplan.trails", str(ROOT / "custom_components" / "houseplan" / "trails.py")
+        )
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules["houseplan.trails"] = mod
+        spec.loader.exec_module(mod)
+        return mod
+    finally:
+        for name in list(sys.modules):
+            if name == "homeassistant" or name.startswith(("homeassistant.", "houseplan")):
+                del sys.modules[name]
+        sys.modules.update(saved)
+
+
+trails = _load_trails()
+
 
 class S:
     def __init__(self, state, attrs): self.state, self.attributes = state, attrs
+
+
 class States:
     def __init__(self, d): self.d = d
     def get(self, k): return self.d.get(k)
+
+
 class Bus:
     def __init__(self): self.fired = []
     def async_fire(self, *a): self.fired.append(a)
+
+
 class Hass:
     def __init__(self, states): self.states, self.bus, self.data = States(states), Bus(), {}
 
