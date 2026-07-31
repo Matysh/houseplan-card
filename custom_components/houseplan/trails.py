@@ -9,6 +9,7 @@ want to see where the cleanup has already been).
 """
 from __future__ import annotations
 
+import asyncio
 import time
 from typing import Any
 
@@ -26,6 +27,28 @@ TRAIL_CAP = 2000          # raw points per run before decimation
 SAVE_DELAY_S = 10         # debounce store writes — flash wear over precision
 FIRE_THROTTLE_S = 2.0     # event-bus updates for live cards
 MOVING_STATES = {"cleaning", "returning", "on"}
+
+
+def resolve_map_id(src_attrs: Any, vac_attrs: Any) -> str:
+    """Map-id normalisation contract, shared with the frontend.
+
+    Mirrors src/vacuum.ts vacMapIdFromAttrs (source attrs, `??`-chain) plus the
+    card's _vacMapId fallback to the vacuum entity's selected_map. The FIRST
+    value that is not None wins — truthiness is wrong here: a zero-based
+    `map_index: 0` is a valid first map and an empty string is still an id.
+    The old `or`-chain dropped the zero, so the server stored trails under a
+    key the renderer never looked up (HP-1540-02).
+    """
+    for v in (
+        src_attrs.get("map_name"),
+        src_attrs.get("current_map"),
+        src_attrs.get("map_index"),
+        src_attrs.get("selected_map"),
+        vac_attrs.get("selected_map"),
+    ):
+        if v is not None:
+            return str(v)
+    return "default"
 
 
 class TrailBook:
@@ -76,44 +99,69 @@ class TrailRecorder:
         self.rt = rt
         self.store = Store(hass, 1, f"{DOMAIN}.trails")
         self.book = TrailBook()
-        self.pairs: dict[str, tuple[str, str]] = {}  # source → (marker, vacuum)
+        # HP-1540-03: one source may feed SEVERAL markers — the same robot
+        # placed on two floors is the documented multi-floor case, and a plain
+        # source → (marker, vacuum) dict silently kept only the last one
+        self.pairs: dict[str, list[tuple[str, str]]] = {}  # source → [(marker, vacuum), …]
         self._unsub_track = None
         self._unsub_save = None
         self._last_fire = 0.0
+        # HP-1540-05: config/set fires refresh as a detached task; two of them
+        # interleaving across the awaited load both subscribed and the loser's
+        # unsub handle was overwritten — a leak until HA restart
+        self._refresh_lock = asyncio.Lock()
+        self._closed = False
 
     async def async_setup(self) -> None:
         self.book = TrailBook(await self.store.async_load() or {})
         await self.async_refresh()
 
     async def async_refresh(self) -> None:
-        """(Re)subscribe after any config change — markers may come and go."""
-        if self._unsub_track:
-            self._unsub_track()
-            self._unsub_track = None
-        stored = await self.rt.config_store.async_load() or {}
-        cfg = stored.get("config") or {}
-        self.pairs = {}
-        for m in cfg.get("markers") or []:
-            v = m.get("vacuum") or {}
-            src = v.get("source")
-            if not src or v.get("live") is False:
-                continue
-            vac = self._vacuum_entity(m)
-            if vac:
-                self.pairs[src] = (str(m.get("id")), vac)
-        ents = set(self.pairs) | {vac for _, vac in self.pairs.values()}
-        _LOGGER.info("Trail recorder: tracking %s", sorted(ents))
-        if ents:
-            self._unsub_track = async_track_state_change_event(
-                self.hass, sorted(ents), self._on_state
-            )
-        # A run already in progress (HA restarted mid-cleanup, or the user just
-        # finished calibrating) must start recording NOW, not at the next
-        # state change — otherwise the first seconds of the path are lost.
-        for src in self.pairs:
-            self._sample(src, time.time())
+        """(Re)subscribe after any config change — markers may come and go.
+
+        Serialised (HP-1540-05): the lock makes unsubscribe-then-resubscribe
+        atomic across the awaited config load, so overlapping refresh tasks can
+        no longer both subscribe and strand one callback forever. The _closed
+        check covers teardown() racing a refresh that is parked on its await.
+        """
+        async with self._refresh_lock:
+            stored = await self.rt.config_store.async_load() or {}
+            if self._closed:
+                return
+            cfg = stored.get("config") or {}
+            pairs: dict[str, list[tuple[str, str]]] = {}
+            for m in cfg.get("markers") or []:
+                v = m.get("vacuum") or {}
+                src = v.get("source")
+                if not src or v.get("live") is False:
+                    continue
+                vac = self._vacuum_entity(m)
+                if vac:
+                    # HP-1540-03: append, never overwrite — every floor's
+                    # marker records its own copy of the run
+                    pairs.setdefault(src, []).append((str(m.get("id")), vac))
+            self.pairs = pairs
+            if self._unsub_track:
+                self._unsub_track()
+                self._unsub_track = None
+            # deduplicated: two markers of one robot share source AND vacuum
+            ents = set(self.pairs) | {vac for ps in self.pairs.values() for _, vac in ps}
+            _LOGGER.info("Trail recorder: tracking %s", sorted(ents))
+            if ents:
+                self._unsub_track = async_track_state_change_event(
+                    self.hass, sorted(ents), self._on_state
+                )
+            # A run already in progress (HA restarted mid-cleanup, or the user
+            # just finished calibrating) must start recording NOW, not at the
+            # next state change — otherwise the first seconds of the path are
+            # lost.
+            for src in self.pairs:
+                self._sample(src, time.time())
 
     def teardown(self) -> None:
+        # HP-1540-05: flag FIRST — a refresh parked on its awaited load must
+        # not re-subscribe after this cleanup has already run
+        self._closed = True
         if self._unsub_track:
             self._unsub_track()
             self._unsub_track = None
@@ -133,51 +181,49 @@ class TrailRecorder:
         return None
 
     def _sample(self, src: str, now: float) -> bool:
-        """Record one point (or end the run) for a single source entity."""
-        pair = self.pairs.get(src)
-        if not pair:
-            return False
-        marker, vac = pair
-        st_vac = self.hass.states.get(vac)
-        # "no state yet" is NOT "stopped": during HA boot the vacuum reads
-        # unavailable and ending the run here would split one cleanup into
-        # current+previous on every restart (observed live: 21 points became
-        # previous, the same run restarted at 5)
-        if not st_vac or st_vac.state in ("unavailable", "unknown"):
-            return False
-        if st_vac.state not in MOVING_STATES:
-            return self.book.end_run(marker, now)
-        st_src = self.hass.states.get(src)
-        attrs = st_src.attributes if st_src else {}
-        raw = attrs.get("vacuum_position") or attrs.get("robot_position")
-        # Server-side these attributes are often OBJECTS (Tasshack keeps a
-        # Point dataclass in memory — it only becomes a dict when serialised
-        # to the frontend). Caught live on the owner's X50: the recorder saw
-        # every state change and rejected every single one.
-        if isinstance(raw, dict):
-            px, py = raw.get("x"), raw.get("y")
-        else:
-            px, py = getattr(raw, "x", None), getattr(raw, "y", None)
-        try:
-            x, y = float(px), float(py)  # type: ignore[arg-type]
-        except (TypeError, ValueError):
-            return False
-        map_id = str(
-            attrs.get("map_name")
-            or attrs.get("current_map")
-            or attrs.get("map_index")
-            or st_vac.attributes.get("selected_map")
-            or "default"
-        )
-        return self.book.on_point(marker, map_id, x, y, now)
+        """Record one point (or end the run) for EVERY marker fed by src.
+
+        HP-1540-03: the same source serves one marker per floor — all of them
+        must receive the point, not just whichever survived the dict.
+        """
+        changed = False
+        for marker, vac in self.pairs.get(src) or ():
+            st_vac = self.hass.states.get(vac)
+            # "no state yet" is NOT "stopped": during HA boot the vacuum reads
+            # unavailable and ending the run here would split one cleanup into
+            # current+previous on every restart (observed live: 21 points
+            # became previous, the same run restarted at 5)
+            if not st_vac or st_vac.state in ("unavailable", "unknown"):
+                continue
+            if st_vac.state not in MOVING_STATES:
+                changed |= self.book.end_run(marker, now)
+                continue
+            st_src = self.hass.states.get(src)
+            attrs = st_src.attributes if st_src else {}
+            raw = attrs.get("vacuum_position") or attrs.get("robot_position")
+            # Server-side these attributes are often OBJECTS (Tasshack keeps a
+            # Point dataclass in memory — it only becomes a dict when
+            # serialised to the frontend). Caught live on the owner's X50: the
+            # recorder saw every state change and rejected every single one.
+            if isinstance(raw, dict):
+                px, py = raw.get("x"), raw.get("y")
+            else:
+                px, py = getattr(raw, "x", None), getattr(raw, "y", None)
+            try:
+                x, y = float(px), float(py)  # type: ignore[arg-type]
+            except (TypeError, ValueError):
+                continue
+            map_id = resolve_map_id(attrs, st_vac.attributes)
+            changed |= self.book.on_point(marker, map_id, x, y, now)
+        return changed
 
     @callback
     def _on_state(self, event: Any) -> None:
         eid = event.data.get("entity_id")
         now = time.time()
         changed = False
-        for src, (_marker, vac) in self.pairs.items():
-            if eid in (src, vac):
+        for src, pair_list in self.pairs.items():
+            if eid == src or any(eid == vac for _, vac in pair_list):
                 changed |= self._sample(src, now)
         if changed:
             self._schedule_save()
