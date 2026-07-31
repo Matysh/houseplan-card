@@ -1,0 +1,10 @@
+{
+  "domain": "demo_guard",
+  "name": "Demo Stand Guard",
+  "codeowners": [],
+  "dependencies": [],
+  "documentation": "https://github.com/Matysh/houseplan-card/tree/dev/demo/stand/demo_guard",
+  "iot_class": "calculated",
+  "requirements": [],
+  "version": "1.0.0"
+}
