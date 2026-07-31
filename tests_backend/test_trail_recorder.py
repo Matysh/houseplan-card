@@ -140,3 +140,15 @@ def test_object_style_position_is_read():
     states["camera.map"] = S("idle", {"vacuum_position": Point(2020, 3096), "map_index": 1})
     assert rec._sample("camera.map", 5.0)
     assert rec.book.data["m1"]["current"]["points"] == [[2020.0, 3096.0]]
+
+
+def test_unavailable_vacuum_is_no_verdict():
+    # HA boot: the vacuum reads unavailable — the open run must NOT be ended
+    rec, _hass, states = _rec()
+    rec._sample("camera.map", 1.0)
+    states["vacuum.x50"] = S("unavailable", {})
+    assert not rec._sample("camera.map", 2.0)
+    assert rec.book.data["m1"]["current"]["ended"] is None
+    del states["vacuum.x50"]
+    assert not rec._sample("camera.map", 3.0)
+    assert rec.book.data["m1"]["current"]["ended"] is None

@@ -139,7 +139,13 @@ class TrailRecorder:
             return False
         marker, vac = pair
         st_vac = self.hass.states.get(vac)
-        if not st_vac or st_vac.state not in MOVING_STATES:
+        # "no state yet" is NOT "stopped": during HA boot the vacuum reads
+        # unavailable and ending the run here would split one cleanup into
+        # current+previous on every restart (observed live: 21 points became
+        # previous, the same run restarted at 5)
+        if not st_vac or st_vac.state in ("unavailable", "unknown"):
+            return False
+        if st_vac.state not in MOVING_STATES:
             return self.book.end_run(marker, now)
         st_src = self.hass.states.get(src)
         attrs = st_src.attributes if st_src else {}
