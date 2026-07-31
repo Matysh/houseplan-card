@@ -4371,15 +4371,34 @@ class HouseplanCard extends LitElement {
       let rt = this._vacRt.get(d.id);
       if (!rt) {
         rt = { trail: [], lastKey: '', lastTs: 0, moving: false, jump: false, endedTs: 0, lastPos: null };
+        // a page reload must not eat the run's trail (owner request): the raw
+        // points live in localStorage per marker, freshness-gated by the same
+        // linger window the on-screen trail obeys
+        try {
+          const raw = JSON.parse(localStorage.getItem('hp_vactrail_' + d.id) || 'null');
+          if (raw && Array.isArray(raw.t) && Date.now() - raw.ts < VAC_TRAIL_LINGER_MS
+              && raw.mapId === (tele?.mapId ?? raw.mapId)
+              // moving now but the snapshot had already ended → that is a NEW
+              // run, the old trail must not leak into it
+              && !(moving && !raw.moving)) {
+            rt.trail = raw.t.filter((q: unknown) => Array.isArray(q) && q.length === 2);
+            rt.moving = moving && raw.moving;
+            rt.endedTs = raw.moving ? 0 : raw.ts;
+          }
+        } catch { /* corrupt snapshot — start clean */ }
         this._vacRt.set(d.id, rt);
       }
-      if (moving && !rt.moving) { rt.trail = []; rt.lastPos = null; } // a fresh run
+      if (moving && !rt.moving) {
+        rt.trail = []; rt.lastPos = null; // a fresh run
+        try { localStorage.removeItem('hp_vactrail_' + d.id); } catch { /* quota */ }
+      }
       const wantTrail = d.marker?.vacuum?.trail !== false && !tele?.path;
       if (!moving && rt.moving) {
         rt.endedTs = Date.now();
         // the run is over: the puck has arrived everywhere it was going
         if (wantTrail && rt.lastPos) rt.trail = pushTrailPoint(rt.trail, rt.lastPos, 40);
         rt.lastPos = null;
+        this._vacPersistTrail(d.id, rt, tele?.mapId);
       }
       rt.moving = moving;
       const pos = tele?.pos;
@@ -4394,7 +4413,10 @@ class HouseplanCard extends LitElement {
           // the trail lags ONE point behind: when a new target arrives the puck
           // has just (visually) reached the previous one — a segment must never
           // outrun the icon (owner report 2026-07-31)
-          if (wantTrail && rt.lastPos) rt.trail = pushTrailPoint(rt.trail, rt.lastPos, 40);
+          if (wantTrail && rt.lastPos) {
+            rt.trail = pushTrailPoint(rt.trail, rt.lastPos, 40);
+            this._vacPersistTrail(d.id, rt, tele!.mapId);
+          }
           rt.lastPos = [pos.x, pos.y];
         }
       }
@@ -4650,6 +4672,13 @@ class HouseplanCard extends LitElement {
         @pointermove=${(e: PointerEvent) => this._vacFitPointer(e, view)}
         @pointerup=${(e: PointerEvent) => this._vacFitPointer(e, view)}
         @pointercancel=${(e: PointerEvent) => this._vacFitPointer(e, view)}>${rects}${dot}${handles}</svg>`;
+  }
+
+  private _vacPersistTrail(id: string, rt: { trail: VacPt[]; moving: boolean }, mapId?: string): void {
+    try {
+      localStorage.setItem('hp_vactrail_' + id,
+        JSON.stringify({ t: rt.trail, ts: Date.now(), moving: rt.moving, mapId: mapId ?? 'default' }));
+    } catch { /* quota/private mode — the trail just will not survive a reload */ }
   }
 
   /** Puck + trail for every live vacuum of the space. */

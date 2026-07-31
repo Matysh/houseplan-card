@@ -103,6 +103,26 @@ const out = await page.evaluate(async () => {
   c._regSignature = ''; c.requestUpdate(); await c.updateComplete;
   o.unknownMapNoPuck = !sr().querySelector('.vacpuck');
 
+  // ---- the trail survives a page reload (localStorage snapshot) ----
+  // simulate a reload: wipe the runtime map, keep LS, tick again
+  for (const [x, y] of [[930, 1130], [950, 1150], [990, 1190]]) {
+    c.hass = { ...c.hass, states: { ...c.hass.states,
+      'vacuum.robo': { state: 'cleaning', attributes: { friendly_name: 'Робот' } },
+      'camera.robo_map': { state: 'idle', attributes: { vacuum_position: { x, y, a: 0 }, map_name: 'm1' } } } };
+    await c.updateComplete;
+  }
+  o.trailPersisted = !!localStorage.getItem('hp_vactrail_e_vacuum_robo');
+  const savedTrailLen = (JSON.parse(localStorage.getItem('hp_vactrail_e_vacuum_robo') || '{}').t || []).length;
+  c._vacRt.clear(); // ← the reload
+  c.hass = { ...c.hass, states: { ...c.hass.states } }; await c.updateComplete;
+  const restored = c._vacRt.get('e_vacuum_robo');
+  o.trailRestoredAfterReload = !!restored && restored.trail.length >= savedTrailLen && savedTrailLen >= 1;
+  // …but a NEW run after the reload discards the old snapshot
+  c._vacRt.clear();
+  localStorage.setItem('hp_vactrail_e_vacuum_robo', JSON.stringify({ t: [[1, 1], [2, 2]], ts: Date.now(), moving: false, mapId: 'm1' }));
+  c.hass = { ...c.hass, states: { ...c.hass.states } }; await c.updateComplete;
+  o.newRunDropsOldTrail = (c._vacRt.get('e_vacuum_robo')?.trail || []).length === 0;
+
   // ---- the fit panel (drag + corner-stretch) end to end ----
   c._regSignature = ''; c.requestUpdate(); await c.updateComplete;
   const dev = c._devices.find((x) => x.id === 'e_vacuum_robo');
@@ -182,6 +202,7 @@ checkAll(out, {
   trailCasing: true, trailToggleOff: true,
   puckGoneWhenDocked: true, trailLingers: true, hiddenNoPuck: true,
   unknownMapNoPuck: true,
+  trailPersisted: true, trailRestoredAfterReload: true, newRunDropsOldTrail: true,
   fitDevFound: true, fitOverlay: true, fitGhostRooms: true, fitLabels: true,
   fitHandles: true, fitHandleHittable: true, fitGhostHittable: true, fitBar: true, fitMirrorDefault: true, fitDragMoves: true,
   fitRotateKeepsCentre: true, fitCornerScales: true, fitSavedMatrix: true,
