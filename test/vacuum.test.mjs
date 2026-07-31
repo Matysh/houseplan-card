@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { solveAffine, applyAffine, affineResidual, readVacTelemetry, autoCalibrate, thinPath, pushTrailPoint, isVacMoving, isVacSourceState } from '../test-build/vacuum.js';
+import { solveAffine, applyAffine, affineResidual, readVacTelemetry, autoCalibrate, thinPath, pushTrailPoint, isVacMoving, isVacSourceState, vacMapIdFromAttrs } from '../test-build/vacuum.js';
 
 test('solveAffine recovers rotation+scale+mirror+offset exactly', () => {
   // target = mirror-X, rotate 90°, scale 0.02, offset (300, 400)
@@ -134,4 +134,21 @@ test('fitMatrix/fitFromMatrix round-trip, mirror and quarters', async () => {
   const r2 = reanchorFit(p2, f, 500, 500);
   const c2 = applyAffine(fitMatrix(r2), 500, 500);
   assert.ok(Math.abs(c2[0] - c[0]) < 1e-6 && Math.abs(c2[1] - c[1]) < 1e-6);
+});
+
+// HP-1540-02: the map-id contract, mirrored by trails.py resolve_map_id —
+// the first value that is not null/undefined wins; zero and '' are valid ids.
+test('vacMapIdFromAttrs: first NOT-nullish value wins, zero survives', () => {
+  assert.equal(vacMapIdFromAttrs({ map_index: 0 }), '0');
+  assert.equal(vacMapIdFromAttrs({ map_index: '0' }), '0');
+  assert.equal(vacMapIdFromAttrs({ map_name: '', selected_map: 'Floor' }), '');
+  assert.equal(vacMapIdFromAttrs({ map_name: 'A', map_index: 0 }), 'A');
+  assert.equal(vacMapIdFromAttrs({ current_map: 2 }), '2');
+  assert.equal(vacMapIdFromAttrs({ selected_map: 'Vac' }), 'Vac');
+  assert.equal(vacMapIdFromAttrs({}), 'default');
+});
+
+test('readVacTelemetry keeps numeric zero map_index as map id (HP-1540-02)', () => {
+  const t = readVacTelemetry({ vacuum_position: { x: 1, y: 2 }, map_index: 0 });
+  assert.equal(t.mapId, '0');
 });

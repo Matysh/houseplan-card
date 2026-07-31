@@ -91,12 +91,16 @@ marker is edited as usual.
 ## Setup UX
 
 A «Живая позиция» section in the device dialog, vacuum markers only:
-status line (which source was found / room-only / nothing), one button
-(«Настроить автоматически» for Tier A, «Калибровка по трём точкам» for
-Tier B), three checkboxes (live position / trail / room highlight, all
-on), and for multi-map robots a per-map calibration status list. The
-source entity is discovered via the device registry — no YAML, no
-entity pickers.
+status line (which source was found / nothing), the «Настроить
+автоматически» button (Tier A — the integration reports a room list),
+the «Подогнать вручную» button opening the fit panel (drag the ghost
+map, stretch by the corners, rotate/mirror), one «Живая позиция на
+плане» checkbox (on by default), the «Показывать путь робота» select
+(never / while cleaning / always), and for multi-map robots a list of
+calibrated maps. The source entity is discovered via the device
+registry — no YAML, no entity pickers. The section works before the
+marker is ever saved: the first vacuum edit materialises the marker
+itself (HP-1540-01).
 
 ## Storage & validation
 

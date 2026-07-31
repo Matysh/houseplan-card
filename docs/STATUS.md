@@ -15,7 +15,7 @@
 
 | Item | State |
 |---|---|
-| Version | **v1.54.0** everywhere (manifest, const.py, package.json, CARD_VERSION); deployed to the home instance |
+| Version | **v1.54.1** everywhere (manifest, const.py, package.json, CARD_VERSION); deployed to the home instance |
 | Workflow | Since 2026-07-22: minor changes go to branch **`dev`** (build + smokes → deploy home → commit → push, NO release); releases are batched on the owner's command (merge dev→main, one tag, one release with a summary changelog, CI checked on dev beforehand) |
 | GitHub | https://github.com/Matysh/houseplan-card — **`main` carries every published release, the latest tag is the current version above**; `dev` is where work lands and is merged into `main` at release time (so `dev` is normally equal to or ahead of `main`, never behind). Push via SSH key `ha_jb` (remote git@github.com:…); API releases via the fine-grained PAT in `~/.git-credentials` (Contents R/W, issued 2026-07-23) |
 | CI | validate.yml (hacs + hassfest + frontend + backend) green; release.yml attaches the bundle on release publish |
@@ -24,7 +24,7 @@
 | Localization | UI en/ru (src/i18n/*.json), everything user-visible localized incl. kiosk popover |
 | Tests | Four layers: frontend unit (`npm test`, node:test over `test-build/`), pure backend (`pytest tests_backend`, runs anywhere), HA-harness backend (same folder, CI only — needs py3.13 + pytest-homeassistant-custom-component), and browser smokes (`demo/smoke_*.mjs`, headless chromium). **Counts are not written down here** — they went stale within two releases while the version line beside them was kept current, which reads as less coverage than exists (review R5-2). Run `npm run inventory` for the current numbers, or read them off the last CI run |
 | Vacuums | Live robot vacuums shipped (docs/VACUUM.md): puck, server-side trails with display modes, fit-panel calibration. Verified on a live Dreame X50 Master |
-| Demo stand | **https://demo.houseplan.tech** — public, login `demo`/`demo`, resets to a pristine synthetic home every hour. **https://dev.houseplan.tech** — closed (basic auth), auto-deploys the `dev` branch every 10 min. Host: `ssh -i ~/.ssh/hp_stand hp@135.106.166.146`; layout, seeds and gotchas in the memory note `houseplan-demo-stand` |
+| Demo stand | **https://demo.houseplan.tech** — public, login `demo`/`demo`, resets to a pristine synthetic home every hour. **https://dev.houseplan.tech** — closed (basic auth), auto-deploys the `dev` branch every 10 min. Host: `ssh -i ~/.ssh/hp_stand hp@135.106.166.146`; layout, seeds and gotchas in the memory note `houseplan-demo-stand`. Since 2026-07-31 the stand covers most of the manual checklist: a scripted robot vacuum (`demo/stand/demo_robot` — Tasshack-shaped map sensor, serpentine run, pre-solved calibration, seeded server trail), Zigbee-style LQI template sensors, hand/auto-triggered leak+smoke alarms, an hvac_action climate marker and working script/scene/automation targets for tap-run. The stand-specific how-to-check guide is **docs/TESTING-DEMO.md** |
 | Community | **Telegram chat: https://t.me/ha_houseplan** (created 2026-07-27) — the primary user-facing support channel; GitHub issues stay for bugs/features. Link it from any new release notes and posts |
 | Product scope | docs/SCOPE.md (2026-07-22) is the feature guard rail — check before accepting any feature |
 
