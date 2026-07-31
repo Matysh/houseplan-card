@@ -50,6 +50,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
         raise ConfigEntryNotReady(f"House Plan storage is not readable: {err}") from err
     entry.runtime_data = data
 
+    # server-side vacuum trails: the integration records the path itself
+    from .trails import TrailRecorder
+    recorder = TrailRecorder(hass, data)
+    await recorder.async_setup()
+    # setdefault: the CI harness sets entries up without async_setup, so
+    # hass.data[DOMAIN] may not exist yet — a KeyError here failed EVERY
+    # downstream WS test with unknown_error
+    hass.data.setdefault(DOMAIN, {})["trail_recorder"] = recorder
+
     card_path = Path(__file__).parent / "frontend" / "houseplan-card.js"
     plans_path = Path(hass.config.path(PLANS_DIR))
     files_path = Path(hass.config.path(FILES_DIR))
@@ -194,6 +203,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) -> bool:
+    rec = hass.data.get(DOMAIN, {}).pop("trail_recorder", None)
+    if rec:
+        rec.teardown()
     """Unload the entry.
 
     WS commands and the HTTP view are global (async_setup) and stay registered —

@@ -40,6 +40,11 @@ right on your Lovelace dashboard.
   explicit button, never an accidental tap.
 - 📺 **Kiosk mode** for wall tablets and TVs: fullscreen, swipe between floors,
   auto-carousel, per-screen icon sizes.
+- 🤖 **Live robot vacuums** — the dock marker stays put while a round puck
+  drives the plan in real time, pouring its path out from under itself;
+  current and previous cleanup runs are recorded server-side. Calibration is
+  one click (rooms matched by name) or a drag-and-stretch overlay. Works with
+  Xiaomi Cloud Map Extractor, Tasshack dreame-vacuum and Valetudo.
 - 🔔 New devices appear automatically with a red “new” dot; the layout is stored
   **server-side** — one shared plan for every user and screen, synced live.
 

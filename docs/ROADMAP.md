@@ -57,7 +57,13 @@ Track progress in `custom_components/houseplan/quality_scale.yaml` (done/exempt 
   mapping (regex/domain/device_class → mdi icon) stored in config, shipping EN+RU
   defaults; drop dacha-specific patterns from code.
 - [x] **Click actions** per device (v1.13.0, simplified v1.38.1): card / more-info /
-  toggle, with the lock/alarm safety model.
+  toggle, with the lock/alarm safety model; running an automation/script/scene
+  with an optional confirmation landed in v1.53.0.
+- [x] **Live robot vacuums** (docs/VACUUM.md): a puck driving the plan over a
+  solved affine transform, one-click calibration by room names or a
+  drag-and-stretch fit panel, server-recorded trails (current + previous run)
+  with never/cleaning/always display modes. Adapters: Xiaomi Cloud Map
+  Extractor, Tasshack dreame-vacuum, Valetudo. Display only — no commands.
 - [x] **Theming**: light-theme pass done in v1.13.0; HA theme variables
   everywhere, optional per-space background color.
 - [ ] Multi-instance question: keep single-instance (one house) but support **multiple

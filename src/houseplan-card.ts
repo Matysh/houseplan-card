@@ -15,7 +15,7 @@ import {
   lqiColor, snapToGrid, samePoint, pointInPolygon, markerIdForBinding,
   segmentCm, formatLength, roomEdges, roomPoly, pointStrictlyInside, roomsOverlap,
   pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, openZoneOf, distToSegment, outlineWithout, cutSegments, alignGuides, segmentAngle, is45, type AlignGuide, swipeTarget, clampScale, migratePdfUrls, roomFillModeOf, contentUrl,
-  snapToWall, openingAmount, interiorPoint, poleOfInaccessibility,
+  snapToWall, openingAmount, interiorPoint, poleOfInaccessibility, subst,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
   stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, glowColorOf, doorSector, hasRoomBehind, controlsAction, isControllable,
   spaceDisplayOf, roomFillStyle, fillColorsOf, DEFAULT_FILL_COLORS, type FillColors, runServiceFor, RUN_TARGET_DOMAINS,
@@ -25,6 +25,12 @@ import {
   DISPLAY_MODES, TAP_ACTIONS, SPACE_FILL_MODES, ROOM_FILL_MODES,
 } from './logic';
 import { ContentSigner } from './signing';
+import {
+  Affine, applyAffine, solveAffine, affineResidual, readVacTelemetry, isVacSourceState,
+  autoCalibrate, pushTrailPoint, isVacMoving, vacTrailMode, VAC_TELEPORT_GAP_MS, VAC_STALE_MS,
+  FitParams, fitMatrix, fitFromMatrix, initialFit, reanchorFit, VacRoom,
+  VAC_TRAIL_LINGER_MS, Pt as VacPt,
+} from './vacuum';
 import { buildDevices, seedHiddenBindings, lqiFor, tempFor, humFor, isHumEntity, areaLights, areaTemp, areaHum, areaLightStats, sourceValue, areaClimateMap, litLightEntity, type AreaClimate } from './devices';
 import type {
   OpeningCfg,
@@ -36,7 +42,7 @@ import { cardStyles } from './styles';
 import { fitInSquare, contentBounds, spaceModels } from './space-geometry';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.53.1';
+const CARD_VERSION = '1.54.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -340,6 +346,28 @@ class HouseplanCard extends LitElement {
   // ---- kiosk (wall device) mode ----
   private _kioskScale: { icon: number; font: number } = { icon: 1, font: 1 };
   private _kioskDialog = false;
+  /** live-vacuum runtime per marker: RAW robot coords (matrix applied at render) */
+  private _vacRt = new Map<string, { trail: VacPt[]; lastKey: string; lastTs: number;
+    moving: boolean; jump: boolean; endedTs: number; lastPos: VacPt | null }>();
+  /** view signature of the previous vacuum render: a changed view (zoom, pan,
+      space switch) or a tab return must TELEPORT the puck — animating left/top
+      through a viewport change reads as «едет через весь план» (owner). */
+  private _vacViewKey = '';
+  private _vacLastView: { x: number; y: number; w: number; h: number } | null = null;
+  private _vacRaf = 0;
+  /** server-recorded runs per marker: {current, previous} in raw robot coords */
+  private _vacSrvTrails: Record<string, any> = {};
+  private _unsubTrail?: () => void;
+  private _vacJumpOnce = false;
+  private _vacVisHandler = () => {
+    if (document.visibilityState === 'visible') {
+      this._vacJumpOnce = true;
+      this.requestUpdate();
+    }
+  };
+  private _vacFit: { markerId: string; source: string; mapId: string; p: FitParams;
+    drag: null | { kind: 'move' | 'scale'; sx: number; sy: number; p0: FitParams;
+      fx: number; fy: number } } | null = null;
   private _kioskDots = false;
   private _kioskDotsTimer?: number;
   private _kioskHoldTimer?: number;
@@ -394,6 +422,7 @@ class HouseplanCard extends LitElement {
     _decorSel: { state: true },
     _decorTextDialog: { state: true },
     _kioskDialog: { state: true },
+    _vacFit: { state: true },
     _kioskDots: { state: true },
     _areaSel: { state: true },
     _nameSel: { state: true },
@@ -417,6 +446,7 @@ class HouseplanCard extends LitElement {
   };
 
   public connectedCallback(): void {
+    document.addEventListener('visibilitychange', this._vacVisHandler);
     super.connectedCallback();
     window.addEventListener('keydown', this._keyHandler);
     // signatures expire (24 h); refresh well before that on long-lived screens
@@ -429,6 +459,8 @@ class HouseplanCard extends LitElement {
   }
 
   public disconnectedCallback(): void {
+    document.removeEventListener('visibilitychange', this._vacVisHandler);
+    if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
     window.removeEventListener('keydown', this._keyHandler);
     clearInterval(this._cycleTimer);
     clearTimeout(this._kioskDotsTimer);
@@ -461,6 +493,12 @@ class HouseplanCard extends LitElement {
   }
 
   private _onKey(e: KeyboardEvent): void {
+    if (e.key === 'Escape' && this._vacFit) {
+      this._vacFit = null;
+      this._showToast(this._t('vac.cal_cancelled'));
+      e.stopPropagation();
+      return;
+    }
     if (e.key === 'Escape') {
       // close the topmost open dialog; info popups first, then editors
       if (this._tapConfirm) { this._tapConfirm = null; return; }
@@ -769,6 +807,7 @@ class HouseplanCard extends LitElement {
   }
 
   protected willUpdate(changed: PropertyValues): void {
+    if (changed?.has?.('hass')) this._vacTick();
     if (changed.has('hass') && this.hass) {
       if (!this._loadOk && !this._loading && this._loadTries < 8) {
         this._loadFromServer();
@@ -857,6 +896,20 @@ class HouseplanCard extends LitElement {
           // already replaced, and the user's edit vanishes (audit L2).
           if ((ev?.data?.rev ?? -1) !== this._cfgRev) this._reloadConfigOnly();
         }, 'houseplan_config_updated');
+      }
+      // server-side trails are additive: an older backend without the WS
+      // command just leaves the map empty and the card shows live-only trails
+      this.hass.callWS({ type: 'houseplan/trail/get' })
+        .then((r: any) => { this._vacSrvTrails = r?.trails || {}; this.requestUpdate(); })
+        .catch(() => undefined);
+      if (!this._unsubTrail) {
+        this._unsubTrail = await this.hass.connection.subscribeEvents(async () => {
+          try {
+            const r: any = await this.hass.callWS({ type: 'houseplan/trail/get' });
+            this._vacSrvTrails = r?.trails || {};
+            this.requestUpdate();
+          } catch { /* transient WS hiccup — the next event retries */ }
+        }, 'houseplan_trail_updated');
       }
       if (!this._unsubLayout) {
         // Positions are separate state. The static card learned to follow them
@@ -1508,6 +1561,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _stagePointerDown(ev: PointerEvent): void {
+    if (this._vacFit) return; // no pan/swipe while fitting the robot map
     if (this._kiosk) {
       this._cyclePausedUntil = Date.now() + 60000;
       if (this._pointers.size === 0) {
@@ -1941,6 +1995,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _markupClick(ev: MouseEvent): void {
+    if (this._vacFit) return; // the fit overlay owns all pointer input
     if (!this._markup) return;
     // a pan or pinch just happened — the synthesized click is not a draw
     if (this._suppressClick) return;
@@ -3065,8 +3120,12 @@ class HouseplanCard extends LitElement {
       if (dlg.binding === 'virtual' && !space) space = this._space;
       id = markerIdForBinding(dlg.binding, dlg.devId, () => 'v_' + Date.now().toString(36));
       const oldId = dlg.devId;
+      // the vacuum block is edited live outside the dialog transaction —
+      // the rebuild below must carry it over, not erase it
+      const prevVac = cfg.markers.find((m0: Marker) => m0.id === id || m0.id === oldId)?.vacuum || null;
       const marker: Marker = {
         id,
+        vacuum: prevVac,
         binding: dlg.binding,
         name: dlg.name.trim() || null,
         icon: dlg.icon || null,
@@ -3266,7 +3325,7 @@ class HouseplanCard extends LitElement {
         mode, title: '', planUrl: null, planFile: null,
         source: 'file',
         showBorders: false, showNames: false,
-        roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'none',
+        roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'glow',
         tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
         showLqi: this._config?.show_signal ?? true,
         cardFontScale: 1,
@@ -3599,7 +3658,7 @@ class HouseplanCard extends LitElement {
       mode: 'create', title, planUrl: null, planFile: null,
       source: 'file',
       showBorders: false, showNames: false,
-      roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'none',
+      roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'glow',
       tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
       showLqi: this._config?.show_signal ?? true,
       cardFontScale: 1,
@@ -4220,6 +4279,8 @@ class HouseplanCard extends LitElement {
           </svg>
           <div class="devlayer" style="--icon-size:${((iconPct * vb[2] * (this._kiosk ? this._kioskScale.icon : 1)) / view.w).toFixed(3)}cqw;--rl-font:${this._kiosk ? this._kioskScale.font : 1}">
             ${devs.map((d) => this._renderDevice(d, view, showLqi, disp.fill === 'glow' && !this._markup))}
+            ${this._renderVacuums(devs, view)}
+            ${this._renderVacFit(view)}
             ${this._renderOpeningLocks(view)}
             ${disp.showNames || this._markup
               ? space.rooms.map((r) => this._renderRoomLabel(r, space, view, disp))
@@ -4264,6 +4325,13 @@ class HouseplanCard extends LitElement {
             </div>`
           : nothing}
         ${this._kioskDialog ? this._renderKioskDialog() : nothing}
+        ${this._vacFit ? html`<div class="vaccalbar">
+          <span>${this._t('vac.fit_hint')}</span>
+          <button class="btn ghostbtn" @click=${() => this._vacFitTurn({ rot: ((this._vacFit!.p.rot + 90) % 360) as any })}>${this._t('vac.fit_rotate')}</button>
+          <button class="btn ghostbtn" @click=${() => this._vacFitTurn({ mir: !this._vacFit!.p.mir })}>${this._t('vac.fit_mirror')}</button>
+          <button class="btn" @click=${() => this._vacFitSave()}>${this._t('btn.save')}</button>
+          <button class="btn ghostbtn" @click=${() => { this._vacFit = null; }}>${this._t('btn.cancel')}</button>
+        </div>` : nothing}
         ${this._tapConfirm
           ? html`<div class="menuwrap dialogwrap" @click=${() => (this._tapConfirm = null)}>
               <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
@@ -4281,6 +4349,436 @@ class HouseplanCard extends LitElement {
         ${this._toast ? html`<div class="toast">${this._toast}</div>` : nothing}
       </ha-card>
     `;
+  }
+
+
+  // ---------------- live robot vacuums (docs/VACUUM.md) ----------------
+
+  /** The live-position source entity for a vacuum device, or null. */
+  private _vacSource(d: DevItem): string | null {
+    const v = d.marker?.vacuum;
+    if (v?.live === false) return null;
+    if (v?.source && this.hass?.states[v.source]) return v.source;
+    for (const eid of d.entities || []) {
+      if (isVacSourceState(this.hass?.states[eid])) return eid;
+    }
+    return null;
+  }
+
+  private _vacEntity(d: DevItem): string | null {
+    if (d.primary?.startsWith('vacuum.')) return d.primary;
+    return (d.entities || []).find((e) => e.startsWith('vacuum.')) || null;
+  }
+
+  private _isVacDev(d: DevItem): boolean {
+    return !!this._vacEntity(d);
+  }
+
+  /**
+   * Trail buffers live OUTSIDE render: every hass tick appends the raw robot
+   * position, so the trail survives view switches and zoom without ever being
+   * part of reactive state (600 points re-rendering the world would hurt).
+   */
+  private _vacTick(): void {
+    if (!this.hass) return;
+    for (const d of this._devices) {
+      if (d.hidden || !this._isVacDev(d)) continue;
+      const src = this._vacSource(d);
+      if (!src) continue;
+      const vacEnt = this._vacEntity(d);
+      const moving = isVacMoving(this.hass.states[vacEnt || '']?.state);
+      const tele = readVacTelemetry(this.hass.states[src]?.attributes);
+      let rt = this._vacRt.get(d.id);
+      if (!rt) {
+        rt = { trail: [], lastKey: '', lastTs: 0, moving: false, jump: false, endedTs: 0, lastPos: null };
+        this._vacRt.set(d.id, rt);
+      }
+      if (moving && !rt.moving) { rt.trail = []; rt.lastPos = null; } // a fresh run
+      const wantTrail = vacTrailMode(d.marker?.vacuum) !== 'never' && !tele?.path;
+      if (!moving && rt.moving) {
+        rt.endedTs = Date.now();
+        // the run is over: the puck has arrived everywhere it was going
+        if (wantTrail && rt.lastPos) rt.trail = pushTrailPoint(rt.trail, rt.lastPos, 40);
+        rt.lastPos = null;
+      }
+      rt.moving = moving;
+      const pos = tele?.pos;
+      if (moving && pos) {
+        const key = pos.x + ':' + pos.y;
+        if (key !== rt.lastKey) {
+          const now = Date.now();
+          // a long silence then a far point = sparse cloud data: teleport, no glide
+          rt.jump = rt.lastTs > 0 && now - rt.lastTs > VAC_TELEPORT_GAP_MS;
+          rt.lastKey = key;
+          rt.lastTs = now;
+          // the trail lags ONE point behind: when a new target arrives the puck
+          // has just (visually) reached the previous one — a segment must never
+          // outrun the icon (owner report 2026-07-31)
+          if (wantTrail && rt.lastPos) rt.trail = pushTrailPoint(rt.trail, rt.lastPos, 40);
+          rt.lastPos = [pos.x, pos.y];
+        }
+      }
+    }
+  }
+
+
+
+  /** «Живая позиция» in the device dialog — vacuum markers only. */
+  private _renderVacSection(dlg: any): TemplateResult | typeof nothing {
+    const dev = this._devices.find((x) => x.id === dlg.devId);
+    if (!dev || !this._isVacDev(dev)) return nothing;
+    const v = dev.marker?.vacuum || {};
+    const src = this._vacSource(dev);
+    const tele = src ? readVacTelemetry(this.hass?.states[src]?.attributes) : null;
+    const tierA = !!(tele && tele.rooms.length >= 3);
+    const status = tele?.pos
+      ? subst(this._t('vac.status_found'), { name: src || '' })
+      : this._t('vac.status_none');
+    const cals = Object.keys(v.calibration || {});
+    const setVac = (patch: Record<string, unknown>) => {
+      const cfg = this._serverCfg;
+      const m = cfg?.markers?.find((x: Marker) => x.id === dev.id);
+      if (!m) return;
+      m.vacuum = { ...(m.vacuum || {}), ...patch };
+      this._regSignature = '';
+      this._saveConfig();
+      this.requestUpdate();
+    };
+    return html`
+      <label>${this._t('vac.section')}</label>
+      <div class="bindbox vacbox">
+        <div class="rhint">${status}</div>
+        ${tele ? html`
+          <div class="vacbtns">
+            ${tierA ? html`<button class="btn" @click=${() => this._vacAutoCalibrate(dev)}>${this._t('vac.autocal')}</button>` : nothing}
+            <button class="btn ghostbtn" @click=${() => this._vacStartFit(dev)}>${this._t('vac.fit')}</button>
+          </div>
+          <label class="srcrow">
+            <input type="checkbox" .checked=${v.live !== false}
+              @change=${(e: Event) => setVac({ live: (e.target as HTMLInputElement).checked ? null : false })} />
+            <span>${this._t('vac.live')}</span>
+          </label>
+          <label>${this._t('vac.trail')}</label>
+          <select class="areasel"
+            @change=${(e: Event) => setVac({ trail_mode: (e.target as HTMLSelectElement).value, trail: null })}>
+            ${(['never', 'cleaning', 'always'] as const).map((mv) => html`
+              <option value=${mv} ?selected=${vacTrailMode(v) === mv}>${this._t(('vac.trail_' + mv) as any)}</option>`)}
+          </select>
+          ${cals.length ? html`<div class="rhint">${subst(this._t('vac.cal_maps'), { maps: cals.join(', ') })}</div>` : nothing}
+        ` : nothing}
+      </div>`;
+  }
+
+  /**
+   * The active-map id. The camera rarely names its map; Dreame keeps the
+   * human-readable one on the vacuum entity (selected_map, verified against a
+   * live X50 Master) — without this both floors would share one matrix.
+   */
+  private _vacMapId(d: DevItem, tele: { mapId: string }): string {
+    if (tele.mapId !== 'default') return tele.mapId;
+    const ve = this._vacEntity(d);
+    const sel = ve ? this.hass?.states[ve]?.attributes?.selected_map : null;
+    return sel ? String(sel) : 'default';
+  }
+
+  /** Persist a solved matrix into marker.vacuum.calibration[mapId]. */
+  private _vacSaveMatrix(markerId: string, source: string, mapId: string, matrix: Affine): void {
+    const cfg = this._serverCfg;
+    const m = cfg?.markers?.find((x: Marker) => x.id === markerId);
+    if (!m) return;
+    const v = { ...(m.vacuum || {}) };
+    v.source = source;
+    v.calibration = { ...(v.calibration || {}), [mapId]: matrix.map((n) => Number(n.toFixed(6))) };
+    m.vacuum = v;
+    this._regSignature = '';
+    this._saveConfig();
+    this.requestUpdate();
+  }
+
+  /** «Настроить автоматически»: robot rooms ↔ plan rooms by name. */
+  private _vacAutoCalibrate(d: DevItem): void {
+    const src = this._vacSource(d);
+    const tele = src ? readVacTelemetry(this.hass?.states[src]?.attributes) : null;
+    if (!src || !tele || tele.rooms.length < 3) {
+      this._showToast(this._t('vac.autocal_no_rooms'));
+      return;
+    }
+    const sp = this._spaceModel(d.space);
+    const planRooms = (sp?.rooms || [])
+      .filter((r: any) => r.name && r.poly?.length >= 3)
+      .map((r: any) => {
+        const c = poleOfInaccessibility(r.poly);
+        return { name: r.name, cx: c[0], cy: c[1] };
+      });
+    const res = autoCalibrate(tele.rooms, planRooms);
+    if (!res) {
+      this._showToast(this._t('vac.autocal_no_match'));
+      return;
+    }
+    // residual gate: 5% of the canvas ≈ 40 cm in a typical house
+    if (res.residual > NORM_W * 0.05) {
+      this._showToast(subst(this._t('vac.autocal_res_warn'), { rooms: String(res.matched.length) }));
+    }
+    this._vacSaveMatrix(d.id, src, this._vacMapId(d, tele), res.matrix);
+    this._showToast(subst(this._t('vac.autocal_done'), { rooms: String(res.matched.length) }));
+  }
+
+  /** «Подогнать вручную»: open the fit overlay and leave the dialog. */
+  private _vacStartFit(d: DevItem): void {
+    const src = this._vacSource(d);
+    const tele = src ? readVacTelemetry(this.hass?.states[src]?.attributes) : null;
+    if (!src || !tele) {
+      this._showToast(this._t('vac.cal_need_pos'));
+      return;
+    }
+    const mapId = this._vacMapId(d, tele);
+    const existing = d.marker?.vacuum?.calibration?.[mapId] as Affine | undefined;
+    const sp = this._spaceModel(d.space);
+    const vb = (sp?.vb || [0, 0, NORM_W, NORM_W]) as [number, number, number, number];
+    const p = (existing && existing.length === 6 && fitFromMatrix(existing))
+      || initialFit(tele.rooms, vb);
+    this._markerDialog = null;
+    if (d.space !== this._space) this._space = d.space;
+    this._vacFit = { markerId: d.id, source: src, mapId, p, drag: null };
+  }
+
+  private _vacFitSave(): void {
+    const f = this._vacFit;
+    if (!f) return;
+    this._vacSaveMatrix(f.markerId, f.source, f.mapId, fitMatrix(f.p));
+    this._vacFit = null;
+    this._showToast(this._t('vac.cal_done'));
+  }
+
+  /** Rotate/mirror around the ghost centre so the map does not fly away. */
+  private _vacFitTurn(patch: Partial<FitParams>): void {
+    const f = this._vacFit;
+    if (!f) return;
+    const tele = readVacTelemetry(this.hass?.states[f.source]?.attributes);
+    const c = this._vacGhostCentre(tele?.rooms || []);
+    const next = { ...f.p, ...patch } as FitParams;
+    this._vacFit = { ...f, p: reanchorFit(next, f.p, c[0], c[1]) };
+  }
+
+  private _vacGhostCentre(rooms: VacRoom[]): VacPt {
+    const xs: number[] = [], ys: number[] = [];
+    for (const r of rooms) {
+      xs.push(r.x0 ?? r.cx, r.x1 ?? r.cx);
+      ys.push(r.y0 ?? r.cy, r.y1 ?? r.cy);
+    }
+    if (!xs.length) return [0, 0];
+    return [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2];
+  }
+
+  /** px→canvas-units for a pointer delta, via the current stage size. */
+  private _vacDelta(view: { w: number; h: number }, dxPx: number, dyPx: number): VacPt {
+    const st = this._stageEl;
+    const w = st?.clientWidth || 1, h = st?.clientHeight || 1;
+    return [(dxPx / w) * view.w, (dyPx / h) * view.h];
+  }
+
+  private _vacFitPointer(ev: PointerEvent, view: { x: number; y: number; w: number; h: number }): void {
+    const f = this._vacFit;
+    if (!f) return;
+    ev.stopPropagation();
+    if (ev.type === 'pointerdown') {
+      const t = ev.target as HTMLElement;
+      const corner = t.getAttribute?.('data-corner');
+      try {
+        (ev.currentTarget as HTMLElement).setPointerCapture?.(ev.pointerId);
+      } catch { /* synthetic pointers (tests) have no active id — capture is a nicety */ }
+      this._vacFit = { ...f, drag: corner
+        ? { kind: 'scale', sx: ev.clientX, sy: ev.clientY, p0: { ...f.p },
+            fx: Number(corner.split(',')[0]), fy: Number(corner.split(',')[1]) }
+        : { kind: 'move', sx: ev.clientX, sy: ev.clientY, p0: { ...f.p }, fx: 0, fy: 0 } };
+      return;
+    }
+    const d = f.drag;
+    if (!d) return;
+    if (ev.type === 'pointermove') {
+      const [dx, dy] = this._vacDelta(view, ev.clientX - d.sx, ev.clientY - d.sy);
+      if (d.kind === 'move') {
+        this._vacFit = { ...f, p: { ...d.p0, ox: d.p0.ox + dx, oy: d.p0.oy + dy } };
+      } else {
+        // corner-stretch: uniform scale about the OPPOSITE corner (fx, fy —
+        // the fixed corner in robot coords), like a graphics-editor frame
+        const tele = readVacTelemetry(this.hass?.states[f.source]?.attributes);
+        const c = this._vacGhostCentre(tele?.rooms || []);
+        const m0 = fitMatrix(d.p0);
+        const [gx, gy] = applyAffine(m0, c[0], c[1]);
+        const [px0, py0] = applyAffine(m0, d.fx, d.fy);
+        const span0 = Math.hypot(gx - px0, gy - py0) || 1;
+        // distance change of the dragged corner (opposite of fixed) from centre
+        const [cx0, cy0] = [2 * gx - px0, 2 * gy - py0];
+        const span1 = Math.hypot(cx0 + dx * 2 - px0, cy0 + dy * 2 - py0) / 2;
+        const k = Math.max(0.05, span1 / span0);
+        const next = { ...d.p0, s: d.p0.s * k } as FitParams;
+        this._vacFit = { ...f, p: reanchorFit(next, d.p0, d.fx, d.fy) };
+      }
+      return;
+    }
+    if (ev.type === 'pointerup' || ev.type === 'pointercancel') {
+      this._vacFit = { ...f, drag: null };
+    }
+  }
+
+  /** The translucent robot map over the plan while fitting. */
+  private _renderVacFit(view: { x: number; y: number; w: number; h: number }): TemplateResult | typeof nothing {
+    const f = this._vacFit;
+    if (!f) return nothing;
+    const tele = readVacTelemetry(this.hass?.states[f.source]?.attributes);
+    if (!tele) return nothing;
+    const m = fitMatrix(f.p);
+    const rects: TemplateResult[] = [];
+    const xs: number[] = [], ys: number[] = [];
+    for (const r of tele.rooms) {
+      if (r.x0 == null) continue;
+      const cs = [[r.x0!, r.y0!], [r.x1!, r.y0!], [r.x1!, r.y1!], [r.x0!, r.y1!]]
+        .map(([x, y]) => applyAffine(m, x, y));
+      cs.forEach(([x, y]) => { xs.push(x); ys.push(y); });
+      const [lx, ly] = applyAffine(m, r.cx, r.cy);
+      rects.push(svg`<polygon points="${cs.map((q) => q[0].toFixed(1) + ',' + q[1].toFixed(1)).join(' ')}"></polygon>
+        <text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}">${r.name}</text>`);
+    }
+    let dot: TemplateResult | typeof nothing = nothing;
+    if (tele.pos) {
+      const [dx2, dy2] = applyAffine(m, tele.pos.x, tele.pos.y);
+      dot = svg`<circle class="vacfitdot" cx="${dx2.toFixed(1)}" cy="${dy2.toFixed(1)}" r="${(view.w * 0.012).toFixed(1)}"></circle>`;
+    }
+    // corner handles on the ghost bbox; data-corner carries the FIXED corner
+    // (the opposite one) in robot coordinates
+    const handles: TemplateResult[] = [];
+    if (xs.length) {
+      const inv = ((): ((x: number, y: number) => VacPt) => {
+        const det = m[0] * m[4] - m[1] * m[3];
+        return (x, y) => [
+          (m[4] * (x - m[2]) - m[1] * (y - m[5])) / det,
+          (-m[3] * (x - m[2]) + m[0] * (y - m[5])) / det,
+        ];
+      })();
+      const x0 = Math.min(...xs), x1 = Math.max(...xs);
+      const y0 = Math.min(...ys), y1 = Math.max(...ys);
+      const r = view.w * 0.022; // finger-sized: these are grabbed on tablets
+      for (const [hx, hy, ox2, oy2] of [[x0, y0, x1, y1], [x1, y0, x0, y1], [x1, y1, x0, y0], [x0, y1, x1, y0]] as number[][]) {
+        const fixed = inv(ox2, oy2);
+        handles.push(svg`<circle class="vacfithandle" data-corner="${fixed[0] + ',' + fixed[1]}"
+          cx="${hx.toFixed(1)}" cy="${hy.toFixed(1)}" r="${r.toFixed(1)}"></circle>`);
+      }
+    }
+    return html`<svg class="vacfit" viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
+        preserveAspectRatio="none"
+        @pointerdown=${(e: PointerEvent) => this._vacFitPointer(e, view)}
+        @pointermove=${(e: PointerEvent) => this._vacFitPointer(e, view)}
+        @pointerup=${(e: PointerEvent) => this._vacFitPointer(e, view)}
+        @pointercancel=${(e: PointerEvent) => this._vacFitPointer(e, view)}>${rects}${dot}${handles}</svg>`;
+  }
+
+  /** Every frame: glue the growing tip segment to the animated puck centre. */
+  private _vacRafLoop(): void {
+    this._vacRaf = requestAnimationFrame(() => {
+      const sr = this.renderRoot as ShadowRoot;
+      const stage = this._stageEl;
+      const view = this._vacLastView;
+      const pucks = sr?.querySelectorAll?.('.vacpuck') || [];
+      if (!stage || !view || !pucks.length) { this._vacRaf = 0; return; }
+      const sb = stage.getBoundingClientRect();
+      for (const puck of pucks as any) {
+        const mid = puck.getAttribute('data-mid');
+        const pb = puck.getBoundingClientRect();
+        const cx = view.x + ((pb.left + pb.width / 2 - sb.left) / sb.width) * view.w;
+        const cy = view.y + ((pb.top + pb.height / 2 - sb.top) / sb.height) * view.h;
+        for (const line of sr.querySelectorAll(`line.tip[data-mid="${mid}"]`)) {
+          line.setAttribute('x2', cx.toFixed(1));
+          line.setAttribute('y2', cy.toFixed(1));
+        }
+      }
+      this._vacRafLoop();
+    });
+  }
+
+  /** Puck + trail for every live vacuum of the space. */
+  private _renderVacuums(devs: DevItem[], view: { x: number; y: number; w: number; h: number }): TemplateResult | typeof nothing {
+    if (this._markup || this._mode === 'decor') return nothing;
+    const viewKey = this._space + '|' + view.x + '|' + view.y + '|' + view.w + '|' + view.h;
+    const jumpAll = this._vacJumpOnce || viewKey !== this._vacViewKey;
+    this._vacViewKey = viewKey;
+    this._vacJumpOnce = false;
+    const pucks: TemplateResult[] = [];
+    const trails: TemplateResult[] = [];
+    for (const d of devs) {
+      if (d.hidden || !this._isVacDev(d)) continue;
+      const src = this._vacSource(d);
+      if (!src) continue;
+      const tele = readVacTelemetry(this.hass?.states[src]?.attributes);
+      if (!tele) continue;
+      const matrix = d.marker?.vacuum?.calibration?.[this._vacMapId(d, tele)] as Affine | undefined;
+      if (!matrix || matrix.length !== 6) continue;
+      const rt = this._vacRt.get(d.id);
+      const moving = rt?.moving ?? false;
+      const tmode = vacTrailMode(d.marker?.vacuum);
+      // owner 2026-07-31: hide when the cleanup is over (default), unless the
+      // mode says always; the previous run only ever shows in 'always'
+      const showCur = tmode === 'always' || (tmode === 'cleaning' && moving);
+      const srv = this._vacSrvTrails[d.id];
+      const mapNow = this._vacMapId(d, tele);
+      const srvCur = srv?.current?.map_id === mapNow && Array.isArray(srv.current.points) ? srv.current : null;
+      const srvPrev = srv?.previous?.map_id === mapNow && Array.isArray(srv.previous.points) ? srv.previous : null;
+      // the PREVIOUS run stays visible even at rest: users compare where the
+      // robot has been against where it has not (owner call 2026-07-31)
+      if (tmode === 'always' && srvPrev && srvPrev.points.length > 1) {
+        const pts = srvPrev.points.map(([x, y]: number[]) => {
+          const [cx2, cy2] = applyAffine(matrix, x, y);
+          return cx2.toFixed(1) + ',' + cy2.toFixed(1);
+        }).join(' ');
+        trails.push(svg`<g class="prev"><polyline class="case" points="${pts}"></polyline><polyline class="core" points="${pts}"></polyline></g>`);
+      }
+      // trail source order: server current run (survives reloads, shared by
+      // every screen) → integration path → the local live buffer
+      if (showCur && (moving || srvCur)) {
+        // any server/integration path ends at the CURRENT target — trim the
+        // live tail while moving so the line never runs ahead of the puck
+        const full: VacPt[] = (srvCur?.points as VacPt[]) || tele.path || rt?.trail || [];
+        const trim = moving && (srvCur || tele.path) && full.length > 1;
+        const raw: VacPt[] = trim ? full.slice(0, -1) : full;
+        if (raw.length > 1) {
+          const ptsStr = raw.map(([x, y]) => {
+            const [cx, cy] = applyAffine(matrix, x, y);
+            return cx.toFixed(1) + ',' + cy.toFixed(1);
+          }).join(' ');
+          // cartography casing: a dark halo under a light core. Neutral and
+          // visible over ANY room fill — blend modes all have a blind
+          // luminance where the line vanishes (owner request 2026-07-31).
+          trails.push(svg`<polyline class="case" points="${ptsStr}"></polyline><polyline class="core" points="${ptsStr}"></polyline>`);
+          // the LAST segment grows glued to the icon (owner: «след появлялся
+          // строго за иконкой»): a rAF sampler drags x2/y2 to the puck centre
+          if (moving) {
+            const [ax, ay] = applyAffine(matrix, raw[raw.length - 1][0], raw[raw.length - 1][1]);
+            const a1 = ax.toFixed(1), a2 = ay.toFixed(1);
+            trails.push(svg`<line class="case tip" data-mid="${d.id}" x1="${a1}" y1="${a2}" x2="${a1}" y2="${a2}"></line><line class="core tip" data-mid="${d.id}" x1="${a1}" y1="${a2}" x2="${a1}" y2="${a2}"></line>`);
+          }
+        }
+      }
+      if (!moving || !tele.pos) continue;
+      const [cx, cy] = applyAffine(matrix, tele.pos.x, tele.pos.y);
+      const left = ((cx - view.x) / view.w) * 100;
+      const top = ((cy - view.y) / view.h) * 100;
+      const stale = rt && rt.lastTs > 0 && Date.now() - rt.lastTs > VAC_STALE_MS;
+      const icon = d.marker?.icon || d.icon || 'mdi:robot-vacuum';
+      pucks.push(html`<div
+        data-mid="${d.id}"
+        class="vacpuck ${rt?.jump || jumpAll ? 'jump' : ''} ${stale ? 'stale' : ''}"
+        style="left:${left}%;top:${top}%"
+        title=${d.name}
+        @click=${(e: Event) => { e.stopPropagation(); const ve = this._vacEntity(d); if (ve) this._openMoreInfo(ve); }}>
+        <ha-icon .icon=${icon}></ha-icon>
+      </div>`);
+    }
+    this._vacLastView = view;
+    if (pucks.length && !this._vacRaf) this._vacRafLoop();
+    if (!pucks.length && !trails.length) return nothing;
+    return html`
+      ${trails.length ? svg`<svg class="vactrail" viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="none">${trails}</svg>` : nothing}
+      ${pucks}`;
   }
 
   private _renderDevice(d: DevItem, view: { x: number; y: number; w: number; h: number }, showLqi = true, glowFill = false): TemplateResult {
@@ -5382,6 +5880,8 @@ class HouseplanCard extends LitElement {
               (r) => html`<option value=${r.value} ?selected=${r.value === d.room}>${r.label}</option>`,
             )}
           </select>
+
+          ${this._renderVacSection(d)}
 
           <label>${this._t('marker.tap_label')}</label>
           <select class="areasel"

@@ -9,7 +9,7 @@ An interactive floor plan for Home Assistant delivered as one HACS package:
 a storage **integration** (server-side config, WS API, file uploads, auth) + a
 **Lovelace card** (rendering, room markup editor, drag layout, zoom, live states,
 temperature, Zigbee LQI, device metadata with PDF manuals, virtual markers,
-en/ru localization). GUI-first: no YAML, no hand-made SVG.
+live robot vacuums, en/ru localization). GUI-first: no YAML, no hand-made SVG.
 
 ## Competitive landscape (stars verified 2026-07-06)
 

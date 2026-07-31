@@ -1,5 +1,44 @@
 # Changelog
 
+## v1.54.0 — 2026-07-31
+
+### Live robot vacuums
+
+The plan now shows the robot while it works. The device marker stays where
+you put it — that is the dock — and a round puck drives the plan in real
+time, pouring its path out from under itself. Everything is display only:
+the card never commands the robot.
+
+- **Calibration without arithmetic.** «Настроить автоматически» matches the
+  robot's room list against your rooms by name and solves the transform in
+  one click. When names do not match, the fit panel lays the robot's rooms
+  over the plan as a dashed ghost: drag it into place, stretch it by the
+  corner handles, quarter-turn and mirror with two buttons. Mirror is on by
+  default — every robot map we have measured flips Y versus the screen.
+  One calibration per robot map, so two floors stay independent.
+- **The path is recorded server-side.** The integration watches the robot
+  itself, so the trail records with no card open, survives page reloads, and
+  every screen sees the same line. The current run and one previous run are
+  kept — cleaned versus not-yet-cleaned at a glance.
+- **«Показывать путь робота»**: never / while cleaning (default) / always.
+  Only the last mode also draws the previous run, faded.
+- The trail never runs ahead of the icon: drawn segments lag one point and
+  the growing tip is glued to the puck's animated centre every frame. It is
+  drawn as a dark halo under a light core, so it stays readable over any
+  room fill. The puck teleports instead of gliding when the view changes —
+  zoom, floor switch or a return to the browser tab.
+- Adapters: Xiaomi Cloud Map Extractor, dreame-vacuum (Tasshack), Valetudo.
+  Verified against a live Dreame X50 Master.
+
+### Also
+
+- **«Свет по источникам» is the default fill for new spaces** and leads the
+  options list. Existing plans are untouched: a space whose owner never
+  chose a fill still renders as before.
+- **Fixed: the "what to run" search showed no results.** The list is a
+  scrollable box and, as a flex item, collapsed into a 1px sliver — the
+  matches were there, rendered into nothing.
+
 ## v1.53.1 — 2026-07-30
 
 - **Fix: the "what to run" search showed no results.** The results were

@@ -923,3 +923,43 @@ def test_check_quota_refuses_when_the_disk_is_nearly_full(tmp_path, monkeypatch)
     with pytest.raises(plans.QuotaError) as e:
         plans.check_quota(d, 1, max_bytes=10 ** 12, max_files=10 ** 6)
     assert e.value.reason == "low_disk_space"
+
+
+class TestVacuum:
+    """marker.vacuum (docs/VACUUM.md): optional everywhere, matrices strict."""
+
+    def test_full_object_passes(self):
+        v.MARKER_SCHEMA(_marker(vacuum={
+            "live": True, "trail": True, "room_highlight": False,
+            "source": "camera.robo_map",
+            "calibration": {"0": [0.02, 0.0, 300.0, 0.0, 0.02, 400.0]},
+            "segment_map": {"16": "kitchen"},
+        }))
+
+    def test_absent_and_none_pass(self):
+        v.MARKER_SCHEMA(_marker())
+        v.MARKER_SCHEMA(_marker(vacuum=None))
+
+    def test_bad_matrices_rejected(self):
+        import pytest
+        for bad in (
+            [1, 2, 3, 4, 5],                       # 5 numbers
+            [1, 2, 3, 4, 5, 6, 7],                 # 7 numbers
+            [1, 2, 3, 4, 5, float("nan")],         # non-finite
+            [1, 2, 3, 4, 5, float("inf")],
+            [1, 2, 3, 4, 5, "x"],                  # junk type
+        ):
+            with pytest.raises(Exception):
+                v.MARKER_SCHEMA(_marker(vacuum={"calibration": {"0": bad}}))
+
+    def test_unknown_keys_rejected(self):
+        import pytest
+        with pytest.raises(Exception):
+            v.MARKER_SCHEMA(_marker(vacuum={"teleport": True}))
+
+    def test_trail_mode_bounded(self):
+        import pytest
+        for ok in ("never", "cleaning", "always", None):
+            v.MARKER_SCHEMA(_marker(vacuum={"trail_mode": ok}))
+        with pytest.raises(Exception):
+            v.MARKER_SCHEMA(_marker(vacuum={"trail_mode": "sometimes"}))

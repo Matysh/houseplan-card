@@ -1233,6 +1233,135 @@ export const cardStyles = css`
       color: var(--hp-muted);
       font-size: 11px;
     }
+    /* live vacuum: a round puck, no badge plate, soft pulse (docs/VACUUM.md) */
+    .vacpuck {
+      position: absolute;
+      /* the base badge, but round and 20% smaller — the owner's wording:
+         «иконка похожа на иконку базы, только круглая и чуть меньше» */
+      --puck-size: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.8);
+      width: var(--puck-size);
+      height: var(--puck-size);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--hp-bg);
+      border: 1px solid var(--hp-line);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+      color: var(--hp-txt);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 6;
+      /* glide between sparse position updates; .jump disables it so the robot
+         never appears to drive through walls after a data gap */
+      transition: left 1.2s linear, top 1.2s linear;
+      animation: vacpulse 2.2s ease-out infinite;
+    }
+    .vacpuck.jump { transition: none; }
+    .vacpuck.stale { opacity: 0.45; animation: none; }
+    .vacpuck ha-icon {
+      --mdc-icon-size: calc(var(--puck-size) * 0.68);
+      color: var(--hp-txt);
+      /* same centering recipe as .dev ha-icon: without flex + line-height 0
+         the glyph sits on its text baseline and appears to float around the
+         circle (owner report 2026-07-31) */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 0;
+      width: var(--mdc-icon-size);
+      height: var(--mdc-icon-size);
+    }
+    @keyframes vacpulse {
+      0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--hp-accent) 45%, transparent); }
+      70% { box-shadow: 0 0 0 12px transparent; }
+      100% { box-shadow: 0 0 0 0 transparent; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .vacpuck { animation: none; }
+    }
+    .vactrail {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+      overflow: visible;
+    }
+    .vactrail polyline {
+      fill: none;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+      vector-effect: non-scaling-stroke;
+    }
+    /* dark halo + light core: neutral, and one of the two always contrasts
+       with whatever fill is underneath */
+    .vactrail g.prev { opacity: 0.4; }
+    .vactrail .case {
+      stroke: rgba(0, 0, 0, 0.4);
+      stroke-width: 2.25;
+    }
+    .vactrail .core {
+      stroke: rgba(255, 255, 255, 0.82);
+      stroke-width: 0.9;
+    }
+    .vacbox .vacbtns { display: flex; gap: 8px; margin: 6px 0; flex-wrap: wrap; }
+    .vacfit {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 12;
+      overflow: visible;
+      touch-action: none;
+      cursor: grab;
+      /* the devlayer is pointer-events: none and every child opts back in —
+         without this line real clicks flew straight through the overlay
+         (owner: «уголки не кликабельны»; synthetic smoke events bypass
+         hit-testing, which is why they lied) */
+      pointer-events: auto;
+    }
+    .vacfit:active { cursor: grabbing; }
+    .vacfit polygon {
+      fill: color-mix(in srgb, var(--hp-accent) 16%, transparent);
+      stroke: var(--hp-accent);
+      stroke-width: 2;
+      vector-effect: non-scaling-stroke;
+      stroke-dasharray: 6 4;
+    }
+    .vacfit text {
+      fill: var(--hp-accent);
+      font-size: 26px;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+      user-select: none;
+    }
+    .vacfitdot { fill: var(--hp-accent); pointer-events: none; }
+    .vacfithandle {
+      fill: var(--hp-bg);
+      stroke: var(--hp-accent);
+      stroke-width: 2;
+      vector-effect: non-scaling-stroke;
+      cursor: nwse-resize;
+    }
+    .vaccalbar {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      background: var(--hp-panel, #16212e);
+      color: var(--hp-fg, #e7eef7);
+      border: 1px solid var(--hp-accent);
+      border-radius: 10px;
+      padding: 10px 14px;
+      z-index: 60;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+    }
     .candlist {
       max-height: 160px;
       overflow-y: auto;

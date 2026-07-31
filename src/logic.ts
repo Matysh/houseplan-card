@@ -617,7 +617,11 @@ export type TapAction = 'info' | 'more-info' | 'toggle' | 'run';
 export const DISPLAY_MODES = ['badge', 'ripple', 'icon_ripple', 'value'] as const;
 export const TAP_ACTIONS = ['info', 'more-info', 'toggle', 'run'] as const;
 /** Space-level fill: 'glow' is a whole-space light model, not a per-room one. */
-export const SPACE_FILL_MODES = ['none', 'lqi', 'light', 'temp', 'glow'] as const;
+// 'glow' leads: it is the default for new spaces since v1.54 — the owner's
+// call, it sells the card best. Existing configs keep whatever they chose;
+// an absent fill_mode still falls back to 'none' (spaceDisplayOf), so an
+// update never repaints somebody's plan.
+export const SPACE_FILL_MODES = ['glow', 'none', 'lqi', 'light', 'temp'] as const;
 export const ROOM_FILL_MODES = ['none', 'lqi', 'light', 'temp'] as const;
 
 export const TOGGLE_SAFE_DOMAINS = new Set(['light', 'switch', 'fan', 'humidifier', 'cover', 'valve']);

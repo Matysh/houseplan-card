@@ -275,6 +275,25 @@ MARKER_SCHEMA = vol.Schema(
             None, vol.All(str, vol.Length(max=MAX_TEXT), vol.Match(r"^(automation|script|scene)\.[A-Za-z0-9_]+$"))
         ),
         vol.Optional("tap_confirm"): vol.Any(bool, None),
+        # live robot vacuums (docs/VACUUM.md): everything optional so configs
+        # from older versions stay valid untouched
+        vol.Optional("vacuum"): vol.Any(
+            None,
+            vol.Schema({
+                vol.Optional("live"): vol.Any(bool, None),
+                vol.Optional("trail"): vol.Any(bool, None),
+                vol.Optional("trail_mode"): vol.Any(
+                    None, vol.In(["never", "cleaning", "always"])
+                ),
+                vol.Optional("room_highlight"): vol.Any(bool, None),
+                vol.Optional("source"): vol.Any(str, None),
+                # one 6-number affine per robot map; numbers must be finite
+                vol.Optional("calibration"): vol.Schema(
+                    {str: vol.All([_finite], vol.Length(min=6, max=6))}
+                ),
+                vol.Optional("segment_map"): vol.Schema({str: str}),
+            }),
+        ),
         vol.Optional("controls"): vol.Any(None, vol.All([_TEXT], vol.Length(max=MAX_CONTROLS))),
         vol.Optional("glow_radius_cm"): vol.Any(vol.All(vol.Coerce(float), vol.Range(min=10, max=10000)), None),
         vol.Optional("is_light"): vol.Any(bool, None),
