@@ -1,5 +1,37 @@
 # Changelog
 
+## v1.54.1 — 2026-07-31
+
+Patch release: everything the adversarial audit of v1.54.0 found
+(HP-1540-01..06), each fix pinned by a regression test that fails on the
+old code.
+
+- **Fix: the first calibration of a freshly discovered vacuum silently did
+  nothing.** Until the device dialog was saved once, the robot had no config
+  marker — yet the «Живая позиция» section was fully interactive, and every
+  handler quietly bailed out while auto-calibration still announced success.
+  Any vacuum edit now materialises the marker itself, and the success toast
+  only appears after the matrix has verifiably landed in the config.
+- **Fix: a robot whose first map is `map_index: 0` lost its server-side
+  trail.** The backend picked the map id by truthiness and dropped the zero,
+  so the recorded run was stored under a key the card never looked up. Both
+  sides now share one explicit rule — the first value that exists wins, and
+  zero is a value.
+- **Fix: one robot on two floors recorded history for the last floor only.**
+  The recorder kept a single marker per source entity, so the second
+  placement silently evicted the first. Every marker fed by a source now
+  gets its own copy of the run.
+- **Fix: auto-calibration ignored plans drawn with rectangle rooms.** The
+  room matcher only accepted polygon outlines and then blamed the room
+  names. Legacy rectangles count like everywhere else in the card.
+- **Fix: overlapping recorder refreshes leaked state subscriptions.** Two
+  config saves racing each other could both subscribe and strand one
+  callback until restart; refreshes are serialised now and teardown wins
+  over any refresh still in flight.
+- The «no rooms» / «no match» toasts and docs/VACUUM.md no longer send you
+  to the three-point calibration that no longer exists — they point at
+  «Подогнать вручную», which does.
+
 ## v1.54.0 — 2026-07-31
 
 ### Live robot vacuums
