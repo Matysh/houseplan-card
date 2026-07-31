@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { solveAffine, applyAffine, affineResidual, readVacTelemetry, autoCalibrate, thinPath, pushTrailPoint, isVacMoving, isVacSourceState, vacMapIdFromAttrs } from '../test-build/vacuum.js';
+import { solveAffine, applyAffine, affineResidual, readVacTelemetry, autoCalibrate, thinPath, pushTrailPoint, isVacMoving, isVacSourceState, vacMapIdFromAttrs, vacMapIdWithFallback } from '../test-build/vacuum.js';
 
 test('solveAffine recovers rotation+scale+mirror+offset exactly', () => {
   // target = mirror-X, rotate 90°, scale 0.02, offset (300, 400)
@@ -146,6 +146,33 @@ test('vacMapIdFromAttrs: first NOT-nullish value wins, zero survives', () => {
   assert.equal(vacMapIdFromAttrs({ current_map: 2 }), '2');
   assert.equal(vacMapIdFromAttrs({ selected_map: 'Vac' }), 'Vac');
   assert.equal(vacMapIdFromAttrs({}), 'default');
+});
+
+// HP-1541-01: the vacuum-entity fallback half of the contract. Truthiness
+// here turned selected_map: 0 into 'default' while the server recorder
+// stored the trail under '0' — reloads never showed the saved run.
+test('vacMapIdWithFallback: selected_map 0 / "0" / "" survive, nullish falls back', () => {
+  assert.equal(vacMapIdWithFallback('default', 0), '0');
+  assert.equal(vacMapIdWithFallback('default', '0'), '0');
+  assert.equal(vacMapIdWithFallback('default', ''), '');
+  assert.equal(vacMapIdWithFallback('default', 'Vac'), 'Vac');
+  assert.equal(vacMapIdWithFallback('default', null), 'default');
+  assert.equal(vacMapIdWithFallback('default', undefined), 'default');
+  assert.equal(vacMapIdWithFallback('1', 0), '1'); // telemetry wins over fallback
+});
+
+// HP-1541-01 cross-runtime contract: for the same inputs the card-side chain
+// (vacMapIdFromAttrs -> vacMapIdWithFallback) must yield exactly what
+// trails.py resolve_map_id stores. Mirrored by
+// tests_backend/test_trail_recorder.py::test_map_id_contract_first_not_none_wins.
+test('map-id contract: frontend chain matches backend resolve_map_id', () => {
+  const chain = (srcAttrs, vacSel) => vacMapIdWithFallback(vacMapIdFromAttrs(srcAttrs), vacSel);
+  assert.equal(chain({}, 0), '0');
+  assert.equal(chain({}, '0'), '0');
+  assert.equal(chain({}, ''), '');
+  assert.equal(chain({}, 'Vac'), 'Vac');
+  assert.equal(chain({}, undefined), 'default');
+  assert.equal(chain({ map_index: 0 }, 'Vac'), '0'); // source wins over vacuum
 });
 
 test('readVacTelemetry keeps numeric zero map_index as map id (HP-1540-02)', () => {

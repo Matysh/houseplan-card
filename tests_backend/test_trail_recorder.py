@@ -184,6 +184,18 @@ def test_map_index_zero_matches_frontend_contract():
     assert rec.book.data["m1"]["current"]["map_id"] == "0"
 
 
+def test_vacuum_selected_map_zero_fallback_recorded_as_zero():
+    # HP-1541-01: source names no map, vacuum reports selected_map: 0 — the
+    # recorder must store the run under "0", the same id the fixed card-side
+    # fallback (vacMapIdWithFallback) resolves. Before the fix the card asked
+    # for calibration/trails under "default" and never found this run.
+    rec, _hass, states = _rec()
+    states["camera.map"] = S("idle", {"vacuum_position": {"x": 10, "y": 20}})
+    states["vacuum.x50"] = S("cleaning", {"selected_map": 0})
+    assert rec._sample("camera.map", 1.0)
+    assert rec.book.data["m1"]["current"]["map_id"] == "0"
+
+
 def test_map_id_contract_first_not_none_wins():
     # HP-1540-02: the shared contract — first NOT-None value, stringified
     cases = [
@@ -194,6 +206,11 @@ def test_map_id_contract_first_not_none_wins():
         ({"current_map": 2}, {}, "2"),
         ({"selected_map": "Src"}, {"selected_map": "Vac"}, "Src"),
         ({}, {"selected_map": "Vac"}, "Vac"),
+        # HP-1541-01: the vacuum-entity fallback with a zero-ish id — must
+        # match the card's vacMapIdWithFallback (test/vacuum.test.mjs)
+        ({}, {"selected_map": 0}, "0"),
+        ({}, {"selected_map": "0"}, "0"),
+        ({}, {"selected_map": ""}, ""),
         ({}, {}, "default"),
     ]
     for src_attrs, vac_attrs, want in cases:

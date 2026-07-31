@@ -95,6 +95,19 @@ export function vacMapIdFromAttrs(attrs: Record<string, any>): string {
 }
 
 /**
+ * The card-side fallback half of that contract (HP-1541-01): when source
+ * telemetry names no map ('default'), the vacuum entity's own selected_map
+ * decides — under the SAME not-nullish rule as above. The old truthiness
+ * check in _vacMapId turned `selected_map: 0` into 'default' while the
+ * server recorder (trails.py resolve_map_id) stored the trail under '0', so
+ * calibration and saved runs lived under a key the renderer never matched.
+ */
+export function vacMapIdWithFallback(teleMapId: string, selectedMap: unknown): string {
+  if (teleMapId !== 'default') return teleMapId;
+  return selectedMap != null ? String(selectedMap) : 'default';
+}
+
+/**
  * Normalise the attribute zoo. One parser instead of per-brand classes: the
  * three Tier-A integrations (Xiaomi Cloud Map Extractor, Tasshack
  * dreame-vacuum, Valetudo camera) all descend from the map-card conventions

@@ -1,5 +1,22 @@
 # Changelog
 
+## v1.54.2 — 2026-07-31
+
+Patch release: the one remaining finding of the v1.54.1 re-audit
+(HP-1541-01), pinned by regression tests on both sides of the contract.
+
+- **Fix: a vacuum whose own `selected_map` is `0` split calibration and
+  trail between two map ids.** The v1.54.1 map-id contract («the first value
+  that exists wins, and zero is a value») was applied to the source entity
+  but not to the card's fallback on the vacuum's `selected_map`: the
+  frontend still judged it by truthiness and turned `0` into `default`,
+  while the server recorder stored the run under `0`. Calibration was saved
+  under a key the recorder never used, and the recorded trail never rendered
+  after a reload. The fallback now follows the same not-nullish rule on both
+  sides (`vacMapIdWithFallback` in the card, `resolve_map_id` on the
+  server), with cross-runtime regressions for `selected_map` = `0`, `"0"`
+  and `""`.
+
 ## v1.54.1 — 2026-07-31
 
 Patch release: everything the adversarial audit of v1.54.0 found
