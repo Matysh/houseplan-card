@@ -130,3 +130,13 @@ def test_junk_position_ignored():
 def test_unknown_source_is_noop():
     rec, _hass, _states = _rec()
     assert not rec._sample("camera.other", 1.0)
+
+
+def test_object_style_position_is_read():
+    # Tasshack in-memory attributes hold a Point OBJECT, not a dict
+    class Point:
+        def __init__(self, x, y): self.x, self.y = x, y
+    rec, _hass, states = _rec()
+    states["camera.map"] = S("idle", {"vacuum_position": Point(2020, 3096), "map_index": 1})
+    assert rec._sample("camera.map", 5.0)
+    assert rec.book.data["m1"]["current"]["points"] == [[2020.0, 3096.0]]

@@ -19,6 +19,9 @@ from homeassistant.helpers.storage import Store
 
 from .const import DOMAIN
 
+import logging
+_LOGGER = logging.getLogger(__name__)
+
 TRAIL_CAP = 2000          # raw points per run before decimation
 SAVE_DELAY_S = 10         # debounce store writes — flash wear over precision
 FIRE_THROTTLE_S = 2.0     # event-bus updates for live cards
@@ -99,6 +102,7 @@ class TrailRecorder:
             if vac:
                 self.pairs[src] = (str(m.get("id")), vac)
         ents = set(self.pairs) | {vac for _, vac in self.pairs.values()}
+        _LOGGER.info("Trail recorder: tracking %s", sorted(ents))
         if ents:
             self._unsub_track = async_track_state_change_event(
                 self.hass, sorted(ents), self._on_state
@@ -139,12 +143,18 @@ class TrailRecorder:
             return self.book.end_run(marker, now)
         st_src = self.hass.states.get(src)
         attrs = st_src.attributes if st_src else {}
-        pos = attrs.get("vacuum_position") or attrs.get("robot_position")
-        if not isinstance(pos, dict):
-            return False
+        raw = attrs.get("vacuum_position") or attrs.get("robot_position")
+        # Server-side these attributes are often OBJECTS (Tasshack keeps a
+        # Point dataclass in memory — it only becomes a dict when serialised
+        # to the frontend). Caught live on the owner's X50: the recorder saw
+        # every state change and rejected every single one.
+        if isinstance(raw, dict):
+            px, py = raw.get("x"), raw.get("y")
+        else:
+            px, py = getattr(raw, "x", None), getattr(raw, "y", None)
         try:
-            x, y = float(pos["x"]), float(pos["y"])
-        except (KeyError, TypeError, ValueError):
+            x, y = float(px), float(py)  # type: ignore[arg-type]
+        except (TypeError, ValueError):
             return False
         map_id = str(
             attrs.get("map_name")
