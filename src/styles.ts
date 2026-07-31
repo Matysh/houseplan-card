@@ -1236,12 +1236,17 @@ export const cardStyles = css`
     /* live vacuum: a round puck, no badge plate, soft pulse (docs/VACUUM.md) */
     .vacpuck {
       position: absolute;
-      width: var(--dev-size);
-      height: var(--dev-size);
+      /* the base badge, but round and 20% smaller — the owner's wording:
+         «иконка похожа на иконку базы, только круглая и чуть меньше» */
+      --puck-size: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.8);
+      width: var(--puck-size);
+      height: var(--puck-size);
       border-radius: 50%;
       transform: translate(-50%, -50%);
-      background: color-mix(in srgb, var(--hp-accent) 20%, transparent);
-      border: 1.5px solid var(--hp-accent);
+      background: var(--hp-bg);
+      border: 1px solid var(--hp-line);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+      color: var(--hp-txt);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1254,7 +1259,7 @@ export const cardStyles = css`
     }
     .vacpuck.jump { transition: none; }
     .vacpuck.stale { opacity: 0.45; animation: none; }
-    .vacpuck ha-icon { --mdc-icon-size: calc(var(--dev-size) * 0.6); color: var(--hp-accent); }
+    .vacpuck ha-icon { --mdc-icon-size: calc(var(--puck-size) * 0.68); color: var(--hp-txt); }
     .vacwedge {
       position: absolute;
       inset: 0;

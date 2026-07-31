@@ -32,6 +32,14 @@ const out = await page.evaluate(async () => {
   let puck = sr().querySelector('.vacpuck');
   o.puckAppears = !!puck;
   o.puckRound = puck && getComputedStyle(puck).borderRadius === '50%';
+  // owner 2026-07-31: the base badge, but round and 20% smaller — same plate
+  // vs a NEUTRAL badge: the robot's own base is yellow while cleaning
+  const devEl = sr().querySelector('.dev:not(.on)');
+  const pcs = getComputedStyle(puck), dcs = getComputedStyle(devEl);
+  o.puckPlateMatchesDev = pcs.backgroundColor === dcs.backgroundColor
+    && pcs.borderTopColor === dcs.borderTopColor;
+  o.puck80pct = Math.abs(puck.getBoundingClientRect().width
+    - devEl.getBoundingClientRect().width * 0.8) < 2;
   o.puckHasWedge = !!sr().querySelector('.vacwedge');
   o.baseStaysDuringCleaning = !!sr().querySelector('.dev');
 
@@ -116,6 +124,7 @@ const out = await page.evaluate(async () => {
 
 checkAll(out, {
   dockedNoPuck: true, baseMarkerThere: true, puckAppears: true, puckRound: true,
+  puckPlateMatchesDev: true, puck80pct: true,
   puckHasWedge: true, baseStaysDuringCleaning: true, trailDrawn: true,
   trailScaledByMatrix: true, wedgeRotated: true, trailToggleOff: true,
   puckGoneWhenDocked: true, trailLingers: true, hiddenNoPuck: true,
