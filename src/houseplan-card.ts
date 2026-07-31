@@ -4637,7 +4637,7 @@ class HouseplanCard extends LitElement {
       })();
       const x0 = Math.min(...xs), x1 = Math.max(...xs);
       const y0 = Math.min(...ys), y1 = Math.max(...ys);
-      const r = view.w * 0.014;
+      const r = view.w * 0.022; // finger-sized: these are grabbed on tablets
       for (const [hx, hy, ox2, oy2] of [[x0, y0, x1, y1], [x1, y0, x0, y1], [x1, y1, x0, y0], [x0, y1, x1, y0]] as number[][]) {
         const fixed = inv(ox2, oy2);
         handles.push(svg`<circle class="vacfithandle" data-corner="${fixed[0] + ',' + fixed[1]}"

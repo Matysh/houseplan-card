@@ -1315,6 +1315,11 @@ export const cardStyles = css`
       overflow: visible;
       touch-action: none;
       cursor: grab;
+      /* the devlayer is pointer-events: none and every child opts back in —
+         without this line real clicks flew straight through the overlay
+         (owner: «уголки не кликабельны»; synthetic smoke events bypass
+         hit-testing, which is why they lied) */
+      pointer-events: auto;
     }
     .vacfit:active { cursor: grabbing; }
     .vacfit polygon {

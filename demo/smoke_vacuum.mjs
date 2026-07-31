@@ -118,6 +118,20 @@ const out = await page.evaluate(async () => {
   o.fitGhostRooms = sr().querySelectorAll('.vacfit polygon').length === 2;
   o.fitLabels = [...sr().querySelectorAll('.vacfit text')].map((t) => t.textContent.trim()).join('|') === 'Кухня|Зал';
   o.fitHandles = sr().querySelectorAll('.vacfithandle').length === 4;
+  // REAL hit-tests: what would an actual click land on? Synthetic dispatch
+  // bypasses pointer-events, and that let the untouchable overlay pass once.
+  const hitAt = (el) => {
+    const r = el.getBoundingClientRect();
+    let n = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    while (n && n.shadowRoot) {
+      const deeper = n.shadowRoot.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      if (!deeper || deeper === n) break;
+      n = deeper;
+    }
+    return n;
+  };
+  o.fitHandleHittable = hitAt(sr().querySelector('.vacfithandle'))?.classList?.contains('vacfithandle') === true;
+  o.fitGhostHittable = !!hitAt(sr().querySelector('.vacfit polygon'))?.closest?.('.vacfit');
   o.fitBar = !!sr().querySelector('.vaccalbar');
   o.fitMirrorDefault = c._vacFit.p.mir === true;
   // drag: the ghost centre must follow; rotate: the centre must NOT move
@@ -169,7 +183,7 @@ checkAll(out, {
   puckGoneWhenDocked: true, trailLingers: true, hiddenNoPuck: true,
   unknownMapNoPuck: true,
   fitDevFound: true, fitOverlay: true, fitGhostRooms: true, fitLabels: true,
-  fitHandles: true, fitBar: true, fitMirrorDefault: true, fitDragMoves: true,
+  fitHandles: true, fitHandleHittable: true, fitGhostHittable: true, fitBar: true, fitMirrorDefault: true, fitDragMoves: true,
   fitRotateKeepsCentre: true, fitCornerScales: true, fitSavedMatrix: true,
   fitClosed: true, oldWizardGone: true, puckAfterFit: true,
 });
