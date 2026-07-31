@@ -41,6 +41,11 @@ const out = await page.evaluate(async () => {
   o.puck80pct = Math.abs(puck.getBoundingClientRect().width
     - devEl.getBoundingClientRect().width * 0.8) < 2;
   o.noWedge = !sr().querySelector('.vacwedge'); // owner 2026-07-31: no heading arrow
+  // the glyph is DEAD centre (owner report: it floated on the text baseline)
+  const pr = puck.getBoundingClientRect();
+  const ir = sr().querySelector('.vacpuck ha-icon').getBoundingClientRect();
+  o.iconCentred = Math.abs(ir.left + ir.width / 2 - (pr.left + pr.width / 2)) < 0.75
+    && Math.abs(ir.top + ir.height / 2 - (pr.top + pr.height / 2)) < 0.75;
   o.baseStaysDuringCleaning = !!sr().querySelector('.dev');
 
   // drive: two more points -> trail polyline grows; puck moves
@@ -122,7 +127,7 @@ const out = await page.evaluate(async () => {
 checkAll(out, {
   dockedNoPuck: true, baseMarkerThere: true, puckAppears: true, puckRound: true,
   puckPlateMatchesDev: true, puck80pct: true,
-  noWedge: true, baseStaysDuringCleaning: true, trailDrawn: true,
+  noWedge: true, iconCentred: true, baseStaysDuringCleaning: true, trailDrawn: true,
   trailScaledByMatrix: true, trailToggleOff: true,
   puckGoneWhenDocked: true, trailLingers: true, hiddenNoPuck: true,
   unknownMapNoPuck: true,

@@ -1262,7 +1262,19 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
     }
     .vacpuck.jump { transition: none; }
     .vacpuck.stale { opacity: 0.45; animation: none; }
-    .vacpuck ha-icon { --mdc-icon-size: calc(var(--puck-size) * 0.68); color: var(--hp-txt); }
+    .vacpuck ha-icon {
+      --mdc-icon-size: calc(var(--puck-size) * 0.68);
+      color: var(--hp-txt);
+      /* same centering recipe as .dev ha-icon: without flex + line-height 0
+         the glyph sits on its text baseline and appears to float around the
+         circle (owner report 2026-07-31) */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 0;
+      width: var(--mdc-icon-size);
+      height: var(--mdc-icon-size);
+    }
     @keyframes vacpulse {
       0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--hp-accent) 45%, transparent); }
       70% { box-shadow: 0 0 0 12px transparent; }
