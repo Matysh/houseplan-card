@@ -956,3 +956,10 @@ class TestVacuum:
         import pytest
         with pytest.raises(Exception):
             v.MARKER_SCHEMA(_marker(vacuum={"teleport": True}))
+
+    def test_trail_mode_bounded(self):
+        import pytest
+        for ok in ("never", "cleaning", "always", None):
+            v.MARKER_SCHEMA(_marker(vacuum={"trail_mode": ok}))
+        with pytest.raises(Exception):
+            v.MARKER_SCHEMA(_marker(vacuum={"trail_mode": "sometimes"}))

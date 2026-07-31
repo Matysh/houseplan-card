@@ -290,3 +290,13 @@ export function reanchorFit(p: FitParams, prev: FitParams, sx: number, sy: numbe
   const [qx, qy] = applyAffine(trial, sx, sy);
   return { ...p, ox: px - qx, oy: py - qy };
 }
+
+export type VacTrailMode = 'never' | 'cleaning' | 'always';
+
+/** marker.vacuum → display mode; legacy bool maps in (false = never). */
+export function vacTrailMode(v: { trail?: boolean | null; trail_mode?: string | null } | null | undefined): VacTrailMode {
+  const m = v?.trail_mode;
+  if (m === 'never' || m === 'cleaning' || m === 'always') return m;
+  if (v?.trail === false) return 'never';
+  return 'cleaning';
+}

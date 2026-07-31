@@ -282,6 +282,9 @@ MARKER_SCHEMA = vol.Schema(
             vol.Schema({
                 vol.Optional("live"): vol.Any(bool, None),
                 vol.Optional("trail"): vol.Any(bool, None),
+                vol.Optional("trail_mode"): vol.Any(
+                    None, vol.In(["never", "cleaning", "always"])
+                ),
                 vol.Optional("room_highlight"): vol.Any(bool, None),
                 vol.Optional("source"): vol.Any(str, None),
                 # one 6-number affine per robot map; numbers must be finite

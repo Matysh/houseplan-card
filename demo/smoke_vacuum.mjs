@@ -87,7 +87,8 @@ const out = await page.evaluate(async () => {
     'vacuum.robo': { state: 'docked', attributes: { friendly_name: 'Робот' } } } };
   c._regSignature = ''; c.requestUpdate(); await c.updateComplete; await new Promise((r) => setTimeout(r, 30));
   o.puckGoneWhenDocked = !sr().querySelector('.vacpuck');
-  o.trailLingers = !!sr().querySelector('.vactrail polyline');
+  // default mode 'cleaning': the trail HIDES the moment the run ends (owner)
+  o.trailHiddenAfterDock = !sr().querySelector('.vactrail polyline');
 
   // hidden marker renders neither puck nor trail
   c.hass = { ...c.hass, states: { ...c.hass.states,
@@ -104,6 +105,7 @@ const out = await page.evaluate(async () => {
   o.unknownMapNoPuck = !sr().querySelector('.vacpuck');
 
   // ---- server-side runs: current + one previous (owner 2026-07-31) ----
+  cfg.markers.find((m) => m.id === 'e_vacuum_robo').vacuum.trail_mode = 'always';
   c._vacSrvTrails = { e_vacuum_robo: {
     current: { map_id: 'm1', started: 1, ended: null,
       points: [[700, 500], [900, 500], [1100, 640], [950, 1150]] },
@@ -123,6 +125,21 @@ const out = await page.evaluate(async () => {
   // 4 server points, the live tail trimmed while moving -> 3 rendered
   o.srvCurTrimmed = !!cur && cur.getAttribute('points').split(' ').length === 3;
   o.srvPrevFaded = !!prevG && getComputedStyle(prevG).opacity === '0.4';
+  // the growing tip is glued to the puck by the rAF sampler
+  const tip = sr().querySelector('line.tip');
+  o.tipExists = !!tip;
+  await new Promise((r) => setTimeout(r, 250));
+  const puckNow = sr().querySelector('.vacpuck').getBoundingClientRect();
+  const svgT = sr().querySelector('.vactrail');
+  const vbT = svgT.viewBox.baseVal; const sbT = svgT.getBoundingClientRect();
+  const tx = sbT.left + ((parseFloat(tip.getAttribute('x2')) - vbT.x) / vbT.width) * sbT.width;
+  const ty = sbT.top + ((parseFloat(tip.getAttribute('y2')) - vbT.y) / vbT.height) * sbT.height;
+  o.tipGluedToPuck = Math.hypot(tx - (puckNow.left + puckNow.width / 2), ty - (puckNow.top + puckNow.height / 2)) < 12;
+  // 'never' kills every line including the previous run
+  cfg.markers.find((m) => m.id === 'e_vacuum_robo').vacuum.trail_mode = 'never';
+  c._regSignature = ''; c.requestUpdate(); await c.updateComplete;
+  o.neverHidesAll = !sr().querySelector('.vactrail');
+  cfg.markers.find((m) => m.id === 'e_vacuum_robo').vacuum.trail_mode = null;
   c._vacSrvTrails = {};
 
   // ---- the fit panel (drag + corner-stretch) end to end ----
@@ -202,9 +219,10 @@ checkAll(out, {
   noWedge: true, iconCentred: true, baseStaysDuringCleaning: true, trailDrawn: true,
   trailScaledByMatrix: true, trailBehindPuck: true, zoomTeleports: true,
   trailCasing: true, trailToggleOff: true,
-  puckGoneWhenDocked: true, trailLingers: true, hiddenNoPuck: true,
+  puckGoneWhenDocked: true, trailHiddenAfterDock: true, hiddenNoPuck: true,
   unknownMapNoPuck: true,
   srvPrevRunShown: true, srvCurTrimmed: true, srvPrevFaded: true,
+  tipExists: true, tipGluedToPuck: true, neverHidesAll: true,
   fitDevFound: true, fitOverlay: true, fitGhostRooms: true, fitLabels: true,
   fitHandles: true, fitHandleHittable: true, fitGhostHittable: true, fitBar: true, fitMirrorDefault: true, fitDragMoves: true,
   fitRotateKeepsCentre: true, fitCornerScales: true, fitSavedMatrix: true,

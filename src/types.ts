@@ -58,7 +58,8 @@ export interface Marker {
   /** live robot vacuum (docs/VACUUM.md); absent on non-vacuum markers */
   vacuum?: {
     live?: boolean | null;
-    trail?: boolean | null;
+    trail?: boolean | null; // legacy bool; trail_mode wins
+    trail_mode?: 'never' | 'cleaning' | 'always' | null;
     room_highlight?: boolean | null;
     source?: string | null;
     calibration?: Record<string, number[]>;

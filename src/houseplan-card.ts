@@ -27,7 +27,7 @@ import {
 import { ContentSigner } from './signing';
 import {
   Affine, applyAffine, solveAffine, affineResidual, readVacTelemetry, isVacSourceState,
-  autoCalibrate, pushTrailPoint, isVacMoving, VAC_TELEPORT_GAP_MS, VAC_STALE_MS,
+  autoCalibrate, pushTrailPoint, isVacMoving, vacTrailMode, VAC_TELEPORT_GAP_MS, VAC_STALE_MS,
   FitParams, fitMatrix, fitFromMatrix, initialFit, reanchorFit, VacRoom,
   VAC_TRAIL_LINGER_MS, Pt as VacPt,
 } from './vacuum';
@@ -353,6 +353,8 @@ class HouseplanCard extends LitElement {
       space switch) or a tab return must TELEPORT the puck — animating left/top
       through a viewport change reads as «едет через весь план» (owner). */
   private _vacViewKey = '';
+  private _vacLastView: { x: number; y: number; w: number; h: number } | null = null;
+  private _vacRaf = 0;
   /** server-recorded runs per marker: {current, previous} in raw robot coords */
   private _vacSrvTrails: Record<string, any> = {};
   private _unsubTrail?: () => void;
@@ -458,6 +460,7 @@ class HouseplanCard extends LitElement {
 
   public disconnectedCallback(): void {
     document.removeEventListener('visibilitychange', this._vacVisHandler);
+    if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
     window.removeEventListener('keydown', this._keyHandler);
     clearInterval(this._cycleTimer);
     clearTimeout(this._kioskDotsTimer);
@@ -4391,7 +4394,7 @@ class HouseplanCard extends LitElement {
         this._vacRt.set(d.id, rt);
       }
       if (moving && !rt.moving) { rt.trail = []; rt.lastPos = null; } // a fresh run
-      const wantTrail = d.marker?.vacuum?.trail !== false && !tele?.path;
+      const wantTrail = vacTrailMode(d.marker?.vacuum) !== 'never' && !tele?.path;
       if (!moving && rt.moving) {
         rt.endedTs = Date.now();
         // the run is over: the puck has arrived everywhere it was going
@@ -4455,11 +4458,12 @@ class HouseplanCard extends LitElement {
               @change=${(e: Event) => setVac({ live: (e.target as HTMLInputElement).checked ? null : false })} />
             <span>${this._t('vac.live')}</span>
           </label>
-          <label class="srcrow">
-            <input type="checkbox" .checked=${v.trail !== false}
-              @change=${(e: Event) => setVac({ trail: (e.target as HTMLInputElement).checked ? null : false })} />
-            <span>${this._t('vac.trail')}</span>
-          </label>
+          <label>${this._t('vac.trail')}</label>
+          <select class="areasel"
+            @change=${(e: Event) => setVac({ trail_mode: (e.target as HTMLSelectElement).value, trail: null })}>
+            ${(['never', 'cleaning', 'always'] as const).map((mv) => html`
+              <option value=${mv} ?selected=${vacTrailMode(v) === mv}>${this._t(('vac.trail_' + mv) as any)}</option>`)}
+          </select>
           ${cals.length ? html`<div class="rhint">${subst(this._t('vac.cal_maps'), { maps: cals.join(', ') })}</div>` : nothing}
         ` : nothing}
       </div>`;
@@ -4669,6 +4673,29 @@ class HouseplanCard extends LitElement {
         @pointercancel=${(e: PointerEvent) => this._vacFitPointer(e, view)}>${rects}${dot}${handles}</svg>`;
   }
 
+  /** Every frame: glue the growing tip segment to the animated puck centre. */
+  private _vacRafLoop(): void {
+    this._vacRaf = requestAnimationFrame(() => {
+      const sr = this.renderRoot as ShadowRoot;
+      const stage = this._stageEl;
+      const view = this._vacLastView;
+      const pucks = sr?.querySelectorAll?.('.vacpuck') || [];
+      if (!stage || !view || !pucks.length) { this._vacRaf = 0; return; }
+      const sb = stage.getBoundingClientRect();
+      for (const puck of pucks as any) {
+        const mid = puck.getAttribute('data-mid');
+        const pb = puck.getBoundingClientRect();
+        const cx = view.x + ((pb.left + pb.width / 2 - sb.left) / sb.width) * view.w;
+        const cy = view.y + ((pb.top + pb.height / 2 - sb.top) / sb.height) * view.h;
+        for (const line of sr.querySelectorAll(`line.tip[data-mid="${mid}"]`)) {
+          line.setAttribute('x2', cx.toFixed(1));
+          line.setAttribute('y2', cy.toFixed(1));
+        }
+      }
+      this._vacRafLoop();
+    });
+  }
+
   /** Puck + trail for every live vacuum of the space. */
   private _renderVacuums(devs: DevItem[], view: { x: number; y: number; w: number; h: number }): TemplateResult | typeof nothing {
     if (this._markup || this._mode === 'decor') return nothing;
@@ -4688,14 +4715,17 @@ class HouseplanCard extends LitElement {
       if (!matrix || matrix.length !== 6) continue;
       const rt = this._vacRt.get(d.id);
       const moving = rt?.moving ?? false;
-      const lingering = !moving && rt?.endedTs && Date.now() - rt.endedTs < VAC_TRAIL_LINGER_MS;
+      const tmode = vacTrailMode(d.marker?.vacuum);
+      // owner 2026-07-31: hide when the cleanup is over (default), unless the
+      // mode says always; the previous run only ever shows in 'always'
+      const showCur = tmode === 'always' || (tmode === 'cleaning' && moving);
       const srv = this._vacSrvTrails[d.id];
       const mapNow = this._vacMapId(d, tele);
       const srvCur = srv?.current?.map_id === mapNow && Array.isArray(srv.current.points) ? srv.current : null;
       const srvPrev = srv?.previous?.map_id === mapNow && Array.isArray(srv.previous.points) ? srv.previous : null;
       // the PREVIOUS run stays visible even at rest: users compare where the
       // robot has been against where it has not (owner call 2026-07-31)
-      if (d.marker?.vacuum?.trail !== false && srvPrev && srvPrev.points.length > 1) {
+      if (tmode === 'always' && srvPrev && srvPrev.points.length > 1) {
         const pts = srvPrev.points.map(([x, y]: number[]) => {
           const [cx2, cy2] = applyAffine(matrix, x, y);
           return cx2.toFixed(1) + ',' + cy2.toFixed(1);
@@ -4704,7 +4734,7 @@ class HouseplanCard extends LitElement {
       }
       // trail source order: server current run (survives reloads, shared by
       // every screen) → integration path → the local live buffer
-      if (d.marker?.vacuum?.trail !== false && (moving || lingering || srvCur)) {
+      if (showCur && (moving || srvCur)) {
         // any server/integration path ends at the CURRENT target — trim the
         // live tail while moving so the line never runs ahead of the puck
         const full: VacPt[] = (srvCur?.points as VacPt[]) || tele.path || rt?.trail || [];
@@ -4719,6 +4749,13 @@ class HouseplanCard extends LitElement {
           // visible over ANY room fill — blend modes all have a blind
           // luminance where the line vanishes (owner request 2026-07-31).
           trails.push(svg`<polyline class="case" points="${ptsStr}"></polyline><polyline class="core" points="${ptsStr}"></polyline>`);
+          // the LAST segment grows glued to the icon (owner: «след появлялся
+          // строго за иконкой»): a rAF sampler drags x2/y2 to the puck centre
+          if (moving) {
+            const [ax, ay] = applyAffine(matrix, raw[raw.length - 1][0], raw[raw.length - 1][1]);
+            const a1 = ax.toFixed(1), a2 = ay.toFixed(1);
+            trails.push(svg`<line class="case tip" data-mid="${d.id}" x1="${a1}" y1="${a2}" x2="${a1}" y2="${a2}"></line><line class="core tip" data-mid="${d.id}" x1="${a1}" y1="${a2}" x2="${a1}" y2="${a2}"></line>`);
+          }
         }
       }
       if (!moving || !tele.pos) continue;
@@ -4728,6 +4765,7 @@ class HouseplanCard extends LitElement {
       const stale = rt && rt.lastTs > 0 && Date.now() - rt.lastTs > VAC_STALE_MS;
       const icon = d.marker?.icon || d.icon || 'mdi:robot-vacuum';
       pucks.push(html`<div
+        data-mid="${d.id}"
         class="vacpuck ${rt?.jump || jumpAll ? 'jump' : ''} ${stale ? 'stale' : ''}"
         style="left:${left}%;top:${top}%"
         title=${d.name}
@@ -4735,6 +4773,8 @@ class HouseplanCard extends LitElement {
         <ha-icon .icon=${icon}></ha-icon>
       </div>`);
     }
+    this._vacLastView = view;
+    if (pucks.length && !this._vacRaf) this._vacRafLoop();
     if (!pucks.length && !trails.length) return nothing;
     return html`
       ${trails.length ? svg`<svg class="vactrail" viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="none">${trails}</svg>` : nothing}

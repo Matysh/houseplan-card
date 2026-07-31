@@ -361,7 +361,7 @@
   "vac.status_none": "The integration reports no coordinates — the robot will only be shown at its base",
   "vac.autocal": "Set up automatically",
   "vac.live": "Live position on the plan",
-  "vac.trail": "Show the cleaning trail",
+  "vac.trail": "Show the robot's path",
   "vac.cal_maps": "Calibrated maps: {maps}",
   "vac.autocal_no_rooms": "The integration reports no room list — use point calibration",
   "vac.autocal_no_match": "Room names did not match (need ≥3 in common) — use point calibration",
@@ -373,5 +373,8 @@
   "vac.fit": "Fit manually",
   "vac.fit_hint": "Drag the robot map into place, stretch by the corners",
   "vac.fit_rotate": "Rotate 90°",
-  "vac.fit_mirror": "Mirror"
+  "vac.fit_mirror": "Mirror",
+  "vac.trail_never": "Never",
+  "vac.trail_cleaning": "While cleaning",
+  "vac.trail_always": "Always"
 }
