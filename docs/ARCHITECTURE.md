@@ -17,6 +17,7 @@ houseplan-card/
 ├─ dist/houseplan-card.js        # build (rollup+terser), ~290 KB, plans embedded
 ├─ custom_components/houseplan/  # the HA integration
 │  ├─ __init__.py                # setup: Store, WS commands, JS serving (add_extra_js_url)
+│  ├─ trails.py                  # server-side vacuum trail recorder (state-change driven)
 │  ├─ websocket_api.py           # houseplan/layout/get|set|update
 │  ├─ config_flow.py             # single entry; admin_only option (editing restricted to admins)
 │  ├─ const.py                   # DOMAIN, STORAGE_KEY, VERSION, FRONTEND_URL
@@ -189,6 +190,7 @@ double click → properties dialog. In markup mode the "Opening" tool handles cl
 | `houseplan/layout/set` | `layout`, `expected_rev?` | `{ok, rev}` / err `conflict`; event `houseplan_layout_updated` |
 | `houseplan/layout/update` | `device_id`, `pos` | `{ok, rev}`; event `houseplan_layout_updated` |
 | `houseplan/config/get` | — | `{config, rev}` |
+| `houseplan/trail/get` | — | `{trails: {marker: {current, previous}}}` — vacuum runs, raw robot coords |
 | `houseplan/config/set` | `config`, `expected_rev?` | `{ok, rev}` / err `conflict`; event `houseplan_config_updated` |
 | `houseplan/plan/set` | `space_id`, `ext` (svg/png/jpg/webp), `data` (b64, ≤8 MB) | `{ok, url}` — writes `<space>.<token>.<ext>`, deletes nothing |
 | `houseplan/plans/list` | — | `{plans: [{name, url, size, modified, used_by}], total}` (newest 60) |

@@ -103,6 +103,11 @@ class TrailRecorder:
             self._unsub_track = async_track_state_change_event(
                 self.hass, sorted(ents), self._on_state
             )
+        # A run already in progress (HA restarted mid-cleanup, or the user just
+        # finished calibrating) must start recording NOW, not at the next
+        # state change — otherwise the first seconds of the path are lost.
+        for src in self.pairs:
+            self._sample(src, time.time())
 
     def teardown(self) -> None:
         if self._unsub_track:
@@ -123,36 +128,41 @@ class TrailRecorder:
                     return e.entity_id
         return None
 
+    def _sample(self, src: str, now: float) -> bool:
+        """Record one point (or end the run) for a single source entity."""
+        pair = self.pairs.get(src)
+        if not pair:
+            return False
+        marker, vac = pair
+        st_vac = self.hass.states.get(vac)
+        if not st_vac or st_vac.state not in MOVING_STATES:
+            return self.book.end_run(marker, now)
+        st_src = self.hass.states.get(src)
+        attrs = st_src.attributes if st_src else {}
+        pos = attrs.get("vacuum_position") or attrs.get("robot_position")
+        if not isinstance(pos, dict):
+            return False
+        try:
+            x, y = float(pos["x"]), float(pos["y"])
+        except (KeyError, TypeError, ValueError):
+            return False
+        map_id = str(
+            attrs.get("map_name")
+            or attrs.get("current_map")
+            or attrs.get("map_index")
+            or st_vac.attributes.get("selected_map")
+            or "default"
+        )
+        return self.book.on_point(marker, map_id, x, y, now)
+
     @callback
     def _on_state(self, event: Any) -> None:
         eid = event.data.get("entity_id")
         now = time.time()
         changed = False
-        for src, (marker, vac) in self.pairs.items():
-            if eid not in (src, vac):
-                continue
-            st_vac = self.hass.states.get(vac)
-            moving = bool(st_vac and st_vac.state in MOVING_STATES)
-            if not moving:
-                changed |= self.book.end_run(marker, now)
-                continue
-            st_src = self.hass.states.get(src)
-            attrs = st_src.attributes if st_src else {}
-            pos = attrs.get("vacuum_position") or attrs.get("robot_position")
-            if not isinstance(pos, dict):
-                continue
-            try:
-                x, y = float(pos["x"]), float(pos["y"])
-            except (KeyError, TypeError, ValueError):
-                continue
-            map_id = str(
-                attrs.get("map_name")
-                or attrs.get("current_map")
-                or attrs.get("map_index")
-                or (st_vac.attributes.get("selected_map") if st_vac else None)
-                or "default"
-            )
-            changed |= self.book.on_point(marker, map_id, x, y, now)
+        for src, (_marker, vac) in self.pairs.items():
+            if eid in (src, vac):
+                changed |= self._sample(src, now)
         if changed:
             self._schedule_save()
             if now - self._last_fire >= FIRE_THROTTLE_S:

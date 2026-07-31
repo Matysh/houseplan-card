@@ -808,15 +808,28 @@ require hands on real hardware — they remain for the human pass.
 - [ ] Single click still opens the status card; double click opens the properties dialog;
       a drag does NOT open either
 
-## Live vacuums (docs/VACUUM.md, P1)
+## Live vacuums (docs/VACUUM.md)
 
-- Docked robot: only the base marker, at the user-placed spot. No puck.
-- Cleaning + calibrated map: a round pulsing puck (no badge plate) drives the
-  plan; the base marker never moves. No heading arrow on the puck
-  (owner removed it 2026-07-31).
-- Trail: integration `path` preferred, else self-recorded; lingers 10 min
-  after docking; a new run clears it; `trail: false` hides it.
+- Docked robot: only the base marker, at the user-placed spot (the dock).
+- Cleaning + calibrated map: a round pulsing puck — the base badge but
+  circular and 20% smaller, same plate colors, glyph dead-centre — drives
+  the plan; the base marker never moves. No heading arrow.
+- Puck motion: glides ~1.2 s between telemetry points; TELEPORTS (no glide)
+  on zoom, pan, space switch, browser-tab return, and after a >10 s data
+  gap. Stale coords (>60 s while cleaning) freeze and dim it.
+- «Показывать путь робота» has three modes: never / while cleaning (default
+  — the line hides the instant the run ends) / always (the only mode that
+  also shows the previous run at 40% opacity).
+- The trail is server-recorded (trails.py watches the source entity; two
+  runs kept per marker, survives reloads, shared by every screen) and never
+  outruns the icon: drawn segments lag one point, and the last segment is a
+  rAF-driven tip glued to the puck centre every frame.
+- Trail style: cartography casing (dark halo 2.25 + light core 0.9),
+  readable over any room fill.
 - Hidden marker: neither puck nor trail. Uncalibrated active map: no puck.
-- Wizard: 3 stage clicks with the robot parked at 3 spots → matrix saved per
-  map id; Esc cancels; collinear points are rejected with a toast.
-- Auto-calibration needs ≥3 rooms matched by name between the robot and plan.
+- Calibration: «Настроить автоматически» (≥3 rooms matched by name) or the
+  fit panel — drag the dashed room ghost, stretch by 4 corner handles,
+  rotate 90°/mirror buttons (mirror ON by default), Save/Cancel/Esc. Real
+  clicks must land on the overlay (elementFromPoint smoke guards it).
+- Multi-floor: one matrix per robot map (Dreame `selected_map` on the
+  vacuum entity names the active one).
