@@ -1,5 +1,33 @@
 # Changelog
 
+## v1.54.3 — 2026-08-01
+
+Patch release: three quality-of-life rounds — icon satellites now follow
+the per-device size multiplier, editor zoom stopped leaking into view
+mode, and motion sensors got a visual language of their own.
+
+- **The per-device size multiplier now scales the icon's satellites
+  too.** Reported by an owner with a screenshot: shrinking a device left
+  the value badge, the temperature/humidity plates, the LQI label, the
+  «new» dot and the alarm ring at full size, towering over the tiny
+  icon. Every satellite now follows the multiplier along with the icon.
+- **Editor zoom is a working tool, not a saved setting.** Zooming to
+  500% to place a marker precisely and then closing the editor used to
+  drop you into a 500% view mode. Leaving any editor now restores the
+  viewport you had in view mode before you started editing.
+- **Fix: editor zoom could still resurrect when switching floors.** The
+  editor viewport raced the per-floor viewport store and won: switch
+  floors while editing and the 500% was written down as that floor's
+  saved view, greeting you on the next visit (steps to reproduce came
+  from the owner). Editor zoom is never written to the store anymore.
+- **Tripped motion and presence sensors signal with a yellow ring.** The
+  rule stays «fill = on»: motion is a one-shot flash — three pulses at
+  the moment of detection, with no pulsing during the cool-down tail —
+  while occupancy/presence hold a static ring for as long as they report
+  someone present.
+- Stand only: a `services.yaml` for the demo stand's `demo_guard` to
+  keep hassfest green; nothing of it ships in the integration.
+
 ## v1.54.2 — 2026-07-31
 
 Patch release: the one remaining finding of the v1.54.1 re-audit
