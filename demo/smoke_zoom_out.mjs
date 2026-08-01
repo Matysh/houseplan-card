@@ -108,6 +108,42 @@ out.viewZoomSurvivesSpaceSwitch = await page.evaluate(async () => {
 });
 await page.evaluate(() => window.__card._resetZoom());
 
+// -- owner's dacha regression: editor 500% must never reach the per-space
+// view store. View zoom set on BOTH floors, editor cranked to 5.0, back to
+// view — and the floor tab is clicked in the SAME tick (on the tablet the
+// exit re-render janks, so the click runs before the restore rAF and the
+// old fix-up save was skipped). Two switches later the stale 5.0 came back.
+out.editorZoomNeverInSpaceStore = await page.evaluate(async () => {
+  const c = window.__card;
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const raf2 = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  c._setMode('view');
+  c._resetZoom(); c._zoomAt(10, 10, 1.6); c._saveZoom();      // floor 1 view zoom
+  c._slideTo('garden', 'left'); await wait(350);
+  c._resetZoom(); c._zoomAt(10, 10, 1.4); c._saveZoom();      // floor 2 view zoom
+  c._setMode('devices'); await raf2();
+  c._zoomAt(10, 10, 5.0); c._saveZoom();                      // 500% — a working tool
+  const lsInEditor = JSON.parse(localStorage.getItem('houseplan_card_zoom_v1') || '{}');
+  c._setMode('view');
+  c._slideTo('f1', 'right'); await wait(350);                 // same tick as the exit — beats the rAF
+  const firstSwitch = Math.abs(c._zoom - 1.6) < 0.01;
+  c._slideTo('garden', 'left'); await wait(350);
+  const secondSwitch = Math.abs(c._zoom - 1.4) < 0.01;        // used to come back as 5.0
+  const ls = JSON.parse(localStorage.getItem('houseplan_card_zoom_v1') || '{}');
+  c._slideTo('f1', 'right'); await wait(350); c._resetZoom(); // leave the stage as the next tests expect
+  return {
+    editorNotPersisted: Math.abs((lsInEditor.garden || 1) - 1.4) < 0.01,
+    firstSwitch,
+    secondSwitch,
+    lsClean: Math.abs((ls.garden || 1) - 1.4) < 0.01 && Math.abs((ls.f1 || 1) - 1.6) < 0.01,
+  };
+});
+out.editorZoomStaysOutOfLs = out.editorZoomNeverInSpaceStore.editorNotPersisted;
+out.ownerFirstSwitchOk = out.editorZoomNeverInSpaceStore.firstSwitch;
+out.ownerSecondSwitchOk = out.editorZoomNeverInSpaceStore.secondSwitch;
+out.ownerLsClean = out.editorZoomNeverInSpaceStore.lsClean;
+delete out.editorZoomNeverInSpaceStore;
+
 // -- devices outside rooms stretch the default frame ---------------------
 out.devicesStretchFrame = await page.evaluate(() => {
   const c = window.__card;

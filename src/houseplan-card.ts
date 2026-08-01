@@ -1543,8 +1543,16 @@ class HouseplanCard extends LitElement {
     this._saveZoom();
   }
 
-  /** Save the current space zoom to localStorage. */
+  /** Save the current space zoom to localStorage (view mode only). */
   private _saveZoom(): void {
+    // Editor zoom is a working tool, never the viewing intent: while an editor
+    // is open the wheel/pinch keep calling _saveZoom, but the per-space VIEW
+    // zoom must not learn about it. The exit-editor restore used to re-save the
+    // view zoom from a rAF — on a slow tablet the floor-tab click lands BEFORE
+    // that rAF (input runs first in the frame), the space guard skipped the
+    // fix-up and the editor 500% stayed in _zoomBySpace/LS_ZOOM for the next
+    // visit to that floor. Editors do not need zoom persistence at all.
+    if (this._mode !== 'view') return;
     this._zoomBySpace = { ...this._zoomBySpace, [this._space]: this._zoom };
     try {
       localStorage.setItem(LS_ZOOM, JSON.stringify(this._zoomBySpace));
