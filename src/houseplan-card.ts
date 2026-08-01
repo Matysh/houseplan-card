@@ -362,7 +362,7 @@ class HouseplanCard extends LitElement {
       the flash is keyed to the TRANSITION, not to the 'on' state. `timer`
       is the one setTimeout per entry that repaints the card when the flash
       window closes (cleared in disconnectedCallback). */
-  private _senseRt = new Map<string, { last: string; flashTs: number; timer: number }>();
+  private _senseRt = new Map<string, { last: string; flashTs: number; timer: number; gen: number }>();
   /** live-vacuum runtime per marker: RAW robot coords (matrix applied at render) */
   private _vacRt = new Map<string, { trail: VacPt[]; lastKey: string; lastTs: number;
     moving: boolean; jump: boolean; endedTs: number; lastPos: VacPt | null }>();
@@ -1331,7 +1331,12 @@ class HouseplanCard extends LitElement {
       // the state has not changed. A new off→on trip re-arms the flash.
       if (dc === 'motion') {
         const rt = this._senseRt.get(d.id);
-        return rt && rt.flashTs && Date.now() - rt.flashTs < SENSE_FLASH_MS ? 'senseflash' : '';
+        if (!(rt && rt.flashTs && Date.now() - rt.flashTs < SENSE_FLASH_MS)) return '';
+        // HP-1543-02: alternate the animation identity per trip (see
+        // _senseTick) — odd generations ride the base hp-sense keyframes,
+        // even ones the identical hp-sense-b twin, so a rapid re-trip
+        // restarts the flash instead of silently inheriting the old timeline
+        return rt.gen % 2 === 0 ? 'senseflash sf2' : 'senseflash';
       }
       // OCCUPANCY/PRESENCE while 'on': a calm STATIC ring ('sensehold',
       // no animation in styles.ts) — «комната обитаема» is a state, not
@@ -1923,8 +1928,7 @@ class HouseplanCard extends LitElement {
     if (mode === 'view') {
       const snap = this._viewModeSnap;
       this._viewModeSnap = null;
-      // restore only for the space the snapshot was taken in — after a space
-      // switch inside the editor the saved per-space zoom already applies
+      // restore the snapshot only for the space it was taken in
       if (snap && snap.space === this._space) {
         this._zoom = snap.zoom;
         this._view = null;
@@ -1934,6 +1938,17 @@ class HouseplanCard extends LitElement {
           this._saveZoom(); // editor wheel zoom wrote itself to LS_ZOOM — put the view zoom back
           this.requestUpdate();
         });
+      } else if (snap) {
+        // HP-1543-01: the floor CHANGED inside the editor — the snapshot
+        // belongs to the floor the editor was entered from, while _zoom still
+        // carries the editor's working zoom for the floor we are exiting on.
+        // Dropping the snapshot alone left that editor zoom (say 500%) on
+        // screen in view mode. The per-space store was never polluted
+        // (_saveZoom is view-only), so the standard centred
+        // _restoreZoom() puts back this floor's saved VIEW viewport. Its rAF
+        // reads _zoomBySpace, not the snapshot, so the same-tick floor-tab
+        // race the view-only guard protects against stays closed.
+        this._restoreZoom();
       }
     }
     this._path = [];
@@ -4462,9 +4477,19 @@ class HouseplanCard extends LitElement {
       const p = this.hass.states[d.primary];
       if (p?.attributes?.device_class !== 'motion') continue;
       const rt = this._senseRt.get(d.id);
-      if (!rt) { this._senseRt.set(d.id, { last: p.state, flashTs: 0, timer: 0 }); continue; }
+      if (!rt) { this._senseRt.set(d.id, { last: p.state, flashTs: 0, timer: 0, gen: 0 }); continue; }
       if (p.state === 'on' && rt.last === 'off') {
         rt.flashTs = Date.now();
+        // HP-1543-02: a retrip BEFORE the previous flash finished kept the
+        // same 'senseflash' class and the same animation-name on the same
+        // pseudo-element — browsers never restart such a CSS animation, so
+        // the second detection played nothing once the first one-shot had
+        // ended (base opacity 0). Every trip bumps the generation;
+        // _stateClass maps its parity to alternating keyframe names
+        // (hp-sense / hp-sense-b in styles.ts), which is a NEW animation
+        // identity and forces a fresh timeline per detection. No class is
+        // ever removed mid-flash, so a lone first flash still plays whole.
+        rt.gen++;
         clearTimeout(rt.timer);
         rt.timer = window.setTimeout(() => this.requestUpdate(), SENSE_FLASH_MS + 60);
       }

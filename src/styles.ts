@@ -907,6 +907,13 @@ export const cardStyles = css`
       animation: hp-sense 1.1s ease-in-out 3;
       pointer-events: none;
     }
+    /* HP-1543-02: a rapid off→on retrip must RESTART the flash. The card
+       flips the .sf2 marker on every trip (_senseTick generation parity);
+       hp-sense-b duplicates hp-sense exactly — switching the animation-name
+       is what makes the browser abandon the old timeline and start a fresh
+       one on the same pseudo-element (a same-name animation never restarts
+       while the class stays on). */
+    .dev.senseflash.sf2::after { animation-name: hp-sense-b; }
     /* OCCUPANCY/PRESENCE while 'on': a calm STATIC ring, no animation —
        «комната обитаема» is a state, not an event, so it must not blink.
        Brightness matches the reduced-motion variant of the flash. */
@@ -920,6 +927,13 @@ export const cardStyles = css`
       pointer-events: none;
     }
     @keyframes hp-sense {
+      0% { transform: scale(0.9); opacity: 0.5; }
+      60% { transform: scale(1.12); opacity: 0.12; }
+      100% { transform: scale(1.12); opacity: 0; }
+    }
+    /* identical twin of hp-sense — exists ONLY as the alternate animation
+       identity for the retrip restart (HP-1543-02), keep the two in sync */
+    @keyframes hp-sense-b {
       0% { transform: scale(0.9); opacity: 0.5; }
       60% { transform: scale(1.12); opacity: 0.12; }
       100% { transform: scale(1.12); opacity: 0; }
@@ -943,7 +957,8 @@ export const cardStyles = css`
       /* the motion flash becomes a static ring for the same ~3.3s class
          window — consistent with alarm's treatment; sensehold is static
          by design already */
-      .dev.senseflash::after { animation: none; opacity: 0.4; }
+      .dev.senseflash::after,
+      .dev.senseflash.sf2::after { animation: none; opacity: 0.4; } /* HP-1543-02: retrip re-arms the window, ring stays static */
     }
     .dev .newdot {
       position: absolute;

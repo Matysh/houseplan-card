@@ -53,6 +53,37 @@ const res = await page.evaluate(async () => {
   await setMotion('on', 'motion');
   out.retripFlashesAgain = sr().querySelectorAll('.dev.senseflash').length === 1;
 
+  // --- HP-1543-02: быстрый повторный off→on ДО конца текущей вспышки ------
+  // обязан ПЕРЕЗАПУСТИТЬ анимацию (новый timeline). Раньше класс senseflash
+  // не снимался и animation-name не менялся — браузер продолжал старый
+  // timeline, и после его конца (base opacity 0) второй trip был невидим.
+  await sleep(3600); await c.updateComplete;   // дать текущей вспышке догореть
+  const senseAnim = (el) => el && el.getAnimations({ subtree: true })
+    .find((a) => a.animationName && a.animationName.startsWith('hp-sense'));
+  await setMotion('off', 'motion');
+  await setMotion('on', 'motion');             // trip №1
+  out.rapidFirstTripFlashes = sr().querySelectorAll('.dev.senseflash').length === 1;
+  await sleep(1200);                           // середина первой вспышки (< 3.3s)
+  const a1 = senseAnim(sr().querySelector('.dev.senseflash'));
+  out.rapidFirstAnimMidway = !!a1 && a1.currentTime > 900 && a1.currentTime < 3300;
+  await setMotion('off', 'motion');
+  await setMotion('on', 'motion');             // trip №2 — retrip до конца вспышки
+  out.rapidRetripKeepsFlash = sr().querySelectorAll('.dev.senseflash').length === 1;
+  const a2 = senseAnim(sr().querySelector('.dev.senseflash'));
+  // новый timeline: currentTime у начала (старый уже был ~1.2s и продолжал бы расти)
+  out.rapidRetripRestartsAnim = !!a2 && a2.currentTime != null && a2.currentTime < 300;
+  // кольцо реально играет ПОСЛЕ момента, где закончилась бы первая анимация:
+  // ~2.3s после trip №2 = ~3.5s после trip №1 (старый timeline уже отыграл бы)
+  await sleep(2300);
+  const el3 = sr().querySelector('.dev.senseflash');
+  const a3 = senseAnim(el3);
+  out.rapidSecondFlashStillPlays = !!a3 && a3.playState === 'running';
+  out.rapidRingVisibleAfterFirstWindow = !!el3
+    && parseFloat(getComputedStyle(el3, '::after').opacity) > 0.03;
+  // и класс уходит через полные ~3.3s после ВТОРОГО trip (flashTs/таймер обновлены)
+  await sleep(1400); await c.updateComplete;
+  out.rapidFlashEndsAfterSecondWindow = sr().querySelectorAll('.dev.senseflash').length === 0;
+
   // --- occupancy: статичное кольцо sensehold, без анимации ----------------
   await setMotion('on', 'occupancy');
   const holdEl = sr().querySelector('.dev.sensehold');

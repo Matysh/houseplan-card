@@ -144,6 +144,53 @@ out.ownerSecondSwitchOk = out.editorZoomNeverInSpaceStore.secondSwitch;
 out.ownerLsClean = out.editorZoomNeverInSpaceStore.lsClean;
 delete out.editorZoomNeverInSpaceStore;
 
+// -- HP-1543-01: смена этажа ВНУТРИ редактора не тащит editor zoom в view --
+// view-зум сохранён на обоих этажах → редактор на f1 → переключение ВКЛАДКОЙ
+// на garden → editor zoom 5.0 → выход в view (остаёмся на garden): вид обязан
+// вернуться к сохранённому view-зуму garden (1.4) с штатным центром
+// _restoreZoom(), а не остаться на редакторских 500% (снапшот-guard по space
+// отбрасывал восстановление, а текущий _zoom так и оставался редакторским).
+out.crossFloorEditorExit = await page.evaluate(async () => {
+  const c = window.__card;
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const raf2 = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  const sr = c.shadowRoot || c.renderRoot;
+  c._setMode('view');
+  c._resetZoom(); c._zoomAt(10, 10, 1.6); c._saveZoom();      // f1 view zoom
+  c._slideTo('garden', 'left'); await wait(350);
+  c._resetZoom(); c._zoomAt(10, 10, 1.4); c._saveZoom();      // garden view zoom
+  c._slideTo('f1', 'right'); await wait(350);
+  c._setMode('devices'); await raf2();
+  // этаж меняется НАСТОЯЩЕЙ вкладкой — именно этот путь под подозрением
+  const idx = c._model.findIndex((s) => s.id === 'garden');
+  sr.querySelectorAll('.tabs .tab')[idx].click();
+  await c.updateComplete; await raf2();
+  c._zoomAt(10, 10, 5.0); c._saveZoom();                      // 500% — рабочий инструмент
+  c._setMode('view'); await raf2(); await wait(60);
+  const stillGarden = c._space === 'garden';
+  const gotZoom = c._zoom;
+  const v = c._view; const vb = c._baseVb();
+  const centred = !!v && Math.abs(v.x + v.w / 2 - (vb[0] + vb[2] / 2)) < 1
+    && Math.abs(v.y + v.h / 2 - (vb[1] + vb[3] / 2)) < 1;
+  const ls = JSON.parse(localStorage.getItem('houseplan_card_zoom_v1') || '{}');
+  const store = { ...c._zoomBySpace };
+  c._slideTo('f1', 'right'); await wait(350); c._resetZoom(); // вернуть сцену следующим тестам
+  return {
+    stillGarden,
+    viewZoomRestoredCrossFloor: Math.abs(gotZoom - 1.4) < 0.01,          // было 5.0 (HP-1543-01)
+    centerRestoredCrossFloor: centred,                                   // центр как у _restoreZoom()
+    storeIntactCrossFloor: Math.abs((store.garden || 1) - 1.4) < 0.01,   // _zoomBySpace не тронут
+    lsIntactCrossFloor: Math.abs((ls.garden || 1) - 1.4) < 0.01
+      && Math.abs((ls.f1 || 1) - 1.6) < 0.01,                            // LS_ZOOM не тронут
+  };
+});
+out.crossFloorStillGarden = out.crossFloorEditorExit.stillGarden;
+out.crossFloorViewZoomRestored = out.crossFloorEditorExit.viewZoomRestoredCrossFloor;
+out.crossFloorCenterRestored = out.crossFloorEditorExit.centerRestoredCrossFloor;
+out.crossFloorStoreIntact = out.crossFloorEditorExit.storeIntactCrossFloor;
+out.crossFloorLsIntact = out.crossFloorEditorExit.lsIntactCrossFloor;
+delete out.crossFloorEditorExit;
+
 // -- devices outside rooms stretch the default frame ---------------------
 out.devicesStretchFrame = await page.evaluate(() => {
   const c = window.__card;
