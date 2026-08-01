@@ -883,22 +883,40 @@ export const cardStyles = css`
     /* v1.52.0: the RGB tint of the icon/border is gone — a lamp's colour
        lives ONLY in its glow spot (owner's rule). The ripple-color fallback
        keeps using the light colour; that is set inline via --ripple-color. */
-    /* motion/occupancy/presence tripped: a soft yellow pulse ring around
-       the icon. Owner's rule (2026-08-01): «жёлтая подложка = включено;
-       срабатывание сенсора = лёгкая жёлтая пульсация» — the yellow FILL
-       stays reserved for the 'on' state, so a tripped sensor keeps the
-       neutral badge and only breathes. Same ring mechanics as .dev.alarm
-       below, but gentler: the .dev.on yellow (--hp-on), half the opacity,
-       a slower period and a smaller amplitude. Declared BEFORE .dev.alarm
-       on purpose: equal specificity on the same ::after means the later
-       alarm rule wins if a device ever carries both — red beats yellow. */
-    .dev.sense::after {
+    /* Owner's rule (2026-08-01, вариант «б»): «движение = разовая вспышка
+       в момент обнаружения; cool-down не пульсирует; присутствие =
+       статичное кольцо пока обитаемо». The yellow FILL stays reserved for
+       «включено» — both sense states keep the neutral badge. Both rings
+       are declared BEFORE .dev.alarm on purpose: equal specificity on the
+       shared ::after means the later alarm rule wins if a device ever
+       carries both — red beats yellow. */
+    /* MOTION tripped: a short ONE-SHOT flash — three beats of the yellow
+       ring (3 × 1.1s), then silence, even while the entity still reports
+       'on' (that tail is the sensor's cool-down, not motion). The
+       iteration count is FINITE, and the card itself drops the class
+       ~3.3s after the off→on transition (_senseTick/_stateClass in
+       houseplan-card.ts); base opacity 0 keeps the ring invisible should
+       the class outlive the animation by a frame. */
+    .dev.senseflash::after {
       content: '';
       position: absolute;
       inset: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * -0.35);
       border: 2px solid var(--hp-on);
       border-radius: 50%;
-      animation: hp-sense 2.4s ease-in-out infinite;
+      opacity: 0;
+      animation: hp-sense 1.1s ease-in-out 3;
+      pointer-events: none;
+    }
+    /* OCCUPANCY/PRESENCE while 'on': a calm STATIC ring, no animation —
+       «комната обитаема» is a state, not an event, so it must not blink.
+       Brightness matches the reduced-motion variant of the flash. */
+    .dev.sensehold::after {
+      content: '';
+      position: absolute;
+      inset: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * -0.35);
+      border: 2px solid var(--hp-on);
+      border-radius: 50%;
+      opacity: 0.4;
       pointer-events: none;
     }
     @keyframes hp-sense {
@@ -922,8 +940,10 @@ export const cardStyles = css`
     }
     @media (prefers-reduced-motion: reduce) {
       .dev.alarm::after { animation: none; opacity: 0.9; }
-      /* static counterpart, same as alarm's: a faint steady yellow ring */
-      .dev.sense::after { animation: none; opacity: 0.4; }
+      /* the motion flash becomes a static ring for the same ~3.3s class
+         window — consistent with alarm's treatment; sensehold is static
+         by design already */
+      .dev.senseflash::after { animation: none; opacity: 0.4; }
     }
     .dev .newdot {
       position: absolute;

@@ -49,6 +49,10 @@ const LS_ZOOM = 'houseplan_card_zoom_v1';
 const LS_NAV = 'houseplan_card_nav_v1'; // last space + editor mode (owner: restore where you were)
 const LS_KIOSK = 'houseplan_card_kiosk_v1'; // per-SCREEN size multipliers (each wall tablet differs)
 const NORM_W = 1000; // side of the render space — the canvas is square (v1.48.0)
+/** motion flash window: 3 beats of the hp-sense ring (3 × 1.1s in styles.ts).
+    Owner's rule (2026-08-01): «движение = разовая вспышка в момент
+    обнаружения; cool-down не пульсирует». */
+const SENSE_FLASH_MS = 3300;
 
 const GRID_N = 240; // grid points across the plan width (half the previous step; old nodes are a subset of the new ones, positions are preserved)
 type MarkupTool = 'draw' | 'merge' | 'split' | 'opening' | 'openwall' | 'delroom';
@@ -352,6 +356,13 @@ class HouseplanCard extends LitElement {
   // ---- kiosk (wall device) mode ----
   private _kioskScale: { icon: number; font: number } = { icon: 1, font: 1 };
   private _kioskDialog = false;
+  /** motion-sensor runtime per marker: the last seen primary state and the
+      ts of the last off→on trip. Owner's rule (2026-08-01): «движение =
+      разовая вспышка в момент обнаружения; cool-down не пульсирует» —
+      the flash is keyed to the TRANSITION, not to the 'on' state. `timer`
+      is the one setTimeout per entry that repaints the card when the flash
+      window closes (cleared in disconnectedCallback). */
+  private _senseRt = new Map<string, { last: string; flashTs: number; timer: number }>();
   /** live-vacuum runtime per marker: RAW robot coords (matrix applied at render) */
   private _vacRt = new Map<string, { trail: VacPt[]; lastKey: string; lastTs: number;
     moving: boolean; jump: boolean; endedTs: number; lastPos: VacPt | null }>();
@@ -467,6 +478,7 @@ class HouseplanCard extends LitElement {
   public disconnectedCallback(): void {
     document.removeEventListener('visibilitychange', this._vacVisHandler);
     if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
+    for (const rt of this._senseRt.values()) clearTimeout(rt.timer); // pending flash-window repaints
     window.removeEventListener('keydown', this._keyHandler);
     clearInterval(this._cycleTimer);
     clearTimeout(this._kioskDotsTimer);
@@ -813,7 +825,7 @@ class HouseplanCard extends LitElement {
   }
 
   protected willUpdate(changed: PropertyValues): void {
-    if (changed?.has?.('hass')) this._vacTick();
+    if (changed?.has?.('hass')) { this._vacTick(); this._senseTick(); }
     if (changed.has('hass') && this.hass) {
       if (!this._loadOk && !this._loading && this._loadTries < 8) {
         this._loadFromServer();
@@ -1308,13 +1320,24 @@ class HouseplanCard extends LitElement {
       const dc = p.attributes?.device_class;
       if (['door', 'window', 'garage_door', 'opening', 'gas', 'smoke', 'moisture', 'problem'].includes(dc))
         return p.state === 'on' ? 'open' : '';
-      // Owner's rule (2026-08-01): «жёлтая подложка = включено; срабатывание
-      // сенсора = лёгкая жёлтая пульсация». A tripped motion/occupancy/
-      // presence sensor must NOT take the yellow 'on' fill — it keeps the
-      // neutral badge and gets a soft yellow pulse ring instead (.dev.sense
-      // in styles.ts, the gentle sibling of the red .dev.alarm ring).
-      if (['motion', 'occupancy', 'presence'].includes(dc))
-        return p.state === 'on' ? 'sense' : '';
+      // Owner's rule (2026-08-01, вариант «б»): «движение = разовая
+      // вспышка в момент обнаружения; cool-down не пульсирует; присутствие =
+      // статичное кольцо пока обитаемо». Neither takes the yellow 'on'
+      // fill — that stays reserved for «включено».
+      // MOTION flashes once per off→on trip: 'senseflash' lives only for
+      // the ~3.3s window after the transition (stamped by _senseTick on
+      // the hass tick) — a sensor still 'on' after that is in its
+      // cool-down, not seeing motion, so the class goes away even though
+      // the state has not changed. A new off→on trip re-arms the flash.
+      if (dc === 'motion') {
+        const rt = this._senseRt.get(d.id);
+        return rt && rt.flashTs && Date.now() - rt.flashTs < SENSE_FLASH_MS ? 'senseflash' : '';
+      }
+      // OCCUPANCY/PRESENCE while 'on': a calm STATIC ring ('sensehold',
+      // no animation in styles.ts) — «комната обитаема» is a state, not
+      // an event, so it must not blink.
+      if (['occupancy', 'presence'].includes(dc))
+        return p.state === 'on' ? 'sensehold' : '';
     }
     if (dom === 'media_player') return ['playing', 'on'].includes(p.state) ? 'on' : '';
     if (dom === 'vacuum') return ['cleaning', 'returning'].includes(p.state) ? 'on' : '';
@@ -4420,6 +4443,33 @@ class HouseplanCard extends LitElement {
 
   private _isVacDev(d: DevItem): boolean {
     return !!this._vacEntity(d);
+  }
+
+  /**
+   * Motion-flash bookkeeping, one pass per hass tick (the _vacTick pattern):
+   * remembers each motion marker's last primary state and stamps flashTs on
+   * an off→on transition. Only a WITNESSED 'off' → 'on' step counts — a
+   * sensor first seen already 'on' (page load mid cool-down) or coming back
+   * from 'unavailable' is a reconnect, not a fresh detection, and must not
+   * flash. Each stamp (re)arms ONE setTimeout that calls requestUpdate when
+   * the ~3.3s window closes, so _stateClass drops 'senseflash' even though
+   * no new hass tick arrives; disconnectedCallback clears the timers.
+   */
+  private _senseTick(): void {
+    if (!this.hass) return;
+    for (const d of this._devices) {
+      if (d.hidden || !d.primary || !d.primary.startsWith('binary_sensor.')) continue;
+      const p = this.hass.states[d.primary];
+      if (p?.attributes?.device_class !== 'motion') continue;
+      const rt = this._senseRt.get(d.id);
+      if (!rt) { this._senseRt.set(d.id, { last: p.state, flashTs: 0, timer: 0 }); continue; }
+      if (p.state === 'on' && rt.last === 'off') {
+        rt.flashTs = Date.now();
+        clearTimeout(rt.timer);
+        rt.timer = window.setTimeout(() => this.requestUpdate(), SENSE_FLASH_MS + 60);
+      }
+      rt.last = p.state;
+    }
   }
 
   /**
