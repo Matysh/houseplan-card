@@ -28,7 +28,8 @@ right on your Lovelace dashboard.
 **Feature highlights**
 
 - 🖱 **GUI-first floorplan editor** — rooms, doors & windows, island rooms,
-  virtual walls and a visual decor layer, all drawn with clicks; smart
+  virtual walls and a visual decor layer, all drawn with clicks; room resize
+  by dragging walls, with live lengths and areas as you drag; smart
   alignment guides and a live ruler in real meters/feet.
 - 💡 **Lights toggle on click** out of the box; wall-switch markers can control
   whole groups of lights (works for dumb switches and stateless remotes too).

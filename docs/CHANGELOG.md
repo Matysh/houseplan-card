@@ -1,5 +1,52 @@
 # Changelog
 
+## v1.55.0 — 2026-08-01
+
+Minor release: rooms are no longer set in stone — a dedicated Resize
+tool in the plan editor changes their size by dragging walls; plus the
+two findings of the v1.54.3 audit (HP-1543-01/02).
+
+- **Room resize — a new «Размер» tool in the plan editor** (spec:
+  docs/RESIZE.md). Every wall gets a handle at its midpoint; drag it
+  and the whole wall moves, staying parallel to itself, with grid
+  snap. Works for polygons (L-shapes included) and for legacy
+  rectangles alike.
+- **Shared walls always move together.** If the dragged wall coincides
+  with a neighbour's boundary, the neighbour follows: your room grows,
+  the neighbour shrinks — gaps and overlaps cannot appear by
+  construction. At T-junctions only the coinciding stretch follows,
+  inserting new corners into the neighbour's outline where needed.
+- **Live numbers while you drag.** The dragged wall and its two
+  adjacent walls show their lengths in real meters/feet, and the room
+  area in m² updates live at the room centre — for a shared wall, the
+  areas of both rooms.
+- **The wall stops where it must.** Rooms cannot get thinner than
+  ~30 cm (neither yours nor the neighbour's), an outline never crosses
+  itself, a growing wall stops at foreign rooms and island rooms, and
+  doors and windows are anchors: an opening travels with its wall, and
+  a wall carrying openings can never get too short for them.
+- **A scale frame for the whole room.** Click a room in the resize
+  tool to select it: dragging a corner of the dashed frame scales the
+  outline proportionally, with the same stops applied.
+- **Esc and Ctrl+Z.** Esc cancels the current drag and puts the
+  original geometry back; one released drag is one undo step, and
+  Ctrl+Z walks back up to 30 of them while the tool is active.
+- **Fix: room overlap detection missed equal-height rectangles slid
+  over each other.** Found while building the resize stops; the
+  slide-over case now counts as an overlap everywhere the check is
+  consulted, including the draw tool.
+- **Fix (HP-1543-01): editor zoom stayed on screen after a floor
+  switch made inside the editor.** Exiting an editor on a different
+  floor than the one you started on skipped the viewport restore and
+  left the editor working zoom in view mode. Such an exit now falls
+  back to the current floor's saved view zoom.
+- **Fix (HP-1543-02): a motion sensor re-tripped mid-flash stayed
+  invisible.** A rapid off→on before the current flash ended kept the
+  old CSS animation timeline, so the second detection played nothing.
+  Every witnessed trip now gets a fresh animation identity and the
+  flash restarts; under reduced motion the static ring stays, as
+  before.
+
 ## v1.54.3 — 2026-08-01
 
 Patch release: three quality-of-life rounds — icon satellites now follow
