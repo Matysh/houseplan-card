@@ -866,12 +866,16 @@ export const cardStyles = css`
       width: 130px;
     }
     .dev.valonly {
+      /* all satellite metrics from --dev-size, not --icon-size: the per-device
+         size multiplier must scale the value plate with its marker — same bug
+         class as the v1.51.3 glyph fix (pinned to base size, the multiplier
+         grew nothing). */
       width: auto;
       min-width: var(--dev-size, var(--icon-size, 2.5cqw));
-      padding: 0 calc(var(--icon-size, 2.5cqw) * 0.16);
+      padding: 0 calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.16);
     }
     .dev.valonly .valtext {
-      font-size: calc(var(--icon-size, 2.5cqw) * 0.45);
+      font-size: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.45);
       font-weight: 700;
       white-space: nowrap;
     }
@@ -883,7 +887,7 @@ export const cardStyles = css`
     .dev.alarm::after {
       content: '';
       position: absolute;
-      inset: calc(var(--icon-size, 2.5cqw) * -0.35);
+      inset: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * -0.35);
       border: 3px solid #f25a4a;
       border-radius: 50%;
       animation: hp-alarm 1s ease-out infinite;
@@ -898,10 +902,10 @@ export const cardStyles = css`
     }
     .dev .newdot {
       position: absolute;
-      top: calc(var(--icon-size, 2.5cqw) * -0.12);
-      right: calc(var(--icon-size, 2.5cqw) * -0.12);
-      width: calc(var(--icon-size, 2.5cqw) * 0.34);
-      height: calc(var(--icon-size, 2.5cqw) * 0.34);
+      top: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * -0.12);
+      right: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * -0.12);
+      width: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.34);
+      height: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.34);
       border-radius: 50%;
       background: #f0301f;
       border: 2px solid var(--card-background-color, var(--hp-bg));
@@ -993,14 +997,14 @@ export const cardStyles = css`
       left: 100%;
       top: 50%;
       transform: translateY(-50%);
-      margin-left: calc(var(--icon-size, 2.5cqw) * 0.1);
+      margin-left: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.1);
       background: var(--card-background-color, var(--hp-bg));
       border: 1px solid var(--hp-accent);
-      border-radius: calc(var(--icon-size, 2.5cqw) * 0.18);
-      padding: 0 calc(var(--icon-size, 2.5cqw) * 0.14);
+      border-radius: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.18);
+      padding: 0 calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.14);
       font-size: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.45);
       font-weight: 700;
-      line-height: calc(var(--icon-size, 2.5cqw) * 0.68);
+      line-height: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.68);
       color: var(--hp-txt);
       white-space: nowrap;
       pointer-events: none;
@@ -1010,14 +1014,14 @@ export const cardStyles = css`
       left: 100%;
       top: 50%;
       transform: translateY(-50%);
-      margin-left: calc(var(--icon-size, 2.5cqw) * 0.1);
+      margin-left: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.1);
       background: var(--card-background-color, var(--hp-bg));
       border: 1px solid #4fc3f7;
-      border-radius: calc(var(--icon-size, 2.5cqw) * 0.18);
-      padding: 0 calc(var(--icon-size, 2.5cqw) * 0.14);
+      border-radius: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.18);
+      padding: 0 calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.14);
       font-size: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.45);
       font-weight: 700;
-      line-height: calc(var(--icon-size, 2.5cqw) * 0.68);
+      line-height: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.68);
       color: var(--hp-txt);
       white-space: nowrap;
       pointer-events: none;
@@ -1027,8 +1031,8 @@ export const cardStyles = css`
       top: 100%;
       left: 50%;
       transform: translateX(-50%);
-      margin-top: calc(var(--icon-size, 2.5cqw) * 0.05);
-      font-size: calc(var(--icon-size, 2.5cqw) * 0.38);
+      margin-top: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.05);
+      font-size: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.38);
       font-weight: 700;
       line-height: 1;
       text-shadow: 0 0 3px rgba(0, 0, 0, 0.9), 0 0 2px rgba(0, 0, 0, 0.9);
