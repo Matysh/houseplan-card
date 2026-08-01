@@ -46,7 +46,7 @@ import { cardStyles } from './styles';
 import { fitInSquare, contentBounds, spaceModels } from './space-geometry';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.55.0';
+const CARD_VERSION = '1.55.1';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -237,6 +237,8 @@ class HouseplanCard extends LitElement {
     changed: string[];
   } | null = null;
   private _rszUndo: { space: string; snap: string }[] = [];
+  /** HP-1550-01: the live resize preview, kept OUT of _serverCfg (see _rszApplyPreview). */
+  private _rszPreview: { space: string; sp: any } | null = null;
   private _rszLive: { x: number; y: number; text: string; area?: boolean }[] | null = null;
   private _path: number[][] = []; // current outline (render units, vertices snapped to the grid)
   private _cursorPt: number[] | null = null;
@@ -745,6 +747,7 @@ class HouseplanCard extends LitElement {
 
   private _buildModel(): SpaceModel[] {
     if (!this._serverCfg) return [];
+    // HP-1550-01: the model renders the preview overlay, not the raw config
     // ONE model builder for both cards. This used to be a hand-copied twin of
     // spaceModels(), and the twin missed the legacy-store fallbacks the shared
     // one gained (safeViewBox, normRect) — the same broken store rendered fine
@@ -753,7 +756,7 @@ class HouseplanCard extends LitElement {
     // is memoized on the config fingerprint, so a signed url baked in here
     // would freeze BEFORE the signature arrives and the plan would never load
     // (bug found 2026-07-27). _display() is called at render time instead.
-    const cfg = this._serverCfg;
+    const cfg = this._renderCfg!;
     return spaceModels(cfg).map((m, i) => {
       const raw = (cfg.spaces[i] as any)?.plan_url;
       return m.bg && raw ? { ...m, bg: { ...m.bg, href: raw } } : m;
@@ -1903,7 +1906,22 @@ class HouseplanCard extends LitElement {
   }
 
   private get _curSpaceCfg(): any {
+    // HP-1550-01: while a resize drag is live, every render-path reader sees
+    // the preview overlay; _writeConfig deliberately reads _serverCfg instead,
+    // so a queued write can never pick the preview up.
+    const pv = this._rszPreview;
+    if (pv && pv.space === this._space) return pv.sp;
     return this._serverCfg?.spaces.find((s: any) => s.id === this._space);
+  }
+
+  /** The config AS RENDERED: _serverCfg with the live resize preview substituted in. */
+  private get _renderCfg(): ServerConfig | null {
+    const pv = this._rszPreview;
+    if (!pv || !this._serverCfg) return this._serverCfg;
+    return {
+      ...this._serverCfg,
+      spaces: this._serverCfg.spaces.map((s: any) => (s.id === pv.space ? pv.sp : s)),
+    };
   }
 
   private get _spaceH(): number {
@@ -2002,6 +2020,7 @@ class HouseplanCard extends LitElement {
     this._rszSel = null;
     this._rszDrag = null;
     this._rszLive = null;
+    this._rszPreview = null;
     this._rszUndo = [];
     this._tip = null;
     this._decorDraft = null;
@@ -2232,7 +2251,8 @@ class HouseplanCard extends LitElement {
   }
 
   private _rszRestore(snap: string): void {
-    const sp = this._curSpaceCfg;
+    // undo restores are commits: they target the REAL config, never the overlay
+    const sp = this._serverCfg?.spaces.find((s: any) => s.id === this._space);
     if (!sp) return;
     const s = JSON.parse(snap);
     sp.rooms = s.rooms;
@@ -2241,16 +2261,25 @@ class HouseplanCard extends LitElement {
     this.requestUpdate();
   }
 
-  /** Live preview: the candidate outlines go straight into the space config (normalized),
-   *  based on the immutable pre-drag snapshot — walls, fills, labels and openings all
-   *  follow in the same render. Nothing is WRITTEN until the handle is released. */
+  /** Live preview of the candidate geometry, based on the immutable pre-drag snapshot —
+   *  walls, fills, labels and openings all follow in the same render.
+   *
+   *  HP-1550-01: the preview must NEVER touch _serverCfg. It used to be written
+   *  into the shared mutable space config, and the serialized write chain
+   *  (HP-1454-03) reads `_serverCfg` AT THE MOMENT a write runs — so a debounced
+   *  write still queued from a previous edit carried the mid-drag preview to the
+   *  server before pointerup, and an Esc after that left the abandoned geometry
+   *  persisted (reload resurrected it). Flushing the queue before the drag would
+   *  not close it: the queued write reads the mutable config later anyway. The
+   *  live geometry therefore lives in the `_rszPreview` overlay; _curSpaceCfg /
+   *  _renderCfg feed it to every render, and only _rszUp moves it into the real
+   *  config — the single point where a resize becomes visible to _writeConfig. */
   private _rszApplyPreview(polys: Record<string, number[][]>, ops: Record<string, [number, number]>): void {
     const g = this._rszDrag;
-    const sp = this._curSpaceCfg;
-    if (!g || !sp) return;
-    const s = JSON.parse(g.snap);
-    sp.rooms = s.rooms;
-    sp.openings = s.openings;
+    const real = this._serverCfg?.spaces.find((s: any) => s.id === this._space);
+    if (!g || !real) return;
+    const s = JSON.parse(g.snap); // fresh deep copies every move — free to mutate
+    const sp = { ...real, rooms: s.rooms, openings: s.openings };
     const H = this._spaceH;
     for (const [id, poly] of Object.entries(polys)) {
       const r = sp.rooms.find((x: any) => x.id === id);
@@ -2264,6 +2293,7 @@ class HouseplanCard extends LitElement {
       o.x = c[0] / NORM_W;
       o.y = c[1] / H;
     }
+    this._rszPreview = { space: this._space, sp };
     this._cfgEpoch++;
   }
 
@@ -2337,16 +2367,24 @@ class HouseplanCard extends LitElement {
     const g = this._rszDrag;
     if (!g || g.pid !== ev.pointerId) return;
     ev.stopPropagation();
+    const preview = this._rszPreview;
     this._rszDrag = null;
     this._rszLive = null;
+    this._rszPreview = null; // the overlay is gone either way; renders read the real config again
     const changed = g.moved && (g.kind === 'edge' ? Math.abs(g.d) > 1e-9 : Math.abs(g.k - 1) > 1e-9);
-    if (!changed) {
-      this._rszRestore(g.snap);
+    if (!changed || !preview) {
+      // HP-1550-01: nothing to restore — the preview never touched the config
+      this._cfgEpoch++;
+      this.requestUpdate();
       return;
     }
-    // commit: clean the collinear leftovers of T-inserts, then ONE undo step + ONE write
+    // commit: the preview moves into the REAL config in one step (the only point
+    // where _writeConfig can see a resize), collinear T-insert leftovers cleaned,
+    // then ONE undo step + ONE write
     const sp = this._curSpaceCfg;
     if (sp) {
+      sp.rooms = preview.sp.rooms;
+      sp.openings = preview.sp.openings;
       for (const id of g.changed) {
         const r = sp.rooms.find((x: any) => x.id === id);
         if (r?.poly) r.poly = simplifyPoly(r.poly, 1e-9);
@@ -2366,7 +2404,23 @@ class HouseplanCard extends LitElement {
     if (!g) return;
     this._rszDrag = null;
     this._rszLive = null;
-    this._rszRestore(g.snap);
+    // HP-1550-01/-03: a cancel just drops the overlay — the real config was
+    // never touched, so there is nothing to restore, no undo step and no write
+    this._rszPreview = null;
+    this._cfgEpoch++;
+    this.requestUpdate();
+  }
+
+  /** HP-1550-03: pointercancel / lostpointercapture is an ABORT, not a release —
+   *  the system interrupted the stream (app switch, palm rejection), so the drag
+   *  takes the cancel path: snapshot geometry, no undo step, no write. The pid
+   *  guard also absorbs the lostpointercapture that follows a normal pointerup
+   *  or a pointercancel (the drag is already gone — no double cancel/commit). */
+  private _rszPointerCancel(ev: PointerEvent): void {
+    const g = this._rszDrag;
+    if (!g || g.pid !== ev.pointerId) return;
+    ev.stopPropagation();
+    this._rszCancelDrag();
   }
 
   /** Ctrl+Z in the resize tool: one handle release = one undo step (docs/RESIZE.md). */
@@ -2427,7 +2481,8 @@ class HouseplanCard extends LitElement {
           @pointerdown=${(e: PointerEvent) => this._rszEdgeDown(e, r.id, i)}
           @pointermove=${(e: PointerEvent) => this._rszMove(e)}
           @pointerup=${(e: PointerEvent) => this._rszUp(e)}
-          @pointercancel=${(e: PointerEvent) => this._rszUp(e)}></circle>`);
+          @pointercancel=${(e: PointerEvent) => this._rszPointerCancel(e)}
+          @lostpointercapture=${(e: PointerEvent) => this._rszPointerCancel(e)}></circle>`);
       }
     }
     const sel = this._rszSel ? rooms.find((r) => r.id === this._rszSel) : null;
@@ -2440,7 +2495,8 @@ class HouseplanCard extends LitElement {
           @pointerdown=${(e: PointerEvent) => this._rszCornerDown(e, sel.id, [cx, cy], [fx, fy] as [number, number])}
           @pointermove=${(e: PointerEvent) => this._rszMove(e)}
           @pointerup=${(e: PointerEvent) => this._rszUp(e)}
-          @pointercancel=${(e: PointerEvent) => this._rszUp(e)}></circle>`);
+          @pointercancel=${(e: PointerEvent) => this._rszPointerCancel(e)}
+          @lostpointercapture=${(e: PointerEvent) => this._rszPointerCancel(e)}></circle>`);
       }
     }
     return svg`${parts}`;
@@ -2869,6 +2925,10 @@ class HouseplanCard extends LitElement {
   /** Drag an opening along the walls (view mode): it re-snaps continuously. */
   private _opPointerDown(ev: PointerEvent, o: OpeningCfg): void {
     if (this._mode !== 'plan') return;
+    // HP-1550-04: in the resize tool the wall handles own the geometry — a door
+    // in the middle of a wall must neither swallow the handle nor start its own
+    // drag (it travels with the wall through the resize pipeline instead)
+    if (this._tool === 'resize') return;
     ev.preventDefault();
     ev.stopPropagation();
     try {
@@ -2914,6 +2974,9 @@ class HouseplanCard extends LitElement {
 
   /** Click: the status card (delayed so a double click can cancel it). */
   private _opClick(ev: MouseEvent, o: OpeningCfg & { rx: number; ry: number; rlen: number }): void {
+    // HP-1550-04: in the resize tool a click over an opening falls through to
+    // the stage (room picking) instead of opening the editor dialog
+    if (this._mode === 'plan' && this._tool === 'resize') return;
     ev.stopPropagation();
     if (this._opDrag?.moved) return; // that click was the tail of a drag
     // openings are inert outside Plan mode (owner's decision: View must not
@@ -4653,8 +4716,8 @@ class HouseplanCard extends LitElement {
             ${this._renderOpenWalls(disp)}
             ${this._editing ? this._renderAlignGuides() : nothing}
             ${this._markup ? this._renderMarkupLayer(vb) : nothing}
-            ${this._markup && this._tool === 'resize' ? this._renderResizeLayer(view) : nothing}
             ${this._renderOpenings(disp)}
+            ${this._markup && this._tool === 'resize' ? this._renderResizeLayer(view) : nothing}
           </svg>
           <div class="devlayer" style="--icon-size:${((iconPct * vb[2] * (this._kiosk ? this._kioskScale.icon : 1)) / view.w).toFixed(3)}cqw;--rl-font:${this._kiosk ? this._kioskScale.font : 1}">
             ${devs.map((d) => this._renderDevice(d, view, showLqi, disp.fill === 'glow' && !this._markup))}

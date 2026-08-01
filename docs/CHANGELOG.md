@@ -1,5 +1,38 @@
 # Changelog
 
+## v1.55.1 — 2026-08-01
+
+Patch release: the four findings of the v1.55.0 audit, all in the new
+Room resize tool (HP-1550-01..04).
+
+- **A pending save can no longer leak a live drag to the server**
+  (HP-1550-01). The resize preview used to be written straight into the
+  shared config object, and a debounced save still queued from a
+  previous edit could snapshot it mid-drag — so a resize you then
+  cancelled with Esc quietly survived on the server and came back after
+  a reload. The live geometry now stays in a separate overlay that only
+  the renderer sees; it reaches the config exactly once, when the
+  handle is released.
+- **An interrupted drag is cancelled, not committed** (HP-1550-03).
+  When the system cuts a drag short — switching apps, palm rejection on
+  a tablet — the tool used to treat it as a release and save the
+  half-finished geometry. Such interruptions now take the same path as
+  Esc: the original geometry comes back, no undo step, no save.
+- **A door in the middle of a wall no longer blocks resizing it**
+  (HP-1550-04). The door's invisible hit area used to sit on top of the
+  wall handle, making such a wall ungrabbable for both rooms. In the
+  resize tool the handles now own the hit test (openings are not
+  editable there anyway — they simply travel with the wall), while all
+  other editor tools keep openings clickable exactly as before.
+- **The ~30 cm minimum size now holds for any room shape**
+  (HP-1550-02). The old check only measured parallel opposite walls, so
+  a triangular room could be squeezed into a sliver, and a rotated
+  room could scale its real short side below the floor unnoticed. Both
+  measures are orientation-independent now: wall drags respect every
+  obstacle in the wall's path (a triangle's apex, a slanted wall), and
+  the scale frame uses the room's true minimum width. Rooms already
+  thinner than the floor may still be improved, never made worse.
+
 ## v1.55.0 — 2026-08-01
 
 Minor release: rooms are no longer set in stone — a dedicated Resize

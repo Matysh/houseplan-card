@@ -29,6 +29,14 @@ before — no handles, no new hit areas.
   converted through `roomPoly` and are **saved back as `poly`**.
 - The moved wall position snaps to the drawing grid (`snapToGrid`,
   same pitch as the draw tool).
+- **Handles own the hit test** (HP-1550-04): inside the resize tool
+  openings are not editable — their transparent hit area is inert
+  (`pointer-events: none`) and the resize layer renders above the
+  openings, so a door sitting exactly at the midpoint of a wall can
+  never shadow that wall's handle. A drag of such a wall carries the
+  door along through the normal anchor pipeline; clicking over a door
+  falls through to room picking. Every other Plan tool keeps the
+  openings interactive exactly as before.
 
 ## Shared walls — ALWAYS together
 
@@ -49,9 +57,17 @@ drag. On commit collinear leftovers are simplified away
 
 1. **Minimum size** — neither the own room nor a shrinking neighbour
    may get thinner than ~30 cm (`MIN_ROOM_CM`, expressed in canvas
-   units through `cell_cm`). Measured as the normal clearance between
-   the moved stretch and any parallel opposite wall with overlapping
-   projection. Rooms that are ALREADY thinner keep their clearance
+   units through `cell_cm`). The measure is orientation-independent
+   (HP-1550-02): for a wall drag it is the smallest perpendicular
+   distance from the moved stretch to any part of the room boundary
+   inside the band the stretch sweeps along its normal — vertices and
+   crossing walls count whether parallel or not (a triangle's apex, a
+   slanted obstacle), while collinear remainders and the step corners
+   a T-junction inserts at the very ends of the stretch do not. For
+   the scale frame it is the TRUE minimum width of the outline
+   (rotating calipers over the convex hull) scaled by `k` — the
+   axis-aligned bbox is never consulted, so rotation cannot hide the
+   short side. Rooms that are ALREADY thinner keep their clearance
    (the drag may improve it, never worsen it).
 2. **Self-intersection** — a wall never passes through the opposite
    side; the outline must stay a simple polygon with its orientation
@@ -97,8 +113,23 @@ While a handle is being dragged:
   live; when a shared wall is dragged — the areas of BOTH rooms
   (owner picked «стены + площадь»);
 - Esc cancels the current drag and puts the original geometry back;
-- releasing the handle commits: one write through the standard
-  debounced `_saveConfig` path.
+- releasing the handle (pointerup) commits: one write through the
+  standard debounced `_saveConfig` path;
+- `pointercancel` / `lostpointercapture` (the system interrupted the
+  stream: app switch, palm rejection) takes the CANCEL path, never the
+  commit path — snapshot geometry back, no undo step, no write
+  (HP-1550-03).
+
+## Preview vs commit (HP-1550-01)
+
+The live drag preview never touches the shared `_serverCfg`: it lives
+in a separate overlay (`_rszPreview`) that `_curSpaceCfg`/`_renderCfg`
+substitute into every render. Config writes are serialized and read
+`_serverCfg` at the moment they run (HP-1454-03), so a debounced write
+still queued from a previous edit can fire mid-drag — with the overlay
+it carries only committed geometry. The overlay moves into the real
+config exactly once, on pointerup; a cancel (Esc, pointercancel) just
+drops the overlay, leaving nothing to restore and nothing to write.
 
 ## Undo
 
@@ -124,6 +155,9 @@ and Ctrl+Z/⌘Z pops it while the tool is active.
 ## Geometry home
 
 All pure geometry lives in `src/resize.ts` (edge normals, edge move,
-shared-span search and vertex insertion, all stops, the scale clamp,
-area formatting) under node:test units in `test/resize.test.mjs`;
-`src/houseplan-card.ts` only wires pointers, preview, badges and undo.
+shared-span search and vertex insertion, all stops — including the
+orientation-independent `minSpanClearance` band measure and the
+`minPolyWidth` calipers width — the scale clamp, area formatting)
+under node:test units in `test/resize.test.mjs`;
+`src/houseplan-card.ts` only wires pointers, the preview overlay,
+badges and undo.
