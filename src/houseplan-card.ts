@@ -246,6 +246,12 @@ class HouseplanCard extends LitElement {
   private _zoom = 1;
   private _view: { x: number; y: number; w: number; h: number } | null = null; // current SVG viewBox (vb coordinates)
   private _zoomBySpace: Record<string, number> = {};
+  /**
+   * View-mode viewport remembered on entering an editor. Editor zoom is a
+   * working tool (zoom in to grab a vertex), not the user's intention for
+   * viewing — leaving any editor brings the view-mode viewport back.
+   */
+  private _viewModeSnap: { space: string; zoom: number; cx?: number; cy?: number } | null = null;
   private _pointers = new Map<number, { x: number; y: number }>();
   private _panStart: { sx: number; sy: number; vx: number; vy: number } | null = null;
   private _pinchStart: { dist: number; zoom: number } | null = null;
@@ -1857,6 +1863,17 @@ class HouseplanCard extends LitElement {
       return;
     }
     const baseChanges = !this._spaceModel().bg && (mode === 'view') !== (this._mode === 'view');
+    if (this._mode === 'view' && mode !== 'view') {
+      // remember the view-mode viewport: whatever zooming happens inside the
+      // editors is a working tool, not what the user wants to see afterwards
+      const v = this._view;
+      this._viewModeSnap = {
+        space: this._space,
+        zoom: this._zoom,
+        cx: v ? v.x + v.w / 2 : undefined,
+        cy: v ? v.y + v.h / 2 : undefined,
+      };
+    }
     this._mode = mode;
     if (baseChanges) {
       // refit against the new base: the editors measure from the full square,
@@ -1864,6 +1881,22 @@ class HouseplanCard extends LitElement {
       // against the other (HP-1490-03)
       this._zoom = 1;
       this._view = null; // updated() refits on the next frame
+    }
+    if (mode === 'view') {
+      const snap = this._viewModeSnap;
+      this._viewModeSnap = null;
+      // restore only for the space the snapshot was taken in — after a space
+      // switch inside the editor the saved per-space zoom already applies
+      if (snap && snap.space === this._space) {
+        this._zoom = snap.zoom;
+        this._view = null;
+        requestAnimationFrame(() => {
+          if (!this._stageEl || this._mode !== 'view' || this._space !== snap.space) return;
+          this._applyView(snap.zoom, snap.cx, snap.cy);
+          this._saveZoom(); // editor wheel zoom wrote itself to LS_ZOOM — put the view zoom back
+          this.requestUpdate();
+        });
+      }
     }
     this._path = [];
     this._cursorPt = null;

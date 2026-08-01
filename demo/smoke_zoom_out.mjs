@@ -48,6 +48,66 @@ out.floorIsHalf = await page.evaluate(() => { window.__card._resetZoom(); const 
   c._applyView(0.1); return c._zoom; }) === 0.4; // clamped at the floor
 await page.evaluate(() => window.__card._resetZoom());
 
+// -- editor zoom is a working tool, not the viewing intent ----------------
+// view 1.6 → devices editor 2.5 → back to view: the pre-editor viewport
+// (zoom AND center) comes back; the editor keeps its own zoom while open.
+out.editorZoomNotSaved = await page.evaluate(async () => {
+  const c = window.__card;
+  const raf2 = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  const center = () => { const v = c._view; return [v.x + v.w / 2, v.y + v.h / 2]; };
+  c._setMode('view');
+  c._resetZoom();
+  c._zoomAt(10, 10, 1.6); c._saveZoom(); // off-center on purpose
+  const want = { zoom: c._zoom, c: center() };
+  c._setMode('devices'); await raf2();
+  c._zoomAt(10, 10, 2.5); c._saveZoom(); // off-center too: the center must not leak either
+  const editorZoomFree = Math.abs(c._zoom - 2.5) < 0.01; // zooming inside stays
+  c._setMode('view'); await raf2();
+  const got = { zoom: c._zoom, c: center() };
+  const ls = JSON.parse(localStorage.getItem('houseplan_card_zoom_v1') || '{}');
+  return {
+    editorZoomFree,
+    zoomRestored: Math.abs(got.zoom - want.zoom) < 0.01,
+    centerRestored: Math.hypot(got.c[0] - want.c[0], got.c[1] - want.c[1]) < 0.02,
+    lsRestored: Math.abs((ls[c._space] || 1) - want.zoom) < 0.01,
+  };
+});
+out.editorZoomFree = out.editorZoomNotSaved.editorZoomFree;
+out.viewZoomRestored = out.editorZoomNotSaved.zoomRestored;
+out.viewCenterRestored = out.editorZoomNotSaved.centerRestored;
+out.viewZoomBackInLs = out.editorZoomNotSaved.lsRestored;
+delete out.editorZoomNotSaved;
+
+// -- editor entered and left without touching zoom: no jump ---------------
+out.untouchedEditorNoJump = await page.evaluate(async () => {
+  const c = window.__card;
+  const raf2 = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  c._setMode('view');
+  c._resetZoom();
+  c._zoomAt(30, 30, 1.6); c._saveZoom();
+  const before = { ...c._view };
+  c._setMode('plan'); await raf2();
+  c._setMode('view'); await raf2();
+  const v = c._view;
+  return Math.abs(c._zoom - 1.6) < 0.01
+    && Math.abs(v.x - before.x) < 0.005 && Math.abs(v.y - before.y) < 0.005
+    && Math.abs(v.w - before.w) < 0.005 && Math.abs(v.h - before.h) < 0.005;
+});
+
+// -- the view zoom still survives a space switch, per space ---------------
+out.viewZoomSurvivesSpaceSwitch = await page.evaluate(async () => {
+  const c = window.__card;
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  c._setMode('view');
+  c._resetZoom(); c._applyView(1.7); c._saveZoom();
+  c._slideTo('garden', 'left'); await wait(350);
+  const gardenGotOwnZoom = Math.abs(c._zoom - (JSON.parse(
+    localStorage.getItem('houseplan_card_zoom_v1') || '{}').garden || 1)) < 0.01;
+  c._slideTo('f1', 'right'); await wait(350);
+  return gardenGotOwnZoom && Math.abs(c._zoom - 1.7) < 0.01;
+});
+await page.evaluate(() => window.__card._resetZoom());
+
 // -- devices outside rooms stretch the default frame ---------------------
 out.devicesStretchFrame = await page.evaluate(() => {
   const c = window.__card;
