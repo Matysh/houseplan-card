@@ -1,0 +1,5 @@
+# demo_guard re-registers EXISTING homeassistant.restart / homeassistant.stop
+# as no-ops on the public demo stand (visitors are admins by necessity — the
+# card's editor requires is_admin — and kept restarting HA). It defines no
+# services of its own; this file exists because hassfest requires it for any
+# integration that calls async_register.

@@ -35,4 +35,60 @@ const out = await page.evaluate(async () => {
   c._cfgEpoch++; c._regSignature = ''; c._maybeRebuildDevices();
   return o;
 });
-await finish(browser, checkAll(out));
+checkAll(out);
+
+// Тот же класс бага для СПУТНИКОВ значка (репорт владельца, 2026-08-01):
+// бейдж значения (display:value) и temp-плашка считались от базового
+// --icon-size и оставались маленькими при size=2. Всё, что визуально
+// принадлежит устройству, обязано расти вместе с --dev-scale.
+const out2 = await page.evaluate(async () => {
+  const o = {};
+  const c = window.__card;
+  const sr = () => c.shadowRoot || c.renderRoot;
+  const devEl = () => {
+    const idx = c._devices.filter((x) => x.space === c._space).findIndex((x) => x.id === 'd_temp');
+    return sr().querySelectorAll('.dev')[idx];
+  };
+  const setMarker = async (extra) => {
+    c._serverCfg.markers = (c._serverCfg.markers || []).filter((m) => m.id !== 'd_temp');
+    c._serverCfg.markers.push({ id: 'd_temp', binding: 'device:d_temp', ...extra });
+    c._cfgEpoch++; c._regSignature = '';
+    c._maybeRebuildDevices(); c.requestUpdate(); await c.updateComplete;
+    await new Promise((r) => setTimeout(r, 80));
+  };
+  const fs = (el) => parseFloat(getComputedStyle(el).fontSize);
+  // базовый --icon-size в px: ширина немасштабированного бейджа минус рамка 1px×2
+  const plain = [...sr().querySelectorAll('.dev')].find(
+    (e) => !e.classList.contains('ghost') && !e.classList.contains('valonly') && !(e.getAttribute('style') || '').includes('--dev-scale'));
+  const iconPx = plain.getBoundingClientRect().width - 2;
+
+  // --- бейдж значения (valonly) ---
+  await setMarker({ display: 'value', size: 1 });
+  const v1 = devEl().getBoundingClientRect();
+  const vf1 = fs(devEl().querySelector('.valtext'));
+  // при size=1 дефолт не изменился: шрифт ровно прежние 0.45 * icon-size
+  o.valDefaultKept = Math.abs(vf1 - iconPx * 0.45) < 0.75;
+  await setMarker({ display: 'value', size: 2 });
+  const v2 = devEl().getBoundingClientRect();
+  const vf2 = fs(devEl().querySelector('.valtext'));
+  o.valFontScales = vf2 / vf1 > 1.8 && vf2 / vf1 < 2.2;
+  o.valPlateScales = (v2.height - 2) / (v1.height - 2) > 1.8 && (v2.height - 2) / (v1.height - 2) < 2.2
+    && v2.width / v1.width > 1.6 && v2.width / v1.width < 2.4;
+
+  // --- temp-плашка (.tval) рядом со значком ---
+  await setMarker({ size: 1 });
+  const t1 = devEl().querySelector('.tval').getBoundingClientRect();
+  const tf1 = fs(devEl().querySelector('.tval'));
+  // дефолт: line-height 0.68 * icon-size + рамка 1px×2
+  o.tvalDefaultKept = Math.abs(t1.height - (iconPx * 0.68 + 2)) < 1;
+  await setMarker({ size: 2 });
+  const t2 = devEl().querySelector('.tval').getBoundingClientRect();
+  const tf2 = fs(devEl().querySelector('.tval'));
+  o.tvalScales = (t2.height - 2) / (t1.height - 2) > 1.8 && (t2.height - 2) / (t1.height - 2) < 2.2
+    && tf2 / tf1 > 1.8 && tf2 / tf1 < 2.2;
+
+  c._serverCfg.markers = c._serverCfg.markers.filter((m) => m.id !== 'd_temp');
+  c._cfgEpoch++; c._regSignature = ''; c._maybeRebuildDevices();
+  return o;
+});
+await finish(browser, checkAll(out2));

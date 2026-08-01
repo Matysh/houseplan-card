@@ -48,6 +48,102 @@ out.floorIsHalf = await page.evaluate(() => { window.__card._resetZoom(); const 
   c._applyView(0.1); return c._zoom; }) === 0.4; // clamped at the floor
 await page.evaluate(() => window.__card._resetZoom());
 
+// -- editor zoom is a working tool, not the viewing intent ----------------
+// view 1.6 → devices editor 2.5 → back to view: the pre-editor viewport
+// (zoom AND center) comes back; the editor keeps its own zoom while open.
+out.editorZoomNotSaved = await page.evaluate(async () => {
+  const c = window.__card;
+  const raf2 = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  const center = () => { const v = c._view; return [v.x + v.w / 2, v.y + v.h / 2]; };
+  c._setMode('view');
+  c._resetZoom();
+  c._zoomAt(10, 10, 1.6); c._saveZoom(); // off-center on purpose
+  const want = { zoom: c._zoom, c: center() };
+  c._setMode('devices'); await raf2();
+  c._zoomAt(10, 10, 2.5); c._saveZoom(); // off-center too: the center must not leak either
+  const editorZoomFree = Math.abs(c._zoom - 2.5) < 0.01; // zooming inside stays
+  c._setMode('view'); await raf2();
+  const got = { zoom: c._zoom, c: center() };
+  const ls = JSON.parse(localStorage.getItem('houseplan_card_zoom_v1') || '{}');
+  return {
+    editorZoomFree,
+    zoomRestored: Math.abs(got.zoom - want.zoom) < 0.01,
+    centerRestored: Math.hypot(got.c[0] - want.c[0], got.c[1] - want.c[1]) < 0.02,
+    lsRestored: Math.abs((ls[c._space] || 1) - want.zoom) < 0.01,
+  };
+});
+out.editorZoomFree = out.editorZoomNotSaved.editorZoomFree;
+out.viewZoomRestored = out.editorZoomNotSaved.zoomRestored;
+out.viewCenterRestored = out.editorZoomNotSaved.centerRestored;
+out.viewZoomBackInLs = out.editorZoomNotSaved.lsRestored;
+delete out.editorZoomNotSaved;
+
+// -- editor entered and left without touching zoom: no jump ---------------
+out.untouchedEditorNoJump = await page.evaluate(async () => {
+  const c = window.__card;
+  const raf2 = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  c._setMode('view');
+  c._resetZoom();
+  c._zoomAt(30, 30, 1.6); c._saveZoom();
+  const before = { ...c._view };
+  c._setMode('plan'); await raf2();
+  c._setMode('view'); await raf2();
+  const v = c._view;
+  return Math.abs(c._zoom - 1.6) < 0.01
+    && Math.abs(v.x - before.x) < 0.005 && Math.abs(v.y - before.y) < 0.005
+    && Math.abs(v.w - before.w) < 0.005 && Math.abs(v.h - before.h) < 0.005;
+});
+
+// -- the view zoom still survives a space switch, per space ---------------
+out.viewZoomSurvivesSpaceSwitch = await page.evaluate(async () => {
+  const c = window.__card;
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  c._setMode('view');
+  c._resetZoom(); c._applyView(1.7); c._saveZoom();
+  c._slideTo('garden', 'left'); await wait(350);
+  const gardenGotOwnZoom = Math.abs(c._zoom - (JSON.parse(
+    localStorage.getItem('houseplan_card_zoom_v1') || '{}').garden || 1)) < 0.01;
+  c._slideTo('f1', 'right'); await wait(350);
+  return gardenGotOwnZoom && Math.abs(c._zoom - 1.7) < 0.01;
+});
+await page.evaluate(() => window.__card._resetZoom());
+
+// -- owner's dacha regression: editor 500% must never reach the per-space
+// view store. View zoom set on BOTH floors, editor cranked to 5.0, back to
+// view — and the floor tab is clicked in the SAME tick (on the tablet the
+// exit re-render janks, so the click runs before the restore rAF and the
+// old fix-up save was skipped). Two switches later the stale 5.0 came back.
+out.editorZoomNeverInSpaceStore = await page.evaluate(async () => {
+  const c = window.__card;
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const raf2 = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  c._setMode('view');
+  c._resetZoom(); c._zoomAt(10, 10, 1.6); c._saveZoom();      // floor 1 view zoom
+  c._slideTo('garden', 'left'); await wait(350);
+  c._resetZoom(); c._zoomAt(10, 10, 1.4); c._saveZoom();      // floor 2 view zoom
+  c._setMode('devices'); await raf2();
+  c._zoomAt(10, 10, 5.0); c._saveZoom();                      // 500% — a working tool
+  const lsInEditor = JSON.parse(localStorage.getItem('houseplan_card_zoom_v1') || '{}');
+  c._setMode('view');
+  c._slideTo('f1', 'right'); await wait(350);                 // same tick as the exit — beats the rAF
+  const firstSwitch = Math.abs(c._zoom - 1.6) < 0.01;
+  c._slideTo('garden', 'left'); await wait(350);
+  const secondSwitch = Math.abs(c._zoom - 1.4) < 0.01;        // used to come back as 5.0
+  const ls = JSON.parse(localStorage.getItem('houseplan_card_zoom_v1') || '{}');
+  c._slideTo('f1', 'right'); await wait(350); c._resetZoom(); // leave the stage as the next tests expect
+  return {
+    editorNotPersisted: Math.abs((lsInEditor.garden || 1) - 1.4) < 0.01,
+    firstSwitch,
+    secondSwitch,
+    lsClean: Math.abs((ls.garden || 1) - 1.4) < 0.01 && Math.abs((ls.f1 || 1) - 1.6) < 0.01,
+  };
+});
+out.editorZoomStaysOutOfLs = out.editorZoomNeverInSpaceStore.editorNotPersisted;
+out.ownerFirstSwitchOk = out.editorZoomNeverInSpaceStore.firstSwitch;
+out.ownerSecondSwitchOk = out.editorZoomNeverInSpaceStore.secondSwitch;
+out.ownerLsClean = out.editorZoomNeverInSpaceStore.lsClean;
+delete out.editorZoomNeverInSpaceStore;
+
 // -- devices outside rooms stretch the default frame ---------------------
 out.devicesStretchFrame = await page.evaluate(() => {
   const c = window.__card;

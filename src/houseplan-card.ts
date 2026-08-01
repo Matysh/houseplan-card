@@ -42,13 +42,17 @@ import { cardStyles } from './styles';
 import { fitInSquare, contentBounds, spaceModels } from './space-geometry';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.54.2';
+const CARD_VERSION = '1.54.3';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
 const LS_NAV = 'houseplan_card_nav_v1'; // last space + editor mode (owner: restore where you were)
 const LS_KIOSK = 'houseplan_card_kiosk_v1'; // per-SCREEN size multipliers (each wall tablet differs)
 const NORM_W = 1000; // side of the render space — the canvas is square (v1.48.0)
+/** motion flash window: 3 beats of the hp-sense ring (3 × 1.1s in styles.ts).
+    Owner's rule (2026-08-01): «движение = разовая вспышка в момент
+    обнаружения; cool-down не пульсирует». */
+const SENSE_FLASH_MS = 3300;
 
 const GRID_N = 240; // grid points across the plan width (half the previous step; old nodes are a subset of the new ones, positions are preserved)
 type MarkupTool = 'draw' | 'merge' | 'split' | 'opening' | 'openwall' | 'delroom';
@@ -246,6 +250,12 @@ class HouseplanCard extends LitElement {
   private _zoom = 1;
   private _view: { x: number; y: number; w: number; h: number } | null = null; // current SVG viewBox (vb coordinates)
   private _zoomBySpace: Record<string, number> = {};
+  /**
+   * View-mode viewport remembered on entering an editor. Editor zoom is a
+   * working tool (zoom in to grab a vertex), not the user's intention for
+   * viewing — leaving any editor brings the view-mode viewport back.
+   */
+  private _viewModeSnap: { space: string; zoom: number; cx?: number; cy?: number } | null = null;
   private _pointers = new Map<number, { x: number; y: number }>();
   private _panStart: { sx: number; sy: number; vx: number; vy: number } | null = null;
   private _pinchStart: { dist: number; zoom: number } | null = null;
@@ -346,6 +356,13 @@ class HouseplanCard extends LitElement {
   // ---- kiosk (wall device) mode ----
   private _kioskScale: { icon: number; font: number } = { icon: 1, font: 1 };
   private _kioskDialog = false;
+  /** motion-sensor runtime per marker: the last seen primary state and the
+      ts of the last off→on trip. Owner's rule (2026-08-01): «движение =
+      разовая вспышка в момент обнаружения; cool-down не пульсирует» —
+      the flash is keyed to the TRANSITION, not to the 'on' state. `timer`
+      is the one setTimeout per entry that repaints the card when the flash
+      window closes (cleared in disconnectedCallback). */
+  private _senseRt = new Map<string, { last: string; flashTs: number; timer: number }>();
   /** live-vacuum runtime per marker: RAW robot coords (matrix applied at render) */
   private _vacRt = new Map<string, { trail: VacPt[]; lastKey: string; lastTs: number;
     moving: boolean; jump: boolean; endedTs: number; lastPos: VacPt | null }>();
@@ -461,6 +478,7 @@ class HouseplanCard extends LitElement {
   public disconnectedCallback(): void {
     document.removeEventListener('visibilitychange', this._vacVisHandler);
     if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
+    for (const rt of this._senseRt.values()) clearTimeout(rt.timer); // pending flash-window repaints
     window.removeEventListener('keydown', this._keyHandler);
     clearInterval(this._cycleTimer);
     clearTimeout(this._kioskDotsTimer);
@@ -807,7 +825,7 @@ class HouseplanCard extends LitElement {
   }
 
   protected willUpdate(changed: PropertyValues): void {
-    if (changed?.has?.('hass')) this._vacTick();
+    if (changed?.has?.('hass')) { this._vacTick(); this._senseTick(); }
     if (changed.has('hass') && this.hass) {
       if (!this._loadOk && !this._loading && this._loadTries < 8) {
         this._loadFromServer();
@@ -1302,6 +1320,24 @@ class HouseplanCard extends LitElement {
       const dc = p.attributes?.device_class;
       if (['door', 'window', 'garage_door', 'opening', 'gas', 'smoke', 'moisture', 'problem'].includes(dc))
         return p.state === 'on' ? 'open' : '';
+      // Owner's rule (2026-08-01, вариант «б»): «движение = разовая
+      // вспышка в момент обнаружения; cool-down не пульсирует; присутствие =
+      // статичное кольцо пока обитаемо». Neither takes the yellow 'on'
+      // fill — that stays reserved for «включено».
+      // MOTION flashes once per off→on trip: 'senseflash' lives only for
+      // the ~3.3s window after the transition (stamped by _senseTick on
+      // the hass tick) — a sensor still 'on' after that is in its
+      // cool-down, not seeing motion, so the class goes away even though
+      // the state has not changed. A new off→on trip re-arms the flash.
+      if (dc === 'motion') {
+        const rt = this._senseRt.get(d.id);
+        return rt && rt.flashTs && Date.now() - rt.flashTs < SENSE_FLASH_MS ? 'senseflash' : '';
+      }
+      // OCCUPANCY/PRESENCE while 'on': a calm STATIC ring ('sensehold',
+      // no animation in styles.ts) — «комната обитаема» is a state, not
+      // an event, so it must not blink.
+      if (['occupancy', 'presence'].includes(dc))
+        return p.state === 'on' ? 'sensehold' : '';
     }
     if (dom === 'media_player') return ['playing', 'on'].includes(p.state) ? 'on' : '';
     if (dom === 'vacuum') return ['cleaning', 'returning'].includes(p.state) ? 'on' : '';
@@ -1537,8 +1573,16 @@ class HouseplanCard extends LitElement {
     this._saveZoom();
   }
 
-  /** Save the current space zoom to localStorage. */
+  /** Save the current space zoom to localStorage (view mode only). */
   private _saveZoom(): void {
+    // Editor zoom is a working tool, never the viewing intent: while an editor
+    // is open the wheel/pinch keep calling _saveZoom, but the per-space VIEW
+    // zoom must not learn about it. The exit-editor restore used to re-save the
+    // view zoom from a rAF — on a slow tablet the floor-tab click lands BEFORE
+    // that rAF (input runs first in the frame), the space guard skipped the
+    // fix-up and the editor 500% stayed in _zoomBySpace/LS_ZOOM for the next
+    // visit to that floor. Editors do not need zoom persistence at all.
+    if (this._mode !== 'view') return;
     this._zoomBySpace = { ...this._zoomBySpace, [this._space]: this._zoom };
     try {
       localStorage.setItem(LS_ZOOM, JSON.stringify(this._zoomBySpace));
@@ -1857,6 +1901,17 @@ class HouseplanCard extends LitElement {
       return;
     }
     const baseChanges = !this._spaceModel().bg && (mode === 'view') !== (this._mode === 'view');
+    if (this._mode === 'view' && mode !== 'view') {
+      // remember the view-mode viewport: whatever zooming happens inside the
+      // editors is a working tool, not what the user wants to see afterwards
+      const v = this._view;
+      this._viewModeSnap = {
+        space: this._space,
+        zoom: this._zoom,
+        cx: v ? v.x + v.w / 2 : undefined,
+        cy: v ? v.y + v.h / 2 : undefined,
+      };
+    }
     this._mode = mode;
     if (baseChanges) {
       // refit against the new base: the editors measure from the full square,
@@ -1864,6 +1919,22 @@ class HouseplanCard extends LitElement {
       // against the other (HP-1490-03)
       this._zoom = 1;
       this._view = null; // updated() refits on the next frame
+    }
+    if (mode === 'view') {
+      const snap = this._viewModeSnap;
+      this._viewModeSnap = null;
+      // restore only for the space the snapshot was taken in — after a space
+      // switch inside the editor the saved per-space zoom already applies
+      if (snap && snap.space === this._space) {
+        this._zoom = snap.zoom;
+        this._view = null;
+        requestAnimationFrame(() => {
+          if (!this._stageEl || this._mode !== 'view' || this._space !== snap.space) return;
+          this._applyView(snap.zoom, snap.cx, snap.cy);
+          this._saveZoom(); // editor wheel zoom wrote itself to LS_ZOOM — put the view zoom back
+          this.requestUpdate();
+        });
+      }
     }
     this._path = [];
     this._cursorPt = null;
@@ -4372,6 +4443,33 @@ class HouseplanCard extends LitElement {
 
   private _isVacDev(d: DevItem): boolean {
     return !!this._vacEntity(d);
+  }
+
+  /**
+   * Motion-flash bookkeeping, one pass per hass tick (the _vacTick pattern):
+   * remembers each motion marker's last primary state and stamps flashTs on
+   * an off→on transition. Only a WITNESSED 'off' → 'on' step counts — a
+   * sensor first seen already 'on' (page load mid cool-down) or coming back
+   * from 'unavailable' is a reconnect, not a fresh detection, and must not
+   * flash. Each stamp (re)arms ONE setTimeout that calls requestUpdate when
+   * the ~3.3s window closes, so _stateClass drops 'senseflash' even though
+   * no new hass tick arrives; disconnectedCallback clears the timers.
+   */
+  private _senseTick(): void {
+    if (!this.hass) return;
+    for (const d of this._devices) {
+      if (d.hidden || !d.primary || !d.primary.startsWith('binary_sensor.')) continue;
+      const p = this.hass.states[d.primary];
+      if (p?.attributes?.device_class !== 'motion') continue;
+      const rt = this._senseRt.get(d.id);
+      if (!rt) { this._senseRt.set(d.id, { last: p.state, flashTs: 0, timer: 0 }); continue; }
+      if (p.state === 'on' && rt.last === 'off') {
+        rt.flashTs = Date.now();
+        clearTimeout(rt.timer);
+        rt.timer = window.setTimeout(() => this.requestUpdate(), SENSE_FLASH_MS + 60);
+      }
+      rt.last = p.state;
+    }
   }
 
   /**
