@@ -1402,6 +1402,29 @@ export const cardStyles = css`
       pointer-events: none;
       user-select: none;
     }
+    /* room resize tool (docs/RESIZE.md) */
+    .rszhandle {
+      fill: var(--hp-bg);
+      stroke: var(--hp-accent);
+      stroke-width: 2;
+      vector-effect: non-scaling-stroke;
+      cursor: move;
+      touch-action: none;
+    }
+    .rszhandle:hover { fill: var(--hp-accent); }
+    .rszcorner { cursor: nwse-resize; }
+    .rszframe {
+      fill: none;
+      stroke: var(--hp-accent);
+      stroke-width: 1.5;
+      stroke-dasharray: 6 5;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
+    .measurelabel.rszarea {
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.6);
+    }
     .vacfitdot { fill: var(--hp-accent); pointer-events: none; }
     .vacfithandle {
       fill: var(--hp-bg);
