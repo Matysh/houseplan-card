@@ -8,7 +8,7 @@ const snap = await page.evaluate(() => JSON.stringify(window.__card._serverCfg))
 const restore = () => page.evaluate((s) => {
   const c = window.__card;
   c._serverCfg = JSON.parse(s);
-  c._rszSel = null; c._rszDrag = null; c._rszLive = null; c._rszUndo = [];
+  c._rszSel = null; c._rszDrag = null; c._rszLive = null; c._rszUndo = []; c._rszPreview = null;
   c._cfgEpoch++; c.requestUpdate();
   return c.updateComplete && true;
 }, snap);
@@ -23,6 +23,12 @@ const enter = (tool) => page.evaluate((t) => {
 const handleCount = () => page.evaluate(() => window.__card.renderRoot.querySelectorAll('.rszhandle').length);
 const roomPolyN = (id) => page.evaluate((id) => {
   const r = window.__card._serverCfg.spaces.find((s) => s.id === 'f1').rooms.find((x) => x.id === id);
+  return r?.poly ? r.poly.map((p) => [p[0], p[1]]) : null;
+}, id);
+// mid-drag geometry AS RENDERED: HP-1550-01 moved the live preview out of
+// _serverCfg into the _rszPreview overlay (_curSpaceCfg serves it to renders)
+const roomPolyLive = (id) => page.evaluate((id) => {
+  const r = window.__card._curSpaceCfg.rooms.find((x) => x.id === id);
   return r?.poly ? r.poly.map((p) => [p[0], p[1]]) : null;
 }, id);
 const openingOf = (id) => page.evaluate((id) =>
@@ -77,8 +83,11 @@ const mid = await labels();
 check('drag_badges_visible', mid.length >= 6);       // 3 wall lengths + 3 areas (r1, r2, r3)
 check('drag_badges_have_area', mid.filter((t) => t.includes('m²')).length >= 3);
 check('drag_badges_have_len', mid.some((t) => /\d\.\d\d m$/.test(t)));
-const midR1 = await roomPolyN('r1');
+const midR1 = await roomPolyLive('r1');
 check('preview_moves_r1', Math.abs(midR1[1][0] - 0.6) < 0.011); // halfway ≈ 0.60 (snapped)
+// HP-1550-01: the preview must NOT leak into the config a queued write reads
+const midSrv = await roomPolyN('r1');
+check('preview_not_in_servercfg', Math.abs(midSrv[1][0] - 0.55) < 1e-9);
 await page.mouse.move(tx, hy, { steps: 4 });
 await settle();
 const end = await labels();
@@ -219,7 +228,7 @@ await settle();
   await page.mouse.down();
   await page.mouse.move(bx, ay, { steps: 4 });
   await settle();
-  const midPoly = await roomPolyN('r1');
+  const midPoly = await roomPolyLive('r1');
   check('esc_preview_moved', Math.abs(midPoly[1][0] - 0.70) < 0.011);
   await page.keyboard.press('Escape');
   await settle();

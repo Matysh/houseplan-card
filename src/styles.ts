@@ -262,6 +262,15 @@ export const cardStyles = css`
     .stage.markup .op-hit:active {
       cursor: grabbing;
     }
+    /* HP-1550-04: in the resize tool the wall handles own the hit test — the
+       transparent .op-hit of a door at the midpoint of a wall used to sit ON
+       TOP of the handle and made that wall ungrabbable for both rooms.
+       Openings are not editable in this tool (they ride along with the wall),
+       so their hit area goes fully inert; every other Plan tool is untouched. */
+    .stage.markup.tool-resize .op-hit {
+      pointer-events: none;
+      cursor: default;
+    }
     .oplock {
       pointer-events: none; /* inert while editing; clickable in View (rule below) */
       position: absolute;

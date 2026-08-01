@@ -224,6 +224,110 @@ export function minParallelClearance(
 }
 
 /**
+ * HP-1550-02: orientation-independent clearance of the moved stretches.
+ *
+ * minParallelClearance only saw PARALLEL opposite walls, so a triangle (no
+ * parallel wall at all) reported Infinity and the 30 cm floor was simply off —
+ * the base could be dragged to a 5-unit sliver. This measure looks at the whole
+ * band the span sweeps along its normal: every vertex strictly inside the band
+ * and every edge crossing the band interior counts with its perpendicular
+ * distance from the span line. Two exclusions keep it honest:
+ *   - anything ON the span line (offset ≤ eps) is the span itself, a collinear
+ *     wall remainder or a T-insert — not an opposite obstacle;
+ *   - the band ENDS (projection ≤ eps or ≥ L − eps) are excluded, so the
+ *     |d|-long step edge a T-junction inserts at the very end of the span does
+ *     not read as a paper-thin room on every small drag.
+ * Offsets cannot change sign inside the band (that would cross the span —
+ * polyIsSimple already rejected it), so an edge's minimum lies at a clip bound.
+ * Infinity still means «nothing opposite at all» (e.g. growing outward).
+ */
+export function minSpanClearance(
+  poly: number[][], spans: [number[], number[]][], eps = 1e-6,
+): number {
+  let best = Infinity;
+  for (const [a, b] of spans) {
+    const ab = sub(b, a);
+    const L = len2d(ab);
+    if (L < eps) continue;
+    const u = [ab[0] / L, ab[1] / L];
+    const soff = (p: number[]) => (p[0] - a[0]) * u[1] - (p[1] - a[1]) * u[0];
+    const tOf = (p: number[]) => (p[0] - a[0]) * u[0] + (p[1] - a[1]) * u[1];
+    const lo = eps, hi = L - eps;
+    for (const v of poly) {
+      const o = Math.abs(soff(v));
+      if (o <= eps) continue;
+      const tv = tOf(v);
+      if (tv <= lo || tv >= hi) continue;
+      if (o < best) best = o;
+    }
+    for (let j = 0; j < poly.length; j++) {
+      const q1 = poly[j], q2 = poly[(j + 1) % poly.length];
+      const o1 = soff(q1), o2 = soff(q2);
+      if (Math.abs(o1) <= eps || Math.abs(o2) <= eps) continue; // attached to the moving wall
+      const t1 = tOf(q1), t2 = tOf(q2);
+      const tlo = Math.max(lo, Math.min(t1, t2));
+      const thi = Math.min(hi, Math.max(t1, t2));
+      if (thi - tlo <= eps) continue; // casts no shadow on the span interior
+      const dt = t2 - t1;
+      if (Math.abs(dt) < eps) { // perpendicular-ish edge fully inside the band
+        best = Math.min(best, Math.abs(o1), Math.abs(o2));
+        continue;
+      }
+      const offAt = (tt: number) => Math.abs(o1 + ((tt - t1) / dt) * (o2 - o1));
+      best = Math.min(best, offAt(tlo), offAt(thi));
+    }
+  }
+  return best;
+}
+
+/** Convex hull (monotone chain) — only the width measure below needs it. */
+function convexHull(pts: number[][]): number[][] {
+  const p = [...pts].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  if (p.length < 3) return p;
+  const cross = (o: number[], a: number[], b: number[]) =>
+    (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lower: number[][] = [];
+  for (const pt of p) {
+    while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], pt) <= 0) lower.pop();
+    lower.push(pt);
+  }
+  const upper: number[][] = [];
+  for (let i = p.length - 1; i >= 0; i--) {
+    const pt = p[i];
+    while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], pt) <= 0) upper.pop();
+    upper.push(pt);
+  }
+  lower.pop(); upper.pop();
+  return lower.concat(upper);
+}
+
+/**
+ * HP-1550-02: the TRUE minimum width of a polygon — rotating calipers over the
+ * convex hull (the min over hull edge directions of the perpendicular extent).
+ * The axis-aligned bbox lied under rotation: a 500×100 rectangle turned 45° has
+ * a ≈424×424 bbox, so a 0.1 scale slid the real 100-side down to 10 unchecked.
+ * A similarity scales every distance by k, which makes k·minPolyWidth exact —
+ * and a concave room is judged by its overall silhouette, so a small notch
+ * that takes no part in the operation cannot veto a legal scale.
+ */
+export function minPolyWidth(poly: number[][]): number {
+  const h = convexHull(poly);
+  if (h.length < 3) return 0;
+  let best = Infinity;
+  for (let i = 0; i < h.length; i++) {
+    const a = h[i], b = h[(i + 1) % h.length];
+    const e = sub(b, a);
+    const L = len2d(e);
+    if (L < 1e-12) continue;
+    const u = [e[0] / L, e[1] / L];
+    let w = 0;
+    for (const pt of h) w = Math.max(w, Math.abs((pt[0] - a[0]) * u[1] - (pt[1] - a[1]) * u[0]));
+    if (w < best) best = w;
+  }
+  return Number.isFinite(best) ? best : 0;
+}
+
+/**
  * Do two outlines ILLEGALLY share floor area? `roomsOverlap` alone misses the
  * «slide-over» case: equal-height rectangles overlapping horizontally have all
  * their edge intersections on collinear stretches, so nothing «properly
@@ -336,13 +440,15 @@ export function validateEdgeDrag(
     if (!polyIsSimple(np)) return false;
     const s0 = signedArea(r.poly), s1 = signedArea(np);
     if (Math.abs(s1) < eps || s0 * s1 <= 0) return false;
-    // minimum size: normal clearance of the moved stretches; a room already
-    // thinner keeps its clearance (improving is allowed, worsening is not)
+    // minimum size: orientation-independent clearance of the moved stretches
+    // (HP-1550-02 — the parallel-walls-only measure left triangles and other
+    // non-parallel geometry without the 30 cm floor); a room already thinner
+    // keeps its clearance (improving is allowed, worsening is not)
     const oldSpans: [number[], number[]][] = id === plan.roomId
       ? [[plan.a, plan.b]]
       : sharedSpansWith(r.poly, plan.a, plan.b, eps);
-    const cOld = minParallelClearance(r.poly, oldSpans, eps);
-    const cNew = minParallelClearance(np, res.movedSpans[id] || [], eps);
+    const cOld = minSpanClearance(r.poly, oldSpans, eps);
+    const cNew = minSpanClearance(np, res.movedSpans[id] || [], eps);
     if (cNew < Math.min(minDim, cOld) - eps) return false;
     // every pre-existing room relationship must SURVIVE the drag: an island
     // stays an island (a jump fully past a thin island crosses no edge, so
@@ -437,12 +543,12 @@ export function validateRoomScale(
   const otherPolys = rooms.filter((r) => r.id !== roomId).map((r) => r.poly);
   const res = applyRoomScale(room, openings, otherPolys, fixed, k, eps * 2);
   const np = res.poly;
-  // minimum size: the bbox side (a similarity cannot self-intersect)
-  const xs = np.map((p) => p[0]), ys = np.map((p) => p[1]);
-  const minSide = Math.min(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
-  const xs0 = room.poly.map((p) => p[0]), ys0 = room.poly.map((p) => p[1]);
-  const minSide0 = Math.min(Math.max(...xs0) - Math.min(...xs0), Math.max(...ys0) - Math.min(...ys0));
-  if (minSide < Math.min(minDim, minSide0) - eps) return false;
+  // minimum size: a similarity scales every distance by exactly k, so the TRUE
+  // minimum width of the original scales to k·w0 (HP-1550-02 — the axis-aligned
+  // bbox side let a rotated rectangle shrink its real short side unchecked);
+  // an already-thin room keeps the improve-only rule
+  const w0 = minPolyWidth(room.poly);
+  if (w0 * k < Math.min(minDim, w0) - eps) return false;
   // the neighbour is a wall to hit: pre-existing nesting must survive,
   // everything else must not gain shared area or become nested (engulfing a
   // foreign room via scale is a stop, not a new island)

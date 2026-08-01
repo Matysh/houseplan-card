@@ -208,3 +208,51 @@ test('zero drag is always valid and clamps to zero', () => {
   assert.equal(validateEdgeDrag(rooms, [], plan, 0, OPTS), true);
   assert.equal(clampEdgeDrag(rooms, [], plan, 0, STEP, OPTS), 0);
 });
+
+// ================= HP-1550-02 (the v1.55.0 audit): the 30 cm floor must be
+// orientation-independent — triangles have no parallel opposite wall and a
+// rotated rectangle hides its true short side from the axis-aligned bbox.
+
+test('HP-1550-02: triangle — the min-size stop holds without a parallel opposite wall', () => {
+  // base 300 wide, apex 300 above it; drag the base toward the apex
+  const T = { id: 'T', poly: [[0, 0], [300, 0], [150, 300]] };
+  const rooms = [T];
+  const plan = planEdgeDrag(rooms, 'T', 0);
+  assert.deepEqual(plan.n.map((v) => Math.round(v) + 0), [0, -1]); // outward = away from the apex
+  assert.equal(validateEdgeDrag(rooms, [], plan, -295, OPTS), false); // height 5 < 25
+  const d = clampEdgeDrag(rooms, [], plan, -295, STEP, OPTS);
+  const height = 300 - Math.abs(d);
+  assert.ok(height >= OPTS.minDim - OPTS.eps, `triangle squeezed to height ${height}`);
+});
+
+test('HP-1550-02: rotated rectangle — scale stops at the TRUE short side, not the bbox', () => {
+  // 500×100 rectangle rotated 45°: its axis-aligned bbox is ≈424×424, so the
+  // bbox measure let k=0.1 slip through while the real short side became 10
+  const c45 = Math.SQRT1_2;
+  const rot = ([x, y]) => [x * c45 - y * c45, x * c45 + y * c45];
+  const P = [[0, 0], [500, 0], [500, 100], [0, 100]].map(rot);
+  const rooms = [{ id: 'S', poly: P }];
+  const fixed = [P[0][0], P[0][1]];
+  assert.equal(validateRoomScale(rooms, [], 'S', fixed, 0.1, OPTS), false); // side 10 < 25
+  const k = clampRoomScale(rooms, [], 'S', fixed, 0.1, OPTS);
+  assert.ok(k * 100 >= OPTS.minDim - OPTS.eps, `short side shrank to ${k * 100}`);
+});
+
+test('HP-1550-02: concave room — a non-parallel obstacle stops the drag', () => {
+  // a "roof" vertex dips into the room at (200,120); the bottom wall dragged up
+  // has NO parallel opposite wall, yet must stop ~30 cm short of the dip
+  const C = { id: 'C', poly: [[0, 0], [400, 0], [400, 200], [200, 120], [0, 200]] };
+  const rooms = [C];
+  const plan = planEdgeDrag(rooms, 'C', 0);
+  assert.equal(validateEdgeDrag(rooms, [], plan, -115, OPTS), false); // 5 from the dip
+  assert.equal(validateEdgeDrag(rooms, [], plan, -95, OPTS), true);   // 25 — the floor
+  closeTo(clampEdgeDrag(rooms, [], plan, -115, STEP, OPTS), -95);
+});
+
+test('HP-1550-02: an already-thin triangle may improve but never worsen', () => {
+  const T = { id: 'T', poly: [[0, 0], [300, 0], [150, 20]] }; // height 20 < 25 already
+  const rooms = [T];
+  const plan = planEdgeDrag(rooms, 'T', 0);
+  assert.equal(validateEdgeDrag(rooms, [], plan, -5, OPTS), false); // 20 → 15: worse
+  assert.equal(validateEdgeDrag(rooms, [], plan, 50, OPTS), true);  // 20 → 70: better
+});
