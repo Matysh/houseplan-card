@@ -883,6 +883,29 @@ export const cardStyles = css`
     /* v1.52.0: the RGB tint of the icon/border is gone — a lamp's colour
        lives ONLY in its glow spot (owner's rule). The ripple-color fallback
        keeps using the light colour; that is set inline via --ripple-color. */
+    /* motion/occupancy/presence tripped: a soft yellow pulse ring around
+       the icon. Owner's rule (2026-08-01): «жёлтая подложка = включено;
+       срабатывание сенсора = лёгкая жёлтая пульсация» — the yellow FILL
+       stays reserved for the 'on' state, so a tripped sensor keeps the
+       neutral badge and only breathes. Same ring mechanics as .dev.alarm
+       below, but gentler: the .dev.on yellow (--hp-on), half the opacity,
+       a slower period and a smaller amplitude. Declared BEFORE .dev.alarm
+       on purpose: equal specificity on the same ::after means the later
+       alarm rule wins if a device ever carries both — red beats yellow. */
+    .dev.sense::after {
+      content: '';
+      position: absolute;
+      inset: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * -0.35);
+      border: 2px solid var(--hp-on);
+      border-radius: 50%;
+      animation: hp-sense 2.4s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes hp-sense {
+      0% { transform: scale(0.9); opacity: 0.5; }
+      60% { transform: scale(1.12); opacity: 0.12; }
+      100% { transform: scale(1.12); opacity: 0; }
+    }
     /* alarms pulse red over everything */
     .dev.alarm::after {
       content: '';
@@ -899,6 +922,8 @@ export const cardStyles = css`
     }
     @media (prefers-reduced-motion: reduce) {
       .dev.alarm::after { animation: none; opacity: 0.9; }
+      /* static counterpart, same as alarm's: a faint steady yellow ring */
+      .dev.sense::after { animation: none; opacity: 0.4; }
     }
     .dev .newdot {
       position: absolute;

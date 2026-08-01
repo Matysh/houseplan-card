@@ -1308,6 +1308,13 @@ class HouseplanCard extends LitElement {
       const dc = p.attributes?.device_class;
       if (['door', 'window', 'garage_door', 'opening', 'gas', 'smoke', 'moisture', 'problem'].includes(dc))
         return p.state === 'on' ? 'open' : '';
+      // Owner's rule (2026-08-01): «жёлтая подложка = включено; срабатывание
+      // сенсора = лёгкая жёлтая пульсация». A tripped motion/occupancy/
+      // presence sensor must NOT take the yellow 'on' fill — it keeps the
+      // neutral badge and gets a soft yellow pulse ring instead (.dev.sense
+      // in styles.ts, the gentle sibling of the red .dev.alarm ring).
+      if (['motion', 'occupancy', 'presence'].includes(dc))
+        return p.state === 'on' ? 'sense' : '';
     }
     if (dom === 'media_player') return ['playing', 'on'].includes(p.state) ? 'on' : '';
     if (dom === 'vacuum') return ['cleaning', 'returning'].includes(p.state) ? 'on' : '';
