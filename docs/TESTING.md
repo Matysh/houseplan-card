@@ -833,3 +833,36 @@ require hands on real hardware — they remain for the human pass.
   clicks must land on the overlay (elementFromPoint smoke guards it).
 - Multi-floor: one matrix per robot map (Dreame `selected_map` on the
   vacuum entity names the active one).
+
+## Room resize (docs/RESIZE.md)
+
+- [ ] The «Размер» tool appears in the Plan editor toolbar; in EVERY other
+      tool (and in Devices/Decor/View) there is not a single `.rszhandle`
+- [ ] Handles sit at the midpoint of every wall of every room; they are
+      finger-sized, capture the pointer and never start a stage pan
+- [ ] Dragging a handle moves the wall along its normal, both edge ends
+      together; the wall line snaps to the drawing grid
+- [ ] A wall fully shared with a neighbour drags the neighbour's wall with
+      it — the neighbour shrinks/grows, no gap and no overlap can appear
+- [ ] A partially shared wall (T-junction) moves only the coinciding
+      stretch: the neighbour becomes L-shaped (new vertices), shown live
+- [ ] Legacy x/y/w/h rectangle rooms resize the same way and are saved back
+      as polygons
+- [ ] Live badges while dragging: lengths of the dragged wall + both
+      adjacent walls, and the m² area at the room centre; dragging a shared
+      wall shows BOTH areas; all numbers update continuously
+- [ ] Stops: ~30 cm minimum for the own room AND the shrinking neighbour;
+      a foreign room in the path (touch is ok, overlap never); islands
+      inside; a door/window on a shortening wall (the wall corner can not
+      pass the opening edge)
+- [ ] A door/window ON the moving wall travels with it (openings x/y
+      recompute; angle unchanged)
+- [ ] Esc mid-drag cancels: the original geometry is back instantly
+- [ ] Click a room in the resize tool → dashed bbox frame with 4 corner
+      handles; dragging a corner scales all vertices proportionally about
+      the opposite corner; neighbours are NOT dragged along (the one
+      exception to «shared walls together»), growing into one stops
+- [ ] Ctrl+Z / ⌘Z after releasing a handle restores the previous geometry —
+      one release = one undo step (rooms AND openings)
+- [ ] Device markers do not move; the room settings gear re-centres itself
+- [ ] Smoke: `node demo/smoke_room_resize.mjs`

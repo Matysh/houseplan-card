@@ -9,6 +9,7 @@
   },
   "include": [
     "src/logic.ts", "src/vacuum.ts",
+    "src/resize.ts",
     "src/rules.ts",
     "src/devices.ts",
     "src/types.ts",

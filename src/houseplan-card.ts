@@ -24,6 +24,10 @@ import {
   referencedContentUrls,
   DISPLAY_MODES, TAP_ACTIONS, SPACE_FILL_MODES, ROOM_FILL_MODES,
 } from './logic';
+import {
+  planEdgeDrag, applyEdgeDrag, clampEdgeDrag, applyRoomScale, clampRoomScale,
+  simplifyPoly, areaM2, formatArea, MIN_ROOM_CM, type EdgeDragPlan,
+} from './resize';
 import { ContentSigner } from './signing';
 import {
   Affine, applyAffine, solveAffine, affineResidual, readVacTelemetry, isVacSourceState,
@@ -42,7 +46,7 @@ import { cardStyles } from './styles';
 import { fitInSquare, contentBounds, spaceModels } from './space-geometry';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.54.3';
+const CARD_VERSION = '1.55.0';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -55,7 +59,7 @@ const NORM_W = 1000; // side of the render space — the canvas is square (v1.48
 const SENSE_FLASH_MS = 3300;
 
 const GRID_N = 240; // grid points across the plan width (half the previous step; old nodes are a subset of the new ones, positions are preserved)
-type MarkupTool = 'draw' | 'merge' | 'split' | 'opening' | 'openwall' | 'delroom';
+type MarkupTool = 'draw' | 'merge' | 'split' | 'resize' | 'opening' | 'openwall' | 'delroom';
 
 const fireEvent = (node: EventTarget, type: string, detail?: unknown) => {
   const ev = new Event(type, { bubbles: true, composed: true }) as any;
@@ -215,6 +219,25 @@ class HouseplanCard extends LitElement {
     return this._mode === 'plan';
   }
   private _tool: MarkupTool = 'draw';
+  // room resize tool (docs/RESIZE.md): selection, live drag, its own undo stack
+  private _rszSel: string | null = null;
+  private _rszDrag: {
+    kind: 'edge' | 'scale';
+    pid: number;
+    roomId: string;
+    plan?: EdgeDragPlan;
+    fixed?: [number, number];
+    span0?: number;
+    rooms: { id: string; poly: number[][] }[];
+    openings: { id: string; x: number; y: number; length: number }[];
+    snap: string;
+    moved: boolean;
+    d: number;
+    k: number;
+    changed: string[];
+  } | null = null;
+  private _rszUndo: { space: string; snap: string }[] = [];
+  private _rszLive: { x: number; y: number; text: string; area?: boolean }[] | null = null;
   private _path: number[][] = []; // current outline (render units, vertices snapped to the grid)
   private _cursorPt: number[] | null = null;
   private _mergeSel: string | null = null;
@@ -362,7 +385,7 @@ class HouseplanCard extends LitElement {
       the flash is keyed to the TRANSITION, not to the 'on' state. `timer`
       is the one setTimeout per entry that repaints the card when the flash
       window closes (cleared in disconnectedCallback). */
-  private _senseRt = new Map<string, { last: string; flashTs: number; timer: number }>();
+  private _senseRt = new Map<string, { last: string; flashTs: number; timer: number; gen: number }>();
   /** live-vacuum runtime per marker: RAW robot coords (matrix applied at render) */
   private _vacRt = new Map<string, { trail: VacPt[]; lastKey: string; lastTs: number;
     moving: boolean; jump: boolean; endedTs: number; lastPos: VacPt | null }>();
@@ -426,6 +449,8 @@ class HouseplanCard extends LitElement {
     _serverCfg: { state: true },
     _mode: { state: true },
     _tool: { state: true },
+    _rszSel: { state: true },
+    _rszLive: { state: true },
     _path: { state: true },
     _cursorPt: { state: true },
     _mergeSel: { state: true },
@@ -565,6 +590,21 @@ class HouseplanCard extends LitElement {
       return;
     }
     if (!undo) return;
+    if (this._tool === 'resize') {
+      e.preventDefault();
+      if (this._rszDrag) {
+        // Esc (or Ctrl+Z) mid-drag: the original geometry comes back
+        this._rszCancelDrag();
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        this._rszUndoPop();
+        return;
+      }
+      if (this._rszSel) this._rszSel = null;
+      else this._tool = 'draw';
+      return;
+    }
     // Esc walks back out of merge/split: point by point, then the room pick,
     // then the tool itself (back to the neutral draw tool)
     if (this._tool === 'split') {
@@ -1331,7 +1371,12 @@ class HouseplanCard extends LitElement {
       // the state has not changed. A new off→on trip re-arms the flash.
       if (dc === 'motion') {
         const rt = this._senseRt.get(d.id);
-        return rt && rt.flashTs && Date.now() - rt.flashTs < SENSE_FLASH_MS ? 'senseflash' : '';
+        if (!(rt && rt.flashTs && Date.now() - rt.flashTs < SENSE_FLASH_MS)) return '';
+        // HP-1543-02: alternate the animation identity per trip (see
+        // _senseTick) — odd generations ride the base hp-sense keyframes,
+        // even ones the identical hp-sense-b twin, so a rapid re-trip
+        // restarts the flash instead of silently inheriting the old timeline
+        return rt.gen % 2 === 0 ? 'senseflash sf2' : 'senseflash';
       }
       // OCCUPANCY/PRESENCE while 'on': a calm STATIC ring ('sensehold',
       // no animation in styles.ts) — «комната обитаема» is a state, not
@@ -1632,7 +1677,7 @@ class HouseplanCard extends LitElement {
       // entirely, which left a phone with no way to zoom or pan the plan
       // (owner's report). Pointers that begin on interactive children still
       // stay out — labels and handles run their own drags.
-      if ((ev.target as HTMLElement).closest?.('.roomlabel, .rlhandle, .dev, .oplock, .op-hit, button')) return;
+      if ((ev.target as HTMLElement).closest?.('.roomlabel, .rlhandle, .rszhandle, .dev, .oplock, .op-hit, button')) return;
     }
     if (this._mode === 'devices' && (ev.target as HTMLElement).closest('.dev')) return;
     if (this._mode === 'decor' && this._decorPointerDown(ev)) return;
@@ -1923,8 +1968,7 @@ class HouseplanCard extends LitElement {
     if (mode === 'view') {
       const snap = this._viewModeSnap;
       this._viewModeSnap = null;
-      // restore only for the space the snapshot was taken in — after a space
-      // switch inside the editor the saved per-space zoom already applies
+      // restore the snapshot only for the space it was taken in
       if (snap && snap.space === this._space) {
         this._zoom = snap.zoom;
         this._view = null;
@@ -1934,6 +1978,17 @@ class HouseplanCard extends LitElement {
           this._saveZoom(); // editor wheel zoom wrote itself to LS_ZOOM — put the view zoom back
           this.requestUpdate();
         });
+      } else if (snap) {
+        // HP-1543-01: the floor CHANGED inside the editor — the snapshot
+        // belongs to the floor the editor was entered from, while _zoom still
+        // carries the editor's working zoom for the floor we are exiting on.
+        // Dropping the snapshot alone left that editor zoom (say 500%) on
+        // screen in view mode. The per-space store was never polluted
+        // (_saveZoom is view-only), so the standard centred
+        // _restoreZoom() puts back this floor's saved VIEW viewport. Its rAF
+        // reads _zoomBySpace, not the snapshot, so the same-tick floor-tab
+        // race the view-only guard protects against stays closed.
+        this._restoreZoom();
       }
     }
     this._path = [];
@@ -1944,6 +1999,10 @@ class HouseplanCard extends LitElement {
     this._splitSel = null;
     this._pendingSplit = null;
     this._selId = null;
+    this._rszSel = null;
+    this._rszDrag = null;
+    this._rszLive = null;
+    this._rszUndo = [];
     this._tip = null;
     this._decorDraft = null;
     this._decorSel = null;
@@ -2078,6 +2137,13 @@ class HouseplanCard extends LitElement {
     const path = (ev.composedPath?.() || []) as any[];
     if (path.some((n) => n?.classList?.contains?.('roomlabel') || n?.classList?.contains?.('rlhandle'))) return;
     const raw = this._svgPoint(ev);
+    if (this._tool === 'resize') {
+      // a click picks the room for the scale frame; handle drags never get here
+      if (this._rszDrag || path.some((n) => n?.classList?.contains?.('rszhandle'))) return;
+      const room = [...this._spaceModel().rooms].reverse().find((r) => this._pointInRoom(raw, r));
+      this._rszSel = room?.id || null;
+      return;
+    }
     if (this._tool === 'delroom') {
       const space = this._spaceModel();
       const room = [...space.rooms].reverse().find((r) => this._pointInRoom(raw, r));
@@ -2137,6 +2203,247 @@ class HouseplanCard extends LitElement {
       return;
     }
     this._path = [...this._path, pt];
+  }
+
+
+  // ================= room resize tool (docs/RESIZE.md) =================
+
+  /** Rooms of the current space as render-unit polygons (legacy rects converted). */
+  private _rszRooms(): { id: string; poly: number[][] }[] {
+    const out: { id: string; poly: number[][] }[] = [];
+    for (const r of this._spaceModel().rooms) {
+      const poly = r.id ? roomPoly(r) : null;
+      if (poly) out.push({ id: r.id!, poly });
+    }
+    return out;
+  }
+
+  private _rszOpenings(): { id: string; x: number; y: number; length: number }[] {
+    return this._openingsR.map((o) => ({ id: o.id, x: o.rx, y: o.ry, length: o.rlen }));
+  }
+
+  private _rszOpts(): { minDim: number; eps: number } {
+    return { minDim: this._cmToUnits(MIN_ROOM_CM), eps: this._gridPitch * 0.05 };
+  }
+
+  private _rszSnapshot(): string {
+    const sp = this._curSpaceCfg;
+    return JSON.stringify({ rooms: sp?.rooms || [], openings: sp?.openings || [] });
+  }
+
+  private _rszRestore(snap: string): void {
+    const sp = this._curSpaceCfg;
+    if (!sp) return;
+    const s = JSON.parse(snap);
+    sp.rooms = s.rooms;
+    sp.openings = s.openings;
+    this._cfgEpoch++;
+    this.requestUpdate();
+  }
+
+  /** Live preview: the candidate outlines go straight into the space config (normalized),
+   *  based on the immutable pre-drag snapshot — walls, fills, labels and openings all
+   *  follow in the same render. Nothing is WRITTEN until the handle is released. */
+  private _rszApplyPreview(polys: Record<string, number[][]>, ops: Record<string, [number, number]>): void {
+    const g = this._rszDrag;
+    const sp = this._curSpaceCfg;
+    if (!g || !sp) return;
+    const s = JSON.parse(g.snap);
+    sp.rooms = s.rooms;
+    sp.openings = s.openings;
+    const H = this._spaceH;
+    for (const [id, poly] of Object.entries(polys)) {
+      const r = sp.rooms.find((x: any) => x.id === id);
+      if (!r) continue;
+      r.poly = poly.map((p) => [p[0] / NORM_W, p[1] / H]);
+      delete r.x; delete r.y; delete r.w; delete r.h; // a resized room is saved as a polygon
+    }
+    for (const [id, c] of Object.entries(ops)) {
+      const o = (sp.openings || []).find((x: any) => x.id === id);
+      if (!o) continue;
+      o.x = c[0] / NORM_W;
+      o.y = c[1] / H;
+    }
+    this._cfgEpoch++;
+  }
+
+  private _rszEdgeDown(ev: PointerEvent, roomId: string, edge: number): void {
+    if (this._tool !== 'resize' || this._rszDrag) return;
+    ev.stopPropagation();
+    ev.preventDefault();
+    capturePointer(ev);
+    const rooms = this._rszRooms();
+    const plan = planEdgeDrag(rooms, roomId, edge);
+    if (!plan) return;
+    this._rszDrag = {
+      kind: 'edge', pid: ev.pointerId, roomId, plan,
+      rooms, openings: this._rszOpenings(), snap: this._rszSnapshot(),
+      moved: false, d: 0, k: 1, changed: [],
+    };
+  }
+
+  private _rszCornerDown(ev: PointerEvent, roomId: string, corner: number[], fixed: [number, number]): void {
+    if (this._tool !== 'resize' || this._rszDrag) return;
+    ev.stopPropagation();
+    ev.preventDefault();
+    capturePointer(ev);
+    this._rszDrag = {
+      kind: 'scale', pid: ev.pointerId, roomId, fixed,
+      span0: Math.hypot(corner[0] - fixed[0], corner[1] - fixed[1]) || 1,
+      rooms: this._rszRooms(), openings: this._rszOpenings(), snap: this._rszSnapshot(),
+      moved: false, d: 0, k: 1, changed: [],
+    };
+  }
+
+  private _rszMove(ev: PointerEvent): void {
+    const g = this._rszDrag;
+    if (!g || g.pid !== ev.pointerId) return;
+    ev.stopPropagation();
+    const p = this._svgPoint(ev);
+    if (g.kind === 'edge') {
+      const plan = g.plan!;
+      const dRaw = (p[0] - plan.a[0]) * plan.n[0] + (p[1] - plan.a[1]) * plan.n[1];
+      // the moved wall LINE lands on the grid, like every drawn wall
+      const sn = this._snap([plan.a[0] + plan.n[0] * dRaw, plan.a[1] + plan.n[1] * dRaw]);
+      let d = (sn[0] - plan.a[0]) * plan.n[0] + (sn[1] - plan.a[1]) * plan.n[1];
+      d = clampEdgeDrag(g.rooms, g.openings, plan, d, this._gridPitch, this._rszOpts());
+      if (d === g.d && g.moved) return;
+      g.d = d;
+      g.moved = true;
+      const res = applyEdgeDrag(g.rooms, g.openings, plan, d, this._rszOpts().eps);
+      g.changed = Object.keys(res.polys);
+      this._rszApplyPreview(res.polys, res.openings);
+      this._rszLive = this._rszEdgeLabels(res, plan);
+    } else {
+      const fixed = g.fixed!;
+      const sn = this._snap(p); // the dragged corner aims at grid nodes
+      let k = Math.hypot(sn[0] - fixed[0], sn[1] - fixed[1]) / (g.span0 || 1);
+      k = Math.max(0.05, Math.min(20, k));
+      k = clampRoomScale(g.rooms, g.openings, g.roomId, fixed, k, this._rszOpts());
+      if (k === g.k && g.moved) return;
+      g.k = k;
+      g.moved = true;
+      const room = g.rooms.find((r) => r.id === g.roomId)!;
+      const others = g.rooms.filter((r) => r.id !== g.roomId).map((r) => r.poly);
+      const res = applyRoomScale(room, g.openings, others, fixed, k, this._rszOpts().eps * 2);
+      g.changed = [g.roomId];
+      this._rszApplyPreview({ [g.roomId]: res.poly }, res.openings);
+      this._rszLive = this._rszScaleLabels(res.poly);
+    }
+    this.requestUpdate();
+  }
+
+  private _rszUp(ev: PointerEvent): void {
+    const g = this._rszDrag;
+    if (!g || g.pid !== ev.pointerId) return;
+    ev.stopPropagation();
+    this._rszDrag = null;
+    this._rszLive = null;
+    const changed = g.moved && (g.kind === 'edge' ? Math.abs(g.d) > 1e-9 : Math.abs(g.k - 1) > 1e-9);
+    if (!changed) {
+      this._rszRestore(g.snap);
+      return;
+    }
+    // commit: clean the collinear leftovers of T-inserts, then ONE undo step + ONE write
+    const sp = this._curSpaceCfg;
+    if (sp) {
+      for (const id of g.changed) {
+        const r = sp.rooms.find((x: any) => x.id === id);
+        if (r?.poly) r.poly = simplifyPoly(r.poly, 1e-9);
+      }
+    }
+    this._rszUndo.push({ space: this._space, snap: g.snap });
+    if (this._rszUndo.length > 30) this._rszUndo.shift();
+    // the click synthesized after the drag must not re-pick the selection
+    this._suppressClick = true;
+    setTimeout(() => (this._suppressClick = false), 0);
+    this._saveConfig();
+    this.requestUpdate();
+  }
+
+  private _rszCancelDrag(): void {
+    const g = this._rszDrag;
+    if (!g) return;
+    this._rszDrag = null;
+    this._rszLive = null;
+    this._rszRestore(g.snap);
+  }
+
+  /** Ctrl+Z in the resize tool: one handle release = one undo step (docs/RESIZE.md). */
+  private _rszUndoPop(): void {
+    for (let i = this._rszUndo.length - 1; i >= 0; i--) {
+      if (this._rszUndo[i].space !== this._space) continue;
+      const [entry] = this._rszUndo.splice(i, 1);
+      this._rszRestore(entry.snap);
+      this._saveConfig();
+      return;
+    }
+  }
+
+  private _rszEdgeLabels(
+    res: { polys: Record<string, number[][]> }, plan: EdgeDragPlan,
+  ): { x: number; y: number; text: string; area?: boolean }[] {
+    const g = this._rszDrag!;
+    const labels: { x: number; y: number; text: string; area?: boolean }[] = [];
+    const own = res.polys[plan.roomId] || g.rooms.find((r) => r.id === plan.roomId)!.poly;
+    const n = own.length;
+    const i = plan.edge, j = (i + 1) % n;
+    // the dragged wall and its two adjacent walls
+    for (const [a, b] of [[own[(i - 1 + n) % n], own[i]], [own[i], own[j]], [own[j], own[(j + 1) % n]]]) {
+      labels.push({ x: (a[0] + b[0]) / 2, y: (a[1] + b[1]) / 2, text: this._fmtLen(a, b) });
+    }
+    // live areas of EVERY room the drag reshapes (both sides of a shared wall)
+    const imperial = this.hass?.config?.unit_system?.length === 'mi';
+    const ids = Object.keys(res.polys).length ? Object.keys(res.polys) : [plan.roomId];
+    for (const id of ids) {
+      const poly = res.polys[id] || g.rooms.find((r) => r.id === id)!.poly;
+      const c = poleOfInaccessibility(poly);
+      labels.push({ x: c[0], y: c[1], text: formatArea(areaM2(poly, this._gridPitch, this._cellCm), imperial), area: true });
+    }
+    return labels;
+  }
+
+  private _rszScaleLabels(poly: number[][]): { x: number; y: number; text: string; area?: boolean }[] {
+    const imperial = this.hass?.config?.unit_system?.length === 'mi';
+    const xs = poly.map((p) => p[0]), ys = poly.map((p) => p[1]);
+    const w = Math.max(...xs) - Math.min(...xs), h = Math.max(...ys) - Math.min(...ys);
+    const c = poleOfInaccessibility(poly);
+    return [
+      { x: Math.min(...xs), y: Math.min(...ys), text: `${this._fmtLen([0, 0], [w, 0])} × ${this._fmtLen([0, 0], [h, 0])}` },
+      { x: c[0], y: c[1], text: formatArea(areaM2(poly, this._gridPitch, this._cellCm), imperial), area: true },
+    ];
+  }
+
+  /** Handles of the resize tool: wall midpoints + the scale frame of the selected room. */
+  private _renderResizeLayer(view: { x: number; y: number; w: number; h: number }): TemplateResult {
+    const hr = Math.max(view.w * 0.013, 5); // finger-sized on touch, like .vacfithandle
+    const parts: TemplateResult[] = [];
+    const rooms = this._rszRooms();
+    for (const r of rooms) {
+      for (let i = 0; i < r.poly.length; i++) {
+        const a = r.poly[i], b = r.poly[(i + 1) % r.poly.length];
+        if (Math.hypot(b[0] - a[0], b[1] - a[1]) < this._gridPitch) continue;
+        parts.push(svg`<circle class="rszhandle" cx="${((a[0] + b[0]) / 2).toFixed(1)}" cy="${((a[1] + b[1]) / 2).toFixed(1)}" r="${hr.toFixed(1)}"
+          @pointerdown=${(e: PointerEvent) => this._rszEdgeDown(e, r.id, i)}
+          @pointermove=${(e: PointerEvent) => this._rszMove(e)}
+          @pointerup=${(e: PointerEvent) => this._rszUp(e)}
+          @pointercancel=${(e: PointerEvent) => this._rszUp(e)}></circle>`);
+      }
+    }
+    const sel = this._rszSel ? rooms.find((r) => r.id === this._rszSel) : null;
+    if (sel) {
+      const xs = sel.poly.map((p) => p[0]), ys = sel.poly.map((p) => p[1]);
+      const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+      parts.push(svg`<rect class="rszframe" x="${x0}" y="${y0}" width="${x1 - x0}" height="${y1 - y0}"></rect>`);
+      for (const [cx, cy, fx, fy] of [[x0, y0, x1, y1], [x1, y0, x0, y1], [x1, y1, x0, y0], [x0, y1, x1, y0]]) {
+        parts.push(svg`<circle class="rszhandle rszcorner" cx="${cx}" cy="${cy}" r="${(hr * 1.15).toFixed(1)}"
+          @pointerdown=${(e: PointerEvent) => this._rszCornerDown(e, sel.id, [cx, cy], [fx, fy] as [number, number])}
+          @pointermove=${(e: PointerEvent) => this._rszMove(e)}
+          @pointerup=${(e: PointerEvent) => this._rszUp(e)}
+          @pointercancel=${(e: PointerEvent) => this._rszUp(e)}></circle>`);
+      }
+    }
+    return svg`${parts}`;
   }
 
   /** Openings of the current space in render units. */
@@ -4346,6 +4653,7 @@ class HouseplanCard extends LitElement {
             ${this._renderOpenWalls(disp)}
             ${this._editing ? this._renderAlignGuides() : nothing}
             ${this._markup ? this._renderMarkupLayer(vb) : nothing}
+            ${this._markup && this._tool === 'resize' ? this._renderResizeLayer(view) : nothing}
             ${this._renderOpenings(disp)}
           </svg>
           <div class="devlayer" style="--icon-size:${((iconPct * vb[2] * (this._kiosk ? this._kioskScale.icon : 1)) / view.w).toFixed(3)}cqw;--rl-font:${this._kiosk ? this._kioskScale.font : 1}">
@@ -4360,6 +4668,11 @@ class HouseplanCard extends LitElement {
           </div>
           ${this._measureAnchor
             ? html`<div class="measurelayer">${this._renderMeasureLabel(view)}</div>`
+            : nothing}
+          ${this._rszLive
+            ? html`<div class="measurelayer">${this._rszLive.map((l) => html`<div
+                class="measurelabel ${l.area ? 'rszarea' : ''}"
+                style="left:${(((l.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((l.y - view.y) / view.h) * 100).toFixed(2)}%">${l.text}</div>`)}</div>`
             : nothing}
           </div>
           ${this._zoom > 1
@@ -4462,9 +4775,19 @@ class HouseplanCard extends LitElement {
       const p = this.hass.states[d.primary];
       if (p?.attributes?.device_class !== 'motion') continue;
       const rt = this._senseRt.get(d.id);
-      if (!rt) { this._senseRt.set(d.id, { last: p.state, flashTs: 0, timer: 0 }); continue; }
+      if (!rt) { this._senseRt.set(d.id, { last: p.state, flashTs: 0, timer: 0, gen: 0 }); continue; }
       if (p.state === 'on' && rt.last === 'off') {
         rt.flashTs = Date.now();
+        // HP-1543-02: a retrip BEFORE the previous flash finished kept the
+        // same 'senseflash' class and the same animation-name on the same
+        // pseudo-element — browsers never restart such a CSS animation, so
+        // the second detection played nothing once the first one-shot had
+        // ended (base opacity 0). Every trip bumps the generation;
+        // _stateClass maps its parity to alternating keyframe names
+        // (hp-sense / hp-sense-b in styles.ts), which is a NEW animation
+        // identity and forces a fresh timeline per detection. No class is
+        // ever removed mid-flash, so a lone first flash still plays whole.
+        rt.gen++;
         clearTimeout(rt.timer);
         rt.timer = window.setTimeout(() => this.requestUpdate(), SENSE_FLASH_MS + 60);
       }
@@ -5774,6 +6097,11 @@ class HouseplanCard extends LitElement {
         title=${this._t('title.markup_split')}>
         <ha-icon icon="mdi:vector-polyline-remove"></ha-icon>${this._t('markup.split')}
       </button>
+      <button class="btn ${this._tool === 'resize' ? 'on' : ''}"
+        @click=${() => { this._cancelPath(); this._tool = 'resize'; this._rszSel = null; }}
+        title=${this._t('title.markup_resize')}>
+        <ha-icon icon="mdi:arrow-expand-all"></ha-icon>${this._t('markup.resize')}
+      </button>
       <button class="btn ${this._tool === 'opening' ? 'on' : ''}"
         @click=${() => { this._cancelPath(); this._tool = 'opening'; }}
         title=${this._t('title.markup_opening')}>
@@ -5795,6 +6123,7 @@ class HouseplanCard extends LitElement {
               : this._t('markup.hint_start')}</span>
             ${this._path.length ? html`<button class="btn ghost" @click=${this._cancelPath}>${this._t('btn.reset')}</button>` : nothing}`
         : nothing}
+      ${this._tool === 'resize' ? html`<span class="hint">${this._t('markup.hint_resize')}</span>` : nothing}
       <button class="btn barclose" title=${this._t('title.close_editor')}
         @click=${() => this._setMode('view')}>
         <ha-icon icon="mdi:close"></ha-icon>
