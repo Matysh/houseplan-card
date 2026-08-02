@@ -4,7 +4,7 @@ const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
-  // 1) диалог общих настроек: 7 цветовых строк, 3 группы
+  // 1) диалог общих настроек: инвентарь строк и групп (обновлён фичей «Солнце»)
   c._openSettingsDialog(); await c.updateComplete;
   out.rows = sr().querySelectorAll('.gsrow').length;
   out.groups = [...sr().querySelectorAll('.dialog .dispsection')].map((l) => l.textContent.trim());
@@ -28,8 +28,8 @@ const res = await page.evaluate(async () => {
 });
 // значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
 checkAll(res, {
-  "rows": 12, // 10 цветов + радиус свечения + фон вокруг плана
-  "groups": ["Fill: lights", "Fill: temperature", "Fill: zigbee signal", "Light-sources fill", "Stage background"],
+  "rows": 14, // 10 цветов + радиус свечения + режим фона + цвет фона + погода (docs/SUN.md)
+  "groups": ["Fill: lights", "Fill: temperature", "Fill: zigbee signal", "Light-sources fill", "Stage background", "Sun"],
   "saved": {"c": "#ff00ff", "a": 0.5},
   "lqiBefore": 7,
   "lqiAfter": 0,
