@@ -13,7 +13,8 @@ const st = () => page.evaluate(() => {
     editBtns: sr.querySelectorAll('.head .btn:not(.zb)').length,
     gears: sr.querySelectorAll('.tabedit').length,
     markupBar: !!sr.querySelector('.editbar'),
-    stageClass: sr.querySelector('.stage').className,
+    // hpsettle is the transient post-boot grace (AUD-1552-02), not a mode class
+    stageClass: sr.querySelector('.stage').className.replace(/ ?\bhpsettle\b/, ''),
   };
 });
 // 1) старт: view, чистая шапка

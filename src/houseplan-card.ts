@@ -47,7 +47,20 @@ import { cardStyles } from './styles';
 import { fitInSquare, contentBounds, spaceModels } from './space-geometry';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.55.2';
+const CARD_VERSION = '1.55.3';
+/** HP-1552 boot-veil timing (AUD-1552-02). The veil holds for at least
+ *  BOOT_MIN_MS; every stage-height change restarts a BOOT_QUIET_MS
+ *  trailing-quiescence requirement (chrome still settling near the cap
+ *  extends the wait); BOOT_MAX_MS lifts the veil unconditionally.
+ *  BOOT_MIN_MS exceeds the old 600 ms window by a frame-latency margin: a
+ *  panel applied right at the window's edge (~590 ms) only materializes in
+ *  the stage height a couple of rAF/render frames later. */
+const BOOT_MIN_MS = 700;
+const BOOT_QUIET_MS = 250;
+const BOOT_MAX_MS = 1200;
+/** AUD-1552-02: post-reveal grace during which late chrome shifts glide
+ *  (CSS height transition on the stage) instead of snapping. */
+const BOOT_SOFT_MS = 1500;
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -293,14 +306,21 @@ class HouseplanCard extends LitElement {
   /** HP-1552: first-open boot veil. In normal (non-kiosk) mode the stage is
    *  calc(100dvh - _hdrH), and _hdrH is measured from HA's chrome — which
    *  finishes loading AFTER the card's first paint, so every late panel
-   *  nudged the height and the plan visibly jumped. Until the height reads
-   *  the same twice in a row (or ~600 ms pass) the plan hides behind a
-   *  pulsing-house veil. First open only; kiosk is 100dvh and never jumps. */
+   *  nudged the height and the plan visibly jumped. The plan hides behind a
+   *  pulsing-house veil for a full protective window (AUD-1552-02: the old
+   *  early reveal on "two equal reads" let a panel landing at 400-600 ms
+   *  jump on a VISIBLE plan); the whole lifecycle restarts from
+   *  connectedCallback (AUD-1552-01: timers die on disconnect — a Lovelace
+   *  DOM rebuild mid-boot used to leave the plan hidden forever).
+   *  First open only; kiosk is 100dvh and never jumps. */
   private _booting = true;
   private _bootFading = false; // veil kept one beat for the opacity-out
   private _bootTimer?: number;
   private _bootLastH = -1;
   private _bootStart = 0;
+  private _bootLastChange = 0; // when the stage height last moved (quiescence clock)
+  private _bootSoft = false; // post-reveal grace: late chrome shifts glide, not jump
+  private _bootSoftTimer?: number;
   /** The accidental-tap guard: pending confirmation for a toggle/run tap. */
   private _tapConfirm: { text: string; exec: () => void } | null = null;
   private _onboardingShown = false; // the auto space dialog is shown once per session
@@ -454,6 +474,7 @@ class HouseplanCard extends LitElement {
     _hdrH: { state: true },
     _booting: { state: true },
     _bootFading: { state: true },
+    _bootSoft: { state: true },
     _tapConfirm: { state: true },
     hass: { attribute: false },
     _config: { state: true },
@@ -515,6 +536,21 @@ class HouseplanCard extends LitElement {
       this._cycleTimer = window.setInterval(() => this._cycleTick(), Number(this._config.cycle) * 1000);
     }
     window.addEventListener('hashchange', this._onHashChange);
+    // AUD-1552-01: the boot-veil timers die in disconnectedCallback, so a
+    // disconnect/reconnect while booting (Lovelace rebuilds its DOM, a view
+    // switch remounts the card) used to strand _booting=true with no watcher
+    // — the plan stayed hidden forever. Restart the veil lifecycle from every
+    // connect: a fresh watch (fresh clock, so the hard cap counts from the
+    // reconnect) while booting, or the tail timers if we detached mid-fade.
+    if (this._booting) this._bootWatch();
+    else if (this._bootFading) {
+      clearTimeout(this._bootTimer);
+      this._bootTimer = window.setTimeout(() => { this._bootFading = false; }, 220);
+    }
+    if (this._bootSoft) {
+      clearTimeout(this._bootSoftTimer);
+      this._bootSoftTimer = window.setTimeout(() => { this._bootSoft = false; }, BOOT_SOFT_MS);
+    }
   }
 
   public disconnectedCallback(): void {
@@ -530,6 +566,8 @@ class HouseplanCard extends LitElement {
     clearTimeout(this._toastTimer);
     clearTimeout(this._slideTimer);
     clearTimeout(this._bootTimer);
+    this._bootTimer = undefined; // AUD-1552-01: a cleared id must not block the reconnect watcher
+    clearTimeout(this._bootSoftTimer);
     this._saveConfigDebounced.flush(); // never leave an edit unsent on teardown
     window.removeEventListener('hashchange', this._onHashChange);
     clearTimeout(this._holdTimer);
@@ -1601,24 +1639,33 @@ class HouseplanCard extends LitElement {
   }
 
   /**
-   * HP-1552: poll the stage height until it settles — two equal reads in a
-   * row, or a hard cap of ~600 ms (HA's panels normally land well inside it).
-   * Only then is the plan revealed, already refit to the final geometry.
+   * HP-1552: hold the boot veil until the stage height settles. AUD-1552-02:
+   * the old "two equal reads at a 200 ms cadence" revealed the plan at
+   * ~400 ms, so an HA panel landing right after (450+ ms is realistic on a
+   * slow device) still jumped on a VISIBLE plan. The veil now holds for the
+   * full protective window (BOOT_MIN_MS); the height is sampled every 100 ms
+   * and any change restarts a trailing-quiescence requirement
+   * (BOOT_QUIET_MS), so chrome still settling near the cap extends the wait.
+   * BOOT_MAX_MS lifts the veil unconditionally — it can never get stuck.
    */
   private _bootWatch(): void {
+    clearTimeout(this._bootTimer); // never two concurrent watchers (connect + updated)
     this._bootStart = Date.now();
     this._bootLastH = -1; // the first read only arms the comparison
+    this._bootLastChange = this._bootStart;
     const tick = () => {
       if (!this._booting) return;
+      const now = Date.now();
       const h = this._stageEl ? this._stageEl.clientHeight : 0;
-      if ((h > 0 && h === this._bootLastH) || Date.now() - this._bootStart >= 600) {
+      if (h !== this._bootLastH) { this._bootLastH = h; this._bootLastChange = now; }
+      const elapsed = now - this._bootStart;
+      if (elapsed >= BOOT_MAX_MS || (elapsed >= BOOT_MIN_MS && h > 0 && now - this._bootLastChange >= BOOT_QUIET_MS)) {
         this._bootSettled();
         return;
       }
-      this._bootLastH = h;
-      this._bootTimer = window.setTimeout(tick, 200);
+      this._bootTimer = window.setTimeout(tick, 100);
     };
-    this._bootTimer = window.setTimeout(tick, 200);
+    this._bootTimer = window.setTimeout(tick, 100);
   }
 
   private _bootSettled(): void {
@@ -1627,6 +1674,21 @@ class HouseplanCard extends LitElement {
     this._booting = false;
     this._bootFading = true; // one soft opacity-out, then out of the DOM
     this._bootTimer = window.setTimeout(() => { this._bootFading = false; }, 220);
+    // AUD-1552-02: chrome that lands after the cap (device slower than
+    // BOOT_MAX_MS) must not snap — for a short grace the stage height
+    // transitions and the viewport ResizeObserver refits the plan each frame.
+    this._bootSoft = true;
+    clearTimeout(this._bootSoftTimer);
+    this._bootSoftTimer = window.setTimeout(() => { this._bootSoft = false; }, BOOT_SOFT_MS);
+  }
+
+  /** The soft grace only covers PASSIVE late chrome. A user action that
+   *  changes the stage height (entering/leaving an editor) must apply
+   *  instantly — the plan may not drift under the pointer mid-drag. */
+  private _bootSoftCancel(): void {
+    if (!this._bootSoft) return;
+    clearTimeout(this._bootSoftTimer);
+    this._bootSoft = false;
   }
 
   /** Recompute the view for a new scene size, preserving zoom and center. */
@@ -2027,6 +2089,7 @@ class HouseplanCard extends LitElement {
   private _setMode(mode: 'view' | 'plan' | 'devices' | 'decor'): void {
     if (this._kiosk && mode !== 'view') return; // wall devices never edit
     if (this._mode === mode) return;
+    this._bootSoftCancel(); // editor bars change the stage height DELIBERATELY — snap, no glide
     if ((mode === 'plan' || mode === 'decor') && !this._norm) {
       this._showToast(this._t('toast.markup_needs_server'));
       return;
@@ -4737,7 +4800,7 @@ class HouseplanCard extends LitElement {
         ${this._markup ? this._renderMarkupBar() : this._mode === 'devices' ? this._renderDevicesBar() : this._mode === 'decor' ? this._renderDecorBar() : nothing}
         </div>
 
-        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'openwall' && this._openWallHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._booting ? ' hpboot' : ''}"
+        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'openwall' && this._openWallHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}"
           style="height:${this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}${stageBg ? `;background:${stageBg}` : ''}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}

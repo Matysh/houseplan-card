@@ -156,6 +156,12 @@ export const cardStyles = css`
     .stage.hpboot .zoombadge {
       visibility: hidden;
     }
+    /* AUD-1552-02: post-veil grace — HA chrome landing after the cap moves
+       the stage height smoothly; the viewport ResizeObserver refits the plan
+       along the transition, so a late panel glides instead of jumping. */
+    .stage.hpsettle {
+      transition: height 0.25s ease;
+    }
     .bootveil {
       position: absolute;
       inset: 0;
@@ -187,6 +193,9 @@ export const cardStyles = css`
       .bootveil .boothouse {
         animation: none;
         opacity: 0.7;
+      }
+      .stage.hpsettle {
+        transition: none;
       }
     }
     .zoomctl {
