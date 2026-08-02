@@ -2538,19 +2538,32 @@ class HouseplanCard extends LitElement {
 
   /** Handles of the resize tool: wall midpoints + the scale frame of the selected room. */
   private _renderResizeLayer(view: { x: number; y: number; w: number; h: number }): TemplateResult {
-    const hr = Math.max(view.w * 0.013, 5); // finger-sized on touch, like .vacfithandle
+    const hr = Math.max(view.w * 0.013, 5); // finger-sized HIT radius on touch, like .vacfithandle
+    // Wall-handle glyph: half the old circle — a wall segment with two arrows
+    // pointing perpendicular to it (the directions the wall can be dragged).
+    // Drawn in local coords (wall along X), rotated per edge at render time.
+    // The invisible circle above keeps the full finger-sized hit area and the
+    // HP-1550-04 hit-test priority over openings.
+    const s = hr / 2, f = (v: number) => v.toFixed(1);
+    const iconD =
+      `M ${f(-0.7 * s)} 0 H ${f(0.7 * s)}` +
+      ` M 0 ${f(-0.22 * s)} V ${f(-s)} M ${f(-0.32 * s)} ${f(-0.6 * s)} L 0 ${f(-s)} L ${f(0.32 * s)} ${f(-0.6 * s)}` +
+      ` M 0 ${f(0.22 * s)} V ${f(s)} M ${f(-0.32 * s)} ${f(0.6 * s)} L 0 ${f(s)} L ${f(0.32 * s)} ${f(0.6 * s)}`;
     const parts: TemplateResult[] = [];
     const rooms = this._rszRooms();
     for (const r of rooms) {
       for (let i = 0; i < r.poly.length; i++) {
         const a = r.poly[i], b = r.poly[(i + 1) % r.poly.length];
         if (Math.hypot(b[0] - a[0], b[1] - a[1]) < this._gridPitch) continue;
-        parts.push(svg`<circle class="rszhandle" cx="${((a[0] + b[0]) / 2).toFixed(1)}" cy="${((a[1] + b[1]) / 2).toFixed(1)}" r="${hr.toFixed(1)}"
+        const mx = f((a[0] + b[0]) / 2), my = f((a[1] + b[1]) / 2);
+        const ang = f(Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI);
+        parts.push(svg`<circle class="rszhandle" cx="${mx}" cy="${my}" r="${f(hr)}"
           @pointerdown=${(e: PointerEvent) => this._rszEdgeDown(e, r.id, i)}
           @pointermove=${(e: PointerEvent) => this._rszMove(e)}
           @pointerup=${(e: PointerEvent) => this._rszUp(e)}
           @pointercancel=${(e: PointerEvent) => this._rszPointerCancel(e)}
           @lostpointercapture=${(e: PointerEvent) => this._rszPointerCancel(e)}></circle>`);
+        parts.push(svg`<g class="rszicon" transform="translate(${mx} ${my}) rotate(${ang})"><path class="rszhalo" d="${iconD}"></path><path class="rszink" d="${iconD}"></path></g>`);
       }
     }
     const sel = this._rszSel ? rooms.find((r) => r.id === this._rszSel) : null;

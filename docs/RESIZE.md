@@ -19,9 +19,14 @@ before — no handles, no new hit areas.
 ## Mechanism A — wall drag
 
 - Every visible room shows a small handle at the midpoint of every
-  wall (handles for all rooms at once — owner's UX pick; they are
-  finger-sized but unobtrusive, radius derived from `view.w` like
-  `.vacfithandle`).
+  wall (handles for all rooms at once — owner's UX pick). The visible
+  glyph is a compact icon — a wall segment with two arrows pointing
+  perpendicular to it (the directions the wall drags), rotated to the
+  wall's orientation; accent ink over a `--hp-bg` halo. It is half the
+  size of the old circle, but the HIT area is an invisible circle of
+  the original finger-sized radius (derived from `view.w` like
+  `.vacfithandle`), so touch targets did not shrink. Cursor: `grab`,
+  `grabbing` while dragging.
 - Dragging a handle moves the wall along its outward normal; **both
   ends of the edge translate together** (the wall stays parallel to
   itself; adjacent walls stretch/shrink). Works for any polygon
