@@ -2689,8 +2689,10 @@ class HouseplanCard extends LitElement {
       const down = (e: PointerEvent) => this._decorShapeDown(e, sh);
       const dbl = () => this._decorShapeDbl(sh);
       if (sh.kind === 'line')
+        // round caps: line ends read as circles of the stroke width, so two
+        // lines meeting at an angle join without the notch (owner's screenshot)
         return svg`<line class="${cls}" x1="${sh.x1 * W}" y1="${sh.y1 * H}" x2="${sh.x2 * W}" y2="${sh.y2 * H}"
-          stroke="${sh.color}" stroke-width="${sh.width}" @pointerdown=${down}></line>`;
+          stroke="${sh.color}" stroke-width="${sh.width}" stroke-linecap="round" stroke-linejoin="round" @pointerdown=${down}></line>`;
       if (sh.kind === 'rect')
         return svg`<rect class="${cls}" x="${sh.x * W}" y="${sh.y * H}" width="${sh.w * W}" height="${sh.h * H}"
           stroke="${sh.color}" stroke-width="${sh.width}"
@@ -2711,7 +2713,7 @@ class HouseplanCard extends LitElement {
       const st = this._decorStyle;
       if (d.kind === 'line')
         draft = svg`<line class="ddraft" x1="${d.a[0]}" y1="${d.a[1]}" x2="${d.b[0]}" y2="${d.b[1]}"
-          stroke="${st.color}" stroke-width="${st.width}"></line>`;
+          stroke="${st.color}" stroke-width="${st.width}" stroke-linecap="round" stroke-linejoin="round"></line>`;
       else {
         const x = Math.min(d.a[0], d.b[0]), y = Math.min(d.a[1], d.b[1]);
         const w = Math.abs(d.b[0] - d.a[0]), h = Math.abs(d.b[1] - d.a[1]);
