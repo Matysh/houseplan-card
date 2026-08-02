@@ -684,6 +684,13 @@ class HouseplanCard extends LitElement {
     } catch {
       /* ignore */
     }
+    // HP-1551: the saved per-space zoom used to be applied only by
+    // _restoreZoom()'s rAF after the server round-trip, so the cached config
+    // painted its first frames at the default fit and the plan visibly
+    // jumped to the saved zoom. The zoom store is already in hand here —
+    // arm it BEFORE the first view computation, so the very first paint is
+    // already at the user's zoom.
+    if (this._mode === 'view' && !this._view) this._zoom = this._zoomBySpace[this._space] || 1;
   }
 
   /** Save a snapshot of the config+layout to localStorage for an instant start. */
@@ -1643,6 +1650,20 @@ class HouseplanCard extends LitElement {
   private _restoreZoom(): void {
     const z = this._zoomBySpace[this._space] || 1;
     this._zoom = z;
+    const stage = this._stageEl;
+    if (stage && stage.clientHeight) {
+      // HP-1551: the stage is already measured — apply the view NOW, before
+      // the next paint. The unconditional rAF here used to let one frame
+      // (or a whole server round-trip worth of frames, via the updated()
+      // refit running with the stale zoom before this method was called at
+      // all) paint at the default fit — the visible "flash" on opening.
+      const vb = this._baseVb();
+      this._applyView(z, vb[0] + vb[2] / 2, vb[1] + vb[3] / 2);
+      this.requestUpdate();
+      return;
+    }
+    // stage not measurable yet: let updated() fit it with the (already
+    // correct) _zoom on the first layout, then center on the plan
     this._view = null;
     requestAnimationFrame(() => {
       if (!this._stageEl) return;
