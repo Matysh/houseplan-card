@@ -151,6 +151,85 @@ export const cardStyles = css`
       position: absolute;
       inset: 0;
     }
+    /* Sun on the plan (docs/SUN.md): the stage breathes with the day over tens
+       of seconds; the plan itself dims at most ~10%. Reduced motion = static. */
+    .stage.daynight {
+      transition: background-color 45s linear;
+    }
+    .stage.daynight .zoomwrap {
+      transition: filter 45s linear;
+    }
+    .stage.daynight.hpsettle {
+      transition: height 0.25s ease, background-color 45s linear;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .stage.daynight,
+      .stage.daynight .zoomwrap,
+      .stage.daynight.hpsettle {
+        transition: none;
+      }
+    }
+    .sunlayer {
+      pointer-events: none;
+    }
+    /* the compass dial in the general settings (docs/SUN.md) */
+    .sunrow {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 6px 0;
+    }
+    .suncol {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+    }
+    .compass {
+      width: 120px;
+      height: 120px;
+      flex: none;
+      touch-action: none;
+      cursor: grab;
+      user-select: none;
+    }
+    .compass:active {
+      cursor: grabbing;
+    }
+    .compass .cring {
+      fill: rgba(255, 255, 255, 0.04);
+      stroke: var(--divider-color, #444);
+      stroke-width: 2;
+    }
+    .compass .ctick {
+      stroke: var(--secondary-text-color, #9aa4ad);
+      stroke-width: 2;
+    }
+    .compass .ctick.minor {
+      stroke-width: 1;
+      opacity: 0.6;
+    }
+    .compass .cneedle line {
+      stroke: var(--primary-color, #3ea6ff);
+      stroke-width: 2.5;
+      stroke-linecap: round;
+    }
+    .compass .cneedle path {
+      fill: var(--primary-color, #3ea6ff);
+    }
+    .compass .cneedle text {
+      fill: var(--text-primary-color, #fff);
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .compass .cdeg {
+      fill: var(--secondary-text-color, #9aa4ad);
+      font-size: 13px;
+    }
+    .compass.unset .cneedle {
+      opacity: 0.35;
+    }
     /* HP-1552: first-open boot veil — the plan hides until the stage height settles */
     .stage.hpboot .zoomwrap,
     .stage.hpboot .zoombadge {

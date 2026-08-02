@@ -866,3 +866,34 @@ require hands on real hardware — they remain for the human pass.
       one release = one undo step (rooms AND openings)
 - [ ] Device markers do not move; the room settings gear re-centres itself
 - [ ] Smoke: `node demo/smoke_room_resize.mjs`
+
+## Sun on the plan (docs/SUN.md)
+
+- [ ] Everything below is INERT until `north_deg` is set (general ⚙ or the
+      space settings) AND the install has `sun.sun`; both dialogs hint at
+      whichever is missing
+- [ ] The ⚙ compass: dragging the «N» arrow turns it in 1° steps (15° with
+      Shift); the number field mirrors the dial and accepts 0–359; «Clear»
+      returns the unset state
+- [ ] «Plan background» selector: `static` keeps the existing color picker
+      and behaviour byte-for-byte; `daynight` hides the picker and the stage
+      follows the sun — neutral day, warm golden hour, dark night — with a
+      slow (tens of seconds) transition; the PLAN dims only ~10% at night
+- [ ] Per-space overrides (background mode, north, sun-in-windows) inherit
+      when empty, exactly like show_lqi/fill_mode
+- [ ] «Sunlight through windows» (default OFF): wedges appear only from
+      windows on EXTERIOR walls facing the sun; interior windows, open
+      (virtual) boundaries and doors never light up
+- [ ] Wedge direction follows the compass; length grows toward
+      sunrise/sunset and shrinks toward noon; every wedge is clipped by its
+      room polygon; night = no wedges at all
+- [ ] Weather entity (optional, global): cloudy fades the wedges, rain/snow
+      removes them, a dead/unknown weather sensor changes nothing
+- [ ] Sun geometry recomputes ONLY when the sun attributes or the config
+      change — an unrelated `hass` tick reuses the memo
+- [ ] Editors (plan/devices/decor) render with NO wedges and NO day/night;
+      kiosk works; the static space-card honours the background mode
+      (wedges are full-card-only in v1)
+- [ ] `prefers-reduced-motion` → no transitions, static colors
+- [ ] Smoke: `node demo/smoke_sun.mjs`; units: `test/sun.test.mjs`;
+      backend: `tests_backend/test_validation.py` (sun settings)

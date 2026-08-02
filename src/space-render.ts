@@ -11,6 +11,7 @@ import { buildDevices, areaLqi, areaLights, areaTemp } from './devices';
 import { spaceDisplayOf, roomFillStyle, fillColorsOf, roomFillModeOf, stageBgOf } from './logic';
 import { DEFAULT_ICON_RULES, compileIconRules, EXCLUDED_DOMAINS } from './rules';
 import { t, type Lang } from './i18n';
+import { bgModeOf, northDegOf, sunStateOf, dayPhase } from './sun';
 import type { ServerConfig } from './types';
 import {
   spaceModels, roomCenter, defaultPositions, markerPos, labelPos, type Layout,
@@ -146,8 +147,16 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     : [];
 
   const bgHref = space.bg ? (o.displayUrl ? o.displayUrl(space.bg.href) : space.bg.href) : '';
-  // the static card paints the same background around the plan as the full one
-  const stageBg = stageBgOf(o.cfg?.settings, disp);
+  // The static card paints the same background around the plan as the full
+  // one. In 'daynight' mode (docs/SUN.md) the sun's elevation paints it —
+  // wedges stay full-card-only in v1, the background alone follows the sky.
+  const spaceSettings = (o.cfg.spaces.find((sp: any) => sp.id === o.spaceId) as any)?.settings || {};
+  let sunBg = '';
+  if (bgModeOf(o.cfg?.settings, spaceSettings) === 'daynight' && northDegOf(o.cfg?.settings, spaceSettings) !== null) {
+    const sun = sunStateOf(o.hass);
+    if (sun) sunBg = dayPhase(sun.elevation).bg;
+  }
+  const stageBg = sunBg || stageBgOf(o.cfg?.settings, disp);
 
   return html`
     <div class="hp-static-stage" style="aspect-ratio:${vb[2]}/${vb[3]}${stageBg ? ';background:' + stageBg : ''}">

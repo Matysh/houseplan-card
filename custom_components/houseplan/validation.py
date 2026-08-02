@@ -168,6 +168,22 @@ ROOM_SCHEMA = vol.All(
     ),
     _require_geometry,
 )
+
+def _north_deg(value):
+    """Compass (docs/SUN.md): strict integer degrees, 0..359.
+
+    Strict on purpose: Coerce(int) would take "90" and 1.5, and a bool is an
+    int in Python — none of those is a compass reading a client stored.
+    """
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise vol.Invalid("north_deg must be an integer in 0..359")
+    if not 0 <= value <= 359:
+        raise vol.Invalid("north_deg must be an integer in 0..359")
+    return value
+
+
+_BG_MODE = vol.In(["static", "daynight"])
+
 SPACE_DISPLAY_SCHEMA = vol.Schema(
     {
         vol.Optional("show_borders"): bool,
@@ -185,6 +201,10 @@ SPACE_DISPLAY_SCHEMA = vol.Schema(
         vol.Optional("label_lqi"): bool,
         vol.Optional("label_light"): bool,
         vol.Optional("card_font_scale"): vol.All(vol.Coerce(float), vol.Range(min=0.5, max=3)),
+        # sun on the plan (docs/SUN.md): per-space overrides, absent = inherit
+        vol.Optional("north_deg"): vol.Any(None, _north_deg),
+        vol.Optional("bg_mode"): vol.Any(None, _BG_MODE),
+        vol.Optional("sun_rays"): vol.Any(None, bool),
     },
     extra=vol.ALLOW_EXTRA,
 )
@@ -323,6 +343,11 @@ CONFIG_SCHEMA = vol.Schema(
                 vol.Optional("glow_radius_cm"): vol.All(vol.Coerce(float), vol.Range(min=10, max=10000)),
                 # background around the plan, all spaces (a space may override)
                 vol.Optional("bg_color"): vol.Match(r"^#[0-9a-fA-F]{6}$"),
+                # sun on the plan (docs/SUN.md): global defaults
+                vol.Optional("north_deg"): _north_deg,
+                vol.Optional("bg_mode"): _BG_MODE,
+                vol.Optional("sun_rays"): bool,
+                vol.Optional("weather_entity"): vol.Any(None, _TEXT),
                 vol.Optional("known_devices"): vol.All([_TEXT], vol.Length(max=MAX_KNOWN_DEVICES)),
                 vol.Optional("new_device_ids"): vol.All([_TEXT], vol.Length(max=MAX_KNOWN_DEVICES)),
                 vol.Optional("fill_colors"): vol.Schema(
