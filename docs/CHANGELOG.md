@@ -1,5 +1,27 @@
 # Changelog
 
+## v1.55.3 — 2026-08-02
+
+Patch release: two fixes for the v1.55.2 first-open veil, found by an
+adversarial lifecycle audit (AUD-1552-01/02).
+
+- **A dashboard rebuild during the first open can no longer leave the
+  plan hidden forever** (AUD-1552-01). Disconnecting the card while the
+  boot veil was up (Lovelace recreates its DOM, a view switch remounts
+  the card) killed the settle timers but kept their ids, so nothing ever
+  lifted the veil again. The veil lifecycle now restarts from every
+  reconnect — with a fresh clock and an unconditional hard cap — and the
+  fade-out also survives a mid-fade remount.
+- **The veil no longer opens early, right before a late panel lands**
+  (AUD-1552-02). Two equal height reads at 200/400 ms used to reveal the
+  plan at ~400 ms, so Home Assistant chrome arriving at 450+ ms jumped
+  on a visible plan — exactly what the veil was meant to prevent. The
+  veil now holds for a full protective window with trailing quiescence
+  (height changes near the cap extend the wait), and for a short grace
+  after the reveal any later shift glides via a height transition
+  instead of snapping. Deliberate height changes (entering an editor)
+  still apply instantly.
+
 ## v1.55.2 — 2026-08-02
 
 Patch release: a calmer first open — no zoom flash and no layout jumps
