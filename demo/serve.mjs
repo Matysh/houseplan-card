@@ -56,6 +56,10 @@ export async function launch(viewport = { width: 820, height: 760 }, scale = 1) 
   });
   await page.goto('http://demo.local/demo.html', { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.__card?._model?.length > 0, { timeout: 9000 });
+  // HP-1552: the first-open boot veil hides the plan (visibility:hidden) until
+  // the stage height settles — real pointer interaction cannot hit a hidden
+  // plan, so every smoke starts where the user does: with the plan revealed.
+  await page.waitForFunction(() => window.__card._booting === false, { timeout: 9000 });
   // hass flows continuously in production; the stub sets it once — nudge a rebuild
   await page.evaluate(() => { const c = window.__card; c.hass = { ...c.hass }; });
   await page.waitForFunction(() => window.__card._devices.length > 0, { timeout: 9000 });

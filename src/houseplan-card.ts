@@ -29,6 +29,7 @@ import {
   simplifyPoly, areaM2, formatArea, MIN_ROOM_CM, type EdgeDragPlan,
 } from './resize';
 import { ContentSigner } from './signing';
+import { mdiHomeCityOutline } from '@mdi/js';
 import {
   Affine, applyAffine, solveAffine, affineResidual, readVacTelemetry, isVacSourceState,
   autoCalibrate, pushTrailPoint, isVacMoving, vacTrailMode, vacMapIdWithFallback, VAC_TELEPORT_GAP_MS, VAC_STALE_MS,
@@ -289,6 +290,17 @@ class HouseplanCard extends LitElement {
   private _roHdr?: ResizeObserver;
   private _onWinResize?: () => void;
   private _hdrH = 118; // measured px above the stage (see the observer in updated())
+  /** HP-1552: first-open boot veil. In normal (non-kiosk) mode the stage is
+   *  calc(100dvh - _hdrH), and _hdrH is measured from HA's chrome — which
+   *  finishes loading AFTER the card's first paint, so every late panel
+   *  nudged the height and the plan visibly jumped. Until the height reads
+   *  the same twice in a row (or ~600 ms pass) the plan hides behind a
+   *  pulsing-house veil. First open only; kiosk is 100dvh and never jumps. */
+  private _booting = true;
+  private _bootFading = false; // veil kept one beat for the opacity-out
+  private _bootTimer?: number;
+  private _bootLastH = -1;
+  private _bootStart = 0;
   /** The accidental-tap guard: pending confirmation for a toggle/run tap. */
   private _tapConfirm: { text: string; exec: () => void } | null = null;
   private _onboardingShown = false; // the auto space dialog is shown once per session
@@ -440,6 +452,8 @@ class HouseplanCard extends LitElement {
 
   static properties = {
     _hdrH: { state: true },
+    _booting: { state: true },
+    _bootFading: { state: true },
     _tapConfirm: { state: true },
     hass: { attribute: false },
     _config: { state: true },
@@ -515,6 +529,7 @@ class HouseplanCard extends LitElement {
     this._signer.dispose();
     clearTimeout(this._toastTimer);
     clearTimeout(this._slideTimer);
+    clearTimeout(this._bootTimer);
     this._saveConfigDebounced.flush(); // never leave an edit unsent on teardown
     window.removeEventListener('hashchange', this._onHashChange);
     clearTimeout(this._holdTimer);
@@ -650,6 +665,7 @@ class HouseplanCard extends LitElement {
 
   public setConfig(config: CardConfig): void {
     this._config = { icon_size: 2.5, show_temperature: true, live_states: true, show_signal: true, ...config };
+    if (this._config.kiosk) { this._booting = false; this._bootFading = false; } // kiosk: 100dvh, nothing to settle
     if (config.default_floor) this._space = config.default_floor;
     try {
       this._zoomBySpace = JSON.parse(localStorage.getItem(LS_ZOOM) || '{}') || {};
@@ -891,6 +907,7 @@ class HouseplanCard extends LitElement {
       this._roViewport = new ResizeObserver(() => this._refitView());
       this._roViewport.observe(stage);
     }
+    if (stage && this._booting && !this._bootTimer) this._bootWatch();
     // The stage fills the rest of the viewport. What sits above it inside the
     // CARD depends on the mode — the editor bars used to be billed against a
     // hard-coded 118px, so entering an editor pushed the plan down by the
@@ -1581,6 +1598,35 @@ class HouseplanCard extends LitElement {
     const ccy = cy ?? cur.y + cur.h / 2;
     this._zoom = z;
     this._view = this._clampView({ x: ccx - w / 2, y: ccy - h / 2, w, h }, fit);
+  }
+
+  /**
+   * HP-1552: poll the stage height until it settles — two equal reads in a
+   * row, or a hard cap of ~600 ms (HA's panels normally land well inside it).
+   * Only then is the plan revealed, already refit to the final geometry.
+   */
+  private _bootWatch(): void {
+    this._bootStart = Date.now();
+    this._bootLastH = -1; // the first read only arms the comparison
+    const tick = () => {
+      if (!this._booting) return;
+      const h = this._stageEl ? this._stageEl.clientHeight : 0;
+      if ((h > 0 && h === this._bootLastH) || Date.now() - this._bootStart >= 600) {
+        this._bootSettled();
+        return;
+      }
+      this._bootLastH = h;
+      this._bootTimer = window.setTimeout(tick, 200);
+    };
+    this._bootTimer = window.setTimeout(tick, 200);
+  }
+
+  private _bootSettled(): void {
+    if (!this._booting) return;
+    this._refitView(); // reveal in the final geometry, never mid-jump
+    this._booting = false;
+    this._bootFading = true; // one soft opacity-out, then out of the DOM
+    this._bootTimer = window.setTimeout(() => { this._bootFading = false; }, 220);
   }
 
   /** Recompute the view for a new scene size, preserving zoom and center. */
@@ -4678,7 +4724,7 @@ class HouseplanCard extends LitElement {
         ${this._markup ? this._renderMarkupBar() : this._mode === 'devices' ? this._renderDevicesBar() : this._mode === 'decor' ? this._renderDecorBar() : nothing}
         </div>
 
-        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'openwall' && this._openWallHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}"
+        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'openwall' && this._openWallHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._booting ? ' hpboot' : ''}"
           style="height:${this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}${stageBg ? `;background:${stageBg}` : ''}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
@@ -4814,6 +4860,11 @@ class HouseplanCard extends LitElement {
           </div>
           ${this._zoom > 1
             ? html`<div class="zoombadge">${Math.round(this._zoom * 100)}%</div>`
+            : nothing}
+          ${this._booting || this._bootFading
+            ? html`<div class="bootveil ${this._booting ? '' : 'off'}" aria-hidden="true">
+                <svg class="boothouse" viewBox="0 0 24 24"><path d="${mdiHomeCityOutline}"></path></svg>
+              </div>`
             : nothing}
         </div>
 

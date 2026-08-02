@@ -151,6 +151,44 @@ export const cardStyles = css`
       position: absolute;
       inset: 0;
     }
+    /* HP-1552: first-open boot veil — the plan hides until the stage height settles */
+    .stage.hpboot .zoomwrap,
+    .stage.hpboot .zoombadge {
+      visibility: hidden;
+    }
+    .bootveil {
+      position: absolute;
+      inset: 0;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--hp-bg, #16212e);
+      opacity: 1;
+      transition: opacity 0.15s ease;
+      pointer-events: none;
+    }
+    .bootveil.off {
+      opacity: 0;
+    }
+    .bootveil .boothouse {
+      position: static; /* .stage svg pins itself to inset:0 — not this one */
+      width: 56px;
+      height: 56px;
+      fill: var(--hp-accent);
+      opacity: 0.85;
+      animation: hp-boot-pulse 1.3s ease-in-out infinite;
+    }
+    @keyframes hp-boot-pulse {
+      0%, 100% { opacity: 0.3; transform: scale(0.94); }
+      50% { opacity: 0.9; transform: scale(1); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .bootveil .boothouse {
+        animation: none;
+        opacity: 0.7;
+      }
+    }
     .zoomctl {
       display: inline-flex;
       gap: 2px;
