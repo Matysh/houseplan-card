@@ -19,7 +19,7 @@ import {
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
   stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, glowColorOf, doorSector, hasRoomBehind, controlsAction, isControllable,
   spaceDisplayOf, roomFillStyle, fillColorsOf, DEFAULT_FILL_COLORS, type FillColors, runServiceFor, RUN_TARGET_DOMAINS,
-  isActiveState, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
+  isActiveState, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY, stageBgOf,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
   referencedContentUrls,
   DISPLAY_MODES, TAP_ACTIONS, SPACE_FILL_MODES, ROOM_FILL_MODES,
@@ -29,6 +29,7 @@ import {
   simplifyPoly, areaM2, formatArea, MIN_ROOM_CM, type EdgeDragPlan,
 } from './resize';
 import { ContentSigner } from './signing';
+import { mdiHomeCityOutline } from '@mdi/js';
 import {
   Affine, applyAffine, solveAffine, affineResidual, readVacTelemetry, isVacSourceState,
   autoCalibrate, pushTrailPoint, isVacMoving, vacTrailMode, vacMapIdWithFallback, VAC_TELEPORT_GAP_MS, VAC_STALE_MS,
@@ -46,7 +47,7 @@ import { cardStyles } from './styles';
 import { fitInSquare, contentBounds, spaceModels } from './space-geometry';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.55.1';
+const CARD_VERSION = '1.55.2';
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -289,12 +290,23 @@ class HouseplanCard extends LitElement {
   private _roHdr?: ResizeObserver;
   private _onWinResize?: () => void;
   private _hdrH = 118; // measured px above the stage (see the observer in updated())
+  /** HP-1552: first-open boot veil. In normal (non-kiosk) mode the stage is
+   *  calc(100dvh - _hdrH), and _hdrH is measured from HA's chrome — which
+   *  finishes loading AFTER the card's first paint, so every late panel
+   *  nudged the height and the plan visibly jumped. Until the height reads
+   *  the same twice in a row (or ~600 ms pass) the plan hides behind a
+   *  pulsing-house veil. First open only; kiosk is 100dvh and never jumps. */
+  private _booting = true;
+  private _bootFading = false; // veil kept one beat for the opacity-out
+  private _bootTimer?: number;
+  private _bootLastH = -1;
+  private _bootStart = 0;
   /** The accidental-tap guard: pending confirmation for a toggle/run tap. */
   private _tapConfirm: { text: string; exec: () => void } | null = null;
   private _onboardingShown = false; // the auto space dialog is shown once per session
 
   private _rulesDialog: { rules: IconRule[]; test: string; busy: boolean } | null = null;
-  private _settingsDialog: { colors: FillColors; glowRadius: number; busy: boolean } | null = null;
+  private _settingsDialog: { colors: FillColors; glowRadius: number; bgColor: string | null; busy: boolean } | null = null;
   private _importDialog: { floors: (FloorInfo & { checked: boolean })[] } | null = null;
   private _importQueue: string[] = []; // floor titles still to create
   private _importTotal = 0;
@@ -363,6 +375,7 @@ class HouseplanCard extends LitElement {
     showNames: boolean;
     roomColor: string;
     roomOpacity: number;           // 0..1
+    bgColor: string | null;        // background around the plan; null = inherit general
     fillMode: 'none' | 'lqi' | 'light' | 'temp' | 'glow';
     tempMin: number;
     tempMax: number;
@@ -439,6 +452,8 @@ class HouseplanCard extends LitElement {
 
   static properties = {
     _hdrH: { state: true },
+    _booting: { state: true },
+    _bootFading: { state: true },
     _tapConfirm: { state: true },
     hass: { attribute: false },
     _config: { state: true },
@@ -514,6 +529,7 @@ class HouseplanCard extends LitElement {
     this._signer.dispose();
     clearTimeout(this._toastTimer);
     clearTimeout(this._slideTimer);
+    clearTimeout(this._bootTimer);
     this._saveConfigDebounced.flush(); // never leave an edit unsent on teardown
     window.removeEventListener('hashchange', this._onHashChange);
     clearTimeout(this._holdTimer);
@@ -649,6 +665,7 @@ class HouseplanCard extends LitElement {
 
   public setConfig(config: CardConfig): void {
     this._config = { icon_size: 2.5, show_temperature: true, live_states: true, show_signal: true, ...config };
+    if (this._config.kiosk) { this._booting = false; this._bootFading = false; } // kiosk: 100dvh, nothing to settle
     if (config.default_floor) this._space = config.default_floor;
     try {
       this._zoomBySpace = JSON.parse(localStorage.getItem(LS_ZOOM) || '{}') || {};
@@ -684,6 +701,13 @@ class HouseplanCard extends LitElement {
     } catch {
       /* ignore */
     }
+    // HP-1551: the saved per-space zoom used to be applied only by
+    // _restoreZoom()'s rAF after the server round-trip, so the cached config
+    // painted its first frames at the default fit and the plan visibly
+    // jumped to the saved zoom. The zoom store is already in hand here —
+    // arm it BEFORE the first view computation, so the very first paint is
+    // already at the user's zoom.
+    if (this._mode === 'view' && !this._view) this._zoom = this._zoomBySpace[this._space] || 1;
   }
 
   /** Save a snapshot of the config+layout to localStorage for an instant start. */
@@ -883,6 +907,7 @@ class HouseplanCard extends LitElement {
       this._roViewport = new ResizeObserver(() => this._refitView());
       this._roViewport.observe(stage);
     }
+    if (stage && this._booting && !this._bootTimer) this._bootWatch();
     // The stage fills the rest of the viewport. What sits above it inside the
     // CARD depends on the mode — the editor bars used to be billed against a
     // hard-coded 118px, so entering an editor pushed the plan down by the
@@ -1575,6 +1600,35 @@ class HouseplanCard extends LitElement {
     this._view = this._clampView({ x: ccx - w / 2, y: ccy - h / 2, w, h }, fit);
   }
 
+  /**
+   * HP-1552: poll the stage height until it settles — two equal reads in a
+   * row, or a hard cap of ~600 ms (HA's panels normally land well inside it).
+   * Only then is the plan revealed, already refit to the final geometry.
+   */
+  private _bootWatch(): void {
+    this._bootStart = Date.now();
+    this._bootLastH = -1; // the first read only arms the comparison
+    const tick = () => {
+      if (!this._booting) return;
+      const h = this._stageEl ? this._stageEl.clientHeight : 0;
+      if ((h > 0 && h === this._bootLastH) || Date.now() - this._bootStart >= 600) {
+        this._bootSettled();
+        return;
+      }
+      this._bootLastH = h;
+      this._bootTimer = window.setTimeout(tick, 200);
+    };
+    this._bootTimer = window.setTimeout(tick, 200);
+  }
+
+  private _bootSettled(): void {
+    if (!this._booting) return;
+    this._refitView(); // reveal in the final geometry, never mid-jump
+    this._booting = false;
+    this._bootFading = true; // one soft opacity-out, then out of the DOM
+    this._bootTimer = window.setTimeout(() => { this._bootFading = false; }, 220);
+  }
+
   /** Recompute the view for a new scene size, preserving zoom and center. */
   private _refitView(): void {
     if (!this._stageEl) return;
@@ -1643,6 +1697,20 @@ class HouseplanCard extends LitElement {
   private _restoreZoom(): void {
     const z = this._zoomBySpace[this._space] || 1;
     this._zoom = z;
+    const stage = this._stageEl;
+    if (stage && stage.clientHeight) {
+      // HP-1551: the stage is already measured — apply the view NOW, before
+      // the next paint. The unconditional rAF here used to let one frame
+      // (or a whole server round-trip worth of frames, via the updated()
+      // refit running with the stale zoom before this method was called at
+      // all) paint at the default fit — the visible "flash" on opening.
+      const vb = this._baseVb();
+      this._applyView(z, vb[0] + vb[2] / 2, vb[1] + vb[3] / 2);
+      this.requestUpdate();
+      return;
+    }
+    // stage not measurable yet: let updated() fit it with the (already
+    // correct) _zoom on the first layout, then center on the plan
     this._view = null;
     requestAnimationFrame(() => {
       if (!this._stageEl) return;
@@ -2470,19 +2538,32 @@ class HouseplanCard extends LitElement {
 
   /** Handles of the resize tool: wall midpoints + the scale frame of the selected room. */
   private _renderResizeLayer(view: { x: number; y: number; w: number; h: number }): TemplateResult {
-    const hr = Math.max(view.w * 0.013, 5); // finger-sized on touch, like .vacfithandle
+    const hr = Math.max(view.w * 0.013, 5); // finger-sized HIT radius on touch, like .vacfithandle
+    // Wall-handle glyph: half the old circle — a wall segment with two arrows
+    // pointing perpendicular to it (the directions the wall can be dragged).
+    // Drawn in local coords (wall along X), rotated per edge at render time.
+    // The invisible circle above keeps the full finger-sized hit area and the
+    // HP-1550-04 hit-test priority over openings.
+    const s = hr / 2, f = (v: number) => v.toFixed(1);
+    const iconD =
+      `M ${f(-0.7 * s)} 0 H ${f(0.7 * s)}` +
+      ` M 0 ${f(-0.22 * s)} V ${f(-s)} M ${f(-0.32 * s)} ${f(-0.6 * s)} L 0 ${f(-s)} L ${f(0.32 * s)} ${f(-0.6 * s)}` +
+      ` M 0 ${f(0.22 * s)} V ${f(s)} M ${f(-0.32 * s)} ${f(0.6 * s)} L 0 ${f(s)} L ${f(0.32 * s)} ${f(0.6 * s)}`;
     const parts: TemplateResult[] = [];
     const rooms = this._rszRooms();
     for (const r of rooms) {
       for (let i = 0; i < r.poly.length; i++) {
         const a = r.poly[i], b = r.poly[(i + 1) % r.poly.length];
         if (Math.hypot(b[0] - a[0], b[1] - a[1]) < this._gridPitch) continue;
-        parts.push(svg`<circle class="rszhandle" cx="${((a[0] + b[0]) / 2).toFixed(1)}" cy="${((a[1] + b[1]) / 2).toFixed(1)}" r="${hr.toFixed(1)}"
+        const mx = f((a[0] + b[0]) / 2), my = f((a[1] + b[1]) / 2);
+        const ang = f(Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI);
+        parts.push(svg`<circle class="rszhandle" cx="${mx}" cy="${my}" r="${f(hr)}"
           @pointerdown=${(e: PointerEvent) => this._rszEdgeDown(e, r.id, i)}
           @pointermove=${(e: PointerEvent) => this._rszMove(e)}
           @pointerup=${(e: PointerEvent) => this._rszUp(e)}
           @pointercancel=${(e: PointerEvent) => this._rszPointerCancel(e)}
           @lostpointercapture=${(e: PointerEvent) => this._rszPointerCancel(e)}></circle>`);
+        parts.push(svg`<g class="rszicon" transform="translate(${mx} ${my}) rotate(${ang})"><path class="rszhalo" d="${iconD}"></path><path class="rszink" d="${iconD}"></path></g>`);
       }
     }
     const sel = this._rszSel ? rooms.find((r) => r.id === this._rszSel) : null;
@@ -2668,8 +2749,10 @@ class HouseplanCard extends LitElement {
       const down = (e: PointerEvent) => this._decorShapeDown(e, sh);
       const dbl = () => this._decorShapeDbl(sh);
       if (sh.kind === 'line')
+        // round caps: line ends read as circles of the stroke width, so two
+        // lines meeting at an angle join without the notch (owner's screenshot)
         return svg`<line class="${cls}" x1="${sh.x1 * W}" y1="${sh.y1 * H}" x2="${sh.x2 * W}" y2="${sh.y2 * H}"
-          stroke="${sh.color}" stroke-width="${sh.width}" @pointerdown=${down}></line>`;
+          stroke="${sh.color}" stroke-width="${sh.width}" stroke-linecap="round" stroke-linejoin="round" @pointerdown=${down}></line>`;
       if (sh.kind === 'rect')
         return svg`<rect class="${cls}" x="${sh.x * W}" y="${sh.y * H}" width="${sh.w * W}" height="${sh.h * H}"
           stroke="${sh.color}" stroke-width="${sh.width}"
@@ -2690,7 +2773,7 @@ class HouseplanCard extends LitElement {
       const st = this._decorStyle;
       if (d.kind === 'line')
         draft = svg`<line class="ddraft" x1="${d.a[0]}" y1="${d.a[1]}" x2="${d.b[0]}" y2="${d.b[1]}"
-          stroke="${st.color}" stroke-width="${st.width}"></line>`;
+          stroke="${st.color}" stroke-width="${st.width}" stroke-linecap="round" stroke-linejoin="round"></line>`;
       else {
         const x = Math.min(d.a[0], d.b[0]), y = Math.min(d.a[1], d.b[1]);
         const w = Math.abs(d.b[0] - d.a[0]), h = Math.abs(d.b[1] - d.a[1]);
@@ -3753,6 +3836,7 @@ class HouseplanCard extends LitElement {
         source: sp.plan_url ? 'file' : 'draw',
         showBorders: disp.showBorders, showNames: disp.showNames,
         roomColor: disp.color, roomOpacity: disp.opacity, fillMode: disp.fill,
+        bgColor: disp.bgColor,
         tempMin: disp.tempMin, tempMax: disp.tempMax,
         showLqi: disp.showLqi ?? this._config?.show_signal ?? true,
         cardFontScale: disp.cardFontScale,
@@ -3767,6 +3851,7 @@ class HouseplanCard extends LitElement {
         source: 'file',
         showBorders: false, showNames: false,
         roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'glow',
+        bgColor: null,
         tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
         showLqi: this._config?.show_signal ?? true,
         cardFontScale: 1,
@@ -3994,6 +4079,7 @@ class HouseplanCard extends LitElement {
         show_names: draw && d.mode === 'create' ? true : d.showNames,
         room_color: d.roomColor,
         room_opacity: d.roomOpacity,
+        bg_color: d.bgColor || undefined, // empty = inherit the general setting
         fill_mode: d.fillMode,
         temp_min: Number.isFinite(d.tempMin) ? Math.min(d.tempMin, d.tempMax) : DEFAULT_TEMP_MIN,
         temp_max: Number.isFinite(d.tempMax) ? Math.max(d.tempMin, d.tempMax) : DEFAULT_TEMP_MAX,
@@ -4100,6 +4186,7 @@ class HouseplanCard extends LitElement {
       source: 'file',
       showBorders: false, showNames: false,
       roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'glow',
+      bgColor: null,
       tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
       showLqi: this._config?.show_signal ?? true,
       cardFontScale: 1,
@@ -4155,6 +4242,31 @@ class HouseplanCard extends LitElement {
     </div>`;
   }
 
+  /**
+   * Effective stage background: per-space override → global setting → '' (the
+   * theme default from the stylesheet). An open dialog previews its pending
+   * value, so the color can be picked against the live plan.
+   */
+  private _stageBg(disp: SpaceDisplay): string {
+    const gd = this._settingsDialog;
+    const sd = this._spaceDialog;
+    const globalBg = gd ? gd.bgColor || '' : stageBgOf(this._settings, { bgColor: null });
+    const spaceBg = sd && sd.mode === 'edit' && sd.spaceId === this._space
+      ? sd.bgColor || ''
+      : disp.bgColor || '';
+    return spaceBg || globalBg;
+  }
+
+  /** Current computed stage background as #rrggbb — the color input's default. */
+  private _stageBgHex(): string {
+    const st = this._stageEl;
+    if (st) {
+      const m = getComputedStyle(st).backgroundColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+      if (m) return '#' + m.slice(1, 4).map((n) => (+n).toString(16).padStart(2, '0')).join('');
+    }
+    return '#111111';
+  }
+
   // ================= GENERAL SETTINGS =================
 
   private _openSettingsDialog = (): void => {
@@ -4164,7 +4276,12 @@ class HouseplanCard extends LitElement {
     const glowRadius = this._imperial
       ? Math.round((cm / 30.48) * 10) / 10
       : Math.round(cm) / 100;
-    this._settingsDialog = { colors: JSON.parse(JSON.stringify(this._fillColors)), glowRadius, busy: false };
+    this._settingsDialog = {
+      colors: JSON.parse(JSON.stringify(this._fillColors)),
+      glowRadius,
+      bgColor: stageBgOf(this._settings, { bgColor: null }) || null,
+      busy: false,
+    };
   };
 
   private _setFillColor(key: keyof FillColors, patch: Partial<{ c: string; a: number }>): void {
@@ -4185,6 +4302,8 @@ class HouseplanCard extends LitElement {
       const cm = this._imperial ? d.glowRadius * 30.48 : d.glowRadius * 100;
       if (Number.isFinite(cm) && cm > 0 && Math.round(cm) !== 300) settings.glow_radius_cm = Math.round(cm);
       else delete settings.glow_radius_cm;
+      if (d.bgColor) settings.bg_color = d.bgColor;
+      else delete settings.bg_color;
       this._serverCfg = { ...cfg, settings };
       await this._saveConfigNow();
       this._settingsDialog = null;
@@ -4337,10 +4456,21 @@ class HouseplanCard extends LitElement {
               }} />
             <span class="opl">${this._imperial ? this._t('gs.unit_ft') : this._t('gs.unit_m')}</span>
           </div>
+          <label class="dispsection">${this._t('gs.bg_group')}</label>
+          <div class="colorrow gsrow">
+            <span class="gsl">${this._t('gs.bg_color')}</span>
+            <input type="color" .value=${this._settingsDialog!.bgColor || this._stageBgHex()}
+              @input=${(e: Event) =>
+                (this._settingsDialog = { ...this._settingsDialog!, bgColor: (e.target as HTMLInputElement).value })} />
+            ${this._settingsDialog!.bgColor
+              ? html`<button class="btn ghost" @click=${() =>
+                  (this._settingsDialog = { ...this._settingsDialog!, bgColor: null })}>${this._t('gs.bg_default')}</button>`
+              : html`<span class="opl">${this._t('gs.bg_theme')}</span>`}
+          </div>
         </div>
         <div class="row">
           <button class="btn ghost" @click=${() =>
-            (this._settingsDialog = { ...this._settingsDialog!, colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: this._imperial ? 9.8 : 3 })}>
+            (this._settingsDialog = { ...this._settingsDialog!, colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: this._imperial ? 9.8 : 3, bgColor: null })}>
             ${this._t('gs.reset')}
           </button>
           <span class="spacer"></span>
@@ -4534,6 +4664,9 @@ class HouseplanCard extends LitElement {
     const cfgSize = this._config.icon_size ?? 2.5;
     const iconPct = cfgSize > 8 ? 2.5 : cfgSize;
     const view = this._viewOr(vb);
+    // Background around the plan (view/kiosk; editors keep their own canvas).
+    // Both settings dialogs preview their pending value live.
+    const stageBg = this._editing ? '' : this._stageBg(disp);
 
     return html`
       <ha-card>
@@ -4604,8 +4737,8 @@ class HouseplanCard extends LitElement {
         ${this._markup ? this._renderMarkupBar() : this._mode === 'devices' ? this._renderDevicesBar() : this._mode === 'decor' ? this._renderDecorBar() : nothing}
         </div>
 
-        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'openwall' && this._openWallHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}"
-          style="height:${this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}"
+        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'openwall' && this._openWallHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._booting ? ' hpboot' : ''}"
+          style="height:${this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}${stageBg ? `;background:${stageBg}` : ''}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
           @pointerdown=${(e: PointerEvent) => { this._notePointer(e); this._stagePointerDown(e); }}
@@ -4740,6 +4873,11 @@ class HouseplanCard extends LitElement {
           </div>
           ${this._zoom > 1
             ? html`<div class="zoombadge">${Math.round(this._zoom * 100)}%</div>`
+            : nothing}
+          ${this._booting || this._bootFading
+            ? html`<div class="bootveil ${this._booting ? '' : 'off'}" aria-hidden="true">
+                <svg class="boothouse" viewBox="0 0 24 24"><path d="${mdiHomeCityOutline}"></path></svg>
+              </div>`
             : nothing}
         </div>
 
@@ -6703,6 +6841,15 @@ class HouseplanCard extends LitElement {
             <input type="range" min="0" max="100" .value=${String(Math.round(d.roomOpacity * 100))}
               @input=${(e: Event) => (this._spaceDialog = { ...d, roomOpacity: Number((e.target as HTMLInputElement).value) / 100 })} />
             <span class="opv">${Math.round(d.roomOpacity * 100)}%</span>
+          </div>
+          <label>${this._t('space.bg_color')}</label>
+          <div class="colorrow">
+            <input type="color" .value=${d.bgColor || stageBgOf(this._settings, { bgColor: null }) || this._stageBgHex()}
+              @input=${(e: Event) => (this._spaceDialog = { ...d, bgColor: (e.target as HTMLInputElement).value })} />
+            ${d.bgColor
+              ? html`<button class="btn ghost" @click=${() => (this._spaceDialog = { ...d, bgColor: null })}>
+                  ${this._t('space.bg_inherit')}</button>`
+              : html`<span class="opl">${this._t('space.bg_inherited')}</span>`}
           </div>
           <label>${this._t('space.fill_label')}</label>
           ${SPACE_FILL_MODES.map((v) => [v, 'fill.' + v] as const).map(

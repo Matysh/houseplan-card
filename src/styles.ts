@@ -151,6 +151,44 @@ export const cardStyles = css`
       position: absolute;
       inset: 0;
     }
+    /* HP-1552: first-open boot veil — the plan hides until the stage height settles */
+    .stage.hpboot .zoomwrap,
+    .stage.hpboot .zoombadge {
+      visibility: hidden;
+    }
+    .bootveil {
+      position: absolute;
+      inset: 0;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--hp-bg, #16212e);
+      opacity: 1;
+      transition: opacity 0.15s ease;
+      pointer-events: none;
+    }
+    .bootveil.off {
+      opacity: 0;
+    }
+    .bootveil .boothouse {
+      position: static; /* .stage svg pins itself to inset:0 — not this one */
+      width: 56px;
+      height: 56px;
+      fill: var(--hp-accent);
+      opacity: 0.85;
+      animation: hp-boot-pulse 1.3s ease-in-out infinite;
+    }
+    @keyframes hp-boot-pulse {
+      0%, 100% { opacity: 0.3; transform: scale(0.94); }
+      50% { opacity: 0.9; transform: scale(1); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .bootveil .boothouse {
+        animation: none;
+        opacity: 0.7;
+      }
+    }
     .zoomctl {
       display: inline-flex;
       gap: 2px;
@@ -1412,16 +1450,37 @@ export const cardStyles = css`
       user-select: none;
     }
     /* room resize tool (docs/RESIZE.md) */
+    /* wall handle: invisible finger-sized hit circle (HP-1550-04 hit priority
+       kept), the visible glyph lives in the sibling .rszicon */
     .rszhandle {
+      fill: transparent;
+      stroke: none;
+      pointer-events: all;
+      cursor: grab;
+      touch-action: none;
+    }
+    .rszhandle:active { cursor: grabbing; }
+    /* wall-with-arrows glyph: accent ink over a bg halo, readable on any plan */
+    .rszicon { pointer-events: none; }
+    .rszicon path {
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vector-effect: non-scaling-stroke;
+    }
+    .rszhalo { stroke: var(--hp-bg); stroke-width: 6; }
+    .rszink { stroke: var(--hp-accent); stroke-width: 2; }
+    .rszhandle:hover + .rszicon .rszink { stroke-width: 3; }
+    /* corner (scale-frame) handles keep the classic filled circle */
+    .rszcorner {
       fill: var(--hp-bg);
       stroke: var(--hp-accent);
       stroke-width: 2;
       vector-effect: non-scaling-stroke;
-      cursor: move;
-      touch-action: none;
+      cursor: nwse-resize;
     }
-    .rszhandle:hover { fill: var(--hp-accent); }
-    .rszcorner { cursor: nwse-resize; }
+    .rszcorner:hover { fill: var(--hp-accent); }
+    .rszcorner:active { cursor: nwse-resize; }
     .rszframe {
       fill: none;
       stroke: var(--hp-accent);

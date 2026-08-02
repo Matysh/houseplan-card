@@ -28,8 +28,8 @@ const res = await page.evaluate(async () => {
 });
 // значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
 checkAll(res, {
-  "rows": 11,
-  "groups": ["Fill: lights", "Fill: temperature", "Fill: zigbee signal", "Light-sources fill"],
+  "rows": 12, // 10 цветов + радиус свечения + фон вокруг плана
+  "groups": ["Fill: lights", "Fill: temperature", "Fill: zigbee signal", "Light-sources fill", "Stage background"],
   "saved": {"c": "#ff00ff", "a": 0.5},
   "lqiBefore": 7,
   "lqiAfter": 0,

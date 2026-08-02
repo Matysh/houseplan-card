@@ -25,10 +25,22 @@ const res = await page.evaluate(async () => {
   out.rectRendered = !!sr().querySelector('.decorlayer rect.dshape');
   // 3) линия и овал
   c._decorDraft = { kind: 'line', a: [g * 2, g * 2], b: [g * 8, g * 2], pid: 1 };
+  await c.updateComplete;
+  // превью рисуемой линии уже с круглыми концами (зубцы на стыках)
+  const draftLine = sr().querySelector('.decorlayer line.ddraft');
+  out.draftLineRound = !!draftLine
+    && draftLine.getAttribute('stroke-linecap') === 'round'
+    && draftLine.getAttribute('stroke-linejoin') === 'round';
   c._decorCommitDraft();
   c._decorDraft = { kind: 'ellipse', a: [g * 30, g * 30], b: [g * 40, g * 36], pid: 1 };
   c._decorCommitDraft(); await c.updateComplete;
   out.threeShapes = c._decorList.length === 3;
+  // сохранённые линии рендерятся с круглыми концами: диаметр = толщине линии,
+  // стык двух линий под углом — без зубца (скриншот владельца)
+  await c.updateComplete;
+  const lines = [...sr().querySelectorAll('.decorlayer line.dshape')];
+  out.savedLineRound = lines.length > 0 && lines.every((l) =>
+    l.getAttribute('stroke-linecap') === 'round' && l.getAttribute('stroke-linejoin') === 'round');
   // вырожденная фигура не сохраняется
   c._decorDraft = { kind: 'line', a: [g, g], b: [g, g], pid: 1 };
   c._decorCommitDraft();

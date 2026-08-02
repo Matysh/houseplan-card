@@ -1,5 +1,34 @@
 # Changelog
 
+## v1.55.2 — 2026-08-02
+
+Patch release: a calmer first open — no zoom flash and no layout jumps
+while Home Assistant is still settling — plus a new background color
+setting and two bits of editor polish.
+
+- **Opening a plan no longer flashes the default view before your saved
+  zoom** (HP-1551). The saved zoom used to be applied a beat after the
+  first render, so the card painted the default fit for a frame and then
+  snapped to your position. It is now applied synchronously, before the
+  first paint — the plan appears exactly where you left it.
+- **A first-open veil hides the plan until the layout settles**
+  (HP-1552). While Home Assistant is still loading its side panels, the
+  stage height can change several times, and the plan visibly jumped
+  along with it. The card now waits under a dark veil with a pulsing
+  house outline until the height stops moving, then reveals the plan
+  already in place. Kiosk mode skips the veil entirely.
+- **New setting: background color around the plan** (HP-1554). The area
+  around the plan can now be any color — set it in general settings for
+  the whole card, or override it per space. The backend validates the
+  value as a #rrggbb hex color.
+- **Round caps and joins on background-editor lines** (HP-1553). Strokes
+  used to end and meet in square cuts; line ends and corners are rounded
+  now, so traced walls and outlines look clean.
+- **The Resize tool's wall handles now look the part.** They are half
+  the previous size, show a wall-with-arrows glyph that rotates to
+  follow the wall, and use the grab cursor — while the hit area stays
+  exactly as large as before.
+
 ## v1.55.1 — 2026-08-01
 
 Patch release: the four findings of the v1.55.0 audit, all in the new

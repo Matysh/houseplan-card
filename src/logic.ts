@@ -739,6 +739,8 @@ export interface SpaceDisplay {
   labelHum: boolean;
   labelLqi: boolean;
   labelLight: boolean;
+  /** Background around the plan; null = inherit the global setting / theme. */
+  bgColor: string | null;
 }
 
 export const DEFAULT_ROOM_COLOR = '#3ea6ff';
@@ -766,7 +768,19 @@ export function spaceDisplayOf(spaceCfg: any): SpaceDisplay {
     labelHum: s.label_hum === true,
     labelLqi: s.label_lqi === true,
     labelLight: s.label_light === true,
+    bgColor: typeof s.bg_color === 'string' && /^#[0-9a-f]{6}$/i.test(s.bg_color) ? s.bg_color : null,
   };
+}
+
+/**
+ * Effective background color around the plan: the per-space override wins,
+ * then the global config.settings.bg_color, then '' — meaning "keep the
+ * theme default" (the stage's stylesheet background stays untouched).
+ */
+export function stageBgOf(settings: any, disp: { bgColor: string | null }): string {
+  if (disp.bgColor) return disp.bgColor;
+  const g = settings?.bg_color;
+  return typeof g === 'string' && /^#[0-9a-f]{6}$/i.test(g) ? g : '';
 }
 
 // ---------------- global fill colors ----------------
