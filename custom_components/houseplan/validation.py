@@ -173,6 +173,8 @@ SPACE_DISPLAY_SCHEMA = vol.Schema(
         vol.Optional("show_borders"): bool,
         vol.Optional("show_names"): bool,
         vol.Optional("room_color"): vol.Match(r"^#[0-9a-fA-F]{6}$"),
+        # per-space background around the plan; absent = inherit the global one
+        vol.Optional("bg_color"): vol.Match(r"^#[0-9a-fA-F]{6}$"),
         vol.Optional("room_opacity"): vol.All(vol.Coerce(float), vol.Range(min=0, max=1)),
         vol.Optional("fill_mode"): vol.In(["none", "lqi", "light", "temp", "glow"]),
         vol.Optional("temp_min"): vol.Coerce(float),
@@ -319,6 +321,8 @@ CONFIG_SCHEMA = vol.Schema(
         vol.Optional("settings", default=dict): vol.Schema(
             {
                 vol.Optional("glow_radius_cm"): vol.All(vol.Coerce(float), vol.Range(min=10, max=10000)),
+                # background around the plan, all spaces (a space may override)
+                vol.Optional("bg_color"): vol.Match(r"^#[0-9a-fA-F]{6}$"),
                 vol.Optional("known_devices"): vol.All([_TEXT], vol.Length(max=MAX_KNOWN_DEVICES)),
                 vol.Optional("new_device_ids"): vol.All([_TEXT], vol.Length(max=MAX_KNOWN_DEVICES)),
                 vol.Optional("fill_colors"): vol.Schema(

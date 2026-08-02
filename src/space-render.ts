@@ -8,7 +8,7 @@
  */
 import { html, svg, nothing, type TemplateResult } from 'lit';
 import { buildDevices, areaLqi, areaLights, areaTemp } from './devices';
-import { spaceDisplayOf, roomFillStyle, fillColorsOf, roomFillModeOf } from './logic';
+import { spaceDisplayOf, roomFillStyle, fillColorsOf, roomFillModeOf, stageBgOf } from './logic';
 import { DEFAULT_ICON_RULES, compileIconRules, EXCLUDED_DOMAINS } from './rules';
 import { t, type Lang } from './i18n';
 import type { ServerConfig } from './types';
@@ -146,9 +146,11 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     : [];
 
   const bgHref = space.bg ? (o.displayUrl ? o.displayUrl(space.bg.href) : space.bg.href) : '';
+  // the static card paints the same background around the plan as the full one
+  const stageBg = stageBgOf(o.cfg?.settings, disp);
 
   return html`
-    <div class="hp-static-stage" style="aspect-ratio:${vb[2]}/${vb[3]}">
+    <div class="hp-static-stage" style="aspect-ratio:${vb[2]}/${vb[3]}${stageBg ? ';background:' + stageBg : ''}">
       <svg viewBox="${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}" preserveAspectRatio="xMidYMid meet">
         ${bgHref
           ? svg`<image href="${bgHref}" x="${space.bg!.x}" y="${space.bg!.y}" width="${space.bg!.w}" height="${space.bg!.h}" preserveAspectRatio="none" />`

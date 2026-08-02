@@ -379,5 +379,12 @@
   "vac.fit_mirror": "Mirror",
   "vac.trail_never": "Never",
   "vac.trail_cleaning": "While cleaning",
-  "vac.trail_always": "Always"
+  "vac.trail_always": "Always",
+  "gs.bg_group": "Stage background",
+  "gs.bg_color": "Background around the plan",
+  "gs.bg_default": "Theme default",
+  "gs.bg_theme": "theme default",
+  "space.bg_color": "Background around the plan",
+  "space.bg_inherit": "Inherit general",
+  "space.bg_inherited": "inherits general settings"
 }

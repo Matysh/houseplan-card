@@ -164,6 +164,24 @@ def test_space_display_settings():
         v.SPACE_SCHEMA(bad_mode)
 
 
+def test_bg_color_setting():
+    """Background-around-the-plan color: strict #rrggbb, globally and per space."""
+    ok_space = {
+        "id": "f1", "title": "F", "view_box": [0, 0, 1, 1], "rooms": [],
+        "settings": {"bg_color": "#102030"},
+    }
+    v.SPACE_SCHEMA(ok_space)
+    v.CONFIG_SCHEMA({"spaces": [], "settings": {"bg_color": "#A1b2C3"}})
+    with pytest.raises(vol.Invalid):
+        v.SPACE_SCHEMA(dict(ok_space, settings={"bg_color": "red"}))
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA({"spaces": [], "settings": {"bg_color": "url(javascript:x)"}})
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA({"spaces": [], "settings": {"bg_color": "#12345"}})
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA({"spaces": [], "settings": {"bg_color": "#1234567"}})
+
+
 def test_space_temp_bounds():
     """Temperature comfort bounds validate as floats; temp fill mode accepted."""
     ok = {

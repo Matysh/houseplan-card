@@ -379,5 +379,12 @@
   "vac.fit_mirror": "Отразить",
   "vac.trail_never": "Не показывать никогда",
   "vac.trail_cleaning": "Во время уборки",
-  "vac.trail_always": "Показывать всегда"
+  "vac.trail_always": "Показывать всегда",
+  "gs.bg_group": "Фон сцены",
+  "gs.bg_color": "Цвет фона вокруг плана",
+  "gs.bg_default": "Как в теме",
+  "gs.bg_theme": "по умолчанию — из темы",
+  "space.bg_color": "Цвет фона вокруг плана",
+  "space.bg_inherit": "Наследовать общий",
+  "space.bg_inherited": "наследуется из общих настроек"
 }

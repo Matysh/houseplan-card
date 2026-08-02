@@ -19,7 +19,7 @@ import {
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
   stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, glowColorOf, doorSector, hasRoomBehind, controlsAction, isControllable,
   spaceDisplayOf, roomFillStyle, fillColorsOf, DEFAULT_FILL_COLORS, type FillColors, runServiceFor, RUN_TARGET_DOMAINS,
-  isActiveState, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY,
+  isActiveState, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY, stageBgOf,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
   referencedContentUrls,
   DISPLAY_MODES, TAP_ACTIONS, SPACE_FILL_MODES, ROOM_FILL_MODES,
@@ -294,7 +294,7 @@ class HouseplanCard extends LitElement {
   private _onboardingShown = false; // the auto space dialog is shown once per session
 
   private _rulesDialog: { rules: IconRule[]; test: string; busy: boolean } | null = null;
-  private _settingsDialog: { colors: FillColors; glowRadius: number; busy: boolean } | null = null;
+  private _settingsDialog: { colors: FillColors; glowRadius: number; bgColor: string | null; busy: boolean } | null = null;
   private _importDialog: { floors: (FloorInfo & { checked: boolean })[] } | null = null;
   private _importQueue: string[] = []; // floor titles still to create
   private _importTotal = 0;
@@ -363,6 +363,7 @@ class HouseplanCard extends LitElement {
     showNames: boolean;
     roomColor: string;
     roomOpacity: number;           // 0..1
+    bgColor: string | null;        // background around the plan; null = inherit general
     fillMode: 'none' | 'lqi' | 'light' | 'temp' | 'glow';
     tempMin: number;
     tempMax: number;
@@ -3776,6 +3777,7 @@ class HouseplanCard extends LitElement {
         source: sp.plan_url ? 'file' : 'draw',
         showBorders: disp.showBorders, showNames: disp.showNames,
         roomColor: disp.color, roomOpacity: disp.opacity, fillMode: disp.fill,
+        bgColor: disp.bgColor,
         tempMin: disp.tempMin, tempMax: disp.tempMax,
         showLqi: disp.showLqi ?? this._config?.show_signal ?? true,
         cardFontScale: disp.cardFontScale,
@@ -3790,6 +3792,7 @@ class HouseplanCard extends LitElement {
         source: 'file',
         showBorders: false, showNames: false,
         roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'glow',
+        bgColor: null,
         tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
         showLqi: this._config?.show_signal ?? true,
         cardFontScale: 1,
@@ -4017,6 +4020,7 @@ class HouseplanCard extends LitElement {
         show_names: draw && d.mode === 'create' ? true : d.showNames,
         room_color: d.roomColor,
         room_opacity: d.roomOpacity,
+        bg_color: d.bgColor || undefined, // empty = inherit the general setting
         fill_mode: d.fillMode,
         temp_min: Number.isFinite(d.tempMin) ? Math.min(d.tempMin, d.tempMax) : DEFAULT_TEMP_MIN,
         temp_max: Number.isFinite(d.tempMax) ? Math.max(d.tempMin, d.tempMax) : DEFAULT_TEMP_MAX,
@@ -4123,6 +4127,7 @@ class HouseplanCard extends LitElement {
       source: 'file',
       showBorders: false, showNames: false,
       roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'glow',
+      bgColor: null,
       tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
       showLqi: this._config?.show_signal ?? true,
       cardFontScale: 1,
@@ -4178,6 +4183,31 @@ class HouseplanCard extends LitElement {
     </div>`;
   }
 
+  /**
+   * Effective stage background: per-space override → global setting → '' (the
+   * theme default from the stylesheet). An open dialog previews its pending
+   * value, so the color can be picked against the live plan.
+   */
+  private _stageBg(disp: SpaceDisplay): string {
+    const gd = this._settingsDialog;
+    const sd = this._spaceDialog;
+    const globalBg = gd ? gd.bgColor || '' : stageBgOf(this._settings, { bgColor: null });
+    const spaceBg = sd && sd.mode === 'edit' && sd.spaceId === this._space
+      ? sd.bgColor || ''
+      : disp.bgColor || '';
+    return spaceBg || globalBg;
+  }
+
+  /** Current computed stage background as #rrggbb — the color input's default. */
+  private _stageBgHex(): string {
+    const st = this._stageEl;
+    if (st) {
+      const m = getComputedStyle(st).backgroundColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+      if (m) return '#' + m.slice(1, 4).map((n) => (+n).toString(16).padStart(2, '0')).join('');
+    }
+    return '#111111';
+  }
+
   // ================= GENERAL SETTINGS =================
 
   private _openSettingsDialog = (): void => {
@@ -4187,7 +4217,12 @@ class HouseplanCard extends LitElement {
     const glowRadius = this._imperial
       ? Math.round((cm / 30.48) * 10) / 10
       : Math.round(cm) / 100;
-    this._settingsDialog = { colors: JSON.parse(JSON.stringify(this._fillColors)), glowRadius, busy: false };
+    this._settingsDialog = {
+      colors: JSON.parse(JSON.stringify(this._fillColors)),
+      glowRadius,
+      bgColor: stageBgOf(this._settings, { bgColor: null }) || null,
+      busy: false,
+    };
   };
 
   private _setFillColor(key: keyof FillColors, patch: Partial<{ c: string; a: number }>): void {
@@ -4208,6 +4243,8 @@ class HouseplanCard extends LitElement {
       const cm = this._imperial ? d.glowRadius * 30.48 : d.glowRadius * 100;
       if (Number.isFinite(cm) && cm > 0 && Math.round(cm) !== 300) settings.glow_radius_cm = Math.round(cm);
       else delete settings.glow_radius_cm;
+      if (d.bgColor) settings.bg_color = d.bgColor;
+      else delete settings.bg_color;
       this._serverCfg = { ...cfg, settings };
       await this._saveConfigNow();
       this._settingsDialog = null;
@@ -4360,10 +4397,21 @@ class HouseplanCard extends LitElement {
               }} />
             <span class="opl">${this._imperial ? this._t('gs.unit_ft') : this._t('gs.unit_m')}</span>
           </div>
+          <label class="dispsection">${this._t('gs.bg_group')}</label>
+          <div class="colorrow gsrow">
+            <span class="gsl">${this._t('gs.bg_color')}</span>
+            <input type="color" .value=${this._settingsDialog!.bgColor || this._stageBgHex()}
+              @input=${(e: Event) =>
+                (this._settingsDialog = { ...this._settingsDialog!, bgColor: (e.target as HTMLInputElement).value })} />
+            ${this._settingsDialog!.bgColor
+              ? html`<button class="btn ghost" @click=${() =>
+                  (this._settingsDialog = { ...this._settingsDialog!, bgColor: null })}>${this._t('gs.bg_default')}</button>`
+              : html`<span class="opl">${this._t('gs.bg_theme')}</span>`}
+          </div>
         </div>
         <div class="row">
           <button class="btn ghost" @click=${() =>
-            (this._settingsDialog = { ...this._settingsDialog!, colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: this._imperial ? 9.8 : 3 })}>
+            (this._settingsDialog = { ...this._settingsDialog!, colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: this._imperial ? 9.8 : 3, bgColor: null })}>
             ${this._t('gs.reset')}
           </button>
           <span class="spacer"></span>
@@ -4557,6 +4605,9 @@ class HouseplanCard extends LitElement {
     const cfgSize = this._config.icon_size ?? 2.5;
     const iconPct = cfgSize > 8 ? 2.5 : cfgSize;
     const view = this._viewOr(vb);
+    // Background around the plan (view/kiosk; editors keep their own canvas).
+    // Both settings dialogs preview their pending value live.
+    const stageBg = this._editing ? '' : this._stageBg(disp);
 
     return html`
       <ha-card>
@@ -4628,7 +4679,7 @@ class HouseplanCard extends LitElement {
         </div>
 
         <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'openwall' && this._openWallHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}"
-          style="height:${this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}"
+          style="height:${this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}${stageBg ? `;background:${stageBg}` : ''}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
           @pointerdown=${(e: PointerEvent) => { this._notePointer(e); this._stagePointerDown(e); }}
@@ -6726,6 +6777,15 @@ class HouseplanCard extends LitElement {
             <input type="range" min="0" max="100" .value=${String(Math.round(d.roomOpacity * 100))}
               @input=${(e: Event) => (this._spaceDialog = { ...d, roomOpacity: Number((e.target as HTMLInputElement).value) / 100 })} />
             <span class="opv">${Math.round(d.roomOpacity * 100)}%</span>
+          </div>
+          <label>${this._t('space.bg_color')}</label>
+          <div class="colorrow">
+            <input type="color" .value=${d.bgColor || stageBgOf(this._settings, { bgColor: null }) || this._stageBgHex()}
+              @input=${(e: Event) => (this._spaceDialog = { ...d, bgColor: (e.target as HTMLInputElement).value })} />
+            ${d.bgColor
+              ? html`<button class="btn ghost" @click=${() => (this._spaceDialog = { ...d, bgColor: null })}>
+                  ${this._t('space.bg_inherit')}</button>`
+              : html`<span class="opl">${this._t('space.bg_inherited')}</span>`}
           </div>
           <label>${this._t('space.fill_label')}</label>
           ${SPACE_FILL_MODES.map((v) => [v, 'fill.' + v] as const).map(
