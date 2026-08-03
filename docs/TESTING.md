@@ -120,6 +120,13 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] In Plan an opening is interactive: grab cursor, hover outline, drag along
       walls, click (any tool) opens its properties — with a 3 px drag threshold
       since v1.43.1, so a tap is never swallowed [auto: smoke_inert_openings]
+- [ ] Opening drag rulers (2026-08-03): while an opening is dragged, a measure
+      badge on EACH shoulder shows the along-the-wall distance from the wall end
+      (collinear touching edges count as one wall) to the nearest opening edge,
+      live; at the wall's center (±half a grid step) a perpendicular dashed tick
+      appears and the center magnet-snaps — Shift disables the magnet; badges
+      and tick vanish on release [auto: smoke_opening_measure + unit
+      openingShoulders]
 
 ## Onboarding ★
 

@@ -15,7 +15,7 @@ import {
   contentUrl, chunk, referencedContentUrls, MAX_SIGN_PATHS,
   interiorPoint,
   segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointOnBoundary, pointStrictlyInside, roomsOverlap,
-  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, poleOfInaccessibility, runServiceFor, TOGGLE_SAFE_DOMAINS } from '../test-build/logic.js';
+  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, openingShoulders, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, poleOfInaccessibility, runServiceFor, TOGGLE_SAFE_DOMAINS } from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
 } from '../test-build/rules.js';
@@ -979,4 +979,76 @@ test('paperRoomShapes: paper follows room contours, one shape per room (owner 20
   assert.deepEqual(paperRoomShapes([]), []);
   assert.deepEqual(paperRoomShapes(null), []);
   assert.deepEqual(paperRoomShapes([{ poly: [[0, 0], [1, 1]] }]), [], 'a 2-point poly is not a surface');
+});
+
+// ---------------- opening drag: shoulder rulers + "centered on the wall" ----------------
+// (owner 2026-08-03) render units; demo-like geometry ×1000
+test('openingShoulders: distances from the opening edges to the wall ends', () => {
+  const rooms = [{ id: 'r1', poly: [[40, 140], [550, 140], [550, 580], [40, 580]] }];
+  // 80-long opening centered at x=200 on the top wall (40..550)
+  const sh = openingShoulders([200, 140], 0, 80, rooms, 2);
+  assert.ok(sh);
+  assert.deepEqual(sh.wallA, [40, 140]);
+  assert.deepEqual(sh.wallB, [550, 140]);
+  assert.equal(sh.sideA, 120, 'left: 160 - 40');
+  assert.equal(sh.sideB, 310, 'right: 550 - 240');
+  // badges sit on the middle of each shoulder
+  assert.deepEqual(sh.midA, [100, 140]);
+  assert.deepEqual(sh.midB, [395, 140]);
+  assert.deepEqual(sh.wallCenter, [295, 140]);
+  assert.equal(sh.centered, false);
+  // at the wall end one shoulder collapses to zero, never negative
+  const end = openingShoulders([80, 140], 0, 80, rooms, 2);
+  assert.equal(end.sideA, 0);
+  assert.equal(end.sideB, 430);
+  // off every wall -> null
+  assert.equal(openingShoulders([300, 300], 0, 80, rooms, 2), null);
+});
+
+test('openingShoulders: centered flag obeys the tolerance', () => {
+  const rooms = [{ id: 'r1', poly: [[40, 140], [550, 140], [550, 580], [40, 580]] }];
+  const mid = openingShoulders([295, 140], 0, 80, rooms, 2);
+  assert.equal(mid.centered, true);
+  assert.equal(mid.sideA, mid.sideB);
+  assert.equal(mid.sideA, 215, '(510 - 80) / 2');
+  assert.equal(openingShoulders([296.5, 140], 0, 80, rooms, 2).centered, true, 'inside tol');
+  assert.equal(openingShoulders([298, 140], 0, 80, rooms, 2).centered, false, 'outside tol');
+});
+
+test('openingShoulders: collinear touching edges merge into one physical wall', () => {
+  // two rooms side by side: the top edges 40..550 and 550..960 are ONE wall
+  const rooms = [
+    { id: 'r1', poly: [[40, 140], [550, 140], [550, 580], [40, 580]] },
+    { id: 'r2', poly: [[550, 140], [960, 140], [960, 580], [550, 580]] },
+  ];
+  const sh = openingShoulders([200, 140], 0, 80, rooms, 2);
+  assert.deepEqual(sh.wallA, [40, 140]);
+  assert.deepEqual(sh.wallB, [960, 140], 'run extends across the room boundary');
+  assert.equal(sh.sideB, 960 - 240);
+  // the middle of the MERGED run: (40+960)/2 = 500
+  assert.equal(openingShoulders([500, 140], 0, 80, rooms, 2).centered, true);
+  assert.equal(openingShoulders([295, 140], 0, 80, rooms, 2).centered, false,
+    'the center of a fragment is not the center of the wall');
+  // the interior shared wall x=550 (vertical, angle 90) is its own run
+  const v = openingShoulders([550, 300], 90, 80, rooms, 2);
+  assert.deepEqual(v.wallA, [550, 140]);
+  assert.deepEqual(v.wallB, [550, 580]);
+  assert.equal(v.centered, false);
+  assert.equal(openingShoulders([550, 360], 90, 80, rooms, 2).centered, true);
+});
+
+test('openingShoulders: angled wall measures along the wall direction', () => {
+  // 3-4-5 triangle: hypotenuse-ish edge (0,0)->(300,400), length 500, angle 53.13°
+  const rooms = [{ id: 't', poly: [[0, 0], [300, 400], [0, 400]] }];
+  const ang = (Math.atan2(400, 300) * 180) / Math.PI;
+  const mid = openingShoulders([150, 200], ang, 100, rooms, 2);
+  assert.ok(mid);
+  assert.ok(Math.abs(mid.sideA - 200) < 1e-9 && Math.abs(mid.sideB - 200) < 1e-9);
+  assert.equal(mid.centered, true);
+  // slide 30 units towards the far end (dir = [0.6, 0.8])
+  const off = openingShoulders([150 + 30 * 0.6, 200 + 30 * 0.8], ang, 100, rooms, 2);
+  assert.ok(Math.abs(off.sideA - 230) < 1e-9, 'near shoulder grows by 30');
+  assert.ok(Math.abs(off.sideB - 170) < 1e-9, 'far shoulder shrinks by 30');
+  assert.equal(off.centered, false);
+  assert.ok(Math.abs(off.wallCenter[0] - 150) < 1e-9 && Math.abs(off.wallCenter[1] - 200) < 1e-9);
 });

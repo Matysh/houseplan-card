@@ -15,7 +15,7 @@ import {
   lqiColor, snapToGrid, samePoint, pointInPolygon, markerIdForBinding,
   segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointStrictlyInside, roomsOverlap,
   pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, openZoneOf, distToSegment, outlineWithout, cutSegments, alignGuides, segmentAngle, is45, type AlignGuide, swipeTarget, clampScale, migratePdfUrls, roomFillModeOf, contentUrl,
-  snapToWall, openingAmount, interiorPoint, poleOfInaccessibility, subst,
+  snapToWall, openingAmount, openingShoulders, interiorPoint, poleOfInaccessibility, subst,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
   stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, glowColorOf, doorSector, hasRoomBehind, controlsAction, isControllable,
   spaceDisplayOf, roomFillStyle, fillColorsOf, DEFAULT_FILL_COLORS, type FillColors, runServiceFor, RUN_TARGET_DOMAINS,
@@ -274,6 +274,11 @@ class HouseplanCard extends LitElement {
   } | null = null;
   private _openingInfo: OpeningCfg | null = null;
   private _opDrag: { id: string; moved: boolean; sx: number; sy: number; dirty: boolean } | null = null;
+  // live ruler badges + the "centered on the wall" tick while an opening is dragged
+  private _opMeasure: {
+    labels: { x: number; y: number; text: string }[];
+    guide: { x: number; y: number; angle: number } | null;
+  } | null = null;
   private _mergeDialog: { aId: string; bId: string; poly: number[][]; pick: 'a' | 'b' } | null = null;
   private _splitSel: { roomId: string; pts: number[][] } | null = null; // room being cut + the cut path so far
   // a split is applied only when the new room's dialog is confirmed — cancel leaves the room intact
@@ -505,6 +510,7 @@ class HouseplanCard extends LitElement {
     _tool: { state: true },
     _rszSel: { state: true },
     _rszLive: { state: true },
+    _opMeasure: { state: true },
     _path: { state: true },
     _cursorPt: { state: true },
     _mergeSel: { state: true },
@@ -3152,8 +3158,30 @@ class HouseplanCard extends LitElement {
     const sp = this._curSpaceCfg;
     const cfg = sp?.openings?.find((x: OpeningCfg) => x.id === o.id);
     if (!cfg) return;
-    const nx = snap.x / NORM_W;
-    const ny = snap.y / this._spaceH;
+    // ruler badges on both shoulders + soft magnet to the wall's center
+    // (owner 2026-08-03); tol = half a grid step, Shift opts out of the magnet
+    // (same convention as the coarse-angle Shift elsewhere in the editor)
+    const rooms = this._spaceModel().rooms;
+    const tol = this._gridPitch / 2;
+    let cx = snap.x, cy = snap.y;
+    let sh = openingShoulders([cx, cy], snap.angle, cfg.length * NORM_W, rooms, tol);
+    if (sh && sh.centered && !ev.shiftKey && (cx !== sh.wallCenter[0] || cy !== sh.wallCenter[1])) {
+      [cx, cy] = sh.wallCenter;
+      sh = openingShoulders([cx, cy], snap.angle, cfg.length * NORM_W, rooms, tol);
+    }
+    if (sh) {
+      const imperial = this.hass?.config?.unit_system?.length === 'mi';
+      const lbl = (d: number, m: number[]) =>
+        ({ x: m[0], y: m[1], text: formatLength((d / this._gridPitch) * this._cellCm, imperial) });
+      this._opMeasure = {
+        labels: [lbl(sh.sideA, sh.midA), lbl(sh.sideB, sh.midB)],
+        guide: sh.centered && !ev.shiftKey
+          ? { x: sh.wallCenter[0], y: sh.wallCenter[1], angle: snap.angle }
+          : null,
+      };
+    } else this._opMeasure = null;
+    const nx = cx / NORM_W;
+    const ny = cy / this._spaceH;
     if (cfg.x !== nx || cfg.y !== ny || cfg.angle !== snap.angle) this._opDrag.dirty = true;
     cfg.x = nx;
     cfg.y = ny;
@@ -3164,6 +3192,7 @@ class HouseplanCard extends LitElement {
   private _opPointerUp(ev: PointerEvent, o: OpeningCfg): void {
     if (!this._opDrag || this._opDrag.id !== o.id) return;
     const moved = this._opDrag.moved;
+    this._opMeasure = null; // badges and the center tick live only through the drag
     // only write when the geometry actually changed (audit L4)
     if (moved && this._opDrag.dirty) this._saveConfig();
     // keep the flag until the click event that follows pointerup, then let it go
@@ -5233,6 +5262,7 @@ class HouseplanCard extends LitElement {
             ${this._renderSunRays(space)}
             ${this._renderOpenWalls(disp)}
             ${this._editing ? this._renderAlignGuides() : nothing}
+            ${this._opMeasure?.guide ? this._renderOpeningCenterTick() : nothing}
             ${this._markup ? this._renderMarkupLayer(vb) : nothing}
             ${this._renderOpenings(disp)}
             ${this._markup && this._tool === 'resize' ? this._renderResizeLayer(view) : nothing}
@@ -5253,6 +5283,11 @@ class HouseplanCard extends LitElement {
           ${this._rszLive
             ? html`<div class="measurelayer">${this._rszLive.map((l) => html`<div
                 class="measurelabel ${l.area ? 'rszarea' : ''}"
+                style="left:${(((l.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((l.y - view.y) / view.h) * 100).toFixed(2)}%">${l.text}</div>`)}</div>`
+            : nothing}
+          ${this._opMeasure
+            ? html`<div class="measurelayer">${this._opMeasure.labels.map((l) => html`<div
+                class="measurelabel opshoulder"
                 style="left:${(((l.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((l.y - view.y) / view.h) * 100).toFixed(2)}%">${l.text}</div>`)}</div>`
             : nothing}
           </div>
@@ -6375,6 +6410,18 @@ class HouseplanCard extends LitElement {
           <circle class="aligndot" cx="${gd.from[0]}" cy="${gd.from[1]}" r="${g * 0.18}"></circle>`;
       })}
     </g>` as unknown as TemplateResult;
+  }
+
+  /** Perpendicular dashed tick through the wall's center while a dragged opening
+   * sits exactly in the middle — same look as the alignment guides. Length is
+   * about the wall stroke (2.5) × 6 to each side. */
+  private _renderOpeningCenterTick(): TemplateResult {
+    const gd = this._opMeasure!.guide!;
+    const rad = ((gd.angle + 90) * Math.PI) / 180;
+    const half = 2.5 * 6;
+    return svg`<line class="alignline opcentertick"
+      x1="${gd.x - Math.cos(rad) * half}" y1="${gd.y - Math.sin(rad) * half}"
+      x2="${gd.x + Math.cos(rad) * half}" y2="${gd.y + Math.sin(rad) * half}"></line>` as unknown as TemplateResult;
   }
 
   private _roomCenter(r: RoomCfg): number[] {
