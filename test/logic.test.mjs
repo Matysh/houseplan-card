@@ -14,8 +14,8 @@ import {
   roomFillModeOf,
   contentUrl, chunk, referencedContentUrls, MAX_SIGN_PATHS,
   interiorPoint,
-  segmentCm, formatLength, roomEdges, roomPoly, pointOnBoundary, pointStrictlyInside, roomsOverlap,
-  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, poleOfInaccessibility, runServiceFor, TOGGLE_SAFE_DOMAINS } from '../test-build/logic.js';
+  segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointOnBoundary, pointStrictlyInside, roomsOverlap,
+  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, openingShoulders, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, poleOfInaccessibility, runServiceFor, TOGGLE_SAFE_DOMAINS } from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
 } from '../test-build/rules.js';
@@ -958,4 +958,131 @@ test('tap action run: explicit-only, with runnable targets (owner spec 2026-07-2
   assert.equal(resolveTapAction(null, 'toggle', 'cover', 'shutter'), 'toggle');
   // locks and alarms stay forbidden, run or not
   assert.equal(resolveTapAction('toggle', undefined, 'lock'), 'info');
+});
+
+
+test('paperRoomShapes: paper follows room contours, one shape per room (owner 2026-08-03)', () => {
+  const L = [[100, 100], [600, 100], [600, 350], [350, 350], [350, 600], [100, 600]];
+  const rooms = [
+    { id: 'L', poly: L },                            // L-shaped: polygon, verbatim
+    { id: 'q', x: 650, y: 650, w: 200, h: 100 },     // legacy rect: same rounded rect the room draws
+    { id: 'bad' },                                   // no geometry -> no paper
+  ];
+  const shapes = paperRoomShapes(rooms);
+  assert.equal(shapes.length, 2, 'one shape per room WITH geometry');
+  // the polygon uses exactly the room's own points string — same coordinates,
+  // so the paper can never peek past a wall
+  assert.deepEqual(shapes[0], { poly: L.map((p) => p.join(',')).join(' ') });
+  // the rect mirrors the room shape incl. its corner rounding rx
+  assert.deepEqual(shapes[1], { rect: { x: 650, y: 650, w: 200, h: 100, rx: 100 * 0.03 } });
+  // degenerate inputs never throw and produce no paper
+  assert.deepEqual(paperRoomShapes([]), []);
+  assert.deepEqual(paperRoomShapes(null), []);
+  assert.deepEqual(paperRoomShapes([{ poly: [[0, 0], [1, 1]] }]), [], 'a 2-point poly is not a surface');
+});
+
+// ---------------- opening drag: shoulder rulers + "centered on the wall" ----------------
+// (owner 2026-08-03) render units; demo-like geometry ×1000
+test('openingShoulders: distances from the opening edges to the wall ends', () => {
+  const rooms = [{ id: 'r1', poly: [[40, 140], [550, 140], [550, 580], [40, 580]] }];
+  // 80-long opening centered at x=200 on the top wall (40..550)
+  const sh = openingShoulders([200, 140], 0, 80, rooms, 2);
+  assert.ok(sh);
+  assert.deepEqual(sh.wallA, [40, 140]);
+  assert.deepEqual(sh.wallB, [550, 140]);
+  assert.equal(sh.sideA, 120, 'left: 160 - 40');
+  assert.equal(sh.sideB, 310, 'right: 550 - 240');
+  // badges sit on the middle of each shoulder
+  assert.deepEqual(sh.midA, [100, 140]);
+  assert.deepEqual(sh.midB, [395, 140]);
+  assert.deepEqual(sh.wallCenter, [295, 140]);
+  assert.equal(sh.centered, false);
+  // at the wall end one shoulder collapses to zero, never negative
+  const end = openingShoulders([80, 140], 0, 80, rooms, 2);
+  assert.equal(end.sideA, 0);
+  assert.equal(end.sideB, 430);
+  // off every wall -> null
+  assert.equal(openingShoulders([300, 300], 0, 80, rooms, 2), null);
+});
+
+test('openingShoulders: centered flag obeys the tolerance', () => {
+  const rooms = [{ id: 'r1', poly: [[40, 140], [550, 140], [550, 580], [40, 580]] }];
+  const mid = openingShoulders([295, 140], 0, 80, rooms, 2);
+  assert.equal(mid.centered, true);
+  assert.equal(mid.sideA, mid.sideB);
+  assert.equal(mid.sideA, 215, '(510 - 80) / 2');
+  assert.equal(openingShoulders([296.5, 140], 0, 80, rooms, 2).centered, true, 'inside tol');
+  assert.equal(openingShoulders([298, 140], 0, 80, rooms, 2).centered, false, 'outside tol');
+});
+
+test('openingShoulders: only the OWN room edge counts, no merging with a neighbour', () => {
+  // two rooms side by side: the top edges 40..550 (r1) and 550..960 (r2) are
+  // collinear and touch at x=550, but they belong to DIFFERENT rooms — the
+  // ruler measures ONLY the edge the opening sits on (owner 2026-08-03:
+  // «only the wall of one room»)
+  const rooms = [
+    { id: 'r1', poly: [[40, 140], [550, 140], [550, 580], [40, 580]] },
+    { id: 'r2', poly: [[550, 140], [960, 140], [960, 580], [550, 580]] },
+  ];
+  const sh = openingShoulders([200, 140], 0, 80, rooms, 2);
+  assert.deepEqual(sh.wallA, [40, 140]);
+  assert.deepEqual(sh.wallB, [550, 140], 'stops at the own corner, never runs into r2');
+  assert.equal(sh.sideB, 550 - 240);
+  // the middle of r1's OWN edge: (40+550)/2 = 295
+  assert.equal(openingShoulders([295, 140], 0, 80, rooms, 2).centered, true,
+    'centered on the own edge');
+  assert.equal(openingShoulders([500, 140], 0, 80, rooms, 2).centered, false,
+    'the center of the old merged run means nothing now');
+  // an opening on r2's fragment measures r2's edge
+  const far = openingShoulders([700, 140], 0, 80, rooms, 2);
+  assert.deepEqual(far.wallA, [550, 140]);
+  assert.deepEqual(far.wallB, [960, 140]);
+  assert.equal(openingShoulders([755, 140], 0, 80, rooms, 2).centered, true);
+  // the interior shared wall x=550 is ONE deduped edge shared by both rooms
+  const v = openingShoulders([550, 300], 90, 80, rooms, 2);
+  assert.deepEqual(v.wallA, [550, 140]);
+  assert.deepEqual(v.wallB, [550, 580]);
+  assert.equal(v.centered, false);
+  assert.equal(openingShoulders([550, 360], 90, 80, rooms, 2).centered, true);
+});
+
+test('openingShoulders: shared wall of two rooms uses the snapped room edge', () => {
+  // staggered fragments on the shared line x=550: r1's right edge 140..400,
+  // r2's left edge 300..580. The snap tie-break (nearest edge, first in
+  // roomEdges order on a tie — exactly what snapToWall picks during the
+  // drag) resolves to r1's edge, so shoulders and center come from 140..400,
+  // never from the merged 140..580 union
+  const rooms = [
+    { id: 'r1', poly: [[40, 140], [550, 140], [550, 400], [40, 400]] },
+    { id: 'r2', poly: [[550, 300], [960, 300], [960, 580], [550, 580]] },
+  ];
+  const sh = openingShoulders([550, 350], 90, 80, rooms, 2);
+  assert.deepEqual(sh.wallA, [550, 140]);
+  assert.deepEqual(sh.wallB, [550, 400], "r1's own end, not r2's 580");
+  assert.equal(sh.sideA, 310 - 140);
+  assert.equal(sh.sideB, 400 - 390);
+  assert.deepEqual(sh.wallCenter, [550, 270]);
+  assert.equal(sh.centered, false);
+  // below r1's edge the same line belongs to r2 alone
+  const low = openingShoulders([550, 500], 90, 80, rooms, 2);
+  assert.deepEqual(low.wallA, [550, 300]);
+  assert.deepEqual(low.wallB, [550, 580]);
+  assert.equal(openingShoulders([550, 440], 90, 80, rooms, 2).centered, true,
+    'centered on r2 own edge (300+580)/2');
+});
+
+test('openingShoulders: angled wall measures along the wall direction', () => {
+  // 3-4-5 triangle: hypotenuse-ish edge (0,0)->(300,400), length 500, angle 53.13°
+  const rooms = [{ id: 't', poly: [[0, 0], [300, 400], [0, 400]] }];
+  const ang = (Math.atan2(400, 300) * 180) / Math.PI;
+  const mid = openingShoulders([150, 200], ang, 100, rooms, 2);
+  assert.ok(mid);
+  assert.ok(Math.abs(mid.sideA - 200) < 1e-9 && Math.abs(mid.sideB - 200) < 1e-9);
+  assert.equal(mid.centered, true);
+  // slide 30 units towards the far end (dir = [0.6, 0.8])
+  const off = openingShoulders([150 + 30 * 0.6, 200 + 30 * 0.8], ang, 100, rooms, 2);
+  assert.ok(Math.abs(off.sideA - 230) < 1e-9, 'near shoulder grows by 30');
+  assert.ok(Math.abs(off.sideB - 170) < 1e-9, 'far shoulder shrinks by 30');
+  assert.equal(off.centered, false);
+  assert.ok(Math.abs(off.wallCenter[0] - 150) < 1e-9 && Math.abs(off.wallCenter[1] - 200) < 1e-9);
 });

@@ -1,5 +1,49 @@
 # Changelog
 
+## v1.56.0 — 2026-08-03
+
+Minor release: the sun comes to the floor plan — a compass, a day/night
+backdrop and real sunlight through the windows — plus room temperature
+from climate devices, a design-token pass over the UI, live rulers for
+opening drags, and a sun-cache fix.
+
+- **The sun on your floor plan** (docs/SUN.md). Tell the plan where
+  north is — a compass dial in the general settings, with a per-space
+  override — and the card starts living by Home Assistant's own
+  `sun.sun`:
+  - *Day/night backdrop* (`bg_mode: daynight`): the scene behind the
+    plan follows the sun's elevation — white at full day, warm gold
+    through the golden hour, cooling dusk, deep night. The plan itself
+    dims only ~10% at night, so the rooms stay readable.
+  - *Light through the windows* (`sun_rays`): every window on an
+    exterior wall casts a soft wedge of light into its room — clipped
+    by the room's own contour, warmer near the horizon, stretching
+    long at sunrise and sunset, short at noon, gone after dark.
+  - *Clouds, if you want them* (`weather_entity`): point at a weather
+    entity and an overcast sky mutes the wedges; rain or snow puts
+    them out. A dead sensor never kills the sun.
+  - The plan now sits on an *opaque sheet of paper* traced along the
+    room contours: the scene background — `bg_color` or the daynight
+    sky — is visible only around the walls and never bleeds through
+    the rooms; in day/night mode the sheet casts a soft shadow.
+  - The whole feature is silent until the compass is set; without
+    `sun.sun` the settings dialog explains why.
+- **Room temperature from climate devices.** A new checkbox in the
+  device dialog puts the AC's or thermostat's `current_temperature` on
+  the badge next to its icon and into the room's average temperature.
+- **UI modernization.** A design-token pass over `styles.ts` — 209
+  hard-coded values unified into spacing/radius/font/shadow scales —
+  and native `ha-switch` / `ha-slider` controls in the dialogs, with a
+  hard fallback to the old plain inputs where HA components are
+  unavailable.
+- **Live rulers for opening drags.** Dragging a door or window now
+  shows the live distances to both ends of its wall, measured along
+  the owning room's edge; a dashed guide and a soft magnet snap the
+  opening to the wall's center (hold Shift to disable the magnet).
+- **Fix DEV-B701-01** — the sun-ray cache is now invalidated by local
+  geometry edits too, so a wedge can no longer go stale after you move
+  a wall locally before the server confirms the change.
+
 ## v1.55.3 — 2026-08-02
 
 Patch release: two fixes for the v1.55.2 first-open veil, found by an

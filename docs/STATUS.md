@@ -11,16 +11,16 @@
 > (versions, publication, infrastructure), DEVELOPMENT.md for new gotchas,
 > ARCHITECTURE.md for design changes, ROADMAP.md when plans move.
 
-## Snapshot (2026-08-02)
+## Snapshot (2026-08-03)
 
 | Item | State |
 |---|---|
-| Version | **v1.55.3** everywhere (manifest, const.py, package.json, CARD_VERSION); deployed to the home instance. Closes the v1.55.2 audit findings AUD-1552-01/02 (boot-veil lifecycle: reconnect restart + full protective window with trailing quiescence + post-reveal soft grace; regressions in `demo/smoke_preloader_lifecycle.mjs`) |
+| Version | **v1.56.0** everywhere (manifest, const.py, package.json, CARD_VERSION); deployed to the home instance. Minor release: the Sun feature (docs/SUN.md — north compass, day/night backdrop, window light wedges, optional weather cloud cover, opaque room-contour paper), opt-in room temperature from climate devices, design-token pass over styles.ts + native ha-switch/ha-slider, opening-drag shoulder rulers with a center magnet, and the DEV-B701-01 sun-ray cache fix |
 | Workflow | Since 2026-07-22: minor changes go to branch **`dev`** (build + smokes → deploy home → commit → push, NO release); releases are batched on the owner's command (merge dev→main, one tag, one release with a summary changelog, CI checked on dev beforehand) |
 | GitHub | https://github.com/Matysh/houseplan-card — **`main` carries every published release, the latest tag is the current version above**; `dev` is where work lands and is merged into `main` at release time (so `dev` is normally equal to or ahead of `main`, never behind). Push via SSH key `ha_jb` (remote git@github.com:…); API releases via the fine-grained PAT in `~/.git-credentials` (Contents R/W, issued 2026-07-23) |
 | CI | validate.yml (hacs + hassfest + frontend + backend) green; release.yml attaches the bundle on release publish |
 | HACS | Custom repository works. **Inclusion PR: hacs/default#9004** — open, valid, labeled, mergeable clean, never drafted. Queue: 1212 open, 835 older than ours. Merge rate COLLAPSED: 75 in July but almost all in the first decade, 0 in the last week (checked 2026-07-29) — maintainers process in rare bursts; ETA unknowable, months at best. Nothing actionable on our side |
-| Home instance | ha.jbstudio.pro (SSH port **22222**, key `ha_jb`; HA config root is `/mnt/data/supervisor/homeassistant` — `/config` does NOT exist in this SSH environment), deployed **v1.55.3** via direct copy (HACS custom repo also installed) |
+| Home instance | ha.jbstudio.pro (SSH port **22222**, key `ha_jb`; HA config root is `/mnt/data/supervisor/homeassistant` — `/config` does NOT exist in this SSH environment), deployed **v1.56.0** via direct copy (HACS custom repo also installed) |
 | Localization | UI en/ru (src/i18n/*.json), everything user-visible localized incl. kiosk popover |
 | Tests | Four layers: frontend unit (`npm test`, node:test over `test-build/`), pure backend (`pytest tests_backend`, runs anywhere), HA-harness backend (same folder, CI only — needs py3.13 + pytest-homeassistant-custom-component), and browser smokes (`demo/smoke_*.mjs`, headless chromium). **Counts are not written down here** — they went stale within two releases while the version line beside them was kept current, which reads as less coverage than exists (review R5-2). Run `npm run inventory` for the current numbers, or read them off the last CI run |
 | Vacuums | Live robot vacuums shipped (docs/VACUUM.md): puck, server-side trails with display modes, fit-panel calibration. Verified on a live Dreame X50 Master |

@@ -8,9 +8,10 @@
  */
 import { html, svg, nothing, type TemplateResult } from 'lit';
 import { buildDevices, areaLqi, areaLights, areaTemp } from './devices';
-import { spaceDisplayOf, roomFillStyle, fillColorsOf, roomFillModeOf, stageBgOf } from './logic';
+import { spaceDisplayOf, roomFillStyle, fillColorsOf, roomFillModeOf, stageBgOf, paperRoomShapes } from './logic';
 import { DEFAULT_ICON_RULES, compileIconRules, EXCLUDED_DOMAINS } from './rules';
 import { t, type Lang } from './i18n';
+import { bgModeOf, northDegOf, sunStateOf, dayPhase } from './sun';
 import type { ServerConfig } from './types';
 import {
   spaceModels, roomCenter, defaultPositions, markerPos, labelPos, type Layout,
@@ -146,12 +147,37 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     : [];
 
   const bgHref = space.bg ? (o.displayUrl ? o.displayUrl(space.bg.href) : space.bg.href) : '';
-  // the static card paints the same background around the plan as the full one
-  const stageBg = stageBgOf(o.cfg?.settings, disp);
+  // The static card paints the same background around the plan as the full
+  // one. In 'daynight' mode (docs/SUN.md) the sun's elevation paints it —
+  // wedges stay full-card-only in v1, the background alone follows the sky.
+  const spaceSettings = (o.cfg.spaces.find((sp: any) => sp.id === o.spaceId) as any)?.settings || {};
+  let sunBg = '';
+  if (bgModeOf(o.cfg?.settings, spaceSettings) === 'daynight' && northDegOf(o.cfg?.settings, spaceSettings) !== null) {
+    const sun = sunStateOf(o.hass);
+    if (sun) sunBg = dayPhase(sun.elevation).bg;
+  }
+  const stageBg = sunBg || stageBgOf(o.cfg?.settings, disp);
+
+  // Opaque plan paper (owner 2026-08-03), same contract as the full card: the
+  // scene background never bleeds through the plan. With a backdrop image the
+  // paper is the image rect; a hand-drawn plan papers the ROOM CONTOURS
+  // (paperRoomShapes) — never their bounding box, so the scene colour reaches
+  // the exterior walls of an L-shaped house and fills the gaps between
+  // detached buildings. An empty drawn space has no paper at all.
+  const paper = space.bg
+    ? { x: space.bg.x, y: space.bg.y, w: space.bg.w, h: space.bg.h }
+    : null;
 
   return html`
     <div class="hp-static-stage" style="aspect-ratio:${vb[2]}/${vb[3]}${stageBg ? ';background:' + stageBg : ''}">
       <svg viewBox="${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}" preserveAspectRatio="xMidYMid meet">
+        ${paper
+          ? svg`<rect class="hp-paper" x="${paper.x}" y="${paper.y}" width="${paper.w}" height="${paper.h}"></rect>`
+          : paperRoomShapes(space.rooms).map((sh) =>
+              'poly' in sh
+                ? svg`<polygon class="hp-paper" points="${sh.poly}"></polygon>`
+                : svg`<rect class="hp-paper" x="${sh.rect.x}" y="${sh.rect.y}" width="${sh.rect.w}" height="${sh.rect.h}" rx="${sh.rect.rx}"></rect>`,
+            )}
         ${bgHref
           ? svg`<image href="${bgHref}" x="${space.bg!.x}" y="${space.bg!.y}" width="${space.bg!.w}" height="${space.bg!.h}" preserveAspectRatio="none" />`
           : nothing}

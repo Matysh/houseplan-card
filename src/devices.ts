@@ -146,6 +146,23 @@ export function tempFor(hass: any, entIds: string[]): number | null {
   return null;
 }
 
+/**
+ * Room temperature as a CLIMATE device reports it: the first climate.* entity
+ * with a finite attributes.current_temperature (owner's spec: several climate
+ * entities -> the first valid one wins). Unavailable/unknown entities and a
+ * missing attribute yield null - no badge, no vote in the room average.
+ */
+export function climateTempFor(hass: any, entIds: string[]): number | null {
+  for (const eid of entIds) {
+    if (!eid.startsWith('climate.')) continue;
+    const st = hass.states[eid];
+    if (!st || st.state === 'unavailable' || st.state === 'unknown') continue;
+    const v = parseFloat(st.attributes?.current_temperature);
+    if (Number.isFinite(v)) return Math.round(v * 10) / 10;
+  }
+  return null;
+}
+
 /** A humidity-measuring entity (device_class humidity or *_humidity), excluding diagnostics. */
 export function isHumEntity(hass: any, eid: string): boolean {
   if (hass.entities?.[eid]?.entity_category) return false;
@@ -508,10 +525,21 @@ export interface AreaClimate { temp: number | null; hum: number | null }
  * caller computes this map once per `hass` snapshot and looks rooms up in O(1).
  */
 export function areaClimateMap(
-  hass: any, rules?: CompiledIconRule[],
+  hass: any, rules?: CompiledIconRule[], markers?: Marker[] | null,
 ): Map<string, AreaClimate> {
   const out = new Map<string, AreaClimate>();
   if (!hass?.entities) return out;
+  // Opt-in climate sources (marker.use_climate_temp): an AC or thermostat
+  // knows the room temperature (current_temperature) - when the user ticks
+  // the option, that reading votes in the room average like any thermometer.
+  // The set holds binding refs (device ids and entity ids); with no opted
+  // markers the pass below is byte-for-byte the old one.
+  const climOpt = new Set<string>();
+  for (const m of markers || []) {
+    if (m?.use_climate_temp !== true) continue;
+    const i = (m.binding || '').indexOf(':');
+    if (i > 0) climOpt.add(m.binding.slice(i + 1));
+  }
   // area -> device (or lone entity) -> the entities that belong to it
   const byArea = new Map<string, Map<string, { name: string; model?: string; ents: string[] }>>();
   for (const [eid, reg] of Object.entries<any>(hass.entities)) {
@@ -523,8 +551,15 @@ export function areaClimateMap(
     // 90 C and a virtual better_thermostat duplicating the real sensor (field
     // question, 2026-07-27). Three guards, cheapest first:
     if (reg.entity_category) continue;              // diagnostic/config readings
-    if (EXCLUDED_DOMAINS.has(reg.platform)) continue; // filtered-out integrations
-    if (NON_AIR_RE.test(eid)) continue;             // water/chip/flow/target/...
+    // An explicitly opted climate entity skips the platform/name filters:
+    // the tick is the user saying "this one DOES measure room air" - even on
+    // an excluded platform (better_thermostat) or a suspicious entity id.
+    const optClimate = climOpt.size > 0 && eid.startsWith('climate.')
+      && (climOpt.has(eid) || (reg.device_id && climOpt.has(reg.device_id)));
+    if (!optClimate) {
+      if (EXCLUDED_DOMAINS.has(reg.platform)) continue; // filtered-out integrations
+      if (NON_AIR_RE.test(eid)) continue;             // water/chip/flow/target/...
+    }
     let groups = byArea.get(area);
     if (!groups) { groups = new Map(); byArea.set(area, groups); }
     const key = reg.device_id || eid;
@@ -543,11 +578,16 @@ export function areaClimateMap(
   for (const [area, groups] of byArea) {
     const temps: number[] = [];
     const hums: number[] = [];
-    for (const g of groups.values()) {
+    for (const [key, g] of groups) {
       const icon = resolveIcon(hass, g.name, g.model, g.ents, rules);
       const air = icon === 'mdi:thermometer' || icon === 'mdi:air-filter';
       if (air) {
         const t = tempFor(hass, g.ents);
+        if (t != null) temps.push(t);
+      }
+      // opted climate device/entity: current_temperature joins the average
+      if (climOpt.size > 0 && (climOpt.has(key) || g.ents.some((e) => climOpt.has(e)))) {
+        const t = climateTempFor(hass, g.ents);
         if (t != null) temps.push(t);
       }
       if (air || icon === 'mdi:water-percent') {

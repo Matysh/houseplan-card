@@ -81,6 +81,13 @@ export interface Marker {
    * null/undefined = auto: any light.* entity of the device.
    */
   is_light?: boolean | null;
+  /**
+   * Climate devices (AC, thermostat) know the room temperature
+   * (attributes.current_temperature). Opt-in per marker: show it as a badge
+   * next to the icon and include it in the room average. null/absent = off —
+   * nothing changes without an explicit tick (owner's spec, 2026-08-03).
+   */
+  use_climate_temp?: boolean | null;
 }
 
 /** A door or window: plan geometry (normalized coords), optionally live via entities. */

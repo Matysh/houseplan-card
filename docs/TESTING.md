@@ -120,6 +120,14 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] In Plan an opening is interactive: grab cursor, hover outline, drag along
       walls, click (any tool) opens its properties — with a 3 px drag threshold
       since v1.43.1, so a tap is never swallowed [auto: smoke_inert_openings]
+- [ ] Opening drag rulers (2026-08-03): while an opening is dragged, a measure
+      badge on EACH shoulder shows the along-the-wall distance from the wall end
+      to the nearest opening edge, live; the wall is ONE room's edge — the edge
+      the opening is snapped to — so a neighbouring room's collinear edge is
+      never merged in; at that edge's center (±half a grid step) a
+      perpendicular dashed tick appears and the center magnet-snaps — Shift
+      disables the magnet; badges and tick vanish on release
+      [auto: smoke_opening_measure + unit openingShoulders]
 
 ## Onboarding ★
 
@@ -866,3 +874,59 @@ require hands on real hardware — they remain for the human pass.
       one release = one undo step (rooms AND openings)
 - [ ] Device markers do not move; the room settings gear re-centres itself
 - [ ] Smoke: `node demo/smoke_room_resize.mjs`
+
+## Sun on the plan (docs/SUN.md)
+
+- [ ] Everything below is INERT until `north_deg` is set (general ⚙ or the
+      space settings) AND the install has `sun.sun`; both dialogs hint at
+      whichever is missing
+- [ ] The ⚙ compass: dragging the «N» arrow turns it in 1° steps (15° with
+      Shift); the number field mirrors the dial and accepts 0–359; «Clear»
+      returns the unset state
+- [ ] «Plan background» selector: `static` keeps the existing color picker
+      and behaviour byte-for-byte; `daynight` hides the picker and the stage
+      follows the sun — neutral day, warm golden hour, dark night — with a
+      slow (tens of seconds) transition; the PLAN dims only ~10% at night
+- [ ] Opaque plan paper (2026-08-03, owner): the scene background —
+      `bg_color` or the daynight sky — is visible ONLY around the plan and
+      NEVER bleeds through it, in view/kiosk/editors and on the static
+      space-card. An image plan papers the backdrop image rect
+      (`rect.hp-paper`). A hand-drawn plan papers the ROOM CONTOURS: one
+      `.hp-paper` shape per room in exactly the room's own geometry (fill
+      only, no stroke), so an L-shaped house or detached buildings never
+      grow a white bounding rectangle — the scene colour reaches the
+      exterior walls, shows in the L's pocket and between buildings, and an
+      empty drawn space has no paper at all. A live resize preview
+      (`_rszPreview`) moves the paper together with the dragged wall.
+      Colours: historical white for drawn plans, the theme card background
+      under an image. At night (`daynight`) the paper dims via the zoomwrap
+      `brightness` filter only — its alpha stays 1. Pixel-proofed against
+      an acid `#ff00ff` background [auto: smoke_bg_color]
+- [ ] Per-space overrides (background mode, north, sun-in-windows) inherit
+      when empty, exactly like show_lqi/fill_mode
+- [ ] «Sunlight through windows» (default OFF): wedges appear only from
+      windows on EXTERIOR walls facing the sun; interior windows, open
+      (virtual) boundaries and doors never light up
+- [ ] Wedge direction follows the compass; length grows toward
+      sunrise/sunset and shrinks toward noon; every wedge is clipped by its
+      room polygon; night = no wedges at all
+- [ ] Weather entity (optional, global): cloudy fades the wedges, rain/snow
+      removes them, a dead/unknown weather sensor changes nothing
+- [ ] Sun geometry recomputes ONLY when the sun attributes or the config
+      change — an unrelated `hass` tick reuses the memo
+- [ ] Editors (plan/devices/decor) render with NO wedges and NO day/night;
+      kiosk works; the static space-card honours the background mode
+      (wedges are full-card-only in v1)
+- [ ] `prefers-reduced-motion` → no transitions, static colors
+- [ ] Smoke: `node demo/smoke_sun.mjs`; units: `test/sun.test.mjs`;
+      backend: `tests_backend/test_validation.py` (sun settings)
+
+## Climate temperature opt-in (dev)
+
+- [ ] «Use the device's temperature sensor» (marker dialog, climate devices
+      only, default OFF): current_temperature shows as the standard `.tval`
+      badge and joins the room average like a thermometer; unavailable /
+      missing attribute = no badge, no vote; hidden devices keep voting
+      (registry-wide climate, like hidden thermometers); the tick survives
+      dialog recreation [auto: smoke_climate_temp; units: test/devices.test.mjs;
+      backend: tests_backend/test_validation.py (use_climate_temp)]

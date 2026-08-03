@@ -13,9 +13,9 @@ import {
 } from './rules';
 import {
   lqiColor, snapToGrid, samePoint, pointInPolygon, markerIdForBinding,
-  segmentCm, formatLength, roomEdges, roomPoly, pointStrictlyInside, roomsOverlap,
+  segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointStrictlyInside, roomsOverlap,
   pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, openZoneOf, distToSegment, outlineWithout, cutSegments, alignGuides, segmentAngle, is45, type AlignGuide, swipeTarget, clampScale, migratePdfUrls, roomFillModeOf, contentUrl,
-  snapToWall, openingAmount, interiorPoint, poleOfInaccessibility, subst,
+  snapToWall, openingAmount, openingShoulders, interiorPoint, poleOfInaccessibility, subst,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
   stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, glowColorOf, doorSector, hasRoomBehind, controlsAction, isControllable,
   spaceDisplayOf, roomFillStyle, fillColorsOf, DEFAULT_FILL_COLORS, type FillColors, runServiceFor, RUN_TARGET_DOMAINS,
@@ -28,6 +28,10 @@ import {
   planEdgeDrag, applyEdgeDrag, clampEdgeDrag, applyRoomScale, clampRoomScale,
   simplifyPoly, areaM2, formatArea, MIN_ROOM_CM, type EdgeDragPlan,
 } from './resize';
+import {
+  computeSunRays, dayPhase, northDegOf, bgModeOf, sunRaysOn, weatherEntityOf,
+  sunStateOf, cloudFactor, rayAlpha, rayColor, type SunRay,
+} from './sun';
 import { ContentSigner } from './signing';
 import { mdiHomeCityOutline } from '@mdi/js';
 import {
@@ -36,7 +40,7 @@ import {
   FitParams, fitMatrix, fitFromMatrix, initialFit, reanchorFit, VacRoom,
   VAC_TRAIL_LINGER_MS, Pt as VacPt,
 } from './vacuum';
-import { buildDevices, seedHiddenBindings, lqiFor, tempFor, humFor, isHumEntity, areaLights, areaTemp, areaHum, areaLightStats, sourceValue, areaClimateMap, litLightEntity, type AreaClimate } from './devices';
+import { buildDevices, seedHiddenBindings, lqiFor, tempFor, humFor, climateTempFor, isHumEntity, areaLights, areaTemp, areaHum, areaLightStats, sourceValue, areaClimateMap, litLightEntity, type AreaClimate } from './devices';
 import type {
   OpeningCfg,
   RoomCfg, SpaceModel, PdfRef, Marker, ServerConfig, DevItem, CardConfig,
@@ -47,7 +51,7 @@ import { cardStyles } from './styles';
 import { fitInSquare, contentBounds, spaceModels } from './space-geometry';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.55.3';
+const CARD_VERSION = '1.56.0';
 /** HP-1552 boot-veil timing (AUD-1552-02). The veil holds for at least
  *  BOOT_MIN_MS; every stage-height change restarts a BOOT_QUIET_MS
  *  trailing-quiescence requirement (chrome still settling near the cap
@@ -270,6 +274,11 @@ class HouseplanCard extends LitElement {
   } | null = null;
   private _openingInfo: OpeningCfg | null = null;
   private _opDrag: { id: string; moved: boolean; sx: number; sy: number; dirty: boolean } | null = null;
+  // live ruler badges + the "centered on the wall" tick while an opening is dragged
+  private _opMeasure: {
+    labels: { x: number; y: number; text: string }[];
+    guide: { x: number; y: number; angle: number } | null;
+  } | null = null;
   private _mergeDialog: { aId: string; bId: string; poly: number[][]; pick: 'a' | 'b' } | null = null;
   private _splitSel: { roomId: string; pts: number[][] } | null = null; // room being cut + the cut path so far
   // a split is applied only when the new room's dialog is confirmed — cancel leaves the room intact
@@ -326,7 +335,15 @@ class HouseplanCard extends LitElement {
   private _onboardingShown = false; // the auto space dialog is shown once per session
 
   private _rulesDialog: { rules: IconRule[]; test: string; busy: boolean } | null = null;
-  private _settingsDialog: { colors: FillColors; glowRadius: number; bgColor: string | null; busy: boolean } | null = null;
+  private _settingsDialog: {
+    colors: FillColors; glowRadius: number; bgColor: string | null;
+    /** sun on the plan (docs/SUN.md) */
+    northDeg: number | null; bgMode: 'static' | 'daynight'; sunRays: boolean; weatherEntity: string;
+    busy: boolean;
+  } | null = null;
+  /** Wedge memo: recomputed only when (azimuth, elevation, north, cfg rev) change (docs/SUN.md). */
+  private _sunRaysCache: { key: string; rays: SunRay[] } | null = null;
+  private _compassDrag = false;
   private _importDialog: { floors: (FloorInfo & { checked: boolean })[] } | null = null;
   private _importQueue: string[] = []; // floor titles still to create
   private _importTotal = 0;
@@ -367,6 +384,7 @@ class HouseplanCard extends LitElement {
     controlsFilter: string;
     glowRadius: string;  // per-device glow radius in display units; '' = global default
     isLight: boolean;    // force this marker to glow (dumb fixtures behind a switch)
+    useClimateTemp: boolean; // badge + room-average vote from climate current_temperature
     model: string;
     link: string;
     description: string;
@@ -396,6 +414,9 @@ class HouseplanCard extends LitElement {
     roomColor: string;
     roomOpacity: number;           // 0..1
     bgColor: string | null;        // background around the plan; null = inherit general
+    bgMode: 'static' | 'daynight' | null; // plan background mode; null = inherit (docs/SUN.md)
+    northDeg: number | null;       // per-space compass override; null = inherit
+    sunRays: boolean | null;       // per-space wedges override; null = inherit
     fillMode: 'none' | 'lqi' | 'light' | 'temp' | 'glow';
     tempMin: number;
     tempMax: number;
@@ -489,6 +510,7 @@ class HouseplanCard extends LitElement {
     _tool: { state: true },
     _rszSel: { state: true },
     _rszLive: { state: true },
+    _opMeasure: { state: true },
     _path: { state: true },
     _cursorPt: { state: true },
     _mergeSel: { state: true },
@@ -1457,8 +1479,27 @@ class HouseplanCard extends LitElement {
 
   private _liveTemp(d: DevItem): number | null {
     if (!this._config?.show_temperature) return null;
+    // Opt-in climate source (marker.use_climate_temp): the AC/thermostat's
+    // current_temperature gets the same badge a thermometer has. No valid
+    // reading (missing attribute, unavailable) -> no badge at all.
+    if (d.marker?.use_climate_temp === true) {
+      const t = climateTempFor(this.hass, d.entities);
+      if (t != null) return t;
+    }
     if (d.icon !== 'mdi:thermometer' && d.icon !== 'mdi:air-filter') return null;
     return tempFor(this.hass, d.entities);
+  }
+
+  /** Does the dialog's binding carry a climate entity? Gates the opt-in checkbox. */
+  private _bindingHasClimate(binding: string): boolean {
+    if (binding.startsWith('entity:')) return binding.slice(7).startsWith('climate.');
+    if (binding.startsWith('device:')) {
+      const ref = binding.slice(7);
+      for (const [eid, reg] of Object.entries<any>(this.hass?.entities || {})) {
+        if (reg?.device_id === ref && eid.startsWith('climate.')) return true;
+      }
+    }
+    return false;
   }
 
   private _liveHum(d: DevItem): number | null {
@@ -1579,6 +1620,24 @@ class HouseplanCard extends LitElement {
       .map((d) => { const p = this._pos(d); return [p.x, p.y] as const; });
     const b = contentBounds(m, 0.05, pts);
     return b ? [b.x, b.y, b.w, b.h] : m.vb;
+  }
+
+  /**
+   * Opaque plan "paper" (owner 2026-08-03): the scene background — bg_color or
+   * the 'daynight' sky — must never bleed through the plan itself, so opaque
+   * shapes sit under everything the plan draws. With a backdrop image the
+   * paper is the image rect (the canvas IS the paper) — this helper returns
+   * it. For a hand-drawn plan the paper follows the ROOM CONTOURS instead
+   * (paperRoomShapes in logic.ts): one shape per room in exactly the room's
+   * own geometry, so an L-shaped house or detached buildings never grow a
+   * white bounding rectangle — the scene colour is visible right up to the
+   * exterior walls, and an empty drawn space has no paper at all. Its colour
+   * is the pre-bg_color canvas (styles.ts .hp-paper): white for drawn plans,
+   * the theme card background under an image. At night 'daynight' dims it via
+   * the zoomwrap brightness filter ONLY — its alpha stays 1 (docs/SUN.md).
+   */
+  private _paperRect(m: SpaceModel): { x: number; y: number; w: number; h: number } | null {
+    return m.bg ? { x: m.bg.x, y: m.bg.y, w: m.bg.w, h: m.bg.h } : null;
   }
 
   /** Aspect ratio of the scene (width/height, px). */
@@ -3099,8 +3158,30 @@ class HouseplanCard extends LitElement {
     const sp = this._curSpaceCfg;
     const cfg = sp?.openings?.find((x: OpeningCfg) => x.id === o.id);
     if (!cfg) return;
-    const nx = snap.x / NORM_W;
-    const ny = snap.y / this._spaceH;
+    // ruler badges on both shoulders + soft magnet to the wall's center
+    // (owner 2026-08-03); tol = half a grid step, Shift opts out of the magnet
+    // (same convention as the coarse-angle Shift elsewhere in the editor)
+    const rooms = this._spaceModel().rooms;
+    const tol = this._gridPitch / 2;
+    let cx = snap.x, cy = snap.y;
+    let sh = openingShoulders([cx, cy], snap.angle, cfg.length * NORM_W, rooms, tol);
+    if (sh && sh.centered && !ev.shiftKey && (cx !== sh.wallCenter[0] || cy !== sh.wallCenter[1])) {
+      [cx, cy] = sh.wallCenter;
+      sh = openingShoulders([cx, cy], snap.angle, cfg.length * NORM_W, rooms, tol);
+    }
+    if (sh) {
+      const imperial = this.hass?.config?.unit_system?.length === 'mi';
+      const lbl = (d: number, m: number[]) =>
+        ({ x: m[0], y: m[1], text: formatLength((d / this._gridPitch) * this._cellCm, imperial) });
+      this._opMeasure = {
+        labels: [lbl(sh.sideA, sh.midA), lbl(sh.sideB, sh.midB)],
+        guide: sh.centered && !ev.shiftKey
+          ? { x: sh.wallCenter[0], y: sh.wallCenter[1], angle: snap.angle }
+          : null,
+      };
+    } else this._opMeasure = null;
+    const nx = cx / NORM_W;
+    const ny = cy / this._spaceH;
     if (cfg.x !== nx || cfg.y !== ny || cfg.angle !== snap.angle) this._opDrag.dirty = true;
     cfg.x = nx;
     cfg.y = ny;
@@ -3111,6 +3192,7 @@ class HouseplanCard extends LitElement {
   private _opPointerUp(ev: PointerEvent, o: OpeningCfg): void {
     if (!this._opDrag || this._opDrag.id !== o.id) return;
     const moved = this._opDrag.moved;
+    this._opMeasure = null; // badges and the center tick live only through the drag
     // only write when the geometry actually changed (audit L4)
     if (moved && this._opDrag.dirty) this._saveConfig();
     // keep the flag until the click event that follows pointerup, then let it go
@@ -3483,6 +3565,7 @@ class HouseplanCard extends LitElement {
         controls: [...(d.marker?.controls || [])],
         controlsFilter: '',
         isLight: d.marker?.is_light === true,
+        useClimateTemp: d.marker?.use_climate_temp === true,
         glowRadius: Number(d.marker?.glow_radius_cm) > 0
           ? String(this._imperial
               ? Math.round((Number(d.marker!.glow_radius_cm) / 30.48) * 10) / 10
@@ -3505,7 +3588,7 @@ class HouseplanCard extends LitElement {
         display: 'badge', rippleColor: '', rippleSize: 3, size: 1, angle: 0,
         tapAction: '', tapTarget: '', tapConfirm: false, runFilter: '',
         defaultTap: 'info', controls: [], controlsFilter: '', isLight: false,
-        glowRadius: '', model: '',
+        useClimateTemp: false, glowRadius: '', model: '',
         link: '', description: '', pdfs: [], room: '', hideFromPlan: false, busy: false,
         uploadId: 'up_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       };
@@ -3727,6 +3810,7 @@ class HouseplanCard extends LitElement {
         controls: dlg.controls.length ? dlg.controls : null,
         // pdfs may be rewritten below when rebinding changes the marker id
         is_light: dlg.isLight ? true : null,
+        use_climate_temp: dlg.useClimateTemp ? true : null,
         glow_radius_cm: (() => {
           const v = parseFloat(dlg.glowRadius);
           if (!Number.isFinite(v) || v <= 0) return null;
@@ -3900,6 +3984,9 @@ class HouseplanCard extends LitElement {
         showBorders: disp.showBorders, showNames: disp.showNames,
         roomColor: disp.color, roomOpacity: disp.opacity, fillMode: disp.fill,
         bgColor: disp.bgColor,
+        bgMode: sp.settings?.bg_mode === 'static' || sp.settings?.bg_mode === 'daynight' ? sp.settings.bg_mode : null,
+        northDeg: northDegOf({}, sp.settings),
+        sunRays: typeof sp.settings?.sun_rays === 'boolean' ? sp.settings.sun_rays : null,
         tempMin: disp.tempMin, tempMax: disp.tempMax,
         showLqi: disp.showLqi ?? this._config?.show_signal ?? true,
         cardFontScale: disp.cardFontScale,
@@ -3915,6 +4002,7 @@ class HouseplanCard extends LitElement {
         showBorders: false, showNames: false,
         roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'glow',
         bgColor: null,
+        bgMode: null, northDeg: null, sunRays: null,
         tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
         showLqi: this._config?.show_signal ?? true,
         cardFontScale: 1,
@@ -4143,6 +4231,9 @@ class HouseplanCard extends LitElement {
         room_color: d.roomColor,
         room_opacity: d.roomOpacity,
         bg_color: d.bgColor || undefined, // empty = inherit the general setting
+        bg_mode: d.bgMode || undefined,    // sun on the plan (docs/SUN.md); empty = inherit
+        north_deg: d.northDeg ?? undefined,
+        sun_rays: d.sunRays ?? undefined,
         fill_mode: d.fillMode,
         temp_min: Number.isFinite(d.tempMin) ? Math.min(d.tempMin, d.tempMax) : DEFAULT_TEMP_MIN,
         temp_max: Number.isFinite(d.tempMax) ? Math.max(d.tempMin, d.tempMax) : DEFAULT_TEMP_MAX,
@@ -4250,6 +4341,7 @@ class HouseplanCard extends LitElement {
       showBorders: false, showNames: false,
       roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'glow',
       bgColor: null,
+      bgMode: null, northDeg: null, sunRays: null,
       tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
       showLqi: this._config?.show_signal ?? true,
       cardFontScale: 1,
@@ -4305,12 +4397,153 @@ class HouseplanCard extends LitElement {
     </div>`;
   }
 
+  // ================= SUN ON THE PLAN (docs/SUN.md) =================
+
+  /** Global settings with the general-settings dialog's pending values. */
+  private _sunGlobal(): any {
+    const gd = this._settingsDialog;
+    if (!gd) return this._settings;
+    return {
+      ...this._settings,
+      north_deg: gd.northDeg ?? undefined,
+      bg_mode: gd.bgMode,
+      sun_rays: gd.sunRays,
+      weather_entity: (gd.weatherEntity || '').trim() || undefined,
+    };
+  }
+
+  /** Current space settings with the space dialog's pending values. */
+  private _sunSpace(): any {
+    const sd = this._spaceDialog;
+    const saved = this._curSpaceCfg?.settings || {};
+    if (!sd || sd.mode !== 'edit' || sd.spaceId !== this._space) return saved;
+    return {
+      ...saved,
+      north_deg: sd.northDeg ?? undefined,
+      bg_mode: sd.bgMode ?? undefined,
+      sun_rays: sd.sunRays ?? undefined,
+    };
+  }
+
+  /** Effective compass; null = the whole sun feature is inert (docs/SUN.md). */
+  private _effNorth(): number | null {
+    return northDegOf(this._sunGlobal(), this._sunSpace());
+  }
+
+  private _effBgMode(): 'static' | 'daynight' {
+    return bgModeOf(this._sunGlobal(), this._sunSpace());
+  }
+
+  private _effSunRays(): boolean {
+    return sunRaysOn(this._sunGlobal(), this._sunSpace());
+  }
+
+  /** sun.sun, but only when the feature is armed (north_deg set somewhere). */
+  private _sunNow(): { azimuth: number; elevation: number } | null {
+    return this._effNorth() !== null ? sunStateOf(this.hass) : null;
+  }
+
+  /**
+   * Window light wedges (docs/SUN.md): view/kiosk only. Geometry recomputes
+   * ONLY when the memo key changes — sun attributes tick every ~30-120 s and
+   * everything else in `hass` must not trigger the polygon clipping.
+   */
+  private _renderSunRays(space: SpaceModel): TemplateResult {
+    const empty = svg`` as unknown as TemplateResult;
+    if (this._editing || !this._effSunRays()) return empty;
+    const north = this._effNorth();
+    const sun = north !== null ? sunStateOf(this.hass) : null;
+    if (!sun || sun.elevation <= 0) return empty;
+    const weather = weatherEntityOf(this._sunGlobal());
+    const cloud = cloudFactor(weather ? this.hass?.states?.[weather]?.state : null);
+    const alpha = rayAlpha(sun.elevation, cloud);
+    if (alpha <= 0) return empty;
+    // DEV-B701-01: the geometry signal must be _cfgEpoch, not _cfgRev.
+    // Every local mutation ends in _saveConfig(), which bumps the epoch
+    // SYNCHRONOUSLY; _cfgRev only moves after the debounced WS write is
+    // acked, so a rev-keyed memo served wedges for the OLD window position
+    // during the whole write window (and forever if the write failed).
+    const key = `${space.id}|${sun.azimuth}|${sun.elevation}|${north}|${this._cfgEpoch}`;
+    if (!this._sunRaysCache || this._sunRaysCache.key !== key) {
+      const rooms = space.rooms
+        .map((r) => ({ id: r.id || '', poly: roomPoly(r) }))
+        .filter((r): r is { id: string; poly: number[][] } => !!r.id && !!r.poly);
+      const windows = this._openingsR
+        .filter((o) => o.type === 'window')
+        .map((o) => ({ id: o.id, x: o.rx, y: o.ry, angle: o.angle, length: o.rlen }));
+      this._sunRaysCache = { key, rays: computeSunRays(rooms, windows, sun.azimuth, sun.elevation, north!) };
+    }
+    const rays = this._sunRaysCache.rays;
+    if (!rays.length) return empty;
+    const color = rayColor(dayPhase(sun.elevation).warmth);
+    return svg`<defs>
+        ${rays.map((r, i) => {
+          const mx = (r.a[0] + r.b[0]) / 2;
+          const my = (r.a[1] + r.b[1]) / 2;
+          return svg`<linearGradient id="hp-sun-${i}" gradientUnits="userSpaceOnUse"
+            x1="${mx}" y1="${my}" x2="${mx + r.dir[0] * r.len}" y2="${my + r.dir[1] * r.len}">
+            <stop offset="0%" stop-color="${color}" stop-opacity="${alpha.toFixed(3)}"></stop>
+            <stop offset="100%" stop-color="${color}" stop-opacity="0"></stop>
+          </linearGradient>`;
+        })}
+      </defs>
+      <g class="sunlayer">
+        ${rays.map((r, i) => r.polys.map((p) => svg`<polygon
+          points="${p.map((q) => q[0] + ',' + q[1]).join(' ')}" fill="url(#hp-sun-${i})"></polygon>`))}
+      </g>` as unknown as TemplateResult;
+  }
+
+  /** One drag/click sample on the compass dial → dialog north_deg. */
+  private _compassPoint(ev: PointerEvent): void {
+    const el = ev.currentTarget as SVGSVGElement;
+    const r = el.getBoundingClientRect();
+    const dx = ev.clientX - (r.left + r.width / 2);
+    const dy = ev.clientY - (r.top + r.height / 2);
+    if (Math.hypot(dx, dy) < 5) return; // the dead centre says nothing about angle
+    let a = Math.round((Math.atan2(dx, -dy) * 180) / Math.PI);
+    if (ev.shiftKey) a = Math.round(a / 15) * 15; // coarse 15° steps with Shift
+    a = ((a % 360) + 360) % 360;
+    this._settingsDialog = { ...this._settingsDialog!, northDeg: a };
+  }
+
+  /** The compass dial: drag the «N» arrow around the ring (docs/SUN.md). */
+  private _renderCompass(): TemplateResult {
+    const d = this._settingsDialog!;
+    const deg = d.northDeg;
+    return html`<svg class="compass ${deg === null ? 'unset' : ''}" viewBox="-60 -60 120 120"
+      @pointerdown=${(e: PointerEvent) => {
+        (e.currentTarget as Element).setPointerCapture(e.pointerId);
+        this._compassDrag = true;
+        this._compassPoint(e);
+      }}
+      @pointermove=${(e: PointerEvent) => { if (this._compassDrag) this._compassPoint(e); }}
+      @pointerup=${() => (this._compassDrag = false)}
+      @pointercancel=${() => (this._compassDrag = false)}>
+      <circle class="cring" r="50"></circle>
+      ${[0, 45, 90, 135, 180, 225, 270, 315].map(
+        (t) => svg`<line class="ctick ${t % 90 ? 'minor' : ''}" x1="0" y1="-50" x2="0" y2="${t % 90 ? -46 : -43}"
+          transform="rotate(${t})"></line>`,
+      )}
+      <g class="cneedle" transform="rotate(${deg ?? 0})">
+        <line x1="0" y1="34" x2="0" y2="-28"></line>
+        <path d="M -7 -24 L 0 -42 L 7 -24 Z"></path>
+        <text x="0" y="-12" text-anchor="middle">${this._t('gs.north_letter')}</text>
+      </g>
+      <text class="cdeg" x="0" y="26" text-anchor="middle">${deg === null ? '—' : deg + '°'}</text>
+    </svg>`;
+  }
+
   /**
    * Effective stage background: per-space override → global setting → '' (the
    * theme default from the stylesheet). An open dialog previews its pending
-   * value, so the color can be picked against the live plan.
+   * value, so the color can be picked against the live plan. In 'daynight'
+   * mode (docs/SUN.md) the sun's elevation paints the stage instead.
    */
   private _stageBg(disp: SpaceDisplay): string {
+    if (this._effBgMode() === 'daynight') {
+      const sun = this._sunNow();
+      if (sun) return dayPhase(sun.elevation).bg;
+    }
     const gd = this._settingsDialog;
     const sd = this._spaceDialog;
     const globalBg = gd ? gd.bgColor || '' : stageBgOf(this._settings, { bgColor: null });
@@ -4343,6 +4576,10 @@ class HouseplanCard extends LitElement {
       colors: JSON.parse(JSON.stringify(this._fillColors)),
       glowRadius,
       bgColor: stageBgOf(this._settings, { bgColor: null }) || null,
+      northDeg: northDegOf(this._settings, {}),
+      bgMode: bgModeOf(this._settings, {}),
+      sunRays: sunRaysOn(this._settings, {}),
+      weatherEntity: weatherEntityOf(this._settings) || '',
       busy: false,
     };
   };
@@ -4367,6 +4604,17 @@ class HouseplanCard extends LitElement {
       else delete settings.glow_radius_cm;
       if (d.bgColor) settings.bg_color = d.bgColor;
       else delete settings.bg_color;
+      // sun on the plan (docs/SUN.md): defaults are never stored
+      if (d.northDeg !== null && Number.isInteger(d.northDeg) && d.northDeg >= 0 && d.northDeg <= 359)
+        settings.north_deg = d.northDeg;
+      else delete settings.north_deg;
+      if (d.bgMode === 'daynight') settings.bg_mode = 'daynight';
+      else delete settings.bg_mode;
+      if (d.sunRays) settings.sun_rays = true;
+      else delete settings.sun_rays;
+      const we = (d.weatherEntity || '').trim();
+      if (we) settings.weather_entity = we;
+      else delete settings.weather_entity;
       this._serverCfg = { ...cfg, settings };
       await this._saveConfigNow();
       this._settingsDialog = null;
@@ -4382,6 +4630,34 @@ class HouseplanCard extends LitElement {
     }
   }
 
+  /** Boolean toggle for dialog rows: the native ha-switch when the HA
+   *  frontend provides it, the classic checkbox otherwise (older HA, the
+   *  smoke env). The ha-* API is undocumented and shifts between HA
+   *  releases, so the presence check is the ONLY coupling: both branches
+   *  fire `change` and both are read back via `.checked` off the event
+   *  target - one handler, two renderers. */
+  private _boolInput(checked: boolean, onChange: (v: boolean) => void, disabled = false): TemplateResult {
+    const h = (e: Event) => onChange(!!(e.target as HTMLInputElement).checked);
+    return customElements.get('ha-switch')
+      ? html`<ha-switch .checked=${checked} .disabled=${disabled} @change=${h}></ha-switch>`
+      : html`<input type="checkbox" .checked=${checked} ?disabled=${disabled} @change=${h} />`;
+  }
+
+  /** Range slider for dialog rows: ha-slider when available, plain
+   *  input[type=range] otherwise. Same fallback contract as _boolInput;
+   *  ha-slider emits `input` while dragging and `change` on release
+   *  (which of the two carries the final value differs between HA
+   *  versions - listen to both, the handler is idempotent). */
+  private _rangeInput(min: number, max: number, step: number, value: number, onInput: (v: number) => void): TemplateResult {
+    const h = (e: Event) => {
+      const n = Number((e.target as HTMLInputElement).value);
+      if (Number.isFinite(n)) onInput(n);
+    };
+    return customElements.get('ha-slider')
+      ? html`<ha-slider .min=${min} .max=${max} .step=${step} .value=${value} @input=${h} @change=${h}></ha-slider>`
+      : html`<input type="range" min=${min} max=${max} step=${step} .value=${String(value)} @input=${h} />`;
+  }
+
   private _renderColorRow(key: keyof FillColors, labelKey: string): TemplateResult {
     const d = this._settingsDialog!;
     const v = d.colors[key];
@@ -4389,8 +4665,7 @@ class HouseplanCard extends LitElement {
       <span class="gsl">${this._t(labelKey as any)}</span>
       <input type="color" .value=${v.c}
         @input=${(e: Event) => this._setFillColor(key, { c: (e.target as HTMLInputElement).value })} />
-      <input type="range" min="0" max="100" .value=${String(Math.round(v.a * 100))}
-        @input=${(e: Event) => this._setFillColor(key, { a: Number((e.target as HTMLInputElement).value) / 100 })} />
+      ${this._rangeInput(0, 100, 1, Math.round(v.a * 100), (n) => this._setFillColor(key, { a: n / 100 }))}
       <span class="opv">${Math.round(v.a * 100)}%</span>
     </div>`;
   }
@@ -4521,19 +4796,77 @@ class HouseplanCard extends LitElement {
           </div>
           <label class="dispsection">${this._t('gs.bg_group')}</label>
           <div class="colorrow gsrow">
-            <span class="gsl">${this._t('gs.bg_color')}</span>
-            <input type="color" .value=${this._settingsDialog!.bgColor || this._stageBgHex()}
+            <span class="gsl">${this._t('gs.bg_mode')}</span>
+            <select class="areasel"
+              @change=${(e: Event) =>
+                (this._settingsDialog = { ...this._settingsDialog!, bgMode: (e.target as HTMLSelectElement).value === 'daynight' ? 'daynight' : 'static' })}>
+              <option value="static" ?selected=${this._settingsDialog!.bgMode === 'static'}>${this._t('gs.bg_static')}</option>
+              <option value="daynight" ?selected=${this._settingsDialog!.bgMode === 'daynight'}>${this._t('gs.bg_daynight')}</option>
+            </select>
+          </div>
+          ${this._settingsDialog!.bgMode === 'static'
+            ? html`<div class="colorrow gsrow">
+                <span class="gsl">${this._t('gs.bg_color')}</span>
+                <input type="color" .value=${this._settingsDialog!.bgColor || this._stageBgHex()}
+                  @input=${(e: Event) =>
+                    (this._settingsDialog = { ...this._settingsDialog!, bgColor: (e.target as HTMLInputElement).value })} />
+                ${this._settingsDialog!.bgColor
+                  ? html`<button class="btn ghost" @click=${() =>
+                      (this._settingsDialog = { ...this._settingsDialog!, bgColor: null })}>${this._t('gs.bg_default')}</button>`
+                  : html`<span class="opl">${this._t('gs.bg_theme')}</span>`}
+              </div>`
+            : html`<div class="rhint">${this._t('gs.bg_daynight_hint')}</div>`}
+          <label class="dispsection">${this._t('gs.sun_group')}</label>
+          ${!sunStateOf(this.hass)
+            ? html`<div class="rhint">${this._t('gs.sun_missing')}</div>`
+            : nothing}
+          <div class="sunrow">
+            ${this._renderCompass()}
+            <div class="suncol">
+              <span class="gsl">${this._t('gs.north')}</span>
+              <div class="colorrow">
+                <input class="namein tempin" type="number" min="0" max="359" step="1"
+                  placeholder=${this._t('gs.north_ph')}
+                  .value=${this._settingsDialog!.northDeg === null ? '' : String(this._settingsDialog!.northDeg)}
+                  @input=${(e: Event) => {
+                    const raw = (e.target as HTMLInputElement).value.trim();
+                    const n = raw === '' ? null : Math.round(Number(raw));
+                    this._settingsDialog = {
+                      ...this._settingsDialog!,
+                      northDeg: n !== null && Number.isFinite(n) ? Math.min(359, Math.max(0, n)) : null,
+                    };
+                  }} />
+                ${this._settingsDialog!.northDeg !== null
+                  ? html`<button class="btn ghost" @click=${() =>
+                      (this._settingsDialog = { ...this._settingsDialog!, northDeg: null })}>${this._t('gs.north_clear')}</button>`
+                  : nothing}
+              </div>
+              ${this._settingsDialog!.northDeg === null
+                ? html`<div class="rhint">${this._t('gs.north_hint')}</div>`
+                : nothing}
+            </div>
+          </div>
+          <label class="srcrow">
+            ${this._boolInput(this._settingsDialog!.sunRays, (v) =>
+              (this._settingsDialog = { ...this._settingsDialog!, sunRays: v }))}
+            <span>${this._t('gs.sun_rays')}</span>
+          </label>
+          <div class="colorrow gsrow">
+            <span class="gsl">${this._t('gs.weather')}</span>
+            <input class="namein" type="text" list="hp-weather-list" placeholder=${this._t('gs.weather_ph')}
+              .value=${this._settingsDialog!.weatherEntity}
               @input=${(e: Event) =>
-                (this._settingsDialog = { ...this._settingsDialog!, bgColor: (e.target as HTMLInputElement).value })} />
-            ${this._settingsDialog!.bgColor
-              ? html`<button class="btn ghost" @click=${() =>
-                  (this._settingsDialog = { ...this._settingsDialog!, bgColor: null })}>${this._t('gs.bg_default')}</button>`
-              : html`<span class="opl">${this._t('gs.bg_theme')}</span>`}
+                (this._settingsDialog = { ...this._settingsDialog!, weatherEntity: (e.target as HTMLInputElement).value })} />
+            <datalist id="hp-weather-list">
+              ${Object.keys(this.hass?.states || {}).filter((id) => id.startsWith('weather.')).map(
+                (id) => html`<option value=${id}></option>`,
+              )}
+            </datalist>
           </div>
         </div>
         <div class="row">
           <button class="btn ghost" @click=${() =>
-            (this._settingsDialog = { ...this._settingsDialog!, colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: this._imperial ? 9.8 : 3, bgColor: null })}>
+            (this._settingsDialog = { ...this._settingsDialog!, colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: this._imperial ? 9.8 : 3, bgColor: null, northDeg: null, bgMode: 'static', sunRays: false, weatherEntity: '' })}>
             ${this._t('gs.reset')}
           </button>
           <span class="spacer"></span>
@@ -4669,8 +5002,7 @@ class HouseplanCard extends LitElement {
     const k = this._kioskScale;
     const row = (key: 'icon' | 'font', label: string) => html`<label>${label}</label>
       <div class="colorrow">
-        <input type="range" min="50" max="300" step="5" .value=${String(Math.round(k[key] * 100))}
-          @input=${(e: Event) => this._saveKioskScale({ [key]: Number((e.target as HTMLInputElement).value) / 100 })} />
+        ${this._rangeInput(50, 300, 5, Math.round(k[key] * 100), (n) => this._saveKioskScale({ [key]: n / 100 }))}
         <span class="opv">${Math.round(k[key] * 100)}%</span>
       </div>`;
     return html`<div class="menuwrap dialogwrap" @click=${() => (this._kioskDialog = false)}>
@@ -4730,6 +5062,9 @@ class HouseplanCard extends LitElement {
     // Background around the plan (view/kiosk; editors keep their own canvas).
     // Both settings dialogs preview their pending value live.
     const stageBg = this._editing ? '' : this._stageBg(disp);
+    // day/night breathing: armed only with a compass AND sun.sun (docs/SUN.md)
+    const dayNight = !this._editing && this._effBgMode() === 'daynight' ? this._sunNow() : null;
+    const planDim = dayNight ? dayPhase(dayNight.elevation).planDim : 0;
 
     return html`
       <ha-card>
@@ -4800,7 +5135,7 @@ class HouseplanCard extends LitElement {
         ${this._markup ? this._renderMarkupBar() : this._mode === 'devices' ? this._renderDevicesBar() : this._mode === 'decor' ? this._renderDecorBar() : nothing}
         </div>
 
-        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'openwall' && this._openWallHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}"
+        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'openwall' && this._openWallHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${dayNight ? ' daynight' : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}"
           style="height:${this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}${stageBg ? `;background:${stageBg}` : ''}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
@@ -4808,8 +5143,28 @@ class HouseplanCard extends LitElement {
           @pointermove=${(e: PointerEvent) => this._stagePointerMove(e)}
           @pointerup=${(e: PointerEvent) => this._stagePointerUp(e)}
           @pointercancel=${(e: PointerEvent) => this._stagePointerUp(e)}>
-          <div class="zoomwrap ${this._slide ? 'slide-' + this._slide : ''}">
+          <div class="zoomwrap ${this._slide ? 'slide-' + this._slide : ''}"
+            style="${dayNight ? `filter:brightness(${(1 - planDim).toFixed(3)})` : ''}">
           <svg viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="xMidYMid meet">
+            ${(() => {
+              // opaque paper: the image rect for image plans, the room
+              // contours for drawn ones (owner: no white square around an
+              // L-shaped house — the scene bg reaches the exterior walls).
+              // `space` comes from _renderCfg, so a live resize preview
+              // (_rszPreview) moves the paper together with the rooms.
+              // One <g> around ALL paper shapes: the daynight drop shadow
+              // (styles.ts) is composited once for the whole sheet, so
+              // adjacent rooms never cast seams onto each other's paper.
+              if (space.bg) {
+                const pp = this._paperRect(space)!;
+                return svg`<g class="hp-paperg"><rect class="hp-paper" x="${pp.x}" y="${pp.y}" width="${pp.w}" height="${pp.h}" pointer-events="none"></rect></g>`;
+              }
+              return svg`<g class="hp-paperg">${paperRoomShapes(space.rooms).map((sh) =>
+                'poly' in sh
+                  ? svg`<polygon class="hp-paper" points="${sh.poly}" pointer-events="none"></polygon>`
+                  : svg`<rect class="hp-paper" x="${sh.rect.x}" y="${sh.rect.y}" width="${sh.rect.w}" height="${sh.rect.h}" rx="${sh.rect.rx}" pointer-events="none"></rect>`,
+              )}</g>`;
+            })()}
             ${this._editing ? this._renderMarkupDefs(vb) : nothing}
             ${this._editing && !this._markup
               ? svg`<rect x="${vb[0]}" y="${vb[1]}" width="${vb[2]}" height="${vb[3]}" fill="url(#hp-grid)" pointer-events="none"></rect>`
@@ -4909,8 +5264,10 @@ class HouseplanCard extends LitElement {
               });
             })()}
             ${disp.fill === 'glow' && !this._markup ? this._renderGlowLayer(space) : nothing}
+            ${this._renderSunRays(space)}
             ${this._renderOpenWalls(disp)}
             ${this._editing ? this._renderAlignGuides() : nothing}
+            ${this._opMeasure?.guide ? this._renderOpeningCenterTick() : nothing}
             ${this._markup ? this._renderMarkupLayer(vb) : nothing}
             ${this._renderOpenings(disp)}
             ${this._markup && this._tool === 'resize' ? this._renderResizeLayer(view) : nothing}
@@ -4931,6 +5288,11 @@ class HouseplanCard extends LitElement {
           ${this._rszLive
             ? html`<div class="measurelayer">${this._rszLive.map((l) => html`<div
                 class="measurelabel ${l.area ? 'rszarea' : ''}"
+                style="left:${(((l.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((l.y - view.y) / view.h) * 100).toFixed(2)}%">${l.text}</div>`)}</div>`
+            : nothing}
+          ${this._opMeasure
+            ? html`<div class="measurelayer">${this._opMeasure.labels.map((l) => html`<div
+                class="measurelabel opshoulder"
                 style="left:${(((l.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((l.y - view.y) / view.h) * 100).toFixed(2)}%">${l.text}</div>`)}</div>`
             : nothing}
           </div>
@@ -5169,8 +5531,7 @@ class HouseplanCard extends LitElement {
             <button class="btn ghostbtn" @click=${() => this._vacStartFit(dev)}>${this._t('vac.fit')}</button>
           </div>
           <label class="srcrow">
-            <input type="checkbox" .checked=${v.live !== false}
-              @change=${(e: Event) => setVac({ live: (e.target as HTMLInputElement).checked ? null : false })} />
+            ${this._boolInput(v.live !== false, (on) => setVac({ live: on ? null : false }))}
             <span>${this._t('vac.live')}</span>
           </label>
           <label>${this._t('vac.trail')}</label>
@@ -5619,7 +5980,7 @@ class HouseplanCard extends LitElement {
     return r.area ? this._climate().get(r.area)?.hum ?? null : null;
   }
 
-  private _climateCache: { h: any; r: any; m: Map<string, AreaClimate> } | null = null;
+  private _climateCache: { h: any; r: any; mk: any; m: Map<string, AreaClimate> } | null = null;
 
   /**
    * Climate for every area, computed ONCE per hass snapshot (review R2-3).
@@ -5629,10 +5990,13 @@ class HouseplanCard extends LitElement {
    * triggering one each (two, with humidity on).
    */
   private _climate(): Map<string, AreaClimate> {
+    // markers are part of the key: ticking "use the device's temperature
+    // sensor" replaces the markers array, so the average recomputes at once
+    const mk = this._serverCfg?.markers;
     const c = this._climateCache;
-    if (c && c.h === this.hass && c.r === this._iconRules) return c.m;
-    const m = areaClimateMap(this.hass, this._iconRules);
-    this._climateCache = { h: this.hass, r: this._iconRules, m };
+    if (c && c.h === this.hass && c.r === this._iconRules && c.mk === mk) return c.m;
+    const m = areaClimateMap(this.hass, this._iconRules, mk);
+    this._climateCache = { h: this.hass, r: this._iconRules, mk, m };
     return m;
   }
 
@@ -6053,6 +6417,18 @@ class HouseplanCard extends LitElement {
     </g>` as unknown as TemplateResult;
   }
 
+  /** Perpendicular dashed tick through the wall's center while a dragged opening
+   * sits exactly in the middle — same look as the alignment guides. Length is
+   * about the wall stroke (2.5) × 6 to each side. */
+  private _renderOpeningCenterTick(): TemplateResult {
+    const gd = this._opMeasure!.guide!;
+    const rad = ((gd.angle + 90) * Math.PI) / 180;
+    const half = 2.5 * 6;
+    return svg`<line class="alignline opcentertick"
+      x1="${gd.x - Math.cos(rad) * half}" y1="${gd.y - Math.sin(rad) * half}"
+      x2="${gd.x + Math.cos(rad) * half}" y2="${gd.y + Math.sin(rad) * half}"></line>` as unknown as TemplateResult;
+  }
+
   private _roomCenter(r: RoomCfg): number[] {
     if (r.poly) {
       const n = r.poly.length;
@@ -6256,8 +6632,7 @@ class HouseplanCard extends LitElement {
           <label>${this._t('opening.contact_label')}</label>
           ${opt(this._contactCandidates(), d.contact, (v) => (this._openingDialog = { ...d, contact: v }))}
           ${d.contact
-            ? html`<label class="srcrow"><input type="checkbox" .checked=${d.invert}
-                @change=${(e: Event) => (this._openingDialog = { ...d, invert: (e.target as HTMLInputElement).checked })} />
+            ? html`<label class="srcrow">${this._boolInput(d.invert, (v) => (this._openingDialog = { ...d, invert: v }))}
                 <span>${this._t('opening.invert')}</span></label>`
             : nothing}
 
@@ -6266,11 +6641,9 @@ class HouseplanCard extends LitElement {
                 ${opt(this._lockCandidates(), d.lock, (v) => (this._openingDialog = { ...d, lock: v }))}`
             : nothing}
 
-          <label class="srcrow"><input type="checkbox" .checked=${d.flipH}
-            @change=${(e: Event) => (this._openingDialog = { ...d, flipH: (e.target as HTMLInputElement).checked })} />
+          <label class="srcrow">${this._boolInput(d.flipH, (v) => (this._openingDialog = { ...d, flipH: v }))}
             <span>${this._t('opening.flip_h')}</span></label>
-          <label class="srcrow"><input type="checkbox" .checked=${d.flipV}
-            @change=${(e: Event) => (this._openingDialog = { ...d, flipV: (e.target as HTMLInputElement).checked })} />
+          <label class="srcrow">${this._boolInput(d.flipV, (v) => (this._openingDialog = { ...d, flipV: v }))}
             <span>${this._t('opening.flip_v')}</span></label>
         </div>
         <div class="row">
@@ -6574,9 +6947,8 @@ class HouseplanCard extends LitElement {
                 <span>${this._t('marker.from_ha_option')}</span>
               </label>
               <label class="srcrow inline entcheck" title=${this._t('marker.show_entities_tip')}>
-                <input type="checkbox" .checked=${d.showEntities}
-                  ?disabled=${d.bindingMode !== 'ha'}
-                  @change=${(e: Event) => (this._markerDialog = { ...d, showEntities: (e.target as HTMLInputElement).checked })} />
+                ${this._boolInput(d.showEntities, (v) => (this._markerDialog = { ...d, showEntities: v }),
+                  d.bindingMode !== 'ha')}
                 <span>${this._t('marker.show_entities')}</span>
               </label>
             </div>
@@ -6656,8 +7028,7 @@ class HouseplanCard extends LitElement {
             : nothing}
           ${d.tapAction === 'run' || d.tapAction === 'toggle' || (!d.tapAction && d.defaultTap === 'toggle')
             ? html`<label class="srcrow" title=${this._t('marker.tap_confirm_tip')}>
-                <input type="checkbox" .checked=${d.tapConfirm}
-                  @change=${(e: Event) => (this._markerDialog = { ...d, tapConfirm: (e.target as HTMLInputElement).checked })} />
+                ${this._boolInput(d.tapConfirm, (v) => (this._markerDialog = { ...d, tapConfirm: v }))}
                 <span>${this._t('marker.tap_confirm')}</span>
               </label>`
             : nothing}
@@ -6695,14 +7066,18 @@ class HouseplanCard extends LitElement {
               </div>`
             : nothing}
 
+          ${this._bindingHasClimate(d.binding)
+            ? html`<label class="srcrow climrow" title=${this._t('marker.use_climate_temp_tip')}>
+                ${this._boolInput(d.useClimateTemp, (v) => (this._markerDialog = { ...d, useClimateTemp: v }))}
+                <span>${this._t('marker.use_climate_temp')}</span>
+              </label>`
+            : nothing}
           <label class="srcrow" title=${this._t('marker.is_light_tip')}>
-            <input type="checkbox" .checked=${d.isLight}
-              @change=${(e: Event) => (this._markerDialog = { ...d, isLight: (e.target as HTMLInputElement).checked })} />
+            ${this._boolInput(d.isLight, (v) => (this._markerDialog = { ...d, isLight: v }))}
             <span>${this._t('marker.is_light')}</span>
           </label>
           <label class="srcrow" title=${this._t('marker.hide_tip')}>
-            <input type="checkbox" .checked=${d.hideFromPlan}
-              @change=${(e: Event) => (this._markerDialog = { ...d, hideFromPlan: (e.target as HTMLInputElement).checked })} />
+            ${this._boolInput(d.hideFromPlan, (v) => (this._markerDialog = { ...d, hideFromPlan: v }))}
             <span>${this._t('marker.hide')}</span>
           </label>
           <label>${this._t('marker.glow_radius_label')}</label>
@@ -6742,20 +7117,17 @@ class HouseplanCard extends LitElement {
                 <input type="color" .value=${d.rippleColor || '#3ea6ff'}
                   @input=${(e: Event) => (this._markerDialog = { ...d, rippleColor: (e.target as HTMLInputElement).value })} />
                 <span class="opl">${this._t('marker.ripple_size')}</span>
-                <input type="range" min="2" max="8" step="0.5" .value=${String(d.rippleSize)}
-                  @input=${(e: Event) => (this._markerDialog = { ...d, rippleSize: Number((e.target as HTMLInputElement).value) })} />
+                ${this._rangeInput(2, 8, 0.5, d.rippleSize, (n) => (this._markerDialog = { ...d, rippleSize: n }))}
                 <span class="opv">×${d.rippleSize}</span>
               </div>`
             : nothing}
 
           <label>${this._t('marker.size_label')}</label>
           <div class="colorrow">
-            <input type="range" min="0.5" max="3" step="0.1" .value=${String(d.size)}
-              @input=${(e: Event) => (this._markerDialog = { ...d, size: Number((e.target as HTMLInputElement).value) })} />
+            ${this._rangeInput(0.5, 3, 0.1, d.size, (n) => (this._markerDialog = { ...d, size: n }))}
             <span class="opv">×${d.size.toFixed(1)}</span>
             <span class="opl">${this._t('marker.angle_label')}</span>
-            <input type="range" min="0" max="350" step="10" .value=${String(d.angle)}
-              @input=${(e: Event) => (this._markerDialog = { ...d, angle: Number((e.target as HTMLInputElement).value) })} />
+            ${this._rangeInput(0, 350, 10, d.angle, (n) => (this._markerDialog = { ...d, angle: n }))}
             <span class="opv">${d.angle}°</span>
           </div>
 
@@ -6866,33 +7238,28 @@ class HouseplanCard extends LitElement {
 
           <label class="dispsection">${this._t('space.display_section')}</label>
           <label class="srcrow">
-            <input type="checkbox" .checked=${d.showBorders}
-              @change=${(e: Event) => (this._spaceDialog = { ...d, showBorders: (e.target as HTMLInputElement).checked })} />
+            ${this._boolInput(d.showBorders, (v) => (this._spaceDialog = { ...d, showBorders: v }))}
             <span>${this._t('space.show_borders')}</span>
           </label>
           <label class="srcrow">
-            <input type="checkbox" .checked=${d.showNames}
-              @change=${(e: Event) => (this._spaceDialog = { ...d, showNames: (e.target as HTMLInputElement).checked })} />
+            ${this._boolInput(d.showNames, (v) => (this._spaceDialog = { ...d, showNames: v }))}
             <span>${this._t('space.show_names')}</span>
           </label>
           <label class="srcrow">
-            <input type="checkbox" .checked=${d.showLqi}
-              @change=${(e: Event) => (this._spaceDialog = { ...d, showLqi: (e.target as HTMLInputElement).checked })} />
+            ${this._boolInput(d.showLqi, (v) => (this._spaceDialog = { ...d, showLqi: v }))}
             <span>${this._t('space.show_lqi')}</span>
           </label>
           <label class="dispsection">${this._t('space.roomcard_section')}</label>
           ${([['labelTemp', 'space.label_temp'], ['labelHum', 'space.label_hum'],
               ['labelLqi', 'space.label_lqi'], ['labelLight', 'space.label_light']] as const).map(
             ([f, k]) => html`<label class="srcrow">
-              <input type="checkbox" .checked=${d[f]}
-                @change=${(e: Event) => (this._spaceDialog = { ...d, [f]: (e.target as HTMLInputElement).checked })} />
+              ${this._boolInput(d[f], (v) => (this._spaceDialog = { ...d, [f]: v }))}
               <span>${this._t(k)}</span>
             </label>`,
           )}
           <label>${this._t('space.card_font')}</label>
           <div class="colorrow gsrow">
-            <input type="range" min="50" max="300" step="5" .value=${String(Math.round(d.cardFontScale * 100))}
-              @input=${(e: Event) => (this._spaceDialog = { ...d, cardFontScale: Number((e.target as HTMLInputElement).value) / 100 })} />
+            ${this._rangeInput(50, 300, 5, Math.round(d.cardFontScale * 100), (n) => (this._spaceDialog = { ...d, cardFontScale: n / 100 }))}
             <span class="opv">${Math.round(d.cardFontScale * 100)}%</span>
           </div>
           ${this._renderCardPreview(d.cardFontScale, 1, 1)}
@@ -6901,19 +7268,56 @@ class HouseplanCard extends LitElement {
             <input type="color" .value=${d.roomColor}
               @input=${(e: Event) => (this._spaceDialog = { ...d, roomColor: (e.target as HTMLInputElement).value })} />
             <span class="opl">${this._t('space.opacity')}</span>
-            <input type="range" min="0" max="100" .value=${String(Math.round(d.roomOpacity * 100))}
-              @input=${(e: Event) => (this._spaceDialog = { ...d, roomOpacity: Number((e.target as HTMLInputElement).value) / 100 })} />
+            ${this._rangeInput(0, 100, 1, Math.round(d.roomOpacity * 100), (n) => (this._spaceDialog = { ...d, roomOpacity: n / 100 }))}
             <span class="opv">${Math.round(d.roomOpacity * 100)}%</span>
           </div>
-          <label>${this._t('space.bg_color')}</label>
+          <label>${this._t('space.bg_mode')}</label>
+          <select class="areasel"
+            @change=${(e: Event) => {
+              const v = (e.target as HTMLSelectElement).value;
+              this._spaceDialog = { ...d, bgMode: v === 'static' || v === 'daynight' ? (v as any) : null };
+            }}>
+            <option value="" ?selected=${d.bgMode === null}>${this._t('space.sun_inherit')}</option>
+            <option value="static" ?selected=${d.bgMode === 'static'}>${this._t('gs.bg_static')}</option>
+            <option value="daynight" ?selected=${d.bgMode === 'daynight'}>${this._t('gs.bg_daynight')}</option>
+          </select>
+          ${(d.bgMode ?? bgModeOf(this._settings, {})) === 'static'
+            ? html`<label>${this._t('space.bg_color')}</label>
+              <div class="colorrow">
+                <input type="color" .value=${d.bgColor || stageBgOf(this._settings, { bgColor: null }) || this._stageBgHex()}
+                  @input=${(e: Event) => (this._spaceDialog = { ...d, bgColor: (e.target as HTMLInputElement).value })} />
+                ${d.bgColor
+                  ? html`<button class="btn ghost" @click=${() => (this._spaceDialog = { ...d, bgColor: null })}>
+                      ${this._t('space.bg_inherit')}</button>`
+                  : html`<span class="opl">${this._t('space.bg_inherited')}</span>`}
+              </div>`
+            : nothing}
+          <label>${this._t('space.north')}</label>
           <div class="colorrow">
-            <input type="color" .value=${d.bgColor || stageBgOf(this._settings, { bgColor: null }) || this._stageBgHex()}
-              @input=${(e: Event) => (this._spaceDialog = { ...d, bgColor: (e.target as HTMLInputElement).value })} />
-            ${d.bgColor
-              ? html`<button class="btn ghost" @click=${() => (this._spaceDialog = { ...d, bgColor: null })}>
-                  ${this._t('space.bg_inherit')}</button>`
-              : html`<span class="opl">${this._t('space.bg_inherited')}</span>`}
+            <input class="namein tempin" type="number" min="0" max="359" step="1"
+              placeholder=${this._t('space.sun_inherit')}
+              .value=${d.northDeg === null ? '' : String(d.northDeg)}
+              @input=${(e: Event) => {
+                const raw = (e.target as HTMLInputElement).value.trim();
+                const n = raw === '' ? null : Math.round(Number(raw));
+                this._spaceDialog = { ...d, northDeg: n !== null && Number.isFinite(n) ? Math.min(359, Math.max(0, n)) : null };
+              }} />
+            <span class="opl">${d.northDeg === null
+              ? this._t('space.north_inherited', {
+                  v: northDegOf(this._settings, {}) === null ? '—' : String(northDegOf(this._settings, {})) + '°',
+                })
+              : '°'}</span>
           </div>
+          <label>${this._t('space.sun_rays')}</label>
+          <select class="areasel"
+            @change=${(e: Event) => {
+              const v = (e.target as HTMLSelectElement).value;
+              this._spaceDialog = { ...d, sunRays: v === '' ? null : v === '1' };
+            }}>
+            <option value="" ?selected=${d.sunRays === null}>${this._t('space.sun_inherit')}</option>
+            <option value="1" ?selected=${d.sunRays === true}>${this._t('space.sun_on')}</option>
+            <option value="0" ?selected=${d.sunRays === false}>${this._t('space.sun_off')}</option>
+          </select>
           <label>${this._t('space.fill_label')}</label>
           ${SPACE_FILL_MODES.map((v) => [v, 'fill.' + v] as const).map(
             ([v, k]) => html`<label class="srcrow">
@@ -7099,14 +7503,12 @@ class HouseplanCard extends LitElement {
           <label class="dispsection">${this._t('room.sizes_section')}</label>
           <label>${this._t('room.name_scale')}</label>
           <div class="colorrow gsrow">
-            <input type="range" min="50" max="300" step="5" .value=${String(Math.round(this._roomNameScale * 100))}
-              @input=${(e: Event) => { this._roomNameScale = Number((e.target as HTMLInputElement).value) / 100; this.requestUpdate(); }} />
+            ${this._rangeInput(50, 300, 5, Math.round(this._roomNameScale * 100), (n) => { this._roomNameScale = n / 100; this.requestUpdate(); })}
             <span class="opv">${Math.round(this._roomNameScale * 100)}%</span>
           </div>
           <label>${this._t('room.label_scale')}</label>
           <div class="colorrow gsrow">
-            <input type="range" min="50" max="300" step="5" .value=${String(Math.round(this._roomLabelScale * 100))}
-              @input=${(e: Event) => { this._roomLabelScale = Number((e.target as HTMLInputElement).value) / 100; this.requestUpdate(); }} />
+            ${this._rangeInput(50, 300, 5, Math.round(this._roomLabelScale * 100), (n) => { this._roomLabelScale = n / 100; this.requestUpdate(); })}
             <span class="opv">${Math.round(this._roomLabelScale * 100)}%</span>
           </div>
           ${this._renderCardPreview(

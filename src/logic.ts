@@ -62,6 +62,30 @@ export function roomPoly(r: any): number[][] | null {
   return null;
 }
 
+/**
+ * Paper shapes for a hand-drawn plan (owner 2026-08-03): the opaque paper
+ * follows the ROOM CONTOURS, not their bounding box — an L-shaped house or a
+ * detached building must not grow a white rectangle around itself. One shape
+ * per room, in EXACTLY the geometry the room itself renders (same polygon
+ * points string, same rounded rect), so the paper never peeks past a wall;
+ * the union of the stack is the paper. Islands simply paint over their
+ * parent; open (virtual) boundaries do not affect the paper at all.
+ */
+export function paperRoomShapes(rooms: any[]): Array<
+  | { poly: string }
+  | { rect: { x: number; y: number; w: number; h: number; rx: number } }
+> {
+  const out: Array<{ poly: string } | { rect: { x: number; y: number; w: number; h: number; rx: number } }> = [];
+  for (const r of rooms || []) {
+    if (r?.poly?.length >= 3) {
+      out.push({ poly: r.poly.map((p: number[]) => p.join(',')).join(' ') });
+    } else if (r && r.x != null && r.y != null && r.w != null && r.h != null) {
+      out.push({ rect: { x: r.x, y: r.y, w: r.w, h: r.h, rx: Math.min(r.w, r.h) * 0.03 } });
+    }
+  }
+  return out;
+}
+
 export function roomEdges(rooms: any[]): number[][] {
   const out: number[][] = [];
   const seen = new Set<string>();
@@ -113,6 +137,76 @@ export function snapToWall(
     }
   }
   return best;
+}
+
+export interface OpeningShoulders {
+  /** Endpoints of the wall edge — the ONE room-polygon edge the opening sits on. */
+  wallA: number[];
+  wallB: number[];
+  /** Distance (render units) from each wall end to the NEAREST opening edge, >= 0. */
+  sideA: number;
+  sideB: number;
+  /** Midpoint of each shoulder — where a measure badge sits. */
+  midA: number[];
+  midB: number[];
+  /** Center of the wall edge. */
+  wallCenter: number[];
+  /** The opening's center coincides with the wall center (within tol). */
+  centered: boolean;
+}
+
+/**
+ * Shoulders of an opening being dragged along a wall: distances from the
+ * opening's edges to the ends of the wall it sits on, plus the "centered on the
+ * wall" flag (owner 2026-08-03: live ruler badges + a perpendicular dashed tick
+ * when the opening is exactly in the middle). The wall is ONE room-polygon
+ * edge — exactly the edge the opening is snapped to (owner 2026-08-03:
+ * «only the wall of one room», collinear edges of a NEIGHBOURING room are
+ * never merged in). Selection mirrors snapToWall: among the edges collinear
+ * with the opening's line, the one nearest to its center wins, first in
+ * roomEdges order on a tie — so the ruler always measures the same edge the
+ * drag snapped to. Works for angled walls too: everything is measured along
+ * the wall's direction. Returns null when the center does not lie on any wall.
+ */
+export function openingShoulders(
+  center: number[], angleDeg: number, lengthPx: number, rooms: any[], tol: number, eps = 1.0,
+): OpeningShoulders | null {
+  const rad = (angleDeg * Math.PI) / 180;
+  const dir = [Math.cos(rad), Math.sin(rad)];
+  // edges lying on the opening's wall line → pick the ONE nearest to the
+  // center along that line (t=0 at the center). Same tie-break as snapToWall:
+  // strictly-nearer wins, so on a tie (shared-boundary fragments, a junction
+  // vertex) the first edge in roomEdges order is used — the very edge the
+  // drag snapped to. NO merging of collinear runs across rooms.
+  let wall: [number, number] | null = null;
+  let bestD = eps;
+  for (const e of roomEdges(rooms)) {
+    const pts = [[e[0], e[1]], [e[2], e[3]]];
+    const off = (p: number[]) => Math.abs(dir[0] * (p[1] - center[1]) - dir[1] * (p[0] - center[0]));
+    if (off(pts[0]) > eps || off(pts[1]) > eps) continue; // not collinear with the wall line
+    const t0 = (pts[0][0] - center[0]) * dir[0] + (pts[0][1] - center[1]) * dir[1];
+    const t1 = (pts[1][0] - center[0]) * dir[0] + (pts[1][1] - center[1]) * dir[1];
+    const lo = Math.min(t0, t1), hi = Math.max(t0, t1);
+    const d = lo > 0 ? lo : hi < 0 ? -hi : 0; // distance from the center to the edge, along the line
+    if (d < bestD) { bestD = d; wall = [lo, hi]; }
+  }
+  if (!wall) return null; // center is not on any edge of this direction
+  const [tMin, tMax] = wall;
+  const half = lengthPx / 2;
+  const sideA = Math.max(0, -half - tMin);
+  const sideB = Math.max(0, tMax - half);
+  const at = (t: number) => [center[0] + dir[0] * t, center[1] + dir[1] * t];
+  const tMid = (tMin + tMax) / 2;
+  return {
+    wallA: at(tMin),
+    wallB: at(tMax),
+    sideA,
+    sideB,
+    midA: at((tMin - half) / 2),
+    midB: at((half + tMax) / 2),
+    wallCenter: at(tMid),
+    centered: Math.abs(tMid) <= tol,
+  };
 }
 
 /**

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildDevices, lightGroups, primaryEntity, lqiFor, tempFor, humFor, areaLights, areaTemp, areaHum, areaLightStats, sourceValue , areaClimate, areaClimateMap, litLightEntity, seedHiddenBindings } from '../test-build/devices.js';
+import { buildDevices, lightGroups, primaryEntity, lqiFor, tempFor, humFor, climateTempFor, areaLights, areaTemp, areaHum, areaLightStats, sourceValue , areaClimate, areaClimateMap, litLightEntity, seedHiddenBindings } from '../test-build/devices.js';
 import { compileIconRules, iconFor } from '../test-build/rules.js';
 
 /** Minimal fake hass around the pieces buildDevices reads. */
@@ -467,6 +467,65 @@ test('areaClimateMap: one registry pass for all areas (review R2-3)', () => {
   scans = 0;
   for (let a = 0; a < 60; a++) { areaClimate(hass, `area${a}`, 'temp'); areaClimate(hass, `area${a}`, 'hum'); }
   assert.equal(scans, 120, 'wrapper считает по одной зоне — им нельзя пользоваться в рендере');
+});
+
+test('climateTempFor: первая climate-сущность с валидной current_temperature', () => {
+  const h = {
+    states: {
+      'climate.dead': { state: 'unavailable', attributes: {} },
+      'climate.mute': { state: 'heat', attributes: {} }, // атрибута нет — мимо
+      'climate.ac': { state: 'cool', attributes: { current_temperature: 23.46 } },
+      'climate.second': { state: 'heat', attributes: { current_temperature: 30 } },
+      'sensor.t': { state: '21', attributes: { device_class: 'temperature' } },
+    },
+  };
+  // несколько climate — берётся ПЕРВАЯ с валидным значением, с округлением до 0.1
+  assert.equal(climateTempFor(h, ['climate.dead', 'climate.mute', 'climate.ac', 'climate.second']), 23.5);
+  // не-climate сущности не участвуют вовсе
+  assert.equal(climateTempFor(h, ['sensor.t']), null);
+  // unavailable/unknown/без атрибута — null: ни плашки, ни голоса в средней
+  assert.equal(climateTempFor(h, ['climate.dead']), null);
+  assert.equal(climateTempFor(h, ['climate.mute']), null);
+});
+
+test('areaClimateMap: климат с опцией участвует в средней (термометр 20 + кондиционер 23.5)', () => {
+  const hass = {
+    devices: {
+      dt: { id: 'dt', name: 'Датчик температуры', area_id: 'living' },
+      dac: { id: 'dac', name: 'Кондиционер', model: 'AC-12', area_id: 'living' },
+    },
+    entities: {
+      'sensor.t': { device_id: 'dt', platform: 'mqtt' },
+      'climate.ac': { device_id: 'dac', platform: 'demo' },
+    },
+    states: {
+      'sensor.t': { state: '20', attributes: { device_class: 'temperature', unit_of_measurement: '°C' } },
+      'climate.ac': { state: 'cool', attributes: { current_temperature: 23.5 } },
+    },
+  };
+  // без опции — как раньше: только термометр
+  assert.equal(areaClimateMap(hass).get('living').temp, 20);
+  assert.equal(areaClimateMap(hass, undefined, [{ id: 'm1', binding: 'device:dac' }]).get('living').temp, 20);
+  // опция включена: (20 + 23.5) / 2 = 21.75 → 21.8 по сетке карточки (0.1°)
+  const markers = [{ id: 'm1', binding: 'device:dac', use_climate_temp: true }];
+  assert.equal(areaClimateMap(hass, undefined, markers).get('living').temp, 21.8);
+  // entity-привязка работает так же
+  const entMarkers = [{ id: 'm1', binding: 'entity:climate.ac', use_climate_temp: true }];
+  assert.equal(areaClimateMap(hass, undefined, entMarkers).get('living').temp, 21.8);
+  // unavailable климат не ломает и не участвует
+  const broken = { ...hass, states: { ...hass.states, 'climate.ac': { state: 'unavailable', attributes: {} } } };
+  assert.equal(areaClimateMap(broken, undefined, markers).get('living').temp, 20);
+});
+
+test('areaClimateMap: комната только с климат-источником появляется в карте', () => {
+  const hass = {
+    devices: { dac: { id: 'dac', name: 'Кондиционер', area_id: 'bed' } },
+    entities: { 'climate.bed': { device_id: 'dac', platform: 'demo' } },
+    states: { 'climate.bed': { state: 'heat', attributes: { current_temperature: 24.2 } } },
+  };
+  assert.equal(areaClimateMap(hass).get('bed'), undefined);
+  const markers = [{ id: 'm1', binding: 'device:dac', use_climate_temp: true }];
+  assert.deepEqual(areaClimateMap(hass, undefined, markers).get('bed'), { temp: 24.2, hum: null });
 });
 
 test('areaClimateMap: температура и влажность живут в одной записи', () => {

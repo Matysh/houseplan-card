@@ -32,7 +32,7 @@ checkAll(res, {
   "cold": ["#4fc3f7", "transparent", "transparent", "transparent"],
   "hot": ["#ffd45c", "transparent", "transparent", "transparent"],
   "swapped": ["#66d17a", "transparent", "transparent", "transparent"],
-  "dialogTempFields": 3,
-  "dialogHiddenWhenNone": 1,
+  "dialogTempFields": 4, // масштаб + мин/макс + компас пространства (docs/SUN.md)
+  "dialogHiddenWhenNone": 2, // мин/макс скрыты; масштаб и компас остаются
 });
 await finish(browser, res);

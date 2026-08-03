@@ -115,6 +115,15 @@ def test_marker_schema():
         v.MARKER_SCHEMA({"binding": "virtual"})
 
 
+def test_marker_use_climate_temp_is_bool_or_none():
+    # opt-in room-temperature from climate devices (owner's feature 2026-08-03)
+    v.MARKER_SCHEMA({"id": "m1", "binding": "device:abc", "use_climate_temp": True})
+    v.MARKER_SCHEMA({"id": "m1", "binding": "device:abc", "use_climate_temp": False})
+    v.MARKER_SCHEMA({"id": "m1", "binding": "device:abc", "use_climate_temp": None})
+    with pytest.raises(vol.Invalid):
+        v.MARKER_SCHEMA({"id": "m1", "binding": "device:abc", "use_climate_temp": "yes"})
+
+
 def test_config_schema_defaults_and_extra():
     out = v.CONFIG_SCHEMA({"spaces": []})
     assert out["markers"] == [] and out["settings"] == {}
@@ -180,6 +189,38 @@ def test_bg_color_setting():
         v.CONFIG_SCHEMA({"spaces": [], "settings": {"bg_color": "#12345"}})
     with pytest.raises(vol.Invalid):
         v.CONFIG_SCHEMA({"spaces": [], "settings": {"bg_color": "#1234567"}})
+
+
+def test_sun_settings_global():
+    """docs/SUN.md: north_deg strict int 0..359, bg_mode, sun_rays, weather_entity."""
+    v.CONFIG_SCHEMA({"spaces": [], "settings": {
+        "north_deg": 0, "bg_mode": "daynight", "sun_rays": True, "weather_entity": "weather.home",
+    }})
+    v.CONFIG_SCHEMA({"spaces": [], "settings": {"north_deg": 359, "bg_mode": "static"}})
+    v.CONFIG_SCHEMA({"spaces": [], "settings": {"weather_entity": None}})
+    for bad in (360, -1, 1.5, "90", True, None):
+        with pytest.raises(vol.Invalid):
+            v.CONFIG_SCHEMA({"spaces": [], "settings": {"north_deg": bad}})
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA({"spaces": [], "settings": {"bg_mode": "disco"}})
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA({"spaces": [], "settings": {"sun_rays": "yes"}})
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA({"spaces": [], "settings": {"weather_entity": {"e": 1}}})
+
+
+def test_sun_settings_per_space():
+    """The same three at the space level; None/absent = inherit; no weather here."""
+    ok = {"id": "f1", "title": "F", "view_box": [0, 0, 1, 1], "rooms": []}
+    v.SPACE_SCHEMA(dict(ok, settings={"north_deg": 90, "bg_mode": "daynight", "sun_rays": False}))
+    v.SPACE_SCHEMA(dict(ok, settings={"north_deg": None, "bg_mode": None, "sun_rays": None}))
+    for bad in (360, -1, 2.5, "0", True):
+        with pytest.raises(vol.Invalid):
+            v.SPACE_SCHEMA(dict(ok, settings={"north_deg": bad}))
+    with pytest.raises(vol.Invalid):
+        v.SPACE_SCHEMA(dict(ok, settings={"bg_mode": "auto"}))
+    with pytest.raises(vol.Invalid):
+        v.SPACE_SCHEMA(dict(ok, settings={"sun_rays": 1}))
 
 
 def test_space_temp_bounds():
