@@ -4458,7 +4458,12 @@ class HouseplanCard extends LitElement {
     const cloud = cloudFactor(weather ? this.hass?.states?.[weather]?.state : null);
     const alpha = rayAlpha(sun.elevation, cloud);
     if (alpha <= 0) return empty;
-    const key = `${space.id}|${sun.azimuth}|${sun.elevation}|${north}|${this._cfgRev}`;
+    // DEV-B701-01: the geometry signal must be _cfgEpoch, not _cfgRev.
+    // Every local mutation ends in _saveConfig(), which bumps the epoch
+    // SYNCHRONOUSLY; _cfgRev only moves after the debounced WS write is
+    // acked, so a rev-keyed memo served wedges for the OLD window position
+    // during the whole write window (and forever if the write failed).
+    const key = `${space.id}|${sun.azimuth}|${sun.elevation}|${north}|${this._cfgEpoch}`;
     if (!this._sunRaysCache || this._sunRaysCache.key !== key) {
       const rooms = space.rooms
         .map((r) => ({ id: r.id || '', poly: roomPoly(r) }))

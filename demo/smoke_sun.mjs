@@ -2,7 +2,7 @@
 // walls, direction follows north_deg, night is empty, wedges clip to rooms,
 // day/night background vs static, per-space inheritance, cloud fading,
 // memoisation across hass ticks, editors stay clean.
-import { launch, checkAll, finish } from './serve.mjs';
+import { launch, check, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch({ width: 900, height: 900 }, 1);
 const res = await page.evaluate(async () => {
   const out = {};
@@ -23,7 +23,11 @@ const res = await page.evaluate(async () => {
     await upd();
   };
   const cfg = () => c._serverCfg;
-  const touchCfg = () => { c._cfgRev = (c._cfgRev || 0) + 1; };
+  // DEV-B701-01: local mutations bump _cfgEpoch (what _saveConfig() does
+  // synchronously). The old helper bumped _cfgRev — a server ack that the
+  // production save path does NOT produce until the debounced write lands —
+  // and thereby masked the stale sun-ray cache.
+  const touchCfg = () => { c._cfgEpoch++; };
   const litIds = () => (c._sunRaysCache?.rays || []).map((r) => r.openingId).sort();
   const domPolys = () => [...sr().querySelectorAll('.sunlayer polygon')];
   const stageStyle = () => sr().querySelector('.stage').getAttribute('style') || '';
@@ -188,4 +192,102 @@ const dlg = await page.evaluate(() => {
   return out;
 });
 Object.assign(res, dlg);
+
+// 14) DEV-B701-01 regression: the PRODUCTION local-save path (no touchCfg, no
+// fake rev/epoch bump from the test) must move the wedge. A REAL pointer drag
+// of the east window ends in _opPointerUp -> _saveConfig(); the WS write is
+// debounced 500 ms, so at check time _cfgRev is still the boot revision — the
+// ray must follow the window anyway, and again after the late server ack.
+const settle = () => page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+const screenPt = (x, y) => page.evaluate(([x, y]) => {
+  const c = window.__card;
+  const stage = c.renderRoot.querySelector('.stage');
+  const r = stage.getBoundingClientRect();
+  const svgEl = stage.querySelector('svg');
+  const [vx, vy, vw, vh] = svgEl.getAttribute('viewBox').split(' ').map(Number);
+  return [r.left + ((x - vx) / vw) * r.width, r.top + ((y - vy) / vh) * r.height];
+}, [x, y]);
+const rayInfo = () => page.evaluate(() => {
+  const c = window.__card;
+  const rays = c._sunRaysCache?.rays || [];
+  const r = rays.find((q) => q.openingId === 'wE');
+  return {
+    ids: rays.map((q) => q.openingId).sort(),
+    midY: r ? (r.a[1] + r.b[1]) / 2 : NaN,
+    minX: r ? Math.min(...r.polys.flat().map((p) => p[0])) : NaN,
+    rev: c._cfgRev,
+    wEy: c._serverCfg.spaces.find((s) => s.id === 'f1').openings.find((o) => o.id === 'wE').y,
+  };
+});
+
+// baseline: morning east sun, only wE glows, window sits at y = 600
+await page.evaluate(async () => {
+  const c = window.__card;
+  c.hass = { ...c.hass, states: { ...c.hass.states, 'sun.sun': {
+    entity_id: 'sun.sun', state: 'above_horizon', attributes: { azimuth: 90, elevation: 5 },
+  } } };
+  c.requestUpdate(); await c.updateComplete;
+});
+const base = await rayInfo();
+check('b701_baseline_east_only', base.ids, ['wE']);
+check('b701_baseline_mid_600', Math.abs(base.midY - 600) < 1, true);
+
+// the real drag: enter the opening editor and pull wE down the east wall
+await page.evaluate(async () => {
+  const c = window.__card;
+  c._setMode('plan'); c._tool = 'opening';
+  c.requestUpdate(); await c.updateComplete;
+});
+await settle();
+const [dx, dy] = await screenPt(960, 600);
+const [, dty] = await screenPt(960, 700);
+await page.mouse.move(dx, dy);
+await page.mouse.down();
+await page.mouse.move(dx, dty, { steps: 6 });
+await page.mouse.up();
+await settle();
+
+// leave the editor IMMEDIATELY — well inside the 500 ms debounce window
+const after = await page.evaluate(async () => {
+  const c = window.__card;
+  c._setMode('view');
+  c.requestUpdate(); await c.updateComplete;
+  return true;
+});
+check('b701_left_editor', after);
+const moved = await rayInfo();
+check('b701_window_really_moved', Math.abs(moved.wEy * 1000 - 700) < 15, true);
+check('b701_rev_still_boot', moved.rev, base.rev); // the write has NOT landed yet
+check('b701_ray_follows_window', Math.abs(moved.midY - moved.wEy * 1000) < 1, true);
+check('b701_ray_not_stale', Math.abs(moved.midY - 600) > 50, true);
+
+// same defect class for ROOM geometry: r3 shrinks to a thin strip along its
+// east wall through the real mutation endpoint (_saveConfig, still no ack).
+// The wedge reaches ~188 units into the room (minX ~772), so the new west
+// boundary at x = 900 MUST cut it — a stale clip keeps points near x = 772.
+const clipped = await page.evaluate(async () => {
+  const c = window.__card;
+  const sp = c._serverCfg.spaces.find((s) => s.id === 'f1');
+  sp.rooms.find((r) => r.id === 'r3').poly = [[0.90, 0.46], [0.96, 0.46], [0.96, 0.86], [0.90, 0.86]];
+  c._saveConfig(); // the one true local-save entry point
+  c.requestUpdate(); await c.updateComplete;
+  return true;
+});
+check('b701_room_mutated', clipped);
+const reclipped = await rayInfo();
+check('b701_room_rev_still_boot', reclipped.rev, base.rev);
+check('b701_room_reclips_ray', reclipped.minX >= 900 - 1, true);
+
+// let the debounced write land: the ray must survive the late server ack
+await page.waitForTimeout(800);
+const acked = await page.evaluate(async () => {
+  const c = window.__card;
+  c.requestUpdate(); await c.updateComplete;
+  return true;
+});
+check('b701_acked', acked);
+const final = await rayInfo();
+check('b701_write_landed', final.rev !== base.rev, true);
+check('b701_ray_survives_ack', Math.abs(final.midY - final.wEy * 1000) < 1, true);
+
 await finish(browser, checkAll(res));
