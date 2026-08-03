@@ -122,11 +122,12 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       since v1.43.1, so a tap is never swallowed [auto: smoke_inert_openings]
 - [ ] Opening drag rulers (2026-08-03): while an opening is dragged, a measure
       badge on EACH shoulder shows the along-the-wall distance from the wall end
-      (collinear touching edges count as one wall) to the nearest opening edge,
-      live; at the wall's center (±half a grid step) a perpendicular dashed tick
-      appears and the center magnet-snaps — Shift disables the magnet; badges
-      and tick vanish on release [auto: smoke_opening_measure + unit
-      openingShoulders]
+      to the nearest opening edge, live; the wall is ONE room's edge — the edge
+      the opening is snapped to — so a neighbouring room's collinear edge is
+      never merged in; at that edge's center (±half a grid step) a
+      perpendicular dashed tick appears and the center magnet-snaps — Shift
+      disables the magnet; badges and tick vanish on release
+      [auto: smoke_opening_measure + unit openingShoulders]
 
 ## Onboarding ★
 

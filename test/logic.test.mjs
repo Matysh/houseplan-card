@@ -1015,26 +1015,60 @@ test('openingShoulders: centered flag obeys the tolerance', () => {
   assert.equal(openingShoulders([298, 140], 0, 80, rooms, 2).centered, false, 'outside tol');
 });
 
-test('openingShoulders: collinear touching edges merge into one physical wall', () => {
-  // two rooms side by side: the top edges 40..550 and 550..960 are ONE wall
+test('openingShoulders: only the OWN room edge counts, no merging with a neighbour', () => {
+  // two rooms side by side: the top edges 40..550 (r1) and 550..960 (r2) are
+  // collinear and touch at x=550, but they belong to DIFFERENT rooms — the
+  // ruler measures ONLY the edge the opening sits on (owner 2026-08-03:
+  // «only the wall of one room»)
   const rooms = [
     { id: 'r1', poly: [[40, 140], [550, 140], [550, 580], [40, 580]] },
     { id: 'r2', poly: [[550, 140], [960, 140], [960, 580], [550, 580]] },
   ];
   const sh = openingShoulders([200, 140], 0, 80, rooms, 2);
   assert.deepEqual(sh.wallA, [40, 140]);
-  assert.deepEqual(sh.wallB, [960, 140], 'run extends across the room boundary');
-  assert.equal(sh.sideB, 960 - 240);
-  // the middle of the MERGED run: (40+960)/2 = 500
-  assert.equal(openingShoulders([500, 140], 0, 80, rooms, 2).centered, true);
-  assert.equal(openingShoulders([295, 140], 0, 80, rooms, 2).centered, false,
-    'the center of a fragment is not the center of the wall');
-  // the interior shared wall x=550 (vertical, angle 90) is its own run
+  assert.deepEqual(sh.wallB, [550, 140], 'stops at the own corner, never runs into r2');
+  assert.equal(sh.sideB, 550 - 240);
+  // the middle of r1's OWN edge: (40+550)/2 = 295
+  assert.equal(openingShoulders([295, 140], 0, 80, rooms, 2).centered, true,
+    'centered on the own edge');
+  assert.equal(openingShoulders([500, 140], 0, 80, rooms, 2).centered, false,
+    'the center of the old merged run means nothing now');
+  // an opening on r2's fragment measures r2's edge
+  const far = openingShoulders([700, 140], 0, 80, rooms, 2);
+  assert.deepEqual(far.wallA, [550, 140]);
+  assert.deepEqual(far.wallB, [960, 140]);
+  assert.equal(openingShoulders([755, 140], 0, 80, rooms, 2).centered, true);
+  // the interior shared wall x=550 is ONE deduped edge shared by both rooms
   const v = openingShoulders([550, 300], 90, 80, rooms, 2);
   assert.deepEqual(v.wallA, [550, 140]);
   assert.deepEqual(v.wallB, [550, 580]);
   assert.equal(v.centered, false);
   assert.equal(openingShoulders([550, 360], 90, 80, rooms, 2).centered, true);
+});
+
+test('openingShoulders: shared wall of two rooms uses the snapped room edge', () => {
+  // staggered fragments on the shared line x=550: r1's right edge 140..400,
+  // r2's left edge 300..580. The snap tie-break (nearest edge, first in
+  // roomEdges order on a tie — exactly what snapToWall picks during the
+  // drag) resolves to r1's edge, so shoulders and center come from 140..400,
+  // never from the merged 140..580 union
+  const rooms = [
+    { id: 'r1', poly: [[40, 140], [550, 140], [550, 400], [40, 400]] },
+    { id: 'r2', poly: [[550, 300], [960, 300], [960, 580], [550, 580]] },
+  ];
+  const sh = openingShoulders([550, 350], 90, 80, rooms, 2);
+  assert.deepEqual(sh.wallA, [550, 140]);
+  assert.deepEqual(sh.wallB, [550, 400], "r1's own end, not r2's 580");
+  assert.equal(sh.sideA, 310 - 140);
+  assert.equal(sh.sideB, 400 - 390);
+  assert.deepEqual(sh.wallCenter, [550, 270]);
+  assert.equal(sh.centered, false);
+  // below r1's edge the same line belongs to r2 alone
+  const low = openingShoulders([550, 500], 90, 80, rooms, 2);
+  assert.deepEqual(low.wallA, [550, 300]);
+  assert.deepEqual(low.wallB, [550, 580]);
+  assert.equal(openingShoulders([550, 440], 90, 80, rooms, 2).centered, true,
+    'centered on r2 own edge (300+580)/2');
 });
 
 test('openingShoulders: angled wall measures along the wall direction', () => {
