@@ -5071,15 +5071,18 @@ class HouseplanCard extends LitElement {
               // L-shaped house — the scene bg reaches the exterior walls).
               // `space` comes from _renderCfg, so a live resize preview
               // (_rszPreview) moves the paper together with the rooms.
+              // One <g> around ALL paper shapes: the daynight drop shadow
+              // (styles.ts) is composited once for the whole sheet, so
+              // adjacent rooms never cast seams onto each other's paper.
               if (space.bg) {
                 const pp = this._paperRect(space)!;
-                return svg`<rect class="hp-paper" x="${pp.x}" y="${pp.y}" width="${pp.w}" height="${pp.h}" pointer-events="none"></rect>`;
+                return svg`<g class="hp-paperg"><rect class="hp-paper" x="${pp.x}" y="${pp.y}" width="${pp.w}" height="${pp.h}" pointer-events="none"></rect></g>`;
               }
-              return paperRoomShapes(space.rooms).map((sh) =>
+              return svg`<g class="hp-paperg">${paperRoomShapes(space.rooms).map((sh) =>
                 'poly' in sh
                   ? svg`<polygon class="hp-paper" points="${sh.poly}" pointer-events="none"></polygon>`
                   : svg`<rect class="hp-paper" x="${sh.rect.x}" y="${sh.rect.y}" width="${sh.rect.w}" height="${sh.rect.h}" rx="${sh.rect.rx}" pointer-events="none"></rect>`,
-              );
+              )}</g>`;
             })()}
             ${this._editing ? this._renderMarkupDefs(vb) : nothing}
             ${this._editing && !this._markup

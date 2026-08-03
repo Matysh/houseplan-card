@@ -231,9 +231,11 @@ const drawn = await page.evaluate(async () => {
     const cs = getComputedStyle(p);
     return cs.stroke === 'none' || cs.strokeOpacity === '0' || cs.strokeWidth === '0px';
   });
-  // paper first, everything else on top of it
+  // paper first, everything else on top of it (one .hp-paperg group wraps
+  // all paper shapes so the daynight drop shadow composites without seams)
   const first = sr().querySelector('.stage.noplan svg').firstElementChild;
-  out.paperUnderneath = !!first && first.classList.contains('hp-paper');
+  out.paperUnderneath = !!first && first.classList.contains('hp-paperg')
+    && !!first.firstElementChild && first.firstElementChild.classList.contains('hp-paper');
   // live resize preview: drag the L's right wall 0.625 -> 0.6875 — the paper
   // must move WITH the room, not lag behind until the drop
   const pv = JSON.parse(JSON.stringify(sp));

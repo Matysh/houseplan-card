@@ -90,11 +90,11 @@ const res = await page.evaluate(async () => {
 
   // 8) day/night background: daynight breathes, static does not
   await setSun(180, 60);
-  out.staticBgAtNoon = !stageStyle().includes('background:#5a6673');
+  out.staticBgAtNoon = !stageStyle().includes('background:#ffffff');
   cfg().settings.bg_mode = 'daynight';
   touchCfg();
   await setSun(180, 60);
-  out.daynightNoonBg = stageStyle().includes('background:#5a6673');
+  out.daynightNoonBg = stageStyle().includes('background:#ffffff');
   out.daynightClass = !!sr().querySelector('.stage.daynight');
   await setSun(180, -20);
   out.daynightNightBg = stageStyle().includes('background:#070c14');

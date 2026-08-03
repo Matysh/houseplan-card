@@ -50,12 +50,12 @@ test('sunDirOnPlan: compass points map to canvas vectors (y grows down)', () => 
   assert.ok(near(d[0], 0, 1e-12) && near(d[1], -1, 1e-12));
 });
 
-test('dayPhase: night is dark and dim, noon is neutral, sunrise is warm', () => {
+test('dayPhase: night is dark and dim, noon is white, sunrise is warm', () => {
   const night = dayPhase(-20);
   const dawn = dayPhase(2);
   const noon = dayPhase(60);
   assert.equal(night.bg, '#070c14');
-  assert.equal(noon.bg, '#5a6673');
+  assert.equal(noon.bg, '#ffffff');
   assert.notEqual(dawn.bg, night.bg);
   assert.notEqual(dawn.bg, noon.bg);
   assert.ok(near(night.planDim, 0.1));

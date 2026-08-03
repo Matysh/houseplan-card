@@ -49,9 +49,9 @@ const BG_STOPS: [number, string][] = [
   [-12, '#070c14'],
   [-4, '#131a28'],  // dusk cools down
   [0, '#4a3527'],   // warm band right at the horizon
-  [10, '#46505f'],  // golden hour fades into neutral
-  [30, '#5a6673'],  // plain day
-  [90, '#5a6673'],
+  [10, '#e8ddcf'],  // morning light — warm and bright on the way to white
+  [30, '#ffffff'],  // plain day: the brightest moment is white (owner 2026-08-03)
+  [90, '#ffffff'],
 ];
 
 const clamp01 = (t: number) => Math.min(1, Math.max(0, t));

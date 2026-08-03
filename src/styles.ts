@@ -328,6 +328,14 @@ export const cardStyles = css`
     .stage.noplan .hp-paper {
       fill: #ffffff;
     }
+    /* White day (owner 2026-08-03): at high sun the daynight sky is #ffffff —
+       the same white as a drawn plan's paper. A whisper of a drop shadow on
+       the paper GROUP keeps the sheet's contour readable on the white sky
+       (user units on the 1000-unit canvas ≈ a few screen px). Invisible at
+       night against the dark sky; 'static' mode never gets it. */
+    .stage.daynight .hp-paperg {
+      filter: drop-shadow(0 2px 8px rgba(10, 16, 26, 0.28));
+    }
     .room {
       transition: 0.12s;
       cursor: default; /* v1.40.1: rooms are not clickable — the label's link icon is */

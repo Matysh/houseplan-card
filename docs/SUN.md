@@ -50,8 +50,19 @@ only — no entities are created, no services are called.
 - `'static'` — the existing `bg_color` behaviour, color picker and
   all. Nothing changes for existing installs.
 - `'daynight'` — the stage background follows the sun's elevation:
-  neutral by day, a warm shift in the golden hour (elevation below
-  ~10°), cooling through dusk, deep darkening at night. The PLAN
+  WHITE at full day (the brightest moment of the day is white — owner,
+  2026-08-03), a warm bright shift in the golden hour (elevation below
+  ~10°), cooling through dusk, deep darkening at night. The scale
+  (piecewise-linear between stops, `BG_STOPS` in `src/sun.ts`):
+
+  | elevation | color | phase |
+  | --- | --- | --- |
+  | −90°…−12° | `#070c14` | deep night |
+  | −4° | `#131a28` | dusk cools down |
+  | 0° | `#4a3527` | warm band right at the horizon |
+  | +10° | `#e8ddcf` | morning light — warm and bright |
+  | +30°…+90° | `#ffffff` | plain day, white |
+ The PLAN
   itself dims only ~10% at night (`filter: brightness(.9)`), so the
   daytime room fills stay readable. Transitions are a CSS
   background/filter transition tens of seconds long;
