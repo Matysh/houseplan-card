@@ -245,7 +245,7 @@ test('spaceDisplayOf: defaults differ for spaces with and without a plan', () =>
   assert.equal(s.opacity, 1);
   assert.equal(s.fill, 'lqi');
   const g = spaceDisplayOf({ settings: { room_color: 'javascript:alert(1)', fill_mode: 'weird' } });
-  assert.equal(g.color, '#3ea6ff');
+  assert.equal(g.color, '#55606c'); // dark-grey default since 2026-08-03
   assert.equal(g.fill, 'none');
 });
 

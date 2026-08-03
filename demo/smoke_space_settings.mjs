@@ -58,6 +58,6 @@ checkAll(res, {
   "atticSquare": true,
   // fill_mode 'glow' — the default for NEW spaces since v1.54 (owner call).
   // Existing spaces with an absent fill_mode still resolve to 'none'.
-  "atticSettings": {"show_borders": true, "show_names": true, "room_color": "#3ea6ff", "room_opacity": 0.55, "fill_mode": "glow", "temp_min": 20, "temp_max": 25, "show_lqi": true, "label_temp": false, "label_hum": false, "label_lqi": false, "label_light": false},
+  "atticSettings": {"show_borders": true, "show_names": true, "room_color": "#55606c", "room_opacity": 0.55, "fill_mode": "glow", "temp_min": 20, "temp_max": 25, "show_lqi": true, "label_temp": false, "label_hum": false, "label_lqi": false, "label_light": false},
 });
 await finish(browser, res);

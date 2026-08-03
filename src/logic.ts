@@ -837,7 +837,13 @@ export interface SpaceDisplay {
   bgColor: string | null;
 }
 
-export const DEFAULT_ROOM_COLOR = '#3ea6ff';
+// Default for borders + room names when room_color is absent. Dark slate
+// grey since 2026-08-03 (owner call, was the accent '#3ea6ff'): reads on
+// the white paper of drawn plans and on the glow-dark theme alike.
+// CHANGELOG draft: "Default room border/name colour is now dark grey
+// (#55606c). Spaces with an explicitly chosen room_color keep it; only
+// spaces that never touched the colour pick up the new default."
+export const DEFAULT_ROOM_COLOR = '#55606c';
 export const DEFAULT_ROOM_OPACITY = 0.55;
 export const DEFAULT_TEMP_MIN = 20;
 export const DEFAULT_TEMP_MAX = 25;
