@@ -14,7 +14,7 @@ import { t, type Lang } from './i18n';
 import { bgModeOf, northDegOf, sunStateOf, dayPhase } from './sun';
 import type { ServerConfig } from './types';
 import {
-  spaceModels, roomCenter, defaultPositions, markerPos, labelPos, spaceFrame, NORM_W,
+  spaceModels, roomCenter, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, NORM_W,
   type Layout, type ContentItem,
 } from './space-geometry';
 
@@ -198,7 +198,13 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
           : nothing}
         ${roomShapes}
       </svg>
-      <div class="devlayer" style="--icon-size:${iconPct}cqw">${markers}${labels}</div>
+      ${''/* docs/CANVAS.md §6: the same expression as the full card. The
+             static card has no zoom, but its frame is the CONTENT now, so a
+             bare `iconPct` would make markers shrink relative to the plan the
+             tighter the frame got. `iconCqw` keeps the marker's footprint at
+             iconPct% of the plan's base unit, which is what it was when the
+             frame was the stored view_box. */}
+      <div class="devlayer" style="--icon-size:${iconCqw(iconPct, space, vb[2]).toFixed(3)}cqw">${markers}${labels}</div>
     </div>
   `;
 }

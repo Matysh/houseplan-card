@@ -1,7 +1,7 @@
 // Infinite canvas (docs/CANVAS.md): a plan drawn far past the old unit square
 // renders whole, devices can be placed and saved out there, the opening view
 // follows the content, one far stray neither breaks the view nor hides itself,
-// zoom-out stops at 3x the content and icons keep their pixel size.
+// zoom-out stops at 3x the content and the icons keep their proportion to it.
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { launch, check, checkAll, finish } from './serve.mjs';
@@ -223,15 +223,25 @@ Object.assign(out, await page.evaluate(async () => {
   return o;
 }));
 
-// ---- icons keep their PIXEL size across zooms (docs/CANVAS.md §6) --------
-out.iconSizeIsViewportRelative = await page.evaluate(async () => {
+// ---- icons scale WITH THE PLAN across zooms (docs/CANVAS.md §6) ----------
+// The infinite canvas briefly made --icon-size a percentage of the viewport,
+// so a marker kept its pixel size at every zoom. The owner looked at it and
+// asked for the original contract back (2026-08-03): an icon is a percentage
+// of the PLAN, it grows when you zoom in and shrinks when you zoom out, like
+// everything else drawn on the plan. What the infinite canvas contributes is
+// only the base unit the percentage is taken OF: `iconUnit` instead of the
+// stored `vb.w`, checked right below on this very plan — which is drawn
+// entirely outside the old square.
+const farIcon = await page.evaluate(async () => {
   const c = window.__card;
   const sr = c.shadowRoot || c.renderRoot;
+  // the badge is --dev-size PLUS a 1px border on each side, and the border
+  // is not part of the scaled geometry (same correction as smoke_icon_scale)
   const size = () => {
     const el = sr.querySelector('.devlayer .dev');
-    const r = el.getBoundingClientRect();
-    return Math.round(r.width * 10) / 10;
+    return Math.round((el.getBoundingClientRect().width - 2) * 100) / 100;
   };
+  const o = {};
   c._resetZoom(); await c.updateComplete;
   const at1 = size();
   c._applyView(4); await c.updateComplete;
@@ -239,8 +249,12 @@ out.iconSizeIsViewportRelative = await page.evaluate(async () => {
   c._applyView(1 / 3); await c.updateComplete;
   const atOut = size();
   c._resetZoom(); await c.updateComplete;
-  return at1 > 4 && Math.abs(at4 - at1) <= 1 && Math.abs(atOut - at1) <= 1;
+  o.iconGrowsWithZoomIn = at1 > 4 && Math.abs(at4 / at1 - 4) < 0.05;
+  o.iconShrinksWithZoomOut = Math.abs(atOut / at1 - 1 / 3) < 0.02;
+  if (!o.iconGrowsWithZoomIn || !o.iconShrinksWithZoomOut) console.log('icon px', at1, at4, atOut);
+  return { o, at1 };
 });
+Object.assign(out, farIcon.o);
 
 // ---- an OLD plan (small, with a view_box) opens exactly as before ---------
 Object.assign(out, await page.evaluate(async () => {
@@ -277,6 +291,35 @@ Object.assign(out, await page.evaluate(async () => {
   o.emptySpaceUsesViewBoxHint = JSON.stringify(e.map(Math.round)) === '[100,200,500,400]';
   return o;
 }));
+
+// ---- and the icon does not DEGENERATE on the runaway plan ----------------
+// The catch of "a percentage of the plan" on an unbounded canvas: keep the
+// old fixed numerator (vb.w = NORM_W) and a plan drawn 2.3 canvases wide
+// divides it by a 2.5-canvas-wide frame — the marker shrinks by that factor
+// and keeps shrinking the further out the plan is drawn. `iconUnit` grows
+// with the plan, so the marker on the far plan measured above is the same
+// number of pixels as on this ordinary 0..1 one.
+out.farIconNotDegenerate = await page.evaluate(async (farPx) => {
+  const c = window.__card;
+  const sr = c.shadowRoot || c.renderRoot;
+  // the small plan from the block above, with its devices back
+  c._serverCfg = { spaces: [{ id: 'f1', title: 'Old', view_box: [0, 0, 1, 1], plan_url: null, plan_aspect: null,
+    rooms: [{ id: 'r1', name: 'Living', area: 'living_room',
+      poly: [[0.04, 0.14], [0.55, 0.14], [0.55, 0.58], [0.04, 0.58]] },
+    { id: 'r2', name: 'Kitchen', area: 'kitchen',
+      poly: [[0.55, 0.14], [0.96, 0.14], [0.96, 0.46], [0.55, 0.46]] }] }],
+    markers: [], settings: {} };
+  c._layout = { d_light1: { s: 'f1', x: 0.22, y: 0.22 } };
+  c._modelCache = null; c._frame = null; c._showFar = false; c._view = null;
+  c._maybeRebuildDevices?.();
+  c._defPos = c._defaultPositions();
+  c.requestUpdate(); await c.updateComplete;
+  c._resetZoom(); await c.updateComplete;
+  const el = sr.querySelector('.devlayer .dev');
+  const px = el.getBoundingClientRect().width - 2;
+  if (!(px > 4 && Math.abs(px / farPx - 1) < 0.3)) console.log('icon px near/far', px, farPx);
+  return px > 4 && Math.abs(px / farPx - 1) < 0.3;
+}, farIcon.at1);
 
 // ---- screenshots ---------------------------------------------------------
 if (SHOTS) {

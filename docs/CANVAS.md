@@ -20,7 +20,7 @@ coordinate system.
    device positions are still stored normalised. `1.0` is still the
    same distance it always was; `cell_cm` still ties a grid cell to
    real centimetres. **No data migration.** An existing plan opens as
-   before (the one deliberate exception is icon size — see §6).
+   before — including the size of the markers (§6).
 2. **`0..1` is not a boundary, it is an origin.** Any finite
    coordinate is legal. `2.7` simply means "2.7 canvas widths to the
    right of the origin".
@@ -39,7 +39,7 @@ coordinate system.
 | "fit" rectangle | `view_box` (or the content bbox in view mode) | always the **content frame** (§4) |
 | Zoom out floor | `ZOOM_MIN = 0.4` (fraction of `view_box`) | 3x the content frame (`MIN_ZOOM = 1/3`) |
 | Pan bounds | content must cover the scene | content frame + one screen of slack in each direction |
-| Icon size | % of `view_box`, i.e. grew with zoom | % of the visible viewport (§6) |
+| Icon size | % of `view_box`, i.e. grew with zoom | % of `iconUnit` — still grows with zoom (§6) |
 | Validation range | `+/-4` | `+/-5000` (§3) |
 
 ### Render frame vs. view
@@ -162,39 +162,60 @@ was silently excluded from the frame).
   in the frame's direction. Clicking it fits the content. Cheap
   insurance against getting lost in the empty plane.
 
-## §6 Icon size — from the viewport
+## §6 Icon size — a percentage of the plan
 
-**Changed behaviour, owner is aware.** Before:
+**Unchanged behaviour** — an icon scales with the plan, exactly as it
+always did. (A first cut of the infinite canvas made it a fixed
+percentage of the viewport; the owner looked at it on 2026-08-03 and
+asked for the original back. The history is kept here because the
+reasoning for the *numerator* below is the whole point.)
+
+Before the infinite canvas:
 
 ```
 --icon-size: iconPct * vb.w / view.w   (cqw)
 ```
 
-so an icon grew as you zoomed in — at 8x zoom a marker covered a whole
-room. Now:
+Now (`iconCqw()` in `src/space-geometry.ts`, pure and unit tested):
 
 ```
---icon-size: iconPct * kioskScale      (cqw)
+--icon-size: iconPct * iconUnit(space) * kioskScale / view.w   (cqw)
 ```
 
-An icon is a fixed percentage of the **visible viewport**: zooming
-changes how much plan you see, not how big the markers are. Side
-effects, all intended:
+Read it in render units: a marker always occupies
+`iconPct/100 * iconUnit` **render units** of the plan, whatever the
+frame and whatever the zoom. Dividing by the width of the visible view
+turns that into the percentage of the container `cqw` means. Zoom in
+2x and the marker is 2x bigger, together with the walls it sits on.
 
-* the full card and the static `houseplan-space-card` now use the
-  identical expression — the two renderers finally agree at every zoom;
-* the per-device multiplier `marker.size` and the kiosk icon/font
-  scales are untouched: they still feed `--dev-size`, and every
-  satellite (badges, LQI chips, presence rings, ripples) still derives
-  from `--dev-size` exactly as before.
+**Why the numerator changed.** `vb.w` was the stored `view_box`, and
+`view_box` is not a frame any more (§4). Keeping a fixed `NORM_W`
+there would have been worse than wrong: on a plan drawn 2 canvases
+wide the frame is ~2.2 canvases, so every marker would come out 2.2x
+smaller than on an ordinary plan — and 55x smaller on a plan 50
+canvases out, i.e. an invisible dot. `iconUnit(space) =
+max(NORM_W, roomsExtent)` is:
+
+* **exactly `NORM_W` for every plan that fits the old square**, and the
+  editor has only ever stored `view_box: [0,0,1,1]`, so `iconUnit ===
+  vb.w` there and the rendered pixel size is bit-identical to the
+  pre-canvas card (verified against the v1.56.0 bundle at a fixed view:
+  `3.400 / 3.091 / 6.182 / 12.364 cqw`, i.e. `28.52 / 26.11 / 50.22 /
+  98.44 px`, both bundles);
+* **proportional to an outsized plan**, so a runaway plan gets markers
+  of the same apparent size as an ordinary one.
+
+Everything else is untouched: the per-device multiplier `marker.size`
+and the kiosk icon/font scales still feed `--dev-size`, and every
+satellite (badges, LQI chips, presence rings, ripples) still derives
+from `--dev-size`. The full card and the static
+`houseplan-space-card` call the same `iconCqw()` — the static card has
+no zoom, but its frame is the content now, so a bare `iconPct` would
+have made its markers shrink as the frame tightened.
 
 **Auto-placement spacing** (`defaultPositions` -> `declump`) is measured
-in render units, so it needs the icon's render-unit footprint, which is
-now frame-relative. `iconUnit(space) = max(NORM_W, roomsExtent)` is
-used instead of a bare `NORM_W`: for any plan that fits the old square
-this is exactly `NORM_W` (bit-identical placement, no churn), and for a
-plan three canvases wide the spacing grows with it. Both renderers call
-the same helper, so the static card and the full card stay in step.
+in render units and uses the same `iconUnit`, so the icon's footprint
+and the distance markers are pushed apart by can never drift apart.
 
 ## §7 Adaptive grid
 
@@ -232,7 +253,7 @@ fits `all`.
 | `contentBounds` envelope `-25 %..125 %` | content outside the square does not count | **removed** — replaced by §4.1 outlier rejection |
 | `_baseVb()` `if (mode !== 'view') return m.vb` | editors need the whole square to have room to draw | **removed** — the content frame plus §5 pan slack and 3x zoom-out gives more room than the square ever did |
 | `_baseVb()` `if (m.bg) return m.vb` | image plans frame on the square | image rect is now just one content item (§4) |
-| `--icon-size` scaled by `vb.w / view.w` | icon is a fraction of the canvas | §6 |
+| `--icon-size` scaled by `vb.w / view.w` | the canvas is what an icon is a fraction OF | numerator becomes `iconUnit()`; the icon still scales with the plan (§6) |
 | `defaultPositions` `minDist` from `NORM_W` | one canvas = one plan | `iconUnit()` (§6) |
 | `markerPos` / `_pos` fallback = `view_box` centre | a device with no position belongs in the middle of the square | `spaceCenter()` — the middle of the content |
 | grid `<rect>` over `vb` | the grid ends with the square | rect follows the view (§7) |

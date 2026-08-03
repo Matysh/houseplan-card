@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {
   NORM_W, CANVAS_LIMIT, SANE_LIMIT, MIN_ZOOM, OUTLIER_K, MIN_VOTERS,
   spaceModels, contentItems, contentFrame, contentBounds, spaceFrame, spaceCenter,
-  iconUnit, gridLevels, itemOf, roomItem, defaultPositions,
+  iconUnit, iconCqw, gridLevels, itemOf, roomItem, defaultPositions,
 } from '../test-build/space-geometry.js';
 
 const model = (space) => spaceModels({ spaces: [{ view_box: [0, 0, 1, 1], rooms: [], ...space }], markers: [] })[0];
@@ -60,6 +60,50 @@ test('a plan past the square keeps its icon spacing in proportion', () => {
       assert.ok(pos[k].x >= lo && pos[k].x <= hi && pos[k].y >= lo && pos[k].y <= hi, 'inside the room');
     }
   }
+});
+
+// ------------------------------------------------------------- icon size
+test('icon size: a percentage of the PLAN, exactly as before the canvas', () => {
+  // The pre-infinite-canvas card rendered `--icon-size: iconPct * vb.w / view.w`
+  // and the editor only ever wrote view_box [0,0,1,1], i.e. vb.w === NORM_W.
+  // iconCqw must reproduce that number to the last digit on such a plan.
+  const small = model({ id: 's', rooms: [{ id: 'r', poly: [[0.04, 0.14], [0.96, 0.14], [0.96, 0.86], [0.04, 0.86]] }] });
+  const legacy = (pct, viewW) => (pct * NORM_W) / viewW;
+  for (const viewW of [1000, 1100, 1093.969144460028, 550, 275, 137.5]) {
+    assert.equal(iconCqw(3.4, small, viewW), legacy(3.4, viewW));
+  }
+  // and that number IS "scales with the plan": half the view, twice the icon
+  assert.equal(iconCqw(2.5, small, 500) / iconCqw(2.5, small, 1000), 2);
+  assert.equal(iconCqw(2.5, small, 8000) / iconCqw(2.5, small, 1000), 0.125);
+  // the kiosk icon multiplier is a plain factor, as it was
+  assert.equal(iconCqw(2.5, small, 1000, 2), 2 * iconCqw(2.5, small, 1000));
+});
+
+test('icon size: a plan drawn past the old square keeps its markers', () => {
+  // rooms at 1.0..3.0 — 2 canvases wide, framed by ~2.2 canvases once the
+  // frame is the content. With the old fixed NORM_W numerator the marker
+  // would be 2.2x smaller than on an ordinary plan, and 55x smaller on a
+  // plan 50 canvases wide: the reason the numerator is iconUnit.
+  const big = model({ id: 's', rooms: [{ id: 'r', poly: [[1, 1], [3, 1], [3, 3], [1, 3]] }] });
+  const small = model({ id: 's', rooms: [{ id: 'r', poly: [[0, 0], [1, 0], [1, 1], [0, 1]] }] });
+  const frame = (m) => { const f = spaceFrame(m); return f.w; }; // content + 5%
+  assert.equal(frame(small), NORM_W * 1.1);
+  assert.equal(frame(big), 2 * NORM_W * 1.1);
+  // same percentage of the frame on both plans — the marker did not degenerate
+  assert.equal(iconCqw(2.5, big, frame(big)), iconCqw(2.5, small, frame(small)));
+  assert.ok(iconCqw(2.5, big, frame(big)) > 2, 'and it is a real size, not a dot');
+  // the degenerate alternative, for the record
+  assert.ok((2.5 * NORM_W) / frame(big) < iconCqw(2.5, big, frame(big)) / 1.9);
+  // the size unit and the auto-placement spacing are the same unit
+  assert.equal(iconUnit(big), 2 * NORM_W);
+});
+
+test('icon size: no view yet is a plain percentage, never NaN', () => {
+  const m = model({ id: 's', rooms: [{ id: 'r', poly: [[0.1, 0.1], [0.5, 0.5]] }] });
+  for (const bad of [0, -1, NaN, Infinity, null, undefined]) {
+    assert.equal(iconCqw(2.5, m, bad), 2.5);
+  }
+  assert.equal(iconCqw(2.5, m, 0, 1.5), 3.75);
 });
 
 // ------------------------------------------------------------- the outlier

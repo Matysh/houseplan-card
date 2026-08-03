@@ -51,7 +51,7 @@ import './space-card';
 import { cardStyles } from './styles';
 import {
   fitInSquare, contentBounds, spaceModels, contentFrame, contentItems, spaceFrame,
-  spaceCenter, iconUnit, gridLevels, itemOf,
+  spaceCenter, iconUnit, iconCqw, gridLevels, itemOf,
   MIN_ZOOM, PAN_SLACK, CANVAS_LIMIT, type ContentItem, type Rect,
 } from './space-geometry';
 import { langOf, t, type I18nKey } from './i18n';
@@ -5663,14 +5663,17 @@ class HouseplanCard extends LitElement {
             ${this._renderOpenings(disp)}
             ${this._markup && this._tool === 'resize' ? this._renderResizeLayer(view) : nothing}
           </svg>
-          ${''/* docs/CANVAS.md §6: --icon-size is a percentage of the VISIBLE
-                 viewport (cqw), no longer of the canvas — the old
-                 `* vb.w / view.w` made a marker grow with the zoom until it
-                 covered a room, and on an unbounded canvas "a percent of the
-                 canvas" has no meaning at all. Same expression as the static
-                 space-card, so the two renderers finally agree. The per-device
+          ${''/* docs/CANVAS.md §6: an icon is a percentage of the PLAN and
+                 scales with it when you zoom — the behaviour the card always
+                 had, restored by the owner. `iconCqw` is `iconPct * iconUnit
+                 / view.w`: the old expression with the stored `vb.w` replaced
+                 by the plan's own base unit, which is the same NORM_W for an
+                 ordinary plan (pixel-identical) but grows with a plan drawn
+                 past the old square, where a fixed 1000 would have shrunk
+                 every marker to a dot. Same expression as the static
+                 space-card, so the two renderers agree. The per-device
                  multiplier and the kiosk scales still feed --dev-size. */}
-          <div class="devlayer" style="--icon-size:${(iconPct * (this._kiosk ? this._kioskScale.icon : 1)).toFixed(3)}cqw;--rl-font:${this._kiosk ? this._kioskScale.font : 1}">
+          <div class="devlayer" style="--icon-size:${iconCqw(iconPct, space, view.w, this._kiosk ? this._kioskScale.icon : 1).toFixed(3)}cqw;--rl-font:${this._kiosk ? this._kioskScale.font : 1}">
             ${devs.map((d) => this._renderDevice(d, view, showLqi, disp.fill === 'glow' && !this._markup))}
             ${this._renderVacuums(devs, view)}
             ${this._renderVacFit(view)}
@@ -7553,7 +7556,9 @@ class HouseplanCard extends LitElement {
             ${this._rangeInput(0.5, 3, 0.1, d.size, (n) => (this._markerDialog = { ...d, size: n }))}
             <span class="opv">×${d.size.toFixed(1)}</span>
             <span class="opl">${this._t('marker.angle_label')}</span>
-            ${this._rangeInput(0, 350, 10, d.angle, (n) => (this._markerDialog = { ...d, angle: n }))}
+            ${''/* 5 degrees, not 10 (owner 2026-08-03): a marker often has to
+                   line up with a wall that is not on a 10-degree grid. */}
+            ${this._rangeInput(0, 355, 5, d.angle, (n) => (this._markerDialog = { ...d, angle: n }))}
             <span class="opv">${d.angle}°</span>
           </div>
 

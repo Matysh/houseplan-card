@@ -281,10 +281,16 @@ export function spaceCenter(space: SpaceModel): Pt {
 }
 
 /**
- * Render units one icon-percent is measured against for AUTO-PLACEMENT
- * spacing (docs/CANVAS.md §6). For any plan that fits the old square this
- * is exactly NORM_W, so existing layouts do not move by a hair; a plan
- * three canvases wide gets proportionally wider spacing.
+ * The BASE UNIT one icon-percent is measured against, in render units
+ * (docs/CANVAS.md §6). It is both the icon's own footprint and the
+ * auto-placement spacing, so the two can never drift apart.
+ *
+ * For any plan that fits the old square this is exactly NORM_W — which is
+ * what `vb.w` was for every plan the card itself ever wrote (the editor only
+ * ever stored `view_box: [0,0,1,1]`), so sizes and layouts are bit-identical
+ * to the pre-infinite-canvas card. A plan drawn three canvases wide gets a
+ * proportionally bigger unit, which is what keeps its markers from
+ * degenerating into dots once the frame is the content (see `iconCqw`).
  * Rooms only — deterministic, so the full card and the static card agree.
  */
 export function iconUnit(space: SpaceModel): number {
@@ -293,6 +299,34 @@ export function iconUnit(space: SpaceModel): number {
   const b = boxOf(items);
   if (!b) return NORM_W;
   return Math.max(NORM_W, Math.min(SANE_LIMIT, Math.max(b.w, b.h)));
+}
+
+/**
+ * `--icon-size` in cqw (docs/CANVAS.md §6) — the ONE expression both
+ * renderers use.
+ *
+ * An icon is a percentage of the PLAN, not of the viewport: it scales with
+ * the plan as you zoom, exactly as it did before the infinite canvas (owner,
+ * 2026-08-03). In render units the marker always occupies
+ * `iconPct/100 * iconUnit`, whatever the frame or the zoom happens to be;
+ * dividing by the width of the visible view turns that into a percentage of
+ * the container, which is what `cqw` means.
+ *
+ * The only thing the infinite canvas changed here is the numerator: it used
+ * to be `vb.w`, the stored view_box, and a plan drawn past the old square
+ * kept a 1000-unit numerator while its frame grew to tens of thousands —
+ * markers would shrink to invisible dots. `iconUnit` is that same 1000 for
+ * an ordinary plan and grows with an outsized one.
+ */
+export function iconCqw(
+  iconPct: number, space: SpaceModel, viewW: number, kioskIcon = 1,
+): number {
+  const w = Number(viewW);
+  const k = Number.isFinite(kioskIcon) && kioskIcon > 0 ? kioskIcon : 1;
+  // No view yet (first paint, zero-width stage): fall back to the plain
+  // percentage rather than to Infinity/NaN — the frame arrives a tick later.
+  if (!Number.isFinite(w) || w <= 0) return iconPct * k;
+  return (iconPct * iconUnit(space) * k) / w;
 }
 
 /** Grid step multipliers offered to the adaptive grid (docs/CANVAS.md §7). */
