@@ -998,6 +998,11 @@ require hands on real hardware — they remain for the human pass.
       frame, on the full card and on `houseplan-space-card`. Untick it and the
       frame takes it in again; room LQI counted it the whole time
       [auto: smoke_canvas_frame]
+- [ ] **The editor frame does not follow you out** (audit DEV-2C947-02): move
+      the only room five canvases away in the Plan editor (the frame grows
+      there, deliberately), close the editor — View frames the room where it
+      is NOW, not the union with where it was; re-entering the editor starts
+      from the current geometry [auto: smoke_canvas_frame]
 - [ ] **A far stray does not break the view** (§4.1): a marker dragged an
       order of magnitude away leaves the opening view alone and raises the
       inline chip «Объектов далеко от плана: N» with «Показать». No modal.

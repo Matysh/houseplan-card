@@ -139,6 +139,19 @@ When `outliers > 0` the card shows an unobtrusive inline hint (no
 modal) — "there are objects far from the plan" with a **Show** action
 that fits `all`.
 
+### §4.3 The frame in an editor
+
+Inside an editor the frame only ever **grows** (`unionRect` with the previous
+one): it bounds pan and defines what zoom 1 means, and a frame that shrank the
+instant a room was deleted would move the ground under a live gesture.
+
+That union belongs to the editor session and to nothing else. The memo key
+carries the growth flag, so leaving for View recomputes the frame from the
+content instead of inheriting the union — otherwise a room dragged five
+canvases away in the Plan editor kept View framing the empty ground it had
+left behind, until some unrelated model change happened to invalidate the memo
+(audit DEV-2C947-02).
+
 ### §4.2 Degenerate frames
 
 An SVG `viewBox` with a zero axis paints nothing, so a frame still has

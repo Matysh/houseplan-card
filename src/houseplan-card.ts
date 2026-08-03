@@ -1843,7 +1843,7 @@ class HouseplanCard extends LitElement {
    */
   private _frame:
     | { id: string; model: SpaceModel; layout: unknown; devs: unknown; far: boolean;
-        rect: Rect; all: Rect; outliers: number }
+        grow: boolean; rect: Rect; all: Rect; outliers: number }
     | null = null;
   /** The outlier hint's «Показать» is on: the frame takes in the far strays
    *  too, so zoom, pan and the fit button all agree about what "everything"
@@ -1857,21 +1857,28 @@ class HouseplanCard extends LitElement {
     // content changes, so this catches a marker drag and a server push alike —
     // an epoch would have to be bumped at every one of those call sites.
     const f = this._frame;
+    // `grow` is part of the KEY, not just of the computation (DEV-2C947-02):
+    // the union an editor accumulated is an editor's frame, and leaving for
+    // View has to recompute rather than inherit it — otherwise a room moved
+    // far away in the Plan editor kept View framing the empty ground it left
+    // behind, until some unrelated model change happened to invalidate memo.
+    const grow = this._mode !== 'view';
     if (f && f.id === m.id && f.model === m && f.layout === this._layout
-        && f.devs === this._devices && f.far === this._showFar) return f;
+        && f.devs === this._devices && f.far === this._showFar && f.grow === grow) return f;
     const cf = contentFrame(this._contentItems(m));
     let all = cf.all || spaceFrame(m);
     let rect = this._showFar ? all : (cf.core || spaceFrame(m));
-    if (f && f.id === m.id && this._mode !== 'view') {
+    if (f && f.id === m.id && grow && f.grow) {
       // Inside an editor the frame only GROWS: it bounds pan and defines what
       // zoom 1 means, and a frame that shrank the instant a room was deleted
-      // would move the ground under the pointer mid-gesture.
+      // would move the ground under the pointer mid-gesture. Only ever unions
+      // with a frame the SAME editor session produced (f.grow).
       rect = unionRect(f.rect, rect);
       all = unionRect(f.all, all);
     }
     this._frame = {
       id: m.id, model: m, layout: this._layout, devs: this._devices,
-      far: this._showFar, rect, all, outliers: cf.outliers,
+      far: this._showFar, grow, rect, all, outliers: cf.outliers,
     };
     return this._frame;
   }

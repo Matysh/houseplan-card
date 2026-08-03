@@ -4,6 +4,10 @@
 // frame — hiding a marker that had wandered into the yard left the visible
 // house a dot in the corner (the full card AND the static
 // houseplan-space-card, which drew `devs` but framed `spaceDevs`).
+//
+// DEV-2C947-02: inside an editor the frame only grows (a frame that shrank
+// mid-drag would move the ground under the pointer); that union was memoised
+// without the mode, so it survived the way back into View.
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 900, height: 820 }, 1);
@@ -111,6 +115,52 @@ Object.assign(out, await page.evaluate(async () => {
   o.staticFrameIsTheVisibleRoom = vb.length === 4
     && Math.round(vb[0]) === 60 && Math.round(vb[2]) === 880;
   host.remove();
+  return o;
+}));
+
+// ------------------------------------------------------- 02: editor -> view
+const oneRoomAt = (x0) => ({
+  spaces: [{
+    id: 'e1', title: 'Editor', view_box: [0, 0, 1, 1], plan_url: null, plan_aspect: null,
+    rooms: [{ id: 'r1', name: 'Room', area: 'zx_room',
+      poly: [[x0, 0.1], [x0 + 0.8, 0.1], [x0 + 0.8, 0.9], [x0, 0.9]] }],
+  }],
+  markers: [], settings: { filter_seeded: true },
+});
+
+await load(oneRoomAt(0.1), {}, 'e1');
+await raf();
+Object.assign(out, await page.evaluate(async () => {
+  const c = window.__card;
+  const o = {};
+  const round = () => c._baseVb().map((n) => Math.round(n));
+  o.viewFrameBefore = JSON.stringify(round()) === JSON.stringify([60, 60, 880, 880]);
+  // move the only room 5 canvases to the right, inside the Plan editor
+  c._setMode('plan');
+  await c.updateComplete;
+  const cfg = JSON.parse(JSON.stringify(c._serverCfg));
+  cfg.spaces[0].rooms[0].poly = [[5.1, 0.1], [5.9, 0.1], [5.9, 0.9], [5.1, 0.9]];
+  c._serverCfg = cfg;
+  c._modelCache = null;
+  c._cfgEpoch++;
+  c.requestUpdate();
+  await c.updateComplete;
+  const inEditor = round();
+  // inside the editor the frame is the UNION — that is deliberate: it bounds
+  // pan and defines zoom 1, and it must not shrink under a live gesture
+  o.editorFrameOnlyGrows = inEditor[2] > 5000;
+  c._setMode('view');
+  await c.updateComplete;
+  const back = round();
+  o.viewFrameFollowsTheRoomAgain = JSON.stringify(back) === JSON.stringify([5060, 60, 880, 880]);
+  if (!o.viewFrameFollowsTheRoomAgain) console.log('frame after exit', back, 'editor', inEditor);
+  // and back into an editor it starts from the CURRENT geometry, not the old union
+  c._setMode('plan');
+  await c.updateComplete;
+  o.reenteringTheEditorDoesNotResurrectTheUnion =
+    JSON.stringify(round()) === JSON.stringify([5060, 60, 880, 880]);
+  c._setMode('view');
+  await c.updateComplete;
   return o;
 }));
 
