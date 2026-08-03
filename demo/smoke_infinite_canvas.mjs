@@ -195,6 +195,34 @@ Object.assign(out, await page.evaluate(() => {
   return o;
 }));
 
+// ---- pan has slack, and "home is that way" brings you back ---------------
+Object.assign(out, await page.evaluate(async () => {
+  const c = window.__card;
+  const sr = c.shadowRoot || c.renderRoot;
+  const o = {};
+  c._resetZoom(); await c.updateComplete;
+  const fit = { ...c._view };
+  // pan most of a screen to the right: nothing pins the content over the scene
+  c._view = c._clampView({ ...fit, x: fit.x + fit.w * 0.9 }, fit);
+  o.panPastContentAllowed = c._view.x > fit.x + fit.w * 0.5;
+  // walk right off the plan: the frame is entirely outside the view now
+  c._view = { ...fit, x: fit.x + fit.w * 1.6 };
+  c.requestUpdate(); await c.updateComplete;
+  const arrow = sr.querySelector('.homearrow');
+  o.homeArrowAppears = !!arrow;
+  if (arrow) {
+    arrow.click();
+    await c.updateComplete;
+    o.homeArrowFitsBack = Math.abs(c._view.x - fit.x) < 2 && Math.abs(c._view.w - fit.w) < 2;
+    await c.updateComplete;
+    o.homeArrowGone = !sr.querySelector('.homearrow');
+  }
+  // and it is NOT there while the plan is on screen
+  c._resetZoom(); c.requestUpdate(); await c.updateComplete;
+  o.noHomeArrowWhenVisible = !sr.querySelector('.homearrow');
+  return o;
+}));
+
 // ---- icons keep their PIXEL size across zooms (docs/CANVAS.md §6) --------
 out.iconSizeIsViewportRelative = await page.evaluate(async () => {
   const c = window.__card;
