@@ -4596,6 +4596,34 @@ class HouseplanCard extends LitElement {
     }
   }
 
+  /** Boolean toggle for dialog rows: the native ha-switch when the HA
+   *  frontend provides it, the classic checkbox otherwise (older HA, the
+   *  smoke env). The ha-* API is undocumented and shifts between HA
+   *  releases, so the presence check is the ONLY coupling: both branches
+   *  fire `change` and both are read back via `.checked` off the event
+   *  target - one handler, two renderers. */
+  private _boolInput(checked: boolean, onChange: (v: boolean) => void, disabled = false): TemplateResult {
+    const h = (e: Event) => onChange(!!(e.target as HTMLInputElement).checked);
+    return customElements.get('ha-switch')
+      ? html`<ha-switch .checked=${checked} .disabled=${disabled} @change=${h}></ha-switch>`
+      : html`<input type="checkbox" .checked=${checked} ?disabled=${disabled} @change=${h} />`;
+  }
+
+  /** Range slider for dialog rows: ha-slider when available, plain
+   *  input[type=range] otherwise. Same fallback contract as _boolInput;
+   *  ha-slider emits `input` while dragging and `change` on release
+   *  (which of the two carries the final value differs between HA
+   *  versions - listen to both, the handler is idempotent). */
+  private _rangeInput(min: number, max: number, step: number, value: number, onInput: (v: number) => void): TemplateResult {
+    const h = (e: Event) => {
+      const n = Number((e.target as HTMLInputElement).value);
+      if (Number.isFinite(n)) onInput(n);
+    };
+    return customElements.get('ha-slider')
+      ? html`<ha-slider .min=${min} .max=${max} .step=${step} .value=${value} @input=${h} @change=${h}></ha-slider>`
+      : html`<input type="range" min=${min} max=${max} step=${step} .value=${String(value)} @input=${h} />`;
+  }
+
   private _renderColorRow(key: keyof FillColors, labelKey: string): TemplateResult {
     const d = this._settingsDialog!;
     const v = d.colors[key];
@@ -4603,8 +4631,7 @@ class HouseplanCard extends LitElement {
       <span class="gsl">${this._t(labelKey as any)}</span>
       <input type="color" .value=${v.c}
         @input=${(e: Event) => this._setFillColor(key, { c: (e.target as HTMLInputElement).value })} />
-      <input type="range" min="0" max="100" .value=${String(Math.round(v.a * 100))}
-        @input=${(e: Event) => this._setFillColor(key, { a: Number((e.target as HTMLInputElement).value) / 100 })} />
+      ${this._rangeInput(0, 100, 1, Math.round(v.a * 100), (n) => this._setFillColor(key, { a: n / 100 }))}
       <span class="opv">${Math.round(v.a * 100)}%</span>
     </div>`;
   }
@@ -4786,9 +4813,8 @@ class HouseplanCard extends LitElement {
             </div>
           </div>
           <label class="srcrow">
-            <input type="checkbox" .checked=${this._settingsDialog!.sunRays}
-              @change=${(e: Event) =>
-                (this._settingsDialog = { ...this._settingsDialog!, sunRays: (e.target as HTMLInputElement).checked })} />
+            ${this._boolInput(this._settingsDialog!.sunRays, (v) =>
+              (this._settingsDialog = { ...this._settingsDialog!, sunRays: v }))}
             <span>${this._t('gs.sun_rays')}</span>
           </label>
           <div class="colorrow gsrow">
@@ -4942,8 +4968,7 @@ class HouseplanCard extends LitElement {
     const k = this._kioskScale;
     const row = (key: 'icon' | 'font', label: string) => html`<label>${label}</label>
       <div class="colorrow">
-        <input type="range" min="50" max="300" step="5" .value=${String(Math.round(k[key] * 100))}
-          @input=${(e: Event) => this._saveKioskScale({ [key]: Number((e.target as HTMLInputElement).value) / 100 })} />
+        ${this._rangeInput(50, 300, 5, Math.round(k[key] * 100), (n) => this._saveKioskScale({ [key]: n / 100 }))}
         <span class="opv">${Math.round(k[key] * 100)}%</span>
       </div>`;
     return html`<div class="menuwrap dialogwrap" @click=${() => (this._kioskDialog = false)}>
@@ -5466,8 +5491,7 @@ class HouseplanCard extends LitElement {
             <button class="btn ghostbtn" @click=${() => this._vacStartFit(dev)}>${this._t('vac.fit')}</button>
           </div>
           <label class="srcrow">
-            <input type="checkbox" .checked=${v.live !== false}
-              @change=${(e: Event) => setVac({ live: (e.target as HTMLInputElement).checked ? null : false })} />
+            ${this._boolInput(v.live !== false, (on) => setVac({ live: on ? null : false }))}
             <span>${this._t('vac.live')}</span>
           </label>
           <label>${this._t('vac.trail')}</label>
@@ -6556,8 +6580,7 @@ class HouseplanCard extends LitElement {
           <label>${this._t('opening.contact_label')}</label>
           ${opt(this._contactCandidates(), d.contact, (v) => (this._openingDialog = { ...d, contact: v }))}
           ${d.contact
-            ? html`<label class="srcrow"><input type="checkbox" .checked=${d.invert}
-                @change=${(e: Event) => (this._openingDialog = { ...d, invert: (e.target as HTMLInputElement).checked })} />
+            ? html`<label class="srcrow">${this._boolInput(d.invert, (v) => (this._openingDialog = { ...d, invert: v }))}
                 <span>${this._t('opening.invert')}</span></label>`
             : nothing}
 
@@ -6566,11 +6589,9 @@ class HouseplanCard extends LitElement {
                 ${opt(this._lockCandidates(), d.lock, (v) => (this._openingDialog = { ...d, lock: v }))}`
             : nothing}
 
-          <label class="srcrow"><input type="checkbox" .checked=${d.flipH}
-            @change=${(e: Event) => (this._openingDialog = { ...d, flipH: (e.target as HTMLInputElement).checked })} />
+          <label class="srcrow">${this._boolInput(d.flipH, (v) => (this._openingDialog = { ...d, flipH: v }))}
             <span>${this._t('opening.flip_h')}</span></label>
-          <label class="srcrow"><input type="checkbox" .checked=${d.flipV}
-            @change=${(e: Event) => (this._openingDialog = { ...d, flipV: (e.target as HTMLInputElement).checked })} />
+          <label class="srcrow">${this._boolInput(d.flipV, (v) => (this._openingDialog = { ...d, flipV: v }))}
             <span>${this._t('opening.flip_v')}</span></label>
         </div>
         <div class="row">
@@ -6874,9 +6895,8 @@ class HouseplanCard extends LitElement {
                 <span>${this._t('marker.from_ha_option')}</span>
               </label>
               <label class="srcrow inline entcheck" title=${this._t('marker.show_entities_tip')}>
-                <input type="checkbox" .checked=${d.showEntities}
-                  ?disabled=${d.bindingMode !== 'ha'}
-                  @change=${(e: Event) => (this._markerDialog = { ...d, showEntities: (e.target as HTMLInputElement).checked })} />
+                ${this._boolInput(d.showEntities, (v) => (this._markerDialog = { ...d, showEntities: v }),
+                  d.bindingMode !== 'ha')}
                 <span>${this._t('marker.show_entities')}</span>
               </label>
             </div>
@@ -6956,8 +6976,7 @@ class HouseplanCard extends LitElement {
             : nothing}
           ${d.tapAction === 'run' || d.tapAction === 'toggle' || (!d.tapAction && d.defaultTap === 'toggle')
             ? html`<label class="srcrow" title=${this._t('marker.tap_confirm_tip')}>
-                <input type="checkbox" .checked=${d.tapConfirm}
-                  @change=${(e: Event) => (this._markerDialog = { ...d, tapConfirm: (e.target as HTMLInputElement).checked })} />
+                ${this._boolInput(d.tapConfirm, (v) => (this._markerDialog = { ...d, tapConfirm: v }))}
                 <span>${this._t('marker.tap_confirm')}</span>
               </label>`
             : nothing}
@@ -6997,19 +7016,16 @@ class HouseplanCard extends LitElement {
 
           ${this._bindingHasClimate(d.binding)
             ? html`<label class="srcrow climrow" title=${this._t('marker.use_climate_temp_tip')}>
-                <input type="checkbox" .checked=${d.useClimateTemp}
-                  @change=${(e: Event) => (this._markerDialog = { ...d, useClimateTemp: (e.target as HTMLInputElement).checked })} />
+                ${this._boolInput(d.useClimateTemp, (v) => (this._markerDialog = { ...d, useClimateTemp: v }))}
                 <span>${this._t('marker.use_climate_temp')}</span>
               </label>`
             : nothing}
           <label class="srcrow" title=${this._t('marker.is_light_tip')}>
-            <input type="checkbox" .checked=${d.isLight}
-              @change=${(e: Event) => (this._markerDialog = { ...d, isLight: (e.target as HTMLInputElement).checked })} />
+            ${this._boolInput(d.isLight, (v) => (this._markerDialog = { ...d, isLight: v }))}
             <span>${this._t('marker.is_light')}</span>
           </label>
           <label class="srcrow" title=${this._t('marker.hide_tip')}>
-            <input type="checkbox" .checked=${d.hideFromPlan}
-              @change=${(e: Event) => (this._markerDialog = { ...d, hideFromPlan: (e.target as HTMLInputElement).checked })} />
+            ${this._boolInput(d.hideFromPlan, (v) => (this._markerDialog = { ...d, hideFromPlan: v }))}
             <span>${this._t('marker.hide')}</span>
           </label>
           <label>${this._t('marker.glow_radius_label')}</label>
@@ -7049,20 +7065,17 @@ class HouseplanCard extends LitElement {
                 <input type="color" .value=${d.rippleColor || '#3ea6ff'}
                   @input=${(e: Event) => (this._markerDialog = { ...d, rippleColor: (e.target as HTMLInputElement).value })} />
                 <span class="opl">${this._t('marker.ripple_size')}</span>
-                <input type="range" min="2" max="8" step="0.5" .value=${String(d.rippleSize)}
-                  @input=${(e: Event) => (this._markerDialog = { ...d, rippleSize: Number((e.target as HTMLInputElement).value) })} />
+                ${this._rangeInput(2, 8, 0.5, d.rippleSize, (n) => (this._markerDialog = { ...d, rippleSize: n }))}
                 <span class="opv">×${d.rippleSize}</span>
               </div>`
             : nothing}
 
           <label>${this._t('marker.size_label')}</label>
           <div class="colorrow">
-            <input type="range" min="0.5" max="3" step="0.1" .value=${String(d.size)}
-              @input=${(e: Event) => (this._markerDialog = { ...d, size: Number((e.target as HTMLInputElement).value) })} />
+            ${this._rangeInput(0.5, 3, 0.1, d.size, (n) => (this._markerDialog = { ...d, size: n }))}
             <span class="opv">×${d.size.toFixed(1)}</span>
             <span class="opl">${this._t('marker.angle_label')}</span>
-            <input type="range" min="0" max="350" step="10" .value=${String(d.angle)}
-              @input=${(e: Event) => (this._markerDialog = { ...d, angle: Number((e.target as HTMLInputElement).value) })} />
+            ${this._rangeInput(0, 350, 10, d.angle, (n) => (this._markerDialog = { ...d, angle: n }))}
             <span class="opv">${d.angle}°</span>
           </div>
 
@@ -7173,33 +7186,28 @@ class HouseplanCard extends LitElement {
 
           <label class="dispsection">${this._t('space.display_section')}</label>
           <label class="srcrow">
-            <input type="checkbox" .checked=${d.showBorders}
-              @change=${(e: Event) => (this._spaceDialog = { ...d, showBorders: (e.target as HTMLInputElement).checked })} />
+            ${this._boolInput(d.showBorders, (v) => (this._spaceDialog = { ...d, showBorders: v }))}
             <span>${this._t('space.show_borders')}</span>
           </label>
           <label class="srcrow">
-            <input type="checkbox" .checked=${d.showNames}
-              @change=${(e: Event) => (this._spaceDialog = { ...d, showNames: (e.target as HTMLInputElement).checked })} />
+            ${this._boolInput(d.showNames, (v) => (this._spaceDialog = { ...d, showNames: v }))}
             <span>${this._t('space.show_names')}</span>
           </label>
           <label class="srcrow">
-            <input type="checkbox" .checked=${d.showLqi}
-              @change=${(e: Event) => (this._spaceDialog = { ...d, showLqi: (e.target as HTMLInputElement).checked })} />
+            ${this._boolInput(d.showLqi, (v) => (this._spaceDialog = { ...d, showLqi: v }))}
             <span>${this._t('space.show_lqi')}</span>
           </label>
           <label class="dispsection">${this._t('space.roomcard_section')}</label>
           ${([['labelTemp', 'space.label_temp'], ['labelHum', 'space.label_hum'],
               ['labelLqi', 'space.label_lqi'], ['labelLight', 'space.label_light']] as const).map(
             ([f, k]) => html`<label class="srcrow">
-              <input type="checkbox" .checked=${d[f]}
-                @change=${(e: Event) => (this._spaceDialog = { ...d, [f]: (e.target as HTMLInputElement).checked })} />
+              ${this._boolInput(d[f], (v) => (this._spaceDialog = { ...d, [f]: v }))}
               <span>${this._t(k)}</span>
             </label>`,
           )}
           <label>${this._t('space.card_font')}</label>
           <div class="colorrow gsrow">
-            <input type="range" min="50" max="300" step="5" .value=${String(Math.round(d.cardFontScale * 100))}
-              @input=${(e: Event) => (this._spaceDialog = { ...d, cardFontScale: Number((e.target as HTMLInputElement).value) / 100 })} />
+            ${this._rangeInput(50, 300, 5, Math.round(d.cardFontScale * 100), (n) => (this._spaceDialog = { ...d, cardFontScale: n / 100 }))}
             <span class="opv">${Math.round(d.cardFontScale * 100)}%</span>
           </div>
           ${this._renderCardPreview(d.cardFontScale, 1, 1)}
@@ -7208,8 +7216,7 @@ class HouseplanCard extends LitElement {
             <input type="color" .value=${d.roomColor}
               @input=${(e: Event) => (this._spaceDialog = { ...d, roomColor: (e.target as HTMLInputElement).value })} />
             <span class="opl">${this._t('space.opacity')}</span>
-            <input type="range" min="0" max="100" .value=${String(Math.round(d.roomOpacity * 100))}
-              @input=${(e: Event) => (this._spaceDialog = { ...d, roomOpacity: Number((e.target as HTMLInputElement).value) / 100 })} />
+            ${this._rangeInput(0, 100, 1, Math.round(d.roomOpacity * 100), (n) => (this._spaceDialog = { ...d, roomOpacity: n / 100 }))}
             <span class="opv">${Math.round(d.roomOpacity * 100)}%</span>
           </div>
           <label>${this._t('space.bg_mode')}</label>
@@ -7444,14 +7451,12 @@ class HouseplanCard extends LitElement {
           <label class="dispsection">${this._t('room.sizes_section')}</label>
           <label>${this._t('room.name_scale')}</label>
           <div class="colorrow gsrow">
-            <input type="range" min="50" max="300" step="5" .value=${String(Math.round(this._roomNameScale * 100))}
-              @input=${(e: Event) => { this._roomNameScale = Number((e.target as HTMLInputElement).value) / 100; this.requestUpdate(); }} />
+            ${this._rangeInput(50, 300, 5, Math.round(this._roomNameScale * 100), (n) => { this._roomNameScale = n / 100; this.requestUpdate(); })}
             <span class="opv">${Math.round(this._roomNameScale * 100)}%</span>
           </div>
           <label>${this._t('room.label_scale')}</label>
           <div class="colorrow gsrow">
-            <input type="range" min="50" max="300" step="5" .value=${String(Math.round(this._roomLabelScale * 100))}
-              @input=${(e: Event) => { this._roomLabelScale = Number((e.target as HTMLInputElement).value) / 100; this.requestUpdate(); }} />
+            ${this._rangeInput(50, 300, 5, Math.round(this._roomLabelScale * 100), (n) => { this._roomLabelScale = n / 100; this.requestUpdate(); })}
             <span class="opv">${Math.round(this._roomLabelScale * 100)}%</span>
           </div>
           ${this._renderCardPreview(

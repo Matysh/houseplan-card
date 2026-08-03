@@ -1347,6 +1347,11 @@ export const cardStyles = css`
     .dialog .body .temprange .tempin { width: 56px; flex: none; padding: var(--sp-2) var(--sp-3); }
     .dialog .body .colorrow .tempin { width: 72px; flex: none; }
     .srcrow { flex-wrap: nowrap; }
+    /* native HA controls (rendered only when the HA frontend defines them;
+       old HA and the smoke env keep the plain inputs). ha-switch is taller
+       than a checkbox - cap its footprint so .srcrow keeps its rhythm. */
+    .srcrow ha-switch { flex: none; }
+    .colorrow ha-slider { flex: 1; min-width: 0; }
     .srcrow > span:first-of-type { white-space: nowrap; }
     .colorrow .opl { color: var(--hp-muted); font-size: var(--fs-s); }
     .colorrow .opv { font-size: var(--fs-s); min-width: 34px; text-align: right; }
