@@ -994,6 +994,13 @@ require hands on real hardware — they remain for the human pass.
 - [ ] **Pan has slack, not walls**: you can pan a full screen past the plan in
       every direction; when the plan is fully off screen a small arrow points
       home and one click fits it back
+- [ ] **Pan at ANY zoom** (owner's report 2026-08-04): dragging empty scene
+      moves the view at 100 %, at 50 % and at the zoom-out floor — in View and
+      in all three editors, with every plan tool selected. The tools keep the
+      pointer they own (a resize handle resizes, a device badge in the Devices
+      editor moves the device, an opening slides along its wall — none of them
+      pan), two fingers still pinch, and on a kiosk screen a horizontal drag
+      is still the floor swipe (a vertical one pans) [auto: smoke_pan_any_zoom]
 - [ ] **Adaptive grid** (§7): in the Plan editor zoomed far out the grid does
       not merge into a grey wash — fine dots thin out, every 5th/10th node
       stays bigger; zoomed in the grid is the usual one and snapping still

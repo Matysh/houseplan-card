@@ -345,6 +345,13 @@ class HouseplanCard extends LitElement {
   private _viewModeSnap: { space: string; zoom: number; cx?: number; cy?: number } | null = null;
   private _pointers = new Map<number, { x: number; y: number }>();
   private _panStart: { sx: number; sy: number; vx: number; vy: number } | null = null;
+  /**
+   * What the current one-finger drag turned out to be, decided ONCE on the
+   * first real movement and held until the finger lifts (see
+   * `_stagePointerMove`). Only the kiosk has two candidates — a horizontal
+   * drag there is the floor swipe; everywhere else a drag always pans.
+   */
+  private _panLock: 'pan' | 'swipe' | null = null;
   private _pinchStart: { dist: number; zoom: number } | null = null;
   private _suppressClick = false;
   private _roViewport?: ResizeObserver;
@@ -2179,13 +2186,25 @@ class HouseplanCard extends LitElement {
     const v = this._viewOr(this._baseVb());
     if (this._pointers.size === 1) {
       this._panStart = { sx: ev.clientX, sy: ev.clientY, vx: v.x, vy: v.y };
+      this._panLock = null; // undecided until the finger moves
       this._suppressClick = false;
     } else if (this._pointers.size === 2) {
       const pts = [...this._pointers.values()];
       const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
       this._pinchStart = { dist, zoom: this._zoom };
       this._panStart = null;
+      this._panLock = null;
     }
+  }
+
+  /**
+   * Is a horizontal drag reserved for the floor swipe right now? Only on a
+   * kiosk screen, only at the zoom `swipeTarget` accepts, and only when there
+   * is more than one space to swipe between — everywhere else nothing
+   * competes with panning.
+   */
+  private get _swipeZone(): boolean {
+    return this._kiosk && this._zoom <= 1.001 && this._model.length > 1;
   }
 
   private _stagePointerMove(ev: PointerEvent): void {
@@ -2221,14 +2240,25 @@ class HouseplanCard extends LitElement {
         this._suppressClick = true;
         clearTimeout(this._holdTimer);
       }
-      if (this._zoom > 1 && this._view) {
-        const stage = this._stageEl!;
-        const v = this._view;
-        const fit = fitView(this._baseVb(), this._stageAspect());
+      // Which gesture is this? Decided once, on the first movement worth the
+      // name, and kept for the rest of the drag so the plan cannot flip-flop
+      // under the finger. Panning is NOT gated on the zoom any more (owner,
+      // 2026-08-04: «таскать план при любом масштабе»): on an infinite canvas
+      // there is no "the content already covers the scene" state that would
+      // make a drag meaningless — `_clampView` alone decides how far you may
+      // walk, at 400% and at 33% alike.
+      if (this._panLock === null && Math.abs(ddx) + Math.abs(ddy) > 8) {
+        this._panLock = this._swipeZone && Math.abs(ddx) > Math.abs(ddy) * 1.5 ? 'swipe' : 'pan';
+      }
+      const stage = this._stageEl;
+      if (this._panLock === 'pan' && stage) {
+        const vb = this._baseVb();
+        const v = this._viewOr(vb);
+        const fit = fitView(vb, this._stageAspect());
         this._view = this._clampView(
           {
-            x: this._panStart.vx - (ddx / stage.clientWidth) * v.w,
-            y: this._panStart.vy - (ddy / stage.clientHeight) * v.h,
+            x: this._panStart.vx - (ddx / (stage.clientWidth || 1)) * v.w,
+            y: this._panStart.vy - (ddy / (stage.clientHeight || 1)) * v.h,
             w: v.w,
             h: v.h,
           },
@@ -2277,6 +2307,7 @@ class HouseplanCard extends LitElement {
     if (this._pointers.size < 2) this._pinchStart = null;
     if (this._pointers.size === 0) {
       this._panStart = null;
+      this._panLock = null;
       // reset click suppression on the next tick (so that a click right after a pan does not fire)
       setTimeout(() => (this._suppressClick = false), 0);
     }

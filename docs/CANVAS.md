@@ -38,7 +38,7 @@ coordinate system.
 | `space.view_box` | the frame; everything was clamped into it | an OPTIONAL hint for the very first frame; used only when there is nothing to frame |
 | "fit" rectangle | `view_box` (or the content bbox in view mode) | always the **content frame** (§4) |
 | Zoom out floor | `ZOOM_MIN = 0.4` (fraction of `view_box`) | 3x the content frame (`MIN_ZOOM = 1/3`) |
-| Pan bounds | content must cover the scene | content frame + one screen of slack in each direction |
+| Pan bounds | content must cover the scene, and only above 100% zoom | content frame + one screen of slack in each direction, at any zoom |
 | Icon size | % of `view_box`, i.e. grew with zoom | % of `iconUnit` — still grows with zoom (§6) |
 | Validation range | `+/-4` | `+/-5000` (§3) |
 
@@ -154,9 +154,26 @@ was silently excluded from the frame).
 * **Zoom in** — unchanged, `ZOOM_MAX = 8`.
 * **Zoom out** — `MIN_ZOOM = 1/3`: you can see three times the content
   frame and no further. Empty space beyond that is not information.
-* **Pan** — bounded by the content frame inflated by
+* **Pan** — available at **every zoom**, in view mode and in every
+  editor, and bounded by the content frame inflated by
   `PAN_SLACK = 1.0` of `max(view, frame)` on each side. You can walk
   off the plan (there is no edge), but not into infinity.
+  Until 2026-08-04 a drag moved the view only while `zoom > 1`: on the
+  old bounded canvas a plan smaller than the scene genuinely had
+  nowhere to go, so the gate was harmless. With no edge left it was
+  simply a missing feature, and the owner reported it as one
+  («таскать план при любом масштабе»). The zoom no longer takes part
+  in the decision — `_clampView` alone says how far you may walk.
+* **Who owns the pointer.** A drag pans only when it starts on empty
+  scene: the room-resize handles, device badges, openings, room labels
+  and the decor shapes take the pointer first (`_stagePointerDown`
+  bails out on them), and a drawing tool that consumes the press —
+  decor line/rect/ellipse/text — bails out too. Two fingers are always
+  a pinch, never a pan. On a **kiosk** screen at swipe zoom (`≤ 1`,
+  more than one space) a *horizontal* drag belongs to the floor swipe:
+  the gesture is classified once, on the first movement past 8 px, and
+  keeps that role until the finger lifts (`_panLock`), so the plan
+  never slides under a swipe and a vertical drag still pans.
 * **"Home is that way" arrow** — when the content frame is entirely
   outside the current view, a small pointer appears at the view edge
   in the frame's direction. Clicking it fits the content. Cheap
@@ -259,6 +276,7 @@ fits `all`.
 | grid `<rect>` over `vb` | the grid ends with the square | rect follows the view (§7) |
 | grid pitch fixed | fine at 1 canvas wide | `gridLevels()` (§7) |
 | `_clampView` pinned content over the scene | you cannot pan past the edge | §5 pan slack |
+| `_stagePointerMove` panned only while `zoom > 1` | below 100% the content already covered the scene, so a drag had nowhere to go | **removed** — §5, panning at every zoom |
 | `ZOOM_MIN = 0.4` | fraction of the square | `MIN_ZOOM = 1/3` of the content frame (§5) |
 | `_decorMoveUpdate` clamp `-0.25 .. 1.25` | decor may hang a quarter past the edge | clamp widened to the sane range (`+/-CANVAS_LIMIT`) — corruption insurance, not a frame |
 | static card `aspect-ratio` + `viewBox` from `space.vb` | the static card frames the square | `spaceFrame()` — same content frame as the full card |
