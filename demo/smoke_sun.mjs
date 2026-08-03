@@ -133,10 +133,10 @@ const res = await page.evaluate(async () => {
   await setWeather('cloudy');
   const stopCloudy = Number(sr().querySelector('.sunlayer ~ * stop, defs stop')?.getAttribute('stop-opacity')
     || sr().querySelector('stop')?.getAttribute('stop-opacity'));
-  out.cloudyFades = domPolys().length > 0 && Math.abs(stopCloudy - 0.18 * 0.4) < 1e-6;
+  out.cloudyFades = domPolys().length > 0 && Math.abs(stopCloudy - 0.3 * 0.4) < 1e-6;
   await setWeather('sunny');
   const stopClear = Number(sr().querySelector('stop')?.getAttribute('stop-opacity'));
-  out.clearFullAlpha = Math.abs(stopClear - 0.18) < 1e-6;
+  out.clearFullAlpha = Math.abs(stopClear - 0.3) < 1e-6;
   delete cfg().settings.weather_entity;
   touchCfg();
 
@@ -289,5 +289,58 @@ check('b701_acked', acked);
 const final = await rayInfo();
 check('b701_write_landed', final.rev !== base.rev, true);
 check('b701_ray_survives_ack', Math.abs(final.midY - final.wEy * 1000) < 1, true);
+
+// 15) the 3° threshold + the 2 s dissolve (owner 2026-08-03). Runs LAST and in
+// its own evaluate: it deliberately waits out a two-second fade, and the b701
+// regression above measures a debounced config write against wall-clock time.
+const thr = await page.evaluate(async () => {
+  const out = {};
+  const c = window.__card;
+  const sr = () => c.shadowRoot || c.renderRoot;
+  const upd = async () => { c.requestUpdate(); await c.updateComplete; };
+  const setSun = async (azimuth, elevation) => {
+    c.hass = { ...c.hass, states: { ...c.hass.states, 'sun.sun': {
+      entity_id: 'sun.sun', state: elevation > 0 ? 'above_horizon' : 'below_horizon',
+      attributes: { azimuth, elevation },
+    } } };
+    await upd();
+  };
+  const domPolys = () => [...sr().querySelectorAll('.sunlayer polygon')];
+  const layer = () => sr().querySelector('.sunlayer');
+  const stopAlpha = () => Number(sr().querySelector('stop')?.getAttribute('stop-opacity'));
+
+  // the old build ramped the alpha in over the first ~2°; now the layer is
+  // either absent or at FULL strength, and crossing 3° fades the whole LAYER
+  // (never the geometry) in or out over exactly two seconds
+  await setSun(90, 10);
+  out.aboveThresholdDrawn = domPolys().length > 0 && !layer().classList.contains('out');
+  {
+    const cs = getComputedStyle(layer());
+    out.fadeInTakesTwoSeconds = cs.animationName === 'hp-sunfade-in' && cs.animationDuration === '2s';
+  }
+  out.fullAlphaWellAboveThreshold = Math.abs(stopAlpha() - 0.3) < 1e-6;
+  await setSun(90, 3.2);
+  out.fullAlphaJustAboveThreshold = Math.abs(stopAlpha() - 0.3) < 1e-6;
+
+  // below 3°: the layer stays for exactly the dissolve, then leaves the DOM
+  await setSun(90, 2);
+  {
+    const dying = layer();
+    const cs = dying && getComputedStyle(dying);
+    out.belowThresholdDissolves = !!dying && dying.classList.contains('out')
+      && cs.animationName === 'hp-sunfade-out' && cs.animationDuration === '2s';
+  }
+  await new Promise((r) => setTimeout(r, 2300));
+  await upd();
+  out.belowThresholdGoneAfterFade = !layer() && domPolys().length === 0;
+
+  // a sun that never crossed the threshold draws nothing at all — no ghost
+  await setSun(90, 1);
+  out.coldStartBelowThresholdEmpty = domPolys().length === 0 && !layer();
+  await setSun(90, 5);
+  out.backAboveThreshold = domPolys().length > 0 && !layer().classList.contains('out');
+  return out;
+});
+Object.assign(res, thr);
 
 await finish(browser, checkAll(res));

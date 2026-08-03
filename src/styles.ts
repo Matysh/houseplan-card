@@ -1111,6 +1111,30 @@ export const cardStyles = css`
        sense rings, the vacuum puck's 2.2s period, and a moderate opacity so
        two curtains travelling at once never turn into a strobe. The plate
        itself stays neutral — yellow means «включено», nothing else. */
+    /* Sun wedges (docs/SUN.md). The layer is present ONLY above the 3°
+       threshold; crossing it fades the whole layer in or out over EXACTLY
+       2 s (owner 2026-08-03 — RAY_FADE_MS in src/sun.ts must match). The
+       geometry is untouched: this is a plain opacity animation on the group,
+       so overlapping wedges keep their own blending while it plays. */
+    .sunlayer {
+      animation: hp-sunfade-in 2s linear both;
+    }
+    .sunlayer.out {
+      animation: hp-sunfade-out 2s linear both;
+    }
+    @keyframes hp-sunfade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes hp-sunfade-out {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      /* no fade at all: the rays are simply there or simply gone */
+      .sunlayer, .sunlayer.out { animation: none; }
+      .sunlayer.out { opacity: 0; }
+    }
     .dev.covermove::after {
       content: '';
       position: absolute;

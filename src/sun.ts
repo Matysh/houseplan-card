@@ -220,13 +220,41 @@ export function computeSunRays(
 
 // ---------------- wedge dressing ----------------
 
-/** Peak wedge opacity; two overlapping wedges stay readable (docs/SUN.md). */
-export const RAY_MAX_ALPHA = 0.18;
+/**
+ * Peak wedge opacity (owner 2026-08-03: «лучи поярче, иногда плохо видны» —
+ * raised from 0.18). Two overlapping wedges still stay under a readable
+ * ceiling on white paper AND on the dark glow canvas (docs/SUN.md).
+ */
+export const RAY_MAX_ALPHA = 0.3;
 
-/** Wedge opacity: ramps in over the first ~2° so sunrise never pops. */
+/**
+ * The elevation threshold, degrees. Below it there are NO rays at all, above
+ * it they are at FULL strength — the owner's 2026-08-03 contract replacing
+ * the old gradual ramp-in. The switch itself is not instant: the card fades
+ * the whole layer in/out over RAY_FADE_MS (CSS, not geometry).
+ */
+export const RAY_ELEVATION_MIN = 3;
+
+/** Duration of that fade, ms — «ровно 2 секунды» (mirrored in styles.ts). */
+export const RAY_FADE_MS = 2000;
+
+/** Are the wedges present at this elevation at all? (The hard 3° threshold.) */
+export function raysVisible(elevation: number): boolean {
+  return Number(elevation) >= RAY_ELEVATION_MIN;
+}
+
+/**
+ * Full-strength wedge opacity for the current cloud cover — elevation plays
+ * no part. The card feeds this into the gradient and lets CSS fade the layer,
+ * so a wedge dissolving at the threshold keeps its colour while it goes.
+ */
+export function rayPeakAlpha(cloud = 1): number {
+  return RAY_MAX_ALPHA * clamp01(cloud);
+}
+
+/** Wedge opacity: nothing below the threshold, full strength above it. */
 export function rayAlpha(elevation: number, cloud = 1): number {
-  if (!(elevation > 0)) return 0;
-  return RAY_MAX_ALPHA * Math.min(1, elevation / 2) * clamp01(cloud);
+  return raysVisible(elevation) ? rayPeakAlpha(cloud) : 0;
 }
 
 /** Wedge color: warm orange at the horizon → neutral daylight. */

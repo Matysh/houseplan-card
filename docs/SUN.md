@@ -111,9 +111,33 @@ room's polygon (`polyclip` intersection, the same dependency
 lengths: ~2.5 at sunrise/sunset tapering to ~0.8 at the zenith
 (`0.8 + 1.7·(1 − elevation/90)^1.6`). A linear gradient runs bright at
 the window and dissolves inward; the color is warm orange while
-`elevation < 10°` and neutral by day; peak opacity is modest (~0.18 —
-two overlapping wedges never exceed a readable ceiling). Near the
-horizon the opacity ramps in over the first ~2° so wedges never pop.
+`elevation < 10°` and neutral by day; peak opacity is `RAY_MAX_ALPHA`
+= 0.30 (owner 2026-08-03: «лучи поярче, иногда плохо видны» — raised
+from 0.18; two overlapping wedges still stay under a readable ceiling
+on white paper and on the dark glow canvas alike).
+
+### The 3° threshold and the 2-second fade
+
+Wedge opacity does NOT depend on elevation any more — the old ramp-in
+over the first ~2° is gone. The contract (owner 2026-08-03) is a hard
+threshold:
+
+- `elevation < 3°` → NO rays at all;
+- `elevation ≥ 3°` → rays at full strength (`rayPeakAlpha`, cloud cover
+  being the only multiplier).
+
+Crossing the threshold is animated, but on the LAYER, never on the
+geometry: the `<g class="sunlayer">` fades in with `hp-sunfade-in` and
+out with `hp-sunfade-out`, both exactly 2 s (`RAY_FADE_MS` in
+`src/sun.ts` must stay in sync with `styles.ts`). To let the fade-out
+play at all, the card keeps the layer mounted with `.out` for those two
+seconds and only then drops it. `prefers-reduced-motion: reduce` skips
+the animation entirely — the rays are simply there or simply gone.
+
+Everything else that removes wedges — leaving view mode, switching the
+feature off, night (`elevation ≤ 0`), rain — is instant: those are not
+threshold crossings, and a wedge lingering while you enter the editor
+would just be a bug.
 
 Layer order: ABOVE room fills (and the glow layer), BELOW devices and
 labels (those live in the HTML `devlayer` anyway). Night

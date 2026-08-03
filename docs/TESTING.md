@@ -931,6 +931,15 @@ require hands on real hardware — they remain for the human pass.
 - [ ] Wedge direction follows the compass; length grows toward
       sunrise/sunset and shrinks toward noon; every wedge is clipped by its
       room polygon; night = no wedges at all
+- [ ] Brightness + the 3° threshold (2026-08-03): wedges are visibly brighter
+      (peak alpha 0.30, was 0.18) yet still readable over white paper AND the
+      dark glow canvas; there is NO gradual ramp near the horizon — below 3°
+      no rays at all, at/above 3° full strength; crossing the threshold fades
+      the whole layer in/out over exactly 2 s (CSS on `.sunlayer`, the
+      geometry never moves), and `prefers-reduced-motion` makes it instant.
+      Every other way of losing the wedges (editor, feature off, night, rain)
+      stays instant [auto: smoke_sun «the 3° threshold» + unit rayAlpha/
+      raysVisible/rayPeakAlpha; shots: demo/shot_sun_bright.mjs]
 - [ ] Weather entity (optional, global): cloudy fades the wedges, rain/snow
       removes them, a dead/unknown weather sensor changes nothing
 - [ ] Sun geometry recomputes ONLY when the sun attributes or the config

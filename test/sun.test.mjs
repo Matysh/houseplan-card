@@ -5,6 +5,7 @@ import {
   isExteriorWall, windowWallInfo, windowLit,
   rayLength, rayQuad, clipToRoom, computeSunRays,
   rayAlpha, rayColor, cloudFactor, RAY_MAX_ALPHA,
+  raysVisible, rayPeakAlpha, RAY_ELEVATION_MIN, RAY_FADE_MS,
   northDegOf, bgModeOf, sunRaysOn, weatherEntityOf, sunStateOf,
 } from '../test-build/sun.js';
 
@@ -163,13 +164,37 @@ test('computeSunRays: rotating the compass swings the light to another window', 
   }
 });
 
-test('rayAlpha: capped, ramps in near the horizon, scaled by clouds', () => {
-  assert.equal(rayAlpha(0), 0);
+test('rayAlpha: nothing below 3°, full strength above (owner 2026-08-03)', () => {
+  // the old gradual ramp-in is gone: it is a threshold, not a fade
   assert.equal(rayAlpha(-3), 0);
-  assert.ok(near(rayAlpha(1), RAY_MAX_ALPHA / 2));
+  assert.equal(rayAlpha(0), 0);
+  assert.equal(rayAlpha(1), 0);
+  assert.equal(rayAlpha(2.99), 0);
+  assert.ok(near(rayAlpha(3), RAY_MAX_ALPHA));   // exactly at the threshold: on
+  assert.ok(near(rayAlpha(3.1), RAY_MAX_ALPHA));
   assert.ok(near(rayAlpha(30), RAY_MAX_ALPHA));
+  assert.ok(near(rayAlpha(89), RAY_MAX_ALPHA));  // no elevation shaping at all
+  // clouds still scale it, rain still kills it
   assert.ok(near(rayAlpha(30, 0.25), RAY_MAX_ALPHA * 0.25));
   assert.equal(rayAlpha(30, 0), 0);
+});
+
+test('raysVisible / rayPeakAlpha: the threshold and the cloud-only ceiling', () => {
+  assert.equal(RAY_ELEVATION_MIN, 3);
+  assert.equal(RAY_FADE_MS, 2000); // «ровно 2 секунды», mirrored in styles.ts
+  assert.equal(raysVisible(2.9), false);
+  assert.equal(raysVisible(3), true);
+  assert.equal(raysVisible(45), true);
+  assert.equal(raysVisible(-10), false);
+  // the peak is what the gradient uses while the layer fades — cloud only
+  assert.ok(near(rayPeakAlpha(), RAY_MAX_ALPHA));
+  assert.ok(near(rayPeakAlpha(1), RAY_MAX_ALPHA));
+  assert.ok(near(rayPeakAlpha(0.4), RAY_MAX_ALPHA * 0.4));
+  assert.equal(rayPeakAlpha(0), 0);
+});
+
+test('RAY_MAX_ALPHA is the brighter 0.3 ceiling (owner 2026-08-03)', () => {
+  assert.equal(RAY_MAX_ALPHA, 0.3);
 });
 
 test('rayColor: warm at the horizon, neutral by day', () => {

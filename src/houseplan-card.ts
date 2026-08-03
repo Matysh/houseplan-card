@@ -31,7 +31,7 @@ import {
 } from './resize';
 import {
   computeSunRays, dayPhase, northDegOf, bgModeOf, sunRaysOn, weatherEntityOf,
-  sunStateOf, cloudFactor, rayAlpha, rayColor, type SunRay,
+  sunStateOf, cloudFactor, rayPeakAlpha, raysVisible, rayColor, RAY_FADE_MS, type SunRay,
 } from './sun';
 import { ContentSigner } from './signing';
 import { mdiHomeCityOutline } from '@mdi/js';
@@ -4655,14 +4655,36 @@ class HouseplanCard extends LitElement {
    */
   private _renderSunRays(space: SpaceModel): TemplateResult {
     const empty = svg`` as unknown as TemplateResult;
-    if (this._editing || !this._effSunRays()) return empty;
+    // HARD gates — the feature is simply not on: leaving an editor, a space
+    // with rays off, night, rain. Those never fade, they just are not there.
+    if (this._editing || !this._effSunRays()) { this._sunFadeReset(); return empty; }
     const north = this._effNorth();
     const sun = north !== null ? sunStateOf(this.hass) : null;
-    if (!sun || sun.elevation <= 0) return empty;
+    if (!sun || sun.elevation <= 0) { this._sunFadeReset(); return empty; }
     const weather = weatherEntityOf(this._sunGlobal());
     const cloud = cloudFactor(weather ? this.hass?.states?.[weather]?.state : null);
-    const alpha = rayAlpha(sun.elevation, cloud);
-    if (alpha <= 0) return empty;
+    const alpha = rayPeakAlpha(cloud);
+    if (alpha <= 0) { this._sunFadeReset(); return empty; }
+    // The ONE thing that fades (owner 2026-08-03): the 3° threshold. Above it
+    // the layer is there at full strength, below it gone — with a 2 s CSS
+    // fade either way. The keep-alive below is what lets the fade-OUT play at
+    // all: without it the layer would leave the DOM in the same frame.
+    if (raysVisible(sun.elevation)) {
+      if (this._sunOutTimer) { clearTimeout(this._sunOutTimer); this._sunOutTimer = 0; }
+      this._sunOut = false;
+      this._sunShown = true;
+    } else {
+      if (!this._sunShown) return empty; // never lit: nothing to dissolve
+      if (!this._sunOut) {
+        this._sunOut = true;
+        this._sunOutTimer = window.setTimeout(() => {
+          this._sunOutTimer = 0;
+          this._sunShown = false;
+          this._sunOut = false;
+          this.requestUpdate();
+        }, RAY_FADE_MS);
+      }
+    }
     // DEV-B701-01: the geometry signal must be _cfgEpoch, not _cfgRev.
     // Every local mutation ends in _saveConfig(), which bumps the epoch
     // SYNCHRONOUSLY; _cfgRev only moves after the debounced WS write is
@@ -4692,10 +4714,24 @@ class HouseplanCard extends LitElement {
           </linearGradient>`;
         })}
       </defs>
-      <g class="sunlayer">
+      <g class="sunlayer ${this._sunOut ? 'out' : ''}">
         ${rays.map((r, i) => r.polys.map((p) => svg`<polygon
           points="${p.map((q) => q[0] + ',' + q[1]).join(' ')}" fill="url(#hp-sun-${i})"></polygon>`))}
       </g>` as unknown as TemplateResult;
+  }
+
+  /** Sun-ray layer keep-alive: `shown` = in the DOM, `out` = playing the
+   *  2 s dissolve before it leaves (plain fields — the timer requests the
+   *  update, render just reads them). */
+  private _sunShown = false;
+  private _sunOut = false;
+  private _sunOutTimer = 0;
+
+  /** Drop the layer at once: used by every gate that is NOT the 3° threshold. */
+  private _sunFadeReset(): void {
+    if (this._sunOutTimer) { clearTimeout(this._sunOutTimer); this._sunOutTimer = 0; }
+    this._sunShown = false;
+    this._sunOut = false;
   }
 
   /** One drag/click sample on the compass dial → dialog north_deg. */
