@@ -290,6 +290,15 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       no position percentages anywhere
       [auto: smoke_cover_tap + units resolveTapAction/coverService/stateIcon +
       backend test_cover_tap_action_is_accepted]
+- [ ] Open/close works when the cover is NOT the primary entity (dev, owner's
+      report 2026-08-04): a curtain driver that ships its `cover.*` hidden by
+      the integration next to a visible `switch.*_reverse_direction` (Aqara
+      E1 — his own) has a SWITCH for a primary; picking «Open/close» in the
+      dialog, saving it and tapping the marker sends `cover.open_cover` to the
+      cover, never touches the service switch and never falls back to the info
+      card. The guarded class is read off that same cover, so a garage still
+      degrades to info and is still not offered in the dialog
+      [auto: smoke_cover_not_primary + unit coverEntityOf]
 - [ ] Light-source badges (v1.52.0): in glow fill a lit lamp's badge stays
       standard (the spot is the indicator) and a lit socket stays yellow; in
       other fills a lit lamp is plain yellow with no RGB tint; morphing and

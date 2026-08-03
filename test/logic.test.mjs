@@ -15,7 +15,7 @@ import {
   contentUrl, chunk, referencedContentUrls, MAX_SIGN_PATHS,
   interiorPoint,
   segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointOnBoundary, pointStrictlyInside, roomsOverlap,
-  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, openingShoulders, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, poleOfInaccessibility, runServiceFor, TOGGLE_SAFE_DOMAINS, coverService, coverMoving } from '../test-build/logic.js';
+  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, openingShoulders, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, poleOfInaccessibility, runServiceFor, TOGGLE_SAFE_DOMAINS, coverService, coverMoving, coverEntityOf } from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
 } from '../test-build/rules.js';
@@ -560,6 +560,25 @@ test('coverService: closed→open, open→close, travelling→stop (owner 2026-0
   assert.equal(coverService('unavailable'), 'toggle');
   assert.equal(coverService(null), 'toggle');
   assert.equal(coverService(undefined), 'toggle');
+});
+
+test('coverEntityOf: the cover among ALL entities, primary or not (owner 2026-08-04)', () => {
+  // the owner's Aqara E1 curtain driver, entity for entity: the cover is
+  // hidden by the integration and sits BEHIND the service switch, so
+  // primaryEntity picks the switch — the tap has to look wider than that
+  const aqara = [
+    'cover.office_curtain', 'sensor.office_curtain_battery',
+    'switch.office_curtain_reverse', 'sensor.office_curtain_motor_state',
+  ];
+  assert.equal(coverEntityOf(aqara), 'cover.office_curtain');
+  assert.equal(coverEntityOf(['switch.a', 'cover.b']), 'cover.b'); // order does not matter
+  assert.equal(coverEntityOf(['cover.first', 'cover.second']), 'cover.first');
+  assert.equal(coverEntityOf(['light.only']), null);
+  assert.equal(coverEntityOf([]), null);
+  assert.equal(coverEntityOf(null), null);
+  assert.equal(coverEntityOf(undefined), null);
+  // a `cover_something` sensor is not a cover
+  assert.equal(coverEntityOf(['sensor.cover_position']), null);
 });
 
 test('coverMoving: only opening/closing breathe', () => {

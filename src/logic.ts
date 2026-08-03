@@ -791,6 +791,24 @@ export function coverService(state: string | null | undefined): string {
   return 'toggle';
 }
 
+/**
+ * The cover entity a marker's «Open/close» acts on: the FIRST `cover.*` among
+ * ALL the device's entities — not necessarily the primary one.
+ *
+ * Why this exists (owner's report 2026-08-04, verified on his own install):
+ * an Aqara E1 curtain driver ships the `cover.*` HIDDEN by the integration and
+ * a perfectly visible `switch.*_reverse_direction` next to it. `primaryEntity`
+ * ranks visible before hidden, so the marker's primary was the service switch;
+ * the tap then resolved on the domain `switch`, and the action the user had
+ * explicitly chosen in the dialog degraded to the info card — while the dialog
+ * kept offering it, because THAT check already looked at every entity of the
+ * device. Same lesson as the climate temperature: what a device DOES is not
+ * always what its primary entity is.
+ */
+export function coverEntityOf(entIds: string[] | null | undefined): string | null {
+  return (entIds || []).find((e) => e.startsWith('cover.')) || null;
+}
+
 /** Is a cover travelling right now? Drives the breathing ring on the icon. */
 export function coverMoving(state: string | null | undefined): boolean {
   return state === 'opening' || state === 'closing';

@@ -23,7 +23,7 @@ import {
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
   referencedContentUrls,
   DISPLAY_MODES, TAP_ACTIONS, SPACE_FILL_MODES, ROOM_FILL_MODES,
-  coverService, coverMoving, COVER_GUARDED_CLASSES,
+  coverService, coverMoving, coverEntityOf, COVER_GUARDED_CLASSES,
 } from './logic';
 import {
   planEdgeDrag, applyEdgeDrag, clampEdgeDrag, applyRoomScale, clampRoomScale,
@@ -1648,15 +1648,13 @@ class HouseplanCard extends LitElement {
 
   /** The cover entity behind the dialog's binding, or null. */
   private _bindingCoverEntity(binding: string): string | null {
-    if (binding.startsWith('entity:')) {
-      const eid = binding.slice(7);
-      return eid.startsWith('cover.') ? eid : null;
-    }
+    if (binding.startsWith('entity:')) return coverEntityOf([binding.slice(7)]);
     if (binding.startsWith('device:')) {
       const ref = binding.slice(7);
-      for (const [eid, reg] of Object.entries<any>(this.hass?.entities || {})) {
-        if (reg?.device_id === ref && eid.startsWith('cover.')) return eid;
-      }
+      const eids = Object.entries<any>(this.hass?.entities || {})
+        .filter(([, reg]) => reg?.device_id === ref)
+        .map(([eid]) => eid);
+      return coverEntityOf(eids);
     }
     return null;
   }
@@ -1707,7 +1705,15 @@ class HouseplanCard extends LitElement {
       this._openMarkerDialog(d);
       return;
     }
-    const domain = d.primary ? d.primary.split('.')[0] : null;
+    // The entity a tap ACTS ON. Normally the primary one — but the explicit
+    // «Open/close» drives the device's cover wherever it sits in the entity
+    // list (coverEntityOf): a curtain driver whose primary is a service
+    // switch used to resolve on the domain `switch` and fall back to the info
+    // card, which is exactly what the owner saw (2026-08-04). The guarded
+    // class is read off that same cover, so a garage still degrades.
+    const coverEid = d.tapAction === 'cover' ? coverEntityOf(d.entities) : null;
+    const actEid = coverEid || d.primary;
+    const domain = actEid ? actEid.split('.')[0] : null;
     // the accidental-tap guard (owner's spec 2026-07-29): any state-changing
     // action — toggle or run — may ask first. The dialog is ours, not the
     // browser confirm(), so it works and looks right on a wall tablet.
@@ -1730,7 +1736,7 @@ class HouseplanCard extends LitElement {
     }
     const action = resolveTapAction(
       d.tapAction, undefined, domain,
-      d.primary ? this.hass.states[d.primary]?.attributes?.device_class : null,
+      actEid ? this.hass.states[actEid]?.attributes?.device_class : null,
     );
     if (action === 'run') {
       const target = d.marker?.tap_target || '';
@@ -1749,13 +1755,13 @@ class HouseplanCard extends LitElement {
       });
       return;
     }
-    if (action === 'cover' && d.primary) {
+    if (action === 'cover' && coverEid) {
       // open / close / stop, decided by the CURRENT state (docs/PRODUCT.md);
       // a tap while the curtain travels stops it, the next one reverses
-      const svc = coverService(this.hass.states[d.primary]?.state);
+      const svc = coverService(this.hass.states[coverEid]?.state);
       guarded(this._t('confirm.tap_cover', { name: d.name }), () => {
         this.hass
-          .callService('cover', svc, { entity_id: d.primary })
+          .callService('cover', svc, { entity_id: coverEid })
           .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
       });
       return;
