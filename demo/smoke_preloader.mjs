@@ -13,6 +13,7 @@ const { page, browser } = await launch({ width: 820, height: 760 });
 // ---------- phase 1: normal mode, HA panel lands late ----------
 const res = await page.evaluate(async () => {
   const out = {};
+  customElements.get('houseplan-card')?._warmBootReset?.(); // DEV-B703: this scenario simulates a COLD first open — forget the page's warm re-mount memo
   const spacer = document.createElement('div');
   spacer.style.cssText = 'height:0px';
   const c = document.createElement('houseplan-card');
@@ -119,6 +120,7 @@ check('kioskPlanNeverHidden', kiosk.kioskPlanNeverHidden);
 // ---------- phase 3: prefers-reduced-motion → the house does not pulse ----------
 await page.emulateMedia({ reducedMotion: 'reduce' });
 const reduced = await page.evaluate(async () => {
+  customElements.get('houseplan-card')?._warmBootReset?.(); // DEV-B703: this scenario simulates a COLD first open — forget the page's warm re-mount memo
   const c = document.createElement('houseplan-card');
   c.setConfig({ type: 'custom:houseplan-card' });
   c.hass = window.__card.hass;

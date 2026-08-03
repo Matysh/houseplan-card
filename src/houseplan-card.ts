@@ -65,6 +65,23 @@ const BOOT_MAX_MS = 1200;
 /** AUD-1552-02: post-reveal grace during which late chrome shifts glide
  *  (CSS height transition on the stage) instead of snapping. */
 const BOOT_SOFT_MS = 1500;
+/** DEV-B703-01: warm re-mount memo — MODULE scope, so it lives with the loaded
+ *  PAGE, not with any card instance. Lovelace re-creates card elements when
+ *  the websocket reconnects after a long-backgrounded tab; the fresh instance
+ *  used to run the whole first-open boot (veil + BOOT_MIN_MS + quiescence),
+ *  which reads as «план перезагрузился», even though the page (and HA's
+ *  chrome) never went anywhere. Within one loaded page the chrome IS already
+ *  settled, so the geometry the previous instance settled at is still valid:
+ *  remember it per (viewport size × card config) and let the next instance
+ *  open instantly in the final geometry, no veil at all. A window resize
+ *  between instances changes the key → miss → the full protective boot (the
+ *  only case where the chrome may genuinely re-settle). The config part of
+ *  the key keeps two DIFFERENT cards on one page from adopting each other's
+ *  header height (same config twice on one view is indistinguishable — and
+ *  then the heights match anyway). */
+const warmBoot = new Map<string, { hdrH: number; stageH: number }>();
+const warmBootKey = (config: unknown): string =>
+  `${window.innerWidth}x${window.innerHeight}|${JSON.stringify(config ?? {})}`;
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -573,6 +590,9 @@ class HouseplanCard extends LitElement {
       clearTimeout(this._bootSoftTimer);
       this._bootSoftTimer = window.setTimeout(() => { this._bootSoft = false; }, BOOT_SOFT_MS);
     }
+    // DEV-B703-02: a reattach mid-outage must keep revalidating — the retry
+    // timer died in disconnectedCallback
+    if (!this._loadOk && this._serverCfg && this.hass) this._scheduleLoadRetry();
   }
 
   public disconnectedCallback(): void {
@@ -584,6 +604,10 @@ class HouseplanCard extends LitElement {
     clearTimeout(this._kioskDotsTimer);
     clearTimeout(this._kioskHoldTimer);
     clearTimeout(this._reloadRetry);
+    clearTimeout(this._loadRetryTimer);
+    this._loadRetryTimer = undefined; // a cleared id must not block a reschedule
+    this._connHooked?.removeEventListener?.('ready', this._onConnReady);
+    this._connHooked = null;
     this._signer.dispose();
     clearTimeout(this._toastTimer);
     clearTimeout(this._slideTimer);
@@ -723,9 +747,32 @@ class HouseplanCard extends LitElement {
     return { type: 'custom:houseplan-card' };
   }
 
+  /** Test hook (smokes): forget the warm re-mount memo — a cold page again. */
+  public static _warmBootReset(): void {
+    warmBoot.clear();
+  }
+
   public setConfig(config: CardConfig): void {
     this._config = { icon_size: 2.5, show_temperature: true, live_states: true, show_signal: true, ...config };
     if (this._config.kiosk) { this._booting = false; this._bootFading = false; } // kiosk: 100dvh, nothing to settle
+    else {
+      // DEV-B703-01: this page already booted an identical card at this
+      // viewport — adopt its settled header height and skip the veil
+      // entirely: the card reveals synchronously in the final geometry (the
+      // saved zoom is armed below, HP-1551). _bootSoft covers any residual
+      // chrome drift with a glide instead of a snap.
+      const warm = warmBoot.get(warmBootKey(this._config));
+      if (warm) {
+        this._booting = false;
+        this._bootFading = false;
+        this._hdrH = warm.hdrH;
+        this._bootSoft = true; // timer armed in connectedCallback...
+        if (this.isConnected) { // ...unless setConfig re-runs while attached
+          clearTimeout(this._bootSoftTimer);
+          this._bootSoftTimer = window.setTimeout(() => { this._bootSoft = false; }, BOOT_SOFT_MS);
+        }
+      }
+    }
     if (config.default_floor) this._space = config.default_floor;
     try {
       this._zoomBySpace = JSON.parse(localStorage.getItem(LS_ZOOM) || '{}') || {};
@@ -954,6 +1001,7 @@ class HouseplanCard extends LitElement {
   protected willUpdate(changed: PropertyValues): void {
     if (changed?.has?.('hass')) { this._vacTick(); this._senseTick(); }
     if (changed.has('hass') && this.hass) {
+      this._hookConnection();
       if (!this._loadOk && !this._loading && this._loadTries < 8) {
         this._loadFromServer();
       }
@@ -986,6 +1034,12 @@ class HouseplanCard extends LitElement {
         const above = Math.min(Math.max(card.getBoundingClientRect().top, 0), 120);
         const t = Math.round(own + above);
         if (t >= 0 && Math.abs(t - this._hdrH) > 1) this._hdrH = t;
+        // DEV-B703-01: chrome that lands after the settle (or a window
+        // resize with a live card) must not poison the next warm mount —
+        // the memo follows the live settled geometry.
+        if (t >= 0 && !this._booting && !this._config?.kiosk && stage.clientHeight > 0) {
+          warmBoot.set(warmBootKey(this._config), { hdrH: t, stageH: stage.clientHeight });
+        }
       };
       // a frame later: setting state straight from the observer callback makes
       // the browser report "ResizeObserver loop completed with undelivered
@@ -1083,16 +1137,26 @@ class HouseplanCard extends LitElement {
       this._cacheSnapshot();
       this._restoreZoom();
     } catch (e) {
-      // not the last attempt — silently wait for the next hass update (WS warm-up)
-      if (this._loadTries >= 8) {
+      if (this._serverCfg) {
+        // DEV-B703-02: this instance already RENDERS a valid config (the LS
+        // snapshot, or an earlier successful load). A failing socket is a
+        // transient condition — nulling _serverCfg here blanked the plan on
+        // every reconnect that took more than 8 hass ticks. Stale-while-
+        // revalidate: the last valid config stays on screen until a
+        // successful reload replaces it, and revalidation keeps running on
+        // our own clock (willUpdate stops driving loads after 8 tries).
+        this._scheduleLoadRetry();
+      } else if (this._loadTries >= 8) {
+        // nothing was ever shown — genuine no-backend: local-only fallback
         this._serverStorage = false;
-        this._serverCfg = null;
         try {
           this._layout = JSON.parse(localStorage.getItem(LS_KEY) || '{}') || {};
         } catch {
           this._layout = {};
         }
       }
+      // fewer than 8 tries with nothing shown yet: silently wait for the
+      // next hass update (WS warm-up)
     } finally {
       this._loading = false;
     }
@@ -1134,6 +1198,46 @@ class HouseplanCard extends LitElement {
   }
 
   private _reloadRetry?: number;
+  /** DEV-B703-02: self-driven revalidation once willUpdate's 8-try budget is
+   *  spent — without it a card whose socket died at mount would show the
+   *  cached plan forever and never revalidate (hass ticks stop driving loads
+   *  after 8 tries). Exponential backoff capped at 8 s; single timer;
+   *  cleared on disconnect and on a connection 'ready'. */
+  private _loadRetryTimer?: number;
+  private _scheduleLoadRetry(): void {
+    if (this._loadRetryTimer !== undefined) return;
+    const delay = Math.min(8000, 500 * 2 ** Math.min(4, Math.max(1, this._loadTries - 7)));
+    this._loadRetryTimer = window.setTimeout(() => {
+      this._loadRetryTimer = undefined;
+      if (!this._loadOk && !this._loading && this.hass) this._loadFromServer();
+    }, delay);
+  }
+
+  /** DEV-B703-02: revalidate the moment the socket comes back. The event
+   *  subscriptions (houseplan_config_updated / layout / trail) survive a
+   *  reconnect on their own — home-assistant-js-websocket keeps the
+   *  Connection object alive and replays its subscription commands on
+   *  'ready' — but a LOAD that burned its retry budget while the socket was
+   *  down would never run again. 'ready' fires on every (re)connect: reset
+   *  the budget and quietly re-read the config. */
+  private _connHooked: { removeEventListener?: (t: string, cb: () => void) => void } | null = null;
+  private _onConnReady = (): void => {
+    this._loadTries = 0;
+    clearTimeout(this._loadRetryTimer);
+    this._loadRetryTimer = undefined;
+    if (this._loading) return;
+    // a subscribe lost mid-load leaves _loadOk=true without _unsubCfg — the
+    // full load path repairs both (every subscribe in it is guarded)
+    if (!this._loadOk || !this._unsubCfg) this._loadFromServer();
+    else this._reloadConfigOnly();
+  };
+  private _hookConnection(): void {
+    const conn = (this.hass as any)?.connection;
+    if (!conn || conn === this._connHooked) return;
+    this._connHooked?.removeEventListener?.('ready', this._onConnReady);
+    conn.addEventListener?.('ready', this._onConnReady);
+    this._connHooked = conn;
+  }
   /**
    * Signed urls for the content endpoint (audit follow-up B1 regression).
    * A browser cannot authenticate an <image href> or an <a href>: HA takes a
@@ -1731,6 +1835,12 @@ class HouseplanCard extends LitElement {
     if (!this._booting) return;
     this._refitView(); // reveal in the final geometry, never mid-jump
     this._booting = false;
+    // DEV-B703-01: the page has settled once — the next instance with the
+    // same config at the same viewport opens warm (no veil, no wait).
+    const settledH = this._stageEl?.clientHeight ?? 0;
+    if (!this._config?.kiosk && settledH > 0) {
+      warmBoot.set(warmBootKey(this._config), { hdrH: this._hdrH, stageH: settledH });
+    }
     this._bootFading = true; // one soft opacity-out, then out of the DOM
     this._bootTimer = window.setTimeout(() => { this._bootFading = false; }, 220);
     // AUD-1552-02: chrome that lands after the cap (device slower than
