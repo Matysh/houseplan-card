@@ -1796,11 +1796,19 @@ class HouseplanCard extends LitElement {
    * model, openings/decor/devices are added here because the model does not
    * carry them. Devices use their RESOLVED position, so a marker parked in
    * the far corner of the yard frames with the rest.
+   *
+   * HIDDEN devices are NOT content (DEV-2C947-01): the frame is presentation,
+   * and a device the plan does not draw must not decide what the plan opens
+   * on — hiding a marker that once wandered into the yard used to leave the
+   * house a dot in the corner of an empty frame. They keep counting for room
+   * LQI/climate and they keep their auto-grid cell (docs/FILTERING.md); only
+   * the frame stops seeing them, including the ghosts of the device editor,
+   * whose reach is the pan slack's job, not the opening view's.
    */
   private _contentItems(m: SpaceModel): ContentItem[] {
     const extra: ContentItem[] = [];
     for (const d of this._devices) {
-      if (d.space !== m.id) continue;
+      if (d.space !== m.id || d.hidden) continue;
       const p = this._pos(d);
       extra.push({ minX: p.x, minY: p.y, maxX: p.x, maxY: p.y });
     }

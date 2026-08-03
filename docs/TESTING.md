@@ -992,6 +992,12 @@ require hands on real hardware — they remain for the human pass.
       drawn plus a small margin, on every floor, with and without a backdrop
       image (with one the IMAGE sets the extent — it must not be cropped to
       the outlined rooms)
+- [ ] **What is not drawn does not frame** (audit DEV-2C947-01): tick «hide
+      from plan» on a marker standing far from the house and the view snaps
+      back to the house — the hidden marker neither renders nor stretches the
+      frame, on the full card and on `houseplan-space-card`. Untick it and the
+      frame takes it in again; room LQI counted it the whole time
+      [auto: smoke_canvas_frame]
 - [ ] **A far stray does not break the view** (§4.1): a marker dragged an
       order of magnitude away leaves the opening view alone and raises the
       inline chip «Объектов далеко от плана: N» with «Показать». No modal.

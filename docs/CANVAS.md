@@ -81,7 +81,12 @@ tested. Input is a list of **items**, one per drawn/placed object:
 * the backdrop image rectangle, when the space has one;
 * every opening (door/window) end-to-end segment;
 * every decor shape;
-* every device the layout actually places in this space.
+* every device the layout actually places in this space **and that the card
+  actually draws** — a HIDDEN device (docs/FILTERING.md) is not content: the
+  frame is presentation, and an object nobody can see must not decide what the
+  plan opens on. It keeps its auto-grid cell and every aggregation it feeds;
+  it simply is not an item here. Ghosts in the device editor are not items
+  either — reaching them is §5's job, not the opening view's.
 
 Output:
 

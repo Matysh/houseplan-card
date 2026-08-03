@@ -51,6 +51,15 @@ the old behaviour until an editing client materialises it.
 - "Show hidden devices" (rename of "Show all") is LOCAL, ephemeral state of
   the current tab.
 - Room LQI counts hidden devices (owner's decision).
+- Hidden devices are NOT content for the CONTENT FRAME (docs/CANVAS.md §4,
+  audit DEV-2C947-01). The frame is presentation: an object the plan does not
+  draw may not decide what the plan opens on. Hiding a marker that had once
+  been dragged into the yard used to leave the visible house a dot in the
+  corner of a frame 112x too wide — on the full card and on
+  `houseplan-space-card` alike. They keep their place in the auto-grid roster
+  (so a visible neighbour does not move when one is hidden) and in every
+  aggregation listed here; only the frame stops seeing them, ghosts in the
+  device editor included — reaching a ghost is the pan slack's job (§5).
 - Light fill and glow do NOT count hidden devices — an invisible device casts
   no visible light (owner's decision). Room climate is registry-wide and
   unaffected, as before.

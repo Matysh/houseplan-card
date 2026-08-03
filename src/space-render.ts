@@ -83,9 +83,12 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   // docs/CANVAS.md §4: the static card frames the CONTENT, exactly like the
   // full one — `space.vb` is only the stored hint now, and on a plan drawn
   // past the old unit square it framed empty canvas with the house off-screen.
-  // Markers placed outside every room count too (a gate sensor by the fence).
+  // Markers placed outside every room count too (a gate sensor by the fence)
+  // — but only the ones this card DRAWS: a hidden device is never painted
+  // here, so it must not stretch the frame either (DEV-2C947-01). It keeps
+  // its grid cell above; the frame is presentation, the roster is not.
   const placed: ContentItem[] = [];
-  for (const d of spaceDevs) {
+  for (const d of devs) {
     const sv = o.layout[d.id];
     if (sv && sv.s === o.spaceId) {
       const x = sv.x * NORM_W, y = sv.y * NORM_W;
