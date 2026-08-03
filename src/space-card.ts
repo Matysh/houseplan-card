@@ -207,9 +207,12 @@ class HouseplanSpaceCard extends LitElement {
       }
       /* Opaque plan paper — the scene bg_color/daynight sky shows only AROUND
          the plan (owner 2026-08-03). The static card keeps its historical
-         canvas colour: the theme card background. */
+         canvas colour: the theme card background. Drawn plans paper the room
+         contours (per-room shapes, fill only, no stroke) — same contract as
+         the full card. */
       .hp-paper {
         fill: var(--ha-card-background, var(--card-background-color, #111));
+        stroke: none;
       }
       .hp-static-stage .devlayer {
         position: absolute;

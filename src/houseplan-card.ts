@@ -13,7 +13,7 @@ import {
 } from './rules';
 import {
   lqiColor, snapToGrid, samePoint, pointInPolygon, markerIdForBinding,
-  segmentCm, formatLength, roomEdges, roomPoly, pointStrictlyInside, roomsOverlap,
+  segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointStrictlyInside, roomsOverlap,
   pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, openZoneOf, distToSegment, outlineWithout, cutSegments, alignGuides, segmentAngle, is45, type AlignGuide, swipeTarget, clampScale, migratePdfUrls, roomFillModeOf, contentUrl,
   snapToWall, openingAmount, interiorPoint, poleOfInaccessibility, subst,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
@@ -1598,19 +1598,20 @@ class HouseplanCard extends LitElement {
 
   /**
    * Opaque plan "paper" (owner 2026-08-03): the scene background — bg_color or
-   * the 'daynight' sky — must never bleed through the plan itself, so an
-   * opaque rect sits under everything the plan draws. It hugs the plan's
-   * extents: the backdrop image when there is one, otherwise the same content
-   * bounds the opening view fits (an empty drawn space papers its whole
-   * canvas — exactly the pre-bg_color look). Its colour is the pre-bg_color
-   * canvas (styles.ts .hp-paper): white for drawn plans, the theme card
-   * background under an image. At night 'daynight' dims it via the zoomwrap
-   * brightness filter ONLY — its alpha stays 1 (docs/SUN.md).
+   * the 'daynight' sky — must never bleed through the plan itself, so opaque
+   * shapes sit under everything the plan draws. With a backdrop image the
+   * paper is the image rect (the canvas IS the paper) — this helper returns
+   * it. For a hand-drawn plan the paper follows the ROOM CONTOURS instead
+   * (paperRoomShapes in logic.ts): one shape per room in exactly the room's
+   * own geometry, so an L-shaped house or detached buildings never grow a
+   * white bounding rectangle — the scene colour is visible right up to the
+   * exterior walls, and an empty drawn space has no paper at all. Its colour
+   * is the pre-bg_color canvas (styles.ts .hp-paper): white for drawn plans,
+   * the theme card background under an image. At night 'daynight' dims it via
+   * the zoomwrap brightness filter ONLY — its alpha stays 1 (docs/SUN.md).
    */
-  private _paperRect(m: SpaceModel): { x: number; y: number; w: number; h: number } {
-    if (m.bg) return { x: m.bg.x, y: m.bg.y, w: m.bg.w, h: m.bg.h };
-    const b = this._baseVb();
-    return { x: b[0], y: b[1], w: b[2], h: b[3] };
+  private _paperRect(m: SpaceModel): { x: number; y: number; w: number; h: number } | null {
+    return m.bg ? { x: m.bg.x, y: m.bg.y, w: m.bg.w, h: m.bg.h } : null;
   }
 
   /** Aspect ratio of the scene (width/height, px). */
@@ -5065,8 +5066,20 @@ class HouseplanCard extends LitElement {
             style="${dayNight ? `filter:brightness(${(1 - planDim).toFixed(3)})` : ''}">
           <svg viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="xMidYMid meet">
             ${(() => {
-              const pp = this._paperRect(space);
-              return svg`<rect class="hp-paper" x="${pp.x}" y="${pp.y}" width="${pp.w}" height="${pp.h}" pointer-events="none"></rect>`;
+              // opaque paper: the image rect for image plans, the room
+              // contours for drawn ones (owner: no white square around an
+              // L-shaped house — the scene bg reaches the exterior walls).
+              // `space` comes from _renderCfg, so a live resize preview
+              // (_rszPreview) moves the paper together with the rooms.
+              if (space.bg) {
+                const pp = this._paperRect(space)!;
+                return svg`<rect class="hp-paper" x="${pp.x}" y="${pp.y}" width="${pp.w}" height="${pp.h}" pointer-events="none"></rect>`;
+              }
+              return paperRoomShapes(space.rooms).map((sh) =>
+                'poly' in sh
+                  ? svg`<polygon class="hp-paper" points="${sh.poly}" pointer-events="none"></polygon>`
+                  : svg`<rect class="hp-paper" x="${sh.rect.x}" y="${sh.rect.y}" width="${sh.rect.w}" height="${sh.rect.h}" rx="${sh.rect.rx}" pointer-events="none"></rect>`,
+              );
             })()}
             ${this._editing ? this._renderMarkupDefs(vb) : nothing}
             ${this._editing && !this._markup

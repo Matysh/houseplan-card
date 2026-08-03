@@ -63,15 +63,20 @@ only — no entities are created, no services are called.
   without `sun.sun`) it behaves as `'static'`.
 - **The scene background never bleeds through the plan** (owner,
   2026-08-03). In BOTH modes the background — `bg_color` or the
-  daynight sky — is visible only AROUND the plan: an opaque
-  `rect.hp-paper` sits under everything the plan draws and hugs the
-  plan's extents (the backdrop image rect, or the drawn content bounds
-  the opening view fits). Its colour is the pre-bg_color canvas —
-  white for hand-drawn plans, the theme card background under an
-  image. The night dimming above is the `brightness` filter on the
-  zoomwrap ONLY; the paper's alpha never changes. Applies to
-  view/kiosk/editors and the static space-card alike
-  (smoke_bg_color).
+  daynight sky — is visible only AROUND the plan: opaque `.hp-paper`
+  shapes sit under everything the plan draws. An image plan papers the
+  backdrop image rect (the canvas IS the paper); a hand-drawn plan
+  papers the ROOM CONTOURS — one shape per room in exactly the room's
+  own geometry (fill only, no stroke), never their bounding box, so
+  the background reaches the exterior walls of an L-shaped house and
+  fills the gaps between detached buildings (an empty drawn space has
+  no paper). Open (virtual) boundaries do not affect the paper; a live
+  resize preview moves it together with the rooms. Its colour is the
+  pre-bg_color canvas — white for hand-drawn plans, the theme card
+  background under an image. The night dimming above is the
+  `brightness` filter on the zoomwrap ONLY; the paper's alpha never
+  changes. Applies to view/kiosk/editors and the static space-card
+  alike (smoke_bg_color).
 
 ## Window light wedges — `settings.sun_rays`
 

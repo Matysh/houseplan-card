@@ -62,6 +62,30 @@ export function roomPoly(r: any): number[][] | null {
   return null;
 }
 
+/**
+ * Paper shapes for a hand-drawn plan (owner 2026-08-03): the opaque paper
+ * follows the ROOM CONTOURS, not their bounding box — an L-shaped house or a
+ * detached building must not grow a white rectangle around itself. One shape
+ * per room, in EXACTLY the geometry the room itself renders (same polygon
+ * points string, same rounded rect), so the paper never peeks past a wall;
+ * the union of the stack is the paper. Islands simply paint over their
+ * parent; open (virtual) boundaries do not affect the paper at all.
+ */
+export function paperRoomShapes(rooms: any[]): Array<
+  | { poly: string }
+  | { rect: { x: number; y: number; w: number; h: number; rx: number } }
+> {
+  const out: Array<{ poly: string } | { rect: { x: number; y: number; w: number; h: number; rx: number } }> = [];
+  for (const r of rooms || []) {
+    if (r?.poly?.length >= 3) {
+      out.push({ poly: r.poly.map((p: number[]) => p.join(',')).join(' ') });
+    } else if (r && r.x != null && r.y != null && r.w != null && r.h != null) {
+      out.push({ rect: { x: r.x, y: r.y, w: r.w, h: r.h, rx: Math.min(r.w, r.h) * 0.03 } });
+    }
+  }
+  return out;
+}
+
 export function roomEdges(rooms: any[]): number[][] {
   const out: number[][] = [];
   const seen = new Set<string>();

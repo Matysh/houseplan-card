@@ -882,13 +882,18 @@ require hands on real hardware — they remain for the human pass.
 - [ ] Opaque plan paper (2026-08-03, owner): the scene background —
       `bg_color` or the daynight sky — is visible ONLY around the plan and
       NEVER bleeds through it, in view/kiosk/editors and on the static
-      space-card. An opaque `rect.hp-paper` under everything the plan draws
-      hugs the plan's extents (the backdrop image rect, or the drawn
-      content bounds the opening view fits); a hand-drawn plan keeps its
-      historical white canvas, an image plan the theme card background.
-      At night (`daynight`) the paper dims via the zoomwrap `brightness`
-      filter only — its alpha stays 1. Pixel-proofed against an acid
-      `#ff00ff` background [auto: smoke_bg_color]
+      space-card. An image plan papers the backdrop image rect
+      (`rect.hp-paper`). A hand-drawn plan papers the ROOM CONTOURS: one
+      `.hp-paper` shape per room in exactly the room's own geometry (fill
+      only, no stroke), so an L-shaped house or detached buildings never
+      grow a white bounding rectangle — the scene colour reaches the
+      exterior walls, shows in the L's pocket and between buildings, and an
+      empty drawn space has no paper at all. A live resize preview
+      (`_rszPreview`) moves the paper together with the dragged wall.
+      Colours: historical white for drawn plans, the theme card background
+      under an image. At night (`daynight`) the paper dims via the zoomwrap
+      `brightness` filter only — its alpha stays 1. Pixel-proofed against
+      an acid `#ff00ff` background [auto: smoke_bg_color]
 - [ ] Per-space overrides (background mode, north, sun-in-windows) inherit
       when empty, exactly like show_lqi/fill_mode
 - [ ] «Sunlight through windows» (default OFF): wedges appear only from

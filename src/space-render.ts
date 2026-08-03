@@ -8,13 +8,13 @@
  */
 import { html, svg, nothing, type TemplateResult } from 'lit';
 import { buildDevices, areaLqi, areaLights, areaTemp } from './devices';
-import { spaceDisplayOf, roomFillStyle, fillColorsOf, roomFillModeOf, stageBgOf } from './logic';
+import { spaceDisplayOf, roomFillStyle, fillColorsOf, roomFillModeOf, stageBgOf, paperRoomShapes } from './logic';
 import { DEFAULT_ICON_RULES, compileIconRules, EXCLUDED_DOMAINS } from './rules';
 import { t, type Lang } from './i18n';
 import { bgModeOf, northDegOf, sunStateOf, dayPhase } from './sun';
 import type { ServerConfig } from './types';
 import {
-  spaceModels, roomCenter, defaultPositions, markerPos, labelPos, contentBounds, type Layout,
+  spaceModels, roomCenter, defaultPositions, markerPos, labelPos, type Layout,
 } from './space-geometry';
 
 export { spaceModels } from './space-geometry';
@@ -159,21 +159,25 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const stageBg = sunBg || stageBgOf(o.cfg?.settings, disp);
 
   // Opaque plan paper (owner 2026-08-03), same contract as the full card: the
-  // scene background never bleeds through the plan. The rect hugs the backdrop
-  // image, or the drawn content's bounds (marker positions included, as on the
-  // full card); an empty space papers its whole canvas.
-  const paperPts = spaceDevs.map((d) => {
-    const p = markerPos(d, o.layout, o.cfg, defPos, space);
-    return [p.x, p.y] as const;
-  });
+  // scene background never bleeds through the plan. With a backdrop image the
+  // paper is the image rect; a hand-drawn plan papers the ROOM CONTOURS
+  // (paperRoomShapes) — never their bounding box, so the scene colour reaches
+  // the exterior walls of an L-shaped house and fills the gaps between
+  // detached buildings. An empty drawn space has no paper at all.
   const paper = space.bg
     ? { x: space.bg.x, y: space.bg.y, w: space.bg.w, h: space.bg.h }
-    : contentBounds(space, 0.05, paperPts) || { x: vb[0], y: vb[1], w: vb[2], h: vb[3] };
+    : null;
 
   return html`
     <div class="hp-static-stage" style="aspect-ratio:${vb[2]}/${vb[3]}${stageBg ? ';background:' + stageBg : ''}">
       <svg viewBox="${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}" preserveAspectRatio="xMidYMid meet">
-        ${svg`<rect class="hp-paper" x="${paper.x}" y="${paper.y}" width="${paper.w}" height="${paper.h}"></rect>`}
+        ${paper
+          ? svg`<rect class="hp-paper" x="${paper.x}" y="${paper.y}" width="${paper.w}" height="${paper.h}"></rect>`
+          : paperRoomShapes(space.rooms).map((sh) =>
+              'poly' in sh
+                ? svg`<polygon class="hp-paper" points="${sh.poly}"></polygon>`
+                : svg`<rect class="hp-paper" x="${sh.rect.x}" y="${sh.rect.y}" width="${sh.rect.w}" height="${sh.rect.h}" rx="${sh.rect.rx}"></rect>`,
+            )}
         ${bgHref
           ? svg`<image href="${bgHref}" x="${space.bg!.x}" y="${space.bg!.y}" width="${space.bg!.w}" height="${space.bg!.h}" preserveAspectRatio="none" />`
           : nothing}

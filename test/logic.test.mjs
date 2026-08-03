@@ -14,7 +14,7 @@ import {
   roomFillModeOf,
   contentUrl, chunk, referencedContentUrls, MAX_SIGN_PATHS,
   interiorPoint,
-  segmentCm, formatLength, roomEdges, roomPoly, pointOnBoundary, pointStrictlyInside, roomsOverlap,
+  segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointOnBoundary, pointStrictlyInside, roomsOverlap,
   mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, poleOfInaccessibility, runServiceFor, TOGGLE_SAFE_DOMAINS } from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
@@ -958,4 +958,25 @@ test('tap action run: explicit-only, with runnable targets (owner spec 2026-07-2
   assert.equal(resolveTapAction(null, 'toggle', 'cover', 'shutter'), 'toggle');
   // locks and alarms stay forbidden, run or not
   assert.equal(resolveTapAction('toggle', undefined, 'lock'), 'info');
+});
+
+
+test('paperRoomShapes: paper follows room contours, one shape per room (owner 2026-08-03)', () => {
+  const L = [[100, 100], [600, 100], [600, 350], [350, 350], [350, 600], [100, 600]];
+  const rooms = [
+    { id: 'L', poly: L },                            // L-shaped: polygon, verbatim
+    { id: 'q', x: 650, y: 650, w: 200, h: 100 },     // legacy rect: same rounded rect the room draws
+    { id: 'bad' },                                   // no geometry -> no paper
+  ];
+  const shapes = paperRoomShapes(rooms);
+  assert.equal(shapes.length, 2, 'one shape per room WITH geometry');
+  // the polygon uses exactly the room's own points string — same coordinates,
+  // so the paper can never peek past a wall
+  assert.deepEqual(shapes[0], { poly: L.map((p) => p.join(',')).join(' ') });
+  // the rect mirrors the room shape incl. its corner rounding rx
+  assert.deepEqual(shapes[1], { rect: { x: 650, y: 650, w: 200, h: 100, rx: 100 * 0.03 } });
+  // degenerate inputs never throw and produce no paper
+  assert.deepEqual(paperRoomShapes([]), []);
+  assert.deepEqual(paperRoomShapes(null), []);
+  assert.deepEqual(paperRoomShapes([{ poly: [[0, 0], [1, 1]] }]), [], 'a 2-point poly is not a surface');
 });
