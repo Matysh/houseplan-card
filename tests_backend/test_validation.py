@@ -115,6 +115,15 @@ def test_marker_schema():
         v.MARKER_SCHEMA({"binding": "virtual"})
 
 
+def test_marker_use_climate_temp_is_bool_or_none():
+    # opt-in room-temperature from climate devices (owner's feature 2026-08-03)
+    v.MARKER_SCHEMA({"id": "m1", "binding": "device:abc", "use_climate_temp": True})
+    v.MARKER_SCHEMA({"id": "m1", "binding": "device:abc", "use_climate_temp": False})
+    v.MARKER_SCHEMA({"id": "m1", "binding": "device:abc", "use_climate_temp": None})
+    with pytest.raises(vol.Invalid):
+        v.MARKER_SCHEMA({"id": "m1", "binding": "device:abc", "use_climate_temp": "yes"})
+
+
 def test_config_schema_defaults_and_extra():
     out = v.CONFIG_SCHEMA({"spaces": []})
     assert out["markers"] == [] and out["settings"] == {}

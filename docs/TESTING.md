@@ -912,3 +912,13 @@ require hands on real hardware — they remain for the human pass.
 - [ ] `prefers-reduced-motion` → no transitions, static colors
 - [ ] Smoke: `node demo/smoke_sun.mjs`; units: `test/sun.test.mjs`;
       backend: `tests_backend/test_validation.py` (sun settings)
+
+## Climate temperature opt-in (dev)
+
+- [ ] «Use the device's temperature sensor» (marker dialog, climate devices
+      only, default OFF): current_temperature shows as the standard `.tval`
+      badge and joins the room average like a thermometer; unavailable /
+      missing attribute = no badge, no vote; hidden devices keep voting
+      (registry-wide climate, like hidden thermometers); the tick survives
+      dialog recreation [auto: smoke_climate_temp; units: test/devices.test.mjs;
+      backend: tests_backend/test_validation.py (use_climate_temp)]

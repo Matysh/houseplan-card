@@ -319,6 +319,8 @@ MARKER_SCHEMA = vol.Schema(
         vol.Optional("controls"): vol.Any(None, vol.All([_TEXT], vol.Length(max=MAX_CONTROLS))),
         vol.Optional("glow_radius_cm"): vol.Any(vol.All(vol.Coerce(float), vol.Range(min=10, max=10000)), None),
         vol.Optional("is_light"): vol.Any(bool, None),
+        # climate current_temperature: badge + room-average vote (off unless True)
+        vol.Optional("use_climate_temp"): vol.Any(bool, None),
         vol.Optional("room_id"): vol.Any(str, None),
         # keep in sync with DISPLAY_MODES in src/logic.ts — a cross-language test
         # asserts every option the editor offers is accepted here (issue #3)

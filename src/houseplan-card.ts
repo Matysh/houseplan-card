@@ -40,7 +40,7 @@ import {
   FitParams, fitMatrix, fitFromMatrix, initialFit, reanchorFit, VacRoom,
   VAC_TRAIL_LINGER_MS, Pt as VacPt,
 } from './vacuum';
-import { buildDevices, seedHiddenBindings, lqiFor, tempFor, humFor, isHumEntity, areaLights, areaTemp, areaHum, areaLightStats, sourceValue, areaClimateMap, litLightEntity, type AreaClimate } from './devices';
+import { buildDevices, seedHiddenBindings, lqiFor, tempFor, humFor, climateTempFor, isHumEntity, areaLights, areaTemp, areaHum, areaLightStats, sourceValue, areaClimateMap, litLightEntity, type AreaClimate } from './devices';
 import type {
   OpeningCfg,
   RoomCfg, SpaceModel, PdfRef, Marker, ServerConfig, DevItem, CardConfig,
@@ -379,6 +379,7 @@ class HouseplanCard extends LitElement {
     controlsFilter: string;
     glowRadius: string;  // per-device glow radius in display units; '' = global default
     isLight: boolean;    // force this marker to glow (dumb fixtures behind a switch)
+    useClimateTemp: boolean; // badge + room-average vote from climate current_temperature
     model: string;
     link: string;
     description: string;
@@ -1472,8 +1473,27 @@ class HouseplanCard extends LitElement {
 
   private _liveTemp(d: DevItem): number | null {
     if (!this._config?.show_temperature) return null;
+    // Opt-in climate source (marker.use_climate_temp): the AC/thermostat's
+    // current_temperature gets the same badge a thermometer has. No valid
+    // reading (missing attribute, unavailable) -> no badge at all.
+    if (d.marker?.use_climate_temp === true) {
+      const t = climateTempFor(this.hass, d.entities);
+      if (t != null) return t;
+    }
     if (d.icon !== 'mdi:thermometer' && d.icon !== 'mdi:air-filter') return null;
     return tempFor(this.hass, d.entities);
+  }
+
+  /** Does the dialog's binding carry a climate entity? Gates the opt-in checkbox. */
+  private _bindingHasClimate(binding: string): boolean {
+    if (binding.startsWith('entity:')) return binding.slice(7).startsWith('climate.');
+    if (binding.startsWith('device:')) {
+      const ref = binding.slice(7);
+      for (const [eid, reg] of Object.entries<any>(this.hass?.entities || {})) {
+        if (reg?.device_id === ref && eid.startsWith('climate.')) return true;
+      }
+    }
+    return false;
   }
 
   private _liveHum(d: DevItem): number | null {
@@ -3516,6 +3536,7 @@ class HouseplanCard extends LitElement {
         controls: [...(d.marker?.controls || [])],
         controlsFilter: '',
         isLight: d.marker?.is_light === true,
+        useClimateTemp: d.marker?.use_climate_temp === true,
         glowRadius: Number(d.marker?.glow_radius_cm) > 0
           ? String(this._imperial
               ? Math.round((Number(d.marker!.glow_radius_cm) / 30.48) * 10) / 10
@@ -3538,7 +3559,7 @@ class HouseplanCard extends LitElement {
         display: 'badge', rippleColor: '', rippleSize: 3, size: 1, angle: 0,
         tapAction: '', tapTarget: '', tapConfirm: false, runFilter: '',
         defaultTap: 'info', controls: [], controlsFilter: '', isLight: false,
-        glowRadius: '', model: '',
+        useClimateTemp: false, glowRadius: '', model: '',
         link: '', description: '', pdfs: [], room: '', hideFromPlan: false, busy: false,
         uploadId: 'up_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       };
@@ -3760,6 +3781,7 @@ class HouseplanCard extends LitElement {
         controls: dlg.controls.length ? dlg.controls : null,
         // pdfs may be rewritten below when rebinding changes the marker id
         is_light: dlg.isLight ? true : null,
+        use_climate_temp: dlg.useClimateTemp ? true : null,
         glow_radius_cm: (() => {
           const v = parseFloat(dlg.glowRadius);
           if (!Number.isFinite(v) || v <= 0) return null;
@@ -5894,7 +5916,7 @@ class HouseplanCard extends LitElement {
     return r.area ? this._climate().get(r.area)?.hum ?? null : null;
   }
 
-  private _climateCache: { h: any; r: any; m: Map<string, AreaClimate> } | null = null;
+  private _climateCache: { h: any; r: any; mk: any; m: Map<string, AreaClimate> } | null = null;
 
   /**
    * Climate for every area, computed ONCE per hass snapshot (review R2-3).
@@ -5904,10 +5926,13 @@ class HouseplanCard extends LitElement {
    * triggering one each (two, with humidity on).
    */
   private _climate(): Map<string, AreaClimate> {
+    // markers are part of the key: ticking "use the device's temperature
+    // sensor" replaces the markers array, so the average recomputes at once
+    const mk = this._serverCfg?.markers;
     const c = this._climateCache;
-    if (c && c.h === this.hass && c.r === this._iconRules) return c.m;
-    const m = areaClimateMap(this.hass, this._iconRules);
-    this._climateCache = { h: this.hass, r: this._iconRules, m };
+    if (c && c.h === this.hass && c.r === this._iconRules && c.mk === mk) return c.m;
+    const m = areaClimateMap(this.hass, this._iconRules, mk);
+    this._climateCache = { h: this.hass, r: this._iconRules, mk, m };
     return m;
   }
 
@@ -6970,6 +6995,13 @@ class HouseplanCard extends LitElement {
               </div>`
             : nothing}
 
+          ${this._bindingHasClimate(d.binding)
+            ? html`<label class="srcrow climrow" title=${this._t('marker.use_climate_temp_tip')}>
+                <input type="checkbox" .checked=${d.useClimateTemp}
+                  @change=${(e: Event) => (this._markerDialog = { ...d, useClimateTemp: (e.target as HTMLInputElement).checked })} />
+                <span>${this._t('marker.use_climate_temp')}</span>
+              </label>`
+            : nothing}
           <label class="srcrow" title=${this._t('marker.is_light_tip')}>
             <input type="checkbox" .checked=${d.isLight}
               @change=${(e: Event) => (this._markerDialog = { ...d, isLight: (e.target as HTMLInputElement).checked })} />
