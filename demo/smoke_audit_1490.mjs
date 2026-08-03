@@ -21,14 +21,27 @@ Object.assign(out, await page.evaluate(async () => {
   c._setMode('plan'); await c.updateComplete;
   await new Promise((r) => requestAnimationFrame(r));
   const inPlan = c._baseVb();
-  o.editorSeesWholeCanvas = inPlan[2] === 1000 && inPlan[3] === 1000;
+  // docs/CANVAS.md: холста-квадрата больше нет, поэтому «редактор видит весь
+  // холст» переписано в исходное НАМЕРЕНИЕ HP-1490-03 — «в редакторе есть куда
+  // рисовать наружу». Рамка теперь по содержимому и в редакторе тоже, а место
+  // даёт запас панорамирования (§5) и зум-аут до 3x.
+  o.editorFrameIsContent = inPlan[2] < 999 && inPlan[2] > 0;
+  o.editorCanPanPastContent = (() => {
+    const fit = c._viewOr(c._baseVb());
+    const moved = c._clampView({ x: fit.x + fit.w * 0.9, y: fit.y, w: fit.w, h: fit.h }, fit);
+    return moved.x > fit.x + fit.w * 0.5; // ушли почти на экран вправо, зажима нет
+  })();
+  o.editorZoomOutGivesRoom = (() => {
+    c._resetZoom(); c._applyView(1 / 3);
+    const wide = c._view.w; c._resetZoom();
+    return wide > inPlan[2] * 2.5; // видно втрое больше, чем нарисовано
+  })();
   const v = c._viewOr(c._baseVb());
-  o.editorViewCoversCanvas = v.w >= 999; // старый cropped view не пережил смену
   // в редакторе можно ткнуть в дальний угол холста
   o.canReachFarCorner = (() => {
     const stage = (c.shadowRoot || c.renderRoot).querySelector('.stage');
     const pt = c._screenToVb(stage.clientWidth - 1, stage.clientHeight - 1);
-    return pt[0] > 900 || pt[1] > 900;
+    return pt[0] > inPlan[0] + inPlan[2] * 0.9 || pt[1] > inPlan[1] + inPlan[3] * 0.9;
   })();
   c._setMode('view'); await c.updateComplete;
   await new Promise((r) => requestAnimationFrame(r));

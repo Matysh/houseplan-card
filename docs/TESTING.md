@@ -960,3 +960,48 @@ require hands on real hardware — they remain for the human pass.
       (registry-wide climate, like hidden thermometers); the tick survives
       dialog recreation [auto: smoke_climate_temp; units: test/devices.test.mjs;
       backend: tests_backend/test_validation.py (use_climate_temp)]
+
+## Infinite canvas (docs/CANVAS.md, dev)
+
+- [ ] **A plan drawn past the old square opens whole**: a space whose rooms
+      live at normalised 1.5..3.0 renders complete and centred (it used to
+      frame empty canvas with the house off-screen) [auto:
+      smoke_infinite_canvas; units: test/canvas.test.mjs]
+- [ ] **Nothing stops at an edge any more**: in the Plan / Devices / Decor
+      editors a room, a marker and a decor shape can be drawn, dragged and
+      SAVED far outside `0..1`, on any floor; reload keeps them there
+      [backend: tests_backend/test_validation.py::test_infinite_canvas_range]
+- [ ] **A typical small plan is visually unchanged** — same framing, same
+      room and label positions as before the feature. The ONE intended
+      difference is icon size (below) [auto: smoke_infinite_canvas
+      (legacyFrameUnchanged); the whole smoke suite is the regression net]
+- [ ] **Icons no longer grow with zoom** (§6, owner is aware): a marker keeps
+      the same pixel size at zoom 1, 4 and at the zoom-out floor; the
+      per-device size multiplier, kiosk icon/font scales, badges, LQI chips
+      and presence rings all still scale from `--dev-size`
+- [ ] **Start view follows the content**: opening a space frames what is
+      drawn plus a small margin, on every floor, with and without a backdrop
+      image (with one the IMAGE sets the extent — it must not be cropped to
+      the outlined rooms)
+- [ ] **A far stray does not break the view** (§4.1): a marker dragged an
+      order of magnitude away leaves the opening view alone and raises the
+      inline chip «Объектов далеко от плана: N» with «Показать». No modal.
+      «Показать» fits the plan AND the stray; the chip then disappears
+- [ ] **«Вписать всё»** (middle zoom button): fits the content from any pan
+      and any zoom, is never disabled, tooltip en/ru
+- [ ] **Zoom-out floor**: the wheel / the minus button stop at three times the
+      content frame; zoom-in still stops at 800 %
+- [ ] **Pan has slack, not walls**: you can pan a full screen past the plan in
+      every direction; when the plan is fully off screen a small arrow points
+      home and one click fits it back
+- [ ] **Adaptive grid** (§7): in the Plan editor zoomed far out the grid does
+      not merge into a grey wash — fine dots thin out, every 5th/10th node
+      stays bigger; zoomed in the grid is the usual one and snapping still
+      lands on the same nodes as before
+- [ ] **Everything else on a far-out plan**: sun wedges, glow radii, open
+      boundaries, room resize handles/rulers, opening rulers, split/merge,
+      vacuum trails, the static `houseplan-space-card` and kiosk carousel all
+      behave exactly as on a plan inside `0..1`
+- [ ] **Real config regression**: a production config (e.g. the dacha, 3
+      floors / 106 markers) frames bit-identically to the previous release —
+      no outliers reported, no frame movement

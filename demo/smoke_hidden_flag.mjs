@@ -175,8 +175,14 @@ Object.assign(out, await page.evaluate(async () => {
   await card.updateComplete;
   const st = [...card.renderRoot.querySelectorAll('[style*="left"]')]
     .find((el) => /%$/.test(el.style.left || '') && el.style.top);
-  // статичная карточка рендерит от полного квадрата 0..1000
-  const stVb = st && [parseFloat(st.style.left) * 10, parseFloat(st.style.top) * 10];
+  // docs/CANVAS.md §4: статичная карточка теперь кадрирует СОДЕРЖИМОЕ, как и
+  // полная, а не квадрат 0..1000 — координаты берём из её же viewBox
+  const svb = (card.renderRoot.querySelector('svg')?.getAttribute('viewBox') || '0 0 1000 1000')
+    .trim().split(/\s+/).map(Number);
+  const stVb = st && [
+    svb[0] + (parseFloat(st.style.left) / 100) * svb[2],
+    svb[1] + (parseFloat(st.style.top) / 100) * svb[3],
+  ];
   o.autoGridParity = !!fullVb && !!stVb
     && Math.abs(fullVb[0] - stVb[0]) < 6 && Math.abs(fullVb[1] - stVb[1]) < 6;
   if (!o.autoGridParity) console.log('full', fullVb, 'static', stVb);
