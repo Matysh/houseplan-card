@@ -128,6 +128,13 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       perpendicular dashed tick appears and the center magnet-snaps — Shift
       disables the magnet; badges and tick vanish on release
       [auto: smoke_opening_measure + unit openingShoulders]
+- [ ] The SAME rulers while PLACING a new opening (2026-08-03): with the
+      Opening tool, moving along a wall shows the dashed ghost together with a
+      badge on each shoulder of the would-be opening (default 90 cm, measured
+      on the snapped room's OWN edge), a perpendicular tick + magnet at that
+      edge's centre, Shift opting out; the click places the opening at the
+      magnetised point and ghost, badges and tick all disappear at once
+      [auto: smoke_opening_measure, the «PLACING a new opening» section]
 
 ## Onboarding ★
 

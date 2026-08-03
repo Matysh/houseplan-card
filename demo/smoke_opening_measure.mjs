@@ -169,4 +169,108 @@ check('shared_wall_badges_equal', await badges(), ['1.44 m', '1.44 m']);
 await page.mouse.up();
 await settle();
 
+// ---------- PLACING a new opening: the same rulers (owner 2026-08-03) -------
+// Moving along a wall with the Opening tool must show exactly what dragging an
+// existing opening shows: a badge on each shoulder of the WOULD-BE opening, a
+// perpendicular tick + magnet at the wall centre, Shift opting out — and the
+// whole lot vanishing the moment the opening is placed. Default length is
+// 90 cm = 75 units, so the shoulders are measured from the edges c +- 37.5.
+await page.evaluate(() => {
+  const c = window.__card;
+  const sp = c._serverCfg.spaces.find((s) => s.id === 'f1');
+  sp.rooms = [
+    { id: 'r1', name: 'Living room', poly: [[0.04, 0.14], [0.55, 0.14], [0.55, 0.58], [0.04, 0.58]] },
+    { id: 'r2', name: 'Kitchen', poly: [[0.55, 0.14], [0.96, 0.14], [0.96, 0.46], [0.55, 0.46]] },
+  ];
+  sp.openings = [];
+  c._setMode('plan'); c._tool = 'opening';
+  c._cfgEpoch++; c.requestUpdate();
+  return c.updateComplete && true;
+});
+await settle();
+const ghosts = () => page.evaluate(() => window.__card.renderRoot.querySelectorAll('.opghost').length);
+
+// hover off-centre on r1's top wall (own edge 40..550, y = 140)
+{
+  const [hx, hy] = await screenPt(460, 141);
+  await page.mouse.move(hx, hy, { steps: 3 });
+  await settle();
+  check('place_ghost_shown', await ghosts(), 1);
+  check('place_two_badges', (await badges()).length, 2);
+  // edges 422.5 / 497.5 -> 382.5 u (4.59 m) left, 52.5 u (0.63 m) right
+  const [a, b] = await nums();
+  check('place_badge_right_0_63', near(a, 0.63, 0.05));
+  check('place_badge_left_4_59', near(b, 4.59, 0.05));
+  check('place_no_tick_off_center', await tick(), 0);
+}
+
+// live update on the way — the badges follow the cursor
+{
+  const [hx, hy] = await screenPt(200, 141);
+  await page.mouse.move(hx, hy, { steps: 3 });
+  await settle();
+  // edges 162.5 / 237.5 -> 122.5 u (1.47 m) left, 312.5 u (3.75 m) right
+  const [a, b] = await nums();
+  check('place_badge_updates_1_47', near(a, 1.47, 0.05));
+  check('place_badge_updates_3_75', near(b, 3.75, 0.05));
+}
+
+// near the wall centre (40+550)/2 = 295: tick appears and the magnet bites
+{
+  const [hx, hy] = await screenPt(293.7, 141);
+  await page.mouse.move(hx, hy, { steps: 3 });
+  await settle();
+  check('place_tick_at_center', await tick(), 1);
+  // equal shoulders after the magnet: (510 - 75) / 2 = 217.5 u -> 2.61 m
+  check('place_badges_equal_at_center', await badges(), ['2.61 m', '2.61 m']);
+  const g = await page.evaluate(() => {
+    const el = window.__card.renderRoot.querySelector('.opcentertick');
+    return el && { x1: +el.getAttribute('x1'), x2: +el.getAttribute('x2'),
+      y1: +el.getAttribute('y1'), y2: +el.getAttribute('y2') };
+  });
+  check('place_tick_perpendicular', !!g && near(g.x1, 295, 1e-6) && near(g.x2, 295, 1e-6)
+    && near(g.y2 - g.y1, 30, 1e-6));
+  // the ghost itself already sits on the magnetised centre
+  const gh = await page.evaluate(() => {
+    const el = window.__card.renderRoot.querySelector('.opghost');
+    return el && (+el.getAttribute('x1') + +el.getAttribute('x2')) / 2;
+  });
+  check('place_ghost_magnetised', near(gh, 295, 1e-6));
+}
+
+// Shift opts out of the magnet, the badges stay
+{
+  await page.keyboard.down('Shift');
+  const [hx, hy] = await screenPt(293.7, 141);
+  await page.mouse.move(hx, hy, { steps: 3 });
+  await settle();
+  check('place_no_tick_with_shift', await tick(), 0);
+  check('place_badges_with_shift', (await badges()).length, 2);
+  const gh = await page.evaluate(() => {
+    const el = window.__card.renderRoot.querySelector('.opghost');
+    return el && (+el.getAttribute('x1') + +el.getAttribute('x2')) / 2;
+  });
+  check('place_ghost_free_with_shift', !!gh && !near(gh, 295, 1e-6) && near(gh, 293.7, 1));
+  await page.keyboard.up('Shift');
+}
+
+// the click places it AT THE MAGNET and clears every hint
+{
+  const [hx, hy] = await screenPt(293.7, 141);
+  await page.mouse.move(hx, hy, { steps: 3 });
+  await settle();
+  await page.mouse.click(hx, hy);
+  await settle();
+  check('place_dialog_opened', await page.evaluate(() => !!window.__card._openingDialog), true);
+  check('place_dialog_x_magnetised', near(await page.evaluate(() => window.__card._openingDialog.x), 295, 1e-6));
+  check('place_badges_gone', (await badges()).length, 0);
+  check('place_tick_gone', await tick(), 0);
+  check('place_ghost_gone', await ghosts(), 0);
+  // …and confirming the dialog writes the opening at the magnetised point
+  await page.evaluate(() => { const c = window.__card; c._saveOpening(); return c.updateComplete && true; });
+  await settle();
+  check('place_committed_x_center', near(await page.evaluate(() =>
+    window.__card._serverCfg.spaces.find((s) => s.id === 'f1').openings[0].x), 0.295, 1e-6));
+}
+
 await finish(browser, { done: true });

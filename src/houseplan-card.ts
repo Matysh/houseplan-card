@@ -160,6 +160,17 @@ const capturePointer = (ev: PointerEvent): void => {
   }
 };
 
+/** Ruler badges on both shoulders of an opening + the centre-magnet tick.
+ *  The same shape serves the DRAG of an existing opening and the PLACEMENT
+ *  preview of a new one (owner 2026-08-03). */
+/** Default length of a freshly placed opening, cm (the dialog's door preset). */
+const OPENING_DEFAULT_CM = 90;
+
+interface OpMeasure {
+  labels: { x: number; y: number; text: string }[];
+  guide: { x: number; y: number; angle: number } | null;
+}
+
 class HouseplanCard extends LitElement {
   public hass?: any;
   private _config?: CardConfig;
@@ -293,10 +304,10 @@ class HouseplanCard extends LitElement {
   private _openingInfo: OpeningCfg | null = null;
   private _opDrag: { id: string; moved: boolean; sx: number; sy: number; dirty: boolean } | null = null;
   // live ruler badges + the "centered on the wall" tick while an opening is dragged
-  private _opMeasure: {
-    labels: { x: number; y: number; text: string }[];
-    guide: { x: number; y: number; angle: number } | null;
-  } | null = null;
+  private _opMeasure: OpMeasure | null = null;
+  /** Shift during the PLACEMENT hover: opts out of the centre magnet, exactly
+   *  as it does while dragging an existing opening. */
+  private _opShift = false;
   private _mergeDialog: { aId: string; bId: string; poly: number[][]; pick: 'a' | 'b' } | null = null;
   private _splitSel: { roomId: string; pts: number[][] } | null = null; // room being cut + the cut path so far
   // a split is applied only when the new room's dialog is confirmed — cancel leaves the room intact
@@ -2525,7 +2536,7 @@ class HouseplanCard extends LitElement {
       return;
     }
     if (this._tool === 'opening') {
-      this._openingClick(raw);
+      this._openingClick(raw, ev.shiftKey);
       return;
     }
     if (this._tool === 'merge') {
@@ -3249,7 +3260,7 @@ class HouseplanCard extends LitElement {
   }
 
   /** Opening tool: click an existing opening to edit it, or a wall to place one. */
-  private _openingClick(raw: number[]): void {
+  private _openingClick(raw: number[], shift = false): void {
     const eps = this._gridPitch * 1.5;
     const hit = this._openingsR.find(
       (o) => Math.hypot(raw[0] - o.rx, raw[1] - o.ry) <= Math.max(o.rlen / 2, eps),
@@ -3263,11 +3274,15 @@ class HouseplanCard extends LitElement {
       this._showToast(this._t('toast.opening_no_wall'));
       return;
     }
+    // the opening is born where the PREVIEW showed it — magnet included
+    const place = this._opRuler(snap, this._cmToUnits(OPENING_DEFAULT_CM), shift);
     this._openingDialog = {
-      type: 'door', lengthCm: 90, contact: '', lock: '',
+      type: 'door', lengthCm: OPENING_DEFAULT_CM, contact: '', lock: '',
       invert: false, flipH: false, flipV: false,
-      x: snap.x, y: snap.y, angle: snap.angle,
+      x: place.x, y: place.y, angle: place.angle,
     };
+    // rulers, tick and ghost live only through the placement gesture
+    this._cursorPt = null;
   }
 
   /** Open the properties dialog for an existing opening. */
@@ -3317,34 +3332,52 @@ class HouseplanCard extends LitElement {
     const cfg = sp?.openings?.find((x: OpeningCfg) => x.id === o.id);
     if (!cfg) return;
     // ruler badges on both shoulders + soft magnet to the wall's center
-    // (owner 2026-08-03); tol = half a grid step, Shift opts out of the magnet
-    // (same convention as the coarse-angle Shift elsewhere in the editor)
-    const rooms = this._spaceModel().rooms;
-    const tol = this._gridPitch / 2;
-    let cx = snap.x, cy = snap.y;
-    let sh = openingShoulders([cx, cy], snap.angle, cfg.length * NORM_W, rooms, tol);
-    if (sh && sh.centered && !ev.shiftKey && (cx !== sh.wallCenter[0] || cy !== sh.wallCenter[1])) {
-      [cx, cy] = sh.wallCenter;
-      sh = openingShoulders([cx, cy], snap.angle, cfg.length * NORM_W, rooms, tol);
-    }
-    if (sh) {
-      const imperial = this.hass?.config?.unit_system?.length === 'mi';
-      const lbl = (d: number, m: number[]) =>
-        ({ x: m[0], y: m[1], text: formatLength((d / this._gridPitch) * this._cellCm, imperial) });
-      this._opMeasure = {
-        labels: [lbl(sh.sideA, sh.midA), lbl(sh.sideB, sh.midB)],
-        guide: sh.centered && !ev.shiftKey
-          ? { x: sh.wallCenter[0], y: sh.wallCenter[1], angle: snap.angle }
-          : null,
-      };
-    } else this._opMeasure = null;
-    const nx = cx / NORM_W;
-    const ny = cy / this._spaceH;
+    // (owner 2026-08-03) — the very same helper the PLACEMENT preview uses
+    const r = this._opRuler(snap, cfg.length * NORM_W, ev.shiftKey);
+    this._opMeasure = r.measure;
+    const nx = r.x / NORM_W;
+    const ny = r.y / this._spaceH;
     if (cfg.x !== nx || cfg.y !== ny || cfg.angle !== snap.angle) this._opDrag.dirty = true;
     cfg.x = nx;
     cfg.y = ny;
     cfg.angle = snap.angle;
     this.requestUpdate();
+  }
+
+  /**
+   * Shoulder rulers + the soft centre magnet for an opening of `rlen` sitting
+   * at a wall snap. ONE implementation for both gestures the owner asked to
+   * behave alike (2026-08-03): dragging an existing opening and placing a new
+   * one. `tol` is half a grid step and Shift opts out of the magnet — the same
+   * convention as the coarse-angle Shift elsewhere in the editor. The returned
+   * x/y are ALREADY magnetised, so the caller just writes them.
+   */
+  private _opRuler(
+    snap: { x: number; y: number; angle: number },
+    rlen: number,
+    shift: boolean,
+  ): { x: number; y: number; angle: number; measure: OpMeasure | null } {
+    const rooms = this._spaceModel().rooms;
+    const tol = this._gridPitch / 2;
+    let cx = snap.x, cy = snap.y;
+    let sh = openingShoulders([cx, cy], snap.angle, rlen, rooms, tol);
+    if (sh && sh.centered && !shift && (cx !== sh.wallCenter[0] || cy !== sh.wallCenter[1])) {
+      [cx, cy] = sh.wallCenter;
+      sh = openingShoulders([cx, cy], snap.angle, rlen, rooms, tol);
+    }
+    if (!sh) return { x: cx, y: cy, angle: snap.angle, measure: null };
+    const imperial = this.hass?.config?.unit_system?.length === 'mi';
+    const lbl = (d: number, m: number[]) =>
+      ({ x: m[0], y: m[1], text: formatLength((d / this._gridPitch) * this._cellCm, imperial) });
+    return {
+      x: cx, y: cy, angle: snap.angle,
+      measure: {
+        labels: [lbl(sh.sideA, sh.midA), lbl(sh.sideB, sh.midB)],
+        guide: sh.centered && !shift
+          ? { x: sh.wallCenter[0], y: sh.wallCenter[1], angle: snap.angle }
+          : null,
+      },
+    };
   }
 
   private _opPointerUp(ev: PointerEvent, o: OpeningCfg): void {
@@ -3550,6 +3583,7 @@ class HouseplanCard extends LitElement {
     if (!this._markup) return;
     if (this._tool === 'opening' || this._tool === 'openwall') {
       // hover preview: raw cursor point; snapping happens in the preview getters
+      this._opShift = !!ev.shiftKey; // Shift opts out of the centre magnet
       this._cursorPt = this._svgPoint(ev);
       return;
     }
@@ -3559,8 +3593,13 @@ class HouseplanCard extends LitElement {
     this._cursorPt = this._snap(this._svgPoint(ev));
   }
 
-  /** Dashed hover preview of an opening: same snap and default length as the click. */
-  private get _openingPreview(): { x: number; y: number; angle: number; rlen: number } | null {
+  /**
+   * Dashed hover preview of an opening: same snap, same default length and —
+   * since 2026-08-03 — the same shoulder rulers and centre magnet as a drag.
+   * Pure: it writes nothing, the render just reads it.
+   */
+  private get _openingPreview():
+    { x: number; y: number; angle: number; rlen: number; measure: OpMeasure | null } | null {
     if (this._tool !== 'opening' || !this._cursorPt) return null;
     const raw = this._cursorPt;
     // an existing opening under the cursor will be edited, not added — no preview
@@ -3571,7 +3610,15 @@ class HouseplanCard extends LitElement {
     if (hit) return null;
     const snap = snapToWall(raw, this._spaceModel().rooms, eps);
     if (!snap) return null;
-    return { ...snap, rlen: this._cmToUnits(90) };
+    const rlen = this._cmToUnits(OPENING_DEFAULT_CM);
+    const r = this._opRuler(snap, rlen, this._opShift);
+    return { x: r.x, y: r.y, angle: r.angle, rlen, measure: r.measure };
+  }
+
+  /** The rulers to draw right now: from the DRAG of an existing opening, or
+   *  from the PLACEMENT preview of a new one — identical badges either way. */
+  private get _opMeasureView(): OpMeasure | null {
+    return this._opMeasure || this._openingPreview?.measure || null;
   }
 
   /** Save a room with a mandatory binding to an HA area. */
@@ -5229,6 +5276,8 @@ class HouseplanCard extends LitElement {
     // day/night breathing: armed only with a compass AND sun.sun (docs/SUN.md)
     const dayNight = !this._editing && this._effBgMode() === 'daynight' ? this._sunNow() : null;
     const planDim = dayNight ? dayPhase(dayNight.elevation).planDim : 0;
+    // opening rulers: the drag of an existing one OR the placement preview
+    const opMeasure = this._opMeasureView;
 
     return html`
       <ha-card>
@@ -5431,7 +5480,7 @@ class HouseplanCard extends LitElement {
             ${this._renderSunRays(space)}
             ${this._renderOpenWalls(disp)}
             ${this._editing ? this._renderAlignGuides() : nothing}
-            ${this._opMeasure?.guide ? this._renderOpeningCenterTick() : nothing}
+            ${opMeasure?.guide ? this._renderOpeningCenterTick(opMeasure.guide) : nothing}
             ${this._markup ? this._renderMarkupLayer(vb) : nothing}
             ${this._renderOpenings(disp)}
             ${this._markup && this._tool === 'resize' ? this._renderResizeLayer(view) : nothing}
@@ -5454,8 +5503,8 @@ class HouseplanCard extends LitElement {
                 class="measurelabel ${l.area ? 'rszarea' : ''}"
                 style="left:${(((l.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((l.y - view.y) / view.h) * 100).toFixed(2)}%">${l.text}</div>`)}</div>`
             : nothing}
-          ${this._opMeasure
-            ? html`<div class="measurelayer">${this._opMeasure.labels.map((l) => html`<div
+          ${opMeasure
+            ? html`<div class="measurelayer">${opMeasure.labels.map((l) => html`<div
                 class="measurelabel opshoulder"
                 style="left:${(((l.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((l.y - view.y) / view.h) * 100).toFixed(2)}%">${l.text}</div>`)}</div>`
             : nothing}
@@ -6584,8 +6633,7 @@ class HouseplanCard extends LitElement {
   /** Perpendicular dashed tick through the wall's center while a dragged opening
    * sits exactly in the middle — same look as the alignment guides. Length is
    * about the wall stroke (2.5) × 6 to each side. */
-  private _renderOpeningCenterTick(): TemplateResult {
-    const gd = this._opMeasure!.guide!;
+  private _renderOpeningCenterTick(gd: { x: number; y: number; angle: number }): TemplateResult {
     const rad = ((gd.angle + 90) * Math.PI) / 180;
     const half = 2.5 * 6;
     return svg`<line class="alignline opcentertick"
