@@ -1,6 +1,6 @@
 # Sun on the plan — the spec (source of truth)
 
-Status: approved by the owner 2026-08-03. Dev-only for now (no release).
+Status: approved by the owner 2026-08-03. Shipped in v1.56.0.
 Scope decisions final: the compass lives in the GENERAL settings with a
 per-space override, the feature is silent until `north_deg` is set
 anywhere, wedges ship for the FULL card only in v1, and mutual shading

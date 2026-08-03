@@ -35,6 +35,10 @@ right on your Lovelace dashboard.
   whole groups of lights (works for dumb switches and stateless remotes too).
 - 🌒 **“Light sources” fill** — a dark house where every lit lamp casts a pool
   of its own color that spills through doorways and open zone boundaries.
+- ☀️ **The sun on the plan** — set the compass and the backdrop lives with
+  the day (white noon → golden hour → deep night), while windows on exterior
+  walls cast real wedges of sunlight into the rooms; optional cloud cover
+  from a weather entity.
 - 🌡 **Room cards** with temperature, humidity, Zigbee LQI and light count;
   comfort-range temperature fills, per-room signal heatmap.
 - 🚪 **Doors, windows and locks** with contact sensors — unlocking is always an
