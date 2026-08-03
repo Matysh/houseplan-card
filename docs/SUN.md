@@ -61,6 +61,17 @@ only — no entities are created, no services are called.
 - Backend validation: `In(['static', 'daynight'])` at both levels.
 - `'daynight'` follows the general gate: without `north_deg` (or
   without `sun.sun`) it behaves as `'static'`.
+- **The scene background never bleeds through the plan** (owner,
+  2026-08-03). In BOTH modes the background — `bg_color` or the
+  daynight sky — is visible only AROUND the plan: an opaque
+  `rect.hp-paper` sits under everything the plan draws and hugs the
+  plan's extents (the backdrop image rect, or the drawn content bounds
+  the opening view fits). Its colour is the pre-bg_color canvas —
+  white for hand-drawn plans, the theme card background under an
+  image. The night dimming above is the `brightness` filter on the
+  zoomwrap ONLY; the paper's alpha never changes. Applies to
+  view/kiosk/editors and the static space-card alike
+  (smoke_bg_color).
 
 ## Window light wedges — `settings.sun_rays`
 

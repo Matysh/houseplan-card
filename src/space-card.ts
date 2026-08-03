@@ -205,6 +205,12 @@ class HouseplanSpaceCard extends LitElement {
         height: 100%;
         display: block;
       }
+      /* Opaque plan paper — the scene bg_color/daynight sky shows only AROUND
+         the plan (owner 2026-08-03). The static card keeps its historical
+         canvas colour: the theme card background. */
+      .hp-paper {
+        fill: var(--ha-card-background, var(--card-background-color, #111));
+      }
       .hp-static-stage .devlayer {
         position: absolute;
         inset: 0;

@@ -1596,6 +1596,23 @@ class HouseplanCard extends LitElement {
     return b ? [b.x, b.y, b.w, b.h] : m.vb;
   }
 
+  /**
+   * Opaque plan "paper" (owner 2026-08-03): the scene background — bg_color or
+   * the 'daynight' sky — must never bleed through the plan itself, so an
+   * opaque rect sits under everything the plan draws. It hugs the plan's
+   * extents: the backdrop image when there is one, otherwise the same content
+   * bounds the opening view fits (an empty drawn space papers its whole
+   * canvas — exactly the pre-bg_color look). Its colour is the pre-bg_color
+   * canvas (styles.ts .hp-paper): white for drawn plans, the theme card
+   * background under an image. At night 'daynight' dims it via the zoomwrap
+   * brightness filter ONLY — its alpha stays 1 (docs/SUN.md).
+   */
+  private _paperRect(m: SpaceModel): { x: number; y: number; w: number; h: number } {
+    if (m.bg) return { x: m.bg.x, y: m.bg.y, w: m.bg.w, h: m.bg.h };
+    const b = this._baseVb();
+    return { x: b[0], y: b[1], w: b[2], h: b[3] };
+  }
+
   /** Aspect ratio of the scene (width/height, px). */
   private _stageAspect(): number {
     const s = this._stageEl;
@@ -5047,6 +5064,10 @@ class HouseplanCard extends LitElement {
           <div class="zoomwrap ${this._slide ? 'slide-' + this._slide : ''}"
             style="${dayNight ? `filter:brightness(${(1 - planDim).toFixed(3)})` : ''}">
           <svg viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="xMidYMid meet">
+            ${(() => {
+              const pp = this._paperRect(space);
+              return svg`<rect class="hp-paper" x="${pp.x}" y="${pp.y}" width="${pp.w}" height="${pp.h}" pointer-events="none"></rect>`;
+            })()}
             ${this._editing ? this._renderMarkupDefs(vb) : nothing}
             ${this._editing && !this._markup
               ? svg`<rect x="${vb[0]}" y="${vb[1]}" width="${vb[2]}" height="${vb[3]}" fill="url(#hp-grid)" pointer-events="none"></rect>`

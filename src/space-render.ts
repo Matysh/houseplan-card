@@ -14,7 +14,7 @@ import { t, type Lang } from './i18n';
 import { bgModeOf, northDegOf, sunStateOf, dayPhase } from './sun';
 import type { ServerConfig } from './types';
 import {
-  spaceModels, roomCenter, defaultPositions, markerPos, labelPos, type Layout,
+  spaceModels, roomCenter, defaultPositions, markerPos, labelPos, contentBounds, type Layout,
 } from './space-geometry';
 
 export { spaceModels } from './space-geometry';
@@ -158,9 +158,22 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   }
   const stageBg = sunBg || stageBgOf(o.cfg?.settings, disp);
 
+  // Opaque plan paper (owner 2026-08-03), same contract as the full card: the
+  // scene background never bleeds through the plan. The rect hugs the backdrop
+  // image, or the drawn content's bounds (marker positions included, as on the
+  // full card); an empty space papers its whole canvas.
+  const paperPts = spaceDevs.map((d) => {
+    const p = markerPos(d, o.layout, o.cfg, defPos, space);
+    return [p.x, p.y] as const;
+  });
+  const paper = space.bg
+    ? { x: space.bg.x, y: space.bg.y, w: space.bg.w, h: space.bg.h }
+    : contentBounds(space, 0.05, paperPts) || { x: vb[0], y: vb[1], w: vb[2], h: vb[3] };
+
   return html`
     <div class="hp-static-stage" style="aspect-ratio:${vb[2]}/${vb[3]}${stageBg ? ';background:' + stageBg : ''}">
       <svg viewBox="${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}" preserveAspectRatio="xMidYMid meet">
+        ${svg`<rect class="hp-paper" x="${paper.x}" y="${paper.y}" width="${paper.w}" height="${paper.h}"></rect>`}
         ${bgHref
           ? svg`<image href="${bgHref}" x="${space.bg!.x}" y="${space.bg!.y}" width="${space.bg!.w}" height="${space.bg!.h}" preserveAspectRatio="none" />`
           : nothing}

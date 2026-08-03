@@ -879,6 +879,16 @@ require hands on real hardware — they remain for the human pass.
       and behaviour byte-for-byte; `daynight` hides the picker and the stage
       follows the sun — neutral day, warm golden hour, dark night — with a
       slow (tens of seconds) transition; the PLAN dims only ~10% at night
+- [ ] Opaque plan paper (2026-08-03, owner): the scene background —
+      `bg_color` or the daynight sky — is visible ONLY around the plan and
+      NEVER bleeds through it, in view/kiosk/editors and on the static
+      space-card. An opaque `rect.hp-paper` under everything the plan draws
+      hugs the plan's extents (the backdrop image rect, or the drawn
+      content bounds the opening view fits); a hand-drawn plan keeps its
+      historical white canvas, an image plan the theme card background.
+      At night (`daynight`) the paper dims via the zoomwrap `brightness`
+      filter only — its alpha stays 1. Pixel-proofed against an acid
+      `#ff00ff` background [auto: smoke_bg_color]
 - [ ] Per-space overrides (background mode, north, sun-in-windows) inherit
       when empty, exactly like show_lqi/fill_mode
 - [ ] «Sunlight through windows» (default OFF): wedges appear only from

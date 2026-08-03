@@ -313,6 +313,17 @@ export const cardStyles = css`
       height: 100%;
       display: block;
     }
+    /* Opaque plan paper (owner 2026-08-03): the scene bg_color / daynight sky
+       shows ONLY around the plan, never through it. The colour is the
+       pre-bg_color canvas — the theme card background under an image plan,
+       plain white for a hand-drawn one (.stage.noplan). Night dimming comes
+       from the .zoomwrap brightness filter, never from alpha (docs/SUN.md). */
+    .hp-paper {
+      fill: var(--ha-card-background, var(--card-background-color, #111));
+    }
+    .stage.noplan .hp-paper {
+      fill: #ffffff;
+    }
     .room {
       transition: 0.12s;
       cursor: default; /* v1.40.1: rooms are not clickable — the label's link icon is */
