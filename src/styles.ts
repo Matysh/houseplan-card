@@ -10,6 +10,28 @@ export const cardStyles = css`
       --hp-accent: var(--primary-color, #3ea6ff);
       --hp-on: #ffd45c;
       --hp-open: #ff9f43;
+      /* design tokens (UI chrome only). The icon/plan scale math stays on
+         --icon-size/--dev-size cqw units and never uses these. */
+      /* spacing scale, fact-based; stray 3/5/7/9/13/14px values are unified
+         onto the nearest step (max +-2px, the whole point of the pass) */
+      --sp-1: 2px;
+      --sp-2: 4px;
+      --sp-3: 6px;
+      --sp-4: 8px;
+      --sp-5: 12px;
+      --sp-6: 16px;
+      /* px radii of dialogs/buttons/plates (the 22% badge radius is scale math) */
+      --rad-s: 6px;
+      --rad-m: 8px;
+      --rad-l: 12px;
+      /* font tiers: fine print+labels / body+buttons / title */
+      --fs-s: 12px;
+      --fs-m: 13px;
+      --fs-l: 15px;
+      /* elevation: badge / floating panel (menu, tip, toast) / dialog */
+      --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.45);
+      --shadow-2: 0 6px 22px rgba(0, 0, 0, 0.45);
+      --shadow-3: 0 8px 30px rgba(0, 0, 0, 0.5);
     }
     ha-card {
       overflow: visible; /* overflow:hidden breaks position:sticky on the header */
@@ -21,7 +43,7 @@ export const cardStyles = css`
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
+      gap: var(--sp-4);
     }
     .empty .big {
       --mdc-icon-size: 56px;
@@ -30,11 +52,11 @@ export const cardStyles = css`
     }
     .empty .muted {
       color: var(--hp-muted);
-      font-size: 13px;
+      font-size: var(--fs-m);
       margin: 0;
     }
     .empty .btn {
-      margin-top: 8px;
+      margin-top: var(--sp-4);
     }
     .hdr {
       position: sticky;
@@ -47,16 +69,16 @@ export const cardStyles = css`
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 10px 14px;
+      padding: 10px var(--sp-5);
       border-bottom: 1px solid var(--hp-line);
       flex-wrap: wrap;
     }
     .title {
-      font-size: 15px;
+      font-size: var(--fs-l);
       font-weight: 600;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: var(--sp-3);
       white-space: nowrap;
     }
     .title ha-icon {
@@ -65,16 +87,16 @@ export const cardStyles = css`
     }
     .tabs {
       display: flex;
-      gap: 4px;
+      gap: var(--sp-2);
       background: rgba(127, 127, 127, 0.12);
-      padding: 3px;
-      border-radius: 10px;
+      padding: var(--sp-2);
+      border-radius: var(--rad-l);
       flex-wrap: wrap;
     }
     @media (max-width: 620px) {
-      .head { gap: 6px; padding: 8px 10px; }
+      .head { gap: var(--sp-3); padding: var(--sp-4) 10px; }
       .head .count { display: none; }
-      .head .title { font-size: 14px; }
+      .head .title { font-size: var(--fs-m); }
     }
     .tab {
       border: 0;
@@ -82,9 +104,9 @@ export const cardStyles = css`
       color: var(--hp-muted);
       display: inline-flex;
       align-items: center;
-      padding: 6px 13px;
-      border-radius: 8px;
-      font-size: 13px;
+      padding: var(--sp-3) var(--sp-5);
+      border-radius: var(--rad-m);
+      font-size: var(--fs-m);
       font-weight: 600;
       cursor: pointer;
       transition: 0.15s;
@@ -98,7 +120,7 @@ export const cardStyles = css`
       color: var(--text-primary-color, #fff);
     }
     .count {
-      font-size: 12px;
+      font-size: var(--fs-s);
       color: var(--hp-muted);
     }
     .spacer {
@@ -107,16 +129,16 @@ export const cardStyles = css`
     .btn {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: var(--sp-3);
       border: 1px solid var(--hp-line);
       background: transparent;
       color: var(--hp-txt);
-      padding: 6px 10px;
-      border-radius: 8px;
+      padding: var(--sp-3) 10px;
+      border-radius: var(--rad-m);
       cursor: pointer;
       transition: 0.15s;
       font-family: inherit;
-      font-size: 12.5px;
+      font-size: var(--fs-m);
     }
     .btn ha-icon {
       --mdc-icon-size: 17px;
@@ -176,14 +198,14 @@ export const cardStyles = css`
     .sunrow {
       display: flex;
       align-items: center;
-      gap: 14px;
-      margin: 6px 0;
+      gap: var(--sp-5);
+      margin: var(--sp-3) 0;
     }
     .suncol {
       flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: var(--sp-3);
       min-width: 0;
     }
     .compass {
@@ -279,14 +301,14 @@ export const cardStyles = css`
     }
     .zoomctl {
       display: inline-flex;
-      gap: 2px;
+      gap: var(--sp-1);
       background: rgba(127, 127, 127, 0.12);
-      border-radius: 8px;
-      padding: 2px;
+      border-radius: var(--rad-m);
+      padding: var(--sp-1);
     }
     .zoomctl .zb {
       border: none;
-      padding: 5px 7px;
+      padding: var(--sp-3) var(--sp-4);
     }
     .zoomctl .zb[disabled] {
       opacity: 0.4;
@@ -294,15 +316,15 @@ export const cardStyles = css`
     }
     .zoombadge {
       position: absolute;
-      left: 8px;
-      bottom: 8px;
+      left: var(--sp-4);
+      bottom: var(--sp-4);
       background: var(--card-background-color, var(--hp-bg));
       opacity: 0.92;
       color: var(--hp-txt);
       border: 1px solid var(--hp-accent);
-      border-radius: 8px;
-      padding: 2px 8px;
-      font-size: 12px;
+      border-radius: var(--rad-m);
+      padding: var(--sp-1) var(--sp-4);
+      font-size: var(--fs-s);
       font-weight: 600;
       pointer-events: none;
     }
@@ -451,8 +473,8 @@ export const cardStyles = css`
       justify-content: center;
       display: flex;
       align-items: center;
-      gap: 6px;
-      margin-top: 8px;
+      gap: var(--sp-3);
+      margin-top: var(--sp-4);
     }
     .btn.lockact.warn {
       color: var(--error-color, #d33);
@@ -461,8 +483,8 @@ export const cardStyles = css`
     .oprow {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 6px 0;
+      gap: var(--sp-4);
+      padding: var(--sp-3) 0;
     }
     .oprow b { margin-left: auto; }
     .oprow.ok b { color: #66d17a; }
@@ -586,7 +608,7 @@ export const cardStyles = css`
       cursor: pointer;
       pointer-events: auto;
       opacity: 0.92;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+      box-shadow: var(--shadow-1);
       z-index: 2;
     }
     .rlgearbtn { transition: opacity 0.15s, filter 0.15s; }
@@ -638,65 +660,65 @@ export const cardStyles = css`
     .bindharow {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: var(--sp-5);
       flex-wrap: wrap;
     }
     .bindharow .entcheck { opacity: 0.9; }
     .dropbtn {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: var(--sp-4);
       width: 100%;
       text-align: left;
       border: 1px solid var(--hp-muted);
-      border-radius: 8px;
+      border-radius: var(--rad-m);
       background: transparent;
       color: var(--hp-txt);
-      padding: 8px 10px;
+      padding: var(--sp-4) 10px;
       cursor: pointer;
       font-family: inherit;
-      font-size: 13px;
-      margin-top: 6px;
+      font-size: var(--fs-m);
+      margin-top: var(--sp-3);
     }
-    .dropbtn .ref { color: var(--hp-muted); font-size: 11px; margin-left: auto; }
-    .dropbtn ha-icon { --mdc-icon-size: 18px; margin-left: 4px; }
+    .dropbtn .ref { color: var(--hp-muted); font-size: var(--fs-s); margin-left: auto; }
+    .dropbtn ha-icon { --mdc-icon-size: 18px; margin-left: var(--sp-2); }
     .dropbtn.open { border-color: var(--hp-accent); }
     .droppanel {
       border: 1px solid var(--hp-accent);
       border-top: none;
-      border-radius: 0 0 8px 8px;
-      padding: 6px;
+      border-radius: 0 0 var(--rad-m) var(--rad-m);
+      padding: var(--sp-3);
       margin-top: -4px;
     }
-    .ctrlchips { display: flex; flex-wrap: wrap; gap: 5px; margin: 4px 0; }
+    .ctrlchips { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin: var(--sp-2) 0; }
     .ctrlchip {
-      display: inline-flex; align-items: center; gap: 4px;
+      display: inline-flex; align-items: center; gap: var(--sp-2);
       background: var(--hp-accent); color: var(--text-primary-color, #fff);
-      border-radius: 12px; padding: 3px 8px; font-size: 12px;
+      border-radius: var(--rad-l); padding: var(--sp-2) var(--sp-4); font-size: var(--fs-s);
     }
     .ctrlchip ha-icon { --mdc-icon-size: 14px; cursor: pointer; }
-    .ctrllist { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
+    .ctrllist { display: flex; flex-direction: column; gap: var(--sp-1); margin-top: var(--sp-2); }
     .ctrlopt {
-      display: flex; align-items: center; gap: 7px; text-align: left;
+      display: flex; align-items: center; gap: var(--sp-4); text-align: left;
       border: 0; background: transparent; color: var(--hp-txt);
-      padding: 5px 7px; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 13px;
+      padding: var(--sp-3) var(--sp-4); border-radius: var(--rad-s); cursor: pointer; font-family: inherit; font-size: var(--fs-m);
     }
     .ctrlopt:hover { background: var(--secondary-background-color, rgba(128,128,128,0.15)); }
-    .ctrlopt .sub { color: var(--hp-muted); font-size: 11px; margin-left: auto; }
+    .ctrlopt .sub { color: var(--hp-muted); font-size: var(--fs-s); margin-left: auto; }
     .ctrlopt ha-icon { --mdc-icon-size: 16px; }
-    .ctrlstates { display: flex; flex-direction: column; gap: 3px; }
-    .ctrlstate { display: inline-flex; align-items: center; gap: 5px; color: var(--hp-muted); }
+    .ctrlstates { display: flex; flex-direction: column; gap: var(--sp-2); }
+    .ctrlstate { display: inline-flex; align-items: center; gap: var(--sp-3); color: var(--hp-muted); }
     .ctrlstate.on { color: var(--hp-txt); }
     .ctrlstate ha-icon { --mdc-icon-size: 15px; }
     .cardpreview {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
-      margin: 8px 0 2px;
+      gap: var(--sp-2);
+      margin: var(--sp-4) 0 var(--sp-1);
       padding: 10px;
       border: 1px dashed var(--hp-muted);
-      border-radius: 8px;
+      border-radius: var(--rad-m);
     }
     .cardpreview .cpname { font-weight: 700; letter-spacing: 0.04em; }
     .cardpreview .cpmeta {
@@ -710,9 +732,9 @@ export const cardStyles = css`
     .iconauto {
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      margin: 4px 0 0;
+      gap: var(--sp-3);
+      font-size: var(--fs-s);
+      margin: var(--sp-2) 0 0;
     }
     .iconauto ha-icon { --mdc-icon-size: 18px; }
     .rlhandle {
@@ -756,10 +778,10 @@ export const cardStyles = css`
     .kioskdots {
       position: absolute;
       left: 50%;
-      bottom: 14px;
+      bottom: var(--sp-5);
       transform: translateX(-50%);
       display: flex;
-      gap: 8px;
+      gap: var(--sp-4);
       z-index: 5;
       pointer-events: none;
     }
@@ -774,10 +796,10 @@ export const cardStyles = css`
     .measurelabel {
       position: absolute;
       transform: translate(12px, -150%);
-      font-size: 12px;
+      font-size: var(--fs-s);
       font-weight: 600;
-      padding: 1px 6px;
-      border-radius: 6px;
+      padding: 1px var(--sp-3);
+      border-radius: var(--rad-s);
       background: rgba(0, 0, 0, 0.72);
       color: #fff;
       white-space: nowrap;
@@ -827,12 +849,12 @@ export const cardStyles = css`
       width: 30px; height: 26px; padding: 0; border: none; background: none; cursor: pointer;
     }
     .decorbar .dwidth {
-      font-family: inherit; font-size: 12px; border-radius: 6px;
+      font-family: inherit; font-size: var(--fs-s); border-radius: var(--rad-s);
       background: var(--hp-bg2, transparent); color: var(--hp-txt); border: 1px solid var(--hp-muted);
-      padding: 3px 5px;
+      padding: var(--sp-2) var(--sp-3);
     }
     .decorbar .dfill {
-      display: inline-flex; align-items: center; gap: 4px; font-size: 12px; cursor: pointer;
+      display: inline-flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-s); cursor: pointer;
     }
     .opghost {
       stroke: var(--hp-open, #ff9800);
@@ -926,21 +948,21 @@ export const cardStyles = css`
     }
     .modes {
       display: inline-flex;
-      gap: 2px;
+      gap: var(--sp-1);
       background: rgba(127, 127, 127, 0.12);
-      border-radius: 10px;
-      padding: 3px;
+      border-radius: var(--rad-l);
+      padding: var(--sp-2);
     }
     .modetab {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: var(--sp-3);
       border: 0;
       background: transparent;
       color: var(--hp-muted);
-      padding: 5px 10px;
-      border-radius: 8px;
-      font-size: 12.5px;
+      padding: var(--sp-3) 10px; /* 10px h-padding kept: +2px would wrap the header modes row */
+      border-radius: var(--rad-m);
+      font-size: var(--fs-m);
       font-weight: 600;
       cursor: pointer;
       font-family: inherit;
@@ -953,12 +975,12 @@ export const cardStyles = css`
       margin-left: 2px;
       opacity: 0.75;
       cursor: pointer;
-      border-radius: 4px;
+      border-radius: var(--rad-s);
     }
     .modetab .closex:hover { opacity: 1; }
     .editbar .barclose {
-      padding: 4px 6px;
-      margin-left: 6px;
+      padding: var(--sp-2) var(--sp-3);
+      margin-left: var(--sp-3);
     }
     .modetab.active {
       background: var(--hp-accent);
@@ -1015,9 +1037,9 @@ export const cardStyles = css`
       background: var(--hp-bg);
       border: 1px solid var(--hp-line);
       color: var(--hp-txt);
-      border-radius: 6px;
-      padding: 6px 8px;
-      font-size: 13px;
+      border-radius: var(--rad-s);
+      padding: var(--sp-3) var(--sp-4);
+      font-size: var(--fs-m);
       font-family: inherit;
     }
     .namein {
@@ -1153,7 +1175,7 @@ export const cardStyles = css`
       cursor: pointer;
       pointer-events: auto;
       transition: background 0.15s, border-color 0.15s, opacity 0.2s;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+      box-shadow: var(--shadow-1);
       z-index: 2;
     }
     .dev ha-icon {
@@ -1261,23 +1283,23 @@ export const cardStyles = css`
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 9px 14px;
+      padding: var(--sp-4) var(--sp-5);
       border-bottom: 1px solid var(--hp-line);
-      font-size: 13px;
+      font-size: var(--fs-m);
       flex-wrap: wrap;
     }
     .tab .tabedit {
       --mdc-icon-size: 13px;
       display: inline-flex;
       align-items: center;
-      margin-left: 6px;
+      margin-left: var(--sp-3);
       opacity: 0.4;
     }
     .tab:hover .tabedit {
       opacity: 0.9;
     }
     .tab.tabadd {
-      padding: 6px 8px;
+      padding: var(--sp-3) var(--sp-4);
     }
     .tab.tabadd ha-icon {
       --mdc-icon-size: 15px;
@@ -1285,14 +1307,14 @@ export const cardStyles = css`
     .srcrow {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 13px;
+      gap: var(--sp-4);
+      font-size: var(--fs-m);
       cursor: pointer;
-      padding: 2px 0;
+      padding: var(--sp-1) 0;
     }
     .dispsection {
-      margin-top: 12px !important;
-      padding-top: 8px;
+      margin-top: var(--sp-5) !important;
+      padding-top: var(--sp-4);
       border-top: 1px solid var(--hp-line);
       font-weight: 600;
       color: var(--hp-txt) !important;
@@ -1300,13 +1322,13 @@ export const cardStyles = css`
     .colorrow {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: var(--sp-4);
     }
     .colorrow input[type='color'] {
       width: 42px;
       height: 28px;
       border: 1px solid var(--hp-line);
-      border-radius: 6px;
+      border-radius: var(--rad-s);
       background: transparent;
       padding: 1px;
       cursor: pointer;
@@ -1316,18 +1338,18 @@ export const cardStyles = css`
     .temprange {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: var(--sp-3);
       margin-left: auto;
       color: var(--hp-muted);
-      font-size: 12px;
+      font-size: var(--fs-s);
     }
     /* beat the generic .dialog .body .namein { width:100% } rule */
-    .dialog .body .temprange .tempin { width: 56px; flex: none; padding: 3px 6px; }
+    .dialog .body .temprange .tempin { width: 56px; flex: none; padding: var(--sp-2) var(--sp-3); }
     .dialog .body .colorrow .tempin { width: 72px; flex: none; }
     .srcrow { flex-wrap: nowrap; }
     .srcrow > span:first-of-type { white-space: nowrap; }
-    .colorrow .opl { color: var(--hp-muted); font-size: 12px; }
-    .colorrow .opv { font-size: 12px; min-width: 34px; text-align: right; }
+    .colorrow .opl { color: var(--hp-muted); font-size: var(--fs-s); }
+    .colorrow .opv { font-size: var(--fs-s); min-width: 34px; text-align: right; }
     .planrow {
       display: flex;
       align-items: center;
@@ -1338,13 +1360,13 @@ export const cardStyles = css`
     .savedplans {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: var(--sp-3);
       max-height: 240px;
       overflow: auto;
-      margin: 6px 0 2px;
-      padding: 6px;
+      margin: var(--sp-3) 0 var(--sp-1);
+      padding: var(--sp-3);
       border: 1px solid var(--hp-line);
-      border-radius: 8px;
+      border-radius: var(--rad-m);
       background: var(--hp-bg2, rgba(255, 255, 255, 0.03));
     }
     .savedplan {
@@ -1352,30 +1374,30 @@ export const cardStyles = css`
       align-items: center;
       gap: 10px;
     }
-    .savedplan.cur { outline: 1px solid var(--hp-accent); border-radius: 6px; }
+    .savedplan.cur { outline: 1px solid var(--hp-accent); border-radius: var(--rad-s); }
     .savedplan img {
       width: 56px;
       height: 40px;
       object-fit: contain;
       border: 1px solid var(--hp-line);
-      border-radius: 4px;
+      border-radius: var(--rad-s);
       background: #fff;
       flex: none;
     }
     .savedmeta { display: flex; flex-direction: column; min-width: 0; flex: 1; }
     .savedmeta b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .savedmeta .muted { font-size: 11px; }
+    .savedmeta .muted { font-size: var(--fs-s); }
     .savedplan .btn.danger ha-icon { color: #f25a4a; }
     .savedplan .btn[disabled] { opacity: 0.4; pointer-events: none; }
     .planprev {
       max-width: 120px;
       max-height: 70px;
       border: 1px solid var(--hp-line);
-      border-radius: 6px;
+      border-radius: var(--rad-s);
       background: #fff;
     }
     .planname {
-      font-size: 12.5px;
+      font-size: var(--fs-m);
       max-width: 150px;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -1407,9 +1429,9 @@ export const cardStyles = css`
       background: var(--hp-bg);
       border: 1px solid var(--hp-line);
       color: var(--hp-txt);
-      border-radius: 6px;
-      padding: 6px 8px;
-      font-size: 13px;
+      border-radius: var(--rad-s);
+      padding: var(--sp-3) var(--sp-4);
+      font-size: var(--fs-m);
       font-family: inherit;
       resize: vertical;
       /* flex column of the dialog body squeezes textareas — keep a usable height */
@@ -1420,22 +1442,22 @@ export const cardStyles = css`
     .bindsel {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: var(--sp-3);
       border: 1px solid var(--hp-line);
-      border-radius: 8px;
-      padding: 8px;
+      border-radius: var(--rad-m);
+      padding: var(--sp-4);
     }
     .bindsel .opt {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: var(--sp-3);
       border: 1px solid var(--hp-line);
       background: transparent;
       color: var(--hp-txt);
-      border-radius: 6px;
-      padding: 6px 8px;
+      border-radius: var(--rad-s);
+      padding: var(--sp-3) var(--sp-4);
       cursor: pointer;
-      font-size: 12.5px;
+      font-size: var(--fs-m);
       font-family: inherit;
     }
     .bindsel .opt.on {
@@ -1446,14 +1468,14 @@ export const cardStyles = css`
     .curbind {
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 12.5px;
+      gap: var(--sp-3);
+      font-size: var(--fs-m);
       color: var(--hp-txt);
       flex-wrap: wrap;
     }
     .curbind .ref {
       color: var(--hp-muted);
-      font-size: 11px;
+      font-size: var(--fs-s);
     }
     /* live vacuum: a round puck, no badge plate, soft pulse (docs/VACUUM.md) */
     .vacpuck {
@@ -1467,7 +1489,7 @@ export const cardStyles = css`
       transform: translate(-50%, -50%);
       background: var(--hp-bg);
       border: 1px solid var(--hp-line);
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+      box-shadow: var(--shadow-1);
       color: var(--hp-txt);
       display: flex;
       align-items: center;
@@ -1528,7 +1550,7 @@ export const cardStyles = css`
       stroke: rgba(255, 255, 255, 0.82);
       stroke-width: 0.9;
     }
-    .vacbox .vacbtns { display: flex; gap: 8px; margin: 6px 0; flex-wrap: wrap; }
+    .vacbox .vacbtns { display: flex; gap: var(--sp-4); margin: var(--sp-3) 0; flex-wrap: wrap; }
     .vacfit {
       position: absolute;
       inset: 0;
@@ -1618,15 +1640,15 @@ export const cardStyles = css`
       bottom: 24px;
       transform: translateX(-50%);
       display: flex;
-      gap: 12px;
+      gap: var(--sp-5);
       align-items: center;
-      background: var(--hp-panel, #16212e);
-      color: var(--hp-fg, #e7eef7);
+      background: var(--hp-bg);
+      color: var(--hp-txt);
       border: 1px solid var(--hp-accent);
-      border-radius: 10px;
-      padding: 10px 14px;
+      border-radius: var(--rad-l);
+      padding: 10px var(--sp-5);
       z-index: 60;
-      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+      box-shadow: var(--shadow-2);
     }
     .candlist {
       max-height: 160px;
@@ -1643,11 +1665,11 @@ export const cardStyles = css`
     .cand {
       display: flex;
       justify-content: space-between;
-      gap: 8px;
-      padding: 6px 8px;
+      gap: var(--sp-4);
+      padding: var(--sp-3) var(--sp-4);
       cursor: pointer;
-      border-radius: 6px;
-      font-size: 12.5px;
+      border-radius: var(--rad-s);
+      font-size: var(--fs-m);
     }
     .cand:hover {
       background: rgba(127, 127, 127, 0.15);
@@ -1658,7 +1680,7 @@ export const cardStyles = css`
     }
     .cand .cs {
       color: var(--hp-muted);
-      font-size: 11px;
+      font-size: var(--fs-s);
       white-space: nowrap;
     }
     .cand.sel .cs {
@@ -1672,17 +1694,17 @@ export const cardStyles = css`
     .pdfedit {
       display: flex;
       flex-wrap: wrap;
-      gap: 6px;
+      gap: var(--sp-3);
       align-items: center;
     }
     .pdftag {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: var(--sp-2);
       border: 1px solid var(--hp-line);
-      border-radius: 6px;
-      padding: 3px 6px;
-      font-size: 12px;
+      border-radius: var(--rad-s);
+      padding: var(--sp-2) var(--sp-3);
+      font-size: var(--fs-s);
     }
     .pdftag a {
       color: var(--hp-txt);
@@ -1703,31 +1725,31 @@ export const cardStyles = css`
     .entlist {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: var(--sp-2);
       margin-bottom: 10px;
     }
     .entrow {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 6px 8px;
-      border-radius: 8px;
+      gap: var(--sp-4);
+      padding: var(--sp-3) var(--sp-4);
+      border-radius: var(--rad-m);
       background: var(--secondary-background-color, rgba(128, 128, 128, 0.12));
     }
     .entrow ha-icon { --mdc-icon-size: 20px; color: var(--hp-muted); }
     .entrow.on ha-icon { color: var(--hp-accent); }
-    .entrow .en { flex: 1; font-size: 13px; }
-    .entrow .ev { font-size: 13px; color: var(--hp-muted); }
+    .entrow .en { flex: 1; font-size: var(--fs-m); }
+    .entrow .ev { font-size: var(--fs-m); color: var(--hp-muted); }
     .entbtn {
       min-width: 74px;
       min-height: 32px;
-      padding: 4px 12px;
+      padding: var(--sp-2) var(--sp-5);
       border: 1px solid var(--hp-muted);
       border-radius: 999px;
       background: transparent;
       color: var(--hp-txt);
       font: inherit;
-      font-size: 13px;
+      font-size: var(--fs-m);
       cursor: pointer;
     }
     .entbtn.on {
@@ -1739,8 +1761,8 @@ export const cardStyles = css`
     .inforow {
       display: flex;
       gap: 10px;
-      font-size: 13px;
-      margin: 3px 0;
+      font-size: var(--fs-m);
+      margin: var(--sp-2) 0;
     }
     .inforow .k {
       color: var(--hp-muted);
@@ -1751,9 +1773,9 @@ export const cardStyles = css`
       word-break: break-all;
     }
     .infodesc {
-      font-size: 13px;
+      font-size: var(--fs-m);
       white-space: pre-wrap;
-      margin-top: 6px;
+      margin-top: var(--sp-3);
     }
     .infodesc.muted {
       color: var(--hp-muted);
@@ -1761,12 +1783,12 @@ export const cardStyles = css`
     .pdflist {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: var(--sp-2);
     }
     .pdf {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: var(--sp-2);
       color: var(--hp-accent);
       text-decoration: none;
     }
@@ -1776,43 +1798,43 @@ export const cardStyles = css`
     .floorrow {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 6px 4px;
-      font-size: 13.5px;
+      gap: var(--sp-4);
+      padding: var(--sp-3) var(--sp-2);
+      font-size: var(--fs-m);
       cursor: pointer;
     }
     .floorrow .floorlvl {
       color: var(--hp-muted);
-      font-size: 11px;
+      font-size: var(--fs-s);
       border: 1px solid var(--hp-line);
-      border-radius: 5px;
-      padding: 0 5px;
+      border-radius: var(--rad-s);
+      padding: 0 var(--sp-3);
     }
     .importprog {
       margin-left: auto;
       color: var(--hp-muted);
-      font-size: 12px;
+      font-size: var(--fs-s);
       font-weight: 400;
     }
     .rhint {
-      font-size: 12px;
+      font-size: var(--fs-s);
       color: var(--hp-muted);
-      margin-bottom: 6px;
+      margin-bottom: var(--sp-3);
     }
     .rtest {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
+      gap: var(--sp-4);
+      margin-bottom: var(--sp-4);
     }
     .rtest .namein { flex: 1; }
     .rtest ha-icon { color: var(--hp-accent); }
-    .rtesticon { font-size: 11px; color: var(--hp-muted); }
+    .rtesticon { font-size: var(--fs-s); color: var(--hp-muted); }
     .rrow {
       display: flex;
       align-items: center;
-      gap: 6px;
-      margin: 2px 0;
+      gap: var(--sp-3);
+      margin: var(--sp-1) 0;
     }
     .rrow .rpat { flex: 2; }
     .rrow .ricon { flex: 1.4; }
@@ -1828,7 +1850,7 @@ export const cardStyles = css`
 
     .gsrow .gsl {
       min-width: 150px;
-      font-size: 12.5px;
+      font-size: var(--fs-m);
       color: var(--hp-muted);
     }
     .dialogwrap {
@@ -1841,32 +1863,32 @@ export const cardStyles = css`
     .dialog {
       background: var(--card-background-color, var(--hp-bg));
       border: 1px solid var(--hp-accent);
-      border-radius: 14px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+      border-radius: var(--rad-l);
+      box-shadow: var(--shadow-3);
       width: min(360px, 92vw);
       overflow: hidden;
     }
     .dialog .hd {
-      padding: 12px 16px;
+      padding: var(--sp-5) var(--sp-6);
       font-weight: 600;
       border-bottom: 1px solid var(--hp-line);
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: var(--sp-4);
     }
     .dialog .hd ha-icon {
       color: var(--hp-accent);
     }
     .dialog .body {
-      padding: 14px 16px;
+      padding: var(--sp-5) var(--sp-6);
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: var(--sp-3);
     }
     .dialog .body label {
-      font-size: 12px;
+      font-size: var(--fs-s);
       color: var(--hp-muted);
-      margin-top: 6px;
+      margin-top: var(--sp-3);
     }
     .dialog .body .namein,
     .dialog .body .areasel {
@@ -1876,8 +1898,8 @@ export const cardStyles = css`
     .dialog .row {
       display: flex;
       justify-content: flex-end;
-      gap: 8px;
-      padding: 12px 16px;
+      gap: var(--sp-4);
+      padding: var(--sp-5) var(--sp-6);
       border-top: 1px solid var(--hp-line);
     }
     .editbar .warn {
@@ -1891,14 +1913,14 @@ export const cardStyles = css`
       background: transparent;
       border: 1px solid var(--hp-line);
       color: var(--hp-txt);
-      border-radius: 6px;
-      padding: 5px 7px;
-      font-size: 13px;
+      border-radius: var(--rad-s);
+      padding: var(--sp-3) var(--sp-4);
+      font-size: var(--fs-m);
     }
     .editbar label,
     .editbar .hint {
       color: var(--hp-muted);
-      font-size: 12px;
+      font-size: var(--fs-s);
     }
     .menuwrap {
       position: fixed;
@@ -1909,21 +1931,21 @@ export const cardStyles = css`
       position: fixed;
       background: var(--hp-bg);
       border: 1px solid var(--hp-accent);
-      border-radius: 10px;
-      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
+      border-radius: var(--rad-l);
+      box-shadow: var(--shadow-2);
       min-width: 210px;
       max-width: 300px;
       overflow: hidden;
       transform: translate(0, 8px);
     }
     .menu .hd {
-      padding: 8px 12px;
+      padding: var(--sp-4) var(--sp-5);
       font-weight: 600;
-      font-size: 12.5px;
+      font-size: var(--fs-m);
       border-bottom: 1px solid var(--hp-line);
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: var(--sp-3);
     }
     .menu .hd ha-icon,
     .menu .it.all ha-icon {
@@ -1931,12 +1953,12 @@ export const cardStyles = css`
       --mdc-icon-size: 16px;
     }
     .menu .it {
-      padding: 8px 12px;
-      font-size: 12.5px;
+      padding: var(--sp-4) var(--sp-5);
+      font-size: var(--fs-m);
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: var(--sp-4);
     }
     .menu .it ha-icon {
       --mdc-icon-size: 16px;
@@ -1955,16 +1977,16 @@ export const cardStyles = css`
       background: var(--hp-bg);
       border: 1px solid var(--hp-accent);
       color: var(--hp-txt);
-      padding: 6px 10px;
-      border-radius: 8px;
-      font-size: 12.5px;
-      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
+      padding: var(--sp-3) 10px;
+      border-radius: var(--rad-m);
+      font-size: var(--fs-m);
+      box-shadow: var(--shadow-2);
       z-index: 99;
       max-width: 260px;
     }
     .tip .m {
       color: var(--hp-muted);
-      font-size: 11px;
+      font-size: var(--fs-s);
       display: block;
     }
     .toast {
@@ -1975,10 +1997,10 @@ export const cardStyles = css`
       background: var(--hp-bg);
       border: 1px solid var(--hp-accent);
       color: var(--hp-txt);
-      padding: 9px 16px;
-      border-radius: 10px;
-      font-size: 13px;
-      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
+      padding: var(--sp-4) var(--sp-6);
+      border-radius: var(--rad-l);
+      font-size: var(--fs-m);
+      box-shadow: var(--shadow-2);
       z-index: 120;
       max-width: 90vw;
     }
