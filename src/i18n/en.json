@@ -19,7 +19,7 @@
   "btn.no_area": "No area",
   "title.zoom_in": "Zoom in",
   "title.zoom_out": "Zoom out",
-  "title.zoom_reset": "Reset zoom",
+  "title.zoom_fit": "Fit all",
   "title.add_device": "Add a device to the plan",
   "title.show_all": "Show hidden devices (ghosted, this tab only)",
   "title.markup": "Room markup: grid, lines, outlines",
@@ -404,7 +404,7 @@
   "gs.weather_ph": "weather.home (optional)",
   "gs.about_group": "About",
   "gs.about_version": "Houseplan Card v{v}",
-  "gs.about_github": "GitHub \u00b7 docs & issues",
+  "gs.about_github": "GitHub · docs & issues",
   "gs.about_telegram": "Telegram chat",
   "space.bg_color": "Background around the plan",
   "space.bg_inherit": "Inherit general",
@@ -415,5 +415,8 @@
   "space.sun_rays": "Sunlight through windows",
   "space.sun_inherit": "Inherit general",
   "space.sun_on": "On",
-  "space.sun_off": "Off"
+  "space.sun_off": "Off",
+  "canvas.far_objects": "{n} object(s) far from the plan",
+  "canvas.show_far": "Show",
+  "canvas.home_tip": "The plan is over there — click to fit it"
 }

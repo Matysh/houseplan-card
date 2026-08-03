@@ -314,6 +314,60 @@ export const cardStyles = css`
       opacity: 0.4;
       pointer-events: none;
     }
+    /* docs/CANVAS.md §4.1: objects an order of magnitude away from the plan
+       do not decide the opening view — one quiet chip says so and offers to
+       take them in. Never a modal (owner). */
+    .farhint {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: var(--sp-4);
+      z-index: 12;
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      max-width: calc(100% - var(--sp-8));
+      background: var(--card-background-color, var(--hp-bg));
+      opacity: 0.94;
+      color: var(--hp-txt);
+      border: 1px solid var(--divider-color, #33404d);
+      border-radius: var(--rad-m);
+      padding: var(--sp-1) var(--sp-3);
+      font-size: var(--fs-s);
+    }
+    .farhint ha-icon {
+      --mdc-icon-size: 18px;
+      color: var(--hp-warn, #e2a03f);
+      flex: none;
+    }
+    .farhint span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    /* docs/CANVAS.md §5: the plane has no edges, so you can pan until nothing
+       is on screen. One pointer home, one click back. */
+    .homearrow {
+      position: absolute;
+      z-index: 12;
+      transform: translate(-50%, -50%);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      background: var(--card-background-color, var(--hp-bg));
+      color: var(--hp-accent);
+      border: 1px solid var(--hp-accent);
+      opacity: 0.9;
+      padding: 0;
+    }
+    .homearrow ha-icon {
+      --mdc-icon-size: 22px;
+      line-height: 1;
+    }
     .zoombadge {
       position: absolute;
       left: var(--sp-4);
@@ -1004,6 +1058,13 @@ export const cardStyles = css`
       opacity: 0.75;
       stroke: rgba(0, 0, 0, 0.35);
       stroke-width: 0.4;
+    }
+    /* docs/CANVAS.md §7: every coarse node (5x/10x the live step) keeps a
+       bigger, more opaque dot, so zoomed far out the grid still reads as a
+       grid instead of a grey wash. */
+    .griddot.major {
+      opacity: 1;
+      stroke-width: 0;
     }
     .seg {
       stroke: var(--hp-accent);

@@ -49,7 +49,11 @@ import type {
 import './editor';
 import './space-card';
 import { cardStyles } from './styles';
-import { fitInSquare, contentBounds, spaceModels } from './space-geometry';
+import {
+  fitInSquare, contentBounds, spaceModels, contentFrame, contentItems, spaceFrame,
+  spaceCenter, iconUnit, gridLevels, itemOf,
+  MIN_ZOOM, PAN_SLACK, CANVAS_LIMIT, type ContentItem, type Rect,
+} from './space-geometry';
 import { langOf, t, type I18nKey } from './i18n';
 
 const CARD_VERSION = '1.56.0';
@@ -93,6 +97,12 @@ const NORM_W = 1000; // side of the render space — the canvas is square (v1.48
     Owner's rule (2026-08-01): «движение = разовая вспышка в момент
     обнаружения; cool-down не пульсирует». */
 const SENSE_FLASH_MS = 3300;
+
+/** Smallest rectangle holding both (docs/CANVAS.md §4). */
+const unionRect = (a: Rect, b: Rect): Rect => {
+  const x = Math.min(a.x, b.x), y = Math.min(a.y, b.y);
+  return { x, y, w: Math.max(a.x + a.w, b.x + b.w) - x, h: Math.max(a.y + a.h, b.y + b.h) - y };
+};
 
 const GRID_N = 240; // grid points across the plan width (half the previous step; old nodes are a subset of the new ones, positions are preserved)
 type MarkupTool = 'draw' | 'merge' | 'split' | 'resize' | 'opening' | 'openwall' | 'delroom';
@@ -1464,8 +1474,11 @@ class HouseplanCard extends LitElement {
   private _defaultPositions(): Record<string, { x: number; y: number }> {
     const map: Record<string, { x: number; y: number }> = {};
     const iconPct = this._config?.icon_size ?? 2.5;
-    const minDist = (iconPct / 100) * NORM_W * 1.3; // no closer than the icon diameter + a margin
     for (const s of this._model) {
+      // docs/CANVAS.md §6: the icon's RENDER-unit footprint follows the plan's
+      // own size — NORM_W for anything inside the old square (identical to
+      // before), proportionally more for a plan several canvases wide.
+      const minDist = (iconPct / 100) * iconUnit(s) * 1.3;
       for (const r of s.rooms) {
         if (!r.area) continue;
         const ds = this._devices.filter((d) => d.area === r.area && d.space === s.id);
@@ -1503,8 +1516,8 @@ class HouseplanCard extends LitElement {
       }
     }
     if (this._defPos[d.id]) return this._defPos[d.id];
-    const vb = s.vb;
-    return { x: vb[0] + vb[2] / 2, y: vb[1] + vb[3] / 2 };
+    // the middle of what IS drawn, not of a canvas that has no edges any more
+    return spaceCenter(s);
   }
 
   private _savePos(d: DevItem, x: number, y: number): void {
@@ -1765,24 +1778,138 @@ class HouseplanCard extends LitElement {
   }
 
   /**
-   * The rectangle "fit to screen" fits. With a background image that is the
-   * whole canvas — the image IS the plan. Without one it is what has been
-   * drawn, plus a small margin, so a single room on a big canvas fills the
-   * screen instead of sitting in it as a speck.
+   * Everything of the current space that counts as CONTENT, one item per
+   * object (docs/CANVAS.md §4): rooms and the backdrop image come from the
+   * model, openings/decor/devices are added here because the model does not
+   * carry them. Devices use their RESOLVED position, so a marker parked in
+   * the far corner of the yard frames with the rest.
    */
-  private _baseVb(): number[] {
+  private _contentItems(m: SpaceModel): ContentItem[] {
+    const extra: ContentItem[] = [];
+    for (const d of this._devices) {
+      if (d.space !== m.id) continue;
+      const p = this._pos(d);
+      extra.push({ minX: p.x, minY: p.y, maxX: p.x, maxY: p.y });
+    }
+    if (m.id === this._space) {
+      for (const o of this._openingsR) {
+        const rad = (Number(o.angle) * Math.PI) / 180;
+        const dx = (Math.cos(rad) * o.rlen) / 2, dy = (Math.sin(rad) * o.rlen) / 2;
+        const it = itemOf([[o.rx - dx, o.ry - dy], [o.rx + dx, o.ry + dy]]);
+        if (it) extra.push(it);
+      }
+      const H = this._decorH;
+      for (const x of this._decorList) {
+        const pts = x.kind === 'line'
+          ? [[x.x1 * NORM_W, x.y1 * H], [x.x2 * NORM_W, x.y2 * H]]
+          : [[x.x * NORM_W, x.y * H], [(x.x + (x.w || 0)) * NORM_W, (x.y + (x.h || 0)) * H]];
+        const it = itemOf(pts);
+        if (it) extra.push(it);
+      }
+    }
+    return contentItems(m, extra);
+  }
+
+  /**
+   * The content frame of the current space, memoised (docs/CANVAS.md §4).
+   *
+   * In VIEW mode it follows the config: adding a device out in the yard
+   * widens what "fit" means. Inside an EDITOR it only ever GROWS — the frame
+   * bounds pan and the meaning of zoom 1, and a frame that shrank the moment
+   * you deleted a room would move the ground under a drag. It never bounds
+   * where you may DRAW: §5 pan slack plus 3x zoom-out is far more room than
+   * the old square ever gave (that is what HP-1490-03 needed).
+   */
+  private _frame:
+    | { id: string; model: SpaceModel; layout: unknown; devs: unknown; far: boolean;
+        rect: Rect; all: Rect; outliers: number }
+    | null = null;
+  /** The outlier hint's «Показать» is on: the frame takes in the far strays
+   *  too, so zoom, pan and the fit button all agree about what "everything"
+   *  is. Reset when the space changes (docs/CANVAS.md §4.1). */
+  private _showFar = false;
+
+  private _frameOf(): { rect: Rect; all: Rect; outliers: number } {
     const m = this._spaceModel();
-    if (m.bg) return m.vb;
-    // The EDITORS get the whole square: the content frame also bounds pan,
-    // zoom and pointer maths, and inside it there is nowhere to draw the next
-    // room or drag a marker away from the first one (HP-1490-03).
-    if (this._mode !== 'view') return m.vb;
-    // devices are content too — they may stand outside every room
-    const pts = this._devices
-      .filter((d) => d.space === m.id)
-      .map((d) => { const p = this._pos(d); return [p.x, p.y] as const; });
-    const b = contentBounds(m, 0.05, pts);
-    return b ? [b.x, b.y, b.w, b.h] : m.vb;
+    // Memo by IDENTITY, not by an epoch counter: `_model`, `_layout` and
+    // `_devices` are all replaced (never mutated in place) whenever their
+    // content changes, so this catches a marker drag and a server push alike —
+    // an epoch would have to be bumped at every one of those call sites.
+    const f = this._frame;
+    if (f && f.id === m.id && f.model === m && f.layout === this._layout
+        && f.devs === this._devices && f.far === this._showFar) return f;
+    const cf = contentFrame(this._contentItems(m));
+    let all = cf.all || spaceFrame(m);
+    let rect = this._showFar ? all : (cf.core || spaceFrame(m));
+    if (f && f.id === m.id && this._mode !== 'view') {
+      // Inside an editor the frame only GROWS: it bounds pan and defines what
+      // zoom 1 means, and a frame that shrank the instant a room was deleted
+      // would move the ground under the pointer mid-gesture.
+      rect = unionRect(f.rect, rect);
+      all = unionRect(f.all, all);
+    }
+    this._frame = {
+      id: m.id, model: m, layout: this._layout, devs: this._devices,
+      far: this._showFar, rect, all, outliers: cf.outliers,
+    };
+    return this._frame;
+  }
+
+  /** The rectangle "fit to screen" fits — always the content (docs/CANVAS.md). */
+  private _baseVb(): number[] {
+    const r = this._frameOf().rect;
+    return [r.x, r.y, r.w, r.h];
+  }
+
+  /** How many objects the opening view deliberately leaves out (§4.1). */
+  private get _outliers(): number {
+    return this._showFar ? 0 : this._frameOf().outliers;
+  }
+
+  /** The outlier hint's action: take the far objects into the frame, then fit. */
+  private _fitFar(): void {
+    this._showFar = true;
+    this._frame = null;
+    this._resetZoom();
+  }
+
+  /** «Вписать всё» (docs/CANVAS.md §8) — the toolbar button and the "home is
+   *  that way" arrow share it. It fits whatever the frame currently means:
+   *  the main mass, or everything once the far-objects hint has been used. */
+  private _fitAll(): void {
+    this._resetZoom();
+  }
+
+  /** Unobtrusive inline hint: some objects stand an order of magnitude away
+   *  from the plan and are deliberately outside the opening view. No modal —
+   *  a chip with one action (docs/CANVAS.md §4.1). */
+  private _renderFarHint(): TemplateResult | typeof nothing {
+    if (this._kiosk || this._mode !== 'view' || this._booting || !this._outliers) return nothing;
+    return html`<div class="farhint">
+      <ha-icon icon="mdi:map-marker-alert-outline"></ha-icon>
+      <span>${this._t('canvas.far_objects', { n: this._outliers })}</span>
+      <button class="btn ghostbtn" @click=${() => this._fitFar()}>${this._t('canvas.show_far')}</button>
+    </div>`;
+  }
+
+  /** "Home is that way" (docs/CANVAS.md §5): the plane has no edges, so it is
+   *  possible to pan until nothing is on screen. One small pointer towards the
+   *  content, one click back to it. */
+  private _renderHomeArrow(): TemplateResult | typeof nothing {
+    if (this._booting) return nothing;
+    const v = this._view;
+    if (!v || !v.w || !v.h) return nothing;
+    const f = this._frameOf().rect;
+    const gone = f.x + f.w <= v.x || f.x >= v.x + v.w || f.y + f.h <= v.y || f.y >= v.y + v.h;
+    if (!gone) return nothing;
+    const ang = Math.atan2((f.y + f.h / 2) - (v.y + v.h / 2), (f.x + f.w / 2) - (v.x + v.w / 2));
+    const left = 50 + Math.cos(ang) * 38;
+    const top = 50 + Math.sin(ang) * 38;
+    return html`<button class="homearrow" title=${this._t('canvas.home_tip')}
+      style="left:${left.toFixed(1)}%;top:${top.toFixed(1)}%"
+      @click=${(e: Event) => { e.stopPropagation(); this._fitAll(); }}>
+      <ha-icon icon="mdi:arrow-right-thick" style="transform:rotate(${((ang * 180) / Math.PI).toFixed(1)}deg)"></ha-icon>
+    </button>`;
   }
 
   /**
@@ -1823,28 +1950,31 @@ class HouseplanCard extends LitElement {
     return [v.x + (sx / w) * v.w, v.y + (sy / h) * v.h];
   }
 
-  /** Zoom limits: 8× in, 0.4× out (zoomed out, the plan floats centred). */
+  /** Zoom limits (docs/CANVAS.md §5): 8x in as before, 3x out — beyond that
+   *  the screen is empty plane, which is not information. */
   private static readonly ZOOM_MAX = 8;
-  private static readonly ZOOM_MIN = 0.4;
+  private static readonly ZOOM_MIN = MIN_ZOOM;
 
-  /** Clamp the view to the fit bounds (the content always covers the scene).
-   *  Zoomed OUT the view is larger than the content on an axis — then there is
-   *  nothing to clamp against and the content is centred on that axis instead
-   *  of being pinned to a corner. */
+  /**
+   * Keep the view within reach of the content (docs/CANVAS.md §5).
+   *
+   * There is no edge any more, so this is NOT "the content must cover the
+   * scene" — that was the rule that made it impossible to draw or place
+   * anything past the plan. Panning may walk a whole screen off the content
+   * in every direction (PAN_SLACK), which is what an editor needs to extend a
+   * plan outwards; further than that you would only be lost, and the "home is
+   * that way" arrow already covers the walk back.
+   */
   private _clampView(
     v: { x: number; y: number; w: number; h: number },
     fit: { x: number; y: number; w: number; h: number },
   ): { x: number; y: number; w: number; h: number } {
-    return {
-      w: v.w,
-      h: v.h,
-      x: v.w >= fit.w
-        ? fit.x + (fit.w - v.w) / 2
-        : Math.max(fit.x, Math.min(fit.x + fit.w - v.w, v.x)),
-      y: v.h >= fit.h
-        ? fit.y + (fit.h - v.h) / 2
-        : Math.max(fit.y, Math.min(fit.y + fit.h - v.h, v.y)),
+    const axis = (vp: number, vs: number, fp: number, fs: number): number => {
+      const slack = Math.max(vs, fs) * PAN_SLACK;
+      const a = fp - slack, b = fp + fs - vs + slack;
+      return Math.max(Math.min(a, b), Math.min(Math.max(a, b), vp));
     };
+    return { w: v.w, h: v.h, x: axis(v.x, v.w, fit.x, fit.w), y: axis(v.y, v.h, fit.y, fit.h) };
   }
 
   /** Set the zoom (centered on vb point cx,cy, or on the center of the current view). */
@@ -1958,6 +2088,9 @@ class HouseplanCard extends LitElement {
     this._saveZoom();
   }
 
+  /** «Вписать всё» (docs/CANVAS.md §8) — the toolbar's middle button and the
+   *  old "reset zoom" in one: frame the content at zoom 1, centred. With
+   *  `all` it also takes in the far strays the opening view leaves out. */
   private _resetZoom(): void {
     const vb = this._baseVb();
     this._zoom = 1;
@@ -2977,16 +3110,18 @@ class HouseplanCard extends LitElement {
     const g = this._gridPitch;
     let dx = snapToGrid(p[0] - m.start[0], g) / NORM_W;
     let dy = snapToGrid(p[1] - m.start[1], g) / this._decorH;
-    // audit follow-up L4: decor had neither a threshold nor a bounds clamp, so
-    // a shape could be dragged far outside the viewBox and persisted there.
+    // audit follow-up L4 gave decor a bounds clamp of -0.25..1.25 — the plan
+    // was a sheet with edges then. It is not any more (docs/CANVAS.md): the
+    // clamp is now the same garbage limit the backend enforces, so decor can
+    // follow a plan that lives at 2.7 and still cannot be flung to 1e100.
     const o = m.orig;
     const curX = o.kind === 'line' ? Math.min(o.x1, o.x2) : o.x;
     const curY = o.kind === 'line' ? Math.min(o.y1, o.y2) : o.y;
     const w = o.kind === 'line' ? Math.abs(o.x2 - o.x1) : (o.w || 0);
     const h = o.kind === 'line' ? Math.abs(o.y2 - o.y1) : (o.h || 0);
-    const lim = 0.25; // a quarter of the plan may hang outside, no more
-    dx = Math.max(-curX - lim, Math.min(1 + lim - curX - w, dx));
-    dy = Math.max(-curY - lim, Math.min(1 + lim - curY - h, dy));
+    const lim = CANVAS_LIMIT;
+    dx = Math.max(-lim - curX, Math.min(lim - curX - w, dx));
+    dy = Math.max(-lim - curY, Math.min(lim - curY - h, dy));
     if (dx || dy) m.moved = true;
     const sp = this._curSpaceCfg;
     sp.decor = this._decorList.map((x) => {
@@ -5331,6 +5466,8 @@ class HouseplanCard extends LitElement {
                   this._space = s.id;
                   this._selId = null;
                   this._navApplied = true;
+                  this._showFar = false; // the hint is per space (docs/CANVAS.md §4.1)
+                  this._frame = null;
                   this._restoreZoom();
                   this._saveNav();
                 }}
@@ -5371,8 +5508,11 @@ class HouseplanCard extends LitElement {
           <span class="spacer"></span>
           <div class="zoomctl">
             <button class="btn zb" @click=${() => this._stepZoom(-1)} title=${this._t('title.zoom_out')}><ha-icon icon="mdi:minus"></ha-icon></button>
-            <button class="btn zb" @click=${() => this._resetZoom()} ?disabled=${this._zoom === 1}
-              title=${this._t('title.zoom_reset')}><ha-icon icon="mdi:fit-to-page-outline"></ha-icon></button>
+            ${''/* docs/CANVAS.md §8: this IS «вписать всё» — the old "reset
+                   zoom" renamed rather than duplicated. No longer disabled at
+                   zoom 1: at zoom 1 panned off to the side it still has work. */}
+            <button class="btn zb" @click=${() => this._fitAll()}
+              title=${this._t('title.zoom_fit')}><ha-icon icon="mdi:fit-to-page-outline"></ha-icon></button>
             <button class="btn zb" @click=${() => this._stepZoom(1)} title=${this._t('title.zoom_in')}><ha-icon icon="mdi:plus"></ha-icon></button>
           </div>
           ${this._norm && this._canEdit
@@ -5415,8 +5555,10 @@ class HouseplanCard extends LitElement {
               )}</g>`;
             })()}
             ${this._editing ? this._renderMarkupDefs(vb) : nothing}
-            ${this._editing && !this._markup
-              ? svg`<rect x="${vb[0]}" y="${vb[1]}" width="${vb[2]}" height="${vb[3]}" fill="url(#hp-grid)" pointer-events="none"></rect>`
+            ${''/* the grid is a property of the plane, not of a box: it follows
+                   the VIEW so it is there wherever you pan (docs/CANVAS.md §7) */}
+            ${this._editing && !this._markup && this._gridLevels()
+              ? svg`<rect x="${view.x}" y="${view.y}" width="${view.w}" height="${view.h}" fill="url(#hp-grid-major)" pointer-events="none"></rect>`
               : nothing}
             ${space.bg && this._display(space.bg.href)
               ? svg`<image href="${this._display(space.bg.href)}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}" preserveAspectRatio="none" />`
@@ -5521,7 +5663,14 @@ class HouseplanCard extends LitElement {
             ${this._renderOpenings(disp)}
             ${this._markup && this._tool === 'resize' ? this._renderResizeLayer(view) : nothing}
           </svg>
-          <div class="devlayer" style="--icon-size:${((iconPct * vb[2] * (this._kiosk ? this._kioskScale.icon : 1)) / view.w).toFixed(3)}cqw;--rl-font:${this._kiosk ? this._kioskScale.font : 1}">
+          ${''/* docs/CANVAS.md §6: --icon-size is a percentage of the VISIBLE
+                 viewport (cqw), no longer of the canvas — the old
+                 `* vb.w / view.w` made a marker grow with the zoom until it
+                 covered a room, and on an unbounded canvas "a percent of the
+                 canvas" has no meaning at all. Same expression as the static
+                 space-card, so the two renderers finally agree. The per-device
+                 multiplier and the kiosk scales still feed --dev-size. */}
+          <div class="devlayer" style="--icon-size:${(iconPct * (this._kiosk ? this._kioskScale.icon : 1)).toFixed(3)}cqw;--rl-font:${this._kiosk ? this._kioskScale.font : 1}">
             ${devs.map((d) => this._renderDevice(d, view, showLqi, disp.fill === 'glow' && !this._markup))}
             ${this._renderVacuums(devs, view)}
             ${this._renderVacFit(view)}
@@ -5548,6 +5697,8 @@ class HouseplanCard extends LitElement {
           ${this._zoom > 1
             ? html`<div class="zoombadge">${Math.round(this._zoom * 100)}%</div>`
             : nothing}
+          ${this._renderFarHint()}
+          ${this._renderHomeArrow()}
           ${this._booting || this._bootFading
             ? html`<div class="bootveil ${this._booting ? '' : 'off'}" aria-hidden="true">
                 <svg class="boothouse" viewBox="0 0 24 24"><path d="${mdiHomeCityOutline}"></path></svg>
@@ -6910,15 +7061,38 @@ class HouseplanCard extends LitElement {
     </div>`;
   }
 
+  /** Adaptive grid density for the current view (docs/CANVAS.md §7):
+   *  which multiple of the drawing pitch is still legible on screen, and
+   *  which coarser one carries the accent dots. */
+  private _gridLevels(): { fine: number; coarse: number } | null {
+    const stage = this._stageEl;
+    const v = this._viewOr(this._baseVb());
+    const px = stage && stage.clientWidth && v.w ? stage.clientWidth / v.w : 1;
+    return gridLevels(this._gridPitch, px);
+  }
+
   private _renderMarkupDefs(_vb: number[]): TemplateResult {
-    const g = this._gridPitch;
-    const dotR = g * 0.14;
+    const lv = this._gridLevels();
+    if (!lv) return svg`<defs></defs>` as unknown as TemplateResult;
+    const g = this._gridPitch * lv.fine;
+    const G = this._gridPitch * lv.coarse;
+    const dotR = this._gridPitch * lv.fine * 0.14;
+    // Two patterns, CAD-style: the fine dots thin out as you zoom away
+    // (gridLevels drops whole decades of them) while every coarse node keeps
+    // a bigger, darker dot, so the eye never loses the scale reference.
     return svg`<defs>
         <pattern id="hp-grid" x="0" y="0" width="${g}" height="${g}" patternUnits="userSpaceOnUse">
           <circle cx="0" cy="0" r="${dotR}" class="griddot"></circle>
           <circle cx="${g}" cy="0" r="${dotR}" class="griddot"></circle>
           <circle cx="0" cy="${g}" r="${dotR}" class="griddot"></circle>
           <circle cx="${g}" cy="${g}" r="${dotR}" class="griddot"></circle>
+        </pattern>
+        <pattern id="hp-grid-major" x="0" y="0" width="${G}" height="${G}" patternUnits="userSpaceOnUse">
+          <rect width="${G}" height="${G}" fill="url(#hp-grid)"></rect>
+          <circle cx="0" cy="0" r="${dotR * 2.1}" class="griddot major"></circle>
+          <circle cx="${G}" cy="0" r="${dotR * 2.1}" class="griddot major"></circle>
+          <circle cx="0" cy="${G}" r="${dotR * 2.1}" class="griddot major"></circle>
+          <circle cx="${G}" cy="${G}" r="${dotR * 2.1}" class="griddot major"></circle>
         </pattern>
       </defs>`;
   }
@@ -6931,8 +7105,11 @@ class HouseplanCard extends LitElement {
       : this._segments;
     const path = this._path;
     const g = this._gridPitch;
+    const view = this._viewOr(this._baseVb());
     return svg`
-      <rect x="${vb[0]}" y="${vb[1]}" width="${vb[2]}" height="${vb[3]}" fill="url(#hp-grid)" pointer-events="none"></rect>
+      ${this._gridLevels()
+        ? svg`<rect x="${view.x}" y="${view.y}" width="${view.w}" height="${view.h}" fill="url(#hp-grid-major)" pointer-events="none"></rect>`
+        : nothing}
       ${segs.map((s) => svg`<line class="seg" x1="${s[0]}" y1="${s[1]}" x2="${s[2]}" y2="${s[3]}"></line>`)}
       ${path.length > 1
         ? svg`<polyline class="pathline" points="${path.map((p) => p.join(',')).join(' ')}"></polyline>`

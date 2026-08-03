@@ -14,7 +14,8 @@ import { t, type Lang } from './i18n';
 import { bgModeOf, northDegOf, sunStateOf, dayPhase } from './sun';
 import type { ServerConfig } from './types';
 import {
-  spaceModels, roomCenter, defaultPositions, markerPos, labelPos, type Layout,
+  spaceModels, roomCenter, defaultPositions, markerPos, labelPos, spaceFrame, NORM_W,
+  type Layout, type ContentItem,
 } from './space-geometry';
 
 export { spaceModels } from './space-geometry';
@@ -43,7 +44,6 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const models = spaceModels(o.cfg);
   const space = models.find((s) => s.id === o.spaceId);
   if (!space) return null;
-  const vb = space.vb;
   const disp = spaceDisplayOf(o.cfg.spaces.find((s: any) => s.id === o.spaceId));
   const cfgSize = o.iconSize ?? 2.5;
   const iconPct = cfgSize > 8 ? 2.5 : cfgSize;
@@ -79,6 +79,21 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   // visible marker with no saved position lands in different spots on the
   // two cards (HP-1511-01). Rendering still draws `devs` only.
   const defPos = defaultPositions(spaceDevs, space, iconPct);
+
+  // docs/CANVAS.md §4: the static card frames the CONTENT, exactly like the
+  // full one — `space.vb` is only the stored hint now, and on a plan drawn
+  // past the old unit square it framed empty canvas with the house off-screen.
+  // Markers placed outside every room count too (a gate sensor by the fence).
+  const placed: ContentItem[] = [];
+  for (const d of spaceDevs) {
+    const sv = o.layout[d.id];
+    if (sv && sv.s === o.spaceId) {
+      const x = sv.x * NORM_W, y = sv.y * NORM_W;
+      placed.push({ minX: x, minY: y, maxX: x, maxY: y });
+    }
+  }
+  const fr = spaceFrame(space, placed);
+  const vb = [fr.x, fr.y, fr.w, fr.h];
 
   const roomShapes = space.rooms
     .filter((r) => r.area || disp.showBorders)

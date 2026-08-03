@@ -19,7 +19,7 @@
   "btn.no_area": "Без зоны",
   "title.zoom_in": "Приблизить",
   "title.zoom_out": "Отдалить",
-  "title.zoom_reset": "Сбросить масштаб",
+  "title.zoom_fit": "Вписать всё",
   "title.add_device": "Добавить устройство на план",
   "title.show_all": "Показать скрытые устройства (полупрозрачными, только в этой вкладке)",
   "title.markup": "Разметка комнат: сетка, линии, контуры",
@@ -402,10 +402,10 @@
   "gs.sun_rays": "Солнце в окнах",
   "gs.weather": "Сущность погоды",
   "gs.weather_ph": "weather.home (необязательно)",
-  "gs.about_group": "\u041e \u043a\u0430\u0440\u0442\u043e\u0447\u043a\u0435",
+  "gs.about_group": "О карточке",
   "gs.about_version": "Houseplan Card v{v}",
-  "gs.about_github": "GitHub \u00b7 \u0434\u043e\u043a\u0443\u043c\u0435\u043d\u0442\u0430\u0446\u0438\u044f \u0438 issues",
-  "gs.about_telegram": "\u0427\u0430\u0442 \u0432 Telegram",
+  "gs.about_github": "GitHub · документация и issues",
+  "gs.about_telegram": "Чат в Telegram",
   "space.bg_color": "Цвет фона вокруг плана",
   "space.bg_inherit": "Наследовать общий",
   "space.bg_inherited": "наследуется из общих настроек",
@@ -415,5 +415,8 @@
   "space.sun_rays": "Солнце в окнах",
   "space.sun_inherit": "Наследовать общий",
   "space.sun_on": "Вкл",
-  "space.sun_off": "Выкл"
+  "space.sun_off": "Выкл",
+  "canvas.far_objects": "Объектов далеко от плана: {n}",
+  "canvas.show_far": "Показать",
+  "canvas.home_tip": "План там — нажмите, чтобы вписать"
 }
