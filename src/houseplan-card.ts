@@ -23,6 +23,7 @@ import {
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
   referencedContentUrls,
   DISPLAY_MODES, TAP_ACTIONS, SPACE_FILL_MODES, ROOM_FILL_MODES,
+  coverService, coverMoving, COVER_GUARDED_CLASSES,
 } from './logic';
 import {
   planEdgeDrag, applyEdgeDrag, clampEdgeDrag, applyRoomScale, clampRoomScale,
@@ -1546,7 +1547,15 @@ class HouseplanCard extends LitElement {
       if (act != null) return ['heating', 'cooling', 'drying', 'fan'].includes(act) ? 'on' : '';
       return ['off', 'unknown'].includes(p.state) ? '' : 'on';
     }
-    if (dom === 'cover' || dom === 'valve') return ['open', 'opening'].includes(p.state) ? 'open' : '';
+    if (dom === 'cover' || dom === 'valve') {
+      const open = ['open', 'opening'].includes(p.state) ? 'open' : '';
+      // Owner's rule (2026-08-03): a cover ON THE MOVE does NOT take the
+      // yellow «включено» plate — it breathes a soft ring instead, the same
+      // language the vacuum puck and the presence ring speak. The existing
+      // 'open' frame is orthogonal and stays.
+      if (dom === 'cover' && coverMoving(p.state)) return (open ? open + ' ' : '') + 'covermove';
+      return open;
+    }
     if (dom === 'lock') return ['unlocked', 'open'].includes(p.state) ? 'open' : '';
     if (dom === 'binary_sensor') {
       const dc = p.attributes?.device_class;
@@ -1604,6 +1613,34 @@ class HouseplanCard extends LitElement {
       }
     }
     return false;
+  }
+
+  /** The cover entity behind the dialog's binding, or null. */
+  private _bindingCoverEntity(binding: string): string | null {
+    if (binding.startsWith('entity:')) {
+      const eid = binding.slice(7);
+      return eid.startsWith('cover.') ? eid : null;
+    }
+    if (binding.startsWith('device:')) {
+      const ref = binding.slice(7);
+      for (const [eid, reg] of Object.entries<any>(this.hass?.entities || {})) {
+        if (reg?.device_id === ref && eid.startsWith('cover.')) return eid;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Does the dialog's binding deserve the «Open/close» tap option? Gates it
+   * exactly like the climate checkbox above: only a device that HAS a cover
+   * entity sees it — and never a garage door, a gate or a driveway door
+   * (COVER_GUARDED_CLASSES; owner 2026-08-03: «нет, только шторы/жалюзи»).
+   */
+  private _bindingCoverTap(binding: string): boolean {
+    const eid = this._bindingCoverEntity(binding);
+    if (!eid) return false;
+    const dc = String(this.hass?.states?.[eid]?.attributes?.device_class || '');
+    return !COVER_GUARDED_CLASSES.has(dc);
   }
 
   private _liveHum(d: DevItem): number | null {
@@ -1677,6 +1714,17 @@ class HouseplanCard extends LitElement {
         this.hass
           .callService(svc.domain, svc.service, { entity_id: target })
           .then(() => this._showToast(this._t('toast.run_started', { name })))
+          .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
+      });
+      return;
+    }
+    if (action === 'cover' && d.primary) {
+      // open / close / stop, decided by the CURRENT state (docs/PRODUCT.md);
+      // a tap while the curtain travels stops it, the next one reverses
+      const svc = coverService(this.hass.states[d.primary]?.state);
+      guarded(this._t('confirm.tap_cover', { name: d.name }), () => {
+        this.hass
+          .callService('cover', svc, { entity_id: d.primary })
           .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
       });
       return;
@@ -7109,7 +7157,8 @@ class HouseplanCard extends LitElement {
           <label>${this._t('marker.tap_label')}</label>
           <select class="areasel"
             @change=${(e: Event) => (this._markerDialog = { ...d, tapAction: (e.target as HTMLSelectElement).value })}>
-            ${TAP_ACTIONS.map((v) => [v, 'tap.' + v.replace('-', '_')] as const).map(
+            ${TAP_ACTIONS.filter((v) => v !== 'cover' || this._bindingCoverTap(d.binding))
+              .map((v) => [v, 'tap.' + v.replace('-', '_')] as const).map(
               ([v, k]) => html`<option value=${v} ?selected=${(d.tapAction || d.defaultTap) === v}>${this._t(k as any)}</option>`,
             )}
           </select>
@@ -7142,7 +7191,7 @@ class HouseplanCard extends LitElement {
                     : nothing}`;
               })()
             : nothing}
-          ${d.tapAction === 'run' || d.tapAction === 'toggle' || (!d.tapAction && d.defaultTap === 'toggle')
+          ${d.tapAction === 'run' || d.tapAction === 'toggle' || d.tapAction === 'cover' || (!d.tapAction && d.defaultTap === 'toggle')
             ? html`<label class="srcrow" title=${this._t('marker.tap_confirm_tip')}>
                 ${this._boolInput(d.tapConfirm, (v) => (this._markerDialog = { ...d, tapConfirm: v }))}
                 <span>${this._t('marker.tap_confirm')}</span>

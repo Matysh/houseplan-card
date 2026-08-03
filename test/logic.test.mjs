@@ -15,7 +15,7 @@ import {
   contentUrl, chunk, referencedContentUrls, MAX_SIGN_PATHS,
   interiorPoint,
   segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointOnBoundary, pointStrictlyInside, roomsOverlap,
-  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, openingShoulders, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, poleOfInaccessibility, runServiceFor, TOGGLE_SAFE_DOMAINS } from '../test-build/logic.js';
+  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, openingShoulders, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, poleOfInaccessibility, runServiceFor, TOGGLE_SAFE_DOMAINS, coverService, coverMoving } from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
 } from '../test-build/rules.js';
@@ -529,6 +529,61 @@ test('stateIcon: doors/locks/bulbs reflect state; custom icons and outages never
   assert.equal(stateIcon('mdi:door', 'binary_sensor', 'door', 'unavailable', false), 'mdi:door');
   assert.equal(stateIcon('mdi:custom', 'lock', undefined, 'unlocked', true), 'mdi:custom'); // user icon wins
   assert.equal(stateIcon('mdi:cctv', 'camera', undefined, 'recording', false), 'mdi:cctv'); // unknown pair
+});
+
+test('stateIcon: covers morph by device_class (owner 2026-08-03)', () => {
+  assert.equal(stateIcon('mdi:blinds', 'cover', 'blind', 'closed', false), 'mdi:blinds');
+  assert.equal(stateIcon('mdi:blinds', 'cover', 'blind', 'open', false), 'mdi:blinds-open');
+  assert.equal(stateIcon('mdi:window-shutter', 'cover', 'shutter', 'open', false), 'mdi:window-shutter-open');
+  assert.equal(stateIcon('mdi:window-shutter', 'cover', 'shutter', 'closed', false), 'mdi:window-shutter');
+  assert.equal(stateIcon('mdi:curtains', 'cover', 'curtain', 'closed', false), 'mdi:curtains-closed');
+  assert.equal(stateIcon('mdi:curtains', 'cover', 'curtain', 'open', false), 'mdi:curtains');
+  // travelling covers show where they are HEADED: closing keeps the open art
+  assert.equal(stateIcon('mdi:blinds', 'cover', 'blind', 'opening', false), 'mdi:blinds-open');
+  assert.equal(stateIcon('mdi:blinds', 'cover', 'blind', 'closing', false), 'mdi:blinds-open');
+  // no state at all — never morph, never guess
+  assert.equal(stateIcon('mdi:blinds', 'cover', 'blind', 'unknown', false), 'mdi:blinds');
+  assert.equal(stateIcon('mdi:blinds', 'cover', 'blind', 'unavailable', false), 'mdi:blinds');
+  assert.equal(stateIcon('mdi:custom', 'cover', 'blind', 'open', true), 'mdi:custom'); // user icon wins
+  // no device_class: only a known base icon morphs, an unrelated one stays
+  assert.equal(stateIcon('mdi:blinds', 'cover', undefined, 'open', false), 'mdi:blinds-open');
+  assert.equal(stateIcon('mdi:window-shutter', 'cover', null, 'closed', false), 'mdi:window-shutter');
+  assert.equal(stateIcon('mdi:sofa', 'cover', undefined, 'open', false), 'mdi:sofa');
+});
+
+test('coverService: closed→open, open→close, travelling→stop (owner 2026-08-03)', () => {
+  assert.equal(coverService('closed'), 'open_cover');
+  assert.equal(coverService('open'), 'close_cover');       // incl. ajar: HA reports 'open'
+  assert.equal(coverService('opening'), 'stop_cover');     // a tap during travel STOPS
+  assert.equal(coverService('closing'), 'stop_cover');
+  assert.equal(coverService('unknown'), 'toggle');         // no readable state → plain toggle
+  assert.equal(coverService('unavailable'), 'toggle');
+  assert.equal(coverService(null), 'toggle');
+  assert.equal(coverService(undefined), 'toggle');
+});
+
+test('coverMoving: only opening/closing breathe', () => {
+  assert.equal(coverMoving('opening'), true);
+  assert.equal(coverMoving('closing'), true);
+  assert.equal(coverMoving('open'), false);
+  assert.equal(coverMoving('closed'), false);
+  assert.equal(coverMoving('unknown'), false);
+  assert.equal(coverMoving(null), false);
+});
+
+test("tap action 'cover': explicit-only, cover-only, never a guarded class", () => {
+  assert.equal(resolveTapAction('cover', null, 'cover', 'curtain'), 'cover');
+  assert.equal(resolveTapAction('cover', null, 'cover', 'blind'), 'cover');
+  assert.equal(resolveTapAction('cover', null, 'cover', null), 'cover'); // no class = a plain cover
+  // the guarded classes degrade to the info card even if the value was saved
+  assert.equal(resolveTapAction('cover', null, 'cover', 'garage'), 'info');
+  assert.equal(resolveTapAction('cover', null, 'cover', 'door'), 'info');
+  assert.equal(resolveTapAction('cover', null, 'cover', 'gate'), 'info');
+  // and it is meaningless anywhere but the cover domain
+  assert.equal(resolveTapAction('cover', null, 'light'), 'info');
+  assert.equal(resolveTapAction('cover', null, 'lock'), 'info');
+  // never a card-wide default (like 'run'): it needs a conscious per-marker choice
+  assert.equal(resolveTapAction(null, 'cover', 'cover', 'curtain'), 'info');
 });
 
 test('lightColorOf: rgb of an on light; off/unavailable/no-color → null', () => {

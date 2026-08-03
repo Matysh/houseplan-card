@@ -690,7 +690,7 @@ export function safeUrl(url: string | null | undefined): string | null {
 
 // ---------------- tap actions ----------------
 
-export type TapAction = 'info' | 'more-info' | 'toggle' | 'run';
+export type TapAction = 'info' | 'more-info' | 'toggle' | 'run' | 'cover';
 
 /** Domains a card-wide `tap_action: toggle` may toggle (accidental-tap safe). */
 /**
@@ -709,7 +709,7 @@ export type TapAction = 'info' | 'more-info' | 'toggle' | 'run';
  * Adding an option here and forgetting the schema now fails the test suite.
  */
 export const DISPLAY_MODES = ['badge', 'ripple', 'icon_ripple', 'value'] as const;
-export const TAP_ACTIONS = ['info', 'more-info', 'toggle', 'run'] as const;
+export const TAP_ACTIONS = ['info', 'more-info', 'toggle', 'run', 'cover'] as const;
 /** Space-level fill: 'glow' is a whole-space light model, not a per-room one. */
 // 'glow' leads: it is the default for new spaces since v1.54 — the owner's
 // call, it sells the card best. Existing configs keep whatever they chose;
@@ -755,6 +755,14 @@ export function resolveTapAction(
   // 'run' is EXPLICIT-only by construction: it needs a per-marker target, so
   // it can never arrive as a card-wide default
   if (want === 'run') return explicit === 'run' ? 'run' : 'info';
+  // 'cover' (open/close/stop, owner's spec 2026-08-03) is EXPLICIT-only and
+  // cover-only. The guarded classes never get it: the option is not offered
+  // in the dialog, and a value smuggled into the config degrades to 'info'
+  // — exactly what a card-wide toggle does for a garage door.
+  if (want === 'cover') {
+    if (explicit !== 'cover' || domain !== 'cover') return 'info';
+    return COVER_GUARDED_CLASSES.has(String(deviceClass || '')) ? 'info' : 'cover';
+  }
   if (want !== 'toggle') return 'info';
   if (!domain || TOGGLE_FORBIDDEN_DOMAINS.has(domain)) return 'info';
   if (explicit === 'toggle') return 'toggle';
@@ -763,6 +771,29 @@ export function resolveTapAction(
   // but the garage door is a cover too, and it stays shut on a default tap
   if (domain === 'cover' && COVER_GUARDED_CLASSES.has(String(deviceClass || ''))) return 'info';
   return 'toggle';
+}
+
+/**
+ * The cover service one tap should call, from the entity's CURRENT state
+ * (owner's spec 2026-08-03):
+ *   closed                 -> open_cover
+ *   open (incl. ajar)      -> close_cover
+ *   opening / closing      -> stop_cover  (a tap during travel is a STOP;
+ *                             the next tap then travels the other way, which
+ *                             is simply what HA's own state machine does)
+ *   anything else/unknown  -> toggle      (no meaningful state to reason about)
+ */
+export function coverService(state: string | null | undefined): string {
+  const s = String(state || '');
+  if (s === 'closed') return 'open_cover';
+  if (s === 'open') return 'close_cover';
+  if (s === 'opening' || s === 'closing') return 'stop_cover';
+  return 'toggle';
+}
+
+/** Is a cover travelling right now? Drives the breathing ring on the icon. */
+export function coverMoving(state: string | null | undefined): boolean {
+  return state === 'opening' || state === 'closing';
 }
 
 /** Domains a tap may RUN (owner's spec 2026-07-29): the runnable units of
@@ -1021,6 +1052,24 @@ export function roomFillColor(
 // ---------------- state-reflecting icons ----------------
 
 /**
+ * cover device_class -> [closed icon, open icon] (owner's spec 2026-08-03).
+ * Same idea as core HA's cover icons; kept here so the plan's morphing lives
+ * in one table with the door/window/lock pairs below.
+ */
+const COVER_ICONS: Record<string, [string, string]> = {
+  blind: ['mdi:blinds', 'mdi:blinds-open'],
+  shade: ['mdi:blinds', 'mdi:blinds-open'],
+  shutter: ['mdi:window-shutter', 'mdi:window-shutter-open'],
+  curtain: ['mdi:curtains-closed', 'mdi:curtains'],
+  window: ['mdi:window-closed', 'mdi:window-open'],
+  awning: ['mdi:awning-outline', 'mdi:awning-outline'],
+  door: ['mdi:door-closed', 'mdi:door-open'],
+  garage: ['mdi:garage', 'mdi:garage-open'],
+  gate: ['mdi:gate', 'mdi:gate-open'],
+  damper: ['mdi:circle-slice-8', 'mdi:circle-outline'],
+};
+
+/**
  * Swap the auto icon for a state variant (open door, unlocked lock…), like core
  * HA does. Conservative: only well-known pairs, only when the user has NOT set
  * a custom icon, and unknown/unavailable states keep the base icon.
@@ -1037,6 +1086,16 @@ export function stateIcon(
     if (deviceClass === 'door') return state === 'on' ? 'mdi:door-open' : 'mdi:door-closed';
     if (deviceClass === 'window') return state === 'on' ? 'mdi:window-open' : 'mdi:window-closed';
     if (deviceClass === 'garage_door') return state === 'on' ? 'mdi:garage-open-variant' : 'mdi:garage-variant';
+  }
+  if (domain === 'cover') {
+    const pair = COVER_ICONS[String(deviceClass || '')];
+    if (pair) return state === 'closed' ? pair[0] : pair[1];
+    // no device_class: morph only when the base icon IS one of the known
+    // pairs, so a hand-picked auto icon is never swapped for a guess
+    for (const [closed, open] of Object.values(COVER_ICONS)) {
+      if (base === closed || base === open) return state === 'closed' ? closed : open;
+    }
+    return base;
   }
   if (domain === 'lock') return state === 'locked' ? 'mdi:lock' : 'mdi:lock-open-variant';
   if (domain === 'light' && base === 'mdi:lightbulb') return state === 'on' ? 'mdi:lightbulb-on' : base;

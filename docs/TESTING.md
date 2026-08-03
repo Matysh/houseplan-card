@@ -269,6 +269,20 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       device classes (explicit per-device toggle still works for them)
       [auto: smoke_tap_run + unit resolveTapAction/runServiceFor + backend
       test_run_target_is_bounded_to_runnable_domains]
+- [ ] Tap opens/closes a cover (dev, owner's spec 2026-08-03): the tap-action
+      list gains "Open/close (curtains/blinds)" — offered ONLY when the binding
+      has a cover entity, and never for the guarded classes garage/door/gate
+      (a value smuggled into the config there degrades to the info card).
+      closed -> cover.open_cover, open (incl. ajar) -> cover.close_cover,
+      opening/closing -> cover.stop_cover, no readable state -> cover.toggle;
+      the «ask for confirmation» checkbox guards it like toggle/run.
+      Indication: while travelling the icon breathes a soft yellow ring
+      (.covermove, 2.2s, static under prefers-reduced-motion) and the plate
+      stays NEUTRAL — yellow is «включено»; the icon morphs by state +
+      device_class (blinds/shutter/curtain…), unknown state morphs nothing;
+      no position percentages anywhere
+      [auto: smoke_cover_tap + units resolveTapAction/coverService/stateIcon +
+      backend test_cover_tap_action_is_accepted]
 - [ ] Light-source badges (v1.52.0): in glow fill a lit lamp's badge stays
       standard (the spot is the indicator) and a lit socket stays yellow; in
       other fills a lit lamp is plain yellow with no RGB tint; morphing and
