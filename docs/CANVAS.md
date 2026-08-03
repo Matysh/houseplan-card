@@ -139,6 +139,11 @@ When `outliers > 0` the card shows an unobtrusive inline hint (no
 modal) — "there are objects far from the plan" with a **Show** action
 that fits `all`.
 
+Whatever the vote rejects is rejected **everywhere the plan is measured**,
+not only in the viewBox: §6's `iconUnit` runs the same vote over the rooms.
+One notion of "the plan", or a stray the frame had just thrown out came back
+as icons ninety times too big (audit DEV-2C947-03).
+
 ### §4.3 The frame in an editor
 
 Inside an editor the frame only ever **grows** (`unionRect` with the previous
@@ -229,7 +234,9 @@ there would have been worse than wrong: on a plan drawn 2 canvases
 wide the frame is ~2.2 canvases, so every marker would come out 2.2x
 smaller than on an ordinary plan — and 55x smaller on a plan 50
 canvases out, i.e. an invisible dot. `iconUnit(space) =
-max(NORM_W, roomsExtent)` is:
+max(NORM_W, mainMassOfTheRooms)` — the extent of the rooms **after the same
+outlier vote §4.1 applies to the frame** (rooms only, so the full card and the
+static card cannot drift apart), and it is:
 
 * **exactly `NORM_W` for every plan that fits the old square**, and the
   editor has only ever stored `view_box: [0,0,1,1]`, so `iconUnit ===
@@ -250,7 +257,8 @@ have made its markers shrink as the frame tightened.
 
 **Auto-placement spacing** (`defaultPositions` -> `declump`) is measured
 in render units and uses the same `iconUnit`, so the icon's footprint
-and the distance markers are pushed apart by can never drift apart.
+and the distance markers are pushed apart by can never drift apart — and
+the outlier vote reaches the spacing through the very same call.
 
 ## §7 Adaptive grid
 

@@ -8,6 +8,10 @@
 // DEV-2C947-02: inside an editor the frame only grows (a frame that shrank
 // mid-drag would move the ground under the pointer); that union was memoised
 // without the mode, so it survived the way back into View.
+//
+// DEV-2C947-03: a room-outlier is rejected from the frame, but iconUnit()
+// measured ALL rooms — so the stray it had just rejected still blew every
+// marker of the main plan up ~91x.
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 900, height: 820 }, 1);
@@ -163,6 +167,46 @@ Object.assign(out, await page.evaluate(async () => {
   await c.updateComplete;
   return o;
 }));
+
+// ---------------------------------------------------- 03: icons and outliers
+// Three rooms in the core plus one dragged 90 canvases out. The frame rejects
+// the stray (that part always worked); the ICON UNIT used to measure all four
+// rooms, so every marker of the plan the user is looking at came out ~91x too
+// big and covered the house.
+const withFarRoom = (far) => ({
+  spaces: [{
+    id: 'i1', title: 'Icons', view_box: [0, 0, 1, 1], plan_url: null, plan_aspect: null,
+    rooms: [
+      { id: 'r1', name: 'A', area: 'zx_a', poly: [[0.10, 0.10], [0.30, 0.10], [0.30, 0.30], [0.10, 0.30]] },
+      { id: 'r2', name: 'B', area: 'zx_b', poly: [[0.30, 0.10], [0.55, 0.10], [0.55, 0.35], [0.30, 0.35]] },
+      { id: 'r3', name: 'C', area: 'zx_c', poly: [[0.10, 0.30], [0.35, 0.30], [0.35, 0.55], [0.10, 0.55]] },
+      ...(far ? [{ id: 'r4', name: 'Far', area: 'zx_d', poly: [[90, 90], [91, 90], [91, 91], [90, 91]] }] : []),
+    ],
+  }],
+  markers: [{ id: 'm_one', binding: 'device:d_light1', area: 'zx_a' }],
+  settings: { filter_seeded: true },
+});
+const ICON_POS = { m_one: { s: 'i1', x: 0.2, y: 0.2 } };
+
+const iconPx = () => page.evaluate(() => {
+  const c = window.__card;
+  const sr = c.shadowRoot || c.renderRoot;
+  const el = sr.querySelector('.devlayer .dev');
+  // the badge is --dev-size plus a 1 px border on each side (smoke_icon_scale)
+  return { px: el ? Math.round((el.getBoundingClientRect().width - 2) * 100) / 100 : null,
+    outliers: c._outliers, frameW: Math.round(c._baseVb()[2]) };
+});
+
+await load(withFarRoom(false), ICON_POS, 'i1');
+await raf();
+const plain = await iconPx();
+await load(withFarRoom(true), ICON_POS, 'i1');
+await raf();
+const strayed = await iconPx();
+out.strayRoomIsRejectedFromTheFrame = strayed.outliers === 1 && strayed.frameW < 1000;
+out.strayRoomDoesNotInflateTheIcons =
+  plain.px > 4 && Math.abs(strayed.px - plain.px) < 0.5;
+if (!out.strayRoomDoesNotInflateTheIcons) console.log('icon px', plain, strayed);
 
 checkAll(out);
 await finish(browser, out);

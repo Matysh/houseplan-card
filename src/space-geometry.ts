@@ -292,11 +292,21 @@ export function spaceCenter(space: SpaceModel): Pt {
  * proportionally bigger unit, which is what keeps its markers from
  * degenerating into dots once the frame is the content (see `iconCqw`).
  * Rooms only — deterministic, so the full card and the static card agree.
+ *
+ * The MAIN MASS only, by the very same vote the frame uses (§4.1). A single
+ * room dragged into the far corner is already rejected from `contentFrame.core`
+ * — but it used to keep its distance in this numerator, so the plan the user
+ * actually looks at grew icons ~91x too big while the frame stayed correct
+ * (DEV-2C947-03). What is out of the frame is out of the icon unit: one notion
+ * of "the plan", not two.
  */
 export function iconUnit(space: SpaceModel): number {
   const items: ContentItem[] = [];
   for (const r of space.rooms || []) { const it = roomItem(r); if (it) items.push(it); }
-  const b = boxOf(items);
+  // pad 0: this is a UNIT, not a viewport — the frame's 5 % breathing room has
+  // no business inflating the icons. Degenerate axes are still lifted off zero,
+  // which cannot matter here (FLOOR < NORM_W).
+  const b = contentFrame(items, { pad: 0 }).core;
   if (!b) return NORM_W;
   return Math.max(NORM_W, Math.min(SANE_LIMIT, Math.max(b.w, b.h)));
 }

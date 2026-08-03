@@ -1003,6 +1003,11 @@ require hands on real hardware — they remain for the human pass.
       there, deliberately), close the editor — View frames the room where it
       is NOW, not the union with where it was; re-entering the editor starts
       from the current geometry [auto: smoke_canvas_frame]
+- [ ] **A far stray does not inflate the icons either** (audit DEV-2C947-03):
+      one ROOM dragged an order of magnitude away is rejected from the frame
+      (as before) and the markers of the main plan keep the size they have
+      without it; auto-placement spacing goes with them
+      [auto: smoke_canvas_frame + unit canvas.test.mjs]
 - [ ] **A far stray does not break the view** (§4.1): a marker dragged an
       order of magnitude away leaves the opening view alone and raises the
       inline chip «Объектов далеко от плана: N» with «Показать». No modal.

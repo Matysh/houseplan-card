@@ -106,6 +106,39 @@ test('icon size: no view yet is a plain percentage, never NaN', () => {
   assert.equal(iconCqw(2.5, m, 0, 1.5), 3.75);
 });
 
+// DEV-2C947-03: what is out of the frame is out of the icon unit
+test('a room-outlier is excluded from the frame AND from the icon unit', () => {
+  // three rooms in the core, a fourth one dragged 90 canvases out — MIN_VOTERS
+  // is exactly met, so the vote runs and the frame rejects the stray.
+  const rooms = [
+    { id: 'a', poly: [[0.10, 0.10], [0.30, 0.10], [0.30, 0.30], [0.10, 0.30]] },
+    { id: 'b', poly: [[0.30, 0.10], [0.55, 0.10], [0.55, 0.35], [0.30, 0.35]] },
+    { id: 'c', poly: [[0.10, 0.30], [0.35, 0.30], [0.35, 0.55], [0.10, 0.55]] },
+    { id: 'far', poly: [[90, 90], [91, 90], [91, 91], [90, 91]] },
+  ];
+  const m = model({ id: 's', rooms });
+  const f = contentFrame(contentItems(m));
+  assert.equal(f.outliers, 1, 'the far room is rejected from the frame');
+  assert.ok(f.core.w < 1000, 'the opening view is the house');
+  // ...and the icon unit agrees: it used to be boxOf(ALL rooms) = 91000 units,
+  // which made every marker of the ordinary plan ~91x too big while the frame
+  // stayed correct (audit dev@2c947f4).
+  assert.equal(iconUnit(m), NORM_W, 'the stray does not stretch the icon unit');
+  const houseOnly = model({ id: 's', rooms: rooms.slice(0, 3) });
+  assert.equal(iconUnit(m), iconUnit(houseOnly), 'same unit as the plan without it');
+  // one shared notion of "the plan": the unit follows the frame's core
+  assert.ok(iconCqw(2.5, m, 1000) < 3, 'the marker is a marker, not a wall');
+  assert.equal(iconCqw(2.5, m, 1000), iconCqw(2.5, houseOnly, 1000));
+  // a genuinely wide plan still scales — no vote, no rejection
+  const wide = model({ id: 's', rooms: [
+    { id: 'a', poly: [[0, 0], [1, 0], [1, 1], [0, 1]] },
+    { id: 'b', poly: [[1, 0], [2, 0], [2, 1], [1, 1]] },
+    { id: 'c', poly: [[0, 1], [1, 1], [1, 2], [0, 2]] },
+    { id: 'd', poly: [[1, 1], [2, 1], [2, 2], [1, 2]] },
+  ] });
+  assert.equal(iconUnit(wide), 2 * NORM_W);
+});
+
 // ------------------------------------------------------------- the outlier
 test('an outlier does not command the frame, but "show all" reaches it', () => {
   const items = [
