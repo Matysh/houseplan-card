@@ -1858,6 +1858,23 @@ export const cardStyles = css`
       font-size: var(--fs-m);
       color: var(--hp-muted);
     }
+    .aboutver {
+      font-size: var(--fs-s);
+      color: var(--hp-muted);
+      margin: var(--sp-2) 0 var(--sp-3);
+    }
+    .aboutlink {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-3);
+      width: fit-content;
+      color: var(--hp-accent);
+      text-decoration: none;
+      font-size: var(--fs-m);
+      padding: var(--sp-1) 0;
+    }
+    .aboutlink:hover { text-decoration: underline; }
+    .aboutlink ha-icon { --mdc-icon-size: 18px; line-height: 1; }
     .dialogwrap {
       background: rgba(0, 0, 0, 0.45);
       display: flex;

@@ -1,4 +1,5 @@
-import { launch, checkAll, finish } from './serve.mjs';
+import { launch, check, checkAll, finish } from './serve.mjs';
+import { readFileSync } from 'node:fs';
 const { page, browser } = await launch();
 const res = await page.evaluate(async () => {
   const out = {};
@@ -8,6 +9,10 @@ const res = await page.evaluate(async () => {
   c._openSettingsDialog(); await c.updateComplete;
   out.rows = sr().querySelectorAll('.gsrow').length;
   out.groups = [...sr().querySelectorAll('.dialog .dispsection')].map((l) => l.textContent.trim());
+  // 1b) блок About: версия + две внешние ссылки (target=_blank rel=noopener)
+  out.aboutVersion = sr().querySelector('.dialog .aboutver')?.textContent.trim() ?? null;
+  out.aboutLinks = [...sr().querySelectorAll('.dialog a.aboutlink')].map((a) => ({
+    href: a.getAttribute('href'), target: a.getAttribute('target'), rel: a.getAttribute('rel') }));
   // 2) сменить цвет light_on и сохранить
   c._setFillColor('light_on', { c: '#ff00ff', a: 0.5 });
   await c._saveSettingsDialog(); await c.updateComplete;
@@ -26,10 +31,22 @@ const res = await page.evaluate(async () => {
   out.lqiAfter = sr().querySelectorAll('.dev .lqi').length;
   return out;
 });
+// CARD_VERSION из собранного бандла (тот же текст уходит в console-баннер).
+// terser либо инлайнит строку (v1.56.0), либо оставляет переменную (v${xx}) —
+// во втором случае доразрешаем её по присваиванию xx="1.56.0".
+const bundle = readFileSync(new URL('./srv/assets/houseplan-card.js', import.meta.url), 'utf8');
+const m = bundle.match(/HOUSEPLAN-CARD %c v(?:(\d+\.\d+\.\d+)|\$\{(\w+)\})/);
+const BUNDLE_VERSION = m?.[1] ?? (m?.[2] && bundle.match(new RegExp(`[^\\w$]${m[2]}="(\\d+\\.\\d+\\.\\d+)"`))?.[1]);
+check('bundleVersionFound', typeof BUNDLE_VERSION === 'string' && BUNDLE_VERSION.length > 0);
 // значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
 checkAll(res, {
   "rows": 14, // 10 цветов + радиус свечения + режим фона + цвет фона + погода (docs/SUN.md)
-  "groups": ["Fill: lights", "Fill: temperature", "Fill: zigbee signal", "Light-sources fill", "Stage background", "Sun"],
+  "groups": ["Fill: lights", "Fill: temperature", "Fill: zigbee signal", "Light-sources fill", "Stage background", "Sun", "About"],
+  "aboutVersion": `Houseplan Card v${BUNDLE_VERSION}`, // та же константа, что в баннере
+  "aboutLinks": [
+    { "href": "https://github.com/Matysh/houseplan-card", "target": "_blank", "rel": "noopener" },
+    { "href": "https://t.me/ha_houseplan", "target": "_blank", "rel": "noopener" },
+  ],
   "saved": {"c": "#ff00ff", "a": 0.5},
   "lqiBefore": 7,
   "lqiAfter": 0,

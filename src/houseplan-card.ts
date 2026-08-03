@@ -4973,6 +4973,12 @@ class HouseplanCard extends LitElement {
               )}
             </datalist>
           </div>
+          <label class="dispsection">${this._t('gs.about_group')}</label>
+          <div class="aboutver">${this._t('gs.about_version', { v: CARD_VERSION })}</div>
+          <a class="aboutlink" href="https://github.com/Matysh/houseplan-card" target="_blank" rel="noopener">
+            <ha-icon icon="mdi:github"></ha-icon>${this._t('gs.about_github')}</a>
+          <a class="aboutlink" href="https://t.me/ha_houseplan" target="_blank" rel="noopener">
+            <ha-icon icon="mdi:send"></ha-icon>${this._t('gs.about_telegram')}</a>
         </div>
         <div class="row">
           <button class="btn ghost" @click=${() =>
