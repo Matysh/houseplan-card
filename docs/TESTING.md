@@ -299,6 +299,16 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       card. The guarded class is read off that same cover, so a garage still
       degrades to info and is still not offered in the dialog
       [auto: smoke_cover_not_primary + unit coverEntityOf]
+- [ ] Curtain INDICATION follows the same cover (dev, owner 2026-08-04): with
+      «Open/close» chosen on that same Aqara marker, the plan shows the cover
+      and not the service switch — the breathing ring while it travels
+      (`covermove`, opening AND closing), the «open» frame when it is open,
+      the `mdi:curtains-closed` / `mdi:curtains` morph, and no yellow plate
+      when `switch.*_reverse_direction` happens to be on. The rule is exactly
+      the explicit action (docs/FILTERING.md «What a marker SHOWS»): take the
+      action away and the marker speaks for its primary again; a lit lamp that
+      also owns a cover keeps its yellow and its own icon
+      [auto: smoke_cover_not_primary (the indication section)]
 - [ ] Light-source badges (v1.52.0): in glow fill a lit lamp's badge stays
       standard (the spot is the indicator) and a lit socket stays yellow; in
       other fills a lit lamp is plain yellow with no RGB tint; morphing and

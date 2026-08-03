@@ -29,6 +29,10 @@ const out = await page.evaluate(async () => {
     'sensor.office_curtain_battery': { entity_id: 'sensor.office_curtain_battery', device_id: 'd_curtain', platform: 'demo', entity_category: 'diagnostic' },
     'switch.office_curtain_reverse': { entity_id: 'switch.office_curtain_reverse', device_id: 'd_curtain', platform: 'demo' },
     'sensor.office_curtain_motor_state': { entity_id: 'sensor.office_curtain_motor_state', device_id: 'd_curtain', platform: 'demo' },
+    // a MIXED device: a lamp that also happens to ship a cover. Its primary is
+    // meaningfully the light, and nothing below may take that away from it.
+    'light.mixed': { entity_id: 'light.mixed', device_id: 'd_mixed', platform: 'demo' },
+    'cover.mixed': { entity_id: 'cover.mixed', device_id: 'd_mixed', platform: 'demo' },
   };
   const coverState = (state, attrs = {}) => ({
     entity_id: 'cover.office_curtain', state,
@@ -39,24 +43,39 @@ const out = await page.evaluate(async () => {
       ...c.hass,
       devices: { ...c.hass.devices,
         d_curtain: { id: 'd_curtain', name: 'Office curtain', model: 'Roller shade driver E1',
-          area_id: 'bedroom', identifiers: [['demo', 'd_curtain']], entry_type: null, via_device_id: null } },
+          area_id: 'bedroom', identifiers: [['demo', 'd_curtain']], entry_type: null, via_device_id: null },
+        d_mixed: { id: 'd_mixed', name: 'Bedside lamp', model: 'Lamp with a blind',
+          area_id: 'bedroom', identifiers: [['demo', 'd_mixed']], entry_type: null, via_device_id: null } },
       entities: { ...c.hass.entities, ...ENTS },
       states: { ...c.hass.states,
         'cover.office_curtain': coverState(state, attrs),
         'sensor.office_curtain_battery': { entity_id: 'sensor.office_curtain_battery', state: '84', attributes: { device_class: 'battery', unit_of_measurement: '%' } },
         'switch.office_curtain_reverse': { entity_id: 'switch.office_curtain_reverse', state: 'off', attributes: { friendly_name: 'Reverse direction' } },
         'sensor.office_curtain_motor_state': { entity_id: 'sensor.office_curtain_motor_state', state: 'stopped', attributes: {} },
+        'light.mixed': { entity_id: 'light.mixed', state: 'on', attributes: { friendly_name: 'Bedside lamp' } },
+        'cover.mixed': { entity_id: 'cover.mixed', state: 'opening', attributes: { friendly_name: 'Bedside blind', device_class: 'curtain' } },
       },
       callService: async (dom, svc, data) => { calls.push([dom, svc, data]); return {}; },
     };
     c._regSignature = '';
     c._maybeRebuildDevices();
+    // park both extra markers in their own corners: the DOM assertions below
+    // find a marker by its position, and the auto grid would sit them on top
+    // of the demo house's own bedroom devices
+    const cu = c._devices.find((x) => x.bindingRef === 'd_curtain');
+    const mx = c._devices.find((x) => x.bindingRef === 'd_mixed');
+    if (cu && mx) {
+      c._layout = { ...c._layout,
+        [cu.id]: { s: cu.space, x: 0.06, y: 0.94 },
+        [mx.id]: { s: mx.space, x: 0.94, y: 0.06 } };
+    }
     c.requestUpdate();
     await c.updateComplete;
   };
 
   await push('closed', { device_class: 'curtain' });
   const curtain = () => c._devices.find((x) => x.bindingRef === 'd_curtain');
+  const mixed = () => c._devices.find((x) => x.bindingRef === 'd_mixed');
   o.deviceIsOnThePlan = !!curtain();
   // the premise of the whole report: the cover is NOT the primary entity
   o.primaryIsNotTheCover = curtain()?.primary === 'switch.office_curtain_reverse';
@@ -116,6 +135,92 @@ const out = await page.evaluate(async () => {
   o.dialogHidesCoverForGarage = !optionValues().includes('cover');
   c._markerDialog = null;
   c._setMode('view'); await c.updateComplete;
+
+  // ---- and the marker SHOWS that cover, not the service switch -----------
+  // Owner, 2026-08-04: «нет ни дышащего кольца во время хода, ни рамки
+  // "открыто", ни морфинга иконки». Same cause, same helper: _stateClass and
+  // the icon morph read d.primary, so the plan reported the state of
+  // `switch.*_reverse_direction`. The rule (docs/FILTERING.md «What a marker
+  // SHOWS»): the marker indicates the entity its tap ACTS ON — the cover
+  // exactly when the owner has explicitly chosen «Открыть/закрыть».
+  const devEl = (dev) => {
+    const v = c._viewOr(c._baseVb());
+    const p = c._pos(dev);
+    const left = ((p.x - v.x) / v.w) * 100;
+    const top = ((p.y - v.y) / v.h) * 100;
+    return [...sr().querySelectorAll('.devlayer .dev')].find((e) =>
+      Math.abs(parseFloat(e.style.left) - left) < 0.4 && Math.abs(parseFloat(e.style.top) - top) < 0.4);
+  };
+  const clsOf = (dev) => [...(devEl(dev)?.classList || [])];
+  const iconOf = (dev) => devEl(dev)?.querySelector('ha-icon')?.getAttribute('icon') || '';
+  const setSwitch = async (state) => {
+    c.hass = { ...c.hass, states: { ...c.hass.states,
+      'switch.office_curtain_reverse': { entity_id: 'switch.office_curtain_reverse', state, attributes: {} } } };
+    c.requestUpdate(); await c.updateComplete;
+  };
+
+  await push('closed', { device_class: 'curtain' });
+  o.markerIsOnScreen = !!devEl(curtain());
+  o.closedIsNeitherOpenNorMoving =
+    !clsOf(curtain()).includes('open') && !clsOf(curtain()).includes('covermove');
+  o.closedIconIsClosedCurtains = iconOf(curtain()) === 'mdi:curtains-closed';
+
+  await push('open', { device_class: 'curtain' });
+  o.openWearsTheOpenFrame = clsOf(curtain()).includes('open');
+  o.openIconIsOpenCurtains = iconOf(curtain()) === 'mdi:curtains';
+
+  await push('opening', { device_class: 'curtain' });
+  o.travellingBreathes = clsOf(curtain()).includes('covermove');
+  await push('closing', { device_class: 'curtain' });
+  o.closingBreathesToo = clsOf(curtain()).includes('covermove');
+  o.stateClassIsTheSameStory = c._stateClass(curtain()).includes('covermove');
+
+  // the service switch never speaks for the marker again: reverse-direction
+  // ON used to paint the curtain yellow («включено») while it stood still
+  await push('closed', { device_class: 'curtain' });
+  await setSwitch('on');
+  o.reverseSwitchNeverLightsTheMarker = !clsOf(curtain()).includes('on');
+
+  // THE BOUNDARY of the rule: take the explicit action away and the marker
+  // goes back to its primary entity — no cover indication is invented
+  const savedMarker = (c._serverCfg.markers || []).find((m) => m.binding === 'device:d_curtain');
+  savedMarker.tap_action = 'info';
+  await push('opening', { device_class: 'curtain' });
+  await setSwitch('on');
+  o.withoutTheActionThePrimarySpeaks = clsOf(curtain()).includes('on')
+    && !clsOf(curtain()).includes('covermove');
+  savedMarker.tap_action = 'cover';
+  await push('closed', { device_class: 'curtain' });
+  await setSwitch('off');
+  o.actionBackMeansCoverBack = iconOf(curtain()) === 'mdi:curtains-closed';
+
+  // ---- the auditor's own probe: BOTH entities visible ---------------------
+  // DEV-2C947-04 was written up with a plain visible `cover.*` beside a
+  // visible `switch.*`: no hidden tier involved, `switch` simply outranks
+  // `cover` inside DOMAIN_PRIORITY. Same premise, same cure — pinned here so
+  // the finding cannot come back through the other door.
+  ENTS['cover.office_curtain'] = { ...ENTS['cover.office_curtain'], hidden: false };
+  await push('closed', { device_class: 'curtain' });
+  await setSwitch('off');
+  o.visibleCoverIsStillNotThePrimary = curtain()?.primary === 'switch.office_curtain_reverse';
+  calls.length = 0;
+  await tap();
+  o.visibleCoverOpensOnTap = JSON.stringify(calls[calls.length - 1] || [])
+    === JSON.stringify(['cover', 'open_cover', { entity_id: 'cover.office_curtain' }]);
+  o.visibleCoverAlsoIndicates = iconOf(curtain()) === 'mdi:curtains-closed';
+  o.noInfoCardForTheVisibleCover = !c._infoCard;
+
+  // ---- a MIXED device is not hijacked ------------------------------------
+  // A lit lamp that also owns a cover keeps the lamp: no explicit «Open/close»
+  // on this marker, so nothing changes for it — and even if there were one,
+  // a shining light still wins the yellow plate (the glow and the badge may
+  // never disagree, owner's principle 2026-07-29).
+  o.mixedPrimaryIsTheLight = mixed()?.primary === 'light.mixed';
+  o.mixedCoverIsTravelling = c.hass.states['cover.mixed'].state === 'opening';
+  o.mixedStaysALitLamp = clsOf(mixed()).includes('on') && !clsOf(mixed()).includes('covermove');
+  // its icon is the device's own auto icon, NOT the cover's open/closed pair
+  o.mixedIconIsNotMorphedByTheCover =
+    iconOf(mixed()) === mixed()?.icon && !iconOf(mixed()).includes('curtains');
 
   return o;
 });

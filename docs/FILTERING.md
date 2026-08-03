@@ -68,3 +68,40 @@ the old behaviour until an editing client materialises it.
   one way to hide); a virtual device's "Delete" remains a real deletion.
 - Duplicate names are still numbered, light groups still fold — those are
   aggregation, not hiding.
+
+## What a marker SHOWS
+
+A marker's live indication — the yellow «on» plate, the «open» frame, the
+breathing `covermove` ring, the state-morphed icon, the ripple — speaks for
+ONE entity of the device, resolved in this order:
+
+1. the marker's bound **controls**, if it has any (a stateless remote or a
+   virtual wall switch mirrors what it drives, not itself);
+2. a **lit light** among its entities (owner's principle 2026-07-29: the glow
+   spot and the badge may never disagree);
+3. the device's **cover**, when the marker's tap action is explicitly
+   «Открыть/закрыть» (`tap_action: 'cover'` — `coverEntityOf`, the same helper
+   and the same entity the tap drives);
+4. otherwise the **primary** entity (`primaryEntity`).
+
+Rule 3 was added 2026-08-04 on the owner's report: his Aqara «Roller shade
+driver E1» curtains ship the `cover.*` hidden by the integration and a visible
+`switch.*_reverse_direction`, so `primaryEntity` picked the service switch —
+the plan showed no ring while a curtain travelled, no «open» frame, no
+`curtains` / `curtains-closed` morph, and a yellow «включено» plate whenever
+the reverse-direction option happened to be on. The tap had already been
+taught to find the cover among ALL the device's entities (2026-08-04, the
+same `coverEntityOf`); the indication now follows it.
+
+**Why it hangs on the explicit action and not on «the device has a cover».**
+Choosing «Открыть/закрыть» in the marker dialog is the only statement the card
+has that means *this marker IS the curtain* — and the dialog offers that option
+for exactly the devices where a cover exists. Tying the indication to it keeps
+one answer to «what is this marker»: the option offered, the entity tapped and
+the state shown are the same entity, decided in one place. Nothing changes
+behind the user's back for a mixed device (a lamp that also owns a blind, a TRV
+with a service switch): those keep their primary until their owner says
+otherwise, and even with the action chosen a lit light still wins rule 2. The
+cost is that a curtain left on «Инфо-карточка» still indicates its primary —
+one click in the dialog away, and the honest reading of what the marker was
+told it is.

@@ -1548,6 +1548,29 @@ class HouseplanCard extends LitElement {
 
   // ================= live states =================
 
+  /**
+   * The device's own cover, when the marker is EXPLICITLY «Open/close»
+   * (`tap_action: 'cover'`) — otherwise null. One helper, one answer: the tap
+   * acts on it, the badge speaks for it, the icon morphs with it.
+   *
+   * The rule and why it is the least surprising one (owner, 2026-08-04 —
+   * docs/FILTERING.md «What a marker SHOWS»): a marker keeps indicating its
+   * PRIMARY entity, unless its owner has said, in the marker dialog, that
+   * this thing is a curtain. Saying so is the only statement the card has
+   * that means «the cover is what this device does»; a mixed marker (a lamp
+   * with a sensor, a TRV with a service switch) is never touched behind the
+   * user's back, and there is no third notion of «what this marker is»
+   * besides the option the dialog offers and the entity the tap drives.
+   */
+  private _coverIndicator(d: DevItem): string | null {
+    return d.tapAction === 'cover' ? coverEntityOf(d.entities) : null;
+  }
+
+  /** The entity a marker's tap acts on and its indication speaks for. */
+  private _actEntity(d: DevItem): string | undefined {
+    return this._coverIndicator(d) || d.primary;
+  }
+
   private _stateClass(d: DevItem): string {
     if (!this._config?.live_states) return '';
     // an icon with controlled targets mirrors THEM, not its own entity
@@ -1562,13 +1585,19 @@ class HouseplanCard extends LitElement {
     // stays yellow only where the spot is not drawn (other fills, the plan
     // editor).
     if (litLightEntity(this.hass, d)) return 'on';
-    const p = d.primary ? this.hass.states[d.primary] : undefined;
+    // Not always the primary: an «Open/close» marker speaks for its cover,
+    // wherever that sits in the entity list (_coverIndicator). Before this an
+    // Aqara curtain driver reported its `switch.*_reverse_direction` — no
+    // breathing ring while it travelled, no «open» frame, and a yellow plate
+    // whenever the reverse-direction option happened to be on.
+    const eid = this._actEntity(d);
+    const p = eid ? this.hass.states[eid] : undefined;
     if (!p) return '';
     if (p.state === 'unavailable') return 'unavail';
     // derive the domain from the entity id we looked the state up by — state
     // objects are not guaranteed to carry entity_id (defensive; found by the
     // TESTING.md edge-case run)
-    const dom = d.primary!.split('.')[0];
+    const dom = eid!.split('.')[0];
     if (['light', 'switch', 'fan', 'humidifier'].includes(dom)) return p.state === 'on' ? 'on' : '';
     if (dom === 'climate') {
       // yellow = actually working right now ("which radiators are heating"),
@@ -1711,8 +1740,8 @@ class HouseplanCard extends LitElement {
     // switch used to resolve on the domain `switch` and fall back to the info
     // card, which is exactly what the owner saw (2026-08-04). The guarded
     // class is read off that same cover, so a garage still degrades.
-    const coverEid = d.tapAction === 'cover' ? coverEntityOf(d.entities) : null;
-    const actEid = coverEid || d.primary;
+    const coverEid = this._coverIndicator(d);
+    const actEid = this._actEntity(d);
     const domain = actEid ? actEid.split('.')[0] : null;
     // the accidental-tap guard (owner's spec 2026-07-29): any state-changing
     // action — toggle or run — may ask first. The dialog is ours, not the
@@ -6353,7 +6382,11 @@ class HouseplanCard extends LitElement {
     // ghost keeps the base icon and name — display modes are status dressing
     const ripple = (disp === 'ripple' || disp === 'icon_ripple') && !d.hidden;
     // value-only display: the measurement IS the marker
-    const primarySt = d.primary ? this.hass.states[d.primary] : undefined;
+    // The state the marker PRESENTS — the primary one, or the device's cover
+    // when the marker is explicitly «Open/close» (_coverIndicator): the badge,
+    // the icon morph and the ripple all read the same entity the tap drives.
+    const actEid = this._actEntity(d);
+    const primarySt = actEid ? this.hass.states[actEid] : undefined;
     const valText = disp === 'value' && !d.hidden
       ? (temp != null ? temp + '°'
         : hum != null ? hum + '%'
@@ -6362,7 +6395,7 @@ class HouseplanCard extends LitElement {
           : null)
       : null;
     // live state variants of the auto icon (doors, locks, bulbs), like core HA
-    const domain = d.primary ? d.primary.split('.')[0] : null;
+    const domain = actEid ? actEid.split('.')[0] : null;
     const icon = this._config?.live_states && !d.hidden
       ? stateIcon(d.icon, domain, primarySt?.attributes?.device_class, primarySt?.state, !!m?.icon)
       : d.icon;
@@ -6379,7 +6412,7 @@ class HouseplanCard extends LitElement {
     // emergencies (leak/smoke/gas/CO/siren) pulse red regardless of display mode
     const alarm = this._config?.live_states && !d.hidden
       && isAlarmState(domain, primarySt?.attributes?.device_class, primarySt?.state);
-    const active = ripple && !d.hidden && !!d.primary && isActiveState(this.hass.states[d.primary]?.state);
+    const active = ripple && !d.hidden && !!actEid && isActiveState(this.hass.states[actEid]?.state);
     const scale = Number(m?.size) > 0 ? Number(m!.size) : 1;
     const angle = Number(m?.angle) || 0;
     const rScale = Number(m?.ripple_size) > 0 ? Number(m!.ripple_size) : 3;
