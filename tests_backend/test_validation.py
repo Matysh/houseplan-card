@@ -273,8 +273,8 @@ def test_finite_on_every_coordinate():
 def test_geometry_magnitudes_are_bounded():
     """HP-1501-01: any finite float used to pass, and one schema-valid 1e100
     room vertex made the space unviewable for every client — the exact failure
-    HP-1500-03 closed for layout positions, one schema over. ±4 is slack for a
-    vertex nudged past an edge, not an envelope for absurdity."""
+    HP-1500-03 closed for layout positions, one schema over. The range is
+    garbage insurance, not an envelope for the plan (docs/CANVAS.md)."""
     base = {"id": "s1", "title": "S", "view_box": [0, 0, 1, 1], "rooms": []}
     huge = 1e100
     for cfg in (
@@ -293,6 +293,80 @@ def test_geometry_magnitudes_are_bounded():
     # a vertex a bit past the canvas edge is a drawing, not an attack
     assert v.CONFIG_SCHEMA({"spaces": [{**base, "rooms": [
         {"id": "r", "name": "R", "poly": [[-0.2, 0], [1.3, 0], [1, 1]]}]}]})
+
+
+def test_infinite_canvas_range():
+    """docs/CANVAS.md §3: the canvas is unbounded, so a plan drawn far past the
+    old unit square must SAVE. The limits moved from ±4 to ±5000: 4.5 and 1000
+    are ordinary plans now, 6000 is still refused."""
+    base = {"id": "s1", "title": "S", "view_box": [0, 0, 1, 1], "rooms": []}
+    assert v.CANVAS_LIMIT == 5000.0
+    # --- coordinates that used to be rejected by the ±4 envelope -----------
+    for good in (4.5, 12.0, 1000.0, -4.5, -1000.0):
+        assert v.CONFIG_SCHEMA({"spaces": [{**base, "rooms": [
+            {"id": "r", "name": "R", "poly": [[good, good], [good + 0.5, good],
+                                              [good + 0.5, good + 0.5]]}]}]})
+        assert v.LAYOUT_SCHEMA({"d1": {"s": "s1", "x": good, "y": good}})
+        assert v.CONFIG_SCHEMA({"spaces": [{**base, "openings": [
+            {"id": "o", "type": "door", "x": good, "y": good,
+             "angle": 30, "length": 0.1}]}]})
+        assert v.CONFIG_SCHEMA({"spaces": [{**base, "decor": [
+            {"id": "d", "kind": "rect", "x": good, "y": good, "w": 0.2, "h": 0.2}]}]})
+    # sizes follow the same ceiling but stay strictly positive
+    assert v.CONFIG_SCHEMA({"spaces": [{**base, "rooms": [
+        {"id": "r", "name": "R", "x": 1.5, "y": 1.5, "w": 4.5, "h": 1000.0}]}]})
+    assert v.CONFIG_SCHEMA({"spaces": [{**base, "view_box": [1.5, 1.5, 4.5, 1000.0]}]})
+    assert v.CONFIG_SCHEMA({"spaces": [{**base, "openings": [
+        {"id": "o", "type": "door", "x": 2.5, "y": 2.5, "angle": 0, "length": 4.5}]}]})
+    # --- and 6000 is still garbage ---------------------------------------
+    for bad in (6000.0, -6000.0):
+        with pytest.raises(vol.Invalid):
+            v.CONFIG_SCHEMA({"spaces": [{**base, "rooms": [
+                {"id": "r", "name": "R", "poly": [[bad, 0], [1, 0], [1, 1]]}]}]})
+        with pytest.raises(vol.Invalid):
+            v.LAYOUT_SCHEMA({"d1": {"s": "s1", "x": bad, "y": 0.5}})
+        with pytest.raises(vol.Invalid):
+            v.CONFIG_SCHEMA({"spaces": [{**base, "decor": [
+                {"id": "d", "kind": "line", "x1": bad, "y1": 0, "x2": 1, "y2": 1}]}]})
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA({"spaces": [{**base, "view_box": [0, 0, 6000.0, 1]}]})
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA({"spaces": [{**base, "rooms": [
+            {"id": "r", "name": "R", "x": 0, "y": 0, "w": 6000.0, "h": 1}]}]})
+    # sizes are still not coordinates: zero and negative stay refused
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA({"spaces": [{**base, "openings": [
+            {"id": "o", "type": "door", "x": 0.5, "y": 0.5, "angle": 0, "length": 0}]}]})
+
+
+def test_existing_plans_stay_valid():
+    """No migration (docs/CANVAS.md §1): a config written by any released
+    version must validate untouched after the limits moved."""
+    legacy = {
+        "spaces": [{
+            "id": "f1", "title": "Ground", "aspect": 1.0, "plan_url": "/local/f1.svg",
+            "plan_aspect": 1.25, "view_box": [0, 0, 1, 1],
+            "segments": [[0, 0, 1, 0]],
+            "rooms": [
+                {"id": "r1", "name": "Living", "area": "living_room",
+                 "poly": [[0.04, 0.14], [0.55, 0.14], [0.55, 0.58], [0.04, 0.58]]},
+                {"id": "r2", "name": "Kitchen", "x": 0.55, "y": 0.14, "w": 0.41, "h": 0.32},
+            ],
+            "openings": [{"id": "o1", "type": "window", "x": 0.3, "y": 0.14,
+                          "angle": 0, "length": 0.08}],
+            "decor": [{"id": "d1", "kind": "line", "x1": 0.1, "y1": 0.1,
+                       "x2": 0.9, "y2": 0.1, "color": "#ffffff"},
+                      {"id": "d2", "kind": "text", "x": 0.5, "y": 0.9, "text": "Porch"}],
+            "settings": {"show_borders": True, "room_opacity": 0.5},
+        }],
+        "markers": [{"id": "m1", "binding": "device:abc", "space": "f1", "size": 1.4}],
+        "settings": {"glow_radius_cm": 300},
+    }
+    out = v.CONFIG_SCHEMA(legacy)
+    assert out["spaces"][0]["rooms"][0]["poly"][0] == [0.04, 0.14]
+    assert "segments" not in out["spaces"][0]
+    assert v.LAYOUT_SCHEMA({"d_light1": {"s": "f1", "x": 0.22, "y": 0.22},
+                            "rl_r1": {"s": "f1", "x": 0.3, "y": 0.3}})
 
 
 def test_sizes_are_not_coordinates():

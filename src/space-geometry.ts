@@ -84,61 +84,233 @@ export function spaceModels(cfg: ServerConfig | null): SpaceModel[] {
   });
 }
 
-/**
- * What the plan actually occupies, padded by `pad` of the larger side.
- *
- * The canvas is a square big enough for any house, so a small hand-drawn plan
- * used to open as a speck in the middle of it. Zooming to the CONTENT instead
- * of the canvas is what people expect — but only when there is no background
- * image: with one, the image is the plan, and cropping to the rooms would hide
- * the parts of it nobody has outlined yet.
- *
- * Returns null when there is nothing drawn, so the caller keeps the full canvas.
- */
-export function contentBounds(
-  space: SpaceModel, pad = 0.05, extra?: ReadonlyArray<readonly [number, number]>,
-): { x: number; y: number; w: number; h: number } | null {
+/* =====================================================================
+ * INFINITE CANVAS (docs/CANVAS.md)
+ * ===================================================================== */
+
+/** Sane coordinate range in NORMALISED units — mirrors validation.py.
+ *  Not a frame: insurance against a stored 1e100 (HP-1500-03/HP-1501-01). */
+export const CANVAS_LIMIT = 5000;
+/** The same range in RENDER units. */
+export const SANE_LIMIT = CANVAS_LIMIT * NORM_W;
+
+/** Zoom-out floor: three times the content frame and no further (CANVAS.md §5). */
+export const MIN_ZOOM = 1 / 3;
+/** How far past the content frame panning may go, in screens (CANVAS.md §5). */
+export const PAN_SLACK = 1;
+
+/** Outlier vote tuning — see docs/CANVAS.md §4.1. */
+export const OUTLIER_K = 10;          // "an order of magnitude further"
+export const MIN_VOTERS = 4;          // fewer items: nobody to be far FROM
+export const MIN_SPREAD = NORM_W * 0.05;  // ~a small room: floor for the scale
+export const OUTLIER_MAX_SHARE = 1 / 3;   // more than this: not strays, a wide plan
+
+/** A degenerate axis (a lone marker) is grown to this, so the SVG paints. */
+export const DEGENERATE = NORM_W * 0.03;
+export const FLOOR = NORM_W * 0.2;
+
+export type Rect = { x: number; y: number; w: number; h: number };
+/** One drawn/placed object, as its own bounding box (render units). */
+export type ContentItem = { minX: number; minY: number; maxX: number; maxY: number };
+
+/** Bounding box of a point cloud, as a ContentItem. */
+export function itemOf(pts: ReadonlyArray<readonly [number, number] | number[]>): ContentItem | null {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  // Only points within a bounded envelope around the canvas command the
-  // opening view. The server bounds what it ACCEPTS now (±4 normalised,
-  // HP-1501-01), but a store may already hold an absurd coordinate from
-  // before that door existed — and one 1e100 vertex framed the space so wide
-  // the plan was a dot for every client. An out-of-envelope point is still
-  // rendered wherever it is; it just does not decide the frame. This applies
-  // to ROOM GEOMETRY and device positions alike (HP-1500-03, HP-1501-01).
-  const lo = -NORM_W * 0.25, hi = NORM_W * 1.25;
-  const add = (x: number, y: number) => {
-    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
-    if (x < lo || x > hi || y < lo || y > hi) return;
+  for (const p of pts) {
+    const x = Number(p[0]), y = Number(p[1]);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
     if (x < minX) minX = x;
     if (y < minY) minY = y;
     if (x > maxX) maxX = x;
     if (y > maxY) maxY = y;
-  };
-  for (const r of space.rooms || []) {
-    if (r.poly) for (const p of r.poly) add(p[0], p[1]);
-    else if (r.x != null && r.y != null) {
-      add(r.x, r.y);
-      add(r.x + (r.w || 0), r.y + (r.h || 0));
-    }
   }
-  // things that live outside any room still count as content — a gate sensor
-  // by the fence, a camera on a pole (the card passes device positions here)
-  for (const p of extra || []) add(p[0], p[1]);
+  return minX > maxX ? null : { minX, minY, maxX, maxY };
+}
+
+/** The room's own bounding box as a content item (polygon or legacy rect). */
+export function roomItem(r: RoomCfg): ContentItem | null {
+  if (r.poly && r.poly.length) return itemOf(r.poly);
+  if (r.x == null || r.y == null) return null;
+  return itemOf([[r.x, r.y], [r.x + (r.w || 0), r.y + (r.h || 0)]]);
+}
+
+/**
+ * Every object of a space that counts as content (docs/CANVAS.md §4):
+ * the rooms, the backdrop image rectangle, plus whatever the caller adds
+ * (devices, openings, decor — the model does not carry those).
+ */
+export function contentItems(
+  space: SpaceModel,
+  extra?: ReadonlyArray<ContentItem | readonly [number, number]>,
+): ContentItem[] {
+  const out: ContentItem[] = [];
+  for (const r of space.rooms || []) { const it = roomItem(r); if (it) out.push(it); }
+  // With a backdrop the IMAGE sets the extent: cropping to the outlined rooms
+  // would hide the parts of the picture nobody has drawn over yet.
+  if (space.bg) out.push({ minX: space.bg.x, minY: space.bg.y, maxX: space.bg.x + space.bg.w, maxY: space.bg.y + space.bg.h });
+  for (const e of extra || []) {
+    if (Array.isArray(e)) { const it = itemOf([e as any]); if (it) out.push(it); }
+    else out.push(e as ContentItem);
+  }
+  return out;
+}
+
+const median = (a: number[]): number => {
+  if (!a.length) return 0;
+  const s = [...a].sort((p, q) => p - q);
+  const m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+};
+
+/** Rank-based quantile of an ALREADY SORTED array (nearest-rank, clamped). */
+const quantile = (sorted: number[], q: number): number => {
+  if (!sorted.length) return 0;
+  const i = Math.min(sorted.length - 1, Math.max(0, Math.round(q * (sorted.length - 1))));
+  return sorted[i];
+};
+
+const boxOf = (items: ContentItem[]): Rect | null => {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const it of items) {
+    if (it.minX < minX) minX = it.minX;
+    if (it.minY < minY) minY = it.minY;
+    if (it.maxX > maxX) maxX = it.maxX;
+    if (it.maxY > maxY) maxY = it.maxY;
+  }
   if (minX > maxX || minY > maxY) return null;
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+};
+
+/** Pad by `pad` of the longer side and lift a degenerate axis off zero. */
+function padRect(b: Rect, pad: number): Rect {
+  let { x, y, w, h } = b;
   // A single marker (or a collinear row of them) has no area, and an SVG
-  // viewBox with a zero axis draws nothing at all (HP-1500-03). An axis with
-  // essentially no span — nothing there but icons — opens up to a floor:
-  // enough canvas around a lone marker to see where it stands. A REAL thin
-  // shape (a 100-unit corridor) keeps its tight frame; only the degenerate
-  // case is padded, so the threshold sits at about an icon's size.
-  const FLOOR = NORM_W * 0.2;
-  const DEGENERATE = NORM_W * 0.03;
-  if (maxX - minX < DEGENERATE) { const c = (minX + maxX) / 2; minX = c - FLOOR / 2; maxX = c + FLOOR / 2; }
-  if (maxY - minY < DEGENERATE) { const c = (minY + maxY) / 2; minY = c - FLOOR / 2; maxY = c + FLOOR / 2; }
-  const m = Math.max(maxX - minX, maxY - minY) * pad;
-  const x = minX - m, y = minY - m;
-  return { x, y, w: (maxX - minX) + m * 2, h: (maxY - minY) + m * 2 };
+  // viewBox with a zero axis draws nothing at all (HP-1500-03). Only the
+  // DEGENERATE case is inflated — a real 100-unit corridor keeps its frame.
+  if (w < DEGENERATE) { x = x + w / 2 - FLOOR / 2; w = FLOOR; }
+  if (h < DEGENERATE) { y = y + h / 2 - FLOOR / 2; h = FLOOR; }
+  const m = Math.max(w, h) * pad;
+  return { x: x - m, y: y - m, w: w + m * 2, h: h + m * 2 };
+}
+
+export interface ContentFrame {
+  /** The main mass, padded — the opening view. */
+  core: Rect | null;
+  /** Everything, padded — what "show the far objects" fits. */
+  all: Rect | null;
+  /** How many items the core deliberately leaves out. */
+  outliers: number;
+}
+
+/**
+ * The content frame (docs/CANVAS.md §4). Pure and rank-based: one absurd
+ * coordinate can move neither the median nor the 75th percentile, so it
+ * cannot decide the frame — but it is never DELETED either, it is simply
+ * not a voter, and "show everything" still reaches it.
+ */
+export function contentFrame(
+  items: ReadonlyArray<ContentItem>,
+  opts: { pad?: number; k?: number; minSpread?: number } = {},
+): ContentFrame {
+  const pad = opts.pad ?? 0.05;
+  const k = opts.k ?? OUTLIER_K;
+  const minSpread = opts.minSpread ?? MIN_SPREAD;
+  // Step 1 — corruption, not content: anything past the range the backend
+  // itself accepts is dropped outright (it is not reachable by "show all"
+  // either, because it is not a coordinate anybody meant).
+  const sane = items.filter((it) =>
+    Number.isFinite(it.minX) && Number.isFinite(it.minY)
+    && Number.isFinite(it.maxX) && Number.isFinite(it.maxY)
+    && Math.abs(it.minX) <= SANE_LIMIT && Math.abs(it.maxX) <= SANE_LIMIT
+    && Math.abs(it.minY) <= SANE_LIMIT && Math.abs(it.maxY) <= SANE_LIMIT);
+  if (!sane.length) return { core: null, all: null, outliers: 0 };
+  const all = boxOf(sane)!;
+  if (sane.length < MIN_VOTERS) {
+    const r = padRect(all, pad);
+    return { core: r, all: r, outliers: 0 };
+  }
+  const cx = sane.map((it) => (it.minX + it.maxX) / 2);
+  const cy = sane.map((it) => (it.minY + it.maxY) / 2);
+  const mx = median(cx), my = median(cy);
+  const d = sane.map((_, i) => Math.max(Math.abs(cx[i] - mx), Math.abs(cy[i] - my)));
+  const spread = Math.max(quantile([...d].sort((p, q) => p - q), 0.75), minSpread);
+  const far = d.map((v) => v > k * spread);
+  const n = far.filter(Boolean).length;
+  // Majority veto: a plan whose objects are simply spread out has no strays.
+  const keep = n && n <= sane.length * OUTLIER_MAX_SHARE ? sane.filter((_, i) => !far[i]) : sane;
+  const core = boxOf(keep) || all;
+  return {
+    core: padRect(core, pad),
+    all: padRect(all, pad),
+    outliers: keep === sane ? 0 : n,
+  };
+}
+
+/**
+ * What the plan actually occupies, padded by `pad` of the larger side —
+ * the MAIN MASS only (docs/CANVAS.md §4.1). Returns null when nothing is
+ * drawn, so the caller can fall back to the stored view_box hint.
+ *
+ * Kept as the narrow entry point used by the renderers; `contentFrame`
+ * is the one that also reports the outliers and the fit-everything box.
+ */
+export function contentBounds(
+  space: SpaceModel, pad = 0.05, extra?: ReadonlyArray<readonly [number, number]>,
+): Rect | null {
+  return contentFrame(contentItems(space, extra), { pad }).core;
+}
+
+/** The rectangle a renderer frames a space with: content, else the stored
+ *  view_box HINT, else the legacy unit square (docs/CANVAS.md §4). */
+export function spaceFrame(
+  space: SpaceModel,
+  extra?: ReadonlyArray<ContentItem | readonly [number, number]>,
+  pad = 0.05,
+): Rect {
+  const f = contentFrame(contentItems(space, extra), { pad });
+  if (f.core) return f.core;
+  const vb = space.vb && space.vb.length === 4 && space.vb[2] > 0 && space.vb[3] > 0
+    ? space.vb : [0, 0, NORM_W, NORM_W];
+  return { x: vb[0], y: vb[1], w: vb[2], h: vb[3] };
+}
+
+/** Middle of the content (fallback anchor for a device with no position). */
+export function spaceCenter(space: SpaceModel): Pt {
+  const r = spaceFrame(space);
+  return { x: r.x + r.w / 2, y: r.y + r.h / 2 };
+}
+
+/**
+ * Render units one icon-percent is measured against for AUTO-PLACEMENT
+ * spacing (docs/CANVAS.md §6). For any plan that fits the old square this
+ * is exactly NORM_W, so existing layouts do not move by a hair; a plan
+ * three canvases wide gets proportionally wider spacing.
+ * Rooms only — deterministic, so the full card and the static card agree.
+ */
+export function iconUnit(space: SpaceModel): number {
+  const items: ContentItem[] = [];
+  for (const r of space.rooms || []) { const it = roomItem(r); if (it) items.push(it); }
+  const b = boxOf(items);
+  if (!b) return NORM_W;
+  return Math.max(NORM_W, Math.min(SANE_LIMIT, Math.max(b.w, b.h)));
+}
+
+/** Grid step multipliers offered to the adaptive grid (docs/CANVAS.md §7). */
+export const GRID_STEPS = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000];
+
+/**
+ * Adaptive grid density: which multiple of the base pitch is still legible
+ * at the current scale, and which coarser one carries the accent dots.
+ * `null` = even the coarsest step is sub-pixel, draw no grid at all.
+ */
+export function gridLevels(
+  pitch: number, pxPerUnit: number, minPx = 7,
+): { fine: number; coarse: number } | null {
+  if (!(pitch > 0) || !(pxPerUnit > 0) || !Number.isFinite(pxPerUnit)) return null;
+  const fine = GRID_STEPS.find((m) => pitch * m * pxPerUnit >= minPx);
+  if (fine === undefined) return null;
+  const coarse = GRID_STEPS.find((m) => m >= fine * 5) ?? fine * 5;
+  return { fine, coarse };
 }
 
 /** Bounding rectangle of a room (rect or polygon) in render units. */
@@ -165,7 +337,10 @@ export function roomCenter(r: RoomCfg): number[] {
 /** Auto grid positions for a single space's area devices (identical to the full card). */
 export function defaultPositions(devs: DevItem[], model: SpaceModel, iconPct: number): Record<string, Pt> {
   const map: Record<string, Pt> = {};
-  const minDist = (iconPct / 100) * NORM_W * 1.3;
+  // NOT a bare NORM_W any more (docs/CANVAS.md §6): on a plan wider than the
+  // old square the icons are proportionally larger in render units, so the
+  // declump distance has to grow with the plan or auto-placed markers overlap.
+  const minDist = (iconPct / 100) * iconUnit(model) * 1.3;
   for (const r of model.rooms) {
     if (!r.area) continue;
     const ds = devs.filter((d) => d.area === r.area);
@@ -194,8 +369,9 @@ export function markerPos(d: DevItem, layout: Layout, cfg: ServerConfig, defPos:
     return { x: saved.x * NORM_W, y: saved.y * NORM_W };
   }
   if (defPos[d.id]) return defPos[d.id];
-  const vb = model.vb;
-  return { x: vb[0] + vb[2] / 2, y: vb[1] + vb[3] / 2 };
+  // no saved position, no room to auto-place in: the middle of what IS drawn,
+  // not the middle of a canvas that no longer has edges (docs/CANVAS.md)
+  return spaceCenter(model);
 }
 
 /** Saved room-label position (layout key rl_<roomId>) or the room centre. */

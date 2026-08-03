@@ -58,8 +58,10 @@ test('markerPos: saved layout → default grid → space centre', () => {
   assert.deepEqual(markerPos(dev, {}, cfg, defPos, model), defPos.d1);
   const b = roomBounds(model.rooms[0]);
   assert.ok(defPos.d1.x >= b.x && defPos.d1.x <= b.x + b.w && defPos.d1.y >= b.y && defPos.d1.y <= b.y + b.h);
-  // no layout, no defPos → space centre
-  assert.deepEqual(markerPos(dev, {}, cfg, {}, model), { x: 500, y: 500 });
+  // no layout, no defPos → the middle of the CONTENT, not of a canvas that no
+  // longer has edges (docs/CANVAS.md): f1 is a 2:1 image (y 250..750) plus a
+  // room at y 100..500, so the content spans y 100..750 — centre 425.
+  assert.deepEqual(markerPos(dev, {}, cfg, {}, model), { x: 500, y: 425 });
 });
 
 test('labelPos: saved rl_<id> → render units; else room centre', () => {
