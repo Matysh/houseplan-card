@@ -12,6 +12,9 @@
 // the config degrades to 'info', exactly like a card-wide toggle does.
 // While travelling the icon breathes a soft ring (.covermove, the vacuum
 // puck's 2.2s period) and the plate stays NEUTRAL — yellow means «включено».
+// Since 2026-08-04 the plate is neutral in EVERY cover state, the «открыто»
+// frame included: open/closed is told by the icon morph alone (the full
+// contract lives in smoke_cover_no_plate.mjs).
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 const out = await page.evaluate(async () => {
@@ -171,7 +174,9 @@ const out = await page.evaluate(async () => {
   await setCover('open', { device_class: 'curtain' });
   o.noPulseWhenOpen = sr().querySelectorAll('.dev.covermove').length === 0;
   o.iconMorphOpen = icons().includes('mdi:curtains') && !icons().includes('mdi:curtains-closed');
-  o.openFrameStays = sr().querySelectorAll('.dev.open').length === 1;
+  // owner 2026-08-04: never a coloured plate on a cover — not even «открыто»
+  o.openWearsNoFrame = sr().querySelectorAll('.dev.open').length === 0;
+  o.openPlateNotYellow = getComputedStyle(devEl()).backgroundColor !== YELLOW;
 
   await setCover('closed', { device_class: 'curtain' });
   o.noPulseWhenClosed = sr().querySelectorAll('.dev.covermove').length === 0;

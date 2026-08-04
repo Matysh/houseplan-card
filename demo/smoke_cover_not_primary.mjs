@@ -138,7 +138,10 @@ const out = await page.evaluate(async () => {
 
   // ---- and the marker SHOWS that cover, not the service switch -----------
   // Owner, 2026-08-04: «нет ни дышащего кольца во время хода, ни рамки
-  // "открыто", ни морфинга иконки». Same cause, same helper: _stateClass and
+  // "открыто", ни морфинга иконки». (The «открыто» frame itself was retired
+  // for covers later the same day — the marker still had to start speaking for
+  // the cover, which is what this section pins.) Same cause, same helper:
+  // _stateClass and
   // the icon morph read d.primary, so the plan reported the state of
   // `switch.*_reverse_direction`. The rule (docs/FILTERING.md «What a marker
   // SHOWS»): the marker indicates the entity its tap ACTS ON — the cover
@@ -166,7 +169,10 @@ const out = await page.evaluate(async () => {
   o.closedIconIsClosedCurtains = iconOf(curtain()) === 'mdi:curtains-closed';
 
   await push('open', { device_class: 'curtain' });
-  o.openWearsTheOpenFrame = clsOf(curtain()).includes('open');
+  // the plate is neutral in every cover state since 2026-08-04 — the morph is
+  // the whole open/closed story (smoke_cover_no_plate.mjs)
+  o.openWearsNoColouredPlate =
+    !clsOf(curtain()).includes('open') && !clsOf(curtain()).includes('on');
   o.openIconIsOpenCurtains = iconOf(curtain()) === 'mdi:curtains';
 
   await push('opening', { device_class: 'curtain' });

@@ -551,6 +551,36 @@ test('stateIcon: covers morph by device_class (owner 2026-08-03)', () => {
   assert.equal(stateIcon('mdi:sofa', 'cover', undefined, 'open', false), 'mdi:sofa');
 });
 
+test('stateIcon: a cover morphs for EVERY class, both ways (owner 2026-08-04)', () => {
+  // With the «открыто» plate gone from covers, the morph is the only signal —
+  // so no class may map both states to the same glyph, and the icons the card
+  // itself hands out (rules.ts) have to morph even without a device_class.
+  const CLASSES = ['blind', 'shade', 'shutter', 'curtain', 'window', 'awning',
+    'door', 'garage', 'gate', 'damper'];
+  for (const dc of CLASSES) {
+    const closed = stateIcon('mdi:chip', 'cover', dc, 'closed', false);
+    const open = stateIcon('mdi:chip', 'cover', dc, 'open', false);
+    assert.notEqual(closed, open, `${dc}: closed and open share one icon`);
+    // ajar and travelling all read as OPEN (HA reports a positioned cover 'open')
+    assert.equal(stateIcon('mdi:chip', 'cover', dc, 'opening', false), open);
+    assert.equal(stateIcon('mdi:chip', 'cover', dc, 'closing', false), open);
+  }
+  assert.equal(stateIcon('mdi:chip', 'cover', 'awning', 'closed', false), 'mdi:awning-outline');
+  assert.equal(stateIcon('mdi:chip', 'cover', 'awning', 'open', false), 'mdi:awning');
+  // no device_class: the auto icons of rules.ts morph within their own family
+  assert.equal(stateIcon('mdi:roller-shade', 'cover', undefined, 'closed', false), 'mdi:roller-shade-closed');
+  assert.equal(stateIcon('mdi:roller-shade-closed', 'cover', undefined, 'open', false), 'mdi:roller-shade');
+  assert.equal(stateIcon('mdi:garage-variant', 'cover', undefined, 'open', false), 'mdi:garage-open-variant');
+  assert.equal(stateIcon('mdi:blinds-horizontal', 'cover', null, 'closed', false), 'mdi:blinds-horizontal-closed');
+  // a HAND-PICKED icon morphs only inside the pair it was picked from — never
+  // traded for another family, never touched outside the cover domain
+  assert.equal(stateIcon('mdi:curtains', 'cover', 'blind', 'closed', true), 'mdi:curtains-closed');
+  assert.equal(stateIcon('mdi:curtains-closed', 'cover', undefined, 'open', true), 'mdi:curtains');
+  assert.equal(stateIcon('mdi:sofa', 'cover', 'blind', 'open', true), 'mdi:sofa');
+  assert.equal(stateIcon('mdi:door-closed', 'binary_sensor', 'door', 'on', true), 'mdi:door-closed');
+  assert.equal(stateIcon('mdi:lock', 'lock', undefined, 'unlocked', true), 'mdi:lock');
+});
+
 test('coverService: closed→open, open→close, travelling→stop (owner 2026-08-03)', () => {
   assert.equal(coverService('closed'), 'open_cover');
   assert.equal(coverService('open'), 'close_cover');       // incl. ajar: HA reports 'open'

@@ -285,11 +285,27 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       the «ask for confirmation» checkbox guards it like toggle/run.
       Indication: while travelling the icon breathes a soft yellow ring
       (.covermove, 2.2s, static under prefers-reduced-motion) and the plate
-      stays NEUTRAL — yellow is «включено»; the icon morphs by state +
-      device_class (blinds/shutter/curtain…), unknown state morphs nothing;
-      no position percentages anywhere
+      stays NEUTRAL in EVERY state (2026-08-04, see the next item); the icon
+      morphs by state + device_class (blinds/shutter/curtain…), unknown state
+      morphs nothing; no position percentages anywhere
       [auto: smoke_cover_tap + units resolveTapAction/coverService/stateIcon +
       backend test_cover_tap_action_is_accepted]
+- [ ] A cover is NEVER painted (dev, owner 2026-08-04): «у штор не должно быть
+      жёлтой подложки никогда, индикация открыто/закрыто за счёт морфинга
+      иконки». Walk one curtain through closed / open / ajar / opening /
+      closing: the plate is the plain neutral badge every time — never the
+      yellow «включено» one, never the orange «открыто» frame it used to wear
+      while open — the icon is the only open/closed signal, and the breathing
+      .covermove ring appears in the two travelling states and nowhere else.
+      The morph is exhaustive: every device class gives two DIFFERENT glyphs
+      (awning included), a cover with no device_class morphs within its own
+      auto-icon family (mdi:roller-shade, mdi:garage-variant), a hand-picked
+      icon morphs only inside the pair it was picked from, and an
+      unknown/unavailable state morphs nothing. NOT touched: an open door /
+      window binary sensor, an unlocked lock and an open valve still wear the
+      orange «открыто» frame (a valve has no icon pair, so the frame is all it
+      has) [auto: smoke_cover_no_plate + unit stateIcon «every class, both
+      ways»]
 - [ ] Open/close works when the cover is NOT the primary entity (dev, owner's
       report 2026-08-04): a curtain driver that ships its `cover.*` hidden by
       the integration next to a visible `switch.*_reverse_direction` (Aqara
@@ -302,9 +318,10 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] Curtain INDICATION follows the same cover (dev, owner 2026-08-04): with
       «Open/close» chosen on that same Aqara marker, the plan shows the cover
       and not the service switch — the breathing ring while it travels
-      (`covermove`, opening AND closing), the «open» frame when it is open,
-      the `mdi:curtains-closed` / `mdi:curtains` morph, and no yellow plate
-      when `switch.*_reverse_direction` happens to be on. The rule is exactly
+      (`covermove`, opening AND closing), the `mdi:curtains-closed` /
+      `mdi:curtains` morph, a neutral plate throughout (the «открыто» frame
+      was retired for covers later the same day), and no yellow plate when
+      `switch.*_reverse_direction` happens to be on. The rule is exactly
       the explicit action (docs/FILTERING.md «What a marker SHOWS»): take the
       action away and the marker speaks for its primary again; a lit lamp that
       also owns a cover keeps its yellow and its own icon

@@ -1607,15 +1607,19 @@ class HouseplanCard extends LitElement {
       if (act != null) return ['heating', 'cooling', 'drying', 'fan'].includes(act) ? 'on' : '';
       return ['off', 'unknown'].includes(p.state) ? '' : 'on';
     }
-    if (dom === 'cover' || dom === 'valve') {
-      const open = ['open', 'opening'].includes(p.state) ? 'open' : '';
-      // Owner's rule (2026-08-03): a cover ON THE MOVE does NOT take the
-      // yellow «включено» plate — it breathes a soft ring instead, the same
-      // language the vacuum puck and the presence ring speak. The existing
-      // 'open' frame is orthogonal and stays.
-      if (dom === 'cover' && coverMoving(p.state)) return (open ? open + ' ' : '') + 'covermove';
-      return open;
-    }
+    // COVERS (owner's contract 2026-08-04): «у штор не должно быть жёлтой
+    // подложки НИКОГДА, индикация открыто/закрыто за счёт морфинга иконки».
+    // So a cover returns NO plate class in any state — not the yellow «on»
+    // one, not the orange 'open' frame it used to wear while open/opening.
+    // Its whole open/closed story is told by the icon (stateIcon/COVER_ICONS,
+    // ajar counts as open because HA reports 'open' for it), and its motion by
+    // the breathing ring alone (2026-08-03, the vacuum puck's language).
+    if (dom === 'cover') return coverMoving(p.state) ? 'covermove' : '';
+    // A VALVE is deliberately NOT swept along: no icon pair morphs for it, so
+    // the frame is the only thing that says «открыт» — taking it away would
+    // leave the marker mute. Owner's rule names the curtains, and the two
+    // domains part ways here.
+    if (dom === 'valve') return ['open', 'opening'].includes(p.state) ? 'open' : '';
     if (dom === 'lock') return ['unlocked', 'open'].includes(p.state) ? 'open' : '';
     if (dom === 'binary_sensor') {
       const dc = p.attributes?.device_class;

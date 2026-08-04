@@ -71,9 +71,10 @@ the old behaviour until an editing client materialises it.
 
 ## What a marker SHOWS
 
-A marker's live indication — the yellow «on» plate, the «open» frame, the
-breathing `covermove` ring, the state-morphed icon, the ripple — speaks for
-ONE entity of the device, resolved in this order:
+A marker's live indication — the yellow «on» plate, the «open» frame (never
+on a cover, see below), the breathing `covermove` ring, the state-morphed
+icon, the ripple — speaks for ONE entity of the device, resolved in this
+order:
 
 1. the marker's bound **controls**, if it has any (a stateless remote or a
    virtual wall switch mirrors what it drives, not itself);
@@ -87,9 +88,9 @@ ONE entity of the device, resolved in this order:
 Rule 3 was added 2026-08-04 on the owner's report: his Aqara «Roller shade
 driver E1» curtains ship the `cover.*` hidden by the integration and a visible
 `switch.*_reverse_direction`, so `primaryEntity` picked the service switch —
-the plan showed no ring while a curtain travelled, no «open» frame, no
-`curtains` / `curtains-closed` morph, and a yellow «включено» plate whenever
-the reverse-direction option happened to be on. The tap had already been
+the plan showed no ring while a curtain travelled, no `curtains` /
+`curtains-closed` morph, and a yellow «включено» plate whenever the
+reverse-direction option happened to be on. The tap had already been
 taught to find the cover among ALL the device's entities (2026-08-04, the
 same `coverEntityOf`); the indication now follows it.
 
@@ -105,3 +106,37 @@ otherwise, and even with the action chosen a lit light still wins rule 2. The
 cost is that a curtain left on «Инфо-карточка» still indicates its primary —
 one click in the dialog away, and the honest reading of what the marker was
 told it is.
+
+### A cover is never painted (owner 2026-08-04)
+
+«У штор не должно быть жёлтой подложки НИКОГДА, индикация открыто/закрыто за
+счёт морфинга иконки.» For the `cover` domain — and for the cover an
+«Открыть/закрыть» marker indicates, rule 3 above — `_stateClass` returns no
+plate class in any state:
+
+| cover state | plate | ring | icon |
+|---|---|---|---|
+| `closed` | neutral | — | closed glyph |
+| `open`, ajar (`open` + position) | neutral | — | open glyph |
+| `opening`, `closing` | neutral | `.covermove` breathes | open glyph |
+| `unknown` / no state | neutral | — | base icon, no morph |
+| `unavailable` | neutral, faded (`.unavail`) | — | base icon |
+
+Until this the domain shared one branch with `valve` and wore `.dev.open` —
+an orange FILLED badge (`--hp-open`), not a mere border — while open or
+opening. The open/closed story is now told by the icon alone (`stateIcon` /
+`COVER_ICONS`), so the morph has to be exhaustive: every device class maps
+its two states to two DIFFERENT glyphs, and a cover with no `device_class` at
+all (z2m ships plenty) morphs within the family of its own base icon —
+`mdi:roller-shade` (what the name rule «штор|curtain|blind|shade» hands out),
+`mdi:garage-variant`, `mdi:blinds-horizontal`, `mdi:door`. The one place a
+hand-picked icon is not final: a cover whose custom icon IS one of those pair
+members morphs inside that pair — never traded for another family — because
+otherwise choosing an icon would silently switch the marker's only indicator
+off.
+
+WHAT KEEPS THE FRAME. `.dev.open` is untouched everywhere else: door / window
+/ garage_door / opening binary sensors, an unlocked `lock`, and `valve`. A
+valve is deliberately left out of the owner's rule — no icon pair morphs for
+it, so the frame is the only thing it has to say «открыт» with. If the owner
+ever wants the two domains to read alike, a valve needs an icon pair first.

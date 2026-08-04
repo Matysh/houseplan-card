@@ -1080,12 +1080,42 @@ const COVER_ICONS: Record<string, [string, string]> = {
   shutter: ['mdi:window-shutter', 'mdi:window-shutter-open'],
   curtain: ['mdi:curtains-closed', 'mdi:curtains'],
   window: ['mdi:window-closed', 'mdi:window-open'],
-  awning: ['mdi:awning-outline', 'mdi:awning-outline'],
+  awning: ['mdi:awning-outline', 'mdi:awning'],
   door: ['mdi:door-closed', 'mdi:door-open'],
   garage: ['mdi:garage', 'mdi:garage-open'],
   gate: ['mdi:gate', 'mdi:gate-open'],
   damper: ['mdi:circle-slice-8', 'mdi:circle-outline'],
 };
+
+/**
+ * Extra [closed, open] pairs recognised on the BASE icon only (owner's
+ * contract 2026-08-04: for a cover the morph is the ONLY open/closed signal,
+ * so it must not fall silent on the icons the card itself hands out). These
+ * are never picked by device_class — they only let a cover whose class is
+ * missing (z2m ships plenty) or whose icon the user chose by hand still swap
+ * within its OWN icon family. `mdi:roller-shade` is what the name rule
+ * «штор|curtain|blind|shade» gives every curtain, `mdi:garage-variant` what
+ * «ворота|garage|gate» gives every gate.
+ */
+const COVER_ICON_ALIASES: [string, string][] = [
+  ['mdi:roller-shade-closed', 'mdi:roller-shade'],
+  ['mdi:blinds-horizontal-closed', 'mdi:blinds-horizontal'],
+  ['mdi:garage-variant', 'mdi:garage-open-variant'],
+  ['mdi:door', 'mdi:door-open'],
+];
+
+/** Every [closed, open] pair a cover's BASE icon may be recognised by. */
+function coverPairs(): [string, string][] {
+  return [...Object.values(COVER_ICONS), ...COVER_ICON_ALIASES];
+}
+
+/** The pair a cover icon belongs to, or null when it is not a known one. */
+function coverPairOf(base: string): [string, string] | null {
+  for (const pair of coverPairs()) {
+    if (base === pair[0] || base === pair[1]) return pair;
+  }
+  return null;
+}
 
 /**
  * Swap the auto icon for a state variant (open door, unlocked lock…), like core
@@ -1099,7 +1129,17 @@ export function stateIcon(
   state: string | null | undefined,
   hasCustomIcon: boolean,
 ): string {
-  if (hasCustomIcon || !state || state === 'unavailable' || state === 'unknown') return base;
+  if (!state || state === 'unavailable' || state === 'unknown') return base;
+  if (hasCustomIcon) {
+    // A hand-picked icon normally wins outright. The ONE exception is a cover:
+    // its plate is neutral in every state (owner 2026-08-04), so the morph is
+    // all it has — and morphing WITHIN the very pair the user picked from
+    // (mdi:curtains -> mdi:curtains-closed) shows the state without ever
+    // trading their icon for a different family.
+    const pair = domain === 'cover' ? coverPairOf(base) : null;
+    if (!pair) return base;
+    return state === 'closed' ? pair[0] : pair[1];
+  }
   if (domain === 'binary_sensor') {
     if (deviceClass === 'door') return state === 'on' ? 'mdi:door-open' : 'mdi:door-closed';
     if (deviceClass === 'window') return state === 'on' ? 'mdi:window-open' : 'mdi:window-closed';
@@ -1109,10 +1149,12 @@ export function stateIcon(
     const pair = COVER_ICONS[String(deviceClass || '')];
     if (pair) return state === 'closed' ? pair[0] : pair[1];
     // no device_class: morph only when the base icon IS one of the known
-    // pairs, so a hand-picked auto icon is never swapped for a guess
-    for (const [closed, open] of Object.values(COVER_ICONS)) {
-      if (base === closed || base === open) return state === 'closed' ? closed : open;
-    }
+    // pairs, so a hand-picked auto icon is never swapped for a guess.
+    // «Closed» is the only state that shows the closed icon: open, ajar
+    // (HA reports plain 'open' with a position) and both travelling states
+    // all read as open, exactly like the classed branch above.
+    const own = coverPairOf(base);
+    if (own) return state === 'closed' ? own[0] : own[1];
     return base;
   }
   if (domain === 'lock') return state === 'locked' ? 'mdi:lock' : 'mdi:lock-open-variant';
