@@ -288,6 +288,12 @@ wash. `gridLevels(pitch, pxPerUnit, minPx)` (pure, unit tested) picks:
 The grid rectangle also follows the **view**, not the old `view_box`,
 so it is there wherever you pan.
 
+The dots are a **hint, not content** (owner 2026-08-04): at full strength
+they argued with the plan on white paper. `.griddot` is `opacity: 0.35`,
+`.griddot.major` `opacity: 0.5` (styles.ts) — both muted, the CAD
+hierarchy kept, coarse nodes still denser than fine ones. The grid lives
+in the editors only; View never draws it (`smoke_grid_fade`).
+
 ## §8 Toolbar
 
 The middle button of the zoom control was "Reset zoom" (`_resetZoom`,

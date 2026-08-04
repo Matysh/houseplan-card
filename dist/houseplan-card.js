@@ -1064,9 +1064,12 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
       stroke-width: 3;
       fill: rgba(255, 193, 77, 0.25);
     }
+    /* Owner 2026-08-04: the grid is a HINT, not content — at full strength the
+       dots argued with the plan on white paper. Both levels are muted, the
+       hierarchy is kept (major still denser than fine). */
     .griddot {
       fill: var(--hp-accent);
-      opacity: 0.75;
+      opacity: 0.35;
       stroke: rgba(0, 0, 0, 0.35);
       stroke-width: 0.4;
     }
@@ -1074,7 +1077,7 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
        bigger, more opaque dot, so zoomed far out the grid still reads as a
        grid instead of a grey wash. */
     .griddot.major {
-      opacity: 1;
+      opacity: 0.5;
       stroke-width: 0;
     }
     .seg {
