@@ -8,6 +8,14 @@
 //     of that gradient: nothing is ever drawn past its end, so the old bright
 //     kerb (a far edge parallel to the wall, cut while still lit) cannot come
 //     back at an oblique sun.
+// DEV-EB173-01 turned the last of those into a contract of its own: the fade
+// runs along the wall's INWARD NORMAL, not along the ray. For parallel rays
+// the distance travelled from the glass is an affine function of the point, so
+// its iso-alpha lines are parallel to the WALL — which is where an honest
+// parallelogram puts its far edge. All three invariants then hold at once:
+// peak alpha across the whole pane, the same fade distance along every ray,
+// and a far edge exactly on the gradient's end. The auditor's own grazing
+// repro is re-run below with his numbers.
 // The "light never crosses a wall" clip is asserted in demo/smoke_sun.mjs
 // (wedgeClippedToRoom) — the polygons arrive from computeSunRays() already
 // intersected with the room, which is why no clip-path is needed here.
@@ -34,6 +42,32 @@ const res = await page.evaluate(async () => {
   const grads = () => [...sr().querySelectorAll('linearGradient[id^=hp-sun-]')];
   const stopsOf = (g) => [...g.querySelectorAll('stop')].map((s) => [
     parseFloat(s.getAttribute('offset')), Number(s.getAttribute('stop-opacity'))]);
+  // everything below is measured off the DOM gradient, exactly like the audit
+  // probe: axis, the offset a point lands on, and the alpha there
+  const axisOf = (g) => {
+    const x1 = +g.getAttribute('x1'), y1 = +g.getAttribute('y1');
+    const x2 = +g.getAttribute('x2'), y2 = +g.getAttribute('y2');
+    const len = Math.hypot(x2 - x1, y2 - y1);
+    return { x1, y1, dx: x2 - x1, dy: y2 - y1, len, ux: (x2 - x1) / len, uy: (y2 - y1) / len };
+  };
+  const offsetOf = (g, p) => {
+    const a = axisOf(g);
+    return ((p[0] - a.x1) * a.dx + (p[1] - a.y1) * a.dy) / (a.len * a.len);
+  };
+  // a bundle without the normal-axis fade must FAIL these by name, not blow up
+  const nrm = (r) => r.normal || [NaN, NaN];
+  const dep = (r) => (r.depth === undefined ? NaN : r.depth);
+  const alphaAt = (g, off) => {
+    const st = stopsOf(g).map(([o, a]) => [o / 100, a]);
+    if (off <= st[0][0]) return st[0][1];
+    for (let i = 1; i < st.length; i++) {
+      if (off <= st[i][0]) {
+        const t = (off - st[i - 1][0]) / (st[i][0] - st[i - 1][0] || 1);
+        return st[i - 1][1] + t * (st[i][1] - st[i - 1][1]);
+      }
+    }
+    return st[st.length - 1][1];
+  };
 
   // ---- 1) 30 % shorter: the wedge reach in window lengths ----------------
   await setSun(270, 5);              // low western sun into the west window
@@ -50,12 +84,28 @@ const res = await page.evaluate(async () => {
   await setSun(270, 5);
   const gs = grads();
   out.gradientsDrawn = gs.length > 0;
-  out.gradientSpansWholeWedge = gs.every((g) => {
-    const st = stopsOf(g);
-    // the gradient axis is the FULL wedge length (x1,y1 → x2,y2 = len away)
-    const dx = +g.getAttribute('x2') - +g.getAttribute('x1');
-    const dy = +g.getAttribute('y2') - +g.getAttribute('y1');
-    return Math.abs(Math.hypot(dx, dy) - c._sunRaysCache.rays[0].len) < 1e-6 && st.length > 2;
+  // the axis is the wall's inward normal, `len · cos(incidence)` long — the
+  // perpendicular depth a ray reaches after running the FULL wedge length
+  out.gradientRunsAlongTheWallNormal = gs.every((g, i) => {
+    const r = c._sunRaysCache.rays[i];
+    const a = axisOf(g);
+    return Math.abs(a.ux - nrm(r)[0]) < 1e-6 && Math.abs(a.uy - nrm(r)[1]) < 1e-6;
+  });
+  out.gradientSpansWholeWedge = gs.every((g, i) => {
+    const r = c._sunRaysCache.rays[i];
+    const cos = r.dir[0] * nrm(r)[0] + r.dir[1] * nrm(r)[1];
+    return Math.abs(axisOf(g).len - r.len * cos) < 1e-6
+      && Math.abs(dep(r) - r.len * cos) < 1e-9
+      && stopsOf(g).length > 2;
+  });
+  // the ONLY thing that matters about that axis: a point `source + dir·u`
+  // lands on offset `u / len`, whichever ray it rode in on
+  out.offsetIsDistanceAlongTheRay = gs.every((g, i) => {
+    const r = c._sunRaysCache.rays[i];
+    return [0, 0.3, 0.85, 1].every((u) => [r.a, r.b].every((src) => {
+      const p = [src[0] + r.dir[0] * r.len * u, src[1] + r.dir[1] * r.len * u];
+      return Math.abs(offsetOf(g, p) - u) < 1e-6;
+    }));
   });
   out.deadWellBeforeTheEnd = gs.every((g) => {
     const st = stopsOf(g);
@@ -94,9 +144,10 @@ const res = await page.evaluate(async () => {
   // gradient. That holds ONLY if the far edge is square to the RAY: with the
   // old wall-parallel edge one far corner sat at offset ~0.7 (low sun) or
   // ~0.11 (high sun) — i.e. still lit — which is exactly the bright kerb.
+  // offset ALONG THE GRADIENT, i.e. depth under the wall over `len · cos`
   const tOf = (r, p) => {
     const mx = (r.a[0] + r.b[0]) / 2, my = (r.a[1] + r.b[1]) / 2;
-    return ((p[0] - mx) * r.dir[0] + (p[1] - my) * r.dir[1]) / r.len;
+    return ((p[0] - mx) * nrm(r)[0] + (p[1] - my) * nrm(r)[1]) / dep(r);
   };
   const skew = (r) => {
     const mx = (r.a[0] + r.b[0]) / 2, my = (r.a[1] + r.b[1]) / 2;
@@ -119,6 +170,47 @@ const res = await page.evaluate(async () => {
   }
   out.obliqueSunHasWedges = out.obliqueChecked.every((n) => n > 0);
   delete out.obliqueChecked;
+
+  // ---- 5) DEV-EB173-01: the auditor's own grazing repro ------------------
+  // West window 80 render units long, elevation 90 (nominal reach 0.56 · 80 =
+  // 44.8, i.e. 70 % of the old 64), azimuth 190 — the light enters the glass
+  // and travels 10° off the wall's own direction. The probe on the broken
+  // build read sides 5.408 / 84.192 (ratio 15.57) and source offsets ±0.879
+  // with opacity 0 at one end of the pane.
+  sp.openings = [{ id: 'wW', type: 'window', x: 0.04, y: 0.30, angle: 90, length: 0.08 }];
+  c._cfgEpoch++;
+  await setSun(190, 90);
+  const gr = c._sunRaysCache.rays;
+  out.grazingRayDrawn = gr.length === 1;
+  if (gr.length === 1) {
+    const r = gr[0];
+    const g = grads()[0];
+    out.grazingIsReallyGrazing = Math.abs(r.dir[0] * nrm(r)[0] + r.dir[1] * nrm(r)[1] - 0.17365) < 1e-4;
+    out.grazingLengthIs70Percent = Math.abs(r.len - 0.7 * (0.8 * 80)) < 1e-6
+      && Math.abs(r.len - 44.8) < 1e-6;
+    // both sides of the shaft, measured off the DRAWN polygon: the depth of a
+    // vertex divided by cos is how far its ray ran
+    const cos = r.dir[0] * nrm(r)[0] + r.dir[1] * nrm(r)[1];
+    const ran = (p) => ((p[0] - r.a[0]) * nrm(r)[0] + (p[1] - r.a[1]) * nrm(r)[1]) / cos;
+    const far = r.polys[0].map(ran).filter((u) => u > 1e-6);
+    out.grazingHasTwoFarCorners = far.length === 2;
+    out.grazingSidesEqualWithin1Percent = far.length === 2
+      && Math.abs(far[0] - far[1]) <= 0.01 * r.len;
+    out.grazingBothSidesAreTheNominalLength = far.every((u) => Math.abs(u - r.len) <= 0.01 * r.len);
+    // the whole pane of glass at peak alpha (was 0 at one end)
+    const peak = stopsOf(g)[0][1];
+    out.grazingGlassAtOffsetZero = [r.a, r.b].every((p) => Math.abs(offsetOf(g, p)) < 1e-6);
+    out.grazingGlassAtPeakAlpha = [r.a, r.b].every((p) => Math.abs(alphaAt(g, offsetOf(g, p)) - peak) < 1e-9);
+    out.grazingPeakIsTheRealPeak = peak > 0.2;
+    // and nothing is drawn past the gradient
+    out.grazingInsideTheGradient = r.polys.every((poly) =>
+      poly.every((p) => offsetOf(g, p) >= -1e-6 && offsetOf(g, p) <= 1 + 1e-6));
+  }
+  // a sun 2° off the wall's plane (cos 0.035 < RAY_MIN_COS) casts nothing
+  await setSun(182, 90);
+  out.sunAlongTheWallCastsNothing = c._sunRaysCache.rays.length === 0;
+  await setSun(186, 90);
+  out.sunJustClearOfTheWallStillCasts = c._sunRaysCache.rays.length === 1;
   return out;
 });
 await finish(browser, checkAll(res));

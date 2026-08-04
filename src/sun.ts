@@ -119,11 +119,24 @@ export function windowWallInfo(
     : { normal: n, roomId: minus!.id };
 }
 
-/** Does the sun actually shine INTO this window right now? (A grazing sun
- * exactly along the wall does not count — hence the epsilon, which also
- * swallows the sin/cos float dust of the right-angle directions.) */
+/**
+ * How square the sun has to be to a wall before that wall's windows cast
+ * anything: the cosine of the angle of incidence, i.e. `outward normal · dir
+ * to the sun`. 0.05 is ~87.1°, so the sun has to clear the plane of the wall
+ * by ~2.9° — the same order as the 3° elevation threshold, and for the same
+ * reason: below it there is no light worth painting. Glass agrees (Fresnel
+ * reflects almost everything at that incidence), and so does the geometry —
+ * the shaft's perpendicular depth is `len · cos`, so under this threshold the
+ * whole wedge is a sliver thinner than the wall it came through, drawn with a
+ * gradient axis shorter than a pixel (DEV-EB173-01).
+ */
+export const RAY_MIN_COS = 0.05;
+
+/** Does the sun actually shine INTO this window right now? (A sun grazing
+ * along the wall does not count — see RAY_MIN_COS, which also swallows the
+ * sin/cos float dust of the right-angle directions.) */
 export function windowLit(normal: number[], sunDir: number[], elevation: number): boolean {
-  return elevation > 0 && normal[0] * sunDir[0] + normal[1] * sunDir[1] > 1e-9;
+  return elevation > 0 && normal[0] * sunDir[0] + normal[1] * sunDir[1] > RAY_MIN_COS;
 }
 
 // ---------------- wedge geometry ----------------
@@ -144,36 +157,38 @@ export function rayLength(elevation: number): number {
 }
 
 /**
- * The unclipped wedge: the window span a-b extruded along `dir` and cut off
- * PERPENDICULAR to the ray, `len` from the span's midpoint.
+ * The unclipped wedge: the window span a-b extruded along `dir` by the SAME
+ * `len` at both ends. An honest parallelogram — every ray through the glass
+ * travels exactly the wedge's reach, so the promised "30 % shorter" holds for
+ * each side of every wedge, at any sun angle.
  *
- * Not the parallelogram an equal extrusion of both ends would give. The fade
- * is a linear gradient running ALONG `dir`, so its iso-alpha lines are
- * perpendicular to `dir`, while a parallelogram's far edge stays parallel to
- * the WALL. For any sun that does not face the glass head-on the two are
- * different lines: one half of that far edge got cut while it still carried
- * colour — the straight bright kerb hanging in mid-floor. Ending both sides on
- * the SAME iso-alpha line makes the geometry and the gradient describe one
- * shaft, so a wedge dies of its gradient (empty from RAY_FADE_END on) and
- * never of its own outline.
+ * Its far edge is parallel to the WALL, and that is not a compromise: it is
+ * the iso-alpha line of the gradient the card actually draws. For parallel
+ * rays the distance travelled from the glass is `depth / cos`, an affine
+ * function of the point whose level sets are lines PARALLEL TO THE WALL, so
+ * the fade must run along the wall's NORMAL (see `SunRay.normal/depth` and
+ * docs/SUN.md), not along `dir`. With that axis all three invariants hold at
+ * once: the whole pane of glass sits at offset 0 (peak alpha end to end), the
+ * alpha at any point depends only on how far its own ray has travelled, and
+ * the wedge's far edge coincides with the gradient's end — a bright kerb is
+ * impossible by construction.
+ *
+ * The previous attempt (DEV-EB173-01) kept the gradient along `dir` from the
+ * span's midpoint and bent the GEOMETRY to match, extruding the two ends by
+ * different amounts. At a grazing sun that put one end of the glass itself at
+ * offset 0.88 — fully transparent before the shaft even started — and made
+ * the long side 88 % longer than the nominal reach instead of 30 % shorter.
  *
  * The two SIDES stay razor-sharp on purpose — owner 2026-08-04: «с лучами
  * солнца ты сделал фигню — не надо размывать их боковые грани». A shaft of
  * light through a window HAS crisp sides; only its reach fades.
  */
 export function rayQuad(a: number[], b: number[], dir: number[], len: number): number[][] {
-  const mx = (a[0] + b[0]) / 2;
-  const my = (a[1] + b[1]) / 2;
-  // how far along `dir` each end of the span already sits, from the midpoint
-  const pa = (a[0] - mx) * dir[0] + (a[1] - my) * dir[1];
-  const pb = (b[0] - mx) * dir[0] + (b[1] - my) * dir[1];
-  const ea = Math.max(0, len - pa); // the trailing end travels further
-  const eb = Math.max(0, len - pb);
   return [
     [a[0], a[1]],
     [b[0], b[1]],
-    [b[0] + dir[0] * eb, b[1] + dir[1] * eb],
-    [a[0] + dir[0] * ea, a[1] + dir[1] * ea],
+    [b[0] + dir[0] * len, b[1] + dir[1] * len],
+    [a[0] + dir[0] * len, a[1] + dir[1] * len],
   ];
 }
 
@@ -206,8 +221,21 @@ export interface SunRay {
   b: number[];
   /** Direction the light travels (AWAY from the sun), unit vector. */
   dir: [number, number];
-  /** Wedge reach in render units (the gradient's fade distance). */
+  /** Wedge reach in render units: how far along `dir` every ray travels. */
   len: number;
+  /**
+   * INWARD wall normal (unit) — the axis of the fade. The distance a point
+   * has travelled from the glass is the same affine function of the point as
+   * its depth under the wall, so the gradient's iso-alpha lines are parallel
+   * to the wall and its axis is this normal (docs/SUN.md, DEV-EB173-01).
+   */
+  normal: [number, number];
+  /**
+   * Length of that axis: `len · (dir·normal)` — the perpendicular depth a ray
+   * reaches after travelling `len`. A point `source + dir·u` therefore lands
+   * at offset `u/len`: the glass is all at 0, the far edge all at 1.
+   */
+  depth: number;
 }
 
 /**
@@ -242,7 +270,12 @@ export function computeSunRays(
     const len = k * w.length;
     const polys = clipToRoom(rayQuad(a, b, away, len), room.poly);
     if (!polys.length) continue;
-    out.push({ openingId: w.id, roomId: info.roomId, polys, a, b, dir: away, len });
+    // inward normal + how deep the ray gets: cos of the incidence angle,
+    // which windowLit() has already found to be above RAY_MIN_COS
+    const normal: [number, number] = [-info.normal[0], -info.normal[1]];
+    const cos = away[0] * normal[0] + away[1] * normal[1];
+    out.push({ openingId: w.id, roomId: info.roomId, polys, a, b, dir: away, len,
+      normal, depth: len * cos });
   }
   return out;
 }

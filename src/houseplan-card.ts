@@ -4971,18 +4971,27 @@ class HouseplanCard extends LitElement {
     const stops = rayStops();
     // NO filter here, and none in <defs>. Owner 2026-08-04: «не надо размывать
     // их боковые грани» — the shaft keeps the crisp sides real light has, and
-    // the only falloff is the gradient running ALONG the ray. The tip needs no
-    // blur either: `rayStops()` is already at zero from RAY_FADE_END on, and
-    // `rayQuad()` ends the wedge on that same iso-alpha line, so the far edge
-    // has nothing left to draw. The polygons come out of `computeSunRays()`
-    // already intersected with the room, so no clip-path is needed to keep the
-    // light off the far side of a wall.
+    // the only falloff is the gradient. The tip needs no blur either:
+    // `rayStops()` is already at zero from RAY_FADE_END on, and the wedge's far
+    // edge IS the gradient's last iso-alpha line, so it has nothing left to
+    // draw. The polygons come out of `computeSunRays()` already intersected
+    // with the room, so no clip-path is needed to keep the light off the far
+    // side of a wall.
+    //
+    // DEV-EB173-01: the axis runs along the wall's INWARD NORMAL, from the
+    // window line inward, and is `r.depth` = `len·cos` long — NOT along the
+    // ray. For parallel rays the distance travelled from the glass is an
+    // affine function of the point, so its iso-alpha lines are parallel to the
+    // wall; with this axis every point `source + dir·u` lands at offset
+    // `u/len`. Whole pane at peak alpha, identical fade distance along every
+    // ray, and the parallelogram's far edge exactly on the gradient's end.
     return svg`<defs>
         ${rays.map((r, i) => {
           const mx = (r.a[0] + r.b[0]) / 2;
           const my = (r.a[1] + r.b[1]) / 2;
           return svg`<linearGradient id="hp-sun-${i}" gradientUnits="userSpaceOnUse"
-            x1="${mx}" y1="${my}" x2="${mx + r.dir[0] * r.len}" y2="${my + r.dir[1] * r.len}">
+            x1="${mx}" y1="${my}"
+            x2="${mx + r.normal[0] * r.depth}" y2="${my + r.normal[1] * r.depth}">
             ${stops.map(([off, k]) => svg`<stop offset="${(off * 100).toFixed(1)}%"
               stop-color="${color}" stop-opacity="${(alpha * k).toFixed(4)}"></stop>`)}
           </linearGradient>`;
