@@ -128,6 +128,13 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       perpendicular dashed tick appears and the center magnet-snaps — Shift
       disables the magnet; badges and tick vanish on release
       [auto: smoke_opening_measure + unit openingShoulders]
+- [ ] The SAME rulers while PLACING a new opening (2026-08-03): with the
+      Opening tool, moving along a wall shows the dashed ghost together with a
+      badge on each shoulder of the would-be opening (default 90 cm, measured
+      on the snapped room's OWN edge), a perpendicular tick + magnet at that
+      edge's centre, Shift opting out; the click places the opening at the
+      magnetised point and ghost, badges and tick all disappear at once
+      [auto: smoke_opening_measure, the «PLACING a new opening» section]
 
 ## Onboarding ★
 
@@ -269,6 +276,68 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       device classes (explicit per-device toggle still works for them)
       [auto: smoke_tap_run + unit resolveTapAction/runServiceFor + backend
       test_run_target_is_bounded_to_runnable_domains]
+- [ ] Tap opens/closes a cover (dev, owner's spec 2026-08-03): the tap-action
+      list gains "Open/close (curtains/blinds)" — offered ONLY when the binding
+      has a cover entity, and never for the guarded classes garage/door/gate
+      (a value smuggled into the config there degrades to the info card).
+      closed -> cover.open_cover, open (incl. ajar) -> cover.close_cover,
+      opening/closing -> cover.stop_cover, no readable state -> cover.toggle;
+      the «ask for confirmation» checkbox guards it like toggle/run.
+      Indication: while travelling the icon breathes a soft yellow ring
+      (.covermove, 2.2s, static under prefers-reduced-motion) and the plate
+      stays NEUTRAL in EVERY state (2026-08-04, see the next item); the icon
+      morphs by state + device_class (blinds/shutter/curtain…), unknown state
+      morphs nothing; no position percentages anywhere
+      [auto: smoke_cover_tap + units resolveTapAction/coverService/stateIcon +
+      backend test_cover_tap_action_is_accepted]
+- [ ] A cover is NEVER painted (dev, owner 2026-08-04): «у штор не должно быть
+      жёлтой подложки никогда, индикация открыто/закрыто за счёт морфинга
+      иконки». Walk one curtain through closed / open / ajar / opening /
+      closing: the plate is the plain neutral badge every time — never the
+      yellow «включено» one, never the orange «открыто» frame it used to wear
+      while open — the icon is the only open/closed signal, and the breathing
+      .covermove ring appears in the two travelling states and nowhere else.
+      The morph is exhaustive: every device class gives two DIFFERENT glyphs
+      (awning included), a cover with no device_class morphs within its own
+      auto-icon family (mdi:roller-shade, mdi:garage-variant), a hand-picked
+      icon morphs only inside the pair it was picked from, and an
+      unknown/unavailable state morphs nothing. NOT touched: an open door /
+      window binary sensor, an unlocked lock and an open valve still wear the
+      orange «открыто» frame (a valve has no icon pair, so the frame is all it
+      has) [auto: smoke_cover_no_plate + unit stateIcon «every class, both
+      ways»]
+- [ ] Open/close works when the cover is NOT the primary entity (dev, owner's
+      report 2026-08-04): a curtain driver that ships its `cover.*` hidden by
+      the integration next to a visible `switch.*_reverse_direction` (Aqara
+      E1 — his own) has a SWITCH for a primary; picking «Open/close» in the
+      dialog, saving it and tapping the marker sends `cover.open_cover` to the
+      cover, never touches the service switch and never falls back to the info
+      card. The guarded class is read off that same cover, so a garage still
+      degrades to info and is still not offered in the dialog
+      [auto: smoke_cover_not_primary + unit coverEntityOf]
+- [ ] Curtain INDICATION follows the same cover (dev, owner 2026-08-04): with
+      «Open/close» chosen on that same Aqara marker, the plan shows the cover
+      and not the service switch — the breathing ring while it travels
+      (`covermove`, opening AND closing), the `mdi:curtains-closed` /
+      `mdi:curtains` morph, a neutral plate throughout (the «открыто» frame
+      was retired for covers later the same day), and no yellow plate when
+      `switch.*_reverse_direction` happens to be on. The rule is exactly
+      the explicit action (docs/FILTERING.md «What a marker SHOWS»): take the
+      action away and the marker speaks for its primary again; a lit lamp that
+      also owns a cover keeps its yellow and its own icon
+      [auto: smoke_cover_not_primary (the indication section)]
+- [ ] Nothing paints over an explicit curtain (dev, audit DEV-1DA1-01): the
+      cover is the FIRST rule of «What a marker SHOWS», above `controls` and
+      above a lit light. Two markers set to «Открыть/закрыть»: one on a mixed
+      device whose own `light.*` is ON, one whose bound `controls` switch is
+      ON. In every cover state (closed / open / opening / closing) the plate
+      stays neutral — never the yellow «включено», never the orange «открыто»
+      — the travelling ring breathes, the icon morphs with the cover, and in
+      glow fill the ring is still there (that is where a yellow-plated curtain
+      used to lose BOTH indicators). Untouched: the same mixed device without
+      the explicit action is yellow again, a wall switch still mirrors its
+      controls, and an «Открыть/закрыть» marker whose device has no `cover.*`
+      at all falls back to its primary [auto: smoke_cover_plate_precedence]
 - [ ] Light-source badges (v1.52.0): in glow fill a lit lamp's badge stays
       standard (the spot is the indicator) and a lit socket stays yellow; in
       other fills a lit lamp is plain yellow with no RGB tint; morphing and
@@ -910,6 +979,15 @@ require hands on real hardware — they remain for the human pass.
 - [ ] Wedge direction follows the compass; length grows toward
       sunrise/sunset and shrinks toward noon; every wedge is clipped by its
       room polygon; night = no wedges at all
+- [ ] Brightness + the 3° threshold (2026-08-03): wedges are visibly brighter
+      (peak alpha 0.30, was 0.18) yet still readable over white paper AND the
+      dark glow canvas; there is NO gradual ramp near the horizon — below 3°
+      no rays at all, at/above 3° full strength; crossing the threshold fades
+      the whole layer in/out over exactly 2 s (CSS on `.sunlayer`, the
+      geometry never moves), and `prefers-reduced-motion` makes it instant.
+      Every other way of losing the wedges (editor, feature off, night, rain)
+      stays instant [auto: smoke_sun «the 3° threshold» + unit rayAlpha/
+      raysVisible/rayPeakAlpha; shots: demo/shot_sun_bright.mjs]
 - [ ] Weather entity (optional, global): cloudy fades the wedges, rain/snow
       removes them, a dead/unknown weather sensor changes nothing
 - [ ] Sun geometry recomputes ONLY when the sun attributes or the config
@@ -930,3 +1008,82 @@ require hands on real hardware — they remain for the human pass.
       (registry-wide climate, like hidden thermometers); the tick survives
       dialog recreation [auto: smoke_climate_temp; units: test/devices.test.mjs;
       backend: tests_backend/test_validation.py (use_climate_temp)]
+
+## Infinite canvas (docs/CANVAS.md, dev)
+
+- [ ] **A plan drawn past the old square opens whole**: a space whose rooms
+      live at normalised 1.5..3.0 renders complete and centred (it used to
+      frame empty canvas with the house off-screen) [auto:
+      smoke_infinite_canvas; units: test/canvas.test.mjs]
+- [ ] **Nothing stops at an edge any more**: in the Plan / Devices / Decor
+      editors a room, a marker and a decor shape can be drawn, dragged and
+      SAVED far outside `0..1`, on any floor; reload keeps them there
+      [backend: tests_backend/test_validation.py::test_infinite_canvas_range]
+- [ ] **A typical small plan is visually unchanged** — same framing, same
+      room and label positions as before the feature. The ONE intended
+      difference is icon size (below) [auto: smoke_infinite_canvas
+      (legacyFrameUnchanged); the whole smoke suite is the regression net]
+- [ ] **Icons no longer grow with zoom** (§6, owner is aware): a marker keeps
+      the same pixel size at zoom 1, 4 and at the zoom-out floor; the
+      per-device size multiplier, kiosk icon/font scales, badges, LQI chips
+      and presence rings all still scale from `--dev-size`
+- [ ] **Start view follows the content**: opening a space frames what is
+      drawn plus a small margin, on every floor, with and without a backdrop
+      image (with one the IMAGE sets the extent — it must not be cropped to
+      the outlined rooms)
+- [ ] **What is not drawn does not frame** (audit DEV-2C947-01): tick «hide
+      from plan» on a marker standing far from the house and the view snaps
+      back to the house — the hidden marker neither renders nor stretches the
+      frame, on the full card and on `houseplan-space-card`. Untick it and the
+      frame takes it in again; room LQI counted it the whole time
+      [auto: smoke_canvas_frame]
+- [ ] **The editor frame does not follow you out** (audit DEV-2C947-02): move
+      the only room five canvases away in the Plan editor (the frame grows
+      there, deliberately), close the editor — View frames the room where it
+      is NOW, not the union with where it was; re-entering the editor starts
+      from the current geometry [auto: smoke_canvas_frame]
+- [ ] **A far stray does not inflate the icons either** (audit DEV-2C947-03):
+      one ROOM dragged an order of magnitude away is rejected from the frame
+      (as before) and the markers of the main plan keep the size they have
+      without it; auto-placement spacing goes with them
+      [auto: smoke_canvas_frame + unit canvas.test.mjs]
+- [ ] **A far stray does not break the view** (§4.1): a marker dragged an
+      order of magnitude away leaves the opening view alone and raises the
+      inline chip «Объектов далеко от плана: N» with «Показать». No modal.
+      «Показать» fits the plan AND the stray; the chip then disappears
+- [ ] **«Вписать всё»** (middle zoom button): fits the content from any pan
+      and any zoom, is never disabled, tooltip en/ru
+- [ ] **Zoom-out floor**: the wheel / the minus button stop at three times the
+      content frame; zoom-in still stops at 800 %
+- [ ] **Pan has slack, not walls**: you can pan a full screen past the plan in
+      every direction; when the plan is fully off screen a small arrow points
+      home and one click fits it back
+- [ ] **Pan at ANY zoom** (owner's report 2026-08-04): dragging empty scene
+      moves the view at 100 %, at 50 % and at the zoom-out floor — in View and
+      in all three editors, with every plan tool selected. The tools keep the
+      pointer they own (a resize handle resizes, a device badge in the Devices
+      editor moves the device, an opening slides along its wall — none of them
+      pan), two fingers still pinch, and on a kiosk screen a horizontal drag
+      is still the floor swipe (a vertical one pans) [auto: smoke_pan_any_zoom]
+- [ ] **Kiosk: a pan stays a pan to the very end** (dev, audit DEV-1DA1-02):
+      on a wall tablet at 100 % start a drag with a small VERTICAL lead-in
+      (the plan starts following the finger — the gesture is locked as `pan`),
+      then curve it far to the left or right and lift. The floor must NOT
+      change: the decision taken on the first movement is final, and only a
+      gesture locked as a swipe may switch storeys. Mirror check: a horizontal
+      lead-in locks the swipe — the plan never slides under it, and if the
+      trajectory then bends vertically and no longer qualifies as a swipe, the
+      gesture simply does nothing (it does not turn into a pan). Straight
+      swipes still switch, straight vertical drags still pan, a motionless
+      double tap still resets the zoom [auto: smoke_kiosk_pan_lock]
+- [ ] **Adaptive grid** (§7): in the Plan editor zoomed far out the grid does
+      not merge into a grey wash — fine dots thin out, every 5th/10th node
+      stays bigger; zoomed in the grid is the usual one and snapping still
+      lands on the same nodes as before
+- [ ] **Everything else on a far-out plan**: sun wedges, glow radii, open
+      boundaries, room resize handles/rulers, opening rulers, split/merge,
+      vacuum trails, the static `houseplan-space-card` and kiosk carousel all
+      behave exactly as on a plan inside `0..1`
+- [ ] **Real config regression**: a production config (e.g. the dacha, 3
+      floors / 106 markers) frames bit-identically to the previous release —
+      no outliers reported, no frame movement

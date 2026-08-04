@@ -95,11 +95,15 @@ _TEXT = vol.All(str, vol.Length(max=MAX_TEXT))
 _TEXT_OR_NONE = vol.Any(None, _TEXT)
 _URL = vol.All(str, vol.Length(max=MAX_URL))
 
-# Positions are normalised to the canvas (0..1). Allow generous slack for an
-# icon dragged past an edge, but not arbitrary magnitudes: any finite float
-# used to pass, and a single stored 1e100 stretched every client's view of the
-# space until the plan was invisible (HP-1500-03).
-_COORD = vol.All(_finite, vol.Range(min=-4.0, max=4.0))
+# The canvas is UNBOUNDED (docs/CANVAS.md). Coordinates are still normalised —
+# 1.0 is still one canvas width — but there is no frame any more, so a plan may
+# legitimately live at 2.7 or -1.4. The range below is GARBAGE INSURANCE, not a
+# boundary: at the product's own scale (cell_cm=5, 240 cells across the unit
+# width) 5000 is about 60 km of plan, unreachable in a home, while a stored
+# 1e100 still cannot stretch every client's view until the plan is invisible
+# (HP-1500-03 / HP-1501-01). Widened from +/-4 on 2026-08-03.
+CANVAS_LIMIT = 5000.0
+_COORD = vol.All(_finite, vol.Range(min=-CANVAS_LIMIT, max=CANVAS_LIMIT))
 
 POS_SCHEMA = vol.Schema(
     {vol.Required("x"): _COORD, vol.Required("y"): _COORD},
@@ -107,19 +111,19 @@ POS_SCHEMA = vol.Schema(
 )
 LAYOUT_SCHEMA = vol.All(vol.Schema({str: POS_SCHEMA}), vol.Length(max=MAX_LAYOUT))
 
-# Geometry is normalised to the canvas (0..1). ±4 is generous slack for a
-# vertex nudged past an edge, not an envelope for arbitrary magnitudes: any
-# finite float used to pass here, and a single 1e100 room vertex stretched the
-# frame until the whole space was unviewable for every client (HP-1501-01) —
-# the exact failure HP-1500-03 closed for layout positions, one schema over.
-_GEOM = vol.All(_finite, vol.Range(min=-4.0, max=4.0))
+# Room/opening geometry: same story, same range (docs/CANVAS.md). A vertex at
+# 2.5 is a plan that grew past the old square, not corruption; 1e100 is
+# corruption (HP-1501-01, the room-geometry twin of HP-1500-03).
+_GEOM = vol.All(_finite, vol.Range(min=-CANVAS_LIMIT, max=CANVAS_LIMIT))
 
 # A SIZE is not a coordinate (HP-1502-01): SVG requires positive width/height,
 # and the clients divide by these. `view_box: [0,0,0,0]` passed the shared
 # validator and serialised into viewBox="0 0 0 0" — a blank plan on every
 # client. The floor is one thousandth of the canvas (1 render unit): far below
-# any real room, but keeps the maths finite.
-_EXTENT = vol.All(_finite, vol.Range(min=0.001, max=4.0))
+# any real room, but keeps the maths finite. The CEILING follows the canvas
+# (docs/CANVAS.md) — a room on an unbounded plane may legitimately be wider
+# than the old unit square — while staying strictly positive.
+_EXTENT = vol.All(_finite, vol.Range(min=0.001, max=CANVAS_LIMIT))
 
 
 def _view_box(value):
@@ -214,7 +218,9 @@ _DECOR_COMMON = {
     vol.Optional("color"): vol.Match(r"^#[0-9a-fA-F]{6}$"),
     vol.Optional("width"): vol.All(vol.Coerce(float), vol.Range(min=0.1, max=30)),
 }
-_NORM = vol.All(vol.Coerce(float), vol.Range(min=-1, max=2))
+# Decor lives on the same unbounded canvas as everything else (docs/CANVAS.md):
+# it used to be pinned to -1..2, i.e. "one canvas of slack around the square".
+_NORM = vol.All(_finite, vol.Range(min=-CANVAS_LIMIT, max=CANVAS_LIMIT))
 DECOR_SCHEMA = vol.Any(
     vol.Schema({**_DECOR_COMMON, vol.Required("kind"): "line",
                 vol.Required("x1"): _NORM, vol.Required("y1"): _NORM,
@@ -258,7 +264,9 @@ SPACE_SCHEMA = vol.Schema(
                     vol.Required("x"): _GEOM,
                     vol.Required("y"): _GEOM,
                     vol.Required("angle"): vol.All(_finite, vol.Range(min=-360.0, max=360.0)),
-                    vol.Required("length"): vol.All(vol.Coerce(float), vol.Range(min=0.001, max=1)),
+                    # a SIZE: strictly positive, capped by the canvas insurance
+                    # limit rather than by the old unit square (docs/CANVAS.md)
+                    vol.Required("length"): vol.All(_finite, vol.Range(min=0.001, max=CANVAS_LIMIT)),
                     vol.Optional("contact"): vol.Any(str, None),
                     vol.Optional("lock"): vol.Any(str, None),
                     vol.Optional("invert"): bool,
@@ -291,7 +299,7 @@ MARKER_SCHEMA = vol.Schema(
         vol.Optional("model"): _TEXT_OR_NONE,
         vol.Optional("link"): vol.Any(None, _URL),
         vol.Optional("description"): vol.Any(None, vol.All(str, vol.Length(max=MAX_DESCRIPTION))),
-        vol.Optional("tap_action"): vol.Any("info", "more-info", "toggle", "run", None),
+        vol.Optional("tap_action"): vol.Any("info", "more-info", "toggle", "run", "cover", None),
         # the 'run' target: only the runnable domains, nothing else is callable
         vol.Optional("tap_target"): vol.Any(
             None, vol.All(str, vol.Length(max=MAX_TEXT), vol.Match(r"^(automation|script|scene)\.[A-Za-z0-9_]+$"))

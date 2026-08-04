@@ -1,5 +1,96 @@
 # Changelog
 
+## v1.57.0 — 2026-08-04
+
+Minor release: the canvas becomes infinite — no more "plan size", no
+more edge to run past — plus a tap action for curtains and blinds,
+a polish pass over the sun, live rulers while placing openings, and a
+warm re-mount that no longer flashes.
+
+### The infinite canvas (docs/CANVAS.md)
+
+The idea of a "grid size" or "plan size" is gone. The canvas is
+conceptually unbounded — any coordinate is legal, with a `+/-5000`
+limit kept only as garbage insurance (about 60 km of plan at the
+card's own scale).
+
+- **If your plan ran off the edge, it now just works.** Some plans
+  grew past the old square and devices simply could not be placed
+  outside it; the only workaround was to redraw everything. That
+  limit no longer exists: draw, drag and place devices anywhere, and
+  nothing needs to be redrawn. Your stored plan is untouched — the
+  coordinates mean exactly what they always meant, and there is no
+  migration.
+- **Existing plans open exactly as before.** Verified on a real
+  three-floor config: the opening frames come out bit-for-bit
+  identical to v1.56.0.
+- **The opening view is derived from what is actually drawn.**
+  `view_box` is now an optional hint for the very first frame only;
+  after that the starting view is always computed from the real
+  content, with outliers rejected so one stray room cannot shrink the
+  whole plan.
+- **Pan at any zoom, in every editor.** Dragging the plan used to work
+  only above 100% zoom; now it works at any zoom and in all editing
+  modes, with one screen of slack around the content.
+- **Zoom out to 3x the content**, so you can see the whole plan and
+  the space around it.
+- **"Fit everything" button** — one tap frames all the content again.
+- **A "home is that way" arrow** appears when you have panned away
+  from the plan, pointing back to it.
+- **An adaptive grid.** The grid picks its step from the zoom
+  (1 / 2 / 5 / 10 ... 1000) instead of a fixed cell, and the dots stay
+  a muted hint rather than a pattern that competes with the plan.
+
+### Curtains and blinds
+
+- **New "Open/close" tap action for covers.** Closed opens, open
+  closes, and a cover in motion stops. Offered only for the
+  unprotected device classes — garage doors, doors and gates stay on
+  the info dialog, on purpose.
+- **The icon itself tells you the state**: it morphs between the open
+  and closed shape (a table of cover classes, plus aliases resolved
+  from the base icon), and pulses with a soft ring while the cover is
+  travelling.
+- **A curtain never wears a coloured plate.** No state fill behind a
+  cover marker, ever.
+- **The cover is found among all of the marker's entities**, not just
+  the primary one — which is the common case for Aqara and
+  zigbee2mqtt devices — and an explicit "Open/close" choice always
+  wins the indication.
+
+### Sun polish
+
+- **Brighter, shorter rays.** Opacity up to 0.30, length down 30%,
+  with crisp sides again.
+- **Light fades only along the ray**, and is guaranteed to reach zero
+  before the wedge ends — the wedge is now clipped by distance along
+  the ray, so the "bright rim" that appeared with a low, oblique sun
+  is gone.
+- **A hard 3 degree threshold.** The rays appear and disappear at 3
+  degrees of solar elevation over a two-second fade, instead of
+  creeping in.
+- **The day/night sky catches up with the sun** when you come back to
+  the tab: a gap of more than 3 degrees is repainted at once, while
+  normal movement keeps breathing smoothly.
+
+### Everything else
+
+- **Live rulers and the centre magnet while PLACING an opening**, not
+  only while dragging one — with the distances measured along the
+  owning room's own edge.
+- **A warm re-mount.** When Lovelace recreates the card on reconnect
+  there is no preloader and no flash of the plan any more, and a
+  dropped WebSocket never blanks a plan that is already on screen.
+- **Room borders and names default to dark grey `#55606c`** instead of
+  the accent blue. If you picked a colour explicitly, nothing changes.
+- **An "About" block at the end of the general settings** — card
+  version, GitHub and Telegram links.
+- **The icon angle now steps by 5 degrees.**
+- Audit fixes: the sun-ray cache survives local edits, hidden devices
+  no longer stretch the frame, the editor's grown frame does not leak
+  into view mode, an outlier room no longer inflates icon sizes, and a
+  kiosk pan stays a pan instead of flipping to the next floor.
+
 ## v1.56.0 — 2026-08-03
 
 Minor release: the sun comes to the floor plan — a compass, a day/night

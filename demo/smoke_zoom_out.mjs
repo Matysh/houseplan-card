@@ -44,8 +44,11 @@ out.zoomOut = await page.evaluate(() => {
 out.zoomOutWorks = out.zoomOut.zoom === 0.5 && out.zoomOut.wider
   && out.zoomOut.centredX && out.zoomOut.centredY;
 delete out.zoomOut;
-out.floorIsHalf = await page.evaluate(() => { window.__card._resetZoom(); const c = window.__card;
-  c._applyView(0.1); return c._zoom; }) === 0.4; // clamped at the floor
+// docs/CANVAS.md §5: the zoom-out floor moved from a fixed 0.4 of the old
+// view_box to 1/3 of the CONTENT frame — three canvases of empty plane is as
+// far as it is useful to go when the canvas has no edges.
+out.floorIsThird = Math.abs(await page.evaluate(() => { window.__card._resetZoom(); const c = window.__card;
+  c._applyView(0.01); return c._zoom; }) - 1 / 3) < 1e-9; // clamped at the floor
 await page.evaluate(() => window.__card._resetZoom());
 
 // -- editor zoom is a working tool, not the viewing intent ----------------

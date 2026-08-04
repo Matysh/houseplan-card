@@ -129,22 +129,51 @@ export function windowLit(normal: number[], sunDir: number[], elevation: number)
 // ---------------- wedge geometry ----------------
 
 /**
- * Wedge length in WINDOW LENGTHS: longest (~2.5) at sunrise/sunset, shortest
- * (~0.8) at the zenith. `0.8 + 1.7·(1 − e/90)^1.6` — long low shafts, short
- * noon pools, smooth in between (docs/SUN.md).
+ * Wedge length in WINDOW LENGTHS: longest (~1.75) at sunrise/sunset, shortest
+ * (~0.56) at the zenith. `0.56 + 1.19·(1 − e/90)^1.6` — long low shafts, short
+ * noon pools, smooth in between (docs/SUN.md). Owner 2026-08-04: «лучи от
+ * солнца сделать короче на 30%» — the whole curve is the old
+ * `0.8 + 1.7·(1 − e/90)^1.6` scaled by RAY_LENGTH_K, so the "low sun reaches
+ * further" shape is untouched.
  */
+export const RAY_LENGTH_K = 0.7;
+
 export function rayLength(elevation: number): number {
   const e = Math.min(90, Math.max(0, elevation));
-  return 0.8 + 1.7 * Math.pow(1 - e / 90, 1.6);
+  return RAY_LENGTH_K * (0.8 + 1.7 * Math.pow(1 - e / 90, 1.6));
 }
 
-/** The unclipped wedge: window span a-b extruded by `len` along `dir`. */
+/**
+ * The unclipped wedge: the window span a-b extruded along `dir` and cut off
+ * PERPENDICULAR to the ray, `len` from the span's midpoint.
+ *
+ * Not the parallelogram an equal extrusion of both ends would give. The fade
+ * is a linear gradient running ALONG `dir`, so its iso-alpha lines are
+ * perpendicular to `dir`, while a parallelogram's far edge stays parallel to
+ * the WALL. For any sun that does not face the glass head-on the two are
+ * different lines: one half of that far edge got cut while it still carried
+ * colour — the straight bright kerb hanging in mid-floor. Ending both sides on
+ * the SAME iso-alpha line makes the geometry and the gradient describe one
+ * shaft, so a wedge dies of its gradient (empty from RAY_FADE_END on) and
+ * never of its own outline.
+ *
+ * The two SIDES stay razor-sharp on purpose — owner 2026-08-04: «с лучами
+ * солнца ты сделал фигню — не надо размывать их боковые грани». A shaft of
+ * light through a window HAS crisp sides; only its reach fades.
+ */
 export function rayQuad(a: number[], b: number[], dir: number[], len: number): number[][] {
+  const mx = (a[0] + b[0]) / 2;
+  const my = (a[1] + b[1]) / 2;
+  // how far along `dir` each end of the span already sits, from the midpoint
+  const pa = (a[0] - mx) * dir[0] + (a[1] - my) * dir[1];
+  const pb = (b[0] - mx) * dir[0] + (b[1] - my) * dir[1];
+  const ea = Math.max(0, len - pa); // the trailing end travels further
+  const eb = Math.max(0, len - pb);
   return [
     [a[0], a[1]],
     [b[0], b[1]],
-    [b[0] + dir[0] * len, b[1] + dir[1] * len],
-    [a[0] + dir[0] * len, a[1] + dir[1] * len],
+    [b[0] + dir[0] * eb, b[1] + dir[1] * eb],
+    [a[0] + dir[0] * ea, a[1] + dir[1] * ea],
   ];
 }
 
@@ -220,18 +249,114 @@ export function computeSunRays(
 
 // ---------------- wedge dressing ----------------
 
-/** Peak wedge opacity; two overlapping wedges stay readable (docs/SUN.md). */
-export const RAY_MAX_ALPHA = 0.18;
+/**
+ * Peak wedge opacity (owner 2026-08-03: «лучи поярче, иногда плохо видны» —
+ * raised from 0.18). Two overlapping wedges still stay under a readable
+ * ceiling on white paper AND on the dark glow canvas (docs/SUN.md).
+ */
+export const RAY_MAX_ALPHA = 0.3;
 
-/** Wedge opacity: ramps in over the first ~2° so sunrise never pops. */
+/**
+ * The elevation threshold, degrees. Below it there are NO rays at all, above
+ * it they are at FULL strength — the owner's 2026-08-03 contract replacing
+ * the old gradual ramp-in. The switch itself is not instant: the card fades
+ * the whole layer in/out over RAY_FADE_MS (CSS, not geometry).
+ */
+export const RAY_ELEVATION_MIN = 3;
+
+/** Duration of that fade, ms — «ровно 2 секунды» (mirrored in styles.ts). */
+export const RAY_FADE_MS = 2000;
+
+/** Are the wedges present at this elevation at all? (The hard 3° threshold.) */
+export function raysVisible(elevation: number): boolean {
+  return Number(elevation) >= RAY_ELEVATION_MIN;
+}
+
+/**
+ * Full-strength wedge opacity for the current cloud cover — elevation plays
+ * no part. The card feeds this into the gradient and lets CSS fade the layer,
+ * so a wedge dissolving at the threshold keeps its colour while it goes.
+ */
+export function rayPeakAlpha(cloud = 1): number {
+  return RAY_MAX_ALPHA * clamp01(cloud);
+}
+
+/** Wedge opacity: nothing below the threshold, full strength above it. */
 export function rayAlpha(elevation: number, cloud = 1): number {
-  if (!(elevation > 0)) return 0;
-  return RAY_MAX_ALPHA * Math.min(1, elevation / 2) * clamp01(cloud);
+  return raysVisible(elevation) ? rayPeakAlpha(cloud) : 0;
 }
 
 /** Wedge color: warm orange at the horizon → neutral daylight. */
 export function rayColor(warmth: number): string {
   return lerpColor('#ffe9c2', '#ff9a45', clamp01(warmth));
+}
+
+/**
+ * Where the shaft is already fully dissolved, as a fraction of its own length.
+ * Owner 2026-08-04: «проверить, чтобы они всегда плавно рассеивались (сейчас
+ * есть ощущение, что они упираются во что-то невидимое)». The old gradient ran
+ * to alpha 0 exactly AT the far edge, so any wedge that ended in mid-air still
+ * carried a sliver of colour up to its last pixel — and the eye reads the
+ * straight line of a polygon edge long before the alpha reaches zero. The last
+ * visible light now sits at 85 % of the length; the remaining 15 % is empty.
+ */
+export const RAY_FADE_END = 0.85;
+
+/**
+ * Gradient stops along the shaft: `[offset 0..1, share of the peak alpha]`.
+ * Convex ease-out — bright at the glass, half gone by a third of the way,
+ * a whisper at two thirds, nothing from RAY_FADE_END on. Consumed by the card
+ * as SVG <stop>s over the FULL wedge length, so the geometry and the gradient
+ * always describe the same shaft (docs/SUN.md).
+ *
+ * This gradient is the ONLY thing that dissolves a wedge: the falloff runs
+ * along the ray, from the glass inward, and the sides of the shaft keep the
+ * hard edge light actually has (owner 2026-08-04: «не надо размывать их
+ * боковые грани»). No blur is involved anywhere.
+ */
+export function rayStops(): [number, number][] {
+  return [
+    [0, 1],
+    [0.26, 0.86],
+    [0.46, 0.6],
+    [0.64, 0.32],
+    [0.77, 0.1],
+    [RAY_FADE_END, 0],
+    [1, 0],
+  ];
+}
+
+/**
+ * Day/night sky: how far the painted sky may drift from the real sun before
+ * the card stops gliding and simply JUMPS to the right colour.
+ *
+ * The stage colour is delivered by a 45 s CSS transition, and a transition only
+ * advances while the card is actually painting. A card that was not painting —
+ * a background tab, another dashboard view, a sleeping wall tablet — comes back
+ * with a stale sky and then crawls toward the truth 45 s at a time, which is
+ * exactly the owner's 2026-08-04 report («цвет фона не меняется сам с течением
+ * времени суток, только после обновления страницы»: a reload paints the right
+ * colour outright, because a freshly mounted element has nothing to transition
+ * FROM). The sun never moves more than ~1° between two `sun.sun` updates (HA
+ * refreshes the position every 4 minutes by day), so a gap this big can only
+ * mean "we were not watching" — catch up at once, then breathe again.
+ */
+export const SKY_SNAP_DEG = 3;
+
+/** Should the sky jump rather than glide from `prev`° to `next`°? */
+export function skyNeedsSnap(prev: number | null, next: number): boolean {
+  return prev === null || !Number.isFinite(prev)
+    || Math.abs(next - prev) >= SKY_SNAP_DEG;
+}
+
+/**
+ * Sky granularity: the elevation the background is computed from, rounded to
+ * 0.1°. Finer than the eye can tell on a 45 s glide, and it keeps `dayPhase`
+ * (and therefore the style attribute lit has to commit) from churning on every
+ * hass tick while the ray GEOMETRY keeps its own, coarser memo.
+ */
+export function skyElevation(elevation: number): number {
+  return Math.round((Number(elevation) || 0) * 10) / 10;
 }
 
 // ---------------- cloud cover ----------------

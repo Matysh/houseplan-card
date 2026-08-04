@@ -184,6 +184,14 @@ export const cardStyles = css`
     .stage.daynight.hpsettle {
       transition: height 0.25s ease, background-color 45s linear;
     }
+    /* Catch-up frame (docs/SUN.md): the sky is out of date because the card
+       was not painting — show the truth at once, the glide comes back on the
+       very next frame. */
+    .stage.daynight.skysnap,
+    .stage.daynight.skysnap .zoomwrap,
+    .stage.daynight.skysnap.hpsettle {
+      transition: none;
+    }
     @media (prefers-reduced-motion: reduce) {
       .stage.daynight,
       .stage.daynight .zoomwrap,
@@ -313,6 +321,60 @@ export const cardStyles = css`
     .zoomctl .zb[disabled] {
       opacity: 0.4;
       pointer-events: none;
+    }
+    /* docs/CANVAS.md §4.1: objects an order of magnitude away from the plan
+       do not decide the opening view — one quiet chip says so and offers to
+       take them in. Never a modal (owner). */
+    .farhint {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: var(--sp-4);
+      z-index: 12;
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      max-width: calc(100% - var(--sp-8));
+      background: var(--card-background-color, var(--hp-bg));
+      opacity: 0.94;
+      color: var(--hp-txt);
+      border: 1px solid var(--divider-color, #33404d);
+      border-radius: var(--rad-m);
+      padding: var(--sp-1) var(--sp-3);
+      font-size: var(--fs-s);
+    }
+    .farhint ha-icon {
+      --mdc-icon-size: 18px;
+      color: var(--hp-warn, #e2a03f);
+      flex: none;
+    }
+    .farhint span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    /* docs/CANVAS.md §5: the plane has no edges, so you can pan until nothing
+       is on screen. One pointer home, one click back. */
+    .homearrow {
+      position: absolute;
+      z-index: 12;
+      transform: translate(-50%, -50%);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      background: var(--card-background-color, var(--hp-bg));
+      color: var(--hp-accent);
+      border: 1px solid var(--hp-accent);
+      opacity: 0.9;
+      padding: 0;
+    }
+    .homearrow ha-icon {
+      --mdc-icon-size: 22px;
+      line-height: 1;
     }
     .zoombadge {
       position: absolute;
@@ -999,11 +1061,21 @@ export const cardStyles = css`
       stroke-width: 3;
       fill: rgba(255, 193, 77, 0.25);
     }
+    /* Owner 2026-08-04: the grid is a HINT, not content — at full strength the
+       dots argued with the plan on white paper. Both levels are muted, the
+       hierarchy is kept (major still denser than fine). */
     .griddot {
       fill: var(--hp-accent);
-      opacity: 0.75;
+      opacity: 0.35;
       stroke: rgba(0, 0, 0, 0.35);
       stroke-width: 0.4;
+    }
+    /* docs/CANVAS.md §7: every coarse node (5x/10x the live step) keeps a
+       bigger, more opaque dot, so zoomed far out the grid still reads as a
+       grid instead of a grey wash. */
+    .griddot.major {
+      opacity: 0.5;
+      stroke-width: 0;
     }
     .seg {
       stroke: var(--hp-accent);
@@ -1106,6 +1178,50 @@ export const cardStyles = css`
       opacity: 0.4;
       pointer-events: none;
     }
+    /* COVER ON THE MOVE (owner 2026-08-03): «не жёлтая подложка, а лёгкая
+       пульсация вокруг значка в стиле шайбы пылесоса». Same yellow as the
+       sense rings, the vacuum puck's 2.2s period, and a moderate opacity so
+       two curtains travelling at once never turn into a strobe. The plate
+       itself stays neutral — yellow means «включено», nothing else. */
+    /* Sun wedges (docs/SUN.md). The layer is present ONLY above the 3°
+       threshold; crossing it fades the whole layer in or out over EXACTLY
+       2 s (owner 2026-08-03 — RAY_FADE_MS in src/sun.ts must match). The
+       geometry is untouched: this is a plain opacity animation on the group,
+       so overlapping wedges keep their own blending while it plays. */
+    .sunlayer {
+      animation: hp-sunfade-in 2s linear both;
+    }
+    .sunlayer.out {
+      animation: hp-sunfade-out 2s linear both;
+    }
+    @keyframes hp-sunfade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes hp-sunfade-out {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      /* no fade at all: the rays are simply there or simply gone */
+      .sunlayer, .sunlayer.out { animation: none; }
+      .sunlayer.out { opacity: 0; }
+    }
+    .dev.covermove::after {
+      content: '';
+      position: absolute;
+      inset: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * -0.35);
+      border: 2px solid var(--hp-on);
+      border-radius: 50%;
+      opacity: 0.45;
+      animation: hp-covermove 2.2s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes hp-covermove {
+      0% { transform: scale(0.92); opacity: 0.16; }
+      50% { transform: scale(1.12); opacity: 0.5; }
+      100% { transform: scale(0.92); opacity: 0.16; }
+    }
     @keyframes hp-sense {
       0% { transform: scale(0.9); opacity: 0.5; }
       60% { transform: scale(1.12); opacity: 0.12; }
@@ -1139,6 +1255,9 @@ export const cardStyles = css`
          by design already */
       .dev.senseflash::after,
       .dev.senseflash.sf2::after { animation: none; opacity: 0.4; } /* HP-1543-02: retrip re-arms the window, ring stays static */
+      /* a travelling cover keeps a STATIC ring — the movement is still shown,
+         it just stops breathing */
+      .dev.covermove::after { animation: none; opacity: 0.4; }
     }
     .dev .newdot {
       position: absolute;
@@ -1858,6 +1977,23 @@ export const cardStyles = css`
       font-size: var(--fs-m);
       color: var(--hp-muted);
     }
+    .aboutver {
+      font-size: var(--fs-s);
+      color: var(--hp-muted);
+      margin: var(--sp-2) 0 var(--sp-3);
+    }
+    .aboutlink {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-3);
+      width: fit-content;
+      color: var(--hp-accent);
+      text-decoration: none;
+      font-size: var(--fs-m);
+      padding: var(--sp-1) 0;
+    }
+    .aboutlink:hover { text-decoration: underline; }
+    .aboutlink ha-icon { --mdc-icon-size: 18px; line-height: 1; }
     .dialogwrap {
       background: rgba(0, 0, 0, 0.45);
       display: flex;

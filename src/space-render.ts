@@ -14,7 +14,8 @@ import { t, type Lang } from './i18n';
 import { bgModeOf, northDegOf, sunStateOf, dayPhase } from './sun';
 import type { ServerConfig } from './types';
 import {
-  spaceModels, roomCenter, defaultPositions, markerPos, labelPos, type Layout,
+  spaceModels, roomCenter, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, NORM_W,
+  type Layout, type ContentItem,
 } from './space-geometry';
 
 export { spaceModels } from './space-geometry';
@@ -43,7 +44,6 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const models = spaceModels(o.cfg);
   const space = models.find((s) => s.id === o.spaceId);
   if (!space) return null;
-  const vb = space.vb;
   const disp = spaceDisplayOf(o.cfg.spaces.find((s: any) => s.id === o.spaceId));
   const cfgSize = o.iconSize ?? 2.5;
   const iconPct = cfgSize > 8 ? 2.5 : cfgSize;
@@ -79,6 +79,24 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   // visible marker with no saved position lands in different spots on the
   // two cards (HP-1511-01). Rendering still draws `devs` only.
   const defPos = defaultPositions(spaceDevs, space, iconPct);
+
+  // docs/CANVAS.md §4: the static card frames the CONTENT, exactly like the
+  // full one — `space.vb` is only the stored hint now, and on a plan drawn
+  // past the old unit square it framed empty canvas with the house off-screen.
+  // Markers placed outside every room count too (a gate sensor by the fence)
+  // — but only the ones this card DRAWS: a hidden device is never painted
+  // here, so it must not stretch the frame either (DEV-2C947-01). It keeps
+  // its grid cell above; the frame is presentation, the roster is not.
+  const placed: ContentItem[] = [];
+  for (const d of devs) {
+    const sv = o.layout[d.id];
+    if (sv && sv.s === o.spaceId) {
+      const x = sv.x * NORM_W, y = sv.y * NORM_W;
+      placed.push({ minX: x, minY: y, maxX: x, maxY: y });
+    }
+  }
+  const fr = spaceFrame(space, placed);
+  const vb = [fr.x, fr.y, fr.w, fr.h];
 
   const roomShapes = space.rooms
     .filter((r) => r.area || disp.showBorders)
@@ -183,7 +201,13 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
           : nothing}
         ${roomShapes}
       </svg>
-      <div class="devlayer" style="--icon-size:${iconPct}cqw">${markers}${labels}</div>
+      ${''/* docs/CANVAS.md §6: the same expression as the full card. The
+             static card has no zoom, but its frame is the CONTENT now, so a
+             bare `iconPct` would make markers shrink relative to the plan the
+             tighter the frame got. `iconCqw` keeps the marker's footprint at
+             iconPct% of the plan's base unit, which is what it was when the
+             frame was the stored view_box. */}
+      <div class="devlayer" style="--icon-size:${iconCqw(iconPct, space, vb[2]).toFixed(3)}cqw">${markers}${labels}</div>
     </div>
   `;
 }

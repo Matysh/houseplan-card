@@ -23,6 +23,7 @@ import {
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
   referencedContentUrls,
   DISPLAY_MODES, TAP_ACTIONS, SPACE_FILL_MODES, ROOM_FILL_MODES,
+  coverService, coverMoving, coverEntityOf, COVER_GUARDED_CLASSES,
 } from './logic';
 import {
   planEdgeDrag, applyEdgeDrag, clampEdgeDrag, applyRoomScale, clampRoomScale,
@@ -30,7 +31,8 @@ import {
 } from './resize';
 import {
   computeSunRays, dayPhase, northDegOf, bgModeOf, sunRaysOn, weatherEntityOf,
-  sunStateOf, cloudFactor, rayAlpha, rayColor, type SunRay,
+  sunStateOf, cloudFactor, rayPeakAlpha, raysVisible, rayColor, RAY_FADE_MS, type SunRay,
+  rayStops, skyElevation, skyNeedsSnap,
 } from './sun';
 import { ContentSigner } from './signing';
 import { mdiHomeCityOutline } from '@mdi/js';
@@ -48,10 +50,14 @@ import type {
 import './editor';
 import './space-card';
 import { cardStyles } from './styles';
-import { fitInSquare, contentBounds, spaceModels } from './space-geometry';
+import {
+  fitInSquare, contentBounds, spaceModels, contentFrame, contentItems, spaceFrame,
+  spaceCenter, iconUnit, iconCqw, gridLevels, itemOf,
+  MIN_ZOOM, PAN_SLACK, CANVAS_LIMIT, type ContentItem, type Rect,
+} from './space-geometry';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.56.0';
+const CARD_VERSION = '1.57.0';
 /** HP-1552 boot-veil timing (AUD-1552-02). The veil holds for at least
  *  BOOT_MIN_MS; every stage-height change restarts a BOOT_QUIET_MS
  *  trailing-quiescence requirement (chrome still settling near the cap
@@ -65,6 +71,23 @@ const BOOT_MAX_MS = 1200;
 /** AUD-1552-02: post-reveal grace during which late chrome shifts glide
  *  (CSS height transition on the stage) instead of snapping. */
 const BOOT_SOFT_MS = 1500;
+/** DEV-B703-01: warm re-mount memo — MODULE scope, so it lives with the loaded
+ *  PAGE, not with any card instance. Lovelace re-creates card elements when
+ *  the websocket reconnects after a long-backgrounded tab; the fresh instance
+ *  used to run the whole first-open boot (veil + BOOT_MIN_MS + quiescence),
+ *  which reads as «план перезагрузился», even though the page (and HA's
+ *  chrome) never went anywhere. Within one loaded page the chrome IS already
+ *  settled, so the geometry the previous instance settled at is still valid:
+ *  remember it per (viewport size × card config) and let the next instance
+ *  open instantly in the final geometry, no veil at all. A window resize
+ *  between instances changes the key → miss → the full protective boot (the
+ *  only case where the chrome may genuinely re-settle). The config part of
+ *  the key keeps two DIFFERENT cards on one page from adopting each other's
+ *  header height (same config twice on one view is indistinguishable — and
+ *  then the heights match anyway). */
+const warmBoot = new Map<string, { hdrH: number; stageH: number }>();
+const warmBootKey = (config: unknown): string =>
+  `${window.innerWidth}x${window.innerHeight}|${JSON.stringify(config ?? {})}`;
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -75,6 +98,12 @@ const NORM_W = 1000; // side of the render space — the canvas is square (v1.48
     Owner's rule (2026-08-01): «движение = разовая вспышка в момент
     обнаружения; cool-down не пульсирует». */
 const SENSE_FLASH_MS = 3300;
+
+/** Smallest rectangle holding both (docs/CANVAS.md §4). */
+const unionRect = (a: Rect, b: Rect): Rect => {
+  const x = Math.min(a.x, b.x), y = Math.min(a.y, b.y);
+  return { x, y, w: Math.max(a.x + a.w, b.x + b.w) - x, h: Math.max(a.y + a.h, b.y + b.h) - y };
+};
 
 const GRID_N = 240; // grid points across the plan width (half the previous step; old nodes are a subset of the new ones, positions are preserved)
 type MarkupTool = 'draw' | 'merge' | 'split' | 'resize' | 'opening' | 'openwall' | 'delroom';
@@ -141,6 +170,17 @@ const capturePointer = (ev: PointerEvent): void => {
     /* an inactive pointerId must never kill the drag */
   }
 };
+
+/** Ruler badges on both shoulders of an opening + the centre-magnet tick.
+ *  The same shape serves the DRAG of an existing opening and the PLACEMENT
+ *  preview of a new one (owner 2026-08-03). */
+/** Default length of a freshly placed opening, cm (the dialog's door preset). */
+const OPENING_DEFAULT_CM = 90;
+
+interface OpMeasure {
+  labels: { x: number; y: number; text: string }[];
+  guide: { x: number; y: number; angle: number } | null;
+}
 
 class HouseplanCard extends LitElement {
   public hass?: any;
@@ -275,10 +315,10 @@ class HouseplanCard extends LitElement {
   private _openingInfo: OpeningCfg | null = null;
   private _opDrag: { id: string; moved: boolean; sx: number; sy: number; dirty: boolean } | null = null;
   // live ruler badges + the "centered on the wall" tick while an opening is dragged
-  private _opMeasure: {
-    labels: { x: number; y: number; text: string }[];
-    guide: { x: number; y: number; angle: number } | null;
-  } | null = null;
+  private _opMeasure: OpMeasure | null = null;
+  /** Shift during the PLACEMENT hover: opts out of the centre magnet, exactly
+   *  as it does while dragging an existing opening. */
+  private _opShift = false;
   private _mergeDialog: { aId: string; bId: string; poly: number[][]; pick: 'a' | 'b' } | null = null;
   private _splitSel: { roomId: string; pts: number[][] } | null = null; // room being cut + the cut path so far
   // a split is applied only when the new room's dialog is confirmed — cancel leaves the room intact
@@ -306,6 +346,13 @@ class HouseplanCard extends LitElement {
   private _viewModeSnap: { space: string; zoom: number; cx?: number; cy?: number } | null = null;
   private _pointers = new Map<number, { x: number; y: number }>();
   private _panStart: { sx: number; sy: number; vx: number; vy: number } | null = null;
+  /**
+   * What the current one-finger drag turned out to be, decided ONCE on the
+   * first real movement and held until the finger lifts (see
+   * `_stagePointerMove`). Only the kiosk has two candidates — a horizontal
+   * drag there is the floor swipe; everywhere else a drag always pans.
+   */
+  private _panLock: 'pan' | 'swipe' | null = null;
   private _pinchStart: { dist: number; zoom: number } | null = null;
   private _suppressClick = false;
   private _roViewport?: ResizeObserver;
@@ -343,6 +390,11 @@ class HouseplanCard extends LitElement {
   } | null = null;
   /** Wedge memo: recomputed only when (azimuth, elevation, north, cfg rev) change (docs/SUN.md). */
   private _sunRaysCache: { key: string; rays: SunRay[] } | null = null;
+  /** Sun elevation (0.1°) the day/night sky is currently PAINTED with, and
+   *  whether the next paint must jump to it instead of gliding (docs/SUN.md). */
+  private _skyElev: number | null = null;
+  private _skySnap = false;
+  private _skySnapRaf = 0;
   private _compassDrag = false;
   private _importDialog: { floors: (FloorInfo & { checked: boolean })[] } | null = null;
   private _importQueue: string[] = []; // floor titles still to create
@@ -458,6 +510,10 @@ class HouseplanCard extends LitElement {
   private _vacVisHandler = () => {
     if (document.visibilityState === 'visible') {
       this._vacJumpOnce = true;
+      // A hidden tab paints nothing, so the 45 s sky transition stood still
+      // while the sun kept moving: come back on the RIGHT colour, then breathe
+      // again (docs/SUN.md, owner 2026-08-04).
+      this._skyElev = null;
       this.requestUpdate();
     }
   };
@@ -573,17 +629,25 @@ class HouseplanCard extends LitElement {
       clearTimeout(this._bootSoftTimer);
       this._bootSoftTimer = window.setTimeout(() => { this._bootSoft = false; }, BOOT_SOFT_MS);
     }
+    // DEV-B703-02: a reattach mid-outage must keep revalidating — the retry
+    // timer died in disconnectedCallback
+    if (!this._loadOk && this._serverCfg && this.hass) this._scheduleLoadRetry();
   }
 
   public disconnectedCallback(): void {
     document.removeEventListener('visibilitychange', this._vacVisHandler);
     if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
+    if (this._skySnapRaf) { cancelAnimationFrame(this._skySnapRaf); this._skySnapRaf = 0; }
     for (const rt of this._senseRt.values()) clearTimeout(rt.timer); // pending flash-window repaints
     window.removeEventListener('keydown', this._keyHandler);
     clearInterval(this._cycleTimer);
     clearTimeout(this._kioskDotsTimer);
     clearTimeout(this._kioskHoldTimer);
     clearTimeout(this._reloadRetry);
+    clearTimeout(this._loadRetryTimer);
+    this._loadRetryTimer = undefined; // a cleared id must not block a reschedule
+    this._connHooked?.removeEventListener?.('ready', this._onConnReady);
+    this._connHooked = null;
     this._signer.dispose();
     clearTimeout(this._toastTimer);
     clearTimeout(this._slideTimer);
@@ -723,9 +787,32 @@ class HouseplanCard extends LitElement {
     return { type: 'custom:houseplan-card' };
   }
 
+  /** Test hook (smokes): forget the warm re-mount memo — a cold page again. */
+  public static _warmBootReset(): void {
+    warmBoot.clear();
+  }
+
   public setConfig(config: CardConfig): void {
     this._config = { icon_size: 2.5, show_temperature: true, live_states: true, show_signal: true, ...config };
     if (this._config.kiosk) { this._booting = false; this._bootFading = false; } // kiosk: 100dvh, nothing to settle
+    else {
+      // DEV-B703-01: this page already booted an identical card at this
+      // viewport — adopt its settled header height and skip the veil
+      // entirely: the card reveals synchronously in the final geometry (the
+      // saved zoom is armed below, HP-1551). _bootSoft covers any residual
+      // chrome drift with a glide instead of a snap.
+      const warm = warmBoot.get(warmBootKey(this._config));
+      if (warm) {
+        this._booting = false;
+        this._bootFading = false;
+        this._hdrH = warm.hdrH;
+        this._bootSoft = true; // timer armed in connectedCallback...
+        if (this.isConnected) { // ...unless setConfig re-runs while attached
+          clearTimeout(this._bootSoftTimer);
+          this._bootSoftTimer = window.setTimeout(() => { this._bootSoft = false; }, BOOT_SOFT_MS);
+        }
+      }
+    }
     if (config.default_floor) this._space = config.default_floor;
     try {
       this._zoomBySpace = JSON.parse(localStorage.getItem(LS_ZOOM) || '{}') || {};
@@ -953,7 +1040,9 @@ class HouseplanCard extends LitElement {
 
   protected willUpdate(changed: PropertyValues): void {
     if (changed?.has?.('hass')) { this._vacTick(); this._senseTick(); }
+    this._skyPlan();
     if (changed.has('hass') && this.hass) {
+      this._hookConnection();
       if (!this._loadOk && !this._loading && this._loadTries < 8) {
         this._loadFromServer();
       }
@@ -962,6 +1051,7 @@ class HouseplanCard extends LitElement {
   }
 
   protected updated(): void {
+    this._skyRelease();
     const stage = this._stageEl;
     if (stage && !this._roViewport) {
       this._roViewport = new ResizeObserver(() => this._refitView());
@@ -986,6 +1076,12 @@ class HouseplanCard extends LitElement {
         const above = Math.min(Math.max(card.getBoundingClientRect().top, 0), 120);
         const t = Math.round(own + above);
         if (t >= 0 && Math.abs(t - this._hdrH) > 1) this._hdrH = t;
+        // DEV-B703-01: chrome that lands after the settle (or a window
+        // resize with a live card) must not poison the next warm mount —
+        // the memo follows the live settled geometry.
+        if (t >= 0 && !this._booting && !this._config?.kiosk && stage.clientHeight > 0) {
+          warmBoot.set(warmBootKey(this._config), { hdrH: t, stageH: stage.clientHeight });
+        }
       };
       // a frame later: setting state straight from the observer callback makes
       // the browser report "ResizeObserver loop completed with undelivered
@@ -1083,16 +1179,26 @@ class HouseplanCard extends LitElement {
       this._cacheSnapshot();
       this._restoreZoom();
     } catch (e) {
-      // not the last attempt — silently wait for the next hass update (WS warm-up)
-      if (this._loadTries >= 8) {
+      if (this._serverCfg) {
+        // DEV-B703-02: this instance already RENDERS a valid config (the LS
+        // snapshot, or an earlier successful load). A failing socket is a
+        // transient condition — nulling _serverCfg here blanked the plan on
+        // every reconnect that took more than 8 hass ticks. Stale-while-
+        // revalidate: the last valid config stays on screen until a
+        // successful reload replaces it, and revalidation keeps running on
+        // our own clock (willUpdate stops driving loads after 8 tries).
+        this._scheduleLoadRetry();
+      } else if (this._loadTries >= 8) {
+        // nothing was ever shown — genuine no-backend: local-only fallback
         this._serverStorage = false;
-        this._serverCfg = null;
         try {
           this._layout = JSON.parse(localStorage.getItem(LS_KEY) || '{}') || {};
         } catch {
           this._layout = {};
         }
       }
+      // fewer than 8 tries with nothing shown yet: silently wait for the
+      // next hass update (WS warm-up)
     } finally {
       this._loading = false;
     }
@@ -1134,6 +1240,46 @@ class HouseplanCard extends LitElement {
   }
 
   private _reloadRetry?: number;
+  /** DEV-B703-02: self-driven revalidation once willUpdate's 8-try budget is
+   *  spent — without it a card whose socket died at mount would show the
+   *  cached plan forever and never revalidate (hass ticks stop driving loads
+   *  after 8 tries). Exponential backoff capped at 8 s; single timer;
+   *  cleared on disconnect and on a connection 'ready'. */
+  private _loadRetryTimer?: number;
+  private _scheduleLoadRetry(): void {
+    if (this._loadRetryTimer !== undefined) return;
+    const delay = Math.min(8000, 500 * 2 ** Math.min(4, Math.max(1, this._loadTries - 7)));
+    this._loadRetryTimer = window.setTimeout(() => {
+      this._loadRetryTimer = undefined;
+      if (!this._loadOk && !this._loading && this.hass) this._loadFromServer();
+    }, delay);
+  }
+
+  /** DEV-B703-02: revalidate the moment the socket comes back. The event
+   *  subscriptions (houseplan_config_updated / layout / trail) survive a
+   *  reconnect on their own — home-assistant-js-websocket keeps the
+   *  Connection object alive and replays its subscription commands on
+   *  'ready' — but a LOAD that burned its retry budget while the socket was
+   *  down would never run again. 'ready' fires on every (re)connect: reset
+   *  the budget and quietly re-read the config. */
+  private _connHooked: { removeEventListener?: (t: string, cb: () => void) => void } | null = null;
+  private _onConnReady = (): void => {
+    this._loadTries = 0;
+    clearTimeout(this._loadRetryTimer);
+    this._loadRetryTimer = undefined;
+    if (this._loading) return;
+    // a subscribe lost mid-load leaves _loadOk=true without _unsubCfg — the
+    // full load path repairs both (every subscribe in it is guarded)
+    if (!this._loadOk || !this._unsubCfg) this._loadFromServer();
+    else this._reloadConfigOnly();
+  };
+  private _hookConnection(): void {
+    const conn = (this.hass as any)?.connection;
+    if (!conn || conn === this._connHooked) return;
+    this._connHooked?.removeEventListener?.('ready', this._onConnReady);
+    conn.addEventListener?.('ready', this._onConnReady);
+    this._connHooked = conn;
+  }
   /**
    * Signed urls for the content endpoint (audit follow-up B1 regression).
    * A browser cannot authenticate an <image href> or an <a href>: HA takes a
@@ -1348,8 +1494,11 @@ class HouseplanCard extends LitElement {
   private _defaultPositions(): Record<string, { x: number; y: number }> {
     const map: Record<string, { x: number; y: number }> = {};
     const iconPct = this._config?.icon_size ?? 2.5;
-    const minDist = (iconPct / 100) * NORM_W * 1.3; // no closer than the icon diameter + a margin
     for (const s of this._model) {
+      // docs/CANVAS.md §6: the icon's RENDER-unit footprint follows the plan's
+      // own size — NORM_W for anything inside the old square (identical to
+      // before), proportionally more for a plan several canvases wide.
+      const minDist = (iconPct / 100) * iconUnit(s) * 1.3;
       for (const r of s.rooms) {
         if (!r.area) continue;
         const ds = this._devices.filter((d) => d.area === r.area && d.space === s.id);
@@ -1387,8 +1536,8 @@ class HouseplanCard extends LitElement {
       }
     }
     if (this._defPos[d.id]) return this._defPos[d.id];
-    const vb = s.vb;
-    return { x: vb[0] + vb[2] / 2, y: vb[1] + vb[3] / 2 };
+    // the middle of what IS drawn, not of a canvas that has no edges any more
+    return spaceCenter(s);
   }
 
   private _savePos(d: DevItem, x: number, y: number): void {
@@ -1412,8 +1561,49 @@ class HouseplanCard extends LitElement {
 
   // ================= live states =================
 
+  /**
+   * The device's own cover, when the marker is EXPLICITLY «Open/close»
+   * (`tap_action: 'cover'`) — otherwise null. One helper, one answer: the tap
+   * acts on it, the badge speaks for it, the icon morphs with it.
+   *
+   * The rule and why it is the least surprising one (owner, 2026-08-04 —
+   * docs/FILTERING.md «What a marker SHOWS»): a marker keeps indicating its
+   * PRIMARY entity, unless its owner has said, in the marker dialog, that
+   * this thing is a curtain. Saying so is the only statement the card has
+   * that means «the cover is what this device does»; a mixed marker (a lamp
+   * with a sensor, a TRV with a service switch) is never touched behind the
+   * user's back, and there is no third notion of «what this marker is»
+   * besides the option the dialog offers and the entity the tap drives.
+   */
+  private _coverIndicator(d: DevItem): string | null {
+    return d.tapAction === 'cover' ? coverEntityOf(d.entities) : null;
+  }
+
+  /** The entity a marker's tap acts on and its indication speaks for. */
+  private _actEntity(d: DevItem): string | undefined {
+    return this._coverIndicator(d) || d.primary;
+  }
+
   private _stateClass(d: DevItem): string {
     if (!this._config?.live_states) return '';
+    // FIRST of all: is this marker a CURTAIN? Choosing «Открыть/закрыть» in
+    // the dialog is the strongest thing its owner can say about what the
+    // marker IS (see _coverIndicator), so it outranks every other source of
+    // indication — and the owner's contract for that answer is absolute: «у
+    // штор не должно быть жёлтой подложки НИКОГДА». Deciding this after
+    // `controls` / a lit light (as it was until 2026-08-04) meant a curtain on
+    // a mixed device — a lamp that also ships a blind, a marker with a bound
+    // wall switch — went yellow anyway and lost its breathing ring while it
+    // travelled, so the tap, the icon and the plate each told a different
+    // story. The plate class of a cover is only ever '' , 'covermove' or
+    // 'unavail'; the open/closed state is the icon's job (COVER_ICONS).
+    const cov = this._coverIndicator(d);
+    if (cov) {
+      const cs = this.hass.states[cov];
+      if (!cs) return '';
+      if (cs.state === 'unavailable') return 'unavail';
+      return coverMoving(cs.state) ? 'covermove' : '';
+    }
     // an icon with controlled targets mirrors THEM, not its own entity
     // (stateless remotes and virtual wall switches have nothing else to show)
     const controls = (d.marker?.controls || []).filter(isControllable);
@@ -1426,13 +1616,21 @@ class HouseplanCard extends LitElement {
     // stays yellow only where the spot is not drawn (other fills, the plan
     // editor).
     if (litLightEntity(this.hass, d)) return 'on';
-    const p = d.primary ? this.hass.states[d.primary] : undefined;
+    // The explicit cover was answered above; what is left here is the primary
+    // entity — an «Open/close» marker only ever reaches this line when its
+    // device carries no `cover.*` at all, and then it has nothing else to
+    // speak for. (Before 2026-08-04 an Aqara curtain driver reported its
+    // `switch.*_reverse_direction` from here: no breathing ring while it
+    // travelled, no morph, and a yellow plate whenever the reverse-direction
+    // option happened to be on.)
+    const eid = this._actEntity(d);
+    const p = eid ? this.hass.states[eid] : undefined;
     if (!p) return '';
     if (p.state === 'unavailable') return 'unavail';
     // derive the domain from the entity id we looked the state up by — state
     // objects are not guaranteed to carry entity_id (defensive; found by the
     // TESTING.md edge-case run)
-    const dom = d.primary!.split('.')[0];
+    const dom = eid!.split('.')[0];
     if (['light', 'switch', 'fan', 'humidifier'].includes(dom)) return p.state === 'on' ? 'on' : '';
     if (dom === 'climate') {
       // yellow = actually working right now ("which radiators are heating"),
@@ -1442,7 +1640,19 @@ class HouseplanCard extends LitElement {
       if (act != null) return ['heating', 'cooling', 'drying', 'fan'].includes(act) ? 'on' : '';
       return ['off', 'unknown'].includes(p.state) ? '' : 'on';
     }
-    if (dom === 'cover' || dom === 'valve') return ['open', 'opening'].includes(p.state) ? 'open' : '';
+    // COVERS (owner's contract 2026-08-04): «у штор не должно быть жёлтой
+    // подложки НИКОГДА, индикация открыто/закрыто за счёт морфинга иконки».
+    // So a cover returns NO plate class in any state — not the yellow «on»
+    // one, not the orange 'open' frame it used to wear while open/opening.
+    // Its whole open/closed story is told by the icon (stateIcon/COVER_ICONS,
+    // ajar counts as open because HA reports 'open' for it), and its motion by
+    // the breathing ring alone (2026-08-03, the vacuum puck's language).
+    if (dom === 'cover') return coverMoving(p.state) ? 'covermove' : '';
+    // A VALVE is deliberately NOT swept along: no icon pair morphs for it, so
+    // the frame is the only thing that says «открыт» — taking it away would
+    // leave the marker mute. Owner's rule names the curtains, and the two
+    // domains part ways here.
+    if (dom === 'valve') return ['open', 'opening'].includes(p.state) ? 'open' : '';
     if (dom === 'lock') return ['unlocked', 'open'].includes(p.state) ? 'open' : '';
     if (dom === 'binary_sensor') {
       const dc = p.attributes?.device_class;
@@ -1502,6 +1712,32 @@ class HouseplanCard extends LitElement {
     return false;
   }
 
+  /** The cover entity behind the dialog's binding, or null. */
+  private _bindingCoverEntity(binding: string): string | null {
+    if (binding.startsWith('entity:')) return coverEntityOf([binding.slice(7)]);
+    if (binding.startsWith('device:')) {
+      const ref = binding.slice(7);
+      const eids = Object.entries<any>(this.hass?.entities || {})
+        .filter(([, reg]) => reg?.device_id === ref)
+        .map(([eid]) => eid);
+      return coverEntityOf(eids);
+    }
+    return null;
+  }
+
+  /**
+   * Does the dialog's binding deserve the «Open/close» tap option? Gates it
+   * exactly like the climate checkbox above: only a device that HAS a cover
+   * entity sees it — and never a garage door, a gate or a driveway door
+   * (COVER_GUARDED_CLASSES; owner 2026-08-03: «нет, только шторы/жалюзи»).
+   */
+  private _bindingCoverTap(binding: string): boolean {
+    const eid = this._bindingCoverEntity(binding);
+    if (!eid) return false;
+    const dc = String(this.hass?.states?.[eid]?.attributes?.device_class || '');
+    return !COVER_GUARDED_CLASSES.has(dc);
+  }
+
   private _liveHum(d: DevItem): number | null {
     if (!this._config?.show_temperature) return null; // same "sensor values" toggle as temperature
     if (!d.primary || !isHumEntity(this.hass, d.primary)) return null;
@@ -1535,7 +1771,15 @@ class HouseplanCard extends LitElement {
       this._openMarkerDialog(d);
       return;
     }
-    const domain = d.primary ? d.primary.split('.')[0] : null;
+    // The entity a tap ACTS ON. Normally the primary one — but the explicit
+    // «Open/close» drives the device's cover wherever it sits in the entity
+    // list (coverEntityOf): a curtain driver whose primary is a service
+    // switch used to resolve on the domain `switch` and fall back to the info
+    // card, which is exactly what the owner saw (2026-08-04). The guarded
+    // class is read off that same cover, so a garage still degrades.
+    const coverEid = this._coverIndicator(d);
+    const actEid = this._actEntity(d);
+    const domain = actEid ? actEid.split('.')[0] : null;
     // the accidental-tap guard (owner's spec 2026-07-29): any state-changing
     // action — toggle or run — may ask first. The dialog is ours, not the
     // browser confirm(), so it works and looks right on a wall tablet.
@@ -1558,7 +1802,7 @@ class HouseplanCard extends LitElement {
     }
     const action = resolveTapAction(
       d.tapAction, undefined, domain,
-      d.primary ? this.hass.states[d.primary]?.attributes?.device_class : null,
+      actEid ? this.hass.states[actEid]?.attributes?.device_class : null,
     );
     if (action === 'run') {
       const target = d.marker?.tap_target || '';
@@ -1573,6 +1817,17 @@ class HouseplanCard extends LitElement {
         this.hass
           .callService(svc.domain, svc.service, { entity_id: target })
           .then(() => this._showToast(this._t('toast.run_started', { name })))
+          .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
+      });
+      return;
+    }
+    if (action === 'cover' && coverEid) {
+      // open / close / stop, decided by the CURRENT state (docs/PRODUCT.md);
+      // a tap while the curtain travels stops it, the next one reverses
+      const svc = coverService(this.hass.states[coverEid]?.state);
+      guarded(this._t('confirm.tap_cover', { name: d.name }), () => {
+        this.hass
+          .callService('cover', svc, { entity_id: coverEid })
           .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
       });
       return;
@@ -1602,24 +1857,153 @@ class HouseplanCard extends LitElement {
   }
 
   /**
-   * The rectangle "fit to screen" fits. With a background image that is the
-   * whole canvas — the image IS the plan. Without one it is what has been
-   * drawn, plus a small margin, so a single room on a big canvas fills the
-   * screen instead of sitting in it as a speck.
+   * Everything of the current space that counts as CONTENT, one item per
+   * object (docs/CANVAS.md §4): rooms and the backdrop image come from the
+   * model, openings/decor/devices are added here because the model does not
+   * carry them. Devices use their RESOLVED position, so a marker parked in
+   * the far corner of the yard frames with the rest.
+   *
+   * HIDDEN devices are NOT content (DEV-2C947-01): the frame is presentation,
+   * and a device the plan does not draw must not decide what the plan opens
+   * on — hiding a marker that once wandered into the yard used to leave the
+   * house a dot in the corner of an empty frame. They keep counting for room
+   * LQI/climate and they keep their auto-grid cell (docs/FILTERING.md); only
+   * the frame stops seeing them, including the ghosts of the device editor,
+   * whose reach is the pan slack's job, not the opening view's.
    */
-  private _baseVb(): number[] {
+  private _contentItems(m: SpaceModel): ContentItem[] {
+    const extra: ContentItem[] = [];
+    for (const d of this._devices) {
+      if (d.space !== m.id || d.hidden) continue;
+      const p = this._pos(d);
+      extra.push({ minX: p.x, minY: p.y, maxX: p.x, maxY: p.y });
+    }
+    if (m.id === this._space) {
+      for (const o of this._openingsR) {
+        const rad = (Number(o.angle) * Math.PI) / 180;
+        const dx = (Math.cos(rad) * o.rlen) / 2, dy = (Math.sin(rad) * o.rlen) / 2;
+        const it = itemOf([[o.rx - dx, o.ry - dy], [o.rx + dx, o.ry + dy]]);
+        if (it) extra.push(it);
+      }
+      const H = this._decorH;
+      for (const x of this._decorList) {
+        const pts = x.kind === 'line'
+          ? [[x.x1 * NORM_W, x.y1 * H], [x.x2 * NORM_W, x.y2 * H]]
+          : [[x.x * NORM_W, x.y * H], [(x.x + (x.w || 0)) * NORM_W, (x.y + (x.h || 0)) * H]];
+        const it = itemOf(pts);
+        if (it) extra.push(it);
+      }
+    }
+    return contentItems(m, extra);
+  }
+
+  /**
+   * The content frame of the current space, memoised (docs/CANVAS.md §4).
+   *
+   * In VIEW mode it follows the config: adding a device out in the yard
+   * widens what "fit" means. Inside an EDITOR it only ever GROWS — the frame
+   * bounds pan and the meaning of zoom 1, and a frame that shrank the moment
+   * you deleted a room would move the ground under a drag. It never bounds
+   * where you may DRAW: §5 pan slack plus 3x zoom-out is far more room than
+   * the old square ever gave (that is what HP-1490-03 needed).
+   */
+  private _frame:
+    | { id: string; model: SpaceModel; layout: unknown; devs: unknown; far: boolean;
+        grow: boolean; rect: Rect; all: Rect; outliers: number }
+    | null = null;
+  /** The outlier hint's «Показать» is on: the frame takes in the far strays
+   *  too, so zoom, pan and the fit button all agree about what "everything"
+   *  is. Reset when the space changes (docs/CANVAS.md §4.1). */
+  private _showFar = false;
+
+  private _frameOf(): { rect: Rect; all: Rect; outliers: number } {
     const m = this._spaceModel();
-    if (m.bg) return m.vb;
-    // The EDITORS get the whole square: the content frame also bounds pan,
-    // zoom and pointer maths, and inside it there is nowhere to draw the next
-    // room or drag a marker away from the first one (HP-1490-03).
-    if (this._mode !== 'view') return m.vb;
-    // devices are content too — they may stand outside every room
-    const pts = this._devices
-      .filter((d) => d.space === m.id)
-      .map((d) => { const p = this._pos(d); return [p.x, p.y] as const; });
-    const b = contentBounds(m, 0.05, pts);
-    return b ? [b.x, b.y, b.w, b.h] : m.vb;
+    // Memo by IDENTITY, not by an epoch counter: `_model`, `_layout` and
+    // `_devices` are all replaced (never mutated in place) whenever their
+    // content changes, so this catches a marker drag and a server push alike —
+    // an epoch would have to be bumped at every one of those call sites.
+    const f = this._frame;
+    // `grow` is part of the KEY, not just of the computation (DEV-2C947-02):
+    // the union an editor accumulated is an editor's frame, and leaving for
+    // View has to recompute rather than inherit it — otherwise a room moved
+    // far away in the Plan editor kept View framing the empty ground it left
+    // behind, until some unrelated model change happened to invalidate memo.
+    const grow = this._mode !== 'view';
+    if (f && f.id === m.id && f.model === m && f.layout === this._layout
+        && f.devs === this._devices && f.far === this._showFar && f.grow === grow) return f;
+    const cf = contentFrame(this._contentItems(m));
+    let all = cf.all || spaceFrame(m);
+    let rect = this._showFar ? all : (cf.core || spaceFrame(m));
+    if (f && f.id === m.id && grow && f.grow) {
+      // Inside an editor the frame only GROWS: it bounds pan and defines what
+      // zoom 1 means, and a frame that shrank the instant a room was deleted
+      // would move the ground under the pointer mid-gesture. Only ever unions
+      // with a frame the SAME editor session produced (f.grow).
+      rect = unionRect(f.rect, rect);
+      all = unionRect(f.all, all);
+    }
+    this._frame = {
+      id: m.id, model: m, layout: this._layout, devs: this._devices,
+      far: this._showFar, grow, rect, all, outliers: cf.outliers,
+    };
+    return this._frame;
+  }
+
+  /** The rectangle "fit to screen" fits — always the content (docs/CANVAS.md). */
+  private _baseVb(): number[] {
+    const r = this._frameOf().rect;
+    return [r.x, r.y, r.w, r.h];
+  }
+
+  /** How many objects the opening view deliberately leaves out (§4.1). */
+  private get _outliers(): number {
+    return this._showFar ? 0 : this._frameOf().outliers;
+  }
+
+  /** The outlier hint's action: take the far objects into the frame, then fit. */
+  private _fitFar(): void {
+    this._showFar = true;
+    this._frame = null;
+    this._resetZoom();
+  }
+
+  /** «Вписать всё» (docs/CANVAS.md §8) — the toolbar button and the "home is
+   *  that way" arrow share it. It fits whatever the frame currently means:
+   *  the main mass, or everything once the far-objects hint has been used. */
+  private _fitAll(): void {
+    this._resetZoom();
+  }
+
+  /** Unobtrusive inline hint: some objects stand an order of magnitude away
+   *  from the plan and are deliberately outside the opening view. No modal —
+   *  a chip with one action (docs/CANVAS.md §4.1). */
+  private _renderFarHint(): TemplateResult | typeof nothing {
+    if (this._kiosk || this._mode !== 'view' || this._booting || !this._outliers) return nothing;
+    return html`<div class="farhint">
+      <ha-icon icon="mdi:map-marker-alert-outline"></ha-icon>
+      <span>${this._t('canvas.far_objects', { n: this._outliers })}</span>
+      <button class="btn ghostbtn" @click=${() => this._fitFar()}>${this._t('canvas.show_far')}</button>
+    </div>`;
+  }
+
+  /** "Home is that way" (docs/CANVAS.md §5): the plane has no edges, so it is
+   *  possible to pan until nothing is on screen. One small pointer towards the
+   *  content, one click back to it. */
+  private _renderHomeArrow(): TemplateResult | typeof nothing {
+    if (this._booting) return nothing;
+    const v = this._view;
+    if (!v || !v.w || !v.h) return nothing;
+    const f = this._frameOf().rect;
+    const gone = f.x + f.w <= v.x || f.x >= v.x + v.w || f.y + f.h <= v.y || f.y >= v.y + v.h;
+    if (!gone) return nothing;
+    const ang = Math.atan2((f.y + f.h / 2) - (v.y + v.h / 2), (f.x + f.w / 2) - (v.x + v.w / 2));
+    const left = 50 + Math.cos(ang) * 38;
+    const top = 50 + Math.sin(ang) * 38;
+    return html`<button class="homearrow" title=${this._t('canvas.home_tip')}
+      style="left:${left.toFixed(1)}%;top:${top.toFixed(1)}%"
+      @click=${(e: Event) => { e.stopPropagation(); this._fitAll(); }}>
+      <ha-icon icon="mdi:arrow-right-thick" style="transform:rotate(${((ang * 180) / Math.PI).toFixed(1)}deg)"></ha-icon>
+    </button>`;
   }
 
   /**
@@ -1660,28 +2044,31 @@ class HouseplanCard extends LitElement {
     return [v.x + (sx / w) * v.w, v.y + (sy / h) * v.h];
   }
 
-  /** Zoom limits: 8× in, 0.4× out (zoomed out, the plan floats centred). */
+  /** Zoom limits (docs/CANVAS.md §5): 8x in as before, 3x out — beyond that
+   *  the screen is empty plane, which is not information. */
   private static readonly ZOOM_MAX = 8;
-  private static readonly ZOOM_MIN = 0.4;
+  private static readonly ZOOM_MIN = MIN_ZOOM;
 
-  /** Clamp the view to the fit bounds (the content always covers the scene).
-   *  Zoomed OUT the view is larger than the content on an axis — then there is
-   *  nothing to clamp against and the content is centred on that axis instead
-   *  of being pinned to a corner. */
+  /**
+   * Keep the view within reach of the content (docs/CANVAS.md §5).
+   *
+   * There is no edge any more, so this is NOT "the content must cover the
+   * scene" — that was the rule that made it impossible to draw or place
+   * anything past the plan. Panning may walk a whole screen off the content
+   * in every direction (PAN_SLACK), which is what an editor needs to extend a
+   * plan outwards; further than that you would only be lost, and the "home is
+   * that way" arrow already covers the walk back.
+   */
   private _clampView(
     v: { x: number; y: number; w: number; h: number },
     fit: { x: number; y: number; w: number; h: number },
   ): { x: number; y: number; w: number; h: number } {
-    return {
-      w: v.w,
-      h: v.h,
-      x: v.w >= fit.w
-        ? fit.x + (fit.w - v.w) / 2
-        : Math.max(fit.x, Math.min(fit.x + fit.w - v.w, v.x)),
-      y: v.h >= fit.h
-        ? fit.y + (fit.h - v.h) / 2
-        : Math.max(fit.y, Math.min(fit.y + fit.h - v.h, v.y)),
+    const axis = (vp: number, vs: number, fp: number, fs: number): number => {
+      const slack = Math.max(vs, fs) * PAN_SLACK;
+      const a = fp - slack, b = fp + fs - vs + slack;
+      return Math.max(Math.min(a, b), Math.min(Math.max(a, b), vp));
     };
+    return { w: v.w, h: v.h, x: axis(v.x, v.w, fit.x, fit.w), y: axis(v.y, v.h, fit.y, fit.h) };
   }
 
   /** Set the zoom (centered on vb point cx,cy, or on the center of the current view). */
@@ -1731,6 +2118,12 @@ class HouseplanCard extends LitElement {
     if (!this._booting) return;
     this._refitView(); // reveal in the final geometry, never mid-jump
     this._booting = false;
+    // DEV-B703-01: the page has settled once — the next instance with the
+    // same config at the same viewport opens warm (no veil, no wait).
+    const settledH = this._stageEl?.clientHeight ?? 0;
+    if (!this._config?.kiosk && settledH > 0) {
+      warmBoot.set(warmBootKey(this._config), { hdrH: this._hdrH, stageH: settledH });
+    }
     this._bootFading = true; // one soft opacity-out, then out of the DOM
     this._bootTimer = window.setTimeout(() => { this._bootFading = false; }, 220);
     // AUD-1552-02: chrome that lands after the cap (device slower than
@@ -1789,6 +2182,9 @@ class HouseplanCard extends LitElement {
     this._saveZoom();
   }
 
+  /** «Вписать всё» (docs/CANVAS.md §8) — the toolbar's middle button and the
+   *  old "reset zoom" in one: frame the content at zoom 1, centred. With
+   *  `all` it also takes in the far strays the opening view leaves out. */
   private _resetZoom(): void {
     const vb = this._baseVb();
     this._zoom = 1;
@@ -1877,13 +2273,25 @@ class HouseplanCard extends LitElement {
     const v = this._viewOr(this._baseVb());
     if (this._pointers.size === 1) {
       this._panStart = { sx: ev.clientX, sy: ev.clientY, vx: v.x, vy: v.y };
+      this._panLock = null; // undecided until the finger moves
       this._suppressClick = false;
     } else if (this._pointers.size === 2) {
       const pts = [...this._pointers.values()];
       const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
       this._pinchStart = { dist, zoom: this._zoom };
       this._panStart = null;
+      this._panLock = null;
     }
+  }
+
+  /**
+   * Is a horizontal drag reserved for the floor swipe right now? Only on a
+   * kiosk screen, only at the zoom `swipeTarget` accepts, and only when there
+   * is more than one space to swipe between — everywhere else nothing
+   * competes with panning.
+   */
+  private get _swipeZone(): boolean {
+    return this._kiosk && this._zoom <= 1.001 && this._model.length > 1;
   }
 
   private _stagePointerMove(ev: PointerEvent): void {
@@ -1919,14 +2327,25 @@ class HouseplanCard extends LitElement {
         this._suppressClick = true;
         clearTimeout(this._holdTimer);
       }
-      if (this._zoom > 1 && this._view) {
-        const stage = this._stageEl!;
-        const v = this._view;
-        const fit = fitView(this._baseVb(), this._stageAspect());
+      // Which gesture is this? Decided once, on the first movement worth the
+      // name, and kept for the rest of the drag so the plan cannot flip-flop
+      // under the finger. Panning is NOT gated on the zoom any more (owner,
+      // 2026-08-04: «таскать план при любом масштабе»): on an infinite canvas
+      // there is no "the content already covers the scene" state that would
+      // make a drag meaningless — `_clampView` alone decides how far you may
+      // walk, at 400% and at 33% alike.
+      if (this._panLock === null && Math.abs(ddx) + Math.abs(ddy) > 8) {
+        this._panLock = this._swipeZone && Math.abs(ddx) > Math.abs(ddy) * 1.5 ? 'swipe' : 'pan';
+      }
+      const stage = this._stageEl;
+      if (this._panLock === 'pan' && stage) {
+        const vb = this._baseVb();
+        const v = this._viewOr(vb);
+        const fit = fitView(vb, this._stageAspect());
         this._view = this._clampView(
           {
-            x: this._panStart.vx - (ddx / stage.clientWidth) * v.w,
-            y: this._panStart.vy - (ddy / stage.clientHeight) * v.h,
+            x: this._panStart.vx - (ddx / (stage.clientWidth || 1)) * v.w,
+            y: this._panStart.vy - (ddy / (stage.clientHeight || 1)) * v.h,
             w: v.w,
             h: v.h,
           },
@@ -1950,7 +2369,19 @@ class HouseplanCard extends LitElement {
           if (now - this._lastTap < 350) this._resetZoom();
           this._lastTap = now;
         }
-        const target = swipeTarget(dx, dy, this._zoom, this._model.map((m) => m.id), this._space);
+        // The lock is FINAL (audit DEV-1DA1-02). `_stagePointerMove` decided
+        // once, on the first movement worth the name, whether this gesture is
+        // a swipe or a pan — and the release may not overturn it. Until this
+        // the release asked `swipeTarget()` again from the raw start→end
+        // vector, so a CURVED gesture (a small vertical lead-in that locks
+        // 'pan', then a long horizontal sweep) dragged the plan under the
+        // finger and still landed on another storey when it lifted. A pan is
+        // a pan to the end: no floor change, whatever the overall vector
+        // happens to look like. A motionless tap never locks anything, so the
+        // double-tap zoom reset above is untouched.
+        const target = this._panLock === 'pan'
+          ? null
+          : swipeTarget(dx, dy, this._zoom, this._model.map((m) => m.id), this._space);
         if (target) {
           // the plan follows the finger: swiping left brings the next one in
           // from the right, so the current one leaves to the left
@@ -1975,6 +2406,7 @@ class HouseplanCard extends LitElement {
     if (this._pointers.size < 2) this._pinchStart = null;
     if (this._pointers.size === 0) {
       this._panStart = null;
+      this._panLock = null;
       // reset click suppression on the next tick (so that a click right after a pan does not fire)
       setTimeout(() => (this._suppressClick = false), 0);
     }
@@ -2367,7 +2799,7 @@ class HouseplanCard extends LitElement {
       return;
     }
     if (this._tool === 'opening') {
-      this._openingClick(raw);
+      this._openingClick(raw, ev.shiftKey);
       return;
     }
     if (this._tool === 'merge') {
@@ -2808,16 +3240,18 @@ class HouseplanCard extends LitElement {
     const g = this._gridPitch;
     let dx = snapToGrid(p[0] - m.start[0], g) / NORM_W;
     let dy = snapToGrid(p[1] - m.start[1], g) / this._decorH;
-    // audit follow-up L4: decor had neither a threshold nor a bounds clamp, so
-    // a shape could be dragged far outside the viewBox and persisted there.
+    // audit follow-up L4 gave decor a bounds clamp of -0.25..1.25 — the plan
+    // was a sheet with edges then. It is not any more (docs/CANVAS.md): the
+    // clamp is now the same garbage limit the backend enforces, so decor can
+    // follow a plan that lives at 2.7 and still cannot be flung to 1e100.
     const o = m.orig;
     const curX = o.kind === 'line' ? Math.min(o.x1, o.x2) : o.x;
     const curY = o.kind === 'line' ? Math.min(o.y1, o.y2) : o.y;
     const w = o.kind === 'line' ? Math.abs(o.x2 - o.x1) : (o.w || 0);
     const h = o.kind === 'line' ? Math.abs(o.y2 - o.y1) : (o.h || 0);
-    const lim = 0.25; // a quarter of the plan may hang outside, no more
-    dx = Math.max(-curX - lim, Math.min(1 + lim - curX - w, dx));
-    dy = Math.max(-curY - lim, Math.min(1 + lim - curY - h, dy));
+    const lim = CANVAS_LIMIT;
+    dx = Math.max(-lim - curX, Math.min(lim - curX - w, dx));
+    dy = Math.max(-lim - curY, Math.min(lim - curY - h, dy));
     if (dx || dy) m.moved = true;
     const sp = this._curSpaceCfg;
     sp.decor = this._decorList.map((x) => {
@@ -3091,7 +3525,7 @@ class HouseplanCard extends LitElement {
   }
 
   /** Opening tool: click an existing opening to edit it, or a wall to place one. */
-  private _openingClick(raw: number[]): void {
+  private _openingClick(raw: number[], shift = false): void {
     const eps = this._gridPitch * 1.5;
     const hit = this._openingsR.find(
       (o) => Math.hypot(raw[0] - o.rx, raw[1] - o.ry) <= Math.max(o.rlen / 2, eps),
@@ -3105,11 +3539,15 @@ class HouseplanCard extends LitElement {
       this._showToast(this._t('toast.opening_no_wall'));
       return;
     }
+    // the opening is born where the PREVIEW showed it — magnet included
+    const place = this._opRuler(snap, this._cmToUnits(OPENING_DEFAULT_CM), shift);
     this._openingDialog = {
-      type: 'door', lengthCm: 90, contact: '', lock: '',
+      type: 'door', lengthCm: OPENING_DEFAULT_CM, contact: '', lock: '',
       invert: false, flipH: false, flipV: false,
-      x: snap.x, y: snap.y, angle: snap.angle,
+      x: place.x, y: place.y, angle: place.angle,
     };
+    // rulers, tick and ghost live only through the placement gesture
+    this._cursorPt = null;
   }
 
   /** Open the properties dialog for an existing opening. */
@@ -3159,34 +3597,52 @@ class HouseplanCard extends LitElement {
     const cfg = sp?.openings?.find((x: OpeningCfg) => x.id === o.id);
     if (!cfg) return;
     // ruler badges on both shoulders + soft magnet to the wall's center
-    // (owner 2026-08-03); tol = half a grid step, Shift opts out of the magnet
-    // (same convention as the coarse-angle Shift elsewhere in the editor)
-    const rooms = this._spaceModel().rooms;
-    const tol = this._gridPitch / 2;
-    let cx = snap.x, cy = snap.y;
-    let sh = openingShoulders([cx, cy], snap.angle, cfg.length * NORM_W, rooms, tol);
-    if (sh && sh.centered && !ev.shiftKey && (cx !== sh.wallCenter[0] || cy !== sh.wallCenter[1])) {
-      [cx, cy] = sh.wallCenter;
-      sh = openingShoulders([cx, cy], snap.angle, cfg.length * NORM_W, rooms, tol);
-    }
-    if (sh) {
-      const imperial = this.hass?.config?.unit_system?.length === 'mi';
-      const lbl = (d: number, m: number[]) =>
-        ({ x: m[0], y: m[1], text: formatLength((d / this._gridPitch) * this._cellCm, imperial) });
-      this._opMeasure = {
-        labels: [lbl(sh.sideA, sh.midA), lbl(sh.sideB, sh.midB)],
-        guide: sh.centered && !ev.shiftKey
-          ? { x: sh.wallCenter[0], y: sh.wallCenter[1], angle: snap.angle }
-          : null,
-      };
-    } else this._opMeasure = null;
-    const nx = cx / NORM_W;
-    const ny = cy / this._spaceH;
+    // (owner 2026-08-03) — the very same helper the PLACEMENT preview uses
+    const r = this._opRuler(snap, cfg.length * NORM_W, ev.shiftKey);
+    this._opMeasure = r.measure;
+    const nx = r.x / NORM_W;
+    const ny = r.y / this._spaceH;
     if (cfg.x !== nx || cfg.y !== ny || cfg.angle !== snap.angle) this._opDrag.dirty = true;
     cfg.x = nx;
     cfg.y = ny;
     cfg.angle = snap.angle;
     this.requestUpdate();
+  }
+
+  /**
+   * Shoulder rulers + the soft centre magnet for an opening of `rlen` sitting
+   * at a wall snap. ONE implementation for both gestures the owner asked to
+   * behave alike (2026-08-03): dragging an existing opening and placing a new
+   * one. `tol` is half a grid step and Shift opts out of the magnet — the same
+   * convention as the coarse-angle Shift elsewhere in the editor. The returned
+   * x/y are ALREADY magnetised, so the caller just writes them.
+   */
+  private _opRuler(
+    snap: { x: number; y: number; angle: number },
+    rlen: number,
+    shift: boolean,
+  ): { x: number; y: number; angle: number; measure: OpMeasure | null } {
+    const rooms = this._spaceModel().rooms;
+    const tol = this._gridPitch / 2;
+    let cx = snap.x, cy = snap.y;
+    let sh = openingShoulders([cx, cy], snap.angle, rlen, rooms, tol);
+    if (sh && sh.centered && !shift && (cx !== sh.wallCenter[0] || cy !== sh.wallCenter[1])) {
+      [cx, cy] = sh.wallCenter;
+      sh = openingShoulders([cx, cy], snap.angle, rlen, rooms, tol);
+    }
+    if (!sh) return { x: cx, y: cy, angle: snap.angle, measure: null };
+    const imperial = this.hass?.config?.unit_system?.length === 'mi';
+    const lbl = (d: number, m: number[]) =>
+      ({ x: m[0], y: m[1], text: formatLength((d / this._gridPitch) * this._cellCm, imperial) });
+    return {
+      x: cx, y: cy, angle: snap.angle,
+      measure: {
+        labels: [lbl(sh.sideA, sh.midA), lbl(sh.sideB, sh.midB)],
+        guide: sh.centered && !shift
+          ? { x: sh.wallCenter[0], y: sh.wallCenter[1], angle: snap.angle }
+          : null,
+      },
+    };
   }
 
   private _opPointerUp(ev: PointerEvent, o: OpeningCfg): void {
@@ -3392,6 +3848,7 @@ class HouseplanCard extends LitElement {
     if (!this._markup) return;
     if (this._tool === 'opening' || this._tool === 'openwall') {
       // hover preview: raw cursor point; snapping happens in the preview getters
+      this._opShift = !!ev.shiftKey; // Shift opts out of the centre magnet
       this._cursorPt = this._svgPoint(ev);
       return;
     }
@@ -3401,8 +3858,13 @@ class HouseplanCard extends LitElement {
     this._cursorPt = this._snap(this._svgPoint(ev));
   }
 
-  /** Dashed hover preview of an opening: same snap and default length as the click. */
-  private get _openingPreview(): { x: number; y: number; angle: number; rlen: number } | null {
+  /**
+   * Dashed hover preview of an opening: same snap, same default length and —
+   * since 2026-08-03 — the same shoulder rulers and centre magnet as a drag.
+   * Pure: it writes nothing, the render just reads it.
+   */
+  private get _openingPreview():
+    { x: number; y: number; angle: number; rlen: number; measure: OpMeasure | null } | null {
     if (this._tool !== 'opening' || !this._cursorPt) return null;
     const raw = this._cursorPt;
     // an existing opening under the cursor will be edited, not added — no preview
@@ -3413,7 +3875,15 @@ class HouseplanCard extends LitElement {
     if (hit) return null;
     const snap = snapToWall(raw, this._spaceModel().rooms, eps);
     if (!snap) return null;
-    return { ...snap, rlen: this._cmToUnits(90) };
+    const rlen = this._cmToUnits(OPENING_DEFAULT_CM);
+    const r = this._opRuler(snap, rlen, this._opShift);
+    return { x: r.x, y: r.y, angle: r.angle, rlen, measure: r.measure };
+  }
+
+  /** The rulers to draw right now: from the DRAG of an existing opening, or
+   *  from the PLACEMENT preview of a new one — identical badges either way. */
+  private get _opMeasureView(): OpMeasure | null {
+    return this._opMeasure || this._openingPreview?.measure || null;
   }
 
   /** Save a room with a mandatory binding to an HA area. */
@@ -4450,14 +4920,36 @@ class HouseplanCard extends LitElement {
    */
   private _renderSunRays(space: SpaceModel): TemplateResult {
     const empty = svg`` as unknown as TemplateResult;
-    if (this._editing || !this._effSunRays()) return empty;
+    // HARD gates — the feature is simply not on: leaving an editor, a space
+    // with rays off, night, rain. Those never fade, they just are not there.
+    if (this._editing || !this._effSunRays()) { this._sunFadeReset(); return empty; }
     const north = this._effNorth();
     const sun = north !== null ? sunStateOf(this.hass) : null;
-    if (!sun || sun.elevation <= 0) return empty;
+    if (!sun || sun.elevation <= 0) { this._sunFadeReset(); return empty; }
     const weather = weatherEntityOf(this._sunGlobal());
     const cloud = cloudFactor(weather ? this.hass?.states?.[weather]?.state : null);
-    const alpha = rayAlpha(sun.elevation, cloud);
-    if (alpha <= 0) return empty;
+    const alpha = rayPeakAlpha(cloud);
+    if (alpha <= 0) { this._sunFadeReset(); return empty; }
+    // The ONE thing that fades (owner 2026-08-03): the 3° threshold. Above it
+    // the layer is there at full strength, below it gone — with a 2 s CSS
+    // fade either way. The keep-alive below is what lets the fade-OUT play at
+    // all: without it the layer would leave the DOM in the same frame.
+    if (raysVisible(sun.elevation)) {
+      if (this._sunOutTimer) { clearTimeout(this._sunOutTimer); this._sunOutTimer = 0; }
+      this._sunOut = false;
+      this._sunShown = true;
+    } else {
+      if (!this._sunShown) return empty; // never lit: nothing to dissolve
+      if (!this._sunOut) {
+        this._sunOut = true;
+        this._sunOutTimer = window.setTimeout(() => {
+          this._sunOutTimer = 0;
+          this._sunShown = false;
+          this._sunOut = false;
+          this.requestUpdate();
+        }, RAY_FADE_MS);
+      }
+    }
     // DEV-B701-01: the geometry signal must be _cfgEpoch, not _cfgRev.
     // Every local mutation ends in _saveConfig(), which bumps the epoch
     // SYNCHRONOUSLY; _cfgRev only moves after the debounced WS write is
@@ -4476,21 +4968,76 @@ class HouseplanCard extends LitElement {
     const rays = this._sunRaysCache.rays;
     if (!rays.length) return empty;
     const color = rayColor(dayPhase(sun.elevation).warmth);
+    const stops = rayStops();
+    // NO filter here, and none in <defs>. Owner 2026-08-04: «не надо размывать
+    // их боковые грани» — the shaft keeps the crisp sides real light has, and
+    // the only falloff is the gradient running ALONG the ray. The tip needs no
+    // blur either: `rayStops()` is already at zero from RAY_FADE_END on, and
+    // `rayQuad()` ends the wedge on that same iso-alpha line, so the far edge
+    // has nothing left to draw. The polygons come out of `computeSunRays()`
+    // already intersected with the room, so no clip-path is needed to keep the
+    // light off the far side of a wall.
     return svg`<defs>
         ${rays.map((r, i) => {
           const mx = (r.a[0] + r.b[0]) / 2;
           const my = (r.a[1] + r.b[1]) / 2;
           return svg`<linearGradient id="hp-sun-${i}" gradientUnits="userSpaceOnUse"
             x1="${mx}" y1="${my}" x2="${mx + r.dir[0] * r.len}" y2="${my + r.dir[1] * r.len}">
-            <stop offset="0%" stop-color="${color}" stop-opacity="${alpha.toFixed(3)}"></stop>
-            <stop offset="100%" stop-color="${color}" stop-opacity="0"></stop>
+            ${stops.map(([off, k]) => svg`<stop offset="${(off * 100).toFixed(1)}%"
+              stop-color="${color}" stop-opacity="${(alpha * k).toFixed(4)}"></stop>`)}
           </linearGradient>`;
         })}
       </defs>
-      <g class="sunlayer">
+      <g class="sunlayer ${this._sunOut ? 'out' : ''}">
         ${rays.map((r, i) => r.polys.map((p) => svg`<polygon
           points="${p.map((q) => q[0] + ',' + q[1]).join(' ')}" fill="url(#hp-sun-${i})"></polygon>`))}
       </g>` as unknown as TemplateResult;
+  }
+
+  /** Sun-ray layer keep-alive: `shown` = in the DOM, `out` = playing the
+   *  2 s dissolve before it leaves (plain fields — the timer requests the
+   *  update, render just reads them). */
+  private _sunShown = false;
+  private _sunOut = false;
+  private _sunOutTimer = 0;
+
+  /**
+   * Day/night sky bookkeeping, once per update (docs/SUN.md).
+   *
+   * The sky colour and the plan dimming are delivered by a 45 s CSS transition
+   * — and a transition only advances while the card is being PAINTED. Whenever
+   * it was not (a background tab, another dashboard view, an editor session, a
+   * fresh mount), the sun moved on without it, and the transition then crawls
+   * toward the truth instead of showing it: the owner's «фон не меняется сам,
+   * только после обновления страницы» (2026-08-04). So: glide while we are
+   * keeping up (the sun moves ≲1° between two `sun.sun` updates), JUMP once
+   * when the gap says we were not watching.
+   */
+  private _skyPlan(): void {
+    const sun = !this._editing && this._effBgMode() === 'daynight' ? this._sunNow() : null;
+    if (!sun) { this._skyElev = null; this._skySnap = false; return; }
+    const e = skyElevation(sun.elevation);
+    if (skyNeedsSnap(this._skyElev, e)) this._skySnap = true;
+    this._skyElev = e;
+  }
+
+  /** Hand the 45 s transition back once the jumped-to colour is on screen. */
+  private _skyRelease(): void {
+    if (!this._skySnap || this._skySnapRaf) return;
+    this._skySnapRaf = requestAnimationFrame(() => {
+      this._skySnapRaf = requestAnimationFrame(() => {
+        this._skySnapRaf = 0;
+        this._skySnap = false;
+        this.requestUpdate();
+      });
+    });
+  }
+
+  /** Drop the layer at once: used by every gate that is NOT the 3° threshold. */
+  private _sunFadeReset(): void {
+    if (this._sunOutTimer) { clearTimeout(this._sunOutTimer); this._sunOutTimer = 0; }
+    this._sunShown = false;
+    this._sunOut = false;
   }
 
   /** One drag/click sample on the compass dial → dialog north_deg. */
@@ -4542,7 +5089,7 @@ class HouseplanCard extends LitElement {
   private _stageBg(disp: SpaceDisplay): string {
     if (this._effBgMode() === 'daynight') {
       const sun = this._sunNow();
-      if (sun) return dayPhase(sun.elevation).bg;
+      if (sun) return dayPhase(skyElevation(sun.elevation)).bg;
     }
     const gd = this._settingsDialog;
     const sd = this._spaceDialog;
@@ -4863,6 +5410,12 @@ class HouseplanCard extends LitElement {
               )}
             </datalist>
           </div>
+          <label class="dispsection">${this._t('gs.about_group')}</label>
+          <div class="aboutver">${this._t('gs.about_version', { v: CARD_VERSION })}</div>
+          <a class="aboutlink" href="https://github.com/Matysh/houseplan-card" target="_blank" rel="noopener">
+            <ha-icon icon="mdi:github"></ha-icon>${this._t('gs.about_github')}</a>
+          <a class="aboutlink" href="https://t.me/ha_houseplan" target="_blank" rel="noopener">
+            <ha-icon icon="mdi:send"></ha-icon>${this._t('gs.about_telegram')}</a>
         </div>
         <div class="row">
           <button class="btn ghost" @click=${() =>
@@ -5064,7 +5617,9 @@ class HouseplanCard extends LitElement {
     const stageBg = this._editing ? '' : this._stageBg(disp);
     // day/night breathing: armed only with a compass AND sun.sun (docs/SUN.md)
     const dayNight = !this._editing && this._effBgMode() === 'daynight' ? this._sunNow() : null;
-    const planDim = dayNight ? dayPhase(dayNight.elevation).planDim : 0;
+    const planDim = dayNight ? dayPhase(skyElevation(dayNight.elevation)).planDim : 0;
+    // opening rulers: the drag of an existing one OR the placement preview
+    const opMeasure = this._opMeasureView;
 
     return html`
       <ha-card>
@@ -5082,6 +5637,8 @@ class HouseplanCard extends LitElement {
                   this._space = s.id;
                   this._selId = null;
                   this._navApplied = true;
+                  this._showFar = false; // the hint is per space (docs/CANVAS.md §4.1)
+                  this._frame = null;
                   this._restoreZoom();
                   this._saveNav();
                 }}
@@ -5122,8 +5679,11 @@ class HouseplanCard extends LitElement {
           <span class="spacer"></span>
           <div class="zoomctl">
             <button class="btn zb" @click=${() => this._stepZoom(-1)} title=${this._t('title.zoom_out')}><ha-icon icon="mdi:minus"></ha-icon></button>
-            <button class="btn zb" @click=${() => this._resetZoom()} ?disabled=${this._zoom === 1}
-              title=${this._t('title.zoom_reset')}><ha-icon icon="mdi:fit-to-page-outline"></ha-icon></button>
+            ${''/* docs/CANVAS.md §8: this IS «вписать всё» — the old "reset
+                   zoom" renamed rather than duplicated. No longer disabled at
+                   zoom 1: at zoom 1 panned off to the side it still has work. */}
+            <button class="btn zb" @click=${() => this._fitAll()}
+              title=${this._t('title.zoom_fit')}><ha-icon icon="mdi:fit-to-page-outline"></ha-icon></button>
             <button class="btn zb" @click=${() => this._stepZoom(1)} title=${this._t('title.zoom_in')}><ha-icon icon="mdi:plus"></ha-icon></button>
           </div>
           ${this._norm && this._canEdit
@@ -5135,7 +5695,7 @@ class HouseplanCard extends LitElement {
         ${this._markup ? this._renderMarkupBar() : this._mode === 'devices' ? this._renderDevicesBar() : this._mode === 'decor' ? this._renderDecorBar() : nothing}
         </div>
 
-        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'openwall' && this._openWallHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${dayNight ? ' daynight' : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}"
+        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'openwall' && this._openWallHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${dayNight ? ' daynight' : ''}${dayNight && this._skySnap ? ' skysnap' : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}"
           style="height:${this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}${stageBg ? `;background:${stageBg}` : ''}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
@@ -5166,8 +5726,10 @@ class HouseplanCard extends LitElement {
               )}</g>`;
             })()}
             ${this._editing ? this._renderMarkupDefs(vb) : nothing}
-            ${this._editing && !this._markup
-              ? svg`<rect x="${vb[0]}" y="${vb[1]}" width="${vb[2]}" height="${vb[3]}" fill="url(#hp-grid)" pointer-events="none"></rect>`
+            ${''/* the grid is a property of the plane, not of a box: it follows
+                   the VIEW so it is there wherever you pan (docs/CANVAS.md §7) */}
+            ${this._editing && !this._markup && this._gridLevels()
+              ? svg`<rect x="${view.x}" y="${view.y}" width="${view.w}" height="${view.h}" fill="url(#hp-grid-major)" pointer-events="none"></rect>`
               : nothing}
             ${space.bg && this._display(space.bg.href)
               ? svg`<image href="${this._display(space.bg.href)}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}" preserveAspectRatio="none" />`
@@ -5267,12 +5829,22 @@ class HouseplanCard extends LitElement {
             ${this._renderSunRays(space)}
             ${this._renderOpenWalls(disp)}
             ${this._editing ? this._renderAlignGuides() : nothing}
-            ${this._opMeasure?.guide ? this._renderOpeningCenterTick() : nothing}
+            ${opMeasure?.guide ? this._renderOpeningCenterTick(opMeasure.guide) : nothing}
             ${this._markup ? this._renderMarkupLayer(vb) : nothing}
             ${this._renderOpenings(disp)}
             ${this._markup && this._tool === 'resize' ? this._renderResizeLayer(view) : nothing}
           </svg>
-          <div class="devlayer" style="--icon-size:${((iconPct * vb[2] * (this._kiosk ? this._kioskScale.icon : 1)) / view.w).toFixed(3)}cqw;--rl-font:${this._kiosk ? this._kioskScale.font : 1}">
+          ${''/* docs/CANVAS.md §6: an icon is a percentage of the PLAN and
+                 scales with it when you zoom — the behaviour the card always
+                 had, restored by the owner. `iconCqw` is `iconPct * iconUnit
+                 / view.w`: the old expression with the stored `vb.w` replaced
+                 by the plan's own base unit, which is the same NORM_W for an
+                 ordinary plan (pixel-identical) but grows with a plan drawn
+                 past the old square, where a fixed 1000 would have shrunk
+                 every marker to a dot. Same expression as the static
+                 space-card, so the two renderers agree. The per-device
+                 multiplier and the kiosk scales still feed --dev-size. */}
+          <div class="devlayer" style="--icon-size:${iconCqw(iconPct, space, view.w, this._kiosk ? this._kioskScale.icon : 1).toFixed(3)}cqw;--rl-font:${this._kiosk ? this._kioskScale.font : 1}">
             ${devs.map((d) => this._renderDevice(d, view, showLqi, disp.fill === 'glow' && !this._markup))}
             ${this._renderVacuums(devs, view)}
             ${this._renderVacFit(view)}
@@ -5290,8 +5862,8 @@ class HouseplanCard extends LitElement {
                 class="measurelabel ${l.area ? 'rszarea' : ''}"
                 style="left:${(((l.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((l.y - view.y) / view.h) * 100).toFixed(2)}%">${l.text}</div>`)}</div>`
             : nothing}
-          ${this._opMeasure
-            ? html`<div class="measurelayer">${this._opMeasure.labels.map((l) => html`<div
+          ${opMeasure
+            ? html`<div class="measurelayer">${opMeasure.labels.map((l) => html`<div
                 class="measurelabel opshoulder"
                 style="left:${(((l.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((l.y - view.y) / view.h) * 100).toFixed(2)}%">${l.text}</div>`)}</div>`
             : nothing}
@@ -5299,6 +5871,8 @@ class HouseplanCard extends LitElement {
           ${this._zoom > 1
             ? html`<div class="zoombadge">${Math.round(this._zoom * 100)}%</div>`
             : nothing}
+          ${this._renderFarHint()}
+          ${this._renderHomeArrow()}
           ${this._booting || this._bootFading
             ? html`<div class="bootveil ${this._booting ? '' : 'off'}" aria-hidden="true">
                 <svg class="boothouse" viewBox="0 0 24 24"><path d="${mdiHomeCityOutline}"></path></svg>
@@ -5898,7 +6472,11 @@ class HouseplanCard extends LitElement {
     // ghost keeps the base icon and name — display modes are status dressing
     const ripple = (disp === 'ripple' || disp === 'icon_ripple') && !d.hidden;
     // value-only display: the measurement IS the marker
-    const primarySt = d.primary ? this.hass.states[d.primary] : undefined;
+    // The state the marker PRESENTS — the primary one, or the device's cover
+    // when the marker is explicitly «Open/close» (_coverIndicator): the badge,
+    // the icon morph and the ripple all read the same entity the tap drives.
+    const actEid = this._actEntity(d);
+    const primarySt = actEid ? this.hass.states[actEid] : undefined;
     const valText = disp === 'value' && !d.hidden
       ? (temp != null ? temp + '°'
         : hum != null ? hum + '%'
@@ -5907,7 +6485,7 @@ class HouseplanCard extends LitElement {
           : null)
       : null;
     // live state variants of the auto icon (doors, locks, bulbs), like core HA
-    const domain = d.primary ? d.primary.split('.')[0] : null;
+    const domain = actEid ? actEid.split('.')[0] : null;
     const icon = this._config?.live_states && !d.hidden
       ? stateIcon(d.icon, domain, primarySt?.attributes?.device_class, primarySt?.state, !!m?.icon)
       : d.icon;
@@ -5924,7 +6502,7 @@ class HouseplanCard extends LitElement {
     // emergencies (leak/smoke/gas/CO/siren) pulse red regardless of display mode
     const alarm = this._config?.live_states && !d.hidden
       && isAlarmState(domain, primarySt?.attributes?.device_class, primarySt?.state);
-    const active = ripple && !d.hidden && !!d.primary && isActiveState(this.hass.states[d.primary]?.state);
+    const active = ripple && !d.hidden && !!actEid && isActiveState(this.hass.states[actEid]?.state);
     const scale = Number(m?.size) > 0 ? Number(m!.size) : 1;
     const angle = Number(m?.angle) || 0;
     const rScale = Number(m?.ripple_size) > 0 ? Number(m!.ripple_size) : 3;
@@ -6420,8 +6998,7 @@ class HouseplanCard extends LitElement {
   /** Perpendicular dashed tick through the wall's center while a dragged opening
    * sits exactly in the middle — same look as the alignment guides. Length is
    * about the wall stroke (2.5) × 6 to each side. */
-  private _renderOpeningCenterTick(): TemplateResult {
-    const gd = this._opMeasure!.guide!;
+  private _renderOpeningCenterTick(gd: { x: number; y: number; angle: number }): TemplateResult {
     const rad = ((gd.angle + 90) * Math.PI) / 180;
     const half = 2.5 * 6;
     return svg`<line class="alignline opcentertick"
@@ -6662,15 +7239,38 @@ class HouseplanCard extends LitElement {
     </div>`;
   }
 
+  /** Adaptive grid density for the current view (docs/CANVAS.md §7):
+   *  which multiple of the drawing pitch is still legible on screen, and
+   *  which coarser one carries the accent dots. */
+  private _gridLevels(): { fine: number; coarse: number } | null {
+    const stage = this._stageEl;
+    const v = this._viewOr(this._baseVb());
+    const px = stage && stage.clientWidth && v.w ? stage.clientWidth / v.w : 1;
+    return gridLevels(this._gridPitch, px);
+  }
+
   private _renderMarkupDefs(_vb: number[]): TemplateResult {
-    const g = this._gridPitch;
-    const dotR = g * 0.14;
+    const lv = this._gridLevels();
+    if (!lv) return svg`<defs></defs>` as unknown as TemplateResult;
+    const g = this._gridPitch * lv.fine;
+    const G = this._gridPitch * lv.coarse;
+    const dotR = this._gridPitch * lv.fine * 0.14;
+    // Two patterns, CAD-style: the fine dots thin out as you zoom away
+    // (gridLevels drops whole decades of them) while every coarse node keeps
+    // a bigger, darker dot, so the eye never loses the scale reference.
     return svg`<defs>
         <pattern id="hp-grid" x="0" y="0" width="${g}" height="${g}" patternUnits="userSpaceOnUse">
           <circle cx="0" cy="0" r="${dotR}" class="griddot"></circle>
           <circle cx="${g}" cy="0" r="${dotR}" class="griddot"></circle>
           <circle cx="0" cy="${g}" r="${dotR}" class="griddot"></circle>
           <circle cx="${g}" cy="${g}" r="${dotR}" class="griddot"></circle>
+        </pattern>
+        <pattern id="hp-grid-major" x="0" y="0" width="${G}" height="${G}" patternUnits="userSpaceOnUse">
+          <rect width="${G}" height="${G}" fill="url(#hp-grid)"></rect>
+          <circle cx="0" cy="0" r="${dotR * 2.1}" class="griddot major"></circle>
+          <circle cx="${G}" cy="0" r="${dotR * 2.1}" class="griddot major"></circle>
+          <circle cx="0" cy="${G}" r="${dotR * 2.1}" class="griddot major"></circle>
+          <circle cx="${G}" cy="${G}" r="${dotR * 2.1}" class="griddot major"></circle>
         </pattern>
       </defs>`;
   }
@@ -6683,8 +7283,11 @@ class HouseplanCard extends LitElement {
       : this._segments;
     const path = this._path;
     const g = this._gridPitch;
+    const view = this._viewOr(this._baseVb());
     return svg`
-      <rect x="${vb[0]}" y="${vb[1]}" width="${vb[2]}" height="${vb[3]}" fill="url(#hp-grid)" pointer-events="none"></rect>
+      ${this._gridLevels()
+        ? svg`<rect x="${view.x}" y="${view.y}" width="${view.w}" height="${view.h}" fill="url(#hp-grid-major)" pointer-events="none"></rect>`
+        : nothing}
       ${segs.map((s) => svg`<line class="seg" x1="${s[0]}" y1="${s[1]}" x2="${s[2]}" y2="${s[3]}"></line>`)}
       ${path.length > 1
         ? svg`<polyline class="pathline" points="${path.map((p) => p.join(',')).join(' ')}"></polyline>`
@@ -6993,7 +7596,8 @@ class HouseplanCard extends LitElement {
           <label>${this._t('marker.tap_label')}</label>
           <select class="areasel"
             @change=${(e: Event) => (this._markerDialog = { ...d, tapAction: (e.target as HTMLSelectElement).value })}>
-            ${TAP_ACTIONS.map((v) => [v, 'tap.' + v.replace('-', '_')] as const).map(
+            ${TAP_ACTIONS.filter((v) => v !== 'cover' || this._bindingCoverTap(d.binding))
+              .map((v) => [v, 'tap.' + v.replace('-', '_')] as const).map(
               ([v, k]) => html`<option value=${v} ?selected=${(d.tapAction || d.defaultTap) === v}>${this._t(k as any)}</option>`,
             )}
           </select>
@@ -7026,7 +7630,7 @@ class HouseplanCard extends LitElement {
                     : nothing}`;
               })()
             : nothing}
-          ${d.tapAction === 'run' || d.tapAction === 'toggle' || (!d.tapAction && d.defaultTap === 'toggle')
+          ${d.tapAction === 'run' || d.tapAction === 'toggle' || d.tapAction === 'cover' || (!d.tapAction && d.defaultTap === 'toggle')
             ? html`<label class="srcrow" title=${this._t('marker.tap_confirm_tip')}>
                 ${this._boolInput(d.tapConfirm, (v) => (this._markerDialog = { ...d, tapConfirm: v }))}
                 <span>${this._t('marker.tap_confirm')}</span>
@@ -7127,7 +7731,9 @@ class HouseplanCard extends LitElement {
             ${this._rangeInput(0.5, 3, 0.1, d.size, (n) => (this._markerDialog = { ...d, size: n }))}
             <span class="opv">×${d.size.toFixed(1)}</span>
             <span class="opl">${this._t('marker.angle_label')}</span>
-            ${this._rangeInput(0, 350, 10, d.angle, (n) => (this._markerDialog = { ...d, angle: n }))}
+            ${''/* 5 degrees, not 10 (owner 2026-08-03): a marker often has to
+                   line up with a wall that is not on a 10-degree grid. */}
+            ${this._rangeInput(0, 355, 5, d.angle, (n) => (this._markerDialog = { ...d, angle: n }))}
             <span class="opv">${d.angle}°</span>
           </div>
 

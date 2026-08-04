@@ -67,6 +67,28 @@ only — no entities are created, no services are called.
   daytime room fills stay readable. Transitions are a CSS
   background/filter transition tens of seconds long;
   `prefers-reduced-motion` gets the current colors statically.
+- **Glide, but never lag behind reality** (owner 2026-08-04: «цвет фона
+  не меняется сам с течением времени суток, только после
+  обновления страницы»). The sky colour and the plan dimming are
+  delivered by a 45 s CSS transition, and a CSS transition only advances
+  while the card is being PAINTED. A card that was not painting — a
+  background tab, another dashboard view, a sleeping wall tablet, an
+  editor session — comes back holding a stale sky and then crawls toward
+  the truth 45 s at a time; a page reload, by contrast, paints the right
+  colour outright, because a freshly mounted element has nothing to
+  transition FROM. So the card measures the gap: HA refreshes `sun.sun`
+  every ~4 minutes by day, i.e. ≤1° per update, and anything from
+  `SKY_SNAP_DEG` = 3° up therefore means "we were not watching". Such a
+  step is applied with `transition: none` for a single frame
+  (`.stage.daynight.skysnap`, released on the next
+  `requestAnimationFrame`); everything smaller keeps the 45 s breathing.
+  `visibilitychange → visible` arms the catch-up outright.
+- The elevation the sky is computed from is rounded to 0.1°
+  (`skyElevation()`) — finer than the eye can tell across a 45 s glide,
+  and it keeps `dayPhase` (and the style attribute lit has to commit)
+  from churning on every `hass` tick. The wedge GEOMETRY keeps its own,
+  coarser memo: the two have deliberately different granularity — the
+  sky is cheap, the polygon clipping is not.
 - The UI is a two-option selector; the color picker shows only for
   `'static'`.
 - Backend validation: `In(['static', 'daynight'])` at both levels.
@@ -105,15 +127,85 @@ when BOTH hold:
   toward the sun is positive (the sun actually faces this window).
 
 The wedge is a quadrilateral cast from the window's span along the
-direction AWAY from the sun (light falls inward), clipped by the
+direction AWAY from the sun (light falls inward) and cut off
+PERPENDICULAR to the ray (see «Dissolving» below), clipped by the
 room's polygon (`polyclip` intersection, the same dependency
 `src/resize.ts` already uses). Its length is `k(elevation)` in window
-lengths: ~2.5 at sunrise/sunset tapering to ~0.8 at the zenith
-(`0.8 + 1.7·(1 − elevation/90)^1.6`). A linear gradient runs bright at
-the window and dissolves inward; the color is warm orange while
-`elevation < 10°` and neutral by day; peak opacity is modest (~0.18 —
-two overlapping wedges never exceed a readable ceiling). Near the
-horizon the opacity ramps in over the first ~2° so wedges never pop.
+lengths: ~1.75 at sunrise/sunset tapering to ~0.56 at the zenith
+(`0.56 + 1.19·(1 − elevation/90)^1.6` — the v1.56 curve
+`0.8 + 1.7·(1 − elevation/90)^1.6` times `RAY_LENGTH_K` = 0.7, owner
+2026-08-04: «лучи от солнца сделать короче на 30%»; scaling the whole
+curve keeps the "a low sun reaches much further" shape intact). The
+color is warm orange while `elevation < 10°` and neutral by day; peak
+opacity is `RAY_MAX_ALPHA` = 0.30 (owner 2026-08-03: «лучи поярче,
+иногда плохо видны» — raised from 0.18; two overlapping wedges
+still stay under a readable ceiling on white paper and on the dark glow
+canvas alike).
+
+### Dissolving — along the ray only (owner 2026-08-04)
+
+Two rounds with the owner on the same day:
+
+1. «Проверить, чтобы они всегда плавно рассеивались (сейчас есть
+   ощущение, что они упираются во что-то невидимое)» — the wedge was
+   ending on a visible line;
+2. «С лучами солнца ты сделал фигню — не надо размывать их боковые
+   грани» — the first answer to (1) was a Gaussian blur over the whole
+   wedge, which feathered the SIDES too. Wrong: a shaft of sunlight
+   through a window has crisp sides. Only its reach fades.
+
+So the falloff is one-dimensional: **along the ray, from the glass
+inward, and nothing else.** The contract:
+
+- the gradient spans the FULL wedge length (`x1,y1` at the glass,
+  `x2,y2` exactly `len` away), so geometry and gradient always describe
+  the same shaft — but its stops (`rayStops()`) ease out to **zero at
+  `RAY_FADE_END` = 85 %** of that length: `1 → .86 → .60 → .32 → .10
+  → 0`. The last 15 % of every wedge is guaranteed empty, so a shaft
+  that ends in mid-air has nothing left to draw an edge with;
+- `rayQuad()` therefore ends the wedge ON an iso-alpha line of that
+  gradient: both sides are extruded until they reach the same distance
+  `len` ALONG `dir`, so the far edge is perpendicular to the RAY, not
+  parallel to the wall. This is what killed the old bright kerb. A
+  parallelogram (equal extrusion of both ends) has its far edge
+  parallel to the WALL, while the gradient's iso-alpha lines are square
+  to the sun; for any sun that does not face the glass head-on the two
+  disagree and one far corner sits at offset `1 − 0.5/k` — still lit
+  (~0.71 at a low sun, ~0.11 at a high one). That corner was the
+  straight bright kerb hanging in mid-floor;
+- the two SIDES carry no falloff at all, on purpose. They are hard
+  lines, because that is what light through a window looks like. There
+  is **no filter, no `feGaussianBlur`, no `clip-path`** anywhere in the
+  sun layer — the polygons arrive from `computeSunRays()` already
+  intersected with the room, so a wall stops the light by geometry;
+- where the room outline does cut a still-lit shaft (the opposite wall,
+  the inner corner of an L, an OPEN boundary) the edge stays crisp:
+  that is light landing on a wall, and blurring it was the mistake.
+
+Clipping by the room is unchanged; only the visible edge changed.
+
+### The 3° threshold and the 2-second fade
+
+Wedge opacity does NOT depend on elevation any more — the old ramp-in
+over the first ~2° is gone. The contract (owner 2026-08-03) is a hard
+threshold:
+
+- `elevation < 3°` → NO rays at all;
+- `elevation ≥ 3°` → rays at full strength (`rayPeakAlpha`, cloud cover
+  being the only multiplier).
+
+Crossing the threshold is animated, but on the LAYER, never on the
+geometry: the `<g class="sunlayer">` fades in with `hp-sunfade-in` and
+out with `hp-sunfade-out`, both exactly 2 s (`RAY_FADE_MS` in
+`src/sun.ts` must stay in sync with `styles.ts`). To let the fade-out
+play at all, the card keeps the layer mounted with `.out` for those two
+seconds and only then drops it. `prefers-reduced-motion: reduce` skips
+the animation entirely — the rays are simply there or simply gone.
+
+Everything else that removes wedges — leaving view mode, switching the
+feature off, night (`elevation ≤ 0`), rain — is instant: those are not
+threshold crossings, and a wedge lingering while you enter the editor
+would just be a bug.
 
 Layer order: ABOVE room fills (and the glow layer), BELOW devices and
 labels (those live in the HTML `devlayer` anyway). Night
@@ -165,3 +257,13 @@ Backend validation: string or null.
 - `custom_components/houseplan/validation.py` — the four settings at
   both levels; tests in `tests_backend/test_validation.py`.
 - `demo/smoke_sun.mjs` — end-to-end behaviour against the demo rig.
+- `demo/smoke_sun_soft.mjs` — the −30 % reach and the "dissolves along
+  the ray only" contract: the gradient spans the wedge and dies at
+  85 %, the sides are sharp (no filter on the wedge, no
+  `feGaussianBlur` at all), and at an oblique sun nothing is drawn past
+  the end of the gradient — the kerb cannot come back.
+- `demo/smoke_sun_live_bg.mjs` — the sky follows `sun.sun` on a plain
+  `hass` tick with no reload, asserted on the COMPUTED background of the
+  stage; small steps still glide, big ones catch up at once.
+- `demo/shot_sun_short.mjs` — stills at a low and a high sun
+  (`node demo/shot_sun_short.mjs <outdir> <prefix>`).

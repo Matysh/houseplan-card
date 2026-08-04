@@ -58,4 +58,33 @@ const out = await page.evaluate(async () => {
   c._cfgEpoch++; c._regSignature = ''; c._maybeRebuildDevices();
   return o;
 });
-await finish(browser, checkAll(out));
+checkAll(out);
+
+// Шаг угла в диалоге устройства — 5°, а не 10° (владелец, 2026-08-03):
+// значок часто надо выровнять по стене, которая не лежит на сетке в 10°.
+const out3 = await page.evaluate(async () => {
+  const o = {};
+  const c = window.__card;
+  const sr = () => c.shadowRoot || c.renderRoot;
+  c._setMode('devices'); await c.updateComplete;
+  const dev = c._devices.find((d) => d.space === 'f1');
+  c._openMarkerDialog(dev); await c.updateComplete;
+  // строка «размер · угол»: два ползунка, второй — угол
+  const rows = [...sr().querySelectorAll('.dialog .colorrow')];
+  const row = rows.find((r) => r.textContent.includes('°'));
+  const ctl = [...row.querySelectorAll('ha-slider, input[type=range]')];
+  const stepOf = (el) => Number(el.step ?? el.getAttribute('step'));
+  const maxOf = (el) => Number(el.max ?? el.getAttribute('max'));
+  o.angleStepIs5 = ctl.length === 2 && stepOf(ctl[1]) === 5;
+  o.angleReaches355 = maxOf(ctl[1]) === 355;
+  o.sizeStepUnchanged = stepOf(ctl[0]) === 0.1;
+  // и значение реально ложится на 5°
+  ctl[1].value = 35;
+  ctl[1].dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+  await c.updateComplete;
+  o.angle35Applied = c._markerDialog.angle === 35;
+  c._markerDialog = null; await c.updateComplete;
+  c._setMode('view'); await c.updateComplete;
+  return o;
+});
+await finish(browser, checkAll(out3));

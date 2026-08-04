@@ -15,7 +15,7 @@ import {
   contentUrl, chunk, referencedContentUrls, MAX_SIGN_PATHS,
   interiorPoint,
   segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointOnBoundary, pointStrictlyInside, roomsOverlap,
-  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, openingShoulders, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, poleOfInaccessibility, runServiceFor, TOGGLE_SAFE_DOMAINS } from '../test-build/logic.js';
+  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, openingShoulders, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, poleOfInaccessibility, runServiceFor, TOGGLE_SAFE_DOMAINS, coverService, coverMoving, coverEntityOf } from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
 } from '../test-build/rules.js';
@@ -245,7 +245,7 @@ test('spaceDisplayOf: defaults differ for spaces with and without a plan', () =>
   assert.equal(s.opacity, 1);
   assert.equal(s.fill, 'lqi');
   const g = spaceDisplayOf({ settings: { room_color: 'javascript:alert(1)', fill_mode: 'weird' } });
-  assert.equal(g.color, '#3ea6ff');
+  assert.equal(g.color, '#55606c'); // dark-grey default since 2026-08-03
   assert.equal(g.fill, 'none');
 });
 
@@ -529,6 +529,110 @@ test('stateIcon: doors/locks/bulbs reflect state; custom icons and outages never
   assert.equal(stateIcon('mdi:door', 'binary_sensor', 'door', 'unavailable', false), 'mdi:door');
   assert.equal(stateIcon('mdi:custom', 'lock', undefined, 'unlocked', true), 'mdi:custom'); // user icon wins
   assert.equal(stateIcon('mdi:cctv', 'camera', undefined, 'recording', false), 'mdi:cctv'); // unknown pair
+});
+
+test('stateIcon: covers morph by device_class (owner 2026-08-03)', () => {
+  assert.equal(stateIcon('mdi:blinds', 'cover', 'blind', 'closed', false), 'mdi:blinds');
+  assert.equal(stateIcon('mdi:blinds', 'cover', 'blind', 'open', false), 'mdi:blinds-open');
+  assert.equal(stateIcon('mdi:window-shutter', 'cover', 'shutter', 'open', false), 'mdi:window-shutter-open');
+  assert.equal(stateIcon('mdi:window-shutter', 'cover', 'shutter', 'closed', false), 'mdi:window-shutter');
+  assert.equal(stateIcon('mdi:curtains', 'cover', 'curtain', 'closed', false), 'mdi:curtains-closed');
+  assert.equal(stateIcon('mdi:curtains', 'cover', 'curtain', 'open', false), 'mdi:curtains');
+  // travelling covers show where they are HEADED: closing keeps the open art
+  assert.equal(stateIcon('mdi:blinds', 'cover', 'blind', 'opening', false), 'mdi:blinds-open');
+  assert.equal(stateIcon('mdi:blinds', 'cover', 'blind', 'closing', false), 'mdi:blinds-open');
+  // no state at all — never morph, never guess
+  assert.equal(stateIcon('mdi:blinds', 'cover', 'blind', 'unknown', false), 'mdi:blinds');
+  assert.equal(stateIcon('mdi:blinds', 'cover', 'blind', 'unavailable', false), 'mdi:blinds');
+  assert.equal(stateIcon('mdi:custom', 'cover', 'blind', 'open', true), 'mdi:custom'); // user icon wins
+  // no device_class: only a known base icon morphs, an unrelated one stays
+  assert.equal(stateIcon('mdi:blinds', 'cover', undefined, 'open', false), 'mdi:blinds-open');
+  assert.equal(stateIcon('mdi:window-shutter', 'cover', null, 'closed', false), 'mdi:window-shutter');
+  assert.equal(stateIcon('mdi:sofa', 'cover', undefined, 'open', false), 'mdi:sofa');
+});
+
+test('stateIcon: a cover morphs for EVERY class, both ways (owner 2026-08-04)', () => {
+  // With the «открыто» plate gone from covers, the morph is the only signal —
+  // so no class may map both states to the same glyph, and the icons the card
+  // itself hands out (rules.ts) have to morph even without a device_class.
+  const CLASSES = ['blind', 'shade', 'shutter', 'curtain', 'window', 'awning',
+    'door', 'garage', 'gate', 'damper'];
+  for (const dc of CLASSES) {
+    const closed = stateIcon('mdi:chip', 'cover', dc, 'closed', false);
+    const open = stateIcon('mdi:chip', 'cover', dc, 'open', false);
+    assert.notEqual(closed, open, `${dc}: closed and open share one icon`);
+    // ajar and travelling all read as OPEN (HA reports a positioned cover 'open')
+    assert.equal(stateIcon('mdi:chip', 'cover', dc, 'opening', false), open);
+    assert.equal(stateIcon('mdi:chip', 'cover', dc, 'closing', false), open);
+  }
+  assert.equal(stateIcon('mdi:chip', 'cover', 'awning', 'closed', false), 'mdi:awning-outline');
+  assert.equal(stateIcon('mdi:chip', 'cover', 'awning', 'open', false), 'mdi:awning');
+  // no device_class: the auto icons of rules.ts morph within their own family
+  assert.equal(stateIcon('mdi:roller-shade', 'cover', undefined, 'closed', false), 'mdi:roller-shade-closed');
+  assert.equal(stateIcon('mdi:roller-shade-closed', 'cover', undefined, 'open', false), 'mdi:roller-shade');
+  assert.equal(stateIcon('mdi:garage-variant', 'cover', undefined, 'open', false), 'mdi:garage-open-variant');
+  assert.equal(stateIcon('mdi:blinds-horizontal', 'cover', null, 'closed', false), 'mdi:blinds-horizontal-closed');
+  // a HAND-PICKED icon morphs only inside the pair it was picked from — never
+  // traded for another family, never touched outside the cover domain
+  assert.equal(stateIcon('mdi:curtains', 'cover', 'blind', 'closed', true), 'mdi:curtains-closed');
+  assert.equal(stateIcon('mdi:curtains-closed', 'cover', undefined, 'open', true), 'mdi:curtains');
+  assert.equal(stateIcon('mdi:sofa', 'cover', 'blind', 'open', true), 'mdi:sofa');
+  assert.equal(stateIcon('mdi:door-closed', 'binary_sensor', 'door', 'on', true), 'mdi:door-closed');
+  assert.equal(stateIcon('mdi:lock', 'lock', undefined, 'unlocked', true), 'mdi:lock');
+});
+
+test('coverService: closed→open, open→close, travelling→stop (owner 2026-08-03)', () => {
+  assert.equal(coverService('closed'), 'open_cover');
+  assert.equal(coverService('open'), 'close_cover');       // incl. ajar: HA reports 'open'
+  assert.equal(coverService('opening'), 'stop_cover');     // a tap during travel STOPS
+  assert.equal(coverService('closing'), 'stop_cover');
+  assert.equal(coverService('unknown'), 'toggle');         // no readable state → plain toggle
+  assert.equal(coverService('unavailable'), 'toggle');
+  assert.equal(coverService(null), 'toggle');
+  assert.equal(coverService(undefined), 'toggle');
+});
+
+test('coverEntityOf: the cover among ALL entities, primary or not (owner 2026-08-04)', () => {
+  // the owner's Aqara E1 curtain driver, entity for entity: the cover is
+  // hidden by the integration and sits BEHIND the service switch, so
+  // primaryEntity picks the switch — the tap has to look wider than that
+  const aqara = [
+    'cover.office_curtain', 'sensor.office_curtain_battery',
+    'switch.office_curtain_reverse', 'sensor.office_curtain_motor_state',
+  ];
+  assert.equal(coverEntityOf(aqara), 'cover.office_curtain');
+  assert.equal(coverEntityOf(['switch.a', 'cover.b']), 'cover.b'); // order does not matter
+  assert.equal(coverEntityOf(['cover.first', 'cover.second']), 'cover.first');
+  assert.equal(coverEntityOf(['light.only']), null);
+  assert.equal(coverEntityOf([]), null);
+  assert.equal(coverEntityOf(null), null);
+  assert.equal(coverEntityOf(undefined), null);
+  // a `cover_something` sensor is not a cover
+  assert.equal(coverEntityOf(['sensor.cover_position']), null);
+});
+
+test('coverMoving: only opening/closing breathe', () => {
+  assert.equal(coverMoving('opening'), true);
+  assert.equal(coverMoving('closing'), true);
+  assert.equal(coverMoving('open'), false);
+  assert.equal(coverMoving('closed'), false);
+  assert.equal(coverMoving('unknown'), false);
+  assert.equal(coverMoving(null), false);
+});
+
+test("tap action 'cover': explicit-only, cover-only, never a guarded class", () => {
+  assert.equal(resolveTapAction('cover', null, 'cover', 'curtain'), 'cover');
+  assert.equal(resolveTapAction('cover', null, 'cover', 'blind'), 'cover');
+  assert.equal(resolveTapAction('cover', null, 'cover', null), 'cover'); // no class = a plain cover
+  // the guarded classes degrade to the info card even if the value was saved
+  assert.equal(resolveTapAction('cover', null, 'cover', 'garage'), 'info');
+  assert.equal(resolveTapAction('cover', null, 'cover', 'door'), 'info');
+  assert.equal(resolveTapAction('cover', null, 'cover', 'gate'), 'info');
+  // and it is meaningless anywhere but the cover domain
+  assert.equal(resolveTapAction('cover', null, 'light'), 'info');
+  assert.equal(resolveTapAction('cover', null, 'lock'), 'info');
+  // never a card-wide default (like 'run'): it needs a conscious per-marker choice
+  assert.equal(resolveTapAction(null, 'cover', 'cover', 'curtain'), 'info');
 });
 
 test('lightColorOf: rgb of an on light; off/unavailable/no-color → null', () => {

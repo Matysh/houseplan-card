@@ -22,6 +22,7 @@ const { page, browser } = await launch({ width: 820, height: 760 });
 const rec = await page.evaluate(async () => {
   const out = {};
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  customElements.get('houseplan-card')?._warmBootReset?.(); // DEV-B703: this scenario simulates a COLD first open — forget the page's warm re-mount memo
   const c = document.createElement('houseplan-card');
   c.setConfig({ type: 'custom:houseplan-card' });
   c.hass = window.__card.hass;
@@ -48,6 +49,7 @@ const rec = await page.evaluate(async () => {
   out.veilGone = !sr().querySelector('.bootveil');
 
   // A2: a second detach DURING the fade must not leave a zombie veil either
+  customElements.get('houseplan-card')?._warmBootReset?.(); // DEV-B703: this scenario simulates a COLD first open — forget the page's warm re-mount memo
   const c2 = document.createElement('houseplan-card');
   c2.setConfig({ type: 'custom:houseplan-card' });
   c2.hass = window.__card.hass;
@@ -72,6 +74,7 @@ const outB = {};
 for (const shiftMs of shifts) {
   const res = await page.evaluate(async (shiftAt) => {
     const out = {};
+    customElements.get('houseplan-card')?._warmBootReset?.(); // DEV-B703: this scenario simulates a COLD first open — forget the page's warm re-mount memo
     const spacer = document.createElement('div');
     spacer.style.cssText = 'height:0px';
     const c = document.createElement('houseplan-card');
@@ -133,6 +136,7 @@ for (const shiftMs of shifts) {
 const late = await page.evaluate(async () => {
   const out = {};
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  customElements.get('houseplan-card')?._warmBootReset?.(); // DEV-B703: this scenario simulates a COLD first open — forget the page's warm re-mount memo
   const spacer = document.createElement('div');
   spacer.style.cssText = 'height:0px';
   const c = document.createElement('houseplan-card');

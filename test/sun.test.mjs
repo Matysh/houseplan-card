@@ -5,6 +5,9 @@ import {
   isExteriorWall, windowWallInfo, windowLit,
   rayLength, rayQuad, clipToRoom, computeSunRays,
   rayAlpha, rayColor, cloudFactor, RAY_MAX_ALPHA,
+  raysVisible, rayPeakAlpha, RAY_ELEVATION_MIN, RAY_FADE_MS,
+  RAY_LENGTH_K, RAY_FADE_END, rayStops,
+  SKY_SNAP_DEG, skyNeedsSnap, skyElevation,
   northDegOf, bgModeOf, sunRaysOn, weatherEntityOf, sunStateOf,
 } from '../test-build/sun.js';
 
@@ -101,12 +104,94 @@ test('windowLit: above the horizon AND facing the sun', () => {
   assert.ok(!windowLit(east, sunDirOnPlan(90, 0), -5));  // night
 });
 
-test('rayLength: longest at the horizon, shortest at noon, monotonic', () => {
-  assert.ok(near(rayLength(0), 2.5, 1e-9));
-  assert.ok(near(rayLength(90), 0.8, 1e-9));
+test('rayLength: 30% shorter than v1.56 (owner 2026-08-04), same shape', () => {
+  // the old curve, kept here so the -30% stays a fact and not a memory
+  const before = (e) => 0.8 + 1.7 * Math.pow(1 - Math.min(90, Math.max(0, e)) / 90, 1.6);
+  assert.equal(RAY_LENGTH_K, 0.7);
+  assert.ok(near(rayLength(0), 1.75, 1e-9));   // was 2.5
+  assert.ok(near(rayLength(90), 0.56, 1e-9));  // was 0.8
+  for (const e of [-5, 0, 3, 10, 30, 45, 60, 89, 90, 120]) {
+    assert.ok(near(rayLength(e), before(e) * 0.7, 1e-12), 'exactly 70% at ' + e);
+  }
+  // the shape survives: a low sun still reaches much further than a high one
   assert.ok(rayLength(10) > rayLength(30));
   assert.ok(rayLength(30) > rayLength(60));
-  assert.ok(near(rayLength(-5), 2.5, 1e-9)); // clamped
+  assert.ok(near(rayLength(-5), 1.75, 1e-9)); // clamped
+});
+
+test('rayStops: the shaft is fully dissolved BEFORE its own far edge', () => {
+  const stops = rayStops();
+  assert.ok(near(stops[0][0], 0) && near(stops[0][1], 1), 'brightest at the glass');
+  assert.equal(RAY_FADE_END, 0.85);
+  // offsets are sorted, alphas never rise, and the tail is a hard zero
+  for (let i = 1; i < stops.length; i++) {
+    assert.ok(stops[i][0] > stops[i - 1][0] || stops[i][0] === 1, 'offsets ascend');
+    assert.ok(stops[i][1] <= stops[i - 1][1], 'alpha never brightens inward');
+  }
+  assert.ok(near(stops[stops.length - 1][0], 1), 'the gradient spans the FULL wedge');
+  for (const [off, k] of stops) {
+    if (off >= RAY_FADE_END) assert.equal(k, 0, 'nothing left at/after ' + RAY_FADE_END);
+    else assert.ok(k > 0, 'still lit at ' + off);
+  }
+  // half gone well before the middle — the eye must not find a straight edge
+  const half = stops.find(([, k]) => k <= 0.5);
+  assert.ok(half[0] <= 0.65, 'past half-dark by two thirds of the way');
+});
+
+test('skyNeedsSnap / skyElevation: glide with the sun, jump when we were away', () => {
+  assert.equal(SKY_SNAP_DEG, 3);
+  assert.equal(skyNeedsSnap(null, 12), true);        // nothing painted yet
+  assert.equal(skyNeedsSnap(NaN, 12), true);
+  assert.equal(skyNeedsSnap(12, 12), false);
+  assert.equal(skyNeedsSnap(12, 13), false);         // a real 4-minute sun step
+  assert.equal(skyNeedsSnap(12, 14.9), false);
+  assert.equal(skyNeedsSnap(12, 15), true);          // ~12 minutes unwatched
+  assert.equal(skyNeedsSnap(12, 9), true);           // and in both directions
+  assert.equal(skyElevation(12.3456), 12.3);
+  assert.equal(skyElevation(-0.04), -0);
+  assert.equal(skyElevation('nonsense'), 0);
+});
+
+test('rayQuad: sharp sides, far edge square to the RAY (owner 2026-08-04)', () => {
+  // «не надо размывать их боковые грани» — the shaft's sides are hard lines,
+  // so the only thing that may dissolve it is the gradient along the ray. That
+  // works only if the wedge ends exactly ON an iso-alpha line: the far edge is
+  // perpendicular to `dir`, not parallel to the wall.
+  const a = [100, 100];
+  const b = [100, 200];            // a window along +y
+  const len = 300;
+  for (const deg of [0, 20, 45, 70, -35, -60]) {
+    const rad = (deg * Math.PI) / 180;
+    const dir = [Math.cos(rad), Math.sin(rad)];   // oblique sun in most cases
+    const q = rayQuad(a, b, dir, len);
+    assert.equal(q.length, 4);
+    // the near edge is still the window itself
+    assert.deepEqual(q[0], [100, 100]);
+    assert.deepEqual(q[1], [100, 200]);
+    // both sides run exactly along the ray — razor-sharp, never splayed
+    for (const [near0, far] of [[q[0], q[3]], [q[1], q[2]]]) {
+      const ex = far[0] - near0[0];
+      const ey = far[1] - near0[1];
+      const cross = ex * dir[1] - ey * dir[0];
+      assert.ok(Math.abs(cross) < 1e-9, 'side parallel to the ray at ' + deg);
+      assert.ok(ex * dir[0] + ey * dir[1] > 0, 'side runs away from the glass');
+    }
+    // ...and both far corners sit at the SAME distance along the ray, i.e. on
+    // one iso-alpha line of the gradient. This is what kills the bright kerb.
+    const mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+    const t = (p) => ((p[0] - mid[0]) * dir[0] + (p[1] - mid[1]) * dir[1]) / len;
+    assert.ok(near(t(q[2]), 1, 1e-9), 'far corner B at offset 1 at ' + deg);
+    assert.ok(near(t(q[3]), 1, 1e-9), 'far corner A at offset 1 at ' + deg);
+    // nothing is drawn past the end of the gradient
+    for (const p of q) assert.ok(t(p) <= 1 + 1e-9, 'no vertex past the gradient');
+    // the far edge really is square to the ray
+    const fx = q[2][0] - q[3][0];
+    const fy = q[2][1] - q[3][1];
+    assert.ok(Math.abs(fx * dir[0] + fy * dir[1]) < 1e-9, 'far edge ⊥ ray at ' + deg);
+  }
+  // head-on sun: the classic parallelogram, unchanged
+  const straight = rayQuad(a, b, [1, 0], len);
+  assert.deepEqual(straight, [[100, 100], [100, 200], [400, 200], [400, 100]]);
 });
 
 test('rayQuad + clipToRoom: the wedge is cut by the room outline', () => {
@@ -163,13 +248,37 @@ test('computeSunRays: rotating the compass swings the light to another window', 
   }
 });
 
-test('rayAlpha: capped, ramps in near the horizon, scaled by clouds', () => {
-  assert.equal(rayAlpha(0), 0);
+test('rayAlpha: nothing below 3°, full strength above (owner 2026-08-03)', () => {
+  // the old gradual ramp-in is gone: it is a threshold, not a fade
   assert.equal(rayAlpha(-3), 0);
-  assert.ok(near(rayAlpha(1), RAY_MAX_ALPHA / 2));
+  assert.equal(rayAlpha(0), 0);
+  assert.equal(rayAlpha(1), 0);
+  assert.equal(rayAlpha(2.99), 0);
+  assert.ok(near(rayAlpha(3), RAY_MAX_ALPHA));   // exactly at the threshold: on
+  assert.ok(near(rayAlpha(3.1), RAY_MAX_ALPHA));
   assert.ok(near(rayAlpha(30), RAY_MAX_ALPHA));
+  assert.ok(near(rayAlpha(89), RAY_MAX_ALPHA));  // no elevation shaping at all
+  // clouds still scale it, rain still kills it
   assert.ok(near(rayAlpha(30, 0.25), RAY_MAX_ALPHA * 0.25));
   assert.equal(rayAlpha(30, 0), 0);
+});
+
+test('raysVisible / rayPeakAlpha: the threshold and the cloud-only ceiling', () => {
+  assert.equal(RAY_ELEVATION_MIN, 3);
+  assert.equal(RAY_FADE_MS, 2000); // «ровно 2 секунды», mirrored in styles.ts
+  assert.equal(raysVisible(2.9), false);
+  assert.equal(raysVisible(3), true);
+  assert.equal(raysVisible(45), true);
+  assert.equal(raysVisible(-10), false);
+  // the peak is what the gradient uses while the layer fades — cloud only
+  assert.ok(near(rayPeakAlpha(), RAY_MAX_ALPHA));
+  assert.ok(near(rayPeakAlpha(1), RAY_MAX_ALPHA));
+  assert.ok(near(rayPeakAlpha(0.4), RAY_MAX_ALPHA * 0.4));
+  assert.equal(rayPeakAlpha(0), 0);
+});
+
+test('RAY_MAX_ALPHA is the brighter 0.3 ceiling (owner 2026-08-03)', () => {
+  assert.equal(RAY_MAX_ALPHA, 0.3);
 });
 
 test('rayColor: warm at the horizon, neutral by day', () => {
