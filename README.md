@@ -34,6 +34,9 @@ right on your Lovelace dashboard.
   virtual walls and a visual decor layer, all drawn with clicks; room resize
   by dragging walls, with live lengths and areas as you drag; smart
   alignment guides and a live ruler in real meters/feet.
+- 🖼 **A backdrop you can move and scale** — drag the floor-plan picture into
+  place and pull a corner to size it, with its real size in metres shown as
+  you drag, so the drawing and the photo of your plan finally line up.
 - 💡 **Lights toggle on click** out of the box; wall-switch markers can control
   whole groups of lights (works for dumb switches and stateless remotes too).
 - 🌒 **“Light sources” fill** — a dark house where every lit lamp casts a pool
@@ -185,7 +188,7 @@ for each floor (names prefilled, a plan image is asked for one by one; any floor
 
 ![Empty plan — prompt to add a space](docs/images/02-onboarding-empty.png)
 
-In the dialog, set a **name** (for example, "1st floor") and pick the background: **upload** a floor-plan image (SVG, PNG, JPG, WebP), **choose one already uploaded** to the server earlier, or select **"no background, I'll draw the rooms"** for a hand-drawn space. The canvas is always square; an image keeps its own proportions and is centred inside it.
+In the dialog, set a **name** (for example, "1st floor") and pick the background: **upload** a floor-plan image (SVG, PNG, JPG, WebP), **choose one already uploaded** to the server earlier, or select **"no background, I'll draw the rooms"** for a hand-drawn space. The canvas is infinite; an image keeps its own proportions and can be moved and resized at any time in the Background editor.
 
 ![Space creation dialog](docs/images/03-space-dialog.png)
 

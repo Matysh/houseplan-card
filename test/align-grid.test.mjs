@@ -129,3 +129,125 @@ test('far-out coordinates align just as well as near ones (infinite canvas)', ()
   for (const p of spaces[0].rooms[0].poly) { assert.ok(onGrid(p[0])); assert.ok(onGrid(p[1])); }
   assert.ok(report.moved >= 1);
 });
+
+// ---------------------------------------------------------------------------
+// AUD-158B1-01 — the confirmation promises an exact maximum before an action
+// with no undo, so the report must be an UPPER BOUND of what the run does.
+// ---------------------------------------------------------------------------
+
+/** What the run REALLY did, measured on the returned objects: the largest
+ *  displacement of any corner / vertex / end, in the centimetres of the space
+ *  it happened in. The report may never be smaller than this. */
+const reallyMovedCm = (before, after, cell = {}) => {
+  const cm = (sp) => (Number(sp?.cell_cm) > 0 ? Number(sp.cell_cm) : 5) * GRID_N;
+  let max = 0;
+  const hit = (d, sp) => { if (d * cm(sp) > max) max = d * cm(sp); };
+  const box = (a, b, sp) => {
+    const dx = Math.max(Math.abs(b.x - a.x), Math.abs((b.x + b.w) - (a.x + (a.w || 0))));
+    const dy = Math.max(Math.abs(b.y - a.y), Math.abs((b.y + b.h) - (a.y + (a.h || 0))));
+    hit(Math.hypot(dx, dy), sp);
+  };
+  before.forEach((sp, i) => {
+    const sq = after[i];
+    (sp.rooms || []).forEach((r, j) => {
+      const q = sq.rooms[j];
+      if (r.poly?.length) r.poly.forEach((p, k) => hit(Math.hypot(q.poly[k][0] - p[0], q.poly[k][1] - p[1]), sp));
+      else if (r.x != null) box(r, q, sp);
+    });
+    (sp.decor || []).forEach((d, j) => {
+      const q = sq.decor[j];
+      if (d.kind === 'line') {
+        hit(Math.hypot(q.x1 - d.x1, q.y1 - d.y1), sp);
+        hit(Math.hypot(q.x2 - d.x2, q.y2 - d.y2), sp);
+      } else if (d.w != null) box(d, q, sp);
+      else hit(Math.hypot(q.x - d.x, q.y - d.y), sp);
+    });
+    (sp.openings || []).forEach((o, j) => {
+      const q = sq.openings[j];
+      const h = (Number(o.length) || 0) / 2, R = Math.PI / 180;
+      const e = (px, py, a, s) => [px + s * Math.cos(a * R) * h, py + s * Math.sin(a * R) * h];
+      const same = Math.max(
+        Math.hypot(...e(q.x, q.y, q.angle, 1).map((v, k) => v - e(o.x, o.y, o.angle, 1)[k])),
+        Math.hypot(...e(q.x, q.y, q.angle, -1).map((v, k) => v - e(o.x, o.y, o.angle, -1)[k])));
+      const flip = Math.max(
+        Math.hypot(...e(q.x, q.y, q.angle, -1).map((v, k) => v - e(o.x, o.y, o.angle, 1)[k])),
+        Math.hypot(...e(q.x, q.y, q.angle, 1).map((v, k) => v - e(o.x, o.y, o.angle, -1)[k])));
+      hit(Math.min(same, flip), sp);
+    });
+  });
+  return max;
+};
+
+test('AUD-158B1-01: the maximum is converted through the scale of ITS OWN space', () => {
+  const spaces = [
+    { id: 'first', cell_cm: 5, rooms: [{ id: 'a', poly: [[0.1, 0.1], [0.2, 0.1], [0.2, 0.2], [0.1, 0.2]] }] },
+    { id: 'second', cell_cm: 100, rooms: [{ id: 'b',
+      poly: [[0.2 + S / 2, 0.2], [0.3, 0.2], [0.3, 0.3], [0.2, 0.3]] }] },
+  ];
+  const { report } = alignAllToGrid(spaces, {});
+  // half a step of a 100 cm cell is 50 cm — NOT the 2.5 cm of the first floor
+  assert.ok(Math.abs(report.maxShiftCm - 50) < 1e-9, String(report.maxShiftCm));
+  assert.equal(report.maxSpace, 'second');
+});
+
+test('AUD-158B1-01: a rect thinner than one step is measured AFTER it is widened', () => {
+  const spaces = [{ id: 'f1', cell_cm: 5,
+    rooms: [{ id: 'r', x: 0.5, y: 0.5, w: 0.001, h: 0.001 }] }];
+  const before = JSON.parse(JSON.stringify(spaces));
+  const res = alignAllToGrid(spaces, {});
+  const real = reallyMovedCm(before, res.spaces);
+  assert.ok(res.report.maxShiftCm + 1e-9 >= real,
+    `promised ${res.report.maxShiftCm} cm, moved ${real} cm`);
+});
+
+test('AUD-158B1-01: a rect whose X and Y errors land on opposite corners', () => {
+  // origin off in X only, far corner off in Y only → the mixed corner moves by
+  // both at once, and that diagonal is the honest maximum
+  const spaces = [{ id: 'f1', cell_cm: 5,
+    rooms: [{ id: 'r', x: 0.25 + S * 0.4, y: 0.25, w: 0.1 - S * 0.4, h: 0.1 + S * 0.4 }] }];
+  const before = JSON.parse(JSON.stringify(spaces));
+  const res = alignAllToGrid(spaces, {});
+  assert.ok(Math.abs(res.report.maxShift - S * 0.4 * Math.SQRT2) < 1e-12,
+    String(res.report.maxShift / S));
+  assert.ok(res.report.maxShiftCm + 1e-9 >= reallyMovedCm(before, res.spaces));
+});
+
+test('AUD-158B1-01: the promise is an upper bound for the whole detuned plan', () => {
+  const cfg = detuned();
+  const before = JSON.parse(JSON.stringify(cfg.spaces));
+  const res = alignAllToGrid(cfg.spaces, detunedLayout());
+  assert.ok(res.report.maxShiftCm + 1e-9 >= reallyMovedCm(before, res.spaces),
+    `promised ${res.report.maxShiftCm} cm`);
+});
+
+// ---------------------------------------------------------------------------
+// AUD-158B1-02 — an opening whose only error is its angle
+// ---------------------------------------------------------------------------
+
+test('AUD-158B1-02: an angle-only correction is a change and can be applied', () => {
+  const spaces = [{ id: 'f1', cell_cm: 5,
+    rooms: [{ id: 'r1', poly: [[0.2, 0.2], [0.5, 0.2], [0.5, 0.5], [0.2, 0.5]] }],
+    openings: [{ id: 'o', type: 'window', x: 0.35, y: 0.2, angle: 90, length: 0.1 }] }];
+  const res = alignAllToGrid(spaces, {});
+  const o = res.spaces[0].openings[0];
+  assert.equal(o.x, 0.35);                 // the centre was already right…
+  assert.equal(o.y, 0.2);
+  assert.equal(o.angle, 0);                // …only the angle was wrong
+  assert.equal(res.changed, true, 'output differs but changed:false');
+  assert.equal(res.report.moved, 1);
+  assert.equal(res.report.rotated, 1);
+  assert.ok(res.report.maxShiftCm > 0);    // its ENDS really do move
+});
+
+test('AUD-158B1-02: turning an opening end over end is not a move', () => {
+  // 180 apart is the same segment on the same wall: it counts as a correction
+  // (the field is rewritten) but it displaces nothing
+  const spaces = [{ id: 'f1', cell_cm: 5,
+    rooms: [{ id: 'r1', poly: [[0.2, 0.2], [0.5, 0.2], [0.5, 0.5], [0.2, 0.5]] }],
+    openings: [{ id: 'o', type: 'window', x: 0.35, y: 0.2, angle: 180, length: 0.1 }] }];
+  const res = alignAllToGrid(spaces, {});
+  assert.equal(res.spaces[0].openings[0].angle, 0);
+  assert.equal(res.changed, true);
+  assert.equal(res.report.rotated, 1);
+  assert.equal(res.report.maxShiftCm, 0);
+});

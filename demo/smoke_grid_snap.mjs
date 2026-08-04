@@ -207,6 +207,50 @@ const out = await page.evaluate(async () => {
   o.secondRunOffersNoButton = !sr().querySelector('.dialogwrap .btn.on');
   c._alignDialog = null;
   await c.updateComplete;
+
+  // ---- 2c) the promise is an UPPER BOUND, in EACH space's own scale -----
+  // AUD-158B1-01: one normalised maximum converted through the first space's
+  // cell size promised 2.5 cm for a vertex that moved 50 cm on the floor above.
+  const MULTI = { spaces: [
+    { id: 'm1', title: 'Ground', cell_cm: 5, view_box: [0, 0, 1, 1],
+      rooms: [{ id: 'ma', name: 'A', area: 'living_room',
+        poly: [[0.1, 0.1], [0.3, 0.1], [0.3, 0.3], [0.1, 0.3]] }] },
+    { id: 'm2', title: 'Attic', cell_cm: 100, view_box: [0, 0, 1, 1],
+      // the ONLY off-grid vertex on the plan, and it is on the 100 cm floor
+      rooms: [{ id: 'mb', name: 'B', area: 'kitchen',
+        poly: [[0.2 + 1 / GRID_N / 2, 0.2], [0.4, 0.2], [0.4, 0.4], [0.2, 0.4]] }] },
+  ], markers: [], settings: {} };
+  c._serverCfg = JSON.parse(JSON.stringify(MULTI));
+  c._layout = {};
+  c._modelCache = null; c._frame = null; c._space = 'm1';
+  c.requestUpdate(); await c.updateComplete;
+  c._openAlignDialog(); await c.updateComplete;
+  const md = c._alignDialog;
+  o.alignPromiseUsesTheOwnScaleOfEachSpace = !!md && md.cm >= 50 && md.cm < 51;
+  o.alignPromiseNamesTheSpaceItBelongsTo = !!md && md.where === 'Attic'
+    && (sr().querySelector('.dialogwrap .body')?.textContent || '').includes('Attic');
+  c._alignDialog = null; await c.updateComplete;
+
+  // ---- 2d) an angle-only opening fix is offerable (AUD-158B1-02) --------
+  // its centre is already on the wall; only the stored angle is wrong, and the
+  // batch used to report "nothing to move" while returning a different plan
+  const TURN = { spaces: [{ id: 'a1', title: 'Flat', cell_cm: 5, view_box: [0, 0, 1, 1],
+    rooms: [{ id: 'r1', name: 'A', area: 'living_room',
+      poly: [[0.2, 0.2], [0.5, 0.2], [0.5, 0.5], [0.2, 0.5]] }],
+    openings: [{ id: 'oa', type: 'window', x: 0.35, y: 0.2, angle: 90, length: 0.1 }],
+  }], markers: [], settings: {} };
+  c._serverCfg = JSON.parse(JSON.stringify(TURN));
+  c._layout = {};
+  c._modelCache = null; c._frame = null; c._space = 'a1';
+  c.requestUpdate(); await c.updateComplete;
+  c._openAlignDialog(); await c.updateComplete;
+  const ad = c._alignDialog;
+  o.angleOnlyOpeningCounts = !!ad && ad.report.moved === 1 && ad.report.rotated === 1;
+  o.angleOnlyOpeningOffersTheButton = !!sr().querySelector('.dialogwrap .btn.on');
+  await c._runAlignToGrid();
+  await c.updateComplete;
+  o.angleOnlyOpeningIsActuallyFixed = c._serverCfg.spaces[0].openings[0].angle === 0;
+
   return o;
 });
 

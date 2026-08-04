@@ -429,12 +429,37 @@ Guarantees, all covered by `test/align-grid.test.mjs`:
 * every grid-bound element ends on a node; a rect's FAR corner too (a
   snapped *size* on an off-grid origin leaves the other side between
   the nodes);
-* an opening ends on its wall, at whole steps along it, inside it;
+* an opening ends on its wall, at whole steps along it, inside it, and
+  **with the wall's own angle** — the angle is written, so it is part of
+  the diff (AUD-158B1-02: an opening already on its wall with a wrong
+  angle used to be returned changed inside `changed: false`, which made
+  it unfixable);
 * a stray opening with no wall within 6 steps is left exactly where it
   is rather than teleported;
 * **idempotent**: a second run reports `moved: 0`, `changed: false`, and
   returns objects deep-equal to the first run's;
-* the report's `maxShift` never exceeds half a step diagonally.
+* the report is an **upper bound**, not a sample (AUD-158B1-01).
+
+### The report is a promise
+
+The confirmation is the only gate in front of an action with no undo, so
+`maxShift`/`maxShiftCm` must never be smaller than what the run does:
+
+* displacement is measured on the geometry **actually written back** —
+  all FOUR corners of a rect, minimum-size correction included. The two
+  corners nobody used to measure are exactly the two that can be worst:
+  they carry the X error of one side together with the Y error of the
+  other, which is √2 of either;
+* an opening is measured on its **ends**, flip-invariantly, so turning
+  it in place costs what it really costs and a 180° rewrite costs
+  nothing;
+* the maximum is accumulated in **centimetres**, each space through its
+  own `cell_cm`, and the report names the space it belongs to. One
+  normalised maximum converted through the *first* space's cell size
+  promised 2.5 cm for a vertex that moved 50 cm on a 100 cm floor;
+* the dialog rounds the last tenth **up** and, on a multi-space plan,
+  says which space the maximum is in; openings corrected in angle alone
+  are counted on a line of their own.
 
 There is no undo, and the dialog says so: the card keeps no snapshot of
 the previous geometry. Re-running the action does not undo it either —

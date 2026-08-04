@@ -1,10 +1,11 @@
 # Changelog
 
-## v1.58.0-beta.1 — 2026-08-04
+## v1.58.0 — 2026-08-04
 
-First pre-release of the 1.58 line: the backdrop picture becomes a
-movable, scalable object, the opaque plan sheet is redefined as the
-room contours, and the decor drawing tools stop stealing clicks.
+Minor release: the backdrop picture becomes a movable, scalable object,
+the opaque plan sheet is redefined as the room contours, the decor
+drawing tools stop stealing clicks, and «Align everything to the grid»
+tells the truth about what it is going to do.
 
 ### The backdrop picture can be moved and scaled (docs/BACKDROP.md)
 
@@ -42,6 +43,40 @@ room contours, and the decor drawing tools stop stealing clicks.
   over the plan must not block the picture's own drag.
 - «Выбрать» and «Стереть» are unchanged: shapes stay clickable there,
   which is where selecting and deleting belong.
+
+### «Align everything to the grid» keeps its promise (AUD-158B1-01)
+
+The action has no undo, so its confirmation dialog is the only safety
+there is — and it was understating the damage.
+
+- **The maximum shift is measured on the geometry that is actually
+  written**, not on an intermediate one. A rect was measured by its
+  origin and its far corner only — so the minimum-size correction that
+  widens a too-thin box afterwards went unmeasured, and the two corners
+  that carry the X error of one side together with the Y error of the
+  other were never looked at at all. An ordinary box could move √2
+  times further than promised; a box thinner than one grid step, much
+  further.
+- **Each space is converted through its own `cell_cm`.** The dialog
+  used to take one normalised maximum and multiply it by the cell size
+  of the FIRST space: a plan whose ground floor is drawn at 5 cm per
+  cell and whose attic is at 100 cm promised 2.5 cm for a vertex that
+  moved 50 cm. The report now carries the maximum in centimetres and
+  the space it belongs to, and the dialog names that space when there
+  is more than one.
+- The last tenth of a centimetre is rounded **up**: the promise can
+  never be smaller than the deed.
+
+### An opening whose only error is its angle can now be fixed (AUD-158B1-02)
+
+- A window sitting exactly on its wall but holding a wrong `angle` used
+  to come back as `changed: false` — the dialog said there was nothing
+  to move and offered no button, while the returned plan differed from
+  the one given. Such openings could never be aligned. The angle is
+  part of the diff now; the dialog counts them separately, and the
+  displacement is measured on the opening's ENDS, so turning it in
+  place is not free in the report either. Turning an opening end over
+  end (180°) is still counted as a correction but displaces nothing.
 
 ## v1.57.0 — 2026-08-04
 

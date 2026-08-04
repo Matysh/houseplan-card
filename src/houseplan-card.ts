@@ -54,14 +54,14 @@ import { cardStyles } from './styles';
 import {
   fitInSquare, planRect, contentBounds, spaceModels, contentFrame, contentItems, spaceFrame,
   spaceCenter, iconUnit, iconCqw, gridLevels, itemOf, snapPt,
-  MIN_ZOOM, PAN_SLACK, CANVAS_LIMIT, GRID_N, GRID_PITCH, GRID_STEP_N,
+  MIN_ZOOM, PAN_SLACK, CANVAS_LIMIT, GRID_PITCH, GRID_STEP_N,
   PLAN_SCALE_MIN, PLAN_SCALE_MAX,
   clampCanvasR, clampCanvasN, type ContentItem, type Rect,
 } from './space-geometry';
 import { alignAllToGrid, type AlignReport } from './align-grid';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.58.0-beta.1';
+const CARD_VERSION = '1.58.0';
 /** HP-1552 boot-veil timing (AUD-1552-02). The veil holds for at least
  *  BOOT_MIN_MS; every stage-height change restarts a BOOT_QUIET_MS
  *  trailing-quiescence requirement (chrome still settling near the cap
@@ -410,7 +410,11 @@ class HouseplanCard extends LitElement {
    *  already-computed result so the write cannot differ from the promise. */
   private _alignDialog: {
     report: AlignReport; spaces: any[]; layout: Record<string, any>;
-    cm: number; busy: boolean;
+    /** the promised maximum, in centimetres, ALREADY rounded up (AUD-158B1-01) */
+    cm: number;
+    /** the space that maximum belongs to, named only when there are several */
+    where: string;
+    busy: boolean;
   } | null = null;
 
   private _settingsDialog: {
@@ -5488,13 +5492,18 @@ class HouseplanCard extends LitElement {
    */
   private _openAlignDialog = (): void => {
     if (!this._norm || !this._serverCfg) return;
-    const r = alignAllToGrid(this._serverCfg.spaces || [], this._layout || {});
-    // the shift in the user's own units: normalised → cells → cm, using the
-    // scale of the first space that has one (they rarely differ, and the
-    // number is an ORDER of magnitude, not a measurement)
-    const cellCm = Number((this._serverCfg.spaces || []).find((x: any) => Number(x?.cell_cm) > 0)?.cell_cm) || 5;
-    const cm = r.report.maxShift * GRID_N * cellCm;
-    this._alignDialog = { report: r.report, spaces: r.spaces, layout: r.layout, cm, busy: false };
+    const spaces = this._serverCfg.spaces || [];
+    const r = alignAllToGrid(spaces, this._layout || {});
+    // The dialog is a safety gate in front of an action with no undo, so the
+    // number it shows is an UPPER BOUND and not a sample. The run already
+    // measured every element in the centimetres of ITS OWN space — converting
+    // one normalised maximum through the first space's `cell_cm` understated
+    // a two-scale plan twentyfold (AUD-158B1-01) — and the last tenth is
+    // rounded UP, so the promise can never be smaller than the deed.
+    const cm = Math.ceil(r.report.maxShiftCm * 10) / 10;
+    const sp = spaces.find((x: any) => x?.id != null && String(x.id) === r.report.maxSpace);
+    const where = spaces.length > 1 && sp ? String(sp.title || sp.id) : '';
+    this._alignDialog = { report: r.report, spaces: r.spaces, layout: r.layout, cm, where, busy: false };
   };
 
   /**
@@ -5741,9 +5750,14 @@ class HouseplanCard extends LitElement {
             ? html`<p class="alignmsg">${this._t('gs.align_none')}</p>`
             : html`
               <p class="alignmsg">${this._t('gs.align_count', {
-                n: String(r.moved), total: String(r.total),
-                cm: (Math.round(d.cm * 10) / 10).toString(),
+                n: String(r.moved), total: String(r.total), cm: String(d.cm),
               })}</p>
+              ${d.where
+                ? html`<p class="alignmsg">${this._t('gs.align_where', { s: d.where })}</p>`
+                : nothing}
+              ${r.rotated
+                ? html`<p class="alignmsg">${this._t('gs.align_turned', { n: String(r.rotated) })}</p>`
+                : nothing}
               <div class="rhint">${this._t('gs.align_warn')}</div>`}
         </div>
         <div class="row">
