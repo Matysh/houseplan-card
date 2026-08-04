@@ -2002,6 +2002,8 @@ export const cardStyles = css`
       font-size: var(--fs-m);
       color: var(--hp-muted);
     }
+    .alignmsg { margin: 0 0 8px; font-size: 13px; line-height: 1.45; }
+    .btn.alignall { width: 100%; justify-content: center; }
     .aboutver {
       font-size: var(--fs-s);
       color: var(--hp-muted);

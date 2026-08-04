@@ -1113,3 +1113,29 @@ require hands on real hardware — they remain for the human pass.
       end of the window starts out transparent), and the light fades along the
       ray, dying out before the far edge. A sun within ~3° of the wall plane
       (`RAY_MIN_COS`) casts nothing at all [auto: smoke_sun_soft + unit sun.test]
+- [ ] **Nothing stops at the old canvas border** (owner 2026-08-04, DEV-B58-01:
+      «названия комнат и устройства не перетаскиваются дальше старых границ
+      холста»). On an ORDINARY plan (rooms inside 0..1), in the Devices editor
+      drag a marker far outside the drawing — to about 2.5 / 2.2 normalised. It
+      follows the cursor the whole way, the position is stored, the plan's frame
+      grows to include it, and it is still there after a reload. Repeat with a
+      room NAME in the Plan editor (this one used to stop at the old unit square
+      exactly), with a decor shape in the Background editor (draw it far out,
+      then drag it further), and with an opening on a wall that lives past the
+      old square. The only thing that still stops you is ±5000 — drag wildly and
+      the marker parks there instead of at 1e12 [auto: smoke_drag_bounds]
+- [ ] **Everything lands on the grid** (owner 2026-08-04, docs/CANVAS.md §9):
+      place a device, a room name, a decor rectangle, a decor text, a room
+      vertex and a resize handle with the mouse — each ends exactly on a grid
+      node, never between two. An opening is the one exception and deliberately
+      so: it stays ON its wall, at a whole number of steps along it. Hold
+      **Shift** while dropping and the element lands where the cursor is,
+      off-grid — that is the only way to get there [auto: smoke_grid_snap]
+- [ ] **«Выровнять всё по сетке»** (owner 2026-08-04): gear → general settings →
+      **Grid** → the button. On an already tidy plan it says everything is
+      already on the grid and offers no confirm button. On a plan with elements
+      between the nodes it names how many will move and the largest shift in cm,
+      and warns there is no undo. Press it: rooms, decor, markers and room names
+      snap to nodes in ONE write, openings stay on their walls, and pressing the
+      button a second time reports nothing to do. Cancel does nothing at all
+      [auto: smoke_grid_snap + unit test/align-grid.test.mjs]

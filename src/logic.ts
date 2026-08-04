@@ -9,9 +9,14 @@ export function lqiColor(lqi: number): string {
   return `hsl(${Math.round(hue)}, 85%, 55%)`;
 }
 
-/** Snap a coordinate to the nearest grid node with step pitch. */
+/** Snap a coordinate to the nearest grid node with step pitch.
+ *  A value already ON a node comes back bit-identical: the round-trip through
+ *  a non-dyadic pitch (1000/240) otherwise turns an exact 500 into
+ *  500.00000000000006, and "is it on the grid?" starts answering no. */
 export function snapToGrid(v: number, pitch: number): number {
-  return Math.round(v / pitch) * pitch;
+  if (!Number.isFinite(v) || !(pitch > 0)) return v;
+  const q = Math.round(v / pitch) * pitch;
+  return Math.abs(q - v) <= pitch * 1e-9 ? v : q;
 }
 
 /** Real-world length (cm) of a segment given the grid pitch (render units per cell) and cm per cell. */
@@ -111,8 +116,15 @@ export function roomEdges(rooms: any[]): number[][] {
  * placed with this stays valid however rooms are later edited — it keeps absolute
  * coordinates and is not tied to a room id or edge index.
  */
+export interface WallSnapOpts {
+  /** Quantise the offset along the wall to this step (render or config units). */
+  step?: number;
+  /** Length of the thing being placed, so it is kept inside its wall. */
+  length?: number;
+}
+
 export function snapToWall(
-  p: number[], rooms: any[], maxDist: number,
+  p: number[], rooms: any[], maxDist: number, opts: WallSnapOpts = {},
 ): { x: number; y: number; angle: number } | null {
   let best: { x: number; y: number; angle: number } | null = null;
   let bestD = maxDist;
@@ -133,8 +145,54 @@ export function snapToWall(
       let angle = (Math.atan2(dy, dx) * 180) / Math.PI;
       if (angle >= 90) angle -= 180;
       else if (angle < -90) angle += 180;
-      best = { x: q[0], y: q[1], angle };
+      // docs/CANVAS.md §9: an opening is WALL-bound, so it cannot be rounded to
+      // a grid node — that would lift it off a diagonal wall. What IS quantised
+      // is its offset ALONG the wall, in the same step, measured from the
+      // wall's first corner. On an axis-aligned wall whose corners are on the
+      // grid (i.e. every wall the editor itself draws) the two agree exactly.
+      if (opts.step && opts.step > 0) {
+        const len = Math.sqrt(len2);
+        const half = Math.min(Math.max(opts.length || 0, 0) / 2, len / 2);
+        let along = Math.round((t * len) / opts.step) * opts.step;
+        // the wall's own CENTRE wins inside one step of it: that is the editor's
+        // magnet (docs/CANVAS.md §9.3), and a batch alignment must not knock a
+        // deliberately centred window off centre by a couple of centimetres
+        if (Math.abs(t * len - len / 2) <= opts.step / 2) along = len / 2;
+        along = Math.max(half, Math.min(len - half, along));
+        const u = along / len;
+        best = { x: x1 + u * dx, y: y1 + u * dy, angle };
+      } else {
+        best = { x: q[0], y: q[1], angle };
+      }
     }
+  }
+  return best;
+}
+
+/** Snap the point to the nearest wall EDGE of a single polygon, quantising the
+ *  offset along that edge — the split tool's flavour of the same contract. */
+export function snapPointAlongPoly(
+  p: number[], poly: number[][], step: number,
+): number[] | null {
+  let best: number[] | null = null;
+  let bestD = Infinity;
+  for (let i = 0; i < poly.length; i++) {
+    const [x1, y1] = poly[i];
+    const [x2, y2] = poly[(i + 1) % poly.length];
+    const dx = x2 - x1, dy = y2 - y1;
+    const len2 = dx * dx + dy * dy;
+    if (!len2) continue;
+    let t = ((p[0] - x1) * dx + (p[1] - y1) * dy) / len2;
+    t = Math.max(0, Math.min(1, t));
+    const d = Math.hypot(p[0] - (x1 + t * dx), p[1] - (y1 + t * dy));
+    if (d >= bestD) continue;
+    bestD = d;
+    const len = Math.sqrt(len2);
+    const along = step > 0
+      ? Math.max(0, Math.min(len, Math.round((t * len) / step) * step))
+      : t * len;
+    const u = along / len;
+    best = [x1 + u * dx, y1 + u * dy];
   }
   return best;
 }

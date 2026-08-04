@@ -94,6 +94,41 @@ export const CANVAS_LIMIT = 5000;
 /** The same range in RENDER units. */
 export const SANE_LIMIT = CANVAS_LIMIT * NORM_W;
 
+/** Grid points across the plan width — the lattice the editor snaps to.
+ *  It is derived from NORM_W alone, so it is the SAME step for every plan and
+ *  it did NOT change when the canvas became infinite (docs/CANVAS.md §9). */
+export const GRID_N = 240;
+/** One grid step in RENDER units. */
+export const GRID_PITCH = NORM_W / GRID_N;
+/** One grid step in NORMALISED units — what the config and the layout store. */
+export const GRID_STEP_N = 1 / GRID_N;
+
+/** Snap a RENDER-unit coordinate to the editor's grid (docs/CANVAS.md §9). */
+export function snapR(v: number): number {
+  if (!Number.isFinite(v)) return v;
+  // integer node index first, then back — dividing by 1000/240 directly turns
+  // an exact 500 into 500.00000000000006 and every equality downstream lies
+  const q = (Math.round((v * GRID_N) / NORM_W) * NORM_W) / GRID_N;
+  return Math.abs(q - v) <= GRID_PITCH * 1e-9 ? v : q;
+}
+/** …and a point. Used for AUTO placements (a device with no saved position, a
+ *  room label nobody has dragged) so that "everything is on the grid" holds for
+ *  what the card puts there itself, not only for what the user drags. */
+export function snapPt(p: { x: number; y: number }): { x: number; y: number } {
+  return { x: snapR(p.x), y: snapR(p.y) };
+}
+
+/** Clamp a RENDER-unit coordinate to the sane canvas range (docs/CANVAS.md §9).
+ *  This is the ONLY bound any editor gesture may impose: the plan has no edges
+ *  any more, only a garbage limit that mirrors validation.py. */
+export function clampCanvasR(v: number): number {
+  return Number.isFinite(v) ? Math.min(SANE_LIMIT, Math.max(-SANE_LIMIT, v)) : 0;
+}
+/** The same range in NORMALISED units. */
+export function clampCanvasN(v: number): number {
+  return Number.isFinite(v) ? Math.min(CANVAS_LIMIT, Math.max(-CANVAS_LIMIT, v)) : 0;
+}
+
 /** Zoom-out floor: three times the content frame and no further (CANVAS.md §5). */
 export const MIN_ZOOM = 1 / 3;
 /** How far past the content frame panning may go, in screens (CANVAS.md §5). */
@@ -401,7 +436,7 @@ export function defaultPositions(devs: DevItem[], model: SpaceModel, iconPct: nu
       y: b.y + pad + ch * (Math.floor(i / cols) + 0.5),
     }));
     declump(pts, b, minDist, pad * 0.5);
-    ds.forEach((d, i) => (map[d.id] = pts[i]));
+    ds.forEach((d, i) => (map[d.id] = snapPt(pts[i])));
   }
   return map;
 }
@@ -415,7 +450,7 @@ export function markerPos(d: DevItem, layout: Layout, cfg: ServerConfig, defPos:
   if (defPos[d.id]) return defPos[d.id];
   // no saved position, no room to auto-place in: the middle of what IS drawn,
   // not the middle of a canvas that no longer has edges (docs/CANVAS.md)
-  return spaceCenter(model);
+  return snapPt(spaceCenter(model));
 }
 
 /** Saved room-label position (layout key rl_<roomId>) or the room centre. */
@@ -424,6 +459,7 @@ export function labelPos(r: RoomCfg, spaceId: string, layout: Layout, cfg: Serve
   if (saved && saved.s === spaceId) {
     return { x: saved.x * NORM_W, y: saved.y * NORM_W };
   }
+  // never dragged: the centroid, put on the nearest node (docs/CANVAS.md §9)
   const c = roomCenter(r);
-  return { x: c[0], y: c[1] };
+  return snapPt({ x: c[0], y: c[1] });
 }

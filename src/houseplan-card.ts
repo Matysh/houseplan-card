@@ -15,7 +15,8 @@ import {
   lqiColor, snapToGrid, samePoint, pointInPolygon, markerIdForBinding,
   segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointStrictlyInside, roomsOverlap,
   pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, openZoneOf, distToSegment, outlineWithout, cutSegments, alignGuides, segmentAngle, is45, type AlignGuide, swipeTarget, clampScale, migratePdfUrls, roomFillModeOf, contentUrl,
-  snapToWall, openingAmount, openingShoulders, interiorPoint, poleOfInaccessibility, subst,
+  snapToWall, snapPointAlongPoly, openingAmount, openingShoulders, interiorPoint,
+  poleOfInaccessibility, subst,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
   stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, glowColorOf, doorSector, hasRoomBehind, controlsAction, isControllable,
   spaceDisplayOf, roomFillStyle, fillColorsOf, DEFAULT_FILL_COLORS, type FillColors, runServiceFor, RUN_TARGET_DOMAINS,
@@ -52,9 +53,11 @@ import './space-card';
 import { cardStyles } from './styles';
 import {
   fitInSquare, contentBounds, spaceModels, contentFrame, contentItems, spaceFrame,
-  spaceCenter, iconUnit, iconCqw, gridLevels, itemOf,
-  MIN_ZOOM, PAN_SLACK, CANVAS_LIMIT, type ContentItem, type Rect,
+  spaceCenter, iconUnit, iconCqw, gridLevels, itemOf, snapPt,
+  MIN_ZOOM, PAN_SLACK, CANVAS_LIMIT, GRID_N, GRID_PITCH, GRID_STEP_N,
+  clampCanvasR, clampCanvasN, type ContentItem, type Rect,
 } from './space-geometry';
+import { alignAllToGrid, type AlignReport } from './align-grid';
 import { langOf, t, type I18nKey } from './i18n';
 
 const CARD_VERSION = '1.57.0';
@@ -105,7 +108,6 @@ const unionRect = (a: Rect, b: Rect): Rect => {
   return { x, y, w: Math.max(a.x + a.w, b.x + b.w) - x, h: Math.max(a.y + a.h, b.y + b.h) - y };
 };
 
-const GRID_N = 240; // grid points across the plan width (half the previous step; old nodes are a subset of the new ones, positions are preserved)
 type MarkupTool = 'draw' | 'merge' | 'split' | 'resize' | 'opening' | 'openwall' | 'delroom';
 
 const fireEvent = (node: EventTarget, type: string, detail?: unknown) => {
@@ -382,6 +384,13 @@ class HouseplanCard extends LitElement {
   private _onboardingShown = false; // the auto space dialog is shown once per session
 
   private _rulesDialog: { rules: IconRule[]; test: string; busy: boolean } | null = null;
+  /** «Выровнять всё по сетке»: the preview the confirmation shows, plus the
+   *  already-computed result so the write cannot differ from the promise. */
+  private _alignDialog: {
+    report: AlignReport; spaces: any[]; layout: Record<string, any>;
+    cm: number; busy: boolean;
+  } | null = null;
+
   private _settingsDialog: {
     colors: FillColors; glowRadius: number; bgColor: string | null;
     /** sun on the plan (docs/SUN.md) */
@@ -597,6 +606,7 @@ class HouseplanCard extends LitElement {
     _infoCard: { state: true },
     _rulesDialog: { state: true },
     _settingsDialog: { state: true },
+    _alignDialog: { state: true },
     _importDialog: { state: true },
     _markerDialog: { state: true },
     _zoom: { state: true },
@@ -690,6 +700,7 @@ class HouseplanCard extends LitElement {
       if (this._openingInfo) { this._openingInfo = null; return; }
       if (this._infoCard) { this._infoCard = null; return; }
       if (this._rulesDialog) { this._rulesDialog = null; return; }
+      if (this._alignDialog) { this._alignDialog = null; return; }
       if (this._settingsDialog) { this._settingsDialog = null; return; }
       if (this._markerDialog) { this._markerDialog = null; return; }
       if (this._openingDialog) { this._openingDialog = null; return; }
@@ -1516,7 +1527,9 @@ class HouseplanCard extends LitElement {
           y: b.y + pad + ch * (Math.floor(i / cols) + 0.5),
         }));
         declump(pts, b, minDist, pad * 0.5);
-        ds.forEach((d, i) => (map[d.id] = pts[i]));
+        // an auto-placed icon lands on a node too (docs/CANVAS.md §9) — the
+        // owner's "everything on the grid" covers what the card places itself
+        ds.forEach((d, i) => (map[d.id] = snapPt(pts[i])));
       }
     }
     return map;
@@ -1537,20 +1550,23 @@ class HouseplanCard extends LitElement {
     }
     if (this._defPos[d.id]) return this._defPos[d.id];
     // the middle of what IS drawn, not of a canvas that has no edges any more
-    return spaceCenter(s);
+    return snapPt(spaceCenter(s));
   }
 
-  private _savePos(d: DevItem, x: number, y: number): void {
+  private _savePos(d: DevItem, x: number, y: number, shift = false): void {
     if (this._norm) {
-      // the icon center snaps to the nodes of the same grid as the room markup
+      // The icon center snaps to the nodes of the same grid as the room markup
+      // (docs/CANVAS.md §9). Shift suspends the snap for this one gesture —
+      // the same convention as the opening magnet and the compass.
       const g = this._gridPitch;
-      const gx = Math.round(x / g) * g;
-      const gy = Math.round(y / g) * g;
+      const gx = shift ? x : Math.round(x / g) * g;
+      const gy = shift ? y : Math.round(y / g) * g;
 
       const prevK = (this._layout[d.id] as any)?.k;
       this._layout = {
         ...this._layout,
-        [d.id]: { s: d.space, x: gx / NORM_W, y: gy / NORM_W, ...(prevK ? { k: prevK } : {}) },
+        [d.id]: { s: d.space, x: clampCanvasN(gx / NORM_W), y: clampCanvasN(gy / NORM_W),
+          ...(prevK ? { k: prevK } : {}) },
       };
     } else {
       this._layout = { ...this._layout, [d.id]: { x: Math.round(x), y: Math.round(y) } };
@@ -2296,7 +2312,7 @@ class HouseplanCard extends LitElement {
 
   private _stagePointerMove(ev: PointerEvent): void {
     if (this._decorDraft?.pid === ev.pointerId) {
-      this._decorDraft = { ...this._decorDraft, b: this._snap(this._svgPoint(ev)) };
+      this._decorDraft = { ...this._decorDraft, b: this._snap(this._svgPoint(ev), ev) };
       return;
     }
     if (this._decorMove?.pid === ev.pointerId) {
@@ -2450,10 +2466,16 @@ class HouseplanCard extends LitElement {
       this._drag.moved = true;
       clearTimeout(this._holdTimer);
     }
-    const m = Math.min(vb[2], vb[3]) * 0.008;
-    const nx = Math.max(vb[0] + m, Math.min(vb[0] + vb[2] - m, this._drag.ox + dx));
-    const ny = Math.max(vb[1] + m, Math.min(vb[1] + vb[3] - m, this._drag.oy + dy));
-    this._savePos(d, nx, ny);
+    // DEV-B58-01. This used to be clamped into `vb` — the CONTENT FRAME — with
+    // a 0.8 % margin, which is exactly the "old canvas border" the owner ran
+    // into: a marker could never be dragged past the outline of whatever was
+    // already drawn, so a plan could not be extended by moving a device out to
+    // where the new room was going to be. The plan has no edges any more
+    // (docs/CANVAS.md §9); the only bound is the garbage limit the backend
+    // enforces, and it is the SAME ±5000 on both sides of the wire.
+    const nx = clampCanvasR(this._drag.ox + dx);
+    const ny = clampCanvasR(this._drag.oy + dy);
+    this._savePos(d, nx, ny, ev.shiftKey);
   }
 
   private _pointerUp(_ev: PointerEvent, d: DevItem): void {
@@ -2511,7 +2533,11 @@ class HouseplanCard extends LitElement {
   // ================= ROOM MARKUP EDITOR =================
 
   private get _gridPitch(): number {
-    return NORM_W / GRID_N;
+    // NORM_W / GRID_N and nothing else. The infinite canvas did NOT touch this
+    // (docs/CANVAS.md §9): the step is the same for every plan, at every zoom,
+    // whatever the content frame happens to be — so no existing plan's nodes
+    // ever moved out from under it.
+    return GRID_PITCH;
   }
 
   /** cm represented by one grid cell for the current space (default 5). */
@@ -2658,9 +2684,20 @@ class HouseplanCard extends LitElement {
     return this._screenToVb(ev.clientX - r.left, ev.clientY - r.top);
   }
 
-  private _snap(p: number[]): number[] {
+  /**
+   * THE snap (docs/CANVAS.md §9). Every editor gesture that produces a plan
+   * coordinate goes through here, so "strictly on the grid" is one function
+   * and not a habit. `shift` (the event, or a bare flag) suspends it for the
+   * duration of the gesture — the same escape hatch the opening magnet and the
+   * compass already offered. The canvas clamp rides along: there are no edges
+   * to bump into any more, only the ±5000 the backend refuses to store.
+   */
+  private _snap(p: number[], shift: boolean | { shiftKey?: boolean } = false): number[] {
+    const off = typeof shift === 'boolean' ? shift : !!shift?.shiftKey;
     const g = this._gridPitch;
-    return [snapToGrid(p[0], g), snapToGrid(p[1], g)];
+    return off
+      ? [clampCanvasR(p[0]), clampCanvasR(p[1])]
+      : [clampCanvasR(snapToGrid(p[0], g)), clampCanvasR(snapToGrid(p[1], g))];
   }
 
   private _samePt(a: number[], b: number[]): boolean {
@@ -2811,12 +2848,12 @@ class HouseplanCard extends LitElement {
       return;
     }
     if (this._tool === 'split') {
-      this._splitClick(raw);
+      this._splitClick(raw, ev.shiftKey);
       return;
     }
     // draw: clicks on grid points build the outline. Nothing is written to the config
     // until the contour closes — an abandoned outline leaves no lines behind.
-    const pt = this._snap(raw);
+    const pt = this._snap(raw, ev);
     const closing = this._path.length >= 3 && this._samePt(pt, this._path[0]);
     // Island rooms (v1.34.0): drawing INSIDE an existing room is legal — the
     // contour may become a nested room (a column, an inner room). Partial
@@ -2956,7 +2993,7 @@ class HouseplanCard extends LitElement {
       const plan = g.plan!;
       const dRaw = (p[0] - plan.a[0]) * plan.n[0] + (p[1] - plan.a[1]) * plan.n[1];
       // the moved wall LINE lands on the grid, like every drawn wall
-      const sn = this._snap([plan.a[0] + plan.n[0] * dRaw, plan.a[1] + plan.n[1] * dRaw]);
+      const sn = this._snap([plan.a[0] + plan.n[0] * dRaw, plan.a[1] + plan.n[1] * dRaw], ev);
       let d = (sn[0] - plan.a[0]) * plan.n[0] + (sn[1] - plan.a[1]) * plan.n[1];
       d = clampEdgeDrag(g.rooms, g.openings, plan, d, this._gridPitch, this._rszOpts());
       if (d === g.d && g.moved) return;
@@ -2968,7 +3005,7 @@ class HouseplanCard extends LitElement {
       this._rszLive = this._rszEdgeLabels(res, plan);
     } else {
       const fixed = g.fixed!;
-      const sn = this._snap(p); // the dragged corner aims at grid nodes
+      const sn = this._snap(p, ev); // the dragged corner aims at grid nodes
       let k = Math.hypot(sn[0] - fixed[0], sn[1] - fixed[1]) / (g.span0 || 1);
       k = Math.max(0.05, Math.min(20, k));
       k = clampRoomScale(g.rooms, g.openings, g.roomId, fixed, k, this._rszOpts());
@@ -3169,15 +3206,15 @@ class HouseplanCard extends LitElement {
     if (onShape) return true; // the shape's own handler deals with it
     if (t === 'line' || t === 'rect' || t === 'ellipse') {
       ev.preventDefault();
-      const p = this._snap(this._svgPoint(ev));
+      const p = this._snap(this._svgPoint(ev), ev);
       this._decorDraft = { kind: t, a: p, b: p, pid: ev.pointerId };
       capturePointer(ev);
       return true;
     }
     if (t === 'text') {
-      const p = this._snap(this._svgPoint(ev));
+      const p = this._snap(this._svgPoint(ev), ev);
       this._decorTextDialog = {
-        x: p[0] / NORM_W, y: p[1] / this._decorH,
+        x: clampCanvasN(p[0] / NORM_W), y: clampCanvasN(p[1] / this._decorH),
         text: '', size: 'm', color: this._decorStyle.color,
       };
       return true;
@@ -3196,12 +3233,16 @@ class HouseplanCard extends LitElement {
     const W = NORM_W, H = this._decorH;
     const st = this._decorStyle;
     const id = 'dc' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+    // creation had no canvas guard at all while the MOVE did — a draft could be
+    // born outside the range the mover then refused to leave. One limit, both
+    // ends of the gesture (docs/CANVAS.md §9).
+    const cn = clampCanvasN;
     let shape: any;
     if (d.kind === 'line') {
-      shape = { id, kind: 'line', x1: d.a[0] / W, y1: d.a[1] / H, x2: d.b[0] / W, y2: d.b[1] / H,
-        color: st.color, width: st.width };
+      shape = { id, kind: 'line', x1: cn(d.a[0] / W), y1: cn(d.a[1] / H),
+        x2: cn(d.b[0] / W), y2: cn(d.b[1] / H), color: st.color, width: st.width };
     } else {
-      const x = Math.min(d.a[0], d.b[0]) / W, y = Math.min(d.a[1], d.b[1]) / H;
+      const x = cn(Math.min(d.a[0], d.b[0]) / W), y = cn(Math.min(d.a[1], d.b[1]) / H);
       const w = Math.abs(d.b[0] - d.a[0]) / W, h = Math.abs(d.b[1] - d.a[1]) / H;
       shape = { id, kind: d.kind, x, y, w, h, color: st.color, width: st.width, fill: st.fill };
     }
@@ -3237,9 +3278,17 @@ class HouseplanCard extends LitElement {
   private _decorMoveUpdate(ev: PointerEvent): void {
     const m = this._decorMove!;
     const p = this._svgPoint(ev);
-    const g = this._gridPitch;
-    let dx = snapToGrid(p[0] - m.start[0], g) / NORM_W;
-    let dy = snapToGrid(p[1] - m.start[1], g) / this._decorH;
+    const o0 = m.orig;
+    // The delta used to be what got snapped, which preserves whatever off-grid
+    // offset the shape already had: a legacy shape at 0.3013 stayed at 0.3013
+    // for ever, one step at a time. Snap the RESULTING ANCHOR instead, so one
+    // drag is enough to put any shape on the grid (docs/CANVAS.md §9). Shift
+    // suspends it, as everywhere else.
+    const ax0 = (o0.kind === 'line' ? o0.x1 : o0.x) * NORM_W;
+    const ay0 = (o0.kind === 'line' ? o0.y1 : o0.y) * this._decorH;
+    const anchor = this._snap([ax0 + (p[0] - m.start[0]), ay0 + (p[1] - m.start[1])], ev);
+    let dx = (anchor[0] - ax0) / NORM_W;
+    let dy = (anchor[1] - ay0) / this._decorH;
     // audit follow-up L4 gave decor a bounds clamp of -0.25..1.25 — the plan
     // was a sheet with edges then. It is not any more (docs/CANVAS.md): the
     // clamp is now the same garbage limit the backend enforces, so decor can
@@ -3629,6 +3678,24 @@ class HouseplanCard extends LitElement {
     if (sh && sh.centered && !shift && (cx !== sh.wallCenter[0] || cy !== sh.wallCenter[1])) {
       [cx, cy] = sh.wallCenter;
       sh = openingShoulders([cx, cy], snap.angle, rlen, rooms, tol);
+    } else if (sh && !shift) {
+      // Not centred: quantise the offset ALONG the wall to the grid step
+      // (docs/CANVAS.md §9.3). Grid-BOUND would lift the opening off a diagonal
+      // wall, so the wall stays the master and the grid only says WHERE on it.
+      // The magnet is consulted first on purpose — a wall whose middle is not a
+      // node must still be able to hold a centred window.
+      const [ax, ay] = sh.wallA, [bx, by] = sh.wallB;
+      const wx = bx - ax, wy = by - ay;
+      const len = Math.hypot(wx, wy);
+      if (len > 0) {
+        const g = this._gridPitch;
+        const half = Math.min(rlen / 2, len / 2);
+        let along = Math.round((((cx - ax) * wx + (cy - ay) * wy) / len) / g) * g;
+        along = Math.max(half, Math.min(len - half, along));
+        cx = ax + (along / len) * wx;
+        cy = ay + (along / len) * wy;
+        sh = openingShoulders([cx, cy], snap.angle, rlen, rooms, tol) || sh;
+      }
     }
     if (!sh) return { x: cx, y: cy, angle: snap.angle, measure: null };
     const imperial = this.hass?.config?.unit_system?.length === 'mi';
@@ -3777,7 +3844,7 @@ class HouseplanCard extends LitElement {
   }
 
   /** Split: click the room, then two points on its walls. */
-  private _splitClick(raw: number[]): void {
+  private _splitClick(raw: number[], shift = false): void {
     const rooms = this._spaceModel().rooms;
     if (!this._splitSel) {
       const hit = [...rooms].reverse().find((r) => this._pointInRoom(raw, r));
@@ -3797,10 +3864,14 @@ class HouseplanCard extends LitElement {
     // any wall (e.g. an accidental one in the middle of the room) is a miss and
     // gets the toast, not a wall the user never meant. splitRoom() still rejects
     // any cut that is not a clean wall-to-wall chord.
+    // …and it is still QUANTISED: the offset ALONG the wall moves in whole grid
+    // steps (docs/CANVAS.md §9), which on the axis-aligned, grid-drawn walls the
+    // editor itself makes IS a grid node. Shift opts out, as everywhere else.
     const eps = this._gridPitch * 0.02;
     const pull = this._gridPitch * 6; // ≈2.5% of the plan width — generous but intentional
-    const near = closestPointOnBoundary(raw, poly);
-    const wallPt = near && Math.hypot(near[0] - raw[0], near[1] - raw[1]) <= pull ? near : null;
+    const raw0 = closestPointOnBoundary(raw, poly);
+    const near = raw0 && !shift ? (snapPointAlongPoly(raw0, poly, this._gridPitch) || raw0) : raw0;
+    const wallPt = raw0 && near && Math.hypot(raw0[0] - raw[0], raw0[1] - raw[1]) <= pull ? near : null;
     const onWall = !!wallPt && pointOnBoundary(wallPt, poly, eps);
     const cur = this._splitSel.pts;
     if (!cur.length) {
@@ -3814,7 +3885,7 @@ class HouseplanCard extends LitElement {
     }
     if (!onWall) {
       // an interior click adds an intermediate vertex of the cut path
-      const mid = this._snap(raw);
+      const mid = this._snap(raw, shift);
       if (!ptInside(mid, poly, eps)) {
         this._showToast(this._t('toast.split_pick_inside'));
         return;
@@ -3855,7 +3926,7 @@ class HouseplanCard extends LitElement {
     const drawing = this._tool === 'draw' && this._path.length && !this._contourClosed;
     const cutting = this._tool === 'split' && !!this._splitSel?.pts?.length;
     if (!drawing && !cutting) return;
-    this._cursorPt = this._snap(this._svgPoint(ev));
+    this._cursorPt = this._snap(this._svgPoint(ev), ev);
   }
 
   /**
@@ -3873,9 +3944,9 @@ class HouseplanCard extends LitElement {
       (o) => Math.hypot(raw[0] - o.rx, raw[1] - o.ry) <= Math.max(o.rlen / 2, eps),
     );
     if (hit) return null;
+    const rlen = this._cmToUnits(OPENING_DEFAULT_CM);
     const snap = snapToWall(raw, this._spaceModel().rooms, eps);
     if (!snap) return null;
-    const rlen = this._cmToUnits(OPENING_DEFAULT_CM);
     const r = this._opRuler(snap, rlen, this._opShift);
     return { x: r.x, y: r.y, angle: r.angle, rlen, measure: r.measure };
   }
@@ -5140,6 +5211,70 @@ class HouseplanCard extends LitElement {
     };
   };
 
+  /**
+   * Preview the batch alignment (docs/CANVAS.md §9). Nothing is written here:
+   * the run is pure, so the dialog can show the exact count and the exact
+   * largest shift, and then commit the very object it measured.
+   */
+  private _openAlignDialog = (): void => {
+    if (!this._norm || !this._serverCfg) return;
+    const r = alignAllToGrid(this._serverCfg.spaces || [], this._layout || {});
+    // the shift in the user's own units: normalised → cells → cm, using the
+    // scale of the first space that has one (they rarely differ, and the
+    // number is an ORDER of magnitude, not a measurement)
+    const cellCm = Number((this._serverCfg.spaces || []).find((x: any) => Number(x?.cell_cm) > 0)?.cell_cm) || 5;
+    const cm = r.report.maxShift * GRID_N * cellCm;
+    this._alignDialog = { report: r.report, spaces: r.spaces, layout: r.layout, cm, busy: false };
+  };
+
+  /**
+   * Commit it: ONE config write and ONE layout write, so a plan that ends up
+   * wrong ends up wrong exactly once and the previous state is a single undo
+   * away — by re-running nothing, because there is no undo. The dialog says so.
+   */
+  private async _runAlignToGrid(): Promise<void> {
+    const d = this._alignDialog;
+    if (!d || d.busy || !this._serverCfg) return;
+    this._alignDialog = { ...d, busy: true };
+    try {
+      this._serverCfg = { ...this._serverCfg, spaces: d.spaces };
+      this._layout = d.layout;
+      for (const id of Object.keys(d.layout)) this._dirtyPos.add(id);
+      this._modelCache = null;
+      this._frame = null;
+      await this._saveConfigNow();
+      await this._persistLayoutNow();
+      this._alignDialog = null;
+      this.requestUpdate();
+      this._showToast(this._t('gs.align_done', { n: String(d.report.moved) }));
+    } catch (e: any) {
+      if (this._alignDialog) this._alignDialog = { ...this._alignDialog, busy: false };
+      this._showToast(this._t('toast.error', { err: this._errText(e) }));
+    }
+  }
+
+  /** The debounced layout writer, awaited — the batch must not return before
+   *  the positions it promised are actually on their way. */
+  private async _persistLayoutNow(): Promise<void> {
+    if (!this._serverStorage) {
+      localStorage.setItem(LS_KEY, JSON.stringify(this._layout));
+      this._dirtyPos.clear();
+      return;
+    }
+    const ids = [...this._dirtyPos];
+    this._dirtyPos.clear();
+    await Promise.all(ids.map((id) => {
+      const pos = this._layout[id];
+      if (!pos) return Promise.resolve();
+      this._sentPos.set(id, pos);
+      return this.hass
+        .callWS({ type: 'houseplan/layout/update', device_id: id, pos })
+        .then((r: any) => this._noteLayoutRev(r))
+        .finally(() => { if (this._sentPos.get(id) === pos) this._sentPos.delete(id); });
+    }));
+    this._cacheSnapshot();
+  }
+
   private _setFillColor(key: keyof FillColors, patch: Partial<{ c: string; a: number }>): void {
     const d = this._settingsDialog!;
     this._settingsDialog = { ...d, colors: { ...d.colors, [key]: { ...d.colors[key], ...patch } } };
@@ -5319,6 +5454,40 @@ class HouseplanCard extends LitElement {
       </g>` as unknown as TemplateResult;
   }
 
+  /**
+   * The confirmation. It states the two numbers the user needs to decide —
+   * HOW MANY elements move and by HOW MUCH at most — and it says plainly that
+   * there is no undo, because there is not: the action is a single batch write
+   * and the card keeps no snapshot of what the plan looked like before.
+   */
+  private _renderAlignDialog(): TemplateResult {
+    const d = this._alignDialog!;
+    const r = d.report;
+    return html`<div class="menuwrap dialogwrap" @click=${() => (this._alignDialog = null)}>
+      <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
+        <div class="hd"><ha-icon icon="mdi:grid"></ha-icon>${this._t('gs.align_title')}</div>
+        <div class="body">
+          ${r.moved === 0
+            ? html`<p class="alignmsg">${this._t('gs.align_none')}</p>`
+            : html`
+              <p class="alignmsg">${this._t('gs.align_count', {
+                n: String(r.moved), total: String(r.total),
+                cm: (Math.round(d.cm * 10) / 10).toString(),
+              })}</p>
+              <div class="rhint">${this._t('gs.align_warn')}</div>`}
+        </div>
+        <div class="row">
+          <span class="spacer"></span>
+          <button class="btn ghost" @click=${() => (this._alignDialog = null)}>${this._t('btn.cancel')}</button>
+          ${r.moved === 0 ? nothing : html`
+            <button class="btn on" @click=${this._runAlignToGrid} ?disabled=${d.busy}>
+              <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this._t('gs.align_run')}
+            </button>`}
+        </div>
+      </div>
+    </div>`;
+  }
+
   private _renderSettingsDialog(): TemplateResult {
     return html`<div class="menuwrap dialogwrap" @click=${(e: Event) => e.stopPropagation()}>
       <div class="dialog wide" @click=${(e: Event) => e.stopPropagation()}>
@@ -5418,6 +5587,13 @@ class HouseplanCard extends LitElement {
                 (id) => html`<option value=${id}></option>`,
               )}
             </datalist>
+          </div>
+          <label class="dispsection">${this._t('gs.grid_group')}</label>
+          <div class="rhint">${this._t('gs.grid_hint')}</div>
+          <div class="colorrow gsrow">
+            <button class="btn ghost alignall" @click=${this._openAlignDialog}>
+              <ha-icon icon="mdi:grid"></ha-icon>${this._t('gs.align_all')}
+            </button>
           </div>
           <label class="dispsection">${this._t('gs.about_group')}</label>
           <div class="aboutver">${this._t('gs.about_version', { v: CARD_VERSION })}</div>
@@ -5905,6 +6081,7 @@ class HouseplanCard extends LitElement {
         ${this._infoCard ? this._renderInfoCard() : nothing}
         ${this._rulesDialog ? this._renderRulesDialog() : nothing}
         ${this._settingsDialog ? this._renderSettingsDialog() : nothing}
+        ${this._alignDialog ? this._renderAlignDialog() : nothing}
         ${this._importDialog ? this._renderImportDialog() : nothing}
         ${this._tip
           ? html`<div class="tip" style="left:${this._tip.x + 12}px;top:${this._tip.y + 12}px">
@@ -6692,7 +6869,9 @@ class HouseplanCard extends LitElement {
     if (saved && saved.s === spaceId) {
       return { x: saved.x * NORM_W, y: saved.y * NORM_W };
     }
-    const c = this._roomCenter(r);
+    // a label nobody has dragged sits at the room's CENTROID, which is not a
+    // node for an odd-sized or polygonal room — put it on the nearest one
+    const c = this._snap(this._roomCenter(r));
     return { x: c[0], y: c[1] };
   }
 
@@ -6718,10 +6897,12 @@ class HouseplanCard extends LitElement {
     const dx = ((ev.clientX - this._drag.sx) / rect.width) * v.w;
     const dy = ((ev.clientY - this._drag.sy) / rect.height) * v.h;
     if (Math.abs(ev.clientX - this._drag.sx) + Math.abs(ev.clientY - this._drag.sy) > 3) this._drag.moved = true;
-    const m = Math.min(vb[2], vb[3]) * 0.008;
-    const nx = Math.max(vb[0] + m, Math.min(vb[0] + vb[2] - m, this._drag.ox + dx));
-    const ny = Math.max(vb[1] + m, Math.min(vb[1] + vb[3] - m, this._drag.oy + dy));
-    this._savePos({ id, space: spaceId } as DevItem, nx, ny);
+    // DEV-B58-01, and worse than the marker's: this clamped to the space's
+    // STORED view_box, which for every existing plan is the old unit square.
+    // A room drawn at 2.5 had a name that could not be dragged to its own room.
+    const nx = clampCanvasR(this._drag.ox + dx);
+    const ny = clampCanvasR(this._drag.oy + dy);
+    this._savePos({ id, space: spaceId } as DevItem, nx, ny, ev.shiftKey);
   }
 
   private _labelUp(r: RoomCfg): void {

@@ -15,6 +15,7 @@
     "src/devices.ts",
     "src/types.ts",
     "src/space-geometry.ts",
-    "src/signing.ts"
+    "src/signing.ts",
+    "src/align-grid.ts"
   ]
 }
