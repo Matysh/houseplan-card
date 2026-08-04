@@ -420,9 +420,19 @@ export const cardStyles = css`
     .stage.daynight .hp-paperg {
       filter: drop-shadow(0 2px 8px rgba(10, 16, 26, 0.28));
     }
+    /* Owner 2026-08-04: «углы границ комнат всё ещё с зубцами». A miter join
+       on a 30-45° corner shoots a spike far past the wall (and flips to an
+       ugly bevel once past the miter limit) — the same defect the decor lines
+       had before they got round caps. Every room border, in EVERY renderer
+       that reuses these styles (plan view, plan editor, static space-card),
+       joins its walls with a ROUND join instead: the corner reads as the
+       stroke's own radius, never as a tooth. The linecap matters only for the
+       open outlines below, but it costs nothing to state it here. */
     .room {
       transition: 0.12s;
       cursor: default; /* v1.40.1: rooms are not clickable — the label's link icon is */
+      stroke-linejoin: round;
+      stroke-linecap: round;
     }
     .room.overlay {
       fill: transparent;
@@ -966,9 +976,15 @@ export const cardStyles = css`
     .room.noedge {
       stroke-opacity: 0 !important;
     }
+    /* rooms with open boundaries draw their walls as separate M..L subpaths,
+       so a corner between two of them is two stroke ENDS meeting: round caps
+       fill it in the same way a round join fills a closed contour's corner
+       (owner 2026-08-04 — no teeth anywhere on a room border). */
     .room-outline {
       fill: none;
       stroke-width: 2.5;
+      stroke-linejoin: round;
+      stroke-linecap: round;
       pointer-events: none;
     }
     /* Plan editor: trimmed outlines use the markup blue */
@@ -1077,10 +1093,13 @@ export const cardStyles = css`
       opacity: 0.5;
       stroke-width: 0;
     }
+    /* the contour being drawn in the Plan editor: each wall is its own <line>,
+       so the round cap IS the corner (matches the finished .room border) */
     .seg {
       stroke: var(--hp-accent);
       stroke-width: 2.5;
       stroke-linecap: round;
+      stroke-linejoin: round;
     }
     .pathline {
       stroke: #ffc14d;

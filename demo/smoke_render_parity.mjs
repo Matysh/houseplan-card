@@ -47,6 +47,29 @@ const res = await page.evaluate(async () => {
   out.parity = out.fullCardRoom0 === out.staticCardRoom0;
   out.overrideRespected = out.staticCardRoom0 === 'transparent';
 
+  // Owner 2026-08-04: «углы границ комнат всё ещё с зубцами» — a miter join
+  // spikes far past a sharp corner (and bevels it flat once past the miter
+  // limit). Room borders join ROUND now, and BOTH renderers share the rule:
+  // the styles live in one cardStyles, and this is the smoke that keeps it so.
+  const joins = (root) => [...root.querySelectorAll('.room')]
+    .map((el) => getComputedStyle(el).strokeLinejoin);
+  const fullJoins = joins(main.shadowRoot || main.renderRoot);
+  const staticJoins = joins(card.renderRoot);
+  out.fullCardBordersRound = fullJoins.length > 0 && fullJoins.every((j) => j === 'round');
+  out.staticCardBordersRound = staticJoins.length > 0 && staticJoins.every((j) => j === 'round');
+  // the trimmed outline of a room with open boundaries is a set of separate
+  // subpaths: its CAPS are the corners, so they must be round as well
+  const f1cfg = cfg.spaces.find((s) => s.id === 'f1');
+  f1cfg.rooms[0].open_to = [f1cfg.rooms[1].id];
+  main._cfgEpoch++;
+  main.requestUpdate(); await main.updateComplete;
+  const outlines = [...(main.shadowRoot || main.renderRoot).querySelectorAll('.room-outline')];
+  out.trimmedOutlineDrawn = outlines.length > 0;
+  out.trimmedOutlineRound = outlines.every((el) => {
+    const cs = getComputedStyle(el);
+    return cs.strokeLinejoin === 'round' && cs.strokeLinecap === 'round';
+  });
+
   return out;
 });
 // зафиксировано прогоном на v1.46.0 и сверено с кодом
