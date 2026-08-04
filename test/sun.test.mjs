@@ -7,6 +7,7 @@ import {
   rayAlpha, rayColor, cloudFactor, RAY_MAX_ALPHA,
   raysVisible, rayPeakAlpha, RAY_ELEVATION_MIN, RAY_FADE_MS,
   RAY_LENGTH_K, RAY_FADE_END, rayStops, raySoftness,
+  SKY_SNAP_DEG, skyNeedsSnap, skyElevation,
   northDegOf, bgModeOf, sunRaysOn, weatherEntityOf, sunStateOf,
 } from '../test-build/sun.js';
 
@@ -143,6 +144,20 @@ test('raySoftness: a feather proportional to the shaft, clamped both ends', () =
   assert.ok(near(raySoftness(200), 14, 1e-9));
   assert.equal(raySoftness(1e6), 18);       // never a smear across the plan
   assert.ok(raySoftness(200) > raySoftness(100));
+});
+
+test('skyNeedsSnap / skyElevation: glide with the sun, jump when we were away', () => {
+  assert.equal(SKY_SNAP_DEG, 3);
+  assert.equal(skyNeedsSnap(null, 12), true);        // nothing painted yet
+  assert.equal(skyNeedsSnap(NaN, 12), true);
+  assert.equal(skyNeedsSnap(12, 12), false);
+  assert.equal(skyNeedsSnap(12, 13), false);         // a real 4-minute sun step
+  assert.equal(skyNeedsSnap(12, 14.9), false);
+  assert.equal(skyNeedsSnap(12, 15), true);          // ~12 minutes unwatched
+  assert.equal(skyNeedsSnap(12, 9), true);           // and in both directions
+  assert.equal(skyElevation(12.3456), 12.3);
+  assert.equal(skyElevation(-0.04), -0);
+  assert.equal(skyElevation('nonsense'), 0);
 });
 
 test('rayQuad + clipToRoom: the wedge is cut by the room outline', () => {

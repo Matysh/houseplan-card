@@ -67,6 +67,28 @@ only — no entities are created, no services are called.
   daytime room fills stay readable. Transitions are a CSS
   background/filter transition tens of seconds long;
   `prefers-reduced-motion` gets the current colors statically.
+- **Glide, but never lag behind reality** (owner 2026-08-04: «цвет фона
+  не меняется сам с течением времени суток, только после
+  обновления страницы»). The sky colour and the plan dimming are
+  delivered by a 45 s CSS transition, and a CSS transition only advances
+  while the card is being PAINTED. A card that was not painting — a
+  background tab, another dashboard view, a sleeping wall tablet, an
+  editor session — comes back holding a stale sky and then crawls toward
+  the truth 45 s at a time; a page reload, by contrast, paints the right
+  colour outright, because a freshly mounted element has nothing to
+  transition FROM. So the card measures the gap: HA refreshes `sun.sun`
+  every ~4 minutes by day, i.e. ≤1° per update, and anything from
+  `SKY_SNAP_DEG` = 3° up therefore means "we were not watching". Such a
+  step is applied with `transition: none` for a single frame
+  (`.stage.daynight.skysnap`, released on the next
+  `requestAnimationFrame`); everything smaller keeps the 45 s breathing.
+  `visibilitychange → visible` arms the catch-up outright.
+- The elevation the sky is computed from is rounded to 0.1°
+  (`skyElevation()`) — finer than the eye can tell across a 45 s glide,
+  and it keeps `dayPhase` (and the style attribute lit has to commit)
+  from churning on every `hass` tick. The wedge GEOMETRY keeps its own,
+  coarser memo: the two have deliberately different granularity — the
+  sky is cheap, the polygon clipping is not.
 - The UI is a two-option selector; the color picker shows only for
   `'static'`.
 - Backend validation: `In(['static', 'daynight'])` at both levels.
@@ -231,5 +253,8 @@ Backend validation: string or null.
 - `demo/smoke_sun_soft.mjs` — the −30 % reach and the "always
   dissolves" contract (the gradient spans the wedge and dies at 85 %,
   the feather filter, the room clip).
+- `demo/smoke_sun_live_bg.mjs` — the sky follows `sun.sun` on a plain
+  `hass` tick with no reload, asserted on the COMPUTED background of the
+  stage; small steps still glide, big ones catch up at once.
 - `demo/shot_sun_short.mjs` — before/after stills at a low and a high
   sun.

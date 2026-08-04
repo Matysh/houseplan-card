@@ -184,6 +184,14 @@ export const cardStyles = css`
     .stage.daynight.hpsettle {
       transition: height 0.25s ease, background-color 45s linear;
     }
+    /* Catch-up frame (docs/SUN.md): the sky is out of date because the card
+       was not painting — show the truth at once, the glide comes back on the
+       very next frame. */
+    .stage.daynight.skysnap,
+    .stage.daynight.skysnap .zoomwrap,
+    .stage.daynight.skysnap.hpsettle {
+      transition: none;
+    }
     @media (prefers-reduced-motion: reduce) {
       .stage.daynight,
       .stage.daynight .zoomwrap,

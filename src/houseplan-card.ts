@@ -32,7 +32,7 @@ import {
 import {
   computeSunRays, dayPhase, northDegOf, bgModeOf, sunRaysOn, weatherEntityOf,
   sunStateOf, cloudFactor, rayPeakAlpha, raysVisible, rayColor, RAY_FADE_MS, type SunRay,
-  rayStops, raySoftness,
+  rayStops, raySoftness, skyElevation, skyNeedsSnap,
 } from './sun';
 import { ContentSigner } from './signing';
 import { mdiHomeCityOutline } from '@mdi/js';
@@ -390,6 +390,11 @@ class HouseplanCard extends LitElement {
   } | null = null;
   /** Wedge memo: recomputed only when (azimuth, elevation, north, cfg rev) change (docs/SUN.md). */
   private _sunRaysCache: { key: string; rays: SunRay[] } | null = null;
+  /** Sun elevation (0.1°) the day/night sky is currently PAINTED with, and
+   *  whether the next paint must jump to it instead of gliding (docs/SUN.md). */
+  private _skyElev: number | null = null;
+  private _skySnap = false;
+  private _skySnapRaf = 0;
   private _compassDrag = false;
   private _importDialog: { floors: (FloorInfo & { checked: boolean })[] } | null = null;
   private _importQueue: string[] = []; // floor titles still to create
@@ -505,6 +510,10 @@ class HouseplanCard extends LitElement {
   private _vacVisHandler = () => {
     if (document.visibilityState === 'visible') {
       this._vacJumpOnce = true;
+      // A hidden tab paints nothing, so the 45 s sky transition stood still
+      // while the sun kept moving: come back on the RIGHT colour, then breathe
+      // again (docs/SUN.md, owner 2026-08-04).
+      this._skyElev = null;
       this.requestUpdate();
     }
   };
@@ -628,6 +637,7 @@ class HouseplanCard extends LitElement {
   public disconnectedCallback(): void {
     document.removeEventListener('visibilitychange', this._vacVisHandler);
     if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
+    if (this._skySnapRaf) { cancelAnimationFrame(this._skySnapRaf); this._skySnapRaf = 0; }
     for (const rt of this._senseRt.values()) clearTimeout(rt.timer); // pending flash-window repaints
     window.removeEventListener('keydown', this._keyHandler);
     clearInterval(this._cycleTimer);
@@ -1030,6 +1040,7 @@ class HouseplanCard extends LitElement {
 
   protected willUpdate(changed: PropertyValues): void {
     if (changed?.has?.('hass')) { this._vacTick(); this._senseTick(); }
+    this._skyPlan();
     if (changed.has('hass') && this.hass) {
       this._hookConnection();
       if (!this._loadOk && !this._loading && this._loadTries < 8) {
@@ -1040,6 +1051,7 @@ class HouseplanCard extends LitElement {
   }
 
   protected updated(): void {
+    this._skyRelease();
     const stage = this._stageEl;
     if (stage && !this._roViewport) {
       this._roViewport = new ResizeObserver(() => this._refitView());
@@ -4969,6 +4981,38 @@ class HouseplanCard extends LitElement {
   private _sunOut = false;
   private _sunOutTimer = 0;
 
+  /**
+   * Day/night sky bookkeeping, once per update (docs/SUN.md).
+   *
+   * The sky colour and the plan dimming are delivered by a 45 s CSS transition
+   * — and a transition only advances while the card is being PAINTED. Whenever
+   * it was not (a background tab, another dashboard view, an editor session, a
+   * fresh mount), the sun moved on without it, and the transition then crawls
+   * toward the truth instead of showing it: the owner's «фон не меняется сам,
+   * только после обновления страницы» (2026-08-04). So: glide while we are
+   * keeping up (the sun moves ≲1° between two `sun.sun` updates), JUMP once
+   * when the gap says we were not watching.
+   */
+  private _skyPlan(): void {
+    const sun = !this._editing && this._effBgMode() === 'daynight' ? this._sunNow() : null;
+    if (!sun) { this._skyElev = null; this._skySnap = false; return; }
+    const e = skyElevation(sun.elevation);
+    if (skyNeedsSnap(this._skyElev, e)) this._skySnap = true;
+    this._skyElev = e;
+  }
+
+  /** Hand the 45 s transition back once the jumped-to colour is on screen. */
+  private _skyRelease(): void {
+    if (!this._skySnap || this._skySnapRaf) return;
+    this._skySnapRaf = requestAnimationFrame(() => {
+      this._skySnapRaf = requestAnimationFrame(() => {
+        this._skySnapRaf = 0;
+        this._skySnap = false;
+        this.requestUpdate();
+      });
+    });
+  }
+
   /** Drop the layer at once: used by every gate that is NOT the 3° threshold. */
   private _sunFadeReset(): void {
     if (this._sunOutTimer) { clearTimeout(this._sunOutTimer); this._sunOutTimer = 0; }
@@ -5025,7 +5069,7 @@ class HouseplanCard extends LitElement {
   private _stageBg(disp: SpaceDisplay): string {
     if (this._effBgMode() === 'daynight') {
       const sun = this._sunNow();
-      if (sun) return dayPhase(sun.elevation).bg;
+      if (sun) return dayPhase(skyElevation(sun.elevation)).bg;
     }
     const gd = this._settingsDialog;
     const sd = this._spaceDialog;
@@ -5553,7 +5597,7 @@ class HouseplanCard extends LitElement {
     const stageBg = this._editing ? '' : this._stageBg(disp);
     // day/night breathing: armed only with a compass AND sun.sun (docs/SUN.md)
     const dayNight = !this._editing && this._effBgMode() === 'daynight' ? this._sunNow() : null;
-    const planDim = dayNight ? dayPhase(dayNight.elevation).planDim : 0;
+    const planDim = dayNight ? dayPhase(skyElevation(dayNight.elevation)).planDim : 0;
     // opening rulers: the drag of an existing one OR the placement preview
     const opMeasure = this._opMeasureView;
 
@@ -5631,7 +5675,7 @@ class HouseplanCard extends LitElement {
         ${this._markup ? this._renderMarkupBar() : this._mode === 'devices' ? this._renderDevicesBar() : this._mode === 'decor' ? this._renderDecorBar() : nothing}
         </div>
 
-        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'openwall' && this._openWallHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${dayNight ? ' daynight' : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}"
+        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'openwall' && this._openWallHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${dayNight ? ' daynight' : ''}${dayNight && this._skySnap ? ' skysnap' : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}"
           style="height:${this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}${stageBg ? `;background:${stageBg}` : ''}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}

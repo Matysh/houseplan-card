@@ -310,6 +310,39 @@ export function raySoftness(len: number): number {
   return Math.max(3, Math.min(18, len * 0.07));
 }
 
+/**
+ * Day/night sky: how far the painted sky may drift from the real sun before
+ * the card stops gliding and simply JUMPS to the right colour.
+ *
+ * The stage colour is delivered by a 45 s CSS transition, and a transition only
+ * advances while the card is actually painting. A card that was not painting —
+ * a background tab, another dashboard view, a sleeping wall tablet — comes back
+ * with a stale sky and then crawls toward the truth 45 s at a time, which is
+ * exactly the owner's 2026-08-04 report («цвет фона не меняется сам с течением
+ * времени суток, только после обновления страницы»: a reload paints the right
+ * colour outright, because a freshly mounted element has nothing to transition
+ * FROM). The sun never moves more than ~1° between two `sun.sun` updates (HA
+ * refreshes the position every 4 minutes by day), so a gap this big can only
+ * mean "we were not watching" — catch up at once, then breathe again.
+ */
+export const SKY_SNAP_DEG = 3;
+
+/** Should the sky jump rather than glide from `prev`° to `next`°? */
+export function skyNeedsSnap(prev: number | null, next: number): boolean {
+  return prev === null || !Number.isFinite(prev)
+    || Math.abs(next - prev) >= SKY_SNAP_DEG;
+}
+
+/**
+ * Sky granularity: the elevation the background is computed from, rounded to
+ * 0.1°. Finer than the eye can tell on a 45 s glide, and it keeps `dayPhase`
+ * (and therefore the style attribute lit has to commit) from churning on every
+ * hass tick while the ray GEOMETRY keeps its own, coarser memo.
+ */
+export function skyElevation(elevation: number): number {
+  return Math.round((Number(elevation) || 0) * 10) / 10;
+}
+
 // ---------------- cloud cover ----------------
 
 /** weather.* state → wedge opacity multiplier (docs/SUN.md table). */
