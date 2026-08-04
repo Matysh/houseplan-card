@@ -6,6 +6,7 @@ import {
   rayLength, rayQuad, clipToRoom, computeSunRays,
   rayAlpha, rayColor, cloudFactor, RAY_MAX_ALPHA,
   raysVisible, rayPeakAlpha, RAY_ELEVATION_MIN, RAY_FADE_MS,
+  RAY_LENGTH_K, RAY_FADE_END, rayStops, raySoftness,
   northDegOf, bgModeOf, sunRaysOn, weatherEntityOf, sunStateOf,
 } from '../test-build/sun.js';
 
@@ -102,12 +103,46 @@ test('windowLit: above the horizon AND facing the sun', () => {
   assert.ok(!windowLit(east, sunDirOnPlan(90, 0), -5));  // night
 });
 
-test('rayLength: longest at the horizon, shortest at noon, monotonic', () => {
-  assert.ok(near(rayLength(0), 2.5, 1e-9));
-  assert.ok(near(rayLength(90), 0.8, 1e-9));
+test('rayLength: 30% shorter than v1.56 (owner 2026-08-04), same shape', () => {
+  // the old curve, kept here so the -30% stays a fact and not a memory
+  const before = (e) => 0.8 + 1.7 * Math.pow(1 - Math.min(90, Math.max(0, e)) / 90, 1.6);
+  assert.equal(RAY_LENGTH_K, 0.7);
+  assert.ok(near(rayLength(0), 1.75, 1e-9));   // was 2.5
+  assert.ok(near(rayLength(90), 0.56, 1e-9));  // was 0.8
+  for (const e of [-5, 0, 3, 10, 30, 45, 60, 89, 90, 120]) {
+    assert.ok(near(rayLength(e), before(e) * 0.7, 1e-12), 'exactly 70% at ' + e);
+  }
+  // the shape survives: a low sun still reaches much further than a high one
   assert.ok(rayLength(10) > rayLength(30));
   assert.ok(rayLength(30) > rayLength(60));
-  assert.ok(near(rayLength(-5), 2.5, 1e-9)); // clamped
+  assert.ok(near(rayLength(-5), 1.75, 1e-9)); // clamped
+});
+
+test('rayStops: the shaft is fully dissolved BEFORE its own far edge', () => {
+  const stops = rayStops();
+  assert.ok(near(stops[0][0], 0) && near(stops[0][1], 1), 'brightest at the glass');
+  assert.equal(RAY_FADE_END, 0.85);
+  // offsets are sorted, alphas never rise, and the tail is a hard zero
+  for (let i = 1; i < stops.length; i++) {
+    assert.ok(stops[i][0] > stops[i - 1][0] || stops[i][0] === 1, 'offsets ascend');
+    assert.ok(stops[i][1] <= stops[i - 1][1], 'alpha never brightens inward');
+  }
+  assert.ok(near(stops[stops.length - 1][0], 1), 'the gradient spans the FULL wedge');
+  for (const [off, k] of stops) {
+    if (off >= RAY_FADE_END) assert.equal(k, 0, 'nothing left at/after ' + RAY_FADE_END);
+    else assert.ok(k > 0, 'still lit at ' + off);
+  }
+  // half gone well before the middle — the eye must not find a straight edge
+  const half = stops.find(([, k]) => k <= 0.5);
+  assert.ok(half[0] <= 0.65, 'past half-dark by two thirds of the way');
+});
+
+test('raySoftness: a feather proportional to the shaft, clamped both ends', () => {
+  assert.equal(raySoftness(0), 3);          // a stub of a wedge still gets a kerb
+  assert.ok(near(raySoftness(100), 7, 1e-9));
+  assert.ok(near(raySoftness(200), 14, 1e-9));
+  assert.equal(raySoftness(1e6), 18);       // never a smear across the plan
+  assert.ok(raySoftness(200) > raySoftness(100));
 });
 
 test('rayQuad + clipToRoom: the wedge is cut by the room outline', () => {

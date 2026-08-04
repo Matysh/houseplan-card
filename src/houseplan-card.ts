@@ -32,6 +32,7 @@ import {
 import {
   computeSunRays, dayPhase, northDegOf, bgModeOf, sunRaysOn, weatherEntityOf,
   sunStateOf, cloudFactor, rayPeakAlpha, raysVisible, rayColor, RAY_FADE_MS, type SunRay,
+  rayStops, raySoftness,
 } from './sun';
 import { ContentSigner } from './signing';
 import { mdiHomeCityOutline } from '@mdi/js';
@@ -4923,20 +4924,41 @@ class HouseplanCard extends LitElement {
     const rays = this._sunRaysCache.rays;
     if (!rays.length) return empty;
     const color = rayColor(dayPhase(sun.elevation).warmth);
+    const stops = rayStops();
+    // Room outlines for the clip: the wedge is blurred FIRST and clipped
+    // SECOND (SVG applies filter → clip-path in that order), so the soft kerb
+    // never leaks through a wall while the wedge itself has no razor edges.
+    const roomPolys = new Map<string, string>();
+    for (const r of space.rooms) {
+      const poly = r.id ? roomPoly(r) : null;
+      if (r.id && poly) roomPolys.set(r.id, poly.map((q) => q[0] + ',' + q[1]).join(' '));
+    }
     return svg`<defs>
         ${rays.map((r, i) => {
           const mx = (r.a[0] + r.b[0]) / 2;
           const my = (r.a[1] + r.b[1]) / 2;
           return svg`<linearGradient id="hp-sun-${i}" gradientUnits="userSpaceOnUse"
             x1="${mx}" y1="${my}" x2="${mx + r.dir[0] * r.len}" y2="${my + r.dir[1] * r.len}">
-            <stop offset="0%" stop-color="${color}" stop-opacity="${alpha.toFixed(3)}"></stop>
-            <stop offset="100%" stop-color="${color}" stop-opacity="0"></stop>
-          </linearGradient>`;
+            ${stops.map(([off, k]) => svg`<stop offset="${(off * 100).toFixed(1)}%"
+              stop-color="${color}" stop-opacity="${(alpha * k).toFixed(4)}"></stop>`)}
+          </linearGradient>
+          <filter id="hp-sunsoft-${i}" x="-30%" y="-30%" width="160%" height="160%"
+            color-interpolation-filters="sRGB">
+            <feGaussianBlur stdDeviation="${raySoftness(r.len).toFixed(2)}"></feGaussianBlur>
+          </filter>
+          ${roomPolys.has(r.roomId)
+            ? svg`<clipPath id="hp-sunclip-${i}" clipPathUnits="userSpaceOnUse">
+                <polygon points="${roomPolys.get(r.roomId)}"></polygon>
+              </clipPath>`
+            : nothing}`;
         })}
       </defs>
       <g class="sunlayer ${this._sunOut ? 'out' : ''}">
-        ${rays.map((r, i) => r.polys.map((p) => svg`<polygon
-          points="${p.map((q) => q[0] + ',' + q[1]).join(' ')}" fill="url(#hp-sun-${i})"></polygon>`))}
+        ${rays.map((r, i) => svg`<g filter="url(#hp-sunsoft-${i})"
+          clip-path="${roomPolys.has(r.roomId) ? `url(#hp-sunclip-${i})` : 'none'}">
+          ${r.polys.map((p) => svg`<polygon
+            points="${p.map((q) => q[0] + ',' + q[1]).join(' ')}" fill="url(#hp-sun-${i})"></polygon>`)}
+        </g>`)}
       </g>` as unknown as TemplateResult;
   }
 

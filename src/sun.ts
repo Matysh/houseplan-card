@@ -129,13 +129,18 @@ export function windowLit(normal: number[], sunDir: number[], elevation: number)
 // ---------------- wedge geometry ----------------
 
 /**
- * Wedge length in WINDOW LENGTHS: longest (~2.5) at sunrise/sunset, shortest
- * (~0.8) at the zenith. `0.8 + 1.7·(1 − e/90)^1.6` — long low shafts, short
- * noon pools, smooth in between (docs/SUN.md).
+ * Wedge length in WINDOW LENGTHS: longest (~1.75) at sunrise/sunset, shortest
+ * (~0.56) at the zenith. `0.56 + 1.19·(1 − e/90)^1.6` — long low shafts, short
+ * noon pools, smooth in between (docs/SUN.md). Owner 2026-08-04: «лучи от
+ * солнца сделать короче на 30%» — the whole curve is the old
+ * `0.8 + 1.7·(1 − e/90)^1.6` scaled by RAY_LENGTH_K, so the "low sun reaches
+ * further" shape is untouched.
  */
+export const RAY_LENGTH_K = 0.7;
+
 export function rayLength(elevation: number): number {
   const e = Math.min(90, Math.max(0, elevation));
-  return 0.8 + 1.7 * Math.pow(1 - e / 90, 1.6);
+  return RAY_LENGTH_K * (0.8 + 1.7 * Math.pow(1 - e / 90, 1.6));
 }
 
 /** The unclipped wedge: window span a-b extruded by `len` along `dir`. */
@@ -260,6 +265,49 @@ export function rayAlpha(elevation: number, cloud = 1): number {
 /** Wedge color: warm orange at the horizon → neutral daylight. */
 export function rayColor(warmth: number): string {
   return lerpColor('#ffe9c2', '#ff9a45', clamp01(warmth));
+}
+
+/**
+ * Where the shaft is already fully dissolved, as a fraction of its own length.
+ * Owner 2026-08-04: «проверить, чтобы они всегда плавно рассеивались (сейчас
+ * есть ощущение, что они упираются во что-то невидимое)». The old gradient ran
+ * to alpha 0 exactly AT the far edge, so any wedge that ended in mid-air still
+ * carried a sliver of colour up to its last pixel — and the eye reads the
+ * straight line of a polygon edge long before the alpha reaches zero. The last
+ * visible light now sits at 85 % of the length; the remaining 15 % is empty.
+ */
+export const RAY_FADE_END = 0.85;
+
+/**
+ * Gradient stops along the shaft: `[offset 0..1, share of the peak alpha]`.
+ * Convex ease-out — bright at the glass, half gone by a third of the way,
+ * a whisper at two thirds, nothing from RAY_FADE_END on. Consumed by the card
+ * as SVG <stop>s over the FULL wedge length, so the geometry and the gradient
+ * always describe the same shaft (docs/SUN.md).
+ */
+export function rayStops(): [number, number][] {
+  return [
+    [0, 1],
+    [0.26, 0.86],
+    [0.46, 0.6],
+    [0.64, 0.32],
+    [0.77, 0.1],
+    [RAY_FADE_END, 0],
+    [1, 0],
+  ];
+}
+
+/**
+ * Blur radius (render units) that feathers a wedge's own edges. The wedge is a
+ * polygon: without this its SIDES are razor-sharp lines across the floor, and
+ * where the room outline clips it — an opposite wall, an L-corner, an OPEN
+ * boundary with no wall drawn at all — the shaft is chopped at whatever alpha
+ * it still had. Blurring the wedge and only then clipping it to the room keeps
+ * the light inside the walls (it never leaks through them) while the visible
+ * kerb becomes a soft ramp: light landing ON the wall, not a cut-out shape.
+ */
+export function raySoftness(len: number): number {
+  return Math.max(3, Math.min(18, len * 0.07));
 }
 
 // ---------------- cloud cover ----------------
