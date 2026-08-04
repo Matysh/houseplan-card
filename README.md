@@ -27,6 +27,9 @@ right on your Lovelace dashboard.
 
 **Feature highlights**
 
+- ♾️ **An infinite canvas** — there is no "plan size" and no edge to run
+  past: draw and place devices anywhere, pan at any zoom, zoom out to see
+  everything, and let one tap fit the whole plan back on screen.
 - 🖱 **GUI-first floorplan editor** — rooms, doors & windows, island rooms,
   virtual walls and a visual decor layer, all drawn with clicks; room resize
   by dragging walls, with live lengths and areas as you drag; smart
@@ -39,6 +42,9 @@ right on your Lovelace dashboard.
   the day (white noon → golden hour → deep night), while windows on exterior
   walls cast real wedges of sunlight into the rooms; optional cloud cover
   from a weather entity.
+- 🪟 **Curtains and blinds open on a tap** — one action opens, closes or
+  stops a cover, and the icon itself morphs between open and closed while a
+  soft ring pulses as it travels.
 - 🌡 **Room cards** with temperature, humidity, Zigbee LQI and light count;
   comfort-range temperature fills, per-room signal heatmap.
 - 🚪 **Doors, windows and locks** with contact sensors — unlocking is always an

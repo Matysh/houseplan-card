@@ -1,8 +1,8 @@
 # Infinite canvas — the spec (source of truth)
 
-Status: approved by the owner 2026-08-03. Dev-branch feature, **no
-release**. Scope decisions final: there is no "plan size" any more, the
-canvas is conceptually unbounded, storage does not change, and the
+Status: approved by the owner 2026-08-03, **shipped in v1.57.0**.
+Scope decisions final: there is no "plan size" any more, the canvas
+is conceptually unbounded, storage does not change, and the
 opening view is always derived from what is actually drawn.
 
 ## The problem it closes
