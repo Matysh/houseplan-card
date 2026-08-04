@@ -359,6 +359,111 @@ export function rayStops(): [number, number][] {
   ];
 }
 
+// ---------------- the rim (owner 2026-08-04) ----------------
+
+/**
+ * The rim: «тонкая (1px) чёрная граница по бокам светящегося сектора, которая
+ * также плавно уходит в ноль вместе с самим градиентом».
+ *
+ * Why at all: painting light means ADDING luminance, and white paper has none
+ * left to give (the analysis kept in docs/SUN-CONTRAST.md). The owner rejected
+ * the «shade instead of light» model that analysis proposed and asked for the
+ * cheap half of it instead — light is invisible on white, but its BOUNDARY is
+ * not. One hairline along each side of the shaft gives the wedge a "beam"
+ * reading on paper without touching the fill, the geometry or anything a dark
+ * scene already gets right.
+ *
+ * Contract (docs/SUN.md, «The rim»):
+ *
+ * - only the two SIDE edges — the ones running from the ends of the window
+ *   along `dir`. Never the glass edge (a-b) and never the far edge: those are
+ *   not boundaries of the beam, they are its source and its end;
+ * - one screen pixel at any zoom (`vector-effect: non-scaling-stroke`);
+ * - black, and it dies EXACTLY with the fill: same gradient axis (the wall's
+ *   inward normal, `depth` long), same normalised curve `rayStops()`, same
+ *   `RAY_FADE_END` — so no rim can outlive the light it outlines;
+ * - clipped by the room like the wedge itself, which here is free: the
+ *   segments are cut out of the ALREADY clipped polygons (`rayRimEdges`),
+ *   so no `clip-path` enters the sun layer (docs/SUN.md keeps that promise).
+ */
+
+/**
+ * Peak rim opacity at the glass, before cloud cover. Visually tuned on the
+ * demo rig at both extremes: it has to make the shaft legible on white paper
+ * (the whole point) yet not read as an ink outline over the dark glow canvas.
+ * Below ~0.3 the line disappears on paper at kiosk scale; above ~0.5 it turns
+ * into a drawn contour on a night scene.
+ */
+export const RIM_MAX_ALPHA = 0.42;
+
+/** The rim is black — the one thing white paper still has room for. */
+export const RIM_COLOR = '#000000';
+
+/** Peak rim opacity for the current cloud cover — dimmed exactly like the fill. */
+export function rimPeakAlpha(cloud = 1): number {
+  return RIM_MAX_ALPHA * clamp01(cloud);
+}
+
+/**
+ * Rim gradient stops — the SAME normalised curve as the fill, by identity and
+ * not by copy: «прозрачность гаснет ВМЕСТЕ с заливкой ... ровно по той же
+ * кривой и тому же порогу». Only the peak alpha and the colour differ.
+ */
+export function rimStops(): [number, number][] {
+  return rayStops();
+}
+
+/**
+ * The two side edges of a wedge, cut to exactly what the room left of it.
+ *
+ * The clipped polygons already contain those edges: a boundary segment belongs
+ * to a side iff both of its endpoints lie on that side's line (through `a`,
+ * resp. `b`, along `dir`). Collinear pieces — polyclip readily splits an edge
+ * at a touching vertex, and an L-shaped room can cut a side into several
+ * stretches — are projected onto `dir` and merged, so an unclipped wedge
+ * yields exactly two segments and a clipped one the fewest that cover it.
+ *
+ * `eps` is in render units (the canvas is NORM_W = 1000 wide), comfortably
+ * above polyclip's rounding and far below anything the eye could see.
+ */
+export function rayRimEdges(ray: SunRay, eps = 1e-4): number[][][] {
+  const [dx, dy] = ray.dir;
+  const nx = -dy;
+  const ny = dx;
+  const out: number[][][] = [];
+  for (const src of [ray.a, ray.b]) {
+    const spans: [number, number][] = [];
+    for (const poly of ray.polys) {
+      for (let i = 0; i < poly.length; i++) {
+        const p = poly[i];
+        const q = poly[(i + 1) % poly.length];
+        // off the side's line? then this boundary edge is the glass, the far
+        // edge, or a wall the room cut the wedge with — not a side of the beam
+        if (Math.abs((p[0] - src[0]) * nx + (p[1] - src[1]) * ny) > eps) continue;
+        if (Math.abs((q[0] - src[0]) * nx + (q[1] - src[1]) * ny) > eps) continue;
+        const up = (p[0] - src[0]) * dx + (p[1] - src[1]) * dy;
+        const uq = (q[0] - src[0]) * dx + (q[1] - src[1]) * dy;
+        if (Math.abs(uq - up) <= eps) continue; // degenerate sliver
+        spans.push(up < uq ? [up, uq] : [uq, up]);
+      }
+    }
+    spans.sort((s, t) => s[0] - t[0]);
+    const merged: [number, number][] = [];
+    for (const s of spans) {
+      const last = merged[merged.length - 1];
+      if (last && s[0] <= last[1] + eps) last[1] = Math.max(last[1], s[1]);
+      else merged.push([s[0], s[1]]);
+    }
+    for (const [u0, u1] of merged) {
+      out.push([
+        [src[0] + dx * u0, src[1] + dy * u0],
+        [src[0] + dx * u1, src[1] + dy * u1],
+      ]);
+    }
+  }
+  return out;
+}
+
 /**
  * Day/night sky: how far the painted sky may drift from the real sun before
  * the card stops gliding and simply JUMPS to the right colour.

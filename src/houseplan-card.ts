@@ -34,6 +34,7 @@ import {
   computeSunRays, dayPhase, northDegOf, bgModeOf, sunRaysOn, weatherEntityOf,
   sunStateOf, cloudFactor, rayPeakAlpha, raysVisible, rayColor, RAY_FADE_MS, type SunRay,
   rayStops, skyElevation, skyNeedsSnap,
+  rayRimEdges, rimStops, rimPeakAlpha, RIM_COLOR,
 } from './sun';
 import { ContentSigner } from './signing';
 import { mdiHomeCityOutline } from '@mdi/js';
@@ -61,7 +62,7 @@ import {
 import { alignAllToGrid, type AlignReport } from './align-grid';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.58.0';
+const CARD_VERSION = '1.59.0-beta.1';
 /** HP-1552 boot-veil timing (AUD-1552-02). The veil holds for at least
  *  BOOT_MIN_MS; every stage-height change restarts a BOOT_QUIET_MS
  *  trailing-quiescence requirement (chrome still settling near the cap
@@ -89,9 +90,56 @@ const BOOT_SOFT_MS = 1500;
  *  the key keeps two DIFFERENT cards on one page from adopting each other's
  *  header height (same config twice on one view is indistinguishable — and
  *  then the heights match anyway). */
-const warmBoot = new Map<string, { hdrH: number; stageH: number }>();
+/** DEV-B703-03 — what the dead instance was LOOKING at. The header height
+ *  alone was not enough: `_view` (the pan) never left the instance, and the
+ *  EDITOR zoom is deliberately not persisted (`_saveZoom` is view-only) while
+ *  the editor MODE is (LS_NAV). So a re-mount inside an editor came back at
+ *  the view-mode zoom, and a panned view came back re-centred on the plan —
+ *  the owner's «чуть-чуть дёргается масштаб». The memo now carries the whole
+ *  viewport, so the restore is the same rect, not the same zoom number. */
+type WarmViewport = {
+  space: string;
+  mode: 'view' | 'plan' | 'devices' | 'decor';
+  zoom: number;
+  view: { x: number; y: number; w: number; h: number } | null;
+  /** the view-mode viewport an editor was entered from (_viewModeSnap) */
+  snap: { space: string; zoom: number; cx?: number; cy?: number } | null;
+  tool: MarkupTool;
+  decorTool: 'select' | 'backdrop' | 'line' | 'rect' | 'ellipse' | 'text' | 'erase';
+  showHidden: boolean;
+  /** «показать дальние» changes _baseVb, so the restored view rect is only
+   *  the same rect if the frame it was clamped against is the same one */
+  showFar: boolean;
+  selId: string | null;
+  rszSel: string | null;
+  decorSel: string | null;
+};
+/** Which dialog was open and its draft (docs/WARM-REMOUNT.md §3). `data` is
+ *  the live draft OBJECT — the memo is module state, never serialised, so a
+ *  half-filled device dialog with its uploaded pdfs survives for free. */
+type WarmDialogKind = 'space' | 'marker' | 'settings' | 'opening' | 'decorText' | 'rules' | 'room' | 'info' | 'openingInfo';
+type WarmDialog = { kind: WarmDialogKind; space: string; mode: string; data: any };
+type WarmEntry = {
+  hdrH: number;
+  stageH: number;
+  vp: WarmViewport | null;
+  dlg: WarmDialog | null;
+  /** when the instance that wrote `dlg` detached; 0 = it is still alive */
+  freed: number;
+};
+const warmBoot = new Map<string, WarmEntry>();
 const warmBootKey = (config: unknown): string =>
   `${window.innerWidth}x${window.innerHeight}|${JSON.stringify(config ?? {})}`;
+/** A dialog is revived only if the instance that owned it died THIS long ago.
+ *  A Lovelace rebuild detaches and re-attaches within one task; a user who
+ *  walked off to another dashboard view and came back later must not be met
+ *  by a dialog they have long forgotten opening. */
+const WARM_REVIVE_MS = 10000;
+/** The memo gains a key on every window RESIZE and never loses one; the
+ *  values used to be two numbers, and now they can hold a dialog draft (a
+ *  plan pdf among it). Keep the last few viewports — a stale entry only
+ *  costs the next card at that size a cold boot. */
+const WARM_MAX_KEYS = 8;
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -424,7 +472,7 @@ class HouseplanCard extends LitElement {
     busy: boolean;
   } | null = null;
   /** Wedge memo: recomputed only when (azimuth, elevation, north, cfg rev) change (docs/SUN.md). */
-  private _sunRaysCache: { key: string; rays: SunRay[] } | null = null;
+  private _sunRaysCache: { key: string; rays: SunRay[]; rims: number[][][][] } | null = null;
   /** Sun elevation (0.1°) the day/night sky is currently PAINTED with, and
    *  whether the next paint must jump to it instead of gliding (docs/SUN.md). */
   private _skyElev: number | null = null;
@@ -517,6 +565,13 @@ class HouseplanCard extends LitElement {
     busy: boolean;
   } | null = null;
   private _keyHandler = (e: KeyboardEvent) => this._onKey(e);
+  /** DEV-B703-03 warm re-mount: the dead instance's viewport, and the two
+   *  flags that keep the restore from being undone (the server load's centred
+   *  _restoreZoom) or applied twice (the dialog revival). */
+  private _warmVp: WarmViewport | null = null;
+  private _warmVpArmed = false;
+  private _warmRevivePending = false;
+  private _warmReviveTimer?: number;
   private _hashApplied = false;
   private _navApplied = false; // the saved space was restored (or the user navigated)
   // ---- kiosk (wall device) mode ----
@@ -669,6 +724,12 @@ class HouseplanCard extends LitElement {
     // DEV-B703-02: a reattach mid-outage must keep revalidating — the retry
     // timer died in disconnectedCallback
     if (!this._loadOk && this._serverCfg && this.hass) this._scheduleLoadRetry();
+    // DEV-B703-03: one task later the element Lovelace replaced has detached
+    // — only then is its open dialog ours to take over.
+    if (this._warmVp && !this._warmRevivePending && this._warmReviveTimer === undefined) {
+      this._warmRevivePending = true;
+      this._warmReviveTimer = window.setTimeout(() => this._warmReviveDialog(), 0);
+    }
   }
 
   public disconnectedCallback(): void {
@@ -711,6 +772,13 @@ class HouseplanCard extends LitElement {
       this._unsubLayout = null;
     }
     clearTimeout(this._layoutSyncTimer);
+    // DEV-B703-03: the last thing this instance was showing, then the
+    // tombstone that lets exactly one successor adopt the open dialog.
+    this._warmRevivePending = false;
+    clearTimeout(this._warmReviveTimer);
+    this._warmReviveTimer = undefined;
+    this._warmSnapshot();
+    this._warmPatch({ freed: Date.now() });
     super.disconnectedCallback();
   }
 
@@ -844,6 +912,7 @@ class HouseplanCard extends LitElement {
         this._booting = false;
         this._bootFading = false;
         this._hdrH = warm.hdrH;
+        this._warmVp = warm.vp; // adopted below, once the model is in hand
         this._bootSoft = true; // timer armed in connectedCallback...
         if (this.isConnected) { // ...unless setConfig re-runs while attached
           clearTimeout(this._bootSoftTimer);
@@ -893,6 +962,171 @@ class HouseplanCard extends LitElement {
     // arm it BEFORE the first view computation, so the very first paint is
     // already at the user's zoom.
     if (this._mode === 'view' && !this._view) this._zoom = this._zoomBySpace[this._space] || 1;
+    this._warmAdoptViewport(config);
+  }
+
+  /**
+   * DEV-B703-03: put back the EXACT viewport of the instance Lovelace threw
+   * away — same space, same editor, same zoom and the same pan rect, so the
+   * re-mount is bit-for-bit the view that was on screen. Runs after the LS
+   * snapshot has restored the model (the space must exist) and after the
+   * LS_NAV/default_floor guesses, which it supersedes: the memo is the newer,
+   * finer-grained record of the very same intent. A `#space=` deep link is an
+   * EXPLICIT navigation and still wins.
+   */
+  private _warmAdoptViewport(config: CardConfig): void {
+    const vp = this._warmVp;
+    if (!vp) return;
+    if (this._hashApplied || !this._model.find((sp) => sp.id === vp.space)) {
+      this._warmVp = null; // another space is on screen — the memo is not about it
+      return;
+    }
+    this._space = vp.space;
+    this._navApplied = true;
+    // the editor comes back only where an editor is allowed at all
+    this._mode = vp.mode !== 'view' && this._canEdit && !config.kiosk ? vp.mode : 'view';
+    this._zoom = vp.zoom;
+    this._view = vp.view ? { ...vp.view } : null;
+    this._viewModeSnap = vp.snap ? { ...vp.snap } : null;
+    this._tool = vp.tool;
+    this._decorTool = vp.decorTool;
+    this._showHidden = vp.showHidden;
+    if (this._showFar !== vp.showFar) { this._showFar = vp.showFar; this._frame = null; }
+    this._selId = vp.selId;
+    this._rszSel = vp.rszSel;
+    this._decorSel = vp.decorSel;
+    this._warmVpArmed = true; // _loadFromServer must not re-centre this
+  }
+
+  /** Merge a patch into this card's warm entry. `create` is false everywhere
+   *  but the boot settle: a memo may only be BORN from a settled geometry. */
+  private _warmPatch(patch: Partial<WarmEntry>, create = false): void {
+    if (this._config?.kiosk) return;
+    const k = warmBootKey(this._config);
+    const cur = warmBoot.get(k);
+    if (!cur && !create) return;
+    warmBoot.set(k, { hdrH: this._hdrH, stageH: 0, vp: null, dlg: null, freed: 0, ...(cur || {}), ...patch });
+    while (warmBoot.size > WARM_MAX_KEYS) {
+      const oldest = warmBoot.keys().next().value; // Map keeps insertion order
+      if (oldest === undefined || oldest === k) break;
+      warmBoot.delete(oldest);
+    }
+  }
+
+  private _warmViewportState(): WarmViewport {
+    return {
+      space: this._space,
+      mode: this._mode,
+      zoom: this._zoom,
+      view: this._view ? { ...this._view } : null,
+      snap: this._viewModeSnap ? { ...this._viewModeSnap } : null,
+      tool: this._tool,
+      decorTool: this._decorTool,
+      showHidden: this._showHidden,
+      showFar: this._showFar,
+      selId: this._selId,
+      rszSel: this._rszSel,
+      decorSel: this._decorSel,
+    };
+  }
+
+  /**
+   * The open dialog, or null. Deliberately null (docs/WARM-REMOUNT.md §4) for:
+   *  • «Выровнять всё по сетке» and the room MERGE confirmation — a modal whose
+   *    only content is "press OK to rewrite your plan". Resurrecting a
+   *    confirmation next to a user who has just come back to the tab is how a
+   *    destructive write gets a blind click; both are one click to reopen.
+   *  • a tap confirmation — it carries a closure over the DEAD instance.
+   *  • the floor-import wizard — `updated()` reopens it by itself while the
+   *    config is still empty; reviving it too would double the queue.
+   *  • ANY dialog with a save/upload in flight (`busy`) — the new instance
+   *    cannot know whether the write landed, and offering Save again invites a
+   *    second one. The config reload shows the truth instead.
+   * Precedence follows the Esc stack: the topmost dialog is the one that is
+   * "open" as far as the user is concerned.
+   */
+  private _warmDialogState(): WarmDialog | null {
+    const at = (kind: WarmDialogKind, data: any): WarmDialog =>
+      ({ kind, space: this._space, mode: this._mode, data });
+    if (this._tapConfirm || this._alignDialog || this._mergeDialog || this._importDialog) return null;
+    if (this._openingInfo) return at('openingInfo', (this._openingInfo as any).id);
+    if (this._infoCard) return at('info', this._infoCard.id);
+    if (this._rulesDialog) return this._rulesDialog.busy ? null : at('rules', this._rulesDialog);
+    if (this._settingsDialog) return this._settingsDialog.busy ? null : at('settings', this._settingsDialog);
+    if (this._markerDialog) return this._markerDialog.busy ? null : at('marker', this._markerDialog);
+    if (this._openingDialog) return at('opening', this._openingDialog);
+    if (this._decorTextDialog) return at('decorText', this._decorTextDialog);
+    if (this._roomDialog) {
+      return at('room', {
+        editId: this._roomEditId, fill: this._roomFill, tempSrc: this._roomTempSrc,
+        humSrc: this._roomHumSrc, srcOpen: this._roomSrcOpen, srcFilter: this._roomSrcFilter,
+        nameScale: this._roomNameScale, labelScale: this._roomLabelScale,
+        areaSel: this._areaSel, nameSel: this._nameSel,
+        pendingSplit: this._pendingSplit, path: this._path,
+      });
+    }
+    if (this._spaceDialog) return this._spaceDialog.busy ? null : at('space', this._spaceDialog);
+    return null;
+  }
+
+  /** Mirror the live viewport (and the open dialog) into the memo. Called from
+   *  every `updated()`: whatever the previous instance last PAINTED is what the
+   *  next one must open at — and a dialog closed with Esc/Cancel/Save writes
+   *  `dlg: null` here on the very next render, so it can never come back. */
+  private _warmSnapshot(): void {
+    if (this._booting || this._config?.kiosk) return;
+    const patch: Partial<WarmEntry> = { vp: this._warmViewportState() };
+    // do not overwrite the snapshot we are about to revive FROM
+    if (!this._warmRevivePending) patch.dlg = this._warmDialogState();
+    this._warmPatch(patch);
+  }
+
+  /**
+   * Re-open the dialog the dead instance had open. Not done in setConfig:
+   * Lovelace may still be holding the old element there, and a live owner's
+   * dialog must not be stolen. One task later the previous instance has
+   * detached (`freed`) and the snapshot is ours to consume — exactly once.
+   */
+  private _warmReviveDialog(): void {
+    this._warmRevivePending = false;
+    const k = warmBootKey(this._config);
+    const e = warmBoot.get(k);
+    if (!e || !e.dlg) return;
+    const d = e.dlg;
+    warmBoot.set(k, { ...e, dlg: null, freed: 0 }); // consume-once: no zombie on the third mount
+    if (!e.freed || Date.now() - e.freed > WARM_REVIVE_MS) return; // owner alive, or gone long ago
+    if (d.space !== this._space || d.mode !== this._mode) return;  // never in another space/editor
+    switch (d.kind) {
+      case 'space': this._spaceDialog = { ...d.data, busy: false, savedBusy: false }; break;
+      case 'marker': this._markerDialog = { ...d.data, busy: false }; break;
+      case 'settings': this._settingsDialog = { ...d.data, busy: false }; break;
+      case 'rules': this._rulesDialog = { ...d.data, busy: false }; break;
+      case 'opening': this._openingDialog = { ...d.data }; break;
+      case 'decorText': this._decorTextDialog = { ...d.data }; break;
+      case 'room': {
+        const r = d.data;
+        this._roomEditId = r.editId; this._roomFill = r.fill; this._roomTempSrc = r.tempSrc;
+        this._roomHumSrc = r.humSrc; this._roomSrcOpen = r.srcOpen; this._roomSrcFilter = r.srcFilter;
+        this._roomNameScale = r.nameScale; this._roomLabelScale = r.labelScale;
+        this._areaSel = r.areaSel; this._nameSel = r.nameSel;
+        this._pendingSplit = r.pendingSplit; this._path = r.path;
+        this._roomDialog = true;
+        break;
+      }
+      // info popups are re-resolved by id: the config may have been reloaded
+      // under us, and a card rendered from a stale object is a lie
+      case 'info': {
+        const dev = this._devices.find((x) => x.id === d.data);
+        if (dev) this._infoCard = dev;
+        break;
+      }
+      case 'openingInfo': {
+        const op = (this._curSpaceCfg?.openings || []).find((x: any) => x.id === d.data);
+        if (op) this._openingInfo = op;
+        break;
+      }
+    }
+    this.requestUpdate();
   }
 
   /** Save a snapshot of the config+layout to localStorage for an instant start. */
@@ -1094,6 +1328,7 @@ class HouseplanCard extends LitElement {
 
   protected updated(): void {
     this._skyRelease();
+    this._warmSnapshot(); // DEV-B703-03: the memo follows what is on screen
     const stage = this._stageEl;
     if (stage && !this._roViewport) {
       this._roViewport = new ResizeObserver(() => this._refitView());
@@ -1122,7 +1357,7 @@ class HouseplanCard extends LitElement {
         // resize with a live card) must not poison the next warm mount —
         // the memo follows the live settled geometry.
         if (t >= 0 && !this._booting && !this._config?.kiosk && stage.clientHeight > 0) {
-          warmBoot.set(warmBootKey(this._config), { hdrH: t, stageH: stage.clientHeight });
+          this._warmPatch({ hdrH: t, stageH: stage.clientHeight });
         }
       };
       // a frame later: setting state straight from the observer callback makes
@@ -1219,7 +1454,12 @@ class HouseplanCard extends LitElement {
         this._space = this._model[0]?.id || this._space;
       }
       this._cacheSnapshot();
-      this._restoreZoom();
+      // DEV-B703-03: a warm re-mount already holds the exact viewport of the
+      // instance that was thrown away; the centred restore here IS the
+      // reported jerk. Only a genuine navigation (the hash/nav landed us on
+      // another space) still needs it.
+      if (this._warmVpArmed && this._space === this._warmVp?.space) this._warmVpArmed = false;
+      else this._restoreZoom();
     } catch (e) {
       if (this._serverCfg) {
         // DEV-B703-02: this instance already RENDERS a valid config (the LS
@@ -2157,7 +2397,7 @@ class HouseplanCard extends LitElement {
     // same config at the same viewport opens warm (no veil, no wait).
     const settledH = this._stageEl?.clientHeight ?? 0;
     if (!this._config?.kiosk && settledH > 0) {
-      warmBoot.set(warmBootKey(this._config), { hdrH: this._hdrH, stageH: settledH });
+      this._warmPatch({ hdrH: this._hdrH, stageH: settledH, vp: this._warmViewportState() }, true);
     }
     this._bootFading = true; // one soft opacity-out, then out of the DOM
     this._bootTimer = window.setTimeout(() => { this._bootFading = false; }, 220);
@@ -5308,12 +5548,17 @@ class HouseplanCard extends LitElement {
       const windows = this._openingsR
         .filter((o) => o.type === 'window')
         .map((o) => ({ id: o.id, x: o.rx, y: o.ry, angle: o.angle, length: o.rlen }));
-      this._sunRaysCache = { key, rays: computeSunRays(rooms, windows, sun.azimuth, sun.elevation, north!) };
+      const rays = computeSunRays(rooms, windows, sun.azimuth, sun.elevation, north!);
+      // the rim is pure geometry off the same wedges — memoised on the same key
+      this._sunRaysCache = { key, rays, rims: rays.map((r) => rayRimEdges(r)) };
     }
     const rays = this._sunRaysCache.rays;
+    const rims = this._sunRaysCache.rims;
     if (!rays.length) return empty;
     const color = rayColor(dayPhase(sun.elevation).warmth);
     const stops = rayStops();
+    const rimAlpha = rimPeakAlpha(cloud);
+    const rimStopList = rimStops();
     // NO filter here, and none in <defs>. Owner 2026-08-04: «не надо размывать
     // их боковые грани» — the shaft keeps the crisp sides real light has, and
     // the only falloff is the gradient. The tip needs no blur either:
@@ -5330,21 +5575,41 @@ class HouseplanCard extends LitElement {
     // wall; with this axis every point `source + dir·u` lands at offset
     // `u/len`. Whole pane at peak alpha, identical fade distance along every
     // ray, and the parallelogram's far edge exactly on the gradient's end.
+    //
+    // THE RIM (owner 2026-08-04, docs/SUN.md «The rim»): a 1 px black hairline
+    // along the two SIDE edges only, so the shaft stays legible on white paper
+    // where added luminance cannot read. It gets a gradient of its own —
+    // `hp-sunrim-i` — deliberately built on the SAME x1/y1/x2/y2 and the same
+    // `rayStops()` curve as `hp-sun-i`, only black and with its own peak: the
+    // line must die on the very stop the fill dies on, never outlive it.
+    // `non-scaling-stroke` keeps it one screen pixel at any zoom, and the
+    // segments come out of the ALREADY clipped polygons, so a wall still stops
+    // the light by geometry alone and no clip-path enters this layer.
     return svg`<defs>
         ${rays.map((r, i) => {
           const mx = (r.a[0] + r.b[0]) / 2;
           const my = (r.a[1] + r.b[1]) / 2;
+          const ax = mx + r.normal[0] * r.depth;
+          const ay = my + r.normal[1] * r.depth;
           return svg`<linearGradient id="hp-sun-${i}" gradientUnits="userSpaceOnUse"
-            x1="${mx}" y1="${my}"
-            x2="${mx + r.normal[0] * r.depth}" y2="${my + r.normal[1] * r.depth}">
+            x1="${mx}" y1="${my}" x2="${ax}" y2="${ay}">
             ${stops.map(([off, k]) => svg`<stop offset="${(off * 100).toFixed(1)}%"
               stop-color="${color}" stop-opacity="${(alpha * k).toFixed(4)}"></stop>`)}
+          </linearGradient>
+          <linearGradient id="hp-sunrim-${i}" gradientUnits="userSpaceOnUse"
+            x1="${mx}" y1="${my}" x2="${ax}" y2="${ay}">
+            ${rimStopList.map(([off, k]) => svg`<stop offset="${(off * 100).toFixed(1)}%"
+              stop-color="${RIM_COLOR}" stop-opacity="${(rimAlpha * k).toFixed(4)}"></stop>`)}
           </linearGradient>`;
         })}
       </defs>
       <g class="sunlayer ${this._sunOut ? 'out' : ''}">
         ${rays.map((r, i) => r.polys.map((p) => svg`<polygon
           points="${p.map((q) => q[0] + ',' + q[1]).join(' ')}" fill="url(#hp-sun-${i})"></polygon>`))}
+        ${rays.map((r, i) => (rims[i] || []).map((e) => svg`<line class="sunrim"
+          x1="${e[0][0]}" y1="${e[0][1]}" x2="${e[1][0]}" y2="${e[1][1]}"
+          stroke="url(#hp-sunrim-${i})" stroke-width="1"
+          vector-effect="non-scaling-stroke"></line>`))}
       </g>` as unknown as TemplateResult;
   }
 
@@ -6124,7 +6389,12 @@ class HouseplanCard extends LitElement {
                   : nothing}
               </button>`,
             )}
-            ${this._norm && this._mode === 'plan'
+            ${''/* «Добавить пространство» is a NAVIGATION action, not a plan-editor
+                   tool (owner 2026-08-04): it lives next to the floor names in every
+                   mode, exactly where the per-space gear does. Kiosk is a shop
+                   window — the whole .hdr is display:none there, but the button is
+                   also not RENDERED, so nothing invisible is clickable. */}
+            ${this._canEdit && !this._kiosk
               ? html`<button class="tab tabadd" title=${this._t('title.add_space')}
                   @click=${() => this._openSpaceDialog('create')}>
                   <ha-icon icon="mdi:plus"></ha-icon>

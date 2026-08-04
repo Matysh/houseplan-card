@@ -1559,6 +1559,14 @@ export const cardStyles = css`
       border: 1px solid var(--hp-line);
       border-radius: var(--rad-m);
       background: var(--hp-bg2, rgba(255, 255, 255, 0.03));
+      /* The same collapse that ate .candlist (v1.53.1): a scroll box is a
+         flex item whose automatic minimum size is ZERO (overflow != visible),
+         so inside .dialog .body — a flex column taller than its 66vh cap —
+         it shrank to a 14px sliver: the rows were in the DOM, the owner saw
+         a thin rounded stripe under the "Already uploaded" button. Don't
+         shrink, and keep a floor even when the box is empty or loading. */
+      flex: 0 0 auto;
+      min-height: 2.6em;
     }
     .savedplan {
       display: flex;

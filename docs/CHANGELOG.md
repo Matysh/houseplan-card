@@ -1,5 +1,80 @@
 # Changelog
 
+## v1.59.0-beta.1 — 2026-08-04
+
+Minor pre-release: the card survives a Lovelace re-mount bit-for-bit —
+your pan, your zoom and even the dialog you had open come back with it —
+sun rays get a hairline edge so they read on white paper, the «+» that
+adds a space leaves the Plan editor for the tab row, and the list of
+plans already uploaded to the server stops collapsing into a stripe.
+
+- **The card no longer twitches — and no longer loses your open dialog —
+  when you come back to the tab (docs/WARM-REMOUNT.md).** Lovelace
+  re-creates the card element on a websocket reconnect; v1.58.0 removed
+  the preloader flash, but the new instance still had to guess what the
+  dead one had been looking at. Measured: the PAN never left the instance
+  (a view parked in a corner came back re-centred: x=50 → x=250 at
+  zoom 2.2), and the EDITOR zoom is deliberately not persisted while the
+  editor MODE is — so a re-mount inside an editor came back at 1.0
+  instead of 3.0. The warm memo now carries the whole viewport (space,
+  mode, zoom, the `_view` rect itself, the view-mode snapshot, the
+  «show far objects» frame, the selected tool and selection, the local
+  «show hidden» toggle), so the restore is the same RECTANGLE, not the
+  same zoom number — bit-for-bit, verified frame by frame.
+
+- **An open dialog survives the re-creation with its draft.** The memo is
+  module state and is never serialised, so the live draft object — a
+  half-filled device dialog with its uploaded PDFs included — moves over
+  for free. The rule is «revive the draft, never revive the decision»:
+  the confirmations for «Align everything to the grid» and for a room
+  merge are deliberately NOT restored (a modal whose whole content is
+  «press OK to rewrite your plan» must not greet a returning user), nor
+  is a tap confirmation (it closes over the dead instance), nor the floor
+  import wizard (it reopens itself), nor any dialog with a save in flight.
+  Revival requires the same space and the same mode, happens at most once
+  (the snapshot is consumed), and only if the previous instance died
+  within the last 10 s. A dialog closed on purpose — Esc, Cancel or
+  Save — writes `null` into the memo on the very next render, so it can
+  never come back (smoke_warm_dialogs).
+
+- **Sun rays get an edge (docs/SUN.md, «The rim»).** On a white plan a
+  wedge of light was nearly invisible, and no amount of opacity could fix
+  it: painting light means adding luminance, and white paper has none
+  left to give. Every lit wedge now carries a 1 px black hairline along
+  its two SIDE edges — the ones running inward from the ends of the
+  window. It fades to nothing on exactly the same axis, the same curve
+  and the same 85 % threshold as the fill (a second gradient built on the
+  fill's own stops), stays one screen pixel at any zoom
+  (`non-scaling-stroke`), is cut by the room like the wedge itself, and
+  lives in the same layer — so the 3° threshold, the two-second fade,
+  cloud cover, night and the editors govern it without a line of extra
+  logic. Peak opacity 0.42, picked against a white sheet and the dark
+  glow canvas alike. The «shade instead of light» model of
+  docs/SUN-CONTRAST.md was rejected in favour of this; that file now
+  records the decision and keeps the analysis behind it.
+
+- **The «+» that adds a space is not an editor tool.** The button next to
+  the floor names only existed inside the Plan editor, so adding a second
+  floor meant first opening an editor you did not want. Adding a space is
+  navigation, not markup: the «+» now sits in the tab row in every mode —
+  View and all three editors — exactly where the per-space gear already
+  lives, and under the same admin rule. The kiosk is a shop window: the
+  button is not rendered there at all (its header is `display:none`, and a
+  hidden-but-present node is still clickable from script). The tab row
+  wraps as before at 390 px (smoke_gear_tabs measures the overflow).
+
+- **«Already uploaded» shows the plans again.** In both space dialogs
+  (new space and space settings) the list of plans stored on the server
+  collapsed into a thin rounded stripe: the rows were rendered, the box
+  itself was 14 px tall. A scrolling box is a flex item whose automatic
+  minimum size is zero, and the dialog body is a flex column with a
+  66 vh cap — so the picker was the one child that could be squeezed to
+  nothing. It no longer shrinks and keeps a floor of its own; up to five
+  thumbnails are visible at once and the rest scroll. The empty and
+  loading states stay readable instead of clipping their own text
+  (smoke_plan_picker measures the heights — the old smoke only counted
+  DOM nodes and passed).
+
 ## v1.58.0 — 2026-08-04
 
 Minor release: the backdrop picture becomes a movable, scalable object,

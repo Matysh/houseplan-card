@@ -7,6 +7,7 @@ import {
   rayAlpha, rayColor, cloudFactor, RAY_MAX_ALPHA,
   raysVisible, rayPeakAlpha, RAY_ELEVATION_MIN, RAY_FADE_MS,
   RAY_LENGTH_K, RAY_FADE_END, rayStops, RAY_MIN_COS,
+  rimStops, rimPeakAlpha, rayRimEdges, RIM_MAX_ALPHA, RIM_COLOR,
   SKY_SNAP_DEG, skyNeedsSnap, skyElevation,
   northDegOf, bgModeOf, sunRaysOn, weatherEntityOf, sunStateOf,
 } from '../test-build/sun.js';
@@ -144,6 +145,98 @@ test('rayStops: the shaft is fully dissolved BEFORE its own far edge', () => {
   // half gone well before the middle — the eye must not find a straight edge
   const half = stops.find(([, k]) => k <= 0.5);
   assert.ok(half[0] <= 0.65, 'past half-dark by two thirds of the way');
+});
+
+// ---- the rim (owner 2026-08-04, docs/SUN.md «The rim») -----------------
+
+test('rimStops: the rim dies on exactly the same curve as the fill', () => {
+  const rim = rimStops();
+  // «ровно по той же кривой и тому же порогу» — identity, not a copy that can
+  // drift: if the fill's easing is ever retuned the outline follows it.
+  assert.deepEqual(rim, rayStops());
+  assert.ok(near(rim[0][0], 0) && near(rim[0][1], 1), 'brightest at the glass');
+  assert.ok(near(rim[rim.length - 1][0], 1), 'spans the FULL wedge, like the fill');
+  for (let i = 1; i < rim.length; i++) {
+    assert.ok(rim[i][0] > rim[i - 1][0] || rim[i][0] === 1, 'offsets ascend');
+    assert.ok(rim[i][1] <= rim[i - 1][1], 'the rim never brightens inward');
+  }
+  for (const [off, k] of rim) {
+    if (off >= RAY_FADE_END) assert.equal(k, 0, 'no rim at/after ' + RAY_FADE_END);
+    else assert.ok(k > 0, 'still drawn at ' + off);
+  }
+  // black, and visible on paper without becoming an ink contour on a dark scene
+  assert.equal(RIM_COLOR, '#000000');
+  assert.ok(RIM_MAX_ALPHA >= 0.35 && RIM_MAX_ALPHA <= 0.5, 'the owner\'s 0.35..0.5 window');
+  assert.ok(near(rimPeakAlpha(1), RIM_MAX_ALPHA));
+  assert.ok(near(rimPeakAlpha(), RIM_MAX_ALPHA));       // clear sky by default
+  assert.ok(near(rimPeakAlpha(0.4), RIM_MAX_ALPHA * 0.4)); // clouds dim it too
+  assert.equal(rimPeakAlpha(0), 0);                     // rain takes it with the light
+  assert.ok(near(rimPeakAlpha(5), RIM_MAX_ALPHA));      // garbage cloud factor clamps
+});
+
+test('rayRimEdges: the two SIDE edges only, cut exactly like the wedge', () => {
+  // a west window in r1, a western sun square into it — the wedge stays well
+  // inside the room, so both sides are whole
+  const [ray] = computeSunRays(ROOMS, [WIN.west], 270, 60, 0);
+  assert.ok(ray, 'the west window is lit');
+  const edges = rayRimEdges(ray);
+  assert.equal(edges.length, 2, 'one line per side, no more');
+  const far = (s) => [s[0] + ray.dir[0] * ray.len, s[1] + ray.dir[1] * ray.len];
+  const same = (p, q) => near(p[0], q[0], 1e-6) && near(p[1], q[1], 1e-6);
+  const has = (s, t) => edges.some(([p, q]) => (same(p, s) && same(q, t)) || (same(p, t) && same(q, s)));
+  assert.ok(has(ray.a, far(ray.a)), 'the side from a runs the full reach');
+  assert.ok(has(ray.b, far(ray.b)), 'the side from b runs the full reach');
+  // never the glass (a-b) and never the far edge: every rim segment is
+  // parallel to the ray, and both of them are the full length
+  for (const [p, q] of edges) {
+    const dx = q[0] - p[0];
+    const dy = q[1] - p[1];
+    const L = Math.hypot(dx, dy);
+    assert.ok(near(L, ray.len, 1e-6), 'a whole side, not a wall of the room');
+    assert.ok(near((dx / L) * ray.dir[1] - (dy / L) * ray.dir[0], 0, 1e-9), 'parallel to the ray');
+  }
+  // ...and the glass edge is NOT among them, however you orient it
+  assert.ok(!has(ray.a, ray.b), 'the pane of glass is not a rim');
+  assert.ok(!has(far(ray.a), far(ray.b)), 'the far edge is not a rim either');
+});
+
+test('rayRimEdges: a room that cuts the shaft cuts the rim with it', () => {
+  // the same window in a room only 30 units deep — the wedge (~46 long at 60°)
+  // hits the far wall, and both rims must stop on it, not carry on in mid-air
+  const narrow = [{ id: 'n1', poly: [[100, 100], [130, 100], [130, 500], [100, 500]] }];
+  const [ray] = computeSunRays(narrow, [WIN.west], 270, 60, 0);
+  assert.ok(ray && ray.len > 30, 'the wedge really is longer than the room');
+  const edges = rayRimEdges(ray);
+  assert.equal(edges.length, 2);
+  for (const [p, q] of edges) {
+    assert.ok(near(Math.hypot(q[0] - p[0], q[1] - p[1]), 30, 1e-6), 'clipped to the room');
+    assert.ok(Math.max(p[0], q[0]) <= 130 + 1e-6, 'nothing past the far wall');
+  }
+  // and the shortened rim still starts at the glass
+  assert.ok(edges.some(([p]) => near(p[0], 100, 1e-6) && near(p[1], 270, 1e-6)));
+  assert.ok(edges.some(([p]) => near(p[0], 100, 1e-6) && near(p[1], 330, 1e-6)));
+});
+
+test('rayRimEdges: collinear splinters merge, an empty wedge draws nothing', () => {
+  const [ray] = computeSunRays(ROOMS, [WIN.west], 270, 60, 0);
+  // polyclip readily splits a side at a touching vertex; the rim must still be
+  // ONE line per side, not a string of them
+  const poly = ray.polys[0];
+  const split = [];
+  for (let i = 0; i < poly.length; i++) {
+    const p = poly[i];
+    const q = poly[(i + 1) % poly.length];
+    split.push(p, [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2]);
+  }
+  assert.equal(split.length, 8, 'every edge of the wedge is now two');
+  const cut = { ...ray, polys: [split] };
+  const merged = rayRimEdges(cut);
+  assert.equal(merged.length, 2, 'still one line per side, not four');
+  for (const [p, q] of merged) {
+    assert.ok(near(Math.hypot(q[0] - p[0], q[1] - p[1]), ray.len, 1e-6), 'the whole side');
+  }
+  // a wedge clipped away to nothing has no rim at all
+  assert.deepEqual(rayRimEdges({ ...ray, polys: [] }), []);
 });
 
 test('skyNeedsSnap / skyElevation: glide with the sun, jump when we were away', () => {

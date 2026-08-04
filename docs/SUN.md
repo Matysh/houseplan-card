@@ -219,6 +219,48 @@ left to draw an edge with.
 
 Clipping by the room is unchanged; only the visible edge changed.
 
+### The rim — a hairline along the sides (owner 2026-08-04)
+
+The fill above is honest and nearly invisible on a light plan. Painting
+light means ADDING luminance, and white paper has none left to give:
+raising `RAY_MAX_ALPHA` does not buy contrast, it only tints the room
+beige. That analysis is kept in docs/SUN-CONTRAST.md, whose «shade
+instead of light» answer the owner **rejected** on 2026-08-04 in favour
+of its cheap half, verbatim: «тонкая (1px) чёрная граница по бокам
+светящегося сектора, которая также плавно уходит в ноль вместе с самим
+градиентом». Light is invisible on paper; its BOUNDARY is not.
+
+The contract:
+
+- **Two side edges only.** The rim runs along the two edges that leave
+  the ends of the glass and travel inward with the ray — `a → a+dir·len`
+  and `b → b+dir·len`. Never the glass edge `a-b` (that is the source,
+  not a boundary) and never the far edge (there is nothing left to
+  outline there — the fill is already at zero, see below).
+- **One screen pixel at any zoom**: `stroke-width="1"` plus
+  `vector-effect="non-scaling-stroke"`, so the hairline is a hairline on
+  a phone, on a 4K kiosk and at any zoom level of the infinite canvas.
+- **Black**, and it dies exactly with the fill. A second gradient
+  `hp-sunrim-N` is emitted next to `hp-sun-N` with **the same
+  `x1,y1,x2,y2`** (the wall's inward normal, `depth` long) and **the same
+  normalised curve** — `rimStops()` returns `rayStops()` by identity, not
+  by copy, so the two can never drift apart. Only the colour and the peak
+  differ: `RIM_MAX_ALPHA` = 0.42 at the glass, tuned on the demo rig
+  against both extremes (below ~0.3 the line vanishes on paper at kiosk
+  scale, above ~0.5 it reads as an ink contour over the dark glow
+  canvas). Zero from `RAY_FADE_END` = 85 % on, like the fill.
+- **Clipped by the room like the wedge**, and for free: `rayRimEdges()`
+  cuts the sides out of the ALREADY clipped polygons — a boundary segment
+  belongs to a side iff both of its ends lie on that side's line —
+  merging collinear pieces so an unclipped wedge yields exactly two
+  lines. No `clip-path` enters the sun layer, and light still cannot
+  cross a wall.
+- **The same life as the wedge.** The rim lives inside the same
+  `<g class="sunlayer">`, so the 3° threshold, the 2 s layer fade,
+  `prefers-reduced-motion`, cloud cover (`rimPeakAlpha(cloud)`, zero in
+  the rain), night, the editors and the memo key all apply to it without
+  a line of extra logic.
+
 ### The 3° threshold and the 2-second fade
 
 Wedge opacity does NOT depend on elevation any more — the old ramp-in
@@ -284,8 +326,8 @@ Backend validation: string or null.
 ## Files
 
 - `src/sun.ts` — pure logic (angles, day phase, exterior walls, wedge
-  quads + clipping, cloud factor, settings inheritance); unit-tested
-  in `test/sun.test.mjs`.
+  quads + clipping, the rim edges and its stops, cloud factor, settings
+  inheritance); unit-tested in `test/sun.test.mjs`.
 - `src/houseplan-card.ts` — the memoised wedge layer, the day/night
   stage background, both settings dialogs (compass dial included).
 - `src/space-render.ts` — the static card's background only.
@@ -301,8 +343,20 @@ Backend validation: string or null.
   DEV-EB173-01 grazing repro end to end (west window 80, elevation 90,
   azimuth 190): equal sides of the nominal length, peak alpha at BOTH
   ends of the glass, and no wedge at all below `RAY_MIN_COS`.
+- `demo/smoke_sun_rim.mjs` — the rim: exactly two lines per wedge, on the
+  two SIDE edges (their coordinates checked against the wedge's own
+  vertices), `url(#hp-sunrim-N)` with BLACK stops on the same axis and
+  the same offsets as the fill, monotone and dead at 85 %,
+  `vector-effect: non-scaling-stroke` at width 1, gone below 3°, in an
+  editor and in the rain — and a pixel probe on WHITE paper proving the
+  side of the wedge is measurably darker than the paper on either hand
+  (the point of the whole change).
 - `demo/smoke_sun_live_bg.mjs` — the sky follows `sun.sun` on a plain
   `hass` tick with no reload, asserted on the COMPUTED background of the
   stage; small steps still glide, big ones catch up at once.
 - `demo/shot_sun_short.mjs` — stills at a low and a high sun
   (`node demo/shot_sun_short.mjs <outdir> <prefix>`).
+- `demo/shot_sun_rim.mjs` — the rim on white paper and on the dark glow
+  canvas, the same frame at several rim peaks (0 = before), which is how
+  `RIM_MAX_ALPHA` was chosen: `node demo/shot_sun_rim.mjs <outdir>
+  [0,0.3,0.42,0.5]`.

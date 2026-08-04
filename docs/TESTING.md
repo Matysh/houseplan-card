@@ -14,6 +14,22 @@
 > nothing (external audit T1/T3). If you add a checklist line marked `[manual]`,
 > add the failing check in the same commit.
 
+> **⚠ Rule: a new scrollable list inside a dialog is tested by GEOMETRY, never
+> by the DOM.** Any new scrolling box or `overflow` container added to a dialog
+> MUST get a smoke that measures **the container's own height and the visible
+> position of its first item** (`getBoundingClientRect`, and the item's rect
+> against the box's rect) — counting rendered rows, or asserting that the nodes
+> exist, proves nothing. The failure mode is always the same and always
+> invisible to a DOM check: a scrolling box is a flex item whose automatic
+> minimum size is zero (`min-height: auto` → 0 for an `overflow` child), and a
+> dialog body is a flex column with a height cap, so the box is the one child
+> that can be squeezed to a sliver while every row inside it renders happily.
+> It has bitten us twice already: the **target search results** in the tap
+> action dialog (v1.53.1 — 26 matching automations rendered into a 1 px
+> stripe; the smoke counted rows and passed) and the **«Already uploaded»**
+> plan picker (dev, unreleased — rows present, box 14 px tall, same story).
+> Both smokes measure heights now; write the third one that way from the start.
+
 - [ ] Smoke harness itself (v1.43.2, audit T1/T2): every smoke asserts named
       facts via `check`/`checkAll` and exits non-zero on any mismatch or
       uncaught in-card exception; the suite runs in CI against a FRESHLY built
@@ -1204,3 +1220,88 @@ require hands on real hardware — they remain for the human pass.
       renders exactly as before the update — same place, same size. Nothing is
       written to its config until the first drag [auto: unit test/backdrop.test.mjs
       + tests_backend/test_validation.py]
+
+## Sun ray rim (docs/SUN.md «The rim», dev, unreleased)
+
+- [ ] **A ray reads on white paper**: with `sun_rays` on and a LIGHT scene
+      (`bg_mode: daynight` at midday, or a white plan), a lit wedge is bounded
+      by a thin dark hairline along its two SIDE edges — the ones running
+      inward from the ends of the window. There is NO line across the glass and
+      none across the far end; the hairline fades out with the light and is
+      already gone before the wedge's tip [auto: smoke_sun_rim]
+- [ ] **It stays a hairline**: zoom the plan all the way in and all the way out
+      — the line is one pixel wide at every zoom, never a growing black band.
+      Check on a phone and on a kiosk display too [auto: smoke_sun_rim
+      (`non-scaling-stroke`), still: demo/shot_sun_rim.mjs]
+- [ ] **It is not an outline on a dark scene**: switch to the glow fill or
+      night — the rim is a subtle darker edge on the shaft, not a drawn contour
+      around it [manual, visual]
+- [ ] **It lives and dies with the wedge**: below 3° it goes with the wedge in
+      the same two-second fade (not a frame before, not a frame after); rain or
+      an overcast `weather_entity` takes it away with the light; the editors
+      show neither; the kiosk and the plan view agree
+      [auto: smoke_sun_rim + smoke_sun]
+- [ ] **A wall still stops it**: point the sun so a shaft runs into the
+      opposite wall or into the inner corner of an L — the hairline stops on
+      the wall exactly where the wedge does, and never continues into the next
+      room [auto: unit sun.test «a room that cuts the shaft cuts the rim»]
+
+## «Already uploaded» plan picker (dev, unreleased)
+
+- [ ] **«Already uploaded» is a list, not a stripe**: in both space dialogs
+      (new space and space settings, source = "I have a floor-plan image")
+      press «Already uploaded» with at least five plans on the server. The box
+      is a few hundred pixels tall, the first thumbnail is fully visible inside
+      it, and the rest scroll. With nothing uploaded the box shows its message
+      instead of clipping it. Repeat at phone width. Measure heights, do not
+      trust the DOM: the rows were always there, the box was 14 px
+      [auto: smoke_plan_picker]
+
+## «+» adds a space from anywhere (dev, unreleased)
+
+- [ ] **The button is where the floors are, always**: as an admin, open the
+      card in View — the «+» sits at the end of the tab row next to the floor
+      names, is at least icon-sized and actually hittable (nothing overlaps
+      it), and opens the NEW-space dialog. Repeat in all three editors (Plan,
+      Devices, Background): the same button in the same place, not only in the
+      Plan editor as before [auto: smoke_gear_tabs]
+- [ ] **A kiosk has no «+»**: a card with `kiosk: true` does not RENDER the
+      button at all — checking that the header is `display:none` is not
+      enough, a hidden node is still clickable from script [auto: smoke_gear_tabs]
+- [ ] **The tab row still fits a phone**: at 390 px the row wraps, nothing
+      scrolls sideways out of the card, and the «+» stays inside the card and
+      hittable [auto: smoke_gear_tabs measures `scrollWidth` vs `clientWidth`]
+- [ ] **A non-admin never sees it**: the button follows the same rule as the
+      per-space gear (`_canEdit`) [manual, needs a non-admin HA user]
+
+## Coming back to the tab (docs/WARM-REMOUNT.md, dev, unreleased)
+
+- [ ] **The view does not twitch**: pan the plan into a corner and zoom in
+      (say 2.5×), leave the tab for long enough that HA reconnects, come back —
+      the plan is in exactly the same place at exactly the same scale. Not
+      «about the same»: the restored viewport is the same rectangle, and the
+      smoke compares it frame by frame [auto: smoke_warm_dialogs]
+- [ ] **The same inside an editor**: do it while the Devices editor is open at
+      a working zoom (say 350 %) — the editor and its zoom both come back
+      (before the fix the mode came back and the zoom fell to 100 %). Leaving
+      the editor afterwards still restores the view-mode viewport
+      [auto: smoke_warm_dialogs]
+- [ ] **An open dialog stays open**: leave the tab with the space settings (or
+      a device card) open and a field edited but NOT saved — on return the
+      dialog is still there with the same draft [auto: smoke_warm_dialogs]
+- [ ] **A closed dialog stays closed**: close it with Esc (or Cancel, or Save)
+      and only then leave the tab — nothing reopens on return, and it does not
+      reappear on a second reconnect either (the snapshot is consumed once)
+      [auto: smoke_warm_dialogs]
+- [ ] **Confirmations are never resurrected**: open «Align everything to the
+      grid», leave the tab, come back — the confirmation is GONE and the plan
+      is untouched. Same for the room-merge confirmation. This is deliberate:
+      a modal whose whole content is «press OK to rewrite your plan» must not
+      be waiting under a returning user's cursor [auto: smoke_warm_dialogs]
+- [ ] **Nothing is revived into the wrong place**: switch to another floor (or
+      another editor) after the reconnect — a dialog that belonged to the old
+      space/mode does not appear there [auto: smoke_warm_dialogs (space/mode
+      guard), manual for the floor switch]
+- [ ] **A save in flight is not offered twice**: press Save in the space dialog
+      and reload/reconnect during the write — the dialog does not come back
+      with a live Save button; the reloaded config shows the outcome [manual]
