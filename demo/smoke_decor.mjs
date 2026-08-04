@@ -86,8 +86,10 @@ const res = await page.evaluate(async () => {
   c._decorTool = 'select';
   await c.updateComplete;
   out.stillThreeShapes = c._decorList.length === 3;
-  // 4) надпись через диалог
-  c._decorTextDialog = { x: 0.5, y: 0.5, text: 'Сауна', size: 'l', color: '#0000ff' };
+  // 4) надпись через диалог. Поля `size` в диалоге больше нет — размер задаётся
+  // углами блока (см. smoke_decor_text); сохранённый старый `size` по-прежнему
+  // читается как начальный масштаб.
+  c._decorTextDialog = { x: 0.5, y: 0.5, text: 'Сауна', color: '#0000ff' };
   c._decorSaveText(); await c.updateComplete;
   out.textSaved = c._decorList.some((x) => x.kind === 'text' && x.text === 'Сауна');
   out.textRendered = [...sr().querySelectorAll('.decorlayer text')].some((t) => t.textContent.includes('Сауна'));
@@ -151,7 +153,10 @@ const res = await page.evaluate(async () => {
     out[key] = !!c._decorDraft && c._decorDraft.kind === tool && c._decorSel === null;
     c._decorDraft = null;
   }
-  // — «текст» по фигуре открывает диалог новой надписи, а не выделяет
+  // — «текст» по ЛИНИИ открывает диалог новой надписи, а не выделяет её.
+  // Инертность нетекстовых фигур под рисующими инструментами остаётся в силе;
+  // единственное исключение — надпись под инструментом «текст», она открывает
+  // СВОЮ форму (владелец 2026-08-04, пинится в smoke_decor_text).
   c._decorTool = 'text'; c._decorSel = null; c._decorTextDialog = null; await c.updateComplete;
   press(probe(), g * 12, g * 30, 43);
   await c.updateComplete;

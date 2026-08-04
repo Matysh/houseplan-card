@@ -1,5 +1,79 @@
 # Changelog
 
+## v1.59.0-beta.2 — 2026-08-04
+
+The second pre-release of the 1.59 line, and it is about the words you put
+on the plan. A decor label can now read a live value off an entity, so a
+caption becomes a readout without becoming a template language. The text
+block itself lost the choice between three font sizes: it is scaled by its
+corners and turned by its handle, like every other object on the plan, and
+it may have more than one line. Under that, the three findings of the
+beta.1 audit are closed — two identical cards no longer share one warm
+memo, a rapid double re-mount no longer eats the draft, and an expired
+dialog no longer holds a plan file in memory.
+
+- **A decor label can show a live value (docs/LIVE-TEXT.md).** A text shape
+  gains three optional fields — `entity`, `attr`, `unit` — and its `text`
+  becomes a template whose `{}` is where the value lands: `Бак {}` reads
+  *Бак 68 %*. Without a placeholder the value is appended; without an entity
+  the label is byte-for-byte the static one it always was. The unit comes
+  from the entity unless you type your own; a dead, unknown or missing
+  entity shows an em dash instead of quietly vanishing. Nothing is rounded
+  or reformatted — the value is what Home Assistant reports, because
+  rounding belongs to the sensor's `display_precision`. Not a template
+  language: one value, one place, no syntax to get wrong.
+
+- **The text dialog gained an entity picker, an attribute picker and a live
+  preview.** The attribute list is the chosen entity's own attributes, the
+  unit field shows the entity's unit as its placeholder, and the preview is
+  rendered through the very same substitution the plan uses.
+
+- **A text block is sized by its corners and turned by its handle.** The
+  choice between three font sizes is gone: select a label and pull a corner
+  to scale it, or use the handle above it to rotate in 5° steps (Shift for
+  any angle) — the same mechanics as the backdrop frame. Labels drawn with
+  the old Small/Medium/Large come back at exactly their old size, and the
+  first drag replaces that setting with the scale it meant.
+
+- **A label can have more than one line.** The text field is a textarea now:
+  your line breaks are stored and drawn as line breaks, centred, with the
+  block growing around its anchor. Nothing wraps by itself — a caption that
+  reflows on a state change is a caption that jumps around the plan.
+
+- **The text tool edits the label you press on.** Drawing tools own the
+  canvas (a new line must be able to start on the end of an old one), and
+  that stays true — with one exception: pressing an existing label with the
+  text tool opens ITS form instead of starting a second label on top of it.
+  Empty canvas and non-text shapes still create a new label.
+
+- **Two identical cards on one page no longer share a warm memo
+  (AUD-159B1-01).** The memo key was the window size and the card config,
+  which cannot tell two placements of the same config apart: the newer of
+  them was the last writer, and a card re-created in the OTHER placement
+  woke up with its neighbour's floor, editor mode and zoom — while the
+  draft of its real predecessor was eaten by the mode guard. The memo now
+  keeps one entry per card PLACEMENT: `location.pathname` (the dashboard
+  view) joins the key, and inside a key the entry is claimed by DOM slot —
+  the parent element and the index in it — with a live neighbour's entry
+  never adoptable. When two placements are genuinely indistinguishable
+  only the settled header height is adopted (it is the same for both),
+  never the viewport and never the dialog.
+
+- **A rapid double re-mount no longer destroys the draft
+  (AUD-159B1-02).** `disconnectedCallback()` cleared the «I still owe my
+  predecessor a dialog» flag BEFORE taking its snapshot, so a middle
+  instance in an A→B→C rebuild wrote `dlg: null` over a draft it had not
+  yet restored, and the third instance got nothing. The snapshot now runs
+  while the flag is still set: an unsaved dialog simply travels down the
+  chain until one instance lives long enough to reopen it.
+
+- **An expired dialog no longer holds its payload (AUD-159B1-03).** The
+  10-second revive TTL was only a rule checked at revive time; the entry
+  itself kept the dialog — for a space dialog that is a whole plan file
+  as base64 — until the page reloaded. Detaching now arms a guarded
+  eviction that frees the payload the moment it stops being revivable
+  (and drops the stale slot, so the next claim is unambiguous again).
+
 ## v1.59.0-beta.1 — 2026-08-04
 
 Minor pre-release: the card survives a Lovelace re-mount bit-for-bit —

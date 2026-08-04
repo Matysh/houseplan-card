@@ -896,6 +896,15 @@ export const cardStyles = css`
     .stage.mode-decor.dtool-ellipse .decorlayer .dshape,
     .stage.mode-decor.dtool-text .decorlayer .dshape,
     .stage.mode-decor.dtool-backdrop .decorlayer .dshape { pointer-events: none; }
+    /* ONE exception (owner, 2026-08-04): under the TEXT tool an existing LABEL
+       is a target again — pressing it opens its editor instead of starting a
+       new label on top of the old one. Only labels: a line or a rectangle
+       under the text tool stays inert, so the press reaches the stage and a
+       new label is created there. */
+    .stage.mode-decor.dtool-text .decorlayer .dshape.dtext {
+      pointer-events: visiblePainted;
+      cursor: text;
+    }
     .decorlayer .dsel {
       filter: drop-shadow(0 0 3px var(--hp-accent));
     }
@@ -944,6 +953,51 @@ export const cardStyles = css`
     .measurelabel.bdmeasure {
       transform: translate(-50%, -50%);
       border: 1px solid var(--hp-accent);
+    }
+    /* the selected text block's frame — same chrome rules as the backdrop's:
+       the outline never takes a pointer, the handles always do, and they are
+       finger-sized because this is dragged on a tablet too */
+    .dtframe .dtbox {
+      fill: none;
+      stroke: var(--hp-accent);
+      stroke-width: 1.5;
+      stroke-dasharray: 7 5;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+      opacity: 0.85;
+    }
+    .dtframe .dtstem {
+      stroke: var(--hp-accent);
+      stroke-width: 1.5;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+      opacity: 0.85;
+    }
+    .dtframe .dthandle {
+      fill: var(--hp-accent);
+      stroke: #fff;
+      stroke-width: 1.5;
+      vector-effect: non-scaling-stroke;
+      pointer-events: all;
+      touch-action: none;
+    }
+    .dtframe .dt-nwse { cursor: nwse-resize; }
+    .dtframe .dt-nesw { cursor: nesw-resize; }
+    .dtframe .dtrot { cursor: grab; }
+    .dtarea {
+      resize: vertical;
+      min-height: 3.4em;
+      font: inherit;
+      line-height: 1.35;
+    }
+    .dtpreview {
+      padding: 6px 8px;
+      border-radius: 8px;
+      background: rgba(127, 127, 127, 0.12);
+      text-align: center;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-weight: 600;
     }
     .stage.mode-decor.dtool-line, .stage.mode-decor.dtool-rect,
     .stage.mode-decor.dtool-ellipse, .stage.mode-decor.dtool-text {

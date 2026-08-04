@@ -25,6 +25,8 @@ import {
   referencedContentUrls,
   DISPLAY_MODES, TAP_ACTIONS, SPACE_FILL_MODES, ROOM_FILL_MODES,
   coverService, coverMoving, coverEntityOf, COVER_GUARDED_CLASSES,
+  liveText, decorTextScale, decorTextLines,
+  DECOR_TEXT_BASE, DECOR_TEXT_SCALE_MIN, DECOR_TEXT_SCALE_MAX,
 } from './logic';
 import {
   planEdgeDrag, applyEdgeDrag, clampEdgeDrag, applyRoomScale, clampRoomScale,
@@ -62,7 +64,7 @@ import {
 import { alignAllToGrid, type AlignReport } from './align-grid';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.59.0-beta.1';
+const CARD_VERSION = '1.59.0-beta.2';
 /** HP-1552 boot-veil timing (AUD-1552-02). The veil holds for at least
  *  BOOT_MIN_MS; every stage-height change restarts a BOOT_QUIET_MS
  *  trailing-quiescence requirement (chrome still settling near the cap
@@ -119,27 +121,98 @@ type WarmViewport = {
  *  half-filled device dialog with its uploaded pdfs survives for free. */
 type WarmDialogKind = 'space' | 'marker' | 'settings' | 'opening' | 'decorText' | 'rules' | 'room' | 'info' | 'openingInfo';
 type WarmDialog = { kind: WarmDialogKind; space: string; mode: string; data: any };
+/** AUD-159B1-01: one entry per CARD PLACEMENT, not per key. Two cards with an
+ *  identical config on one view share the key, so the key alone cannot say
+ *  whose viewport this is; `place`/`idx` (the parent element the card was
+ *  mounted in, and its position among that parent's children) identify the
+ *  DOM slot, and `owner` the live instance sitting in it. A re-mount into the
+ *  same slot inherits the entry; a different card never does. */
 type WarmEntry = {
+  /** generation id of the instance that currently owns the slot */
+  owner: number;
+  /** the parent element the owner was mounted in (weak — never keep DOM alive) */
+  place: WeakRef<Node> | null;
+  /** the owner's index among that parent's children */
+  idx: number;
+  /** the owner is attached; a dead slot is a tombstone waiting for a successor */
+  live: boolean;
   hdrH: number;
   stageH: number;
   vp: WarmViewport | null;
   dlg: WarmDialog | null;
   /** when the instance that wrote `dlg` detached; 0 = it is still alive */
   freed: number;
+  /** the TTL timer that frees `dlg` once it can no longer be revived */
+  evict: number;
 };
-const warmBoot = new Map<string, WarmEntry>();
+const warmBoot = new Map<string, WarmEntry[]>();
+let warmGen = 0;
+/** `location.pathname` is the dashboard AND the view path: two Lovelace views
+ *  never share a key, so a card that comes back on another view boots cold
+ *  instead of inheriting a stranger's viewport (AUD-159B1-01). The hash is
+ *  deliberately out — `#space=` is OUR deep link, not another placement. */
 const warmBootKey = (config: unknown): string =>
-  `${window.innerWidth}x${window.innerHeight}|${JSON.stringify(config ?? {})}`;
+  `${window.innerWidth}x${window.innerHeight}|${location.pathname}|${JSON.stringify(config ?? {})}`;
 /** A dialog is revived only if the instance that owned it died THIS long ago.
  *  A Lovelace rebuild detaches and re-attaches within one task; a user who
  *  walked off to another dashboard view and came back later must not be met
  *  by a dialog they have long forgotten opening. */
-const WARM_REVIVE_MS = 10000;
+let WARM_REVIVE_MS = 10000;
 /** The memo gains a key on every window RESIZE and never loses one; the
  *  values used to be two numbers, and now they can hold a dialog draft (a
  *  plan pdf among it). Keep the last few viewports — a stale entry only
  *  costs the next card at that size a cold boot. */
 const WARM_MAX_KEYS = 8;
+/** How many placements of ONE key are remembered. More identical cards than
+ *  this on one view and the oldest dead slot is dropped — it only costs that
+ *  placement a cold boot. */
+const WARM_MAX_SLOTS = 4;
+
+/** Which slot of `list` belongs to the instance now claiming it, and may we
+ *  trust it with the viewport/dialog (`sure`) or only with the settled height?
+ *  Ranked, best first (AUD-159B1-01):
+ *    4 — same parent, same index: literally the DOM slot we are standing in,
+ *        which is how Lovelace replaces a card (the predecessor may still be
+ *        attached for another task — that is the case the audit reproduced);
+ *    0 — some OTHER placement whose owner is still attached: a neighbouring
+ *        card with an identical config, never ours to inherit;
+ *    3 — same parent, shifted index, owner gone: still our placement;
+ *    2 — a tombstone whose placement is gone with its subtree — the ordinary
+ *        Lovelace rebuild, where the container is rebuilt too.
+ *  A tie means two candidates are equally plausible: then only the settled
+ *  height is adopted, and it is the same for all of them anyway. */
+const warmMatch = (
+  list: WarmEntry[],
+  gen: number,
+  place: Node | null,
+  idx: number,
+): { slot: WarmEntry | null; sure: boolean } => {
+  const score = (s: WarmEntry): number => {
+    const same = !!place && s.place?.deref() === place;
+    if (same && s.idx === idx) return 4;
+    if (s.live) return 0;
+    return same ? 3 : 2;
+  };
+  let best: WarmEntry | null = null;
+  let bestScore = 0;
+  let ties = 0;
+  let newest: WarmEntry | null = null;
+  for (const s of list) {
+    if (s.owner === gen) continue;
+    newest = s;
+    const sc = score(s);
+    if (sc <= 0) continue;
+    if (sc > bestScore) { best = s; bestScore = sc; ties = 1; }
+    else if (sc === bestScore) ties++;
+  }
+  if (!best || ties > 1) return { slot: best || newest, sure: false };
+  return { slot: best, sure: true };
+};
+/** Rotation step of a decor text block — the same 5° a device icon turns in
+ *  (marker dialog). Shift drags past it, as past every other snap. */
+const DT_ANGLE_STEP = 5;
+/** Line spacing of a multi-line label, in font sizes. */
+const DT_LINE = 1.2;
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
@@ -268,7 +341,23 @@ class HouseplanCard extends LitElement {
   private _decorDraft: { kind: 'line' | 'rect' | 'ellipse'; a: number[]; b: number[]; pid: number } | null = null;
   private _decorMove: { id: string; start: number[]; orig: any; pid: number; moved: boolean } | null = null;
   private _decorSel: string | null = null;
-  private _decorTextDialog: { id?: string; x: number; y: number; text: string; size: 's' | 'm' | 'l'; color: string } | null = null;
+  /** The text dialog. `size` is gone from the UI (the block is scaled by its
+   *  corners now); `entity`/`attr`/`unit` are the live link (docs/LIVE-TEXT.md). */
+  private _decorTextDialog: {
+    id?: string; x: number; y: number; text: string; color: string;
+    entity?: string; attr?: string; unit?: string;
+  } | null = null;
+  /** The measured box of the selected text block, its own (unrotated) frame. */
+  private _dtBox: { id: string; x: number; y: number; w: number; h: number } | null = null;
+  /** A live corner (scale) or rotate gesture on the selected text block. */
+  private _dtDrag: {
+    id: string; kind: 'scale' | 'rotate'; pid: number;
+    /** the anchor the block is scaled and rotated about (render units) */
+    ax: number; ay: number;
+    /** distance / bearing of the pointer at the start, and the stored values */
+    r0: number; a0: number; scale0: number; angle0: number;
+    moved: boolean;
+  } | null = null;
   /**
    * The live backdrop gesture (docs/BACKDROP.md §2): moving the picture by its
    * body, or scaling it UNIFORMLY by a corner handle about the opposite corner.
@@ -572,6 +661,11 @@ class HouseplanCard extends LitElement {
   private _warmVpArmed = false;
   private _warmRevivePending = false;
   private _warmReviveTimer?: number;
+  /** AUD-159B1-01: this instance's identity in the memo — its generation, the
+   *  key it settled under and the slot (card placement) it owns. */
+  private _warmGen = ++warmGen;
+  private _warmKey: string | null = null;
+  private _warmSlot: WarmEntry | null = null;
   private _hashApplied = false;
   private _navApplied = false; // the saved space was restored (or the user navigated)
   // ---- kiosk (wall device) mode ----
@@ -670,6 +764,8 @@ class HouseplanCard extends LitElement {
     _decorSel: { state: true },
     _decorTextDialog: { state: true },
     _bdDrag: { state: true },
+    _dtBox: { state: true },
+    _dtDrag: { state: true },
     _kioskDialog: { state: true },
     _vacFit: { state: true },
     _kioskDots: { state: true },
@@ -724,6 +820,8 @@ class HouseplanCard extends LitElement {
     // DEV-B703-02: a reattach mid-outage must keep revalidating — the retry
     // timer died in disconnectedCallback
     if (!this._loadOk && this._serverCfg && this.hass) this._scheduleLoadRetry();
+    // AUD-159B1-01: the placement is only knowable once we are IN the DOM.
+    if (!this._warmSlot && this._config) this._warmAdopt();
     // DEV-B703-03: one task later the element Lovelace replaced has detached
     // — only then is its open dialog ours to take over.
     if (this._warmVp && !this._warmRevivePending && this._warmReviveTimer === undefined) {
@@ -774,11 +872,18 @@ class HouseplanCard extends LitElement {
     clearTimeout(this._layoutSyncTimer);
     // DEV-B703-03: the last thing this instance was showing, then the
     // tombstone that lets exactly one successor adopt the open dialog.
+    // AUD-159B1-02: the snapshot runs while `_warmRevivePending` is still
+    // TRUE. An instance that never got to consume its predecessor's dialog
+    // has nothing of its own to record there, and the old order (clear the
+    // flag, then snapshot) had it write `dlg: null` over somebody else's
+    // unsaved draft — a second Lovelace rebuild inside one task destroyed
+    // the draft before the first successor could restore it. Now the draft
+    // simply travels down the chain until one of them lives long enough.
+    this._warmSnapshot();
     this._warmRevivePending = false;
     clearTimeout(this._warmReviveTimer);
     this._warmReviveTimer = undefined;
-    this._warmSnapshot();
-    this._warmPatch({ freed: Date.now() });
+    this._warmRelease();
     super.disconnectedCallback();
   }
 
@@ -893,33 +998,32 @@ class HouseplanCard extends LitElement {
     return { type: 'custom:houseplan-card' };
   }
 
-  /** Test hook (smokes): forget the warm re-mount memo — a cold page again. */
-  public static _warmBootReset(): void {
+  /** Test hook (smokes): forget the warm re-mount memo — a cold page again.
+   *  `ttl` retunes WARM_REVIVE_MS so a smoke can watch the TTL expire without
+   *  standing still for ten seconds (AUD-159B1-03); omitted = back to 10 s. */
+  public static _warmBootReset(ttl?: number): void {
+    for (const list of warmBoot.values()) for (const s of list) clearTimeout(s.evict);
     warmBoot.clear();
+    WARM_REVIVE_MS = ttl && ttl > 0 ? ttl : 10000;
+  }
+
+  /** Test hook (smokes): what the memo is holding — slots per key, and how
+   *  many of them still keep a dialog payload alive. */
+  public static _warmBootStats(): { keys: number; slots: number; dlgs: number; drafts: string[] } {
+    let slots = 0, dlgs = 0;
+    const drafts: string[] = [];
+    for (const list of warmBoot.values()) {
+      for (const s of list) {
+        slots++;
+        if (s.dlg) { dlgs++; drafts.push(s.dlg.kind); }
+      }
+    }
+    return { keys: warmBoot.size, slots, dlgs, drafts };
   }
 
   public setConfig(config: CardConfig): void {
     this._config = { icon_size: 2.5, show_temperature: true, live_states: true, show_signal: true, ...config };
     if (this._config.kiosk) { this._booting = false; this._bootFading = false; } // kiosk: 100dvh, nothing to settle
-    else {
-      // DEV-B703-01: this page already booted an identical card at this
-      // viewport — adopt its settled header height and skip the veil
-      // entirely: the card reveals synchronously in the final geometry (the
-      // saved zoom is armed below, HP-1551). _bootSoft covers any residual
-      // chrome drift with a glide instead of a snap.
-      const warm = warmBoot.get(warmBootKey(this._config));
-      if (warm) {
-        this._booting = false;
-        this._bootFading = false;
-        this._hdrH = warm.hdrH;
-        this._warmVp = warm.vp; // adopted below, once the model is in hand
-        this._bootSoft = true; // timer armed in connectedCallback...
-        if (this.isConnected) { // ...unless setConfig re-runs while attached
-          clearTimeout(this._bootSoftTimer);
-          this._bootSoftTimer = window.setTimeout(() => { this._bootSoft = false; }, BOOT_SOFT_MS);
-        }
-      }
-    }
     if (config.default_floor) this._space = config.default_floor;
     try {
       this._zoomBySpace = JSON.parse(localStorage.getItem(LS_ZOOM) || '{}') || {};
@@ -962,7 +1066,127 @@ class HouseplanCard extends LitElement {
     // arm it BEFORE the first view computation, so the very first paint is
     // already at the user's zoom.
     if (this._mode === 'view' && !this._view) this._zoom = this._zoomBySpace[this._space] || 1;
-    this._warmAdoptViewport(config);
+    // AUD-159B1-01: the memo is claimed by DOM slot, and Lovelace calls
+    // setConfig BEFORE it inserts the element — so the claim waits for
+    // connectedCallback (still before the first render, so nothing flashes).
+    // A setConfig on a card that is already attached (the editor's live
+    // preview) re-claims right here, because the config is part of the key.
+    if (this.isConnected) this._warmAdopt();
+  }
+
+  /**
+   * DEV-B703-01/03 + AUD-159B1-01: find the memo of the card that used to sit
+   * in THIS placement and step into it — the settled header height (no veil,
+   * synchronous reveal in the final geometry) and, when the slot is provably
+   * ours, the whole viewport. `_bootSoft` covers residual chrome drift with a
+   * glide instead of a snap.
+   */
+  private _warmAdopt(): void {
+    if (this._config?.kiosk) return;
+    const key = warmBootKey(this._config);
+    if (this._warmKey === key && this._warmSlot) return; // already sitting in it
+    if (this._warmSlot) this._warmRelease(); // the config (or the window) changed under us
+    const place = this.parentNode;
+    const idx = this._warmIdx(place);
+    const list = warmBoot.get(key);
+    if (!list || !list.length) return; // cold page — the full protective boot
+    // the same element re-attached (Lovelace moves cards around): our own slot
+    // is waiting for us, and our live state is newer than anything in it
+    const mine = list.find((s) => s.owner === this._warmGen);
+    if (mine) {
+      clearTimeout(mine.evict); mine.evict = 0; mine.freed = 0; mine.live = true;
+      this._warmSlot = mine;
+      this._warmKey = key;
+      return;
+    }
+    const { slot, sure } = warmMatch(list, this._warmGen, place, idx);
+    if (!slot) return;
+    this._booting = false;
+    this._bootFading = false;
+    this._hdrH = slot.hdrH;
+    this._bootSoft = true; // timer armed in connectedCallback...
+    if (this.isConnected) { // ...unless we are claiming while already attached
+      clearTimeout(this._bootSoftTimer);
+      this._bootSoftTimer = window.setTimeout(() => { this._bootSoft = false; }, BOOT_SOFT_MS);
+    }
+    this._warmKey = key;
+    if (sure) {
+      clearTimeout(slot.evict); // the dialog is ours now, not the TTL's
+      slot.evict = 0;
+      slot.owner = this._warmGen;
+      slot.place = place ? new WeakRef(place) : null;
+      slot.idx = idx;
+      slot.live = true;
+      this._warmSlot = slot;
+      this._warmVp = slot.vp; // adopted below, once the model is in hand
+      this._warmAdoptViewport(this._config!);
+    } else {
+      // Two identical cards on one view and no way to tell which slot is ours:
+      // the height is interchangeable (they settle at the same chrome), the
+      // viewport and the dialog belong to somebody and must not be guessed.
+      this._warmSlot = {
+        owner: this._warmGen, place: place ? new WeakRef(place) : null, idx, live: true,
+        hdrH: slot.hdrH, stageH: slot.stageH, vp: null, dlg: null, freed: 0, evict: 0,
+      };
+      list.push(this._warmSlot);
+      this._warmTrim(list);
+    }
+  }
+
+  /** This element's position among its parent's children (-1 if unmounted). */
+  private _warmIdx(place: Node | null): number {
+    const kids = (place as Element | null)?.children;
+    if (!kids) return -1;
+    for (let i = 0; i < kids.length; i++) if (kids[i] === this) return i;
+    return -1;
+  }
+
+  /** Let go of the slot: the placement is still there, this instance is not. */
+  private _warmRelease(): void {
+    const s = this._warmSlot;
+    const key = this._warmKey;
+    this._warmSlot = null;
+    this._warmKey = null;
+    if (!s || !key) return;
+    s.freed = Date.now();
+    if (s.owner === this._warmGen) s.live = false;
+    this._warmScheduleEvict(s, key);
+  }
+
+  /** Drop the oldest slot that nobody is sitting in. */
+  private _warmTrim(list: WarmEntry[]): void {
+    while (list.length > WARM_MAX_SLOTS) {
+      const i = list.findIndex((s) => !s.live);
+      if (i < 0) break;
+      clearTimeout(list[i].evict);
+      list.splice(i, 1);
+    }
+  }
+
+  /**
+   * AUD-159B1-03: the TTL used to be a rule checked at revive time only, so a
+   * draft nobody came back for stayed reachable from module scope until the
+   * page reloaded — with the space dialog that means a whole plan file held as
+   * base64 (8 MiB allowed by the backend). Free the payload the moment it
+   * stops being revivable; the height and the viewport are bytes, they stay.
+   */
+  private _warmScheduleEvict(s: WarmEntry, key: string): void {
+    clearTimeout(s.evict);
+    if (!s.dlg) return;
+    const freed = s.freed;
+    const gen = s.owner;
+    s.evict = window.setTimeout(() => {
+      s.evict = 0;
+      if (s.freed !== freed || s.owner !== gen) return; // a successor took over
+      // the dialog is unrevivable now, whoever is sitting in the slot
+      s.dlg = null;
+      // a slot nobody re-claimed is also what makes the NEXT claim ambiguous
+      const list = warmBoot.get(key);
+      if (!s.live && list && list.length > 1) {
+        const i = list.indexOf(s);
+        if (i >= 0) list.splice(i, 1);
+      }
+    }, WARM_REVIVE_MS + 250);
   }
 
   /**
@@ -1003,14 +1227,31 @@ class HouseplanCard extends LitElement {
   private _warmPatch(patch: Partial<WarmEntry>, create = false): void {
     if (this._config?.kiosk) return;
     const k = warmBootKey(this._config);
-    const cur = warmBoot.get(k);
-    if (!cur && !create) return;
-    warmBoot.set(k, { hdrH: this._hdrH, stageH: 0, vp: null, dlg: null, freed: 0, ...(cur || {}), ...patch });
-    while (warmBoot.size > WARM_MAX_KEYS) {
-      const oldest = warmBoot.keys().next().value; // Map keeps insertion order
-      if (oldest === undefined || oldest === k) break;
-      warmBoot.delete(oldest);
+    // The key carries the window size and the view path: once either changes
+    // under a LIVE card, its slot describes a geometry that is no longer on
+    // screen, and the next mount at the new size must boot cold (documented
+    // in docs/WARM-REMOUNT.md §1) — so write nothing rather than lie.
+    if (this._warmSlot && this._warmKey !== k) return;
+    if (!this._warmSlot) {
+      if (!create) return;
+      const place = this.parentNode;
+      this._warmKey = k;
+      this._warmSlot = {
+        owner: this._warmGen, place: place ? new WeakRef(place) : null, idx: this._warmIdx(place), live: true,
+        hdrH: this._hdrH, stageH: 0, vp: null, dlg: null, freed: 0, evict: 0,
+      };
+      const list = warmBoot.get(k) || [];
+      list.push(this._warmSlot);
+      warmBoot.set(k, list);
+      this._warmTrim(list);
+      while (warmBoot.size > WARM_MAX_KEYS) {
+        const oldest = warmBoot.keys().next().value; // Map keeps insertion order
+        if (oldest === undefined || oldest === k) break;
+        for (const s of warmBoot.get(oldest) || []) clearTimeout(s.evict);
+        warmBoot.delete(oldest);
+      }
     }
+    Object.assign(this._warmSlot, patch);
   }
 
   private _warmViewportState(): WarmViewport {
@@ -1078,6 +1319,13 @@ class HouseplanCard extends LitElement {
     const patch: Partial<WarmEntry> = { vp: this._warmViewportState() };
     // do not overwrite the snapshot we are about to revive FROM
     if (!this._warmRevivePending) patch.dlg = this._warmDialogState();
+    // AUD-159B1-01: the placement is re-measured from the live DOM, so a card
+    // that was moved (a sibling added above it) still names its own slot.
+    if (this.isConnected && this._warmSlot?.owner === this._warmGen) {
+      const place = this.parentNode;
+      patch.place = place ? new WeakRef(place) : null;
+      patch.idx = this._warmIdx(place);
+    }
     this._warmPatch(patch);
   }
 
@@ -1089,12 +1337,14 @@ class HouseplanCard extends LitElement {
    */
   private _warmReviveDialog(): void {
     this._warmRevivePending = false;
-    const k = warmBootKey(this._config);
-    const e = warmBoot.get(k);
+    const e = this._warmSlot; // AUD-159B1-01: OUR slot, never a neighbour's
+    this._warmReviveTimer = undefined;
     if (!e || !e.dlg) return;
     const d = e.dlg;
-    warmBoot.set(k, { ...e, dlg: null, freed: 0 }); // consume-once: no zombie on the third mount
-    if (!e.freed || Date.now() - e.freed > WARM_REVIVE_MS) return; // owner alive, or gone long ago
+    const freed = e.freed;
+    e.dlg = null; e.freed = 0; // consume-once: no zombie on the third mount
+    clearTimeout(e.evict); e.evict = 0;
+    if (!freed || Date.now() - freed > WARM_REVIVE_MS) return; // owner alive, or gone long ago
     if (d.space !== this._space || d.mode !== this._mode) return;  // never in another space/editor
     switch (d.kind) {
       case 'space': this._spaceDialog = { ...d.data, busy: false, savedBusy: false }; break;
@@ -1329,6 +1579,7 @@ class HouseplanCard extends LitElement {
   protected updated(): void {
     this._skyRelease();
     this._warmSnapshot(); // DEV-B703-03: the memo follows what is on screen
+    this._dtMeasure();    // the selected label's frame follows the glyphs
     const stage = this._stageEl;
     if (stage && !this._roViewport) {
       this._roViewport = new ResizeObserver(() => this._refitView());
@@ -2570,6 +2821,10 @@ class HouseplanCard extends LitElement {
   }
 
   private _stagePointerMove(ev: PointerEvent): void {
+    if (this._dtDrag?.pid === ev.pointerId) {
+      this._dtMove(ev);
+      return;
+    }
     if (this._bdDrag?.pid === ev.pointerId) {
       this._bdMove(ev);
       return;
@@ -2671,6 +2926,10 @@ class HouseplanCard extends LitElement {
           this._showKioskDots();
         }
       }
+    }
+    if (this._dtDrag?.pid === ev.pointerId) {
+      this._dtUp();
+      return;
     }
     if (this._bdDrag?.pid === ev.pointerId) {
       this._bdUp();
@@ -2942,6 +3201,8 @@ class HouseplanCard extends LitElement {
     this._decorSel = null;
     this._decorTool = 'select';
     this._bdDrag = null;
+    this._dtDrag = null;
+    this._dtBox = null;
     this._saveNav();
   }
 
@@ -3487,10 +3748,12 @@ class HouseplanCard extends LitElement {
       return true;
     }
     if (t === 'text') {
+      // …and the press did NOT land on an existing label: those are the one
+      // exception to the inertness above (see _decorShapeDown).
       const p = this._snap(this._svgPoint(ev), ev);
       this._decorTextDialog = {
         x: clampCanvasN(p[0] / NORM_W), y: clampCanvasN(p[1] / this._decorH),
-        text: '', size: 'm', color: this._decorStyle.color,
+        text: '', color: this._decorStyle.color,
       };
       return true;
     }
@@ -3547,6 +3810,19 @@ class HouseplanCard extends LitElement {
     // backdrop tool grabs the picture). Swallowing it here was the bug — the
     // click on a line end did nothing but keep the old selection alive.
     const t = this._decorTool;
+    // ONE exception (owner, 2026-08-04): under the TEXT tool an existing LABEL
+    // is a target again, and pressing it opens its editor instead of starting
+    // a new label on top of it. Everything else stays inert — a press on a
+    // line or a rectangle under the text tool still reaches the stage and
+    // creates a new label there (the CSS keeps them pointer-inert, this is
+    // the belt to that pair of braces).
+    if (t === 'text') {
+      if (shape.kind !== 'text') return;
+      ev.stopPropagation();
+      ev.preventDefault();
+      this._decorOpenText(shape);
+      return;
+    }
     if (t !== 'select' && t !== 'erase') return;
     ev.stopPropagation();
     ev.preventDefault();
@@ -3606,24 +3882,168 @@ class HouseplanCard extends LitElement {
   /** Double click on a text shape (select tool) re-opens its dialog. */
   private _decorShapeDbl(shape: any): void {
     if (this._mode !== 'decor' || this._decorTool !== 'select' || shape.kind !== 'text') return;
-    this._decorTextDialog = { id: shape.id, x: shape.x, y: shape.y,
-      text: shape.text, size: shape.size || 'm', color: shape.color };
+    this._decorOpenText(shape);
+  }
+
+  /** Open the editor of an existing label (double click, or the text tool). */
+  private _decorOpenText(shape: any): void {
+    this._decorTextDialog = {
+      id: shape.id, x: shape.x, y: shape.y, text: shape.text, color: shape.color,
+      entity: shape.entity || '', attr: shape.attr || '', unit: shape.unit || '',
+    };
+  }
+
+  /** The link fields as they are STORED: only what the user actually filled in
+   *  ends up in the config, so a plain label stays byte-for-byte a plain one. */
+  private _decorTextLink(d: { entity?: string; attr?: string; unit?: string }): Record<string, string> {
+    const out: Record<string, string> = {};
+    const ent = (d.entity || '').trim();
+    if (!ent) return out;
+    out.entity = ent;
+    const attr = (d.attr || '').trim();
+    if (attr) out.attr = attr;
+    const unit = (d.unit || '').trim();
+    if (unit) out.unit = unit;
+    return out;
   }
 
   private _decorSaveText(): void {
     const d = this._decorTextDialog;
-    if (!d || !d.text.trim()) { this._decorTextDialog = null; return; }
+    // The user's own line breaks are kept; the surrounding whitespace is not.
+    const text = String(d?.text ?? '').replace(/\r\n?/g, '\n').trim();
+    if (!d || !text) { this._decorTextDialog = null; return; }
     const sp = this._curSpaceCfg;
+    const link = this._decorTextLink(d);
     if (d.id) {
-      sp.decor = this._decorList.map((x) => x.id === d.id
-        ? { ...x, text: d.text.trim(), size: d.size, color: d.color } : x);
+      sp.decor = this._decorList.map((x) => {
+        if (x.id !== d.id) return x;
+        // the OLD link is dropped wholesale: clearing the entity in the dialog
+        // must clear the attribute and the unit with it, not leave orphans
+        const { entity, attr, unit, ...rest } = x;
+        return { ...rest, text, color: d.color, ...link };
+      });
     } else {
       const id = 'dc' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
       sp.decor = [...this._decorList, { id, kind: 'text', x: d.x, y: d.y,
-        text: d.text.trim(), size: d.size, color: d.color }];
+        text, color: d.color, ...link }];
+      this._decorSel = id;
     }
     this._decorTextDialog = null;
     this._saveConfig();
+    this.requestUpdate();
+  }
+
+  // ---- the text block: scale by a corner, rotate by its handle ----
+  // The mechanics are the backdrop frame's (docs/BACKDROP.md §2), reused
+  // rather than reinvented: chrome that never takes a pointer, finger-sized
+  // handles that always do, the gesture written live into the config and
+  // PERSISTED only if something actually moved. What differs is the pivot —
+  // a label has an anchor (its x/y), not a box, so both gestures are about
+  // that anchor and the text never walks away from the point it was placed at.
+
+  /** The selected text shape, when the select tool has one. */
+  private get _dtSel(): any | null {
+    if (this._mode !== 'decor' || this._decorTool !== 'select' || !this._decorSel) return null;
+    const sh = this._decorList.find((x) => x.id === this._decorSel);
+    return sh && sh.kind === 'text' ? sh : null;
+  }
+
+  /** Write scale/angle into the shape — live, without saving. */
+  private _dtApply(id: string, patch: { scale?: number; angle?: number }): void {
+    const sp = this._curSpaceCfg;
+    if (!sp) return;
+    sp.decor = this._decorList.map((x) => {
+      if (x.id !== id) return x;
+      // the first drag replaces the legacy font size with the scale it means,
+      // so a shape never states its size twice
+      const { size, ...rest } = x;
+      const out: any = { ...rest };
+      if (patch.scale !== undefined) out.scale = Number(patch.scale.toFixed(4));
+      else if (x.scale === undefined && size !== undefined) out.scale = decorTextScale(x);
+      if (patch.angle !== undefined) {
+        if (patch.angle) out.angle = Number(patch.angle.toFixed(2));
+        else delete out.angle; // straight again = the field goes away
+      }
+      return out;
+    });
+    this._cfgEpoch++;
+    this.requestUpdate();
+  }
+
+  private _dtStart(ev: PointerEvent, kind: 'scale' | 'rotate'): void {
+    const sh = this._dtSel;
+    if (!sh) return;
+    ev.stopPropagation();
+    ev.preventDefault();
+    const ax = sh.x * NORM_W, ay = sh.y * this._decorH;
+    const p = this._svgPoint(ev);
+    this._dtDrag = {
+      id: sh.id, kind, pid: ev.pointerId, ax, ay,
+      r0: Math.hypot(p[0] - ax, p[1] - ay),
+      a0: (Math.atan2(p[1] - ay, p[0] - ax) * 180) / Math.PI,
+      scale0: decorTextScale(sh), angle0: Number(sh.angle) || 0,
+      moved: false,
+    };
+    capturePointer(ev);
+  }
+
+  private _dtMove(ev: PointerEvent): void {
+    const d = this._dtDrag;
+    if (!d) return;
+    const p = this._svgPoint(ev);
+    if (d.kind === 'scale') {
+      // uniform, about the anchor: the distance from the anchor is invariant
+      // under the block's own rotation, so a rotated block scales the same way
+      const r = Math.hypot(p[0] - d.ax, p[1] - d.ay);
+      if (d.r0 < 1e-6) return;
+      const k = Math.min(DECOR_TEXT_SCALE_MAX, Math.max(DECOR_TEXT_SCALE_MIN, d.scale0 * (r / d.r0)));
+      if (Math.abs(k - d.scale0) > 1e-6) d.moved = true;
+      this._dtApply(d.id, { scale: k });
+      return;
+    }
+    const a = (Math.atan2(p[1] - d.ay, p[0] - d.ax) * 180) / Math.PI;
+    let ang = d.angle0 + (a - d.a0);
+    // 5° steps — the step the device icons rotate in; Shift is the way past a
+    // snap everywhere in this card (docs/CANVAS.md §9.4), so it is here too
+    if (!ev.shiftKey) ang = Math.round(ang / DT_ANGLE_STEP) * DT_ANGLE_STEP;
+    ang = ((ang % 360) + 360) % 360;
+    if (ang > 180) ang -= 360;
+    if (Math.abs(ang - d.angle0) > 1e-6) d.moved = true;
+    this._dtApply(d.id, { angle: ang });
+  }
+
+  private _dtUp(): void {
+    const d = this._dtDrag;
+    this._dtDrag = null;
+    if (d?.moved) this._saveConfig();
+    this.requestUpdate();
+  }
+
+  /**
+   * Measure the selected label's own box. SVG can only tell us how big a text
+   * actually came out once it is in the DOM, so the frame is one render
+   * behind — and it is re-measured whenever the text, its scale or the
+   * selection changes. Guarded against the render→measure→render loop by
+   * comparing the numbers before asking for another update.
+   */
+  private _dtMeasure(): void {
+    const sh = this._dtSel;
+    if (!sh) {
+      if (this._dtBox) { this._dtBox = null; this.requestUpdate(); }
+      return;
+    }
+    const el = this.renderRoot.querySelector(`text.dtext[data-id="${sh.id}"]`) as SVGGraphicsElement | null;
+    if (!el || typeof (el as any).getBBox !== 'function') return;
+    let b: DOMRect;
+    try { b = el.getBBox(); } catch { return; } // not rendered yet (hidden card)
+    if (!b || (!b.width && !b.height)) return;
+    const box = { id: sh.id, x: b.x, y: b.y, w: b.width, h: b.height };
+    const cur = this._dtBox;
+    const same = cur && cur.id === box.id && Math.abs(cur.x - box.x) < 0.01
+      && Math.abs(cur.y - box.y) < 0.01 && Math.abs(cur.w - box.w) < 0.01
+      && Math.abs(cur.h - box.h) < 0.01;
+    if (same) return;
+    this._dtBox = box;
     this.requestUpdate();
   }
 
@@ -3836,9 +4256,37 @@ class HouseplanCard extends LitElement {
     </g>` as unknown as TemplateResult;
   }
 
+  /**
+   * The selected text block's frame: a dashed outline, four corner handles
+   * that scale it uniformly and one handle above it that turns it. Same
+   * mechanics and same handle size as the backdrop frame (docs/BACKDROP.md
+   * §2) — finger-sized in SCREEN terms, so it stays grabbable at any zoom —
+   * and it rides the block's own rotation, so the corners stay at the corners.
+   */
+  private _renderTextFrame(view: { x: number; y: number; w: number; h: number }): TemplateResult | typeof nothing {
+    const sh = this._dtSel;
+    const b = this._dtBox;
+    if (!sh || !b || b.id !== sh.id) return nothing;
+    const hr = Math.max(view.w, view.h) * 0.018;
+    const ax = sh.x * NORM_W, ay = sh.y * this._decorH;
+    const ang = Number(sh.angle) || 0;
+    const corners: [number, number, string][] = [
+      [-1, -1, 'nwse'], [1, -1, 'nesw'], [1, 1, 'nwse'], [-1, 1, 'nesw'],
+    ];
+    const arm = hr * 2.2;
+    return svg`<g class="dtframe" transform=${ang ? `rotate(${ang} ${ax} ${ay})` : nothing}>
+      <rect class="dtbox" x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}"></rect>
+      <line class="dtstem" x1="${b.x + b.w / 2}" y1="${b.y}" x2="${b.x + b.w / 2}" y2="${b.y - arm}"></line>
+      <circle class="dthandle dtrot" cx="${b.x + b.w / 2}" cy="${b.y - arm}" r="${hr.toFixed(1)}"
+        @pointerdown=${(e: PointerEvent) => this._dtStart(e, 'rotate')}></circle>
+      ${corners.map(([sx, sy, cur]) => svg`<circle class="dthandle dt-${cur}"
+        cx="${sx < 0 ? b.x : b.x + b.w}" cy="${sy < 0 ? b.y : b.y + b.h}" r="${hr.toFixed(1)}"
+        @pointerdown=${(e: PointerEvent) => this._dtStart(e, 'scale')}></circle>`)}
+    </g>` as unknown as TemplateResult;
+  }
+
   private _renderDecorLayer(): TemplateResult {
     const W = NORM_W, H = this._decorH;
-    const TXT = { s: 14, m: 20, l: 30 } as Record<string, number>;
     const editing = this._mode === 'decor';
     const shapes = this._decorList.map((sh) => {
       const cls = 'dshape' + (editing && this._decorSel === sh.id ? ' dsel' : '');
@@ -3857,9 +4305,25 @@ class HouseplanCard extends LitElement {
         return svg`<ellipse class="${cls}" cx="${(sh.x + sh.w / 2) * W}" cy="${(sh.y + sh.h / 2) * H}"
           rx="${(sh.w / 2) * W}" ry="${(sh.h / 2) * H}" stroke="${sh.color}" stroke-width="${sh.width}"
           fill="${sh.fill ? sh.color : 'none'}" fill-opacity="${sh.fill ? 0.25 : 0}" @pointerdown=${down}></ellipse>`;
-      if (sh.kind === 'text')
-        return svg`<text class="${cls} dtext" x="${sh.x * W}" y="${sh.y * H}" fill="${sh.color}"
-          font-size="${TXT[sh.size] || TXT.m}" @pointerdown=${down} @dblclick=${dbl}>${sh.text}</text>`;
+      if (sh.kind === 'text') {
+        // The label is painted from the LIVE value on every render — the same
+        // `hass` the rest of the card reads, no polling of its own. Without an
+        // entity `liveText` gives the stored text back byte-for-byte, so a
+        // plain label is the plain label it always was (docs/LIVE-TEXT.md).
+        const fs = DECOR_TEXT_BASE * decorTextScale(sh);
+        const lines = decorTextLines(liveText(sh.text, sh, this.hass));
+        const ax = sh.x * W, ay = sh.y * H;
+        const ang = Number(sh.angle) || 0;
+        // the block is centred on its anchor, horizontally (the layer's
+        // text-anchor) and vertically — so adding a second line grows the
+        // label in both directions instead of pushing the first one up
+        const y0 = ay - ((lines.length - 1) * fs * DT_LINE) / 2;
+        return svg`<text class="${cls} dtext" data-id="${sh.id}" x="${ax}" y="${ay}" fill="${sh.color}"
+          font-size="${fs}" transform=${ang ? `rotate(${ang} ${ax} ${ay})` : nothing}
+          @pointerdown=${down} @dblclick=${dbl}>${lines.map(
+            (ln, i) => svg`<tspan x="${ax}" y="${y0 + i * fs * DT_LINE}">${ln}</tspan>`,
+          )}</text>`;
+      }
       return nothing;
     });
     // живое превью рисуемой фигуры
@@ -3940,27 +4404,53 @@ class HouseplanCard extends LitElement {
 
   private _renderDecorTextDialog(): TemplateResult {
     const d = this._decorTextDialog!;
+    const ent = (d.entity || '').trim();
+    const st = ent ? this.hass?.states?.[ent] : null;
+    const ownUnit = String(st?.attributes?.unit_of_measurement ?? '');
+    // the preview is the REAL renderer: one substitution, one truth
+    const preview = liveText(d.text, d, this.hass);
     return html`<div class="menuwrap dialogwrap" @click=${() => (this._decorTextDialog = null)}>
       <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
         <div class="hd"><ha-icon icon="mdi:format-text"></ha-icon>${this._t('decor.text_title')}</div>
         <div class="body">
           <label>${this._t('decor.text_label')}</label>
-          <input class="namein" .value=${d.text} autofocus
-            @input=${(e: Event) => (this._decorTextDialog = { ...d, text: (e.target as HTMLInputElement).value })}
-            @keydown=${(e: KeyboardEvent) => { if (e.key === 'Enter') this._decorSaveText(); }} />
-          <label>${this._t('decor.text_size')}</label>
-          <div class="radiorow">
-            ${(['s', 'm', 'l'] as const).map(
-              (sz) => html`<label class="srcrow inline">
-                <input type="radio" name="dtsize" .checked=${d.size === sz}
-                  @change=${() => (this._decorTextDialog = { ...d, size: sz })} />
-                <span>${this._t(('decor.size_' + sz) as any)}</span>
-              </label>`,
-            )}
-          </div>
+          ${''/* a textarea, not an input: the user's own line breaks are kept
+                 and rendered (centred). Enter is a NEW LINE here, so saving
+                 moved to Ctrl/Cmd+Enter and the button. */}
+          <textarea class="namein dtarea" rows="3" maxlength="200" .value=${d.text} autofocus
+            @input=${(e: Event) => (this._decorTextDialog = { ...d, text: (e.target as HTMLTextAreaElement).value })}
+            @keydown=${(e: KeyboardEvent) => {
+              e.stopPropagation();
+              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) this._decorSaveText();
+            }}></textarea>
+          <div class="rhint">${this._t(ent ? 'decor.text_hint_live' : 'decor.text_hint')}</div>
           <label>${this._t('decor.color')}</label>
           <input type="color" .value=${d.color}
             @input=${(e: Event) => (this._decorTextDialog = { ...d, color: (e.target as HTMLInputElement).value })} />
+          <label class="dispsection">${this._t('decor.live_group')}</label>
+          <div class="rhint">${this._t('decor.live_hint')}</div>
+          <label>${this._t('decor.live_entity')}</label>
+          <input class="namein" type="text" list="hp-dtext-ents" placeholder=${this._t('decor.live_entity_ph')}
+            .value=${d.entity || ''}
+            @input=${(e: Event) => (this._decorTextDialog = { ...d, entity: (e.target as HTMLInputElement).value })} />
+          <datalist id="hp-dtext-ents">
+            ${Object.keys(this.hass?.states || {}).map((id) => html`<option value=${id}></option>`)}
+          </datalist>
+          ${ent ? html`
+            <label>${this._t('decor.live_attr')}</label>
+            <input class="namein" type="text" list="hp-dtext-attrs" placeholder=${this._t('decor.live_attr_ph')}
+              .value=${d.attr || ''}
+              @input=${(e: Event) => (this._decorTextDialog = { ...d, attr: (e.target as HTMLInputElement).value })} />
+            <datalist id="hp-dtext-attrs">
+              ${Object.keys(st?.attributes || {}).map((a) => html`<option value=${a}></option>`)}
+            </datalist>
+            <label>${this._t('decor.live_unit')}</label>
+            <input class="namein" type="text" .value=${d.unit || ''}
+              placeholder=${(d.attr || '').trim() ? '' : ownUnit}
+              @input=${(e: Event) => (this._decorTextDialog = { ...d, unit: (e.target as HTMLInputElement).value })} />
+            <label>${this._t('decor.live_preview')}</label>
+            <div class="dtpreview">${decorTextLines(preview).map((ln) => html`<div>${ln}</div>`)}</div>
+          ` : nothing}
         </div>
         <div class="row">
           <span class="spacer"></span>
@@ -6581,6 +7071,7 @@ class HouseplanCard extends LitElement {
                    grabbable (docs/BACKDROP.md §2). It exists only in the
                    backdrop editor, where rooms and devices are pointer-inert. */}
             ${this._renderBackdropFrame(view)}
+            ${this._renderTextFrame(view)}
           </svg>
           ${''/* docs/CANVAS.md §6: an icon is a percentage of the PLAN and
                  scales with it when you zoom — the behaviour the card always

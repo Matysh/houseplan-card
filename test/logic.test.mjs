@@ -15,7 +15,9 @@ import {
   contentUrl, chunk, referencedContentUrls, MAX_SIGN_PATHS,
   interiorPoint,
   segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointOnBoundary, pointStrictlyInside, roomsOverlap,
-  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, openingShoulders, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, poleOfInaccessibility, runServiceFor, TOGGLE_SAFE_DOMAINS, coverService, coverMoving, coverEntityOf } from '../test-build/logic.js';
+  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, openingShoulders, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, poleOfInaccessibility, runServiceFor, TOGGLE_SAFE_DOMAINS, coverService, coverMoving, coverEntityOf,
+  liveText, liveTextValue, decorTextScale, decorTextLines,
+  LIVE_TEXT_DASH, LIVE_TEXT_VALUE_MAX, DECOR_TEXT_SCALE_MIN, DECOR_TEXT_SCALE_MAX } from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
 } from '../test-build/rules.js';
@@ -1189,4 +1191,113 @@ test('openingShoulders: angled wall measures along the wall direction', () => {
   assert.ok(Math.abs(off.sideB - 170) < 1e-9, 'far shoulder shrinks by 30');
   assert.equal(off.centered, false);
   assert.ok(Math.abs(off.wallCenter[0] - 150) < 1e-9 && Math.abs(off.wallCenter[1] - 200) < 1e-9);
+});
+
+
+// ---------------- live text on a decor label (docs/LIVE-TEXT.md) ------------
+
+const hassLive = {
+  states: {
+    'sensor.tank': { state: '68', attributes: { unit_of_measurement: '%' } },
+    'sensor.plain': { state: '17.4', attributes: {} },
+    'climate.hall': { state: 'heat', attributes: { current_temperature: 21.5, unit_of_measurement: '°C', preset_modes: ['home', 'away'] } },
+    'sensor.dead': { state: 'unavailable', attributes: { unit_of_measurement: '%' } },
+    'sensor.unknown': { state: 'unknown', attributes: {} },
+    'sensor.blob': { state: 'ok', attributes: { payload: { a: 1 }, zero: 0, no: false, empty: '' } },
+  },
+};
+
+test('liveText: no entity = the text is untouched, byte for byte', () => {
+  assert.equal(liveText('Кухня', null, hassLive), 'Кухня');
+  assert.equal(liveText('Бак {}', {}, hassLive), 'Бак {}');
+  assert.equal(liveText('Бак {}', { entity: '  ' }, hassLive), 'Бак {}');
+  assert.equal(liveText('', null, hassLive), '');
+});
+
+test('liveText: the placeholder is where the value lands', () => {
+  assert.equal(liveText('Бак {}', { entity: 'sensor.tank' }, hassLive), 'Бак 68 %');
+  assert.equal(liveText('{} в баке', { entity: 'sensor.tank' }, hassLive), '68 % в баке');
+});
+
+test('liveText: no placeholder = the value is appended after a space', () => {
+  assert.equal(liveText('Бак', { entity: 'sensor.tank' }, hassLive), 'Бак 68 %');
+  assert.equal(liveText('', { entity: 'sensor.tank' }, hassLive), '68 %', 'empty template = the bare value, no leading space');
+});
+
+test('liveText: only the FIRST placeholder is replaced — one label, one value', () => {
+  assert.equal(liveText('{} и {}', { entity: 'sensor.tank' }, hassLive), '68 % и {}');
+});
+
+test('liveText: the placeholder may sit on any line of a multi-line label', () => {
+  assert.equal(liveText('Бак\n{}', { entity: 'sensor.tank' }, hassLive), 'Бак\n68 %');
+});
+
+test('liveTextValue: unit comes from the entity, an explicit one wins', () => {
+  assert.equal(liveTextValue(hassLive, { entity: 'sensor.tank' }), '68 %');
+  assert.equal(liveTextValue(hassLive, { entity: 'sensor.tank', unit: 'проц.' }), '68 проц.');
+  assert.equal(liveTextValue(hassLive, { entity: 'sensor.tank', unit: '  ' }), '68 %', 'blank = inherit');
+  assert.equal(liveTextValue(hassLive, { entity: 'sensor.plain' }), '17.4', 'no unit on the entity, none added');
+});
+
+test('liveTextValue: an attribute never inherits the STATE unit', () => {
+  assert.equal(liveTextValue(hassLive, { entity: 'climate.hall', attr: 'current_temperature' }), '21.5',
+    'the entity °C describes the state, not the attribute');
+  assert.equal(liveTextValue(hassLive, { entity: 'climate.hall', attr: 'current_temperature', unit: '°C' }), '21.5 °C');
+  assert.equal(liveTextValue(hassLive, { entity: 'climate.hall' }), 'heat °C', 'the state keeps the entity unit');
+});
+
+test('liveTextValue: values are shown as HA reports them — no rounding', () => {
+  const hass = { states: { 'sensor.x': { state: '17.40000', attributes: { unit_of_measurement: '°C' } } } };
+  assert.equal(liveTextValue(hass, { entity: 'sensor.x' }), '17.40000 °C');
+});
+
+test('liveTextValue: a dead or missing entity is a dash, and the dash has no unit', () => {
+  assert.equal(liveTextValue(hassLive, { entity: 'sensor.dead' }), LIVE_TEXT_DASH);
+  assert.equal(liveTextValue(hassLive, { entity: 'sensor.unknown' }), LIVE_TEXT_DASH);
+  assert.equal(liveTextValue(hassLive, { entity: 'sensor.nope' }), LIVE_TEXT_DASH);
+  assert.equal(liveTextValue({}, { entity: 'sensor.tank' }), LIVE_TEXT_DASH);
+  assert.equal(liveText('Бак {}', { entity: 'sensor.dead' }, hassLive), 'Бак —', 'the rest of the template stays');
+});
+
+test('liveTextValue: a missing attribute on a live entity is a dash too', () => {
+  assert.equal(liveTextValue(hassLive, { entity: 'climate.hall', attr: 'nope' }), LIVE_TEXT_DASH);
+  assert.equal(liveTextValue(hassLive, { entity: 'sensor.blob', attr: 'payload' }), LIVE_TEXT_DASH, 'a dict is not a caption');
+  assert.equal(liveTextValue(hassLive, { entity: 'sensor.blob', attr: 'empty' }), LIVE_TEXT_DASH);
+  assert.equal(liveTextValue(hassLive, { entity: 'sensor.blob', attr: 'zero' }), '0', '0 is a value, not an absence');
+  assert.equal(liveTextValue(hassLive, { entity: 'sensor.blob', attr: 'no' }), 'false');
+  assert.equal(liveTextValue(hassLive, { entity: 'climate.hall', attr: 'preset_modes' }), 'home, away');
+});
+
+test('liveTextValue: a runaway value is clipped, so a caption stays a caption', () => {
+  const hass = { states: { 'sensor.big': { state: 'x'.repeat(500), attributes: {} } } };
+  const v = liveTextValue(hass, { entity: 'sensor.big' });
+  assert.equal(v.length, LIVE_TEXT_VALUE_MAX);
+  assert.ok(liveText('Log: {}', { entity: 'sensor.big' }, hass).length <= 'Log: '.length + LIVE_TEXT_VALUE_MAX);
+});
+
+test('decorTextScale: legacy size renders exactly as it used to', () => {
+  assert.equal(decorTextScale({ size: 's' }), 0.7, '14px against the base 20');
+  assert.equal(decorTextScale({ size: 'm' }), 1);
+  assert.equal(decorTextScale({ size: 'l' }), 1.5, '30px against the base 20');
+  assert.equal(decorTextScale({}), 1, 'a shape with neither is the medium it has always been');
+  assert.equal(decorTextScale(null), 1);
+});
+
+test('decorTextScale: an explicit scale wins over the legacy size and is bounded', () => {
+  assert.equal(decorTextScale({ size: 's', scale: 2 }), 2);
+  assert.equal(decorTextScale({ scale: 0 }), 1, '0 is not a scale — fall back');
+  assert.equal(decorTextScale({ scale: -3 }), 1);
+  assert.equal(decorTextScale({ scale: 'x' }), 1);
+  assert.equal(decorTextScale({ scale: 1e9 }), DECOR_TEXT_SCALE_MAX);
+  assert.equal(decorTextScale({ scale: 1e-9 }), DECOR_TEXT_SCALE_MIN);
+});
+
+test('decorTextLines: explicit newlines only, never an automatic wrap', () => {
+  assert.deepEqual(decorTextLines('a\nb'), ['a', 'b']);
+  assert.deepEqual(decorTextLines('a\r\nb'), ['a', 'b'], 'CRLF from a pasted text');
+  assert.deepEqual(decorTextLines('one'), ['one']);
+  assert.deepEqual(decorTextLines(''), ['']);
+  assert.deepEqual(decorTextLines('a\n\nb'), ['a', '', 'b'], 'a blank line is a line');
+  const long = 'x'.repeat(300);
+  assert.deepEqual(decorTextLines(long), [long], '300 chars stay one line — no auto wrap');
 });

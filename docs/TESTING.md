@@ -1121,6 +1121,51 @@ require hands on real hardware — they remain for the human pass.
       updates on every move, is absent before the drag has any length, and is
       gone the moment the shape is committed. Rectangles and ovals show their
       bounding box «W × H» instead [auto: smoke_decor]
+
+## The text block on the plan (docs/LIVE-TEXT.md, dev, unreleased)
+
+- [ ] **A label can show a live value**: in the Background editor place a text,
+      pick an entity in the dialog and write `Бак {}` — the plan shows
+      «Бак 68 %». Change the sensor: the label follows without any reload. A
+      label with no entity is untouched, byte for byte
+      [auto: smoke_live_text + unit logic.test]
+- [ ] **The unit comes from the entity**: leave the unit field empty and the
+      entity's own `unit_of_measurement` is used (its placeholder shows which);
+      type your own and it wins. Choose an ATTRIBUTE (say `battery_level` on a
+      °C sensor) and the entity's unit is NOT inherited — an attribute is not
+      the state [auto: smoke_live_text]
+- [ ] **A dead sensor says so**: make the entity unavailable (or delete it) —
+      the value becomes «—» and the rest of the caption stays. The dash carries
+      no unit [auto: smoke_live_text]
+- [ ] **Nothing is rounded**: a sensor reporting `23.94781` shows `23.94781`.
+      Rounding is the sensor's `display_precision`, not ours [auto:
+      smoke_live_text]
+- [ ] **The preview is the truth**: the line under the dialog's fields is
+      rendered by the same substitution the plan uses, so what it shows is what
+      the plan will show [manual]
+- [ ] **The same everywhere**: the label reads identically in View, in the
+      editors and on a kiosk screen [auto: smoke_live_text]
+- [ ] **No font-size choice any more**: the dialog has no Small/Medium/Large.
+      Select a label and pull a corner — the text scales uniformly about its
+      anchor; the handle above it turns the block in 5° steps, Shift for any
+      angle. Rotating back to zero leaves a straight label
+      [auto: smoke_decor_text]
+- [ ] **Old labels keep their size**: a plan made before the handles renders
+      its Small/Medium/Large labels at exactly the old 14/20/30 px, and the
+      first corner drag converts that setting into the scale it meant
+      [auto: smoke_decor_text + unit logic.test]
+- [ ] **Enter is a new line**: type two lines in the dialog (Ctrl/⌘+Enter or
+      the button saves) — the plan shows two lines, centred, growing around the
+      anchor. A very long single line is NOT wrapped for you
+      [auto: smoke_decor_text]
+- [ ] **The text tool edits the label under the cursor**: with the text tool
+      selected, press an existing label — its form opens, prefilled, and no
+      second label is created. Press empty canvas, or a line/rectangle, and a
+      NEW label is created there instead (non-text shapes stay inert under
+      drawing tools) [auto: smoke_decor_text, smoke_decor]
+- [ ] **A label is still a caption, not a device**: no tap action, no icon, no
+      part in room averages; it is not offered in any of the device pickers
+      [manual]
 - [ ] **Grazing sunlight** (dev, audit DEV-EB173-01): with `sun_rays` on, set
       the sun almost ALONG a wall carrying a window (e.g. a west window,
       azimuth 190°, elevation 90° at north_deg 0). The shaft is a true
@@ -1305,3 +1350,21 @@ require hands on real hardware — they remain for the human pass.
 - [ ] **A save in flight is not offered twice**: press Save in the space dialog
       and reload/reconnect during the write — the dialog does not come back
       with a live Save button; the reloaded config shows the outcome [manual]
+- [ ] **Two identical cards keep to themselves**: put the SAME card config
+      twice on one view, park one in the Devices editor at 350 % and leave the
+      other in View with an unsaved space dialog, then force a rebuild — each
+      card comes back with its OWN floor, mode and zoom, and the draft returns
+      to the card that owned it, not to its neighbour (AUD-159B1-01)
+      [auto: smoke_warm_owners, section A]
+- [ ] **Two dashboard views keep to themselves**: the same card config on two
+      views of one dashboard — switching between them never carries a viewport
+      or a dialog across (`location.pathname` is part of the key) [manual]
+- [ ] **A rebuild storm keeps the draft**: a dashboard that rebuilds twice in a
+      row (config churn, a flapping websocket) still returns the unsaved dialog
+      — the draft travels down the chain of instances (AUD-159B1-02)
+      [auto: smoke_warm_owners, section B]
+- [ ] **A forgotten draft frees its plan file**: open the space dialog with a
+      plan chosen, leave the view and do not come back — after the 10-second
+      TTL the memo no longer holds the dialog (a plan is base64 in memory), and
+      nothing revives afterwards (AUD-159B1-03)
+      [auto: smoke_warm_owners, section C]

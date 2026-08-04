@@ -1135,3 +1135,73 @@ class TestVacuum:
             v.MARKER_SCHEMA(_marker(vacuum={"trail_mode": ok}))
         with pytest.raises(Exception):
             v.MARKER_SCHEMA(_marker(vacuum={"trail_mode": "sometimes"}))
+
+
+def test_decor_text_live_fields():
+    """docs/LIVE-TEXT.md: a text label may carry an entity, an attribute and a
+    unit. All three optional and BOUNDED; junk is refused; a label without them
+    stays valid, so no plan needs a migration."""
+    base = {"id": "s1", "title": "S", "view_box": [0, 0, 1, 1], "rooms": []}
+    txt = {"id": "d", "kind": "text", "x": 0.5, "y": 0.5, "text": "Бак {}"}
+
+    def cfg(extra):
+        return v.CONFIG_SCHEMA({"spaces": [{**base, "decor": [{**txt, **extra}]}]})
+
+    # --- a plain label is untouched by the new fields ---------------------
+    assert cfg({})["spaces"][0]["decor"][0] == txt
+    # --- accepted ---------------------------------------------------------
+    out = cfg({"entity": "sensor.water_tank", "attr": "battery_level", "unit": "%"})
+    shape = out["spaces"][0]["decor"][0]
+    assert shape["entity"] == "sensor.water_tank"
+    assert shape["attr"] == "battery_level"
+    assert shape["unit"] == "%"
+    # None is how the dialog clears a field
+    assert cfg({"entity": None, "attr": None, "unit": None})
+    assert cfg({"entity": "binary_sensor.a_1", "attr": "x", "unit": "°C"})
+    # --- refused ----------------------------------------------------------
+    for bad in ("sensor", "sensor.", ".tank", "Sensor.Tank", "sensor.tank; drop",
+                "sensor." + "x" * 300, 5, True, ["sensor.a"]):
+        with pytest.raises(vol.Invalid):
+            cfg({"entity": bad})
+    with pytest.raises(vol.Invalid):
+        cfg({"attr": "a" * (v.MAX_DECOR_ATTR + 1)})
+    with pytest.raises(vol.Invalid):
+        cfg({"unit": "u" * (v.MAX_DECOR_UNIT + 1)})
+    with pytest.raises(vol.Invalid):
+        cfg({"attr": 7})
+    with pytest.raises(vol.Invalid):
+        cfg({"unit": {"a": 1}})
+    # the template itself keeps its own bound, placeholder or not
+    assert cfg({"text": "x" * v.MAX_DECOR_TEXT})
+    with pytest.raises(vol.Invalid):
+        cfg({"text": "x" * (v.MAX_DECOR_TEXT + 1)})
+
+
+def test_decor_text_block_scale_and_angle():
+    """The dialog no longer offers a font size — the block is scaled by its
+    corners and rotated by its handle. Both fields optional and bounded; the
+    legacy `size` is still accepted (and still bounded) so a label drawn before
+    the handles renders exactly as it did."""
+    base = {"id": "s1", "title": "S", "view_box": [0, 0, 1, 1], "rooms": []}
+    txt = {"id": "d", "kind": "text", "x": 0.5, "y": 0.5, "text": "Porch"}
+
+    def cfg(extra):
+        return v.CONFIG_SCHEMA({"spaces": [{**base, "decor": [{**txt, **extra}]}]})
+
+    assert cfg({"scale": 1})["spaces"][0]["decor"][0]["scale"] == 1.0
+    assert cfg({"scale": v.DECOR_TEXT_SCALE_MIN})
+    assert cfg({"scale": v.DECOR_TEXT_SCALE_MAX})
+    assert cfg({"angle": 0}) and cfg({"angle": -360}) and cfg({"angle": 360})
+    assert cfg({"angle": 45.5})["spaces"][0]["decor"][0]["angle"] == 45.5
+    for bad in (0, -1, v.DECOR_TEXT_SCALE_MAX + 1, float("nan"), float("inf")):
+        with pytest.raises(vol.Invalid):
+            cfg({"scale": bad})
+    for bad in (361, -361, float("nan")):
+        with pytest.raises(vol.Invalid):
+            cfg({"angle": bad})
+    # legacy: still valid, still only the three known values
+    assert cfg({"size": "s"}) and cfg({"size": "m"}) and cfg({"size": "l"})
+    with pytest.raises(vol.Invalid):
+        cfg({"size": "xxl"})
+    # a multi-line label round-trips with its newlines intact
+    assert cfg({"text": "Гараж\nпод ключ"})["spaces"][0]["decor"][0]["text"] == "Гараж\nпод ключ"

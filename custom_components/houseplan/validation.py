@@ -220,6 +220,22 @@ SPACE_DISPLAY_SCHEMA = vol.Schema(
     extra=vol.ALLOW_EXTRA,
 )
 
+# Live text on a decor label (docs/LIVE-TEXT.md). An entity id is
+# `<domain>.<object_id>`; HA itself allows only lowercase letters, digits and
+# underscores in both halves. The bound is a sanity limit, not a policy.
+MAX_ENTITY_ID = 255
+_ENTITY_ID = vol.All(str, vol.Length(min=3, max=MAX_ENTITY_ID),
+                     vol.Match(r"^[a-z0-9_]+\.[a-z0-9_]+$"))
+# A caption is a caption: the template is bounded, the attribute name is a flat
+# name (no dots needed), and a unit is a couple of characters, not a sentence.
+MAX_DECOR_TEXT = 200
+MAX_DECOR_ATTR = 64
+MAX_DECOR_UNIT = 16
+# The text block is scaled by dragging its corners; the range is what a human
+# could mean on a 1000-unit canvas, the rest is garbage insurance.
+DECOR_TEXT_SCALE_MIN = 0.15
+DECOR_TEXT_SCALE_MAX = 20.0
+
 _DECOR_COMMON = {
     vol.Required("id"): str,
     vol.Optional("color"): vol.Match(r"^#[0-9a-fA-F]{6}$"),
@@ -240,8 +256,25 @@ DECOR_SCHEMA = vol.Any(
                extra=vol.ALLOW_EXTRA),
     vol.Schema({**_DECOR_COMMON, vol.Required("kind"): "text",
                 vol.Required("x"): _NORM, vol.Required("y"): _NORM,
-                vol.Required("text"): vol.All(str, vol.Length(min=1, max=200)),
-                vol.Optional("size"): vol.In(["s", "m", "l"])},
+                # the template: newlines are the user's own line breaks and are
+                # kept verbatim (docs/LIVE-TEXT.md); the label never wraps itself
+                vol.Required("text"): vol.All(str, vol.Length(min=1, max=MAX_DECOR_TEXT)),
+                # legacy font size ('s'|'m'|'l'). The dialog no longer offers it
+                # — the block is scaled by its corner handles — but a plan
+                # written before that keeps it, and it is read as the scale it
+                # used to render at. Kept in the schema so it stays BOUNDED.
+                vol.Optional("size"): vol.In(["s", "m", "l"]),
+                # size and rotation of the block (docs/LIVE-TEXT.md §block).
+                # Both optional: a shape without them is the old one exactly.
+                vol.Optional("scale"): vol.All(
+                    _finite, vol.Range(min=DECOR_TEXT_SCALE_MIN, max=DECOR_TEXT_SCALE_MAX)),
+                vol.Optional("angle"): vol.All(_finite, vol.Range(min=-360.0, max=360.0)),
+                # live text: the label may show one entity's value. All three
+                # optional, so every existing plan validates unchanged and no
+                # migration runs.
+                vol.Optional("entity"): vol.Any(None, _ENTITY_ID),
+                vol.Optional("attr"): vol.Any(None, vol.All(str, vol.Length(max=MAX_DECOR_ATTR))),
+                vol.Optional("unit"): vol.Any(None, vol.All(str, vol.Length(max=MAX_DECOR_UNIT)))},
                extra=vol.ALLOW_EXTRA),
 )
 

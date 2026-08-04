@@ -910,6 +910,105 @@ export function floorsOf(hass: any): FloorInfo[] {
   return list;
 }
 
+// ---------------- live text on a decor label (docs/LIVE-TEXT.md) -------------
+
+/** What a dead sensor says. A label that vanishes with its entity is worse
+ *  than one that admits it has no data. */
+export const LIVE_TEXT_DASH = '—';
+/** A caption is a caption: an attribute that turns out to be a 4 KB string
+ *  must not become the plan's wallpaper. */
+export const LIVE_TEXT_VALUE_MAX = 60;
+/** The one placeholder. Not `{{ }}`: this is a substitution, not a template
+ *  language — see docs/LIVE-TEXT.md for why that line is where it is. */
+export const LIVE_TEXT_SLOT = '{}';
+
+export interface LiveTextLink {
+  /** entity id whose value lands in the label; absent = a plain static label */
+  entity?: string | null;
+  /** attribute to read instead of the state */
+  attr?: string | null;
+  /** suffix; absent = the entity's own unit_of_measurement (state only) */
+  unit?: string | null;
+}
+
+/** One attribute/state value as text, or null when there is nothing to show. */
+function liveRaw(raw: unknown): string | null {
+  if (raw === undefined || raw === null) return null;
+  if (Array.isArray(raw)) {
+    const s = raw.map((v) => (v === null || v === undefined ? '' : String(v))).join(', ');
+    return s ? s.slice(0, LIVE_TEXT_VALUE_MAX) : null;
+  }
+  if (typeof raw === 'object') return null; // a dict is not a caption
+  const s = String(raw);
+  return s === '' ? null : s.slice(0, LIVE_TEXT_VALUE_MAX);
+}
+
+/**
+ * The live value of a linked label, unit included — exactly as HA reports it.
+ * No rounding, no reformatting, no localised separators: rounding belongs to
+ * the sensor's `display_precision`, and duplicating it here would make two
+ * sources of truth (docs/LIVE-TEXT.md).
+ *
+ * Unit resolution: an explicit `unit` always wins. An empty one inherits the
+ * entity's `unit_of_measurement` ONLY when the STATE is being read — a
+ * `battery_level` attribute on a °C sensor must not come out as «73 °C».
+ */
+export function liveTextValue(hass: any, link: LiveTextLink | null | undefined): string {
+  const id = (link?.entity || '').trim();
+  if (!id) return '';
+  const st = hass?.states?.[id];
+  const state = st?.state;
+  if (!st || state === undefined || state === null || state === ''
+    || state === 'unavailable' || state === 'unknown') return LIVE_TEXT_DASH;
+  const attr = (link?.attr || '').trim();
+  const val = liveRaw(attr ? st.attributes?.[attr] : state);
+  if (val === null) return LIVE_TEXT_DASH; // the attribute is not on this entity
+  const own = attr ? '' : String(st.attributes?.unit_of_measurement ?? '').trim();
+  const unit = String(link?.unit ?? '').trim() || own;
+  return unit ? `${val} ${unit}` : val;
+}
+
+/**
+ * The label as it must be painted: the template with its first `{}` replaced
+ * by the live value. A template without the placeholder gets the value
+ * appended after a space, so picking an entity and typing nothing sensible
+ * still shows something useful. Only the FIRST `{}` is substituted — one
+ * label, one value (docs/LIVE-TEXT.md «not a multi-entity widget»).
+ * Without an entity the text is returned byte-for-byte.
+ */
+export function liveText(text: string | null | undefined, link: LiveTextLink | null | undefined, hass: any): string {
+  const tpl = text ?? '';
+  if (!(link?.entity || '').trim()) return tpl;
+  const v = liveTextValue(hass, link);
+  const i = tpl.indexOf(LIVE_TEXT_SLOT);
+  if (i >= 0) return tpl.slice(0, i) + v + tpl.slice(i + LIVE_TEXT_SLOT.length);
+  return tpl ? `${tpl} ${v}` : v;
+}
+
+export const DECOR_TEXT_BASE = 20;   // px at scale 1 — what 'm' has always been
+export const DECOR_TEXT_SCALE_MIN = 0.15;
+export const DECOR_TEXT_SCALE_MAX = 20;
+
+/**
+ * The font multiplier of a decor text shape. `scale` is the field the corner
+ * handles write; the legacy `size` ('s'|'m'|'l') is read as the multiplier it
+ * used to render at (14/20/30 px against the base 20), so a label drawn
+ * before the handles existed comes back at exactly its old size without any
+ * migration. An explicit `scale` wins — it is the newer, finer statement of
+ * the same thing, and the first drag replaces `size` with it.
+ */
+export function decorTextScale(shape: { scale?: unknown; size?: unknown } | null | undefined): number {
+  const s = Number(shape?.scale);
+  if (Number.isFinite(s) && s > 0) return Math.min(DECOR_TEXT_SCALE_MAX, Math.max(DECOR_TEXT_SCALE_MIN, s));
+  const legacy: Record<string, number> = { s: 0.7, m: 1, l: 1.5 };
+  return legacy[String(shape?.size ?? '')] ?? 1;
+}
+/** The lines of a decor label. Explicit newlines only: the label never wraps
+ *  by itself, so a caption cannot reflow (and jump) on a state change. */
+export function decorTextLines(s: string | null | undefined): string[] {
+  return String(s ?? '').replace(/\r\n?/g, '\n').split('\n');
+}
+
 /** Substitute every occurrence of {name} placeholders in a template string. */
 export function subst(s: string, vars?: Record<string, string | number>): string {
   if (!vars) return s;
