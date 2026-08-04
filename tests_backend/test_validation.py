@@ -107,6 +107,35 @@ def test_space_schema_drops_the_old_aspect_and_bounds_the_image_ratio():
         v.SPACE_SCHEMA({**ok, "view_box": [0, 0, 1]})
 
 
+def test_space_backdrop_transform_is_optional_and_bounded():
+    """plan_x / plan_y / plan_scale — the backdrop placement (docs/BACKDROP.md).
+
+    Optional to the letter: a space that has never been through the backdrop
+    editor validates exactly as it did before, and the keys stay absent (there
+    is no migration and no default written into anybody's store).
+    """
+    ok = {"id": "f1", "title": "1", "view_box": [0, 0, 1, 1], "rooms": []}
+    out = v.SPACE_SCHEMA(ok)
+    assert "plan_x" not in out and "plan_y" not in out and "plan_scale" not in out
+
+    v.SPACE_SCHEMA({**ok, "plan_x": 0.25, "plan_y": -1.5, "plan_scale": 2.5})
+    v.SPACE_SCHEMA({**ok, "plan_x": None, "plan_y": None, "plan_scale": None})
+    # the offset is a coordinate: the whole canvas range, both signs
+    v.SPACE_SCHEMA({**ok, "plan_x": v.CANVAS_LIMIT, "plan_y": -v.CANVAS_LIMIT})
+    # the scale is a MULTIPLIER: strictly positive, human-sized
+    v.SPACE_SCHEMA({**ok, "plan_scale": v.PLAN_SCALE_MIN})
+    v.SPACE_SCHEMA({**ok, "plan_scale": v.PLAN_SCALE_MAX})
+
+    for bad in ({"plan_x": v.CANVAS_LIMIT + 1}, {"plan_y": -v.CANVAS_LIMIT - 1},
+                {"plan_x": float("nan")}, {"plan_y": float("inf")},
+                {"plan_scale": 0}, {"plan_scale": -1},
+                {"plan_scale": v.PLAN_SCALE_MIN / 2},
+                {"plan_scale": v.PLAN_SCALE_MAX * 2},
+                {"plan_scale": float("nan")}):
+        with pytest.raises(vol.Invalid):
+            v.SPACE_SCHEMA({**ok, **bad})
+
+
 def test_marker_schema():
     v.MARKER_SCHEMA({"id": "m1", "binding": "device:abc"})
     v.MARKER_SCHEMA({"id": "m2", "binding": "virtual", "name": "X",

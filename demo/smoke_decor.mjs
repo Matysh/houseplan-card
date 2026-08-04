@@ -11,7 +11,9 @@ const res = await page.evaluate(async () => {
   tabs[2].click(); await c.updateComplete;
   out.decorMode = c._mode === 'decor';
   out.decorBar = !!sr().querySelector('.editbar.decorbar');
-  out.toolBtns = sr().querySelectorAll('.decorbar .btn:not(.barclose)').length === 6;
+  // six drawing tools + «Картинка-подложка», which f1 offers because it HAS a
+  // picture (docs/BACKDROP.md §2); a hand-drawn space still shows six
+  out.toolBtns = sr().querySelectorAll('.decorbar .btn.dtool').length === 7;
   // 2) нарисовать прямоугольник drag-ом (через прямые вызовы)
   c._decorTool = 'rect'; c._decorStyle = { color: '#ff0000', width: 3, fill: true }; await c.updateComplete;
   const g = c._gridPitch;
@@ -101,6 +103,72 @@ const res = await page.evaluate(async () => {
   c._curSpaceCfg.decor = c._decorList.map((x) => x.id === m.id ? { ...x, x: m.orig.x + dx5 } : x);
   out.moveKeepsSize = Math.abs(c._decorList.find((x) => x.id === rect.id).w - before.w) < 1e-9;
   c._decorMove = null;
+  // 5b) инструмент рисования ВЛАДЕЕТ холстом: клик по существующей фигуре
+  // начинает новую фигуру в этой точке, а не выделяет старую (владелец
+  // 2026-08-04: «нельзя поставить начало линии на конец другой»).
+  const stageEl = () => sr().querySelector('.stage');
+  // экранные координаты точки холста (обратное _screenToVb)
+  const toScreen = (x, y) => {
+    const r = stageEl().getBoundingClientRect();
+    const v = c._viewOr(c._baseVb());
+    return { clientX: r.left + ((x - v.x) / v.w) * r.width,
+      clientY: r.top + ((y - v.y) / v.h) * r.height };
+  };
+  const press = (el, x, y, pid) => {
+    const { clientX, clientY } = toScreen(x, y);
+    el.dispatchEvent(new PointerEvent('pointerdown', {
+      bubbles: true, composed: true, cancelable: true,
+      pointerId: pid, clientX, clientY, button: 0, isPrimary: true }));
+  };
+  // подопытная линия с известными концами
+  c._decorTool = 'select'; c._decorSel = null; c._decorDraft = null; c._decorMove = null;
+  const decorBefore = c._decorList.slice();
+  c._curSpaceCfg.decor = [{ id: 'dcprobe', kind: 'line', x1: (g * 6) / 1000, y1: (g * 30) / 1000,
+    x2: (g * 18) / 1000, y2: (g * 30) / 1000, color: '#000000', width: 3 }];
+  c._cfgEpoch = (c._cfgEpoch || 0) + 1;
+  c.requestUpdate(); await c.updateComplete;
+  const probe = () => [...sr().querySelectorAll('.decorlayer line.dshape')]
+    .find((l) => Math.abs(+l.getAttribute('x1') - g * 6) < 0.01);
+  out.probeRendered = !!probe();
+  // — инструмент «линия»: жмём ровно на КОНЕЦ линии
+  c._decorTool = 'line'; await c.updateComplete;
+  // фигура вообще перестаёт быть мишенью для указателя
+  out.shapeInertUnderLineTool = getComputedStyle(probe()).pointerEvents === 'none';
+  press(probe(), g * 18, g * 30, 41);
+  await c.updateComplete;
+  out.lineToolStartsDraft = !!c._decorDraft && c._decorDraft.kind === 'line';
+  // ...и именно из этой точки (снап к концу старой линии)
+  out.draftStartsAtTheEnd = !!c._decorDraft
+    && Math.abs(c._decorDraft.a[0] - g * 18) < 0.51 && Math.abs(c._decorDraft.a[1] - g * 30) < 0.51;
+  out.lineToolNoSelect = c._decorSel === null;
+  out.lineToolNoMove = !c._decorMove;
+  c._decorDraft = null; await c.updateComplete;
+  // — прямоугольник и овал ведут себя так же
+  for (const [tool, key] of [['rect', 'rectToolStartsDraft'], ['ellipse', 'ellipseToolStartsDraft']]) {
+    c._decorTool = tool; c._decorSel = null; await c.updateComplete;
+    press(probe(), g * 12, g * 30, 42);
+    await c.updateComplete;
+    out[key] = !!c._decorDraft && c._decorDraft.kind === tool && c._decorSel === null;
+    c._decorDraft = null;
+  }
+  // — «текст» по фигуре открывает диалог новой надписи, а не выделяет
+  c._decorTool = 'text'; c._decorSel = null; c._decorTextDialog = null; await c.updateComplete;
+  press(probe(), g * 12, g * 30, 43);
+  await c.updateComplete;
+  out.textToolOpensDialog = !!c._decorTextDialog && !c._decorTextDialog.id && c._decorSel === null;
+  c._decorTextDialog = null;
+  // — а вот в «выборе» всё по-прежнему: клик выделяет и берёт на перетаскивание
+  c._decorTool = 'select'; c._decorSel = null; c._decorDraft = null; await c.updateComplete;
+  out.shapeLiveUnderSelect = getComputedStyle(probe()).pointerEvents !== 'none';
+  press(probe(), g * 12, g * 30, 44);
+  await c.updateComplete;
+  out.selectStillSelects = c._decorSel === 'dcprobe';
+  out.selectStillGrabs = !!c._decorMove && c._decorMove.id === 'dcprobe';
+  out.selectMakesNoDraft = !c._decorDraft;
+  c._decorMove = null; c._decorSel = null;
+  c._curSpaceCfg.decor = decorBefore;                 // сцена как была до пробы
+  c._decorTool = 'select'; await c.updateComplete;
+  out.decorRestored = c._decorList.length === decorBefore.length;
   // 6) erase удаляет
   const n0 = c._decorList.length;
   c._decorTool = 'erase';

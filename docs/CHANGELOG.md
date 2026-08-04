@@ -1,5 +1,48 @@
 # Changelog
 
+## v1.58.0-beta.1 — 2026-08-04
+
+First pre-release of the 1.58 line: the backdrop picture becomes a
+movable, scalable object, the opaque plan sheet is redefined as the
+room contours, and the decor drawing tools stop stealing clicks.
+
+### The backdrop picture can be moved and scaled (docs/BACKDROP.md)
+
+- **The plan image is no longer nailed down.** In the Background
+  editor the picture gets a transform frame: drag it by its body to
+  move it, pull a corner to resize it evenly (proportions kept, the
+  opposite corner stays put). A live badge states the picture's real
+  size in metres (or feet) while you drag, through the space's
+  `cell_cm`. Position and size land on the grid; Shift steps off it.
+  Nothing else moves — rooms, doors, devices and decor stay put — and
+  there is no rotation.
+- Three new optional space fields: `plan_x`, `plan_y`, `plan_scale`.
+  Their absence is exactly the old behaviour, so **existing plans
+  render bit-identically and nothing is migrated**. «Вернуть картинку»
+  in the toolbar clears them.
+- **The opaque plan sheet is now always the room contours.** It used
+  to be the image rectangle whenever a picture was attached; now the
+  picture is drawn ON the sheet — above it, below the walls. The
+  scene colour (`bg_color`, the `daynight` sky) therefore reaches the
+  exterior walls on an image plan too. Consequence, deliberate: a
+  transparent picture over a space with no rooms drawn shows the
+  scene background through itself.
+- «Вписать всё» counts the moved and scaled picture, so it can no
+  longer be left off screen.
+
+### Drawing tools no longer grab the shape under the cursor
+
+- **A drawing tool owns the canvas.** With Line, Rectangle, Oval or
+  Text picked in the decor editor, clicking on an existing figure now
+  starts a NEW figure instead of selecting the old one — so a line can
+  begin exactly on the end of another line, and a rectangle can be
+  drawn on top of a filled one. Double-clicking a text under a drawing
+  tool no longer opens it for editing either. The same inertness
+  applies in the «Картинка-подложка» tool, where a decor shape lying
+  over the plan must not block the picture's own drag.
+- «Выбрать» and «Стереть» are unchanged: shapes stay clickable there,
+  which is where selecting and deleting belong.
+
 ## v1.57.0 — 2026-08-04
 
 Minor release: the canvas becomes infinite — no more "plan size", no

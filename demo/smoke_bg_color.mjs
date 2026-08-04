@@ -144,9 +144,11 @@ checkAll(res);
 
 // ---- 11) opaque plan paper (owner 2026-08-03) --------------------------
 // The scene bg_color must never bleed through the plan itself: opaque
-// .hp-paper shapes sit under everything the plan draws. An IMAGE plan papers
-// the backdrop image rect (the canvas is the paper); a DRAWN plan papers the
-// ROOM CONTOURS — one shape per room, never their bounding box (section 12).
+// .hp-paper shapes sit under everything the plan draws. Since v1.58.0 the
+// paper is the ROOM CONTOURS and ONLY them — one shape per room, never their
+// bounding box (section 12), and never the backdrop image rect either
+// (docs/BACKDROP.md §3). The demo's f1 IS an image plan, so this section now
+// asserts the new rule on exactly the case that used to be the exception.
 // The scene colour is visible ONLY around the paper; the 'daynight' night
 // dims the paper via brightness only.
 const paper = await page.evaluate(async () => {
@@ -158,20 +160,28 @@ const paper = await page.evaluate(async () => {
   c._cfgRev = (c._cfgRev || 0) + 1;
   await upd();
   const m = c._spaceModel();
-  const p = sr().querySelector('.stage svg rect.hp-paper');
+  const shapes = () => [...sr().querySelectorAll('.stage svg .hp-paper')];
+  const p = shapes()[0];
   out.paperExists = !!p;
+  out.imagePlanPapersTheRooms = shapes().length === m.rooms.length;
+  // …and NOT the image: no paper rect the size of the backdrop any more
+  out.noImageSizedPaper = ![...sr().querySelectorAll('.stage svg rect.hp-paper')].some((r) =>
+    Math.abs(Number(r.getAttribute('width')) - m.bg.w) < 1e-6
+    && Math.abs(Number(r.getAttribute('height')) - m.bg.h) < 1e-6);
   if (p) {
-    const a = (n) => Number(p.getAttribute(n));
-    out.paperHugsImage = Math.abs(a('x') - m.bg.x) < 1e-6 && Math.abs(a('y') - m.bg.y) < 1e-6
-      && Math.abs(a('width') - m.bg.w) < 1e-6 && Math.abs(a('height') - m.bg.h) < 1e-6;
     const cs = getComputedStyle(p);
     out.paperOpaque = cs.fillOpacity === '1' && cs.opacity === '1'
       && cs.fill !== 'none' && !/rgba\(.*,\s*0\)/.test(cs.fill);
   }
+  // …and the picture is drawn ON that paper: image after paper, before walls
+  const kids = [...sr().querySelector('.stage svg').children];
+  const idxOf = (sel) => kids.findIndex((n) => n.matches(sel) || n.querySelector?.(sel));
+  out.imageAbovePaper = idxOf('image') > idxOf('.hp-paper') && idxOf('image') >= 0;
+  out.imageBelowRooms = idxOf('image') < idxOf('.room, .room-outline');
   // editors keep the paper too (their canvas ignores bg_color anyway)
   c._setMode('decor');
   await upd();
-  out.editorKeepsPaper = !!sr().querySelector('.stage svg rect.hp-paper');
+  out.editorKeepsPaper = !!sr().querySelector('.stage svg .hp-paper');
   c._setMode('view');
   await upd();
   // daynight night: the paper dims via the brightness filter ONLY, never alpha
@@ -184,7 +194,7 @@ const paper = await page.evaluate(async () => {
   } } };
   await upd();
   out.nightDimsByBrightness = (sr().querySelector('.zoomwrap').getAttribute('style') || '').includes('brightness(0.900');
-  const pn = sr().querySelector('.stage svg rect.hp-paper');
+  const pn = sr().querySelector('.stage svg .hp-paper');
   out.nightPaperStaysOpaque = !!pn && getComputedStyle(pn).fillOpacity === '1' && getComputedStyle(pn).opacity === '1';
   delete c._serverCfg.settings.bg_mode;
   delete c._serverCfg.settings.north_deg;

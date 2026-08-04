@@ -125,6 +125,13 @@ _GEOM = vol.All(_finite, vol.Range(min=-CANVAS_LIMIT, max=CANVAS_LIMIT))
 # than the old unit square — while staying strictly positive.
 _EXTENT = vol.All(_finite, vol.Range(min=0.001, max=CANVAS_LIMIT))
 
+# The backdrop's uniform scale (docs/BACKDROP.md). A MULTIPLIER, not a
+# coordinate: strictly positive, and bounded by what a person could mean —
+# a hundredth of the canvas is already a thumbnail, a hundred canvases is
+# already absurd. Mirrored by PLAN_SCALE_MIN/MAX in src/space-geometry.ts.
+PLAN_SCALE_MIN = 0.01
+PLAN_SCALE_MAX = 100.0
+
 
 def _view_box(value):
     """[x, y, w, h]: the first two are coordinates, the last two are sizes."""
@@ -252,6 +259,17 @@ SPACE_SCHEMA = vol.Schema(
         vol.Remove("aspect"): object,
         vol.Optional("plan_aspect"): vol.Any(
             None, vol.All(vol.Coerce(float), vol.Range(min=0.05, max=20))
+        ),
+        # Backdrop placement (docs/BACKDROP.md): the picture may be moved and
+        # scaled UNIFORMLY on the canvas. All three are optional and their
+        # absence is the pre-v1.58.0 behaviour exactly — there is no migration,
+        # and an old config validates unchanged. The offset is a normalised
+        # coordinate like every other one (the ±CANVAS_LIMIT garbage guard);
+        # the scale is a positive multiplier in a range a human could mean.
+        vol.Optional("plan_x"): vol.Any(None, _COORD),
+        vol.Optional("plan_y"): vol.Any(None, _COORD),
+        vol.Optional("plan_scale"): vol.Any(
+            None, vol.All(_finite, vol.Range(min=PLAN_SCALE_MIN, max=PLAN_SCALE_MAX))
         ),
         vol.Required("view_box"): _view_box,
         vol.Required("rooms"): vol.All([ROOM_SCHEMA], vol.Length(max=MAX_ROOMS)),
