@@ -32,7 +32,7 @@ import {
 import {
   computeSunRays, dayPhase, northDegOf, bgModeOf, sunRaysOn, weatherEntityOf,
   sunStateOf, cloudFactor, rayPeakAlpha, raysVisible, rayColor, RAY_FADE_MS, type SunRay,
-  rayStops, raySoftness, skyElevation, skyNeedsSnap,
+  rayStops, skyElevation, skyNeedsSnap,
 } from './sun';
 import { ContentSigner } from './signing';
 import { mdiHomeCityOutline } from '@mdi/js';
@@ -4969,14 +4969,14 @@ class HouseplanCard extends LitElement {
     if (!rays.length) return empty;
     const color = rayColor(dayPhase(sun.elevation).warmth);
     const stops = rayStops();
-    // Room outlines for the clip: the wedge is blurred FIRST and clipped
-    // SECOND (SVG applies filter → clip-path in that order), so the soft kerb
-    // never leaks through a wall while the wedge itself has no razor edges.
-    const roomPolys = new Map<string, string>();
-    for (const r of space.rooms) {
-      const poly = r.id ? roomPoly(r) : null;
-      if (r.id && poly) roomPolys.set(r.id, poly.map((q) => q[0] + ',' + q[1]).join(' '));
-    }
+    // NO filter here, and none in <defs>. Owner 2026-08-04: «не надо размывать
+    // их боковые грани» — the shaft keeps the crisp sides real light has, and
+    // the only falloff is the gradient running ALONG the ray. The tip needs no
+    // blur either: `rayStops()` is already at zero from RAY_FADE_END on, and
+    // `rayQuad()` ends the wedge on that same iso-alpha line, so the far edge
+    // has nothing left to draw. The polygons come out of `computeSunRays()`
+    // already intersected with the room, so no clip-path is needed to keep the
+    // light off the far side of a wall.
     return svg`<defs>
         ${rays.map((r, i) => {
           const mx = (r.a[0] + r.b[0]) / 2;
@@ -4985,24 +4985,12 @@ class HouseplanCard extends LitElement {
             x1="${mx}" y1="${my}" x2="${mx + r.dir[0] * r.len}" y2="${my + r.dir[1] * r.len}">
             ${stops.map(([off, k]) => svg`<stop offset="${(off * 100).toFixed(1)}%"
               stop-color="${color}" stop-opacity="${(alpha * k).toFixed(4)}"></stop>`)}
-          </linearGradient>
-          <filter id="hp-sunsoft-${i}" x="-30%" y="-30%" width="160%" height="160%"
-            color-interpolation-filters="sRGB">
-            <feGaussianBlur stdDeviation="${raySoftness(r.len).toFixed(2)}"></feGaussianBlur>
-          </filter>
-          ${roomPolys.has(r.roomId)
-            ? svg`<clipPath id="hp-sunclip-${i}" clipPathUnits="userSpaceOnUse">
-                <polygon points="${roomPolys.get(r.roomId)}"></polygon>
-              </clipPath>`
-            : nothing}`;
+          </linearGradient>`;
         })}
       </defs>
       <g class="sunlayer ${this._sunOut ? 'out' : ''}">
-        ${rays.map((r, i) => svg`<g filter="url(#hp-sunsoft-${i})"
-          clip-path="${roomPolys.has(r.roomId) ? `url(#hp-sunclip-${i})` : 'none'}">
-          ${r.polys.map((p) => svg`<polygon
-            points="${p.map((q) => q[0] + ',' + q[1]).join(' ')}" fill="url(#hp-sun-${i})"></polygon>`)}
-        </g>`)}
+        ${rays.map((r, i) => r.polys.map((p) => svg`<polygon
+          points="${p.map((q) => q[0] + ',' + q[1]).join(' ')}" fill="url(#hp-sun-${i})"></polygon>`))}
       </g>` as unknown as TemplateResult;
   }
 

@@ -6,7 +6,7 @@ import {
   rayLength, rayQuad, clipToRoom, computeSunRays,
   rayAlpha, rayColor, cloudFactor, RAY_MAX_ALPHA,
   raysVisible, rayPeakAlpha, RAY_ELEVATION_MIN, RAY_FADE_MS,
-  RAY_LENGTH_K, RAY_FADE_END, rayStops, raySoftness,
+  RAY_LENGTH_K, RAY_FADE_END, rayStops,
   SKY_SNAP_DEG, skyNeedsSnap, skyElevation,
   northDegOf, bgModeOf, sunRaysOn, weatherEntityOf, sunStateOf,
 } from '../test-build/sun.js';
@@ -138,14 +138,6 @@ test('rayStops: the shaft is fully dissolved BEFORE its own far edge', () => {
   assert.ok(half[0] <= 0.65, 'past half-dark by two thirds of the way');
 });
 
-test('raySoftness: a feather proportional to the shaft, clamped both ends', () => {
-  assert.equal(raySoftness(0), 3);          // a stub of a wedge still gets a kerb
-  assert.ok(near(raySoftness(100), 7, 1e-9));
-  assert.ok(near(raySoftness(200), 14, 1e-9));
-  assert.equal(raySoftness(1e6), 18);       // never a smear across the plan
-  assert.ok(raySoftness(200) > raySoftness(100));
-});
-
 test('skyNeedsSnap / skyElevation: glide with the sun, jump when we were away', () => {
   assert.equal(SKY_SNAP_DEG, 3);
   assert.equal(skyNeedsSnap(null, 12), true);        // nothing painted yet
@@ -158,6 +150,48 @@ test('skyNeedsSnap / skyElevation: glide with the sun, jump when we were away', 
   assert.equal(skyElevation(12.3456), 12.3);
   assert.equal(skyElevation(-0.04), -0);
   assert.equal(skyElevation('nonsense'), 0);
+});
+
+test('rayQuad: sharp sides, far edge square to the RAY (owner 2026-08-04)', () => {
+  // «не надо размывать их боковые грани» — the shaft's sides are hard lines,
+  // so the only thing that may dissolve it is the gradient along the ray. That
+  // works only if the wedge ends exactly ON an iso-alpha line: the far edge is
+  // perpendicular to `dir`, not parallel to the wall.
+  const a = [100, 100];
+  const b = [100, 200];            // a window along +y
+  const len = 300;
+  for (const deg of [0, 20, 45, 70, -35, -60]) {
+    const rad = (deg * Math.PI) / 180;
+    const dir = [Math.cos(rad), Math.sin(rad)];   // oblique sun in most cases
+    const q = rayQuad(a, b, dir, len);
+    assert.equal(q.length, 4);
+    // the near edge is still the window itself
+    assert.deepEqual(q[0], [100, 100]);
+    assert.deepEqual(q[1], [100, 200]);
+    // both sides run exactly along the ray — razor-sharp, never splayed
+    for (const [near0, far] of [[q[0], q[3]], [q[1], q[2]]]) {
+      const ex = far[0] - near0[0];
+      const ey = far[1] - near0[1];
+      const cross = ex * dir[1] - ey * dir[0];
+      assert.ok(Math.abs(cross) < 1e-9, 'side parallel to the ray at ' + deg);
+      assert.ok(ex * dir[0] + ey * dir[1] > 0, 'side runs away from the glass');
+    }
+    // ...and both far corners sit at the SAME distance along the ray, i.e. on
+    // one iso-alpha line of the gradient. This is what kills the bright kerb.
+    const mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+    const t = (p) => ((p[0] - mid[0]) * dir[0] + (p[1] - mid[1]) * dir[1]) / len;
+    assert.ok(near(t(q[2]), 1, 1e-9), 'far corner B at offset 1 at ' + deg);
+    assert.ok(near(t(q[3]), 1, 1e-9), 'far corner A at offset 1 at ' + deg);
+    // nothing is drawn past the end of the gradient
+    for (const p of q) assert.ok(t(p) <= 1 + 1e-9, 'no vertex past the gradient');
+    // the far edge really is square to the ray
+    const fx = q[2][0] - q[3][0];
+    const fy = q[2][1] - q[3][1];
+    assert.ok(Math.abs(fx * dir[0] + fy * dir[1]) < 1e-9, 'far edge ⊥ ray at ' + deg);
+  }
+  // head-on sun: the classic parallelogram, unchanged
+  const straight = rayQuad(a, b, [1, 0], len);
+  assert.deepEqual(straight, [[100, 100], [100, 200], [400, 200], [400, 100]]);
 });
 
 test('rayQuad + clipToRoom: the wedge is cut by the room outline', () => {

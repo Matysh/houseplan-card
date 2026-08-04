@@ -127,7 +127,8 @@ when BOTH hold:
   toward the sun is positive (the sun actually faces this window).
 
 The wedge is a quadrilateral cast from the window's span along the
-direction AWAY from the sun (light falls inward), clipped by the
+direction AWAY from the sun (light falls inward) and cut off
+PERPENDICULAR to the ray (see «Dissolving» below), clipped by the
 room's polygon (`polyclip` intersection, the same dependency
 `src/resize.ts` already uses). Its length is `k(elevation)` in window
 lengths: ~1.75 at sunrise/sunset tapering to ~0.56 at the zenith
@@ -141,41 +142,47 @@ opacity is `RAY_MAX_ALPHA` = 0.30 (owner 2026-08-03: «лучи поярче,
 still stay under a readable ceiling on white paper and on the dark glow
 canvas alike).
 
-### Dissolving — never a kerb (owner 2026-08-04)
+### Dissolving — along the ray only (owner 2026-08-04)
 
-«Проверить, чтобы они всегда плавно рассеивались (сейчас есть
-ощущение, что они упираются во что-то невидимое)». A wedge is a
-polygon, and until v1.56 nothing hid that:
+Two rounds with the owner on the same day:
 
-- the gradient's iso-alpha lines run PERPENDICULAR to the sun, while
-  the wedge's far edge is parallel to the WALL. For any sun that does
-  not hit the glass head-on the two are not the same line, so half of
-  that far edge was cut while it still carried colour — a straight
-  bright kerb hanging in the middle of the floor;
-- the wedge's two SIDES had no falloff at all — two razor lines running
-  from the window into the room;
-- where the room outline clips the wedge (the opposite wall, the inner
-  corner of an L, and above all an OPEN boundary, which has no wall
-  drawn at all) the shaft was chopped at whatever alpha it still had.
+1. «Проверить, чтобы они всегда плавно рассеивались (сейчас есть
+   ощущение, что они упираются во что-то невидимое)» — the wedge was
+   ending on a visible line;
+2. «С лучами солнца ты сделал фигню — не надо размывать их боковые
+   грани» — the first answer to (1) was a Gaussian blur over the whole
+   wedge, which feathered the SIDES too. Wrong: a shaft of sunlight
+   through a window has crisp sides. Only its reach fades.
 
-The contract now:
+So the falloff is one-dimensional: **along the ray, from the glass
+inward, and nothing else.** The contract:
 
-- the gradient still spans the FULL wedge length (`x1,y1` at the glass,
+- the gradient spans the FULL wedge length (`x1,y1` at the glass,
   `x2,y2` exactly `len` away), so geometry and gradient always describe
   the same shaft — but its stops (`rayStops()`) ease out to **zero at
   `RAY_FADE_END` = 85 %** of that length: `1 → .86 → .60 → .32 → .10
   → 0`. The last 15 % of every wedge is guaranteed empty, so a shaft
   that ends in mid-air has nothing left to draw an edge with;
-- each wedge is drawn inside `<g filter="…" clip-path="…">`. SVG applies
-  the filter FIRST and the clip SECOND, so a small Gaussian blur
-  (`raySoftness(len)` = 7 % of the length, clamped to 3…18 render units)
-  feathers the sides and the tip, and the room outline then cuts the
-  feather off — light still never crosses a wall, but where the shaft
-  does reach one the kerb is a soft ramp that reads as light landing ON
-  the wall instead of a cut-out shape.
+- `rayQuad()` therefore ends the wedge ON an iso-alpha line of that
+  gradient: both sides are extruded until they reach the same distance
+  `len` ALONG `dir`, so the far edge is perpendicular to the RAY, not
+  parallel to the wall. This is what killed the old bright kerb. A
+  parallelogram (equal extrusion of both ends) has its far edge
+  parallel to the WALL, while the gradient's iso-alpha lines are square
+  to the sun; for any sun that does not face the glass head-on the two
+  disagree and one far corner sits at offset `1 − 0.5/k` — still lit
+  (~0.71 at a low sun, ~0.11 at a high one). That corner was the
+  straight bright kerb hanging in mid-floor;
+- the two SIDES carry no falloff at all, on purpose. They are hard
+  lines, because that is what light through a window looks like. There
+  is **no filter, no `feGaussianBlur`, no `clip-path`** anywhere in the
+  sun layer — the polygons arrive from `computeSunRays()` already
+  intersected with the room, so a wall stops the light by geometry;
+- where the room outline does cut a still-lit shaft (the opposite wall,
+  the inner corner of an L, an OPEN boundary) the edge stays crisp:
+  that is light landing on a wall, and blurring it was the mistake.
 
-Clipping by the room stays exactly as before; only its visible edge
-changed.
+Clipping by the room is unchanged; only the visible edge changed.
 
 ### The 3° threshold and the 2-second fade
 
@@ -250,11 +257,13 @@ Backend validation: string or null.
 - `custom_components/houseplan/validation.py` — the four settings at
   both levels; tests in `tests_backend/test_validation.py`.
 - `demo/smoke_sun.mjs` — end-to-end behaviour against the demo rig.
-- `demo/smoke_sun_soft.mjs` — the −30 % reach and the "always
-  dissolves" contract (the gradient spans the wedge and dies at 85 %,
-  the feather filter, the room clip).
+- `demo/smoke_sun_soft.mjs` — the −30 % reach and the "dissolves along
+  the ray only" contract: the gradient spans the wedge and dies at
+  85 %, the sides are sharp (no filter on the wedge, no
+  `feGaussianBlur` at all), and at an oblique sun nothing is drawn past
+  the end of the gradient — the kerb cannot come back.
 - `demo/smoke_sun_live_bg.mjs` — the sky follows `sun.sun` on a plain
   `hass` tick with no reload, asserted on the COMPUTED background of the
   stage; small steps still glide, big ones catch up at once.
-- `demo/shot_sun_short.mjs` — before/after stills at a low and a high
-  sun.
+- `demo/shot_sun_short.mjs` — stills at a low and a high sun
+  (`node demo/shot_sun_short.mjs <outdir> <prefix>`).

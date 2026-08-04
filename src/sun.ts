@@ -143,13 +143,37 @@ export function rayLength(elevation: number): number {
   return RAY_LENGTH_K * (0.8 + 1.7 * Math.pow(1 - e / 90, 1.6));
 }
 
-/** The unclipped wedge: window span a-b extruded by `len` along `dir`. */
+/**
+ * The unclipped wedge: the window span a-b extruded along `dir` and cut off
+ * PERPENDICULAR to the ray, `len` from the span's midpoint.
+ *
+ * Not the parallelogram an equal extrusion of both ends would give. The fade
+ * is a linear gradient running ALONG `dir`, so its iso-alpha lines are
+ * perpendicular to `dir`, while a parallelogram's far edge stays parallel to
+ * the WALL. For any sun that does not face the glass head-on the two are
+ * different lines: one half of that far edge got cut while it still carried
+ * colour — the straight bright kerb hanging in mid-floor. Ending both sides on
+ * the SAME iso-alpha line makes the geometry and the gradient describe one
+ * shaft, so a wedge dies of its gradient (empty from RAY_FADE_END on) and
+ * never of its own outline.
+ *
+ * The two SIDES stay razor-sharp on purpose — owner 2026-08-04: «с лучами
+ * солнца ты сделал фигню — не надо размывать их боковые грани». A shaft of
+ * light through a window HAS crisp sides; only its reach fades.
+ */
 export function rayQuad(a: number[], b: number[], dir: number[], len: number): number[][] {
+  const mx = (a[0] + b[0]) / 2;
+  const my = (a[1] + b[1]) / 2;
+  // how far along `dir` each end of the span already sits, from the midpoint
+  const pa = (a[0] - mx) * dir[0] + (a[1] - my) * dir[1];
+  const pb = (b[0] - mx) * dir[0] + (b[1] - my) * dir[1];
+  const ea = Math.max(0, len - pa); // the trailing end travels further
+  const eb = Math.max(0, len - pb);
   return [
     [a[0], a[1]],
     [b[0], b[1]],
-    [b[0] + dir[0] * len, b[1] + dir[1] * len],
-    [a[0] + dir[0] * len, a[1] + dir[1] * len],
+    [b[0] + dir[0] * eb, b[1] + dir[1] * eb],
+    [a[0] + dir[0] * ea, a[1] + dir[1] * ea],
   ];
 }
 
@@ -284,6 +308,11 @@ export const RAY_FADE_END = 0.85;
  * a whisper at two thirds, nothing from RAY_FADE_END on. Consumed by the card
  * as SVG <stop>s over the FULL wedge length, so the geometry and the gradient
  * always describe the same shaft (docs/SUN.md).
+ *
+ * This gradient is the ONLY thing that dissolves a wedge: the falloff runs
+ * along the ray, from the glass inward, and the sides of the shaft keep the
+ * hard edge light actually has (owner 2026-08-04: «не надо размывать их
+ * боковые грани»). No blur is involved anywhere.
  */
 export function rayStops(): [number, number][] {
   return [
@@ -295,19 +324,6 @@ export function rayStops(): [number, number][] {
     [RAY_FADE_END, 0],
     [1, 0],
   ];
-}
-
-/**
- * Blur radius (render units) that feathers a wedge's own edges. The wedge is a
- * polygon: without this its SIDES are razor-sharp lines across the floor, and
- * where the room outline clips it — an opposite wall, an L-corner, an OPEN
- * boundary with no wall drawn at all — the shaft is chopped at whatever alpha
- * it still had. Blurring the wedge and only then clipping it to the room keeps
- * the light inside the walls (it never leaks through them) while the visible
- * kerb becomes a soft ramp: light landing ON the wall, not a cut-out shape.
- */
-export function raySoftness(len: number): number {
-  return Math.max(3, Math.min(18, len * 0.07));
 }
 
 /**

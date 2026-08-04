@@ -1,8 +1,16 @@
-// Owner 2026-08-04: «лучи от солнца сделать короче на 30%, проверить, чтобы они
-// всегда плавно рассеивались (сейчас есть ощущение, что они упираются во что-то
-// невидимое)». The wedge must be 70 % of the old reach AND must never show a
-// straight kerb: the gradient dies before the far edge, the shaft is feathered
-// and only then clipped by the room (docs/SUN.md).
+// Owner 2026-08-04, on the first attempt: «с лучами солнца ты сделал фигню —
+// не надо размывать их боковые грани». A shaft of sunlight has HARD sides; it
+// fades only with distance, along the ray, from the glass inward. So:
+//   * the reach is still 70 % of the v1.56 curve;
+//   * the gradient still spans the FULL wedge and is dead from RAY_FADE_END;
+//   * the sides are SHARP — no blur filter on the wedge, none defined at all;
+//   * and because the sides are sharp, the wedge must end ON an iso-alpha line
+//     of that gradient: nothing is ever drawn past its end, so the old bright
+//     kerb (a far edge parallel to the wall, cut while still lit) cannot come
+//     back at an oblique sun.
+// The "light never crosses a wall" clip is asserted in demo/smoke_sun.mjs
+// (wedgeClippedToRoom) — the polygons arrive from computeSunRays() already
+// intersected with the room, which is why no clip-path is needed here.
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch({ width: 900, height: 900 }, 1);
 
@@ -61,16 +69,56 @@ const res = await page.evaluate(async () => {
     return st.every(([, a], i) => i === 0 || a <= st[i - 1][1] + 1e-9);
   });
 
-  // ---- 3) feathered edges, and still no light through a wall -------------
-  const wraps = [...sr().querySelectorAll('.sunlayer > g')];
-  out.everyWedgeFeathered = wraps.length > 0
-    && wraps.every((g) => /hp-sunsoft-/.test(g.getAttribute('filter') || ''));
-  out.everyWedgeClippedToItsRoom = wraps.every((g) => /hp-sunclip-/.test(g.getAttribute('clip-path') || ''));
-  out.blurIsProportional = [...sr().querySelectorAll('filter[id^=hp-sunsoft-] feGaussianBlur')]
-    .every((b) => { const s = Number(b.getAttribute('stdDeviation')); return s >= 3 && s <= 18; });
-  // the clip really is the room outline, so a wall still stops the light
-  out.clipIsTheRoomOutline = [...sr().querySelectorAll('clipPath[id^=hp-sunclip-] polygon')]
-    .every((p) => (p.getAttribute('points') || '').split(' ').length >= 3);
+  // ---- 3) SHARP sides: no blur on the wedge, and none defined anywhere ----
+  const wedges = () => [...sr().querySelectorAll('.sunlayer polygon')];
+  // walk the polygon and its ancestors up to and including .sunlayer — the
+  // day/night `brightness` filter lives further up, on the zoomwrap, and is
+  // none of this test's business
+  const blurredChain = (el) => {
+    for (let n = el; n; n = n.parentElement) {
+      const attr = n.getAttribute && n.getAttribute('filter');
+      if (attr && attr !== 'none') return true;
+      const cs = getComputedStyle(n).filter;
+      if (cs && cs !== 'none' && cs !== '') return true;
+      if (n.classList && n.classList.contains('sunlayer')) break;
+    }
+    return false;
+  };
+  out.wedgesDrawn = wedges().length > 0;
+  out.everyWedgeHasSharpSides = wedges().length > 0 && wedges().every((p) => !blurredChain(p));
+  out.noSoftFilterDefined = sr().querySelectorAll('filter[id^=hp-sunsoft-]').length === 0;
+  out.noGaussianBlurAtAll = sr().querySelectorAll('feGaussianBlur').length === 0;
+
+  // ---- 4) an OBLIQUE sun: the shaft still dies of its gradient -----------
+  // The sides are hard again, so the only thing that may end the wedge is the
+  // gradient. That holds ONLY if the far edge is square to the RAY: with the
+  // old wall-parallel edge one far corner sat at offset ~0.7 (low sun) or
+  // ~0.11 (high sun) — i.e. still lit — which is exactly the bright kerb.
+  const tOf = (r, p) => {
+    const mx = (r.a[0] + r.b[0]) / 2, my = (r.a[1] + r.b[1]) / 2;
+    return ((p[0] - mx) * r.dir[0] + (p[1] - my) * r.dir[1]) / r.len;
+  };
+  const skew = (r) => {
+    const mx = (r.a[0] + r.b[0]) / 2, my = (r.a[1] + r.b[1]) / 2;
+    return Math.abs((r.a[0] - mx) * r.dir[0] + (r.a[1] - my) * r.dir[1]) / r.len;
+  };
+  out.obliqueChecked = [];
+  out.sunIsReallyOblique = true;
+  out.nothingDrawnPastTheGradient = true;
+  for (const [az, el] of [[230, 8], [225, 55]]) {
+    await setSun(az, el);
+    const rays = c._sunRaysCache.rays;
+    out.obliqueChecked.push(rays.length);
+    if (!rays.length) { out.sunIsReallyOblique = false; continue; }
+    if (!rays.some((r) => skew(r) > 1e-3)) out.sunIsReallyOblique = false;
+    for (const r of rays) {
+      for (const poly of r.polys) {
+        for (const p of poly) if (tOf(r, p) > 1 + 1e-6) out.nothingDrawnPastTheGradient = false;
+      }
+    }
+  }
+  out.obliqueSunHasWedges = out.obliqueChecked.every((n) => n > 0);
+  delete out.obliqueChecked;
   return out;
 });
 await finish(browser, checkAll(res));
