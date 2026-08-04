@@ -326,6 +326,18 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       action away and the marker speaks for its primary again; a lit lamp that
       also owns a cover keeps its yellow and its own icon
       [auto: smoke_cover_not_primary (the indication section)]
+- [ ] Nothing paints over an explicit curtain (dev, audit DEV-1DA1-01): the
+      cover is the FIRST rule of «What a marker SHOWS», above `controls` and
+      above a lit light. Two markers set to «Открыть/закрыть»: one on a mixed
+      device whose own `light.*` is ON, one whose bound `controls` switch is
+      ON. In every cover state (closed / open / opening / closing) the plate
+      stays neutral — never the yellow «включено», never the orange «открыто»
+      — the travelling ring breathes, the icon morphs with the cover, and in
+      glow fill the ring is still there (that is where a yellow-plated curtain
+      used to lose BOTH indicators). Untouched: the same mixed device without
+      the explicit action is yellow again, a wall switch still mirrors its
+      controls, and an «Открыть/закрыть» marker whose device has no `cover.*`
+      at all falls back to its primary [auto: smoke_cover_plate_precedence]
 - [ ] Light-source badges (v1.52.0): in glow fill a lit lamp's badge stays
       standard (the spot is the indicator) and a lit socket stays yellow; in
       other fills a lit lamp is plain yellow with no RGB tint; morphing and

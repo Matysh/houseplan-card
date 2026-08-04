@@ -74,18 +74,18 @@ the old behaviour until an editing client materialises it.
 A marker's live indication — the yellow «on» plate, the «open» frame (never
 on a cover, see below), the breathing `covermove` ring, the state-morphed
 icon, the ripple — speaks for ONE entity of the device, resolved in this
-order:
+order (`_stateClass` / `_actEntity`):
 
-1. the marker's bound **controls**, if it has any (a stateless remote or a
-   virtual wall switch mirrors what it drives, not itself);
-2. a **lit light** among its entities (owner's principle 2026-07-29: the glow
-   spot and the badge may never disagree);
-3. the device's **cover**, when the marker's tap action is explicitly
+1. the device's **cover**, when the marker's tap action is explicitly
    «Открыть/закрыть» (`tap_action: 'cover'` — `coverEntityOf`, the same helper
-   and the same entity the tap drives);
+   and the same entity the tap drives). It wins over EVERYTHING below;
+2. the marker's bound **controls**, if it has any (a stateless remote or a
+   virtual wall switch mirrors what it drives, not itself);
+3. a **lit light** among its entities (owner's principle 2026-07-29: the glow
+   spot and the badge may never disagree);
 4. otherwise the **primary** entity (`primaryEntity`).
 
-Rule 3 was added 2026-08-04 on the owner's report: his Aqara «Roller shade
+Rule 1 was added 2026-08-04 on the owner's report: his Aqara «Roller shade
 driver E1» curtains ship the `cover.*` hidden by the integration and a visible
 `switch.*_reverse_direction`, so `primaryEntity` picked the service switch —
 the plan showed no ring while a curtain travelled, no `curtains` /
@@ -94,6 +94,18 @@ reverse-direction option happened to be on. The tap had already been
 taught to find the cover among ALL the device's entities (2026-08-04, the
 same `coverEntityOf`); the indication now follows it.
 
+**Why the cover is FIRST and not third** (audit DEV-1DA1-01, fixed the same
+day). It went in below `controls` and the lit light at first, and that left
+the contract below («у штор не должно быть жёлтой подложки НИКОГДА») with two
+holes big enough to walk through: a mixed device — a lamp that also ships a
+blind — told «Открыть/закрыть» went yellow off its own lit `light.*`, and a
+curtain marker with a bound wall switch went yellow off `controls`. In both
+the early `return 'on'` never reached the cover branch, so the travelling
+curtain also lost its breathing ring, and in glow fill (where the renderer
+strips `on` from a shining source) it was left with no indicator at all —
+while the tap still drove the cover. A rule that «шторы никогда не жёлтые»
+cannot have exceptions decided by the neighbours in the entity list.
+
 **Why it hangs on the explicit action and not on «the device has a cover».**
 Choosing «Открыть/закрыть» in the marker dialog is the only statement the card
 has that means *this marker IS the curtain* — and the dialog offers that option
@@ -101,11 +113,13 @@ for exactly the devices where a cover exists. Tying the indication to it keeps
 one answer to «what is this marker»: the option offered, the entity tapped and
 the state shown are the same entity, decided in one place. Nothing changes
 behind the user's back for a mixed device (a lamp that also owns a blind, a TRV
-with a service switch): those keep their primary until their owner says
-otherwise, and even with the action chosen a lit light still wins rule 2. The
-cost is that a curtain left on «Инфо-карточка» still indicates its primary —
-one click in the dialog away, and the honest reading of what the marker was
-told it is.
+with a service switch) that was NOT told it is a curtain: it keeps its primary
+and the old 2–3–4 precedence, controls and lit light included, until its owner
+says otherwise. Two edges follow from the wording: a marker set to
+«Открыть/закрыть» whose device carries no `cover.*` at all falls through to
+rules 2–4 (the statement is only as strong as the entity behind it), and a
+curtain left on «Инфо-карточка» still indicates its primary — one click in the
+dialog away, and the honest reading of what the marker was told it is.
 
 ### A cover is never painted (owner 2026-08-04)
 

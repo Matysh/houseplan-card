@@ -1586,6 +1586,24 @@ class HouseplanCard extends LitElement {
 
   private _stateClass(d: DevItem): string {
     if (!this._config?.live_states) return '';
+    // FIRST of all: is this marker a CURTAIN? Choosing «Открыть/закрыть» in
+    // the dialog is the strongest thing its owner can say about what the
+    // marker IS (see _coverIndicator), so it outranks every other source of
+    // indication — and the owner's contract for that answer is absolute: «у
+    // штор не должно быть жёлтой подложки НИКОГДА». Deciding this after
+    // `controls` / a lit light (as it was until 2026-08-04) meant a curtain on
+    // a mixed device — a lamp that also ships a blind, a marker with a bound
+    // wall switch — went yellow anyway and lost its breathing ring while it
+    // travelled, so the tap, the icon and the plate each told a different
+    // story. The plate class of a cover is only ever '' , 'covermove' or
+    // 'unavail'; the open/closed state is the icon's job (COVER_ICONS).
+    const cov = this._coverIndicator(d);
+    if (cov) {
+      const cs = this.hass.states[cov];
+      if (!cs) return '';
+      if (cs.state === 'unavailable') return 'unavail';
+      return coverMoving(cs.state) ? 'covermove' : '';
+    }
     // an icon with controlled targets mirrors THEM, not its own entity
     // (stateless remotes and virtual wall switches have nothing else to show)
     const controls = (d.marker?.controls || []).filter(isControllable);
@@ -1598,11 +1616,13 @@ class HouseplanCard extends LitElement {
     // stays yellow only where the spot is not drawn (other fills, the plan
     // editor).
     if (litLightEntity(this.hass, d)) return 'on';
-    // Not always the primary: an «Open/close» marker speaks for its cover,
-    // wherever that sits in the entity list (_coverIndicator). Before this an
-    // Aqara curtain driver reported its `switch.*_reverse_direction` — no
-    // breathing ring while it travelled, no «open» frame, and a yellow plate
-    // whenever the reverse-direction option happened to be on.
+    // The explicit cover was answered above; what is left here is the primary
+    // entity — an «Open/close» marker only ever reaches this line when its
+    // device carries no `cover.*` at all, and then it has nothing else to
+    // speak for. (Before 2026-08-04 an Aqara curtain driver reported its
+    // `switch.*_reverse_direction` from here: no breathing ring while it
+    // travelled, no morph, and a yellow plate whenever the reverse-direction
+    // option happened to be on.)
     const eid = this._actEntity(d);
     const p = eid ? this.hass.states[eid] : undefined;
     if (!p) return '';
