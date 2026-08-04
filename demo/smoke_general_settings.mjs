@@ -34,14 +34,17 @@ const res = await page.evaluate(async () => {
 // CARD_VERSION из собранного бандла (тот же текст уходит в console-баннер).
 // terser либо инлайнит строку (v1.56.0), либо оставляет переменную (v${xx}) —
 // во втором случае доразрешаем её по присваиванию xx="1.56.0".
+// Версия — SemVer, у пре-релиза есть суффикс (1.58.0-beta.1), он тоже часть строки.
 const bundle = readFileSync(new URL('./srv/assets/houseplan-card.js', import.meta.url), 'utf8');
-const m = bundle.match(/HOUSEPLAN-CARD %c v(?:(\d+\.\d+\.\d+)|\$\{(\w+)\})/);
-const BUNDLE_VERSION = m?.[1] ?? (m?.[2] && bundle.match(new RegExp(`[^\\w$]${m[2]}="(\\d+\\.\\d+\\.\\d+)"`))?.[1]);
+const SEMVER = '\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?';
+const m = bundle.match(new RegExp(`HOUSEPLAN-CARD %c v(?:(${SEMVER})|\\$\\{(\\w+)\\})`));
+const BUNDLE_VERSION = m?.[1] ?? (m?.[2] && bundle.match(new RegExp(`[^\\w$]${m[2]}="(${SEMVER})"`))?.[1]);
 check('bundleVersionFound', typeof BUNDLE_VERSION === 'string' && BUNDLE_VERSION.length > 0);
 // значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
 checkAll(res, {
-  "rows": 14, // 10 цветов + радиус свечения + режим фона + цвет фона + погода (docs/SUN.md)
-  "groups": ["Fill: lights", "Fill: temperature", "Fill: zigbee signal", "Light-sources fill", "Stage background", "Sun", "About"],
+  "rows": 15, // 10 цветов + радиус свечения + режим фона + цвет фона + погода (docs/SUN.md)
+              // + «Выровнять всё по сетке» (docs/CANVAS.md §9)
+  "groups": ["Fill: lights", "Fill: temperature", "Fill: zigbee signal", "Light-sources fill", "Stage background", "Sun", "Grid", "About"],
   "aboutVersion": `Houseplan Card v${BUNDLE_VERSION}`, // та же константа, что в баннере
   "aboutLinks": [
     { "href": "https://github.com/Matysh/houseplan-card", "target": "_blank", "rel": "noopener" },

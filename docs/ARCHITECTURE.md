@@ -109,7 +109,9 @@ references and duplicates by name|area. Manual files: transactional HTTP upload 
 
 `.storage/houseplan.config` (Store):
 ```json
-{ "spaces": [{ "id","title","plan_url","plan_aspect","view_box":[4],
+{ "spaces": [{ "id","title","plan_url","plan_aspect",
+               "plan_x","plan_y","plan_scale",   // optional, docs/BACKDROP.md
+               "view_box":[4],
                "rooms":[{"id","name","area","poly|x/y/w/h","open_to","settings"}],
                "openings":[…], "decor":[…], "settings":{…} }],
   "markers": [{ "id","binding":"device:<id>|entity:<eid>|virtual","hidden",
@@ -122,7 +124,9 @@ references and duplicates by name|area. Manual files: transactional HTTP upload 
 All coordinates are **normalized (0..1 of the canvas)**; the canvas is always
 **square** (v1.48.0), render space `NORM_W × NORM_W` (1000×1000). A space has no
 proportions of its own — `plan_aspect` is the IMAGE's ratio, used to letterbox
-it centred on the square. The schema bounds geometry to ±4 with strictly
+it centred on the square; the optional `plan_x`/`plan_y`/`plan_scale` then move
+and uniformly scale that rectangle (`planRect`, docs/BACKDROP.md), and their
+absence is the centred default exactly. The schema bounds geometry to ±4 with strictly
 positive sizes (HP-1501/1502). `device_overrides`/`virtual_devices` are long
 gone — markers carry everything, `marker.hidden` is the explicit
 "hide from plan" flag seeded once by the old filter (docs/FILTERING.md).

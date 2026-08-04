@@ -420,9 +420,19 @@ export const cardStyles = css`
     .stage.daynight .hp-paperg {
       filter: drop-shadow(0 2px 8px rgba(10, 16, 26, 0.28));
     }
+    /* Owner 2026-08-04: «углы границ комнат всё ещё с зубцами». A miter join
+       on a 30-45° corner shoots a spike far past the wall (and flips to an
+       ugly bevel once past the miter limit) — the same defect the decor lines
+       had before they got round caps. Every room border, in EVERY renderer
+       that reuses these styles (plan view, plan editor, static space-card),
+       joins its walls with a ROUND join instead: the corner reads as the
+       stroke's own radius, never as a tooth. The linecap matters only for the
+       open outlines below, but it costs nothing to state it here. */
     .room {
       transition: 0.12s;
       cursor: default; /* v1.40.1: rooms are not clickable — the label's link icon is */
+      stroke-linejoin: round;
+      stroke-linecap: round;
     }
     .room.overlay {
       fill: transparent;
@@ -876,6 +886,16 @@ export const cardStyles = css`
       cursor: pointer;
     }
     .stage.mode-decor.dtool-select .decorlayer .dshape { cursor: move; }
+    /* …but a DRAWING tool owns the canvas: existing shapes stop being targets
+       entirely, so a new line can start exactly on the end of an old one
+       instead of grabbing it (owner, 2026-08-04). Same for the picture tool —
+       a shape lying over the plan must not block the picture's own drag.
+       Only select (move) and erase (delete) keep the shapes clickable. */
+    .stage.mode-decor.dtool-line .decorlayer .dshape,
+    .stage.mode-decor.dtool-rect .decorlayer .dshape,
+    .stage.mode-decor.dtool-ellipse .decorlayer .dshape,
+    .stage.mode-decor.dtool-text .decorlayer .dshape,
+    .stage.mode-decor.dtool-backdrop .decorlayer .dshape { pointer-events: none; }
     .decorlayer .dsel {
       filter: drop-shadow(0 0 3px var(--hp-accent));
     }
@@ -893,6 +913,37 @@ export const cardStyles = css`
     .stage.mode-decor {
       outline: 2px solid #26a69a;
       outline-offset: -2px;
+    }
+    /* backdrop transform frame (docs/BACKDROP.md §2). Editor chrome: the
+       outline never takes a pointer, the four corner handles do — and they are
+       finger-sized (r = 2 % of the visible view), because this is dragged on a
+       tablet as often as with a mouse. */
+    .bdframe .bdbox {
+      fill: none;
+      stroke: var(--hp-accent);
+      stroke-width: 2;
+      stroke-dasharray: 10 7;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+      opacity: 0.9;
+    }
+    .bdframe .bdhandle {
+      fill: var(--hp-accent);
+      stroke: #fff;
+      stroke-width: 1.5;
+      vector-effect: non-scaling-stroke;
+      pointer-events: all;
+      touch-action: none;
+    }
+    .bdframe .bd-nwse { cursor: nwse-resize; }
+    .bdframe .bd-nesw { cursor: nesw-resize; }
+    /* the picture itself is the drag target for a move (grab, then grabbing) */
+    .stage.mode-decor.bdgrab { cursor: grab; }
+    .stage.mode-decor.bdgrabbing,
+    .stage.mode-decor.bdgrabbing .bdframe .bdhandle { cursor: grabbing; }
+    .measurelabel.bdmeasure {
+      transform: translate(-50%, -50%);
+      border: 1px solid var(--hp-accent);
     }
     .stage.mode-decor.dtool-line, .stage.mode-decor.dtool-rect,
     .stage.mode-decor.dtool-ellipse, .stage.mode-decor.dtool-text {
@@ -914,6 +965,13 @@ export const cardStyles = css`
       font-family: inherit; font-size: var(--fs-s); border-radius: var(--rad-s);
       background: var(--hp-bg2, transparent); color: var(--hp-txt); border: 1px solid var(--hp-muted);
       padding: var(--sp-2) var(--sp-3);
+    }
+    .decorbar .bdhint {
+      font-size: var(--fs-s);
+      color: var(--hp-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .decorbar .dfill {
       display: inline-flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-s); cursor: pointer;
@@ -966,9 +1024,15 @@ export const cardStyles = css`
     .room.noedge {
       stroke-opacity: 0 !important;
     }
+    /* rooms with open boundaries draw their walls as separate M..L subpaths,
+       so a corner between two of them is two stroke ENDS meeting: round caps
+       fill it in the same way a round join fills a closed contour's corner
+       (owner 2026-08-04 — no teeth anywhere on a room border). */
     .room-outline {
       fill: none;
       stroke-width: 2.5;
+      stroke-linejoin: round;
+      stroke-linecap: round;
       pointer-events: none;
     }
     /* Plan editor: trimmed outlines use the markup blue */
@@ -1077,10 +1141,13 @@ export const cardStyles = css`
       opacity: 0.5;
       stroke-width: 0;
     }
+    /* the contour being drawn in the Plan editor: each wall is its own <line>,
+       so the round cap IS the corner (matches the finished .room border) */
     .seg {
       stroke: var(--hp-accent);
       stroke-width: 2.5;
       stroke-linecap: round;
+      stroke-linejoin: round;
     }
     .pathline {
       stroke: #ffc14d;
@@ -1746,6 +1813,12 @@ export const cardStyles = css`
       vector-effect: non-scaling-stroke;
       pointer-events: none;
     }
+    /* the decor draft badge rides the MIDDLE of the shape, so it is centred
+       horizontally and lifted clear of the line instead of trailing the
+       cursor the way a wall badge does (owner 2026-08-04) */
+    .measurelabel.dmeasure {
+      transform: translate(-50%, -160%);
+    }
     .measurelabel.rszarea {
       transform: translate(-50%, -50%);
       background: rgba(0, 0, 0, 0.6);
@@ -1977,6 +2050,8 @@ export const cardStyles = css`
       font-size: var(--fs-m);
       color: var(--hp-muted);
     }
+    .alignmsg { margin: 0 0 8px; font-size: 13px; line-height: 1.45; }
+    .btn.alignall { width: 100%; justify-content: center; }
     .aboutver {
       font-size: var(--fs-s);
       color: var(--hp-muted);

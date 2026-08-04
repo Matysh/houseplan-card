@@ -176,26 +176,21 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   }
   const stageBg = sunBg || stageBgOf(o.cfg?.settings, disp);
 
-  // Opaque plan paper (owner 2026-08-03), same contract as the full card: the
-  // scene background never bleeds through the plan. With a backdrop image the
-  // paper is the image rect; a hand-drawn plan papers the ROOM CONTOURS
-  // (paperRoomShapes) — never their bounding box, so the scene colour reaches
-  // the exterior walls of an L-shaped house and fills the gaps between
-  // detached buildings. An empty drawn space has no paper at all.
-  const paper = space.bg
-    ? { x: space.bg.x, y: space.bg.y, w: space.bg.w, h: space.bg.h }
-    : null;
+  // Opaque plan paper, same contract as the full card (docs/BACKDROP.md §3):
+  // the paper is ALWAYS the ROOM CONTOURS and only them — never their bounding
+  // box, and (since v1.58.0) never the backdrop image rect either. The scene
+  // colour therefore reaches the exterior walls of an L-shaped house, fills the
+  // gaps between detached buildings, and an empty space has no paper at all,
+  // image or no image. The picture is drawn ON the paper, one layer above.
 
   return html`
     <div class="hp-static-stage" style="aspect-ratio:${vb[2]}/${vb[3]}${stageBg ? ';background:' + stageBg : ''}">
       <svg viewBox="${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}" preserveAspectRatio="xMidYMid meet">
-        ${paper
-          ? svg`<rect class="hp-paper" x="${paper.x}" y="${paper.y}" width="${paper.w}" height="${paper.h}"></rect>`
-          : paperRoomShapes(space.rooms).map((sh) =>
-              'poly' in sh
-                ? svg`<polygon class="hp-paper" points="${sh.poly}"></polygon>`
-                : svg`<rect class="hp-paper" x="${sh.rect.x}" y="${sh.rect.y}" width="${sh.rect.w}" height="${sh.rect.h}" rx="${sh.rect.rx}"></rect>`,
-            )}
+        ${paperRoomShapes(space.rooms).map((sh) =>
+          'poly' in sh
+            ? svg`<polygon class="hp-paper" points="${sh.poly}"></polygon>`
+            : svg`<rect class="hp-paper" x="${sh.rect.x}" y="${sh.rect.y}" width="${sh.rect.w}" height="${sh.rect.h}" rx="${sh.rect.rx}"></rect>`,
+        )}
         ${bgHref
           ? svg`<image href="${bgHref}" x="${space.bg!.x}" y="${space.bg!.y}" width="${space.bg!.w}" height="${space.bg!.h}" preserveAspectRatio="none" />`
           : nothing}

@@ -6,7 +6,7 @@ import {
   rayLength, rayQuad, clipToRoom, computeSunRays,
   rayAlpha, rayColor, cloudFactor, RAY_MAX_ALPHA,
   raysVisible, rayPeakAlpha, RAY_ELEVATION_MIN, RAY_FADE_MS,
-  RAY_LENGTH_K, RAY_FADE_END, rayStops,
+  RAY_LENGTH_K, RAY_FADE_END, rayStops, RAY_MIN_COS,
   SKY_SNAP_DEG, skyNeedsSnap, skyElevation,
   northDegOf, bgModeOf, sunRaysOn, weatherEntityOf, sunStateOf,
 } from '../test-build/sun.js';
@@ -96,12 +96,20 @@ test('isExteriorWall probes the outer side', () => {
   assert.ok(!isExteriorWall([500, 300], [1, 0], ROOMS)); // r2 is outside r1 here
 });
 
-test('windowLit: above the horizon AND facing the sun', () => {
+test('windowLit: above the horizon, facing the sun, and NOT along the wall', () => {
   const east = [1, 0];
   assert.ok(windowLit(east, sunDirOnPlan(90, 0), 10));
   assert.ok(!windowLit(east, sunDirOnPlan(270, 0), 10)); // sun behind the house
   assert.ok(!windowLit(east, sunDirOnPlan(90, 0), 0));   // sunset moment
   assert.ok(!windowLit(east, sunDirOnPlan(90, 0), -5));  // night
+  // DEV-EB173-01: a sun sliding ALONG the wall lights nothing. The dot product
+  // is the cosine of the incidence angle: for this wall it is exactly sin(az).
+  assert.equal(RAY_MIN_COS, 0.05);
+  const cos = (az) => Math.sin((az * Math.PI) / 180);
+  assert.ok(cos(2) < RAY_MIN_COS && !windowLit(east, sunDirOnPlan(2, 0), 40));
+  assert.ok(cos(4) > RAY_MIN_COS && windowLit(east, sunDirOnPlan(4, 0), 40));
+  // ~87.1° of incidence, i.e. the sun ~2.9° clear of the wall's own plane
+  assert.ok(near((Math.acos(RAY_MIN_COS) * 180) / Math.PI, 87.13, 0.01));
 });
 
 test('rayLength: 30% shorter than v1.56 (owner 2026-08-04), same shape', () => {
@@ -152,11 +160,13 @@ test('skyNeedsSnap / skyElevation: glide with the sun, jump when we were away', 
   assert.equal(skyElevation('nonsense'), 0);
 });
 
-test('rayQuad: sharp sides, far edge square to the RAY (owner 2026-08-04)', () => {
-  // «не надо размывать их боковые грани» — the shaft's sides are hard lines,
-  // so the only thing that may dissolve it is the gradient along the ray. That
-  // works only if the wedge ends exactly ON an iso-alpha line: the far edge is
-  // perpendicular to `dir`, not parallel to the wall.
+test('rayQuad: an honest parallelogram, both sides exactly `len` (DEV-EB173-01)', () => {
+  // «Не надо размывать их боковые грани» — the sides are hard lines, so the
+  // only thing that may dissolve a shaft is the gradient. That gradient runs
+  // along the wall's NORMAL (see SunRay.normal/depth), and ITS iso-alpha lines
+  // are parallel to the wall — which is exactly where an equal extrusion of
+  // both ends puts the far edge. So the wedge is a plain parallelogram again
+  // and every side is the full, promised reach.
   const a = [100, 100];
   const b = [100, 200];            // a window along +y
   const len = 300;
@@ -168,26 +178,22 @@ test('rayQuad: sharp sides, far edge square to the RAY (owner 2026-08-04)', () =
     // the near edge is still the window itself
     assert.deepEqual(q[0], [100, 100]);
     assert.deepEqual(q[1], [100, 200]);
-    // both sides run exactly along the ray — razor-sharp, never splayed
     for (const [near0, far] of [[q[0], q[3]], [q[1], q[2]]]) {
       const ex = far[0] - near0[0];
       const ey = far[1] - near0[1];
-      const cross = ex * dir[1] - ey * dir[0];
-      assert.ok(Math.abs(cross) < 1e-9, 'side parallel to the ray at ' + deg);
+      // both sides run exactly along the ray — razor-sharp, never splayed
+      assert.ok(Math.abs(ex * dir[1] - ey * dir[0]) < 1e-9, 'side parallel to the ray at ' + deg);
       assert.ok(ex * dir[0] + ey * dir[1] > 0, 'side runs away from the glass');
+      // ...and each is the FULL reach: the 30 % cut is a fact on every side,
+      // at every sun angle (the old skewed quad made one side 88 % longer)
+      assert.ok(near(Math.hypot(ex, ey), len, 1e-9), 'side is exactly len at ' + deg);
     }
-    // ...and both far corners sit at the SAME distance along the ray, i.e. on
-    // one iso-alpha line of the gradient. This is what kills the bright kerb.
-    const mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
-    const t = (p) => ((p[0] - mid[0]) * dir[0] + (p[1] - mid[1]) * dir[1]) / len;
-    assert.ok(near(t(q[2]), 1, 1e-9), 'far corner B at offset 1 at ' + deg);
-    assert.ok(near(t(q[3]), 1, 1e-9), 'far corner A at offset 1 at ' + deg);
-    // nothing is drawn past the end of the gradient
-    for (const p of q) assert.ok(t(p) <= 1 + 1e-9, 'no vertex past the gradient');
-    // the far edge really is square to the ray
+    // the far edge is parallel to the wall — the gradient's last iso-alpha line
     const fx = q[2][0] - q[3][0];
     const fy = q[2][1] - q[3][1];
-    assert.ok(Math.abs(fx * dir[0] + fy * dir[1]) < 1e-9, 'far edge ⊥ ray at ' + deg);
+    const sx = b[0] - a[0];
+    const sy = b[1] - a[1];
+    assert.ok(Math.abs(fx * sy - fy * sx) < 1e-6, 'far edge parallel to the wall at ' + deg);
   }
   // head-on sun: the classic parallelogram, unchanged
   const straight = rayQuad(a, b, [1, 0], len);
@@ -228,6 +234,67 @@ test('computeSunRays: noon south sun → south window, short wedge', () => {
 test('computeSunRays: evening west sun → west window', () => {
   const rays = computeSunRays(ROOMS, ALL, 270, 4, 0);
   assert.deepEqual(rays.map((r) => r.openingId), ['wW']);
+});
+
+test('grazing sun: the auditor\'s repro, fixed by a normal-axis fade (DEV-EB173-01)', () => {
+  // The report's browser probe: a WEST window 80 render units long, elevation
+  // 90 (so the nominal reach is 0.56 · 80 = 44.8 — «на 30 % короче»), azimuth
+  // 190 at north_deg 0, i.e. the light enters the glass but travels only 10°
+  // off the wall's own direction. It measured sides of 5.408 and 84.192
+  // (ratio 15.57, the long one 31 % LONGER than the pre-cut 64) and source
+  // offsets of ±0.879 — one end of the glass already fully transparent,
+  // because rayStops() is dead from 0.85 on.
+  const win = { id: 'wW', x: 100, y: 300, angle: 90, length: 80 };
+  const rays = computeSunRays(ROOMS, [win], 190, 90, 0);
+  assert.equal(rays.length, 1);
+  const r = rays[0];
+  assert.ok(near(r.dir[0], 0.17365, 1e-5) && near(r.dir[1], -0.98481, 1e-5));
+  assert.ok(near(r.len, 44.8, 1e-9), 'nominal reach is the 70 % one');
+
+  // 1) EQUAL sides, each exactly the nominal reach
+  const q = rayQuad([r.a[0], r.a[1]], [r.b[0], r.b[1]], r.dir, r.len);
+  const side = (p0, p1) => Math.hypot(p1[0] - p0[0], p1[1] - p0[1]);
+  const sides = [side(q[0], q[3]), side(q[1], q[2])];
+  assert.ok(near(sides[0], sides[1], 1e-9), 'sides equal (was a ratio of 15.57)');
+  for (const l of sides) assert.ok(near(l, 44.8, 1e-9), 'each side is 44.8 (was 5.41 / 84.19)');
+
+  // 2) the fade axis is the INWARD wall normal, len · cos(incidence) long
+  assert.ok(near(r.normal[0], 1, 1e-12) && near(r.normal[1], 0, 1e-12));
+  const cos = r.dir[0] * r.normal[0] + r.dir[1] * r.normal[1];
+  assert.ok(near(cos, 0.17365, 1e-5), 'a 10°-off-the-wall sun');
+  assert.ok(near(r.depth, 44.8 * cos, 1e-9));
+  assert.ok(near(r.depth, 7.7794, 1e-4));
+
+  // 3) offsets along THAT axis: the whole pane of glass at 0 (peak alpha at
+  // BOTH ends — the probe's ±0.879 is gone), the far edge exactly at 1
+  const mx = (r.a[0] + r.b[0]) / 2;
+  const my = (r.a[1] + r.b[1]) / 2;
+  const off = (p) => ((p[0] - mx) * r.normal[0] + (p[1] - my) * r.normal[1]) / r.depth;
+  assert.ok(near(off(r.a), 0, 1e-12) && near(off(r.b), 0, 1e-12), 'glass all at peak alpha');
+  assert.ok(near(off(q[2]), 1, 1e-12) && near(off(q[3]), 1, 1e-12), 'far edge on the last iso-alpha line');
+
+  // 4) ...and the offset of any point is exactly how far ITS ray has run
+  for (const u of [0, 0.25, 0.5, 0.85, 1]) {
+    for (const src of [r.a, r.b, [r.a[0], r.a[1] + 17]]) {
+      const p = [src[0] + r.dir[0] * r.len * u, src[1] + r.dir[1] * r.len * u];
+      assert.ok(near(off(p), u, 1e-9), 'offset = travelled / len at u=' + u);
+    }
+  }
+  // 5) nothing drawn past the gradient, on the clipped geometry too
+  for (const poly of r.polys) for (const p of poly) {
+    assert.ok(off(p) >= -1e-6 && off(p) <= 1 + 1e-6, 'inside the gradient');
+  }
+});
+
+test('grazing sun: below RAY_MIN_COS a window casts nothing at all', () => {
+  // azimuth 182° at north_deg 0 puts the sun 2° off the west wall's plane:
+  // cos = sin(2°) = 0.035 < RAY_MIN_COS. 186° (0.105) still lights it.
+  const win = { id: 'wW', x: 100, y: 300, angle: 90, length: 80 };
+  assert.deepEqual(computeSunRays(ROOMS, [win], 182, 90, 0), []);
+  assert.equal(computeSunRays(ROOMS, [win], 186, 90, 0).length, 1);
+  // the surviving wedge is never thinner than 5 % of its own reach
+  const r = computeSunRays(ROOMS, [win], 186, 90, 0)[0];
+  assert.ok(r.depth >= r.len * RAY_MIN_COS);
 });
 
 test('computeSunRays: night → nothing at all', () => {

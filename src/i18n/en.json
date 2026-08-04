@@ -277,6 +277,10 @@
   "decor.size_s": "Small",
   "decor.size_m": "Medium",
   "decor.size_l": "Large",
+  "decor.backdrop": "Backdrop image",
+  "decor.backdrop_hint": "Drag the picture to move it, pull a corner to resize it. Shift — off the grid.",
+  "decor.backdrop_reset": "Reset the picture",
+  "decor.backdrop_reset_done": "The picture is back at its original place and size",
   "marker.icon_auto": "Auto: {icon} (by icon rules; pick one to override)",
   "mode.plan_tip": "Plan editor — the geometry of the home: draw and split/merge rooms, bind them to HA areas, place doors and windows, move room cards, set the scale",
   "mode.devices_tip": "Device editor — everything about icons: drag to position, click to edit binding/icon/display, add virtual devices, icon rules",
@@ -418,5 +422,16 @@
   "space.sun_off": "Off",
   "canvas.far_objects": "{n} object(s) far from the plan",
   "canvas.show_far": "Show",
-  "canvas.home_tip": "The plan is over there — click to fit it"
+  "canvas.home_tip": "The plan is over there — click to fit it",
+  "gs.grid_group": "Grid",
+  "gs.grid_hint": "Everything you draw or drag now lands on the grid. Hold Shift to place something between the nodes on purpose.",
+  "gs.align_all": "Align everything to the grid",
+  "gs.align_title": "Align everything to the grid",
+  "gs.align_none": "Everything is already on the grid — nothing to move.",
+  "gs.align_count": "{n} of {total} elements will move, by at most {cm} cm.",
+  "gs.align_where": "The largest shift is in \u201c{s}\u201d.",
+  "gs.align_turned": "Openings whose angle is corrected: {n}.",
+  "gs.align_warn": "This rewrites the plan and the device positions in one go. There is no undo: the only way back is to move things by hand. If some elements are deliberately between the nodes, cancel.",
+  "gs.align_run": "Align",
+  "gs.align_done": "Aligned to the grid: {n} elements moved"
 }

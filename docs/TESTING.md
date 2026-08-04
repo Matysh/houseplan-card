@@ -1087,3 +1087,120 @@ require hands on real hardware — they remain for the human pass.
 - [ ] **Real config regression**: a production config (e.g. the dacha, 3
       floors / 106 markers) frames bit-identically to the previous release —
       no outliers reported, no frame movement
+
+## Batch 2026-08-04 (dev, unreleased)
+
+- [ ] **Room borders have no teeth** (owner 2026-08-04): draw a room with a
+      sharp corner (a wedge with a 30-60° apex, or an L) — the corner is
+      ROUNDED off by the stroke's own radius, never a spike sticking out past
+      the two walls and never a flat bevel. Same in the plan View, in the Plan
+      editor and on the static `houseplan-space-card`; a room with OPEN
+      boundaries (its trimmed outline) has round corners too
+      [auto: smoke_render_parity, still: demo/shot_room_joins.mjs]
+- [ ] **The Background editor measures what you draw** (owner 2026-08-04, «в
+      редакторе подложки у линий писать длину»): while a decor LINE is being
+      dragged out, a badge on the MIDDLE of the segment shows «length · angle»
+      in the HA unit system (`cell_cm`, metres or feet) and turns green on a
+      45° multiple — exactly the badge a wall gets in the Plan editor. It
+      updates on every move, is absent before the drag has any length, and is
+      gone the moment the shape is committed. Rectangles and ovals show their
+      bounding box «W × H» instead [auto: smoke_decor]
+- [ ] **Grazing sunlight** (dev, audit DEV-EB173-01): with `sun_rays` on, set
+      the sun almost ALONG a wall carrying a window (e.g. a west window,
+      azimuth 190°, elevation 90° at north_deg 0). The shaft is a true
+      parallelogram — both sides exactly as long as the nominal reach, 70 % of
+      the pre-v1.57 curve — the whole pane of glass is at FULL brightness (no
+      end of the window starts out transparent), and the light fades along the
+      ray, dying out before the far edge. A sun within ~3° of the wall plane
+      (`RAY_MIN_COS`) casts nothing at all [auto: smoke_sun_soft + unit sun.test]
+- [ ] **Nothing stops at the old canvas border** (owner 2026-08-04, DEV-B58-01:
+      «названия комнат и устройства не перетаскиваются дальше старых границ
+      холста»). On an ORDINARY plan (rooms inside 0..1), in the Devices editor
+      drag a marker far outside the drawing — to about 2.5 / 2.2 normalised. It
+      follows the cursor the whole way, the position is stored, the plan's frame
+      grows to include it, and it is still there after a reload. Repeat with a
+      room NAME in the Plan editor (this one used to stop at the old unit square
+      exactly), with a decor shape in the Background editor (draw it far out,
+      then drag it further), and with an opening on a wall that lives past the
+      old square. The only thing that still stops you is ±5000 — drag wildly and
+      the marker parks there instead of at 1e12 [auto: smoke_drag_bounds]
+- [ ] **Everything lands on the grid** (owner 2026-08-04, docs/CANVAS.md §9):
+      place a device, a room name, a decor rectangle, a decor text, a room
+      vertex and a resize handle with the mouse — each ends exactly on a grid
+      node, never between two. An opening is the one exception and deliberately
+      so: it stays ON its wall, at a whole number of steps along it. Hold
+      **Shift** while dropping and the element lands where the cursor is,
+      off-grid — that is the only way to get there [auto: smoke_grid_snap]
+- [ ] **«Выровнять всё по сетке»** (owner 2026-08-04): gear → general settings →
+      **Grid** → the button. On an already tidy plan it says everything is
+      already on the grid and offers no confirm button. On a plan with elements
+      between the nodes it names how many will move and the largest shift in cm,
+      and warns there is no undo. Press it: rooms, decor, markers and room names
+      snap to nodes in ONE write, openings stay on their walls, and pressing the
+      button a second time reports nothing to do. Cancel does nothing at all
+      [auto: smoke_grid_snap + unit test/align-grid.test.mjs]
+
+## Backdrop picture: move & scale (docs/BACKDROP.md, dev)
+
+- [ ] **The frame is there, and only there** (owner 2026-08-04): open a space
+      that HAS an uploaded plan image → **Редактор подложки**. A dashed frame
+      hugs the picture straight away, with four round corner handles, and the
+      toolbar has gained a «Картинка-подложка» tool. Switch to Line /
+      Rectangle / Oval / Text / Erase — the frame disappears (those tools own
+      the drag). Leave for View, the Plan editor, the Device editor and the
+      kiosk — no frame anywhere. A space with NO image never shows one, and
+      its toolbar has no extra button [auto: smoke_backdrop, smoke_decor]
+- [ ] **Dragging the picture moves the picture, and nothing else** (owner
+      2026-08-04): pick the «Картинка-подложка» tool (the cursor over the
+      picture becomes a hand), grab the picture by its body and pull it aside.
+      It follows the finger the whole way — it must NOT drift away from the
+      cursor or jump when the toolbar changes — while the rooms, walls, doors,
+      windows, devices, room names and decor stay exactly where they were.
+      Release, reload the page — the picture is still where you left it
+      [auto: smoke_backdrop]
+- [ ] **One-finger pan survives** (regression, DEV-B58 «таскать план при любом
+      масштабе»): back on the «Выбрать» tool, drag across the middle of the
+      picture — the PLANE pans, the picture does not move. Same at 50 % and
+      33 % zoom [auto: smoke_backdrop, smoke_pan_any_zoom]
+- [ ] **The corners scale it evenly**: pull a corner handle. The picture grows
+      and shrinks in BOTH directions at once, keeps its proportions (nothing
+      is stretched), and the OPPOSITE corner does not move a pixel. Try all
+      four corners; the cursor over a handle is a diagonal resize arrow. On a
+      tablet the handles are big enough to hit with a finger [auto: smoke_backdrop]
+- [ ] **Live size in metres**: while dragging or scaling, a badge in the middle
+      of the picture states its real size, «Ш × В», in the same units the wall
+      ruler uses (metres, or feet on an imperial HA). Change the space's
+      `cell_cm` in its settings and the numbers change with it. The badge
+      disappears on release [auto: smoke_backdrop]
+- [ ] **Snap, and Shift**: after a plain drag the picture's corner sits on a
+      grid node (zoom in on the corner — it is on a crossing, not between
+      two). After a corner scale one side of the picture ends on a node too.
+      Hold **Shift** during the gesture and it lands exactly where the cursor
+      is instead [auto: smoke_backdrop]
+- [ ] **«Вернуть картинку»**: the button appears in the backdrop toolbar only
+      after the picture has been moved or scaled. Press it — the picture goes
+      back to centred, at its own size, and the button disappears again
+      [auto: smoke_backdrop]
+- [ ] **NEW PAPER RULE — the sheet is the rooms** (owner 2026-08-04, changes
+      the old behaviour): set a loud `bg_color` (or `daynight`) on a space
+      that has BOTH a picture and drawn rooms, then shrink the picture with a
+      corner handle. The opaque white/card-coloured sheet follows the ROOM
+      CONTOURS — it is no longer a rectangle the size of the picture. The
+      scene colour is visible around the rooms, including in the pocket of an
+      L-shaped house and between detached buildings. The picture is drawn ON
+      that sheet: above it, below the walls, doors, decor and devices. A space
+      with a picture and NO rooms has no sheet at all, so a transparent PNG
+      shows the scene through itself — deliberate
+      [auto: smoke_backdrop + smoke_bg_color, still: demo/shot_backdrop.mjs]
+- [ ] **«Вписать всё» does not lose the picture**: drag the picture well away
+      from the rooms (or scale it right down), leave the editor, press «Вписать
+      всё». The view frames the rooms AND the picture; the "home is that way"
+      arrow points at them together [auto: smoke_backdrop]
+- [ ] **The static card and the kiosk agree**: put a `houseplan-space-card` for
+      the same space on a dashboard and open the kiosk view. Both draw the
+      picture at the same offset and size, with the same room-contour paper
+      [auto: smoke_backdrop, smoke_render_parity]
+- [ ] **Old plans are untouched**: a space whose picture has never been moved
+      renders exactly as before the update — same place, same size. Nothing is
+      written to its config until the first drag [auto: unit test/backdrop.test.mjs
+      + tests_backend/test_validation.py]

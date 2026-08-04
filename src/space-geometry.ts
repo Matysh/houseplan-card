@@ -24,6 +24,44 @@ export function fitInSquare(ratio: number | null | undefined, side: number) {
   return { x: (side - w) / 2, y: (side - h) / 2, w, h };
 }
 
+/** Uniform backdrop scale bounds — mirrors validation.py (docs/BACKDROP.md). */
+export const PLAN_SCALE_MIN = 0.01;
+export const PLAN_SCALE_MAX = 100;
+
+/**
+ * WHERE THE BACKDROP IMAGE SITS (docs/BACKDROP.md).
+ *
+ * `fitInSquare` is only the DEFAULT placement: the image centred in the square
+ * canvas at its own proportions. On top of it a space may carry three optional
+ * numbers, the ones the owner produces by dragging the transform frame in the
+ * backdrop editor:
+ *
+ *   plan_x, plan_y — offset of the image's top-left corner from that default,
+ *                    in NORMALISED units (the very units rooms, openings and
+ *                    decor use, bounded by ±CANVAS_LIMIT);
+ *   plan_scale     — ONE uniform multiplier for both sides, anchored at the
+ *                    (already offset) top-left corner. There is no rotation.
+ *
+ * All three are OPTIONAL and their absence is exactly the pre-v1.58.0
+ * behaviour, so every plan written before renders bit-identically and there is
+ * no migration to run.
+ */
+export function planRect(space: any, side = NORM_W): Rect {
+  const base = fitInSquare(space?.plan_aspect, side);
+  const raw = Number(space?.plan_scale);
+  const k = Number.isFinite(raw) && raw > 0
+    ? Math.min(PLAN_SCALE_MAX, Math.max(PLAN_SCALE_MIN, raw))
+    : 1;
+  const dx = Number(space?.plan_x);
+  const dy = Number(space?.plan_y);
+  return {
+    x: base.x + (Number.isFinite(dx) ? clampCanvasN(dx) : 0) * side,
+    y: base.y + (Number.isFinite(dy) ? clampCanvasN(dy) : 0) * side,
+    w: base.w * k,
+    h: base.h * k,
+  };
+}
+
 export type Pt = { x: number; y: number };
 export type Layout = Record<string, { s?: string; x: number; y: number } | undefined>;
 
@@ -78,7 +116,9 @@ export function spaceModels(cfg: ServerConfig | null): SpaceModel[] {
       id: s.id,
       title: s.title,
       vb: [vb[0] * NORM_W, vb[1] * H, vb[2] * NORM_W, vb[3] * H],
-      bg: s.plan_url ? { href: contentUrl(s.plan_url), ...fitInSquare(s.plan_aspect, NORM_W) } : null,
+      // the image's own placement — the centred default plus whatever the
+      // backdrop frame has stored (plan_x/plan_y/plan_scale, docs/BACKDROP.md)
+      bg: s.plan_url ? { href: contentUrl(s.plan_url), ...planRect(s, NORM_W) } : null,
       rooms: (s.rooms || []).map(scale),
     } as SpaceModel;
   });
@@ -93,6 +133,41 @@ export function spaceModels(cfg: ServerConfig | null): SpaceModel[] {
 export const CANVAS_LIMIT = 5000;
 /** The same range in RENDER units. */
 export const SANE_LIMIT = CANVAS_LIMIT * NORM_W;
+
+/** Grid points across the plan width — the lattice the editor snaps to.
+ *  It is derived from NORM_W alone, so it is the SAME step for every plan and
+ *  it did NOT change when the canvas became infinite (docs/CANVAS.md §9). */
+export const GRID_N = 240;
+/** One grid step in RENDER units. */
+export const GRID_PITCH = NORM_W / GRID_N;
+/** One grid step in NORMALISED units — what the config and the layout store. */
+export const GRID_STEP_N = 1 / GRID_N;
+
+/** Snap a RENDER-unit coordinate to the editor's grid (docs/CANVAS.md §9). */
+export function snapR(v: number): number {
+  if (!Number.isFinite(v)) return v;
+  // integer node index first, then back — dividing by 1000/240 directly turns
+  // an exact 500 into 500.00000000000006 and every equality downstream lies
+  const q = (Math.round((v * GRID_N) / NORM_W) * NORM_W) / GRID_N;
+  return Math.abs(q - v) <= GRID_PITCH * 1e-9 ? v : q;
+}
+/** …and a point. Used for AUTO placements (a device with no saved position, a
+ *  room label nobody has dragged) so that "everything is on the grid" holds for
+ *  what the card puts there itself, not only for what the user drags. */
+export function snapPt(p: { x: number; y: number }): { x: number; y: number } {
+  return { x: snapR(p.x), y: snapR(p.y) };
+}
+
+/** Clamp a RENDER-unit coordinate to the sane canvas range (docs/CANVAS.md §9).
+ *  This is the ONLY bound any editor gesture may impose: the plan has no edges
+ *  any more, only a garbage limit that mirrors validation.py. */
+export function clampCanvasR(v: number): number {
+  return Number.isFinite(v) ? Math.min(SANE_LIMIT, Math.max(-SANE_LIMIT, v)) : 0;
+}
+/** The same range in NORMALISED units. */
+export function clampCanvasN(v: number): number {
+  return Number.isFinite(v) ? Math.min(CANVAS_LIMIT, Math.max(-CANVAS_LIMIT, v)) : 0;
+}
 
 /** Zoom-out floor: three times the content frame and no further (CANVAS.md §5). */
 export const MIN_ZOOM = 1 / 3;
@@ -145,8 +220,11 @@ export function contentItems(
 ): ContentItem[] {
   const out: ContentItem[] = [];
   for (const r of space.rooms || []) { const it = roomItem(r); if (it) out.push(it); }
-  // With a backdrop the IMAGE sets the extent: cropping to the outlined rooms
-  // would hide the parts of the picture nobody has drawn over yet.
+  // The backdrop image is ONE OF the objects of the space, exactly like a room
+  // (docs/BACKDROP.md §4): cropping to the outlined rooms would hide the parts
+  // of the picture nobody has drawn over yet, and — since v1.58.0 — the
+  // rectangle here is the MOVED and SCALED one, so «Вписать всё» follows the
+  // picture wherever the owner has dragged it.
   if (space.bg) out.push({ minX: space.bg.x, minY: space.bg.y, maxX: space.bg.x + space.bg.w, maxY: space.bg.y + space.bg.h });
   for (const e of extra || []) {
     if (Array.isArray(e)) { const it = itemOf([e as any]); if (it) out.push(it); }
@@ -401,7 +479,7 @@ export function defaultPositions(devs: DevItem[], model: SpaceModel, iconPct: nu
       y: b.y + pad + ch * (Math.floor(i / cols) + 0.5),
     }));
     declump(pts, b, minDist, pad * 0.5);
-    ds.forEach((d, i) => (map[d.id] = pts[i]));
+    ds.forEach((d, i) => (map[d.id] = snapPt(pts[i])));
   }
   return map;
 }
@@ -415,7 +493,7 @@ export function markerPos(d: DevItem, layout: Layout, cfg: ServerConfig, defPos:
   if (defPos[d.id]) return defPos[d.id];
   // no saved position, no room to auto-place in: the middle of what IS drawn,
   // not the middle of a canvas that no longer has edges (docs/CANVAS.md)
-  return spaceCenter(model);
+  return snapPt(spaceCenter(model));
 }
 
 /** Saved room-label position (layout key rl_<roomId>) or the room centre. */
@@ -424,6 +502,7 @@ export function labelPos(r: RoomCfg, spaceId: string, layout: Layout, cfg: Serve
   if (saved && saved.s === spaceId) {
     return { x: saved.x * NORM_W, y: saved.y * NORM_W };
   }
+  // never dragged: the centroid, put on the nearest node (docs/CANVAS.md §9)
   const c = roomCenter(r);
-  return { x: c[0], y: c[1] };
+  return snapPt({ x: c[0], y: c[1] });
 }

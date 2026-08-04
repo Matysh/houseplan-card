@@ -15,7 +15,8 @@ import {
   lqiColor, snapToGrid, samePoint, pointInPolygon, markerIdForBinding,
   segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointStrictlyInside, roomsOverlap,
   pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, openZoneOf, distToSegment, outlineWithout, cutSegments, alignGuides, segmentAngle, is45, type AlignGuide, swipeTarget, clampScale, migratePdfUrls, roomFillModeOf, contentUrl,
-  snapToWall, openingAmount, openingShoulders, interiorPoint, poleOfInaccessibility, subst,
+  snapToWall, snapPointAlongPoly, openingAmount, openingShoulders, interiorPoint,
+  poleOfInaccessibility, subst,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
   stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, glowColorOf, doorSector, hasRoomBehind, controlsAction, isControllable,
   spaceDisplayOf, roomFillStyle, fillColorsOf, DEFAULT_FILL_COLORS, type FillColors, runServiceFor, RUN_TARGET_DOMAINS,
@@ -51,13 +52,16 @@ import './editor';
 import './space-card';
 import { cardStyles } from './styles';
 import {
-  fitInSquare, contentBounds, spaceModels, contentFrame, contentItems, spaceFrame,
-  spaceCenter, iconUnit, iconCqw, gridLevels, itemOf,
-  MIN_ZOOM, PAN_SLACK, CANVAS_LIMIT, type ContentItem, type Rect,
+  fitInSquare, planRect, contentBounds, spaceModels, contentFrame, contentItems, spaceFrame,
+  spaceCenter, iconUnit, iconCqw, gridLevels, itemOf, snapPt,
+  MIN_ZOOM, PAN_SLACK, CANVAS_LIMIT, GRID_PITCH, GRID_STEP_N,
+  PLAN_SCALE_MIN, PLAN_SCALE_MAX,
+  clampCanvasR, clampCanvasN, type ContentItem, type Rect,
 } from './space-geometry';
+import { alignAllToGrid, type AlignReport } from './align-grid';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.57.0';
+const CARD_VERSION = '1.58.0';
 /** HP-1552 boot-veil timing (AUD-1552-02). The veil holds for at least
  *  BOOT_MIN_MS; every stage-height change restarts a BOOT_QUIET_MS
  *  trailing-quiescence requirement (chrome still settling near the cap
@@ -105,7 +109,6 @@ const unionRect = (a: Rect, b: Rect): Rect => {
   return { x, y, w: Math.max(a.x + a.w, b.x + b.w) - x, h: Math.max(a.y + a.h, b.y + b.h) - y };
 };
 
-const GRID_N = 240; // grid points across the plan width (half the previous step; old nodes are a subset of the new ones, positions are preserved)
 type MarkupTool = 'draw' | 'merge' | 'split' | 'resize' | 'opening' | 'openwall' | 'delroom';
 
 const fireEvent = (node: EventTarget, type: string, detail?: unknown) => {
@@ -212,12 +215,33 @@ class HouseplanCard extends LitElement {
    * starts in view. */
   private _mode: 'view' | 'plan' | 'devices' | 'decor' = 'view';
   // ---- decor (background) editor ----
-  private _decorTool: 'select' | 'line' | 'rect' | 'ellipse' | 'text' | 'erase' = 'select';
+  private _decorTool: 'select' | 'backdrop' | 'line' | 'rect' | 'ellipse' | 'text' | 'erase' = 'select';
   private _decorStyle: { color: string; width: number; fill: boolean } = { color: '#607d8b', width: 3, fill: false };
   private _decorDraft: { kind: 'line' | 'rect' | 'ellipse'; a: number[]; b: number[]; pid: number } | null = null;
   private _decorMove: { id: string; start: number[]; orig: any; pid: number; moved: boolean } | null = null;
   private _decorSel: string | null = null;
   private _decorTextDialog: { id?: string; x: number; y: number; text: string; size: 's' | 'm' | 'l'; color: string } | null = null;
+  /**
+   * The live backdrop gesture (docs/BACKDROP.md §2): moving the picture by its
+   * body, or scaling it UNIFORMLY by a corner handle about the opposite corner.
+   * `base` is the untransformed, centred rectangle the transform is measured
+   * from, so a gesture never accumulates rounding of its own.
+   */
+  private _bdDrag: {
+    kind: 'move' | 'scale';
+    pid: number;
+    /** pointer down, render units */
+    sx: number; sy: number;
+    /** the centred default rect (render units) — the transform's origin */
+    base: Rect;
+    /** transform at pointer down */
+    p0: { dx: number; dy: number; k: number };
+    /** the corner that STAYS PUT while scaling (render units) */
+    fx: number; fy: number;
+    /** which way the dragged corner points from the fixed one (±1) */
+    sgx: number; sgy: number;
+    moved: boolean;
+  } | null = null;
 
   /** Edit tabs are offered to admins only (hass.user missing → assume admin). */
   private get _canEdit(): boolean {
@@ -382,6 +406,17 @@ class HouseplanCard extends LitElement {
   private _onboardingShown = false; // the auto space dialog is shown once per session
 
   private _rulesDialog: { rules: IconRule[]; test: string; busy: boolean } | null = null;
+  /** «Выровнять всё по сетке»: the preview the confirmation shows, plus the
+   *  already-computed result so the write cannot differ from the promise. */
+  private _alignDialog: {
+    report: AlignReport; spaces: any[]; layout: Record<string, any>;
+    /** the promised maximum, in centimetres, ALREADY rounded up (AUD-158B1-01) */
+    cm: number;
+    /** the space that maximum belongs to, named only when there are several */
+    where: string;
+    busy: boolean;
+  } | null = null;
+
   private _settingsDialog: {
     colors: FillColors; glowRadius: number; bgColor: string | null;
     /** sun on the plan (docs/SUN.md) */
@@ -579,6 +614,7 @@ class HouseplanCard extends LitElement {
     _decorDraft: { state: true },
     _decorSel: { state: true },
     _decorTextDialog: { state: true },
+    _bdDrag: { state: true },
     _kioskDialog: { state: true },
     _vacFit: { state: true },
     _kioskDots: { state: true },
@@ -597,6 +633,7 @@ class HouseplanCard extends LitElement {
     _infoCard: { state: true },
     _rulesDialog: { state: true },
     _settingsDialog: { state: true },
+    _alignDialog: { state: true },
     _importDialog: { state: true },
     _markerDialog: { state: true },
     _zoom: { state: true },
@@ -690,6 +727,7 @@ class HouseplanCard extends LitElement {
       if (this._openingInfo) { this._openingInfo = null; return; }
       if (this._infoCard) { this._infoCard = null; return; }
       if (this._rulesDialog) { this._rulesDialog = null; return; }
+      if (this._alignDialog) { this._alignDialog = null; return; }
       if (this._settingsDialog) { this._settingsDialog = null; return; }
       if (this._markerDialog) { this._markerDialog = null; return; }
       if (this._openingDialog) { this._openingDialog = null; return; }
@@ -889,6 +927,10 @@ class HouseplanCard extends LitElement {
     let s = sp.length + ':';
     for (const x of sp as any[]) {
       s += (x.id || '') + ',' + (x.plan_aspect || '') + ',' + (x.plan_url || '').length + ','
+        // the backdrop transform is geometry: without it in the key a drag of
+        // the picture would leave the memoized model (and the content frame
+        // built from it) showing the old rectangle (docs/BACKDROP.md §5)
+        + (x.plan_x ?? '') + ',' + (x.plan_y ?? '') + ',' + (x.plan_scale ?? '') + ','
         + (x.rooms?.length || 0) + ',' + (x.openings?.length || 0) + ',' + (x.decor?.length || 0) + ';';
       for (const r of x.rooms || []) {
         // O(1) geometry roll-up per room: the count alone said nothing about
@@ -1516,7 +1558,9 @@ class HouseplanCard extends LitElement {
           y: b.y + pad + ch * (Math.floor(i / cols) + 0.5),
         }));
         declump(pts, b, minDist, pad * 0.5);
-        ds.forEach((d, i) => (map[d.id] = pts[i]));
+        // an auto-placed icon lands on a node too (docs/CANVAS.md §9) — the
+        // owner's "everything on the grid" covers what the card places itself
+        ds.forEach((d, i) => (map[d.id] = snapPt(pts[i])));
       }
     }
     return map;
@@ -1537,20 +1581,23 @@ class HouseplanCard extends LitElement {
     }
     if (this._defPos[d.id]) return this._defPos[d.id];
     // the middle of what IS drawn, not of a canvas that has no edges any more
-    return spaceCenter(s);
+    return snapPt(spaceCenter(s));
   }
 
-  private _savePos(d: DevItem, x: number, y: number): void {
+  private _savePos(d: DevItem, x: number, y: number, shift = false): void {
     if (this._norm) {
-      // the icon center snaps to the nodes of the same grid as the room markup
+      // The icon center snaps to the nodes of the same grid as the room markup
+      // (docs/CANVAS.md §9). Shift suspends the snap for this one gesture —
+      // the same convention as the opening magnet and the compass.
       const g = this._gridPitch;
-      const gx = Math.round(x / g) * g;
-      const gy = Math.round(y / g) * g;
+      const gx = shift ? x : Math.round(x / g) * g;
+      const gy = shift ? y : Math.round(y / g) * g;
 
       const prevK = (this._layout[d.id] as any)?.k;
       this._layout = {
         ...this._layout,
-        [d.id]: { s: d.space, x: gx / NORM_W, y: gy / NORM_W, ...(prevK ? { k: prevK } : {}) },
+        [d.id]: { s: d.space, x: clampCanvasN(gx / NORM_W), y: clampCanvasN(gy / NORM_W),
+          ...(prevK ? { k: prevK } : {}) },
       };
     } else {
       this._layout = { ...this._layout, [d.id]: { x: Math.round(x), y: Math.round(y) } };
@@ -1929,6 +1976,12 @@ class HouseplanCard extends LitElement {
     // far away in the Plan editor kept View framing the empty ground it left
     // behind, until some unrelated model change happened to invalidate memo.
     const grow = this._mode !== 'view';
+    // A LIVE BACKDROP GESTURE FREEZES THE FRAME (docs/BACKDROP.md §2). The
+    // picture is a content item, so dragging it grows the frame — which
+    // rescales the view, which changes how many plan units a screen pixel is
+    // worth, mid-gesture: the picture then runs away from the finger and no
+    // drag lands where it was aimed. The frame catches up on release.
+    if (f && f.id === m.id && this._bdDrag) return f;
     if (f && f.id === m.id && f.model === m && f.layout === this._layout
         && f.devs === this._devices && f.far === this._showFar && f.grow === grow) return f;
     const cf = contentFrame(this._contentItems(m));
@@ -2004,24 +2057,6 @@ class HouseplanCard extends LitElement {
       @click=${(e: Event) => { e.stopPropagation(); this._fitAll(); }}>
       <ha-icon icon="mdi:arrow-right-thick" style="transform:rotate(${((ang * 180) / Math.PI).toFixed(1)}deg)"></ha-icon>
     </button>`;
-  }
-
-  /**
-   * Opaque plan "paper" (owner 2026-08-03): the scene background — bg_color or
-   * the 'daynight' sky — must never bleed through the plan itself, so opaque
-   * shapes sit under everything the plan draws. With a backdrop image the
-   * paper is the image rect (the canvas IS the paper) — this helper returns
-   * it. For a hand-drawn plan the paper follows the ROOM CONTOURS instead
-   * (paperRoomShapes in logic.ts): one shape per room in exactly the room's
-   * own geometry, so an L-shaped house or detached buildings never grow a
-   * white bounding rectangle — the scene colour is visible right up to the
-   * exterior walls, and an empty drawn space has no paper at all. Its colour
-   * is the pre-bg_color canvas (styles.ts .hp-paper): white for drawn plans,
-   * the theme card background under an image. At night 'daynight' dims it via
-   * the zoomwrap brightness filter ONLY — its alpha stays 1 (docs/SUN.md).
-   */
-  private _paperRect(m: SpaceModel): { x: number; y: number; w: number; h: number } | null {
-    return m.bg ? { x: m.bg.x, y: m.bg.y, w: m.bg.w, h: m.bg.h } : null;
   }
 
   /** Aspect ratio of the scene (width/height, px). */
@@ -2295,8 +2330,12 @@ class HouseplanCard extends LitElement {
   }
 
   private _stagePointerMove(ev: PointerEvent): void {
+    if (this._bdDrag?.pid === ev.pointerId) {
+      this._bdMove(ev);
+      return;
+    }
     if (this._decorDraft?.pid === ev.pointerId) {
-      this._decorDraft = { ...this._decorDraft, b: this._snap(this._svgPoint(ev)) };
+      this._decorDraft = { ...this._decorDraft, b: this._snap(this._svgPoint(ev), ev) };
       return;
     }
     if (this._decorMove?.pid === ev.pointerId) {
@@ -2393,6 +2432,10 @@ class HouseplanCard extends LitElement {
         }
       }
     }
+    if (this._bdDrag?.pid === ev.pointerId) {
+      this._bdUp();
+      return;
+    }
     if (this._decorDraft?.pid === ev.pointerId) {
       this._decorCommitDraft();
       return;
@@ -2450,10 +2493,16 @@ class HouseplanCard extends LitElement {
       this._drag.moved = true;
       clearTimeout(this._holdTimer);
     }
-    const m = Math.min(vb[2], vb[3]) * 0.008;
-    const nx = Math.max(vb[0] + m, Math.min(vb[0] + vb[2] - m, this._drag.ox + dx));
-    const ny = Math.max(vb[1] + m, Math.min(vb[1] + vb[3] - m, this._drag.oy + dy));
-    this._savePos(d, nx, ny);
+    // DEV-B58-01. This used to be clamped into `vb` — the CONTENT FRAME — with
+    // a 0.8 % margin, which is exactly the "old canvas border" the owner ran
+    // into: a marker could never be dragged past the outline of whatever was
+    // already drawn, so a plan could not be extended by moving a device out to
+    // where the new room was going to be. The plan has no edges any more
+    // (docs/CANVAS.md §9); the only bound is the garbage limit the backend
+    // enforces, and it is the SAME ±5000 on both sides of the wire.
+    const nx = clampCanvasR(this._drag.ox + dx);
+    const ny = clampCanvasR(this._drag.oy + dy);
+    this._savePos(d, nx, ny, ev.shiftKey);
   }
 
   private _pointerUp(_ev: PointerEvent, d: DevItem): void {
@@ -2511,7 +2560,11 @@ class HouseplanCard extends LitElement {
   // ================= ROOM MARKUP EDITOR =================
 
   private get _gridPitch(): number {
-    return NORM_W / GRID_N;
+    // NORM_W / GRID_N and nothing else. The infinite canvas did NOT touch this
+    // (docs/CANVAS.md §9): the step is the same for every plan, at every zoom,
+    // whatever the content frame happens to be — so no existing plan's nodes
+    // ever moved out from under it.
+    return GRID_PITCH;
   }
 
   /** cm represented by one grid cell for the current space (default 5). */
@@ -2648,6 +2701,7 @@ class HouseplanCard extends LitElement {
     this._decorDraft = null;
     this._decorSel = null;
     this._decorTool = 'select';
+    this._bdDrag = null;
     this._saveNav();
   }
 
@@ -2658,9 +2712,20 @@ class HouseplanCard extends LitElement {
     return this._screenToVb(ev.clientX - r.left, ev.clientY - r.top);
   }
 
-  private _snap(p: number[]): number[] {
+  /**
+   * THE snap (docs/CANVAS.md §9). Every editor gesture that produces a plan
+   * coordinate goes through here, so "strictly on the grid" is one function
+   * and not a habit. `shift` (the event, or a bare flag) suspends it for the
+   * duration of the gesture — the same escape hatch the opening magnet and the
+   * compass already offered. The canvas clamp rides along: there are no edges
+   * to bump into any more, only the ±5000 the backend refuses to store.
+   */
+  private _snap(p: number[], shift: boolean | { shiftKey?: boolean } = false): number[] {
+    const off = typeof shift === 'boolean' ? shift : !!shift?.shiftKey;
     const g = this._gridPitch;
-    return [snapToGrid(p[0], g), snapToGrid(p[1], g)];
+    return off
+      ? [clampCanvasR(p[0]), clampCanvasR(p[1])]
+      : [clampCanvasR(snapToGrid(p[0], g)), clampCanvasR(snapToGrid(p[1], g))];
   }
 
   private _samePt(a: number[], b: number[]): boolean {
@@ -2811,12 +2876,12 @@ class HouseplanCard extends LitElement {
       return;
     }
     if (this._tool === 'split') {
-      this._splitClick(raw);
+      this._splitClick(raw, ev.shiftKey);
       return;
     }
     // draw: clicks on grid points build the outline. Nothing is written to the config
     // until the contour closes — an abandoned outline leaves no lines behind.
-    const pt = this._snap(raw);
+    const pt = this._snap(raw, ev);
     const closing = this._path.length >= 3 && this._samePt(pt, this._path[0]);
     // Island rooms (v1.34.0): drawing INSIDE an existing room is legal — the
     // contour may become a nested room (a column, an inner room). Partial
@@ -2956,7 +3021,7 @@ class HouseplanCard extends LitElement {
       const plan = g.plan!;
       const dRaw = (p[0] - plan.a[0]) * plan.n[0] + (p[1] - plan.a[1]) * plan.n[1];
       // the moved wall LINE lands on the grid, like every drawn wall
-      const sn = this._snap([plan.a[0] + plan.n[0] * dRaw, plan.a[1] + plan.n[1] * dRaw]);
+      const sn = this._snap([plan.a[0] + plan.n[0] * dRaw, plan.a[1] + plan.n[1] * dRaw], ev);
       let d = (sn[0] - plan.a[0]) * plan.n[0] + (sn[1] - plan.a[1]) * plan.n[1];
       d = clampEdgeDrag(g.rooms, g.openings, plan, d, this._gridPitch, this._rszOpts());
       if (d === g.d && g.moved) return;
@@ -2968,7 +3033,7 @@ class HouseplanCard extends LitElement {
       this._rszLive = this._rszEdgeLabels(res, plan);
     } else {
       const fixed = g.fixed!;
-      const sn = this._snap(p); // the dragged corner aims at grid nodes
+      const sn = this._snap(p, ev); // the dragged corner aims at grid nodes
       let k = Math.hypot(sn[0] - fixed[0], sn[1] - fixed[1]) / (g.span0 || 1);
       k = Math.max(0.05, Math.min(20, k));
       k = clampRoomScale(g.rooms, g.openings, g.roomId, fixed, k, this._rszOpts());
@@ -3165,24 +3230,42 @@ class HouseplanCard extends LitElement {
   /** Begin a decor gesture. Returns true when the event is consumed (no pan). */
   private _decorPointerDown(ev: PointerEvent): boolean {
     const t = this._decorTool;
-    const onShape = (ev.target as HTMLElement).closest?.('.dshape') as SVGElement | null;
+    // A DRAWING tool owns the whole canvas. Pressing on top of an existing
+    // shape must start a NEW figure at that very point — otherwise a line can
+    // never begin at the end of another line, because the old line grabs the
+    // press first (owner, 2026-08-04). Only select/erase talk to shapes, and
+    // only for them does the shape's own handler get to deal with the event.
+    const onShape = (t === 'select' || t === 'erase')
+      ? ((ev.target as HTMLElement).closest?.('.dshape') as SVGElement | null)
+      : null;
     if (onShape) return true; // the shape's own handler deals with it
     if (t === 'line' || t === 'rect' || t === 'ellipse') {
       ev.preventDefault();
-      const p = this._snap(this._svgPoint(ev));
+      const p = this._snap(this._svgPoint(ev), ev);
       this._decorDraft = { kind: t, a: p, b: p, pid: ev.pointerId };
       capturePointer(ev);
       return true;
     }
     if (t === 'text') {
-      const p = this._snap(this._svgPoint(ev));
+      const p = this._snap(this._svgPoint(ev), ev);
       this._decorTextDialog = {
-        x: p[0] / NORM_W, y: p[1] / this._decorH,
+        x: clampCanvasN(p[0] / NORM_W), y: clampCanvasN(p[1] / this._decorH),
         text: '', size: 'm', color: this._decorStyle.color,
       };
       return true;
     }
     this._decorSel = null; // select/erase on empty space clears the selection
+    // …and under its own tool the picture is grabbable by its body
+    // (docs/BACKDROP.md §2). Only INSIDE the image rect: press beside the
+    // picture and the plane still pans with one finger.
+    if (this._bdMovable) {
+      const r = this._bdRect!;
+      const p = this._svgPoint(ev);
+      if (p[0] >= r.x && p[0] <= r.x + r.w && p[1] >= r.y && p[1] <= r.y + r.h) {
+        ev.preventDefault();
+        return this._bdStart(ev);
+      }
+    }
     return false; // pan is allowed
   }
 
@@ -3196,12 +3279,16 @@ class HouseplanCard extends LitElement {
     const W = NORM_W, H = this._decorH;
     const st = this._decorStyle;
     const id = 'dc' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+    // creation had no canvas guard at all while the MOVE did — a draft could be
+    // born outside the range the mover then refused to leave. One limit, both
+    // ends of the gesture (docs/CANVAS.md §9).
+    const cn = clampCanvasN;
     let shape: any;
     if (d.kind === 'line') {
-      shape = { id, kind: 'line', x1: d.a[0] / W, y1: d.a[1] / H, x2: d.b[0] / W, y2: d.b[1] / H,
-        color: st.color, width: st.width };
+      shape = { id, kind: 'line', x1: cn(d.a[0] / W), y1: cn(d.a[1] / H),
+        x2: cn(d.b[0] / W), y2: cn(d.b[1] / H), color: st.color, width: st.width };
     } else {
-      const x = Math.min(d.a[0], d.b[0]) / W, y = Math.min(d.a[1], d.b[1]) / H;
+      const x = cn(Math.min(d.a[0], d.b[0]) / W), y = cn(Math.min(d.a[1], d.b[1]) / H);
       const w = Math.abs(d.b[0] - d.a[0]) / W, h = Math.abs(d.b[1] - d.a[1]) / H;
       shape = { id, kind: d.kind, x, y, w, h, color: st.color, width: st.width, fill: st.fill };
     }
@@ -3215,9 +3302,15 @@ class HouseplanCard extends LitElement {
   /** Select tool: pointerdown on a shape starts moving it. */
   private _decorShapeDown(ev: PointerEvent, shape: any): void {
     if (this._mode !== 'decor') return;
+    // Under any other tool the shape is not a target at all: the press has to
+    // reach the stage, where the drawing tool starts a new figure (or the
+    // backdrop tool grabs the picture). Swallowing it here was the bug — the
+    // click on a line end did nothing but keep the old selection alive.
+    const t = this._decorTool;
+    if (t !== 'select' && t !== 'erase') return;
     ev.stopPropagation();
     ev.preventDefault();
-    if (this._decorTool === 'erase') {
+    if (t === 'erase') {
       const sp = this._curSpaceCfg;
       sp.decor = this._decorList.filter((x) => x.id !== shape.id);
       if (this._decorSel === shape.id) this._decorSel = null;
@@ -3225,7 +3318,6 @@ class HouseplanCard extends LitElement {
       this.requestUpdate();
       return;
     }
-    if (this._decorTool !== 'select') return;
     this._decorSel = shape.id;
     this._decorMove = {
       id: shape.id, start: this._svgPoint(ev), orig: JSON.parse(JSON.stringify(shape)),
@@ -3237,9 +3329,17 @@ class HouseplanCard extends LitElement {
   private _decorMoveUpdate(ev: PointerEvent): void {
     const m = this._decorMove!;
     const p = this._svgPoint(ev);
-    const g = this._gridPitch;
-    let dx = snapToGrid(p[0] - m.start[0], g) / NORM_W;
-    let dy = snapToGrid(p[1] - m.start[1], g) / this._decorH;
+    const o0 = m.orig;
+    // The delta used to be what got snapped, which preserves whatever off-grid
+    // offset the shape already had: a legacy shape at 0.3013 stayed at 0.3013
+    // for ever, one step at a time. Snap the RESULTING ANCHOR instead, so one
+    // drag is enough to put any shape on the grid (docs/CANVAS.md §9). Shift
+    // suspends it, as everywhere else.
+    const ax0 = (o0.kind === 'line' ? o0.x1 : o0.x) * NORM_W;
+    const ay0 = (o0.kind === 'line' ? o0.y1 : o0.y) * this._decorH;
+    const anchor = this._snap([ax0 + (p[0] - m.start[0]), ay0 + (p[1] - m.start[1])], ev);
+    let dx = (anchor[0] - ax0) / NORM_W;
+    let dy = (anchor[1] - ay0) / this._decorH;
     // audit follow-up L4 gave decor a bounds clamp of -0.25..1.25 — the plan
     // was a sheet with edges then. It is not any more (docs/CANVAS.md): the
     // clamp is now the same garbage limit the backend enforces, so decor can
@@ -3265,7 +3365,7 @@ class HouseplanCard extends LitElement {
 
   /** Double click on a text shape (select tool) re-opens its dialog. */
   private _decorShapeDbl(shape: any): void {
-    if (this._mode !== 'decor' || shape.kind !== 'text') return;
+    if (this._mode !== 'decor' || this._decorTool !== 'select' || shape.kind !== 'text') return;
     this._decorTextDialog = { id: shape.id, x: shape.x, y: shape.y,
       text: shape.text, size: shape.size || 'm', color: shape.color };
   }
@@ -3294,6 +3394,206 @@ class HouseplanCard extends LitElement {
     this._decorSel = null;
     this._saveConfig();
     this.requestUpdate();
+  }
+
+  // ============ backdrop transform frame (docs/BACKDROP.md) ============
+
+  /** The centred, UNTRANSFORMED rectangle of the current backdrop image. */
+  private get _bdBase(): Rect | null {
+    const sp = this._curSpaceCfg;
+    return sp?.plan_url ? { ...fitInSquare(sp.plan_aspect, NORM_W) } : null;
+  }
+
+  /** Where the backdrop image sits right now, render units (null: no image). */
+  private get _bdRect(): Rect | null {
+    const sp = this._curSpaceCfg;
+    return sp?.plan_url ? planRect(sp, NORM_W) : null;
+  }
+
+  /** The stored transform of the current space (defaults = the old behaviour). */
+  private get _bdParams(): { dx: number; dy: number; k: number } {
+    const sp = this._curSpaceCfg;
+    const dx = Number(sp?.plan_x), dy = Number(sp?.plan_y), k = Number(sp?.plan_scale);
+    return {
+      dx: Number.isFinite(dx) ? dx : 0,
+      dy: Number.isFinite(dy) ? dy : 0,
+      k: Number.isFinite(k) && k > 0 ? k : 1,
+    };
+  }
+
+  /**
+   * Is the transform frame on screen? Only in the BACKDROP editor, and only
+   * under the two tools that are not busy drawing something — the frame's
+   * handles must never swallow the first point of a line. Every other mode
+   * (view, plan, devices, kiosk) leaves the picture alone entirely.
+   */
+  private get _bdActive(): boolean {
+    return this._mode === 'decor' && !!this._bdRect
+      && (this._decorTool === 'select' || this._decorTool === 'backdrop');
+  }
+
+  /**
+   * …and may the picture be dragged by its BODY? Only under its own tool.
+   *
+   * The corner handles are precise targets and are live as soon as the frame
+   * is, but the body is the whole picture, i.e. most of the screen — claiming
+   * it under the select tool would take away the one-finger pan the owner
+   * asked for on 2026-08-04 («таскать план при любом масштабе»), which
+   * smoke_pan_any_zoom guards. So moving the picture is a tool, exactly like
+   * drawing a line is.
+   */
+  private get _bdMovable(): boolean {
+    return this._mode === 'decor' && this._decorTool === 'backdrop' && !!this._bdRect;
+  }
+
+  /** Write a transform into the space config — live, without saving. */
+  private _bdApply(dx: number, dy: number, k: number): void {
+    const sp = this._curSpaceCfg;
+    if (!sp) return;
+    // 6 decimals: the same precision the rest of the normalised config keeps,
+    // and enough for a 1000-unit canvas to be exact to a thousandth of a pixel
+    sp.plan_x = Number(clampCanvasN(dx).toFixed(6));
+    sp.plan_y = Number(clampCanvasN(dy).toFixed(6));
+    sp.plan_scale = Number(Math.min(PLAN_SCALE_MAX, Math.max(PLAN_SCALE_MIN, k)).toFixed(6));
+    this._cfgEpoch++;
+    this.requestUpdate();
+  }
+
+  /**
+   * Begin a backdrop gesture. `corner` is the DRAGGED corner as a pair of
+   * signs (-1 = the low side of the axis, +1 = the high one); absent = the
+   * body, i.e. a move. Returns false when there is nothing to grab.
+   */
+  private _bdStart(ev: PointerEvent, corner?: number[]): boolean {
+    const base = this._bdBase, r = this._bdRect;
+    if (!base || !r) return false;
+    const p = this._svgPoint(ev);
+    const sgx = corner ? corner[0] : 0;
+    const sgy = corner ? corner[1] : 0;
+    // the corner that stays put is the OPPOSITE one
+    const fx = sgx > 0 ? r.x : r.x + r.w;
+    const fy = sgy > 0 ? r.y : r.y + r.h;
+    this._bdDrag = {
+      kind: corner ? 'scale' : 'move',
+      pid: ev.pointerId,
+      sx: p[0], sy: p[1],
+      base, p0: this._bdParams,
+      fx, fy, sgx, sgy,
+      moved: false,
+    };
+    capturePointer(ev);
+    return true;
+  }
+
+  /**
+   * One step of the gesture.
+   *
+   * MOVE — the resulting TOP-LEFT CORNER is snapped, not the delta, so one
+   * drag is enough to put a legacy off-grid picture on the lattice
+   * (docs/CANVAS.md §9.3, the same rule decor already follows).
+   *
+   * SCALE — uniform about the fixed corner. The dragged corner is snapped
+   * along the picture's LONGER side and the scale is read back off it, so the
+   * fixed corner keeps its (on-grid) place and the picture's long side lands
+   * on a node. The short side follows from the aspect ratio and generally does
+   * not, which is what "uniform, no rotation, no stretch" costs.
+   *
+   * Shift suspends the snap, as everywhere (docs/CANVAS.md §9.4).
+   */
+  private _bdMove(ev: PointerEvent): void {
+    const d = this._bdDrag;
+    if (!d) return;
+    const p = this._svgPoint(ev);
+    const b = d.base;
+    if (d.kind === 'move') {
+      const x0 = b.x + d.p0.dx * NORM_W;
+      const y0 = b.y + d.p0.dy * NORM_W;
+      const at = this._snap([x0 + (p[0] - d.sx), y0 + (p[1] - d.sy)], ev);
+      if (Math.abs(at[0] - x0) > 1e-9 || Math.abs(at[1] - y0) > 1e-9) d.moved = true;
+      this._bdApply((at[0] - b.x) / NORM_W, (at[1] - b.y) / NORM_W, d.p0.k);
+      return;
+    }
+    const w0 = b.w || 1, h0 = b.h || 1;
+    let k = Math.max(Math.abs(p[0] - d.fx) / w0, Math.abs(p[1] - d.fy) / h0);
+    if (!ev.shiftKey) {
+      // snap the dragged corner along the dominant axis, then read k back
+      const alongX = w0 >= h0;
+      const raw = alongX ? d.fx + d.sgx * k * w0 : d.fy + d.sgy * k * h0;
+      const snapped = snapToGrid(raw, this._gridPitch);
+      const span = Math.abs(snapped - (alongX ? d.fx : d.fy));
+      const kk = span / (alongX ? w0 : h0);
+      if (kk > 0) k = kk;
+    }
+    k = Math.min(PLAN_SCALE_MAX, Math.max(PLAN_SCALE_MIN, k));
+    if (Math.abs(k - d.p0.k) > 1e-9) d.moved = true;
+    const x = d.sgx > 0 ? d.fx : d.fx - k * w0;
+    const y = d.sgy > 0 ? d.fy : d.fy - k * h0;
+    this._bdApply((x - b.x) / NORM_W, (y - b.y) / NORM_W, k);
+  }
+
+  /** Has this space's picture been moved or scaled at all? */
+  private get _bdMoved(): boolean {
+    if (this._mode !== 'decor' || !this._bdRect) return false;
+    const p = this._bdParams;
+    return p.dx !== 0 || p.dy !== 0 || p.k !== 1;
+  }
+
+  /** Put the picture back where an untouched plan has it: centred, own size. */
+  private _bdReset(): void {
+    const sp = this._curSpaceCfg;
+    if (!sp) return;
+    delete sp.plan_x; delete sp.plan_y; delete sp.plan_scale;
+    this._bdDrag = null;
+    this._saveConfig();
+    this._showToast(this._t('decor.backdrop_reset_done'));
+    this.requestUpdate();
+  }
+
+  /** Release: persist only when something actually moved. */
+  private _bdUp(): void {
+    const d = this._bdDrag;
+    this._bdDrag = null;
+    if (d?.moved) this._saveConfig();
+    this.requestUpdate();
+  }
+
+  /**
+   * Live size badge while the picture is dragged or scaled (owner 2026-08-04):
+   * its REAL width × height through `cell_cm`, in the HA unit system — the
+   * same `_fmtLen` (`segmentCm`/`formatLength`) and the same `.measurelabel`
+   * the wall ruler and the room resize use, so there is one way the card ever
+   * states a length.
+   */
+  private get _bdLive(): { x: number; y: number; text: string } | null {
+    if (!this._bdDrag) return null;
+    const r = this._bdRect;
+    if (!r) return null;
+    return {
+      x: r.x + r.w / 2,
+      y: r.y + r.h / 2,
+      text: `${this._fmtLen([0, 0], [r.w, 0])} × ${this._fmtLen([0, 0], [0, r.h])}`,
+    };
+  }
+
+  /** The transform frame itself: a dashed outline and four corner handles. */
+  private _renderBackdropFrame(view: { x: number; y: number; w: number; h: number }): TemplateResult | typeof nothing {
+    const r = this._bdRect;
+    if (!this._bdActive || !r) return nothing;
+    // finger-sized in SCREEN terms: a fraction of the visible view, so the
+    // handle stays grabbable at any zoom (the same rule the vacuum fit uses)
+    const hr = Math.max(view.w, view.h) * 0.02;
+    const corners: [number, number, string][] = [
+      [-1, -1, 'nwse'], [1, -1, 'nesw'], [1, 1, 'nwse'], [-1, 1, 'nesw'],
+    ];
+    return svg`<g class="bdframe">
+      <rect class="bdbox" x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}"></rect>
+      ${corners.map(([sx, sy, cur]) => svg`<circle
+        class="bdhandle bd-${cur}" data-corner="${sx + ',' + sy}"
+        cx="${sx < 0 ? r.x : r.x + r.w}" cy="${sy < 0 ? r.y : r.y + r.h}" r="${hr.toFixed(1)}"
+        @pointerdown=${(e: PointerEvent) => {
+          e.stopPropagation(); e.preventDefault(); this._bdStart(e, [sx, sy]);
+        }}></circle>`)}
+    </g>` as unknown as TemplateResult;
   }
 
   private _renderDecorLayer(): TemplateResult {
@@ -3346,6 +3646,9 @@ class HouseplanCard extends LitElement {
   private _renderDecorBar(): TemplateResult {
     const tools = [
       ['select', 'mdi:cursor-default-outline', 'decor.select'],
+      // moving the picture is a TOOL (docs/BACKDROP.md §2) — offered only when
+      // there IS a picture, so a hand-drawn space's bar is unchanged
+      ...(this._bdRect ? [['backdrop', 'mdi:image-move', 'decor.backdrop'] as const] : []),
       ['line', 'mdi:vector-line', 'decor.line'],
       ['rect', 'mdi:rectangle-outline', 'decor.rect'],
       ['ellipse', 'mdi:ellipse-outline', 'decor.ellipse'],
@@ -3355,8 +3658,8 @@ class HouseplanCard extends LitElement {
     return html`<div class="editbar decorbar">
       <ha-icon icon="mdi:draw" class="warn"></ha-icon>
       ${tools.map(
-        ([t, ic, k]) => html`<button class="btn ${this._decorTool === t ? 'on' : ''}"
-          @click=${() => { this._decorTool = t; this._decorDraft = null; }}
+        ([t, ic, k]) => html`<button class="btn dtool ${this._decorTool === t ? 'on' : ''}"
+          @click=${() => { this._decorTool = t as typeof this._decorTool; this._decorDraft = null; }}
           title=${this._t(k)}>
           <ha-icon icon=${ic}></ha-icon><span class="ml">${this._t(k)}</span>
         </button>`,
@@ -3373,7 +3676,21 @@ class HouseplanCard extends LitElement {
       <label class="dfill"><input type="checkbox" .checked=${this._decorStyle.fill}
         @change=${(e: Event) => (this._decorStyle = { ...this._decorStyle, fill: (e.target as HTMLInputElement).checked })} />
         ${this._t('decor.fill')}</label>
+      ${''/* the picture's own affordance: only offered once it HAS been moved,
+             so an untouched plan gains no button and no explaining to do.
+             NOT while a gesture is live — this bar sits above the stage, and a
+             button appearing mid-drag changes the stage's height, i.e. how
+             many plan units a screen pixel is worth, under the finger. */}
+      ${this._bdMoved && !this._bdDrag
+        ? html`<button class="btn bdreset" title=${this._t('decor.backdrop_reset')}
+            @click=${() => this._bdReset()}>
+            <ha-icon icon="mdi:image-refresh-outline"></ha-icon><span class="ml">${this._t('decor.backdrop_reset')}</span>
+          </button>`
+        : nothing}
       <span class="spacer"></span>
+      ${this._bdMovable
+        ? html`<span class="bdhint">${this._t('decor.backdrop_hint')}</span>`
+        : nothing}
       <button class="btn barclose" title=${this._t('title.close_editor')}
         @click=${() => this._setMode('view')}>
         <ha-icon icon="mdi:close"></ha-icon>
@@ -3629,6 +3946,24 @@ class HouseplanCard extends LitElement {
     if (sh && sh.centered && !shift && (cx !== sh.wallCenter[0] || cy !== sh.wallCenter[1])) {
       [cx, cy] = sh.wallCenter;
       sh = openingShoulders([cx, cy], snap.angle, rlen, rooms, tol);
+    } else if (sh && !shift) {
+      // Not centred: quantise the offset ALONG the wall to the grid step
+      // (docs/CANVAS.md §9.3). Grid-BOUND would lift the opening off a diagonal
+      // wall, so the wall stays the master and the grid only says WHERE on it.
+      // The magnet is consulted first on purpose — a wall whose middle is not a
+      // node must still be able to hold a centred window.
+      const [ax, ay] = sh.wallA, [bx, by] = sh.wallB;
+      const wx = bx - ax, wy = by - ay;
+      const len = Math.hypot(wx, wy);
+      if (len > 0) {
+        const g = this._gridPitch;
+        const half = Math.min(rlen / 2, len / 2);
+        let along = Math.round((((cx - ax) * wx + (cy - ay) * wy) / len) / g) * g;
+        along = Math.max(half, Math.min(len - half, along));
+        cx = ax + (along / len) * wx;
+        cy = ay + (along / len) * wy;
+        sh = openingShoulders([cx, cy], snap.angle, rlen, rooms, tol) || sh;
+      }
     }
     if (!sh) return { x: cx, y: cy, angle: snap.angle, measure: null };
     const imperial = this.hass?.config?.unit_system?.length === 'mi';
@@ -3777,7 +4112,7 @@ class HouseplanCard extends LitElement {
   }
 
   /** Split: click the room, then two points on its walls. */
-  private _splitClick(raw: number[]): void {
+  private _splitClick(raw: number[], shift = false): void {
     const rooms = this._spaceModel().rooms;
     if (!this._splitSel) {
       const hit = [...rooms].reverse().find((r) => this._pointInRoom(raw, r));
@@ -3797,10 +4132,14 @@ class HouseplanCard extends LitElement {
     // any wall (e.g. an accidental one in the middle of the room) is a miss and
     // gets the toast, not a wall the user never meant. splitRoom() still rejects
     // any cut that is not a clean wall-to-wall chord.
+    // …and it is still QUANTISED: the offset ALONG the wall moves in whole grid
+    // steps (docs/CANVAS.md §9), which on the axis-aligned, grid-drawn walls the
+    // editor itself makes IS a grid node. Shift opts out, as everywhere else.
     const eps = this._gridPitch * 0.02;
     const pull = this._gridPitch * 6; // ≈2.5% of the plan width — generous but intentional
-    const near = closestPointOnBoundary(raw, poly);
-    const wallPt = near && Math.hypot(near[0] - raw[0], near[1] - raw[1]) <= pull ? near : null;
+    const raw0 = closestPointOnBoundary(raw, poly);
+    const near = raw0 && !shift ? (snapPointAlongPoly(raw0, poly, this._gridPitch) || raw0) : raw0;
+    const wallPt = raw0 && near && Math.hypot(raw0[0] - raw[0], raw0[1] - raw[1]) <= pull ? near : null;
     const onWall = !!wallPt && pointOnBoundary(wallPt, poly, eps);
     const cur = this._splitSel.pts;
     if (!cur.length) {
@@ -3814,7 +4153,7 @@ class HouseplanCard extends LitElement {
     }
     if (!onWall) {
       // an interior click adds an intermediate vertex of the cut path
-      const mid = this._snap(raw);
+      const mid = this._snap(raw, shift);
       if (!ptInside(mid, poly, eps)) {
         this._showToast(this._t('toast.split_pick_inside'));
         return;
@@ -3855,7 +4194,7 @@ class HouseplanCard extends LitElement {
     const drawing = this._tool === 'draw' && this._path.length && !this._contourClosed;
     const cutting = this._tool === 'split' && !!this._splitSel?.pts?.length;
     if (!drawing && !cutting) return;
-    this._cursorPt = this._snap(this._svgPoint(ev));
+    this._cursorPt = this._snap(this._svgPoint(ev), ev);
   }
 
   /**
@@ -3873,9 +4212,9 @@ class HouseplanCard extends LitElement {
       (o) => Math.hypot(raw[0] - o.rx, raw[1] - o.ry) <= Math.max(o.rlen / 2, eps),
     );
     if (hit) return null;
+    const rlen = this._cmToUnits(OPENING_DEFAULT_CM);
     const snap = snapToWall(raw, this._spaceModel().rooms, eps);
     if (!snap) return null;
-    const rlen = this._cmToUnits(OPENING_DEFAULT_CM);
     const r = this._opRuler(snap, rlen, this._opShift);
     return { x: r.x, y: r.y, angle: r.angle, rlen, measure: r.measure };
   }
@@ -4690,8 +5029,14 @@ class HouseplanCard extends LitElement {
         sp.plan_aspect = pickedAspect;
       }
       // switching an existing space to "draw" detaches its background image
-      // (the uploaded file stays on disk; only the reference is cleared)
-      if (d.source === 'draw') { sp.plan_url = null; sp.plan_aspect = null; }
+      // (the uploaded file stays on disk; only the reference is cleared).
+      // Its transform goes with it — there is nothing left for plan_x/plan_y/
+      // plan_scale to describe, and a stale one would silently apply to the
+      // NEXT picture uploaded here (docs/BACKDROP.md §1).
+      if (d.source === 'draw') {
+        sp.plan_url = null; sp.plan_aspect = null;
+        delete sp.plan_x; delete sp.plan_y; delete sp.plan_scale;
+      }
       // per-space display settings; hand-drawn spaces get borders+names on by default
       const draw = d.source === 'draw';
       sp.settings = {
@@ -4971,18 +5316,27 @@ class HouseplanCard extends LitElement {
     const stops = rayStops();
     // NO filter here, and none in <defs>. Owner 2026-08-04: «не надо размывать
     // их боковые грани» — the shaft keeps the crisp sides real light has, and
-    // the only falloff is the gradient running ALONG the ray. The tip needs no
-    // blur either: `rayStops()` is already at zero from RAY_FADE_END on, and
-    // `rayQuad()` ends the wedge on that same iso-alpha line, so the far edge
-    // has nothing left to draw. The polygons come out of `computeSunRays()`
-    // already intersected with the room, so no clip-path is needed to keep the
-    // light off the far side of a wall.
+    // the only falloff is the gradient. The tip needs no blur either:
+    // `rayStops()` is already at zero from RAY_FADE_END on, and the wedge's far
+    // edge IS the gradient's last iso-alpha line, so it has nothing left to
+    // draw. The polygons come out of `computeSunRays()` already intersected
+    // with the room, so no clip-path is needed to keep the light off the far
+    // side of a wall.
+    //
+    // DEV-EB173-01: the axis runs along the wall's INWARD NORMAL, from the
+    // window line inward, and is `r.depth` = `len·cos` long — NOT along the
+    // ray. For parallel rays the distance travelled from the glass is an
+    // affine function of the point, so its iso-alpha lines are parallel to the
+    // wall; with this axis every point `source + dir·u` lands at offset
+    // `u/len`. Whole pane at peak alpha, identical fade distance along every
+    // ray, and the parallelogram's far edge exactly on the gradient's end.
     return svg`<defs>
         ${rays.map((r, i) => {
           const mx = (r.a[0] + r.b[0]) / 2;
           const my = (r.a[1] + r.b[1]) / 2;
           return svg`<linearGradient id="hp-sun-${i}" gradientUnits="userSpaceOnUse"
-            x1="${mx}" y1="${my}" x2="${mx + r.dir[0] * r.len}" y2="${my + r.dir[1] * r.len}">
+            x1="${mx}" y1="${my}"
+            x2="${mx + r.normal[0] * r.depth}" y2="${my + r.normal[1] * r.depth}">
             ${stops.map(([off, k]) => svg`<stop offset="${(off * 100).toFixed(1)}%"
               stop-color="${color}" stop-opacity="${(alpha * k).toFixed(4)}"></stop>`)}
           </linearGradient>`;
@@ -5130,6 +5484,75 @@ class HouseplanCard extends LitElement {
       busy: false,
     };
   };
+
+  /**
+   * Preview the batch alignment (docs/CANVAS.md §9). Nothing is written here:
+   * the run is pure, so the dialog can show the exact count and the exact
+   * largest shift, and then commit the very object it measured.
+   */
+  private _openAlignDialog = (): void => {
+    if (!this._norm || !this._serverCfg) return;
+    const spaces = this._serverCfg.spaces || [];
+    const r = alignAllToGrid(spaces, this._layout || {});
+    // The dialog is a safety gate in front of an action with no undo, so the
+    // number it shows is an UPPER BOUND and not a sample. The run already
+    // measured every element in the centimetres of ITS OWN space — converting
+    // one normalised maximum through the first space's `cell_cm` understated
+    // a two-scale plan twentyfold (AUD-158B1-01) — and the last tenth is
+    // rounded UP, so the promise can never be smaller than the deed.
+    const cm = Math.ceil(r.report.maxShiftCm * 10) / 10;
+    const sp = spaces.find((x: any) => x?.id != null && String(x.id) === r.report.maxSpace);
+    const where = spaces.length > 1 && sp ? String(sp.title || sp.id) : '';
+    this._alignDialog = { report: r.report, spaces: r.spaces, layout: r.layout, cm, where, busy: false };
+  };
+
+  /**
+   * Commit it: ONE config write and ONE layout write, so a plan that ends up
+   * wrong ends up wrong exactly once and the previous state is a single undo
+   * away — by re-running nothing, because there is no undo. The dialog says so.
+   */
+  private async _runAlignToGrid(): Promise<void> {
+    const d = this._alignDialog;
+    if (!d || d.busy || !this._serverCfg) return;
+    this._alignDialog = { ...d, busy: true };
+    try {
+      this._serverCfg = { ...this._serverCfg, spaces: d.spaces };
+      this._layout = d.layout;
+      for (const id of Object.keys(d.layout)) this._dirtyPos.add(id);
+      this._modelCache = null;
+      this._frame = null;
+      await this._saveConfigNow();
+      await this._persistLayoutNow();
+      this._alignDialog = null;
+      this.requestUpdate();
+      this._showToast(this._t('gs.align_done', { n: String(d.report.moved) }));
+    } catch (e: any) {
+      if (this._alignDialog) this._alignDialog = { ...this._alignDialog, busy: false };
+      this._showToast(this._t('toast.error', { err: this._errText(e) }));
+    }
+  }
+
+  /** The debounced layout writer, awaited — the batch must not return before
+   *  the positions it promised are actually on their way. */
+  private async _persistLayoutNow(): Promise<void> {
+    if (!this._serverStorage) {
+      localStorage.setItem(LS_KEY, JSON.stringify(this._layout));
+      this._dirtyPos.clear();
+      return;
+    }
+    const ids = [...this._dirtyPos];
+    this._dirtyPos.clear();
+    await Promise.all(ids.map((id) => {
+      const pos = this._layout[id];
+      if (!pos) return Promise.resolve();
+      this._sentPos.set(id, pos);
+      return this.hass
+        .callWS({ type: 'houseplan/layout/update', device_id: id, pos })
+        .then((r: any) => this._noteLayoutRev(r))
+        .finally(() => { if (this._sentPos.get(id) === pos) this._sentPos.delete(id); });
+    }));
+    this._cacheSnapshot();
+  }
 
   private _setFillColor(key: keyof FillColors, patch: Partial<{ c: string; a: number }>): void {
     const d = this._settingsDialog!;
@@ -5310,6 +5733,45 @@ class HouseplanCard extends LitElement {
       </g>` as unknown as TemplateResult;
   }
 
+  /**
+   * The confirmation. It states the two numbers the user needs to decide —
+   * HOW MANY elements move and by HOW MUCH at most — and it says plainly that
+   * there is no undo, because there is not: the action is a single batch write
+   * and the card keeps no snapshot of what the plan looked like before.
+   */
+  private _renderAlignDialog(): TemplateResult {
+    const d = this._alignDialog!;
+    const r = d.report;
+    return html`<div class="menuwrap dialogwrap" @click=${() => (this._alignDialog = null)}>
+      <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
+        <div class="hd"><ha-icon icon="mdi:grid"></ha-icon>${this._t('gs.align_title')}</div>
+        <div class="body">
+          ${r.moved === 0
+            ? html`<p class="alignmsg">${this._t('gs.align_none')}</p>`
+            : html`
+              <p class="alignmsg">${this._t('gs.align_count', {
+                n: String(r.moved), total: String(r.total), cm: String(d.cm),
+              })}</p>
+              ${d.where
+                ? html`<p class="alignmsg">${this._t('gs.align_where', { s: d.where })}</p>`
+                : nothing}
+              ${r.rotated
+                ? html`<p class="alignmsg">${this._t('gs.align_turned', { n: String(r.rotated) })}</p>`
+                : nothing}
+              <div class="rhint">${this._t('gs.align_warn')}</div>`}
+        </div>
+        <div class="row">
+          <span class="spacer"></span>
+          <button class="btn ghost" @click=${() => (this._alignDialog = null)}>${this._t('btn.cancel')}</button>
+          ${r.moved === 0 ? nothing : html`
+            <button class="btn on" @click=${this._runAlignToGrid} ?disabled=${d.busy}>
+              <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this._t('gs.align_run')}
+            </button>`}
+        </div>
+      </div>
+    </div>`;
+  }
+
   private _renderSettingsDialog(): TemplateResult {
     return html`<div class="menuwrap dialogwrap" @click=${(e: Event) => e.stopPropagation()}>
       <div class="dialog wide" @click=${(e: Event) => e.stopPropagation()}>
@@ -5409,6 +5871,13 @@ class HouseplanCard extends LitElement {
                 (id) => html`<option value=${id}></option>`,
               )}
             </datalist>
+          </div>
+          <label class="dispsection">${this._t('gs.grid_group')}</label>
+          <div class="rhint">${this._t('gs.grid_hint')}</div>
+          <div class="colorrow gsrow">
+            <button class="btn ghost alignall" @click=${this._openAlignDialog}>
+              <ha-icon icon="mdi:grid"></ha-icon>${this._t('gs.align_all')}
+            </button>
           </div>
           <label class="dispsection">${this._t('gs.about_group')}</label>
           <div class="aboutver">${this._t('gs.about_version', { v: CARD_VERSION })}</div>
@@ -5620,6 +6089,8 @@ class HouseplanCard extends LitElement {
     const planDim = dayNight ? dayPhase(skyElevation(dayNight.elevation)).planDim : 0;
     // opening rulers: the drag of an existing one OR the placement preview
     const opMeasure = this._opMeasureView;
+    const decorMeasure = this._decorMeasure;
+    const bdLive = this._bdLive;
 
     return html`
       <ha-card>
@@ -5695,7 +6166,7 @@ class HouseplanCard extends LitElement {
         ${this._markup ? this._renderMarkupBar() : this._mode === 'devices' ? this._renderDevicesBar() : this._mode === 'decor' ? this._renderDecorBar() : nothing}
         </div>
 
-        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'openwall' && this._openWallHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${dayNight ? ' daynight' : ''}${dayNight && this._skySnap ? ' skysnap' : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}"
+        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'openwall' && this._openWallHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._bdMovable ? ' bdgrab' : ''}${this._bdDrag ? ' bdgrabbing' : ''}${dayNight ? ' daynight' : ''}${dayNight && this._skySnap ? ' skysnap' : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}"
           style="height:${this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}${stageBg ? `;background:${stageBg}` : ''}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
@@ -5706,25 +6177,27 @@ class HouseplanCard extends LitElement {
           <div class="zoomwrap ${this._slide ? 'slide-' + this._slide : ''}"
             style="${dayNight ? `filter:brightness(${(1 - planDim).toFixed(3)})` : ''}">
           <svg viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="xMidYMid meet">
-            ${(() => {
-              // opaque paper: the image rect for image plans, the room
-              // contours for drawn ones (owner: no white square around an
-              // L-shaped house — the scene bg reaches the exterior walls).
-              // `space` comes from _renderCfg, so a live resize preview
-              // (_rszPreview) moves the paper together with the rooms.
-              // One <g> around ALL paper shapes: the daynight drop shadow
-              // (styles.ts) is composited once for the whole sheet, so
-              // adjacent rooms never cast seams onto each other's paper.
-              if (space.bg) {
-                const pp = this._paperRect(space)!;
-                return svg`<g class="hp-paperg"><rect class="hp-paper" x="${pp.x}" y="${pp.y}" width="${pp.w}" height="${pp.h}" pointer-events="none"></rect></g>`;
-              }
-              return svg`<g class="hp-paperg">${paperRoomShapes(space.rooms).map((sh) =>
-                'poly' in sh
-                  ? svg`<polygon class="hp-paper" points="${sh.poly}" pointer-events="none"></polygon>`
-                  : svg`<rect class="hp-paper" x="${sh.rect.x}" y="${sh.rect.y}" width="${sh.rect.w}" height="${sh.rect.h}" rx="${sh.rect.rx}" pointer-events="none"></rect>`,
-              )}</g>`;
-            })()}
+            ${''/* THE PAPER IS THE ROOMS (docs/BACKDROP.md §3, owner
+                   2026-08-04). Opaque shapes stop the scene background —
+                   bg_color or the 'daynight' sky — from bleeding through the
+                   plan. They follow the ROOM CONTOURS and nothing else: one
+                   shape per room in exactly the room's own geometry, so an
+                   L-shaped house or a pair of detached buildings never grows a
+                   white bounding rectangle, and an empty space has no paper at
+                   all. A backdrop image no longer makes paper of its own — it
+                   is drawn ON this sheet, one layer below the geometry, so a
+                   picture with transparency and no rooms under it shows the
+                   scene through, which is the deliberate consequence.
+                   `space` comes from _renderCfg, so a live resize preview
+                   (_rszPreview) moves the paper together with the rooms.
+                   One <g> around ALL paper shapes: the daynight drop shadow
+                   (styles.ts) is composited once for the whole sheet, so
+                   adjacent rooms never cast seams onto each other's paper. */}
+            ${svg`<g class="hp-paperg">${paperRoomShapes(space.rooms).map((sh) =>
+              'poly' in sh
+                ? svg`<polygon class="hp-paper" points="${sh.poly}" pointer-events="none"></polygon>`
+                : svg`<rect class="hp-paper" x="${sh.rect.x}" y="${sh.rect.y}" width="${sh.rect.w}" height="${sh.rect.h}" rx="${sh.rect.rx}" pointer-events="none"></rect>`,
+            )}</g>`}
             ${this._editing ? this._renderMarkupDefs(vb) : nothing}
             ${''/* the grid is a property of the plane, not of a box: it follows
                    the VIEW so it is there wherever you pan (docs/CANVAS.md §7) */}
@@ -5833,6 +6306,11 @@ class HouseplanCard extends LitElement {
             ${this._markup ? this._renderMarkupLayer(vb) : nothing}
             ${this._renderOpenings(disp)}
             ${this._markup && this._tool === 'resize' ? this._renderResizeLayer(view) : nothing}
+            ${''/* editor chrome, not plan content: the backdrop frame sits on
+                   top of everything the plan draws so its handles stay
+                   grabbable (docs/BACKDROP.md §2). It exists only in the
+                   backdrop editor, where rooms and devices are pointer-inert. */}
+            ${this._renderBackdropFrame(view)}
           </svg>
           ${''/* docs/CANVAS.md §6: an icon is a percentage of the PLAN and
                  scales with it when you zoom — the behaviour the card always
@@ -5867,6 +6345,16 @@ class HouseplanCard extends LitElement {
                 class="measurelabel opshoulder"
                 style="left:${(((l.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((l.y - view.y) / view.h) * 100).toFixed(2)}%">${l.text}</div>`)}</div>`
             : nothing}
+          ${decorMeasure
+            ? html`<div class="measurelayer"><div
+                class="measurelabel dmeasure ${decorMeasure.on45 ? 'on45' : ''}"
+                style="left:${(((decorMeasure.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((decorMeasure.y - view.y) / view.h) * 100).toFixed(2)}%">${decorMeasure.text}</div></div>`
+            : nothing}
+          ${bdLive
+            ? html`<div class="measurelayer"><div
+                class="measurelabel bdmeasure"
+                style="left:${(((bdLive.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((bdLive.y - view.y) / view.h) * 100).toFixed(2)}%">${bdLive.text}</div></div>`
+            : nothing}
           </div>
           ${this._zoom > 1
             ? html`<div class="zoombadge">${Math.round(this._zoom * 100)}%</div>`
@@ -5890,6 +6378,7 @@ class HouseplanCard extends LitElement {
         ${this._infoCard ? this._renderInfoCard() : nothing}
         ${this._rulesDialog ? this._renderRulesDialog() : nothing}
         ${this._settingsDialog ? this._renderSettingsDialog() : nothing}
+        ${this._alignDialog ? this._renderAlignDialog() : nothing}
         ${this._importDialog ? this._renderImportDialog() : nothing}
         ${this._tip
           ? html`<div class="tip" style="left:${this._tip.x + 12}px;top:${this._tip.y + 12}px">
@@ -6677,7 +7166,9 @@ class HouseplanCard extends LitElement {
     if (saved && saved.s === spaceId) {
       return { x: saved.x * NORM_W, y: saved.y * NORM_W };
     }
-    const c = this._roomCenter(r);
+    // a label nobody has dragged sits at the room's CENTROID, which is not a
+    // node for an odd-sized or polygonal room — put it on the nearest one
+    const c = this._snap(this._roomCenter(r));
     return { x: c[0], y: c[1] };
   }
 
@@ -6703,10 +7194,12 @@ class HouseplanCard extends LitElement {
     const dx = ((ev.clientX - this._drag.sx) / rect.width) * v.w;
     const dy = ((ev.clientY - this._drag.sy) / rect.height) * v.h;
     if (Math.abs(ev.clientX - this._drag.sx) + Math.abs(ev.clientY - this._drag.sy) > 3) this._drag.moved = true;
-    const m = Math.min(vb[2], vb[3]) * 0.008;
-    const nx = Math.max(vb[0] + m, Math.min(vb[0] + vb[2] - m, this._drag.ox + dx));
-    const ny = Math.max(vb[1] + m, Math.min(vb[1] + vb[3] - m, this._drag.oy + dy));
-    this._savePos({ id, space: spaceId } as DevItem, nx, ny);
+    // DEV-B58-01, and worse than the marker's: this clamped to the space's
+    // STORED view_box, which for every existing plan is the old unit square.
+    // A room drawn at 2.5 had a name that could not be dragged to its own room.
+    const nx = clampCanvasR(this._drag.ox + dx);
+    const ny = clampCanvasR(this._drag.oy + dy);
+    this._savePos({ id, space: spaceId } as DevItem, nx, ny, ev.shiftKey);
   }
 
   private _labelUp(r: RoomCfg): void {
@@ -6884,6 +7377,41 @@ class HouseplanCard extends LitElement {
     const on45 = is45(deg);
     return html`<div class="measurelabel ${on45 ? 'on45' : ''}" style="left:${left}%;top:${top}%">
       ${this._fmtLen(a, b)} · ${shown}°</div>`;
+  }
+
+  /**
+   * Live size badge for the shape being drawn in the BACKGROUND (decor)
+   * editor — owner 2026-08-04: «в редакторе подложки у линий писать длину,
+   * как при рисовании комнат в редакторе плана».
+   *
+   * A line gets exactly what a wall gets while a plan is drawn: length ·
+   * angle in the HA unit system, green on a 45° multiple — the same
+   * `_fmtLen` (`segmentCm` over `cell_cm`), the same `.measurelabel`. The
+   * only difference is WHERE it sits: a wall badge follows the cursor
+   * because the cursor is the wall's free end, while a decor line is pulled
+   * out by both ends at once, so its badge rides the MIDDLE of the segment
+   * (owner: «плашка на середине линии»).
+   *
+   * Rectangles and ellipses have no "length", but they do have a size, and
+   * the same two calls answer it: «W × H» of the bounding box. A draft that
+   * has not moved yet (the pointerdown before the drag) shows nothing —
+   * a «0» badge under the cursor is noise, not a measurement.
+   */
+  private get _decorMeasure(): { x: number; y: number; text: string; on45: boolean } | null {
+    const d = this._decorDraft;
+    if (!d || this._mode !== 'decor') return null;
+    const [ax, ay] = d.a;
+    const [bx, by] = d.b;
+    if (Math.abs(ax - bx) < 1e-6 && Math.abs(ay - by) < 1e-6) return null;
+    const x = (ax + bx) / 2;
+    const y = (ay + by) / 2;
+    if (d.kind === 'line') {
+      const deg = segmentAngle(d.a, d.b);
+      return { x, y, on45: is45(deg),
+        text: `${this._fmtLen(d.a, d.b)} · ${Math.round(deg * 10) / 10}°` };
+    }
+    return { x, y, on45: false,
+      text: `${this._fmtLen([ax, ay], [bx, ay])} × ${this._fmtLen([bx, ay], [bx, by])}` };
   }
 
   // ================= alignment guides (smart guides) =================

@@ -305,7 +305,168 @@ do). It fits `core` — the same rectangle the plan opens with. Far
 objects are reached through the outlier hint's **Show** action, which
 fits `all`.
 
+## §9 Drag limits and the snap contract (dev, DEV-B58)
+
+### 9.1 One bound, and it is the backend's
+
+v1.57.0 freed the FRAME and the DRAWING, but not the drag handlers. Two
+of them still clamped, and the owner and a user hit both:
+
+| Handler | Old clamp | Effect |
+| --- | --- | --- |
+| `_pointerMove` (device marker) | `_baseVb()` ± a 0.8 % inset — the CONTENT FRAME | a marker could never be dragged past the outline of what was already drawn, so a plan could not be extended by putting a device where the next room was going to be |
+| `_labelMove` (room label) | `_spaceModel().vb` — the space's STORED `view_box` | worse: that is `[0,0,1,1]` for every plan the card has ever written, i.e. literally the old square. A room drawn at 2.5 had a name that could not reach its own room |
+| `_decorCommitDraft` / decor text anchor | *none at all* | asymmetric with `_decorMoveUpdate`, which did clamp — a draft could be born outside the range the mover then refused to leave |
+
+The rule now: **an editor gesture has exactly one bound, `±CANVAS_LIMIT`
+(±5000 normalised, ±`SANE_LIMIT` in render units), and it is the same
+number `validation.py` enforces.** It is a garbage limit — insurance
+against a stored `1e100` — and never a frame. `clampCanvasR` /
+`clampCanvasN` (`space-geometry.ts`) are the only two functions that may
+impose it, and `_snap()` applies `clampCanvasR` on the way out, so every
+gesture that goes through the snap is bounded by construction.
+
+Room drawing, split, resize and opening placement had no clamp before
+and still have none of their own — they inherit it from `_snap()` /
+`clampCanvasN` at the write.
+
+### 9.2 The grid step never changed
+
+`_gridPitch = NORM_W / GRID_N = 1000 / 240`. Both constants; neither
+depends on the content frame, the view, the zoom, `view_box`, or
+`cell_cm`. `git log -S` confirms neither has been touched since v1.4.0
+(the one historical change, `GRID_N` 120 → 240, halved the step, so the
+old nodes stayed a subset of the new ones and every position was
+preserved).
+
+**So the infinite canvas did NOT move any existing element off the
+grid.** `gridLevels()` (§7) chooses which multiples of that pitch are
+still legible at the current zoom — it changes what is DRAWN, never what
+is SNAPPED TO. An element that looks off-grid is off-grid because it was
+placed by something that never snapped, not because the lattice moved.
+
+### 9.3 What snaps, and to what
+
+Two kinds of element, because a door rounded to a grid node while its
+wall runs diagonally is broken geometry, not a tidy plan:
+
+**GRID-BOUND — rounded to the nearest node:**
+
+| Element | Where |
+| --- | --- |
+| the backdrop picture: move (its top-left corner) and corner scale (the dragged corner, along the longer side) | `_bdMove` → `_snap` / `snapToGrid` (docs/BACKDROP.md §5) |
+| room vertices (draw tool) | `_markupClick` → `_snap` |
+| split tool's interior vertices | `_splitClick` → `_snap` |
+| resize edge drag / corner scale | `_rszMove` → `_snap` |
+| decor draft endpoints, text anchor | `_decorPointerDown` / `_stagePointerMove` → `_snap` |
+| decor move | `_decorMoveUpdate` → `_snap` of the resulting ANCHOR |
+| device markers | `_savePos` |
+| room labels | `_labelMove` → `_savePos` |
+| auto-placed markers (`defaultPositions`), the `spaceCenter` fallback, an undragged room label | `snapPt` |
+
+**WALL-BOUND — projected onto the wall, then the offset ALONG the wall
+quantised to the same step, measured from the wall's first corner:**
+
+| Element | Where |
+| --- | --- |
+| openings, placed and dragged | `snapToWall(..., { step, length })` |
+| split tool's points ON a wall | `snapPointAlongPoly` |
+
+On an axis-aligned wall whose corners are on the grid — every wall the
+editor itself draws — the two rules give the same point. An opening is
+also kept inside its wall by half its own length.
+
+Three things were fixed here besides the new coverage:
+
+* `_decorMoveUpdate` used to snap the **delta**, which preserves any
+  off-grid offset the shape already had for ever, one step at a time.
+  It snaps the resulting anchor now, so one drag is enough.
+* `defaultPositions` / `labelPos` / the `spaceCenter` fallback placed
+  auto elements at centroids, which are not nodes for an odd-sized or
+  polygonal room. These were the most likely source of "some elements
+  are between the points" on an untouched plan.
+* `snapToGrid` and `snapR` now return a value that is already on a node
+  **bit-identical**. The round trip through a non-dyadic pitch
+  (1000/240) otherwise turns an exact `500` into `500.00000000000006`,
+  and "is this on the grid?" starts answering no.
+
+### 9.4 Shift
+
+`Shift` suspends the snap for the duration of the gesture, everywhere:
+`_snap(p, ev)` reads `ev.shiftKey`, `_savePos(..., shift)` takes it, and
+`snapToWall` is called without `step` when it is held. It keeps its two
+older meanings too — it opts out of the opening's centre magnet, and it
+turns the compass to coarse 15° steps.
+
+### 9.5 «Выровнять всё по сетке» — an ACTION, not a migration
+
+Existing plans may hold coordinates between the nodes. The card does
+**not** round them on update. Instead, general settings grow a **Grid**
+group with one button; it opens a confirmation that states how many
+elements will move and by how much at most, warns that there is no undo,
+and only then writes.
+
+Why an action rather than a silent migration:
+
+1. It moves the user's data without asking. A house plan is a drawing;
+   the card has no mandate to redraw it on a version bump.
+2. Some elements are off-grid **on purpose** — a small decor label
+   nudged next to an icon, a window on a diagonal wall, a plan traced
+   over a photo whose scale was never a whole number of cells.
+3. A silent migration is unattributable. When a room looks 3 cm wrong
+   the owner cannot tell whether the card did it or they did.
+4. An update that touches stored geometry cannot be rolled back by
+   downgrading the card. An action can simply not be pressed.
+
+`alignAllToGrid(spaces, layout)` (`src/align-grid.ts`) is pure: it
+copies its input, never mutates it, and returns the new spaces, the new
+layout and the report. The dialog therefore measures and commits the
+**same object** — the numbers it promises cannot differ from what it
+does. The write is one `config/set` plus the layout updates, in one go.
+
+Guarantees, all covered by `test/align-grid.test.mjs`:
+
+* every grid-bound element ends on a node; a rect's FAR corner too (a
+  snapped *size* on an off-grid origin leaves the other side between
+  the nodes);
+* an opening ends on its wall, at whole steps along it, inside it, and
+  **with the wall's own angle** — the angle is written, so it is part of
+  the diff (AUD-158B1-02: an opening already on its wall with a wrong
+  angle used to be returned changed inside `changed: false`, which made
+  it unfixable);
+* a stray opening with no wall within 6 steps is left exactly where it
+  is rather than teleported;
+* **idempotent**: a second run reports `moved: 0`, `changed: false`, and
+  returns objects deep-equal to the first run's;
+* the report is an **upper bound**, not a sample (AUD-158B1-01).
+
+### The report is a promise
+
+The confirmation is the only gate in front of an action with no undo, so
+`maxShift`/`maxShiftCm` must never be smaller than what the run does:
+
+* displacement is measured on the geometry **actually written back** —
+  all FOUR corners of a rect, minimum-size correction included. The two
+  corners nobody used to measure are exactly the two that can be worst:
+  they carry the X error of one side together with the Y error of the
+  other, which is √2 of either;
+* an opening is measured on its **ends**, flip-invariantly, so turning
+  it in place costs what it really costs and a 180° rewrite costs
+  nothing;
+* the maximum is accumulated in **centimetres**, each space through its
+  own `cell_cm`, and the report names the space it belongs to. One
+  normalised maximum converted through the *first* space's cell size
+  promised 2.5 cm for a vertex that moved 50 cm on a 100 cm floor;
+* the dialog rounds the last tenth **up** and, on a multi-space plan,
+  says which space the maximum is in; openings corrected in angle alone
+  are counted on a line of their own.
+
+There is no undo, and the dialog says so: the card keeps no snapshot of
+the previous geometry. Re-running the action does not undo it either —
+it is a projection, and a projection is not invertible.
+
 ## Every place that assumed the unit square
+
 
 | Place | Assumption | Decision |
 | --- | --- | --- |
@@ -321,10 +482,12 @@ fits `all`.
 | `_stagePointerMove` panned only while `zoom > 1` | below 100% the content already covered the scene, so a drag had nowhere to go | **removed** — §5, panning at every zoom |
 | `ZOOM_MIN = 0.4` | fraction of the square | `MIN_ZOOM = 1/3` of the content frame (§5) |
 | `_decorMoveUpdate` clamp `-0.25 .. 1.25` | decor may hang a quarter past the edge | clamp widened to the sane range (`+/-CANVAS_LIMIT`) — corruption insurance, not a frame |
+| `_pointerMove` clamp to `_baseVb()`, `_labelMove` clamp to `view_box` | a marker/label belongs inside the canvas | **removed** — §9.1; missed in v1.57.0 and reported by the owner |
 | static card `aspect-ratio` + `viewBox` from `space.vb` | the static card frames the square | `spaceFrame()` — same content frame as the full card |
 | `validation.py` `+/-4`, `_EXTENT <= 4`, decor `-1..2`, opening `length <= 1` | the square plus slack | §3 |
 | `safeViewBox` fallback `[0,0,1,1]` | a broken `view_box` means the square | kept — it is only the last-resort hint (§4) |
-| `fitInSquare` (image placement) | image is centred in the square | **kept** — it defines the image's own rectangle in canvas units, which is exactly what §4 wants as a content item |
+| `fitInSquare` (image placement) | image is centred in the square | **kept** — it defines the image's own rectangle in canvas units, which is exactly what §4 wants as a content item. Since v1.58.0 it is only the DEFAULT placement: `planRect()` adds the owner's `plan_x`/`plan_y`/`plan_scale` on top, and the moved rectangle is what §4 counts (docs/BACKDROP.md) |
+| image plan papers the image rect | the picture IS the sheet | **removed** in v1.58.0 — the opaque paper is the room contours in every case, and the picture is drawn on top of it (docs/BACKDROP.md §3) |
 | `_spaceH` / `_decorH` = `NORM_W` | the canvas is square | **kept** — this is the coordinate system's aspect, not a frame |
 | `_gridPitch = NORM_W / GRID_N` | grid pitch is tied to the canvas unit | **kept** — the pitch is the real-world cell (`cell_cm`), it must not change with the plan's size |
 | sun wedges / glow radii / resize maths | all in render units, relative to their own geometry | **unaffected** — verified: no `NORM_W`-relative constants |

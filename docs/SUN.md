@@ -124,11 +124,16 @@ when BOTH hold:
 
 - the sun is above the horizon (`elevation > 0`), and
 - the dot product of the wall's outward normal with the direction
-  toward the sun is positive (the sun actually faces this window).
+  toward the sun — the cosine of the angle of incidence — is above
+  `RAY_MIN_COS` = 0.05, i.e. the sun faces this window AND clears the
+  plane of its wall by ~2.9° (~87.1° of incidence). Below that there is
+  nothing to paint: glass reflects almost all of it, and the shaft's
+  perpendicular depth (`len · cos`, see «Dissolving») would be thinner
+  than the wall it came through.
 
-The wedge is a quadrilateral cast from the window's span along the
-direction AWAY from the sun (light falls inward) and cut off
-PERPENDICULAR to the ray (see «Dissolving» below), clipped by the
+The wedge is a PARALLELOGRAM: the window's span extruded by the same
+length along the direction AWAY from the sun (light falls inward), so
+its far edge is parallel to the wall, clipped by the
 room's polygon (`polyclip` intersection, the same dependency
 `src/resize.ts` already uses). Its length is `k(elevation)` in window
 lengths: ~1.75 at sunrise/sunset tapering to ~0.56 at the zenith
@@ -155,24 +160,54 @@ Two rounds with the owner on the same day:
    through a window has crisp sides. Only its reach fades.
 
 So the falloff is one-dimensional: **along the ray, from the glass
-inward, and nothing else.** The contract:
+inward, and nothing else.** Three invariants have to hold at once:
 
-- the gradient spans the FULL wedge length (`x1,y1` at the glass,
-  `x2,y2` exactly `len` away), so geometry and gradient always describe
-  the same shaft — but its stops (`rayStops()`) ease out to **zero at
-  `RAY_FADE_END` = 85 %** of that length: `1 → .86 → .60 → .32 → .10
-  → 0`. The last 15 % of every wedge is guaranteed empty, so a shaft
-  that ends in mid-air has nothing left to draw an edge with;
-- `rayQuad()` therefore ends the wedge ON an iso-alpha line of that
-  gradient: both sides are extruded until they reach the same distance
-  `len` ALONG `dir`, so the far edge is perpendicular to the RAY, not
-  parallel to the wall. This is what killed the old bright kerb. A
-  parallelogram (equal extrusion of both ends) has its far edge
-  parallel to the WALL, while the gradient's iso-alpha lines are square
-  to the sun; for any sun that does not face the glass head-on the two
-  disagree and one far corner sits at offset `1 − 0.5/k` — still lit
-  (~0.71 at a low sun, ~0.11 at a high one). That corner was the
-  straight bright kerb hanging in mid-floor;
+1. the whole pane of glass is at peak alpha — light does not start out
+   half-dark at one end of the window;
+2. every ray fades over the same distance, its own `len`;
+3. the wedge's far edge lies exactly on an iso-alpha line, so the shaft
+   dies of its gradient and never of its own outline (that visible
+   straight «bright kerb» hanging in mid-floor).
+
+**The axis of the fade is the wall's INWARD NORMAL, not the ray.**
+The light is a bundle of PARALLEL rays, so the distance a point has
+travelled from the glass is `depth / cos`, where `depth` is its
+perpendicular distance from the wall and `cos = dir·normal` is fixed
+for the whole wedge. That is an affine function of the point, and its
+level sets are straight lines PARALLEL TO THE WALL. A linear gradient
+whose axis is the normal therefore describes the travelled distance
+exactly:
+
+- `x1,y1` = the middle of the window span (any point of the glass —
+  they all have depth 0);
+- `x2,y2` = that point plus `normal · len · cos` — `SunRay.depth`, the
+  perpendicular depth a ray reaches after running the full `len`;
+- a point `source + dir·u` lands on offset `u / len`, whichever ray it
+  rode in on.
+
+Hence: the glass is all at offset 0 (invariant 1), the alpha at any
+point is a function of how far its own ray has run (invariant 2), and
+the parallelogram's far edge — parallel to the wall — IS the gradient's
+last iso-alpha line (invariant 3). The «30 % shorter» reach is then a
+fact about every SIDE of every wedge, at any sun angle.
+
+The stops (`rayStops()`) ease out to **zero at `RAY_FADE_END` = 85 %**
+of the axis: `1 → .86 → .60 → .32 → .10 → 0`. The last 15 % of every
+wedge is guaranteed empty, so a shaft that ends in mid-air has nothing
+left to draw an edge with.
+
+> **DEV-EB173-01 (fixed).** The previous attempt kept the gradient along
+> `dir` from the span's midpoint and bent the GEOMETRY to match,
+> extruding the two ends of the window by different amounts so both far
+> corners projected onto the same point of that axis. It bought
+> invariant 3 with the other two: at a grazing sun the ends of the glass
+> themselves sat at offsets ±0.879 — one of them fully transparent
+> before the shaft even started — and the two sides came out 5.41 and
+> 84.19 long (ratio 15.6), the long one 31 % LONGER than the pre-cut 64
+> rather than 30 % shorter. One linear gradient along the ray cannot
+> satisfy all three; along the normal it satisfies all three by
+> construction.
+
 - the two SIDES carry no falloff at all, on purpose. They are hard
   lines, because that is what light through a window looks like. There
   is **no filter, no `feGaussianBlur`, no `clip-path`** anywhere in the
@@ -258,10 +293,14 @@ Backend validation: string or null.
   both levels; tests in `tests_backend/test_validation.py`.
 - `demo/smoke_sun.mjs` — end-to-end behaviour against the demo rig.
 - `demo/smoke_sun_soft.mjs` — the −30 % reach and the "dissolves along
-  the ray only" contract: the gradient spans the wedge and dies at
-  85 %, the sides are sharp (no filter on the wedge, no
+  the ray only" contract: the gradient axis is the wall normal and is
+  `len · cos` long, an offset is exactly how far a ray has run, the
+  stops die at 85 %, the sides are sharp (no filter on the wedge, no
   `feGaussianBlur` at all), and at an oblique sun nothing is drawn past
-  the end of the gradient — the kerb cannot come back.
+  the end of the gradient — the kerb cannot come back. It re-runs the
+  DEV-EB173-01 grazing repro end to end (west window 80, elevation 90,
+  azimuth 190): equal sides of the nominal length, peak alpha at BOTH
+  ends of the glass, and no wedge at all below `RAY_MIN_COS`.
 - `demo/smoke_sun_live_bg.mjs` — the sky follows `sun.sun` on a plain
   `hass` tick with no reload, asserted on the COMPUTED background of the
   stage; small steps still glide, big ones catch up at once.
