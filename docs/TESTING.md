@@ -1087,3 +1087,29 @@ require hands on real hardware — they remain for the human pass.
 - [ ] **Real config regression**: a production config (e.g. the dacha, 3
       floors / 106 markers) frames bit-identically to the previous release —
       no outliers reported, no frame movement
+
+## Batch 2026-08-04 (dev, unreleased)
+
+- [ ] **Room borders have no teeth** (owner 2026-08-04): draw a room with a
+      sharp corner (a wedge with a 30-60° apex, or an L) — the corner is
+      ROUNDED off by the stroke's own radius, never a spike sticking out past
+      the two walls and never a flat bevel. Same in the plan View, in the Plan
+      editor and on the static `houseplan-space-card`; a room with OPEN
+      boundaries (its trimmed outline) has round corners too
+      [auto: smoke_render_parity, still: demo/shot_room_joins.mjs]
+- [ ] **The Background editor measures what you draw** (owner 2026-08-04, «в
+      редакторе подложки у линий писать длину»): while a decor LINE is being
+      dragged out, a badge on the MIDDLE of the segment shows «length · angle»
+      in the HA unit system (`cell_cm`, metres or feet) and turns green on a
+      45° multiple — exactly the badge a wall gets in the Plan editor. It
+      updates on every move, is absent before the drag has any length, and is
+      gone the moment the shape is committed. Rectangles and ovals show their
+      bounding box «W × H» instead [auto: smoke_decor]
+- [ ] **Grazing sunlight** (dev, audit DEV-EB173-01): with `sun_rays` on, set
+      the sun almost ALONG a wall carrying a window (e.g. a west window,
+      azimuth 190°, elevation 90° at north_deg 0). The shaft is a true
+      parallelogram — both sides exactly as long as the nominal reach, 70 % of
+      the pre-v1.57 curve — the whole pane of glass is at FULL brightness (no
+      end of the window starts out transparent), and the light fades along the
+      ray, dying out before the far edge. A sun within ~3° of the wall plane
+      (`RAY_MIN_COS`) casts nothing at all [auto: smoke_sun_soft + unit sun.test]

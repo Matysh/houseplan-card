@@ -5620,6 +5620,7 @@ class HouseplanCard extends LitElement {
     const planDim = dayNight ? dayPhase(skyElevation(dayNight.elevation)).planDim : 0;
     // opening rulers: the drag of an existing one OR the placement preview
     const opMeasure = this._opMeasureView;
+    const decorMeasure = this._decorMeasure;
 
     return html`
       <ha-card>
@@ -5866,6 +5867,11 @@ class HouseplanCard extends LitElement {
             ? html`<div class="measurelayer">${opMeasure.labels.map((l) => html`<div
                 class="measurelabel opshoulder"
                 style="left:${(((l.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((l.y - view.y) / view.h) * 100).toFixed(2)}%">${l.text}</div>`)}</div>`
+            : nothing}
+          ${decorMeasure
+            ? html`<div class="measurelayer"><div
+                class="measurelabel dmeasure ${decorMeasure.on45 ? 'on45' : ''}"
+                style="left:${(((decorMeasure.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((decorMeasure.y - view.y) / view.h) * 100).toFixed(2)}%">${decorMeasure.text}</div></div>`
             : nothing}
           </div>
           ${this._zoom > 1
@@ -6884,6 +6890,41 @@ class HouseplanCard extends LitElement {
     const on45 = is45(deg);
     return html`<div class="measurelabel ${on45 ? 'on45' : ''}" style="left:${left}%;top:${top}%">
       ${this._fmtLen(a, b)} · ${shown}°</div>`;
+  }
+
+  /**
+   * Live size badge for the shape being drawn in the BACKGROUND (decor)
+   * editor — owner 2026-08-04: «в редакторе подложки у линий писать длину,
+   * как при рисовании комнат в редакторе плана».
+   *
+   * A line gets exactly what a wall gets while a plan is drawn: length ·
+   * angle in the HA unit system, green on a 45° multiple — the same
+   * `_fmtLen` (`segmentCm` over `cell_cm`), the same `.measurelabel`. The
+   * only difference is WHERE it sits: a wall badge follows the cursor
+   * because the cursor is the wall's free end, while a decor line is pulled
+   * out by both ends at once, so its badge rides the MIDDLE of the segment
+   * (owner: «плашка на середине линии»).
+   *
+   * Rectangles and ellipses have no "length", but they do have a size, and
+   * the same two calls answer it: «W × H» of the bounding box. A draft that
+   * has not moved yet (the pointerdown before the drag) shows nothing —
+   * a «0» badge under the cursor is noise, not a measurement.
+   */
+  private get _decorMeasure(): { x: number; y: number; text: string; on45: boolean } | null {
+    const d = this._decorDraft;
+    if (!d || this._mode !== 'decor') return null;
+    const [ax, ay] = d.a;
+    const [bx, by] = d.b;
+    if (Math.abs(ax - bx) < 1e-6 && Math.abs(ay - by) < 1e-6) return null;
+    const x = (ax + bx) / 2;
+    const y = (ay + by) / 2;
+    if (d.kind === 'line') {
+      const deg = segmentAngle(d.a, d.b);
+      return { x, y, on45: is45(deg),
+        text: `${this._fmtLen(d.a, d.b)} · ${Math.round(deg * 10) / 10}°` };
+    }
+    return { x, y, on45: false,
+      text: `${this._fmtLen([ax, ay], [bx, ay])} × ${this._fmtLen([bx, ay], [bx, by])}` };
   }
 
   // ================= alignment guides (smart guides) =================

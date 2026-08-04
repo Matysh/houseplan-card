@@ -64,6 +64,19 @@ Header in View: space tabs, device count, zoom cluster. Nothing else.
   👁 "Show hidden" (local editor tool; replaced the shared show-all toggle),
   ⬡ icon rules.
 
+## Background — the decor underlay
+
+- Toolbar tools: select / line / rect / oval / text / erase, plus colour, width
+  and fill. Shapes are drag-drawn with grid snap and a live preview.
+- **Live size badge** (owner 2026-08-04): while a LINE is being dragged out, the
+  same `.measurelabel` the Plan editor puts on a wall shows «length · angle» —
+  `segmentCm` over the space's `cell_cm`, metres or feet per the HA unit system,
+  green on a 45° multiple. It rides the MIDDLE of the segment (a wall badge
+  follows the cursor because the cursor is the wall's free end; a decor line is
+  pulled out by both ends at once), updates on every move and disappears the
+  moment the shape is committed. Rectangles and ovals have no length, so they
+  show their bounding box «W × H» instead; a draft with no size shows nothing.
+
 ## Deprecations decided
 
 1. "Drag anywhere" (v1.9) — reversed by this design.

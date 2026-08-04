@@ -45,6 +45,45 @@ const res = await page.evaluate(async () => {
   c._decorDraft = { kind: 'line', a: [g, g], b: [g, g], pid: 1 };
   c._decorCommitDraft();
   out.degenerateSkipped = c._decorList.length === 3;
+  // 3b) живая плашка размера, пока фигуру ещё тянут (владелец 2026-08-04:
+  // «в редакторе подложки у линий писать длину, как при рисовании комнат в
+  // редакторе плана»). Та же .measurelabel, тот же formatLength/cell_cm.
+  const label = () => sr().querySelector('.measurelabel.dmeasure');
+  const txt = () => (label() ? label().textContent.trim() : null);
+  const cellCm = 5;                                    // cell_cm по умолчанию
+  const fmt = (px) => (((px / g) * cellCm) / 100).toFixed(2) + ' m';
+  const vw = () => c._viewOr(c._baseVb());
+  c._decorTool = 'line';
+  c._decorDraft = { kind: 'line', a: [g * 4, g * 20], b: [g * 4, g * 20], pid: 3 };
+  await c.updateComplete;
+  out.noBadgeBeforeTheDrag = !label();                 // нулевая длина — молчим
+  c._decorDraft = { ...c._decorDraft, b: [g * 16, g * 20] };   // 12 клеток вправо
+  await c.updateComplete;
+  out.lineBadgeShown = !!label();
+  // 12 клеток × 5 см = 0.60 m, угол 0° — ровно то, что пишет плашка стены
+  out.lineBadgeText = txt();
+  out.lineBadgeMatchesGeometry = txt() === fmt(g * 12) + ' · 0°';
+  // ...ровно на середине отрезка (владелец: «плашка на середине линии»)
+  out.lineBadgeAtTheMiddle = !!label() && Math.abs(
+    parseFloat(label().style.left) - ((g * 10 - vw().x) / vw().w) * 100) < 0.02;
+  // 0° кратен 45° — плашка зелёная, как у стены на 45°
+  out.badgeGreenOnAxis = !!label() && label().classList.contains('on45');
+  // косой отрезок 3-4-5: длина 5 клеток, угол 53.1° — не кратен 45°
+  c._decorDraft = { kind: 'line', a: [g * 4, g * 20], b: [g * 7, g * 24], pid: 3 };
+  await c.updateComplete;
+  out.obliqueBadge = txt() === fmt(g * 5) + ' · 53.1°';
+  out.obliqueNotGreen = !!label() && !label().classList.contains('on45');
+  // прямоугольник и овал: длины у них нет, есть габарит «Ш × В»
+  c._decorDraft = { kind: 'rect', a: [g * 4, g * 20], b: [g * 12, g * 26], pid: 3 };
+  await c.updateComplete;
+  out.rectBadgeIsSize = txt() === fmt(g * 8) + ' × ' + fmt(g * 6);
+  // отпустили — плашки нет
+  c._decorCommitDraft(); await c.updateComplete;
+  out.badgeGoneAfterRelease = !label();
+  c._curSpaceCfg.decor = c._decorList.slice(0, 3);     // назад к трём фигурам
+  c._decorTool = 'select';
+  await c.updateComplete;
+  out.stillThreeShapes = c._decorList.length === 3;
   // 4) надпись через диалог
   c._decorTextDialog = { x: 0.5, y: 0.5, text: 'Сауна', size: 'l', color: '#0000ff' };
   c._decorSaveText(); await c.updateComplete;
@@ -82,5 +121,6 @@ const res = await page.evaluate(async () => {
   out.deleteKey = c._decorList.length === n1 - 1;
   return out;
 });
-checkAll(res);
+// значение плашки зафиксировано числом: 12 клеток × cell_cm 5 = 0.60 m, 0°
+checkAll(res, { lineBadgeText: '0.60 m · 0°' });
 await finish(browser, res);

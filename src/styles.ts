@@ -1765,6 +1765,12 @@ export const cardStyles = css`
       vector-effect: non-scaling-stroke;
       pointer-events: none;
     }
+    /* the decor draft badge rides the MIDDLE of the shape, so it is centred
+       horizontally and lifted clear of the line instead of trailing the
+       cursor the way a wall badge does (owner 2026-08-04) */
+    .measurelabel.dmeasure {
+      transform: translate(-50%, -160%);
+    }
     .measurelabel.rszarea {
       transform: translate(-50%, -50%);
       background: rgba(0, 0, 0, 0.6);
