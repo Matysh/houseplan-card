@@ -2369,7 +2369,19 @@ class HouseplanCard extends LitElement {
           if (now - this._lastTap < 350) this._resetZoom();
           this._lastTap = now;
         }
-        const target = swipeTarget(dx, dy, this._zoom, this._model.map((m) => m.id), this._space);
+        // The lock is FINAL (audit DEV-1DA1-02). `_stagePointerMove` decided
+        // once, on the first movement worth the name, whether this gesture is
+        // a swipe or a pan — and the release may not overturn it. Until this
+        // the release asked `swipeTarget()` again from the raw start→end
+        // vector, so a CURVED gesture (a small vertical lead-in that locks
+        // 'pan', then a long horizontal sweep) dragged the plan under the
+        // finger and still landed on another storey when it lifted. A pan is
+        // a pan to the end: no floor change, whatever the overall vector
+        // happens to look like. A motionless tap never locks anything, so the
+        // double-tap zoom reset above is untouched.
+        const target = this._panLock === 'pan'
+          ? null
+          : swipeTarget(dx, dy, this._zoom, this._model.map((m) => m.id), this._space);
         if (target) {
           // the plan follows the finger: swiping left brings the next one in
           // from the right, so the current one leaves to the left

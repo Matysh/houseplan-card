@@ -197,6 +197,16 @@ was silently excluded from the frame).
   the gesture is classified once, on the first movement past 8 px, and
   keeps that role until the finger lifts (`_panLock`), so the plan
   never slides under a swipe and a vertical drag still pans.
+* **The lock is final, at the release too** (audit DEV-1DA1-02). The
+  release used to ask `swipeTarget()` again from the raw start→end
+  vector, ignoring the lock — so a *curved* gesture (a short vertical
+  lead-in that locks `pan`, then a long horizontal sweep) dragged the
+  plan under the finger and still landed on another storey when it
+  lifted: the worst kind of surprise on a wall tablet. `_panLock ===
+  'pan'` now means no floor change, whatever the overall vector ends up
+  looking like; only a gesture locked as `swipe` may reach
+  `swipeTarget()`, and it never pans on the way. A motionless tap locks
+  nothing, so the double-tap zoom reset is untouched.
 * **"Home is that way" arrow** — when the content frame is entirely
   outside the current view, a small pointer appears at the view edge
   in the frame's direction. Clicking it fits the content. Cheap

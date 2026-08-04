@@ -1065,6 +1065,17 @@ require hands on real hardware — they remain for the human pass.
       editor moves the device, an opening slides along its wall — none of them
       pan), two fingers still pinch, and on a kiosk screen a horizontal drag
       is still the floor swipe (a vertical one pans) [auto: smoke_pan_any_zoom]
+- [ ] **Kiosk: a pan stays a pan to the very end** (dev, audit DEV-1DA1-02):
+      on a wall tablet at 100 % start a drag with a small VERTICAL lead-in
+      (the plan starts following the finger — the gesture is locked as `pan`),
+      then curve it far to the left or right and lift. The floor must NOT
+      change: the decision taken on the first movement is final, and only a
+      gesture locked as a swipe may switch storeys. Mirror check: a horizontal
+      lead-in locks the swipe — the plan never slides under it, and if the
+      trajectory then bends vertically and no longer qualifies as a swipe, the
+      gesture simply does nothing (it does not turn into a pan). Straight
+      swipes still switch, straight vertical drags still pan, a motionless
+      double tap still resets the zoom [auto: smoke_kiosk_pan_lock]
 - [ ] **Adaptive grid** (§7): in the Plan editor zoomed far out the grid does
       not merge into a grey wash — fine dots thin out, every 5th/10th node
       stays bigger; zoomed in the grid is the usual one and snapping still
