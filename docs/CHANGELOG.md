@@ -22,8 +22,6 @@ lifecycle, plus wall fill colour under the hatch.
 - **Warm owner vs pending nav (AUD-159B6-04):** adopting a warm viewport clears
   the global LS pending mode so a neighbour card cannot overwrite the owner's
   editor and draft.
-- **Release gate (AUD-159B6-05):** the Release workflow waits for a green
-  Validate of the exact commit before uploading the asset.
 - **Smoke / inventory hygiene (AUD-159B6-06):** two-click openwall fixtures,
   island-by-id, render-perf hook on `_openPairs` / `_buildModel`, inventory
   counts `test` and `it`.

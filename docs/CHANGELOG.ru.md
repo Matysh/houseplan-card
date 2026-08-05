@@ -27,7 +27,6 @@
   frontend fail-soft отбрасывает битые записи.
 - **Warm owner vs pending nav (AUD-159B6-04):** принятие warm viewport сбрасывает
   глобальный pending mode из LS.
-- **Release gate (AUD-159B6-05):** Release ждёт зелёный Validate точного SHA.
 - **Smoke / inventory (AUD-159B6-06):** двухкликовые фикстуры, island по id,
   inventory считает `test` и `it`.
 
