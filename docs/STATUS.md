@@ -148,6 +148,11 @@
 
 ## Open items / watchlist
 
+0. **Full project audit (2026-08-05)** — pack at [`docs/AUDIT.md`](AUDIT.md)
+   (market, quality, functional integrity, prioritized recommendations). Key
+   takeaway: engineering depth is strong; **easy-floorplan ≈430★** is now the
+   traction threat; P0s are demo GIF + forum posts + write-policy UI↔API align.
+   Agents: read the pack before proposing features or refactors.
 1. **hacs/default PR #9004** — accepted by the bot into the review queue ('New default
    repository' label). Minor issues ⇒ the bot drafts the PR (fix and re-ready).
 2. GitHub auth: fine-grained PAT (Contents R/W, issued 2026-07-23) in the sandbox
