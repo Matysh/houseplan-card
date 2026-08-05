@@ -233,6 +233,20 @@ def test_space_display_settings():
         v.SPACE_SCHEMA(bad_mode)
 
 
+def test_hide_layer_settings():
+    """«Скрыть декоративный слой» / «Скрыть проёмы»: optional, strictly bool."""
+    base = {"id": "f1", "title": "F", "view_box": [0, 0, 1, 1], "rooms": []}
+    # absent — every plan written before 2026-08-05 still validates
+    v.SPACE_SCHEMA(dict(base, settings={}))
+    v.SPACE_SCHEMA(dict(base, settings={"hide_decor": True, "hide_openings": True}))
+    v.SPACE_SCHEMA(dict(base, settings={"hide_decor": False, "hide_openings": False}))
+    for bad in ("yes", 1, None, [], {}):
+        with pytest.raises(vol.Invalid):
+            v.SPACE_SCHEMA(dict(base, settings={"hide_decor": bad}))
+        with pytest.raises(vol.Invalid):
+            v.SPACE_SCHEMA(dict(base, settings={"hide_openings": bad}))
+
+
 def test_bg_color_setting():
     """Background-around-the-plan color: strict #rrggbb, globally and per space."""
     ok_space = {
@@ -1236,3 +1250,68 @@ def test_decor_text_block_scale_and_angle():
         cfg({"size": "xxl"})
     # a multi-line label round-trips with its newlines intact
     assert cfg({"text": "Гараж\nпод ключ"})["spaces"][0]["decor"][0]["text"] == "Гараж\nпод ключ"
+
+
+def test_decor_furniture():
+    """docs/FURNITURE.md: a piece of furniture is a decor shape with a symbol
+    id, a normalised box and an optional rotation. Additive — a plan without
+    one validates byte-for-byte as before, and no migration runs."""
+    base = {"id": "s1", "title": "S", "view_box": [0, 0, 1, 1], "rooms": []}
+    f = {"id": "f1", "kind": "furniture", "symbol": "sofa",
+         "x": 0.2, "y": 0.3, "w": 0.18, "h": 0.075}
+
+    def cfg(extra):
+        return v.CONFIG_SCHEMA({"spaces": [{**base, "decor": [{**f, **extra}]}]})
+
+    # --- accepted, and round-trips unchanged ------------------------------
+    assert cfg({})["spaces"][0]["decor"][0] == f
+    out = cfg({"angle": 90, "color": "#607d8b", "width": 3})["spaces"][0]["decor"][0]
+    assert out["angle"] == 90 and out["color"] == "#607d8b" and out["width"] == 3.0
+    assert cfg({"angle": -360}) and cfg({"angle": 360}) and cfg({"angle": 12.5})
+    # a symbol this backend has never heard of is still SAVED: the card may
+    # learn a new one before the integration does, and a plan must not be
+    # refused for being newer than the server reading it
+    assert cfg({"symbol": "hovercraft"})["spaces"][0]["decor"][0]["symbol"] == "hovercraft"
+    # the canvas is unbounded, so a piece may live outside the old unit square
+    assert cfg({"x": -3.5, "y": 4.25})
+
+    # --- refused ----------------------------------------------------------
+    for bad in ("", "Sofa", "sofa bed", "sofa-bed", "x" * 33, 5, None, True):
+        with pytest.raises(vol.Invalid):
+            cfg({"symbol": bad})
+    for bad in (0, -1, float("nan"), float("inf"), v.CANVAS_LIMIT + 1):
+        with pytest.raises(vol.Invalid):
+            cfg({"w": bad})
+        with pytest.raises(vol.Invalid):
+            cfg({"h": bad})
+    for bad in (361, -361, float("nan")):
+        with pytest.raises(vol.Invalid):
+            cfg({"angle": bad})
+    for bad in (float("nan"), v.CANVAS_LIMIT + 1, -v.CANVAS_LIMIT - 1):
+        with pytest.raises(vol.Invalid):
+            cfg({"x": bad})
+    # the box is REQUIRED: a piece of furniture without a size is not a shape
+    for missing in ("symbol", "x", "y", "w", "h"):
+        broken = {k: val for k, val in f.items() if k != missing}
+        with pytest.raises(vol.Invalid):
+            v.CONFIG_SCHEMA({"spaces": [{**base, "decor": [broken]}]})
+
+
+def test_decor_furniture_does_not_disturb_the_other_kinds():
+    """The new branch is an addition to `vol.Any`, so every shape that
+    validated before validates identically, and a `kind` nobody knows is still
+    refused rather than quietly stored."""
+    base = {"id": "s1", "title": "S", "view_box": [0, 0, 1, 1], "rooms": []}
+    shapes = [
+        {"id": "a", "kind": "line", "x1": 0, "y1": 0, "x2": 1, "y2": 1},
+        {"id": "b", "kind": "rect", "x": 0, "y": 0, "w": 0.5, "h": 0.5},
+        {"id": "c", "kind": "ellipse", "x": 0, "y": 0, "w": 0.5, "h": 0.5},
+        {"id": "d", "kind": "text", "x": 0.5, "y": 0.5, "text": "Hall"},
+        {"id": "e", "kind": "furniture", "symbol": "toilet",
+         "x": 0.1, "y": 0.1, "w": 0.03, "h": 0.06},
+    ]
+    out = v.CONFIG_SCHEMA({"spaces": [{**base, "decor": shapes}]})
+    assert out["spaces"][0]["decor"] == shapes
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA({"spaces": [{**base, "decor": [
+            {"id": "z", "kind": "hologram", "x": 0, "y": 0, "w": 1, "h": 1}]}]})

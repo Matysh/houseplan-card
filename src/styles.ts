@@ -895,7 +895,11 @@ export const cardStyles = css`
     .stage.mode-decor.dtool-rect .decorlayer .dshape,
     .stage.mode-decor.dtool-ellipse .decorlayer .dshape,
     .stage.mode-decor.dtool-text .decorlayer .dshape,
+    .stage.mode-decor.dtool-furniture .decorlayer .dshape,
     .stage.mode-decor.dtool-backdrop .decorlayer .dshape { pointer-events: none; }
+    /* the furniture tool is a stamp: the press must reach the stage even when
+       it lands on a sofa that is already there (docs/FURNITURE.md §4) */
+    .stage.mode-decor.dtool-furniture { cursor: copy; }
     /* ONE exception (owner, 2026-08-04): under the TEXT tool an existing LABEL
        is a target again — pressing it opens its editor instead of starting a
        new label on top of the old one. Only labels: a line or a rectangle
@@ -936,14 +940,23 @@ export const cardStyles = css`
       pointer-events: none;
       opacity: 0.9;
     }
+    /* the HIT circle: invisible, finger-sized, the only thing that takes a
+       pointer. The visible bead is .bdknob, a quarter of its radius — the same
+       visual/hit split .dthandle + .dtknob and .rszhandle + .rszicon use. */
     .bdframe .bdhandle {
-      fill: var(--hp-accent);
-      stroke: #fff;
-      stroke-width: 1.5;
-      vector-effect: non-scaling-stroke;
+      fill: transparent;
+      stroke: none;
       pointer-events: all;
       touch-action: none;
     }
+    .bdframe .bdknob {
+      fill: var(--hp-accent);
+      stroke: #fff;
+      stroke-width: 1;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
+    .bdframe .bdhandle:hover + .bdknob { fill: #fff; stroke: var(--hp-accent); }
     .bdframe .bd-nwse { cursor: nwse-resize; }
     .bdframe .bd-nesw { cursor: nesw-resize; }
     /* the picture itself is the drag target for a move (grab, then grabbing) */
@@ -973,14 +986,23 @@ export const cardStyles = css`
       pointer-events: none;
       opacity: 0.85;
     }
+    /* the HIT circle: invisible, finger-sized, the only thing that takes a
+       pointer. The visible bead is .dtknob, a quarter of its radius — the
+       same visual/hit split .rszhandle + .rszicon use. */
     .dtframe .dthandle {
-      fill: var(--hp-accent);
-      stroke: #fff;
-      stroke-width: 1.5;
-      vector-effect: non-scaling-stroke;
+      fill: transparent;
+      stroke: none;
       pointer-events: all;
       touch-action: none;
     }
+    .dtframe .dtknob {
+      fill: var(--hp-accent);
+      stroke: #fff;
+      stroke-width: 1;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
+    .dtframe .dthandle:hover + .dtknob { fill: #fff; stroke: var(--hp-accent); }
     .dtframe .dt-nwse { cursor: nwse-resize; }
     .dtframe .dt-nesw { cursor: nesw-resize; }
     .dtframe .dtrot { cursor: grab; }
@@ -1857,15 +1879,20 @@ export const cardStyles = css`
     .rszhalo { stroke: var(--hp-bg); stroke-width: 6; }
     .rszink { stroke: var(--hp-accent); stroke-width: 2; }
     .rszhandle:hover + .rszicon .rszink { stroke-width: 3; }
-    /* corner (scale-frame) handles keep the classic filled circle */
+    /* corner (scale-frame) handles: hit circle invisible, .rszknob is the bead */
     .rszcorner {
+      fill: transparent;
+      stroke: none;
+      cursor: nwse-resize;
+    }
+    .rszknob {
       fill: var(--hp-bg);
       stroke: var(--hp-accent);
       stroke-width: 2;
       vector-effect: non-scaling-stroke;
-      cursor: nwse-resize;
+      pointer-events: none;
     }
-    .rszcorner:hover { fill: var(--hp-accent); }
+    .rszcorner:hover + .rszknob { fill: var(--hp-accent); }
     .rszcorner:active { cursor: nwse-resize; }
     .rszframe {
       fill: none;
@@ -1885,13 +1912,106 @@ export const cardStyles = css`
       transform: translate(-50%, -50%);
       background: rgba(0, 0, 0, 0.6);
     }
+    /* width and depth of a piece of furniture while its corner is dragged —
+       centred on the edge they measure (docs/FURNITURE.md §6) */
+    .measurelabel.furnmeasure {
+      transform: translate(-50%, -50%);
+      border: 1px solid var(--hp-accent);
+    }
+    /* ---- the furniture palette (docs/FURNITURE.md §3) ------------------- */
+    .furnpalette {
+      display: flex;
+      flex-direction: column;
+      max-height: 38vh;
+      border-top: 1px solid var(--hp-border, rgba(255, 255, 255, 0.12));
+      background: var(--card-background-color, var(--hp-bg));
+      font-size: 0.85em;
+    }
+    .furnhd {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      font-weight: 600;
+      opacity: 0.9;
+    }
+    .furnhd .spacer { flex: 1; }
+    .furnbody {
+      overflow: auto;
+      padding: 0 8px 6px;
+    }
+    .furngroup {
+      margin: 6px 0 3px;
+      font-size: 0.85em;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      opacity: 0.6;
+    }
+    .furnrow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .furnitem {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      width: 74px;
+      padding: 4px 2px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: rgba(127, 127, 127, 0.08);
+      color: inherit;
+      font: inherit;
+      font-size: 0.8em;
+      line-height: 1.15;
+      text-align: center;
+      cursor: pointer;
+    }
+    .furnitem:hover { background: rgba(127, 127, 127, 0.18); }
+    .furnitem.on {
+      border-color: var(--hp-accent);
+      background: rgba(38, 166, 154, 0.18);
+    }
+    .furnprev {
+      width: 40px;
+      height: 40px;
+      color: var(--primary-text-color, currentColor);
+    }
+    .furnsize {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 6px 8px;
+      border-top: 1px solid var(--hp-border, rgba(255, 255, 255, 0.12));
+    }
+    .furnsize label {
+      display: flex;
+      align-items: baseline;
+      gap: 3px;
+      opacity: 0.8;
+    }
+    .furnsize .furnunit { opacity: 0.6; font-size: 0.85em; }
+    .furnsize input {
+      width: 5.5em;
+      padding: 3px 5px;
+    }
+    .furnhint { opacity: 0.6; }
     .vacfitdot { fill: var(--hp-accent); pointer-events: none; }
+    /* hit target: invisible and finger-sized; .vacfitknob is the visible bead */
     .vacfithandle {
+      fill: transparent;
+      stroke: none;
+      cursor: nwse-resize;
+    }
+    .vacfitknob {
       fill: var(--hp-bg);
       stroke: var(--hp-accent);
       stroke-width: 2;
       vector-effect: non-scaling-stroke;
-      cursor: nwse-resize;
+      pointer-events: none;
     }
     .vaccalbar {
       position: fixed;

@@ -4,7 +4,9 @@
 //   2) многострочный текст: перевод строки сохраняется и рисуется, блок
 //      выравнивается по центру;
 //   3) у выделенного блока есть угловые ручки (масштаб) и ручка поворота
-//      (шаг 5°, Shift — мимо шага);
+//      (шаг 5°, Shift — мимо шага); ВИДИМЫЙ размер ручки — четверть хит-зоны
+//      (правка владельца 2026-08-05 «уменьшить в 4 раза»), сама хит-зона
+//      прежняя, пальцевая: 1.8 % видимого вида;
 //   4) при инструменте «текст» клик по УЖЕ РАЗМЕЩЁННОЙ надписи открывает её
 //      форму, а не создаёт новую; по пустому месту и по НЕтекстовой фигуре —
 //      создаёт новую (нетекстовые фигуры остаются инертными, см. smoke_decor).
@@ -97,6 +99,24 @@ const res = await page.evaluate(async () => {
   out.fourCornersAndRotate = !!frame()
     && frame().querySelectorAll('.dthandle').length === 5
     && !!frame().querySelector('.dtrot');
+
+  // --- визуал в 4 раза меньше, хит-зона прежняя (docs/LIVE-TEXT.md §3) ---
+  out.fiveVisibleKnobs = frame()?.querySelectorAll('.dtknob').length === 5;
+  const rOf = (sel) => { const e = frame()?.querySelector(sel); return e ? +e.getAttribute('r') : NaN; };
+  const hitR = rOf('.dthandle.dtrot');
+  const knobR = rOf('.dtknob');
+  const vw = c._viewOr(c._baseVb());
+  const expectHit = Math.max(vw.w, vw.h) * 0.018;
+  out.hitRadiusUnchanged = Math.abs(hitR - expectHit) < 0.1;       // прежние 1.8 %
+  out.knobIsAQuarterOfTheHit = Math.abs(knobR * 4 - hitR) < 0.02;  // ровно в 4 раза
+  out.knobTakesNoPointer = getComputedStyle(frame().querySelector('.dtknob')).pointerEvents === 'none';
+  out.handleTakesThePointer = getComputedStyle(frame().querySelector('.dthandle')).pointerEvents !== 'none';
+  // …и палец, попавший МИМО бусины, но внутрь прежнего круга, всё ещё берёт ручку
+  const rotEl = frame().querySelector('.dtrot');
+  const rcx = +rotEl.getAttribute('cx'), rcy = +rotEl.getAttribute('cy');
+  const far = toScreen(rcx + hitR * 0.7, rcy);                     // > knobR, < hitR
+  const hitEl = sr().elementFromPoint(far.clientX, far.clientY);
+  out.fingerZoneStillCatchesTheHandle = !!hitEl?.classList?.contains?.('dthandle');
   // линия выделена — рамки текста нет (это рамка ТЕКСТОВОГО блока)
   c._curSpaceCfg.decor = [...c._decorList, { id: 'dline', kind: 'line',
     x1: 0.1, y1: 0.8, x2: 0.4, y2: 0.8, color: '#000000', width: 3 }];

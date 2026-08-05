@@ -1211,9 +1211,22 @@ require hands on real hardware — they remain for the human pass.
       the drag). Leave for View, the Plan editor, the Device editor and the
       kiosk — no frame anywhere. A space with NO image never shows one, and
       its toolbar has no extra button [auto: smoke_backdrop, smoke_decor]
+- [ ] **The picture tool is already armed** (owner 2026-08-05, «не получается
+      двигать картинку-подложку»): open **Редактор подложки** on a space that
+      HAS a picture — «Картинка-подложка» is the selected tool, the hint about
+      dragging is in the toolbar, and the picture moves on the FIRST drag,
+      without picking anything. A space with no picture opens on «Выбрать» as
+      before, and Esc still returns to «Выбрать» [auto: smoke_backdrop,
+      smoke_hide_layers]
+- [ ] **The corner handles are beads, not blobs** (owner 2026-08-05,
+      «уменьшить в 4 раза… они постоянно гигантские»): the four dots on the
+      picture's frame are small — they must not cover the picture — yet a
+      finger still lands on them without aiming. Same on the room-resize
+      frame (Plan → «Размер», click a room) and on the robot-map calibration
+      [auto: smoke_hide_layers, smoke_backdrop, smoke_room_resize]
 - [ ] **Dragging the picture moves the picture, and nothing else** (owner
-      2026-08-04): pick the «Картинка-подложка» tool (the cursor over the
-      picture becomes a hand), grab the picture by its body and pull it aside.
+      2026-08-04): with the «Картинка-подложка» tool (the cursor over the
+      picture is a hand), grab the picture by its body and pull it aside.
       It follows the finger the whole way — it must NOT drift away from the
       cursor or jump when the toolbar changes — while the rooms, walls, doors,
       windows, devices, room names and decor stay exactly where they were.
@@ -1368,3 +1381,136 @@ require hands on real hardware — they remain for the human pass.
       TTL the memo no longer holds the dialog (a plan is base64 in memory), and
       nothing revives afterwards (AUD-159B1-03)
       [auto: smoke_warm_owners, section C]
+
+## Styling hooks and HA-formatted values (docs/STYLING-HOOKS.md, dev, unreleased)
+
+- [ ] **The hooks are there and they are the config's ids**: open the plan's
+      DOM (devtools → the card's shadow root) and check that a device marker
+      carries `data-hp="device"`, `data-id`, `data-entity` and `data-area`; a
+      room `data-hp="room"` + `data-id` + `data-area`; a door/window
+      `data-hp="opening"` + `data-kind`; a decor shape `data-hp="decor"` +
+      `data-kind`; a room caption `data-hp="room-label"`; a floor tab
+      `data-hp="space-tab"`. The ids are the ones in your config, not DOM
+      positions — they survive a reload [auto: smoke_styling_hooks]
+- [ ] **Absent is absent**: a virtual marker has NO `data-entity` at all, and a
+      sub-area room (no HA area) has NO `data-area` — never the string
+      «undefined» [auto: smoke_styling_hooks]
+- [ ] **A card-mod rule actually applies**: with card-mod installed, add
+      `ha-card [data-hp="device"] .lqi { display: none; }` to the card — the
+      signal badges disappear and nothing else moves. Then target one marker by
+      `[data-entity="…"]` and confirm it is the only one affected [manual]
+- [ ] **The static card carries the same hooks**: a `houseplan-space-card`
+      has `data-hp` on its rooms, room labels and markers (it draws no openings
+      and no decor, so those are simply absent), and it needs its OWN card-mod
+      block — it is a different card with its own shadow root
+      [auto: smoke_styling_hooks]
+- [ ] **`ha-icon` internals stay out of reach**: a rule may style the icon HOST
+      (colour, transform) but cannot reach the `<svg>` inside it. That is a
+      browser rule, and it is why the hooks sit on our wrappers
+      [auto: smoke_styling_hooks]
+
+- [ ] **A value badge is formatted by HA**: set a numeric sensor's display
+      precision in HA (Settings → the entity → Display precision) to 1 and put
+      it on the plan as «value instead of icon». The badge shows the rounded
+      number with YOUR decimal separator and the entity's unit — once, not
+      twice — and matches what more-info shows [auto: smoke_value_format]
+- [ ] **A live decor label is formatted by HA**: the same sensor in a text
+      shape reads identically; a switch shows «Включено», not `on`; an
+      attribute goes through the attribute formatter (a climate's
+      `current_temperature` is a number, not the climate's state)
+      [auto: smoke_value_format + unit logic.test]
+- [ ] **Your own unit replaces the entity's**: type `проц.` in a label's unit
+      field — the result is «68,4 проц.», never «68,4 % проц.»
+      [auto: smoke_value_format]
+- [ ] **An older Home Assistant is unchanged**: on an HA without
+      `formatEntityState` the badge and the label print the raw state with the
+      entity's unit appended, exactly as before — nothing is blank and nothing
+      throws [auto: smoke_value_format + unit logic.test]
+- [ ] **The °/% plates are untouched**: the small temperature/humidity badges
+      next to an icon (and the same numbers in a room card and the tooltip)
+      still read «21.5°» / «48%». They are a derived reading, not an entity
+      state — deliberately ours [auto: smoke_value_format]
+
+- [ ] **The text block's handles are small but still catchable**: select a
+      label in the Background editor. The four corner circles and the rotate
+      handle are a quarter of their old size — beads, not buttons — and the
+      dashed frame no longer hides the text. Now grab one on a TABLET with a
+      finger, aiming roughly at it rather than exactly: it is caught, because
+      the invisible hit circle is still the old finger-sized one. Same at any
+      zoom [auto: smoke_decor_text]
+
+## The furniture library (docs/FURNITURE.md, dev, unreleased)
+
+- [ ] **The tool and the palette**: Background editor → **Furniture**. A panel
+      opens under the bar with the symbols grouped (furniture / appliances /
+      plumbing / other), every tile drawing the real symbol, and the plan stays
+      visible behind it [auto: smoke_furniture]
+- [ ] **Real size through `cell_cm`**: pick the sofa, click in the middle of a
+      room, then measure it against the plan's own grid — it is 2.2 m wide and
+      0.9 m deep. Change the space's scale (Space settings → cm per cell) from
+      5 to 10 and place a second sofa: it covers the same 2.2 m of the plan,
+      i.e. half as many cells [auto: smoke_furniture + furniture.test]
+- [ ] **The size fields**: pick the bath, type 1.5 in Width, click — the piece
+      is 1.5 m, not 1.7. In an imperial HA profile the same fields read and
+      accept FEET, and the stored plan is unchanged when you switch back
+      [auto: smoke_furniture (metric); manual for the imperial profile]
+- [ ] **The wall magnet**: click near a wall — the piece's BACK lands flat on
+      it and it turns to the wall's direction (a bed's headboard against the
+      wall, a toilet's cistern against it, a sofa's back against it). Hold
+      **Shift** and click at the same place: it stays exactly under the cursor,
+      straight [auto: smoke_furniture]
+- [ ] **The magnet while dragging**: drag a placed sofa across the room to
+      another wall — it turns to that wall as it arrives. Drag it back into the
+      middle: it keeps the angle it had rather than snapping straight. On a
+      DIAGONAL wall it lands at the wall's own angle [auto: smoke_furniture for
+      the axis-aligned case; manual for a diagonal wall]
+- [ ] **One stamp per pick**: after placing, the editor is back in **Select**
+      with the new piece selected, and the palette is disarmed — clicking the
+      plan again does not place a second one [auto: smoke_furniture]
+- [ ] **The frame is the text block's frame**: four corner beads and a rotate
+      handle, the beads a quarter of their hit area. Grab one with a finger on
+      a tablet, aiming roughly: it is caught [auto: smoke_furniture]
+- [ ] **Width and depth are independent**: drag a corner sideways — only the
+      width changes; drag it down — only the depth. Two live badges show both
+      in metres (or feet) while you drag, and they match a later measurement
+      against the grid. Hold **Shift** for sizes off the grid
+      [auto: smoke_furniture]
+- [ ] **Rotation**: the handle above the box turns the piece in 5° steps about
+      its CENTRE (not a corner); Shift goes past the step; turning back to
+      straight removes the angle entirely [auto: smoke_furniture]
+- [ ] **It is only decor**: a piece takes no tap in view mode, has no entity
+      and no state, and does not appear in any room aggregation. Erase removes
+      it; Delete removes the selected one [auto: smoke_furniture]
+- [ ] **Old plans and old servers**: a plan saved before this release opens
+      unchanged. A plan WITH furniture saved by this card and opened by an
+      older integration still saves (the backend accepts any well-formed symbol
+      id) [auto: tests_backend test_decor_furniture; manual for the old server]
+- [ ] **card-mod**: `[data-symbol="toilet"] { stroke: #4fc3f7; }` colours only
+      the toilets [auto: smoke_furniture checks the attributes; manual for the
+      rule itself]
+
+## Hiding layers: decor, openings, virtual walls (docs/UX-MODES.md, dev, unreleased)
+
+- [ ] **«Скрыть декоративный слой»** (owner 2026-08-05): a space with lines,
+      labels or furniture on it → space settings → Display → tick the box, save.
+      The plan loses all of it, in View, in the Plan editor and in the Device
+      editor. Open **Редактор подложки** — everything is back, editable, exactly
+      where it was. Untick it: the plan looks as it did before you started
+      [auto: smoke_hide_layers]
+- [ ] **«Скрыть проёмы»**: tick it on a space with doors and windows. The
+      symbols are gone from View and from the Device editor; the **Plan editor
+      still draws them**, or the Opening tool would be editing blind. Nothing
+      else changed: a lit room still spills light through the doorway, the sun
+      still comes in at the window, a door with a contact sensor still reports
+      open/closed in the room card, and the resize tool still refuses to
+      shorten a wall past its opening [auto: smoke_hide_layers, smoke_glow]
+- [ ] **Virtual walls follow the borders switch** (owner 2026-08-05): make an
+      open boundary between two rooms (Plan → «Открытая граница»), then turn
+      **«Всегда отображать границы комнат» OFF**. The dashed stretch goes with
+      the borders — no floating dashes on a plan that draws no walls. Turn the
+      borders back on and it returns. In the Plan editor the dashes are always
+      visible, whatever the switch says [auto: smoke_hide_layers, smoke_openwall]
+- [ ] **Nothing is stored when nothing is hidden**: with both boxes unticked,
+      the space's config carries no `hide_decor` / `hide_openings` at all, and
+      a plan saved by an older card still opens here unchanged
+      [auto: smoke_hide_layers, tests_backend test_hide_layer_settings]

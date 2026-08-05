@@ -16,7 +16,7 @@ import {
   interiorPoint,
   segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointOnBoundary, pointStrictlyInside, roomsOverlap,
   mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, openingShoulders, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, poleOfInaccessibility, runServiceFor, TOGGLE_SAFE_DOMAINS, coverService, coverMoving, coverEntityOf,
-  liveText, liveTextValue, decorTextScale, decorTextLines,
+  liveText, liveTextValue, hassValue, valueWithUnit, decorTextScale, decorTextLines,
   LIVE_TEXT_DASH, LIVE_TEXT_VALUE_MAX, DECOR_TEXT_SCALE_MIN, DECOR_TEXT_SCALE_MAX } from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
@@ -249,6 +249,20 @@ test('spaceDisplayOf: defaults differ for spaces with and without a plan', () =>
   const g = spaceDisplayOf({ settings: { room_color: 'javascript:alert(1)', fill_mode: 'weird' } });
   assert.equal(g.color, '#55606c'); // dark-grey default since 2026-08-03
   assert.equal(g.fill, 'none');
+});
+
+test('spaceDisplayOf: the two hide switches are opt-in and strictly boolean', () => {
+  // absent = today's rendering, so no stored plan changes by being read
+  const off = spaceDisplayOf({ plan_url: '/x.svg' });
+  assert.equal(off.hideDecor, false);
+  assert.equal(off.hideOpenings, false);
+  const on = spaceDisplayOf({ settings: { hide_decor: true, hide_openings: true } });
+  assert.equal(on.hideDecor, true);
+  assert.equal(on.hideOpenings, true);
+  // only a real `true` hides: a stray string must not blank the plan
+  const junk = spaceDisplayOf({ settings: { hide_decor: 'yes', hide_openings: 1 } });
+  assert.equal(junk.hideDecor, false);
+  assert.equal(junk.hideOpenings, false);
 });
 
 test('roomFillColor: lqi gradient, light tri-state, none', () => {
@@ -1300,4 +1314,113 @@ test('decorTextLines: explicit newlines only, never an automatic wrap', () => {
   assert.deepEqual(decorTextLines('a\n\nb'), ['a', '', 'b'], 'a blank line is a line');
   const long = 'x'.repeat(300);
   assert.deepEqual(decorTextLines(long), [long], '300 chars stay one line — no auto wrap');
+});
+
+// ---------------- hassValue: HA formats the value (docs/STYLING-HOOKS.md §6) ----
+
+/** The same states, plus the formatters a modern HA puts on `hass`. */
+const hassFmt = {
+  states: hassLive.states,
+  // display_precision 1 + ru locale + state translations, exactly what HA does
+  formatEntityState: (st) => {
+    if (st.state === 'heat') return 'Нагрев';
+    if (st.state === 'on') return 'Включено';
+    const n = Number(st.state);
+    if (!Number.isFinite(n)) return st.state;
+    const u = st.attributes?.unit_of_measurement;
+    const txt = n.toFixed(1).replace('.', ',');
+    return u ? `${txt} ${u}` : txt;
+  },
+  formatEntityAttributeValue: (st, attr) => {
+    const v = st.attributes?.[attr];
+    return typeof v === 'number' ? String(v).replace('.', ',') : String(v);
+  },
+};
+
+test('hassValue: with a formatter the value is HOME ASSISTANT\'s, unit included', () => {
+  const v = hassValue(hassFmt, 'sensor.tank');
+  assert.deepEqual(v, { text: '68,0 %', formatted: true },
+    'display_precision, the ru separator and the unit all come from HA');
+  assert.deepEqual(hassValue(hassFmt, 'climate.hall'), { text: 'Нагрев', formatted: true },
+    'a state is translated, not printed raw');
+});
+
+test('hassValue: without a formatter it is the raw state — an older HA still works', () => {
+  assert.deepEqual(hassValue(hassLive, 'sensor.tank'), { text: '68', formatted: false },
+    'no unit here: `formatted:false` tells the caller the unit is still its own job');
+  assert.deepEqual(hassValue(hassLive, 'climate.hall'), { text: 'heat', formatted: false });
+  assert.deepEqual(hassValue({ states: hassLive.states, formatEntityState: 'nope' }, 'sensor.plain'),
+    { text: '17.4', formatted: false }, 'a non-function is not a formatter');
+  assert.deepEqual(hassValue({ states: hassLive.states, formatEntityState: () => '' }, 'sensor.plain'),
+    { text: '17.4', formatted: false }, 'an empty string is not a value');
+  assert.deepEqual(hassValue({ states: hassLive.states, formatEntityState: () => { throw new Error('x'); } }, 'sensor.plain'),
+    { text: '17.4', formatted: false }, 'a formatter that throws is a formatter we do not have');
+});
+
+test('hassValue: an ATTRIBUTE goes through the attribute formatter, not the state one', () => {
+  assert.deepEqual(hassValue(hassFmt, 'climate.hall', 'current_temperature'),
+    { text: '21,5', formatted: true });
+  assert.deepEqual(hassValue(hassLive, 'climate.hall', 'current_temperature'),
+    { text: '21.5', formatted: false }, 'no attribute formatter = the raw attribute');
+  assert.deepEqual(hassValue({ states: hassLive.states, formatEntityState: hassFmt.formatEntityState },
+    'climate.hall', 'current_temperature'),
+    { text: '21.5', formatted: false },
+    'formatEntityState must NEVER be used on an attribute — it would print «Нагрев»');
+  assert.deepEqual(hassValue(hassFmt, 'climate.hall', 'preset_modes'),
+    { text: 'home,away', formatted: true }, 'the attribute formatter owns lists too');
+});
+
+test('hassValue: nothing to print returns null, never a placeholder string', () => {
+  assert.equal(hassValue(hassFmt, ''), null);
+  assert.equal(hassValue(hassFmt, null), null);
+  assert.equal(hassValue(hassFmt, 'sensor.nope'), null, 'the entity is not in this HA');
+  assert.equal(hassValue(undefined, 'sensor.tank'), null, 'no hass at all');
+  assert.equal(hassValue(hassFmt, 'sensor.blob', 'nosuch'), null, 'the attribute is not on it');
+  assert.equal(hassValue(hassFmt, 'sensor.blob', 'payload'), null, 'a dict is not a caption');
+  assert.equal(hassValue(hassFmt, 'sensor.blob', 'empty'), null, 'an empty string is nothing to show');
+  assert.deepEqual(hassValue(hassLive, 'sensor.blob', 'zero'), { text: '0', formatted: false },
+    '0 is a value, not an absence');
+  assert.deepEqual(hassValue(hassLive, 'sensor.blob', 'no'), { text: 'false', formatted: false });
+});
+
+test('liveTextValue: the formatter\'s unit is not doubled, an explicit one replaces it', () => {
+  assert.equal(liveTextValue(hassFmt, { entity: 'sensor.tank' }), '68,0 %',
+    'the unit is already in the formatted text — we do not add a second one');
+  assert.equal(liveTextValue(hassFmt, { entity: 'sensor.tank', unit: 'проц.' }), '68,0 проц.',
+    'the entity unit comes off, the user unit goes on');
+  assert.equal(liveTextValue(hassFmt, { entity: 'sensor.plain' }), '17,4',
+    'no unit on the entity, none invented');
+  assert.equal(liveTextValue(hassFmt, { entity: 'sensor.plain', unit: 'кВт' }), '17,4 кВт');
+  assert.equal(liveTextValue(hassFmt, { entity: 'climate.hall', attr: 'current_temperature' }), '21,5',
+    'an attribute never inherits the entity unit — «21,5 °C» would be a lie about a °C sensor');
+  assert.equal(liveTextValue(hassFmt, { entity: 'climate.hall', attr: 'current_temperature', unit: '°C' }), '21,5 °C');
+  assert.equal(liveTextValue(hassFmt, { entity: 'sensor.dead' }), '—', 'a dead sensor still shows the dash');
+  assert.equal(liveTextValue(hassFmt, { entity: 'sensor.unknown' }), '—');
+  assert.equal(liveTextValue(hassFmt, { entity: 'sensor.nope' }), '—');
+});
+
+test('liveTextValue: a state is translated by HA — «on» is not what the user reads', () => {
+  const h = { states: { 'switch.pump': { state: 'on', attributes: {} } }, formatEntityState: hassFmt.formatEntityState };
+  assert.equal(liveText('Насос: {}', { entity: 'switch.pump' }, h), 'Насос: Включено');
+  assert.equal(liveText('Насос: {}', { entity: 'switch.pump' },
+    { states: h.states }), 'Насос: on', 'without a formatter — the raw state, as before');
+});
+
+test('valueWithUnit: the unit lands exactly once, whoever put it there', () => {
+  const F = (text) => ({ text, formatted: true });
+  const R = (text) => ({ text, formatted: false });
+  assert.equal(valueWithUnit(F('68,4 %'), '%'), '68,4 %', 'HA already appended it — not twice');
+  assert.equal(valueWithUnit(F('68,4'), '%'), '68,4 %', 'a formatter that omits the unit does not lose it');
+  assert.equal(valueWithUnit(R('68'), '%'), '68 %', 'no formatter at all — we append as before');
+  assert.equal(valueWithUnit(F('68,4 %'), '%', 'проц.'), '68,4 проц.', 'the user unit replaces the entity one');
+  assert.equal(valueWithUnit(R('68'), '%', 'проц.'), '68 проц.');
+  assert.equal(valueWithUnit(F('Включено'), ''), 'Включено', 'a translated state grows no suffix');
+  assert.equal(valueWithUnit(F('21,5'), '', '°C'), '21,5 °C', 'an attribute takes only an explicit unit');
+  assert.equal(valueWithUnit(F('17,4'), '   '), '17,4', 'a blank unit is no unit');
+});
+
+test('liveTextValue: a formatter that omits the unit still gets one (the demo stub does)', () => {
+  const h = { states: hassLive.states, formatEntityState: (st) => st.state };
+  assert.equal(liveTextValue(h, { entity: 'sensor.tank' }), '68 %',
+    'formatEntityState returning a bare state must not cost the label its unit');
 });

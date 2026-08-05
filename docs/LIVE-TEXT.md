@@ -63,15 +63,31 @@ CSS/template does not work"). One value, one place, no syntax to get wrong.
 - An attribute that is not on the entity, or that is a dict, renders as the
   same dash. A list attribute is joined with `, `; `0` and `false` are values,
   not absences.
-- Numbers are shown as HA reports them; we do not round, do not reformat and
-  do not localise decimal separators. Rounding belongs to the sensor's
-  `display_precision` in HA, and duplicating it here would make two sources of
-  truth. Imperial/metric is not our business either — the value and the unit
-  come from HA.
+- **Home Assistant formats the value; we still write no formatting of our
+  own.** *(Refined 2026-08-05 — the rule below is narrowed, not revoked.)* We
+  do not round, do not reformat and do not localise decimal separators
+  ourselves: we hand the state object to **HA's own formatter**
+  (`hass.formatEntityState`, and `hass.formatEntityAttributeValue` for an
+  attribute) through the single wrapper `hassValue()` in `src/logic.ts` —
+  the same call HA's more-info makes. So the label obeys the sensor's
+  `display_precision`, the user's decimal separator and the state
+  translations (`on` → *Включено*), because those are the user's HA settings
+  and the settings are the one source of truth. What is forbidden is
+  duplicating that logic here, not delegating it. An older HA without the
+  formatter falls back to the raw state, byte-for-byte the pre-2026-08-05
+  behaviour. Imperial/metric is not our business either — the value and the
+  unit come from HA (docs/STYLING-HOOKS.md §6).
 - **The unit is inherited only for the STATE.** With an `attr` the entity's
   `unit_of_measurement` is not applied: it describes the state, and a
   `battery_level` read off a °C sensor must not come out as «73 °C». An
   explicit `unit` always wins; an empty one inherits.
+- **The unit appears exactly once.** HA's formatter normally appends the
+  entity's unit itself, so the inherited one is not added a second time — and
+  where it does not append it, ours still is, so the unit never silently
+  disappears either. The rule: strip the entity's own `unit_of_measurement`
+  if it is already the tail (exact trailing match, nothing else in the string
+  is touched), then append the unit actually wanted — the user's explicit one,
+  or the entity's own.
 - The value is clipped to `LIVE_TEXT_VALUE_MAX` (60) characters: a caption is
   a caption, and an attribute that turns out to be a 4 KB string must not
   become the plan's wallpaper.
@@ -114,9 +130,15 @@ size is not one of three opinions; it is whatever fits the place it is put in.
   still scales along the same axis (a distance from the anchor is invariant
   under its own rotation). The frame chrome — dashed outline, four corner
   handles, one rotate handle on a stem — reuses the backdrop frame's mechanics
-  and sizes: chrome that never takes a pointer, handles that always do, sized
-  at 1.8 % of the visible view so they stay finger-sized at any zoom
-  (docs/BACKDROP.md §2).
+  and sizes: chrome that never takes a pointer, handles that always do, with
+  a **hit** radius of 1.8 % of the visible view so they stay finger-sized at
+  any zoom (docs/BACKDROP.md §2). What you **see** is a quarter of that
+  (owner, 2026-08-05: «уменьшить в 4 раза») — a bead, not a button, so the
+  frame stops covering the words it frames. The two are different elements:
+  an invisible `.dthandle` circle at the full radius owns the gesture, a
+  `.dtknob` circle at `hr / 4` owns the paint and takes no pointer. The
+  clickable area is therefore **unchanged**; only the ink shrank. Same split
+  the wall-resize handles use (docs/RESIZE.md).
 - The frame is measured from the rendered glyphs (`getBBox`), so it appears
   one frame after the text and follows every edit of it.
 

@@ -11,9 +11,10 @@ const res = await page.evaluate(async () => {
   tabs[2].click(); await c.updateComplete;
   out.decorMode = c._mode === 'decor';
   out.decorBar = !!sr().querySelector('.editbar.decorbar');
-  // six drawing tools + «Картинка-подложка», which f1 offers because it HAS a
-  // picture (docs/BACKDROP.md §2); a hand-drawn space still shows six
-  out.toolBtns = sr().querySelectorAll('.decorbar .btn.dtool').length === 7;
+  // seven tools (the six drawing ones + «Мебель», docs/FURNITURE.md) plus
+  // «Картинка-подложка», which f1 offers because it HAS a picture
+  // (docs/BACKDROP.md §2); a hand-drawn space still shows seven
+  out.toolBtns = sr().querySelectorAll('.decorbar .btn.dtool').length === 8;
   // 2) нарисовать прямоугольник drag-ом (через прямые вызовы)
   c._decorTool = 'rect'; c._decorStyle = { color: '#ff0000', width: 3, fill: true }; await c.updateComplete;
   const g = c._gridPitch;

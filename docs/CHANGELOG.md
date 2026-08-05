@@ -2,6 +2,100 @@
 
 ## Unreleased (dev)
 
+- **Two new switches in a space's settings: «Hide the decorative layer» and
+  «Hide doors and windows».** Both only hide. The shapes, labels, furniture
+  and openings stay in your config, and each stays visible in the editor that
+  owns it — the backdrop editor always draws decor, the plan editor always
+  draws openings — because a layer you cannot see is a layer you cannot edit.
+  What an opening *means* is untouched either way: light still spills through
+  it, the sun still comes in at a window, a contact sensor still opens it; only
+  the symbol is gone. Both are off by default and store nothing when off, so
+  every existing plan reads back unchanged.
+
+- **A space that does not draw room borders no longer draws virtual walls.**
+  With «Always show room borders» off, the dashed stretches of an open boundary
+  used to survive on their own, leaving a plan with no walls except a few
+  floating dashes. They now follow the same switch. The plan editor still shows
+  them — the Open-boundary tool has to show what it edits.
+
+- **The backdrop editor opens on the tool it is named after.** With a picture
+  in the space, «Backdrop image» is armed the moment the editor opens, so
+  dragging the picture works straight away instead of after finding the tool.
+  The frame was already drawn on open, which promised a draggable picture; the
+  promise is now kept. Select is still one click away and still leaves the
+  picture's body to the one-finger pan.
+
+- **Corner handles are beads again, not blobs.** Every corner handle in the
+  card — the backdrop frame, the room-resize frame and the robot-map fit —
+  paints a circle a **quarter** of its old radius while its clickable area is
+  unchanged, matching the text block's handles. A handle the size of a room
+  hides the thing it is there to adjust.
+
+- **You can furnish the plan (docs/FURNITURE.md).** The background editor
+  gains a seventh tool, **Furniture**: a grouped palette of ~30 top-view
+  symbols — furniture, appliances, plumbing and a few odds like stairs and a
+  rug — that are placed at their **real size**. Pick a sofa, correct the
+  2.2 × 0.9 m in the two fields if your sofa is a different one, click the
+  plan, and 2.2 m of *your* plan is what it takes, because the size goes
+  through the space's `cell_cm` like every other length in this card. While
+  you place or drag it, the nearest wall within ~30 cm claims it: the piece's
+  back lands flat on that wall and turns to it, so "put the bed against that
+  wall" is one click. Shift suspends the magnet, as Shift suspends every snap
+  here. A placed piece is selected in the **Select** tool and wears the text
+  block's frame — the corner handles now set **width and depth independently**
+  (a bed is not made deeper by being made wider), with live badges showing
+  both in metres or feet, and the handle above it turns the piece in 5° steps.
+  The symbols are **drawn by us, in code**: an icon set draws a sofa seen from
+  the front in a 24 × 24 square, and stretching that into a 2.2 × 0.9 m
+  rectangle gives an icon lying on the floor rather than a plan. That also
+  settles the licence question outright — nothing third-party ships in the
+  bundle. Every piece carries `data-kind="furniture"` and `data-symbol`, so
+  card-mod can colour all the plumbing in one rule. New kind, nothing
+  migrated: a plan written before this reads back byte-for-byte.
+
+- **The plan has stable hooks for card-mod (docs/STYLING-HOOKS.md).** Every
+  object the plan draws now carries the same identity — `data-hp` says what it
+  is (`device`, `room`, `room-label`, `opening`, `decor`, `space-tab`),
+  `data-id` is its id in your config, and where it applies `data-entity`,
+  `data-area` and `data-kind` (door/window, line/rect/ellipse/text) come with
+  it. That is all this is: we do not ship a CSS field, do not add a theme
+  editor and do not support user stylesheets — we simply stop getting in the
+  way of a power user who has already installed card-mod and only needed
+  something stable to aim at. The names are a contract now: renaming one is a
+  breaking change. Everything NOT in that table — editor chrome, boot classes,
+  layer wrappers, dialog markup — is explicitly not the contract. The doc
+  carries the table, three worked examples, the shadow-DOM limits (you can
+  style an `ha-icon` host, never its insides) and a plain disclaimer that
+  card-mod is not ours to support.
+
+- **Values are formatted by Home Assistant, not by us.** Wherever the card
+  prints one entity's state — the value badge of a «value instead of icon»
+  marker, a live decor label, the device info card — it now goes through
+  `hass.formatEntityState` (and `hass.formatEntityAttributeValue` for an
+  attribute), the same call HA's own more-info makes. So a sensor's
+  `display_precision` is honoured, the decimal separator is the one your
+  locale uses, and `on` finally reads as *Включено* instead of `on`. The unit
+  lands exactly once — the formatter usually appends it, and where it does not
+  we still do — and your own unit on a decor label replaces the entity's
+  rather than piling on after it. An older Home Assistant without those
+  methods behaves exactly as before. The small °/% plates next to an icon keep
+  their own compact form on purpose: they are a derived reading (an average
+  over the area's sensors, a climate device's `current_temperature`), not an
+  entity state, and the plan reads as one instrument panel because they all
+  look alike.
+
+- **The text block's handles are a quarter of the size** (owner's request).
+  The corner circles and the rotate handle above a selected label are now ink
+  the size of a bead instead of a button, so the frame stops covering the very
+  words it frames. The area you can grab is unchanged — an invisible
+  finger-sized circle still owns the gesture at the old 1.8 % of the visible
+  view, exactly the split the wall-resize handles use.
+
+- **Wall thickness — the approved spec (docs/WALL-THICKNESS.md).** Not
+  implemented yet; the document captures the model (thickness on a wall, not
+  a room edge), segment keys that survive resize, hatching that does not
+  affect area, and how openings render in a thick wall.
+
 Audit follow-ups from `docs/AUDIT-RECOMMENDATIONS.md` (2026-08-05):
 
 - **Write policy aligned (P0-4).** `admin_only` now defaults to **on** for new

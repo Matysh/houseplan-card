@@ -90,13 +90,21 @@ check('four_finger_handles', await q('.bdframe .bdhandle'), 4);
 check('frame_hugs_the_picture', await frameRect(), BASE);
 check('untouched_picture_is_where_it_always_was', await imageRect(), BASE);
 // …and the picture has a tool of its own, offered because f1 HAS a picture
-check('the_picture_has_a_tool', await q('.decorbar .btn.dtool'), 7);
-check('no_grab_cursor_until_that_tool', await page.evaluate(() =>
+check('the_picture_has_a_tool', await q('.decorbar .btn.dtool'), 8);
+// …which is ARMED the moment the editor opens (owner 2026-08-05: «не
+// получается двигать картинку-подложку в режиме редактора подложки» — the
+// frame promised a draggable picture while the promise needed a tool nobody
+// had found). The editor is named after the picture; it opens on it.
+check('picture_tool_armed_on_open', await page.evaluate(() => window.__card._decorTool), 'backdrop');
+check('grab_cursor', await page.evaluate(() =>
+  window.__card.renderRoot.querySelector('.stage').classList.contains('bdgrab')), true);
+// select still exists and still leaves the body to the pan (smoke_pan_any_zoom)
+await tool('select');
+await settle();
+check('no_grab_cursor_under_select', await page.evaluate(() =>
   window.__card.renderRoot.querySelector('.stage').classList.contains('bdgrab')), false);
 await tool('backdrop');
 await settle();
-check('grab_cursor', await page.evaluate(() =>
-  window.__card.renderRoot.querySelector('.stage').classList.contains('bdgrab')), true);
 check('frame_still_there_under_its_own_tool', await q('.bdframe'), 1);
 // a drawing tool owns the drag instead — no frame competing with it
 await tool('rect');

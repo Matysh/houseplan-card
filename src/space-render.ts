@@ -130,10 +130,18 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       }
       const svgLabel = !space.bg && !disp.showNames;
       const c = roomCenter(r);
+      // docs/STYLING-HOOKS.md §3/§5: the static card carries the same hooks for
+      // the objects it draws — a card-mod rule written for the plan reads here
+      // too (in its own block: this is a different card, with its own root).
+      const hpId = r.id || nothing;
+      const hpArea = r.area || nothing;
       const shape = r.poly
-        ? svg`<polygon class="${cls}" style="${style}" points="${r.poly.map((p) => p.join(',')).join(' ')}"></polygon>`
-        : svg`<rect class="${cls}" style="${style}" x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="${Math.min(r.w!, r.h!) * 0.03}"></rect>`;
-      return svg`${shape}${svgLabel ? svg`<text class="rlabel" x="${c[0]}" y="${c[1]}">${r.name}</text>` : nothing}`;
+        ? svg`<polygon class="${cls}" style="${style}" data-hp="room" data-id=${hpId} data-area=${hpArea}
+            points="${r.poly.map((p) => p.join(',')).join(' ')}"></polygon>`
+        : svg`<rect class="${cls}" style="${style}" data-hp="room" data-id=${hpId} data-area=${hpArea}
+            x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="${Math.min(r.w!, r.h!) * 0.03}"></rect>`;
+      return svg`${shape}${svgLabel ? svg`<text class="rlabel" data-hp="room-label" data-id=${hpId} data-area=${hpArea}
+        x="${c[0]}" y="${c[1]}">${r.name}</text>` : nothing}`;
     });
 
   const markers = devs.map((d) => {
@@ -147,7 +155,9 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     const angle = Number(d.marker?.angle) || 0;
     const st = [`left:${left}%`, `top:${top}%`];
     if (scale !== 1) st.push(`--dev-scale:${scale}`);
-    return html`<div class="dev ${d.virtual ? 'virtual' : ''}" style="${st.join(';')}">
+    return html`<div class="dev ${d.virtual ? 'virtual' : ''}"
+      data-hp="device" data-id="${d.id}" data-entity=${d.primary || nothing} data-area=${d.area || nothing}
+      style="${st.join(';')}">
       <ha-icon icon="${d.icon}" style=${angle ? `transform:rotate(${angle}deg)` : nothing}></ha-icon>
     </div>`;
   });
@@ -160,7 +170,9 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
           const left = ((p.x - vb[0]) / vb[2]) * 100;
           const top = ((p.y - vb[1]) / vb[3]) * 100;
           const op = Math.min(1, disp.opacity + 0.25);
-          return html`<div class="roomlabel" style="left:${left}%;top:${top}%;color:${disp.color};opacity:${op}">${r.name}</div>`;
+          return html`<div class="roomlabel"
+            data-hp="room-label" data-id=${r.id || nothing} data-area=${r.area || nothing}
+            style="left:${left}%;top:${top}%;color:${disp.color};opacity:${op}">${r.name}</div>`;
         })
     : [];
 

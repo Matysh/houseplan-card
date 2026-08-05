@@ -291,6 +291,10 @@ title: План дома
 
 ![Добавление устройства вручную](docs/images/07-marker-dialog.png)
 
+### Свои стили через card-mod (для продвинутых, без поддержки)
+
+Карточка приезжает готовой, и поля для CSS у неё нет — но если у вас уже стоит [card-mod](https://github.com/thomasloven/lovelace-card-mod), у каждого объекта плана теперь есть стабильный «крючок», за который можно зацепиться: `data-hp="device"` (плюс `data-entity`, `data-area`), `data-hp="room"`, `data-hp="opening"`, `data-hp="decor"`, `data-hp="room-label"`, `data-hp="space-tab"`. Мы обещаем их не переименовывать; сам card-mod мы не поставляем, не поддерживаем и за то, что ваш CSS сделает с карточкой, не отвечаем. Полная таблица, примеры и ограничения — в **[docs/STYLING-HOOKS.md](docs/STYLING-HOOKS.md)**.
+
 ---
 
 ## Удаление

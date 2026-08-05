@@ -290,6 +290,10 @@ turned the way it is mounted.
 
 ![Adding a device manually](docs/images/07-marker-dialog.png)
 
+### Styling the plan with card-mod (advanced, unsupported)
+
+The card ships finished and has no CSS field of its own — but if you already run [card-mod](https://github.com/thomasloven/lovelace-card-mod), every object on the plan now carries a stable hook you can aim at: `data-hp="device"` (plus `data-entity`, `data-area`), `data-hp="room"`, `data-hp="opening"`, `data-hp="decor"`, `data-hp="room-label"`, `data-hp="space-tab"`. We promise not to rename them; we do not ship card-mod, do not support it, and are not responsible for what your CSS does to the card. The full table, the examples and the limits are in **[docs/STYLING-HOOKS.md](docs/STYLING-HOOKS.md)**.
+
 ---
 
 ## Uninstalling

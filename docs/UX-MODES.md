@@ -54,6 +54,30 @@ Header in View: space tabs, device count, zoom cluster. Nothing else.
   add space, floors import, delete space.
 - ⚙ General settings (fill palette) lives here — it is about the plan's appearance.
 
+### What a space may choose not to draw (2026-08-05)
+
+Three switches in the space's Display section decide how much of the plan is
+inked. All of them are **display only** — nothing is deleted, nothing changes
+meaning, and each layer stays visible in the editor that owns it, because a
+layer you cannot see is a layer you cannot edit.
+
+| Setting | Off (default) | On | Always drawn in |
+|---|---|---|---|
+| `show_borders` — «Всегда отображать границы комнат» | borders (and the dashed **virtual walls**) are hidden | both are drawn | the Plan editor |
+| `hide_decor` — «Скрыть декоративный слой» | decor is drawn | lines, shapes, labels and furniture are hidden | the Background editor |
+| `hide_openings` — «Скрыть проёмы» | doors and windows are drawn | their symbols are hidden | the Plan editor |
+
+- **Virtual walls follow `show_borders`** (owner, 2026-08-05). They are walls —
+  dashed ones. Drawing them on a space with no borders left a plan whose only
+  walls were a few floating dashed stretches.
+- **`hide_openings` hides the symbol, not the opening.** Light still spills
+  through it, the sun still enters at a window, a contact sensor still opens
+  it, and the resize tool still anchors to it. Anything else would be a second
+  meaning for one setting.
+- Both new switches store **nothing when off** (the key is omitted, as
+  `bg_color` is), so a plan written before this reads back byte-for-byte.
+  Backend: `hide_decor` / `hide_openings`, strictly `bool`, both optional.
+
 ## Devices — placement and marker configuration
 
 - Icon dragging (ONLY here). Click on a device opens the **edit dialog directly**

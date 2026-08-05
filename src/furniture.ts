@@ -1,0 +1,473 @@
+/**
+ * The furniture library of the decor layer (docs/FURNITURE.md).
+ *
+ * Pure geometry and pure data: no Lit, no DOM, no `hass`. Everything here is
+ * unit-testable, and the card only turns the output into one `<path>`.
+ *
+ * WHY OUR OWN SYMBOLS AND NOT AN ICON SET. Every general-purpose icon pack —
+ * mdi included, and it is already in this bundle — draws a PICTOGRAM: a sofa
+ * seen from the front, inside a 24x24 square. A plan is drawn from ABOVE and
+ * to SCALE: a sofa is a 2.2 x 0.9 m rectangle with a back along one long
+ * side. Putting a 24x24 pictogram into that rectangle stretches a drawing
+ * that was never meant to be stretched, and the result reads as an icon lying
+ * on the floor, not as a piece of furniture. So the symbols below are drawn
+ * here, in a UNIT BOX, and generated at the shape's real size — which also
+ * means the stroke is a plain `stroke-width` in render units, exactly like
+ * every other decor shape, instead of a `vector-effect` hack fighting a
+ * non-uniform scale.
+ *
+ * THE CONVENTION EVERY SYMBOL OBEYS:
+ *   - the box is `0..1 x 0..1`, x to the right, y DOWN (SVG);
+ *   - `y = 0` is the BACK of the object — the side that goes against a wall.
+ *     That is what makes the wall magnet meaningful: a sofa's back, a bed's
+ *     headboard, a wardrobe's rear panel and a worktop's edge all mean the
+ *     same thing to `snapFurnitureToWall`;
+ *   - nothing is filled. The card strokes the whole symbol in the decor
+ *     colour, so a plan stays a drawing (owner: «символы рисуются линейно»).
+ */
+
+import { NORM_W, GRID_PITCH, CANVAS_LIMIT } from './space-geometry';
+
+/** Groups the palette shows, in the order it shows them. */
+export const FURNITURE_GROUPS = ['furniture', 'appliance', 'sanitary', 'other'] as const;
+export type FurnitureGroup = (typeof FURNITURE_GROUPS)[number];
+
+/**
+ * A drawing primitive in the unit box. Deliberately tiny — four shapes are
+ * enough for a plan symbol, and each one maps to a couple of path commands,
+ * so a symbol costs a few dozen bytes in the bundle instead of a kilobyte of
+ * Inkscape output.
+ *
+ *   ['r', x, y, w, h]                 rectangle
+ *   ['l', x1, y1, x2, y2]             line
+ *   ['e', cx, cy, rx, ry]             ellipse
+ *   ['p', x1, y1, x2, y2, ...]        open polyline (2 points or more)
+ */
+export type Prim =
+  | ['r', number, number, number, number]
+  | ['l', number, number, number, number]
+  | ['e', number, number, number, number]
+  | ['p', ...number[]];
+
+export interface FurnitureSymbol {
+  /** Stable id — it is what the config stores and what `data-symbol` carries. */
+  id: string;
+  group: FurnitureGroup;
+  /** Default REAL size in centimetres: width ALONG the back edge x depth. */
+  w: number;
+  h: number;
+  /** The drawing, in the unit box described above. */
+  g: Prim[];
+}
+
+// The outline every boxy symbol starts from, named once so the table reads.
+const box = (): Prim => ['r', 0, 0, 1, 1];
+
+/**
+ * The library. Sizes are the ones a European flat actually has; they are
+ * DEFAULTS, not limits — the palette lets the user type over both numbers
+ * before placing, and the corner handles change them afterwards.
+ */
+export const FURNITURE: FurnitureSymbol[] = [
+  // ------------------------------- мебель --------------------------------
+  { id: 'sofa', group: 'furniture', w: 220, h: 90, g: [
+    box(),
+    ['l', 0.09, 0.26, 0.91, 0.26],   // the back cushion
+    ['l', 0.09, 0.26, 0.09, 1],      // armrests
+    ['l', 0.91, 0.26, 0.91, 1],
+    ['l', 0.5, 0.26, 0.5, 1],        // two seats
+  ] },
+  { id: 'armchair', group: 'furniture', w: 90, h: 85, g: [
+    box(),
+    ['l', 0.14, 0.28, 0.86, 0.28],
+    ['l', 0.14, 0.28, 0.14, 1],
+    ['l', 0.86, 0.28, 0.86, 1],
+  ] },
+  { id: 'coffee_table', group: 'furniture', w: 110, h: 60, g: [
+    box(), ['r', 0.08, 0.14, 0.84, 0.72],
+  ] },
+  { id: 'table_dining', group: 'furniture', w: 140, h: 80, g: [
+    box(), ['r', 0.06, 0.11, 0.88, 0.78],
+  ] },
+  { id: 'table_round', group: 'furniture', w: 120, h: 120, g: [
+    ['e', 0.5, 0.5, 0.5, 0.5], ['e', 0.5, 0.5, 0.41, 0.41],
+  ] },
+  { id: 'chair', group: 'furniture', w: 45, h: 45, g: [
+    ['r', 0, 0, 1, 0.18],            // the back
+    ['r', 0.06, 0.18, 0.88, 0.8],    // the seat
+  ] },
+  { id: 'desk', group: 'furniture', w: 120, h: 60, g: [
+    box(),
+    ['r', 0.63, 0.07, 0.31, 0.86],   // the drawer pedestal
+    ['l', 0.63, 0.5, 0.94, 0.5],
+  ] },
+  { id: 'bed_double', group: 'furniture', w: 160, h: 200, g: [
+    box(),
+    ['r', 0, 0, 1, 0.07],            // the headboard, i.e. the back
+    ['r', 0.06, 0.1, 0.4, 0.15],     // two pillows
+    ['r', 0.54, 0.1, 0.4, 0.15],
+    ['l', 0, 0.33, 1, 0.33],         // the turned-down blanket
+  ] },
+  { id: 'bed_single', group: 'furniture', w: 90, h: 200, g: [
+    box(),
+    ['r', 0, 0, 1, 0.07],
+    ['r', 0.15, 0.1, 0.7, 0.15],
+    ['l', 0, 0.33, 1, 0.33],
+  ] },
+  { id: 'nightstand', group: 'furniture', w: 45, h: 40, g: [
+    box(), ['r', 0.12, 0.14, 0.76, 0.33], ['r', 0.12, 0.53, 0.76, 0.33],
+  ] },
+  { id: 'wardrobe', group: 'furniture', w: 100, h: 60, g: [
+    box(),
+    ['l', 0, 0.72, 1, 0.72],         // the hanging rail
+    ['l', 0.5, 0.72, 0.5, 1],        // the doors meet here
+  ] },
+  { id: 'bookshelf', group: 'furniture', w: 80, h: 30, g: [
+    box(), ['l', 0.34, 0, 0.34, 1], ['l', 0.67, 0, 0.67, 1],
+  ] },
+
+  // ------------------------------- техника -------------------------------
+  { id: 'fridge', group: 'appliance', w: 60, h: 65, g: [
+    box(),
+    ['l', 0, 0.36, 1, 0.36],         // freezer / fridge
+    ['l', 0.83, 0.44, 0.83, 0.64],   // the handle
+  ] },
+  { id: 'stove', group: 'appliance', w: 60, h: 60, g: [
+    box(),
+    ['e', 0.29, 0.31, 0.15, 0.15], ['e', 0.71, 0.31, 0.15, 0.15],
+    ['e', 0.29, 0.71, 0.15, 0.15], ['e', 0.71, 0.71, 0.15, 0.15],
+  ] },
+  { id: 'dishwasher', group: 'appliance', w: 60, h: 60, g: [
+    box(),
+    ['r', 0.1, 0.12, 0.8, 0.76],
+    ['e', 0.5, 0.5, 0.27, 0.27], ['e', 0.5, 0.5, 0.13, 0.13],  // plates
+  ] },
+  { id: 'washer', group: 'appliance', w: 60, h: 60, g: [
+    box(),
+    ['l', 0.08, 0.17, 0.92, 0.17],   // the control panel
+    ['e', 0.5, 0.57, 0.3, 0.3], ['e', 0.5, 0.57, 0.14, 0.14],  // the drum
+  ] },
+  { id: 'dryer', group: 'appliance', w: 60, h: 60, g: [
+    box(),
+    ['l', 0.08, 0.17, 0.92, 0.17],
+    ['e', 0.5, 0.57, 0.3, 0.3],
+    ['p', 0.36, 0.5, 0.5, 0.64, 0.64, 0.5],  // the chevron that is not a drum
+  ] },
+  { id: 'tv', group: 'appliance', w: 120, h: 30, g: [
+    ['r', 0, 0, 1, 0.42],            // the screen, seen edge-on
+    ['l', 0.5, 0.42, 0.5, 0.72],
+    ['l', 0.3, 0.72, 0.7, 0.72],     // the stand
+  ] },
+  { id: 'ac', group: 'appliance', w: 90, h: 25, g: [
+    box(), ['l', 0.05, 0.55, 0.95, 0.55], ['l', 0.05, 0.79, 0.95, 0.79],
+  ] },
+  { id: 'water_heater', group: 'appliance', w: 45, h: 45, g: [
+    ['e', 0.5, 0.5, 0.5, 0.5], ['e', 0.5, 0.5, 0.31, 0.31],
+  ] },
+
+  // ----------------------------- сантехника ------------------------------
+  { id: 'toilet', group: 'sanitary', w: 40, h: 70, g: [
+    ['r', 0.06, 0, 0.88, 0.2],       // the cistern, against the wall
+    ['e', 0.5, 0.58, 0.37, 0.35],    // the bowl
+    ['e', 0.5, 0.58, 0.22, 0.2],
+  ] },
+  { id: 'bathtub', group: 'sanitary', w: 170, h: 75, g: [
+    box(),
+    ['r', 0.05, 0.11, 0.77, 0.78],
+    ['e', 0.89, 0.5, 0.045, 0.1],    // the drain end
+  ] },
+  { id: 'shower', group: 'sanitary', w: 90, h: 90, g: [
+    box(),
+    ['l', 0, 0, 1, 1], ['l', 1, 0, 0, 1],   // the tray, as every plan draws it
+    ['e', 0.5, 0.5, 0.08, 0.08],
+  ] },
+  { id: 'sink', group: 'sanitary', w: 60, h: 45, g: [
+    box(),
+    ['e', 0.5, 0.6, 0.34, 0.3],
+    ['e', 0.5, 0.15, 0.07, 0.07],    // the tap
+  ] },
+  { id: 'kitchen_sink', group: 'sanitary', w: 80, h: 60, g: [
+    box(),
+    ['r', 0.06, 0.24, 0.44, 0.64],
+    ['r', 0.54, 0.24, 0.4, 0.64],
+    ['e', 0.5, 0.12, 0.06, 0.06],
+  ] },
+  { id: 'bidet', group: 'sanitary', w: 40, h: 55, g: [
+    ['e', 0.5, 0.5, 0.44, 0.5], ['e', 0.5, 0.5, 0.26, 0.3],
+  ] },
+
+  // ------------------------------- прочее --------------------------------
+  { id: 'stairs', group: 'other', w: 100, h: 280, g: [
+    box(),
+    ['l', 0, 0.111, 1, 0.111], ['l', 0, 0.222, 1, 0.222], ['l', 0, 0.333, 1, 0.333],
+    ['l', 0, 0.444, 1, 0.444], ['l', 0, 0.556, 1, 0.556], ['l', 0, 0.667, 1, 0.667],
+    ['l', 0, 0.778, 1, 0.778], ['l', 0, 0.889, 1, 0.889],
+    ['l', 0.5, 0.93, 0.5, 0.06],               // the "up" arrow
+    ['p', 0.38, 0.16, 0.5, 0.06, 0.62, 0.16],
+  ] },
+  { id: 'fireplace', group: 'other', w: 120, h: 40, g: [
+    box(), ['p', 0.22, 1, 0.22, 0.42, 0.78, 0.42, 0.78, 1],
+  ] },
+  { id: 'plant', group: 'other', w: 40, h: 40, g: [
+    ['e', 0.5, 0.5, 0.22, 0.22],
+    ['l', 0.5, 0.28, 0.5, 0.02], ['l', 0.5, 0.72, 0.5, 0.98],
+    ['l', 0.28, 0.5, 0.02, 0.5], ['l', 0.72, 0.5, 0.98, 0.5],
+    ['l', 0.34, 0.34, 0.13, 0.13], ['l', 0.66, 0.66, 0.87, 0.87],
+    ['l', 0.66, 0.34, 0.87, 0.13], ['l', 0.34, 0.66, 0.13, 0.87],
+  ] },
+  { id: 'rug', group: 'other', w: 200, h: 140, g: [
+    box(), ['r', 0.06, 0.09, 0.88, 0.82],
+  ] },
+];
+
+const BY_ID = new Map(FURNITURE.map((s) => [s.id, s]));
+
+/** The symbol with this id, or null. An unknown id is DATA, not a crash: a
+ *  plan written by a newer card must still validate, save and simply render
+ *  nothing in an older one. */
+export function furnitureSymbol(id: string | null | undefined): FurnitureSymbol | null {
+  return (id && BY_ID.get(id)) || null;
+}
+
+/** The symbols of one group, in table order. */
+export function furnitureOfGroup(group: FurnitureGroup): FurnitureSymbol[] {
+  return FURNITURE.filter((s) => s.group === group);
+}
+
+/** Default real size (cm) of a symbol; an unknown id falls back to 60 x 60 —
+ *  a box the user can immediately resize rather than an error. */
+export function furnitureDefaultCm(id: string): { w: number; h: number } {
+  const s = furnitureSymbol(id);
+  return s ? { w: s.w, h: s.h } : { w: 60, h: 60 };
+}
+
+// ------------------------- centimetres <-> the canvas -----------------------
+
+/**
+ * Real centimetres -> a NORMALISED size on the canvas, through the space's
+ * `cell_cm` — the one scale this card has (`_cmToUnits` and `segmentCm` are
+ * the same conversion in render units). Kept pure and parameterised so a test
+ * can state the arithmetic without a card.
+ */
+export function cmToNorm(cm: number, cellCm: number,
+                         gridPitch: number = GRID_PITCH, normW: number = NORM_W): number {
+  const c = Number(cellCm) > 0 ? Number(cellCm) : 5;
+  return ((Number(cm) || 0) / c) * gridPitch / normW;
+}
+
+/** ...and back, for the size fields and the live badges. */
+export function normToCm(v: number, cellCm: number,
+                         gridPitch: number = GRID_PITCH, normW: number = NORM_W): number {
+  const c = Number(cellCm) > 0 ? Number(cellCm) : 5;
+  return (((Number(v) || 0) * normW) / gridPitch) * c;
+}
+
+/** A piece may not be smaller than a stroke or larger than the canvas guard.
+ *  Both are garbage insurance, not opinions about furniture. */
+export const FURN_MIN_N = 0.0005;   // half of a 1000-unit pixel
+export const FURN_MAX_N = CANVAS_LIMIT;
+
+export function clampFurnSize(n: number): number {
+  if (!Number.isFinite(n)) return FURN_MIN_N;
+  return Math.max(FURN_MIN_N, Math.min(FURN_MAX_N, n));
+}
+
+/** Real-size bounds for the palette's two fields: 1 cm ... 100 m. */
+export const FURN_MIN_CM = 1;
+export const FURN_MAX_CM = 10000;
+
+export function clampFurnCm(cm: number): number {
+  if (!Number.isFinite(cm)) return FURN_MIN_CM;
+  return Math.max(FURN_MIN_CM, Math.min(FURN_MAX_CM, cm));
+}
+
+// ------------------------------ the drawing --------------------------------
+
+const num = (v: number): string => {
+  const r = Math.round(v * 1000) / 1000;
+  return Object.is(r, -0) ? '0' : String(r);
+};
+
+/**
+ * The symbol as ONE `d` string, in a box `w x h` whose top-left is `(0,0)`.
+ *
+ * One path per piece, not one element per primitive: the whole symbol then
+ * takes a single stroke, a single pointer target and a single `data-symbol`,
+ * and the decor layer's DOM does not grow by ten nodes per sofa.
+ */
+export function furniturePathD(id: string, w: number, h: number): string {
+  const s = furnitureSymbol(id);
+  if (!s || !(w > 0) || !(h > 0)) return '';
+  const X = (v: number) => num(v * w);
+  const Y = (v: number) => num(v * h);
+  const out: string[] = [];
+  for (const p of s.g) {
+    if (p[0] === 'r') {
+      const [, x, y, pw, ph] = p;
+      out.push(`M${X(x)} ${Y(y)}H${X(x + pw)}V${Y(y + ph)}H${X(x)}Z`);
+    } else if (p[0] === 'l') {
+      const [, x1, y1, x2, y2] = p;
+      out.push(`M${X(x1)} ${Y(y1)}L${X(x2)} ${Y(y2)}`);
+    } else if (p[0] === 'e') {
+      const [, cx, cy, rx, ry] = p;
+      // two half-arcs: a full ellipse cannot be one A command
+      out.push(`M${X(cx - rx)} ${Y(cy)}`
+        + `A${num(rx * w)} ${num(ry * h)} 0 0 1 ${X(cx + rx)} ${Y(cy)}`
+        + `A${num(rx * w)} ${num(ry * h)} 0 0 1 ${X(cx - rx)} ${Y(cy)}Z`);
+    } else {
+      const pts = p.slice(1) as number[];
+      if (pts.length < 4) continue;
+      let d = `M${X(pts[0])} ${Y(pts[1])}`;
+      for (let i = 2; i + 1 < pts.length; i += 2) d += `L${X(pts[i])} ${Y(pts[i + 1])}`;
+      out.push(d);
+    }
+  }
+  return out.join('');
+}
+
+// ------------------------------ the wall magnet -----------------------------
+
+/** How far from a wall the magnet still reaches, in GRID CELLS. Six cells is
+ *  30 cm on a default plan: close enough to be a decision, far enough to be
+ *  reachable with a finger. */
+export const FURN_WALL_CELLS = 6;
+
+export interface FurnitureSnap {
+  /** The new CENTRE of the piece. */
+  cx: number;
+  cy: number;
+  /** Its new rotation, degrees, such that the back edge lies on the wall. */
+  angle: number;
+  /** How far the centre was from the wall before snapping (tests, diagnostics). */
+  dist: number;
+}
+
+/** Wall segments (`[x1,y1,x2,y2]`) in whatever units the caller works in. */
+export type WallSeg = number[];
+
+const norm180 = (a: number): number => {
+  let x = ((a % 360) + 360) % 360;
+  if (x > 180) x -= 360;
+  return x;
+};
+
+/**
+ * Press a piece of furniture flat against the nearest wall.
+ *
+ * `edges` are the DERIVED room walls (`roomEdges`) in the same units as the
+ * centre — the card passes render units. The piece is placed so that its BACK
+ * (local `y = 0`, the convention every symbol above obeys) lies ON the wall
+ * and its body stays on the side the user was dragging it from, and it is
+ * turned to the wall's own direction. Returns `null` when no wall is within
+ * `maxDist`, which is how "Shift, or simply far away" stays plain dragging.
+ *
+ * The offset ALONG the wall is quantised to `step` when one is given: the
+ * wall decides two of the three degrees of freedom, the grid still decides
+ * the third, so a row of kitchen units lines up instead of drifting.
+ */
+export function snapFurnitureToWall(
+  cx: number, cy: number, depth: number, edges: WallSeg[], maxDist: number,
+  step = 0,
+): FurnitureSnap | null {
+  let best: FurnitureSnap | null = null;
+  let bestD = maxDist;
+  for (const e of edges) {
+    const [x1, y1, x2, y2] = e;
+    const dx = x2 - x1, dy = y2 - y1;
+    const len2 = dx * dx + dy * dy;
+    if (!len2) continue;
+    const len = Math.sqrt(len2);
+    let t = ((cx - x1) * dx + (cy - y1) * dy) / len2;
+    t = Math.max(0, Math.min(1, t));
+    let qx = x1 + t * dx, qy = y1 + t * dy;
+    const d = Math.hypot(cx - qx, cy - qy);
+    if (!(d < bestD)) continue;
+    bestD = d;
+    // the outward normal: from the wall TOWARDS where the user is holding the
+    // piece, so a sofa dragged along the inside of a wall does not flip
+    // through it the moment the magnet takes over
+    let nx = cx - qx, ny = cy - qy;
+    const nl = Math.hypot(nx, ny);
+    if (nl < 1e-9) {
+      // dead on the wall: no side to prefer, take the wall's left normal
+      nx = dy / len; ny = -dx / len;
+    } else {
+      nx /= nl; ny /= nl;
+    }
+    if (step > 0) {
+      // quantise the position along the wall, measured from its first corner
+      const along = Math.round((t * len) / step) * step;
+      qx = x1 + (along / len) * dx;
+      qy = y1 + (along / len) * dy;
+    }
+    // rotate(A) maps the local +y (0,1) onto (-sin A, cos A); we want that to
+    // be the outward normal, i.e. the piece looking away from the wall
+    const angle = norm180((Math.atan2(-nx, ny) * 180) / Math.PI);
+    best = { cx: qx + nx * (depth / 2), cy: qy + ny * (depth / 2), angle, dist: d };
+  }
+  return best;
+}
+
+/**
+ * The four corners of a rotated box, world units, in the order the frame
+ * draws them: NW, NE, SE, SW. Pure, so the frame, the gestures and the tests
+ * all agree on where a corner is.
+ */
+export function furnitureCorners(
+  x: number, y: number, w: number, h: number, angle: number,
+): number[][] {
+  const cx = x + w / 2, cy = y + h / 2;
+  const a = ((Number(angle) || 0) * Math.PI) / 180;
+  const cs = Math.cos(a), sn = Math.sin(a);
+  const rot = (px: number, py: number): number[] => {
+    const ux = px - cx, uy = py - cy;
+    return [cx + ux * cs - uy * sn, cy + ux * sn + uy * cs];
+  };
+  return [rot(x, y), rot(x + w, y), rot(x + w, y + h), rot(x, y + h)];
+}
+
+/**
+ * Resize by a dragged corner about the OPPOSITE one — the backdrop frame's
+ * rule, but with WIDTH AND DEPTH INDEPENDENT.
+ *
+ * Why not uniform: a picture has one true aspect ratio and stretching it is a
+ * lie, which is why the backdrop scales uniformly. Furniture is the opposite
+ * case — the ratio is a fact about THIS sofa, and the next one is 1.8 m long
+ * with the same 0.9 m depth. A uniform handle would force the user to make a
+ * bed deeper in order to make it wider, i.e. to state something false about
+ * the room. So both axes move, and the two live badges say what they became.
+ *
+ * `sgx/sgy` are the dragged corner as signs (+1 = the high side of the axis).
+ * `px/py` is the pointer. `step > 0` quantises each dimension to the grid —
+ * on an unrotated piece whose fixed corner sits on a node that also puts the
+ * dragged corner on a node, which is what "snap to the grid" has to mean
+ * here; Shift is the caller passing 0.
+ */
+export function furnitureResize(
+  orig: { x: number; y: number; w: number; h: number; angle?: number },
+  sgx: number, sgy: number, px: number, py: number, step = 0, minSize = 1e-6,
+): { x: number; y: number; w: number; h: number } {
+  const a = ((Number(orig.angle) || 0) * Math.PI) / 180;
+  const ux = Math.cos(a), uy = Math.sin(a);          // local +x in world
+  const vx = -Math.sin(a), vy = Math.cos(a);         // local +y in world
+  const cx = orig.x + orig.w / 2, cy = orig.y + orig.h / 2;
+  // the fixed corner = the one opposite the dragged one
+  const fLocalX = sgx > 0 ? -orig.w / 2 : orig.w / 2;
+  const fLocalY = sgy > 0 ? -orig.h / 2 : orig.h / 2;
+  const fx = cx + fLocalX * ux + fLocalY * vx;
+  const fy = cy + fLocalX * uy + fLocalY * vy;
+  // the pointer, expressed along the piece's own axes from that fixed corner
+  const rx = px - fx, ry = py - fy;
+  let w = (rx * ux + ry * uy) * (sgx > 0 ? 1 : -1);
+  let h = (rx * vx + ry * vy) * (sgy > 0 ? 1 : -1);
+  if (step > 0) {
+    w = Math.round(w / step) * step;
+    h = Math.round(h / step) * step;
+  }
+  w = Math.max(minSize, w);
+  h = Math.max(minSize, h);
+  // rebuild the centre from the fixed corner, then the UNROTATED top-left
+  const ncx = fx + (sgx > 0 ? w / 2 : -w / 2) * ux + (sgy > 0 ? h / 2 : -h / 2) * vx;
+  const ncy = fy + (sgx > 0 ? w / 2 : -w / 2) * uy + (sgy > 0 ? h / 2 : -h / 2) * vy;
+  return { x: ncx - w / 2, y: ncy - h / 2, w, h };
+}

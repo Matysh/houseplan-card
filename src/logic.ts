@@ -944,14 +944,115 @@ function liveRaw(raw: unknown): string | null {
 }
 
 /**
- * The live value of a linked label, unit included — exactly as HA reports it.
- * No rounding, no reformatting, no localised separators: rounding belongs to
- * the sensor's `display_precision`, and duplicating it here would make two
- * sources of truth (docs/LIVE-TEXT.md).
+ * What one printing site got out of `hassValue`.
+ * `formatted` answers the only question a caller has afterwards: did HOME
+ * ASSISTANT build this string (unit already inside — never append one), or
+ * did we fall back to the raw state (the unit, if any, is still ours to add)?
+ */
+export interface HassValue {
+  text: string;
+  formatted: boolean;
+}
+
+/**
+ * One entity value, printed the way HOME ASSISTANT would print it
+ * (docs/STYLING-HOOKS.md §6).
+ *
+ * This is the single wrapper every value on the plan goes through. It does
+ * NOT round, localise or translate anything of its own — it hands the state
+ * object to `hass.formatEntityState` (or `hass.formatEntityAttributeValue`
+ * for an attribute), which is the very call HA's own more-info makes, so the
+ * number obeys the entity's `display_precision`, the user's decimal separator
+ * and the state translations. Our old rule ("we do not reformat") is not
+ * revoked, it is delegated: the formatting belongs to the side that knows the
+ * user's settings.
+ *
+ * An older Home Assistant has no such method — then `formatted` is false and
+ * `text` is exactly what we printed before, so nothing breaks and no version
+ * check is needed anywhere else.
+ *
+ * Returns null when there is nothing to print: no entity id, no such entity,
+ * an empty state, a missing attribute, or an attribute that is a dict.
+ */
+export function hassValue(
+  hass: any, entityId: string | null | undefined, attr?: string | null,
+): HassValue | null {
+  const id = String(entityId ?? '').trim();
+  if (!id) return null;
+  const st = hass?.states?.[id];
+  if (!st) return null;
+  const name = String(attr ?? '').trim();
+  const clip = (v: string) => v.slice(0, LIVE_TEXT_VALUE_MAX);
+  if (name) {
+    const bare = liveRaw(st.attributes?.[name]);
+    if (bare === null) return null; // not on this entity, or a dict
+    const f = hass?.formatEntityAttributeValue;
+    if (typeof f === 'function') {
+      // a formatter that throws is a formatter we do not have (an older HA
+      // may know the name but not this attribute's shape)
+      try {
+        const out = f.call(hass, st, name);
+        if (typeof out === 'string' && out !== '') return { text: clip(out), formatted: true };
+      } catch { /* fall through to the raw value */ }
+    }
+    return { text: bare, formatted: false };
+  }
+  const raw = st.state;
+  if (raw === undefined || raw === null || raw === '') return null;
+  const f = hass?.formatEntityState;
+  if (typeof f === 'function') {
+    try {
+      const out = f.call(hass, st);
+      if (typeof out === 'string' && out !== '') return { text: clip(out), formatted: true };
+    } catch { /* fall through to the raw state */ }
+  }
+  return { text: clip(String(raw)), formatted: false };
+}
+
+/**
+ * Exact trailing match on `unit` only — nothing else in the string is touched,
+ * and a text that does not end with it comes back untouched.
+ */
+function withoutUnit(text: string, unit: string): string {
+  if (!unit) return text;
+  const t = text.replace(/\s+$/, '');
+  return t.endsWith(unit) ? t.slice(0, t.length - unit.length).replace(/\s+$/, '') : text;
+}
+
+/**
+ * A formatted value with the unit it should end in — and with it there exactly
+ * ONCE (docs/STYLING-HOOKS.md §6).
+ *
+ * HA's `formatEntityState` normally appends the entity's own unit itself, so
+ * blindly adding `own` would double it and blindly trusting it would drop the
+ * unit on the versions/entities where it does not. The rule that survives both:
+ * strip the entity's own unit if it is already the tail, then append the unit
+ * the caller actually wants — the user's explicit one when there is one, the
+ * entity's own otherwise. With no unit wanted at all the text is returned
+ * untouched, so a translated state («Включено») never grows a suffix.
+ */
+export function valueWithUnit(v: HassValue, own: string, explicit?: string | null): string {
+  const ownU = String(own ?? '').trim();
+  const wanted = String(explicit ?? '').trim() || ownU;
+  if (!wanted) return v.text;
+  const bare = v.formatted && ownU ? withoutUnit(v.text, ownU) : v.text;
+  return `${bare} ${wanted}`;
+}
+
+/**
+ * The live value of a linked label, unit included — formatted the way HOME
+ * ASSISTANT formats it (docs/LIVE-TEXT.md §2.1, docs/STYLING-HOOKS.md §6).
+ *
+ * We still write no rounding logic of our own: the value goes through
+ * `hassValue`, which hands it to HA's formatter, so `display_precision`, the
+ * decimal separator and the state translations are the user's HA settings and
+ * not two sources of truth. Without a formatter (an older HA) this is
+ * byte-for-byte the previous behaviour.
  *
  * Unit resolution: an explicit `unit` always wins. An empty one inherits the
  * entity's `unit_of_measurement` ONLY when the STATE is being read — a
- * `battery_level` attribute on a °C sensor must not come out as «73 °C».
+ * `battery_level` attribute on a °C sensor must not come out as «73 °C» —
+ * and only when the formatter has not already put it there.
  */
 export function liveTextValue(hass: any, link: LiveTextLink | null | undefined): string {
   const id = (link?.entity || '').trim();
@@ -961,11 +1062,11 @@ export function liveTextValue(hass: any, link: LiveTextLink | null | undefined):
   if (!st || state === undefined || state === null || state === ''
     || state === 'unavailable' || state === 'unknown') return LIVE_TEXT_DASH;
   const attr = (link?.attr || '').trim();
-  const val = liveRaw(attr ? st.attributes?.[attr] : state);
-  if (val === null) return LIVE_TEXT_DASH; // the attribute is not on this entity
+  const v = hassValue(hass, id, attr || null);
+  if (v === null) return LIVE_TEXT_DASH; // the attribute is not on this entity
+  // the unit the entity carries — inherited by the STATE only
   const own = attr ? '' : String(st.attributes?.unit_of_measurement ?? '').trim();
-  const unit = String(link?.unit ?? '').trim() || own;
-  return unit ? `${val} ${unit}` : val;
+  return valueWithUnit(v, own, link?.unit);
 }
 
 /**
@@ -1041,6 +1142,14 @@ export interface SpaceDisplay {
   labelLight: boolean;
   /** Background around the plan; null = inherit the global setting / theme. */
   bgColor: string | null;
+  /**
+   * Two "draw less" switches (owner 2026-08-05). Both are OPT-IN and both are
+   * lifted inside the editor that owns the layer — a hidden thing you cannot
+   * see to edit is a trap, so the decor editor always shows decor and the plan
+   * editor always shows openings, whatever these say.
+   */
+  hideDecor: boolean;
+  hideOpenings: boolean;
 }
 
 // Default for borders + room names when room_color is absent. Dark slate
@@ -1075,6 +1184,9 @@ export function spaceDisplayOf(spaceCfg: any): SpaceDisplay {
     labelLqi: s.label_lqi === true,
     labelLight: s.label_light === true,
     bgColor: typeof s.bg_color === 'string' && /^#[0-9a-f]{6}$/i.test(s.bg_color) ? s.bg_color : null,
+    // absent = false = today's rendering, so no plan changes by being read
+    hideDecor: s.hide_decor === true,
+    hideOpenings: s.hide_openings === true,
   };
 }
 

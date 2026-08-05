@@ -207,6 +207,9 @@ SPACE_DISPLAY_SCHEMA = vol.Schema(
         vol.Optional("temp_min"): vol.Coerce(float),
         vol.Optional("temp_max"): vol.Coerce(float),
         vol.Optional("show_lqi"): bool,
+        # "draw less" switches; absent = False = everything is drawn as before
+        vol.Optional("hide_decor"): bool,
+        vol.Optional("hide_openings"): bool,
         vol.Optional("label_temp"): bool,
         vol.Optional("label_hum"): bool,
         vol.Optional("label_lqi"): bool,
@@ -235,6 +238,18 @@ MAX_DECOR_UNIT = 16
 # could mean on a 1000-unit canvas, the rest is garbage insurance.
 DECOR_TEXT_SCALE_MIN = 0.15
 DECOR_TEXT_SCALE_MAX = 20.0
+# A furniture symbol id (docs/FURNITURE.md). Deliberately NOT the card's list:
+# the backend must accept a plan written by a NEWER card, and a card that has
+# learnt a new symbol must not have to wait for the integration to be updated
+# before the user can save. What is enforced is the shape of the id — a flat
+# lowercase name — and its length; an id this backend has never heard of simply
+# renders as nothing in an older card.
+MAX_FURN_SYMBOL = 32
+_FURN_SYMBOL = vol.All(str, vol.Length(min=1, max=MAX_FURN_SYMBOL),
+                       vol.Match(r"^[a-z0-9_]+$"))
+# …and its size: strictly positive, capped by the same canvas insurance limit
+# an opening's length is. A piece of furniture is a SIZE, not a coordinate.
+_FURN_SIZE = vol.All(_finite, vol.Range(min=0.0000001, max=CANVAS_LIMIT))
 
 _DECOR_COMMON = {
     vol.Required("id"): str,
@@ -277,6 +292,16 @@ DECOR_SCHEMA = vol.Any(
                 vol.Optional("entity"): vol.Any(None, _ENTITY_ID),
                 vol.Optional("attr"): vol.Any(None, vol.All(str, vol.Length(max=MAX_DECOR_ATTR))),
                 vol.Optional("unit"): vol.Any(None, vol.All(str, vol.Length(max=MAX_DECOR_UNIT)))},
+               extra=vol.ALLOW_EXTRA),
+    # A piece of furniture (docs/FURNITURE.md): a symbol id, a normalised box
+    # and an optional rotation. It is a NEW kind, so no existing plan carries
+    # it, nothing is migrated, and an integration that has this branch reads
+    # every older config byte-for-byte as before.
+    vol.Schema({**_DECOR_COMMON, vol.Required("kind"): "furniture",
+                vol.Required("symbol"): _FURN_SYMBOL,
+                vol.Required("x"): _NORM, vol.Required("y"): _NORM,
+                vol.Required("w"): _FURN_SIZE, vol.Required("h"): _FURN_SIZE,
+                vol.Optional("angle"): vol.All(_finite, vol.Range(min=-360.0, max=360.0))},
                extra=vol.ALLOW_EXTRA),
 )
 

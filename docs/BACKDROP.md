@@ -66,9 +66,14 @@ steps aside for them. Nowhere else: View, the Plan editor, the Device
 editor and the kiosk never touch the picture. A space with no image never
 grows a frame, and its toolbar is unchanged.
 
-**What.** A dashed outline on the picture's rectangle plus four
-finger-sized corner handles (radius = 2 % of the visible view, so they stay
-grabbable at any zoom — the same rule the vacuum fit frame uses). The
+**What.** A dashed outline on the picture's rectangle plus four corner
+handles. **Two radii, one gesture:** the HIT circle is 2 % of the visible
+view — finger-sized at any zoom, the same rule the vacuum fit frame uses —
+and is invisible; the bead you actually see (`.bdknob`) is a **quarter** of
+it (owner, 2026-08-05: «уменьшить в 4 раза… они постоянно гигантские»). The
+clickable area is unchanged; only the ink shrank, so the frame stops
+covering the picture it frames. The same split now governs the text block
+(docs/LIVE-TEXT.md §3), the room-resize corners and the vacuum fit. The
 outline never takes a pointer; the handles do, with `setPointerCapture` and
 `nwse-resize` / `nesw-resize` cursors. Under the picture's own tool the
 stage cursor is `grab`, and `grabbing` while a gesture is live.
@@ -81,6 +86,16 @@ one-finger pan of the whole plane, which the owner asked for on 2026-08-04
 corner handles are precise targets and need no such protection — they are
 live whenever the frame is. The gesture is also only started INSIDE the
 rectangle, so pressing beside the picture pans even under its own tool.
+
+**…and that tool is ARMED when the editor opens** (owner, 2026-08-05: «не
+получается двигать картинку-подложку в режиме редактора подложки»). The
+frame is drawn on open, which promises a draggable picture, while the
+promise was only kept once the user found a tool they had no reason to look
+for. So `_setMode('decor')` selects `backdrop` instead of `select` whenever
+the space HAS a picture — the editor is named after it. Nothing else
+changes: `select` is one click away and still leaves the body to the pan, a
+space with no picture still opens on `select`, and Esc still returns to
+`select`. This is a discoverability fix, not a new gesture.
 
 **Nothing may rescale the stage mid-gesture.** Two things wanted to, and
 both moved the picture away from the finger before they were stopped:
