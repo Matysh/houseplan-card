@@ -243,6 +243,10 @@ export interface SunRay {
  * card memoises the result on (azimuth, elevation, config rev) and reuses
  * it across hass ticks (docs/SUN.md). Mutual shading of building wings is
  * NOT considered (documented limit).
+ *
+ * `innerByRoom` (optional): when wall thickness is set, clip wedges to each
+ * room's inner contour and narrow the lit width through the opening tunnel
+ * (`max(0, L − d·tan(|α|))`, docs/WALL-THICKNESS.md §5).
  */
 export function computeSunRays(
   rooms: SunRoom[],
@@ -250,6 +254,8 @@ export function computeSunRays(
   azimuth: number,
   elevation: number,
   northDeg: number,
+  innerByRoom?: Record<string, number[][]>,
+  wallDepthByOpening?: Record<string, number>,
 ): SunRay[] {
   if (!(elevation > 0)) return [];
   const toSun = sunDirOnPlan(azimuth, northDeg);
@@ -262,13 +268,26 @@ export function computeSunRays(
     if (!info || !windowLit(info.normal, toSun, elevation)) continue;
     const room = rooms.find((r) => r.id === info.roomId);
     if (!room) continue;
+    const clipPoly = (innerByRoom && innerByRoom[info.roomId]) || room.poly;
     const rad = (w.angle * Math.PI) / 180;
-    const hx = (Math.cos(rad) * w.length) / 2;
-    const hy = (Math.sin(rad) * w.length) / 2;
+    let half = w.length / 2;
+    const d = wallDepthByOpening?.[w.id] || 0;
+    if (d > 0) {
+      // tunnel narrowing: α = angle between ray and inward normal
+      const inward: [number, number] = [-info.normal[0], -info.normal[1]];
+      const cos = Math.max(-1, Math.min(1, away[0] * inward[0] + away[1] * inward[1]));
+      const sin = Math.sqrt(Math.max(0, 1 - cos * cos));
+      const tan = cos > 1e-9 ? sin / cos : 1e6;
+      const eff = Math.max(0, w.length - d * tan);
+      half = eff / 2;
+      if (!(eff > 0)) continue;
+    }
+    const hx = Math.cos(rad) * half;
+    const hy = Math.sin(rad) * half;
     const a = [w.x - hx, w.y - hy];
     const b = [w.x + hx, w.y + hy];
     const len = k * w.length;
-    const polys = clipToRoom(rayQuad(a, b, away, len), room.poly);
+    const polys = clipToRoom(rayQuad(a, b, away, len), clipPoly);
     if (!polys.length) continue;
     // inward normal + how deep the ray gets: cos of the incidence angle,
     // which windowLit() has already found to be above RAY_MIN_COS

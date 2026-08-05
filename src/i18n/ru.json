@@ -315,6 +315,7 @@
   "wallthick.unit_cm": "см",
   "wallthick.unit_in": "дюйм",
   "wallthick.apply_room": "Применить ко всем стенам комнаты",
+  "markup.draw_wall_title": "Толщина стен новой комнаты. Пустое или ноль — без толщины. Общие стены сохраняют значение соседа.",
   "toast.wallthick_pick": "Кликните по стене (не по открытой границе)",
   "toast.wallthick_open": "У открытой границы нет толщины",
   "toast.wallthick_set": "Толщина стены задана",

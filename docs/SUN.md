@@ -133,10 +133,14 @@ when BOTH hold:
 
 The wedge is a PARALLELOGRAM: the window's span extruded by the same
 length along the direction AWAY from the sun (light falls inward), so
-its far edge is parallel to the wall, clipped by the
-room's polygon (`polyclip` intersection, the same dependency
-`src/resize.ts` already uses). Its length is `k(elevation)` in window
-lengths: ~1.75 at sunrise/sunset tapering to ~0.56 at the zenith
+its far edge is parallel to the wall, clipped by the receiving room's
+**inner contour** when wall thickness is set (`inset` of the polygon by
+half the wall thickness — see `docs/WALL-THICKNESS.md`); otherwise by
+the room polygon (`polyclip` intersection). With thickness `d` the
+effective lit width narrows through the opening tunnel:
+`max(0, L − d·tan(|α|))` where `α` is the angle between the ray and the
+inward normal (`d = 0` keeps the previous full-span wedge). Its length
+is `k(elevation)` in window lengths: ~1.75 at sunrise/sunset tapering to ~0.56 at the zenith
 (`0.56 + 1.19·(1 − elevation/90)^1.6` — the v1.56 curve
 `0.8 + 1.7·(1 − elevation/90)^1.6` times `RAY_LENGTH_K` = 0.7, owner
 2026-08-04: «лучи от солнца сделать короче на 30%»; scaling the whole

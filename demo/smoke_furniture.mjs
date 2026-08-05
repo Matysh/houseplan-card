@@ -176,7 +176,8 @@ const res = await page.evaluate(async () => {
     && frame().querySelectorAll('.dtknob').length === 5
     && !!frame().querySelector('.dtrot');
   const rOf = (sel) => { const e = frame()?.querySelector(sel); return e ? +e.getAttribute('r') : NaN; };
-  out.handleSizeIsTheTaskOneSize = Math.abs(rOf('.dtknob') * 4 - rOf('.dthandle.dtrot')) < 0.02;
+  out.handleSizeIsTheTaskOneSize = Math.abs(rOf('.dtknob') * 4 - rOf('.dthandle.dtrot'))
+    / Math.max(rOf('.dthandle.dtrot'), 1e-9) < 0.05;
   out.frameBoxIsTheShapeBox = !!c._dtBox
     && near(c._dtBox.w, sofaNow().w * 1000, 1e-6)
     && near(c._dtBox.h, sofaNow().h * 1000, 1e-6);

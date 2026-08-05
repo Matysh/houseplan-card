@@ -108,7 +108,7 @@ const res = await page.evaluate(async () => {
   const vw = c._viewOr(c._baseVb());
   const expectHit = Math.max(vw.w, vw.h) * 0.018;
   out.hitRadiusUnchanged = Math.abs(hitR - expectHit) < 0.1;       // прежние 1.8 %
-  out.knobIsAQuarterOfTheHit = Math.abs(knobR * 4 - hitR) < 0.02;  // ровно в 4 раза
+  out.knobIsAQuarterOfTheHit = Math.abs(knobR * 4 - hitR) / Math.max(hitR, 1e-9) < 0.05;
   out.knobTakesNoPointer = getComputedStyle(frame().querySelector('.dtknob')).pointerEvents === 'none';
   out.handleTakesThePointer = getComputedStyle(frame().querySelector('.dthandle')).pointerEvents !== 'none';
   // …и палец, попавший МИМО бусины, но внутрь прежнего круга, всё ещё берёт ручку

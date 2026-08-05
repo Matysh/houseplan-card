@@ -2,6 +2,27 @@
 
 ## Unreleased (dev)
 
+## v1.59.0-beta.5 — 2026-08-05
+
+Fifth pre-release of the 1.59 line: wall-thickness redesign (seamless ±½ rings, inner floor/area/sun), draw-with-thickness, new-space opens the plan editor, and audit hygiene from the beta.4 recheck.
+
+- **Draw with wall thickness.** The Plan Draw toolbar has a thickness field
+  (default 15 cm / HA inches). New rooms get that thickness on commit; shared
+  walls keep the neighbour's value; empty clears. Live thick preview while
+  drawing.
+
+- **New space opens the plan editor.** Saving a newly created space switches to
+  Plan with the draw tool armed, so an empty floor is not left in View with
+  nothing to look at (same as the first-space onboard path).
+
+- **Wall thickness redesign (docs/WALL-THICKNESS.md).** Walls grow ±½ from the
+  centreline (outer and shared); bodies are outset−inset rings unioned into one
+  hatch (seamless L/T as in the reference plan); fills/glow/sun clip to the
+  inner contour; displayed m² is the clean floor; sun wedges narrow through the
+  opening tunnel. Resize/undo/scale keep and re-key `walls`; openings resolve by
+  wall angle; plan-editor mode restores after `can_write`. Hatch colour matches
+  the wall outline.
+
 ## v1.59.0-beta.4 — 2026-08-05
 
 Fourth pre-release of the 1.59 line: wall thickness in the plan editor, and a

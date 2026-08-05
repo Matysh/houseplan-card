@@ -3,8 +3,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   wallKey, lookupWall, thicknessCmAt, degradeWalls, rekeyWallsAfterMove,
-  setWallThickness, setWallThicknessForRoom, clampWallCm, cmToField, fieldToCm,
+  setWallThickness, setWallThicknessForRoom, applyWallThicknessToNewRoom,
+  drawWallPreviewD, DRAW_WALL_DEFAULT_CM, clampWallCm, cmToField, fieldToCm,
   wallCmToUnits, insetContour, inwardNormal, edgeKinds, wallEdgeBodies,
+  wallBodyRings, wallBodiesUnionPath, innerContourForRoom,
   paperRoomShapesWithWalls, WALL_MIN_CM, WALL_MAX_CM, MITRE_LIMIT,
 } from '../test-build/wall-thickness.js';
 import { polygonArea, paperRoomShapes } from '../test-build/logic.js';
@@ -151,7 +153,7 @@ test('inwardNormal points into the rectangle', () => {
 
 // ------------------------------- bodies / paper -----------------------------
 
-test('wallEdgeBodies: shared wall is one full-depth quad, outer is inward', () => {
+test('wallEdgeBodies: shared and outer both grow ±½ from the centreline', () => {
   const rooms = [
     { id: 'a', poly: [[0, 0], [5, 0], [5, 4], [0, 4]] },
     { id: 'b', poly: [[5, 0], [10, 0], [10, 4], [5, 4]] },
@@ -176,6 +178,28 @@ test('wallEdgeBodies: shared wall is one full-depth quad, outer is inward', () =
   assert.equal(outer.kind, 'outer');
   // only one body per key even though two rooms see the shared wall
   assert.equal(bodies.filter((b) => b.key === sharedKey).length, 1);
+  // outer grows half outward: min y of quad < 0
+  const ys = outer.quad.map((p) => p[1]);
+  assert.ok(Math.min(...ys) < -1e-9, 'outer must grow outward by half');
+});
+
+test('wallBodyRings / union: outset − inset forms a closed ring', () => {
+  const rooms = [
+    { id: 'a', poly: [[0, 0], [5, 0], [5, 4], [0, 4]] },
+    { id: 'b', poly: [[5, 0], [10, 0], [10, 4], [5, 4]] },
+  ];
+  const walls = [
+    { key: wallKey([5, 0], [5, 4], pitch), cm: 20 },
+    { key: wallKey([0, 0], [5, 0], pitch), cm: 20 },
+  ];
+  const rings = wallBodyRings(rooms, walls, [], pitch, cellCm, pitch);
+  assert.ok(rings.length >= 1);
+  assert.ok(rings[0].d.includes('M'));
+  const united = wallBodiesUnionPath(rooms, walls, [], [], pitch, cellCm, pitch);
+  assert.ok(united && united.d.includes('M'));
+  const inner = innerContourForRoom(rooms, 'a', walls, [], pitch, cellCm, pitch);
+  assert.ok(inner);
+  assert.ok(polygonArea(inner) < polygonArea(rooms[0].poly));
 });
 
 test('paper with walls covers shared centreline; without walls matches paperRoomShapes', () => {
@@ -199,4 +223,29 @@ test('area of the room polygon is unchanged by thickness helpers', () => {
   const before = polygonArea(poly);
   insetContour(poly, [0.5, 0.5, 0.5, 0.5]);
   assert.equal(polygonArea(poly), before);
+});
+
+test('applyWallThicknessToNewRoom skips edges that already have thickness', () => {
+  const sharedKey = wallKey([5, 0], [5, 4], pitch);
+  const existing = [{ key: sharedKey, cm: 40 }];
+  const newRoom = { id: 'b', poly: [[5, 0], [10, 0], [10, 4], [5, 4]] };
+  const next = applyWallThicknessToNewRoom(existing, newRoom, DRAW_WALL_DEFAULT_CM, pitch);
+  const shared = next.find((w) => w.key === sharedKey);
+  assert.equal(shared?.cm, 40, 'neighbour thickness must be kept');
+  // other three edges of b get the draw default
+  assert.equal(next.filter((w) => w.cm === DRAW_WALL_DEFAULT_CM).length, 3);
+  assert.equal(thicknessCmAt(next, [5, 0], [10, 0], pitch), DRAW_WALL_DEFAULT_CM);
+});
+
+test('applyWallThicknessToNewRoom with null cm is a no-op', () => {
+  const room = { id: 'r', poly: [[0, 0], [1, 0], [1, 1], [0, 1]] };
+  assert.deepEqual(applyWallThicknessToNewRoom([], room, null, pitch), []);
+});
+
+test('drawWallPreviewD returns a path for open and closed outlines', () => {
+  const open = drawWallPreviewD([[0, 0], [10, 0], [10, 6]], 1, false);
+  assert.ok(open.includes('M'));
+  const closed = drawWallPreviewD([[0, 0], [10, 0], [10, 6], [0, 6]], 1, true);
+  assert.ok(closed.includes('M'));
+  assert.equal(drawWallPreviewD([[0, 0]], 1, false), '');
 });

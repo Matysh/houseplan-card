@@ -315,6 +315,7 @@
   "wallthick.unit_cm": "cm",
   "wallthick.unit_in": "in",
   "wallthick.apply_room": "Apply to all walls of this room",
+  "markup.draw_wall_title": "Thickness for new room walls. Empty or zero — thin walls. Shared walls keep the neighbour's value.",
   "toast.wallthick_pick": "Click a wall (not an open boundary)",
   "toast.wallthick_open": "Open boundaries have no thickness",
   "toast.wallthick_set": "Wall thickness set",

@@ -28,7 +28,10 @@ const res = await page.evaluate(async () => {
   r3.open_to = [r1.id]; r1.open_to = [r2.id, r3.id];
   c._saveConfig(); c.requestUpdate(); await c.updateComplete;
   out.invalidatesOnEdit = pairsCalls > before;
-  // геометрия по-прежнему правильная: пунктир на месте
+  // геометрия по-прежнему правильная: пунктир на месте (нужны borders —
+  // open walls follow show_borders since beta.3)
+  sp.settings = { ...(sp.settings || {}), show_borders: true };
+  c._saveConfig(); c.requestUpdate(); await c.updateComplete;
   out.dashesStillRendered = (c.shadowRoot || c.renderRoot).querySelectorAll('.openwall').length > 0;
   return out;
 });

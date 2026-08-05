@@ -220,7 +220,6 @@ class HouseplanSpaceCard extends LitElement {
         stroke: var(--room-stroke, var(--hp-muted, #607d8b));
         stroke-width: 0.6;
         pointer-events: none;
-        opacity: 0.95;
       }
       .hp-static-stage .devlayer {
         position: absolute;

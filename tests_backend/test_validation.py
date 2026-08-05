@@ -1320,7 +1320,7 @@ def test_space_walls_thickness():
     """docs/WALL-THICKNESS.md: optional walls[{key,cm}]; absent = today's plan;
     cm bounded 1..100; key a bounded string; list capped like openings."""
     base = {"id": "s1", "title": "S", "view_box": [0, 0, 1, 1], "rooms": []}
-    # no walls — byte-compatible
+    # no walls -- byte-compatible
     assert "walls" not in v.CONFIG_SCHEMA({"spaces": [base]})["spaces"][0]
 
     ok = {"key": "0.50,0.20@0.0000", "cm": 20}

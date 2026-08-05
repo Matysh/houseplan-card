@@ -2,10 +2,12 @@
  * Wall thickness — pure geometry (docs/WALL-THICKNESS.md).
  *
  * Thickness is a rendering layer keyed by a segment identity that survives
- * resize. Area, sun, glow and rulers keep reading the room polygon; nothing
- * here changes that contract.
+ * resize. Wall bodies grow ±½ from the centreline; fills, glow, sun and
+ * displayed m² use the inner (inset) contour. Wall-length rulers stay on the
+ * centreline.
  */
-import { roomPoly, roomEdges } from './logic';
+import { union, difference } from 'polyclip-ts';
+import { roomPoly, roomEdges, sharedBoundary } from './logic';
 
 export interface WallEntry {
   key: string;
@@ -14,6 +16,8 @@ export interface WallEntry {
 
 export const WALL_MIN_CM = 1;
 export const WALL_MAX_CM = 100;
+/** Default thickness offered in the Draw toolbar (docs/WALL-THICKNESS.md §6). */
+export const DRAW_WALL_DEFAULT_CM = 15;
 
 /** Mitre spikes longer than this × thickness fall back to a bevel. */
 export const MITRE_LIMIT = 4;
@@ -117,18 +121,26 @@ export function lookupWall(
   let ang = Math.atan2(dy, dx);
   if (ang < 0) ang += Math.PI;
   const tol = Math.max(pitch * 0.5, 1e-9);
+  const scale = coordScale > 0 ? coordScale : 1;
+  let best: { w: WallEntry; d: number } | null = null;
   for (const w of walls) {
     const at = w.key.lastIndexOf('@');
     if (at < 0) continue;
     const [sx, sy] = w.key.slice(0, at).split(',').map(Number);
     const aq = Number(w.key.slice(at + 1));
     if (![sx, sy, aq].every(Number.isFinite)) continue;
-    if (Math.hypot(sx - mx, sy - my) > tol) continue;
     let dAng = Math.abs(aq - ang);
     if (dAng > Math.PI / 2) dAng = Math.PI - dAng;
-    if (dAng < 0.02) return w; // ~1°
+    if (dAng >= 0.02) continue; // ~1°
+    const midDist = Math.hypot(sx - mx, sy - my);
+    if (midDist <= tol) return w;
+    // atomic shared span: wall mid lies on this edge (partial overlap)
+    const dist = distToSeg(sx * scale, sy * scale, a[0], a[1], b[0], b[1]);
+    if (dist <= tol * scale) {
+      if (!best || midDist < best.d) best = { w, d: midDist };
+    }
   }
-  return null;
+  return best?.w || null;
 }
 
 export function thicknessCmAt(
@@ -141,7 +153,7 @@ export function thicknessCmAt(
   return e && e.cm > 0 ? clampWallCm(e.cm) : 0;
 }
 
-/** Drop entries whose key matches no current room edge. */
+/** Drop entries whose key matches no current room edge or shared atomic span. */
 export function degradeWalls(
   walls: WallEntry[] | null | undefined,
   rooms: any[],
@@ -153,7 +165,40 @@ export function degradeWalls(
   for (const seg of roomEdges(rooms)) {
     live.add(keyOf([seg[0], seg[1]], [seg[2], seg[3]], pitch, coordScale));
   }
+  // partial shared overlaps are keyed by their own mid — keep those too
+  const list = rooms || [];
+  const eps = Math.max(pitch * coordScale * 0.02, 1e-9);
+  for (let i = 0; i < list.length; i++) {
+    const pa = roomPoly(list[i]);
+    if (!pa) continue;
+    for (let j = i + 1; j < list.length; j++) {
+      const pb = roomPoly(list[j]);
+      if (!pb) continue;
+      for (const sg of sharedBoundary(pa, pb, eps)) {
+        live.add(keyOf([sg[0], sg[1]], [sg[2], sg[3]], pitch, coordScale));
+      }
+    }
+  }
   return walls.filter((w) => live.has(w.key) && w.cm >= WALL_MIN_CM && w.cm <= WALL_MAX_CM);
+}
+
+/**
+ * Wall direction vs opening angle (both mod 180°). Used so a T-junction
+ * opening does not bind to the perpendicular receiving wall.
+ */
+export function wallAngleMatches(
+  a: number[], b: number[],
+  openingAngleDeg: number,
+  tolDeg = 8,
+): boolean {
+  const [dx, dy] = wallDir(a, b);
+  let wang = Math.atan2(dy, dx);
+  if (wang < 0) wang += Math.PI;
+  let oang = ((openingAngleDeg * Math.PI) / 180) % Math.PI;
+  if (oang < 0) oang += Math.PI;
+  let d = Math.abs(wang - oang);
+  if (d > Math.PI / 2) d = Math.PI - d;
+  return d <= (tolDeg * Math.PI) / 180;
 }
 
 /**
@@ -224,6 +269,78 @@ export function setWallThicknessForRoom(
     out = setWallThickness(out, a, b, cm, pitch, coordScale);
   }
   return out;
+}
+
+/**
+ * After drawing a new room: set session thickness on edges that do not yet
+ * have one. Shared stretches that already carry a neighbour's cm are left
+ * alone (docs/WALL-THICKNESS.md — one physical wall, one thickness).
+ */
+export function applyWallThicknessToNewRoom(
+  walls: WallEntry[] | null | undefined,
+  room: any,
+  cm: number | null,
+  pitch: number,
+  openCuts: number[][] = [],
+  coordScale = 1,
+): WallEntry[] {
+  if (cm == null || cm < WALL_MIN_CM) return walls ? walls.slice() : [];
+  const poly = roomPoly(room);
+  if (!poly || poly.length < 3) return walls ? walls.slice() : [];
+  let out = walls ? walls.slice() : [];
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i], b = poly[(i + 1) % poly.length];
+    if (edgeIsOpen(a, b, openCuts, pitch, coordScale)) continue;
+    if (thicknessCmAt(out, a, b, pitch, coordScale) > 0) continue;
+    out = setWallThickness(out, a, b, cm, pitch, coordScale);
+  }
+  return out;
+}
+
+/**
+ * SVG path for the thick-wall preview while drawing a room outline.
+ * Closed contours use outset−inset; open polylines use per-segment quads.
+ */
+export function drawWallPreviewD(
+  pts: number[][],
+  halfDepth: number,
+  closed: boolean,
+): string {
+  if (!(halfDepth > 0) || !pts || pts.length < 2) return '';
+  if (closed && pts.length >= 3) {
+    let poly = pts;
+    const last = pts[pts.length - 1];
+    if (pts.length >= 4
+        && Math.hypot(pts[0][0] - last[0], pts[0][1] - last[1]) < 1e-9) {
+      poly = pts.slice(0, -1);
+    }
+    if (poly.length >= 3) {
+      const offs = poly.map(() => halfDepth);
+      const outset = outsetContour(poly, offs);
+      const inset = insetContour(poly, offs);
+      if (outset && inset) {
+        return `${polyToPath(outset)} ${polyToPath(reversePoly(inset))}`;
+      }
+    }
+  }
+  let d = '';
+  for (let i = 0; i < pts.length - 1; i++) {
+    const a = pts[i], b = pts[i + 1];
+    const dx = b[0] - a[0], dy = b[1] - a[1];
+    const L = Math.hypot(dx, dy);
+    if (L < 1e-9) continue;
+    const ux = dx / L, uy = dy / L;
+    const nx = -uy, ny = ux;
+    const h = halfDepth;
+    const quad = [
+      [a[0] + nx * h, a[1] + ny * h],
+      [b[0] + nx * h, b[1] + ny * h],
+      [b[0] - nx * h, b[1] - ny * h],
+      [a[0] - nx * h, a[1] - ny * h],
+    ];
+    d += (d ? ' ' : '') + polyToPath(quad);
+  }
+  return d;
 }
 
 function edgeIsOpen(a: number[], b: number[], cuts: number[][], pitch: number, coordScale = 1): boolean {
@@ -429,8 +546,8 @@ function distToSeg(px: number, py: number, ax: number, ay: number, bx: number, b
 }
 
 /**
- * Per-room inward offsets (plan units) for insetContour: shared → half,
- * outer → full, open/none → 0.
+ * Per-room half-depth offsets (plan units) for inset/outset: every thick edge
+ * (shared or outer) → half; open/none → 0. docs/WALL-THICKNESS.md §2.
  */
 export function insetOffsetsForRoom(
   rooms: any[],
@@ -453,15 +570,61 @@ export function insetOffsetsForRoom(
     if (!kind) { out.push(0); continue; }
     const cm = thicknessCmAt(walls, a, b, pitch, coordScale);
     if (!(cm > 0)) { out.push(0); continue; }
-    const full = wallCmToUnits(cm, cellCm, gridPitch);
-    out.push(kind === 'shared' ? full / 2 : full);
+    out.push(wallCmToUnits(cm, cellCm, gridPitch) / 2);
   }
   return out;
 }
 
+/** Alias — half offsets drive both inset and outset. */
+export const halfOffsetsForRoom = insetOffsetsForRoom;
+
 /**
- * One evenodd ring path per room that has any thick edge. Shared walls are
- * drawn as two half-rings that meet at the centreline (one entry each side).
+ * Inner (clean-floor) contour of a room: inset by half wall thickness.
+ * Returns the original poly when there is no thickness.
+ */
+export function innerContourForRoom(
+  rooms: any[],
+  roomId: string,
+  walls: WallEntry[] | null | undefined,
+  openCuts: number[][],
+  pitch: number,
+  cellCm: number,
+  gridPitch: number,
+  coordScale = 1,
+): number[][] | null {
+  const room = (rooms || []).find((r) => r?.id === roomId);
+  const poly = roomPoly(room);
+  if (!poly || poly.length < 3) return null;
+  if (!walls?.length) return poly.map((p) => [p[0], p[1]]);
+  const offsets = insetOffsetsForRoom(
+    rooms, roomId, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
+  );
+  if (!offsets.some((o) => o > 0)) return poly.map((p) => [p[0], p[1]]);
+  return insetContour(poly, offsets) || poly.map((p) => [p[0], p[1]]);
+}
+
+function closedRing(poly: number[][]): number[][][] {
+  const ring = poly.map((p) => [p[0], p[1]]);
+  ring.push([poly[0][0], poly[0][1]]);
+  return [ring];
+}
+
+function polyclipToPathD(geom: any): string {
+  if (!geom) return '';
+  let d = '';
+  for (const poly of geom as any[]) {
+    const ring = poly?.[0];
+    if (!Array.isArray(ring) || ring.length < 4) continue;
+    const pts = ring.slice(0, ring.length - 1);
+    if (pts.length < 3) continue;
+    d += (d ? ' ' : '') + polyToPath(pts.map((p: number[]) => [p[0], p[1]]));
+  }
+  return d;
+}
+
+/**
+ * One evenodd ring path per room: outset(half) − inset(half). Shared walls
+ * meet as two half-rings; callers may union them via wallBodiesUnionPath.
  */
 export function wallBodyRings(
   rooms: any[],
@@ -479,9 +642,10 @@ export function wallBodyRings(
     if (!poly || poly.length < 3) continue;
     const offsets = insetOffsetsForRoom(rooms, room.id, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
     if (!offsets.some((o) => o > 0)) continue;
+    const outset = outsetContour(poly, offsets);
     const inset = insetContour(poly, offsets);
-    if (!inset) continue;
-    const d = `${polyToPath(poly)} ${polyToPath(reversePoly(inset))}`;
+    if (!outset || !inset) continue;
+    const d = `${polyToPath(outset)} ${polyToPath(reversePoly(inset))}`;
     let key = '';
     let kind: WallKind = 'outer';
     let cm = 0;
@@ -502,9 +666,84 @@ export function wallBodyRings(
 }
 
 /**
- * Per-edge wall quads for styling hooks and opening cuts — one body per
- * unique wall key. Shared walls are a single full-depth quad centred on the
- * centreline; outer walls are a full-depth quad inward only.
+ * Seamless wall hatch: union of all half-outsets minus union of all half-insets,
+ * with opening slots cut as holes. One continuous body across L and T joins.
+ */
+export function wallBodiesUnionPath(
+  rooms: any[],
+  walls: WallEntry[] | null | undefined,
+  openCuts: number[][],
+  openings: Array<{ x: number; y: number; angle: number; length: number }> = [],
+  pitch: number,
+  cellCm: number,
+  gridPitch: number,
+  coordScale = 1,
+): { d: string; depthUnits: number } | null {
+  if (!walls?.length) return null;
+  const outsets: number[][][] = [];
+  const insets: number[][][] = [];
+  let maxDepth = 0;
+  for (const room of rooms || []) {
+    const poly = roomPoly(room);
+    if (!poly || poly.length < 3) continue;
+    const offsets = insetOffsetsForRoom(
+      rooms, room.id, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
+    );
+    if (!offsets.some((o) => o > 0)) continue;
+    for (let i = 0; i < offsets.length; i++) {
+      if (offsets[i] > 0) maxDepth = Math.max(maxDepth, offsets[i] * 2);
+    }
+    const outC = outsetContour(poly, offsets);
+    const inC = insetContour(poly, offsets);
+    if (outC) outsets.push(outC);
+    if (inC) insets.push(inC);
+  }
+  if (!outsets.length) return null;
+  try {
+    let Uout: any = closedRing(outsets[0]);
+    for (let i = 1; i < outsets.length; i++) {
+      Uout = union(Uout, closedRing(outsets[i]) as any);
+    }
+    let body: any = Uout;
+    if (insets.length) {
+      let Uin: any = closedRing(insets[0]);
+      for (let i = 1; i < insets.length; i++) {
+        Uin = union(Uin, closedRing(insets[i]) as any);
+      }
+      body = difference(Uout, Uin);
+    }
+    // cut opening tunnels (axis-aligned to opening angle)
+    for (const o of openings) {
+      if (!(o.length > 0)) continue;
+      const rad = (o.angle * Math.PI) / 180;
+      const ux = Math.cos(rad), uy = Math.sin(rad);
+      const nx = -uy, ny = ux;
+      const half = o.length / 2;
+      const pad = Math.max(maxDepth, pitch * coordScale) * 1.25;
+      const slot = [
+        [o.x - ux * half - nx * pad, o.y - uy * half - ny * pad],
+        [o.x + ux * half - nx * pad, o.y + uy * half - ny * pad],
+        [o.x + ux * half + nx * pad, o.y + uy * half + ny * pad],
+        [o.x - ux * half + nx * pad, o.y - uy * half + ny * pad],
+      ];
+      body = difference(body, closedRing(slot) as any);
+    }
+    const d = polyclipToPathD(body);
+    if (!d) return null;
+    return { d, depthUnits: maxDepth };
+  } catch {
+    // fall back to evenodd rings concatenated
+    const rings = wallBodyRings(rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
+    if (!rings.length) return null;
+    return { d: rings.map((r) => r.d).join(' '), depthUnits: maxDepth };
+  }
+}
+
+/**
+ * Per-edge wall quads for styling hooks and thick-cut suppression — one body
+ * per unique wall key. Shared and outer walls both grow ±½ from the
+ * centreline (docs/WALL-THICKNESS.md §2). Production hatch uses
+ * wallBodiesUnionPath; these quads remain for hooks / stroke cuts.
  */
 export interface WallEdgeBody {
   key: string;
@@ -545,23 +784,13 @@ export function wallEdgeBodies(
       const depth = wallCmToUnits(cm, cellCm, gridPitch);
       const [inx, iny] = inwardNormal(poly, i);
       const ox = -inx, oy = -iny;
-      let quad: number[][];
-      if (kind === 'shared') {
-        const h = depth / 2;
-        quad = [
-          [a[0] + ox * h, a[1] + oy * h],
-          [b[0] + ox * h, b[1] + oy * h],
-          [b[0] + inx * h, b[1] + iny * h],
-          [a[0] + inx * h, a[1] + iny * h],
-        ];
-      } else {
-        quad = [
-          [a[0], a[1]],
-          [b[0], b[1]],
-          [b[0] + inx * depth, b[1] + iny * depth],
-          [a[0] + inx * depth, a[1] + iny * depth],
-        ];
-      }
+      const h = depth / 2;
+      const quad: number[][] = [
+        [a[0] + ox * h, a[1] + oy * h],
+        [b[0] + ox * h, b[1] + oy * h],
+        [b[0] + inx * h, b[1] + iny * h],
+        [a[0] + inx * h, a[1] + iny * h],
+      ];
       out.push({ key, kind, cm, quad, a: [a[0], a[1]], b: [b[0], b[1]], depthUnits: depth });
     }
   }
@@ -579,6 +808,7 @@ export function wallEdgePathD(
   // normal across the wall (from a toward inward of first room estimate = perp)
   const nx = -uy, ny = ux;
   for (const o of openings) {
+    if (!wallAngleMatches(body.a, body.b, o.angle)) continue;
     // only openings whose centre lies on (or very near) this span's centreline
     const dist = distToSeg(o.x, o.y, body.a[0], body.a[1], body.b[0], body.b[1]);
     if (dist > Math.max(body.depthUnits * 0.55, 1e-3)) continue;
@@ -599,9 +829,9 @@ export function wallEdgePathD(
 }
 
 /**
- * Outward paper growth offsets per edge (plan units): enough paper under the
- * wall body so the scene background never shows through. Shared → half;
- * outer → 0 (body is entirely inward); open → 0.
+ * Outward paper growth offsets per edge (plan units): half-thickness under
+ * every thick wall (outer and shared) so the scene background never shows
+ * through the outer half-out.
  */
 export function paperOutwardOffsets(
   rooms: any[],
@@ -621,7 +851,7 @@ export function paperOutwardOffsets(
   for (let i = 0; i < poly.length; i++) {
     const a = poly[i], b = poly[(i + 1) % poly.length];
     const kind = kinds[i];
-    if (kind !== 'shared') { out.push(0); continue; }
+    if (!kind) { out.push(0); continue; }
     const cm = thicknessCmAt(walls, a, b, pitch, coordScale);
     if (!(cm > 0)) { out.push(0); continue; }
     out.push(wallCmToUnits(cm, cellCm, gridPitch) / 2);
@@ -712,7 +942,8 @@ export function paperRoomShapesWithWalls(
 
 /**
  * Half-depth from the centreline toward the door's inner face (the room the
- * leaf swings into). Used to shift the swing arc off the centreline.
+ * leaf swings into). Association prefers a wall whose direction matches the
+ * opening angle (T-junctions must not bind to the perpendicular receiver).
  */
 export function openingInnerFaceOffset(
   rooms: any[],
@@ -723,14 +954,24 @@ export function openingInnerFaceOffset(
   gridPitch: number,
   coordScale = 1,
 ): { ox: number; oy: number; cm: number } {
-  let best: { a: number[]; b: number[]; room: any; edge: number; dist: number } | null = null;
+  let best: { a: number[]; b: number[]; room: any; edge: number; dist: number; angled: boolean } | null = null;
   for (const room of rooms || []) {
     const poly = roomPoly(room);
     if (!poly) continue;
     for (let i = 0; i < poly.length; i++) {
       const a = poly[i], b = poly[(i + 1) % poly.length];
       const d = distToSeg(opening.x, opening.y, a[0], a[1], b[0], b[1]);
-      if (!best || d < best.dist) best = { a, b, room, edge: i, dist: d };
+      const angled = wallAngleMatches(a, b, opening.angle);
+      if (!best) {
+        best = { a, b, room, edge: i, dist: d, angled };
+        continue;
+      }
+      // prefer angle-matching edges; among equals, nearer centreline
+      if (angled && !best.angled) {
+        best = { a, b, room, edge: i, dist: d, angled };
+      } else if (angled === best.angled && d < best.dist) {
+        best = { a, b, room, edge: i, dist: d, angled };
+      }
     }
   }
   if (!best || best.dist > pitch * coordScale) return { ox: 0, oy: 0, cm: 0 };
@@ -740,8 +981,7 @@ export function openingInnerFaceOffset(
   const poly = roomPoly(best.room)!;
   const [inx, iny] = inwardNormal(poly, best.edge);
   const s = opening.flip_v ? -1 : 1;
-  const kinds = edgeKinds(rooms, best.room.id, [], pitch, coordScale);
-  const kind = kinds[best.edge] || 'outer';
-  const along = kind === 'shared' ? depth / 2 : depth;
+  // ±½ growth: the inner face is always half-depth from the centreline
+  const along = depth / 2;
   return { ox: inx * along * s, oy: iny * along * s, cm };
 }

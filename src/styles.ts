@@ -1106,11 +1106,10 @@ export const cardStyles = css`
       stroke: var(--room-stroke, var(--hp-muted));
       stroke-width: 0.6;
       pointer-events: none;
-      opacity: 0.95;
     }
     .wallbody.solid {
       fill: var(--room-stroke, var(--hp-muted));
-      fill-opacity: 0.35;
+      fill-opacity: 1;
     }
     .wallthick-hover {
       stroke: var(--accent-color, #03a9f4);
@@ -1301,6 +1300,15 @@ export const cardStyles = css`
       stroke-width: 2;
       stroke-dasharray: 6 5;
       opacity: 0.7;
+    }
+    .drawwall-preview {
+      fill: url(#hp-wall-hatch);
+      fill-opacity: 0.55;
+      fill-rule: evenodd;
+      stroke: var(--accent-color, #03a9f4);
+      stroke-width: 0.5;
+      stroke-opacity: 0.7;
+      pointer-events: none;
     }
     .vertex {
       fill: #ffc14d;
@@ -2381,6 +2389,19 @@ export const cardStyles = css`
     }
     .editbar label,
     .editbar .hint {
+      color: var(--hp-muted);
+      font-size: var(--fs-s);
+    }
+    .editbar .drawwall {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-3);
+      white-space: nowrap;
+    }
+    .editbar .drawwall input {
+      width: 4.2em;
+    }
+    .editbar .drawwall .opl {
       color: var(--hp-muted);
       font-size: var(--fs-s);
     }

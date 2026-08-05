@@ -45,6 +45,7 @@ const res = await page.evaluate(async () => {
   out.atticSquare = attic?.aspect === undefined;  // no per-space ratio any more
   out.atticSettings = attic?.settings;
   out.atticNoPlan = attic ? attic.plan_url === null : null;
+  out.atticOpensPlanEditor = c._space === attic?.id && c._mode === 'plan' && c._tool === 'draw';
   return out;
 });
 // значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)

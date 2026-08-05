@@ -9,7 +9,7 @@
 import { html, svg, nothing, type TemplateResult } from 'lit';
 import { buildDevices, areaLqi, areaLights, areaTemp } from './devices';
 import { spaceDisplayOf, roomFillStyle, fillColorsOf, roomFillModeOf, stageBgOf, paperRoomShapes } from './logic';
-import { wallEdgeBodies, wallEdgePathD, paperRoomShapesWithWalls, type WallEntry } from './wall-thickness';
+import { wallBodiesUnionPath, paperRoomShapesWithWalls, type WallEntry } from './wall-thickness';
 import { DEFAULT_ICON_RULES, compileIconRules, EXCLUDED_DOMAINS } from './rules';
 import { t, type Lang } from './i18n';
 import { bgModeOf, northDegOf, sunStateOf, dayPhase } from './sun';
@@ -203,17 +203,17 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const paperShapes = walls.length
     ? paperRoomShapesWithWalls(space.rooms, walls, [], GRID_STEP_N, cellCm, GRID_PITCH, NORM_W)
     : paperRoomShapes(space.rooms);
-  const wallBodies = walls.length && disp.showBorders
-    ? wallEdgeBodies(space.rooms, walls, [], GRID_STEP_N, cellCm, GRID_PITCH, NORM_W)
-    : [];
+  const wallUnion = walls.length && disp.showBorders
+    ? wallBodiesUnionPath(space.rooms, walls, [], [], GRID_STEP_N, cellCm, GRID_PITCH, NORM_W)
+    : null;
 
   return html`
     <div class="hp-static-stage" style="aspect-ratio:${vb[2]}/${vb[3]}${stageBg ? ';background:' + stageBg : ''}">
       <svg viewBox="${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}" preserveAspectRatio="xMidYMid meet">
-        ${wallBodies.length ? svg`<defs>
+        ${wallUnion ? svg`<defs>
           <pattern id="hp-wall-hatch" patternUnits="userSpaceOnUse" width="8" height="8"
             patternTransform="rotate(45)">
-            <path d="M0 0 L0 8" stroke="${disp.color}" stroke-width="2" opacity="0.55"></path>
+            <path d="M0 0 L0 8" stroke="${disp.color}" stroke-width="2"></path>
           </pattern>
         </defs>` : nothing}
         ${paperShapes.map((sh) =>
@@ -225,8 +225,10 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
           ? svg`<image href="${bgHref}" x="${space.bg!.x}" y="${space.bg!.y}" width="${space.bg!.w}" height="${space.bg!.h}" preserveAspectRatio="none" />`
           : nothing}
         ${roomShapes}
-        ${wallBodies.map((b) => svg`<path class="wallbody" data-hp="wall" data-id=${b.key} data-kind=${b.kind}
-          d="${wallEdgePathD(b, [])}" style="--room-stroke:${disp.color}"></path>`)}
+        ${wallUnion
+          ? svg`<path class="wallbody" data-hp="wall" data-id="union" data-kind="union"
+              d="${wallUnion.d}" style="--room-stroke:${disp.color}"></path>`
+          : nothing}
       </svg>
       ${''/* docs/CANVAS.md §6: the same expression as the full card. The
              static card has no zoom, but its frame is the CONTENT now, so a
