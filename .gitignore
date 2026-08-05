@@ -4,3 +4,4 @@ test-build/
 *.log
 __pycache__/
 .pytest_cache/
+.venv-backend/
