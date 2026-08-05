@@ -9,7 +9,7 @@ import {
   wallBodyRings, wallBodiesUnionPath, innerContourForRoom,
   paperRoomShapesWithWalls, WALL_MIN_CM, WALL_MAX_CM, MITRE_LIMIT,
   atomicPolyForRoom, insetOffsetsForRoom, wallIntervals, normalizeWallIntervals,
-  intervalCmAt,
+  intervalCmAt, wallBodyNeedsSolid, WALL_HATCH_MIN_PX,
 } from '../test-build/wall-thickness.js';
 import { polygonArea, paperRoomShapes } from '../test-build/logic.js';
 import { GRID_PITCH } from '../test-build/space-geometry.js';
@@ -59,6 +59,14 @@ test('wallCmToUnits goes through cell_cm like every other length', () => {
   // 5 cm at 5 cm/cell and pitch P → 1 cell = P units
   closeTo(wallCmToUnits(5, 5, GRID_PITCH), GRID_PITCH);
   closeTo(wallCmToUnits(10, 5, GRID_PITCH), 2 * GRID_PITCH);
+});
+
+test('thin-on-screen fallback policy is shared by both renderers', () => {
+  assert.equal(wallBodyNeedsSolid(2, 1), true);
+  assert.equal(wallBodyNeedsSolid(WALL_HATCH_MIN_PX, 1), false);
+  assert.equal(wallBodyNeedsSolid(2, 2), false);
+  assert.equal(wallBodyNeedsSolid(Number.NaN, 1), false);
+  assert.equal(wallBodyNeedsSolid(2, 0), false);
 });
 
 // ------------------------------- degrade / rekey ----------------------------

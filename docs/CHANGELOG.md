@@ -2,6 +2,28 @@
 
 ## Unreleased (dev)
 
+## v1.59.0-beta.8 — 2026-08-05
+
+Eighth pre-release of the 1.59 line: beta.7 audit follow-ups, a fail-closed
+release path, full/static wall-render parity, and sunlight anchored to the
+room-side corners of thick window openings.
+
+- **Sun rays start at the inner window corners.** With wall thickness, the
+  wedge's full source span now sits on the room-side face of the opening, so
+  both crisp side edges begin at its two inner corners even at an oblique sun
+  angle. The clean-floor contour still clips the light at the wall body.
+- **Beta.7 audit follow-up.** A Split crossing one `open_span` now keeps every
+  valid room-pair piece and derives `open_to` for both children instead of
+  silently turning one half back into a solid wall (`AUD-159B7-01`).
+- **Release safety.** `release.yml` resolves the published tag to its exact
+  commit and waits for all matching Validate runs to finish green; missing,
+  failed, cancelled or timed-out validation withholds the asset
+  (`AUD-159B7-02`). The same fail-closed policy has automated negative tests.
+- **Test/render parity.** General-settings smoke includes the Walls group,
+  inventory counts class-based and trail backend tests, and the static space
+  card uses the same 3 px thin-wall hatch fallback as the full card
+  (`AUD-159B7-03`, `AUD-159B7-04`).
+
 ## v1.59.0-beta.7 — 2026-08-05
 
 Seventh pre-release of the 1.59 line: audit fixes for partial-wall geometry and

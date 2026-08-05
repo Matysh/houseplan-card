@@ -49,13 +49,13 @@ import {
   wallEdgeBodies, wallBodiesUnionPath, paperRoomShapesWithWalls,
   innerContourForRoom, openingInnerFaceOffset, applyWallThicknessToNewRoom,
   drawWallPreviewD, DRAW_WALL_DEFAULT_CM, wallIntervals, normalizeWallIntervals,
-  intervalCmAt, type WallEntry,
+  intervalCmAt, wallBodyNeedsSolid, type WallEntry,
 } from './wall-thickness';
 import {
   resolveOpenCuts, hitSharedWall, hitOuterWall, hitOpenSpan, snapOpenPoint,
   clampToEdgeEnds, jointsOnEdge, cutsToSpanEntries, syncOpenToFromCuts,
   applyThicknessOnClose, purgeOpeningsOnSpan,
-  pointOnOpenCut, removeCut, rekeyOpenSpansAfterMove, degradeOpenSpans, clipOpenSpansToShared,
+  pointOnOpenCut, removeCut, rekeyOpenSpansAfterMove, clipOpenSpansToShared,
   sanitizeOpenSpans, entryToSeg,
   type OpenSpanEntry,
 } from './open-spans';
@@ -85,7 +85,7 @@ import {
 import { alignAllToGrid, type AlignReport } from './align-grid';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.59.0-beta.7';
+const CARD_VERSION = '1.59.0-beta.8';
 /** HP-1552 boot-veil timing (AUD-1552-02). The veil holds for at least
  *  BOOT_MIN_MS; every stage-height change restarts a BOOT_QUIET_MS
  *  trailing-quiescence requirement (chrome still settling near the cap
@@ -5086,7 +5086,6 @@ class HouseplanCard extends LitElement {
       // first-save migration the spec asks for).
       spans = cutsToSpanEntries(resolveOpenCuts(rooms, null, NORM_W, eps), NORM_W);
     }
-    spans = degradeOpenSpans(spans, rooms, NORM_W, eps);
     spans = clipOpenSpansToShared(spans, rooms, NORM_W, eps);
     this._persistOpenCuts(spans.map((e) => entryToSeg(e, NORM_W)));
   }
@@ -5437,7 +5436,7 @@ class HouseplanCard extends LitElement {
     const v = this._viewOr(this._baseVb());
     const px = stage && stage.clientWidth && v.w ? stage.clientWidth / v.w : 1;
     const stroke = disp?.color || 'var(--hp-muted)';
-    const solid = united.depthUnits * px < 3;
+    const solid = wallBodyNeedsSolid(united.depthUnits, px);
     const wf = this._fillColors.wall_fill;
     // Fill colour UNDER the hatch (owner 2026-08-05): both, never one instead
     // of the other. When the body is thinner than ~3px on screen the hatch
@@ -7052,11 +7051,11 @@ class HouseplanCard extends LitElement {
     // side of a wall.
     //
     // DEV-EB173-01: the axis runs along the wall's INWARD NORMAL, from the
-    // window line inward, and is `r.depth` = `len·cos` long — NOT along the
-    // ray. For parallel rays the distance travelled from the glass is an
+    // room-side opening face inward, and is `r.depth` = `len·cos` long — NOT
+    // along the ray. For parallel rays, distance from the source span is an
     // affine function of the point, so its iso-alpha lines are parallel to the
     // wall; with this axis every point `source + dir·u` lands at offset
-    // `u/len`. Whole pane at peak alpha, identical fade distance along every
+    // `u/len`. Whole inner opening at peak alpha, identical fade distance along every
     // ray, and the parallelogram's far edge exactly on the gradient's end.
     //
     // THE RIM (owner 2026-08-04, docs/SUN.md «The rim»): a 1 px black hairline

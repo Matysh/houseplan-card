@@ -42,6 +42,9 @@ class HouseplanSpaceCard extends LitElement {
   private _snap: HpConfigSnapshot | null = null;
   private _loading = false;
   private _unsub?: () => void;
+  private _stageWidth = 0;
+  private _stageObserver?: ResizeObserver;
+  private _observedStage?: HTMLElement;
 
   static properties = {
     hass: { attribute: false },
@@ -82,6 +85,9 @@ class HouseplanSpaceCard extends LitElement {
   public disconnectedCallback(): void {
     this._unsub?.();
     this._unsub = undefined;
+    this._stageObserver?.disconnect();
+    this._stageObserver = undefined;
+    this._observedStage = undefined;
     this._signer.dispose();
     super.disconnectedCallback();
   }
@@ -90,6 +96,27 @@ class HouseplanSpaceCard extends LitElement {
     if (this.hass && !this._loading && (!this._snap || changed.has('hass'))) {
       if (!this._snap || !this._loadedOnce) this._load();
     }
+  }
+
+  protected updated(): void {
+    const stage = this.renderRoot.querySelector<HTMLElement>('.hp-static-stage') || undefined;
+    if (stage === this._observedStage) return;
+    this._stageObserver?.disconnect();
+    this._observedStage = stage;
+    if (!stage) {
+      this._stageObserver = undefined;
+      return;
+    }
+    const measure = () => {
+      const width = stage.clientWidth;
+      if (width > 0 && Math.abs(width - this._stageWidth) > 0.5) {
+        this._stageWidth = width;
+        this.requestUpdate();
+      }
+    };
+    this._stageObserver = new ResizeObserver(measure);
+    this._stageObserver.observe(stage);
+    measure();
   }
 
   private _loadedOnce = false;
@@ -152,6 +179,7 @@ class HouseplanSpaceCard extends LitElement {
       layout: this._snap?.layout || {},
       spaceId,
       iconSize: this._config.icon_size,
+      stageWidth: this._stageWidth,
       lang: this._lang,
       // resolved at render time: a url baked in earlier would be the unsigned one
       displayUrl: (raw) => this._signer.display(this.hass, raw),
@@ -227,6 +255,9 @@ class HouseplanSpaceCard extends LitElement {
         stroke: var(--room-stroke, var(--hp-muted, #607d8b));
         stroke-width: 0.6;
         pointer-events: none;
+      }
+      .wallbody.solid {
+        fill: none;
       }
       .hp-static-stage .devlayer {
         position: absolute;

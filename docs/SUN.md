@@ -131,15 +131,17 @@ when BOTH hold:
   perpendicular depth (`len · cos`, see «Dissolving») would be thinner
   than the wall it came through.
 
-The wedge is a PARALLELOGRAM: the window's span extruded by the same
+The wedge is a PARALLELOGRAM: the window's full **room-side span**, from
+one inner corner of the opening to the other, extruded by the same
 length along the direction AWAY from the sun (light falls inward), so
 its far edge is parallel to the wall, clipped by the receiving room's
 **inner contour** when wall thickness is set (`inset` of the polygon by
 half the wall thickness — see `docs/WALL-THICKNESS.md`); otherwise by
-the room polygon (`polyclip` intersection). With thickness `d` the
-effective lit width narrows through the opening tunnel:
-`max(0, L − d·tan(|α|))` where `α` is the angle between the ray and the
-inward normal (`d = 0` keeps the previous full-span wedge). Its length
+the room polygon (`polyclip` intersection). With wall depth `d`, the
+source span is translated from the wall centreline by `d/2` along the
+inward normal. Thus both crisp side edges begin exactly at the two inner
+corners of the opening at every incidence angle (`d = 0` keeps the
+previous centreline/full-span geometry). Its length
 is `k(elevation)` in window lengths: ~1.75 at sunrise/sunset tapering to ~0.56 at the zenith
 (`0.56 + 1.19·(1 − elevation/90)^1.6` — the v1.56 curve
 `0.8 + 1.7·(1 − elevation/90)^1.6` times `RAY_LENGTH_K` = 0.7, owner
@@ -163,10 +165,10 @@ Two rounds with the owner on the same day:
    wedge, which feathered the SIDES too. Wrong: a shaft of sunlight
    through a window has crisp sides. Only its reach fades.
 
-So the falloff is one-dimensional: **along the ray, from the glass
+So the falloff is one-dimensional: **along the ray, from the room-side opening
 inward, and nothing else.** Three invariants have to hold at once:
 
-1. the whole pane of glass is at peak alpha — light does not start out
+1. the whole room-side opening is at peak alpha — light does not start out
    half-dark at one end of the window;
 2. every ray fades over the same distance, its own `len`;
 3. the wedge's far edge lies exactly on an iso-alpha line, so the shaft
@@ -175,21 +177,21 @@ inward, and nothing else.** Three invariants have to hold at once:
 
 **The axis of the fade is the wall's INWARD NORMAL, not the ray.**
 The light is a bundle of PARALLEL rays, so the distance a point has
-travelled from the glass is `depth / cos`, where `depth` is its
-perpendicular distance from the wall and `cos = dir·normal` is fixed
+travelled from the room-side source span is `depth / cos`, where `depth`
+is its perpendicular distance from that span and `cos = dir·normal` is fixed
 for the whole wedge. That is an affine function of the point, and its
 level sets are straight lines PARALLEL TO THE WALL. A linear gradient
 whose axis is the normal therefore describes the travelled distance
 exactly:
 
-- `x1,y1` = the middle of the window span (any point of the glass —
+- `x1,y1` = the middle of the room-side window span (any point of that span —
   they all have depth 0);
 - `x2,y2` = that point plus `normal · len · cos` — `SunRay.depth`, the
   perpendicular depth a ray reaches after running the full `len`;
 - a point `source + dir·u` lands on offset `u / len`, whichever ray it
   rode in on.
 
-Hence: the glass is all at offset 0 (invariant 1), the alpha at any
+Hence: the inner opening span is all at offset 0 (invariant 1), the alpha at any
 point is a function of how far its own ray has run (invariant 2), and
 the parallelogram's far edge — parallel to the wall — IS the gradient's
 last iso-alpha line (invariant 3). The «30 % shorter» reach is then a
@@ -237,8 +239,8 @@ of its cheap half, verbatim: «тонкая (1px) чёрная граница п
 The contract:
 
 - **Two side edges only.** The rim runs along the two edges that leave
-  the ends of the glass and travel inward with the ray — `a → a+dir·len`
-  and `b → b+dir·len`. Never the glass edge `a-b` (that is the source,
+  the inner opening corners and travel inward with the ray — `a → a+dir·len`
+  and `b → b+dir·len`. Never the source edge `a-b` (that is the source,
   not a boundary) and never the far edge (there is nothing left to
   outline there — the fill is already at zero, see below).
 - **One screen pixel at any zoom**: `stroke-width="1"` plus
@@ -249,7 +251,7 @@ The contract:
   `x1,y1,x2,y2`** (the wall's inward normal, `depth` long) and **the same
   normalised curve** — `rimStops()` returns `rayStops()` by identity, not
   by copy, so the two can never drift apart. Only the colour and the peak
-  differ: `RIM_MAX_ALPHA` = 0.42 at the glass, tuned on the demo rig
+  differ: `RIM_MAX_ALPHA` = 0.42 at the inner opening, tuned on the demo rig
   against both extremes (below ~0.3 the line vanishes on paper at kiosk
   scale, above ~0.5 it reads as an ink contour over the dark glow
   canvas). Zero from `RAY_FADE_END` = 85 % on, like the fill.
@@ -346,7 +348,7 @@ Backend validation: string or null.
   the end of the gradient — the kerb cannot come back. It re-runs the
   DEV-EB173-01 grazing repro end to end (west window 80, elevation 90,
   azimuth 190): equal sides of the nominal length, peak alpha at BOTH
-  ends of the glass, and no wedge at all below `RAY_MIN_COS`.
+  ends of the source span, and no wedge at all below `RAY_MIN_COS`.
 - `demo/smoke_sun_rim.mjs` — the rim: exactly two lines per wedge, on the
   two SIDE edges (their coordinates checked against the wedge's own
   vertices), `url(#hp-sunrim-N)` with BLACK stops on the same axis and

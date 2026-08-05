@@ -9,7 +9,9 @@
 import { html, svg, nothing, type TemplateResult } from 'lit';
 import { buildDevices, areaLqi, areaLights, areaTemp } from './devices';
 import { spaceDisplayOf, roomFillStyle, fillColorsOf, roomFillModeOf, stageBgOf, paperRoomShapes } from './logic';
-import { wallBodiesUnionPath, paperRoomShapesWithWalls, type WallEntry } from './wall-thickness';
+import {
+  wallBodiesUnionPath, paperRoomShapesWithWalls, wallBodyNeedsSolid, type WallEntry,
+} from './wall-thickness';
 import { DEFAULT_ICON_RULES, compileIconRules, EXCLUDED_DOMAINS } from './rules';
 import { t, type Lang } from './i18n';
 import { bgModeOf, northDegOf, sunStateOf, dayPhase } from './sun';
@@ -28,6 +30,8 @@ export interface StaticRenderOpts {
   layout: Layout;
   spaceId: string;
   iconSize?: number;
+  /** Measured CSS width of the static stage, used for screen-depth policies. */
+  stageWidth?: number;
   lang: Lang;
   /**
    * Resolve a stored content url to what the DOM may actually request — the
@@ -207,6 +211,8 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const wallUnion = walls.length && disp.showBorders
     ? wallBodiesUnionPath(space.rooms, walls, [], [], GRID_STEP_N, cellCm, GRID_PITCH, NORM_W)
     : null;
+  const pxPerUnit = o.stageWidth && vb[2] ? o.stageWidth / vb[2] : 1;
+  const solidWall = !!wallUnion && wallBodyNeedsSolid(wallUnion.depthUnits, pxPerUnit);
 
   return html`
     <div class="hp-static-stage" style="aspect-ratio:${vb[2]}/${vb[3]}${stageBg ? ';background:' + stageBg : ''};--wall-fill:${colors.wall_fill.c};--wall-fill-op:${colors.wall_fill.a}">
@@ -229,7 +235,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
         ${wallUnion
           ? svg`<g class="wallbodies" style="--room-stroke:${disp.color}">
               <path class="wallbody-fill" d="${wallUnion.d}"></path>
-              <path class="wallbody" data-hp="wall" data-id="union" data-kind="union"
+              <path class="wallbody ${solidWall ? 'solid' : ''}" data-hp="wall" data-id="union" data-kind="union"
                 d="${wallUnion.d}"></path>
             </g>`
           : nothing}

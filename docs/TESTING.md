@@ -995,6 +995,10 @@ require hands on real hardware — they remain for the human pass.
 - [ ] Wedge direction follows the compass; length grows toward
       sunrise/sunset and shrinks toward noon; every wedge is clipped by its
       room polygon; night = no wedges at all
+- [ ] With wall thickness, both crisp side edges start at the two room-side
+      corners of the window opening (the full span translated inward by half
+      the wall depth), including at an oblique sun angle; no edge starts on the
+      wall centreline [auto: unit `sun.test.mjs` + `smoke_wall_thickness`]
 - [ ] Brightness + the 3° threshold (2026-08-03): wedges are visibly brighter
       (peak alpha 0.30, was 0.18) yet still readable over white paper AND the
       dark glow canvas; there is NO gradual ramp near the horizon — below 3°
@@ -1460,6 +1464,14 @@ require hands on real hardware — they remain for the human pass.
 - [ ] **Unit + backend**: inset/mitre/bevel, key from either end, degrade,
       rekey, cm↔inches; `walls` schema bounds
       [auto: test/wall-thickness.test.mjs + tests_backend/test_validation.py]
+- [ ] **Thin-on-screen parity**: at the same card width a 1 cm wall suppresses
+      the hatch (solid fill stays) in both `houseplan-card` and
+      `houseplan-space-card`; a 20 cm wall restores the hatch in both
+      [auto: smoke_wall_thickness + test/wall-thickness.test.mjs]
+- [ ] **Split through an open span**: split one side of a shared wall through
+      the middle of an existing open stretch. Both resulting pieces remain in
+      `open_spans`, and both new rooms link to the neighbour in `open_to`
+      [auto: smoke_merge_split + test/open-spans.test.mjs]
 
 ## The furniture library (docs/FURNITURE.md, dev, unreleased)
 

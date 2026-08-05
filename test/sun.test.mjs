@@ -329,6 +329,24 @@ test('computeSunRays: evening west sun → west window', () => {
   assert.deepEqual(rays.map((r) => r.openingId), ['wW']);
 });
 
+test('computeSunRays: a thick-wall ray starts at both room-side opening corners', () => {
+  const win = { id: 'wW', x: 100, y: 300, angle: 90, length: 80 };
+  const inner = {
+    r1: [[110, 110], [490, 110], [490, 490], [110, 490]],
+  };
+  // Oblique sunlight is intentional: the source must remain the full inner
+  // aperture instead of shrinking or sliding away from either jamb corner.
+  const [ray] = computeSunRays(ROOMS, [win], 240, 60, 0, inner, { wW: 20 });
+  assert.ok(ray, 'the west window is lit');
+  assert.ok(near(ray.a[0], 110) && near(ray.a[1], 260), 'first inner corner');
+  assert.ok(near(ray.b[0], 110) && near(ray.b[1], 340), 'second inner corner');
+  assert.ok(near(Math.hypot(ray.b[0] - ray.a[0], ray.b[1] - ray.a[1]), 80), 'full opening width');
+  for (const poly of ray.polys) for (const [x, y] of poly) {
+    assert.ok(x >= 110 - 1e-6 && x <= 490 + 1e-6, 'clipped to the clean-floor contour');
+    assert.ok(y >= 110 - 1e-6 && y <= 490 + 1e-6, 'clipped to the clean-floor contour');
+  }
+});
+
 test('grazing sun: the auditor\'s repro, fixed by a normal-axis fade (DEV-EB173-01)', () => {
   // The report's browser probe: a WEST window 80 render units long, elevation
   // 90 (so the nominal reach is 0.56 · 80 = 44.8 — «на 30 % короче»), azimuth

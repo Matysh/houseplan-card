@@ -126,9 +126,15 @@ export function snapOpenPoint(
   return [ax + dx * u, ay + dy * u];
 }
 
-/** All shared-boundary segments between rooms (render units). */
-export function allSharedSegs(rooms: any[], eps: number): number[][] {
-  const out: number[][] = [];
+interface SharedSeg {
+  seg: number[];
+  /** Room-pair identity. Adjacent pieces from different pairs must stay split. */
+  pair: string;
+}
+
+/** Shared-boundary segments with their room-pair semantics (render units). */
+function sharedSegsWithPairs(rooms: any[], eps: number): SharedSeg[] {
+  const out: SharedSeg[] = [];
   const list = (rooms || []).filter((r) => r?.id);
   for (let i = 0; i < list.length; i++) {
     const pa = roomPoly(list[i]);
@@ -136,10 +142,15 @@ export function allSharedSegs(rooms: any[], eps: number): number[][] {
     for (let j = i + 1; j < list.length; j++) {
       const pb = roomPoly(list[j]);
       if (!pb) continue;
-      for (const sg of sharedBoundary(pa, pb, eps)) out.push(sg);
+      for (const sg of sharedBoundary(pa, pb, eps)) out.push({ seg: sg, pair: `${i}:${j}` });
     }
   }
   return out;
+}
+
+/** All shared-boundary segments between rooms (render units). */
+export function allSharedSegs(rooms: any[], eps: number): number[][] {
+  return sharedSegsWithPairs(rooms, eps).map((x) => x.seg);
 }
 
 /** Find shared edge under a point; returns rooms + the atomic shared segment. */
@@ -471,7 +482,10 @@ export function degradeOpenSpans(
 
 /**
  * Project each open span onto the current shared-boundary geometry and clip
- * to the overlap. Spans that no longer overlap any shared stretch are dropped.
+ * to every overlap. Spans that no longer overlap any shared stretch are dropped.
+ * A Split may turn one continuous physical boundary into adjacent stretches
+ * owned by different room pairs. Those pieces must remain separate so their
+ * midpoints derive the correct `open_to` links (AUD-159B7-01).
  * Prevents "solid outline + dashed open" after resize when a span drifts off
  * the true shared edge.
  */
@@ -483,7 +497,7 @@ export function clipOpenSpansToShared(
 ): OpenSpanEntry[] {
   const clean = sanitizeOpenSpans(spans);
   if (!clean.length) return [];
-  const shared = allSharedSegs(roomsModel, eps);
+  const shared = sharedSegsWithPairs(roomsModel, eps);
   if (!shared.length) return [];
   const out: OpenSpanEntry[] = [];
   const minLen = Math.max(eps * 4, 1e-6);
@@ -494,8 +508,8 @@ export function clipOpenSpansToShared(
     const aLen = Math.hypot(adx, ady);
     if (aLen < minLen) continue;
     const ux = adx / aLen, uy = ady / aLen;
-    let best: { lo: number; hi: number } | null = null;
-    for (const sh of shared) {
+    const byPair = new Map<string, { lo: number; hi: number }[]>();
+    for (const { seg: sh, pair } of shared) {
       // both endpoints of `sh` must lie on the line of sg
       const d1 = Math.abs((sh[0] - ax) * uy - (sh[1] - ay) * ux);
       const d2 = Math.abs((sh[2] - ax) * uy - (sh[3] - ay) * ux);
@@ -505,13 +519,25 @@ export function clipOpenSpansToShared(
       const lo = Math.max(0, Math.min(t1, t2));
       const hi = Math.min(aLen, Math.max(t1, t2));
       if (hi - lo < minLen) continue;
-      if (!best || hi - lo > best.hi - best.lo) best = { lo, hi };
+      const ranges = byPair.get(pair) || [];
+      ranges.push({ lo, hi });
+      byPair.set(pair, ranges);
     }
-    if (!best) continue;
-    const na = [ax + ux * best.lo, ay + uy * best.lo];
-    const nb = [ax + ux * best.hi, ay + uy * best.hi];
-    if (Math.hypot(nb[0] - na[0], nb[1] - na[1]) < minLen) continue;
-    out.push(spanToEntry(na, nb, coordScale));
+    for (const ranges of byPair.values()) {
+      ranges.sort((a, b) => a.lo - b.lo || a.hi - b.hi);
+      const merged: { lo: number; hi: number }[] = [];
+      for (const range of ranges) {
+        const tail = merged[merged.length - 1];
+        if (tail && range.lo <= tail.hi + minLen) tail.hi = Math.max(tail.hi, range.hi);
+        else merged.push({ ...range });
+      }
+      for (const range of merged) {
+        const na = [ax + ux * range.lo, ay + uy * range.lo];
+        const nb = [ax + ux * range.hi, ay + uy * range.hi];
+        if (Math.hypot(nb[0] - na[0], nb[1] - na[1]) < minLen) continue;
+        out.push(spanToEntry(na, nb, coordScale));
+      }
+    }
   }
   return out;
 }

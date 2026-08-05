@@ -158,17 +158,17 @@ export function rayLength(elevation: number): number {
 
 /**
  * The unclipped wedge: the window span a-b extruded along `dir` by the SAME
- * `len` at both ends. An honest parallelogram — every ray through the glass
+ * `len` at both ends. An honest parallelogram — every ray through the opening
  * travels exactly the wedge's reach, so the promised "30 % shorter" holds for
  * each side of every wedge, at any sun angle.
  *
  * Its far edge is parallel to the WALL, and that is not a compromise: it is
  * the iso-alpha line of the gradient the card actually draws. For parallel
- * rays the distance travelled from the glass is `depth / cos`, an affine
+ * rays the distance travelled from the source span is `depth / cos`, an affine
  * function of the point whose level sets are lines PARALLEL TO THE WALL, so
  * the fade must run along the wall's NORMAL (see `SunRay.normal/depth` and
  * docs/SUN.md), not along `dir`. With that axis all three invariants hold at
- * once: the whole pane of glass sits at offset 0 (peak alpha end to end), the
+ * once: the whole source span sits at offset 0 (peak alpha end to end), the
  * alpha at any point depends only on how far its own ray has travelled, and
  * the wedge's far edge coincides with the gradient's end — a bright kerb is
  * impossible by construction.
@@ -216,7 +216,7 @@ export interface SunRay {
   roomId: string;
   /** Clipped wedge outline(s), render units. */
   polys: number[][][];
-  /** Window span endpoints (the bright end of the gradient). */
+  /** Room-side opening corners (the bright end of the gradient). */
   a: number[];
   b: number[];
   /** Direction the light travels (AWAY from the sun), unit vector. */
@@ -225,7 +225,7 @@ export interface SunRay {
   len: number;
   /**
    * INWARD wall normal (unit) — the axis of the fade. The distance a point
-   * has travelled from the glass is the same affine function of the point as
+   * has travelled from the source span is the same affine function of the point as
    * its depth under the wall, so the gradient's iso-alpha lines are parallel
    * to the wall and its axis is this normal (docs/SUN.md, DEV-EB173-01).
    */
@@ -233,7 +233,7 @@ export interface SunRay {
   /**
    * Length of that axis: `len · (dir·normal)` — the perpendicular depth a ray
    * reaches after travelling `len`. A point `source + dir·u` therefore lands
-   * at offset `u/len`: the glass is all at 0, the far edge all at 1.
+   * at offset `u/len`: the source span is all at 0, the far edge all at 1.
    */
   depth: number;
 }
@@ -245,8 +245,9 @@ export interface SunRay {
  * NOT considered (documented limit).
  *
  * `innerByRoom` (optional): when wall thickness is set, clip wedges to each
- * room's inner contour and narrow the lit width through the opening tunnel
- * (`max(0, L − d·tan(|α|))`, docs/WALL-THICKNESS.md §5).
+ * room's inner contour. `wallDepthByOpening` moves the full window span from
+ * the wall centreline to its room-side face, so the two side rays start at the
+ * opening's two inner corners (docs/WALL-THICKNESS.md §5).
  */
 export function computeSunRays(
   rooms: SunRoom[],
@@ -270,28 +271,23 @@ export function computeSunRays(
     if (!room) continue;
     const clipPoly = (innerByRoom && innerByRoom[info.roomId]) || room.poly;
     const rad = (w.angle * Math.PI) / 180;
-    let half = w.length / 2;
-    const d = wallDepthByOpening?.[w.id] || 0;
-    if (d > 0) {
-      // tunnel narrowing: α = angle between ray and inward normal
-      const inward: [number, number] = [-info.normal[0], -info.normal[1]];
-      const cos = Math.max(-1, Math.min(1, away[0] * inward[0] + away[1] * inward[1]));
-      const sin = Math.sqrt(Math.max(0, 1 - cos * cos));
-      const tan = cos > 1e-9 ? sin / cos : 1e6;
-      const eff = Math.max(0, w.length - d * tan);
-      half = eff / 2;
-      if (!(eff > 0)) continue;
-    }
+    const half = w.length / 2;
+    const normal: [number, number] = [-info.normal[0], -info.normal[1]];
+    const d = Math.max(0, wallDepthByOpening?.[w.id] || 0);
+    // A wall grows ±½ from its centreline. Start the whole light span on the
+    // room-side face: its endpoints are the two inner corners of the opening,
+    // independent of the sun's incidence angle.
+    const sourceX = w.x + normal[0] * d / 2;
+    const sourceY = w.y + normal[1] * d / 2;
     const hx = Math.cos(rad) * half;
     const hy = Math.sin(rad) * half;
-    const a = [w.x - hx, w.y - hy];
-    const b = [w.x + hx, w.y + hy];
+    const a = [sourceX - hx, sourceY - hy];
+    const b = [sourceX + hx, sourceY + hy];
     const len = k * w.length;
     const polys = clipToRoom(rayQuad(a, b, away, len), clipPoly);
     if (!polys.length) continue;
     // inward normal + how deep the ray gets: cos of the incidence angle,
     // which windowLit() has already found to be above RAY_MIN_COS
-    const normal: [number, number] = [-info.normal[0], -info.normal[1]];
     const cos = away[0] * normal[0] + away[1] * normal[1];
     out.push({ openingId: w.id, roomId: info.roomId, polys, a, b, dir: away, len,
       normal, depth: len * cos });
@@ -356,13 +352,13 @@ export const RAY_FADE_END = 0.85;
 
 /**
  * Gradient stops along the shaft: `[offset 0..1, share of the peak alpha]`.
- * Convex ease-out — bright at the glass, half gone by a third of the way,
+ * Convex ease-out — bright at the inner opening, half gone by a third of the way,
  * a whisper at two thirds, nothing from RAY_FADE_END on. Consumed by the card
  * as SVG <stop>s over the FULL wedge length, so the geometry and the gradient
  * always describe the same shaft (docs/SUN.md).
  *
  * This gradient is the ONLY thing that dissolves a wedge: the falloff runs
- * along the ray, from the glass inward, and the sides of the shaft keep the
+ * along the ray, from the inner opening inward, and the sides of the shaft keep the
  * hard edge light actually has (owner 2026-08-04: «не надо размывать их
  * боковые грани»). No blur is involved anywhere.
  */
@@ -394,8 +390,8 @@ export function rayStops(): [number, number][] {
  *
  * Contract (docs/SUN.md, «The rim»):
  *
- * - only the two SIDE edges — the ones running from the ends of the window
- *   along `dir`. Never the glass edge (a-b) and never the far edge: those are
+ * - only the two SIDE edges — the ones running from the inner opening corners
+ *   along `dir`. Never the source edge (a-b) and never the far edge: those are
  *   not boundaries of the beam, they are its source and its end;
  * - one screen pixel at any zoom (`vector-effect: non-scaling-stroke`);
  * - black, and it dies EXACTLY with the fill: same gradient axis (the wall's
@@ -407,7 +403,7 @@ export function rayStops(): [number, number][] {
  */
 
 /**
- * Peak rim opacity at the glass, before cloud cover. Visually tuned on the
+ * Peak rim opacity at the inner opening, before cloud cover. Visually tuned on the
  * demo rig at both extremes: it has to make the shaft legible on white paper
  * (the whole point) yet not read as an ink outline over the dark glow canvas.
  * Below ~0.3 the line disappears on paper at kiosk scale; above ~0.5 it turns
@@ -456,7 +452,7 @@ export function rayRimEdges(ray: SunRay, eps = 1e-4): number[][][] {
       for (let i = 0; i < poly.length; i++) {
         const p = poly[i];
         const q = poly[(i + 1) % poly.length];
-        // off the side's line? then this boundary edge is the glass, the far
+        // off the side's line? then this boundary edge is the source, the far
         // edge, or a wall the room cut the wedge with — not a side of the beam
         if (Math.abs((p[0] - src[0]) * nx + (p[1] - src[1]) * ny) > eps) continue;
         if (Math.abs((q[0] - src[0]) * nx + (q[1] - src[1]) * ny) > eps) continue;

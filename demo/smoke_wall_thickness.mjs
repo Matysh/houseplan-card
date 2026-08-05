@@ -70,6 +70,30 @@ const res = await page.evaluate(async () => {
   const areaAfter = floorAreaOf('r1');
   out.areaShrinks = areaAfter > 0 && areaAfter < areaBefore - 1;
 
+  // A sun shaft starts at the two room-side corners of a thick opening, not
+  // on the wall centreline and not at an incidence-narrowed pseudo-aperture.
+  sp().openings = [{
+    id: 'wtSun', type: 'window', x: 0.04, y: 0.25, angle: 90, length: 0.09,
+  }];
+  sp().settings = { ...(sp().settings || {}), north_deg: 0, sun_rays: true };
+  c.hass = { ...c.hass, states: { ...c.hass.states, 'sun.sun': {
+    entity_id: 'sun.sun', state: 'above_horizon',
+    attributes: { azimuth: 240, elevation: 60 },
+  } } };
+  c._setMode('view');
+  await upd();
+  const sunRay = (c._sunRaysCache?.rays || []).find((r) => r.openingId === 'wtSun');
+  const sunDepth = (20 / c._cellCm) * c._gridPitch;
+  const ys = sunRay ? [sunRay.a[1], sunRay.b[1]].sort((a, b) => a - b) : [];
+  out.sunStartsInnerFace = !!sunRay
+    && Math.abs(sunRay.a[0] - (40 + sunDepth / 2)) < 1e-6
+    && Math.abs(sunRay.b[0] - (40 + sunDepth / 2)) < 1e-6;
+  out.sunStartsInnerCorners = !!sunRay
+    && Math.abs(ys[0] - 205) < 1e-6 && Math.abs(ys[1] - 295) < 1e-6;
+  c._setMode('plan');
+  c._tool = 'wallthick';
+  await upd();
+
   c._tool = 'wallthick';
   c._wallThickClick([550, 250]);
   await upd();
@@ -201,6 +225,47 @@ const res = await page.evaluate(async () => {
   }
 
   out.pixelProbe = !!sr().querySelector('.wallbody');
+
+  // AUD-159B7-04: the same screen-depth policy owns both cards. At 1 cm the
+  // hatch must be suppressed in full and static views; at 20 cm both restore
+  // it. The static card measures its actual stage width via ResizeObserver.
+  c._setMode('view');
+  const parityCfg = JSON.parse(JSON.stringify(c._serverCfg));
+  const paritySp = parityCfg.spaces.find((x) => x.id === c._space);
+  paritySp.settings = { ...(paritySp.settings || {}), show_borders: true };
+  paritySp.walls = (paritySp.walls || []).map((w) => ({ ...w, cm: 1 }));
+  c._serverCfg = parityCfg;
+  await upd();
+
+  await customElements.whenDefined('houseplan-space-card');
+  const baseCall = c.hass.callWS.bind(c.hass);
+  const staticHass = { ...c.hass, callWS: async (m) => {
+    if (m.type === 'houseplan/config/get') return { config: parityCfg, rev: 1 };
+    if (m.type === 'houseplan/layout/get') return { layout: c._layout || {}, rev: 1 };
+    return baseCall(m);
+  } };
+  const staticCard = document.createElement('houseplan-space-card');
+  staticCard.setConfig({ type: 'custom:houseplan-space-card', space: c._space, show_button: false });
+  staticCard.hass = staticHass;
+  document.body.appendChild(staticCard);
+  const t0 = Date.now();
+  while ((!staticCard.renderRoot?.querySelector('.wallbody') || !(staticCard._stageWidth > 0))
+    && Date.now() - t0 < 6000) {
+    await new Promise((r) => setTimeout(r, 60));
+  }
+  await staticCard.updateComplete;
+  out.thinWallFullSolid = !!sr().querySelector('.wallbody.solid');
+  out.thinWallStaticSolid = !!staticCard.renderRoot?.querySelector('.wallbody.solid');
+
+  for (const w of paritySp.walls || []) w.cm = 20;
+  c._cfgEpoch++;
+  c.requestUpdate();
+  staticCard.requestUpdate();
+  await c.updateComplete;
+  await staticCard.updateComplete;
+  out.thickWallFullHatched = !!sr().querySelector('.wallbody:not(.solid)');
+  out.thickWallStaticHatched = !!staticCard.renderRoot?.querySelector('.wallbody:not(.solid)');
+  staticCard.remove();
   return out;
 });
 

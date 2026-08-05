@@ -391,7 +391,10 @@ hash falls back to the default.
   geometric virtual stretches; `room.open_to` remains the light-zone index
   derived from spans (legacy `open_to`-only configs expand to full
   `sharedBoundary` on read). Shared stretches drawn as a TRUE dash; outlines
-  trimmed (`outlineWithout`/`cutSegments`).
+  trimmed (`outlineWithout`/`cutSegments`). Geometry mutations clip one stored
+  span to **every** surviving shared segment. Adjacent pieces owned by different
+  room pairs stay separate: their midpoints are the source of the corresponding
+  `open_to` links after Split (`AUD-159B7-01`).
 - **Marker controls** (v1.36): `marker.controls[]` (lights/switches only)
   toggled as one HA-group-semantics service call on the marker's EXPLICIT
   tap_action=toggle; icon state/tint mirrors the targets. `primaryEntity`

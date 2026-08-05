@@ -4,11 +4,43 @@ on:
     types: [published]
 permissions:
   contents: write
+  actions: read
 jobs:
-  build:
+  # AUD-159B7-02: publishing a GitHub Release used to BE the gate — this
+  # workflow only built and uploaded, so an asset shipped while both Validate
+  # runs for the very same commit were red. The asset now waits for a green
+  # Validate of the EXACT commit the tag points at, and is withheld otherwise.
+  #
+  # Needs a push with a token that has the `workflow` scope (the ordinary
+  # Personal Access Token used for `git push` refuses workflow file updates).
+  gate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Require a green Validate for this exact commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          # HEAD is the peeled commit even when TAG is annotated. Do not trust
+          # target_commitish (it may be a branch name) or an event-context SHA.
+          SHA=$(git rev-parse HEAD)
+          echo "release tag: $TAG; exact commit: $SHA"
+          node scripts/release-gate.mjs "$SHA"
+  build:
+    needs: gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: npm ci && npm run build

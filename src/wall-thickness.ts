@@ -18,11 +18,20 @@ export const WALL_MIN_CM = 1;
 export const WALL_MAX_CM = 100;
 /** Default thickness offered in the Draw toolbar (docs/WALL-THICKNESS.md §6). */
 export const DRAW_WALL_DEFAULT_CM = 15;
+/** Below this screen depth the diagonal hatch becomes visual noise. */
+export const WALL_HATCH_MIN_PX = 3;
 
 /** Mitre spikes longer than this × thickness fall back to a bevel. */
 export const MITRE_LIMIT = 4;
 
 // ------------------------------- units --------------------------------------
+
+/** Shared full/static render policy for the thin-on-screen fallback. */
+export function wallBodyNeedsSolid(depthUnits: number, pxPerUnit: number): boolean {
+  return Number.isFinite(depthUnits) && depthUnits > 0
+    && Number.isFinite(pxPerUnit) && pxPerUnit > 0
+    && depthUnits * pxPerUnit < WALL_HATCH_MIN_PX;
+}
 
 export function clampWallCm(cm: number): number {
   if (!Number.isFinite(cm)) return WALL_MIN_CM;

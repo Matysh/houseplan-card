@@ -6,8 +6,8 @@ Status: **implemented / evolving** (post beta.4 redesign). Visual reference:
 
 Owner intent: thick walls form one continuous hatched body (seamless L and T),
 grow both ways from the room centreline, fills/light stay inside the inner
-contour, displayed area is the clean floor, and sun wedges narrow through the
-opening tunnel.
+contour, displayed area is the clean floor, and sun wedges start at the two
+room-side corners of an opening.
 
 Code: `src/wall-thickness.ts`, render in `src/houseplan-card.ts` /
 `src/space-render.ts`. Sun: `src/sun.ts`. Tests: `test/wall-thickness.test.mjs`,
@@ -36,8 +36,10 @@ room, **union**ed across rooms so shared and T junctions show one continuous
 body with no internal seams (as in the reference plan). The body is painted in
 two layers: a solid fill from global `settings.fill_colors.wall_fill` (default
 opaque white, with its own opacity) **under** the diagonal hatch whose stroke
-matches the wall outline. Neither replaces the other. Mitre joins; bevel when
-the mitre spike exceeds `MITRE_LIMIT × thickness`.
+matches the wall outline. Normally neither replaces the other. When the body is
+thinner than 3 CSS px on screen, the shared full/static render policy suppresses
+only the hatch so it does not collapse into noise; the solid fill remains. Mitre
+joins; bevel when the mitre spike exceeds `MITRE_LIMIT × thickness`.
 
 Openings cut the body full-depth; jambs cap the cut; window glass mid-tunnel;
 door swing from the **inner face**. Association uses wall direction ≈ opening
@@ -54,10 +56,11 @@ angle (mod 180°), then nearest span — never a perpendicular neighbour at a T.
 
 ## 5. Sun
 
-Wedges do not draw through wall bodies. The window is a tunnel of depth `cm`:
-effective lit width ≈ `max(0, L − d·tan(|α|))` where `α` is the ray angle from
-the inward normal. Clip to the receiving room’s inner contour. `d = 0` keeps
-the previous wedge. `hide_openings` hides the symbol only.
+Wedges do not draw through wall bodies. Their full source span is translated
+from the centreline by half the wall depth along the receiving room's inward
+normal, so both side rays begin at the two room-side corners of the window
+opening. Clip to the receiving room's inner contour. `d = 0` keeps the previous
+centreline/full-span wedge. `hide_openings` hides the symbol only.
 
 ## 6. Tool / hooks / i18n
 
@@ -79,5 +82,6 @@ Decor-line thickness, per-side finish, auto-from-backdrop, plan-wide default.
 
 Unit: ring closed at corners; half-out; inner area; atomic partial shared;
 angle-aware opening; rekey after edge/scale. Browser: seamless frame; fill not
-in hatch; m² drops with thickness; real resize/undo keeps walls; sun narrows
-with thickness + obliqueness; nav mode restores after `can_write`.
+in hatch; m² drops with thickness; real resize/undo keeps walls; sun starts at
+the room-side opening corners; nav mode restores after `can_write`; a 1 cm body
+uses solid-only in both full and static cards while a 20 cm body keeps its hatch.

@@ -95,9 +95,12 @@ cp dist/houseplan-card.js custom_components/houseplan/frontend/
 
 ## Release
 
-Tag `vX.Y.Z` + GitHub Release → the workflow `.github/workflows/release.yml` builds and attaches
-`houseplan-card.js`. Bump the version everywhere in sync: `src/houseplan-card.ts` (CARD_VERSION),
-`package.json`, `custom_components/houseplan/manifest.json`, `custom_components/houseplan/const.py`.
+Tag `vX.Y.Z` + GitHub Release → `.github/workflows/release.yml` resolves that
+tag to its exact commit, waits for every Validate run of the SHA to complete
+successfully, then builds and attaches `houseplan-card.js`. A missing, failed,
+cancelled or one-hour-timed-out Validate withholds the asset. Bump the version
+everywhere in sync: `src/houseplan-card.ts` (CARD_VERSION), `package.json`,
+`custom_components/houseplan/manifest.json`, `custom_components/houseplan/const.py`.
 
 ## Reproducible scripts (data)
 

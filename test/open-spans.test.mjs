@@ -141,6 +141,26 @@ describe('open-spans', () => {
     assert.ok(Math.max(sg[1], sg[3]) <= 4 + 1e-6, JSON.stringify(sg));
   });
 
+  it('clipOpenSpansToShared keeps both room-pair pieces after Split', () => {
+    const rooms = [
+      { id: 'left_top', poly: [[0, 0], [5, 0], [5, 2], [0, 2]] },
+      { id: 'left_bottom', poly: [[0, 2], [5, 2], [5, 4], [0, 4]] },
+      { id: 'right', poly: [[5, 0], [10, 0], [10, 4], [5, 4]] },
+    ];
+    const clipped = clipOpenSpansToShared(
+      [spanToEntry([5, 1], [5, 3], 1)], rooms, 1, eps,
+    );
+    const pieces = clipped.map((e) => entryToSeg(e, 1))
+      .map((sg) => [Math.min(sg[1], sg[3]), Math.max(sg[1], sg[3])]);
+    assert.deepEqual(pieces, [[1, 2], [2, 3]]);
+
+    const cfg = rooms.map(({ id }) => ({ id }));
+    syncOpenToFromCuts(cfg, rooms, clipped.map((e) => entryToSeg(e, 1)), eps);
+    assert.deepEqual(cfg[0].open_to, ['right']);
+    assert.deepEqual(cfg[1].open_to, ['right']);
+    assert.deepEqual(cfg[2].open_to, ['left_top', 'left_bottom']);
+  });
+
   it('entry round-trip', () => {
     const e = spanToEntry([100, 200], [100, 400], scale);
     const sg = entryToSeg(e, scale);

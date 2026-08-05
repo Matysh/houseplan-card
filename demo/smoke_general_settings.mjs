@@ -42,9 +42,9 @@ const BUNDLE_VERSION = m?.[1] ?? (m?.[2] && bundle.match(new RegExp(`[^\\w$]${m[
 check('bundleVersionFound', typeof BUNDLE_VERSION === 'string' && BUNDLE_VERSION.length > 0);
 // значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
 checkAll(res, {
-  "rows": 15, // 10 цветов + радиус свечения + режим фона + цвет фона + погода (docs/SUN.md)
-              // + «Выровнять всё по сетке» (docs/CANVAS.md §9)
-  "groups": ["Fill: lights", "Fill: temperature", "Fill: zigbee signal", "Light-sources fill", "Stage background", "Sun", "Grid", "About"],
+  "rows": 16, // 11 цветов (включая wall_fill) + радиус свечения + фон + погода (docs/SUN.md)
+               // + «Выровнять всё по сетке» (docs/CANVAS.md §9)
+  "groups": ["Fill: lights", "Fill: temperature", "Fill: zigbee signal", "Light-sources fill", "Walls", "Stage background", "Sun", "Grid", "About"],
   "aboutVersion": `Houseplan Card v${BUNDLE_VERSION}`, // та же константа, что в баннере
   "aboutLinks": [
     { "href": "https://github.com/Matysh/houseplan-card", "target": "_blank", "rel": "noopener" },
