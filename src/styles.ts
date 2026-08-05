@@ -1112,11 +1112,13 @@ export const cardStyles = css`
       fill-opacity: 1;
     }
     .wallthick-hover {
+      fill: var(--accent-color, #03a9f4);
+      fill-opacity: 0.38;
       stroke: var(--accent-color, #03a9f4);
-      stroke-width: 4;
+      stroke-width: 2.5;
+      stroke-linejoin: round;
       stroke-linecap: round;
       pointer-events: none;
-      opacity: 0.85;
     }
     .wallthick-dlg {
       position: absolute;
@@ -1133,6 +1135,7 @@ export const cardStyles = css`
       pointer-events: auto;
     }
     .wallthick-hover.isopen {
+      fill: var(--error-color, #f44336);
       stroke: var(--error-color, #f44336);
     }
     .wallthick-dlg .row {
@@ -1148,8 +1151,8 @@ export const cardStyles = css`
       background: var(--input-fill, transparent);
       color: var(--primary-text-color);
     }
-    .stage.markup.tool-openwall { cursor: default; }
-    .stage.markup.tool-openwall.wallhot { cursor: pointer; }
+    .stage.markup.tool-openwall { cursor: crosshair; }
+    .stage.markup.tool-openwall.wallhot { cursor: crosshair; }
     .openwall {
       stroke: var(--ow-stroke, var(--hp-muted));
       stroke-width: 2.5;

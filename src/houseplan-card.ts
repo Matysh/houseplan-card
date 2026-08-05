@@ -50,6 +50,13 @@ import {
   innerContourForRoom, openingInnerFaceOffset, applyWallThicknessToNewRoom,
   drawWallPreviewD, DRAW_WALL_DEFAULT_CM, type WallEntry,
 } from './wall-thickness';
+import {
+  resolveOpenCuts, hitSharedWall, hitOuterWall, hitOpenSpan, snapOpenPoint,
+  clampToEdgeEnds, jointsOnEdge, cutsToSpanEntries, syncOpenToFromCuts,
+  clearThicknessUnderSpan, applyThicknessOnClose, purgeOpeningsOnSpan,
+  pointOnOpenCut, removeCut, rekeyOpenSpansAfterMove, degradeOpenSpans,
+  type OpenSpanEntry,
+} from './open-spans';
 import { ContentSigner } from './signing';
 import { mdiHomeCityOutline } from '@mdi/js';
 import {
@@ -76,7 +83,7 @@ import {
 import { alignAllToGrid, type AlignReport } from './align-grid';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.59.0-beta.5';
+const CARD_VERSION = '1.59.0-beta.6';
 /** HP-1552 boot-veil timing (AUD-1552-02). The veil holds for at least
  *  BOOT_MIN_MS; every stage-height change restarts a BOOT_QUIET_MS
  *  trailing-quiescence requirement (chrome still settling near the cap
@@ -537,6 +544,8 @@ class HouseplanCard extends LitElement {
    *  as it does while dragging an existing opening. */
   private _opShift = false;
   private _mergeDialog: { aId: string; bId: string; poly: number[][]; pick: 'a' | 'b' } | null = null;
+  /** Open-boundary tool: first click anchor on a shared wall (render units). */
+  private _openWallAnchor: { p: number[]; edge: number[]; aId: string; bId: string } | null = null;
   private _splitSel: { roomId: string; pts: number[][] } | null = null; // room being cut + the cut path so far
   // a split is applied only when the new room's dialog is confirmed — cancel leaves the room intact
   private _pendingSplit: { roomId: string; mainPoly: number[][]; newPoly: number[][] } | null = null;
@@ -817,6 +826,7 @@ class HouseplanCard extends LitElement {
     _openingDialog: { state: true },
     _openingInfo: { state: true },
     _mergeDialog: { state: true },
+    _openWallAnchor: { state: true },
     _splitSel: { state: true },
     _decorTool: { state: true },
     _decorStyle: { state: true },
@@ -1047,7 +1057,13 @@ class HouseplanCard extends LitElement {
       this._wallDialog = null;
       return;
     }
-    if (this._tool === 'openwall' || this._tool === 'opening' || this._tool === 'wallthick' || this._tool === 'delroom') {
+    if (this._tool === 'openwall') {
+      e.preventDefault();
+      if (this._openWallAnchor) this._openWallAnchor = null;
+      else this._tool = 'draw';
+      return;
+    }
+    if (this._tool === 'opening' || this._tool === 'wallthick' || this._tool === 'delroom') {
       e.preventDefault();
       this._tool = 'draw';
     }
@@ -3472,16 +3488,7 @@ class HouseplanCard extends LitElement {
       return;
     }
     if (this._tool === 'delroom') {
-      const space = this._spaceModel();
-      const room = [...space.rooms].reverse().find((r) => this._pointInRoom(raw, r));
-      if (!room) return;
-      if (!confirm(this._t('confirm.delete_room', { name: room.name }))) return;
-      const sp = this._curSpaceCfg;
-      sp.rooms = sp.rooms.filter((r: any) => r.id !== room.id);
-      this._saveConfig();
-      this._regSignature = '';
-      this._maybeRebuildDevices();
-      this.requestUpdate();
+      this._deleteWallClick(raw);
       return;
     }
     if (this._tool === 'opening') {
@@ -3735,6 +3742,32 @@ class HouseplanCard extends LitElement {
         }
         sp.walls = degradeWalls(sp.walls, sp.rooms || [], GRID_STEP_N, 1);
         if (!sp.walls.length) delete sp.walls;
+      }
+      if (Array.isArray((sp as any).open_spans) && (sp as any).open_spans.length) {
+        const H = this._spaceH;
+        const oldSpans: [number[], number[]][] = [];
+        const newSpans: [number[], number[]][] = [];
+        for (const id of g.changed) {
+          const oldR = g.rooms.find((r) => r.id === id);
+          const nr = sp.rooms.find((x: any) => x.id === id);
+          if (!oldR || !nr?.poly) continue;
+          const newPoly = nr.poly.map((p: number[]) => [p[0] * NORM_W, p[1] * H] as number[]);
+          if (oldR.poly.length !== newPoly.length) continue;
+          for (let i = 0; i < oldR.poly.length; i++) {
+            oldSpans.push([oldR.poly[i], oldR.poly[(i + 1) % oldR.poly.length]]);
+            newSpans.push([newPoly[i], newPoly[(i + 1) % newPoly.length]]);
+          }
+        }
+        if (oldSpans.length) {
+          (sp as any).open_spans = rekeyOpenSpansAfterMove(
+            (sp as any).open_spans, oldSpans, newSpans, NORM_W,
+          );
+        }
+        (sp as any).open_spans = degradeOpenSpans(
+          (sp as any).open_spans, this._spaceModel().rooms, NORM_W, this._gridPitch * 0.02,
+        );
+        if (!(sp as any).open_spans.length) delete (sp as any).open_spans;
+        else this._persistOpenCuts(this._openCuts());
       }
     }
     this._rszUndo.push({ space: this._space, snap: g.snap });
@@ -4972,25 +5005,28 @@ class HouseplanCard extends LitElement {
   /** Boundary under the cursor in the open-wall tool (hover preview). */
   private get _openWallHover(): { segs: number[][]; open: boolean } | null {
     if (!this._markup || this._tool !== 'openwall' || !this._cursorPt) return null;
-    const hit = this._openWallHit(this._cursorPt);
-    return hit ? { segs: hit.segs, open: hit.open } : null;
+    if (this._openWallAnchor) {
+      const p2 = clampToEdgeEnds(this._cursorPt, this._openWallAnchor.edge);
+      return { segs: [[this._openWallAnchor.p[0], this._openWallAnchor.p[1], p2[0], p2[1]]], open: false };
+    }
+    const cuts = this._openCuts();
+    const openSg = hitOpenSpan(this._cursorPt, cuts, this._gridPitch * 6);
+    if (openSg) return { segs: [openSg], open: true };
+    const sh = hitSharedWall(this._cursorPt, this._spaceModel().rooms, this._gridPitch * 6, this._gridPitch * 0.02);
+    return sh ? { segs: [sh.edge], open: false } : null;
   }
 
   /** Dashed strokes over open (virtual) boundaries; highlighted in the tool. */
   private _renderOpenWalls(disp?: SpaceDisplay): TemplateResult {
-    // A virtual wall IS a wall — a dashed one. When the space is set not to
-    // draw room borders, drawing the dashes anyway left a plan with no walls
-    // except a few floating dashed stretches (owner, 2026-08-05). The plan
-    // editor is exempt: the openwall tool has to show what it edits.
     if (disp && !disp.showBorders && !this._markup) return svg`` as unknown as TemplateResult;
-    const pairs = this._openPairs();
+    const cuts = this._openCuts();
     const hover = this._openWallHover;
-    if (!pairs.length && !hover) return svg`` as unknown as TemplateResult;
+    if (!cuts.length && !hover) return svg`` as unknown as TemplateResult;
     const hot = this._markup && this._tool === 'openwall';
     const stroke = disp?.color || 'var(--hp-muted)';
     return svg`<g class="openwalls ${hot ? 'hot' : ''}" style="--ow-stroke:${stroke}">
-      ${pairs.flatMap((p) => p.segs.map((sg) => svg`<line class="openwall"
-        x1="${sg[0]}" y1="${sg[1]}" x2="${sg[2]}" y2="${sg[3]}"></line>`))}
+      ${cuts.map((sg) => svg`<line class="openwall"
+        x1="${sg[0]}" y1="${sg[1]}" x2="${sg[2]}" y2="${sg[3]}"></line>`)}
       ${hover
         ? hover.segs.map((sg) => svg`<line class="openwall-preview ${hover.open ? 'willclose' : ''}"
             x1="${sg[0]}" y1="${sg[1]}" x2="${sg[2]}" y2="${sg[3]}"></line>`)
@@ -4998,89 +5034,182 @@ class HouseplanCard extends LitElement {
     </g>` as unknown as TemplateResult;
   }
 
-  /** All open-boundary pairs of the current space with their shared segments. */
-  private _openPairsCache: { model: SpaceModel; pairs: { a: RoomCfg; b: RoomCfg; segs: number[][] }[] } | null = null;
+  /** Open cuts in render units (from open_spans or legacy open_to). */
+  private _openCuts(): number[][] {
+    const sp = this._curSpaceCfg;
+    return resolveOpenCuts(
+      this._spaceModel().rooms,
+      (sp as any)?.open_spans as OpenSpanEntry[] | undefined,
+      NORM_W,
+      this._gridPitch * 0.02,
+    );
+  }
 
+  /** Open cuts grouped by room pair (for per-room outline trimming). */
   private _openPairs(): { a: RoomCfg; b: RoomCfg; segs: number[][] }[] {
-    // audit L1: this used to run once PER ROOM on every render (O(rooms^3)
-    // collinear-overlap math on every HA state push), so it is memoized.
-    //
-    // The key is the SPACE MODEL OBJECT ITSELF (HP-1454-04). It used to be a
-    // string of room ids and open_to links, which said nothing about geometry:
-    // change the plan, or drag a vertex, and the shared segments were
-    // recomputed for the outlines but the open boundaries — and the glow cuts
-    // that follow them — kept their old coordinates until a full reload.
-    // `_model` is already rebuilt whenever the epoch or the config fingerprint
-    // moves, and everything below derives from it, so its identity is an exact
-    // and cheaper key. One cache invalidation strategy, not two.
-    const sp = this._spaceModel();
-    if (this._openPairsCache && this._openPairsCache.model === sp) return this._openPairsCache.pairs;
-    const pairs = this._computeOpenPairs();
-    this._openPairsCache = { model: sp, pairs };
-    return pairs;
-  }
-
-  private _computeOpenPairs(): { a: RoomCfg; b: RoomCfg; segs: number[][] }[] {
+    const cuts = this._openCuts();
+    if (!cuts.length) return [];
     const rooms = this._spaceModel().rooms.filter((r) => r.id);
+    const eps = this._gridPitch * 0.02;
     const res: { a: RoomCfg; b: RoomCfg; segs: number[][] }[] = [];
-    for (let i = 0; i < rooms.length; i++)
-      for (let j = i + 1; j < rooms.length; j++) {
-        const a = rooms[i], b = rooms[j];
-        const linked = ((a as any).open_to || []).includes(b.id) || ((b as any).open_to || []).includes(a.id);
-        if (!linked) continue;
-        const pa = roomPoly(a), pb = roomPoly(b);
-        if (!pa || !pb) continue;
-        const segs = sharedBoundary(pa, pb, this._gridPitch * 0.02);
-        if (segs.length) res.push({ a, b, segs });
-      }
-    return res;
-  }
-
-  /** The shared boundary nearest to the cursor (both the tool's click and hover). */
-  private _openWallHit(raw: number[]): { a: RoomCfg; b: RoomCfg; segs: number[][]; open: boolean } | null {
-    const rooms = this._spaceModel().rooms.filter((r) => r.id);
-    const pull = this._gridPitch * 6;
-    let best: { a: RoomCfg; b: RoomCfg; segs: number[][]; d: number } | null = null;
-    for (let i = 0; i < rooms.length; i++)
+    for (let i = 0; i < rooms.length; i++) {
       for (let j = i + 1; j < rooms.length; j++) {
         const pa = roomPoly(rooms[i]), pb = roomPoly(rooms[j]);
         if (!pa || !pb) continue;
-        const segs = sharedBoundary(pa, pb, this._gridPitch * 0.02);
-        for (const seg of segs) {
-          const d = distToSegment(raw, seg);
-          if (d <= pull && (!best || d < best.d)) best = { a: rooms[i], b: rooms[j], segs, d };
-        }
+        const shared = sharedBoundary(pa, pb, eps);
+        if (!shared.length) continue;
+        const segs = cuts.filter((cut) => {
+          const mid = [(cut[0] + cut[2]) / 2, (cut[1] + cut[3]) / 2];
+          return shared.some((sg) => distToSegment(mid, sg) < eps * 4);
+        });
+        if (segs.length) res.push({ a: rooms[i], b: rooms[j], segs });
       }
-    if (!best) return null;
-    const open = (((best.a as any).open_to || []).includes(best.b.id))
-      || (((best.b as any).open_to || []).includes(best.a.id));
-    return { a: best.a, b: best.b, segs: best.segs, open };
+    }
+    return res;
   }
 
-  /** Open-boundary tool: a click on a shared wall toggles its "virtual" state. */
+  /** Write cuts into space.open_spans and sync open_to. */
+  private _persistOpenCuts(cuts: number[][]): void {
+    const sp = this._curSpaceCfg;
+    if (!sp) return;
+    const entries = cutsToSpanEntries(cuts, NORM_W);
+    if (entries.length) (sp as any).open_spans = entries;
+    else delete (sp as any).open_spans;
+    syncOpenToFromCuts(sp.rooms || [], this._spaceModel().rooms, cuts, this._gridPitch * 0.02);
+  }
+
+  private _closeOpenSpan(sg: number[]): void {
+    const sp = this._curSpaceCfg;
+    if (!sp) return;
+    const eps = this._gridPitch * 0.02;
+    const cuts = removeCut(this._openCuts(), sg, eps);
+    const solid: number[][] = [];
+    for (const r of this._spaceModel().rooms) {
+      const poly = roomPoly(r);
+      if (!poly) continue;
+      for (let i = 0; i < poly.length; i++) {
+        const a = poly[i], b = poly[(i + 1) % poly.length];
+        const edge = [a[0], a[1], b[0], b[1]];
+        const mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+        if (cuts.some((c) => distToSegment(mid, c) < eps * 4)) continue;
+        solid.push(edge);
+      }
+    }
+    let walls = applyThicknessOnClose(
+      sp.walls, sg, solid, this._wallKeyPitch, NORM_W, DRAW_WALL_DEFAULT_CM,
+    );
+    walls = degradeWalls(walls, sp.rooms || [], GRID_STEP_N, 1);
+    if (walls.length) sp.walls = walls;
+    else delete sp.walls;
+    this._persistOpenCuts(cuts);
+    this._showToast(this._t('toast.openwall_closed_span'));
+    this._saveConfig();
+    this.requestUpdate();
+  }
+
+  /** Open-boundary tool: two-click span, or click existing span to close. */
   private _openWallClick(raw: number[]): void {
-    const best = this._openWallHit(raw);
-    if (!best) {
-      this._showToast(this._t('toast.openwall_pick'));
+    const pull = this._gridPitch * 6;
+    const eps = this._gridPitch * 0.02;
+    const cuts = this._openCuts();
+
+    if (this._openWallAnchor) {
+      const { p, edge } = this._openWallAnchor;
+      const joints = jointsOnEdge(edge, cuts, eps);
+      const p2 = snapOpenPoint(raw, edge, joints, this._gridPitch, this._gridPitch * 1.5);
+      const clamped = clampToEdgeEnds(p2, edge);
+      const len = Math.hypot(clamped[0] - p[0], clamped[1] - p[1]);
+      this._openWallAnchor = null;
+      if (len < this._gridPitch * 0.5) {
+        this._showToast(this._t('toast.openwall_short'));
+        return;
+      }
+      if (distToSegment(raw, edge) > pull) {
+        this._showToast(this._t('toast.openwall_pick'));
+        return;
+      }
+      const sg = [p[0], p[1], clamped[0], clamped[1]];
+      const next = [...cuts, sg];
+      const sp = this._curSpaceCfg;
+      if (!sp) return;
+      let walls = clearThicknessUnderSpan(sp.walls, [sg[0], sg[1]], [sg[2], sg[3]], this._wallKeyPitch, NORM_W);
+      walls = degradeWalls(walls, sp.rooms || [], GRID_STEP_N, 1);
+      if (walls.length) sp.walls = walls;
+      else delete sp.walls;
+      const beforeOp = (sp.openings || []).length;
+      sp.openings = purgeOpeningsOnSpan(sp.openings, sg, NORM_W, pull);
+      if ((sp.openings || []).length < beforeOp) {
+        this._showToast(this._t('toast.openwall_openings_removed'));
+      }
+      this._persistOpenCuts(next);
+      this._showToast(this._t('toast.openwall_opened_span'));
+      this._saveConfig();
+      this.requestUpdate();
       return;
     }
+
+    const openSg = hitOpenSpan(raw, cuts, pull);
+    if (openSg) {
+      this._closeOpenSpan(openSg);
+      return;
+    }
+
+    const sh = hitSharedWall(raw, this._spaceModel().rooms, pull, eps);
+    if (!sh) {
+      const outer = hitOuterWall(raw, this._spaceModel().rooms, pull, eps);
+      this._showToast(this._t(outer ? 'toast.openwall_shared_only' : 'toast.openwall_pick'));
+      return;
+    }
+    const joints = jointsOnEdge(sh.edge, cuts, eps);
+    const p1 = snapOpenPoint(raw, sh.edge, joints, this._gridPitch, this._gridPitch * 1.5);
+    this._openWallAnchor = {
+      p: p1,
+      edge: sh.edge,
+      aId: sh.a.id!,
+      bId: sh.b.id!,
+    };
+  }
+
+  /** Delete tool: virtual→close; shared→merge; outer/inside→delete room. */
+  private _deleteWallClick(raw: number[]): void {
+    const pull = this._gridPitch * 6;
+    const eps = this._gridPitch * 0.02;
+    const cuts = this._openCuts();
+    const openSg = hitOpenSpan(raw, cuts, pull);
+    if (openSg) {
+      this._closeOpenSpan(openSg);
+      return;
+    }
+    const sh = hitSharedWall(raw, this._spaceModel().rooms, pull, eps);
+    if (sh) {
+      const pa = roomPoly(sh.a), pb = roomPoly(sh.b);
+      const merged = pa && pb ? mergeRooms(pa, pb) : null;
+      if (!merged) {
+        this._showToast(this._t('toast.merge_not_adjacent'));
+        return;
+      }
+      if (!confirm(this._t('confirm.merge_rooms', {
+        a: sh.a.name || sh.a.id, b: sh.b.name || sh.b.id,
+      }))) return;
+      this._mergeDialog = { aId: sh.a.id!, bId: sh.b.id!, poly: merged, pick: 'a' };
+      return;
+    }
+    const outer = hitOuterWall(raw, this._spaceModel().rooms, pull, eps);
+    const room = outer?.room
+      || [...this._spaceModel().rooms].reverse().find((r) => this._pointInRoom(raw, r));
+    if (!room) return;
+    if (!confirm(this._t('confirm.delete_room', { name: room.name }))) return;
     const sp = this._curSpaceCfg;
-    const ra = sp.rooms.find((r: any) => r.id === best.a.id);
-    const rb = sp.rooms.find((r: any) => r.id === best.b.id);
-    if (!ra || !rb) return;
-    const linked = (ra.open_to || []).includes(rb.id) || (rb.open_to || []).includes(ra.id);
-    if (linked) {
-      ra.open_to = (ra.open_to || []).filter((x: string) => x !== rb.id);
-      rb.open_to = (rb.open_to || []).filter((x: string) => x !== ra.id);
-      if (!ra.open_to.length) delete ra.open_to;
-      if (!rb.open_to.length) delete rb.open_to;
-      this._showToast(this._t('toast.openwall_closed', { a: ra.name || '', b: rb.name || '' }));
-    } else {
-      ra.open_to = [...(ra.open_to || []), rb.id];
-      rb.open_to = [...(rb.open_to || []), ra.id];
-      this._showToast(this._t('toast.openwall_opened', { a: ra.name || '', b: rb.name || '' }));
+    if (!sp) return;
+    sp.rooms = sp.rooms.filter((r: any) => r.id !== room.id);
+    if (Array.isArray((sp as any).open_spans)) {
+      (sp as any).open_spans = degradeOpenSpans((sp as any).open_spans, this._spaceModel().rooms, NORM_W, eps);
+      if (!(sp as any).open_spans.length) delete (sp as any).open_spans;
+      this._persistOpenCuts(this._openCuts());
     }
     this._saveConfig();
+    this._regSignature = '';
+    this._maybeRebuildDevices();
     this.requestUpdate();
   }
 
@@ -5136,9 +5265,8 @@ class HouseplanCard extends LitElement {
     }
     if (!best) return null;
     // open-boundary stretches refuse thickness
-    const openHit = this._openWallHit(raw);
-    const open = !!(openHit && openHit.open
-      && distToSegment(raw, openHit.segs[0]) <= pull + 1e-6);
+    const openSg = hitOpenSpan(raw, this._openCuts(), pull);
+    const open = !!openSg;
     // prefer the atomic shared stretch under the cursor (partial overlaps)
     let a = best.a, b = best.b;
     let segs: number[][] = [[a[0], a[1], b[0], b[1]]];
@@ -5162,22 +5290,31 @@ class HouseplanCard extends LitElement {
             || segs[0][2] !== best.b[0] || segs[0][3] !== best.b[1])) break;
       }
     }
-    if (openHit?.open) {
+    if (openSg) {
       const mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
-      for (const sg of openHit.segs) {
-        if (distToSegment(mid, sg) < this._gridPitch) {
-          segs = openHit.segs;
-          break;
-        }
-      }
+      if (distToSegment(mid, openSg) < this._gridPitch) segs = [openSg];
     }
     return { a, b, roomId: best.roomId, segs, open };
   }
 
-  private get _wallThickHover(): { segs: number[][]; open: boolean } | null {
+  private get _wallThickHover(): { segs: number[][]; open: boolean; d: string } | null {
     if (!this._markup || this._tool !== 'wallthick' || !this._cursorPt || this._wallDialog) return null;
     const hit = this._wallThickHit(this._cursorPt);
-    return hit ? { segs: hit.segs, open: hit.open } : null;
+    if (!hit) return null;
+    // Whole-wall strip: real half-depth when thickness is set, else a visible
+    // minimum so thin centreline walls still light up under the cursor.
+    const cm = thicknessCmAt(this._spaceWalls, hit.a, hit.b, this._wallKeyPitch, NORM_W);
+    const depth = cm > 0
+      ? wallCmToUnits(cm, this._cellCm, this._gridPitch)
+      : this._gridPitch * 3;
+    const half = Math.max(depth / 2, this._gridPitch * 1.25);
+    let d = '';
+    for (const sg of hit.segs) {
+      d += (d ? ' ' : '') + drawWallPreviewD(
+        [[sg[0], sg[1]], [sg[2], sg[3]]], half, false,
+      );
+    }
+    return { segs: hit.segs, open: hit.open, d };
   }
 
   private _wallThickClick(raw: number[]): void {
@@ -5272,9 +5409,9 @@ class HouseplanCard extends LitElement {
   /** Hover highlight for the wall-thickness tool (SVG). */
   private _renderWallThickUi(): TemplateResult {
     const hover = this._wallThickHover;
-    if (!hover) return svg`` as unknown as TemplateResult;
-    return svg`${hover.segs.map((sg) => svg`<line class="wallthick-hover ${hover.open ? 'isopen' : ''}"
-      x1="${sg[0]}" y1="${sg[1]}" x2="${sg[2]}" y2="${sg[3]}"></line>`)}` as unknown as TemplateResult;
+    if (!hover || !hover.d) return svg`` as unknown as TemplateResult;
+    return svg`<path class="wallthick-hover ${hover.open ? 'isopen' : ''}"
+      d="${hover.d}"></path>` as unknown as TemplateResult;
   }
 
   /** Thickness input popover, anchored in stage % like measure labels. */
@@ -5320,6 +5457,10 @@ class HouseplanCard extends LitElement {
     const snap = snapToWall(raw, this._spaceModel().rooms, eps);
     if (!snap) {
       this._showToast(this._t('toast.opening_no_wall'));
+      return;
+    }
+    if (pointOnOpenCut(snap.x, snap.y, snap.angle, this._openCuts(), eps)) {
+      this._showToast(this._t('toast.opening_on_virtual'));
       return;
     }
     // the opening is born where the PREVIEW showed it — magnet included
@@ -5570,6 +5711,14 @@ class HouseplanCard extends LitElement {
     keep.poly = d.poly.map((p) => [p[0] / NORM_W, p[1] / H]);
     delete keep.x; delete keep.y; delete keep.w; delete keep.h; // a merged room is never a rect
     sp.rooms = sp.rooms.filter((r: any) => r.id !== dropId);
+    this._cfgEpoch++;
+    if (Array.isArray((sp as any).open_spans)) {
+      (sp as any).open_spans = degradeOpenSpans(
+        (sp as any).open_spans, this._spaceModel().rooms, NORM_W, this._gridPitch * 0.02,
+      );
+      if (!(sp as any).open_spans.length) delete (sp as any).open_spans;
+      else this._persistOpenCuts(this._openCuts());
+    }
     this._saveConfig();
     this._mergeDialog = null;
     this._regSignature = '';
@@ -5651,7 +5800,7 @@ class HouseplanCard extends LitElement {
 
   private _markupMove(ev: MouseEvent): void {
     if (!this._markup) return;
-    if (this._tool === 'opening' || this._tool === 'openwall') {
+    if (this._tool === 'opening' || this._tool === 'openwall' || this._tool === 'wallthick') {
       // hover preview: raw cursor point; snapping happens in the preview getters
       this._opShift = !!ev.shiftKey; // Shift opts out of the centre magnet
       this._cursorPt = this._svgPoint(ev);
@@ -5794,6 +5943,7 @@ class HouseplanCard extends LitElement {
     this._splitSel = null;
     this._mergeSel = null;
     this._mergeDialog = null;
+    this._openWallAnchor = null;
   }
 
   /** Cancel in the dialog: the outline is open again (the closing point is removed). */

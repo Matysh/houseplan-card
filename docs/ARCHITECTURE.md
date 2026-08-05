@@ -387,11 +387,11 @@ hash falls back to the default.
   SEPARATE clipPath child (children union; subpaths of one nonzero path
   cancel on opposite windings — field bug v1.36.3). Radius: global
   `settings.glow_radius_cm` + per-marker `glow_radius_cm`.
-- **Open boundaries** (v1.37): `room.open_to: [roomId]` symmetric links;
-  light zones are connected components (`openZoneOf`); shared stretches
-  computed by collinear-overlap math (`sharedBoundary`) and drawn as a TRUE
-  dash — both room outlines and derived wall segments are trimmed
-  (`outlineWithout`/`cutSegments`).
+- **Open boundaries** (v1.37, revised 2026-08): `space.open_spans` hold
+  geometric virtual stretches; `room.open_to` remains the light-zone index
+  derived from spans (legacy `open_to`-only configs expand to full
+  `sharedBoundary` on read). Shared stretches drawn as a TRUE dash; outlines
+  trimmed (`outlineWithout`/`cutSegments`).
 - **Marker controls** (v1.36): `marker.controls[]` (lights/switches only)
   toggled as one HA-group-semantics service call on the marker's EXPLICIT
   tap_action=toggle; icon state/tint mirrors the targets. `primaryEntity`

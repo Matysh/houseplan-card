@@ -2,6 +2,18 @@
 
 ## Unreleased (dev)
 
+## v1.59.0-beta.6 — 2026-08-05
+
+Sixth pre-release of the 1.59 line: partial open-wall spans and wall-centric Delete.
+
+- **Partial open (virtual) wall spans** (`space.open_spans`): two-click openwall
+  (anchor → second point on a shared wall, clamped to nearest corners); crosshair
+  cursor; openings on virtual stretches are removed and cannot be placed;
+  thickness clears on open and restores from neighbour / 15 cm on close. Legacy
+  `open_to` still expands to the full shared boundary on read.
+- **Wall-centric Delete**: virtual → solid; shared solid → confirm merge (whole
+  shared boundary); outer wall or click inside room → confirm delete room.
+
 ## v1.59.0-beta.5 — 2026-08-05
 
 Fifth pre-release of the 1.59 line: wall-thickness redesign (seamless ±½ rings, inner floor/area/sun), draw-with-thickness, new-space opens the plan editor, and audit hygiene from the beta.4 recheck.
