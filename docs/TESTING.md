@@ -957,6 +957,10 @@ require hands on real hardware — they remain for the human pass.
       exception to «shared walls together»), growing into one stops
 - [ ] Ctrl+Z / ⌘Z after releasing a handle restores the previous geometry —
       one release = one undo step (rooms AND openings)
+- [ ] A moved shared wall with a partial virtual middle and thick solid
+      remainders keeps the dash and both thickness values during live drag and
+      after release; Undo restores rooms, `open_spans` and `walls` together
+      [auto: smoke_resize_virtual_thick]
 - [ ] Device markers do not move; the room settings gear re-centres itself
 - [ ] Smoke: `node demo/smoke_room_resize.mjs`
 
@@ -1460,7 +1464,14 @@ require hands on real hardware — they remain for the human pass.
       [auto: smoke_wall_thickness]
 - [ ] **Shared once / clear → line / resize re-keys**: one body for a shared
       wall; clearing thickness restores the centreline; resizing a thick wall
-      keeps the thickness on the moved stretch [auto: smoke_wall_thickness]
+      keeps the thickness on the moved stretch, including both atomic solid
+      remainders around a partial virtual span
+      [auto: smoke_wall_thickness + smoke_resize_virtual_thick]
+- [ ] **Virtual T-junction**: when two real thick arms from different room
+      contours meet at an `open_span` endpoint, the outside corner is a clean
+      mitre with no stair-step; the saved dash and the two-click rubber band
+      paint above the real hatch right up to the centreline
+      [auto: test/wall-thickness.test.mjs + smoke_resize_virtual_thick]
 - [ ] **Unit + backend**: inset/mitre/bevel, key from either end, degrade,
       rekey, cm↔inches; `walls` schema bounds
       [auto: test/wall-thickness.test.mjs + tests_backend/test_validation.py]

@@ -93,6 +93,20 @@ test('rekeyWallsAfterMove rewrites the key when a span shifts by one cell', () =
   assert.equal(next[0].cm, 18);
 });
 
+test('rekeyWallsAfterMove carries atomic remainders of a partially virtual wall', () => {
+  const oldA = [0.5, 0.1], oldB = [0.5, 0.7];
+  const newA = [0.6, 0.1], newB = [0.6, 0.7];
+  const walls = [
+    { key: wallKey([0.5, 0.1], [0.5, 0.3], pitch), cm: 20 },
+    { key: wallKey([0.5, 0.5], [0.5, 0.7], pitch), cm: 25 },
+  ];
+  const next = rekeyWallsAfterMove(walls, [[oldA, oldB]], [[newA, newB]], pitch);
+  assert.deepEqual(next, [
+    { key: wallKey([0.6, 0.1], [0.6, 0.3], pitch), cm: 20 },
+    { key: wallKey([0.6, 0.5], [0.6, 0.7], pitch), cm: 25 },
+  ]);
+});
+
 test('setWallThickness upserts and removes', () => {
   const a = [0, 0], b = [1, 0];
   let walls = setWallThickness([], a, b, 12, pitch);
@@ -276,6 +290,31 @@ test('wallBodyRings / union: outset − inset forms a closed ring', () => {
   const inner = innerContourForRoom(rooms, 'a', walls, [], pitch, cellCm, pitch);
   assert.ok(inner);
   assert.ok(polygonArea(inner) < polygonArea(rooms[0].poly));
+});
+
+test('wallBodiesUnionPath mitres real arms owned by different rooms at a virtual T', () => {
+  const scale = 1000;
+  const rooms = [
+    { id: 'a', poly: [[100, 100], [500, 100], [500, 500], [100, 500]] },
+    { id: 'b', poly: [[500, 500], [900, 500], [900, 900], [500, 900]] },
+    { id: 'c', poly: [[500, 100], [900, 100], [900, 500], [500, 500]] },
+  ];
+  const open = [[500, 500, 900, 500]];
+  const walls = [
+    { key: wallKey([0.1, 0.5], [0.5, 0.5], pitch), cm: 20 },
+    { key: wallKey([0.5, 0.5], [0.5, 0.9], pitch), cm: 20 },
+  ];
+  const united = wallBodiesUnionPath(rooms, walls, open, [], pitch, cellCm, GRID_PITCH, scale);
+  assert.ok(united);
+  const nums = (united.d.match(/-?\d+(?:\.\d+)?/g) || []).map(Number);
+  const pts = [];
+  for (let i = 0; i + 1 < nums.length; i += 2) pts.push([nums[i], nums[i + 1]]);
+  const half = wallCmToUnits(20, cellCm, GRID_PITCH) / 2;
+  assert.ok(
+    pts.some((p) => Math.abs(p[0] - (500 + half)) < 1e-6
+      && Math.abs(p[1] - (500 - half)) < 1e-6),
+    `missing outer mitre corner in ${united.d}`,
+  );
 });
 
 test('wallBodiesUnionPath: single fully-thick room keeps a floor hole', () => {

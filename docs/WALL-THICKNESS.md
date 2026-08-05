@@ -44,6 +44,9 @@ joins; bevel when the mitre spike exceeds `MITRE_LIMIT × thickness`.
 Openings cut the body full-depth; jambs cap the cut; window glass mid-tunnel;
 door swing from the **inner face**. Association uses wall direction ≈ opening
 angle (mod 180°), then nearest span — never a perpendicular neighbour at a T.
+At an `open_span` endpoint, real arms owned by different room contours receive
+the same bounded mitre patch as arms from one contour; a virtual T therefore
+has one clean outer corner rather than two butt caps forming a step.
 
 ## 4. Floor, fills, light, area
 
@@ -81,7 +84,9 @@ Decor-line thickness, per-side finish, auto-from-backdrop, plan-wide default.
 ## 8. Testing
 
 Unit: ring closed at corners; half-out; inner area; atomic partial shared;
-angle-aware opening; rekey after edge/scale. Browser: seamless frame; fill not
-in hatch; m² drops with thickness; real resize/undo keeps walls; sun starts at
-the room-side opening corners; nav mode restores after `can_write`; a 1 cm body
-uses solid-only in both full and static cards while a 20 cm body keeps its hatch.
+virtual-T mitre; angle-aware opening; whole and atomic rekey after edge/scale.
+Browser: seamless frame; fill not in hatch; m² drops with thickness; a partial
+virtual stretch, its solid thick remainders and Undo move as one real resize;
+the virtual rubber band paints above the real body; sun starts at the room-side
+opening corners; nav mode restores after `can_write`; a 1 cm body uses
+solid-only in both full and static cards while a 20 cm body keeps its hatch.

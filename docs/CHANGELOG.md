@@ -2,6 +2,20 @@
 
 ## Unreleased (dev)
 
+## v1.59.0-beta.9 — 2026-08-05
+
+Ninth pre-release of the 1.59 line: mixed virtual/thick resize integrity and
+clean, visible virtual T-junctions.
+
+- **Resize keeps mixed virtual/thick walls intact.** A live edge drag now moves
+  `open_spans` and whole/atomic thickness keys together with the room polygons;
+  commit no longer drops the thickness of the solid remainders, and Undo
+  restores the complete transaction.
+- **Clean virtual T-junctions.** Real wall arms owned by different room
+  contours receive the missing mitre at an open-span endpoint instead of a
+  stepped corner. Virtual dashes and the two-click drawing preview paint above
+  real wall bodies, so they stay visible right up to the junction centreline.
+
 ## v1.59.0-beta.8 — 2026-08-05
 
 Eighth pre-release of the 1.59 line: beta.7 audit follow-ups, a fail-closed

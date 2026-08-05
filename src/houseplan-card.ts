@@ -85,7 +85,7 @@ import {
 import { alignAllToGrid, type AlignReport } from './align-grid';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.59.0-beta.8';
+const CARD_VERSION = '1.59.0-beta.9';
 /** HP-1552 boot-veil timing (AUD-1552-02). The veil holds for at least
  *  BOOT_MIN_MS; every stage-height change restarts a BOOT_QUIET_MS
  *  trailing-quiescence requirement (chrome still settling near the cap
@@ -3620,7 +3620,14 @@ class HouseplanCard extends LitElement {
     const real = this._serverCfg?.spaces.find((s: any) => s.id === this._space);
     if (!g || !real) return;
     const s = JSON.parse(g.snap); // fresh deep copies every move — free to mutate
-    const sp = { ...real, rooms: s.rooms, openings: s.openings, walls: s.walls };
+    const sp = {
+      ...real,
+      rooms: s.rooms,
+      openings: s.openings,
+      walls: s.walls,
+      open_spans: s.open_spans,
+    };
+    if (!Array.isArray(s.open_spans) || !s.open_spans.length) delete (sp as any).open_spans;
     const H = this._spaceH;
     for (const [id, poly] of Object.entries(polys)) {
       const r = sp.rooms.find((x: any) => x.id === id);
@@ -3633,6 +3640,36 @@ class HouseplanCard extends LitElement {
       if (!o) continue;
       o.x = c[0] / NORM_W;
       o.y = c[1] / H;
+    }
+    // Geometry that belongs to a wall must ride in the SAME live overlay as
+    // its room polygons. Map from the immutable snapshot on every move (never
+    // from the previous preview), so partial virtual stretches and the atomic
+    // thickness keys on their solid remainders cannot lag behind or accumulate
+    // rounding error during a long drag.
+    const oldSpans: [number[], number[]][] = [];
+    const newSpans: [number[], number[]][] = [];
+    for (const id of g.changed) {
+      const oldR = g.rooms.find((r) => r.id === id);
+      const nr = sp.rooms.find((x: any) => x.id === id);
+      if (!oldR || !nr?.poly) continue;
+      const newPoly = nr.poly.map((p: number[]) => [p[0] * NORM_W, p[1] * H] as number[]);
+      if (oldR.poly.length !== newPoly.length) continue;
+      for (let i = 0; i < oldR.poly.length; i++) {
+        oldSpans.push([oldR.poly[i], oldR.poly[(i + 1) % oldR.poly.length]]);
+        newSpans.push([newPoly[i], newPoly[(i + 1) % newPoly.length]]);
+      }
+    }
+    if (oldSpans.length) {
+      const movedOpen = rekeyOpenSpansAfterMove(
+        sanitizeOpenSpans((sp as any).open_spans), oldSpans, newSpans, NORM_W,
+      );
+      if (movedOpen.length) (sp as any).open_spans = movedOpen;
+      else delete (sp as any).open_spans;
+      if (Array.isArray(sp.walls) && sp.walls.length) {
+        sp.walls = rekeyWallsAfterMove(
+          sp.walls, oldSpans, newSpans, this._wallKeyPitch, NORM_W,
+        );
+      }
     }
     this._rszPreview = { space: this._space, sp };
     this._cfgEpoch++;
@@ -3730,35 +3767,21 @@ class HouseplanCard extends LitElement {
         if (preview.sp.walls.length) sp.walls = preview.sp.walls;
         else delete sp.walls;
       }
+      if (Array.isArray(preview.sp.open_spans) && preview.sp.open_spans.length) {
+        (sp as any).open_spans = preview.sp.open_spans;
+      } else {
+        delete (sp as any).open_spans;
+      }
       for (const id of g.changed) {
         const r = sp.rooms.find((x: any) => x.id === id);
         if (r?.poly) r.poly = simplifyPoly(r.poly, 1e-9);
       }
-      // ONE geometry transaction (docs/WALL-THICKNESS.md, AUD-159B6-02):
-      // old→new edge pairs are built once, then the open spans move (they
-      // define where a wall is cut into atomic pieces) and only after that the
-      // thickness keys are rewritten and the dead ones dropped.
-      const H = this._spaceH;
-      const oldSpans: [number[], number[]][] = [];
-      const newSpans: [number[], number[]][] = [];
-      for (const id of g.changed) {
-        const oldR = g.rooms.find((r) => r.id === id);
-        const nr = sp.rooms.find((x: any) => x.id === id);
-        if (!oldR || !nr?.poly) continue;
-        const newPoly = nr.poly.map((p: number[]) => [p[0] * NORM_W, p[1] * H] as number[]);
-        if (oldR.poly.length !== newPoly.length) continue;
-        for (let i = 0; i < oldR.poly.length; i++) {
-          oldSpans.push([oldR.poly[i], oldR.poly[(i + 1) % oldR.poly.length]]);
-          newSpans.push([newPoly[i], newPoly[(i + 1) % newPoly.length]]);
-        }
-      }
-      this._commitOpenSpans({ old: oldSpans, next: newSpans });
+      // The preview was derived from the immutable snapshot and already moved
+      // both explicit spans and every whole/atomic thickness key. Commit only
+      // clips that geometry to the simplified final rooms, rebuilds open_to,
+      // and drops keys that genuinely no longer name a live interval.
+      this._commitOpenSpans();
       if (Array.isArray(sp.walls) && sp.walls.length) {
-        if (oldSpans.length) {
-          sp.walls = rekeyWallsAfterMove(
-            sp.walls, oldSpans, newSpans, this._wallKeyPitch, NORM_W,
-          );
-        }
         sp.walls = degradeWalls(sp.walls, sp.rooms || [], GRID_STEP_N, 1, this._cfgOpenCuts());
         if (!sp.walls.length) delete sp.walls;
       }
@@ -8097,7 +8120,6 @@ class HouseplanCard extends LitElement {
             })()}
             ${disp.fill === 'glow' && !this._markup ? this._renderGlowLayer(space) : nothing}
             ${this._renderSunRays(space)}
-            ${this._renderOpenWalls(disp)}
             ${this._editing ? this._renderAlignGuides() : nothing}
             ${opMeasure?.guide ? this._renderOpeningCenterTick(opMeasure.guide) : nothing}
             ${this._markup ? this._renderMarkupLayer(vb) : nothing}
@@ -8108,6 +8130,11 @@ class HouseplanCard extends LitElement {
                    it, the sun still comes in at its window, and the contact
                    sensor still opens it. */}
             ${this._renderWallBodies(disp)}
+            ${''/* Virtual boundaries (including the live two-click preview)
+                   deliberately paint AFTER real wall bodies. At a T-junction
+                   their first dash must remain visible all the way to the
+                   centreline instead of disappearing underneath the hatch. */}
+            ${this._renderOpenWalls(disp)}
             ${disp.hideOpenings && !this._markup ? nothing : this._renderOpenings(disp)}
             ${this._renderWallThickUi()}
             ${this._markup && this._tool === 'resize' ? this._renderResizeLayer(view) : nothing}

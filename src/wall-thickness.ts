@@ -255,6 +255,11 @@ export function wallAngleMatches(
 /**
  * After an edge drag: rewrite keys whose old span mid/dir map to a moved
  * stretch. `oldSpans` / `newSpans` are parallel lists of [a,b] endpoints.
+ *
+ * A stored key may name either the whole polygon edge or one atomic remainder
+ * left by a partial shared/open stretch. The latter has a different midpoint,
+ * so an exact whole-edge key map is insufficient: project every unmatched key
+ * onto the old edge and carry that relative point onto the new one.
  */
 export function rekeyWallsAfterMove(
   walls: WallEntry[] | null | undefined,
@@ -273,11 +278,39 @@ export function rekeyWallsAfterMove(
     const nk = keyOf(na, nb, pitch, coordScale);
     if (ok !== nk) map.set(ok, nk);
   }
-  if (!map.size) return walls.slice();
+  const scale = coordScale > 0 ? coordScale : 1;
+  const tol = Math.max(pitch * 0.5, 1e-9) * scale;
   const used = new Set<string>();
   const out: WallEntry[] = [];
   for (const w of walls) {
-    const nk = map.get(w.key) || w.key;
+    let nk = map.get(w.key) || '';
+    if (!nk) {
+      const parsed = parseKeys([w], scale)[0];
+      if (parsed) {
+        for (let i = 0; i < oldSpans.length; i++) {
+          const [oa, ob] = oldSpans[i];
+          const [na, nb] = newSpans[i];
+          if (!angleClose(parsed.ang, segAngle(oa, ob))) continue;
+          const dx = ob[0] - oa[0], dy = ob[1] - oa[1];
+          const L2 = dx * dx + dy * dy;
+          if (L2 < 1e-18) continue;
+          const t = ((parsed.x - oa[0]) * dx + (parsed.y - oa[1]) * dy) / L2;
+          if (t < -1e-6 || t > 1 + 1e-6) continue;
+          if (distToSeg(parsed.x, parsed.y, oa[0], oa[1], ob[0], ob[1]) > tol) continue;
+          const mx = na[0] + (nb[0] - na[0]) * Math.max(0, Math.min(1, t));
+          const my = na[1] + (nb[1] - na[1]) * Math.max(0, Math.min(1, t));
+          const [ux, uy] = wallDir(na, nb);
+          const arm = Math.max(pitch * scale, 1e-6);
+          nk = keyOf(
+            [mx - ux * arm, my - uy * arm],
+            [mx + ux * arm, my + uy * arm],
+            pitch, scale,
+          );
+          break;
+        }
+      }
+    }
+    if (!nk) nk = w.key;
     if (used.has(nk)) continue;
     used.add(nk);
     out.push({ key: nk, cm: w.cm });
@@ -973,6 +1006,80 @@ function polyclipToPathD(geom: any): string {
 }
 
 /**
+ * Mitre patches at an endpoint where a virtual stretch meets real walls that
+ * belong to different room contours.
+ *
+ * The normal per-room rings can only join adjacent thick edges of ONE room.
+ * At a virtual T, the two real arms may be owned by two point-touching rooms;
+ * each ring then ends with a butt cap and their union leaves a stair-step at
+ * the outer corner. The patch is the missing offset-line parallelogram. It is
+ * restricted to open-span endpoints, so ordinary corners keep the existing
+ * contour/mitre/bevel implementation unchanged.
+ */
+function virtualJunctionPatches(
+  rooms: any[],
+  walls: WallEntry[] | null | undefined,
+  openCuts: number[][],
+  pitch: number,
+  cellCm: number,
+  gridPitch: number,
+  coordScale: number,
+): number[][][] {
+  if (!walls?.length || !openCuts?.length) return [];
+  const eps = openEps(pitch, coordScale) * 4;
+  const unique = new Map<string, WallInterval>();
+  for (const iv of wallIntervals(rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale)) {
+    if (iv.open || !(iv.half > 0) || unique.has(iv.key)) continue;
+    unique.set(iv.key, iv);
+  }
+  const intervals = [...unique.values()];
+  if (intervals.length < 2) return [];
+
+  const nodes: number[][] = [];
+  for (const cut of openCuts) {
+    for (const p of [[cut[0], cut[1]], [cut[2], cut[3]]]) {
+      if (!nodes.some((q) => Math.hypot(q[0] - p[0], q[1] - p[1]) <= eps)) nodes.push(p);
+    }
+  }
+  const out: number[][][] = [];
+  const awayFrom = (iv: WallInterval, v: number[]): number[] | null => {
+    let dx = 0, dy = 0;
+    if (Math.hypot(iv.a[0] - v[0], iv.a[1] - v[1]) <= eps) {
+      dx = iv.b[0] - iv.a[0]; dy = iv.b[1] - iv.a[1];
+    } else if (Math.hypot(iv.b[0] - v[0], iv.b[1] - v[1]) <= eps) {
+      dx = iv.a[0] - iv.b[0]; dy = iv.a[1] - iv.b[1];
+    } else {
+      return null;
+    }
+    const L = Math.hypot(dx, dy);
+    return L > eps ? [dx / L, dy / L] : null;
+  };
+
+  for (const v of nodes) {
+    const touching = intervals
+      .map((iv) => ({ iv, u: awayFrom(iv, v) }))
+      .filter((x): x is { iv: WallInterval; u: number[] } => !!x.u);
+    for (let i = 0; i < touching.length; i++) {
+      for (let j = i + 1; j < touching.length; j++) {
+        const a = touching[i], b = touching[j];
+        const cross = a.u[0] * b.u[1] - a.u[1] * b.u[0];
+        const sin = Math.abs(cross);
+        if (sin < 1e-3) continue; // one straight wall, no corner to fill
+        const da = b.iv.half / sin;
+        const db = a.iv.half / sin;
+        const pa = [v[0] - a.u[0] * da, v[1] - a.u[1] * da];
+        const pb = [v[0] - b.u[0] * db, v[1] - b.u[1] * db];
+        const far = [pa[0] + pb[0] - v[0], pa[1] + pb[1] - v[1]];
+        const maxHalf = Math.max(a.iv.half, b.iv.half, 1e-9);
+        if (Math.hypot(far[0] - v[0], far[1] - v[1]) > MITRE_LIMIT * maxHalf) continue;
+        out.push(cross > 0 ? [v.slice(), pa, far, pb] : [v.slice(), pb, far, pa]);
+      }
+    }
+  }
+  return out;
+}
+
+/**
  * One evenodd ring path per room: outset(half) − inset(half). Shared walls
  * meet as two half-rings; callers may union them via wallBodiesUnionPath.
  */
@@ -1042,6 +1149,9 @@ export function wallBodiesUnionPath(
     if (inC) insets.push(inC);
   }
   if (!outsets.length) return null;
+  const junctions = virtualJunctionPatches(
+    rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
+  );
   try {
     let Uout: any = closedRing(outsets[0]);
     for (let i = 1; i < outsets.length; i++) {
@@ -1055,6 +1165,10 @@ export function wallBodiesUnionPath(
       }
       body = difference(Uout, Uin);
     }
+    // The room-ring subtraction above cannot infer a mitre between real arms
+    // owned by different contours at a virtual T. Add only those missing
+    // junction pieces, then let physical openings cut through them as usual.
+    for (const patch of junctions) body = union(body, closedRing(patch) as any);
     // cut opening tunnels (axis-aligned to opening angle)
     for (const o of openings) {
       if (!(o.length > 0)) continue;
