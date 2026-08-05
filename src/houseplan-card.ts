@@ -314,6 +314,8 @@ class HouseplanCard extends LitElement {
   private _layout: Record<string, { x: number; y: number; s?: string; k?: number }> = {};
   private _serverStorage = false;
   private _loadOk = false;
+  /** null until config/get answers; then mirrors auth.may_write for this user. */
+  private _serverCanWrite: boolean | null = null;
   private _loading = false;
   private _loadTries = 0;
   private _serverCfg: ServerConfig | null = null;
@@ -381,8 +383,18 @@ class HouseplanCard extends LitElement {
   } | null = null;
 
   /** Edit tabs are offered to admins only (hass.user missing → assume admin). */
+  /**
+   * Editor chrome (Plan/Devices/Background tabs, space +/gear).
+   * Driven by the server `can_write` flag from `houseplan/config/get` so the
+   * UI matches `auth.may_write` / the `admin_only` option (audit P0-4).
+   * Until the server answers, fail CLOSED: missing `hass.user` must never
+   * open the editors (`=== true`, not `!== false`).
+   */
   private get _canEdit(): boolean {
-    return this._norm && this.hass?.user?.is_admin !== false;
+    if (!this._norm) return false;
+    if (this._serverCanWrite === true) return true;
+    if (this._serverCanWrite === false) return false;
+    return this.hass?.user?.is_admin === true;
   }
 
   /** Legacy alias: markup machinery is active exactly in plan mode. */
@@ -1652,6 +1664,8 @@ class HouseplanCard extends LitElement {
       ]);
       this._loadOk = true;
       this._serverStorage = true;
+      // absent can_write = older backend / demo stub → keep null (legacy admin fallback)
+      if (typeof cfgResp?.can_write === 'boolean') this._serverCanWrite = cfgResp.can_write;
       const cfg = cfgResp?.config;
       this._serverCfg = cfg && Array.isArray(cfg.spaces) ? cfg : null;
       this._cfgEpoch++;
@@ -1761,6 +1775,7 @@ class HouseplanCard extends LitElement {
       this._serverCfg = cfg && Array.isArray(cfg.spaces) ? cfg : null;
       this._cfgEpoch++;
       this._cfgRev = resp?.rev || 0;
+      if (typeof resp?.can_write === 'boolean') this._serverCanWrite = resp.can_write;
       this._cacheSnapshot();
       this._regSignature = '';
       this._maybeRebuildDevices();

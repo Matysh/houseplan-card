@@ -561,13 +561,25 @@ async def ws_layout_delete(hass: HomeAssistant, connection, msg: dict[str, Any])
 @websocket_api.websocket_command({vol.Required("type"): "houseplan/config/get"})
 @websocket_api.async_response
 async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Return the configuration and its revision."""
+    """Return the configuration, its revision, and whether this user may write.
+
+    `can_write` is the single source of truth for the card's editor chrome
+    (audit P0-4): the UI must mirror `may_write`, not a hard-coded is_admin
+    check that drifted from the integration option.
+    """
     rt = _runtime(hass, connection, msg["id"])
     if rt is None:
         return
     data = await rt.config_store.async_load() or {}
     config = {**DEFAULT_CONFIG, **data.get("config", {})}
-    connection.send_result(msg["id"], {"config": config, "rev": data.get("rev", 0)})
+    connection.send_result(
+        msg["id"],
+        {
+            "config": config,
+            "rev": data.get("rev", 0),
+            "can_write": may_write(hass, getattr(connection, "user", None)),
+        },
+    )
 
 
 

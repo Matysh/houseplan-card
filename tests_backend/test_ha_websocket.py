@@ -11,7 +11,7 @@ from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 from pytest_homeassistant_custom_component.typing import WebSocketGenerator
 
-from custom_components.houseplan.const import DOMAIN
+from custom_components.houseplan.const import CONF_ADMIN_ONLY, DOMAIN
 
 
 async def _setup(hass: HomeAssistant) -> MockConfigEntry:
@@ -129,6 +129,51 @@ async def test_admin_check_fails_closed(hass, hass_ws_client):
         user = _Admin()
 
     assert wsapi._check_write(hass, _AdminConn()) is True
+
+
+async def test_may_write_defaults_admin_only_when_option_missing(hass):
+    """audit P0-4: empty options ⇒ admin-only (matches the card UI)."""
+    from custom_components.houseplan.auth import may_write
+
+    await _setup(hass)  # options={}
+
+    class _User:
+        is_admin = False
+
+    class _Admin:
+        is_admin = True
+
+    # missing / unset key must not open writes to every household user
+    assert may_write(hass, _User()) is False
+    assert may_write(hass, _Admin()) is True
+
+
+async def test_may_write_honours_explicit_admin_only_false(hass):
+    """Household users may write only when the option is explicitly off."""
+    from custom_components.houseplan.auth import may_write
+
+    entry = MockConfigEntry(
+        domain=DOMAIN, title="House Plan", data={}, options={CONF_ADMIN_ONLY: False}
+    )
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    class _User:
+        is_admin = False
+
+    assert may_write(hass, _User()) is True
+
+
+async def test_config_get_reports_can_write(hass: HomeAssistant, hass_ws_client: WebSocketGenerator) -> None:
+    """audit P0-4: config/get carries can_write so the card mirrors may_write."""
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    resp = await client.receive_json()
+    assert resp["success"]
+    assert resp["result"]["can_write"] is True  # hass_ws_client is an admin
+    assert "config" in resp["result"] and "rev" in resp["result"]
 
 
 async def test_files_migrate_copies_and_reports_mapping(
@@ -675,13 +720,17 @@ async def test_upload_never_overwrites_an_existing_attachment(
     markers both uploading `manual.pdf` shared one physical file.
     """
     import os
+    import uuid
 
     from custom_components.houseplan.const import CONTENT_URL, FILES_DIR
 
     await _setup(hass)
     http = await hass_client()
+    # Unique per run: the HA test config dir is shared across the module, so a
+    # fixed marker id accumulates files across retries and poisons the assert.
+    marker_id = f"m9_{uuid.uuid4().hex[:8]}"
 
-    async def upload(marker_id: str, name: str, data: bytes) -> str:
+    async def upload(name: str, data: bytes) -> str:
         import aiohttp
 
         writer = aiohttp.FormData()
@@ -691,12 +740,11 @@ async def test_upload_never_overwrites_an_existing_attachment(
         assert resp.status == 200, await resp.text()
         return (await resp.json())["url"]
 
-    first = await upload("m9", "manual.pdf", b"ONE")
-    second = await upload("m9", "manual.pdf", b"TWO")
+    first = await upload("manual.pdf", b"ONE")
+    second = await upload("manual.pdf", b"TWO")
     assert first != second, "the second upload must not take the first name"
 
-    folder = os.path.join(hass.config.path(FILES_DIR), "m9")
-    # the HA test config dir is shared across the module — hence our own marker id
+    folder = os.path.join(hass.config.path(FILES_DIR), marker_id)
     names = sorted(
         n for n in await hass.async_add_executor_job(os.listdir, folder) if n.startswith("manual")
     )

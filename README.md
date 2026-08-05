@@ -84,16 +84,26 @@ The integration consists of two parts that are installed together:
 
 ## How it differs from alternatives
 
-A house plan in Home Assistant is usually built with `picture-elements`, `ha-floorplan` and similar solutions. There you have to write YAML by hand, calculate the coordinates of every icon, and edit the config again after every change. House Plan works differently:
+A house plan in Home Assistant is usually built with `picture-elements`,
+`ha-floorplan`, or newer GUI cards that draw walls and furniture in the
+dashboard. Those either lock you into YAML/SVG, or store the plan in the
+Lovelace card config. House Plan is a **shared live map** backed by a Home
+Assistant integration:
 
-| | House Plan | Typical solutions (picture-elements / ha-floorplan) |
-|---|---|---|
-| **Setup** | Entirely through the UI, with the mouse | Manual YAML and code editing |
-| **Adding devices** | Automatic, by room | You type in every entity by hand |
-| **Icon coordinates** | Drag with the mouse | You count pixels and write them into the config |
-| **Room markup** | Built-in outline editor | You draw in an external SVG editor |
-| **Storage** | On the HA server (shared by all devices) | In the dashboard YAML |
-| **Zoom** | Smooth zoom, everything stays crisp (vector) | Usually a fixed image |
+| | House Plan | picture-elements / ha-floorplan | GUI draw cards (e.g. easy-floorplan) |
+|---|---|---|---|
+| **Setup** | Entirely through the UI, with the mouse | Manual YAML / Inkscape SVG | In-card drawing of walls & furniture |
+| **Adding devices** | Automatic, by HA **area** | You type every entity by hand | Place entities by hand on the drawing |
+| **Icon coordinates** | Drag with the mouse | Count pixels into YAML | Drag on the canvas |
+| **Room markup** | Built-in outline editor bound to areas | External SVG editor | Draw walls yourself (furniture CAD) |
+| **Storage** | On the HA server (`.storage`, shared, multi-client) | In the dashboard YAML | In the card / dashboard YAML |
+| **Overlays** | Glow, climate, LQI, sun, vacuums, kiosk | Whatever you script in SVG/CSS | Varies by card |
+| **Zoom** | Smooth vector zoom | Usually a fixed image | SVG / virtual canvas |
+
+**One sentence:** House Plan is the shared, area-aware live map of your home —
+not a drawing app for furniture. If you want to sketch sofas and walls from
+scratch, a draw-centric card may fit better; if you already have a plan image
+and a real HA areas registry, House Plan keeps every tablet on the same layout.
 
 Key advantages in short:
 

@@ -120,10 +120,13 @@ let STATES={
 function mkHass(){
   return {
     language:'en', locale:{language:'en'},
+    // audit P0-4: the card fail-closes editors without an admin user /
+    // can_write flag — the demo admin mirrors a real HA admin session.
+    user:{id:'demo', name:'Demo', is_admin:true},
     devices:DEVICES, entities:ENTITIES, areas:AREAS, states:STATES,
     floors:{g:{floor_id:'g',name:'Ground floor',level:0},u:{floor_id:'u',name:'Upstairs',level:1}},
     callWS:async (m)=>{
-      if(m.type==='houseplan/config/get')return{config:CFG,rev:1};
+      if(m.type==='houseplan/config/get')return{config:CFG,rev:1,can_write:true};
       if(m.type==='houseplan/layout/get')return{layout:LAYOUT};
       return {ok:true,rev:2};
     },

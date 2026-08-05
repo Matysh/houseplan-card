@@ -13,8 +13,8 @@
 |---|---|---|---|
 | P0-1 | Ship **demo GIF/video** on README (real product motion: glow + tap light + kiosk) | Biggest adoption lever; ROADMAP Phase 10; easy-floorplan is winning attention without our counter-demo | open |
 | P0-2 | Publish EN **forum Floorplan + Reddit** posts (drafts exist off-repo) | Social proof before/while HACS #9004 waits | open |
-| P0-3 | Refresh **README differentiation** vs easy-floorplan (server sync, areas→devices, overlays — not furniture CAD) | PRODUCT table is a month stale; narrative gap is urgent | open |
-| P0-4 | Align **write policy**: either default `admin_only=True` **or** drive `_canEdit` from the same option; fail closed if `hass.user` missing | UI↔API inconsistency; household persona assumption | open |
+| P0-3 | Refresh **README differentiation** vs easy-floorplan (server sync, areas→devices, overlays — not furniture CAD) | PRODUCT table is a month stale; narrative gap is urgent | **done 2026-08-05** (README + README.ru) |
+| P0-4 | Align **write policy**: either default `admin_only=True` **or** drive `_canEdit` from the same option; fail closed if `hass.user` missing | UI↔API inconsistency; household persona assumption | **done 2026-08-05** (`can_write` on config/get, default admin_only on, fail-closed UI) |
 | P0-5 | Keep watching **hacs/default#9004** — no code action; do not spam maintainers | Queue is months-scale; custom-repo remains the path | open |
 
 ## P1 — maintainability (next engineering focus)
@@ -45,8 +45,8 @@
 | P3-1 | Measure backend coverage; drive toward **≥95%** or revise the goal honestly | quality_scale todo | open |
 | P3-2 | **mypy strict** (or staged) | Platinum todo | open |
 | P3-3 | `docs-troubleshooting` + `docs-examples` (Gold) | quality_scale todo | open |
-| P3-4 | Tighten MARKER_SCHEMA (`binding` pattern, hex `ripple_color`, positive decor sizes, space id regex) | Validation gaps | open |
-| P3-5 | Fix quality_scale filename (`test_ha_config_flow.py`); remove or re-wire dead card `tap_action` | Nits that confuse agents | open |
+| P3-4 | Tighten MARKER_SCHEMA (`binding` pattern, hex `ripple_color`, positive decor sizes, space id regex) | Validation gaps | **done 2026-08-05** |
+| P3-5 | Fix quality_scale filename (`test_ha_config_flow.py`); remove or re-wire dead card `tap_action` | Nits that confuse agents | **done 2026-08-05** (filename fixed; tap_action documented deprecated) |
 | P3-6 | Refresh stale doc headers: ARCHITECTURE tree, UX-MODES “no code yet”, PRODUCT competitor table | Truth decay | open |
 | P3-7 | Investigate / soften `smoke_opening_measure` magnet `1e-6` placement checks | Known env-sensitive red | open |
 | P3-8 | Exception / icon translations | ROADMAP Phase 8 | open |

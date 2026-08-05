@@ -144,6 +144,37 @@ def test_marker_schema():
         v.MARKER_SCHEMA({"binding": "virtual"})
 
 
+def test_marker_binding_shape_and_ripple_color():
+    """audit P3-4: binding is device:/entity:/virtual; ripple_color is #rrggbb."""
+    v.MARKER_SCHEMA({"id": "m1", "binding": "entity:sensor.temp"})
+    v.MARKER_SCHEMA({"id": "m1", "binding": "device:abc", "ripple_color": "#3ea6ff"})
+    for bad in ("foo", "device:", "virtualx", "entity:"):
+        with pytest.raises(vol.Invalid):
+            v.MARKER_SCHEMA({"id": "m1", "binding": bad})
+    with pytest.raises(vol.Invalid):
+        v.MARKER_SCHEMA({"id": "m1", "binding": "device:x", "ripple_color": "red"})
+    with pytest.raises(vol.Invalid):
+        v.MARKER_SCHEMA({"id": "m1", "binding": "device:x", "ripple_color": "#fff"})
+
+
+def test_decor_rect_extents_must_be_positive():
+    """audit P3-4: rect/ellipse w/h are sizes, not signed canvas coords."""
+    v.DECOR_SCHEMA({"id": "d", "kind": "rect", "x": 0, "y": 0, "w": 0.1, "h": 0.2})
+    with pytest.raises(vol.Invalid):
+        v.DECOR_SCHEMA({"id": "d", "kind": "rect", "x": 0, "y": 0, "w": -1, "h": 1})
+    with pytest.raises(vol.Invalid):
+        v.DECOR_SCHEMA({"id": "d", "kind": "ellipse", "x": 0, "y": 0, "w": 0, "h": 1})
+
+
+def test_space_id_matches_SPACE_ID_RE():
+    ok = {"id": "f1", "title": "F", "view_box": [0, 0, 1, 1], "rooms": []}
+    v.SPACE_SCHEMA(ok)
+    with pytest.raises(vol.Invalid):
+        v.SPACE_SCHEMA({**ok, "id": "Bad Id"})
+    with pytest.raises(vol.Invalid):
+        v.SPACE_SCHEMA({**ok, "id": ""})
+
+
 def test_marker_use_climate_temp_is_bool_or_none():
     # opt-in room-temperature from climate devices (owner's feature 2026-08-03)
     v.MARKER_SCHEMA({"id": "m1", "binding": "device:abc", "use_climate_temp": True})

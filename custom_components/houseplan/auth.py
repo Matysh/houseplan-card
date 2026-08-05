@@ -24,5 +24,8 @@ def may_write(hass: HomeAssistant, user) -> bool:
     entry = get_entry(hass)
     if entry is None:
         return is_admin
-    admin_only = bool(entry.options.get(CONF_ADMIN_ONLY, False))
+    # Default TRUE when the key is absent (audit P0-4, 2026-08-05): the card
+    # UI has always been admin-gated, and an unset option must not open every
+    # write WS/HTTP path to every authenticated household user.
+    admin_only = bool(entry.options.get(CONF_ADMIN_ONLY, True))
     return is_admin if admin_only else True

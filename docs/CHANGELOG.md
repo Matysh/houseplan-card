@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased (dev)
+
+Audit follow-ups from `docs/AUDIT-RECOMMENDATIONS.md` (2026-08-05):
+
+- **Write policy aligned (P0-4).** `admin_only` now defaults to **on** for new
+  installs and when the option key is missing; `houseplan/config/get` returns
+  `can_write` from `may_write`, and the card's editor chrome follows that flag.
+  Missing `hass.user` no longer fails open into the editors.
+- **README differentiation (P0-3).** Comparison table now positions House Plan
+  against both YAML/SVG incumbents and GUI draw cards (e.g. easy-floorplan):
+  shared `.storage` map + area-bound rooms, not furniture CAD.
+- **Validation tighten (P3-4).** Marker `binding` must be `device:…` /
+  `entity:…` / `virtual`; `ripple_color` is `#rrggbb`; decor rect/ellipse
+  extents are strictly positive; space `id` matches `SPACE_ID_RE`.
+- **Hygiene (P3-5).** `quality_scale.yaml` points at the real config-flow test
+  file; card-level `tap_action` documented as deprecated/ignored.
+
 ## v1.59.0-beta.2 — 2026-08-04
 
 The second pre-release of the 1.59 line, and it is about the words you put

@@ -153,6 +153,9 @@
    takeaway: engineering depth is strong; **easy-floorplan ≈430★** is now the
    traction threat; P0s are demo GIF + forum posts + write-policy UI↔API align.
    Agents: read the pack before proposing features or refactors.
+   **Partial follow-up landed on `dev` (2026-08-05):** P0-3 README diff, P0-4
+   write-policy (`can_write` + admin_only default on), P3-4/P3-5 validation &
+   hygiene. Still open: P0-1 demo GIF/video, P0-2 forum/Reddit posts.
 1. **hacs/default PR #9004** — accepted by the bot into the review queue ('New default
    repository' label). Minor issues ⇒ the bot drafts the PR (fix and re-ready).
 2. GitHub auth: fine-grained PAT (Contents R/W, issued 2026-07-23) in the sandbox

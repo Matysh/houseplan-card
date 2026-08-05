@@ -251,7 +251,9 @@ DECOR_SCHEMA = vol.Any(
                extra=vol.ALLOW_EXTRA),
     vol.Schema({**_DECOR_COMMON, vol.Required("kind"): vol.In(["rect", "ellipse"]),
                 vol.Required("x"): _NORM, vol.Required("y"): _NORM,
-                vol.Required("w"): _NORM, vol.Required("h"): _NORM,
+                # sizes are extents — negative/zero is garbage, not "canvas slack"
+                vol.Required("w"): vol.All(_finite, vol.Range(min=0.001, max=CANVAS_LIMIT)),
+                vol.Required("h"): vol.All(_finite, vol.Range(min=0.001, max=CANVAS_LIMIT)),
                 vol.Optional("fill"): bool},
                extra=vol.ALLOW_EXTRA),
     vol.Schema({**_DECOR_COMMON, vol.Required("kind"): "text",
@@ -280,7 +282,7 @@ DECOR_SCHEMA = vol.Any(
 
 SPACE_SCHEMA = vol.Schema(
     {
-        vol.Required("id"): str,
+        vol.Required("id"): vol.All(str, vol.Match(SPACE_ID_RE.pattern)),
         vol.Required("title"): str,
         vol.Optional("settings"): SPACE_DISPLAY_SCHEMA,
         vol.Optional("plan_url"): vol.Any(str, None),
@@ -341,7 +343,11 @@ MARKER_SCHEMA = vol.Schema(
     {
         vol.Required("id"): str,
         # 'device:<device_id>' | 'entity:<entity_id>' | 'virtual'
-        vol.Required("binding"): str,
+        vol.Required("binding"): vol.All(
+            str,
+            vol.Length(min=1, max=MAX_TEXT),
+            vol.Match(r"^(device:.+|entity:.+|virtual)$"),
+        ),
         vol.Optional("space"): vol.Any(str, None),
         vol.Optional("area"): vol.Any(str, None),
         vol.Optional("hidden"): bool,
@@ -384,7 +390,9 @@ MARKER_SCHEMA = vol.Schema(
         # keep in sync with DISPLAY_MODES in src/logic.ts — a cross-language test
         # asserts every option the editor offers is accepted here (issue #3)
         vol.Optional("display"): vol.Any("badge", "ripple", "icon_ripple", "value", None),
-        vol.Optional("ripple_color"): vol.Any(str, None),
+        vol.Optional("ripple_color"): vol.Any(
+            None, vol.Match(r"^#[0-9a-fA-F]{6}$")
+        ),
         vol.Optional("ripple_size"): vol.Any(vol.All(vol.Coerce(float), vol.Range(min=1, max=20)), None),
         vol.Optional("size"): vol.Any(vol.All(vol.Coerce(float), vol.Range(min=0.2, max=6)), None),
         vol.Optional("angle"): vol.Any(vol.All(vol.Coerce(float), vol.Range(min=-360, max=360)), None),
