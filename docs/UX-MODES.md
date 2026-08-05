@@ -48,8 +48,9 @@ Header in View: space tabs, device count, zoom cluster. Nothing else.
 
 ## Plan — geometry and appearance of the space
 
-- Toolbar tools: Outline room (with a session wall-thickness field, default
-  15 cm — docs/WALL-THICKNESS.md §6), Delete room, Merge, Split, Resize,
+- Toolbar tools: **Walls** / room outline (with its session wall-thickness field
+  immediately on the right, default 15 cm — docs/WALL-THICKNESS.md §6), Delete
+  room, Merge, Split, Resize,
   Opening (place / drag along walls / properties), Open boundary, Wall thickness
   (docs/WALL-THICKNESS.md — click a wall, set cm/inches from HA's unit system;
   empty/0 clears), Room labels (drag positions — labels are part of the plan).
@@ -74,6 +75,10 @@ layer you cannot see is a layer you cannot edit.
 - **Virtual walls follow `show_borders`** (owner, 2026-08-05). They are walls —
   dashed ones. Drawing them on a space with no borders left a plan whose only
   walls were a few floating dashed stretches.
+- **Their geometry and their presentation are separate.** Every virtual span
+  still ends on the real wall centreline. In View the thick wall body is
+  painted over the dash ends, so they visually stop at its faces; editors paint
+  the full dash (and live preview) over the body for unambiguous editing.
 - **`hide_openings` hides the symbol, not the opening.** Light still spills
   through it, the sun still enters at a window, a contact sensor still opens
   it, and the resize tool still anchors to it. Anything else would be a second
@@ -85,7 +90,8 @@ layer you cannot see is a layer you cannot edit.
 ## Devices — placement and marker configuration
 
 - Icon dragging (ONLY here). Click on a device opens the **edit dialog directly**
-  (binding, name, icon, size/angle, display badge/ripple + colors, tap override,
+  (binding, name, icon, size/angle, display as icon / icon + activity / value,
+  activity color and size, tap override,
   model/link/description/PDFs, room).
 - + add device/entity/virtual, the "Hide device from plan" checkbox (since
   v1.51.0 the one hiding mechanism, docs/FILTERING.md), ↺ reset layout,
@@ -117,12 +123,12 @@ layer you cannot see is a layer you cannot edit.
 
 1. State-reflecting icons (open/closed door variants etc., like core HA).
 2. `display: value` — show the measurement instead of an icon.
-3. Light color in the icon/ripple (RGB lights). *(Shipped in v1.27.0;
-   superseded in v1.52.0: the colour lives in the glow spot and the ripple
+3. Light color in the activity effect (RGB lights). *(Shipped in v1.27.0;
+   superseded in v1.52.0: the colour lives in the glow spot and the activity
    fallback only, the icon tint was removed by the owner's rule.)*
 4. Alarm visual (leak/smoke/doorbell): red pulse overlay.
 5. Rooms as sub-areas without an HA area + manual device placement by room id.
-6. Backlog (not planned): music notes for players, directional TV ripples.
+6. Backlog (not planned): music notes for players, directional TV effects.
 
 ## Implementation iterations
 

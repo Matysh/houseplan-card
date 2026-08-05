@@ -1,7 +1,8 @@
 /**
  * Regression: resize a shared wall whose middle is virtual and whose solid
  * remainders carry thickness. The live overlay, commit and Undo must move one
- * geometry transaction; virtual drawing must paint above the real wall body.
+ * geometry transaction. Virtual drawing paints above the real wall body in
+ * editors, but below it in View so thick-wall jambs mask the dash ends.
  */
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
@@ -47,6 +48,18 @@ const res = await page.evaluate(async () => {
   c._cursorPt = null;
   await upd();
   out.partialSpanCreated = (sp().open_spans || []).length === 1;
+  const editorBody = sr().querySelector('.wallbodies');
+  const editorVirtual = sr().querySelector('.openwalls');
+  out.savedVirtualAboveRealInEditor = !!editorBody && !!editorVirtual
+    && !!(editorBody.compareDocumentPosition(editorVirtual) & Node.DOCUMENT_POSITION_FOLLOWING);
+  c._setMode('view');
+  await upd();
+  const viewBody = sr().querySelector('.wallbodies');
+  const viewVirtual = sr().querySelector('.openwalls');
+  out.savedVirtualBelowRealInView = !!viewBody && !!viewVirtual
+    && !!(viewVirtual.compareDocumentPosition(viewBody) & Node.DOCUMENT_POSITION_FOLLOWING);
+  c._setMode('plan');
+  await upd();
   out.atomicThicknessBefore = c._intervalCm([550, 145, 550, 195]) === 20
     && c._intervalCm([550, 205, 550, 295]) === 0
     && c._intervalCm([550, 305, 550, 455]) === 20;
@@ -111,6 +124,30 @@ const res = await page.evaluate(async () => {
       walls: sp().walls,
       open_spans: sp().open_spans,
     }) === before;
+  }
+
+  // Canonical storage: legacy/transactional fragments on one room pair become
+  // one selectable span, and closing it restores the uniformly thick parent
+  // wall instead of leaving atomic debris in `walls`.
+  const restoredCut = c._openCuts()[0];
+  if (restoredCut) {
+    const mx = (restoredCut[0] + restoredCut[2]) / 2;
+    const my = (restoredCut[1] + restoredCut[3]) / 2;
+    c._persistOpenCuts([
+      [restoredCut[0], restoredCut[1], mx, my],
+      [mx, my, restoredCut[2], restoredCut[3]],
+    ]);
+    await upd();
+    out.adjacentSpansPersistAsOne = (sp().open_spans || []).length === 1
+      && c._openCuts().length === 1;
+    c._closeOpenSpan(c._openCuts()[0]);
+    await upd();
+    out.closeRejoinsUniformWall = !sp().open_spans
+      && (sp().walls || []).length === 1
+      && c._intervalCm(restoredCut) === 20;
+  } else {
+    out.adjacentSpansPersistAsOne = false;
+    out.closeRejoinsUniformWall = false;
   }
 
   // The screenshot topology: the two real arms belong to different room

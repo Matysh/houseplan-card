@@ -19,7 +19,8 @@ const res = await page.evaluate(async () => {
   c._openMarkerDialog();
   const room = c._spaceModel().rooms.find((r) => r.id && r.area);
   c._markerDialog = { ...c._markerDialog, name: 'Выключатель', binding: 'virtual',
-    room: c._space + '#' + room.area, tapAction: 'toggle', controls: lights, icon: 'mdi:light-switch' };
+    room: c._space + '#' + room.area, tapAction: 'toggle', controls: lights,
+    icon: 'mdi:light-switch', display: 'icon_ripple' };
   await c._saveMarker(); await c.updateComplete;
   const dev = c._devices.find((d) => d.name === 'Выключатель');
   out.markerSaved = !!dev && JSON.stringify(dev.marker.controls) === JSON.stringify(lights);
@@ -36,6 +37,7 @@ const res = await page.evaluate(async () => {
   // 3) значок отражает цели: горит одна → класс on
   const el = [...sr().querySelectorAll('.dev')].find((e) => e.title === 'Выключатель' || e.textContent.includes(''));
   out.stateOn = !!c._stateClass(dev2()).includes('on');
+  out.aggregateActivityRuns = c._stateClass(dev2()).includes('activity-running');
   await setSt({ [lights[0]]: 'off' });
   out.stateOff = c._stateClass(dev2()) === '';
   // 4) без tap_action=toggle клик НЕ переключает (инфо)

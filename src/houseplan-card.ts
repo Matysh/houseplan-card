@@ -18,14 +18,14 @@ import {
   snapToWall, snapPointAlongPoly, openingAmount, openingShoulders, interiorPoint,
   poleOfInaccessibility, subst,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
-  stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, glowColorOf, doorSector, hasRoomBehind, controlsAction, isControllable,
+  stateIcon, lightColorOf, parseRoomRef, diffNewDevices, glowColorOf, doorSector, hasRoomBehind, controlsAction, isControllable,
   spaceDisplayOf, roomFillStyle, fillColorsOf, DEFAULT_FILL_COLORS, type FillColors, runServiceFor, RUN_TARGET_DOMAINS,
-  isActiveState, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY, stageBgOf,
+  DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY, stageBgOf,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
   referencedContentUrls,
   DISPLAY_MODES, TAP_ACTIONS, SPACE_FILL_MODES, ROOM_FILL_MODES,
-  coverService, coverMoving, coverEntityOf, COVER_GUARDED_CLASSES,
-  liveText, hassValue, valueWithUnit, decorTextScale, decorTextLines,
+  coverService, coverEntityOf, COVER_GUARDED_CLASSES,
+  liveText, liveTextToken, hassValue, valueWithUnit, decorTextScale, decorTextLines,
   DECOR_TEXT_BASE, DECOR_TEXT_SCALE_MIN, DECOR_TEXT_SCALE_MAX,
 } from './logic';
 import {
@@ -84,8 +84,12 @@ import {
 } from './space-geometry';
 import { alignAllToGrid, type AlignReport } from './align-grid';
 import { langOf, t, type I18nKey } from './i18n';
+import {
+  combineVisualSamples, edgeActivity, entityVisualSample,
+  type DeviceActivity, type DeviceVisualState, type EntityVisualSample,
+} from './device-visual';
 
-const CARD_VERSION = '1.59.0-beta.9';
+const CARD_VERSION = '1.59.0-beta.10';
 /** HP-1552 boot-veil timing (AUD-1552-02). The veil holds for at least
  *  BOOT_MIN_MS; every stage-height change restarts a BOOT_QUIET_MS
  *  trailing-quiescence requirement (chrome still settling near the cap
@@ -240,10 +244,9 @@ const LS_ZOOM = 'houseplan_card_zoom_v1';
 const LS_NAV = 'houseplan_card_nav_v1'; // last space + editor mode (owner: restore where you were)
 const LS_KIOSK = 'houseplan_card_kiosk_v1'; // per-SCREEN size multipliers (each wall tablet differs)
 const NORM_W = 1000; // side of the render space — the canvas is square (v1.48.0)
-/** motion flash window: 3 beats of the hp-sense ring (3 × 1.1s in styles.ts).
-    Owner's rule (2026-08-01): «движение = разовая вспышка в момент
-    обнаружения; cool-down не пульсирует». */
-const SENSE_FLASH_MS = 3300;
+/** Short semantic-event / direct-terminal-transition window. Event uses
+    three sequential 1.1 s waves; motion cool-down itself never animates. */
+const ACTIVITY_WINDOW_MS = 3300;
 
 /** Smallest rectangle holding both (docs/CANVAS.md §4). */
 const unionRect = (a: Rect, b: Rect): Rect => {
@@ -369,12 +372,14 @@ class HouseplanCard extends LitElement {
   private _decorDraft: { kind: 'line' | 'rect' | 'ellipse'; a: number[]; b: number[]; pid: number } | null = null;
   private _decorMove: { id: string; start: number[]; orig: any; pid: number; moved: boolean } | null = null;
   private _decorSel: string | null = null;
-  /** The text dialog. `size` is gone from the UI (the block is scaled by its
-   *  corners now); `entity`/`attr`/`unit` are the live link (docs/LIVE-TEXT.md). */
+  /** The text dialog. Live references are part of `text`; `pickerEntity` is
+   *  only transient UI state and is never persisted (docs/LIVE-TEXT.md). */
   private _decorTextDialog: {
     id?: string; x: number; y: number; text: string; color: string;
-    entity?: string; attr?: string; unit?: string;
+    pickerEntity?: string;
   } | null = null;
+  /** Last textarea selection survives moving focus to the HA pickers. */
+  private _decorTextSelection: { start: number; end: number } = { start: 0, end: 0 };
   /**
    * The furniture palette (docs/FURNITURE.md §3): which symbol is armed and at
    * what REAL size it will be placed. `w`/`h` are centimetres — the fields show
@@ -661,7 +666,7 @@ class HouseplanCard extends LitElement {
     bindingFilter: string;
     icon: string;        // '' = auto
     autoIcon: string;    // the icon the rules would give — picker placeholder
-    display: 'badge' | 'ripple' | 'icon_ripple' | 'value';
+    display: 'badge' | 'icon_ripple' | 'value';
     rippleColor: string; // '' = accent
     rippleSize: number;  // in icon diameters
     size: number;        // icon size multiplier
@@ -740,13 +745,20 @@ class HouseplanCard extends LitElement {
   // ---- kiosk (wall device) mode ----
   private _kioskScale: { icon: number; font: number } = { icon: 1, font: 1 };
   private _kioskDialog = false;
-  /** motion-sensor runtime per marker: the last seen primary state and the
-      ts of the last off→on trip. Owner's rule (2026-08-01): «движение =
-      разовая вспышка в момент обнаружения; cool-down не пульсирует» —
-      the flash is keyed to the TRANSITION, not to the 'on' state. `timer`
-      is the one setTimeout per entry that repaints the card when the flash
-      window closes (cleared in disconnectedCallback). */
-  private _senseRt = new Map<string, { last: string; flashTs: number; timer: number; gen: number }>();
+  /**
+   * Previous entity states + the short event/terminal-transition window for
+   * every marker. The map lives outside Lit state: hass ticks update it, one
+   * timer repaints when the 3.3 s window closes, and the generation bit forces
+   * a CSS event animation to restart on a rapid retrigger.
+   */
+  private _activityRt = new Map<string, {
+    sources: string;
+    last: Record<string, string>;
+    flashTs: number;
+    flashKind: 'event' | 'transition' | null;
+    timer: number;
+    gen: number;
+  }>();
   /** live-vacuum runtime per marker: RAW robot coords (matrix applied at render) */
   private _vacRt = new Map<string, { trail: VacPt[]; lastKey: string; lastTs: number;
     moving: boolean; jump: boolean; endedTs: number; lastPos: VacPt | null }>();
@@ -907,7 +919,7 @@ class HouseplanCard extends LitElement {
     document.removeEventListener('visibilitychange', this._vacVisHandler);
     if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
     if (this._skySnapRaf) { cancelAnimationFrame(this._skySnapRaf); this._skySnapRaf = 0; }
-    for (const rt of this._senseRt.values()) clearTimeout(rt.timer); // pending flash-window repaints
+    for (const rt of this._activityRt.values()) clearTimeout(rt.timer); // pending activity-window repaints
     window.removeEventListener('keydown', this._keyHandler);
     clearInterval(this._cycleTimer);
     clearTimeout(this._kioskDotsTimer);
@@ -1449,7 +1461,12 @@ class HouseplanCard extends LitElement {
       case 'settings': this._settingsDialog = { ...d.data, busy: false }; break;
       case 'rules': this._rulesDialog = { ...d.data, busy: false }; break;
       case 'opening': this._openingDialog = { ...d.data }; break;
-      case 'decorText': this._decorTextDialog = { ...d.data }; break;
+      case 'decorText': {
+        this._decorTextDialog = { ...d.data };
+        const end = String(this._decorTextDialog?.text ?? '').length;
+        this._decorTextSelection = { start: end, end };
+        break;
+      }
       case 'room': {
         const r = d.data;
         this._roomEditId = r.editId; this._roomFill = r.fill; this._roomTempSrc = r.tempSrc;
@@ -1662,7 +1679,7 @@ class HouseplanCard extends LitElement {
   }
 
   protected willUpdate(changed: PropertyValues): void {
-    if (changed?.has?.('hass')) { this._vacTick(); this._senseTick(); }
+    if (changed?.has?.('hass')) { this._vacTick(); this._activityTick(); }
     this._skyPlan();
     if (changed.has('hass') && this.hass) {
       this._hookConnection();
@@ -2230,107 +2247,70 @@ class HouseplanCard extends LitElement {
     return this._coverIndicator(d) || d.primary;
   }
 
-  private _stateClass(d: DevItem): string {
-    if (!this._config?.live_states) return '';
-    // FIRST of all: is this marker a CURTAIN? Choosing «Открыть/закрыть» in
-    // the dialog is the strongest thing its owner can say about what the
-    // marker IS (see _coverIndicator), so it outranks every other source of
-    // indication — and the owner's contract for that answer is absolute: «у
-    // штор не должно быть жёлтой подложки НИКОГДА». Deciding this after
-    // `controls` / a lit light (as it was until 2026-08-04) meant a curtain on
-    // a mixed device — a lamp that also ships a blind, a marker with a bound
-    // wall switch — went yellow anyway and lost its breathing ring while it
-    // travelled, so the tap, the icon and the plate each told a different
-    // story. The plate class of a cover is only ever '' , 'covermove' or
-    // 'unavail'; the open/closed state is the icon's job (COVER_ICONS).
-    const cov = this._coverIndicator(d);
-    if (cov) {
-      const cs = this.hass.states[cov];
-      if (!cs) return '';
-      if (cs.state === 'unavailable') return 'unavail';
-      return coverMoving(cs.state) ? 'covermove' : '';
-    }
-    // an icon with controlled targets mirrors THEM, not its own entity
-    // (stateless remotes and virtual wall switches have nothing else to show)
+  /** Legacy `ripple` is read as the surviving icon+activity presentation. */
+  private _displayOf(d: DevItem): 'badge' | 'icon_ripple' | 'value' {
+    const display = d.marker?.display;
+    return display === 'ripple' ? 'icon_ripple' : display || 'badge';
+  }
+
+  /**
+   * Entities that jointly describe the marker. Explicit cover intent wins;
+   * controls are an aggregate; otherwise a lit light and the primary entity
+   * keep the glow plate, icon and activity on the same story. Critical
+   * secondary entities are appended so an alarm cannot hide behind a less
+   * important primary sensor.
+   */
+  private _visualSamples(d: DevItem): EntityVisualSample[] {
+    const ids: string[] = [];
+    const cover = this._coverIndicator(d);
     const controls = (d.marker?.controls || []).filter(isControllable);
-    if (controls.length)
-      return controls.some((e) => this.hass.states[e]?.state === 'on') ? 'on' : '';
-    // A shining light yields 'on' here by the SAME condition that lights the
-    // glow pool, so the pool and the state cannot disagree. Note the renderer
-    // then STRIPS the class wherever the glow layer is actually visible —
-    // there the spot is the one indicator (v1.52.0, owner's rule); the badge
-    // stays yellow only where the spot is not drawn (other fills, the plan
-    // editor).
-    if (litLightEntity(this.hass, d)) return 'on';
-    // The explicit cover was answered above; what is left here is the primary
-    // entity — an «Open/close» marker only ever reaches this line when its
-    // device carries no `cover.*` at all, and then it has nothing else to
-    // speak for. (Before 2026-08-04 an Aqara curtain driver reported its
-    // `switch.*_reverse_direction` from here: no breathing ring while it
-    // travelled, no morph, and a yellow plate whenever the reverse-direction
-    // option happened to be on.)
-    const eid = this._actEntity(d);
-    const p = eid ? this.hass.states[eid] : undefined;
-    if (!p) return '';
-    if (p.state === 'unavailable') return 'unavail';
-    // derive the domain from the entity id we looked the state up by — state
-    // objects are not guaranteed to carry entity_id (defensive; found by the
-    // TESTING.md edge-case run)
-    const dom = eid!.split('.')[0];
-    if (['light', 'switch', 'fan', 'humidifier'].includes(dom)) return p.state === 'on' ? 'on' : '';
-    if (dom === 'climate') {
-      // yellow = actually working right now ("which radiators are heating"),
-      // not "enabled for the winter": hvac_action when the integration
-      // reports one, the coarser state only as a fallback
-      const act = p.attributes?.hvac_action;
-      if (act != null) return ['heating', 'cooling', 'drying', 'fan'].includes(act) ? 'on' : '';
-      return ['off', 'unknown'].includes(p.state) ? '' : 'on';
+    if (cover) ids.push(cover);
+    else if (controls.length) ids.push(...controls);
+    else {
+      const lit = litLightEntity(this.hass, d);
+      if (lit) ids.push(lit);
+      if (d.primary && !ids.includes(d.primary)) ids.push(d.primary);
     }
-    // COVERS (owner's contract 2026-08-04): «у штор не должно быть жёлтой
-    // подложки НИКОГДА, индикация открыто/закрыто за счёт морфинга иконки».
-    // So a cover returns NO plate class in any state — not the yellow «on»
-    // one, not the orange 'open' frame it used to wear while open/opening.
-    // Its whole open/closed story is told by the icon (stateIcon/COVER_ICONS,
-    // ajar counts as open because HA reports 'open' for it), and its motion by
-    // the breathing ring alone (2026-08-03, the vacuum puck's language).
-    if (dom === 'cover') return coverMoving(p.state) ? 'covermove' : '';
-    // A VALVE is deliberately NOT swept along: no icon pair morphs for it, so
-    // the frame is the only thing that says «открыт» — taking it away would
-    // leave the marker mute. Owner's rule names the curtains, and the two
-    // domains part ways here.
-    if (dom === 'valve') return ['open', 'opening'].includes(p.state) ? 'open' : '';
-    if (dom === 'lock') return ['unlocked', 'open'].includes(p.state) ? 'open' : '';
-    if (dom === 'binary_sensor') {
-      const dc = p.attributes?.device_class;
-      if (['door', 'window', 'garage_door', 'opening', 'gas', 'smoke', 'moisture', 'problem'].includes(dc))
-        return p.state === 'on' ? 'open' : '';
-      // Owner's rule (2026-08-01, вариант «б»): «движение = разовая
-      // вспышка в момент обнаружения; cool-down не пульсирует; присутствие =
-      // статичное кольцо пока обитаемо». Neither takes the yellow 'on'
-      // fill — that stays reserved for «включено».
-      // MOTION flashes once per off→on trip: 'senseflash' lives only for
-      // the ~3.3s window after the transition (stamped by _senseTick on
-      // the hass tick) — a sensor still 'on' after that is in its
-      // cool-down, not seeing motion, so the class goes away even though
-      // the state has not changed. A new off→on trip re-arms the flash.
-      if (dc === 'motion') {
-        const rt = this._senseRt.get(d.id);
-        if (!(rt && rt.flashTs && Date.now() - rt.flashTs < SENSE_FLASH_MS)) return '';
-        // HP-1543-02: alternate the animation identity per trip (see
-        // _senseTick) — odd generations ride the base hp-sense keyframes,
-        // even ones the identical hp-sense-b twin, so a rapid re-trip
-        // restarts the flash instead of silently inheriting the old timeline
-        return rt.gen % 2 === 0 ? 'senseflash sf2' : 'senseflash';
+    // Safety wins independently of the presentation source.
+    for (const eid of d.entities || []) {
+      const sample = entityVisualSample(this.hass, eid);
+      if (sample.status === 'alarm' && !ids.includes(eid)) ids.push(eid);
+    }
+    return ids.map((eid) => entityVisualSample(this.hass, eid));
+  }
+
+  /** One semantic result feeds the plate and every non-critical activity effect. */
+  private _deviceVisual(d: DevItem): DeviceVisualState {
+    if (d.hidden) return { availability: 'available', status: 'neutral', activity: 'none' };
+    const combined = combineVisualSamples(this._visualSamples(d));
+    // A critical state is never a decorative preference and stays visible
+    // even when the card-wide live-state dressing is disabled.
+    if (combined.status === 'alarm') return combined;
+    if (!this._config?.live_states) return { availability: 'available', status: 'neutral', activity: 'none' };
+    if (combined.availability === 'unavailable') return combined;
+    const rt = this._activityRt.get(d.id);
+    if (rt?.flashTs && rt.flashKind && Date.now() - rt.flashTs < ACTIVITY_WINDOW_MS)
+      return { ...combined, activity: rt.flashKind };
+    return combined;
+  }
+
+  /** CSS classes retained behind the old helper name for smoke/debug callers. */
+  private _stateClass(d: DevItem, visual = this._deviceVisual(d)): string {
+    if (d.hidden) return '';
+    const cls: string[] = [];
+    if (visual.status === 'alarm') cls.push('alarm');
+    else if (visual.availability === 'unavailable') cls.push('unavail');
+    else if (visual.status === 'working') cls.push('on');
+    else if (visual.status === 'open') cls.push('open');
+
+    if (this._displayOf(d) === 'icon_ripple' && this._config?.live_states && visual.status !== 'alarm') {
+      if (visual.activity !== 'none') cls.push('activity-' + visual.activity);
+      if (visual.activity === 'event') {
+        const rt = this._activityRt.get(d.id);
+        if (rt && rt.gen % 2 === 0) cls.push('activity-gen2');
       }
-      // OCCUPANCY/PRESENCE while 'on': a calm STATIC ring ('sensehold',
-      // no animation in styles.ts) — «комната обитаема» is a state, not
-      // an event, so it must not blink.
-      if (['occupancy', 'presence'].includes(dc))
-        return p.state === 'on' ? 'sensehold' : '';
     }
-    if (dom === 'media_player') return ['playing', 'on'].includes(p.state) ? 'on' : '';
-    if (dom === 'vacuum') return ['cleaning', 'returning'].includes(p.state) ? 'on' : '';
-    return '';
+    return cls.join(' ');
   }
 
   private _liveTemp(d: DevItem): number | null {
@@ -2462,7 +2442,11 @@ class HouseplanCard extends LitElement {
       guarded(this._t('confirm.tap_run', { name }), () => {
         this.hass
           .callService(svc.domain, svc.service, { entity_id: target })
-          .then(() => this._showToast(this._t('toast.run_started', { name })))
+          .then(() => {
+            this._stampActivity(d.id, 'event', this._activitySourceKey(this._visualSamples(d)));
+            this.requestUpdate();
+            this._showToast(this._t('toast.run_started', { name }));
+          })
           .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
       });
       return;
@@ -3375,6 +3359,11 @@ class HouseplanCard extends LitElement {
    * weight: drop it on every save. Configs written before v1.19.0 shed it on first write.
    */
   private _dropLegacySegments(): void {
+    // «Ripple only» was removed from the UI: keep old configs readable, then
+    // materialise the recognisable icon+activity presentation on any write.
+    for (const marker of this._serverCfg?.markers || []) {
+      if (marker.display === 'ripple') marker.display = 'icon_ripple';
+    }
     for (const sp of this._serverCfg?.spaces || []) {
       delete (sp as any).segments;
       if (Array.isArray(sp.walls)) {
@@ -3980,6 +3969,7 @@ class HouseplanCard extends LitElement {
         x: clampCanvasN(p[0] / NORM_W), y: clampCanvasN(p[1] / this._decorH),
         text: '', color: this._decorStyle.color,
       };
+      this._decorTextSelection = { start: 0, end: 0 };
       return true;
     }
     if (t === 'furniture') {
@@ -4126,24 +4116,48 @@ class HouseplanCard extends LitElement {
 
   /** Open the editor of an existing label (double click, or the text tool). */
   private _decorOpenText(shape: any): void {
+    let text = String(shape.text ?? '');
+    const legacyToken = liveTextToken(shape.entity, shape.attr);
+    if (legacyToken) {
+      const slot = text.indexOf('{}');
+      text = slot >= 0
+        ? text.slice(0, slot) + legacyToken + text.slice(slot + 2)
+        : `${text}${text ? ' ' : ''}${legacyToken}`;
+    }
     this._decorTextDialog = {
-      id: shape.id, x: shape.x, y: shape.y, text: shape.text, color: shape.color,
-      entity: shape.entity || '', attr: shape.attr || '', unit: shape.unit || '',
+      id: shape.id, x: shape.x, y: shape.y, text, color: shape.color,
+      pickerEntity: shape.entity || '',
+    };
+    this._decorTextSelection = { start: text.length, end: text.length };
+  }
+
+  private _decorRememberTextSelection(el: HTMLTextAreaElement): void {
+    this._decorTextSelection = {
+      start: el.selectionStart ?? el.value.length,
+      end: el.selectionEnd ?? el.value.length,
     };
   }
 
-  /** The link fields as they are STORED: only what the user actually filled in
-   *  ends up in the config, so a plain label stays byte-for-byte a plain one. */
-  private _decorTextLink(d: { entity?: string; attr?: string; unit?: string }): Record<string, string> {
-    const out: Record<string, string> = {};
-    const ent = (d.entity || '').trim();
-    if (!ent) return out;
-    out.entity = ent;
-    const attr = (d.attr || '').trim();
-    if (attr) out.attr = attr;
-    const unit = (d.unit || '').trim();
-    if (unit) out.unit = unit;
-    return out;
+  /** Insert a complete reference without ever truncating it into broken text. */
+  private _decorInsertLiveVariable(attr: string | null): void {
+    const d = this._decorTextDialog;
+    if (!d) return;
+    const token = liveTextToken(d.pickerEntity, attr);
+    if (!token) return;
+    const old = d.text;
+    const start = Math.max(0, Math.min(old.length, this._decorTextSelection.start));
+    const end = Math.max(start, Math.min(old.length, this._decorTextSelection.end));
+    if (old.length - (end - start) + token.length > 200) return;
+    const text = old.slice(0, start) + token + old.slice(end);
+    const caret = start + token.length;
+    this._decorTextSelection = { start: caret, end: caret };
+    this._decorTextDialog = { ...d, text };
+    this.updateComplete.then(() => {
+      const el = this.renderRoot.querySelector<HTMLTextAreaElement>('textarea.dtarea');
+      if (!el) return;
+      el.focus();
+      el.setSelectionRange(caret, caret);
+    });
   }
 
   private _decorSaveText(): void {
@@ -4152,19 +4166,18 @@ class HouseplanCard extends LitElement {
     const text = String(d?.text ?? '').replace(/\r\n?/g, '\n').trim();
     if (!d || !text) { this._decorTextDialog = null; return; }
     const sp = this._curSpaceCfg;
-    const link = this._decorTextLink(d);
     if (d.id) {
       sp.decor = this._decorList.map((x) => {
         if (x.id !== d.id) return x;
-        // the OLD link is dropped wholesale: clearing the entity in the dialog
-        // must clear the attribute and the unit with it, not leave orphans
+        // beta.9 and earlier stored one live link beside the text. Saving in
+        // the new editor migrates it to inline tokens and drops the old fields.
         const { entity, attr, unit, ...rest } = x;
-        return { ...rest, text, color: d.color, ...link };
+        return { ...rest, text, color: d.color };
       });
     } else {
       const id = 'dc' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
       sp.decor = [...this._decorList, { id, kind: 'text', x: d.x, y: d.y,
-        text, color: d.color, ...link }];
+        text, color: d.color }];
       this._decorSel = id;
     }
     this._decorTextDialog = null;
@@ -4961,11 +4974,8 @@ class HouseplanCard extends LitElement {
 
   private _renderDecorTextDialog(): TemplateResult {
     const d = this._decorTextDialog!;
-    const ent = (d.entity || '').trim();
+    const ent = (d.pickerEntity || '').trim();
     const st = ent ? this.hass?.states?.[ent] : null;
-    const ownUnit = String(st?.attributes?.unit_of_measurement ?? '');
-    // the preview is the REAL renderer: one substitution, one truth
-    const preview = liveText(d.text, d, this.hass);
     return html`<div class="menuwrap dialogwrap" @click=${() => (this._decorTextDialog = null)}>
       <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
         <div class="hd"><ha-icon icon="mdi:format-text"></ha-icon>${this._t('decor.text_title')}</div>
@@ -4975,38 +4985,43 @@ class HouseplanCard extends LitElement {
                  and rendered (centred). Enter is a NEW LINE here, so saving
                  moved to Ctrl/Cmd+Enter and the button. */}
           <textarea class="namein dtarea" rows="3" maxlength="200" .value=${d.text} autofocus
-            @input=${(e: Event) => (this._decorTextDialog = { ...d, text: (e.target as HTMLTextAreaElement).value })}
+            @input=${(e: Event) => {
+              const el = e.target as HTMLTextAreaElement;
+              this._decorRememberTextSelection(el);
+              this._decorTextDialog = { ...d, text: el.value };
+            }}
+            @click=${(e: Event) => this._decorRememberTextSelection(e.target as HTMLTextAreaElement)}
+            @keyup=${(e: Event) => this._decorRememberTextSelection(e.target as HTMLTextAreaElement)}
+            @select=${(e: Event) => this._decorRememberTextSelection(e.target as HTMLTextAreaElement)}
+            @blur=${(e: Event) => this._decorRememberTextSelection(e.target as HTMLTextAreaElement)}
             @keydown=${(e: KeyboardEvent) => {
               e.stopPropagation();
               if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) this._decorSaveText();
             }}></textarea>
-          <div class="rhint">${this._t(ent ? 'decor.text_hint_live' : 'decor.text_hint')}</div>
           <label>${this._t('decor.color')}</label>
           <input type="color" .value=${d.color}
             @input=${(e: Event) => (this._decorTextDialog = { ...d, color: (e.target as HTMLInputElement).value })} />
           <label class="dispsection">${this._t('decor.live_group')}</label>
-          <div class="rhint">${this._t('decor.live_hint')}</div>
           <label>${this._t('decor.live_entity')}</label>
           <input class="namein" type="text" list="hp-dtext-ents" placeholder=${this._t('decor.live_entity_ph')}
-            .value=${d.entity || ''}
-            @input=${(e: Event) => (this._decorTextDialog = { ...d, entity: (e.target as HTMLInputElement).value })} />
+            .value=${d.pickerEntity || ''}
+            @input=${(e: Event) => (this._decorTextDialog = {
+              ...d, pickerEntity: (e.target as HTMLInputElement).value,
+            })} />
           <datalist id="hp-dtext-ents">
             ${Object.keys(this.hass?.states || {}).map((id) => html`<option value=${id}></option>`)}
           </datalist>
           ${ent ? html`
             <label>${this._t('decor.live_attr')}</label>
-            <input class="namein" type="text" list="hp-dtext-attrs" placeholder=${this._t('decor.live_attr_ph')}
-              .value=${d.attr || ''}
-              @input=${(e: Event) => (this._decorTextDialog = { ...d, attr: (e.target as HTMLInputElement).value })} />
-            <datalist id="hp-dtext-attrs">
-              ${Object.keys(st?.attributes || {}).map((a) => html`<option value=${a}></option>`)}
-            </datalist>
-            <label>${this._t('decor.live_unit')}</label>
-            <input class="namein" type="text" .value=${d.unit || ''}
-              placeholder=${(d.attr || '').trim() ? '' : ownUnit}
-              @input=${(e: Event) => (this._decorTextDialog = { ...d, unit: (e.target as HTMLInputElement).value })} />
-            <label>${this._t('decor.live_preview')}</label>
-            <div class="dtpreview">${decorTextLines(preview).map((ln) => html`<div>${ln}</div>`)}</div>
+            <select class="namein" .value=${''}
+              @change=${(e: Event) => {
+                const value = (e.target as HTMLSelectElement).value;
+                if (value) this._decorInsertLiveVariable(value === '__state__' ? null : value);
+              }}>
+              <option value="">${this._t('decor.live_attr_ph')}</option>
+              <option value="__state__">${this._t('decor.live_state')}</option>
+              ${Object.keys(st?.attributes || {}).map((a) => html`<option value=${a}>${a}</option>`)}
+            </select>
           ` : nothing}
         </div>
         <div class="row">
@@ -5117,10 +5132,14 @@ class HouseplanCard extends LitElement {
   private _persistOpenCuts(cuts: number[][]): void {
     const sp = this._curSpaceCfg;
     if (!sp) return;
-    const entries = cutsToSpanEntries(cuts, NORM_W);
+    const eps = this._gridPitch * 0.02;
+    const entries = clipOpenSpansToShared(
+      cutsToSpanEntries(cuts, NORM_W), this._spaceModel().rooms, NORM_W, eps,
+    );
+    const canonicalCuts = entries.map((e) => entryToSeg(e, NORM_W));
     if (entries.length) (sp as any).open_spans = entries;
     else delete (sp as any).open_spans;
-    syncOpenToFromCuts(sp.rooms || [], this._spaceModel().rooms, cuts, this._gridPitch * 0.02);
+    syncOpenToFromCuts(sp.rooms || [], this._spaceModel().rooms, canonicalCuts, eps);
   }
 
   private _closeOpenSpan(sg: number[]): void {
@@ -6060,7 +6079,7 @@ class HouseplanCard extends LitElement {
         bindingFilter: '',
         icon: d.marker?.icon || '',
         autoIcon: d.icon || '',
-        display: d.marker?.display || 'badge',
+        display: d.marker?.display === 'ripple' ? 'icon_ripple' : d.marker?.display || 'badge',
         rippleColor: d.marker?.ripple_color || '',
         rippleSize: Number(d.marker?.ripple_size) > 0 ? Number(d.marker!.ripple_size) : 3,
         size: Number(d.marker?.size) > 0 ? Number(d.marker!.size) : 1,
@@ -6308,8 +6327,8 @@ class HouseplanCard extends LitElement {
         name: dlg.name.trim() || null,
         icon: dlg.icon || null,
         display: dlg.display !== 'badge' ? dlg.display : null,
-        ripple_color: dlg.display !== 'badge' && dlg.rippleColor ? dlg.rippleColor : null,
-        ripple_size: dlg.display !== 'badge' && dlg.rippleSize !== 3 ? dlg.rippleSize : null,
+        ripple_color: dlg.display === 'icon_ripple' && dlg.rippleColor ? dlg.rippleColor : null,
+        ripple_size: dlg.display === 'icon_ripple' && dlg.rippleSize !== 3 ? dlg.rippleSize : null,
         size: dlg.size !== 1 ? dlg.size : null,
         angle: dlg.angle ? dlg.angle : null,
         tap_action: dlg.tapAction || null,
@@ -7434,6 +7453,22 @@ class HouseplanCard extends LitElement {
       .map((r) => ({ r, poly: roomPoly(r) }))
       .filter((x): x is { r: RoomCfg; poly: number[][] } => !!x.poly);
     const doors = this._openingsR.filter((o) => o.type === 'door');
+    const walls = this._spaceWalls;
+    const openCuts = this._openPairs().flatMap((p) => p.segs);
+    const doorTunnelDepth = new Map<string, number>();
+    if (walls.length) {
+      for (const o of doors) {
+        const rad = (o.angle * Math.PI) / 180;
+        const dx = (Math.cos(rad) * o.rlen) / 2;
+        const dy = (Math.sin(rad) * o.rlen) / 2;
+        const cm = intervalCmAt(
+          space.rooms, walls, openCuts,
+          [o.rx - dx, o.ry - dy, o.rx + dx, o.ry + dy],
+          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+        );
+        if (cm > 0) doorTunnelDepth.set(o.id, wallCmToUnits(cm, this._cellCm, this._gridPitch));
+      }
+    }
     const spots: { pos: { x: number; y: number }; c: string; alpha: number; clip: string[] | null; r: number }[] = [];
     for (const d of this._devices) {
       if (d.space !== space.id) continue;
@@ -7460,8 +7495,6 @@ class HouseplanCard extends LitElement {
         const zoneIds = home.r.id ? openZoneOf(home.r.id, space.rooms) : new Set([home.r.id]);
         const zone = polys.filter((x) => x.r.id && zoneIds.has(x.r.id));
         const zoneList = zone.length ? zone : [home];
-        const walls = this._spaceWalls;
-        const openCuts = this._openPairs().flatMap((p) => p.segs);
         const shapes: string[] = zoneList.map((z) => {
           const poly = (walls.length && z.r.id)
             ? (innerContourForRoom(
@@ -7483,7 +7516,10 @@ class HouseplanCard extends LitElement {
           const dx = (Math.cos(rad) * o.rlen) / 2;
           const dy = (Math.sin(rad) * o.rlen) / 2;
           if (!hasRoomBehind([o.rx, o.ry], o.angle, [pos.x, pos.y], others, g * 0.6)) continue;
-          const sector = doorSector([pos.x, pos.y], [o.rx - dx, o.ry - dy], [o.rx + dx, o.ry + dy], R);
+          const sector = doorSector(
+            [pos.x, pos.y], [o.rx - dx, o.ry - dy], [o.rx + dx, o.ry + dy],
+            R, 170, doorTunnelDepth.get(o.id) || 0,
+          );
           if (sector) shapes.push('M ' + sector.map((p) => p[0] + ' ' + p[1]).join(' L ') + ' Z');
         }
         // IMPORTANT: separate <path> children — clipPath children always
@@ -8129,12 +8165,16 @@ class HouseplanCard extends LitElement {
                    an opening MEANS is untouched: light still spills through
                    it, the sun still comes in at its window, and the contact
                    sensor still opens it. */}
+            ${''/* View: virtual geometry still meets real walls on their
+                   centreline, but paints BELOW the physical wall body. The
+                   hatch therefore masks the visually awkward half-dashes
+                   inside thick jambs without changing the stored span. */}
+            ${!this._editing ? this._renderOpenWalls(disp) : nothing}
             ${this._renderWallBodies(disp)}
-            ${''/* Virtual boundaries (including the live two-click preview)
-                   deliberately paint AFTER real wall bodies. At a T-junction
-                   their first dash must remain visible all the way to the
-                   centreline instead of disappearing underneath the hatch. */}
-            ${this._renderOpenWalls(disp)}
+            ${''/* Editors: saved virtual boundaries and the live two-click
+                   preview deliberately paint AFTER real wall bodies. Their
+                   full centreline geometry remains visible for editing. */}
+            ${this._editing ? this._renderOpenWalls(disp) : nothing}
             ${disp.hideOpenings && !this._markup ? nothing : this._renderOpenings(disp)}
             ${this._renderWallThickUi()}
             ${this._markup && this._tool === 'resize' ? this._renderResizeLayer(view) : nothing}
@@ -8288,40 +8328,80 @@ class HouseplanCard extends LitElement {
     return !!this._vacEntity(d);
   }
 
+  /** Start/restart a short semantic event or direct-terminal transition. */
+  private _activitySourceKey(samples: EntityVisualSample[]): string {
+    return samples.map((sample) => sample.eid).sort().join('\n');
+  }
+
+  private _stampActivity(id: string, kind: 'event' | 'transition', sources?: string): void {
+    let rt = this._activityRt.get(id);
+    if (!rt) {
+      rt = { sources: sources || '', last: {}, flashTs: 0, flashKind: null, timer: 0, gen: 0 };
+      this._activityRt.set(id, rt);
+    }
+    if (sources != null) rt.sources = sources;
+    // Event outranks a transition when two sources change in the same hass tick.
+    if (rt.flashTs && Date.now() - rt.flashTs < ACTIVITY_WINDOW_MS && rt.flashKind === 'event' && kind === 'transition') return;
+    rt.flashTs = Date.now();
+    rt.flashKind = kind;
+    rt.gen++;
+    clearTimeout(rt.timer);
+    rt.timer = window.setTimeout(() => this.requestUpdate(), ACTIVITY_WINDOW_MS + 60);
+  }
+
   /**
-   * Motion-flash bookkeeping, one pass per hass tick (the _vacTick pattern):
-   * remembers each motion marker's last primary state and stamps flashTs on
-   * an off→on transition. Only a WITNESSED 'off' → 'on' step counts — a
-   * sensor first seen already 'on' (page load mid cool-down) or coming back
-   * from 'unavailable' is a reconnect, not a fresh detection, and must not
-   * flash. Each stamp (re)arms ONE setTimeout that calls requestUpdate when
-   * the ~3.3s window closes, so _stateClass drops 'senseflash' even though
-   * no new hass tick arrives; disconnectedCallback clears the timers.
+   * One pass per hass tick records every effective source. Only a witnessed,
+   * meaningful edge starts a short effect: first load and recovery from
+   * unknown/unavailable establish a baseline and never fake a detection.
    */
-  private _senseTick(): void {
+  private _activityTick(): void {
     if (!this.hass) return;
+    const live = new Set<string>();
     for (const d of this._devices) {
-      if (d.hidden || !d.primary || !d.primary.startsWith('binary_sensor.')) continue;
-      const p = this.hass.states[d.primary];
-      if (p?.attributes?.device_class !== 'motion') continue;
-      const rt = this._senseRt.get(d.id);
-      if (!rt) { this._senseRt.set(d.id, { last: p.state, flashTs: 0, timer: 0, gen: 0 }); continue; }
-      if (p.state === 'on' && rt.last === 'off') {
-        rt.flashTs = Date.now();
-        // HP-1543-02: a retrip BEFORE the previous flash finished kept the
-        // same 'senseflash' class and the same animation-name on the same
-        // pseudo-element — browsers never restart such a CSS animation, so
-        // the second detection played nothing once the first one-shot had
-        // ended (base opacity 0). Every trip bumps the generation;
-        // _stateClass maps its parity to alternating keyframe names
-        // (hp-sense / hp-sense-b in styles.ts), which is a NEW animation
-        // identity and forces a fresh timeline per detection. No class is
-        // ever removed mid-flash, so a lone first flash still plays whole.
-        rt.gen++;
-        clearTimeout(rt.timer);
-        rt.timer = window.setTimeout(() => this.requestUpdate(), SENSE_FLASH_MS + 60);
+      if (d.hidden) continue;
+      live.add(d.id);
+      const samples = this._visualSamples(d);
+      const sourceKey = this._activitySourceKey(samples);
+      let rt = this._activityRt.get(d.id);
+      if (!rt) {
+        rt = { sources: sourceKey, last: {}, flashTs: 0, flashKind: null, timer: 0, gen: 0 };
+        for (const sample of samples) rt.last[sample.eid] = sample.state;
+        this._activityRt.set(d.id, rt);
+        continue;
       }
-      rt.last = p.state;
+      // A marker changed what it represents (cover action removed, controls
+      // rebound, primary replaced): the old entity's short effect must never
+      // leak onto the new source. Establish a fresh baseline instead.
+      if (rt.sources !== sourceKey) {
+        clearTimeout(rt.timer);
+        rt.sources = sourceKey;
+        rt.last = {};
+        rt.flashTs = 0;
+        rt.flashKind = null;
+        for (const sample of samples) rt.last[sample.eid] = sample.state;
+        continue;
+      }
+      // A direct closed↔open fallback is only a substitute for integrations
+      // that omit opening/closing. Once a real travelling state is observed,
+      // it owns the ring and the old 3.3 s fallback is discarded.
+      if (rt.flashKind === 'transition' && samples.some((sample) => sample.activity === 'transition')) {
+        clearTimeout(rt.timer);
+        rt.flashTs = 0;
+        rt.flashKind = null;
+      }
+      let edge: 'event' | 'transition' | null = null;
+      for (const sample of samples) {
+        const found = edgeActivity(rt.last[sample.eid], sample);
+        if (found === 'event' || (!edge && found)) edge = found;
+        rt.last[sample.eid] = sample.state;
+      }
+      if (edge) this._stampActivity(d.id, edge, sourceKey);
+    }
+    // Config/registry churn must not leave timers or stale edge baselines alive.
+    for (const [id, rt] of this._activityRt) {
+      if (live.has(id)) continue;
+      clearTimeout(rt.timer);
+      this._activityRt.delete(id);
     }
   }
 
@@ -8794,21 +8874,24 @@ class HouseplanCard extends LitElement {
     // must equal the layer's visibility, or a mode ends up with neither
     // indicator (HP-1520-01). "Source" is exactly the litLightEntity
     // condition that casts the spot, so a lit socket keeps its yellow.
-    let cls = d.hidden ? '' : this._stateClass(d);
-    if (glowFill && cls === 'on' && litLightEntity(this.hass, d)) cls = '';
+    const visual = this._deviceVisual(d);
+    let cls = d.hidden ? '' : this._stateClass(d, visual);
+    if (glowFill && visual.status === 'working' && litLightEntity(this.hass, d))
+      cls = cls.split(/\s+/).filter((c) => c && c !== 'on').join(' ');
     const temp = d.hidden ? null : this._liveTemp(d);
     const hum = d.hidden ? null : this._liveHum(d);
     const lqi = showLqi && !d.virtual && !d.hidden ? lqiFor(this.hass, d.entities) : null;
     const m = d.marker;
-    const disp = m?.display || 'badge';
-    // a ghost drops the ripple presentation entirely (HP-1511-02): an
-    // icon-less pulse is unrecognisable, and the release contract says a
-    // ghost keeps the base icon and name — display modes are status dressing
-    const ripple = (disp === 'ripple' || disp === 'icon_ripple') && !d.hidden;
+    const disp = this._displayOf(d);
+    // Ordinary activity is an explicit presentation. Alarm is already a dev
+    // class and remains visible in every presentation; ghosts get neither.
+    const activity: DeviceActivity = disp === 'icon_ripple' && !d.hidden
+      && this._config?.live_states && visual.status !== 'alarm'
+      ? visual.activity : 'none';
     // value-only display: the measurement IS the marker
     // The state the marker PRESENTS — the primary one, or the device's cover
     // when the marker is explicitly «Open/close» (_coverIndicator): the badge,
-    // the icon morph and the ripple all read the same entity the tap drives.
+    // the icon morph and the value all read the same entity the tap drives.
     const actEid = this._actEntity(d);
     const primarySt = actEid ? this.hass.states[actEid] : undefined;
     // The °/% plates come first and keep their own compact form — they are a
@@ -8840,26 +8923,22 @@ class HouseplanCard extends LitElement {
     const icon = this._config?.live_states && !d.hidden
       ? stateIcon(d.icon, domain, primarySt?.attributes?.device_class, primarySt?.state, !!m?.icon)
       : d.icon;
-    // v1.52.0: a lamp's colour lives in its GLOW and in the ripple fallback
+    // v1.52.0: a lamp's colour lives in its GLOW and in the activity fallback
     // only — the icon/border tint is gone. lightC is still computed (from the
     // marker's first lit RGB target, else the primary light) purely to feed
-    // --ripple-color when no explicit ripple colour is set.
+    // --ripple-color (legacy storage/CSS name) when no explicit effect colour is set.
     const ctrl = (m?.controls || []).filter(isControllable);
     const lightC = this._config?.live_states && !d.hidden
       ? ctrl.length
         ? ctrl.map((e) => lightColorOf(this.hass.states[e])).find((v) => v) || null
         : domain === 'light' ? lightColorOf(primarySt) : null
       : null;
-    // emergencies (leak/smoke/gas/CO/siren) pulse red regardless of display mode
-    const alarm = this._config?.live_states && !d.hidden
-      && isAlarmState(domain, primarySt?.attributes?.device_class, primarySt?.state);
-    const active = ripple && !d.hidden && !!actEid && isActiveState(this.hass.states[actEid]?.state);
     const scale = Number(m?.size) > 0 ? Number(m!.size) : 1;
     const angle = Number(m?.angle) || 0;
     const rScale = Number(m?.ripple_size) > 0 ? Number(m!.ripple_size) : 3;
     const st = [`left:${left}%`, `top:${top}%`];
     if (scale !== 1) st.push(`--dev-scale:${scale}`);
-    if (ripple) {
+    if (disp === 'icon_ripple') {
       st.push(`--ripple-scale:${rScale}`);
       if (m?.ripple_color) st.push(`--ripple-color:${m.ripple_color}`);
       else if (lightC) st.push(`--ripple-color:${lightC}`);
@@ -8873,7 +8952,7 @@ class HouseplanCard extends LitElement {
       data-id="${d.id}"
       data-entity=${d.primary || nothing}
       data-area=${d.area || nothing}
-      class="dev ${cls} ${this._selId === d.id ? 'sel' : ''} ${d.virtual ? 'virtual' : ''} ${d.hidden ? 'ghost' : ''} ${disp === 'ripple' && !d.hidden ? 'noicon' : ''} ${valText != null ? 'valonly' : ''} ${alarm ? 'alarm' : ''}"
+      class="dev ${cls} ${this._selId === d.id ? 'sel' : ''} ${d.virtual ? 'virtual' : ''} ${d.hidden ? 'ghost' : ''} ${valText != null ? 'valonly' : ''}"
       style="${st.join(';')}"
       @click=${(e: MouseEvent) => this._clickDevice(e, d)}
       @contextmenu=${(e: MouseEvent) => this._ctxDevice(e, d)}
@@ -8886,15 +8965,13 @@ class HouseplanCard extends LitElement {
       @pointerup=${(e: PointerEvent) => this._pointerUp(e, d)}
       @pointercancel=${(e: PointerEvent) => this._pointerUp(e, d)}
     >
-      ${ripple
-        ? html`<span class="ripple ${active ? 'active' : ''}"><i></i><i></i><i></i></span>`
+      ${activity !== 'none'
+        ? html`<span class="activity-ring ${activity} ${cls.includes('activity-gen2') ? 'gen2' : ''}"><i></i><i></i><i></i></span>`
         : nothing}
       ${this._newIds.has(d.id) ? html`<span class="newdot" title=${this._t('device.new')}></span>` : nothing}
       ${valText != null
         ? html`<span class="valtext">${valText}</span>`
-        : disp !== 'ripple' || d.hidden
-          ? html`<ha-icon icon="${icon}" style=${angle ? `transform:rotate(${angle}deg)` : nothing}></ha-icon>`
-          : nothing}
+        : html`<ha-icon icon="${icon}" style=${angle ? `transform:rotate(${angle}deg)` : nothing}></ha-icon>`}
       ${temp != null && valText == null ? html`<span class="tval">${temp}°</span>` : nothing}
       ${hum != null && valText == null ? html`<span class="hval">${hum}%</span>` : nothing}
       ${lqi != null ? html`<span class="lqi" style="color:${lqiColor(lqi)}">${lqi}</span>` : nothing}
@@ -9772,10 +9849,23 @@ class HouseplanCard extends LitElement {
   private _renderMarkupBar(): TemplateResult {
     return html`<div class="editbar">
       <ha-icon icon="mdi:vector-square-edit" class="warn"></ha-icon>
-      <button class="btn ${this._tool === 'draw' ? 'on' : ''}" @click=${() => (this._tool = 'draw')}
-        title=${this._t('title.markup_add')}>
-        <ha-icon icon="mdi:vector-polyline-plus"></ha-icon>${this._t('markup.add')}
-      </button>
+      <span class="wallsgroup">
+        <button class="btn ${this._tool === 'draw' ? 'on' : ''}" @click=${() => (this._tool = 'draw')}
+          title=${this._t('title.markup_add')}>
+          <ha-icon icon="mdi:vector-polyline-plus"></ha-icon>${this._t('markup.add')}
+        </button>
+        ${this._tool === 'draw'
+          ? html`<label class="drawwall">${this._t('wallthick.field')}
+              <input type="number" min="0" max="100" step="any"
+                .value=${this._drawWallFieldValue}
+                @input=${(e: Event) => {
+                  this._drawWallField = (e.target as HTMLInputElement).value;
+                }}
+                title=${this._t('markup.draw_wall_title')} />
+              <span class="opl">${this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span>
+            </label>`
+          : nothing}
+      </span>
       <button class="btn ${this._tool === 'merge' ? 'on' : ''}"
         @click=${() => { this._tool = 'merge'; this._cancelPath(); this._tool = 'merge'; }}
         title=${this._t('title.markup_merge')}>
@@ -9815,15 +9905,6 @@ class HouseplanCard extends LitElement {
         ? html`<span class="hint">${this._path.length
               ? this._t('markup.hint_points', { n: this._path.length })
               : this._t('markup.hint_start')}</span>
-            <label class="drawwall">${this._t('wallthick.field')}
-              <input type="number" min="0" max="100" step="any"
-                .value=${this._drawWallFieldValue}
-                @input=${(e: Event) => {
-                  this._drawWallField = (e.target as HTMLInputElement).value;
-                }}
-                title=${this._t('markup.draw_wall_title')} />
-              <span class="opl">${this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span>
-            </label>
             ${this._path.length ? html`<button class="btn ghost" @click=${this._cancelPath}>${this._t('btn.reset')}</button>` : nothing}`
         : nothing}
       ${this._tool === 'resize' ? html`<span class="hint">${this._t('markup.hint_resize')}</span>` : nothing}
@@ -10180,8 +10261,10 @@ class HouseplanCard extends LitElement {
               ([v, k]) => html`<option value=${v} ?selected=${d.display === v}>${this._t(k as any)}</option>`,
             )}
           </select>
-          ${d.display === 'ripple' || d.display === 'icon_ripple'
+          <p class="muted">${this._t('marker.display_hint')}</p>
+          ${d.display === 'icon_ripple'
             ? html`<div class="colorrow">
+                <span class="opl">${this._t('marker.activity_color')}</span>
                 <input type="color" .value=${d.rippleColor || '#3ea6ff'}
                   @input=${(e: Event) => (this._markerDialog = { ...d, rippleColor: (e.target as HTMLInputElement).value })} />
                 <span class="opl">${this._t('marker.ripple_size')}</span>

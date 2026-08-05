@@ -2,6 +2,44 @@
 
 ## Unreleased (dev)
 
+## v1.59.0-beta.10 — 2026-08-05
+
+Tenth pre-release of the 1.59 line: one coherent device-state language and a
+focused set of wall, doorway-light and background-label refinements.
+
+- **One device-state language.** Marker plates and effects now come from one
+  semantic resolver: yellow means actual work, orange means open/unlocked,
+  unavailable is faded, and alarms are always red. The display list is reduced
+  to Icon, Icon + activity and Value; the removed Ripple-only value migrates to
+  Icon + activity on the next save. Activity distinguishes short events,
+  persistent presence, mechanical travel and actual running, with
+  reduced-motion fallbacks and no false event on first load or reconnect.
+  Short effects also reset when a marker's effective source changes, while a
+  cover's real opening/closing state takes precedence over the tap fallback.
+- **Clearer wall-drawing toolbar.** The Plan editor's former “Add” tool is now
+  labelled “Walls”, and its new-wall thickness field sits immediately to the
+  right of that button instead of after the rest of the toolbar.
+- **View-mode virtual walls sit behind thick wall bodies.** Their stored
+  geometry still reaches the physical centreline, but in View the hatch masks
+  the dash ends inside adjoining thick walls. All three editors keep saved
+  dashes and live previews above the wall body so the complete span remains
+  visible while editing.
+- **Door light respects thick-wall reveals.** Light now crosses a doorway only
+  through the clear width of its physical wall tunnel. The near and far inner
+  face spans jointly clip the spill, so the two jamb returns cast the expected
+  cut-offs for an off-centre source; zero-thickness walls retain the previous
+  doorway sector.
+- **Inline HA variables in decor text.** A label can now mix ordinary copy and
+  multiple `{entity}` / `{entity:attribute}` references. Choosing a state or
+  attribute inserts its token at the textarea caret. The separate unit field,
+  one-slot hint, and preview are removed; old linked labels remain readable and
+  migrate to inline tokens when edited.
+- **Canonical wall fragments.** Touching or overlapping virtual stretches on
+  the same boundary and room pair now collapse into one `open_span`; Split
+  pieces belonging to different room pairs remain separate. When removing the
+  last virtual stretches leaves an original wall solid and uniformly thick,
+  its atomic thickness entries collapse back to one whole-wall key.
+
 ## v1.59.0-beta.9 — 2026-08-05
 
 Ninth pre-release of the 1.59 line: mixed virtual/thick resize integrity and

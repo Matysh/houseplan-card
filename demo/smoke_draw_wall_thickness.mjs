@@ -17,6 +17,9 @@ const res = await page.evaluate(async () => {
   await upd();
   out.fieldDefault = c._drawWallFieldValue === '15' || c._drawWallFieldValue === '15.0';
   out.fieldInBar = !!sr().querySelector('.editbar .drawwall input');
+  const wallsButton = sr().querySelector('.editbar button.on');
+  out.drawButtonNamedWalls = ['Walls', 'Стены'].includes((wallsButton?.textContent || '').trim());
+  out.fieldImmediatelyAfterWalls = wallsButton?.nextElementSibling?.matches('label.drawwall') === true;
 
   // draw a small room away from existing rooms (garden/demo f1 may have rooms)
   // use empty space if available, else clear rooms on a copy path

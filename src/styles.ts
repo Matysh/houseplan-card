@@ -576,17 +576,13 @@ export const cardStyles = css`
     @media (prefers-reduced-motion: reduce) {
       .op-leaf, .op-arc { transition: none; }
     }
-    /* presence ripples: opted into per device, drawn around the anchor point */
-    .dev.noicon {
-      background: transparent;
-      border-color: transparent;
-      box-shadow: none;
-    }
+    /* Semantic activity: event / presence / transition / actual running all
+       share one ring layer and one colour/size override. */
     .dev ha-icon {
       position: relative;
       z-index: 1;
     }
-    .ripple {
+    .activity-ring {
       position: absolute;
       left: 50%;
       top: 50%;
@@ -596,33 +592,57 @@ export const cardStyles = css`
       pointer-events: none;
       z-index: 0;
     }
-    .ripple i {
+    .activity-ring i {
       position: absolute;
       inset: 0;
       border-radius: 50%;
       border: 2px solid var(--ripple-color, var(--hp-accent));
       opacity: 0;
     }
-    .ripple.active i {
-      animation: hp-ripple 2.4s ease-out infinite;
+    /* A witnessed edge: exactly three waves over the 3.3 s runtime window. */
+    .activity-ring.event i {
+      animation: hp-activity-event 1.1s ease-out 1 forwards;
     }
-    .ripple.active i:nth-child(2) { animation-delay: 0.8s; }
-    .ripple.active i:nth-child(3) { animation-delay: 1.6s; }
-    /* idle: a faint dot keeps the spot marked without pulling the eye */
-    .ripple:not(.active) i:nth-child(n + 2) { display: none; }
-    .ripple:not(.active) i {
-      inset: calc(50% - 0.15 * var(--dev-size));
-      opacity: 0.3;
-      animation: none;
+    .activity-ring.event i:nth-child(2) { animation-delay: 1.1s; }
+    .activity-ring.event i:nth-child(3) { animation-delay: 2.2s; }
+    .activity-ring.event.gen2 i { animation-name: hp-activity-event-b; }
+    /* Presence is a state, not an event: calm and deliberately static. */
+    .activity-ring.presence i:first-child { opacity: 0.4; }
+    .activity-ring.presence i:nth-child(n + 2),
+    .activity-ring.transition i:nth-child(n + 2),
+    .activity-ring.running i:nth-child(n + 2) { display: none; }
+    /* Physical travel and actual work use related but distinct tempos. */
+    .activity-ring.transition i:first-child {
+      animation: hp-activity-breathe 2.2s ease-in-out infinite;
     }
-    @keyframes hp-ripple {
+    .activity-ring.running i:first-child {
+      animation: hp-activity-running 2.8s ease-in-out infinite;
+    }
+    @keyframes hp-activity-event {
       0% { transform: scale(0.18); opacity: 0.7; }
       70% { opacity: 0.22; }
       100% { transform: scale(1); opacity: 0; }
     }
+    /* Alternate identity: a rapid retrigger restarts the browser timeline. */
+    @keyframes hp-activity-event-b {
+      0% { transform: scale(0.18); opacity: 0.7; }
+      70% { opacity: 0.22; }
+      100% { transform: scale(1); opacity: 0; }
+    }
+    @keyframes hp-activity-breathe {
+      0% { transform: scale(0.92); opacity: 0.16; }
+      50% { transform: scale(1.04); opacity: 0.5; }
+      100% { transform: scale(0.92); opacity: 0.16; }
+    }
+    @keyframes hp-activity-running {
+      0% { transform: scale(0.94); opacity: 0.18; }
+      50% { transform: scale(1.02); opacity: 0.42; }
+      100% { transform: scale(0.94); opacity: 0.18; }
+    }
     @media (prefers-reduced-motion: reduce) {
-      .ripple.active i { animation: none; opacity: 0.3; }
-      .ripple.active i:nth-child(n + 2) { display: none; }
+      .activity-ring i { animation: none !important; }
+      .activity-ring i:first-child { opacity: 0.4; }
+      .activity-ring i:nth-child(n + 2) { display: none; }
     }
     .roomlabel {
       pointer-events: none; /* draggable only in plan mode (rule below) */
@@ -1024,15 +1044,6 @@ export const cardStyles = css`
       font: inherit;
       line-height: 1.35;
     }
-    .dtpreview {
-      padding: 6px 8px;
-      border-radius: 8px;
-      background: rgba(127, 127, 127, 0.12);
-      text-align: center;
-      white-space: pre-wrap;
-      word-break: break-word;
-      font-weight: 600;
-    }
     .stage.mode-decor.dtool-line, .stage.mode-decor.dtool-rect,
     .stage.mode-decor.dtool-ellipse, .stage.mode-decor.dtool-text {
       cursor: crosshair;
@@ -1368,54 +1379,6 @@ export const cardStyles = css`
     /* v1.52.0: the RGB tint of the icon/border is gone — a lamp's colour
        lives ONLY in its glow spot (owner's rule). The ripple-color fallback
        keeps using the light colour; that is set inline via --ripple-color. */
-    /* Owner's rule (2026-08-01, вариант «б»): «движение = разовая вспышка
-       в момент обнаружения; cool-down не пульсирует; присутствие =
-       статичное кольцо пока обитаемо». The yellow FILL stays reserved for
-       «включено» — both sense states keep the neutral badge. Both rings
-       are declared BEFORE .dev.alarm on purpose: equal specificity on the
-       shared ::after means the later alarm rule wins if a device ever
-       carries both — red beats yellow. */
-    /* MOTION tripped: a short ONE-SHOT flash — three beats of the yellow
-       ring (3 × 1.1s), then silence, even while the entity still reports
-       'on' (that tail is the sensor's cool-down, not motion). The
-       iteration count is FINITE, and the card itself drops the class
-       ~3.3s after the off→on transition (_senseTick/_stateClass in
-       houseplan-card.ts); base opacity 0 keeps the ring invisible should
-       the class outlive the animation by a frame. */
-    .dev.senseflash::after {
-      content: '';
-      position: absolute;
-      inset: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * -0.35);
-      border: 2px solid var(--hp-on);
-      border-radius: 50%;
-      opacity: 0;
-      animation: hp-sense 1.1s ease-in-out 3;
-      pointer-events: none;
-    }
-    /* HP-1543-02: a rapid off→on retrip must RESTART the flash. The card
-       flips the .sf2 marker on every trip (_senseTick generation parity);
-       hp-sense-b duplicates hp-sense exactly — switching the animation-name
-       is what makes the browser abandon the old timeline and start a fresh
-       one on the same pseudo-element (a same-name animation never restarts
-       while the class stays on). */
-    .dev.senseflash.sf2::after { animation-name: hp-sense-b; }
-    /* OCCUPANCY/PRESENCE while 'on': a calm STATIC ring, no animation —
-       «комната обитаема» is a state, not an event, so it must not blink.
-       Brightness matches the reduced-motion variant of the flash. */
-    .dev.sensehold::after {
-      content: '';
-      position: absolute;
-      inset: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * -0.35);
-      border: 2px solid var(--hp-on);
-      border-radius: 50%;
-      opacity: 0.4;
-      pointer-events: none;
-    }
-    /* COVER ON THE MOVE (owner 2026-08-03): «не жёлтая подложка, а лёгкая
-       пульсация вокруг значка в стиле шайбы пылесоса». Same yellow as the
-       sense rings, the vacuum puck's 2.2s period, and a moderate opacity so
-       two curtains travelling at once never turn into a strobe. The plate
-       itself stays neutral — yellow means «включено», nothing else. */
     /* Sun wedges (docs/SUN.md). The layer is present ONLY above the 3°
        threshold; crossing it fades the whole layer in or out over EXACTLY
        2 s (owner 2026-08-03 — RAY_FADE_MS in src/sun.ts must match). The
@@ -1440,34 +1403,14 @@ export const cardStyles = css`
       .sunlayer, .sunlayer.out { animation: none; }
       .sunlayer.out { opacity: 0; }
     }
-    .dev.covermove::after {
-      content: '';
-      position: absolute;
-      inset: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * -0.35);
-      border: 2px solid var(--hp-on);
-      border-radius: 50%;
-      opacity: 0.45;
-      animation: hp-covermove 2.2s ease-in-out infinite;
-      pointer-events: none;
-    }
-    @keyframes hp-covermove {
-      0% { transform: scale(0.92); opacity: 0.16; }
-      50% { transform: scale(1.12); opacity: 0.5; }
-      100% { transform: scale(0.92); opacity: 0.16; }
-    }
-    @keyframes hp-sense {
-      0% { transform: scale(0.9); opacity: 0.5; }
-      60% { transform: scale(1.12); opacity: 0.12; }
-      100% { transform: scale(1.12); opacity: 0; }
-    }
-    /* identical twin of hp-sense — exists ONLY as the alternate animation
-       identity for the retrip restart (HP-1543-02), keep the two in sync */
-    @keyframes hp-sense-b {
-      0% { transform: scale(0.9); opacity: 0.5; }
-      60% { transform: scale(1.12); opacity: 0.12; }
-      100% { transform: scale(1.12); opacity: 0; }
-    }
     /* alarms pulse red over everything */
+    .dev.alarm,
+    .dev.alarm:hover {
+      background: #6f2325;
+      border-color: #f25a4a;
+      color: #fff;
+      box-shadow: 0 0 10px rgba(242, 90, 74, 0.65);
+    }
     .dev.alarm::after {
       content: '';
       position: absolute;
@@ -1483,14 +1426,6 @@ export const cardStyles = css`
     }
     @media (prefers-reduced-motion: reduce) {
       .dev.alarm::after { animation: none; opacity: 0.9; }
-      /* the motion flash becomes a static ring for the same ~3.3s class
-         window — consistent with alarm's treatment; sensehold is static
-         by design already */
-      .dev.senseflash::after,
-      .dev.senseflash.sf2::after { animation: none; opacity: 0.4; } /* HP-1543-02: retrip re-arms the window, ring stays static */
-      /* a travelling cover keeps a STATIC ring — the movement is still shown,
-         it just stops breathing */
-      .dev.covermove::after { animation: none; opacity: 0.4; }
     }
     .dev .newdot {
       position: absolute;
@@ -2414,6 +2349,12 @@ export const cardStyles = css`
       display: inline-flex;
       align-items: center;
       gap: var(--sp-3);
+      white-space: nowrap;
+    }
+    .editbar .wallsgroup {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
       white-space: nowrap;
     }
     .editbar .drawwall input {

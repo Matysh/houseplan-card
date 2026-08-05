@@ -273,8 +273,9 @@ SPACE_DISPLAY_SCHEMA = vol.Schema(
 MAX_ENTITY_ID = 255
 _ENTITY_ID = vol.All(str, vol.Length(min=3, max=MAX_ENTITY_ID),
                      vol.Match(r"^[a-z0-9_]+\.[a-z0-9_]+$"))
-# A caption is a caption: the template is bounded, the attribute name is a flat
-# name (no dots needed), and a unit is a couple of characters, not a sentence.
+# A caption is a caption: the inline-reference template is bounded. Attribute
+# and unit bounds below apply only to legacy beta.9 link fields, which remain
+# accepted so an older saved plan can reach the frontend and migrate on edit.
 MAX_DECOR_TEXT = 200
 MAX_DECOR_ATTR = 64
 MAX_DECOR_UNIT = 16
@@ -330,9 +331,9 @@ DECOR_SCHEMA = vol.Any(
                 vol.Optional("scale"): vol.All(
                     _finite, vol.Range(min=DECOR_TEXT_SCALE_MIN, max=DECOR_TEXT_SCALE_MAX)),
                 vol.Optional("angle"): vol.All(_finite, vol.Range(min=-360.0, max=360.0)),
-                # live text: the label may show one entity's value. All three
-                # optional, so every existing plan validates unchanged and no
-                # migration runs.
+                # Legacy one-value link (beta.9 and earlier). New labels store
+                # every `{entity[:attribute]}` reference directly in `text`;
+                # these stay accepted solely for backward compatibility.
                 vol.Optional("entity"): vol.Any(None, _ENTITY_ID),
                 vol.Optional("attr"): vol.Any(None, vol.All(str, vol.Length(max=MAX_DECOR_ATTR))),
                 vol.Optional("unit"): vol.Any(None, vol.All(str, vol.Length(max=MAX_DECOR_UNIT)))},
@@ -475,8 +476,8 @@ MARKER_SCHEMA = vol.Schema(
         # climate current_temperature: badge + room-average vote (off unless True)
         vol.Optional("use_climate_temp"): vol.Any(bool, None),
         vol.Optional("room_id"): vol.Any(str, None),
-        # keep in sync with DISPLAY_MODES in src/logic.ts — a cross-language test
-        # asserts every option the editor offers is accepted here (issue #3)
+        # Keep in sync with DISPLAY_MODES in src/logic.ts. `ripple` is no longer
+        # offered, but remains accepted while old stores migrate to icon_ripple.
         vol.Optional("display"): vol.Any("badge", "ripple", "icon_ripple", "value", None),
         vol.Optional("ripple_color"): vol.Any(
             None, vol.Match(r"^#[0-9a-fA-F]{6}$")

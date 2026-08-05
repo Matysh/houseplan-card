@@ -87,11 +87,16 @@ Built from the registries (`_buildDevices`), rules carried over 1-to-1 from the 
 
 ## Device markers (v1.6.0+)
 
-Per-marker appearance (v1.22.0): `display: badge|ripple|icon_ripple` (+`ripple_color`,
-`ripple_size`) draws presence-style pulsing rings gated by the pure `isActiveState` —
-deliberately independent of the card-wide `live_states` toggle, with `unavailable` counting as
-idle. `size` (icon multiplier via the `--dev-size` CSS var — value badges scale along) and
-`angle` rotate/scale a single icon. Room drawing shows a live **ruler** (`segmentCm` +
+Per-marker appearance: `display: badge|icon_ripple|value`. All three use one semantic
+resolver (`src/device-visual.ts`) for availability, steady status and activity. `badge`
+shows the icon/morph and status plate; `icon_ripple` additionally shows a finite event,
+static presence, mechanical transition or actual-work ring; `value` replaces the icon
+with the HA-formatted numeric value. A critical alarm is red in every presentation.
+Legacy `display: ripple` is read as `icon_ripple` and rewritten on the next config save;
+the backend accepts it only for compatibility. `ripple_color` and `ripple_size` remain the
+stored names for the ordinary activity effect. `size` (icon multiplier via the
+`--dev-size` CSS var — value badges scale along) and `angle` rotate/scale a single icon.
+Room drawing shows a live **ruler** (`segmentCm` +
 `formatLength`, metres or feet+inches by `hass.config.unit_system`); the scale is per-space
 `cell_cm` (default 5 cm per grid cell).
 
@@ -386,12 +391,17 @@ hash falls back to the default.
   a per-light `clipPath` = zone polygons + doorway sectors, each contour a
   SEPARATE clipPath child (children union; subpaths of one nonzero path
   cancel on opposite windings — field bug v1.36.3). Radius: global
-  `settings.glow_radius_cm` + per-marker `glow_radius_cm`.
+  `settings.glow_radius_cm` + per-marker `glow_radius_cm`. On a thick wall the
+  doorway sector is the angular intersection of its near- and far-face clear
+  spans, so the jamb returns clip the spill as a real opening tunnel.
 - **Open boundaries** (v1.37, revised 2026-08): `space.open_spans` hold
   geometric virtual stretches; `room.open_to` remains the light-zone index
   derived from spans (legacy `open_to`-only configs expand to full
   `sharedBoundary` on read). Shared stretches drawn as a TRUE dash; outlines
-  trimmed (`outlineWithout`/`cutSegments`). Geometry mutations clip one stored
+  trimmed (`outlineWithout`/`cutSegments`). In View the dash group is painted
+  before thick wall bodies, letting real jambs mask its centreline ends; in all
+  editors it is painted after the bodies so saved spans and previews remain
+  fully visible. Geometry mutations clip one stored
   span to **every** surviving shared segment. Adjacent pieces owned by different
   room pairs stay separate: their midpoints are the source of the corresponding
   `open_to` links after Split (`AUD-159B7-01`).

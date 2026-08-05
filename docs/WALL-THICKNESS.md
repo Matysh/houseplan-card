@@ -18,7 +18,11 @@ Code: `src/wall-thickness.ts`, render in `src/houseplan-card.ts` /
 Per space: `walls: [{ key, cm }]`. Key = quantised midpoint + direction
 (modulo 180°). Config always stores centimetres. Open boundaries refuse
 thickness. One physical stretch has one thickness (atomic collinear spans when
-neighbours overlap only partially).
+neighbours overlap only partially). Atomic keys are storage only while a real
+geometric break requires them: once an original edge is entirely solid with
+one thickness, normalisation writes its single whole-edge key again. Likewise,
+touching/overlapping `open_spans` of the same room pair are stored as one span;
+pair ownership remains a hard boundary so Split can derive exact `open_to` links.
 
 Degrade unmatched keys silently on write. Resize / undo / scale re-key all
 touched spans in the same transaction and keep `walls` in the resize snapshot.
@@ -47,12 +51,19 @@ angle (mod 180°), then nearest span — never a perpendicular neighbour at a T.
 At an `open_span` endpoint, real arms owned by different room contours receive
 the same bounded mitre patch as arms from one contour; a virtual T therefore
 has one clean outer corner rather than two butt caps forming a step.
+The virtual segment itself remains centreline-based. View paints it before the
+wall body, which masks the part inside each adjoining thick jamb; editors paint
+it after the body so its full stored extent and live preview stay visible.
 
 ## 4. Floor, fills, light, area
 
 - **Inner contour** = `inset(poly, half[])`.
 - Room fills and glow are clipped to the inner contour (not painted into the
   wall hatch).
+- Glow leaving through a door uses the clear rectangular opening tunnel: its
+  sector is the intersection of the doorway spans at the near and far inner
+  faces. The two jamb returns therefore clip off-axis light; a zero-depth wall
+  keeps the original centreline sector.
 - Displayed **m²** = area of the inner contour (clean floor). Wall-length
   rulers and opening anchors stay on the centreline.
 - With no thickness, inner = poly (parity with pre-thickness behaviour).
@@ -70,8 +81,9 @@ centreline/full-span wedge. `hide_openings` hides the symbol only.
 Plan-editor tool «Wall thickness»; hover whole wall; cm/in from HA; empty/0
 clears; apply-to-room. Hooks: `data-hp="wall"`. i18n en/ru.
 
-**Draw with thickness.** The Draw toolbar carries a session thickness field
-(default **15 cm**, or inches when HA is imperial). Closing a new room outline
+**Draw with thickness.** The Plan toolbar's **Walls** button carries its session
+thickness field immediately on the right (default **15 cm**, or inches when HA
+is imperial). Closing a new room outline
 writes that cm onto every new edge that does not already have one; shared
 stretches that already carry a neighbour's thickness are left alone. Empty / 0
 leaves the room thin. Live thick preview follows the rubber-band while drawing.
@@ -84,7 +96,8 @@ Decor-line thickness, per-side finish, auto-from-backdrop, plan-wide default.
 ## 8. Testing
 
 Unit: ring closed at corners; half-out; inner area; atomic partial shared;
-virtual-T mitre; angle-aware opening; whole and atomic rekey after edge/scale.
+virtual-T mitre; angle-aware opening; thick-door tunnel clipping; whole and
+atomic rekey after edge/scale.
 Browser: seamless frame; fill not in hatch; m² drops with thickness; a partial
 virtual stretch, its solid thick remainders and Undo move as one real resize;
 the virtual rubber band paints above the real body; sun starts at the room-side

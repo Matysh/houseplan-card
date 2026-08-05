@@ -10,8 +10,8 @@
 // The option is offered ONLY for a binding that HAS a cover entity, and never
 // for the guarded classes (garage/door/gate) — for those a value smuggled into
 // the config degrades to 'info', exactly like a card-wide toggle does.
-// While travelling the icon breathes a soft ring (.covermove, the vacuum
-// puck's 2.2s period) and the plate stays NEUTRAL — yellow means «включено».
+// With «Icon + activity», travelling breathes a soft activity ring (the
+// vacuum puck's 2.2s period) and the plate stays NEUTRAL — yellow means work.
 // Since 2026-08-04 the plate is neutral in EVERY cover state, the «открыто»
 // frame included: open/closed is told by the icon morph alone (the full
 // contract lives in smoke_cover_no_plate.mjs).
@@ -45,7 +45,8 @@ const out = await page.evaluate(async () => {
     c._serverCfg = {
       ...c._serverCfg,
       markers: [
-        { id: 'm_gate', binding: 'device:d_gate', tap_action: tapAction, tap_confirm: confirm || null },
+        { id: 'm_gate', binding: 'device:d_gate', tap_action: tapAction,
+          tap_confirm: confirm || null, display: 'icon_ripple' },
         ...(solo ? [{ id: 'm_mower', binding: 'device:d_mower', hidden: true }] : []),
       ],
     };
@@ -149,9 +150,9 @@ const out = await page.evaluate(async () => {
 
   // ---- the indication ----------------------------------------------------
   const afterAnim = () => {
-    const el = devEl();
+    const el = devEl()?.querySelector('.activity-ring.transition i:first-child');
     if (!el) return null;
-    const cs = getComputedStyle(el, '::after');
+    const cs = getComputedStyle(el);
     return { name: cs.animationName, dur: cs.animationDuration };
   };
   await setMarker('cover', false, true); // the gate alone on the plan
@@ -160,33 +161,33 @@ const out = await page.evaluate(async () => {
   // mower used, so a plate colour read in the same frame is still mid-fade
   await new Promise((r) => setTimeout(r, 300));
   o.onlyTheCoverOnThePlan = sr().querySelectorAll('.dev').length === 1;
-  o.pulseWhileOpening = sr().querySelectorAll('.dev.covermove').length === 1;
+  o.pulseWhileOpening = sr().querySelectorAll('.dev.activity-transition').length === 1;
   const a1 = afterAnim();
-  o.pulseIsBreathingRing = a1?.name === 'hp-covermove' && a1?.dur === '2.2s';
+  o.pulseIsBreathingRing = a1?.name === 'hp-activity-breathe' && a1?.dur === '2.2s';
   // the plate stays NEUTRAL while travelling: yellow is reserved for «включено»
   o.movingPlateNotYellow = getComputedStyle(devEl()).backgroundColor !== YELLOW;
 
   await setCover('closing', { device_class: 'curtain' });
   await new Promise((r) => setTimeout(r, 300));
-  o.pulseWhileClosing = sr().querySelectorAll('.dev.covermove').length === 1;
+  o.pulseWhileClosing = sr().querySelectorAll('.dev.activity-transition').length === 1;
   o.closingPlateNotYellow = getComputedStyle(devEl()).backgroundColor !== YELLOW;
 
   await setCover('open', { device_class: 'curtain' });
-  o.noPulseWhenOpen = sr().querySelectorAll('.dev.covermove').length === 0;
+  o.noPulseWhenOpen = sr().querySelectorAll('.dev.activity-transition').length === 0;
   o.iconMorphOpen = icons().includes('mdi:curtains') && !icons().includes('mdi:curtains-closed');
   // owner 2026-08-04: never a coloured plate on a cover — not even «открыто»
   o.openWearsNoFrame = sr().querySelectorAll('.dev.open').length === 0;
   o.openPlateNotYellow = getComputedStyle(devEl()).backgroundColor !== YELLOW;
 
   await setCover('closed', { device_class: 'curtain' });
-  o.noPulseWhenClosed = sr().querySelectorAll('.dev.covermove').length === 0;
+  o.directCloseGetsFallback = sr().querySelectorAll('.dev.activity-transition').length === 1;
   o.iconMorphClosed = icons().includes('mdi:curtains-closed') && !icons().includes('mdi:curtains');
 
   await setCover('open', { device_class: 'shutter' });
   o.iconMorphShutterOpen = icons().includes('mdi:window-shutter-open');
 
   await setCover('unknown', { device_class: 'curtain' });
-  o.noPulseWhenUnknown = sr().querySelectorAll('.dev.covermove').length === 0;
+  o.noPulseWhenUnknown = sr().querySelectorAll('.dev.activity-transition').length === 0;
   o.noMorphWhenUnknown = icons().includes(gate().icon)
     && !icons().some((i) => i.startsWith('mdi:curtains'));
 

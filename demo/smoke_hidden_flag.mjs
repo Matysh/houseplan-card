@@ -100,7 +100,7 @@ Object.assign(out, await page.evaluate(async () => {
   return o;
 }));
 
-// --- HP-1511-02: ripple-призрак с базовой иконкой, без пульса -------------
+// --- Legacy ripple → icon+activity; ghost keeps icon and has no effect -----
 Object.assign(out, await page.evaluate(async () => {
   const o = {};
   const c = window.__card;
@@ -114,11 +114,10 @@ Object.assign(out, await page.evaluate(async () => {
   c._maybeRebuildDevices();
   c._setMode('devices'); c._showHidden = true;
   c.requestUpdate(); await c.updateComplete;
-  const g = [...sr().querySelectorAll('.dev.ghost')].find((x) => x.querySelector('.ripple') || !x.classList.contains('noicon'));
   const ghosts = [...sr().querySelectorAll('.dev.ghost')];
   o.rippleGhostHasIcon = ghosts.length > 0 && ghosts.every((x) => !!x.querySelector('ha-icon'));
   o.rippleGhostNoNoicon = ghosts.every((x) => !x.classList.contains('noicon'));
-  o.rippleGhostNoRipple = ghosts.every((x) => !x.querySelector('.ripple'));
+  o.rippleGhostNoRipple = ghosts.every((x) => !x.querySelector('.activity-ring'));
   c._serverCfg.markers = c._serverCfg.markers.filter((m) => m.id !== lamp.id);
   c._cfgEpoch++; c._regSignature = ''; c._maybeRebuildDevices();
   c._setMode('view'); c._showHidden = false;

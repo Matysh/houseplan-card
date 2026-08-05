@@ -257,7 +257,10 @@ export function resolveOpenCuts(
 ): number[][] {
   const list = (rooms || []).filter((r) => r?.id);
   const clean = sanitizeOpenSpans(spans);
-  if (clean.length) return clean.map((e) => entryToSeg(e, coordScale));
+  if (clean.length) {
+    return clipOpenSpansToShared(clean, rooms, coordScale, eps)
+      .map((e) => entryToSeg(e, coordScale));
+  }
   // Legacy `open_to`-only configuration. NEVER read in the middle of a geometry
   // transaction (AUD-159B6-02): once explicit spans have been removed the index
   // is stale by construction and would resurrect a different stretch.
@@ -499,7 +502,7 @@ export function clipOpenSpansToShared(
   if (!clean.length) return [];
   const shared = sharedSegsWithPairs(roomsModel, eps);
   if (!shared.length) return [];
-  const out: OpenSpanEntry[] = [];
+  const pieces: Array<{ pair: string; seg: number[] }> = [];
   const minLen = Math.max(eps * 4, 1e-6);
   for (const e of clean) {
     const sg = entryToSeg(e, coordScale);
@@ -523,7 +526,7 @@ export function clipOpenSpansToShared(
       ranges.push({ lo, hi });
       byPair.set(pair, ranges);
     }
-    for (const ranges of byPair.values()) {
+    for (const [pair, ranges] of byPair) {
       ranges.sort((a, b) => a.lo - b.lo || a.hi - b.hi);
       const merged: { lo: number; hi: number }[] = [];
       for (const range of ranges) {
@@ -535,7 +538,69 @@ export function clipOpenSpansToShared(
         const na = [ax + ux * range.lo, ay + uy * range.lo];
         const nb = [ax + ux * range.hi, ay + uy * range.hi];
         if (Math.hypot(nb[0] - na[0], nb[1] - na[1]) < minLen) continue;
-        out.push(spanToEntry(na, nb, coordScale));
+        pieces.push({ pair, seg: [na[0], na[1], nb[0], nb[1]] });
+      }
+    }
+  }
+
+  // Canonicalise storage globally, not only inside each source entry. Drawing
+  // two touching pieces on the same physical boundary must not leave two dash
+  // phases / two selectable fragments behind. Pair identity is deliberately
+  // part of the group: Split can leave touching pieces owned by DIFFERENT room
+  // pairs and those must stay separate for an exact `open_to` index.
+  interface LineGroup {
+    pair: string;
+    origin: number[];
+    ux: number;
+    uy: number;
+    ranges: Array<{ lo: number; hi: number }>;
+  }
+  const groups: LineGroup[] = [];
+  const lineTol = Math.max(eps * 4, 1e-6);
+  for (const { pair, seg } of pieces) {
+    const dx = seg[2] - seg[0], dy = seg[3] - seg[1];
+    const len = Math.hypot(dx, dy);
+    if (len < minLen) continue;
+    let ux = dx / len, uy = dy / len;
+    if (ux < -1e-12 || (Math.abs(ux) <= 1e-12 && uy < 0)) {
+      ux = -ux;
+      uy = -uy;
+    }
+    let group = groups.find((g) => (
+      g.pair === pair &&
+      Math.abs(g.ux * uy - g.uy * ux) <= 1e-6 &&
+      Math.abs((seg[0] - g.origin[0]) * g.uy - (seg[1] - g.origin[1]) * g.ux) <= lineTol &&
+      Math.abs((seg[2] - g.origin[0]) * g.uy - (seg[3] - g.origin[1]) * g.ux) <= lineTol
+    ));
+    if (!group) {
+      group = { pair, origin: [seg[0], seg[1]], ux, uy, ranges: [] };
+      groups.push(group);
+    }
+    const t1 = (seg[0] - group.origin[0]) * group.ux + (seg[1] - group.origin[1]) * group.uy;
+    const t2 = (seg[2] - group.origin[0]) * group.ux + (seg[3] - group.origin[1]) * group.uy;
+    group.ranges.push({ lo: Math.min(t1, t2), hi: Math.max(t1, t2) });
+  }
+
+  const out: OpenSpanEntry[] = [];
+  for (const group of groups) {
+    group.ranges.sort((a, b) => a.lo - b.lo || a.hi - b.hi);
+    const merged: Array<{ lo: number; hi: number }> = [];
+    for (const range of group.ranges) {
+      const tail = merged[merged.length - 1];
+      if (tail && range.lo <= tail.hi + minLen) tail.hi = Math.max(tail.hi, range.hi);
+      else merged.push({ ...range });
+    }
+    for (const range of merged) {
+      const a = [
+        group.origin[0] + group.ux * range.lo,
+        group.origin[1] + group.uy * range.lo,
+      ];
+      const b = [
+        group.origin[0] + group.ux * range.hi,
+        group.origin[1] + group.uy * range.hi,
+      ];
+      if (Math.hypot(b[0] - a[0], b[1] - a[1]) >= minLen) {
+        out.push(spanToEntry(a, b, coordScale));
       }
     }
   }

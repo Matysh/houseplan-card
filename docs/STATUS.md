@@ -15,11 +15,11 @@
 
 | Item | State |
 |---|---|
-| Version | **v1.59.0-beta.9** everywhere (manifest, const.py, package.json, CARD_VERSION) — **pre-release**, tag `v1.59.0-beta.9` on **`dev`**, GitHub Release with `prerelease=true`; `main` is not touched and nothing is copied to the home instance by hand — HACS delivers it on the beta channel. On top of beta.8: resize keeps partial `open_spans` and the atomic thickness keys of their solid remainders together in live preview, commit and Undo; real arms at virtual T-junctions receive the missing mitre, and the virtual dash/preview renders above thick real walls. Previous pre-release: v1.59.0-beta.8; previous stable: v1.58.0 |
+| Version | **v1.59.0-beta.10** everywhere (manifest, const.py, package.json, CARD_VERSION) — **pre-release**, tag `v1.59.0-beta.10` on **`dev`**, GitHub Release with `prerelease=true`; `main` is not touched and nothing is copied to the home instance by hand — HACS delivers it on the beta channel. On top of beta.9: unified device status/activity visuals; inline HA variables in decor text; doorway-light clipping by thick-wall reveals; view-only virtual-wall masking; a clearer wall toolbar; and canonical merging/compaction of wall fragments. Previous pre-release: v1.59.0-beta.9; previous stable: v1.58.0 |
 
-| Workflow | Since 2026-07-22: minor changes go to branch **`dev`** (build + smokes → deploy home → commit → push, NO release); releases are batched on the owner's command. **Since 2026-08-04 there is also a pre-release track:** bump to `X.Y.Z-beta.N`, tag the `dev` commit, publish a GitHub Release with `prerelease=true` — `main` is not touched and nothing is copied to the home instance by hand; HACS delivers it on the beta channel |
+| Workflow | Owner's rule since 2026-08-05: ordinary fixes/features are made **locally, without tests and without commits**. Tests/build/smokes run only when the owner asks for a pre-release; then bump to `X.Y.Z-beta.N`, commit/tag the tested `dev` state and publish a GitHub Release with `prerelease=true`. `main` is not touched and nothing is copied to the home instance by hand; HACS delivers it on the beta channel |
 | GitHub | https://github.com/Matysh/houseplan-card — `main` carries stable releases; pre-release tags may point directly at `dev`. Work lands on `dev` and is merged into `main` for a stable release, so `dev` is normally equal to or ahead of `main`, never behind. Push via SSH key `ha_jb` (remote git@github.com:…); API releases via the fine-grained PAT in `~/.git-credentials` (Contents R/W, issued 2026-07-23) |
-| CI | beta.8 repairs the stale general-settings smoke that left beta.7 Validate red (`111/112`) and adds exact-SHA release gating: `release.yml` withholds the asset until every matching Validate run finishes green. The full local gate is green; GitHub Validate and the release asset are verified after the tag is pushed |
+| CI | beta.10 passes the full local frontend, pure-backend and browser-smoke gate. Exact-SHA release gating remains active: `release.yml` withholds the asset until every matching Validate run finishes green; GitHub Validate and the release asset are verified after the tag is pushed |
 | HACS | Custom repository works. **Inclusion PR: hacs/default#9004** — open, valid, labeled, mergeable clean, never drafted. Queue: 1212 open, 835 older than ours. Merge rate COLLAPSED: 75 in July but almost all in the first decade, 0 in the last week (checked 2026-07-29) — maintainers process in rare bursts; ETA unknowable, months at best. Nothing actionable on our side |
 | Home instance | ha.jbstudio.pro (SSH port **22222**, key `ha_jb`; HA config root is `/mnt/data/supervisor/homeassistant` — `/config` does NOT exist in this SSH environment), last direct copy was **v1.57.0**; from v1.58.0 on it updates itself through HACS by tag (no scp) |
 | Localization | UI en/ru (src/i18n/*.json), everything user-visible localized incl. kiosk popover |
@@ -69,6 +69,11 @@
 - **Yellow = working right now** (v1.51.0): climate by hvac_action, service
   switches can no longer become primary, glow pool and icon share one
   condition. Editor gestures on touch (pinch/pan) landed the same release.
+- **Unified device status/activity** (v1.59.0-beta.10, 2026-08-05): three display
+  modes (Icon / Icon + activity / Value), one semantic resolver for yellow
+  actual work, orange open/unlocked, unavailable and always-red alarms;
+  activity distinguishes a short event, presence, mechanical travel and
+  running. Legacy Ripple-only migrates to Icon + activity on the next save.
 
 ## Recent milestones (details in CHANGELOG.md)
 

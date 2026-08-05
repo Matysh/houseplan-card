@@ -16,7 +16,8 @@ import {
   interiorPoint,
   segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointOnBoundary, pointStrictlyInside, roomsOverlap,
   mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, openingShoulders, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, poleOfInaccessibility, runServiceFor, TOGGLE_SAFE_DOMAINS, coverService, coverMoving, coverEntityOf,
-  liveText, liveTextValue, hassValue, valueWithUnit, decorTextScale, decorTextLines,
+  liveText, liveTextValue, liveTextReference, liveTextToken,
+  hassValue, valueWithUnit, decorTextScale, decorTextLines,
   LIVE_TEXT_DASH, LIVE_TEXT_VALUE_MAX, DECOR_TEXT_SCALE_MIN, DECOR_TEXT_SCALE_MAX } from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
@@ -663,10 +664,12 @@ test('lightColorOf: rgb of an on light; off/unavailable/no-color → null', () =
   assert.equal(lightColorOf(undefined), null);
 });
 
-test('isAlarmState: leak/smoke/gas/siren fire; doors and outages do not', () => {
+test('isAlarmState: safety sensors, siren and triggered alarm panel fire; doors and outages do not', () => {
   assert.ok(isAlarmState('binary_sensor', 'moisture', 'on'));
   assert.ok(isAlarmState('binary_sensor', 'smoke', 'on'));
   assert.ok(isAlarmState('siren', undefined, 'on'));
+  assert.ok(isAlarmState('alarm_control_panel', undefined, 'triggered'));
+  assert.ok(!isAlarmState('alarm_control_panel', undefined, 'armed_away'));
   assert.ok(!isAlarmState('binary_sensor', 'door', 'on'));
   assert.ok(!isAlarmState('binary_sensor', 'smoke', 'off'));
   assert.ok(!isAlarmState('binary_sensor', 'smoke', 'unavailable'));
@@ -777,6 +780,26 @@ test('doorSector: sector through a door, clamped and guarded', () => {
   assert.equal(doorSector(s, [60, -2], [60, 2], 50), null);
   // источник на краю двери
   assert.equal(doorSector(s, [0, 0], [10, 2], 50), null);
+});
+
+test('doorSector: thick doorway is clipped by both tunnel jamb faces', () => {
+  const src = [0, 3];
+  const a = [10, -2];
+  const b = [10, 2];
+  const thin = doorSector(src, a, b, 50);
+  const thick = doorSector(src, a, b, 50, 170, 4);
+  assert.ok(thin && thick);
+  assert.deepEqual(doorSector(src, a, b, 50, 170, 0), thin);
+
+  // The vertical wall occupies x=8..12. Every limiting ray must remain inside
+  // the clear opening y=-2..2 at BOTH faces, not only at the centreline.
+  const yAtX = (p, x) => src[1] + (p[1] - src[1]) * ((x - src[0]) / (p[0] - src[0]));
+  for (const p of [thick[1], thick.at(-1)]) {
+    for (const x of [8, 12]) assert.ok(Math.abs(yAtX(p, x)) <= 2 + 1e-9);
+  }
+
+  const spreadAtFarFace = (sector) => Math.abs(yAtX(sector[1], 12) - yAtX(sector.at(-1), 12));
+  assert.ok(spreadAtFarFace(thick) < spreadAtFarFace(thin));
 });
 
 test('hasRoomBehind: neighbour room yes, street no', () => {
@@ -1230,6 +1253,33 @@ test('liveText: no entity = the text is untouched, byte for byte', () => {
   assert.equal(liveText('Бак {}', {}, hassLive), 'Бак {}');
   assert.equal(liveText('Бак {}', { entity: '  ' }, hassLive), 'Бак {}');
   assert.equal(liveText('', null, hassLive), '');
+});
+
+test('liveText: inline variables resolve every state and attribute in the text', () => {
+  assert.equal(
+    liveText('Бак {sensor.tank}; климат {climate.hall:current_temperature}', null, hassLive),
+    'Бак 68 %; климат 21.5',
+  );
+  assert.equal(
+    liveText('{sensor.plain} / {sensor.tank} / {sensor.plain}', null, hassLive),
+    '17.4 / 68 % / 17.4',
+  );
+});
+
+test('liveText: hand-written dotted attributes work; invalid braces stay literal', () => {
+  assert.equal(liveText('{climate.hall.current_temperature}', null, hassLive), '21.5');
+  assert.equal(liveText('Обычный {текст}', null, hassLive), 'Обычный {текст}');
+  assert.equal(liveText('{sensor.nope}', null, hassLive), LIVE_TEXT_DASH);
+});
+
+test('liveTextToken writes the canonical editor syntax', () => {
+  assert.deepEqual(liveTextReference('climate.hall.current_temperature'), {
+    entity: 'climate.hall', attr: 'current_temperature',
+  });
+  assert.equal(liveTextToken('sensor.tank'), '{sensor.tank}');
+  assert.equal(liveTextToken('climate.hall', 'current_temperature'),
+    '{climate.hall:current_temperature}');
+  assert.equal(liveTextToken('not-an-entity'), '');
 });
 
 test('liveText: the placeholder is where the value lands', () => {

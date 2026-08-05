@@ -283,10 +283,9 @@ export function openingAmount(
 }
 
 /**
- * Is an entity "active / detected"? Used by presence ripples, which are opted into per
- * device and therefore must not depend on the card-wide live_states toggle.
- * Anything unknown — including `unavailable` — counts as idle: a sensor outage should
- * calm the plan down, never leave a ring pulsing forever.
+ * Coarse active/open predicate used by bound architectural openings and
+ * compatibility helpers. Device activity itself is classified semantically
+ * in device-visual.ts; it must not use this broad list.
  */
 export function isActiveState(state?: string | null): boolean {
   return ['on', 'open', 'home', 'detected', 'playing', 'cleaning'].includes(String(state));
@@ -766,7 +765,9 @@ export type TapAction = 'info' | 'more-info' | 'toggle' | 'run' | 'cover';
  * can read them and assert the schema accepts every value a user can pick.
  * Adding an option here and forgetting the schema now fails the test suite.
  */
-export const DISPLAY_MODES = ['badge', 'ripple', 'icon_ripple', 'value'] as const;
+/** UI presentations. `ripple` remains a backend/read compatibility value only
+ * and is normalised to `icon_ripple` by the card. */
+export const DISPLAY_MODES = ['badge', 'icon_ripple', 'value'] as const;
 export const TAP_ACTIONS = ['info', 'more-info', 'toggle', 'run', 'cover'] as const;
 /** Space-level fill: 'glow' is a whole-space light model, not a per-room one. */
 // 'glow' leads: it is the default for new spaces since v1.54 — the owner's
@@ -918,8 +919,8 @@ export const LIVE_TEXT_DASH = '—';
 /** A caption is a caption: an attribute that turns out to be a 4 KB string
  *  must not become the plan's wallpaper. */
 export const LIVE_TEXT_VALUE_MAX = 60;
-/** The one placeholder. Not `{{ }}`: this is a substitution, not a template
- *  language — see docs/LIVE-TEXT.md for why that line is where it is. */
+/** Legacy one-value placeholder. New labels store complete `{entity[:attr]}`
+ *  references in `text`; this stays readable for existing configurations. */
 export const LIVE_TEXT_SLOT = '{}';
 
 export interface LiveTextLink {
@@ -929,6 +930,45 @@ export interface LiveTextLink {
   attr?: string | null;
   /** suffix; absent = the entity's own unit_of_measurement (state only) */
   unit?: string | null;
+}
+
+/**
+ * A reference written directly in decor text.
+ *
+ * Canonical form is `{domain.object_id}` for state and
+ * `{domain.object_id:attribute}` for an attribute. For hand-written labels we
+ * also accept `{domain.object_id.attribute}`: the first two dot-separated
+ * parts are the entity id and the rest is the flat attribute name.
+ */
+export function liveTextReference(raw: string | null | undefined): LiveTextLink | null {
+  const ref = String(raw ?? '').trim();
+  if (!ref) return null;
+  let entity = ref;
+  let attr = '';
+  const colon = ref.indexOf(':');
+  if (colon >= 0) {
+    entity = ref.slice(0, colon).trim();
+    attr = ref.slice(colon + 1).trim();
+  } else {
+    const parts = ref.split('.');
+    if (parts.length > 2) {
+      entity = parts.slice(0, 2).join('.');
+      attr = parts.slice(2).join('.');
+    }
+  }
+  if (!/^[a-z0-9_]+\.[a-z0-9_]+$/.test(entity)) return null;
+  if (colon >= 0 && !attr) return null;
+  if (attr && !/^[a-zA-Z0-9_.-]+$/.test(attr)) return null;
+  return attr ? { entity, attr } : { entity };
+}
+
+/** Canonical token inserted by the text editor. */
+export function liveTextToken(entity: string | null | undefined, attr?: string | null): string {
+  const id = String(entity ?? '').trim();
+  const name = String(attr ?? '').trim();
+  const ref = liveTextReference(name ? `${id}:${name}` : id);
+  if (!ref) return '';
+  return `{${ref.entity}${ref.attr ? `:${ref.attr}` : ''}}`;
 }
 
 /** One attribute/state value as text, or null when there is nothing to show. */
@@ -1070,15 +1110,26 @@ export function liveTextValue(hass: any, link: LiveTextLink | null | undefined):
 }
 
 /**
- * The label as it must be painted: the template with its first `{}` replaced
- * by the live value. A template without the placeholder gets the value
- * appended after a space, so picking an entity and typing nothing sensible
- * still shows something useful. Only the FIRST `{}` is substituted — one
- * label, one value (docs/LIVE-TEXT.md «not a multi-entity widget»).
- * Without an entity the text is returned byte-for-byte.
+ * The label as it must be painted. Every valid `{entity}` / `{entity:attr}`
+ * reference is resolved independently, so ordinary text and any number of HA
+ * values may be mixed in one caption. Invalid brace contents stay literal.
+ *
+ * `link` is the pre-template storage format. It is intentionally evaluated
+ * only when the text has no new references, keeping old saved labels working
+ * until the user edits and saves them in the new UI.
  */
 export function liveText(text: string | null | undefined, link: LiveTextLink | null | undefined, hass: any): string {
   const tpl = text ?? '';
+  let referenced = false;
+  const rendered = tpl.replace(/\{([^{}\r\n]+)\}/g, (whole, raw: string) => {
+    const ref = liveTextReference(raw);
+    if (!ref) return whole;
+    referenced = true;
+    return liveTextValue(hass, ref);
+  });
+  if (referenced) return rendered;
+
+  // Backward compatibility for shapes saved by beta.9 and earlier.
   if (!(link?.entity || '').trim()) return tpl;
   const v = liveTextValue(hass, link);
   const i = tpl.indexOf(LIVE_TEXT_SLOT);
@@ -1487,21 +1538,62 @@ export function glowColorOf(state: any, fallback: string): { c: string; bri: num
 
 /**
  * Light spilling through a doorway: the sector of the glow circle between the
- * rays source→A and source→B (door edge points), out to radius r. This part of
- * the circle is intentionally NOT clipped by the room (owner's spec: no shadow
- * casting — just the unclipped sector). Null when the door is out of reach or
- * the source sits on a door edge; the sweep is clamped to maxDeg.
+ * rays source→A and source→B (door edge points), out to radius r.
+ *
+ * With `tunnelDepth > 0`, A/B are the centreline opening corners and the wall
+ * is an actual rectangular tunnel. A valid ray must cross BOTH its source-side
+ * and far-side spans, so the outgoing angle is the intersection of the two
+ * spans' angular intervals. That is the shadow cast by the two jamb returns;
+ * an off-centre lamp no longer shines through the solid corner of a thick wall.
+ * Zero depth is byte-for-byte the old centreline sector.
+ *
+ * This part of the circle is intentionally NOT clipped by the room (owner's
+ * spec: no general shadow casting — only the opening tunnel constrains it).
+ * Null when the door is out of reach/source is on an edge, or when the two
+ * tunnel apertures have no common sight line. Sweep is clamped to maxDeg.
  */
 export function doorSector(
   src: number[], a: number[], b: number[], r: number, maxDeg = 170,
+  tunnelDepth = 0,
 ): number[][] | null {
   const la = Math.hypot(a[0] - src[0], a[1] - src[1]);
   const lb = Math.hypot(b[0] - src[0], b[1] - src[1]);
   if (la < 1e-6 || lb < 1e-6 || Math.min(la, lb) >= r) return null;
-  let aa = Math.atan2(a[1] - src[1], a[0] - src[0]);
-  let sweep = Math.atan2(b[1] - src[1], b[0] - src[0]) - aa;
-  while (sweep > Math.PI) sweep -= 2 * Math.PI;
-  while (sweep < -Math.PI) sweep += 2 * Math.PI;
+  let aa: number;
+  let sweep: number;
+  if (Number.isFinite(tunnelDepth) && tunnelDepth > 1e-6) {
+    const dx = b[0] - a[0], dy = b[1] - a[1];
+    const len = Math.hypot(dx, dy);
+    if (len < 1e-6) return null;
+    const ux = dx / len, uy = dy / len;
+    const nx = -uy, ny = ux;
+    const cx = (a[0] + b[0]) / 2, cy = (a[1] + b[1]) / 2;
+    const side = ((src[0] - cx) * nx + (src[1] - cy) * ny) >= 0 ? 1 : -1;
+    const off = tunnelDepth / 2;
+    const nearA = [a[0] + nx * off * side, a[1] + ny * off * side];
+    const nearB = [b[0] + nx * off * side, b[1] + ny * off * side];
+    const farA = [a[0] - nx * off * side, a[1] - ny * off * side];
+    const farB = [b[0] - nx * off * side, b[1] - ny * off * side];
+    const base = Math.atan2(cy - src[1], cx - src[0]);
+    const unwrap = (p: number[]) => {
+      let ang = Math.atan2(p[1] - src[1], p[0] - src[0]);
+      while (ang - base > Math.PI) ang -= 2 * Math.PI;
+      while (ang - base < -Math.PI) ang += 2 * Math.PI;
+      return ang;
+    };
+    const na = unwrap(nearA), nb = unwrap(nearB);
+    const fa = unwrap(farA), fb = unwrap(farB);
+    const lo = Math.max(Math.min(na, nb), Math.min(fa, fb));
+    const hi = Math.min(Math.max(na, nb), Math.max(fa, fb));
+    if (!(hi - lo > 1e-9)) return null;
+    aa = lo;
+    sweep = hi - lo;
+  } else {
+    aa = Math.atan2(a[1] - src[1], a[0] - src[0]);
+    sweep = Math.atan2(b[1] - src[1], b[0] - src[0]) - aa;
+    while (sweep > Math.PI) sweep -= 2 * Math.PI;
+    while (sweep < -Math.PI) sweep += 2 * Math.PI;
+  }
   const max = (maxDeg * Math.PI) / 180;
   if (Math.abs(sweep) > max) {
     const mid = aa + sweep / 2;
@@ -1844,14 +1936,16 @@ export function distToSegment(p: number[], s: number[]): number {
 const ALARM_CLASSES = new Set(['smoke', 'gas', 'carbon_monoxide', 'moisture', 'safety', 'tamper', 'problem']);
 
 /**
- * An alarm is firing: leak/smoke/gas/CO/safety binary sensors in `on`, or a
- * siren that is on. Unavailable/unknown never alarm (an outage is not a fire).
+ * An alarm is firing: leak/smoke/gas/CO/safety binary sensors in `on`, a
+ * siren that is on, or an alarm panel in `triggered`. Unavailable/unknown
+ * never alarm (an outage is not a fire).
  */
 export function isAlarmState(
   domain: string | null | undefined,
   deviceClass: string | null | undefined,
   state: string | null | undefined,
 ): boolean {
+  if (domain === 'alarm_control_panel') return state === 'triggered';
   if (state !== 'on') return false;
   if (domain === 'siren') return true;
   return domain === 'binary_sensor' && !!deviceClass && ALARM_CLASSES.has(deviceClass);

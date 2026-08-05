@@ -71,16 +71,16 @@ the old behaviour until an editing client materialises it.
 
 ## What a marker SHOWS
 
-A marker's live indication — the yellow «on» plate, the «open» frame (never
-on a cover, see below), the breathing `covermove` ring, the state-morphed
-icon, the ripple — speaks for ONE entity of the device, resolved in this
-order (`_stateClass` / `_actEntity`):
+A marker's live indication — status plate, state-morphed icon and semantic
+activity — is derived by one resolver from one effective source set. Its
+source precedence is (`_visualSamples` / `_actEntity`):
 
 1. the device's **cover**, when the marker's tap action is explicitly
    «Открыть/закрыть» (`tap_action: 'cover'` — `coverEntityOf`, the same helper
    and the same entity the tap drives). It wins over EVERYTHING below;
 2. the marker's bound **controls**, if it has any (a stateless remote or a
-   virtual wall switch mirrors what it drives, not itself);
+   virtual wall switch aggregates what it drives, not itself; any working
+   target drives both the yellow plate and running activity);
 3. a **lit light** among its entities (owner's principle 2026-07-29: the glow
    spot and the badge may never disagree);
 4. otherwise the **primary** entity (`primaryEntity`).
@@ -125,14 +125,14 @@ dialog away, and the honest reading of what the marker was told it is.
 
 «У штор не должно быть жёлтой подложки НИКОГДА, индикация открыто/закрыто за
 счёт морфинга иконки.» For the `cover` domain — and for the cover an
-«Открыть/закрыть» marker indicates, rule 3 above — `_stateClass` returns no
-plate class in any state:
+«Открыть/закрыть» marker indicates, rule 1 above — the visual resolver returns
+no working/open plate in any state:
 
 | cover state | plate | ring | icon |
 |---|---|---|---|
 | `closed` | neutral | — | closed glyph |
 | `open`, ajar (`open` + position) | neutral | — | open glyph |
-| `opening`, `closing` | neutral | `.covermove` breathes | open glyph |
+| `opening`, `closing` | neutral | `.activity-transition` breathes in Icon + activity | open glyph |
 | `unknown` / no state | neutral | — | base icon, no morph |
 | `unavailable` | neutral, faded (`.unavail`) | — | base icon |
 

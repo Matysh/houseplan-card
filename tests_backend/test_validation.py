@@ -592,6 +592,8 @@ def test_every_display_mode_the_editor_offers_is_accepted():
     assert "value" in modes, "the regression this test exists for"
     for mode in modes:
         v.MARKER_SCHEMA(_marker(display=mode))
+    # Read/write compatibility for stores created before the unified activity UI.
+    v.MARKER_SCHEMA(_marker(display="ripple"))
     v.MARKER_SCHEMA(_marker(display=None))
     with pytest.raises(vol.Invalid):
         v.MARKER_SCHEMA(_marker(display="wat"))
@@ -1183,11 +1185,11 @@ class TestVacuum:
 
 
 def test_decor_text_live_fields():
-    """docs/LIVE-TEXT.md: a text label may carry an entity, an attribute and a
-    unit. All three optional and BOUNDED; junk is refused; a label without them
-    stays valid, so no plan needs a migration."""
+    """docs/LIVE-TEXT.md: new references live in `text`; the bounded legacy
+    entity/attribute/unit fields remain valid until an old label is edited."""
     base = {"id": "s1", "title": "S", "view_box": [0, 0, 1, 1], "rooms": []}
-    txt = {"id": "d", "kind": "text", "x": 0.5, "y": 0.5, "text": "Бак {}"}
+    txt = {"id": "d", "kind": "text", "x": 0.5, "y": 0.5,
+           "text": "Бак {sensor.water_tank}"}
 
     def cfg(extra):
         return v.CONFIG_SCHEMA({"spaces": [{**base, "decor": [{**txt, **extra}]}]})

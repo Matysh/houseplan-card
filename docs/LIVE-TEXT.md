@@ -1,17 +1,18 @@
 # The text block — a decor label that can show an entity's state
 
 Status: **implemented (dev, unreleased).** Code: `src/logic.ts`
-(`liveText`, `liveTextValue`, `decorTextScale`, `decorTextLines` — pure,
-unit-tested), `src/houseplan-card.ts` (`_renderDecorLayer`,
+(`liveText`, `liveTextReference`, `liveTextToken`, `liveTextValue`,
+`decorTextScale`, `decorTextLines` — pure, unit-tested),
+`src/houseplan-card.ts` (`_renderDecorLayer`,
 `_renderTextFrame`, `_renderDecorTextDialog`, the `_dt*` gestures),
 `custom_components/houseplan/validation.py` (`DECOR_SCHEMA`, text branch).
 Smokes: `demo/smoke_live_text.mjs`, `demo/smoke_decor_text.mjs`;
 `demo/smoke_decor.mjs` keeps the surrounding decor contract.
 
-The shape: `{kind:'text', x, y, text, color, scale?, angle?, entity?, attr?,
-unit?}` — plus the legacy `size?` that older plans still carry. Everything
-after `color` is optional, so **every existing plan validates and renders
-unchanged and no migration runs**.
+The shape: `{kind:'text', x, y, text, color, scale?, angle?}` — plus legacy
+`size?`, `entity?`, `attr?`, and `unit?` fields that older plans may still
+carry. New live references are stored only inside `text`; existing linked
+labels render unchanged and migrate to inline references when edited.
 
 ## 1. Why a live label
 
@@ -27,28 +28,26 @@ happens to have a live number in it.
 The competing card (ha-floorplan) covers this with `text_set` and it is one of
 its most used features; our decor text was one field away from it.
 
-## 2. The live value
+## 2. Inline HA variables
 
-A decor text shape has three optional fields:
+`text` is both the visible copy and the complete template. It may contain any
+number of HA references mixed with ordinary text and line breaks:
 
-- `entity` — an entity id whose state is substituted; absent = today's plain
-  static label, byte-for-byte unchanged;
-- `attr` — an attribute name to read instead of `state` (battery level,
-  current temperature of a climate, position of a cover); absent = the state;
-- `unit` — a suffix; absent = the entity's own `unit_of_measurement`, so
-  `sensor.tank` needs no configuration to read *68 %*.
+- `{sensor.water_tank}` — the entity state;
+- `{climate.hall:current_temperature}` — one attribute;
+- `Бак {sensor.water_tank}, зал {climate.hall:current_temperature}` — several
+  independent values in one label.
 
-The `text` field keeps its present meaning and becomes the **template**: the
-placeholder `{}` is where the value lands. `Бак {}` → *Бак 68 %*. A template
-without a placeholder gets the value appended after a space, so a user who
-only picks an entity and types nothing sensible still sees something useful.
-**Only the first `{}` is replaced** — one label, one value.
+The editor writes the colon form because the boundary between entity and
+attribute is unambiguous. Hand-written `{climate.hall.current_temperature}` is
+accepted too: the first two dot-separated parts form the entity id and the
+rest is the attribute. Invalid brace contents stay literal, while a valid but
+missing entity or attribute renders as a dash.
 
-`{}` was chosen over `{{ }}` deliberately: this is a substitution, not a
-template language. There is no expression, no condition, no arithmetic — the
-moment we accept `{{ states('x') | round(1) }}` we have signed up for the
-class of support load that fills the competitor's thread (138 posts of "my
-CSS/template does not work"). One value, one place, no syntax to get wrong.
+This remains substitution, not a template language: no expressions,
+conditions, arithmetic, Jinja, or nested braces. The 200-character limit is
+the limit of the saved template; each resolved value is still clipped to 60
+characters.
 
 ### 2.1. Rendering rules
 
@@ -77,17 +76,10 @@ CSS/template does not work"). One value, one place, no syntax to get wrong.
   formatter falls back to the raw state, byte-for-byte the pre-2026-08-05
   behaviour. Imperial/metric is not our business either — the value and the
   unit come from HA (docs/STYLING-HOOKS.md §6).
-- **The unit is inherited only for the STATE.** With an `attr` the entity's
-  `unit_of_measurement` is not applied: it describes the state, and a
-  `battery_level` read off a °C sensor must not come out as «73 °C». An
-  explicit `unit` always wins; an empty one inherits.
-- **The unit appears exactly once.** HA's formatter normally appends the
-  entity's unit itself, so the inherited one is not added a second time — and
-  where it does not append it, ours still is, so the unit never silently
-  disappears either. The rule: strip the entity's own `unit_of_measurement`
-  if it is already the tail (exact trailing match, nothing else in the string
-  is touched), then append the unit actually wanted — the user's explicit one,
-  or the entity's own.
+- **Units belong to Home Assistant.** State variables use HA's formatted state,
+  including its unit. Attribute variables use HA's attribute formatter and do
+  not inherit the entity state's unit. There is no separate unit override in
+  the new editor; a literal suffix can be typed immediately after the token.
 - The value is clipped to `LIVE_TEXT_VALUE_MAX` (60) characters: a caption is
   a caption, and an attribute that turns out to be a 4 KB string must not
   become the plan's wallpaper.
@@ -119,7 +111,7 @@ size is not one of three opinions; it is whatever fits the place it is put in.
   newline is stored and rendered as a newline (one `<tspan>` per line, line
   height 1.2 em). The label **never wraps by itself** — a caption that reflows
   on every state change is a caption that jumps around the plan. A
-  300-character line stays one line.
+  200-character line stays one line.
 - **Multi-line blocks are centred**, horizontally (the decor layer's
   `text-anchor: middle`, which single-line labels already used) and
   vertically: the anchor `x/y` sits in the middle of the block, so adding a
@@ -159,34 +151,24 @@ click opens its editor, and the corner/rotate handles appear.
 
 ## 5. The dialog
 
-Under the text field:
-
-- a **textarea** (line breaks are content now), saved with the button or
-  Ctrl/⌘+Enter — plain Enter is a new line;
-- a hint that mentions `{}` **only when an entity is chosen** — an unlinked
-  label must not be burdened with syntax it does not need;
-- an **entity picker** with a datalist of all entities — the same control
-  style the vacuum source and the weather field use;
-- an **attribute field**, shown only once an entity is chosen, with a datalist
-  of that entity's actual attribute names — the user should not have to know
-  that a climate keeps `current_temperature`;
-- a **unit field** whose placeholder is the entity's own unit, so leaving it
-  empty is the obvious right answer (the placeholder disappears once an
-  attribute is chosen, because an attribute does not inherit it);
-- a **live preview** of the resulting label, rendered through the same
-  `liveText` the plan uses: one substitution, one truth.
-
-Clearing the entity clears the attribute and the unit with it — a save never
-leaves orphan fields in the config.
+- The textarea is the sole source of the label. It accepts ordinary copy,
+  line breaks, and manually typed references in any order; Ctrl/⌘+Enter saves.
+- «Insert HA variable» contains an entity picker. After an entity is selected,
+  the second control offers its state and actual attribute names.
+- Choosing the state or an attribute immediately inserts the complete token at
+  the textarea's current selection/caret, then returns focus after the token.
+  The user can continue typing or insert another variable, including one from
+  another entity, until the 200-character field limit is reached.
+- There is no unit field, single-slot hint, or separate preview. The label on
+  the plan is already the live preview and uses the same text template.
 
 ## 6. Backend
 
-`DECOR_SCHEMA`, text branch: `entity` optional, `None` or an entity id
-(`^[a-z0-9_]+\.[a-z0-9_]+$`, ≤ 255); `attr` optional, `None` or a flat name
-≤ 64; `unit` optional, `None` or ≤ 16 characters; `scale` optional, finite,
-`0.15…20`; `angle` optional, finite, `-360…360`; `text` ≤ 200 characters,
-newlines included. Everything optional, so every existing plan validates
-unchanged. Tests: `tests_backend/test_validation.py`
+`DECOR_SCHEMA`, text branch: `text` ≤ 200 characters, newlines and inline
+references included; `scale` optional, finite, `0.15…20`; `angle` optional,
+finite, `-360…360`. Legacy `entity`/`attr`/`unit` remain accepted and bounded
+so old saved plans continue to validate and render. The frontend writes none
+of them after the label has been edited. Tests: `tests_backend/test_validation.py`
 (`test_decor_text_live_fields`, `test_decor_text_block_scale_and_angle`).
 
 ## 7. What this is not
@@ -194,8 +176,7 @@ unchanged. Tests: `tests_backend/test_validation.py`
 - **Not a second device marker.** No tap action, no icon, no state class, no
   participation in room aggregation (LQI, climate averages) — it is a caption,
   not a device. A user who wants an interactive thing puts a marker.
-- **Not a template engine** (see §2).
-- **Not a multi-entity widget.** One label, one value. Two values are two
-  labels; that stays honest and costs the user one drag.
+- **Not a template engine** (see §2). Multiple substitutions do not introduce
+  expressions, conditions, or formatting rules.
 - **Not an auto-layout.** No wrapping, no shrink-to-fit: the size is set with
   the corners and the lines with the Enter key.

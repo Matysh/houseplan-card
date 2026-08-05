@@ -232,17 +232,23 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] Drag anywhere (no edit mode), snaps to grid, persists after reload, per space
 - [ ] ↺ reset restores auto layout after confirm
 - [ ] Temperature badge on thermometers; LQI value under zigbee icons with red→green color
-- [ ] Live states: light on = yellow, open cover/lock/door = orange, unavailable = faded
+- [ ] Unified live states (dev, owner 2026-08-05): actual work is yellow;
+      open door/window, unlocked lock and open valve are orange; covers stay
+      neutral and morph their icon; unavailable is faded. The plate and the
+      activity effect come from the same semantic resolver
 - [ ] State icons (v1.26.0): auto icons morph with state — door/window/garage open↔closed,
       lock locked↔unlocked, bulb on; custom icons and unavailable states never morph [manual]
 - [ ] display "Value instead of an icon": the marker shows the measurement (°/%/unit)
       as its body, small badges hidden; non-numeric fallback keeps the icon [manual]
 - [ ] RGB lights (v1.27.0, contract changed in v1.52.0): a lamp's colour lives
-      in its glow spot and the ripple fallback ONLY — the icon/badge/border get
-      no RGB tint; explicit ripple color still wins; off lights unchanged
+      in its glow spot and the activity-effect fallback ONLY — the icon/badge/border get
+      no RGB tint; explicit activity color still wins; off lights unchanged
       [auto: smoke_light_badges + smoke_rgb_alarm]
-- [ ] Alarm pulse (v1.27.0): leak/smoke/gas/CO/siren in 'on' pulse a red ring over any
-      display mode; clears on 'off'; unavailable never alarms [manual]; reduced-motion static
+- [ ] Alarm pulse (v1.27.0, unified dev): leak/smoke/gas/CO/siren in `on`
+      and an alarm control panel in `triggered`
+      get a red plate and red pulse over every display mode and even with
+      ordinary live-state dressing off; clears on 'off'; unavailable never
+      alarms [manual]; reduced-motion is static
 - [ ] Render cost (v1.43.1, audit L1): geometry (space model, open pairs) is
       computed once per config change, not per HA state push — smoke asserts
       zero recomputations across 10 state pushes and recomputation after an
@@ -299,9 +305,10 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       closed -> cover.open_cover, open (incl. ajar) -> cover.close_cover,
       opening/closing -> cover.stop_cover, no readable state -> cover.toggle;
       the «ask for confirmation» checkbox guards it like toggle/run.
-      Indication: while travelling the icon breathes a soft yellow ring
-      (.covermove, 2.2s, static under prefers-reduced-motion) and the plate
-      stays NEUTRAL in EVERY state (2026-08-04, see the next item); the icon
+      Indication: while travelling the icon breathes a soft activity ring
+      (`.activity-transition`, 2.2s, static under prefers-reduced-motion) in
+      display «Icon + activity» and the plate stays NEUTRAL in EVERY state
+      (2026-08-04, see the next item); the icon
       morphs by state + device_class (blinds/shutter/curtain…), unknown state
       morphs nothing; no position percentages anywhere
       [auto: smoke_cover_tap + units resolveTapAction/coverService/stateIcon +
@@ -312,7 +319,8 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       closing: the plate is the plain neutral badge every time — never the
       yellow «включено» one, never the orange «открыто» frame it used to wear
       while open — the icon is the only open/closed signal, and the breathing
-      .covermove ring appears in the two travelling states and nowhere else.
+      `.activity-transition` ring appears in the two travelling states and
+      nowhere else when «Icon + activity» is selected.
       The morph is exhaustive: every device class gives two DIFFERENT glyphs
       (awning included), a cover with no device_class morphs within its own
       auto-icon family (mdi:roller-shade, mdi:garage-variant), a hand-picked
@@ -334,7 +342,7 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] Curtain INDICATION follows the same cover (dev, owner 2026-08-04): with
       «Open/close» chosen on that same Aqara marker, the plan shows the cover
       and not the service switch — the breathing ring while it travels
-      (`covermove`, opening AND closing), the `mdi:curtains-closed` /
+      (`activity-transition`, opening AND closing), the `mdi:curtains-closed` /
       `mdi:curtains` morph, a neutral plate throughout (the «открыто» frame
       was retired for covers later the same day), and no yellow plate when
       `switch.*_reverse_direction` happens to be on. The rule is exactly
@@ -348,8 +356,8 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       device whose own `light.*` is ON, one whose bound `controls` switch is
       ON. In every cover state (closed / open / opening / closing) the plate
       stays neutral — never the yellow «включено», never the orange «открыто»
-      — the travelling ring breathes, the icon morphs with the cover, and in
-      glow fill the ring is still there (that is where a yellow-plated curtain
+      — with «Icon + activity» the travelling ring breathes, the icon morphs
+      with the cover, and in glow fill the ring is still there (that is where a yellow-plated curtain
       used to lose BOTH indicators). Untouched: the same mixed device without
       the explicit action is yellow again, a wall switch still mirrors its
       controls, and an «Открыть/закрыть» marker whose device has no `cover.*`
@@ -357,7 +365,7 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] Light-source badges (v1.52.0): in glow fill a lit lamp's badge stays
       standard (the spot is the indicator) and a lit socket stays yellow; in
       other fills a lit lamp is plain yellow with no RGB tint; morphing and
-      the ripple colour fallback survive [auto: smoke_light_badges +
+      the activity colour fallback survive [auto: smoke_light_badges +
       smoke_rgb_alarm]
 - [ ] Icon size multiplier scales the glyph (dev): set a marker's size to 3 —
       the icon inside grows with the badge instead of staying default
@@ -365,8 +373,8 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] Auto-grid parity (v1.51.2, HP-1511-01): with an empty layout, a visible
       device among hidden ones sits at the same spot on both cards
       [auto: smoke_hidden_flag autoGridParity]
-- [ ] Ripple ghost (v1.51.2, HP-1511-02): a hidden ripple-display marker shows
-      its base icon, no pulse [auto: smoke_hidden_flag rippleGhost*]
+- [ ] Activity ghost (v1.51.2, unified dev): a hidden icon+activity marker
+      shows its base icon and no effect [auto: smoke_hidden_flag rippleGhost*]
 - [ ] Hidden LQI parity (v1.51.1, HP-1510-01): a room whose only Zigbee
       devices are hidden paints the same lqi fill on the full and the static
       card [auto: smoke_hidden_flag lqiParity]
@@ -378,7 +386,7 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       the count, still count toward room LQI, cast no glow/light fill; the
       device editor's "Show hidden" (local, per tab) shows them as BLUE
       dashed ghosts — distinct from a grey unavailable icon — with NO live
-      state paint (no yellow, no alarm, no ripple);
+      state paint (no yellow, no alarm, no activity);
       unticking keeps a hidden:false marker (re-seed protection); an old
       config materialises on first load by an editing client and legacy
       clients keep the old behaviour until then
@@ -679,7 +687,7 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       tap action Toggle flips all bound lights/switches at once (any on → all
       off, all off → all on, one service call); the icon state (yellow badge)
       mirrors the targets, not the marker's own entity — the RGB tint is gone
-      since v1.52.0, target colours reach only the glow/ripple; without explicit Toggle
+      since v1.52.0, target colours reach only the glow/activity effect; without explicit Toggle
       the click opens info as usual; the info card lists targets with states;
       locks/other domains are filtered out of controls [auto: smoke_controls]
 - [ ] Glow fill (v1.35.0): fill mode "Light sources" — every room painted with
@@ -869,17 +877,34 @@ require hands on real hardware — they remain for the human pass.
 - [ ] `show_button: false` hides the footer
 - [ ] Full card honours `#space=<id>` on load and on hashchange; invalid id ignored [manual]
 
-## Presence ripples / per-device icon (v1.22.0)
+## Unified device status and activity (dev, owner 2026-08-05)
 
-- [ ] Marker dialog → Display = "Ripple only": the icon badge disappears, rings pulse while the
-      entity is on, and collapse to a faint dot when it goes off
-- [ ] Display = "Icon + ripple": both the icon and the rings are drawn
-- [ ] Ripple colour and size (×2..×8) apply per device
-- [ ] An entity going `unavailable` stops the pulsing (idle dot), never leaves it running
-- [ ] Icon size ×0.5..×3 and rotation 0..350° apply per device; the temp/humidity badges
-      scale with the icon
-- [ ] Ripples still work with the card-wide "live states" toggle OFF (they are opt-in per device)
-- [ ] With OS "reduce motion" enabled, rings do not animate
+- [ ] The Display list contains exactly Icon, Icon + activity, Value instead
+      of an icon. Legacy `display: ripple` reads and saves back as `icon_ripple`
+- [ ] Icon shows state plate/morph but no ordinary activity effect; Icon +
+      activity adds the semantic effect; Value keeps the state-coloured plate
+      and hides ordinary activity
+- [ ] Motion/vibration/sound/contact rising edges render exactly three waves
+      for about 3.3 s; initial load and recovery from unknown/unavailable do
+      not fake an event; a rapid retrigger restarts it
+- [ ] Occupancy/presence is one calm static ring for the whole active state
+- [ ] Cover/lock/valve movement breathes until the travelling state ends;
+      direct terminal `closed ↔ open` / `locked ↔ unlocked` without an
+      intermediate state breathes for about 3.3 s
+- [ ] Actual work (light/switch/fan/humidifier on, active climate action,
+      media playing, vacuum cleaning, script running) is yellow and slowly
+      breathes in Icon + activity; `automation = on` is merely enabled and
+      remains neutral
+- [ ] Controls aggregate their targets: any working target drives both the
+      yellow plate and the running effect
+- [ ] Open contact/unlocked lock/open valve are orange; an open cover stays
+      neutral because its icon morph carries that state
+- [ ] Unavailable suppresses ordinary activity. Alarm outranks all of it,
+      remains red in every display mode and with ordinary live states off
+- [ ] Activity colour and size (×2..×8) apply per device; alarm ignores them
+- [ ] Icon size ×0.5..×3 and rotation 0..355° apply per device; the
+      temp/humidity badges scale with the icon
+- [ ] With OS "reduce motion" enabled, activity/alarm rings are static
 
 ## Doors & windows (v1.23.0)
 
@@ -1132,25 +1157,30 @@ require hands on real hardware — they remain for the human pass.
 
 ## The text block on the plan (docs/LIVE-TEXT.md, dev, unreleased)
 
-- [ ] **A label can show a live value**: in the Background editor place a text,
-      pick an entity in the dialog and write `Бак {}` — the plan shows
-      «Бак 68 %». Change the sensor: the label follows without any reload. A
-      label with no entity is untouched, byte for byte
-      [auto: smoke_live_text + unit logic.test]
-- [ ] **The unit comes from the entity**: leave the unit field empty and the
-      entity's own `unit_of_measurement` is used (its placeholder shows which);
-      type your own and it wins. Choose an ATTRIBUTE (say `battery_level` on a
-      °C sensor) and the entity's unit is NOT inherited — an attribute is not
-      the state [auto: smoke_live_text]
+- [ ] **One text, many HA variables**: write `Бак {sensor.tank}, зал
+      {climate.hall:current_temperature}` — both values render and update
+      independently. The hand-written dotted attribute form
+      `{climate.hall.current_temperature}` works too; ordinary/invalid braces
+      stay literal [auto: smoke_live_text + unit logic.test]
+- [ ] **Picker inserts at the caret**: put the cursor between two words, choose
+      an entity and then its state/attribute — the full token appears exactly
+      at that selection and focus returns immediately after it. Continue typing
+      and insert another variable until the textarea's 200-character limit
+      [auto: smoke_live_text]
+- [ ] **No separate unit/preview/single-slot UI**: the dialog has none of the
+      old unit field, `{}` hint, or preview block. State units come from HA;
+      attributes do not inherit the state unit, and a custom suffix is ordinary
+      text after the token [manual]
 - [ ] **A dead sensor says so**: make the entity unavailable (or delete it) —
       the value becomes «—» and the rest of the caption stays. The dash carries
       no unit [auto: smoke_live_text]
 - [ ] **Nothing is rounded**: a sensor reporting `23.94781` shows `23.94781`.
       Rounding is the sensor's `display_precision`, not ours [auto:
       smoke_live_text]
-- [ ] **The preview is the truth**: the line under the dialog's fields is
-      rendered by the same substitution the plan uses, so what it shows is what
-      the plan will show [manual]
+- [ ] **Old links migrate on edit**: a stored beta.9 `text + entity/attr/unit`
+      label still renders unchanged. Open it: the inline token is visible in
+      the textarea; save it and only the new text template remains
+      [auto: smoke_live_text]
 - [ ] **The same everywhere**: the label reads identically in View, in the
       editors and on a kiosk screen [auto: smoke_live_text]
 - [ ] **No font-size choice any more**: the dialog has no Small/Medium/Large.
@@ -1427,9 +1457,9 @@ require hands on real hardware — they remain for the human pass.
       attribute goes through the attribute formatter (a climate's
       `current_temperature` is a number, not the climate's state)
       [auto: smoke_value_format + unit logic.test]
-- [ ] **Your own unit replaces the entity's**: type `проц.` in a label's unit
-      field — the result is «68,4 проц.», never «68,4 % проц.»
-      [auto: smoke_value_format]
+- [ ] **A literal suffix stays literal**: write an attribute token followed by
+      ` проц.` — the suffix is part of the text, with no hidden unit override
+      and no duplicate appended by the label renderer [auto: smoke_live_text]
 - [ ] **An older Home Assistant is unchanged**: on an HA without
       `formatEntityState` the badge and the label print the raw state with the
       entity's unit appended, exactly as before — nothing is blank and nothing
@@ -1451,6 +1481,11 @@ require hands on real hardware — they remain for the human pass.
 
 ## Wall thickness (docs/WALL-THICKNESS.md, Unreleased)
 
+- [ ] **Walls + adjacent draw thickness**: the first Plan-editor tool is named
+      “Walls” / «Стены» rather than “Add”; while it is active, its thickness
+      field is the immediately following toolbar element, before Merge. The
+      field still defaults to 15 cm and disappears when another tool is selected
+      [auto: smoke_draw_wall_thickness]
 - [ ] **Tool + hover + input**: Plan editor → Wall thickness. Hover highlights
       the whole wall; click opens the cm/in field; empty/0 clears; Esc closes
       without applying; «Apply to all walls of this room» fills every allowed
@@ -1462,6 +1497,11 @@ require hands on real hardware — they remain for the human pass.
       the body; the door swing is offset toward the inner face; with
       `hide_openings` the symbols hide but the cut remains
       [auto: smoke_wall_thickness]
+- [ ] **Door light uses the clear tunnel**: place an off-centre light beside a
+      door in a thick wall. In the neighbouring room the glow is limited by
+      sight lines through both the near and far inner-face corners; neither
+      side crosses a solid jamb return. Clearing wall thickness restores the
+      wider centreline-based sector [auto: test/logic.test.mjs; manual visual]
 - [ ] **Shared once / clear → line / resize re-keys**: one body for a shared
       wall; clearing thickness restores the centreline; resizing a thick wall
       keeps the thickness on the moved stretch, including both atomic solid
@@ -1469,9 +1509,18 @@ require hands on real hardware — they remain for the human pass.
       [auto: smoke_wall_thickness + smoke_resize_virtual_thick]
 - [ ] **Virtual T-junction**: when two real thick arms from different room
       contours meet at an `open_span` endpoint, the outside corner is a clean
-      mitre with no stair-step; the saved dash and the two-click rubber band
-      paint above the real hatch right up to the centreline
+      mitre with no stair-step. In every editor the saved dash and the two-click
+      rubber band paint above the real hatch right up to the centreline; in
+      View the same saved dash paints below the body, so each thick jamb masks
+      its centreline end without shortening the stored span
       [auto: test/wall-thickness.test.mjs + smoke_resize_virtual_thick]
+- [ ] **Fragment normalisation**: draw adjacent/overlapping virtual stretches
+      along the same pair of rooms — they persist and select as one span. Close
+      the last virtual stretch on a uniformly thick wall — its saved `walls`
+      data returns to one whole-edge key. Repeat across a Split boundary: spans
+      owned by different room pairs must stay separate
+      [auto: test/open-spans.test.mjs + test/wall-thickness.test.mjs +
+      smoke_resize_virtual_thick]
 - [ ] **Unit + backend**: inset/mitre/bevel, key from either end, degrade,
       rekey, cm↔inches; `walls` schema bounds
       [auto: test/wall-thickness.test.mjs + tests_backend/test_validation.py]

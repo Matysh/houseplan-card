@@ -54,14 +54,14 @@ const out = await page.evaluate(async () => {
   /** The auditor's marker #1: primary is a LIT light, the cover is explicit. */
   const litLamp = {
     id: 'p_lamp', primary: 'light.mixed', entities: ['light.mixed', 'cover.mixed'],
-    tapAction: 'cover', marker: null,
+    tapAction: 'cover', marker: { display: 'icon_ripple' },
   };
   /** The auditor's marker #2: a cover marker whose bound control is on. */
   const controlled = {
     id: 'p_ctrl', primary: 'cover.mixed', entities: ['cover.mixed'],
-    tapAction: 'cover', marker: { id: 'p_ctrl', binding: 'device:x', controls: ['switch.control'] },
+    tapAction: 'cover', marker: { id: 'p_ctrl', binding: 'device:x', controls: ['switch.control'], display: 'icon_ripple' },
   };
-  const CV = { closed: '', open: '', opening: 'covermove', closing: 'covermove' };
+  const CV = { closed: '', open: '', opening: 'activity-transition', closing: 'activity-transition' };
   for (const [state, want] of Object.entries(CV)) {
     const states = {
       'light.mixed': st('on', { friendly_name: 'Bedside lamp' }),
@@ -78,14 +78,15 @@ const out = await page.evaluate(async () => {
   o.controlledUnavailFades = withStates({
     'switch.control': st('on', {}), 'cover.mixed': st('unavailable', {}),
   }, () => c._stateClass(controlled)) === 'unavail';
-  // …and a cover entity with no state at all is simply neutral, not yellow
-  o.litLampNoCoverStateIsNeutral = withStates({
+  // …and a selected cover with no state is unavailable, never borrowed from
+  // the lit neighbour that the explicit cover action deliberately outranks.
+  o.litLampNoCoverStateIsUnavailable = withStates({
     'light.mixed': st('on', {}),
-  }, () => c._stateClass(litLamp)) === '';
+  }, () => c._stateClass(litLamp)) === 'unavail';
 
   // ---- the OTHER side of the rule: nothing changed for the rest ----------
   // the very same mixed device WITHOUT the explicit action keeps its primary
-  const plainLamp = { ...litLamp, id: 'p_plain', tapAction: null };
+  const plainLamp = { ...litLamp, id: 'p_plain', tapAction: null, marker: null };
   o.mixedWithoutTheOptionStaysYellow = withStates({
     'light.mixed': st('on', {}), 'cover.mixed': st('opening', { device_class: 'curtain' }),
   }, () => c._stateClass(plainLamp)) === 'on';
@@ -104,7 +105,7 @@ const out = await page.evaluate(async () => {
   // a curtain marker with controls that are OFF is still just a curtain
   o.controlledOffStillRings = withStates({
     'switch.control': st('off', {}), 'cover.mixed': st('opening', { device_class: 'curtain' }),
-  }, () => c._stateClass(controlled)) === 'covermove';
+  }, () => c._stateClass(controlled)) === 'activity-transition';
   // an explicit «cover» marker with NO cover among its entities falls back to
   // the old order — the statement is only as strong as the entity behind it
   const noCover = {
@@ -143,8 +144,8 @@ const out = await page.evaluate(async () => {
     c._serverCfg = {
       ...c._serverCfg,
       markers: [
-        { id: 'm_mixed', binding: 'device:d_mixed', tap_action: 'cover' },
-        { id: 'm_ctrl', binding: 'device:d_ctrl', tap_action: 'cover', controls: ['switch.control'] },
+        { id: 'm_mixed', binding: 'device:d_mixed', tap_action: 'cover', display: 'icon_ripple' },
+        { id: 'm_ctrl', binding: 'device:d_ctrl', tap_action: 'cover', controls: ['switch.control'], display: 'icon_ripple' },
       ],
     };
     c._cfgEpoch++;
@@ -187,7 +188,7 @@ const out = await page.evaluate(async () => {
     o[tag + 'NotYellow'] = bg !== YELLOW;
     o[tag + 'NotOrange'] = bg !== ORANGE;
     o[tag + 'NoOnClass'] = !el.classList.contains('on') && !el.classList.contains('open');
-    o[tag + 'Rings'] = el.classList.contains('covermove');
+    o[tag + 'Rings'] = el.classList.contains('activity-transition');
     o[tag + 'IconIsTheCover'] = el.querySelector('ha-icon')?.getAttribute('icon') === 'mdi:curtains';
   };
   o.lampIsTrulyLit = c.hass.states['light.mixed'].state === 'on';
@@ -200,7 +201,7 @@ const out = await page.evaluate(async () => {
   const closedBg = (ref) => getComputedStyle(elOf(dev(ref))).backgroundColor;
   o.litLampClosedNeutral = closedBg('d_mixed') === NEUTRAL;
   o.controlledClosedNeutral = closedBg('d_ctrl') === NEUTRAL;
-  o.litLampClosedNoRing = !elOf(dev('d_mixed')).classList.contains('covermove');
+  o.litLampClosedNoRing = !elOf(dev('d_mixed')).classList.contains('activity-transition');
   return o;
 });
 checkAll(out);

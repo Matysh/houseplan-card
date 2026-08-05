@@ -86,7 +86,7 @@ const out = await page.evaluate(async () => {
   c._openMarkerDialog(curtain()); await c.updateComplete;
   const optionValues = () => [...sr().querySelectorAll('.dialog option')].map((e) => e.value);
   o.dialogOffersCover = optionValues().includes('cover');
-  c._markerDialog = { ...c._markerDialog, tapAction: 'cover' };
+  c._markerDialog = { ...c._markerDialog, tapAction: 'cover', display: 'icon_ripple' };
   await c.updateComplete;
   await c._saveMarker();
   await c.updateComplete;
@@ -165,7 +165,7 @@ const out = await page.evaluate(async () => {
   await push('closed', { device_class: 'curtain' });
   o.markerIsOnScreen = !!devEl(curtain());
   o.closedIsNeitherOpenNorMoving =
-    !clsOf(curtain()).includes('open') && !clsOf(curtain()).includes('covermove');
+    !clsOf(curtain()).includes('open') && !clsOf(curtain()).includes('activity-transition');
   o.closedIconIsClosedCurtains = iconOf(curtain()) === 'mdi:curtains-closed';
 
   await push('open', { device_class: 'curtain' });
@@ -176,10 +176,10 @@ const out = await page.evaluate(async () => {
   o.openIconIsOpenCurtains = iconOf(curtain()) === 'mdi:curtains';
 
   await push('opening', { device_class: 'curtain' });
-  o.travellingBreathes = clsOf(curtain()).includes('covermove');
+  o.travellingBreathes = clsOf(curtain()).includes('activity-transition');
   await push('closing', { device_class: 'curtain' });
-  o.closingBreathesToo = clsOf(curtain()).includes('covermove');
-  o.stateClassIsTheSameStory = c._stateClass(curtain()).includes('covermove');
+  o.closingBreathesToo = clsOf(curtain()).includes('activity-transition');
+  o.stateClassIsTheSameStory = c._stateClass(curtain()).includes('activity-transition');
 
   // the service switch never speaks for the marker again: reverse-direction
   // ON used to paint the curtain yellow («включено») while it stood still
@@ -194,7 +194,7 @@ const out = await page.evaluate(async () => {
   await push('opening', { device_class: 'curtain' });
   await setSwitch('on');
   o.withoutTheActionThePrimarySpeaks = clsOf(curtain()).includes('on')
-    && !clsOf(curtain()).includes('covermove');
+    && !clsOf(curtain()).includes('activity-transition');
   savedMarker.tap_action = 'cover';
   await push('closed', { device_class: 'curtain' });
   await setSwitch('off');
@@ -223,7 +223,7 @@ const out = await page.evaluate(async () => {
   // never disagree, owner's principle 2026-07-29).
   o.mixedPrimaryIsTheLight = mixed()?.primary === 'light.mixed';
   o.mixedCoverIsTravelling = c.hass.states['cover.mixed'].state === 'opening';
-  o.mixedStaysALitLamp = clsOf(mixed()).includes('on') && !clsOf(mixed()).includes('covermove');
+  o.mixedStaysALitLamp = clsOf(mixed()).includes('on') && !clsOf(mixed()).includes('activity-transition');
   // its icon is the device's own auto icon, NOT the cover's open/closed pair
   o.mixedIconIsNotMorphedByTheCover =
     iconOf(mixed()) === mixed()?.icon && !iconOf(mixed()).includes('curtains');

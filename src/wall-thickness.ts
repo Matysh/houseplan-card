@@ -875,8 +875,10 @@ export function wallIntervals(
 }
 
 /**
- * Rewrite `walls` so every entry names an atomic interval of the CURRENT
- * geometry, and no entry survives under an open span.
+ * Rewrite `walls` so every entry names the smallest necessary interval of the
+ * CURRENT geometry, and no entry survives under an open span. Atomic entries
+ * are compacted back to the original polygon edge when all of its children
+ * are solid and have the same thickness.
  *
  * This is the single place where the spec invariant "an open span and a
  * positive thickness never share a key" is enforced: opening a stretch splits
@@ -893,10 +895,62 @@ export function normalizeWallIntervals(
   coordScale = 1,
 ): WallEntry[] {
   if (!walls?.length) return [];
+  const atomic: WallInterval[] = [];
+  const atomicKeys = new Set<string>();
+  for (const iv of wallIntervals(rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale)) {
+    if (iv.open || !(iv.cm > 0) || atomicKeys.has(iv.key)) continue;
+    atomicKeys.add(iv.key);
+    atomic.push(iv);
+  }
+
+  // A partial shared boundary or a former open span may have split one
+  // original edge into several storage keys. Once every child is solid and
+  // carries the same cm value, the parent key is the canonical representation
+  // again. Prefer the longest valid parent first so a room whose edge contains
+  // a shorter neighbour edge also removes that redundant shorter key.
+  const parents: Array<{ a: number[]; b: number[]; key: string; cm: number; len: number }> = [];
+  for (const room of rooms || []) {
+    if (!room?.id) continue;
+    const pr = roomWallProfile(rooms, room.id, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
+    if (!pr) continue;
+    for (let pi = 0; pi < pr.orig.length; pi++) {
+      const children: number[] = [];
+      for (let i = 0; i < pr.parent.length; i++) {
+        if (pr.parent[i] === pi) children.push(i);
+      }
+      if (!children.length) continue;
+      const cm = pr.cms[children[0]];
+      if (!(cm > 0) || children.some((i) => pr.kinds[i] === null || pr.cms[i] !== cm)) continue;
+      const a = pr.orig[pi], b = pr.orig[(pi + 1) % pr.orig.length];
+      const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      if (len <= 0) continue;
+      parents.push({
+        a: [a[0], a[1]], b: [b[0], b[1]],
+        key: keyOf(a, b, pitch, coordScale), cm, len,
+      });
+    }
+  }
+  parents.sort((a, b) => b.len - a.len || a.key.localeCompare(b.key));
+
   const out: WallEntry[] = [];
   const seen = new Set<string>();
-  for (const iv of wallIntervals(rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale)) {
-    if (iv.open || !(iv.cm > 0) || seen.has(iv.key)) continue;
+  const covered = new Set<string>();
+  const tol = openEps(pitch, coordScale) * 4;
+  for (const parent of parents) {
+    const matches = atomic.filter((iv) => (
+      !covered.has(iv.key) && iv.cm === parent.cm &&
+      angleClose(segAngle(iv.a, iv.b), segAngle(parent.a, parent.b)) &&
+      distToSeg(iv.a[0], iv.a[1], parent.a[0], parent.a[1], parent.b[0], parent.b[1]) <= tol &&
+      distToSeg(iv.b[0], iv.b[1], parent.a[0], parent.a[1], parent.b[0], parent.b[1]) <= tol
+    ));
+    if (!matches.length) continue;
+    for (const iv of matches) covered.add(iv.key);
+    if (seen.has(parent.key)) continue;
+    seen.add(parent.key);
+    out.push({ key: parent.key, cm: parent.cm });
+  }
+  for (const iv of atomic) {
+    if (covered.has(iv.key) || seen.has(iv.key)) continue;
     seen.add(iv.key);
     out.push({ key: iv.key, cm: iv.cm });
   }

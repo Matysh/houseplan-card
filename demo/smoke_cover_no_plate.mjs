@@ -8,8 +8,8 @@
 // underneath the breathing ring. Now a cover returns no plate class at all:
 //
 //   closed / open / ajar   -> neutral plate, the ICON tells the state
-//   opening / closing      -> neutral plate + the .covermove ring (kept, the
-//                             owner approved it 2026-08-03)
+//   opening / closing      -> neutral plate + activity-transition when the
+//                             marker opts into «Icon + activity»
 //
 // The frame itself is NOT gone: door/window binary sensors and locks still
 // wear it, and a valve keeps it too (nothing morphs its icon). Those are
@@ -43,7 +43,7 @@ const out = await page.evaluate(async () => {
     c._serverCfg = {
       ...c._serverCfg,
       markers: [
-        { id: 'm_gate', binding: 'device:d_gate', tap_action: 'cover' },
+        { id: 'm_gate', binding: 'device:d_gate', tap_action: 'cover', display: 'icon_ripple' },
         { id: 'm_mower', binding: 'device:d_mower', hidden: true },
       ],
     };
@@ -84,12 +84,14 @@ const out = await page.evaluate(async () => {
   };
 
   plateIsNeutral('closed');
-  o.closedNoRing = !cls().includes('covermove');
+  o.closedNoRing = !cls().includes('activity-transition');
   o.closedIconClosed = icon() === 'mdi:curtains-closed';
 
   await setCover('open', { device_class: 'curtain' });
   plateIsNeutral('open');
-  o.openNoRing = !cls().includes('covermove');
+  // This fixture jumps closed → open without an intermediate HA state, so
+  // the unified resolver supplies the agreed ~3.3 s transition fallback.
+  o.openDirectTransition = cls().includes('activity-transition');
   o.openIconOpen = icon() === 'mdi:curtains';
 
   // ajar: HA reports a positioned curtain as plain 'open' — it reads as OPEN
@@ -99,15 +101,16 @@ const out = await page.evaluate(async () => {
 
   await setCover('opening', { device_class: 'curtain' });
   plateIsNeutral('opening');
-  o.openingRings = cls().includes('covermove');
+  o.openingRings = cls().includes('activity-transition');
   o.openingRingIsTheBreathingOne = (() => {
-    const cs = getComputedStyle(devEl(), '::after');
-    return cs.animationName === 'hp-covermove' && cs.animationDuration === '2.2s';
+    const ring = devEl()?.querySelector('.activity-ring.transition i:first-child');
+    const cs = ring ? getComputedStyle(ring) : null;
+    return !!cs && cs.animationName === 'hp-activity-breathe' && cs.animationDuration === '2.2s';
   })();
 
   await setCover('closing', { device_class: 'curtain' });
   plateIsNeutral('closing');
-  o.closingRings = cls().includes('covermove');
+  o.closingRings = cls().includes('activity-transition');
 
   // --- the morph covers every class, both ways ---------------------------
   const morph = async (dc, closedIcon, openIcon) => {
@@ -135,7 +138,7 @@ const out = await page.evaluate(async () => {
   await setCover('unknown', { device_class: 'curtain' });
   plateIsNeutral('unknown');
   o.unknownNoMorph = icon() === 'mdi:garage-variant';
-  o.unknownNoRing = !cls().includes('covermove');
+  o.unknownNoRing = !cls().includes('activity-transition');
 
   // --- NOT touched: the «открыто» frame elsewhere ------------------------
   // the demo house has a lock and a window sensor on the ground floor
@@ -186,10 +189,10 @@ const out = await page.evaluate(async () => {
   o.valveOpenKeepsTheFrame = clsOfState(valve, { 'valve.water': { state: 'open', attributes: {} } }) === 'open';
   o.valveClosedIsNeutral = clsOfState(valve, { 'valve.water': { state: 'closed', attributes: {} } }) === '';
   // and the cover's own class string, straight from the source
-  const cover = { id: 'k', primary: 'cover.blind', entities: ['cover.blind'], marker: null };
+  const cover = { id: 'k', primary: 'cover.blind', entities: ['cover.blind'], marker: { display: 'icon_ripple' } };
   o.coverOpenClassIsEmpty = clsOfState(cover, { 'cover.blind': { state: 'open', attributes: { device_class: 'blind' } } }) === '';
-  o.coverOpeningClassIsRingOnly = clsOfState(cover, { 'cover.blind': { state: 'opening', attributes: { device_class: 'blind' } } }) === 'covermove';
-  o.coverClosingClassIsRingOnly = clsOfState(cover, { 'cover.blind': { state: 'closing', attributes: { device_class: 'blind' } } }) === 'covermove';
+  o.coverOpeningClassIsRingOnly = clsOfState(cover, { 'cover.blind': { state: 'opening', attributes: { device_class: 'blind' } } }) === 'activity-transition';
+  o.coverClosingClassIsRingOnly = clsOfState(cover, { 'cover.blind': { state: 'closing', attributes: { device_class: 'blind' } } }) === 'activity-transition';
   o.coverUnavailableStillFades = clsOfState(cover, { 'cover.blind': { state: 'unavailable', attributes: {} } }) === 'unavail';
   return o;
 });

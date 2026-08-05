@@ -72,6 +72,7 @@ export interface Marker {
     segment_map?: Record<string, string>;
   } | null;
   room_id?: string | null; // manual placement into a room WITHOUT an HA area (sub-area rooms)
+  /** `ripple` is legacy read compatibility; UI maps it to icon_ripple. */
   display?: 'badge' | 'ripple' | 'icon_ripple' | 'value' | null; // how the device is drawn
   ripple_color?: string | null;
   ripple_size?: number | null; // max ring diameter, in icon diameters (default 3)

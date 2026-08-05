@@ -1,11 +1,7 @@
-// Живой текст в декоре (docs/LIVE-TEXT.md): текстовая фигура может показывать
-// значение ОДНОЙ сущности. Шаблон — поле text, место значения — {}; единица по
-// умолчанию из сущности; мёртвая/отсутствующая сущность — прочерк «—»; ничего
-// не округляем и не переформатируем. Смок проверяет, что значение читается
-// живьём (новый hass — новый текст в DOM, без пересоздания карточки), что
-// редактор и просмотр рисуют одно и то же и что все три поля переживают
-// сохранение конфига.
-// ПАДАЕТ на сборке до этой фичи: подстановки нет, в DOM остаётся сырой шаблон.
+// Живой текст в декоре (docs/LIVE-TEXT.md): все связи с HA живут прямо в
+// тексте как {entity} / {entity:attribute}. Один блок может смешивать обычный
+// текст и несколько переменных; выбор значения вставляет токен в позицию
+// курсора. Старые entity/attr/unit читаются, но первое сохранение мигрирует их.
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 const res = await page.evaluate(async () => {
@@ -33,15 +29,16 @@ const res = await page.evaluate(async () => {
   out.decorMode = c._mode === 'decor';
   c._curSpaceCfg.decor = [];
 
-  // ---------- 1. связанная и обычная надписи -------------------------------
-  c._decorTextDialog = { x: 0.3, y: 0.3, text: 'Бак {}', color: '#112233',
-    entity: 'sensor.living_temp', attr: '', unit: '' };
+  // ---------- 1. несколько inline-переменных и обычная надпись -------------
+  c._decorTextDialog = { x: 0.3, y: 0.3,
+    text: 'Бак {sensor.living_temp}; LQI {sensor.living_temp:linkquality}',
+    color: '#112233' };
   c._decorSaveText(); await c.updateComplete;
   const live = c._decorList.find((x) => x.kind === 'text');
-  out.linkStored = live.entity === 'sensor.living_temp';
-  out.noEmptyFieldsStored = !('attr' in live) && !('unit' in live);
-  out.templateStoredRaw = live.text === 'Бак {}';   // в конфиге — ШАБЛОН
-  out.liveValueRendered = dom(live.id) === 'Бак 22.4 °C';
+  out.onlyTextStored = !('entity' in live) && !('attr' in live) && !('unit' in live);
+  out.templateStoredRaw = live.text ===
+    'Бак {sensor.living_temp}; LQI {sensor.living_temp:linkquality}';
+  out.multipleValuesRendered = dom(live.id) === 'Бак 22.4 °C; LQI 154';
 
   c._decorTextDialog = { x: 0.6, y: 0.3, text: 'Сауна', color: '#112233' };
   c._decorSaveText(); await c.updateComplete;
@@ -51,63 +48,64 @@ const res = await page.evaluate(async () => {
   // ---------- 2. значение живое: новый hass — новый текст -------------------
   await push('sensor.living_temp', { entity_id: 'sensor.living_temp', state: '23.9',
     attributes: { unit_of_measurement: '°C', linkquality: 154 } });
-  out.updatesOnState = dom(live.id) === 'Бак 23.9 °C';
+  out.updatesOnState = dom(live.id) === 'Бак 23.9 °C; LQI 154';
   out.plainStillUntouched = dom(plain.id) === 'Сауна';
   // как отдаёт HA: ни округления, ни переформатирования
   await push('sensor.living_temp', { entity_id: 'sensor.living_temp', state: '23.94781',
     attributes: { unit_of_measurement: '°C', linkquality: 154 } });
-  out.noRounding = dom(live.id) === 'Бак 23.94781 °C';
+  out.noRounding = dom(live.id) === 'Бак 23.94781 °C; LQI 154';
 
   // ---------- 3. мёртвая сущность — прочерк, шаблон остаётся ---------------
   await push('sensor.living_temp', { entity_id: 'sensor.living_temp', state: 'unavailable',
     attributes: { unit_of_measurement: '°C' } });
-  out.deadIsDash = dom(live.id) === 'Бак —';
+  out.deadIsDash = dom(live.id) === 'Бак —; LQI —';
   await push('sensor.living_temp', { entity_id: 'sensor.living_temp', state: 'unknown', attributes: {} });
-  out.unknownIsDash = dom(live.id) === 'Бак —';
+  out.unknownIsDash = dom(live.id) === 'Бак —; LQI —';
   await push('sensor.living_temp', null);
-  out.missingIsDash = dom(live.id) === 'Бак —';
+  out.missingIsDash = dom(live.id) === 'Бак —; LQI —';
   await push('sensor.living_temp', { entity_id: 'sensor.living_temp', state: '22.4',
     attributes: { unit_of_measurement: '°C', linkquality: 154 } });
-  out.backAlive = dom(live.id) === 'Бак 22.4 °C';
+  out.backAlive = dom(live.id) === 'Бак 22.4 °C; LQI 154';
 
-  // ---------- 4. атрибут и единица ----------------------------------------
-  open(live); await c.updateComplete;
-  out.dialogHasTheLink = c._decorTextDialog?.id === live.id
-    && c._decorTextDialog?.entity === 'sensor.living_temp';
-  c._decorTextDialog = { ...c._decorTextDialog, attr: 'linkquality' };
+  // ---------- 4. picker вставляет полный токен ровно в позицию курсора ------
+  c._decorTextDialog = { x: 0.45, y: 0.45, text: 'До после', color: '#112233',
+    pickerEntity: 'sensor.living_temp' };
+  c._decorTextSelection = { start: 3, end: 3 };
+  c._decorInsertLiveVariable('linkquality'); await c.updateComplete;
+  out.insertedAtCaret = c._decorTextDialog.text ===
+    'До {sensor.living_temp:linkquality}после';
   c._decorSaveText(); await c.updateComplete;
-  out.attrRead = dom(live.id) === 'Бак 154';
-  open(c._decorList.find((x) => x.id === live.id)); await c.updateComplete;
-  c._decorTextDialog = { ...c._decorTextDialog, unit: 'LQI' };
-  c._decorSaveText(); await c.updateComplete;
-  out.unitOverride = dom(live.id) === 'Бак 154 LQI';
-  // атрибута нет — прочерк, но остальная надпись жива
-  open(c._decorList.find((x) => x.id === live.id)); await c.updateComplete;
-  c._decorTextDialog = { ...c._decorTextDialog, attr: 'nope', unit: '' };
-  c._decorSaveText(); await c.updateComplete;
-  out.missingAttrIsDash = dom(live.id) === 'Бак —';
+  const inserted = c._decorList.find((x) => x.text?.startsWith('До '));
+  out.insertedRenders = dom(inserted.id) === 'До 154после';
 
-  // ---------- 5. без плейсхолдера значение уезжает в конец ------------------
-  open(c._decorList.find((x) => x.id === live.id)); await c.updateComplete;
-  c._decorTextDialog = { ...c._decorTextDialog, text: 'Бак', attr: '', unit: '' };
+  // ---------- 5. ручная dotted-форма и отсутствующий атрибут ---------------
+  c._decorTextDialog = { x: 0.55, y: 0.55,
+    text: '{sensor.living_temp.linkquality} / {sensor.living_temp:nope}',
+    color: '#112233' };
   c._decorSaveText(); await c.updateComplete;
-  out.appendedWithoutSlot = dom(live.id) === 'Бак 22.4 °C';
+  const manual = c._decorList.find((x) => x.text?.includes(':nope'));
+  out.manualTokensWork = dom(manual.id) === '154 / —';
 
-  // ---------- 6. отвязали — снова обычная надпись --------------------------
-  open(c._decorList.find((x) => x.id === live.id)); await c.updateComplete;
-  c._decorTextDialog = { ...c._decorTextDialog, text: 'Бак {}', entity: '' };
+  // ---------- 6. старая связка мигрирует при первом редактировании ----------
+  const legacy = { id: 'legacy_live', kind: 'text', x: 0.7, y: 0.7,
+    text: 'Старый {}', color: '#112233', entity: 'sensor.living_temp' };
+  c._curSpaceCfg.decor = [...c._decorList, legacy];
+  c.requestUpdate(); await c.updateComplete;
+  out.legacyStillRenders = dom(legacy.id) === 'Старый 22.4 °C';
+  open(legacy); await c.updateComplete;
+  out.legacyOpensAsToken = c._decorTextDialog?.text ===
+    'Старый {sensor.living_temp}';
   c._decorSaveText(); await c.updateComplete;
-  const unlinked = c._decorList.find((x) => x.id === live.id);
-  out.linkCleared = !('entity' in unlinked) && !('attr' in unlinked) && !('unit' in unlinked);
-  out.rawTemplateShown = dom(live.id) === 'Бак {}';
+  const migrated = c._decorList.find((x) => x.id === legacy.id);
+  out.legacyMigrated = !('entity' in migrated)
+    && migrated.text === 'Старый {sensor.living_temp}'
+    && dom(legacy.id) === 'Старый 22.4 °C';
 
   // ---------- 7. просмотр и киоск рисуют то же самое ------------------------
-  open(unlinked); await c.updateComplete;
-  c._decorTextDialog = { ...c._decorTextDialog, entity: 'sensor.living_temp' };
-  c._decorSaveText(); await c.updateComplete;
   const editorText = dom(live.id);
   c._setMode('view'); await c.updateComplete; await sleep(60);
-  out.sameInViewMode = dom(live.id) === editorText && editorText === 'Бак 22.4 °C';
+  out.sameInViewMode = dom(live.id) === editorText
+    && editorText === 'Бак 22.4 °C; LQI 154';
 
   const kiosk = document.createElement('houseplan-card');
   kiosk.setConfig({ type: 'custom:houseplan-card', kiosk: true });
@@ -120,20 +118,19 @@ const res = await page.evaluate(async () => {
     && [...kEl.querySelectorAll('tspan')].map((t) => t.textContent).join('\n') === editorText;
   kiosk.remove();
 
-  // ---------- 8. все три поля переживают запись конфига ---------------------
+  // ---------- 8. round-trip хранит только текстовый шаблон ------------------
   const sent = [];
   const ws = c.hass.callWS;
   c.hass = { ...c.hass, callWS: async (m) => { sent.push(m); return ws(m); } };
   c._setMode('decor'); await c.updateComplete;
   open(c._decorList.find((x) => x.id === live.id)); await c.updateComplete;
-  c._decorTextDialog = { ...c._decorTextDialog, attr: 'linkquality', unit: 'LQI' };
   c._decorSaveText();
   await sleep(900);
   const set = sent.filter((m) => m.type === 'houseplan/config/set').pop();
   const shape = set && (set.config.spaces.find((s) => s.id === c._space).decor || [])
     .find((x) => x.id === live.id);
-  out.roundTrip = !!shape && shape.entity === 'sensor.living_temp'
-    && shape.attr === 'linkquality' && shape.unit === 'LQI' && shape.text === 'Бак {}';
+  out.roundTrip = !!shape && !('entity' in shape) && !('attr' in shape) && !('unit' in shape)
+    && shape.text === 'Бак {sensor.living_temp}; LQI {sensor.living_temp:linkquality}';
   return out;
 });
 checkAll(res);

@@ -169,6 +169,28 @@ test('partial shared wall: a pre-atomic whole-edge key still covers both pieces'
   assert.ok(ivs.every((iv) => iv.cm === 30), 'an existing plan must not lose thickness');
 });
 
+test('equal solid atomic pieces compact back to one whole-wall key', () => {
+  const rooms = partialRooms();
+  const walls = [
+    { key: wallKey([5, 0], [5, 4], pitch), cm: 30 },
+    { key: wallKey([5, 4], [5, 10], pitch), cm: 30 },
+  ];
+  const next = normalizeWallIntervals(rooms, walls, [], pitch, cellCm, GRID_PITCH);
+  assert.deepEqual(next, [{ key: wallKey([5, 0], [5, 10], pitch), cm: 30 }]);
+});
+
+test('different solid thicknesses remain separate atomic keys', () => {
+  const rooms = partialRooms();
+  const walls = [
+    { key: wallKey([5, 0], [5, 4], pitch), cm: 30 },
+    { key: wallKey([5, 4], [5, 10], pitch), cm: 20 },
+  ];
+  const next = normalizeWallIntervals(rooms, walls, [], pitch, cellCm, GRID_PITCH);
+  assert.equal(next.length, 2);
+  assert.deepEqual(new Set(next.map((w) => w.cm)), new Set([20, 30]));
+  assert.ok(!next.some((w) => w.key === wallKey([5, 0], [5, 10], pitch)));
+});
+
 // An open span that does NOT contain the parent edge's midpoint used to leave
 // the key in place, so the wall body stayed solid straight across the passage.
 test('open span away from the edge midpoint clears only its own interval', () => {

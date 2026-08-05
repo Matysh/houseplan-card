@@ -1,7 +1,7 @@
 // Capture: one curtain in the four states an owner sees — closed, open,
 // opening, closing (owner's contract 2026-08-04). The plate is the plain
 // neutral badge in ALL of them; open/closed is told by the icon morph alone,
-// and the two travelling ones add the breathing .covermove ring (frozen at a
+// and the two travelling ones add the breathing transition ring (frozen at a
 // visible frame so the shot is deterministic).
 import { launch } from './serve.mjs';
 const { page, browser } = await launch({ width: 900, height: 520 }, 2);
@@ -22,7 +22,8 @@ await page.evaluate(async (STATES) => {
     entities: { ...c.hass.entities, ...entities },
     states: { ...c.hass.states, ...states } };
   c._serverCfg = { ...c._serverCfg, markers: [
-    ...STATES.map((s, i) => ({ id: 'm_cur' + i, binding: 'device:d_cur' + i, tap_action: 'cover' })),
+    ...STATES.map((s, i) => ({ id: 'm_cur' + i, binding: 'device:d_cur' + i,
+      tap_action: 'cover', display: 'icon_ripple' })),
     { id: 'm_mower', binding: 'device:d_mower', hidden: true },
     { id: 'm_gate', binding: 'device:d_gate', hidden: true },
   ] };
@@ -37,7 +38,7 @@ await page.evaluate(async (STATES) => {
   c.requestUpdate();
   await c.updateComplete;
   const st = document.createElement('style');
-  st.textContent = '.dev.covermove::after{animation-delay:-1.1s;animation-play-state:paused;}';
+  st.textContent = '.activity-ring.transition i:first-child{animation-delay:-1.1s!important;animation-play-state:paused!important;}';
   (c.shadowRoot || c.renderRoot).appendChild(st);
 }, STATES);
 await page.waitForTimeout(500);

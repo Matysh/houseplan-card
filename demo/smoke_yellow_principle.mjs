@@ -33,9 +33,10 @@ const out = await page.evaluate(() => {
     'climate.trv': { state: 'off', attributes: { hvac_action: 'off' } },
   }) === '';
 
-  // без hvac_action фолбэк на state
-  o.stateFallback = cls(trv, { 'climate.trv': { state: 'heat', attributes: {} } }) === ''
-    ? false : cls(trv, { 'climate.trv': { state: 'heat', attributes: {} } }) === 'on';
+  // без hvac_action выбранный режим heat не доказывает реальную работу
+  o.modeWithoutActionStaysDark = cls(trv, {
+    'climate.trv': { state: 'heat', attributes: {} },
+  }) === '';
 
   // горящая лампа устройства желтит значок, даже если primary — не она
   const lamp = { id: 'l', primary: 'sensor.lamp_power', entities: ['sensor.lamp_power', 'light.lamp'], marker: null };

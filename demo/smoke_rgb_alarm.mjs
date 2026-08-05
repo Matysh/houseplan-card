@@ -9,10 +9,10 @@ const res = await page.evaluate(async () => {
     'light.ceiling': { entity_id: 'light.ceiling', state: 'on', attributes: { friendly_name: 'Ceiling light', rgb_color: [255, 0, 128] } } } };
   await c.updateComplete;
   // v1.52.0 (правило владельца): RGB больше НЕ красит значок — цвет лампы
-  // живёт только в glow-пятне и в фолбэке цвета пульсации
+  // живёт только в glow-пятне и в фолбэке цвета activity-эффекта
   out.rgbClassGone = !sr().querySelector('.dev.rgb');
   out.litLampIsYellow = [...sr().querySelectorAll('.dev.on')].length > 0;
-  // фолбэк пульсации сохраняет цвет свечения: маркер icon_ripple на лампе
+  // фолбэк activity сохраняет цвет свечения: маркер icon_ripple на лампе
   const lampDev = c._devices.find((x) => x.entities.includes('light.ceiling'));
   c._serverCfg.markers = (c._serverCfg.markers || []).filter((m) => m.id !== lampDev.id);
   c._serverCfg.markers.push({ id: lampDev.id, binding: 'device:' + lampDev.bindingRef, display: 'icon_ripple' });

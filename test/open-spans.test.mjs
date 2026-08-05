@@ -141,6 +141,26 @@ describe('open-spans', () => {
     assert.ok(Math.max(sg[1], sg[3]) <= 4 + 1e-6, JSON.stringify(sg));
   });
 
+  it('adjacent virtual pieces of the same room pair collapse to one span', () => {
+    const rooms = [
+      { id: 'a', poly: [[0, 0], [5, 0], [5, 4], [0, 4]] },
+      { id: 'b', poly: [[5, 0], [10, 0], [10, 4], [5, 4]] },
+    ];
+    const spans = [
+      spanToEntry([5, 0], [5, 2], 1),
+      spanToEntry([5, 4], [5, 2], 1),
+    ];
+    const clipped = clipOpenSpansToShared(spans, rooms, 1, eps);
+    assert.equal(clipped.length, 1);
+    const sg = entryToSeg(clipped[0], 1);
+    assert.deepEqual(
+      [Math.min(sg[1], sg[3]), Math.max(sg[1], sg[3])],
+      [0, 4],
+    );
+    assert.equal(resolveOpenCuts(rooms, spans, 1, eps).length, 1,
+      'legacy fragmented storage must render as one selectable span too');
+  });
+
   it('clipOpenSpansToShared keeps both room-pair pieces after Split', () => {
     const rooms = [
       { id: 'left_top', poly: [[0, 0], [5, 0], [5, 2], [0, 2]] },
