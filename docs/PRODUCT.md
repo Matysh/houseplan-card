@@ -3,6 +3,15 @@
 *Written 2026-07-05. Sources: GitHub API star counts and HA docs verified 2026-07-06;
 see links inline. Update this file when the landscape shifts.*
 
+> **2026-08-05 refresh.** A full audit pack now lives under
+> [`docs/AUDIT.md`](AUDIT.md) (market / quality / functional / recommendations).
+> **Critical market change:** [easy-floorplan](https://github.com/nicosandller/easy-floorplan)
+> grew from **11★ → ≈430★** in ~one month and is a real GUI peer — the July claim
+> that the niche is “currently unoccupied” is **obsolete**. Our technical moat
+> (server-side integration, area-bound rooms, overlays, quality-scale) still
+> holds; traction and messaging do not. Prefer [`AUDIT-MARKET.md`](AUDIT-MARKET.md)
+> for current competitor numbers until this file is rewritten.
+
 ## What the product is
 
 An interactive floor plan for Home Assistant delivered as one HACS package:
@@ -23,7 +32,7 @@ live robot vacuums, en/ru localization). GUI-first: no YAML, no hand-made SVG.
 | [zigbee-floorplan-card](https://github.com/TheLarsinator/zigbee-floorplan-card) | 71 | LQI over a plan image | single-purpose; validates our LQI feature |
 | [kishorviswanathan/ha-floorplan](https://github.com/kishorviswanathan/ha-floorplan) (2026-01) | 155 | external web editor → YAML export | editor outside HA, still YAML at runtime |
 | [Padraigggs-ha-interactive-floorplan](https://github.com/Padraiggg/Padraigggs-ha-interactive-floorplan) (2026-03) | 41 | editor+viewer cards, "no YAML" | weeks old, card-only, no server-side integration |
-| [easy-floorplan](https://github.com/nicosandller/easy-floorplan) (2026-05) | 11 | draw walls/furniture in the card | drawing-centric, immature |
+| [easy-floorplan](https://github.com/nicosandller/easy-floorplan) (2026-05) | 11→**≈430 by 2026-08-05** | draw walls/furniture in the card | drawing-centric (still our non-goal) but **no longer immature** — fastest GUI peer; see AUDIT-MARKET |
 
 **Demand evidence:** a dedicated [Floorplan forum category](https://community.home-assistant.io/c/third-party/floorplan/28);
 the "100% Floorplan UI" mega-thread (500k+ views); a visible 2025–2026 wave of new
@@ -42,14 +51,17 @@ hundreds of stars in the first year *if* discoverability is solved (HACS default
 demo GIF + forum post). Bubble Card (4.4k★) proves polished GUI cards can go
 quasi-mainstream; ha-floorplan's 1.5k★ with a hostile workflow shows the demand floor.
 
-**Unique position — currently unoccupied.** Nobody else combines: server-side config
-(integration + `.storage`, survives dashboard edits, shared across users/devices,
-optimistic locking, live multi-client sync) + in-card room polygon editor bound to HA
-areas + curated auto-placement + drag layout + LQI/temperature overlays + config flow +
-en/ru localization + CI/quality-scale discipline. The newcomers are card-only toys so
-far; the incumbent is powerful but YAML/SVG-locked. Our moat grows if we integrate
-deeper with the areas/floors registry (Phase 9) — that is the direction HA core itself
-is signalling with the native Areas dashboard.
+**Unique technical position — still real; market exclusivity — gone.** Nobody else
+combines: server-side config (integration + `.storage`, survives dashboard edits,
+shared across users/devices, optimistic locking, live multi-client sync) + in-card
+room polygon editor bound to HA areas + curated auto-placement + drag layout +
+LQI/temperature/glow/sun/vacuum overlays + config flow + en/ru localization +
+CI/quality-scale discipline. The incumbent (ha-floorplan) is still YAML/SVG-locked.
+But **easy-floorplan** (2026-08) is a shipping GUI card with an order of magnitude
+more stars than us — card-only / furniture-drawing, yet owning the “no YAML” mindshare.
+Our moat grows if we integrate deeper with the areas/floors registry (Phase 9) and
+*tell that story* in the README/demo — that is the direction HA core itself is
+signalling with the native Areas dashboard.
 
 **Risks.**
 1. *HA core ships a native spatial plan.* The Areas dashboard is grid-based today, but
