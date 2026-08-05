@@ -1315,3 +1315,26 @@ def test_decor_furniture_does_not_disturb_the_other_kinds():
     with pytest.raises(vol.Invalid):
         v.CONFIG_SCHEMA({"spaces": [{**base, "decor": [
             {"id": "z", "kind": "hologram", "x": 0, "y": 0, "w": 1, "h": 1}]}]})
+
+def test_space_walls_thickness():
+    """docs/WALL-THICKNESS.md: optional walls[{key,cm}]; absent = today's plan;
+    cm bounded 1..100; key a bounded string; list capped like openings."""
+    base = {"id": "s1", "title": "S", "view_box": [0, 0, 1, 1], "rooms": []}
+    # no walls — byte-compatible
+    assert "walls" not in v.CONFIG_SCHEMA({"spaces": [base]})["spaces"][0]
+
+    ok = {"key": "0.50,0.20@0.0000", "cm": 20}
+    out = v.CONFIG_SCHEMA({"spaces": [{**base, "walls": [ok]}]})
+    assert out["spaces"][0]["walls"] == [ok]
+
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA({"spaces": [{**base, "walls": [{"key": ok["key"], "cm": 0}]}]})
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA({"spaces": [{**base, "walls": [{"key": ok["key"], "cm": 101}]}]})
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA({"spaces": [{**base, "walls": [{"key": "", "cm": 10}]}]})
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA({"spaces": [{**base, "walls": [{"key": "k" * 65, "cm": 10}]}]})
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA({"spaces": [{**base, "walls": [
+            {"key": f"k{i}", "cm": 10} for i in range(v.MAX_WALLS + 1)]}]})

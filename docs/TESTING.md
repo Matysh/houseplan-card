@@ -1441,6 +1441,28 @@ require hands on real hardware — they remain for the human pass.
 
 ## The furniture library (docs/FURNITURE.md, dev, unreleased)
 
+## Wall thickness (docs/WALL-THICKNESS.md, Unreleased)
+
+- [ ] **Tool + hover + input**: Plan editor → Wall thickness. Hover highlights
+      the whole wall; click opens the cm/in field; empty/0 clears; Esc closes
+      without applying; «Apply to all walls of this room» fills every allowed
+      edge [auto: smoke_wall_thickness]
+- [ ] **Hatched body, area unchanged**: after setting thickness a `.wallbody`
+      path appears; the room card's m² is identical before and after
+      [auto: smoke_wall_thickness]
+- [ ] **Openings cut the slab**: a door/window on a thick wall leaves a gap in
+      the body; the door swing is offset toward the inner face; with
+      `hide_openings` the symbols hide but the cut remains
+      [auto: smoke_wall_thickness]
+- [ ] **Shared once / clear → line / resize re-keys**: one body for a shared
+      wall; clearing thickness restores the centreline; resizing a thick wall
+      keeps the thickness on the moved stretch [auto: smoke_wall_thickness]
+- [ ] **Unit + backend**: inset/mitre/bevel, key from either end, degrade,
+      rekey, cm↔inches; `walls` schema bounds
+      [auto: test/wall-thickness.test.mjs + tests_backend/test_validation.py]
+
+## The furniture library (docs/FURNITURE.md, dev, unreleased)
+
 - [ ] **The tool and the palette**: Background editor → **Furniture**. A panel
       opens under the bar with the symbols grouped (furniture / appliances /
       plumbing / other), every tile drawing the real symbol, and the plan stays

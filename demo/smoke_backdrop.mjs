@@ -271,6 +271,42 @@ check('no_paper_the_size_of_the_picture', layers.imageSizedPaper, false);
 check('picture_is_above_the_paper', layers.iImage > layers.iPaper && layers.iPaper >= 0, true);
 check('picture_is_below_the_walls', layers.iImage < layers.iRoom, true);
 
+// ---------- 6b) editors keep a WHITE sheet under the grid with a backdrop --
+const editorWhite = await page.evaluate(async () => {
+  const c = window.__card;
+  const sr = () => c.shadowRoot || c.renderRoot;
+  const upd = async () => { c.requestUpdate(); await c.updateComplete; };
+  const probe = async (mode) => {
+    c._setMode(mode);
+    await upd();
+    const stage = sr().querySelector('.stage');
+    const paper = sr().querySelector('.stage svg .hp-paper');
+    return {
+      mode,
+      stageWhite: getComputedStyle(stage).backgroundColor === 'rgb(255, 255, 255)',
+      paperWhite: !paper || getComputedStyle(paper).fill === 'rgb(255, 255, 255)',
+      hasBg: !!c._spaceModel().bg,
+      noNoplan: !stage.classList.contains('noplan'),
+    };
+  };
+  const plan = await probe('plan');
+  const devices = await probe('devices');
+  const decor = await probe('decor');
+  c._setMode('view');
+  await upd();
+  const viewStage = sr().querySelector('.stage');
+  // View with a backdrop must NOT force white — theme/card colour stays
+  const viewForcedWhite = getComputedStyle(viewStage).backgroundColor === 'rgb(255, 255, 255)'
+    && !viewStage.classList.contains('noplan');
+  return { plan, devices, decor, viewForcedWhite, hasBg: plan.hasBg };
+});
+check('editors_have_backdrop', editorWhite.hasBg, true);
+check('plan_editor_stage_white_with_backdrop', editorWhite.plan.stageWhite && editorWhite.plan.noNoplan, true);
+check('plan_editor_paper_white_with_backdrop', editorWhite.plan.paperWhite, true);
+check('devices_editor_stage_white_with_backdrop', editorWhite.devices.stageWhite, true);
+check('decor_editor_stage_white_with_backdrop', editorWhite.decor.stageWhite, true);
+check('view_with_backdrop_is_not_forced_white', editorWhite.viewForcedWhite, false);
+
 // ---------- 7) «Вписать всё» keeps a picture that was dragged away --------
 await page.evaluate(() => {
   const c = window.__card;

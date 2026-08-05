@@ -132,7 +132,9 @@ v1.58.0 it had two forms: the ROOM CONTOURS for a drawn plan, and **the
 image rectangle** for a picture plan.
 
 The second form is gone. The paper is now `paperRoomShapes(space.rooms)`
-in every case:
+in every case (or `paperRoomShapesWithWalls` when a space carries wall
+thickness — docs/WALL-THICKNESS.md §4 — so the sheet grows under shared
+slabs and the scene never shows through a hatched body):
 
 * one opaque shape per room, in exactly the room's own geometry — an
   L-shaped house or a pair of detached buildings never grows a bounding
@@ -140,8 +142,10 @@ in every case:
 * an empty space has **no paper at all**, image or no image;
 * its colour is unchanged (`styles.ts .hp-paper`): white on a hand-drawn
   plan (`.stage.noplan`), the theme card background where an image is
-  attached. `daynight` dims it via the `.zoomwrap` brightness filter only —
-  its alpha stays 1.
+  attached in **View**; every editor (plan / devices / decor) forces white
+  under the grid even with a backdrop, so the drawing sheet stays the same
+  sheet as a hand-drawn plan. `daynight` dims it via the `.zoomwrap`
+  brightness filter only — its alpha stays 1.
 
 **Layer order**, top to bottom, in both renderers:
 

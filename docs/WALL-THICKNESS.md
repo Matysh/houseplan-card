@@ -1,12 +1,16 @@
 # Wall thickness — the spec
 
-Status: **approved, not implemented.** Owner's wording (2026-08-05): «в
+Status: **implemented** (on `dev`). Owner's wording (2026-08-05): «в
 редакторе плана появляется режим "толщина стен". В нем кликаем по стене
 (стеной считаем грань одной комнаты), там поле ввода толщины в сантиметрах
 или дюймах (в зависимости от настроек HA). Ввели — стена начинает
 отображаться с толщиной, внутренность стены заштрихована. Толщина не должна
 учитываться при расчете площади. Учти изменение отображения проемов в толстых
 стенах.»
+
+Code: `src/wall-thickness.ts`, tool + render in `src/houseplan-card.ts`,
+static card in `src/space-render.ts`. Unit: `test/wall-thickness.test.mjs`.
+Smoke: `demo/smoke_wall_thickness.mjs`.
 
 Written against the code as it stands: rooms are polygons, `roomEdges()`
 splits them into segments, `sharedBoundary()` finds where two rooms touch,

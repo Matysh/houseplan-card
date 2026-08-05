@@ -2,6 +2,26 @@
 
 ## Unreleased (dev)
 
+## v1.59.0-beta.4 — 2026-08-05
+
+Fourth pre-release of the 1.59 line: wall thickness in the plan editor, and a
+fix so editors keep a white drawing sheet under the grid even when a backdrop
+image is loaded.
+
+- **Wall thickness in the plan editor (docs/WALL-THICKNESS.md).** A wall carries
+  one thickness (`space.walls: [{ key, cm }]`), entered in cm or inches from HA's
+  unit system. Shared walls grow half into each room; outer walls grow inward;
+  open boundaries refuse thickness. Hatched bodies follow `show_borders` (always
+  visible in the plan editor); openings cut the slab full-depth and door swings
+  start at the inner face. Area, glow and sun stay on the polygon. The static
+  space card draws the same bodies. Unit + smoke: `test/wall-thickness.test.mjs`,
+  `demo/smoke_wall_thickness.mjs`.
+
+- **Editors keep a white sheet under the grid with a backdrop.** With an uploaded
+  plan image, the plan / devices / decor editors used the theme card colour under
+  the grid instead of the white drawing sheet of a hand-drawn plan. They now stay
+  white; View is unchanged (theme under an image, white without one).
+
 ## v1.59.0-beta.3 — 2026-08-05
 
 The third pre-release of the 1.59 line: you can furnish the plan with

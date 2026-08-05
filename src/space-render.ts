@@ -9,12 +9,14 @@
 import { html, svg, nothing, type TemplateResult } from 'lit';
 import { buildDevices, areaLqi, areaLights, areaTemp } from './devices';
 import { spaceDisplayOf, roomFillStyle, fillColorsOf, roomFillModeOf, stageBgOf, paperRoomShapes } from './logic';
+import { wallEdgeBodies, wallEdgePathD, paperRoomShapesWithWalls, type WallEntry } from './wall-thickness';
 import { DEFAULT_ICON_RULES, compileIconRules, EXCLUDED_DOMAINS } from './rules';
 import { t, type Lang } from './i18n';
 import { bgModeOf, northDegOf, sunStateOf, dayPhase } from './sun';
 import type { ServerConfig } from './types';
 import {
   spaceModels, roomCenter, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, NORM_W,
+  GRID_STEP_N, GRID_PITCH,
   type Layout, type ContentItem,
 } from './space-geometry';
 
@@ -195,10 +197,26 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   // gaps between detached buildings, and an empty space has no paper at all,
   // image or no image. The picture is drawn ON the paper, one layer above.
 
+  const spCfg: any = o.cfg.spaces.find((s: any) => s.id === o.spaceId) || {};
+  const walls: WallEntry[] = Array.isArray(spCfg.walls) ? spCfg.walls : [];
+  const cellCm = Number(spCfg.cell_cm) > 0 ? Number(spCfg.cell_cm) : 5;
+  const paperShapes = walls.length
+    ? paperRoomShapesWithWalls(space.rooms, walls, [], GRID_STEP_N, cellCm, GRID_PITCH, NORM_W)
+    : paperRoomShapes(space.rooms);
+  const wallBodies = walls.length && disp.showBorders
+    ? wallEdgeBodies(space.rooms, walls, [], GRID_STEP_N, cellCm, GRID_PITCH, NORM_W)
+    : [];
+
   return html`
     <div class="hp-static-stage" style="aspect-ratio:${vb[2]}/${vb[3]}${stageBg ? ';background:' + stageBg : ''}">
       <svg viewBox="${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}" preserveAspectRatio="xMidYMid meet">
-        ${paperRoomShapes(space.rooms).map((sh) =>
+        ${wallBodies.length ? svg`<defs>
+          <pattern id="hp-wall-hatch" patternUnits="userSpaceOnUse" width="8" height="8"
+            patternTransform="rotate(45)">
+            <path d="M0 0 L0 8" stroke="${disp.color}" stroke-width="2" opacity="0.55"></path>
+          </pattern>
+        </defs>` : nothing}
+        ${paperShapes.map((sh) =>
           'poly' in sh
             ? svg`<polygon class="hp-paper" points="${sh.poly}"></polygon>`
             : svg`<rect class="hp-paper" x="${sh.rect.x}" y="${sh.rect.y}" width="${sh.rect.w}" height="${sh.rect.h}" rx="${sh.rect.rx}"></rect>`,
@@ -207,6 +225,8 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
           ? svg`<image href="${bgHref}" x="${space.bg!.x}" y="${space.bg!.y}" width="${space.bg!.w}" height="${space.bg!.h}" preserveAspectRatio="none" />`
           : nothing}
         ${roomShapes}
+        ${wallBodies.map((b) => svg`<path class="wallbody" data-hp="wall" data-id=${b.key} data-kind=${b.kind}
+          d="${wallEdgePathD(b, [])}" style="--room-stroke:${disp.color}"></path>`)}
       </svg>
       ${''/* docs/CANVAS.md §6: the same expression as the full card. The
              static card has no zoom, but its frame is the CONTENT now, so a

@@ -43,6 +43,12 @@ import {
   furniturePathD, furnitureCorners, furnitureResize, snapFurnitureToWall,
   cmToNorm, clampFurnSize, clampFurnCm, FURN_WALL_CELLS, type FurnitureGroup,
 } from './furniture';
+import {
+  wallKey, lookupWall, thicknessCmAt, degradeWalls, rekeyWallsAfterMove,
+  setWallThickness, setWallThicknessForRoom, cmToField, fieldToCm,
+  wallEdgeBodies, wallEdgePathD, paperRoomShapesWithWalls,
+  openingInnerFaceOffset, type WallEntry,
+} from './wall-thickness';
 import { ContentSigner } from './signing';
 import { mdiHomeCityOutline } from '@mdi/js';
 import {
@@ -69,7 +75,7 @@ import {
 import { alignAllToGrid, type AlignReport } from './align-grid';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.59.0-beta.3';
+const CARD_VERSION = '1.59.0-beta.4';
 /** HP-1552 boot-veil timing (AUD-1552-02). The veil holds for at least
  *  BOOT_MIN_MS; every stage-height change restarts a BOOT_QUIET_MS
  *  trailing-quiescence requirement (chrome still settling near the cap
@@ -235,7 +241,7 @@ const unionRect = (a: Rect, b: Rect): Rect => {
   return { x, y, w: Math.max(a.x + a.w, b.x + b.w) - x, h: Math.max(a.y + a.h, b.y + b.h) - y };
 };
 
-type MarkupTool = 'draw' | 'merge' | 'split' | 'resize' | 'opening' | 'openwall' | 'delroom';
+type MarkupTool = 'draw' | 'merge' | 'split' | 'resize' | 'opening' | 'openwall' | 'wallthick' | 'delroom';
 /** Tools of the decor (background) editor. `furniture` is the library
  *  (docs/FURNITURE.md): it opens a palette and places a symbol at real size. */
 type DecorTool = 'select' | 'backdrop' | 'line' | 'rect' | 'ellipse' | 'text' | 'furniture' | 'erase';
@@ -474,6 +480,12 @@ class HouseplanCard extends LitElement {
     return this._mode === 'plan';
   }
   private _tool: MarkupTool = 'draw';
+  /** Wall-thickness tool dialog (docs/WALL-THICKNESS.md). */
+  private _wallDialog: {
+    a: number[]; b: number[];
+    value: string; roomId: string | null;
+    sx: number; sy: number;
+  } | null = null;
   // room resize tool (docs/RESIZE.md): selection, live drag, its own undo stack
   private _rszSel: string | null = null;
   private _rszDrag: {
@@ -786,6 +798,7 @@ class HouseplanCard extends LitElement {
     _serverCfg: { state: true },
     _mode: { state: true },
     _tool: { state: true },
+    _wallDialog: { state: true },
     _rszSel: { state: true },
     _rszLive: { state: true },
     _opMeasure: { state: true },
@@ -1020,7 +1033,12 @@ class HouseplanCard extends LitElement {
       else this._tool = 'draw';
       return;
     }
-    if (this._tool === 'openwall' || this._tool === 'opening' || this._tool === 'delroom') {
+    if (this._wallDialog) {
+      e.preventDefault();
+      this._wallDialog = null;
+      return;
+    }
+    if (this._tool === 'openwall' || this._tool === 'opening' || this._tool === 'wallthick' || this._tool === 'delroom') {
       e.preventDefault();
       this._tool = 'draw';
     }
@@ -3293,7 +3311,13 @@ class HouseplanCard extends LitElement {
    * weight: drop it on every save. Configs written before v1.19.0 shed it on first write.
    */
   private _dropLegacySegments(): void {
-    for (const sp of this._serverCfg?.spaces || []) delete (sp as any).segments;
+    for (const sp of this._serverCfg?.spaces || []) {
+      delete (sp as any).segments;
+      if (Array.isArray(sp.walls)) {
+        sp.walls = degradeWalls(sp.walls, sp.rooms || [], GRID_STEP_N, 1);
+        if (!sp.walls.length) delete sp.walls;
+      }
+    }
   }
 
   /**
@@ -3425,6 +3449,10 @@ class HouseplanCard extends LitElement {
     }
     if (this._tool === 'merge') {
       this._mergeClick(raw);
+      return;
+    }
+    if (this._tool === 'wallthick') {
+      this._wallThickClick(raw);
       return;
     }
     if (this._tool === 'openwall') {
@@ -3631,6 +3659,18 @@ class HouseplanCard extends LitElement {
       for (const id of g.changed) {
         const r = sp.rooms.find((x: any) => x.id === id);
         if (r?.poly) r.poly = simplifyPoly(r.poly, 1e-9);
+      }
+      // docs/WALL-THICKNESS.md: rewrite thickness keys for the moved stretches
+      if (g.kind === 'edge' && g.plan && Array.isArray(sp.walls) && sp.walls.length) {
+        const D = g.d;
+        const n = g.plan.n as [number, number];
+        const oldA = g.plan.a, oldB = g.plan.b;
+        const newA = [oldA[0] + n[0] * D, oldA[1] + n[1] * D];
+        const newB = [oldB[0] + n[0] * D, oldB[1] + n[1] * D];
+        // plan a/b are render units → keys use NORM_W scale
+        sp.walls = rekeyWallsAfterMove(
+          sp.walls, [[oldA, oldB]], [[newA, newB]], this._wallKeyPitch, NORM_W,
+        );
       }
     }
     this._rszUndo.push({ space: this._space, snap: g.snap });
@@ -4964,6 +5004,227 @@ class HouseplanCard extends LitElement {
     this._saveConfig();
     this.requestUpdate();
   }
+
+
+  // ================= WALL THICKNESS (docs/WALL-THICKNESS.md) =================
+
+  /** Keys are always stored in normalised space (GRID_STEP_N). */
+  private get _wallKeyPitch(): number {
+    return GRID_STEP_N;
+  }
+
+  private get _spaceWalls(): WallEntry[] {
+    const w = this._curSpaceCfg?.walls;
+    return Array.isArray(w) ? (w as WallEntry[]) : [];
+  }
+
+  /** Paper under rooms, grown by shared-wall half-thickness when set. */
+  private _paperShapes(rooms: any[]): Array<{ poly: string } | { rect: { x: number; y: number; w: number; h: number; rx: number } }> {
+    const walls = this._spaceWalls;
+    if (!walls.length) return paperRoomShapes(rooms);
+    const openCuts = this._openPairs().flatMap((p) => p.segs);
+    return paperRoomShapesWithWalls(
+      rooms, walls, openCuts, this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+    );
+  }
+
+  /** Thick-wall spans in render units — suppress centreline stroke under bodies. */
+  private _thickWallCuts(): number[][] {
+    const walls = this._spaceWalls;
+    if (!walls.length) return [];
+    const openCuts = this._openPairs().flatMap((p) => p.segs);
+    return wallEdgeBodies(
+      this._spaceModel().rooms, walls, openCuts,
+      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+    ).map((b) => [b.a[0], b.a[1], b.b[0], b.b[1]]);
+  }
+
+  /** Nearest room edge under the cursor for the wall-thickness tool. */
+  private _wallThickHit(raw: number[]): {
+    a: number[]; b: number[]; roomId: string; segs: number[][]; open: boolean;
+  } | null {
+    const rooms = this._spaceModel().rooms.filter((r) => r.id);
+    const pull = this._gridPitch * 6;
+    let best: { a: number[]; b: number[]; roomId: string; d: number } | null = null;
+    for (const room of rooms) {
+      const poly = roomPoly(room);
+      if (!poly) continue;
+      for (let i = 0; i < poly.length; i++) {
+        const a = poly[i], b = poly[(i + 1) % poly.length];
+        const d = distToSegment(raw, [a[0], a[1], b[0], b[1]]);
+        if (d <= pull && (!best || d < best.d)) best = { a, b, roomId: room.id!, d };
+      }
+    }
+    if (!best) return null;
+    // open-boundary stretches refuse thickness
+    const openHit = this._openWallHit(raw);
+    const open = !!(openHit && openHit.open
+      && distToSegment(raw, openHit.segs[0]) <= pull + 1e-6);
+    // highlight the whole physical wall: shared → sharedBoundary segments
+    let segs: number[][] = [[best.a[0], best.a[1], best.b[0], best.b[1]]];
+    const key = wallKey(
+      [best.a[0] / NORM_W, best.a[1] / NORM_W],
+      [best.b[0] / NORM_W, best.b[1] / NORM_W],
+      this._wallKeyPitch,
+    );
+    for (const room of rooms) {
+      if (room.id === best.roomId) continue;
+      const poly = roomPoly(room);
+      if (!poly) continue;
+      for (let i = 0; i < poly.length; i++) {
+        const a = poly[i], b = poly[(i + 1) % poly.length];
+        const k = wallKey(
+          [a[0] / NORM_W, a[1] / NORM_W], [b[0] / NORM_W, b[1] / NORM_W], this._wallKeyPitch,
+        );
+        if (k === key) {
+          segs = [[a[0], a[1], b[0], b[1]]];
+          break;
+        }
+      }
+    }
+    if (openHit?.open) {
+      const mid = [(best.a[0] + best.b[0]) / 2, (best.a[1] + best.b[1]) / 2];
+      for (const sg of openHit.segs) {
+        if (distToSegment(mid, sg) < this._gridPitch) {
+          segs = openHit.segs;
+          break;
+        }
+      }
+    }
+    return { a: best.a, b: best.b, roomId: best.roomId, segs, open };
+  }
+
+  private get _wallThickHover(): { segs: number[][]; open: boolean } | null {
+    if (!this._markup || this._tool !== 'wallthick' || !this._cursorPt || this._wallDialog) return null;
+    const hit = this._wallThickHit(this._cursorPt);
+    return hit ? { segs: hit.segs, open: hit.open } : null;
+  }
+
+  private _wallThickClick(raw: number[]): void {
+    const hit = this._wallThickHit(raw);
+    if (!hit) {
+      this._showToast(this._t('toast.wallthick_pick'));
+      return;
+    }
+    if (hit.open) {
+      this._showToast(this._t('toast.wallthick_open'));
+      return;
+    }
+    const cm = thicknessCmAt(this._spaceWalls, hit.a, hit.b, this._wallKeyPitch, NORM_W);
+    const view = this._viewOr(this._baseVb());
+    const mx = (hit.a[0] + hit.b[0]) / 2, my = (hit.a[1] + hit.b[1]) / 2;
+    this._wallDialog = {
+      a: hit.a, b: hit.b,
+      value: cmToField(cm, this._imperial),
+      roomId: hit.roomId,
+      sx: ((mx - view.x) / view.w) * 100,
+      sy: ((my - view.y) / view.h) * 100,
+    };
+  }
+
+  private _wallThickApply(allRoom: boolean): void {
+    const d = this._wallDialog;
+    if (!d) return;
+    const sp = this._curSpaceCfg;
+    if (!sp) return;
+    const cm = fieldToCm(d.value, this._imperial);
+    const openCuts = this._openPairs().flatMap((p) => p.segs);
+    let next: WallEntry[];
+    if (allRoom && d.roomId) {
+      const room = this._spaceModel().rooms.find((r) => r.id === d.roomId);
+      next = setWallThicknessForRoom(
+        sp.walls, room, cm, this._wallKeyPitch, openCuts, NORM_W,
+      );
+    } else {
+      next = setWallThickness(sp.walls, d.a, d.b, cm, this._wallKeyPitch, NORM_W);
+    }
+    next = degradeWalls(next, sp.rooms || [], GRID_STEP_N, 1);
+    if (next.length) sp.walls = next;
+    else delete sp.walls;
+    this._wallDialog = null;
+    this._showToast(this._t(cm == null ? 'toast.wallthick_cleared' : 'toast.wallthick_set'));
+    this._saveConfig();
+    this.requestUpdate();
+  }
+
+  private _wallHatchDefs(): TemplateResult {
+    if (!this._spaceWalls.length && !this._markup) return svg`` as unknown as TemplateResult;
+    const inv = Math.max(0.4, 1 / Math.max(this._zoom, 0.4));
+    return svg`<defs>
+      <pattern id="hp-wall-hatch" patternUnits="userSpaceOnUse" width="8" height="8"
+        patternTransform="rotate(45) scale(${inv.toFixed(3)})">
+        <path d="M0 0 L0 8" stroke="var(--room-stroke, #607d8b)" stroke-width="2" opacity="0.55"></path>
+      </pattern>
+    </defs>` as unknown as TemplateResult;
+  }
+
+  private _renderWallBodies(disp: SpaceDisplay): TemplateResult {
+    if (disp && !disp.showBorders && !this._markup) return svg`` as unknown as TemplateResult;
+    const walls = this._spaceWalls;
+    if (!walls.length) return svg`` as unknown as TemplateResult;
+    const openCuts = this._openPairs().flatMap((p) => p.segs);
+    const bodies = wallEdgeBodies(
+      this._spaceModel().rooms, walls, openCuts,
+      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+    );
+    if (!bodies.length) return svg`` as unknown as TemplateResult;
+    const openings = (this._curSpaceCfg?.openings || []).map((o: any) => ({
+      x: Number(o.x) * NORM_W, y: Number(o.y) * NORM_W,
+      angle: Number(o.angle) || 0,
+      length: (Number(o.length) > 0 ? Number(o.length) : 0.9) * NORM_W,
+    }));
+    // screen px per plan unit — below ~3px wall depth → solid fill
+    const stage = this._stageEl;
+    const v = this._viewOr(this._baseVb());
+    const px = stage && stage.clientWidth && v.w ? stage.clientWidth / v.w : 1;
+    const stroke = disp?.color || 'var(--hp-muted)';
+    return svg`<g class="wallbodies" style="--room-stroke:${stroke}">
+      ${bodies.map((b) => {
+        const solid = b.depthUnits * px < 3;
+        return svg`<path class="wallbody ${solid ? 'solid' : ''}"
+          data-hp="wall" data-id=${b.key} data-kind=${b.kind}
+          d="${wallEdgePathD(b, openings)}"></path>`;
+      })}
+    </g>` as unknown as TemplateResult;
+  }
+
+  /** Hover highlight for the wall-thickness tool (SVG). */
+  private _renderWallThickUi(): TemplateResult {
+    const hover = this._wallThickHover;
+    if (!hover) return svg`` as unknown as TemplateResult;
+    return svg`${hover.segs.map((sg) => svg`<line class="wallthick-hover ${hover.open ? 'isopen' : ''}"
+      x1="${sg[0]}" y1="${sg[1]}" x2="${sg[2]}" y2="${sg[3]}"></line>`)}` as unknown as TemplateResult;
+  }
+
+  /** Thickness input popover, anchored in stage % like measure labels. */
+  private _renderWallThickDialog(): TemplateResult {
+    const d = this._wallDialog;
+    if (!d) return html``;
+    return html`<div class="wallthick-dlg" style="left:${d.sx.toFixed(2)}%;top:${d.sy.toFixed(2)}%"
+      @click=${(e: Event) => e.stopPropagation()}>
+      <div class="row">
+        <label>${this._t('wallthick.field')}</label>
+        <input type="number" min="0" max="100" step="any" .value=${d.value}
+          @input=${(e: Event) => {
+            this._wallDialog = { ...d, value: (e.target as HTMLInputElement).value };
+          }}
+          @keydown=${(e: KeyboardEvent) => {
+            if (e.key === 'Enter') { e.preventDefault(); this._wallThickApply(false); }
+          }} />
+        <span class="opl">${this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span>
+      </div>
+      <div class="row">
+        <button class="btn ghost" @click=${() => this._wallThickApply(true)}>
+          ${this._t('wallthick.apply_room')}
+        </button>
+        <span class="spacer"></span>
+        <button class="btn on" @click=${() => this._wallThickApply(false)}>
+          <ha-icon icon="mdi:check"></ha-icon>
+        </button>
+      </div>
+    </div>`;
+  }
+
 
   /** Opening tool: click an existing opening to edit it, or a wall to place one. */
   private _openingClick(raw: number[], shift = false): void {
@@ -7332,7 +7593,7 @@ class HouseplanCard extends LitElement {
         ${this._mode === 'decor' && this._decorTool === 'furniture' ? this._renderFurnPalette() : nothing}
         </div>
 
-        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'openwall' && this._openWallHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._bdMovable ? ' bdgrab' : ''}${this._bdDrag ? ' bdgrabbing' : ''}${dayNight ? ' daynight' : ''}${dayNight && this._skySnap ? ' skysnap' : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}"
+        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'openwall' && this._openWallHover ? ' wallhot' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._bdMovable ? ' bdgrab' : ''}${this._bdDrag ? ' bdgrabbing' : ''}${dayNight ? ' daynight' : ''}${dayNight && this._skySnap ? ' skysnap' : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}"
           style="height:${this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}${stageBg ? `;background:${stageBg}` : ''}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
@@ -7359,7 +7620,7 @@ class HouseplanCard extends LitElement {
                    One <g> around ALL paper shapes: the daynight drop shadow
                    (styles.ts) is composited once for the whole sheet, so
                    adjacent rooms never cast seams onto each other's paper. */}
-            ${svg`<g class="hp-paperg">${paperRoomShapes(space.rooms).map((sh) =>
+            ${this._wallHatchDefs()}${svg`<g class="hp-paperg">${this._paperShapes(space.rooms).map((sh) =>
               'poly' in sh
                 ? svg`<polygon class="hp-paper" points="${sh.poly}" pointer-events="none"></polygon>`
                 : svg`<rect class="hp-paper" x="${sh.rect.x}" y="${sh.rect.y}" width="${sh.rect.w}" height="${sh.rect.h}" rx="${sh.rect.rx}" pointer-events="none"></rect>`,
@@ -7439,7 +7700,9 @@ class HouseplanCard extends LitElement {
               const openCuts = r.id && !isPicked
                 ? allPairs.filter((pp) => pp.a.id === r.id || pp.b.id === r.id).flatMap((pp) => pp.segs)
                 : [];
-              if (openCuts.length) cls += ' noedge';
+              const thickCuts = !isPicked ? this._thickWallCuts() : [];
+              const edgeCuts = openCuts.concat(thickCuts);
+              if (edgeCuts.length) cls += ' noedge';
               // island rooms punch holes in their parent's fill (evenodd)
               const myPoly = polyOf(r);
               const holes = myPoly ? islandsOf(myPoly, otherPolys(r)) : [];
@@ -7465,8 +7728,8 @@ class HouseplanCard extends LitElement {
                     x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="${Math.min(r.w!, r.h!) * 0.03}"
                     @mousemove=${tip}
                     @mouseleave=${() => (this._tip = null)}></rect>`;
-              const trimmed = openCuts.length && myPoly
-                ? outlineWithout(myPoly, openCuts, this._gridPitch * 0.02)
+              const trimmed = edgeCuts.length && myPoly
+                ? outlineWithout(myPoly, edgeCuts, this._gridPitch * 0.02)
                 : null;
               const outline = trimmed
                 ? svg`<path class="room-outline ${this._markup ? 'outlined' : ''}"
@@ -7490,7 +7753,9 @@ class HouseplanCard extends LitElement {
                    an opening MEANS is untouched: light still spills through
                    it, the sun still comes in at its window, and the contact
                    sensor still opens it. */}
+            ${this._renderWallBodies(disp)}
             ${disp.hideOpenings && !this._markup ? nothing : this._renderOpenings(disp)}
+            ${this._renderWallThickUi()}
             ${this._markup && this._tool === 'resize' ? this._renderResizeLayer(view) : nothing}
             ${''/* editor chrome, not plan content: the backdrop frame sits on
                    top of everything the plan draws so its handles stay
@@ -7531,6 +7796,9 @@ class HouseplanCard extends LitElement {
             ? html`<div class="measurelayer">${opMeasure.labels.map((l) => html`<div
                 class="measurelabel opshoulder"
                 style="left:${(((l.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((l.y - view.y) / view.h) * 100).toFixed(2)}%">${l.text}</div>`)}</div>`
+            : nothing}
+          ${this._wallDialog
+            ? html`<div class="measurelayer">${this._renderWallThickDialog()}</div>`
             : nothing}
           ${decorMeasure
             ? html`<div class="measurelayer"><div
@@ -8778,19 +9046,46 @@ class HouseplanCard extends LitElement {
     const items = this._openingsR;
     if (!items.length) return svg``;
     const base = disp.color;
+    const walls = this._spaceWalls;
+    const rooms = this._spaceModel().rooms;
     return svg`${items.map((o) => {
       const half = o.rlen / 2;
       const amt = this._openingAmt(o);
       const active = amt > 0 && !!o.contact;
       const tone = active ? 'var(--hp-open)' : base;
-      const jamb = 8;
+      const face = walls.length
+        ? openingInnerFaceOffset(
+            rooms,
+            { x: o.rx, y: o.ry, angle: o.angle, length: o.rlen, flip_v: o.flip_v },
+            walls, this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+          )
+        : { ox: 0, oy: 0, cm: 0 };
+      // jambs span the full wall depth, centred on the centreline
+      const jambHalf = face.cm > 0
+        ? ((face.cm / this._cellCm) * this._gridPitch) / 2
+        : 4;
       const sx = o.flip_h ? -1 : 1;
       const sy = o.flip_v ? -1 : 1;
+      // shift swing geometry to the inner face (plan space → local via inverse rotate)
+      let swingTx = 0, swingTy = 0;
+      if (face.cm > 0 && (face.ox || face.oy)) {
+        const rad = (-o.angle * Math.PI) / 180;
+        const c = Math.cos(rad), s = Math.sin(rad);
+        swingTx = face.ox * c - face.oy * s;
+        swingTy = face.ox * s + face.oy * c;
+        // undo flip_v on the offset — scale(sy) will re-apply it
+        swingTy *= sy;
+        swingTx *= sx;
+      }
       let body;
       if (o.type === 'window') {
-        // two casement leaves hinged at the jambs, meeting in the middle
         const arcLen = (Math.PI / 2) * half;
+        const glass = face.cm > 0
+          ? svg`<line class="op-glass" x1="0" y1="${-jambHalf}" x2="0" y2="${jambHalf}"
+              stroke="${tone}" stroke-width="1.5"></line>`
+          : nothing;
         body = svg`
+          <g transform="translate(${swingTx} ${swingTy})">
           <path class="op-arc" d="M 0 0 A ${half} ${half} 0 0 0 ${-half} ${-half}" fill="none"
             stroke="${tone}" stroke-dasharray="${arcLen}" stroke-dashoffset="${arcLen * (1 - amt)}"></path>
           <path class="op-arc" d="M 0 0 A ${half} ${half} 0 0 1 ${half} ${-half}" fill="none"
@@ -8804,29 +9099,32 @@ class HouseplanCard extends LitElement {
             <g class="op-leaf" style="transform:rotate(${90 * amt}deg)">
               <rect x="${-half}" y="-1.5" width="${half}" height="3" fill="${tone}"></rect>
             </g>
+          </g>
+          ${glass}
           </g>`;
       } else {
-        // door leaf hinged at the left jamb, swinging up; arc from tip to tip
         const L = o.rlen;
         const arcLen = (Math.PI / 2) * L;
         body = svg`
+          <g transform="translate(${swingTx} ${swingTy})">
           <path class="op-arc" d="M ${half} 0 A ${L} ${L} 0 0 0 ${-half} ${-L}" fill="none"
             stroke="${tone}" stroke-dasharray="${arcLen}" stroke-dashoffset="${arcLen * (1 - amt)}"></path>
           <g transform="translate(${-half} 0)">
             <g class="op-leaf" style="transform:rotate(${-90 * amt}deg)">
               <rect x="0" y="-1.75" width="${L}" height="3.5" fill="${tone}"></rect>
             </g>
+          </g>
           </g>`;
       }
       return svg`<g class="opening" data-hp="opening" data-id="${o.id}" data-kind="${o.type}"
         transform="translate(${o.rx} ${o.ry}) rotate(${o.angle})">
         <g transform="scale(${sx} ${sy})">
-          <line x1="${-half}" y1="${-jamb / 2}" x2="${-half}" y2="${jamb / 2}" stroke="${base}" stroke-width="2.5"></line>
-          <line x1="${half}" y1="${-jamb / 2}" x2="${half}" y2="${jamb / 2}" stroke="${base}" stroke-width="2.5"></line>
+          <line x1="${-half}" y1="${-jambHalf}" x2="${-half}" y2="${jambHalf}" stroke="${base}" stroke-width="2.5"></line>
+          <line x1="${half}" y1="${-jambHalf}" x2="${half}" y2="${jambHalf}" stroke="${base}" stroke-width="2.5"></line>
           ${body}
         </g>
-        <rect class="op-outline" x="${-half - 10}" y="-16" width="${o.rlen + 20}" height="32" rx="6"></rect>
-        <rect class="op-hit" x="${-half - 12}" y="-20" width="${o.rlen + 24}" height="40"
+        <rect class="op-outline" x="${-half - 10}" y="${-Math.max(16, jambHalf + 8)}" width="${o.rlen + 20}" height="${Math.max(32, jambHalf * 2 + 16)}" rx="6"></rect>
+        <rect class="op-hit" x="${-half - 12}" y="${-Math.max(20, jambHalf + 10)}" width="${o.rlen + 24}" height="${Math.max(40, jambHalf * 2 + 20)}"
           @click=${(e: MouseEvent) => this._opClick(e, o)}
           @pointerdown=${(e: PointerEvent) => this._opPointerDown(e, o)}
           @pointermove=${(e: PointerEvent) => this._opPointerMove(e, o)}
@@ -9022,14 +9320,20 @@ class HouseplanCard extends LitElement {
           <circle cx="0" cy="${G}" r="${dotR * 2.1}" class="griddot major"></circle>
           <circle cx="${G}" cy="${G}" r="${dotR * 2.1}" class="griddot major"></circle>
         </pattern>
+      <pattern id="hp-wall-hatch" patternUnits="userSpaceOnUse" width="8" height="8"
+        patternTransform="rotate(45) scale(${Math.max(0.4, 1 / Math.max(this._zoom, 0.4)).toFixed(3)})">
+        <path d="M0 0 L0 8" stroke="var(--room-stroke, #607d8b)" stroke-width="2" opacity="0.55"></path>
+      </pattern>
       </defs>`;
   }
 
   private _renderMarkupLayer(vb: number[]): TemplateResult {
     // derived walls minus the open stretches — those are drawn dashed on top
     const openCuts = this._openPairs().flatMap((p) => p.segs);
-    const segs = openCuts.length
-      ? cutSegments(this._segments, openCuts, this._gridPitch * 0.02)
+    const thickCuts = this._thickWallCuts();
+    const allCuts = openCuts.concat(thickCuts);
+    const segs = allCuts.length
+      ? cutSegments(this._segments, allCuts, this._gridPitch * 0.02)
       : this._segments;
     const path = this._path;
     const g = this._gridPitch;
@@ -9098,9 +9402,14 @@ class HouseplanCard extends LitElement {
         <ha-icon icon="mdi:door"></ha-icon>${this._t('markup.opening')}
       </button>
       <button class="btn ${this._tool === 'openwall' ? 'on' : ''}"
-        @click=${() => { this._cancelPath(); this._tool = 'openwall'; }}
+        @click=${() => { this._cancelPath(); this._tool = 'openwall'; this._wallDialog = null; }}
         title=${this._t('title.markup_openwall')}>
         <ha-icon icon="mdi:border-none-variant"></ha-icon>${this._t('markup.openwall')}
+      </button>
+      <button class="btn ${this._tool === 'wallthick' ? 'on' : ''}"
+        @click=${() => { this._cancelPath(); this._tool = 'wallthick'; this._wallDialog = null; }}
+        title=${this._t('title.markup_wallthick')}>
+        <ha-icon icon="mdi:wall"></ha-icon>${this._t('markup.wallthick')}
       </button>
       <button class="btn ${this._tool === 'delroom' ? 'on' : ''}" @click=${() => (this._tool = 'delroom')}
         title=${this._t('title.markup_delroom')}>
@@ -9114,6 +9423,7 @@ class HouseplanCard extends LitElement {
             ${this._path.length ? html`<button class="btn ghost" @click=${this._cancelPath}>${this._t('btn.reset')}</button>` : nothing}`
         : nothing}
       ${this._tool === 'resize' ? html`<span class="hint">${this._t('markup.hint_resize')}</span>` : nothing}
+      ${this._tool === 'wallthick' ? html`<span class="hint">${this._t('markup.hint_wallthick')}</span>` : nothing}
       <button class="btn barclose" title=${this._t('title.close_editor')}
         @click=${() => this._setMode('view')}>
         <ha-icon icon="mdi:close"></ha-icon>

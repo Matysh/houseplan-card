@@ -68,6 +68,7 @@ MAX_ROOMS = 400
 MAX_MARKERS = 2000
 MAX_OPENINGS = 500
 MAX_DECOR = 1000
+MAX_WALLS = 500
 MAX_LAYOUT = 5000
 # Inner limits (HP-1454-05). The outer collections were capped, the collections
 # INSIDE them were not: a 150 000-point polygon or a 100 000-entry known_devices
@@ -354,6 +355,18 @@ SPACE_SCHEMA = vol.Schema(
                 extra=vol.ALLOW_EXTRA,
             )
         ], vol.Length(max=MAX_OPENINGS)),
+        # Wall thickness (docs/WALL-THICKNESS.md): keyed by a segment identity
+        # (midpoint + direction), thickness always in centimetres. Optional —
+        # a space without `walls` validates and renders exactly as before.
+        vol.Optional("walls"): vol.All([
+            vol.Schema(
+                {
+                    vol.Required("key"): vol.All(str, vol.Length(min=1, max=64)),
+                    vol.Required("cm"): vol.All(_finite, vol.Range(min=1, max=100)),
+                },
+                extra=vol.ALLOW_EXTRA,
+            )
+        ], vol.Length(max=MAX_WALLS)),
         # Legacy: walls are derived from room outlines since v1.19.0 — a line has no
         # independent existence. Still accepted so a stale browser tab cannot fail a save;
         # the card strips the field on every write.

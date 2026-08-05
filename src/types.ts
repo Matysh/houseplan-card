@@ -24,6 +24,12 @@ export interface RoomCfg {
   poly?: number[][]; // polygon in render units (model) / normalized (config)
 }
 
+/** Wall thickness entry (docs/WALL-THICKNESS.md) — always centimetres in config. */
+export interface WallEntry {
+  key: string;
+  cm: number;
+}
+
 export interface SpaceModel {
   id: string;
   title: string;

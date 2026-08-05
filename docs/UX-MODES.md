@@ -48,8 +48,10 @@ Header in View: space tabs, device count, zoom cluster. Nothing else.
 
 ## Plan — geometry and appearance of the space
 
-- Toolbar tools: Outline room, Delete room, Merge, Split, Opening (place / drag along
-  walls / properties), Room labels (drag positions — labels are part of the plan).
+- Toolbar tools: Outline room, Delete room, Merge, Split, Resize, Opening (place /
+  drag along walls / properties), Open boundary, Wall thickness (docs/WALL-THICKNESS.md —
+  click a wall, set cm/inches from HA's unit system; empty/0 clears), Room labels
+  (drag positions — labels are part of the plan).
 - Space gear dialog (title, plan image / hand-drawn, scale, Display section, show_lqi),
   add space, floors import, delete space.
 - ⚙ General settings (fill palette) lives here — it is about the plan's appearance.

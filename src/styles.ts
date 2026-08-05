@@ -161,6 +161,15 @@ export const cardStyles = css`
     .stage.noplan {
       background: #ffffff;
     }
+    /* Editors always keep the white drawing sheet — even when a backdrop
+       image is loaded. Without this, a picture plan painted the theme card
+       colour under the grid (owner 2026-08-05). View keeps the historical
+       theme / .noplan split. */
+    .stage.mode-plan,
+    .stage.mode-devices,
+    .stage.mode-decor {
+      background: #ffffff;
+    }
     .stage {
       position: relative;
       width: 100%;
@@ -409,7 +418,10 @@ export const cardStyles = css`
       fill: var(--ha-card-background, var(--card-background-color, #111));
       stroke: none;
     }
-    .stage.noplan .hp-paper {
+    .stage.noplan .hp-paper,
+    .stage.mode-plan .hp-paper,
+    .stage.mode-devices .hp-paper,
+    .stage.mode-decor .hp-paper {
       fill: #ffffff;
     }
     /* White day (owner 2026-08-03): at high sun the daynight sky is #ffffff —
@@ -1085,6 +1097,58 @@ export const cardStyles = css`
       cursor: pointer;
     }
     /* open-wall tool: default until a shared wall is under the cursor */
+
+    .stage.markup.tool-wallthick { cursor: default; }
+    .stage.markup.tool-wallthick.wallhot { cursor: pointer; }
+    .wallbody {
+      fill: url(#hp-wall-hatch);
+      fill-rule: evenodd;
+      stroke: var(--room-stroke, var(--hp-muted));
+      stroke-width: 0.6;
+      pointer-events: none;
+      opacity: 0.95;
+    }
+    .wallbody.solid {
+      fill: var(--room-stroke, var(--hp-muted));
+      fill-opacity: 0.35;
+    }
+    .wallthick-hover {
+      stroke: var(--accent-color, #03a9f4);
+      stroke-width: 4;
+      stroke-linecap: round;
+      pointer-events: none;
+      opacity: 0.85;
+    }
+    .wallthick-dlg {
+      position: absolute;
+      z-index: 40;
+      min-width: 200px;
+      transform: translate(-50%, 8px);
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: var(--card-background-color, #fff);
+      box-shadow: 0 8px 28px rgba(0,0,0,.22);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: auto;
+    }
+    .wallthick-hover.isopen {
+      stroke: var(--error-color, #f44336);
+    }
+    .wallthick-dlg .row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .wallthick-dlg input[type="number"] {
+      width: 5.5em;
+      padding: 4px 6px;
+      border: 1px solid var(--divider-color, #ccc);
+      border-radius: 6px;
+      background: var(--input-fill, transparent);
+      color: var(--primary-text-color);
+    }
     .stage.markup.tool-openwall { cursor: default; }
     .stage.markup.tool-openwall.wallhot { cursor: pointer; }
     .openwall {
