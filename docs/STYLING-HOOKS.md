@@ -1,6 +1,6 @@
 # Styling hooks — the selectors card-mod may rely on
 
-Status: **implemented (dev, unreleased).** Code: `src/houseplan-card.ts`
+Status: **implemented (v1.59.0-beta.3).** Code: `src/houseplan-card.ts`
 (`_renderDevice`, `_renderRoomLabel`, `_renderOpenings`, `_renderDecorLayer`,
 the room shapes in `render()`, the space tabs in the header),
 `src/space-render.ts` (the static `houseplan-space-card`).

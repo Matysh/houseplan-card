@@ -69,7 +69,7 @@ import {
 import { alignAllToGrid, type AlignReport } from './align-grid';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.59.0-beta.2';
+const CARD_VERSION = '1.59.0-beta.3';
 /** HP-1552 boot-veil timing (AUD-1552-02). The veil holds for at least
  *  BOOT_MIN_MS; every stage-height change restarts a BOOT_QUIET_MS
  *  trailing-quiescence requirement (chrome still settling near the cap

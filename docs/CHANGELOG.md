@@ -2,6 +2,18 @@
 
 ## Unreleased (dev)
 
+## v1.59.0-beta.3 — 2026-08-05
+
+The third pre-release of the 1.59 line: you can furnish the plan with
+top-view symbols at real size, hide the decor layer or the openings from
+View without losing them, aim card-mod at stable `data-*` hooks, and let
+Home Assistant format entity values the way its own more-info does. A
+handful of editor polish lands with it — bead-sized corner handles, the
+backdrop editor opening on its own tool, virtual walls following the
+room-border switch — plus the audit follow-ups (write policy, README
+differentiation, tighter validation). Wall thickness is approved as a
+written spec only (docs/WALL-THICKNESS.md); it is not coded yet.
+
 - **Two new switches in a space's settings: «Hide the decorative layer» and
   «Hide doors and windows».** Both only hide. The shapes, labels, furniture
   and openings stay in your config, and each stays visible in the editor that

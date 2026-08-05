@@ -1,6 +1,6 @@
 # The furniture library — top-view symbols in the decor layer
 
-Status: **implemented (dev, unreleased).** Code: `src/furniture.ts` (the
+Status: **implemented (v1.59.0-beta.3).** Code: `src/furniture.ts` (the
 table, the geometry, the wall magnet, the resize — all pure and unit-tested),
 `src/houseplan-card.ts` (the `furniture` tool, `_renderFurnPalette`,
 `_furnPlace`, `_furnMoveUpdate`, the shared `_dt*` frame),
