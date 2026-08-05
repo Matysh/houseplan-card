@@ -37,6 +37,33 @@ export function entryToSeg(e: OpenSpanEntry, coordScale: number): number[] {
   return [e.a[0] * s, e.a[1] * s, e.b[0] * s, e.b[1] * s];
 }
 
+function finitePoint(p: any): boolean {
+  return Array.isArray(p) && p.length >= 2
+    && Number.isFinite(Number(p[0])) && Number.isFinite(Number(p[1]));
+}
+
+/**
+ * Fail-soft read of `space.open_spans` (AUD-159B6-03). The field is persisted
+ * data: an old client, a hand-edited YAML or a broken import can put anything
+ * there, and one malformed entry used to throw inside render and blank the
+ * card for every reader. Anything that is not two finite points a minimum
+ * length apart is dropped, the rest keeps working.
+ */
+export function sanitizeOpenSpans(spans: unknown): OpenSpanEntry[] {
+  if (!Array.isArray(spans)) return [];
+  const out: OpenSpanEntry[] = [];
+  for (const e of spans) {
+    if (!e || typeof e !== 'object') continue;
+    const raw = e as any;
+    if (!finitePoint(raw.a) || !finitePoint(raw.b)) continue;
+    const a = [Number(raw.a[0]), Number(raw.a[1])];
+    const b = [Number(raw.b[0]), Number(raw.b[1])];
+    if (Math.hypot(b[0] - a[0], b[1] - a[1]) < OPEN_SPAN_MIN_UNITS) continue;
+    out.push({ a, b });
+  }
+  return out;
+}
+
 export function spanKey(a: number[], b: number[], pitch: number, coordScale = 1): string {
   if (coordScale === 1) return wallKey(a, b, pitch);
   return wallKey([a[0] / coordScale, a[1] / coordScale], [b[0] / coordScale, b[1] / coordScale], pitch);
@@ -178,7 +205,8 @@ export function expandLegacyOpenSpans(
   spans: OpenSpanEntry[] | null | undefined,
   eps: number,
 ): OpenSpanEntry[] {
-  if (spans && spans.length) return spans.map((s) => ({ a: s.a.slice(), b: s.b.slice() }));
+  const clean = sanitizeOpenSpans(spans);
+  if (clean.length) return clean;
   const out: OpenSpanEntry[] = [];
   const list = (rooms || []).filter((r) => r?.id);
   const linked = (x: any, y: any) =>
@@ -214,12 +242,15 @@ export function resolveOpenCuts(
   spans: OpenSpanEntry[] | null | undefined,
   coordScale: number,
   eps: number,
+  allowLegacy = true,
 ): number[][] {
   const list = (rooms || []).filter((r) => r?.id);
-  if (spans && spans.length) {
-    return spans.map((e) => entryToSeg(e, coordScale));
-  }
-  // legacy
+  const clean = sanitizeOpenSpans(spans);
+  if (clean.length) return clean.map((e) => entryToSeg(e, coordScale));
+  // Legacy `open_to`-only configuration. NEVER read in the middle of a geometry
+  // transaction (AUD-159B6-02): once explicit spans have been removed the index
+  // is stale by construction and would resurrect a different stretch.
+  if (!allowLegacy) return [];
   const out: number[][] = [];
   const linked = (x: any, y: any) =>
     (x.open_to || []).includes(y.id) || (y.open_to || []).includes(x.id);
@@ -428,13 +459,61 @@ export function degradeOpenSpans(
   coordScale: number,
   eps: number,
 ): OpenSpanEntry[] {
-  if (!spans?.length) return [];
+  const clean = sanitizeOpenSpans(spans);
+  if (!clean.length) return [];
   const shared = allSharedSegs(roomsModel, eps);
-  return spans.filter((e) => {
+  return clean.filter((e) => {
     const sg = entryToSeg(e, coordScale);
     const mid = [(sg[0] + sg[2]) / 2, (sg[1] + sg[3]) / 2];
     return shared.some((sh) => distToSegment(mid, sh) < eps * 4);
   });
+}
+
+/**
+ * Project each open span onto the current shared-boundary geometry and clip
+ * to the overlap. Spans that no longer overlap any shared stretch are dropped.
+ * Prevents "solid outline + dashed open" after resize when a span drifts off
+ * the true shared edge.
+ */
+export function clipOpenSpansToShared(
+  spans: OpenSpanEntry[] | null | undefined,
+  roomsModel: any[],
+  coordScale: number,
+  eps: number,
+): OpenSpanEntry[] {
+  const clean = sanitizeOpenSpans(spans);
+  if (!clean.length) return [];
+  const shared = allSharedSegs(roomsModel, eps);
+  if (!shared.length) return [];
+  const out: OpenSpanEntry[] = [];
+  const minLen = Math.max(eps * 4, 1e-6);
+  for (const e of clean) {
+    const sg = entryToSeg(e, coordScale);
+    const ax = sg[0], ay = sg[1], bx = sg[2], by = sg[3];
+    const adx = bx - ax, ady = by - ay;
+    const aLen = Math.hypot(adx, ady);
+    if (aLen < minLen) continue;
+    const ux = adx / aLen, uy = ady / aLen;
+    let best: { lo: number; hi: number } | null = null;
+    for (const sh of shared) {
+      // both endpoints of `sh` must lie on the line of sg
+      const d1 = Math.abs((sh[0] - ax) * uy - (sh[1] - ay) * ux);
+      const d2 = Math.abs((sh[2] - ax) * uy - (sh[3] - ay) * ux);
+      if (d1 > eps * 4 || d2 > eps * 4) continue;
+      const t1 = (sh[0] - ax) * ux + (sh[1] - ay) * uy;
+      const t2 = (sh[2] - ax) * ux + (sh[3] - ay) * uy;
+      const lo = Math.max(0, Math.min(t1, t2));
+      const hi = Math.min(aLen, Math.max(t1, t2));
+      if (hi - lo < minLen) continue;
+      if (!best || hi - lo > best.hi - best.lo) best = { lo, hi };
+    }
+    if (!best) continue;
+    const na = [ax + ux * best.lo, ay + uy * best.lo];
+    const nb = [ax + ux * best.hi, ay + uy * best.hi];
+    if (Math.hypot(nb[0] - na[0], nb[1] - na[1]) < minLen) continue;
+    out.push(spanToEntry(na, nb, coordScale));
+  }
+  return out;
 }
 
 /** Rekey span endpoints after parallel old→new edge moves (render units). */
@@ -444,10 +523,11 @@ export function rekeyOpenSpansAfterMove(
   newSpans: [number[], number[]][],
   coordScale: number,
 ): OpenSpanEntry[] {
-  if (!spans?.length) return [];
-  if (oldSpans.length !== newSpans.length) return spans.map((s) => ({ a: s.a.slice(), b: s.b.slice() }));
+  const clean = sanitizeOpenSpans(spans);
+  if (!clean.length) return [];
+  if (oldSpans.length !== newSpans.length) return clean;
   const out: OpenSpanEntry[] = [];
-  for (const e of spans) {
+  for (const e of clean) {
     const sg = entryToSeg(e, coordScale);
     const a = [sg[0], sg[1]], b = [sg[2], sg[3]];
     let na = a, nb = b;

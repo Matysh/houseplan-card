@@ -14,8 +14,11 @@ const count = (dir, match, re) =>
 
 const files = (dir, match) => readdirSync(dir).filter((f) => match.test(f)).length;
 
+// AUD-159B6-06: counting only `test(` under-reported by every suite written
+// with describe/it — the inventory claimed 339 while `npm test` ran 352. Both
+// spellings are the same layer, so both are counted (indented `it(` included).
 const rows = [
-  ['frontend unit (node:test)', count('test', /\.test\.mjs$/, /^test\(/gm)],
+  ['frontend unit (node:test)', count('test', /\.test\.mjs$/, /^\s*(test|it)\(/gm)],
   ['pure backend (pytest, no HA)', count('tests_backend', /^test_validation\.py$/, /^def test_/gm)],
   ['HA-harness backend (CI, py3.13)', count('tests_backend', /^test_ha_.*\.py$/, /^async def test_|^def test_/gm)],
   ['browser smokes (headless chromium)', files('demo', /^smoke_.*\.mjs$/)],

@@ -2,6 +2,32 @@
 
 ## Unreleased (dev)
 
+## v1.59.0-beta.7 — 2026-08-05
+
+Seventh pre-release of the 1.59 line: audit fixes for partial-wall geometry and
+lifecycle, plus wall fill colour under the hatch.
+
+- **Wall fill + hatch.** General setting `fill_colors.wall_fill` (default opaque
+  white) paints under the diagonal hatch; the hatch stays. Thin-on-screen bodies
+  keep the solid fill alone so the hatch does not collapse into noise.
+- **Atomic wall intervals (AUD-159B6-01).** Thickness and open cuts follow
+  shared-boundary / open-span endpoints, not whole polygon edges — a partial
+  shared stretch no longer leaks thickness onto the outer remainder, and an open
+  span away from the edge midpoint clears only its own piece.
+- **Open-span geometry transaction (AUD-159B6-02).** `open_spans` ride in the
+  resize snapshot/Undo; Split / Merge / Delete rekey, clip and sync `open_to` in
+  one step without resurrecting a legacy stretch mid-mutation.
+- **Backend `open_spans` schema (AUD-159B6-03)** with cap / finite points /
+  dedupe; frontend fail-soft sanitises malformed entries.
+- **Warm owner vs pending nav (AUD-159B6-04):** adopting a warm viewport clears
+  the global LS pending mode so a neighbour card cannot overwrite the owner's
+  editor and draft.
+- **Release gate (AUD-159B6-05):** the Release workflow waits for a green
+  Validate of the exact commit before uploading the asset.
+- **Smoke / inventory hygiene (AUD-159B6-06):** two-click openwall fixtures,
+  island-by-id, render-perf hook on `_openPairs` / `_buildModel`, inventory
+  counts `test` and `it`.
+
 ## v1.59.0-beta.6 — 2026-08-05
 
 Sixth pre-release of the 1.59 line: partial open-wall spans and wall-centric Delete.

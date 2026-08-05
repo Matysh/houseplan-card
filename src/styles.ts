@@ -1100,6 +1100,14 @@ export const cardStyles = css`
 
     .stage.markup.tool-wallthick { cursor: default; }
     .stage.markup.tool-wallthick.wallhot { cursor: pointer; }
+    /* Solid wall colour sits under the hatch (owner: both, not either/or). */
+    .wallbody-fill {
+      fill: var(--wall-fill, #ffffff);
+      fill-opacity: var(--wall-fill-op, 1);
+      fill-rule: evenodd;
+      stroke: none;
+      pointer-events: none;
+    }
     .wallbody {
       fill: url(#hp-wall-hatch);
       fill-rule: evenodd;
@@ -1107,9 +1115,9 @@ export const cardStyles = css`
       stroke-width: 0.6;
       pointer-events: none;
     }
+    /* Thin-on-screen: hatch collapses into noise — fill alone, stroke from fill path's sibling. */
     .wallbody.solid {
-      fill: var(--room-stroke, var(--hp-muted));
-      fill-opacity: 1;
+      fill: none;
     }
     .wallthick-hover {
       fill: var(--accent-color, #03a9f4);
@@ -1303,6 +1311,13 @@ export const cardStyles = css`
       stroke-width: 2;
       stroke-dasharray: 6 5;
       opacity: 0.7;
+    }
+    .drawwall-preview-fill {
+      fill: var(--wall-fill, #ffffff);
+      fill-opacity: calc(var(--wall-fill-op, 1) * 0.55);
+      fill-rule: evenodd;
+      stroke: none;
+      pointer-events: none;
     }
     .drawwall-preview {
       fill: url(#hp-wall-hatch);

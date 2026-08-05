@@ -115,18 +115,28 @@ const res = await page.evaluate(async () => {
   c._dropLegacySegments();
   out.degrade = !(sp().walls || []).some((w) => w.key.startsWith('9.99'));
 
+  // Opening a stretch takes TWO clicks since v1.59.0-beta.6: anchor, then the
+  // second point on the same shared wall. A span over y=150..350 must refuse
+  // thickness at y=250, and the solid remainder above/below must keep its own.
   c._tool = 'openwall';
-  c._openWallClick([550, 250]);
+  c._openWallClick([550, 150]);
+  c._openWallClick([550, 350]);
   await upd();
+  out.spanOpened = ((sp().open_spans || []).length === 1);
   c._tool = 'wallthick';
   c._toast = null;
   c._wallThickClick([550, 250]);
   await upd();
   out.openRefused = !!c._toast && !c._wallDialog;
+  // the closed parts of the same wall still carry the 25 cm they had
+  out.solidRemainderKeepsCm = c._intervalCm([550, 140, 550, 148]) === 25
+    && c._intervalCm([550, 350, 550, 460]) === 25
+    && c._intervalCm([550, 200, 550, 300]) === 0;
 
   c._tool = 'openwall';
-  c._openWallClick([550, 250]);
+  c._openWallClick([550, 250]); // a click on the span closes it again
   await upd();
+  out.spanClosed = !(sp().open_spans || []).length;
   delete sp().openings;
   c._tool = 'wallthick';
   c._wallThickClick([550, 250]);

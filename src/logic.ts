@@ -1222,6 +1222,8 @@ export interface FillColors {
   /** Glow mode: uniform "darkness" over every room + default light color. */
   glow_base: FillColorEntry;
   glow_light: FillColorEntry;
+  /** Thick-wall body fill (docs/WALL-THICKNESS.md); default opaque white. */
+  wall_fill: FillColorEntry;
 }
 
 export const DEFAULT_FILL_COLORS: FillColors = {
@@ -1235,6 +1237,7 @@ export const DEFAULT_FILL_COLORS: FillColors = {
   lqi_high: { c: '#4bd28f', a: 0.18 },
   glow_base: { c: '#0d1b2a', a: 0.5 },
   glow_light: { c: '#ffd9a0', a: 0.85 },
+  wall_fill: { c: '#ffffff', a: 1 },
 };
 
 const HEX_RE = /^#[0-9a-f]{6}$/i;

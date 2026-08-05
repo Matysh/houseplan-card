@@ -498,11 +498,15 @@ test('snapToWall: the angle is normalized to [-90, 90) so opposite edge directio
 test('fillColorsOf: defaults, merge, malformed entries dropped', () => {
   const d = fillColorsOf({});
   assert.equal(d.light_on.c, '#ffd45c');
-  const o = fillColorsOf({ fill_colors: { light_on: { c: '#ff0000', a: 0.5 }, temp_hot: { c: 'javascript:x', a: 9 } } });
+  assert.equal(d.wall_fill.c, '#ffffff');
+  assert.equal(d.wall_fill.a, 1);
+  const o = fillColorsOf({ fill_colors: { light_on: { c: '#ff0000', a: 0.5 }, temp_hot: { c: 'javascript:x', a: 9 }, wall_fill: { c: '#abcdef', a: 0.4 } } });
   assert.equal(o.light_on.c, '#ff0000');
   assert.equal(o.light_on.a, 0.5);
   assert.equal(o.temp_hot.c, '#ffd45c'); // malformed hex → default
   assert.equal(o.temp_hot.a, 1);         // clamped
+  assert.equal(o.wall_fill.c, '#abcdef');
+  assert.equal(o.wall_fill.a, 0.4);
 });
 
 test('lerpColor: endpoints and midpoint', () => {

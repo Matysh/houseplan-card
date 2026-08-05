@@ -33,8 +33,11 @@ outer walls. Paper and the content frame grow under that outer half.
 
 Production body is the **ring** `outset(poly, half) − inset(poly, half)` per
 room, **union**ed across rooms so shared and T junctions show one continuous
-hatch with no internal seams (as in the reference plan). Mitre joins; bevel
-when the mitre spike exceeds `MITRE_LIMIT × thickness`.
+body with no internal seams (as in the reference plan). The body is painted in
+two layers: a solid fill from global `settings.fill_colors.wall_fill` (default
+opaque white, with its own opacity) **under** the diagonal hatch whose stroke
+matches the wall outline. Neither replaces the other. Mitre joins; bevel when
+the mitre spike exceeds `MITRE_LIMIT × thickness`.
 
 Openings cut the body full-depth; jambs cap the cut; window glass mid-tunnel;
 door swing from the **inner face**. Association uses wall direction ≈ opening

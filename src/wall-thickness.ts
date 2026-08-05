@@ -101,7 +101,52 @@ function keyOf(a: number[], b: number[], pitch: number, scale: number): string {
   return wallKey([a[0] / scale, a[1] / scale], [b[0] / scale, b[1] / scale], pitch);
 }
 
-/** Match within half a grid step on the midpoint (direction must agree). */
+/** One parsed key: midpoint in the caller's coordinate space + angle bucket. */
+interface ParsedKey {
+  w: WallEntry;
+  x: number;
+  y: number;
+  ang: number;
+}
+
+function parseKeys(walls: WallEntry[], coordScale: number): ParsedKey[] {
+  const scale = coordScale > 0 ? coordScale : 1;
+  const out: ParsedKey[] = [];
+  for (const w of walls) {
+    const at = w.key.lastIndexOf('@');
+    if (at < 0) continue;
+    const [sx, sy] = w.key.slice(0, at).split(',').map(Number);
+    const aq = Number(w.key.slice(at + 1));
+    if (![sx, sy, aq].every(Number.isFinite)) continue;
+    out.push({ w, x: sx * scale, y: sy * scale, ang: aq });
+  }
+  return out;
+}
+
+/** Direction of a segment as a 0..π bucket, matching the key's angle field. */
+function segAngle(a: number[], b: number[]): number {
+  const [dx, dy] = wallDir(a, b);
+  let ang = Math.atan2(dy, dx);
+  if (ang < 0) ang += Math.PI;
+  return ang;
+}
+
+function angleClose(x: number, y: number): boolean {
+  let d = Math.abs(x - y);
+  if (d > Math.PI / 2) d = Math.PI - d;
+  return d < 0.02; // ~1°
+}
+
+/**
+ * Match within half a grid step on the midpoint (direction must agree).
+ *
+ * AUD-159B6-01: this used to also accept a key whose midpoint merely LAY
+ * SOMEWHERE on the queried segment, so 30 cm set on a 4-unit shared stretch
+ * was reported for the whole 10-unit edge that contains it and the thickness
+ * visibly leaked past the physical wall. A key now identifies ONE stretch;
+ * callers query atomic intervals (see wallIntervals) and old whole-edge keys
+ * are resolved separately, per parent edge, in cmsForPoly().
+ */
 export function lookupWall(
   walls: WallEntry[] | null | undefined,
   a: number[], b: number[],
@@ -113,34 +158,15 @@ export function lookupWall(
   const hit = walls.find((w) => w.key === want);
   if (hit) return hit;
   // tolerant fallback: same direction bucket, midpoint within half pitch (norm)
-  const mx = ((a[0] + b[0]) / 2) / coordScale, my = ((a[1] + b[1]) / 2) / coordScale;
-  const [dx, dy] = wallDir(
-    [a[0] / coordScale, a[1] / coordScale],
-    [b[0] / coordScale, b[1] / coordScale],
-  );
-  let ang = Math.atan2(dy, dx);
-  if (ang < 0) ang += Math.PI;
-  const tol = Math.max(pitch * 0.5, 1e-9);
   const scale = coordScale > 0 ? coordScale : 1;
-  let best: { w: WallEntry; d: number } | null = null;
-  for (const w of walls) {
-    const at = w.key.lastIndexOf('@');
-    if (at < 0) continue;
-    const [sx, sy] = w.key.slice(0, at).split(',').map(Number);
-    const aq = Number(w.key.slice(at + 1));
-    if (![sx, sy, aq].every(Number.isFinite)) continue;
-    let dAng = Math.abs(aq - ang);
-    if (dAng > Math.PI / 2) dAng = Math.PI - dAng;
-    if (dAng >= 0.02) continue; // ~1°
-    const midDist = Math.hypot(sx - mx, sy - my);
-    if (midDist <= tol) return w;
-    // atomic shared span: wall mid lies on this edge (partial overlap)
-    const dist = distToSeg(sx * scale, sy * scale, a[0], a[1], b[0], b[1]);
-    if (dist <= tol * scale) {
-      if (!best || midDist < best.d) best = { w, d: midDist };
-    }
+  const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+  const ang = segAngle(a, b);
+  const tol = Math.max(pitch * 0.5, 1e-9) * scale;
+  for (const e of parseKeys(walls, scale)) {
+    if (!angleClose(e.ang, ang)) continue;
+    if (Math.hypot(e.x - mx, e.y - my) <= tol) return e.w;
   }
-  return best?.w || null;
+  return null;
 }
 
 export function thicknessCmAt(
@@ -153,12 +179,20 @@ export function thicknessCmAt(
   return e && e.cm > 0 ? clampWallCm(e.cm) : 0;
 }
 
-/** Drop entries whose key matches no current room edge or shared atomic span. */
+/**
+ * Drop entries whose key matches no current wall stretch.
+ *
+ * "Stretch" means an ATOMIC interval (AUD-159B6-01): whole polygon edges,
+ * shared overlaps AND the pieces an open span cuts an edge into — the last of
+ * which is where a legitimately split thickness lives, so leaving them out
+ * would delete the solid remainder of a partially opened wall on the next save.
+ */
 export function degradeWalls(
   walls: WallEntry[] | null | undefined,
   rooms: any[],
   pitch: number,
   coordScale = 1,
+  openCuts: number[][] = [],
 ): WallEntry[] {
   if (!walls?.length) return [];
   const live = new Set<string>();
@@ -177,6 +211,14 @@ export function degradeWalls(
       for (const sg of sharedBoundary(pa, pb, eps)) {
         live.add(keyOf([sg[0], sg[1]], [sg[2], sg[3]], pitch, coordScale));
       }
+    }
+  }
+  for (const room of list) {
+    if (!room?.id) continue;
+    const at = atomicPolyForRoom(list, room.id, openCuts, pitch, coordScale);
+    if (!at) continue;
+    for (let i = 0; i < at.poly.length; i++) {
+      live.add(keyOf(at.poly[i], at.poly[(i + 1) % at.poly.length], pitch, coordScale));
     }
   }
   return walls.filter((w) => live.has(w.key) && w.cm >= WALL_MIN_CM && w.cm <= WALL_MAX_CM);
@@ -249,49 +291,72 @@ export function setWallThickness(
 }
 
 /**
- * Apply one thickness to every edge of a room that is allowed to carry one
- * (skips open-boundary stretches listed in `openCuts` as [x1,y1,x2,y2]).
+ * Every atomic stretch of one room that may carry a thickness (open ones are
+ * excluded). The unit of a wall is the interval, not the polygon edge.
  */
-export function setWallThicknessForRoom(
-  walls: WallEntry[] | null | undefined,
-  room: any,
-  cm: number | null,
+export function solidIntervalsForRoom(
+  rooms: any[],
+  roomId: string,
+  openCuts: number[][],
   pitch: number,
-  openCuts: number[][] = [],
   coordScale = 1,
-): WallEntry[] {
-  const poly = roomPoly(room);
-  if (!poly || poly.length < 3) return walls ? walls.slice() : [];
-  let out = walls ? walls.slice() : [];
-  for (let i = 0; i < poly.length; i++) {
-    const a = poly[i], b = poly[(i + 1) % poly.length];
+): Array<{ a: number[]; b: number[] }> {
+  const at = atomicPolyForRoom(rooms, roomId, openCuts, pitch, coordScale);
+  if (!at) return [];
+  const out: Array<{ a: number[]; b: number[] }> = [];
+  for (let i = 0; i < at.poly.length; i++) {
+    const a = at.poly[i], b = at.poly[(i + 1) % at.poly.length];
     if (edgeIsOpen(a, b, openCuts, pitch, coordScale)) continue;
-    out = setWallThickness(out, a, b, cm, pitch, coordScale);
+    out.push({ a, b });
   }
   return out;
 }
 
 /**
- * After drawing a new room: set session thickness on edges that do not yet
+ * Apply one thickness to every atomic stretch of a room that is allowed to
+ * carry one (skips open-boundary stretches listed in `openCuts`).
+ */
+export function setWallThicknessForRoom(
+  walls: WallEntry[] | null | undefined,
+  rooms: any[],
+  roomId: string,
+  cm: number | null,
+  pitch: number,
+  openCuts: number[][] = [],
+  coordScale = 1,
+): WallEntry[] {
+  let out = walls ? walls.slice() : [];
+  for (const iv of solidIntervalsForRoom(rooms, roomId, openCuts, pitch, coordScale)) {
+    out = setWallThickness(out, iv.a, iv.b, cm, pitch, coordScale);
+  }
+  return out;
+}
+
+/**
+ * After drawing a new room: set session thickness on stretches that do not yet
  * have one. Shared stretches that already carry a neighbour's cm are left
  * alone (docs/WALL-THICKNESS.md — one physical wall, one thickness).
  */
 export function applyWallThicknessToNewRoom(
   walls: WallEntry[] | null | undefined,
-  room: any,
+  rooms: any[],
+  roomId: string,
   cm: number | null,
   pitch: number,
   openCuts: number[][] = [],
   coordScale = 1,
 ): WallEntry[] {
   if (cm == null || cm < WALL_MIN_CM) return walls ? walls.slice() : [];
-  const poly = roomPoly(room);
-  if (!poly || poly.length < 3) return walls ? walls.slice() : [];
+  const at = atomicPolyForRoom(rooms, roomId, openCuts, pitch, coordScale);
+  if (!at) return walls ? walls.slice() : [];
+  // effective cm per interval — a neighbour's thickness counts even when it is
+  // still stored under a pre-atomic whole-edge key
+  const cms = cmsForPoly(walls, at, pitch, coordScale);
   let out = walls ? walls.slice() : [];
-  for (let i = 0; i < poly.length; i++) {
-    const a = poly[i], b = poly[(i + 1) % poly.length];
+  for (let i = 0; i < at.poly.length; i++) {
+    const a = at.poly[i], b = at.poly[(i + 1) % at.poly.length];
     if (edgeIsOpen(a, b, openCuts, pitch, coordScale)) continue;
-    if (thicknessCmAt(out, a, b, pitch, coordScale) > 0) continue;
+    if (cms[i] > 0) continue;
     out = setWallThickness(out, a, b, cm, pitch, coordScale);
   }
   return out;
@@ -343,20 +408,29 @@ export function drawWallPreviewD(
   return d;
 }
 
+/**
+ * Is this stretch virtual? Interval-exact (AUD-159B6-01): the midpoint must sit
+ * ON the cut, not merely near the cut's own midpoint. Atomic intervals never
+ * straddle a cut end (they are split there), so the test is unambiguous —
+ * a partial open span no longer has to cover the parent edge's midpoint to
+ * count, and no longer opens the parts it does not cover.
+ */
 function edgeIsOpen(a: number[], b: number[], cuts: number[][], pitch: number, coordScale = 1): boolean {
   if (!cuts.length) return false;
-  const key = keyOf(a, b, pitch, coordScale);
+  const eps = openEps(pitch, coordScale);
+  const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+  const [dx, dy] = wallDir(a, b);
   for (const c of cuts) {
-    if (keyOf([c[0], c[1]], [c[2], c[3]], pitch, coordScale) === key) return true;
-    const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
-    const cx = (c[0] + c[2]) / 2, cy = (c[1] + c[3]) / 2;
-    if (Math.hypot(mx - cx, my - cy) < pitch * coordScale) {
-      const [dx, dy] = wallDir(a, b);
-      const [ex, ey] = wallDir([c[0], c[1]], [c[2], c[3]]);
-      if (Math.abs(dx * ey - dy * ex) < 0.05) return true;
-    }
+    const [ex, ey] = wallDir([c[0], c[1]], [c[2], c[3]]);
+    if (Math.abs(dx * ey - dy * ex) > 0.05) continue; // not collinear
+    if (distToSeg(mx, my, c[0], c[1], c[2], c[3]) <= eps) return true;
   }
   return false;
+}
+
+/** Collinearity / on-segment tolerance for interval work (plan units). */
+function openEps(pitch: number, coordScale: number): number {
+  return Math.max(pitch * (coordScale > 0 ? coordScale : 1) * 0.04, 1e-9);
 }
 
 // ------------------------------- inset / rings ------------------------------
@@ -397,6 +471,13 @@ function pointInPoly(p: number[], poly: number[][]): boolean {
         p[0] < ((xj - xi) * (p[1] - yi)) / (yj - yi + 0) + xi) inside = !inside;
   }
   return inside;
+}
+
+/** Same direction, no turn: the joint of two pieces of ONE straight wall. */
+function collinearJoint(uA: number[], uB: number[]): boolean {
+  const cross = uA[0] * uB[1] - uA[1] * uB[0];
+  const dot = uA[0] * uB[0] + uA[1] * uB[1];
+  return Math.abs(cross) < 1e-9 && dot > 0;
 }
 
 function lineIntersect(
@@ -447,6 +528,19 @@ export function insetContour(poly: number[][], offsets: number[]): number[][] | 
       continue;
     }
 
+    // AUD-159B6-01: atomic intervals put COLLINEAR neighbours in one outline.
+    // Two parallel offset lines never intersect, so the mitre branch below would
+    // fall through to a bevel that skips the zero side and slants the wall face.
+    // Equal offsets collapse to one point, different ones step across.
+    if (collinearJoint(uA, uB)) {
+      const v = poly[i];
+      const pa = [v[0] + nAx * oA, v[1] + nAy * oA];
+      const pb = [v[0] + nBx * oB, v[1] + nBy * oB];
+      out.push(pa);
+      if (Math.hypot(pb[0] - pa[0], pb[1] - pa[1]) > 1e-9) out.push(pb);
+      continue;
+    }
+
     const hit = lineIntersect(pA, uA, pB, uB);
     const maxO = Math.max(oA, oB, 1e-9);
     if (hit) {
@@ -488,9 +582,110 @@ function reversePoly(poly: number[][]): number[][] {
   return poly.slice().reverse();
 }
 
+// --------------------------- atomic intervals -------------------------------
+//
+// docs/WALL-THICKNESS.md §2. A room edge is NOT the unit of a wall: a single
+// polygon edge can be shared with a neighbour over part of its length, carry a
+// virtual (open) stretch in the middle, and be an outer wall for the rest.
+// Every geometry step below therefore works on ATOMIC INTERVALS — the pieces
+// an edge is cut into by every shared-boundary end and every open-span end.
+// Both the stored key and the rendered ring follow those pieces (AUD-159B6-01).
+
+/** Room outline with every atomic breakpoint inserted as a vertex. */
+export interface AtomicPoly {
+  /** Subdivided outline (superset of the room polygon's vertices). */
+  poly: number[][];
+  /** For sub-edge i: index of the original polygon edge it belongs to. */
+  parent: number[];
+  /** The untouched room polygon. */
+  orig: number[][];
+}
+
+export function atomicPolyForRoom(
+  rooms: any[],
+  roomId: string,
+  openCuts: number[][],
+  pitch: number,
+  coordScale = 1,
+): AtomicPoly | null {
+  const room = (rooms || []).find((r) => r?.id === roomId);
+  const orig = roomPoly(room);
+  if (!orig || orig.length < 3) return null;
+  const eps = openEps(pitch, coordScale);
+  const breaks: number[][] = [];
+  for (const other of rooms || []) {
+    if (!other || other.id === roomId) continue;
+    const op = roomPoly(other);
+    if (!op) continue;
+    for (const sg of sharedBoundary(orig, op, eps)) {
+      breaks.push([sg[0], sg[1]], [sg[2], sg[3]]);
+    }
+  }
+  for (const c of openCuts || []) breaks.push([c[0], c[1]], [c[2], c[3]]);
+  const poly: number[][] = [];
+  const parent: number[] = [];
+  for (let i = 0; i < orig.length; i++) {
+    const a = orig[i], b = orig[(i + 1) % orig.length];
+    poly.push([a[0], a[1]]);
+    parent.push(i);
+    const L = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    if (L < eps * 2 || !breaks.length) continue;
+    const gap = Math.min(0.499, (eps * 2) / L);
+    const ts: number[] = [];
+    for (const p of breaks) {
+      if (distToSeg(p[0], p[1], a[0], a[1], b[0], b[1]) > eps) continue;
+      const t = ((p[0] - a[0]) * (b[0] - a[0]) + (p[1] - a[1]) * (b[1] - a[1])) / (L * L);
+      if (t <= gap || t >= 1 - gap) continue;
+      if (ts.some((u) => Math.abs(u - t) * L <= eps * 2)) continue;
+      ts.push(t);
+    }
+    ts.sort((x, y) => x - y);
+    for (const t of ts) {
+      poly.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
+      parent.push(i);
+    }
+  }
+  return { poly, parent, orig };
+}
+
+/** Shared-boundary stretches of one room against every other (plan units). */
+function sharedSegsOf(rooms: any[], roomId: string, eps: number): number[][] {
+  const room = (rooms || []).find((r) => r?.id === roomId);
+  const poly = roomPoly(room);
+  if (!poly) return [];
+  const out: number[][] = [];
+  for (const other of rooms || []) {
+    if (!other || other.id === roomId) continue;
+    const op = roomPoly(other);
+    if (!op) continue;
+    for (const sg of sharedBoundary(poly, op, eps)) out.push(sg);
+  }
+  return out;
+}
+
+function kindsForPoly(
+  poly: number[][],
+  shared: number[][],
+  openCuts: number[][],
+  pitch: number,
+  coordScale: number,
+): Array<WallKind | null> {
+  const eps = openEps(pitch, coordScale);
+  const out: Array<WallKind | null> = [];
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i], b = poly[(i + 1) % poly.length];
+    if (edgeIsOpen(a, b, openCuts, pitch, coordScale)) { out.push(null); continue; }
+    const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+    const onShared = shared.some((sg) => distToSeg(mx, my, sg[0], sg[1], sg[2], sg[3]) <= eps);
+    out.push(onShared ? 'shared' : 'outer');
+  }
+  return out;
+}
+
 /**
- * Classify each edge of a room: shared with a neighbour, or outer.
- * Open-boundary stretches are reported as kind null (no thickness allowed).
+ * Classify each ATOMIC interval of a room: shared with a neighbour, or outer.
+ * Open (virtual) stretches are reported as kind null (no thickness allowed).
+ * Indices align with `atomicPolyForRoom(...).poly`.
  */
 export function edgeKinds(
   rooms: any[],
@@ -499,41 +694,195 @@ export function edgeKinds(
   pitch: number,
   coordScale = 1,
 ): Array<WallKind | null> {
-  const room = (rooms || []).find((r) => r?.id === roomId);
-  const poly = roomPoly(room);
-  if (!poly) return [];
-  const kinds: Array<WallKind | null> = [];
-  for (let i = 0; i < poly.length; i++) {
-    const a = poly[i], b = poly[(i + 1) % poly.length];
-    if (edgeIsOpen(a, b, openCuts, pitch, coordScale)) {
-      kinds.push(null);
-      continue;
+  const at = atomicPolyForRoom(rooms, roomId, openCuts, pitch, coordScale);
+  if (!at) return [];
+  const shared = sharedSegsOf(rooms, roomId, openEps(pitch, coordScale));
+  return kindsForPoly(at.poly, shared, openCuts, pitch, coordScale);
+}
+
+/**
+ * Effective thickness (cm) per atomic interval.
+ *
+ * An interval first looks for its OWN key. What is left over is matched against
+ * keys written before the split — a pre-atomic key describes the whole parent
+ * edge, so its cm goes to the intervals of that edge nobody claimed. Without
+ * that, an existing plan would silently lose thickness the moment a neighbour
+ * or an open span cuts one of its walls in two.
+ */
+function cmsForPoly(
+  walls: WallEntry[] | null | undefined,
+  at: AtomicPoly,
+  pitch: number,
+  coordScale: number,
+): number[] {
+  const n = at.poly.length;
+  const cms = new Array<number>(n).fill(0);
+  if (!walls?.length) return cms;
+  const claimed = new Set<string>();
+  const orphans: number[] = [];
+  for (let i = 0; i < n; i++) {
+    const a = at.poly[i], b = at.poly[(i + 1) % n];
+    const hit = lookupWall(walls, a, b, pitch, coordScale);
+    if (hit && hit.cm > 0) {
+      cms[i] = clampWallCm(hit.cm);
+      claimed.add(hit.key);
+    } else {
+      orphans.push(i);
     }
-    let shared = false;
-    const myKey = keyOf(a, b, pitch, coordScale);
-    for (const other of rooms || []) {
-      if (other?.id === roomId) continue;
-      const op = roomPoly(other);
-      if (!op) continue;
-      for (let j = 0; j < op.length; j++) {
-        const c = op[j], d = op[(j + 1) % op.length];
-        if (keyOf(c, d, pitch, coordScale) === myKey) {
-          shared = true;
-          break;
-        }
-        const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
-        const dist = distToSeg(mx, my, c[0], c[1], d[0], d[1]);
-        if (dist <= pitch * coordScale * 0.5) {
-          const [dx, dy] = wallDir(a, b);
-          const [ex, ey] = wallDir(c, d);
-          if (Math.abs(dx * ey - dy * ex) < 0.08) { shared = true; break; }
-        }
-      }
-      if (shared) break;
-    }
-    kinds.push(shared ? 'shared' : 'outer');
   }
-  return kinds;
+  if (!orphans.length) return cms;
+  const scale = coordScale > 0 ? coordScale : 1;
+  const tol = Math.max(pitch * 0.5, 1e-9) * scale;
+  const parsed = parseKeys(walls, scale).filter((e) => e.w.cm > 0);
+  const byParent = new Map<number, number[]>();
+  for (const i of orphans) {
+    const p = at.parent[i];
+    const list = byParent.get(p);
+    if (list) list.push(i);
+    else byParent.set(p, [i]);
+  }
+  for (const [pi, idxs] of byParent) {
+    const a = at.orig[pi], b = at.orig[(pi + 1) % at.orig.length];
+    const ang = segAngle(a, b);
+    const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+    let best: { cm: number; d: number } | null = null;
+    for (const e of parsed) {
+      if (claimed.has(e.w.key)) continue;
+      if (!angleClose(e.ang, ang)) continue;
+      if (distToSeg(e.x, e.y, a[0], a[1], b[0], b[1]) > tol) continue;
+      const d = Math.hypot(e.x - mx, e.y - my);
+      if (!best || d < best.d) best = { cm: clampWallCm(e.w.cm), d };
+    }
+    if (!best) continue;
+    for (const i of idxs) cms[i] = best.cm;
+  }
+  return cms;
+}
+
+/** One atomic wall stretch of one room, with everything a caller may need. */
+export interface WallInterval {
+  roomId: string;
+  a: number[];
+  b: number[];
+  key: string;
+  kind: WallKind | null;
+  cm: number;
+  open: boolean;
+  /** Half depth in plan units (0 when there is no thickness). */
+  half: number;
+}
+
+/** Per-room atomic geometry: subdivided outline + kinds + cms + half offsets. */
+export interface RoomWallProfile extends AtomicPoly {
+  kinds: Array<WallKind | null>;
+  cms: number[];
+  offsets: number[];
+}
+
+export function roomWallProfile(
+  rooms: any[],
+  roomId: string,
+  walls: WallEntry[] | null | undefined,
+  openCuts: number[][],
+  pitch: number,
+  cellCm: number,
+  gridPitch: number,
+  coordScale = 1,
+): RoomWallProfile | null {
+  const at = atomicPolyForRoom(rooms, roomId, openCuts, pitch, coordScale);
+  if (!at) return null;
+  const shared = sharedSegsOf(rooms, roomId, openEps(pitch, coordScale));
+  const kinds = kindsForPoly(at.poly, shared, openCuts, pitch, coordScale);
+  const cms = cmsForPoly(walls, at, pitch, coordScale);
+  const offsets = cms.map((cm, i) => (
+    kinds[i] && cm > 0 ? wallCmToUnits(cm, cellCm, gridPitch) / 2 : 0
+  ));
+  return { ...at, kinds, cms, offsets };
+}
+
+/** Every atomic wall stretch of every room (render/plan units). */
+export function wallIntervals(
+  rooms: any[],
+  walls: WallEntry[] | null | undefined,
+  openCuts: number[][],
+  pitch: number,
+  cellCm: number,
+  gridPitch: number,
+  coordScale = 1,
+): WallInterval[] {
+  const out: WallInterval[] = [];
+  for (const room of rooms || []) {
+    if (!room?.id) continue;
+    const pr = roomWallProfile(rooms, room.id, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
+    if (!pr) continue;
+    for (let i = 0; i < pr.poly.length; i++) {
+      const a = pr.poly[i], b = pr.poly[(i + 1) % pr.poly.length];
+      out.push({
+        roomId: room.id,
+        a: [a[0], a[1]],
+        b: [b[0], b[1]],
+        key: keyOf(a, b, pitch, coordScale),
+        kind: pr.kinds[i],
+        cm: pr.kinds[i] ? pr.cms[i] : 0,
+        open: pr.kinds[i] === null,
+        half: pr.offsets[i],
+      });
+    }
+  }
+  return out;
+}
+
+/**
+ * Rewrite `walls` so every entry names an atomic interval of the CURRENT
+ * geometry, and no entry survives under an open span.
+ *
+ * This is the single place where the spec invariant "an open span and a
+ * positive thickness never share a key" is enforced: opening a stretch splits
+ * the parent key and drops the piece under the span, closing it merges the
+ * pieces back and inherits the cm of whatever stayed solid.
+ */
+export function normalizeWallIntervals(
+  rooms: any[],
+  walls: WallEntry[] | null | undefined,
+  openCuts: number[][],
+  pitch: number,
+  cellCm: number,
+  gridPitch: number,
+  coordScale = 1,
+): WallEntry[] {
+  if (!walls?.length) return [];
+  const out: WallEntry[] = [];
+  const seen = new Set<string>();
+  for (const iv of wallIntervals(rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale)) {
+    if (iv.open || !(iv.cm > 0) || seen.has(iv.key)) continue;
+    seen.add(iv.key);
+    out.push({ key: iv.key, cm: iv.cm });
+  }
+  return out;
+}
+
+/** Effective thickness of the atomic interval that covers a segment's middle. */
+export function intervalCmAt(
+  rooms: any[],
+  walls: WallEntry[] | null | undefined,
+  openCuts: number[][],
+  seg: number[],
+  pitch: number,
+  cellCm: number,
+  gridPitch: number,
+  coordScale = 1,
+): number {
+  const eps = openEps(pitch, coordScale);
+  const mx = (seg[0] + seg[2]) / 2, my = (seg[1] + seg[3]) / 2;
+  const ang = segAngle([seg[0], seg[1]], [seg[2], seg[3]]);
+  let best: { cm: number; d: number } | null = null;
+  for (const iv of wallIntervals(rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale)) {
+    if (!angleClose(segAngle(iv.a, iv.b), ang)) continue;
+    const d = distToSeg(mx, my, iv.a[0], iv.a[1], iv.b[0], iv.b[1]);
+    if (d > eps * 4) continue;
+    if (!best || d < best.d) best = { cm: iv.cm, d };
+  }
+  return best?.cm || 0;
 }
 
 function distToSeg(px: number, py: number, ax: number, ay: number, bx: number, by: number): number {
@@ -559,20 +908,8 @@ export function insetOffsetsForRoom(
   gridPitch: number,
   coordScale = 1,
 ): number[] {
-  const room = (rooms || []).find((r) => r?.id === roomId);
-  const poly = roomPoly(room);
-  if (!poly) return [];
-  const kinds = edgeKinds(rooms, roomId, openCuts, pitch, coordScale);
-  const out: number[] = [];
-  for (let i = 0; i < poly.length; i++) {
-    const a = poly[i], b = poly[(i + 1) % poly.length];
-    const kind = kinds[i];
-    if (!kind) { out.push(0); continue; }
-    const cm = thicknessCmAt(walls, a, b, pitch, coordScale);
-    if (!(cm > 0)) { out.push(0); continue; }
-    out.push(wallCmToUnits(cm, cellCm, gridPitch) / 2);
-  }
-  return out;
+  const pr = roomWallProfile(rooms, roomId, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
+  return pr ? pr.offsets : [];
 }
 
 /** Alias — half offsets drive both inset and outset. */
@@ -596,11 +933,9 @@ export function innerContourForRoom(
   const poly = roomPoly(room);
   if (!poly || poly.length < 3) return null;
   if (!walls?.length) return poly.map((p) => [p[0], p[1]]);
-  const offsets = insetOffsetsForRoom(
-    rooms, roomId, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
-  );
-  if (!offsets.some((o) => o > 0)) return poly.map((p) => [p[0], p[1]]);
-  return insetContour(poly, offsets) || poly.map((p) => [p[0], p[1]]);
+  const pr = roomWallProfile(rooms, roomId, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
+  if (!pr || !pr.offsets.some((o) => o > 0)) return poly.map((p) => [p[0], p[1]]);
+  return insetContour(pr.poly, pr.offsets) || poly.map((p) => [p[0], p[1]]);
 }
 
 function closedRing(poly: number[][]): number[][][] {
@@ -612,12 +947,18 @@ function closedRing(poly: number[][]): number[][][] {
 function polyclipToPathD(geom: any): string {
   if (!geom) return '';
   let d = '';
+  // polyclip Geom: MultiPolygon = Polygon[]; Polygon = Ring[] where ring[0]
+  // is the outer and ring[1..] are holes. We must emit EVERY ring so evenodd
+  // fill punches the floor out of the wall body (otherwise a single-room
+  // outset fills solid — the whole room looks like hatch).
   for (const poly of geom as any[]) {
-    const ring = poly?.[0];
-    if (!Array.isArray(ring) || ring.length < 4) continue;
-    const pts = ring.slice(0, ring.length - 1);
-    if (pts.length < 3) continue;
-    d += (d ? ' ' : '') + polyToPath(pts.map((p: number[]) => [p[0], p[1]]));
+    if (!Array.isArray(poly)) continue;
+    for (const ring of poly) {
+      if (!Array.isArray(ring) || ring.length < 4) continue;
+      const pts = ring.slice(0, ring.length - 1);
+      if (pts.length < 3) continue;
+      d += (d ? ' ' : '') + polyToPath(pts.map((p: number[]) => [p[0], p[1]]));
+    }
   }
   return d;
 }
@@ -638,25 +979,23 @@ export function wallBodyRings(
   if (!walls?.length) return [];
   const out: WallBodyPath[] = [];
   for (const room of rooms || []) {
-    const poly = roomPoly(room);
-    if (!poly || poly.length < 3) continue;
-    const offsets = insetOffsetsForRoom(rooms, room.id, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
-    if (!offsets.some((o) => o > 0)) continue;
-    const outset = outsetContour(poly, offsets);
-    const inset = insetContour(poly, offsets);
+    if (!room?.id) continue;
+    const pr = roomWallProfile(rooms, room.id, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
+    if (!pr || pr.poly.length < 3 || !pr.offsets.some((o) => o > 0)) continue;
+    const outset = outsetContour(pr.poly, pr.offsets);
+    const inset = insetContour(pr.poly, pr.offsets);
     if (!outset || !inset) continue;
     const d = `${polyToPath(outset)} ${polyToPath(reversePoly(inset))}`;
     let key = '';
     let kind: WallKind = 'outer';
     let cm = 0;
     let depth = 0;
-    const kinds = edgeKinds(rooms, room.id, openCuts, pitch, coordScale);
-    for (let i = 0; i < poly.length; i++) {
-      if (!(offsets[i] > 0)) continue;
-      const a = poly[i], b = poly[(i + 1) % poly.length];
+    for (let i = 0; i < pr.poly.length; i++) {
+      if (!(pr.offsets[i] > 0)) continue;
+      const a = pr.poly[i], b = pr.poly[(i + 1) % pr.poly.length];
       key = keyOf(a, b, pitch, coordScale);
-      kind = kinds[i] || 'outer';
-      cm = thicknessCmAt(walls, a, b, pitch, coordScale);
+      kind = pr.kinds[i] || 'outer';
+      cm = pr.cms[i];
       depth = wallCmToUnits(cm, cellCm, gridPitch);
       break;
     }
@@ -684,17 +1023,12 @@ export function wallBodiesUnionPath(
   const insets: number[][][] = [];
   let maxDepth = 0;
   for (const room of rooms || []) {
-    const poly = roomPoly(room);
-    if (!poly || poly.length < 3) continue;
-    const offsets = insetOffsetsForRoom(
-      rooms, room.id, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
-    );
-    if (!offsets.some((o) => o > 0)) continue;
-    for (let i = 0; i < offsets.length; i++) {
-      if (offsets[i] > 0) maxDepth = Math.max(maxDepth, offsets[i] * 2);
-    }
-    const outC = outsetContour(poly, offsets);
-    const inC = insetContour(poly, offsets);
+    if (!room?.id) continue;
+    const pr = roomWallProfile(rooms, room.id, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
+    if (!pr || pr.poly.length < 3 || !pr.offsets.some((o) => o > 0)) continue;
+    for (const o of pr.offsets) if (o > 0) maxDepth = Math.max(maxDepth, o * 2);
+    const outC = outsetContour(pr.poly, pr.offsets);
+    const inC = insetContour(pr.poly, pr.offsets);
     if (outC) outsets.push(outC);
     if (inC) insets.push(inC);
   }
@@ -769,14 +1103,15 @@ export function wallEdgeBodies(
   const seen = new Set<string>();
   const out: WallEdgeBody[] = [];
   for (const room of rooms || []) {
-    const poly = roomPoly(room);
-    if (!poly) continue;
-    const kinds = edgeKinds(rooms, room.id, openCuts, pitch, coordScale);
+    if (!room?.id) continue;
+    const pr = roomWallProfile(rooms, room.id, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
+    if (!pr) continue;
+    const poly = pr.poly;
     for (let i = 0; i < poly.length; i++) {
       const a = poly[i], b = poly[(i + 1) % poly.length];
-      const kind = kinds[i];
+      const kind = pr.kinds[i];
       if (!kind) continue;
-      const cm = thicknessCmAt(walls, a, b, pitch, coordScale);
+      const cm = pr.cms[i];
       if (!(cm > 0)) continue;
       const key = keyOf(a, b, pitch, coordScale);
       if (seen.has(key)) continue;
@@ -843,20 +1178,8 @@ export function paperOutwardOffsets(
   gridPitch: number,
   coordScale = 1,
 ): number[] {
-  const room = (rooms || []).find((r) => r?.id === roomId);
-  const poly = roomPoly(room);
-  if (!poly) return [];
-  const kinds = edgeKinds(rooms, roomId, openCuts, pitch, coordScale);
-  const out: number[] = [];
-  for (let i = 0; i < poly.length; i++) {
-    const a = poly[i], b = poly[(i + 1) % poly.length];
-    const kind = kinds[i];
-    if (!kind) { out.push(0); continue; }
-    const cm = thicknessCmAt(walls, a, b, pitch, coordScale);
-    if (!(cm > 0)) { out.push(0); continue; }
-    out.push(wallCmToUnits(cm, cellCm, gridPitch) / 2);
-  }
-  return out;
+  const pr = roomWallProfile(rooms, roomId, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
+  return pr ? pr.offsets : [];
 }
 
 /**
@@ -896,6 +1219,14 @@ export function outsetContour(poly: number[][], offsets: number[]): number[][] |
       out.push([poly[i][0], poly[i][1]]);
       continue;
     }
+    if (collinearJoint(uA, uB)) {
+      const v = poly[i];
+      const pa = [v[0] - nAx * oA, v[1] - nAy * oA];
+      const pb = [v[0] - nBx * oB, v[1] - nBy * oB];
+      out.push(pa);
+      if (Math.hypot(pb[0] - pa[0], pb[1] - pa[1]) > 1e-9) out.push(pb);
+      continue;
+    }
     const hit = lineIntersect(pA, uA, pB, uB);
     const maxO = Math.max(oA, oB, 1e-9);
     if (hit) {
@@ -929,8 +1260,10 @@ export function paperRoomShapesWithWalls(
   for (const r of rooms || []) {
     const poly = roomPoly(r);
     if (poly && poly.length >= 3) {
-      const offs = paperOutwardOffsets(rooms, r.id, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
-      const grown = offs.some((o) => o > 0) ? outsetContour(poly, offs) : null;
+      const pr = roomWallProfile(rooms, r.id, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
+      const grown = pr && pr.offsets.some((o) => o > 0)
+        ? outsetContour(pr.poly, pr.offsets)
+        : null;
       const use = grown || poly;
       out.push({ poly: use.map((p) => p.join(',')).join(' ') });
     } else if (r && r.x != null && r.y != null && r.w != null && r.h != null) {

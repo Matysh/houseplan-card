@@ -47,12 +47,13 @@ const res = await page.evaluate(async () => {
   const evenodd = [...sr().querySelectorAll('path.room')].find((p) => p.getAttribute('fill-rule') === 'evenodd');
   out.evenoddPath = !!evenodd;
   out.holeInPath = evenodd ? (evenodd.getAttribute('d').match(/M /g) || []).length === 2 : null;
-  // 4) остров кликабелен (элемент существует и он поверх дырки)
-  const islandEl = [...sr().querySelectorAll('.room')].find((el) => {
-    const d = el.getAttribute('points') || el.getAttribute('d') || '';
-    return d.includes(String(cx)) && el !== evenodd;
-  });
-  out.islandRendered = !!islandEl;
+  // 4) остров кликабелен (элемент существует и он поверх дырки).
+  // Beta.5+ applies Draw thickness, so the painted contour is inset and no
+  // longer contains the exact centreline coordinate — look up by room id.
+  const islandEl = island
+    ? sr().querySelector(`[data-hp="room"][data-id="${island.id}"]`)
+    : null;
+  out.islandRendered = !!islandEl && islandEl !== evenodd;
   return out;
 });
 checkAll(res);

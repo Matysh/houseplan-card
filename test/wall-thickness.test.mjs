@@ -8,6 +8,8 @@ import {
   wallCmToUnits, insetContour, inwardNormal, edgeKinds, wallEdgeBodies,
   wallBodyRings, wallBodiesUnionPath, innerContourForRoom,
   paperRoomShapesWithWalls, WALL_MIN_CM, WALL_MAX_CM, MITRE_LIMIT,
+  atomicPolyForRoom, insetOffsetsForRoom, wallIntervals, normalizeWallIntervals,
+  intervalCmAt,
 } from '../test-build/wall-thickness.js';
 import { polygonArea, paperRoomShapes } from '../test-build/logic.js';
 import { GRID_PITCH } from '../test-build/space-geometry.js';
@@ -96,11 +98,75 @@ test('setWallThickness upserts and removes', () => {
 test('setWallThicknessForRoom skips open cuts', () => {
   const room = { id: 'r', poly: [[0, 0], [1, 0], [1, 1], [0, 1]] };
   const open = [[0, 0, 1, 0]];
-  const walls = setWallThicknessForRoom([], room, 20, pitch, open);
+  const walls = setWallThicknessForRoom([], [room], 'r', 20, pitch, open);
   // three edges get thickness; the open bottom does not
   assert.equal(walls.length, 3);
   assert.equal(thicknessCmAt(walls, [0, 0], [1, 0], pitch), 0);
   assert.equal(thicknessCmAt(walls, [1, 0], [1, 1], pitch), 20);
+});
+
+// ---------------------- atomic intervals (AUD-159B6-01) ---------------------
+
+// A's right edge runs y=0..10, B only touches y=0..4: thickness set on that
+// shared stretch used to be reported for the whole 10-long edge, so the outer
+// remainder silently grew a wall the user never asked for.
+const partialRooms = () => ([
+  { id: 'a', poly: [[0, 0], [5, 0], [5, 10], [0, 10]] },
+  { id: 'b', poly: [[5, 0], [10, 0], [10, 4], [5, 4]] },
+]);
+
+test('partial shared wall: an edge is split at the shared boundary end', () => {
+  const at = atomicPolyForRoom(partialRooms(), 'a', [], pitch);
+  assert.ok(at);
+  assert.equal(at.poly.length, 5, JSON.stringify(at.poly));
+  assert.ok(at.poly.some((p) => Math.abs(p[0] - 5) < 1e-9 && Math.abs(p[1] - 4) < 1e-9));
+});
+
+test('partial shared wall: thickness stays on its own interval', () => {
+  const rooms = partialRooms();
+  const walls = [{ key: wallKey([5, 0], [5, 4], pitch), cm: 30 }];
+  const kinds = edgeKinds(rooms, 'a', [], pitch);
+  const offs = insetOffsetsForRoom(rooms, 'a', walls, [], pitch, cellCm, pitch);
+  const ivs = wallIntervals(rooms, walls, [], pitch, cellCm, pitch)
+    .filter((iv) => iv.roomId === 'a' && Math.abs(iv.a[0] - 5) < 1e-9 && Math.abs(iv.b[0] - 5) < 1e-9);
+  const shared = ivs.find((iv) => iv.kind === 'shared');
+  const outer = ivs.find((iv) => iv.kind === 'outer');
+  assert.equal(shared?.cm, 30);
+  assert.equal(outer?.cm, 0, 'thickness must not leak past the shared stretch');
+  assert.equal(kinds.filter((k) => k === 'shared').length, 1);
+  assert.equal(offs.filter((o) => o > 0).length, 1);
+});
+
+test('partial shared wall: a pre-atomic whole-edge key still covers both pieces', () => {
+  const rooms = partialRooms();
+  // written before the split: the key names the WHOLE right edge (mid y=5)
+  const walls = [{ key: wallKey([5, 0], [5, 10], pitch), cm: 30 }];
+  const ivs = wallIntervals(rooms, walls, [], pitch, cellCm, pitch)
+    .filter((iv) => iv.roomId === 'a' && Math.abs(iv.a[0] - 5) < 1e-9 && Math.abs(iv.b[0] - 5) < 1e-9);
+  assert.equal(ivs.length, 2);
+  assert.ok(ivs.every((iv) => iv.cm === 30), 'an existing plan must not lose thickness');
+});
+
+// An open span that does NOT contain the parent edge's midpoint used to leave
+// the key in place, so the wall body stayed solid straight across the passage.
+test('open span away from the edge midpoint clears only its own interval', () => {
+  const scale = 1000;
+  const p = 1 / 240;
+  const rooms = [
+    { id: 'a', poly: [[100, 140], [300, 140], [300, 460], [100, 460]] },
+    { id: 'b', poly: [[300, 140], [500, 140], [500, 460], [300, 460]] },
+  ];
+  const walls = [{ key: wallKey([300 / scale, 140 / scale], [300 / scale, 460 / scale], p), cm: 30 }];
+  const cut = [[300, 150, 300, 220]];
+  const full = wallBodiesUnionPath(rooms, walls, [], [], p, cellCm, GRID_PITCH, scale);
+  const opened = wallBodiesUnionPath(rooms, walls, cut, [], p, cellCm, GRID_PITCH, scale);
+  assert.ok(full && opened);
+  assert.notEqual(full.d, opened.d, 'the wall body must open under the span');
+
+  const next = normalizeWallIntervals(rooms, walls, cut, p, cellCm, GRID_PITCH, scale);
+  assert.equal(intervalCmAt(rooms, next, cut, [300, 150, 300, 220], p, cellCm, GRID_PITCH, scale), 0);
+  assert.equal(intervalCmAt(rooms, next, cut, [300, 220, 300, 460], p, cellCm, GRID_PITCH, scale), 30);
+  assert.equal(intervalCmAt(rooms, next, cut, [300, 140, 300, 150], p, cellCm, GRID_PITCH, scale), 30);
 });
 
 // ------------------------------- inset --------------------------------------
@@ -197,9 +263,20 @@ test('wallBodyRings / union: outset − inset forms a closed ring', () => {
   assert.ok(rings[0].d.includes('M'));
   const united = wallBodiesUnionPath(rooms, walls, [], [], pitch, cellCm, pitch);
   assert.ok(united && united.d.includes('M'));
+  // Partial-thickness walls may produce a simple strip (one subpath); a fully
+  // thick room must keep a floor hole — see the next test.
   const inner = innerContourForRoom(rooms, 'a', walls, [], pitch, cellCm, pitch);
   assert.ok(inner);
   assert.ok(polygonArea(inner) < polygonArea(rooms[0].poly));
+});
+
+test('wallBodiesUnionPath: single fully-thick room keeps a floor hole', () => {
+  const room = { id: 'n', poly: [[100, 100], [300, 100], [300, 300], [100, 300]] };
+  const walls = applyWallThicknessToNewRoom([], [room], 'n', 15, 0.01, [], 1000);
+  assert.equal(walls.length, 4);
+  const united = wallBodiesUnionPath([room], walls, [], [], 0.01, cellCm, 4.166666666666667, 1000);
+  assert.ok(united);
+  assert.ok((united.d.match(/M/g) || []).length >= 2, united.d);
 });
 
 test('paper with walls covers shared centreline; without walls matches paperRoomShapes', () => {
@@ -228,8 +305,11 @@ test('area of the room polygon is unchanged by thickness helpers', () => {
 test('applyWallThicknessToNewRoom skips edges that already have thickness', () => {
   const sharedKey = wallKey([5, 0], [5, 4], pitch);
   const existing = [{ key: sharedKey, cm: 40 }];
+  const older = { id: 'a', poly: [[0, 0], [5, 0], [5, 4], [0, 4]] };
   const newRoom = { id: 'b', poly: [[5, 0], [10, 0], [10, 4], [5, 4]] };
-  const next = applyWallThicknessToNewRoom(existing, newRoom, DRAW_WALL_DEFAULT_CM, pitch);
+  const next = applyWallThicknessToNewRoom(
+    existing, [older, newRoom], 'b', DRAW_WALL_DEFAULT_CM, pitch,
+  );
   const shared = next.find((w) => w.key === sharedKey);
   assert.equal(shared?.cm, 40, 'neighbour thickness must be kept');
   // other three edges of b get the draw default
@@ -239,7 +319,7 @@ test('applyWallThicknessToNewRoom skips edges that already have thickness', () =
 
 test('applyWallThicknessToNewRoom with null cm is a no-op', () => {
   const room = { id: 'r', poly: [[0, 0], [1, 0], [1, 1], [0, 1]] };
-  assert.deepEqual(applyWallThicknessToNewRoom([], room, null, pitch), []);
+  assert.deepEqual(applyWallThicknessToNewRoom([], [room], 'r', null, pitch), []);
 });
 
 test('drawWallPreviewD returns a path for open and closed outlines', () => {

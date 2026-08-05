@@ -300,6 +300,8 @@
   "gs.glow_group": "Light-sources fill",
   "gs.glow_base": "House darkness",
   "gs.glow_light": "Default light color / intensity",
+  "gs.wall_group": "Walls",
+  "gs.wall_fill": "Wall fill",
   "gs.glow_radius": "Glow radius",
   "gs.unit_m": "m",
   "gs.unit_ft": "ft",

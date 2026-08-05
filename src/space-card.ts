@@ -214,6 +214,13 @@ class HouseplanSpaceCard extends LitElement {
         fill: var(--ha-card-background, var(--card-background-color, #111));
         stroke: none;
       }
+      .wallbody-fill {
+        fill: var(--wall-fill, #ffffff);
+        fill-opacity: var(--wall-fill-op, 1);
+        fill-rule: evenodd;
+        stroke: none;
+        pointer-events: none;
+      }
       .wallbody {
         fill: url(#hp-wall-hatch);
         fill-rule: evenodd;

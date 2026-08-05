@@ -44,17 +44,19 @@ import {
   cmToNorm, clampFurnSize, clampFurnCm, FURN_WALL_CELLS, type FurnitureGroup,
 } from './furniture';
 import {
-  thicknessCmAt, degradeWalls, rekeyWallsAfterMove,
+  degradeWalls, rekeyWallsAfterMove,
   setWallThickness, setWallThicknessForRoom, cmToField, fieldToCm, wallCmToUnits,
   wallEdgeBodies, wallBodiesUnionPath, paperRoomShapesWithWalls,
   innerContourForRoom, openingInnerFaceOffset, applyWallThicknessToNewRoom,
-  drawWallPreviewD, DRAW_WALL_DEFAULT_CM, type WallEntry,
+  drawWallPreviewD, DRAW_WALL_DEFAULT_CM, wallIntervals, normalizeWallIntervals,
+  intervalCmAt, type WallEntry,
 } from './wall-thickness';
 import {
   resolveOpenCuts, hitSharedWall, hitOuterWall, hitOpenSpan, snapOpenPoint,
   clampToEdgeEnds, jointsOnEdge, cutsToSpanEntries, syncOpenToFromCuts,
-  clearThicknessUnderSpan, applyThicknessOnClose, purgeOpeningsOnSpan,
-  pointOnOpenCut, removeCut, rekeyOpenSpansAfterMove, degradeOpenSpans,
+  applyThicknessOnClose, purgeOpeningsOnSpan,
+  pointOnOpenCut, removeCut, rekeyOpenSpansAfterMove, degradeOpenSpans, clipOpenSpansToShared,
+  sanitizeOpenSpans, entryToSeg,
   type OpenSpanEntry,
 } from './open-spans';
 import { ContentSigner } from './signing';
@@ -83,7 +85,7 @@ import {
 import { alignAllToGrid, type AlignReport } from './align-grid';
 import { langOf, t, type I18nKey } from './i18n';
 
-const CARD_VERSION = '1.59.0-beta.6';
+const CARD_VERSION = '1.59.0-beta.7';
 /** HP-1552 boot-veil timing (AUD-1552-02). The veil holds for at least
  *  BOOT_MIN_MS; every stage-height change restarts a BOOT_QUIET_MS
  *  trailing-quiescence requirement (chrome still settling near the cap
@@ -1298,7 +1300,12 @@ class HouseplanCard extends LitElement {
     this._navApplied = true;
     // the editor comes back only where an editor is allowed at all
     this._mode = vp.mode !== 'view' && this._canEdit && !config.kiosk ? vp.mode : 'view';
-    if (vp.mode !== 'view' && !this._canEdit && !config.kiosk) this._pendingNavMode = vp.mode;
+    // AUD-159B6-04: the memo is the NEWER and MORE SPECIFIC record than the
+    // global LS nav — a neighbour card writing `mode=devices` into localStorage
+    // must not be replayed over this owner's viewport once can_write answers
+    // (it also broke the draft revival, whose guard compares the mode). So the
+    // pending intent is REPLACED here, never merely added to.
+    this._pendingNavMode = vp.mode !== 'view' && !this._canEdit && !config.kiosk ? vp.mode : null;
     this._zoom = vp.zoom;
     this._view = vp.view ? { ...vp.view } : null;
     this._viewModeSnap = vp.snap ? { ...vp.snap } : null;
@@ -3371,7 +3378,9 @@ class HouseplanCard extends LitElement {
     for (const sp of this._serverCfg?.spaces || []) {
       delete (sp as any).segments;
       if (Array.isArray(sp.walls)) {
-        sp.walls = degradeWalls(sp.walls, sp.rooms || [], GRID_STEP_N, 1);
+        const cuts = sanitizeOpenSpans((sp as any).open_spans)
+          .map((e) => [e.a[0], e.a[1], e.b[0], e.b[1]]);
+        sp.walls = degradeWalls(sp.walls, sp.rooms || [], GRID_STEP_N, 1, cuts);
         if (!sp.walls.length) delete sp.walls;
       }
     }
@@ -3570,6 +3579,11 @@ class HouseplanCard extends LitElement {
       rooms: sp?.rooms || [],
       openings: sp?.openings || [],
       walls: sp?.walls || [],
+      // AUD-159B6-02: `open_spans` is geometry too. Left out of the snapshot it
+      // survived Undo un-rekeyed, so the room went back and the dash stayed on
+      // the resized coordinates — a virtual stretch detached from any wall.
+      // `open_to` rides along inside `rooms`.
+      open_spans: (sp as any)?.open_spans || [],
     });
   }
 
@@ -3582,6 +3596,8 @@ class HouseplanCard extends LitElement {
     sp.openings = s.openings;
     if (Array.isArray(s.walls) && s.walls.length) sp.walls = s.walls;
     else delete sp.walls;
+    if (Array.isArray(s.open_spans) && s.open_spans.length) (sp as any).open_spans = s.open_spans;
+    else delete (sp as any).open_spans;
     this._cfgEpoch++;
     this.requestUpdate();
   }
@@ -3718,56 +3734,33 @@ class HouseplanCard extends LitElement {
         const r = sp.rooms.find((x: any) => x.id === id);
         if (r?.poly) r.poly = simplifyPoly(r.poly, 1e-9);
       }
-      // docs/WALL-THICKNESS.md: rewrite thickness keys for all touched spans
-      // (edge drag and scale), then drop keys that no longer match any edge.
-      if (Array.isArray(sp.walls) && sp.walls.length) {
-        const H = this._spaceH;
-        const oldSpans: [number[], number[]][] = [];
-        const newSpans: [number[], number[]][] = [];
-        for (const id of g.changed) {
-          const oldR = g.rooms.find((r) => r.id === id);
-          const nr = sp.rooms.find((x: any) => x.id === id);
-          if (!oldR || !nr?.poly) continue;
-          const newPoly = nr.poly.map((p: number[]) => [p[0] * NORM_W, p[1] * H] as number[]);
-          if (oldR.poly.length !== newPoly.length) continue;
-          for (let i = 0; i < oldR.poly.length; i++) {
-            oldSpans.push([oldR.poly[i], oldR.poly[(i + 1) % oldR.poly.length]]);
-            newSpans.push([newPoly[i], newPoly[(i + 1) % newPoly.length]]);
-          }
+      // ONE geometry transaction (docs/WALL-THICKNESS.md, AUD-159B6-02):
+      // old→new edge pairs are built once, then the open spans move (they
+      // define where a wall is cut into atomic pieces) and only after that the
+      // thickness keys are rewritten and the dead ones dropped.
+      const H = this._spaceH;
+      const oldSpans: [number[], number[]][] = [];
+      const newSpans: [number[], number[]][] = [];
+      for (const id of g.changed) {
+        const oldR = g.rooms.find((r) => r.id === id);
+        const nr = sp.rooms.find((x: any) => x.id === id);
+        if (!oldR || !nr?.poly) continue;
+        const newPoly = nr.poly.map((p: number[]) => [p[0] * NORM_W, p[1] * H] as number[]);
+        if (oldR.poly.length !== newPoly.length) continue;
+        for (let i = 0; i < oldR.poly.length; i++) {
+          oldSpans.push([oldR.poly[i], oldR.poly[(i + 1) % oldR.poly.length]]);
+          newSpans.push([newPoly[i], newPoly[(i + 1) % newPoly.length]]);
         }
+      }
+      this._commitOpenSpans({ old: oldSpans, next: newSpans });
+      if (Array.isArray(sp.walls) && sp.walls.length) {
         if (oldSpans.length) {
           sp.walls = rekeyWallsAfterMove(
             sp.walls, oldSpans, newSpans, this._wallKeyPitch, NORM_W,
           );
         }
-        sp.walls = degradeWalls(sp.walls, sp.rooms || [], GRID_STEP_N, 1);
+        sp.walls = degradeWalls(sp.walls, sp.rooms || [], GRID_STEP_N, 1, this._cfgOpenCuts());
         if (!sp.walls.length) delete sp.walls;
-      }
-      if (Array.isArray((sp as any).open_spans) && (sp as any).open_spans.length) {
-        const H = this._spaceH;
-        const oldSpans: [number[], number[]][] = [];
-        const newSpans: [number[], number[]][] = [];
-        for (const id of g.changed) {
-          const oldR = g.rooms.find((r) => r.id === id);
-          const nr = sp.rooms.find((x: any) => x.id === id);
-          if (!oldR || !nr?.poly) continue;
-          const newPoly = nr.poly.map((p: number[]) => [p[0] * NORM_W, p[1] * H] as number[]);
-          if (oldR.poly.length !== newPoly.length) continue;
-          for (let i = 0; i < oldR.poly.length; i++) {
-            oldSpans.push([oldR.poly[i], oldR.poly[(i + 1) % oldR.poly.length]]);
-            newSpans.push([newPoly[i], newPoly[(i + 1) % newPoly.length]]);
-          }
-        }
-        if (oldSpans.length) {
-          (sp as any).open_spans = rekeyOpenSpansAfterMove(
-            (sp as any).open_spans, oldSpans, newSpans, NORM_W,
-          );
-        }
-        (sp as any).open_spans = degradeOpenSpans(
-          (sp as any).open_spans, this._spaceModel().rooms, NORM_W, this._gridPitch * 0.02,
-        );
-        if (!(sp as any).open_spans.length) delete (sp as any).open_spans;
-        else this._persistOpenCuts(this._openCuts());
       }
     }
     this._rszUndo.push({ space: this._space, snap: g.snap });
@@ -5005,15 +4998,15 @@ class HouseplanCard extends LitElement {
   /** Boundary under the cursor in the open-wall tool (hover preview). */
   private get _openWallHover(): { segs: number[][]; open: boolean } | null {
     if (!this._markup || this._tool !== 'openwall' || !this._cursorPt) return null;
+    // After the anchor: rubber-band from P1 to the clamped cursor — that is the
+    // only solid-wall preview. Do NOT light up the whole shared edge on hover:
+    // it hides where the click will land (owner 2026-08-05).
     if (this._openWallAnchor) {
       const p2 = clampToEdgeEnds(this._cursorPt, this._openWallAnchor.edge);
       return { segs: [[this._openWallAnchor.p[0], this._openWallAnchor.p[1], p2[0], p2[1]]], open: false };
     }
-    const cuts = this._openCuts();
-    const openSg = hitOpenSpan(this._cursorPt, cuts, this._gridPitch * 6);
-    if (openSg) return { segs: [openSg], open: true };
-    const sh = hitSharedWall(this._cursorPt, this._spaceModel().rooms, this._gridPitch * 6, this._gridPitch * 0.02);
-    return sh ? { segs: [sh.edge], open: false } : null;
+    const openSg = hitOpenSpan(this._cursorPt, this._openCuts(), this._gridPitch * 6);
+    return openSg ? { segs: [openSg], open: true } : null;
   }
 
   /** Dashed strokes over open (virtual) boundaries; highlighted in the tool. */
@@ -5068,6 +5061,36 @@ class HouseplanCard extends LitElement {
     return res;
   }
 
+  /**
+   * One geometry transaction for open spans (AUD-159B6-02). Called by EVERY
+   * operation that rewrites the room set — resize/scale commit, Undo-adjacent
+   * commits, Split, Merge, Delete: rekey explicit spans onto the moved edges,
+   * drop/clip them against the NEW rooms, then derive `open_to` from what is
+   * left. The order matters: the legacy `open_to` index is never read in the
+   * middle, or a removed explicit span resurrects a different stretch.
+   */
+  private _commitOpenSpans(
+    rekey?: { old: [number[], number[]][]; next: [number[], number[]][] },
+  ): void {
+    const sp = this._curSpaceCfg;
+    if (!sp) return;
+    const eps = this._gridPitch * 0.02;
+    this._cfgEpoch++; // the room set changed under the model memo
+    const rooms = this._spaceModel().rooms;
+    let spans = sanitizeOpenSpans((sp as any).open_spans);
+    if (spans.length && rekey?.old.length) {
+      spans = rekeyOpenSpansAfterMove(spans, rekey.old, rekey.next, NORM_W);
+    } else if (!spans.length) {
+      // A legacy `open_to`-only space: its truth is connectivity, so the
+      // stretches are re-derived on the new geometry and persisted here (the
+      // first-save migration the spec asks for).
+      spans = cutsToSpanEntries(resolveOpenCuts(rooms, null, NORM_W, eps), NORM_W);
+    }
+    spans = degradeOpenSpans(spans, rooms, NORM_W, eps);
+    spans = clipOpenSpansToShared(spans, rooms, NORM_W, eps);
+    this._persistOpenCuts(spans.map((e) => entryToSeg(e, NORM_W)));
+  }
+
   /** Write cuts into space.open_spans and sync open_to. */
   private _persistOpenCuts(cuts: number[][]): void {
     const sp = this._curSpaceCfg;
@@ -5083,22 +5106,29 @@ class HouseplanCard extends LitElement {
     if (!sp) return;
     const eps = this._gridPitch * 0.02;
     const cuts = removeCut(this._openCuts(), sg, eps);
-    const solid: number[][] = [];
-    for (const r of this._spaceModel().rooms) {
-      const poly = roomPoly(r);
-      if (!poly) continue;
-      for (let i = 0; i < poly.length; i++) {
-        const a = poly[i], b = poly[(i + 1) % poly.length];
-        const edge = [a[0], a[1], b[0], b[1]];
-        const mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
-        if (cuts.some((c) => distToSegment(mid, c) < eps * 4)) continue;
-        solid.push(edge);
-      }
-    }
-    let walls = applyThicknessOnClose(
-      sp.walls, sg, solid, this._wallKeyPitch, NORM_W, DRAW_WALL_DEFAULT_CM,
+    // The stretch is solid again: rekey thickness onto the merged intervals
+    // first — a partially opened wall keeps the cm of the part that stayed
+    // closed. Only a wall that was open end to end has nothing to inherit and
+    // takes the default (owner 2026-08-05).
+    let walls = this._normalizeWalls(sp.walls, cuts);
+    const inherited = intervalCmAt(
+      this._spaceModel().rooms, walls, cuts, sg,
+      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
     );
-    walls = degradeWalls(walls, sp.rooms || [], GRID_STEP_N, 1);
+    if (!(inherited > 0)) {
+      const solid: number[][] = [];
+      for (const iv of wallIntervals(
+        this._spaceModel().rooms, walls, cuts,
+        this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+      )) {
+        if (iv.open) continue;
+        solid.push([iv.a[0], iv.a[1], iv.b[0], iv.b[1]]);
+      }
+      walls = applyThicknessOnClose(
+        walls, sg, solid, this._wallKeyPitch, NORM_W, DRAW_WALL_DEFAULT_CM,
+      );
+      walls = this._normalizeWalls(walls, cuts);
+    }
     if (walls.length) sp.walls = walls;
     else delete sp.walls;
     this._persistOpenCuts(cuts);
@@ -5132,8 +5162,12 @@ class HouseplanCard extends LitElement {
       const next = [...cuts, sg];
       const sp = this._curSpaceCfg;
       if (!sp) return;
-      let walls = clearThicknessUnderSpan(sp.walls, [sg[0], sg[1]], [sg[2], sg[3]], this._wallKeyPitch, NORM_W);
-      walls = degradeWalls(walls, sp.rooms || [], GRID_STEP_N, 1);
+      // A virtual stretch carries no thickness: the key of the wall it cuts is
+      // SPLIT here — the covered piece is dropped, the solid remainder keeps
+      // the cm under its own atomic key (spec invariant, AUD-159B6-01). Simply
+      // deleting every key that touches the span, as this used to do, threw the
+      // remainder away with it.
+      const walls = this._normalizeWalls(sp.walls, next);
       if (walls.length) sp.walls = walls;
       else delete sp.walls;
       const beforeOp = (sp.openings || []).length;
@@ -5202,11 +5236,7 @@ class HouseplanCard extends LitElement {
     const sp = this._curSpaceCfg;
     if (!sp) return;
     sp.rooms = sp.rooms.filter((r: any) => r.id !== room.id);
-    if (Array.isArray((sp as any).open_spans)) {
-      (sp as any).open_spans = degradeOpenSpans((sp as any).open_spans, this._spaceModel().rooms, NORM_W, eps);
-      if (!(sp as any).open_spans.length) delete (sp as any).open_spans;
-      this._persistOpenCuts(this._openCuts());
-    }
+    this._commitOpenSpans();
     this._saveConfig();
     this._regSignature = '';
     this._maybeRebuildDevices();
@@ -5224,6 +5254,36 @@ class HouseplanCard extends LitElement {
   private get _spaceWalls(): WallEntry[] {
     const w = this._curSpaceCfg?.walls;
     return Array.isArray(w) ? (w as WallEntry[]) : [];
+  }
+
+  /**
+   * Open cuts in CONFIG space (normalised), for key work that runs on
+   * `sp.rooms` rather than on the render model. The canvas is square, so both
+   * axes divide by NORM_W and a stored span IS a config-space segment.
+   * `degradeWalls` needs them: a wall split by an open span keeps its solid
+   * remainder under an atomic key that is only "live" when the cut is known.
+   */
+  private _cfgOpenCuts(): number[][] {
+    return sanitizeOpenSpans((this._curSpaceCfg as any)?.open_spans)
+      .map((e) => [e.a[0], e.a[1], e.b[0], e.b[1]]);
+  }
+
+  /** Thickness of the atomic stretch under a segment (docs/WALL-THICKNESS.md). */
+  private _intervalCm(seg: number[]): number {
+    return intervalCmAt(
+      this._spaceModel().rooms, this._spaceWalls, this._openCuts(), seg,
+      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+    );
+  }
+
+  /** Rewrite thickness keys onto the current atomic intervals and drop dead ones. */
+  private _normalizeWalls(walls: WallEntry[] | null | undefined, cuts: number[][]): WallEntry[] {
+    const next = normalizeWallIntervals(
+      this._spaceModel().rooms, walls, cuts,
+      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+    );
+    return degradeWalls(next, this._curSpaceCfg?.rooms || [], GRID_STEP_N, 1,
+      cuts.map((c) => [c[0] / NORM_W, c[1] / NORM_W, c[2] / NORM_W, c[3] / NORM_W]));
   }
 
   /** Paper under rooms, grown by shared-wall half-thickness when set. */
@@ -5247,54 +5307,34 @@ class HouseplanCard extends LitElement {
     ).map((b) => [b.a[0], b.a[1], b.b[0], b.b[1]]);
   }
 
-  /** Nearest room edge under the cursor for the wall-thickness tool. */
+  /**
+   * The ATOMIC wall stretch under the cursor for the wall-thickness tool.
+   *
+   * AUD-159B6-01: it used to return the whole polygon edge (only preferring a
+   * shared overlap), so a click on the outer remainder of a partially shared
+   * wall wrote a key that the renderer then spread over the shared part as
+   * well. The unit of the tool is now the same interval the renderer draws.
+   */
   private _wallThickHit(raw: number[]): {
-    a: number[]; b: number[]; roomId: string; segs: number[][]; open: boolean;
+    a: number[]; b: number[]; roomId: string; segs: number[][]; open: boolean; cm: number;
   } | null {
-    const rooms = this._spaceModel().rooms.filter((r) => r.id);
     const pull = this._gridPitch * 6;
-    let best: { a: number[]; b: number[]; roomId: string; d: number } | null = null;
-    for (const room of rooms) {
-      const poly = roomPoly(room);
-      if (!poly) continue;
-      for (let i = 0; i < poly.length; i++) {
-        const a = poly[i], b = poly[(i + 1) % poly.length];
-        const d = distToSegment(raw, [a[0], a[1], b[0], b[1]]);
-        if (d <= pull && (!best || d < best.d)) best = { a, b, roomId: room.id!, d };
-      }
+    const cuts = this._openCuts();
+    let best: { iv: ReturnType<typeof wallIntervals>[number]; d: number } | null = null;
+    for (const iv of wallIntervals(
+      this._spaceModel().rooms, this._spaceWalls, cuts,
+      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+    )) {
+      const d = distToSegment(raw, [iv.a[0], iv.a[1], iv.b[0], iv.b[1]]);
+      if (d <= pull && (!best || d < best.d)) best = { iv, d };
     }
     if (!best) return null;
-    // open-boundary stretches refuse thickness
-    const openSg = hitOpenSpan(raw, this._openCuts(), pull);
-    const open = !!openSg;
-    // prefer the atomic shared stretch under the cursor (partial overlaps)
-    let a = best.a, b = best.b;
-    let segs: number[][] = [[a[0], a[1], b[0], b[1]]];
-    const eps = this._gridPitch * 0.02;
-    const home = rooms.find((r) => r.id === best.roomId);
-    const homePoly = home ? roomPoly(home) : null;
-    if (homePoly) {
-      for (const other of rooms) {
-        if (other.id === best.roomId) continue;
-        const op = roomPoly(other);
-        if (!op) continue;
-        for (const sg of sharedBoundary(homePoly, op, eps)) {
-          if (distToSegment(raw, sg) <= pull) {
-            a = [sg[0], sg[1]];
-            b = [sg[2], sg[3]];
-            segs = [sg];
-            break;
-          }
-        }
-        if (segs.length === 1 && (segs[0][0] !== best.a[0] || segs[0][1] !== best.a[1]
-            || segs[0][2] !== best.b[0] || segs[0][3] !== best.b[1])) break;
-      }
-    }
-    if (openSg) {
-      const mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
-      if (distToSegment(mid, openSg) < this._gridPitch) segs = [openSg];
-    }
-    return { a, b, roomId: best.roomId, segs, open };
+    const iv = best.iv;
+    return {
+      a: iv.a, b: iv.b, roomId: iv.roomId,
+      segs: [[iv.a[0], iv.a[1], iv.b[0], iv.b[1]]],
+      open: iv.open, cm: iv.cm,
+    };
   }
 
   private get _wallThickHover(): { segs: number[][]; open: boolean; d: string } | null {
@@ -5303,7 +5343,7 @@ class HouseplanCard extends LitElement {
     if (!hit) return null;
     // Whole-wall strip: real half-depth when thickness is set, else a visible
     // minimum so thin centreline walls still light up under the cursor.
-    const cm = thicknessCmAt(this._spaceWalls, hit.a, hit.b, this._wallKeyPitch, NORM_W);
+    const cm = hit.cm;
     const depth = cm > 0
       ? wallCmToUnits(cm, this._cellCm, this._gridPitch)
       : this._gridPitch * 3;
@@ -5327,7 +5367,7 @@ class HouseplanCard extends LitElement {
       this._showToast(this._t('toast.wallthick_open'));
       return;
     }
-    const cm = thicknessCmAt(this._spaceWalls, hit.a, hit.b, this._wallKeyPitch, NORM_W);
+    const cm = hit.cm;
     const view = this._viewOr(this._baseVb());
     const mx = (hit.a[0] + hit.b[0]) / 2, my = (hit.a[1] + hit.b[1]) / 2;
     this._wallDialog = {
@@ -5345,17 +5385,16 @@ class HouseplanCard extends LitElement {
     const sp = this._curSpaceCfg;
     if (!sp) return;
     const cm = fieldToCm(d.value, this._imperial);
-    const openCuts = this._openPairs().flatMap((p) => p.segs);
+    const openCuts = this._openCuts();
     let next: WallEntry[];
     if (allRoom && d.roomId) {
-      const room = this._spaceModel().rooms.find((r) => r.id === d.roomId);
       next = setWallThicknessForRoom(
-        sp.walls, room, cm, this._wallKeyPitch, openCuts, NORM_W,
+        sp.walls, this._spaceModel().rooms, d.roomId, cm, this._wallKeyPitch, openCuts, NORM_W,
       );
     } else {
       next = setWallThickness(sp.walls, d.a, d.b, cm, this._wallKeyPitch, NORM_W);
     }
-    next = degradeWalls(next, sp.rooms || [], GRID_STEP_N, 1);
+    next = this._normalizeWalls(next, openCuts);
     if (next.length) sp.walls = next;
     else delete sp.walls;
     this._wallDialog = null;
@@ -5399,7 +5438,12 @@ class HouseplanCard extends LitElement {
     const px = stage && stage.clientWidth && v.w ? stage.clientWidth / v.w : 1;
     const stroke = disp?.color || 'var(--hp-muted)';
     const solid = united.depthUnits * px < 3;
-    return svg`<g class="wallbodies" style="--room-stroke:${stroke}">
+    const wf = this._fillColors.wall_fill;
+    // Fill colour UNDER the hatch (owner 2026-08-05): both, never one instead
+    // of the other. When the body is thinner than ~3px on screen the hatch
+    // collapses into noise — keep the solid fill alone.
+    return svg`<g class="wallbodies" style="--room-stroke:${stroke};--wall-fill:${wf.c};--wall-fill-op:${wf.a}">
+      <path class="wallbody-fill" d="${united.d}"></path>
       <path class="wallbody ${solid ? 'solid' : ''}"
         data-hp="wall" data-id="union" data-kind="union"
         d="${united.d}"></path>
@@ -5711,14 +5755,7 @@ class HouseplanCard extends LitElement {
     keep.poly = d.poly.map((p) => [p[0] / NORM_W, p[1] / H]);
     delete keep.x; delete keep.y; delete keep.w; delete keep.h; // a merged room is never a rect
     sp.rooms = sp.rooms.filter((r: any) => r.id !== dropId);
-    this._cfgEpoch++;
-    if (Array.isArray((sp as any).open_spans)) {
-      (sp as any).open_spans = degradeOpenSpans(
-        (sp as any).open_spans, this._spaceModel().rooms, NORM_W, this._gridPitch * 0.02,
-      );
-      if (!(sp as any).open_spans.length) delete (sp as any).open_spans;
-      else this._persistOpenCuts(this._openCuts());
-    }
+    this._commitOpenSpans();
     this._saveConfig();
     this._mergeDialog = null;
     this._regSignature = '';
@@ -5884,17 +5921,24 @@ class HouseplanCard extends LitElement {
       ...(this._roomSettingsFromDialog() ? { settings: this._roomSettingsFromDialog() } : {}),
     };
     sp.rooms.push(newRoom);
+    // A Split rewrites the parent outline and adds a child, so a span that used
+    // to sit between the parent and a neighbour may now belong to the child.
+    // Geometry first, then spans and the derived open_to — otherwise border
+    // trimming reads the new geometry while glow reads the old connectivity
+    // (AUD-159B6-02).
+    if (wasSplit) this._commitOpenSpans();
     // Draw-session wall thickness: apply to new edges only; keep neighbour cm
     // on shared stretches. Split naming does not use the Draw field.
     if (!wasSplit) {
       const cm = this._drawWallCm;
       if (cm != null) {
-        const openCuts = this._openPairs().flatMap((p) => p.segs);
-        const roomR = { id: newRoom.id, poly: verts };
+        this._cfgEpoch++; // the new room must be in the model before keying
+        const openCuts = this._openCuts();
         let next = applyWallThicknessToNewRoom(
-          sp.walls, roomR, cm, this._wallKeyPitch, openCuts, NORM_W,
+          sp.walls, this._spaceModel().rooms, newRoom.id, cm,
+          this._wallKeyPitch, openCuts, NORM_W,
         );
-        next = degradeWalls(next, sp.rooms || [], GRID_STEP_N, 1);
+        next = this._normalizeWalls(next, openCuts);
         if (next.length) sp.walls = next;
         else delete sp.walls;
       }
@@ -7504,6 +7548,8 @@ class HouseplanCard extends LitElement {
           <label class="dispsection">${this._t('gs.glow_group')}</label>
           ${this._renderColorRow('glow_base', 'gs.glow_base')}
           ${this._renderColorRow('glow_light', 'gs.glow_light')}
+          <label class="dispsection">${this._t('gs.wall_group')}</label>
+          ${this._renderColorRow('wall_fill', 'gs.wall_fill')}
           <div class="colorrow gsrow">
             <span class="gsl">${this._t('gs.glow_radius')}</span>
             <input type="number" class="tempin" min="0.5" step="0.5"
@@ -7890,7 +7936,7 @@ class HouseplanCard extends LitElement {
         </div>
 
         <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'openwall' && this._openWallHover ? ' wallhot' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._bdMovable ? ' bdgrab' : ''}${this._bdDrag ? ' bdgrabbing' : ''}${dayNight ? ' daynight' : ''}${dayNight && this._skySnap ? ' skysnap' : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}"
-          style="height:${this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}${stageBg ? `;background:${stageBg}` : ''}"
+          style="height:${this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}${stageBg ? `;background:${stageBg}` : ''};--wall-fill:${this._fillColors.wall_fill.c};--wall-fill-op:${this._fillColors.wall_fill.a}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
           @pointerdown=${(e: PointerEvent) => { this._notePointer(e); this._stagePointerDown(e); }}
@@ -7920,7 +7966,7 @@ class HouseplanCard extends LitElement {
               'poly' in sh
                 ? svg`<polygon class="hp-paper" points="${sh.poly}" pointer-events="none"></polygon>`
                 : svg`<rect class="hp-paper" x="${sh.rect.x}" y="${sh.rect.y}" width="${sh.rect.w}" height="${sh.rect.h}" rx="${sh.rect.rx}" pointer-events="none"></rect>`,
-            )}</g>`}
+              )}</g>`}
             ${this._editing ? this._renderMarkupDefs(vb) : nothing}
             ${''/* the grid is a property of the plane, not of a box: it follows
                    the VIEW so it is there wherever you pan (docs/CANVAS.md §7) */}
@@ -9663,7 +9709,8 @@ class HouseplanCard extends LitElement {
         : nothing}
       ${segs.map((s) => svg`<line class="seg" x1="${s[0]}" y1="${s[1]}" x2="${s[2]}" y2="${s[3]}"></line>`)}
       ${previewD
-        ? svg`<path class="drawwall-preview" d="${previewD}"></path>`
+        ? svg`<path class="drawwall-preview-fill" d="${previewD}"></path>
+             <path class="drawwall-preview" d="${previewD}"></path>`
         : nothing}
       ${path.length > 1
         ? svg`<polyline class="pathline" points="${path.map((p) => p.join(',')).join(' ')}"></polyline>`

@@ -1338,3 +1338,42 @@ def test_space_walls_thickness():
     with pytest.raises(vol.Invalid):
         v.CONFIG_SCHEMA({"spaces": [{**base, "walls": [
             {"key": f"k{i}", "cm": 10} for i in range(v.MAX_WALLS + 1)]}]})
+
+
+def test_space_open_spans():
+    """AUD-159B6-03: `open_spans` used to ride on extra=ALLOW_EXTRA, so any
+    shape reached the card and one malformed entry blanked the plan for every
+    reader. Two finite points, bounded, capped, deduped -- or refused."""
+    base = {"id": "s1", "title": "S", "view_box": [0, 0, 1, 1], "rooms": []}
+    # absent -- an existing plan validates exactly as before
+    assert "open_spans" not in v.CONFIG_SCHEMA({"spaces": [base]})["spaces"][0]
+
+    ok = {"a": [0.3, 0.14], "b": [0.3, 0.46]}
+    out = v.CONFIG_SCHEMA({"spaces": [{**base, "open_spans": [ok]}]})
+    assert out["spaces"][0]["open_spans"] == [ok]
+
+    # the exact crash the audit reproduced: `entryToSeg` reading e.a[0]
+    for bad in (
+        {"foo": 1},
+        {"a": [0.1, 0.2]},
+        {"a": [0.1], "b": [0.2, 0.3]},
+        {"a": [0.1, 0.2], "b": "x"},
+        {"a": [0.1, float("nan")], "b": [0.2, 0.3]},
+        {"a": [0.1, float("inf")], "b": [0.2, 0.3]},
+        {"a": [0.1, 0.2], "b": [0.1, 0.2]},                       # degenerate
+        {"a": [0.1, 0.2], "b": [v.CANVAS_LIMIT + 1, 0.3]},        # out of canvas
+        "not-an-object",
+    ):
+        with pytest.raises(vol.Invalid):
+            v.CONFIG_SCHEMA({"spaces": [{**base, "open_spans": [bad]}]})
+
+    # capped like every other list
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA({"spaces": [{**base, "open_spans": [
+            {"a": [0, i / 10000], "b": [1, i / 10000]}
+            for i in range(v.MAX_OPEN_SPANS + 1)]}]})
+
+    # one wall, one span: the same stretch twice (either direction) collapses
+    dup = v.CONFIG_SCHEMA({"spaces": [{**base, "open_spans": [
+        ok, dict(ok), {"a": ok["b"], "b": ok["a"]}]}]})
+    assert dup["spaces"][0]["open_spans"] == [ok]

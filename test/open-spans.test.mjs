@@ -4,6 +4,7 @@ import {
   clampToEdgeEnds, snapOpenPoint, resolveOpenCuts, hitSharedWall, hitOuterWall,
   clearThicknessUnderSpan, thicknessOnClose, purgeOpeningsOnSpan, pointOnOpenCut,
   spanToEntry, entryToSeg, syncOpenToFromCuts, removeCut, hitOpenSpan,
+  clipOpenSpansToShared, sanitizeOpenSpans, degradeOpenSpans, rekeyOpenSpansAfterMove,
 } from '../test-build/open-spans.js';
 import { wallKey, setWallThickness, DRAW_WALL_DEFAULT_CM } from '../test-build/wall-thickness.js';
 
@@ -127,11 +128,62 @@ describe('open-spans', () => {
     assert.equal(next.length, 1);
   });
 
+  it('clipOpenSpansToShared clips drifted span onto shared edge', () => {
+    const rooms = [
+      { id: 'a', poly: [[0, 0], [5, 0], [5, 4], [0, 4]] },
+      { id: 'b', poly: [[5, 0], [10, 0], [10, 4], [5, 4]] },
+    ];
+    // span slightly past the shared edge (y 0..5 while shared is 0..4)
+    const drifted = [spanToEntry([5, 0], [5, 5], 1)];
+    const clipped = clipOpenSpansToShared(drifted, rooms, 1, eps);
+    assert.equal(clipped.length, 1);
+    const sg = [clipped[0].a[0], clipped[0].a[1], clipped[0].b[0], clipped[0].b[1]];
+    assert.ok(Math.max(sg[1], sg[3]) <= 4 + 1e-6, JSON.stringify(sg));
+  });
+
   it('entry round-trip', () => {
     const e = spanToEntry([100, 200], [100, 400], scale);
     const sg = entryToSeg(e, scale);
     assert.ok(Math.abs(sg[1] - 200) < 1e-6);
     assert.ok(Math.abs(sg[3] - 400) < 1e-6);
+  });
+
+  // AUD-159B6-03: persisted data is untrusted input. A single malformed entry
+  // used to throw inside render (`Cannot read properties of undefined`) and
+  // blank the card for every reader of that space.
+  it('sanitizeOpenSpans drops malformed entries and keeps the good ones', () => {
+    const good = { a: [0.3, 0.14], b: [0.3, 0.46] };
+    const spans = [
+      null, 'x', 42, {}, { foo: 1 }, { a: [0.1, 0.2] },
+      { a: [0.1], b: [0.2, 0.3] },
+      { a: [0.1, Number.NaN], b: [0.2, 0.3] },
+      { a: [0.1, 0.2], b: [0.1, 0.2] }, // degenerate
+      good,
+    ];
+    assert.deepEqual(sanitizeOpenSpans(spans), [good]);
+    assert.deepEqual(sanitizeOpenSpans(null), []);
+    assert.deepEqual(sanitizeOpenSpans('nope'), []);
+  });
+
+  it('malformed spans never reach the geometry helpers', () => {
+    const rooms = [
+      { id: 'a', poly: [[0, 0], [5, 0], [5, 4], [0, 4]] },
+      { id: 'b', poly: [[5, 0], [10, 0], [10, 4], [5, 4]] },
+    ];
+    const junk = [{ foo: 1 }];
+    assert.deepEqual(resolveOpenCuts(rooms, junk, 1, eps), []);
+    assert.deepEqual(degradeOpenSpans(junk, rooms, 1, eps), []);
+    assert.deepEqual(clipOpenSpansToShared(junk, rooms, 1, eps), []);
+    assert.deepEqual(rekeyOpenSpansAfterMove(junk, [], [], 1), []);
+  });
+
+  it('resolveOpenCuts: legacy fallback can be refused mid-transaction', () => {
+    const rooms = [
+      { id: 'a', poly: [[0, 0], [5, 0], [5, 4], [0, 4]], open_to: ['b'] },
+      { id: 'b', poly: [[5, 0], [10, 0], [10, 4], [5, 4]], open_to: ['a'] },
+    ];
+    assert.equal(resolveOpenCuts(rooms, [], 1, eps).length, 1);
+    assert.equal(resolveOpenCuts(rooms, [], 1, eps, false).length, 0);
   });
 
   it('setWallThickness still works with cleared list', () => {

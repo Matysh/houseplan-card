@@ -69,6 +69,10 @@ MAX_MARKERS = 2000
 MAX_OPENINGS = 500
 MAX_DECOR = 1000
 MAX_WALLS = 500
+# Open (virtual) wall stretches, docs/superpowers/specs/2026-08-05-open-spans-delete-design.md.
+# Every span is a piece of a shared boundary, so there can never be more of
+# them than there are wall segments — the cap is the walls' one (AUD-159B6-03).
+MAX_OPEN_SPANS = 500
 MAX_LAYOUT = 5000
 # Inner limits (HP-1454-05). The outer collections were capped, the collections
 # INSIDE them were not: a 150 000-point polygon or a 100 000-entry known_devices
@@ -142,6 +146,45 @@ def _view_box(value):
 
 
 POINT = vol.All([_GEOM], vol.Length(min=2, max=2))
+
+# A virtual stretch shorter than this is a click, not a span. Mirrors
+# OPEN_SPAN_MIN_UNITS in src/open-spans.ts (normalised units).
+OPEN_SPAN_MIN_LEN = 1e-3
+
+
+def _open_span(value):
+    """One virtual stretch: exactly two distinct finite points a/b.
+
+    AUD-159B6-03: the field used to ride on `extra=ALLOW_EXTRA` — any shape
+    passed the backend and the card crashed reading `e.a[0]` on render, for
+    every reader of that space. A degenerate span (a == b) is not a stretch
+    either: it can never be hit, closed or drawn, so it is corruption, not data.
+    """
+    if not isinstance(value, dict):
+        raise vol.Invalid("open_span must be an object with a/b points")
+    a = POINT(value.get("a"))
+    b = POINT(value.get("b"))
+    if abs(a[0] - b[0]) < OPEN_SPAN_MIN_LEN and abs(a[1] - b[1]) < OPEN_SPAN_MIN_LEN:
+        raise vol.Invalid("open_span: a and b must differ")
+    out = {k: v for k, v in value.items() if k not in ("a", "b")}
+    out["a"] = a
+    out["b"] = b
+    return out
+
+
+def _dedupe_open_spans(value):
+    """Drop repeats of the same stretch (either direction) — one wall, one span."""
+    seen = set()
+    out = []
+    for span in value:
+        a, b = span["a"], span["b"]
+        fwd = (round(a[0], 6), round(a[1], 6), round(b[0], 6), round(b[1], 6))
+        key = min(fwd, (fwd[2], fwd[3], fwd[0], fwd[1]))
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(span)
+    return out
 
 
 def _require_geometry(room: dict) -> dict:
@@ -367,6 +410,13 @@ SPACE_SCHEMA = vol.Schema(
                 extra=vol.ALLOW_EXTRA,
             )
         ], vol.Length(max=MAX_WALLS)),
+        # Open (virtual) wall stretches: a piece of a shared boundary that the
+        # user opened. Optional and bounded — a space without `open_spans`
+        # validates exactly as before, and the legacy `rooms[].open_to` index
+        # keeps working on its own (AUD-159B6-03).
+        vol.Optional("open_spans"): vol.All(
+            vol.Length(max=MAX_OPEN_SPANS), [_open_span], _dedupe_open_spans,
+        ),
         # Legacy: walls are derived from room outlines since v1.19.0 — a line has no
         # independent existence. Still accepted so a stale browser tab cannot fail a save;
         # the card strips the field on every write.

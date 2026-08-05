@@ -203,12 +203,13 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const paperShapes = walls.length
     ? paperRoomShapesWithWalls(space.rooms, walls, [], GRID_STEP_N, cellCm, GRID_PITCH, NORM_W)
     : paperRoomShapes(space.rooms);
+  const colors = fillColorsOf(o.cfg.settings);
   const wallUnion = walls.length && disp.showBorders
     ? wallBodiesUnionPath(space.rooms, walls, [], [], GRID_STEP_N, cellCm, GRID_PITCH, NORM_W)
     : null;
 
   return html`
-    <div class="hp-static-stage" style="aspect-ratio:${vb[2]}/${vb[3]}${stageBg ? ';background:' + stageBg : ''}">
+    <div class="hp-static-stage" style="aspect-ratio:${vb[2]}/${vb[3]}${stageBg ? ';background:' + stageBg : ''};--wall-fill:${colors.wall_fill.c};--wall-fill-op:${colors.wall_fill.a}">
       <svg viewBox="${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}" preserveAspectRatio="xMidYMid meet">
         ${wallUnion ? svg`<defs>
           <pattern id="hp-wall-hatch" patternUnits="userSpaceOnUse" width="8" height="8"
@@ -226,8 +227,11 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
           : nothing}
         ${roomShapes}
         ${wallUnion
-          ? svg`<path class="wallbody" data-hp="wall" data-id="union" data-kind="union"
-              d="${wallUnion.d}" style="--room-stroke:${disp.color}"></path>`
+          ? svg`<g class="wallbodies" style="--room-stroke:${disp.color}">
+              <path class="wallbody-fill" d="${wallUnion.d}"></path>
+              <path class="wallbody" data-hp="wall" data-id="union" data-kind="union"
+                d="${wallUnion.d}"></path>
+            </g>`
           : nothing}
       </svg>
       ${''/* docs/CANVAS.md §6: the same expression as the full card. The
