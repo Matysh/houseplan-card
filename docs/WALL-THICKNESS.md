@@ -27,6 +27,9 @@ merges consecutive solid pieces into each maximal run of equal thickness; a
 different thickness or a virtual gap remains a real break. Likewise,
 touching/overlapping `open_spans` of the same room pair are stored as one span;
 pair ownership remains a hard boundary so Split can derive exact `open_to` links.
+When a maximal wall run crosses a collinear vertex belonging to another room,
+its exact endpoints cover that room's shorter child side too; lookup does not
+depend on the compacted run's midpoint remaining inside every room.
 
 Degrade unmatched keys silently on write. Resize / undo / scale transform exact
 endpoints and re-key all touched spans in the same transaction; legacy entries

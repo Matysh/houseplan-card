@@ -3,7 +3,8 @@
  * markers (overrides/virtual). No Lit/DOM — only the hass object.
  */
 import { iconFor, iconFromDeviceClasses, DOMAIN_PRIORITY, FALLBACK_ICON, type CompiledIconRule, EXCLUDED_DOMAINS } from './rules';
-import { averageLqi } from './logic';
+import { averageLqi, isControllable } from './logic';
+import { isSemanticBinaryEntity } from './device-visual';
 import type { DevItem, Marker, ServerConfig } from './types';
 
 /** Build context: a slice of hass + config resolution. */
@@ -54,22 +55,76 @@ export function isTempEntity(hass: any, eid: string): boolean {
   );
 }
 
+/**
+ * Domains which expose the state machine of a whole functional device. This
+ * is a role order, not an entity-list order: an auxiliary switch may never
+ * outrank the vacuum/climate/cover/etc. entity it configures.
+ */
+const DEVICE_STATE_DOMAINS = [
+  'vacuum', 'lawn_mower', 'climate', 'light', 'cover', 'lock', 'valve',
+  'alarm_control_panel', 'water_heater', 'media_player', 'fan', 'humidifier',
+  'siren', 'camera', 'remote',
+];
+
+interface DeviceEntityCandidate {
+  eid: string;
+  reg: any;
+}
+
+const visibleFirst = (items: DeviceEntityCandidate[]): DeviceEntityCandidate[] => [
+  ...items.filter((item) => !item.reg?.hidden),
+  ...items.filter((item) => !!item.reg?.hidden),
+];
+
+/**
+ * Effective entities which jointly describe one device's status.
+ *
+ * Home Assistant has no device state: it has entity states, while
+ * entity_category marks config/diagnostic entities as non-primary. House Plan
+ * therefore resolves a ROLE, not a first list item:
+ *   1) uncategorised HA entities (all entities only as a fallback);
+ *   2) a whole-device state domain, if present;
+ *   3) semantic binary signals (presence/contact/motion/safety/running);
+ *   4) switches only when the device has no stronger state-bearing role;
+ *   5) passive entities together, so one unavailable sensor does not make the
+ *      whole marker unavailable while another reading is alive.
+ */
+export function resolvedDeviceStateEntities(hass: any, entIds: readonly string[]): string[] {
+  const all: DeviceEntityCandidate[] = entIds
+    .map((eid) => ({ eid, reg: hass?.entities?.[eid] }))
+    .filter((item) => !!item.reg);
+  if (!all.length) return [];
+  const haPrimary = all.filter((item) => !item.reg.entity_category);
+  const pool = haPrimary.length ? haPrimary : all;
+
+  for (const domain of DEVICE_STATE_DOMAINS) {
+    const role = pool.filter((item) => item.eid.startsWith(domain + '.'));
+    if (role.length) return visibleFirst(role).map((item) => item.eid);
+  }
+
+  const semanticBinary = pool.filter((item) => isSemanticBinaryEntity(hass, item.eid));
+  if (semanticBinary.length) return visibleFirst(semanticBinary).map((item) => item.eid);
+
+  const switches = pool.filter((item) => item.eid.startsWith('switch.'));
+  if (switches.length) return visibleFirst(switches).map((item) => item.eid);
+
+  // Passive/fallback entities are all useful for aggregate availability. Keep
+  // the historical domain order only as a stable ordering for primaryEntity.
+  const ordered: DeviceEntityCandidate[] = [];
+  for (const domain of DOMAIN_PRIORITY)
+    ordered.push(...visibleFirst(pool.filter((item) => item.eid.startsWith(domain + '.'))));
+  ordered.push(...visibleFirst(pool.filter(
+    (item) => !DOMAIN_PRIORITY.includes(item.eid.split('.')[0]),
+  )));
+  return ordered.map((item) => item.eid);
+}
+
 export function primaryEntity(hass: any, entIds: string[], icon: string): string | undefined {
   const all = entIds
     .map((eid) => ({ eid, reg: hass.entities[eid], st: hass.states[eid] }))
     .filter((e) => e.reg);
-  // Tiers, in order: functional and visible; functional but hidden (lamps
-  // folded into a light group get hidden in the registry — the device's main
-  // function is still the lamp, and tap-toggle must flip IT, not the
-  // do-not-disturb switch); config/diagnostic but visible; everything.
-  //
-  // The TIER loop is the OUTER one. It used to be inner, which made the
-  // domain priority stronger than visibility — and `switch` outranks
-  // `climate`, so a TRV's primary was whatever service switch the vendor
-  // ships (child lock, anti-scaling): the icon glowed yellow because scale
-  // protection was on, while the head that was actually HEATING stayed dark
-  // (owner's install, verified live 2026-07-29). A service entity must never
-  // beat the device's visible main function.
+  // Temperature/air-monitor labels deliberately choose their measurement;
+  // every other device delegates to the shared role resolver below.
   const tiers = [
     all.filter((e) => !e.reg.hidden && !e.reg.entity_category),
     all.filter((e) => !e.reg.entity_category),
@@ -82,33 +137,107 @@ export function primaryEntity(hass: any, entIds: string[], icon: string): string
       if (t) return t.eid;
     }
   }
-  for (const tier of tiers) {
-    for (const dom of DOMAIN_PRIORITY) {
-      const found = tier.find((e) => e.eid.split('.')[0] === dom);
-      if (found) return found.eid;
-    }
+  return resolvedDeviceStateEntities(hass, entIds)[0];
+}
+
+/** Minimal device shape accepted by the shared light-source resolver. */
+export interface LightSourceDevice {
+  id?: string;
+  area: string;
+  hidden?: boolean;
+  entities: string[];
+  primary?: string;
+  marker?: {
+    room_id?: string | null;
+    is_light?: boolean | null;
+    controls?: string[] | null;
+  } | null;
+}
+
+export type LightSourceRoom = string | { id?: string | null; area?: string | null };
+
+export interface ResolvedLightSource<D extends LightSourceDevice = LightSourceDevice> {
+  /** HA entity that carries the source's on/off state and accepts controls. */
+  eid: string;
+  /** Device/marker which places this source on the plan. */
+  device: D;
+  /** Why this entity belongs to the light-source set. */
+  via: 'controls' | 'forced' | 'light';
+  on: boolean;
+}
+
+function lightSourceBelongsToRoom(d: LightSourceDevice, room: LightSourceRoom): boolean {
+  if (typeof room === 'string') return d.area === room;
+  // An explicit marker-to-room binding is more precise than the HA area and
+  // therefore must not leak the source into every room sharing that area.
+  const roomId = d.marker?.room_id;
+  if (roomId) return !!room.id && roomId === room.id;
+  return !!room.area && d.area === room.area;
+}
+
+function lightEntitiesOf(d: LightSourceDevice): { eids: string[]; via: ResolvedLightSource['via'] } {
+  const controls = (d.marker?.controls || []).filter(isControllable);
+  if (controls.length) return { eids: controls, via: 'controls' };
+
+  if (d.marker?.is_light === true) {
+    // A forced source is a smart switch (or light) driving real fixtures.
+    // Prefer its primary entity, but never treat measurements or service
+    // entities as light switches merely because they belong to the device.
+    const controllable = d.entities.filter(isControllable);
+    const primary = d.primary && isControllable(d.primary) ? d.primary : null;
+    // The marker is one physical source, so do not count its auxiliary
+    // controllable entities as additional lamps in room statistics.
+    return { eids: primary ? [primary] : controllable.slice(0, 1), via: 'forced' };
   }
-  // no known domain anywhere — first entity of the best non-empty tier
-  for (const tier of tiers) if (tier.length) return tier[0].eid;
-  return undefined;
+
+  return { eids: d.entities.filter((eid) => eid.startsWith('light.')), via: 'light' };
 }
 
 /**
- * The lit light entity of a device, or null — ONE truth for "this thing is
- * shining": the glow-mode pool and the yellow icon both ask here, so the
- * light pool and the icon can never disagree (owner's principle, 2026-07-29).
- * Normally that is a lit `light.*`; with the "is a light source" flag (a smart
- * switch driving dumb fixtures) any lit entity counts — the switch itself, or
- * the lights it controls when they are bound.
+ * One source of truth for every light-related room feature. Explicit marker
+ * controls win, then `is_light`, then automatic `light.*` discovery. Passing
+ * a room scopes sources by room_id/area; omitting it resolves the supplied
+ * devices (used by Glow and per-marker controls).
  */
+export function resolvedLightSources<D extends LightSourceDevice>(
+  hass: any,
+  devices: readonly D[],
+  room?: LightSourceRoom | null,
+): ResolvedLightSource<D>[] {
+  const out: ResolvedLightSource<D>[] = [];
+  const seen = new Set<string>();
+  for (const d of devices) {
+    if (d.hidden || (room != null && !lightSourceBelongsToRoom(d, room))) continue;
+    const { eids, via } = lightEntitiesOf(d);
+    for (const eid of eids) {
+      if (!eid || seen.has(eid)) continue;
+      seen.add(eid);
+      out.push({ eid, device: d, via, on: hass.states[eid]?.state === 'on' });
+    }
+  }
+  return out;
+}
+
+/** Tri-state used by room fill. */
+export function resolvedLightState(sources: readonly ResolvedLightSource[]): 'on' | 'off' | 'none' {
+  if (!sources.length) return 'none';
+  return sources.some((source) => source.on) ? 'on' : 'off';
+}
+
+/** Counts used by the room card/label. */
+export function resolvedLightStats(
+  sources: readonly ResolvedLightSource[],
+): { on: number; total: number } | null {
+  if (!sources.length) return null;
+  return { on: sources.filter((source) => source.on).length, total: sources.length };
+}
+
+/** @deprecated Compatibility helper for older tests/callers; use resolvedLightSources(). */
 export function litLightEntity(
-  hass: any, d: { entities: string[]; marker?: { is_light?: boolean | null; controls?: string[] | null } | null },
+  hass: any,
+  d: Omit<LightSourceDevice, 'area'> & { area?: string },
 ): string | null {
-  const forced = d.marker?.is_light === true;
-  const pool = forced
-    ? [...(d.marker?.controls || []), ...d.entities]
-    : d.entities.filter((e) => e.startsWith('light.'));
-  return pool.find((e) => hass.states[e]?.state === 'on') || null;
+  return resolvedLightSources(hass, [{ ...d, area: d.area || '' }]).find((source) => source.on)?.eid || null;
 }
 
 /** Average zigbee LQI across the device's entities (*_linkquality/*_lqi sensors or an attribute). */
@@ -432,17 +561,8 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
  * Light situation of an area: 'on' if any light entity of the area's devices is on,
  * 'off' if lights exist but none is on, 'none' when the area has no lights at all.
  */
-export function areaLights(hass: any, devices: { area: string; entities: string[]; hidden?: boolean }[], area: string): 'on' | 'off' | 'none' {
-  let seen = false;
-  for (const d of devices) {
-    if (d.area !== area || d.hidden) continue; // an invisible device casts no visible light
-    for (const eid of d.entities) {
-      if (!eid.startsWith('light.')) continue;
-      seen = true;
-      if (hass.states[eid]?.state === 'on') return 'on';
-    }
-  }
-  return seen ? 'off' : 'none';
+export function areaLights(hass: any, devices: readonly LightSourceDevice[], area: string): 'on' | 'off' | 'none' {
+  return resolvedLightState(resolvedLightSources(hass, devices, area));
 }
 
 /**
@@ -615,20 +735,10 @@ export function areaClimate(
 /** How many of the area's lights are on: {on, total}, or null without lights. */
 export function areaLightStats(
   hass: any,
-  devices: { area: string; entities: string[]; hidden?: boolean }[],
+  devices: readonly LightSourceDevice[],
   area: string,
 ): { on: number; total: number } | null {
-  const seen = new Set<string>();
-  let on = 0;
-  for (const dv of devices) {
-    if (dv.area !== area || dv.hidden) continue; // hidden lights are not part of the picture
-    for (const eid of dv.entities) {
-      if (!eid.startsWith('light.') || seen.has(eid)) continue;
-      seen.add(eid);
-      if (hass.states[eid]?.state === 'on') on++;
-    }
-  }
-  return seen.size ? { on, total: seen.size } : null;
+  return resolvedLightStats(resolvedLightSources(hass, devices, area));
 }
 
 /** Average temperature across the area's devices (null when nothing reports one). */

@@ -36,6 +36,29 @@ const EVENT_BINARY_CLASSES = new Set(['motion', 'vibration', 'sound']);
 const PRESENCE_BINARY_CLASSES = new Set(['occupancy', 'presence']);
 const CONTACT_BINARY_CLASSES = new Set(['door', 'window', 'garage_door', 'opening']);
 const RUNNING_BINARY_CLASSES = new Set(['running', 'power']);
+const ALARM_BINARY_CLASSES = new Set([
+  'smoke', 'gas', 'carbon_monoxide', 'moisture', 'safety', 'tamper', 'problem',
+]);
+
+/**
+ * A binary entity whose state is a real device signal, not an arbitrary
+ * vendor option. The device-level source resolver uses the same vocabulary as
+ * entityVisualSample, so selection and rendering cannot drift apart.
+ */
+export function isSemanticBinaryEntity(hass: any, eid: string): boolean {
+  if (!eid.startsWith('binary_sensor.')) return false;
+  const dc = lower(
+    hass?.states?.[eid]?.attributes?.device_class
+    || hass?.entities?.[eid]?.device_class
+    || hass?.entities?.[eid]?.original_device_class,
+  );
+  return EVENT_BINARY_CLASSES.has(dc)
+    || PRESENCE_BINARY_CLASSES.has(dc)
+    || CONTACT_BINARY_CLASSES.has(dc)
+    || RUNNING_BINARY_CLASSES.has(dc)
+    || dc === 'moving'
+    || ALARM_BINARY_CLASSES.has(dc);
+}
 
 /** States that describe real work, not a selected mode or mere availability. */
 const WORKING_STATES = new Set([

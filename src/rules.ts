@@ -95,6 +95,7 @@ const DEVICE_CLASS_ICONS: Record<string, string> = {
   humidity: 'mdi:water-percent',
   motion: 'mdi:motion-sensor',
   occupancy: 'mdi:motion-sensor',
+  presence: 'mdi:motion-sensor',
   door: 'mdi:door',
   window: 'mdi:window-closed',
   garage_door: 'mdi:garage-variant',

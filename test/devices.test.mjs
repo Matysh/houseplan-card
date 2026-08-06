@@ -1,6 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildDevices, lightGroups, primaryEntity, lqiFor, tempFor, humFor, climateTempFor, areaLights, areaTemp, areaHum, areaLightStats, sourceValue , areaClimate, areaClimateMap, litLightEntity, seedHiddenBindings } from '../test-build/devices.js';
+import {
+  buildDevices, lightGroups, primaryEntity, lqiFor, tempFor, humFor, climateTempFor,
+  areaLights, areaTemp, areaHum, areaLightStats, sourceValue, areaClimate, areaClimateMap,
+  litLightEntity, resolvedDeviceStateEntities, resolvedLightSources, resolvedLightState,
+  resolvedLightStats, seedHiddenBindings,
+} from '../test-build/devices.js';
 import { compileIconRules, iconFor } from '../test-build/rules.js';
 
 /** Minimal fake hass around the pieces buildDevices reads. */
@@ -148,6 +153,108 @@ test('primaryEntity: domain priority and diagnostic-category demotion', () => {
   assert.equal(primaryEntity(h, ['sensor.batt', 'sensor.temp', 'light.a'], 'mdi:lightbulb'), 'light.a');
   // only a diagnostic entity → still usable as a last resort
   assert.equal(primaryEntity(h, ['sensor.batt'], 'mdi:chip'), 'sensor.batt');
+});
+
+test('primaryEntity: occupancy beats an enabled vendor option switch on a presence sensor', () => {
+  const hass = mkHass({
+    entities: {
+      'switch.presence_anti_interference': { entity_id: 'switch.presence_anti_interference' },
+      'binary_sensor.presence_occupancy': { entity_id: 'binary_sensor.presence_occupancy' },
+      'sensor.presence_illuminance': { entity_id: 'sensor.presence_illuminance' },
+    },
+    states: {
+      'switch.presence_anti_interference': { state: 'on', attributes: {} },
+      'binary_sensor.presence_occupancy': { state: 'off', attributes: { device_class: 'occupancy' } },
+      'sensor.presence_illuminance': { state: '12', attributes: { device_class: 'illuminance' } },
+    },
+  });
+  assert.equal(
+    primaryEntity(
+      hass,
+      ['switch.presence_anti_interference', 'binary_sensor.presence_occupancy', 'sensor.presence_illuminance'],
+      'mdi:motion-sensor',
+    ),
+    'binary_sensor.presence_occupancy',
+  );
+  assert.deepEqual(
+    resolvedDeviceStateEntities(
+      hass,
+      ['switch.presence_anti_interference', 'binary_sensor.presence_occupancy', 'sensor.presence_illuminance'],
+    ),
+    ['binary_sensor.presence_occupancy'],
+  );
+});
+
+test('primaryEntity: vacuum beats an unavailable unclassified Customized Cleaning switch', () => {
+  const hass = mkHass({
+    entities: {
+      'switch.x50_master_customized_cleaning': { entity_id: 'switch.x50_master_customized_cleaning' },
+      'vacuum.x50_master': { entity_id: 'vacuum.x50_master' },
+      'sensor.x50_master_state': { entity_id: 'sensor.x50_master_state' },
+    },
+    states: {
+      'switch.x50_master_customized_cleaning': { state: 'unavailable', attributes: {} },
+      'vacuum.x50_master': { state: 'docked', attributes: {} },
+      'sensor.x50_master_state': { state: 'docked', attributes: {} },
+    },
+  });
+  assert.equal(
+    primaryEntity(
+      hass,
+      ['switch.x50_master_customized_cleaning', 'vacuum.x50_master', 'sensor.x50_master_state'],
+      'mdi:robot-vacuum',
+    ),
+    'vacuum.x50_master',
+  );
+  assert.deepEqual(
+    resolvedDeviceStateEntities(
+      hass,
+      ['switch.x50_master_customized_cleaning', 'vacuum.x50_master', 'sensor.x50_master_state'],
+    ),
+    ['vacuum.x50_master'],
+  );
+});
+
+test('primaryEntity: a real cover beats its option switch, but a mixed lamp stays a light', () => {
+  const hass = mkHass({
+    entities: {
+      'cover.curtain': { entity_id: 'cover.curtain', hidden: true },
+      'switch.curtain_reverse': { entity_id: 'switch.curtain_reverse' },
+      'cover.mixed': { entity_id: 'cover.mixed' },
+      'light.mixed': { entity_id: 'light.mixed' },
+    },
+    states: {
+      'cover.curtain': { state: 'closed', attributes: { device_class: 'curtain' } },
+      'switch.curtain_reverse': { state: 'on', attributes: {} },
+      'cover.mixed': { state: 'opening', attributes: { device_class: 'curtain' } },
+      'light.mixed': { state: 'on', attributes: {} },
+    },
+  });
+  assert.equal(
+    primaryEntity(hass, ['switch.curtain_reverse', 'cover.curtain'], 'mdi:curtains'),
+    'cover.curtain',
+  );
+  assert.equal(
+    primaryEntity(hass, ['cover.mixed', 'light.mixed'], 'mdi:lightbulb'),
+    'light.mixed',
+  );
+});
+
+test('resolvedDeviceStateEntities: passive readings aggregate availability instead of picking the first', () => {
+  const hass = mkHass({
+    entities: {
+      'sensor.monitor_temperature': { entity_id: 'sensor.monitor_temperature' },
+      'sensor.monitor_humidity': { entity_id: 'sensor.monitor_humidity' },
+    },
+    states: {
+      'sensor.monitor_temperature': { state: 'unavailable', attributes: { device_class: 'temperature' } },
+      'sensor.monitor_humidity': { state: '45', attributes: { device_class: 'humidity' } },
+    },
+  });
+  assert.deepEqual(
+    resolvedDeviceStateEntities(hass, ['sensor.monitor_temperature', 'sensor.monitor_humidity']),
+    ['sensor.monitor_temperature', 'sensor.monitor_humidity'],
+  );
 });
 
 test('lqiFor: dedicated sensor wins over attribute duplication; tempFor rounds', () => {
@@ -581,6 +688,54 @@ test('litLightEntity: one truth for "this thing is shining"', () => {
   assert.equal(
     litLightEntity(hass, { entities: ['sensor.x'], marker: { is_light: true, controls: ['switch.wall'] } }),
     'switch.wall',
+  );
+});
+
+test('resolvedLightSources: one source set feeds room fill, card, glow and controls', () => {
+  const hass = { states: {
+    'light.auto': { state: 'on' },
+    'switch.relay': { state: 'on' },
+    'light.bound': { state: 'off' },
+    'switch.bound': { state: 'on' },
+    'light.own': { state: 'on' },
+    'light.hidden': { state: 'on' },
+  } };
+  const devices = [
+    { id: 'lamp', area: 'living', entities: ['light.auto'] },
+    { id: 'relay', area: 'living', primary: 'switch.relay', entities: ['switch.relay'], marker: { is_light: true } },
+    {
+      id: 'controller', area: 'living', entities: ['light.own'],
+      marker: { controls: ['light.bound', 'switch.bound'] },
+    },
+    { id: 'hidden', area: 'living', hidden: true, entities: ['light.hidden'] },
+  ];
+
+  const sources = resolvedLightSources(hass, devices, { id: 'room-a', area: 'living' });
+  assert.deepEqual(
+    sources.map(({ eid, via, on }) => ({ eid, via, on })),
+    [
+      { eid: 'light.auto', via: 'light', on: true },
+      { eid: 'switch.relay', via: 'forced', on: true },
+      { eid: 'light.bound', via: 'controls', on: false },
+      { eid: 'switch.bound', via: 'controls', on: true },
+    ],
+  );
+  assert.equal(resolvedLightState(sources), 'on');
+  assert.deepEqual(resolvedLightStats(sources), { on: 3, total: 4 });
+  assert.ok(!sources.some((source) => source.eid === 'light.own'), 'controls replace automatic device lights');
+  assert.ok(!sources.some((source) => source.eid === 'light.hidden'), 'hidden markers cast and count no light');
+});
+
+test('resolvedLightSources: marker room_id is more precise than a shared HA area', () => {
+  const hass = { states: { 'switch.one': { state: 'on' } } };
+  const devices = [{
+    id: 'one', area: 'living', primary: 'switch.one', entities: ['switch.one'],
+    marker: { room_id: 'room-b', is_light: true },
+  }];
+  assert.deepEqual(resolvedLightSources(hass, devices, { id: 'room-a', area: 'living' }), []);
+  assert.deepEqual(
+    resolvedLightSources(hass, devices, { id: 'room-b', area: null }).map((source) => source.eid),
+    ['switch.one'],
   );
 });
 

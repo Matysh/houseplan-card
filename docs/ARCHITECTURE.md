@@ -10,7 +10,7 @@ houseplan-card/
 ├─ src/                          # card sources (TypeScript + Lit 3)
 │  ├─ houseplan-card.ts          # the card: rendering, states, drag, tooltip, sticky header
 │  ├─ editor.ts                  # GUI config editor (ha-form + selectors)
-│  ├─ rules.ts                   # icon rules (iconFor), filtering, groups, domain priority
+│  ├─ rules.ts                   # icon rules (iconFor), filtering, groups, fallback order
 │  └─ data/
 │     ├─ house.ts                # geometry: ROOMS (rooms→area), FLOOR_VB (viewBox), names
 │     └─ backgrounds.ts          # VECTOR plans (SVG base64) + FLOOR_BG_RECT (positioning)
@@ -55,8 +55,10 @@ houseplan-card/
 
 ## Card data model (runtime)
 
-`DevItem`: id (device_id), name, model, area, floor, icon, entities[], primary (the entity used for
-more-info by domain priority), temp, members[] (light group), link/linkPrimary (Z2M group).
+`DevItem`: id (device_id), name, model, area, floor, icon, entities[], primary
+(the first resolved state entity for actions requiring one target), temp,
+members[] (light group), link/linkPrimary (Z2M group). Marker state consumes
+the complete resolved role, not this single compatibility field.
 
 Built from the registries (`_buildDevices`), rules carried over 1-to-1 from the prototype:
 - only devices with an area from the room list are shown;
@@ -422,8 +424,22 @@ hash falls back to the default.
   `open_to` links after Split (`AUD-159B7-01`).
 - **Marker controls** (v1.36): `marker.controls[]` (lights/switches only)
   toggled as one HA-group-semantics service call on the marker's EXPLICIT
-  tap_action=toggle; icon state/tint mirrors the targets. `primaryEntity`
-  picks in tiers so domain priority beats registry `hidden` (grouped lamps).
+  tap_action=toggle; icon state/tint mirrors the targets.
+- **Resolved device state** (2026-08-06): HA provides states per entity, not
+  one state per device. `resolvedDeviceStateEntities` therefore starts from
+  uncategorised registry entities, resolves one functional role (whole-device
+  domains, then semantic binary signals, then switches), and aggregates
+  passive readings as the final fallback. `_visualSamples` consumes the full
+  result; `primaryEntity` only selects its first member where a single action
+  target is required. Integration option switches can no longer make an
+  otherwise healthy device working or unavailable merely by list order.
+- **Resolved light sources** (UX-12): `resolvedLightSources(hass, devices,
+  room?)` is the only light-membership resolver. Per marker the precedence is
+  `controls[]` -> the primary controllable entity when `is_light` is set ->
+  automatic `light.*`. It excludes hidden markers, de-duplicates entity ids,
+  and honours `marker.room_id` before an HA area. Glow, Light fill, room light
+  stats, marker indication/card ordering and group toggle all consume this
+  result instead of maintaining separate domain tests.
 - **Island rooms** (v1.34): full nesting is legal (`polyContainsPoly`);
   parents render as evenodd paths with holes (`islandsOf`).
 - **Kiosk mode** (v1.41): a card-config flag, not a mode — `_setMode` is

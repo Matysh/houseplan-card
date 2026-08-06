@@ -68,7 +68,13 @@ import {
   FitParams, fitMatrix, fitFromMatrix, initialFit, reanchorFit, VacRoom,
   VAC_TRAIL_LINGER_MS, Pt as VacPt,
 } from './vacuum';
-import { buildDevices, seedHiddenBindings, lqiFor, tempFor, humFor, climateTempFor, isHumEntity, areaLights, areaTemp, areaHum, areaLightStats, sourceValue, areaClimateMap, litLightEntity, type AreaClimate } from './devices';
+import {
+  buildDevices, seedHiddenBindings, lqiFor, tempFor, humFor, climateTempFor, isHumEntity,
+  areaTemp, areaHum, sourceValue, areaClimateMap,
+  resolvedLightSources, resolvedLightState, resolvedLightStats,
+  resolvedDeviceStateEntities,
+  type AreaClimate,
+} from './devices';
 import type {
   OpeningCfg,
   RoomCfg, SpaceModel, PdfRef, Marker, ServerConfig, DevItem, CardConfig,
@@ -91,7 +97,7 @@ import {
   type DeviceActivity, type DeviceVisualState, type EntityVisualSample,
 } from './device-visual';
 
-const CARD_VERSION = '1.59.0';
+const CARD_VERSION = '1.59.1';
 /** HP-1552 boot-veil timing (AUD-1552-02). The veil holds for at least
  *  BOOT_MIN_MS; every stage-height change restarts a BOOT_QUIET_MS
  *  trailing-quiescence requirement (chrome still settling near the cap
@@ -2329,21 +2335,21 @@ class HouseplanCard extends LitElement {
 
   /**
    * Entities that jointly describe the marker. Explicit cover intent wins;
-   * controls are an aggregate; otherwise a lit light and the primary entity
-   * keep the glow plate, icon and activity on the same story. Critical
-   * secondary entities are appended so an alarm cannot hide behind a less
-   * important primary sensor.
+   * otherwise the same resolved light set used by Glow/fill/controls wins;
+   * a non-light marker uses its resolved device-state role. Critical secondary
+   * entities are appended so an alarm cannot hide behind a less important
+   * functional source.
    */
   private _visualSamples(d: DevItem): EntityVisualSample[] {
     const ids: string[] = [];
     const cover = this._coverIndicator(d);
-    const controls = (d.marker?.controls || []).filter(isControllable);
+    const lights = resolvedLightSources(this.hass, [d]);
     if (cover) ids.push(cover);
-    else if (controls.length) ids.push(...controls);
+    else if (lights.length) ids.push(...lights.map((source) => source.eid));
     else {
-      const lit = litLightEntity(this.hass, d);
-      if (lit) ids.push(lit);
-      if (d.primary && !ids.includes(d.primary)) ids.push(d.primary);
+      const stateEntities = resolvedDeviceStateEntities(this.hass, d.entities);
+      if (stateEntities.length) ids.push(...stateEntities);
+      else if (d.primary) ids.push(d.primary);
     }
     // Safety wins independently of the presentation source.
     for (const eid of d.entities || []) {
@@ -2492,7 +2498,9 @@ class HouseplanCard extends LitElement {
     // a switch with bound targets: the EXPLICIT per-marker toggle flips them
     // all with HA-group semantics (any on -> all off). Owner's decision:
     // controls never fire on the card-wide default action.
-    const controls = (d.marker?.controls || []).filter(isControllable);
+    const controls = resolvedLightSources(this.hass, [d])
+      .filter((source) => source.via === 'controls')
+      .map((source) => source.eid);
     if (d.tapAction === 'toggle' && controls.length) {
       const act = controlsAction(controls.map((e) => this.hass.states[e]?.state));
       guarded(this._t('confirm.tap_toggle', { name: d.name }), () => {
@@ -7871,16 +7879,18 @@ class HouseplanCard extends LitElement {
         if (cm > 0) doorTunnelDepth.set(o.id, wallCmToUnits(cm, this._cellCm, this._gridPitch));
       }
     }
+    const litByDevice = new Map<string, string>();
+    for (const source of resolvedLightSources(
+      this.hass,
+      this._devices.filter((d) => d.space === space.id),
+    )) {
+      if (source.on && source.device.id && !litByDevice.has(source.device.id))
+        litByDevice.set(source.device.id, source.eid);
+    }
     const spots: { pos: { x: number; y: number }; c: string; alpha: number; clip: string[] | null; r: number }[] = [];
     for (const d of this._devices) {
       if (d.space !== space.id) continue;
-      if (d.hidden) continue; // an invisible device casts no visible light (docs/FILTERING.md)
-      // A light source is normally a device with a lit light.* entity. With the
-      // "is a light source" flag (field request: a smart SWITCH driving dumb
-      // fixtures) any lit entity counts — the switch itself, or the lights it
-      // controls when they are bound.
-      // the SAME condition that turns the icon yellow (devices.ts)
-      const lightEid = litLightEntity(this.hass, d);
+      const lightEid = litByDevice.get(d.id);
       if (!lightEid) continue;
       const glow = glowColorOf(this.hass.states[lightEid], colors.glow_light.c);
       if (!glow) continue;
@@ -7945,7 +7955,7 @@ class HouseplanCard extends LitElement {
       ${''/* Glow is presentation only. It is painted above room fills, but must
              not become the pointer target: room hover and its tooltip still
              belong to the room underneath the light pool. */}
-      <g class="glowlayer" pointer-events="none">
+      <g class="glowlayer" pointer-events="none" opacity="0.7">
         ${spots.map((sp, i) => svg`<circle cx="${sp.pos.x}" cy="${sp.pos.y}" r="${sp.r}"
           fill="url(#hp-glow-${i})" ${''}
           clip-path=${sp.clip ? `url(#hp-glowclip-${i})` : nothing}></circle>`)}
@@ -8482,11 +8492,18 @@ class HouseplanCard extends LitElement {
                   // temp works without an HA area when a tier-3 source is set
                   ? roomFillStyle('temp', null, 'none', this._roomTemp(r),
                       disp.tempMin, disp.tempMax, this._fillColors)
+                  : effFill === 'light'
+                  // marker.room_id also supports rooms without an HA area
+                  ? roomFillStyle(
+                      'light', null,
+                      resolvedLightState(resolvedLightSources(this.hass, this._devices, r)),
+                      null, disp.tempMin, disp.tempMax, this._fillColors,
+                    )
                   : r.area
                   ? roomFillStyle(
                       effFill,
                       effFill === 'lqi' ? this._roomLqi(r.area) : null,
-                      effFill === 'light' ? areaLights(this.hass, this._devices, r.area) : 'none',
+                      'none',
                       null,
                       disp.tempMin,
                       disp.tempMax,
@@ -9359,11 +9376,9 @@ class HouseplanCard extends LitElement {
     // only — the icon/border tint is gone. lightC is still computed (from the
     // marker's first lit RGB target, else the primary light) purely to feed
     // --ripple-color (legacy storage/CSS name) when no explicit effect colour is set.
-    const ctrl = (m?.controls || []).filter(isControllable);
+    const lightSources = resolvedLightSources(this.hass, [d]);
     const lightC = this._config?.live_states && !d.hidden
-      ? ctrl.length
-        ? ctrl.map((e) => lightColorOf(this.hass.states[e])).find((v) => v) || null
-        : domain === 'light' ? lightColorOf(primarySt) : null
+      ? lightSources.map((source) => lightColorOf(this.hass.states[source.eid])).find((v) => v) || null
       : null;
     const scale = Number(m?.size) > 0 ? Number(m!.size) : 1;
     const angle = Number(m?.angle) || 0;
@@ -9699,9 +9714,10 @@ class HouseplanCard extends LitElement {
     const top = ((p.y - view.y) / view.h) * 100;
     const op = Math.min(1, disp.opacity + 0.25);
     const k = this._labelScale(r);
-    // optional metrics row (needs an HA area; sub-area rooms show the name only)
+    // Optional metrics row. Light sources may use an explicit room_id even
+    // when this room has no HA area; the other aggregate metrics still need it.
     const rows: TemplateResult[] = [];
-    if (r.area || r.settings?.temp_source || r.settings?.hum_source) {
+    if (r.area || r.settings?.temp_source || r.settings?.hum_source || disp.labelLight) {
       if (disp.labelTemp) {
         const t = this._roomTemp(r);
         if (t != null) rows.push(html`<span class="rlm"><ha-icon icon="mdi:thermometer"></ha-icon>${t}°</span>`);
@@ -9714,8 +9730,8 @@ class HouseplanCard extends LitElement {
         const l = this._roomLqi(r.area);
         if (l != null) rows.push(html`<span class="rlm"><ha-icon icon="mdi:zigbee"></ha-icon>${l}</span>`);
       }
-      if (disp.labelLight && r.area) {
-        const ls = areaLightStats(this.hass, this._devices, r.area);
+      if (disp.labelLight) {
+        const ls = resolvedLightStats(resolvedLightSources(this.hass, this._devices, r));
         if (ls) {
           const txt = ls.on === 0
             ? this._t('roomcard.light_off')
@@ -10423,7 +10439,7 @@ class HouseplanCard extends LitElement {
       else if (['sensor', 'binary_sensor', 'number', 'select'].includes(dom))
         out.push({ eid, kind: 'value' });
     };
-    for (const e of d.marker?.controls || []) push(e);
+    for (const source of resolvedLightSources(h, [d])) push(source.eid);
     if (d.primary) push(d.primary);
     for (const e of d.entities) push(e);
     return out.slice(0, 12);

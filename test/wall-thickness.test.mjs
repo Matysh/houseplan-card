@@ -188,6 +188,24 @@ test('partial shared wall: a pre-atomic whole-edge key still covers both pieces'
   assert.ok(ivs.every((iv) => iv.cm === 30), 'an existing plan must not lose thickness');
 });
 
+test('a compacted exact wall covers a shorter collinear side in another room', () => {
+  const rooms = [
+    { id: 'guest', poly: [[2, 2], [2, 6], [4, 6], [4, 2]] },
+    { id: 'hall', poly: [[4, 2], [8, 2], [8, 11], [4, 11]] },
+  ];
+  // Production T-junction: a long vertical real wall crosses the guest-room
+  // corner while a horizontal virtual wall starts at that same node. The
+  // compacted wall midpoint (4, 6.5) lies outside the shorter guest side, but
+  // its exact endpoints cover that side completely.
+  const walls = setWallThickness([], [4, 2], [4, 11], 15, pitch);
+  const open = [[4, 2, 8, 2]];
+  const right = wallIntervals(rooms, walls, open, pitch, cellCm, GRID_PITCH)
+    .find((iv) => iv.roomId === 'guest'
+      && Math.abs(iv.a[0] - 4) < 1e-9 && Math.abs(iv.b[0] - 4) < 1e-9);
+  assert.equal(right?.cm, 15);
+  assert.ok(right && right.half > 0, 'hover/body profile must use the real inner face');
+});
+
 test('equal solid atomic pieces compact back to one whole-wall key', () => {
   const rooms = partialRooms();
   const walls = [

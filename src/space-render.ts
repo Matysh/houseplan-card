@@ -7,7 +7,7 @@
  * Geometry/model math lives in space-geometry.ts (pure, unit-tested).
  */
 import { html, svg, nothing, type TemplateResult } from 'lit';
-import { buildDevices, areaLqi, areaLights, areaTemp } from './devices';
+import { buildDevices, areaLqi, areaTemp, resolvedLightSources, resolvedLightState } from './devices';
 import { spaceDisplayOf, roomFillStyle, fillColorsOf, roomFillModeOf, stageBgOf, paperRoomShapes } from './logic';
 import {
   wallBodiesUnionPath, paperRoomShapesWithWalls, wallBodyNeedsSolid, type WallEntry,
@@ -105,7 +105,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const vb = [fr.x, fr.y, fr.w, fr.h];
 
   const roomShapes = space.rooms
-    .filter((r) => r.area || disp.showBorders)
+    .filter((r) => r.area || disp.showBorders || roomFillModeOf(disp.fill, r) === 'light')
     .map((r) => {
       let cls = 'room ' + (space.bg ? 'overlay' : 'yard');
       let style = '';
@@ -115,11 +115,17 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
         cls += ' styled';
         const parts = [`--room-stroke:${disp.color}`, `--room-stroke-op:${disp.showBorders ? disp.opacity : 0}`];
         // fill rendered exactly as configured on the full card (snapshot of current states)
-        const fillC = r.area
+        const fillC = fill === 'light'
+          ? roomFillStyle(
+              'light', null,
+              resolvedLightState(resolvedLightSources(o.hass, spaceDevs, r)),
+              null, disp.tempMin, disp.tempMax, fillColorsOf(o.cfg?.settings),
+            )
+          : r.area
           ? roomFillStyle(
               fill,
               fill === 'lqi' ? areaLqi(o.hass, spaceDevs, r.area) : null,
-              fill === 'light' ? areaLights(o.hass, spaceDevs, r.area) : 'none',
+              'none',
               fill === 'temp' ? areaTemp(o.hass, spaceDevs, r.area) : null,
               disp.tempMin,
               disp.tempMax,

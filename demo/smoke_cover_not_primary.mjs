@@ -1,16 +1,14 @@
-// «Открыть/закрыть» on a curtain whose cover entity is NOT the primary one
+// «Открыть/закрыть» on a curtain whose cover entity used to lose to an option
+// switch in registry/domain order.
 // (owner's report 2026-08-04: «в настройках "открыть\закрыть", а по нажатию
 // по-прежнему инфо-карточка»).
 //
 // The device below is his, entity for entity: an Aqara «Roller shade driver
 // E1» ships the `cover.*` HIDDEN by the integration and a perfectly visible
-// `switch.*_reverse_direction` beside it. `primaryEntity` ranks visible above
-// hidden and `switch` above `cover`, so the marker's primary was the service
-// switch — the tap then resolved on the domain `switch` and the action the
-// user had explicitly chosen degraded to the info card, while the dialog kept
-// OFFERING the action, because that check already looked at every entity of
-// the device. The tap now finds the cover the same way the climate
-// temperature finds the thermostat: among all of them.
+// `switch.*_reverse_direction` beside it. The shared role resolver must pick
+// the real cover for status, while the explicit tap action decides whether a
+// click controls it. A mixed lamp+cover still stays a lamp unless the owner
+// explicitly selects the cover action.
 //
 // End to end: the action is chosen in the dialog and SAVED through the normal
 // path, and the click is done on the marker the card rebuilt from that config.
@@ -77,8 +75,9 @@ const out = await page.evaluate(async () => {
   const curtain = () => c._devices.find((x) => x.bindingRef === 'd_curtain');
   const mixed = () => c._devices.find((x) => x.bindingRef === 'd_mixed');
   o.deviceIsOnThePlan = !!curtain();
-  // the premise of the whole report: the cover is NOT the primary entity
-  o.primaryIsNotTheCover = curtain()?.primary === 'switch.office_curtain_reverse';
+  // Registry order and visibility no longer let an option switch outrank the
+  // actual functional entity.
+  o.primaryIsTheCover = curtain()?.primary === 'cover.office_curtain';
   o.coverIsAmongTheEntities = (curtain()?.entities || []).includes('cover.office_curtain');
 
   // ---- the dialog offers the action and SAVES it -------------------------
@@ -187,28 +186,25 @@ const out = await page.evaluate(async () => {
   await setSwitch('on');
   o.reverseSwitchNeverLightsTheMarker = !clsOf(curtain()).includes('on');
 
-  // THE BOUNDARY of the rule: take the explicit action away and the marker
-  // goes back to its primary entity — no cover indication is invented
+  // Status and action are independent: taking the explicit action away keeps
+  // the resolved cover status, but a click returns to the ordinary info path.
   const savedMarker = (c._serverCfg.markers || []).find((m) => m.binding === 'device:d_curtain');
   savedMarker.tap_action = 'info';
   await push('opening', { device_class: 'curtain' });
   await setSwitch('on');
-  o.withoutTheActionThePrimarySpeaks = clsOf(curtain()).includes('on')
-    && !clsOf(curtain()).includes('activity-transition');
+  o.withoutTheActionResolvedCoverSpeaks = clsOf(curtain()).includes('activity-transition')
+    && !clsOf(curtain()).includes('on');
   savedMarker.tap_action = 'cover';
   await push('closed', { device_class: 'curtain' });
   await setSwitch('off');
   o.actionBackMeansCoverBack = iconOf(curtain()) === 'mdi:curtains-closed';
 
   // ---- the auditor's own probe: BOTH entities visible ---------------------
-  // DEV-2C947-04 was written up with a plain visible `cover.*` beside a
-  // visible `switch.*`: no hidden tier involved, `switch` simply outranks
-  // `cover` inside DOMAIN_PRIORITY. Same premise, same cure — pinned here so
-  // the finding cannot come back through the other door.
+  // The same rule must hold when BOTH entities are visible.
   ENTS['cover.office_curtain'] = { ...ENTS['cover.office_curtain'], hidden: false };
   await push('closed', { device_class: 'curtain' });
   await setSwitch('off');
-  o.visibleCoverIsStillNotThePrimary = curtain()?.primary === 'switch.office_curtain_reverse';
+  o.visibleCoverIsThePrimary = curtain()?.primary === 'cover.office_curtain';
   calls.length = 0;
   await tap();
   o.visibleCoverOpensOnTap = JSON.stringify(calls[calls.length - 1] || [])

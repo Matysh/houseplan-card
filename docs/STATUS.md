@@ -15,11 +15,11 @@
 
 | Item | State |
 |---|---|
-| Version | **v1.59.0** everywhere (manifest, const.py, package.json, CARD_VERSION) — stable release. Tag `v1.59.0`, `main` and `dev` point to the same tested release commit; GitHub Release uses `prerelease=false`. Previous pre-release: v1.59.0-rc.2; previous stable: v1.58.0 |
+| Version | **v1.59.1** everywhere (manifest, const.py, package.json, CARD_VERSION) — stable maintenance release. Tag `v1.59.1`, `main` and `dev` point to the same tested release commit; GitHub Release uses `prerelease=false`. Previous pre-release: v1.59.0-rc.2; previous stable: v1.59.0 |
 
 | Workflow | Owner's rule since 2026-08-05: ordinary fixes/features are made **locally, without tests and without commits**. A requested pre-release gets the full tests/build/smokes, one tested `dev` commit/tag and a GitHub Release with `prerelease=true`; `main` stays untouched. A requested stable release gets the same full gate, then `main` is fast-forwarded to the exact tested `dev` SHA and the GitHub Release uses `prerelease=false`. Nothing is copied to the home instance by hand |
 | GitHub | https://github.com/Matysh/houseplan-card — `main` carries stable releases; pre-release tags may point directly at `dev`. Work lands on `dev` and is merged into `main` for a stable release, so `dev` is normally equal to or ahead of `main`, never behind. Push via SSH key `ha_jb` (remote git@github.com:…); API releases via the fine-grained PAT in `~/.git-credentials` (Contents R/W, issued 2026-07-23) |
-| CI | v1.59.0 passes the local Node 22 typecheck/build, all 390 frontend tests, all 93 pure-backend tests and all 113 browser smokes. Native Windows cannot start the current HA pytest plugin (`fcntl` is Unix-only), so the exact-SHA Ubuntu Validate remains mandatory: `release.yml` withholds the asset until every matching run finishes green; GitHub Validate and the release asset are verified after the tag is pushed |
+| CI | v1.59.1 passes the full local release gate; exact counts are recorded by `npm run inventory` and the test logs rather than copied here. Native Windows cannot start the current HA pytest plugin (`fcntl` is Unix-only), so the exact-SHA Ubuntu Validate remains mandatory: `release.yml` withholds the asset until every matching run finishes green; GitHub Validate and the release asset are verified after the tag is pushed |
 | HACS | Custom repository works. **Inclusion PR: hacs/default#9004** — open, valid, labeled, mergeable clean, never drafted. Queue: 1212 open, 835 older than ours. Merge rate COLLAPSED: 75 in July but almost all in the first decade, 0 in the last week (checked 2026-07-29) — maintainers process in rare bursts; ETA unknowable, months at best. Nothing actionable on our side |
 | Home instance | ha.jbstudio.pro (SSH port **22222**, key `ha_jb`; HA config root is `/mnt/data/supervisor/homeassistant` — `/config` does NOT exist in this SSH environment), last direct copy was **v1.57.0**; from v1.58.0 on it updates itself through HACS by tag (no scp) |
 | Localization | UI en/ru (src/i18n/*.json), everything user-visible localized incl. kiosk popover |
@@ -93,6 +93,11 @@
   projected opening gaps. Thick-wall rendering unions each room's own wall
   ring, so one room's floor cannot erase another room's wall or leave white
   slivers at complex crossings.
+- **v1.59.1** (2026-08-06): device markers resolve a semantic entity role
+  instead of trusting registry order; one light-source resolver now drives
+  Glow, Light fill, room statistics, marker feedback and controls. Glow uses
+  0.7 opacity, and compacted real walls retain their correct inner face and
+  body at real/virtual T-junctions.
 
 ## Recent milestones (details in CHANGELOG.md)
 

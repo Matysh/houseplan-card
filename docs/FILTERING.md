@@ -80,12 +80,15 @@ source precedence is (`_visualSamples` / `_actEntity`):
 1. the device's **cover**, when the marker's tap action is explicitly
    «Открыть/закрыть» (`tap_action: 'cover'` — `coverEntityOf`, the same helper
    and the same entity the tap drives). It wins over EVERYTHING below;
-2. the marker's bound **controls**, if it has any (a stateless remote or a
-   virtual wall switch aggregates what it drives, not itself; any working
-   target drives both the yellow plate and running activity);
-3. a **lit light** among its entities (owner's principle 2026-07-29: the glow
-   spot and the badge may never disagree);
-4. otherwise the **primary** entity (`primaryEntity`).
+2. the marker's **resolved light sources** (`resolvedLightSources`): bound
+   `controls` first, otherwise its primary controllable entity when
+   `is_light` is set, otherwise automatic `light.*`. This exact set also feeds
+   Glow, Light fill, room light stats and group toggle;
+3. otherwise the device's **resolved state role**
+   (`resolvedDeviceStateEntities`): functional device domains first, then
+   semantic binary signals, then switches, then passive readings together.
+   `primaryEntity` is only the first entity of this same set for actions which
+   require one target; it no longer defines marker availability by itself.
 
 Rule 1 was added 2026-08-04 on the owner's report: his Aqara «Roller shade
 driver E1» curtains ship the `cover.*` hidden by the integration and a visible
@@ -116,10 +119,10 @@ one answer to «what is this marker»: the option offered, the entity tapped and
 the state shown are the same entity, decided in one place. Nothing changes
 behind the user's back for a mixed device (a lamp that also owns a blind, a TRV
 with a service switch) that was NOT told it is a curtain: it keeps its primary
-and the old 2–3–4 precedence, controls and lit light included, until its owner
+and the same controls/light/primary precedence until its owner
 says otherwise. Two edges follow from the wording: a marker set to
 «Открыть/закрыть» whose device carries no `cover.*` at all falls through to
-rules 2–4 (the statement is only as strong as the entity behind it), and a
+rules 2–3 (the statement is only as strong as the entity behind it), and a
 curtain left on «Инфо-карточка» still indicates its primary — one click in the
 dialog away, and the honest reading of what the marker was told it is.
 

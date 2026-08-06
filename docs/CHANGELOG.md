@@ -2,6 +2,36 @@
 
 ## Unreleased (dev)
 
+## v1.59.1 — 2026-08-06
+
+This maintenance release makes device status and every light-related view use
+shared semantic resolvers, softens Glow, and fixes the last compacted-wall
+T-junction artifact.
+
+- **Systemic device-state resolver instead of a “first entity”.** HA devices
+  have no single state, so House Plan now excludes `config`/`diagnostic`
+  entities first, resolves the device's functional role, then semantic binary
+  signals, and uses generic switches only as a fallback. Passive readings are
+  aggregated, so one unavailable entity no longer makes the whole marker
+  unavailable. The same rule fixes X50/Customized Cleaning, presence/Anti
+  interference, TRV service switches and equivalent integration mistakes. A
+  real cover now also outranks its reverse-direction option, while a mixed
+  lamp+cover remains a lamp unless the cover action is explicitly selected.
+- **UX-12: one resolved light-source set.** Glow, Light fill, room light stats,
+  marker indication and group controls now consume `resolvedLightSources(room)`.
+  Its precedence is `controls` -> an explicit `is_light` source -> automatic
+  `light.*`; hidden markers are excluded, entity ids are de-duplicated, and an
+  explicit `room_id` outranks an HA area. Relays and controlled groups therefore
+  mean the same thing in every light presentation.
+- **Softer source glow.** The complete glow layer now renders at `0.7`
+  opacity; room darkness and the yellow working-state plate are unchanged.
+- **Clean real/virtual T-junctions after wall compaction.** A maximal real wall
+  may cross several shorter collinear room sides. Exact endpoint containment
+  now restores its thickness on every covered side even when the compacted
+  wall's midpoint lies outside that room. Room hover therefore stays on the
+  inner face and the adjoining real wall no longer exposes a false end cap at
+  a virtual continuation.
+
 ## v1.59.0 — 2026-08-06
 
 Stable 1.59 turns House Plan into a substantially more complete floor-plan

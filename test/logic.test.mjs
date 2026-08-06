@@ -179,6 +179,7 @@ test('icon rules: defaults are bilingual', () => {
 test('icon rules: device_class fallback', () => {
   assert.equal(iconFromDeviceClasses(['temperature']), 'mdi:thermometer');
   assert.equal(iconFromDeviceClasses(['unknown', 'motion']), 'mdi:motion-sensor');
+  assert.equal(iconFromDeviceClasses(['presence']), 'mdi:motion-sensor');
   assert.equal(iconFromDeviceClasses(['unknown']), null);
   assert.equal(iconFromDeviceClasses([]), null);
 });

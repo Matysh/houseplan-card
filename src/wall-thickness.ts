@@ -874,13 +874,32 @@ function cmsForPoly(
     const a = at.orig[pi], b = at.orig[(pi + 1) % at.orig.length];
     const ang = segAngle(a, b);
     const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
-    let best: { cm: number; d: number } | null = null;
+    let best: { cm: number; d: number; exact: boolean } | null = null;
+    const parentLen = Math.hypot(b[0] - a[0], b[1] - a[1]);
     for (const e of parsed) {
       if (claimed.has(e.w.key)) continue;
       if (!angleClose(e.ang, ang)) continue;
-      if (distToSeg(e.x, e.y, a[0], a[1], b[0], b[1]) > tol) continue;
-      const d = Math.hypot(e.x - mx, e.y - my);
-      if (!best || d < best.d) best = { cm: clampWallCm(e.w.cm), d };
+      const span = entrySpan(e.w, scale);
+      let exact = false;
+      let d = 0;
+      if (span) {
+        // Normalisation may compact one equal-thickness run through several
+        // collinear room sides. Its midpoint can then lie outside a shorter
+        // child side, but the lossless endpoints still prove that the run
+        // covers that side. Require BOTH endpoints so a partial wall cannot
+        // leak into the rest of its parent edge (AUD-159B6-01).
+        if (!angleClose(segAngle(span[0], span[1]), ang)) continue;
+        if (distToSeg(a[0], a[1], span[0][0], span[0][1], span[1][0], span[1][1]) > tol
+          || distToSeg(b[0], b[1], span[0][0], span[0][1], span[1][0], span[1][1]) > tol) continue;
+        exact = true;
+        d = Math.max(0, Math.hypot(span[1][0] - span[0][0], span[1][1] - span[0][1]) - parentLen);
+      } else {
+        if (distToSeg(e.x, e.y, a[0], a[1], b[0], b[1]) > tol) continue;
+        d = Math.hypot(e.x - mx, e.y - my);
+      }
+      if (!best || (exact && !best.exact) || (exact === best.exact && d < best.d)) {
+        best = { cm: clampWallCm(e.w.cm), d, exact };
+      }
     }
     if (!best) continue;
     for (const i of idxs) cms[i] = best.cm;
