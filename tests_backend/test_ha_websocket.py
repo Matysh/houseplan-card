@@ -67,6 +67,59 @@ async def test_config_rev_conflict(hass: HomeAssistant, hass_ws_client: WebSocke
     assert resp["result"]["rev"] == 1
 
 
+async def test_plan_optimize_pair_and_one_deep_undo(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """Config and layout move together; the snapshot restores both revisions."""
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    original = {"spaces": [], "markers": [], "settings": {}}
+    original_layout = {"dev": {"s": "f1", "x": 0.1, "y": 0.2}}
+
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": original, "expected_rev": 0,
+    })
+    assert (await client.receive_json())["success"]
+    await client.send_json_auto_id({
+        "type": "houseplan/layout/set", "layout": original_layout, "expected_rev": 0,
+    })
+    assert (await client.receive_json())["success"]
+
+    optimized = {**original, "model_version": 1}
+    optimized_layout = {"dev": {"s": "f1", "x": 0.125, "y": 0.25}}
+    await client.send_json_auto_id({
+        "type": "houseplan/plan/optimize",
+        "config": optimized,
+        "layout": optimized_layout,
+        "expected_config_rev": 1,
+        "expected_layout_rev": 1,
+    })
+    resp = await client.receive_json()
+    assert resp["success"]
+    assert resp["result"]["config_rev"] == 2
+    assert resp["result"]["layout_rev"] == 2
+    assert resp["result"]["can_undo"] is True
+
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    assert (await client.receive_json())["result"]["can_optimize_undo"] is True
+
+    await client.send_json_auto_id({
+        "type": "houseplan/plan/optimize_undo",
+        "expected_config_rev": 2,
+        "expected_layout_rev": 2,
+    })
+    resp = await client.receive_json()
+    assert resp["success"] and resp["result"]["can_undo"] is False
+
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    cfg = (await client.receive_json())["result"]
+    assert cfg["config"] == original
+    assert cfg["can_optimize_undo"] is False
+    await client.send_json_auto_id({"type": "houseplan/layout/get"})
+    layout = (await client.receive_json())["result"]
+    assert layout["layout"] == original_layout
+
+
 async def test_not_ready_without_entry(hass: HomeAssistant, hass_ws_client: WebSocketGenerator) -> None:
     """WS commands answer not_ready when the integration has no loaded entry."""
     # register only the WS commands, without an entry

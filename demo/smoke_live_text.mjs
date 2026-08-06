@@ -101,6 +101,41 @@ const res = await page.evaluate(async () => {
     && migrated.text === 'Старый {sensor.living_temp}'
     && dom(legacy.id) === 'Старый 22.4 °C';
 
+  // Explicit legacy units and attribute names outside the inline grammar are
+  // not silently destroyed. They stay in the compatible representation until
+  // the user explicitly replaces the binding.
+  const legacyUnit = { id: 'legacy_unit', kind: 'text', x: 0.75, y: 0.75,
+    text: 'Бак {}', color: '#112233', entity: 'sensor.living_temp', unit: 'K' };
+  c._curSpaceCfg.decor = [...c._decorList, legacyUnit]; c.requestUpdate(); await c.updateComplete;
+  out.legacyUnitRenders = dom(legacyUnit.id) === 'Бак 22.4 K';
+  open(legacyUnit); await c.updateComplete;
+  out.legacyUnitIsNotLossyToken = c._decorTextDialog?.preserveLegacy === true
+    && c._decorTextDialog?.text === 'Бак {}';
+  c._decorSaveText(); await c.updateComplete;
+  const keptUnit = c._decorList.find((x) => x.id === legacyUnit.id);
+  out.legacyUnitSurvivesSave = keptUnit?.unit === 'K'
+    && keptUnit?.entity === 'sensor.living_temp' && dom(legacyUnit.id) === 'Бак 22.4 K';
+
+  await push('sensor.living_temp', { entity_id: 'sensor.living_temp', state: '22.4',
+    attributes: { unit_of_measurement: '°C', linkquality: 154, 'bad attr': 7 } });
+  const legacyAttr = { id: 'legacy_attr', kind: 'text', x: 0.8, y: 0.8,
+    text: 'Атрибут {}', color: '#112233', entity: 'sensor.living_temp', attr: 'bad attr' };
+  c._curSpaceCfg.decor = [...c._decorList, legacyAttr]; c.requestUpdate(); await c.updateComplete;
+  out.legacyOddAttrRenders = dom(legacyAttr.id) === 'Атрибут 7';
+  open(legacyAttr); await c.updateComplete;
+  out.legacyOddAttrPreserved = c._decorTextDialog?.preserveLegacy === true;
+  c._decorSaveText(); await c.updateComplete;
+  const keptAttr = c._decorList.find((x) => x.id === legacyAttr.id);
+  out.legacyOddAttrSurvivesSave = keptAttr?.attr === 'bad attr'
+    && keptAttr?.entity === 'sensor.living_temp' && dom(legacyAttr.id) === 'Атрибут 7';
+
+  c._decorTextDialog = { x: 0.2, y: 0.2, text: 'x', color: '#112233',
+    pickerEntity: 'sensor.living_temp' };
+  c.requestUpdate(); await c.updateComplete;
+  out.pickerHidesUnrepresentableAttr = ![...sr().querySelectorAll('select.namein option')]
+    .some((o) => o.value === 'bad attr');
+  c._decorTextDialog = null;
+
   // ---------- 7. просмотр и киоск рисуют то же самое ------------------------
   const editorText = dom(live.id);
   c._setMode('view'); await c.updateComplete; await sleep(60);

@@ -20,6 +20,11 @@ const res = await page.evaluate(async () => {
   await c.updateComplete;
   out.tipTemp = c._tip?.temp;
   out.tipHasTempLine = (sr().querySelector('.tip')?.textContent || '').includes('средняя температура');
+  // _roomArea consumes the rendered room geometry (0..1000), not the stored
+  // normalized config polygon (0..1).
+  const expectedArea = c._roomArea(c._spaceModel().rooms[0]);
+  out.tipHasArea = !!expectedArea && c._tip?.meta === c._t('tip.area', { value: expectedArea });
+  out.tipHasAreaLine = (sr().querySelector('.tip')?.textContent || '').includes(expectedArea);
   c._tip = null;
   // диалог: радио заливки, компактные поля, ширина
   c._openSpaceDialog('edit', 'f1'); await c.updateComplete;

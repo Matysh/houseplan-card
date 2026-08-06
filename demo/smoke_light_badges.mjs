@@ -1,8 +1,6 @@
-// Правило владельца (2026-07-29): у источников света подложка в glow-режиме
-// всегда стандартная — индикатор включения это ПЯТНО; в остальных режимах
-// горящий источник жёлтый, как греющая термоголовка. RGB лампы красит только
-// пятно (и фолбэк цвета пульсации); окраска иконки/рамки убрана. Морф иконки
-// остаётся везде. Розетка в glow-режиме остаётся жёлтой — она не источник.
+// Правило владельца (2026-08-06): жёлтая подложка всегда означает «работает
+// сейчас». В glow-режиме световое пятно ДОПОЛНЯЕТ её, но не заменяет. RGB
+// лампы по-прежнему красит только пятно/эффект, не значок и не рамку.
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 const out = await page.evaluate(async () => {
@@ -39,21 +37,19 @@ const out = await page.evaluate(async () => {
   o.litLampYellowInLightMode = !!le && le.classList.contains('on') && !le.classList.contains('rgb');
   o.morphInLightMode = le?.querySelector('ha-icon')?.getAttribute('icon')?.includes('lightbulb') ?? false;
 
-  // --- режим glow: лампа ТЁМНАЯ (индикатор — пятно), розетка жёлтая -------
+  // --- режим glow: и лампа, и розетка жёлтые; пятно остаётся --------------
   await setFill('glow');
   le = devEl('d_lamp');
   const ke = devEl('d_kettle');
-  o.litLampDarkInGlow = !!le && !le.classList.contains('on') && !le.classList.contains('rgb');
+  o.litLampYellowInGlow = !!le && le.classList.contains('on') && !le.classList.contains('rgb');
   o.glowSpotPresent = !!sr().querySelector('.stage svg radialGradient, .stage svg [id*=glow]');
   o.socketStaysYellowInGlow = !!ke && ke.classList.contains('on');
   o.morphInGlow = le?.querySelector('ha-icon')?.getAttribute('icon')?.includes('lightbulb') ?? false;
 
-  // --- HP-1520-01: в редакторах, где glow-слой скрыт, индикатор возвращается
-  // (лампа горит; в devices-редакторе слой рисуется — там лампа тёмная,
-  // в plan-редакторе слоя нет — там класс on должен вернуться)
+  // --- редакторы используют ту же жёлтую подложку независимо от слоя glow --
   c._setMode('devices'); c.requestUpdate(); await c.updateComplete;
   le = devEl('d_lamp');
-  o.devicesEditorLampDark = !!le && !le.classList.contains('on');
+  o.devicesEditorLampYellow = !!le && le.classList.contains('on');
   o.devicesEditorHasGlow = !!sr().querySelector('.stage svg radialGradient, .stage svg [id*=glow]');
   c._setMode('plan'); c.requestUpdate(); await c.updateComplete;
   // ИМЕННО лампа (mutation-проверка аудита HP-1521-01: розетка тоже on и

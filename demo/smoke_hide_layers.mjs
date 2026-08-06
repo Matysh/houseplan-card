@@ -6,7 +6,8 @@
  *   • «Скрыть проёмы» hides doors/windows everywhere EXCEPT the plan editor,
  *     and does not touch what an opening MEANS (the light still gets through);
  *   • a space that does not draw room borders draws no dashed virtual walls
- *     either — the plan editor still does, or the openwall tool would be blind;
+ *     in View; every editor still does, because the complete centreline span
+ *     must remain visible while editing;
  *   • both switches survive a round trip through the dialog;
  *   • every corner handle paints a bead a quarter of its hit radius, and the
  *     hit radius itself is unchanged.
@@ -79,11 +80,16 @@ const res = await page.evaluate(async () => {
   out.openWallsDrawnWithBorders = n('.openwalls .openwall') > 0;
   await set({ show_borders: false });
   out.openWallsGoneWithoutBorders = n('.openwalls .openwall') === 0;
-  // the plan editor still draws them — the openwall tool edits what it sees
+  // Every editor still draws them. The dash deliberately reaches the physical
+  // centreline there, even if show_borders is off; only View hides it.
   await mode('plan');
   c._tool = 'openwall';
   await upd();
   out.openWallsVisibleInPlanEditor = n('.openwalls .openwall') > 0;
+  await mode('devices');
+  out.openWallsVisibleInDevicesEditor = n('.openwalls .openwall') > 0;
+  await mode('decor');
+  out.openWallsVisibleInDecorEditor = n('.openwalls .openwall') > 0;
   await mode('view');
   await set({ show_borders: true });
 

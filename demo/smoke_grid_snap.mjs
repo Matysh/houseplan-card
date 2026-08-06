@@ -2,9 +2,9 @@
 //   1. every element placed or dragged by hand lands on a node — devices, room
 //      labels, decor, room vertices, resize handles; an opening lands ON ITS
 //      WALL at a whole number of steps along it; Shift is the only way out;
-//   2. the explicit «Выровнять всё по сетке» action moves a deliberately
-//      detuned plan onto the grid, tells the truth about how much it moves,
-//      and does nothing at all the second time.
+//   2. the explicit «Оптимизировать планы» action moves a deliberately
+//      detuned plan onto the grid through one atomic config+layout commit,
+//      tells the truth about how much it moves, and is idempotent.
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 900, height: 820 }, 1);
@@ -147,7 +147,7 @@ const out = await page.evaluate(async () => {
   o.roomVertexOnANode = c._path.length === 1 && onGridR(c._path[0][0]) && onGridR(c._path[0][1]);
   c._path = []; c._tool = 'draw';
 
-  // ---- 2) «Выровнять всё по сетке» --------------------------------------
+  // ---- 2) «Оптимизировать планы» -----------------------------------------
   c._setMode('view'); await c.updateComplete;
   // a deliberately detuned fixture: a third of a step off, everywhere
   const D = 1 / GRID_N / 3;
@@ -174,7 +174,7 @@ const out = await page.evaluate(async () => {
   o.alignCountsWhatMoves = !!dlg && dlg.report.moved > 0 && dlg.report.moved <= dlg.report.total;
   // half a step of 5 cm cells ≈ 2.5 cm; a third of a step is well under that
   o.alignPromisesASmallShift = !!dlg && dlg.cm > 0 && dlg.cm < 3;
-  o.alignWarnsAboutNoUndo = (sr().querySelector('.dialogwrap .rhint')?.textContent || '').length > 20;
+  o.alignExplainsSafeUndo = (sr().querySelector('.dialogwrap .rhint')?.textContent || '').length > 20;
 
   // capture what the network is told, then run it
   const sent = [];
@@ -183,8 +183,7 @@ const out = await page.evaluate(async () => {
   await c._runAlignToGrid();
   await c.updateComplete;
   o.alignDialogClosed = c._alignDialog === null;
-  o.alignWroteConfigOnce = sent.filter((t) => t === 'houseplan/config/set').length === 1;
-  o.alignWroteLayout = sent.some((t) => t === 'houseplan/layout/update');
+  o.alignUsedAtomicConfigLayoutWrite = sent.filter((t) => t === 'houseplan/plan/optimize').length === 1;
 
   const g = c._serverCfg.spaces[0];
   o.alignedRoomPoly = g.rooms[0].poly.every((p) => onGridN(p[0]) && onGridN(p[1]));

@@ -11,15 +11,15 @@
 > (versions, publication, infrastructure), DEVELOPMENT.md for new gotchas,
 > ARCHITECTURE.md for design changes, ROADMAP.md when plans move.
 
-## Snapshot (2026-08-05)
+## Snapshot (2026-08-06)
 
 | Item | State |
 |---|---|
-| Version | **v1.59.0-beta.10** everywhere (manifest, const.py, package.json, CARD_VERSION) — **pre-release**, tag `v1.59.0-beta.10` on **`dev`**, GitHub Release with `prerelease=true`; `main` is not touched and nothing is copied to the home instance by hand — HACS delivers it on the beta channel. On top of beta.9: unified device status/activity visuals; inline HA variables in decor text; doorway-light clipping by thick-wall reveals; view-only virtual-wall masking; a clearer wall toolbar; and canonical merging/compaction of wall fragments. Previous pre-release: v1.59.0-beta.9; previous stable: v1.58.0 |
+| Version | **v1.59.0-rc.1** everywhere (manifest, const.py, package.json, CARD_VERSION) — **pre-release**, tag `v1.59.0-rc.1` on **`dev`**, GitHub Release with `prerelease=true`; `main` is not touched. The rc line deliberately replaces the planned beta.11: GitHub lists beta.9 before beta.10/beta.11 lexicographically and HACS 2.0.x consumes that order without SemVer sorting, while rc.1 is both newer by SemVer and discoverable first. Previous pre-release: v1.59.0-beta.10; previous stable: v1.58.0 |
 
-| Workflow | Owner's rule since 2026-08-05: ordinary fixes/features are made **locally, without tests and without commits**. Tests/build/smokes run only when the owner asks for a pre-release; then bump to `X.Y.Z-beta.N`, commit/tag the tested `dev` state and publish a GitHub Release with `prerelease=true`. `main` is not touched and nothing is copied to the home instance by hand; HACS delivers it on the beta channel |
+| Workflow | Owner's rule since 2026-08-05: ordinary fixes/features are made **locally, without tests and without commits**. Tests/build/smokes run only when the owner asks for a pre-release; then bump the version, commit/tag the tested `dev` state and publish a GitHub Release with `prerelease=true`. `main` is not touched and nothing is copied to the home instance by hand. The release workflow now reports a failed HACS-discovery check when GitHub does not return the new tag as its first prerelease |
 | GitHub | https://github.com/Matysh/houseplan-card — `main` carries stable releases; pre-release tags may point directly at `dev`. Work lands on `dev` and is merged into `main` for a stable release, so `dev` is normally equal to or ahead of `main`, never behind. Push via SSH key `ha_jb` (remote git@github.com:…); API releases via the fine-grained PAT in `~/.git-credentials` (Contents R/W, issued 2026-07-23) |
-| CI | beta.10 passes the full local frontend, pure-backend and browser-smoke gate. Exact-SHA release gating remains active: `release.yml` withholds the asset until every matching Validate run finishes green; GitHub Validate and the release asset are verified after the tag is pushed |
+| CI | rc.1 passes the local Node 22 typecheck/build, all 386 frontend tests, all 93 pure-backend tests and all 113 browser smokes. Native Windows cannot start the current HA pytest plugin (`fcntl` is Unix-only), so the exact-SHA Ubuntu Validate remains mandatory: `release.yml` withholds the asset until every matching run finishes green; GitHub Validate and the release asset are verified after the tag is pushed |
 | HACS | Custom repository works. **Inclusion PR: hacs/default#9004** — open, valid, labeled, mergeable clean, never drafted. Queue: 1212 open, 835 older than ours. Merge rate COLLAPSED: 75 in July but almost all in the first decade, 0 in the last week (checked 2026-07-29) — maintainers process in rare bursts; ETA unknowable, months at best. Nothing actionable on our side |
 | Home instance | ha.jbstudio.pro (SSH port **22222**, key `ha_jb`; HA config root is `/mnt/data/supervisor/homeassistant` — `/config` does NOT exist in this SSH environment), last direct copy was **v1.57.0**; from v1.58.0 on it updates itself through HACS by tag (no scp) |
 | Localization | UI en/ru (src/i18n/*.json), everything user-visible localized incl. kiosk popover |
@@ -74,6 +74,13 @@
   actual work, orange open/unlocked, unavailable and always-red alarms;
   activity distinguishes a short event, presence, mechanical travel and
   running. Legacy Ripple-only migrates to Icon + activity on the next save.
+- **v1.59.0-rc.1** (2026-08-06): whole-plan lossless optimization with an
+  atomic config+layout commit and safe undo; the yellow actual-work plate is
+  retained alongside source glow; all Background objects have Select-mode
+  double-click properties; View hover highlights every room and reports its
+  clean-floor area. Audit fixes add eager activity baselines/source resets,
+  lossless legacy live-text editing, exact wall-fragment endpoints/compaction,
+  editor-visible virtual walls and prerelease-discovery reporting in CI.
 
 ## Recent milestones (details in CHANGELOG.md)
 

@@ -2,6 +2,45 @@
 
 ## Unreleased (dev)
 
+## v1.59.0-rc.1 — 2026-08-06
+
+First release candidate of the 1.59 line: safe whole-plan optimization,
+clearer object editing and room feedback, plus the beta.10 audit follow-ups.
+
+- **Whole-plan optimizer with safe undo.** The former Align-to-grid action is
+  now Optimize plans. One preview runs every current lossless model migration,
+  aligns grid- and wall-bound geometry, materialises legacy open boundaries,
+  merges touching virtual pieces and compacts equal-thickness real-wall
+  fragments. Config and layout are committed through a durable two-store
+  intent; one undo remains available until the next plan edit. Backdrop
+  calibration, saved views, unattached layout entries and user files are left
+  alone. Interrupted optimization/undo completes on the next integration setup.
+- **Background-object properties on double click.** In the Background editor's
+  Select mode, double-clicking any object now opens its properties: labels keep
+  their text form, while lines, rectangles, ellipses and furniture get a compact
+  colour / line-width dialog (plus fill for closed shapes). The new dialog is
+  included in warm-remount draft recovery.
+- **Rooms identify themselves in View.** Hover now highlights the room under the
+  pointer, including rooms with no configured fill or HA area. The room tooltip
+  also shows its formatted clean-floor area; thick walls use the same inner
+  contour as room labels and resize measurements.
+- **Yellow working state remains universal in source-light fill.** A device that
+  is semantically on/working keeps its yellow marker plate when the space uses
+  the per-source glow fill. The light pool supplements the marker state instead
+  of replacing it.
+- **beta.10 audit fixes.** The first real device transition after load is no
+  longer consumed while rebuilding the registry, and changing a marker's
+  effective source synchronously clears an old source's short effect. Editing a
+  legacy live label preserves an explicit unit or a non-representable attribute
+  instead of silently dropping it; the old `attr: state` selector migrates to a
+  bare state token instead of a nonexistent attribute. Wall thickness fragments
+  now persist exact normalised endpoints (legacy midpoint keys still read),
+  survive resize, and
+  compact into maximal equal-thickness solid runs after virtual pieces are
+  closed. Virtual-wall dashes remain visible in all editors even with borders
+  hidden. Release CI now reports GitHub/HACS prerelease-order trouble instead of
+  silently publishing a beta that HACS cannot discover.
+
 ## v1.59.0-beta.10 — 2026-08-05
 
 Tenth pre-release of the 1.59 line: one coherent device-state language and a

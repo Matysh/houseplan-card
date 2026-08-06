@@ -169,9 +169,10 @@ Lovelace **пересоздаёт элемент карточки** — выбр
 
 `_spaceDialog` (настройки/создание пространства), `_markerDialog` (устройство),
 `_settingsDialog` (общие настройки), `_rulesDialog` (правила иконок),
-`_openingDialog` (проём), `_decorTextDialog` (надпись), `_roomDialog` вместе со
-всей своей обвязкой (`_roomEditId`, `_roomFill`, источники температуры и
-влажности, масштабы подписей, `_areaSel`/`_nameSel`, `_pendingSplit`, `_path`).
+`_openingDialog` (проём), `_decorTextDialog` (надпись), `_decorShapeDialog`
+(цвет / толщина линии объекта подложки), `_roomDialog` вместе со всей своей
+обвязкой (`_roomEditId`, `_roomFill`, источники температуры и влажности,
+масштабы подписей, `_areaSel`/`_nameSel`, `_pendingSplit`, `_path`).
 
 Информационные попапы — `_infoCard` (карточка устройства) и `_openingInfo` —
 восстанавливаются **по id**, а не по объекту: конфиг мог перезагрузиться под

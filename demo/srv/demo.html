@@ -72,6 +72,7 @@ const LAYOUT = {
   d_bedlight:{s:'f1',x:0.75,y:0.6}, d_window:{s:'f1',x:0.9,y:0.85}, d_lock:{s:'f1',x:0.1,y:0.88},
   d_motion:{s:'f1',x:0.4,y:0.75}, d_mower:{s:'garden',x:0.25,y:0.35}, d_gate:{s:'garden',x:0.73,y:0.22}
 };
+let CFG_REV=1, LAYOUT_REV=1;
 const AREAS={living_room:{area_id:'living_room',name:'Living room'},kitchen:{area_id:'kitchen',name:'Kitchen'},
   bedroom:{area_id:'bedroom',name:'Bedroom'},hallway:{area_id:'hallway',name:'Hallway'},garden:{area_id:'garden',name:'Garden'}};
 function dev(id,name,model,area){return [id,{id,name,model,area_id:area,identifiers:[['demo',id]],entry_type:null,via_device_id:null}];}
@@ -126,9 +127,16 @@ function mkHass(){
     devices:DEVICES, entities:ENTITIES, areas:AREAS, states:STATES,
     floors:{g:{floor_id:'g',name:'Ground floor',level:0},u:{floor_id:'u',name:'Upstairs',level:1}},
     callWS:async (m)=>{
-      if(m.type==='houseplan/config/get')return{config:CFG,rev:1,can_write:true};
-      if(m.type==='houseplan/layout/get')return{layout:LAYOUT};
-      return {ok:true,rev:2};
+      if(m.type==='houseplan/config/get')return{config:CFG,rev:CFG_REV,can_write:true};
+      if(m.type==='houseplan/layout/get')return{layout:LAYOUT,rev:LAYOUT_REV};
+      if(m.type==='houseplan/config/set')return{ok:true,rev:++CFG_REV};
+      if(['houseplan/layout/set','houseplan/layout/update','houseplan/layout/delete'].includes(m.type))
+        return{ok:true,rev:++LAYOUT_REV};
+      if(m.type==='houseplan/plan/optimize')return{
+        ok:true,config_rev:++CFG_REV,layout_rev:++LAYOUT_REV,can_undo:true};
+      if(m.type==='houseplan/plan/optimize_undo')return{
+        ok:true,config_rev:++CFG_REV,layout_rev:++LAYOUT_REV,can_undo:false};
+      return {ok:true};
     },
     callService:async (d,s,data)=>{
       const eid=data.entity_id, st=STATES[eid];

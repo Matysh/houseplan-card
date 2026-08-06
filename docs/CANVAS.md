@@ -398,13 +398,13 @@ Three things were fixed here besides the new coverage:
 older meanings too — it opts out of the opening's centre magnet, and it
 turns the compass to coarse 15° steps.
 
-### 9.5 «Выровнять всё по сетке» — an ACTION, not a migration
+### 9.5 «Оптимизировать планы» — explicit whole-plan maintenance
 
 Existing plans may hold coordinates between the nodes. The card does
-**not** round them on update. Instead, general settings grow a **Grid**
-group with one button; it opens a confirmation that states how many
-elements will move and by how much at most, warns that there is no undo,
-and only then writes.
+**not** round them on update. General settings contain a **Plan
+maintenance** group whose action previews and then runs all current
+lossless maintenance passes: model upgrades, grid alignment, exact
+open-span canonicalisation and wall-interval compaction.
 
 Why an action rather than a silent migration:
 
@@ -416,15 +416,35 @@ Why an action rather than a silent migration:
 3. A silent migration is unattributable. When a room looks 3 cm wrong
    the owner cannot tell whether the card did it or they did.
 4. An update that touches stored geometry cannot be rolled back by
-   downgrading the card. An action can simply not be pressed.
+   downgrading the card. The explicit action has a one-deep snapshot and
+   can also simply not be pressed.
+
+`optimizePlans(config, layout)` (`src/plan-optimizer.ts`) is the pure
+orchestrator. It converts only legacy fields with an exact lossless
+mapping, materialises legacy `open_to`, calls the grid projection,
+rekeys exact wall/open-span endpoints onto the moved rooms, merges
+touching virtual spans per room pair, compacts consecutive real-wall
+intervals of equal thickness and stamps `model_version`. Unknown fields
+are preserved and every pass is idempotent.
+
+The optimizer deliberately does **not** alter backdrop calibration or
+saved view boxes, delete unattached layout entries (a device may only be
+temporarily unavailable), deduplicate markers, or delete files. File
+collection remains the backend's reference-aware scheduled job.
 
 `alignAllToGrid(spaces, layout)` (`src/align-grid.ts`) is pure: it
 copies its input, never mutates it, and returns the new spaces, the new
 layout and the report. The dialog therefore measures and commits the
 **same object** — the numbers it promises cannot differ from what it
-does. The write is one `config/set` plus the layout updates, in one go.
+does. The resulting config+layout pair is sent to
+`houseplan/plan/optimize`; the backend persists a durable intent before
+either store changes, commits both revisions, and retains one snapshot.
+`houseplan/plan/optimize_undo` restores it only while neither revision
+has changed since the optimization. A crash between store writes is
+completed from the intent on the next integration setup.
 
-Guarantees, all covered by `test/align-grid.test.mjs`:
+Guarantees are covered by `test/align-grid.test.mjs` and the orchestration/
+idempotence case in `test/plan-optimizer.test.mjs`:
 
 * every grid-bound element ends on a node; a rect's FAR corner too (a
   snapped *size* on an off-grid origin leaves the other side between
@@ -442,7 +462,7 @@ Guarantees, all covered by `test/align-grid.test.mjs`:
 
 ### The report is a promise
 
-The confirmation is the only gate in front of an action with no undo, so
+The confirmation is the decision gate in front of a geometry rewrite, so
 `maxShift`/`maxShiftCm` must never be smaller than what the run does:
 
 * displacement is measured on the geometry **actually written back** —
@@ -461,9 +481,9 @@ The confirmation is the only gate in front of an action with no undo, so
   says which space the maximum is in; openings corrected in angle alone
   are counted on a line of their own.
 
-There is no undo, and the dialog says so: the card keeps no snapshot of
-the previous geometry. Re-running the action does not undo it either —
-it is a projection, and a projection is not invertible.
+One undo is available until the next config or layout edit. It restores
+the stored snapshot; re-running optimization itself is never treated as
+undo because a grid projection is not invertible.
 
 ## Every place that assumed the unit square
 

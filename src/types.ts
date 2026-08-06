@@ -28,6 +28,9 @@ export interface RoomCfg {
 export interface WallEntry {
   key: string;
   cm: number;
+  /** Exact interval endpoints in normalized config coordinates (new writes). */
+  a?: number[];
+  b?: number[];
 }
 
 export interface SpaceModel {

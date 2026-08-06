@@ -17,6 +17,7 @@
     "src/space-geometry.ts",
     "src/signing.ts",
     "src/align-grid.ts",
+    "src/plan-optimizer.ts",
     "src/furniture.ts",
     "src/wall-thickness.ts",
     "src/open-spans.ts"

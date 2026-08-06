@@ -171,7 +171,22 @@ const res = await page.evaluate(async () => {
   out.selectStillSelects = c._decorSel === 'dcprobe';
   out.selectStillGrabs = !!c._decorMove && c._decorMove.id === 'dcprobe';
   out.selectMakesNoDraft = !c._decorDraft;
-  c._decorMove = null; c._decorSel = null;
+  c._decorMove = null;
+  // Double click in Select is the universal properties gesture for every
+  // object, not only text. It must go through the rendered listener so this
+  // also pins the event wiring, then persist the common colour/width fields.
+  probe().dispatchEvent(new MouseEvent('dblclick', {
+    bubbles: true, composed: true, cancelable: true, button: 0,
+  }));
+  await c.updateComplete;
+  out.doubleClickOpensObjectDialog = c._decorShapeDialog?.id === 'dcprobe'
+    && !!sr().querySelector('.dialog .dfill') === false;
+  c._decorShapeDialog = { ...c._decorShapeDialog, color: '#123456', width: 6.5 };
+  c._decorSaveShape(); await c.updateComplete;
+  const editedProbe = c._decorList.find((x) => x.id === 'dcprobe');
+  out.objectDialogSavesStyle = editedProbe?.color === '#123456'
+    && editedProbe?.width === 6.5 && c._decorShapeDialog === null;
+  c._decorSel = null;
   c._curSpaceCfg.decor = decorBefore;                 // сцена как была до пробы
   c._decorTool = 'select'; await c.updateComplete;
   out.decorRestored = c._decorList.length === decorBefore.length;

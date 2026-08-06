@@ -15,17 +15,23 @@ Code: `src/wall-thickness.ts`, render in `src/houseplan-card.ts` /
 
 ## 1. Model
 
-Per space: `walls: [{ key, cm }]`. Key = quantised midpoint + direction
-(modulo 180°). Config always stores centimetres. Open boundaries refuse
-thickness. One physical stretch has one thickness (atomic collinear spans when
-neighbours overlap only partially). Atomic keys are storage only while a real
-geometric break requires them: once an original edge is entirely solid with
-one thickness, normalisation writes its single whole-edge key again. Likewise,
+Per space: `walls: [{ key, cm, a?, b? }]`. `key` remains the quantised midpoint
+and direction (modulo 180°) compatibility lookup; new or rewritten entries also
+carry exact endpoints `a` / `b` in normalised plan coordinates. Config always
+stores centimetres. Old `{key, cm}` data remains readable and is upgraded when
+the affected boundary is edited. Open boundaries refuse thickness. One physical
+stretch has one thickness (atomic collinear spans when neighbours overlap only
+partially). Exact endpoints make a thickness boundary independent of whichever
+room topology later happens to split the same straight line. Normalisation
+merges consecutive solid pieces into each maximal run of equal thickness; a
+different thickness or a virtual gap remains a real break. Likewise,
 touching/overlapping `open_spans` of the same room pair are stored as one span;
 pair ownership remains a hard boundary so Split can derive exact `open_to` links.
 
-Degrade unmatched keys silently on write. Resize / undo / scale re-key all
-touched spans in the same transaction and keep `walls` in the resize snapshot.
+Degrade unmatched keys silently on write. Resize / undo / scale transform exact
+endpoints and re-key all touched spans in the same transaction; legacy entries
+without endpoints keep the midpoint fallback. `walls` stays in the resize
+snapshot.
 
 ## 2. Growth (centreline ±½)
 

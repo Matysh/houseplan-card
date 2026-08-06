@@ -350,6 +350,30 @@ DECOR_SCHEMA = vol.Any(
                extra=vol.ALLOW_EXTRA),
 )
 
+
+def _wall_endpoints_pair(entry: dict) -> dict:
+    """Exact wall endpoints are useful only as a complete a/b pair."""
+    if ("a" in entry) != ("b" in entry):
+        raise vol.Invalid("wall exact endpoints require both a and b")
+    return entry
+
+
+WALL_SCHEMA = vol.All(
+    vol.Schema(
+        {
+            vol.Required("key"): vol.All(str, vol.Length(min=1, max=64)),
+            vol.Required("cm"): vol.All(_finite, vol.Range(min=1, max=100)),
+            # New writes retain exact normalized interval endpoints. The old
+            # key remains the compatibility lookup; endpoints preserve a
+            # differing-thickness breakpoint after a virtual span is closed.
+            vol.Optional("a"): vol.All([_NORM], vol.Length(min=2, max=2)),
+            vol.Optional("b"): vol.All([_NORM], vol.Length(min=2, max=2)),
+        },
+        extra=vol.ALLOW_EXTRA,
+    ),
+    _wall_endpoints_pair,
+)
+
 SPACE_SCHEMA = vol.Schema(
     {
         vol.Required("id"): vol.All(str, vol.Match(SPACE_ID_RE.pattern)),
@@ -402,15 +426,7 @@ SPACE_SCHEMA = vol.Schema(
         # Wall thickness (docs/WALL-THICKNESS.md): keyed by a segment identity
         # (midpoint + direction), thickness always in centimetres. Optional —
         # a space without `walls` validates and renders exactly as before.
-        vol.Optional("walls"): vol.All([
-            vol.Schema(
-                {
-                    vol.Required("key"): vol.All(str, vol.Length(min=1, max=64)),
-                    vol.Required("cm"): vol.All(_finite, vol.Range(min=1, max=100)),
-                },
-                extra=vol.ALLOW_EXTRA,
-            )
-        ], vol.Length(max=MAX_WALLS)),
+        vol.Optional("walls"): vol.All([WALL_SCHEMA], vol.Length(max=MAX_WALLS)),
         # Open (virtual) wall stretches: a piece of a shared boundary that the
         # user opened. Optional and bounded — a space without `open_spans`
         # validates exactly as before, and the legacy `rooms[].open_to` index

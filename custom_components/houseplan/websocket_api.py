@@ -7,6 +7,7 @@ import base64
 import binascii
 import json
 import secrets
+import time
 from pathlib import Path
 from typing import Any
 
@@ -36,6 +37,36 @@ from .validation import (
 
 _LOGGER = logging.getLogger(__name__)
 
+_OPTIMIZE_BACKUP = "optimize_backup"
+_OPTIMIZE_PENDING = "optimize_pending"
+
+
+def _optimizer_backup_is_current(config_data: dict[str, Any], layout_data: dict[str, Any]) -> bool:
+    """An optimization can be undone only before any later plan edit."""
+    backup = layout_data.get(_OPTIMIZE_BACKUP)
+    if not isinstance(backup, dict):
+        return False
+    try:
+        return (
+            int(backup.get("after_config_rev", -1)) == int(config_data.get("rev", 0))
+            and int(backup.get("after_layout_rev", -1)) == int(layout_data.get("rev", 0))
+        )
+    except (TypeError, ValueError):
+        return False
+
+
+async def _discard_optimizer_snapshot(rt: HouseplanData) -> None:
+    """Free a snapshot made stale by a later ordinary config edit."""
+    data = await rt.store.async_load() or {}
+    if _OPTIMIZE_BACKUP not in data and _OPTIMIZE_PENDING not in data:
+        return
+    await rt.store.async_save({
+        **{
+            k: v for k, v in data.items()
+            if k not in (_OPTIMIZE_BACKUP, _OPTIMIZE_PENDING)
+        }
+    })
+
 
 @callback
 def async_register(hass: HomeAssistant) -> None:
@@ -48,6 +79,8 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_layout_delete)
     websocket_api.async_register_command(hass, ws_config_get)
     websocket_api.async_register_command(hass, ws_config_set)
+    websocket_api.async_register_command(hass, ws_plan_optimize)
+    websocket_api.async_register_command(hass, ws_plan_optimize_undo)
     websocket_api.async_register_command(hass, ws_plan_set)
     websocket_api.async_register_command(hass, ws_plans_list)
     websocket_api.async_register_command(hass, ws_plans_delete)
@@ -85,8 +118,13 @@ async def ws_layout_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
     if rt is None:
         return
     data = await rt.store.async_load() or {}
+    config_data = await rt.config_store.async_load() or {}
     connection.send_result(
-        msg["id"], {"layout": data.get("layout", {}), "rev": int(data.get("rev", 0))}
+        msg["id"], {
+            "layout": data.get("layout", {}),
+            "rev": int(data.get("rev", 0)),
+            "can_optimize_undo": _optimizer_backup_is_current(config_data, data),
+        }
     )
 
 
@@ -121,7 +159,8 @@ async def ws_layout_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             )
             return
         new_rev = current_rev + 1
-        await rt.store.async_save({**{k: v for k, v in data.items() if k not in ("layout", "rev")},
+        await rt.store.async_save({**{k: v for k, v in data.items() if k not in (
+                                       "layout", "rev", _OPTIMIZE_BACKUP, _OPTIMIZE_PENDING)},
                                    "layout": msg["layout"], "rev": new_rev})
     hass.bus.async_fire("houseplan_layout_updated", {"rev": new_rev})
     connection.send_result(msg["id"], {"ok": True, "rev": new_rev})
@@ -151,7 +190,8 @@ async def ws_layout_update(hass: HomeAssistant, connection, msg: dict[str, Any])
         # optimistic locking on layout/set meaningless — every drag reset the
         # counter to 0 (HP-1454-08)
         new_rev = int(data.get("rev", 0)) + 1
-        await rt.store.async_save({**{k: v for k, v in data.items() if k not in ("layout", "rev")},
+        await rt.store.async_save({**{k: v for k, v in data.items() if k not in (
+                                       "layout", "rev", _OPTIMIZE_BACKUP, _OPTIMIZE_PENDING)},
                                    "layout": layout, "rev": new_rev})
     hass.bus.async_fire("houseplan_layout_updated", {"rev": new_rev})
     connection.send_result(msg["id"], {"ok": True, "rev": new_rev})
@@ -548,7 +588,8 @@ async def ws_layout_delete(hass: HomeAssistant, connection, msg: dict[str, Any])
         if msg["device_id"] in layout:
             del layout[msg["device_id"]]
             new_rev = int(data.get("rev", 0)) + 1
-            await rt.store.async_save({**{k: v for k, v in data.items() if k not in ("layout", "rev")},
+            await rt.store.async_save({**{k: v for k, v in data.items() if k not in (
+                                           "layout", "rev", _OPTIMIZE_BACKUP, _OPTIMIZE_PENDING)},
                                        "layout": layout, "rev": new_rev})
     if new_rev is not None:
         hass.bus.async_fire("houseplan_layout_updated", {"rev": new_rev})
@@ -571,6 +612,7 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
     if rt is None:
         return
     data = await rt.config_store.async_load() or {}
+    layout_data = await rt.store.async_load() or {}
     config = {**DEFAULT_CONFIG, **data.get("config", {})}
     connection.send_result(
         msg["id"],
@@ -578,6 +620,7 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             "config": config,
             "rev": data.get("rev", 0),
             "can_write": may_write(hass, getattr(connection, "user", None)),
+            "can_optimize_undo": _optimizer_backup_is_current(data, layout_data),
         },
     )
 
@@ -691,6 +734,10 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             return
         new_rev = current_rev + 1
         await rt.config_store.async_save({"config": msg["config"], "rev": new_rev})
+        try:
+            await _discard_optimizer_snapshot(rt)
+        except Exception:  # noqa: BLE001 — stale backup cleanup is best-effort
+            _LOGGER.exception("House Plan: discarding stale optimization backup failed")
         # Still holding the lock: the file system is not part of the store's
         # transaction, so collection has to be pinned to this commit (R3-1).
         # It is best-effort housekeeping behind an already durable write — a
@@ -714,6 +761,184 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
 
         hass.async_create_task(async_check_plan_files(hass, entry))
     connection.send_result(msg["id"], {"ok": True, "rev": new_rev})
+
+
+# ---------------- whole-plan maintenance ----------------
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "houseplan/plan/optimize",
+        vol.Required("config"): CONFIG_SCHEMA,
+        vol.Required("layout"): LAYOUT_SCHEMA,
+        vol.Required("expected_config_rev"): int,
+        vol.Required("expected_layout_rev"): int,
+    }
+)
+@websocket_api.async_response
+async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
+    """Atomically-intended replacement of config+layout with one-deep undo.
+
+    Home Assistant stores are separate files, so a literal cross-file
+    transaction is impossible. Persisting the target as an intent before
+    either half changes makes a crash resumable during the next setup; the UI
+    only receives success once both halves are durable.
+    """
+    if not _check_write(hass, connection):
+        connection.send_error(msg["id"], "unauthorized", "Only administrators may optimize plans")
+        return
+    rt = _runtime(hass, connection, msg["id"])
+    if rt is None:
+        return
+    size = len(json.dumps(msg["config"], separators=(",", ":")))
+    if size > MAX_CONFIG_BYTES:
+        connection.send_error(
+            msg["id"], "too_large",
+            f"Configuration is {size // 1024} KB, the limit is {MAX_CONFIG_BYTES // 1024} KB",
+        )
+        return
+
+    async with rt.write_lock:
+        config_data = await rt.config_store.async_load() or {}
+        layout_data = await rt.store.async_load() or {}
+        config_rev = int(config_data.get("rev", 0))
+        layout_rev = int(layout_data.get("rev", 0))
+        if msg["expected_config_rev"] != config_rev or msg["expected_layout_rev"] != layout_rev:
+            connection.send_error(
+                msg["id"], "conflict",
+                f"Plan changed elsewhere (config {config_rev}, layout {layout_rev})",
+            )
+            return
+
+        missing = await hass.async_add_executor_job(
+            _missing_internal_plans,
+            Path(hass.config.path(PLANS_DIR)),
+            msg["config"],
+            config_data.get("config"),
+        )
+        if missing:
+            connection.send_error(
+                msg["id"], "missing_plan",
+                "Plan file no longer exists: " + ", ".join(sorted(missing)),
+            )
+            return
+
+        new_config_rev = config_rev + 1
+        new_layout_rev = layout_rev + 1
+        backup = {
+            "config": config_data.get("config") or DEFAULT_CONFIG,
+            "layout": layout_data.get("layout", {}),
+            "created": int(time.time()),
+            "after_config_rev": new_config_rev,
+            "after_layout_rev": new_layout_rev,
+        }
+        pending = {
+            "config": msg["config"],
+            "layout": msg["layout"],
+            "clear_backup": False,
+        }
+        layout_meta = {
+            k: v for k, v in layout_data.items()
+            if k not in ("layout", "rev", _OPTIMIZE_BACKUP, _OPTIMIZE_PENDING)
+        }
+
+        # Intent first. A setup-time finisher completes whichever half a crash
+        # interrupted; until then the visible layout/revision remain unchanged.
+        await rt.store.async_save({
+            **layout_meta,
+            "layout": layout_data.get("layout", {}),
+            "rev": layout_rev,
+            _OPTIMIZE_BACKUP: backup,
+            _OPTIMIZE_PENDING: pending,
+        })
+        await rt.config_store.async_save({"config": msg["config"], "rev": new_config_rev})
+        await rt.store.async_save({
+            **layout_meta,
+            "layout": msg["layout"],
+            "rev": new_layout_rev,
+            _OPTIMIZE_BACKUP: backup,
+        })
+
+    hass.bus.async_fire("houseplan_config_updated", {"rev": new_config_rev})
+    hass.bus.async_fire("houseplan_layout_updated", {"rev": new_layout_rev})
+    _refresh_trail_recorder(hass)
+    connection.send_result(msg["id"], {
+        "ok": True,
+        "config_rev": new_config_rev,
+        "layout_rev": new_layout_rev,
+        "can_undo": True,
+    })
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "houseplan/plan/optimize_undo",
+        vol.Required("expected_config_rev"): int,
+        vol.Required("expected_layout_rev"): int,
+    }
+)
+@websocket_api.async_response
+async def ws_plan_optimize_undo(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
+    """Restore the snapshot, but never overwrite edits made after optimization."""
+    if not _check_write(hass, connection):
+        connection.send_error(msg["id"], "unauthorized", "Only administrators may undo optimization")
+        return
+    rt = _runtime(hass, connection, msg["id"])
+    if rt is None:
+        return
+
+    async with rt.write_lock:
+        config_data = await rt.config_store.async_load() or {}
+        layout_data = await rt.store.async_load() or {}
+        config_rev = int(config_data.get("rev", 0))
+        layout_rev = int(layout_data.get("rev", 0))
+        if msg["expected_config_rev"] != config_rev or msg["expected_layout_rev"] != layout_rev:
+            connection.send_error(msg["id"], "conflict", "Plan changed elsewhere")
+            return
+        if not _optimizer_backup_is_current(config_data, layout_data):
+            connection.send_error(
+                msg["id"], "no_backup",
+                "The optimization backup is unavailable or a later edit made it stale",
+            )
+            return
+
+        backup = layout_data[_OPTIMIZE_BACKUP]
+        restored_config = backup.get("config") or DEFAULT_CONFIG
+        restored_layout = backup.get("layout") or {}
+        new_config_rev = config_rev + 1
+        new_layout_rev = layout_rev + 1
+        pending = {
+            "config": restored_config,
+            "layout": restored_layout,
+            "clear_backup": True,
+        }
+        layout_meta = {
+            k: v for k, v in layout_data.items()
+            if k not in ("layout", "rev", _OPTIMIZE_BACKUP, _OPTIMIZE_PENDING)
+        }
+        await rt.store.async_save({
+            **layout_meta,
+            "layout": layout_data.get("layout", {}),
+            "rev": layout_rev,
+            _OPTIMIZE_BACKUP: backup,
+            _OPTIMIZE_PENDING: pending,
+        })
+        await rt.config_store.async_save({"config": restored_config, "rev": new_config_rev})
+        await rt.store.async_save({
+            **layout_meta,
+            "layout": restored_layout,
+            "rev": new_layout_rev,
+        })
+
+    hass.bus.async_fire("houseplan_config_updated", {"rev": new_config_rev})
+    hass.bus.async_fire("houseplan_layout_updated", {"rev": new_layout_rev})
+    _refresh_trail_recorder(hass)
+    connection.send_result(msg["id"], {
+        "ok": True,
+        "config_rev": new_config_rev,
+        "layout_rev": new_layout_rev,
+        "can_undo": False,
+    })
 
 
 # ---------------- plan uploads ----------------

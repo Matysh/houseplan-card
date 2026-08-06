@@ -19,6 +19,47 @@
 - GitHub pushes: classic PAT (repo+workflow scopes), created via the user's Chrome;
   stored in `~/.git-credentials` for the session.
 
+## Local Windows workstation
+
+The CI contract is **Node.js 22 + Python 3.13**. Do not use Codex's bundled
+Node 24 or the machine's default Python 3.14 as proof that a release will pass.
+
+Minimal native setup (PowerShell):
+
+```powershell
+winget install --id OpenJS.NodeJS.22 --source winget
+winget install --id GitHub.cli --source winget
+gh auth login
+Set-Location 'C:\Users\Sergey\Downloads\dev\houseplan-dev\houseplan-card-src'
+uv python install 3.13
+uv venv --python 3.13 .venv
+uv pip install --python '.venv\Scripts\python.exe' pytest voluptuous pytest-asyncio
+npm ci
+npx playwright install chromium
+```
+
+Open a new Windows Terminal after installing Node/GitHub CLI so their PATH
+changes are visible. Keep the Playwright browser in its normal shared Windows
+cache; downloading it inside every repository wastes time and disk space.
+
+WSL2 is optional for the ordinary frontend and pure-backend loop. It is required
+only when running the full HA harness locally: current Home Assistant imports
+the Unix-only `fcntl` module and cannot start its pytest plugin on native
+Windows. Keep a WSL clone inside the Linux ext4 filesystem rather than under
+`/mnt/c`, otherwise dependency installs become slower. The release CI always
+runs this harness on Ubuntu and gates the exact tagged commit. Docker Desktop is
+not currently required. Do not install the full Home Assistant pytest stack
+natively just for this repository: its pinned `lru-dict==1.3.0` first requires
+Visual Studio Build Tools to compile, but the resulting plugin still cannot run
+without `fcntl`.
+
+Useful repo-local Git settings on NTFS (optional for this small repository):
+
+```powershell
+git config core.fsmonitor true
+git config core.untrackedCache true
+```
+
 ### ⚠️ File-sync pitfalls (critical)
 1. The network mount sometimes serves files **truncated/scrambled** — edits via the Edit tool
    from the Windows side are unreliable. Rule: **apply python patches against a clean copy in /tmp,
@@ -32,8 +73,12 @@
 
 - Frontend: `npm test` — compiles src/logic.ts+rules.ts (tsconfig.test.json) and runs node:test
   (test/*.test.mjs). Strict typing: `npm run typecheck` (tsc --noEmit, part of `npm run build`).
-- Backend: `python -m pytest tests_backend/` — pure validation of custom_components/houseplan/validation.py
-  (loaded by path, without importing the HA package).
+- Pure backend on native Windows (with no HA plugin autoload):
+  `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .\.venv\Scripts\python.exe -m pytest
+  -p pytest_asyncio.plugin tests_backend/test_validation.py
+  tests_backend/test_trails.py tests_backend/test_trail_recorder.py -q`.
+- Full backend (including `test_ha_*.py`): `python -m pytest tests_backend/ -q`
+  in CI or WSL/Linux only.
 - IMPORTANT (audit lesson): the rollup typescript plugin reports a syntax error as a WARNING and still
   builds the bundle — a truncated file can "pass". That is why the build starts with `tsc --noEmit`,
   which fails on such errors. Always build with `npm run build`, never bare `rollup -c`.

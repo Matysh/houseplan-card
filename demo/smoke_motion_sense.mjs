@@ -14,6 +14,13 @@ const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
+  // Fresh-card baseline: the marker is built while motion is off and no
+  // unrelated hass tick is allowed to establish runtime later by accident.
+  c.hass = { ...c.hass, states: { ...c.hass.states,
+    'binary_sensor.hall_motion': { entity_id: 'binary_sensor.hall_motion', state: 'off',
+      attributes: { friendly_name: 'Motion', device_class: 'motion', linkquality: 64 } } } };
+  await c.updateComplete;
+  c._activityRt.clear();
   // Activity is an explicit presentation: opt this fixture into it.
   const motionDevice = c._devices.find((x) => x.entities.includes('binary_sensor.hall_motion'));
   c._serverCfg.markers = (c._serverCfg.markers || [])
@@ -32,6 +39,12 @@ const res = await page.evaluate(async () => {
     await c.updateComplete;
   };
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  // --- первое событие сразу после build не теряется как baseline ----------
+  await setMotion('on', 'motion');
+  out.firstTripAfterBuildFlashes = sr().querySelectorAll('.dev.activity-event').length === 1;
+  await setMotion('off', 'motion');
+  c._activityRt.clear(); c._syncActivityRuntime(); c.requestUpdate(); await c.updateComplete;
 
   // --- motion off→on: event, 3 волны, подложка НЕ жёлтая -------------------
   await setMotion('off', 'motion');
@@ -117,6 +130,16 @@ const res = await page.evaluate(async () => {
   out.presenceHolds = sr().querySelectorAll('.dev.activity-presence').length === 1;
   // и это именно sense-состояние, не тревога и не «открыто»
   out.noAlarmNoOpen = !sr().querySelector('.dev.activity-presence.alarm') && !sr().querySelector('.dev.activity-presence.open');
+
+  // --- смена effective source синхронно снимает старую вспышку ------------
+  await setMotion('off', 'motion');
+  await setMotion('on', 'motion');
+  const liveMarker = c._serverCfg.markers.find((m) => m.id === motionDevice.id);
+  liveMarker.controls = ['switch.kettle'];
+  c._regSignature = ''; c._maybeRebuildDevices(); c.requestUpdate(); await c.updateComplete;
+  out.rebindDropsOldFlashWithoutHassTick = !sr().querySelector('.dev.activity-event');
+  delete liveMarker.controls;
+  c._regSignature = ''; c._maybeRebuildDevices(); c.requestUpdate(); await c.updateComplete;
 
   // --- ghost не рисует ничего (призрак — конфигурация, не статус) ---------
   await setMotion('off', 'motion');

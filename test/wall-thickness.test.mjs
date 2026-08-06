@@ -83,6 +83,15 @@ test('degradeWalls drops a key with no matching room edge', () => {
   assert.equal(kept[0].key, live);
 });
 
+test('degradeWalls keeps an exact maximal run even when another breakpoint subdivides it', () => {
+  const rooms = [{ id: 'r1', poly: [[0, 0], [1, 0], [1, 1], [0, 1]] }];
+  const walls = setWallThickness([], [0, 0], [0.4, 0], 18, pitch);
+  const kept = degradeWalls(walls, rooms, pitch);
+  assert.equal(kept.length, 1);
+  assert.deepEqual(kept[0].a, [0, 0]);
+  assert.deepEqual(kept[0].b, [0.4, 0]);
+});
+
 test('rekeyWallsAfterMove rewrites the key when a span shifts by one cell', () => {
   const oldA = [0.1, 0.2], oldB = [0.4, 0.2];
   const newA = [0.1, 0.2 + pitch], newB = [0.4, 0.2 + pitch];
@@ -105,6 +114,16 @@ test('rekeyWallsAfterMove carries atomic remainders of a partially virtual wall'
     { key: wallKey([0.6, 0.1], [0.6, 0.3], pitch), cm: 20 },
     { key: wallKey([0.6, 0.5], [0.6, 0.7], pitch), cm: 25 },
   ]);
+});
+
+test('rekeyWallsAfterMove carries exact interval endpoints with the wall', () => {
+  const oldA = [0.2, 0.1], oldB = [0.2, 0.4];
+  const newA = [0.3, 0.1], newB = [0.3, 0.4];
+  const walls = setWallThickness([], oldA, oldB, 22, pitch);
+  const next = rekeyWallsAfterMove(walls, [[oldA, oldB]], [[newA, newB]], pitch);
+  assert.equal(next[0].key, wallKey(newA, newB, pitch));
+  assert.deepEqual(next[0].a, newA);
+  assert.deepEqual(next[0].b, newB);
 });
 
 test('setWallThickness upserts and removes', () => {
@@ -176,7 +195,11 @@ test('equal solid atomic pieces compact back to one whole-wall key', () => {
     { key: wallKey([5, 4], [5, 10], pitch), cm: 30 },
   ];
   const next = normalizeWallIntervals(rooms, walls, [], pitch, cellCm, GRID_PITCH);
-  assert.deepEqual(next, [{ key: wallKey([5, 0], [5, 10], pitch), cm: 30 }]);
+  assert.equal(next.length, 1);
+  assert.equal(next[0].key, wallKey([5, 0], [5, 10], pitch));
+  assert.equal(next[0].cm, 30);
+  assert.deepEqual(next[0].a, [5, 0]);
+  assert.deepEqual(next[0].b, [5, 10]);
 });
 
 test('different solid thicknesses remain separate atomic keys', () => {
@@ -189,6 +212,33 @@ test('different solid thicknesses remain separate atomic keys', () => {
   assert.equal(next.length, 2);
   assert.deepEqual(new Set(next.map((w) => w.cm)), new Set([20, 30]));
   assert.ok(!next.some((w) => w.key === wallKey([5, 0], [5, 10], pitch)));
+});
+
+test('closing the sole geometric split preserves different thicknesses', () => {
+  const rooms = [
+    { id: 'a', poly: [[0, 0], [5, 0], [5, 10], [0, 10]] },
+    { id: 'b', poly: [[5, 0], [10, 0], [10, 10], [5, 10]] },
+  ];
+  // No neighbour endpoint and no open cut remains at y=4. Exact endpoints in
+  // new wall entries are therefore the only record of this intentional break.
+  let walls = setWallThickness([], [5, 0], [5, 4], 20, pitch);
+  walls = setWallThickness(walls, [5, 4], [5, 10], 30, pitch);
+  const next = normalizeWallIntervals(rooms, walls, [], pitch, cellCm, GRID_PITCH);
+  assert.equal(next.length, 2);
+  assert.deepEqual(new Set(next.map((w) => w.cm)), new Set([20, 30]));
+  assert.ok(next.some((w) => w.a?.[1] === 4 || w.b?.[1] === 4));
+});
+
+test('exact endpoints do not prevent equal closed pieces from compacting', () => {
+  const rooms = [
+    { id: 'a', poly: [[0, 0], [5, 0], [5, 10], [0, 10]] },
+    { id: 'b', poly: [[5, 0], [10, 0], [10, 10], [5, 10]] },
+  ];
+  let walls = setWallThickness([], [5, 0], [5, 4], 20, pitch);
+  walls = setWallThickness(walls, [5, 4], [5, 10], 20, pitch);
+  const next = normalizeWallIntervals(rooms, walls, [], pitch, cellCm, GRID_PITCH);
+  assert.equal(next.length, 1);
+  assert.equal(next[0].key, wallKey([5, 0], [5, 10], pitch));
 });
 
 // An open span that does NOT contain the parent edge's midpoint used to leave

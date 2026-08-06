@@ -126,6 +126,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
         cfg = stored.get("config")
         lay_stored = await data.store.async_load() or {}
         layout = lay_stored.get("layout") or {}
+        lay_meta = {
+            k: v for k, v in lay_stored.items()
+            if k not in ("layout", "rev", "geom_pending")
+        }
         pending = {
             str(k): v for k, v in (lay_stored.get("geom_pending") or {}).items()
         }
@@ -134,20 +138,59 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
             lay_rev = int(lay_stored.get("rev", 0))
             if merged != pending:  # 1. the durable intent, before anything moves
                 await data.store.async_save(
-                    {"layout": layout, "rev": lay_rev, "geom_pending": merged}
+                    {**lay_meta, "layout": layout, "rev": lay_rev, "geom_pending": merged}
                 )
             rev = int(stored.get("rev", 0))
             if cfg and migrate_config(cfg):  # 2. the config half
                 rev += 1
                 await data.config_store.async_save({"config": cfg, "rev": rev})
             migrate_layout(layout, merged)  # 3. the layout half + intent cleared
-            await data.store.async_save({"layout": layout, "rev": lay_rev + 1})
+            await data.store.async_save({**lay_meta, "layout": layout, "rev": lay_rev + 1})
             _LOGGER.info(
                 "House Plan: migrated %s space(s) to the square canvas", len(merged)
             )
             # only once both halves are durable — a client refetching on this
             # event must never see one migrated half and one old one
             hass.bus.async_fire("houseplan_config_updated", {"rev": rev})
+
+    # Finish an explicit whole-plan optimization/undo interrupted between the
+    # config and layout store writes. The target was persisted before either
+    # visible half changed, so setup can always converge on the requested pair.
+    optimize_revs: tuple[int, int] | None = None
+    async with data.write_lock:
+        stored = await data.config_store.async_load() or {}
+        lay_stored = await data.store.async_load() or {}
+        pending = lay_stored.get("optimize_pending")
+        if isinstance(pending, dict) and isinstance(pending.get("config"), dict) \
+                and isinstance(pending.get("layout"), dict):
+            target_config = pending["config"]
+            target_layout = pending["layout"]
+            config_rev = int(stored.get("rev", 0))
+            layout_rev = int(lay_stored.get("rev", 0))
+            if stored.get("config") != target_config:
+                config_rev += 1
+                await data.config_store.async_save({
+                    "config": target_config,
+                    "rev": config_rev,
+                })
+            if lay_stored.get("layout", {}) != target_layout:
+                layout_rev += 1
+            layout_meta = {
+                k: v for k, v in lay_stored.items()
+                if k not in ("layout", "rev", "optimize_pending", "optimize_backup")
+            }
+            if not pending.get("clear_backup") and "optimize_backup" in lay_stored:
+                layout_meta["optimize_backup"] = lay_stored["optimize_backup"]
+            await data.store.async_save({
+                **layout_meta,
+                "layout": target_layout,
+                "rev": layout_rev,
+            })
+            optimize_revs = (config_rev, layout_rev)
+            _LOGGER.warning("House Plan: completed an interrupted plan optimization")
+    if optimize_revs is not None:
+        hass.bus.async_fire("houseplan_config_updated", {"rev": optimize_revs[0]})
+        hass.bus.async_fire("houseplan_layout_updated", {"rev": optimize_revs[1]})
 
     await async_check_plan_files(hass, entry)
 

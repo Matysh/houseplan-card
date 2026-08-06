@@ -1,6 +1,6 @@
 # The text block — a decor label that can show an entity's state
 
-Status: **implemented (dev, unreleased).** Code: `src/logic.ts`
+Status: **released in v1.59.0-rc.1.** Code: `src/logic.ts`
 (`liveText`, `liveTextReference`, `liveTextToken`, `liveTextValue`,
 `decorTextScale`, `decorTextLines` — pure, unit-tested),
 `src/houseplan-card.ts` (`_renderDecorLayer`,
@@ -12,7 +12,9 @@ Smokes: `demo/smoke_live_text.mjs`, `demo/smoke_decor_text.mjs`;
 The shape: `{kind:'text', x, y, text, color, scale?, angle?}` — plus legacy
 `size?`, `entity?`, `attr?`, and `unit?` fields that older plans may still
 carry. New live references are stored only inside `text`; existing linked
-labels render unchanged and migrate to inline references when edited.
+labels render unchanged and migrate to inline references when that conversion
+is lossless. A legacy explicit `unit`, or an attribute name that cannot be
+represented by the inline grammar, stays in the legacy fields when edited.
 
 ## 1. Why a live label
 
@@ -168,7 +170,9 @@ click opens its editor, and the corner/rotate handles appear.
 references included; `scale` optional, finite, `0.15…20`; `angle` optional,
 finite, `-360…360`. Legacy `entity`/`attr`/`unit` remain accepted and bounded
 so old saved plans continue to validate and render. The frontend writes none
-of them after the label has been edited. Tests: `tests_backend/test_validation.py`
+of them after an ordinary representable label has been edited. It deliberately
+retains them when dropping an explicit unit or non-representable attribute would
+change what the label says. Tests: `tests_backend/test_validation.py`
 (`test_decor_text_live_fields`, `test_decor_text_block_scale_and_angle`).
 
 ## 7. What this is not

@@ -12,6 +12,9 @@ import { roomPoly, roomEdges, sharedBoundary } from './logic';
 export interface WallEntry {
   key: string;
   cm: number;
+  /** Optional exact interval endpoints in config coordinates (new writes). */
+  a?: number[];
+  b?: number[];
 }
 
 export const WALL_MIN_CM = 1;
@@ -110,6 +113,26 @@ function keyOf(a: number[], b: number[], pitch: number, scale: number): string {
   return wallKey([a[0] / scale, a[1] / scale], [b[0] / scale, b[1] / scale], pitch);
 }
 
+/** Exact stored interval in the caller's coordinate space, when available. */
+function entrySpan(w: WallEntry, coordScale: number): [number[], number[]] | null {
+  if (!Array.isArray(w.a) || !Array.isArray(w.b) || w.a.length < 2 || w.b.length < 2) return null;
+  const nums = [Number(w.a[0]), Number(w.a[1]), Number(w.b[0]), Number(w.b[1])];
+  if (!nums.every(Number.isFinite)) return null;
+  const scale = coordScale > 0 ? coordScale : 1;
+  return [[nums[0] * scale, nums[1] * scale], [nums[2] * scale, nums[3] * scale]];
+}
+
+/** Persist an interval with both its compatible key and lossless endpoints. */
+function wallEntry(a: number[], b: number[], cm: number, pitch: number, coordScale: number): WallEntry {
+  const scale = coordScale > 0 ? coordScale : 1;
+  return {
+    key: keyOf(a, b, pitch, scale),
+    cm: clampWallCm(cm),
+    a: [a[0] / scale, a[1] / scale],
+    b: [b[0] / scale, b[1] / scale],
+  };
+}
+
 /** One parsed key: midpoint in the caller's coordinate space + angle bucket. */
 interface ParsedKey {
   w: WallEntry;
@@ -205,7 +228,8 @@ export function degradeWalls(
 ): WallEntry[] {
   if (!walls?.length) return [];
   const live = new Set<string>();
-  for (const seg of roomEdges(rooms)) {
+  const edges = roomEdges(rooms);
+  for (const seg of edges) {
     live.add(keyOf([seg[0], seg[1]], [seg[2], seg[3]], pitch, coordScale));
   }
   // partial shared overlaps are keyed by their own mid — keep those too
@@ -224,13 +248,41 @@ export function degradeWalls(
   }
   for (const room of list) {
     if (!room?.id) continue;
-    const at = atomicPolyForRoom(list, room.id, openCuts, pitch, coordScale);
+    const at = atomicPolyForRoom(list, room.id, openCuts, pitch, coordScale, walls);
     if (!at) continue;
     for (let i = 0; i < at.poly.length; i++) {
       live.add(keyOf(at.poly[i], at.poly[(i + 1) % at.poly.length], pitch, coordScale));
     }
   }
-  return walls.filter((w) => live.has(w.key) && w.cm >= WALL_MIN_CM && w.cm <= WALL_MAX_CM);
+  const exactStillLive = (w: WallEntry): boolean => {
+    const span = entrySpan(w, coordScale);
+    if (!span) return false;
+    const [a, b] = span;
+    const dx = b[0] - a[0], dy = b[1] - a[1];
+    const L = Math.hypot(dx, dy);
+    if (L <= eps) return false;
+    const onCurrentEdge = edges.some((sg) => {
+      const ea = [sg[0], sg[1]], eb = [sg[2], sg[3]];
+      return angleClose(segAngle(a, b), segAngle(ea, eb))
+        && distToSeg(a[0], a[1], ea[0], ea[1], eb[0], eb[1]) <= eps
+        && distToSeg(b[0], b[1], ea[0], ea[1], eb[0], eb[1]) <= eps;
+    });
+    if (!onCurrentEdge) return false;
+    // A stored solid interval must not straddle a newly virtual piece.
+    const overlapsCut = (openCuts || []).some((c) => {
+      const ca = [c[0], c[1]], cb = [c[2], c[3]];
+      if (!angleClose(segAngle(a, b), segAngle(ca, cb))) return false;
+      const lineDist = (p: number[]) => Math.abs((p[0] - a[0]) * dy - (p[1] - a[1]) * dx) / L;
+      if (lineDist(ca) > eps || lineDist(cb) > eps) return false;
+      const L2 = L * L;
+      const t0 = ((ca[0] - a[0]) * dx + (ca[1] - a[1]) * dy) / L2;
+      const t1 = ((cb[0] - a[0]) * dx + (cb[1] - a[1]) * dy) / L2;
+      return Math.min(1, Math.max(t0, t1)) - Math.max(0, Math.min(t0, t1)) > eps / L;
+    });
+    return !overlapsCut;
+  };
+  return walls.filter((w) => (live.has(w.key) || exactStillLive(w))
+    && w.cm >= WALL_MIN_CM && w.cm <= WALL_MAX_CM);
 }
 
 /**
@@ -283,7 +335,31 @@ export function rekeyWallsAfterMove(
   const used = new Set<string>();
   const out: WallEntry[] = [];
   for (const w of walls) {
-    let nk = map.get(w.key) || '';
+    // Exact endpoints are authoritative for new entries. Never move only their
+    // compatibility key while leaving a/b behind on the old wall.
+    let nk = '';
+    let moved: [number[], number[]] | null = null;
+    const exact = entrySpan(w, scale);
+    if (exact) {
+      for (let i = 0; i < oldSpans.length; i++) {
+        const [oa, ob] = oldSpans[i];
+        const [na, nb] = newSpans[i];
+        if (!angleClose(segAngle(exact[0], exact[1]), segAngle(oa, ob))) continue;
+        if (distToSeg(exact[0][0], exact[0][1], oa[0], oa[1], ob[0], ob[1]) > tol
+            || distToSeg(exact[1][0], exact[1][1], oa[0], oa[1], ob[0], ob[1]) > tol) continue;
+        const dx = ob[0] - oa[0], dy = ob[1] - oa[1];
+        const L2 = dx * dx + dy * dy;
+        if (L2 < 1e-18) continue;
+        const movePoint = (p: number[]): number[] => {
+          const t = Math.max(0, Math.min(1, ((p[0] - oa[0]) * dx + (p[1] - oa[1]) * dy) / L2));
+          return [na[0] + (nb[0] - na[0]) * t, na[1] + (nb[1] - na[1]) * t];
+        };
+        moved = [movePoint(exact[0]), movePoint(exact[1])];
+        nk = keyOf(moved[0], moved[1], pitch, scale);
+        break;
+      }
+    }
+    if (!exact) nk = map.get(w.key) || '';
     if (!nk) {
       const parsed = parseKeys([w], scale)[0];
       if (parsed) {
@@ -313,7 +389,9 @@ export function rekeyWallsAfterMove(
     if (!nk) nk = w.key;
     if (used.has(nk)) continue;
     used.add(nk);
-    out.push({ key: nk, cm: w.cm });
+    out.push(moved
+      ? wallEntry(moved[0], moved[1], w.cm, pitch, scale)
+      : { ...w, key: nk, cm: clampWallCm(w.cm) });
   }
   return out;
 }
@@ -329,7 +407,7 @@ export function setWallThickness(
   const key = keyOf(a, b, pitch, coordScale);
   const base = (walls || []).filter((w) => w.key !== key);
   if (cm == null || cm < WALL_MIN_CM) return base;
-  return [...base, { key, cm: clampWallCm(cm) }];
+  return [...base, wallEntry(a, b, cm, pitch, coordScale)];
 }
 
 /**
@@ -342,8 +420,9 @@ export function solidIntervalsForRoom(
   openCuts: number[][],
   pitch: number,
   coordScale = 1,
+  wallBreaks: WallEntry[] | null | undefined = [],
 ): Array<{ a: number[]; b: number[] }> {
-  const at = atomicPolyForRoom(rooms, roomId, openCuts, pitch, coordScale);
+  const at = atomicPolyForRoom(rooms, roomId, openCuts, pitch, coordScale, wallBreaks);
   if (!at) return [];
   const out: Array<{ a: number[]; b: number[] }> = [];
   for (let i = 0; i < at.poly.length; i++) {
@@ -368,7 +447,7 @@ export function setWallThicknessForRoom(
   coordScale = 1,
 ): WallEntry[] {
   let out = walls ? walls.slice() : [];
-  for (const iv of solidIntervalsForRoom(rooms, roomId, openCuts, pitch, coordScale)) {
+  for (const iv of solidIntervalsForRoom(rooms, roomId, openCuts, pitch, coordScale, out)) {
     out = setWallThickness(out, iv.a, iv.b, cm, pitch, coordScale);
   }
   return out;
@@ -389,7 +468,7 @@ export function applyWallThicknessToNewRoom(
   coordScale = 1,
 ): WallEntry[] {
   if (cm == null || cm < WALL_MIN_CM) return walls ? walls.slice() : [];
-  const at = atomicPolyForRoom(rooms, roomId, openCuts, pitch, coordScale);
+  const at = atomicPolyForRoom(rooms, roomId, openCuts, pitch, coordScale, walls);
   if (!at) return walls ? walls.slice() : [];
   // effective cm per interval — a neighbour's thickness counts even when it is
   // still stored under a pre-atomic whole-edge key
@@ -649,6 +728,7 @@ export function atomicPolyForRoom(
   openCuts: number[][],
   pitch: number,
   coordScale = 1,
+  wallBreaks: WallEntry[] | null | undefined = [],
 ): AtomicPoly | null {
   const room = (rooms || []).find((r) => r?.id === roomId);
   const orig = roomPoly(room);
@@ -664,6 +744,13 @@ export function atomicPolyForRoom(
     }
   }
   for (const c of openCuts || []) breaks.push([c[0], c[1]], [c[2], c[3]]);
+  // A closed virtual span may have been the only geometric breakpoint between
+  // two real intervals of different thickness. New wall entries retain their
+  // exact endpoints so deleting that span cannot erase the thickness boundary.
+  for (const w of wallBreaks || []) {
+    const span = entrySpan(w, coordScale);
+    if (span) breaks.push(span[0], span[1]);
+  }
   const poly: number[][] = [];
   const parent: number[] = [];
   for (let i = 0; i < orig.length; i++) {
@@ -831,7 +918,7 @@ export function roomWallProfile(
   gridPitch: number,
   coordScale = 1,
 ): RoomWallProfile | null {
-  const at = atomicPolyForRoom(rooms, roomId, openCuts, pitch, coordScale);
+  const at = atomicPolyForRoom(rooms, roomId, openCuts, pitch, coordScale, walls);
   if (!at) return null;
   const shared = sharedSegsOf(rooms, roomId, openEps(pitch, coordScale));
   const kinds = kindsForPoly(at.poly, shared, openCuts, pitch, coordScale);
@@ -875,10 +962,10 @@ export function wallIntervals(
 }
 
 /**
- * Rewrite `walls` so every entry names the smallest necessary interval of the
- * CURRENT geometry, and no entry survives under an open span. Atomic entries
- * are compacted back to the original polygon edge when all of its children
- * are solid and have the same thickness.
+ * Rewrite `walls` so every entry names a maximal equal-thickness interval of
+ * the CURRENT geometry, and no entry survives under an open span. Atomic
+ * entries compact across every consecutive solid run; a thickness change or
+ * virtual gap remains an exact stored breakpoint.
  *
  * This is the single place where the spec invariant "an open span and a
  * positive thickness never share a key" is enforced: opening a stretch splits
@@ -903,11 +990,9 @@ export function normalizeWallIntervals(
     atomic.push(iv);
   }
 
-  // A partial shared boundary or a former open span may have split one
-  // original edge into several storage keys. Once every child is solid and
-  // carries the same cm value, the parent key is the canonical representation
-  // again. Prefer the longest valid parent first so a room whose edge contains
-  // a shorter neighbour edge also removes that redundant shorter key.
+  // Compact every maximal solid run of one thickness. This still restores one
+  // whole-edge entry when all children agree, but retains an exact breakpoint
+  // when neighbouring real intervals intentionally have different thicknesses.
   const parents: Array<{ a: number[]; b: number[]; key: string; cm: number; len: number }> = [];
   for (const room of rooms || []) {
     if (!room?.id) continue;
@@ -919,15 +1004,25 @@ export function normalizeWallIntervals(
         if (pr.parent[i] === pi) children.push(i);
       }
       if (!children.length) continue;
-      const cm = pr.cms[children[0]];
-      if (!(cm > 0) || children.some((i) => pr.kinds[i] === null || pr.cms[i] !== cm)) continue;
-      const a = pr.orig[pi], b = pr.orig[(pi + 1) % pr.orig.length];
-      const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
-      if (len <= 0) continue;
-      parents.push({
-        a: [a[0], a[1]], b: [b[0], b[1]],
-        key: keyOf(a, b, pitch, coordScale), cm, len,
-      });
+      for (let at = 0; at < children.length;) {
+        const first = children[at];
+        const cm = pr.cms[first];
+        if (!(cm > 0) || pr.kinds[first] === null) { at++; continue; }
+        let end = at;
+        while (end + 1 < children.length) {
+          const next = children[end + 1];
+          if (pr.kinds[next] === null || pr.cms[next] !== cm) break;
+          end++;
+        }
+        const last = children[end];
+        const a = pr.poly[first], b = pr.poly[(last + 1) % pr.poly.length];
+        const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+        if (len > 0) parents.push({
+          a: [a[0], a[1]], b: [b[0], b[1]],
+          key: keyOf(a, b, pitch, coordScale), cm, len,
+        });
+        at = end + 1;
+      }
     }
   }
   parents.sort((a, b) => b.len - a.len || a.key.localeCompare(b.key));
@@ -947,12 +1042,12 @@ export function normalizeWallIntervals(
     for (const iv of matches) covered.add(iv.key);
     if (seen.has(parent.key)) continue;
     seen.add(parent.key);
-    out.push({ key: parent.key, cm: parent.cm });
+    out.push(wallEntry(parent.a, parent.b, parent.cm, pitch, coordScale));
   }
   for (const iv of atomic) {
     if (covered.has(iv.key) || seen.has(iv.key)) continue;
     seen.add(iv.key);
-    out.push({ key: iv.key, cm: iv.cm });
+    out.push(wallEntry(iv.a, iv.b, iv.cm, pitch, coordScale));
   }
   return out;
 }

@@ -85,9 +85,11 @@
       placed on the plan (hidden by filtering or by the user) still feeds the
       room card, the tooltip and the temperature fill; fridges/TRVs still do
       not; an explicit per-room source still wins [auto: unit devices.test]
-- [ ] Room tooltip wording (v1.44.5): hovering a room shows its name (plus
-      temperature/signal when available) and no longer claims "open the area" —
-      room clicks were removed in v1.40.1 [manual]
+- [ ] Room hover + tooltip: in View, hovering any room visibly highlights it
+      (filled, transparent and area-less alike) and shows its name plus clean-
+      floor area; temperature/signal follow when available. Thick walls reduce
+      the area to the inner contour. Editors do neither [auto: smoke_ux_fixes;
+      manual visual]
 
 ## Environments matrix
 
@@ -283,9 +285,9 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       at 70% of a device icon and zooming WITH the plan; the small metric rows
       under the room name now show in the plan editor too
       [auto: smoke_room_cards gearDetached/plainInPlan]
-- [ ] One indicator always (v1.52.1, HP-1520-01): in a glow space the plan
-      editor (no glow layer) shows the lit lamp yellow again; the devices
-      editor draws the layer and keeps the badge standard
+- [ ] Working plate remains universal: in a source-glow space a lit lamp or
+      other actually working device stays yellow in View and in every editor;
+      the glow pool is an additional spatial indicator, not a replacement
       [auto: smoke_light_badges]
 - [ ] Size/angle parity (v1.52.1, HP-1513-01): a marker with size 3 / angle 37
       scales x3 and rotates on BOTH cards [auto: smoke_size_angle_parity]
@@ -362,10 +364,10 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       the explicit action is yellow again, a wall switch still mirrors its
       controls, and an «Открыть/закрыть» marker whose device has no `cover.*`
       at all falls back to its primary [auto: smoke_cover_plate_precedence]
-- [ ] Light-source badges (v1.52.0): in glow fill a lit lamp's badge stays
-      standard (the spot is the indicator) and a lit socket stays yellow; in
-      other fills a lit lamp is plain yellow with no RGB tint; morphing and
-      the activity colour fallback survive [auto: smoke_light_badges +
+- [ ] Light-source badges (current contract): in glow fill a lit lamp's badge
+      stays yellow just like a lit socket; the pool keeps the source's RGB while
+      the marker keeps semantic yellow. Other fills behave identically;
+      morphing and the activity-colour fallback survive [auto: smoke_light_badges +
       smoke_rgb_alarm]
 - [ ] Icon size multiplier scales the glyph (dev): set a marker's size to 3 —
       the icon inside grows with the badge instead of staying default
@@ -394,10 +396,13 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] Yellow means working (dev): a TRV whose hvac_action is heating glows
       yellow; one that is merely enabled (idle) or has a service switch on
       (anti-scaling, child lock) stays dark; a lit light turns its state on by
-      the same condition that lights the glow pool — and shows the yellow
-      badge only where the glow spot is NOT drawn: with the glow layer
-      visible the spot is the one indicator (v1.52.0)
+      the same condition that lights the glow pool and shows the yellow badge
+      even where that pool is drawn
       [auto: smoke_yellow_principle + smoke_light_badges]
+- [ ] Activity baseline (beta.10 audit): rebuilding the device registry seeds
+      the current snapshot immediately, so the very first later motion/event
+      transition is detected. Rebinding a marker's effective source clears the
+      old source's finite flash in the same update [auto: smoke_motion_sense]
 - [ ] Editor gestures on touch (dev): in the plan editor on a phone, pinch
       zooms and a moving finger pans; releasing after a gesture does not draw
       a point, a clean tap still does [auto: smoke_editor_gestures]
@@ -718,9 +723,11 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       while decor shapes stay fully opaque; no fade in the other editors [auto: smoke_decor / smoke_grid_fade]
 - [ ] Background editor (v1.33.0): third tab with its own toolbar (select /
       line / rect / oval / text / erase + color, width, fill, X); shapes drag-
-      drawn with grid snap and live preview; degenerate shapes dropped; text
-      via dialog (S/M/L, color; dblclick re-edits); Select moves (snap), Delete
-      removes, Erase deletes on click; Esc: draft → selection → select tool →
+      drawn with grid snap and live preview; degenerate shapes dropped. In
+      Select, double click always opens properties: text/HA variables for a
+      label, colour + line width for every other object, and Fill for rectangles
+      or ovals. Select moves (snap), Delete removes, Erase deletes on click;
+      Esc: draft → selection → select tool →
       View; decor renders under rooms, visible everywhere, inert outside the
       editor; stored in space.decor (rev/lock, backend schema) [auto: smoke_decor / smoke_grid_fade]
 - [ ] Opening hover preview (v1.32.1): with the Opening tool, hovering near a
@@ -820,7 +827,8 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 
 - [ ] HA instance with zero devices/areas → onboarding works, rooms can be drawn, no crashes [manual]
 - [ ] Space with zero rooms → renders; markup hint visible
-- [ ] Room without area + borders ON → drawn, click does nothing, no area tooltip signal
+- [ ] Room without HA area + borders OFF → still has a transparent View hit
+      surface, highlights on hover, reports geometric floor area, click does nothing
 - [ ] No zigbee devices anywhere → no LQI badges, lqi fill leaves all rooms unfilled [manual]
 - [ ] 100+ devices in one space → build under ~50 ms [manual], drag stays smooth
 - [ ] Very long device/room names → ellipsis/wrap, no layout explosion
@@ -1177,9 +1185,11 @@ require hands on real hardware — they remain for the human pass.
 - [ ] **Nothing is rounded**: a sensor reporting `23.94781` shows `23.94781`.
       Rounding is the sensor's `display_precision`, not ours [auto:
       smoke_live_text]
-- [ ] **Old links migrate on edit**: a stored beta.9 `text + entity/attr/unit`
-      label still renders unchanged. Open it: the inline token is visible in
-      the textarea; save it and only the new text template remains
+- [ ] **Old links migrate without loss**: a stored beta.9 `text + entity/attr`
+      label still renders unchanged. A representable link moves into the
+      textarea token and drops legacy fields on save; an explicit `unit` or an
+      attribute name outside the inline grammar remains legacy and survives an
+      otherwise unrelated text/colour edit
       [auto: smoke_live_text]
 - [ ] **The same everywhere**: the label reads identically in View, in the
       editors and on a kiosk screen [auto: smoke_live_text]
@@ -1490,8 +1500,9 @@ require hands on real hardware — they remain for the human pass.
       the whole wall; click opens the cm/in field; empty/0 clears; Esc closes
       without applying; «Apply to all walls of this room» fills every allowed
       edge [auto: smoke_wall_thickness]
-- [ ] **Hatched body, area unchanged**: after setting thickness a `.wallbody`
-      path appears; the room card's m² is identical before and after
+- [ ] **Hatched body, clean-floor area**: after setting thickness a `.wallbody`
+      path appears; room-card and tooltip m² both decrease to the same inner-
+      contour area
       [auto: smoke_wall_thickness]
 - [ ] **Openings cut the slab**: a door/window on a thick wall leaves a gap in
       the body; the door swing is offset toward the inner face; with
@@ -1516,9 +1527,10 @@ require hands on real hardware — they remain for the human pass.
       [auto: test/wall-thickness.test.mjs + smoke_resize_virtual_thick]
 - [ ] **Fragment normalisation**: draw adjacent/overlapping virtual stretches
       along the same pair of rooms — they persist and select as one span. Close
-      the last virtual stretch on a uniformly thick wall — its saved `walls`
-      data returns to one whole-edge key. Repeat across a Split boundary: spans
-      owned by different room pairs must stay separate
+      the last virtual stretch — consecutive solid fragments merge into maximal
+      runs of equal thickness; equal neighbours become one, a thickness change
+      remains an exact endpoint. Resize transforms those endpoints. Repeat
+      across a Split boundary: spans owned by different room pairs must stay separate
       [auto: test/open-spans.test.mjs + test/wall-thickness.test.mjs +
       smoke_resize_virtual_thick]
 - [ ] **Unit + backend**: inset/mitre/bevel, key from either end, degrade,
@@ -1598,12 +1610,13 @@ require hands on real hardware — they remain for the human pass.
       still comes in at the window, a door with a contact sensor still reports
       open/closed in the room card, and the resize tool still refuses to
       shorten a wall past its opening [auto: smoke_hide_layers, smoke_glow]
-- [ ] **Virtual walls follow the borders switch** (owner 2026-08-05): make an
+- [ ] **Virtual walls follow the borders switch only in View** (owner 2026-08-05): make an
       open boundary between two rooms (Plan → «Открытая граница»), then turn
       **«Всегда отображать границы комнат» OFF**. The dashed stretch goes with
       the borders — no floating dashes on a plan that draws no walls. Turn the
-      borders back on and it returns. In the Plan editor the dashes are always
-      visible, whatever the switch says [auto: smoke_hide_layers, smoke_openwall]
+      borders back on and it returns. In Plan, Devices and Background editors
+      the dashes are always visible, whatever the switch says
+      [auto: smoke_hide_layers, smoke_openwall]
 - [ ] **Nothing is stored when nothing is hidden**: with both boxes unticked,
       the space's config carries no `hide_decor` / `hide_openings` at all, and
       a plan saved by an older card still opens here unchanged

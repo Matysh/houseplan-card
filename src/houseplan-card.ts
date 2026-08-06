@@ -25,7 +25,7 @@ import {
   referencedContentUrls,
   DISPLAY_MODES, TAP_ACTIONS, SPACE_FILL_MODES, ROOM_FILL_MODES,
   coverService, coverEntityOf, COVER_GUARDED_CLASSES,
-  liveText, liveTextToken, hassValue, valueWithUnit, decorTextScale, decorTextLines,
+  liveText, liveTextReference, liveTextToken, hassValue, valueWithUnit, decorTextScale, decorTextLines,
   DECOR_TEXT_BASE, DECOR_TEXT_SCALE_MIN, DECOR_TEXT_SCALE_MAX,
 } from './logic';
 import {
@@ -82,14 +82,14 @@ import {
   PLAN_SCALE_MIN, PLAN_SCALE_MAX,
   clampCanvasR, clampCanvasN, type ContentItem, type Rect,
 } from './space-geometry';
-import { alignAllToGrid, type AlignReport } from './align-grid';
+import { optimizePlans, type OptimizeReport } from './plan-optimizer';
 import { langOf, t, type I18nKey } from './i18n';
 import {
   combineVisualSamples, edgeActivity, entityVisualSample,
   type DeviceActivity, type DeviceVisualState, type EntityVisualSample,
 } from './device-visual';
 
-const CARD_VERSION = '1.59.0-beta.10';
+const CARD_VERSION = '1.59.0-rc.1';
 /** HP-1552 boot-veil timing (AUD-1552-02). The veil holds for at least
  *  BOOT_MIN_MS; every stage-height change restarts a BOOT_QUIET_MS
  *  trailing-quiescence requirement (chrome still settling near the cap
@@ -144,7 +144,7 @@ type WarmViewport = {
 /** Which dialog was open and its draft (docs/WARM-REMOUNT.md §3). `data` is
  *  the live draft OBJECT — the memo is module state, never serialised, so a
  *  half-filled device dialog with its uploaded pdfs survives for free. */
-type WarmDialogKind = 'space' | 'marker' | 'settings' | 'opening' | 'decorText' | 'rules' | 'room' | 'info' | 'openingInfo';
+type WarmDialogKind = 'space' | 'marker' | 'settings' | 'opening' | 'decorText' | 'decorShape' | 'rules' | 'room' | 'info' | 'openingInfo';
 type WarmDialog = { kind: WarmDialogKind; space: string; mode: string; data: any };
 /** AUD-159B1-01: one entry per CARD PLACEMENT, not per key. Two cards with an
  *  identical config on one view share the key, so the key alone cannot say
@@ -350,6 +350,8 @@ class HouseplanCard extends LitElement {
   private _unsubCfg: (() => void) | null = null;
   private _unsubLayout: (() => void) | null = null;
   private _layoutRev = 0;
+  /** One-deep server snapshot; invalidated by the first later plan edit. */
+  private _canOptimizeUndo = false;
   private _devices: DevItem[] = [];
   private _regSignature = '';
   private _defPos: Record<string, { x: number; y: number }> = {};
@@ -377,6 +379,13 @@ class HouseplanCard extends LitElement {
   private _decorTextDialog: {
     id?: string; x: number; y: number; text: string; color: string;
     pickerEntity?: string;
+    /** Keep an old link when inline syntax cannot represent its attr/unit losslessly. */
+    preserveLegacy?: boolean;
+  } | null = null;
+  /** Style editor opened by double-clicking a non-text decor object. */
+  private _decorShapeDialog: {
+    id: string; kind: 'line' | 'rect' | 'ellipse' | 'furniture';
+    color: string; width: number; fill?: boolean;
   } | null = null;
   /** Last textarea selection survives moving focus to the HA pickers. */
   private _decorTextSelection: { start: number; end: number } = { start: 0, end: 0 };
@@ -615,14 +624,14 @@ class HouseplanCard extends LitElement {
   private _onboardingShown = false; // the auto space dialog is shown once per session
 
   private _rulesDialog: { rules: IconRule[]; test: string; busy: boolean } | null = null;
-  /** «Выровнять всё по сетке»: the preview the confirmation shows, plus the
-   *  already-computed result so the write cannot differ from the promise. */
+  /** Optimization preview plus the exact pair, so commit cannot differ from it. */
   private _alignDialog: {
-    report: AlignReport; spaces: any[]; layout: Record<string, any>;
+    report: OptimizeReport; config: any; layout: Record<string, any>;
     /** the promised maximum, in centimetres, ALREADY rounded up (AUD-158B1-01) */
     cm: number;
     /** the space that maximum belongs to, named only when there are several */
     where: string;
+    changed: boolean;
     busy: boolean;
   } | null = null;
 
@@ -847,6 +856,7 @@ class HouseplanCard extends LitElement {
     _decorDraft: { state: true },
     _decorSel: { state: true },
     _decorTextDialog: { state: true },
+    _decorShapeDialog: { state: true },
     _furnPalette: { state: true },
     _bdDrag: { state: true },
     _dtBox: { state: true },
@@ -989,6 +999,7 @@ class HouseplanCard extends LitElement {
       if (this._settingsDialog) { this._settingsDialog = null; return; }
       if (this._markerDialog) { this._markerDialog = null; return; }
       if (this._openingDialog) { this._openingDialog = null; return; }
+      if (this._decorShapeDialog) { this._decorShapeDialog = null; return; }
       if (this._decorTextDialog) { this._decorTextDialog = null; return; }
       if (this._spaceDialog && !this._roomDialog) {
         // same semantics as the dialog's Cancel: an import queue is abandoned
@@ -1405,6 +1416,7 @@ class HouseplanCard extends LitElement {
     if (this._settingsDialog) return this._settingsDialog.busy ? null : at('settings', this._settingsDialog);
     if (this._markerDialog) return this._markerDialog.busy ? null : at('marker', this._markerDialog);
     if (this._openingDialog) return at('opening', this._openingDialog);
+    if (this._decorShapeDialog) return at('decorShape', this._decorShapeDialog);
     if (this._decorTextDialog) return at('decorText', this._decorTextDialog);
     if (this._roomDialog) {
       return at('room', {
@@ -1461,6 +1473,7 @@ class HouseplanCard extends LitElement {
       case 'settings': this._settingsDialog = { ...d.data, busy: false }; break;
       case 'rules': this._rulesDialog = { ...d.data, busy: false }; break;
       case 'opening': this._openingDialog = { ...d.data }; break;
+      case 'decorShape': this._decorShapeDialog = { ...d.data }; break;
       case 'decorText': {
         this._decorTextDialog = { ...d.data };
         const end = String(this._decorTextDialog?.text ?? '').length;
@@ -1679,14 +1692,17 @@ class HouseplanCard extends LitElement {
   }
 
   protected willUpdate(changed: PropertyValues): void {
-    if (changed?.has?.('hass')) { this._vacTick(); this._activityTick(); }
     this._skyPlan();
     if (changed.has('hass') && this.hass) {
       this._hookConnection();
       if (!this._loadOk && !this._loading && this._loadTries < 8) {
         this._loadFromServer();
       }
+      // Devices must exist before their first state snapshot is classified.
+      // Otherwise the first real off->on edge after mount becomes the baseline.
       this._maybeRebuildDevices();
+      this._vacTick();
+      this._activityTick();
     }
   }
 
@@ -1768,6 +1784,7 @@ class HouseplanCard extends LitElement {
       this._serverStorage = true;
       // absent can_write = older backend / demo stub → keep null (legacy admin fallback)
       if (typeof cfgResp?.can_write === 'boolean') this._serverCanWrite = cfgResp.can_write;
+      this._canOptimizeUndo = !!(cfgResp?.can_optimize_undo || layResp?.can_optimize_undo);
       if (this._pendingNavMode && this._canEdit && !this._config?.kiosk) {
         this._mode = this._pendingNavMode;
         this._pendingNavMode = null;
@@ -1856,6 +1873,7 @@ class HouseplanCard extends LitElement {
       this._loading = false;
     }
     this._regSignature = '';
+    this._maybeRebuildDevices();
     this.requestUpdate();
   }
 
@@ -1881,6 +1899,7 @@ class HouseplanCard extends LitElement {
       this._serverCfg = cfg && Array.isArray(cfg.spaces) ? cfg : null;
       this._cfgEpoch++;
       this._cfgRev = resp?.rev || 0;
+      this._canOptimizeUndo = !!resp?.can_optimize_undo;
       if (typeof resp?.can_write === 'boolean') this._serverCanWrite = resp.can_write;
       if (this._pendingNavMode && this._canEdit && !this._config?.kiosk) {
         this._mode = this._pendingNavMode;
@@ -2013,6 +2032,7 @@ class HouseplanCard extends LitElement {
       for (const [id, pos] of mine) merged[id] = pos;
       this._layout = merged;
       this._layoutRev = resp?.rev ?? this._layoutRev;
+      this._canOptimizeUndo = !!resp?.can_optimize_undo;
       this._cacheSnapshot();
       this.requestUpdate();
     } catch {
@@ -2073,6 +2093,9 @@ class HouseplanCard extends LitElement {
     this._defPos = this._defaultPositions();
     this._syncNewDevices();
     this._seedHiddenDevices();
+    // Rebuilds also happen without a hass update (marker save/rebind). Establish
+    // new baselines and clear old flashes synchronously, before the next paint.
+    this._syncActivityRuntime();
   }
 
   /**
@@ -2282,14 +2305,16 @@ class HouseplanCard extends LitElement {
   /** One semantic result feeds the plate and every non-critical activity effect. */
   private _deviceVisual(d: DevItem): DeviceVisualState {
     if (d.hidden) return { availability: 'available', status: 'neutral', activity: 'none' };
-    const combined = combineVisualSamples(this._visualSamples(d));
+    const samples = this._visualSamples(d);
+    const combined = combineVisualSamples(samples);
     // A critical state is never a decorative preference and stays visible
     // even when the card-wide live-state dressing is disabled.
     if (combined.status === 'alarm') return combined;
     if (!this._config?.live_states) return { availability: 'available', status: 'neutral', activity: 'none' };
     if (combined.availability === 'unavailable') return combined;
     const rt = this._activityRt.get(d.id);
-    if (rt?.flashTs && rt.flashKind && Date.now() - rt.flashTs < ACTIVITY_WINDOW_MS)
+    const sourceKey = this._activitySourceKey(samples);
+    if (rt?.sources === sourceKey && rt.flashTs && rt.flashKind && Date.now() - rt.flashTs < ACTIVITY_WINDOW_MS)
       return { ...combined, activity: rt.flashKind };
     return combined;
   }
@@ -4108,17 +4133,44 @@ class HouseplanCard extends LitElement {
     this.requestUpdate();
   }
 
-  /** Double click on a text shape (select tool) re-opens its dialog. */
-  private _decorShapeDbl(shape: any): void {
-    if (this._mode !== 'decor' || this._decorTool !== 'select' || shape.kind !== 'text') return;
-    this._decorOpenText(shape);
+  /** Select tool: every decor object has a double-click properties dialog. */
+  private _decorShapeDbl(ev: MouseEvent, shape: any): void {
+    if (this._mode !== 'decor' || this._decorTool !== 'select') return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    this._decorMove = null;
+    this._decorSel = shape.id;
+    if (shape.kind === 'text') {
+      this._decorOpenText(shape);
+      return;
+    }
+    if (!['line', 'rect', 'ellipse', 'furniture'].includes(shape.kind)) return;
+    this._decorShapeDialog = {
+      id: shape.id,
+      kind: shape.kind,
+      color: shape.color || this._decorStyle.color,
+      width: Number(shape.width) > 0 ? Number(shape.width) : this._decorStyle.width,
+      ...(shape.kind === 'rect' || shape.kind === 'ellipse' ? { fill: !!shape.fill } : {}),
+    };
   }
 
   /** Open the editor of an existing label (double click, or the text tool). */
   private _decorOpenText(shape: any): void {
     let text = String(shape.text ?? '');
-    const legacyToken = liveTextToken(shape.entity, shape.attr);
-    if (legacyToken) {
+    const hasInline = [...text.matchAll(/\{([^{}\r\n]+)\}/g)]
+      .some((m) => !!liveTextReference(m[1]));
+    const explicitUnit = String(shape.unit ?? '').trim();
+    // Old dialogs represented the entity state as attr="state"; inline text
+    // represents that same value with a bare `{entity}` token.
+    const legacyAttr = String(shape.attr ?? '').trim().toLowerCase() === 'state'
+      ? null
+      : shape.attr;
+    const legacyToken = !hasInline && !explicitUnit
+      ? liveTextToken(shape.entity, legacyAttr)
+      : '';
+    const preserveLegacy = !!String(shape.entity ?? '').trim() && !hasInline
+      && (!legacyToken || !!explicitUnit);
+    if (legacyToken && !preserveLegacy) {
       const slot = text.indexOf('{}');
       text = slot >= 0
         ? text.slice(0, slot) + legacyToken + text.slice(slot + 2)
@@ -4127,6 +4179,7 @@ class HouseplanCard extends LitElement {
     this._decorTextDialog = {
       id: shape.id, x: shape.x, y: shape.y, text, color: shape.color,
       pickerEntity: shape.entity || '',
+      preserveLegacy: preserveLegacy || undefined,
     };
     this._decorTextSelection = { start: text.length, end: text.length };
   }
@@ -4151,7 +4204,9 @@ class HouseplanCard extends LitElement {
     const text = old.slice(0, start) + token + old.slice(end);
     const caret = start + token.length;
     this._decorTextSelection = { start: caret, end: caret };
-    this._decorTextDialog = { ...d, text };
+    // Inserting a new inline reference is the explicit replacement of any
+    // unrepresentable legacy link; the stale side fields can now be dropped.
+    this._decorTextDialog = { ...d, text, preserveLegacy: undefined };
     this.updateComplete.then(() => {
       const el = this.renderRoot.querySelector<HTMLTextAreaElement>('textarea.dtarea');
       if (!el) return;
@@ -4169,6 +4224,10 @@ class HouseplanCard extends LitElement {
     if (d.id) {
       sp.decor = this._decorList.map((x) => {
         if (x.id !== d.id) return x;
+        // A legacy unit or non-canonical attribute cannot be represented by
+        // the inline grammar. Keep those fields until the user explicitly
+        // replaces the binding; ordinary representable links still migrate.
+        if (d.preserveLegacy) return { ...x, text, color: d.color };
         // beta.9 and earlier stored one live link beside the text. Saving in
         // the new editor migrates it to inline tokens and drops the old fields.
         const { entity, attr, unit, ...rest } = x;
@@ -4181,6 +4240,27 @@ class HouseplanCard extends LitElement {
       this._decorSel = id;
     }
     this._decorTextDialog = null;
+    this._saveConfig();
+    this.requestUpdate();
+  }
+
+  private _decorSaveShape(): void {
+    const d = this._decorShapeDialog;
+    if (!d) return;
+    const width = Math.max(0.1, Math.min(30, Number(d.width) || 0.1));
+    const sp = this._curSpaceCfg;
+    sp.decor = this._decorList.map((x) => x.id === d.id
+      ? {
+          ...x, color: d.color, width,
+          ...(d.kind === 'rect' || d.kind === 'ellipse' ? { fill: !!d.fill } : {}),
+        }
+      : x);
+    this._decorStyle = {
+      color: d.color,
+      width,
+      fill: d.kind === 'rect' || d.kind === 'ellipse' ? !!d.fill : this._decorStyle.fill,
+    };
+    this._decorShapeDialog = null;
     this._saveConfig();
     this.requestUpdate();
   }
@@ -4831,24 +4911,27 @@ class HouseplanCard extends LitElement {
     const shapes = this._decorList.map((sh) => {
       const cls = 'dshape' + (editing && this._decorSel === sh.id ? ' dsel' : '');
       const down = (e: PointerEvent) => this._decorShapeDown(e, sh);
-      const dbl = () => this._decorShapeDbl(sh);
+      const dbl = (e: MouseEvent) => this._decorShapeDbl(e, sh);
       // docs/STYLING-HOOKS.md §3: every shape carries its kind and its id
       if (sh.kind === 'line')
         // round caps: line ends read as circles of the stroke width, so two
         // lines meeting at an angle join without the notch (owner's screenshot)
         return svg`<line class="${cls}" data-hp="decor" data-id="${sh.id}" data-kind="${sh.kind}"
           x1="${sh.x1 * W}" y1="${sh.y1 * H}" x2="${sh.x2 * W}" y2="${sh.y2 * H}"
-          stroke="${sh.color}" stroke-width="${sh.width}" stroke-linecap="round" stroke-linejoin="round" @pointerdown=${down}></line>`;
+          stroke="${sh.color}" stroke-width="${sh.width}" stroke-linecap="round" stroke-linejoin="round"
+          @pointerdown=${down} @dblclick=${dbl}></line>`;
       if (sh.kind === 'rect')
         return svg`<rect class="${cls}" data-hp="decor" data-id="${sh.id}" data-kind="${sh.kind}"
           x="${sh.x * W}" y="${sh.y * H}" width="${sh.w * W}" height="${sh.h * H}"
           stroke="${sh.color}" stroke-width="${sh.width}"
-          fill="${sh.fill ? sh.color : 'none'}" fill-opacity="${sh.fill ? 0.25 : 0}" @pointerdown=${down}></rect>`;
+          fill="${sh.fill ? sh.color : 'none'}" fill-opacity="${sh.fill ? 0.25 : 0}"
+          @pointerdown=${down} @dblclick=${dbl}></rect>`;
       if (sh.kind === 'ellipse')
         return svg`<ellipse class="${cls}" data-hp="decor" data-id="${sh.id}" data-kind="${sh.kind}"
           cx="${(sh.x + sh.w / 2) * W}" cy="${(sh.y + sh.h / 2) * H}"
           rx="${(sh.w / 2) * W}" ry="${(sh.h / 2) * H}" stroke="${sh.color}" stroke-width="${sh.width}"
-          fill="${sh.fill ? sh.color : 'none'}" fill-opacity="${sh.fill ? 0.25 : 0}" @pointerdown=${down}></ellipse>`;
+          fill="${sh.fill ? sh.color : 'none'}" fill-opacity="${sh.fill ? 0.25 : 0}"
+          @pointerdown=${down} @dblclick=${dbl}></ellipse>`;
       if (sh.kind === 'furniture') {
         // One path per piece, generated at the shape's REAL size, so the
         // stroke is an ordinary stroke-width in render units like every other
@@ -4864,7 +4947,8 @@ class HouseplanCard extends LitElement {
         return svg`<path class="${cls} dfurn" data-hp="decor" data-id="${sh.id}"
           data-kind="${sh.kind}" data-symbol="${sh.symbol}" d="${d}" transform=${tr}
           stroke="${sh.color}" stroke-width="${sh.width}" fill="none"
-          stroke-linecap="round" stroke-linejoin="round" @pointerdown=${down}></path>`;
+          stroke-linecap="round" stroke-linejoin="round"
+          @pointerdown=${down} @dblclick=${dbl}></path>`;
       }
       if (sh.kind === 'text') {
         // The label is painted from the LIVE value on every render — the same
@@ -5020,7 +5104,9 @@ class HouseplanCard extends LitElement {
               }}>
               <option value="">${this._t('decor.live_attr_ph')}</option>
               <option value="__state__">${this._t('decor.live_state')}</option>
-              ${Object.keys(st?.attributes || {}).map((a) => html`<option value=${a}>${a}</option>`)}
+              ${Object.keys(st?.attributes || {})
+                .filter((a) => !!liveTextToken(ent, a))
+                .map((a) => html`<option value=${a}>${a}</option>`)}
             </select>
           ` : nothing}
         </div>
@@ -5028,6 +5114,38 @@ class HouseplanCard extends LitElement {
           <span class="spacer"></span>
           <button class="btn ghost" @click=${() => (this._decorTextDialog = null)}>${this._t('btn.cancel')}</button>
           <button class="btn primary" ?disabled=${!d.text.trim()} @click=${() => this._decorSaveText()}>${this._t('btn.save')}</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  private _renderDecorShapeDialog(): TemplateResult {
+    const d = this._decorShapeDialog!;
+    const canFill = d.kind === 'rect' || d.kind === 'ellipse';
+    const kindLabel = this._t(('decor.' + d.kind) as any);
+    return html`<div class="menuwrap dialogwrap" @click=${() => (this._decorShapeDialog = null)}>
+      <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
+        <div class="hd"><ha-icon icon="mdi:pencil-outline"></ha-icon>${this._t('decor.object_title', { kind: kindLabel })}</div>
+        <div class="body">
+          <label>${this._t('decor.color')}</label>
+          <input type="color" .value=${d.color}
+            @input=${(e: Event) => (this._decorShapeDialog = {
+              ...d, color: (e.target as HTMLInputElement).value,
+            })} />
+          <label>${this._t('decor.width')}</label>
+          <input class="namein" type="number" min="0.1" max="30" step="0.5" .value=${String(d.width)}
+            @input=${(e: Event) => (this._decorShapeDialog = {
+              ...d, width: Number((e.target as HTMLInputElement).value),
+            })} />
+          ${canFill ? html`<label class="dfill"><input type="checkbox" .checked=${!!d.fill}
+            @change=${(e: Event) => (this._decorShapeDialog = {
+              ...d, fill: (e.target as HTMLInputElement).checked,
+            })} />${this._t('decor.fill')}</label>` : nothing}
+        </div>
+        <div class="row">
+          <span class="spacer"></span>
+          <button class="btn ghost" @click=${() => (this._decorShapeDialog = null)}>${this._t('btn.cancel')}</button>
+          <button class="btn primary" @click=${() => this._decorSaveShape()}>${this._t('btn.save')}</button>
         </div>
       </div>
     </div>`;
@@ -5049,7 +5167,7 @@ class HouseplanCard extends LitElement {
 
   /** Dashed strokes over open (virtual) boundaries; highlighted in the tool. */
   private _renderOpenWalls(disp?: SpaceDisplay): TemplateResult {
-    if (disp && !disp.showBorders && !this._markup) return svg`` as unknown as TemplateResult;
+    if (disp && !disp.showBorders && !this._editing) return svg`` as unknown as TemplateResult;
     const cuts = this._openCuts();
     const hover = this._openWallHover;
     if (!cuts.length && !hover) return svg`` as unknown as TemplateResult;
@@ -5146,12 +5264,26 @@ class HouseplanCard extends LitElement {
     const sp = this._curSpaceCfg;
     if (!sp) return;
     const eps = this._gridPitch * 0.02;
-    const cuts = removeCut(this._openCuts(), sg, eps);
+    const oldCuts = this._openCuts();
+    // Materialise exact endpoints of every real remainder before removing the
+    // cut. Older entries carry only midpoint+angle; without this one cut can be
+    // the sole record of the boundary between (for example) 20 and 30 cm.
+    let seededWalls = Array.isArray(sp.walls) ? sp.walls.slice() : [];
+    for (const iv of wallIntervals(
+      this._spaceModel().rooms, seededWalls, oldCuts,
+      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+    )) {
+      if (iv.open || !(iv.cm > 0)) continue;
+      seededWalls = setWallThickness(
+        seededWalls, iv.a, iv.b, iv.cm, this._wallKeyPitch, NORM_W,
+      );
+    }
+    const cuts = removeCut(oldCuts, sg, eps);
     // The stretch is solid again: rekey thickness onto the merged intervals
     // first — a partially opened wall keeps the cm of the part that stayed
     // closed. Only a wall that was open end to end has nothing to inherit and
     // takes the default (owner 2026-08-05).
-    let walls = this._normalizeWalls(sp.walls, cuts);
+    let walls = this._normalizeWalls(seededWalls, cuts);
     const inherited = intervalCmAt(
       this._spaceModel().rooms, walls, cuts, sg,
       this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
@@ -7275,16 +7407,14 @@ class HouseplanCard extends LitElement {
   };
 
   /**
-   * Preview the batch alignment (docs/CANVAS.md §9). Nothing is written here:
-   * the run is pure, so the dialog can show the exact count and the exact
-   * largest shift, and then commit the very object it measured.
+   * Preview whole-plan maintenance. Nothing is written here: the pure run
+   * produces both the report and the exact config/layout pair to commit.
    */
   private _openAlignDialog = (): void => {
     if (!this._norm || !this._serverCfg) return;
     const spaces = this._serverCfg.spaces || [];
-    const r = alignAllToGrid(spaces, this._layout || {});
-    // The dialog is a safety gate in front of an action with no undo, so the
-    // number it shows is an UPPER BOUND and not a sample. The run already
+    const r = optimizePlans(this._serverCfg, this._layout || {});
+    // The maximum geometry shift is an UPPER BOUND, not a sample. The run
     // measured every element in the centimetres of ITS OWN space — converting
     // one normalised maximum through the first space's `cell_cm` understated
     // a two-scale plan twentyfold (AUD-158B1-01) — and the last tenth is
@@ -7292,55 +7422,93 @@ class HouseplanCard extends LitElement {
     const cm = Math.ceil(r.report.maxShiftCm * 10) / 10;
     const sp = spaces.find((x: any) => x?.id != null && String(x.id) === r.report.maxSpace);
     const where = spaces.length > 1 && sp ? String(sp.title || sp.id) : '';
-    this._alignDialog = { report: r.report, spaces: r.spaces, layout: r.layout, cm, where, busy: false };
+    this._alignDialog = {
+      report: r.report, config: r.config, layout: r.layout, cm, where,
+      changed: r.changed, busy: false,
+    };
   };
 
   /**
-   * Commit it: ONE config write and ONE layout write, so a plan that ends up
-   * wrong ends up wrong exactly once and the previous state is a single undo
-   * away — by re-running nothing, because there is no undo. The dialog says so.
+   * The backend persists an intent before either store changes, then keeps a
+   * one-deep snapshot that remains undoable until the next plan edit.
    */
   private async _runAlignToGrid(): Promise<void> {
     const d = this._alignDialog;
     if (!d || d.busy || !this._serverCfg) return;
     this._alignDialog = { ...d, busy: true };
     try {
-      this._serverCfg = { ...this._serverCfg, spaces: d.spaces };
+      if (this._saveConfigDebounced.pending()) this._saveConfigDebounced.flush();
+      await this._writeChain;
+      const resp = await this.hass.callWS({
+        type: 'houseplan/plan/optimize',
+        config: d.config,
+        layout: d.layout,
+        expected_config_rev: this._cfgRev,
+        expected_layout_rev: this._layoutRev,
+      });
+      this._serverCfg = d.config;
       this._layout = d.layout;
-      for (const id of Object.keys(d.layout)) this._dirtyPos.add(id);
+      this._cfgRev = resp?.config_rev ?? this._cfgRev + 1;
+      this._layoutRev = resp?.layout_rev ?? this._layoutRev + 1;
+      this._canOptimizeUndo = !!resp?.can_undo;
+      this._dirtyPos.clear();
+      this._sentPos.clear();
+      this._cfgEpoch++;
       this._modelCache = null;
       this._frame = null;
-      await this._saveConfigNow();
-      await this._persistLayoutNow();
+      this._cacheSnapshot();
       this._alignDialog = null;
       this.requestUpdate();
-      this._showToast(this._t('gs.align_done', { n: String(d.report.moved) }));
+      this._showToast(this._t('gs.align_done', {
+        n: String(d.report.moved),
+        m: String(d.report.migrated + d.report.canonicalized
+          + d.report.wallsMerged + d.report.spansMerged),
+      }));
     } catch (e: any) {
       if (this._alignDialog) this._alignDialog = { ...this._alignDialog, busy: false };
+      if (e?.code === 'conflict') {
+        await Promise.all([this._reloadConfigOnly(true), this._reloadLayoutOnly()]);
+      }
       this._showToast(this._t('toast.error', { err: this._errText(e) }));
     }
   }
 
-  /** The debounced layout writer, awaited — the batch must not return before
-   *  the positions it promised are actually on their way. */
-  private async _persistLayoutNow(): Promise<void> {
-    if (!this._serverStorage) {
-      localStorage.setItem(LS_KEY, JSON.stringify(this._layout));
-      this._dirtyPos.clear();
-      return;
+  /** Prevent a double click from sending two restores of the same snapshot. */
+  private _optimizeUndoBusy = false;
+
+  /** Restore the one-deep snapshot, provided no later plan edit exists. */
+  private async _undoPlanOptimization(): Promise<void> {
+    if (!this._canOptimizeUndo || this._optimizeUndoBusy) return;
+    this._optimizeUndoBusy = true;
+    this.requestUpdate();
+    try {
+      await this.hass.callWS({
+        type: 'houseplan/plan/optimize_undo',
+        expected_config_rev: this._cfgRev,
+        expected_layout_rev: this._layoutRev,
+      });
+      const [cfgResp, layResp] = await Promise.all([
+        this.hass.callWS({ type: 'houseplan/config/get' }),
+        this.hass.callWS({ type: 'houseplan/layout/get' }),
+      ]);
+      this._serverCfg = cfgResp?.config || this._serverCfg;
+      this._cfgRev = cfgResp?.rev ?? this._cfgRev;
+      this._layout = layResp?.layout || this._layout;
+      this._layoutRev = layResp?.rev ?? this._layoutRev;
+      this._canOptimizeUndo = false;
+      this._cfgEpoch++;
+      this._modelCache = null;
+      this._frame = null;
+      this._cacheSnapshot();
+      this.requestUpdate();
+      this._showToast(this._t('gs.optimize_undone'));
+    } catch (e: any) {
+      this._canOptimizeUndo = false;
+      this._showToast(this._t('toast.error', { err: this._errText(e) }));
+    } finally {
+      this._optimizeUndoBusy = false;
+      this.requestUpdate();
     }
-    const ids = [...this._dirtyPos];
-    this._dirtyPos.clear();
-    await Promise.all(ids.map((id) => {
-      const pos = this._layout[id];
-      if (!pos) return Promise.resolve();
-      this._sentPos.set(id, pos);
-      return this.hass
-        .callWS({ type: 'houseplan/layout/update', device_id: id, pos })
-        .then((r: any) => this._noteLayoutRev(r))
-        .finally(() => { if (this._sentPos.get(id) === pos) this._sentPos.delete(id); });
-    }));
-    this._cacheSnapshot();
   }
 
   private _setFillColor(key: keyof FillColors, patch: Partial<{ c: string; a: number }>): void {
@@ -7548,36 +7716,38 @@ class HouseplanCard extends LitElement {
   }
 
   /**
-   * The confirmation. It states the two numbers the user needs to decide —
-   * HOW MANY elements move and by HOW MUCH at most — and it says plainly that
-   * there is no undo, because there is not: the action is a single batch write
-   * and the card keeps no snapshot of what the plan looked like before.
+   * The confirmation separates geometry movement from lossless maintenance,
+   * and promises the one-deep undo before either store is changed.
    */
   private _renderAlignDialog(): TemplateResult {
     const d = this._alignDialog!;
     const r = d.report;
     return html`<div class="menuwrap dialogwrap" @click=${() => (this._alignDialog = null)}>
       <div class="dialog" @click=${(e: Event) => e.stopPropagation()}>
-        <div class="hd"><ha-icon icon="mdi:grid"></ha-icon>${this._t('gs.align_title')}</div>
+        <div class="hd"><ha-icon icon="mdi:broom"></ha-icon>${this._t('gs.align_title')}</div>
         <div class="body">
-          ${r.moved === 0
+          ${!d.changed
             ? html`<p class="alignmsg">${this._t('gs.align_none')}</p>`
             : html`
-              <p class="alignmsg">${this._t('gs.align_count', {
-                n: String(r.moved), total: String(r.total), cm: String(d.cm),
-              })}</p>
+              ${r.moved ? html`<p class="alignmsg">${this._t('gs.align_count', {
+                  n: String(r.moved), total: String(r.total), cm: String(d.cm),
+                })}</p>` : nothing}
               ${d.where
                 ? html`<p class="alignmsg">${this._t('gs.align_where', { s: d.where })}</p>`
                 : nothing}
               ${r.rotated
                 ? html`<p class="alignmsg">${this._t('gs.align_turned', { n: String(r.rotated) })}</p>`
                 : nothing}
+              <p class="alignmsg">${this._t('gs.optimize_changes', {
+                m: String(r.migrated), c: String(r.canonicalized),
+                w: String(r.wallsMerged), s: String(r.spansMerged),
+              })}</p>
               <div class="rhint">${this._t('gs.align_warn')}</div>`}
         </div>
         <div class="row">
           <span class="spacer"></span>
           <button class="btn ghost" @click=${() => (this._alignDialog = null)}>${this._t('btn.cancel')}</button>
-          ${r.moved === 0 ? nothing : html`
+          ${!d.changed ? nothing : html`
             <button class="btn on" @click=${this._runAlignToGrid} ?disabled=${d.busy}>
               <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this._t('gs.align_run')}
             </button>`}
@@ -7692,9 +7862,15 @@ class HouseplanCard extends LitElement {
           <div class="rhint">${this._t('gs.grid_hint')}</div>
           <div class="colorrow gsrow">
             <button class="btn ghost alignall" @click=${this._openAlignDialog}>
-              <ha-icon icon="mdi:grid"></ha-icon>${this._t('gs.align_all')}
+              <ha-icon icon="mdi:broom"></ha-icon>${this._t('gs.align_all')}
             </button>
           </div>
+          ${this._canOptimizeUndo ? html`<div class="colorrow gsrow">
+            <button class="btn ghost alignall" @click=${this._undoPlanOptimization}
+              ?disabled=${this._optimizeUndoBusy}>
+              <ha-icon icon="mdi:undo-variant"></ha-icon>${this._t('gs.optimize_undo')}
+            </button>
+          </div>` : nothing}
           <label class="dispsection">${this._t('gs.about_group')}</label>
           <div class="aboutver">${this._t('gs.about_version', { v: CARD_VERSION })}</div>
           <a class="aboutlink" href="https://github.com/Matysh/houseplan-card" target="_blank" rel="noopener">
@@ -8051,7 +8227,7 @@ class HouseplanCard extends LitElement {
               };
               const otherPolys = (rr: any) =>
                 space.rooms.filter((o) => o !== rr).map(polyOf).filter(Boolean) as number[][][];
-              return space.rooms.filter((r) => r.area || this._markup || disp.showBorders).map((r) => {
+              return space.rooms.filter((r) => r.area || this._mode === 'view' || this._markup || disp.showBorders).map((r) => {
               let cls = 'room ' + (space.bg ? 'overlay' : 'yard') + (this._markup ? ' outlined' : '');
               if (this._markup && (r.id === this._mergeSel || r.id === this._splitSel?.roomId))
                 cls += ' picked';
@@ -8086,10 +8262,18 @@ class HouseplanCard extends LitElement {
                 } else st.push('--room-fill:transparent', '--room-fill-op:0');
                 style = st.join(';');
               }
-              const tip = (e: MouseEvent) =>
-                this._showTip(e, r.name, '',
+              let areaText: string | null | undefined;
+              const tip = (e: MouseEvent) => {
+                if (this._mode !== 'view') return;
+                if (areaText === undefined) areaText = this._roomArea(r);
+                this._showTip(
+                  e,
+                  r.name || this._t('room.unnamed'),
+                  areaText ? this._t('tip.area', { value: areaText }) : '',
                   showLqi ? this._roomLqi(r.area) : null,
-                  this._roomTemp(r));
+                  this._roomTemp(r),
+                );
+              };
               const label = !space.bg && !disp.showNames && !this._markup;
               const c = this._roomCenter(r);
               // open boundaries: this room's solid stroke must not run beneath
@@ -8196,7 +8380,7 @@ class HouseplanCard extends LitElement {
                  space-card, so the two renderers agree. The per-device
                  multiplier and the kiosk scales still feed --dev-size. */}
           <div class="devlayer" style="--icon-size:${iconCqw(iconPct, space, view.w, this._kiosk ? this._kioskScale.icon : 1).toFixed(3)}cqw;--rl-font:${this._kiosk ? this._kioskScale.font : 1}">
-            ${devs.map((d) => this._renderDevice(d, view, showLqi, disp.fill === 'glow' && !this._markup))}
+            ${devs.map((d) => this._renderDevice(d, view, showLqi))}
             ${this._renderVacuums(devs, view)}
             ${this._renderVacFit(view)}
             ${this._renderOpeningLocks(view)}
@@ -8254,6 +8438,7 @@ class HouseplanCard extends LitElement {
         ${this._openingDialog ? this._renderOpeningDialog() : nothing}
         ${this._openingInfo ? this._renderOpeningInfoCard() : nothing}
         ${this._decorTextDialog ? this._renderDecorTextDialog() : nothing}
+        ${this._decorShapeDialog ? this._renderDecorShapeDialog() : nothing}
         ${this._spaceDialog ? this._renderSpaceDialog() : nothing}
         ${this._markerDialog ? this._renderMarkerDialog() : nothing}
         ${this._infoCard ? this._renderInfoCard() : nothing}
@@ -8350,11 +8535,12 @@ class HouseplanCard extends LitElement {
   }
 
   /**
-   * One pass per hass tick records every effective source. Only a witnessed,
-   * meaningful edge starts a short effect: first load and recovery from
-   * unknown/unavailable establish a baseline and never fake a detection.
+   * Bring activity runtime in sync with the marker/source graph without
+   * classifying an edge. Called after every device rebuild as well as before a
+   * hass tick: new sources get a baseline, rebound sources lose the old flash,
+   * and removed markers cannot leave timers behind.
    */
-  private _activityTick(): void {
+  private _syncActivityRuntime(): void {
     if (!this.hass) return;
     const live = new Set<string>();
     for (const d of this._devices) {
@@ -8369,18 +8555,35 @@ class HouseplanCard extends LitElement {
         this._activityRt.set(d.id, rt);
         continue;
       }
-      // A marker changed what it represents (cover action removed, controls
-      // rebound, primary replaced): the old entity's short effect must never
-      // leak onto the new source. Establish a fresh baseline instead.
-      if (rt.sources !== sourceKey) {
-        clearTimeout(rt.timer);
-        rt.sources = sourceKey;
-        rt.last = {};
-        rt.flashTs = 0;
-        rt.flashKind = null;
-        for (const sample of samples) rt.last[sample.eid] = sample.state;
-        continue;
-      }
+      if (rt.sources === sourceKey) continue;
+      clearTimeout(rt.timer);
+      rt.sources = sourceKey;
+      rt.last = {};
+      rt.flashTs = 0;
+      rt.flashKind = null;
+      for (const sample of samples) rt.last[sample.eid] = sample.state;
+    }
+    for (const [id, rt] of this._activityRt) {
+      if (live.has(id)) continue;
+      clearTimeout(rt.timer);
+      this._activityRt.delete(id);
+    }
+  }
+
+  /**
+   * One pass per hass tick records every effective source. Only a witnessed,
+   * meaningful edge starts a short effect: first load and recovery from
+   * unknown/unavailable establish a baseline and never fake a detection.
+   */
+  private _activityTick(): void {
+    if (!this.hass) return;
+    this._syncActivityRuntime();
+    for (const d of this._devices) {
+      if (d.hidden) continue;
+      const samples = this._visualSamples(d);
+      const sourceKey = this._activitySourceKey(samples);
+      const rt = this._activityRt.get(d.id);
+      if (!rt || rt.sources !== sourceKey) continue;
       // A direct closed↔open fallback is only a substitute for integrations
       // that omit opening/closing. Once a real travelling state is observed,
       // it owns the ring and the old 3.3 s fallback is discarded.
@@ -8396,12 +8599,6 @@ class HouseplanCard extends LitElement {
         rt.last[sample.eid] = sample.state;
       }
       if (edge) this._stampActivity(d.id, edge, sourceKey);
-    }
-    // Config/registry churn must not leave timers or stale edge baselines alive.
-    for (const [id, rt] of this._activityRt) {
-      if (live.has(id)) continue;
-      clearTimeout(rt.timer);
-      this._activityRt.delete(id);
     }
   }
 
@@ -8859,7 +9056,7 @@ class HouseplanCard extends LitElement {
       ${pucks}`;
   }
 
-  private _renderDevice(d: DevItem, view: { x: number; y: number; w: number; h: number }, showLqi = true, glowFill = false): TemplateResult {
+  private _renderDevice(d: DevItem, view: { x: number; y: number; w: number; h: number }, showLqi = true): TemplateResult {
     const p = this._pos(d);
     const left = ((p.x - view.x) / view.w) * 100;
     const top = ((p.y - view.y) / view.h) * 100;
@@ -8867,17 +9064,10 @@ class HouseplanCard extends LitElement {
     // and no live numbers either (HP-1510-02): no value text, no temperature,
     // no humidity, no LQI badge, no state-morphed icon. The base icon and the
     // name stay — enough to recognise the device and open its dialog.
-    // The owner's rule for LIGHT SOURCES (2026-07-29): where the glow layer
-    // is VISIBLE, the indicator IS the glow spot — the badge stays standard,
-    // on or off; wherever the spot is not drawn (other fills, the plan
-    // editor) a lit source goes plain yellow like a heating TRV. The gate
-    // must equal the layer's visibility, or a mode ends up with neither
-    // indicator (HP-1520-01). "Source" is exactly the litLightEntity
-    // condition that casts the spot, so a lit socket keeps its yellow.
+    // Yellow is the universal "working now" plate. A source glow supplements
+    // it instead of replacing it, so every fill mode tells the same story.
     const visual = this._deviceVisual(d);
-    let cls = d.hidden ? '' : this._stateClass(d, visual);
-    if (glowFill && visual.status === 'working' && litLightEntity(this.hass, d))
-      cls = cls.split(/\s+/).filter((c) => c && c !== 'on').join(' ');
+    const cls = d.hidden ? '' : this._stateClass(d, visual);
     const temp = d.hidden ? null : this._liveTemp(d);
     const hum = d.hidden ? null : this._liveHum(d);
     const lqi = showLqi && !d.virtual && !d.hidden ? lqiFor(this.hass, d.entities) : null;
@@ -8976,6 +9166,24 @@ class HouseplanCard extends LitElement {
       ${hum != null && valText == null ? html`<span class="hval">${hum}%</span>` : nothing}
       ${lqi != null ? html`<span class="lqi" style="color:${lqiColor(lqi)}">${lqi}</span>` : nothing}
     </div>`;
+  }
+
+  /** Clean-floor area shown in the room tooltip (same rule as resize labels). */
+  private _roomArea(r: RoomCfg): string | null {
+    const poly = roomPoly(r);
+    if (!poly) return null;
+    const walls = this._spaceWalls;
+    const floor = walls.length && r.id
+      ? (innerContourForRoom(
+          this._spaceModel().rooms, r.id, walls,
+          this._openPairs().flatMap((p) => p.segs),
+          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+        ) || poly)
+      : poly;
+    return formatArea(
+      areaM2(floor, this._gridPitch, this._cellCm),
+      this.hass?.config?.unit_system?.length === 'mi',
+    );
   }
 
   /** Room temperature honouring the tier-3 source override. */

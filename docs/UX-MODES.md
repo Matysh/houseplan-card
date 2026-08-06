@@ -35,7 +35,8 @@ Allowed: pan/zoom (wheel, pinch, buttons), switching spaces, device tap
 (info / more-info / toggle per settings), long-press → info card, opening tap →
 door/lock info card (with an explicit Unlock/Lock button when a lock is bound —
 the only way to operate a lock from the card; plan-icon taps never toggle locks),
-room-card link icon → HA area (room taps do nothing since v1.40.1), hover tooltips (name, temperature, signal).
+room-card link icon → HA area (room taps do nothing since v1.40.1), room hover
+highlight, hover tooltips (name, clean-floor area, temperature, signal).
 
 Removed from this mode (they move, not die):
 - icon dragging ("drag anywhere", v1.9 — consciously reversed),
@@ -68,13 +69,15 @@ layer you cannot see is a layer you cannot edit.
 
 | Setting | Off (default) | On | Always drawn in |
 |---|---|---|---|
-| `show_borders` — «Всегда отображать границы комнат» | borders (and the dashed **virtual walls**) are hidden | both are drawn | the Plan editor |
+| `show_borders` — «Всегда отображать границы комнат» | in View, borders and dashed **virtual walls** are hidden | both are drawn | room borders: Plan; virtual walls: all editors |
 | `hide_decor` — «Скрыть декоративный слой» | decor is drawn | lines, shapes, labels and furniture are hidden | the Background editor |
 | `hide_openings` — «Скрыть проёмы» | doors and windows are drawn | their symbols are hidden | the Plan editor |
 
-- **Virtual walls follow `show_borders`** (owner, 2026-08-05). They are walls —
-  dashed ones. Drawing them on a space with no borders left a plan whose only
-  walls were a few floating dashed stretches.
+- **Virtual walls follow `show_borders` in View** (owner, 2026-08-05). They are
+  walls — dashed ones. Drawing them on a View with no borders left a plan whose
+  only walls were a few floating dashed stretches. Every editor deliberately
+  shows them regardless of the switch: hiding geometry while editing a plan,
+  device placement or its underlay makes those modes visually ambiguous.
 - **Their geometry and their presentation are separate.** Every virtual span
   still ends on the real wall centreline. In View the thick wall body is
   painted over the dash ends, so they visually stop at its faces; editors paint
@@ -102,6 +105,9 @@ layer you cannot see is a layer you cannot edit.
 
 - Toolbar tools: select / line / rect / oval / text / erase, plus colour, width
   and fill. Shapes are drag-drawn with grid snap and a live preview.
+- In **Select**, double click always means “edit this object”. Text opens its
+  text/HA-variable form; a line, rectangle, oval or furniture symbol opens the
+  common colour and line-width form, with Fill where the shape supports it.
 - **Live size badge** (owner 2026-08-04): while a LINE is being dragged out, the
   same `.measurelabel` the Plan editor puts on a wall shows «length · angle» —
   `segmentCm` over the space's `cell_cm`, metres or feet per the HA unit system,

@@ -72,8 +72,12 @@ Built from the registries (`_buildDevices`), rules carried over 1-to-1 from the 
 - Temperature: an entity with device_class=temperature / °C / `_temperature$` → label on the right.
 - LQI (zigbee): the average over `*_linkquality` entities → label under the icon; color via
   `lqiColor()`: ≤40 red → ≥180 green (hsl gradient). The room average is shown in the room tooltip.
+  The same tooltip includes the formatted clean-floor area (inner contour for
+  thick walls), and View hover gives every room an accent/brightness highlight.
 - Icon state classes: on (yellow), open (orange: cover/valve/lock/binary_sensor
-  of problem classes), unavail (transparency).
+  of problem classes), unavail (transparency). Yellow remains on the marker in
+  source-glow fill mode: a light pool is spatial information, not a replacement
+  for the universal working-state plate.
 
 ## Sizes
 
@@ -92,6 +96,8 @@ resolver (`src/device-visual.ts`) for availability, steady status and activity. 
 shows the icon/morph and status plate; `icon_ripple` additionally shows a finite event,
 static presence, mechanical transition or actual-work ring; `value` replaces the icon
 with the HA-formatted numeric value. A critical alarm is red in every presentation.
+Runtime baselines are seeded as soon as a rebuilt registry becomes authoritative, before
+the next HA snapshot is classified; source-key changes reset any finite effect immediately.
 Legacy `display: ripple` is read as `icon_ripple` and rewritten on the next config save;
 the backend accepts it only for compatibility. `ripple_color` and `ripple_size` remain the
 stored names for the ordinary activity effect. `size` (icon multiplier via the
@@ -201,6 +207,8 @@ double click → properties dialog. In markup mode the "Opening" tool handles cl
 | `houseplan/config/get` | — | `{config, rev}` |
 | `houseplan/trail/get` | — | `{trails: {marker: {current, previous}}}` — vacuum runs, raw robot coords |
 | `houseplan/config/set` | `config`, `expected_rev?` | `{ok, rev}` / err `conflict`; event `houseplan_config_updated` |
+| `houseplan/plan/optimize` | `config`, `layout`, both expected revisions | crash-resumable two-store commit + one-deep backup |
+| `houseplan/plan/optimize_undo` | both expected revisions | restores backup only before any later edit |
 | `houseplan/plan/set` | `space_id`, `ext` (svg/png/jpg/webp), `data` (b64, ≤8 MB) | `{ok, url}` — writes `<space>.<token>.<ext>`, deletes nothing |
 | `houseplan/plans/list` | — | `{plans: [{name, url, size, modified, used_by}], total}` (newest 60) |
 | `houseplan/plans/delete` | `name` | `{ok, removed}` / err `in_use` |

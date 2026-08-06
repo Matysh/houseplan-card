@@ -451,19 +451,20 @@ export const cardStyles = css`
       stroke: transparent;
       stroke-width: 2;
     }
-    .room.overlay:not(.styled):hover {
-      fill: #9aa0a6;
-      fill-opacity: 0.22;
-      stroke: var(--hp-muted);
+    .stage.mode-view .room.overlay:not(.styled):hover {
+      fill: var(--hp-accent);
+      fill-opacity: 0.18;
+      stroke: var(--hp-accent);
     }
     .room.yard {
       fill: rgba(75, 140, 90, 0.14);
       stroke: #4b8c5a;
       stroke-width: 2;
     }
-    .room.yard:not(.styled):hover {
-      fill: rgba(75, 140, 90, 0.24);
-      stroke: #6fbf86;
+    .stage.mode-view .room.yard:not(.styled):hover {
+      fill: var(--hp-accent);
+      fill-opacity: 0.2;
+      stroke: var(--hp-accent);
     }
     .room.styled {
       stroke: var(--room-stroke, transparent);
@@ -472,14 +473,15 @@ export const cardStyles = css`
       fill: var(--room-fill, transparent);
       fill-opacity: var(--room-fill-op, 0);
     }
-    /* hover: darken the current fill instead of recoloring; grey when unfilled */
-    .room.styled.filled:hover {
-      filter: brightness(0.78);
+    /* View hover: brighten the current fill; accent wash when unfilled. */
+    .stage.mode-view .room.styled.filled:hover {
+      filter: brightness(1.2) saturate(1.08) drop-shadow(0 0 4px var(--hp-accent));
+      stroke: var(--hp-accent);
       stroke-opacity: 1;
     }
-    .room.styled:not(.filled):hover {
-      fill: #9aa0a6;
-      fill-opacity: 0.22;
+    .stage.mode-view .room.styled:not(.filled):hover {
+      fill: var(--hp-accent);
+      fill-opacity: 0.18;
       stroke-opacity: 1;
     }
     /* doors & windows */
@@ -1074,6 +1076,12 @@ export const cardStyles = css`
     }
     .decorbar .dfill {
       display: inline-flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-s); cursor: pointer;
+    }
+    .dialog .dfill {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-3);
+      cursor: pointer;
     }
     .opghost {
       stroke: var(--hp-open, #ff9800);
