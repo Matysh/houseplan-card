@@ -3,8 +3,10 @@
 *Fixed with the owner on 2026-07-22. This document is a guard rail: features are
 built, improved and accepted **only** if they serve a job listed here. When a new
 idea appears, first find its row in this file; if there is none — it belongs to
-HA core, to another card, or nowhere. Companion documents: PRODUCT.md (market),
-ROADMAP.md (order of work), UX-MODES.md (interaction model).*
+HA core, to another card, or nowhere. Companion documents:
+PRODUCT-IMPROVEMENT-PLAN.ru.md (current product audit and order of work),
+ROADMAP.md (engineering/quality backlog), UX-MODES.md (interaction model).
+The old market snapshot is archived at `legacy/docs/PRODUCT-2026-07-05.md`.*
 
 ## Mission
 

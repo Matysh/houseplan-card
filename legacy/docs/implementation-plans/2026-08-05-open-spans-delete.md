@@ -8,7 +8,7 @@
 
 **Tech Stack:** TypeScript, Lit card, node:test, Playwright smokes, GitHub prerelease.
 
-**Spec:** `docs/superpowers/specs/2026-08-05-open-spans-delete-design.md`
+**Spec:** [`docs/superpowers/specs/2026-08-05-open-spans-delete-design.md`](../../../docs/superpowers/specs/2026-08-05-open-spans-delete-design.md)
 
 ## Global Constraints
 

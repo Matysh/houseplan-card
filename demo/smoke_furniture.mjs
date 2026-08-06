@@ -5,7 +5,7 @@
 //      cell_cm пространства, и сразу оказывается выделенным в «выбрать»;
 //   3) поля ширины/глубины в палитре меняют размер ДО размещения;
 //   4) магнит к стене: предмет прижимается к ближайшей стене и доворачивается
-//      по ней; Shift магнит отключает (docs/CANVAS.md §9.4);
+//      по ней; Shift не отключает обязательную привязку (docs/CANVAS.md §9.4);
 //   5) у выделенного предмета та же рамка, что у текстового блока, — угловые
 //      ручки (НЕзависимые ширина и глубина) и ручка поворота с шагом 5°;
 //   6) во время растягивания угла показываются живые плашки размеров;
@@ -138,15 +138,14 @@ const res = await page.evaluate(async () => {
   out.wallMagnetQuantisesAlongTheWall = !!bed
     && Math.abs((bed.x + bed.w / 2) * 1000 - 300) <= PITCH + 1e-6;
 
-  // …а Shift магнит отключает: предмет встаёт ровно под пальцем
+  // …Shift больше не отключает магнит
   c._decorTool = 'furniture'; await c.updateComplete;
   pick('bed_single'); await c.updateComplete;
   ev('pointerdown', stageEl(), 301.7, 151.3, { shiftKey: true });
   await c.updateComplete;
   const free = c._decorList.find((s) => s.symbol === 'bed_single');
-  out.shiftDisablesTheMagnet = !!free
-    && near((free.x + free.w / 2) * 1000, 301.7, 1e-6)
-    && near((free.y + free.h / 2) * 1000, 151.3, 1e-6)
+  out.shiftKeepsTheMagnet = !!free
+    && !near((free.y + free.h / 2) * 1000, 151.3, 1e-6)
     && free.angle === undefined;
 
   // …магнит работает и при ПЕРЕТАСКИВАНИИ: тянем диван к левой стене (x=40)
@@ -162,7 +161,8 @@ const res = await page.evaluate(async () => {
     near((pulled.x + pulled.w / 2) * 1000, 40 + cmToUnits(90) / 2, 1e-6);
   ev('pointermove', stageEl(), 300, 300, { shiftKey: true });
   await c.updateComplete;
-  out.shiftDragIsFree = near((sofaNow().x + sofaNow().w / 2) * 1000, 300, 1e-6);
+  const shiftDragGridIndex = (sofaNow().x * 1000) / PITCH;
+  out.shiftDragRemainsGridBound = near(shiftDragGridIndex, Math.round(shiftDragGridIndex), 1e-6);
   ev('pointerup', stageEl(), 300, 300, { shiftKey: true });
   await c.updateComplete;
 
@@ -193,7 +193,8 @@ const res = await page.evaluate(async () => {
   await c.updateComplete;
   const grown = sofaNow();
   out.cornerGrowsTheWidth = grown.w > before.w && near(grown.w * 1000, b.w + 100, 1e-6);
-  out.cornerGrowsTheDepthINDEPENDENTLY = near(grown.h * 1000, b.h + 20, 1e-6);
+  out.cornerGrowsTheDepthINDEPENDENTLY = grown.h > before.h
+    && near(((grown.h * 1000) / PITCH) % 1, 0, 1e-6);
   out.oppositeCornerStaysPut = near(grown.x * 1000, b.x, 1e-6) && near(grown.y * 1000, b.y, 1e-6);
   const plates = [...sr().querySelectorAll('.measurelabel.furnmeasure')];
   out.twoLivePlates = plates.length === 2;

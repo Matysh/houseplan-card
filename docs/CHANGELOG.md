@@ -2,6 +2,39 @@
 
 ## Unreleased (dev)
 
+## v1.59.0-rc.2 — 2026-08-06
+
+The second release candidate makes plan editing predictable and reversible,
+enforces one grid invariant, and completes the documentation refresh.
+
+- **One tool — one result.** Closing a virtual boundary, merging rooms and
+  deleting a room are now three separate Plan actions. Delete removes only the
+  room that was explicitly clicked; the opening tool no longer closes an
+  existing dashed stretch. The drawing action is renamed Room outline to state
+  that it creates a closed room rather than a free wall.
+- **One named geometry history.** Create, Split, Merge, Resize, room deletion,
+  wall thickness, virtual-boundary edits and door/window add/edit/move/delete
+  all share a 50-command Undo/Redo stack. Toolbar buttons and Ctrl+Z,
+  Ctrl+Shift+Z/Ctrl+Y expose the same named steps; a new branch clears Redo.
+  Echoes of the card's own server writes keep the history, while a genuinely
+  newer external revision safely resets it.
+- **The grid is mandatory.** Shift can no longer place rooms, markers, labels,
+  decor, furniture, backdrops or openings between grid positions. Free points
+  land on nodes; wall-bound objects stay projected and quantised along their
+  wall. Shift remains only for explicitly angular controls. Optimize plans
+  repairs old/imported off-grid data.
+- **Clearer interaction feedback.** Glow is pointer-transparent, so room hover
+  and tooltips work through a light pool. The View hover overlay follows the
+  complete physical perimeter, including shared thick walls. Existing device
+  dialogs now expose an explicit bottom-left Hide/Show action. The static
+  space-card editor no longer offers the unused `aspect_ratio` setting. Toasts
+  are pointer-transparent and cannot block a tool handle underneath them.
+- **Documentation and repository hygiene.** A new Russian user guide and a
+  code-grounded product audit/roadmap document current behaviour, setting and
+  device matrices. Obsolete audits, rejected design notes and one-off debug
+  scripts moved under `legacy/`; active docs and automated scenarios now match
+  the grid, Undo and split-action contracts.
+
 ## v1.59.0-rc.1 — 2026-08-06
 
 First release candidate of the 1.59 line: safe whole-plan optimization,
@@ -298,7 +331,7 @@ written spec only (docs/WALL-THICKNESS.md); it is not coded yet.
   a room edge), segment keys that survive resize, hatching that does not
   affect area, and how openings render in a thick wall.
 
-Audit follow-ups from `docs/AUDIT-RECOMMENDATIONS.md` (2026-08-05):
+Audit follow-ups from `legacy/docs/audit-v1.58.0/AUDIT-RECOMMENDATIONS.md` (2026-08-05):
 
 - **Write policy aligned (P0-4).** `admin_only` now defaults to **on** for new
   installs and when the option key is missing; `houseplan/config/get` returns
@@ -437,7 +470,7 @@ plans already uploaded to the server stops collapsing into a stripe.
   cloud cover, night and the editors govern it without a line of extra
   logic. Peak opacity 0.42, picked against a white sheet and the dark
   glow canvas alike. The «shade instead of light» model of
-  docs/SUN-CONTRAST.md was rejected in favour of this; that file now
+  legacy/docs/SUN-CONTRAST.md was rejected in favour of this; that file now
   records the decision and keeps the analysis behind it.
 
 - **The «+» that adds a space is not an editor tool.** The button next to

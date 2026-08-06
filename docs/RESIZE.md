@@ -139,10 +139,10 @@ drops the overlay, leaving nothing to restore and nothing to write.
 ## Undo
 
 One operation (handle release that changed something) = one undo step.
-The plan editor has no committed-operation undo stack (Ctrl+Z/Esc only
-walk back draw/split points), so the resize tool keeps its own stack
-of pre-drag snapshots (rooms + openings of the space, capped at 30)
-and Ctrl+Z/⌘Z pops it while the tool is active.
+Resize uses the same named 50-command Undo/Redo stack as every other
+committed plan-geometry operation. Its snapshot includes rooms, openings,
+wall thickness intervals and virtual boundary spans, so one Ctrl+Z/⌘Z
+restores the entire transaction. Ctrl+Shift+Z/Ctrl+Y reapplies it.
 
 ## Out of scope / invariants
 

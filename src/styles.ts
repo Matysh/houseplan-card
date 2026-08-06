@@ -1180,6 +1180,8 @@ export const cardStyles = css`
     }
     .stage.markup.tool-openwall { cursor: crosshair; }
     .stage.markup.tool-openwall.wallhot { cursor: crosshair; }
+    .stage.markup.tool-closewall { cursor: default; }
+    .stage.markup.tool-closewall.wallhot { cursor: pointer; }
     .openwall {
       stroke: var(--ow-stroke, var(--hp-muted));
       stroke-width: 2.5;
@@ -1188,8 +1190,9 @@ export const cardStyles = css`
       pointer-events: none;
       opacity: 0.9;
     }
-    /* rooms with open stretches: the polygon's own stroke is fully off
-       (hover included) — the trimmed .room-outline path draws the walls */
+    /* Rooms with open/thick stretches: the polygon's own stroke is fully off.
+       The trimmed .room-outline draws normal walls; View hover gets its own
+       top overlay after the wall bodies. */
     .room.noedge {
       stroke-opacity: 0 !important;
     }
@@ -1208,6 +1211,17 @@ export const cardStyles = css`
     .room-outline.outlined {
       stroke: rgba(62, 166, 255, 0.55);
       stroke-opacity: 1;
+    }
+    /* View hover is repeated above the unioned thick-wall body. The original
+       room stroke remains responsible for the fill and thin-wall fallback. */
+    .room-hover-outline {
+      fill: none;
+      stroke: var(--hp-accent);
+      stroke-width: 3;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+      pointer-events: none;
+      filter: drop-shadow(0 0 3px var(--hp-accent));
     }
     .openwalls.hot .openwall {
       stroke: #ffc14d;
@@ -2333,6 +2347,19 @@ export const cardStyles = css`
       padding: var(--sp-5) var(--sp-6);
       border-top: 1px solid var(--hp-line);
     }
+    .dialog .row.markerfooter {
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .markeractions,
+    .markersaveactions {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-4);
+    }
+    .markeractions:empty { display: none; }
+    .markersaveactions { margin-left: auto; }
     .editbar .warn {
       color: #ffc14d;
     }
@@ -2441,6 +2468,7 @@ export const cardStyles = css`
     }
     .toast {
       position: fixed;
+      pointer-events: none;
       left: 50%;
       bottom: 22px;
       transform: translateX(-50%);

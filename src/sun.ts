@@ -381,7 +381,7 @@ export function rayStops(): [number, number][] {
  * также плавно уходит в ноль вместе с самим градиентом».
  *
  * Why at all: painting light means ADDING luminance, and white paper has none
- * left to give (the analysis kept in docs/SUN-CONTRAST.md). The owner rejected
+ * left to give (the analysis kept in legacy/docs/SUN-CONTRAST.md). The owner rejected
  * the «shade instead of light» model that analysis proposed and asked for the
  * cheap half of it instead — light is invisible on white, but its BOUNDARY is
  * not. One hairline along each side of the shaft gives the wedge a "beam"

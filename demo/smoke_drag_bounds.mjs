@@ -110,14 +110,14 @@ const out = await page.evaluate(async () => {
   c._drag = null;
   o.garbageStillClamped = c._layout[dev2.id].x === 5000 && c._layout[dev2.id].y === 5000;
 
-  // ---- (f) Shift is the only way to land BETWEEN the nodes --------------
+  // ---- (f) Shift cannot land between the nodes ---------------------------
   const dev3 = c._devices.find((d) => d.id !== dev.id && d.id !== dev2.id && !d.virtual);
   const r0 = c._pos(dev3);
   const halfStep = NORM_W / 240 / 2;
   c._drag = { id: dev3.id, sx: 400, sy: 400, ox: r0.x, oy: r0.y, moved: false };
   c._pointerMove(mk(2.5 * NORM_W + halfStep - r0.x, 2.5 * NORM_W - r0.y, 400, 400, { shiftKey: true }), dev3);
   c._drag = null;
-  o.shiftPlacesBetweenTheNodes = !onGrid(c._layout[dev3.id].x);
+  o.shiftStillSnapsToTheNodes = onGrid(c._layout[dev3.id].x);
 
   c._setMode('view');
   return o;

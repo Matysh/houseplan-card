@@ -45,6 +45,19 @@ const res = await page.evaluate(async () => {
   label.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true, clientX: 10, clientY: 10 }));
   await c.updateComplete;
   out.delroomIgnored = !confirmCalled;
+  // 6) Delete has exactly one semantic result: the clicked room disappears;
+  // it never closes a virtual boundary or merges a neighbour into it.
+  const roomCount = c._curSpaceCfg.rooms.length;
+  const deleteId = room.id;
+  window.confirm = () => true;
+  c._deleteRoomClick(c._roomCenter(room));
+  await c.updateComplete;
+  out.deleteOnlyClickedRoom = c._curSpaceCfg.rooms.length === roomCount - 1
+    && !c._curSpaceCfg.rooms.some((x) => x.id === deleteId);
+  c._undoGeometry();
+  await c.updateComplete;
+  out.deleteUndoRestoresRoom = c._curSpaceCfg.rooms.length === roomCount
+    && c._curSpaceCfg.rooms.some((x) => x.id === deleteId);
   return out;
 });
 checkAll(res);

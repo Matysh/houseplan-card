@@ -193,9 +193,9 @@ lands on a node. The short side follows from the aspect ratio and generally
 does **not** — that is what "uniform, no stretch" costs, and it is the
 right trade: a picture whose proportions drift is a broken picture.
 
-**Shift** suspends the snap for the duration of the gesture, exactly as
-everywhere else (§9.4). The `±CANVAS_LIMIT` clamp rides along regardless —
-`_snap()` and `clampCanvasN` are the only bound either gesture has.
+There is no modifier that suspends positional snapping (§9.4). The
+`±CANVAS_LIMIT` clamp rides along — `_snap()` and `clampCanvasN` are the
+only bound either gesture has.
 
 ---
 

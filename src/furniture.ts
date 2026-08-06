@@ -359,7 +359,7 @@ const norm180 = (a: number): number => {
  * (local `y = 0`, the convention every symbol above obeys) lies ON the wall
  * and its body stays on the side the user was dragging it from, and it is
  * turned to the wall's own direction. Returns `null` when no wall is within
- * `maxDist`, which is how "Shift, or simply far away" stays plain dragging.
+ * `maxDist`, so a piece outside the magnet reach stays a grid-bound drag.
  *
  * The offset ALONG the wall is quantised to `step` when one is given: the
  * wall decides two of the three degrees of freedom, the grid still decides
@@ -441,7 +441,8 @@ export function furnitureCorners(
  * `px/py` is the pointer. `step > 0` quantises each dimension to the grid —
  * on an unrotated piece whose fixed corner sits on a node that also puts the
  * dragged corner on a node, which is what "snap to the grid" has to mean
- * here; Shift is the caller passing 0.
+ * here. The UI always passes a positive grid step; zero remains useful only
+ * for pure geometry callers that intentionally request no quantisation.
  */
 export function furnitureResize(
   orig: { x: number; y: number; w: number; h: number; angle?: number },

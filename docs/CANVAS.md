@@ -392,30 +392,27 @@ Three things were fixed here besides the new coverage:
 
 ### 9.4 Shift
 
-`Shift` suspends the snap for the duration of the gesture, everywhere:
-`_snap(p, ev)` reads `ev.shiftKey`, `_savePos(..., shift)` takes it, and
-`snapToWall` is called without `step` when it is held. It keeps its two
-older meanings too — it opts out of the opening's centre magnet, and it
-turns the compass to coarse 15° steps.
+There is no free-position mode. `Shift` never suspends coordinate
+snapping: free anchors always land on grid nodes, and wall-bound objects
+always remain projected and quantised along their wall. `Shift` is
+reserved for explicitly angular controls (fine decor rotation and the
+compass step) and cannot create an off-grid object.
 
 ### 9.5 «Оптимизировать планы» — explicit whole-plan maintenance
 
-Existing plans may hold coordinates between the nodes. The card does
-**not** round them on update. General settings contain a **Plan
-maintenance** group whose action previews and then runs all current
-lossless maintenance passes: model upgrades, grid alignment, exact
-open-span canonicalisation and wall-interval compaction.
+Existing and imported plans may still hold coordinates between the
+nodes. New editor operations cannot create more. General settings contain
+a **Plan maintenance** group whose action previews and then repairs old
+data through all current passes: model upgrades, mandatory grid
+alignment, exact open-span canonicalisation and wall-interval compaction.
 
 Why an action rather than a silent migration:
 
 1. It moves the user's data without asking. A house plan is a drawing;
    the card has no mandate to redraw it on a version bump.
-2. Some elements are off-grid **on purpose** — a small decor label
-   nudged next to an icon, a window on a diagonal wall, a plan traced
-   over a photo whose scale was never a whole number of cells.
-3. A silent migration is unattributable. When a room looks 3 cm wrong
+2. A silent migration is unattributable. When a room looks 3 cm wrong
    the owner cannot tell whether the card did it or they did.
-4. An update that touches stored geometry cannot be rolled back by
+3. An update that touches stored geometry cannot be rolled back by
    downgrading the card. The explicit action has a one-deep snapshot and
    can also simply not be pressed.
 

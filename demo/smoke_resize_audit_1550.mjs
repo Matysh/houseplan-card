@@ -15,7 +15,8 @@ const snap = await page.evaluate(() => JSON.stringify(window.__card._serverCfg))
 const restore = () => page.evaluate((s) => {
   const c = window.__card;
   c._serverCfg = JSON.parse(s);
-  c._rszSel = null; c._rszDrag = null; c._rszLive = null; c._rszUndo = [];
+  c._rszSel = null; c._rszDrag = null; c._rszLive = null;
+  c._geometryHistory.clear();
   if ('_rszPreview' in c) c._rszPreview = null;
   c._cfgEpoch++; c.requestUpdate();
   return c.updateComplete && true;
@@ -138,7 +139,7 @@ await settle();
   await settle();
   check('03_snapshot_back_live', Math.abs((await roomLive('r1'))[1][0] - 0.55) < 1e-6);
   check('03_server_untouched', Math.abs((await roomSrv('r1'))[1][0] - 0.55) < 1e-6);
-  check('03_undo_empty', await page.evaluate(() => window.__card._rszUndo.length), 0);
+  check('03_undo_empty', await page.evaluate(() => window.__card._geometryHistory.size), 0);
   check('03_drag_cleared', await page.evaluate(() => window.__card._rszDrag === null));
   await page.waitForTimeout(800);
   check('03_no_pending_write', (await writes()) - w0, 0);
@@ -166,7 +167,7 @@ await settle();
   });
   await settle();
   check('03_corner_snapshot_back', Math.abs((await roomLive('r4'))[2][0] - 0.55) < 1e-6);
-  check('03_corner_undo_empty', await page.evaluate(() => window.__card._rszUndo.length), 0);
+  check('03_corner_undo_empty', await page.evaluate(() => window.__card._geometryHistory.size), 0);
   await page.waitForTimeout(800);
   check('03_corner_no_write', (await writes()) - w0, 0);
   await page.mouse.up();

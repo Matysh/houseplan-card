@@ -6,7 +6,7 @@ mechanism; the code follows it.
 ## Principle
 
 Whether a device is on the plan is an EXPLICIT, per-device fact: the
-"Hide from plan" checkbox, stored as `marker.hidden`. The old on-the-fly
+bottom-left "Hide" / "Show" action, stored as `marker.hidden`. The old on-the-fly
 filtering algorithm survives only as the SEEDER of those flags — it decides
 the initial value once, and the user owns the flag from then on.
 
@@ -47,7 +47,8 @@ the old behaviour until an editing client materialises it.
 
 - Hidden devices ARE built (flagged `hidden`), but not rendered in any mode,
   except the device editor with "Show hidden devices" on — there they render
-  ghosted (translucent, dashed) and clicking opens the dialog to untick.
+  ghosted (translucent, dashed) and clicking opens the dialog, where the
+  bottom-left "Show" action restores it after saving.
 - "Show hidden devices" (rename of "Show all") is LOCAL, ephemeral state of
   the current tab.
 - Room LQI counts hidden devices (owner's decision).
@@ -63,9 +64,10 @@ the old behaviour until an editing client materialises it.
 - Light fill and glow do NOT count hidden devices — an invisible device casts
   no visible light (owner's decision). Room climate is registry-wide and
   unaffected, as before.
-- The checkbox appears in the dialog of EVERY device kind, virtual included.
-- "Remove from plan" disappears for auto/entity devices (the checkbox is the
-  one way to hide); a virtual device's "Delete" remains a real deletion.
+- The bottom-left "Hide" / "Show" action appears in the dialog of every
+  existing device kind, virtual included; changing it is applied by "Save".
+- "Remove from plan" disappears for auto/entity devices (the hide action is
+  the one way to hide); a virtual device's "Delete" remains a real deletion.
 - Duplicate names are still numbered, light groups still fold — those are
   aggregation, not hiding.
 

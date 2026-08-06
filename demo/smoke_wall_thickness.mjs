@@ -157,8 +157,8 @@ const res = await page.evaluate(async () => {
     && c._intervalCm([550, 350, 550, 460]) === 25
     && c._intervalCm([550, 200, 550, 300]) === 0;
 
-  c._tool = 'openwall';
-  c._openWallClick([550, 250]); // a click on the span closes it again
+  c._tool = 'closewall';
+  c._closeWallClick([550, 250]);
   await upd();
   out.spanClosed = !(sp().open_spans || []).length;
   delete sp().openings;
@@ -214,7 +214,7 @@ const res = await page.evaluate(async () => {
     pev('pointerup', sharedHandle, cx + step, cy);
     await upd();
     out.resizeKeeps = (sp().walls || []).some((w) => w.cm === 30);
-    c._rszUndoPop();
+    c._undoGeometry();
     await upd();
     out.resizeUndoRestores = (sp().walls || []).some((w) => w.cm === 30)
       && JSON.stringify(sp().walls || []) === wallsBefore;

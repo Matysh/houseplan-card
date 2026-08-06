@@ -95,5 +95,5 @@ Avoid mixing A+B+C in one PR. Distribution P0s do not require waiting on P1.
 - Market context: [`AUDIT-MARKET.md`](AUDIT-MARKET.md)
 - Quality detail: [`AUDIT-QUALITY.md`](AUDIT-QUALITY.md)
 - Gaps / matrix: [`AUDIT-FUNCTIONAL.md`](AUDIT-FUNCTIONAL.md)
-- Guard rail: [`SCOPE.md`](SCOPE.md)
-- Living ops: [`STATUS.md`](STATUS.md)
+- Guard rail: [`SCOPE.md`](../../../docs/SCOPE.md)
+- Living ops: [`STATUS.md`](../../../docs/STATUS.md)

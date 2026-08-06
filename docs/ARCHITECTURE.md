@@ -161,10 +161,17 @@ bigger part keeps the room identity (name/area/devices).
 
 ## Markup editor (v1.4.0+)
 
-State inside the card: `_markup` (mode), `_tool` (draw/delroom), `_path` (the current outline,
+State inside the card: `_markup` (mode), `_tool` (draw/merge/split/resize/opening/openwall/
+closewall/wallthick/delroom), `_path` (the current outline,
 vertices on the GRID_N=240 grid). Clicks on the stage → `_svgPoint`→`_snap`. The outline is closed
 = a click on the first vertex → area select (hass.areas) + name → room {poly}. Polygon rooms and
 rectangles are rendered uniformly (hit-test: point-in-polygon / rect).
+
+All committed plan-geometry mutations enter one named 50-command Undo/Redo stack. Ctrl+Z,
+Ctrl+Shift+Z/Ctrl+Y and the toolbar buttons use the same stack; a new mutation after Undo drops
+the redo branch. The local stack survives the server echo of its own writes, but is cleared when
+a newer external config revision is adopted. Positional placement is always quantized to the plan
+grid. Shift remains an angular precision modifier only and cannot create off-grid coordinates.
 
 **A line is never an entity of its own (v1.19.0).** Nothing is persisted while you draw: an
 outline you never close leaves no trace. Walls are *derived* from the room outlines by

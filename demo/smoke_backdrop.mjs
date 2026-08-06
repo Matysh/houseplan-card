@@ -7,7 +7,7 @@
  *   • dragging the body moves the picture and writes plan_x/plan_y;
  *   • a corner handle scales UNIFORMLY about the opposite corner;
  *   • live badges state the real size in metres, through cell_cm;
- *   • position and size land on the grid, Shift steps off it;
+ *   • position and size always land on the grid, including with Shift;
  *   • the paper follows the ROOMS even here, and the picture is drawn above
  *     the paper and below the walls;
  *   • «Вписать всё» still finds a picture that has been dragged away;
@@ -158,7 +158,7 @@ check('badge_gone_after_release', (await badges()).length, 0);
 check('the_plan_geometry_never_moved', await page.evaluate(() =>
   JSON.stringify(window.__card._serverCfg.spaces.find((s) => s.id === 'f1').rooms)), roomsBefore);
 
-// ---------- 3) Shift steps off the grid ----------------------------------
+// ---------- 3) Shift cannot step off the grid -----------------------------
 await restore();
 await settle();
 {
@@ -173,12 +173,8 @@ await settle();
   await page.keyboard.up('Shift');
   await settle();
   const im = await imageRect();
-  // Shift is not "a different snap", it is NO snap: the corner is wherever the
-  // finger left it, to the pixel — and a pixel is a fraction of a grid step,
-  // so at least one axis is bound to sit between the nodes.
-  check('shift_lands_where_the_finger_did',
-    Math.abs(im.x - 102) <= 1 && Math.abs(im.y - 152) <= 1, true);
-  check('shift_is_off_the_lattice', onGrid(im.x) && onGrid(im.y), false);
+  check('shift_still_lands_on_the_nearest_node', [im.x, im.y], [100, 150]);
+  check('shift_stays_on_the_lattice', onGrid(im.x) && onGrid(im.y), true);
 }
 
 // ---------- 4) a corner handle scales UNIFORMLY about the opposite one ----

@@ -15,11 +15,11 @@
 
 | Item | State |
 |---|---|
-| Version | **v1.59.0-rc.1** everywhere (manifest, const.py, package.json, CARD_VERSION) — **pre-release**, tag `v1.59.0-rc.1` on **`dev`**, GitHub Release with `prerelease=true`; `main` is not touched. The rc line deliberately replaces the planned beta.11: GitHub lists beta.9 before beta.10/beta.11 lexicographically and HACS 2.0.x consumes that order without SemVer sorting, while rc.1 is both newer by SemVer and discoverable first. Previous pre-release: v1.59.0-beta.10; previous stable: v1.58.0 |
+| Version | **v1.59.0-rc.2** everywhere (manifest, const.py, package.json, CARD_VERSION) — **pre-release**, tag `v1.59.0-rc.2` on **`dev`**, GitHub Release with `prerelease=true`; `main` is not touched. The rc line avoids the beta.9/beta.10 lexicographic discovery problem in HACS 2.0.x. Previous pre-release: v1.59.0-rc.1; previous stable: v1.58.0 |
 
 | Workflow | Owner's rule since 2026-08-05: ordinary fixes/features are made **locally, without tests and without commits**. Tests/build/smokes run only when the owner asks for a pre-release; then bump the version, commit/tag the tested `dev` state and publish a GitHub Release with `prerelease=true`. `main` is not touched and nothing is copied to the home instance by hand. The release workflow now reports a failed HACS-discovery check when GitHub does not return the new tag as its first prerelease |
 | GitHub | https://github.com/Matysh/houseplan-card — `main` carries stable releases; pre-release tags may point directly at `dev`. Work lands on `dev` and is merged into `main` for a stable release, so `dev` is normally equal to or ahead of `main`, never behind. Push via SSH key `ha_jb` (remote git@github.com:…); API releases via the fine-grained PAT in `~/.git-credentials` (Contents R/W, issued 2026-07-23) |
-| CI | rc.1 passes the local Node 22 typecheck/build, all 386 frontend tests, all 93 pure-backend tests and all 113 browser smokes. Native Windows cannot start the current HA pytest plugin (`fcntl` is Unix-only), so the exact-SHA Ubuntu Validate remains mandatory: `release.yml` withholds the asset until every matching run finishes green; GitHub Validate and the release asset are verified after the tag is pushed |
+| CI | rc.2 passes the local Node 22 typecheck/build, all 389 frontend tests, all 93 pure-backend tests and all 113 browser smokes. Native Windows cannot start the current HA pytest plugin (`fcntl` is Unix-only), so the exact-SHA Ubuntu Validate remains mandatory: `release.yml` withholds the asset until every matching run finishes green; GitHub Validate and the release asset are verified after the tag is pushed |
 | HACS | Custom repository works. **Inclusion PR: hacs/default#9004** — open, valid, labeled, mergeable clean, never drafted. Queue: 1212 open, 835 older than ours. Merge rate COLLAPSED: 75 in July but almost all in the first decade, 0 in the last week (checked 2026-07-29) — maintainers process in rare bursts; ETA unknowable, months at best. Nothing actionable on our side |
 | Home instance | ha.jbstudio.pro (SSH port **22222**, key `ha_jb`; HA config root is `/mnt/data/supervisor/homeassistant` — `/config` does NOT exist in this SSH environment), last direct copy was **v1.57.0**; from v1.58.0 on it updates itself through HACS by tag (no scp) |
 | Localization | UI en/ru (src/i18n/*.json), everything user-visible localized incl. kiosk popover |
@@ -63,7 +63,8 @@
   content-fit default zoom with devices as content, zoom out to 0.4×,
   measured stage height (v1.49–v1.50.2).
 - **Explicit hide flags** (v1.51.0, docs/FILTERING.md): per-device
-  "Hide from plan" checkbox seeded once from the old filter; local
+  `marker.hidden` seeded once from the old filter and controlled by the
+  bottom-left "Hide" / "Show" action in the device dialog; local
   "Show hidden" ghosts; hidden counts toward room LQI on both cards, casts
   no light (v1.51.1).
 - **Yellow = working right now** (v1.51.0): climate by hvac_action, service
@@ -81,6 +82,12 @@
   clean-floor area. Audit fixes add eager activity baselines/source resets,
   lossless legacy live-text editing, exact wall-fragment endpoints/compaction,
   editor-visible virtual walls and prerelease-discovery reporting in CI.
+- **v1.59.0-rc.2** (2026-08-06): Plan actions have one meaning each; Room
+  outline names the closed-contour tool; one named 50-command Undo/Redo stack
+  covers committed plan geometry; positional placement is always grid-bound.
+  Glow and toast overlays no longer steal room/tool pointers, View hover covers
+  shared thick walls, device Hide/Show is explicit, the static no-op aspect
+  field is gone, and the new user guide/product audit replaces archived docs.
 
 ## Recent milestones (details in CHANGELOG.md)
 
@@ -160,12 +167,14 @@
 
 ## Open items / watchlist
 
-0. **Full project audit (2026-08-05)** — pack at [`docs/AUDIT.md`](AUDIT.md)
-   (market, quality, functional integrity, prioritized recommendations). Key
+0. **Current product audit (2026-08-06)** — [`PRODUCT-IMPROVEMENT-PLAN.ru.md`](PRODUCT-IMPROVEMENT-PLAN.ru.md)
+   (UX, functional integrity, architecture debt and prioritized roadmap). The
+   previous v1.58.0 market/quality pack is preserved under
+   [`legacy/docs/audit-v1.58.0`](../legacy/docs/audit-v1.58.0/AUDIT.md). Key
    takeaway: engineering depth is strong; **easy-floorplan ≈430★** is now the
    traction threat; P0s are demo GIF + forum posts + write-policy UI↔API align.
    Agents: read the pack before proposing features or refactors.
-   **Partial follow-up landed on `dev` (2026-08-05):** P0-3 README diff, P0-4
+   **Partial follow-up from the archived audit landed on `dev` (2026-08-05):** P0-3 README diff, P0-4
    write-policy (`can_write` + admin_only default on), P3-4/P3-5 validation &
    hygiene. Still open: P0-1 demo GIF/video, P0-2 forum/Reddit posts.
 1. **hacs/default PR #9004** — accepted by the bot into the review queue ('New default

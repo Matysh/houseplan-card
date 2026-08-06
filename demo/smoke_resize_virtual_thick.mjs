@@ -117,7 +117,7 @@ const res = await page.evaluate(async () => {
       && c._intervalCm([finalX, 305, finalX, 455]) === 20;
     out.commitKeepsAtomicKeys = (sp().walls || []).filter((w) => w.cm === 20).length >= 2;
 
-    c._rszUndoPop();
+    c._undoGeometry();
     await upd();
     out.undoRestoresAll = JSON.stringify({
       rooms: sp().rooms,

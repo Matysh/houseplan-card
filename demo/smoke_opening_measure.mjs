@@ -1,8 +1,8 @@
 // Opening drag rulers (owner 2026-08-03): while a door/window is dragged along
 // a wall, a measure badge sits on EACH shoulder (wall end -> opening edge,
 // along the wall), and when the opening's center hits the wall's center a
-// perpendicular dashed tick appears and the center magnet-snaps (Shift opts
-// out). The wall is ONE room's edge (owner: "only the wall of one room") —
+// perpendicular dashed tick appears and the center magnet-snaps (Shift cannot
+// opt out). The wall is ONE room's edge (owner: "only the wall of one room") —
 // r2's collinear top edge never merges into r1's, so the ruler runs 40..550
 // (center 295), not the old merged 40..960. Real pointer events; the numbers
 // are checked against the geometry: cell = 5 cm, grid pitch = 1000/240, so
@@ -97,7 +97,7 @@ check('tick_gone_after_drop', await tick(), 0);
 check('committed_x_center', near(await page.evaluate(() =>
   window.__card._serverCfg.spaces.find((s) => s.id === 'f1').openings[0].x), 0.295, 1e-6));
 
-// ---------- Shift disables the magnet (badges stay) ----------
+// ---------- Shift cannot disable the magnet (badges stay) ----
 // park the opening off-center first: a drag that returns to within 3 px of its
 // own starting point is filtered by the tap threshold, so the Shift approach
 // must start away from the center
@@ -111,9 +111,9 @@ await page.keyboard.down('Shift');
 await page.mouse.down();
 await page.mouse.move(t3x, sy, { steps: 3 });
 await settle();
-check('no_tick_with_shift', await tick(), 0);
+check('tick_with_shift', await tick(), 1);
 const freeX = await page.evaluate(() => window.__card._curSpaceCfg.openings[0].x);
-check('no_magnet_with_shift', near(freeX, 0.2937, 0.004) && freeX !== 0.295);
+check('magnet_with_shift', near(freeX, 0.295, 1e-6));
 check('badges_still_there_with_shift', (await badges()).length, 2);
 await page.mouse.up();
 await page.keyboard.up('Shift');
@@ -238,19 +238,19 @@ const ghosts = () => page.evaluate(() => window.__card.renderRoot.querySelectorA
   check('place_ghost_magnetised', near(gh, 295, 1e-6));
 }
 
-// Shift opts out of the magnet, the badges stay
+// Shift cannot opt out of the magnet, the badges stay
 {
   await page.keyboard.down('Shift');
   const [hx, hy] = await screenPt(293.7, 141);
   await page.mouse.move(hx, hy, { steps: 3 });
   await settle();
-  check('place_no_tick_with_shift', await tick(), 0);
+  check('place_tick_with_shift', await tick(), 1);
   check('place_badges_with_shift', (await badges()).length, 2);
   const gh = await page.evaluate(() => {
     const el = window.__card.renderRoot.querySelector('.opghost');
     return el && (+el.getAttribute('x1') + +el.getAttribute('x2')) / 2;
   });
-  check('place_ghost_free_with_shift', !!gh && !near(gh, 295, 1e-6) && near(gh, 293.7, 1));
+  check('place_ghost_magnetised_with_shift', near(gh, 295, 1e-6));
   await page.keyboard.up('Shift');
 }
 

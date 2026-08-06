@@ -170,11 +170,10 @@ Walls are the **derived room edges** (`roomEdges`) — the same walls an opening
 snaps to. There is no wall entity to be bound to and no room id is stored: a
 piece keeps absolute coordinates and survives every later edit of the rooms.
 
-**Shift suspends the magnet**, and with it the grid snap — our general
-contract (docs/CANVAS.md §9.4). Out of the magnet's reach the drag is the
-ordinary grid snap on the shape's own anchor, and the angle the piece already
-had is kept: dragging a turned wardrobe into the middle of a room must not
-straighten it.
+The magnet and grid quantisation are mandatory (docs/CANVAS.md §9.4). Out
+of the magnet's reach the drag is the ordinary grid snap on the shape's own
+anchor, and the angle the piece already had is kept: dragging a turned
+wardrobe into the middle of a room must not straighten it.
 
 ## 6. Selecting: one frame, two shapes
 
@@ -199,12 +198,9 @@ and stretching it is a lie — which is why the backdrop scales uniformly. Furni
 is the opposite case: the ratio is a fact about *this* sofa, and the next one
 is 1.8 m long with the same 0.9 m depth. A uniform handle would force the user
 to make a bed deeper in order to make it wider, i.e. to state something false
-about the room. So both axes move. Shift is not "keep the ratio" — it is what
-it is everywhere else in this card: off the grid.
-
-Without Shift each dimension is quantised to a whole cell, which on an on-grid
-piece also puts the dragged corner on a node. That is what "snap to the grid"
-has to mean when both sides move.
+about the room. So both axes move. Each dimension is quantised to a whole cell,
+which on an on-grid piece also puts the dragged corner on a node. That is what
+"snap to the grid" has to mean when both sides move.
 
 **Rotation** is the handle above the box, in **5° steps**, Shift past the step
 — the same step a device icon and a text block turn in. Turning back to zero

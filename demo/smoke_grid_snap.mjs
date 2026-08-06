@@ -1,7 +1,8 @@
 // «Всё строго по сетке» (docs/CANVAS.md §9). Two halves:
 //   1. every element placed or dragged by hand lands on a node — devices, room
 //      labels, decor, room vertices, resize handles; an opening lands ON ITS
-//      WALL at a whole number of steps along it; Shift is the only way out;
+//      WALL at a whole number of steps along it; positional off-grid placement
+//      is not supported, including while Shift is held;
 //   2. the explicit «Оптимизировать планы» action moves a deliberately
 //      detuned plan onto the grid through one atomic config+layout commit,
 //      tells the truth about how much it moves, and is idempotent.
@@ -34,7 +35,7 @@ const out = await page.evaluate(async () => {
   const s1 = c._snap([100 + OFF, 200 + OFF]);
   o.snapRoundsToTheNode = onGridR(s1[0]) && onGridR(s1[1]);
   const s2 = c._snap([100 + OFF, 200 + OFF], { shiftKey: true });
-  o.shiftSuspendsTheSnap = !onGridR(s2[0]);
+  o.shiftCannotSuspendTheSnap = onGridR(s2[0]) && onGridR(s2[1]);
   o.snapAlsoClampsTheGarbage = c._snap([1e12, -1e12])[0] === 5000 * NORM_W;
   // the step is NORM_W/GRID_N and nothing else — it did NOT change with the
   // infinite canvas, so no plan's nodes ever moved out from under it

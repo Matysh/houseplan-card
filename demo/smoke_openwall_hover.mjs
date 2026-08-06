@@ -15,16 +15,20 @@ const res = await page.evaluate(async () => {
   c._cursorPt = [550, 0.25 * H]; c.requestUpdate(); await c.updateComplete;
   out.hoverNoFullEdge = !sr().querySelector('.openwall-preview');
   out.hoverCursor = getComputedStyle(stage()).cursor === 'crosshair';
-  // 3) two-click open, then hover the virtual: willclose preview on that span only
+  // 3) Opening and closing are separate tools: openwall does not advertise a
+  // close action, while closewall highlights the exact virtual stretch.
   c._openWallClick([550, 140]);
   c._openWallClick([550, 460]);
   await c.updateComplete;
   c._cursorPt = [550, 300]; c.requestUpdate(); await c.updateComplete;
+  out.openToolDoesNotOfferClose = !sr().querySelector('.openwall-preview');
+  c._tool = 'closewall'; c.requestUpdate(); await c.updateComplete;
   const prev = sr().querySelector('.openwall-preview');
-  out.willclose = prev?.classList.contains('willclose') === true;
+  out.closeToolWillClose = prev?.classList.contains('willclose') === true;
   // 4) with anchor set: rubber-band preview appears
-  c._openWallClick([550, 300]); // close first
+  c._closeWallClick([550, 300]);
   await c.updateComplete;
+  c._tool = 'openwall';
   c._openWallClick([550, 200]);
   c._cursorPt = [550, 400]; c.requestUpdate(); await c.updateComplete;
   const band = sr().querySelector('.openwall-preview');

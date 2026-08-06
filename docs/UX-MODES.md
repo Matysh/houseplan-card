@@ -96,8 +96,8 @@ layer you cannot see is a layer you cannot edit.
   (binding, name, icon, size/angle, display as icon / icon + activity / value,
   activity color and size, tap override,
   model/link/description/PDFs, room).
-- + add device/entity/virtual, the "Hide device from plan" checkbox (since
-  v1.51.0 the one hiding mechanism, docs/FILTERING.md), ↺ reset layout,
+- + add device/entity/virtual, the bottom-left "Hide" / "Show" action in an
+  existing device dialog (the one hiding mechanism, docs/FILTERING.md), ↺ reset layout,
   👁 "Show hidden" (local editor tool; replaced the shared show-all toggle),
   ⬡ icon rules.
 

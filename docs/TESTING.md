@@ -143,14 +143,14 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       to the nearest opening edge, live; the wall is ONE room's edge — the edge
       the opening is snapped to — so a neighbouring room's collinear edge is
       never merged in; at that edge's center (±half a grid step) a
-      perpendicular dashed tick appears and the center magnet-snaps — Shift
-      disables the magnet; badges and tick vanish on release
+      perpendicular dashed tick appears and the center magnet-snaps; there is
+      no modifier that disables the magnet; badges and tick vanish on release
       [auto: smoke_opening_measure + unit openingShoulders]
 - [ ] The SAME rulers while PLACING a new opening (2026-08-03): with the
       Opening tool, moving along a wall shows the dashed ghost together with a
       badge on each shoulder of the would-be opening (default 90 cm, measured
       on the snapped room's OWN edge), a perpendicular tick + magnet at that
-      edge's centre, Shift opting out; the click places the opening at the
+      edge's centre; the click places the opening at the
       magnetised point and ghost, badges and tick all disappear at once
       [auto: smoke_opening_measure, the «PLACING a new opening» section]
 
@@ -383,13 +383,14 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] Ghost shows no numbers (v1.51.1, HP-1510-02): a hidden value-display
       device renders as a plain ghost — no value/temp/hum/LQI, no icon morph
       [auto: smoke_hidden_flag ghostHidesValue]
-- [ ] Hide-from-plan flag (dev, docs/FILTERING.md): every device dialog has
-      the checkbox, incl. virtual; hidden devices vanish from every mode and
+- [ ] Hide-from-plan flag (dev, docs/FILTERING.md): every existing device
+      dialog has a bottom-left "Hide" / "Show" action, incl. virtual; the
+      change is applied by Save; hidden devices vanish from every mode and
       the count, still count toward room LQI, cast no glow/light fill; the
       device editor's "Show hidden" (local, per tab) shows them as BLUE
       dashed ghosts — distinct from a grey unavailable icon — with NO live
       state paint (no yellow, no alarm, no activity);
-      unticking keeps a hidden:false marker (re-seed protection); an old
+      showing and saving keeps a hidden:false marker (re-seed protection); an old
       config materialises on first load by an editing client and legacy
       clients keep the old behaviour until then
       [auto: smoke_hidden_flag + unit seedHiddenBindings/seeded/legacy]
@@ -990,6 +991,10 @@ require hands on real hardware — they remain for the human pass.
       exception to «shared walls together»), growing into one stops
 - [ ] Ctrl+Z / ⌘Z after releasing a handle restores the previous geometry —
       one release = one undo step (rooms AND openings)
+- [ ] The Plan toolbar names the next Undo/Redo operation; Ctrl+Shift+Z and
+      Ctrl+Y redo it, and a new geometry edit after Undo clears the redo branch.
+      Fifty committed operations remain available in the shared stack
+      [auto: command-stack.test]
 - [ ] A moved shared wall with a partial virtual middle and thick solid
       remainders keeps the dash and both thickness values during live drag and
       after release; Undo restores rooms, `open_spans` and `walls` together
@@ -1236,10 +1241,10 @@ require hands on real hardware — they remain for the human pass.
 - [ ] **Everything lands on the grid** (owner 2026-08-04, docs/CANVAS.md §9):
       place a device, a room name, a decor rectangle, a decor text, a room
       vertex and a resize handle with the mouse — each ends exactly on a grid
-      node, never between two. An opening is the one exception and deliberately
-      so: it stays ON its wall, at a whole number of steps along it. Hold
-      **Shift** while dropping and the element lands where the cursor is,
-      off-grid — that is the only way to get there [auto: smoke_grid_snap]
+      node, never between two. An opening is wall-bound rather than freely
+      grid-bound: it stays ON its wall, at a whole number of steps along it.
+      Holding **Shift** must not change any resulting position
+      [auto: smoke_grid_snap]
 - [ ] **«Выровнять всё по сетке»** (owner 2026-08-04): gear → general settings →
       **Grid** → the button. On an already tidy plan it says everything is
       already on the grid and offers no confirm button. On a plan with elements
@@ -1294,11 +1299,10 @@ require hands on real hardware — they remain for the human pass.
       ruler uses (metres, or feet on an imperial HA). Change the space's
       `cell_cm` in its settings and the numbers change with it. The badge
       disappears on release [auto: smoke_backdrop]
-- [ ] **Snap, and Shift**: after a plain drag the picture's corner sits on a
+- [ ] **Mandatory snap**: after a plain drag the picture's corner sits on a
       grid node (zoom in on the corner — it is on a crossing, not between
-      two). After a corner scale one side of the picture ends on a node too.
-      Hold **Shift** during the gesture and it lands exactly where the cursor
-      is instead [auto: smoke_backdrop]
+      two). After a corner scale one side of the picture ends on a node too;
+      holding Shift produces the same snapped result [auto: smoke_backdrop]
 - [ ] **«Вернуть картинку»**: the button appears in the backdrop toolbar only
       after the picture has been moved or scaled. Press it — the picture goes
       back to centred, at its own size, and the button disappears again
@@ -1562,9 +1566,9 @@ require hands on real hardware — they remain for the human pass.
       [auto: smoke_furniture (metric); manual for the imperial profile]
 - [ ] **The wall magnet**: click near a wall — the piece's BACK lands flat on
       it and it turns to the wall's direction (a bed's headboard against the
-      wall, a toilet's cistern against it, a sofa's back against it). Hold
-      **Shift** and click at the same place: it stays exactly under the cursor,
-      straight [auto: smoke_furniture]
+      wall, a toilet's cistern against it, a sofa's back against it). Holding
+      **Shift** at the same place must not disable the wall magnet
+      [auto: smoke_furniture]
 - [ ] **The magnet while dragging**: drag a placed sofa across the room to
       another wall — it turns to that wall as it arrives. Drag it back into the
       middle: it keeps the angle it had rather than snapping straight. On a
@@ -1579,7 +1583,7 @@ require hands on real hardware — they remain for the human pass.
 - [ ] **Width and depth are independent**: drag a corner sideways — only the
       width changes; drag it down — only the depth. Two live badges show both
       in metres (or feet) while you drag, and they match a later measurement
-      against the grid. Hold **Shift** for sizes off the grid
+      against the grid. Holding **Shift** must not create sizes off the grid
       [auto: smoke_furniture]
 - [ ] **Rotation**: the handle above the box turns the piece in 5° steps about
       its CENTRE (not a corner); Shift goes past the step; turning back to

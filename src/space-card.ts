@@ -31,7 +31,6 @@ interface SpaceCardConfig {
   show_button?: boolean;
   button_label?: string;
   button_target?: string;
-  aspect_ratio?: string;
   icon_size?: number;
   language?: string;
 }

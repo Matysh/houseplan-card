@@ -45,7 +45,6 @@ class HouseplanSpaceCardEditor extends LitElement {
       { name: 'show_button', selector: { boolean: {} } },
       { name: 'button_label', selector: { text: {} } },
       { name: 'button_target', selector: { text: {} } },
-      { name: 'aspect_ratio', selector: { text: {} } },
       { name: 'icon_size', selector: { number: { min: 1, max: 6, step: 0.1, mode: 'box' } } },
     ];
   }
@@ -60,7 +59,6 @@ class HouseplanSpaceCardEditor extends LitElement {
       show_button: t(L, 'editor.show_button'),
       button_label: t(L, 'editor.button_label'),
       button_target: t(L, 'editor.button_target'),
-      aspect_ratio: t(L, 'editor.aspect_ratio'),
       icon_size: t(L, 'editor.icon_size'),
     };
     return html`<ha-form
@@ -73,7 +71,11 @@ class HouseplanSpaceCardEditor extends LitElement {
   }
 
   private _valueChanged(ev: CustomEvent): void {
-    const config = { ...this._config, ...ev.detail.value };
+    // `aspect_ratio` was exposed by the editor but never consumed by the
+    // square static card. Strip the stale no-op key on the next real edit so
+    // the UI cannot keep promising a setting that has no effect.
+    const config = { ...(this._config || {}), ...ev.detail.value };
+    delete config.aspect_ratio;
     const e = new Event('config-changed', { bubbles: true, composed: true }) as any;
     e.detail = { config };
     this.dispatchEvent(e);

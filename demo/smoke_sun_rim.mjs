@@ -1,7 +1,7 @@
 // THE RIM (owner 2026-08-04): «тонкая (1px) чёрная граница по бокам
 // светящегося сектора, которая также плавно уходит в ноль вместе с самим
 // градиентом». The owner rejected the «shade instead of light» model of
-// docs/SUN-CONTRAST.md and asked for this one line instead — because a wedge
+// legacy/docs/SUN-CONTRAST.md and asked for this one line instead — because a wedge
 // of added luminance simply cannot read on white paper, while its BOUNDARY
 // can (docs/SUN.md, «The rim»).
 //

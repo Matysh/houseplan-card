@@ -1,10 +1,13 @@
 # Project audit — index
 
+> **Archived:** this is the v1.58.0 snapshot. The current product audit is
+> [`docs/PRODUCT-IMPROVEMENT-PLAN.ru.md`](../../../docs/PRODUCT-IMPROVEMENT-PLAN.ru.md).
+>
 > **Audience:** future humans and agents. Read this before proposing features,
 > refactors, or go-to-market work. Snapshot date: **2026-08-05**. Product
 > version audited: **v1.58.0**.
 >
-> **Policy:** this pack supplements (does not replace) `PRODUCT.md`,
+> **Policy at the snapshot date:** this pack supplemented `PRODUCT-2026-07-05.md`,
 > `STATUS.md`, `SCOPE.md`, `ARCHITECTURE.md`, `ROADMAP.md`. When they disagree
 > on *current* market numbers, prefer this pack until `PRODUCT.md` is refreshed.
 
@@ -69,7 +72,7 @@ overlays that feel like a home — not a drawing app).
 
 ## Related living docs
 
-- Market rationale (older): `PRODUCT.md` — refresh after this audit lands.
+- Market rationale (older): [`PRODUCT-2026-07-05.md`](../PRODUCT-2026-07-05.md).
 - Guard rail: `SCOPE.md`
 - Current ops snapshot: `STATUS.md`
 - Design: `ARCHITECTURE.md`, `CANVAS.md`, `BACKDROP.md`, `VACUUM.md`, `SUN.md`

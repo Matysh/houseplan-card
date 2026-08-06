@@ -230,7 +230,7 @@ Clipping by the room is unchanged; only the visible edge changed.
 The fill above is honest and nearly invisible on a light plan. Painting
 light means ADDING luminance, and white paper has none left to give:
 raising `RAY_MAX_ALPHA` does not buy contrast, it only tints the room
-beige. That analysis is kept in docs/SUN-CONTRAST.md, whose «shade
+beige. That rejected analysis is archived in legacy/docs/SUN-CONTRAST.md, whose «shade
 instead of light» answer the owner **rejected** on 2026-08-04 in favour
 of its cheap half, verbatim: «тонкая (1px) чёрная граница по бокам
 светящегося сектора, которая также плавно уходит в ноль вместе с самим

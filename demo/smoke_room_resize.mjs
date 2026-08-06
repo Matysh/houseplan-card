@@ -8,7 +8,8 @@ const snap = await page.evaluate(() => JSON.stringify(window.__card._serverCfg))
 const restore = () => page.evaluate((s) => {
   const c = window.__card;
   c._serverCfg = JSON.parse(s);
-  c._rszSel = null; c._rszDrag = null; c._rszLive = null; c._rszUndo = []; c._rszPreview = null;
+  c._rszSel = null; c._rszDrag = null; c._rszLive = null; c._rszPreview = null;
+  c._geometryHistory.clear();
   c._cfgEpoch++; c.requestUpdate();
   return c.updateComplete && true;
 }, snap);

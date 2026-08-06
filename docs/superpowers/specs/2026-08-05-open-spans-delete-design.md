@@ -1,5 +1,10 @@
 # Open spans + wall-centric Delete — design
 
+> Superseded on 2026-08-06 by UX-02 in
+> `docs/PRODUCT-IMPROVEMENT-PLAN.ru.md`: opening a boundary, closing a boundary,
+> merging rooms, and deleting a room are now separate tools. This file remains
+> only as the historical rationale for the original open-span implementation.
+
 Status: **approved in chat** (2026-08-05). Implementation plan follows after
 spec review.
 

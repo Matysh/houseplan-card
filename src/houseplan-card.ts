@@ -84,12 +84,13 @@ import {
 } from './space-geometry';
 import { optimizePlans, type OptimizeReport } from './plan-optimizer';
 import { langOf, t, type I18nKey } from './i18n';
+import { CommandStack } from './command-stack';
 import {
   combineVisualSamples, edgeActivity, entityVisualSample,
   type DeviceActivity, type DeviceVisualState, type EntityVisualSample,
 } from './device-visual';
 
-const CARD_VERSION = '1.59.0-rc.1';
+const CARD_VERSION = '1.59.0-rc.2';
 /** HP-1552 boot-veil timing (AUD-1552-02). The veil holds for at least
  *  BOOT_MIN_MS; every stage-height change restarts a BOOT_QUIET_MS
  *  trailing-quiescence requirement (chrome still settling near the cap
@@ -234,7 +235,7 @@ const warmMatch = (
   return { slot: best, sure: true };
 };
 /** Rotation step of a decor text block — the same 5° a device icon turns in
- *  (marker dialog). Shift drags past it, as past every other snap. */
+ *  (marker dialog). Shift affects angle precision only, never position. */
 const DT_ANGLE_STEP = 5;
 /** Line spacing of a multi-line label, in font sizes. */
 const DT_LINE = 1.2;
@@ -254,7 +255,15 @@ const unionRect = (a: Rect, b: Rect): Rect => {
   return { x, y, w: Math.max(a.x + a.w, b.x + b.w) - x, h: Math.max(a.y + a.h, b.y + b.h) - y };
 };
 
-type MarkupTool = 'draw' | 'merge' | 'split' | 'resize' | 'opening' | 'openwall' | 'wallthick' | 'delroom';
+type MarkupTool = 'draw' | 'merge' | 'split' | 'resize' | 'opening' | 'openwall' | 'closewall' | 'wallthick' | 'delroom';
+/** Everything whose topology or wall association changes in the plan editor. */
+interface SpaceGeometryState {
+  spaceId: string;
+  rooms: any[];
+  openings?: OpeningCfg[];
+  walls?: WallEntry[];
+  open_spans?: OpenSpanEntry[];
+}
 /** Tools of the decor (background) editor. `furniture` is the library
  *  (docs/FURNITURE.md): it opens a palette and places a symbol at real size. */
 type DecorTool = 'select' | 'backdrop' | 'line' | 'rect' | 'ellipse' | 'text' | 'furniture' | 'erase';
@@ -357,6 +366,9 @@ class HouseplanCard extends LitElement {
   private _defPos: Record<string, { x: number; y: number }> = {};
   private _newSyncKey = '';
   private _tip: { x: number; y: number; title: string; meta: string; lqi?: number | null; temp?: number | null } | null = null;
+  /** Room whose physical perimeter is highlighted in View. The explicit
+   *  overlay is needed because thick wall bodies paint above room shapes. */
+  private _hoverRoom: { space: string; room: RoomCfg } | null = null;
   private _selId: string | null = null;
   private _toast = '';
   private _toastTimer?: number;
@@ -401,7 +413,7 @@ class HouseplanCard extends LitElement {
   /**
    * A live corner (scale) or rotate gesture on the selected decor BLOCK — a
    * text label or a piece of furniture. One gesture, two shapes: the handles,
-   * the 5° step and the Shift escape are the same, only what a corner MEANS
+   * the 5° angular step are the same, only what a corner MEANS
    * differs (a font multiplier for text, a width and a depth for furniture),
    * and that lives in `_dtMove` alone.
    */
@@ -506,6 +518,8 @@ class HouseplanCard extends LitElement {
     return this._mode === 'plan';
   }
   private _tool: MarkupTool = 'draw';
+  /** UX-04: one named, 50-step command history for every plan-geometry tool. */
+  private _geometryHistory = new CommandStack<SpaceGeometryState>(50);
   /** Wall-thickness tool dialog (docs/WALL-THICKNESS.md). */
   private _wallDialog: {
     a: number[]; b: number[];
@@ -517,7 +531,7 @@ class HouseplanCard extends LitElement {
    * then primed to DRAW_WALL_DEFAULT_CM. Empty string = no thickness on commit.
    */
   private _drawWallField: string | null = null;
-  // room resize tool (docs/RESIZE.md): selection, live drag, its own undo stack
+  // room resize tool (docs/RESIZE.md): selection and an immutable live preview
   private _rszSel: string | null = null;
   private _rszDrag: {
     kind: 'edge' | 'scale';
@@ -534,7 +548,6 @@ class HouseplanCard extends LitElement {
     k: number;
     changed: string[];
   } | null = null;
-  private _rszUndo: { space: string; snap: string }[] = [];
   /** HP-1550-01: the live resize preview, kept OUT of _serverCfg (see _rszApplyPreview). */
   private _rszPreview: { space: string; sp: any } | null = null;
   private _rszLive: { x: number; y: number; text: string; area?: boolean }[] | null = null;
@@ -553,12 +566,12 @@ class HouseplanCard extends LitElement {
     x: number; y: number; angle: number; // render units (from the wall snap)
   } | null = null;
   private _openingInfo: OpeningCfg | null = null;
-  private _opDrag: { id: string; moved: boolean; sx: number; sy: number; dirty: boolean } | null = null;
+  private _opDrag: {
+    id: string; moved: boolean; sx: number; sy: number; dirty: boolean;
+    before: SpaceGeometryState | null;
+  } | null = null;
   // live ruler badges + the "centered on the wall" tick while an opening is dragged
   private _opMeasure: OpMeasure | null = null;
-  /** Shift during the PLACEMENT hover: opts out of the centre magnet, exactly
-   *  as it does while dragging an existing opening. */
-  private _opShift = false;
   private _mergeDialog: { aId: string; bId: string; poly: number[][]; pick: 'a' | 'b' } | null = null;
   /** Open-boundary tool: first click anchor on a shared wall (render units). */
   private _openWallAnchor: { p: number[]; edge: number[]; aId: string; bId: string } | null = null;
@@ -833,6 +846,7 @@ class HouseplanCard extends LitElement {
     _layout: { state: true },
     _devices: { state: true },
     _tip: { state: true },
+    _hoverRoom: { state: true },
     _selId: { state: true },
     _toast: { state: true },
     _serverCfg: { state: true },
@@ -1009,9 +1023,11 @@ class HouseplanCard extends LitElement {
         return;
       }
     }
+    const target = e.target as HTMLElement | null;
+    const inField = !!target?.closest?.('input, textarea, select, [contenteditable="true"]');
     if (this._mode === 'decor') {
       if ((e.key === 'Delete' || e.key === 'Backspace') && this._decorSel &&
-          !(e.target as HTMLElement)?.closest?.('input, textarea, select')) {
+          !inField) {
         e.preventDefault();
         this._decorDeleteSel();
         return;
@@ -1029,8 +1045,37 @@ class HouseplanCard extends LitElement {
       return;
     }
     if (!this._markup) return;
-    const undo = e.key === 'Escape' || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z');
-    if (!undo) return;
+    const mod = e.ctrlKey || e.metaKey;
+    const key = e.key.toLowerCase();
+    const redo = mod && (key === 'y' || (key === 'z' && e.shiftKey));
+    const undo = mod && key === 'z' && !e.shiftKey;
+    if ((undo || redo) && inField) return; // keep native text-field history
+    if (redo) {
+      e.preventDefault();
+      this._redoGeometry();
+      return;
+    }
+    if (undo) {
+      e.preventDefault();
+      if (this._rszDrag) {
+        this._rszCancelDrag();
+        return;
+      }
+      // Draft points are not committed commands. Walk them back before the
+      // shared stack, just like an unfinished word before document Undo.
+      if (this._tool === 'draw' && this._path.length) {
+        this._undoPoint();
+        return;
+      }
+      if (this._tool === 'split' && this._splitSel?.pts?.length) {
+        this._splitSel = { ...this._splitSel, pts: this._splitSel.pts.slice(0, -1) };
+        if (!this._splitSel.pts.length) this._cursorPt = null;
+        return;
+      }
+      this._undoGeometry();
+      return;
+    }
+    if (e.key !== 'Escape') return;
     if (this._roomDialog) {
       e.preventDefault();
       this._roomDialogCancel();
@@ -1041,16 +1086,11 @@ class HouseplanCard extends LitElement {
       this._undoPoint();
       return;
     }
-    if (!undo) return;
     if (this._tool === 'resize') {
       e.preventDefault();
       if (this._rszDrag) {
-        // Esc (or Ctrl+Z) mid-drag: the original geometry comes back
+        // Esc mid-drag: the immutable preview is simply discarded
         this._rszCancelDrag();
-        return;
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
-        this._rszUndoPop();
         return;
       }
       if (this._rszSel) this._rszSel = null;
@@ -1082,7 +1122,7 @@ class HouseplanCard extends LitElement {
       this._wallDialog = null;
       return;
     }
-    if (this._tool === 'openwall') {
+    if (this._tool === 'openwall' || this._tool === 'closewall') {
       e.preventDefault();
       if (this._openWallAnchor) this._openWallAnchor = null;
       else this._tool = 'draw';
@@ -1790,6 +1830,9 @@ class HouseplanCard extends LitElement {
         this._pendingNavMode = null;
       }
       const cfg = cfgResp?.config;
+      // A server reload is a new history baseline. Replaying snapshots made
+      // against an older revision would overwrite somebody else's geometry.
+      this._geometryHistory.clear();
       this._serverCfg = cfg && Array.isArray(cfg.spaces) ? cfg : null;
       this._cfgEpoch++;
       this._cfgRev = cfgResp?.rev || 0;
@@ -1801,7 +1844,8 @@ class HouseplanCard extends LitElement {
           // Flush a pending local edit BEFORE adopting a remote revision:
           // otherwise the debounced write reads a config that this reload has
           // already replaced, and the user's edit vanishes (audit L2).
-          if ((ev?.data?.rev ?? -1) !== this._cfgRev) this._reloadConfigOnly();
+          const observedRev = Number(ev?.data?.rev ?? -1);
+          if (observedRev !== this._cfgRev) this._reloadConfigOnly(false, observedRev);
         }, 'houseplan_config_updated');
       }
       // server-side trails are additive: an older backend without the WS
@@ -1883,19 +1927,26 @@ class HouseplanCard extends LitElement {
    * top of an unsent edit is exactly how edits disappeared (audit L2).
    * `force` skips the deferral (conflict path: the local edit already lost).
    */
-  private async _reloadConfigOnly(force = false): Promise<void> {
+  private async _reloadConfigOnly(force = false, observedRev?: number): Promise<void> {
     if (!force) {
+      // The event can arrive before the response to our own config/set. By the
+      // time a pending write settles, its returned revision is current and the
+      // queued event is merely an echo. Reloading it would erase the valid
+      // session Undo stack after every local command. Revisions are monotonic,
+      // so an equal or older observation is safe to ignore.
+      if (observedRev !== undefined && observedRev <= this._cfgRev) return;
       if (this._saveConfigDebounced.pending()) this._saveConfigDebounced.flush();
       if (this._cfgWriting) {
         // retry once the in-flight write settles
         clearTimeout(this._reloadRetry);
-        this._reloadRetry = window.setTimeout(() => this._reloadConfigOnly(), 400);
+        this._reloadRetry = window.setTimeout(() => this._reloadConfigOnly(false, observedRev), 400);
         return;
       }
     }
     try {
       const resp = await this.hass.callWS({ type: 'houseplan/config/get' });
       const cfg = resp?.config;
+      this._geometryHistory.clear();
       this._serverCfg = cfg && Array.isArray(cfg.spaces) ? cfg : null;
       this._cfgEpoch++;
       this._cfgRev = resp?.rev || 0;
@@ -2223,14 +2274,13 @@ class HouseplanCard extends LitElement {
     return snapPt(spaceCenter(s));
   }
 
-  private _savePos(d: DevItem, x: number, y: number, shift = false): void {
+  private _savePos(d: DevItem, x: number, y: number): void {
     if (this._norm) {
       // The icon center snaps to the nodes of the same grid as the room markup
-      // (docs/CANVAS.md §9). Shift suspends the snap for this one gesture —
-      // the same convention as the opening magnet and the compass.
+      // (docs/CANVAS.md §9). UX-05 has no free-position escape hatch.
       const g = this._gridPitch;
-      const gx = shift ? x : Math.round(x / g) * g;
-      const gy = shift ? y : Math.round(y / g) * g;
+      const gx = Math.round(x / g) * g;
+      const gy = Math.round(y / g) * g;
 
       const prevK = (this._layout[d.id] as any)?.k;
       this._layout = {
@@ -2477,7 +2527,8 @@ class HouseplanCard extends LitElement {
       return;
     }
     if (action === 'cover' && coverEid) {
-      // open / close / stop, decided by the CURRENT state (docs/PRODUCT.md);
+      // open / close / stop, decided by the CURRENT state
+      // (legacy/docs/PRODUCT-2026-07-05.md — original interaction decision);
       // a tap while the curtain travels stops it, the next one reverses
       const svc = coverService(this.hass.states[coverEid]?.state);
       guarded(this._t('confirm.tap_cover', { name: d.name }), () => {
@@ -2947,7 +2998,7 @@ class HouseplanCard extends LitElement {
       return;
     }
     if (this._decorDraft?.pid === ev.pointerId) {
-      this._decorDraft = { ...this._decorDraft, b: this._snap(this._svgPoint(ev), ev) };
+      this._decorDraft = { ...this._decorDraft, b: this._snap(this._svgPoint(ev)) };
       return;
     }
     if (this._decorMove?.pid === ev.pointerId) {
@@ -3118,7 +3169,7 @@ class HouseplanCard extends LitElement {
     // enforces, and it is the SAME ±5000 on both sides of the wire.
     const nx = clampCanvasR(this._drag.ox + dx);
     const ny = clampCanvasR(this._drag.oy + dy);
-    this._savePos(d, nx, ny, ev.shiftKey);
+    this._savePos(d, nx, ny);
   }
 
   private _pointerUp(_ev: PointerEvent, d: DevItem): void {
@@ -3312,8 +3363,8 @@ class HouseplanCard extends LitElement {
     this._rszDrag = null;
     this._rszLive = null;
     this._rszPreview = null;
-    this._rszUndo = [];
     this._tip = null;
+    this._hoverRoom = null;
     this._decorDraft = null;
     this._decorSel = null;
     // The backdrop editor opens on the tool it is NAMED after, whenever there
@@ -3362,17 +3413,12 @@ class HouseplanCard extends LitElement {
   /**
    * THE snap (docs/CANVAS.md §9). Every editor gesture that produces a plan
    * coordinate goes through here, so "strictly on the grid" is one function
-   * and not a habit. `shift` (the event, or a bare flag) suspends it for the
-   * duration of the gesture — the same escape hatch the opening magnet and the
-   * compass already offered. The canvas clamp rides along: there are no edges
+   * and not a habit. No modifier bypasses it. The canvas clamp rides along: there are no edges
    * to bump into any more, only the ±5000 the backend refuses to store.
    */
-  private _snap(p: number[], shift: boolean | { shiftKey?: boolean } = false): number[] {
-    const off = typeof shift === 'boolean' ? shift : !!shift?.shiftKey;
+  private _snap(p: number[]): number[] {
     const g = this._gridPitch;
-    return off
-      ? [clampCanvasR(p[0]), clampCanvasR(p[1])]
-      : [clampCanvasR(snapToGrid(p[0], g)), clampCanvasR(snapToGrid(p[1], g))];
+    return [clampCanvasR(snapToGrid(p[0], g)), clampCanvasR(snapToGrid(p[1], g))];
   }
 
   private _samePt(a: number[], b: number[]): boolean {
@@ -3450,6 +3496,94 @@ class HouseplanCard extends LitElement {
     this._saveConfigDebounced();
   }
 
+  /** Deep, immutable geometry state from the real config (never Resize preview). */
+  private _geometrySnapshot(spaceId = this._space): SpaceGeometryState | null {
+    const sp = this._serverCfg?.spaces.find((s: any) => s.id === spaceId);
+    if (!sp) return null;
+    const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
+    return {
+      spaceId,
+      rooms: copy(sp.rooms || []),
+      ...(Array.isArray(sp.openings) ? { openings: copy(sp.openings) } : {}),
+      ...(Array.isArray(sp.walls) ? { walls: copy(sp.walls) } : {}),
+      ...(Array.isArray((sp as any).open_spans)
+        ? { open_spans: copy((sp as any).open_spans) }
+        : {}),
+    };
+  }
+
+  /** Finish one geometry transaction and invalidate the redo branch. */
+  private _recordGeometry(name: string, before: SpaceGeometryState | null): void {
+    if (!before) return;
+    const after = this._geometrySnapshot(before.spaceId);
+    if (!after || JSON.stringify(before) === JSON.stringify(after)) return;
+    this._geometryHistory.push({ name, before, after });
+    this.requestUpdate();
+  }
+
+  /** Drop every transient gesture before replacing committed geometry. */
+  private _clearGeometryGesture(): void {
+    this._path = [];
+    this._cursorPt = null;
+    this._mergeSel = null;
+    this._mergeDialog = null;
+    this._splitSel = null;
+    this._pendingSplit = null;
+    this._openWallAnchor = null;
+    this._wallDialog = null;
+    this._openingDialog = null;
+    this._rszSel = null;
+    this._rszDrag = null;
+    this._rszPreview = null;
+    this._rszLive = null;
+  }
+
+  private _applyGeometryState(state: SpaceGeometryState): boolean {
+    const sp = this._serverCfg?.spaces.find((s: any) => s.id === state.spaceId);
+    if (!sp) return false;
+    const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
+    sp.rooms = copy(state.rooms);
+    if (state.openings !== undefined) sp.openings = copy(state.openings);
+    else delete sp.openings;
+    if (state.walls !== undefined) sp.walls = copy(state.walls);
+    else delete sp.walls;
+    if (state.open_spans !== undefined) (sp as any).open_spans = copy(state.open_spans);
+    else delete (sp as any).open_spans;
+    this._clearGeometryGesture();
+    if (this._space !== state.spaceId) {
+      this._space = state.spaceId;
+      this._saveNav();
+      this._restoreZoom();
+    }
+    this._modelCache = null;
+    this._frame = null;
+    this._regSignature = '';
+    this._maybeRebuildDevices();
+    this._saveConfig();
+    this.requestUpdate();
+    return true;
+  }
+
+  private _undoGeometry = (): void => {
+    const command = this._geometryHistory.undo();
+    if (!command) return;
+    if (!this._applyGeometryState(command.before)) {
+      this._geometryHistory.clear();
+      return;
+    }
+    this._showToast(this._t('history.undone', { name: command.name }));
+  };
+
+  private _redoGeometry = (): void => {
+    const command = this._geometryHistory.redo();
+    if (!command) return;
+    if (!this._applyGeometryState(command.after)) {
+      this._geometryHistory.clear();
+      return;
+    }
+    this._showToast(this._t('history.redone', { name: command.name }));
+  };
+
   private _saveConfigDebounced = debounce(() => {
     if (!this._serverCfg) return;
     this._writeConfig().catch((e: any) => {
@@ -3511,11 +3645,11 @@ class HouseplanCard extends LitElement {
       return;
     }
     if (this._tool === 'delroom') {
-      this._deleteWallClick(raw);
+      this._deleteRoomClick(raw);
       return;
     }
     if (this._tool === 'opening') {
-      this._openingClick(raw, ev.shiftKey);
+      this._openingClick(raw);
       return;
     }
     if (this._tool === 'merge') {
@@ -3530,13 +3664,17 @@ class HouseplanCard extends LitElement {
       this._openWallClick(raw);
       return;
     }
+    if (this._tool === 'closewall') {
+      this._closeWallClick(raw);
+      return;
+    }
     if (this._tool === 'split') {
-      this._splitClick(raw, ev.shiftKey);
+      this._splitClick(raw);
       return;
     }
     // draw: clicks on grid points build the outline. Nothing is written to the config
     // until the contour closes — an abandoned outline leaves no lines behind.
-    const pt = this._snap(raw, ev);
+    const pt = this._snap(raw);
     const closing = this._path.length >= 3 && this._samePt(pt, this._path[0]);
     // Island rooms (v1.34.0): drawing INSIDE an existing room is legal — the
     // contour may become a nested room (a column, an inner room). Partial
@@ -3588,32 +3726,9 @@ class HouseplanCard extends LitElement {
   }
 
   private _rszSnapshot(): string {
-    const sp = this._curSpaceCfg;
-    return JSON.stringify({
-      rooms: sp?.rooms || [],
-      openings: sp?.openings || [],
-      walls: sp?.walls || [],
-      // AUD-159B6-02: `open_spans` is geometry too. Left out of the snapshot it
-      // survived Undo un-rekeyed, so the room went back and the dash stayed on
-      // the resized coordinates — a virtual stretch detached from any wall.
-      // `open_to` rides along inside `rooms`.
-      open_spans: (sp as any)?.open_spans || [],
+    return JSON.stringify(this._geometrySnapshot() || {
+      spaceId: this._space, rooms: [], openings: [], walls: [], open_spans: [],
     });
-  }
-
-  private _rszRestore(snap: string): void {
-    // undo restores are commits: they target the REAL config, never the overlay
-    const sp = this._serverCfg?.spaces.find((s: any) => s.id === this._space);
-    if (!sp) return;
-    const s = JSON.parse(snap);
-    sp.rooms = s.rooms;
-    sp.openings = s.openings;
-    if (Array.isArray(s.walls) && s.walls.length) sp.walls = s.walls;
-    else delete sp.walls;
-    if (Array.isArray(s.open_spans) && s.open_spans.length) (sp as any).open_spans = s.open_spans;
-    else delete (sp as any).open_spans;
-    this._cfgEpoch++;
-    this.requestUpdate();
   }
 
   /** Live preview of the candidate geometry, based on the immutable pre-drag snapshot —
@@ -3726,7 +3841,7 @@ class HouseplanCard extends LitElement {
       const plan = g.plan!;
       const dRaw = (p[0] - plan.a[0]) * plan.n[0] + (p[1] - plan.a[1]) * plan.n[1];
       // the moved wall LINE lands on the grid, like every drawn wall
-      const sn = this._snap([plan.a[0] + plan.n[0] * dRaw, plan.a[1] + plan.n[1] * dRaw], ev);
+      const sn = this._snap([plan.a[0] + plan.n[0] * dRaw, plan.a[1] + plan.n[1] * dRaw]);
       let d = (sn[0] - plan.a[0]) * plan.n[0] + (sn[1] - plan.a[1]) * plan.n[1];
       d = clampEdgeDrag(g.rooms, g.openings, plan, d, this._gridPitch, this._rszOpts());
       if (d === g.d && g.moved) return;
@@ -3738,7 +3853,7 @@ class HouseplanCard extends LitElement {
       this._rszLive = this._rszEdgeLabels(res, plan);
     } else {
       const fixed = g.fixed!;
-      const sn = this._snap(p, ev); // the dragged corner aims at grid nodes
+      const sn = this._snap(p); // the dragged corner aims at grid nodes
       let k = Math.hypot(sn[0] - fixed[0], sn[1] - fixed[1]) / (g.span0 || 1);
       k = Math.max(0.05, Math.min(20, k));
       k = clampRoomScale(g.rooms, g.openings, g.roomId, fixed, k, this._rszOpts());
@@ -3770,6 +3885,7 @@ class HouseplanCard extends LitElement {
       this.requestUpdate();
       return;
     }
+    const before = JSON.parse(g.snap) as SpaceGeometryState;
     // commit: the preview moves into the REAL config in one step (the only point
     // where _writeConfig can see a resize), collinear T-insert leftovers cleaned,
     // then ONE undo step + ONE write
@@ -3800,11 +3916,10 @@ class HouseplanCard extends LitElement {
         if (!sp.walls.length) delete sp.walls;
       }
     }
-    this._rszUndo.push({ space: this._space, snap: g.snap });
-    if (this._rszUndo.length > 30) this._rszUndo.shift();
     // the click synthesized after the drag must not re-pick the selection
     this._suppressClick = true;
     setTimeout(() => (this._suppressClick = false), 0);
+    this._recordGeometry(this._t('history.resize_room'), before);
     this._saveConfig();
     this.requestUpdate();
   }
@@ -3831,17 +3946,6 @@ class HouseplanCard extends LitElement {
     if (!g || g.pid !== ev.pointerId) return;
     ev.stopPropagation();
     this._rszCancelDrag();
-  }
-
-  /** Ctrl+Z in the resize tool: one handle release = one undo step (docs/RESIZE.md). */
-  private _rszUndoPop(): void {
-    for (let i = this._rszUndo.length - 1; i >= 0; i--) {
-      if (this._rszUndo[i].space !== this._space) continue;
-      const [entry] = this._rszUndo.splice(i, 1);
-      this._rszRestore(entry.snap);
-      this._saveConfig();
-      return;
-    }
   }
 
   private _rszEdgeLabels(
@@ -3981,7 +4085,7 @@ class HouseplanCard extends LitElement {
     if (onShape) return true; // the shape's own handler deals with it
     if (t === 'line' || t === 'rect' || t === 'ellipse') {
       ev.preventDefault();
-      const p = this._snap(this._svgPoint(ev), ev);
+      const p = this._snap(this._svgPoint(ev));
       this._decorDraft = { kind: t, a: p, b: p, pid: ev.pointerId };
       capturePointer(ev);
       return true;
@@ -3989,7 +4093,7 @@ class HouseplanCard extends LitElement {
     if (t === 'text') {
       // …and the press did NOT land on an existing label: those are the one
       // exception to the inertness above (see _decorShapeDown).
-      const p = this._snap(this._svgPoint(ev), ev);
+      const p = this._snap(this._svgPoint(ev));
       this._decorTextDialog = {
         x: clampCanvasN(p[0] / NORM_W), y: clampCanvasN(p[1] / this._decorH),
         text: '', color: this._decorStyle.color,
@@ -4005,7 +4109,7 @@ class HouseplanCard extends LitElement {
       // must not silently place whatever was chosen last week.
       if (!this._furnPalette) return false;
       ev.preventDefault();
-      this._furnPlace(this._svgPoint(ev), ev);
+      this._furnPlace(this._svgPoint(ev));
       return true;
     }
     this._decorSel = null; // select/erase on empty space clears the selection
@@ -4103,11 +4207,10 @@ class HouseplanCard extends LitElement {
     // The delta used to be what got snapped, which preserves whatever off-grid
     // offset the shape already had: a legacy shape at 0.3013 stayed at 0.3013
     // for ever, one step at a time. Snap the RESULTING ANCHOR instead, so one
-    // drag is enough to put any shape on the grid (docs/CANVAS.md §9). Shift
-    // suspends it, as everywhere else.
+    // drag is enough to put any shape on the grid (docs/CANVAS.md §9).
     const ax0 = (o0.kind === 'line' ? o0.x1 : o0.x) * NORM_W;
     const ay0 = (o0.kind === 'line' ? o0.y1 : o0.y) * this._decorH;
-    const anchor = this._snap([ax0 + (p[0] - m.start[0]), ay0 + (p[1] - m.start[1])], ev);
+    const anchor = this._snap([ax0 + (p[0] - m.start[0]), ay0 + (p[1] - m.start[1])]);
     let dx = (anchor[0] - ax0) / NORM_W;
     let dy = (anchor[1] - ay0) / this._decorH;
     // audit follow-up L4 gave decor a bounds clamp of -0.25..1.25 — the plan
@@ -4351,12 +4454,11 @@ class HouseplanCard extends LitElement {
     if (!d) return;
     const p = this._svgPoint(ev);
     if (d.kind === 'scale' && d.orig) {
-      // furniture: the two axes are INDEPENDENT (docs/FURNITURE.md §6). Shift
-      // is off the grid, as everywhere; without it each dimension lands on a
-      // whole cell, which on an on-grid piece puts the dragged corner on a
+      // furniture: the two axes are INDEPENDENT (docs/FURNITURE.md §6). Each
+      // dimension lands on a whole cell, which puts the dragged corner on a
       // node — that is what "snap" has to mean when both sides move.
-      const step = ev.shiftKey ? 0 : this._gridPitch;
-      const min = step > 0 ? step : this._gridPitch * 0.25;
+      const step = this._gridPitch;
+      const min = step;
       const box = furnitureResize(d.orig, d.sgx ?? 1, d.sgy ?? 1, p[0], p[1], step, min);
       if (Math.abs(box.w - d.orig.w) > 1e-6 || Math.abs(box.h - d.orig.h) > 1e-6) d.moved = true;
       this._furnApplyBox(d.id, box);
@@ -4374,8 +4476,7 @@ class HouseplanCard extends LitElement {
     }
     const a = (Math.atan2(p[1] - d.ay, p[0] - d.ax) * 180) / Math.PI;
     let ang = d.angle0 + (a - d.a0);
-    // 5° steps — the step the device icons rotate in; Shift is the way past a
-    // snap everywhere in this card (docs/CANVAS.md §9.4), so it is here too
+    // 5° rotation steps; Shift remains an angle-only precision modifier.
     if (!ev.shiftKey) ang = Math.round(ang / DT_ANGLE_STEP) * DT_ANGLE_STEP;
     ang = ((ang % 360) + 360) % 360;
     if (ang > 180) ang -= 360;
@@ -4480,24 +4581,21 @@ class HouseplanCard extends LitElement {
    * plan drawn at 10 cm per cell gets a sofa half the cells of one drawn at 5.
    *
    * A wall within reach claims it immediately, with its angle, so the common
-   * case (put the bed against that wall) is one click and no dragging. Shift
-   * places it exactly where the finger is, as Shift does everywhere.
+   * case (put the bed against that wall) is one click and no dragging.
    */
-  private _furnPlace(raw: number[], ev: PointerEvent): void {
+  private _furnPlace(raw: number[]): void {
     const pal = this._furnPalette;
     const sp = this._curSpaceCfg;
     if (!pal || !sp) return;
     const W = NORM_W, H = this._decorH;
     const wN = clampFurnSize(cmToNorm(pal.w, this._cellCm, this._gridPitch, W));
     const hN = clampFurnSize(cmToNorm(pal.h, this._cellCm, this._gridPitch, W));
-    const c = this._snap(raw, ev);
+    const c = this._snap(raw);
     let cx = c[0], cy = c[1];
     let angle = 0;
-    if (!ev.shiftKey) {
-      const snap = snapFurnitureToWall(cx, cy, hN * H, this._furnWalls,
-        this._furnWallReach, this._gridPitch);
-      if (snap) { cx = snap.cx; cy = snap.cy; angle = snap.angle; }
-    }
+    const snap = snapFurnitureToWall(cx, cy, hN * H, this._furnWalls,
+      this._furnWallReach, this._gridPitch);
+    if (snap) { cx = snap.cx; cy = snap.cy; angle = snap.angle; }
     const id = 'df' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
     const shape: any = {
       id, kind: 'furniture', symbol: pal.symbol,
@@ -4522,7 +4620,7 @@ class HouseplanCard extends LitElement {
    * reach — it decides the position AND the rotation, which is the whole point
    * of it: a sofa pushed at a wall is parallel to that wall or it is wrong.
    * Out of reach it is the ordinary grid snap on the piece's own anchor, and
-   * the angle it already had is kept. Shift suspends both (docs/CANVAS.md §9.4).
+   * the angle it already had is kept.
    */
   private _furnMoveUpdate(ev: PointerEvent): void {
     const m = this._decorMove!;
@@ -4535,14 +4633,14 @@ class HouseplanCard extends LitElement {
     const rawCy = (o.y + o.h / 2) * H + (p[1] - m.start[1]);
     let x: number, y: number;
     let angle = Number(o.angle) || 0;
-    const snap = ev.shiftKey ? null : snapFurnitureToWall(
+    const snap = snapFurnitureToWall(
       rawCx, rawCy, o.h * H, this._furnWalls, this._furnWallReach, this._gridPitch);
     if (snap) {
       x = snap.cx / W - o.w / 2;
       y = snap.cy / H - o.h / 2;
       angle = snap.angle;
     } else {
-      const a = this._snap([rawCx - (o.w / 2) * W, rawCy - (o.h / 2) * H], ev);
+      const a = this._snap([rawCx - (o.w / 2) * W, rawCy - (o.h / 2) * H]);
       x = a[0] / W;
       y = a[1] / H;
     }
@@ -4759,7 +4857,7 @@ class HouseplanCard extends LitElement {
    * on a node. The short side follows from the aspect ratio and generally does
    * not, which is what "uniform, no rotation, no stretch" costs.
    *
-   * Shift suspends the snap, as everywhere (docs/CANVAS.md §9.4).
+   * Positional snapping is mandatory (UX-05).
    */
   private _bdMove(ev: PointerEvent): void {
     const d = this._bdDrag;
@@ -4769,22 +4867,20 @@ class HouseplanCard extends LitElement {
     if (d.kind === 'move') {
       const x0 = b.x + d.p0.dx * NORM_W;
       const y0 = b.y + d.p0.dy * NORM_W;
-      const at = this._snap([x0 + (p[0] - d.sx), y0 + (p[1] - d.sy)], ev);
+      const at = this._snap([x0 + (p[0] - d.sx), y0 + (p[1] - d.sy)]);
       if (Math.abs(at[0] - x0) > 1e-9 || Math.abs(at[1] - y0) > 1e-9) d.moved = true;
       this._bdApply((at[0] - b.x) / NORM_W, (at[1] - b.y) / NORM_W, d.p0.k);
       return;
     }
     const w0 = b.w || 1, h0 = b.h || 1;
     let k = Math.max(Math.abs(p[0] - d.fx) / w0, Math.abs(p[1] - d.fy) / h0);
-    if (!ev.shiftKey) {
-      // snap the dragged corner along the dominant axis, then read k back
-      const alongX = w0 >= h0;
-      const raw = alongX ? d.fx + d.sgx * k * w0 : d.fy + d.sgy * k * h0;
-      const snapped = snapToGrid(raw, this._gridPitch);
-      const span = Math.abs(snapped - (alongX ? d.fx : d.fy));
-      const kk = span / (alongX ? w0 : h0);
-      if (kk > 0) k = kk;
-    }
+    // snap the dragged corner along the dominant axis, then read k back
+    const alongX = w0 >= h0;
+    const raw = alongX ? d.fx + d.sgx * k * w0 : d.fy + d.sgy * k * h0;
+    const snapped = snapToGrid(raw, this._gridPitch);
+    const span = Math.abs(snapped - (alongX ? d.fx : d.fy));
+    const kk = span / (alongX ? w0 : h0);
+    if (kk > 0) k = kk;
     k = Math.min(PLAN_SCALE_MAX, Math.max(PLAN_SCALE_MIN, k));
     if (Math.abs(k - d.p0.k) > 1e-9) d.moved = true;
     const x = d.sgx > 0 ? d.fx : d.fx - k * w0;
@@ -5151,9 +5247,13 @@ class HouseplanCard extends LitElement {
     </div>`;
   }
 
-  /** Boundary under the cursor in the open-wall tool (hover preview). */
+  /** Boundary under the cursor in the open/close-boundary tools. */
   private get _openWallHover(): { segs: number[][]; open: boolean } | null {
-    if (!this._markup || this._tool !== 'openwall' || !this._cursorPt) return null;
+    if (!this._markup || (this._tool !== 'openwall' && this._tool !== 'closewall') || !this._cursorPt) return null;
+    if (this._tool === 'closewall') {
+      const openSg = hitOpenSpan(this._cursorPt, this._openCuts(), this._gridPitch * 6);
+      return openSg ? { segs: [openSg], open: true } : null;
+    }
     // After the anchor: rubber-band from P1 to the clamped cursor — that is the
     // only solid-wall preview. Do NOT light up the whole shared edge on hover:
     // it hides where the click will land (owner 2026-08-05).
@@ -5161,8 +5261,10 @@ class HouseplanCard extends LitElement {
       const p2 = clampToEdgeEnds(this._cursorPt, this._openWallAnchor.edge);
       return { segs: [[this._openWallAnchor.p[0], this._openWallAnchor.p[1], p2[0], p2[1]]], open: false };
     }
-    const openSg = hitOpenSpan(this._cursorPt, this._openCuts(), this._gridPitch * 6);
-    return openSg ? { segs: [openSg], open: true } : null;
+    // Opening and closing are separate tools.  An existing virtual stretch is
+    // intentionally not presented as a close target here; clicking it only
+    // explains which tool should be used.
+    return null;
   }
 
   /** Dashed strokes over open (virtual) boundaries; highlighted in the tool. */
@@ -5171,7 +5273,7 @@ class HouseplanCard extends LitElement {
     const cuts = this._openCuts();
     const hover = this._openWallHover;
     if (!cuts.length && !hover) return svg`` as unknown as TemplateResult;
-    const hot = this._markup && this._tool === 'openwall';
+    const hot = this._markup && (this._tool === 'openwall' || this._tool === 'closewall');
     const stroke = disp?.color || 'var(--hp-muted)';
     return svg`<g class="openwalls ${hot ? 'hot' : ''}" style="--ow-stroke:${stroke}">
       ${cuts.map((sg) => svg`<line class="openwall"
@@ -5263,6 +5365,7 @@ class HouseplanCard extends LitElement {
   private _closeOpenSpan(sg: number[]): void {
     const sp = this._curSpaceCfg;
     if (!sp) return;
+    const before = this._geometrySnapshot();
     const eps = this._gridPitch * 0.02;
     const oldCuts = this._openCuts();
     // Materialise exact endpoints of every real remainder before removing the
@@ -5306,11 +5409,12 @@ class HouseplanCard extends LitElement {
     else delete sp.walls;
     this._persistOpenCuts(cuts);
     this._showToast(this._t('toast.openwall_closed_span'));
+    this._recordGeometry(this._t('history.close_boundary'), before);
     this._saveConfig();
     this.requestUpdate();
   }
 
-  /** Open-boundary tool: two-click span, or click existing span to close. */
+  /** Open-boundary tool: two clicks create a virtual stretch. */
   private _openWallClick(raw: number[]): void {
     const pull = this._gridPitch * 6;
     const eps = this._gridPitch * 0.02;
@@ -5335,6 +5439,7 @@ class HouseplanCard extends LitElement {
       const next = [...cuts, sg];
       const sp = this._curSpaceCfg;
       if (!sp) return;
+      const before = this._geometrySnapshot();
       // A virtual stretch carries no thickness: the key of the wall it cuts is
       // SPLIT here — the covered piece is dropped, the solid remainder keeps
       // the cm under its own atomic key (spec invariant, AUD-159B6-01). Simply
@@ -5350,6 +5455,7 @@ class HouseplanCard extends LitElement {
       }
       this._persistOpenCuts(next);
       this._showToast(this._t('toast.openwall_opened_span'));
+      this._recordGeometry(this._t('history.open_boundary'), before);
       this._saveConfig();
       this.requestUpdate();
       return;
@@ -5357,7 +5463,7 @@ class HouseplanCard extends LitElement {
 
     const openSg = hitOpenSpan(raw, cuts, pull);
     if (openSg) {
-      this._closeOpenSpan(openSg);
+      this._showToast(this._t('toast.closewall_use_tool'));
       return;
     }
 
@@ -5377,39 +5483,30 @@ class HouseplanCard extends LitElement {
     };
   }
 
-  /** Delete tool: virtual→close; shared→merge; outer/inside→delete room. */
-  private _deleteWallClick(raw: number[]): void {
-    const pull = this._gridPitch * 6;
-    const eps = this._gridPitch * 0.02;
-    const cuts = this._openCuts();
-    const openSg = hitOpenSpan(raw, cuts, pull);
-    if (openSg) {
-      this._closeOpenSpan(openSg);
+  /** Close-boundary is deliberately separate from opening and deletion. */
+  private _closeWallClick(raw: number[]): void {
+    const openSg = hitOpenSpan(raw, this._openCuts(), this._gridPitch * 6);
+    if (!openSg) {
+      this._showToast(this._t('toast.closewall_pick'));
       return;
     }
-    const sh = hitSharedWall(raw, this._spaceModel().rooms, pull, eps);
-    if (sh) {
-      const pa = roomPoly(sh.a), pb = roomPoly(sh.b);
-      const merged = pa && pb ? mergeRooms(pa, pb) : null;
-      if (!merged) {
-        this._showToast(this._t('toast.merge_not_adjacent'));
-        return;
-      }
-      if (!confirm(this._t('confirm.merge_rooms', {
-        a: sh.a.name || sh.a.id, b: sh.b.name || sh.b.id,
-      }))) return;
-      this._mergeDialog = { aId: sh.a.id!, bId: sh.b.id!, poly: merged, pick: 'a' };
+    this._closeOpenSpan(openSg);
+  }
+
+  /** Delete tool: only the explicitly clicked room, never wall semantics. */
+  private _deleteRoomClick(raw: number[]): void {
+    const room = [...this._spaceModel().rooms].reverse().find((r) => this._pointInRoom(raw, r));
+    if (!room) {
+      this._showToast(this._t('toast.delete_room_pick'));
       return;
     }
-    const outer = hitOuterWall(raw, this._spaceModel().rooms, pull, eps);
-    const room = outer?.room
-      || [...this._spaceModel().rooms].reverse().find((r) => this._pointInRoom(raw, r));
-    if (!room) return;
     if (!confirm(this._t('confirm.delete_room', { name: room.name }))) return;
     const sp = this._curSpaceCfg;
     if (!sp) return;
+    const before = this._geometrySnapshot();
     sp.rooms = sp.rooms.filter((r: any) => r.id !== room.id);
     this._commitOpenSpans();
+    this._recordGeometry(this._t('history.delete_room'), before);
     this._saveConfig();
     this._regSignature = '';
     this._maybeRebuildDevices();
@@ -5557,6 +5654,7 @@ class HouseplanCard extends LitElement {
     if (!d) return;
     const sp = this._curSpaceCfg;
     if (!sp) return;
+    const before = this._geometrySnapshot();
     const cm = fieldToCm(d.value, this._imperial);
     const openCuts = this._openCuts();
     let next: WallEntry[];
@@ -5572,6 +5670,7 @@ class HouseplanCard extends LitElement {
     else delete sp.walls;
     this._wallDialog = null;
     this._showToast(this._t(cm == null ? 'toast.wallthick_cleared' : 'toast.wallthick_set'));
+    this._recordGeometry(this._t('history.wall_thickness'), before);
     this._saveConfig();
     this.requestUpdate();
   }
@@ -5623,6 +5722,56 @@ class HouseplanCard extends LitElement {
     </g>` as unknown as TemplateResult;
   }
 
+  /**
+   * View-only perimeter above real wall bodies.
+   *
+   * The room shape lives below the unioned wall body, so its CSS :hover stroke
+   * disappears precisely on thick/common walls. Draw the hovered room's real
+   * boundary once more after the bodies. Open (virtual) spans stay dashed in
+   * their own layer and are cut out here instead of being painted solid.
+   */
+  private _renderRoomHover(space: SpaceModel): TemplateResult {
+    const hover = this._hoverRoom;
+    if (this._mode !== 'view' || !hover || hover.space !== space.id) {
+      return svg`` as unknown as TemplateResult;
+    }
+    const room = space.rooms.find((r) => r === hover.room || (!!r.id && r.id === hover.room.id));
+    if (!room) return svg`` as unknown as TemplateResult;
+    const poly = roomPoly(room);
+    if (!poly) return svg`` as unknown as TemplateResult;
+
+    // A parent room also owns the walls around rooms nested inside it.
+    const others = space.rooms
+      .filter((r) => r !== room)
+      .map((r) => roomPoly(r))
+      .filter((p): p is number[][] => !!p);
+    const contours = [poly, ...islandsOf(poly, others)];
+    const pairs = this._openPairs();
+    const openCuts = room.id
+      ? pairs.filter((p) => p.a.id === room.id || p.b.id === room.id).flatMap((p) => p.segs)
+      : pairs.flatMap((p) => p.segs);
+    // A hidden opening symbol is still a physical opening: never bridge a
+    // doorway/window with the hover stroke merely because its symbol is off.
+    const openingCuts = this._openingsR.map((o) => {
+      const rad = (o.angle * Math.PI) / 180;
+      const dx = (Math.cos(rad) * o.rlen) / 2;
+      const dy = (Math.sin(rad) * o.rlen) / 2;
+      return [o.rx - dx, o.ry - dy, o.rx + dx, o.ry + dy];
+    });
+    const cuts = openCuts.concat(openingCuts);
+    const eps = this._gridPitch * 0.02;
+    const d = contours.map((contour) => {
+      if (!cuts.length) {
+        return `M ${contour.map((p) => `${p[0]} ${p[1]}`).join(' L ')} Z`;
+      }
+      return outlineWithout(contour, cuts, eps)
+        .map((sg) => `M ${sg[0]} ${sg[1]} L ${sg[2]} ${sg[3]}`)
+        .join(' ');
+    }).filter(Boolean).join(' ');
+    if (!d) return svg`` as unknown as TemplateResult;
+    return svg`<path class="room-hover-outline" d="${d}"></path>` as unknown as TemplateResult;
+  }
+
   /** Hover highlight for the wall-thickness tool (SVG). */
   private _renderWallThickUi(): TemplateResult {
     const hover = this._wallThickHover;
@@ -5662,7 +5811,7 @@ class HouseplanCard extends LitElement {
 
 
   /** Opening tool: click an existing opening to edit it, or a wall to place one. */
-  private _openingClick(raw: number[], shift = false): void {
+  private _openingClick(raw: number[]): void {
     const eps = this._gridPitch * 1.5;
     const hit = this._openingsR.find(
       (o) => Math.hypot(raw[0] - o.rx, raw[1] - o.ry) <= Math.max(o.rlen / 2, eps),
@@ -5681,7 +5830,7 @@ class HouseplanCard extends LitElement {
       return;
     }
     // the opening is born where the PREVIEW showed it — magnet included
-    const place = this._opRuler(snap, this._cmToUnits(OPENING_DEFAULT_CM), shift);
+    const place = this._opRuler(snap, this._cmToUnits(OPENING_DEFAULT_CM));
     this._openingDialog = {
       type: 'door', lengthCm: OPENING_DEFAULT_CM, contact: '', lock: '',
       invert: false, flipH: false, flipV: false,
@@ -5720,7 +5869,10 @@ class HouseplanCard extends LitElement {
     } catch {
       /* an inactive pointerId (synthetic events, some browsers) must not kill the drag */
     }
-    this._opDrag = { id: o.id, moved: false, sx: ev.clientX, sy: ev.clientY, dirty: false };
+    this._opDrag = {
+      id: o.id, moved: false, sx: ev.clientX, sy: ev.clientY, dirty: false,
+      before: this._geometrySnapshot(),
+    };
   }
 
   private _opPointerMove(ev: PointerEvent, o: OpeningCfg): void {
@@ -5739,7 +5891,7 @@ class HouseplanCard extends LitElement {
     if (!cfg) return;
     // ruler badges on both shoulders + soft magnet to the wall's center
     // (owner 2026-08-03) — the very same helper the PLACEMENT preview uses
-    const r = this._opRuler(snap, cfg.length * NORM_W, ev.shiftKey);
+    const r = this._opRuler(snap, cfg.length * NORM_W);
     this._opMeasure = r.measure;
     const nx = r.x / NORM_W;
     const ny = r.y / this._spaceH;
@@ -5754,23 +5906,22 @@ class HouseplanCard extends LitElement {
    * Shoulder rulers + the soft centre magnet for an opening of `rlen` sitting
    * at a wall snap. ONE implementation for both gestures the owner asked to
    * behave alike (2026-08-03): dragging an existing opening and placing a new
-   * one. `tol` is half a grid step and Shift opts out of the magnet — the same
-   * convention as the coarse-angle Shift elsewhere in the editor. The returned
+   * one. `tol` is half a grid step; the centre magnet and along-wall grid step
+   * are mandatory. The returned
    * x/y are ALREADY magnetised, so the caller just writes them.
    */
   private _opRuler(
     snap: { x: number; y: number; angle: number },
     rlen: number,
-    shift: boolean,
   ): { x: number; y: number; angle: number; measure: OpMeasure | null } {
     const rooms = this._spaceModel().rooms;
     const tol = this._gridPitch / 2;
     let cx = snap.x, cy = snap.y;
     let sh = openingShoulders([cx, cy], snap.angle, rlen, rooms, tol);
-    if (sh && sh.centered && !shift && (cx !== sh.wallCenter[0] || cy !== sh.wallCenter[1])) {
+    if (sh && sh.centered && (cx !== sh.wallCenter[0] || cy !== sh.wallCenter[1])) {
       [cx, cy] = sh.wallCenter;
       sh = openingShoulders([cx, cy], snap.angle, rlen, rooms, tol);
-    } else if (sh && !shift) {
+    } else if (sh) {
       // Not centred: quantise the offset ALONG the wall to the grid step
       // (docs/CANVAS.md §9.3). Grid-BOUND would lift the opening off a diagonal
       // wall, so the wall stays the master and the grid only says WHERE on it.
@@ -5797,7 +5948,7 @@ class HouseplanCard extends LitElement {
       x: cx, y: cy, angle: snap.angle,
       measure: {
         labels: [lbl(sh.sideA, sh.midA), lbl(sh.sideB, sh.midB)],
-        guide: sh.centered && !shift
+        guide: sh.centered
           ? { x: sh.wallCenter[0], y: sh.wallCenter[1], angle: snap.angle }
           : null,
       },
@@ -5806,10 +5957,14 @@ class HouseplanCard extends LitElement {
 
   private _opPointerUp(ev: PointerEvent, o: OpeningCfg): void {
     if (!this._opDrag || this._opDrag.id !== o.id) return;
-    const moved = this._opDrag.moved;
+    const drag = this._opDrag;
+    const moved = drag.moved;
     this._opMeasure = null; // badges and the center tick live only through the drag
     // only write when the geometry actually changed (audit L4)
-    if (moved && this._opDrag.dirty) this._saveConfig();
+    if (moved && drag.dirty) {
+      this._recordGeometry(this._t('history.move_opening'), drag.before);
+      this._saveConfig();
+    }
     // keep the flag until the click event that follows pointerup, then let it go
     if (moved) window.setTimeout(() => (this._opDrag = null), 0);
     else this._opDrag = null;
@@ -5831,6 +5986,7 @@ class HouseplanCard extends LitElement {
     const d = this._openingDialog;
     const sp = this._curSpaceCfg;
     if (!d || !sp) return;
+    const before = this._geometrySnapshot();
     const H = this._spaceH;
     const o: OpeningCfg = {
       id: d.id || 'o' + Date.now().toString(36),
@@ -5849,6 +6005,7 @@ class HouseplanCard extends LitElement {
     const i = sp.openings.findIndex((x: OpeningCfg) => x.id === o.id);
     if (i >= 0) sp.openings[i] = o;
     else sp.openings.push(o);
+    this._recordGeometry(this._t(d.id ? 'history.edit_opening' : 'history.add_opening'), before);
     this._saveConfig();
     this._openingDialog = null;
     this.requestUpdate();
@@ -5858,7 +6015,9 @@ class HouseplanCard extends LitElement {
     const d = this._openingDialog;
     const sp = this._curSpaceCfg;
     if (!d?.id || !sp?.openings) return;
+    const before = this._geometrySnapshot();
     sp.openings = sp.openings.filter((x: OpeningCfg) => x.id !== d.id);
+    this._recordGeometry(this._t('history.delete_opening'), before);
     this._saveConfig();
     this._openingDialog = null;
     this.requestUpdate();
@@ -5916,6 +6075,7 @@ class HouseplanCard extends LitElement {
     const d = this._mergeDialog;
     const sp = this._curSpaceCfg;
     if (!d || !sp) return;
+    const before = this._geometrySnapshot();
     const H = this._spaceH;
     const keepId = d.pick === 'a' ? d.aId : d.bId;
     const dropId = d.pick === 'a' ? d.bId : d.aId;
@@ -5929,6 +6089,7 @@ class HouseplanCard extends LitElement {
     delete keep.x; delete keep.y; delete keep.w; delete keep.h; // a merged room is never a rect
     sp.rooms = sp.rooms.filter((r: any) => r.id !== dropId);
     this._commitOpenSpans();
+    this._recordGeometry(this._t('history.merge_rooms'), before);
     this._saveConfig();
     this._mergeDialog = null;
     this._regSignature = '';
@@ -5937,7 +6098,7 @@ class HouseplanCard extends LitElement {
   }
 
   /** Split: click the room, then two points on its walls. */
-  private _splitClick(raw: number[], shift = false): void {
+  private _splitClick(raw: number[]): void {
     const rooms = this._spaceModel().rooms;
     if (!this._splitSel) {
       const hit = [...rooms].reverse().find((r) => this._pointInRoom(raw, r));
@@ -5959,11 +6120,11 @@ class HouseplanCard extends LitElement {
     // any cut that is not a clean wall-to-wall chord.
     // …and it is still QUANTISED: the offset ALONG the wall moves in whole grid
     // steps (docs/CANVAS.md §9), which on the axis-aligned, grid-drawn walls the
-    // editor itself makes IS a grid node. Shift opts out, as everywhere else.
+    // editor itself makes IS a grid node. There is no free-position bypass.
     const eps = this._gridPitch * 0.02;
     const pull = this._gridPitch * 6; // ≈2.5% of the plan width — generous but intentional
     const raw0 = closestPointOnBoundary(raw, poly);
-    const near = raw0 && !shift ? (snapPointAlongPoly(raw0, poly, this._gridPitch) || raw0) : raw0;
+    const near = raw0 ? (snapPointAlongPoly(raw0, poly, this._gridPitch) || raw0) : raw0;
     const wallPt = raw0 && near && Math.hypot(raw0[0] - raw[0], raw0[1] - raw[1]) <= pull ? near : null;
     const onWall = !!wallPt && pointOnBoundary(wallPt, poly, eps);
     const cur = this._splitSel.pts;
@@ -5978,7 +6139,7 @@ class HouseplanCard extends LitElement {
     }
     if (!onWall) {
       // an interior click adds an intermediate vertex of the cut path
-      const mid = this._snap(raw, shift);
+      const mid = this._snap(raw);
       if (!ptInside(mid, poly, eps)) {
         this._showToast(this._t('toast.split_pick_inside'));
         return;
@@ -6010,16 +6171,15 @@ class HouseplanCard extends LitElement {
 
   private _markupMove(ev: MouseEvent): void {
     if (!this._markup) return;
-    if (this._tool === 'opening' || this._tool === 'openwall' || this._tool === 'wallthick') {
+    if (this._tool === 'opening' || this._tool === 'openwall' || this._tool === 'closewall' || this._tool === 'wallthick') {
       // hover preview: raw cursor point; snapping happens in the preview getters
-      this._opShift = !!ev.shiftKey; // Shift opts out of the centre magnet
       this._cursorPt = this._svgPoint(ev);
       return;
     }
     const drawing = this._tool === 'draw' && this._path.length && !this._contourClosed;
     const cutting = this._tool === 'split' && !!this._splitSel?.pts?.length;
     if (!drawing && !cutting) return;
-    this._cursorPt = this._snap(this._svgPoint(ev), ev);
+    this._cursorPt = this._snap(this._svgPoint(ev));
   }
 
   /**
@@ -6040,7 +6200,7 @@ class HouseplanCard extends LitElement {
     const rlen = this._cmToUnits(OPENING_DEFAULT_CM);
     const snap = snapToWall(raw, this._spaceModel().rooms, eps);
     if (!snap) return null;
-    const r = this._opRuler(snap, rlen, this._opShift);
+    const r = this._opRuler(snap, rlen);
     return { x: r.x, y: r.y, angle: r.angle, rlen, measure: r.measure };
   }
 
@@ -6066,6 +6226,7 @@ class HouseplanCard extends LitElement {
   private _commitRoom(): void {
     const sp = this._curSpaceCfg;
     if (!sp) return;
+    const before = this._geometrySnapshot();
     const H = this._spaceH;
     const wasSplit = !!this._pendingSplit;
     let verts: number[][];
@@ -6116,6 +6277,7 @@ class HouseplanCard extends LitElement {
         else delete sp.walls;
       }
     }
+    this._recordGeometry(this._t(wasSplit ? 'history.split_room' : 'history.add_room'), before);
     this._saveConfig();
     this._path = [];
     this._pendingSplit = null;
@@ -7448,6 +7610,7 @@ class HouseplanCard extends LitElement {
       });
       this._serverCfg = d.config;
       this._layout = d.layout;
+      this._geometryHistory.clear();
       this._cfgRev = resp?.config_rev ?? this._cfgRev + 1;
       this._layoutRev = resp?.layout_rev ?? this._layoutRev + 1;
       this._canOptimizeUndo = !!resp?.can_undo;
@@ -7494,6 +7657,7 @@ class HouseplanCard extends LitElement {
       this._serverCfg = cfgResp?.config || this._serverCfg;
       this._cfgRev = cfgResp?.rev ?? this._cfgRev;
       this._layout = layResp?.layout || this._layout;
+      this._geometryHistory.clear();
       this._layoutRev = layResp?.rev ?? this._layoutRev;
       this._canOptimizeUndo = false;
       this._cfgEpoch++;
@@ -7708,7 +7872,10 @@ class HouseplanCard extends LitElement {
           </radialGradient>
           ${sp.clip ? svg`<clipPath id="hp-glowclip-${i}">${sp.clip.map((d) => svg`<path d="${d}"></path>`)}</clipPath>` : nothing}`)}
       </defs>
-      <g class="glowlayer">
+      ${''/* Glow is presentation only. It is painted above room fills, but must
+             not become the pointer target: room hover and its tooltip still
+             belong to the room underneath the light pool. */}
+      <g class="glowlayer" pointer-events="none">
         ${spots.map((sp, i) => svg`<circle cx="${sp.pos.x}" cy="${sp.pos.y}" r="${sp.r}"
           fill="url(#hp-glow-${i})" ${''}
           clip-path=${sp.clip ? `url(#hp-glowclip-${i})` : nothing}></circle>`)}
@@ -8169,7 +8336,7 @@ class HouseplanCard extends LitElement {
         ${this._mode === 'decor' && this._decorTool === 'furniture' ? this._renderFurnPalette() : nothing}
         </div>
 
-        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'openwall' && this._openWallHover ? ' wallhot' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._bdMovable ? ' bdgrab' : ''}${this._bdDrag ? ' bdgrabbing' : ''}${dayNight ? ' daynight' : ''}${dayNight && this._skySnap ? ' skysnap' : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}"
+        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + ((this._tool === 'openwall' || this._tool === 'closewall') && this._openWallHover ? ' wallhot' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._bdMovable ? ' bdgrab' : ''}${this._bdDrag ? ' bdgrabbing' : ''}${dayNight ? ' daynight' : ''}${dayNight && this._skySnap ? ' skysnap' : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}"
           style="height:${this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}${stageBg ? `;background:${stageBg}` : ''};--wall-fill:${this._fillColors.wall_fill.c};--wall-fill-op:${this._fillColors.wall_fill.a}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
@@ -8308,23 +8475,27 @@ class HouseplanCard extends LitElement {
                 ? svg`<path class="${cls}" style="${style}" fill-rule="evenodd"
                     data-hp="room" data-id=${hpId} data-area=${hpArea}
                     d="${[fillPoly, ...holes].map(pathD).join(' ')}"
+                    @mouseenter=${() => (this._hoverRoom = { space: space.id, room: r })}
                     @mousemove=${tip}
-                    @mouseleave=${() => (this._tip = null)}></path>`
-                : fillPoly && fillPoly !== myPoly
-                ? svg`<polygon class="${cls}" style="${style}" points="${fillPoly.map((p) => p.join(',')).join(' ')}"
-                    data-hp="room" data-id=${hpId} data-area=${hpArea}
+                    @mouseleave=${() => { this._tip = null; this._hoverRoom = null; }}></path>`
+                 : fillPoly && fillPoly !== myPoly
+                 ? svg`<polygon class="${cls}" style="${style}" points="${fillPoly.map((p) => p.join(',')).join(' ')}"
+                     data-hp="room" data-id=${hpId} data-area=${hpArea}
+                    @mouseenter=${() => (this._hoverRoom = { space: space.id, room: r })}
                     @mousemove=${tip}
-                    @mouseleave=${() => (this._tip = null)}></polygon>`
-                : r.poly
-                ? svg`<polygon class="${cls}" style="${style}" points="${r.poly.map((p) => p.join(',')).join(' ')}"
-                    data-hp="room" data-id=${hpId} data-area=${hpArea}
+                    @mouseleave=${() => { this._tip = null; this._hoverRoom = null; }}></polygon>`
+                 : r.poly
+                 ? svg`<polygon class="${cls}" style="${style}" points="${r.poly.map((p) => p.join(',')).join(' ')}"
+                     data-hp="room" data-id=${hpId} data-area=${hpArea}
+                    @mouseenter=${() => (this._hoverRoom = { space: space.id, room: r })}
                     @mousemove=${tip}
-                    @mouseleave=${() => (this._tip = null)}></polygon>`
-                : svg`<rect class="${cls}" style="${style}"
-                    data-hp="room" data-id=${hpId} data-area=${hpArea}
-                    x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="${Math.min(r.w!, r.h!) * 0.03}"
+                    @mouseleave=${() => { this._tip = null; this._hoverRoom = null; }}></polygon>`
+                 : svg`<rect class="${cls}" style="${style}"
+                     data-hp="room" data-id=${hpId} data-area=${hpArea}
+                     x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="${Math.min(r.w!, r.h!) * 0.03}"
+                    @mouseenter=${() => (this._hoverRoom = { space: space.id, room: r })}
                     @mousemove=${tip}
-                    @mouseleave=${() => (this._tip = null)}></rect>`;
+                    @mouseleave=${() => { this._tip = null; this._hoverRoom = null; }}></rect>`;
               const trimmed = edgeCuts.length && myPoly
                 ? outlineWithout(myPoly, edgeCuts, this._gridPitch * 0.02)
                 : null;
@@ -8355,6 +8526,7 @@ class HouseplanCard extends LitElement {
                    inside thick jambs without changing the stored span. */}
             ${!this._editing ? this._renderOpenWalls(disp) : nothing}
             ${this._renderWallBodies(disp)}
+            ${this._renderRoomHover(space)}
             ${''/* Editors: saved virtual boundaries and the live two-click
                    preview deliberately paint AFTER real wall bodies. Their
                    full centreline geometry remains visible for editing. */}
@@ -9353,7 +9525,7 @@ class HouseplanCard extends LitElement {
     // A room drawn at 2.5 had a name that could not be dragged to its own room.
     const nx = clampCanvasR(this._drag.ox + dx);
     const ny = clampCanvasR(this._drag.oy + dy);
-    this._savePos({ id, space: spaceId } as DevItem, nx, ny, ev.shiftKey);
+    this._savePos({ id, space: spaceId } as DevItem, nx, ny);
   }
 
   private _labelUp(r: RoomCfg): void {
@@ -10055,6 +10227,8 @@ class HouseplanCard extends LitElement {
   }
 
   private _renderMarkupBar(): TemplateResult {
+    const undoName = this._geometryHistory.undoName;
+    const redoName = this._geometryHistory.redoName;
     return html`<div class="editbar">
       <ha-icon icon="mdi:vector-square-edit" class="warn"></ha-icon>
       <span class="wallsgroup">
@@ -10099,14 +10273,30 @@ class HouseplanCard extends LitElement {
         title=${this._t('title.markup_openwall')}>
         <ha-icon icon="mdi:border-none-variant"></ha-icon>${this._t('markup.openwall')}
       </button>
+      <button class="btn ${this._tool === 'closewall' ? 'on' : ''}"
+        @click=${() => { this._cancelPath(); this._tool = 'closewall'; this._wallDialog = null; }}
+        title=${this._t('title.markup_closewall')}>
+        <ha-icon icon="mdi:border-all-variant"></ha-icon>${this._t('markup.closewall')}
+      </button>
       <button class="btn ${this._tool === 'wallthick' ? 'on' : ''}"
         @click=${() => { this._cancelPath(); this._tool = 'wallthick'; this._wallDialog = null; }}
         title=${this._t('title.markup_wallthick')}>
         <ha-icon icon="mdi:wall"></ha-icon>${this._t('markup.wallthick')}
       </button>
-      <button class="btn ${this._tool === 'delroom' ? 'on' : ''}" @click=${() => (this._tool = 'delroom')}
+      <button class="btn ${this._tool === 'delroom' ? 'on' : ''}"
+        @click=${() => { this._cancelPath(); this._tool = 'delroom'; }}
         title=${this._t('title.markup_delroom')}>
-        <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('markup.delete')}
+        <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('markup.delete_room')}
+      </button>
+      <button class="btn ghost" @click=${this._undoGeometry}
+        ?disabled=${!undoName}
+        title=${undoName ? this._t('history.undo_named', { name: undoName }) : this._t('history.undo_empty')}>
+        <ha-icon icon="mdi:undo-variant"></ha-icon>${this._t('history.undo')}
+      </button>
+      <button class="btn ghost" @click=${this._redoGeometry}
+        ?disabled=${!redoName}
+        title=${redoName ? this._t('history.redo_named', { name: redoName }) : this._t('history.redo_empty')}>
+        <ha-icon icon="mdi:redo-variant"></ha-icon>${this._t('history.redo')}
       </button>
       <span class="spacer"></span>
       ${this._tool === 'draw'
@@ -10433,10 +10623,6 @@ class HouseplanCard extends LitElement {
             ${this._boolInput(d.isLight, (v) => (this._markerDialog = { ...d, isLight: v }))}
             <span>${this._t('marker.is_light')}</span>
           </label>
-          <label class="srcrow" title=${this._t('marker.hide_tip')}>
-            ${this._boolInput(d.hideFromPlan, (v) => (this._markerDialog = { ...d, hideFromPlan: v }))}
-            <span>${this._t('marker.hide')}</span>
-          </label>
           <label>${this._t('marker.glow_radius_label')}</label>
           <div class="colorrow">
             <input class="tempin" type="number" min="0.5" step="0.5"
@@ -10521,19 +10707,31 @@ class HouseplanCard extends LitElement {
             </label>
           </div>
         </div>
-        <div class="row">
-          ${d.devId && d.binding === 'virtual'
-            ? html`<button class="btn danger" @click=${this._deleteMarker}>
-                <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.remove')}
-              </button>`
-            : nothing}
-          <span class="spacer"></span>
-          <button class="btn ghost" @click=${() => (this._markerDialog = null)}>${this._t('btn.cancel')}</button>
-          <button class="btn on" @click=${this._saveMarker}
-            ?disabled=${d.busy || (d.bindingMode === 'ha' && (!d.binding || d.binding === 'virtual'))}
-            title=${d.bindingMode === 'ha' && (!d.binding || d.binding === 'virtual') ? this._t('marker.pick_ph') : ''}>
-            <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this._t('btn.save')}
-          </button>
+        <div class="row markerfooter">
+          <div class="markeractions">
+            ${d.devId
+              ? html`<button class="btn" type="button"
+                  aria-pressed=${d.hideFromPlan ? 'true' : 'false'}
+                  title=${this._t(d.hideFromPlan ? 'marker.show_tip' : 'marker.hide_tip')}
+                  @click=${() => (this._markerDialog = { ...d, hideFromPlan: !d.hideFromPlan })}>
+                  <ha-icon icon=${d.hideFromPlan ? 'mdi:eye-outline' : 'mdi:eye-off-outline'}></ha-icon>
+                  ${this._t(d.hideFromPlan ? 'marker.show' : 'marker.hide')}
+                </button>`
+              : nothing}
+            ${d.devId && d.binding === 'virtual'
+              ? html`<button class="btn danger" @click=${this._deleteMarker}>
+                  <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.remove')}
+                </button>`
+              : nothing}
+          </div>
+          <div class="markersaveactions">
+            <button class="btn ghost" @click=${() => (this._markerDialog = null)}>${this._t('btn.cancel')}</button>
+            <button class="btn on" @click=${this._saveMarker}
+              ?disabled=${d.busy || (d.bindingMode === 'ha' && (!d.binding || d.binding === 'virtual'))}
+              title=${d.bindingMode === 'ha' && (!d.binding || d.binding === 'virtual') ? this._t('marker.pick_ph') : ''}>
+              <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this._t('btn.save')}
+            </button>
+          </div>
         </div>
       </div>
     </div>`;

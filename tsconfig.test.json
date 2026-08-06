@@ -16,6 +16,7 @@
     "src/types.ts",
     "src/space-geometry.ts",
     "src/signing.ts",
+    "src/command-stack.ts",
     "src/align-grid.ts",
     "src/plan-optimizer.ts",
     "src/furniture.ts",

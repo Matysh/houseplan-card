@@ -35,12 +35,15 @@ const res = await page.evaluate(async () => {
     return Math.abs(x1 - 550) < 0.5 && Math.abs(x2 - 550) < 0.5
       && Math.min(y1, y2) < midY && Math.max(y1, y2) > midY;
   });
-  c._tool = 'openwall'; await c.updateComplete;
-  // click the virtual span to close
+  c._tool = 'openwall';
   c._openWallClick([550, 300]); await c.updateComplete;
+  out.openToolCannotClose = (c._curSpaceCfg.open_spans || []).length > 0;
+  c._tool = 'closewall'; await c.updateComplete;
+  // Closing is a separate, single-purpose action (UX-02).
+  c._closeWallClick([550, 300]); await c.updateComplete;
   out.toggledOff = !(c._curSpaceCfg.rooms.find((r) => r.id === 'r1').open_to || []).includes('r2');
   out.dashesGone = sr().querySelectorAll('.openwall').length === 0;
-  c._openWallClick([100, 100]);
+  c._closeWallClick([100, 100]);
   out.missToast = !!c._toast;
   // reopen for glow
   c._openWallClick([550, 140]);

@@ -4,20 +4,18 @@
  * WHY THIS IS AN ACTION AND NOT A MIGRATION
  * -----------------------------------------
  * Every gesture in the editor now lands on the grid, but plans drawn before
- * that contract existed may hold coordinates between the nodes. The obvious
- * fix — quietly rounding everything on the next update — is the wrong one:
+ * that contract existed (and imported plans) may hold coordinates between
+ * the nodes. The repair stays explicit and previewable because:
  *
  *  1. It moves the user's data without asking. A house plan is a drawing; the
  *     card has no mandate to redraw it on a version bump.
- *  2. Some things are off-grid ON PURPOSE — a small decor label nudged next to
- *     an icon, a diagonal wall's window, a plan traced over a photo where the
- *     scale never was a whole number of cells.
- *  3. A silent migration is unattributable. When a room looks 3 cm wrong the
+ *  2. A silent migration is unattributable. When a room looks 3 cm wrong the
  *     owner cannot tell whether the card did it or they did.
  *
- * So the alignment lives behind an explicit button that first says how many
- * elements it would move and by how much at most, and only then writes — once,
- * in a single config+layout operation.
+ * Intentional off-grid placement is no longer a supported product state
+ * (UX-05). The button is the repair path for legacy/imported data: it first
+ * says how many elements it will move and by how much at most, and only then
+ * writes once, in a single config+layout operation.
  *
  * WALL-BOUND VS GRID-BOUND (the contract this file implements)
  * -----------------------------------------------------------

@@ -3,7 +3,7 @@
 Status: **REJECTED by the owner on 2026-08-04.** The model below was
 approved in principle a few hours earlier and never became code. The owner
 cancelled it in favour of one line out of it — the rim — which IS
-implemented and specified in docs/SUN.md, section «The rim».
+implemented and specified in [`docs/SUN.md`](../../docs/SUN.md), section «The rim».
 
 This file is kept for one reason: the analysis of *why* a wedge of light
 cannot read on white paper is correct, it is what the rim answers, and it
@@ -12,7 +12,7 @@ proposes «просто сделай лучи поярче».
 
 ## The problem (this part still holds)
 
-Today a lit window casts a warm translucent wedge (docs/SUN.md). It reads
+Today a lit window casts a warm translucent wedge ([`docs/SUN.md`](../../docs/SUN.md)). It reads
 beautifully on a dark scene — glow fill, night, a dark theme — and almost
 disappears on a light one, which is now the common case: `bg_mode: daynight`
 makes a clear day **white**, and a hand-drawn plan's paper is white too.
@@ -65,7 +65,7 @@ Light is invisible on white paper; its boundary is not. A boundary costs
 one stroke, works on any background, and needs no second model, no
 luminance threshold and no cross-fade.
 
-Full contract and the tuned peak opacity: **docs/SUN.md, «The rim»**.
+Full contract and the tuned peak opacity: **[`docs/SUN.md`](../../docs/SUN.md), «The rim»**.
 Implementation: `rayRimEdges()`, `rimStops()`, `rimPeakAlpha()` and
 `RIM_MAX_ALPHA` in `src/sun.ts`, plus the `hp-sunrim-N` gradient in
 `src/houseplan-card.ts`. Browser proof, including the pixel probe showing
