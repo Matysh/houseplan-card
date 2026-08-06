@@ -1270,8 +1270,13 @@ export function wallBodyRings(
 }
 
 /**
- * Seamless wall hatch: union of all half-outsets minus union of all half-insets,
+ * Seamless wall hatch: union of each room's own outset-minus-inset wall ring,
  * with opening slots cut as holes. One continuous body across L and T joins.
+ *
+ * Do not rewrite this as `(union outsets) - (union insets)`: subtraction does
+ * not distribute over union. In a nested/complex layout the clean floor of one
+ * room would then erase a wall owned by another room, leaving half-depth strips
+ * and tiny holes at junctions.
  */
 export function wallBodiesUnionPath(
   rooms: any[],
@@ -1284,8 +1289,7 @@ export function wallBodiesUnionPath(
   coordScale = 1,
 ): { d: string; depthUnits: number } | null {
   if (!walls?.length) return null;
-  const outsets: number[][][] = [];
-  const insets: number[][][] = [];
+  const roomRings: { outset: number[][]; inset: number[][] | null }[] = [];
   let maxDepth = 0;
   for (const room of rooms || []) {
     if (!room?.id) continue;
@@ -1294,26 +1298,20 @@ export function wallBodiesUnionPath(
     for (const o of pr.offsets) if (o > 0) maxDepth = Math.max(maxDepth, o * 2);
     const outC = outsetContour(pr.poly, pr.offsets);
     const inC = insetContour(pr.poly, pr.offsets);
-    if (outC) outsets.push(outC);
-    if (inC) insets.push(inC);
+    if (!outC) continue;
+    roomRings.push({ outset: outC, inset: inC });
   }
-  if (!outsets.length) return null;
+  if (!roomRings.length) return null;
   const junctions = virtualJunctionPatches(
     rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
   );
   try {
-    let Uout: any = closedRing(outsets[0]);
-    for (let i = 1; i < outsets.length; i++) {
-      Uout = union(Uout, closedRing(outsets[i]) as any);
-    }
-    let body: any = Uout;
-    if (insets.length) {
-      let Uin: any = closedRing(insets[0]);
-      for (let i = 1; i < insets.length; i++) {
-        Uin = union(Uin, closedRing(insets[i]) as any);
-      }
-      body = difference(Uout, Uin);
-    }
+    const bodyOf = (ring: typeof roomRings[number]): any => {
+      const outset: any = closedRing(ring.outset);
+      return ring.inset ? difference(outset, closedRing(ring.inset) as any) : outset;
+    };
+    let body: any = bodyOf(roomRings[0]);
+    for (let i = 1; i < roomRings.length; i++) body = union(body, bodyOf(roomRings[i]));
     // The room-ring subtraction above cannot infer a mitre between real arms
     // owned by different contours at a virtual T. Add only those missing
     // junction pieces, then let physical openings cut through them as usual.

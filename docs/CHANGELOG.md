@@ -2,6 +2,50 @@
 
 ## Unreleased (dev)
 
+## v1.59.0 — 2026-08-06
+
+Stable 1.59 turns House Plan into a substantially more complete floor-plan
+editor while keeping the card's live Home Assistant view coherent. It includes
+every beta/RC change below and closes the line with clean-floor hover geometry
+and robust wall unions.
+
+- **Real walls, virtual boundaries and openings form one geometry system.** A
+  room can mix wall thicknesses, a wall can contain real and virtual stretches,
+  adjacent equal fragments compact again, and Resize preserves exact interval
+  endpoints. Partial openings, virtual T-junctions, thick-wall door tunnels and
+  sunlight from the inner corners of windows are handled consistently.
+- **Plan edits are explicit and reversible.** Room outline, Split, Close
+  boundary, Merge rooms, Delete room, Resize, wall thickness and opening edits
+  have one result each and share a named 50-command Undo/Redo stack. Delete
+  removes only the selected object.
+- **One mandatory grid invariant.** Rooms, openings, markers, decor, furniture
+  and backdrops always land on the grid or stay quantised along their wall.
+  Optimize plans previews and applies all current lossless migrations, repairs
+  legacy/off-grid data and compacts wall fragments with a safe one-step undo.
+- **Editors gained production workflows.** Background objects open their
+  properties on double click; furniture has real dimensions and wall snapping;
+  live labels accept arbitrary text mixed with manually typed or picker-inserted
+  Home Assistant tokens; layer and object visibility controls are explicit.
+- **Device feedback uses one semantic language.** Yellow means actual work,
+  orange means open/unlocked, alarms remain dominant, unavailable devices are
+  muted, motion is a short event and presence lasts while detected. The marker
+  plate, pulse/activity effect and source-light room fill now agree, including
+  covers, climate, fans, relays, media players and other working devices.
+- **Rooms explain themselves in View.** Glow and toasts are pointer-transparent;
+  room hover and tooltips work through light pools, the tooltip reports clean
+  floor area, and device dialogs expose an explicit Hide/Show action. The hover
+  accent now follows the same inner wall faces used for area; nested-room walls
+  use the face exposed to the parent floor, while doors, windows and virtual
+  spans remain gaps.
+- **Final wall-body correction.** Wall bodies are formed as the union of each
+  room's own outset-minus-inset ring. A parent clean-floor contour can no longer
+  erase half of a nested 15 cm wall or leave a white sliver at a complex
+  multi-wall crossing.
+- **Documentation was rebuilt from the product.** The complete Russian user
+  guide, setting/device behaviour tables and improvement plan describe the
+  shipped code; obsolete audits and one-off debug material live under
+  `legacy/`.
+
 ## v1.59.0-rc.2 — 2026-08-06
 
 The second release candidate makes plan editing predictable and reversible,

@@ -1212,8 +1212,8 @@ export const cardStyles = css`
       stroke: rgba(62, 166, 255, 0.55);
       stroke-opacity: 1;
     }
-    /* View hover is repeated above the unioned thick-wall body. The original
-       room stroke remains responsible for the fill and thin-wall fallback. */
+    /* View hover follows the clean-floor face above the unioned wall body. The
+       original room stroke remains responsible for fill and thin-wall fallback. */
     .room-hover-outline {
       fill: none;
       stroke: var(--hp-accent);

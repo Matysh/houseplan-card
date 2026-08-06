@@ -47,7 +47,8 @@ import {
   degradeWalls, rekeyWallsAfterMove,
   setWallThickness, setWallThicknessForRoom, cmToField, fieldToCm, wallCmToUnits,
   wallEdgeBodies, wallBodiesUnionPath, paperRoomShapesWithWalls,
-  innerContourForRoom, openingInnerFaceOffset, applyWallThicknessToNewRoom,
+  innerContourForRoom, roomWallProfile, outsetContour,
+  openingInnerFaceOffset, applyWallThicknessToNewRoom,
   drawWallPreviewD, DRAW_WALL_DEFAULT_CM, wallIntervals, normalizeWallIntervals,
   intervalCmAt, wallBodyNeedsSolid, type WallEntry,
 } from './wall-thickness';
@@ -90,7 +91,7 @@ import {
   type DeviceActivity, type DeviceVisualState, type EntityVisualSample,
 } from './device-visual';
 
-const CARD_VERSION = '1.59.0-rc.2';
+const CARD_VERSION = '1.59.0';
 /** HP-1552 boot-veil timing (AUD-1552-02). The veil holds for at least
  *  BOOT_MIN_MS; every stage-height change restarts a BOOT_QUIET_MS
  *  trailing-quiescence requirement (chrome still settling near the cap
@@ -5723,12 +5724,12 @@ class HouseplanCard extends LitElement {
   }
 
   /**
-   * View-only perimeter above real wall bodies.
+   * View-only clean-floor perimeter above real wall bodies.
    *
-   * The room shape lives below the unioned wall body, so its CSS :hover stroke
-   * disappears precisely on thick/common walls. Draw the hovered room's real
-   * boundary once more after the bodies. Open (virtual) spans stay dashed in
-   * their own layer and are cut out here instead of being painted solid.
+   * The hover follows the same inner face that defines the displayed room
+   * area. A nested room is a hole in the hovered room, so its boundary uses the
+   * opposite (outward) wall face. Open spans stay dashed in their own layer;
+   * doors and windows remain gaps instead of being bridged by a solid accent.
    */
   private _renderRoomHover(space: SpaceModel): TemplateResult {
     const hover = this._hoverRoom;
@@ -5740,16 +5741,39 @@ class HouseplanCard extends LitElement {
     const poly = roomPoly(room);
     if (!poly) return svg`` as unknown as TemplateResult;
 
-    // A parent room also owns the walls around rooms nested inside it.
+    // A parent room also owns the floor-facing side of walls around rooms
+    // nested inside it. Keep the room together with its cached polygon so a
+    // hole can use the OUTER face of that nested room's wall.
     const others = space.rooms
       .filter((r) => r !== room)
-      .map((r) => roomPoly(r))
-      .filter((p): p is number[][] => !!p);
-    const contours = [poly, ...islandsOf(poly, others)];
+      .map((r) => ({ room: r, poly: roomPoly(r) }))
+      .filter((v): v is { room: RoomCfg; poly: number[][] } => !!v.poly);
+    const islandPolys = islandsOf(poly, others.map((v) => v.poly));
     const pairs = this._openPairs();
+    const allOpenCuts = pairs.flatMap((p) => p.segs);
     const openCuts = room.id
       ? pairs.filter((p) => p.a.id === room.id || p.b.id === room.id).flatMap((p) => p.segs)
       : pairs.flatMap((p) => p.segs);
+    const walls = this._spaceWalls;
+    const floor = walls.length && room.id
+      ? (innerContourForRoom(
+          space.rooms, room.id, walls, allOpenCuts,
+          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+        ) || poly)
+      : poly;
+    const contours: { axis: number[][]; face: number[][] }[] = [{ axis: poly, face: floor }];
+    for (const island of islandPolys) {
+      const owner = others.find((v) => v.poly === island)?.room;
+      let face = island;
+      if (walls.length && owner?.id) {
+        const profile = roomWallProfile(
+          space.rooms, owner.id, walls, allOpenCuts,
+          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+        );
+        if (profile) face = outsetContour(profile.poly, profile.offsets) || island;
+      }
+      contours.push({ axis: island, face });
+    }
     // A hidden opening symbol is still a physical opening: never bridge a
     // doorway/window with the hover stroke merely because its symbol is off.
     const openingCuts = this._openingsR.map((o) => {
@@ -5758,13 +5782,59 @@ class HouseplanCard extends LitElement {
       const dy = (Math.sin(rad) * o.rlen) / 2;
       return [o.rx - dx, o.ry - dy, o.rx + dx, o.ry + dy];
     });
-    const cuts = openCuts.concat(openingCuts);
     const eps = this._gridPitch * 0.02;
-    const d = contours.map((contour) => {
-      if (!cuts.length) {
-        return `M ${contour.map((p) => `${p[0]} ${p[1]}`).join(' L ')} Z`;
+
+    // Cuts are stored on wall centrelines. Project each relevant cut onto the
+    // clean-floor face before trimming; otherwise a door on a thick wall would
+    // no longer intersect the inset hover contour.
+    const cutOnFace = (cut: number[], axis: number[][], face: number[][]): number[] | null => {
+      const cx = cut[2] - cut[0], cy = cut[3] - cut[1];
+      const cLen = Math.hypot(cx, cy);
+      if (cLen < eps) return null;
+      const cux = cx / cLen, cuy = cy / cLen;
+      const mx = (cut[0] + cut[2]) / 2, my = (cut[1] + cut[3]) / 2;
+      let belongs = false;
+      for (let i = 0; i < axis.length; i++) {
+        const a = axis[i], b = axis[(i + 1) % axis.length];
+        const ex = b[0] - a[0], ey = b[1] - a[1];
+        const eLen = Math.hypot(ex, ey);
+        if (eLen < eps || Math.abs(cux * (ey / eLen) - cuy * (ex / eLen)) > 0.05) continue;
+        if (distToSegment([mx, my], [a[0], a[1], b[0], b[1]]) <= eps * 4) {
+          belongs = true;
+          break;
+        }
       }
-      return outlineWithout(contour, cuts, eps)
+      if (!belongs) return null;
+
+      let best: { a: number[]; b: number[]; d: number } | null = null;
+      for (let i = 0; i < face.length; i++) {
+        const a = face[i], b = face[(i + 1) % face.length];
+        const ex = b[0] - a[0], ey = b[1] - a[1];
+        const eLen = Math.hypot(ex, ey);
+        if (eLen < eps || Math.abs(cux * (ey / eLen) - cuy * (ex / eLen)) > 0.05) continue;
+        const d = distToSegment([mx, my], [a[0], a[1], b[0], b[1]]);
+        if (!best || d < best.d) best = { a, b, d };
+      }
+      if (!best) return null;
+      const fx = best.b[0] - best.a[0], fy = best.b[1] - best.a[1];
+      const fLen = Math.hypot(fx, fy) || 1;
+      const nx = -fy / fLen, ny = fx / fLen;
+      const shift = (best.a[0] - mx) * nx + (best.a[1] - my) * ny;
+      return [
+        cut[0] + nx * shift, cut[1] + ny * shift,
+        cut[2] + nx * shift, cut[3] + ny * shift,
+      ];
+    };
+
+    const rawCuts = openCuts.concat(openingCuts);
+    const d = contours.map(({ axis, face }) => {
+      const cuts = rawCuts
+        .map((cut) => cutOnFace(cut, axis, face))
+        .filter((cut): cut is number[] => !!cut);
+      if (!cuts.length) {
+        return `M ${face.map((p) => `${p[0]} ${p[1]}`).join(' L ')} Z`;
+      }
+      return outlineWithout(face, cuts, eps)
         .map((sg) => `M ${sg[0]} ${sg[1]} L ${sg[2]} ${sg[3]}`)
         .join(' ');
     }).filter(Boolean).join(' ');

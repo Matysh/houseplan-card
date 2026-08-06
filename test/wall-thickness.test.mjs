@@ -398,6 +398,24 @@ test('wallBodiesUnionPath: single fully-thick room keeps a floor hole', () => {
   assert.ok((united.d.match(/M/g) || []).length >= 2, united.d);
 });
 
+test('wallBodiesUnionPath: a parent floor never erases a nested room wall', () => {
+  const scale = 1000;
+  const rooms = [
+    { id: 'parent', poly: [[100, 100], [900, 100], [900, 900], [100, 900]] },
+    { id: 'nested', poly: [[300, 300], [700, 300], [700, 700], [300, 700]] },
+  ];
+  let walls = applyWallThicknessToNewRoom([], rooms, 'parent', 15, pitch, [], scale);
+  walls = applyWallThicknessToNewRoom(walls, rooms, 'nested', 15, pitch, [], scale);
+  const united = wallBodiesUnionPath(
+    rooms, walls, [], [], pitch, cellCm, GRID_PITCH, scale,
+  );
+  assert.ok(united);
+  // Parent ring (outer + floor hole) and nested ring (outer + floor hole).
+  // The old `(union outsets) - (union insets)` formula returned only two
+  // subpaths here because the parent floor swallowed the nested wall entirely.
+  assert.ok((united.d.match(/M/g) || []).length >= 4, united.d);
+});
+
 test('paper with walls covers shared centreline; without walls matches paperRoomShapes', () => {
   const rooms = [
     { id: 'a', poly: [[0, 0], [5, 0], [5, 4], [0, 4]] },
