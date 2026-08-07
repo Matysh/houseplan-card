@@ -86,6 +86,11 @@ out.untouchedEditorNoJump = await page.evaluate(async () => {
   const c = window.__card;
   const raf2 = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
   c._setMode('view');
+  // The previous case has only waited two frames after leaving an editor.
+  // Let its 180 ms chrome collapse and ResizeObservers settle before taking a
+  // new baseline; otherwise this case measures the previous transition, not
+  // the untouched editor round-trip it is meant to verify.
+  await new Promise((resolve) => setTimeout(resolve, 240));
   c._resetZoom();
   c._zoomAt(30, 30, 1.6); c._saveZoom();
   const before = { ...c._view };
