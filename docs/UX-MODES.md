@@ -103,19 +103,24 @@ layer you cannot see is a layer you cannot edit.
 
 ## Background — the decor underlay
 
-- Toolbar tools: select / line / rect / oval / text / erase, plus colour, width
-  and fill. Shapes are drag-drawn with grid snap and a live preview.
+- Toolbar tools: Select / optional Plan backdrop / Line / Rectangle / Oval /
+  Text / Furniture / Erase, plus contour colour+opacity, physical width,
+  optional fill colour+opacity and shared Undo/Redo. Shapes are drag-drawn
+  with grid/decor/room snap and a live preview.
 - In **Select**, double click always means “edit this object”. Text opens its
   text/HA-variable form; a line, rectangle, oval or furniture symbol opens the
-  common colour and line-width form, with Fill where the shape supports it.
+  complete numeric/style form, with Fill where the shape supports it. Every
+  selected kind has the common move/resize/rotate controller; lines use end
+  handles. The image is transformed only in its own tool and fades to 0.5
+  below the other Background tools.
 - **Live size badge** (owner 2026-08-04): while a LINE is being dragged out, the
   same `.measurelabel` the Plan editor puts on a wall shows «length · angle» —
   `segmentCm` over the space's `cell_cm`, metres or feet per the HA unit system,
   green on a 45° multiple. It rides the MIDDLE of the segment (a wall badge
   follows the cursor because the cursor is the wall's free end; a decor line is
   pulled out by both ends at once), updates on every move and disappears the
-  moment the shape is committed. Rectangles and ovals have no length, so they
-  show their bounding box «W × H» instead; a draft with no size shows nothing.
+  moment the shape is committed. Rectangles show size and area; circles show
+  `R`, and non-circular ovals `Rx × Ry`; a draft with no size shows nothing.
 
 ## Deprecations decided
 

@@ -1,6 +1,7 @@
 // Текстовый блок декора (правки владельца 2026-08-04):
-//   1) выбора размера шрифта БОЛЬШЕ НЕТ — размер задаётся углами блока, а
-//      сохранённый старый `size` читается как начальный масштаб;
+//   1) выбора размера шрифта БОЛЬШЕ НЕТ — размер задаётся углами блока и
+//      после явной правки хранится физически в `size_cm`; старый `size`
+//      до этого продолжает читаться без визуальной миграции;
 //   2) многострочный текст: перевод строки сохраняется и рисуется, блок
 //      выравнивается по центру;
 //   3) у выделенного блока есть угловые ручки (масштаб) и ручка поворота
@@ -117,42 +118,49 @@ const res = await page.evaluate(async () => {
   const far = toScreen(rcx + hitR * 0.7, rcy);                     // > knobR, < hitR
   const hitEl = sr().elementFromPoint(far.clientX, far.clientY);
   out.fingerZoneStillCatchesTheHandle = !!hitEl?.classList?.contains?.('dthandle');
-  // линия выделена — рамки текста нет (это рамка ТЕКСТОВОГО блока)
+  // линия использует общую рамку, но только с двумя ручками концов
   c._curSpaceCfg.decor = [...c._decorList, { id: 'dline', kind: 'line',
     x1: 0.1, y1: 0.8, x2: 0.4, y2: 0.8, color: '#000000', width: 3 }];
   c._cfgEpoch++; c._decorSel = 'dline'; c.requestUpdate();
   await c.updateComplete; await sleep(40); await c.updateComplete;
-  out.noFrameOnALine = !sr().querySelector('.dtframe');
+  const lineFrame = sr().querySelector('.dtframe.dtlineframe');
+  out.lineGetsEndpointFrame = !!lineFrame
+    && lineFrame.querySelectorAll('.dthandle.dtendpoint').length === 2
+    && !lineFrame.querySelector('.dtrot');
   c._decorSel = 'dtm'; c.requestUpdate();
   await c.updateComplete; await sleep(60); await c.updateComplete;
 
-  // тянем угол: масштаб растёт пропорционально расстоянию от якоря
+  // тянем угол: физический размер растёт пропорционально расстоянию от якоря
   const anchor = () => {
     const sh = c._decorList.find((x) => x.id === 'dtm');
     return [sh.x * 1000, sh.y * 1000];
   };
   const [ax, ay2] = anchor();
+  const mediumSizeCm0 = c._decorTextSizeCm(c._decorList.find((x) => x.id === 'dtm'));
   const corner = frame()?.querySelector('.dthandle.dt-nwse') || stageEl();
   ev('pointerdown', corner, ax + 40, ay2);
   out.dragStarted = !!c._dtDrag && c._dtDrag.kind === 'scale';
   ev('pointermove', stageEl(), ax + 80, ay2);
   await c.updateComplete;
   const scaled = c._decorList.find((x) => x.id === 'dtm');
-  out.cornerScales = Math.abs((scaled.scale || 0) - 2) < 0.01;
+  out.cornerStoresPhysicalSize = scaled.scale === undefined && scaled.size === undefined
+    && Math.abs((scaled.size_cm || 0) - mediumSizeCm0 * 2) < 0.01;
   out.fontFollowsScale = +attr('dtm', 'font-size') === 40;
   ev('pointerup', stageEl(), ax + 80, ay2);
   out.dragEnded = !c._dtDrag;
 
-  // старый `size` заменяется масштабом, который он означал (одна правда)
+  // старый `size` становится физическим `size_cm` только после явной правки
   c._decorSel = 'dtl'; c.requestUpdate();
   await c.updateComplete; await sleep(60); await c.updateComplete;
   const [lx, ly] = [c._decorList.find((x) => x.id === 'dtl').x * 1000,
     c._decorList.find((x) => x.id === 'dtl').y * 1000];
+  const legacySizeCm0 = c._decorTextSizeCm(c._decorList.find((x) => x.id === 'dtl'));
   ev('pointerdown', frame()?.querySelector('.dthandle.dt-nwse') || stageEl(), lx + 50, ly);
   ev('pointermove', stageEl(), lx + 100, ly);
   await c.updateComplete;
   const grown = c._decorList.find((x) => x.id === 'dtl');
-  out.legacySizeBecomesScale = grown.size === undefined && Math.abs((grown.scale || 0) - 3) < 0.01;
+  out.legacySizeBecomesPhysical = grown.size === undefined && grown.scale === undefined
+    && Math.abs((grown.size_cm || 0) - legacySizeCm0 * 2) < 0.01;
   ev('pointerup', stageEl(), lx + 100, ly);
 
   // ручка поворота: шаг 5°, Shift — мимо шага

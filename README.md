@@ -101,9 +101,10 @@ Assistant integration:
 | **Zoom** | Smooth vector zoom | Usually a fixed image | SVG / virtual canvas |
 
 **One sentence:** House Plan is the shared, area-aware live map of your home —
-not a drawing app for furniture. If you want to sketch sofas and walls from
-scratch, a draw-centric card may fit better; if you already have a plan image
-and a real HA areas registry, House Plan keeps every tablet on the same layout.
+not a general-purpose CAD package. Its Background editor covers practical
+decor, labels and furniture; if you need unrestricted architectural drafting,
+a draw-centric tool may fit better. With a plan and HA areas, House Plan keeps
+every tablet on the same live layout.
 
 Key advantages in short:
 
@@ -112,11 +113,15 @@ Key advantages in short:
 - **Manual additions of your own.** Any device, group or even a "virtual" point can be placed on the plan manually, with a name, icon, model, link and an attached PDF manual.
 - **Live states.** Temperature, Zigbee signal strength, on/off, open/closed — everything updates in real time.
   Icon colors follow one principle — **yellow means the device is doing its main job right now**:
-  a light is shining, a socket is powering, a fan is spinning, media is playing, a vacuum is
+  a light is shining, a socket is powering, a fan is spinning, a vacuum is
   cleaning, a radiator valve is actually heating (not merely enabled). Orange = open / unlocked.
   A pulsing red ring = an emergency (leak, smoke, gas). An RGB bulb's colour lives in its glow
   spot (glow fill), where the spot itself is the on/off indicator and the badge stays standard.
   A translucent icon = unavailable. Dark = idle.
+- **A coherent visual Background editor.** Draw lines/shapes, place labels and
+  furniture, edit physical styles and transform every object with the same
+  selection model. The plan image has its own move/resize/rotate tool, numeric
+  properties and shared Undo/Redo.
 - **Crisp zoom.** Zooming in does not "blur" the picture: the plan, labels and icons remain vector-sharp at any scale.
 
 ---
@@ -198,7 +203,7 @@ for each floor (names prefilled, a plan image is asked for one by one; any floor
 
 ![Empty plan — prompt to add a space](docs/images/02-onboarding-empty.png)
 
-In the dialog, set a **name** (for example, "1st floor") and pick the background: **upload** a floor-plan image (SVG, PNG, JPG, WebP), **choose one already uploaded** to the server earlier, or select **"no background, I'll draw the rooms"** for a hand-drawn space. The canvas is infinite; an image keeps its own proportions and can be moved and resized at any time in the Background editor.
+In the dialog, set a **name** (for example, "1st floor") and pick the background: **upload** a floor-plan image (SVG, PNG, JPG, WebP), **choose one already uploaded** to the server earlier, or select **"no background, I'll draw the rooms"** for a hand-drawn space. The canvas is infinite; an image keeps its own proportions by default and can be moved, resized or rotated at any time in the Background editor.
 
 ![Space creation dialog](docs/images/03-space-dialog.png)
 

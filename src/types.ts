@@ -37,7 +37,7 @@ export interface SpaceModel {
   id: string;
   title: string;
   vb: number[]; // render units
-  bg: { href: string; x: number; y: number; w: number; h: number } | null;
+  bg: { href: string; x: number; y: number; w: number; h: number; angle?: number } | null;
   rooms: RoomCfg[]; // render units
 }
 
@@ -53,6 +53,9 @@ export interface Marker {
   space?: string | null;
   area?: string | null;
   hidden?: boolean;
+  /** Tombstone: excluded from every plan renderer/aggregate, but its binding
+   * remains available in the Add-device picker. */
+  removed?: boolean;
   name?: string | null;
   icon?: string | null;
   model?: string | null;

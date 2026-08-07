@@ -144,6 +144,13 @@ def test_marker_schema():
         v.MARKER_SCHEMA({"binding": "virtual"})
 
 
+def test_marker_removed_tombstone_is_strictly_boolean():
+    assert v.MARKER_SCHEMA({"id": "m1", "binding": "device:abc", "removed": True})["removed"] is True
+    assert v.MARKER_SCHEMA({"id": "m1", "binding": "entity:sensor.x", "removed": False})["removed"] is False
+    with pytest.raises(vol.Invalid):
+        v.MARKER_SCHEMA({"id": "m1", "binding": "device:abc", "removed": "yes"})
+
+
 def test_marker_binding_shape_and_ripple_color():
     """audit P3-4: binding is device:/entity:/virtual; ripple_color is #rrggbb."""
     v.MARKER_SCHEMA({"id": "m1", "binding": "entity:sensor.temp"})
@@ -164,6 +171,29 @@ def test_decor_rect_extents_must_be_positive():
         v.DECOR_SCHEMA({"id": "d", "kind": "rect", "x": 0, "y": 0, "w": -1, "h": 1})
     with pytest.raises(vol.Invalid):
         v.DECOR_SCHEMA({"id": "d", "kind": "ellipse", "x": 0, "y": 0, "w": 0, "h": 1})
+
+
+def test_decor_physical_style_and_backdrop_transform():
+    """New canonical style/transform fields are bounded; legacy fields stay valid."""
+    shape = {
+        "id": "d", "kind": "rect", "x": 0, "y": 0, "w": 0.2, "h": 0.1,
+        "color": "#123456", "opacity": 0.7, "width_cm": 3.5,
+        "fill": True, "fill_color": "#abcdef", "fill_opacity": 0.25, "angle": 45,
+    }
+    assert v.DECOR_SCHEMA(shape)["width_cm"] == 3.5
+    assert v.DECOR_SCHEMA({**shape, "width": 3})["width"] == 3
+    for patch in ({"opacity": 1.1}, {"width_cm": 0}, {"fill_opacity": -0.1}):
+        with pytest.raises(vol.Invalid):
+            v.DECOR_SCHEMA({**shape, **patch})
+
+    space = {
+        "id": "s", "title": "S", "view_box": [0, 0, 1, 1], "rooms": [],
+        "plan_scale_x": 1.2, "plan_scale_y": 0.8, "plan_angle": -35,
+    }
+    out = v.SPACE_SCHEMA(space)
+    assert out["plan_scale_x"] == 1.2 and out["plan_angle"] == -35
+    with pytest.raises(vol.Invalid):
+        v.SPACE_SCHEMA({**space, "plan_scale_x": 0})
 
 
 def test_space_id_matches_SPACE_ID_RE():
@@ -1225,10 +1255,8 @@ def test_decor_text_live_fields():
 
 
 def test_decor_text_block_scale_and_angle():
-    """The dialog no longer offers a font size — the block is scaled by its
-    corners and rotated by its handle. Both fields optional and bounded; the
-    legacy `size` is still accepted (and still bounded) so a label drawn before
-    the handles renders exactly as it did."""
+    """Physical font size is canonical; scale and size remain bounded legacy
+    fallbacks so a label drawn before the physical field renders unchanged."""
     base = {"id": "s1", "title": "S", "view_box": [0, 0, 1, 1], "rooms": []}
     txt = {"id": "d", "kind": "text", "x": 0.5, "y": 0.5, "text": "Porch"}
 
@@ -1236,6 +1264,7 @@ def test_decor_text_block_scale_and_angle():
         return v.CONFIG_SCHEMA({"spaces": [{**base, "decor": [{**txt, **extra}]}]})
 
     assert cfg({"scale": 1})["spaces"][0]["decor"][0]["scale"] == 1.0
+    assert cfg({"size_cm": 24})["spaces"][0]["decor"][0]["size_cm"] == 24.0
     assert cfg({"scale": v.DECOR_TEXT_SCALE_MIN})
     assert cfg({"scale": v.DECOR_TEXT_SCALE_MAX})
     assert cfg({"angle": 0}) and cfg({"angle": -360}) and cfg({"angle": 360})
@@ -1243,6 +1272,9 @@ def test_decor_text_block_scale_and_angle():
     for bad in (0, -1, v.DECOR_TEXT_SCALE_MAX + 1, float("nan"), float("inf")):
         with pytest.raises(vol.Invalid):
             cfg({"scale": bad})
+    for bad in (0, -1, v.DECOR_TEXT_CM_MAX + 0.1, float("nan"), float("inf")):
+        with pytest.raises(vol.Invalid):
+            cfg({"size_cm": bad})
     for bad in (361, -361, float("nan")):
         with pytest.raises(vol.Invalid):
             cfg({"angle": bad})

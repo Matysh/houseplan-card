@@ -76,6 +76,11 @@ markers render neither base nor puck (general hidden rules). Works in
 the full card, static card and kiosk; in editors no puck — the base
 marker is edited as usual.
 
+Deleting a vacuum marker is stronger than hiding it: its binding tombstone
+stops all plan rendering/aggregation, its layout is removed, and both stored
+server runs (current and previous) are erased. Re-adding starts uncalibrated at
+a fresh position; the old trail is not resurrected.
+
 ## Trail (ships in P1)
 
 - Integration `path` when available (Map Extractor) — transform and

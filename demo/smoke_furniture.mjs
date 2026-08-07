@@ -205,8 +205,12 @@ const res = await page.evaluate(async () => {
   ev('pointermove', stageEl(), b.x + b.w + 101.7, b.y + b.h + 21.3);
   await c.updateComplete;
   const snapped = sofaNow();
-  out.sizeSnapsToTheGrid = near(((snapped.w * 1000) / PITCH) % 1, 0, 1e-6)
-    && near(((snapped.h * 1000) / PITCH) % 1, 0, 1e-6);
+  const wCells = (snapped.w * 1000) / PITCH;
+  const hCells = (snapped.h * 1000) / PITCH;
+  // Normalised config is rounded to six decimals, so a mathematical cell 27
+  // may read back as 26.9999999. Compare with the nearest integer, not `% 1`.
+  out.sizeSnapsToTheGrid = near(wCells, Math.round(wCells), 1e-4)
+    && near(hCells, Math.round(hCells), 1e-4);
   ev('pointerup', stageEl(), b.x + b.w + 101.7, b.y + b.h + 21.3);
   await c.updateComplete;
   out.cornerDragEnded = !c._dtDrag;

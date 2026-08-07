@@ -76,10 +76,11 @@ const res = await page.evaluate(async () => {
   await c.updateComplete;
   out.obliqueBadge = txt() === fmt(g * 5) + ' · 53.1°';
   out.obliqueNotGreen = !!label() && !label().classList.contains('on45');
-  // прямоугольник и овал: длины у них нет, есть габарит «Ш × В»
+  // прямоугольник показывает габарит и чистую площадь
   c._decorDraft = { kind: 'rect', a: [g * 4, g * 20], b: [g * 12, g * 26], pid: 3 };
   await c.updateComplete;
-  out.rectBadgeIsSize = txt() === fmt(g * 8) + ' × ' + fmt(g * 6);
+  out.rectBadgeHasSizeAndArea = txt().startsWith(fmt(g * 8) + ' × ' + fmt(g * 6) + ' · ')
+    && /(?:m²|ft²)$/.test(txt());
   // отпустили — плашки нет
   c._decorCommitDraft(); await c.updateComplete;
   out.badgeGoneAfterRelease = !label();
@@ -181,11 +182,12 @@ const res = await page.evaluate(async () => {
   await c.updateComplete;
   out.doubleClickOpensObjectDialog = c._decorShapeDialog?.id === 'dcprobe'
     && !!sr().querySelector('hp-dialog .dfill') === false;
-  c._decorShapeDialog = { ...c._decorShapeDialog, color: '#123456', width: 6.5 };
+  c._decorShapeDialog = { ...c._decorShapeDialog, color: '#123456', widthCm: 6.5 };
   c._decorSaveShape(); await c.updateComplete;
   const editedProbe = c._decorList.find((x) => x.id === 'dcprobe');
   out.objectDialogSavesStyle = editedProbe?.color === '#123456'
-    && editedProbe?.width === 6.5 && c._decorShapeDialog === null;
+    && editedProbe?.width_cm === 6.5 && editedProbe?.width === undefined
+    && c._decorShapeDialog === null;
   c._decorSel = null;
   c._curSpaceCfg.decor = decorBefore;                 // сцена как была до пробы
   c._decorTool = 'select'; await c.updateComplete;

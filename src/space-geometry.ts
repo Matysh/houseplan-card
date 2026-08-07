@@ -5,6 +5,7 @@
  */
 import { declump, contentUrl } from './logic';
 import type { ServerConfig, SpaceModel, RoomCfg, DevItem } from './types';
+import { boxCorners, normalizeAngle } from './editors/decor/geometry';
 
 export const NORM_W = 1000; // side of the render space — the canvas is square
 
@@ -24,7 +25,7 @@ export function fitInSquare(ratio: number | null | undefined, side: number) {
   return { x: (side - w) / 2, y: (side - h) / 2, w, h };
 }
 
-/** Uniform backdrop scale bounds — mirrors validation.py (docs/BACKDROP.md). */
+/** Per-axis backdrop scale bounds — mirrors validation.py (docs/BACKDROP.md). */
 export const PLAN_SCALE_MIN = 0.01;
 export const PLAN_SCALE_MAX = 100;
 
@@ -32,33 +33,43 @@ export const PLAN_SCALE_MAX = 100;
  * WHERE THE BACKDROP IMAGE SITS (docs/BACKDROP.md).
  *
  * `fitInSquare` is only the DEFAULT placement: the image centred in the square
- * canvas at its own proportions. On top of it a space may carry three optional
- * numbers, the ones the owner produces by dragging the transform frame in the
- * backdrop editor:
+ * canvas at its own proportions. On top of it a space may carry an optional
+ * transform produced by the Background editor:
  *
  *   plan_x, plan_y — offset of the image's top-left corner from that default,
  *                    in NORMALISED units (the very units rooms, openings and
  *                    decor use, bounded by ±CANVAS_LIMIT);
- *   plan_scale     — ONE uniform multiplier for both sides, anchored at the
- *                    (already offset) top-left corner. There is no rotation.
+ *   plan_scale     — legacy uniform fallback for both sides;
+ *   plan_scale_x/y — canonical independent multipliers;
+ *   plan_angle     — rotation around the transformed rectangle centre.
  *
- * All three are OPTIONAL and their absence is exactly the pre-v1.58.0
+ * All transform fields are OPTIONAL and their absence is exactly the pre-v1.58.0
  * behaviour, so every plan written before renders bit-identically and there is
  * no migration to run.
  */
-export function planRect(space: any, side = NORM_W): Rect {
+export type PlanRect = Rect & { angle?: number };
+
+export function planRect(space: any, side = NORM_W): PlanRect {
   const base = fitInSquare(space?.plan_aspect, side);
   const raw = Number(space?.plan_scale);
   const k = Number.isFinite(raw) && raw > 0
     ? Math.min(PLAN_SCALE_MAX, Math.max(PLAN_SCALE_MIN, raw))
     : 1;
+  const kxRaw = Number(space?.plan_scale_x);
+  const kyRaw = Number(space?.plan_scale_y);
+  const kx = Number.isFinite(kxRaw) && kxRaw > 0
+    ? Math.min(PLAN_SCALE_MAX, Math.max(PLAN_SCALE_MIN, kxRaw)) : k;
+  const ky = Number.isFinite(kyRaw) && kyRaw > 0
+    ? Math.min(PLAN_SCALE_MAX, Math.max(PLAN_SCALE_MIN, kyRaw)) : k;
   const dx = Number(space?.plan_x);
   const dy = Number(space?.plan_y);
+  const angle = normalizeAngle(space?.plan_angle);
   return {
     x: base.x + (Number.isFinite(dx) ? clampCanvasN(dx) : 0) * side,
     y: base.y + (Number.isFinite(dy) ? clampCanvasN(dy) : 0) * side,
-    w: base.w * k,
-    h: base.h * k,
+    w: base.w * kx,
+    h: base.h * ky,
+    ...(angle ? { angle } : {}),
   };
 }
 
@@ -117,7 +128,7 @@ export function spaceModels(cfg: ServerConfig | null): SpaceModel[] {
       title: s.title,
       vb: [vb[0] * NORM_W, vb[1] * H, vb[2] * NORM_W, vb[3] * H],
       // the image's own placement — the centred default plus whatever the
-      // backdrop frame has stored (plan_x/plan_y/plan_scale, docs/BACKDROP.md)
+      // backdrop frame has stored (plan_x/y, per-axis scale and angle)
       bg: s.plan_url ? { href: contentUrl(s.plan_url), ...planRect(s, NORM_W) } : null,
       rooms: (s.rooms || []).map(scale),
     } as SpaceModel;
@@ -225,7 +236,11 @@ export function contentItems(
   // of the picture nobody has drawn over yet, and — since v1.58.0 — the
   // rectangle here is the MOVED and SCALED one, so «Вписать всё» follows the
   // picture wherever the owner has dragged it.
-  if (space.bg) out.push({ minX: space.bg.x, minY: space.bg.y, maxX: space.bg.x + space.bg.w, maxY: space.bg.y + space.bg.h });
+  if (space.bg) {
+    const pts = boxCorners(space.bg);
+    const item = itemOf(pts);
+    if (item) out.push(item);
+  }
   for (const e of extra || []) {
     if (Array.isArray(e)) { const it = itemOf([e as any]); if (it) out.push(it); }
     else out.push(e as ContentItem);

@@ -348,8 +348,56 @@ export function resolveIcon(hass: any, name: string, model: string | undefined, 
   return iconFromDeviceClasses(classes) ?? FALLBACK_ICON;
 }
 
-function applyMarker(item: DevItem, m: Marker): void {
-  item.marker = m;
+export interface RemovedPlanBindings {
+  devices: Set<string>;
+  entities: Set<string>;
+}
+
+/** Bindings explicitly deleted from the plan, kept as minimal tombstones. */
+export function removedPlanBindings(markers?: readonly Marker[] | null): RemovedPlanBindings {
+  const devices = new Set<string>();
+  const entities = new Set<string>();
+  for (const m of markers || []) {
+    if (m?.removed !== true) continue;
+    const i = String(m.binding || '').indexOf(':');
+    if (i < 1) continue;
+    const kind = m.binding.slice(0, i);
+    const ref = m.binding.slice(i + 1);
+    if (!ref) continue;
+    if (kind === 'device') devices.add(ref);
+    else if (kind === 'entity') entities.add(ref);
+  }
+  return { devices, entities };
+}
+
+/** Whether an HA entity is suppressed by an entity or whole-device tombstone. */
+export function isRemovedPlanEntity(
+  hass: any, eid: string, removed: RemovedPlanBindings,
+): boolean {
+  if (removed.entities.has(eid)) return true;
+  const deviceId = hass?.entities?.[eid]?.device_id;
+  return !!deviceId && removed.devices.has(deviceId);
+}
+
+/** Whether a `device:*` / `entity:*` source is deleted from the plan. */
+export function isRemovedPlanSource(
+  hass: any, source: string | null | undefined, markers?: readonly Marker[] | null,
+): boolean {
+  if (!source) return false;
+  const i = source.indexOf(':');
+  if (i < 1) return false;
+  const kind = source.slice(0, i);
+  const ref = source.slice(i + 1);
+  const removed = removedPlanBindings(markers);
+  if (kind === 'device') return removed.devices.has(ref);
+  return kind === 'entity' && isRemovedPlanEntity(hass, ref, removed);
+}
+
+function applyMarker(item: DevItem, m: Marker, hass: any, removed: RemovedPlanBindings): void {
+  const controls = (m.controls || []).filter((eid) => !isRemovedPlanEntity(hass, eid, removed));
+  item.marker = controls.length === (m.controls || []).length
+    ? m
+    : { ...m, controls: controls.length ? controls : null };
   if (m.hidden) item.hidden = true;
   if (m.name) item.name = m.name;
   if (m.icon) item.icon = m.icon;
@@ -370,7 +418,9 @@ function applyMarker(item: DevItem, m: Marker): void {
 export function seedHiddenBindings(ctx: Omit<BuildCtx, 'showAll' | 'loc'>): string[] {
   const { hass: h, areaToSpace, markers, settings, excluded, iconRules } = ctx;
   const groupLights = settings.group_lights !== false;
-  const groups = lightGroups(h, groupLights);
+  const removed = removedPlanBindings(markers);
+  const groups = lightGroups(h, groupLights)
+    .filter((g) => !isRemovedPlanEntity(h, g.eid, removed));
   const groupedAreas = new Set(groups.map((g) => g.area));
   const entsBy = entitiesByDevice(h);
   const marked = new Set(markers.map((m) => m.binding));
@@ -380,7 +430,7 @@ export function seedHiddenBindings(ctx: Omit<BuildCtx, 'showAll' | 'loc'>): stri
     if (!area || !areaToSpace[area]) continue;
     if (dev.entry_type === 'service') continue;
     if (marked.has('device:' + dev.id)) continue;
-    const entIds = entsBy[dev.id] || [];
+    const entIds = (entsBy[dev.id] || []).filter((eid) => !isRemovedPlanEntity(h, eid, removed));
     const dom = domainOfDevice(h, dev, entIds);
     let nonPhysical =
       excluded.has(dom)
@@ -401,7 +451,9 @@ export function seedHiddenBindings(ctx: Omit<BuildCtx, 'showAll' | 'loc'>): stri
 export function buildDevices(ctx: BuildCtx): DevItem[] {
   const { hass: h, areaToSpace, markers, settings, excluded, showAll, firstSpaceId, loc, iconRules } = ctx;
   const groupLights = settings.group_lights !== false;
-  const groups = lightGroups(h, groupLights);
+  const removed = removedPlanBindings(markers);
+  const groups = lightGroups(h, groupLights)
+    .filter((g) => !isRemovedPlanEntity(h, g.eid, removed));
   const groupedAreas = new Set(groups.map((g) => g.area));
   const entsBy = entitiesByDevice(h);
   const claimed = new Set<string>();
@@ -421,7 +473,7 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
     if (claimed.has('device:' + dev.id)) continue; // a marker will take over below
     const marker = markerFor('device', dev.id);
     if (marker && marker.hidden && !settings.filter_seeded) continue; // legacy: dropped entirely
-    const entIds = entsBy[dev.id] || [];
+    const entIds = (entsBy[dev.id] || []).filter((eid) => !isRemovedPlanEntity(h, eid, removed));
     const dom = domainOfDevice(h, dev, entIds);
     // LEGACY runtime filter: only while the config is not yet materialised
     // (docs/FILTERING.md). A seeded config hides by explicit marker flags.
@@ -480,6 +532,7 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
 
   // 3) explicit markers (rebinding/metadata/virtual)
   for (const m of markers) {
+    if (m.removed) continue;
     // Hidden is a FLAG now, not an absence: the device is built (room LQI
     // still counts it) and the renderer decides. Legacy configs keep the old
     // "hidden = gone" until they are seeded (docs/FILTERING.md).
@@ -489,7 +542,9 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
       const dev = h.devices[ref];
       const area = m.area || dev?.area_id || '';
       const space = (area && areaToSpace[area]) || m.space || firstSpaceId;
-      const entIds = dev ? entsBy[dev.id] || [] : [];
+      const entIds = dev
+        ? (entsBy[dev.id] || []).filter((eid) => !isRemovedPlanEntity(h, eid, removed))
+        : [];
       let icon = dev
         ? resolveIcon(h, dev.name_by_user || dev.name || '', dev.model, entIds, iconRules)
         : 'mdi:help-circle';
@@ -509,9 +564,10 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
       if (icon === 'mdi:thermometer' || icon === 'mdi:air-filter') item.temp = tempFor(h, entIds);
       if (item.primary && isHumEntity(h, item.primary)) item.hum = humFor(h, entIds);
     if (item.primary && isHumEntity(h, item.primary)) item.hum = humFor(h, entIds);
-      applyMarker(item, m);
+      applyMarker(item, m, h, removed);
       rest.push(item);
     } else if (kind === 'entity') {
+      if (isRemovedPlanEntity(h, ref, removed)) continue;
       const reg = h.entities[ref];
       const area = m.area || reg?.area_id || (reg?.device_id && h.devices[reg.device_id]?.area_id) || '';
       const space = (area && areaToSpace[area]) || m.space || firstSpaceId;
@@ -533,7 +589,7 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
       };
       if (icon === 'mdi:thermometer' || icon === 'mdi:air-filter') item.temp = tempFor(h, [ref]);
       if (isHumEntity(h, ref)) item.hum = humFor(h, [ref]);
-      applyMarker(item, m);
+      applyMarker(item, m, h, removed);
       rest.push(item);
     } else {
       // virtual
@@ -550,7 +606,7 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
         bindingKind: 'virtual',
         virtual: true,
       };
-      applyMarker(item, m);
+      applyMarker(item, m, h, removed);
       rest.push(item);
     }
   }
@@ -570,8 +626,13 @@ export function areaLights(hass: any, devices: readonly LightSourceDevice[], are
  * number; 'device:<id>' aggregates over that device's entities (tempFor /
  * humFor). Used by the room-settings override (tier 3).
  */
-export function sourceValue(hass: any, src: string | null | undefined, kind: 'temp' | 'hum'): number | null {
+export function sourceValue(
+  hass: any, src: string | null | undefined, kind: 'temp' | 'hum',
+  markers?: readonly Marker[] | null,
+): number | null {
   if (!src) return null;
+  if (isRemovedPlanSource(hass, src, markers)) return null;
+  const removed = removedPlanBindings(markers);
   const i = src.indexOf(':');
   if (i < 0) return null;
   const k = src.slice(0, i);
@@ -585,7 +646,8 @@ export function sourceValue(hass: any, src: string | null | undefined, kind: 'te
   if (k === 'device') {
     const entIds = Object.entries(hass.entities as Record<string, any>)
       .filter(([, r]) => (r as any).device_id === ref)
-      .map(([eid]) => eid);
+      .map(([eid]) => eid)
+      .filter((eid) => !isRemovedPlanEntity(hass, eid, removed));
     return kind === 'temp' ? tempFor(hass, entIds) : humFor(hass, entIds);
   }
   return null;
@@ -654,15 +716,17 @@ export function areaClimateMap(
   // the option, that reading votes in the room average like any thermometer.
   // The set holds binding refs (device ids and entity ids); with no opted
   // markers the pass below is byte-for-byte the old one.
+  const removed = removedPlanBindings(markers);
   const climOpt = new Set<string>();
   for (const m of markers || []) {
-    if (m?.use_climate_temp !== true) continue;
+    if (m?.removed || m?.use_climate_temp !== true) continue;
     const i = (m.binding || '').indexOf(':');
     if (i > 0) climOpt.add(m.binding.slice(i + 1));
   }
   // area -> device (or lone entity) -> the entities that belong to it
   const byArea = new Map<string, Map<string, { name: string; model?: string; ents: string[] }>>();
   for (const [eid, reg] of Object.entries<any>(hass.entities)) {
+    if (isRemovedPlanEntity(hass, eid, removed)) continue;
     const dev = reg.device_id ? hass.devices?.[reg.device_id] : null;
     const area = reg.area_id || dev?.area_id || null;
     if (!area) continue;

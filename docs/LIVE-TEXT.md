@@ -9,8 +9,8 @@ Status: **released in v1.59.0-rc.1.** Code: `src/logic.ts`
 Smokes: `demo/smoke_live_text.mjs`, `demo/smoke_decor_text.mjs`;
 `demo/smoke_decor.mjs` keeps the surrounding decor contract.
 
-The shape: `{kind:'text', x, y, text, color, scale?, angle?}` — plus legacy
-`size?`, `entity?`, `attr?`, and `unit?` fields that older plans may still
+The shape: `{kind:'text', x, y, text, color, opacity?, size_cm?, angle?}` — plus legacy
+`size?`, `scale?`, `entity?`, `attr?`, and `unit?` fields that older plans may still
 carry. New live references are stored only inside `text`; existing linked
 labels render unchanged and migrate to inline references when that conversion
 is lossless. A legacy explicit `unit`, or an attribute name that cannot be
@@ -56,11 +56,13 @@ characters.
 - The value is read live from `hass` on every render — the same source as the
   rest of the card, no polling and no subscriptions of its own. A new `hass`
   repaints the label; nothing is re-created.
-- **Unavailable / unknown / missing entity** → the value renders as `—` (an
+- **Unavailable / unknown / missing or deleted-from-plan entity** → the value renders as `—` (an
   em dash) **and the dash carries no unit** («— °C» is not a reading); the
   rest of the template stays. A label that silently disappears when a sensor
   dies is worse than one that says "no data": the user must see that the
   caption is alive and the sensor is not.
+- Deletion does not rewrite the label template. Re-adding the same HA binding
+  makes the saved variable live again.
 - An attribute that is not on the entity, or that is a dict, renders as the
   same dash. A list attribute is joined with `, `; `0` and `false` are values,
   not absences.
@@ -95,18 +97,21 @@ characters.
 The old `size: 's'|'m'|'l'` selector is **gone from the dialog**. A caption's
 size is not one of three opinions; it is whatever fits the place it is put in.
 
-- **`scale`** — a font multiplier against the base 20 px, written by dragging
-  a corner of the selected block (select tool). Bounded `0.15…20` in the card
-  and in the backend.
+- **`size_cm`** — the canonical physical font size, shown as centimetres or
+  inches and written both by the numeric properties field and by dragging a
+  corner of the selected block. Text always scales proportionally, including
+  with `Shift`; changing the plan scale therefore keeps the label's physical
+  size meaningful. The backend bounds it to `0.1…2000 cm`.
 - **`angle`** — degrees, written by the handle above the block. The step is
-  **5°**, the same step a device icon rotates in; **Shift** drags past it, as
-  past every other snap in this card (docs/CANVAS.md §9.4). Rotating back to
+  **5°**, the same step a device icon rotates in; **Shift** enables a free
+  angle but never disables positional grid snapping. Rotating back to
   zero removes the field, so a straight label stores nothing.
-- **No migration for `size`.** A stored `size` is read as the multiplier it
+- **Legacy size is read without a silent migration.** A stored `size` is read as the multiplier it
   used to render at — `s` = 0.7 (14 px), `m` = 1 (20 px), `l` = 1.5 (30 px) —
-  so an old label comes back at exactly its old size. An explicit `scale`
-  wins, and the first corner drag **replaces** `size` with the scale it meant:
-  a shape never states its size twice. `size` stays in `DECOR_SCHEMA` (still
+  so an old label comes back at exactly its old size. An explicit legacy
+  `scale` wins. The first corner drag or properties save replaces both with
+  the equivalent `size_cm`; **Оптимизировать планы** performs the same lossless
+  conversion explicitly for the whole model. `size` stays in `DECOR_SCHEMA` (still
   bounded to the three known values) precisely because old plans keep sending
   it.
 - **Line breaks are the user's own.** The dialog's field is a textarea; a
@@ -166,9 +171,10 @@ click opens its editor, and the corner/rotate handles appear.
 
 ## 6. Backend
 
-`DECOR_SCHEMA`, text branch: `text` ≤ 200 characters, newlines and inline
-references included; `scale` optional, finite, `0.15…20`; `angle` optional,
-finite, `-360…360`. Legacy `entity`/`attr`/`unit` remain accepted and bounded
+`DECOR_SCHEMA`, text branch: `text` ≤ 200 characters, `opacity` 0…1, newlines and inline
+references included; canonical `size_cm` is finite `0.1…2000`; `angle` is
+optional and finite `-360…360`. Legacy `size`, `scale` (`0.15…20`) and
+`entity`/`attr`/`unit` remain accepted and bounded
 so old saved plans continue to validate and render. The frontend writes none
 of them after an ordinary representable label has been edited. It deliberately
 retains them when dropping an explicit unit or non-representable attribute would

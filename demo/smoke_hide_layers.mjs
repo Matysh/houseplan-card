@@ -165,12 +165,18 @@ checkAll({
   resizeBeadIsAQuarter: rad.rszQuarter,
 });
 
-// ---- 7) the backdrop editor opens ON the picture tool ---------------------
+// ---- 7) every Background session starts on Select; image has its own tool --
 const armed = await page.evaluate(async () => {
   const c = window.__card;
   c._setMode('view'); await c.updateComplete;
   c._setMode('decor'); await c.updateComplete;
-  const o = { tool: c._decorTool, movable: c._bdMovable, hasPicture: !!c._curSpaceCfg.plan_url };
+  const o = {
+    startsOnSelect: c._decorTool === 'select',
+    inertUntilPictureTool: !c._bdMovable,
+    hasPicture: !!c._curSpaceCfg.plan_url,
+  };
+  c._decorTool = 'backdrop'; c.requestUpdate(); await c.updateComplete;
+  o.movable = c._bdMovable;
   // and the picture really moves under it: press inside the body, drag, release
   const r = c._bdRect;
   const before = { x: c._curSpaceCfg.plan_x ?? 0, y: c._curSpaceCfg.plan_y ?? 0 };
@@ -194,8 +200,9 @@ const armed = await page.evaluate(async () => {
   return o;
 });
 checkAll({
-  backdropToolArmed: armed.tool === 'backdrop',
-  pictureMovableAtOnce: armed.movable,
+  backgroundStartsOnSelect: armed.startsOnSelect,
+  pictureInertUntilOwnTool: armed.inertUntilPictureTool,
+  pictureMovableUnderOwnTool: armed.movable,
   dragMovedThePicture: armed.moved,
 });
 

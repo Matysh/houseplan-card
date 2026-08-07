@@ -1,6 +1,46 @@
 # Changelog
 
-## Unreleased (dev)
+## v1.60.0-beta.1 — 2026-08-07
+
+- **The Background editor now has one coherent transform and style system.**
+  Every decor kind can be selected, moved, resized proportionally (Shift for
+  independent axes), rotated and edited numerically; lines expose endpoint
+  handles. Stroke/text and fill have independent colour/opacity; stroke width
+  and text size are canonical physical cm/in values. Rectangle drafts show area and ovals show radii. Drawing
+  magnetises only to decor and room geometry. Decor and the plan image keep
+  both dimensions on the grid even during proportional resize and use
+  the named 50-step Undo/Redo stack. The image has an exclusive tool, fades to
+  0.5 elsewhere in this editor, supports independent axes/rotation and remains
+  fully opaque outside it. Legacy styles/transforms remain visually stable and
+  migrate only via explicit plan optimisation.
+
+- **Devices can now be deleted from the plan, not merely hidden.** Delete sits
+  beside Hide/Show and requires confirmation. A deleted HA binding is excluded
+  from rendering, Show-hidden ghosts, LQI, climate, room sources, light
+  resolution/Glow/statistics, controls, openings and live text, while remaining
+  available in Add. Re-adding replaces its minimal discovery tombstone and
+  starts with a fresh position. Virtual markers are removed outright; layout,
+  attachments, activity runtime and vacuum trails are cleaned, and stale-tab
+  drag updates cannot resurrect the old position.
+
+- **Device-dialog footer spans the dialog again.** The shared `hp-dialog`
+  footer is now a full-width slot item instead of exposing its action row as a
+  shrink-to-fit flex child. The divider no longer starts halfway across the
+  modal, Hide stays at bottom-left, and Cancel/Save stay at bottom-right.
+
+- **Auto device icons keep their label in the editor.** When a marker has no
+  explicit icon override, the HA icon picker now receives the effective
+  auto-derived icon as its display value, so the field shows both the glyph
+  and `mdi:*` name instead of a nameless glyph. The stored override remains
+  empty until the user actually selects an icon.
+
+- **Media-player power is no longer mistaken for work.** `media_player`
+  markers now stay neutral for `on`, `idle`, `playing`, `paused` and other
+  transport states; an explicit `off` uses the same faded presentation as
+  `unknown` / `unavailable`.
+  This is a domain-level rule for TVs, receivers, speakers and soundbars, not
+  a model exception. Mixed media entities fade only when none of them is
+  currently available and powered.
 
 ## v1.59.2 — 2026-08-07
 

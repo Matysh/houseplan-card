@@ -8,6 +8,7 @@
  */
 import { LitElement, html, svg, nothing, TemplateResult, PropertyValues } from 'lit';
 import './hp-dialog';
+import './hp-color-opacity';
 import {
   EXCLUDED_DOMAINS, DEFAULT_ICON_RULES, compileIconRules, isValidPattern, iconFor,
   type IconRule, type CompiledIconRule,
@@ -27,7 +28,7 @@ import {
   DISPLAY_MODES, TAP_ACTIONS, SPACE_FILL_MODES, ROOM_FILL_MODES,
   coverService, coverEntityOf, COVER_GUARDED_CLASSES,
   liveText, liveTextReference, liveTextToken, hassValue, valueWithUnit, decorTextScale, decorTextLines,
-  DECOR_TEXT_BASE, DECOR_TEXT_SCALE_MIN, DECOR_TEXT_SCALE_MAX,
+  DECOR_TEXT_BASE,
 } from './logic';
 import {
   planEdgeDrag, applyEdgeDrag, clampEdgeDrag, applyRoomScale, clampRoomScale,
@@ -41,7 +42,7 @@ import {
 } from './sun';
 import {
   FURNITURE_GROUPS, furnitureOfGroup, furnitureSymbol, furnitureDefaultCm,
-  furniturePathD, furnitureCorners, furnitureResize, snapFurnitureToWall,
+  furniturePathD, furnitureCorners, snapFurnitureToWall,
   cmToNorm, clampFurnSize, clampFurnCm, FURN_WALL_CELLS, type FurnitureGroup,
 } from './furniture';
 import {
@@ -73,7 +74,7 @@ import {
   buildDevices, seedHiddenBindings, lqiFor, tempFor, humFor, climateTempFor, isHumEntity,
   areaTemp, areaHum, sourceValue, areaClimateMap,
   resolvedLightSources, resolvedLightState, resolvedLightStats,
-  resolvedDeviceStateEntities,
+  resolvedDeviceStateEntities, removedPlanBindings, isRemovedPlanEntity,
   type AreaClimate,
 } from './devices';
 import type {
@@ -97,8 +98,17 @@ import {
   combineVisualSamples, edgeActivity, entityVisualSample,
   type DeviceActivity, type DeviceVisualState, type EntityVisualSample,
 } from './device-visual';
+import type { DecorShape, DecorStyle } from './editors/decor/types';
+import {
+  DEFAULT_DECOR_STYLE, boxAnchors, boxCorners, clamp01, decorCmToUnits,
+  decorStrokeUnits, decorStyleOf, decorStylePatch,
+  decorUnitsToCm, mergeSnapGeometry, normalizeAngle, resizeDecorBox,
+  snapDecorPoint, type DecorBox, type SnapGeometry,
+} from './editors/decor/geometry';
 
-const CARD_VERSION = '1.59.2';
+const CARD_VERSION = '1.60.0-beta.1';
+/** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
+const DECOR_TEXT_CM_MAX = 2000;
 /** HP-1552 boot-veil timing (AUD-1552-02). The veil holds for at least
  *  BOOT_MIN_MS; every stage-height change restarts a BOOT_QUIET_MS
  *  trailing-quiescence requirement (chrome still settling near the cap
@@ -153,7 +163,7 @@ type WarmViewport = {
 /** Which dialog was open and its draft (docs/WARM-REMOUNT.md §3). `data` is
  *  the live draft OBJECT — the memo is module state, never serialised, so a
  *  half-filled device dialog with its uploaded pdfs survives for free. */
-type WarmDialogKind = 'space' | 'marker' | 'settings' | 'opening' | 'decorText' | 'decorShape' | 'rules' | 'room' | 'info' | 'openingInfo';
+type WarmDialogKind = 'space' | 'marker' | 'settings' | 'opening' | 'decorText' | 'decorShape' | 'backdrop' | 'rules' | 'room' | 'info' | 'openingInfo';
 type WarmDialog = { kind: WarmDialogKind; space: string; mode: string; data: any };
 /** AUD-159B1-01: one entry per CARD PLACEMENT, not per key. Two cards with an
  *  identical config on one view share the key, so the key alone cannot say
@@ -271,6 +281,11 @@ interface SpaceGeometryState {
   openings?: OpeningCfg[];
   walls?: WallEntry[];
   open_spans?: OpenSpanEntry[];
+  decor?: DecorShape[];
+  plan_transform: {
+    plan_x?: number; plan_y?: number; plan_scale?: number;
+    plan_scale_x?: number; plan_scale_y?: number; plan_angle?: number;
+  };
 }
 /** Tools of the decor (background) editor. `furniture` is the library
  *  (docs/FURNITURE.md): it opens a palette and places a symbol at real size. */
@@ -390,14 +405,18 @@ class HouseplanCard extends LitElement {
   private _pendingNavMode: 'plan' | 'devices' | 'decor' | null = null;
   // ---- decor (background) editor ----
   private _decorTool: DecorTool = 'select';
-  private _decorStyle: { color: string; width: number; fill: boolean } = { color: '#607d8b', width: 3, fill: false };
+  private _decorStyle: DecorStyle = { ...DEFAULT_DECOR_STYLE };
   private _decorDraft: { kind: 'line' | 'rect' | 'ellipse'; a: number[]; b: number[]; pid: number } | null = null;
-  private _decorMove: { id: string; start: number[]; orig: any; pid: number; moved: boolean } | null = null;
+  private _decorMove: {
+    id: string; start: number[]; orig: DecorShape; pid: number; moved: boolean;
+    before: SpaceGeometryState | null;
+  } | null = null;
   private _decorSel: string | null = null;
   /** The text dialog. Live references are part of `text`; `pickerEntity` is
    *  only transient UI state and is never persisted (docs/LIVE-TEXT.md). */
   private _decorTextDialog: {
     id?: string; x: number; y: number; text: string; color: string;
+    opacity: number; angle: number; sizeCm: number;
     pickerEntity?: string;
     /** Keep an old link when inline syntax cannot represent its attr/unit losslessly. */
     preserveLegacy?: boolean;
@@ -405,8 +424,12 @@ class HouseplanCard extends LitElement {
   /** Style editor opened by double-clicking a non-text decor object. */
   private _decorShapeDialog: {
     id: string; kind: 'line' | 'rect' | 'ellipse' | 'furniture';
-    color: string; width: number; fill?: boolean;
+    color: string; opacity: number; widthCm: number;
+    fill?: boolean; fillColor?: string; fillOpacity?: number;
+    lengthCm?: number; sizeWCm?: number; sizeHCm?: number; angle: number;
+    symbol?: string;
   } | null = null;
+  private _backdropDialog: { widthCm: number; heightCm: number; angle: number } | null = null;
   /** Last textarea selection survives moving focus to the HA pickers. */
   private _decorTextSelection: { start: number; end: number } = { start: 0, end: 0 };
   /**
@@ -416,45 +439,48 @@ class HouseplanCard extends LitElement {
    * a unit system is a display setting, never a stored one.
    */
   private _furnPalette: { symbol: string; w: number; h: number } | null = null;
-  /** The measured box of the selected text block, its own (unrotated) frame. */
+  /** The selected shape's own unrotated frame (text is measured from SVG). */
   private _dtBox: { id: string; x: number; y: number; w: number; h: number } | null = null;
   /**
-   * A live corner (scale) or rotate gesture on the selected decor BLOCK — a
-   * text label or a piece of furniture. One gesture, two shapes: the handles,
-   * the 5° angular step are the same, only what a corner MEANS
-   * differs (a font multiplier for text, a width and a depth for furniture),
-   * and that lives in `_dtMove` alone.
+   * One live transform gesture for every selected decor kind. Lines use two
+   * endpoint handles; text uses one physical font size; box kinds use the
+   * same oriented resize/rotate controller.
    */
   private _dtDrag: {
     id: string; kind: 'scale' | 'rotate'; pid: number;
     /** the pivot the block is scaled and rotated about (render units) */
     ax: number; ay: number;
     /** distance / bearing of the pointer at the start, and the stored values */
-    r0: number; a0: number; scale0: number; angle0: number;
-    /** furniture only: the dragged corner as signs, and the box at drag start */
+    r0: number; a0: number; textSizeCm0: number; angle0: number;
+    /** box shapes: the dragged corner signs and the oriented box at drag start */
     sgx?: number; sgy?: number;
-    orig?: { x: number; y: number; w: number; h: number; angle?: number };
+    orig?: DecorBox;
+    origShape: DecorShape;
+    before: SpaceGeometryState | null;
+    lineEnd?: 0 | 1;
     moved: boolean;
   } | null = null;
   /**
    * The live backdrop gesture (docs/BACKDROP.md §2): moving the picture by its
-   * body, or scaling it UNIFORMLY by a corner handle about the opposite corner.
+   * body, scaling it by a corner handle or rotating it by the upper handle.
    * `base` is the untransformed, centred rectangle the transform is measured
    * from, so a gesture never accumulates rounding of its own.
    */
   private _bdDrag: {
-    kind: 'move' | 'scale';
+    kind: 'move' | 'scale' | 'rotate';
     pid: number;
     /** pointer down, render units */
     sx: number; sy: number;
     /** the centred default rect (render units) — the transform's origin */
     base: Rect;
     /** transform at pointer down */
-    p0: { dx: number; dy: number; k: number };
+    p0: { dx: number; dy: number; sx: number; sy: number; angle: number };
     /** the corner that STAYS PUT while scaling (render units) */
     fx: number; fy: number;
     /** which way the dragged corner points from the fixed one (±1) */
     sgx: number; sgy: number;
+    rect0: DecorBox;
+    before: SpaceGeometryState | null;
     moved: boolean;
   } | null = null;
 
@@ -879,6 +905,7 @@ class HouseplanCard extends LitElement {
     _decorSel: { state: true },
     _decorTextDialog: { state: true },
     _decorShapeDialog: { state: true },
+    _backdropDialog: { state: true },
     _furnPalette: { state: true },
     _bdDrag: { state: true },
     _dtBox: { state: true },
@@ -1021,6 +1048,7 @@ class HouseplanCard extends LitElement {
       if (this._settingsDialog) { this._settingsDialog = null; return; }
       if (this._markerDialog) { this._markerDialog = null; return; }
       if (this._openingDialog) { this._openingDialog = null; return; }
+      if (this._backdropDialog) { this._backdropDialog = null; return; }
       if (this._decorShapeDialog) { this._decorShapeDialog = null; return; }
       if (this._decorTextDialog) { this._decorTextDialog = null; return; }
       if (this._spaceDialog && !this._roomDialog) {
@@ -1034,6 +1062,22 @@ class HouseplanCard extends LitElement {
     const target = e.target as HTMLElement | null;
     const inField = !!target?.closest?.('input, textarea, select, [contenteditable="true"]');
     if (this._mode === 'decor') {
+      const mod = e.ctrlKey || e.metaKey;
+      const key = e.key.toLowerCase();
+      const redo = mod && (key === 'y' || (key === 'z' && e.shiftKey));
+      const undo = mod && key === 'z' && !e.shiftKey;
+      if ((undo || redo) && inField) return;
+      if (redo) { e.preventDefault(); this._redoGeometry(); return; }
+      if (undo) {
+        e.preventDefault();
+        if (this._decorDraft) { this._decorDraft = null; return; }
+        if (this._decorMove || this._dtDrag || this._bdDrag) {
+          this._cancelDecorGesture();
+          return;
+        }
+        this._undoGeometry();
+        return;
+      }
       if ((e.key === 'Delete' || e.key === 'Backspace') && this._decorSel &&
           !inField) {
         e.preventDefault();
@@ -1043,6 +1087,7 @@ class HouseplanCard extends LitElement {
       if (e.key === 'Escape') {
         e.preventDefault();
         if (this._decorDraft) this._decorDraft = null;
+        else if (this._decorMove || this._dtDrag || this._bdDrag) this._cancelDecorGesture();
         // an armed symbol is the same kind of "half-done thing" a draft is:
         // Escape disarms it before it lets go of the selection or the tool
         else if (this._furnPalette) this._furnPalette = null;
@@ -1464,6 +1509,7 @@ class HouseplanCard extends LitElement {
     if (this._settingsDialog) return this._settingsDialog.busy ? null : at('settings', this._settingsDialog);
     if (this._markerDialog) return this._markerDialog.busy ? null : at('marker', this._markerDialog);
     if (this._openingDialog) return at('opening', this._openingDialog);
+    if (this._backdropDialog) return at('backdrop', this._backdropDialog);
     if (this._decorShapeDialog) return at('decorShape', this._decorShapeDialog);
     if (this._decorTextDialog) return at('decorText', this._decorTextDialog);
     if (this._roomDialog) {
@@ -1521,6 +1567,7 @@ class HouseplanCard extends LitElement {
       case 'settings': this._settingsDialog = { ...d.data, busy: false }; break;
       case 'rules': this._rulesDialog = { ...d.data, busy: false }; break;
       case 'opening': this._openingDialog = { ...d.data }; break;
+      case 'backdrop': this._backdropDialog = { ...d.data }; break;
       case 'decorShape': this._decorShapeDialog = { ...d.data }; break;
       case 'decorText': {
         this._decorTextDialog = { ...d.data };
@@ -1590,6 +1637,7 @@ class HouseplanCard extends LitElement {
         // the picture would leave the memoized model (and the content frame
         // built from it) showing the old rectangle (docs/BACKDROP.md §5)
         + (x.plan_x ?? '') + ',' + (x.plan_y ?? '') + ',' + (x.plan_scale ?? '') + ','
+        + (x.plan_scale_x ?? '') + ',' + (x.plan_scale_y ?? '') + ',' + (x.plan_angle ?? '') + ','
         + (x.rooms?.length || 0) + ',' + (x.openings?.length || 0) + ',' + (x.decor?.length || 0) + ';';
       for (const r of x.rooms || []) {
         // O(1) geometry roll-up per room: the count alone said nothing about
@@ -2605,7 +2653,10 @@ class HouseplanCard extends LitElement {
       for (const x of this._decorList) {
         const pts = x.kind === 'line'
           ? [[x.x1 * NORM_W, x.y1 * H], [x.x2 * NORM_W, x.y2 * H]]
-          : [[x.x * NORM_W, x.y * H], [(x.x + (x.w || 0)) * NORM_W, (x.y + (x.h || 0)) * H]];
+          : x.kind === 'text'
+            ? [[x.x * NORM_W, x.y * H]]
+            : boxCorners({ x: x.x * NORM_W, y: x.y * H, w: x.w * NORM_W,
+                h: x.h * H, angle: x.angle });
         const it = itemOf(pts);
         if (it) extra.push(it);
       }
@@ -3008,7 +3059,17 @@ class HouseplanCard extends LitElement {
       return;
     }
     if (this._decorDraft?.pid === ev.pointerId) {
-      this._decorDraft = { ...this._decorDraft, b: this._snap(this._svgPoint(ev)) };
+      const draft = this._decorDraft;
+      let b = this._decorSnap(this._svgPoint(ev), ev.pointerType);
+      if (ev.shiftKey && (draft.kind === 'rect' || draft.kind === 'ellipse')) {
+        const dx = b[0] - draft.a[0], dy = b[1] - draft.a[1];
+        const side = Math.max(Math.abs(dx), Math.abs(dy));
+        b = this._snap([
+          draft.a[0] + (dx < 0 ? -side : side),
+          draft.a[1] + (dy < 0 ? -side : side),
+        ]);
+      }
+      this._decorDraft = { ...draft, b };
       return;
     }
     if (this._decorMove?.pid === ev.pointerId) {
@@ -3118,7 +3179,10 @@ class HouseplanCard extends LitElement {
       return;
     }
     if (this._decorMove?.pid === ev.pointerId) {
-      if (this._decorMove.moved) this._saveConfig();
+      if (this._decorMove.moved) {
+        this._recordGeometry(this._t('history.decor_move'), this._decorMove.before);
+        this._saveConfig();
+      }
       this._decorMove = null;
       return;
     }
@@ -3377,17 +3441,10 @@ class HouseplanCard extends LitElement {
     this._hoverRoom = null;
     this._decorDraft = null;
     this._decorSel = null;
-    // The backdrop editor opens on the tool it is NAMED after, whenever there
-    // is a picture to move. The owner's report (2026-08-05): «не получается
-    // двигать картинку-подложку в режиме редактора подложки» — the frame is
-    // drawn the moment the editor opens, which promises the picture can be
-    // dragged, but the promise was only kept once the user found the
-    // «Картинка-подложка» tool, because the body must stay pan-able under
-    // `select` (docs/BACKDROP.md §2, smoke_pan_any_zoom). Arming the tool
-    // keeps both: the picture drags straight away, and one-finger pan is a
-    // click away on `select`, exactly as before. A space with no picture has
-    // no such tool and still opens on `select`.
-    this._decorTool = mode === 'decor' && this._curSpaceCfg?.plan_url ? 'backdrop' : 'select';
+    this._backdropDialog = null;
+    // Every Background session starts predictably on Select. The image has an
+    // explicit tool of its own; only that tool may claim its body or frame.
+    this._decorTool = 'select';
     this._bdDrag = null;
     this._dtDrag = null;
     this._dtBox = null;
@@ -3511,6 +3568,10 @@ class HouseplanCard extends LitElement {
     const sp = this._serverCfg?.spaces.find((s: any) => s.id === spaceId);
     if (!sp) return null;
     const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
+    const plan_transform: SpaceGeometryState['plan_transform'] = {};
+    for (const key of ['plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle'] as const) {
+      if (sp[key] !== undefined) plan_transform[key] = sp[key];
+    }
     return {
       spaceId,
       rooms: copy(sp.rooms || []),
@@ -3519,6 +3580,8 @@ class HouseplanCard extends LitElement {
       ...(Array.isArray((sp as any).open_spans)
         ? { open_spans: copy((sp as any).open_spans) }
         : {}),
+      ...(Array.isArray(sp.decor) ? { decor: copy(sp.decor) } : {}),
+      plan_transform,
     };
   }
 
@@ -3546,6 +3609,32 @@ class HouseplanCard extends LitElement {
     this._rszDrag = null;
     this._rszPreview = null;
     this._rszLive = null;
+    this._decorDraft = null;
+    this._decorMove = null;
+    this._dtDrag = null;
+    this._bdDrag = null;
+  }
+
+  /** Browser/OS cancellation is an aborted transaction, never a commit. */
+  private _stagePointerCancel(ev: PointerEvent): void {
+    clearTimeout(this._kioskHoldTimer);
+    if (this._swipeStart?.id === ev.pointerId) this._swipeStart = null;
+    if (this._decorDraft?.pid === ev.pointerId) {
+      this._decorDraft = null;
+      this.requestUpdate();
+      return;
+    }
+    if (this._decorMove?.pid === ev.pointerId || this._dtDrag?.pid === ev.pointerId
+        || this._bdDrag?.pid === ev.pointerId) {
+      this._cancelDecorGesture();
+      return;
+    }
+    this._pointers.delete(ev.pointerId);
+    if (this._pointers.size < 2) this._pinchStart = null;
+    if (this._pointers.size === 0) {
+      this._panStart = null;
+      this._panLock = null;
+    }
   }
 
   private _applyGeometryState(state: SpaceGeometryState): boolean {
@@ -3559,6 +3648,11 @@ class HouseplanCard extends LitElement {
     else delete sp.walls;
     if (state.open_spans !== undefined) (sp as any).open_spans = copy(state.open_spans);
     else delete (sp as any).open_spans;
+    if (state.decor !== undefined) sp.decor = copy(state.decor);
+    else delete sp.decor;
+    for (const key of ['plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle'] as const)
+      delete sp[key];
+    Object.assign(sp, copy(state.plan_transform || {}));
     this._clearGeometryGesture();
     if (this._space !== state.spaceId) {
       this._space = state.spaceId;
@@ -4072,13 +4166,145 @@ class HouseplanCard extends LitElement {
 
   // ================= decor (background) layer =================
 
-  private get _decorList(): any[] {
+  private get _decorList(): DecorShape[] {
     const sp = this._curSpaceCfg;
-    return Array.isArray(sp?.decor) ? sp.decor : [];
+    return (Array.isArray(sp?.decor) ? sp.decor : []) as DecorShape[];
   }
 
   private get _decorH(): number {
     return NORM_W;
+  }
+
+  private _decorResolvedStyle(shape?: DecorShape | null): DecorStyle {
+    return decorStyleOf(shape, this._cellCm, this._gridPitch, DEFAULT_DECOR_STYLE);
+  }
+
+  private _decorWidthUnits(shape?: DecorShape | null): number {
+    return decorStrokeUnits(shape, this._cellCm, this._gridPitch, DEFAULT_DECOR_STYLE.widthCm);
+  }
+
+  /** Canonical text size is physical; old size/scale values stay pixel-exact. */
+  private _decorTextSizeCm(shape?: DecorShape | null): number {
+    if (shape?.kind === 'text') {
+      const canonical = Number(shape.size_cm);
+      if (Number.isFinite(canonical) && canonical > 0) return canonical;
+      return decorUnitsToCm(
+        DECOR_TEXT_BASE * decorTextScale(shape), this._cellCm, this._gridPitch,
+      );
+    }
+    return decorUnitsToCm(DECOR_TEXT_BASE, this._cellCm, this._gridPitch);
+  }
+
+  private _decorTextUnits(shape: DecorShape): number {
+    if (shape.kind !== 'text') return DECOR_TEXT_BASE;
+    const canonical = Number(shape.size_cm);
+    return Number.isFinite(canonical) && canonical > 0
+      ? decorCmToUnits(canonical, this._cellCm, this._gridPitch)
+      : DECOR_TEXT_BASE * decorTextScale(shape);
+  }
+
+  /** Small physical fields are centimetres in metric plans and inches in imperial plans. */
+  private _decorSmallField(cm: number): number {
+    return Math.round((this._imperial ? cm / 2.54 : cm) * 100) / 100;
+  }
+
+  private _decorSmallCm(value: number): number {
+    const cm = this._imperial ? value * 2.54 : value;
+    return Number.isFinite(cm) ? Math.max(0.1, Math.min(100, cm)) : 0.1;
+  }
+
+  private _decorTextCm(value: number): number {
+    const cm = this._imperial ? value * 2.54 : value;
+    return Number.isFinite(cm) ? Math.max(0.1, Math.min(DECOR_TEXT_CM_MAX, cm)) : 0.1;
+  }
+
+  private _decorLargeField(cm: number): number {
+    return Math.round((this._imperial ? cm / 30.48 : cm / 100) * 100) / 100;
+  }
+
+  private _decorLargeCm(value: number): number {
+    const cm = this._imperial ? value * 30.48 : value * 100;
+    return Number.isFinite(cm) ? Math.max(0.1, Math.min(CANVAS_LIMIT * this._cellCm, cm)) : 0.1;
+  }
+
+  private _decorBoxOf(shape: DecorShape): DecorBox | null {
+    if (shape.kind !== 'rect' && shape.kind !== 'ellipse' && shape.kind !== 'furniture') return null;
+    return {
+      x: shape.x * NORM_W, y: shape.y * this._decorH,
+      w: shape.w * NORM_W, h: shape.h * this._decorH,
+      angle: normalizeAngle(shape.angle) || undefined,
+    };
+  }
+
+  /** Magnet candidates are intentionally limited to decor and room contours. */
+  private _decorSnapGeometry(excludeId?: string): SnapGeometry {
+    const parts: SnapGeometry[] = [];
+    for (const shape of this._decorList) {
+      if (shape.id === excludeId) continue;
+      if (shape.kind === 'line') {
+        const a = [shape.x1 * NORM_W, shape.y1 * this._decorH];
+        const b = [shape.x2 * NORM_W, shape.y2 * this._decorH];
+        parts.push({
+          points: [a, b, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]],
+          segments: [{ a, b }],
+        });
+      } else if (shape.kind === 'text') {
+        parts.push({ points: [[shape.x * NORM_W, shape.y * this._decorH]], segments: [] });
+      } else {
+        const box = this._decorBoxOf(shape);
+        if (box) parts.push(boxAnchors(box));
+      }
+    }
+    for (const room of this._spaceModel().rooms) {
+      const poly = roomPoly(room);
+      if (!poly?.length) continue;
+      parts.push({
+        points: poly.flatMap((p, i) => {
+          const q = poly[(i + 1) % poly.length];
+          return [p, [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2]];
+        }),
+        segments: poly.map((p, i) => ({ a: p, b: poly[(i + 1) % poly.length] })),
+      });
+    }
+    return mergeSnapGeometry(parts);
+  }
+
+  private _decorSnap(raw: number[], pointerType = 'mouse', excludeId?: string): number[] {
+    const stage = this._stageEl;
+    const view = this._viewOr(this._baseVb());
+    const px = pointerType === 'touch' || pointerType === 'pen' ? 14 : 8;
+    const tolerance = stage ? (view.w / Math.max(1, stage.clientWidth)) * px : this._gridPitch;
+    return snapDecorPoint(
+      raw, this._decorSnapGeometry(excludeId), tolerance,
+      (point) => this._snap(point),
+    ).point;
+  }
+
+  private _replaceDecor(id: string, patch: Partial<DecorShape>): void {
+    const sp = this._curSpaceCfg;
+    if (!sp) return;
+    sp.decor = this._decorList.map((shape) => shape.id === id ? { ...shape, ...patch } : shape);
+    this._cfgEpoch++;
+    this.requestUpdate();
+  }
+
+  /** Esc/Ctrl+Z during a live gesture restores its transaction start without creating history. */
+  private _cancelDecorGesture(): void {
+    const before = this._decorMove?.before || this._dtDrag?.before || this._bdDrag?.before;
+    const sp = before && this._serverCfg?.spaces.find((space: any) => space.id === before.spaceId);
+    if (before && sp) {
+      const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
+      if (before.decor !== undefined) sp.decor = copy(before.decor);
+      else delete sp.decor;
+      for (const key of ['plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle'] as const)
+        delete sp[key];
+      Object.assign(sp, copy(before.plan_transform || {}));
+      this._cfgEpoch++;
+    }
+    this._decorMove = null;
+    this._dtDrag = null;
+    this._bdDrag = null;
+    this.requestUpdate();
   }
 
   /** Begin a decor gesture. Returns true when the event is consumed (no pan). */
@@ -4095,7 +4321,7 @@ class HouseplanCard extends LitElement {
     if (onShape) return true; // the shape's own handler deals with it
     if (t === 'line' || t === 'rect' || t === 'ellipse') {
       ev.preventDefault();
-      const p = this._snap(this._svgPoint(ev));
+      const p = this._decorSnap(this._svgPoint(ev), ev.pointerType);
       this._decorDraft = { kind: t, a: p, b: p, pid: ev.pointerId };
       capturePointer(ev);
       return true;
@@ -4103,10 +4329,11 @@ class HouseplanCard extends LitElement {
     if (t === 'text') {
       // …and the press did NOT land on an existing label: those are the one
       // exception to the inertness above (see _decorShapeDown).
-      const p = this._snap(this._svgPoint(ev));
+      const p = this._decorSnap(this._svgPoint(ev), ev.pointerType);
       this._decorTextDialog = {
         x: clampCanvasN(p[0] / NORM_W), y: clampCanvasN(p[1] / this._decorH),
-        text: '', color: this._decorStyle.color,
+        text: '', color: this._decorStyle.color, opacity: this._decorStyle.opacity,
+        angle: 0, sizeCm: decorUnitsToCm(DECOR_TEXT_BASE, this._cellCm, this._gridPitch),
       };
       this._decorTextSelection = { start: 0, end: 0 };
       return true;
@@ -4119,7 +4346,7 @@ class HouseplanCard extends LitElement {
       // must not silently place whatever was chosen last week.
       if (!this._furnPalette) return false;
       ev.preventDefault();
-      this._furnPlace(this._svgPoint(ev));
+      this._furnPlace(this._svgPoint(ev), ev.shiftKey);
       return true;
     }
     this._decorSel = null; // select/erase on empty space clears the selection
@@ -4129,7 +4356,11 @@ class HouseplanCard extends LitElement {
     if (this._bdMovable) {
       const r = this._bdRect!;
       const p = this._svgPoint(ev);
-      if (p[0] >= r.x && p[0] <= r.x + r.w && p[1] >= r.y && p[1] <= r.y + r.h) {
+      const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+      const a = (-normalizeAngle(r.angle) * Math.PI) / 180;
+      const dx = p[0] - cx, dy = p[1] - cy;
+      const local = [cx + dx * Math.cos(a) - dy * Math.sin(a), cy + dx * Math.sin(a) + dy * Math.cos(a)];
+      if (local[0] >= r.x && local[0] <= r.x + r.w && local[1] >= r.y && local[1] <= r.y + r.h) {
         ev.preventDefault();
         return this._bdStart(ev);
       }
@@ -4146,29 +4377,31 @@ class HouseplanCard extends LitElement {
     if (Math.hypot(d.b[0] - d.a[0], d.b[1] - d.a[1]) < min) return;
     const W = NORM_W, H = this._decorH;
     const st = this._decorStyle;
+    const before = this._geometrySnapshot();
     const id = 'dc' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
     // creation had no canvas guard at all while the MOVE did — a draft could be
     // born outside the range the mover then refused to leave. One limit, both
     // ends of the gesture (docs/CANVAS.md §9).
     const cn = clampCanvasN;
-    let shape: any;
+    let shape: DecorShape;
     if (d.kind === 'line') {
       shape = { id, kind: 'line', x1: cn(d.a[0] / W), y1: cn(d.a[1] / H),
-        x2: cn(d.b[0] / W), y2: cn(d.b[1] / H), color: st.color, width: st.width };
+        x2: cn(d.b[0] / W), y2: cn(d.b[1] / H), ...decorStylePatch(st, false) } as DecorShape;
     } else {
       const x = cn(Math.min(d.a[0], d.b[0]) / W), y = cn(Math.min(d.a[1], d.b[1]) / H);
       const w = Math.abs(d.b[0] - d.a[0]) / W, h = Math.abs(d.b[1] - d.a[1]) / H;
-      shape = { id, kind: d.kind, x, y, w, h, color: st.color, width: st.width, fill: st.fill };
+      shape = { id, kind: d.kind, x, y, w, h, ...decorStylePatch(st, true) } as DecorShape;
     }
     const sp = this._curSpaceCfg;
     sp.decor = [...this._decorList, shape];
     this._decorSel = id;
+    this._recordGeometry(this._t('history.decor_add'), before);
     this._saveConfig();
     this.requestUpdate();
   }
 
   /** Select tool: pointerdown on a shape starts moving it. */
-  private _decorShapeDown(ev: PointerEvent, shape: any): void {
+  private _decorShapeDown(ev: PointerEvent, shape: DecorShape): void {
     if (this._mode !== 'decor') return;
     // Under any other tool the shape is not a target at all: the press has to
     // reach the stage, where the drawing tool starts a new figure (or the
@@ -4192,9 +4425,11 @@ class HouseplanCard extends LitElement {
     ev.stopPropagation();
     ev.preventDefault();
     if (t === 'erase') {
+      const before = this._geometrySnapshot();
       const sp = this._curSpaceCfg;
       sp.decor = this._decorList.filter((x) => x.id !== shape.id);
       if (this._decorSel === shape.id) this._decorSel = null;
+      this._recordGeometry(this._t('history.decor_delete'), before);
       this._saveConfig();
       this.requestUpdate();
       return;
@@ -4202,7 +4437,7 @@ class HouseplanCard extends LitElement {
     this._decorSel = shape.id;
     this._decorMove = {
       id: shape.id, start: this._svgPoint(ev), orig: JSON.parse(JSON.stringify(shape)),
-      pid: ev.pointerId, moved: false,
+      pid: ev.pointerId, moved: false, before: this._geometrySnapshot(),
     };
     capturePointer(ev);
   }
@@ -4213,21 +4448,24 @@ class HouseplanCard extends LitElement {
     // (docs/FURNITURE.md §5) — a different rule, not a different gesture.
     if (m.orig?.kind === 'furniture') { this._furnMoveUpdate(ev); return; }
     const p = this._svgPoint(ev);
-    const o0 = m.orig;
+    const o0: any = m.orig;
     // The delta used to be what got snapped, which preserves whatever off-grid
     // offset the shape already had: a legacy shape at 0.3013 stayed at 0.3013
     // for ever, one step at a time. Snap the RESULTING ANCHOR instead, so one
     // drag is enough to put any shape on the grid (docs/CANVAS.md §9).
     const ax0 = (o0.kind === 'line' ? o0.x1 : o0.x) * NORM_W;
     const ay0 = (o0.kind === 'line' ? o0.y1 : o0.y) * this._decorH;
-    const anchor = this._snap([ax0 + (p[0] - m.start[0]), ay0 + (p[1] - m.start[1])]);
+    const anchor = this._decorSnap(
+      [ax0 + (p[0] - m.start[0]), ay0 + (p[1] - m.start[1])],
+      ev.pointerType, m.id,
+    );
     let dx = (anchor[0] - ax0) / NORM_W;
     let dy = (anchor[1] - ay0) / this._decorH;
     // audit follow-up L4 gave decor a bounds clamp of -0.25..1.25 — the plan
     // was a sheet with edges then. It is not any more (docs/CANVAS.md): the
     // clamp is now the same garbage limit the backend enforces, so decor can
     // follow a plan that lives at 2.7 and still cannot be flung to 1e100.
-    const o = m.orig;
+    const o: any = m.orig;
     const curX = o.kind === 'line' ? Math.min(o.x1, o.x2) : o.x;
     const curY = o.kind === 'line' ? Math.min(o.y1, o.y2) : o.y;
     const w = o.kind === 'line' ? Math.abs(o.x2 - o.x1) : (o.w || 0);
@@ -4239,7 +4477,7 @@ class HouseplanCard extends LitElement {
     const sp = this._curSpaceCfg;
     sp.decor = this._decorList.map((x) => {
       if (x.id !== m.id) return x;
-      const o = m.orig;
+      const o: any = m.orig;
       if (x.kind === 'line') return { ...x, x1: o.x1 + dx, y1: o.y1 + dy, x2: o.x2 + dx, y2: o.y2 + dy };
       return { ...x, x: o.x + dx, y: o.y + dy };
     });
@@ -4247,7 +4485,7 @@ class HouseplanCard extends LitElement {
   }
 
   /** Select tool: every decor object has a double-click properties dialog. */
-  private _decorShapeDbl(ev: MouseEvent, shape: any): void {
+  private _decorShapeDbl(ev: MouseEvent, shape: DecorShape): void {
     if (this._mode !== 'decor' || this._decorTool !== 'select') return;
     ev.preventDefault();
     ev.stopPropagation();
@@ -4258,17 +4496,37 @@ class HouseplanCard extends LitElement {
       return;
     }
     if (!['line', 'rect', 'ellipse', 'furniture'].includes(shape.kind)) return;
+    const style = this._decorResolvedStyle(shape);
+    const line = shape.kind === 'line' ? shape : null;
+    const box = this._decorBoxOf(shape);
     this._decorShapeDialog = {
       id: shape.id,
-      kind: shape.kind,
-      color: shape.color || this._decorStyle.color,
-      width: Number(shape.width) > 0 ? Number(shape.width) : this._decorStyle.width,
-      ...(shape.kind === 'rect' || shape.kind === 'ellipse' ? { fill: !!shape.fill } : {}),
+      kind: shape.kind as 'line' | 'rect' | 'ellipse' | 'furniture',
+      color: style.color, opacity: style.opacity, widthCm: style.widthCm,
+      angle: line
+        ? normalizeAngle(segmentAngle(
+            [line.x1 * NORM_W, line.y1 * this._decorH],
+            [line.x2 * NORM_W, line.y2 * this._decorH],
+          ))
+        : normalizeAngle((shape as any).angle),
+      ...(line ? { lengthCm: decorUnitsToCm(
+        Math.hypot((line.x2 - line.x1) * NORM_W, (line.y2 - line.y1) * this._decorH),
+        this._cellCm, this._gridPitch,
+      ) } : {}),
+      ...(box ? {
+        sizeWCm: decorUnitsToCm(box.w, this._cellCm, this._gridPitch),
+        sizeHCm: decorUnitsToCm(box.h, this._cellCm, this._gridPitch),
+      } : {}),
+      ...(shape.kind === 'furniture' ? { symbol: shape.symbol } : {}),
+      ...(shape.kind === 'rect' || shape.kind === 'ellipse' ? {
+        fill: style.fill, fillColor: style.fillColor, fillOpacity: style.fillOpacity,
+      } : {}),
     };
   }
 
   /** Open the editor of an existing label (double click, or the text tool). */
-  private _decorOpenText(shape: any): void {
+  private _decorOpenText(shape: DecorShape): void {
+    if (shape.kind !== 'text') return;
     let text = String(shape.text ?? '');
     const hasInline = [...text.matchAll(/\{([^{}\r\n]+)\}/g)]
       .some((m) => !!liveTextReference(m[1]));
@@ -4290,7 +4548,10 @@ class HouseplanCard extends LitElement {
         : `${text}${text ? ' ' : ''}${legacyToken}`;
     }
     this._decorTextDialog = {
-      id: shape.id, x: shape.x, y: shape.y, text, color: shape.color,
+      id: shape.id, x: shape.x, y: shape.y, text, color: shape.color || this._decorStyle.color,
+      opacity: clamp01(shape.opacity, this._decorStyle.opacity),
+      angle: normalizeAngle(shape.angle),
+      sizeCm: this._decorTextSizeCm(shape),
       pickerEntity: shape.entity || '',
       preserveLegacy: preserveLegacy || undefined,
     };
@@ -4333,26 +4594,38 @@ class HouseplanCard extends LitElement {
     // The user's own line breaks are kept; the surrounding whitespace is not.
     const text = String(d?.text ?? '').replace(/\r\n?/g, '\n').trim();
     if (!d || !text) { this._decorTextDialog = null; return; }
+    const before = this._geometrySnapshot();
     const sp = this._curSpaceCfg;
+    const textStyle = {
+      color: d.color, opacity: clamp01(d.opacity),
+      size_cm: Number(Math.max(0.1, Math.min(DECOR_TEXT_CM_MAX, d.sizeCm)).toFixed(4)),
+      ...(normalizeAngle(d.angle) ? { angle: normalizeAngle(d.angle) } : {}),
+    };
     if (d.id) {
       sp.decor = this._decorList.map((x) => {
         if (x.id !== d.id) return x;
+        if (x.kind !== 'text') return x;
         // A legacy unit or non-canonical attribute cannot be represented by
         // the inline grammar. Keep those fields until the user explicitly
         // replaces the binding; ordinary representable links still migrate.
-        if (d.preserveLegacy) return { ...x, text, color: d.color };
+        if (d.preserveLegacy) {
+          const { angle: _angle, size: _size, scale: _scale, ...straight } = x;
+          return { ...straight, text, ...textStyle };
+        }
         // beta.9 and earlier stored one live link beside the text. Saving in
         // the new editor migrates it to inline tokens and drops the old fields.
         const { entity, attr, unit, ...rest } = x;
-        return { ...rest, text, color: d.color };
+        const { angle: _angle, size: _size, scale: _scale, ...straight } = rest;
+        return { ...straight, text, ...textStyle };
       });
     } else {
       const id = 'dc' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
       sp.decor = [...this._decorList, { id, kind: 'text', x: d.x, y: d.y,
-        text, color: d.color }];
+        text, ...textStyle }];
       this._decorSel = id;
     }
     this._decorTextDialog = null;
+    this._recordGeometry(this._t(d.id ? 'history.decor_edit' : 'history.decor_add'), before);
     this._saveConfig();
     this.requestUpdate();
   }
@@ -4360,69 +4633,107 @@ class HouseplanCard extends LitElement {
   private _decorSaveShape(): void {
     const d = this._decorShapeDialog;
     if (!d) return;
-    const width = Math.max(0.1, Math.min(30, Number(d.width) || 0.1));
+    const before = this._geometrySnapshot();
+    const style: DecorStyle = {
+      color: d.color, opacity: clamp01(d.opacity),
+      widthCm: Math.max(0.1, Math.min(100, Number(d.widthCm) || 0.1)),
+      fill: !!d.fill, fillColor: d.fillColor || d.color,
+      fillOpacity: clamp01(d.fillOpacity, 0.25),
+    };
     const sp = this._curSpaceCfg;
-    sp.decor = this._decorList.map((x) => x.id === d.id
-      ? {
-          ...x, color: d.color, width,
-          ...(d.kind === 'rect' || d.kind === 'ellipse' ? { fill: !!d.fill } : {}),
-        }
-      : x);
-    this._decorStyle = {
-      color: d.color,
-      width,
-      fill: d.kind === 'rect' || d.kind === 'ellipse' ? !!d.fill : this._decorStyle.fill,
+    sp.decor = this._decorList.map((shape) => {
+      if (shape.id !== d.id) return shape;
+      const fillable = d.kind === 'rect' || d.kind === 'ellipse';
+      const visual = decorStylePatch(style, fillable);
+      if (shape.kind === 'line') {
+        const cx = ((shape.x1 + shape.x2) / 2) * NORM_W;
+        const cy = ((shape.y1 + shape.y2) / 2) * this._decorH;
+        const length = decorCmToUnits(Math.max(0.1, Number(d.lengthCm) || 0.1), this._cellCm, this._gridPitch);
+        const rad = (normalizeAngle(d.angle) * Math.PI) / 180;
+        const dx = Math.cos(rad) * length / 2, dy = Math.sin(rad) * length / 2;
+        const a = this._snap([cx - dx, cy - dy]);
+        const b = this._snap([cx + dx, cy + dy]);
+        const { width: _legacyWidth, ...rest } = shape;
+        return { ...rest, ...visual,
+          x1: clampCanvasN(a[0] / NORM_W), y1: clampCanvasN(a[1] / this._decorH),
+          x2: clampCanvasN(b[0] / NORM_W), y2: clampCanvasN(b[1] / this._decorH),
+        } as DecorShape;
+      }
+      if (shape.kind === 'rect' || shape.kind === 'ellipse' || shape.kind === 'furniture') {
+        const oldW = shape.w * NORM_W, oldH = shape.h * this._decorH;
+        const w = Math.max(this._gridPitch, snapToGrid(
+          decorCmToUnits(Number(d.sizeWCm), this._cellCm, this._gridPitch), this._gridPitch,
+        ));
+        const h = Math.max(this._gridPitch, snapToGrid(
+          decorCmToUnits(Number(d.sizeHCm), this._cellCm, this._gridPitch), this._gridPitch,
+        ));
+        const cx = shape.x * NORM_W + oldW / 2, cy = shape.y * this._decorH + oldH / 2;
+        const topLeft = this._snap([cx - w / 2, cy - h / 2]);
+        const { width: _legacyWidth, angle: _oldAngle, ...rest } = shape;
+        const angle = normalizeAngle(d.angle);
+        return { ...rest, ...visual,
+          x: clampCanvasN(topLeft[0] / NORM_W), y: clampCanvasN(topLeft[1] / this._decorH),
+          w: w / NORM_W, h: h / this._decorH,
+          ...(shape.kind === 'furniture' && d.symbol ? { symbol: d.symbol } : {}),
+          ...(angle ? { angle } : {}),
+        } as DecorShape;
+      }
+      return shape;
+    });
+    this._decorStyle = { ...style,
+      fill: d.kind === 'rect' || d.kind === 'ellipse' ? style.fill : this._decorStyle.fill,
+      fillColor: d.kind === 'rect' || d.kind === 'ellipse' ? style.fillColor : this._decorStyle.fillColor,
+      fillOpacity: d.kind === 'rect' || d.kind === 'ellipse' ? style.fillOpacity : this._decorStyle.fillOpacity,
     };
     this._decorShapeDialog = null;
+    this._recordGeometry(this._t('history.decor_edit'), before);
     this._saveConfig();
     this.requestUpdate();
   }
 
-  // ---- the text block: scale by a corner, rotate by its handle ----
-  // The mechanics are the backdrop frame's (docs/BACKDROP.md §2), reused
+  // ---- common decor transform controller ----
+  // The mechanics are the backdrop frame's (docs/BACKDROP.md), reused
   // rather than reinvented: chrome that never takes a pointer, finger-sized
   // handles that always do, the gesture written live into the config and
   // PERSISTED only if something actually moved. What differs is the pivot —
   // a label has an anchor (its x/y), not a box, so both gestures are about
   // that anchor and the text never walks away from the point it was placed at.
 
-  /**
-   * The selected BLOCK, when the select tool has one: a text label or a piece
-   * of furniture. Both wear the same frame — dashed box, four corner handles,
-   * one rotate handle — because they are the same question ("how big, which
-   * way round?") asked about two different things, and a third set of chrome
-   * would only be a third set of bugs (docs/FURNITURE.md §6).
-   */
-  private get _dtSel(): any | null {
+  /** The selected shape under Select. Every decor kind uses this controller. */
+  private get _dtSel(): DecorShape | null {
     if (this._mode !== 'decor' || this._decorTool !== 'select' || !this._decorSel) return null;
-    const sh = this._decorList.find((x) => x.id === this._decorSel);
-    return sh && (sh.kind === 'text' || sh.kind === 'furniture') ? sh : null;
+    return this._decorList.find((x) => x.id === this._decorSel) || null;
   }
 
   /**
-   * What the block turns about. A label has an ANCHOR (its x/y is the point it
-   * was placed at, and it must never walk away from it); a piece of furniture
-   * has a BOX, and turning a sofa about its top-left corner is not what anyone
-   * means by turning a sofa. So: the anchor for text, the centre for furniture.
+   * What the object turns about. A label has an ANCHOR (its x/y is the point it
+   * was placed at, and it must never walk away from it); boxes and lines use
+   * their geometric centres.
    */
-  private _dtPivot(sh: any): number[] {
-    if (sh.kind === 'furniture')
+  private _dtPivot(sh: DecorShape): number[] {
+    if (sh.kind === 'line') return [
+      ((sh.x1 + sh.x2) / 2) * NORM_W,
+      ((sh.y1 + sh.y2) / 2) * this._decorH,
+    ];
+    if (sh.kind === 'furniture' || sh.kind === 'rect' || sh.kind === 'ellipse')
       return [(sh.x + sh.w / 2) * NORM_W, (sh.y + sh.h / 2) * this._decorH];
     return [sh.x * NORM_W, sh.y * this._decorH];
   }
 
-  /** Write scale/angle into the shape — live, without saving. */
-  private _dtApply(id: string, patch: { scale?: number; angle?: number }): void {
+  /** Write physical text size/angle into the shape — live, without saving. */
+  private _dtApply(id: string, patch: { textSizeCm?: number; angle?: number }): void {
     const sp = this._curSpaceCfg;
     if (!sp) return;
     sp.decor = this._decorList.map((x) => {
       if (x.id !== id) return x;
-      // the first drag replaces the legacy font size with the scale it means,
-      // so a shape never states its size twice
-      const { size, ...rest } = x;
+      const rest: any = { ...x };
+      if (x.kind === 'text' && patch.textSizeCm !== undefined) {
+        delete rest.size;
+        delete rest.scale;
+      }
       const out: any = { ...rest };
-      if (patch.scale !== undefined) out.scale = Number(patch.scale.toFixed(4));
-      else if (x.scale === undefined && size !== undefined) out.scale = decorTextScale(x);
+      if (patch.textSizeCm !== undefined)
+        out.size_cm = Number(Math.max(0.1, Math.min(DECOR_TEXT_CM_MAX, patch.textSizeCm)).toFixed(4));
       if (patch.angle !== undefined) {
         if (patch.angle) out.angle = Number(patch.angle.toFixed(2));
         else delete out.angle; // straight again = the field goes away
@@ -4433,27 +4744,30 @@ class HouseplanCard extends LitElement {
     this.requestUpdate();
   }
 
-  private _dtStart(ev: PointerEvent, kind: 'scale' | 'rotate', corner?: number[]): void {
+  private _dtStart(
+    ev: PointerEvent, kind: 'scale' | 'rotate', corner?: number[], lineEnd?: 0 | 1,
+  ): void {
     const sh = this._dtSel;
     if (!sh) return;
     ev.stopPropagation();
     ev.preventDefault();
     const [ax, ay] = this._dtPivot(sh);
     const p = this._svgPoint(ev);
-    const furn = sh.kind === 'furniture';
+    const box = this._decorBoxOf(sh);
     this._dtDrag = {
       id: sh.id, kind, pid: ev.pointerId, ax, ay,
       r0: Math.hypot(p[0] - ax, p[1] - ay),
       a0: (Math.atan2(p[1] - ay, p[0] - ax) * 180) / Math.PI,
-      scale0: furn ? 1 : decorTextScale(sh), angle0: Number(sh.angle) || 0,
+      textSizeCm0: sh.kind === 'text' ? this._decorTextSizeCm(sh) : 1,
+      angle0: sh.kind === 'line' ? 0 : Number(sh.angle) || 0,
       // which corner is being pulled, and the box it started from: a piece of
       // furniture is resized about the OPPOSITE corner, so both have to be
       // remembered — a label, scaled about its anchor, needs neither
       sgx: corner?.[0], sgy: corner?.[1],
-      orig: furn ? {
-        x: sh.x * NORM_W, y: sh.y * this._decorH,
-        w: sh.w * NORM_W, h: sh.h * this._decorH, angle: Number(sh.angle) || 0,
-      } : undefined,
+      orig: box || undefined,
+      origShape: JSON.parse(JSON.stringify(sh)),
+      before: this._geometrySnapshot(),
+      lineEnd,
       moved: false,
     };
     capturePointer(ev);
@@ -4463,15 +4777,28 @@ class HouseplanCard extends LitElement {
     const d = this._dtDrag;
     if (!d) return;
     const p = this._svgPoint(ev);
+    if (d.lineEnd !== undefined && d.origShape.kind === 'line') {
+      const at = this._decorSnap(p, ev.pointerType, d.id);
+      const nx = clampCanvasN(at[0] / NORM_W), ny = clampCanvasN(at[1] / this._decorH);
+      const old = d.origShape;
+      const ox = d.lineEnd === 0 ? old.x1 : old.x2;
+      const oy = d.lineEnd === 0 ? old.y1 : old.y2;
+      if (Math.abs(nx - ox) > 1e-9 || Math.abs(ny - oy) > 1e-9) d.moved = true;
+      this._replaceDecor(d.id, d.lineEnd === 0 ? { x1: nx, y1: ny } : { x2: nx, y2: ny });
+      return;
+    }
     if (d.kind === 'scale' && d.orig) {
-      // furniture: the two axes are INDEPENDENT (docs/FURNITURE.md §6). Each
-      // dimension lands on a whole cell, which puts the dragged corner on a
-      // node — that is what "snap" has to mean when both sides move.
-      const step = this._gridPitch;
-      const min = step;
-      const box = furnitureResize(d.orig, d.sgx ?? 1, d.sgy ?? 1, p[0], p[1], step, min);
-      if (Math.abs(box.w - d.orig.w) > 1e-6 || Math.abs(box.h - d.orig.h) > 1e-6) d.moved = true;
-      this._furnApplyBox(d.id, box);
+      // Box geometry preserves ratio by default and separates axes with Shift.
+      // Each dimension lands on a whole cell.
+      const box = resizeDecorBox(
+        d.orig, d.sgx ?? 1, d.sgy ?? 1, p[0], p[1],
+        !ev.shiftKey, this._gridPitch, this._gridPitch,
+      );
+      const changed = Math.abs(box.x - d.orig.x) > 1e-6 || Math.abs(box.y - d.orig.y) > 1e-6
+        || Math.abs(box.w - d.orig.w) > 1e-6 || Math.abs(box.h - d.orig.h) > 1e-6;
+      if (!changed && !d.moved) return;
+      d.moved ||= changed;
+      this._decorApplyBox(d.id, box);
       return;
     }
     if (d.kind === 'scale') {
@@ -4479,9 +4806,11 @@ class HouseplanCard extends LitElement {
       // under the block's own rotation, so a rotated block scales the same way
       const r = Math.hypot(p[0] - d.ax, p[1] - d.ay);
       if (d.r0 < 1e-6) return;
-      const k = Math.min(DECOR_TEXT_SCALE_MAX, Math.max(DECOR_TEXT_SCALE_MIN, d.scale0 * (r / d.r0)));
-      if (Math.abs(k - d.scale0) > 1e-6) d.moved = true;
-      this._dtApply(d.id, { scale: k });
+      const sizeCm = Math.max(0.1, Math.min(DECOR_TEXT_CM_MAX, d.textSizeCm0 * (r / d.r0)));
+      const changed = Math.abs(sizeCm - d.textSizeCm0) > 1e-6;
+      if (!changed && !d.moved) return;
+      d.moved ||= changed;
+      this._dtApply(d.id, { textSizeCm: sizeCm });
       return;
     }
     const a = (Math.atan2(p[1] - d.ay, p[0] - d.ax) * 180) / Math.PI;
@@ -4490,14 +4819,19 @@ class HouseplanCard extends LitElement {
     if (!ev.shiftKey) ang = Math.round(ang / DT_ANGLE_STEP) * DT_ANGLE_STEP;
     ang = ((ang % 360) + 360) % 360;
     if (ang > 180) ang -= 360;
-    if (Math.abs(ang - d.angle0) > 1e-6) d.moved = true;
+    const changed = Math.abs(ang - d.angle0) > 1e-6;
+    if (!changed && !d.moved) return;
+    d.moved ||= changed;
     this._dtApply(d.id, { angle: ang });
   }
 
   private _dtUp(): void {
     const d = this._dtDrag;
     this._dtDrag = null;
-    if (d?.moved) this._saveConfig();
+    if (d?.moved) {
+      this._recordGeometry(this._t('history.decor_transform'), d.before);
+      this._saveConfig();
+    }
     this.requestUpdate();
   }
 
@@ -4515,7 +4849,12 @@ class HouseplanCard extends LitElement {
       return;
     }
     let box: { id: string; x: number; y: number; w: number; h: number };
-    if (sh.kind === 'furniture') {
+    if (sh.kind === 'line') {
+      const x1 = sh.x1 * NORM_W, y1 = sh.y1 * this._decorH;
+      const x2 = sh.x2 * NORM_W, y2 = sh.y2 * this._decorH;
+      box = { id: sh.id, x: Math.min(x1, x2), y: Math.min(y1, y2),
+        w: Math.abs(x2 - x1), h: Math.abs(y2 - y1) };
+    } else if (sh.kind === 'furniture' || sh.kind === 'rect' || sh.kind === 'ellipse') {
       // …and furniture needs no measuring at all: its box IS the config. The
       // frame therefore appears in the SAME frame as the selection, not one
       // after it, and a resize can never be a render behind the shape.
@@ -4540,9 +4879,11 @@ class HouseplanCard extends LitElement {
 
   private _decorDeleteSel(): void {
     if (!this._decorSel) return;
+    const before = this._geometrySnapshot();
     const sp = this._curSpaceCfg;
     sp.decor = this._decorList.filter((x) => x.id !== this._decorSel);
     this._decorSel = null;
+    this._recordGeometry(this._t('history.decor_delete'), before);
     this._saveConfig();
     this.requestUpdate();
   }
@@ -4593,17 +4934,18 @@ class HouseplanCard extends LitElement {
    * A wall within reach claims it immediately, with its angle, so the common
    * case (put the bed against that wall) is one click and no dragging.
    */
-  private _furnPlace(raw: number[]): void {
+  private _furnPlace(raw: number[], free = false): void {
     const pal = this._furnPalette;
     const sp = this._curSpaceCfg;
     if (!pal || !sp) return;
     const W = NORM_W, H = this._decorH;
     const wN = clampFurnSize(cmToNorm(pal.w, this._cellCm, this._gridPitch, W));
     const hN = clampFurnSize(cmToNorm(pal.h, this._cellCm, this._gridPitch, W));
-    const c = this._snap(raw);
+    const before = this._geometrySnapshot();
+    const c = this._decorSnap(raw);
     let cx = c[0], cy = c[1];
     let angle = 0;
-    const snap = snapFurnitureToWall(cx, cy, hN * H, this._furnWalls,
+    const snap = free ? null : snapFurnitureToWall(cx, cy, hN * H, this._furnWalls,
       this._furnWallReach, this._gridPitch);
     if (snap) { cx = snap.cx; cy = snap.cy; angle = snap.angle; }
     const id = 'df' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
@@ -4611,7 +4953,7 @@ class HouseplanCard extends LitElement {
       id, kind: 'furniture', symbol: pal.symbol,
       x: clampCanvasN(cx / W - wN / 2), y: clampCanvasN(cy / H - hN / 2),
       w: wN, h: hN,
-      color: this._decorStyle.color, width: this._decorStyle.width,
+      ...decorStylePatch(this._decorStyle, false),
     };
     // a straight piece stores no angle at all, exactly as a straight label
     // stores none (docs/LIVE-TEXT.md §3)
@@ -4621,6 +4963,7 @@ class HouseplanCard extends LitElement {
     // …and the editor goes back to the tool that can move what was just placed
     this._decorTool = 'select';
     this._furnPalette = null;
+    this._recordGeometry(this._t('history.decor_add'), before);
     this._saveConfig();
     this.requestUpdate();
   }
@@ -4634,7 +4977,8 @@ class HouseplanCard extends LitElement {
    */
   private _furnMoveUpdate(ev: PointerEvent): void {
     const m = this._decorMove!;
-    const o = m.orig;
+    if (m.orig.kind !== 'furniture') return;
+    const o: any = m.orig;
     const sp = this._curSpaceCfg;
     if (!sp) return;
     const W = NORM_W, H = this._decorH;
@@ -4643,14 +4987,16 @@ class HouseplanCard extends LitElement {
     const rawCy = (o.y + o.h / 2) * H + (p[1] - m.start[1]);
     let x: number, y: number;
     let angle = Number(o.angle) || 0;
-    const snap = snapFurnitureToWall(
+    const snap = ev.shiftKey ? null : snapFurnitureToWall(
       rawCx, rawCy, o.h * H, this._furnWalls, this._furnWallReach, this._gridPitch);
     if (snap) {
       x = snap.cx / W - o.w / 2;
       y = snap.cy / H - o.h / 2;
       angle = snap.angle;
     } else {
-      const a = this._snap([rawCx - (o.w / 2) * W, rawCy - (o.h / 2) * H]);
+      const a = this._decorSnap(
+        [rawCx - (o.w / 2) * W, rawCy - (o.h / 2) * H], ev.pointerType, m.id,
+      );
       x = a[0] / W;
       y = a[1] / H;
     }
@@ -4668,14 +5014,16 @@ class HouseplanCard extends LitElement {
   }
 
   /** Write a resized box into the shape — live, without saving. */
-  private _furnApplyBox(id: string, box: { x: number; y: number; w: number; h: number }): void {
+  private _decorApplyBox(id: string, box: { x: number; y: number; w: number; h: number }): void {
     const sp = this._curSpaceCfg;
     if (!sp) return;
     const W = NORM_W, H = this._decorH;
+    const topLeft = this._snap([box.x, box.y]);
     sp.decor = this._decorList.map((s) => (s.id === id ? {
       ...s,
-      x: clampCanvasN(box.x / W), y: clampCanvasN(box.y / H),
-      w: clampFurnSize(box.w / W), h: clampFurnSize(box.h / H),
+      x: clampCanvasN(topLeft[0] / W), y: clampCanvasN(topLeft[1] / H),
+      w: Math.max(this._gridPitch / W, Math.min(CANVAS_LIMIT * 2, box.w / W)),
+      h: Math.max(this._gridPitch / H, Math.min(CANVAS_LIMIT * 2, box.h / H)),
     } : s));
     this._cfgEpoch++;
     this.requestUpdate();
@@ -4774,31 +5122,70 @@ class HouseplanCard extends LitElement {
   }
 
   /** Where the backdrop image sits right now, render units (null: no image). */
-  private get _bdRect(): Rect | null {
+  private get _bdRect(): (Rect & { angle?: number }) | null {
     const sp = this._curSpaceCfg;
     return sp?.plan_url ? planRect(sp, NORM_W) : null;
   }
 
   /** The stored transform of the current space (defaults = the old behaviour). */
-  private get _bdParams(): { dx: number; dy: number; k: number } {
+  private get _bdParams(): { dx: number; dy: number; sx: number; sy: number; angle: number } {
     const sp = this._curSpaceCfg;
-    const dx = Number(sp?.plan_x), dy = Number(sp?.plan_y), k = Number(sp?.plan_scale);
+    const dx = Number(sp?.plan_x), dy = Number(sp?.plan_y);
+    const legacy = Number(sp?.plan_scale);
+    const sxRaw = Number(sp?.plan_scale_x), syRaw = Number(sp?.plan_scale_y);
+    const baseScale = Number.isFinite(legacy) && legacy > 0 ? legacy : 1;
     return {
       dx: Number.isFinite(dx) ? dx : 0,
       dy: Number.isFinite(dy) ? dy : 0,
-      k: Number.isFinite(k) && k > 0 ? k : 1,
+      sx: Number.isFinite(sxRaw) && sxRaw > 0 ? sxRaw : baseScale,
+      sy: Number.isFinite(syRaw) && syRaw > 0 ? syRaw : baseScale,
+      angle: normalizeAngle(sp?.plan_angle),
     };
   }
 
+  private _openBackdropDialog(ev?: Event): void {
+    if (!this._bdMovable || !this._bdRect) return;
+    ev?.preventDefault();
+    ev?.stopPropagation();
+    this._bdDrag = null;
+    const r = this._bdRect;
+    this._backdropDialog = {
+      widthCm: decorUnitsToCm(r.w, this._cellCm, this._gridPitch),
+      heightCm: decorUnitsToCm(r.h, this._cellCm, this._gridPitch),
+      angle: normalizeAngle(r.angle),
+    };
+  }
+
+  private _saveBackdropDialog(): void {
+    const d = this._backdropDialog;
+    const base = this._bdBase, current = this._bdRect;
+    if (!d || !base || !current) return;
+    const before = this._geometrySnapshot();
+    const w = Math.min(base.w * PLAN_SCALE_MAX, Math.max(
+      base.w * PLAN_SCALE_MIN, snapToGrid(
+        decorCmToUnits(d.widthCm, this._cellCm, this._gridPitch), this._gridPitch,
+      ),
+    ));
+    const h = Math.min(base.h * PLAN_SCALE_MAX, Math.max(
+      base.h * PLAN_SCALE_MIN, snapToGrid(
+        decorCmToUnits(d.heightCm, this._cellCm, this._gridPitch), this._gridPitch,
+      ),
+    ));
+    const cx = current.x + current.w / 2, cy = current.y + current.h / 2;
+    const topLeft = this._snap([cx - w / 2, cy - h / 2]);
+    this._bdApply((topLeft[0] - base.x) / NORM_W, (topLeft[1] - base.y) / NORM_W,
+      w / base.w, h / base.h, d.angle);
+    this._backdropDialog = null;
+    this._recordGeometry(this._t('history.backdrop_transform'), before);
+    this._saveConfig();
+  }
+
   /**
-   * Is the transform frame on screen? Only in the BACKDROP editor, and only
-   * under the two tools that are not busy drawing something — the frame's
-   * handles must never swallow the first point of a line. Every other mode
-   * (view, plan, devices, kiosk) leaves the picture alone entirely.
+   * The transform frame belongs exclusively to the backdrop tool. It is never
+   * active in Select and can never swallow a decor gesture.
    */
   private get _bdActive(): boolean {
-    return this._mode === 'decor' && !!this._bdRect
-      && (this._decorTool === 'select' || this._decorTool === 'backdrop');
+    return this._mode === 'decor' && !!this._bdRect && this._decorTool === 'backdrop';
   }
 
   /**
@@ -4816,14 +5203,19 @@ class HouseplanCard extends LitElement {
   }
 
   /** Write a transform into the space config — live, without saving. */
-  private _bdApply(dx: number, dy: number, k: number): void {
+  private _bdApply(dx: number, dy: number, sx: number, sy: number, angle: number): void {
     const sp = this._curSpaceCfg;
     if (!sp) return;
     // 6 decimals: the same precision the rest of the normalised config keeps,
     // and enough for a 1000-unit canvas to be exact to a thousandth of a pixel
     sp.plan_x = Number(clampCanvasN(dx).toFixed(6));
     sp.plan_y = Number(clampCanvasN(dy).toFixed(6));
-    sp.plan_scale = Number(Math.min(PLAN_SCALE_MAX, Math.max(PLAN_SCALE_MIN, k)).toFixed(6));
+    delete sp.plan_scale;
+    sp.plan_scale_x = Number(Math.min(PLAN_SCALE_MAX, Math.max(PLAN_SCALE_MIN, sx)).toFixed(6));
+    sp.plan_scale_y = Number(Math.min(PLAN_SCALE_MAX, Math.max(PLAN_SCALE_MIN, sy)).toFixed(6));
+    const a = normalizeAngle(angle);
+    if (a) sp.plan_angle = Number(a.toFixed(2));
+    else delete sp.plan_angle;
     this._cfgEpoch++;
     this.requestUpdate();
   }
@@ -4833,7 +5225,7 @@ class HouseplanCard extends LitElement {
    * signs (-1 = the low side of the axis, +1 = the high one); absent = the
    * body, i.e. a move. Returns false when there is nothing to grab.
    */
-  private _bdStart(ev: PointerEvent, corner?: number[]): boolean {
+  private _bdStart(ev: PointerEvent, corner?: number[], rotate = false): boolean {
     const base = this._bdBase, r = this._bdRect;
     if (!base || !r) return false;
     const p = this._svgPoint(ev);
@@ -4843,11 +5235,13 @@ class HouseplanCard extends LitElement {
     const fx = sgx > 0 ? r.x : r.x + r.w;
     const fy = sgy > 0 ? r.y : r.y + r.h;
     this._bdDrag = {
-      kind: corner ? 'scale' : 'move',
+      kind: rotate ? 'rotate' : corner ? 'scale' : 'move',
       pid: ev.pointerId,
       sx: p[0], sy: p[1],
       base, p0: this._bdParams,
       fx, fy, sgx, sgy,
+      rect0: { x: r.x, y: r.y, w: r.w, h: r.h, angle: r.angle },
+      before: this._geometrySnapshot(),
       moved: false,
     };
     capturePointer(ev);
@@ -4861,11 +5255,8 @@ class HouseplanCard extends LitElement {
    * drag is enough to put a legacy off-grid picture on the lattice
    * (docs/CANVAS.md §9.3, the same rule decor already follows).
    *
-   * SCALE — uniform about the fixed corner. The dragged corner is snapped
-   * along the picture's LONGER side and the scale is read back off it, so the
-   * fixed corner keeps its (on-grid) place and the picture's long side lands
-   * on a node. The short side follows from the aspect ratio and generally does
-   * not, which is what "uniform, no rotation, no stretch" costs.
+   * SCALE — proportional about the fixed corner by default; Shift allows the
+   * two axes to diverge. ROTATE — 5° by default, free with Shift.
    *
    * Positional snapping is mandatory (UX-05).
    */
@@ -4875,42 +5266,57 @@ class HouseplanCard extends LitElement {
     const p = this._svgPoint(ev);
     const b = d.base;
     if (d.kind === 'move') {
-      const x0 = b.x + d.p0.dx * NORM_W;
-      const y0 = b.y + d.p0.dy * NORM_W;
+      const x0 = d.rect0.x, y0 = d.rect0.y;
       const at = this._snap([x0 + (p[0] - d.sx), y0 + (p[1] - d.sy)]);
-      if (Math.abs(at[0] - x0) > 1e-9 || Math.abs(at[1] - y0) > 1e-9) d.moved = true;
-      this._bdApply((at[0] - b.x) / NORM_W, (at[1] - b.y) / NORM_W, d.p0.k);
+      const changed = Math.abs(at[0] - x0) > 1e-9 || Math.abs(at[1] - y0) > 1e-9;
+      if (!changed && !d.moved) return;
+      d.moved ||= changed;
+      this._bdApply((at[0] - b.x) / NORM_W, (at[1] - b.y) / NORM_W,
+        d.p0.sx, d.p0.sy, d.p0.angle);
       return;
     }
-    const w0 = b.w || 1, h0 = b.h || 1;
-    let k = Math.max(Math.abs(p[0] - d.fx) / w0, Math.abs(p[1] - d.fy) / h0);
-    // snap the dragged corner along the dominant axis, then read k back
-    const alongX = w0 >= h0;
-    const raw = alongX ? d.fx + d.sgx * k * w0 : d.fy + d.sgy * k * h0;
-    const snapped = snapToGrid(raw, this._gridPitch);
-    const span = Math.abs(snapped - (alongX ? d.fx : d.fy));
-    const kk = span / (alongX ? w0 : h0);
-    if (kk > 0) k = kk;
-    k = Math.min(PLAN_SCALE_MAX, Math.max(PLAN_SCALE_MIN, k));
-    if (Math.abs(k - d.p0.k) > 1e-9) d.moved = true;
-    const x = d.sgx > 0 ? d.fx : d.fx - k * w0;
-    const y = d.sgy > 0 ? d.fy : d.fy - k * h0;
-    this._bdApply((x - b.x) / NORM_W, (y - b.y) / NORM_W, k);
+    if (d.kind === 'rotate') {
+      const cx = d.rect0.x + d.rect0.w / 2, cy = d.rect0.y + d.rect0.h / 2;
+      const a0 = Math.atan2(d.sy - cy, d.sx - cx) * 180 / Math.PI;
+      let angle = d.p0.angle + (Math.atan2(p[1] - cy, p[0] - cx) * 180 / Math.PI - a0);
+      if (!ev.shiftKey) angle = Math.round(angle / DT_ANGLE_STEP) * DT_ANGLE_STEP;
+      angle = normalizeAngle(angle);
+      const changed = Math.abs(angle - d.p0.angle) > 1e-9;
+      if (!changed && !d.moved) return;
+      d.moved ||= changed;
+      this._bdApply(d.p0.dx, d.p0.dy, d.p0.sx, d.p0.sy, angle);
+      return;
+    }
+    const box = resizeDecorBox(
+      d.rect0, d.sgx, d.sgy, p[0], p[1], !ev.shiftKey,
+      this._gridPitch, Math.min(b.w, b.h) * PLAN_SCALE_MIN,
+    );
+    const sx = box.w / Math.max(1e-9, b.w), sy = box.h / Math.max(1e-9, b.h);
+    const changed = Math.abs(sx - d.p0.sx) > 1e-9 || Math.abs(sy - d.p0.sy) > 1e-9
+      || Math.abs(box.x - d.rect0.x) > 1e-9 || Math.abs(box.y - d.rect0.y) > 1e-9;
+    if (!changed && !d.moved) return;
+    d.moved ||= changed;
+    const topLeft = this._snap([box.x, box.y]);
+    this._bdApply((topLeft[0] - b.x) / NORM_W, (topLeft[1] - b.y) / NORM_W,
+      sx, sy, d.p0.angle);
   }
 
   /** Has this space's picture been moved or scaled at all? */
   private get _bdMoved(): boolean {
     if (this._mode !== 'decor' || !this._bdRect) return false;
     const p = this._bdParams;
-    return p.dx !== 0 || p.dy !== 0 || p.k !== 1;
+    return p.dx !== 0 || p.dy !== 0 || p.sx !== 1 || p.sy !== 1 || p.angle !== 0;
   }
 
   /** Put the picture back where an untouched plan has it: centred, own size. */
   private _bdReset(): void {
     const sp = this._curSpaceCfg;
     if (!sp) return;
+    const before = this._geometrySnapshot();
     delete sp.plan_x; delete sp.plan_y; delete sp.plan_scale;
+    delete sp.plan_scale_x; delete sp.plan_scale_y; delete sp.plan_angle;
     this._bdDrag = null;
+    this._recordGeometry(this._t('history.backdrop_transform'), before);
     this._saveConfig();
     this._showToast(this._t('decor.backdrop_reset_done'));
     this.requestUpdate();
@@ -4920,7 +5326,10 @@ class HouseplanCard extends LitElement {
   private _bdUp(): void {
     const d = this._bdDrag;
     this._bdDrag = null;
-    if (d?.moved) this._saveConfig();
+    if (d?.moved) {
+      this._recordGeometry(this._t('history.backdrop_transform'), d.before);
+      this._saveConfig();
+    }
     this.requestUpdate();
   }
 
@@ -4955,11 +5364,20 @@ class HouseplanCard extends LitElement {
     // unchanged; only the ink shrank.
     const hr = Math.max(view.w, view.h) * 0.02;
     const kr = hr / 4;
+    const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+    const angle = normalizeAngle(r.angle);
+    const arm = hr * 2.2;
     const corners: [number, number, string][] = [
       [-1, -1, 'nwse'], [1, -1, 'nesw'], [1, 1, 'nwse'], [-1, 1, 'nesw'],
     ];
-    return svg`<g class="bdframe">
+    return svg`<g class="bdframe" transform=${angle ? `rotate(${angle} ${cx} ${cy})` : nothing}>
       <rect class="bdbox" x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}"></rect>
+      <line class="dtstem" x1="${cx}" y1="${r.y}" x2="${cx}" y2="${r.y - arm}"></line>
+      <circle class="bdhandle dtrot" cx="${cx}" cy="${r.y - arm}" r="${hr.toFixed(1)}"
+        @pointerdown=${(e: PointerEvent) => {
+          e.stopPropagation(); e.preventDefault(); this._bdStart(e, undefined, true);
+        }}></circle>
+      <circle class="bdknob" cx="${cx}" cy="${r.y - arm}" r="${kr.toFixed(2)}"></circle>
       ${corners.map(([sx, sy, cur]) => {
         const cx = sx < 0 ? r.x : r.x + r.w;
         const cy = sy < 0 ? r.y : r.y + r.h;
@@ -4974,8 +5392,8 @@ class HouseplanCard extends LitElement {
   }
 
   /**
-   * The selected text block's frame: a dashed outline, four corner handles
-   * that scale it uniformly and one handle above it that turns it. Same
+   * The common selected-object frame: line endpoints, or a dashed outline,
+   * four corner handles and one rotation handle. Same
    * mechanics and same handle size as the backdrop frame (docs/BACKDROP.md
    * §2) — finger-sized in SCREEN terms, so it stays grabbable at any zoom —
    * and it rides the block's own rotation, so the corners stay at the corners.
@@ -4992,6 +5410,16 @@ class HouseplanCard extends LitElement {
     // handles use (.rszhandle + .rszicon, docs/RESIZE.md).
     const hr = Math.max(view.w, view.h) * 0.018;
     const kr = hr / 4;
+    if (sh.kind === 'line') {
+      const a = [sh.x1 * NORM_W, sh.y1 * this._decorH];
+      const c = [sh.x2 * NORM_W, sh.y2 * this._decorH];
+      return svg`<g class="dtframe dtlineframe">
+        <line class="dtbox" x1="${a[0]}" y1="${a[1]}" x2="${c[0]}" y2="${c[1]}"></line>
+        ${[a, c].map((p, i) => svg`<circle class="dthandle dtendpoint" cx="${p[0]}" cy="${p[1]}"
+          r="${hr.toFixed(1)}" @pointerdown=${(e: PointerEvent) => this._dtStart(e, 'scale', undefined, i as 0 | 1)}></circle>
+          <circle class="dtknob" cx="${p[0]}" cy="${p[1]}" r="${kr.toFixed(2)}"></circle>`)}
+      </g>` as unknown as TemplateResult;
+    }
     const [ax, ay] = this._dtPivot(sh);
     const ang = Number(sh.angle) || 0;
     const corners: [number, number, string][] = [
@@ -5016,6 +5444,8 @@ class HouseplanCard extends LitElement {
     const editing = this._mode === 'decor';
     const shapes = this._decorList.map((sh) => {
       const cls = 'dshape' + (editing && this._decorSel === sh.id ? ' dsel' : '');
+      const style = this._decorResolvedStyle(sh);
+      const strokeWidth = this._decorWidthUnits(sh);
       const down = (e: PointerEvent) => this._decorShapeDown(e, sh);
       const dbl = (e: MouseEvent) => this._decorShapeDbl(e, sh);
       // docs/STYLING-HOOKS.md §3: every shape carries its kind and its id
@@ -5024,20 +5454,28 @@ class HouseplanCard extends LitElement {
         // lines meeting at an angle join without the notch (owner's screenshot)
         return svg`<line class="${cls}" data-hp="decor" data-id="${sh.id}" data-kind="${sh.kind}"
           x1="${sh.x1 * W}" y1="${sh.y1 * H}" x2="${sh.x2 * W}" y2="${sh.y2 * H}"
-          stroke="${sh.color}" stroke-width="${sh.width}" stroke-linecap="round" stroke-linejoin="round"
+          stroke="${style.color}" stroke-opacity="${style.opacity}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"
           @pointerdown=${down} @dblclick=${dbl}></line>`;
-      if (sh.kind === 'rect')
+      if (sh.kind === 'rect') {
+        const cx = (sh.x + sh.w / 2) * W, cy = (sh.y + sh.h / 2) * H;
+        const ang = normalizeAngle(sh.angle);
         return svg`<rect class="${cls}" data-hp="decor" data-id="${sh.id}" data-kind="${sh.kind}"
           x="${sh.x * W}" y="${sh.y * H}" width="${sh.w * W}" height="${sh.h * H}"
-          stroke="${sh.color}" stroke-width="${sh.width}"
-          fill="${sh.fill ? sh.color : 'none'}" fill-opacity="${sh.fill ? 0.25 : 0}"
+          stroke="${style.color}" stroke-opacity="${style.opacity}" stroke-width="${strokeWidth}"
+          fill="${style.fill ? style.fillColor : 'none'}" fill-opacity="${style.fill ? style.fillOpacity : 0}"
+          transform=${ang ? `rotate(${ang} ${cx} ${cy})` : nothing}
           @pointerdown=${down} @dblclick=${dbl}></rect>`;
-      if (sh.kind === 'ellipse')
+      }
+      if (sh.kind === 'ellipse') {
+        const cx = (sh.x + sh.w / 2) * W, cy = (sh.y + sh.h / 2) * H;
+        const ang = normalizeAngle(sh.angle);
         return svg`<ellipse class="${cls}" data-hp="decor" data-id="${sh.id}" data-kind="${sh.kind}"
-          cx="${(sh.x + sh.w / 2) * W}" cy="${(sh.y + sh.h / 2) * H}"
-          rx="${(sh.w / 2) * W}" ry="${(sh.h / 2) * H}" stroke="${sh.color}" stroke-width="${sh.width}"
-          fill="${sh.fill ? sh.color : 'none'}" fill-opacity="${sh.fill ? 0.25 : 0}"
+          cx="${cx}" cy="${cy}"
+          rx="${(sh.w / 2) * W}" ry="${(sh.h / 2) * H}" stroke="${style.color}" stroke-opacity="${style.opacity}" stroke-width="${strokeWidth}"
+          fill="${style.fill ? style.fillColor : 'none'}" fill-opacity="${style.fill ? style.fillOpacity : 0}"
+          transform=${ang ? `rotate(${ang} ${cx} ${cy})` : nothing}
           @pointerdown=${down} @dblclick=${dbl}></ellipse>`;
+      }
       if (sh.kind === 'furniture') {
         // One path per piece, generated at the shape's REAL size, so the
         // stroke is an ordinary stroke-width in render units like every other
@@ -5052,7 +5490,7 @@ class HouseplanCard extends LitElement {
         const tr = `${ang ? `rotate(${ang} ${cx} ${cy}) ` : ''}translate(${sh.x * W} ${sh.y * H})`;
         return svg`<path class="${cls} dfurn" data-hp="decor" data-id="${sh.id}"
           data-kind="${sh.kind}" data-symbol="${sh.symbol}" d="${d}" transform=${tr}
-          stroke="${sh.color}" stroke-width="${sh.width}" fill="none"
+          stroke="${style.color}" stroke-opacity="${style.opacity}" stroke-width="${strokeWidth}" fill="none"
           stroke-linecap="round" stroke-linejoin="round"
           @pointerdown=${down} @dblclick=${dbl}></path>`;
       }
@@ -5061,8 +5499,10 @@ class HouseplanCard extends LitElement {
         // `hass` the rest of the card reads, no polling of its own. Without an
         // entity `liveText` gives the stored text back byte-for-byte, so a
         // plain label is the plain label it always was (docs/LIVE-TEXT.md).
-        const fs = DECOR_TEXT_BASE * decorTextScale(sh);
-        const lines = decorTextLines(liveText(sh.text, sh, this.hass));
+        const fs = this._decorTextUnits(sh);
+        const lines = decorTextLines(liveText(
+          sh.text, sh, this.hass, (eid) => this._planEntityAvailable(eid),
+        ));
         const ax = sh.x * W, ay = sh.y * H;
         const ang = Number(sh.angle) || 0;
         // the block is centred on its anchor, horizontally (the layer's
@@ -5070,7 +5510,7 @@ class HouseplanCard extends LitElement {
         // label in both directions instead of pushing the first one up
         const y0 = ay - ((lines.length - 1) * fs * DT_LINE) / 2;
         return svg`<text class="${cls} dtext" data-hp="decor" data-id="${sh.id}" data-kind="${sh.kind}"
-          x="${ax}" y="${ay}" fill="${sh.color}"
+          x="${ax}" y="${ay}" fill="${style.color}" fill-opacity="${style.opacity}"
           font-size="${fs}" transform=${ang ? `rotate(${ang} ${ax} ${ay})` : nothing}
           @pointerdown=${down} @dblclick=${dbl}>${lines.map(
             (ln, i) => svg`<tspan x="${ax}" y="${y0 + i * fs * DT_LINE}">${ln}</tspan>`,
@@ -5083,17 +5523,18 @@ class HouseplanCard extends LitElement {
     const d = this._decorDraft;
     if (d) {
       const st = this._decorStyle;
+      const sw = decorCmToUnits(st.widthCm, this._cellCm, this._gridPitch);
       if (d.kind === 'line')
         draft = svg`<line class="ddraft" x1="${d.a[0]}" y1="${d.a[1]}" x2="${d.b[0]}" y2="${d.b[1]}"
-          stroke="${st.color}" stroke-width="${st.width}" stroke-linecap="round" stroke-linejoin="round"></line>`;
+          stroke="${st.color}" stroke-opacity="${st.opacity}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round"></line>`;
       else {
         const x = Math.min(d.a[0], d.b[0]), y = Math.min(d.a[1], d.b[1]);
         const w = Math.abs(d.b[0] - d.a[0]), h = Math.abs(d.b[1] - d.a[1]);
         draft = d.kind === 'rect'
           ? svg`<rect class="ddraft" x="${x}" y="${y}" width="${w}" height="${h}" stroke="${st.color}"
-              stroke-width="${st.width}" fill="${st.fill ? st.color : 'none'}" fill-opacity="${st.fill ? 0.15 : 0}"></rect>`
+              stroke-opacity="${st.opacity}" stroke-width="${sw}" fill="${st.fill ? st.fillColor : 'none'}" fill-opacity="${st.fill ? st.fillOpacity : 0}"></rect>`
           : svg`<ellipse class="ddraft" cx="${x + w / 2}" cy="${y + h / 2}" rx="${w / 2}" ry="${h / 2}"
-              stroke="${st.color}" stroke-width="${st.width}" fill="${st.fill ? st.color : 'none'}" fill-opacity="${st.fill ? 0.15 : 0}"></ellipse>`;
+              stroke="${st.color}" stroke-opacity="${st.opacity}" stroke-width="${sw}" fill="${st.fill ? st.fillColor : 'none'}" fill-opacity="${st.fill ? st.fillOpacity : 0}"></ellipse>`;
       }
     }
     return svg`<g class="decorlayer">${shapes}${draft}</g>` as unknown as TemplateResult;
@@ -5113,6 +5554,11 @@ class HouseplanCard extends LitElement {
       ['furniture', 'mdi:sofa-outline', 'decor.furniture'],
       ['erase', 'mdi:eraser', 'decor.erase'],
     ] as const;
+    const selected = this._decorSel ? this._decorList.find((shape) => shape.id === this._decorSel) : null;
+    const canFill = this._decorTool === 'rect' || this._decorTool === 'ellipse'
+      || selected?.kind === 'rect' || selected?.kind === 'ellipse';
+    const undoName = this._geometryHistory.undoName;
+    const redoName = this._geometryHistory.redoName;
     return html`<div class="editbar decorbar">
       <ha-icon icon="mdi:draw" class="warn"></ha-icon>
       ${tools.map(
@@ -5128,18 +5574,33 @@ class HouseplanCard extends LitElement {
           <ha-icon icon=${ic}></ha-icon><span class="ml">${this._t(k)}</span>
         </button>`,
       )}
-      <input type="color" class="dcolor" .value=${this._decorStyle.color}
-        title=${this._t('decor.color')}
-        @input=${(e: Event) => (this._decorStyle = { ...this._decorStyle, color: (e.target as HTMLInputElement).value })} />
-      <select class="dwidth" title=${this._t('decor.width')}
-        @change=${(e: Event) => (this._decorStyle = { ...this._decorStyle, width: Number((e.target as HTMLSelectElement).value) })}>
-        ${[[1.5, 'decor.w_thin'], [3, 'decor.w_mid'], [6, 'decor.w_thick']].map(
-          ([v, k]) => html`<option value=${v} ?selected=${this._decorStyle.width === v}>${this._t(k as any)}</option>`,
-        )}
-      </select>
-      <label class="dfill"><input type="checkbox" .checked=${this._decorStyle.fill}
-        @change=${(e: Event) => (this._decorStyle = { ...this._decorStyle, fill: (e.target as HTMLInputElement).checked })} />
-        ${this._t('decor.fill')}</label>
+      <hp-color-opacity .label=${this._t('decor.color')} .color=${this._decorStyle.color}
+        .opacity=${this._decorStyle.opacity}
+        @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
+          (this._decorStyle = { ...this._decorStyle, ...e.detail })}></hp-color-opacity>
+      <label class="drawwall">${this._t('decor.width')}
+        <input type="number" min="0.1" max="100" step="0.1"
+          .value=${String(this._decorSmallField(this._decorStyle.widthCm))}
+          @input=${(e: Event) => (this._decorStyle = { ...this._decorStyle,
+            widthCm: this._decorSmallCm(Number((e.target as HTMLInputElement).value)) })} />
+        <span class="opl">${this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span>
+      </label>
+      ${canFill ? html`<label class="dfill"><input type="checkbox" .checked=${this._decorStyle.fill}
+          @change=${(e: Event) => (this._decorStyle = { ...this._decorStyle, fill: (e.target as HTMLInputElement).checked })} />
+          ${this._t('decor.fill')}</label>
+        <hp-color-opacity .label=${this._t('decor.fill_color')} .color=${this._decorStyle.fillColor}
+          .opacity=${this._decorStyle.fillOpacity} .disabled=${!this._decorStyle.fill}
+          @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
+            (this._decorStyle = { ...this._decorStyle,
+              fillColor: e.detail.color, fillOpacity: e.detail.opacity })}></hp-color-opacity>` : nothing}
+      <button class="btn ghost" @click=${this._undoGeometry} ?disabled=${!undoName}
+        title=${undoName ? this._t('history.undo_named', { name: undoName }) : this._t('history.undo_empty')}>
+        <ha-icon icon="mdi:undo-variant"></ha-icon>${this._t('history.undo')}
+      </button>
+      <button class="btn ghost" @click=${this._redoGeometry} ?disabled=${!redoName}
+        title=${redoName ? this._t('history.redo_named', { name: redoName }) : this._t('history.redo_empty')}>
+        <ha-icon icon="mdi:redo-variant"></ha-icon>${this._t('history.redo')}
+      </button>
       ${''/* the picture's own affordance: only offered once it HAS been moved,
              so an untouched plan gains no button and no explaining to do.
              NOT while a gesture is live — this bar sits above the stage, and a
@@ -5187,9 +5648,20 @@ class HouseplanCard extends LitElement {
               e.stopPropagation();
               if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) this._decorSaveText();
             }}></textarea>
-          <label>${this._t('decor.color')}</label>
-          <input type="color" .value=${d.color}
-            @input=${(e: Event) => (this._decorTextDialog = { ...d, color: (e.target as HTMLInputElement).value })} />
+          <hp-color-opacity .label=${this._t('decor.color')} .color=${d.color} .opacity=${d.opacity}
+            @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
+              (this._decorTextDialog = { ...d, ...e.detail })}></hp-color-opacity>
+          <label>${this._t('decor.text_size')}</label>
+          <div class="colorrow"><input class="namein" type="number" min="0.1"
+            max=${this._decorSmallField(DECOR_TEXT_CM_MAX)} step="0.1"
+            .value=${String(this._decorSmallField(d.sizeCm))}
+            @input=${(e: Event) => (this._decorTextDialog = { ...d,
+              sizeCm: this._decorTextCm(Number((e.target as HTMLInputElement).value)) })} />
+            <span class="opl">${this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span></div>
+          <label>${this._t('decor.angle')}</label>
+          <input class="namein" type="number" min="-180" max="180" step="1" .value=${String(d.angle)}
+            @input=${(e: Event) => (this._decorTextDialog = { ...d,
+              angle: normalizeAngle(Number((e.target as HTMLInputElement).value)) })} />
           <label class="dispsection">${this._t('decor.live_group')}</label>
           <label>${this._t('decor.live_entity')}</label>
           <input class="namein" type="text" list="hp-dtext-ents" placeholder=${this._t('decor.live_entity_ph')}
@@ -5227,30 +5699,96 @@ class HouseplanCard extends LitElement {
     const d = this._decorShapeDialog!;
     const canFill = d.kind === 'rect' || d.kind === 'ellipse';
     const kindLabel = this._t(('decor.' + d.kind) as any);
+    const unit = this._t(this._imperial ? 'gs.unit_ft' : 'gs.unit_m');
     return html`<hp-dialog .hass=${this.hass}
       .title=${this._t('decor.object_title', { kind: kindLabel })} icon="mdi:pencil-outline"
       dismiss-on-scrim @hp-close=${() => (this._decorShapeDialog = null)}>
         <div class="body">
-          <label>${this._t('decor.color')}</label>
-          <input type="color" .value=${d.color}
-            @input=${(e: Event) => (this._decorShapeDialog = {
-              ...d, color: (e.target as HTMLInputElement).value,
-            })} />
+          ${d.kind === 'furniture' ? html`
+            <label>${this._t('furn.symbol')}</label>
+            <select class="namein" .value=${d.symbol || ''}
+              @change=${(e: Event) => (this._decorShapeDialog = {
+                ...d, symbol: (e.target as HTMLSelectElement).value,
+              })}>
+              ${FURNITURE_GROUPS.map((group) => html`<optgroup label=${this._t(`furn.group_${group}` as any)}>
+                ${furnitureOfGroup(group).map((symbol) => html`<option value=${symbol.id}>
+                  ${this._t(`furn.sym_${symbol.id}` as any)}
+                </option>`)}
+              </optgroup>`)}
+            </select>` : nothing}
+          <hp-color-opacity .label=${this._t('decor.color')} .color=${d.color} .opacity=${d.opacity}
+            @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
+              (this._decorShapeDialog = { ...d, ...e.detail })}></hp-color-opacity>
           <label>${this._t('decor.width')}</label>
-          <input class="namein" type="number" min="0.1" max="30" step="0.5" .value=${String(d.width)}
+          <div class="colorrow"><input class="namein" type="number" min="0.1" max="100" step="0.1"
+            .value=${String(this._decorSmallField(d.widthCm))}
             @input=${(e: Event) => (this._decorShapeDialog = {
-              ...d, width: Number((e.target as HTMLInputElement).value),
-            })} />
+              ...d, widthCm: this._decorSmallCm(Number((e.target as HTMLInputElement).value)),
+            })} /><span class="opl">${this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span></div>
+          ${d.kind === 'line' ? html`
+            <label>${this._t('decor.length')}</label>
+            <div class="colorrow"><input class="namein" type="number" min="0.01" step="0.01"
+              .value=${String(this._decorLargeField(d.lengthCm || 0))}
+              @input=${(e: Event) => (this._decorShapeDialog = { ...d,
+                lengthCm: this._decorLargeCm(Number((e.target as HTMLInputElement).value)) })} />
+              <span class="opl">${unit}</span></div>` : html`
+            <label>${this._t('decor.size')}</label>
+            <div class="colorrow"><input class="namein" type="number" min="0.01" step="0.01"
+              .value=${String(this._decorLargeField(d.sizeWCm || 0))}
+              @input=${(e: Event) => (this._decorShapeDialog = { ...d,
+                sizeWCm: this._decorLargeCm(Number((e.target as HTMLInputElement).value)) })} />
+              <span>×</span><input class="namein" type="number" min="0.01" step="0.01"
+              .value=${String(this._decorLargeField(d.sizeHCm || 0))}
+              @input=${(e: Event) => (this._decorShapeDialog = { ...d,
+                sizeHCm: this._decorLargeCm(Number((e.target as HTMLInputElement).value)) })} />
+              <span class="opl">${unit}</span></div>`}
+          <label>${this._t('decor.angle')}</label>
+          <input class="namein" type="number" min="-180" max="180" step="1" .value=${String(d.angle)}
+            @input=${(e: Event) => (this._decorShapeDialog = { ...d,
+              angle: normalizeAngle(Number((e.target as HTMLInputElement).value)) })} />
           ${canFill ? html`<label class="dfill"><input type="checkbox" .checked=${!!d.fill}
             @change=${(e: Event) => (this._decorShapeDialog = {
               ...d, fill: (e.target as HTMLInputElement).checked,
-            })} />${this._t('decor.fill')}</label>` : nothing}
+            })} />${this._t('decor.fill')}</label>
+            <hp-color-opacity .label=${this._t('decor.fill_color')}
+              .color=${d.fillColor || d.color} .opacity=${d.fillOpacity ?? 0.25} .disabled=${!d.fill}
+              @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
+                (this._decorShapeDialog = { ...d,
+                  fillColor: e.detail.color, fillOpacity: e.detail.opacity })}></hp-color-opacity>` : nothing}
         </div>
         <div class="row" slot="footer">
           <span class="spacer"></span>
           <button class="btn ghost" @click=${() => (this._decorShapeDialog = null)}>${this._t('btn.cancel')}</button>
           <button class="btn primary" @click=${() => this._decorSaveShape()}>${this._t('btn.save')}</button>
         </div>
+    </hp-dialog>`;
+  }
+
+  private _renderBackdropDialog(): TemplateResult {
+    const d = this._backdropDialog!;
+    const unit = this._t(this._imperial ? 'gs.unit_ft' : 'gs.unit_m');
+    return html`<hp-dialog .hass=${this.hass} .title=${this._t('decor.backdrop_properties')}
+      icon="mdi:image-edit-outline" dismiss-on-scrim @hp-close=${() => (this._backdropDialog = null)}>
+      <div class="body">
+        <label>${this._t('decor.size')}</label>
+        <div class="colorrow"><input class="namein" type="number" min="0.01" step="0.01"
+          .value=${String(this._decorLargeField(d.widthCm))}
+          @input=${(e: Event) => (this._backdropDialog = { ...d,
+            widthCm: this._decorLargeCm(Number((e.target as HTMLInputElement).value)) })} />
+          <span>×</span><input class="namein" type="number" min="0.01" step="0.01"
+          .value=${String(this._decorLargeField(d.heightCm))}
+          @input=${(e: Event) => (this._backdropDialog = { ...d,
+            heightCm: this._decorLargeCm(Number((e.target as HTMLInputElement).value)) })} />
+          <span class="opl">${unit}</span></div>
+        <label>${this._t('decor.angle')}</label>
+        <input class="namein" type="number" min="-180" max="180" step="1" .value=${String(d.angle)}
+          @input=${(e: Event) => (this._backdropDialog = { ...d,
+            angle: normalizeAngle(Number((e.target as HTMLInputElement).value)) })} />
+      </div>
+      <div class="row" slot="footer"><span class="spacer"></span>
+        <button class="btn ghost" @click=${() => (this._backdropDialog = null)}>${this._t('btn.cancel')}</button>
+        <button class="btn primary" @click=${() => this._saveBackdropDialog()}>${this._t('btn.save')}</button>
+      </div>
     </hp-dialog>`;
   }
 
@@ -6103,6 +6641,7 @@ class HouseplanCard extends LitElement {
   private _contactCandidates(): { value: string; label: string }[] {
     const out: [string, string, number][] = [];
     for (const eid of Object.keys(this.hass.states)) {
+      if (!this._planEntityAvailable(eid)) continue;
       const dom = eid.split('.')[0];
       if (dom !== 'binary_sensor' && dom !== 'cover') continue;
       const st = this.hass.states[eid];
@@ -6118,7 +6657,7 @@ class HouseplanCard extends LitElement {
 
   private _lockCandidates(): { value: string; label: string }[] {
     return Object.keys(this.hass.states)
-      .filter((eid) => eid.startsWith('lock.'))
+      .filter((eid) => eid.startsWith('lock.') && this._planEntityAvailable(eid))
       .map((eid) => ({ value: eid, label: this.hass.states[eid]?.attributes?.friendly_name || eid }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }
@@ -6511,6 +7050,10 @@ class HouseplanCard extends LitElement {
   /** Binding candidates: HA devices + group/helper entities, minus the ones already placed. */
   private _bindingCandidates(): { value: string; label: string; sub: string }[] {
     const h = this.hass;
+    const removed = removedPlanBindings(this._markers);
+    const removedBindings = new Set(
+      this._markers.filter((m) => m.removed).map((m) => m.binding),
+    );
     const taken = new Set<string>();
     for (const dev of this._devices) {
       if (dev.id === this._markerDialog?.devId) continue;
@@ -6529,7 +7072,8 @@ class HouseplanCard extends LitElement {
       const v = 'device:' + dev.id;
       if (taken.has(v)) continue;
       const name = (dev.name_by_user || dev.name || dev.id).trim();
-      if (v !== this._markerDialog?.binding && shownKeys.has(name + '|' + (dev.area_id || ''))) continue;
+      if (v !== this._markerDialog?.binding && !removedBindings.has(v)
+          && shownKeys.has(name + '|' + (dev.area_id || ''))) continue;
       list.push({ value: v, label: name, sub: (dev.model || this._t('marker.sub_device')) + (dev.model === 'Group' ? this._t('marker.sub_z2m_group') : '') });
     }
     // group/helper entities without a physical device of their own
@@ -6540,10 +7084,11 @@ class HouseplanCard extends LitElement {
     for (const [eid, reg] of Object.entries<any>(h.entities)) {
       const v = 'entity:' + eid;
       if (taken.has(v)) continue;
+      if (isRemovedPlanEntity(h, eid, removed) && !removedBindings.has(v)) continue;
       const isHelper = helperPlatforms.has(reg.platform);
       const isGroupEntity = reg.platform === 'group';
       if (!isHelper && !isGroupEntity) continue;
-      if (reg.hidden) continue;
+      if (reg.hidden && !removedBindings.has(v)) continue;
       const st = h.states[eid];
       list.push({
         value: v,
@@ -6557,7 +7102,8 @@ class HouseplanCard extends LitElement {
       const seen = new Set(list.map((o) => o.value));
       for (const [eid, reg] of Object.entries<any>(h.entities)) {
         const v = 'entity:' + eid;
-        if (taken.has(v) || seen.has(v) || reg.hidden) continue;
+        if (taken.has(v) || seen.has(v) || (reg.hidden && !removedBindings.has(v))) continue;
+        if (isRemovedPlanEntity(h, eid, removed) && !removedBindings.has(v)) continue;
         const stt = h.states[eid];
         const label = reg.name || stt?.attributes?.friendly_name || eid;
         const dev = reg.device_id ? h.devices[reg.device_id] : null;
@@ -6687,6 +7233,12 @@ class HouseplanCard extends LitElement {
       if (dlg.binding === 'virtual' && !space) space = this._space;
       id = markerIdForBinding(dlg.binding, dlg.devId, () => 'v_' + Date.now().toString(36));
       const oldId = dlg.devId;
+      const replacedRemovedIds = dlg.binding === 'virtual'
+        ? []
+        : cfg.markers
+          .filter((m) => m.removed && m.binding === dlg.binding)
+          .map((m) => m.id);
+      const replacingRemoved = replacedRemovedIds.length > 0;
       // the vacuum block is edited live outside the dialog transaction —
       // the rebuild below must carry it over, not erase it
       const prevVac = cfg.markers.find((m0: Marker) => m0.id === id || m0.id === oldId)?.vacuum || null;
@@ -6755,7 +7307,10 @@ class HouseplanCard extends LitElement {
         }
       }
       // remove the previous marker (by the old id and by the new id)
-      cfg.markers = cfg.markers.filter((m) => m.id !== id && m.id !== oldId);
+      cfg.markers = cfg.markers.filter(
+        (m) => m.id !== id && m.id !== oldId
+          && (marker.binding === 'virtual' || m.binding !== marker.binding),
+      );
       cfg.markers.push(marker);
       // Position rule (owner's decision, v1.33.4): editing an existing icon —
       // rebinding it to another HA device/entity or to another room — must NOT
@@ -6773,13 +7328,13 @@ class HouseplanCard extends LitElement {
         : oldId && prevDev && this._defPos[oldId]
           ? this._normPos(prevDev.space, this._defPos[oldId].x, this._defPos[oldId].y)
           : null;
-      if (prevPos && prevPos.s === targetSpace) {
+      if (!replacingRemoved && prevPos && prevPos.s === targetSpace) {
         // stays in place; pin it under the (possibly new) id
         if (id !== oldId || !this._layout[id] || roomChanged) {
           newPos = { s: prevPos.s, x: prevPos.x, y: prevPos.y };
           this._layout = { ...this._layout, [id]: newPos };
         }
-      } else if (!this._layout[id] || roomChanged) {
+      } else if (replacingRemoved || !this._layout[id] || roomChanged) {
         const spm = this._spaceModel(space || undefined);
         let cx = spm.vb[0] + spm.vb[2] / 2;
         let cy = spm.vb[1] + spm.vb[3] / 2;
@@ -6794,10 +7349,13 @@ class HouseplanCard extends LitElement {
       }
       await this._saveConfigNow();
       if (newPos) this._noteLayoutRev(await this.hass.callWS({ type: 'houseplan/layout/update', device_id: id, pos: newPos }));
-      if (oldId && oldId !== id) {
-        // rebinding changed the icon id — clean up the old position
-        delete this._layout[oldId];
-        await this.hass.callWS({ type: 'houseplan/layout/delete', device_id: oldId })
+      const obsoleteIds = new Set(replacedRemovedIds);
+      if (oldId && oldId !== id) obsoleteIds.add(oldId);
+      obsoleteIds.delete(id);
+      for (const obsoleteId of obsoleteIds) {
+        // Rebinding or replacing a legacy tombstone changed the icon id.
+        delete this._layout[obsoleteId];
+        await this.hass.callWS({ type: 'houseplan/layout/delete', device_id: obsoleteId })
           .then((r: any) => this._noteLayoutRev(r)).catch(() => undefined);
       }
       // the config is committed — now it is safe to drop the old folder
@@ -6822,40 +7380,63 @@ class HouseplanCard extends LitElement {
 
   private async _deleteMarker(): Promise<void> {
     const dlg = this._markerDialog;
-    if (!dlg) return;
+    if (!dlg || dlg.busy || !dlg.devId) return;
     const d = dlg.devId ? this._devices.find((x) => x.id === dlg.devId) : null;
+    if (!d) return;
     const label = dlg.name || this._t('device.fallback');
     if (!confirm(this._t('confirm.remove_marker', { name: label }))) return;
     const cfg = this._serverCfg!;
     cfg.markers = cfg.markers || [];
-    if (d && d.bindingKind === 'virtual') {
-      cfg.markers = cfg.markers.filter((m) => m.id !== d.id);
-    } else if (d && d.marker) {
-      // there was an explicit marker → either hide or delete: we hide (the auto entry comes back if it is an auto device)
-      cfg.markers = cfg.markers.filter((m) => m.id !== d.id);
-      if (d.bindingKind === 'device' && d.bindingRef) {
-        cfg.markers.push({ id: d.id, binding: 'device:' + d.bindingRef, hidden: true });
-      } else if (d.bindingKind === 'entity' && d.bindingRef) {
-        cfg.markers.push({ id: d.id, binding: 'entity:' + d.bindingRef, hidden: true });
-      }
-    } else if (d && d.bindingKind === 'device' && d.bindingRef) {
-      cfg.markers.push({ id: d.id, binding: 'device:' + d.bindingRef, hidden: true });
-    } else if (d && d.bindingKind === 'entity' && d.bindingRef) {
-      cfg.markers.push({ id: d.id, binding: 'entity:' + d.bindingRef, hidden: true });
+    const previousMarkers = cfg.markers;
+    const binding = d.bindingKind === 'virtual'
+      ? 'virtual'
+      : d.bindingKind && d.bindingRef ? `${d.bindingKind}:${d.bindingRef}` : '';
+    if (!binding) return;
+    const cleanupIds = new Set<string>([d.id]);
+    // Remove every duplicate of this plan binding. A non-virtual binding gets
+    // one minimal tombstone: it blocks auto-discovery and every aggregate but
+    // is intentionally ignored by the Add-device candidate list.
+    cfg.markers = cfg.markers.filter((m) => {
+      const drop = m.id === d.id || m.binding === binding;
+      if (drop) cleanupIds.add(m.id);
+      return !drop;
+    });
+    if (d.bindingKind !== 'virtual') {
+      cfg.markers.push({ id: d.id, binding, removed: true });
     }
+    this._markerDialog = { ...dlg, busy: true };
     try {
       await this._saveConfigNow();
-      if (d && d.bindingKind === 'virtual' && this._layout[d.id]) {
-        // the virtual one is deleted for good → its position is no longer needed
-        delete this._layout[d.id];
-        await this.hass.callWS({ type: 'houseplan/layout/delete', device_id: d.id })
+      // Housekeeping follows the durable config write. Every call is
+      // idempotent and best-effort: the device is already deleted even if an
+      // old integration cannot yet serve one of the cleanup commands.
+      for (const id of cleanupIds) {
+        delete this._layout[id];
+        delete this._defPos[id];
+        this._dirtyPos.delete(id);
+        this._sentPos.delete(id);
+        const activity = this._activityRt.get(id);
+        if (activity) clearTimeout(activity.timer);
+        this._activityRt.delete(id);
+        this._vacRt.delete(id);
+        delete this._vacSrvTrails[id];
+        await this.hass.callWS({ type: 'houseplan/layout/delete', device_id: id })
           .then((r: any) => this._noteLayoutRev(r)).catch(() => undefined);
+        await this.hass.callWS({ type: 'houseplan/files/cleanup', marker_id: id })
+          .catch(() => undefined);
+        await this.hass.callWS({ type: 'houseplan/trail/delete', marker_id: id })
+          .catch(() => undefined);
       }
       this._markerDialog = null;
+      if (this._infoCard?.id === d.id) this._infoCard = null;
+      if (this._selId === d.id) this._selId = null;
+      if (this._drag?.id === d.id) this._drag = null;
       this._regSignature = '';
       this._maybeRebuildDevices();
       this._showToast(this._t('toast.marker_removed'));
     } catch (e: any) {
+      if (this._serverCfg === cfg) cfg.markers = previousMarkers;
+      if (this._markerDialog) this._markerDialog = { ...this._markerDialog, busy: false };
       this._showToast(this._t('toast.error', { err: this._errText(e) }));
     }
   }
@@ -7126,6 +7707,7 @@ class HouseplanCard extends LitElement {
       if (d.source === 'draw') {
         sp.plan_url = null; sp.plan_aspect = null;
         delete sp.plan_x; delete sp.plan_y; delete sp.plan_scale;
+        delete sp.plan_scale_x; delete sp.plan_scale_y; delete sp.plan_angle;
       }
       // per-space display settings; hand-drawn spaces get borders+names on by default
       const draw = d.source === 'draw';
@@ -8411,7 +8993,7 @@ class HouseplanCard extends LitElement {
           @pointerdown=${(e: PointerEvent) => { this._notePointer(e); this._stagePointerDown(e); }}
           @pointermove=${(e: PointerEvent) => this._stagePointerMove(e)}
           @pointerup=${(e: PointerEvent) => this._stagePointerUp(e)}
-          @pointercancel=${(e: PointerEvent) => this._stagePointerUp(e)}>
+          @pointercancel=${(e: PointerEvent) => this._stagePointerCancel(e)}>
           <div class="zoomwrap ${this._slide ? 'slide-' + this._slide : ''}"
             style="${dayNight ? `filter:brightness(${(1 - planDim).toFixed(3)})` : ''}">
           <svg viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="xMidYMid meet">
@@ -8443,7 +9025,13 @@ class HouseplanCard extends LitElement {
               ? svg`<rect x="${view.x}" y="${view.y}" width="${view.w}" height="${view.h}" fill="url(#hp-grid-major)" pointer-events="none"></rect>`
               : nothing}
             ${space.bg && this._display(space.bg.href)
-              ? svg`<image href="${this._display(space.bg.href)}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}" preserveAspectRatio="none" />`
+              ? svg`<image href="${this._display(space.bg.href)}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}"
+                  opacity="${this._mode === 'decor' && this._decorTool !== 'backdrop' ? 0.5 : 1}"
+                  transform=${space.bg.angle
+                    ? `rotate(${space.bg.angle} ${space.bg.x + space.bg.w / 2} ${space.bg.y + space.bg.h / 2})`
+                    : nothing}
+                  @dblclick=${(e: Event) => this._openBackdropDialog(e)}
+                  preserveAspectRatio="none" />`
               : nothing}
             ${''/* «Скрыть декоративный слой» (space.hide_decor). The layer is
                    still THERE — the shapes are in the config and the decor
@@ -8686,6 +9274,7 @@ class HouseplanCard extends LitElement {
         ${this._openingInfo ? this._renderOpeningInfoCard() : nothing}
         ${this._decorTextDialog ? this._renderDecorTextDialog() : nothing}
         ${this._decorShapeDialog ? this._renderDecorShapeDialog() : nothing}
+        ${this._backdropDialog ? this._renderBackdropDialog() : nothing}
         ${this._spaceDialog ? this._renderSpaceDialog() : nothing}
         ${this._markerDialog ? this._renderMarkerDialog() : nothing}
         ${this._infoCard ? this._renderInfoCard() : nothing}
@@ -9433,7 +10022,7 @@ class HouseplanCard extends LitElement {
   /** Room temperature honouring the tier-3 source override. */
   private _roomTemp(r: RoomCfg): number | null {
     const src = r.settings?.temp_source;
-    if (src) return sourceValue(this.hass, src, 'temp');
+    if (src) return sourceValue(this.hass, src, 'temp', this._markers);
     // every sensor of the area, placed on the plan or not (field report)
     return r.area ? this._climate().get(r.area)?.temp ?? null : null;
   }
@@ -9441,7 +10030,7 @@ class HouseplanCard extends LitElement {
   /** Room humidity honouring the tier-3 source override. */
   private _roomHum(r: RoomCfg): number | null {
     const src = r.settings?.hum_source;
-    if (src) return sourceValue(this.hass, src, 'hum');
+    if (src) return sourceValue(this.hass, src, 'hum', this._markers);
     return r.area ? this._climate().get(r.area)?.hum ?? null : null;
   }
 
@@ -9531,16 +10120,19 @@ class HouseplanCard extends LitElement {
   /** Devices + sensor entities for the measurement-source picker. */
   private _roomSrcCandidates(): { value: string; label: string; sub: string }[] {
     const h = this.hass;
+    const removed = removedPlanBindings(this._markers);
     const q = this._roomSrcFilter.trim().toLowerCase();
     const list: { value: string; label: string; sub: string }[] = [];
     for (const dev of Object.values<any>(h.devices)) {
       if (dev.entry_type === 'service') continue;
+      if (removed.devices.has(dev.id)) continue;
       const name = (dev.name_by_user || dev.name || dev.id).trim();
       if (q && !name.toLowerCase().includes(q)) continue;
       list.push({ value: 'device:' + dev.id, label: name, sub: dev.model || this._t('marker.sub_device') });
     }
     for (const [eid, reg] of Object.entries<any>(h.entities)) {
       if (!eid.startsWith('sensor.') || reg.hidden) continue;
+      if (isRemovedPlanEntity(h, eid, removed)) continue;
       const label = reg.name || h.states[eid]?.attributes?.friendly_name || eid;
       if (q && !(label + ' ' + eid).toLowerCase().includes(q)) continue;
       list.push({ value: 'entity:' + eid, label, sub: eid });
@@ -9792,10 +10384,10 @@ class HouseplanCard extends LitElement {
    * out by both ends at once, so its badge rides the MIDDLE of the segment
    * (owner: «плашка на середине линии»).
    *
-   * Rectangles and ellipses have no "length", but they do have a size, and
-   * the same two calls answer it: «W × H» of the bounding box. A draft that
-   * has not moved yet (the pointerdown before the drag) shows nothing —
-   * a «0» badge under the cursor is noise, not a measurement.
+   * Rectangles report «W × H» plus area; ellipses report one radius for a
+   * circle or both radii otherwise. A draft that has not moved yet (the
+   * pointerdown before the drag) shows nothing — a «0» badge under the cursor
+   * is noise, not a measurement.
    */
   private get _decorMeasure(): { x: number; y: number; text: string; on45: boolean } | null {
     const d = this._decorDraft;
@@ -9810,8 +10402,18 @@ class HouseplanCard extends LitElement {
       return { x, y, on45: is45(deg),
         text: `${this._fmtLen(d.a, d.b)} · ${Math.round(deg * 10) / 10}°` };
     }
+    const wText = this._fmtLen([ax, ay], [bx, ay]);
+    const hText = this._fmtLen([bx, ay], [bx, by]);
+    if (d.kind === 'ellipse') {
+      const rx = this._fmtLen([0, 0], [Math.abs(bx - ax) / 2, 0]);
+      const ry = this._fmtLen([0, 0], [0, Math.abs(by - ay) / 2]);
+      const circle = Math.abs(Math.abs(bx - ax) - Math.abs(by - ay)) < 1e-6;
+      return { x, y, on45: false, text: circle ? `R ${rx}` : `Rx ${rx} × Ry ${ry}` };
+    }
+    const area = (decorUnitsToCm(Math.abs(bx - ax), this._cellCm, this._gridPitch)
+      * decorUnitsToCm(Math.abs(by - ay), this._cellCm, this._gridPitch)) / 10000;
     return { x, y, on45: false,
-      text: `${this._fmtLen([ax, ay], [bx, ay])} × ${this._fmtLen([bx, ay], [bx, by])}` };
+      text: `${wText} × ${hText} · ${formatArea(area, this._imperial)}` };
   }
 
   // ================= alignment guides (smart guides) =================
@@ -9882,22 +10484,9 @@ class HouseplanCard extends LitElement {
       return out;
     }
     if (this._mode === 'decor') {
-      const W = NORM_W, H = this._decorH;
       const movingId = this._decorMove?.id;
-      for (const sh of this._decorList) {
-        if (sh.id === movingId) continue;
-        if (sh.kind === 'line') { out.push([sh.x1 * W, sh.y1 * H], [sh.x2 * W, sh.y2 * H]); }
-        else if (sh.kind === 'text') out.push([sh.x * W, sh.y * H]);
-        else {
-          out.push([sh.x * W, sh.y * H], [(sh.x + sh.w) * W, sh.y * H],
-            [sh.x * W, (sh.y + sh.h) * H], [(sh.x + sh.w) * W, (sh.y + sh.h) * H]);
-        }
-      }
+      out.push(...this._decorSnapGeometry(movingId).points);
       if (this._decorDraft) out.push(this._decorDraft.a);
-      for (const r of spm.rooms) {
-        const poly = roomPoly(r);
-        if (poly) for (const p of poly) out.push(p);
-      }
       return out;
     }
     return out;
@@ -9944,8 +10533,16 @@ class HouseplanCard extends LitElement {
 
   /** Live state of an opening's contact, 0..1 drawn amount. */
   private _openingAmt(o: OpeningCfg): number {
-    const st = o.contact ? this.hass.states[o.contact]?.state : null;
+    const st = o.contact && this._planEntityAvailable(o.contact)
+      ? this.hass.states[o.contact]?.state
+      : null;
     return openingAmount(o.type, st, !!o.invert);
+  }
+
+  /** Deleted bindings are unavailable to every plan-level consumer. */
+  private _planEntityAvailable(eid: string | null | undefined): boolean {
+    if (!eid) return false;
+    return !isRemovedPlanEntity(this.hass, eid, removedPlanBindings(this._markers));
   }
 
   /**
@@ -9962,7 +10559,7 @@ class HouseplanCard extends LitElement {
     return svg`${items.map((o) => {
       const half = o.rlen / 2;
       const amt = this._openingAmt(o);
-      const active = amt > 0 && !!o.contact;
+      const active = amt > 0 && !!o.contact && this._planEntityAvailable(o.contact);
       const tone = active ? 'var(--hp-open)' : base;
       const face = walls.length
         ? openingInnerFaceOffset(
@@ -10047,7 +10644,9 @@ class HouseplanCard extends LitElement {
 
   /** Padlock badges for doors with a lock entity (HTML, so ha-icon just works). */
   private _renderOpeningLocks(view: { x: number; y: number; w: number; h: number }): TemplateResult {
-    const items = this._openingsR.filter((o) => o.type === 'door' && o.lock);
+    const items = this._openingsR.filter(
+      (o) => o.type === 'door' && o.lock && this._planEntityAvailable(o.lock),
+    );
     if (!items.length) return html``;
     return html`${items.map((o) => {
       const st = this.hass.states[o.lock!]?.state;
@@ -10081,6 +10680,7 @@ class HouseplanCard extends LitElement {
     // button is a deliberate, labeled control inside an opened card, the same
     // contract as Home Assistant's own more-info dialog. Unlocking additionally
     // asks for confirmation; locking does not (locking is never destructive).
+    if (!this._planEntityAvailable(entityId)) return;
     if (action === 'unlock') {
       const name = this.hass?.states?.[entityId]?.attributes?.friendly_name || entityId;
       if (!confirm(this._t('confirm.unlock', { name }))) return;
@@ -10090,9 +10690,11 @@ class HouseplanCard extends LitElement {
 
   private _renderOpeningInfoCard(): TemplateResult {
     const o = this._openingInfo!;
-    const cSt = o.contact ? this.hass.states[o.contact]?.state : null;
+    const contact = o.contact && this._planEntityAvailable(o.contact) ? o.contact : null;
+    const lock = o.lock && this._planEntityAvailable(o.lock) ? o.lock : null;
+    const cSt = contact ? this.hass.states[contact]?.state : null;
     const amt = this._openingAmt(o);
-    const lSt = o.lock ? this.hass.states[o.lock]?.state : null;
+    const lSt = lock ? this.hass.states[lock]?.state : null;
     const row = (icon: string, label: string, value: string, cls = '') =>
       html`<div class="oprow ${cls}"><ha-icon icon=${icon}></ha-icon><span>${label}</span><b>${value}</b></div>`;
     return html`<hp-dialog .hass=${this.hass}
@@ -10100,7 +10702,7 @@ class HouseplanCard extends LitElement {
       icon=${o.type === 'door' ? 'mdi:door' : 'mdi:window-closed-variant'} dismiss-on-scrim
       @hp-close=${() => (this._openingInfo = null)}>
         <div class="body">
-          ${o.contact
+          ${contact
             ? row(amt > 0 ? 'mdi:door-open' : 'mdi:door-closed',
                 this._t('opening.contact_label'),
                 cSt === 'unavailable' || cSt == null
@@ -10108,7 +10710,7 @@ class HouseplanCard extends LitElement {
                   : this._t(amt > 0 ? 'opening.open' : 'opening.closed'),
                 amt > 0 ? 'warn' : 'ok')
             : nothing}
-          ${o.lock
+          ${lock
             ? row(lSt === 'locked' ? 'mdi:lock' : 'mdi:lock-open-variant',
                 this._t('opening.lock_label'),
                 lSt === 'locked' ? this._t('opening.locked')
@@ -10116,19 +10718,19 @@ class HouseplanCard extends LitElement {
                   : this._t('opening.state_unknown'),
                 lSt === 'locked' ? 'ok' : 'warn')
             : nothing}
-          ${o.lock && (lSt === 'locked' || ['unlocked', 'open'].includes(String(lSt)))
+          ${lock && (lSt === 'locked' || ['unlocked', 'open'].includes(String(lSt)))
             ? html`<button
                 class="btn lockact ${lSt === 'locked' ? 'warn' : ''}"
-                @click=${() => this._lockAction(o.lock!, lSt === 'locked' ? 'unlock' : 'lock')}>
+                @click=${() => this._lockAction(lock, lSt === 'locked' ? 'unlock' : 'lock')}>
                 <ha-icon icon=${lSt === 'locked' ? 'mdi:lock-open-variant' : 'mdi:lock'}></ha-icon>
                 ${this._t(lSt === 'locked' ? 'opening.unlock_action' : 'opening.lock_action')}
               </button>`
-            : o.lock && ['locking', 'unlocking'].includes(String(lSt))
+            : lock && ['locking', 'unlocking'].includes(String(lSt))
               ? html`<button class="btn lockact" disabled>
                   <ha-icon icon="mdi:timer-sand"></ha-icon>${this._t('opening.lock_pending')}
                 </button>`
               : nothing}
-          ${!o.contact && !o.lock ? html`<p class="muted">${this._t('opening.no_entities')}</p>` : nothing}
+          ${!contact && !lock ? html`<p class="muted">${this._t('opening.no_entities')}</p>` : nothing}
         </div>
         <div class="row" slot="footer">
           <span class="spacer"></span>
@@ -10702,10 +11304,19 @@ class HouseplanCard extends LitElement {
 
           <label>${this._t('marker.icon_label')}</label>
           ${customElements.get('ha-icon-picker')
-            ? html`<ha-icon-picker .hass=${this.hass} .value=${d.icon}
+            // Feed the effective icon to HA's picker so its field renders both
+            // the glyph and the mdi:* label. autoIcon is presentation-only:
+            // untouched dialogs still save d.icon as an empty auto override.
+            ? html`<ha-icon-picker .hass=${this.hass} .value=${d.icon || d.autoIcon}
                 .placeholder=${d.autoIcon || undefined}
                 .fallbackPath=${undefined}
-                @value-changed=${(e: any) => (this._markerDialog = { ...d, icon: e.detail.value || '' })}></ha-icon-picker>`
+                @value-changed=${(e: any) => {
+                  const icon = e.detail.value || '';
+                  // Some picker versions announce an assigned value. Do not
+                  // let that turn the display-only auto icon into an override.
+                  if (!d.icon && icon === d.autoIcon) return;
+                  this._markerDialog = { ...d, icon };
+                }}></ha-icon-picker>`
             : html`<input class="namein" type="text"
                 placeholder=${d.autoIcon || this._t('marker.icon_ph')}
                 .value=${d.icon}
@@ -10778,6 +11389,7 @@ class HouseplanCard extends LitElement {
           <div class="markeractions">
             ${d.devId
               ? html`<button class="btn" type="button"
+                  ?disabled=${d.busy}
                   aria-pressed=${d.hideFromPlan ? 'true' : 'false'}
                   title=${this._t(d.hideFromPlan ? 'marker.show_tip' : 'marker.hide_tip')}
                   @click=${() => (this._markerDialog = { ...d, hideFromPlan: !d.hideFromPlan })}>
@@ -10785,14 +11397,16 @@ class HouseplanCard extends LitElement {
                   ${this._t(d.hideFromPlan ? 'marker.show' : 'marker.hide')}
                 </button>`
               : nothing}
-            ${d.devId && d.binding === 'virtual'
-              ? html`<button class="btn danger" @click=${this._deleteMarker}>
-                  <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.remove')}
+            ${d.devId
+              ? html`<button class="btn danger" type="button" ?disabled=${d.busy}
+                  title=${this._t('marker.delete_tip')} @click=${this._deleteMarker}>
+                  <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.delete')}
                 </button>`
               : nothing}
           </div>
           <div class="markersaveactions">
-            <button class="btn ghost" @click=${() => (this._markerDialog = null)}>${this._t('btn.cancel')}</button>
+            <button class="btn ghost" ?disabled=${d.busy}
+              @click=${() => (this._markerDialog = null)}>${this._t('btn.cancel')}</button>
             <button class="btn on" @click=${this._saveMarker}
               ?disabled=${d.busy || (d.bindingMode === 'ha' && (!d.binding || d.binding === 'virtual'))}
               title=${d.bindingMode === 'ha' && (!d.binding || d.binding === 'virtual') ? this._t('marker.pick_ph') : ''}>

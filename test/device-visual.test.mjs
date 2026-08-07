@@ -31,6 +31,40 @@ test('actual work is yellow/running, but an enabled automation is neutral', () =
   assert.equal(entityVisualSample(h, 'script.scene').status, 'working');
 });
 
+test('media players express power without treating playback as work', () => {
+  const h = hass({
+    'media_player.soundbar': { state: 'playing' },
+    'media_player.tv': { state: 'on' },
+    'media_player.receiver': { state: 'idle' },
+    'media_player.speaker': { state: 'off' },
+  });
+  for (const eid of ['media_player.soundbar', 'media_player.tv', 'media_player.receiver']) {
+    assert.deepEqual(
+      (({ status, activity }) => ({ status, activity }))(entityVisualSample(h, eid)),
+      { status: 'neutral', activity: 'none' },
+    );
+  }
+  assert.deepEqual(
+    (({ availability, status, activity }) => ({ availability, status, activity }))(
+      entityVisualSample(h, 'media_player.speaker'),
+    ),
+    { availability: 'unavailable', status: 'neutral', activity: 'none' },
+  );
+});
+
+test('off media sources share unavailable styling without hiding an active peer', () => {
+  const off = entityVisualSample(hass({ 'media_player.one': { state: 'off' } }), 'media_player.one');
+  const on = entityVisualSample(hass({ 'media_player.two': { state: 'on' } }), 'media_player.two');
+  assert.deepEqual(
+    combineVisualSamples([off]),
+    { availability: 'unavailable', status: 'neutral', activity: 'none' },
+  );
+  assert.deepEqual(
+    combineVisualSamples([off, on]),
+    { availability: 'available', status: 'neutral', activity: 'none' },
+  );
+});
+
 test('open state, cover travel and presence are separate meanings', () => {
   const h = hass({
     'binary_sensor.window': { state: 'on', attributes: { device_class: 'window' } },

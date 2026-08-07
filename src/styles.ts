@@ -947,7 +947,6 @@ export const cardStyles = css`
       filter: drop-shadow(0 0 3px var(--hp-accent));
     }
     .decorlayer .ddraft {
-      opacity: 0.75;
       stroke-dasharray: 6 5;
       pointer-events: none;
     }
@@ -1001,7 +1000,7 @@ export const cardStyles = css`
       transform: translate(-50%, -50%);
       border: 1px solid var(--hp-accent);
     }
-    /* the selected text block's frame — same chrome rules as the backdrop's:
+    /* the selected decor object's frame — same chrome rules as the backdrop's:
        the outline never takes a pointer, the handles always do, and they are
        finger-sized because this is dragged on a tablet too */
     .dtframe .dtbox {
@@ -1040,6 +1039,8 @@ export const cardStyles = css`
     .dtframe .dt-nwse { cursor: nwse-resize; }
     .dtframe .dt-nesw { cursor: nesw-resize; }
     .dtframe .dtrot { cursor: grab; }
+    .dtframe .dtendpoint { cursor: crosshair; }
+    .bdframe .dtrot { cursor: grab; }
     .dtarea {
       resize: vertical;
       min-height: 3.4em;
@@ -1050,6 +1051,7 @@ export const cardStyles = css`
     .stage.mode-decor.dtool-ellipse, .stage.mode-decor.dtool-text {
       cursor: crosshair;
     }
+    .stage.mode-decor.dtool-erase .decorlayer .dshape { cursor: crosshair; }
     .stage.mode-decor .room, .stage.mode-decor .devlayer { pointer-events: none; }
     .stage.mode-decor .oplock { pointer-events: none; }
     /* decor mode: everything but the decor itself fades back */
@@ -1077,6 +1079,7 @@ export const cardStyles = css`
     .decorbar .dfill {
       display: inline-flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-s); cursor: pointer;
     }
+    .decorbar hp-color-opacity { flex: 0 0 auto; }
     hp-dialog .dfill {
       display: inline-flex;
       align-items: center;

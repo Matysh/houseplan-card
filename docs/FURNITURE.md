@@ -9,7 +9,7 @@ branch). Tests: `test/furniture.test.mjs`,
 `tests_backend/test_validation.py::test_decor_furniture`; smoke:
 `demo/smoke_furniture.mjs`.
 
-The shape: `{kind:'furniture', symbol, x, y, w, h, color, width, angle?}` —
+The shape: `{kind:'furniture', symbol, x, y, w, h, color, opacity, width_cm, angle?}` —
 a **new** decor kind, so no existing plan carries one, nothing is migrated,
 and every plan written before this validates and renders byte-for-byte as
 before.
@@ -189,22 +189,19 @@ confined to two places:
   piece of furniture has a box, and turning a sofa about its top-left corner
   is not what anyone means by turning a sofa. So: the anchor for text, the
   **centre** for furniture (`_dtPivot`).
-- **what a corner means.** For a label it is one font multiplier. For
-  furniture it is **width and depth, independently**, about the opposite
-  corner.
-
-**Why independent and not proportional.** A picture has one true aspect ratio
-and stretching it is a lie — which is why the backdrop scales uniformly. Furniture
-is the opposite case: the ratio is a fact about *this* sofa, and the next one
-is 1.8 m long with the same 0.9 m depth. A uniform handle would force the user
-to make a bed deeper in order to make it wider, i.e. to state something false
-about the room. So both axes move. Each dimension is quantised to a whole cell,
-which on an on-grid piece also puts the dragged corner on a node. That is what
-"snap to the grid" has to mean when both sides move.
+- **what a corner means.** For a label it is one physical font size. For
+  furniture it is width and depth about the opposite corner. The common
+  controller preserves the current ratio by default; hold `Shift` for
+  independent axes. Each extent and the stored top-left coordinate remains
+  grid-bound.
 
 **Rotation** is the handle above the box, in **5° steps**, Shift past the step
 — the same step a device icon and a text block turn in. Turning back to zero
 removes the field, so a straight piece stores no angle at all.
+
+Double click opens the common properties dialog. It exposes the symbol itself,
+physical width/depth, angle, contour colour/opacity and physical line width;
+changing the symbol keeps the current box and transform.
 
 **Live measurements.** While a corner is dragged, two badges show the piece's
 real width and depth in the HA unit system, centred on the edges they measure.
@@ -230,15 +227,16 @@ one particular bed, without us shipping a CSS field:
 .decorlayer [data-kind="furniture"][data-symbol="bathtub"] { stroke: #4fc3f7; }
 ```
 
-The colour and the line width are the decor style's, chosen in the bar like
-any other shape's, and are stored per piece.
+The colour, opacity and physical line width are the decor style's, chosen in
+the bar like any other shape's, and are stored per piece.
 
 ## 8. Backend
 
 `DECOR_SCHEMA` gains a fourth branch: `symbol` required, `^[a-z0-9_]+$`,
 ≤ 32 characters; `x`/`y` the usual ±`CANVAS_LIMIT`; `w`/`h` strictly positive
 and capped by the same limit (a size, not a coordinate); `angle` optional,
-−360…360. `color`/`width` come from `_DECOR_COMMON` unchanged.
+−360…360. `color`/`opacity`/`width_cm` come from `_DECOR_COMMON`; legacy
+render-unit `width` remains accepted until the object is edited or optimised.
 
 The symbol is **not** validated against the card's list. The backend must
 accept a plan written by a NEWER card, and a card that has learnt a new symbol

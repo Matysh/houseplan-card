@@ -283,6 +283,7 @@ MAX_DECOR_UNIT = 16
 # could mean on a 1000-unit canvas, the rest is garbage insurance.
 DECOR_TEXT_SCALE_MIN = 0.15
 DECOR_TEXT_SCALE_MAX = 20.0
+DECOR_TEXT_CM_MAX = 2000.0
 # A furniture symbol id (docs/FURNITURE.md). Deliberately NOT the card's list:
 # the backend must accept a plan written by a NEWER card, and a card that has
 # learnt a new symbol must not have to wait for the integration to be updated
@@ -299,6 +300,10 @@ _FURN_SIZE = vol.All(_finite, vol.Range(min=0.0000001, max=CANVAS_LIMIT))
 _DECOR_COMMON = {
     vol.Required("id"): str,
     vol.Optional("color"): vol.Match(r"^#[0-9a-fA-F]{6}$"),
+    vol.Optional("opacity"): vol.All(_finite, vol.Range(min=0.0, max=1.0)),
+    # Physical centimetres are canonical. `width` remains accepted so plans
+    # written by older cards keep their exact appearance until edited.
+    vol.Optional("width_cm"): vol.All(_finite, vol.Range(min=0.1, max=100)),
     vol.Optional("width"): vol.All(vol.Coerce(float), vol.Range(min=0.1, max=30)),
 }
 # Decor lives on the same unbounded canvas as everything else (docs/CANVAS.md):
@@ -314,7 +319,10 @@ DECOR_SCHEMA = vol.Any(
                 # sizes are extents — negative/zero is garbage, not "canvas slack"
                 vol.Required("w"): vol.All(_finite, vol.Range(min=0.001, max=CANVAS_LIMIT)),
                 vol.Required("h"): vol.All(_finite, vol.Range(min=0.001, max=CANVAS_LIMIT)),
-                vol.Optional("fill"): bool},
+                vol.Optional("angle"): vol.All(_finite, vol.Range(min=-360.0, max=360.0)),
+                vol.Optional("fill"): bool,
+                vol.Optional("fill_color"): vol.Match(r"^#[0-9a-fA-F]{6}$"),
+                vol.Optional("fill_opacity"): vol.All(_finite, vol.Range(min=0.0, max=1.0))},
                extra=vol.ALLOW_EXTRA),
     vol.Schema({**_DECOR_COMMON, vol.Required("kind"): "text",
                 vol.Required("x"): _NORM, vol.Required("y"): _NORM,
@@ -326,8 +334,11 @@ DECOR_SCHEMA = vol.Any(
                 # written before that keeps it, and it is read as the scale it
                 # used to render at. Kept in the schema so it stays BOUNDED.
                 vol.Optional("size"): vol.In(["s", "m", "l"]),
-                # size and rotation of the block (docs/LIVE-TEXT.md §block).
-                # Both optional: a shape without them is the old one exactly.
+                # Canonical physical font size plus the legacy scale. Both are
+                # accepted so older plans remain pixel-identical until edited
+                # or explicitly optimized.
+                vol.Optional("size_cm"): vol.All(
+                    _finite, vol.Range(min=0.1, max=DECOR_TEXT_CM_MAX)),
                 vol.Optional("scale"): vol.All(
                     _finite, vol.Range(min=DECOR_TEXT_SCALE_MIN, max=DECOR_TEXT_SCALE_MAX)),
                 vol.Optional("angle"): vol.All(_finite, vol.Range(min=-360.0, max=360.0)),
@@ -389,16 +400,27 @@ SPACE_SCHEMA = vol.Schema(
         vol.Optional("plan_aspect"): vol.Any(
             None, vol.All(vol.Coerce(float), vol.Range(min=0.05, max=20))
         ),
-        # Backdrop placement (docs/BACKDROP.md): the picture may be moved and
-        # scaled UNIFORMLY on the canvas. All three are optional and their
-        # absence is the pre-v1.58.0 behaviour exactly — there is no migration,
-        # and an old config validates unchanged. The offset is a normalised
+        # Backdrop placement (docs/BACKDROP.md): the picture may be moved,
+        # resized per axis and rotated. Every transform field is optional; its
+        # complete absence is the pre-v1.58.0 behaviour exactly, and an old
+        # config validates unchanged. The offset is a normalised
         # coordinate like every other one (the ±CANVAS_LIMIT garbage guard);
         # the scale is a positive multiplier in a range a human could mean.
         vol.Optional("plan_x"): vol.Any(None, _COORD),
         vol.Optional("plan_y"): vol.Any(None, _COORD),
         vol.Optional("plan_scale"): vol.Any(
             None, vol.All(_finite, vol.Range(min=PLAN_SCALE_MIN, max=PLAN_SCALE_MAX))
+        ),
+        # New writes may stretch each axis independently and rotate. The old
+        # uniform field remains a read-compatible fallback for both axes.
+        vol.Optional("plan_scale_x"): vol.Any(
+            None, vol.All(_finite, vol.Range(min=PLAN_SCALE_MIN, max=PLAN_SCALE_MAX))
+        ),
+        vol.Optional("plan_scale_y"): vol.Any(
+            None, vol.All(_finite, vol.Range(min=PLAN_SCALE_MIN, max=PLAN_SCALE_MAX))
+        ),
+        vol.Optional("plan_angle"): vol.Any(
+            None, vol.All(_finite, vol.Range(min=-360.0, max=360.0))
         ),
         vol.Required("view_box"): _view_box,
         vol.Required("rooms"): vol.All([ROOM_SCHEMA], vol.Length(max=MAX_ROOMS)),
@@ -456,6 +478,9 @@ MARKER_SCHEMA = vol.Schema(
         vol.Optional("space"): vol.Any(str, None),
         vol.Optional("area"): vol.Any(str, None),
         vol.Optional("hidden"): bool,
+        # A binding-level tombstone: not rendered or aggregated, but retained
+        # so automatic discovery does not put a deleted device straight back.
+        vol.Optional("removed"): bool,
         vol.Optional("name"): _TEXT_OR_NONE,
         vol.Optional("icon"): _TEXT_OR_NONE,
         vol.Optional("model"): _TEXT_OR_NONE,

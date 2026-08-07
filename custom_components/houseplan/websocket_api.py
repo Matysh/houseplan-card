@@ -73,6 +73,7 @@ def async_register(hass: HomeAssistant) -> None:
     """Register the WS commands."""
     websocket_api.async_register_command(hass, ws_layout_get)
     websocket_api.async_register_command(hass, ws_trail_get)
+    websocket_api.async_register_command(hass, ws_trail_delete)
     websocket_api.async_register_command(hass, ws_layout_set)
     websocket_api.async_register_command(hass, ws_geometry_repair)
     websocket_api.async_register_command(hass, ws_layout_update)
@@ -108,6 +109,28 @@ def _check_write(hass: HomeAssistant, connection) -> bool:
 
 
 # ---------------- layout ----------------
+
+
+def _live_layout(config: dict[str, Any], layout: dict[str, Any]) -> dict[str, Any]:
+    """Drop positions which a deleted marker can no longer own.
+
+    HA device ids may be layout-only because auto-discovered devices need no
+    marker entry. Virtual ids are different: every live virtual marker is
+    explicit, so a missing `v_*` owner is always stale data.
+    """
+    markers = config.get("markers") or []
+    removed_ids = {
+        str(m.get("id")) for m in markers if m.get("removed") is True
+    }
+    virtual_ids = {
+        str(m.get("id")) for m in markers
+        if m.get("removed") is not True and m.get("binding") == "virtual"
+    }
+    return {
+        marker_id: pos for marker_id, pos in layout.items()
+        if marker_id not in removed_ids
+        and (not marker_id.startswith("v_") or marker_id in virtual_ids)
+    }
 
 
 @websocket_api.websocket_command({vol.Required("type"): "houseplan/layout/get"})
@@ -151,6 +174,7 @@ async def ws_layout_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
     if rt is None:
         return
     async with rt.write_lock:
+        config_data = await rt.config_store.async_load() or {}
         data = await rt.store.async_load() or {}
         current_rev = int(data.get("rev", 0))
         if "expected_rev" in msg and msg["expected_rev"] != current_rev:
@@ -158,10 +182,11 @@ async def ws_layout_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
                 msg["id"], "conflict", f"Layout changed elsewhere (rev {current_rev})"
             )
             return
+        layout = _live_layout(config_data.get("config") or {}, msg["layout"])
         new_rev = current_rev + 1
         await rt.store.async_save({**{k: v for k, v in data.items() if k not in (
                                        "layout", "rev", _OPTIMIZE_BACKUP, _OPTIMIZE_PENDING)},
-                                   "layout": msg["layout"], "rev": new_rev})
+                                   "layout": layout, "rev": new_rev})
     hass.bus.async_fire("houseplan_layout_updated", {"rev": new_rev})
     connection.send_result(msg["id"], {"ok": True, "rev": new_rev})
 
@@ -183,6 +208,31 @@ async def ws_layout_update(hass: HomeAssistant, connection, msg: dict[str, Any])
     if rt is None:
         return
     async with rt.write_lock:
+        # A stale browser may still finish a drag after another client deleted
+        # the marker. Its tombstone is the server-side authority: acknowledge
+        # but ignore the late point so re-adding starts without a zombie
+        # position.
+        config_data = await rt.config_store.async_load() or {}
+        config = config_data.get("config") or {}
+        markers = config.get("markers") or []
+        deleted = any(
+            str(m.get("id")) == msg["device_id"] and m.get("removed") is True
+            for m in markers
+        )
+        live_virtual = any(
+            str(m.get("id")) == msg["device_id"] and m.get("removed") is not True
+            and m.get("binding") == "virtual"
+            for m in markers
+        )
+        orphan_virtual = msg["device_id"].startswith("v_") and not live_virtual
+        if deleted or orphan_virtual:
+            data = await rt.store.async_load() or {}
+            connection.send_result(msg["id"], {
+                "ok": True,
+                "ignored": "removed" if deleted else "missing_virtual",
+                "rev": int(data.get("rev", 0)),
+            })
+            return
         data = await rt.store.async_load() or {}
         layout = data.get("layout", {})
         layout[msg["device_id"]] = msg["pos"]
@@ -1022,3 +1072,22 @@ async def ws_trail_get(hass: HomeAssistant, connection: websocket_api.ActiveConn
     """Current + previous cleanup runs per marker, raw robot coordinates."""
     rec = hass.data.get(DOMAIN, {}).get("trail_recorder")
     connection.send_result(msg["id"], {"trails": rec.book.data if rec else {}})
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "houseplan/trail/delete",
+        vol.Required("marker_id"): vol.All(str, vol.Length(min=1, max=256)),
+    }
+)
+@websocket_api.async_response
+async def ws_trail_delete(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict) -> None:
+    """Permanently forget one deleted marker's current and previous runs."""
+    if not _check_write(hass, connection):
+        connection.send_error(msg["id"], "unauthorized", "Only administrators may delete trails")
+        return
+    if _runtime(hass, connection, msg["id"]) is None:
+        return
+    rec = hass.data.get(DOMAIN, {}).get("trail_recorder")
+    removed = await rec.async_delete(msg["marker_id"]) if rec else False
+    connection.send_result(msg["id"], {"ok": True, "removed": removed})

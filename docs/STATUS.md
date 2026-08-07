@@ -15,11 +15,11 @@
 
 | Item | State |
 |---|---|
-| Version | **v1.59.2** everywhere (manifest, const.py, package.json, CARD_VERSION) — stable accessibility maintenance release. Tag `v1.59.2`, `main` and `dev` point to the same tested release commit; GitHub Release uses `prerelease=false`. Previous pre-release: v1.59.0-rc.2; previous stable: v1.59.1 |
+| Version | **v1.60.0-beta.1** everywhere (manifest, const.py, package.json, CARD_VERSION) — first pre-release of the unified Background editor and true device deletion line. The tag points at the tested `dev` commit and GitHub Release uses `prerelease=true`; `main` remains on stable v1.59.2 |
 
 | Workflow | Owner's rule since 2026-08-05: ordinary fixes/features are made **locally, without tests and without commits**. A requested pre-release gets the full tests/build/smokes, one tested `dev` commit/tag and a GitHub Release with `prerelease=true`; `main` stays untouched. A requested stable release gets the same full gate, then `main` is fast-forwarded to the exact tested `dev` SHA and the GitHub Release uses `prerelease=false`. Nothing is copied to the home instance by hand |
 | GitHub | https://github.com/Matysh/houseplan-card — `main` carries stable releases; pre-release tags may point directly at `dev`. Work lands on `dev` and is merged into `main` for a stable release, so `dev` is normally equal to or ahead of `main`, never behind. Push via SSH key `ha_jb` (remote git@github.com:…); API releases via the fine-grained PAT in `~/.git-credentials` (Contents R/W, issued 2026-07-23) |
-| CI | v1.59.2 passes the full local release gate; exact counts are recorded by `npm run inventory` and the test logs rather than copied here. Native Windows cannot start the current HA pytest plugin (`fcntl` is Unix-only), so the exact-SHA Ubuntu Validate remains mandatory: `release.yml` withholds the asset until every matching run finishes green; GitHub Validate and the release asset are verified after the tag is pushed |
+| CI | v1.60.0-beta.1 uses the full local release gate; exact counts are recorded by `npm run inventory` and the test logs rather than copied here. Native Windows cannot start the current HA pytest plugin (`fcntl` is Unix-only), so the exact-SHA Ubuntu Validate remains mandatory: `release.yml` withholds the asset until every matching run finishes green; GitHub Validate and the release asset are verified after the tag is pushed |
 | HACS | Custom repository works. **Inclusion PR: hacs/default#9004** — open, valid, labeled, mergeable clean, never drafted. Queue: 1212 open, 835 older than ours. Merge rate COLLAPSED: 75 in July but almost all in the first decade, 0 in the last week (checked 2026-07-29) — maintainers process in rare bursts; ETA unknowable, months at best. Nothing actionable on our side |
 | Home instance | ha.jbstudio.pro (SSH port **22222**, key `ha_jb`; HA config root is `/mnt/data/supervisor/homeassistant` — `/config` does NOT exist in this SSH environment), last direct copy was **v1.57.0**; from v1.58.0 on it updates itself through HACS by tag (no scp) |
 | Localization | UI en/ru (src/i18n/*.json), everything user-visible localized incl. kiosk popover |
@@ -67,6 +67,11 @@
   bottom-left "Hide" / "Show" action in the device dialog; local
   "Show hidden" ghosts; hidden counts toward room LQI on both cards, casts
   no light (v1.51.1).
+- **True plan deletion** (v1.60.0-beta.1, 2026-08-07): confirmed Delete beside Hide/Show;
+  a minimal `marker.removed` tombstone prevents auto-rediscovery but exposes
+  the binding to Add. Deleted devices are absent from every plan aggregate and
+  linked presentation; layout/files/trails are cleaned and stale layout writes
+  are rejected.
 - **Yellow = working right now** (v1.51.0): climate by hvac_action, service
   switches can no longer become primary, glow pool and icon share one
   condition. Editor gestures on touch (pinch/pan) landed the same release.
@@ -75,6 +80,20 @@
   actual work, orange open/unlocked, unavailable and always-red alarms;
   activity distinguishes a short event, presence, mechanical travel and
   running. Legacy Ripple-only migrates to Icon + activity on the next save.
+- **Passive media lifecycle** (v1.60.0-beta.1): every `media_player`,
+  regardless of model, stays neutral while powered or playing and fades to
+  the existing unavailable appearance on explicit `off`; transport playback
+  is no longer classified as yellow actual work and no new visual state is
+  introduced.
+- **Unified Background editor** (v1.60.0-beta.1): typed decor model,
+  physical cm/in strokes and text size, independent contour/fill opacity, decor+room smart
+  magnet, common selection/resize/rotate frame for every decor kind, numeric
+  geometry properties, and shared 50-command Undo/Redo. The plan image now has
+  an exclusive tool, 0.5 editor de-emphasis elsewhere, independent axes,
+  rotation, numeric properties and rotated content bounds. Legacy `width` and
+  `plan_scale` remain read-compatible and migrate only through explicit plan
+  optimisation. Furniture properties also expose the symbol itself. See
+  `DECOR-EDITOR.md`.
 - **v1.59.0-rc.1** (2026-08-06): whole-plan lossless optimization with an
   atomic config+layout commit and safe undo; the yellow actual-work plate is
   retained alongside source glow; all Background objects have Select-mode

@@ -1267,6 +1267,15 @@ test('liveText: inline variables resolve every state and attribute in the text',
   );
 });
 
+test('liveText: unavailable plan bindings render as a dash without changing the template', () => {
+  const available = (eid) => eid !== 'sensor.tank';
+  assert.equal(
+    liveText('Tank {sensor.tank}; climate {climate.hall:current_temperature}', null, hassLive, available),
+    'Tank —; climate 21.5',
+  );
+  assert.equal(liveText('Tank {}', { entity: 'sensor.tank' }, hassLive, available), 'Tank —');
+});
+
 test('liveText: hand-written dotted attributes work; invalid braces stay literal', () => {
   assert.equal(liveText('{climate.hall.current_temperature}', null, hassLive), '21.5');
   assert.equal(liveText('Обычный {текст}', null, hassLive), 'Обычный {текст}');

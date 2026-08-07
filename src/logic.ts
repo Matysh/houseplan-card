@@ -1118,19 +1118,31 @@ export function liveTextValue(hass: any, link: LiveTextLink | null | undefined):
  * only when the text has no new references, keeping old saved labels working
  * until the user edits and saves them in the new UI.
  */
-export function liveText(text: string | null | undefined, link: LiveTextLink | null | undefined, hass: any): string {
+export function liveText(
+  text: string | null | undefined,
+  link: LiveTextLink | null | undefined,
+  hass: any,
+  entityAvailable: (entityId: string) => boolean = () => true,
+): string {
   const tpl = text ?? '';
   let referenced = false;
   const rendered = tpl.replace(/\{([^{}\r\n]+)\}/g, (whole, raw: string) => {
     const ref = liveTextReference(raw);
     if (!ref) return whole;
     referenced = true;
+    if (!entityAvailable(ref.entity || '')) return LIVE_TEXT_DASH;
     return liveTextValue(hass, ref);
   });
   if (referenced) return rendered;
 
   // Backward compatibility for shapes saved by beta.9 and earlier.
-  if (!(link?.entity || '').trim()) return tpl;
+  const linkedEntity = (link?.entity || '').trim();
+  if (!linkedEntity) return tpl;
+  if (!entityAvailable(linkedEntity)) {
+    const i = tpl.indexOf(LIVE_TEXT_SLOT);
+    if (i >= 0) return tpl.slice(0, i) + LIVE_TEXT_DASH + tpl.slice(i + LIVE_TEXT_SLOT.length);
+    return tpl ? `${tpl} ${LIVE_TEXT_DASH}` : LIVE_TEXT_DASH;
+  }
   const v = liveTextValue(hass, link);
   const i = tpl.indexOf(LIVE_TEXT_SLOT);
   if (i >= 0) return tpl.slice(0, i) + v + tpl.slice(i + LIVE_TEXT_SLOT.length);
@@ -1142,12 +1154,12 @@ export const DECOR_TEXT_SCALE_MIN = 0.15;
 export const DECOR_TEXT_SCALE_MAX = 20;
 
 /**
- * The font multiplier of a decor text shape. `scale` is the field the corner
- * handles write; the legacy `size` ('s'|'m'|'l') is read as the multiplier it
+ * Read the legacy font multiplier of a decor text shape. Canonical new writes
+ * use physical `size_cm`; this helper keeps old `scale` and `size`
+ * ('s'|'m'|'l') visually stable. `size` is read as the multiplier it
  * used to render at (14/20/30 px against the base 20), so a label drawn
  * before the handles existed comes back at exactly its old size without any
- * migration. An explicit `scale` wins — it is the newer, finer statement of
- * the same thing, and the first drag replaces `size` with it.
+ * migration. An explicit `scale` wins among the legacy representations.
  */
 export function decorTextScale(shape: { scale?: unknown; size?: unknown } | null | undefined): number {
   const s = Number(shape?.scale);

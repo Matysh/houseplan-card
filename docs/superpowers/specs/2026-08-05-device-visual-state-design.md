@@ -64,13 +64,20 @@ activity: 'none' | 'event' | 'presence' | 'transition' | 'running'
 - `light/switch/fan/humidifier = on`;
 - climate: `hvac_action = heating/cooling/drying/fan`, но не просто выбранный
   режим `heat/cool/auto`;
-- media player: `playing`;
 - vacuum: `cleaning` (и работающий механизм при `returning`);
 - бытовая техника: `running/washing/rinsing/spinning/drying/heating/cooking`;
 - маркер с `controls`: работает хотя бы одна управляемая цель.
 
 Не являются работой: открытая дверь, разблокированный замок, открытые шторы,
 presence/motion, `enabled`, `home`, `unknown`, `unavailable`, climate `idle`.
+
+`media_player` — пассивный медиатранспорт, а не исполнительный механизм:
+`on/idle/playing/paused/standby` остаются нейтральными и не получают running-
+активность, а явный `off` использует то же приглушённое отображение, что
+`unknown/unavailable`. Правило действует на весь домен (телевизоры, ресиверы,
+колонки, саундбары), не на конкретные модели, и не вводит отдельного статуса.
+Если у маркера несколько `media_player`, он бледнеет только когда среди них
+нет доступной и включённой сущности.
 
 В glow-режиме у реального источника света жёлтая подложка может быть скрыта:
 его устойчивым индикатором служит световое пятно. Эффект активности остаётся.

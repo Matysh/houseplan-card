@@ -1,14 +1,15 @@
-# Filtering: the explicit "hide from plan" flag
+# Filtering: hide versus delete
 
 Agreed with the owner 2026-07-29. This document is the source of truth for the
 mechanism; the code follows it.
 
 ## Principle
 
-Whether a device is on the plan is an EXPLICIT, per-device fact: the
-bottom-left "Hide" / "Show" action, stored as `marker.hidden`. The old on-the-fly
-filtering algorithm survives only as the SEEDER of those flags — it decides
-the initial value once, and the user owns the flag from then on.
+Whether a device is on the plan is an EXPLICIT, per-device fact. The
+bottom-left actions have deliberately different meanings: Hide/Show is a
+reversible presentation flag, while Delete removes the plan object and every
+plan-level contribution. The old on-the-fly filtering algorithm survives only
+as the SEEDER of initial hidden flags.
 
 ## Data model
 
@@ -17,6 +18,11 @@ the initial value once, and the user owns the flag from then on.
 - `marker.hidden: false` (marker present) — explicitly VISIBLE: the seeder
   never touches a device that has any marker, so unhiding must KEEP the stub
   marker. That is the re-seed protection.
+- `marker.removed: true` — a minimal binding tombstone. It is not a marker and
+  is never built, rendered, shown as a ghost or aggregated. It exists only so
+  automatic discovery cannot immediately recreate the deleted device. The
+  same binding remains available in Add; saving it again replaces the
+  tombstone and starts with a fresh position.
 - No marker — never evaluated by the seeder yet, or a plain physical device.
 - `settings.filter_seeded: true` — this config has been materialised.
 - `settings.show_all` — removed (deleted during materialisation). The old
@@ -45,6 +51,12 @@ the old behaviour until an editing client materialises it.
 
 ## Behaviour
 
+| State | Renders | Show hidden | Room/light/climate data | Add picker |
+|---|---:|---:|---:|---:|
+| visible marker/device | yes | — | yes | no duplicate |
+| `hidden: true` | no | ghost | LQI/climate yes, visible light no | no duplicate |
+| `removed: true` | no | no | no | yes |
+
 - Hidden devices ARE built (flagged `hidden`), but not rendered in any mode,
   except the device editor with "Show hidden devices" on — there they render
   ghosted (translucent, dashed) and clicking opens the dialog, where the
@@ -66,8 +78,18 @@ the old behaviour until an editing client materialises it.
   unaffected, as before.
 - The bottom-left "Hide" / "Show" action appears in the dialog of every
   existing device kind, virtual included; changing it is applied by "Save".
-- "Remove from plan" disappears for auto/entity devices (the hide action is
-  the one way to hide); a virtual device's "Delete" remains a real deletion.
+- "Delete" appears beside Hide/Show for every existing marker. It asks for
+  confirmation and commits immediately. HA device/entity markers leave only
+  the tombstone above; virtual markers are removed outright.
+- Deletion removes the marker layout, pending activity state, attachments and
+  saved vacuum trails. A late drag from a stale browser tab is ignored by the
+  server while the tombstone exists.
+- Deleted bindings are excluded from room LQI, light-source resolution, room
+  light statistics/fill/Glow, registry-wide climate averages, explicit room
+  temperature/humidity sources and another marker's `controls`. References in
+  openings and live text are retained but become inactive (no lock/contact
+  badge and `—` respectively) so adding the device again restores them without
+  reconstructing configuration.
 - Duplicate names are still numbered, light groups still fold — those are
   aggregation, not hiding.
 
@@ -125,6 +147,16 @@ says otherwise. Two edges follow from the wording: a marker set to
 rules 2–3 (the statement is only as strong as the entity behind it), and a
 curtain left on «Инфо-карточка» still indicates its primary — one click in the
 dialog away, and the honest reading of what the marker was told it is.
+
+### A media player is powered, not "working" (owner 2026-08-07)
+
+The resolved role stays `media_player.*` for every TV, receiver, speaker and
+soundbar; no model/name exception is involved. Its HA transport states
+(`on`, `idle`, `playing`, `paused`, `standby`, etc.) all produce a neutral
+marker with no running effect. Explicit `off` deliberately reuses the existing
+`.dev.unavail` faded presentation used by `unknown` / `unavailable`; it does
+not add another visual status. When a marker resolves several media entities,
+it fades only if none is currently available and powered.
 
 ### A cover is never painted (owner 2026-08-04)
 

@@ -47,6 +47,8 @@ houseplan-card/
    initial focus, Escape close event and restore-focus session. Focus sessions
    are scoped to a card shadow root so nested dialogs return to their parent
    trigger and dialog replacement still returns to the original outside opener.
+   Its footer wrapper is a full-width slot item: HA lays the footer slot out as
+   flex, so flattening that wrapper would shrink action rows to their content.
 
 ## Coordinate system
 
@@ -84,7 +86,8 @@ Built from the registries (`_buildDevices`), rules carried over 1-to-1 from the 
   The same tooltip includes the formatted clean-floor area (inner contour for
   thick walls), and View hover gives every room an accent/brightness highlight.
 - Icon state classes: on (yellow), open (orange: cover/valve/lock/binary_sensor
-  of problem classes), unavail (transparency). Yellow remains on the marker in
+  of problem classes), unavail (transparency, also used by a powered-down
+  media endpoint). Yellow remains on the marker in
   source-glow fill mode: a light pool is spatial information, not a replacement
   for the universal working-state plate.
 
@@ -116,7 +119,7 @@ Room drawing shows a live **ruler** (`segmentCm` +
 `cell_cm` (default 5 cm per grid cell).
 
 
-`config.markers[]`: `{id, binding:'device:<id>'|'entity:<eid>'|'virtual', space?, area?, hidden?,
+`config.markers[]`: `{id, binding:'device:<id>'|'entity:<eid>'|'virtual', space?, area?, hidden?, removed?,
 name?, icon?, model?, link?, description?, pdfs:[{name,url}]}`. A hybrid: auto-discovered HA devices
 appear on their own; a marker with `binding=device:<id>` overrides them (metadata/rebinding/hiding),
 `entity:<eid>` — for groups/helpers, `virtual` — a manual icon without HA. The marker id = device_id /
@@ -125,16 +128,23 @@ references and duplicates by name|area. Manual files: transactional HTTP upload 
 (staging `up_*` folders promoted on save), served via signed
 `/api/houseplan/content/files/…` urls.
 
+`removed:true` is a binding tombstone, not a renderable marker. It claims an
+HA binding against automatic discovery while intentionally exposing that same
+binding to the Add picker. Every plan-level resolver excludes its entity or
+all entities of its device. Re-adding replaces the tombstone; virtual markers
+need no tombstone because they have no discovery source.
+
 ## Server-side configuration (current shape, v1.51+)
 
 `.storage/houseplan.config` (Store):
 ```json
 { "spaces": [{ "id","title","plan_url","plan_aspect",
-               "plan_x","plan_y","plan_scale",   // optional, docs/BACKDROP.md
+               "plan_x","plan_y","plan_scale_x","plan_scale_y","plan_angle",
+               "plan_scale",   // legacy optional fallback, docs/BACKDROP.md
                "view_box":[4],
                "rooms":[{"id","name","area","poly|x/y/w/h","open_to","settings"}],
                "openings":[…], "decor":[…], "settings":{…} }],
-  "markers": [{ "id","binding":"device:<id>|entity:<eid>|virtual","hidden",
+  "markers": [{ "id","binding":"device:<id>|entity:<eid>|virtual","hidden","removed",
                 "name","icon","display","controls","is_light","tap_action",
                 "room_id","pdfs",… }],
   "settings": { "exclude_integrations":[], "group_lights":true,
@@ -144,14 +154,16 @@ references and duplicates by name|area. Manual files: transactional HTTP upload 
 All coordinates are **normalized (0..1 of the canvas)**; the canvas is always
 **square** (v1.48.0), render space `NORM_W × NORM_W` (1000×1000). A space has no
 proportions of its own — `plan_aspect` is the IMAGE's ratio, used to letterbox
-it centred on the square; the optional `plan_x`/`plan_y`/`plan_scale` then move
-and uniformly scale that rectangle (`planRect`, docs/BACKDROP.md), and their
-absence is the centred default exactly. The schema bounds geometry to ±4 with strictly
+it centred on the square; optional `plan_x/y`, independent `plan_scale_x/y`
+and `plan_angle` then transform that rectangle (`planRect`, docs/BACKDROP.md).
+Legacy `plan_scale` feeds both axes, and the absence of every transform field
+is the centred default exactly. The schema bounds geometry to ±5000 with strictly
 positive sizes (HP-1501/1502). `device_overrides`/`virtual_devices` are long
-gone — markers carry everything, `marker.hidden` is the explicit
-"hide from plan" flag seeded once by the old filter (docs/FILTERING.md).
+gone — markers carry everything. `marker.hidden` is the explicit reversible
+"hide from plan" flag seeded once by the old filter; `marker.removed` is the
+minimal delete tombstone (docs/FILTERING.md).
 Layout v2: `{device_id | rl_<roomId>: {"s": space, "x", "y"}}` (normalized,
-bounded ±4). Plan files: `<config>/houseplan/plans/<space>.<token>.<ext>`
+bounded ±5000). Plan files: `<config>/houseplan/plans/<space>.<token>.<ext>`
 (copy-on-write, never overwritten), served via signed
 `/api/houseplan/content/plans/_/<name>` urls; growth is bounded by store
 quotas, nothing is ever deleted for being old (docs/SCOPE.md).
@@ -180,7 +192,8 @@ All committed plan-geometry mutations enter one named 50-command Undo/Redo stack
 Ctrl+Shift+Z/Ctrl+Y and the toolbar buttons use the same stack; a new mutation after Undo drops
 the redo branch. The local stack survives the server echo of its own writes, but is cleared when
 a newer external config revision is adopted. Positional placement is always quantized to the plan
-grid. Shift remains an angular precision modifier only and cannot create off-grid coordinates.
+grid. Shift may alter a gesture's geometry (square/circle creation, independent
+resize axes or free rotation), but it cannot create off-grid coordinates.
 
 **A line is never an entity of its own (v1.19.0).** Nothing is persisted while you draw: an
 outline you never close leaves no trace. Walls are *derived* from the room outlines by
@@ -222,6 +235,7 @@ double click → properties dialog. In markup mode the "Opening" tool handles cl
 | `houseplan/layout/update` | `device_id`, `pos` | `{ok, rev}`; event `houseplan_layout_updated` |
 | `houseplan/config/get` | — | `{config, rev}` |
 | `houseplan/trail/get` | — | `{trails: {marker: {current, previous}}}` — vacuum runs, raw robot coords |
+| `houseplan/trail/delete` | `marker_id` | `{ok, removed}` — erase current/previous runs after marker deletion |
 | `houseplan/config/set` | `config`, `expected_rev?` | `{ok, rev}` / err `conflict`; event `houseplan_config_updated` |
 | `houseplan/plan/optimize` | `config`, `layout`, both expected revisions | crash-resumable two-store commit + one-deep backup |
 | `houseplan/plan/optimize_undo` | both expected revisions | restores backup only before any later edit |
@@ -405,11 +419,20 @@ hash falls back to the default.
 
 ## Additions v1.28–v1.41 (2026-07-24)
 
-- **Decor layer** (`space.decor[]`, v1.33): purely visual shapes
-  (line/rect/ellipse/text, normalized coords, per-shape style) drawn in the
-  SVG right above the background image and BELOW rooms; pointer-events only
-  inside the Background editor. Validated by `DECOR_SCHEMA` (vol.Any of the
-  four kinds).
+- **Decor layer** (`space.decor[]`, v1.33; unified editor 2026-08-07): purely
+  visual line/rect/ellipse/text/furniture shapes, normalised geometry and
+  physical per-shape style. `src/editors/decor/types.ts` is the typed persisted
+  union; `geometry.ts` owns cm↔render conversion, oriented boxes and the
+  decor+room magnet; `hp-color-opacity` is the shared colour/alpha control.
+  `houseplan-card.ts` still owns orchestration, but every kind uses one
+  selection/transform/history pipeline. `DECOR_SCHEMA` accepts canonical
+  `width_cm`, text `size_cm`, opacity/fill fields and legacy width/text-size
+  representations for read compatibility.
+- **Plan image transform**: `planRect()` resolves the fitted image plus
+  `plan_x/y`, independent `plan_scale_x/y` and `plan_angle`; legacy
+  `plan_scale` feeds both axes. The image is interactive only in its own
+  Background tool, rotated corners contribute to content bounds, and the
+  static card uses the same model. See `DECOR-EDITOR.md` and `BACKDROP.md`.
 - **Glow fill** (v1.35+): `fill_mode: 'glow'` paints every room with
   `fill_colors.glow_base` and renders per-source radial gradients clipped by
   a per-light `clipPath` = zone polygons + doorway sectors, each contour a

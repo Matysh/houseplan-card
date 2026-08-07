@@ -159,9 +159,13 @@ export function entityVisualSample(hass: any, eid: string): EntityVisualSample {
   }
 
   if (domain === 'media_player') {
-    return state === 'playing'
-      ? { ...base, status: 'working', activity: 'running' }
-      : base;
+    // A media-player state describes its power/transport lifecycle, not an
+    // actuator doing work.  In particular, `playing` must not turn every TV,
+    // receiver or soundbar into a permanent yellow "working" marker.  Keep
+    // every powered/transport state neutral. An explicit `off` uses the same
+    // existing faded presentation as unknown/unavailable: this is a visual
+    // availability flag, not another status in the marker state machine.
+    return state === 'off' ? { ...base, availability: 'unavailable' } : base;
   }
 
   if (domain === 'vacuum') {

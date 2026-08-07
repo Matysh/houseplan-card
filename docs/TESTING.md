@@ -78,8 +78,9 @@
       rects, polygon vertices, view_box and openings — not only in layout; the
       openings list honours MAX_OPENINGS [auto: tests_backend]
 - [ ] Drag hardening (v1.44.4, L4 sub-item): every drag pipeline captures the
-      pointer through the tolerant helper; decor shapes cannot be dragged more
-      than a quarter of the plan outside the viewBox [auto: smoke_decor]
+      pointer through the tolerant helper; decor follows the infinite canvas
+      and stops only at the shared normalized ±5000 garbage bound
+      [auto: smoke_decor, smoke_drag_bounds]
 
 - [ ] Room climate counts hidden sensors (v1.44.5): a thermometer that is NOT
       placed on the plan (hidden by filtering or by the user) still feeds the
@@ -713,24 +714,29 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       or auto position migrates to the new marker id; only a brand-new icon or
       a move to another space centers it in the target room [auto: smoke_marker_stay]
 - [ ] Icon picker placeholder (v1.33.3): with no explicit icon the device
-      dialog's icon picker shows the auto-derived icon as its placeholder, plus
-      an "Auto: mdi:..." hint line with the icon preview; the hint disappears
-      once an explicit icon is picked [auto: smoke_icon_placeholder]
+      dialog's icon picker shows both the glyph and `mdi:*` label of the
+      auto-derived effective icon, plus an "Auto: mdi:..." hint line with the
+      icon preview; opening/saving untouched must keep the explicit override
+      empty, and the hint disappears once an explicit icon is picked
+      [auto: smoke_icon_placeholder]
 - [ ] No Reset button (v1.33.2): the Device editor toolbar has three tools —
       add, show all, icon rules; the layout-wiping Reset is gone [auto: smoke_editor_tabs]
 - [ ] Grid in all editors + decor fade (v1.33.1): the dot grid shows in the
       Device and Background editors too (instant "I'm editing" cue), not in
       View; in the Background editor rooms/devices/openings/labels fade to 35%
       while decor shapes stay fully opaque; no fade in the other editors [auto: smoke_decor / smoke_grid_fade]
-- [ ] Background editor (v1.33.0): third tab with its own toolbar (select /
-      line / rect / oval / text / erase + color, width, fill, X); shapes drag-
-      drawn with grid snap and live preview; degenerate shapes dropped. In
-      Select, double click always opens properties: text/HA variables for a
-      label, colour + line width for every other object, and Fill for rectangles
-      or ovals. Select moves (snap), Delete removes, Erase deletes on click;
-      Esc: draft → selection → select tool →
-      View; decor renders under rooms, visible everywhere, inert outside the
-      editor; stored in space.decor (rev/lock, backend schema) [auto: smoke_decor / smoke_grid_fade]
+- [ ] Background editor (unified after v1.59.2): it always opens on Select and
+      has Select / optional Plan backdrop / Line / Rectangle / Oval / Text /
+      Furniture / Erase, colour+opacity, physical line width, optional
+      fill colour+opacity and named Undo/Redo. Shapes are drag-drawn with
+      mandatory grid snap and live preview; degenerate shapes are dropped.
+      One click selects every decor kind; lines get endpoint handles and box
+      kinds get the common proportional resize/rotate frame. Double click
+      opens complete numeric/style/content properties. Delete removes the
+      selection and Erase deletes on click. Esc restores only an active draft
+      or gesture; a released operation is reverted through Undo. Decor stays
+      purely visual and inert outside its editor [auto: smoke_decor /
+      smoke_grid_fade; unit: decor-geometry.test.mjs]
 - [ ] Opening hover preview (v1.32.1): with the Opening tool, hovering near a
       wall shows a dashed 90 cm ghost snapped onto the wall (with a center
       dot); no ghost far from walls, over an existing opening (click = edit),
@@ -758,6 +764,10 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       info, device info, icon rules, general settings, device editor, opening
       editor, space dialog incl. abandoning an import queue); stacked dialogs
       close one per press; Esc while drawing still undoes the last point [manual]
+- [ ] Shared dialog footer (dev after v1.59.2): in the wide device editor the
+      divider spans the full modal width, Hide is bottom-left and Cancel/Save
+      are bottom-right; the scrollable body ends above the footer. At narrow
+      width the two action groups wrap without overlap [manual]
 - [ ] General settings gear (v1.30.3): the header cog is visible in every mode
       (admins), opens the palette dialog from View too [auto: smoke_gear_tabs / smoke_gs_always]
 - [ ] Editor tabs (v1.30.2): only two tabs — "Plan editor" / "Device editor"
@@ -789,7 +799,27 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] Tap-action override select (default/info/more-info/toggle) saves and applies
 - [ ] PDF/manual upload: ok path; >50 MB → readable error; .exe → bad-ext error [auto backend]; traversal names sanitized [auto backend]
 - [ ] `javascript:` in the link field is not rendered as a clickable link [manual]
-- [ ] Remove: auto device → hidden marker (reappears via dialog "show all"? no — stays hidden until re-added); virtual → gone incl. its layout entry [auto backend]
+- [ ] Delete versus Hide: both buttons sit together at bottom-left; Delete asks
+      for confirmation, Cancel changes nothing, Confirm closes the dialog
+      immediately [manual]
+- [ ] Delete an auto device: no icon and no Show-hidden ghost; it does not
+      return on rebuild/reload, but its binding is offered by Add. Re-add it:
+      one marker only, fresh centred/grid position, no tombstone [unit + manual]
+- [ ] Delete an entity marker and a virtual marker: the entity is offered by
+      Add (with Show entities when applicable); the virtual marker is gone and
+      can be recreated manually. The exact deleted entity remains offered even
+      if HA marks its registry entry hidden. Other virtual markers survive both
+      Save and Delete [unit + manual]
+- [ ] Deleted device contributes to none of LQI, climate average, explicit room
+      temp/humidity, resolved lights, Light fill, Glow, room stats or another
+      marker's controls. Hidden device keeps the documented hidden semantics
+      [unit + manual]
+- [ ] References are non-destructive: a deleted contact/lock stops driving an
+      opening and a deleted live-text variable prints `—`; re-adding the
+      binding restores both. Layout, attachments and current/previous vacuum
+      trails are gone [unit + backend + manual]
+- [ ] Multi-tab race: after deletion, a stale tab's late layout/update is
+      acknowledged as ignored and cannot resurrect the old position [backend]
 
 ## Icon rules ★
 
@@ -901,9 +931,13 @@ require hands on real hardware — they remain for the human pass.
       direct terminal `closed ↔ open` / `locked ↔ unlocked` without an
       intermediate state breathes for about 3.3 s
 - [ ] Actual work (light/switch/fan/humidifier on, active climate action,
-      media playing, vacuum cleaning, script running) is yellow and slowly
+      vacuum cleaning, script running) is yellow and slowly
       breathes in Icon + activity; `automation = on` is merely enabled and
       remains neutral
+- [ ] Every `media_player` is neutral and has no running activity for `on`,
+      `idle`, `playing`, `paused` and other transport states; explicit `off`
+      uses the same faded treatment as `unknown`/`unavailable`. Several
+      resolved media entities fade only when none is available and powered
 - [ ] Controls aggregate their targets: any working target drives both the
       yellow plate and the running effect
 - [ ] Open contact/unlocked lock/open valve are orange; an open cover stays
@@ -1165,8 +1199,9 @@ require hands on real hardware — they remain for the human pass.
       in the HA unit system (`cell_cm`, metres or feet) and turns green on a
       45° multiple — exactly the badge a wall gets in the Plan editor. It
       updates on every move, is absent before the drag has any length, and is
-      gone the moment the shape is committed. Rectangles and ovals show their
-      bounding box «W × H» instead [auto: smoke_decor]
+      gone the moment the shape is committed. Rectangles show «W × H» plus
+      area; circles show `R`, and non-circular ovals show `Rx × Ry`
+      [auto: smoke_decor]
 
 ## The text block on the plan (docs/LIVE-TEXT.md, dev, unreleased)
 
@@ -1198,14 +1233,16 @@ require hands on real hardware — they remain for the human pass.
       [auto: smoke_live_text]
 - [ ] **The same everywhere**: the label reads identically in View, in the
       editors and on a kiosk screen [auto: smoke_live_text]
-- [ ] **No font-size choice any more**: the dialog has no Small/Medium/Large.
-      Select a label and pull a corner — the text scales uniformly about its
-      anchor; the handle above it turns the block in 5° steps, Shift for any
-      angle. Rotating back to zero leaves a straight label
+- [ ] **Physical text size**: the dialog has no Small/Medium/Large; instead it
+      exposes a numeric centimetre/inch size. Select a label and pull a corner
+      — the text scales uniformly about its anchor even with Shift; the handle
+      above it turns the block in 5° steps, Shift for any angle. A new/edited
+      label stores `size_cm`, while legacy `size/scale` remains pixel-identical
+      until edited or explicitly optimized. Rotating back to zero leaves a straight label
       [auto: smoke_decor_text]
 - [ ] **Old labels keep their size**: a plan made before the handles renders
       its Small/Medium/Large labels at exactly the old 14/20/30 px, and the
-      first corner drag converts that setting into the scale it meant
+      first corner drag converts that setting into the equivalent `size_cm`
       [auto: smoke_decor_text + unit logic.test]
 - [ ] **Enter is a new line**: type two lines in the dialog (Ctrl/⌘+Enter or
       the button saves) — the plan shows two lines, centred, growing around the
@@ -1257,20 +1294,17 @@ require hands on real hardware — they remain for the human pass.
 ## Backdrop picture: move & scale (docs/BACKDROP.md, dev)
 
 - [ ] **The frame is there, and only there** (owner 2026-08-04): open a space
-      that HAS an uploaded plan image → **Редактор подложки**. A dashed frame
-      hugs the picture straight away, with four round corner handles, and the
-      toolbar has gained a «Картинка-подложка» tool. Switch to Line /
-      Rectangle / Oval / Text / Erase — the frame disappears (those tools own
-      the drag). Leave for View, the Plan editor, the Device editor and the
-      kiosk — no frame anywhere. A space with NO image never shows one, and
-      its toolbar has no extra button [auto: smoke_backdrop, smoke_decor]
-- [ ] **The picture tool is already armed** (owner 2026-08-05, «не получается
-      двигать картинку-подложку»): open **Редактор подложки** on a space that
-      HAS a picture — «Картинка-подложка» is the selected tool, the hint about
-      dragging is in the toolbar, and the picture moves on the FIRST drag,
-      without picking anything. A space with no picture opens on «Выбрать» as
-      before, and Esc still returns to «Выбрать» [auto: smoke_backdrop,
-      smoke_hide_layers]
+      that HAS an uploaded plan image → **Редактор подложки**. It opens on
+      Select; the toolbar contains «Картинка-подложка». Select that tool: a
+      dashed, rotated frame hugs the picture with four corner handles and one
+      upper rotate handle. Switch to Select / Line / Rectangle / Oval / Text /
+      Furniture / Erase — the frame disappears and the image is pointer-inert.
+      Leave for View, Plan, Devices or kiosk — no frame anywhere. A space with
+      NO image has no image tool [auto: smoke_backdrop, smoke_decor]
+- [ ] **Opacity is contextual**: under Select or any drawing/furniture/erase
+      tool the image opacity is exactly 0.5; under Plan backdrop it is 1.0.
+      View, Plan, Devices, kiosk and the static card always use 1.0
+      [auto: smoke_backdrop, smoke_hide_layers]
 - [ ] **The corner handles are beads, not blobs** (owner 2026-08-05,
       «уменьшить в 4 раза… они постоянно гигантские»): the four dots on the
       picture's frame are small — they must not cover the picture — yet a
@@ -1293,7 +1327,15 @@ require hands on real hardware — they remain for the human pass.
       and shrinks in BOTH directions at once, keeps its proportions (nothing
       is stretched), and the OPPOSITE corner does not move a pixel. Try all
       four corners; the cursor over a handle is a diagonal resize arrow. On a
-      tablet the handles are big enough to hit with a finger [auto: smoke_backdrop]
+      tablet the handles are big enough to hit with a finger. Repeat with
+      Shift: width and height now change independently, but stay grid-bound
+      [auto: smoke_backdrop]
+- [ ] **Rotation and numeric properties**: the upper handle rotates around the
+      image centre in 5° steps; Shift allows any angle. Double click the image
+      while its tool is active, enter width/height in m/ft and an angle, save,
+      reload and compare. Esc during a live transform restores pointer-down;
+      after release Ctrl+Z restores and Ctrl+Y reapplies it [manual + unit:
+      backdrop.test.mjs]
 - [ ] **Live size in metres**: while dragging or scaling, a badge in the middle
       of the picture states its real size, «Ш × В», in the same units the wall
       ruler uses (metres, or feet on an imperial HA). Change the space's
@@ -1304,8 +1346,9 @@ require hands on real hardware — they remain for the human pass.
       two). After a corner scale one side of the picture ends on a node too;
       holding Shift produces the same snapped result [auto: smoke_backdrop]
 - [ ] **«Вернуть картинку»**: the button appears in the backdrop toolbar only
-      after the picture has been moved or scaled. Press it — the picture goes
-      back to centred, at its own size, and the button disappears again
+      after the picture has been moved, scaled or rotated. Press it — the picture goes
+      back to centred, at its own size and zero angle; Undo restores the prior
+      transform, and the button disappears at the reset state
       [auto: smoke_backdrop]
 - [ ] **NEW PAPER RULE — the sheet is the rooms** (owner 2026-08-04, changes
       the old behaviour): set a loud `bg_color` (or `daynight`) on a space
@@ -1324,7 +1367,7 @@ require hands on real hardware — they remain for the human pass.
       arrow points at them together [auto: smoke_backdrop]
 - [ ] **The static card and the kiosk agree**: put a `houseplan-space-card` for
       the same space on a dashboard and open the kiosk view. Both draw the
-      picture at the same offset and size, with the same room-contour paper
+      picture at the same offset, independent size and angle, with the same room-contour paper
       [auto: smoke_backdrop, smoke_render_parity]
 - [ ] **Old plans are untouched**: a space whose picture has never been moved
       renders exactly as before the update — same place, same size. Nothing is
@@ -1567,7 +1610,8 @@ require hands on real hardware — they remain for the human pass.
 - [ ] **The wall magnet**: click near a wall — the piece's BACK lands flat on
       it and it turns to the wall's direction (a bed's headboard against the
       wall, a toilet's cistern against it, a sofa's back against it). Holding
-      **Shift** at the same place must not disable the wall magnet
+      **Shift** bypasses the wall magnet but still lands through the
+      decor/room/grid magnet, never between grid nodes
       [auto: smoke_furniture]
 - [ ] **The magnet while dragging**: drag a placed sofa across the room to
       another wall — it turns to that wall as it arrives. Drag it back into the
@@ -1580,14 +1624,19 @@ require hands on real hardware — they remain for the human pass.
 - [ ] **The frame is the text block's frame**: four corner beads and a rotate
       handle, the beads a quarter of their hit area. Grab one with a finger on
       a tablet, aiming roughly: it is caught [auto: smoke_furniture]
-- [ ] **Width and depth are independent**: drag a corner sideways — only the
-      width changes; drag it down — only the depth. Two live badges show both
-      in metres (or feet) while you drag, and they match a later measurement
-      against the grid. Holding **Shift** must not create sizes off the grid
+- [ ] **Proportional by default**: drag a corner sideways or down — the current
+      ratio is preserved about the opposite corner. Hold Shift to change width
+      and depth independently. Two live badges show both in metres (or feet)
+      while you drag, and they match a later measurement against the grid;
+      neither mode creates sizes off the grid
       [auto: smoke_furniture]
 - [ ] **Rotation**: the handle above the box turns the piece in 5° steps about
       its CENTRE (not a corner); Shift goes past the step; turning back to
       straight removes the angle entirely [auto: smoke_furniture]
+- [ ] **Complete properties**: double click a piece and change its symbol,
+      width/depth in m/ft, angle, contour colour/opacity and line width in
+      cm/in. Save keeps its centre/transform and reloads exactly; Cancel changes
+      nothing [manual]
 - [ ] **It is only decor**: a piece takes no tap in view mode, has no entity
       and no state, and does not appear in any room aggregation. Erase removes
       it; Delete removes the selected one [auto: smoke_furniture]

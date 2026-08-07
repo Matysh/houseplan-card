@@ -354,7 +354,7 @@ wall runs diagonally is broken geometry, not a tidy plan:
 
 | Element | Where |
 | --- | --- |
-| the backdrop picture: move (its top-left corner) and corner scale (the dragged corner, along the longer side) | `_bdMove` → `_snap` / `snapToGrid` (docs/BACKDROP.md §5) |
+| the backdrop picture: move (its top-left corner) and proportional/independent corner scale | `_bdMove` → `_snap` / `snapToGrid` (docs/BACKDROP.md) |
 | room vertices (draw tool) | `_markupClick` → `_snap` |
 | split tool's interior vertices | `_splitClick` → `_snap` |
 | resize edge drag / corner scale | `_rszMove` → `_snap` |
@@ -394,9 +394,11 @@ Three things were fixed here besides the new coverage:
 
 There is no free-position mode. `Shift` never suspends coordinate
 snapping: free anchors always land on grid nodes, and wall-bound objects
-always remain projected and quantised along their wall. `Shift` is
-reserved for explicitly angular controls (fine decor rotation and the
-compass step) and cannot create an off-grid object.
+always remain projected and quantised along their wall. It modifies only
+the current gesture: square/circle creation, independent resize axes, free
+decor/backdrop rotation, the compass step, or bypassing the furniture wall
+magnet while the ordinary decor/room/grid magnet remains active. It cannot
+create an off-grid object.
 
 ### 9.5 «Оптимизировать планы» — explicit whole-plan maintenance
 
@@ -503,7 +505,7 @@ undo because a grid projection is not invertible.
 | static card `aspect-ratio` + `viewBox` from `space.vb` | the static card frames the square | `spaceFrame()` — same content frame as the full card |
 | `validation.py` `+/-4`, `_EXTENT <= 4`, decor `-1..2`, opening `length <= 1` | the square plus slack | §3 |
 | `safeViewBox` fallback `[0,0,1,1]` | a broken `view_box` means the square | kept — it is only the last-resort hint (§4) |
-| `fitInSquare` (image placement) | image is centred in the square | **kept** — it defines the image's own rectangle in canvas units, which is exactly what §4 wants as a content item. Since v1.58.0 it is only the DEFAULT placement: `planRect()` adds the owner's `plan_x`/`plan_y`/`plan_scale` on top, and the moved rectangle is what §4 counts (docs/BACKDROP.md) |
+| `fitInSquare` (image placement) | image is centred in the square | **kept** — it defines the image's own rectangle in canvas units, which is exactly what §4 wants as a content item. It is only the DEFAULT placement: `planRect()` adds `plan_x/y`, per-axis scale and angle on top (with legacy `plan_scale` as fallback), and the transformed corners are what §4 counts (docs/BACKDROP.md) |
 | image plan papers the image rect | the picture IS the sheet | **removed** in v1.58.0 — the opaque paper is the room contours in every case, and the picture is drawn on top of it (docs/BACKDROP.md §3) |
 | `_spaceH` / `_decorH` = `NORM_W` | the canvas is square | **kept** — this is the coordinate system's aspect, not a frame |
 | `_gridPitch = NORM_W / GRID_N` | grid pitch is tied to the canvas unit | **kept** — the pitch is the real-world cell (`cell_cm`), it must not change with the plan's size |

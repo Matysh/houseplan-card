@@ -9,7 +9,9 @@
  */
 
 import { alignAllToGrid, type AlignReport } from './align-grid';
-import { decorTextScale, liveTextReference, liveTextToken, roomPoly } from './logic';
+import {
+  DECOR_TEXT_BASE, decorTextScale, liveTextReference, liveTextToken, roomPoly,
+} from './logic';
 import {
   clipOpenSpansToShared, cutsToSpanEntries, entryToSeg,
   projectOnSeg, rekeyOpenSpansAfterMove, resolveOpenCuts, sanitizeOpenSpans,
@@ -21,7 +23,7 @@ import {
 } from './wall-thickness';
 
 /** Bump when a new lossless maintenance pass is added. */
-export const PLAN_MODEL_VERSION = 1;
+export const PLAN_MODEL_VERSION = 2;
 const DEFAULT_CELL_CM = 5;
 
 export interface OptimizeReport extends AlignReport {
@@ -85,12 +87,41 @@ const migrateLosslessly = (config: any): number => {
 
   for (const space of config.spaces || []) {
     if (own(space, 'segments')) { delete space.segments; n++; }
+    if (own(space, 'plan_scale')) {
+      const k = Number(space.plan_scale);
+      if (Number.isFinite(k) && k > 0) {
+        if (!own(space, 'plan_scale_x')) space.plan_scale_x = k;
+        if (!own(space, 'plan_scale_y')) space.plan_scale_y = k;
+      }
+      delete space.plan_scale;
+      n++;
+    }
+    const cellCm = Number(space.cell_cm) > 0 ? Number(space.cell_cm) : DEFAULT_CELL_CM;
     for (const shape of space.decor || []) {
+      if (own(shape, 'width')) {
+        if (!own(shape, 'width_cm'))
+          shape.width_cm = Number((((Number(shape.width) / GRID_PITCH) * cellCm)).toFixed(6));
+        delete shape.width;
+        n++;
+      }
+      if ((shape?.kind === 'rect' || shape?.kind === 'ellipse') && shape.fill === true) {
+        if (!own(shape, 'fill_color')) { shape.fill_color = shape.color || '#607d8b'; n++; }
+        if (!own(shape, 'fill_opacity')) { shape.fill_opacity = 0.25; n++; }
+      }
       if (shape?.kind !== 'text') continue;
 
-      // Old s/m/l text sizes have an exact numerical equivalent.
-      if (shape.scale === undefined && shape.size !== undefined) {
-        shape.scale = decorTextScale(shape);
+      // Text size is physical styling, like stroke thickness. Convert either
+      // legacy representation to centimetres without changing its current
+      // appearance at this space's scale.
+      if (shape.size_cm === undefined) {
+        shape.size_cm = Number((
+          ((DECOR_TEXT_BASE * decorTextScale(shape)) / GRID_PITCH) * cellCm
+        ).toFixed(6));
+        delete shape.scale;
+        delete shape.size;
+        n++;
+      } else if (own(shape, 'scale') || own(shape, 'size')) {
+        delete shape.scale;
         delete shape.size;
         n++;
       }

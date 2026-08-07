@@ -34,7 +34,11 @@ const settle = () => page.evaluate(() => new Promise((r) => requestAnimationFram
 const q = (sel) => page.evaluate((s) => window.__card.renderRoot.querySelectorAll(s).length, sel);
 const spaceCfg = () => page.evaluate(() => {
   const sp = window.__card._serverCfg.spaces.find((s) => s.id === 'f1');
-  return { x: sp.plan_x ?? null, y: sp.plan_y ?? null, k: sp.plan_scale ?? null };
+  return {
+    x: sp.plan_x ?? null, y: sp.plan_y ?? null,
+    sx: sp.plan_scale_x ?? null, sy: sp.plan_scale_y ?? null,
+    legacy: sp.plan_scale ?? null, angle: sp.plan_angle ?? null,
+  };
 });
 /** The image rect AS RENDERED (attributes of the <image> in the stage svg). */
 const imageRect = () => page.evaluate(() => {
@@ -84,28 +88,24 @@ const tool = (t) => page.evaluate((t) => {
 
 await mode('decor');
 await settle();
-// the frame is on screen the moment the backdrop editor opens…
-check('frame_in_backdrop_editor', await q('.bdframe'), 1);
-check('four_finger_handles', await q('.bdframe .bdhandle'), 4);
-check('frame_hugs_the_picture', await frameRect(), BASE);
+// Every Background session starts predictably on Select. The image frame is
+// exclusive to its own tool and therefore cannot steal a Select/pan gesture.
+check('no_frame_until_picture_tool', await q('.bdframe'), 0);
+check('no_handles_until_picture_tool', await q('.bdframe .bdhandle'), 0);
+check('no_picture_frame_until_picture_tool', await frameRect(), null);
 check('untouched_picture_is_where_it_always_was', await imageRect(), BASE);
 // …and the picture has a tool of its own, offered because f1 HAS a picture
 check('the_picture_has_a_tool', await q('.decorbar .btn.dtool'), 8);
-// …which is ARMED the moment the editor opens (owner 2026-08-05: «не
-// получается двигать картинку-подложку в режиме редактора подложки» — the
-// frame promised a draggable picture while the promise needed a tool nobody
-// had found). The editor is named after the picture; it opens on it.
-check('picture_tool_armed_on_open', await page.evaluate(() => window.__card._decorTool), 'backdrop');
-check('grab_cursor', await page.evaluate(() =>
-  window.__card.renderRoot.querySelector('.stage').classList.contains('bdgrab')), true);
-// select still exists and still leaves the body to the pan (smoke_pan_any_zoom)
-await tool('select');
-await settle();
+check('select_tool_armed_on_open', await page.evaluate(() => window.__card._decorTool), 'select');
 check('no_grab_cursor_under_select', await page.evaluate(() =>
   window.__card.renderRoot.querySelector('.stage').classList.contains('bdgrab')), false);
 await tool('backdrop');
 await settle();
 check('frame_still_there_under_its_own_tool', await q('.bdframe'), 1);
+check('four_corners_plus_rotate_under_picture_tool', await q('.bdframe .bdhandle'), 5);
+check('frame_hugs_the_picture_under_picture_tool', await frameRect(), BASE);
+check('grab_cursor_under_picture_tool', await page.evaluate(() =>
+  window.__card.renderRoot.querySelector('.stage').classList.contains('bdgrab')), true);
 // a drawing tool owns the drag instead — no frame competing with it
 await tool('rect');
 await settle();
@@ -145,7 +145,8 @@ check('badge_gone_after_release', (await badges()).length, 0);
   // corner lands on a lattice node within one step of where the finger let go
   check('plan_x_saved', near(cfg.x, im.x / 1000, 1e-6), true);
   check('plan_y_saved', near(cfg.y, (im.y - BASE.y) / 1000, 1e-6), true);
-  check('scale_untouched_by_a_move', cfg.k, 1);
+  check('scale_untouched_by_a_move', near(cfg.sx, 1) && near(cfg.sy, 1), true);
+  check('legacy_scale_not_written', cfg.legacy, null);
   check('size_untouched_by_a_move', [im.w, im.h], [BASE.w, BASE.h]);
   check('corner_lands_on_a_grid_node', onGrid(im.x) && onGrid(im.y), true);
   // …at the node NEAREST the finger: 102 → 100 (24 steps), 152 → 150 (36).
@@ -201,9 +202,10 @@ await settle();
   check('scaled_down', im.w < BASE.w, true);
   check('uniform_no_stretch', near(im.w / im.h, BASE.w / BASE.h, 1e-9), true);
   const cfg = await spaceCfg();
-  check('plan_scale_saved', near(cfg.k, im.w / BASE.w, 1e-5), true);
-  check('scaled_width_is_on_the_grid',
-    Math.abs((im.x + im.w) / PITCH - Math.round((im.x + im.w) / PITCH)) < 1e-6, true);
+  check('axis_scales_saved', near(cfg.sx, im.w / BASE.w, 1e-5)
+    && near(cfg.sy, im.h / BASE.h, 1e-5), true);
+  check('proportional_scale_keeps_axes_equal', near(cfg.sx, cfg.sy, 1e-6), true);
+  check('scaled_width_is_on_the_grid', onGrid(im.x + im.w), true);
   // …and the badge states the picture's REAL size through cell_cm
   check('badge_matches_the_new_size', await page.evaluate(() => {
     const c = window.__card;
@@ -221,7 +223,9 @@ check('reset_button_offered_once_moved', await q('.decorbar .bdreset'), 1);
 await page.evaluate(() => { const c = window.__card; c._bdReset?.(); c.requestUpdate(); return c.updateComplete; });
 await settle();
 check('reset_puts_the_picture_back', await imageRect(), BASE);
-check('reset_clears_the_fields', await spaceCfg(), { x: null, y: null, k: null });
+check('reset_clears_the_fields', await spaceCfg(), {
+  x: null, y: null, sx: null, sy: null, legacy: null, angle: null,
+});
 check('reset_button_gone_again', await q('.decorbar .bdreset'), 0);
 
 // ---------- 5b) the SELECT tool still pans right over the picture ---------

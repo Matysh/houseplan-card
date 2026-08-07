@@ -90,6 +90,10 @@ class TrailBook:
             return True
         return False
 
+    def delete(self, marker: str) -> bool:
+        """Forget every stored run of one plan marker."""
+        return self.data.pop(marker, None) is not None
+
 
 class TrailRecorder:
     """HA wiring: watch the tracked entities, feed the book, persist, notify."""
@@ -131,6 +135,8 @@ class TrailRecorder:
             cfg = stored.get("config") or {}
             pairs: dict[str, list[tuple[str, str]]] = {}
             for m in cfg.get("markers") or []:
+                if m.get("removed") is True:
+                    continue
                 v = m.get("vacuum") or {}
                 src = v.get("source")
                 if not src or v.get("live") is False:
@@ -157,6 +163,25 @@ class TrailRecorder:
             # lost.
             for src in self.pairs:
                 self._sample(src, time.time())
+
+    async def async_delete(self, marker: str) -> bool:
+        """Stop and erase one marker without racing subscription refresh/save."""
+        async with self._refresh_lock:
+            for src in list(self.pairs):
+                kept = [pair for pair in self.pairs[src] if pair[0] != marker]
+                if kept:
+                    self.pairs[src] = kept
+                else:
+                    del self.pairs[src]
+            removed = self.book.delete(marker)
+            if not removed:
+                return False
+            if self._unsub_save:
+                self._unsub_save()
+                self._unsub_save = None
+            await self.store.async_save(self.book.data)
+        self.hass.bus.async_fire("houseplan_trail_updated", {})
+        return True
 
     def teardown(self) -> None:
         # HP-1540-05: flag FIRST — a refresh parked on its awaited load must

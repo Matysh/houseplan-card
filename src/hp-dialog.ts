@@ -62,7 +62,20 @@ export class HpDialog extends LitElement {
     }
 
     .footer {
-      display: contents;
+      /* ha-dialog lays out its footer slot as a flex row. display: contents
+         exposed the consumer's action row as a shrink-to-fit flex item, so a
+         wide device dialog got a half-width divider and its Hide action slid
+         toward the centre. Keep one full-width slot item in both HA and the
+         native fallback. */
+      display: block;
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+
+    ::slotted([slot='footer']) {
+      width: 100%;
+      box-sizing: border-box;
     }
 
     dialog {

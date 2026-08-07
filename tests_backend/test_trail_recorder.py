@@ -132,6 +132,17 @@ def test_unknown_source_is_noop():
     assert not rec._sample("camera.other", 1.0)
 
 
+def test_trail_book_delete_forgets_current_and_previous_runs():
+    book = trails.TrailBook({
+        "m1": {"current": {"points": [[1, 2]]}, "previous": {"points": [[3, 4]]}},
+        "m2": {"current": {"points": [[5, 6]]}},
+    })
+    assert book.delete("m1") is True
+    assert "m1" not in book.data
+    assert "m2" in book.data
+    assert book.delete("m1") is False
+
+
 def test_object_style_position_is_read():
     # Tasshack in-memory attributes hold a Point OBJECT, not a dict
     class Point:
@@ -274,6 +285,29 @@ def test_refresh_builds_pair_lists_and_dedups_subscription():
         assert tracked == [["camera.map", "vacuum.x50"]]
     finally:
         trails.async_track_state_change_event = old_track
+
+
+def test_refresh_never_tracks_a_removed_marker_even_with_stale_vacuum_fields():
+    class CS:
+        async def async_load(self):
+            return {"config": {"markers": [{
+                "id": "m1",
+                "binding": "entity:vacuum.x50",
+                "removed": True,
+                "vacuum": {"source": "camera.map"},
+            }]}}
+
+    class RT:
+        config_store = CS()
+
+    hass = Hass({
+        "vacuum.x50": S("cleaning", {}),
+        "camera.map": S("idle", {"vacuum_position": {"x": 1, "y": 2}}),
+    })
+    rec = trails.TrailRecorder(hass, RT())
+    _run_isolated(rec.async_refresh())
+    assert rec.pairs == {}
+    assert rec.book.data == {}
 
 
 def test_overlapping_refreshes_leave_one_subscription_teardown_zero():

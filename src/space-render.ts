@@ -235,7 +235,11 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
             : svg`<rect class="hp-paper" x="${sh.rect.x}" y="${sh.rect.y}" width="${sh.rect.w}" height="${sh.rect.h}" rx="${sh.rect.rx}"></rect>`,
         )}
         ${bgHref
-          ? svg`<image href="${bgHref}" x="${space.bg!.x}" y="${space.bg!.y}" width="${space.bg!.w}" height="${space.bg!.h}" preserveAspectRatio="none" />`
+          ? svg`<image href="${bgHref}" x="${space.bg!.x}" y="${space.bg!.y}" width="${space.bg!.w}" height="${space.bg!.h}"
+              transform=${space.bg!.angle
+                ? `rotate(${space.bg!.angle} ${space.bg!.x + space.bg!.w / 2} ${space.bg!.y + space.bg!.h / 2})`
+                : nothing}
+              preserveAspectRatio="none" />`
           : nothing}
         ${roomShapes}
         ${wallUnion

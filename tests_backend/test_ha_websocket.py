@@ -48,6 +48,77 @@ async def test_layout_roundtrip(hass: HomeAssistant, hass_ws_client: WebSocketGe
     assert set(resp["result"]["layout"]) == {"dev2"}
 
 
+async def test_deleted_marker_rejects_a_stale_layout_update(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """A late drag from another tab must not resurrect a deleted position."""
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    cfg = {
+        "spaces": [],
+        "markers": [
+            {"id": "dev1", "binding": "device:dev1", "removed": True},
+            {"id": "v_live", "binding": "virtual", "name": "Still here"},
+        ],
+        "settings": {},
+    }
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": cfg, "expected_rev": 0,
+    })
+    assert (await client.receive_json())["success"]
+
+    await client.send_json_auto_id({
+        "type": "houseplan/layout/update",
+        "device_id": "dev1",
+        "pos": {"s": "f1", "x": 0.1, "y": 0.2},
+    })
+    ignored = await client.receive_json()
+    assert ignored["success"] and ignored["result"]["ignored"] == "removed"
+
+    await client.send_json_auto_id({
+        "type": "houseplan/layout/update",
+        "device_id": "v_deleted",
+        "pos": {"s": "f1", "x": 0.3, "y": 0.4},
+    })
+    ignored_virtual = await client.receive_json()
+    assert ignored_virtual["success"]
+    assert ignored_virtual["result"]["ignored"] == "missing_virtual"
+
+    await client.send_json_auto_id({"type": "houseplan/layout/get"})
+    assert (await client.receive_json())["result"]["layout"] == {}
+
+    # The compatibility wholesale endpoint applies the same filter.
+    await client.send_json_auto_id({
+        "type": "houseplan/layout/set",
+        "layout": {
+            "dev1": {"s": "f1", "x": 0.1, "y": 0.2},
+            "v_deleted": {"s": "f1", "x": 0.3, "y": 0.4},
+            "v_live": {"s": "f1", "x": 0.4, "y": 0.5},
+            "ordinary_auto_device": {"s": "f1", "x": 0.5, "y": 0.6},
+        },
+        "expected_rev": 0,
+    })
+    assert (await client.receive_json())["success"]
+    await client.send_json_auto_id({"type": "houseplan/layout/get"})
+    assert (await client.receive_json())["result"]["layout"] == {
+        "v_live": {"s": "f1", "x": 0.4, "y": 0.5},
+        "ordinary_auto_device": {"s": "f1", "x": 0.5, "y": 0.6},
+    }
+
+
+async def test_trail_delete_clears_the_server_book(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    await _setup(hass)
+    recorder = hass.data[DOMAIN]["trail_recorder"]
+    recorder.book.data["m1"] = {"current": {"points": [[1, 2]]}}
+    client = await hass_ws_client(hass)
+    await client.send_json_auto_id({"type": "houseplan/trail/delete", "marker_id": "m1"})
+    response = await client.receive_json()
+    assert response["success"] and response["result"]["removed"] is True
+    assert "m1" not in recorder.book.data
+
+
 async def test_config_rev_conflict(hass: HomeAssistant, hass_ws_client: WebSocketGenerator) -> None:
     await _setup(hass)
     client = await hass_ws_client(hass)

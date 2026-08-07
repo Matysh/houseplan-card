@@ -21,6 +21,7 @@
     "src/plan-optimizer.ts",
     "src/furniture.ts",
     "src/wall-thickness.ts",
-    "src/open-spans.ts"
+    "src/open-spans.ts",
+    "src/editors/decor/geometry.ts"
   ]
 }

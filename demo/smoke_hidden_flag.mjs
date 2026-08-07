@@ -49,11 +49,11 @@ Object.assign(out, await page.evaluate(async () => {
   // тумблер локальный: конфиг не трогается
   o.toggleIsLocal = c._serverCfg.settings.show_all === undefined;
 
-  // --- галка в диалоге у авто-устройства, кнопки «Удалить» нет -----------
+  // --- авто-устройство тоже можно полностью удалить с плана --------------
   const ghost = c._devices.find((x) => x.id === d.id);
   c._openMarkerDialog(ghost); await c.updateComplete;
   o.checkboxOn = c._markerDialog?.hideFromPlan === true;
-  o.noDeleteForAuto = !sr().querySelector('hp-dialog .btn.danger');
+  o.deleteForAuto = !!sr().querySelector('hp-dialog .btn.danger');
   // снимаем галку и сохраняем — маркер остаётся с hidden:false (анти-повтор)
   c._markerDialog = { ...c._markerDialog, hideFromPlan: false };
   await c._saveMarker(); await c.updateComplete;

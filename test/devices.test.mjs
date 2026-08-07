@@ -96,6 +96,36 @@ test('buildDevices: hidden marker removes the device entirely', () => {
   assert.equal(res.length, 0);
 });
 
+test('buildDevices: deleted binding is claimed but never built', () => {
+  const h = mkHass({ devices: { a: dev('a', 'Deleted', 'Sensor', 'living') } });
+  const markers = [{ id: 'a', binding: 'device:a', removed: true }];
+  assert.deepEqual(buildDevices(baseCtx(h, { markers })).map((d) => d.id), []);
+  assert.deepEqual(
+    buildDevices(baseCtx(h, { markers, settings: { filter_seeded: true } })).map((d) => d.id),
+    [],
+  );
+});
+
+test('buildDevices: deleted entities cannot remain as controls of another marker', () => {
+  const h = mkHass({
+    entities: {
+      'light.keep': { entity_id: 'light.keep' },
+      'light.gone': { entity_id: 'light.gone' },
+    },
+    states: {
+      'light.keep': { state: 'on', attributes: {} },
+      'light.gone': { state: 'on', attributes: {} },
+    },
+  });
+  const markers = [
+    { id: 'v1', binding: 'virtual', name: 'Combined light', controls: ['light.keep', 'light.gone'] },
+    { id: 'gone', binding: 'entity:light.gone', removed: true },
+  ];
+  const item = buildDevices(baseCtx(h, { markers })).find((d) => d.id === 'v1');
+  assert.deepEqual(item.marker.controls, ['light.keep']);
+  assert.deepEqual(resolvedLightSources(h, [item]).map((source) => source.eid), ['light.keep']);
+});
+
 test('buildDevices: virtual marker lands in its room; entity marker resolves name from state', () => {
   const h = mkHass({
     entities: { 'sensor.avg': { entity_id: 'sensor.avg', platform: 'min_max', area_id: 'kitchen' } },
@@ -465,6 +495,34 @@ test('sourceValue: explicit entity and device sources (tier 3)', () => {
   assert.equal(sourceValue(hass, 'device:nope', 'temp'), null);
   assert.equal(sourceValue(hass, '', 'temp'), null);
   assert.equal(sourceValue(hass, 'garbage', 'temp'), null);
+  assert.equal(
+    sourceValue(hass, 'entity:sensor.custom_temp', 'temp', [
+      { id: 'gone', binding: 'entity:sensor.custom_temp', removed: true },
+    ]),
+    null,
+  );
+  assert.equal(
+    sourceValue(hass, 'device:dev1', 'temp', [
+      { id: 'gone', binding: 'device:dev1', removed: true },
+    ]),
+    null,
+  );
+});
+
+test('sourceValue: deleted members are excluded from a surviving device source', () => {
+  const hass = {
+    devices: { dev1: { id: 'dev1' } },
+    entities: {
+      'sensor.keep': { device_id: 'dev1' },
+      'sensor.gone': { device_id: 'dev1' },
+    },
+    states: {
+      'sensor.keep': { state: '20', attributes: { device_class: 'temperature' } },
+      'sensor.gone': { state: '30', attributes: { device_class: 'temperature' } },
+    },
+  };
+  const markers = [{ id: 'gone', binding: 'entity:sensor.gone', removed: true }];
+  assert.equal(sourceValue(hass, 'device:dev1', 'temp', markers), 20);
 });
 
 test('areaClimate: counts sensors that are NOT on the plan (field report)', () => {
@@ -691,6 +749,28 @@ test('litLightEntity: one truth for "this thing is shining"', () => {
   );
 });
 
+test('areaClimateMap: deleted entity and whole device contribute no room data', () => {
+  const hass = {
+    devices: {
+      a: { id: 'a', name: 'Room thermometer A', area_id: 'living' },
+      b: { id: 'b', name: 'Room thermometer B', area_id: 'living' },
+    },
+    entities: {
+      'sensor.a_temperature': { device_id: 'a', platform: 'demo' },
+      'sensor.b_temperature': { device_id: 'b', platform: 'demo' },
+    },
+    states: {
+      'sensor.a_temperature': { state: '20', attributes: { device_class: 'temperature' } },
+      'sensor.b_temperature': { state: '30', attributes: { device_class: 'temperature' } },
+    },
+  };
+  const markers = [
+    { id: 'a', binding: 'device:a', removed: true },
+    { id: 'b-temp', binding: 'entity:sensor.b_temperature', removed: true },
+  ];
+  assert.equal(areaClimateMap(hass, undefined, markers).get('living'), undefined);
+});
+
 test('resolvedLightSources: one source set feeds room fill, card, glow and controls', () => {
   const hass = { states: {
     'light.auto': { state: 'on' },
@@ -757,8 +837,9 @@ test('seedHiddenBindings: non-physical devices in bound areas, unmarked only', (
   const marked = { ...ctx, markers: [
     { id: 'x', binding: 'device:bridge', hidden: false },
     { id: 'y', binding: 'device:grp', hidden: true },
+    { id: 'z', binding: 'device:scn', removed: true },
   ] };
-  assert.deepEqual(seedHiddenBindings(marked), ['device:scn'], 'marked devices are never revisited');
+  assert.deepEqual(seedHiddenBindings(marked), [], 'marked and deleted devices are never revisited');
 });
 
 test('seeded config: hidden is a flag, not an absence', () => {

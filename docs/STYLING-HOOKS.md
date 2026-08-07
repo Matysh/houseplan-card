@@ -96,7 +96,7 @@ Everything in this table is **public API**.
 | Room card (name + metrics) | `div` (HTML, marker layer) | `room-label` | `data-id` = room id, `data-area` | `.roomlabel` |
 | Door / window | `g` (SVG) | `opening` | `data-id` = opening id, `data-kind` = `door` \| `window` | `.opening` |
 | Wall body (thickness) | `path` (SVG) | `wall` | `data-id` = segment key, `data-kind` = `shared` \| `outer` | `.wallbody` |
-| Decor shape | `line` / `rect` / `ellipse` / `text` (SVG) | `decor` | `data-id` = shape id, `data-kind` = `line` \| `rect` \| `ellipse` \| `text` | `.dshape` (`.dtext` on text) |
+| Decor shape | `line` / `rect` / `ellipse` / `text` (SVG) | `decor` | `data-id` = shape id, `data-kind` = `line` \| `rect` \| `ellipse` \| `text` | `.dshape` (`.dtext` on text); persisted colour/alpha are inline SVG attributes and therefore win over weak CSS selectors |
 | Furniture | `path` (SVG) | `decor` | `data-id` = shape id, `data-kind` = `furniture`, `data-symbol` = the symbol id (`sofa`, `toilet`, …) | `.dshape .dfurn` |
 | Floor / space tab | `button` (HTML, header) | `space-tab` | `data-id` = space id | `.tab` |
 
