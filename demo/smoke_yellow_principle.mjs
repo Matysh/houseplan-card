@@ -33,10 +33,11 @@ const out = await page.evaluate(() => {
     'climate.trv': { state: 'off', attributes: { hvac_action: 'off' } },
   }) === '';
 
-  // без hvac_action выбранный режим heat не доказывает реальную работу
-  o.modeWithoutActionStaysDark = cls(trv, {
-    'climate.trv': { state: 'heat', attributes: {} },
-  }) === '';
+  // Некоторые интеграции не отдают hvac_action: тогда их текущий режим из
+  // hvac_modes — единственный доступный сигнал фактической работы.
+  o.modeWithoutActionIsYellow = cls(trv, {
+    'climate.trv': { state: 'heat_cool', attributes: { hvac_modes: ['off', 'heat', 'cool', 'heat_cool'] } },
+  }) === 'on';
 
   // Функциональная роль настоящей лампы желтит значок. Auxiliary light у
   // soundbar/media-player, наоборот, отсечён системным role-resolver тестом.

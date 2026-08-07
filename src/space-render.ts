@@ -219,6 +219,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     : null;
   const pxPerUnit = o.stageWidth && vb[2] ? o.stageWidth / vb[2] : 1;
   const solidWall = !!wallUnion && wallBodyNeedsSolid(wallUnion.depthUnits, pxPerUnit);
+  const wallStroke = disp.color || '#607d8b';
 
   return html`
     <div class="hp-static-stage" style="aspect-ratio:${vb[2]}/${vb[3]}${stageBg ? ';background:' + stageBg : ''};--wall-fill:${colors.wall_fill.c};--wall-fill-op:${colors.wall_fill.a}">
@@ -226,7 +227,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
         ${wallUnion ? svg`<defs>
           <pattern id="hp-wall-hatch" patternUnits="userSpaceOnUse" width="8" height="8"
             patternTransform="rotate(45)">
-            <path d="M0 0 L0 8" stroke="${disp.color}" stroke-width="2"></path>
+            <path d="M0 0 L0 8" stroke="${wallStroke}" stroke-width="2"></path>
           </pattern>
         </defs>` : nothing}
         ${paperShapes.map((sh) =>
@@ -243,13 +244,13 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
           : nothing}
         ${roomShapes}
         ${wallUnion
-          ? svg`<g class="wallbodies" style="--room-stroke:${disp.color}">
+          ? svg`<g class="wallbodies" style="--room-stroke:${wallStroke}">
               <path class="wallbody-fill" d="${wallUnion.d}"
                 fill="${colors.wall_fill.c}" fill-opacity="${colors.wall_fill.a}" fill-rule="evenodd"
                 stroke="none" pointer-events="none"></path>
               <path class="wallbody ${solidWall ? 'solid' : ''}" data-hp="wall" data-id="union" data-kind="union"
                 d="${wallUnion.d}" fill="${solidWall ? 'none' : 'url(#hp-wall-hatch)'}" fill-rule="evenodd"
-                stroke="${disp.color || 'var(--hp-muted, #607d8b)'}" stroke-width="0.6" pointer-events="none"></path>
+                stroke="${wallStroke}" stroke-width="0.6" pointer-events="none"></path>
             </g>`
           : nothing}
       </svg>

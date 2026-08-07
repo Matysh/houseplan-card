@@ -181,10 +181,30 @@ export function effectiveMarkerControls(
   controls: readonly string[] | null | undefined,
   ownEntities: readonly string[] = [],
 ): string[] {
-  const own = new Set(ownEntities);
-  if (binding?.startsWith('entity:')) own.add(binding.slice('entity:'.length));
+  // An entity marker owns only its exact binding. Registry rebuilds may attach
+  // sibling entities from the parent device to DevItem; treating every sibling
+  // as self would silently drop an explicitly configured external target.
+  const own = binding?.startsWith('entity:')
+    ? new Set([binding.slice('entity:'.length)])
+    : new Set(ownEntities);
   return [...new Set(controls || [])]
     .filter((eid) => isControllable(eid) && !own.has(eid));
+}
+
+/**
+ * Before `is_light` existed, putting a marker's own switch into `controls`
+ * was the supported way to say that the relay drives a real fixture. Keep that
+ * intent alive until Save/Optimize converts the legacy representation.
+ */
+export function hasLegacySelfLightIntent(
+  binding: string | null | undefined,
+  controls: readonly string[] | null | undefined,
+  ownEntities: readonly string[] = [],
+): boolean {
+  const own = binding?.startsWith('entity:')
+    ? new Set([binding.slice('entity:'.length)])
+    : new Set(ownEntities);
+  return (controls || []).some((eid) => eid.startsWith('switch.') && own.has(eid));
 }
 
 function lightSourceBelongsToRoom(d: LightSourceDevice, room: LightSourceRoom): boolean {
@@ -196,24 +216,47 @@ function lightSourceBelongsToRoom(d: LightSourceDevice, room: LightSourceRoom): 
   return !!room.area && d.area === room.area;
 }
 
-function lightEntitiesOf(hass: any, d: LightSourceDevice): { eids: string[]; via: ResolvedLightSource['via'] } {
+interface LightEntityCandidate {
+  eid: string;
+  via: ResolvedLightSource['via'];
+}
+
+function forcedLightEntityOf(d: LightSourceDevice): string | null {
+  const bound = d.marker?.binding?.startsWith('entity:')
+    ? d.marker.binding.slice('entity:'.length) : null;
+  const controllable = d.entities.filter(isControllable);
+  const primary = d.primary && isControllable(d.primary) ? d.primary : null;
+  // An entity-bound legacy self-control names the physical relay exactly.
+  // Do not let a different registry-derived primary entity steal that intent.
+  return (bound && isControllable(bound) ? bound : null) || primary || controllable[0] || null;
+}
+
+function lightEntitiesOf(hass: any, d: LightSourceDevice): LightEntityCandidate[] {
   const controls = effectiveMarkerControls(
     d.marker?.binding,
     d.controls ?? d.marker?.controls,
     d.entities,
   );
-  if (controls.length) return { eids: controls, via: 'controls' };
+  const out: LightEntityCandidate[] = controls.map((eid) => ({ eid, via: 'controls' }));
 
-  if (d.marker?.is_light === true) {
+  if (d.marker?.is_light === true || hasLegacySelfLightIntent(
+    d.marker?.binding, d.marker?.controls, d.entities,
+  )) {
     // A forced source is a smart switch (or light) driving real fixtures.
     // Prefer its primary entity, but never treat measurements or service
     // entities as light switches merely because they belong to the device.
-    const controllable = d.entities.filter(isControllable);
-    const primary = d.primary && isControllable(d.primary) ? d.primary : null;
     // The marker is one physical source, so do not count its auxiliary
     // controllable entities as additional lamps in room statistics.
-    return { eids: primary ? [primary] : controllable.slice(0, 1), via: 'forced' };
+    const forced = forcedLightEntityOf(d);
+    if (forced && !out.some((candidate) => candidate.eid === forced)) {
+      out.push({ eid: forced, via: 'forced' });
+    }
   }
+
+  // Explicit external controls and the marker's own explicit source are
+  // additive. Automatic discovery remains the fallback only when neither was
+  // configured, so a device status LED still cannot leak into the room light set.
+  if (out.length) return out;
 
   // Automatic light discovery describes the DEVICE, not every auxiliary
   // entity it happens to expose. TVs, soundbars, air cleaners and similar
@@ -223,8 +266,9 @@ function lightEntitiesOf(hass: any, d: LightSourceDevice): { eids: string[]; via
   // Explicit controls/is_light above still override it when the user says the
   // auxiliary light really is a plan light.
   const role = d.primary || resolvedDeviceStateEntities(hass, d.entities)[0];
-  if (role && !role.startsWith('light.')) return { eids: [], via: 'light' };
-  return { eids: d.entities.filter((eid) => eid.startsWith('light.')), via: 'light' };
+  if (role && !role.startsWith('light.')) return [];
+  return d.entities.filter((eid) => eid.startsWith('light.'))
+    .map((eid) => ({ eid, via: 'light' as const }));
 }
 
 /**
@@ -242,8 +286,8 @@ export function resolvedLightSources<D extends LightSourceDevice>(
   const seen = new Set<string>();
   for (const d of devices) {
     if (d.hidden || (room != null && !lightSourceBelongsToRoom(d, room))) continue;
-    const { eids, via } = lightEntitiesOf(hass, d);
-    for (const eid of eids) {
+    const candidates = lightEntitiesOf(hass, d);
+    for (const { eid, via } of candidates) {
       if (!eid || seen.has(eid)) continue;
       seen.add(eid);
       out.push({ eid, device: d, via, on: hass.states[eid]?.state === 'on' });

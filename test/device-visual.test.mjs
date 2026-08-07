@@ -18,6 +18,16 @@ test('actual work is yellow/running, but an enabled automation is neutral', () =
     'switch.relay': { state: 'on' },
     'climate.office': { state: 'heat', attributes: { hvac_action: 'idle' } },
     'climate.bedroom': { state: 'heat', attributes: { hvac_action: 'heating' } },
+    'climate.mode_only': {
+      state: 'heat_cool',
+      attributes: { hvac_modes: ['off', 'heat_cool', 'cool', 'heat', 'fan_only', 'dry'] },
+    },
+    'climate.mode_only_off': {
+      state: 'off', attributes: { hvac_modes: ['off', 'heat_cool'] },
+    },
+    'climate.custom_mode_only': {
+      state: 'eco', attributes: { hvac_modes: ['off', 'eco'] },
+    },
     'automation.night': { state: 'on' },
     'script.scene': { state: 'on' },
   });
@@ -27,6 +37,10 @@ test('actual work is yellow/running, but an enabled automation is neutral', () =
   );
   assert.equal(entityVisualSample(h, 'climate.office').status, 'neutral');
   assert.equal(entityVisualSample(h, 'climate.bedroom').status, 'working');
+  assert.equal(entityVisualSample(h, 'climate.mode_only').status, 'working');
+  assert.equal(entityVisualSample(h, 'climate.mode_only').activity, 'running');
+  assert.equal(entityVisualSample(h, 'climate.mode_only_off').status, 'neutral');
+  assert.equal(entityVisualSample(h, 'climate.custom_mode_only').status, 'working');
   assert.equal(entityVisualSample(h, 'automation.night').status, 'neutral');
   assert.equal(entityVisualSample(h, 'script.scene').status, 'working');
 });

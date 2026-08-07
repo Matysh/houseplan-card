@@ -147,6 +147,14 @@ cancelled or one-hour-timed-out Validate withholds the asset. Bump the version
 everywhere in sync: `src/houseplan-card.ts` (CARD_VERSION), `package.json`,
 `custom_components/houseplan/manifest.json`, `custom_components/houseplan/const.py`.
 
+Local release gates are deliberately different. A pre-release runs
+`npm run build` plus only the unit tests and browser smokes selected for the
+changed surfaces; record the exact selection in the release handoff. A stable
+release runs the complete local frontend, backend and smoke gates before its
+tag is created. The exact-SHA Validate required by `release.yml` remains in
+force for both and can run a broader matrix automatically; the local policy
+does not weaken the publication guard.
+
 ## Reproducible scripts (data)
 
 - Extracting the geometry/backgrounds from the prototype and generating `src/data/*` — see the commit

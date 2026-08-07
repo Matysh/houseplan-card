@@ -15,11 +15,11 @@
 
 | Item | State |
 |---|---|
-| Version | **v1.60.0** everywhere (manifest, const.py, package.json, CARD_VERSION) — stable release of the unified Background editor, true device deletion and the complete beta audit hardening. Stable publication fast-forwards `main` to the exact tested `dev` commit and uses `prerelease=false` |
+| Version | **v1.60.1-beta.1** everywhere (manifest, const.py, package.json, CARD_VERSION) — pre-release with the v1.60.0 follow-up audit fixes, smoother editor navigation, safer room/decor editing, responsive room settings and the climate mode fallback. The tag points at `dev`; `main` remains on v1.60.0 |
 
-| Workflow | Owner's rule since 2026-08-05: ordinary fixes/features are made **locally, without tests and without commits**. A requested pre-release gets the full tests/build/smokes, one tested `dev` commit/tag and a GitHub Release with `prerelease=true`; `main` stays untouched. A requested stable release gets the same full gate, then `main` is fast-forwarded to the exact tested `dev` SHA and the GitHub Release uses `prerelease=false`. Nothing is copied to the home instance by hand |
+| Workflow | Owner's rule since 2026-08-07: ordinary fixes/features are made **locally, without tests and without commits**. A requested pre-release gets a production build plus the smallest targeted unit/smoke set covering the changed surfaces, one tested `dev` commit/tag and a GitHub Release with `prerelease=true`; `main` stays untouched. The complete local frontend/backend/smoke gate runs only before a stable release, after which `main` is fast-forwarded to the exact tested `dev` SHA and the GitHub Release uses `prerelease=false`. Nothing is copied to the home instance by hand |
 | GitHub | https://github.com/Matysh/houseplan-card — `main` carries stable releases; pre-release tags may point directly at `dev`. Work lands on `dev` and is merged into `main` for a stable release, so `dev` is normally equal to or ahead of `main`, never behind. Push via SSH key `ha_jb` (remote git@github.com:…); API releases via the fine-grained PAT in `~/.git-credentials` (Contents R/W, issued 2026-07-23) |
-| CI | v1.60.0 uses the full local release gate; exact counts are recorded by `npm run inventory` and the test logs rather than copied here. Native Windows cannot start the current HA pytest plugin (`fcntl` is Unix-only), so the exact-SHA Ubuntu Validate remains mandatory: `release.yml` withholds the asset until every matching run finishes green; GitHub Validate and the release asset are verified after the tag is pushed |
+| CI | v1.60.1-beta.1 uses the targeted local pre-release gate; exact commands belong in the release handoff rather than this snapshot. The exact-SHA Ubuntu Validate remains mandatory and may run the broader CI matrix automatically: `release.yml` withholds the asset until every matching run finishes green. Stable releases additionally require the complete local frontend/backend/smoke gate before tagging |
 | HACS | Custom repository works. **Inclusion PR: hacs/default#9004** — open, valid, labeled, mergeable clean, never drafted. Queue: 1212 open, 835 older than ours. Merge rate COLLAPSED: 75 in July but almost all in the first decade, 0 in the last week (checked 2026-07-29) — maintainers process in rare bursts; ETA unknowable, months at best. Nothing actionable on our side |
 | Home instance | ha.jbstudio.pro (SSH port **22222**, key `ha_jb`; HA config root is `/mnt/data/supervisor/homeassistant` — `/config` does NOT exist in this SSH environment), last direct copy was **v1.57.0**; from v1.58.0 on it updates itself through HACS by tag (no scp) |
 | Localization | UI en/ru (src/i18n/*.json), everything user-visible localized incl. kiosk popover |
@@ -72,9 +72,11 @@
   the binding to Add. Deleted devices are absent from every plan aggregate and
   linked presentation; layout/files/trails are cleaned and stale layout writes
   are rejected.
-- **Yellow = working right now** (v1.51.0): climate by hvac_action, service
-  switches can no longer become primary, glow pool and icon share one
-  condition. Editor gestures on touch (pinch/pan) landed the same release.
+- **Yellow = working right now** (v1.51.0): climate uses `hvac_action` when
+  available and falls back to a current advertised non-off HVAC mode only when
+  the integration omits the action; service switches can no longer become
+  primary, and glow pool and icon share one condition. Editor gestures on touch
+  (pinch/pan) landed the same release.
 - **Unified device status/activity** (v1.59.0-beta.10, 2026-08-05): three display
   modes (Icon / Icon + activity / Value), one semantic resolver for yellow
   actual work, orange open/unlocked, unavailable and always-red alarms;

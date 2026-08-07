@@ -11,6 +11,21 @@ const res = await page.evaluate(async () => {
   tabs[2].click(); await c.updateComplete;
   out.decorMode = c._mode === 'decor';
   out.decorBar = !!sr().querySelector('.editbar.decorbar');
+  // The compact colour/opacity control must escape the clipped editor/dialog
+  // surface through the browser top layer and remain inside the viewport.
+  const picker = sr().querySelector('.decorbar hp-color-opacity');
+  const trigger = picker?.shadowRoot?.querySelector('.trigger');
+  trigger?.click();
+  await picker?.updateComplete;
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  const popup = picker?.shadowRoot?.querySelector('.picker');
+  const popupRect = popup?.getBoundingClientRect();
+  out.colorPickerUsesTopLayer = !!popup?.matches(':popover-open');
+  out.colorPickerInsideViewport = !!popupRect
+    && popupRect.left >= 0 && popupRect.top >= 0
+    && popupRect.right <= innerWidth && popupRect.bottom <= innerHeight;
+  trigger?.click();
+  await picker?.updateComplete;
   // seven tools (the six drawing ones + «Мебель», docs/FURNITURE.md) plus
   // «Картинка-подложка», which f1 offers because it HAS a picture
   // (docs/BACKDROP.md §2); a hand-drawn space still shows seven

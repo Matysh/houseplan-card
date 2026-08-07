@@ -15,7 +15,7 @@ export class HpColorOpacity extends LitElement {
   public disabled = false;
 
   private _open = false;
-  private _alignEnd = false;
+  private _pickerRaf = 0;
 
   static properties = {
     label: { type: String },
@@ -24,7 +24,6 @@ export class HpColorOpacity extends LitElement {
     opacity: { type: Number },
     disabled: { type: Boolean, reflect: true },
     _open: { state: true },
-    _alignEnd: { state: true },
   };
 
   static styles = css`
@@ -71,24 +70,31 @@ export class HpColorOpacity extends LitElement {
       pointer-events: none;
     }
     .picker {
-      position: absolute;
-      z-index: 120;
-      top: calc(100% + 7px);
+      /* The popover attribute promotes this surface into the browser top layer, outside
+         hp-dialog's scrolling/clipping body. JS supplies viewport coordinates. */
+      position: fixed;
+      z-index: 2147483647;
+      inset: auto;
+      top: 0;
       left: 0;
-      width: 226px;
+      width: min(226px, calc(100vw - 16px));
+      max-height: calc(100vh - 16px);
+      margin: 0;
       box-sizing: border-box;
       display: grid;
       gap: 10px;
       padding: 12px;
+      overflow: auto;
       color: var(--primary-text-color, #fff);
       background: var(--card-background-color, #202126);
       border: 1px solid var(--primary-color, #03a9f4);
       border-radius: 10px;
       box-shadow: 0 10px 28px rgb(0 0 0 / 0.34);
     }
-    .picker.end {
-      right: 0;
-      left: auto;
+    .picker[popover]:not(:popover-open) {
+      /* Keep the author-level display:grid from exposing the surface for one
+         frame before showPopover() promotes it into the top layer. */
+      display: none;
     }
     .row {
       display: flex;
@@ -145,36 +151,95 @@ export class HpColorOpacity extends LitElement {
   connectedCallback(): void {
     super.connectedCallback();
     document.addEventListener('pointerdown', this._outsidePointerDown, true);
+    document.addEventListener('scroll', this._queuePickerPosition, true);
+    window.addEventListener('resize', this._queuePickerPosition);
     this.addEventListener('keydown', this._keyDown, true);
   }
 
   disconnectedCallback(): void {
     document.removeEventListener('pointerdown', this._outsidePointerDown, true);
+    document.removeEventListener('scroll', this._queuePickerPosition, true);
+    window.removeEventListener('resize', this._queuePickerPosition);
     this.removeEventListener('keydown', this._keyDown, true);
+    if (this._pickerRaf) cancelAnimationFrame(this._pickerRaf);
+    this._pickerRaf = 0;
     super.disconnectedCallback();
   }
 
   private _outsidePointerDown = (event: PointerEvent): void => {
-    if (this._open && !event.composedPath().includes(this)) this._open = false;
+    if (this._open && !event.composedPath().includes(this)) this._closePicker();
   };
 
   private _keyDown = (event: KeyboardEvent): void => {
     if (!this._open || event.key !== 'Escape') return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    this._open = false;
-    this.updateComplete.then(() => this.renderRoot.querySelector<HTMLButtonElement>('.trigger')?.focus());
+    this._closePicker(true);
   };
 
   private _toggle(): void {
     if (this.disabled) return;
-    this._open = !this._open;
-    this._alignEnd = false;
+    if (this._open) {
+      this._closePicker();
+      return;
+    }
+    this._open = true;
+    this.updateComplete.then(() => this._positionPicker());
+  }
+
+  private _closePicker(refocus = false): void {
+    const popup = this.renderRoot.querySelector<HTMLElement>('.picker') as any;
+    if (popup?.hidePopover) {
+      try {
+        if (popup.matches(':popover-open')) popup.hidePopover();
+      } catch {
+        /* older engines simply remove the fallback surface on the next render */
+      }
+    }
+    this._open = false;
+    if (refocus) {
+      this.updateComplete.then(() => this.renderRoot.querySelector<HTMLButtonElement>('.trigger')?.focus());
+    }
+  }
+
+  private _queuePickerPosition = (): void => {
     if (!this._open) return;
-    this.updateComplete.then(() => {
-      const popup = this.renderRoot.querySelector<HTMLElement>('.picker');
-      if (popup && popup.getBoundingClientRect().right > window.innerWidth - 8) this._alignEnd = true;
+    if (this._pickerRaf) cancelAnimationFrame(this._pickerRaf);
+    this._pickerRaf = requestAnimationFrame(() => {
+      this._pickerRaf = 0;
+      this._positionPicker();
     });
+  };
+
+  private _positionPicker(): void {
+    if (!this._open) return;
+    const trigger = this.renderRoot.querySelector<HTMLElement>('.trigger');
+    const popup = this.renderRoot.querySelector<HTMLElement>('.picker') as any;
+    if (!trigger || !popup) return;
+    popup.style.visibility = 'hidden';
+    if (popup.showPopover) {
+      try {
+        if (!popup.matches(':popover-open')) popup.showPopover();
+      } catch {
+        /* fixed-position fallback remains usable without the Popover API */
+      }
+    }
+    const anchor = trigger.getBoundingClientRect();
+    const box = popup.getBoundingClientRect();
+    const gap = 7;
+    const edge = 8;
+    const maxLeft = Math.max(edge, window.innerWidth - box.width - edge);
+    let left = anchor.left;
+    if (left + box.width > window.innerWidth - edge) left = anchor.right - box.width;
+    left = Math.min(maxLeft, Math.max(edge, left));
+    const below = anchor.bottom + gap;
+    const above = anchor.top - gap - box.height;
+    let top = below;
+    if (below + box.height > window.innerHeight - edge && above >= edge) top = above;
+    else top = Math.min(Math.max(edge, top), Math.max(edge, window.innerHeight - box.height - edge));
+    popup.style.left = `${Math.round(left)}px`;
+    popup.style.top = `${Math.round(top)}px`;
+    popup.style.visibility = '';
   }
 
   private _emit(color: string, opacity: number): void {
@@ -202,7 +267,7 @@ export class HpColorOpacity extends LitElement {
         <span class="swatch" style=${`background:${this.color};opacity:${pct / 100}`}></span>
       </button>
       ${this._open && !this.disabled ? html`
-        <div class="picker ${this._alignEnd ? 'end' : ''}" role="dialog" aria-label=${this.label || 'Color'}>
+        <div class="picker" popover="manual" role="dialog" aria-label=${this.label || 'Color'}>
           <div class="row">
             <span class="caption">${this.label || 'Color'}</span>
             <input type="color" .value=${this.color} aria-label=${this.label || 'Color'}

@@ -32,7 +32,7 @@ import {
 } from './logic';
 import {
   planEdgeDrag, applyEdgeDrag, clampEdgeDrag, applyRoomScale, clampRoomScale,
-  simplifyPoly, areaM2, formatArea, MIN_ROOM_CM, type EdgeDragPlan,
+  simplifyPoly, polyIsSimple, areaM2, formatArea, MIN_ROOM_CM, type EdgeDragPlan,
 } from './resize';
 import {
   computeSunRays, dayPhase, northDegOf, bgModeOf, sunRaysOn, weatherEntityOf,
@@ -75,7 +75,7 @@ import {
   areaTemp, areaHum, sourceValue, areaClimateMap,
   resolvedLightSources, resolvedLightState, resolvedLightStats,
   resolvedDeviceStateEntities, removedPlanBindings, isRemovedPlanEntity,
-  deletePlanMarkerRecords, effectiveMarkerControls, resolveIcon,
+  deletePlanMarkerRecords, effectiveMarkerControls, hasLegacySelfLightIntent, resolveIcon,
   type AreaClimate,
 } from './devices';
 import type {
@@ -108,9 +108,10 @@ import {
   type DecorBox, type SnapGeometry,
 } from './editors/decor/geometry';
 
-const CARD_VERSION = '1.60.0';
+const CARD_VERSION = '1.60.1-beta.1';
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
+const CELL_CM_MIN = 0.1;
 const CELL_CM_MAX = 1000;
 /** HP-1552 boot-veil timing (AUD-1552-02). The veil holds for at least
  *  BOOT_MIN_MS; every stage-height change restarts a BOOT_QUIET_MS
@@ -530,12 +531,28 @@ class HouseplanCard extends LitElement {
   }
 
   /** Kiosk auto-carousel: advance to the next space every `cycle` seconds. */
-  /**
-   * Which way the plan should fly out when the space changes. Empty means no
-   * animation — a direct pick from the tabs should not slide anywhere.
-   */
+  /** Which way the incoming plan moves when the active space changes. */
   private _slide: '' | 'left' | 'right' = '';
   private _slideTimer?: number;
+
+  /** Short shared transition for View ↔ editor and editor ↔ editor changes. */
+  private _navMotion: '' | 'enter' | 'exit' | 'swap' = '';
+  private _navMotionTimer?: number;
+  /** Last editor kept in the collapsing chrome so leaving it can animate out. */
+  private _editorChromeMode: 'plan' | 'devices' | 'decor' = 'plan';
+
+  private _startNavMotion(kind: 'enter' | 'exit' | 'swap'): void {
+    clearTimeout(this._navMotionTimer);
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) {
+      this._navMotion = '';
+      return;
+    }
+    this._navMotion = kind;
+    this._navMotionTimer = window.setTimeout(() => {
+      this._navMotion = '';
+      this.requestUpdate();
+    }, 190);
+  }
 
   /** Change the space with the usual sideways transition. */
   private _slideTo(id: string, dir: 'left' | 'right'): void {
@@ -547,9 +564,21 @@ class HouseplanCard extends LitElement {
     if (reduce) return;
     this._slide = dir;
     clearTimeout(this._slideTimer);
-    // long enough to be read as motion, short enough not to be in the way
-    this._slideTimer = window.setTimeout(() => { this._slide = ''; this.requestUpdate(); }, 260);
+    this._slideTimer = window.setTimeout(() => { this._slide = ''; this.requestUpdate(); }, 190);
     this.requestUpdate();
+  }
+
+  /** Direct space tabs use the same motion as swipe/carousel navigation. */
+  private _pickSpace(id: string): void {
+    if (id === this._space) return;
+    const ids = this._model.map((sp) => sp.id);
+    const from = ids.indexOf(this._space);
+    const to = ids.indexOf(id);
+    this._navApplied = true;
+    this._showFar = false; // the hint is per space (docs/CANVAS.md §4.1)
+    this._frame = null;
+    this._slideTo(id, from >= 0 && to < from ? 'right' : 'left');
+    this._saveNav();
   }
 
   private _cycleTick(): void {
@@ -1040,6 +1069,7 @@ class HouseplanCard extends LitElement {
     this._signer.dispose();
     clearTimeout(this._toastTimer);
     clearTimeout(this._slideTimer);
+    clearTimeout(this._navMotionTimer);
     clearTimeout(this._bootTimer);
     this._bootTimer = undefined; // AUD-1552-01: a cleared id must not block the reconnect watcher
     clearTimeout(this._bootSoftTimer);
@@ -1077,6 +1107,10 @@ class HouseplanCard extends LitElement {
     clearTimeout(this._warmReviveTimer);
     this._warmReviveTimer = undefined;
     this._warmRelease();
+    // R1: the rAF is the only normal owner that clears this flag. Reset only
+    // after the disconnect snapshot (which must still skip unstable geometry),
+    // so a same-element reattach can start fresh instead of keeping the veil.
+    this._resumeSettling = false;
     super.disconnectedCallback();
   }
 
@@ -1109,13 +1143,20 @@ class HouseplanCard extends LitElement {
         return;
       }
     }
-    const target = e.target as HTMLElement | null;
-    const inField = !!target?.closest?.('input, textarea, select, [contenteditable="true"]');
+    // At the window listener `target` may be retargeted to the card host by
+    // Shadow DOM. The composed path still contains the actual focused field.
+    const inField = (e.composedPath?.() || [e.target]).some((node: any) =>
+      node?.matches?.('input, textarea, select, [contenteditable="true"]'),
+    );
+    const mod = e.ctrlKey || e.metaKey;
+    const key = e.key.toLowerCase();
+    // `key` becomes «я» on a Russian layout. `code` keeps Ctrl/Cmd+Z and
+    // Ctrl/Cmd+Y tied to the expected physical shortcuts in every layout.
+    const isZ = e.code === 'KeyZ' || key === 'z';
+    const isY = e.code === 'KeyY' || key === 'y';
+    const redo = mod && ((isZ && e.shiftKey) || isY);
+    const undo = mod && isZ && !e.shiftKey;
     if (this._mode === 'decor') {
-      const mod = e.ctrlKey || e.metaKey;
-      const key = e.key.toLowerCase();
-      const redo = mod && (key === 'y' || (key === 'z' && e.shiftKey));
-      const undo = mod && key === 'z' && !e.shiftKey;
       if ((undo || redo) && inField) return;
       if (redo) { e.preventDefault(); this._redoGeometry(); return; }
       if (undo) {
@@ -1148,10 +1189,6 @@ class HouseplanCard extends LitElement {
       return;
     }
     if (!this._markup) return;
-    const mod = e.ctrlKey || e.metaKey;
-    const key = e.key.toLowerCase();
-    const redo = mod && (key === 'y' || (key === 'z' && e.shiftKey));
-    const undo = mod && key === 'z' && !e.shiftKey;
     if ((undo || redo) && inField) return; // keep native text-field history
     if (redo) {
       e.preventDefault();
@@ -3500,11 +3537,12 @@ class HouseplanCard extends LitElement {
   private _setMode(mode: 'view' | 'plan' | 'devices' | 'decor'): void {
     if (this._kiosk && mode !== 'view') return; // wall devices never edit
     if (this._mode === mode) return;
-    this._bootSoftCancel(); // editor bars change the stage height DELIBERATELY — snap, no glide
+    this._bootSoftCancel(); // navigation owns its own short, bounded transition
     if ((mode === 'plan' || mode === 'decor') && !this._norm) {
       this._showToast(this._t('toast.markup_needs_server'));
       return;
     }
+    const previousMode = this._mode;
     // A live decor transform is a transaction. Switching tabs must cancel and
     // restore it, not merely forget its pointer record after the config has
     // already been mutated by move/resize.
@@ -3522,6 +3560,8 @@ class HouseplanCard extends LitElement {
       };
     }
     this._mode = mode;
+    this._editorChromeMode = mode === 'view' ? previousMode as 'plan' | 'devices' | 'decor' : mode;
+    this._startNavMotion(previousMode === 'view' ? 'enter' : mode === 'view' ? 'exit' : 'swap');
     if (baseChanges) {
       // refit against the new base: the editors measure from the full square,
       // the view from the content frame — a view clamped to one is nonsense
@@ -3873,6 +3913,54 @@ class HouseplanCard extends LitElement {
     );
   }
 
+  /** A room ring may meet only at the endpoints of neighbouring edges. */
+  private _contourSelfIntersects(poly: number[][]): boolean {
+    if (!polyIsSimple(poly)) return true; // transverse crossings
+    const n = poly.length;
+    const eps = 0.001;
+    for (let i = 0; i < n; i++) {
+      const a = poly[i], b = poly[(i + 1) % n];
+      for (let j = i + 1; j < n; j++) {
+        // Neighbours deliberately share one endpoint, including first ↔ last.
+        if (j === i + 1 || (i === 0 && j === n - 1)) continue;
+        const c = poly[j], d = poly[(j + 1) % n];
+        const cd = [c[0], c[1], d[0], d[1]];
+        const ab = [a[0], a[1], b[0], b[1]];
+        // This also catches a closing edge passing through an older vertex and
+        // collinear overlap, which a proper-crossing test intentionally omits.
+        if (distToSegment(a, cd) <= eps || distToSegment(b, cd) <= eps ||
+            distToSegment(c, ab) <= eps || distToSegment(d, ab) <= eps) return true;
+      }
+    }
+    return false;
+  }
+
+  /** Validate and close the draft without using the closing click as a vertex. */
+  private _closeRoomContour(showMinimumError = false): void {
+    // Three placed vertices mean two existing edges; the closing edge becomes
+    // the third one. Anything shorter cannot enclose a room.
+    if (this._path.length < 3) {
+      if (showMinimumError) this._showToast(this._t('toast.contour_min_edges'));
+      return;
+    }
+    if (this._contourSelfIntersects(this._path) || polygonArea(this._path) <= 1e-6) {
+      this._showToast(this._t('toast.contour_cannot_close'));
+      return; // keep the draft editable
+    }
+    // A contour can enclose an existing room without any vertex inside it.
+    const clash = this._overlapRoom(this._path);
+    if (clash) {
+      this._showToast(this._t('toast.room_overlap', { name: clash.name || '' }));
+      return;
+    }
+    this._path = [...this._path, [...this._path[0]]];
+    this._cursorPt = null;
+    this._nameSel = '';
+    this._areaSel = '';
+    this._resetRoomDialogFields();
+    this._roomDialog = true;
+  }
+
   private _markupClick(ev: MouseEvent): void {
     if (this._vacFit) return; // the fit overlay owns all pointer input
     if (!this._markup) return;
@@ -3924,6 +4012,11 @@ class HouseplanCard extends LitElement {
     // draw: clicks on grid points build the outline. Nothing is written to the config
     // until the contour closes — an abandoned outline leaves no lines behind.
     const pt = this._snap(raw);
+    if (ev.ctrlKey || ev.metaKey) {
+      ev.preventDefault();
+      this._closeRoomContour(true);
+      return;
+    }
     const closing = this._path.length >= 3 && this._samePt(pt, this._path[0]);
     // Island rooms (v1.34.0): drawing INSIDE an existing room is legal — the
     // contour may become a nested room (a column, an inner room). Partial
@@ -3936,18 +4029,7 @@ class HouseplanCard extends LitElement {
     const last = this._path[this._path.length - 1];
     if (this._samePt(pt, last)) return; // repeated click on the same point
     if (closing) {
-      // a contour can enclose an existing room without any vertex inside it
-      const clash = this._overlapRoom(this._path);
-      if (clash) {
-        this._showToast(this._t('toast.room_overlap', { name: clash.name || '' }));
-        return; // leave the outline open so it can be corrected
-      }
-      this._path = [...this._path, pt];
-      this._cursorPt = null;
-      this._nameSel = '';
-      this._areaSel = '';
-      this._resetRoomDialogFields();
-      this._roomDialog = true;
+      this._closeRoomContour();
       return;
     }
     this._path = [...this._path, pt];
@@ -4507,7 +4589,11 @@ class HouseplanCard extends LitElement {
       this._furnPlace(this._svgPoint(ev), ev.shiftKey);
       return true;
     }
-    this._decorSel = null; // select/erase on empty space clears the selection
+    // Empty-space selection belongs only to Select. Erase is an object
+    // command: a miss must be a true no-op. With SVG text its painted glyphs
+    // do not cover the whole logical label box, so clearing here made a click
+    // between letters appear to erase only the selection outline.
+    if (t === 'select') this._decorSel = null;
     // …and under its own tool the picture is grabbable by its body
     // (docs/BACKDROP.md §2). Only INSIDE the image rect: press beside the
     // picture and the plane still pans with one finger.
@@ -6425,7 +6511,7 @@ class HouseplanCard extends LitElement {
     // Bake the wall colour into the pattern — CSS vars on <pattern> content
     // do not inherit from the filled path, so var(--room-stroke) fell back
     // to grey while the wall outline used the real border colour.
-    const stroke = color || 'var(--hp-muted, #607d8b)';
+    const stroke = color || '#607d8b';
     return svg`<defs>
       <pattern id="hp-wall-hatch" patternUnits="userSpaceOnUse" width="8" height="8"
         patternTransform="rotate(45) scale(${inv.toFixed(3)})">
@@ -6452,7 +6538,7 @@ class HouseplanCard extends LitElement {
     const stage = this._stageEl;
     const v = this._viewOr(this._baseVb());
     const px = stage && stage.clientWidth && v.w ? stage.clientWidth / v.w : 1;
-    const stroke = disp?.color || 'var(--hp-muted, #607d8b)';
+    const stroke = disp?.color || '#607d8b';
     const solid = wallBodyNeedsSolid(united.depthUnits, px);
     const wf = this._fillColors.wall_fill;
     // Fill colour UNDER the hatch (owner 2026-08-05): both, never one instead
@@ -7200,11 +7286,14 @@ class HouseplanCard extends LitElement {
         tapConfirm: d.marker?.tap_confirm === true,
         runFilter: '',
         defaultTap: d.primary?.split('.')[0] === 'light' ? 'toggle' : 'info',
-        // Keep temporarily inactive external targets for lossless editing, but
-        // discard the invalid legacy self-reference of an entity marker.
+        // Keep temporarily inactive external targets for lossless editing.
+        // A legacy self-reference is represented by isLight below instead of
+        // remaining duplicated in the external-target list.
         controls: effectiveMarkerControls(d.marker?.binding, d.marker?.controls, d.entities),
         controlsFilter: '',
-        isLight: d.marker?.is_light === true,
+        isLight: d.marker?.is_light === true || hasLegacySelfLightIntent(
+          d.marker?.binding, d.marker?.controls, d.entities,
+        ),
         useClimateTemp: d.marker?.use_climate_temp === true,
         glowRadius: Number(d.marker?.glow_radius_cm) > 0
           ? String(this._imperial
@@ -7962,7 +8051,7 @@ class HouseplanCard extends LitElement {
         label_light: d.labelLight,
       };
       sp.cell_cm = Number.isFinite(d.cellCm) && d.cellCm > 0
-        ? Math.min(CELL_CM_MAX, d.cellCm) : 5;
+        ? Math.max(CELL_CM_MIN, Math.min(CELL_CM_MAX, d.cellCm)) : 5;
       // Nothing to clean up from here: the backend collects the superseded
       // file inside the same locked transaction that accepted this config
       // (review R3-1). A cleanup driven from the client could not be ordered
@@ -9129,6 +9218,7 @@ class HouseplanCard extends LitElement {
     const decorMeasure = this._decorMeasure;
     const bdLive = this._bdLive;
     const furnLive = this._furnLive;
+    const editorChromeMode = this._mode === 'view' ? this._editorChromeMode : this._mode;
 
     return html`
       <ha-card>
@@ -9143,15 +9233,7 @@ class HouseplanCard extends LitElement {
               (s) => html`<button
                 data-hp="space-tab" data-id="${s.id}"
                 class="tab ${this._space === s.id ? 'active' : ''}"
-                @click=${() => {
-                  this._space = s.id;
-                  this._selId = null;
-                  this._navApplied = true;
-                  this._showFar = false; // the hint is per space (docs/CANVAS.md §4.1)
-                  this._frame = null;
-                  this._restoreZoom();
-                  this._saveNav();
-                }}
+                @click=${() => this._pickSpace(s.id)}
               >
                 ${s.title}${this._norm && this._canEdit
                   ? html`<ha-icon class="tabedit" icon="mdi:cog-outline"
@@ -9207,14 +9289,26 @@ class HouseplanCard extends LitElement {
               </button>`
             : nothing}
         </div>
-        ${this._markup ? this._renderMarkupBar() : this._mode === 'devices' ? this._renderDevicesBar() : this._mode === 'decor' ? this._renderDecorBar() : nothing}
-        ${''/* the palette lives UNDER the bar, above the stage: it is part of
-               the tool, not a modal — the plan stays visible while a symbol is
-               chosen, because where a sofa goes is a question about the plan */}
-        ${this._mode === 'decor' && this._decorTool === 'furniture' ? this._renderFurnPalette() : nothing}
+        ${this._canEdit && !this._kiosk
+          ? html`<div class="editorchrome ${this._editing ? 'open' : ''}${this._navMotion ? ' nav-' + this._navMotion : ''}" aria-hidden=${this._editing ? 'false' : 'true'}>
+              <div class="editorchrome-inner ${this._navMotion ? 'nav-' + this._navMotion : ''}">
+                ${editorChromeMode === 'plan'
+                  ? this._renderMarkupBar()
+                  : editorChromeMode === 'devices'
+                    ? this._renderDevicesBar()
+                    : this._renderDecorBar()}
+                ${''/* the palette lives UNDER the bar, above the stage: it is part of
+                       the tool, not a modal — the plan stays visible while a symbol is
+                       chosen, because where a sofa goes is a question about the plan */}
+                ${editorChromeMode === 'decor' && this._decorTool === 'furniture'
+                  ? this._renderFurnPalette()
+                  : nothing}
+              </div>
+            </div>`
+          : nothing}
         </div>
 
-        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + ((this._tool === 'openwall' || this._tool === 'closewall') && this._openWallHover ? ' wallhot' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._bdMovable ? ' bdgrab' : ''}${this._bdDrag ? ' bdgrabbing' : ''}${dayNight ? ' daynight' : ''}${dayNight && this._skySnap ? ' skysnap' : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}${this._resumeSettling && this._mode === 'view' && !this._kiosk ? ' hpresume' : ''}"
+        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + ((this._tool === 'openwall' || this._tool === 'closewall') && this._openWallHover ? ' wallhot' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._bdMovable ? ' bdgrab' : ''}${this._bdDrag ? ' bdgrabbing' : ''}${dayNight ? ' daynight' : ''}${dayNight && this._skySnap ? ' skysnap' : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}${this._navMotion ? ' hpnav' : ''}${this._resumeSettling && this._mode === 'view' && !this._kiosk ? ' hpresume' : ''}"
           style="height:${this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}${stageBg ? `;background:${stageBg}` : ''};--wall-fill:${this._fillColors.wall_fill.c};--wall-fill-op:${this._fillColors.wall_fill.a}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
@@ -9222,7 +9316,7 @@ class HouseplanCard extends LitElement {
           @pointermove=${(e: PointerEvent) => this._stagePointerMove(e)}
           @pointerup=${(e: PointerEvent) => this._stagePointerUp(e)}
           @pointercancel=${(e: PointerEvent) => this._stagePointerCancel(e)}>
-          <div class="zoomwrap ${this._slide ? 'slide-' + this._slide : ''}"
+          <div class="zoomwrap ${this._slide ? 'slide-' + this._slide : ''}${this._navMotion ? ' nav-' + this._navMotion : ''}"
             style="${dayNight ? `filter:brightness(${(1 - planDim).toFixed(3)})` : ''}">
           <svg viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="xMidYMid meet">
             ${''/* THE PAPER IS THE ROOMS (docs/BACKDROP.md §3, owner
@@ -11716,13 +11810,13 @@ class HouseplanCard extends LitElement {
 
           <label>${this._t('space.scale_label')}</label>
           <div class="colorrow">
-            <input class="namein tempin" type="number" min="0.1" max=${CELL_CM_MAX}
+            <input class="namein tempin" type="number" min=${CELL_CM_MIN} max=${CELL_CM_MAX}
               step="0.1" .value=${String(d.cellCm)}
               @input=${(e: Event) => {
                 const n = parseFloat((e.target as HTMLInputElement).value);
                 this._spaceDialog = {
                   ...d, cellCm: Number.isFinite(n) && n > 0
-                    ? Math.min(CELL_CM_MAX, n) : d.cellCm,
+                    ? Math.max(CELL_CM_MIN, Math.min(CELL_CM_MAX, n)) : d.cellCm,
                 };
               }} />
             <span class="opl">${this._t('space.scale_unit')}</span>
@@ -11968,7 +12062,7 @@ class HouseplanCard extends LitElement {
       const cur = this.hass.areas[this._areaSel];
       if (cur) areas.unshift(cur);
     }
-    return html`<hp-dialog .hass=${this.hass}
+    return html`<hp-dialog class="roomdialog" .hass=${this.hass} wide
       .title=${edit ? this._t('room.settings_title') : this._t('room.new')}
       icon=${edit ? 'mdi:cog-outline' : 'mdi:floor-plan'} @hp-close=${this._roomDialogCancel}>
         <div class="body">
@@ -12019,7 +12113,7 @@ class HouseplanCard extends LitElement {
             this._roomLabelScale,
           )}
         </div>
-        <div class="row" slot="footer">
+        <div class="row roomfooter" slot="footer">
           <button class="btn ghost" @click=${this._roomDialogCancel}>${this._t('btn.cancel')}</button>
           <span class="spacer"></span>
           ${edit

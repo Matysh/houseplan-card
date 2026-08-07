@@ -897,7 +897,7 @@ test('resolvedLightSources: marker room_id is more precise than a shared HA area
   );
 });
 
-test('standalone entity cannot list itself as an external light control', () => {
+test('self-control is not external but preserves legacy switch-as-light intent', () => {
   assert.deepEqual(
     effectiveMarkerControls('entity:switch.hood', [
       'switch.hood', 'light.mirror', 'switch.hood', 'lock.front_door',
@@ -912,20 +912,46 @@ test('standalone entity cannot list itself as an external light control', () => 
     'a device marker also separates its own entities from external targets',
   );
 
-  const hass = { states: { 'switch.hood': { state: 'on' } } };
+  const hass = { states: {
+    'switch.hood': { state: 'on' }, 'light.mirror': { state: 'off' },
+  } };
   const hood = {
     id: 'hood', area: 'bathroom', primary: 'switch.hood', entities: ['switch.hood'],
-    marker: { binding: 'entity:switch.hood', controls: ['switch.hood'] },
+    marker: { binding: 'entity:switch.hood', controls: ['switch.hood', 'light.mirror'] },
   };
-  assert.deepEqual(resolvedLightSources(hass, [hood]), []);
-  assert.deepEqual(resolvedLightSources(hass, [{
-    ...hood, marker: { binding: 'device:hood', controls: ['switch.hood'] },
-  }]), [], 'the same self-control is ignored for a bound HA device');
+  assert.deepEqual(
+    resolvedLightSources(hass, [hood]).map(({ eid, via }) => ({ eid, via })),
+    [
+      { eid: 'light.mirror', via: 'controls' },
+      { eid: 'switch.hood', via: 'forced' },
+    ],
+    'legacy entity self-control remains additive with external light targets',
+  );
+  assert.deepEqual(
+    resolvedLightSources(hass, [{
+      ...hood, primary: 'light.mirror', entities: ['light.mirror', 'switch.hood'],
+    }]).map(({ eid, via }) => ({ eid, via })),
+    [
+      { eid: 'light.mirror', via: 'controls' },
+      { eid: 'switch.hood', via: 'forced' },
+    ],
+    'an entity binding preserves the exact legacy relay even if registry primary differs',
+  );
+  assert.deepEqual(
+    resolvedLightSources(hass, [{
+      ...hood, marker: { binding: 'device:hood', controls: ['switch.hood'] },
+    }]).map(({ eid, via }) => ({ eid, via })),
+    [{ eid: 'switch.hood', via: 'forced' }],
+    'legacy device-child self-control preserves the same intent',
+  );
   assert.deepEqual(
     resolvedLightSources(hass, [{ ...hood, marker: { ...hood.marker, is_light: true } }])
       .map(({ eid, via }) => ({ eid, via })),
-    [{ eid: 'switch.hood', via: 'forced' }],
-    'the explicit source flag remains the supported way to make this switch a light',
+    [
+      { eid: 'light.mirror', via: 'controls' },
+      { eid: 'switch.hood', via: 'forced' },
+    ],
+    'the canonical explicit source flag keeps the same combined result',
   );
 });
 

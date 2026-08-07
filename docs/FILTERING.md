@@ -110,18 +110,32 @@ source precedence is (`_visualSamples` / `_actEntity`):
 1. the device's **cover**, when the marker's tap action is explicitly
    «Открыть/закрыть» (`tap_action: 'cover'` — `coverEntityOf`, the same helper
    and the same entity the tap drives). It wins over EVERYTHING below;
-2. the marker's **resolved light sources** (`resolvedLightSources`): bound
-   `controls` first (other targets only: an `entity:*` marker's bound entity and
-   a `device:*` marker's child entities are excluded), otherwise its primary controllable entity when
-   `is_light` is set, otherwise automatic `light.*` only when `light` is the
+2. the marker's **resolved light sources** (`resolvedLightSources`): external
+   `controls` plus its own primary controllable entity when `is_light` is set
+   (an `entity:*` marker's bound entity and a `device:*` marker's child entities
+   are excluded from the external list), otherwise automatic `light.*` only when `light` is the
    device's resolved functional role. An auxiliary LED/display light on a
    media player or appliance does not turn the whole marker into a lamp. This exact set also feeds
    Glow, Light fill, room light stats and group toggle;
+
+For compatibility, a pre-v1.60 marker that lists its own `switch.*` in
+`controls` is interpreted as `is_light`. Marker Save converts either binding;
+Optimize Plans can convert the losslessly identifiable `entity:switch.*` case
+(a `device:*` marker needs the HA registry and is therefore left to Save).
+External controls remain additive, so migration does not change Glow, Light
+fill or room statistics.
 3. otherwise the device's **resolved state role**
    (`resolvedDeviceStateEntities`): functional device domains first, then
    semantic binary signals, then switches, then passive readings together.
    `primaryEntity` is only the first entity of this same set for actions which
    require one target; it no longer defines marker availability by itself.
+
+For `climate.*`, a real `hvac_action`/equivalent action remains authoritative:
+`idle` stays neutral even while the selected mode is `heat`. If the integration
+does not expose an action at all, the current non-off state is matched against
+HA's `hvac_modes` (plus the standard modes) and used as the enabled/working
+fallback. This keeps mode-only air conditioners visible without overriding a
+more precise idle signal when one exists.
 
 Rule 1 was added 2026-08-04 on the owner's report: his Aqara «Roller shade
 driver E1» curtains ship the `cover.*` hidden by the integration and a visible

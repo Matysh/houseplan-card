@@ -134,17 +134,33 @@ test('legacy filled shapes receive the canonical fill fields', () => {
   assert.equal(result.config.spaces[0].decor[0].fill_opacity, 0.25);
 });
 
-test('optimizer removes legacy self-controls but preserves external targets', () => {
+test('optimizer migrates legacy self-light intent and preserves unknown controls losslessly', () => {
   const result = optimizePlans({
     model_version: PLAN_MODEL_VERSION - 1,
     spaces: [],
     markers: [{
       id: 'hood', binding: 'entity:switch.hood',
-      controls: ['switch.hood', 'light.mirror'],
+      controls: ['switch.hood', 'input_boolean.legacy', 'light.mirror', 'light.mirror'],
     }],
     settings: {},
   }, {});
-  assert.deepEqual(result.config.markers[0].controls, ['light.mirror']);
+  assert.deepEqual(result.config.markers[0].controls, [
+    'input_boolean.legacy', 'light.mirror', 'light.mirror',
+  ]);
+  assert.equal(result.config.markers[0].is_light, true);
   assert.equal(result.config.model_version, PLAN_MODEL_VERSION);
-  assert.equal(result.report.migrated, 1);
+  assert.equal(result.report.migrated, 2);
+});
+
+test('optimizer repairs legacy cell_cm values into the server schema range', () => {
+  const result = optimizePlans({
+    spaces: [
+      { id: 'high', title: 'High', view_box: [0, 0, 1, 1], cell_cm: 5000, rooms: [] },
+      { id: 'low', title: 'Low', view_box: [0, 0, 1, 1], cell_cm: 0.01, rooms: [] },
+      { id: 'bad', title: 'Bad', view_box: [0, 0, 1, 1], cell_cm: 'NaN', rooms: [] },
+    ],
+    markers: [], settings: {},
+  }, {});
+  assert.deepEqual(result.config.spaces.map((space) => space.cell_cm), [1000, 0.1, 5]);
+  assert.equal(result.report.migrated, 3);
 });

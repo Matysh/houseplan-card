@@ -465,7 +465,11 @@ hash falls back to the default.
   passive readings as the final fallback. `_visualSamples` consumes the full
   result; `primaryEntity` only selects its first member where a single action
   target is required. Integration option switches can no longer make an
-  otherwise healthy device working or unavailable merely by list order.
+  otherwise healthy device working or unavailable merely by list order. For
+  `climate`, an explicit `hvac_action` is authoritative; only integrations that
+  omit it fall back to a current non-off state advertised by `hvac_modes` (or a
+  standard HA HVAC mode), so `idle` never becomes yellow while mode-only
+  entities still report actual operation.
 - **Resolved light sources** (UX-12): `resolvedLightSources(hass, devices,
   room?)` is the only light-membership resolver. Per marker the precedence is
   `controls[]` -> the primary controllable entity when `is_light` is set ->

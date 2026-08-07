@@ -178,6 +178,14 @@ export const cardStyles = css`
       touch-action: none; /* custom pinch/pan gestures */
       background: var(--ha-card-background, var(--card-background-color, #111));
     }
+    /* A deliberate navigation change gets one short visual settle. The class
+       is transient, so normal day/night breathing keeps its slow cadence. */
+    .stage.hpnav,
+    .stage.daynight.hpnav {
+      transition:
+        background-color 0.18s ease,
+        outline-color 0.18s ease;
+    }
     .zoomwrap {
       position: absolute;
       inset: 0;
@@ -679,20 +687,41 @@ export const cardStyles = css`
       gap: 0.25em;
       font-size: calc(1em * var(--rl-name, 1));
     }
-    /* Switching spaces by swipe or on the kiosk carousel: the plan flies out
-       the way the finger went and the next one arrives from the other side. */
+    /* Space changes keep their direction, but travel only a few percent: the
+       motion explains what changed without making the whole plan fly around. */
     @keyframes hp-slide-left {
-      0%   { transform: translateX(22%); opacity: 0; }
+      0%   { transform: translateX(4%); opacity: 0.72; }
       100% { transform: translateX(0);   opacity: 1; }
     }
     @keyframes hp-slide-right {
-      0%   { transform: translateX(-22%); opacity: 0; }
+      0%   { transform: translateX(-4%); opacity: 0.72; }
       100% { transform: translateX(0);    opacity: 1; }
     }
-    .zoomwrap.slide-left  { animation: hp-slide-left 0.26s cubic-bezier(0.22, 0.61, 0.36, 1); }
-    .zoomwrap.slide-right { animation: hp-slide-right 0.26s cubic-bezier(0.22, 0.61, 0.36, 1); }
+    @keyframes hp-editor-enter {
+      0%   { transform: translateY(5px) scale(0.997); opacity: 0.72; }
+      100% { transform: translateY(0) scale(1); opacity: 1; }
+    }
+    @keyframes hp-editor-exit {
+      0%   { transform: translateY(-4px) scale(1.002); opacity: 0.72; }
+      100% { transform: translateY(0) scale(1); opacity: 1; }
+    }
+    @keyframes hp-editor-swap {
+      0%   { transform: scale(0.997); opacity: 0.68; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .zoomwrap.slide-left  { animation: hp-slide-left 0.18s cubic-bezier(0.2, 0.7, 0.2, 1); }
+    .zoomwrap.slide-right { animation: hp-slide-right 0.18s cubic-bezier(0.2, 0.7, 0.2, 1); }
+    .zoomwrap.nav-enter   { animation: hp-editor-enter 0.18s cubic-bezier(0.2, 0.7, 0.2, 1); }
+    .zoomwrap.nav-exit    { animation: hp-editor-exit 0.18s cubic-bezier(0.2, 0.7, 0.2, 1); }
+    .zoomwrap.nav-swap    { animation: hp-editor-swap 0.16s ease-out; }
     @media (prefers-reduced-motion: reduce) {
-      .zoomwrap.slide-left, .zoomwrap.slide-right { animation: none; }
+      .stage.hpnav,
+      .stage.daynight.hpnav { transition: none; }
+      .zoomwrap.slide-left,
+      .zoomwrap.slide-right,
+      .zoomwrap.nav-enter,
+      .zoomwrap.nav-exit,
+      .zoomwrap.nav-swap { animation: none; }
     }
     /* The name is the anchor: the label box is centred on the room point, so
        anything that takes part in its layout SHIFTS THE NAME. The gear button
@@ -951,8 +980,15 @@ export const cardStyles = css`
        new label on top of the old one. Only labels: a line or a rectangle
        under the text tool stays inert, so the press reaches the stage and a
        new label is created there. */
+    .stage.mode-decor.dtool-text .decorlayer .dshape.dtext,
+    .stage.mode-decor.dtool-select .decorlayer .dshape.dtext,
+    .stage.mode-decor.dtool-erase .decorlayer .dshape.dtext {
+      /* A label is one logical decor object. SVG's visiblePainted would hit
+         only the ink of individual glyphs, so spaces, counters and the area
+         inside its selection glow behaved like empty canvas. */
+      pointer-events: bounding-box;
+    }
     .stage.mode-decor.dtool-text .decorlayer .dshape.dtext {
-      pointer-events: visiblePainted;
       cursor: text;
     }
     .decorlayer .dsel {
@@ -1301,7 +1337,9 @@ export const cardStyles = css`
       font-weight: 600;
       cursor: pointer;
       font-family: inherit;
+      transition: background-color 0.14s ease, color 0.14s ease, transform 0.14s ease;
     }
+    .modetab:active { transform: scale(0.97); }
     .modetab ha-icon { --mdc-icon-size: 15px; }
     .modetab .closex {
       --mdc-icon-size: 13px;
@@ -2331,6 +2369,37 @@ export const cardStyles = css`
       width: 100%;
       box-sizing: border-box;
     }
+    /* Room settings contains long radio labels, two source pickers and live
+       previews, so it deliberately uses hp-dialog's medium width. Keep its
+       content shrinkable as well: the generic srcrow rule is nowrap because
+       compact switch rows need it, but here that created a horizontal scroll
+       box even on a wide desktop viewport. */
+    hp-dialog.roomdialog .body {
+      min-width: 0;
+      overflow-x: hidden;
+    }
+    hp-dialog.roomdialog .body > * {
+      min-width: 0;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+    hp-dialog.roomdialog .srcrow {
+      min-width: 0;
+      align-items: flex-start;
+    }
+    hp-dialog.roomdialog .srcrow > span:first-of-type {
+      min-width: 0;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      line-height: 1.35;
+    }
+    hp-dialog.roomdialog .dropbtn > b,
+    hp-dialog.roomdialog .dropbtn > .ref {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
     hp-dialog .row {
       display: flex;
       justify-content: flex-end;
@@ -2342,6 +2411,47 @@ export const cardStyles = css`
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
+    }
+    hp-dialog .row.roomfooter {
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    /* Keep the last editor bar mounted while the row collapses. This makes
+       both entering and leaving an editor change the card geometry gradually;
+       the header ResizeObserver keeps the stage fitted throughout. */
+    .editorchrome {
+      display: grid;
+      grid-template-rows: 0fr;
+      opacity: 0;
+      visibility: hidden;
+      overflow: hidden;
+      transition:
+        grid-template-rows 0.18s cubic-bezier(0.2, 0.7, 0.2, 1),
+        opacity 0.12s ease,
+        visibility 0s linear 0.18s;
+    }
+    .editorchrome.open {
+      grid-template-rows: 1fr;
+      opacity: 1;
+      visibility: visible;
+      overflow: visible;
+      transition-delay: 0s;
+    }
+    .editorchrome.open.nav-enter {
+      overflow: hidden;
+    }
+    .editorchrome-inner {
+      min-height: 0;
+    }
+    .editorchrome-inner.nav-enter { animation: hp-editor-enter 0.18s cubic-bezier(0.2, 0.7, 0.2, 1); }
+    .editorchrome-inner.nav-exit  { animation: hp-editor-exit 0.18s cubic-bezier(0.2, 0.7, 0.2, 1); }
+    .editorchrome-inner.nav-swap  { animation: hp-editor-swap 0.16s ease-out; }
+    @media (prefers-reduced-motion: reduce) {
+      .modetab { transition: none; }
+      .editorchrome { transition: none; }
+      .editorchrome-inner.nav-enter,
+      .editorchrome-inner.nav-exit,
+      .editorchrome-inner.nav-swap { animation: none; }
     }
     /* Device info can have Edit + Open in HA + Close. A small HA dialog is
        narrower than those three Russian-labelled actions; without wrapping,

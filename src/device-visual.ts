@@ -72,6 +72,13 @@ const IDLE_STATES = new Set([
   'completed', 'stopped', 'ready', 'sleeping',
 ]);
 
+/** Standard HA HVAC modes which mean the climate entity is enabled. The
+ * entity's own `hvac_modes` attribute extends this set for integrations with
+ * custom modes; `off`/idle states are always excluded. */
+const CLIMATE_ENABLED_MODES = new Set([
+  'heat', 'cool', 'heat_cool', 'auto', 'dry', 'fan_only',
+]);
+
 const unavailable = (state: string): boolean =>
   state === '' || state === 'unknown' || state === 'unavailable' || state === '__missing__';
 
@@ -147,7 +154,20 @@ export function entityVisualSample(hass: any, eid: string): EntityVisualSample {
 
   if (domain === 'climate') {
     const action = workAction(st.attributes);
-    return WORKING_STATES.has(action)
+    // `hvac_action` (or an equivalent action attribute) is the precise answer
+    // when an integration exposes it: a thermostat may be in heat mode while
+    // currently idle. Some valid climate integrations expose only the entity
+    // state/HVAC mode, though. In that case use HA's own `hvac_modes` contract
+    // as the best available enabled-state fallback instead of leaving every
+    // non-off air conditioner permanently neutral.
+    const advertisedModes = Array.isArray(st.attributes?.hvac_modes)
+      ? st.attributes.hvac_modes.map(lower) : [];
+    const enabledMode = !IDLE_STATES.has(state) && (
+      CLIMATE_ENABLED_MODES.has(state)
+      || WORKING_STATES.has(state)
+      || advertisedModes.includes(state)
+    );
+    return (action ? WORKING_STATES.has(action) : enabledMode)
       ? { ...base, status: 'working', activity: 'running' }
       : base;
   }

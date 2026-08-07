@@ -1,5 +1,35 @@
 # Changelog
 
+## v1.60.1-beta.1 — 2026-08-07
+
+- Climate markers whose integrations omit `hvac_action` now fall back to the
+  current non-off HA mode advertised in `hvac_modes`, so enabled air
+  conditioners regain their yellow working plate. A present action remains
+  authoritative, therefore `hvac_action: idle` stays neutral.
+- Room settings now opens at the medium dialog width. Long radio labels and
+  source names wrap or ellipsize within the content area, eliminating the
+  horizontal scrollbar while retaining responsive mobile sizing.
+- Erase now treats a text label as one atomic decor object across its full
+  bounding box. Clicking between glyphs or on its selection glow can no longer
+  remove only the apparent outline; an empty-canvas miss is a true no-op.
+- Space tabs, View/editor changes and switches between editors now use one
+  short, subtle transition. Editor controls expand and collapse smoothly, and
+  reduced-motion preferences still disable all navigation motion.
+- While drawing a room outline, Ctrl/Cmd+click now closes the last point back
+  to the first without adding another vertex. Closure requires at least two
+  existing edges and refuses degenerate or self-intersecting contours.
+- Editor Undo/Redo shortcuts now use layout-independent keyboard codes, so
+  Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z and Ctrl/Cmd+Y work with non-Latin layouts too.
+  Focused text and number fields retain their native browser history.
+- Closed the v1.60.0 follow-up audit: reconnecting during resume settle can no
+  longer strand the plan veil; legacy self-controlled switches retain their
+  light-source intent and migrate to `is_light`; colour/opacity pickers use the
+  browser top layer and flip/clamp inside small dialogs; Optimize repairs
+  out-of-range `cell_cm` while preserving unknown/duplicate control targets;
+  entity-bound legacy relays discard only their exact self-control and keep
+  explicitly added sibling light targets; wall SVG fallbacks now use valid
+  literal colours.
+
 ## v1.60.0 — 2026-08-07
 
 - **Audit hardening.** Deleting one virtual marker no longer removes its

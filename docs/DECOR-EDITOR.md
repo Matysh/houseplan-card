@@ -33,7 +33,7 @@ device state or Home Assistant actions.
 | Oval | Drag its bounding box; `Shift` makes a circle | `R` for a circle, `Rx × Ry` for an oval | bounding size, angle, contour and optional fill |
 | Text | Click to open the text form | the saved label is selected immediately | content, HA variables, colour/opacity, physical size and angle |
 | Furniture | Pick a symbol, then click its centre | wall magnet unless `Shift` is held | size, angle and contour style; the common frame preserves ratio unless `Shift` is held |
-| Erase | Click a decor object | confirmation dialog, then removal | Undo restores it |
+| Erase | Click a decor object; text uses its whole logical bounding box, including spaces between glyphs | confirmation dialog, then atomic removal of the whole object | A miss changes nothing; Undo restores a removed object |
 
 The editor always opens on **Select**. If the space has an image, the Plan
 backdrop tool appears next to Select but is never armed implicitly.

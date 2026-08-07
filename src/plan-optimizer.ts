@@ -9,7 +9,7 @@
  */
 
 import { alignAllToGrid, type AlignReport } from './align-grid';
-import { effectiveMarkerControls } from './devices';
+import { hasLegacySelfLightIntent } from './devices';
 import {
   DECOR_TEXT_BASE, decorTextScale, liveTextReference, liveTextToken, roomPoly,
 } from './logic';
@@ -26,8 +26,10 @@ import {
 } from './wall-thickness';
 
 /** Bump when a new lossless maintenance pass is added. */
-export const PLAN_MODEL_VERSION = 3;
+export const PLAN_MODEL_VERSION = 4;
 const DEFAULT_CELL_CM = 5;
+const CELL_CM_MIN = 0.1;
+const CELL_CM_MAX = 1000;
 const DECOR_WIDTH_CM_MIN = 0.1;
 const DECOR_WIDTH_CM_MAX = 100;
 const DECOR_TEXT_CM_MIN = 0.1;
@@ -86,7 +88,18 @@ const migrateLosslessly = (config: any): number => {
   for (const marker of config.markers || []) {
     if (marker.display === 'ripple') { marker.display = 'icon_ripple'; n++; }
     if (Array.isArray(marker.controls)) {
-      const controls = effectiveMarkerControls(marker.binding, marker.controls);
+      // R2: preserve the old, once-supported declaration that an entity-bound
+      // switch is itself a light source before removing its redundant control.
+      if (hasLegacySelfLightIntent(marker.binding, marker.controls) && marker.is_light !== true) {
+        marker.is_light = true;
+        n++;
+      }
+      // R6: maintenance knows only the direct entity binding. Do not run the
+      // runtime filter here: YAML-only targets and duplicates are user data,
+      // not garbage that a "lossless" optimiser may silently discard.
+      const self = typeof marker.binding === 'string' && marker.binding.startsWith('entity:')
+        ? marker.binding.slice('entity:'.length) : '';
+      const controls = self ? marker.controls.filter((eid: unknown) => eid !== self) : marker.controls;
       if (JSON.stringify(controls) !== JSON.stringify(marker.controls)) {
         marker.controls = controls.length ? controls : null;
         n++;
@@ -114,8 +127,17 @@ const migrateLosslessly = (config: any): number => {
       }
     }
     const rawCellCm = Number(space.cell_cm);
-    const cellCm = Number.isFinite(rawCellCm) && rawCellCm > 0
-      ? rawCellCm : DEFAULT_CELL_CM;
+    if (own(space, 'cell_cm') && (
+      !Number.isFinite(rawCellCm) || rawCellCm < CELL_CM_MIN || rawCellCm > CELL_CM_MAX
+    )) {
+      space.cell_cm = Number.isFinite(rawCellCm)
+        ? clamp(rawCellCm, CELL_CM_MIN, CELL_CM_MAX)
+        : DEFAULT_CELL_CM;
+      n++;
+    }
+    const repairedCellCm = Number(space.cell_cm);
+    const cellCm = Number.isFinite(repairedCellCm) && repairedCellCm > 0
+      ? repairedCellCm : DEFAULT_CELL_CM;
     for (const shape of space.decor || []) {
       if (own(shape, 'width')) {
         const legacyWidth = Number(shape.width);

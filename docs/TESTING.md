@@ -1,8 +1,10 @@
 # Manual testing checklist
 
 > **Policy:** this checklist is updated **in the same commit** as any functional
-> change (like CHANGELOG.md). Every release: run at least the smoke column on the
-> synthetic demo (`demo/`), and the full list before major releases. Items marked
+> change (like CHANGELOG.md). For a pre-release, build the production bundle and
+> run the smallest unit/smoke subset that covers its changed surfaces. Run the
+> complete local frontend, backend and smoke gates only before a stable release.
+> The exact-SHA GitHub Validate remains mandatory for publication. Items marked
 > `[manual]` are covered by unit tests or the headless smokes in `demo/` — they still
 > deserve an occasional eyeball. File every failure as a GitHub issue before fixing.
 
