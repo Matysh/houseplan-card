@@ -10,7 +10,7 @@ const res = await page.evaluate(async () => {
   // берём заведомо не-световое устройство
   const dev = c._devices.find((d) => !d.virtual && d.primary && !d.primary.startsWith('light.'));
   c._openMarkerDialog(dev); await c.updateComplete;
-  const sel = [...sr().querySelectorAll('.dialog select')].find((s) =>
+  const sel = [...sr().querySelectorAll('hp-dialog select')].find((s) =>
     [...s.options].some((o) => o.textContent === c._t('tap.toggle')));
   out.threeOptions = sel && sel.options.length === 4; // + «Запустить…» (2026-07-29)
   out.noAutoOption = sel && ![...sel.options].some((o) => o.value === '');

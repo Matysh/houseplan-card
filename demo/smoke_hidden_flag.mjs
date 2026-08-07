@@ -53,7 +53,7 @@ Object.assign(out, await page.evaluate(async () => {
   const ghost = c._devices.find((x) => x.id === d.id);
   c._openMarkerDialog(ghost); await c.updateComplete;
   o.checkboxOn = c._markerDialog?.hideFromPlan === true;
-  o.noDeleteForAuto = !sr().querySelector('.dialog .btn.danger');
+  o.noDeleteForAuto = !sr().querySelector('hp-dialog .btn.danger');
   // снимаем галку и сохраняем — маркер остаётся с hidden:false (анти-повтор)
   c._markerDialog = { ...c._markerDialog, hideFromPlan: false };
   await c._saveMarker(); await c.updateComplete;
@@ -68,7 +68,7 @@ Object.assign(out, await page.evaluate(async () => {
   await c._saveMarker(); await c.updateComplete;
   const virt = c._devices.find((x) => x.virtual);
   c._openMarkerDialog(virt); await c.updateComplete;
-  o.deleteForVirtual = !!sr().querySelector('.dialog .btn.danger');
+  o.deleteForVirtual = !!sr().querySelector('hp-dialog .btn.danger');
   c._markerDialog = null; c._setMode('view');
   return o;
 }));

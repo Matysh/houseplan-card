@@ -1077,7 +1077,7 @@ export const cardStyles = css`
     .decorbar .dfill {
       display: inline-flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-s); cursor: pointer;
     }
-    .dialog .dfill {
+    hp-dialog .dfill {
       display: inline-flex;
       align-items: center;
       gap: var(--sp-3);
@@ -1652,9 +1652,9 @@ export const cardStyles = css`
       color: var(--hp-muted);
       font-size: var(--fs-s);
     }
-    /* beat the generic .dialog .body .namein { width:100% } rule */
-    .dialog .body .temprange .tempin { width: 56px; flex: none; padding: var(--sp-2) var(--sp-3); }
-    .dialog .body .colorrow .tempin { width: 72px; flex: none; }
+    /* beat the generic hp-dialog .body .namein { width:100% } rule */
+    hp-dialog .body .temprange .tempin { width: 56px; flex: none; padding: var(--sp-2) var(--sp-3); }
+    hp-dialog .body .colorrow .tempin { width: 72px; flex: none; }
     .srcrow { flex-wrap: nowrap; }
     /* native HA controls (rendered only when the HA frontend defines them;
        old HA and the smoke env keep the plain inputs). ha-switch is taller
@@ -1684,7 +1684,7 @@ export const cardStyles = css`
       background: var(--hp-bg2, rgba(255, 255, 255, 0.03));
       /* The same collapse that ate .candlist (v1.53.1): a scroll box is a
          flex item whose automatic minimum size is ZERO (overflow != visible),
-         so inside .dialog .body — a flex column taller than its 66vh cap —
+         so inside hp-dialog .body — a flex column taller than its 66vh cap —
          it shrank to a 14px sliver: the rows were in the DOM, the owner saw
          a thin rounded stripe under the "Already uploaded" button. Don't
          shrink, and keep a floor even when the box is empty or loading. */
@@ -1735,13 +1735,10 @@ export const cardStyles = css`
       border-color: #b3402a;
       color: #ff7a5c;
     }
-    .dialog .row .spacer {
+    hp-dialog .row .spacer {
       flex: 1;
     }
-    .dialog.wide {
-      width: min(500px, 94vw);
-    }
-    .dialog .body {
+    hp-dialog .body {
       max-height: 66vh;
       overflow-y: auto;
     }
@@ -2236,12 +2233,6 @@ export const cardStyles = css`
       border-radius: var(--rad-s);
       padding: 0 var(--sp-3);
     }
-    .importprog {
-      margin-left: auto;
-      color: var(--hp-muted);
-      font-size: var(--fs-s);
-      font-weight: 400;
-    }
     .rhint {
       font-size: var(--fs-s);
       color: var(--hp-muted);
@@ -2298,56 +2289,30 @@ export const cardStyles = css`
     }
     .aboutlink:hover { text-decoration: underline; }
     .aboutlink ha-icon { --mdc-icon-size: 18px; line-height: 1; }
-    .dialogwrap {
-      background: rgba(0, 0, 0, 0.45);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 90;
-    }
-    .dialog {
-      background: var(--card-background-color, var(--hp-bg));
-      border: 1px solid var(--hp-accent);
-      border-radius: var(--rad-l);
-      box-shadow: var(--shadow-3);
-      width: min(360px, 92vw);
-      overflow: hidden;
-    }
-    .dialog .hd {
-      padding: var(--sp-5) var(--sp-6);
-      font-weight: 600;
-      border-bottom: 1px solid var(--hp-line);
-      display: flex;
-      align-items: center;
-      gap: var(--sp-4);
-    }
-    .dialog .hd ha-icon {
-      color: var(--hp-accent);
-    }
-    .dialog .body {
+    hp-dialog .body {
       padding: var(--sp-5) var(--sp-6);
       display: flex;
       flex-direction: column;
       gap: var(--sp-3);
     }
-    .dialog .body label {
+    hp-dialog .body label {
       font-size: var(--fs-s);
       color: var(--hp-muted);
       margin-top: var(--sp-3);
     }
-    .dialog .body .namein,
-    .dialog .body .areasel {
+    hp-dialog .body .namein,
+    hp-dialog .body .areasel {
       width: 100%;
       box-sizing: border-box;
     }
-    .dialog .row {
+    hp-dialog .row {
       display: flex;
       justify-content: flex-end;
       gap: var(--sp-4);
       padding: var(--sp-5) var(--sp-6);
       border-top: 1px solid var(--hp-line);
     }
-    .dialog .row.markerfooter {
+    hp-dialog .row.markerfooter {
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;

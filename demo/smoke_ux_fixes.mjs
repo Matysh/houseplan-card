@@ -30,8 +30,9 @@ const res = await page.evaluate(async () => {
   c._openSpaceDialog('edit', 'f1'); await c.updateComplete;
   out.fillRadios = sr().querySelectorAll('input[name="fillmode"]').length;
   out.tempInputs = sr().querySelectorAll('.temprange .tempin').length;
-  out.dialogWide = !!sr().querySelector('.dialog.wide .srcrow');
-  out.dialogWidth = Math.round(sr().querySelector('.dialog').getBoundingClientRect().width);
+  const hpDialog = sr().querySelector('hp-dialog');
+  out.dialogWide = !!hpDialog?.hasAttribute('wide') && !!hpDialog.querySelector('.srcrow');
+  out.dialogWidth = Math.round(hpDialog.shadowRoot.querySelector('.surface').getBoundingClientRect().width);
   // NaN-защита: пустой ввод не ломает границы
   const before = c._spaceDialog.tempMax;
   const fakeEv = { target: { value: '' } };
@@ -44,13 +45,14 @@ const res = await page.evaluate(async () => {
 // '/tmp/...' указывает в несуществующий C:\tmp и смоук падал, не дойдя до
 // ассертов (портируемость, ревью 2026-07-27)
 await page.screenshot({ path: join(tmpdir(), 'houseplan_ux_dialog.png') }).catch(() => {});
-// значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
+// Geometry values were re-baselined for the shared border-box hp-dialog in
+// v1.59.2; the usable wide-dialog width remains 500 px.
 checkAll(res, {
   "filledClass": 1,
   "unfilled": 3,
   "tipTemp": 22.4,
   "fillRadios": 5,
   "tempInputs": 2,
-  "dialogWidth": 502,
+  "dialogWidth": 500,
 });
 await finish(browser, res);

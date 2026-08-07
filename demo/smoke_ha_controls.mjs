@@ -14,9 +14,9 @@ const res = await page.evaluate(async () => {
 
   // --- 1) fallback branch: no ha-* registered -> classic inputs ----------
   c._openMarkerDialog(c._devices[0]); await c.updateComplete;
-  out.fallbackCheckbox = !!sr().querySelector('.dialog .srcrow input[type=checkbox]');
-  out.fallbackRange = !!sr().querySelector('.dialog input[type=range]');
-  out.fallbackNoHaSwitch = !sr().querySelector('.dialog ha-switch');
+  out.fallbackCheckbox = !!sr().querySelector('hp-dialog .srcrow input[type=checkbox]');
+  out.fallbackRange = !!sr().querySelector('hp-dialog input[type=range]');
+  out.fallbackNoHaSwitch = !sr().querySelector('hp-dialog ha-switch');
   c._markerDialog = null; await c.updateComplete;
 
   // --- 2) register stubs mimicking the HA contract -----------------------
@@ -35,20 +35,20 @@ const res = await page.evaluate(async () => {
   });
 
   c._openMarkerDialog(c._devices[0]); await c.updateComplete;
-  const switches = [...sr().querySelectorAll('.dialog ha-switch')];
+  const switches = [...sr().querySelectorAll('hp-dialog ha-switch')];
   out.haSwitchRendered = switches.length >= 2; // is_light + hide-from-plan at minimum
-  out.haNoPlainCheckbox = !sr().querySelector('.dialog .srcrow input[type=checkbox]');
-  const sliders = [...sr().querySelectorAll('.dialog ha-slider')];
+  out.haNoPlainCheckbox = !sr().querySelector('hp-dialog .srcrow input[type=checkbox]');
+  const sliders = [...sr().querySelectorAll('hp-dialog ha-slider')];
   out.haSliderRendered = sliders.length >= 2; // size + angle
 
   // --- 3) card -> control: state is pushed into the element --------------
   c._markerDialog = { ...c._markerDialog, isLight: true, hideFromPlan: false };
   await c.updateComplete;
-  out.downstreamChecked = [...sr().querySelectorAll('.dialog ha-switch')].some((el) => el.checked === true);
+  out.downstreamChecked = [...sr().querySelectorAll('hp-dialog ha-switch')].some((el) => el.checked === true);
 
   // --- 4) control -> card: change with .checked lands in the dialog ------
   const before = c._markerDialog.hideFromPlan;
-  const sw = [...sr().querySelectorAll('.dialog ha-switch')].find((el) => el.checked === before);
+  const sw = [...sr().querySelectorAll('hp-dialog ha-switch')].find((el) => el.checked === before);
   sw.checked = !before;
   sw.dispatchEvent(new Event('change', { bubbles: true }));
   await c.updateComplete;
@@ -57,7 +57,7 @@ const res = await page.evaluate(async () => {
 
   // --- 5) slider both ways ----------------------------------------------
   const sizeBefore = c._markerDialog.size;
-  const sl = [...sr().querySelectorAll('.dialog ha-slider')].find((el) => Number(el.value) === Number(sizeBefore));
+  const sl = [...sr().querySelectorAll('hp-dialog ha-slider')].find((el) => Number(el.value) === Number(sizeBefore));
   out.downstreamValue = !!sl;
   sl.value = 2;
   sl.dispatchEvent(new Event('input', { bubbles: true }));
@@ -73,8 +73,8 @@ const res = await page.evaluate(async () => {
 
   // --- 6) general settings: opacity sliders take the ha branch too -------
   c._openSettingsDialog(); await c.updateComplete;
-  out.gsHaSliders = sr().querySelectorAll('.dialog ha-slider').length >= 9;
-  const gsl = sr().querySelector('.dialog ha-slider');
+  out.gsHaSliders = sr().querySelectorAll('hp-dialog ha-slider').length >= 9;
+  const gsl = sr().querySelector('hp-dialog ha-slider');
   gsl.value = 55;
   gsl.dispatchEvent(new Event('input', { bubbles: true }));
   await c.updateComplete;

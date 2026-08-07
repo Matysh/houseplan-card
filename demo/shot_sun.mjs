@@ -46,7 +46,8 @@ await page.evaluate(async () => {
   c.shadowRoot.querySelector('.compass').scrollIntoView({ block: 'center' });
 });
 await page.waitForTimeout(200);
-const dlg = await page.evaluateHandle(() => window.__card.shadowRoot.querySelector('.dialog'));
+const dlg = await page.evaluateHandle(() => window.__card.shadowRoot
+  .querySelector('hp-dialog').shadowRoot.querySelector('.surface'));
 await dlg.asElement().screenshot({ path: outDir + '/sun_compass.png' });
 await browser.close();
 console.log('shots written to ' + outDir);

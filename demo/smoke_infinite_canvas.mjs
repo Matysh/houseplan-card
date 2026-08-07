@@ -159,7 +159,7 @@ Object.assign(out, await page.evaluate(() => {
   const sr = c.shadowRoot || c.renderRoot;
   const hint = sr.querySelector('.farhint');
   o.hintShown = !!hint && !!hint.querySelector('button');
-  o.hintIsNotAModal = !sr.querySelector('.dialogwrap');
+  o.hintIsNotAModal = !sr.querySelector('hp-dialog');
   return o;
 }));
 

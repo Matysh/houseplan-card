@@ -2,6 +2,15 @@
 
 ## Unreleased (dev)
 
+## v1.59.2 — 2026-08-07
+
+- **A11Y-02: one accessible dialog shell.** Every House Plan modal now uses
+  `hp-dialog`: Home Assistant supplies the modal surface and focus trap through
+  `ha-dialog`, while the standalone demo uses a native `<dialog>` fallback.
+  Dialogs have an announced title, deterministic initial focus, Escape
+  handling, contained Tab navigation and focus restoration to the control that
+  opened the modal, including nested and dialog-to-dialog flows.
+
 ## v1.59.1 — 2026-08-06
 
 This maintenance release makes device status and every light-related view use

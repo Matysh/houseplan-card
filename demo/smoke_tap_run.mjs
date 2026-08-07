@@ -22,13 +22,13 @@ const out = await page.evaluate(async () => {
   // ВИДИМОСТЬ, не просто наличие в DOM: список — flex-item со скроллом и
   // однажды схлопнулся в полоску 1px при 26 кандидатах внутри (репорт
   // пользователя 2026-07-30, поймано только замером высоты)
-  const listEl = () => sr().querySelector('.dialog .candlist');
+  const listEl = () => sr().querySelector('hp-dialog .candlist');
   o.pickerShown = !!listEl() && listEl().getBoundingClientRect().height > 30;
   c._markerDialog = { ...c._markerDialog, runFilter: 'штор' }; await c.updateComplete;
-  const cands = [...sr().querySelectorAll('.dialog .cand')].map((x) => x.textContent);
+  const cands = [...sr().querySelectorAll('hp-dialog .cand')].map((x) => x.textContent);
   o.searchWorks = cands.length >= 1 && cands.some((t) => t.includes('Шторы'));
   // и найденная строка реально нарисована, а не сплющена
-  const row = sr().querySelector('.dialog .cand');
+  const row = sr().querySelector('hp-dialog .cand');
   o.resultRowVisible = !!row && row.getBoundingClientRect().height > 10
     && row.getBoundingClientRect().bottom <= listEl().getBoundingClientRect().bottom + 1;
   // сохранение без цели блокируется
@@ -37,7 +37,7 @@ const out = await page.evaluate(async () => {
   // выбираем цель + подтверждение, сохраняем
   c._markerDialog = { ...c._markerDialog, tapTarget: 'script.curtains', tapConfirm: true };
   await c.updateComplete;
-  o.confirmCheckboxShown = [...sr().querySelectorAll('.dialog .srcrow')].length >= 2;
+  o.confirmCheckboxShown = [...sr().querySelectorAll('hp-dialog .srcrow')].length >= 2;
   await c._saveMarker(); await c.updateComplete;
   const saved = (c._serverCfg.markers || []).find((m) => m.binding === 'device:' + d.bindingRef);
   o.markerSaved = saved?.tap_action === 'run' && saved?.tap_target === 'script.curtains' && saved?.tap_confirm === true;

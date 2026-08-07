@@ -8,10 +8,10 @@ const res = await page.evaluate(async () => {
   // 1) диалог общих настроек: инвентарь строк и групп (обновлён фичей «Солнце»)
   c._openSettingsDialog(); await c.updateComplete;
   out.rows = sr().querySelectorAll('.gsrow').length;
-  out.groups = [...sr().querySelectorAll('.dialog .dispsection')].map((l) => l.textContent.trim());
+  out.groups = [...sr().querySelectorAll('hp-dialog .dispsection')].map((l) => l.textContent.trim());
   // 1b) блок About: версия + две внешние ссылки (target=_blank rel=noopener)
-  out.aboutVersion = sr().querySelector('.dialog .aboutver')?.textContent.trim() ?? null;
-  out.aboutLinks = [...sr().querySelectorAll('.dialog a.aboutlink')].map((a) => ({
+  out.aboutVersion = sr().querySelector('hp-dialog .aboutver')?.textContent.trim() ?? null;
+  out.aboutLinks = [...sr().querySelectorAll('hp-dialog a.aboutlink')].map((a) => ({
     href: a.getAttribute('href'), target: a.getAttribute('target'), rel: a.getAttribute('rel') }));
   // 2) сменить цвет light_on и сохранить
   c._setFillColor('light_on', { c: '#ff00ff', a: 0.5 });

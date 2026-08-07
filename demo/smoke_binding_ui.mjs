@@ -15,7 +15,7 @@ const res = await page.evaluate(async () => {
   radios()[1].click(); await c.updateComplete;
   out.dropShown = !!sr().querySelector('.dropbtn');
   out.panelOpen = !!sr().querySelector('.droppanel');
-  const saveBtn = [...sr().querySelectorAll('.dialog .btn.on')].pop();
+  const saveBtn = [...sr().querySelectorAll('hp-dialog .btn.on')].pop();
   out.saveDisabled = saveBtn?.disabled === true;
   // без чекбокса в списке нет individual-сущностей устройств
   const subs = () => [...sr().querySelectorAll('.cand .cs')].map((e) => e.textContent);
@@ -32,7 +32,7 @@ const res = await page.evaluate(async () => {
   sr().querySelector('.cand').click(); await c.updateComplete;
   out.picked = c._markerDialog.binding !== '' && c._markerDialog.binding !== 'virtual';
   out.panelClosed = !sr().querySelector('.droppanel');
-  out.saveEnabled = [...sr().querySelectorAll('.dialog .btn.on')].pop()?.disabled === false;
+  out.saveEnabled = [...sr().querySelectorAll('hp-dialog .btn.on')].pop()?.disabled === false;
   // радио назад на «Виртуальное» → binding=virtual
   radios()[0].click(); await c.updateComplete;
   out.backToVirtual = c._markerDialog.binding === 'virtual' && c._markerDialog.bindingMode === 'virtual';

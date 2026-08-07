@@ -39,7 +39,7 @@ const res = await page.evaluate(async () => {
   c._openSpaceDialog('create'); await c.updateComplete;
   c._spaceDialog = { ...c._spaceDialog, title: 'Attic', source: 'draw', orientation: 'square' };
   await c.updateComplete;
-  out.saveEnabled = !sr().querySelector('.dialog .btn.on[disabled]');
+  out.saveEnabled = !sr().querySelector('hp-dialog .btn.on[disabled]');
   await c._saveSpaceDialog(); await c.updateComplete;
   const attic = c._serverCfg.spaces.find((s) => s.title === 'Attic');
   out.atticSquare = attic?.aspect === undefined;  // no per-space ratio any more

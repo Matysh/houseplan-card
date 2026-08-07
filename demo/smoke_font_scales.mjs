@@ -50,7 +50,7 @@ const res = await page.evaluate(async () => {
   // 5) превью есть и в диалоге пространства
   c._openSpaceDialog('edit', spId); await c.updateComplete;
   out.spacePreview = !!sr().querySelector('.cardpreview');
-  out.spaceSlider = [...sr().querySelectorAll('.dialog label')].some((l) => l.textContent === c._t('space.card_font'));
+  out.spaceSlider = [...sr().querySelectorAll('hp-dialog label')].some((l) => l.textContent === c._t('space.card_font'));
   c._spaceDialog = null; await c.updateComplete;
   return out;
 });

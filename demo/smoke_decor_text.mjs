@@ -49,7 +49,7 @@ const res = await page.evaluate(async () => {
   c._decorTextDialog = { x: 0.3, y: 0.3, text: '', color: '#223344' };
   await c.updateComplete;
   out.noSizePicker = !sr().querySelector('input[name="dtsize"]');
-  out.textareaNotInput = !!sr().querySelector('.dialog textarea.dtarea');
+  out.textareaNotInput = !!sr().querySelector('hp-dialog textarea.dtarea');
   c._decorTextDialog = null; await c.updateComplete;
 
   // старый `size` продолжает рисоваться ровно как раньше: 'l' = 30px

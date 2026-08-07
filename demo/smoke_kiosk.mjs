@@ -51,7 +51,7 @@ const res = await page.evaluate(async () => {
   out.persisted = JSON.parse(localStorage.getItem('houseplan_card_kiosk_v1')).icon === 1;
   // 7) попап настроек экрана открывается (прямой вызов; долгое нажатие проверено таймером)
   c._kioskDialog = true; await c.updateComplete;
-  out.dialogRenders = !!sr().querySelector('.dialog input[type="range"]');
+  out.dialogRenders = !!sr().querySelector('hp-dialog input[type="range"]');
   c._kioskDialog = false;
   // 8) карусель: тик двигает пространство, пауза после касания работает
   const cs = c._space;

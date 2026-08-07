@@ -61,12 +61,12 @@ Object.assign(out, await page.evaluate(async () => {
   // у обычного термометра чекбокса нет
   const th = c._devices.find((d) => d.entities?.includes('sensor.living_temp'));
   c._openMarkerDialog(th); await c.updateComplete;
-  o.noCheckboxForThermometer = !sr().querySelector('.dialog .climrow');
+  o.noCheckboxForThermometer = !sr().querySelector('hp-dialog .climrow');
   c._markerDialog = null; await c.updateComplete;
   // у кондиционера — есть и по умолчанию снят
   const ac = c._devices.find((d) => d.entities?.includes('climate.ac'));
   c._openMarkerDialog(ac); await c.updateComplete;
-  const row = sr().querySelector('.dialog .climrow input');
+  const row = sr().querySelector('hp-dialog .climrow input');
   o.checkboxForClimate = !!row;
   o.uncheckedByDefault = !!row && !row.checked;
   if (row) row.scrollIntoView({ block: 'center' });
@@ -77,7 +77,7 @@ Object.assign(out, await page.evaluate(async () => {
 const box = await page.evaluate(() => {
   const c = window.__card;
   const sr = c.shadowRoot || c.renderRoot;
-  const r = sr.querySelector('.dialog .climrow input')?.getBoundingClientRect();
+  const r = sr.querySelector('hp-dialog .climrow input')?.getBoundingClientRect();
   return r ? { x: r.x + r.width / 2, y: r.y + r.height / 2 } : null;
 });
 check('checkboxClickable', !!box);
@@ -138,7 +138,7 @@ Object.assign(out, await page.evaluate(async () => {
   const ac = c._devices.find((d) => d.entities?.includes('climate.ac'));
   c._openMarkerDialog(ac); await c.updateComplete;
   o.survivesReopen = c._markerDialog?.useClimateTemp === true;
-  o.checkboxChecked = sr().querySelector('.dialog .climrow input')?.checked === true;
+  o.checkboxChecked = sr().querySelector('hp-dialog .climrow input')?.checked === true;
   c._markerDialog = null;
   return o;
 }));

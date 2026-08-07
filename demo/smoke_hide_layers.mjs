@@ -96,7 +96,7 @@ const res = await page.evaluate(async () => {
   // ---- 5) the dialog carries both switches round trip --------------------
   c._openSpaceDialog('edit', c._space);
   await upd();
-  const rows = [...sr().querySelectorAll('.dialog .srcrow')].map((r) => r.textContent.trim());
+  const rows = [...sr().querySelectorAll('hp-dialog .srcrow')].map((r) => r.textContent.trim());
   out.dialogOffersHideDecor = rows.some((t) => /декорат|decorative/i.test(t));
   out.dialogOffersHideOpenings = rows.some((t) => /проём|проем|doors and windows/i.test(t));
   out.dialogReadsOff = c._spaceDialog.hideDecor === false && c._spaceDialog.hideOpenings === false;

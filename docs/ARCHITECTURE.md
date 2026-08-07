@@ -9,6 +9,7 @@ that contains both the backend (`custom_components/houseplan`) and the Lovelace 
 houseplan-card/
 ├─ src/                          # card sources (TypeScript + Lit 3)
 │  ├─ houseplan-card.ts          # the card: rendering, states, drag, tooltip, sticky header
+│  ├─ hp-dialog.ts               # shared HA/native modal shell and focus lifecycle
 │  ├─ editor.ts                  # GUI config editor (ha-form + selectors)
 │  ├─ rules.ts                   # icon rules (iconFor), filtering, groups, fallback order
 │  └─ data/
@@ -40,6 +41,12 @@ houseplan-card/
    `hass.devices/entities/areas` (registries). No direct WS connections.
 4. **Reactivity.** Every state change in HA leads to set hass → re-render.
    Temperatures/LQI/on-off are live by definition (verified by substituting state).
+5. **One modal contract.** Card modals render through `hp-dialog`. In Home
+   Assistant it delegates surface semantics and trapping to `ha-dialog`; the
+   standalone demo falls back to native `<dialog>`. The wrapper owns the title,
+   initial focus, Escape close event and restore-focus session. Focus sessions
+   are scoped to a card shadow root so nested dialogs return to their parent
+   trigger and dialog replacement still returns to the original outside opener.
 
 ## Coordinate system
 

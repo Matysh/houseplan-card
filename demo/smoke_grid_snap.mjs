@@ -171,11 +171,11 @@ const out = await page.evaluate(async () => {
   c._openAlignDialog();
   await c.updateComplete;
   const dlg = c._alignDialog;
-  o.alignDialogOpens = !!dlg && !!sr().querySelector('.dialogwrap .alignmsg');
+  o.alignDialogOpens = !!dlg && !!sr().querySelector('hp-dialog .alignmsg');
   o.alignCountsWhatMoves = !!dlg && dlg.report.moved > 0 && dlg.report.moved <= dlg.report.total;
   // half a step of 5 cm cells ≈ 2.5 cm; a third of a step is well under that
   o.alignPromisesASmallShift = !!dlg && dlg.cm > 0 && dlg.cm < 3;
-  o.alignExplainsSafeUndo = (sr().querySelector('.dialogwrap .rhint')?.textContent || '').length > 20;
+  o.alignExplainsSafeUndo = (sr().querySelector('hp-dialog .rhint')?.textContent || '').length > 20;
 
   // capture what the network is told, then run it
   const sent = [];
@@ -204,7 +204,7 @@ const out = await page.evaluate(async () => {
   c._openAlignDialog();
   await c.updateComplete;
   o.secondRunMovesNothing = c._alignDialog.report.moved === 0;
-  o.secondRunOffersNoButton = !sr().querySelector('.dialogwrap .btn.on');
+  o.secondRunOffersNoButton = !sr().querySelector('hp-dialog .btn.on');
   c._alignDialog = null;
   await c.updateComplete;
 
@@ -228,7 +228,7 @@ const out = await page.evaluate(async () => {
   const md = c._alignDialog;
   o.alignPromiseUsesTheOwnScaleOfEachSpace = !!md && md.cm >= 50 && md.cm < 51;
   o.alignPromiseNamesTheSpaceItBelongsTo = !!md && md.where === 'Attic'
-    && (sr().querySelector('.dialogwrap .body')?.textContent || '').includes('Attic');
+    && (sr().querySelector('hp-dialog .body')?.textContent || '').includes('Attic');
   c._alignDialog = null; await c.updateComplete;
 
   // ---- 2d) an angle-only opening fix is offerable (AUD-158B1-02) --------
@@ -246,7 +246,7 @@ const out = await page.evaluate(async () => {
   c._openAlignDialog(); await c.updateComplete;
   const ad = c._alignDialog;
   o.angleOnlyOpeningCounts = !!ad && ad.report.moved === 1 && ad.report.rotated === 1;
-  o.angleOnlyOpeningOffersTheButton = !!sr().querySelector('.dialogwrap .btn.on');
+  o.angleOnlyOpeningOffersTheButton = !!sr().querySelector('hp-dialog .btn.on');
   await c._runAlignToGrid();
   await c.updateComplete;
   o.angleOnlyOpeningIsActuallyFixed = c._serverCfg.spaces[0].openings[0].angle === 0;

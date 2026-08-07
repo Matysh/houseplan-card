@@ -3,6 +3,45 @@ const { page, browser } = await launch();
 const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
+  const sr = c.shadowRoot || c.renderRoot;
+  const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+  const deepActive = () => {
+    let active = document.activeElement;
+    while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+    return active;
+  };
+
+  // A11Y-02: the shared native fallback carries the same modal/focus contract
+  // that ha-dialog supplies in Home Assistant.
+  const opener = document.createElement('button');
+  opener.textContent = 'open settings';
+  sr.append(opener);
+  opener.focus();
+  c._openSettingsDialog(); await c.updateComplete; await frame();
+  const hp = sr.querySelector('hp-dialog');
+  const native = hp?.shadowRoot?.querySelector('dialog');
+  const titleId = native?.getAttribute('aria-labelledby');
+  out.sharedShell = !!hp && !!native?.open;
+  out.modalSemantics = native?.getAttribute('role') === 'dialog'
+    && native?.getAttribute('aria-modal') === 'true'
+    && !!titleId && !!hp.shadowRoot.getElementById(titleId)?.textContent.trim();
+  let active = deepActive();
+  out.initialFocus = !!active && (hp.contains(active) || hp.shadowRoot.contains(active));
+  const focusable = [...hp.querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled])')];
+  const last = focusable.at(-1);
+  last?.focus();
+  last?.dispatchEvent(new KeyboardEvent('keydown', {
+    key: 'Tab', bubbles: true, composed: true, cancelable: true,
+  }));
+  active = deepActive();
+  out.focusTrap = active?.classList?.contains('close') === true;
+  active?.dispatchEvent(new KeyboardEvent('keydown', {
+    key: 'Escape', bubbles: true, composed: true, cancelable: true,
+  }));
+  await c.updateComplete; await frame();
+  out.restoreFocus = !c._settingsDialog && deepActive() === opener;
+  opener.remove();
+
   const esc = async () => { window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); await c.updateComplete; };
   // общие настройки
   c._openSettingsDialog(); await c.updateComplete;

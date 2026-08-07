@@ -48,7 +48,7 @@ const res = await page.evaluate(async () => {
   };
   c._openSettingsDialog();
   await c.updateComplete;
-  out.dialogHasBgRow = !!sr().querySelector('.dialog .colorrow input[type=color]');
+  out.dialogHasBgRow = !!sr().querySelector('hp-dialog .colorrow input[type=color]');
   c._settingsDialog = { ...c._settingsDialog, bgColor: '#0a2a4a' };
   out.dialogPreviews = (await stageBg()) === rgb('#0a2a4a');
   await c._saveSettingsDialog();

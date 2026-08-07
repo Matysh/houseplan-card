@@ -83,7 +83,7 @@ const out = await page.evaluate(async () => {
   // ---- the dialog offers the action and SAVES it -------------------------
   c._setMode('devices'); await c.updateComplete;
   c._openMarkerDialog(curtain()); await c.updateComplete;
-  const optionValues = () => [...sr().querySelectorAll('.dialog option')].map((e) => e.value);
+  const optionValues = () => [...sr().querySelectorAll('hp-dialog option')].map((e) => e.value);
   o.dialogOffersCover = optionValues().includes('cover');
   c._markerDialog = { ...c._markerDialog, tapAction: 'cover', display: 'icon_ripple' };
   await c.updateComplete;

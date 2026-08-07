@@ -183,8 +183,8 @@ const dlg = await page.evaluate(() => {
   const sr = c.shadowRoot;
   const out = {
     compassDragSets180: c._settingsDialog?.northDeg === 180,
-    dialogHasModeSelect: !!sr.querySelector('.dialog select.areasel'),
-    dialogHasRaysToggle: [...sr.querySelectorAll('.dialog .srcrow input[type=checkbox]')].length > 0,
+    dialogHasModeSelect: !!sr.querySelector('hp-dialog select.areasel'),
+    dialogHasRaysToggle: [...sr.querySelectorAll('hp-dialog .srcrow input[type=checkbox]')].length > 0,
     dialogHasWeatherList: sr.querySelectorAll('#hp-weather-list option').length > 0,
     dialogNumberMatches: sr.querySelector('.suncol input[type=number]')?.value === '180',
   };

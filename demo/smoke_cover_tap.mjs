@@ -74,13 +74,13 @@ const out = await page.evaluate(async () => {
   // ---- the dialog offers the option only where it makes sense ------------
   await setCover('closed', { device_class: 'curtain' });
   c._setMode('devices'); await c.updateComplete;
-  const optionValues = () => [...sr().querySelectorAll('.dialog option')].map((e) => e.value);
+  const optionValues = () => [...sr().querySelectorAll('hp-dialog option')].map((e) => e.value);
   c._openMarkerDialog(gate()); await c.updateComplete;
   o.dialogOffersCoverForCurtain = optionValues().includes('cover');
   // …and the confirmation checkbox follows the choice, like it does for run/toggle
-  const rowsBefore = sr().querySelectorAll('.dialog .srcrow').length;
+  const rowsBefore = sr().querySelectorAll('hp-dialog .srcrow').length;
   c._markerDialog = { ...c._markerDialog, tapAction: 'cover' }; await c.updateComplete;
-  o.confirmCheckboxShownForCover = sr().querySelectorAll('.dialog .srcrow').length > rowsBefore;
+  o.confirmCheckboxShownForCover = sr().querySelectorAll('hp-dialog .srcrow').length > rowsBefore;
   c._markerDialog = null; await c.updateComplete;
 
   // a GARAGE door never gets the option (owner: «нет, только шторы/жалюзи»)

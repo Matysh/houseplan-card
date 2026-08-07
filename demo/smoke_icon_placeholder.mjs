@@ -17,7 +17,7 @@ const res = await page.evaluate(async () => {
   out.hintIcon = hint?.querySelector('ha-icon')?.getAttribute('icon') === dev.icon;
   // пикер (или фолбэк-инпут) получил placeholder
   const picker = sr().querySelector('ha-icon-picker');
-  const inputs = [...sr().querySelectorAll('.dialog input')];
+  const inputs = [...sr().querySelectorAll('hp-dialog input')];
   out.placeholderSet = picker
     ? picker.placeholder === dev.icon
     : inputs.some((i) => i.placeholder === dev.icon);

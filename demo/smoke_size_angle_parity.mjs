@@ -70,7 +70,7 @@ const out3 = await page.evaluate(async () => {
   const dev = c._devices.find((d) => d.space === 'f1');
   c._openMarkerDialog(dev); await c.updateComplete;
   // строка «размер · угол»: два ползунка, второй — угол
-  const rows = [...sr().querySelectorAll('.dialog .colorrow')];
+  const rows = [...sr().querySelectorAll('hp-dialog .colorrow')];
   const row = rows.find((r) => r.textContent.includes('°'));
   const ctl = [...row.querySelectorAll('ha-slider, input[type=range]')];
   const stepOf = (el) => Number(el.step ?? el.getAttribute('step'));

@@ -180,7 +180,7 @@ const res = await page.evaluate(async () => {
   }));
   await c.updateComplete;
   out.doubleClickOpensObjectDialog = c._decorShapeDialog?.id === 'dcprobe'
-    && !!sr().querySelector('.dialog .dfill') === false;
+    && !!sr().querySelector('hp-dialog .dfill') === false;
   c._decorShapeDialog = { ...c._decorShapeDialog, color: '#123456', width: 6.5 };
   c._decorSaveShape(); await c.updateComplete;
   const editedProbe = c._decorList.find((x) => x.id === 'dcprobe');

@@ -13,7 +13,7 @@ const res = await page.evaluate(async () => {
   out.hasDev = !!dev;
   c._infoCard = dev; await c.updateComplete;
   // 1) блок сущностей идёт ПЕРВЫМ, до модели/ссылок
-  const body = sr().querySelector('.dialog .body');
+  const body = sr().querySelector('hp-dialog .body');
   out.entListFirst = body.firstElementChild?.classList.contains('entlist')
     || body.querySelector('.entlist') === body.children[0];
   const rows = [...sr().querySelectorAll('.entrow')];

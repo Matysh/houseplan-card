@@ -43,8 +43,8 @@ const res = await page.evaluate(async () => {
   // 5) создание новой комнаты: в диалоге есть секция настроек
   c._setMode('plan'); c._tool = 'draw'; await c.updateComplete;
   c._resetRoomDialogFields(); c._roomDialog = true; c.requestUpdate(); await c.updateComplete;
-  out.createHasSection = [...sr().querySelectorAll('.dialog label')].some((l) => l.textContent === c._t('room.settings_section'));
-  out.createHasInherit = [...sr().querySelectorAll('.dialog .srcrow')].some((l) => l.textContent.trim() === c._t('fill.inherit'));
+  out.createHasSection = [...sr().querySelectorAll('hp-dialog label')].some((l) => l.textContent === c._t('room.settings_section'));
+  out.createHasInherit = [...sr().querySelectorAll('hp-dialog .srcrow')].some((l) => l.textContent.trim() === c._t('fill.inherit'));
   c._roomDialogCancel(); await c.updateComplete;
   // 6) glow-пространство: оверрайд none выводит комнату из тьмы
   c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== spId ? s : ({

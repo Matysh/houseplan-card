@@ -35,7 +35,7 @@ const res = await page.evaluate(async () => {
   c._openSpaceDialog('edit', 'f1'); await c.updateComplete;
   c._spaceDialog = { ...c._spaceDialog, source: 'file', planUrl: null, planFile: null };
   await c.updateComplete;
-  out.saveBlockedWithoutPlan = !!sr().querySelector('.dialog .btn.on[disabled]');
+  out.saveBlockedWithoutPlan = !!sr().querySelector('hp-dialog .btn.on[disabled]');
 
   // открываем список сохранённых
   await c._toggleServerPlans();
@@ -54,7 +54,7 @@ const res = await page.evaluate(async () => {
   await c.updateComplete;
   out.picked = c._spaceDialog.planUrl === '/api/houseplan/content/plans/_/f1.aaa.png';
   out.listClosed = !c._spaceDialog.pickSaved;
-  out.saveEnabledAfterPick = !sr().querySelector('.dialog .btn.on[disabled]');
+  out.saveEnabledAfterPick = !sr().querySelector('hp-dialog .btn.on[disabled]');
 
   // выбранный в этом же диалоге удалить нельзя: сохранение записало бы ссылку
   // на несуществующий файл (HP-1470-02)
