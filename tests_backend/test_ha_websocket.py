@@ -137,13 +137,16 @@ async def test_trail_delete_clears_the_server_book(
 
 
 async def test_trail_delete_rejects_non_admin_without_mutation(
-    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    hass_read_only_access_token: str,
 ) -> None:
     await _setup(hass)
     recorder = hass.data[DOMAIN]["trail_recorder"]
     recorder.book.data["m1"] = {"current": {"points": [[1, 2]]}}
-    user = await hass.auth.async_create_user("ordinary")
-    client = await hass_ws_client(hass, user=user)
+    # The current HA harness authenticates websocket clients by access token;
+    # older releases accepted a `user=` shortcut which no longer exists.
+    client = await hass_ws_client(hass, access_token=hass_read_only_access_token)
     await client.send_json_auto_id({"type": "houseplan/trail/delete", "marker_id": "m1"})
     response = await client.receive_json()
     assert not response["success"] and response["error"]["code"] == "unauthorized"
