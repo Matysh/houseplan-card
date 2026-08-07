@@ -143,6 +143,36 @@ def test_trail_book_delete_forgets_current_and_previous_runs():
     assert book.delete("m1") is False
 
 
+def test_missing_trail_delete_does_not_mutate_live_tracking_pairs():
+    rec, _hass, _states = _rec()
+    before = {src: list(pairs) for src, pairs in rec.pairs.items()}
+    unsubscribed = []
+    rec._unsub_track = lambda: unsubscribed.append(True)
+    assert _run_isolated(rec.async_delete("m1")) is False
+    assert rec.pairs == before
+    assert unsubscribed == []
+
+
+def test_trail_delete_prunes_pair_and_replaces_subscription():
+    tracked = []
+    old_track = trails.async_track_state_change_event
+    trails.async_track_state_change_event = lambda hass, ents, cb: (
+        tracked.append(list(ents)) or (lambda: None)
+    )
+    try:
+        rec, _hass, _states = _rec()
+        rec.pairs["other.source"] = [("m2", "vacuum.other")]
+        rec.book.data["m1"] = {"current": {"points": [[1, 2]]}}
+        unsubscribed = []
+        rec._unsub_track = lambda: unsubscribed.append(True)
+        assert _run_isolated(rec.async_delete("m1")) is True
+        assert rec.pairs == {"other.source": [("m2", "vacuum.other")]}
+        assert unsubscribed == [True]
+        assert tracked == [["other.source", "vacuum.other"]]
+    finally:
+        trails.async_track_state_change_event = old_track
+
+
 def test_object_style_position_is_read():
     # Tasshack in-memory attributes hold a Point OBJECT, not a dict
     class Point:

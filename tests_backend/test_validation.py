@@ -136,6 +136,15 @@ def test_space_backdrop_transform_is_optional_and_bounded():
             v.SPACE_SCHEMA({**ok, **bad})
 
 
+def test_space_cell_scale_is_optional_finite_and_bounded():
+    ok = {"id": "f1", "title": "1", "view_box": [0, 0, 1, 1], "rooms": []}
+    assert "cell_cm" not in v.SPACE_SCHEMA(ok)
+    assert v.SPACE_SCHEMA({**ok, "cell_cm": 20})["cell_cm"] == 20.0
+    for bad in (0, -1, v.CELL_CM_MAX + 1, float("nan"), float("inf")):
+        with pytest.raises(vol.Invalid):
+            v.SPACE_SCHEMA({**ok, "cell_cm": bad})
+
+
 def test_marker_schema():
     v.MARKER_SCHEMA({"id": "m1", "binding": "device:abc"})
     v.MARKER_SCHEMA({"id": "m2", "binding": "virtual", "name": "X",

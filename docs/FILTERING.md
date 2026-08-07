@@ -81,15 +81,23 @@ the old behaviour until an editing client materialises it.
 - "Delete" appears beside Hide/Show for every existing marker. It asks for
   confirmation and commits immediately. HA device/entity markers leave only
   the tombstone above; virtual markers are removed outright.
+- Deleting a generated light-group binding also removes that group from the
+  plan's light-source set. On a legacy unseeded config its formerly folded
+  member lamps may consequently appear as ordinary devices. This is deliberate
+  delete semantics, not restoration of a hidden group.
 - Deletion removes the marker layout, pending activity state, attachments and
   saved vacuum trails. A late drag from a stale browser tab is ignored by the
   server while the tombstone exists.
-- Deleted bindings are excluded from room LQI, light-source resolution, room
-  light statistics/fill/Glow, registry-wide climate averages, explicit room
-  temperature/humidity sources and another marker's `controls`. References in
-  openings and live text are retained but become inactive (no lock/contact
-  badge and `—` respectively) so adding the device again restores them without
-  reconstructing configuration.
+- A deleted **device binding** is excluded from room LQI, light-source
+  resolution, room light statistics/fill/Glow, registry-wide climate averages
+  and explicit room sources. An **entity binding** tombstone suppresses that
+  standalone plan object; it does not remove the same entity from the data of
+  a still-live parent HA device. Tombstones are binding-scoped, not mutations
+  of the HA registry.
+- References in openings, live text and another marker's persisted `controls`
+  are retained but become inactive (no lock/contact badge, `—`, or control
+  action respectively). Adding the binding again restores them without
+  reconstructing configuration or performing an unrelated Save first.
 - Duplicate names are still numbered, light groups still fold — those are
   aggregation, not hiding.
 
@@ -103,8 +111,11 @@ source precedence is (`_visualSamples` / `_actEntity`):
    «Открыть/закрыть» (`tap_action: 'cover'` — `coverEntityOf`, the same helper
    and the same entity the tap drives). It wins over EVERYTHING below;
 2. the marker's **resolved light sources** (`resolvedLightSources`): bound
-   `controls` first, otherwise its primary controllable entity when
-   `is_light` is set, otherwise automatic `light.*`. This exact set also feeds
+   `controls` first (other targets only: an `entity:*` marker's bound entity and
+   a `device:*` marker's child entities are excluded), otherwise its primary controllable entity when
+   `is_light` is set, otherwise automatic `light.*` only when `light` is the
+   device's resolved functional role. An auxiliary LED/display light on a
+   media player or appliance does not turn the whole marker into a lamp. This exact set also feeds
    Glow, Light fill, room light stats and group toggle;
 3. otherwise the device's **resolved state role**
    (`resolvedDeviceStateEntities`): functional device domains first, then
@@ -157,6 +168,12 @@ marker with no running effect. Explicit `off` deliberately reuses the existing
 `.dev.unavail` faded presentation used by `unknown` / `unavailable`; it does
 not add another visual status. When a marker resolves several media entities,
 it fades only if none is currently available and powered.
+
+The media role also outranks auxiliary `light.*`/`switch.*` entities belonging
+to the same physical device. Status LEDs, display illumination and vendor
+options therefore neither paint the media marker nor enter room light
+aggregates automatically. Explicit marker `controls` or `is_light` remains the
+user override for a real light source.
 
 ### A cover is never painted (owner 2026-08-04)
 

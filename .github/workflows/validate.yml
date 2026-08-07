@@ -32,8 +32,10 @@ jobs:
         run: npm test
       - name: Build
         run: npm run build
-      - name: Card bundle in sync with integration
-        run: cmp dist/houseplan-card.js custom_components/houseplan/frontend/houseplan-card.js
+      - name: Card bundle snapshots in sync
+        run: |
+          cmp dist/houseplan-card.js custom_components/houseplan/frontend/houseplan-card.js
+          cmp dist/houseplan-card.js demo/srv/assets/houseplan-card.js
   smoke:
     # audit T2: the end-to-end layer used to run only when a human remembered.
     # Gated on `frontend` so a typecheck failure does not burn browser minutes.
@@ -47,8 +49,8 @@ jobs:
       - name: Install Chromium for Playwright
         run: npx playwright install --with-deps chromium
       - name: Build a FRESH bundle for the smokes
-        # the committed demo/srv/assets copy is a snapshot; testing it would
-        # report green about code that no longer exists (audit T2)
+        # Never depend on a previous job's artefact; build the exact source
+        # under test again before the browser suite.
         run: npm run build && cp dist/houseplan-card.js demo/srv/assets/houseplan-card.js
       - name: Smoke suite
         run: |

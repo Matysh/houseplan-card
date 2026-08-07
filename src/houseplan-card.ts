@@ -75,6 +75,7 @@ import {
   areaTemp, areaHum, sourceValue, areaClimateMap,
   resolvedLightSources, resolvedLightState, resolvedLightStats,
   resolvedDeviceStateEntities, removedPlanBindings, isRemovedPlanEntity,
+  deletePlanMarkerRecords, effectiveMarkerControls, resolveIcon,
   type AreaClimate,
 } from './devices';
 import type {
@@ -103,12 +104,14 @@ import {
   DEFAULT_DECOR_STYLE, boxAnchors, boxCorners, clamp01, decorCmToUnits,
   decorStrokeUnits, decorStyleOf, decorStylePatch,
   decorUnitsToCm, mergeSnapGeometry, normalizeAngle, resizeDecorBox,
-  snapDecorPoint, type DecorBox, type SnapGeometry,
+  resizedBoxTopLeft, snapDecorPoint, validDecorDraft,
+  type DecorBox, type SnapGeometry,
 } from './editors/decor/geometry';
 
-const CARD_VERSION = '1.60.0-beta.1';
+const CARD_VERSION = '1.60.0';
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
+const CELL_CM_MAX = 1000;
 /** HP-1552 boot-veil timing (AUD-1552-02). The veil holds for at least
  *  BOOT_MIN_MS; every stage-height change restarts a BOOT_QUIET_MS
  *  trailing-quiescence requirement (chrome still settling near the cap
@@ -122,6 +125,19 @@ const BOOT_MAX_MS = 1200;
 /** AUD-1552-02: post-reveal grace during which late chrome shifts glide
  *  (CSS height transition on the stage) instead of snapping. */
 const BOOT_SOFT_MS = 1500;
+/** A long-backgrounded browser tab may resume through several stale/partial
+ *  layout frames (HA chrome, dynamic viewport and a websocket warm re-mount
+ *  do not necessarily wake in the same frame). In normal View we keep those
+ *  frames behind the stage background and reveal one viewport computed from
+ *  a quiet, measurable stage. Quick tab switches stay instant; kiosk and all
+ *  editors deliberately bypass this path. */
+const RESUME_LONG_HIDDEN_MS = 15000;
+const RESUME_RECENT_MS = 15000;
+const RESUME_MIN_MS = 220;
+const RESUME_QUIET_MS = 80;
+const RESUME_MAX_MS = 750;
+let pageHiddenAt = typeof document !== 'undefined' && document.visibilityState === 'hidden' ? Date.now() : 0;
+let pageResumedAt = 0;
 /** DEV-B703-01: warm re-mount memo — MODULE scope, so it lives with the loaded
  *  PAGE, not with any card instance. Lovelace re-creates card elements when
  *  the websocket reconnects after a long-backgrounded tab; the fresh instance
@@ -412,6 +428,9 @@ class HouseplanCard extends LitElement {
     before: SpaceGeometryState | null;
   } | null = null;
   private _decorSel: string | null = null;
+  /** Pending eraser-tool confirmation. Delete/Backspace remains the direct
+   *  command for an explicitly selected object. */
+  private _decorEraseConfirm: { id: string; kind: DecorShape['kind'] } | null = null;
   /** The text dialog. Live references are part of `text`; `pickerEntity` is
    *  only transient UI state and is never persisted (docs/LIVE-TEXT.md). */
   private _decorTextDialog: {
@@ -789,6 +808,7 @@ class HouseplanCard extends LitElement {
    *  _restoreZoom) or applied twice (the dialog revival). */
   private _warmVp: WarmViewport | null = null;
   private _warmVpArmed = false;
+  private _warmLongReturn = false;
   private _warmRevivePending = false;
   private _warmReviveTimer?: number;
   /** AUD-159B1-01: this instance's identity in the memo — its generation, the
@@ -829,15 +849,31 @@ class HouseplanCard extends LitElement {
   private _unsubTrail?: () => void;
   private _vacJumpOnce = false;
   private _vacVisHandler = () => {
+    if (document.visibilityState === 'hidden') {
+      if (!pageHiddenAt) pageHiddenAt = Date.now();
+      return;
+    }
     if (document.visibilityState === 'visible') {
+      const now = Date.now();
+      if (pageHiddenAt && now - pageHiddenAt >= RESUME_LONG_HIDDEN_MS) pageResumedAt = now;
+      pageHiddenAt = 0;
       this._vacJumpOnce = true;
       // A hidden tab paints nothing, so the 45 s sky transition stood still
       // while the sun kept moving: come back on the RIGHT colour, then breathe
       // again (docs/SUN.md, owner 2026-08-04).
       this._skyElev = null;
+      this._tip = null;
+      this._hoverRoom = null;
+      if (now - pageResumedAt <= RESUME_RECENT_MS) this._beginResumeSettle();
       this.requestUpdate();
     }
   };
+  private _resumeSettling = false;
+  private _resumeRaf = 0;
+  private _resumeStarted = 0;
+  private _resumeLastSize = '';
+  private _resumeLastChange = 0;
+  private _viewportInvalidAt = 0;
   private _vacFit: { markerId: string; source: string; mapId: string; p: FitParams;
     drag: null | { kind: 'move' | 'scale'; sx: number; sy: number; p0: FitParams;
       fx: number; fy: number } } | null = null;
@@ -903,6 +939,7 @@ class HouseplanCard extends LitElement {
     _decorStyle: { state: true },
     _decorDraft: { state: true },
     _decorSel: { state: true },
+    _decorEraseConfirm: { state: true },
     _decorTextDialog: { state: true },
     _decorShapeDialog: { state: true },
     _backdropDialog: { state: true },
@@ -972,11 +1009,23 @@ class HouseplanCard extends LitElement {
       this._warmRevivePending = true;
       this._warmReviveTimer = window.setTimeout(() => this._warmReviveDialog(), 0);
     }
+    // A successor created by Lovelace after the visibility event did not see
+    // that event itself. Module time bridges that small reconnect gap; if no
+    // card instance survived to hear `visible`, consume the pending hidden
+    // timestamp here instead.
+    const now = Date.now();
+    if (document.visibilityState === 'visible' && pageHiddenAt) {
+      if (now - pageHiddenAt >= RESUME_LONG_HIDDEN_MS) pageResumedAt = now;
+      pageHiddenAt = 0;
+    }
+    if (this._warmLongReturn || now - pageResumedAt <= RESUME_RECENT_MS) this._beginResumeSettle();
+    this._warmLongReturn = false;
   }
 
   public disconnectedCallback(): void {
     document.removeEventListener('visibilitychange', this._vacVisHandler);
     if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
+    if (this._resumeRaf) { cancelAnimationFrame(this._resumeRaf); this._resumeRaf = 0; }
     if (this._skySnapRaf) { cancelAnimationFrame(this._skySnapRaf); this._skySnapRaf = 0; }
     for (const rt of this._activityRt.values()) clearTimeout(rt.timer); // pending activity-window repaints
     window.removeEventListener('keydown', this._keyHandler);
@@ -1041,6 +1090,7 @@ class HouseplanCard extends LitElement {
     if (e.key === 'Escape') {
       // close the topmost open dialog; info popups first, then editors
       if (this._tapConfirm) { this._tapConfirm = null; return; }
+      if (this._decorEraseConfirm) { this._decorEraseConfirm = null; return; }
       if (this._openingInfo) { this._openingInfo = null; return; }
       if (this._infoCard) { this._infoCard = null; return; }
       if (this._rulesDialog) { this._rulesDialog = null; return; }
@@ -1278,7 +1328,11 @@ class HouseplanCard extends LitElement {
     // connectedCallback (still before the first render, so nothing flashes).
     // A setConfig on a card that is already attached (the editor's live
     // preview) re-claims right here, because the config is part of the key.
-    if (this.isConnected) this._warmAdopt();
+    if (this.isConnected) {
+      this._warmAdopt();
+      if (this._warmLongReturn) this._beginResumeSettle();
+      this._warmLongReturn = false;
+    }
   }
 
   /**
@@ -1301,6 +1355,7 @@ class HouseplanCard extends LitElement {
     // is waiting for us, and our live state is newer than anything in it
     const mine = list.find((s) => s.owner === this._warmGen);
     if (mine) {
+      this._warmLongReturn = !!mine.freed && Date.now() - mine.freed >= RESUME_LONG_HIDDEN_MS;
       clearTimeout(mine.evict); mine.evict = 0; mine.freed = 0; mine.live = true;
       this._warmSlot = mine;
       this._warmKey = key;
@@ -1308,6 +1363,7 @@ class HouseplanCard extends LitElement {
     }
     const { slot, sure } = warmMatch(list, this._warmGen, place, idx);
     if (!slot) return;
+    this._warmLongReturn = !!slot.freed && Date.now() - slot.freed >= RESUME_LONG_HIDDEN_MS;
     this._booting = false;
     this._bootFading = false;
     this._hdrH = slot.hdrH;
@@ -1530,7 +1586,9 @@ class HouseplanCard extends LitElement {
    *  next one must open at — and a dialog closed with Esc/Cancel/Save writes
    *  `dlg: null` here on the very next render, so it can never come back. */
   private _warmSnapshot(): void {
-    if (this._booting || this._config?.kiosk) return;
+    // The hidden resume frame still carries the pre-suspension viewport. Do
+    // not replace the warm memo with it; the settled frame writes the truth.
+    if (this._booting || this._resumeSettling || this._config?.kiosk) return;
     const patch: Partial<WarmEntry> = { vp: this._warmViewportState() };
     // do not overwrite the snapshot we are about to revive FROM
     if (!this._warmRevivePending) patch.dlg = this._warmDialogState();
@@ -1626,6 +1684,9 @@ class HouseplanCard extends LitElement {
   /** Bumped by every config mutation — the model/geometry cache key (audit L1). */
   private _cfgEpoch = 0;
   private _modelCache: { key: string; model: SpaceModel[] } | null = null;
+  private _decorSnapCache: {
+    epoch: number; space: string; height: number; exclude: string; geometry: SnapGeometry;
+  } | null = null;
 
   /** Cheap structural fingerprint of the config (audit L1 cache key). */
   private _cfgFingerprint(): string {
@@ -2457,29 +2518,24 @@ class HouseplanCard extends LitElement {
     return tempFor(this.hass, d.entities);
   }
 
+  /** Every HA entity owned by a dialog binding. */
+  private _bindingEntities(binding: string): string[] {
+    if (binding.startsWith('entity:')) return [binding.slice(7)];
+    if (!binding.startsWith('device:')) return [];
+    const ref = binding.slice(7);
+    return Object.entries<any>(this.hass?.entities || {})
+      .filter(([, reg]) => reg?.device_id === ref)
+      .map(([eid]) => eid);
+  }
+
   /** Does the dialog's binding carry a climate entity? Gates the opt-in checkbox. */
   private _bindingHasClimate(binding: string): boolean {
-    if (binding.startsWith('entity:')) return binding.slice(7).startsWith('climate.');
-    if (binding.startsWith('device:')) {
-      const ref = binding.slice(7);
-      for (const [eid, reg] of Object.entries<any>(this.hass?.entities || {})) {
-        if (reg?.device_id === ref && eid.startsWith('climate.')) return true;
-      }
-    }
-    return false;
+    return this._bindingEntities(binding).some((eid) => eid.startsWith('climate.'));
   }
 
   /** The cover entity behind the dialog's binding, or null. */
   private _bindingCoverEntity(binding: string): string | null {
-    if (binding.startsWith('entity:')) return coverEntityOf([binding.slice(7)]);
-    if (binding.startsWith('device:')) {
-      const ref = binding.slice(7);
-      const eids = Object.entries<any>(this.hass?.entities || {})
-        .filter(([, reg]) => reg?.device_id === ref)
-        .map(([eid]) => eid);
-      return coverEntityOf(eids);
-    }
-    return null;
+    return coverEntityOf(this._bindingEntities(binding));
   }
 
   /**
@@ -2898,9 +2954,79 @@ class HouseplanCard extends LitElement {
     this._bootSoft = false;
   }
 
+  /** Hide only the unstable plan frames after a genuinely long tab sleep.
+   *  The header remains usable and the existing stage background stays put;
+   *  once its measured size has been quiet, viewport + reveal land in the
+   *  same Lit update. */
+  private _beginResumeSettle(): void {
+    if (this._kiosk || this._mode !== 'view' || this._booting || this._resumeSettling) return;
+    this._resumeSettling = true;
+    this._resumeStarted = performance.now();
+    this._resumeLastSize = '';
+    this._resumeLastChange = this._resumeStarted;
+    this._viewportInvalidAt = 0;
+    this.requestUpdate();
+    if (this._resumeRaf) cancelAnimationFrame(this._resumeRaf);
+    this._resumeRaf = requestAnimationFrame(() => this._resumeSettleTick());
+  }
+
+  private _resumeSettleTick(): void {
+    this._resumeRaf = 0;
+    if (!this._resumeSettling || !this.isConnected) return;
+    if (this._kiosk || this._mode !== 'view') {
+      this._resumeSettling = false;
+      this.requestUpdate();
+      return;
+    }
+    const now = performance.now();
+    const stage = this._stageEl;
+    const measurable = !!stage && stage.clientWidth > 0 && stage.clientHeight > 0;
+    if (measurable) {
+      const size = `${stage!.clientWidth}x${stage!.clientHeight}`;
+      if (size !== this._resumeLastSize) {
+        this._resumeLastSize = size;
+        this._resumeLastChange = now;
+      }
+    }
+    const elapsed = now - this._resumeStarted;
+    const settled = measurable && elapsed >= RESUME_MIN_MS && now - this._resumeLastChange >= RESUME_QUIET_MS;
+    if (settled || elapsed >= RESUME_MAX_MS) {
+      const cur = this._view;
+      this._resumeSettling = false;
+      if (measurable) {
+        this._applyView(
+          this._zoom,
+          cur ? cur.x + cur.w / 2 : undefined,
+          cur ? cur.y + cur.h / 2 : undefined,
+        );
+      }
+      this.requestUpdate();
+      return;
+    }
+    this._resumeRaf = requestAnimationFrame(() => this._resumeSettleTick());
+  }
+
   /** Recompute the view for a new scene size, preserving zoom and center. */
   private _refitView(): void {
-    if (!this._stageEl) return;
+    const stage = this._stageEl;
+    // ResizeObserver may deliver a zero/transitional box while a browser tab
+    // is frozen or while Lovelace replaces the card. Mutating `_view` from
+    // that box is the scale jump observed on return.
+    if (!stage || document.visibilityState !== 'visible' || stage.clientWidth <= 0 || stage.clientHeight <= 0) {
+      if (!this._viewportInvalidAt) this._viewportInvalidAt = Date.now();
+      return;
+    }
+    if (this._viewportInvalidAt) {
+      const invalidFor = Date.now() - this._viewportInvalidAt;
+      this._viewportInvalidAt = 0;
+      // Lovelace's own view tabs can hide a card without hiding `document`.
+      // A long zero-box interval is the equivalent suspension signal.
+      if (invalidFor >= RESUME_LONG_HIDDEN_MS && !this._resumeSettling) {
+        this._beginResumeSettle();
+        if (this._resumeSettling) return;
+      }
+    }
+    if (this._resumeSettling) return;
     const cur = this._view;
     this._applyView(this._zoom, cur ? cur.x + cur.w / 2 : undefined, cur ? cur.y + cur.h / 2 : undefined);
     this.requestUpdate();
@@ -3379,6 +3505,10 @@ class HouseplanCard extends LitElement {
       this._showToast(this._t('toast.markup_needs_server'));
       return;
     }
+    // A live decor transform is a transaction. Switching tabs must cancel and
+    // restore it, not merely forget its pointer record after the config has
+    // already been mutated by move/resize.
+    if (this._decorMove || this._dtDrag || this._bdDrag) this._cancelDecorGesture();
     const baseChanges = !this._spaceModel().bg && (mode === 'view') !== (this._mode === 'view');
     if (this._mode === 'view' && mode !== 'view') {
       // remember the view-mode viewport: whatever zooming happens inside the
@@ -3441,6 +3571,7 @@ class HouseplanCard extends LitElement {
     this._hoverRoom = null;
     this._decorDraft = null;
     this._decorSel = null;
+    this._decorMove = null;
     this._backdropDialog = null;
     // Every Background session starts predictably on Select. The image has an
     // explicit tool of its own; only that tool may claim its body or frame.
@@ -3669,6 +3800,12 @@ class HouseplanCard extends LitElement {
   }
 
   private _undoGeometry = (): void => {
+    if (this._decorDraft) { this._decorDraft = null; this.requestUpdate(); return; }
+    if (this._decorMove || this._dtDrag || this._bdDrag) {
+      this._cancelDecorGesture();
+      return;
+    }
+    if (this._rszDrag) { this._rszCancelDrag(); return; }
     const command = this._geometryHistory.undo();
     if (!command) return;
     if (!this._applyGeometryState(command.before)) {
@@ -3679,6 +3816,14 @@ class HouseplanCard extends LitElement {
   };
 
   private _redoGeometry = (): void => {
+    // Redo and Undo share the same transaction boundary. The first invocation
+    // cancels an in-progress transform; only the next one navigates history.
+    if (this._decorDraft) { this._decorDraft = null; this.requestUpdate(); return; }
+    if (this._decorMove || this._dtDrag || this._bdDrag) {
+      this._cancelDecorGesture();
+      return;
+    }
+    if (this._rszDrag) { this._rszCancelDrag(); return; }
     const command = this._geometryHistory.redo();
     if (!command) return;
     if (!this._applyGeometryState(command.after)) {
@@ -4238,6 +4383,12 @@ class HouseplanCard extends LitElement {
 
   /** Magnet candidates are intentionally limited to decor and room contours. */
   private _decorSnapGeometry(excludeId?: string): SnapGeometry {
+    const cacheKey = excludeId || '';
+    const cached = this._decorSnapCache;
+    if (cached && cached.epoch === this._cfgEpoch && cached.space === this._space
+        && cached.height === this._decorH && cached.exclude === cacheKey) {
+      return cached.geometry;
+    }
     const parts: SnapGeometry[] = [];
     for (const shape of this._decorList) {
       if (shape.id === excludeId) continue;
@@ -4266,7 +4417,12 @@ class HouseplanCard extends LitElement {
         segments: poly.map((p, i) => ({ a: p, b: poly[(i + 1) % poly.length] })),
       });
     }
-    return mergeSnapGeometry(parts);
+    const geometry = mergeSnapGeometry(parts);
+    this._decorSnapCache = {
+      epoch: this._cfgEpoch, space: this._space, height: this._decorH,
+      exclude: cacheKey, geometry,
+    };
+    return geometry;
   }
 
   private _decorSnap(raw: number[], pointerType = 'mouse', excludeId?: string): number[] {
@@ -4284,7 +4440,9 @@ class HouseplanCard extends LitElement {
     const sp = this._curSpaceCfg;
     if (!sp) return;
     sp.decor = this._decorList.map((shape) => shape.id === id ? { ...shape, ...patch } : shape);
-    this._cfgEpoch++;
+    // The edited shape is excluded from the gesture's magnet candidates, so
+    // keep the cached geometry of every *other* object across pointermoves.
+    // A different exclude id/cache key rebuilds it when the next gesture starts.
     this.requestUpdate();
   }
 
@@ -4374,7 +4532,7 @@ class HouseplanCard extends LitElement {
     this._decorDraft = null;
     if (!d) return;
     const min = this._gridPitch * 0.5;
-    if (Math.hypot(d.b[0] - d.a[0], d.b[1] - d.a[1]) < min) return;
+    if (!validDecorDraft(d.kind, d.a, d.b, min)) return;
     const W = NORM_W, H = this._decorH;
     const st = this._decorStyle;
     const before = this._geometrySnapshot();
@@ -4425,13 +4583,7 @@ class HouseplanCard extends LitElement {
     ev.stopPropagation();
     ev.preventDefault();
     if (t === 'erase') {
-      const before = this._geometrySnapshot();
-      const sp = this._curSpaceCfg;
-      sp.decor = this._decorList.filter((x) => x.id !== shape.id);
-      if (this._decorSel === shape.id) this._decorSel = null;
-      this._recordGeometry(this._t('history.decor_delete'), before);
-      this._saveConfig();
-      this.requestUpdate();
+      this._decorEraseConfirm = { id: shape.id, kind: shape.kind };
       return;
     }
     this._decorSel = shape.id;
@@ -4668,9 +4820,12 @@ class HouseplanCard extends LitElement {
           decorCmToUnits(Number(d.sizeHCm), this._cellCm, this._gridPitch), this._gridPitch,
         ));
         const cx = shape.x * NORM_W + oldW / 2, cy = shape.y * this._decorH + oldH / 2;
-        const topLeft = this._snap([cx - w / 2, cy - h / 2]);
-        const { width: _legacyWidth, angle: _oldAngle, ...rest } = shape;
         const angle = normalizeAngle(d.angle);
+        const topLeft = resizedBoxTopLeft(
+          { x: cx - w / 2, y: cy - h / 2 }, angle,
+          (point) => this._snap(point),
+        );
+        const { width: _legacyWidth, angle: _oldAngle, ...rest } = shape;
         return { ...rest, ...visual,
           x: clampCanvasN(topLeft[0] / NORM_W), y: clampCanvasN(topLeft[1] / this._decorH),
           w: w / NORM_W, h: h / this._decorH,
@@ -4877,15 +5032,25 @@ class HouseplanCard extends LitElement {
     this.requestUpdate();
   }
 
-  private _decorDeleteSel(): void {
-    if (!this._decorSel) return;
+  private _deleteDecor(id: string): void {
+    if (!this._decorList.some((shape) => shape.id === id)) return;
     const before = this._geometrySnapshot();
     const sp = this._curSpaceCfg;
-    sp.decor = this._decorList.filter((x) => x.id !== this._decorSel);
-    this._decorSel = null;
+    sp.decor = this._decorList.filter((shape) => shape.id !== id);
+    if (this._decorSel === id) this._decorSel = null;
     this._recordGeometry(this._t('history.decor_delete'), before);
     this._saveConfig();
     this.requestUpdate();
+  }
+
+  private _decorDeleteSel(): void {
+    if (this._decorSel) this._deleteDecor(this._decorSel);
+  }
+
+  private _confirmDecorErase(): void {
+    const pending = this._decorEraseConfirm;
+    this._decorEraseConfirm = null;
+    if (pending) this._deleteDecor(pending.id);
   }
 
   // ================= the furniture library (docs/FURNITURE.md) =================
@@ -5018,13 +5183,18 @@ class HouseplanCard extends LitElement {
     const sp = this._curSpaceCfg;
     if (!sp) return;
     const W = NORM_W, H = this._decorH;
-    const topLeft = this._snap([box.x, box.y]);
-    sp.decor = this._decorList.map((s) => (s.id === id ? {
-      ...s,
-      x: clampCanvasN(topLeft[0] / W), y: clampCanvasN(topLeft[1] / H),
-      w: Math.max(this._gridPitch / W, Math.min(CANVAS_LIMIT * 2, box.w / W)),
-      h: Math.max(this._gridPitch / H, Math.min(CANVAS_LIMIT * 2, box.h / H)),
-    } : s));
+    sp.decor = this._decorList.map((s) => {
+      if (s.id !== id) return s;
+      const topLeft = resizedBoxTopLeft(
+        box, (s as any).angle, (point) => this._snap(point),
+      );
+      return {
+        ...s,
+        x: clampCanvasN(topLeft[0] / W), y: clampCanvasN(topLeft[1] / H),
+        w: Math.max(this._gridPitch / W, Math.min(CANVAS_LIMIT * 2, box.w / W)),
+        h: Math.max(this._gridPitch / H, Math.min(CANVAS_LIMIT * 2, box.h / H)),
+      } as DecorShape;
+    });
     this._cfgEpoch++;
     this.requestUpdate();
   }
@@ -5172,7 +5342,10 @@ class HouseplanCard extends LitElement {
       ),
     ));
     const cx = current.x + current.w / 2, cy = current.y + current.h / 2;
-    const topLeft = this._snap([cx - w / 2, cy - h / 2]);
+    const topLeft = resizedBoxTopLeft(
+      { x: cx - w / 2, y: cy - h / 2 }, d.angle,
+      (point) => this._snap(point),
+    );
     this._bdApply((topLeft[0] - base.x) / NORM_W, (topLeft[1] - base.y) / NORM_W,
       w / base.w, h / base.h, d.angle);
     this._backdropDialog = null;
@@ -5296,7 +5469,9 @@ class HouseplanCard extends LitElement {
       || Math.abs(box.x - d.rect0.x) > 1e-9 || Math.abs(box.y - d.rect0.y) > 1e-9;
     if (!changed && !d.moved) return;
     d.moved ||= changed;
-    const topLeft = this._snap([box.x, box.y]);
+    const topLeft = resizedBoxTopLeft(
+      box, d.p0.angle, (point) => this._snap(point),
+    );
     this._bdApply((topLeft[0] - b.x) / NORM_W, (topLeft[1] - b.y) / NORM_W,
       sx, sy, d.p0.angle);
   }
@@ -5560,7 +5735,6 @@ class HouseplanCard extends LitElement {
     const undoName = this._geometryHistory.undoName;
     const redoName = this._geometryHistory.redoName;
     return html`<div class="editbar decorbar">
-      <ha-icon icon="mdi:draw" class="warn"></ha-icon>
       ${tools.map(
         ([t, ic, k]) => html`<button class="btn dtool ${this._decorTool === t ? 'on' : ''}"
           @click=${() => {
@@ -5575,11 +5749,12 @@ class HouseplanCard extends LitElement {
         </button>`,
       )}
       <hp-color-opacity .label=${this._t('decor.color')} .color=${this._decorStyle.color}
-        .opacity=${this._decorStyle.opacity}
+        .opacity=${this._decorStyle.opacity} .opacityLabel=${this._t('space.opacity')}
         @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
           (this._decorStyle = { ...this._decorStyle, ...e.detail })}></hp-color-opacity>
       <label class="drawwall">${this._t('decor.width')}
-        <input type="number" min="0.1" max="100" step="0.1"
+        <input type="number" min=${this._decorSmallField(0.1)}
+          max=${this._decorSmallField(100)} step="0.1"
           .value=${String(this._decorSmallField(this._decorStyle.widthCm))}
           @input=${(e: Event) => (this._decorStyle = { ...this._decorStyle,
             widthCm: this._decorSmallCm(Number((e.target as HTMLInputElement).value)) })} />
@@ -5589,7 +5764,8 @@ class HouseplanCard extends LitElement {
           @change=${(e: Event) => (this._decorStyle = { ...this._decorStyle, fill: (e.target as HTMLInputElement).checked })} />
           ${this._t('decor.fill')}</label>
         <hp-color-opacity .label=${this._t('decor.fill_color')} .color=${this._decorStyle.fillColor}
-          .opacity=${this._decorStyle.fillOpacity} .disabled=${!this._decorStyle.fill}
+          .opacity=${this._decorStyle.fillOpacity} .opacityLabel=${this._t('space.opacity')}
+          .disabled=${!this._decorStyle.fill}
           @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
             (this._decorStyle = { ...this._decorStyle,
               fillColor: e.detail.color, fillOpacity: e.detail.opacity })}></hp-color-opacity>` : nothing}
@@ -5623,6 +5799,24 @@ class HouseplanCard extends LitElement {
     </div>`;
   }
 
+  private _renderDecorEraseConfirm(): TemplateResult {
+    const pending = this._decorEraseConfirm!;
+    const kind = this._t(`decor.${pending.kind}` as any);
+    return html`<hp-dialog .hass=${this.hass} .title=${this._t('decor.erase_confirm_title')}
+      icon="mdi:eraser" dismiss-on-scrim @hp-close=${() => (this._decorEraseConfirm = null)}>
+        <div class="body"><p>${this._t('confirm.erase_decor', { kind })}</p></div>
+        <div class="row" slot="footer">
+          <span class="spacer"></span>
+          <button class="btn ghost" @click=${() => (this._decorEraseConfirm = null)}>
+            ${this._t('btn.cancel')}
+          </button>
+          <button class="btn danger" @click=${this._confirmDecorErase}>
+            <ha-icon icon="mdi:eraser"></ha-icon>${this._t('decor.erase')}
+          </button>
+        </div>
+    </hp-dialog>`;
+  }
+
   private _renderDecorTextDialog(): TemplateResult {
     const d = this._decorTextDialog!;
     const ent = (d.pickerEntity || '').trim();
@@ -5649,6 +5843,7 @@ class HouseplanCard extends LitElement {
               if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) this._decorSaveText();
             }}></textarea>
           <hp-color-opacity .label=${this._t('decor.color')} .color=${d.color} .opacity=${d.opacity}
+            .opacityLabel=${this._t('space.opacity')}
             @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
               (this._decorTextDialog = { ...d, ...e.detail })}></hp-color-opacity>
           <label>${this._t('decor.text_size')}</label>
@@ -5706,21 +5901,24 @@ class HouseplanCard extends LitElement {
         <div class="body">
           ${d.kind === 'furniture' ? html`
             <label>${this._t('furn.symbol')}</label>
-            <select class="namein" .value=${d.symbol || ''}
+            <select class="namein"
               @change=${(e: Event) => (this._decorShapeDialog = {
                 ...d, symbol: (e.target as HTMLSelectElement).value,
               })}>
               ${FURNITURE_GROUPS.map((group) => html`<optgroup label=${this._t(`furn.group_${group}` as any)}>
-                ${furnitureOfGroup(group).map((symbol) => html`<option value=${symbol.id}>
+                ${furnitureOfGroup(group).map((symbol) => html`<option value=${symbol.id}
+                  ?selected=${symbol.id === d.symbol}>
                   ${this._t(`furn.sym_${symbol.id}` as any)}
                 </option>`)}
               </optgroup>`)}
             </select>` : nothing}
           <hp-color-opacity .label=${this._t('decor.color')} .color=${d.color} .opacity=${d.opacity}
+            .opacityLabel=${this._t('space.opacity')}
             @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
               (this._decorShapeDialog = { ...d, ...e.detail })}></hp-color-opacity>
           <label>${this._t('decor.width')}</label>
-          <div class="colorrow"><input class="namein" type="number" min="0.1" max="100" step="0.1"
+          <div class="colorrow"><input class="namein" type="number"
+            min=${this._decorSmallField(0.1)} max=${this._decorSmallField(100)} step="0.1"
             .value=${String(this._decorSmallField(d.widthCm))}
             @input=${(e: Event) => (this._decorShapeDialog = {
               ...d, widthCm: this._decorSmallCm(Number((e.target as HTMLInputElement).value)),
@@ -5751,7 +5949,8 @@ class HouseplanCard extends LitElement {
               ...d, fill: (e.target as HTMLInputElement).checked,
             })} />${this._t('decor.fill')}</label>
             <hp-color-opacity .label=${this._t('decor.fill_color')}
-              .color=${d.fillColor || d.color} .opacity=${d.fillOpacity ?? 0.25} .disabled=${!d.fill}
+              .color=${d.fillColor || d.color} .opacity=${d.fillOpacity ?? 0.25}
+              .opacityLabel=${this._t('space.opacity')} .disabled=${!d.fill}
               @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
                 (this._decorShapeDialog = { ...d,
                   fillColor: e.detail.color, fillOpacity: e.detail.opacity })}></hp-color-opacity>` : nothing}
@@ -6253,17 +6452,20 @@ class HouseplanCard extends LitElement {
     const stage = this._stageEl;
     const v = this._viewOr(this._baseVb());
     const px = stage && stage.clientWidth && v.w ? stage.clientWidth / v.w : 1;
-    const stroke = disp?.color || 'var(--hp-muted)';
+    const stroke = disp?.color || 'var(--hp-muted, #607d8b)';
     const solid = wallBodyNeedsSolid(united.depthUnits, px);
     const wf = this._fillColors.wall_fill;
     // Fill colour UNDER the hatch (owner 2026-08-05): both, never one instead
     // of the other. When the body is thinner than ~3px on screen the hatch
     // collapses into noise — keep the solid fill alone.
     return svg`<g class="wallbodies" style="--room-stroke:${stroke};--wall-fill:${wf.c};--wall-fill-op:${wf.a}">
-      <path class="wallbody-fill" d="${united.d}"></path>
+      <path class="wallbody-fill" d="${united.d}"
+        fill="${wf.c}" fill-opacity="${wf.a}" fill-rule="evenodd"
+        stroke="none" pointer-events="none"></path>
       <path class="wallbody ${solid ? 'solid' : ''}"
         data-hp="wall" data-id="union" data-kind="union"
-        d="${united.d}"></path>
+        d="${united.d}" fill="${solid ? 'none' : 'url(#hp-wall-hatch)'}" fill-rule="evenodd"
+        stroke="${stroke}" stroke-width="0.6" pointer-events="none"></path>
     </g>` as unknown as TemplateResult;
   }
 
@@ -6998,7 +7200,9 @@ class HouseplanCard extends LitElement {
         tapConfirm: d.marker?.tap_confirm === true,
         runFilter: '',
         defaultTap: d.primary?.split('.')[0] === 'light' ? 'toggle' : 'info',
-        controls: [...(d.marker?.controls || [])],
+        // Keep temporarily inactive external targets for lossless editing, but
+        // discard the invalid legacy self-reference of an entity marker.
+        controls: effectiveMarkerControls(d.marker?.binding, d.marker?.controls, d.entities),
         controlsFilter: '',
         isLight: d.marker?.is_light === true,
         useClimateTemp: d.marker?.use_climate_temp === true,
@@ -7117,6 +7321,33 @@ class HouseplanCard extends LitElement {
       : list;
     filtered.sort((a, b) => a.label.localeCompare(b.label));
     return filtered.slice(0, 200);
+  }
+
+  /** Effective auto icon for a binding selected but not saved yet. */
+  private _autoIconForBinding(binding: string): string {
+    if (binding === 'virtual') return 'mdi:map-marker';
+    const [kind, ref] = binding.split(':');
+    if (!ref) return '';
+    if (kind === 'device') {
+      const dev = this.hass.devices?.[ref];
+      if (!dev) return 'mdi:help-circle';
+      const entities = Object.entries<any>(this.hass.entities || {})
+        .filter(([, reg]) => reg?.device_id === ref)
+        .map(([eid]) => eid);
+      if (entities.some((eid) => eid.startsWith('lock.'))) return 'mdi:lock';
+      return resolveIcon(
+        this.hass, dev.name_by_user || dev.name || '', dev.model, entities, this._iconRules,
+      );
+    }
+    if (kind === 'entity') {
+      const reg = this.hass.entities?.[ref];
+      const state = this.hass.states?.[ref];
+      const name = reg?.name || state?.attributes?.friendly_name || ref;
+      return ref.startsWith('lock.')
+        ? 'mdi:lock'
+        : resolveIcon(this.hass, name, '', [ref], this._iconRules);
+    }
+    return '';
   }
 
   /** List of rooms across all spaces for a virtual device. */
@@ -7239,6 +7470,9 @@ class HouseplanCard extends LitElement {
           .filter((m) => m.removed && m.binding === dlg.binding)
           .map((m) => m.id);
       const replacingRemoved = replacedRemovedIds.length > 0;
+      const controls = effectiveMarkerControls(
+        dlg.binding, dlg.controls, this._bindingEntities(dlg.binding),
+      );
       // the vacuum block is edited live outside the dialog transaction —
       // the rebuild below must carry it over, not erase it
       const prevVac = cfg.markers.find((m0: Marker) => m0.id === id || m0.id === oldId)?.vacuum || null;
@@ -7256,7 +7490,7 @@ class HouseplanCard extends LitElement {
         tap_action: dlg.tapAction || null,
         tap_target: dlg.tapAction === 'run' ? dlg.tapTarget || null : null,
         tap_confirm: dlg.tapConfirm ? true : null,
-        controls: dlg.controls.length ? dlg.controls : null,
+        controls: controls.length ? controls : null,
         // pdfs may be rewritten below when rebinding changes the marker id
         is_light: dlg.isLight ? true : null,
         use_climate_temp: dlg.useClimateTemp ? true : null,
@@ -7392,18 +7626,11 @@ class HouseplanCard extends LitElement {
       ? 'virtual'
       : d.bindingKind && d.bindingRef ? `${d.bindingKind}:${d.bindingRef}` : '';
     if (!binding) return;
-    const cleanupIds = new Set<string>([d.id]);
-    // Remove every duplicate of this plan binding. A non-virtual binding gets
-    // one minimal tombstone: it blocks auto-discovery and every aggregate but
-    // is intentionally ignored by the Add-device candidate list.
-    cfg.markers = cfg.markers.filter((m) => {
-      const drop = m.id === d.id || m.binding === binding;
-      if (drop) cleanupIds.add(m.id);
-      return !drop;
-    });
-    if (d.bindingKind !== 'virtual') {
-      cfg.markers.push({ id: d.id, binding, removed: true });
-    }
+    const deletion = deletePlanMarkerRecords(
+      cfg.markers, d.id, binding, d.bindingKind === 'virtual',
+    );
+    cfg.markers = deletion.markers;
+    const cleanupIds = deletion.cleanupIds;
     this._markerDialog = { ...dlg, busy: true };
     try {
       await this._saveConfigNow();
@@ -7734,7 +7961,8 @@ class HouseplanCard extends LitElement {
         label_lqi: d.labelLqi,
         label_light: d.labelLight,
       };
-      sp.cell_cm = Number.isFinite(d.cellCm) && d.cellCm > 0 ? d.cellCm : 5;
+      sp.cell_cm = Number.isFinite(d.cellCm) && d.cellCm > 0
+        ? Math.min(CELL_CM_MAX, d.cellCm) : 5;
       // Nothing to clean up from here: the backend collects the superseded
       // file inside the same locked transaction that accepted this config
       // (review R3-1). A cleanup driven from the client could not be ordered
@@ -8986,7 +9214,7 @@ class HouseplanCard extends LitElement {
         ${this._mode === 'decor' && this._decorTool === 'furniture' ? this._renderFurnPalette() : nothing}
         </div>
 
-        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + ((this._tool === 'openwall' || this._tool === 'closewall') && this._openWallHover ? ' wallhot' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._bdMovable ? ' bdgrab' : ''}${this._bdDrag ? ' bdgrabbing' : ''}${dayNight ? ' daynight' : ''}${dayNight && this._skySnap ? ' skysnap' : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}"
+        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + ((this._tool === 'openwall' || this._tool === 'closewall') && this._openWallHover ? ' wallhot' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._bdMovable ? ' bdgrab' : ''}${this._bdDrag ? ' bdgrabbing' : ''}${dayNight ? ' daynight' : ''}${dayNight && this._skySnap ? ' skysnap' : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}${this._resumeSettling && this._mode === 'view' && !this._kiosk ? ' hpresume' : ''}"
           style="height:${this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}${stageBg ? `;background:${stageBg}` : ''};--wall-fill:${this._fillColors.wall_fill.c};--wall-fill-op:${this._fillColors.wall_fill.a}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
@@ -9275,6 +9503,7 @@ class HouseplanCard extends LitElement {
         ${this._decorTextDialog ? this._renderDecorTextDialog() : nothing}
         ${this._decorShapeDialog ? this._renderDecorShapeDialog() : nothing}
         ${this._backdropDialog ? this._renderBackdropDialog() : nothing}
+        ${this._decorEraseConfirm ? this._renderDecorEraseConfirm() : nothing}
         ${this._spaceDialog ? this._renderSpaceDialog() : nothing}
         ${this._markerDialog ? this._renderMarkerDialog() : nothing}
         ${this._infoCard ? this._renderInfoCard() : nothing}
@@ -11044,7 +11273,7 @@ class HouseplanCard extends LitElement {
     const d = this._infoCard!;
     const st = d.primary ? this.hass.states[d.primary] : undefined;
     const stateTxt = st ? hassValue(this.hass, d.primary)?.text ?? st.state : null;
-    const controls = (d.marker?.controls || []).filter(isControllable);
+    const controls = (d.controls ?? d.marker?.controls ?? []).filter(isControllable);
     return html`<hp-dialog .hass=${this.hass} .title=${d.name} .icon=${d.icon}
       dismiss-on-scrim @hp-close=${() => (this._infoCard = null)}>
         <div class="body">
@@ -11108,7 +11337,7 @@ class HouseplanCard extends LitElement {
             ? html`<div class="infodesc muted">${this._t('info.none')}</div>`
             : nothing}
         </div>
-        <div class="row" slot="footer">
+        <div class="row infofooter" slot="footer">
           <button class="btn" @click=${() => { const dd = d; this._infoCard = null; this._openMarkerDialog(dd); }}>
             <ha-icon icon="mdi:pencil"></ha-icon>${this._t('btn.edit')}
           </button>
@@ -11127,6 +11356,7 @@ class HouseplanCard extends LitElement {
     const d = this._markerDialog!;
     const isVirtual = d.bindingMode === 'virtual';
     const cands = this._bindingCandidates();
+    const ownEntities = this._bindingEntities(d.binding);
     const curLabel = (() => {
       if (isVirtual) return null;
       const found = cands.find((c) => c.value === d.binding);
@@ -11148,7 +11378,11 @@ class HouseplanCard extends LitElement {
           <div class="bindsel">
             <label class="srcrow">
               <input type="radio" name="bmode" .checked=${d.bindingMode === 'virtual'}
-                @change=${() => (this._markerDialog = { ...d, bindingMode: 'virtual', binding: 'virtual', bindingOpen: false })} />
+                @change=${() => (this._markerDialog = {
+                  ...d, bindingMode: 'virtual', binding: 'virtual', bindingOpen: false,
+                  controls: effectiveMarkerControls('virtual', d.controls),
+                  autoIcon: this._autoIconForBinding('virtual'),
+                })} />
               <span>${this._t('marker.virtual_option')}</span>
             </label>
             <div class="bindharow">
@@ -11183,7 +11417,13 @@ class HouseplanCard extends LitElement {
                         <div class="candlist">
                           ${cands.map(
                             (c) => html`<div class="cand ${c.value === d.binding ? 'sel' : ''}"
-                              @click=${() => (this._markerDialog = { ...d, binding: c.value, bindingOpen: false })}>
+                              @click=${() => (this._markerDialog = {
+                                ...d, binding: c.value, bindingOpen: false,
+                                controls: effectiveMarkerControls(
+                                  c.value, d.controls, this._bindingEntities(c.value),
+                                ),
+                                autoIcon: this._autoIconForBinding(c.value),
+                              })}>
                               <span class="cl">${c.label}</span><span class="cs">${c.sub}</span>
                             </div>`,
                           )}
@@ -11266,7 +11506,8 @@ class HouseplanCard extends LitElement {
           ${d.controlsFilter.trim()
             ? html`<div class="ctrllist">
                 ${Object.keys(this.hass.states)
-                  .filter((eid) => isControllable(eid) && !d.controls.includes(eid))
+                  .filter((eid) => effectiveMarkerControls(d.binding, [eid], ownEntities).length > 0
+                    && !d.controls.includes(eid))
                   .filter((eid) => {
                     const q = d.controlsFilter.trim().toLowerCase();
                     const name = String(this.hass.states[eid]?.attributes?.friendly_name || '');
@@ -11323,7 +11564,11 @@ class HouseplanCard extends LitElement {
                 @input=${(e: Event) => (this._markerDialog = { ...d, icon: (e.target as HTMLInputElement).value })} />`}
           ${!d.icon && d.autoIcon
             ? html`<p class="muted iconauto"><ha-icon icon=${d.autoIcon}></ha-icon>
-                ${this._t('marker.icon_auto', { icon: d.autoIcon })}</p>`
+                <span>${this._t('marker.icon_auto', { icon: d.autoIcon })}</span>
+                <button class="btn ghost" type="button"
+                  @click=${() => (this._markerDialog = { ...d, icon: d.autoIcon })}>
+                  ${this._t('marker.icon_pin_auto')}
+                </button></p>`
             : nothing}
 
           <label>${this._t('marker.display_label')}</label>
@@ -11471,10 +11716,14 @@ class HouseplanCard extends LitElement {
 
           <label>${this._t('space.scale_label')}</label>
           <div class="colorrow">
-            <input class="namein tempin" type="number" min="0.1" step="0.1" .value=${String(d.cellCm)}
+            <input class="namein tempin" type="number" min="0.1" max=${CELL_CM_MAX}
+              step="0.1" .value=${String(d.cellCm)}
               @input=${(e: Event) => {
                 const n = parseFloat((e.target as HTMLInputElement).value);
-                this._spaceDialog = { ...d, cellCm: Number.isFinite(n) && n > 0 ? n : d.cellCm };
+                this._spaceDialog = {
+                  ...d, cellCm: Number.isFinite(n) && n > 0
+                    ? Math.min(CELL_CM_MAX, n) : d.cellCm,
+                };
               }} />
             <span class="opl">${this._t('space.scale_unit')}</span>
           </div>

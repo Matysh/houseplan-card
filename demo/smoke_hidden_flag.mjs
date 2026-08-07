@@ -62,13 +62,50 @@ Object.assign(out, await page.evaluate(async () => {
   const back = c._devices.find((x) => x.id === d.id) || c._devices.find((x) => x.bindingRef === d.bindingRef);
   o.deviceVisibleAgain = !!back && !back.hidden;
 
-  // --- у виртуального кнопка «Удалить» есть -------------------------------
+  // --- у виртуального кнопка «Удалить» есть; удаляется только выбранный ---
   c._openMarkerDialog(); await c.updateComplete;
-  c._markerDialog = { ...c._markerDialog, name: 'Тест', binding: 'virtual' };
+  c._markerDialog = { ...c._markerDialog, name: 'delete-one-a', binding: 'virtual' };
   await c._saveMarker(); await c.updateComplete;
-  const virt = c._devices.find((x) => x.virtual);
-  c._openMarkerDialog(virt); await c.updateComplete;
+  await new Promise((resolve) => setTimeout(resolve, 2));
+  c._openMarkerDialog(); await c.updateComplete;
+  c._markerDialog = { ...c._markerDialog, name: 'delete-one-b', binding: 'virtual' };
+  await c._saveMarker(); await c.updateComplete;
+  const virtualA = c._devices.find((x) => x.virtual && x.name === 'delete-one-a');
+  const virtualB = c._devices.find((x) => x.virtual && x.name === 'delete-one-b');
+  c._openMarkerDialog(virtualA); await c.updateComplete;
   o.deleteForVirtual = !!sr().querySelector('hp-dialog .btn.danger');
+  const savedConfirm = window.confirm;
+  window.confirm = () => true;
+  await c._deleteMarker(); await c.updateComplete;
+  window.confirm = savedConfirm;
+  o.deleteOnlySelectedVirtual = !!virtualA && !!virtualB
+    && !(c._serverCfg.markers || []).some((m) => m.id === virtualA.id)
+    && (c._serverCfg.markers || []).some((m) => m.id === virtualB.id);
+
+  // A re-added HA binding replaces its tombstone and receives a fresh layout
+  // position instead of inheriting the deleted marker's last coordinates.
+  const readd = c._devices.find((x) => x.bindingKind === 'device' && !x.hidden);
+  const oldPos = { s: readd.space, x: 0.913, y: 0.917 };
+  c._layout = { ...c._layout, [readd.id]: oldPos };
+  c._openMarkerDialog(readd); await c.updateComplete;
+  window.confirm = () => true;
+  await c._deleteMarker(); await c.updateComplete;
+  window.confirm = savedConfirm;
+  c._openMarkerDialog(); await c.updateComplete;
+  c._markerDialog = {
+    ...c._markerDialog,
+    bindingMode: 'ha',
+    binding: `device:${readd.bindingRef}`,
+    name: readd.name,
+  };
+  await c._saveMarker(); await c.updateComplete;
+  const rebound = (c._serverCfg.markers || [])
+    .filter((m) => m.binding === `device:${readd.bindingRef}`);
+  const fresh = c._layout[readd.id];
+  o.readdReplacesTombstone = rebound.length === 1 && rebound[0].removed !== true;
+  o.readdUsesFreshPosition = !!fresh
+    && (Math.abs(fresh.x - oldPos.x) > 1e-6 || Math.abs(fresh.y - oldPos.y) > 1e-6);
+
   c._markerDialog = null; c._setMode('view');
   return o;
 }));

@@ -1,6 +1,29 @@
 # Changelog
 
-## v1.60.0-beta.1 — 2026-08-07
+## v1.60.0 — 2026-08-07
+
+- **Audit hardening.** Deleting one virtual marker no longer removes its
+  neighbours; real `v_*` ids remain positionable; deletion tombstones are
+  hidden for old clients and binding-scoped for entity members of live HA
+  devices. Runtime-filtered controls are no longer destructively saved. Trail
+  deletion is transactional. Optimisation clamps migrated physical styles,
+  validates `cell_cm`, preserves invalid legacy transforms for manual repair
+  and reports model-version bookkeeping honestly. Flat shapes are rejected,
+  furniture selectors initialise reliably, rotated resize keeps its fixed
+  corner, mode switches cancel live transforms, and the demo bundle is rebuilt
+  from the same source as production. English device names containing
+  `thermometer` now resolve as temperature sensors instead of matching the
+  broader meter rule.
+- Auto icons now update immediately after rebinding and can be explicitly
+  pinned; imperial stroke-field bounds use inches; decor magnet geometry is
+  memoised; Undo and Redo share the same live-gesture boundary.
+- A marker can no longer list its own bound entity (or an entity of its bound
+  device) as an external light control. Legacy self-controls are ignored immediately;
+  marker Save removes them, and plan optimisation also cleans a directly bound
+  entity self-reference. The explicit `is_light` switch
+  remains the only way to classify that bound relay as a light source. Active
+  fans/hoods still use the yellow working-state plate without entering Glow,
+  Light fill or room light statistics.
 
 - **The Background editor now has one coherent transform and style system.**
   Every decor kind can be selected, moved, resized proportionally (Shift for
@@ -41,6 +64,20 @@
   This is a domain-level rule for TVs, receivers, speakers and soundbars, not
   a model exception. Mixed media entities fade only when none of them is
   currently available and powered.
+
+- **Returning to a long-suspended View is stable.** In normal View (not kiosk),
+  transient zero/partial ResizeObserver boxes no longer overwrite the saved
+  viewport. After a genuinely long background sleep the plan is revealed only
+  after the stage size is measurable and quiet, then zoom and centre are
+  applied in one frame. Critical wall fill/stroke attributes also live directly
+  on the SVG paths, so a warm Lovelace re-mount cannot show the browser's black
+  default paint while component styles are being restored. Editors, kiosk and
+  quick tab switches keep their existing immediate behaviour.
+
+- **Device-info actions stay inside narrow dialogs.** The Edit, Open in HA and
+  Close actions now wrap as complete buttons when the small HA dialog cannot
+  fit one row; reduced mobile padding preserves useful width. The leading Edit
+  action can no longer be pushed beyond the left edge of the modal.
 
 ## v1.59.2 — 2026-08-07
 

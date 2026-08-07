@@ -47,6 +47,30 @@ export const normalizeAngle = (value: unknown): number => {
   return n > 180 ? n - 360 : n;
 };
 
+/**
+ * Axis-aligned boxes keep their stored top-left on the lattice. For an
+ * oriented resize, however, resizeDecorBox has already derived this top-left
+ * from the fixed opposite corner. Snapping it again translates the whole box
+ * and breaks the fixed-corner contract.
+ */
+export function resizedBoxTopLeft(
+  box: Pick<DecorBox, 'x' | 'y'>,
+  angle: unknown,
+  grid: (point: number[]) => number[],
+): number[] {
+  return normalizeAngle(angle) ? [box.x, box.y] : grid([box.x, box.y]);
+}
+
+/** A rectangle/ellipse must have two non-zero axes; a line only needs length. */
+export function validDecorDraft(
+  kind: 'line' | 'rect' | 'ellipse',
+  a: number[], b: number[], minSize: number,
+): boolean {
+  const dx = Math.abs(b[0] - a[0]), dy = Math.abs(b[1] - a[1]);
+  if (kind === 'line') return Math.hypot(dx, dy) >= minSize;
+  return dx >= minSize && dy >= minSize;
+}
+
 /** Render units represented by a physical number of centimetres. */
 export const decorCmToUnits = (cm: unknown, cellCm: number, gridPitch: number): number => {
   const n = Number(cm);

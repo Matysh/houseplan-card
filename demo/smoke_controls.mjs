@@ -57,6 +57,30 @@ const res = await page.evaluate(async () => {
   c._clickDevice(new MouseEvent('click'), dev2());
   const last = calls.at(-1);
   out.lockFiltered = JSON.stringify(last) === JSON.stringify(['homeassistant', 'turn_on', [lights[0]]]);
+
+  // Legacy configs could store a standalone entity as its own external
+  // control. That self-reference must neither become a light source/group nor
+  // disappear behind ambiguous dialog UI. Its normal Toggle action still
+  // operates the entity, and an ON hood/fan still has working-state yellow.
+  const own = Object.keys(c.hass.states).find((eid) => eid.startsWith('switch.'));
+  out.hasStandaloneSwitch = !!own;
+  const self = own && {
+    id: 'self-control-regression', name: 'Hood', icon: 'mdi:fan',
+    space: c._space, area: room.area, entities: [own], primary: own,
+    bindingKind: 'entity', bindingRef: own, tapAction: 'toggle',
+    marker: { id: 'self-control-regression', binding: `entity:${own}`, controls: [own] },
+  };
+  if (self) {
+    await setSt({ [own]: 'off' });
+    c._clickDevice(new MouseEvent('click'), self);
+    out.selfControlUsesDirectToggle = JSON.stringify(calls.at(-1))
+      === JSON.stringify(['homeassistant', 'toggle', own]);
+    c._openMarkerDialog(self); await c.updateComplete;
+    out.selfControlAbsentFromDialog = c._markerDialog?.controls.length === 0;
+    c._markerDialog = null;
+    await setSt({ [own]: 'on' });
+    out.selfSwitchStillShowsWorkingState = c._stateClass(self).includes('on');
+  }
   return out;
 });
 checkAll(res);

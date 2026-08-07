@@ -1,6 +1,6 @@
 # Background editor: current contract
 
-Status: implemented in v1.60.0-beta.1. This document is the source of
+Status: implemented in v1.60.0. This document is the source of
 truth for the decorative layer. `BACKDROP.md`, `LIVE-TEXT.md` and
 `FURNITURE.md` describe the specialised parts.
 
@@ -12,7 +12,7 @@ device state or Home Assistant actions.
 
 | Invariant | Contract |
 |---|---|
-| Coordinates | Every committed position and box dimension is quantised to the space grid. Proportional resize uses a common scale increment so both axes stay on-grid; `Shift` never disables the grid. |
+| Coordinates | Axis-aligned positions and every box dimension are quantised to the space grid. A rotated resize keeps its opposite world-space corner fixed and quantises dimensions; its derived unrotated storage origin is not post-snapped, because that would translate the entire object. `Shift` never disables dimension snapping. |
 | Physical values | Stroke and text sizes are stored in centimetres; the UI shows cm/in for small values and m/ft for object dimensions. |
 | Undo | Decor and backdrop use the same named 50-command stack as plan geometry. |
 | Cancel | `Esc` restores the state at the start of an active drag/draw/resize/rotate gesture. A completed gesture is reverted with Undo. |
@@ -33,7 +33,7 @@ device state or Home Assistant actions.
 | Oval | Drag its bounding box; `Shift` makes a circle | `R` for a circle, `Rx × Ry` for an oval | bounding size, angle, contour and optional fill |
 | Text | Click to open the text form | the saved label is selected immediately | content, HA variables, colour/opacity, physical size and angle |
 | Furniture | Pick a symbol, then click its centre | wall magnet unless `Shift` is held | size, angle and contour style; the common frame preserves ratio unless `Shift` is held |
-| Erase | Click a decor object | immediate removal | Undo restores it |
+| Erase | Click a decor object | confirmation dialog, then removal | Undo restores it |
 
 The editor always opens on **Select**. If the space has an image, the Plan
 backdrop tool appears next to Select but is never armed implicitly.
@@ -74,8 +74,10 @@ rectangle or sofa does not make its outline thicker. A legacy object with render
 pixel-identical until edited or explicitly optimised; conversion is
 `width_cm = width / GRID_PITCH × cell_cm`.
 
-The toolbar values are session defaults for newly drawn objects. Double-click
-properties edit an existing object without creating a second style model.
+The toolbar values are session defaults for newly drawn objects. Colour is a
+compact swatch; its popover owns both the native colour field and opacity, so
+alpha controls do not consume permanent toolbar space. Double-click properties
+edit an existing object without creating a second style model.
 
 ## Interaction state machine
 
@@ -86,12 +88,15 @@ idle → draft/move/scale/rotate → release → named history command → debou
 
 Only the active tool owns pointer events. Drawing tools can therefore start a
 new line or figure exactly on top of an existing object. Select and Erase are
-the only decor tools that target existing decor; the backdrop body belongs
+the general tools that target existing decor. The deliberate exception is
+Text: clicking an existing text label with Text opens that label's editor;
+clicking any non-text shape still starts a new label. The backdrop body belongs
 only to the Plan backdrop tool.
 
 `Ctrl/Cmd+Z` first cancels an unfinished draft or live gesture, then walks the
-shared history. `Ctrl+Shift+Z` and `Ctrl+Y` redo. Native text-field history wins
-while focus is inside an input.
+shared history. `Ctrl+Shift+Z` and `Ctrl+Y` obey the same transaction boundary:
+the first invocation cancels a live gesture, the next redoes. Native text-field
+history wins while focus is inside an input.
 
 ## Code ownership
 

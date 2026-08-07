@@ -147,6 +147,9 @@ export interface DevItem {
   hum?: number | null;
   virtual?: boolean;
   marker?: Marker; // linked config marker (metadata, overrides)
+  /** Runtime-effective controls. The marker retains the user's complete
+   * persisted list so transient tombstones cannot erase it on the next save. */
+  controls?: string[];
   bindingKind?: 'device' | 'entity' | 'virtual';
   bindingRef?: string; // device_id / entity_id
   link?: string | null;

@@ -38,8 +38,9 @@ const out = await page.evaluate(() => {
     'climate.trv': { state: 'heat', attributes: {} },
   }) === '';
 
-  // горящая лампа устройства желтит значок, даже если primary — не она
-  const lamp = { id: 'l', primary: 'sensor.lamp_power', entities: ['sensor.lamp_power', 'light.lamp'], marker: null };
+  // Функциональная роль настоящей лампы желтит значок. Auxiliary light у
+  // soundbar/media-player, наоборот, отсечён системным role-resolver тестом.
+  const lamp = { id: 'l', primary: 'light.lamp', entities: ['sensor.lamp_power', 'light.lamp'], marker: null };
   o.litLightWins = cls(lamp, {
     'sensor.lamp_power': { state: '5' },
     'light.lamp': { state: 'on' },

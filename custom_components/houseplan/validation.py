@@ -95,6 +95,8 @@ MAX_URL = 2000
 # they can act on. For scale, a real three-floor home with ~200 devices stores
 # about 70 KB, so this is ~30x headroom.
 MAX_CONFIG_BYTES = 2 * 1024 * 1024
+CELL_CM_MIN = 0.1
+CELL_CM_MAX = 1000.0
 
 _TEXT = vol.All(str, vol.Length(max=MAX_TEXT))
 _TEXT_OR_NONE = vol.Any(None, _TEXT)
@@ -389,6 +391,12 @@ SPACE_SCHEMA = vol.Schema(
     {
         vol.Required("id"): vol.All(str, vol.Match(SPACE_ID_RE.pattern)),
         vol.Required("title"): str,
+        # Physical grid scale. It feeds every px/cell -> centimetres migration,
+        # so NaN/Infinity or an absurd value must not be allowed to manufacture
+        # invalid decor sizes later.
+        vol.Optional("cell_cm"): vol.All(
+            _finite, vol.Range(min=CELL_CM_MIN, max=CELL_CM_MAX)
+        ),
         vol.Optional("settings"): SPACE_DISPLAY_SCHEMA,
         vol.Optional("plan_url"): vol.Any(str, None),
         # The canvas is square since v1.48.0. What used to be the space's own

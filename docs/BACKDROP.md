@@ -1,6 +1,6 @@
 # Plan image backdrop
 
-Status: current in v1.60.0-beta.1. The complete Background editor contract is in
+Status: current in v1.60.0. The complete Background editor contract is in
 `DECOR-EDITOR.md`.
 
 ## Placement model

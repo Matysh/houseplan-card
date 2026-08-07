@@ -48,6 +48,9 @@ const res = await page.evaluate(async () => {
   c._decorDraft = { kind: 'line', a: [g, g], b: [g, g], pid: 1 };
   c._decorCommitDraft();
   out.degenerateSkipped = c._decorList.length === 3;
+  c._decorDraft = { kind: 'rect', a: [g, g], b: [g * 5, g], pid: 1 };
+  c._decorCommitDraft();
+  out.flatRectSkipped = c._decorList.length === 3;
   // 3b) живая плашка размера, пока фигуру ещё тянут (владелец 2026-08-04:
   // «в редакторе подложки у линий писать длину, как при рисовании комнат в
   // редакторе плана»). Та же .measurelabel, тот же formatLength/cell_cm.
@@ -192,10 +195,29 @@ const res = await page.evaluate(async () => {
   c._curSpaceCfg.decor = decorBefore;                 // сцена как была до пробы
   c._decorTool = 'select'; await c.updateComplete;
   out.decorRestored = c._decorList.length === decorBefore.length;
+  // Switching modes during a live move cancels the transaction and restores
+  // its start instead of leaving mutated geometry with a forgotten pointer.
+  const liveShape = c._decorList[0];
+  const liveBefore = JSON.parse(JSON.stringify(liveShape));
+  const liveSnapshot = c._geometrySnapshot();
+  c._decorMove = {
+    id: liveShape.id, start: [0, 0], orig: liveBefore, pid: 99,
+    moved: true, before: liveSnapshot,
+  };
+  c._curSpaceCfg.decor = c._decorList.map((shape) => shape.id === liveShape.id
+    ? { ...shape, x: (shape.x || 0) + 0.2 }
+    : shape);
+  c._setMode('view'); await c.updateComplete;
+  const restoredLive = c._decorList.find((shape) => shape.id === liveShape.id);
+  out.modeSwitchCancelsLiveDecor = !c._decorMove
+    && JSON.stringify(restoredLive) === JSON.stringify(liveBefore);
+  c._setMode('decor'); await c.updateComplete;
   // 6) erase удаляет
   const n0 = c._decorList.length;
   c._decorTool = 'erase';
   c._decorShapeDown({ stopPropagation() {}, preventDefault() {}, target: null, pointerId: 1 }, c._decorList[0]);
+  out.eraseAsksConfirmation = c._decorList.length === n0 && !!c._decorEraseConfirm;
+  c._confirmDecorErase();
   out.eraseWorks = c._decorList.length === n0 - 1;
   // 7) Esc-лестница: инструмент → select → выход
   c._decorTool = 'line'; c._decorSel = null; await c.updateComplete;

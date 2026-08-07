@@ -244,9 +244,12 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
         ${roomShapes}
         ${wallUnion
           ? svg`<g class="wallbodies" style="--room-stroke:${disp.color}">
-              <path class="wallbody-fill" d="${wallUnion.d}"></path>
+              <path class="wallbody-fill" d="${wallUnion.d}"
+                fill="${colors.wall_fill.c}" fill-opacity="${colors.wall_fill.a}" fill-rule="evenodd"
+                stroke="none" pointer-events="none"></path>
               <path class="wallbody ${solidWall ? 'solid' : ''}" data-hp="wall" data-id="union" data-kind="union"
-                d="${wallUnion.d}"></path>
+                d="${wallUnion.d}" fill="${solidWall ? 'none' : 'url(#hp-wall-hatch)'}" fill-rule="evenodd"
+                stroke="${disp.color || 'var(--hp-muted, #607d8b)'}" stroke-width="0.6" pointer-events="none"></path>
             </g>`
           : nothing}
       </svg>

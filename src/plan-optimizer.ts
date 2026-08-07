@@ -9,6 +9,7 @@
  */
 
 import { alignAllToGrid, type AlignReport } from './align-grid';
+import { effectiveMarkerControls } from './devices';
 import {
   DECOR_TEXT_BASE, decorTextScale, liveTextReference, liveTextToken, roomPoly,
 } from './logic';
@@ -17,14 +18,20 @@ import {
   projectOnSeg, rekeyOpenSpansAfterMove, resolveOpenCuts, sanitizeOpenSpans,
   snapOpenPoint, spanToEntry, syncOpenToFromCuts,
 } from './open-spans';
-import { GRID_PITCH, GRID_STEP_N, NORM_W, spaceModels } from './space-geometry';
+import {
+  GRID_PITCH, GRID_STEP_N, NORM_W, PLAN_SCALE_MAX, PLAN_SCALE_MIN, spaceModels,
+} from './space-geometry';
 import {
   degradeWalls, normalizeWallIntervals, rekeyWallsAfterMove,
 } from './wall-thickness';
 
 /** Bump when a new lossless maintenance pass is added. */
-export const PLAN_MODEL_VERSION = 2;
+export const PLAN_MODEL_VERSION = 3;
 const DEFAULT_CELL_CM = 5;
+const DECOR_WIDTH_CM_MIN = 0.1;
+const DECOR_WIDTH_CM_MAX = 100;
+const DECOR_TEXT_CM_MIN = 0.1;
+const DECOR_TEXT_CM_MAX = 2000;
 
 export interface OptimizeReport extends AlignReport {
   modelFrom: number;
@@ -48,6 +55,9 @@ export interface OptimizeResult {
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
 const own = (o: any, key: string): boolean => Object.prototype.hasOwnProperty.call(o, key);
+const clamp = (value: number, min: number, max: number): number => (
+  Math.min(max, Math.max(min, value))
+);
 
 const modelOf = (space: any): any => (
   spaceModels({ spaces: [space], markers: [], settings: {} } as any)[0]
@@ -75,6 +85,13 @@ const migrateLosslessly = (config: any): number => {
   let n = 0;
   for (const marker of config.markers || []) {
     if (marker.display === 'ripple') { marker.display = 'icon_ripple'; n++; }
+    if (Array.isArray(marker.controls)) {
+      const controls = effectiveMarkerControls(marker.binding, marker.controls);
+      if (JSON.stringify(controls) !== JSON.stringify(marker.controls)) {
+        marker.controls = controls.length ? controls : null;
+        n++;
+      }
+    }
     const vacuum = marker.vacuum;
     if (vacuum && own(vacuum, 'trail')) {
       if (!['never', 'cleaning', 'always'].includes(vacuum.trail_mode)) {
@@ -89,20 +106,29 @@ const migrateLosslessly = (config: any): number => {
     if (own(space, 'segments')) { delete space.segments; n++; }
     if (own(space, 'plan_scale')) {
       const k = Number(space.plan_scale);
-      if (Number.isFinite(k) && k > 0) {
+      if (Number.isFinite(k) && k >= PLAN_SCALE_MIN && k <= PLAN_SCALE_MAX) {
         if (!own(space, 'plan_scale_x')) space.plan_scale_x = k;
         if (!own(space, 'plan_scale_y')) space.plan_scale_y = k;
+        delete space.plan_scale;
+        n++;
       }
-      delete space.plan_scale;
-      n++;
     }
-    const cellCm = Number(space.cell_cm) > 0 ? Number(space.cell_cm) : DEFAULT_CELL_CM;
+    const rawCellCm = Number(space.cell_cm);
+    const cellCm = Number.isFinite(rawCellCm) && rawCellCm > 0
+      ? rawCellCm : DEFAULT_CELL_CM;
     for (const shape of space.decor || []) {
       if (own(shape, 'width')) {
-        if (!own(shape, 'width_cm'))
-          shape.width_cm = Number((((Number(shape.width) / GRID_PITCH) * cellCm)).toFixed(6));
-        delete shape.width;
-        n++;
+        const legacyWidth = Number(shape.width);
+        if (own(shape, 'width_cm') || Number.isFinite(legacyWidth)) {
+          if (!own(shape, 'width_cm'))
+            shape.width_cm = Number(clamp(
+              (legacyWidth / GRID_PITCH) * cellCm,
+              DECOR_WIDTH_CM_MIN,
+              DECOR_WIDTH_CM_MAX,
+            ).toFixed(6));
+          delete shape.width;
+          n++;
+        }
       }
       if ((shape?.kind === 'rect' || shape?.kind === 'ellipse') && shape.fill === true) {
         if (!own(shape, 'fill_color')) { shape.fill_color = shape.color || '#607d8b'; n++; }
@@ -114,8 +140,10 @@ const migrateLosslessly = (config: any): number => {
       // legacy representation to centimetres without changing its current
       // appearance at this space's scale.
       if (shape.size_cm === undefined) {
-        shape.size_cm = Number((
-          ((DECOR_TEXT_BASE * decorTextScale(shape)) / GRID_PITCH) * cellCm
+        shape.size_cm = Number(clamp(
+          ((DECOR_TEXT_BASE * decorTextScale(shape)) / GRID_PITCH) * cellCm,
+          DECOR_TEXT_CM_MIN,
+          DECOR_TEXT_CM_MAX,
         ).toFixed(6));
         delete shape.scale;
         delete shape.size;
@@ -294,20 +322,28 @@ export function optimizePlans(configIn: any, layoutIn: Record<string, any>): Opt
     if (canonicalAfter !== canonicalBefore) canonicalized++;
   }
 
-  if (modelFrom !== PLAN_MODEL_VERSION) {
+  // A version marker is bookkeeping, not maintenance by itself. Persist it
+  // only alongside a real config/layout transformation; otherwise an already
+  // canonical plan would forever offer an Optimize action that changes no
+  // user data. Never downgrade a model written by a newer client.
+  const meaningfulChanged = JSON.stringify(config) !== original
+    || JSON.stringify(aligned.layout) !== originalLayout;
+  if (modelFrom < PLAN_MODEL_VERSION && meaningfulChanged) {
     config.model_version = PLAN_MODEL_VERSION;
-    migrated++;
   }
 
   const changed = JSON.stringify(config) !== original
     || JSON.stringify(aligned.layout) !== originalLayout;
+  const modelTo = Number.isInteger(Number(config.model_version))
+    ? Number(config.model_version)
+    : modelFrom;
   return {
     config,
     layout: aligned.layout,
     report: {
       ...alignReport,
       modelFrom,
-      modelTo: PLAN_MODEL_VERSION,
+      modelTo,
       migrated,
       canonicalized,
       wallsMerged,

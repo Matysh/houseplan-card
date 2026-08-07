@@ -250,6 +250,13 @@ const res = await page.evaluate(async () => {
     && near(after.w, stored.w, 1e-12) && near(after.h, stored.h, 1e-12)
     && near(after.x, stored.x, 1e-12) && near(after.y, stored.y, 1e-12);
   out.stillRenderedAfterRebuild = !!el(sofaId);
+  c._decorTool = 'select';
+  c._decorShapeDbl({ preventDefault() {}, stopPropagation() {} }, after);
+  await c.updateComplete;
+  out.objectDialogSelectsStoredSymbol = sr().querySelector(
+    '.body select.namein option:checked',
+  )?.value === stored.symbol;
+  c._decorShapeDialog = null;
 
   // ================= 8. инертность и удаление ==============================
   c._decorTool = 'furniture'; c._furnPalette = null; await c.updateComplete;
@@ -260,6 +267,10 @@ const res = await page.evaluate(async () => {
   out.noSymbolNoStamp = c._decorList.length === n0;
   c._decorTool = 'erase'; await c.updateComplete;
   ev('pointerdown', el(sofaId), 300, 300);
+  await c.updateComplete;
+  // Eraser is intentionally two-step now; the generic decor smoke verifies
+  // the dialog itself, while this furniture scenario confirms the action.
+  c._confirmDecorErase();
   await c.updateComplete;
   out.eraseRemovesIt = !!sofaId && !c._decorList.some((s) => s.id === sofaId);
   // а в режиме просмотра мебель видна и не кликается

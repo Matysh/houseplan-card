@@ -63,3 +63,88 @@ test('optimizePlans migrates, aligns and canonicalises idempotently', () => {
   assert.deepEqual(second.config, first.config);
   assert.deepEqual(second.layout, first.layout);
 });
+
+test('legacy physical decor fields are clamped to the persisted schema', () => {
+  const result = optimizePlans({
+    spaces: [{
+      id: 'f1', title: 'Floor', view_box: [0, 0, 1, 1], cell_cm: 1000,
+      rooms: [],
+      decor: [
+        { id: 'wide', kind: 'line', x1: 0, y1: 0, x2: 1, y2: 0, width: 300 },
+        { id: 'thin', kind: 'line', x1: 0, y1: 0, x2: 1, y2: 0, width: 0 },
+        { id: 'huge', kind: 'text', x: 0, y: 0, text: 'X', scale: 20 },
+      ],
+    }],
+    markers: [], settings: {},
+  }, {});
+  const [wide, thin, huge] = result.config.spaces[0].decor;
+  assert.equal(wide.width_cm, 100);
+  assert.equal(thin.width_cm, 0.1);
+  assert.equal(huge.size_cm, 2000);
+});
+
+test('invalid legacy plan_scale is preserved instead of being counted as migrated', () => {
+  const result = optimizePlans({
+    model_version: PLAN_MODEL_VERSION,
+    spaces: [{
+      id: 'f1', title: 'Floor', view_box: [0, 0, 1, 1],
+      plan_scale: 'broken', rooms: [],
+    }],
+    markers: [], settings: {},
+  }, {});
+  assert.equal(result.config.spaces[0].plan_scale, 'broken');
+  assert.equal(result.report.migrated, 0);
+});
+
+test('model version bookkeeping does not claim a data migration', () => {
+  const result = optimizePlans({
+    model_version: PLAN_MODEL_VERSION - 1,
+    spaces: [], markers: [], settings: {},
+  }, {});
+  assert.equal(result.changed, false);
+  assert.equal(result.config.model_version, PLAN_MODEL_VERSION - 1);
+  assert.equal(result.report.modelTo, PLAN_MODEL_VERSION - 1);
+  assert.equal(result.report.migrated, 0);
+});
+
+test('optimizer never downgrades a model from a newer client', () => {
+  const future = PLAN_MODEL_VERSION + 1;
+  const result = optimizePlans({
+    model_version: future,
+    spaces: [], markers: [], settings: {},
+  }, {});
+  assert.equal(result.changed, false);
+  assert.equal(result.config.model_version, future);
+  assert.equal(result.report.modelTo, future);
+});
+
+test('legacy filled shapes receive the canonical fill fields', () => {
+  const result = optimizePlans({
+    model_version: PLAN_MODEL_VERSION,
+    spaces: [{
+      id: 'f1', title: 'Floor', view_box: [0, 0, 1, 1], rooms: [],
+      decor: [{
+        id: 'r1', kind: 'rect', x: 0, y: 0, w: 0.2, h: 0.2,
+        color: '#123456', fill: true,
+      }],
+    }],
+    markers: [], settings: {},
+  }, {});
+  assert.equal(result.config.spaces[0].decor[0].fill_color, '#123456');
+  assert.equal(result.config.spaces[0].decor[0].fill_opacity, 0.25);
+});
+
+test('optimizer removes legacy self-controls but preserves external targets', () => {
+  const result = optimizePlans({
+    model_version: PLAN_MODEL_VERSION - 1,
+    spaces: [],
+    markers: [{
+      id: 'hood', binding: 'entity:switch.hood',
+      controls: ['switch.hood', 'light.mirror'],
+    }],
+    settings: {},
+  }, {});
+  assert.deepEqual(result.config.markers[0].controls, ['light.mirror']);
+  assert.equal(result.config.model_version, PLAN_MODEL_VERSION);
+  assert.equal(result.report.migrated, 1);
+});

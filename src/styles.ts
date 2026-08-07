@@ -274,6 +274,16 @@ export const cardStyles = css`
     .stage.hpboot .zoombadge {
       visibility: hidden;
     }
+    /* A long-suspended normal View wakes through transient HA/viewport
+       geometry. Keep those few frames behind the already-correct stage
+       background; the final viewport and reveal are committed together.
+       This class is never set in kiosk or an editor. */
+    .stage.hpresume .zoomwrap,
+    .stage.hpresume .zoombadge,
+    .stage.hpresume .farhint,
+    .stage.hpresume .homearrow {
+      visibility: hidden;
+    }
     /* AUD-1552-02: post-veil grace — HA chrome landing after the cap moves
        the stage height smoothly; the viewport ResizeObserver refits the plan
        along the transition, so a late panel glides instead of jumping. */
@@ -843,6 +853,8 @@ export const cardStyles = css`
       margin: var(--sp-2) 0 0;
     }
     .iconauto ha-icon { --mdc-icon-size: 18px; }
+    .iconauto span { flex: 1; }
+    .iconauto .btn { min-height: 32px; padding: 0 var(--sp-3); }
     .rlhandle {
       display: none;
       position: absolute;
@@ -1012,7 +1024,8 @@ export const cardStyles = css`
       pointer-events: none;
       opacity: 0.85;
     }
-    .dtframe .dtstem {
+    .dtframe .dtstem,
+    .bdframe .dtstem {
       stroke: var(--hp-accent);
       stroke-width: 1.5;
       vector-effect: non-scaling-stroke;
@@ -1051,7 +1064,10 @@ export const cardStyles = css`
     .stage.mode-decor.dtool-ellipse, .stage.mode-decor.dtool-text {
       cursor: crosshair;
     }
-    .stage.mode-decor.dtool-erase .decorlayer .dshape { cursor: crosshair; }
+    .stage.mode-decor.dtool-erase,
+    .stage.mode-decor.dtool-erase .decorlayer .dshape {
+      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cg transform='rotate(-45 12 12)'%3E%3Crect x='7' y='2' width='10' height='18' rx='2' fill='%23fff' stroke='%23111' stroke-width='1.5'/%3E%3Cpath d='M7 13h10v5a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2z' fill='%23ff9f43' stroke='%23111' stroke-width='1.5'/%3E%3C/g%3E%3C/svg%3E") 5 22, pointer;
+    }
     .stage.mode-decor .room, .stage.mode-decor .devlayer { pointer-events: none; }
     .stage.mode-decor .oplock { pointer-events: none; }
     /* decor mode: everything but the decor itself fades back */
@@ -1078,6 +1094,13 @@ export const cardStyles = css`
     }
     .decorbar .dfill {
       display: inline-flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-s); cursor: pointer;
+    }
+    .decorbar .dfill input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      flex: none;
+      margin: 0;
+      padding: 0;
     }
     .decorbar hp-color-opacity { flex: 0 0 auto; }
     hp-dialog .dfill {
@@ -2319,6 +2342,22 @@ export const cardStyles = css`
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
+    }
+    /* Device info can have Edit + Open in HA + Close. A small HA dialog is
+       narrower than those three Russian-labelled actions; without wrapping,
+       HA's end-aligned footer pushed the first button outside the surface. */
+    hp-dialog .row.infofooter {
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--sp-3);
+    }
+    hp-dialog .row.infofooter .btn {
+      flex-shrink: 0;
+    }
+    @media (max-width: 480px) {
+      hp-dialog .row.infofooter {
+        padding: var(--sp-4) var(--sp-5);
+      }
     }
     .markeractions,
     .markersaveactions {

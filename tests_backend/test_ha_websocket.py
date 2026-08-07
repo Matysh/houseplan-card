@@ -59,6 +59,7 @@ async def test_deleted_marker_rejects_a_stale_layout_update(
         "markers": [
             {"id": "dev1", "binding": "device:dev1", "removed": True},
             {"id": "v_live", "binding": "virtual", "name": "Still here"},
+            {"id": "v_real", "binding": "device:real-device"},
         ],
         "settings": {},
     }
@@ -84,8 +85,20 @@ async def test_deleted_marker_rejects_a_stale_layout_update(
     assert ignored_virtual["success"]
     assert ignored_virtual["result"]["ignored"] == "missing_virtual"
 
+    # `v_` is only the historical virtual naming convention. An explicit
+    # non-virtual marker with that prefix must remain positionable.
+    await client.send_json_auto_id({
+        "type": "houseplan/layout/update",
+        "device_id": "v_real",
+        "pos": {"s": "f1", "x": 0.2, "y": 0.25},
+    })
+    real = await client.receive_json()
+    assert real["success"] and "ignored" not in real["result"]
+
     await client.send_json_auto_id({"type": "houseplan/layout/get"})
-    assert (await client.receive_json())["result"]["layout"] == {}
+    assert (await client.receive_json())["result"]["layout"] == {
+        "v_real": {"s": "f1", "x": 0.2, "y": 0.25},
+    }
 
     # The compatibility wholesale endpoint applies the same filter.
     await client.send_json_auto_id({
@@ -94,14 +107,18 @@ async def test_deleted_marker_rejects_a_stale_layout_update(
             "dev1": {"s": "f1", "x": 0.1, "y": 0.2},
             "v_deleted": {"s": "f1", "x": 0.3, "y": 0.4},
             "v_live": {"s": "f1", "x": 0.4, "y": 0.5},
+            "v_real": {"s": "f1", "x": 0.45, "y": 0.55},
+            "rl_r1": {"s": "f1", "x": 0.35, "y": 0.45},
             "ordinary_auto_device": {"s": "f1", "x": 0.5, "y": 0.6},
         },
-        "expected_rev": 0,
+        "expected_rev": 1,
     })
     assert (await client.receive_json())["success"]
     await client.send_json_auto_id({"type": "houseplan/layout/get"})
     assert (await client.receive_json())["result"]["layout"] == {
         "v_live": {"s": "f1", "x": 0.4, "y": 0.5},
+        "v_real": {"s": "f1", "x": 0.45, "y": 0.55},
+        "rl_r1": {"s": "f1", "x": 0.35, "y": 0.45},
         "ordinary_auto_device": {"s": "f1", "x": 0.5, "y": 0.6},
     }
 
@@ -117,6 +134,20 @@ async def test_trail_delete_clears_the_server_book(
     response = await client.receive_json()
     assert response["success"] and response["result"]["removed"] is True
     assert "m1" not in recorder.book.data
+
+
+async def test_trail_delete_rejects_non_admin_without_mutation(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    await _setup(hass)
+    recorder = hass.data[DOMAIN]["trail_recorder"]
+    recorder.book.data["m1"] = {"current": {"points": [[1, 2]]}}
+    user = await hass.auth.async_create_user("ordinary")
+    client = await hass_ws_client(hass, user=user)
+    await client.send_json_auto_id({"type": "houseplan/trail/delete", "marker_id": "m1"})
+    response = await client.receive_json()
+    assert not response["success"] and response["error"]["code"] == "unauthorized"
+    assert "m1" in recorder.book.data
 
 
 async def test_config_rev_conflict(hass: HomeAssistant, hass_ws_client: WebSocketGenerator) -> None:

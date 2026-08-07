@@ -61,8 +61,8 @@ export function isTempEntity(hass: any, eid: string): boolean {
  * outrank the vacuum/climate/cover/etc. entity it configures.
  */
 const DEVICE_STATE_DOMAINS = [
-  'vacuum', 'lawn_mower', 'climate', 'light', 'cover', 'lock', 'valve',
-  'alarm_control_panel', 'water_heater', 'media_player', 'fan', 'humidifier',
+  'vacuum', 'lawn_mower', 'climate', 'media_player', 'light', 'cover', 'lock', 'valve',
+  'alarm_control_panel', 'water_heater', 'fan', 'humidifier',
   'siren', 'camera', 'remote',
 ];
 
@@ -147,7 +147,10 @@ export interface LightSourceDevice {
   hidden?: boolean;
   entities: string[];
   primary?: string;
+  /** Runtime-effective controls; marker.controls remains the persisted list. */
+  controls?: string[];
   marker?: {
+    binding?: string;
     room_id?: string | null;
     is_light?: boolean | null;
     controls?: string[] | null;
@@ -166,6 +169,24 @@ export interface ResolvedLightSource<D extends LightSourceDevice = LightSourceDe
   on: boolean;
 }
 
+/**
+ * Controls are OTHER light targets operated by this marker. A marker already
+ * operates its own bound entity/device through the normal tap action; storing
+ * one of those same entities in controls made a plain fan/socket look like an
+ * explicitly configured light source. `is_light` is the sole explicit way to
+ * say that the bound switch itself drives a real fixture.
+ */
+export function effectiveMarkerControls(
+  binding: string | null | undefined,
+  controls: readonly string[] | null | undefined,
+  ownEntities: readonly string[] = [],
+): string[] {
+  const own = new Set(ownEntities);
+  if (binding?.startsWith('entity:')) own.add(binding.slice('entity:'.length));
+  return [...new Set(controls || [])]
+    .filter((eid) => isControllable(eid) && !own.has(eid));
+}
+
 function lightSourceBelongsToRoom(d: LightSourceDevice, room: LightSourceRoom): boolean {
   if (typeof room === 'string') return d.area === room;
   // An explicit marker-to-room binding is more precise than the HA area and
@@ -175,8 +196,12 @@ function lightSourceBelongsToRoom(d: LightSourceDevice, room: LightSourceRoom): 
   return !!room.area && d.area === room.area;
 }
 
-function lightEntitiesOf(d: LightSourceDevice): { eids: string[]; via: ResolvedLightSource['via'] } {
-  const controls = (d.marker?.controls || []).filter(isControllable);
+function lightEntitiesOf(hass: any, d: LightSourceDevice): { eids: string[]; via: ResolvedLightSource['via'] } {
+  const controls = effectiveMarkerControls(
+    d.marker?.binding,
+    d.controls ?? d.marker?.controls,
+    d.entities,
+  );
   if (controls.length) return { eids: controls, via: 'controls' };
 
   if (d.marker?.is_light === true) {
@@ -190,6 +215,15 @@ function lightEntitiesOf(d: LightSourceDevice): { eids: string[]; via: ResolvedL
     return { eids: primary ? [primary] : controllable.slice(0, 1), via: 'forced' };
   }
 
+  // Automatic light discovery describes the DEVICE, not every auxiliary
+  // entity it happens to expose. TVs, soundbars, air cleaners and similar
+  // devices often publish a light.* for a status LED / display illumination;
+  // letting that entity win turned the whole marker yellow and made it a room
+  // light source. The resolved functional role is the shared systemic answer.
+  // Explicit controls/is_light above still override it when the user says the
+  // auxiliary light really is a plan light.
+  const role = d.primary || resolvedDeviceStateEntities(hass, d.entities)[0];
+  if (role && !role.startsWith('light.')) return { eids: [], via: 'light' };
   return { eids: d.entities.filter((eid) => eid.startsWith('light.')), via: 'light' };
 }
 
@@ -208,7 +242,7 @@ export function resolvedLightSources<D extends LightSourceDevice>(
   const seen = new Set<string>();
   for (const d of devices) {
     if (d.hidden || (room != null && !lightSourceBelongsToRoom(d, room))) continue;
-    const { eids, via } = lightEntitiesOf(d);
+    const { eids, via } = lightEntitiesOf(hass, d);
     for (const eid of eids) {
       if (!eid || seen.has(eid)) continue;
       seen.add(eid);
@@ -353,6 +387,33 @@ export interface RemovedPlanBindings {
   entities: Set<string>;
 }
 
+export interface DeletePlanMarkerResult {
+  markers: Marker[];
+  cleanupIds: Set<string>;
+}
+
+/** Remove one marker binding without letting the shared literal `virtual`
+ *  identify every manual marker. Real HA bindings are unique and therefore
+ *  deduplicated; virtual markers have identity only by id. Non-virtual
+ *  deletion leaves a hidden tombstone so an older cached card degrades to a
+ *  hidden marker instead of visibly resurrecting it. */
+export function deletePlanMarkerRecords(
+  markers: readonly Marker[], id: string, binding: string, virtual: boolean,
+): DeletePlanMarkerResult {
+  const cleanupIds = new Set<string>([id]);
+  const kept = markers.filter((marker) => {
+    const drop = marker.id === id || (!virtual && marker.binding === binding);
+    if (drop) cleanupIds.add(marker.id);
+    return !drop;
+  });
+  return {
+    markers: virtual
+      ? kept
+      : [...kept, { id, binding, removed: true, hidden: true }],
+    cleanupIds,
+  };
+}
+
 /** Bindings explicitly deleted from the plan, kept as minimal tombstones. */
 export function removedPlanBindings(markers?: readonly Marker[] | null): RemovedPlanBindings {
   const devices = new Set<string>();
@@ -394,10 +455,13 @@ export function isRemovedPlanSource(
 }
 
 function applyMarker(item: DevItem, m: Marker, hass: any, removed: RemovedPlanBindings): void {
-  const controls = (m.controls || []).filter((eid) => !isRemovedPlanEntity(hass, eid, removed));
-  item.marker = controls.length === (m.controls || []).length
-    ? m
-    : { ...m, controls: controls.length ? controls : null };
+  const controls = effectiveMarkerControls(m.binding, m.controls, item.entities)
+    .filter((eid) => !isRemovedPlanEntity(hass, eid, removed));
+  // Keep persisted configuration lossless. Runtime consumers use the filtered
+  // projection above; the dialog edits the original list and therefore cannot
+  // silently write a temporarily suppressed control out of the marker.
+  item.marker = m;
+  item.controls = controls;
   if (m.hidden) item.hidden = true;
   if (m.name) item.name = m.name;
   if (m.icon) item.icon = m.icon;
@@ -430,7 +494,9 @@ export function seedHiddenBindings(ctx: Omit<BuildCtx, 'showAll' | 'loc'>): stri
     if (!area || !areaToSpace[area]) continue;
     if (dev.entry_type === 'service') continue;
     if (marked.has('device:' + dev.id)) continue;
-    const entIds = (entsBy[dev.id] || []).filter((eid) => !isRemovedPlanEntity(h, eid, removed));
+    // An entity tombstone suppresses that standalone binding, not the same
+    // entity as data belonging to a still-live parent device.
+    const entIds = entsBy[dev.id] || [];
     const dom = domainOfDevice(h, dev, entIds);
     let nonPhysical =
       excluded.has(dom)
@@ -473,7 +539,7 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
     if (claimed.has('device:' + dev.id)) continue; // a marker will take over below
     const marker = markerFor('device', dev.id);
     if (marker && marker.hidden && !settings.filter_seeded) continue; // legacy: dropped entirely
-    const entIds = (entsBy[dev.id] || []).filter((eid) => !isRemovedPlanEntity(h, eid, removed));
+    const entIds = entsBy[dev.id] || [];
     const dom = domainOfDevice(h, dev, entIds);
     // LEGACY runtime filter: only while the config is not yet materialised
     // (docs/FILTERING.md). A seeded config hides by explicit marker flags.
@@ -543,7 +609,7 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
       const area = m.area || dev?.area_id || '';
       const space = (area && areaToSpace[area]) || m.space || firstSpaceId;
       const entIds = dev
-        ? (entsBy[dev.id] || []).filter((eid) => !isRemovedPlanEntity(h, eid, removed))
+        ? (entsBy[dev.id] || [])
         : [];
       let icon = dev
         ? resolveIcon(h, dev.name_by_user || dev.name || '', dev.model, entIds, iconRules)
@@ -632,7 +698,6 @@ export function sourceValue(
 ): number | null {
   if (!src) return null;
   if (isRemovedPlanSource(hass, src, markers)) return null;
-  const removed = removedPlanBindings(markers);
   const i = src.indexOf(':');
   if (i < 0) return null;
   const k = src.slice(0, i);
@@ -646,8 +711,7 @@ export function sourceValue(
   if (k === 'device') {
     const entIds = Object.entries(hass.entities as Record<string, any>)
       .filter(([, r]) => (r as any).device_id === ref)
-      .map(([eid]) => eid)
-      .filter((eid) => !isRemovedPlanEntity(hass, eid, removed));
+      .map(([eid]) => eid);
     return kind === 'temp' ? tempFor(hass, entIds) : humFor(hass, entIds);
   }
   return null;
@@ -726,7 +790,11 @@ export function areaClimateMap(
   // area -> device (or lone entity) -> the entities that belong to it
   const byArea = new Map<string, Map<string, { name: string; model?: string; ents: string[] }>>();
   for (const [eid, reg] of Object.entries<any>(hass.entities)) {
-    if (isRemovedPlanEntity(hass, eid, removed)) continue;
+    // A device tombstone suppresses all of its data. An entity tombstone only
+    // suppresses a standalone entity; inside its live parent device it remains
+    // available to device state, cards and room aggregates.
+    if ((reg.device_id && removed.devices.has(reg.device_id))
+        || (!reg.device_id && removed.entities.has(eid))) continue;
     const dev = reg.device_id ? hass.devices?.[reg.device_id] : null;
     const area = reg.area_id || dev?.area_id || null;
     if (!area) continue;

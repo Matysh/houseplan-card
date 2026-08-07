@@ -5,6 +5,7 @@ import {
   areaLights, areaTemp, areaHum, areaLightStats, sourceValue, areaClimate, areaClimateMap,
   litLightEntity, resolvedDeviceStateEntities, resolvedLightSources, resolvedLightState,
   resolvedLightStats, seedHiddenBindings,
+  deletePlanMarkerRecords, effectiveMarkerControls,
 } from '../test-build/devices.js';
 import { compileIconRules, iconFor } from '../test-build/rules.js';
 
@@ -21,6 +22,30 @@ const baseCtx = (hass, over = {}) => ({
 });
 const dev = (id, name, model, area, extra = {}) =>
   ({ id, name, model, area_id: area, identifiers: [['demo', id]], entry_type: null, via_device_id: null, ...extra });
+
+test('deletePlanMarkerRecords removes only the selected virtual marker', () => {
+  const markers = [
+    { id: 'v_a', binding: 'virtual', name: 'A' },
+    { id: 'v_b', binding: 'virtual', name: 'B', pdfs: [{ name: 'manual', url: '/files/v_b/manual.pdf' }] },
+    { id: 'plug', binding: 'device:plug' },
+  ];
+  const result = deletePlanMarkerRecords(markers, 'v_a', 'virtual', true);
+  assert.deepEqual(result.markers, [markers[1], markers[2]]);
+  assert.deepEqual([...result.cleanupIds], ['v_a']);
+});
+
+test('deletePlanMarkerRecords deduplicates HA binding and leaves old-card-safe tombstone', () => {
+  const result = deletePlanMarkerRecords([
+    { id: 'old', binding: 'entity:sensor.x' },
+    { id: 'new', binding: 'entity:sensor.x' },
+    { id: 'other', binding: 'entity:sensor.y' },
+  ], 'new', 'entity:sensor.x', false);
+  assert.deepEqual(result.markers, [
+    { id: 'other', binding: 'entity:sensor.y' },
+    { id: 'new', binding: 'entity:sensor.x', removed: true, hidden: true },
+  ]);
+  assert.deepEqual(new Set(result.cleanupIds), new Set(['old', 'new']));
+});
 
 test('buildDevices: devices outside bound areas are dropped', () => {
   const h = mkHass({ devices: {
@@ -106,7 +131,7 @@ test('buildDevices: deleted binding is claimed but never built', () => {
   );
 });
 
-test('buildDevices: deleted entities cannot remain as controls of another marker', () => {
+test('buildDevices: deleted controls are inactive without being destructively persisted', () => {
   const h = mkHass({
     entities: {
       'light.keep': { entity_id: 'light.keep' },
@@ -122,8 +147,29 @@ test('buildDevices: deleted entities cannot remain as controls of another marker
     { id: 'gone', binding: 'entity:light.gone', removed: true },
   ];
   const item = buildDevices(baseCtx(h, { markers })).find((d) => d.id === 'v1');
-  assert.deepEqual(item.marker.controls, ['light.keep']);
+  assert.deepEqual(item.marker.controls, ['light.keep', 'light.gone']);
+  assert.deepEqual(item.controls, ['light.keep']);
   assert.deepEqual(resolvedLightSources(h, [item]).map((source) => source.eid), ['light.keep']);
+});
+
+test('entity tombstone does not strip that entity from a live parent device', () => {
+  const h = mkHass({
+    devices: { sensorbox: dev('sensorbox', 'Climate box', 'Sensor', 'living') },
+    entities: {
+      'sensor.box_temp': {
+        entity_id: 'sensor.box_temp', device_id: 'sensorbox',
+        original_device_class: 'temperature',
+      },
+    },
+    states: {
+      'sensor.box_temp': { state: '23.5', attributes: { device_class: 'temperature' } },
+    },
+  });
+  const markers = [{ id: 'gone_entity', binding: 'entity:sensor.box_temp', removed: true }];
+  const parent = buildDevices(baseCtx(h, { markers })).find((d) => d.id === 'sensorbox');
+  assert.ok(parent);
+  assert.deepEqual(parent.entities, ['sensor.box_temp']);
+  assert.equal(parent.primary, 'sensor.box_temp');
 });
 
 test('buildDevices: virtual marker lands in its room; entity marker resolves name from state', () => {
@@ -267,6 +313,36 @@ test('primaryEntity: a real cover beats its option switch, but a mixed lamp stay
   assert.equal(
     primaryEntity(hass, ['cover.mixed', 'light.mixed'], 'mdi:lightbulb'),
     'light.mixed',
+  );
+});
+
+test('media role shields a marker from auxiliary light and switch entities', () => {
+  const hass = mkHass({
+    entities: {
+      'light.soundbar_display': { entity_id: 'light.soundbar_display' },
+      'switch.soundbar_night_mode': { entity_id: 'switch.soundbar_night_mode' },
+      'media_player.soundbar': { entity_id: 'media_player.soundbar' },
+    },
+    states: {
+      'light.soundbar_display': { state: 'on', attributes: {} },
+      'switch.soundbar_night_mode': { state: 'on', attributes: {} },
+      'media_player.soundbar': { state: 'playing', attributes: {} },
+    },
+  });
+  const entities = [
+    'light.soundbar_display', 'switch.soundbar_night_mode', 'media_player.soundbar',
+  ];
+  assert.deepEqual(resolvedDeviceStateEntities(hass, entities), ['media_player.soundbar']);
+  assert.equal(primaryEntity(hass, entities, 'mdi:soundbar'), 'media_player.soundbar');
+
+  const soundbar = {
+    id: 'soundbar', area: 'living', primary: 'media_player.soundbar', entities,
+  };
+  assert.deepEqual(resolvedLightSources(hass, [soundbar]), []);
+  assert.deepEqual(
+    resolvedLightSources(hass, [{ ...soundbar, marker: { is_light: true } }])
+      .map((source) => source.eid),
+    ['light.soundbar_display'],
   );
 });
 
@@ -509,12 +585,12 @@ test('sourceValue: explicit entity and device sources (tier 3)', () => {
   );
 });
 
-test('sourceValue: deleted members are excluded from a surviving device source', () => {
+test('sourceValue: entity tombstone does not remove data from a surviving device source', () => {
   const hass = {
     devices: { dev1: { id: 'dev1' } },
     entities: {
-      'sensor.keep': { device_id: 'dev1' },
       'sensor.gone': { device_id: 'dev1' },
+      'sensor.keep': { device_id: 'dev1' },
     },
     states: {
       'sensor.keep': { state: '20', attributes: { device_class: 'temperature' } },
@@ -522,7 +598,9 @@ test('sourceValue: deleted members are excluded from a surviving device source',
     },
   };
   const markers = [{ id: 'gone', binding: 'entity:sensor.gone', removed: true }];
-  assert.equal(sourceValue(hass, 'device:dev1', 'temp', markers), 20);
+  // Device sources intentionally use the first valid reading. Keeping the
+  // tombstoned entity inside its live parent therefore returns 30, not 20.
+  assert.equal(sourceValue(hass, 'device:dev1', 'temp', markers), 30);
 });
 
 test('areaClimate: counts sensors that are NOT on the plan (field report)', () => {
@@ -749,7 +827,7 @@ test('litLightEntity: one truth for "this thing is shining"', () => {
   );
 });
 
-test('areaClimateMap: deleted entity and whole device contribute no room data', () => {
+test('areaClimateMap: whole device tombstone wins; entity tombstone stays binding-scoped', () => {
   const hass = {
     devices: {
       a: { id: 'a', name: 'Room thermometer A', area_id: 'living' },
@@ -768,7 +846,7 @@ test('areaClimateMap: deleted entity and whole device contribute no room data', 
     { id: 'a', binding: 'device:a', removed: true },
     { id: 'b-temp', binding: 'entity:sensor.b_temperature', removed: true },
   ];
-  assert.equal(areaClimateMap(hass, undefined, markers).get('living'), undefined);
+  assert.deepEqual(areaClimateMap(hass, undefined, markers).get('living'), { temp: 30, hum: null });
 });
 
 test('resolvedLightSources: one source set feeds room fill, card, glow and controls', () => {
@@ -816,6 +894,38 @@ test('resolvedLightSources: marker room_id is more precise than a shared HA area
   assert.deepEqual(
     resolvedLightSources(hass, devices, { id: 'room-b', area: null }).map((source) => source.eid),
     ['switch.one'],
+  );
+});
+
+test('standalone entity cannot list itself as an external light control', () => {
+  assert.deepEqual(
+    effectiveMarkerControls('entity:switch.hood', [
+      'switch.hood', 'light.mirror', 'switch.hood', 'lock.front_door',
+    ]),
+    ['light.mirror'],
+  );
+  assert.deepEqual(
+    effectiveMarkerControls(
+      'device:hood', ['switch.hood', 'switch.mirror'], ['switch.hood'],
+    ),
+    ['switch.mirror'],
+    'a device marker also separates its own entities from external targets',
+  );
+
+  const hass = { states: { 'switch.hood': { state: 'on' } } };
+  const hood = {
+    id: 'hood', area: 'bathroom', primary: 'switch.hood', entities: ['switch.hood'],
+    marker: { binding: 'entity:switch.hood', controls: ['switch.hood'] },
+  };
+  assert.deepEqual(resolvedLightSources(hass, [hood]), []);
+  assert.deepEqual(resolvedLightSources(hass, [{
+    ...hood, marker: { binding: 'device:hood', controls: ['switch.hood'] },
+  }]), [], 'the same self-control is ignored for a bound HA device');
+  assert.deepEqual(
+    resolvedLightSources(hass, [{ ...hood, marker: { ...hood.marker, is_light: true } }])
+      .map(({ eid, via }) => ({ eid, via })),
+    [{ eid: 'switch.hood', via: 'forced' }],
+    'the explicit source flag remains the supported way to make this switch a light',
   );
 });
 

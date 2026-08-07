@@ -116,7 +116,9 @@ def _live_layout(config: dict[str, Any], layout: dict[str, Any]) -> dict[str, An
 
     HA device ids may be layout-only because auto-discovered devices need no
     marker entry. Virtual ids are different: every live virtual marker is
-    explicit, so a missing `v_*` owner is always stale data.
+    explicit, so a missing `v_*` owner is stale data. The prefix itself is
+    only a legacy naming convention, however; an explicit real marker remains
+    authoritative even when its id happens to begin with `v_`.
     """
     markers = config.get("markers") or []
     removed_ids = {
@@ -126,10 +128,16 @@ def _live_layout(config: dict[str, Any], layout: dict[str, Any]) -> dict[str, An
         str(m.get("id")) for m in markers
         if m.get("removed") is not True and m.get("binding") == "virtual"
     }
+    explicit_live_ids = {
+        str(m.get("id")) for m in markers
+        if m.get("removed") is not True and m.get("binding") != "virtual"
+    }
     return {
         marker_id: pos for marker_id, pos in layout.items()
         if marker_id not in removed_ids
-        and (not marker_id.startswith("v_") or marker_id in virtual_ids)
+        and (not marker_id.startswith("v_")
+             or marker_id in virtual_ids
+             or marker_id in explicit_live_ids)
     }
 
 
@@ -224,7 +232,15 @@ async def ws_layout_update(hass: HomeAssistant, connection, msg: dict[str, Any])
             and m.get("binding") == "virtual"
             for m in markers
         )
-        orphan_virtual = msg["device_id"].startswith("v_") and not live_virtual
+        live_explicit = any(
+            str(m.get("id")) == msg["device_id"] and m.get("removed") is not True
+            for m in markers
+        )
+        orphan_virtual = (
+            msg["device_id"].startswith("v_")
+            and not live_virtual
+            and not live_explicit
+        )
         if deleted or orphan_virtual:
             data = await rt.store.async_load() or {}
             connection.send_result(msg["id"], {

@@ -697,6 +697,15 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       since v1.52.0, target colours reach only the glow/activity effect; without explicit Toggle
       the click opens info as usual; the info card lists targets with states;
       locks/other domains are filtered out of controls [auto: smoke_controls]
+- [ ] Bound-entity self-control regression: a marker bound to
+      `entity:switch.hood` with legacy `controls: ["switch.hood"]` is not a
+      light source/group, opens with no self chip and its explicit Toggle acts
+      directly on the switch. When ON it may still show the ordinary yellow
+      working-state plate, but creates no Glow/Light fill/statistics; setting
+      `is_light` explicitly restores those light behaviours
+      [auto: smoke_controls; unit: devices.test.mjs, plan-optimizer.test.mjs].
+      Repeat with a `device:*` binding whose controls contain one of that
+      device's child switches; the child is excluded while external targets remain
 - [ ] Glow fill (v1.35.0): fill mode "Light sources" — every room painted with
       one uniform darkness color; lit lamps glow with a radial gradient
       (rgb_color → color temp → default color; brightness scales opacity),
@@ -737,6 +746,11 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       or gesture; a released operation is reverted through Undo. Decor stays
       purely visual and inert outside its editor [auto: smoke_decor /
       smoke_grid_fade; unit: decor-geometry.test.mjs]
+- [ ] Background-editor gesture regressions: a perfectly horizontal/vertical
+      rect or ellipse draft is discarded; switching tools during a live move
+      restores the pointer-down snapshot; resizing a rotated box keeps the
+      opposite corner fixed without a post-resize grid wobble
+      [auto: smoke_decor; unit: decor-geometry.test.mjs]
 - [ ] Opening hover preview (v1.32.1): with the Opening tool, hovering near a
       wall shows a dashed 90 cm ghost snapped onto the wall (with a center
       dot); no ghost far from walls, over an existing opening (click = edit),
@@ -804,12 +818,13 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       immediately [manual]
 - [ ] Delete an auto device: no icon and no Show-hidden ghost; it does not
       return on rebuild/reload, but its binding is offered by Add. Re-add it:
-      one marker only, fresh centred/grid position, no tombstone [unit + manual]
+      one marker only, fresh centred/grid position, no tombstone
+      [auto: smoke_hidden_flag; unit + manual]
 - [ ] Delete an entity marker and a virtual marker: the entity is offered by
       Add (with Show entities when applicable); the virtual marker is gone and
       can be recreated manually. The exact deleted entity remains offered even
       if HA marks its registry entry hidden. Other virtual markers survive both
-      Save and Delete [unit + manual]
+      Save and Delete [auto: smoke_hidden_flag; unit + manual]
 - [ ] Deleted device contributes to none of LQI, climate average, explicit room
       temp/humidity, resolved lights, Light fill, Glow, room stats or another
       marker's controls. Hidden device keeps the documented hidden semantics
@@ -818,8 +833,16 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       opening and a deleted live-text variable prints `—`; re-adding the
       binding restores both. Layout, attachments and current/previous vacuum
       trails are gone [unit + backend + manual]
+- [ ] Tombstones stay binding-scoped: deleting a standalone entity does not
+      remove the same entity from a still-live parent device; temporarily
+      inactive `controls` remain stored and become active again after re-add.
+      A stale old card sees a non-virtual tombstone as hidden, never visible
+      [unit: devices.test.mjs; manual for the old-card fallback]
 - [ ] Multi-tab race: after deletion, a stale tab's late layout/update is
       acknowledged as ignored and cannot resurrect the old position [backend]
+- [ ] A live explicit non-virtual marker whose custom id begins with `v_`
+      accepts both point and batch layout writes; only an actually orphaned
+      virtual id is ignored [backend: test_ha_websocket.py]
 
 ## Icon rules ★
 
@@ -985,6 +1008,10 @@ require hands on real hardware — they remain for the human pass.
   runs kept per marker, survives reloads, shared by every screen) and never
   outruns the icon: drawn segments lag one point, and the last segment is a
   rAF-driven tip glued to the puck centre every frame.
+- Calling trail delete for a marker with no stored run is a true no-op: its
+  source/vacuum pair stays subscribed. A successful delete removes only that
+  marker's pairs and immediately rebuilds the subscription
+  [backend: test_trail_recorder.py].
 - Trail style: cartography casing (dark halo 2.25 + light core 0.9),
   readable over any room fill.
 - Hidden marker: neither puck nor trail. Uncalibrated active map: no puck.
@@ -1290,6 +1317,11 @@ require hands on real hardware — they remain for the human pass.
       snap to nodes in ONE write, openings stay on their walls, and pressing the
       button a second time reports nothing to do. Cancel does nothing at all
       [auto: smoke_grid_snap + unit test/align-grid.test.mjs]
+- [ ] Optimizer migration safety: legacy decor width/text size is clamped to
+      the backend schema, `fill: true` receives explicit fill style, invalid
+      legacy `plan_scale` is preserved for repair, an already canonical plan is
+      a no-op, and a future model version is never downgraded
+      [unit: plan-optimizer.test.mjs; backend: test_validation.py]
 
 ## Backdrop picture: move & scale (docs/BACKDROP.md, dev)
 
@@ -1636,7 +1668,8 @@ require hands on real hardware — they remain for the human pass.
 - [ ] **Complete properties**: double click a piece and change its symbol,
       width/depth in m/ft, angle, contour colour/opacity and line width in
       cm/in. Save keeps its centre/transform and reloads exactly; Cancel changes
-      nothing [manual]
+      nothing; reopening a non-first symbol selects that exact option
+      [auto: smoke_furniture; manual]
 - [ ] **It is only decor**: a piece takes no tap in view mode, has no entity
       and no state, and does not appear in any room aggregation. Erase removes
       it; Delete removes the selected one [auto: smoke_furniture]

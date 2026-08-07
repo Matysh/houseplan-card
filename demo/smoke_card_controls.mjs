@@ -1,5 +1,7 @@
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
+// Reproduce the narrow wall-tablet/mobile dialog from the field report.
+await page.setViewportSize({ width: 390, height: 760 });
 const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
@@ -12,6 +14,14 @@ const res = await page.evaluate(async () => {
   const dev = c._devices.find((d) => d.entities?.some((e) => e.startsWith('light.') || e.startsWith('switch.')));
   out.hasDev = !!dev;
   c._infoCard = dev; await c.updateComplete;
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+  const footer = sr().querySelector('.infofooter');
+  const footerBox = footer?.getBoundingClientRect();
+  const footerButtons = [...(footer?.querySelectorAll('button') || [])];
+  out.footerActionsContained = !!footerBox && footerButtons.length >= 2 && footerButtons.every((button) => {
+    const rect = button.getBoundingClientRect();
+    return rect.left >= footerBox.left - 1 && rect.right <= footerBox.right + 1;
+  });
   // 1) блок сущностей идёт ПЕРВЫМ, до модели/ссылок
   const body = sr().querySelector('hp-dialog .body');
   out.entListFirst = body.firstElementChild?.classList.contains('entlist')

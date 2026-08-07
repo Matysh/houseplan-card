@@ -130,9 +130,12 @@ references and duplicates by name|area. Manual files: transactional HTTP upload 
 
 `removed:true` is a binding tombstone, not a renderable marker. It claims an
 HA binding against automatic discovery while intentionally exposing that same
-binding to the Add picker. Every plan-level resolver excludes its entity or
-all entities of its device. Re-adding replaces the tombstone; virtual markers
-need no tombstone because they have no discovery source.
+binding to the Add picker. A device tombstone excludes all data of that device;
+an entity tombstone excludes the standalone entity binding but does not mutate
+the same entity out of a still-live parent device. Runtime-filtered references
+such as `controls` remain persisted and become active again after re-add.
+Re-adding replaces the tombstone; virtual markers need no tombstone because
+they have no discovery source.
 
 ## Server-side configuration (current shape, v1.51+)
 

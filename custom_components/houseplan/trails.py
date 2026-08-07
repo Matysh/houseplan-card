@@ -147,16 +147,7 @@ class TrailRecorder:
                     # marker records its own copy of the run
                     pairs.setdefault(src, []).append((str(m.get("id")), vac))
             self.pairs = pairs
-            if self._unsub_track:
-                self._unsub_track()
-                self._unsub_track = None
-            # deduplicated: two markers of one robot share source AND vacuum
-            ents = set(self.pairs) | {vac for ps in self.pairs.values() for _, vac in ps}
-            _LOGGER.info("Trail recorder: tracking %s", sorted(ents))
-            if ents:
-                self._unsub_track = async_track_state_change_event(
-                    self.hass, sorted(ents), self._on_state
-                )
+            self._resubscribe()
             # A run already in progress (HA restarted mid-cleanup, or the user
             # just finished calibrating) must start recording NOW, not at the
             # next state change — otherwise the first seconds of the path are
@@ -167,21 +158,37 @@ class TrailRecorder:
     async def async_delete(self, marker: str) -> bool:
         """Stop and erase one marker without racing subscription refresh/save."""
         async with self._refresh_lock:
+            # The trail book owns deletion. When it has no such marker, this
+            # is a no-op and must not silently damage the live tracking graph.
+            removed = self.book.delete(marker)
+            if not removed:
+                return False
             for src in list(self.pairs):
                 kept = [pair for pair in self.pairs[src] if pair[0] != marker]
                 if kept:
                     self.pairs[src] = kept
                 else:
                     del self.pairs[src]
-            removed = self.book.delete(marker)
-            if not removed:
-                return False
+            self._resubscribe()
             if self._unsub_save:
                 self._unsub_save()
                 self._unsub_save = None
             await self.store.async_save(self.book.data)
         self.hass.bus.async_fire("houseplan_trail_updated", {})
         return True
+
+    def _resubscribe(self) -> None:
+        """Replace the state subscription for the current pair graph."""
+        if self._unsub_track:
+            self._unsub_track()
+            self._unsub_track = None
+        # deduplicated: two markers of one robot share source AND vacuum
+        ents = set(self.pairs) | {vac for ps in self.pairs.values() for _, vac in ps}
+        _LOGGER.info("Trail recorder: tracking %s", sorted(ents))
+        if ents and not self._closed:
+            self._unsub_track = async_track_state_change_event(
+                self.hass, sorted(ents), self._on_state
+            )
 
     def teardown(self) -> None:
         # HP-1540-05: flag FIRST — a refresh parked on its awaited load must
