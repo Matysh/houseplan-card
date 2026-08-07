@@ -81,9 +81,11 @@ const res = await page.evaluate(async () => {
 
   // 8) editors keep their own canvas (inline bg only in view/kiosk)
   c._setMode('decor');
+  await new Promise((resolve) => setTimeout(resolve, 220));
   const editorBg = await stageBg();
   out.editorUnpainted = editorBg !== rgb('#0a2a4a');
   c._setMode('view');
+  await new Promise((resolve) => setTimeout(resolve, 220));
   out.viewPaintedAgain = (await stageBg()) === rgb('#0a2a4a');
 
   // 9) kiosk instance respects the setting
@@ -181,9 +183,11 @@ const paper = await page.evaluate(async () => {
   // editors keep the paper too (their canvas ignores bg_color anyway)
   c._setMode('decor');
   await upd();
+  await new Promise((resolve) => setTimeout(resolve, 220));
   out.editorKeepsPaper = !!sr().querySelector('.stage svg .hp-paper');
   c._setMode('view');
   await upd();
+  await new Promise((resolve) => setTimeout(resolve, 220));
   // daynight night: the paper dims via the brightness filter ONLY, never alpha
   c._serverCfg.settings.bg_mode = 'daynight';
   c._serverCfg.settings.north_deg = 0;

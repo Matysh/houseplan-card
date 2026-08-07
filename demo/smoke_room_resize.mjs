@@ -14,12 +14,16 @@ const restore = () => page.evaluate((s) => {
   return c.updateComplete && true;
 }, snap);
 
-const enter = (tool) => page.evaluate((t) => {
-  const c = window.__card;
-  if (!c._markup) c._setMode('plan');
-  c._tool = t; c._rszSel = null; c.requestUpdate();
-  return c.updateComplete && true;
-}, tool);
+const enter = async (tool) => {
+  const changed = await page.evaluate((t) => {
+    const c = window.__card;
+    const changed = !c._markup;
+    if (changed) c._setMode('plan');
+    c._tool = t; c._rszSel = null; c.requestUpdate();
+    return Promise.resolve(c.updateComplete).then(() => changed);
+  }, tool);
+  if (changed) await page.waitForTimeout(220);
+};
 
 const handleCount = () => page.evaluate(() => window.__card.renderRoot.querySelectorAll('.rszhandle').length);
 const roomPolyN = (id) => page.evaluate((id) => {

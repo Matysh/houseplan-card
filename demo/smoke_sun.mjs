@@ -238,6 +238,7 @@ await page.evaluate(async () => {
   c._setMode('plan'); c._tool = 'opening';
   c.requestUpdate(); await c.updateComplete;
 });
+await page.waitForTimeout(220); // stage coordinates settle with editor chrome
 await settle();
 const [dx, dy] = await screenPt(960, 600);
 const [, dty] = await screenPt(960, 700);

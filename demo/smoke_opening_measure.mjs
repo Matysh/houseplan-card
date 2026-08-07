@@ -20,6 +20,7 @@ await page.evaluate(() => {
   return c.updateComplete && true;
 });
 const settle = () => page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+await page.waitForTimeout(220); // editor chrome transition changes stage coordinates
 await settle();
 
 const screenPt = (x, y) => page.evaluate(([x, y]) => {

@@ -25,11 +25,14 @@ const restore = () => page.evaluate((s) => {
   return c.updateComplete && true;
 }, snap);
 
-const mode = (m) => page.evaluate((m) => {
+const mode = async (m) => {
+  await page.evaluate((m) => {
   const c = window.__card;
   c._setMode(m); c.requestUpdate();
   return c.updateComplete && true;
-}, m);
+  }, m);
+  await page.waitForTimeout(220); // editor chrome transition owns stage geometry
+};
 const settle = () => page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
 const q = (sel) => page.evaluate((s) => window.__card.renderRoot.querySelectorAll(s).length, sel);
 const spaceCfg = () => page.evaluate(() => {
@@ -276,9 +279,11 @@ const editorWhite = await page.evaluate(async () => {
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
   const upd = async () => { c.requestUpdate(); await c.updateComplete; };
+  const navSettled = () => new Promise((resolve) => setTimeout(resolve, 220));
   const probe = async (mode) => {
     c._setMode(mode);
     await upd();
+    await navSettled();
     const stage = sr().querySelector('.stage');
     const paper = sr().querySelector('.stage svg .hp-paper');
     return {
@@ -294,6 +299,7 @@ const editorWhite = await page.evaluate(async () => {
   const decor = await probe('decor');
   c._setMode('view');
   await upd();
+  await navSettled();
   const viewStage = sr().querySelector('.stage');
   // View with a backdrop must NOT force white — theme/card colour stays
   const viewForcedWhite = getComputedStyle(viewStage).backgroundColor === 'rgb(255, 255, 255)'

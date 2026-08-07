@@ -12,7 +12,9 @@ const st = () => page.evaluate(() => {
     active: sr.querySelector('.modetab.active')?.textContent.trim(),
     editBtns: sr.querySelectorAll('.head .btn:not(.zb)').length,
     gears: sr.querySelectorAll('.tabedit').length,
-    markupBar: !!sr.querySelector('.editbar'),
+    // The last bar stays mounted for the exit animation; only an open chrome
+    // is an active/visible editor bar.
+    markupBar: !!sr.querySelector('.editorchrome.open .editbar'),
     // hpsettle is the transient post-boot grace (AUD-1552-02), not a mode class
     stageClass: sr.querySelector('.stage').className.replace(/ ?\bhpsettle\b/, ''),
   };
