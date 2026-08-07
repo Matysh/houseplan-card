@@ -1,0 +1,42 @@
+name: Announce release
+# Telegram notifications for t.me/ha_houseplan (owner request, 2026-08-07).
+# Fires on every published release, prereleases included: the workflow file
+# lives at the TAGGED commit, so it works for beta tags cut from dev as soon
+# as this file is on dev, and for stable tags once it reaches main.
+# workflow_dispatch exists purely as a connectivity test button.
+on:
+  release:
+    types: [published]
+  workflow_dispatch: {}
+permissions: {}
+jobs:
+  telegram:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send to Telegram
+        env:
+          TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TAG: ${{ github.event.release.tag_name }}
+          NAME: ${{ github.event.release.name }}
+          URL: ${{ github.event.release.html_url }}
+          PRE: ${{ github.event.release.prerelease }}
+          # The body goes through env, never through shell interpolation —
+          # release notes are arbitrary text.
+          BODY: ${{ github.event.release.body }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            TEXT="✅ Тест: оповещения о релизах houseplan-card подключены."
+          else
+            KIND=$([ "$PRE" = "true" ] && echo "🧪 Пре-релиз" || echo "🏠 Релиз")
+            SUMMARY=$(printf '%s' "$BODY" | head -c 2500)
+            TEXT=$(printf '%s houseplan-card %s — %s\n\n%s\n\n%s' \
+              "$KIND" "$TAG" "$NAME" "$SUMMARY" "$URL")
+          fi
+          curl -sS --fail-with-body -X POST \
+            "https://api.telegram.org/bot$TOKEN/sendMessage" \
+            --data-urlencode "chat_id=$CHAT" \
+            --data-urlencode "text=$TEXT" \
+            -d disable_web_page_preview=true
