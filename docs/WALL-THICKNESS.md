@@ -87,7 +87,7 @@ centreline/full-span wedge. `hide_openings` hides the symbol only.
 
 ## 6. Tool / hooks / i18n
 
-Plan-editor tool «Wall thickness»; hover whole wall; cm/in from HA; empty/0
+Plan-editor tool «Thickness»; hover whole wall; cm/in from HA; empty/0
 clears; apply-to-room. Hooks: `data-hp="wall"`. i18n en/ru.
 
 **Draw with thickness.** The Plan toolbar's **Walls** button carries its session
@@ -96,7 +96,7 @@ is imperial). Closing a new room outline
 writes that cm onto every new edge that does not already have one; shared
 stretches that already carry a neighbour's thickness are left alone. Empty / 0
 leaves the room thin. Live thick preview follows the rubber-band while drawing.
-Split does not use this field. The Wall thickness tool remains for later edits.
+Split does not use this field. The Thickness tool remains for later edits.
 
 ## 7. Out of scope
 
@@ -112,3 +112,14 @@ virtual stretch, its solid thick remainders and Undo move as one real resize;
 the virtual rubber band paints above the real body; sun starts at the room-side
 opening corners; nav mode restores after `can_write`; a 1 cm body uses
 solid-only in both full and static cards while a 20 cm body keeps its hatch.
+
+## 9. Independent partitions, drafts and columns
+
+Their thickness is stored directly in centimetres: 1–100 cm for draft and
+partition segments, 1–150 cm for a column's outer side/diameter. Invalid input
+blocks the commit and reports the valid range; no editor path silently clamps
+it. These bodies are unioned with room-wall bodies only after door/window cuts,
+so an opening cannot punch a coincident independent wall. They are subtracted
+from the cached clean floor, and the same body set is used by Glow and sun-ray
+occlusion even when borders are hidden. A source inside/on a physical body is
+fully occluded instead of leaking around its own masonry.

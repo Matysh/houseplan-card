@@ -48,6 +48,23 @@ const rec = await page.evaluate(async () => {
   out.noHpbootClass = !!stage && !stage.classList.contains('hpboot');
   out.veilGone = !sr().querySelector('.bootveil');
 
+  // A detach during resume/nav motion kills their timers. The transient state
+  // must die with the timers, otherwise the same element comes back veiled or
+  // permanently clipped by nav-enter.
+  c._resumeSettling = true;
+  c._navMotion = 'enter';
+  c._slide = 'left';
+  c.requestUpdate(); await c.updateComplete;
+  c.remove();
+  out.detachClearsResumeAndNav = c._resumeSettling === false
+    && c._navMotion === '' && c._slide === '';
+  wrap.appendChild(c);
+  await c.updateComplete;
+  const stageAfterMotionReattach = sr().querySelector('.stage');
+  out.reattachHasNoStuckMotionClasses = !!stageAfterMotionReattach
+    && !stageAfterMotionReattach.classList.contains('hpnav')
+    && !stageAfterMotionReattach.classList.contains('hpresume');
+
   // A2: a second detach DURING the fade must not leave a zombie veil either
   customElements.get('houseplan-card')?._warmBootReset?.(); // DEV-B703: this scenario simulates a COLD first open — forget the page's warm re-mount memo
   const c2 = document.createElement('houseplan-card');

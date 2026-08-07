@@ -89,6 +89,8 @@ export interface AlignReport {
   maxSpace: string;
   /** Openings whose stored `angle` is corrected — possibly without moving. */
   rotated: number;
+  /** Drafts which collapse below two distinct grid points and cannot remain valid. */
+  removedDrafts: number;
 }
 
 export interface AlignResult {
@@ -149,6 +151,7 @@ export function alignAllToGrid(
   const spaces = JSON.parse(JSON.stringify(spacesIn || []));
   const layout: Record<string, any> = JSON.parse(JSON.stringify(layoutIn || {}));
   let moved = 0, total = 0, maxShift = 0, maxShiftCm = 0, maxSpace = '', rotated = 0;
+  let removedDrafts = 0;
 
   // a marker or a room label names its space; the scale of THAT space is the
   // one its centimetres are in
@@ -196,6 +199,56 @@ export function alignAllToGrid(
         d = boxShift(x0, y0, w0, h0, nx, ny, nw, nh);
         r.x = nx; r.y = ny; r.w = nw; r.h = nh;
       }
+      note(d, cell, sid);
+    }
+
+    // ---- saved open room contours ------------------------------------
+    for (const draft of sp.room_drafts || []) {
+      total++;
+      let d = 0;
+      const snapped = (draft.points || []).map((p: number[]) => {
+        const q = [snapN(p[0]), snapN(p[1])];
+        d = Math.max(d, dist(p[0], p[1], q[0], q[1]));
+        return q;
+      });
+      const points: number[][] = snapped.length ? [snapped[0]] : [];
+      const segments: any[] = [];
+      for (let i = 0; i + 1 < snapped.length; i++) {
+        const next = snapped[i + 1], last = points[points.length - 1];
+        if (last && dist(last[0], last[1], next[0], next[1]) <= EPS) continue;
+        points.push(next);
+        segments.push({
+          ...(draft.segments?.[i] || {}),
+          cm: Number(draft.segments?.[i]?.cm) || 15,
+        });
+      }
+      draft.points = points;
+      draft.segments = segments;
+      note(d, cell, sid);
+    }
+    if (Array.isArray(sp.room_drafts)) {
+      const before = sp.room_drafts.length;
+      sp.room_drafts = sp.room_drafts.filter((d: any) => d.points?.length >= 2);
+      removedDrafts += before - sp.room_drafts.length;
+      if (!sp.room_drafts.length) delete sp.room_drafts;
+    }
+
+    // ---- independent partitions and columns --------------------------
+    for (const p of sp.partitions || []) {
+      total++;
+      const a = [snapN(p.a[0]), snapN(p.a[1])];
+      const b = [snapN(p.b[0]), snapN(p.b[1])];
+      let d = Math.max(dist(p.a[0], p.a[1], a[0], a[1]),
+        dist(p.b[0], p.b[1], b[0], b[1]));
+      if (dist(a[0], a[1], b[0], b[1]) > EPS) { p.a = a; p.b = b; }
+      else d = 0;
+      note(d, cell, sid);
+    }
+    for (const c of sp.wall_columns || []) {
+      total++;
+      const center = [snapN(c.center[0]), snapN(c.center[1])];
+      const d = dist(c.center[0], c.center[1], center[0], center[1]);
+      c.center = center;
       note(d, cell, sid);
     }
 
@@ -261,7 +314,7 @@ export function alignAllToGrid(
 
   return {
     spaces, layout,
-    report: { moved, total, maxShift, maxShiftCm, maxSpace, rotated },
+    report: { moved, total, maxShift, maxShiftCm, maxSpace, rotated, removedDrafts },
     changed: moved > 0,
   };
 }

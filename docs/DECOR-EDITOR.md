@@ -20,6 +20,7 @@ device state or Home Assistant actions.
 | Scale | Corner drag preserves aspect ratio. Hold `Shift` for independent axes. |
 | Rotation | 5° steps by default; `Shift` gives free rotation. Lines use endpoint handles instead of a rotation handle. |
 | Magnet targets | Only other decor objects and room contours: corners, edge centres, centres and edges. The image, devices and openings are excluded. |
+| Context emphasis | Decor and its editing chrome stay fully opaque. Rooms, labels, devices, openings, solid/thick walls and dashed virtual walls are contextual only and render at 35% opacity. |
 | Compatibility | Legacy `width`, text `size/scale` and `plan_scale` remain readable. New writes use `width_cm`, `size_cm` and `plan_scale_x/y`. |
 
 ## Tools

@@ -69,6 +69,10 @@ MAX_MARKERS = 2000
 MAX_OPENINGS = 500
 MAX_DECOR = 1000
 MAX_WALLS = 500
+MAX_ROOM_DRAFTS = 200
+MAX_DRAFT_SEGMENTS = 2000
+MAX_PARTITIONS = 2000
+MAX_WALL_COLUMNS = 500
 # Open (virtual) wall stretches, docs/superpowers/specs/2026-08-05-open-spans-delete-design.md.
 # Every span is a piece of a shared boundary, so there can never be more of
 # them than there are wall segments — the cap is the walls' one (AUD-159B6-03).
@@ -387,7 +391,98 @@ WALL_SCHEMA = vol.All(
     _wall_endpoints_pair,
 )
 
-SPACE_SCHEMA = vol.Schema(
+
+def _room_draft_segments(value: dict) -> dict:
+    """An open draft has exactly one thickness per consecutive edge."""
+    if len(value.get("segments", [])) != max(0, len(value.get("points", [])) - 1):
+        raise vol.Invalid("room draft segments must match consecutive point pairs")
+    if any(a == b for a, b in zip(value.get("points", []), value.get("points", [])[1:])):
+        raise vol.Invalid("room draft consecutive points must differ")
+    return value
+
+
+ROOM_DRAFT_SCHEMA = vol.All(
+    vol.Schema(
+        {
+            vol.Required("id"): vol.All(str, vol.Length(min=1, max=64)),
+            vol.Required("points"): vol.All([POINT], vol.Length(min=2, max=500)),
+            vol.Required("segments"): vol.All(
+                [vol.Schema({vol.Required("cm"): vol.All(_finite, vol.Range(min=1, max=100))},
+                            extra=vol.ALLOW_EXTRA)],
+                vol.Length(min=1, max=499),
+            ),
+        },
+        extra=vol.ALLOW_EXTRA,
+    ),
+    _room_draft_segments,
+)
+
+def _partition_nonzero(value: dict) -> dict:
+    if value["a"] == value["b"]:
+        raise vol.Invalid("partition endpoints must differ")
+    return value
+
+
+PARTITION_SCHEMA = vol.All(
+    vol.Schema(
+        {
+            vol.Required("id"): vol.All(str, vol.Length(min=1, max=64)),
+            vol.Required("a"): POINT,
+            vol.Required("b"): POINT,
+            vol.Required("cm"): vol.All(_finite, vol.Range(min=1, max=100)),
+        },
+        extra=vol.ALLOW_EXTRA,
+    ),
+    _partition_nonzero,
+)
+
+def _strict_wall_column(value: dict) -> dict:
+    """Reject shape-inapplicable or non-canonical column fields."""
+    if value["shape"] == "circle" and "angle" in value:
+        raise vol.Invalid("angle is allowed only for square wall columns")
+    if value["shape"] == "square" and value.get("angle", 0) >= 90:
+        raise vol.Invalid("square wall column angle must be in [0, 90)")
+    return value
+
+
+WALL_COLUMN_SCHEMA = vol.All(
+    vol.Schema(
+        {
+            vol.Required("id"): vol.All(str, vol.Length(min=1, max=64)),
+            vol.Required("shape"): vol.In(["square", "circle"]),
+            vol.Required("center"): POINT,
+            # Outer side for a square, outer diameter for a circle.
+            vol.Required("cm"): vol.All(_finite, vol.Range(min=1, max=150)),
+            vol.Optional("angle"): vol.All(
+                _finite, vol.Range(min=0, max=90)
+            ),
+        },
+        extra=vol.ALLOW_EXTRA,
+    ),
+    _strict_wall_column,
+)
+
+
+def _space_geometry_invariants(value: dict) -> dict:
+    """All stored geometry shares ids; draft segments also have a space cap."""
+    seen: set[str] = set()
+    for key in ("rooms", "openings", "decor", "room_drafts", "partitions", "wall_columns"):
+        for item in value.get(key, []):
+            item_id = item.get("id")
+            if not item_id:
+                continue
+            if item_id in seen:
+                raise vol.Invalid("geometry object ids must be unique within a space")
+            seen.add(item_id)
+    draft_segments = sum(
+        len(item.get("segments", [])) for item in value.get("room_drafts", [])
+    )
+    if draft_segments > MAX_DRAFT_SEGMENTS:
+        raise vol.Invalid("too many saved room-draft segments")
+    return value
+
+
+SPACE_SCHEMA = vol.All(vol.Schema(
     {
         vol.Required("id"): vol.All(str, vol.Match(SPACE_ID_RE.pattern)),
         vol.Required("title"): str,
@@ -457,6 +552,15 @@ SPACE_SCHEMA = vol.Schema(
         # (midpoint + direction), thickness always in centimetres. Optional —
         # a space without `walls` validates and renders exactly as before.
         vol.Optional("walls"): vol.All([WALL_SCHEMA], vol.Length(max=MAX_WALLS)),
+        vol.Optional("room_drafts"): vol.All(
+            [ROOM_DRAFT_SCHEMA], vol.Length(max=MAX_ROOM_DRAFTS)
+        ),
+        vol.Optional("partitions"): vol.All(
+            [PARTITION_SCHEMA], vol.Length(max=MAX_PARTITIONS)
+        ),
+        vol.Optional("wall_columns"): vol.All(
+            [WALL_COLUMN_SCHEMA], vol.Length(max=MAX_WALL_COLUMNS)
+        ),
         # Open (virtual) wall stretches: a piece of a shared boundary that the
         # user opened. Optional and bounded — a space without `open_spans`
         # validates exactly as before, and the legacy `rooms[].open_to` index
@@ -473,7 +577,7 @@ SPACE_SCHEMA = vol.Schema(
         vol.Remove("segments"): object,
     },
     extra=vol.ALLOW_EXTRA,
-)
+), _space_geometry_invariants)
 MARKER_SCHEMA = vol.Schema(
     {
         vol.Required("id"): str,

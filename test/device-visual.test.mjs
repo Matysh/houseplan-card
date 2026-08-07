@@ -28,6 +28,14 @@ test('actual work is yellow/running, but an enabled automation is neutral', () =
     'climate.custom_mode_only': {
       state: 'eco', attributes: { hvac_modes: ['off', 'eco'] },
     },
+    'climate.preheating': { state: 'heat', attributes: { hvac_action: 'preheating' } },
+    'climate.defrosting': { state: 'heat', attributes: { hvac_action: 'defrosting' } },
+    'climate.mode_like_pseudo_action': {
+      state: 'cool', attributes: { hvac_modes: ['off', 'cool'], current_operation: 'eco' },
+    },
+    'climate.recognised_idle_equivalent': {
+      state: 'heat', attributes: { hvac_modes: ['off', 'heat'], current_operation: 'idle' },
+    },
     'automation.night': { state: 'on' },
     'script.scene': { state: 'on' },
   });
@@ -41,6 +49,10 @@ test('actual work is yellow/running, but an enabled automation is neutral', () =
   assert.equal(entityVisualSample(h, 'climate.mode_only').activity, 'running');
   assert.equal(entityVisualSample(h, 'climate.mode_only_off').status, 'neutral');
   assert.equal(entityVisualSample(h, 'climate.custom_mode_only').status, 'working');
+  assert.equal(entityVisualSample(h, 'climate.preheating').status, 'working');
+  assert.equal(entityVisualSample(h, 'climate.defrosting').status, 'working');
+  assert.equal(entityVisualSample(h, 'climate.mode_like_pseudo_action').status, 'working');
+  assert.equal(entityVisualSample(h, 'climate.recognised_idle_equivalent').status, 'neutral');
   assert.equal(entityVisualSample(h, 'automation.night').status, 'neutral');
   assert.equal(entityVisualSample(h, 'script.scene').status, 'working');
 });

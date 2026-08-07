@@ -2,7 +2,8 @@
 //   1. every element placed or dragged by hand lands on a node — devices, room
 //      labels, decor, room vertices, resize handles; an opening lands ON ITS
 //      WALL at a whole number of steps along it; positional off-grid placement
-//      is not supported, including while Shift is held;
+//      is not supported. Shift keeps the room-outline point on the grid while
+//      additionally constraining its wall to the nearest 45° direction;
 //   2. the explicit «Оптимизировать планы» action moves a deliberately
 //      detuned plan onto the grid through one atomic config+layout commit,
 //      tells the truth about how much it moves, and is idempotent.
@@ -146,6 +147,13 @@ const out = await page.evaluate(async () => {
   c._tool = 'draw'; c._path = [];
   c._markupClick(at(220 + OFF, 220 + OFF, 'click'));
   o.roomVertexOnANode = c._path.length === 1 && onGridR(c._path[0][0]) && onGridR(c._path[0][1]);
+  c._path = [[200, 200]];
+  c._markupClick(at(240 + OFF, 310 + OFF, 'click', { shiftKey: true }));
+  const locked = c._path[1];
+  const ldx = Math.abs(locked[0] - 200), ldy = Math.abs(locked[1] - 200);
+  o.shiftLocksRoomWallTo45 = c._path.length === 2
+    && (ldx < 1e-7 || ldy < 1e-7 || Math.abs(ldx - ldy) < 1e-7)
+    && onGridR(locked[0]) && onGridR(locked[1]);
   c._path = []; c._tool = 'draw';
 
   // ---- 2) «Оптимизировать планы» -----------------------------------------

@@ -216,6 +216,8 @@ export interface SunRay {
   roomId: string;
   /** Clipped wedge outline(s), render units. */
   polys: number[][][];
+  /** Optional even-odd polygons after physical-obstacle subtraction. */
+  paths?: string[];
   /** Room-side opening corners (the bright end of the gradient). */
   a: number[];
   b: number[];

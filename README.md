@@ -114,7 +114,9 @@ Key advantages in short:
 - **Live states.** Temperature, Zigbee signal strength, on/off, open/closed — everything updates in real time.
   Icon colors follow one principle — **yellow means the device is doing its main job right now**:
   a light is shining, a socket is powering, a fan is spinning, a vacuum is
-  cleaning, a radiator valve is actually heating (not merely enabled). Orange = open / unlocked.
+  cleaning, a radiator valve is actually heating (not merely enabled). For climate integrations,
+  a reported work action is authoritative; when an integration exposes only its enabled HVAC mode,
+  that mode is the best available fallback. Orange = open / unlocked.
   A pulsing red ring = an emergency (leak, smoke, gas). An RGB bulb's colour lives in its glow
   spot (glow fill), where the spot itself is the on/off indicator and the badge stays standard.
   A translucent icon = unavailable. Dark = idle.

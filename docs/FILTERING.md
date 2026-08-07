@@ -118,24 +118,27 @@ source precedence is (`_visualSamples` / `_actEntity`):
    media player or appliance does not turn the whole marker into a lamp. This exact set also feeds
    Glow, Light fill, room light stats and group toggle;
 
-For compatibility, a pre-v1.60 marker that lists its own `switch.*` in
-`controls` is interpreted as `is_light`. Marker Save converts either binding;
-Optimize Plans can convert the losslessly identifiable `entity:switch.*` case
-(a `device:*` marker needs the HA registry and is therefore left to Save).
-External controls remain additive, so migration does not change Glow, Light
-fill or room statistics.
+   For compatibility, a pre-v1.60 marker that lists its own `switch.*` in
+   `controls` is interpreted as `is_light`. Marker Save converts either binding;
+   Optimize Plans can convert the losslessly identifiable `entity:switch.*` case
+   (a `device:*` marker needs the HA registry and is therefore left to Save).
+   External controls remain additive, so migration does not change Glow, Light
+   fill or room statistics. The dialog preserves their ordered raw list,
+   including duplicates and temporarily unknown targets; runtime consumers
+   separately de-duplicate and keep only currently controllable entities.
 3. otherwise the device's **resolved state role**
    (`resolvedDeviceStateEntities`): functional device domains first, then
    semantic binary signals, then switches, then passive readings together.
    `primaryEntity` is only the first entity of this same set for actions which
    require one target; it no longer defines marker availability by itself.
 
-For `climate.*`, a real `hvac_action`/equivalent action remains authoritative:
-`idle` stays neutral even while the selected mode is `heat`. If the integration
-does not expose an action at all, the current non-off state is matched against
-HA's `hvac_modes` (plus the standard modes) and used as the enabled/working
-fallback. This keeps mode-only air conditioners visible without overriding a
-more precise idle signal when one exists.
+For `climate.*`, a recognized real `hvac_action`/equivalent action remains
+authoritative: `idle` stays neutral even while the selected mode is `heat`,
+while `heating`, `cooling`, `preheating` and `defrosting` are working. Unknown
+vendor mode-like values in action attributes are ignored instead of suppressing
+the normal enabled-mode fallback. If the integration exposes no recognized
+action, the current non-off state is matched against HA's `hvac_modes` (plus the
+standard modes) and used as the best available enabled/working approximation.
 
 Rule 1 was added 2026-08-04 on the owner's report: his Aqara «Roller shade
 driver E1» curtains ship the `cover.*` hidden by the integration and a visible

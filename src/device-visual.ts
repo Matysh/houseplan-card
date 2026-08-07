@@ -64,7 +64,7 @@ export function isSemanticBinaryEntity(hass: any, eid: string): boolean {
 const WORKING_STATES = new Set([
   'running', 'working', 'washing', 'rinsing', 'spinning', 'drying', 'heating',
   'cooling', 'cleaning', 'cooking', 'playing', 'recording', 'pumping',
-  'irrigating', 'humidifying', 'dehumidifying', 'fan',
+  'irrigating', 'humidifying', 'dehumidifying', 'fan', 'preheating', 'defrosting',
 ]);
 
 const IDLE_STATES = new Set([
@@ -84,11 +84,13 @@ const unavailable = (state: string): boolean =>
 
 const lower = (v: unknown): string => String(v ?? '').trim().toLowerCase();
 
-/** Best actual-work attribute exposed by climate/appliance integrations. */
+/** Best recognised actual-work attribute exposed by integrations. Vendor
+ * mode/options such as `current_operation: eco` are not action signals and
+ * must not suppress a climate entity's enabled-mode fallback. */
 function workAction(attrs: any): string {
   for (const key of ['hvac_action', 'action', 'current_operation', 'run_state', 'job_state', 'operation', 'activity']) {
     const v = lower(attrs?.[key]);
-    if (v) return v;
+    if (WORKING_STATES.has(v) || IDLE_STATES.has(v)) return v;
   }
   return '';
 }

@@ -23,10 +23,12 @@ inert everywhere outside its editor).
   lands you where you were (owner's decision, reversing the earlier
   "never restore" rule).
 - Activating an editor tab highlights it and opens that editor's bottom toolbar
-  (both editors have one since v1.30.2). The toolbar and the active tab each
+  (all three editors have one). The toolbar and the active tab each
   carry an **X** that closes the editor back to View; re-clicking the active tab
-  does nothing; Plan↔Devices switches directly.
-- **Plan editor** and **Device editor** are shown only to admins when
+  does nothing; editors switch directly with a short content fade and an
+  interpolation between their measured toolbar heights, including wrapped
+  multi-row layouts. Reduced-motion preferences disable this transition.
+- All editor tabs are shown only to admins when
   `admin_only` is on.
 
 ## View — display and device interaction only
@@ -51,14 +53,18 @@ Header in View: space tabs, device count, zoom cluster. Nothing else.
 
 - Toolbar tools: **Walls** / room outline (with its session wall-thickness field
   immediately on the right, default 15 cm — docs/WALL-THICKNESS.md §6), Delete
-  room, Merge, Split, Resize,
-  Opening (place / drag along walls / properties), Open boundary, Wall thickness
+  room, Merge, Split, Resize, Partition, Column,
+  Opening (place / drag along walls / properties), Virtual wall, Physical wall, Thickness
   (docs/WALL-THICKNESS.md — click a wall, set cm/inches from HA's unit system;
   empty/0 clears), Room labels (drag positions — labels are part of the plan).
 - Space gear dialog (title, plan image / hand-drawn, scale, Display section, show_lqi),
   add space, floors import, delete space. Saving a **new** space opens this
   editor with the draw tool armed (an empty floor has nothing useful in View).
 - ⚙ General settings (fill palette) lives here — it is about the plan's appearance.
+
+- Independent partitions and columns are masonry for hit testing as well as
+  area/light: room hover stops at their physical bodies just as it stops at a
+  thick room wall. This does not split the room or change its HA area.
 
 ### What a space may choose not to draw (2026-08-05)
 
@@ -121,6 +127,23 @@ layer you cannot see is a layer you cannot edit.
   pulled out by both ends at once), updates on every move and disappears the
   moment the shape is committed. Rectangles show size and area; circles show
   `R`, and non-circular ovals `Rx × Ry`; a draft with no size shows nothing.
+
+## Plan — independent physical objects
+
+- **Walls** still draws room contours. An unfinished contour is saved after
+  every completed segment and can be resumed from either free endpoint. A
+  click on the endpoint of another saved outline joins both records; branching
+  from the middle of a segment is intentionally not supported.
+- **Partition** draws one physical wall segment; **Column** places a square
+  column whose side is the current Thickness value. Neither object creates a
+  room or HA area. A closed partition ring subtracts only its wall body from
+  the original room floor.
+- **Select** is the only mode in which these objects intercept input. It offers
+  rigid grid-bound drag, double-click/tap properties, Delete, and a rotate
+  handle for square columns (5° steps; Shift is free). Draft Delete removes the
+  whole outline; its properties dialog separately offers segment deletion.
+- Physical objects are inert in View/kiosk. `show_borders: false` hides their
+  paint in View without changing area or light physics.
 
 ## Deprecations decided
 

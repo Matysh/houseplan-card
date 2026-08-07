@@ -158,9 +158,28 @@ test('optimizer repairs legacy cell_cm values into the server schema range', () 
       { id: 'high', title: 'High', view_box: [0, 0, 1, 1], cell_cm: 5000, rooms: [] },
       { id: 'low', title: 'Low', view_box: [0, 0, 1, 1], cell_cm: 0.01, rooms: [] },
       { id: 'bad', title: 'Bad', view_box: [0, 0, 1, 1], cell_cm: 'NaN', rooms: [] },
+      { id: 'zero', title: 'Zero', view_box: [0, 0, 1, 1], cell_cm: 0, rooms: [] },
+      { id: 'null', title: 'Null', view_box: [0, 0, 1, 1], cell_cm: null, rooms: [] },
+      { id: 'negative', title: 'Negative', view_box: [0, 0, 1, 1], cell_cm: -2, rooms: [] },
     ],
     markers: [], settings: {},
   }, {});
-  assert.deepEqual(result.config.spaces.map((space) => space.cell_cm), [1000, 0.1, 5]);
-  assert.equal(result.report.migrated, 3);
+  assert.deepEqual(result.config.spaces.map((space) => space.cell_cm), [1000, 0.1, 5, 5, 5, 5]);
+  assert.equal(result.report.migrated, 6);
+});
+
+test('optimizer canonicalises only an explicitly stored square-column angle', () => {
+  const result = optimizePlans({
+    spaces: [{
+      id: 'f1', title: 'Floor', view_box: [0, 0, 1, 1], rooms: [],
+      wall_columns: [
+        { id: 'implicit', shape: 'square', center: [0.2, 0.2], cm: 30 },
+        { id: 'explicit', shape: 'square', center: [0.4, 0.4], cm: 30, angle: 95 },
+      ],
+    }],
+    markers: [], settings: {},
+  }, {});
+  const [implicit, explicit] = result.config.spaces[0].wall_columns;
+  assert.equal('angle' in implicit, false);
+  assert.equal(explicit.angle, 5);
 });

@@ -1392,6 +1392,63 @@ def test_space_walls_thickness():
             {"key": f"k{i}", "cm": 10} for i in range(v.MAX_WALLS + 1)]}]})
 
 
+def test_space_independent_physical_objects():
+    base = {"id": "s1", "title": "S", "view_box": [0, 0, 1, 1], "rooms": []}
+    physical = {
+        "room_drafts": [{
+            "id": "draft", "points": [[0, 0], [0.5, 0], [0.5, 0.5]],
+            "segments": [{"cm": 10}, {"cm": 20}],
+        }],
+        "partitions": [{"id": "part", "a": [0, 0], "b": [1, 0], "cm": 15}],
+        "wall_columns": [
+            {"id": "square", "shape": "square", "center": [0.5, 0.5],
+             "cm": 30, "angle": 45},
+            {"id": "circle", "shape": "circle", "center": [0.7, 0.7],
+             "cm": 40},
+        ],
+    }
+    out = v.SPACE_SCHEMA({**base, **physical})
+    assert out["wall_columns"][0]["angle"] == 45
+    assert "angle" not in out["wall_columns"][1]
+
+    for bad_column in (
+        {"id": "neg", "shape": "square", "center": [0, 0], "cm": 20,
+         "angle": -1},
+        {"id": "quarter", "shape": "square", "center": [0, 0], "cm": 20,
+         "angle": 90},
+        {"id": "round-angle", "shape": "circle", "center": [0, 0], "cm": 20,
+         "angle": 10},
+    ):
+        with pytest.raises(vol.Invalid):
+            v.SPACE_SCHEMA({**base, "wall_columns": [bad_column]})
+
+    with pytest.raises(vol.Invalid):
+        v.SPACE_SCHEMA({**base, "partitions": [
+            {"id": "zero", "a": [0, 0], "b": [0, 0], "cm": 15}]})
+    with pytest.raises(vol.Invalid):
+        v.SPACE_SCHEMA({**base, "room_drafts": [{
+            "id": "bad", "points": [[0, 0], [1, 0]], "segments": []}]})
+    with pytest.raises(vol.Invalid):
+        v.SPACE_SCHEMA({**base, "partitions": [physical["partitions"][0]],
+                        "wall_columns": [{"id": "part", "shape": "circle",
+                                          "center": [0, 0], "cm": 20}]})
+
+    # Limits are shared with the editor contract, including the aggregate
+    # segment cap (not merely a per-draft bound).
+    drafts = [{"id": f"draft-{i}", "points": [[j / 1000, i / 1000]
+               for j in range(402)], "segments": [{"cm": 15}] * 401}
+              for i in range(5)]
+    with pytest.raises(vol.Invalid):
+        v.SPACE_SCHEMA({**base, "room_drafts": drafts})
+    assert v.SPACE_SCHEMA({**base, "partitions": [
+        {"id": f"p{i}", "a": [0, i / 10000], "b": [1, i / 10000], "cm": 100}
+        for i in range(v.MAX_PARTITIONS)]})
+    with pytest.raises(vol.Invalid):
+        v.SPACE_SCHEMA({**base, "partitions": [
+            {"id": f"p{i}", "a": [0, i / 10000], "b": [1, i / 10000], "cm": 15}
+            for i in range(v.MAX_PARTITIONS + 1)]})
+
+
 def test_space_open_spans():
     """AUD-159B6-03: `open_spans` used to ride on extra=ALLOW_EXTRA, so any
     shape reached the card and one malformed entry blanked the plan for every

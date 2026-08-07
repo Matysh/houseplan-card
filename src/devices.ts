@@ -181,14 +181,30 @@ export function effectiveMarkerControls(
   controls: readonly string[] | null | undefined,
   ownEntities: readonly string[] = [],
 ): string[] {
+  return [...new Set(persistedExternalControls(binding, controls, ownEntities))]
+    .filter((eid) => isControllable(eid));
+}
+
+/**
+ * Lossless controls list for marker editing/persistence.
+ *
+ * Runtime consumers deliberately discard unknown domains and duplicates, but
+ * opening and saving the dialog must not rewrite YAML-only targets or collapse
+ * repeated entries. Only the marker's own target is removed: it belongs to the
+ * normal tap action (or migrates to `is_light` for a legacy self-switch).
+ */
+export function persistedExternalControls(
+  binding: string | null | undefined,
+  controls: readonly string[] | null | undefined,
+  ownEntities: readonly string[] = [],
+): string[] {
   // An entity marker owns only its exact binding. Registry rebuilds may attach
   // sibling entities from the parent device to DevItem; treating every sibling
   // as self would silently drop an explicitly configured external target.
   const own = binding?.startsWith('entity:')
     ? new Set([binding.slice('entity:'.length)])
     : new Set(ownEntities);
-  return [...new Set(controls || [])]
-    .filter((eid) => isControllable(eid) && !own.has(eid));
+  return (controls || []).filter((eid) => typeof eid === 'string' && !own.has(eid));
 }
 
 /**

@@ -33,12 +33,37 @@ export interface WallEntry {
   b?: number[];
 }
 
+/** Persisted open room contour. Coordinates are normalised in config and
+ * render units in SpaceModel, exactly like rooms. */
+export interface RoomDraftCfg {
+  id: string;
+  points: number[][];
+  /** One thickness entry for every consecutive pair of points. */
+  segments: Array<{ cm: number }>;
+}
+
+/** A single independent physical wall which never owns or splits a room. */
+export interface PartitionCfg {
+  id: string;
+  a: number[];
+  b: number[];
+  cm: number;
+}
+
+/** A physical column. `cm` is the outer side/diameter. */
+export type WallColumnCfg =
+  | { id: string; shape: 'square'; center: number[]; cm: number; angle?: number }
+  | { id: string; shape: 'circle'; center: number[]; cm: number };
+
 export interface SpaceModel {
   id: string;
   title: string;
   vb: number[]; // render units
   bg: { href: string; x: number; y: number; w: number; h: number; angle?: number } | null;
   rooms: RoomCfg[]; // render units
+  room_drafts: RoomDraftCfg[];
+  partitions: PartitionCfg[];
+  wall_columns: WallColumnCfg[];
 }
 
 export interface PdfRef {

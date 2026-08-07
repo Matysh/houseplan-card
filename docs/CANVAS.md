@@ -395,10 +395,11 @@ Three things were fixed here besides the new coverage:
 There is no free-position mode. `Shift` never suspends coordinate
 snapping: free anchors always land on grid nodes, and wall-bound objects
 always remain projected and quantised along their wall. It modifies only
-the current gesture: square/circle creation, independent resize axes, free
-decor/backdrop rotation, the compass step, or bypassing the furniture wall
-magnet while the ordinary decor/room/grid magnet remains active. It cannot
-create an off-grid object.
+the current gesture: a room-outline segment is constrained to the nearest
+45° direction and the nearest grid node on that ray; square/circle creation,
+independent resize axes, free decor/backdrop rotation, the compass step, or
+bypassing the furniture wall magnet while the ordinary decor/room/grid magnet
+remains active. It cannot create an off-grid object.
 
 ### 9.5 «Оптимизировать планы» — explicit whole-plan maintenance
 
@@ -520,3 +521,13 @@ undo because a grid projection is not invertible.
   breaking storage change for old clients and buys nothing.
 * The outlier hint has no "hide this object" action. Deciding what to
   do with a stray marker is the device editor's job.
+
+## Independent wall geometry
+
+`room_drafts[].points`, `partitions[].a/b` and `wall_columns[].center` use the
+same normalized-X coordinate convention as `room.poly`; both axes are divided
+by `NORM_W`. Every interactive write passes through the global grid snap and
+the ±`CANVAS_LIMIT` guard. Rigid partition drag clamps one shared delta against
+both endpoints, so it cannot deform the segment or let its far endpoint cross
+the backend boundary. Hit areas and drag thresholds are expressed in CSS
+pixels, therefore selection remains usable at every zoom.

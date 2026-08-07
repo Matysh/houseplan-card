@@ -1306,8 +1306,11 @@ export function wallBodiesUnionPath(
   cellCm: number,
   gridPitch: number,
   coordScale = 1,
-): { d: string; depthUnits: number } | null {
-  if (!walls?.length) return null;
+  /** Independent physical bodies are unioned only after room openings are cut,
+   * so a door/window can never punch a coincident partition or column. */
+  extraBodies: number[][][] = [],
+): { d: string; depthUnits: number; fillRule: 'evenodd' | 'nonzero' } | null {
+  if (!walls?.length && !extraBodies.length) return null;
   const roomRings: { outset: number[][]; inset: number[][] | null }[] = [];
   let maxDepth = 0;
   for (const room of rooms || []) {
@@ -1320,7 +1323,21 @@ export function wallBodiesUnionPath(
     if (!outC) continue;
     roomRings.push({ outset: outC, inset: inC });
   }
-  if (!roomRings.length) return null;
+  for (const body of extraBodies) {
+    const xs = body.map((p) => p[0]), ys = body.map((p) => p[1]);
+    if (xs.length) {
+      const bboxDepth = Math.min(
+        Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+      // A 96-gon is a circle and its bbox is the diameter. Four-point bodies
+      // are partitions/square columns; their shortest edge is the real depth,
+      // whereas a rotated bbox exaggerates it and incorrectly enables hatch.
+      const edgeDepth = Math.min(...body.map((p, i) => {
+        const q = body[(i + 1) % body.length];
+        return Math.hypot(q[0] - p[0], q[1] - p[1]);
+      }));
+      maxDepth = Math.max(maxDepth, body.length > 16 ? bboxDepth : edgeDepth);
+    }
+  }
   const junctions = virtualJunctionPatches(
     rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
   );
@@ -1329,12 +1346,13 @@ export function wallBodiesUnionPath(
       const outset: any = closedRing(ring.outset);
       return ring.inset ? difference(outset, closedRing(ring.inset) as any) : outset;
     };
-    let body: any = bodyOf(roomRings[0]);
+    let body: any = roomRings.length ? bodyOf(roomRings[0]) : null;
     for (let i = 1; i < roomRings.length; i++) body = union(body, bodyOf(roomRings[i]));
     // The room-ring subtraction above cannot infer a mitre between real arms
     // owned by different contours at a virtual T. Add only those missing
     // junction pieces, then let physical openings cut through them as usual.
-    for (const patch of junctions) body = union(body, closedRing(patch) as any);
+    for (const patch of junctions)
+      body = body ? union(body, closedRing(patch) as any) : closedRing(patch);
     // cut opening tunnels (axis-aligned to opening angle)
     for (const o of openings) {
       if (!(o.length > 0)) continue;
@@ -1349,16 +1367,31 @@ export function wallBodiesUnionPath(
         [o.x + ux * half + nx * pad, o.y + uy * half + ny * pad],
         [o.x - ux * half + nx * pad, o.y - uy * half + ny * pad],
       ];
-      body = difference(body, closedRing(slot) as any);
+      if (body) body = difference(body, closedRing(slot) as any);
+    }
+    // Independent bodies are physical but own no openings. Unioning here (not
+    // before the loop above) preserves them under coincident room openings.
+    for (const extra of extraBodies) {
+      if (extra.length < 3) continue;
+      body = body ? union(body, closedRing(extra) as any) : [closedRing(extra)];
     }
     const d = polyclipToPathD(body);
     if (!d) return null;
-    return { d, depthUnits: maxDepth };
+    return { d, depthUnits: maxDepth, fillRule: 'evenodd' };
   } catch {
     // fall back to evenodd rings concatenated
     const rings = wallBodyRings(rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
-    if (!rings.length) return null;
-    return { d: rings.map((r) => r.d).join(' '), depthUnits: maxDepth };
+    const extraD = extraBodies.map((poly) => polyToPath(poly)).join(' ');
+    if (!rings.length && !extraD) return null;
+    // Each room ring already reverses its inset. `nonzero` therefore keeps
+    // floors as holes while overlapping independent rings add instead of
+    // cancelling one another (the old even-odd fallback produced pinholes at
+    // exactly the complex junctions for which a fallback is needed).
+    return {
+      d: [rings.map((r) => r.d).join(' '), extraD].filter(Boolean).join(' '),
+      depthUnits: maxDepth,
+      fillRule: 'nonzero',
+    };
   }
 }
 

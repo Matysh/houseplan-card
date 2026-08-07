@@ -96,6 +96,9 @@ Everything in this table is **public API**.
 | Room card (name + metrics) | `div` (HTML, marker layer) | `room-label` | `data-id` = room id, `data-area` | `.roomlabel` |
 | Door / window | `g` (SVG) | `opening` | `data-id` = opening id, `data-kind` = `door` \| `window` | `.opening` |
 | Wall body (thickness) | `path` (SVG) | `wall` | `data-id` = segment key, `data-kind` = `shared` \| `outer` | `.wallbody` |
+| Independent partition | `path` (SVG editor hit target) | `partition` | `data-id` = partition id, `data-kind` = `partition` | `.physical-hit` |
+| Wall column | `path` / `circle` (SVG editor hit target) | `wall-column` | `data-id` = column id, `data-kind` = `square` \| `circle` | `.physical-hit` |
+| Unfinished room contour | `line` (one editor hit target per segment) | `room-draft` | `data-id` = draft id, `data-kind` = `segment`, `data-segment` = zero-based segment index | `.physical-hit` |
 | Decor shape | `line` / `rect` / `ellipse` / `text` (SVG) | `decor` | `data-id` = shape id, `data-kind` = `line` \| `rect` \| `ellipse` \| `text` | `.dshape` (`.dtext` on text); persisted colour/alpha are inline SVG attributes and therefore win over weak CSS selectors |
 | Furniture | `path` (SVG) | `decor` | `data-id` = shape id, `data-kind` = `furniture`, `data-symbol` = the symbol id (`sofa`, `toilet`, …) | `.dshape .dfurn` |
 | Floor / space tab | `button` (HTML, header) | `space-tab` | `data-id` = space id | `.tab` |
@@ -150,7 +153,8 @@ them:
   whole job is to be replaced.
 - **Editor chrome and previews** — `.dtframe`, `.dthandle`, `.dtknob`,
   `.dtbox`, `.dtstem`, `.bdhandle`, `.rszhandle`, `.rszicon`, `.rszframe`,
-  `.ddraft`, `.vacfithandle`, the align guides, the markup layer,
+  `.ddraft`, `.vacfithandle`, the align guides, the markup layer (apart from
+  the physical-object identity attributes explicitly listed in §3),
   `data-corner`, `data-mid`. These are the drawing tools' own furniture; they
   are redesigned whenever an editor is.
 - **Layout wrappers** — `.stage`, `.zoomwrap`, `.devlayer`, `.decorlayer`,

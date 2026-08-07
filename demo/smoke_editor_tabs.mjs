@@ -19,11 +19,25 @@ const res = await page.evaluate(async () => {
   // 3) повторный клик по активной вкладке — ничего
   tabs()[0].click(); await c.updateComplete;
   out.reclickNoop = c._mode === 'plan';
+  // Let the View -> editor grid transition finish first. A real user cannot
+  // switch editors in the same zero-layout frame, and competing WAAPI/CSS
+  // height animations in that frame are intentionally suppressed.
+  await new Promise((resolve) => setTimeout(resolve, 220));
   // 4) прямое переключение План → Устройства
+  // Deliberately make the outgoing bar taller: the editor transition must
+  // interpolate real content height, not merely fade two equal-height rows.
+  const planBarBeforeSwap = sr().querySelector('.editorchrome .editbar');
+  planBarBeforeSwap.style.minHeight = `${planBarBeforeSwap.getBoundingClientRect().height + 36}px`;
   tabs()[1].click(); await c.updateComplete;
   out.directSwitch = c._mode === 'devices';
   out.devBar = !!sr().querySelector('.editbar.devbar');
   out.devBarBtns = sr().querySelectorAll('.editbar.devbar .btn:not(.barclose)').length === 3; // add/show-all/rules (v1.33.2: Reset removed)
+  const swapChrome = sr().querySelector('.editorchrome');
+  const swapInner = swapChrome.querySelector('.editorchrome-inner');
+  out.editorSwapAnimatesHeight = swapChrome.getAnimations()
+    .some((animation) => animation.id === 'hp-editor-height-swap');
+  out.editorSwapAnimatesContent = swapInner.getAnimations()
+    .some((animation) => animation.id === 'hp-editor-content-swap');
   // 5) инструменты устройств из шапки исчезли (в .bar их больше нет)
   out.headerCleanInDev = !sr().querySelector('.bar > .btn[title*="' + (c._t('title.add_device')) + '"]');
   // 6) крестик на панели → Просмотр
@@ -45,8 +59,11 @@ const res = await page.evaluate(async () => {
   // Russian «я», while an input keeps its native browser history.
   tabs()[0].click(); await c.updateComplete;
   const realUndo = c._undoGeometry;
+  const realRedo = c._redoGeometry;
   let undoCalls = 0;
+  let redoCalls = 0;
   c._undoGeometry = () => { undoCalls += 1; };
+  c._redoGeometry = () => { redoCalls += 1; };
   window.dispatchEvent(new KeyboardEvent('keydown', {
     key: 'я', code: 'KeyZ', ctrlKey: true, bubbles: true, composed: true,
   }));
@@ -56,7 +73,24 @@ const res = await page.evaluate(async () => {
     key: 'я', code: 'KeyZ', ctrlKey: true, bubbles: true, composed: true,
   }));
   out.inputKeepsNativeUndo = undoCalls === 1;
+  // QWERTZ swaps the physical Y/Z codes. The labelled key wins when it is a
+  // Latin letter; otherwise both isZ/isY became true and Redo ran first.
+  window.dispatchEvent(new KeyboardEvent('keydown', {
+    key: 'z', code: 'KeyY', ctrlKey: true, bubbles: true, composed: true,
+  }));
+  out.qwertzCtrlZIsUndo = undoCalls === 2 && redoCalls === 0;
+  window.dispatchEvent(new KeyboardEvent('keydown', {
+    key: 'y', code: 'KeyZ', ctrlKey: true, bubbles: true, composed: true,
+  }));
+  out.qwertzCtrlYIsRedo = undoCalls === 2 && redoCalls === 1;
+  // On AZERTY the physical KeyZ carries W: Ctrl+W must remain the browser's
+  // close-tab shortcut, never an editor Undo.
+  window.dispatchEvent(new KeyboardEvent('keydown', {
+    key: 'w', code: 'KeyZ', ctrlKey: true, bubbles: true, composed: true,
+  }));
+  out.azertyCtrlWIsNotUndo = undoCalls === 2 && redoCalls === 1;
   c._undoGeometry = realUndo;
+  c._redoGeometry = realRedo;
 
   // Ctrl+click closes a valid draft without adding the click as a new point;
   // the same gesture must refuse a draft with fewer than two existing edges.
@@ -80,6 +114,13 @@ const res = await page.evaluate(async () => {
   out.ctrlCloseValidContour = ctrlClick() && c._roomDialog
     && c._path.length === 4
     && c._path[0][0] === c._path[3][0] && c._path[0][1] === c._path[3][1];
+  await c.updateComplete;
+  const roomDialog = sr().querySelector('hp-dialog.roomdialog');
+  const roomBody = roomDialog?.querySelector('.body');
+  out.roomDialogUsesMediumWidth = roomDialog?.wide === true
+    && roomDialog.hasAttribute('wide');
+  out.roomDialogHasNoHorizontalScroll = !!roomBody
+    && roomBody.scrollWidth <= roomBody.clientWidth + 1;
   c._path = savedPath;
   c._roomDialog = savedRoomDialog;
   return out;

@@ -26,7 +26,7 @@ import {
 } from './wall-thickness';
 
 /** Bump when a new lossless maintenance pass is added. */
-export const PLAN_MODEL_VERSION = 4;
+export const PLAN_MODEL_VERSION = 5;
 const DEFAULT_CELL_CM = 5;
 const CELL_CM_MIN = 0.1;
 const CELL_CM_MAX = 1000;
@@ -130,7 +130,10 @@ const migrateLosslessly = (config: any): number => {
     if (own(space, 'cell_cm') && (
       !Number.isFinite(rawCellCm) || rawCellCm < CELL_CM_MIN || rawCellCm > CELL_CM_MAX
     )) {
-      space.cell_cm = Number.isFinite(rawCellCm)
+      // Non-positive values have always meant "use the 5 cm runtime default".
+      // Repairing 0/null to the schema minimum (0.1) silently changed the
+      // effective scale fiftyfold instead of preserving what the plan showed.
+      space.cell_cm = Number.isFinite(rawCellCm) && rawCellCm > 0
         ? clamp(rawCellCm, CELL_CM_MIN, CELL_CM_MAX)
         : DEFAULT_CELL_CM;
       n++;
@@ -138,6 +141,15 @@ const migrateLosslessly = (config: any): number => {
     const repairedCellCm = Number(space.cell_cm);
     const cellCm = Number.isFinite(repairedCellCm) && repairedCellCm > 0
       ? repairedCellCm : DEFAULT_CELL_CM;
+    for (const column of space.wall_columns || []) {
+      if (column.shape === 'circle') {
+        if (own(column, 'angle')) { delete column.angle; n++; }
+      } else if (column.shape === 'square' && own(column, 'angle')) {
+        const raw = Number(column.angle) || 0;
+        const angle = ((raw % 90) + 90) % 90;
+        if (column.angle !== angle) { column.angle = angle; n++; }
+      }
+    }
     for (const shape of space.decor || []) {
       if (own(shape, 'width')) {
         const legacyWidth = Number(shape.width);

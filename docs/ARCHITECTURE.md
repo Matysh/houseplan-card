@@ -146,6 +146,7 @@ they have no discovery source.
                "plan_scale",   // legacy optional fallback, docs/BACKDROP.md
                "view_box":[4],
                "rooms":[{"id","name","area","poly|x/y/w/h","open_to","settings"}],
+               "room_drafts":[…], "partitions":[…], "wall_columns":[…],
                "openings":[…], "decor":[…], "settings":{…} }],
   "markers": [{ "id","binding":"device:<id>|entity:<eid>|virtual","hidden","removed",
                 "name","icon","display","controls","is_light","tap_action",
@@ -171,11 +172,19 @@ bounded ±5000). Plan files: `<config>/houseplan/plans/<space>.<token>.<ext>`
 `/api/houseplan/content/plans/_/<name>` urls; growth is bounded by store
 quotas, nothing is ever deleted for being old (docs/SCOPE.md).
 
-## Room geometry rules (v1.19–v1.21)
+## Room and independent wall geometry
 
-A **line is never an entity of its own**: walls are *derived* from room outlines
-(`roomEdges`, deduped by `segKey`), so an abandoned outline leaves nothing behind and deleting
-a room keeps the walls its neighbours still contribute. Rooms may not overlap
+Room-boundary walls remain *derived* from room outlines (`roomEdges`, deduped by
+`segKey`), so deleting a room keeps the boundaries its neighbours still
+contribute. Three explicitly typed exceptions are stored per space:
+`room_drafts` for persisted unfinished room outlines, `partitions` for
+one-segment independent walls and `wall_columns` for square/circular columns.
+They do not create a room or HA area and never split a room implicitly. Their
+physical bodies are unioned with room walls for rendering and light occlusion,
+and subtracted from clean room floor area. Doors and windows still belong only
+to derived room walls and never cut an independent object.
+
+Rooms may not overlap
 (`pointStrictlyInside` + `roomsOverlap`; being ON a shared wall is legal — real neighbouring
 walls overlap collinearly rather than match exactly). **Merge/Split** use boolean geometry from
 **polyclip-ts** (chosen over `polygon-clipping`, whose ESM build exports only a default while
@@ -185,7 +194,7 @@ bigger part keeps the room identity (name/area/devices).
 
 ## Markup editor (v1.4.0+)
 
-State inside the card: `_markup` (mode), `_tool` (draw/merge/split/resize/opening/openwall/
+State inside the card: `_markup` (mode), `_tool` (draw/partition/column/merge/split/resize/opening/openwall/
 closewall/wallthick/delroom), `_path` (the current outline,
 vertices on the GRID_N=240 grid). Clicks on the stage → `_svgPoint`→`_snap`. The outline is closed
 = a click on the first vertex → area select (hass.areas) + name → room {poly}. Polygon rooms and
@@ -198,12 +207,16 @@ a newer external config revision is adopted. Positional placement is always quan
 grid. Shift may alter a gesture's geometry (square/circle creation, independent
 resize axes or free rotation), but it cannot create off-grid coordinates.
 
-**A line is never an entity of its own (v1.19.0).** Nothing is persisted while you draw: an
-outline you never close leaves no trace. Walls are *derived* from the room outlines by
-`roomEdges(rooms)` (logic.ts) and deduped by `segKey`, so a wall shared by two rooms is emitted
-once — deleting a room therefore keeps the borders its neighbours still contribute and drops the
-rest, with no bookkeeping. The legacy `space.segments` array is stripped on every save (validation
-still tolerates it on read; see CHANGELOG v1.19.0).
+Every completed segment of an unfinished room contour is persisted in
+`room_drafts`, including the thickness selected when that segment was placed.
+Switching tools keeps it; the same editing session resumes automatically, and
+after reload either endpoint can be selected to continue. Closing converts the
+draft into a room, while the room dialog's secondary action converts its edges
+to independent partitions. `partition` creates exactly one wall per gesture;
+`column` creates a square object whose size comes from the current Thickness
+field. Double click edits physical-object properties, pointer drag moves the
+whole object on the grid, and Delete removes only the selected object. The
+legacy root `space.segments` array is still stripped on every save.
 
 While drawing, the length of the current segment follows the cursor (`_fmtLen` → `segmentCm`/
 `formatLength`): metres, or feet+inches when `hass.config.unit_system` is imperial. The scale is
@@ -455,9 +468,13 @@ hash falls back to the default.
   span to **every** surviving shared segment. Adjacent pieces owned by different
   room pairs stay separate: their midpoints are the source of the corresponding
   `open_to` links after Split (`AUD-159B7-01`).
-- **Marker controls** (v1.36): `marker.controls[]` (lights/switches only)
-  toggled as one HA-group-semantics service call on the marker's EXPLICIT
-  tap_action=toggle; icon state/tint mirrors the targets.
+- **Marker controls** (v1.36): persisted `marker.controls[]` is a lossless,
+  ordered external-target list. Opening and saving the dialog preserves
+  duplicates and temporarily unknown/vendor targets, removing only the
+  marker's own bound/device entities. The runtime projection separately
+  de-duplicates and filters to currently controllable lights/switches, then
+  toggles them as one HA-group-semantics service call on the marker's explicit
+  `tap_action=toggle`; icon state/tint mirrors those effective targets.
 - **Resolved device state** (2026-08-06): HA provides states per entity, not
   one state per device. `resolvedDeviceStateEntities` therefore starts from
   uncategorised registry entities, resolves one functional role (whole-device
@@ -466,10 +483,11 @@ hash falls back to the default.
   result; `primaryEntity` only selects its first member where a single action
   target is required. Integration option switches can no longer make an
   otherwise healthy device working or unavailable merely by list order. For
-  `climate`, an explicit `hvac_action` is authoritative; only integrations that
-  omit it fall back to a current non-off state advertised by `hvac_modes` (or a
-  standard HA HVAC mode), so `idle` never becomes yellow while mode-only
-  entities still report actual operation.
+  `climate`, a recognized explicit `hvac_action` is authoritative: idle remains
+  neutral and heating/cooling/preheating/defrosting are working. Unknown vendor
+  pseudo-actions are ignored; when no recognized action exists, a current
+  non-off state advertised by `hvac_modes` (or a standard HA HVAC mode) is the
+  best available enabled-mode fallback.
 - **Resolved light sources** (UX-12): `resolvedLightSources(hass, devices,
   room?)` is the only light-membership resolver. Per marker the precedence is
   `controls[]` -> the primary controllable entity when `is_light` is set ->

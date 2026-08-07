@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  lqiColor, snapToGrid, segKey, samePoint, pointInPolygon, markerIdForBinding, averageLqi,
+  lqiColor, snapToGrid, snapSegment45, segKey, samePoint, pointInPolygon, markerIdForBinding, averageLqi,
   fitView, declump, safeUrl, resolveTapAction, floorsOf, subst, spaceDisplayOf, roomFillColor,
   splitRoomPath, polyContainsPoly, islandsOf,
   kelvinToRgb, glowColorOf, doorSector, hasRoomBehind,
@@ -35,6 +35,14 @@ test('snapToGrid', () => {
   assert.equal(snapToGrid(0, 10), 0);
   assert.equal(snapToGrid(14, 10), 10);
   assert.equal(snapToGrid(16, 10), 20);
+});
+
+test('snapSegment45: nearest octant stays on grid and keeps the exact angle', () => {
+  assert.deepEqual(snapSegment45([100, 100], [104, 156], 10), [100, 160]);
+  assert.deepEqual(snapSegment45([100, 100], [151, 142], 10), [150, 150]);
+  assert.deepEqual(snapSegment45([100, 100], [48, 57], 10), [50, 50]);
+  assert.deepEqual(snapSegment45([100, 100], [100, 100], 10), [100, 100]);
+  assert.deepEqual(snapSegment45([90, 90], [200, 200], 10, 100), [100, 100]);
 });
 
 test('segKey: direction does not matter', () => {

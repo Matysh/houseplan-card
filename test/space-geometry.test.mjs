@@ -28,6 +28,18 @@ test('spaceModels: the canvas is square; the image is centred by its own ratio',
   assert.equal(spaceModels(null).length, 0);
 });
 
+test('spaceModels canonicalises square-column symmetry to a quarter turn', () => {
+  const [space] = spaceModels({ spaces: [{
+    id: 's', view_box: [0, 0, 1, 1], rooms: [],
+    wall_columns: [
+      { id: 'square', shape: 'square', center: [0.2, 0.3], cm: 30, angle: 95 },
+      { id: 'circle', shape: 'circle', center: [0.4, 0.5], cm: 40 },
+    ],
+  }], markers: [] });
+  assert.equal(space.wall_columns[0].angle, 5);
+  assert.equal('angle' in space.wall_columns[1], false);
+});
+
 test('fitInSquare: wide gets top/bottom margins, tall gets side margins', () => {
   assert.deepEqual(fitInSquare(2, 1000), { x: 0, y: 250, w: 1000, h: 500 });
   assert.deepEqual(fitInSquare(0.5, 1000), { x: 250, y: 0, w: 500, h: 1000 });

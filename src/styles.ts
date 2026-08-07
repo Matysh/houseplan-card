@@ -986,6 +986,7 @@ export const cardStyles = css`
       /* A label is one logical decor object. SVG's visiblePainted would hit
          only the ink of individual glyphs, so spaces, counters and the area
          inside its selection glow behaved like empty canvas. */
+      pointer-events: visiblePainted;
       pointer-events: bounding-box;
     }
     .stage.mode-decor.dtool-text .decorlayer .dshape.dtext {
@@ -1110,7 +1111,10 @@ export const cardStyles = css`
     .stage.mode-decor .room,
     .stage.mode-decor .devlayer,
     .stage.mode-decor .opening,
-    .stage.mode-decor .rlabel {
+    .stage.mode-decor .rlabel,
+    .stage.mode-decor .room-outline,
+    .stage.mode-decor .wallbodies,
+    .stage.mode-decor .openwalls {
       opacity: 0.35;
     }
     .decorbar .dcolor {
@@ -1583,6 +1587,58 @@ export const cardStyles = css`
     .dev.unavail {
       opacity: 0.35;
     }
+    .physical-hit {
+      fill: transparent;
+      stroke: transparent;
+      pointer-events: none;
+      cursor: grab;
+    }
+    .stage.tool-select .physical-hit { pointer-events: all; }
+    .physical-hit:active { cursor: grabbing; }
+    line.physical-hit { cursor: pointer; }
+    .physical-hit.selected {
+      fill: rgba(255, 193, 77, 0.24);
+      stroke: transparent;
+    }
+    line.physical-hit.selected {
+      stroke: transparent;
+    }
+    .physical-drag {
+      fill: rgba(255, 193, 77, 0.38);
+      stroke: #ffc14d;
+      stroke-width: 2.5;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
+    .physical-chrome { pointer-events: none; }
+    .physical-chrome .frame,
+    .physical-chrome .stem {
+      fill: none;
+      stroke: #ffc14d;
+      stroke-width: 2;
+      vector-effect: non-scaling-stroke;
+    }
+    .physical-chrome .frame { fill: rgba(255, 193, 77, 0.22); }
+    .physical-chrome polyline.frame { fill: none; }
+    .physical-chrome .move-dot {
+      fill: #ffc14d;
+      stroke: #24262d;
+      stroke-width: 1.5;
+      vector-effect: non-scaling-stroke;
+    }
+    .physical-chrome .rotate-handle {
+      fill: #24262d;
+      stroke: #ffc14d;
+      stroke-width: 2.5;
+      vector-effect: non-scaling-stroke;
+      pointer-events: all;
+      cursor: crosshair;
+    }
+    .drawwall.invalid input { border-color: var(--error-color, #db4437); }
+    .drawwall .rangehint { margin-inline-start: 4px; font-size: 0.78em; opacity: 0.72; }
+    .drawwall.invalid .rangehint { color: var(--error-color, #db4437); opacity: 1; }
+    .stage.markup.tool-partition,
+    .stage.markup.tool-column { cursor: crosshair; }
     .dev.virtual {
       border-style: dashed;
     }
@@ -2430,6 +2486,9 @@ export const cardStyles = css`
         opacity 0.12s ease,
         visibility 0s linear 0.18s;
     }
+    .editorchrome:not(.open) {
+      pointer-events: none;
+    }
     .editorchrome.open {
       grid-template-rows: 1fr;
       opacity: 1;
@@ -2437,21 +2496,24 @@ export const cardStyles = css`
       overflow: visible;
       transition-delay: 0s;
     }
+    .editorchrome.resizing {
+      overflow: hidden;
+      will-change: height;
+    }
     .editorchrome.open.nav-enter {
       overflow: hidden;
     }
     .editorchrome-inner {
       min-height: 0;
+      transform-origin: top center;
     }
     .editorchrome-inner.nav-enter { animation: hp-editor-enter 0.18s cubic-bezier(0.2, 0.7, 0.2, 1); }
     .editorchrome-inner.nav-exit  { animation: hp-editor-exit 0.18s cubic-bezier(0.2, 0.7, 0.2, 1); }
-    .editorchrome-inner.nav-swap  { animation: hp-editor-swap 0.16s ease-out; }
     @media (prefers-reduced-motion: reduce) {
       .modetab { transition: none; }
       .editorchrome { transition: none; }
       .editorchrome-inner.nav-enter,
-      .editorchrome-inner.nav-exit,
-      .editorchrome-inner.nav-swap { animation: none; }
+      .editorchrome-inner.nav-exit { animation: none; }
     }
     /* Device info can have Edit + Open in HA + Close. A small HA dialog is
        narrower than those three Russian-labelled actions; without wrapping,

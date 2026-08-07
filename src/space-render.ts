@@ -16,6 +16,7 @@ import { DEFAULT_ICON_RULES, compileIconRules, EXCLUDED_DOMAINS } from './rules'
 import { t, type Lang } from './i18n';
 import { bgModeOf, northDegOf, sunStateOf, dayPhase } from './sun';
 import type { ServerConfig } from './types';
+import { physicalBodies } from './physical-geometry';
 import {
   spaceModels, roomCenter, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, NORM_W,
   GRID_STEP_N, GRID_PITCH,
@@ -100,6 +101,17 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       const x = sv.x * NORM_W, y = sv.y * NORM_W;
       placed.push({ minX: x, minY: y, maxX: x, maxY: y });
     }
+  }
+  const spCfg: any = o.cfg.spaces.find((s: any) => s.id === o.spaceId) || {};
+  const walls: WallEntry[] = Array.isArray(spCfg.walls) ? spCfg.walls : [];
+  const cellCm = Number(spCfg.cell_cm) > 0 ? Number(spCfg.cell_cm) : 5;
+  const extras = physicalBodies(space, cellCm, GRID_PITCH);
+  for (const body of extras) {
+    const xs = body.map((p) => p[0]), ys = body.map((p) => p[1]);
+    if (xs.length) placed.push({
+      minX: Math.min(...xs), minY: Math.min(...ys),
+      maxX: Math.max(...xs), maxY: Math.max(...ys),
+    });
   }
   const fr = spaceFrame(space, placed);
   const vb = [fr.x, fr.y, fr.w, fr.h];
@@ -207,15 +219,12 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   // gaps between detached buildings, and an empty space has no paper at all,
   // image or no image. The picture is drawn ON the paper, one layer above.
 
-  const spCfg: any = o.cfg.spaces.find((s: any) => s.id === o.spaceId) || {};
-  const walls: WallEntry[] = Array.isArray(spCfg.walls) ? spCfg.walls : [];
-  const cellCm = Number(spCfg.cell_cm) > 0 ? Number(spCfg.cell_cm) : 5;
   const paperShapes = walls.length
     ? paperRoomShapesWithWalls(space.rooms, walls, [], GRID_STEP_N, cellCm, GRID_PITCH, NORM_W)
     : paperRoomShapes(space.rooms);
   const colors = fillColorsOf(o.cfg.settings);
-  const wallUnion = walls.length && disp.showBorders
-    ? wallBodiesUnionPath(space.rooms, walls, [], [], GRID_STEP_N, cellCm, GRID_PITCH, NORM_W)
+  const wallUnion = (walls.length || extras.length) && disp.showBorders
+    ? wallBodiesUnionPath(space.rooms, walls, [], [], GRID_STEP_N, cellCm, GRID_PITCH, NORM_W, extras)
     : null;
   const pxPerUnit = o.stageWidth && vb[2] ? o.stageWidth / vb[2] : 1;
   const solidWall = !!wallUnion && wallBodyNeedsSolid(wallUnion.depthUnits, pxPerUnit);
@@ -246,10 +255,10 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
         ${wallUnion
           ? svg`<g class="wallbodies" style="--room-stroke:${wallStroke}">
               <path class="wallbody-fill" d="${wallUnion.d}"
-                fill="${colors.wall_fill.c}" fill-opacity="${colors.wall_fill.a}" fill-rule="evenodd"
+                fill="${colors.wall_fill.c}" fill-opacity="${colors.wall_fill.a}" fill-rule=${wallUnion.fillRule}
                 stroke="none" pointer-events="none"></path>
               <path class="wallbody ${solidWall ? 'solid' : ''}" data-hp="wall" data-id="union" data-kind="union"
-                d="${wallUnion.d}" fill="${solidWall ? 'none' : 'url(#hp-wall-hatch)'}" fill-rule="evenodd"
+                d="${wallUnion.d}" fill="${solidWall ? 'none' : 'url(#hp-wall-hatch)'}" fill-rule=${wallUnion.fillRule}
                 stroke="${wallStroke}" stroke-width="0.6" pointer-events="none"></path>
             </g>`
           : nothing}

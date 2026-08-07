@@ -6,6 +6,7 @@
 import { declump, contentUrl } from './logic';
 import type { ServerConfig, SpaceModel, RoomCfg, DevItem } from './types';
 import { boxCorners, normalizeAngle } from './editors/decor/geometry';
+import { canonicalColumnAngle } from './physical-geometry';
 
 export const NORM_W = 1000; // side of the render space — the canvas is square
 
@@ -131,6 +132,24 @@ export function spaceModels(cfg: ServerConfig | null): SpaceModel[] {
       // backdrop frame has stored (plan_x/y, per-axis scale and angle)
       bg: s.plan_url ? { href: contentUrl(s.plan_url), ...planRect(s, NORM_W) } : null,
       rooms: (s.rooms || []).map(scale),
+      room_drafts: (s.room_drafts || []).map((d: any) => ({
+        id: d.id,
+        points: (d.points || []).map((p: number[]) => [p[0] * NORM_W, p[1] * H]),
+        segments: (d.segments || []).map((sg: any) => ({ cm: Number(sg.cm) })),
+      })),
+      partitions: (s.partitions || []).map((p: any) => ({
+        id: p.id,
+        a: [p.a[0] * NORM_W, p.a[1] * H],
+        b: [p.b[0] * NORM_W, p.b[1] * H],
+        cm: Number(p.cm),
+      })),
+      wall_columns: (s.wall_columns || []).map((c: any) => ({
+        id: c.id,
+        shape: c.shape === 'circle' ? 'circle' : 'square',
+        center: [c.center[0] * NORM_W, c.center[1] * H],
+        cm: Number(c.cm),
+        ...(c.shape === 'circle' ? {} : { angle: canonicalColumnAngle(c.angle) }),
+      })),
     } as SpaceModel;
   });
 }

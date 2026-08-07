@@ -5,7 +5,7 @@ import {
   areaLights, areaTemp, areaHum, areaLightStats, sourceValue, areaClimate, areaClimateMap,
   litLightEntity, resolvedDeviceStateEntities, resolvedLightSources, resolvedLightState,
   resolvedLightStats, seedHiddenBindings,
-  deletePlanMarkerRecords, effectiveMarkerControls,
+  deletePlanMarkerRecords, effectiveMarkerControls, persistedExternalControls,
 } from '../test-build/devices.js';
 import { compileIconRules, iconFor } from '../test-build/rules.js';
 
@@ -898,6 +898,14 @@ test('resolvedLightSources: marker room_id is more precise than a shared HA area
 });
 
 test('self-control is not external but preserves legacy switch-as-light intent', () => {
+  assert.deepEqual(
+    persistedExternalControls('entity:switch.hood', [
+      'switch.hood', 'input_boolean.yaml_only', 'light.mirror',
+      'light.mirror', 'sensor.vendor_option',
+    ]),
+    ['input_boolean.yaml_only', 'light.mirror', 'light.mirror', 'sensor.vendor_option'],
+    'dialog persistence removes only self and keeps unknown/duplicate user data',
+  );
   assert.deepEqual(
     effectiveMarkerControls('entity:switch.hood', [
       'switch.hood', 'light.mirror', 'switch.hood', 'lock.front_door',

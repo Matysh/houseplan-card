@@ -27,6 +27,9 @@ async def system_health_info(hass: HomeAssistant) -> dict[str, Any]:
         "config_rev": cfg_raw.get("rev", 0),
         "spaces": len(config.get("spaces", [])),
         "rooms": sum(len(s.get("rooms", [])) for s in config.get("spaces", [])),
+        "room_drafts": sum(len(s.get("room_drafts", [])) for s in config.get("spaces", [])),
+        "partitions": sum(len(s.get("partitions", [])) for s in config.get("spaces", [])),
+        "wall_columns": sum(len(s.get("wall_columns", [])) for s in config.get("spaces", [])),
         "markers": len(config.get("markers", [])),
         "layout_entries": len(layout_raw.get("layout", {})),
     }

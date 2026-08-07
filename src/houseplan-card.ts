@@ -14,7 +14,7 @@ import {
   type IconRule, type CompiledIconRule,
 } from './rules';
 import {
-  lqiColor, snapToGrid, samePoint, pointInPolygon, markerIdForBinding,
+  lqiColor, snapToGrid, snapSegment45, samePoint, pointInPolygon, markerIdForBinding,
   segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointStrictlyInside, roomsOverlap,
   pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, openZoneOf, distToSegment, outlineWithout, cutSegments, alignGuides, segmentAngle, is45, type AlignGuide, swipeTarget, clampScale, migratePdfUrls, roomFillModeOf, contentUrl,
   snapToWall, snapPointAlongPoly, openingAmount, openingShoulders, interiorPoint,
@@ -47,7 +47,7 @@ import {
 } from './furniture';
 import {
   degradeWalls, rekeyWallsAfterMove,
-  setWallThickness, setWallThicknessForRoom, cmToField, fieldToCm, wallCmToUnits,
+  setWallThickness, setWallThicknessForRoom, cmToField, wallCmToUnits,
   wallEdgeBodies, wallBodiesUnionPath, paperRoomShapesWithWalls,
   innerContourForRoom, roomWallProfile, outsetContour,
   openingInnerFaceOffset, applyWallThicknessToNewRoom,
@@ -75,20 +75,28 @@ import {
   areaTemp, areaHum, sourceValue, areaClimateMap,
   resolvedLightSources, resolvedLightState, resolvedLightStats,
   resolvedDeviceStateEntities, removedPlanBindings, isRemovedPlanEntity,
-  deletePlanMarkerRecords, effectiveMarkerControls, hasLegacySelfLightIntent, resolveIcon,
+  deletePlanMarkerRecords, effectiveMarkerControls, persistedExternalControls,
+  hasLegacySelfLightIntent, resolveIcon,
   type AreaClimate,
 } from './devices';
 import type {
   OpeningCfg,
-  RoomCfg, SpaceModel, PdfRef, Marker, ServerConfig, DevItem, CardConfig,
+  RoomCfg, RoomDraftCfg, PartitionCfg, WallColumnCfg,
+  SpaceModel, PdfRef, Marker, ServerConfig, DevItem, CardConfig,
 } from './types';
+import {
+  COLUMN_MAX_CM, canonicalColumnAngle, clampColumnCm, columnBody,
+  directionalOccluders, draftBodies, floorMinusBodies, geometryArea, geometryOuterRings,
+  partitionBody, polyclipPathD, radialOccluders,
+  pointInPhysicalBody, sameColumnPlacement,
+} from './physical-geometry';
 import './editor';
 import './space-card';
 import { cardStyles } from './styles';
 import {
   fitInSquare, planRect, contentBounds, spaceModels, contentFrame, contentItems, spaceFrame,
   spaceCenter, iconUnit, iconCqw, gridLevels, itemOf, snapPt,
-  MIN_ZOOM, PAN_SLACK, CANVAS_LIMIT, GRID_PITCH, GRID_STEP_N,
+  MIN_ZOOM, PAN_SLACK, CANVAS_LIMIT, SANE_LIMIT, GRID_PITCH, GRID_STEP_N,
   PLAN_SCALE_MIN, PLAN_SCALE_MAX,
   clampCanvasR, clampCanvasN, type ContentItem, type Rect,
 } from './space-geometry';
@@ -108,7 +116,7 @@ import {
   type DecorBox, type SnapGeometry,
 } from './editors/decor/geometry';
 
-const CARD_VERSION = '1.60.1-beta.1';
+const CARD_VERSION = '1.60.2-beta.1';
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
 const CELL_CM_MIN = 0.1;
@@ -137,6 +145,33 @@ const RESUME_RECENT_MS = 15000;
 const RESUME_MIN_MS = 220;
 const RESUME_QUIET_MS = 80;
 const RESUME_MAX_MS = 750;
+
+/** Numeric editor fields must consume the whole value: `50abc` is invalid,
+ * not a surprisingly accepted 50. Decimal comma remains supported. */
+const strictNumber = (value: string): number | null => {
+  const text = String(value ?? '').trim().replace(',', '.');
+  if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(text)) return null;
+  const parsed = Number(text);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+type LruRead<V> = { hit: true; value: V } | { hit: false };
+const lruRead = <K, V>(cache: Map<K, V>, key: K): LruRead<V> => {
+  if (!cache.has(key)) return { hit: false };
+  const value = cache.get(key)!;
+  cache.delete(key);
+  cache.set(key, value);
+  return { hit: true, value };
+};
+const lruWrite = <K, V>(cache: Map<K, V>, key: K, value: V, limit: number): void => {
+  cache.delete(key);
+  cache.set(key, value);
+  while (cache.size > limit) {
+    const oldest = cache.keys().next().value as K | undefined;
+    if (oldest === undefined) break;
+    cache.delete(oldest);
+  }
+};
 let pageHiddenAt = typeof document !== 'undefined' && document.visibilityState === 'hidden' ? Date.now() : 0;
 let pageResumedAt = 0;
 /** DEV-B703-01: warm re-mount memo — MODULE scope, so it lives with the loaded
@@ -290,7 +325,12 @@ const unionRect = (a: Rect, b: Rect): Rect => {
   return { x, y, w: Math.max(a.x + a.w, b.x + b.w) - x, h: Math.max(a.y + a.h, b.y + b.h) - y };
 };
 
-type MarkupTool = 'draw' | 'merge' | 'split' | 'resize' | 'opening' | 'openwall' | 'closewall' | 'wallthick' | 'delroom';
+type MarkupTool = 'select' | 'draw' | 'partition' | 'column' | 'merge' | 'split' | 'resize' | 'opening' | 'openwall' | 'closewall' | 'wallthick' | 'delroom';
+const MAX_ROOM_DRAFTS = 200;
+const MAX_DRAFT_POINTS = 500;
+const MAX_DRAFT_SEGMENTS = 2000;
+const MAX_PARTITIONS = 2000;
+const MAX_WALL_COLUMNS = 500;
 /** Everything whose topology or wall association changes in the plan editor. */
 interface SpaceGeometryState {
   spaceId: string;
@@ -298,6 +338,9 @@ interface SpaceGeometryState {
   openings?: OpeningCfg[];
   walls?: WallEntry[];
   open_spans?: OpenSpanEntry[];
+  room_drafts?: RoomDraftCfg[];
+  partitions?: PartitionCfg[];
+  wall_columns?: WallColumnCfg[];
   decor?: DecorShape[];
   plan_transform: {
     plan_x?: number; plan_y?: number; plan_scale?: number;
@@ -538,33 +581,104 @@ class HouseplanCard extends LitElement {
   /** Short shared transition for View ↔ editor and editor ↔ editor changes. */
   private _navMotion: '' | 'enter' | 'exit' | 'swap' = '';
   private _navMotionTimer?: number;
+  /** WAAPI owns editor↔editor content and auto-height interpolation. */
+  private _editorSwapAnimations: Animation[] = [];
   /** Last editor kept in the collapsing chrome so leaving it can animate out. */
   private _editorChromeMode: 'plan' | 'devices' | 'decor' = 'plan';
 
   private _startNavMotion(kind: 'enter' | 'exit' | 'swap'): void {
     clearTimeout(this._navMotionTimer);
+    this._navMotionTimer = undefined;
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) {
+      this._cancelEditorSwapAnimations();
       this._navMotion = '';
       return;
     }
     this._navMotion = kind;
     this._navMotionTimer = window.setTimeout(() => {
+      this._navMotionTimer = undefined;
       this._navMotion = '';
       this.requestUpdate();
     }, 190);
+  }
+
+  private _cancelEditorSwapAnimations(): void {
+    for (const animation of this._editorSwapAnimations) animation.cancel();
+    this._editorSwapAnimations = [];
+    (this.renderRoot.querySelector('.editorchrome') as HTMLElement | null)
+      ?.classList.remove('resizing');
+  }
+
+  /** Fade in a newly selected editor and interpolate the toolbar's real
+   * content height. CSS cannot transition height:auto, and the three editors
+   * wrap to different row counts at different card widths. Measuring both
+   * ends keeps the stage/header ResizeObservers following one smooth change. */
+  private _animateEditorSwap(fromHeight: number): void {
+    void this.updateComplete.then(() => {
+      if (!this.isConnected || this._navMotion !== 'swap'
+        || window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) return;
+      const chrome = this.renderRoot.querySelector('.editorchrome') as HTMLElement | null;
+      const inner = chrome?.querySelector('.editorchrome-inner') as HTMLElement | null;
+      if (!chrome || !inner) return;
+      // A rapid second switch may arrive while the previous WAAPI transform is
+      // still scaling this same inner node. Cancel it before measuring the new
+      // natural height; `fromHeight` already captured the presented midpoint.
+      this._cancelEditorSwapAnimations();
+      const toHeight = inner.getBoundingClientRect().height;
+      chrome.classList.add('resizing');
+      const timing: KeyframeAnimationOptions = {
+        duration: 190,
+        easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)',
+      };
+      const animations: Animation[] = [];
+      if (fromHeight > 0 && toHeight > 0 && Math.abs(fromHeight - toHeight) > 0.5) {
+        const height = chrome.animate([
+          { height: `${fromHeight}px` },
+          { height: `${toHeight}px` },
+        ], timing);
+        height.id = 'hp-editor-height-swap';
+        animations.push(height);
+      }
+      const content = inner.animate([
+        { opacity: 0.42, transform: 'translateY(5px) scale(0.995)' },
+        { opacity: 1, transform: 'translateY(0) scale(1)' },
+      ], timing);
+      content.id = 'hp-editor-content-swap';
+      animations.push(content);
+      this._editorSwapAnimations = animations;
+      void Promise.allSettled(animations.map((animation) => animation.finished)).then(() => {
+        if (this._editorSwapAnimations !== animations) return;
+        this._editorSwapAnimations = [];
+        chrome.classList.remove('resizing');
+      });
+    });
   }
 
   /** Change the space with the usual sideways transition. */
   private _slideTo(id: string, dir: 'left' | 'right'): void {
     if (id === this._space) return;
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    if (this._activeDraftId) this._resumeDraftBySpace[this._space] = this._activeDraftId;
     this._space = id;
+    this._path = [];
+    this._cursorPt = null;
+    this._activeDraftId = null;
+    this._draftSegmentCms = [];
+    this._closingWallCm = null;
     this._selId = null;
+    this._physicalSel = null;
+    this._physicalDialog = null;
+    this._physicalDrag = null;
+    if (this._mode === 'plan' && this._tool === 'draw') this._resumeLastDraft();
     this._restoreZoom();
     if (reduce) return;
     this._slide = dir;
     clearTimeout(this._slideTimer);
-    this._slideTimer = window.setTimeout(() => { this._slide = ''; this.requestUpdate(); }, 190);
+    this._slideTimer = window.setTimeout(() => {
+      this._slideTimer = undefined;
+      this._slide = '';
+      this.requestUpdate();
+    }, 190);
     this.requestUpdate();
   }
 
@@ -613,6 +727,47 @@ class HouseplanCard extends LitElement {
    * then primed to DRAW_WALL_DEFAULT_CM. Empty string = no thickness on commit.
    */
   private _drawWallField: string | null = null;
+  /** The saved draft currently continued by the Draw tool. */
+  private _activeDraftId: string | null = null;
+  private _resumeDraftBySpace: Record<string, string> = {};
+  /** One-click/two-click physical-object selection in the Plan editor. */
+  private _physicalSel: {
+    kind: 'partition' | 'column' | 'draft'; id: string; segment?: number;
+  } | null = null;
+  private _physicalDialog: {
+    kind: 'partition' | 'column' | 'draft'; id: string; cm: string;
+    segment?: number; shape?: 'square' | 'circle'; angle?: string; length?: string;
+  } | null = null;
+  /** Drag preview is render-only; config is committed once on pointerup. */
+  private _physicalDrag: {
+    pid: number; kind: 'partition' | 'column'; id: string;
+    start: number[]; startClient: number[]; before: SpaceGeometryState | null; moved: boolean;
+    base: PartitionCfg | WallColumnCfg; delta: number[];
+  } | null = null;
+  private _physicalRotate: {
+    pid: number; id: string; center: number[]; startAngle: number;
+    baseAngle: number; angle: number; before: SpaceGeometryState | null; moved: boolean;
+  } | null = null;
+  private _physicalLastTap: {
+    kind: 'partition' | 'column' | 'draft'; id: string; segment?: number; at: number;
+  } | null = null;
+  private _physicalPickCycle: {
+    signature: string; index: number; x: number; y: number; at: number;
+  } | null = null;
+  private _wallUnionCache: {
+    key: string;
+    value: ReturnType<typeof wallBodiesUnionPath>;
+  } | null = null;
+  private _physicalBodiesCache: {
+    key: string; drafts: number[][][]; partitions: number[][][];
+    columns: number[][][]; all: number[][][];
+  } | null = null;
+  private _cleanFloorCache = new Map<string, {
+    floor: number[][]; geom: any; path: string; area: number;
+  }>();
+  private _glowClipCache = new Map<string, string[] | null>();
+  private _duplicateColumnId: string | null = null;
+  private _duplicateColumnTimer = 0;
   // room resize tool (docs/RESIZE.md): selection and an immutable live preview
   private _rszSel: string | null = null;
   private _rszDrag: {
@@ -921,8 +1076,15 @@ class HouseplanCard extends LitElement {
   private _onHashChange = (): void => {
     const id = this._hashSpace();
     if (id && this._model.find((sp) => sp.id === id) && id !== this._space) {
+      if (this._activeDraftId) this._resumeDraftBySpace[this._space] = this._activeDraftId;
       this._space = id;
       this._selId = null;
+      this._path = [];
+      this._cursorPt = null;
+      this._activeDraftId = null;
+      this._draftSegmentCms = [];
+      this._closingWallCm = null;
+      if (this._mode === 'plan' && this._tool === 'draw') this._resumeLastDraft();
       this._restoreZoom();
       this.requestUpdate();
     }
@@ -953,6 +1115,12 @@ class HouseplanCard extends LitElement {
     _tool: { state: true },
     _wallDialog: { state: true },
     _drawWallField: { state: true },
+    _activeDraftId: { state: true },
+    _physicalSel: { state: true },
+    _physicalDialog: { state: true },
+    _physicalDrag: { state: true },
+    _physicalRotate: { state: true },
+    _duplicateColumnId: { state: true },
     _rszSel: { state: true },
     _rszLive: { state: true },
     _opMeasure: { state: true },
@@ -1049,6 +1217,10 @@ class HouseplanCard extends LitElement {
     }
     if (this._warmLongReturn || now - pageResumedAt <= RESUME_RECENT_MS) this._beginResumeSettle();
     this._warmLongReturn = false;
+    // Transient navigation/resume fields are intentionally not reactive. A
+    // same-element reconnect keeps Lit's previous DOM, so explicitly repaint
+    // after clearing those fields in disconnectedCallback.
+    this.requestUpdate();
   }
 
   public disconnectedCallback(): void {
@@ -1070,6 +1242,14 @@ class HouseplanCard extends LitElement {
     clearTimeout(this._toastTimer);
     clearTimeout(this._slideTimer);
     clearTimeout(this._navMotionTimer);
+    this._cancelEditorSwapAnimations();
+    this._slideTimer = undefined;
+    this._navMotionTimer = undefined;
+    // The timers are the normal owners of these transient classes. Once the
+    // timers are cleared on detach, reset their state too or a same-element
+    // reattach keeps nav-enter overflow clipping / hpnav transitions forever.
+    this._slide = '';
+    this._navMotion = '';
     clearTimeout(this._bootTimer);
     this._bootTimer = undefined; // AUD-1552-01: a cleared id must not block the reconnect watcher
     clearTimeout(this._bootSoftTimer);
@@ -1093,6 +1273,7 @@ class HouseplanCard extends LitElement {
       this._unsubLayout = null;
     }
     clearTimeout(this._layoutSyncTimer);
+    clearTimeout(this._duplicateColumnTimer);
     // DEV-B703-03: the last thing this instance was showing, then the
     // tombstone that lets exactly one successor adopt the open dialog.
     // AUD-159B1-02: the snapshot runs while `_warmRevivePending` is still
@@ -1132,6 +1313,7 @@ class HouseplanCard extends LitElement {
       if (this._settingsDialog) { this._settingsDialog = null; return; }
       if (this._markerDialog) { this._markerDialog = null; return; }
       if (this._openingDialog) { this._openingDialog = null; return; }
+      if (this._physicalDialog) { this._physicalDialog = null; return; }
       if (this._backdropDialog) { this._backdropDialog = null; return; }
       if (this._decorShapeDialog) { this._decorShapeDialog = null; return; }
       if (this._decorTextDialog) { this._decorTextDialog = null; return; }
@@ -1150,10 +1332,13 @@ class HouseplanCard extends LitElement {
     );
     const mod = e.ctrlKey || e.metaKey;
     const key = e.key.toLowerCase();
-    // `key` becomes «я» on a Russian layout. `code` keeps Ctrl/Cmd+Z and
-    // Ctrl/Cmd+Y tied to the expected physical shortcuts in every layout.
-    const isZ = e.code === 'KeyZ' || key === 'z';
-    const isY = e.code === 'KeyY' || key === 'y';
+    // A Latin `key` names the shortcut the user actually pressed (including
+    // QWERTZ/AZERTY). For a non-Latin layout use the physical code fallback,
+    // so Russian «я» at KeyZ still works without making QWERTZ Ctrl+Z both
+    // Undo (`key=z`) and Redo (`code=KeyY`) at the same time.
+    const latinLetter = /^[a-z]$/.test(key);
+    const isZ = key === 'z' || (!latinLetter && e.code === 'KeyZ');
+    const isY = key === 'y' || (!latinLetter && e.code === 'KeyY');
     const redo = mod && ((isZ && e.shiftKey) || isY);
     const undo = mod && isZ && !e.shiftKey;
     if (this._mode === 'decor') {
@@ -1190,6 +1375,11 @@ class HouseplanCard extends LitElement {
     }
     if (!this._markup) return;
     if ((undo || redo) && inField) return; // keep native text-field history
+    if ((e.key === 'Delete' || e.key === 'Backspace') && this._physicalSel && !inField) {
+      e.preventDefault();
+      this._deletePhysicalSelection();
+      return;
+    }
     if (redo) {
       e.preventDefault();
       this._redoGeometry();
@@ -1203,8 +1393,9 @@ class HouseplanCard extends LitElement {
       }
       // Draft points are not committed commands. Walk them back before the
       // shared stack, just like an unfinished word before document Undo.
-      if (this._tool === 'draw' && this._path.length) {
-        this._undoPoint();
+      if ((this._tool === 'draw' || this._tool === 'partition') && this._path.length) {
+        if (this._activeDraftId && this._path.length > 1) this._undoGeometry();
+        else this._undoPoint();
         return;
       }
       if (this._tool === 'split' && this._splitSel?.pts?.length) {
@@ -1216,6 +1407,11 @@ class HouseplanCard extends LitElement {
       return;
     }
     if (e.key !== 'Escape') return;
+    if (this._physicalDrag || this._physicalRotate) {
+      e.preventDefault();
+      this._cancelPhysicalGesture();
+      return;
+    }
     if (this._roomDialog) {
       e.preventDefault();
       this._roomDialogCancel();
@@ -1224,6 +1420,16 @@ class HouseplanCard extends LitElement {
     if (this._tool === 'draw' && this._path.length) {
       e.preventDefault();
       this._undoPoint();
+      return;
+    }
+    if (this._tool === 'partition' && this._path.length) {
+      e.preventDefault();
+      this._undoPoint();
+      return;
+    }
+    if (this._physicalSel) {
+      e.preventDefault();
+      this._physicalSel = null;
       return;
     }
     if (this._tool === 'resize') {
@@ -1268,15 +1474,44 @@ class HouseplanCard extends LitElement {
       else this._tool = 'draw';
       return;
     }
-    if (this._tool === 'opening' || this._tool === 'wallthick' || this._tool === 'delroom') {
+    if (this._tool === 'opening' || this._tool === 'wallthick' || this._tool === 'delroom'
+        || this._tool === 'partition' || this._tool === 'column') {
       e.preventDefault();
       this._tool = 'draw';
     }
   }
 
-  /** Remove the last placed point. An unfinished outline is never persisted. */
+  /** Remove the last placed point; saved drafts stay structurally valid. */
   private _undoPoint(): void {
     if (!this._path.length) return;
+    if (this._contourClosed) {
+      this._path = this._path.slice(0, -1);
+      this._closingWallCm = null;
+      return;
+    }
+    if (this._activeDraftId && this._path.length > 1 && this._curSpaceCfg) {
+      const before = this._geometrySnapshot();
+      this._path = this._path.slice(0, -1);
+      this._draftSegmentCms = this._draftSegmentCms.slice(0, -1);
+      const sp = this._curSpaceCfg as any;
+      const i = (sp.room_drafts || []).findIndex((d: any) => d.id === this._activeDraftId);
+      if (i >= 0) {
+        if (this._path.length < 2) {
+          sp.room_drafts.splice(i, 1);
+          if (!sp.room_drafts.length) delete sp.room_drafts;
+          this._activeDraftId = null;
+        } else {
+          sp.room_drafts[i] = {
+            id: this._activeDraftId,
+            points: this._path.map((p) => [p[0] / NORM_W, p[1] / NORM_W]),
+            segments: this._draftSegmentCms.map((cm) => ({ cm })),
+          };
+        }
+        this._recordGeometry(this._t('history.draft_segment_delete'), before);
+        this._saveConfig();
+      }
+      return;
+    }
     this._path = this._path.slice(0, -1);
   }
 
@@ -1886,6 +2121,10 @@ class HouseplanCard extends LitElement {
   }
 
   protected willUpdate(changed: PropertyValues): void {
+    // `_serverCfg` is the root of every geometry cache. Keep the epoch
+    // invariant local to that reactive assignment so imports, reconnects and
+    // demo harnesses cannot accidentally reuse an older config object's data.
+    if (changed.has('_serverCfg')) this._cfgEpoch++;
     this._skyPlan();
     if (changed.has('hass') && this.hass) {
       this._hookConnection();
@@ -1927,7 +2166,10 @@ class HouseplanCard extends LitElement {
         const own = stage.getBoundingClientRect().top - card.getBoundingClientRect().top;
         const above = Math.min(Math.max(card.getBoundingClientRect().top, 0), 120);
         const t = Math.round(own + above);
-        if (t >= 0 && Math.abs(t - this._hdrH) > 1) this._hdrH = t;
+        // `t` is already an integer. Ignoring a one-pixel delta left the View
+        // stage one pixel shorter after an editor collapse and made the fitted
+        // viewport drift; changing stage height cannot feed back into its top.
+        if (t >= 0 && t !== this._hdrH) this._hdrH = t;
         // DEV-B703-01: chrome that lands after the settle (or a window
         // resize with a live card) must not poison the next warm mount —
         // the memo follows the live settled geometry.
@@ -1987,6 +2229,7 @@ class HouseplanCard extends LitElement {
       // A server reload is a new history baseline. Replaying snapshots made
       // against an older revision would overwrite somebody else's geometry.
       this._geometryHistory.clear();
+      if (this._serverCfg) this._clearGeometryGesture();
       this._serverCfg = cfg && Array.isArray(cfg.spaces) ? cfg : null;
       this._cfgEpoch++;
       this._cfgRev = cfgResp?.rev || 0;
@@ -2101,6 +2344,7 @@ class HouseplanCard extends LitElement {
       const resp = await this.hass.callWS({ type: 'houseplan/config/get' });
       const cfg = resp?.config;
       this._geometryHistory.clear();
+      this._clearGeometryGesture();
       this._serverCfg = cfg && Array.isArray(cfg.spaces) ? cfg : null;
       this._cfgEpoch++;
       this._cfgRev = resp?.rev || 0;
@@ -2753,6 +2997,13 @@ class HouseplanCard extends LitElement {
         const it = itemOf(pts);
         if (it) extra.push(it);
       }
+      // Independent physical geometry participates in content bounds even
+      // outside room paper. Each body is one bounded object, never a vote made
+      // only by its centre point.
+      for (const body of this._physicalBodiesR(m)) {
+        const it = itemOf(body);
+        if (it) extra.push(it);
+      }
     }
     return contentItems(m, extra);
   }
@@ -2837,6 +3088,8 @@ class HouseplanCard extends LitElement {
    *  that way" arrow share it. It fits whatever the frame currently means:
    *  the main mass, or everything once the far-objects hint has been used. */
   private _fitAll(): void {
+    this._showFar = true;
+    this._frame = null;
     this._resetZoom();
   }
 
@@ -3213,6 +3466,14 @@ class HouseplanCard extends LitElement {
   }
 
   private _stagePointerMove(ev: PointerEvent): void {
+    if (this._physicalRotate?.pid === ev.pointerId) {
+      this._physicalRotateMove(ev);
+      return;
+    }
+    if (this._physicalDrag?.pid === ev.pointerId) {
+      this._physicalMove(ev);
+      return;
+    }
     if (this._dtDrag?.pid === ev.pointerId) {
       this._dtMove(ev);
       return;
@@ -3328,6 +3589,14 @@ class HouseplanCard extends LitElement {
           this._showKioskDots();
         }
       }
+    }
+    if (this._physicalDrag?.pid === ev.pointerId) {
+      this._physicalUp(ev);
+      return;
+    }
+    if (this._physicalRotate?.pid === ev.pointerId) {
+      this._physicalRotateUp(ev);
+      return;
     }
     if (this._dtDrag?.pid === ev.pointerId) {
       this._dtUp();
@@ -3543,6 +3812,12 @@ class HouseplanCard extends LitElement {
       return;
     }
     const previousMode = this._mode;
+    const editorSwap = previousMode !== 'view' && mode !== 'view';
+    const editorFromHeight = editorSwap
+      ? (this.renderRoot.querySelector('.editorchrome-inner') as HTMLElement | null)
+        ?.getBoundingClientRect().height || 0
+      : 0;
+    if (!editorSwap) this._cancelEditorSwapAnimations();
     // A live decor transform is a transaction. Switching tabs must cancel and
     // restore it, not merely forget its pointer record after the config has
     // already been mutated by move/resize.
@@ -3559,9 +3834,12 @@ class HouseplanCard extends LitElement {
         cy: v ? v.y + v.h / 2 : undefined,
       };
     }
+    if (previousMode === 'plan' && this._activeDraftId)
+      this._resumeDraftBySpace[this._space] = this._activeDraftId;
     this._mode = mode;
     this._editorChromeMode = mode === 'view' ? previousMode as 'plan' | 'devices' | 'decor' : mode;
     this._startNavMotion(previousMode === 'view' ? 'enter' : mode === 'view' ? 'exit' : 'swap');
+    if (editorSwap) this._animateEditorSwap(editorFromHeight);
     if (baseChanges) {
       // refit against the new base: the editors measure from the full square,
       // the view from the content frame — a view clamped to one is nonsense
@@ -3603,6 +3881,9 @@ class HouseplanCard extends LitElement {
     this._splitSel = null;
     this._pendingSplit = null;
     this._selId = null;
+    this._physicalSel = null;
+    this._physicalDialog = null;
+    this._physicalDrag = null;
     this._rszSel = null;
     this._rszDrag = null;
     this._rszLive = null;
@@ -3619,7 +3900,10 @@ class HouseplanCard extends LitElement {
     this._bdDrag = null;
     this._dtDrag = null;
     this._dtBox = null;
-    if (mode === 'plan') this._primeDrawWallField();
+    if (mode === 'plan') {
+      this._primeDrawWallField();
+      this._resumeLastDraft();
+    }
     this._saveNav();
   }
 
@@ -3638,7 +3922,40 @@ class HouseplanCard extends LitElement {
   }
 
   private get _drawWallCm(): number | null {
-    return fieldToCm(this._drawWallFieldValue, this._imperial);
+    const raw = strictNumber(this._drawWallFieldValue);
+    if (raw == null || raw <= 0) return null;
+    const cm = this._imperial ? raw * 2.54 : raw;
+    const max = this._tool === 'column' ? COLUMN_MAX_CM : 100;
+    return cm >= 1 && cm <= max ? cm : null;
+  }
+
+  private get _drawWallMaxCm(): number {
+    return this._tool === 'column' ? COLUMN_MAX_CM : 100;
+  }
+
+  private _showPhysicalRange(max = this._drawWallMaxCm): void {
+    this._showToast(this._t('toast.physical_range', {
+      max: cmToField(max, this._imperial),
+      unit: this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm'),
+    }));
+  }
+
+  private _draftSegmentCount(sp = this._curSpaceCfg as any): number {
+    return (sp?.room_drafts || []).reduce(
+      (sum: number, d: any) => sum + (Array.isArray(d.segments) ? d.segments.length : 0), 0,
+    );
+  }
+
+  private _limitReached(kind: 'draft' | 'partition' | 'column'): boolean {
+    const sp = this._curSpaceCfg as any;
+    if (!sp) return true;
+    const reached = kind === 'draft'
+      ? (sp.room_drafts || []).length >= MAX_ROOM_DRAFTS
+      : kind === 'partition'
+        ? (sp.partitions || []).length >= MAX_PARTITIONS
+        : (sp.wall_columns || []).length >= MAX_WALL_COLUMNS;
+    if (reached) this._showToast(this._t('toast.physical_limit'));
+    return reached;
   }
 
 
@@ -3659,13 +3976,23 @@ class HouseplanCard extends LitElement {
     return [clampCanvasR(snapToGrid(p[0], g)), clampCanvasR(snapToGrid(p[1], g))];
   }
 
+  /** Grid snap for the free end of the wall currently being drawn. */
+  private _snapDrawPoint(p: number[], lock45 = false): number[] {
+    const anchor = this._path[this._path.length - 1];
+    const candidate = lock45 && anchor
+      ? snapSegment45(anchor, p, this._gridPitch, SANE_LIMIT)
+      : p;
+    return this._snap(candidate);
+  }
+
   private _samePt(a: number[], b: number[]): boolean {
     return samePoint(a, b);
   }
 
   /**
-   * Walls are derived from rooms, so the legacy per-space `segments` array is dead
-   * weight: drop it on every save. Configs written before v1.19.0 shed it on first write.
+   * Room-boundary walls are derived from rooms, so the legacy per-space
+   * `segments` array is dead weight. Independent walls live in the typed
+   * `partitions` collection and must never be confused with that legacy field.
    */
   private _dropLegacySegments(): void {
     // «Ripple only» was removed from the UI: keep old configs readable, then
@@ -3675,6 +4002,51 @@ class HouseplanCard extends LitElement {
     }
     for (const sp of this._serverCfg?.spaces || []) {
       delete (sp as any).segments;
+      const physicalIds = new Set<string>();
+      const validId = (id: any): id is string => typeof id === 'string'
+        && id.length >= 1 && id.length <= 64 && !physicalIds.has(id);
+      const keepId = (id: string): boolean => { physicalIds.add(id); return true; };
+      const point = (p: any): p is number[] => Array.isArray(p) && p.length === 2
+        && p.every((v: any) => Number.isFinite(Number(v)) && Math.abs(Number(v)) <= CANVAS_LIMIT);
+      if (Array.isArray((sp as any).partitions)) {
+        (sp as any).partitions = (sp as any).partitions.filter((p: any) =>
+          p && validId(p.id) && point(p.a) && point(p.b)
+          && Math.hypot(p.a[0] - p.b[0], p.a[1] - p.b[1]) > 1e-9
+          && keepId(p.id))
+          .map((p: any) => ({ ...p, cm: Math.max(1, Math.min(100, Number(p.cm) || 15)) }));
+        if (!(sp as any).partitions.length) delete (sp as any).partitions;
+      }
+      if (Array.isArray((sp as any).wall_columns)) {
+        (sp as any).wall_columns = (sp as any).wall_columns.filter((c: any) =>
+          c && validId(c.id) && point(c.center) && keepId(c.id))
+          .map((c: any) => ({
+            id: c.id, shape: c.shape === 'circle' ? 'circle' : 'square',
+            center: [Number(c.center[0]), Number(c.center[1])],
+            cm: clampColumnCm(Number(c.cm) || 15),
+            ...(c.shape === 'circle' ? {} : { angle: canonicalColumnAngle(c.angle) }),
+          }));
+        if (!(sp as any).wall_columns.length) delete (sp as any).wall_columns;
+      }
+      if (Array.isArray((sp as any).room_drafts)) {
+        (sp as any).room_drafts = (sp as any).room_drafts.filter((d: any) =>
+          d && validId(d.id) && Array.isArray(d.points)
+          && d.points.length >= 2 && d.points.every(point) && keepId(d.id))
+          .map((d: any) => {
+            const points: number[][] = [[Number(d.points[0][0]), Number(d.points[0][1])]];
+            const segments: Array<{ cm: number }> = [];
+            for (let i = 1; i < d.points.length; i++) {
+              const next = [Number(d.points[i][0]), Number(d.points[i][1])];
+              if (this._samePt(points[points.length - 1], next)) continue;
+              points.push(next);
+              segments.push({
+                cm: Math.max(1, Math.min(100, Number(d.segments?.[i - 1]?.cm) || 15)),
+              });
+            }
+            return { id: d.id, points, segments };
+          })
+          .filter((d: any) => d.points.length >= 2);
+        if (!(sp as any).room_drafts.length) delete (sp as any).room_drafts;
+      }
       if (Array.isArray(sp.walls)) {
         const cuts = sanitizeOpenSpans((sp as any).open_spans)
           .map((e) => [e.a[0], e.a[1], e.b[0], e.b[1]]);
@@ -3751,6 +4123,15 @@ class HouseplanCard extends LitElement {
       ...(Array.isArray((sp as any).open_spans)
         ? { open_spans: copy((sp as any).open_spans) }
         : {}),
+      ...(Array.isArray((sp as any).room_drafts)
+        ? { room_drafts: copy((sp as any).room_drafts) }
+        : {}),
+      ...(Array.isArray((sp as any).partitions)
+        ? { partitions: copy((sp as any).partitions) }
+        : {}),
+      ...(Array.isArray((sp as any).wall_columns)
+        ? { wall_columns: copy((sp as any).wall_columns) }
+        : {}),
       ...(Array.isArray(sp.decor) ? { decor: copy(sp.decor) } : {}),
       plan_transform,
     };
@@ -3775,6 +4156,13 @@ class HouseplanCard extends LitElement {
     this._pendingSplit = null;
     this._openWallAnchor = null;
     this._wallDialog = null;
+    this._physicalDialog = null;
+    this._physicalSel = null;
+    this._physicalDrag = null;
+    this._physicalRotate = null;
+    this._activeDraftId = null;
+    this._draftSegmentCms = [];
+    this._closingWallCm = null;
     this._openingDialog = null;
     this._rszSel = null;
     this._rszDrag = null;
@@ -3790,6 +4178,10 @@ class HouseplanCard extends LitElement {
   private _stagePointerCancel(ev: PointerEvent): void {
     clearTimeout(this._kioskHoldTimer);
     if (this._swipeStart?.id === ev.pointerId) this._swipeStart = null;
+    if (this._physicalDrag?.pid === ev.pointerId || this._physicalRotate?.pid === ev.pointerId) {
+      this._cancelPhysicalGesture();
+      return;
+    }
     if (this._decorDraft?.pid === ev.pointerId) {
       this._decorDraft = null;
       this.requestUpdate();
@@ -3819,6 +4211,12 @@ class HouseplanCard extends LitElement {
     else delete sp.walls;
     if (state.open_spans !== undefined) (sp as any).open_spans = copy(state.open_spans);
     else delete (sp as any).open_spans;
+    if (state.room_drafts !== undefined) (sp as any).room_drafts = copy(state.room_drafts);
+    else delete (sp as any).room_drafts;
+    if (state.partitions !== undefined) (sp as any).partitions = copy(state.partitions);
+    else delete (sp as any).partitions;
+    if (state.wall_columns !== undefined) (sp as any).wall_columns = copy(state.wall_columns);
+    else delete (sp as any).wall_columns;
     if (state.decor !== undefined) sp.decor = copy(state.decor);
     else delete sp.decor;
     for (const key of ['plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle'] as const)
@@ -3840,6 +4238,10 @@ class HouseplanCard extends LitElement {
   }
 
   private _undoGeometry = (): void => {
+    if (this._physicalDrag || this._physicalRotate) {
+      this._cancelPhysicalGesture();
+      return;
+    }
     if (this._decorDraft) { this._decorDraft = null; this.requestUpdate(); return; }
     if (this._decorMove || this._dtDrag || this._bdDrag) {
       this._cancelDecorGesture();
@@ -3858,6 +4260,10 @@ class HouseplanCard extends LitElement {
   private _redoGeometry = (): void => {
     // Redo and Undo share the same transaction boundary. The first invocation
     // cancels an in-progress transform; only the next one navigates history.
+    if (this._physicalDrag || this._physicalRotate) {
+      this._cancelPhysicalGesture();
+      return;
+    }
     if (this._decorDraft) { this._decorDraft = null; this.requestUpdate(); return; }
     if (this._decorMove || this._dtDrag || this._bdDrag) {
       this._cancelDecorGesture();
@@ -3943,6 +4349,8 @@ class HouseplanCard extends LitElement {
       if (showMinimumError) this._showToast(this._t('toast.contour_min_edges'));
       return;
     }
+    const closingCm = this._drawWallCm;
+    if (closingCm == null) { this._showPhysicalRange(100); return; }
     if (this._contourSelfIntersects(this._path) || polygonArea(this._path) <= 1e-6) {
       this._showToast(this._t('toast.contour_cannot_close'));
       return; // keep the draft editable
@@ -3954,6 +4362,7 @@ class HouseplanCard extends LitElement {
       return;
     }
     this._path = [...this._path, [...this._path[0]]];
+    this._closingWallCm = closingCm;
     this._cursorPt = null;
     this._nameSel = '';
     this._areaSel = '';
@@ -3973,7 +4382,12 @@ class HouseplanCard extends LitElement {
     if (this._drag || this._rlResize) return;
     const path = (ev.composedPath?.() || []) as any[];
     if (path.some((n) => n?.classList?.contains?.('roomlabel') || n?.classList?.contains?.('rlhandle'))) return;
+    if (path.some((n) => n?.classList?.contains?.('physical-hit'))) return;
     const raw = this._svgPoint(ev);
+    if (this._tool === 'select') {
+      this._physicalSel = null;
+      return;
+    }
     if (this._tool === 'resize') {
       // a click picks the room for the scale frame; handle drags never get here
       if (this._rszDrag || path.some((n) => n?.classList?.contains?.('rszhandle'))) return;
@@ -4009,9 +4423,17 @@ class HouseplanCard extends LitElement {
       this._splitClick(raw);
       return;
     }
+    if (this._tool === 'partition') {
+      this._partitionClick(raw, ev.shiftKey);
+      return;
+    }
+    if (this._tool === 'column') {
+      this._columnClick(raw);
+      return;
+    }
     // draw: clicks on grid points build the outline. Nothing is written to the config
     // until the contour closes — an abandoned outline leaves no lines behind.
-    const pt = this._snap(raw);
+    const pt = this._snapDrawPoint(raw, ev.shiftKey);
     if (ev.ctrlKey || ev.metaKey) {
       ev.preventDefault();
       this._closeRoomContour(true);
@@ -4023,16 +4445,570 @@ class HouseplanCard extends LitElement {
     // overlaps are still rejected, but only at closing time, when the whole
     // outline is known (roomsOverlap treats full nesting as legal).
     if (!this._path.length) {
+      // After reload a saved open contour is resumed explicitly by clicking
+      // either free end. Mid-segment branching is deliberately unsupported.
+      const endHit = this._draftEndAt(pt);
+      if (endHit) {
+        this._activeDraftId = endHit.draft.id;
+        this._resumeDraftBySpace[this._space] = endHit.draft.id;
+        this._path = endHit.reverse
+          ? [...endHit.draft.points].reverse().map((p) => [...p])
+          : endHit.draft.points.map((p) => [...p]);
+        this._draftSegmentCms = endHit.reverse
+          ? [...endHit.draft.segments].reverse().map((s) => s.cm)
+          : endHit.draft.segments.map((s) => s.cm);
+        return;
+      }
+      this._activeDraftId = null;
+      this._draftSegmentCms = [];
       this._path = [pt];
       return;
     }
     const last = this._path[this._path.length - 1];
     if (this._samePt(pt, last)) return; // repeated click on the same point
+    // A saved outline may be continued into another saved outline, but only
+    // endpoint-to-endpoint. The two records become one atomic history step;
+    // mid-segment branching remains deliberately unsupported.
     if (closing) {
       this._closeRoomContour();
       return;
     }
+    const join = this._draftEndAt(pt, this._activeDraftId || undefined);
+    if (join) {
+      this._mergeDraftEndpoint(join);
+      return;
+    }
+    if (this._drawWallCm == null) { this._showPhysicalRange(100); return; }
+    if (this._path.length >= MAX_DRAFT_POINTS) {
+      this._showToast(this._t('toast.physical_limit'));
+      return;
+    }
+    const spCfg = this._curSpaceCfg as any;
+    const newDraft = !this._activeDraftId;
+    if ((newDraft && (spCfg?.room_drafts || []).length >= MAX_ROOM_DRAFTS)
+        || this._draftSegmentCount(spCfg) >= MAX_DRAFT_SEGMENTS) {
+      this._showToast(this._t('toast.physical_limit'));
+      return;
+    }
     this._path = [...this._path, pt];
+    this._persistActiveDraftSegment();
+  }
+
+  private _draftSegmentCms: number[] = [];
+  private _closingWallCm: number | null = null;
+
+  private _draftEndAt(
+    pt: number[], excludeId?: string,
+  ): { draft: RoomDraftCfg; reverse: boolean } | null {
+    const view = this._viewOr(this._baseVb());
+    const eps = Math.max(this._gridPitch * 0.15,
+      this._stageEl?.clientWidth ? (view.w / this._stageEl.clientWidth) * 12 : 0);
+    for (const draft of this._spaceModel().room_drafts || []) {
+      if (draft.id === excludeId) continue;
+      if (draft.points.length < 2) continue;
+      const first = draft.points[0], last = draft.points[draft.points.length - 1];
+      if (Math.hypot(pt[0] - last[0], pt[1] - last[1]) <= eps) return { draft, reverse: false };
+      if (Math.hypot(pt[0] - first[0], pt[1] - first[1]) <= eps) return { draft, reverse: true };
+    }
+    return null;
+  }
+
+  private _mergeDraftEndpoint(
+    hit: { draft: RoomDraftCfg; reverse: boolean },
+  ): void {
+    const sp = this._curSpaceCfg as any;
+    if (!sp || !this._path.length) return;
+    const drafts = Array.isArray(sp.room_drafts) ? sp.room_drafts : [];
+    const activeRaw = this._activeDraftId
+      ? drafts.find((d: any) => d.id === this._activeDraftId) : null;
+    const otherRaw = drafts.find((d: any) => d.id === hit.draft.id);
+    if (!otherRaw) return;
+
+    // `_draftEndAt.reverse` describes how to resume WITH the clicked end at
+    // the tail. A merge needs that end at the head, hence the opposite order.
+    const otherPoints = hit.reverse
+      ? hit.draft.points.map((p) => [...p])
+      : [...hit.draft.points].reverse().map((p) => [...p]);
+    const otherSegments = hit.reverse
+      ? (otherRaw.segments || []).map((s: any) => ({ ...s }))
+      : [...(otherRaw.segments || [])].reverse().map((s: any) => ({ ...s }));
+    const last = this._path[this._path.length - 1];
+    const touching = this._samePt(last, otherPoints[0]);
+    const connectorCm = touching ? null : this._drawWallCm;
+    if (!touching && connectorCm == null) { this._showPhysicalRange(100); return; }
+
+    const activeSegments = this._draftSegmentCms.map((cm, i) => ({
+      ...(activeRaw?.segments?.[i] || {}), cm,
+    }));
+    const mergedPoints = [
+      ...this._path.map((p) => [...p]),
+      ...(touching ? otherPoints.slice(1) : otherPoints),
+    ];
+    const mergedSegments = [
+      ...activeSegments,
+      ...(connectorCm == null ? [] : [{ cm: connectorCm }]),
+      ...otherSegments,
+    ];
+    const closed = mergedPoints.length >= 4
+      && this._samePt(mergedPoints[0], mergedPoints[mergedPoints.length - 1]);
+    const persistedPoints = closed ? mergedPoints.slice(0, -1) : mergedPoints;
+    const persistedSegments = closed ? mergedSegments.slice(0, -1) : mergedSegments;
+    if (persistedPoints.length > MAX_DRAFT_POINTS) {
+      this._showToast(this._t('toast.physical_limit'));
+      return;
+    }
+    const oldSegments = (activeRaw?.segments?.length || 0) + (otherRaw.segments?.length || 0);
+    if (this._draftSegmentCount(sp) - oldSegments + persistedSegments.length > MAX_DRAFT_SEGMENTS) {
+      this._showToast(this._t('toast.physical_limit'));
+      return;
+    }
+    if (closed) {
+      if (this._contourSelfIntersects(persistedPoints) || polygonArea(persistedPoints) <= 1e-6) {
+        this._showToast(this._t('toast.contour_cannot_close'));
+        return;
+      }
+      const clash = this._overlapRoom(persistedPoints);
+      if (clash) {
+        this._showToast(this._t('toast.room_overlap', { name: clash.name || '' }));
+        return;
+      }
+    }
+
+    const before = this._geometrySnapshot();
+    const id = this._activeDraftId || hit.draft.id;
+    const base = activeRaw || otherRaw;
+    const saved = {
+      ...base, id,
+      points: persistedPoints.map((p) => [p[0] / NORM_W, p[1] / NORM_W]),
+      segments: persistedSegments,
+    };
+    sp.room_drafts = drafts.filter((d: any) => d.id !== hit.draft.id
+      && (!this._activeDraftId || d.id !== this._activeDraftId));
+    sp.room_drafts.push(saved);
+    this._activeDraftId = id;
+    this._resumeDraftBySpace[this._space] = id;
+    this._draftSegmentCms = persistedSegments.map((s: any) => Number(s.cm));
+    this._path = persistedPoints;
+    this._physicalSel = null;
+    this._recordGeometry(this._t('history.draft_merge'), before);
+    this._saveConfig();
+
+    if (closed) {
+      this._closingWallCm = Number(mergedSegments[mergedSegments.length - 1]?.cm)
+        || DRAW_WALL_DEFAULT_CM;
+      this._path = [...persistedPoints, [...persistedPoints[0]]];
+      this._cursorPt = null;
+      this._nameSel = '';
+      this._areaSel = '';
+      this._resetRoomDialogFields();
+      this._roomDialog = true;
+    }
+  }
+
+  /** Persist every completed draft segment immediately. */
+  private _persistActiveDraftSegment(): void {
+    if (this._path.length < 2 || !this._curSpaceCfg) return;
+    const cm = this._drawWallCm;
+    if (cm == null) return;
+    this._draftSegmentCms = [...this._draftSegmentCms, cm];
+    const before = this._geometrySnapshot();
+    const sp = this._curSpaceCfg as any;
+    sp.room_drafts ||= [];
+    if (!this._activeDraftId) this._activeDraftId = 'draft-' + Date.now().toString(36);
+    this._resumeDraftBySpace[this._space] = this._activeDraftId;
+    const i = sp.room_drafts.findIndex((d: any) => d.id === this._activeDraftId);
+    const saved = {
+      ...(i >= 0 ? sp.room_drafts[i] : {}),
+      id: this._activeDraftId,
+      points: this._path.map((p) => [p[0] / NORM_W, p[1] / NORM_W]),
+      segments: this._draftSegmentCms.map((v, j) => ({
+        ...(i >= 0 ? sp.room_drafts[i]?.segments?.[j] : {}), cm: v,
+      })),
+    };
+    if (i >= 0) sp.room_drafts[i] = saved;
+    else sp.room_drafts.push(saved);
+    this._recordGeometry(this._t('history.draft_segment'), before);
+    this._saveConfig();
+  }
+
+  private _partitionClick(raw: number[], lock45: boolean): void {
+    const pt = this._snapDrawPoint(raw, lock45);
+    if (!this._path.length) { this._path = [pt]; return; }
+    const a = this._path[0];
+    if (this._samePt(a, pt)) return;
+    const cm = this._drawWallCm;
+    if (cm == null) { this._showPhysicalRange(100); return; }
+    if (!this._curSpaceCfg || this._limitReached('partition')) return;
+    const before = this._geometrySnapshot();
+    const sp = this._curSpaceCfg as any;
+    sp.partitions ||= [];
+    const id = 'partition-' + Date.now().toString(36);
+    sp.partitions.push({ id, a: [a[0] / NORM_W, a[1] / NORM_W],
+      b: [pt[0] / NORM_W, pt[1] / NORM_W], cm });
+    this._path = [];
+    this._activeDraftId = null;
+    this._draftSegmentCms = [];
+    this._closingWallCm = null;
+    this._cursorPt = null;
+    this._recordGeometry(this._t('history.partition_add'), before);
+    this._saveConfig();
+  }
+
+  private _columnClick(raw: number[]): void {
+    const center = this._snap(raw);
+    const cm = this._drawWallCm;
+    if (cm == null) { this._showPhysicalRange(COLUMN_MAX_CM); return; }
+    if (!this._curSpaceCfg || this._limitReached('column')) return;
+    const candidate: WallColumnCfg = {
+      id: 'column-' + Date.now().toString(36), shape: 'square', center, cm: clampColumnCm(cm), angle: 0,
+    };
+    const duplicate = (this._spaceModel().wall_columns || []).find((c) =>
+      sameColumnPlacement(c, candidate, this._gridPitch * 0.02));
+    if (duplicate) {
+      clearTimeout(this._duplicateColumnTimer);
+      this._duplicateColumnId = duplicate.id;
+      this._duplicateColumnTimer = window.setTimeout(() => {
+        this._duplicateColumnId = null;
+      }, 900);
+      this._showToast(this._t('toast.column_duplicate'));
+      return;
+    }
+    const before = this._geometrySnapshot();
+    const sp = this._curSpaceCfg as any;
+    sp.wall_columns ||= [];
+    sp.wall_columns.push({ ...candidate, center: [center[0] / NORM_W, center[1] / NORM_W] });
+    this._recordGeometry(this._t('history.column_add'), before);
+    this._saveConfig();
+  }
+
+  private _openPhysicalDialog(
+    kind: 'partition' | 'column' | 'draft', id: string, segment?: number,
+  ): void {
+    const model = this._spaceModel();
+    if (kind === 'partition') {
+      const p = model.partitions.find((x) => x.id === id);
+      if (p) this._physicalDialog = {
+        kind, id, cm: cmToField(p.cm, this._imperial), length: this._fmtLen(p.a, p.b),
+      };
+    } else if (kind === 'column') {
+      const c = model.wall_columns.find((x) => x.id === id);
+      if (c) this._physicalDialog = {
+        kind, id, cm: cmToField(c.cm, this._imperial), shape: c.shape,
+        angle: String(c.shape === 'square' ? canonicalColumnAngle(c.angle) : 0),
+      };
+    } else {
+      const d = model.room_drafts.find((x) => x.id === id);
+      const i = Math.max(0, Math.min(d?.segments.length ? d.segments.length - 1 : 0, segment || 0));
+      if (d?.segments[i]) this._physicalDialog = {
+        kind, id, segment: i, cm: cmToField(d.segments[i].cm, this._imperial),
+        length: this._fmtLen(d.points[i], d.points[i + 1]),
+      };
+    }
+  }
+
+  private _savePhysicalDialog = (): void => {
+    const d = this._physicalDialog;
+    const sp = this._curSpaceCfg as any;
+    if (!d || !sp) return;
+    const raw = strictNumber(d.cm);
+    if (raw == null) {
+      this._showPhysicalRange(d.kind === 'column' ? COLUMN_MAX_CM : 100);
+      return;
+    }
+    const cmRaw = this._imperial ? raw * 2.54 : raw;
+    const max = d.kind === 'column' ? COLUMN_MAX_CM : 100;
+    if (!Number.isFinite(cmRaw) || cmRaw < 1 || cmRaw > max) {
+      this._showPhysicalRange(max);
+      return;
+    }
+    if (d.kind === 'column') {
+      const current = this._spaceModel().wall_columns.find((x) => x.id === d.id);
+      if (!current) return;
+      const rawAngle = strictNumber(d.angle || '0');
+      if (d.shape !== 'circle'
+          && (rawAngle == null || rawAngle < 0 || rawAngle >= 90)) {
+        this._showToast(this._t('toast.physical_angle'));
+        return;
+      }
+      const candidate: WallColumnCfg = d.shape === 'circle'
+        ? { id: d.id, shape: 'circle', center: current.center, cm: cmRaw }
+        : { id: d.id, shape: 'square', center: current.center, cm: cmRaw,
+            angle: rawAngle! };
+      if (this._spaceModel().wall_columns.some((c) => c.id !== d.id
+          && sameColumnPlacement(c, candidate, this._gridPitch * 0.02))) {
+        this._showToast(this._t('toast.column_duplicate'));
+        return;
+      }
+    }
+    const before = this._geometrySnapshot();
+    if (d.kind === 'partition') {
+      const p = (sp.partitions || []).find((x: any) => x.id === d.id);
+      if (p) p.cm = cmRaw;
+    } else if (d.kind === 'column') {
+      const c = (sp.wall_columns || []).find((x: any) => x.id === d.id);
+      if (c) {
+        c.cm = clampColumnCm(cmRaw);
+        c.shape = d.shape === 'circle' ? 'circle' : 'square';
+        if (c.shape === 'square') c.angle = strictNumber(d.angle || '0')!;
+        else delete c.angle;
+      }
+    } else {
+      const draft = (sp.room_drafts || []).find((x: any) => x.id === d.id);
+      if (draft?.segments?.[d.segment || 0]) draft.segments[d.segment || 0].cm = cmRaw;
+    }
+    this._recordGeometry(this._t('history.physical_edit'), before);
+    this._physicalDialog = null;
+    this._saveConfig();
+  };
+
+  private _deletePhysicalSelection = (): void => {
+    const sel = this._physicalSel;
+    const sp = this._curSpaceCfg as any;
+    if (!sel || !sp) return;
+    if (sel.kind === 'draft') { this._deleteDraftWhole(); return; }
+    const before = this._geometrySnapshot();
+    const key = sel.kind === 'partition' ? 'partitions'
+      : sel.kind === 'column' ? 'wall_columns' : 'room_drafts';
+    sp[key] = (sp[key] || []).filter((x: any) => x.id !== sel.id);
+    if (!sp[key].length) delete sp[key];
+    if (this._activeDraftId === sel.id) this._cancelPath();
+    this._physicalSel = null;
+    this._physicalDialog = null;
+    this._recordGeometry(this._t('history.physical_delete'), before);
+    this._saveConfig();
+  };
+
+  private _deleteDraftWhole = (): void => {
+    const id = this._physicalDialog?.kind === 'draft'
+      ? this._physicalDialog.id
+      : this._physicalSel?.kind === 'draft' ? this._physicalSel.id : null;
+    const sp = this._curSpaceCfg as any;
+    if (!id || !sp || !confirm(this._t('confirm.delete_draft'))) return;
+    const before = this._geometrySnapshot();
+    sp.room_drafts = (sp.room_drafts || []).filter((x: any) => x.id !== id);
+    if (!sp.room_drafts.length) delete sp.room_drafts;
+    if (this._activeDraftId === id) this._cancelPath();
+    this._physicalSel = null;
+    this._physicalDialog = null;
+    this._recordGeometry(this._t('history.physical_delete'), before);
+    this._saveConfig();
+  };
+
+  private _deleteDraftSegment = (): void => {
+    const dlg = this._physicalDialog;
+    const sp = this._curSpaceCfg as any;
+    if (!dlg || dlg.kind !== 'draft' || !sp) return;
+    if (!confirm(this._t('confirm.delete_draft_segment'))) return;
+    const index = (sp.room_drafts || []).findIndex((x: any) => x.id === dlg.id);
+    if (index < 0) return;
+    const draft = sp.room_drafts[index];
+    const cut = Math.max(0, Math.min(draft.segments.length - 1, dlg.segment || 0));
+    const pieces: any[] = [];
+    const leftPoints = draft.points.slice(0, cut + 1);
+    const rightPoints = draft.points.slice(cut + 1);
+    if (leftPoints.length >= 2) pieces.push({
+      id: draft.id, points: leftPoints, segments: draft.segments.slice(0, cut),
+    });
+    if (rightPoints.length >= 2) pieces.push({
+      id: pieces.length ? `${draft.id}-${Date.now().toString(36)}` : draft.id,
+      points: rightPoints, segments: draft.segments.slice(cut + 1),
+    });
+    if (pieces.length === 2 && sp.room_drafts.length >= MAX_ROOM_DRAFTS) {
+      this._showToast(this._t('toast.physical_limit'));
+      return;
+    }
+    const before = this._geometrySnapshot();
+    sp.room_drafts.splice(index, 1, ...pieces);
+    if (!sp.room_drafts.length) delete sp.room_drafts;
+    if (this._activeDraftId === draft.id) this._cancelPath();
+    this._physicalDialog = null;
+    this._physicalSel = pieces.length ? { kind: 'draft', id: pieces[0].id } : null;
+    this._recordGeometry(this._t('history.draft_segment_delete'), before);
+    this._saveConfig();
+  };
+
+  private _physicalDown(ev: PointerEvent, kind: 'partition' | 'column', id: string): void {
+    ev.stopPropagation();
+    capturePointer(ev);
+    const model = this._spaceModel();
+    const point = this._svgPoint(ev);
+    const candidates: Array<{ kind: 'partition' | 'column'; id: string }> = [];
+    for (const c of [...model.wall_columns].reverse()) {
+      if (pointInPhysicalBody(point, columnBody(c, this._cellCm, this._gridPitch)))
+        candidates.push({ kind: 'column', id: c.id });
+    }
+    for (const p of [...model.partitions].reverse()) {
+      const body = partitionBody(p.a, p.b, p.cm, this._cellCm, this._gridPitch);
+      if (body && pointInPhysicalBody(point, body)) candidates.push({ kind: 'partition', id: p.id });
+    }
+    if (!candidates.some((x) => x.kind === kind && x.id === id)) candidates.unshift({ kind, id });
+    const signature = candidates.map((x) => `${x.kind}:${x.id}`).sort().join('|');
+    const now = performance.now();
+    const cycle = this._physicalPickCycle;
+    const repeat = candidates.length > 1 && cycle?.signature === signature
+      && now - cycle.at > 380 && now - cycle.at <= 1200
+      && Math.hypot(ev.clientX - cycle.x, ev.clientY - cycle.y) <= 10;
+    const index = repeat ? (cycle.index + 1) % candidates.length
+      : Math.max(0, candidates.findIndex((x) => x.kind === kind && x.id === id));
+    this._physicalPickCycle = { signature, index, x: ev.clientX, y: ev.clientY, at: now };
+    kind = candidates[index].kind;
+    id = candidates[index].id;
+    const base = kind === 'partition'
+      ? model.partitions.find((x) => x.id === id)
+      : model.wall_columns.find((x) => x.id === id);
+    if (!base) return;
+    this._physicalSel = { kind, id };
+    this._physicalDrag = {
+      pid: ev.pointerId, kind, id, start: this._svgPoint(ev),
+      startClient: [ev.clientX, ev.clientY],
+      before: this._geometrySnapshot(), moved: false,
+      base: JSON.parse(JSON.stringify(base)), delta: [0, 0],
+    };
+  }
+
+  private _clampPhysicalDelta(
+    kind: 'partition' | 'column', base: PartitionCfg | WallColumnCfg, delta: number[],
+  ): number[] {
+    const points = kind === 'partition'
+      ? [(base as PartitionCfg).a, (base as PartitionCfg).b]
+      : [(base as WallColumnCfg).center];
+    const xs = points.map((p) => p[0]), ys = points.map((p) => p[1]);
+    return [
+      Math.max(-CANVAS_LIMIT * NORM_W - Math.min(...xs),
+        Math.min(CANVAS_LIMIT * NORM_W - Math.max(...xs), delta[0])),
+      Math.max(-CANVAS_LIMIT * NORM_W - Math.min(...ys),
+        Math.min(CANVAS_LIMIT * NORM_W - Math.max(...ys), delta[1])),
+    ];
+  }
+
+  private _physicalMove(ev: PointerEvent): void {
+    const drag = this._physicalDrag;
+    if (!drag || drag.pid !== ev.pointerId) return;
+    ev.stopPropagation();
+    const raw = this._svgPoint(ev);
+    const anchor = drag.kind === 'partition'
+      ? (drag.base as PartitionCfg).a : (drag.base as WallColumnCfg).center;
+    const target = this._snap([
+      anchor[0] + raw[0] - drag.start[0], anchor[1] + raw[1] - drag.start[1],
+    ]);
+    const delta = this._clampPhysicalDelta(
+      drag.kind, drag.base, [target[0] - anchor[0], target[1] - anchor[1]],
+    );
+    this._physicalDrag = {
+      ...drag, delta,
+      moved: drag.moved || Math.hypot(
+        ev.clientX - drag.startClient[0], ev.clientY - drag.startClient[1],
+      ) >= 5,
+    };
+  }
+
+  private _physicalUp(ev: PointerEvent): void {
+    const drag = this._physicalDrag;
+    if (!drag || drag.pid !== ev.pointerId) return;
+    ev.stopPropagation();
+    this._physicalDrag = null;
+    if (!drag.moved) {
+      this._registerPhysicalTap(drag.kind, drag.id);
+      return;
+    }
+    if (!this._curSpaceCfg) return;
+    const sp = this._curSpaceCfg as any;
+    if (drag.kind === 'partition') {
+      const p = (sp.partitions || []).find((x: any) => x.id === drag.id);
+      const base = drag.base as PartitionCfg;
+      if (p) {
+        p.a = [(base.a[0] + drag.delta[0]) / NORM_W, (base.a[1] + drag.delta[1]) / NORM_W];
+        p.b = [(base.b[0] + drag.delta[0]) / NORM_W, (base.b[1] + drag.delta[1]) / NORM_W];
+      }
+    } else {
+      const c = (sp.wall_columns || []).find((x: any) => x.id === drag.id);
+      const base = drag.base as WallColumnCfg;
+      const candidate: WallColumnCfg = {
+        ...base,
+        center: [base.center[0] + drag.delta[0], base.center[1] + drag.delta[1]],
+      } as WallColumnCfg;
+      if (this._spaceModel().wall_columns.some((x) => x.id !== drag.id
+          && sameColumnPlacement(x, candidate, this._gridPitch * 0.02))) {
+        this._showToast(this._t('toast.column_duplicate'));
+        return;
+      }
+      if (c) c.center = [
+        (base.center[0] + drag.delta[0]) / NORM_W,
+        (base.center[1] + drag.delta[1]) / NORM_W,
+      ];
+    }
+    this._recordGeometry(this._t('history.physical_move'), drag.before);
+    this._saveConfig();
+  }
+
+  private _registerPhysicalTap(
+    kind: 'partition' | 'column' | 'draft', id: string, segment?: number,
+  ): void {
+    const now = performance.now();
+    const twice = this._physicalLastTap?.kind === kind
+      && this._physicalLastTap.id === id
+      && this._physicalLastTap.segment === segment
+      && now - this._physicalLastTap.at <= 360;
+    this._physicalLastTap = { kind, id, segment, at: now };
+    if (twice) {
+      this._physicalLastTap = null;
+      this._openPhysicalDialog(kind, id, segment);
+    }
+  }
+
+  private _cancelPhysicalGesture(): void {
+    this._physicalDrag = null;
+    this._physicalRotate = null;
+    this.requestUpdate();
+  }
+
+  private _physicalRotateDown(ev: PointerEvent, c: WallColumnCfg): void {
+    if (c.shape !== 'square') return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    capturePointer(ev);
+    const p = this._svgPoint(ev);
+    this._physicalSel = { kind: 'column', id: c.id };
+    this._physicalRotate = {
+      pid: ev.pointerId, id: c.id, center: [...c.center],
+      startAngle: Math.atan2(p[1] - c.center[1], p[0] - c.center[0]) * 180 / Math.PI,
+      baseAngle: canonicalColumnAngle(c.angle), angle: canonicalColumnAngle(c.angle),
+      before: this._geometrySnapshot(), moved: false,
+    };
+  }
+
+  private _physicalRotateMove(ev: PointerEvent): void {
+    const drag = this._physicalRotate;
+    if (!drag || drag.pid !== ev.pointerId) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    const p = this._svgPoint(ev);
+    const pointerAngle = Math.atan2(p[1] - drag.center[1], p[0] - drag.center[0]) * 180 / Math.PI;
+    const raw = drag.baseAngle + pointerAngle - drag.startAngle;
+    const angle = canonicalColumnAngle(ev.shiftKey ? raw : Math.round(raw / 5) * 5);
+    this._physicalRotate = { ...drag, angle, moved: drag.moved || Math.abs(raw - drag.baseAngle) >= 0.5 };
+  }
+
+  private _physicalRotateUp(ev: PointerEvent): void {
+    const drag = this._physicalRotate;
+    if (!drag || drag.pid !== ev.pointerId) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    this._physicalRotate = null;
+    if (!drag.moved || !this._curSpaceCfg) return;
+    const current = this._spaceModel().wall_columns.find((c) => c.id === drag.id);
+    if (!current || current.shape !== 'square') return;
+    const candidate: WallColumnCfg = { ...current, angle: drag.angle };
+    if (this._spaceModel().wall_columns.some((c) => c.id !== drag.id
+        && sameColumnPlacement(c, candidate, this._gridPitch * 0.02))) {
+      this._showToast(this._t('toast.column_duplicate'));
+      return;
+    }
+    const stored = (this._curSpaceCfg as any).wall_columns?.find((c: any) => c.id === drag.id);
+    if (!stored) return;
+    stored.angle = drag.angle;
+    this._recordGeometry(this._t('history.physical_edit'), drag.before);
+    this._saveConfig();
   }
 
 
@@ -4296,6 +5272,7 @@ class HouseplanCard extends LitElement {
     const ids = Object.keys(res.polys).length ? Object.keys(res.polys) : [plan.roomId];
     const walls = this._spaceWalls;
     const openCuts = this._openPairs().flatMap((p) => p.segs);
+    const physical = this._physicalBodiesR();
     for (const id of ids) {
       const poly = res.polys[id] || g.rooms.find((r) => r.id === id)!.poly;
       const floor = walls.length
@@ -4305,7 +5282,11 @@ class HouseplanCard extends LitElement {
           ) || poly)
         : poly;
       const c = poleOfInaccessibility(floor);
-      labels.push({ x: c[0], y: c[1], text: formatArea(areaM2(floor, this._gridPitch, this._cellCm), imperial), area: true });
+      const m2 = physical.length
+        ? geometryArea(floorMinusBodies(floor, physical))
+            * Math.pow(this._cellCm / this._gridPitch, 2) / 1e4
+        : areaM2(floor, this._gridPitch, this._cellCm);
+      labels.push({ x: c[0], y: c[1], text: formatArea(m2, imperial), area: true });
     }
     return labels;
   }
@@ -4322,9 +5303,14 @@ class HouseplanCard extends LitElement {
         ) || poly)
       : poly;
     const c = poleOfInaccessibility(floor);
+    const physical = this._physicalBodiesR();
+    const area = physical.length
+      ? geometryArea(floorMinusBodies(floor, physical))
+          * Math.pow(this._cellCm / this._gridPitch, 2) / 1e4
+      : areaM2(floor, this._gridPitch, this._cellCm);
     return [
       { x: Math.min(...xs), y: Math.min(...ys), text: `${this._fmtLen([0, 0], [w, 0])} × ${this._fmtLen([0, 0], [h, 0])}` },
-      { x: c[0], y: c[1], text: formatArea(areaM2(floor, this._gridPitch, this._cellCm), imperial), area: true },
+      { x: c[0], y: c[1], text: formatArea(area, imperial), area: true },
     ];
   }
 
@@ -5141,11 +6127,16 @@ class HouseplanCard extends LitElement {
 
   // ================= the furniture library (docs/FURNITURE.md) =================
 
-  /** The walls a piece of furniture can stick to: the DERIVED room edges of
-   *  the current space, render units. Same source the openings snap to, so a
-   *  wall the user can hang a window on is a wall a sofa can lean on. */
+  /** Furniture sees room centrelines plus the physical faces of independent
+   * partitions/drafts/columns. Openings intentionally still use room walls
+   * only; furniture is allowed to lean against every real obstacle. */
   private get _furnWalls(): number[][] {
-    return this._segments;
+    const faces = this._physicalBodiesR().flatMap((body) =>
+      body.map((a, i) => {
+        const b = body[(i + 1) % body.length];
+        return [a[0], a[1], b[0], b[1]];
+      }));
+    return [...this._segments, ...faces];
   }
 
   /** How far the wall magnet reaches, render units. */
@@ -6484,8 +7475,17 @@ class HouseplanCard extends LitElement {
     if (!d) return;
     const sp = this._curSpaceCfg;
     if (!sp) return;
+    const text = d.value.trim();
+    const raw = text ? strictNumber(text) : 0;
+    if (raw == null) { this._showPhysicalRange(100); return; }
+    const cmRaw = this._imperial ? raw * 2.54 : raw;
+    if (text && (!Number.isFinite(cmRaw) || cmRaw < 0 || (cmRaw > 0 && cmRaw < 1)
+        || cmRaw > 100)) {
+      this._showPhysicalRange(100);
+      return;
+    }
     const before = this._geometrySnapshot();
-    const cm = fieldToCm(d.value, this._imperial);
+    const cm = text && cmRaw > 0 ? cmRaw : null;
     const openCuts = this._openCuts();
     let next: WallEntry[];
     if (allRoom && d.roomId) {
@@ -6506,7 +7506,8 @@ class HouseplanCard extends LitElement {
   }
 
   private _wallHatchDefs(color: string): TemplateResult {
-    if (!this._spaceWalls.length && !this._markup) return svg`` as unknown as TemplateResult;
+    if (!this._spaceWalls.length && !this._physicalBodiesR().length && !this._markup)
+      return svg`` as unknown as TemplateResult;
     const inv = Math.max(0.4, 1 / Math.max(this._zoom, 0.4));
     // Bake the wall colour into the pattern — CSS vars on <pattern> content
     // do not inherit from the filled path, so var(--room-stroke) fell back
@@ -6521,19 +7522,28 @@ class HouseplanCard extends LitElement {
   }
 
   private _renderWallBodies(disp: SpaceDisplay): TemplateResult {
-    if (disp && !disp.showBorders && !this._markup) return svg`` as unknown as TemplateResult;
+    if (disp && !disp.showBorders && (this._mode === 'view' || this._mode === 'devices'))
+      return svg`` as unknown as TemplateResult;
     const walls = this._spaceWalls;
-    if (!walls.length) return svg`` as unknown as TemplateResult;
+    const extras = this._physicalBodiesR();
+    if (!walls.length && !extras.length) return svg`` as unknown as TemplateResult;
     const openCuts = this._openPairs().flatMap((p) => p.segs);
     const openings = (this._curSpaceCfg?.openings || []).map((o: any) => ({
       x: Number(o.x) * NORM_W, y: Number(o.y) * NORM_W,
       angle: Number(o.angle) || 0,
       length: (Number(o.length) > 0 ? Number(o.length) : 0.9) * NORM_W,
     }));
-    const united = wallBodiesUnionPath(
-      this._spaceModel().rooms, walls, openCuts, openings,
-      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-    );
+    const unionKey = `${this._space}|${this._cfgEpoch}|${this._spaceModel().rooms.length}`;
+    if (!this._wallUnionCache || this._wallUnionCache.key !== unionKey) {
+      this._wallUnionCache = {
+        key: unionKey,
+        value: wallBodiesUnionPath(
+          this._spaceModel().rooms, walls, openCuts, openings,
+          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, extras,
+        ),
+      };
+    }
+    const united = this._wallUnionCache.value;
     if (!united) return svg`` as unknown as TemplateResult;
     const stage = this._stageEl;
     const v = this._viewOr(this._baseVb());
@@ -6546,11 +7556,11 @@ class HouseplanCard extends LitElement {
     // collapses into noise — keep the solid fill alone.
     return svg`<g class="wallbodies" style="--room-stroke:${stroke};--wall-fill:${wf.c};--wall-fill-op:${wf.a}">
       <path class="wallbody-fill" d="${united.d}"
-        fill="${wf.c}" fill-opacity="${wf.a}" fill-rule="evenodd"
+        fill="${wf.c}" fill-opacity="${wf.a}" fill-rule=${united.fillRule}
         stroke="none" pointer-events="none"></path>
       <path class="wallbody ${solid ? 'solid' : ''}"
         data-hp="wall" data-id="union" data-kind="union"
-        d="${united.d}" fill="${solid ? 'none' : 'url(#hp-wall-hatch)'}" fill-rule="evenodd"
+        d="${united.d}" fill="${solid ? 'none' : 'url(#hp-wall-hatch)'}" fill-rule=${united.fillRule}
         stroke="${stroke}" stroke-width="0.6" pointer-events="none"></path>
     </g>` as unknown as TemplateResult;
   }
@@ -7074,15 +8084,23 @@ class HouseplanCard extends LitElement {
 
   private _markupMove(ev: MouseEvent): void {
     if (!this._markup) return;
+    if (this._tool === 'column') {
+      this._cursorPt = this._snap(this._svgPoint(ev));
+      return;
+    }
     if (this._tool === 'opening' || this._tool === 'openwall' || this._tool === 'closewall' || this._tool === 'wallthick') {
       // hover preview: raw cursor point; snapping happens in the preview getters
       this._cursorPt = this._svgPoint(ev);
       return;
     }
-    const drawing = this._tool === 'draw' && this._path.length && !this._contourClosed;
+    const drawing = (this._tool === 'draw' || this._tool === 'partition')
+      && this._path.length && !this._contourClosed;
     const cutting = this._tool === 'split' && !!this._splitSel?.pts?.length;
     if (!drawing && !cutting) return;
-    this._cursorPt = this._snap(this._svgPoint(ev));
+    const raw = this._svgPoint(ev);
+    this._cursorPt = drawing
+      ? this._snapDrawPoint(raw, ev.shiftKey)
+      : this._snap(raw);
   }
 
   /**
@@ -7158,6 +8176,11 @@ class HouseplanCard extends LitElement {
       ...(this._roomSettingsFromDialog() ? { settings: this._roomSettingsFromDialog() } : {}),
     };
     sp.rooms.push(newRoom);
+    // Closing a saved draft promotes it into a room in the same transaction.
+    if (!wasSplit && this._activeDraftId && Array.isArray((sp as any).room_drafts)) {
+      (sp as any).room_drafts = (sp as any).room_drafts.filter((d: any) => d.id !== this._activeDraftId);
+      if (!(sp as any).room_drafts.length) delete (sp as any).room_drafts;
+    }
     // A Split rewrites the parent outline and adds a child, so a span that used
     // to sit between the parent and a neighbour may now belong to the child.
     // Geometry first, then spans and the derived open_to — otherwise border
@@ -7167,7 +8190,8 @@ class HouseplanCard extends LitElement {
     // Draw-session wall thickness: apply to new edges only; keep neighbour cm
     // on shared stretches. Split naming does not use the Draw field.
     if (!wasSplit) {
-      const cm = this._drawWallCm;
+      const edgeCms = [...this._draftSegmentCms, this._closingWallCm || this._drawWallCm || DRAW_WALL_DEFAULT_CM];
+      const cm = edgeCms[0] || this._drawWallCm;
       if (cm != null) {
         this._cfgEpoch++; // the new room must be in the model before keying
         const openCuts = this._openCuts();
@@ -7175,6 +8199,24 @@ class HouseplanCard extends LitElement {
           sp.walls, this._spaceModel().rooms, newRoom.id, cm,
           this._wallKeyPitch, openCuts, NORM_W,
         );
+        // The room may have been drawn while the toolbar thickness changed.
+        // Shared stretches keep the already-existing physical wall; every
+        // outer atomic stretch receives the value of its source draft edge.
+        for (const iv of wallIntervals(
+          this._spaceModel().rooms, next, openCuts,
+          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+        )) {
+          if (iv.roomId !== newRoom.id || iv.kind !== 'outer') continue;
+          const mid = [(iv.a[0] + iv.b[0]) / 2, (iv.a[1] + iv.b[1]) / 2];
+          const source = verts.findIndex((a, i) => {
+            const b = verts[(i + 1) % verts.length];
+            return distToSegment(mid, [a[0], a[1], b[0], b[1]]) <= this._gridPitch * 0.02;
+          });
+          if (source >= 0) next = setWallThickness(
+            next, iv.a, iv.b, edgeCms[source] || cm,
+            this._wallKeyPitch, NORM_W,
+          );
+        }
         next = this._normalizeWalls(next, openCuts);
         if (next.length) sp.walls = next;
         else delete sp.walls;
@@ -7183,6 +8225,10 @@ class HouseplanCard extends LitElement {
     this._recordGeometry(this._t(wasSplit ? 'history.split_room' : 'history.add_room'), before);
     this._saveConfig();
     this._path = [];
+    delete this._resumeDraftBySpace[this._space];
+    this._activeDraftId = null;
+    this._draftSegmentCms = [];
+    this._closingWallCm = null;
     this._pendingSplit = null;
     this._splitSel = null;
     const boundArea = this._areaSel;
@@ -7218,7 +8264,11 @@ class HouseplanCard extends LitElement {
   }
 
   private _cancelPath(): void {
+    if (this._activeDraftId) this._resumeDraftBySpace[this._space] = this._activeDraftId;
     this._path = [];
+    this._activeDraftId = null;
+    this._draftSegmentCms = [];
+    this._closingWallCm = null;
     this._cursorPt = null;
     this._roomDialog = false;
     this._pendingSplit = null;
@@ -7226,6 +8276,20 @@ class HouseplanCard extends LitElement {
     this._mergeSel = null;
     this._mergeDialog = null;
     this._openWallAnchor = null;
+    this._physicalSel = null;
+    this._physicalDrag = null;
+    this._physicalRotate = null;
+  }
+
+  private _resumeLastDraft(): void {
+    const id = this._resumeDraftBySpace[this._space];
+    if (!id) return;
+    const draft = this._spaceModel().room_drafts.find((d) => d.id === id);
+    if (!draft) { delete this._resumeDraftBySpace[this._space]; return; }
+    this._activeDraftId = id;
+    this._path = draft.points.map((p) => [...p]);
+    this._draftSegmentCms = draft.segments.map((s) => s.cm);
+    this._cursorPt = null;
   }
 
   /** Cancel in the dialog: the outline is open again (the closing point is removed). */
@@ -7286,10 +8350,10 @@ class HouseplanCard extends LitElement {
         tapConfirm: d.marker?.tap_confirm === true,
         runFilter: '',
         defaultTap: d.primary?.split('.')[0] === 'light' ? 'toggle' : 'info',
-        // Keep temporarily inactive external targets for lossless editing.
-        // A legacy self-reference is represented by isLight below instead of
-        // remaining duplicated in the external-target list.
-        controls: effectiveMarkerControls(d.marker?.binding, d.marker?.controls, d.entities),
+        // Keep unknown, temporarily inactive and duplicate external targets
+        // byte-for-byte across Open → Save. Runtime uses the filtered
+        // effective projection; a legacy self-reference becomes isLight.
+        controls: persistedExternalControls(d.marker?.binding, d.marker?.controls, d.entities),
         controlsFilter: '',
         isLight: d.marker?.is_light === true || hasLegacySelfLightIntent(
           d.marker?.binding, d.marker?.controls, d.entities,
@@ -7410,6 +8474,92 @@ class HouseplanCard extends LitElement {
       : list;
     filtered.sort((a, b) => a.label.localeCompare(b.label));
     return filtered.slice(0, 200);
+  }
+
+  /** A closed outline may intentionally remain a set of independent walls. */
+  private _keepClosedAsPartitions = (): void => {
+    if (!this._contourClosed || this._pendingSplit || !this._curSpaceCfg) return;
+    const sp = this._curSpaceCfg as any;
+    const verts = this._path.slice(0, -1);
+    if ((sp.partitions || []).length + verts.length > MAX_PARTITIONS) {
+      this._showToast(this._t('toast.physical_limit'));
+      return;
+    }
+    const before = this._geometrySnapshot();
+    const cms = [...this._draftSegmentCms,
+      this._closingWallCm || this._drawWallCm || DRAW_WALL_DEFAULT_CM];
+    sp.partitions ||= [];
+    const seed = Date.now().toString(36);
+    for (let i = 0; i < verts.length; i++) {
+      const a = verts[i], b = verts[(i + 1) % verts.length];
+      sp.partitions.push({
+        id: `partition-${seed}-${i}`,
+        a: [a[0] / NORM_W, a[1] / NORM_W],
+        b: [b[0] / NORM_W, b[1] / NORM_W],
+        cm: cms[i] || DRAW_WALL_DEFAULT_CM,
+      });
+    }
+    if (this._activeDraftId && Array.isArray(sp.room_drafts)) {
+      sp.room_drafts = sp.room_drafts.filter((d: any) => d.id !== this._activeDraftId);
+      if (!sp.room_drafts.length) delete sp.room_drafts;
+    }
+    this._recordGeometry(this._t('history.contour_to_partitions'), before);
+    this._saveConfig();
+    this._roomDialog = false;
+    this._path = [];
+    delete this._resumeDraftBySpace[this._space];
+    this._activeDraftId = null;
+    this._draftSegmentCms = [];
+    this._closingWallCm = null;
+  };
+
+  /** All independent physical bodies in render units. Physics intentionally
+   * does not depend on show_borders. */
+  private _physicalBodiesR(space = this._spaceModel()): number[][][] {
+    const key = `${space.id}|${this._cfgEpoch}|${this._cellCm}|${this._gridPitch}`;
+    if (this._physicalBodiesCache?.key === key) return this._physicalBodiesCache.all;
+    const drafts = (space.room_drafts || []).flatMap((d) =>
+      draftBodies(d, this._cellCm, this._gridPitch));
+    const partitions = (space.partitions || []).flatMap((p) => {
+      const body = partitionBody(p.a, p.b, p.cm, this._cellCm, this._gridPitch);
+      return body ? [body] : [];
+    });
+    const columns = (space.wall_columns || []).map((c) =>
+      columnBody(c, this._cellCm, this._gridPitch));
+    const all = [...drafts, ...partitions, ...columns];
+    this._physicalBodiesCache = { key, drafts, partitions, columns, all };
+    return all;
+  }
+
+  /** Cached clean floor. A cheap bbox pass is the spatial index needed for
+   * rooms which touch only a small subset of independent bodies. */
+  private _cleanFloor(
+    room: RoomCfg, floor: number[][], space = this._spaceModel(),
+  ): { floor: number[][]; geom: any; path: string; area: number } {
+    const roomKey = room.id || `#${space.rooms.indexOf(room)}`;
+    const key = `${space.id}|${this._cfgEpoch}|${roomKey}`;
+    if (!this._rszPreview) {
+      const cached = lruRead(this._cleanFloorCache, key);
+      if (cached.hit) return cached.value;
+    }
+    const xs = floor.map((p) => p[0]), ys = floor.map((p) => p[1]);
+    const box = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+    const candidates = this._physicalBodiesR(space).filter((body) => {
+      const bx = body.map((p) => p[0]), by = body.map((p) => p[1]);
+      return Math.max(...bx) >= box[0] && Math.min(...bx) <= box[2]
+        && Math.max(...by) >= box[1] && Math.min(...by) <= box[3];
+    });
+    const geom = candidates.length ? floorMinusBodies(floor, candidates) : null;
+    const result = {
+      floor,
+      geom,
+      path: geom ? polyclipPathD(geom) : '',
+      area: geom ? geometryArea(geom) : geometryArea([[[...floor, floor[0]]]]),
+    };
+    if (!this._rszPreview) {
+      lruWrite(this._cleanFloorCache, key, result, 600);
+    }
+    return result;
   }
 
   /** Effective auto icon for a binding selected but not saved yet. */
@@ -7559,7 +8709,7 @@ class HouseplanCard extends LitElement {
           .filter((m) => m.removed && m.binding === dlg.binding)
           .map((m) => m.id);
       const replacingRemoved = replacedRemovedIds.length > 0;
-      const controls = effectiveMarkerControls(
+      const controls = persistedExternalControls(
         dlg.binding, dlg.controls, this._bindingEntities(dlg.binding),
       );
       // the vacuum block is edited live outside the dialog transaction —
@@ -7584,8 +8734,8 @@ class HouseplanCard extends LitElement {
         is_light: dlg.isLight ? true : null,
         use_climate_temp: dlg.useClimateTemp ? true : null,
         glow_radius_cm: (() => {
-          const v = parseFloat(dlg.glowRadius);
-          if (!Number.isFinite(v) || v <= 0) return null;
+          const v = strictNumber(dlg.glowRadius);
+          if (v == null || v <= 0) return null;
           return Math.round(this._imperial ? v * 30.48 : v * 100);
         })(),
         model: dlg.model.trim() || null,
@@ -8335,11 +9485,23 @@ class HouseplanCard extends LitElement {
           }
         }
       }
-      const rays = computeSunRays(
+      let rays = computeSunRays(
         rooms, windows, sun.azimuth, sun.elevation, north!,
         walls.length ? innerByRoom : undefined,
         walls.length ? wallDepthByOpening : undefined,
       );
+      const physical = this._physicalBodiesR(space);
+      if (physical.length) {
+        rays = rays.map((ray) => {
+          const shadows = directionalOccluders(physical, ray.dir, ray.len);
+          const clipped = ray.polys.map((poly) => floorMinusBodies(poly, shadows));
+          return {
+            ...ray,
+            paths: clipped.map(polyclipPathD).filter(Boolean),
+            polys: clipped.flatMap(geometryOuterRings),
+          };
+        }).filter((ray) => ray.paths?.length || ray.polys.length);
+      }
       // the rim is pure geometry off the same wedges — memoised on the same key
       this._sunRaysCache = { key, rays, rims: rays.map((r) => rayRimEdges(r)) };
     }
@@ -8395,8 +9557,10 @@ class HouseplanCard extends LitElement {
         })}
       </defs>
       <g class="sunlayer ${this._sunOut ? 'out' : ''}">
-        ${rays.map((r, i) => r.polys.map((p) => svg`<polygon
-          points="${p.map((q) => q[0] + ',' + q[1]).join(' ')}" fill="url(#hp-sun-${i})"></polygon>`))}
+        ${rays.map((r, i) => r.paths?.length
+          ? r.paths.map((d) => svg`<path d=${d} fill-rule="evenodd" fill="url(#hp-sun-${i})"></path>`)
+          : r.polys.map((p) => svg`<polygon
+              points="${p.map((q) => q[0] + ',' + q[1]).join(' ')}" fill="url(#hp-sun-${i})"></polygon>`))}
         ${rays.map((r, i) => (rims[i] || []).map((e) => svg`<line class="sunrim"
           x1="${e[0][0]}" y1="${e[0][1]}" x2="${e[1][0]}" y2="${e[1][1]}"
           stroke="url(#hp-sunrim-${i})" stroke-width="1"
@@ -8760,6 +9924,7 @@ class HouseplanCard extends LitElement {
     const doors = this._openingsR.filter((o) => o.type === 'door');
     const walls = this._spaceWalls;
     const openCuts = this._openPairs().flatMap((p) => p.segs);
+    const physical = this._physicalBodiesR(space);
     const doorTunnelDepth = new Map<string, number>();
     if (walls.length) {
       for (const o of doors) {
@@ -8796,7 +9961,16 @@ class HouseplanCard extends LitElement {
       // innermost room under the source (islands win — reverse order)
       const home = [...polys].reverse().find((x) => this._pointInRoom([pos.x, pos.y], x.r));
       let clip: string[] | null = null;
-      if (home) {
+      const clipKey = home
+        ? `${space.id}|${this._cfgEpoch}|${pos.x.toFixed(4)},${pos.y.toFixed(4)}|${R.toFixed(4)}`
+        : '';
+      const cachedClip = home ? lruRead(this._glowClipCache, clipKey) : { hit: false as const };
+      if (cachedClip.hit) {
+        clip = cachedClip.value;
+      } else if (home) {
+        const occluders = physical.length
+          ? radialOccluders(physical, [pos.x, pos.y], R)
+          : [];
         // open (virtual) boundaries: light flows through the whole connected
         // zone of rooms, not just the source's own room (owner's spec)
         const zoneIds = home.r.id ? openZoneOf(home.r.id, space.rooms) : new Set([home.r.id]);
@@ -8809,7 +9983,9 @@ class HouseplanCard extends LitElement {
                 this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
               ) || z.poly)
             : z.poly;
-          return 'M ' + poly.map((p) => p[0] + ' ' + p[1]).join(' L ') + ' Z';
+          return occluders.length
+            ? polyclipPathD(floorMinusBodies(poly, occluders))
+            : 'M ' + poly.map((p) => p[0] + ' ' + p[1]).join(' L ') + ' Z';
         });
         // doorways on the ZONE's walls spill light into rooms outside the zone
         const others = polys.filter((x) => !zoneList.includes(x)).map((x) => x.poly);
@@ -8827,13 +10003,16 @@ class HouseplanCard extends LitElement {
             [pos.x, pos.y], [o.rx - dx, o.ry - dy], [o.rx + dx, o.ry + dy],
             R, 170, doorTunnelDepth.get(o.id) || 0,
           );
-          if (sector) shapes.push('M ' + sector.map((p) => p[0] + ' ' + p[1]).join(' L ') + ' Z');
+          if (sector) shapes.push(occluders.length
+            ? polyclipPathD(floorMinusBodies(sector, occluders))
+            : 'M ' + sector.map((p) => p[0] + ' ' + p[1]).join(' L ') + ' Z');
         }
         // IMPORTANT: separate <path> children — clipPath children always
         // UNION. Joining the room and a sector into ONE path made the default
         // nonzero fill-rule cancel their overlap when the windings opposed,
         // punching a dark wedge INSIDE the room (field report + screenshot).
         clip = shapes;
+        lruWrite(this._glowClipCache, clipKey, clip, 256);
       }
       spots.push({ pos, c: glow.c, alpha: colors.glow_light.a * glow.bri, clip, r: R });
     }
@@ -8845,7 +10024,7 @@ class HouseplanCard extends LitElement {
             <stop offset="70%" stop-color="${sp.c}" stop-opacity="${sp.alpha.toFixed(3)}"></stop>
             <stop offset="100%" stop-color="${sp.c}" stop-opacity="0"></stop>
           </radialGradient>
-          ${sp.clip ? svg`<clipPath id="hp-glowclip-${i}">${sp.clip.map((d) => svg`<path d="${d}"></path>`)}</clipPath>` : nothing}`)}
+          ${sp.clip ? svg`<clipPath id="hp-glowclip-${i}">${sp.clip.map((d) => svg`<path d="${d}" clip-rule="evenodd" fill-rule="evenodd"></path>`)}</clipPath>` : nothing}`)}
       </defs>
       ${''/* Glow is presentation only. It is painted above room fills, but must
              not become the pointer target: room hover and its tooltip still
@@ -8878,6 +10057,11 @@ class HouseplanCard extends LitElement {
                 : nothing}
               ${r.rotated
                 ? html`<p class="alignmsg">${this._t('gs.align_turned', { n: String(r.rotated) })}</p>`
+                : nothing}
+              ${r.removedDrafts
+                ? html`<p class="alignmsg">${this._t('gs.align_removed_drafts', {
+                    n: String(r.removedDrafts),
+                  })}</p>`
                 : nothing}
               <p class="alignmsg">${this._t('gs.optimize_changes', {
                 m: String(r.migrated), c: String(r.canonicalized),
@@ -8922,8 +10106,8 @@ class HouseplanCard extends LitElement {
             <input type="number" class="tempin" min="0.5" step="0.5"
               .value=${String(this._settingsDialog!.glowRadius)}
               @input=${(e: Event) => {
-                const v = parseFloat((e.target as HTMLInputElement).value);
-                if (Number.isFinite(v) && v > 0)
+                const v = strictNumber((e.target as HTMLInputElement).value);
+                if (v != null && v > 0)
                   this._settingsDialog = { ...this._settingsDialog!, glowRadius: v };
               }} />
             <span class="opl">${this._imperial ? this._t('gs.unit_ft') : this._t('gs.unit_m')}</span>
@@ -9290,7 +10474,8 @@ class HouseplanCard extends LitElement {
             : nothing}
         </div>
         ${this._canEdit && !this._kiosk
-          ? html`<div class="editorchrome ${this._editing ? 'open' : ''}${this._navMotion ? ' nav-' + this._navMotion : ''}" aria-hidden=${this._editing ? 'false' : 'true'}>
+          ? html`<div class="editorchrome ${this._editing ? 'open' : ''}${this._navMotion ? ' nav-' + this._navMotion : ''}"
+              aria-hidden=${this._editing ? 'false' : 'true'} ?inert=${!this._editing}>
               <div class="editorchrome-inner ${this._navMotion ? 'nav-' + this._navMotion : ''}">
                 ${editorChromeMode === 'plan'
                   ? this._renderMarkupBar()
@@ -9452,11 +10637,19 @@ class HouseplanCard extends LitElement {
               const holes = fillPoly ? islandsOf(fillPoly, otherPolys(r)) : [];
               const pathD = (pts: number[][]) =>
                 'M ' + pts.map((p) => p[0] + ' ' + p[1]).join(' L ') + ' Z';
+              const obstaclePath = fillPoly ? this._cleanFloor(r, fillPoly, space).path : '';
               // docs/STYLING-HOOKS.md §3 — the same three hooks whichever SVG
               // element this room happens to be drawn as today
               const hpId = r.id || nothing;
               const hpArea = r.area || nothing;
-              const shape = holes.length && fillPoly
+              const shape = obstaclePath && fillPoly
+                ? svg`<path class="${cls}" style="${style}" fill-rule="evenodd"
+                    data-hp="room" data-id=${hpId} data-area=${hpArea}
+                    d="${[obstaclePath, ...holes.map(pathD)].join(' ')}"
+                    @mouseenter=${() => (this._hoverRoom = { space: space.id, room: r })}
+                    @mousemove=${tip}
+                    @mouseleave=${() => { this._tip = null; this._hoverRoom = null; }}></path>`
+                : holes.length && fillPoly
                 ? svg`<path class="${cls}" style="${style}" fill-rule="evenodd"
                     data-hp="room" data-id=${hpId} data-area=${hpArea}
                     d="${[fillPoly, ...holes].map(pathD).join(' ')}"
@@ -9593,6 +10786,7 @@ class HouseplanCard extends LitElement {
         ${this._roomDialog ? this._renderRoomDialog() : nothing}
         ${this._mergeDialog ? this._renderMergeDialog() : nothing}
         ${this._openingDialog ? this._renderOpeningDialog() : nothing}
+        ${this._physicalDialog ? this._renderPhysicalDialog() : nothing}
         ${this._openingInfo ? this._renderOpeningInfoCard() : nothing}
         ${this._decorTextDialog ? this._renderDecorTextDialog() : nothing}
         ${this._decorShapeDialog ? this._renderDecorShapeDialog() : nothing}
@@ -10336,8 +11530,10 @@ class HouseplanCard extends LitElement {
           this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
         ) || poly)
       : poly;
+    const clean = this._cleanFloor(r, floor);
+    const cmPerUnit = this._cellCm / this._gridPitch;
     return formatArea(
-      areaM2(floor, this._gridPitch, this._cellCm),
+      (clean.area * cmPerUnit * cmPerUnit) / 1e4,
       this.hass?.config?.unit_system?.length === 'mi',
     );
   }
@@ -10673,7 +11869,8 @@ class HouseplanCard extends LitElement {
   /** Where the live measurement starts: the last outline point, or the first split point. */
   private get _measureAnchor(): number[] | null {
     if (!this._markup || !this._cursorPt) return null;
-    if (this._tool === 'draw' && this._path.length && !this._contourClosed)
+    if ((this._tool === 'draw' || this._tool === 'partition')
+        && this._path.length && !this._contourClosed)
       return this._path[this._path.length - 1];
     if (this._tool === 'split' && this._splitSel?.pts?.length)
       return this._splitSel.pts[this._splitSel.pts.length - 1];
@@ -11084,8 +12281,8 @@ class HouseplanCard extends LitElement {
           <label>${this._t('opening.length_label')}</label>
           <input class="namein tempin" type="number" min="20" max="600" step="5" .value=${String(d.lengthCm)}
             @input=${(e: Event) => {
-              const n = parseFloat((e.target as HTMLInputElement).value);
-              if (Number.isFinite(n)) this._openingDialog = { ...d, lengthCm: n };
+              const n = strictNumber((e.target as HTMLInputElement).value);
+              if (n != null) this._openingDialog = { ...d, lengthCm: n };
             }} />
 
           <label>${this._t('opening.contact_label')}</label>
@@ -11156,6 +12353,115 @@ class HouseplanCard extends LitElement {
       </defs>`;
   }
 
+  private _renderPhysicalEditorLayer(): TemplateResult {
+    const space = this._spaceModel();
+    const g = this._gridPitch;
+    const view = this._viewOr(this._baseVb());
+    const stage = this._stageEl;
+    const unitsPerPx = stage?.clientWidth ? view.w / stage.clientWidth : g / 8;
+    const touchStroke = 24;
+    const handleR = Math.max(g * 0.22, unitsPerPx * 8);
+    const rotateHandleR = Math.max(handleR, unitsPerPx * 12);
+    const path = (poly: number[][]) => `M ${poly.map((p) => `${p[0]} ${p[1]}`).join(' L ')} Z`;
+    const selected = (kind: string, id: string) =>
+      (this._physicalSel?.kind === kind && this._physicalSel.id === id)
+      || (kind === 'column' && this._duplicateColumnId === id);
+    const draftSegs = (space.room_drafts || []).flatMap((d) => d.points.slice(0, -1).map((a, i) => {
+      const b = d.points[i + 1];
+      const depth = wallCmToUnits(d.segments[i]?.cm || 15, this._cellCm, this._gridPitch);
+      return svg`<line class="physical-hit ${selected('draft', d.id) ? 'selected' : ''}"
+        data-hp="room-draft" data-kind="segment" data-id=${d.id} data-segment=${i}
+        x1=${a[0]} y1=${a[1]} x2=${b[0]} y2=${b[1]}
+        stroke-width=${Math.max(touchStroke, depth / Math.max(unitsPerPx, 1e-9))}
+        vector-effect="non-scaling-stroke"
+        @pointerdown=${(e: PointerEvent) => {
+          this._physicalSel = { kind: 'draft', id: d.id, segment: i };
+          this._registerPhysicalTap('draft', d.id, i);
+        }}></line>`;
+    }));
+    const partitions = (space.partitions || []).map((p) => {
+      const body = partitionBody(p.a, p.b, p.cm, this._cellCm, this._gridPitch);
+      if (!body) return nothing;
+      return svg`<path class="physical-hit ${selected('partition', p.id) ? 'selected' : ''}"
+        data-hp="partition" data-kind="partition" data-id=${p.id} d=${path(body)}
+        stroke-width=${touchStroke} vector-effect="non-scaling-stroke"
+        @pointerdown=${(e: PointerEvent) => this._physicalDown(e, 'partition', p.id)}
+        @pointermove=${(e: PointerEvent) => this._physicalMove(e)}
+        @pointerup=${(e: PointerEvent) => this._physicalUp(e)}></path>`;
+    });
+    const columns = (space.wall_columns || []).map((c) => {
+      const shown = this._physicalRotate?.id === c.id
+        ? { ...c, angle: this._physicalRotate.angle } as WallColumnCfg : c;
+      const body = columnBody(shown, this._cellCm, this._gridPitch);
+      return svg`<path class="physical-hit ${selected('column', c.id) ? 'selected' : ''}"
+        data-hp="wall-column" data-kind=${c.shape} data-id=${c.id} d=${path(body)}
+        stroke-width=${touchStroke} vector-effect="non-scaling-stroke"
+        @pointerdown=${(e: PointerEvent) => this._physicalDown(e, 'column', c.id)}
+        @pointermove=${(e: PointerEvent) => this._physicalMove(e)}
+        @pointerup=${(e: PointerEvent) => this._physicalUp(e)}></path>`;
+    });
+    const drag = this._physicalDrag;
+    const ghost = (() => {
+      if (!drag?.moved) return nothing;
+      const poly = drag.kind === 'partition'
+        ? partitionBody((drag.base as PartitionCfg).a, (drag.base as PartitionCfg).b,
+            (drag.base as PartitionCfg).cm, this._cellCm, this._gridPitch)
+        : columnBody(drag.base as WallColumnCfg, this._cellCm, this._gridPitch);
+      return poly ? svg`<path class="physical-drag" d=${path(poly)}
+        transform="translate(${drag.delta[0]} ${drag.delta[1]})"></path>` : nothing;
+    })();
+    const chrome = (() => {
+      const sel = this._physicalSel;
+      if (!sel) return nothing;
+      if (sel.kind === 'draft') {
+        const d = space.room_drafts.find((x) => x.id === sel.id);
+        if (!d) return nothing;
+        return svg`<g class="physical-chrome" data-kind="draft-selection">
+          <polyline class="frame" points=${d.points.map((p) => p.join(',')).join(' ')}></polyline>
+          ${d.points.map((p) => svg`<circle class="move-dot" cx=${p[0]} cy=${p[1]} r=${handleR * 0.55}></circle>`)}
+        </g>`;
+      }
+      if (sel.kind === 'partition') {
+        const p = space.partitions.find((x) => x.id === sel.id);
+        if (!p) return nothing;
+        const body = partitionBody(p.a, p.b, p.cm, this._cellCm, this._gridPitch);
+        if (!body) return nothing;
+        const mx = (p.a[0] + p.b[0]) / 2, my = (p.a[1] + p.b[1]) / 2;
+        return svg`<g class="physical-chrome" data-kind="partition-selection">
+          <path class="frame" d=${path(body)}></path>
+          <circle class="move-dot" cx=${p.a[0]} cy=${p.a[1]} r=${handleR * 0.55}></circle>
+          <circle class="move-dot" cx=${p.b[0]} cy=${p.b[1]} r=${handleR * 0.55}></circle>
+          <circle class="move-dot" cx=${mx} cy=${my} r=${handleR}></circle>
+        </g>`;
+      }
+      const base = space.wall_columns.find((x) => x.id === sel.id);
+      if (!base) return nothing;
+      const c = this._physicalRotate?.id === base.id
+        ? { ...base, angle: this._physicalRotate.angle } as WallColumnCfg : base;
+      const body = columnBody(c, this._cellCm, this._gridPitch);
+      if (c.shape !== 'square') return svg`<g class="physical-chrome" data-kind="circle-selection">
+        <path class="frame" d=${path(body)}></path>
+        <circle class="move-dot" cx=${c.center[0]} cy=${c.center[1]} r=${handleR}></circle>
+      </g>`;
+      const size = wallCmToUnits(c.cm, this._cellCm, this._gridPitch);
+      const angle = canonicalColumnAngle(c.angle) * Math.PI / 180;
+      const ux = Math.sin(angle), uy = -Math.cos(angle);
+      const edge = [c.center[0] + ux * size / 2, c.center[1] + uy * size / 2];
+      const handle = [edge[0] + ux * Math.max(g, unitsPerPx * 24),
+        edge[1] + uy * Math.max(g, unitsPerPx * 24)];
+      return svg`<g class="physical-chrome" data-kind="square-selection">
+        <path class="frame" d=${path(body)}></path>
+        <circle class="move-dot" cx=${c.center[0]} cy=${c.center[1]} r=${handleR}></circle>
+        <line class="stem" x1=${edge[0]} y1=${edge[1]} x2=${handle[0]} y2=${handle[1]}></line>
+        <circle class="rotate-handle" cx=${handle[0]} cy=${handle[1]} r=${rotateHandleR}
+          data-kind="rotate" @pointerdown=${(e: PointerEvent) => this._physicalRotateDown(e, base)}
+          @pointermove=${(e: PointerEvent) => this._physicalRotateMove(e)}
+          @pointerup=${(e: PointerEvent) => this._physicalRotateUp(e)}></circle>
+      </g>`;
+    })();
+    return svg`<g class="physical-editor">${draftSegs}${partitions}${columns}${ghost}${chrome}</g>`;
+  }
+
   private _renderMarkupLayer(vb: number[]): TemplateResult {
     // derived walls minus the open stretches — those are drawn dashed on top
     const openCuts = this._openPairs().flatMap((p) => p.segs);
@@ -11167,9 +12473,9 @@ class HouseplanCard extends LitElement {
     const path = this._path;
     const g = this._gridPitch;
     const view = this._viewOr(this._baseVb());
-    const drawCm = this._tool === 'draw' ? this._drawWallCm : null;
+    const drawCm = this._tool === 'draw' || this._tool === 'partition' ? this._drawWallCm : null;
     const previewPts = (() => {
-      if (this._tool !== 'draw' || !path.length || !(drawCm != null && drawCm > 0)) return null;
+      if ((this._tool !== 'draw' && this._tool !== 'partition') || !path.length || !(drawCm != null && drawCm > 0)) return null;
       if (this._contourClosed) return path;
       if (this._cursorPt) return [...path, this._cursorPt];
       return path.length >= 2 ? path : null;
@@ -11186,6 +12492,14 @@ class HouseplanCard extends LitElement {
         ? svg`<rect x="${view.x}" y="${view.y}" width="${view.w}" height="${view.h}" fill="url(#hp-grid-major)" pointer-events="none"></rect>`
         : nothing}
       ${segs.map((s) => svg`<line class="seg" x1="${s[0]}" y1="${s[1]}" x2="${s[2]}" y2="${s[3]}"></line>`)}
+      ${this._renderPhysicalEditorLayer()}
+      ${this._tool === 'column' && this._cursorPt && this._drawWallCm
+        ? svg`<path class="physical-drag" d=${(() => {
+            const c: WallColumnCfg = { id: 'preview', shape: 'square', center: this._cursorPt!, cm: this._drawWallCm! };
+            const body = columnBody(c, this._cellCm, this._gridPitch);
+            return `M ${body.map((p) => `${p[0]} ${p[1]}`).join(' L ')} Z`;
+          })()}></path>`
+        : nothing}
       ${previewD
         ? svg`<path class="drawwall-preview-fill" d="${previewD}"></path>
              <path class="drawwall-preview" d="${previewD}"></path>`
@@ -11193,7 +12507,7 @@ class HouseplanCard extends LitElement {
       ${path.length > 1
         ? svg`<polyline class="pathline" points="${path.map((p) => p.join(',')).join(' ')}"></polyline>`
         : nothing}
-      ${path.length && this._cursorPt && this._tool === 'draw' && !this._contourClosed
+      ${path.length && this._cursorPt && (this._tool === 'draw' || this._tool === 'partition') && !this._contourClosed
         ? svg`<line class="preview" x1="${path[path.length - 1][0]}" y1="${path[path.length - 1][1]}"
             x2="${this._cursorPt[0]}" y2="${this._cursorPt[1]}"></line>`
         : nothing}
@@ -11221,25 +12535,112 @@ class HouseplanCard extends LitElement {
     `;
   }
 
+  private _renderPhysicalDialog(): TemplateResult {
+    const d = this._physicalDialog!;
+    const column = d.kind === 'column';
+    return html`<hp-dialog .hass=${this.hass}
+      .title=${this._t(column ? 'physical.column_properties' : d.kind === 'partition'
+        ? 'physical.partition_properties' : 'physical.draft_properties')}
+      icon=${column ? 'mdi:vector-square' : 'mdi:wall'}
+      @hp-close=${() => (this._physicalDialog = null)}>
+        <div class="body">
+          ${column ? html`<label>${this._t('physical.shape')}</label>
+            <select class="areasel" @change=${(e: Event) => {
+              const shape = (e.target as HTMLSelectElement).value as 'square' | 'circle';
+              this._physicalDialog = { ...d, shape };
+            }}>
+              <option value="square" ?selected=${d.shape === 'square'}>${this._t('physical.square')}</option>
+              <option value="circle" ?selected=${d.shape === 'circle'}>${this._t('physical.circle')}</option>
+            </select>` : nothing}
+          <label>${this._t(column
+            ? d.shape === 'circle' ? 'physical.diameter' : 'physical.side'
+            : 'wallthick.field')}</label>
+          <div class="row"><input class="namein tempin" type="number"
+            min=${cmToField(1, this._imperial)}
+            max=${cmToField(column ? 150 : 100, this._imperial)} step="any" .value=${d.cm}
+            @input=${(e: Event) => (this._physicalDialog = {
+              ...d, cm: (e.target as HTMLInputElement).value,
+            })} />
+            <span class="opl">${this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span></div>
+          ${column && d.shape === 'square' ? html`
+            <label>${this._t('physical.rotation')}</label>
+            <input class="namein tempin" type="number" min="0" max="89.999" step="5"
+              .value=${d.angle || '0'}
+              @input=${(e: Event) => (this._physicalDialog = {
+                ...d, angle: (e.target as HTMLInputElement).value,
+              })} />` : nothing}
+          ${d.length ? html`<div class="muted">${this._t('physical.length')}: ${d.length}</div>` : nothing}
+        </div>
+        <div class="row" slot="footer">
+          ${d.kind === 'draft' ? html`
+            <button class="btn danger" @click=${this._deleteDraftSegment}>
+              <ha-icon icon="mdi:vector-line"></ha-icon>${this._t('physical.delete_segment')}
+            </button>
+            <button class="btn danger" @click=${this._deleteDraftWhole}>
+              <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('physical.delete_draft')}
+            </button>` : html`
+            <button class="btn danger" @click=${this._deletePhysicalSelection}>
+              <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.delete')}
+            </button>`}
+          <span class="spacer"></span>
+          <button class="btn ghost" @click=${() => (this._physicalDialog = null)}>${this._t('btn.cancel')}</button>
+          <button class="btn on" @click=${this._savePhysicalDialog}>
+            <ha-icon icon="mdi:check"></ha-icon>${this._t('btn.save')}
+          </button>
+        </div>
+    </hp-dialog>`;
+  }
+
   private _renderMarkupBar(): TemplateResult {
     const undoName = this._geometryHistory.undoName;
     const redoName = this._geometryHistory.redoName;
+    const undoTitle = undoName
+      ? this._t('history.undo_named', { name: undoName })
+      : this._t('history.undo_empty');
+    const redoTitle = redoName
+      ? this._t('history.redo_named', { name: redoName })
+      : this._t('history.redo_empty');
     return html`<div class="editbar">
       <ha-icon icon="mdi:vector-square-edit" class="warn"></ha-icon>
       <span class="wallsgroup">
-        <button class="btn ${this._tool === 'draw' ? 'on' : ''}" @click=${() => (this._tool = 'draw')}
+        <button class="btn ${this._tool === 'select' ? 'on' : ''}"
+          @click=${() => { this._cancelPath(); this._tool = 'select'; }}
+          title=${this._t('title.markup_select')}>
+          <ha-icon icon="mdi:cursor-default-outline"></ha-icon>${this._t('markup.select')}
+        </button>
+        <button class="btn ${this._tool === 'draw' ? 'on' : ''}"
+          @click=${() => { if (this._tool !== 'draw') {
+            this._cancelPath(); this._tool = 'draw'; this._resumeLastDraft();
+          } }}
           title=${this._t('title.markup_add')}>
           <ha-icon icon="mdi:vector-polyline-plus"></ha-icon>${this._t('markup.add')}
         </button>
-        ${this._tool === 'draw'
-          ? html`<label class="drawwall">${this._t('wallthick.field')}
-              <input type="number" min="0" max="100" step="any"
+        <button class="btn ${this._tool === 'partition' ? 'on' : ''}"
+          @click=${() => { this._cancelPath(); this._tool = 'partition'; }}
+          title=${this._t('title.markup_partition')}>
+          <ha-icon icon="mdi:wall"></ha-icon>${this._t('markup.partition')}
+        </button>
+        <button class="btn ${this._tool === 'column' ? 'on' : ''}"
+          @click=${() => { this._cancelPath(); this._tool = 'column'; }}
+          title=${this._t('title.markup_column')}>
+          <ha-icon icon="mdi:vector-square"></ha-icon>${this._t('markup.column')}
+        </button>
+        ${this._tool === 'draw' || this._tool === 'partition' || this._tool === 'column'
+          ? html`<label class="drawwall ${this._drawWallCm == null ? 'invalid' : ''}">${this._t('wallthick.field')}
+              <input type="number" min=${cmToField(1, this._imperial)}
+                max=${cmToField(150, this._imperial)} step="any"
                 .value=${this._drawWallFieldValue}
                 @input=${(e: Event) => {
                   this._drawWallField = (e.target as HTMLInputElement).value;
                 }}
-                title=${this._t('markup.draw_wall_title')} />
+                title=${this._t(this._tool === 'draw' ? 'markup.draw_wall_title'
+                  : this._tool === 'partition' ? 'physical.partition_size_title'
+                  : 'physical.column_size_title')} />
               <span class="opl">${this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span>
+              <span class="rangehint">${this._t('physical.allowed_range', {
+                max: cmToField(this._drawWallMaxCm, this._imperial),
+                unit: this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm'),
+              })}</span>
             </label>`
           : nothing}
       </span>
@@ -11285,13 +12686,13 @@ class HouseplanCard extends LitElement {
       </button>
       <button class="btn ghost" @click=${this._undoGeometry}
         ?disabled=${!undoName}
-        title=${undoName ? this._t('history.undo_named', { name: undoName }) : this._t('history.undo_empty')}>
-        <ha-icon icon="mdi:undo-variant"></ha-icon>${this._t('history.undo')}
+        title=${undoTitle} aria-label=${undoTitle}>
+        <ha-icon icon="mdi:undo-variant" aria-hidden="true"></ha-icon>
       </button>
       <button class="btn ghost" @click=${this._redoGeometry}
         ?disabled=${!redoName}
-        title=${redoName ? this._t('history.redo_named', { name: redoName }) : this._t('history.redo_empty')}>
-        <ha-icon icon="mdi:redo-variant"></ha-icon>${this._t('history.redo')}
+        title=${redoTitle} aria-label=${redoTitle}>
+        <ha-icon icon="mdi:redo-variant" aria-hidden="true"></ha-icon>
       </button>
       <span class="spacer"></span>
       ${this._tool === 'draw'
@@ -11300,8 +12701,19 @@ class HouseplanCard extends LitElement {
               : this._t('markup.hint_start')}</span>
             ${this._path.length ? html`<button class="btn ghost" @click=${this._cancelPath}>${this._t('btn.reset')}</button>` : nothing}`
         : nothing}
+      ${this._tool === 'partition' ? html`<span class="hint">${this._t('markup.hint_partition')}</span>` : nothing}
+      ${this._tool === 'column' ? html`<span class="hint">${this._t('markup.hint_column')}</span>` : nothing}
       ${this._tool === 'resize' ? html`<span class="hint">${this._t('markup.hint_resize')}</span>` : nothing}
       ${this._tool === 'wallthick' ? html`<span class="hint">${this._t('markup.hint_wallthick')}</span>` : nothing}
+      ${this._physicalSel
+        ? html`<button class="btn ghost" @click=${() => {
+              const s = this._physicalSel!;
+              this._openPhysicalDialog(s.kind, s.id, s.segment);
+            }}><ha-icon icon="mdi:tune"></ha-icon>${this._t('btn.properties')}</button>
+            <button class="btn danger" @click=${this._deletePhysicalSelection}>
+              <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.delete')}
+            </button>`
+        : nothing}
       <button class="btn barclose" title=${this._t('title.close_editor')}
         @click=${() => this._setMode('view')}>
         <ha-icon icon="mdi:close"></ha-icon>
@@ -11813,9 +13225,9 @@ class HouseplanCard extends LitElement {
             <input class="namein tempin" type="number" min=${CELL_CM_MIN} max=${CELL_CM_MAX}
               step="0.1" .value=${String(d.cellCm)}
               @input=${(e: Event) => {
-                const n = parseFloat((e.target as HTMLInputElement).value);
+                const n = strictNumber((e.target as HTMLInputElement).value);
                 this._spaceDialog = {
-                  ...d, cellCm: Number.isFinite(n) && n > 0
+                  ...d, cellCm: n != null && n > 0
                     ? Math.max(CELL_CM_MIN, Math.min(CELL_CM_MAX, n)) : d.cellCm,
                 };
               }} />
@@ -11928,14 +13340,14 @@ class HouseplanCard extends LitElement {
                 ? html`<span class="temprange">
                     <input class="namein tempin" type="number" step="0.5" .value=${String(d.tempMin)}
                       @input=${(e: Event) => {
-                        const n = parseFloat((e.target as HTMLInputElement).value);
-                        if (Number.isFinite(n)) this._spaceDialog = { ...d, tempMin: n };
+                        const n = strictNumber((e.target as HTMLInputElement).value);
+                        if (n != null) this._spaceDialog = { ...d, tempMin: n };
                       }} />
                     –
                     <input class="namein tempin" type="number" step="0.5" .value=${String(d.tempMax)}
                       @input=${(e: Event) => {
-                        const n = parseFloat((e.target as HTMLInputElement).value);
-                        if (Number.isFinite(n)) this._spaceDialog = { ...d, tempMax: n };
+                        const n = strictNumber((e.target as HTMLInputElement).value);
+                        if (n != null) this._spaceDialog = { ...d, tempMax: n };
                       }} />
                     °C
                   </span>`
@@ -12124,6 +13536,9 @@ class HouseplanCard extends LitElement {
                 title=${this._t('title.no_area_room')}>
                 ${this._t('btn.no_area')}
               </button>
+              ${!this._pendingSplit ? html`<button class="btn ghost" @click=${this._keepClosedAsPartitions}>
+                <ha-icon icon="mdi:wall"></ha-icon>${this._t('btn.keep_as_walls')}
+              </button>` : nothing}
               <button class="btn on" @click=${this._saveRoom} ?disabled=${!this._areaSel}
                 title=${!this._areaSel ? this._t('title.choose_area') : ''}>
                 <ha-icon icon="mdi:check"></ha-icon>${this._t('btn.save')}

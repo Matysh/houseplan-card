@@ -197,6 +197,7 @@ const res = await page.evaluate(async () => {
   const before = c._decorList.length;
   const target = c._decorList.find((x) => x.id === 'dtm');
   out.labelIsLiveUnderTextTool = !!el('dtm') && getComputedStyle(el('dtm')).pointerEvents !== 'none';
+  out.chromiumTextUsesAtomicBoundingBox = getComputedStyle(el('dtm')).pointerEvents === 'bounding-box';
   ev('pointerdown', el('dtm') || stageEl(), target.x * 1000, target.y * 1000);
   await c.updateComplete;
   out.textToolEditsTheLabel = c._decorTextDialog?.id === 'dtm'

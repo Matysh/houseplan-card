@@ -100,8 +100,7 @@ out.untouchedEditorNoJump = await page.evaluate(async () => {
   return Math.abs(c._zoom - 1.6) < 0.01
     && Math.hypot(afterCenter[0] - beforeCenter[0], afterCenter[1] - beforeCenter[1]) < 0.01
     && Math.abs(v.w - before.w) < 0.005
-    // The final measured stage may round by one CSS pixel after its observer.
-    && Math.abs(v.h - before.h) < 1.1;
+    && Math.abs(v.h - before.h) < 0.005;
 });
 
 // -- the view zoom still survives a space switch, per space ---------------

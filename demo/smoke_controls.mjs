@@ -58,6 +58,19 @@ const res = await page.evaluate(async () => {
   const last = calls.at(-1);
   out.lockFiltered = JSON.stringify(last) === JSON.stringify(['homeassistant', 'turn_on', [lights[0]]]);
 
+  // Opening and saving must not rewrite configuration that runtime cannot
+  // currently execute: YAML-only domains and duplicates are still user data.
+  const losslessControls = [lights[0], 'input_boolean.yaml_only', lights[0], 'sensor.vendor_option'];
+  cfg.controls = [...losslessControls];
+  c._regSignature = ''; c._maybeRebuildDevices(); await c.updateComplete;
+  c._openMarkerDialog(dev2()); await c.updateComplete;
+  out.dialogKeepsUnknownAndDuplicateControls = JSON.stringify(c._markerDialog?.controls)
+    === JSON.stringify(losslessControls);
+  await c._saveMarker(); await c.updateComplete;
+  const savedLossless = c._serverCfg.markers.find((m) => m.name === 'Выключатель')?.controls;
+  out.saveKeepsUnknownAndDuplicateControls = JSON.stringify(savedLossless)
+    === JSON.stringify(losslessControls);
+
   // Legacy configs could store a standalone entity as its own external
   // control. That self-reference must neither become a light source/group nor
   // disappear behind ambiguous dialog UI. Its normal Toggle action still

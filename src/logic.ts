@@ -19,6 +19,45 @@ export function snapToGrid(v: number, pitch: number): number {
   return Math.abs(q - v) <= pitch * 1e-9 ? v : q;
 }
 
+/**
+ * Nearest grid node on the nearest 45° ray from `anchor` towards `raw`.
+ *
+ * Room vertices are always grid-bound. Projecting onto an arbitrary geometric
+ * ray and snapping x/y independently would break its angle, so the eight valid
+ * directions use integer grid vectors instead: cardinal (1,0) and diagonal
+ * (1,1) variants. `limit` caps the number of steps without clipping one axis
+ * independently, which keeps diagonals at exactly 45° at the canvas edge too.
+ */
+export function snapSegment45(
+  anchor: number[], raw: number[], pitch: number, limit = Infinity,
+): number[] {
+  if (!(pitch > 0) || !anchor?.every(Number.isFinite) || !raw?.every(Number.isFinite)) {
+    return [raw[0], raw[1]];
+  }
+  const dx = raw[0] - anchor[0], dy = raw[1] - anchor[1];
+  if (Math.abs(dx) + Math.abs(dy) <= 1e-12) return [anchor[0], anchor[1]];
+  const step = Math.PI / 4;
+  let angle = Math.atan2(dy, dx);
+  if (angle < 0) angle += Math.PI * 2;
+  const octant = Math.floor(angle / step + 0.5) % 8;
+  const directions = [
+    [1, 0], [1, 1], [0, 1], [-1, 1],
+    [-1, 0], [-1, -1], [0, -1], [1, -1],
+  ];
+  const [vx, vy] = directions[octant];
+  const denom = vx * vx + vy * vy;
+  let steps = Math.max(0, Math.round((dx * vx + dy * vy) / (pitch * denom)));
+  if (Number.isFinite(limit) && limit >= 0) {
+    const maxSteps = (origin: number, direction: number): number => {
+      if (!direction) return Infinity;
+      const room = direction > 0 ? limit - origin : origin + limit;
+      return Math.max(0, Math.floor((room + pitch * 1e-9) / pitch));
+    };
+    steps = Math.min(steps, maxSteps(anchor[0], vx), maxSteps(anchor[1], vy));
+  }
+  return [anchor[0] + vx * steps * pitch, anchor[1] + vy * steps * pitch];
+}
+
 /** Real-world length (cm) of a segment given the grid pitch (render units per cell) and cm per cell. */
 export function segmentCm(a: number[], b: number[], gridPitch: number, cellCm: number): number {
   const cells = Math.hypot(b[0] - a[0], b[1] - a[1]) / gridPitch;

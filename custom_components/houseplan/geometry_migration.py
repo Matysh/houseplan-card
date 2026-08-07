@@ -64,6 +64,16 @@ def migrate_space(space: dict[str, Any]) -> bool:
         if room.get("poly"):
             room["poly"] = [_pt(p, dx, dy, kx, ky) for p in room["poly"]]
 
+    for draft in space.get("room_drafts") or []:
+        draft["points"] = [_pt(p, dx, dy, kx, ky) for p in draft.get("points") or []]
+
+    for part in space.get("partitions") or []:
+        part["a"] = _pt(part.get("a"), dx, dy, kx, ky)
+        part["b"] = _pt(part.get("b"), dx, dy, kx, ky)
+
+    for column in space.get("wall_columns") or []:
+        column["center"] = _pt(column.get("center"), dx, dy, kx, ky)
+
     for op in space.get("openings") or []:
         op["x"] = dx + float(op.get("x", 0)) * kx
         op["y"] = dy + float(op.get("y", 0)) * ky

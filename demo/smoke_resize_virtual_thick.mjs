@@ -58,6 +58,14 @@ const res = await page.evaluate(async () => {
   const viewVirtual = sr().querySelector('.openwalls');
   out.savedVirtualBelowRealInView = !!viewBody && !!viewVirtual
     && !!(viewVirtual.compareDocumentPosition(viewBody) & Node.DOCUMENT_POSITION_FOLLOWING);
+  c._setMode('decor');
+  await upd();
+  const decorBody = sr().querySelector('.wallbodies');
+  const decorVirtual = sr().querySelector('.openwalls');
+  out.realWallsFadeBehindDecor = !!decorBody
+    && getComputedStyle(decorBody).opacity === '0.35';
+  out.virtualWallsFadeBehindDecor = !!decorVirtual
+    && getComputedStyle(decorVirtual).opacity === '0.35';
   c._setMode('plan');
   await upd();
   out.atomicThicknessBefore = c._intervalCm([550, 145, 550, 195]) === 20

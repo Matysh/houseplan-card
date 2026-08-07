@@ -221,7 +221,13 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       the wall-snap pull is capped, accidental clicks do not pick a wall [manual]
 - [ ] Esc / Ctrl+Z removes the last dot (and its line); Reset clears the path
 - [ ] Closing the contour (click the first dot, ≥4 points) opens the room dialog
+- [ ] Ctrl/Cmd+click closes the current endpoint back to the first point without
+      adding another vertex. It requires at least two existing edges and refuses
+      degenerate or self-intersecting closure [auto: smoke_editor_tabs]
 - [ ] Room dialog: area list shows only unassigned areas; picking an area prefills the name
+- [ ] Room dialog uses the medium width and its body has no horizontal overflow;
+      long options stay inside it at desktop and narrow widths [auto:
+      smoke_editor_tabs; manual: narrow viewport]
 - [ ] "No area" room (decorative) requires a name; saves with `area: null`
 - [ ] Cancel in the dialog reopens the contour (last point undone)
 - [ ] Saving a room with an area: area devices appear with icons; positions are fixed into the layout [manual]
@@ -676,7 +682,7 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       open is previewed (amber dashed); an already-open boundary previews red
       solid (the click will close it); preview follows the cursor and clears
       on miss [auto: smoke_openwall]
-- [ ] Open boundaries (v1.37.0): the Plan editor's "Open boundary" tool
+- [ ] Open boundaries (v1.37.0): the Plan editor's "Virtual wall" tool
       toggles a virtual wall between two rooms by clicking their shared wall
       (pull like Split; miss → toast); open stretches render dashed (amber
       highlight while the tool is active); glow light floods the whole
@@ -699,6 +705,11 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       since v1.52.0, target colours reach only the glow/activity effect; without explicit Toggle
       the click opens info as usual; the info card lists targets with states;
       locks/other domains are filtered out of controls [auto: smoke_controls]
+- [ ] Marker controls are lossless across Open → Save: their stored order,
+      duplicates and temporarily unknown/vendor targets survive unchanged;
+      only the marker's own bound/device entities are removed, while runtime
+      toggle still filters to currently controllable targets
+      [auto: smoke_controls; unit: devices.test.mjs]
 - [ ] Bound-entity self-control regression: a marker bound to
       `entity:switch.hood` with legacy `controls: ["switch.hood"]` is not a
       light source/group, opens with no self chip and its explicit Toggle acts
@@ -734,8 +745,10 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       add, show all, icon rules; the layout-wiping Reset is gone [auto: smoke_editor_tabs]
 - [ ] Grid in all editors + decor fade (v1.33.1): the dot grid shows in the
       Device and Background editors too (instant "I'm editing" cue), not in
-      View; in the Background editor rooms/devices/openings/labels fade to 35%
-      while decor shapes stay fully opaque; no fade in the other editors [auto: smoke_decor / smoke_grid_fade]
+      View; in the Background editor rooms/devices/openings/labels plus solid,
+      thick and dashed virtual walls fade to 35% while decor shapes stay fully
+      opaque; no fade in the other editors [auto: smoke_decor / smoke_grid_fade /
+      smoke_resize_virtual_thick]
 - [ ] Background editor (unified after v1.59.2): it always opens on Select and
       has Select / optional Plan backdrop / Line / Rectangle / Oval / Text /
       Furniture / Erase, colour+opacity, physical line width, optional
@@ -786,11 +799,19 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       width the two action groups wrap without overlap [manual]
 - [ ] General settings gear (v1.30.3): the header cog is visible in every mode
       (admins), opens the palette dialog from View too [auto: smoke_gear_tabs / smoke_gs_always]
-- [ ] Editor tabs (v1.30.2): only two tabs — "Plan editor" / "Device editor"
-      (no View button; View is the default state); clicking a tab opens its
+- [ ] Editor tabs: three tabs — "Plan editor" / "Device editor" /
+      "Background editor" (no View button; View is the default state); clicking a tab opens its
       bottom toolbar (Devices got its own bar with add/show-all/reset/rules);
       the bar and the active tab both show an X that returns to View; re-click
       on the active tab does nothing; Plan↔Devices switches directly [auto: smoke_editor_tabs]
+- [ ] Navigation motion is short and coherent for space changes, View↔editor
+      and editor↔editor. A same-space editor switch fades in the new toolbar
+      and interpolates from the outgoing measured height to the incoming one,
+      including wrapped multi-row bars and a rapid second switch. Hidden editor
+      chrome is `aria-hidden`, inert and cannot receive pointer input;
+      disconnect/reconnect clears transient slide/resume
+      classes instead of replaying a stale transition [auto: smoke_editor_tabs,
+      smoke_preloader_lifecycle, smoke_zoom_out]
 - [ ] Space gear (v1.30.1): the cog next to the space name is visible in every
       mode (admins only), vertically centered with the tab text; clicking it
       opens space settings without switching the tab; "+" tab stays Plan-only [auto: smoke_gear_tabs / smoke_gs_always]
@@ -1058,6 +1079,10 @@ require hands on real hardware — they remain for the human pass.
       Ctrl+Y redo it, and a new geometry edit after Undo clears the redo branch.
       Fifty committed operations remain available in the shared stack
       [auto: command-stack.test]
+- [ ] History shortcuts are layout-independent without conflating physical and
+      labelled keys: Cyrillic Ctrl/Cmd+Z works, QWERTZ Ctrl+Z/Ctrl+Y pick the
+      labelled command, and AZERTY Ctrl+W never becomes Undo. Focused inputs
+      keep native history [auto: smoke_editor_tabs]
 - [ ] A moved shared wall with a partial virtual middle and thick solid
       remainders keeps the dash and both thickness values during live drag and
       after release; Undo restores rooms, `open_spans` and `walls` together
@@ -1282,6 +1307,12 @@ require hands on real hardware — they remain for the human pass.
       second label is created. Press empty canvas, or a line/rectangle, and a
       NEW label is created there instead (non-text shapes stay inert under
       drawing tools) [auto: smoke_decor_text, smoke_decor]
+- [ ] **A text label has one atomic hit area where supported**: in Chromium,
+      clicks between glyphs and on multiline gaps still select/edit/erase the
+      whole label via `pointer-events: bounding-box`. Gecko/WebKit fall back to
+      `visiblePainted`: glyph clicks must still edit the existing label instead
+      of creating a new one, while gap hit-testing may degrade to painted ink
+      [auto: smoke_decor_text (Chromium); manual: Firefox/Safari fallback]
 - [ ] **A label is still a caption, not a device**: no tap action, no icon, no
       part in room averages; it is not offered in any of the device pickers
       [manual]
@@ -1309,7 +1340,9 @@ require hands on real hardware — they remain for the human pass.
       vertex and a resize handle with the mouse — each ends exactly on a grid
       node, never between two. An opening is wall-bound rather than freely
       grid-bound: it stays ON its wall, at a whole number of steps along it.
-      Holding **Shift** must not change any resulting position
+      Holding **Shift** must not bypass the grid. For a room-outline vertex it
+      additionally selects the nearest grid node on a 45° ray from the previous
+      point; all other positions keep their existing modifier behaviour
       [auto: smoke_grid_snap]
 - [ ] **«Выровнять всё по сетке»** (owner 2026-08-04): gear → general settings →
       **Grid** → the button. On an already tidy plan it says everything is
@@ -1322,7 +1355,9 @@ require hands on real hardware — they remain for the human pass.
 - [ ] Optimizer migration safety: legacy decor width/text size is clamped to
       the backend schema, `fill: true` receives explicit fill style, invalid
       legacy `plan_scale` is preserved for repair, an already canonical plan is
-      a no-op, and a future model version is never downgraded
+      a no-op, a future model version is never downgraded, and zero/null/negative
+      `cell_cm` is repaired to the 5 cm default (positive subminimum values clamp
+      to 0.1 cm)
       [unit: plan-optimizer.test.mjs; backend: test_validation.py]
 
 ## Backdrop picture: move & scale (docs/BACKDROP.md, dev)
@@ -1577,7 +1612,7 @@ require hands on real hardware — they remain for the human pass.
       field is the immediately following toolbar element, before Merge. The
       field still defaults to 15 cm and disappears when another tool is selected
       [auto: smoke_draw_wall_thickness]
-- [ ] **Tool + hover + input**: Plan editor → Wall thickness. Hover highlights
+- [ ] **Tool + hover + input**: Plan editor → Thickness. Hover highlights
       the whole wall; click opens the cm/in field; empty/0 clears; Esc closes
       without applying; «Apply to all walls of this room» fills every allowed
       edge [auto: smoke_wall_thickness]
@@ -1683,6 +1718,39 @@ require hands on real hardware — they remain for the human pass.
       the toilets [auto: smoke_furniture checks the attributes; manual for the
       rule itself]
 
+## Unfinished outlines, partitions and columns (dev, unreleased)
+
+- [ ] **Persistence and joining**: draw two unfinished outlines, switch tools,
+      reload and resume each from either end. Continue one into the free end of
+      the other: one draft id remains, segment thicknesses keep their order,
+      and an endpoint-to-endpoint loop opens the room dialog. A click in the
+      middle never creates a branch [auto: smoke_free_walls; backend schema].
+- [ ] **Creation limits and validation**: 1/100 cm partitions and 1/150 cm
+      columns save exactly. Zero, NaN and 101/151 cm block the final click with
+      a range toast and create no history entry. Client caps match backend:
+      200 drafts, 500 points per draft, 2000 total draft segments, 2000
+      partitions and 500 columns [auto: backend validation + smoke_free_walls].
+- [ ] **Select gestures**: creation tools click through existing physical
+      bodies. Select gives at least a 24 px target, cycles overlaps on repeated
+      clicks and moves a partition rigidly on the grid. Escape/pointercancel
+      restores the pre-drag state. A square column rotates in 5° steps (Shift
+      free); a circle has no rotation handle [auto: smoke_free_walls; manual].
+- [ ] **Delete contract**: Delete on a selected draft asks once and removes the
+      whole outline. Its properties dialog has distinct “Delete segment” and
+      “Delete entire outline” actions; a middle-segment split respects the
+      draft-count cap [auto: smoke_free_walls; manual dialog labels].
+- [ ] **Area and light**: overlapping bodies are subtracted once from clean
+      area; closed partition rings keep the enclosed floor; bodies outside all
+      rooms create no paper. Glow does not cross a long nearby partition and a
+      source inside masonry lights nothing. Window rays are blocked by the same
+      bodies. `show_borders: false` changes paint only [auto:
+      physical-geometry.test; manual visual].
+- [ ] **Lifecycle/performance**: an external config revision cancels live
+      move/rotate state before replacing geometry. Drag preview performs no
+      polygon boolean work; clean floor and Glow clips are reused until the
+      config/space/source changes [auto: editor/preloader smokes; performance
+      profile for a dense plan].
+
 ## Hiding layers: decor, openings, virtual walls (docs/UX-MODES.md, dev, unreleased)
 
 - [ ] **«Скрыть декоративный слой»** (owner 2026-08-05): a space with lines,
@@ -1699,7 +1767,7 @@ require hands on real hardware — they remain for the human pass.
       open/closed in the room card, and the resize tool still refuses to
       shorten a wall past its opening [auto: smoke_hide_layers, smoke_glow]
 - [ ] **Virtual walls follow the borders switch only in View** (owner 2026-08-05): make an
-      open boundary between two rooms (Plan → «Открытая граница»), then turn
+      open boundary between two rooms (Plan → «Виртуальная стена»), then turn
       **«Всегда отображать границы комнат» OFF**. The dashed stretch goes with
       the borders — no floating dashes on a plan that draws no walls. Turn the
       borders back on and it returns. In Plan, Devices and Background editors

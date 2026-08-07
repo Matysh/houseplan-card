@@ -1,5 +1,48 @@
 # Changelog
 
+## Unreleased
+
+## v1.60.2-beta.1 — 2026-08-07
+
+- The final review follow-up makes geometry cache invalidation root-safe and
+  LRU-bounded, keeps pan/pinch available over saved outline hit targets,
+  rejects partially numeric editor values, preserves absent column angles in
+  Optimize Plans and gives rotation handles a full 24 px touch target. Boolean
+  geometry now has a lossless sequential fallback, and draft joining plus
+  editor-to-editor height animation are covered by realistic browser smokes.
+
+- The Plan editor now supports persistent unfinished room outlines,
+  room-independent partitions and square/circular columns. They stay on the
+  grid, participate in clean floor area, Glow and window-ray occlusion, and
+  share the geometry Undo/Redo stack. Select provides drag, properties and a
+  rotation handle for square columns; saved outlines can be resumed or joined
+  endpoint-to-endpoint. Client and backend limits are aligned and invalid
+  thicknesses are rejected visibly instead of being silently clamped.
+- Audit hardening adds cached clean-floor/light geometry, complete blocking for
+  a light embedded in masonry, leak-free point shadows behind long partitions,
+  strict column validation, reconnect gesture cancellation and browser smoke
+  coverage for the new physical objects.
+- While drawing a room outline, Shift now locks the new segment to the nearest
+  45° direction. The preview and committed vertex match, and the endpoint
+  remains strictly grid-bound.
+- The Plan editor toolbar now uses the compact labels Merge, Virtual wall,
+  Physical wall and Thickness. Undo and Redo are icon-only while retaining
+  localized tooltips and accessible names.
+- The Background editor now de-emphasizes physical, thick and dashed virtual
+  walls to the same 35% opacity as every other non-decor plan layer.
+- Switching between editors on the same space now visibly fades in the new
+  toolbar and interpolates its measured height. Different wrapping and tool
+  composition no longer make the plan jump; rapid switches continue smoothly
+  from the current intermediate height.
+- Audit hardening makes editor history unambiguous on QWERTZ/AZERTY and
+  non-Latin layouts, gives SVG text an atomic Gecko/WebKit hit-test fallback,
+  and fully resets or disables hidden navigation/editor chrome after lifecycle
+  changes. Exact header sizing no longer leaves a stale viewport.
+- Opening and saving a marker no longer drops ordered, duplicate or temporarily
+  unknown external controls. Climate recognizes preheating/defrosting and
+  ignores vendor pseudo-actions before using its documented mode fallback;
+  Optimize Plans repairs zero, null and negative grid scales to the 5 cm default.
+
 ## v1.60.1-beta.1 — 2026-08-07
 
 - Climate markers whose integrations omit `hvac_action` now fall back to the
