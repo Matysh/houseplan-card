@@ -4,7 +4,7 @@
  */
 import { iconFor, iconFromDeviceClasses, DOMAIN_PRIORITY, FALLBACK_ICON, type CompiledIconRule, EXCLUDED_DOMAINS } from './rules';
 import { averageLqi, isControllable } from './logic';
-import { isSemanticBinaryEntity } from './device-visual';
+import { isDevicePowerSwitch, isSemanticBinaryEntity } from './device-visual';
 import type { DevItem, Marker, ServerConfig } from './types';
 
 /** Build context: a slice of hass + config resolution. */
@@ -85,7 +85,8 @@ const visibleFirst = (items: DeviceEntityCandidate[]): DeviceEntityCandidate[] =
  *   1) uncategorised HA entities (all entities only as a fallback);
  *   2) a whole-device state domain, if present;
  *   3) semantic binary signals (presence/contact/motion/safety/running);
- *   4) switches only when the device has no stronger state-bearing role;
+ *   4) one representative switch when the device has no stronger
+ *      state-bearing role;
  *   5) passive entities together, so one unavailable sensor does not make the
  *      whole marker unavailable while another reading is alive.
  */
@@ -106,7 +107,18 @@ export function resolvedDeviceStateEntities(hass: any, entIds: readonly string[]
   if (semanticBinary.length) return visibleFirst(semanticBinary).map((item) => item.eid);
 
   const switches = pool.filter((item) => item.eid.startsWith('switch.'));
-  if (switches.length) return visibleFirst(switches).map((item) => item.eid);
+  if (switches.length) {
+    // A switch-only integration commonly exposes one power relay plus a set
+    // of feature toggles (night mode, voice enhancement, child lock, etc.).
+    // HA gives us no device-level state and some third-party integrations do
+    // not mark those feature entities as `entity_category: config`. Combining
+    // every switch would therefore mean "any option enabled = device working".
+    // Prefer a dedicated HA Power entity when metadata identifies one, then
+    // use the same single representative that primaryEntity/actions use.
+    // Entity-bound markers remain exact because their list has one member.
+    const ordered = visibleFirst(switches);
+    return [(ordered.find((item) => isDevicePowerSwitch(hass, item.eid)) || ordered[0]).eid];
+  }
 
   // Passive/fallback entities are all useful for aggregate availability. Keep
   // the historical domain order only as a stable ordering for primaryEntity.

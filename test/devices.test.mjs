@@ -346,6 +346,45 @@ test('media role shields a marker from auxiliary light and switch entities', () 
   );
 });
 
+test('switch-only device uses one representative instead of aggregating feature toggles', () => {
+  const hass = mkHass({
+    entities: {
+      'switch.soundbar_power': { entity_id: 'switch.soundbar_power' },
+      'switch.soundbar_smart_mode': { entity_id: 'switch.soundbar_smart_mode' },
+      'switch.soundbar_pure_voice': { entity_id: 'switch.soundbar_pure_voice' },
+    },
+    states: {
+      'switch.soundbar_power': { state: 'off', attributes: {} },
+      'switch.soundbar_smart_mode': { state: 'off', attributes: {} },
+      'switch.soundbar_pure_voice': { state: 'on', attributes: {} },
+    },
+  });
+  const entities = [
+    'switch.soundbar_power',
+    'switch.soundbar_smart_mode',
+    'switch.soundbar_pure_voice',
+  ];
+  assert.deepEqual(resolvedDeviceStateEntities(hass, entities), ['switch.soundbar_power']);
+  assert.equal(primaryEntity(hass, entities, 'mdi:soundbar'), 'switch.soundbar_power');
+});
+
+test('switch-only resolver prefers a dedicated Power entity over registry order', () => {
+  const hass = mkHass({
+    entities: {
+      'switch.receiver_night_mode': { entity_id: 'switch.receiver_night_mode' },
+      'switch.receiver_power': { entity_id: 'switch.receiver_power' },
+    },
+    states: {
+      'switch.receiver_night_mode': { state: 'on', attributes: {} },
+      'switch.receiver_power': { state: 'off', attributes: { friendly_name: 'Receiver Power' } },
+    },
+  });
+  assert.deepEqual(
+    resolvedDeviceStateEntities(hass, ['switch.receiver_night_mode', 'switch.receiver_power']),
+    ['switch.receiver_power'],
+  );
+});
+
 test('resolvedDeviceStateEntities: passive readings aggregate availability instead of picking the first', () => {
   const hass = mkHass({
     entities: {

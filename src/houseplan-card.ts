@@ -104,7 +104,7 @@ import { optimizePlans, type OptimizeReport } from './plan-optimizer';
 import { langOf, t, type I18nKey } from './i18n';
 import { CommandStack } from './command-stack';
 import {
-  combineVisualSamples, edgeActivity, entityVisualSample,
+  combineVisualSamples, edgeActivity, entityVisualSample, entityVisualSamplesForDevice,
   type DeviceActivity, type DeviceVisualState, type EntityVisualSample,
 } from './device-visual';
 import type { DecorShape, DecorStyle } from './editors/decor/types';
@@ -116,7 +116,7 @@ import {
   type DecorBox, type SnapGeometry,
 } from './editors/decor/geometry';
 
-const CARD_VERSION = '1.60.2-beta.1';
+const CARD_VERSION = '1.60.2-beta.2';
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
 const CELL_CM_MIN = 0.1;
@@ -2732,22 +2732,24 @@ class HouseplanCard extends LitElement {
    * functional source.
    */
   private _visualSamples(d: DevItem): EntityVisualSample[] {
-    const ids: string[] = [];
+    let samples: EntityVisualSample[] = [];
     const cover = this._coverIndicator(d);
     const lights = resolvedLightSources(this.hass, [d]);
-    if (cover) ids.push(cover);
-    else if (lights.length) ids.push(...lights.map((source) => source.eid));
+    if (cover) samples.push(entityVisualSample(this.hass, cover));
+    else if (lights.length) {
+      samples.push(...lights.map((source) => entityVisualSample(this.hass, source.eid)));
+    }
     else {
       const stateEntities = resolvedDeviceStateEntities(this.hass, d.entities);
-      if (stateEntities.length) ids.push(...stateEntities);
-      else if (d.primary) ids.push(d.primary);
+      const ids = stateEntities.length ? stateEntities : d.primary ? [d.primary] : [];
+      samples = entityVisualSamplesForDevice(this.hass, ids, d.entities);
     }
     // Safety wins independently of the presentation source.
     for (const eid of d.entities || []) {
       const sample = entityVisualSample(this.hass, eid);
-      if (sample.status === 'alarm' && !ids.includes(eid)) ids.push(eid);
+      if (sample.status === 'alarm' && !samples.some((item) => item.eid === eid)) samples.push(sample);
     }
-    return ids.map((eid) => entityVisualSample(this.hass, eid));
+    return samples;
   }
 
   /** One semantic result feeds the plate and every non-critical activity effect. */
@@ -6694,6 +6696,7 @@ class HouseplanCard extends LitElement {
   private _renderDecorLayer(): TemplateResult {
     const W = NORM_W, H = this._decorH;
     const editing = this._mode === 'decor';
+    const erasing = editing && this._decorTool === 'erase';
     const shapes = this._decorList.map((sh) => {
       const cls = 'dshape' + (editing && this._decorSel === sh.id ? ' dsel' : '');
       const style = this._decorResolvedStyle(sh);
@@ -6707,7 +6710,10 @@ class HouseplanCard extends LitElement {
         return svg`<line class="${cls}" data-hp="decor" data-id="${sh.id}" data-kind="${sh.kind}"
           x1="${sh.x1 * W}" y1="${sh.y1 * H}" x2="${sh.x2 * W}" y2="${sh.y2 * H}"
           stroke="${style.color}" stroke-opacity="${style.opacity}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"
-          @pointerdown=${down} @dblclick=${dbl}></line>`;
+          @pointerdown=${down} @dblclick=${dbl}></line>
+          ${erasing ? svg`<line class="dshape derasehit" data-hp="decor" data-id="${sh.id}" data-kind="${sh.kind}"
+            x1="${sh.x1 * W}" y1="${sh.y1 * H}" x2="${sh.x2 * W}" y2="${sh.y2 * H}"
+            @pointerdown=${down}></line>` : nothing}`;
       if (sh.kind === 'rect') {
         const cx = (sh.x + sh.w / 2) * W, cy = (sh.y + sh.h / 2) * H;
         const ang = normalizeAngle(sh.angle);
@@ -6716,7 +6722,10 @@ class HouseplanCard extends LitElement {
           stroke="${style.color}" stroke-opacity="${style.opacity}" stroke-width="${strokeWidth}"
           fill="${style.fill ? style.fillColor : 'none'}" fill-opacity="${style.fill ? style.fillOpacity : 0}"
           transform=${ang ? `rotate(${ang} ${cx} ${cy})` : nothing}
-          @pointerdown=${down} @dblclick=${dbl}></rect>`;
+          @pointerdown=${down} @dblclick=${dbl}></rect>
+          ${erasing ? svg`<rect class="dshape derasehit" data-hp="decor" data-id="${sh.id}" data-kind="${sh.kind}"
+            x="${sh.x * W}" y="${sh.y * H}" width="${sh.w * W}" height="${sh.h * H}"
+            transform=${ang ? `rotate(${ang} ${cx} ${cy})` : nothing} @pointerdown=${down}></rect>` : nothing}`;
       }
       if (sh.kind === 'ellipse') {
         const cx = (sh.x + sh.w / 2) * W, cy = (sh.y + sh.h / 2) * H;
@@ -6726,7 +6735,10 @@ class HouseplanCard extends LitElement {
           rx="${(sh.w / 2) * W}" ry="${(sh.h / 2) * H}" stroke="${style.color}" stroke-opacity="${style.opacity}" stroke-width="${strokeWidth}"
           fill="${style.fill ? style.fillColor : 'none'}" fill-opacity="${style.fill ? style.fillOpacity : 0}"
           transform=${ang ? `rotate(${ang} ${cx} ${cy})` : nothing}
-          @pointerdown=${down} @dblclick=${dbl}></ellipse>`;
+          @pointerdown=${down} @dblclick=${dbl}></ellipse>
+          ${erasing ? svg`<ellipse class="dshape derasehit" data-hp="decor" data-id="${sh.id}" data-kind="${sh.kind}"
+            cx="${cx}" cy="${cy}" rx="${(sh.w / 2) * W}" ry="${(sh.h / 2) * H}"
+            transform=${ang ? `rotate(${ang} ${cx} ${cy})` : nothing} @pointerdown=${down}></ellipse>` : nothing}`;
       }
       if (sh.kind === 'furniture') {
         // One path per piece, generated at the shape's REAL size, so the
@@ -6744,7 +6756,10 @@ class HouseplanCard extends LitElement {
           data-kind="${sh.kind}" data-symbol="${sh.symbol}" d="${d}" transform=${tr}
           stroke="${style.color}" stroke-opacity="${style.opacity}" stroke-width="${strokeWidth}" fill="none"
           stroke-linecap="round" stroke-linejoin="round"
-          @pointerdown=${down} @dblclick=${dbl}></path>`;
+          @pointerdown=${down} @dblclick=${dbl}></path>
+          ${erasing ? svg`<path class="dshape derasehit" data-hp="decor" data-id="${sh.id}"
+            data-kind="${sh.kind}" data-symbol="${sh.symbol}" d="${d}" transform=${tr}
+            @pointerdown=${down}></path>` : nothing}`;
       }
       if (sh.kind === 'text') {
         // The label is painted from the LIVE value on every render — the same
@@ -8131,16 +8146,10 @@ class HouseplanCard extends LitElement {
     return this._opMeasure || this._openingPreview?.measure || null;
   }
 
-  /** Save a room with a mandatory binding to an HA area. */
+  /** Save a room with an optional HA-area binding.
+   *  An area supplies the fallback name; a room without one needs a name. */
   private _saveRoom(): void {
-    if (!this._areaSel) return;
-    this._commitRoom();
-  }
-
-  /** Save a decorative room without an area (only a name is required). */
-  private _saveRoomNoArea(): void {
-    if (!this._nameSel.trim()) return;
-    this._areaSel = '';
+    if (!this._areaSel && !this._nameSel.trim()) return;
     this._commitRoom();
   }
 
@@ -12780,7 +12789,7 @@ class HouseplanCard extends LitElement {
     const st = d.primary ? this.hass.states[d.primary] : undefined;
     const stateTxt = st ? hassValue(this.hass, d.primary)?.text ?? st.state : null;
     const controls = (d.controls ?? d.marker?.controls ?? []).filter(isControllable);
-    return html`<hp-dialog .hass=${this.hass} .title=${d.name} .icon=${d.icon}
+    return html`<hp-dialog .hass=${this.hass} .title=${d.name} .icon=${d.icon} wide
       dismiss-on-scrim @hp-close=${() => (this._infoCard = null)}>
         <div class="body">
           ${(() => {
@@ -12852,8 +12861,7 @@ class HouseplanCard extends LitElement {
                 <ha-icon icon="mdi:open-in-new"></ha-icon>${this._t('btn.open_in_ha')}
               </button>`
             : nothing}
-          <span class="spacer"></span>
-          <button class="btn ghost" @click=${() => (this._infoCard = null)}>${this._t('btn.close')}</button>
+          <button class="btn ghost infofooter-close" @click=${() => (this._infoCard = null)}>${this._t('btn.close')}</button>
         </div>
     </hp-dialog>`;
   }
@@ -13468,6 +13476,7 @@ class HouseplanCard extends LitElement {
 
   private _renderRoomDialog(): TemplateResult {
     const edit = !!this._roomEditId;
+    const canSaveNew = !!this._areaSel || !!this._nameSel.trim();
     // the free-areas list must include the edited room's CURRENT area
     const areas = [...this._freeAreas];
     if (edit && this._areaSel && !areas.some((a) => a.area_id === this._areaSel)) {
@@ -13532,15 +13541,10 @@ class HouseplanCard extends LitElement {
             ? html`<button class="btn on" @click=${() => this._saveRoomEdit()} ?disabled=${!this._nameSel.trim()}>
                 <ha-icon icon="mdi:check"></ha-icon>${this._t('btn.save')}
               </button>`
-            : html`<button class="btn ghost" @click=${this._saveRoomNoArea} ?disabled=${!this._nameSel.trim()}
-                title=${this._t('title.no_area_room')}>
-                ${this._t('btn.no_area')}
-              </button>
-              ${!this._pendingSplit ? html`<button class="btn ghost" @click=${this._keepClosedAsPartitions}>
+            : html`${!this._pendingSplit ? html`<button class="btn ghost" @click=${this._keepClosedAsPartitions}>
                 <ha-icon icon="mdi:wall"></ha-icon>${this._t('btn.keep_as_walls')}
               </button>` : nothing}
-              <button class="btn on" @click=${this._saveRoom} ?disabled=${!this._areaSel}
-                title=${!this._areaSel ? this._t('title.choose_area') : ''}>
+              <button class="btn on room-save" @click=${this._saveRoom} ?disabled=${!canSaveNew}>
                 <ha-icon icon="mdi:check"></ha-icon>${this._t('btn.save')}
               </button>`}
         </div>

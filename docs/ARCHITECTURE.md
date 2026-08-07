@@ -478,12 +478,18 @@ hash falls back to the default.
 - **Resolved device state** (2026-08-06): HA provides states per entity, not
   one state per device. `resolvedDeviceStateEntities` therefore starts from
   uncategorised registry entities, resolves one functional role (whole-device
-  domains, then semantic binary signals, then switches), and aggregates
+  domains, then semantic binary signals, then one representative switch), and aggregates
   passive readings as the final fallback. `_visualSamples` consumes the full
   result; `primaryEntity` only selects its first member where a single action
   target is required. Integration option switches can no longer make an
   otherwise healthy device working or unavailable merely by list order. For
-  `climate`, a recognized explicit `hvac_action` is authoritative: idle remains
+  A switch-only device never aggregates sibling option switches: integrations
+  which fail to categorise night mode, voice enhancement or child lock cannot
+  paint the whole marker as working. When generic HA metadata identifies a
+  dedicated Power switch in such a composite controller, `on` is a neutral
+  powered lifecycle and `off` reuses the faded unavailable presentation; a
+  lone relay keeps normal working-state yellow. For `climate`, a recognized
+  explicit `hvac_action` is authoritative: idle remains
   neutral and heating/cooling/preheating/defrosting are working. Unknown vendor
   pseudo-actions are ignored; when no recognized action exists, a current
   non-off state advertised by `hvac_modes` (or a standard HA HVAC mode) is the

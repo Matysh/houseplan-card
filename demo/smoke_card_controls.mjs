@@ -15,6 +15,7 @@ const res = await page.evaluate(async () => {
   out.hasDev = !!dev;
   c._infoCard = dev; await c.updateComplete;
   await new Promise((resolve) => requestAnimationFrame(resolve));
+  out.infoUsesWideShell = sr().querySelector('hp-dialog')?.hasAttribute('wide') === true;
   const footer = sr().querySelector('.infofooter');
   const footerBox = footer?.getBoundingClientRect();
   const footerButtons = [...(footer?.querySelectorAll('button') || [])];

@@ -96,6 +96,8 @@ const res = await page.evaluate(async () => {
   // the same gesture must refuse a draft with fewer than two existing edges.
   const savedPath = c._path;
   const savedRoomDialog = c._roomDialog;
+  const savedNameSel = c._nameSel;
+  const savedAreaSel = c._areaSel;
   const ctrlClick = () => {
     let prevented = false;
     c._markupClick({
@@ -121,8 +123,17 @@ const res = await page.evaluate(async () => {
     && roomDialog.hasAttribute('wide');
   out.roomDialogHasNoHorizontalScroll = !!roomBody
     && roomBody.scrollWidth <= roomBody.clientWidth + 1;
+  c._nameSel = 'No-area room';
+  c._areaSel = '';
+  c.requestUpdate();
+  await c.updateComplete;
+  const noAreaSave = sr().querySelector('hp-dialog.roomdialog .room-save');
+  out.noAreaUsesRegularSave = !!noAreaSave && !noAreaSave.disabled
+    && sr().querySelectorAll('hp-dialog.roomdialog .room-save').length === 1;
   c._path = savedPath;
   c._roomDialog = savedRoomDialog;
+  c._nameSel = savedNameSel;
+  c._areaSel = savedAreaSel;
   return out;
 });
 // значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)

@@ -61,7 +61,7 @@ out.cancelWhole = (await S()).rooms.length===5; // 4 базовых + rg
 await page.evaluate((p)=>window.__card._splitClick(p), await R(0.28,0.28));
 await page.evaluate((p)=>window.__card._splitClick(p), await R(0.25,0.0625));
 await page.evaluate((p)=>window.__card._splitClick(p), await R(0.25,0.5));
-await page.evaluate(()=>{const c=window.__card; c._nameSel='Cabinet'; c._saveRoomNoArea();});
+await page.evaluate(()=>{const c=window.__card; c._nameSel='Cabinet'; c._areaSel=''; c._saveRoom();});
 s = await S();
 out.splitRooms = s.rooms.length===6;                      // 4 базовых + rg разрезанная надвое
 out.bigKeepsLiving = s.rooms.some(r=>r.id==='r1' && r.area==='living_room');

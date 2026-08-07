@@ -206,6 +206,31 @@ const res = await page.evaluate(async () => {
   out.objectDialogSavesStyle = editedProbe?.color === '#123456'
     && editedProbe?.width_cm === 6.5 && editedProbe?.width === undefined
     && c._decorShapeDialog === null;
+  // Erase gets a constant screen-space target around hairlines. Exercise the
+  // browser's actual SVG hit-test 6 px away from a sub-pixel painted stroke;
+  // dispatching directly to the proxy would only prove that its listener exists.
+  c._replaceDecor('dcprobe', { width_cm: 0.1, width: undefined });
+  c._decorTool = 'erase'; await c.updateComplete;
+  const paintedProbe = sr().querySelector('.decorlayer line.dshape:not(.derasehit)');
+  const eraseHit = sr().querySelector('.decorlayer line.derasehit');
+  const matrix = paintedProbe?.getScreenCTM();
+  let picked = null;
+  if (paintedProbe && eraseHit && matrix) {
+    const p1 = new DOMPoint(+paintedProbe.getAttribute('x1'), +paintedProbe.getAttribute('y1')).matrixTransform(matrix);
+    const p2 = new DOMPoint(+paintedProbe.getAttribute('x2'), +paintedProbe.getAttribute('y2')).matrixTransform(matrix);
+    const dx = p2.x - p1.x, dy = p2.y - p1.y, len = Math.hypot(dx, dy) || 1;
+    picked = sr().elementFromPoint((p1.x + p2.x) / 2 - (dy / len) * 6,
+      (p1.y + p2.y) / 2 + (dx / len) * 6);
+  }
+  out.eraseHairlineHasWideHitTarget = picked === eraseHit
+    && getComputedStyle(eraseHit).strokeWidth === '16px'
+    && getComputedStyle(eraseHit).pointerEvents === 'stroke';
+  picked?.dispatchEvent(new PointerEvent('pointerdown', {
+    bubbles: true, composed: true, cancelable: true, pointerId: 45, button: 0, isPrimary: true,
+  }));
+  await c.updateComplete;
+  out.eraseWideHitOpensConfirmation = c._decorEraseConfirm?.id === 'dcprobe';
+  c._decorEraseConfirm = null;
   c._decorSel = null;
   c._curSpaceCfg.decor = decorBefore;                 // сцена как была до пробы
   c._decorTool = 'select'; await c.updateComplete;

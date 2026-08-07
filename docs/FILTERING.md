@@ -128,7 +128,13 @@ source precedence is (`_visualSamples` / `_actEntity`):
    separately de-duplicate and keep only currently controllable entities.
 3. otherwise the device's **resolved state role**
    (`resolvedDeviceStateEntities`): functional device domains first, then
-   semantic binary signals, then switches, then passive readings together.
+   semantic binary signals, then one representative switch, then passive
+   readings together. A switch-only device does not aggregate sibling feature
+   toggles into its working state; this covers integrations which expose power,
+   modes and options as uncategorised peer switches. If HA metadata identifies
+   a dedicated Power entity in that composite controller, Power=on is neutral
+   and Power=off uses the existing faded unavailable style. A lone relay is
+   unchanged and remains yellow while on.
    `primaryEntity` is only the first entity of this same set for actions which
    require one target; it no longer defines marker availability by itself.
 

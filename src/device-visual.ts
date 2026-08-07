@@ -84,6 +84,26 @@ const unavailable = (state: string): boolean =>
 
 const lower = (v: unknown): string => String(v ?? '').trim().toLowerCase();
 
+/**
+ * A dedicated whole-device power switch, as opposed to a relay whose `on`
+ * state is the useful work itself. This uses generic HA registry/state
+ * metadata only; no integration, model or device-name exception is involved.
+ */
+export function isDevicePowerSwitch(hass: any, eid: string): boolean {
+  if (!eid.startsWith('switch.')) return false;
+  const reg = hass?.entities?.[eid] || {};
+  const st = hass?.states?.[eid];
+  const objectId = eid.slice('switch.'.length).toLowerCase();
+  if (/(?:^|_)(?:main_)?power$/.test(objectId)) return true;
+  const exact = [reg.translation_key, reg.original_name, reg.name]
+    .map(lower)
+    .some((value) => ['power', 'main power', 'power switch', 'питание'].includes(value));
+  if (exact) return true;
+  const friendly = lower(st?.attributes?.friendly_name);
+  return /(?:^|[\s._-])(?:main[\s._-]+)?power$/.test(friendly)
+    || /(?:^|[\s._-])питание$/.test(friendly);
+}
+
 /** Best recognised actual-work attribute exposed by integrations. Vendor
  * mode/options such as `current_operation: eco` are not action signals and
  * must not suppress a climate entity's enabled-mode fallback. */
@@ -214,6 +234,35 @@ export function entityVisualSample(hass: any, eid: string): EntityVisualSample {
     return { ...base, status: 'working', activity: 'running' };
   }
   return base;
+}
+
+/**
+ * Classify a resolved device role with the small amount of topology that an
+ * entity alone cannot provide. A switch-only controller with several peer
+ * switches and a dedicated Power entity is a powered appliance: its feature
+ * toggles do not define device activity, Power=on is neutral, and Power=off
+ * reuses the existing unavailable/faded presentation. A lone relay remains a
+ * normal working switch.
+ */
+export function entityVisualSamplesForDevice(
+  hass: any,
+  resolvedEids: readonly string[],
+  allEids: readonly string[],
+): EntityVisualSample[] {
+  const samples = resolvedEids.map((eid) => entityVisualSample(hass, eid));
+  const uncategorisedSwitches = allEids.filter((eid) =>
+    eid.startsWith('switch.') && !hass?.entities?.[eid]?.entity_category,
+  );
+  const lifecycle = resolvedEids.length === 1
+    && uncategorisedSwitches.length > 1
+    && isDevicePowerSwitch(hass, resolvedEids[0]);
+  if (!lifecycle) return samples;
+  return samples.map((sample) => {
+    if (sample.availability === 'unavailable') return sample;
+    return sample.state === 'off'
+      ? { ...sample, availability: 'unavailable', status: 'neutral', activity: 'none', edge: 'none' }
+      : { ...sample, status: 'neutral', activity: 'none', edge: 'none' };
+  });
 }
 
 /** Combine the entities that jointly describe one marker. */

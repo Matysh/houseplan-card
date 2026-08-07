@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## v1.60.2-beta.2 — 2026-08-08
+
+- Composite switch-only devices now use one representative lifecycle entity
+  instead of treating every uncategorised feature toggle as whole-device
+  activity. A dedicated Power switch is selected from generic Home Assistant
+  metadata: powered-on appliances stay neutral, while off/unavailable ones use
+  the existing faded presentation. Standalone relays retain their normal
+  yellow working state.
+- Device information uses the wide responsive dialog shell and a wrapping
+  footer which keeps Edit, Open in HA and Close aligned on narrow screens.
+- New Room has one save path: choosing “No area” in the area list and entering
+  a name enables the regular Save action and stores `area: null`; the duplicate
+  “No area” footer button has been removed.
+- Erase in the Background editor gives thin lines and outlined shapes an
+  invisible 16 px screen-space target without changing their appearance. The
+  target remains usable at every zoom level.
+
 ## v1.60.2-beta.1 — 2026-08-07
 
 - The final review follow-up makes geometry cache invalidation root-safe and

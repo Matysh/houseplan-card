@@ -4,6 +4,7 @@ import {
   combineVisualSamples,
   edgeActivity,
   entityVisualSample,
+  entityVisualSamplesForDevice,
 } from '../test-build/device-visual.js';
 
 const hass = (states) => ({
@@ -75,6 +76,35 @@ test('media players express power without treating playback as work', () => {
       entityVisualSample(h, 'media_player.speaker'),
     ),
     { availability: 'unavailable', status: 'neutral', activity: 'none' },
+  );
+});
+
+test('a composite Power switch is a neutral lifecycle, while a lone relay still works', () => {
+  const h = {
+    ...hass({
+      'switch.soundbar_power': { state: 'off', attributes: { friendly_name: 'Soundbar Power' } },
+      'switch.soundbar_pure_voice': { state: 'on' },
+      'switch.relay': { state: 'on' },
+    }),
+    entities: {
+      'switch.soundbar_power': {},
+      'switch.soundbar_pure_voice': {},
+      'switch.relay': {},
+    },
+  };
+  const soundbarIds = ['switch.soundbar_power', 'switch.soundbar_pure_voice'];
+  assert.deepEqual(
+    combineVisualSamples(entityVisualSamplesForDevice(h, ['switch.soundbar_power'], soundbarIds)),
+    { availability: 'unavailable', status: 'neutral', activity: 'none' },
+  );
+  h.states['switch.soundbar_power'].state = 'on';
+  assert.deepEqual(
+    combineVisualSamples(entityVisualSamplesForDevice(h, ['switch.soundbar_power'], soundbarIds)),
+    { availability: 'available', status: 'neutral', activity: 'none' },
+  );
+  assert.equal(
+    combineVisualSamples(entityVisualSamplesForDevice(h, ['switch.relay'], ['switch.relay'])).status,
+    'working',
   );
 });
 

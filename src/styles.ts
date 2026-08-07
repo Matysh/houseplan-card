@@ -992,6 +992,21 @@ export const cardStyles = css`
     .stage.mode-decor.dtool-text .decorlayer .dshape.dtext {
       cursor: text;
     }
+    /* Erasing a hairline must not require pixel-perfect aim. The duplicate
+       geometry is invisible and exists only while Erase is active. A
+       non-scaling stroke keeps the target comfortably wide at every zoom. */
+    .decorlayer .derasehit {
+      fill: none;
+      stroke: transparent;
+      stroke-width: 16px;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
+    .stage.mode-decor.dtool-erase .decorlayer .derasehit {
+      pointer-events: stroke;
+    }
     .decorlayer .dsel {
       filter: drop-shadow(0 0 3px var(--hp-accent));
     }
@@ -2515,16 +2530,20 @@ export const cardStyles = css`
       .editorchrome-inner.nav-enter,
       .editorchrome-inner.nav-exit { animation: none; }
     }
-    /* Device info can have Edit + Open in HA + Close. A small HA dialog is
-       narrower than those three Russian-labelled actions; without wrapping,
-       HA's end-aligned footer pushed the first button outside the surface. */
+    /* Device info can have Edit + Open in HA + Close. It uses a wide dialog;
+       wrapping remains as a phone fallback, but without a flex spacer (which
+       used to strand Edit alone on the first line). */
     hp-dialog .row.infofooter {
       align-items: center;
+      justify-content: flex-start;
       flex-wrap: wrap;
       gap: var(--sp-3);
     }
     hp-dialog .row.infofooter .btn {
       flex-shrink: 0;
+    }
+    hp-dialog .row.infofooter .infofooter-close {
+      margin-left: auto;
     }
     @media (max-width: 480px) {
       hp-dialog .row.infofooter {
