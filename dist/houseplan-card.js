@@ -4207,6 +4207,15 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
           title=${this._t("title.markup_add")}>
           <ha-icon icon="mdi:vector-polyline-plus"></ha-icon>${this._t("markup.add")}
         </button>
+        ${"draw"===this._tool||"partition"===this._tool||"column"===this._tool?W`<label class="drawwall ${null==this._drawWallCm?"invalid":""}">${this._t("wallthick.field")}
+              <input type="number" min=${Xs(1,this._imperial)}
+                max=${Xs(150,this._imperial)} step="any"
+                .value=${this._drawWallFieldValue}
+                @input=${t=>{this._drawWallField=t.target.value}}
+                title=${this._t("draw"===this._tool?"markup.draw_wall_title":"partition"===this._tool?"physical.partition_size_title":"physical.column_size_title")} />
+              <span class="opl">${this._t(this._imperial?"wallthick.unit_in":"wallthick.unit_cm")}</span>
+              <span class="rangehint">${this._t("physical.allowed_range",{max:Xs(this._drawWallMaxCm,this._imperial),unit:this._t(this._imperial?"wallthick.unit_in":"wallthick.unit_cm")})}</span>
+            </label>`:G}
         <button class="btn ${"partition"===this._tool?"on":""}"
           @click=${()=>{this._cancelPath(),this._tool="partition"}}
           title=${this._t("title.markup_partition")}>
@@ -4217,15 +4226,6 @@ const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow
           title=${this._t("title.markup_column")}>
           <ha-icon icon="mdi:vector-square"></ha-icon>${this._t("markup.column")}
         </button>
-        ${"draw"===this._tool||"partition"===this._tool||"column"===this._tool?W`<label class="drawwall ${null==this._drawWallCm?"invalid":""}">${this._t("wallthick.field")}
-              <input type="number" min=${Xs(1,this._imperial)}
-                max=${Xs(150,this._imperial)} step="any"
-                .value=${this._drawWallFieldValue}
-                @input=${t=>{this._drawWallField=t.target.value}}
-                title=${this._t("draw"===this._tool?"markup.draw_wall_title":"partition"===this._tool?"physical.partition_size_title":"physical.column_size_title")} />
-              <span class="opl">${this._t(this._imperial?"wallthick.unit_in":"wallthick.unit_cm")}</span>
-              <span class="rangehint">${this._t("physical.allowed_range",{max:Xs(this._drawWallMaxCm,this._imperial),unit:this._t(this._imperial?"wallthick.unit_in":"wallthick.unit_cm")})}</span>
-            </label>`:G}
       </span>
       <button class="btn ${"merge"===this._tool?"on":""}"
         @click=${()=>{this._tool="merge",this._cancelPath(),this._tool="merge"}}

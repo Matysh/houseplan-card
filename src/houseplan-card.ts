@@ -12615,16 +12615,6 @@ class HouseplanCard extends LitElement {
           title=${this._t('title.markup_add')}>
           <ha-icon icon="mdi:vector-polyline-plus"></ha-icon>${this._t('markup.add')}
         </button>
-        <button class="btn ${this._tool === 'partition' ? 'on' : ''}"
-          @click=${() => { this._cancelPath(); this._tool = 'partition'; }}
-          title=${this._t('title.markup_partition')}>
-          <ha-icon icon="mdi:wall"></ha-icon>${this._t('markup.partition')}
-        </button>
-        <button class="btn ${this._tool === 'column' ? 'on' : ''}"
-          @click=${() => { this._cancelPath(); this._tool = 'column'; }}
-          title=${this._t('title.markup_column')}>
-          <ha-icon icon="mdi:vector-square"></ha-icon>${this._t('markup.column')}
-        </button>
         ${this._tool === 'draw' || this._tool === 'partition' || this._tool === 'column'
           ? html`<label class="drawwall ${this._drawWallCm == null ? 'invalid' : ''}">${this._t('wallthick.field')}
               <input type="number" min=${cmToField(1, this._imperial)}
@@ -12643,6 +12633,16 @@ class HouseplanCard extends LitElement {
               })}</span>
             </label>`
           : nothing}
+        <button class="btn ${this._tool === 'partition' ? 'on' : ''}"
+          @click=${() => { this._cancelPath(); this._tool = 'partition'; }}
+          title=${this._t('title.markup_partition')}>
+          <ha-icon icon="mdi:wall"></ha-icon>${this._t('markup.partition')}
+        </button>
+        <button class="btn ${this._tool === 'column' ? 'on' : ''}"
+          @click=${() => { this._cancelPath(); this._tool = 'column'; }}
+          title=${this._t('title.markup_column')}>
+          <ha-icon icon="mdi:vector-square"></ha-icon>${this._t('markup.column')}
+        </button>
       </span>
       <button class="btn ${this._tool === 'merge' ? 'on' : ''}"
         @click=${() => { this._tool = 'merge'; this._cancelPath(); this._tool = 'merge'; }}
