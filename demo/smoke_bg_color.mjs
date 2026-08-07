@@ -13,6 +13,15 @@ const res = await page.evaluate(async () => {
     await c.updateComplete;
     return getComputedStyle(sr().querySelector('.stage')).backgroundColor;
   };
+  const waitStageBg = async (accept) => {
+    const deadline = performance.now() + 700;
+    let value = await stageBg();
+    while (!accept(value) && performance.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 25));
+      value = await stageBg();
+    }
+    return value;
+  };
   const rgb = (hex) => `rgb(${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)})`;
 
   const themeBg = await stageBg(); // theme default from the stylesheet
@@ -81,12 +90,10 @@ const res = await page.evaluate(async () => {
 
   // 8) editors keep their own canvas (inline bg only in view/kiosk)
   c._setMode('decor');
-  await new Promise((resolve) => setTimeout(resolve, 220));
-  const editorBg = await stageBg();
+  const editorBg = await waitStageBg((value) => value !== rgb('#0a2a4a'));
   out.editorUnpainted = editorBg !== rgb('#0a2a4a');
   c._setMode('view');
-  await new Promise((resolve) => setTimeout(resolve, 220));
-  out.viewPaintedAgain = (await stageBg()) === rgb('#0a2a4a');
+  out.viewPaintedAgain = (await waitStageBg((value) => value === rgb('#0a2a4a'))) === rgb('#0a2a4a');
 
   // 9) kiosk instance respects the setting
   const k = document.createElement('houseplan-card');
