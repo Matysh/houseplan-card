@@ -1,0 +1,40 @@
+name: Attach HACS zip to release
+# hacs.json declares zip_release + filename=houseplan.zip, so every release
+# (prereleases included) must carry the asset — HACS installs from it and
+# GitHub's public download counter becomes a free per-version install metric
+# (owner request, 2026-08-08). Like announce.yml, the workflow file lives at
+# the TAGGED commit: betas cut from dev pick it up as soon as this file is on
+# dev, stable tags once it reaches main.
+# workflow_dispatch lets us attach the zip to an EXISTING release (needed
+# once for the latest stable after the hacs.json change reaches main).
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag to attach the zip to"
+        required: true
+permissions:
+  contents: write
+jobs:
+  zip:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve tag
+        id: tag
+        env:
+          EVENT_TAG: ${{ github.event.release.tag_name }}
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+        run: echo "tag=${EVENT_TAG:-$INPUT_TAG}" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.tag.outputs.tag }}
+      - name: Build houseplan.zip (contents of custom_components/houseplan at zip root)
+        run: cd custom_components/houseplan && zip -qr ../../houseplan.zip .
+      - name: Sanity check
+        run: unzip -l houseplan.zip | grep -q "manifest.json"
+      - name: Upload asset
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${{ steps.tag.outputs.tag }}" houseplan.zip --clobber --repo "$GITHUB_REPOSITORY"
