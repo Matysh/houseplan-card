@@ -208,6 +208,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       showTemperature: o.showTemperature !== false,
       showSignal: disp.showLqi ?? (o.showSignal !== false),
       activityRuntime: o.activityRuntime?.get(d.id),
+      sourceDetails: false,
     });
     const st = [`left:${left}%`, `top:${top}%`, ...deviceFaceStyle(presentation)];
     return html`<div class="dev ${presentation.classes.join(' ')} ${d.virtual ? 'virtual' : ''} ${presentation.valueText != null ? 'valonly' : ''}"

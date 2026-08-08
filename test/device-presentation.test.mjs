@@ -40,6 +40,75 @@ const options = {
   showSignal: true,
 };
 
+test('always-static display suppresses every live visual but keeps diagnostics', () => {
+  const h = hass({
+    'binary_sensor.smoke': state('binary_sensor.smoke', 'on', { device_class: 'smoke' }),
+  }, {
+    'binary_sensor.smoke': { entity_id: 'binary_sensor.smoke', device_id: 'd1', platform: 'demo' },
+  });
+  const marker = device({
+    icon: 'mdi:smoke-detector',
+    entities: ['binary_sensor.smoke'],
+    primary: 'binary_sensor.smoke',
+    marker: {
+      id: 'd1', binding: 'device:d1', display: 'static_icon',
+      ripple_color: '#00ff00', vacuum: { live: true },
+    },
+  });
+  const result = resolveDevicePresentation(h, marker, options);
+  assert.equal(result.display, 'static_icon');
+  assert.equal(result.visual.status, 'neutral');
+  assert.equal(result.visual.activity, 'none');
+  assert.equal(result.icon, 'mdi:smoke-detector');
+  assert.equal(result.valueText, null);
+  assert.equal(result.tempText, null);
+  assert.equal(result.humText, null);
+  assert.equal(result.lqiText, null);
+  assert.equal(result.lightColor, null);
+  assert.equal(result.rippleColor, null);
+  assert.equal(result.vacuumLive, false);
+  assert.deepEqual(result.classes, ['static-icon']);
+  assert.equal(result.explanation.reason, 'static_icon');
+  assert.equal(result.visualSources[0].eid, 'binary_sensor.smoke');
+});
+
+test('always-static source short-circuit is plan-only and lifecycle still wins', () => {
+  const h = hass(
+    { 'switch.relay': state('switch.relay', 'unavailable') },
+    { 'switch.relay': { entity_id: 'switch.relay', device_id: 'd1', platform: 'demo' } },
+  );
+  const marker = device({ marker: { id: 'd1', binding: 'device:d1', display: 'static_icon' } });
+  const plan = resolveDevicePresentation(h, marker, { ...options, sourceDetails: false });
+  assert.equal(plan.visual.status, 'neutral');
+  assert.deepEqual(plan.visualSources, []);
+  assert.deepEqual(plan.classes, ['static-icon']);
+
+  const hidden = resolveDevicePresentation(h, { ...marker, hidden: true, userHidden: true }, options);
+  assert.equal(hidden.effectiveHidden, true);
+});
+
+test('always-static vacuum keeps its dock face but exposes no live overlay', () => {
+  const h = hass(
+    { 'vacuum.robot': state('vacuum.robot', 'cleaning') },
+    { 'vacuum.robot': { entity_id: 'vacuum.robot', device_id: 'd1', platform: 'demo' } },
+  );
+  const base = device({
+    icon: 'mdi:robot-vacuum',
+    entities: ['vacuum.robot'],
+    primary: 'vacuum.robot',
+    marker: { id: 'd1', binding: 'device:d1', vacuum: { live: true } },
+  });
+  const dynamic = resolveDevicePresentation(h, base, options);
+  const fixed = resolveDevicePresentation(h, {
+    ...base, marker: { ...base.marker, display: 'static_icon' },
+  }, options);
+  assert.equal(dynamic.visual.status, 'working');
+  assert.equal(dynamic.vacuumLive, true);
+  assert.equal(fixed.visual.status, 'neutral');
+  assert.equal(fixed.vacuumLive, false);
+  assert.equal(fixed.explanation.reason, 'static_icon');
+});
+
 test('one projection supplies working state and localized text value', () => {
   const h = hass(
     { 'switch.relay': state('switch.relay', 'on') },

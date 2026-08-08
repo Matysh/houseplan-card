@@ -1144,6 +1144,7 @@ export const cardStyles = css`
     .stage.mode-decor .rlabel,
     .stage.mode-decor .room-outline,
     .stage.mode-decor .wallbodies,
+    .stage.mode-decor .opening-tunnels,
     .stage.mode-decor .openwalls {
       opacity: 0.35;
     }

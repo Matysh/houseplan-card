@@ -95,6 +95,7 @@ Everything in this table is **public API**.
 | Room name (no metrics) | `text` (SVG) | `room-label` | `data-id` = room id, `data-area` | `.rlabel` |
 | Room card (name + metrics) | `div` (HTML, marker layer) | `room-label` | `data-id` = room id, `data-area` | `.roomlabel` |
 | Door / window / gate | `g` (SVG) | `opening` | `data-id` = opening id, `data-kind` = `door` \| `window` \| `gate` | `.opening` |
+| Coloured tunnel inside a thick opening | `path` / `g` (SVG) | `opening-tunnel` | `data-id` = opening id, `data-kind` = `door` \| `window` \| `gate` | `.opening-tunnel` |
 | Wall body (thickness) | `path` (SVG) | `wall` | `data-id` = segment key, `data-kind` = `shared` \| `outer` | `.wallbody` |
 | Independent partition | `path` (SVG editor hit target) | `partition` | `data-id` = partition id, `data-kind` = `partition` | `.physical-hit` |
 | Wall column | `path` / `circle` (SVG editor hit target) | `wall-column` | `data-id` = column id, `data-kind` = `square` \| `circle` | `.physical-hit` |
@@ -138,7 +139,8 @@ them:
 
 `.on`, `.off`, `.unavail`, `.alarm`, `.ghost` (hidden device shown in the
 device editor), `.virtual` (a marker with no entity), `.valonly` (value
-instead of icon), `.noicon`, `.sel` (selected in an editor).
+instead of icon), `.static-icon` (the always-static display mode), `.noicon`,
+`.sel` (selected in an editor).
 
 The full plan and `houseplan-space-card` emit the same binding-status data
 attributes. A forced-hidden HA-disabled marker is absent from ordinary View;

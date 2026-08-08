@@ -7,7 +7,7 @@
  * centreline.
  */
 import { union, difference } from 'polyclip-ts';
-import { roomPoly, roomEdges, sharedBoundary } from './logic';
+import { polygonArea, roomPoly, roomEdges, sharedBoundary } from './logic';
 
 export interface WallEntry {
   key: string;
@@ -1645,4 +1645,182 @@ export function openingInnerFaceOffset(
   // ±½ growth: the inner face is always half-depth from the centreline
   const along = depth / 2;
   return { ox: inx * along * s, oy: iny * along * s, cm, side };
+}
+
+/** One half of a room-coloured opening tunnel, in opening-local coordinates. */
+export interface OpeningTunnelFace {
+  side: -1 | 1;
+  roomId: string;
+  /** One SVG path, possibly containing several non-overlapping atomic strips. */
+  d: string;
+}
+
+/** Pure geometry consumed by the full-card opening-tunnel renderer. */
+export interface OpeningTunnelGeometry {
+  faces: OpeningTunnelFace[];
+  /** Local Y bounds. The wall centreline is always y=0. */
+  minY: number;
+  maxY: number;
+  wallKey: string;
+}
+
+interface TunnelPiece {
+  x0: number;
+  x1: number;
+  half: number;
+  key: string;
+}
+
+interface TunnelCandidate {
+  roomId: string;
+  side: -1 | 1;
+  pieces: TunnelPiece[];
+  distance: number;
+  faceDistance: number;
+  area: number;
+  coverage: number;
+  full: boolean;
+}
+
+function tunnelCoverage(pieces: TunnelPiece[], lo: number, hi: number, eps: number): {
+  coverage: number; full: boolean;
+} {
+  const spans = pieces
+    .map((p) => [Math.max(lo, p.x0), Math.min(hi, p.x1)] as [number, number])
+    .filter((p) => p[1] - p[0] > eps)
+    .sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  if (!spans.length) return { coverage: 0, full: false };
+  let start = spans[0][0], end = spans[0][1], coverage = 0;
+  let full = start <= lo + eps;
+  for (let i = 1; i < spans.length; i++) {
+    const [a, b] = spans[i];
+    if (a <= end + eps) {
+      end = Math.max(end, b);
+      continue;
+    }
+    coverage += end - start;
+    full = false;
+    start = a; end = b;
+  }
+  coverage += end - start;
+  full = full && end >= hi - eps;
+  return { coverage, full };
+}
+
+function tunnelFacePath(side: -1 | 1, pieces: TunnelPiece[]): string {
+  const parts: string[] = [];
+  for (const p of pieces) {
+    if (!(p.x1 > p.x0) || !(p.half > 0)) continue;
+    const y = side * p.half;
+    parts.push(`M ${p.x0} 0 L ${p.x1} 0 L ${p.x1} ${y} L ${p.x0} ${y} Z`);
+  }
+  return parts.join(' ');
+}
+
+/**
+ * Resolve the physical tunnel and its adjacent rooms without reading card or
+ * HA state. The opening-local X axis follows `angle`; local y=0 is the wall
+ * centreline. Atomic room-wall profiles provide exact mixed-thickness clips,
+ * so a legacy opening near a breakpoint cannot paint beyond the real body.
+ *
+ * A single adjacent room (outer wall) owns both halves. Two adjacent rooms own
+ * one half each. Draft walls, virtual spans and zero-thickness intervals never
+ * produce a face because they have no eligible room-wall interval.
+ */
+export function openingTunnelGeometry(
+  rooms: any[],
+  opening: { x: number; y: number; angle: number; length: number },
+  walls: WallEntry[] | null | undefined,
+  openCuts: number[][],
+  pitch: number,
+  cellCm: number,
+  gridPitch: number,
+  coordScale = 1,
+): OpeningTunnelGeometry | null {
+  const x = Number(opening?.x), y = Number(opening?.y);
+  const angle = Number(opening?.angle), length = Number(opening?.length);
+  if (![x, y, angle, length, pitch, cellCm, gridPitch, coordScale].every(Number.isFinite)
+      || !(length > 0) || !(pitch > 0) || !(cellCm > 0) || !(gridPitch > 0)
+      || !(coordScale > 0) || !walls?.length) return null;
+
+  const rad = angle * Math.PI / 180;
+  const ux = Math.cos(rad), uy = Math.sin(rad);
+  const nx = -uy, ny = ux;
+  const openingHalf = length / 2;
+  const eps = Math.max(1e-7, pitch * coordScale * 0.02);
+  const maxDistance = pitch * coordScale;
+  const candidates = new Map<string, TunnelCandidate>();
+
+  for (const room of rooms || []) {
+    if (!room?.id) continue;
+    const pr = roomWallProfile(rooms, room.id, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
+    if (!pr) continue;
+    const area = Math.abs(polygonArea(pr.poly));
+    for (let i = 0; i < pr.poly.length; i++) {
+      if (!pr.kinds[i] || !(pr.offsets[i] > 0)) continue;
+      const a = pr.poly[i], b = pr.poly[(i + 1) % pr.poly.length];
+      if (!wallAngleMatches(a, b, angle)) continue;
+      const distance = distToSeg(x, y, a[0], a[1], b[0], b[1]);
+      if (distance > maxDistance) continue;
+      const ta = (a[0] - x) * ux + (a[1] - y) * uy;
+      const tb = (b[0] - x) * ux + (b[1] - y) * uy;
+      const x0 = Math.max(-openingHalf, Math.min(ta, tb));
+      const x1 = Math.min(openingHalf, Math.max(ta, tb));
+      if (x1 - x0 <= eps) continue;
+      const [inx, iny] = inwardNormal(pr.poly, i);
+      const side = (inx * nx + iny * ny >= 0 ? 1 : -1) as -1 | 1;
+      const key = `${side}|${room.id}`;
+      const half = pr.offsets[i];
+      const piece = { x0, x1, half, key: keyOf(a, b, pitch, coordScale) };
+      const prev = candidates.get(key);
+      if (prev) {
+        prev.pieces.push(piece);
+        prev.distance = Math.min(prev.distance, distance);
+        prev.faceDistance = Math.min(prev.faceDistance, distance + half);
+      } else {
+        candidates.set(key, {
+          roomId: room.id, side, pieces: [piece], distance,
+          faceDistance: distance + half, area, coverage: 0, full: false,
+        });
+      }
+    }
+  }
+
+  for (const c of candidates.values()) {
+    const coverage = tunnelCoverage(c.pieces, -openingHalf, openingHalf, eps);
+    c.coverage = coverage.coverage;
+    c.full = coverage.full;
+  }
+  const pick = (side: -1 | 1): TunnelCandidate | null => {
+    const list = [...candidates.values()].filter((c) => c.side === side && c.coverage > eps);
+    list.sort((a, b) => Number(b.full) - Number(a.full)
+      || b.coverage - a.coverage
+      || a.faceDistance - b.faceDistance
+      || a.area - b.area
+      || a.roomId.localeCompare(b.roomId));
+    return list[0] || null;
+  };
+  const negative = pick(-1), positive = pick(1);
+  if (!negative && !positive) return null;
+
+  let chosen: Array<{ candidate: TunnelCandidate; side: -1 | 1 }>;
+  if (negative && positive) {
+    chosen = [{ candidate: negative, side: -1 }, { candidate: positive, side: 1 }];
+  } else {
+    const only = (negative || positive)!;
+    // An outer wall has no second room, but the same floor continues through
+    // the complete wall depth to the exterior face.
+    chosen = [{ candidate: only, side: -1 }, { candidate: only, side: 1 }];
+  }
+
+  const faces = chosen.map(({ candidate, side }) => ({
+    side,
+    roomId: candidate.roomId,
+    d: tunnelFacePath(side, candidate.pieces),
+  })).filter((f) => !!f.d);
+  if (!faces.length) return null;
+  const allPieces = chosen.flatMap((x) => x.candidate.pieces);
+  const maxHalf = Math.max(...allPieces.map((p) => p.half));
+  const wallKey = [...new Set(allPieces.map((p) => p.key))].sort().join('|');
+  return { faces, minY: -maxHalf, maxY: maxHalf, wallKey };
 }

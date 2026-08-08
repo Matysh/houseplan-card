@@ -9,7 +9,8 @@ import {
   wallBodyRings, wallBodiesUnionPath, innerContourForRoom,
   paperRoomShapesWithWalls, WALL_MIN_CM, WALL_MAX_CM, MITRE_LIMIT,
   atomicPolyForRoom, insetOffsetsForRoom, wallIntervals, normalizeWallIntervals,
-  intervalCmAt, wallBodyNeedsSolid, openingInnerFaceOffset, WALL_HATCH_MIN_PX,
+  intervalCmAt, wallBodyNeedsSolid, openingInnerFaceOffset, openingTunnelGeometry,
+  WALL_HATCH_MIN_PX,
 } from '../test-build/wall-thickness.js';
 import { polygonArea, paperRoomShapes } from '../test-build/logic.js';
 import { GRID_PITCH } from '../test-build/space-geometry.js';
@@ -344,6 +345,79 @@ test('opening face side is known without wall thickness and can be inverted for 
     rooms, { x: 5, y: 6, angle: 0, length: 3 }, [], 1, cellCm, pitch,
   );
   assert.equal(bottomInner.side, -1, 'the bottom wall room side is -Y');
+});
+
+test('openingTunnelGeometry: an outer thick wall gives the one room both tunnel halves', () => {
+  const rooms = [{ id: 'r', poly: [[0, 0], [10, 0], [10, 6], [0, 6]] }];
+  const walls = [{ key: wallKey([0, 0], [10, 0], pitch), cm: 20 }];
+  const g = openingTunnelGeometry(
+    rooms, { x: 5, y: 0, angle: 0, length: 2 }, walls, [], pitch, 5, 1,
+  );
+  assert.ok(g);
+  assert.deepEqual(g.faces.map((f) => [f.side, f.roomId]), [[-1, 'r'], [1, 'r']]);
+  closeTo(g.minY, -2);
+  closeTo(g.maxY, 2);
+});
+
+test('openingTunnelGeometry: a shared wall is owned by the room on each local side', () => {
+  const rooms = [
+    { id: 'south', poly: [[0, 0], [10, 0], [10, 5], [0, 5]] },
+    { id: 'north', poly: [[0, -5], [10, -5], [10, 0], [0, 0]] },
+  ];
+  const walls = [{ key: wallKey([0, 0], [10, 0], pitch), cm: 15 }];
+  const g = openingTunnelGeometry(
+    rooms, { x: 5, y: 0, angle: 0, length: 2 }, walls, [], pitch, 5, 1,
+  );
+  assert.ok(g);
+  assert.equal(g.faces.find((f) => f.side === -1).roomId, 'north');
+  assert.equal(g.faces.find((f) => f.side === 1).roomId, 'south');
+  const reversed = openingTunnelGeometry(
+    [...rooms].reverse(), { x: 5, y: 0, angle: 0, length: 2 }, walls, [], pitch, 5, 1,
+  );
+  assert.deepEqual(reversed, g, 'config order must not change the selected rooms or paths');
+});
+
+test('openingTunnelGeometry: mixed atomic thickness clips each piece to its real depth', () => {
+  const rooms = [{ id: 'r', poly: [[0, 0], [10, 0], [10, 6], [0, 6]] }];
+  const walls = [
+    { key: wallKey([0, 0], [5, 0], pitch), a: [0, 0], b: [5, 0], cm: 10 },
+    { key: wallKey([5, 0], [10, 0], pitch), a: [5, 0], b: [10, 0], cm: 20 },
+  ];
+  const g = openingTunnelGeometry(
+    rooms, { x: 5, y: 0, angle: 0, length: 4 }, walls, [], pitch, 5, 1,
+  );
+  assert.ok(g);
+  assert.match(g.faces[0].d, /-1(?:\.0+)?\b/, '10 cm half-depth is present');
+  assert.match(g.faces[0].d, /-2(?:\.0+)?\b/, '20 cm half-depth is present');
+  closeTo(g.maxY, 2);
+});
+
+test('openingTunnelGeometry: virtual, zero-thickness, orphan and draft-only walls do not paint', () => {
+  const rooms = [{ id: 'r', poly: [[0, 0], [10, 0], [10, 6], [0, 6]] }];
+  const opening = { x: 5, y: 0, angle: 0, length: 2 };
+  const walls = [{ key: wallKey([0, 0], [10, 0], pitch), cm: 20 }];
+  assert.equal(openingTunnelGeometry(rooms, opening, [], [], pitch, 5, 1), null);
+  assert.equal(openingTunnelGeometry(rooms, opening, walls, [[0, 0, 10, 0]], pitch, 5, 1), null);
+  assert.equal(openingTunnelGeometry(rooms, { ...opening, y: 3 }, walls, [], pitch, 5, 1), null);
+  assert.equal(openingTunnelGeometry([], opening, walls, [], pitch, 5, 1), null,
+    'a physical room_draft body is not a room fill owner');
+});
+
+test('openingTunnelGeometry: angle match beats a perpendicular T-junction receiver', () => {
+  const rooms = [
+    { id: 'horizontal', poly: [[0, 0], [10, 0], [10, 5], [0, 5]] },
+    { id: 'vertical', poly: [[4, -5], [6, -5], [6, 0], [4, 0]] },
+  ];
+  const walls = [
+    { key: wallKey([0, 0], [10, 0], pitch), cm: 20 },
+    { key: wallKey([4, -5], [4, 0], pitch), cm: 30 },
+  ];
+  const g = openingTunnelGeometry(
+    rooms, { x: 5, y: 0, angle: 0, length: 2 }, walls, [], pitch, 5, 1,
+  );
+  assert.ok(g);
+  assert.ok(g.faces.every((f) => f.roomId === 'horizontal' || f.roomId === 'vertical'));
+  closeTo(g.maxY, 2);
 });
 
 // ------------------------------- bodies / paper -----------------------------

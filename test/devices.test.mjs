@@ -909,12 +909,12 @@ test('resolvedLightSources: one source set feeds room fill, card, glow and contr
 
   const sources = resolvedLightSources(hass, devices, { id: 'room-a', area: 'living' });
   assert.deepEqual(
-    sources.map(({ eid, via, on }) => ({ eid, via, on })),
+    sources.map(({ eid, via, castsGlow, on }) => ({ eid, via, castsGlow, on })),
     [
-      { eid: 'light.auto', via: 'light', on: true },
-      { eid: 'switch.relay', via: 'forced', on: true },
-      { eid: 'light.bound', via: 'controls', on: false },
-      { eid: 'switch.bound', via: 'controls', on: true },
+      { eid: 'light.auto', via: 'light', castsGlow: true, on: true },
+      { eid: 'switch.relay', via: 'forced', castsGlow: true, on: true },
+      { eid: 'light.bound', via: 'controls', castsGlow: false, on: false },
+      { eid: 'switch.bound', via: 'controls', castsGlow: false, on: true },
     ],
   );
   assert.equal(resolvedLightState(sources), 'on');
@@ -936,7 +936,7 @@ test('resolvedLightSources: marker room_id is more precise than a shared HA area
   );
 });
 
-test('self-control is not external but preserves legacy switch-as-light intent', () => {
+test('self-control is not external and only explicit is_light makes the switch shine', () => {
   assert.deepEqual(
     persistedExternalControls('entity:switch.hood', [
       'switch.hood', 'input_boolean.yaml_only', 'light.mirror',
@@ -968,28 +968,22 @@ test('self-control is not external but preserves legacy switch-as-light intent',
   };
   assert.deepEqual(
     resolvedLightSources(hass, [hood]).map(({ eid, via }) => ({ eid, via })),
-    [
-      { eid: 'light.mirror', via: 'controls' },
-      { eid: 'switch.hood', via: 'forced' },
-    ],
-    'legacy entity self-control remains additive with external light targets',
+    [{ eid: 'light.mirror', via: 'controls' }],
+    'legacy entity self-control is ignored while external targets remain',
   );
   assert.deepEqual(
     resolvedLightSources(hass, [{
       ...hood, primary: 'light.mirror', entities: ['light.mirror', 'switch.hood'],
     }]).map(({ eid, via }) => ({ eid, via })),
-    [
-      { eid: 'light.mirror', via: 'controls' },
-      { eid: 'switch.hood', via: 'forced' },
-    ],
-    'an entity binding preserves the exact legacy relay even if registry primary differs',
+    [{ eid: 'light.mirror', via: 'controls' }],
+    'a different registry primary cannot revive a legacy self-control',
   );
   assert.deepEqual(
     resolvedLightSources(hass, [{
       ...hood, marker: { binding: 'device:hood', controls: ['switch.hood'] },
     }]).map(({ eid, via }) => ({ eid, via })),
-    [{ eid: 'switch.hood', via: 'forced' }],
-    'legacy device-child self-control preserves the same intent',
+    [],
+    'a device-child self-control is ignored too',
   );
   assert.deepEqual(
     resolvedLightSources(hass, [{ ...hood, marker: { ...hood.marker, is_light: true } }])
@@ -999,6 +993,25 @@ test('self-control is not external but preserves legacy switch-as-light intent',
       { eid: 'switch.hood', via: 'forced' },
     ],
     'the canonical explicit source flag keeps the same combined result',
+  );
+});
+
+test('a real lamp marker owns Glow even when a controller names the same entity first', () => {
+  const hass = { states: { 'light.hall': { state: 'on' } } };
+  const controller = {
+    id: 'switch', area: 'hall', primary: 'switch.wall', entities: ['switch.wall'],
+    marker: { controls: ['light.hall'] },
+  };
+  const lamp = { id: 'lamp', area: 'hall', primary: 'light.hall', entities: ['light.hall'] };
+  const sources = resolvedLightSources(hass, [controller, lamp]);
+  assert.equal(sources.length, 1);
+  assert.equal(sources[0].device.id, 'lamp');
+  assert.equal(sources[0].via, 'light');
+  assert.equal(sources[0].castsGlow, true);
+  assert.equal(
+    resolvedLightSources(hass, [controller])[0].castsGlow,
+    false,
+    'a controller without a physical lamp marker never casts from the switch coordinates',
   );
 });
 

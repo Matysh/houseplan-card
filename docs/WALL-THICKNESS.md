@@ -69,6 +69,15 @@ it after the body so its full stored extent and live preview stay visible.
 - **Inner contour** = `inset(poly, half[])`.
 - Room fills and glow are clipped to the inner contour (not painted into the
   wall hatch).
+- The free tunnel cut by a door, window or gate continues the effective room
+  fill through the wall body instead of exposing the neutral paper below the
+  plan. On an outer wall the one adjacent room owns the complete depth. On a
+  shared wall each room owns its half, with a hard colour change exactly on the
+  wall centreline. This is a base-fill layer only: Glow and sun remain above it
+  with their existing aperture, clipping, colour and opacity.
+- A zero-thickness wall, virtual span, orphan opening or opening associated only
+  with an unfinished room draft has no coloured tunnel. Mixed-thickness legacy
+  spans are clipped to their actual atomic wall bodies.
 - Glow leaving through a door uses the clear rectangular opening tunnel: its
   sector is the intersection of the doorway spans at the near and far inner
   faces. The two jamb returns therefore clip off-axis light; a zero-depth wall
@@ -105,13 +114,16 @@ Decor-line thickness, per-side finish, auto-from-backdrop, plan-wide default.
 ## 8. Testing
 
 Unit: ring closed at corners; half-out; inner area; atomic partial shared;
-virtual-T mitre; angle-aware opening; thick-door tunnel clipping; whole and
+virtual-T mitre; angle-aware opening; thick-door tunnel clipping and room-side
+colour ownership; whole and
 atomic rekey after edge/scale.
 Browser: seamless frame; fill not in hatch; m² drops with thickness; a partial
 virtual stretch, its solid thick remainders and Undo move as one real resize;
 the virtual rubber band paints above the real body; sun starts at the room-side
 opening corners; nav mode restores after `can_write`; a 1 cm body uses
-solid-only in both full and static cards while a 20 cm body keeps its hatch.
+solid-only in both full and static cards while a 20 cm body keeps its hatch;
+door/window/gate tunnels repeat outer/shared room fills without an axis seam
+(`demo/smoke_opening_tunnel_fill.mjs`).
 
 ## 9. Independent partitions, drafts and columns
 

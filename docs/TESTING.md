@@ -75,7 +75,7 @@ public binding-status hook.
 
 - [ ] Every binding/display/icon/size/angle/control/temperature draft change
       updates the preview before Save; Cancel writes neither config nor layout.
-- [ ] Working, open, cover, presence, short event, transition, alarm,
+- [ ] Working, open, cover, presence, short event, transition, alarm, static,
       unavailable, media-neutral, composite-Power and `live_states: false`
       explanations match the actual face.
 - [ ] The local activity demo lasts 3.3 seconds, sends no service call, survives
@@ -124,8 +124,9 @@ missing destructive confirmation or an editor exception that breaks View.
       (stylus, paired mouse, vendor skins) [auto: smoke_feedback_v2]
 
 - [ ] Light-source flag (v1.44.0, user feedback): a smart SWITCH driving dumb
-      fixtures glows in the "Light sources" fill once "This device is a light
-      source" is ticked (its own entity or the lights bound under "Controls");
+      fixtures glows in the "Light sources" fill only once "This device is a
+      light source" is ticked. External targets under "Controls" still feed
+      group state/statistics but never create a pool at the switch coordinates;
       unticked devices without a light entity never glow [auto: smoke_glow]
 - [ ] Device card controls (v1.44.0): the device card opens with its
       controllable entities FIRST — toggles right there (≥30 px tap targets),
@@ -334,9 +335,10 @@ separately promised workflows:
       [auto: smoke_light_badges + smoke_rgb_alarm]
 - [ ] Alarm pulse (v1.27.0, unified dev): leak/smoke/gas/CO/siren in `on`
       and an alarm control panel in `triggered`
-      get a red plate and red pulse over every display mode and even with
-      ordinary live-state dressing off; clears on 'off'; unavailable never
-      alarms [manual]; reduced-motion is static
+      get a red plate and red pulse over every dynamic display mode and even
+      with ordinary live-state dressing off; `static_icon` is the deliberate
+      neutral exception after an editor warning; clears on 'off'; unavailable
+      never alarms [manual]; reduced-motion is static
 - [ ] Render cost (v1.43.1, audit L1): geometry (space model, open pairs) is
       computed once per config change, not per HA state push — smoke asserts
       zero recomputations across 10 state pushes and recomputation after an
@@ -797,7 +799,9 @@ separately promised workflows:
       mirrors the targets, not the marker's own entity — the RGB tint is gone
       since v1.52.0, target colours reach only the glow/activity effect; without explicit Toggle
       the click opens info as usual; the info card lists targets with states;
-      locks/other domains are filtered out of controls [auto: smoke_controls]
+      locks/other domains are filtered out of controls. Glow is spatial: the
+      controller casts no pool and the real lamp marker owns it even when the
+      controller is encountered first [auto: smoke_controls; unit: devices.test.mjs]
 - [ ] Marker controls are lossless across Open → Save: their stored order,
       duplicates and temporarily unknown/vendor targets survive unchanged;
       only the marker's own bound/device entities are removed, while runtime
@@ -1057,11 +1061,13 @@ require hands on real hardware — they remain for the human pass.
 
 ## Unified device status and activity (dev, owner 2026-08-05)
 
-- [ ] The Display list contains exactly Icon, Icon + activity, Value instead
-      of an icon. Legacy `display: ripple` reads and saves back as `icon_ripple`
-- [ ] Icon shows state plate/morph but no ordinary activity effect; Icon +
-      activity adds the semantic effect; Value keeps the state-coloured plate
-      and hides ordinary activity
+- [ ] The Display list contains exactly Icon + dynamic plate, Icon + activity,
+      Value instead of an icon, Always static icon, in that order. Legacy
+      `display: ripple` reads and saves back as `icon_ripple`
+- [ ] Icon + dynamic plate shows state plate/morph but no ordinary activity
+      effect; Icon + activity adds the semantic effect; Value keeps the
+      state-coloured plate and hides ordinary activity; Always static icon
+      keeps one neutral base icon and suppresses all state-driven visuals
 - [ ] Motion/vibration/sound/contact rising edges render exactly three waves
       for about 3.3 s; initial load and recovery from unknown/unavailable do
       not fake an event; a rapid retrigger restarts it
@@ -1081,8 +1087,14 @@ require hands on real hardware — they remain for the human pass.
       yellow plate and the running effect
 - [ ] Open contact/unlocked lock/open valve are orange; an open cover stays
       neutral because its icon morph carries that state
-- [ ] Unavailable suppresses ordinary activity. Alarm outranks all of it,
-      remains red in every display mode and with ordinary live states off
+- [ ] Unavailable suppresses ordinary activity. Alarm outranks all dynamic
+      presentation, including when ordinary live states are off; `static_icon`
+      deliberately hides alarm paint without suppressing service-call errors
+- [ ] `static_icon` hides temperature/humidity/LQI, RGB, value, icon morph,
+      activity and live vacuum puck/trails/room highlight on the full and static
+      cards; preview still names the real HA state/source and explains the static result
+- [ ] Switching a static vacuum back to a dynamic display restores applicable
+      live/server trails; choosing static never deletes stored trail history
 - [ ] Activity colour and size (×2..×8) apply per device; alarm ignores them
 - [ ] Icon size ×0.5..×3 and rotation 0..355° apply per device; the
       temp/humidity badges scale with the icon
@@ -1720,6 +1732,15 @@ require hands on real hardware — they remain for the human pass.
       toward the exterior face; with
       `hide_openings` the symbols hide but the cut remains
       [auto: smoke_wall_thickness]
+- [ ] **Opening tunnel repeats the room fill**: check a door, window and gate on
+      outer and shared thick walls. An outer opening uses its room colour for
+      the complete wall depth; a shared opening with different fills has one
+      hard transition exactly on the wall axis and no white/alpha seam. Window
+      glass and all architectural symbols remain above it. Repeat with hidden
+      opening symbols, hidden wall borders and in the Background editor; Glow
+      and sun geometry must not change
+      [auto: smoke_opening_tunnel_fill + test/wall-thickness.test.mjs +
+      test/logic.test.mjs]
 - [ ] **Door/gate light uses the clear tunnel**: place an off-centre light beside a
       door or gate in a thick wall. In the neighbouring room the glow is limited by
       sight lines through both the near and far inner-face corners; neither

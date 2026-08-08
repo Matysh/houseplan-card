@@ -15,7 +15,8 @@ import {
   type DeviceActivity, type DeviceVisualState, type EntityVisualSample,
 } from './device-visual';
 import {
-  coverEntityOf, hassValue, lightColorOf, lqiColor, stateIcon, valueWithUnit,
+  coverEntityOf, hassValue, lightColorOf, lqiColor, normalizeDeviceDisplay, stateIcon, valueWithUnit,
+  type DeviceDisplayMode,
 } from './logic';
 import type { DevItem } from './types';
 
@@ -49,6 +50,7 @@ export type PresentationReason =
   | 'hidden_design_preview'
   | 'composite_power_source'
   | 'activity_display_disabled'
+  | 'static_icon'
   | 'ha_disabled'
   | 'orphaned';
 
@@ -88,6 +90,9 @@ export interface ResolvePresentationOptions {
   /** User-hidden markers show their real design inside the editor preview. */
   designPreview?: boolean;
   activityRuntime?: PresentationActivityRuntime | null;
+  /** The preview needs real source facts even for a static face. Plan surfaces
+   * may skip that work because the static projection cannot consume it. */
+  sourceDetails?: boolean;
   now?: number;
 }
 
@@ -100,7 +105,7 @@ export interface ResolvedDevicePresentation {
   sourceSignature: string;
 
   visual: DeviceVisualState;
-  display: 'badge' | 'icon_ripple' | 'value';
+  display: DeviceDisplayMode;
   icon: string;
   valueText: string | null;
   valueFullText: string | null;
@@ -136,11 +141,9 @@ export interface ResolvedPresentationSources {
 }
 
 const ACTIVITY_WINDOW_MS = 3300;
-
-function displayOf(d: DevItem): ResolvedDevicePresentation['display'] {
-  const display = d.marker?.display;
-  return display === 'ripple' ? 'icon_ripple' : display || 'badge';
-}
+const EMPTY_SOURCES: ResolvedPresentationSources = {
+  sourceKind: 'none', visualSources: [], criticalSources: [], samples: [],
+};
 
 function sourceName(hass: any, eid: string): string {
   const reg = hass?.entities?.[eid];
@@ -348,6 +351,7 @@ function explanationReason(
 ): PresentationReason {
   if (haDisabled) return 'ha_disabled';
   if (orphaned) return 'orphaned';
+  if (display === 'static_icon') return 'static_icon';
   if (visual.status === 'alarm') return 'alarm';
   if (!liveStates) return 'live_states_disabled';
   if (visual.availability === 'unavailable') return 'unavailable';
@@ -368,6 +372,7 @@ export function presentationClasses(presentation: Pick<
   'visual' | 'activity' | 'display' | 'effectiveHidden' | 'activityGeneration'
 >): string[] {
   if (presentation.effectiveHidden) return [];
+  if (presentation.display === 'static_icon') return ['static-icon'];
   const classes: string[] = [];
   const { visual } = presentation;
   if (visual.status === 'alarm') classes.push('alarm');
@@ -390,8 +395,10 @@ export function resolveDevicePresentation(
   d: DevItem,
   options: ResolvePresentationOptions,
 ): ResolvedDevicePresentation {
-  const sources = resolvePresentationSources(hass, d);
-  const display = displayOf(d);
+  const display = normalizeDeviceDisplay(d.marker?.display);
+  const staticIcon = display === 'static_icon';
+  const sources = staticIcon && options.sourceDetails === false
+    ? EMPTY_SOURCES : resolvePresentationSources(hass, d);
   const status = d.bindingStatus;
   const haDisabled = status?.kind === 'ha_disabled';
   const orphaned = status?.kind === 'orphaned';
@@ -400,15 +407,18 @@ export function resolveDevicePresentation(
   const combined = combineVisualSamples(sources.samples);
   let visual = combined;
   if (effectiveHidden) visual = { availability: 'available', status: 'neutral', activity: 'none' };
+  else if (staticIcon) visual = { availability: 'available', status: 'neutral', activity: 'none' };
   else if (combined.status !== 'alarm' && !options.liveStates) {
     visual = { availability: 'available', status: 'neutral', activity: 'none' };
   }
 
-  const value = resolveValue(hass, d, sources, options.showTemperature);
+  const value = staticIcon && options.sourceDetails === false
+    ? { source: null, text: null, fallback: null }
+    : resolveValue(hass, d, sources, options.showTemperature);
   const sourceSignature = signatureOf(d, sources, value.source);
   const rt = options.activityRuntime;
   const now = options.now ?? Date.now();
-  if (!effectiveHidden && options.liveStates && combined.status !== 'alarm'
+  if (!staticIcon && !effectiveHidden && options.liveStates && combined.status !== 'alarm'
       && rt?.sources === sourceSignature && rt.flashTs && rt.flashKind
       && now - rt.flashTs < ACTIVITY_WINDOW_MS) {
     visual = { ...visual, activity: rt.flashKind };
@@ -416,21 +426,21 @@ export function resolveDevicePresentation(
 
   const activity = display === 'icon_ripple' && !effectiveHidden
     && options.liveStates && visual.status !== 'alarm' ? visual.activity : 'none';
-  const temp = !effectiveHidden && options.showTemperature
+  const temp = !staticIcon && !effectiveHidden && options.showTemperature
     ? (d.marker?.use_climate_temp === true ? climateTempFor(hass, d.entities)
       : (d.icon === 'mdi:thermometer' || d.icon === 'mdi:air-filter') ? tempFor(hass, d.entities) : null)
     : null;
-  const hum = !effectiveHidden && options.showTemperature && d.primary && isHumEntity(hass, d.primary)
+  const hum = !staticIcon && !effectiveHidden && options.showTemperature && d.primary && isHumEntity(hass, d.primary)
     ? humFor(hass, d.entities) : null;
-  const lqi = !effectiveHidden && options.showSignal && !d.virtual ? lqiFor(hass, d.entities) : null;
+  const lqi = !staticIcon && !effectiveHidden && options.showSignal && !d.virtual ? lqiFor(hass, d.entities) : null;
   const actEid = sources.sourceKind === 'cover'
     ? sources.visualSources[0]?.eid
     : d.primary || sources.visualSources[0]?.eid;
   const state = actEid ? hass?.states?.[actEid] : null;
-  const icon = options.liveStates && !effectiveHidden
+  const icon = options.liveStates && !staticIcon && !effectiveHidden
     ? stateIcon(d.icon, actEid?.split('.')[0], state?.attributes?.device_class, state?.state, !!d.marker?.icon)
     : d.icon;
-  const lightColor = options.liveStates && !effectiveHidden
+  const lightColor = options.liveStates && !staticIcon && !effectiveHidden
     ? resolvedLightSources(hass, [{ ...d, hidden: false }])
         .map((source) => lightColorOf(hass?.states?.[source.eid]))
         .find((color): color is string => !!color) || null
@@ -438,7 +448,7 @@ export function resolveDevicePresentation(
   const scale = Number(d.marker?.size) > 0 ? Number(d.marker!.size) : 1;
   const angle = Number(d.marker?.angle) || 0;
   const rippleScale = Number(d.marker?.ripple_size) > 0 ? Number(d.marker!.ripple_size) : 3;
-  const rippleColor = d.marker?.ripple_color || lightColor || null;
+  const rippleColor = staticIcon ? null : d.marker?.ripple_color || lightColor || null;
   const valueText = display === 'value' && !effectiveHidden ? value.text : null;
   const disabledReason = status?.kind === 'ha_disabled' ? status.reason : null;
   const reason = explanationReason(
@@ -446,14 +456,15 @@ export function resolveDevicePresentation(
   );
   const notices: PresentationReason[] = [];
   if (options.designPreview && userHidden) notices.push('hidden_design_preview');
-  if (d.marker?.vacuum?.live === true) notices.push('vacuum_live_plan_only');
+  if (!staticIcon && d.marker?.vacuum?.live === true) notices.push('vacuum_live_plan_only');
   const powerSource = sources.visualSources.length === 1
     && isDevicePowerSwitch(hass, sources.visualSources[0].eid);
   const uncategorisedSwitches = d.entities.filter((eid) =>
     eid.startsWith('switch.') && !hass?.entities?.[eid]?.entity_category,
   ).length;
   if (powerSource && uncategorisedSwitches > 1) notices.push('composite_power_source');
-  if (display !== 'icon_ripple' && combined.status !== 'alarm' && combined.activity !== 'none') {
+  if (display !== 'icon_ripple' && display !== 'static_icon'
+      && combined.status !== 'alarm' && combined.activity !== 'none') {
     notices.push('activity_display_disabled');
   }
 
@@ -488,7 +499,7 @@ export function resolveDevicePresentation(
     haDisabled,
     disabledReason,
     orphaned,
-    vacuumLive: d.marker?.vacuum?.live === true,
+    vacuumLive: !staticIcon && d.marker?.vacuum?.live === true,
     explanation: { reason, notices },
   };
   return { ...presentation, classes: presentationClasses(presentation) };
@@ -499,6 +510,7 @@ export function presentationWithDemoActivity(
   source: ResolvedDevicePresentation,
   generation: number,
 ): ResolvedDevicePresentation {
+  if (source.display !== 'icon_ripple') return source;
   const out: ResolvedDevicePresentation = {
     ...source,
     activity: 'event',

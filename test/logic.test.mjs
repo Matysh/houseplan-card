@@ -15,13 +15,25 @@ import {
   contentUrl, chunk, referencedContentUrls, MAX_SIGN_PATHS,
   interiorPoint,
   segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointOnBoundary, pointStrictlyInside, roomsOverlap,
-  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, openingShoulders, fillColorsOf, lerpColor, roomFillStyle, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, poleOfInaccessibility, runServiceFor, TOGGLE_SAFE_DOMAINS, coverService, coverMoving, coverEntityOf,
+  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, openingShoulders, fillColorsOf, lerpColor, roomFillStyle, resolveEffectiveRoomFill, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, poleOfInaccessibility, runServiceFor, TOGGLE_SAFE_DOMAINS, coverService, coverMoving, coverEntityOf,
+  normalizeDeviceDisplay, isAlarmCapable,
   liveText, liveTextValue, liveTextReference, liveTextToken,
   hassValue, valueWithUnit, decorTextScale, decorTextLines,
   LIVE_TEXT_DASH, LIVE_TEXT_VALUE_MAX, DECOR_TEXT_SCALE_MIN, DECOR_TEXT_SCALE_MAX } from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
 } from '../test-build/rules.js';
+
+test('display normalization and alarm-capable metadata share one contract', () => {
+  assert.equal(normalizeDeviceDisplay(undefined), 'badge');
+  assert.equal(normalizeDeviceDisplay('ripple'), 'icon_ripple');
+  assert.equal(normalizeDeviceDisplay('static_icon'), 'static_icon');
+  assert.equal(normalizeDeviceDisplay('not-a-mode'), 'badge');
+  assert.equal(isAlarmCapable('alarm_control_panel', ''), true);
+  assert.equal(isAlarmCapable('siren', ''), true);
+  assert.equal(isAlarmCapable('binary_sensor', 'smoke'), true);
+  assert.equal(isAlarmCapable('binary_sensor', 'motion'), false);
+});
 
 test('lqiColor: boundaries and midpoint', () => {
   assert.equal(lqiColor(40), 'hsl(0, 85%, 55%)');
@@ -551,6 +563,34 @@ test('roomFillStyle light_none: alpha 0 keeps no-fill; a custom color fills ligh
   assert.equal(roomFillStyle('light', null, 'none', null, 20, 25, def), null); // default: unchanged
   const c = fillColorsOf({ fill_colors: { light_none: { c: '#123456', a: 0.2 } } });
   assert.deepEqual(roomFillStyle('light', null, 'none', null, 20, 25, c), { c: '#123456', a: 0.2 });
+});
+
+test('resolveEffectiveRoomFill preserves the existing palette contract for room shapes and tunnels', () => {
+  const colors = fillColorsOf({ fill_colors: {
+    light_on: { c: '#111111', a: 0.11 },
+    light_off: { c: '#222222', a: 0.22 },
+    temp_cold: { c: '#333333', a: 0.33 },
+    temp_ok: { c: '#444444', a: 0.44 },
+    temp_hot: { c: '#555555', a: 0.55 },
+    lqi_low: { c: '#000000', a: 0.1 },
+    lqi_high: { c: '#ffffff', a: 0.3 },
+    glow_base: { c: '#666666', a: 0.66 },
+  } });
+  const cases = [
+    ['none', null, 'none', null, null],
+    ['lqi', 110, 'none', null, { color: '#808080', opacity: 0.2, mode: 'lqi' }],
+    ['lqi', null, 'none', null, null],
+    ['light', null, 'on', null, { color: '#111111', opacity: 0.11, mode: 'light' }],
+    ['light', null, 'off', null, { color: '#222222', opacity: 0.22, mode: 'light' }],
+    ['temp', null, 'none', 18, { color: '#333333', opacity: 0.33, mode: 'temp' }],
+    ['temp', null, 'none', 22, { color: '#444444', opacity: 0.44, mode: 'temp' }],
+    ['temp', null, 'none', 27, { color: '#555555', opacity: 0.55, mode: 'temp' }],
+    ['temp', null, 'none', null, null],
+    ['glow', null, 'none', null, { color: '#666666', opacity: 0.66, mode: 'glow' }],
+  ];
+  for (const [mode, lqi, lights, temp, expected] of cases) {
+    assert.deepEqual(resolveEffectiveRoomFill(mode, lqi, lights, temp, 20, 25, colors), expected);
+  }
 });
 
 test('stateIcon: doors/locks/bulbs reflect state; custom icons and outages never morph', () => {

@@ -134,7 +134,7 @@ test('legacy filled shapes receive the canonical fill fields', () => {
   assert.equal(result.config.spaces[0].decor[0].fill_opacity, 0.25);
 });
 
-test('optimizer migrates legacy self-light intent and preserves unknown controls losslessly', () => {
+test('optimizer removes legacy self-control without inventing a light source', () => {
   const result = optimizePlans({
     model_version: PLAN_MODEL_VERSION - 1,
     spaces: [],
@@ -147,9 +147,9 @@ test('optimizer migrates legacy self-light intent and preserves unknown controls
   assert.deepEqual(result.config.markers[0].controls, [
     'input_boolean.legacy', 'light.mirror', 'light.mirror',
   ]);
-  assert.equal(result.config.markers[0].is_light, true);
+  assert.equal(result.config.markers[0].is_light, undefined);
   assert.equal(result.config.model_version, PLAN_MODEL_VERSION);
-  assert.equal(result.report.migrated, 2);
+  assert.equal(result.report.migrated, 1);
 });
 
 test('optimizer repairs legacy cell_cm values into the server schema range', () => {

@@ -26,20 +26,19 @@ from homeassistant.helpers.typing import ConfigType
 DOMAIN = "demo_robot"
 TICK_S = 2          # telemetry cadence
 SPEED_MM = 600      # per tick ≈ 0.3 m/s, a realistic robot pace
-DOCK = (3900.0, 2600.0)
+DOCK = (6100.0, 3600.0)  # inside Under-Stairs Closet
 
 # Robot-map rooms, mm, Y up (flipped vs screen). Bboxes mirror the plan's
 # room polygons; the names MUST equal the plan room names — auto-calibration
 # matches by name.
 ROOMS: dict[str, tuple[str, float, float, float, float]] = {
-    "1": ("Гостиная", 480, 4320, 4160, 7360),
-    "2": ("Кухня", 4160, 5120, 7520, 7360),
-    "3": ("Спальня", 4160, 2400, 7520, 5120),
-    "4": ("Кабинет", 480, 2400, 2720, 4320),
-    "5": ("Прихожая", 2720, 2400, 4160, 4320),
+    "1": ("Kitchen & Living", 900, 3067, 6300, 6367),
+    "2": ("Hallway", 3200, 1033, 4533, 3800),
+    "3": ("Guest Bedroom", 4533, 1033, 6300, 3067),
+    "4": ("Under-Stairs Closet", 5300, 3067, 6933, 4467),
 }
 # cleaning order: start at the dock in the hallway, end next to it
-CLEAN_ORDER = ("5", "4", "1", "2", "3")
+CLEAN_ORDER = ("4", "2", "3", "1")
 INSET = 350.0       # keep lanes away from walls
 LANE_MM = 650.0     # serpentine lane spacing
 

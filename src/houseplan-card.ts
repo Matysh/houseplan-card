@@ -22,11 +22,13 @@ import {
   poleOfInaccessibility, subst,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
   stateIcon, lightColorOf, parseRoomRef, diffNewDevices, glowColorOf, doorSector, hasRoomBehind, controlsAction, isControllable,
-  spaceDisplayOf, roomFillStyle, fillColorsOf, DEFAULT_FILL_COLORS, type FillColors, runServiceFor, RUN_TARGET_DOMAINS,
+  spaceDisplayOf, resolveEffectiveRoomFill, fillColorsOf, DEFAULT_FILL_COLORS,
+  type FillColors, type ResolvedRoomFill, runServiceFor, RUN_TARGET_DOMAINS,
   DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY, stageBgOf,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
   referencedContentUrls,
   DISPLAY_MODES, TAP_ACTIONS, SPACE_FILL_MODES, ROOM_FILL_MODES,
+  normalizeDeviceDisplay, isAlarmCapable, type DeviceDisplayMode,
   coverService, coverEntityOf, COVER_GUARDED_CLASSES,
   liveText, liveTextReference, liveTextToken, hassValue, valueWithUnit, decorTextScale, decorTextLines,
   DECOR_TEXT_BASE,
@@ -51,7 +53,7 @@ import {
   setWallThickness, setWallThicknessForRoom, cmToField, wallCmToUnits,
   wallEdgeBodies, wallBodiesUnionPath, paperRoomShapesWithWalls,
   innerContourForRoom, roomWallProfile, outsetContour,
-  openingInnerFaceOffset, applyWallThicknessToNewRoom,
+  openingInnerFaceOffset, openingTunnelGeometry, applyWallThicknessToNewRoom,
   drawWallPreviewD, DRAW_WALL_DEFAULT_CM, wallIntervals, normalizeWallIntervals,
   intervalCmAt, wallBodyNeedsSolid, type WallEntry,
 } from './wall-thickness';
@@ -77,7 +79,7 @@ import {
   resolvedLightSources, resolvedLightState, resolvedLightStats,
   resolvedDeviceStateEntities, removedPlanBindings, isRemovedPlanEntity,
   deletePlanMarkerRecords, effectiveMarkerControls, persistedExternalControls,
-  hasLegacySelfLightIntent, resolveIcon,
+  resolveIcon,
   type AreaClimate,
 } from './devices';
 import type {
@@ -128,7 +130,7 @@ import {
   type DecorBox, type SnapGeometry,
 } from './editors/decor/geometry';
 
-const CARD_VERSION = '1.60.2-beta.3';
+const CARD_VERSION = '1.60.2';
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
 const CELL_CM_MIN = 0.1;
@@ -338,6 +340,10 @@ const unionRect = (a: Rect, b: Rect): Rect => {
 };
 
 type MarkupTool = 'select' | 'draw' | 'partition' | 'column' | 'merge' | 'split' | 'resize' | 'opening' | 'boundary' | 'wallthick' | 'delroom';
+type RoomFillFrame = {
+  byRoom: Map<RoomCfg, ResolvedRoomFill | null>;
+  byId: Map<string, ResolvedRoomFill | null>;
+};
 const MARKUP_TOOLS = new Set<MarkupTool>([
   'select', 'draw', 'partition', 'column', 'merge', 'split', 'resize',
   'opening', 'boundary', 'wallthick', 'delroom',
@@ -964,7 +970,7 @@ class HouseplanCard extends LitElement {
     bindingFilter: string;
     icon: string;        // '' = auto
     autoIcon: string;    // the icon the rules would give — picker placeholder
-    display: 'badge' | 'icon_ripple' | 'value';
+    display: DeviceDisplayMode;
     rippleColor: string; // '' = accent
     rippleSize: number;  // in icon diameters
     size: number;        // icon size multiplier
@@ -2941,12 +2947,6 @@ class HouseplanCard extends LitElement {
     return this._coverIndicator(d) || d.primary;
   }
 
-  /** Legacy `ripple` is read as the surviving icon+activity presentation. */
-  private _displayOf(d: DevItem): 'badge' | 'icon_ripple' | 'value' {
-    const display = d.marker?.display;
-    return display === 'ripple' ? 'icon_ripple' : display || 'badge';
-  }
-
   /**
    * Entities that jointly describe the marker. Explicit cover intent wins;
    * otherwise the same resolved light set used by Glow/fill/controls wins;
@@ -2968,6 +2968,7 @@ class HouseplanCard extends LitElement {
       showSignal: showLqi && this._config?.show_signal !== false,
       designPreview,
       activityRuntime: this._activityRt.get(d.id),
+      sourceDetails: false,
     });
   }
 
@@ -3009,6 +3010,20 @@ class HouseplanCard extends LitElement {
   /** Does the dialog's binding carry a climate entity? Gates the opt-in checkbox. */
   private _bindingHasClimate(binding: string): boolean {
     return this._bindingEntities(binding).some((eid) => eid.startsWith('climate.'));
+  }
+
+  /** Static display can deliberately hide this binding's alarm indication. */
+  private _bindingHasAlarm(binding: string): boolean {
+    return this._bindingEntities(binding).some((eid) => {
+      const state = this._planHass?.states?.[eid] || this.hass?.states?.[eid];
+      const registry = this._fullRegistryHass.entities[eid] || this.hass?.entities?.[eid];
+      return isAlarmCapable(
+        eid.split('.')[0],
+        state?.attributes?.device_class
+          || registry?.device_class
+          || registry?.original_device_class,
+      );
+    });
   }
 
   /** The cover entity behind the dialog's binding, or null. */
@@ -8008,6 +8023,99 @@ class HouseplanCard extends LitElement {
     </defs>` as unknown as TemplateResult;
   }
 
+  /**
+   * One authoritative room-fill projection per render frame. Room polygons and
+   * thick-wall opening tunnels consume the same object, so a live HA tick can
+   * never update one without the other or drift in palette semantics.
+   */
+  private _resolvedRoomFills(space: SpaceModel, disp: SpaceDisplay): RoomFillFrame {
+    const byRoom = new Map<RoomCfg, ResolvedRoomFill | null>();
+    const byId = new Map<string, ResolvedRoomFill | null>();
+    for (const room of space.rooms) {
+      const mode = roomFillModeOf(disp.fill, room);
+      const resolved = resolveEffectiveRoomFill(
+        mode,
+        mode === 'lqi' && room.area ? this._roomLqi(room.area) : null,
+        mode === 'light'
+          ? resolvedLightState(resolvedLightSources(this._planHass, this._devices, room))
+          : 'none',
+        mode === 'temp' ? this._roomTemp(room) : null,
+        disp.tempMin,
+        disp.tempMax,
+        this._fillColors,
+      );
+      byRoom.set(room, resolved);
+      if (room.id) byId.set(room.id, resolved);
+    }
+    return { byRoom, byId };
+  }
+
+  /**
+   * Room-coloured base beneath Glow/sun and beneath the architectural symbol.
+   * The pure helper returns exact atomic wall strips in opening-local coords;
+   * a hard-stop gradient changes side precisely at local y=0 (the wall axis),
+   * never at an assumed 50% of an asymmetric bounding box.
+   */
+  private _renderOpeningTunnelFills(
+    space: SpaceModel,
+    roomFills: RoomFillFrame,
+  ): TemplateResult {
+    // Plan mode replaces live fills with its blue editing wash. A coloured
+    // tunnel there would no longer repeat the room and could obstruct handles.
+    if (this._markup || !this._spaceWalls.length || !this._openingsR.length)
+      return svg`` as unknown as TemplateResult;
+    const openCuts = this._openPairs().flatMap((p) => p.segs);
+    const parts = this._openingsR.map((opening, index) => {
+      const geometry = openingTunnelGeometry(
+        space.rooms,
+        { x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen },
+        this._spaceWalls,
+        openCuts,
+        this._wallKeyPitch,
+        this._cellCm,
+        this._gridPitch,
+        NORM_W,
+      );
+      if (!geometry) return nothing;
+      const negative = geometry.faces.find((f) => f.side === -1);
+      const positive = geometry.faces.find((f) => f.side === 1);
+      if (!negative || !positive) return nothing;
+      const negFill = roomFills.byId.get(negative.roomId) || null;
+      const posFill = roomFills.byId.get(positive.roomId) || null;
+      if (!negFill && !posFill) return nothing;
+      const d = `${negative.d} ${positive.d}`;
+      const same = !!negFill && !!posFill
+        && negFill.color === posFill.color && negFill.opacity === posFill.opacity;
+      const transform = `translate(${opening.rx} ${opening.ry}) rotate(${opening.angle})`;
+      if (same) {
+        return svg`<path class="opening-tunnel" data-hp="opening-tunnel" data-id=${opening.id} data-kind=${opening.type}
+          data-wall-key=${geometry.wallKey} aria-hidden="true" pointer-events="none"
+          transform=${transform} d=${d} fill=${negFill!.color}
+          fill-opacity=${negFill!.opacity}></path>`;
+      }
+      const span = geometry.maxY - geometry.minY;
+      if (!(span > 0)) return nothing;
+      const axis = Math.max(0, Math.min(1, -geometry.minY / span));
+      const axisOffset = `${(axis * 100).toFixed(6)}%`;
+      const nf = negFill || { color: '#000000', opacity: 0, mode: 'none' as const };
+      const pf = posFill || { color: '#000000', opacity: 0, mode: 'none' as const };
+      const gradientId = `hp-opening-tunnel-${index}`;
+      return svg`<g class="opening-tunnel" data-hp="opening-tunnel" data-id=${opening.id} data-kind=${opening.type}
+        data-wall-key=${geometry.wallKey} aria-hidden="true" pointer-events="none"
+        transform=${transform}>
+        <defs><linearGradient id=${gradientId} gradientUnits="userSpaceOnUse"
+          x1="0" y1=${geometry.minY} x2="0" y2=${geometry.maxY}>
+          <stop offset="0%" stop-color=${nf.color} stop-opacity=${nf.opacity}></stop>
+          <stop offset=${axisOffset} stop-color=${nf.color} stop-opacity=${nf.opacity}></stop>
+          <stop offset=${axisOffset} stop-color=${pf.color} stop-opacity=${pf.opacity}></stop>
+          <stop offset="100%" stop-color=${pf.color} stop-opacity=${pf.opacity}></stop>
+        </linearGradient></defs>
+        <path d=${d} fill=${`url(#${gradientId})`} fill-rule="nonzero"></path>
+      </g>`;
+    });
+    return (svg`<g class="opening-tunnels" aria-hidden="true" pointer-events="none">${parts}</g>`) as unknown as TemplateResult;
+  }
+
   private _renderWallBodies(disp: SpaceDisplay): TemplateResult {
     if (disp && !disp.showBorders && (this._mode === 'view' || this._mode === 'devices'))
       return svg`` as unknown as TemplateResult;
@@ -8294,10 +8402,15 @@ class HouseplanCard extends LitElement {
     this._opMeasure = r.measure;
     const nx = r.x / NORM_W;
     const ny = r.y / this._spaceH;
-    if (cfg.x !== nx || cfg.y !== ny || cfg.angle !== snap.angle) this._opDrag.dirty = true;
+    const geometryChanged = cfg.x !== nx || cfg.y !== ny || cfg.angle !== snap.angle;
+    if (geometryChanged) this._opDrag.dirty = true;
     cfg.x = nx;
     cfg.y = ny;
     cfg.angle = snap.angle;
+    // The wall cut and room-coloured tunnel are geometry caches too. Advance
+    // the preview epoch so both follow the live opening instead of remaining at
+    // its pre-drag location until pointerup/save.
+    if (geometryChanged) this._cfgEpoch++;
     this.requestUpdate();
   }
 
@@ -8824,7 +8937,7 @@ class HouseplanCard extends LitElement {
         bindingFilter: '',
         icon: d.marker?.icon || '',
         autoIcon: d.icon || '',
-        display: d.marker?.display === 'ripple' ? 'icon_ripple' : d.marker?.display || 'badge',
+        display: normalizeDeviceDisplay(d.marker?.display),
         rippleColor: d.marker?.ripple_color || '',
         rippleSize: Number(d.marker?.ripple_size) > 0 ? Number(d.marker!.ripple_size) : 3,
         size: Number(d.marker?.size) > 0 ? Number(d.marker!.size) : 1,
@@ -8836,12 +8949,10 @@ class HouseplanCard extends LitElement {
         defaultTap: d.primary?.split('.')[0] === 'light' ? 'toggle' : 'info',
         // Keep unknown, temporarily inactive and duplicate external targets
         // byte-for-byte across Open → Save. Runtime uses the filtered
-        // effective projection; a legacy self-reference becomes isLight.
+        // effective projection; a legacy self-reference is not a light source.
         controls: persistedExternalControls(d.marker?.binding, d.marker?.controls, d.entities),
         controlsFilter: '',
-        isLight: d.marker?.is_light === true || hasLegacySelfLightIntent(
-          d.marker?.binding, d.marker?.controls, d.entities,
-        ),
+        isLight: d.marker?.is_light === true,
         useClimateTemp: d.marker?.use_climate_temp === true,
         glowRadius: Number(d.marker?.glow_radius_cm) > 0
           ? String(this._imperial
@@ -10449,7 +10560,7 @@ class HouseplanCard extends LitElement {
       this._planHass,
       this._devices.filter((d) => d.space === space.id),
     )) {
-      if (source.on && source.device.id && !litByDevice.has(source.device.id))
+      if (source.on && source.castsGlow && source.device.id && !litByDevice.has(source.device.id))
         litByDevice.set(source.device.id, source.eid);
     }
     const spots: { pos: { x: number; y: number }; c: string; alpha: number; clip: string[] | null; r: number }[] = [];
@@ -10884,6 +10995,7 @@ class HouseplanCard extends LitElement {
     const showGhosts = this._mode === 'devices' && this._showAll;
     const devs = this._devices.filter((d) => d.space === space.id && (!d.hidden || showGhosts));
     const disp = spaceDisplayOf(this._curSpaceCfg);
+    const roomFills = this._resolvedRoomFills(space, disp);
     const showLqi = disp.showLqi ?? this._config.show_signal ?? true;
     const cfgSize = this._config.icon_size ?? 2.5;
     const iconPct = cfgSize > 8 ? 2.5 : cfgSize;
@@ -11068,34 +11180,12 @@ class HouseplanCard extends LitElement {
                 const st: string[] = [];
                 // keep the stroke colour even when borders are hidden, so hover can reveal it
                 st.push(`--room-stroke:${disp.color}`, `--room-stroke-op:${disp.showBorders ? disp.opacity : 0}`);
-                const fillC = effFill === 'glow'
-                  // glow: uniform darkness (a room override may opt OUT of it)
-                  ? this._fillColors.glow_base
-                  : effFill === 'temp'
-                  // temp works without an HA area when a tier-3 source is set
-                  ? roomFillStyle('temp', null, 'none', this._roomTemp(r),
-                      disp.tempMin, disp.tempMax, this._fillColors)
-                  : effFill === 'light'
-                  // marker.room_id also supports rooms without an HA area
-                  ? roomFillStyle(
-                      'light', null,
-                      resolvedLightState(resolvedLightSources(this._planHass, this._devices, r)),
-                      null, disp.tempMin, disp.tempMax, this._fillColors,
-                    )
-                  : r.area
-                  ? roomFillStyle(
-                      effFill,
-                      effFill === 'lqi' ? this._roomLqi(r.area) : null,
-                      'none',
-                      null,
-                      disp.tempMin,
-                      disp.tempMax,
-                      this._fillColors,
-                    )
-                  : null;
+                // One frame-local resolver drives both this room and every
+                // thick-wall opening tunnel that continues its floor colour.
+                const fillC = roomFills.byRoom.get(r) || null;
                 if (fillC) {
                   cls += ' filled';
-                  st.push(`--room-fill:${fillC.c}`, `--room-fill-op:${fillC.a.toFixed(3)}`);
+                  st.push(`--room-fill:${fillC.color}`, `--room-fill-op:${fillC.opacity.toFixed(3)}`);
                 } else st.push('--room-fill:transparent', '--room-fill-op:0');
                 style = st.join(';');
               }
@@ -11187,6 +11277,7 @@ class HouseplanCard extends LitElement {
                 x="${c[0]}" y="${c[1]}">${r.name}</text>` : nothing}`;
               });
             })()}
+            ${this._renderOpeningTunnelFills(space, roomFills)}
             ${disp.fill === 'glow' && !this._markup ? this._renderGlowLayer(space) : nothing}
             ${this._renderSunRays(space)}
             ${this._editing ? this._renderAlignGuides() : nothing}
@@ -11410,6 +11501,7 @@ class HouseplanCard extends LitElement {
     const live = new Set<string>();
     for (const d of this._devices) {
       if (d.hidden) continue;
+      if (normalizeDeviceDisplay(d.marker?.display) === 'static_icon') continue;
       live.add(d.id);
       const snapshot = this._activitySnapshot(d);
       snapshots.set(d.id, snapshot);
@@ -11449,6 +11541,7 @@ class HouseplanCard extends LitElement {
     const snapshots = this._syncActivityRuntime();
     for (const d of this._devices) {
       if (d.hidden) continue;
+      if (normalizeDeviceDisplay(d.marker?.display) === 'static_icon') continue;
       const snapshot = snapshots.get(d.id) || this._activitySnapshot(d);
       const { samples, sourceKey } = snapshot;
       const rt = this._activityRt.get(d.id);
@@ -11480,6 +11573,10 @@ class HouseplanCard extends LitElement {
     if (!this.hass) return;
     for (const d of this._devices) {
       if (d.hidden || !this._isVacDev(d)) continue;
+      if (normalizeDeviceDisplay(d.marker?.display) === 'static_icon') {
+        this._vacRt.delete(d.id);
+        continue;
+      }
       const src = this._vacSource(d);
       if (!src) continue;
       const vacEnt = this._vacEntity(d);
@@ -11851,6 +11948,7 @@ class HouseplanCard extends LitElement {
     const trails: TemplateResult[] = [];
     for (const d of devs) {
       if (d.hidden || !this._isVacDev(d)) continue;
+      if (normalizeDeviceDisplay(d.marker?.display) === 'static_icon') continue;
       const src = this._vacSource(d);
       if (!src) continue;
       const tele = readVacTelemetry(this.hass?.states[src]?.attributes);
@@ -13701,12 +13799,21 @@ class HouseplanCard extends LitElement {
 
           <label>${this._t('marker.display_label')}</label>
           <select class="areasel"
-            @change=${(e: Event) => (this._markerDialog = { ...d, display: (e.target as HTMLSelectElement).value as any })}>
+            @change=${(e: Event) => (this._markerDialog = {
+              ...d,
+              display: normalizeDeviceDisplay((e.target as HTMLSelectElement).value),
+            })}>
             ${DISPLAY_MODES.map((v) => [v, 'display.' + v] as const).map(
               ([v, k]) => html`<option value=${v} ?selected=${d.display === v}>${this._t(k as any)}</option>`,
             )}
           </select>
           <p class="muted">${this._t('marker.display_hint')}</p>
+          ${d.display === 'static_icon' && this._bindingHasAlarm(d.binding)
+            ? html`<div class="habindingbanner" role="note">
+                <ha-icon icon="mdi:alert-outline"></ha-icon>
+                <span>${this._t('marker.static_alarm_warning')}</span>
+              </div>`
+            : nothing}
           ${previewPresentation
             ? html`<hp-device-preview
                 .hass=${this.hass}

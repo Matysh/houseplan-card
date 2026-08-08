@@ -805,8 +805,18 @@ export type TapAction = 'info' | 'more-info' | 'toggle' | 'run' | 'cover';
  * Adding an option here and forgetting the schema now fails the test suite.
  */
 /** UI presentations. `ripple` remains a backend/read compatibility value only
- * and is normalised to `icon_ripple` by the card. */
-export const DISPLAY_MODES = ['badge', 'icon_ripple', 'value'] as const;
+ * and is normalised to `icon_ripple` by the shared normalizer. */
+export const DISPLAY_MODES = ['badge', 'icon_ripple', 'value', 'static_icon'] as const;
+export type DeviceDisplayMode = typeof DISPLAY_MODES[number];
+
+/** One read boundary for persisted/legacy display values. Unknown manual data
+ * safely falls back to the default dynamic badge; the backend still rejects it
+ * on write. Keep every renderer and editor on this normalizer. */
+export function normalizeDeviceDisplay(value: unknown): DeviceDisplayMode {
+  if (value === 'ripple') return 'icon_ripple';
+  return (DISPLAY_MODES as readonly unknown[]).includes(value)
+    ? value as DeviceDisplayMode : 'badge';
+}
 export const TAP_ACTIONS = ['info', 'more-info', 'toggle', 'run', 'cover'] as const;
 /** Space-level fill: 'glow' is a whole-space light model, not a per-room one. */
 // 'glow' leads: it is the default for new spaces since v1.54 — the owner's
@@ -1409,6 +1419,36 @@ export function roomFillStyle(
 }
 
 /**
+ * Renderer-ready room fill shared by the room shape and every piece of floor
+ * that visually extends it (currently thick-wall opening tunnels).
+ *
+ * Keep live-data collection outside this pure helper. Callers resolve the
+ * room's LQI/light/temperature once per frame, then both render paths consume
+ * this exact color/opacity pair. This preserves the historical room palette
+ * while preventing a second, subtly different fill implementation.
+ */
+export interface ResolvedRoomFill {
+  color: string;
+  opacity: number;
+  mode: RoomFillMode;
+}
+
+export function resolveEffectiveRoomFill(
+  mode: RoomFillMode,
+  lqi: number | null,
+  lights: 'on' | 'off' | 'none',
+  temp: number | null | undefined,
+  tempMin: number,
+  tempMax: number,
+  colors: FillColors,
+): ResolvedRoomFill | null {
+  const entry = mode === 'glow'
+    ? colors.glow_base
+    : roomFillStyle(mode, lqi, lights, temp, tempMin, tempMax, colors);
+  return entry ? { color: entry.c, opacity: entry.a, mode } : null;
+}
+
+/**
  * Room fill color for the selected mode, or null for "no fill".
  * - lqi: red→green gradient by the room's average zigbee signal (null LQI → no fill)
  * - light: warm yellow when any light in the room is on, grey when all known
@@ -1986,6 +2026,16 @@ export function distToSegment(p: number[], s: number[]): number {
 /** Device classes whose active state is an emergency, not a status. */
 const ALARM_CLASSES = new Set(['smoke', 'gas', 'carbon_monoxide', 'moisture', 'safety', 'tamper', 'problem']);
 
+/** Whether an entity can produce House Plan's critical alarm presentation,
+ * independent of its current state. Used for the static-icon safety notice. */
+export function isAlarmCapable(
+  domain: string | null | undefined,
+  deviceClass: string | null | undefined,
+): boolean {
+  if (domain === 'alarm_control_panel' || domain === 'siren') return true;
+  return domain === 'binary_sensor' && !!deviceClass && ALARM_CLASSES.has(deviceClass);
+}
+
 /**
  * An alarm is firing: leak/smoke/gas/CO/safety binary sensors in `on`, a
  * siren that is on, or an alarm panel in `triggered`. Unavailable/unknown
@@ -1998,8 +2048,7 @@ export function isAlarmState(
 ): boolean {
   if (domain === 'alarm_control_panel') return state === 'triggered';
   if (state !== 'on') return false;
-  if (domain === 'siren') return true;
-  return domain === 'binary_sensor' && !!deviceClass && ALARM_CLASSES.has(deviceClass);
+  return isAlarmCapable(domain, deviceClass);
 }
 
 // ---------------- room references ----------------

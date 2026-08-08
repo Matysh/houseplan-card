@@ -128,6 +128,15 @@ A marker's live indication — status plate, state-morphed icon and semantic
 activity — is derived by one resolver from one effective source set. Its
 source precedence is (`_visualSamples` / `_actEntity`):
 
+`display: static_icon` is the deliberate presentation exception to the matrix
+below. The resolver still retains source metadata for preview diagnostics, but
+the rendered marker always uses its base icon on a neutral dark plate: no state
+morph, work/open/alarm/unavailable paint, activity, RGB, value or satellite
+temperature/humidity/LQI badge. Live vacuum puck/trail/room-highlight overlays
+are also suppressed. This changes presentation only: hover/focus, service-call
+feedback, controls, Glow and room light aggregation keep using the real device.
+Hidden, removed or HA-disabled lifecycle rules still outrank display mode.
+
 1. the device's **cover**, when the marker's tap action is explicitly
    «Открыть/закрыть» (`tap_action: 'cover'` — `coverEntityOf`, the same helper
    and the same entity the tap drives). It wins over EVERYTHING below;
@@ -136,15 +145,17 @@ source precedence is (`_visualSamples` / `_actEntity`):
    (an `entity:*` marker's bound entity and a `device:*` marker's child entities
    are excluded from the external list), otherwise automatic `light.*` only when `light` is the
    device's resolved functional role. An auxiliary LED/display light on a
-   media player or appliance does not turn the whole marker into a lamp. This exact set also feeds
-   Glow, Light fill, room light stats and group toggle;
+   media player or appliance does not turn the whole marker into a lamp. This
+   exact set feeds Light fill, room light stats, marker feedback and group
+   toggle. Glow additionally requires a spatial source: an external control
+   never places a pool at the controller, while a real lamp marker or explicit
+   `is_light` marker does. When both name the same entity, the physical marker
+   owns its one Glow position regardless of registry order;
 
-   For compatibility, a pre-v1.60 marker that lists its own `switch.*` in
-   `controls` is interpreted as `is_light`. Marker Save converts either binding;
-   Optimize Plans can convert the losslessly identifiable `entity:switch.*` case
-   (a `device:*` marker needs the HA registry and is therefore left to Save).
-   External controls remain additive, so migration does not change Glow, Light
-   fill or room statistics. The dialog preserves their ordered raw list,
+   A pre-v1.60 marker that lists its own `switch.*` in `controls` is ignored as
+   a self-reference; it is not interpreted as `is_light`. Marker Save removes
+   it, and Optimize Plans can remove the directly identifiable `entity:*` case.
+   The dialog preserves the ordered raw list of genuine external controls,
    including duplicates and temporarily unknown targets; runtime consumers
    separately de-duplicate and keep only currently controllable entities.
 3. otherwise the device's **resolved state role**

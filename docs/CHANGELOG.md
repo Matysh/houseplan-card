@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+## v1.60.2 — 2026-08-08
+
+- Door, window and gate tunnels in thick walls now continue the effective room
+  fill instead of exposing a white paper strip. An exterior opening uses its
+  room colour through the full wall depth; a shared opening splits cleanly on
+  the wall centreline when its rooms use different fills. Glow, window sun
+  rays and opening symbols keep their existing behaviour.
+- Device display now has an **Always static icon** option. It keeps the normal
+  dark icon unchanged by work, open, alarm, unavailable, RGB, values or sensor
+  badges, and hides live vacuum puck/trail overlays. Hover, actions, controls
+  and the device's separate contribution to room light remain unchanged. The
+  former **Icon** option is now named **Icon + dynamic plate**.
+- A controller no longer becomes a physical Glow origin merely because it has
+  managed light targets. `controls` still drives group toggling, room light
+  state and statistics, while the actual lamp marker owns the light pool. A
+  marker's own legacy `switch.*` self-control is no longer inferred as a light;
+  relay-driven fixtures require the explicit “This device is a light source” flag.
+
 ## v1.60.2-beta.3 — 2026-08-08
 
 - Saved devices disabled in Home Assistant are now forced off the plan and all

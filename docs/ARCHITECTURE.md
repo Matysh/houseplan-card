@@ -123,7 +123,7 @@ Built from the registries (`_buildDevices`), rules carried over 1-to-1 from the 
 
 ## Device markers (v1.6.0+)
 
-Per-marker appearance: `display: badge|icon_ripple|value`. Entity semantics originate in
+Per-marker appearance: `display: badge|icon_ripple|value|static_icon`. Entity semantics originate in
 `src/device-visual.ts`; `src/device-presentation.ts` resolves the complete renderer-ready
 projection (sources, value, icon, classes, metrics and explanation), and
 `src/device-face.ts` renders that projection on the full plan, device preview and static
@@ -132,13 +132,17 @@ shows the icon/morph and status plate; `icon_ripple` additionally shows a finite
 static presence, mechanical transition or actual-work ring; `value` replaces the icon
 with the HA-formatted numeric or text value. Ambiguous/missing/unavailable sources fall
 back to the icon instead of selecting an arbitrary registry row. A critical alarm is red
-in every presentation. The marker dialog builds its unsaved draft through `buildDevices`,
+in every dynamic presentation. `static_icon` deliberately keeps the configured/automatic
+base icon on one neutral dark plate: state morphing, work/open/alarm/unavailable paint,
+activity, RGB, value, temperature/humidity/LQI badges and live vacuum overlays are all
+suppressed. Hover/focus, taps, controls and light aggregation keep their normal behaviour.
+`normalizeDeviceDisplay()` is the mandatory compatibility gate for every consumer and maps
+legacy `ripple` to `icon_ripple`. The marker dialog builds its unsaved draft through `buildDevices`,
 then `hp-device-preview` shows the actual projection, integration provenance from
 registry/config-entry metadata and an isolated 3.3 s activity demonstration.
 Runtime baselines are seeded as soon as a rebuilt registry becomes authoritative, before
 the next HA snapshot is classified; source-key changes reset any finite effect immediately.
-Legacy `display: ripple` is read as `icon_ripple` and rewritten on the next config save;
-the backend accepts it only for compatibility. `ripple_color` and `ripple_size` remain the
+The backend accepts legacy `display: ripple` only for compatibility. `ripple_color` and `ripple_size` remain the
 stored names for the ordinary activity effect. `size` (icon multiplier via the
 `--dev-size` CSS var — value badges scale along) and `angle` rotate/scale a single icon.
 Room drawing shows a live **ruler** (`segmentCm` +
@@ -281,6 +285,13 @@ Its default width in the editor is 300 cm. `openingAmount` (pure) maps the conta
 **never** toggled from the plan (TOGGLE_FORBIDDEN_DOMAINS rule). View-mode UX: hover outline,
 drag along walls (continuous re-snap, saved on release), click → status card (250 ms timer),
 double click → properties dialog. In markup mode the "Opening" tool handles clicks instead.
+
+For a wall with thickness, `openingTunnelGeometry()` resolves the atomic wall
+interval and adjacent room on each side of the centreline. A base patch beneath
+Glow/sun repeats the same frame-local effective fill as the room shape. Outer
+openings give the one room both halves; shared openings use a local-coordinate
+hard stop at `y=0`. The helper ignores virtual spans, unfinished drafts and
+zero-thickness walls and clips mixed-thickness legacy spans per atomic body.
 
 ## Integration WS API
 
@@ -499,7 +510,11 @@ hash falls back to the default.
   cancel on opposite windings — field bug v1.36.3). Radius: global
   `settings.glow_radius_cm` + per-marker `glow_radius_cm`. On a thick wall the
   doorway sector is the angular intersection of its near- and far-face clear
-  spans, so the jamb returns clip the spill as a real opening tunnel.
+  spans, so the jamb returns clip the spill as a real opening tunnel. The
+  shared light resolver marks external `controls` as non-spatial: they still
+  vote in room state/statistics and drive group actions, but never place a Glow
+  pool at the controller. If the same entity also has a real lamp marker, that
+  physical marker owns its unique Glow position regardless of registry order.
 - **Open boundaries** (v1.37, revised 2026-08): `space.open_spans` hold
   geometric virtual stretches; `room.open_to` remains the light-zone index
   derived from spans (legacy `open_to`-only configs expand to full

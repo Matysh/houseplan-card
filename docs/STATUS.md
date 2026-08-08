@@ -15,11 +15,11 @@
 
 | Item | State |
 |---|---|
-| Version | **v1.60.2-beta.3** everywhere (manifest, const.py, package.json, CARD_VERSION) — pre-release with HA-disabled binding handling, live device preview, a unified Boundary tool, Gates, dashed decor lines and weather-independent window rays. The tag points at `dev`; `main` remains on v1.60.0 |
+| Version | **v1.60.2** everywhere (manifest, const.py, package.json, CARD_VERSION) — stable release with HA-disabled binding handling, live device preview, a unified Boundary tool, Gates, dashed decor lines, weather-independent window rays, an always-static device display and room-coloured opening tunnels. Stable `main`, `dev` and tag point to the same tested release commit |
 
 | Workflow | Owner's rule since 2026-08-07: ordinary fixes/features are made **locally, without tests and without commits**. A requested pre-release gets a production build plus the smallest targeted unit/smoke set covering the changed surfaces, one tested `dev` commit/tag and a GitHub Release with `prerelease=true`; `main` stays untouched. The complete local frontend/backend/smoke gate runs only before a stable release, after which `main` is fast-forwarded to the exact tested `dev` SHA and the GitHub Release uses `prerelease=false`. Release bodies are short and bilingual (Russian first): only significant user changes get individual bullets, while minor/code-only work is grouped as `Мелкие исправления и улучшения` / `Small fixes and improvements`; every body ends with separate links to the Russian and English changelogs. Nothing is copied to the home instance by hand |
 | GitHub | https://github.com/Matysh/houseplan-card — `main` carries stable releases; pre-release tags may point directly at `dev`. Work lands on `dev` and is merged into `main` for a stable release, so `dev` is normally equal to or ahead of `main`, never behind. Push via SSH key `ha_jb` (remote git@github.com:…); API releases via the fine-grained PAT in `~/.git-credentials` (Contents R/W, issued 2026-07-23) |
-| CI | v1.60.2-beta.3 uses the targeted local pre-release gate; exact commands belong in the release handoff rather than this snapshot. The exact-SHA Ubuntu Validate remains mandatory and may run the broader CI matrix automatically: `release.yml` withholds the asset until every matching run finishes green. Stable releases additionally require the complete local frontend/backend/smoke gate before tagging |
+| CI | v1.60.2 uses the complete local stable-release frontend/backend/browser-smoke gate. The exact-SHA Ubuntu Validate remains mandatory: `release.yml` withholds the asset until every matching run finishes green |
 | HACS | Custom repository works. **Inclusion PR: hacs/default#9004** — open, valid, labeled, mergeable clean, never drafted. Queue: 1212 open, 835 older than ours. Merge rate COLLAPSED: 75 in July but almost all in the first decade, 0 in the last week (checked 2026-07-29) — maintainers process in rare bursts; ETA unknowable, months at best. Nothing actionable on our side |
 | Home instance | ha.jbstudio.pro (SSH port **22222**, key `ha_jb`; HA config root is `/mnt/data/supervisor/homeassistant` — `/config` does NOT exist in this SSH environment), last direct copy was **v1.57.0**; from v1.58.0 on it updates itself through HACS by tag (no scp) |
 | Localization | UI en/ru (src/i18n/*.json), everything user-visible localized incl. kiosk popover |
@@ -80,11 +80,14 @@
   the integration omits the action; service switches can no longer become
   primary, and glow pool and icon share one condition. Editor gestures on touch
   (pinch/pan) landed the same release.
-- **Unified device status/activity** (v1.59.0-beta.10, 2026-08-05): three display
-  modes (Icon / Icon + activity / Value), one semantic resolver for yellow
+- **Unified device status/activity** (v1.59.0-beta.10; extended 2026-08-08): four display
+  modes (Icon + dynamic plate / Icon + activity / Value / Always static icon),
+  one semantic resolver for yellow
   actual work, orange open/unlocked, unavailable and always-red alarms;
   activity distinguishes a short event, presence, mechanical travel and
-  running. Legacy Ripple-only migrates to Icon + activity on the next save.
+  running. Always-static deliberately suppresses every state-driven visual,
+  satellite badge and live vacuum overlay while leaving hover, actions, Glow and
+  controls intact. Legacy Ripple-only migrates to Icon + activity on the next save.
 - **Passive media lifecycle** (v1.60.0-beta.1): every `media_player`,
   regardless of model, stays neutral while powered or playing and fades to
   the existing unavailable appearance on explicit `off`; transport playback
@@ -120,8 +123,10 @@
 - **v1.59.1** (2026-08-06): device markers resolve a semantic entity role
   instead of trusting registry order; one light-source resolver now drives
   Glow, Light fill, room statistics, marker feedback and controls. Glow uses
-  0.7 opacity, and compacted real walls retain their correct inner face and
-  body at real/virtual T-junctions.
+  0.7 opacity. Current dev keeps external `controls` non-spatial: they still
+  drive group state, but only a real lamp marker or explicit `is_light` marker
+  can place a Glow pool. Compacted real walls retain their correct inner face
+  and body at real/virtual T-junctions.
 - **v1.59.2** (2026-08-07): every modal uses the shared `hp-dialog` shell,
   backed by Home Assistant's `ha-dialog` with a native demo fallback. Titles,
   modal semantics, initial focus, focus trapping, Escape and restore focus are

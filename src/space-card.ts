@@ -11,7 +11,7 @@ import { buildSpaceDevices, renderSpaceStatic, spaceModels } from './space-rende
 import { getConfig, onConfigChange, cachedSnapshot, type HpConfigSnapshot } from './config-store';
 import { t, langOf, type Lang } from './i18n';
 import { ContentSigner } from './signing';
-import { referencedContentUrls } from './logic';
+import { normalizeDeviceDisplay, referencedContentUrls } from './logic';
 import { acquireHaRegistries, activeRegistryHass, haRegistrySnapshot } from './ha-binding-status';
 import { edgeActivity } from './device-visual';
 import {
@@ -168,6 +168,7 @@ class HouseplanSpaceCard extends LitElement {
     const live = new Set<string>();
     for (const device of devices) {
       if (device.hidden) continue;
+      if (normalizeDeviceDisplay(device.marker?.display) === 'static_icon') continue;
       live.add(device.id);
       const sources = resolvePresentationSources(planHass, device);
       const samples = sources.samples;

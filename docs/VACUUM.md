@@ -139,6 +139,11 @@ previous run, at 40% opacity). The legacy boolean `trail` still maps in
 (`false` → never). Recording is independent of the mode: the server always
 records, the mode only decides what is drawn.
 
+The device-level `display: static_icon` is a stronger visual override: it hides
+the moving puck, current/previous trails and room highlight regardless of the
+vacuum trail mode. It does not delete calibration or server history; changing
+back to a dynamic device display restores the applicable live overlays.
+
 The last segment is a rAF-driven tip line whose endpoint is glued to the
 puck's animated centre every frame, so the path pours out from under the
 icon instead of popping in when the next telemetry point lands.

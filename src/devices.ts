@@ -191,10 +191,12 @@ export type LightSourceRoom = string | { id?: string | null; area?: string | nul
 export interface ResolvedLightSource<D extends LightSourceDevice = LightSourceDevice> {
   /** HA entity that carries the source's on/off state and accepts controls. */
   eid: string;
-  /** Device/marker which places this source on the plan. */
+  /** Device/marker which declares or physically places this source on the plan. */
   device: D;
   /** Why this entity belongs to the light-source set. */
   via: 'controls' | 'forced' | 'light';
+  /** False for remote controls: they describe room light but have no lamp position. */
+  castsGlow: boolean;
   on: boolean;
 }
 
@@ -220,7 +222,8 @@ export function effectiveMarkerControls(
  * Runtime consumers deliberately discard unknown domains and duplicates, but
  * opening and saving the dialog must not rewrite YAML-only targets or collapse
  * repeated entries. Only the marker's own target is removed: it belongs to the
- * normal tap action (or migrates to `is_light` for a legacy self-switch).
+ * normal tap action. Classifying that relay as a lamp is a separate, explicit
+ * `is_light` decision.
  */
 export function persistedExternalControls(
   binding: string | null | undefined,
@@ -234,22 +237,6 @@ export function persistedExternalControls(
     ? new Set([binding.slice('entity:'.length)])
     : new Set(ownEntities);
   return (controls || []).filter((eid) => typeof eid === 'string' && !own.has(eid));
-}
-
-/**
- * Before `is_light` existed, putting a marker's own switch into `controls`
- * was the supported way to say that the relay drives a real fixture. Keep that
- * intent alive until Save/Optimize converts the legacy representation.
- */
-export function hasLegacySelfLightIntent(
-  binding: string | null | undefined,
-  controls: readonly string[] | null | undefined,
-  ownEntities: readonly string[] = [],
-): boolean {
-  const own = binding?.startsWith('entity:')
-    ? new Set([binding.slice('entity:'.length)])
-    : new Set(ownEntities);
-  return (controls || []).some((eid) => eid.startsWith('switch.') && own.has(eid));
 }
 
 function lightSourceBelongsToRoom(d: LightSourceDevice, room: LightSourceRoom): boolean {
@@ -271,8 +258,8 @@ function forcedLightEntityOf(d: LightSourceDevice): string | null {
     ? d.marker.binding.slice('entity:'.length) : null;
   const controllable = d.entities.filter(isControllable);
   const primary = d.primary && isControllable(d.primary) ? d.primary : null;
-  // An entity-bound legacy self-control names the physical relay exactly.
-  // Do not let a different registry-derived primary entity steal that intent.
+  // An explicitly forced entity marker names the physical relay exactly. Do
+  // not let a different registry-derived primary entity steal that decision.
   return (bound && isControllable(bound) ? bound : null) || primary || controllable[0] || null;
 }
 
@@ -284,9 +271,7 @@ function lightEntitiesOf(hass: any, d: LightSourceDevice): LightEntityCandidate[
   );
   const out: LightEntityCandidate[] = controls.map((eid) => ({ eid, via: 'controls' }));
 
-  if (d.marker?.is_light === true || hasLegacySelfLightIntent(
-    d.marker?.binding, d.marker?.controls, d.entities,
-  )) {
+  if (d.marker?.is_light === true) {
     // A forced source is a smart switch (or light) driving real fixtures.
     // Prefer its primary entity, but never treat measurements or service
     // entities as light switches merely because they belong to the device.
@@ -317,10 +302,11 @@ function lightEntitiesOf(hass: any, d: LightSourceDevice): LightEntityCandidate[
 }
 
 /**
- * One source of truth for every light-related room feature. Explicit marker
- * controls win, then `is_light`, then automatic `light.*` discovery. Passing
- * a room scopes sources by room_id/area; omitting it resolves the supplied
- * devices (used by Glow and per-marker controls).
+ * One source of truth for every light-related room feature. Within a marker,
+ * explicit controls win, then `is_light`, then automatic `light.*` discovery.
+ * Across markers the real/forced source owns spatial Glow over a controller
+ * naming the same entity. Passing a room scopes sources by room_id/area;
+ * omitting it resolves the supplied devices (used by Glow and controls).
  */
 export function resolvedLightSources<D extends LightSourceDevice>(
   hass: any,
@@ -328,14 +314,23 @@ export function resolvedLightSources<D extends LightSourceDevice>(
   room?: LightSourceRoom | null,
 ): ResolvedLightSource<D>[] {
   const out: ResolvedLightSource<D>[] = [];
-  const seen = new Set<string>();
+  const byEntity = new Map<string, number>();
   for (const d of devices) {
     if (d.hidden || (room != null && !lightSourceBelongsToRoom(d, room))) continue;
     const candidates = lightEntitiesOf(hass, d);
     for (const { eid, via } of candidates) {
-      if (!eid || seen.has(eid)) continue;
-      seen.add(eid);
-      out.push({ eid, device: d, via, on: hass.states[eid]?.state === 'on' });
+      if (!eid) continue;
+      const castsGlow = via !== 'controls';
+      const source = { eid, device: d, via, castsGlow, on: hass.states[eid]?.state === 'on' };
+      const previous = byEntity.get(eid);
+      if (previous == null) {
+        byEntity.set(eid, out.length);
+        out.push(source);
+      } else if (castsGlow && !out[previous].castsGlow) {
+        // A remote controller may be encountered before the real lamp marker.
+        // Keep one room/statistics vote, but let the physical marker own Glow.
+        out[previous] = source;
+      }
     }
   }
   return out;

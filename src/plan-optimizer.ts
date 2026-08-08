@@ -9,7 +9,6 @@
  */
 
 import { alignAllToGrid, type AlignReport } from './align-grid';
-import { hasLegacySelfLightIntent } from './devices';
 import {
   DECOR_TEXT_BASE, decorTextScale, liveTextReference, liveTextToken, roomPoly,
 } from './logic';
@@ -88,12 +87,6 @@ const migrateLosslessly = (config: any): number => {
   for (const marker of config.markers || []) {
     if (marker.display === 'ripple') { marker.display = 'icon_ripple'; n++; }
     if (Array.isArray(marker.controls)) {
-      // R2: preserve the old, once-supported declaration that an entity-bound
-      // switch is itself a light source before removing its redundant control.
-      if (hasLegacySelfLightIntent(marker.binding, marker.controls) && marker.is_light !== true) {
-        marker.is_light = true;
-        n++;
-      }
       // R6: maintenance knows only the direct entity binding. Do not run the
       // runtime filter here: YAML-only targets and duplicates are user data,
       // not garbage that a "lossless" optimiser may silently discard.
