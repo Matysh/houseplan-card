@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "matrixVersion": 2,
+  "acceptedAt": "2026-08-08T18:51:15.651Z",
+  "sourceFingerprint": "4d8e60a278cd81ea896a50b94da318b11ba8b2d7cdc3b782a5fb7fbe042702a5",
+  "chromium": "151.0.7922.34",
+  "scenarios": {
+    "geometry-view-dark-fit": "fbce77f97180cd7d50a997c74d3fa1874ee3be2515a4c09b36dd4e792ebc66df",
+    "geometry-view-light-fit": "a425fa6d77081bb35d2fb81e469962402c6a3c86a8113ff957f28548908d0816",
+    "geometry-plan-editor-dark": "1c98c2a22843846fe021fd69f8f854a394229216a35f1e22cce381f510415754",
+    "geometry-devices-editor-dark": "89f677b2ae242236071bea8c4bc9ba88100eb61ba80bd85ad919e288673a0622",
+    "geometry-decor-editor-dark": "6e8cafb30e47da92b711528bb24c6d29dce094214b81c1175ec30408c6b988e4",
+    "geometry-diagonal-45-opening-dark": "fbce77f97180cd7d50a997c74d3fa1874ee3be2515a4c09b36dd4e792ebc66df",
+    "openings-thick-wall-dark": "5d9ac6add9a5709318180f4554ac62c1c7e2862bd016be7901a2bd450e021f0c",
+    "openings-hidden-view-dark": "799e791830ab63a1c445b8c77650a577d8e881daa1ff47d1dcf4e238eb1cff16",
+    "lighting-glow-sun-dark": "638ab9fa6856f91581453c732e4059b2a7af47b20d6a58b45a47497876142ea1",
+    "lighting-fill-light-axis-split-dark": "acdbebe845ede66dbbe9de979aad93ba78dc2779d1ec533b238a9bea0d047d1c",
+    "lighting-fill-temp-axis-split-dark": "2348b7c6a8594468664755e2fea1b49126e604192599be0a3965f24a0c2d2765",
+    "lighting-fill-lqi-axis-split-dark": "584adcfb5541b1dddc814c2674bfce8002566bbb667b10501b7ff49fedef6f9c",
+    "hover-over-glow-dark": "3ca354fa94922a3e38ce15886250ae88630a1e9356e4ac07b74b425f063839d7",
+    "hover-nested-room-dark": "472f630768f60c3168f64744af891323a64cf71f36f943fc5a56b4f0494efa70",
+    "large-house-zoom-040-dark": "69593f75f1965daf0a12777fde923ae25c99b42089a73a04cf523b3ea5ce4f0d",
+    "large-house-zoom-250-dark": "21a1a0408c913f477913ae9c0339417ae7aaad7baad8a890eb558f6e36a5a597",
+    "large-house-warm-remount-dark": "f3eb077934701cf11bc828da6a68b55346d499a68c323988938b88aca5f5d9fe",
+    "device-dialog-desktop-en": "f669ff6b975a3d52d06b6eb7535f1af39373001217b7ab65c94a4fb9c3036193",
+    "device-dialog-mobile-ru": "852b5ced2d056eb1b79d7dcd3218271198a90a7b3ea6e93da5622f75518ca6c6",
+    "decor-color-popover-mobile-ru": "206f9e8ec7ee1d584561622772b6a4cbdadfcbfeec55c987dffc0107f5ed1293"
+  }
+}
