@@ -1669,6 +1669,10 @@ export interface OpeningWallPiece {
 export interface OpeningWallSide {
   roomId: string;
   side: -1 | 1;
+  /** First matching room edge in config order. Symbols historically use that
+   * order to choose their default face on an inherently ambiguous shared wall;
+   * tunnel ownership still uses compareOpeningSides below. */
+  order: number;
   pieces: OpeningWallPiece[];
   faceDistance: number;
   area: number;
@@ -1735,6 +1739,7 @@ export function resolveOpeningWallAssociation(
   const openingHalf = length / 2;
   const eps = Math.max(1e-9, index.adjacencyEps);
   const candidates = new Map<string, OpeningWallSide>();
+  let candidateOrder = 0;
 
   for (const edge of index.edges) {
     if (physicalOnly && !(edge.half > 0)) continue;
@@ -1767,7 +1772,7 @@ export function resolveOpeningWallAssociation(
       previous.faceDistance = Math.min(previous.faceDistance, faceDistance);
     } else {
       candidates.set(key, {
-        roomId: edge.roomId, side, pieces: [piece], faceDistance,
+        roomId: edge.roomId, side, order: candidateOrder++, pieces: [piece], faceDistance,
         area: edge.area, coverage: 0, full: false,
       });
     }
@@ -1824,7 +1829,10 @@ export function openingInnerFaceOffsetFromIndex(
   const association = resolveOpeningWallAssociation(index, opening);
   const available = [association.negative, association.positive]
     .filter((side): side is OpeningWallSide => !!side)
-    .sort(compareOpeningSides);
+    // Preserve the pre-index symbol behaviour: on a shared wall the first room
+    // in model order owns the unflipped face. This is separate from tunnel
+    // ownership, whose geometric tie-breaks must remain order-independent.
+    .sort((a, b) => a.order - b.order);
   if (!available.length) return { ox: 0, oy: 0, cm: 0, side: -1 };
   const natural = available[0];
   const selectedSide = (opening.flip_v ? -natural.side : natural.side) as -1 | 1;

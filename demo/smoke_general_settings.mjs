@@ -21,8 +21,11 @@ const res = await page.evaluate(async () => {
   c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== 'f1' ? s : ({ ...s,
     settings: { ...(s.settings||{}), show_borders: true, fill_mode: 'light' } })) };
   c.requestUpdate(); await c.updateComplete;
-  const styles = [...sr().querySelectorAll('.room.styled')].map((r) => r.getAttribute('style') || '');
-  out.customFillUsed = styles.some((st) => st.includes('#ff00ff') && st.includes('0.500'));
+  const styledRooms = [...sr().querySelectorAll('.room.styled')];
+  out.customFillUsed = styledRooms.some((room) => (
+    room.style.getPropertyValue('--room-fill').trim() === '#ff00ff'
+    && Math.abs(Number(room.style.getPropertyValue('--room-fill-op')) - 0.5) < 1e-9
+  ));
   // 4) show_lqi=false у пространства скрывает LQI-бейджи
   out.lqiBefore = sr().querySelectorAll('.dev .lqi').length;
   c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== 'f1' ? s : ({ ...s,

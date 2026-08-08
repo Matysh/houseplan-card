@@ -15,7 +15,12 @@ const res = await page.evaluate(async () => {
   out.styled = sr().querySelectorAll('.room.styled').length;
   out.labels = [...sr().querySelectorAll('.roomlabel')].map((l) => l.textContent.trim());
   const liv = [...sr().querySelectorAll('.room.styled')][0];
-  out.livingStyle = liv.getAttribute('style');
+  out.livingStyle = {
+    stroke: liv.style.getPropertyValue('--room-stroke').trim(),
+    strokeOpacity: Number(liv.style.getPropertyValue('--room-stroke-op')),
+    fill: liv.style.getPropertyValue('--room-fill').trim(),
+    fillOpacity: Number(liv.style.getPropertyValue('--room-fill-op')),
+  };
   // living: ceiling on → жёлтая; kitchen: нет light-сущностей → без заливки; bedroom light off → серая
   const styles = [...sr().querySelectorAll('.room.styled')].map((r) => r.getAttribute('style'));
   out.hasYellow = styles.some((s) => s.includes('#ffd45c'));
@@ -54,7 +59,7 @@ checkAll(res, {
   "defaultLabels": 0,
   "styled": 4,
   "labels": ["Living room", "Kitchen", "Bedroom", "Hallway"],
-  "livingStyle": "--room-stroke:#ff8800;--room-stroke-op:0.8;--room-fill:#ffd45c;--room-fill-op:0.180",
+  "livingStyle": {"stroke": "#ff8800", "strokeOpacity": 0.8, "fill": "#ffd45c", "fillOpacity": 0.18},
   "lqiFills": 0,
   "atticSquare": true,
   // fill_mode 'glow' — the default for NEW spaces since v1.54 (owner call).
