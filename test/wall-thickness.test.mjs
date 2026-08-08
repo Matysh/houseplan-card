@@ -10,6 +10,7 @@ import {
   paperRoomShapesWithWalls, WALL_MIN_CM, WALL_MAX_CM, MITRE_LIMIT,
   atomicPolyForRoom, insetOffsetsForRoom, wallIntervals, normalizeWallIntervals,
   intervalCmAt, wallBodyNeedsSolid, openingInnerFaceOffset, openingTunnelGeometry,
+  openingTunnelGeometries,
   WALL_HATCH_MIN_PX,
 } from '../test-build/wall-thickness.js';
 import { polygonArea, paperRoomShapes } from '../test-build/logic.js';
@@ -357,6 +358,21 @@ test('openingTunnelGeometry: an outer thick wall gives the one room both tunnel 
   assert.deepEqual(g.faces.map((f) => [f.side, f.roomId]), [[-1, 'r'], [1, 'r']]);
   closeTo(g.minY, -2);
   closeTo(g.maxY, 2);
+  assert.match(g.faces[0].d, / 0\.04\b/, 'the negative face crosses the axis symmetrically');
+  assert.match(g.faces[1].d, / -0\.04\b/, 'the positive face crosses the axis symmetrically');
+});
+
+test('openingTunnelGeometry: a 45° wall keeps the opening-local width and physical depth', () => {
+  const rooms = [{ id: 'diagonal', poly: [[0, 0], [10, 10], [0, 20]] }];
+  const walls = [{ key: wallKey([0, 0], [10, 10], pitch), cm: 20 }];
+  const g = openingTunnelGeometry(
+    rooms, { x: 5, y: 5, angle: 45, length: 4 }, walls, [], pitch, 5, 1,
+  );
+  assert.ok(g);
+  closeTo(g.minY, -2);
+  closeTo(g.maxY, 2);
+  assert.match(g.faces[0].d, /M -2(?:\.\d+)? /);
+  assert.match(g.faces[0].d, /L 2(?:\.\d+)? /);
 });
 
 test('openingTunnelGeometry: a shared wall is owned by the room on each local side', () => {
@@ -406,7 +422,7 @@ test('openingTunnelGeometry: virtual, zero-thickness, orphan and draft-only wall
 test('openingTunnelGeometry: angle match beats a perpendicular T-junction receiver', () => {
   const rooms = [
     { id: 'horizontal', poly: [[0, 0], [10, 0], [10, 5], [0, 5]] },
-    { id: 'vertical', poly: [[4, -5], [6, -5], [6, 0], [4, 0]] },
+    { id: 'vertical', poly: [[4, -5], [6, -5], [6, 5], [4, 5]] },
   ];
   const walls = [
     { key: wallKey([0, 0], [10, 0], pitch), cm: 20 },
@@ -416,8 +432,83 @@ test('openingTunnelGeometry: angle match beats a perpendicular T-junction receiv
     rooms, { x: 5, y: 0, angle: 0, length: 2 }, walls, [], pitch, 5, 1,
   );
   assert.ok(g);
-  assert.ok(g.faces.every((f) => f.roomId === 'horizontal' || f.roomId === 'vertical'));
+  assert.ok(g.faces.every((f) => f.roomId === 'horizontal'));
   closeTo(g.maxY, 2);
+});
+
+test('openingTunnelGeometry: a detached parallel room inside one cell cannot own a tunnel side', () => {
+  const rooms = [
+    { id: 'real', poly: [[0, 0], [10, 0], [10, 5], [0, 5]] },
+    { id: 'air-gap', poly: [[0, -5.5], [10, -5.5], [10, -0.5], [0, -0.5]] },
+  ];
+  const walls = [
+    { key: wallKey([0, 0], [10, 0], 1), cm: 20 },
+    { key: wallKey([0, -0.5], [10, -0.5], 1), cm: 20 },
+  ];
+  const g = openingTunnelGeometry(
+    rooms, { x: 5, y: 0, angle: 0, length: 2 }, walls, [], 1, 5, 1,
+  );
+  assert.ok(g);
+  assert.ok(g.faces.every((face) => face.roomId === 'real'));
+});
+
+test('openingTunnelGeometry: the smaller coincident nested room wins after equal full/face distance', () => {
+  const rooms = [
+    { id: 'large', poly: [[0, 0], [10, 0], [10, 8], [0, 8]] },
+    { id: 'small', poly: [[3, 0], [7, 0], [7, 3], [3, 3]] },
+  ];
+  const walls = [{ key: wallKey([0, 0], [10, 0], pitch), cm: 20 }];
+  const g = openingTunnelGeometry(
+    rooms, { x: 5, y: 0, angle: 0, length: 2 }, walls, [], pitch, 5, 1,
+  );
+  assert.ok(g);
+  assert.ok(g.faces.every((face) => face.roomId === 'small'));
+  const reversed = openingTunnelGeometry(
+    [...rooms].reverse(), { x: 5, y: 0, angle: 0, length: 2 }, walls, [], pitch, 5, 1,
+  );
+  assert.deepEqual(reversed, g);
+});
+
+test('opening association rejects angle drift consistently for face, cut and tunnel', () => {
+  const rooms = [{ id: 'r', poly: [[0, 0], [10, 0], [10, 6], [0, 6]] }];
+  const walls = [{ key: wallKey([0, 0], [10, 0], pitch), cm: 20 }];
+  const opening = { x: 5, y: 0, angle: 12, length: 2 };
+  assert.equal(openingInnerFaceOffset(rooms, opening, walls, pitch, 5, 1).cm, 0);
+  assert.equal(openingTunnelGeometry(rooms, opening, walls, [], pitch, 5, 1), null);
+  const uncut = wallBodiesUnionPath(rooms, walls, [], [], pitch, 5, 1);
+  const invalidCut = wallBodiesUnionPath(rooms, walls, [], [opening], pitch, 5, 1);
+  assert.deepEqual(invalidCut, uncut);
+});
+
+test('openingTunnelGeometry: a legacy opening outside the span is clipped to the real wall body', () => {
+  const rooms = [{ id: 'r', poly: [[0, 0], [10, 0], [10, 6], [0, 6]] }];
+  const walls = [{ key: wallKey([0, 0], [10, 0], pitch), cm: 20 }];
+  const g = openingTunnelGeometry(
+    rooms, { x: 10.5, y: 0, angle: 0, length: 4 }, walls, [], pitch, 5, 1,
+  );
+  assert.ok(g);
+  assert.match(g.faces[0].d, /M -2(?:\.0+)? [^L]+L -0\.5(?:0+)? /);
+  assert.doesNotMatch(g.faces[0].d, /L 2(?:\.0+)? /, 'the missing wall extension is not painted');
+});
+
+test('openingTunnelGeometries removes overlap so translucent fills never composite twice', () => {
+  const rooms = [{ id: 'r', poly: [[0, 0], [10, 0], [10, 6], [0, 6]] }];
+  const walls = [{ key: wallKey([0, 0], [10, 0], pitch), cm: 20 }];
+  const exact = openingTunnelGeometries(
+    rooms,
+    [{ x: 5, y: 0, angle: 0, length: 4 }, { x: 5, y: 0, angle: 0, length: 4 }],
+    walls, [], pitch, 5, 1,
+  );
+  assert.ok(exact[0]);
+  assert.equal(exact[1], null, 'an exact duplicate contributes no second alpha layer');
+
+  const partial = openingTunnelGeometries(
+    rooms,
+    [{ x: 4, y: 0, angle: 0, length: 4 }, { x: 6, y: 0, angle: 0, length: 4 }],
+    walls, [], pitch, 5, 1,
+  );
+  assert.ok(partial[0] && partial[1]);
+  assert.match(partial[1].faces[0].d, /M 0(?:\.0+)? /, 'only the non-overlapping extension remains');
 });
 
 // ------------------------------- bodies / paper -----------------------------

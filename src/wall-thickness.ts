@@ -1341,6 +1341,9 @@ export function wallBodiesUnionPath(
   const junctions = virtualJunctionPatches(
     rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
   );
+  const openingIndex = openings.length
+    ? openingWallIndex(rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale)
+    : null;
   try {
     const bodyOf = (ring: typeof roomRings[number]): any => {
       const outset: any = closedRing(ring.outset);
@@ -1356,6 +1359,8 @@ export function wallBodiesUnionPath(
     // cut opening tunnels (axis-aligned to opening angle)
     for (const o of openings) {
       if (!(o.length > 0)) continue;
+      const association = resolveOpeningWallAssociation(openingIndex!, o, true);
+      if (!association.negative && !association.positive) continue;
       const rad = (o.angle * Math.PI) / 180;
       const ux = Math.cos(rad), uy = Math.sin(rad);
       const nx = -uy, ny = ux;
@@ -1595,94 +1600,88 @@ export function paperRoomShapesWithWalls(
   return out;
 }
 
+interface OpeningWallEdge {
+  roomId: string;
+  a: number[];
+  b: number[];
+  inward: [number, number];
+  cm: number;
+  half: number;
+  area: number;
+  key: string;
+}
+
 /**
- * Half-depth from the centreline toward the selected face of an opening.
- * Normally that is the room's inner face; callers may invert `flip_v` when a
- * symbol (a gate) must sit on the exterior face. `side` is the selected face
- * in opening-local Y and remains available for zero-thickness walls.
- * Association prefers a wall whose direction matches the opening angle
- * (T-junctions must not bind to the perpendicular receiver).
+ * Immutable wall index shared by opening symbols, wall cuts and tunnel fills.
+ * Building atomic room profiles is the expensive O(rooms²) part; callers that
+ * resolve several openings build this once and reuse it for every opening.
  */
-export function openingInnerFaceOffset(
+export interface OpeningWallIndex {
+  edges: OpeningWallEdge[];
+  adjacencyEps: number;
+}
+
+export function openingWallIndex(
   rooms: any[],
-  opening: { x: number; y: number; angle: number; length: number; flip_v?: boolean },
   walls: WallEntry[] | null | undefined,
+  openCuts: number[][],
   pitch: number,
   cellCm: number,
   gridPitch: number,
   coordScale = 1,
-): { ox: number; oy: number; cm: number; side: -1 | 1 } {
-  let best: { a: number[]; b: number[]; room: any; edge: number; dist: number; angled: boolean } | null = null;
+): OpeningWallIndex {
+  const edges: OpeningWallEdge[] = [];
   for (const room of rooms || []) {
-    const poly = roomPoly(room);
-    if (!poly) continue;
-    for (let i = 0; i < poly.length; i++) {
-      const a = poly[i], b = poly[(i + 1) % poly.length];
-      const d = distToSeg(opening.x, opening.y, a[0], a[1], b[0], b[1]);
-      const angled = wallAngleMatches(a, b, opening.angle);
-      if (!best) {
-        best = { a, b, room, edge: i, dist: d, angled };
-        continue;
-      }
-      // prefer angle-matching edges; among equals, nearer centreline
-      if (angled && !best.angled) {
-        best = { a, b, room, edge: i, dist: d, angled };
-      } else if (angled === best.angled && d < best.dist) {
-        best = { a, b, room, edge: i, dist: d, angled };
-      }
+    if (!room?.id) continue;
+    const pr = roomWallProfile(
+      rooms, room.id, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
+    );
+    if (!pr) continue;
+    const area = Math.abs(polygonArea(pr.poly));
+    for (let i = 0; i < pr.poly.length; i++) {
+      // A virtual interval has no opening, inner face or physical tunnel.
+      if (!pr.kinds[i]) continue;
+      const a = pr.poly[i], b = pr.poly[(i + 1) % pr.poly.length];
+      edges.push({
+        roomId: room.id,
+        a, b,
+        inward: inwardNormal(pr.poly, i),
+        cm: pr.cms[i],
+        half: pr.offsets[i],
+        area,
+        key: keyOf(a, b, pitch, coordScale),
+      });
     }
   }
-  if (!best || best.dist > pitch * coordScale) return { ox: 0, oy: 0, cm: 0, side: -1 };
-  const poly = roomPoly(best.room)!;
-  const [inx, iny] = inwardNormal(poly, best.edge);
-  const s = opening.flip_v ? -1 : 1;
-  const rad = (-opening.angle * Math.PI) / 180;
-  const localY = inx * Math.sin(rad) + iny * Math.cos(rad);
-  const side = (localY * s >= 0 ? 1 : -1) as -1 | 1;
-  const cm = thicknessCmAt(walls, best.a, best.b, pitch, coordScale);
-  if (!(cm > 0)) return { ox: 0, oy: 0, cm: 0, side };
-  const depth = wallCmToUnits(cm, cellCm, gridPitch);
-  // ±½ growth: the inner face is always half-depth from the centreline
-  const along = depth / 2;
-  return { ox: inx * along * s, oy: iny * along * s, cm, side };
+  return { edges, adjacencyEps: openEps(pitch, coordScale) };
 }
 
-/** One half of a room-coloured opening tunnel, in opening-local coordinates. */
-export interface OpeningTunnelFace {
-  side: -1 | 1;
-  roomId: string;
-  /** One SVG path, possibly containing several non-overlapping atomic strips. */
-  d: string;
-}
-
-/** Pure geometry consumed by the full-card opening-tunnel renderer. */
-export interface OpeningTunnelGeometry {
-  faces: OpeningTunnelFace[];
-  /** Local Y bounds. The wall centreline is always y=0. */
-  minY: number;
-  maxY: number;
-  wallKey: string;
-}
-
-interface TunnelPiece {
+export interface OpeningWallPiece {
   x0: number;
   x1: number;
   half: number;
+  cm: number;
   key: string;
+  /** Canonical unit direction of the physical wall, independent of room winding. */
+  axis: [number, number];
 }
 
-interface TunnelCandidate {
+export interface OpeningWallSide {
   roomId: string;
   side: -1 | 1;
-  pieces: TunnelPiece[];
-  distance: number;
+  pieces: OpeningWallPiece[];
   faceDistance: number;
   area: number;
   coverage: number;
   full: boolean;
 }
 
-function tunnelCoverage(pieces: TunnelPiece[], lo: number, hi: number, eps: number): {
+export interface OpeningWallAssociation {
+  negative: OpeningWallSide | null;
+  positive: OpeningWallSide | null;
+}
+
+function tunnelCoverage(pieces: OpeningWallPiece[], lo: number, hi: number, eps: number): {
   coverage: number; full: boolean;
 } {
   const spans = pieces
@@ -1707,14 +1706,257 @@ function tunnelCoverage(pieces: TunnelPiece[], lo: number, hi: number, eps: numb
   return { coverage, full };
 }
 
-function tunnelFacePath(side: -1 | 1, pieces: TunnelPiece[]): string {
+function compareOpeningSides(a: OpeningWallSide, b: OpeningWallSide): number {
+  return Number(b.full) - Number(a.full)
+    || a.faceDistance - b.faceDistance
+    || a.area - b.area
+    || a.roomId.localeCompare(b.roomId);
+}
+
+/**
+ * Resolve adjacent room sides for one opening against a prebuilt wall index.
+ * A candidate must be genuinely collinear/adjacent (4% of one grid pitch), not
+ * merely the closest parallel wall within a whole cell. This keeps detached
+ * rooms and double-wall air gaps from becoming a phantom second room.
+ */
+export function resolveOpeningWallAssociation(
+  index: OpeningWallIndex,
+  opening: { x: number; y: number; angle: number; length: number },
+  physicalOnly = false,
+): OpeningWallAssociation {
+  const x = Number(opening?.x), y = Number(opening?.y);
+  const angle = Number(opening?.angle), length = Number(opening?.length);
+  if (![x, y, angle, length].every(Number.isFinite) || !(length > 0)) {
+    return { negative: null, positive: null };
+  }
+  const rad = angle * Math.PI / 180;
+  const ux = Math.cos(rad), uy = Math.sin(rad);
+  const nx = -uy, ny = ux;
+  const openingHalf = length / 2;
+  const eps = Math.max(1e-9, index.adjacencyEps);
+  const candidates = new Map<string, OpeningWallSide>();
+
+  for (const edge of index.edges) {
+    if (physicalOnly && !(edge.half > 0)) continue;
+    if (!wallAngleMatches(edge.a, edge.b, angle)) continue;
+    const [edgeUx, edgeUy] = wallDir(edge.a, edge.b);
+    // Adjacency is perpendicular distance to the wall line. Long legacy
+    // openings may have their centre just beyond an endpoint while still
+    // overlapping the real span; the projection clip below decides that part.
+    const lineDistance = Math.abs((x - edge.a[0]) * edgeUy - (y - edge.a[1]) * edgeUx);
+    if (lineDistance > eps) continue;
+    const ta = (edge.a[0] - x) * ux + (edge.a[1] - y) * uy;
+    const tb = (edge.b[0] - x) * ux + (edge.b[1] - y) * uy;
+    const x0 = Math.max(-openingHalf, Math.min(ta, tb));
+    const x1 = Math.min(openingHalf, Math.max(ta, tb));
+    if (x1 - x0 <= eps) continue;
+    const side = (edge.inward[0] * nx + edge.inward[1] * ny >= 0 ? 1 : -1) as -1 | 1;
+    // Signed centreline position matters: an edge just across the axis has an
+    // inner face closer by that offset, not farther by abs(offset) + half.
+    const mx = (edge.a[0] + edge.b[0]) / 2;
+    const my = (edge.a[1] + edge.b[1]) / 2;
+    const centreY = (mx - x) * nx + (my - y) * ny;
+    const faceDistance = Math.abs(centreY + side * edge.half);
+    const key = `${side}|${edge.roomId}`;
+    const piece: OpeningWallPiece = {
+      x0, x1, half: edge.half, cm: edge.cm, key: edge.key, axis: [edgeUx, edgeUy],
+    };
+    const previous = candidates.get(key);
+    if (previous) {
+      previous.pieces.push(piece);
+      previous.faceDistance = Math.min(previous.faceDistance, faceDistance);
+    } else {
+      candidates.set(key, {
+        roomId: edge.roomId, side, pieces: [piece], faceDistance,
+        area: edge.area, coverage: 0, full: false,
+      });
+    }
+  }
+
+  for (const candidate of candidates.values()) {
+    const coverage = tunnelCoverage(candidate.pieces, -openingHalf, openingHalf, eps);
+    candidate.coverage = coverage.coverage;
+    candidate.full = coverage.full;
+  }
+  const pick = (side: -1 | 1): OpeningWallSide | null => {
+    const list = [...candidates.values()].filter((candidate) => (
+      candidate.side === side && candidate.coverage > eps
+    ));
+    list.sort(compareOpeningSides);
+    return list[0] || null;
+  };
+  return { negative: pick(-1), positive: pick(1) };
+}
+
+function centrePiece(side: OpeningWallSide): OpeningWallPiece {
+  return [...side.pieces].sort((a, b) => {
+    const da = a.x0 <= 0 && a.x1 >= 0 ? 0 : Math.min(Math.abs(a.x0), Math.abs(a.x1));
+    const db = b.x0 <= 0 && b.x1 >= 0 ? 0 : Math.min(Math.abs(b.x0), Math.abs(b.x1));
+    return da - db || (b.x1 - b.x0) - (a.x1 - a.x0) || a.key.localeCompare(b.key);
+  })[0];
+}
+
+/**
+ * Half-depth from the centreline toward the selected face of an opening.
+ * The exact same association resolver is used by wall cuts and tunnel fills;
+ * invalid angle/distance fallbacks can no longer move a symbol into a slot
+ * which the other renderers do not recognise.
+ */
+export function openingInnerFaceOffset(
+  rooms: any[],
+  opening: { x: number; y: number; angle: number; length: number; flip_v?: boolean },
+  walls: WallEntry[] | null | undefined,
+  pitch: number,
+  cellCm: number,
+  gridPitch: number,
+  coordScale = 1,
+  openCuts: number[][] = [],
+): { ox: number; oy: number; cm: number; side: -1 | 1 } {
+  const index = openingWallIndex(rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
+  return openingInnerFaceOffsetFromIndex(index, opening);
+}
+
+/** Cheap per-opening face resolution against a cached atomic wall index. */
+export function openingInnerFaceOffsetFromIndex(
+  index: OpeningWallIndex,
+  opening: { x: number; y: number; angle: number; length: number; flip_v?: boolean },
+): { ox: number; oy: number; cm: number; side: -1 | 1 } {
+  const association = resolveOpeningWallAssociation(index, opening);
+  const available = [association.negative, association.positive]
+    .filter((side): side is OpeningWallSide => !!side)
+    .sort(compareOpeningSides);
+  if (!available.length) return { ox: 0, oy: 0, cm: 0, side: -1 };
+  const natural = available[0];
+  const selectedSide = (opening.flip_v ? -natural.side : natural.side) as -1 | 1;
+  const selected = (selectedSide === -1 ? association.negative : association.positive) || natural;
+  const piece = centrePiece(selected);
+  if (!(piece.half > 0) || !(piece.cm > 0)) return { ox: 0, oy: 0, cm: 0, side: selectedSide };
+  const rad = opening.angle * Math.PI / 180;
+  const nx = -Math.sin(rad), ny = Math.cos(rad);
+  return {
+    ox: nx * selectedSide * piece.half,
+    oy: ny * selectedSide * piece.half,
+    cm: piece.cm,
+    side: selectedSide,
+  };
+}
+
+/** One half of a room-coloured opening tunnel, in opening-local coordinates. */
+export interface OpeningTunnelFace {
+  side: -1 | 1;
+  roomId: string;
+  /** One SVG path, possibly containing several non-overlapping atomic strips. */
+  d: string;
+}
+
+/** Pure geometry consumed by the full-card opening-tunnel renderer. */
+export interface OpeningTunnelGeometry {
+  faces: OpeningTunnelFace[];
+  /** Local Y bounds. The wall centreline is always y=0. */
+  minY: number;
+  maxY: number;
+  wallKey: string;
+}
+
+function tunnelFacePath(side: -1 | 1, pieces: OpeningWallPiece[]): string {
   const parts: string[] = [];
   for (const p of pieces) {
     if (!(p.x1 > p.x0) || !(p.half > 0)) continue;
     const y = side * p.half;
-    parts.push(`M ${p.x0} 0 L ${p.x1} 0 L ${p.x1} ${y} L ${p.x0} ${y} Z`);
+    // Both faces overlap symmetrically across y=0 by a tiny amount. They are
+    // subpaths of one SVG fill, so this closes fractional-zoom hairlines
+    // without adding opacity or escaping the physical outer faces.
+    const seam = Math.min(p.half * 0.02, 0.05);
+    const y0 = -side * seam;
+    parts.push(`M ${p.x0} ${y0} L ${p.x1} ${y0} L ${p.x1} ${y} L ${p.x0} ${y} Z`);
   }
   return parts.join(' ');
+}
+
+type TunnelOccupancy = Map<string, Array<[number, number]>>;
+
+function reserveTunnelPieces(
+  opening: { x: number; y: number; angle: number },
+  side: -1 | 1,
+  pieces: OpeningWallPiece[],
+  occupied?: TunnelOccupancy,
+): OpeningWallPiece[] {
+  if (!occupied) return pieces;
+  const openingRad = opening.angle * Math.PI / 180;
+  const openingUx = Math.cos(openingRad), openingUy = Math.sin(openingRad);
+  const out: OpeningWallPiece[] = [];
+  const eps = 1e-9;
+
+  for (const piece of pieces) {
+    const [ux, uy] = piece.axis;
+    const direction = openingUx * ux + openingUy * uy;
+    if (Math.abs(direction) <= eps) continue;
+    const centre = opening.x * ux + opening.y * uy;
+    const g0 = centre + direction * piece.x0;
+    const g1 = centre + direction * piece.x1;
+    const lo = Math.min(g0, g1), hi = Math.max(g0, g1);
+    const occupancyKey = `${piece.key}|${side}`;
+    const previous = occupied.get(occupancyKey) || [];
+    let fragments: Array<[number, number]> = [[lo, hi]];
+    for (const [usedLo, usedHi] of previous) {
+      const next: Array<[number, number]> = [];
+      for (const [a, b] of fragments) {
+        if (usedHi <= a + eps || usedLo >= b - eps) next.push([a, b]);
+        else {
+          if (usedLo > a + eps) next.push([a, Math.min(b, usedLo)]);
+          if (usedHi < b - eps) next.push([Math.max(a, usedHi), b]);
+        }
+      }
+      fragments = next;
+      if (!fragments.length) break;
+    }
+    for (const [a, b] of fragments) {
+      const lx0 = (a - centre) / direction;
+      const lx1 = (b - centre) / direction;
+      out.push({ ...piece, x0: Math.min(lx0, lx1), x1: Math.max(lx0, lx1) });
+    }
+    const merged = [...previous, [lo, hi] as [number, number]]
+      .sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const compact: Array<[number, number]> = [];
+    for (const span of merged) {
+      const tail = compact[compact.length - 1];
+      if (tail && span[0] <= tail[1] + eps) tail[1] = Math.max(tail[1], span[1]);
+      else compact.push([span[0], span[1]]);
+    }
+    occupied.set(occupancyKey, compact);
+  }
+  return out;
+}
+
+function openingTunnelGeometryFromIndex(
+  index: OpeningWallIndex,
+  opening: { x: number; y: number; angle: number; length: number },
+  occupied?: TunnelOccupancy,
+): OpeningTunnelGeometry | null {
+  const association = resolveOpeningWallAssociation(index, opening, true);
+  const negative = association.negative, positive = association.positive;
+  if (!negative && !positive) return null;
+
+  let chosen: Array<{ candidate: OpeningWallSide; side: -1 | 1 }>;
+  if (negative && positive) {
+    chosen = [{ candidate: negative, side: -1 }, { candidate: positive, side: 1 }];
+  } else {
+    const only = (negative || positive)!;
+    chosen = [{ candidate: only, side: -1 }, { candidate: only, side: 1 }];
+  }
+  const renderedPieces = chosen.map(({ candidate, side }) => ({
+    candidate,
+    side,
+    pieces: reserveTunnelPieces(opening, side, candidate.pieces, occupied),
+  }));
+  const faces = renderedPieces.map(({ candidate, side, pieces }) => ({
+    side, roomId: candidate.roomId, d: tunnelFacePath(side, pieces),
+  }));
+  const allPieces = renderedPieces.flatMap(({ pieces }) => pieces);
+  if (!allPieces.length) return null;
+  const maxHalf = Math.max(...allPieces.map((piece) => piece.half));
+  const wallKey = [...new Set(allPieces.map((piece) => piece.key))].sort().join('|');
+  return { faces, minY: -maxHalf, maxY: maxHalf, wallKey };
 }
 
 /**
@@ -1737,90 +1979,40 @@ export function openingTunnelGeometry(
   gridPitch: number,
   coordScale = 1,
 ): OpeningTunnelGeometry | null {
-  const x = Number(opening?.x), y = Number(opening?.y);
-  const angle = Number(opening?.angle), length = Number(opening?.length);
-  if (![x, y, angle, length, pitch, cellCm, gridPitch, coordScale].every(Number.isFinite)
-      || !(length > 0) || !(pitch > 0) || !(cellCm > 0) || !(gridPitch > 0)
-      || !(coordScale > 0) || !walls?.length) return null;
+  if (![pitch, cellCm, gridPitch, coordScale].every(Number.isFinite)
+      || !(pitch > 0) || !(cellCm > 0) || !(gridPitch > 0) || !(coordScale > 0)
+      || !walls?.length) return null;
+  const index = openingWallIndex(
+    rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
+  );
+  return openingTunnelGeometryFromIndex(index, opening);
+}
 
-  const rad = angle * Math.PI / 180;
-  const ux = Math.cos(rad), uy = Math.sin(rad);
-  const nx = -uy, ny = ux;
-  const openingHalf = length / 2;
-  const eps = Math.max(1e-7, pitch * coordScale * 0.02);
-  const maxDistance = pitch * coordScale;
-  const candidates = new Map<string, TunnelCandidate>();
+/** Resolve every opening while paying the atomic room-profile cost once. */
+export function openingTunnelGeometries(
+  rooms: any[],
+  openings: Array<{ x: number; y: number; angle: number; length: number }>,
+  walls: WallEntry[] | null | undefined,
+  openCuts: number[][],
+  pitch: number,
+  cellCm: number,
+  gridPitch: number,
+  coordScale = 1,
+): Array<OpeningTunnelGeometry | null> {
+  if (![pitch, cellCm, gridPitch, coordScale].every(Number.isFinite)
+      || !(pitch > 0) || !(cellCm > 0) || !(gridPitch > 0) || !(coordScale > 0)
+      || !walls?.length) return openings.map(() => null);
+  const index = openingWallIndex(
+    rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
+  );
+  return openingTunnelGeometriesFromIndex(index, openings);
+}
 
-  for (const room of rooms || []) {
-    if (!room?.id) continue;
-    const pr = roomWallProfile(rooms, room.id, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
-    if (!pr) continue;
-    const area = Math.abs(polygonArea(pr.poly));
-    for (let i = 0; i < pr.poly.length; i++) {
-      if (!pr.kinds[i] || !(pr.offsets[i] > 0)) continue;
-      const a = pr.poly[i], b = pr.poly[(i + 1) % pr.poly.length];
-      if (!wallAngleMatches(a, b, angle)) continue;
-      const distance = distToSeg(x, y, a[0], a[1], b[0], b[1]);
-      if (distance > maxDistance) continue;
-      const ta = (a[0] - x) * ux + (a[1] - y) * uy;
-      const tb = (b[0] - x) * ux + (b[1] - y) * uy;
-      const x0 = Math.max(-openingHalf, Math.min(ta, tb));
-      const x1 = Math.min(openingHalf, Math.max(ta, tb));
-      if (x1 - x0 <= eps) continue;
-      const [inx, iny] = inwardNormal(pr.poly, i);
-      const side = (inx * nx + iny * ny >= 0 ? 1 : -1) as -1 | 1;
-      const key = `${side}|${room.id}`;
-      const half = pr.offsets[i];
-      const piece = { x0, x1, half, key: keyOf(a, b, pitch, coordScale) };
-      const prev = candidates.get(key);
-      if (prev) {
-        prev.pieces.push(piece);
-        prev.distance = Math.min(prev.distance, distance);
-        prev.faceDistance = Math.min(prev.faceDistance, distance + half);
-      } else {
-        candidates.set(key, {
-          roomId: room.id, side, pieces: [piece], distance,
-          faceDistance: distance + half, area, coverage: 0, full: false,
-        });
-      }
-    }
-  }
-
-  for (const c of candidates.values()) {
-    const coverage = tunnelCoverage(c.pieces, -openingHalf, openingHalf, eps);
-    c.coverage = coverage.coverage;
-    c.full = coverage.full;
-  }
-  const pick = (side: -1 | 1): TunnelCandidate | null => {
-    const list = [...candidates.values()].filter((c) => c.side === side && c.coverage > eps);
-    list.sort((a, b) => Number(b.full) - Number(a.full)
-      || b.coverage - a.coverage
-      || a.faceDistance - b.faceDistance
-      || a.area - b.area
-      || a.roomId.localeCompare(b.roomId));
-    return list[0] || null;
-  };
-  const negative = pick(-1), positive = pick(1);
-  if (!negative && !positive) return null;
-
-  let chosen: Array<{ candidate: TunnelCandidate; side: -1 | 1 }>;
-  if (negative && positive) {
-    chosen = [{ candidate: negative, side: -1 }, { candidate: positive, side: 1 }];
-  } else {
-    const only = (negative || positive)!;
-    // An outer wall has no second room, but the same floor continues through
-    // the complete wall depth to the exterior face.
-    chosen = [{ candidate: only, side: -1 }, { candidate: only, side: 1 }];
-  }
-
-  const faces = chosen.map(({ candidate, side }) => ({
-    side,
-    roomId: candidate.roomId,
-    d: tunnelFacePath(side, candidate.pieces),
-  })).filter((f) => !!f.d);
-  if (!faces.length) return null;
-  const allPieces = chosen.flatMap((x) => x.candidate.pieces);
-  const maxHalf = Math.max(...allPieces.map((p) => p.half));
-  const wallKey = [...new Set(allPieces.map((p) => p.key))].sort().join('|');
-  return { faces, minY: -maxHalf, maxY: maxHalf, wallKey };
+/** Cheap batch resolution against a cached atomic wall index. */
+export function openingTunnelGeometriesFromIndex(
+  index: OpeningWallIndex,
+  openings: Array<{ x: number; y: number; angle: number; length: number }>,
+): Array<OpeningTunnelGeometry | null> {
+  const occupied: TunnelOccupancy = new Map();
+  return openings.map((opening) => openingTunnelGeometryFromIndex(index, opening, occupied));
 }

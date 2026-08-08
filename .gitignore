@@ -5,3 +5,4 @@ test-build/
 __pycache__/
 .pytest_cache/
 .venv-backend/
+artifacts/

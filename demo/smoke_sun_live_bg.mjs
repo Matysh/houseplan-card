@@ -62,6 +62,27 @@ const res = await page.evaluate(async () => {
   out.realStepNoSnapClass = !sr().querySelector('.stage.skysnap');
   out.realStepStillGlides = comp() !== hexToRgb(target); // 45 s transition, not a jump
 
+  // A quick tab switch is not a suspended renderer: keep the current painted
+  // sky and hover in place. The old visibility handler cleared both on every
+  // return, producing a one-frame whole-plan flash even after two seconds.
+  const ownVisibilityState = Object.getOwnPropertyDescriptor(document, 'visibilityState');
+  const room = c._spaceModel().rooms[0];
+  c._hoverRoom = { space: c._space, room };
+  c.requestUpdate();
+  await c.updateComplete;
+  const skyBeforeQuickReturn = c._skyElev;
+  Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' });
+  document.dispatchEvent(new Event('visibilitychange'));
+  Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
+  document.dispatchEvent(new Event('visibilitychange'));
+  await c.updateComplete;
+  out.quickReturnKeepsSky = c._skyElev === skyBeforeQuickReturn;
+  out.quickReturnKeepsHover = c._hoverRoom?.room === room;
+  out.quickReturnHasNoSnapFrame = !stage().classList.contains('skysnap')
+    && !stage().classList.contains('hpresume');
+  if (ownVisibilityState) Object.defineProperty(document, 'visibilityState', ownVisibilityState);
+  else delete document.visibilityState;
+
   // the tab came back from the background: the sky catches up at once
   await setSun(180, 25);          // 12° of sun happened while we were not painting
   out.returnFromHiddenSnaps = comp() === hexToRgb(stage().getAttribute('style').split('background:')[1]);

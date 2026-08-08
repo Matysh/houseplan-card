@@ -53,9 +53,10 @@ import {
   setWallThickness, setWallThicknessForRoom, cmToField, wallCmToUnits,
   wallEdgeBodies, wallBodiesUnionPath, paperRoomShapesWithWalls,
   innerContourForRoom, roomWallProfile, outsetContour,
-  openingInnerFaceOffset, openingTunnelGeometry, applyWallThicknessToNewRoom,
+  openingInnerFaceOffsetFromIndex, openingTunnelGeometriesFromIndex,
+  openingWallIndex as buildOpeningWallIndex, applyWallThicknessToNewRoom,
   drawWallPreviewD, DRAW_WALL_DEFAULT_CM, wallIntervals, normalizeWallIntervals,
-  intervalCmAt, wallBodyNeedsSolid, type WallEntry,
+  intervalCmAt, wallBodyNeedsSolid, type OpeningTunnelGeometry, type OpeningWallIndex, type WallEntry,
 } from './wall-thickness';
 import {
   resolveOpenCuts, resolveBoundaryTarget, snapOpenPoint,
@@ -129,8 +130,9 @@ import {
   resizedBoxTopLeft, snapDecorPoint, validDecorDraft,
   type DecorBox, type SnapGeometry,
 } from './editors/decor/geometry';
+import { renderOpeningTunnelFills } from './render/opening-tunnels';
 
-const CARD_VERSION = '1.60.2';
+const CARD_VERSION = '1.60.3-beta.1';
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
 const CELL_CM_MIN = 0.1;
@@ -188,6 +190,10 @@ const lruWrite = <K, V>(cache: Map<K, V>, key: K, value: V, limit: number): void
 };
 let pageHiddenAt = typeof document !== 'undefined' && document.visibilityState === 'hidden' ? Date.now() : 0;
 let pageResumedAt = 0;
+/** All card instances receive the same visibilitychange Event object. Keep the
+ *  long-return decision on that event so a second card does not mistake the
+ *  first card's cleared pageHiddenAt for a quick return. */
+let pageLongResumeEvent: Event | null = null;
 /** DEV-B703-01: warm re-mount memo — MODULE scope, so it lives with the loaded
  *  PAGE, not with any card instance. Lovelace re-creates card elements when
  *  the websocket reconnects after a long-backgrounded tab; the fresh instance
@@ -796,6 +802,11 @@ class HouseplanCard extends LitElement {
     key: string;
     value: ReturnType<typeof wallBodiesUnionPath>;
   } | null = null;
+  private _openingTunnelCache: {
+    key: string;
+    value: Array<OpeningTunnelGeometry | null>;
+  } | null = null;
+  private _openingWallIndexCache: { key: string; value: OpeningWallIndex } | null = null;
   private _physicalBodiesCache: {
     key: string; drafts: number[][][]; partitions: number[][][];
     columns: number[][][]; all: number[][][];
@@ -1077,23 +1088,33 @@ class HouseplanCard extends LitElement {
   private _vacSrvTrails: Record<string, any> = {};
   private _unsubTrail?: () => void;
   private _vacJumpOnce = false;
-  private _vacVisHandler = () => {
+  private _vacVisHandler = (event: Event) => {
     if (document.visibilityState === 'hidden') {
       if (!pageHiddenAt) pageHiddenAt = Date.now();
+      pageLongResumeEvent = null;
       return;
     }
     if (document.visibilityState === 'visible') {
       const now = Date.now();
-      if (pageHiddenAt && now - pageHiddenAt >= RESUME_LONG_HIDDEN_MS) pageResumedAt = now;
+      const hiddenFor = pageHiddenAt ? now - pageHiddenAt : 0;
+      if (hiddenFor >= RESUME_LONG_HIDDEN_MS) {
+        pageResumedAt = now;
+        pageLongResumeEvent = event;
+      }
+      const longReturn = pageLongResumeEvent === event;
       pageHiddenAt = 0;
       this._vacJumpOnce = true;
-      // A hidden tab paints nothing, so the 45 s sky transition stood still
-      // while the sun kept moving: come back on the RIGHT colour, then breathe
-      // again (docs/SUN.md, owner 2026-08-04).
-      this._skyElev = null;
-      this._tip = null;
-      this._hoverRoom = null;
-      if (now - pageResumedAt <= RESUME_RECENT_MS) this._beginResumeSettle();
+      if (longReturn) {
+        // A genuinely sleeping tab paints nothing, so the 45 s sky transition
+        // stood still while the sun kept moving. Catch it up behind the resume
+        // veil. A quick tab switch must preserve the already painted sky and
+        // hover; resetting them created a visible one-frame flash on every
+        // return even when the tab was hidden for only a couple of seconds.
+        this._skyElev = null;
+        this._tip = null;
+        this._hoverRoom = null;
+        this._beginResumeSettle();
+      }
       this.requestUpdate();
     }
   };
@@ -8050,6 +8071,33 @@ class HouseplanCard extends LitElement {
     return { byRoom, byId };
   }
 
+  /** Atomic wall association shared by symbols, wall cuts and tunnel geometry. */
+  private _openingWallIndexFor(space: SpaceModel, openCuts: number[][]): {
+    key: string; value: OpeningWallIndex;
+  } {
+    const roomFingerprint = space.rooms.map((room) => (
+      `${room.id}:${room.poly?.map((point) => point.join(',')).join('/') || `${room.x},${room.y},${room.w},${room.h}`}`
+    )).join(';');
+    const wallFingerprint = this._spaceWalls.map((wall) => (
+      `${wall.key}:${wall.a?.join(',') || ''}:${wall.b?.join(',') || ''}:${wall.cm}`
+    )).join(';');
+    const cutFingerprint = openCuts.map((cut) => cut.join(',')).join(';');
+    const key = [
+      space.id, this._cfgEpoch, this._wallKeyPitch, this._cellCm, this._gridPitch,
+      roomFingerprint, wallFingerprint, cutFingerprint,
+    ].join('|');
+    if (!this._openingWallIndexCache || this._openingWallIndexCache.key !== key) {
+      this._openingWallIndexCache = {
+        key,
+        value: buildOpeningWallIndex(
+          space.rooms, this._spaceWalls, openCuts,
+          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+        ),
+      };
+    }
+    return this._openingWallIndexCache;
+  }
+
   /**
    * Room-coloured base beneath Glow/sun and beneath the architectural symbol.
    * The pure helper returns exact atomic wall strips in opening-local coords;
@@ -8065,55 +8113,24 @@ class HouseplanCard extends LitElement {
     if (this._markup || !this._spaceWalls.length || !this._openingsR.length)
       return svg`` as unknown as TemplateResult;
     const openCuts = this._openPairs().flatMap((p) => p.segs);
-    const parts = this._openingsR.map((opening, index) => {
-      const geometry = openingTunnelGeometry(
-        space.rooms,
-        { x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen },
-        this._spaceWalls,
-        openCuts,
-        this._wallKeyPitch,
-        this._cellCm,
-        this._gridPitch,
-        NORM_W,
-      );
-      if (!geometry) return nothing;
-      const negative = geometry.faces.find((f) => f.side === -1);
-      const positive = geometry.faces.find((f) => f.side === 1);
-      if (!negative || !positive) return nothing;
-      const negFill = roomFills.byId.get(negative.roomId) || null;
-      const posFill = roomFills.byId.get(positive.roomId) || null;
-      if (!negFill && !posFill) return nothing;
-      const d = `${negative.d} ${positive.d}`;
-      const same = !!negFill && !!posFill
-        && negFill.color === posFill.color && negFill.opacity === posFill.opacity;
-      const transform = `translate(${opening.rx} ${opening.ry}) rotate(${opening.angle})`;
-      if (same) {
-        return svg`<path class="opening-tunnel" data-hp="opening-tunnel" data-id=${opening.id} data-kind=${opening.type}
-          data-wall-key=${geometry.wallKey} aria-hidden="true" pointer-events="none"
-          transform=${transform} d=${d} fill=${negFill!.color}
-          fill-opacity=${negFill!.opacity}></path>`;
-      }
-      const span = geometry.maxY - geometry.minY;
-      if (!(span > 0)) return nothing;
-      const axis = Math.max(0, Math.min(1, -geometry.minY / span));
-      const axisOffset = `${(axis * 100).toFixed(6)}%`;
-      const nf = negFill || { color: '#000000', opacity: 0, mode: 'none' as const };
-      const pf = posFill || { color: '#000000', opacity: 0, mode: 'none' as const };
-      const gradientId = `hp-opening-tunnel-${index}`;
-      return svg`<g class="opening-tunnel" data-hp="opening-tunnel" data-id=${opening.id} data-kind=${opening.type}
-        data-wall-key=${geometry.wallKey} aria-hidden="true" pointer-events="none"
-        transform=${transform}>
-        <defs><linearGradient id=${gradientId} gradientUnits="userSpaceOnUse"
-          x1="0" y1=${geometry.minY} x2="0" y2=${geometry.maxY}>
-          <stop offset="0%" stop-color=${nf.color} stop-opacity=${nf.opacity}></stop>
-          <stop offset=${axisOffset} stop-color=${nf.color} stop-opacity=${nf.opacity}></stop>
-          <stop offset=${axisOffset} stop-color=${pf.color} stop-opacity=${pf.opacity}></stop>
-          <stop offset="100%" stop-color=${pf.color} stop-opacity=${pf.opacity}></stop>
-        </linearGradient></defs>
-        <path d=${d} fill=${`url(#${gradientId})`} fill-rule="nonzero"></path>
-      </g>`;
+    const geometryInputs = this._openingsR.map((opening) => ({
+      x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen,
+    }));
+    const geometryFingerprint = geometryInputs
+      .map((opening) => `${opening.x},${opening.y},${opening.angle},${opening.length}`).join(';');
+    const wallIndex = this._openingWallIndexFor(space, openCuts);
+    const cacheKey = `${wallIndex.key}|${geometryFingerprint}`;
+    if (!this._openingTunnelCache || this._openingTunnelCache.key !== cacheKey) {
+      this._openingTunnelCache = {
+        key: cacheKey,
+        value: openingTunnelGeometriesFromIndex(wallIndex.value, geometryInputs),
+      };
+    }
+    return renderOpeningTunnelFills({
+      openings: this._openingsR,
+      geometries: this._openingTunnelCache.value,
+      fillsByRoomId: roomFills.byId,
     });
-    return (svg`<g class="opening-tunnels" aria-hidden="true" pointer-events="none">${parts}</g>`) as unknown as TemplateResult;
   }
 
   private _renderWallBodies(disp: SpaceDisplay): TemplateResult {
@@ -10077,6 +10094,7 @@ class HouseplanCard extends LitElement {
         .map((o) => ({ id: o.id, x: o.rx, y: o.ry, angle: o.angle, length: o.rlen }));
       const walls = this._spaceWalls;
       const openCuts = this._openPairs().flatMap((p) => p.segs);
+      const openingWallIndex = this._openingWallIndexFor(space, openCuts).value;
       const innerByRoom: Record<string, number[][]> = {};
       const wallDepthByOpening: Record<string, number> = {};
       if (walls.length) {
@@ -10088,9 +10106,8 @@ class HouseplanCard extends LitElement {
           if (inn) innerByRoom[r.id] = inn;
         }
         for (const o of windows) {
-          const face = openingInnerFaceOffset(
-            space.rooms, { x: o.x, y: o.y, angle: o.angle, length: o.length },
-            walls, this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+          const face = openingInnerFaceOffsetFromIndex(
+            openingWallIndex, { x: o.x, y: o.y, angle: o.angle, length: o.length },
           );
           if (face.cm > 0) {
             wallDepthByOpening[o.id] = wallCmToUnits(face.cm, this._cellCm, this._gridPitch);
@@ -11185,7 +11202,7 @@ class HouseplanCard extends LitElement {
                 const fillC = roomFills.byRoom.get(r) || null;
                 if (fillC) {
                   cls += ' filled';
-                  st.push(`--room-fill:${fillC.color}`, `--room-fill-op:${fillC.opacity.toFixed(3)}`);
+                  st.push(`--room-fill:${fillC.color}`, `--room-fill-op:${fillC.opacity}`);
                 } else st.push('--room-fill:transparent', '--room-fill-op:0');
                 style = st.join(';');
               }
@@ -12636,7 +12653,8 @@ class HouseplanCard extends LitElement {
     if (!items.length) return svg``;
     const base = disp.color;
     const walls = this._spaceWalls;
-    const rooms = this._spaceModel().rooms;
+    const openCuts = this._openPairs().flatMap((pair) => pair.segs);
+    const openingWallIndex = this._openingWallIndexFor(this._spaceModel(), openCuts).value;
     return svg`${items.map((o) => {
       const half = o.rlen / 2;
       const amt = this._openingAmt(o);
@@ -12650,10 +12668,9 @@ class HouseplanCard extends LitElement {
       // Resolve the side even with zero-thickness walls for gates, while
       // preserving the cheap classic path for ordinary line-plan openings.
       const face = walls.length || o.type === 'gate'
-        ? openingInnerFaceOffset(
-            rooms,
+        ? openingInnerFaceOffsetFromIndex(
+            openingWallIndex,
             { x: o.rx, y: o.ry, angle: o.angle, length: o.rlen, flip_v: faceFlipV },
-            walls, this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
           )
         : { ox: 0, oy: 0, cm: 0, side: -1 as -1 | 1 };
       // jambs span the full wall depth, centred on the centreline
@@ -12759,6 +12776,8 @@ class HouseplanCard extends LitElement {
       (o) => o.type !== 'window' && o.lock && this._planEntityAvailable(o.lock),
     );
     if (!items.length) return html``;
+    const openCuts = this._openPairs().flatMap((pair) => pair.segs);
+    const openingWallIndex = this._openingWallIndexFor(this._spaceModel(), openCuts).value;
     return html`${items.map((o) => {
       const st = this.hass.states[o.lock!]?.state;
       const locked = st === 'locked';
@@ -12768,10 +12787,9 @@ class HouseplanCard extends LitElement {
       // angle, so resolve that face explicitly.
       const rad = ((o.angle + 90) * Math.PI) / 180;
       const gateFace = o.type === 'gate'
-        ? openingInnerFaceOffset(
-            this._spaceModel().rooms,
+        ? openingInnerFaceOffsetFromIndex(
+            openingWallIndex,
             { x: o.rx, y: o.ry, angle: o.angle, length: o.rlen, flip_v: !o.flip_v },
-            this._spaceWalls, this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
           )
         : null;
       const off = gateFace ? -16 * gateFace.side : 16 * (o.flip_v ? -1 : 1);

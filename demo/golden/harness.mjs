@@ -1,0 +1,206 @@
+import { makeLargeHouseFixture } from '../fixtures/large-house.mjs';
+import { makeVisualMatrixFixture } from '../fixtures/visual-matrix.mjs';
+
+const fixtureFor = (name) => name === 'large' ? makeLargeHouseFixture() : makeVisualMatrixFixture();
+
+const themeVars = {
+  dark: {
+    '--primary-color': '#3ea6ff', '--primary-text-color': '#e6e7eb',
+    '--secondary-text-color': '#9aa4ad', '--card-background-color': '#202126',
+    '--ha-card-background': '#202126', '--divider-color': '#3a3d45',
+  },
+  light: {
+    '--primary-color': '#0b73b8', '--primary-text-color': '#202124',
+    '--secondary-text-color': '#5f6368', '--card-background-color': '#ffffff',
+    '--ha-card-background': '#ffffff', '--divider-color': '#d7d9de',
+  },
+};
+
+async function stableEnvironment(page, scenario) {
+  await page.setViewportSize(scenario.viewport);
+  await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: scenario.theme });
+  await page.evaluate(({ variables, theme }) => {
+    let style = document.getElementById('hp-golden-stability');
+    if (!style) {
+      style = document.createElement('style');
+      style.id = 'hp-golden-stability';
+      style.textContent = `
+        *, *::before, *::after {
+          animation: none !important;
+          transition: none !important;
+          caret-color: transparent !important;
+          scroll-behavior: auto !important;
+        }
+        html, body { width: 100%; min-height: 100%; overflow: hidden; }
+        body { background: var(--hp-golden-page-bg) !important;
+          font-family: Arial, sans-serif !important; }
+        #host { width: min(100%, 1120px) !important; margin: 0 auto !important;
+          padding: 8px !important; box-sizing: border-box !important; }
+      `;
+      document.head.appendChild(style);
+    }
+    for (const [name, value] of Object.entries(variables))
+      document.documentElement.style.setProperty(name, value);
+    document.documentElement.style.setProperty(
+      '--hp-golden-page-bg', theme === 'light' ? '#eef1f4' : '#11151b',
+    );
+    document.documentElement.style.colorScheme = theme;
+  }, { variables: themeVars[scenario.theme] || themeVars.dark, theme: scenario.theme });
+}
+
+export async function prepareGoldenScenario(page, scenario) {
+  await stableEnvironment(page, scenario);
+  const fixture = fixtureFor(scenario.fixture);
+  if (scenario.deviceName && fixture.devices?.[scenario.deviceId])
+    fixture.devices[scenario.deviceId].name = scenario.deviceName;
+  if (scenario.fillMode) {
+    const space = fixture.config.spaces.find((item) => item.id === scenario.space);
+    space.settings = { ...(space.settings || {}), fill_mode: scenario.fillMode };
+  }
+  if (scenario.hideOpenings) {
+    const space = fixture.config.spaces.find((item) => item.id === scenario.space);
+    space.settings = { ...(space.settings || {}), hide_openings: true };
+  }
+
+  return page.evaluate(async ({ fixture, scenario }) => {
+    const wait = (ms) => new Promise((done) => setTimeout(done, ms));
+    const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+    const until = async (predicate, timeout = 10000) => {
+      const started = performance.now();
+      while (!predicate()) {
+        if (performance.now() - started > timeout) throw new Error(`golden scenario timed out: ${scenario.id}`);
+        await wait(15);
+      }
+    };
+    window.__goldenCard?.remove?.();
+    window.__card?.remove?.();
+    localStorage.clear();
+    const host = document.getElementById('host');
+    const cardConfig = {
+      type: 'custom:houseplan-card', title: `Golden ${scenario.id}`, icon_size: 3.4,
+      language: scenario.language || 'en',
+    };
+    const hassFor = () => ({
+      language: scenario.language || 'en', locale: { language: scenario.language || 'en' },
+      user: { id: 'golden', name: 'Golden fixture', is_admin: true },
+      devices: fixture.devices || {}, entities: fixture.entities || {},
+      areas: fixture.areas || {}, states: fixture.states || {},
+      floors: {
+        one: { floor_id: 'one', name: 'One', level: 0 },
+        two: { floor_id: 'two', name: 'Two', level: 1 },
+        three: { floor_id: 'three', name: 'Three', level: 2 },
+      },
+      callWS: async (message) => {
+        if (message.type === 'houseplan/config/get')
+          return { config: structuredClone(fixture.config), rev: 1, can_write: true };
+        if (message.type === 'houseplan/layout/get')
+          return { layout: structuredClone(fixture.layout || {}), rev: 1 };
+        if (message.type === 'config/device_registry/list') return Object.values(fixture.devices || {});
+        if (message.type === 'config/entity_registry/list') return Object.values(fixture.entities || {});
+        if (message.type === 'config_entries/get')
+          return [{ entry_id: 'golden_entry', domain: 'houseplan_golden', title: 'Golden fixture' }];
+        if (message.type === 'manifest/list')
+          return [{ domain: 'houseplan_golden', name: 'House Plan Golden' }];
+        return { ok: true };
+      },
+      callService: async () => undefined,
+      connection: { subscribeEvents: async () => () => undefined, subscribeMessage: async () => () => undefined },
+      localize: () => null,
+      formatEntityState: (state) => state.state,
+      config: { unit_system: { length: 'km' } },
+    });
+    const mount = async () => {
+      const card = document.createElement('houseplan-card');
+      card.setConfig(cardConfig);
+      host.replaceChildren(card);
+      card.hass = hassFor();
+      await until(() => card._loadOk && card._model?.length === fixture.config.spaces.length);
+      await card.updateComplete;
+      const expectedDevices = Object.keys(fixture.devices || {}).length;
+      if (expectedDevices) await until(() => card._devices?.length >= expectedDevices);
+      await until(() => card._booting === false);
+      await frame();
+      return card;
+    };
+
+    let card = await mount();
+    if (scenario.warmRemount) {
+      card.remove();
+      await wait(0);
+      card = await mount();
+    }
+    window.__goldenCard = card;
+    if (scenario.space && card._space !== scenario.space) {
+      card._pickSpace(scenario.space);
+      await card.updateComplete;
+    }
+    if (scenario.mode) {
+      card._setMode(scenario.mode);
+      await card.updateComplete;
+    }
+    if (Number.isFinite(scenario.zoom)) {
+      card._applyView(scenario.zoom, 500, 500);
+      card.requestUpdate();
+      await card.updateComplete;
+    }
+    if (scenario.hoverRoom) {
+      const room = card._spaceModel().rooms.find((item) => item.id === scenario.hoverRoom);
+      if (!room) throw new Error(`golden hover room missing: ${scenario.hoverRoom}`);
+      card._hoverRoom = { space: card._space, room };
+      card.requestUpdate();
+      await card.updateComplete;
+    }
+    if (scenario.dialog === 'device') {
+      card._setMode('devices');
+      await card.updateComplete;
+      const device = card._devices.find((item) => item.id === scenario.deviceId);
+      if (!device) throw new Error(`golden device missing: ${scenario.deviceId}`);
+      card._openMarkerDialog(device);
+      await card.updateComplete;
+      if (scenario.focusDialogClose) {
+        const dialog = card.renderRoot.querySelector('hp-dialog');
+        await dialog?.updateComplete;
+        dialog?.renderRoot?.querySelector('.close')?.focus();
+      }
+    } else if (scenario.dialog === 'decor-color') {
+      card._setMode('decor');
+      card._decorTool = 'select';
+      await card.updateComplete;
+      const shape = card._decorList.find((item) => item.kind === 'line');
+      if (!shape) throw new Error('golden decor line missing');
+      card._decorShapeDbl(new MouseEvent('dblclick'), shape);
+      await card.updateComplete;
+      const dialog = card.renderRoot.querySelector('hp-dialog');
+      const picker = dialog?.querySelector('hp-color-opacity');
+      await picker?.updateComplete;
+      const trigger = picker?.renderRoot?.querySelector('.trigger');
+      if (!trigger) throw new Error('golden decor color trigger missing');
+      trigger.click();
+      await picker.updateComplete;
+    }
+    await document.fonts?.ready;
+    await frame();
+    return {
+      space: card._space,
+      mode: card._mode,
+      devices: card._devices.length,
+      dialog: !!card.renderRoot.querySelector('hp-dialog'),
+    };
+  }, { fixture, scenario });
+}
+
+export async function goldenClip(page, capture) {
+  if (capture === 'page') return null;
+  return page.evaluate(() => {
+    const card = window.__goldenCard;
+    const target = card?.renderRoot?.querySelector('.stage');
+    if (!target) throw new Error('golden stage capture target missing');
+    const rect = target.getBoundingClientRect();
+    const pad = 2;
+    const x = Math.max(0, Math.floor(rect.left - pad));
+    const y = Math.max(0, Math.floor(rect.top - pad));
+    const right = Math.min(window.innerWidth, Math.ceil(rect.right + pad));
+    const bottom = Math.min(window.innerHeight, Math.ceil(rect.bottom + pad));
+    return { x, y, width: Math.max(1, right - x), height: Math.max(1, bottom - y) };
+  });
+}

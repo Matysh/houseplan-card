@@ -1,6 +1,6 @@
 # House Plan architecture
 
-Updated: 2026-07-04 (v1.2.2). The repository = a HACS integration (category **Integration**)
+Updated: 2026-08-08 (maintenance after v1.60.2). The repository = a HACS integration (category **Integration**)
 that contains both the backend (`custom_components/houseplan`) and the Lovelace card (`src/` → `dist/`).
 
 ## Layout
@@ -10,12 +10,14 @@ houseplan-card/
 ├─ src/                          # card sources (TypeScript + Lit 3)
 │  ├─ houseplan-card.ts          # the card: rendering, states, drag, tooltip, sticky header
 │  ├─ hp-dialog.ts               # shared HA/native modal shell and focus lifecycle
+│  ├─ render/opening-tunnels.ts  # immutable SVG projection of resolved tunnel geometry/fills
 │  ├─ editor.ts                  # GUI config editor (ha-form + selectors)
 │  ├─ rules.ts                   # icon rules (iconFor), filtering, groups, fallback order
 │  └─ data/
 │     ├─ house.ts                # geometry: ROOMS (rooms→area), FLOOR_VB (viewBox), names
 │     └─ backgrounds.ts          # VECTOR plans (SVG base64) + FLOOR_BG_RECT (positioning)
 ├─ dist/houseplan-card.js        # build (rollup+terser), ~290 KB, plans embedded
+├─ demo/golden/                  # deterministic HP-QA-01 matrix, capture/verify/accept
 ├─ custom_components/houseplan/  # the HA integration
 │  ├─ __init__.py                # setup: Store, WS commands, JS serving (add_extra_js_url)
 │  ├─ trails.py                  # server-side vacuum trail recorder (state-change driven)
@@ -26,6 +28,11 @@ houseplan-card/
 ├─ hacs.json                     # HACS manifest
 └─ docs/                         # this documentation
 ```
+
+Rollup embeds a source fingerprint in the bundle. Performance and golden-image
+tooling compares it with the current `src/` tree before recording results, so a
+committed demo snapshot from an older source revision cannot produce a false
+baseline.
 
 ## Key decisions
 
@@ -286,12 +293,23 @@ Its default width in the editor is 300 cm. `openingAmount` (pure) maps the conta
 drag along walls (continuous re-snap, saved on release), click → status card (250 ms timer),
 double click → properties dialog. In markup mode the "Opening" tool handles clicks instead.
 
-For a wall with thickness, `openingTunnelGeometry()` resolves the atomic wall
-interval and adjacent room on each side of the centreline. A base patch beneath
-Glow/sun repeats the same frame-local effective fill as the room shape. Outer
-openings give the one room both halves; shared openings use a local-coordinate
-hard stop at `y=0`. The helper ignores virtual spans, unfinished drafts and
-zero-thickness walls and clips mixed-thickness legacy spans per atomic body.
+For a wall with thickness, one `OpeningWallIndex` resolves the atomic wall
+interval and adjacent room on each side of the centreline. Opening symbols,
+wall cuts and room-coloured tunnel patches all consume this association; none
+has a separate nearest-wall fallback. A candidate must be genuinely adjacent
+to the opening axis, so a detached parallel room inside one grid cell cannot
+own the far half. Full-width coverage, signed inner-face distance, room area
+and stable room id form the deterministic tie order.
+
+The full card caches that index and the batch tunnel geometry by space,
+`_cfgEpoch` and complete room/wall/opening geometry. A normal HA state tick
+therefore resolves only live room fill values, not `roomWallProfile` again.
+The batch helper removes already-painted intervals from later overlapping
+openings, preventing double alpha. A base patch beneath Glow/sun repeats the
+same frame-local effective fill as the room shape. Outer openings give the one
+room both halves; shared openings use a local-coordinate hard stop at `y=0`.
+Virtual spans, unfinished drafts and zero-thickness walls are ignored; legacy
+spans are clipped per atomic body.
 
 ## Integration WS API
 
@@ -515,6 +533,11 @@ hash falls back to the default.
   vote in room state/statistics and drive group actions, but never place a Glow
   pool at the controller. If the same entity also has a real lamp marker, that
   physical marker owns its unique Glow position regardless of registry order.
+  Room-coloured opening tunnels are a separate layer below Glow/sun. Their
+  geometry and cache remain owned by `wall-thickness.ts`/the card orchestrator;
+  `render/opening-tunnels.ts` only maps resolved immutable inputs to the stable
+  SVG contract. This is the first render-only HP-ARCH-01 extraction and must not
+  become a second geometry or fill model.
 - **Open boundaries** (v1.37, revised 2026-08): `space.open_spans` hold
   geometric virtual stretches; `room.open_to` remains the light-zone index
   derived from spans (legacy `open_to`-only configs expand to full

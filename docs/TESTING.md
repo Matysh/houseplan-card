@@ -1022,6 +1022,48 @@ separately promised workflows:
 
 ---
 
+## Golden-image regression matrix
+
+`npm run golden:capture` records the data-only scenarios from
+`demo/golden/matrix.mjs` into ignored `artifacts/golden/actual/`; it never
+changes a reviewed image and fails if any scenario itself errors.
+`golden:verify` always compares the complete matrix (a diagnostic
+`--scenario` is capture-only) with
+`demo/golden/baselines/`, writes high-contrast pixel diffs and fails on a
+missing image, changed dimensions, excessive diff, scenario error or stale
+matrix manifest. It also refuses a different Chromium build and baseline PNGs
+whose hashes no longer match the reviewed manifest. `golden:accept --
+--reviewed` is the only baseline write path and also requires a complete,
+error-free report captured from the current source fingerprint; the entire set
+is validated before any reference is copied.
+
+The matrix covers thick wall junctions, virtual/physical boundaries,
+partitions/columns, axis-aligned and 45° door/window/gate tunnels, hidden
+opening symbols, Glow and sun, light/temperature/LQI fill splits on a wall
+axis, hover over Glow and nested rooms, all three editors, dark/light themes,
+0.4×/fit/2.5×, warm remount and adaptive RU/EN dialogs including focus and the
+decor colour popover. In the
+canonical Linux CI profile Chromium, viewport, DPR, locale, timezone, colour
+profile, font rendering, animations and caret are deterministic. The separate
+CI job captures review candidates until the first baseline is accepted; after
+that it automatically runs blocking verification. Review and accept the
+`golden-images` CI artifact rather than treating a developer OS raster as the
+canonical set. See `demo/golden/README.md`.
+
+## Large-house performance baseline
+
+`npm run benchmark:large-house` runs a deterministic fictional three-floor
+fixture with 60 rooms, 200 devices, 100 openings, 60 partitions, 40 columns and
+500 decor objects. It records model readiness, first stable render, space
+switch, HA state update, pan/zoom, settings-dialog render, repeated navigation,
+hot-cache sizes and post-stabilisation heap growth when Chromium exposes it.
+
+This runner is **not a test yet** and has no arbitrary developer-machine
+thresholds. Store repeated JSON artefacts from one pinned Chromium/CI profile,
+approve baseline-relative budgets, then add a separate CI job. The old
+`smoke_edge_cases` 150-device ceiling remains a quick coarse guard but is not a
+substitute for HP-PERF-01.
+
 ## Last self-run
 
 **v1.21.1 (2026-07-16), full audit of v1.16–v1.21.** All `[manual]` items pass (73 frontend
@@ -1605,6 +1647,11 @@ require hands on real hardware — they remain for the human pass.
 
 ## Coming back to the tab (docs/WARM-REMOUNT.md, dev, unreleased)
 
+- [ ] **A quick return does not flash**: leave the browser tab or minimise the
+      window for a few seconds and return. The existing viewport, day/night
+      background and room hover remain painted continuously; neither
+      `skysnap` nor the long-sleep `hpresume` veil is armed
+      [auto: smoke_sun_live_bg]
 - [ ] **The view does not twitch**: pan the plan into a corner and zoom in
       (say 2.5×), leave the tab for long enough that HA reconnects, come back —
       the plan is in exactly the same place at exactly the same scale. Not
@@ -1741,6 +1788,14 @@ require hands on real hardware — they remain for the human pass.
       and sun geometry must not change
       [auto: smoke_opening_tunnel_fill + test/wall-thickness.test.mjs +
       test/logic.test.mjs]
+- [ ] **Opening association and overlap edges**: a parallel room separated by
+      an air gap does not colour the outer half; a perpendicular T arm does not
+      capture the opening; a 45° wall keeps its local-axis split; nested rooms
+      resolve deterministically; a legacy opening beyond an endpoint paints
+      only the real wall interval. Exact and partial duplicate openings do not
+      stack alpha, and an angle-invalid opening is consistently rejected by
+      symbol offset, wall cut and tunnel fill
+      [auto: test/wall-thickness.test.mjs]
 - [ ] **Door/gate light uses the clear tunnel**: place an off-centre light beside a
       door or gate in a thick wall. In the neighbouring room the glow is limited by
       sight lines through both the near and far inner-face corners; neither

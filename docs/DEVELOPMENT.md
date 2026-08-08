@@ -103,6 +103,36 @@ git config core.untrackedCache true
   builds the bundle — a truncated file can "pass". That is why the build starts with `tsc --noEmit`,
   which fails on such errors. Always build with `npm run build`, never bare `rollup -c`.
 
+## Maintenance diagnostics
+
+These commands are read-only diagnostics, not release gates:
+
+```bash
+# Show registered legacy/internal fields or inspect an exported config locally.
+npm run audit:config
+npm run audit:config -- path/to/houseplan-config.json
+
+# Reproducible synthetic large-house baseline (defaults to three samples).
+npm run benchmark:large-house -- --samples=5 --output=artifacts/large-house.json
+
+# Golden candidates never overwrite reviewed references.
+npm run golden:capture
+npm run golden:verify
+npm run golden:accept -- --reviewed
+```
+
+The config audit performs no network requests and does not rewrite the input.
+Its registry and lifecycle rules are documented in `CONFIG-COMPATIBILITY.md`.
+The performance runner has deliberately no pass/fail thresholds yet: collect
+repeated artefacts on one pinned Chromium/CI profile before approving budgets.
+Do not turn a developer-laptop timing into a CI limit.
+Both browser diagnostics require a freshly built/copied demo bundle. Rollup
+embeds a SHA-256 fingerprint of `src/` plus the locked package and
+Rollup/TypeScript build inputs; benchmark/golden runners fail before
+capturing anything when `demo/srv/assets/houseplan-card.js` is stale. Golden
+commands and the explicit review workflow are documented in
+`demo/golden/README.md`.
+
 ## Build
 
 ```bash
@@ -203,6 +233,13 @@ release runs the complete local frontend, backend and smoke gates before its
 tag is created. The exact-SHA Validate required by `release.yml` remains in
 force for both and can run a broader matrix automatically; the local policy
 does not weaken the publication guard.
+
+Feature promotion has an additional hard gate: every new feature or material
+behaviour change must spend at least one published beta/RC before stable. A
+stable release commit may change only version fields, generated bundle
+snapshots and changelog/release metadata; feature source changes belong in the
+preceding pre-release commit. Skip this step only for an explicit owner-approved
+emergency hotfix, and document the exception in the handoff.
 
 ## Reproducible scripts (data)
 

@@ -11,15 +11,20 @@
 > (versions, publication, infrastructure), DEVELOPMENT.md for new gotchas,
 > ARCHITECTURE.md for design changes, ROADMAP.md when plans move.
 
+**Promotion rule (2026-08-08):** every new feature or material behaviour
+change must pass through a published beta/RC before stable. Stable release
+commits are promotion-only (versions, generated bundles and release/changelog
+metadata). Only an explicit owner-approved emergency hotfix may skip this gate.
+
 ## Snapshot (2026-08-08)
 
 | Item | State |
 |---|---|
-| Version | **v1.60.2** everywhere (manifest, const.py, package.json, CARD_VERSION) — stable release with HA-disabled binding handling, live device preview, a unified Boundary tool, Gates, dashed decor lines, weather-independent window rays, an always-static device display and room-coloured opening tunnels. Stable `main`, `dev` and tag point to the same tested release commit |
-
+| Version | **v1.60.3-beta.1** everywhere (manifest, const.py, package.json, CARD_VERSION) — first maintenance pre-release after v1.60.2; `main` remains on stable v1.60.2 while the beta is published from `dev` |
+| Current local cycle | Maintenance-only after v1.60.2: the brief tab-return flash and thick-opening association/overlap defects are fixed; static-icon coverage is expanded. HP-DATA-01 has an offline compatibility registry/auditor; HP-PERF-01 has a schema-valid deterministic large-house benchmark with source-freshness and precise-memory guards; HP-ARCH-01 started with the opening-tunnel render seam; HP-QA-01 has deterministic capture/verify/review infrastructure and its first pre-release candidate matrix. No new user features are introduced. |
 | Workflow | Owner's rule since 2026-08-07: ordinary fixes/features are made **locally, without tests and without commits**. A requested pre-release gets a production build plus the smallest targeted unit/smoke set covering the changed surfaces, one tested `dev` commit/tag and a GitHub Release with `prerelease=true`; `main` stays untouched. The complete local frontend/backend/smoke gate runs only before a stable release, after which `main` is fast-forwarded to the exact tested `dev` SHA and the GitHub Release uses `prerelease=false`. Release bodies are short and bilingual (Russian first): only significant user changes get individual bullets, while minor/code-only work is grouped as `Мелкие исправления и улучшения` / `Small fixes and improvements`; every body ends with separate links to the Russian and English changelogs. Nothing is copied to the home instance by hand |
 | GitHub | https://github.com/Matysh/houseplan-card — `main` carries stable releases; pre-release tags may point directly at `dev`. Work lands on `dev` and is merged into `main` for a stable release, so `dev` is normally equal to or ahead of `main`, never behind. Push via SSH key `ha_jb` (remote git@github.com:…); API releases via the fine-grained PAT in `~/.git-credentials` (Contents R/W, issued 2026-07-23) |
-| CI | v1.60.2 uses the complete local stable-release frontend/backend/browser-smoke gate. The exact-SHA Ubuntu Validate remains mandatory: `release.yml` withholds the asset until every matching run finishes green |
+| CI | v1.60.3-beta.1 uses the owner-approved targeted pre-release gate locally. Exact-SHA Ubuntu Validate remains mandatory and runs the broader matrix; `release.yml` withholds assets until every matching run finishes green |
 | HACS | Custom repository works. **Inclusion PR: hacs/default#9004** — open, valid, labeled, mergeable clean, never drafted. Queue: 1212 open, 835 older than ours. Merge rate COLLAPSED: 75 in July but almost all in the first decade, 0 in the last week (checked 2026-07-29) — maintainers process in rare bursts; ETA unknowable, months at best. Nothing actionable on our side |
 | Home instance | ha.jbstudio.pro (SSH port **22222**, key `ha_jb`; HA config root is `/mnt/data/supervisor/homeassistant` — `/config` does NOT exist in this SSH environment), last direct copy was **v1.57.0**; from v1.58.0 on it updates itself through HACS by tag (no scp) |
 | Localization | UI en/ru (src/i18n/*.json), everything user-visible localized incl. kiosk popover |

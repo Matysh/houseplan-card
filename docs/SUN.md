@@ -82,7 +82,9 @@ only — no entities are created, no services are called.
   step is applied with `transition: none` for a single frame
   (`.stage.daynight.skysnap`, released on the next
   `requestAnimationFrame`); everything smaller keeps the 45 s breathing.
-  `visibilitychange → visible` arms the catch-up outright.
+  Returning after a genuinely long browser suspension arms the catch-up
+  outright. A quick tab switch or a short browser minimise preserves the
+  already painted sky and hover, so it cannot introduce a one-frame flash.
 - The elevation the sky is computed from is rounded to 0.1°
   (`skyElevation()`) — finer than the eye can tell across a 45 s glide,
   and it keeps `dayPhase` (and the style attribute lit has to commit)

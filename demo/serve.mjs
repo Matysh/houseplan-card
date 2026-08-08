@@ -40,9 +40,16 @@ export async function finish(browser, out) {
   }
 }
 
-export async function launch(viewport = { width: 820, height: 760 }, scale = 1) {
-  const browser = await chromium.launch({ args: ['--no-sandbox'] });
-  const page = await (await browser.newContext({ viewport, deviceScaleFactor: scale })).newPage();
+export async function launch(
+  viewport = { width: 820, height: 760 },
+  scale = 1,
+  browserArgs = [],
+  contextOptions = {},
+) {
+  const browser = await chromium.launch({ args: ['--no-sandbox', ...browserArgs] });
+  const page = await (await browser.newContext({
+    viewport, deviceScaleFactor: scale, ...contextOptions,
+  })).newPage();
   // audit T1: an exception inside the card used to be logged and ignored
   page.on('pageerror', (e) => { _pageErrors++; console.log('EXC', e.message); });
   await page.route('**/*', (r) => {

@@ -52,7 +52,7 @@ test('always-static display suppresses every live visual but keeps diagnostics',
     primary: 'binary_sensor.smoke',
     marker: {
       id: 'd1', binding: 'device:d1', display: 'static_icon',
-      ripple_color: '#00ff00', vacuum: { live: true },
+      ripple_color: '#00ff00', size: 1.75, angle: 125, vacuum: { live: true },
     },
   });
   const result = resolveDevicePresentation(h, marker, options);
@@ -65,11 +65,100 @@ test('always-static display suppresses every live visual but keeps diagnostics',
   assert.equal(result.humText, null);
   assert.equal(result.lqiText, null);
   assert.equal(result.lightColor, null);
+  assert.equal(result.scale, 1.75);
+  assert.equal(result.angle, 125);
   assert.equal(result.rippleColor, null);
   assert.equal(result.vacuumLive, false);
   assert.deepEqual(result.classes, ['static-icon']);
   assert.equal(result.explanation.reason, 'static_icon');
   assert.equal(result.visualSources[0].eid, 'binary_sensor.smoke');
+});
+
+test('always-static light keeps configured geometry but suppresses RGB and state colour', () => {
+  const h = hass(
+    {
+      'light.rgb': state('light.rgb', 'on', {
+        rgb_color: [12, 140, 250], brightness: 210,
+      }),
+    },
+    { 'light.rgb': { entity_id: 'light.rgb', device_id: 'd1', platform: 'demo' } },
+  );
+  const base = device({
+    icon: 'mdi:lightbulb', entities: ['light.rgb'], primary: 'light.rgb',
+    marker: { id: 'd1', binding: 'device:d1', size: 2.25, angle: 315 },
+  });
+  const dynamic = resolveDevicePresentation(h, base, options);
+  const fixed = resolveDevicePresentation(h, {
+    ...base, marker: { ...base.marker, display: 'static_icon' },
+  }, options);
+  assert.equal(dynamic.visual.status, 'working');
+  assert.ok(dynamic.lightColor);
+  assert.ok(dynamic.classes.includes('on'));
+  assert.equal(fixed.lightColor, null);
+  assert.equal(fixed.visual.status, 'neutral');
+  assert.deepEqual(fixed.classes, ['static-icon']);
+  assert.equal(fixed.icon, 'mdi:lightbulb');
+  assert.equal(fixed.scale, 2.25);
+  assert.equal(fixed.angle, 315);
+});
+
+test('static mode cannot revive HA-disabled or orphaned lifecycle diagnostics', () => {
+  const h = hass({});
+  const disabled = resolveDevicePresentation(h, device({
+    bindingStatus: {
+      kind: 'ha_disabled', reason: 'device', enabledEntityIds: [], allEntityIds: ['switch.relay'],
+    },
+    entities: [], primary: undefined,
+    marker: { id: 'd1', binding: 'device:d1', display: 'static_icon' },
+  }), options);
+  assert.equal(disabled.effectiveHidden, true);
+  assert.equal(disabled.explanation.reason, 'ha_disabled');
+  assert.deepEqual(disabled.classes, []);
+
+  const orphaned = resolveDevicePresentation(h, device({
+    bindingStatus: { kind: 'orphaned', enabledEntityIds: [], allEntityIds: [] },
+    entities: [], primary: undefined,
+    marker: { id: 'd1', binding: 'device:d1', display: 'static_icon' },
+  }), options);
+  assert.equal(orphaned.orphaned, true);
+  assert.equal(orphaned.explanation.reason, 'orphaned');
+});
+
+test('switching through static mode cannot reuse a finite activity window', () => {
+  const h = hass(
+    { 'binary_sensor.motion': state('binary_sensor.motion', 'on', { device_class: 'motion' }) },
+    { 'binary_sensor.motion': { entity_id: 'binary_sensor.motion', device_id: 'd1', platform: 'demo' } },
+  );
+  const base = device({
+    icon: 'mdi:motion-sensor', entities: ['binary_sensor.motion'], primary: 'binary_sensor.motion',
+    marker: { id: 'd1', binding: 'device:d1', display: 'icon_ripple' },
+  });
+  const sourceSignature = presentationSourceSignature(h, base);
+  const active = resolveDevicePresentation(h, base, {
+    ...options,
+    now: 2_000,
+    activityRuntime: {
+      sources: sourceSignature, flashTs: 1_000, flashKind: 'event', gen: 2,
+    },
+  });
+  assert.equal(active.activity, 'event');
+  assert.ok(active.classes.includes('activity-gen2'));
+  const fixed = resolveDevicePresentation(h, {
+    ...base, marker: { ...base.marker, display: 'static_icon' },
+  }, {
+    ...options,
+    now: 2_000,
+    activityRuntime: {
+      sources: sourceSignature, flashTs: 1_000, flashKind: 'event', gen: 2,
+    },
+  });
+  assert.equal(fixed.activity, 'none');
+  assert.deepEqual(fixed.classes, ['static-icon']);
+  const restored = resolveDevicePresentation(h, base, {
+    ...options, now: 2_000, activityRuntime: null,
+  });
+  assert.equal(restored.activity, 'none');
+  assert.ok(!restored.classes.some((name) => name.startsWith('activity-')));
 });
 
 test('always-static source short-circuit is plan-only and lifecycle still wins', () => {

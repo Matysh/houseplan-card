@@ -57,6 +57,20 @@ joins; bevel when the mitre spike exceeds `MITRE_LIMIT × thickness`.
 Openings cut the body full-depth; jambs cap the cut; window glass mid-tunnel;
 door swing from the **inner face**. Association uses wall direction ≈ opening
 angle (mod 180°), then nearest span — never a perpendicular neighbour at a T.
+One atomic `OpeningWallIndex` is authoritative for the symbol offset, physical
+wall cut and coloured tunnel. Candidates must be effectively collinear with
+the opening axis (not merely parallel within one grid cell); ties use complete
+opening coverage, signed distance to the inner face, smaller room area and
+stable room id. The index and batch tunnel geometry are cached by space,
+configuration epoch and complete geometry, so HA state ticks change only the
+resolved fill colours. Overlapping openings reserve each physical interval
+once and cannot stack room-fill alpha.
+"Effectively collinear" is deliberately strict: the perpendicular distance to
+the candidate axis may not exceed `max(4% × grid pitch, 1e-9)`. A detached
+parallel room beyond that tolerance is not an opening side; when only one real
+owner remains, its fill continues through the full wall depth. Legacy openings
+outside the same angle/distance contract no longer cut or offset a nearby wall
+and must be re-snapped in the Plan editor.
 At an `open_span` endpoint, real arms owned by different room contours receive
 the same bounded mitre patch as arms from one contour; a virtual T therefore
 has one clean outer corner rather than two butt caps forming a step.
@@ -114,8 +128,10 @@ Decor-line thickness, per-side finish, auto-from-backdrop, plan-wide default.
 ## 8. Testing
 
 Unit: ring closed at corners; half-out; inner area; atomic partial shared;
-virtual-T mitre; angle-aware opening; thick-door tunnel clipping and room-side
-colour ownership; whole and
+virtual-T mitre; angle-aware opening; 45° wall; T-junction; detached parallel
+room; nested-room tie; partially out-of-span legacy opening; overlapping
+opening de-duplication; shared symbol/cut/tunnel rejection; thick-door tunnel
+clipping and room-side colour ownership; whole and
 atomic rekey after edge/scale.
 Browser: seamless frame; fill not in hatch; m² drops with thickness; a partial
 virtual stretch, its solid thick remainders and Undo move as one real resize;

@@ -1,7 +1,9 @@
 """Unit tests for the pure House Plan validation (validation.py is loaded by path,
 without importing the HA integration package)."""
 import importlib.util
+import json
 import os
+import subprocess
 
 import pytest
 import voluptuous as vol
@@ -13,6 +15,33 @@ _PATH = os.path.join(
 _spec = importlib.util.spec_from_file_location("hp_validation", _PATH)
 v = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(v)
+
+
+@pytest.mark.parametrize("module_name, expected_spaces", [
+    ("large-house", 3),
+    ("visual-matrix", 2),
+])
+def test_browser_fixtures_match_backend_schema(module_name, expected_spaces):
+    """Browser fixtures must not bypass constraints real saves enforce."""
+    root = os.path.dirname(os.path.dirname(__file__))
+    script = (
+        f"import * as fixture from './demo/fixtures/{module_name}.mjs';"
+        "const make=fixture.makeLargeHouseFixture||fixture.makeVisualMatrixFixture;"
+        "process.stdout.write(JSON.stringify(make()));"
+    )
+    result = subprocess.run(
+        ["node", "--input-type=module", "--eval", script],
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    fixture = json.loads(result.stdout)
+    validated = v.CONFIG_SCHEMA(fixture["config"])
+    validated_layout = v.LAYOUT_SCHEMA(fixture.get("layout", {}))
+    assert len(validated["spaces"]) == expected_spaces
+    assert sum(len(space["rooms"]) for space in validated["spaces"]) >= 6
+    assert len(validated_layout) == len(fixture.get("layout", {}))
 
 
 def _load_pure(name):

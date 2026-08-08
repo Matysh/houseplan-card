@@ -1,6 +1,24 @@
 # Changelog
 
-## Unreleased
+## v1.60.3-beta.1 — 2026-08-08
+
+- Returning to a briefly backgrounded browser tab no longer forces a one-frame
+  day/night/hover reset that could make the whole plan flash. Long suspended
+  tabs keep the protected settle and immediate sun catch-up.
+- Thick-wall openings now use one cached wall association for their symbol,
+  wall cut and room-coloured tunnel. Nearby detached walls and perpendicular
+  T-junction arms can no longer steal a tunnel side, while overlapping openings
+  no longer darken the room fill twice. A legacy opening whose saved angle or
+  offset no longer actually aligns with a wall is no longer allowed to cut or
+  shift that wall; re-snap the opening in the Plan editor to restore it.
+- Expanded always-static device coverage now verifies RGB suppression,
+  size/rotation, lifecycle priority, mode round trips, plan/preview/static-card
+  parity and live-vacuum overlay removal.
+- Maintenance groundwork adds an offline compatibility-field registry/config
+  audit, a schema-valid large-house performance baseline with stale-bundle and
+  precise-memory guards, deterministic golden-image capture/review
+  infrastructure and the first render-only extraction from the root card.
+  These changes do not alter saved data or the plan's SVG/interaction contract.
 
 ## v1.60.2 — 2026-08-08
 
