@@ -7,7 +7,7 @@ import { launch } from '../serve.mjs';
 import { assertFreshDemoBundle } from '../bundle-freshness.mjs';
 import { goldenClip, prepareGoldenScenario } from './harness.mjs';
 import { GOLDEN_MATRIX_VERSION, GOLDEN_SCENARIOS } from './matrix.mjs';
-import { assertGoldenInvocation, goldenRunFailed } from './policy.mjs';
+import { assertGoldenInvocation, GOLDEN_BASELINE_MANIFEST, goldenRunFailed } from './policy.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const mode = process.argv.find((arg) => arg.startsWith('--mode='))?.slice(7) || 'capture';
@@ -106,7 +106,7 @@ async function comparePng(page, actual, baseline, threshold) {
 }
 
 let baselineManifest = null;
-const baselineManifestPath = resolve(baselineRoot, 'manifest.json');
+const baselineManifestPath = resolve(baselineRoot, GOLDEN_BASELINE_MANIFEST);
 if (existsSync(baselineManifestPath)) {
   try { baselineManifest = JSON.parse(readFileSync(baselineManifestPath, 'utf8')); }
   catch { baselineManifest = { invalid: true }; }

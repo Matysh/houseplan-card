@@ -5,6 +5,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { sourceFingerprint } from '../../scripts/source-fingerprint.mjs';
 import { GOLDEN_MATRIX_VERSION, GOLDEN_SCENARIOS } from './matrix.mjs';
+import { GOLDEN_BASELINE_MANIFEST } from './policy.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const reviewed = process.argv.includes('--reviewed');
@@ -45,7 +46,7 @@ for (const scenario of GOLDEN_SCENARIOS) {
 // updated baseline directory behind.
 for (const { scenario, candidate } of candidates)
   copyFileSync(candidate, resolve(baselineRoot, `${scenario.id}.png`));
-writeFileSync(resolve(baselineRoot, 'manifest.json'), `${JSON.stringify({
+writeFileSync(resolve(baselineRoot, GOLDEN_BASELINE_MANIFEST), `${JSON.stringify({
   schema: 1,
   matrixVersion: GOLDEN_MATRIX_VERSION,
   acceptedAt: new Date().toISOString(),

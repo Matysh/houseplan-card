@@ -1,3 +1,5 @@
+export const GOLDEN_BASELINE_MANIFEST = 'baseline-manifest.json';
+
 export const assertGoldenInvocation = (mode, scenarioFilter = '') => {
   if (!['capture', 'verify'].includes(mode)) throw new Error(`unknown golden mode: ${mode}`);
   if (mode === 'verify' && scenarioFilter)
