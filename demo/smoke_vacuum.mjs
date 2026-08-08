@@ -11,7 +11,11 @@ const out = await page.evaluate(async () => {
   // via the 6-number matrix directly (0.5 scale: robot 0..2000 -> canvas 0..1000)
   const M = [0.5, 0, 0, 0, 0.5, 0];
   const mkAttrs = (x, y, extra) => ({ vacuum_position: { x, y, a: 45 }, map_name: 'm1', ...extra });
-  c.hass = { ...c.hass, states: { ...c.hass.states,
+  c.hass = { ...c.hass,
+    entities: { ...c.hass.entities,
+      'vacuum.robo': { entity_id: 'vacuum.robo', platform: 'demo', disabled_by: null },
+      'camera.robo_map': { entity_id: 'camera.robo_map', platform: 'demo', disabled_by: null } },
+    states: { ...c.hass.states,
     'vacuum.robo': { state: 'docked', attributes: { friendly_name: 'Робот' } },
     'camera.robo_map': { state: 'idle', attributes: mkAttrs(600, 800) },
   } };

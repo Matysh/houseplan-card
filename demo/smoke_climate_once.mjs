@@ -62,13 +62,14 @@ const res = await page.evaluate(async () => {
   return out;
 });
 // зафиксировано прогоном на v1.45.0 и сверено с кодом.
-// scansPerUpdate = 2: один обход у areaClimateMap, один у buildDevices. Важно
+// scansPerUpdate = 1: active-registry projection is shared by the climate map
+// and buildDevices. Важно
 // не само число, а что оно не растёт вместе с числом комнат.
 checkAll(res, {
   scansOnRerender: 0,
   roomCount: 44,
   scansSameWith44Rooms: true,
-  scansPerUpdate: 2,
+  scansPerUpdate: 1,
   tempBefore: 22.4,
   tempAfter: 33.3,
   climateIsMap: true,

@@ -64,7 +64,7 @@ const out = await page.evaluate(async () => {
 
   // ---- manual fit from scratch (HP-1540-01) ----
   cfg.markers = [];
-  c._regSignature = ''; c.requestUpdate(); await c.updateComplete;
+  c._regSignature = ''; c._maybeRebuildDevices(); c.requestUpdate(); await c.updateComplete;
   const dev2 = c._devices.find((x) => x.id === 'd_mower');
   o.fitFreshNoMarker = !dev2.marker;
   c._vacStartFit(dev2); await c.updateComplete;
@@ -76,7 +76,7 @@ const out = await page.evaluate(async () => {
 
   // ---- live checkbox + trail select from scratch (HP-1540-01) ----
   cfg.markers = [];
-  c._regSignature = ''; c.requestUpdate(); await c.updateComplete;
+  c._regSignature = ''; c._maybeRebuildDevices(); c.requestUpdate(); await c.updateComplete;
   c._setMode('devices'); await c.updateComplete;
   c._openMarkerDialog(c._devices.find((x) => x.id === 'd_mower')); await c.updateComplete;
   const liveBox = sr().querySelector('.vacbox input[type=checkbox]');

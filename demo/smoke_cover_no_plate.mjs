@@ -181,7 +181,15 @@ const out = await page.evaluate(async () => {
   const valve = { id: 'v', primary: 'valve.water', entities: ['valve.water'], marker: null };
   const clsOfState = (d, states) => {
     const saved = c.hass;
-    c.hass = { ...c.hass, states: { ...c.hass.states, ...states } };
+    const entities = Object.fromEntries(Object.keys(states).map((entity_id) => [
+      entity_id,
+      { entity_id, platform: 'demo', disabled_by: null },
+    ]));
+    c.hass = {
+      ...c.hass,
+      entities: { ...c.hass.entities, ...entities },
+      states: { ...c.hass.states, ...states },
+    };
     const r = c._stateClass(d);
     c.hass = saved;
     return r;

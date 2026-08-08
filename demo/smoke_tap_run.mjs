@@ -8,6 +8,10 @@ const out = await page.evaluate(async () => {
   const sr = () => c.shadowRoot || c.renderRoot;
   const calls = [];
   c.hass = { ...c.hass,
+    entities: { ...c.hass.entities,
+      'automation.evening': { entity_id: 'automation.evening', platform: 'automation', disabled_by: null },
+      'script.curtains': { entity_id: 'script.curtains', platform: 'script', disabled_by: null },
+      'scene.movie': { entity_id: 'scene.movie', platform: 'scene', disabled_by: null } },
     states: { ...c.hass.states,
       'automation.evening': { state: 'on', attributes: { friendly_name: 'Вечерний свет' } },
       'script.curtains': { state: 'off', attributes: { friendly_name: 'Шторы' } },
