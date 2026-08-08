@@ -24,7 +24,7 @@ only — no entities are created, no services are called.
 - Sun attributes update rarely (~30–120 s). Sun geometry is recomputed
   ONLY when (azimuth, elevation) or the config change — never on every
   `hass` tick. The wedge layer memoises on
-  `(azimuth, elevation, config rev, space id, weather state)`.
+  `(azimuth, elevation, config rev, space id)`.
 - Angle on the plan: `plan_angle = azimuth − north_deg` (normalised to
   0–360). With `north_deg = 0` the top of the canvas is north; the
   direction TOWARD the sun on the canvas is
@@ -263,9 +263,8 @@ The contract:
   cross a wall.
 - **The same life as the wedge.** The rim lives inside the same
   `<g class="sunlayer">`, so the 3° threshold, the 2 s layer fade,
-  `prefers-reduced-motion`, cloud cover (`rimPeakAlpha(cloud)`, zero in
-  the rain), night, the editors and the memo key all apply to it without
-  a line of extra logic.
+  `prefers-reduced-motion`, night, the editors and the memo key all apply
+  to it without a line of extra logic.
 
 ### The 3° threshold and the 2-second fade
 
@@ -274,8 +273,7 @@ over the first ~2° is gone. The contract (owner 2026-08-03) is a hard
 threshold:
 
 - `elevation < 3°` → NO rays at all;
-- `elevation ≥ 3°` → rays at full strength (`rayPeakAlpha`, cloud cover
-  being the only multiplier).
+- `elevation ≥ 3°` → rays at full strength (`rayPeakAlpha`).
 
 Crossing the threshold is animated, but on the LAYER, never on the
 geometry: the `<g class="sunlayer">` fades in with `hp-sunfade-in` and
@@ -286,7 +284,7 @@ seconds and only then drops it. `prefers-reduced-motion: reduce` skips
 the animation entirely — the rays are simply there or simply gone.
 
 Everything else that removes wedges — leaving view mode, switching the
-feature off, night (`elevation ≤ 0`), rain — is instant: those are not
+feature off or night (`elevation ≤ 0`) — is instant: those are not
 threshold crossings, and a wedge lingering while you enter the editor
 would just be a bug.
 
@@ -294,27 +292,24 @@ Layer order: ABOVE room fills (and the glow layer), BELOW devices and
 labels (those live in the HTML `devlayer` anyway). Night
 (`elevation ≤ 0`) → no wedges. Wedges work under BOTH `bg_mode`s.
 
-## Cloud cover — `settings.weather_entity` (optional)
+## Weather independence and legacy `weather_entity`
 
-String entity id or null; GLOBAL settings only. When set and the
-entity's state reads overcast, the wedges fade by an opacity
-multiplier — ~0.25 fully overcast, 0 (gone) in rain/snow:
+Weather never changes the window rays. Once the feature, compass,
+geometry and solar elevation allow a wedge, it is painted at full
+strength regardless of any `weather.*` state. This keeps the plan a
+stable geometric visualisation instead of making sunlight disappear
+because of a provider-specific weather classification.
 
-| states | factor |
-| --- | --- |
-| clear, sunny, clear-night, windy, exceptional, unset entity | 1.0 |
-| partlycloudy, windy-variant | 0.7 |
-| cloudy | 0.4 |
-| overcast, fog | 0.25 |
-| rainy, pouring, snowy, snowy-rainy, hail, lightning, lightning-rainy | 0.0 |
-| unknown, unavailable | 1.0 (a dead sensor must not kill the sun) |
-
-Backend validation: string or null.
+`settings.weather_entity` was used by older versions. It is no longer
+shown or read by the frontend. Backend validation continues to accept
+the old string/null field so existing stored configs remain loadable;
+saving General settings removes it.
 
 ## Edge cases and limits
 
 - No `sun.sun` → silent feature + a hint in the settings dialog.
 - `north_deg` unset everywhere → silent feature + a hint.
+- Any weather state, including rain and snow → no effect on rays.
 - `prefers-reduced-motion` → no transitions; colors and wedges render
   statically for the current sun position.
 - Kiosk mode → works (same view path).
@@ -332,13 +327,14 @@ Backend validation: string or null.
 ## Files
 
 - `src/sun.ts` — pure logic (angles, day phase, exterior walls, wedge
-  quads + clipping, the rim edges and its stops, cloud factor, settings
+  quads + clipping, the rim edges and its stops, settings
   inheritance); unit-tested in `test/sun.test.mjs`.
 - `src/houseplan-card.ts` — the memoised wedge layer, the day/night
   stage background, both settings dialogs (compass dial included).
 - `src/space-render.ts` — the static card's background only.
-- `custom_components/houseplan/validation.py` — the four settings at
-  both levels; tests in `tests_backend/test_validation.py`.
+- `custom_components/houseplan/validation.py` — the three active sun
+  settings plus the accepted legacy global weather field; tests in
+  `tests_backend/test_validation.py`.
 - `demo/smoke_sun.mjs` — end-to-end behaviour against the demo rig.
 - `demo/smoke_sun_soft.mjs` — the −30 % reach and the "dissolves along
   the ray only" contract: the gradient axis is the wall normal and is
@@ -353,9 +349,9 @@ Backend validation: string or null.
   two SIDE edges (their coordinates checked against the wedge's own
   vertices), `url(#hp-sunrim-N)` with BLACK stops on the same axis and
   the same offsets as the fill, monotone and dead at 85 %,
-  `vector-effect: non-scaling-stroke` at width 1, gone below 3°, in an
-  editor and in the rain — and a pixel probe on WHITE paper proving the
-  side of the wedge is measurably darker than the paper on either hand
+  `vector-effect: non-scaling-stroke` at width 1, gone below 3° and in an
+  editor, unaffected by legacy weather settings — and a pixel probe on
+  WHITE paper proving the side of the wedge is measurably darker than the paper on either hand
   (the point of the whole change).
 - `demo/smoke_sun_live_bg.mjs` — the sky follows `sun.sun` on a plain
   `hass` tick with no reload, asserted on the COMPUTED background of the

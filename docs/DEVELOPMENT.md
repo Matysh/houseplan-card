@@ -1,5 +1,25 @@
 # Development and deployment
 
+## Input support contract
+
+Read `docs/TOUCH-SUPPORT.md` before changing interaction code.
+
+- View and kiosk must work well on touch and remain release-blocking surfaces.
+- Editors are implemented and accepted against a desktop browser with
+  mouse/keyboard first.
+- Full editor parity on phones/tablets is not required. If correct touch support
+  is expensive, an intentionally reduced or absent touch path is allowed.
+- Every editor feature/spec/code review must classify touch as supported,
+  best-effort/degraded, or not exposed.
+- A degradation is valid only when documented in the same change. It may not
+  compromise data integrity, permissions, confirmations or ordinary View.
+- Do not add complex gesture state solely to claim touch parity. Prefer a clear
+  desktop recommendation or safe unavailable action over unreliable editing.
+
+Existing touch editor behaviour is not silently disposable: when changing a
+covered workflow, update its test and documentation explicitly and record why
+the degradation is accepted.
+
 ## Environment (cowork sessions)
 
 - The source of truth is **GitHub `main`** (https://github.com/Matysh/houseplan-card).
@@ -146,6 +166,35 @@ successfully, then builds and attaches `houseplan-card.js`. A missing, failed,
 cancelled or one-hour-timed-out Validate withholds the asset. Bump the version
 everywhere in sync: `src/houseplan-card.ts` (CARD_VERSION), `package.json`,
 `custom_components/houseplan/manifest.json`, `custom_components/houseplan/const.py`.
+
+The GitHub Release body is a concise **bilingual user summary**, not a copy of
+the exhaustive changelog. Put Russian first and English second, with equivalent
+meaning in both sections. Give separate bullets only to significant features
+and user-visible behaviour changes. Collapse minor fixes, visual polish,
+refactors, tests and purely internal improvements into one final bullet:
+`Мелкие исправления и улучшения.` / `Small fixes and improvements.` Keep the
+body short because HACS displays it inside Home Assistant and concatenates the
+bodies of skipped releases. The full detail remains in both
+`docs/CHANGELOG.ru.md` and `docs/CHANGELOG.md`; finish every release body with
+two explicit links, one to each language version of the changelog.
+
+```md
+## Русский
+- Значимое изменение.
+- Мелкие исправления и улучшения.
+
+---
+
+## English
+- Significant change.
+- Small fixes and improvements.
+
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/vX.Y.Z/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/vX.Y.Z/docs/CHANGELOG.md)
+```
+
+Replace `vX.Y.Z` with the release tag so the links remain pinned to the
+published version instead of drifting with `dev` or `main`.
 
 Local release gates are deliberately different. A pre-release runs
 `npm run build` plus only the unit tests and browser smokes selected for the

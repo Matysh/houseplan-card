@@ -1,4 +1,4 @@
-// Opening drag rulers (owner 2026-08-03): while a door/window is dragged along
+// Opening drag rulers (owner 2026-08-03): while a door/window/gate is dragged along
 // a wall, a measure badge sits on EACH shoulder (wall end -> opening edge,
 // along the wall), and when the opening's center hits the wall's center a
 // perpendicular dashed tick appears and the center magnet-snaps (Shift cannot

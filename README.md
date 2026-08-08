@@ -15,6 +15,11 @@ room, Zigbee signal maps, glowing light pools and a fullscreen kiosk mode for wa
 tablets. No YAML, no Inkscape, no external editors — the whole floorplan lives
 right on your Lovelace dashboard.
 
+> **Use a desktop computer to edit plans.** View and kiosk are fully supported
+> on phones and tablets. The editors are designed primarily for a desktop
+> browser with a mouse and keyboard; individual editing operations on touch
+> devices may be awkward, limited, or unavailable.
+
 ![Interactive Home Assistant floor plan: live rooms, devices, lights and climate on a real floorplan card](docs/images/demo.gif)
 
 > ### 🚀 Try it live — no install needed
@@ -229,15 +234,17 @@ Rooms may not overlap: a click strictly inside an existing room, or an outline t
 - **Split** — click a room, then two points on its walls; the chord cuts it in two. The bigger part stays the room it was (name, area, devices); the smaller one asks for a new name and area.
 
 
-### Doors, windows and locks
+### Doors, windows, gates and locks
 
-In markup mode the **"Opening"** tool places doors and windows: click next to a wall and the
+In markup mode the **"Opening"** tool places doors, windows and gates: click next to a wall and the
 opening snaps onto it. Pick the type, the **length in real centimetres** (defaults: door 90 cm,
-window 120 cm), an open/close sensor and — for doors — a **lock entity**.
+window 120 cm, gate 300 cm), an open/close sensor and — for doors and gates — a **lock entity**.
 
 With a sensor bound, the plan comes alive: the door leaf swings on its hinge and the swing arc
 draws itself in as the real door opens; a window opens its two casements. While open, the moving
-parts take an accent colour. A door with a lock shows a padlock badge next to it — green when
+parts take an accent colour. A gate keeps a 3–4 m opening compact on the plan: two half-width
+leaves open only 10° outwards, without a full-width swing arc, while contact, lock and light
+passage work exactly like a door. A door or gate with a lock shows a padlock badge next to it — green when
 locked, orange when unlocked. For safety the lock can **not** be toggled from the plan; a click
 on the opening shows a status card with both states instead.
 
@@ -248,7 +255,7 @@ walls** (it slides around corners too), and a **double click opens its propertie
 
 As soon as you save a room bound to an area, **the devices of that area are automatically laid out inside the outline**. These are the same devices shown on the **Settings → Devices → (filtered by the room)** page — only the meaningful ones, without service records, bridges and duplicates.
 
-By default only meaningful devices make it onto the plan: non-physical ones (service records, bridges, scenes, individual lamps folded into a light group) arrive with the **"Hide device from plan"** checkbox already ticked. The checkbox is yours from then on — every device dialog has it, virtual devices included. To see and un-hide them, open the device editor and press **"Show hidden"**: hidden devices appear as translucent blue ghosts, a click opens the dialog. Hidden devices still count toward the room's Zigbee signal, but cast no light.
+By default only meaningful devices make it onto the plan: non-physical ones (service records, bridges, scenes, individual lamps folded into a light group) arrive with the **"Hide device from plan"** checkbox already ticked. The checkbox is yours from then on — every device dialog has it, virtual devices included. To see and un-hide them, open the device editor and press **"Hidden and disabled"**: user-hidden devices appear as translucent blue ghosts, a click opens the dialog. Hidden devices still count toward the room's Zigbee signal, but cast no light. A device disabled in Home Assistant appears there as a labelled grey service ghost and is excluded from all plan data/actions until it is enabled in HA again.
 
 From here on you can just use the plan: clicking an icon opens the device card with the model, link and a button to jump into Home Assistant.
 
@@ -334,7 +341,7 @@ Services → House Plan**.
 
 **Do I need to write anything in YAML?** No. The only line is adding the card to the dashboard; everything else is done with the mouse.
 
-**My devices did not appear on the plan.** A device appears only if its Home Assistant area is bound to a drawn room. Check that the device has a room assigned (Settings → Devices) and that the room is outlined and bound to that area. If the device exists but is hidden (the "Hide device from plan" checkbox — set automatically for bridges, scenes and other non-physical records) — open the device editor, press **"Show hidden"** and untick the box in its dialog.
+**My devices did not appear on the plan.** A device appears only if its Home Assistant area is bound to a drawn room. Check that the device has a room assigned (Settings → Devices) and that the room is outlined and bound to that area. Open the device editor and press **"Hidden and disabled"**: a blue ghost is user-hidden and can be shown; a grey disabled ghost must first be enabled in Home Assistant.
 
 **Can I hide an unwanted device or rename it?** Yes — click the device on the plan and press "Edit" in its card: there you can change the name, icon, model or hide the icon.
 

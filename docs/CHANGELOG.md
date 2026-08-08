@@ -2,6 +2,45 @@
 
 ## Unreleased
 
+## v1.60.2-beta.3 — 2026-08-08
+
+- Saved devices disabled in Home Assistant are now forced off the plan and all
+  plan calculations until re-enabled, while the Device editor keeps a labelled
+  service ghost. Registry refresh now also recovers from unavailable update
+  subscriptions, and preview/static-card status hooks and explanations stay in
+  sync. Small accessibility, routing and preview-parity fixes are included.
+- Openings now include Gate. It keeps the same contact, lock, wall cut and Glow
+  behaviour as a door, but defaults to 300 cm and uses two half-width leaves
+  opening only 10° outwards, without a plan-obscuring full swing arc.
+- Sunlight through windows no longer depends on a weather entity: clouds,
+  rain and snow cannot dim or hide geometrically valid rays. The obsolete
+  weather selector is removed; legacy stored values are safely ignored.
+- Device settings now include a live display preview with the actual current
+  state, effective source entities, the providing Home Assistant integration,
+  an explanation of the resulting marker, and a safe local activity demo.
+  The full plan, preview and read-only space card now share one presentation
+  resolver and one marker-face renderer.
+- Existing `Value instead of icon` markers can now show localized text states,
+  not only numeric measurements. Long valid values are ellipsized without
+  changing the marker hit area, while their full text remains accessible.
+- When several equally valid visual sources exist, `Value instead of icon` no
+  longer picks the first registry entity arbitrarily: it falls back to the
+  device icon and the preview explains the ambiguity.
+- Decorative lines can now be switched between Solid and Dashed in the
+  properties dialog opened by double-clicking a finished line. Existing and
+  newly drawn lines stay solid by default, and dashed gaps retain a comfortable
+  selection target in the Background editor.
+- The Plan editor now has one contextual Boundary tool instead of separate
+  Virtual wall and Physical wall buttons. Two points on a solid shared wall
+  open a virtual stretch; one click on a dashed stretch restores its complete
+  physical body with the inherited thickness previewed before the click.
+  Screen-space hit zones stay usable at every zoom, ambiguous junctions and
+  independent masonry block unsafe edits, and an unfinished first point is
+  cancelled by Esc, Undo/Redo, navigation, reconnect or multi-touch.
+- The shared `hp-dialog` now wraps long translated titles and device names
+  instead of clipping them horizontally. Numeric angle fields across editors
+  display at most three decimal places without rounding stored geometry.
+
 ## v1.60.2-beta.2 — 2026-08-08
 
 - Composite switch-only devices now use one representative lifecycle entity

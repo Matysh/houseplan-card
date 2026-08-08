@@ -42,7 +42,7 @@ const BUNDLE_VERSION = m?.[1] ?? (m?.[2] && bundle.match(new RegExp(`[^\\w$]${m[
 check('bundleVersionFound', typeof BUNDLE_VERSION === 'string' && BUNDLE_VERSION.length > 0);
 // значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
 checkAll(res, {
-  "rows": 16, // 11 цветов (включая wall_fill) + радиус свечения + фон + погода (docs/SUN.md)
+  "rows": 15, // 11 цветов (включая wall_fill) + радиус свечения + фон
                // + «Оптимизировать планы» (docs/CANVAS.md §9)
   "groups": ["Fill: lights", "Fill: temperature", "Fill: zigbee signal", "Light-sources fill", "Walls", "Stage background", "Sun", "Plan maintenance", "About"],
   "aboutVersion": `Houseplan Card v${BUNDLE_VERSION}`, // та же константа, что в баннере

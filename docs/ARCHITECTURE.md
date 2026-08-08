@@ -37,8 +37,16 @@ houseplan-card/
 2. **Icon layout lives on the server.** `helpers.storage.Store(1, "houseplan.layout")` →
    `.storage/houseplan.layout`. The card reads/writes via `hass.callWS`
    (`houseplan/layout/get|set|update`). Fallback — localStorage (when the integration is absent).
-3. **No token.** Everything comes from the frontend `hass` object: `hass.states` (reactive),
-   `hass.devices/entities/areas` (registries). No direct WS connections.
+3. **No token.** Everything comes from the frontend `hass` object and its
+   authenticated connection: `hass.states` is reactive, while a module-level
+   `ha-binding-status` cache obtains the complete device/entity registries via
+   `hass.callWS`. There is one fetch/in-flight request and one pair of registry
+   subscriptions per HA connection, shared by every full/static card on the
+   page; House Plan creates no direct socket or token. Newly observed rows in
+   the live frontend projection augment an older full snapshot immediately,
+   and a changed projection schedules a debounced full reconciliation. This
+   keeps discovery and `disabled_by` changes reactive even when a registry
+   event subscription is unavailable.
 4. **Reactivity.** Every state change in HA leads to set hass → re-render.
    Temperatures/LQI/on-off are live by definition (verified by substituting state).
 5. **One modal contract.** Card modals render through `hp-dialog`. In Home
@@ -67,7 +75,19 @@ houseplan-card/
 `DevItem`: id (device_id), name, model, area, floor, icon, entities[], primary
 (the first resolved state entity for actions requiring one target), temp,
 members[] (light group), link/linkPrimary (Z2M group). Marker state consumes
-the complete resolved role, not this single compatibility field.
+the complete resolved role, not this single compatibility field. `entities[]`
+contains active runtime entities only; `allEntities[]` is metadata-only, and
+`bindingStatus` distinguishes `active`, `ha_disabled`, `orphaned` and
+`unverified` without mutating persisted markers.
+
+`resolveHaBindingStatus()` is the only authority for saved HA bindings. Full
+registry data wins; a limited-permission client accepts positive live evidence
+but never guesses that a missing shortened row means disabled/deleted. Every
+plan-level consumer uses the active registry/state projection, so disabled
+bindings cannot leak through Glow, climate, LQI, live text, openings, controls
+or vacuum rendering. A bounded local runtime cache stores only the last
+authoritative active/disabled decision to avoid a stale warm-remount flash; it
+is not part of the server config or layout.
 
 Built from the registries (`_buildDevices`), rules carried over 1-to-1 from the prototype:
 - only devices with an area from the room list are shown;
@@ -103,11 +123,18 @@ Built from the registries (`_buildDevices`), rules carried over 1-to-1 from the 
 
 ## Device markers (v1.6.0+)
 
-Per-marker appearance: `display: badge|icon_ripple|value`. All three use one semantic
-resolver (`src/device-visual.ts`) for availability, steady status and activity. `badge`
+Per-marker appearance: `display: badge|icon_ripple|value`. Entity semantics originate in
+`src/device-visual.ts`; `src/device-presentation.ts` resolves the complete renderer-ready
+projection (sources, value, icon, classes, metrics and explanation), and
+`src/device-face.ts` renders that projection on the full plan, device preview and static
+space card. `badge`
 shows the icon/morph and status plate; `icon_ripple` additionally shows a finite event,
 static presence, mechanical transition or actual-work ring; `value` replaces the icon
-with the HA-formatted numeric value. A critical alarm is red in every presentation.
+with the HA-formatted numeric or text value. Ambiguous/missing/unavailable sources fall
+back to the icon instead of selecting an arbitrary registry row. A critical alarm is red
+in every presentation. The marker dialog builds its unsaved draft through `buildDevices`,
+then `hp-device-preview` shows the actual projection, integration provenance from
+registry/config-entry metadata and an isolated 3.3 s activity demonstration.
 Runtime baselines are seeded as soon as a rebuilt registry becomes authoritative, before
 the next HA snapshot is classified; source-key changes reset any finite effect immediately.
 Legacy `display: ripple` is read as `icon_ripple` and rewritten on the next config save;
@@ -181,8 +208,8 @@ contribute. Three explicitly typed exceptions are stored per space:
 one-segment independent walls and `wall_columns` for square/circular columns.
 They do not create a room or HA area and never split a room implicitly. Their
 physical bodies are unioned with room walls for rendering and light occlusion,
-and subtracted from clean room floor area. Doors and windows still belong only
-to derived room walls and never cut an independent object.
+and subtracted from clean room floor area. Openings (doors, windows and gates)
+still belong only to derived room walls and never cut an independent object.
 
 Rooms may not overlap
 (`pointStrictlyInside` + `roomsOverlap`; being ON a shared wall is legal — real neighbouring
@@ -194,8 +221,8 @@ bigger part keeps the room identity (name/area/devices).
 
 ## Markup editor (v1.4.0+)
 
-State inside the card: `_markup` (mode), `_tool` (draw/partition/column/merge/split/resize/opening/openwall/
-closewall/wallthick/delroom), `_path` (the current outline,
+State inside the card: `_markup` (mode), `_tool` (draw/partition/column/merge/split/resize/opening/
+boundary/wallthick/delroom), `_path` (the current outline,
 vertices on the GRID_N=240 grid). Clicks on the stage → `_svgPoint`→`_snap`. The outline is closed
 = a click on the first vertex → area select (hass.areas) + name → room {poly}. Polygon rooms and
 rectangles are rendered uniformly (hit-test: point-in-polygon / rect).
@@ -206,6 +233,16 @@ the redo branch. The local stack survives the server echo of its own writes, but
 a newer external config revision is adopted. Positional placement is always quantized to the plan
 grid. Shift may alter a gesture's geometry (square/circle creation, independent
 resize axes or free rotation), but it cannot create off-grid coordinates.
+
+`boundary` is one contextual UI tool over the existing `open_spans` model.
+Before the first click, independent physical bodies block the room boundary
+below them; otherwise a dashed span wins over a solid shared boundary, and an
+outer wall is rejected. A solid shared wall takes two points to open, while a
+dashed canonical span is restored whole with one click. Interaction widths and
+junction ambiguity are measured in CSS pixels and converted through the live
+viewBox, so zoom never changes the effective target. The first point is a
+transient gesture only: Esc, Undo/Redo, navigation, external config adoption,
+pointer cancellation and multi-touch discard it without touching history.
 
 Every completed segment of an unfinished room contour is persisted in
 `room_drafts`, including the thickness selected when that segment was placed.
@@ -222,11 +259,11 @@ While drawing, the length of the current segment follows the cursor (`_fmtLen` �
 `formatLength`): metres, or feet+inches when `hass.config.unit_system` is imperial. The scale is
 per-space `cell_cm` — cm represented by one grid cell (default 5, so 240 cells ≈ 12 m).
 
-## Doors & windows (v1.23.0+)
+## Doors, windows & gates (v1.23.0+)
 
 `space.openings[]` — plan geometry, **not** markers: an opening needs an angle, a length and a
 wall, while markers are free points whose positions live in the layout store. Model:
-`{id, type: door|window, x, y, angle, length, contact?, lock?, invert?, flip_h?, flip_v?}`
+`{id, type: door|window|gate, x, y, angle, length, contact?, lock?, invert?, flip_h?, flip_v?}`
 (normalized coords; `length` normalized by plan width). Placement snaps onto the nearest
 **derived** wall via `snapToWall` (logic.ts) — the angle is normalized to [-90, 90) because two
 rooms share a wall with opposite edge directions, and without that a drag across segment
@@ -235,9 +272,12 @@ or deleting rooms never breaks it.
 
 Rendering (after easy-floorplan, MIT): SVG symbol at the origin (jambs + hinged leaf + a
 quarter-circle arc revealed via `stroke-dashoffset`), translated/rotated onto the wall; windows
-are two casement leaves. `openingAmount` (pure) maps the contact state to 0..1: no sensor →
-door drawn open / window closed (static-plan convention); `unavailable`/`unknown` freeze that
-default. The lock renders as an HTML padlock badge (`.oplock`) in the device layer; a lock is
+are two casement leaves. A gate has the same data/light/contact/lock semantics as a door, but
+uses two half-width leaves opening only 10° toward the exterior face and no large swing arc.
+Its default width in the editor is 300 cm. `openingAmount` (pure) maps the contact state to
+0..1: no sensor → door/gate drawn open / window closed (static-plan convention);
+`unavailable`/`unknown` freeze that default. The lock renders as an HTML padlock badge
+(`.oplock`) in the device layer; a lock is
 **never** toggled from the plan (TOGGLE_FORBIDDEN_DOMAINS rule). View-mode UX: hover outline,
 drag along walls (continuous re-snap, saved on release), click → status card (250 ms timer),
 double click → properties dialog. In markup mode the "Opening" tool handles clicks instead.
@@ -417,9 +457,11 @@ Shared, framework-light modules keep the two views from diverging:
   `roomCenter`, `defaultPositions`, `markerPos`, `labelPos`; no Lit import) — unit-tested,
   mirrors the full card's private geometry.
 - `src/space-render.ts` — `renderSpaceStatic()` draws the plan + configured room
-  borders/names + device markers (via `buildDevices`, same filtering) with NO handlers,
-  NO live states, NO status/temperature fills. Uses the same CSS classes as the full card
-  (the space-card imports `cardStyles`) for visual parity.
+  borders/names + device markers (via `buildDevices`, same filtering) with NO marker
+  handlers. Current states, values, alarms, temperature/LQI badges and witnessed activity
+  use the shared `ResolvedDevicePresentation` and `renderDeviceFace`; optional card settings
+  can disable ordinary live dressing, temperature or signal without creating another
+  semantic implementation.
 - `src/config-store.ts` — module-level `{config, rev, layout}` cache shared by all embedded
   cards (dedupes `houseplan/config/get`), seeded synchronously from the full card's
   localStorage snapshot (`houseplan_card_cfg_v1`) and invalidated on `houseplan_config_updated`.
@@ -442,8 +484,9 @@ hash falls back to the default.
   decor+room magnet; `hp-color-opacity` is the shared colour/alpha control.
   `houseplan-card.ts` still owns orchestration, but every kind uses one
   selection/transform/history pipeline. `DECOR_SCHEMA` accepts canonical
-  `width_cm`, text `size_cm`, opacity/fill fields and legacy width/text-size
-  representations for read compatibility.
+  `width_cm`, text `size_cm`, opacity/fill fields, optional per-line
+  `line_style` (`solid` / `dashed`; the frontend omits the legacy solid
+  default), and legacy width/text-size representations for read compatibility.
 - **Plan image transform**: `planRect()` resolves the fitted image plus
   `plan_x/y`, independent `plan_scale_x/y` and `plan_angle`; legacy
   `plan_scale` feeds both axes. The image is interactive only in its own

@@ -31,6 +31,24 @@ inert everywhere outside its editor).
 - All editor tabs are shown only to admins when
   `admin_only` is on.
 
+## Input support policy
+
+`TOUCH-SUPPORT.md` is authoritative for input parity:
+
+- View and kiosk are fully supported touch surfaces. Essential information and
+  safe actions may not depend on hover, a fine pointer or keyboard modifiers.
+- Plan, Device and Background editors are desktop-first. Mouse/keyboard in a
+  desktop browser is the reference editing environment.
+- Editor operation on touch is best effort. A gesture or precision operation
+  may be awkward, reduced or absent when correct parity is disproportionately
+  expensive.
+- Best effort never relaxes data integrity, permissions, destructive
+  confirmations or protection against a pinch/pointer cancellation being saved
+  as an unintended edit.
+
+The presence of editor tabs on a tablet is not a promise of complete editor
+support. User documentation recommends desktop for creation and maintenance.
+
 ## View — display and device interaction only
 
 Allowed: pan/zoom (wheel, pinch, buttons), switching spaces, device tap
@@ -54,7 +72,7 @@ Header in View: space tabs, device count, zoom cluster. Nothing else.
 - Toolbar tools: **Walls** / room outline (with its session wall-thickness field
   immediately on the right, default 15 cm — docs/WALL-THICKNESS.md §6), Delete
   room, Merge, Split, Resize, Partition, Column,
-  Opening (place / drag along walls / properties), Virtual wall, Physical wall, Thickness
+  Opening (place / drag along walls / properties), Boundary, Thickness
   (docs/WALL-THICKNESS.md — click a wall, set cm/inches from HA's unit system;
   empty/0 clears), Room labels (drag positions — labels are part of the plan).
 - Space gear dialog (title, plan image / hand-drawn, scale, Display section, show_lqi),
@@ -65,6 +83,10 @@ Header in View: space tabs, device count, zoom cluster. Nothing else.
 - Independent partitions and columns are masonry for hit testing as well as
   area/light: room hover stops at their physical bodies just as it stops at a
   thick room wall. This does not split the room or change its HA area.
+- Boundary is contextual: two points on one solid shared wall make the selected
+  stretch virtual; one click on an existing dashed stretch restores it whole.
+  Outer walls and room boundaries hidden under independent masonry are not
+  edited through the object above them.
 
 ### What a space may choose not to draw (2026-08-05)
 
@@ -77,7 +99,7 @@ layer you cannot see is a layer you cannot edit.
 |---|---|---|---|
 | `show_borders` — «Всегда отображать границы комнат» | in View, borders and dashed **virtual walls** are hidden | both are drawn | room borders: Plan; virtual walls: all editors |
 | `hide_decor` — «Скрыть декоративный слой» | decor is drawn | lines, shapes, labels and furniture are hidden | the Background editor |
-| `hide_openings` — «Скрыть проёмы» | doors and windows are drawn | their symbols are hidden | the Plan editor |
+| `hide_openings` — «Скрыть проёмы» | doors, windows and gates are drawn | their symbols are hidden | the Plan editor |
 
 - **Virtual walls follow `show_borders` in View** (owner, 2026-08-05). They are
   walls — dashed ones. Drawing them on a View with no borders left a plan whose

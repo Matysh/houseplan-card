@@ -318,7 +318,8 @@ _NORM = vol.All(_finite, vol.Range(min=-CANVAS_LIMIT, max=CANVAS_LIMIT))
 DECOR_SCHEMA = vol.Any(
     vol.Schema({**_DECOR_COMMON, vol.Required("kind"): "line",
                 vol.Required("x1"): _NORM, vol.Required("y1"): _NORM,
-                vol.Required("x2"): _NORM, vol.Required("y2"): _NORM},
+                vol.Required("x2"): _NORM, vol.Required("y2"): _NORM,
+                vol.Optional("line_style"): vol.In(["solid", "dashed"])},
                extra=vol.ALLOW_EXTRA),
     vol.Schema({**_DECOR_COMMON, vol.Required("kind"): vol.In(["rect", "ellipse"]),
                 vol.Required("x"): _NORM, vol.Required("y"): _NORM,
@@ -532,7 +533,7 @@ SPACE_SCHEMA = vol.All(vol.Schema(
             vol.Schema(
                 {
                     vol.Required("id"): str,
-                    vol.Required("type"): vol.Any("door", "window"),
+                    vol.Required("type"): vol.Any("door", "window", "gate"),
                     vol.Required("x"): _GEOM,
                     vol.Required("y"): _GEOM,
                     vol.Required("angle"): vol.All(_finite, vol.Range(min=-360.0, max=360.0)),
@@ -658,6 +659,9 @@ CONFIG_SCHEMA = vol.Schema(
                 vol.Optional("north_deg"): _north_deg,
                 vol.Optional("bg_mode"): _BG_MODE,
                 vol.Optional("sun_rays"): bool,
+                # Removed from the UI/runtime in 2026-08-08. Keep accepting the
+                # legacy field so an existing stored config can still load; the
+                # frontend ignores it and removes it on the next settings save.
                 vol.Optional("weather_entity"): vol.Any(None, _TEXT),
                 vol.Optional("known_devices"): vol.All([_TEXT], vol.Length(max=MAX_KNOWN_DEVICES)),
                 vol.Optional("new_device_ids"): vol.All([_TEXT], vol.Length(max=MAX_KNOWN_DEVICES)),

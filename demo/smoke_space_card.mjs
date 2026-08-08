@@ -1,4 +1,4 @@
-// Smoke: houseplan-space-card renders a static, non-interactive schematic + deep-link button.
+// Smoke: houseplan-space-card renders a live, non-interactive schematic + deep-link button.
 import { launch } from './serve.mjs';
 const { page, browser } = await launch({ width: 900, height: 900 }, 1);
 const res = await page.evaluate(async () => {
@@ -18,6 +18,7 @@ const res = await page.evaluate(async () => {
   const stage = card.renderRoot.querySelector('.hp-static-stage');
   const pe = stage ? getComputedStyle(stage).pointerEvents : null;
   const markers = card.renderRoot.querySelectorAll('.hp-static-stage .devlayer .dev').length;
+  const litMarker = card.renderRoot.querySelector('.hp-static-stage .dev[data-id="d_light1"]');
   const btn = card.renderRoot.querySelector('.hp-static-btn');
 
   // deep-link: clicking the button pushes #space=<id>
@@ -35,6 +36,8 @@ const res = await page.evaluate(async () => {
   return {
     stagePointerEvents: pe,
     markers,
+    litMarkerOn: !!litMarker?.classList.contains('on'),
+    sharedFacePresent: !!litMarker?.querySelector('ha-icon'),
     hasButton: !!btn,
     deepLink: pushed,
     errorShown: !!errCard,
@@ -45,9 +48,11 @@ await browser.close();
 const ok =
   res.stagePointerEvents === 'none' &&
   res.markers > 0 &&
+  res.litMarkerOn &&
+  res.sharedFacePresent &&
   res.hasButton &&
   typeof res.deepLink === 'string' && res.deepLink.includes('#space=') &&
   res.errorShown;
 console.log(JSON.stringify(res));
 if (!ok) { console.error('FAIL space-card smoke'); process.exit(1); }
-console.log('OK space-card: static (pointer-events:none), markers rendered, deep-link button, error card');
+console.log('OK space-card: live shared marker face, pointer-events:none, deep-link button, error card');

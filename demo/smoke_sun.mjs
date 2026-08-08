@@ -1,6 +1,6 @@
 // Sun on the plan (docs/SUN.md): compass gating, window wedges on all four
 // walls, direction follows north_deg, night is empty, wedges clip to rooms,
-// day/night background vs static, per-space inheritance, cloud fading,
+// day/night background vs static, per-space inheritance, weather independence,
 // memoisation across hass ticks, editors stay clean.
 import { launch, check, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch({ width: 900, height: 900 }, 1);
@@ -124,19 +124,16 @@ const res = await page.evaluate(async () => {
   delete sp.settings.north_deg;
   touchCfg();
 
-  // 10) clouds: rain kills the wedges, cloudy only fades them
+  // 10) legacy weather settings and live weather states no longer participate
   cfg().settings.weather_entity = 'weather.home';
   touchCfg();
   await setWeather('pouring');
   await setSun(90, 5);
-  out.rainKillsRays = domPolys().length === 0;
+  const stopRain = Number(sr().querySelector('stop')?.getAttribute('stop-opacity'));
+  out.rainDoesNotHideRays = domPolys().length > 0 && Math.abs(stopRain - 0.3) < 1e-6;
   await setWeather('cloudy');
-  const stopCloudy = Number(sr().querySelector('.sunlayer ~ * stop, defs stop')?.getAttribute('stop-opacity')
-    || sr().querySelector('stop')?.getAttribute('stop-opacity'));
-  out.cloudyFades = domPolys().length > 0 && Math.abs(stopCloudy - 0.3 * 0.4) < 1e-6;
-  await setWeather('sunny');
-  const stopClear = Number(sr().querySelector('stop')?.getAttribute('stop-opacity'));
-  out.clearFullAlpha = Math.abs(stopClear - 0.3) < 1e-6;
+  const stopCloudy = Number(sr().querySelector('stop')?.getAttribute('stop-opacity'));
+  out.cloudsDoNotDimRays = domPolys().length > 0 && Math.abs(stopCloudy - 0.3) < 1e-6;
   delete cfg().settings.weather_entity;
   touchCfg();
 
@@ -185,7 +182,7 @@ const dlg = await page.evaluate(() => {
     compassDragSets180: c._settingsDialog?.northDeg === 180,
     dialogHasModeSelect: !!sr.querySelector('hp-dialog select.areasel'),
     dialogHasRaysToggle: [...sr.querySelectorAll('hp-dialog .srcrow input[type=checkbox]')].length > 0,
-    dialogHasWeatherList: sr.querySelectorAll('#hp-weather-list option').length > 0,
+    dialogHasNoWeatherList: sr.querySelectorAll('#hp-weather-list option').length === 0,
     dialogNumberMatches: sr.querySelector('.suncol input[type=number]')?.value === '180',
   };
   c._settingsDialog = null;

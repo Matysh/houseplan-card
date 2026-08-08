@@ -75,7 +75,7 @@ const LAYOUT = {
 let CFG_REV=1, LAYOUT_REV=1;
 const AREAS={living_room:{area_id:'living_room',name:'Living room'},kitchen:{area_id:'kitchen',name:'Kitchen'},
   bedroom:{area_id:'bedroom',name:'Bedroom'},hallway:{area_id:'hallway',name:'Hallway'},garden:{area_id:'garden',name:'Garden'}};
-function dev(id,name,model,area){return [id,{id,name,model,area_id:area,identifiers:[['demo',id]],entry_type:null,via_device_id:null}];}
+  function dev(id,name,model,area){return [id,{id,name,model,area_id:area,identifiers:[['demo',id]],config_entries:['ce_demo'],entry_type:null,via_device_id:null,disabled_by:null}];}
 const DEVICES=Object.fromEntries([
   dev('d_light1','Ceiling light','Smart Bulb E27','living_room'),
   dev('d_lamp','Floor lamp','Smart Bulb E14','living_room'),
@@ -91,19 +91,27 @@ const DEVICES=Object.fromEntries([
   dev('d_gate','Gate','GDO-4','garden'),
 ]);
 const ENTITIES={
-  'light.ceiling':{entity_id:'light.ceiling',device_id:'d_light1',platform:'demo'},
-  'light.floor_lamp':{entity_id:'light.floor_lamp',device_id:'d_lamp',platform:'demo'},
-  'media_player.tv':{entity_id:'media_player.tv',device_id:'d_tv',platform:'demo'},
-  'sensor.living_temp':{entity_id:'sensor.living_temp',device_id:'d_temp',platform:'demo'},
-  'switch.kettle':{entity_id:'switch.kettle',device_id:'d_kettle',platform:'demo'},
-  'binary_sensor.sink_leak':{entity_id:'binary_sensor.sink_leak',device_id:'d_leak',platform:'demo'},
-  'light.bedroom':{entity_id:'light.bedroom',device_id:'d_bedlight',platform:'demo'},
-  'binary_sensor.window':{entity_id:'binary_sensor.window',device_id:'d_window',platform:'demo'},
-  'lock.front_door':{entity_id:'lock.front_door',device_id:'d_lock',platform:'demo'},
-  'binary_sensor.hall_motion':{entity_id:'binary_sensor.hall_motion',device_id:'d_motion',platform:'demo'},
-  'vacuum.mower':{entity_id:'vacuum.mower',device_id:'d_mower',platform:'demo'},
-  'cover.gate':{entity_id:'cover.gate',device_id:'d_gate',platform:'demo'},
+  'light.ceiling':{entity_id:'light.ceiling',device_id:'d_light1',platform:'demo',config_entry_id:'ce_demo',disabled_by:null},
+  'light.floor_lamp':{entity_id:'light.floor_lamp',device_id:'d_lamp',platform:'demo',disabled_by:null},
+  'media_player.tv':{entity_id:'media_player.tv',device_id:'d_tv',platform:'demo',disabled_by:null},
+  'sensor.living_temp':{entity_id:'sensor.living_temp',device_id:'d_temp',platform:'demo',disabled_by:null},
+  'switch.kettle':{entity_id:'switch.kettle',device_id:'d_kettle',platform:'demo',disabled_by:null},
+  'binary_sensor.sink_leak':{entity_id:'binary_sensor.sink_leak',device_id:'d_leak',platform:'demo',disabled_by:null},
+  'light.bedroom':{entity_id:'light.bedroom',device_id:'d_bedlight',platform:'demo',disabled_by:null},
+  'binary_sensor.window':{entity_id:'binary_sensor.window',device_id:'d_window',platform:'demo',disabled_by:null},
+  'lock.front_door':{entity_id:'lock.front_door',device_id:'d_lock',platform:'demo',disabled_by:null},
+  'binary_sensor.hall_motion':{entity_id:'binary_sensor.hall_motion',device_id:'d_motion',platform:'demo',disabled_by:null},
+  'vacuum.mower':{entity_id:'vacuum.mower',device_id:'d_mower',platform:'demo',disabled_by:null},
+  'cover.gate':{entity_id:'cover.gate',device_id:'d_gate',platform:'demo',disabled_by:null},
 };
+let REGISTRY_ACCESS='full';
+const REGISTRY_LISTENERS={device_registry_updated:new Set(),entity_registry_updated:new Set()};
+const CONNECTION={subscribeEvents:async(cb,event)=>{
+  const listeners=REGISTRY_LISTENERS[event];
+  if(!listeners)return()=>{};
+  listeners.add(cb);
+  return()=>listeners.delete(cb);
+},subscribeMessage:async()=>()=>{}};
 let STATES={
   'light.ceiling':{entity_id:'light.ceiling',state:'on',attributes:{friendly_name:'Ceiling light'}},
   'light.floor_lamp':{entity_id:'light.floor_lamp',state:'off',attributes:{friendly_name:'Floor lamp',linkquality:196}},
@@ -127,6 +135,16 @@ function mkHass(){
     devices:DEVICES, entities:ENTITIES, areas:AREAS, states:STATES,
     floors:{g:{floor_id:'g',name:'Ground floor',level:0},u:{floor_id:'u',name:'Upstairs',level:1}},
     callWS:async (m)=>{
+      if(m.type==='config/device_registry/list'){
+        if(REGISTRY_ACCESS!=='full')throw new Error('unauthorized');
+        return Object.values(DEVICES);
+      }
+      if(m.type==='config/entity_registry/list'){
+        if(REGISTRY_ACCESS!=='full')throw new Error('unauthorized');
+        return Object.values(ENTITIES);
+      }
+      if(m.type==='config_entries/get')return[{entry_id:'ce_demo',domain:'demo',title:'Synthetic Home'}];
+      if(m.type==='manifest/list')return[{domain:'demo',name:'House Plan Demo'}];
       if(m.type==='houseplan/config/get')return{config:CFG,rev:CFG_REV,can_write:true};
       if(m.type==='houseplan/layout/get')return{layout:LAYOUT,rev:LAYOUT_REV};
       if(m.type==='houseplan/config/set')return{ok:true,rev:++CFG_REV};
@@ -144,7 +162,8 @@ function mkHass(){
         STATES={...STATES,[eid]:{...st,state:on?'off':'on'}};
         card.hass=mkHass();}
     },
-    connection:{subscribeEvents:async()=>()=>{}},
+    connection:CONNECTION,
+    localize:(key)=>key==='component.demo.title'?'Demo integration':null,
     formatEntityState:(st)=>st.state,
   };
 }
@@ -155,5 +174,14 @@ document.getElementById('host').appendChild(card);
 card.hass=mkHass();
 window.__card=card;
 window.__mkHass=mkHass;
+window.__setRegistryAccess=(mode)=>{REGISTRY_ACCESS=mode==='full'?'full':'limited';};
+window.__setRegistryDisabled=(kind,id,disabledBy='user')=>{
+  const row=(kind==='device'?DEVICES:ENTITIES)[id];
+  if(row){
+    row.disabled_by=disabledBy;
+    const event=kind==='device'?'device_registry_updated':'entity_registry_updated';
+    for(const cb of REGISTRY_LISTENERS[event])cb({action:'update',id});
+  }
+};
 </script>
 </body></html>

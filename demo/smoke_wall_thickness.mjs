@@ -142,9 +142,9 @@ const res = await page.evaluate(async () => {
   // Opening a stretch takes TWO clicks since v1.59.0-beta.6: anchor, then the
   // second point on the same shared wall. A span over y=150..350 must refuse
   // thickness at y=250, and the solid remainder above/below must keep its own.
-  c._tool = 'openwall';
-  c._openWallClick([550, 150]);
-  c._openWallClick([550, 350]);
+  c._tool = 'boundary';
+  c._boundaryClick([550, 150]);
+  c._boundaryClick([550, 350]);
   await upd();
   out.spanOpened = ((sp().open_spans || []).length === 1);
   c._tool = 'wallthick';
@@ -157,8 +157,8 @@ const res = await page.evaluate(async () => {
     && c._intervalCm([550, 350, 550, 460]) === 25
     && c._intervalCm([550, 200, 550, 300]) === 0;
 
-  c._tool = 'closewall';
-  c._closeWallClick([550, 250]);
+  c._tool = 'boundary';
+  c._boundaryClick([550, 250]);
   await upd();
   out.spanClosed = !(sp().open_spans || []).length;
   delete sp().openings;

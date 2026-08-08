@@ -479,17 +479,22 @@ test('snapToWall: projects onto the nearest derived wall with its angle; misses 
   assert.equal(snapToWall([5, 5], rooms, 1), null); // middle of the room: no wall within reach
 });
 
-test('openingAmount: doors default open, windows closed; outages freeze the default', () => {
+test('openingAmount: door-like openings default open, windows closed; outages freeze the default', () => {
   assert.equal(openingAmount('door', null), 1);
+  assert.equal(openingAmount('gate', null), 1);
   assert.equal(openingAmount('window', null), 0);
   assert.equal(openingAmount('door', 'unavailable'), 1);
+  assert.equal(openingAmount('gate', 'unknown'), 1);
   assert.equal(openingAmount('window', 'unknown'), 0);
   assert.equal(openingAmount('door', 'on'), 1);
+  assert.equal(openingAmount('gate', 'off'), 0);
+  assert.equal(openingAmount('gate', 'open'), 1);
   assert.equal(openingAmount('door', 'off'), 0);
   assert.equal(openingAmount('window', 'open'), 1);
   // invert flips on/off but never the outage default
   assert.equal(openingAmount('door', 'on', true), 0);
   assert.equal(openingAmount('door', 'off', true), 1);
+  assert.equal(openingAmount('gate', 'off', true), 1);
   assert.equal(openingAmount('door', 'unavailable', true), 1);
 });
 

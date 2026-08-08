@@ -60,7 +60,7 @@ Every object the plan draws now carries the same identity:
 | --- | --- |
 | `data-hp` | **what kind of object** this is — the one attribute to branch on |
 | `data-id` | the object's **own id** in the stored config, stable across restarts |
-| `data-kind` | the sub-type, where a kind has one (`door`/`window`, `line`/`rect`/…) |
+| `data-kind` | the sub-type, where a kind has one (`door`/`window`/`gate`, `line`/`rect`/…) |
 | `data-entity` | the entity the object **presents**, where it presents one |
 | `data-area` | the Home Assistant **area id**, where the object belongs to one |
 
@@ -90,11 +90,11 @@ Everything in this table is **public API**.
 
 | Object | Element | `data-hp` | Other attributes | Public class |
 | --- | --- | --- | --- | --- |
-| Device marker | `div` (HTML, marker layer) | `device` | `data-id` = marker/device id, `data-entity` = primary entity id, `data-area` = area id | `.dev` |
+| Device marker | `div` (HTML, marker layer) | `device` | `data-id` = marker/device id, `data-entity` = primary entity id, `data-area` = area id, `data-binding-status` = `active` \| `ha-disabled` \| `orphaned` \| `unverified`, `data-disabled-reason` = `device` \| `entity` \| `all-entities` when applicable | `.dev` |
 | Room shape | `polygon` / `rect` / `path` (SVG) | `room` | `data-id` = room id, `data-area` = area id | `.room` |
 | Room name (no metrics) | `text` (SVG) | `room-label` | `data-id` = room id, `data-area` | `.rlabel` |
 | Room card (name + metrics) | `div` (HTML, marker layer) | `room-label` | `data-id` = room id, `data-area` | `.roomlabel` |
-| Door / window | `g` (SVG) | `opening` | `data-id` = opening id, `data-kind` = `door` \| `window` | `.opening` |
+| Door / window / gate | `g` (SVG) | `opening` | `data-id` = opening id, `data-kind` = `door` \| `window` \| `gate` | `.opening` |
 | Wall body (thickness) | `path` (SVG) | `wall` | `data-id` = segment key, `data-kind` = `shared` \| `outer` | `.wallbody` |
 | Independent partition | `path` (SVG editor hit target) | `partition` | `data-id` = partition id, `data-kind` = `partition` | `.physical-hit` |
 | Wall column | `path` / `circle` (SVG editor hit target) | `wall-column` | `data-id` = column id, `data-kind` = `square` \| `circle` | `.physical-hit` |
@@ -139,6 +139,10 @@ them:
 `.on`, `.off`, `.unavail`, `.alarm`, `.ghost` (hidden device shown in the
 device editor), `.virtual` (a marker with no entity), `.valonly` (value
 instead of icon), `.noicon`, `.sel` (selected in an editor).
+
+The full plan and `houseplan-space-card` emit the same binding-status data
+attributes. A forced-hidden HA-disabled marker is absent from ordinary View;
+the attributes are visible on its service ghost in the Device editor.
 
 On a room shape: `.filled` (a fill mode is painting it), `.styled`,
 `.overlay` / `.yard` (drawn over a picture / on bare canvas).
@@ -213,8 +217,9 @@ card_mod:
     ha-card [data-hp="opening"][data-kind="window"] { opacity: .45; }
 ```
 
-**Dash one decor line** (a planned wall you have not built yet), by its shape
-id, which you can read off the config:
+The supported Solid / Dashed choice for a decor line lives in its properties
+dialog. For a custom dash pattern beyond those two product styles, card-mod can
+still target one line by its shape id from the config:
 
 ```yaml
 card_mod:

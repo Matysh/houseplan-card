@@ -3,6 +3,9 @@
 Agreed with the owner 2026-07-29. This document is the source of truth for the
 mechanism; the code follows it.
 
+HA registry deactivation is a separate runtime condition. Its full contract is
+specified in `docs/superpowers/specs/2026-08-08-ha-disabled-devices-design.md`.
+
 ## Principle
 
 Whether a device is on the plan is an EXPLICIT, per-device fact. The
@@ -24,6 +27,9 @@ as the SEEDER of initial hidden flags.
   same binding remains available in Add; saving it again replaces the
   tombstone and starts with a fresh position.
 - No marker — never evaluated by the seeder yet, or a plain physical device.
+- `bindingStatus: ha_disabled` is runtime-only. It is derived from Home
+  Assistant's device/entity registries and is never written into a marker or
+  confused with `marker.hidden`.
 - `settings.filter_seeded: true` — this config has been materialised.
 - `settings.show_all` — removed (deleted during materialisation). The old
   toggle was shared config state; the new one is a local editor tool.
@@ -51,18 +57,22 @@ the old behaviour until an editing client materialises it.
 
 ## Behaviour
 
-| State | Renders | Show hidden | Room/light/climate data | Add picker |
+| State | Renders | Hidden/disabled tool | Room/light/climate data | Add picker |
 |---|---:|---:|---:|---:|
 | visible marker/device | yes | — | yes | no duplicate |
 | `hidden: true` | no | ghost | LQI/climate yes, visible light no | no duplicate |
+| HA `disabled_by != null` (device/entity/all children) | no | disabled ghost | no | no |
+| registry access limited, binding unverified | no, no false ghost | support status only | no | no |
 | `removed: true` | no | no | no | yes |
 
 - Hidden devices ARE built (flagged `hidden`), but not rendered in any mode,
   except the device editor with "Show hidden devices" on — there they render
   ghosted (translucent, dashed) and clicking opens the dialog, where the
   bottom-left "Show" action restores it after saving.
-- "Show hidden devices" (rename of "Show all") is LOCAL, ephemeral state of
-  the current tab.
+- "Hidden and disabled" (formerly "Show all") is LOCAL, ephemeral state of
+  the current tab. A disabled ghost is grey and explicitly labelled; it cannot
+  be dragged or shown until the binding is activated in HA. Its dialog still
+  permits metadata edits, Open in HA and Delete.
 - Room LQI counts hidden devices (owner's decision).
 - Hidden devices are NOT content for the CONTENT FRAME (docs/CANVAS.md §4,
   audit DEV-2C947-01). The frame is presentation: an object the plan does not
@@ -98,6 +108,17 @@ the old behaviour until an editing client materialises it.
   are retained but become inactive (no lock/contact badge, `—`, or control
   action respectively). Adding the binding again restores them without
   reconstructing configuration or performing an unrelated Save first.
+- The same inactive rule applies while a saved binding is HA-disabled. The
+  marker, room metrics, Glow/light fill, registry-wide climate, live text,
+  openings, controls, vacuum puck and trails all ignore it. Reactivation of the
+  same registry ID restores the existing metadata and layout; a prior explicit
+  `hidden: true` remains hidden.
+- Full entity/device registries are fetched and subscribed once per HA
+  connection and shared by every full/static House Plan card on the page.
+  Non-admin clients which cannot read them use positive current registry/state
+  evidence only. Unknown absence is `unverified`, never guessed to be disabled
+  or deleted. The last authoritative disabled result is cached separately from
+  config to prevent a stale warm-boot flash.
 - Duplicate names are still numbered, light groups still fold — those are
   aggregation, not hiding.
 

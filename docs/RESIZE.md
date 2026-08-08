@@ -82,7 +82,7 @@ drag. On commit collinear leftovers are simplified away
    walls are legal, crossing is not).
 4. **Island rooms** — islands inside the room (`islandsOf`) must stay
    fully inside; a wall shrinking onto an island stops.
-5. **Openings are anchors** — a door/window ON the moving stretch
+5. **Openings are anchors** — a door/window/gate ON the moving stretch
    travels with the wall (its `openings[].x/y` centre is shifted, the
    angle is unchanged). A wall that carries openings cannot get too
    short for them: every opening previously sitting on a wall of an

@@ -48,17 +48,46 @@ export class HpDialog extends LitElement {
       overflow: hidden;
     }
 
+    /* The HA header slot is a flex item with a constrained inline size.  The
+       old inline-flex title kept its min-content width, so HA clipped the last
+       word instead of giving it a second line.  Keep every wrapper shrinkable
+       and let the text wrap; this applies to every hp-dialog, including long
+       device names and translated titles. */
+    .header-title-slot {
+      display: block;
+      flex: 1 1 auto;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      white-space: normal;
+    }
+
     .title {
-      display: inline-flex;
+      display: flex;
+      flex: 1 1 auto;
       align-items: center;
       gap: var(--sp-4, 12px);
+      width: 100%;
+      max-width: 100%;
       min-width: 0;
       font-weight: 600;
+      line-height: 1.25;
+      white-space: normal;
     }
 
     .title ha-icon {
       flex: none;
       color: var(--hp-accent, #d89300);
+    }
+
+    .title-text {
+      flex: 1 1 auto;
+      min-width: 0;
+      max-width: 100%;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: normal;
     }
 
     .footer {
@@ -292,7 +321,7 @@ export class HpDialog extends LitElement {
   protected render() {
     const title = html`<span class="title" id=${this._titleId}>
       ${this.icon ? html`<ha-icon icon=${this.icon}></ha-icon>` : nothing}
-      <span>${this.title}</span>
+      <span class="title-text">${this.title}</span>
     </span>`;
 
     if (this._useHaDialog) {
@@ -305,7 +334,7 @@ export class HpDialog extends LitElement {
         @opened=${this._focusInitial}
         @closed=${this._requestClose}
       >
-        <span slot="headerTitle">${title}</span>
+        <span class="header-title-slot" slot="headerTitle">${title}</span>
         <slot></slot>
         <span class="footer" slot="footer"><slot name="footer"></slot></span>
       </ha-dialog>`;

@@ -83,7 +83,7 @@ const res = await page.evaluate(async () => {
   // Every editor still draws them. The dash deliberately reaches the physical
   // centreline there, even if show_borders is off; only View hides it.
   await mode('plan');
-  c._tool = 'openwall';
+  c._tool = 'boundary';
   await upd();
   out.openWallsVisibleInPlanEditor = n('.openwalls .openwall') > 0;
   await mode('devices');
@@ -98,7 +98,7 @@ const res = await page.evaluate(async () => {
   await upd();
   const rows = [...sr().querySelectorAll('hp-dialog .srcrow')].map((r) => r.textContent.trim());
   out.dialogOffersHideDecor = rows.some((t) => /декорат|decorative/i.test(t));
-  out.dialogOffersHideOpenings = rows.some((t) => /проём|проем|doors and windows/i.test(t));
+  out.dialogOffersHideOpenings = rows.some((t) => /проём|проем|openings|doors and windows/i.test(t));
   out.dialogReadsOff = c._spaceDialog.hideDecor === false && c._spaceDialog.hideOpenings === false;
   c._spaceDialog = { ...c._spaceDialog, hideDecor: true, hideOpenings: true };
   await c._saveSpaceDialog();

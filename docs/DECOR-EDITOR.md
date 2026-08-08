@@ -29,7 +29,7 @@ device state or Home Assistant actions.
 |---|---|---|---|
 | Select | Select/move any decor object; corner handles resize; upper handle rotates | common selection frame and standard move/resize/rotate cursors | double click opens geometry, angle, contour/fill colour and opacity; text also exposes its content |
 | Plan backdrop | Move the image by its body; resize/rotate by the frame | size badge; 5° rotation step | double click opens width, height and angle |
-| Line | Drag between two grid points | length, angle, magnetic alignment guides | endpoint handles; length, angle, stroke colour/opacity/thickness |
+| Line | Drag between two grid points | length, angle, magnetic alignment guides | endpoint handles; length, angle, stroke colour/opacity/thickness; Solid or Dashed style |
 | Rectangle | Drag a diagonal; `Shift` makes a square | width × height and area | size, angle, contour, optional independent fill colour/opacity |
 | Oval | Drag its bounding box; `Shift` makes a circle | `R` for a circle, `Rx × Ry` for an oval | bounding size, angle, contour and optional fill |
 | Text | Click to open the text form | the saved label is selected immediately | content, HA variables, colour/opacity, physical size and angle |
@@ -68,6 +68,7 @@ New decor writes use:
 color, opacity, width_cm
 fill, fill_color, fill_opacity       rectangles and ovals only
 size_cm                              text only
+line_style: dashed                   dashed lines only; absence means Solid
 ```
 
 `width_cm` and text `size_cm` are independent physical styles. Resizing a
@@ -79,6 +80,11 @@ The toolbar values are session defaults for newly drawn objects. Colour is a
 compact swatch; its popover owns both the native colour field and opacity, so
 alpha controls do not consume permanent toolbar space. Double-click properties
 edit an existing object without creating a second style model.
+
+Line style is intentionally absent from the drawing toolbar. Every new and
+legacy line is Solid by default. Double-click a line with **Select** to switch
+that individual object between **Solid** and **Dashed**; switching back removes
+the optional `line_style` key instead of persisting a redundant default.
 
 ## Interaction state machine
 

@@ -308,15 +308,15 @@ export function openingShoulders(
 
 /**
  * How far open an opening is drawn, 0..1, from its contact sensor state.
- * No sensor bound → doors default to open (the familiar swing symbol), windows to
- * closed (intact glass) — same convention as a static architectural plan.
+ * No sensor bound → doors and gates default to open (the familiar swing
+ * symbol), windows to closed (intact glass) — the static-plan convention.
  * `unavailable`/`unknown` freeze the default too: an outage must not fake motion.
  */
 export function openingAmount(
-  type: 'door' | 'window', state: string | null | undefined, invert = false,
+  type: 'door' | 'window' | 'gate', state: string | null | undefined, invert = false,
 ): number {
   if (state == null || state === 'unavailable' || state === 'unknown')
-    return type === 'door' ? 1 : 0;
+    return type === 'window' ? 0 : 1;
   const open = isActiveState(state) !== !!invert;
   return open ? 1 : 0;
 }

@@ -182,17 +182,17 @@ const res = await page.evaluate(async (fadeMs) => {
   await upd();
   out.rimIsBackInViewMode = rimsOf().length === 2;
 
-  // ---- 5) a fully overcast sky takes the rim with the light --------------
+  // ---- 5) a legacy weather setting cannot hide the rim -------------------
   cfg.settings = { ...cfg.settings, weather_entity: 'weather.home' };
   c.hass = { ...c.hass, states: { ...c.hass.states,
     'weather.home': { entity_id: 'weather.home', state: 'pouring', attributes: {} } } };
   c._cfgEpoch++;
   await upd();
-  out.noRimInTheRain = rimsOf().length === 0;
+  out.rimIgnoresRain = rimsOf().length === 2;
   delete cfg.settings.weather_entity;
   c._cfgEpoch++;
   await upd();
-  out.rimIsBackInTheSun = rimsOf().length === 2;
+  out.rimStaysAfterLegacyCleanup = rimsOf().length === 2;
   return out;
 }, RAY_FADE_MS);
 

@@ -182,6 +182,15 @@ def test_decor_rect_extents_must_be_positive():
         v.DECOR_SCHEMA({"id": "d", "kind": "ellipse", "x": 0, "y": 0, "w": 0, "h": 1})
 
 
+def test_decor_line_style_is_bounded_and_optional():
+    base = {"id": "d", "kind": "line", "x1": 0, "y1": 0, "x2": 1, "y2": 1}
+    assert "line_style" not in v.DECOR_SCHEMA(base)
+    assert v.DECOR_SCHEMA({**base, "line_style": "solid"})["line_style"] == "solid"
+    assert v.DECOR_SCHEMA({**base, "line_style": "dashed"})["line_style"] == "dashed"
+    with pytest.raises(vol.Invalid):
+        v.DECOR_SCHEMA({**base, "line_style": "dots"})
+
+
 def test_decor_physical_style_and_backdrop_transform():
     """New canonical style/transform fields are bounded; legacy fields stay valid."""
     shape = {
@@ -305,7 +314,7 @@ def test_bg_color_setting():
 
 
 def test_sun_settings_global():
-    """docs/SUN.md: north_deg strict int 0..359, bg_mode, sun_rays, weather_entity."""
+    """Active sun settings plus the accepted-but-ignored legacy weather field."""
     v.CONFIG_SCHEMA({"spaces": [], "settings": {
         "north_deg": 0, "bg_mode": "daynight", "sun_rays": True, "weather_entity": "weather.home",
     }})
@@ -511,6 +520,19 @@ def test_openings_cap_enforced():
         v.CONFIG_SCHEMA({"spaces": [{"id": "s1", "title": "S", "aspect": 1.0,
                                      "view_box": [0, 0, 1, 1], "rooms": [],
                                      "openings": many}]})
+
+
+def test_gate_is_a_valid_opening_type():
+    """Gates share door data semantics; only the frontend symbol differs."""
+    space = {"id": "s1", "title": "S", "view_box": [0, 0, 1, 1], "rooms": [],
+             "openings": [{"id": "g1", "type": "gate", "x": 0.5, "y": 0.1,
+                           "angle": 0, "length": 0.3, "contact": "binary_sensor.gate",
+                           "lock": "lock.gate"}]}
+    out = v.CONFIG_SCHEMA({"spaces": [space]})
+    assert out["spaces"][0]["openings"][0]["type"] == "gate"
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA({"spaces": [{**space, "openings": [
+            {**space["openings"][0], "type": "garage"}]}]})
 
 
 # ---------- plan-file collection (review R3-1) ----------

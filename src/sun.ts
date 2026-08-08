@@ -2,7 +2,7 @@
  * Sun on the plan — pure logic only (docs/SUN.md).
  *
  * Angles, the day phase palette, exterior-wall detection, window light
- * wedges and their clipping, the cloud factor and the settings
+ * wedges and their clipping, and the settings
  * inheritance. Coordinates are render units (NORM_W-scaled canvas,
  * y grows DOWNWARD), same as the card's space model. Nothing here
  * touches Lit, the DOM or `hass` beyond a plain state object.
@@ -322,18 +322,14 @@ export function raysVisible(elevation: number): boolean {
   return Number(elevation) >= RAY_ELEVATION_MIN;
 }
 
-/**
- * Full-strength wedge opacity for the current cloud cover — elevation plays
- * no part. The card feeds this into the gradient and lets CSS fade the layer,
- * so a wedge dissolving at the threshold keeps its colour while it goes.
- */
-export function rayPeakAlpha(cloud = 1): number {
-  return RAY_MAX_ALPHA * clamp01(cloud);
+/** Full-strength wedge opacity. Weather deliberately plays no part. */
+export function rayPeakAlpha(): number {
+  return RAY_MAX_ALPHA;
 }
 
 /** Wedge opacity: nothing below the threshold, full strength above it. */
-export function rayAlpha(elevation: number, cloud = 1): number {
-  return raysVisible(elevation) ? rayPeakAlpha(cloud) : 0;
+export function rayAlpha(elevation: number): number {
+  return raysVisible(elevation) ? rayPeakAlpha() : 0;
 }
 
 /** Wedge color: warm orange at the horizon → neutral daylight. */
@@ -405,7 +401,7 @@ export function rayStops(): [number, number][] {
  */
 
 /**
- * Peak rim opacity at the inner opening, before cloud cover. Visually tuned on the
+ * Peak rim opacity at the inner opening. Visually tuned on the
  * demo rig at both extremes: it has to make the shaft legible on white paper
  * (the whole point) yet not read as an ink outline over the dark glow canvas.
  * Below ~0.3 the line disappears on paper at kiosk scale; above ~0.5 it turns
@@ -416,9 +412,9 @@ export const RIM_MAX_ALPHA = 0.42;
 /** The rim is black — the one thing white paper still has room for. */
 export const RIM_COLOR = '#000000';
 
-/** Peak rim opacity for the current cloud cover — dimmed exactly like the fill. */
-export function rimPeakAlpha(cloud = 1): number {
-  return RIM_MAX_ALPHA * clamp01(cloud);
+/** Peak rim opacity; weather deliberately plays no part. */
+export function rimPeakAlpha(): number {
+  return RIM_MAX_ALPHA;
 }
 
 /**
@@ -514,28 +510,6 @@ export function skyElevation(elevation: number): number {
   return Math.round((Number(elevation) || 0) * 10) / 10;
 }
 
-// ---------------- cloud cover ----------------
-
-/** weather.* state → wedge opacity multiplier (docs/SUN.md table). */
-const CLOUD_FACTORS: Record<string, number> = {
-  'clear': 1, 'sunny': 1, 'clear-night': 1, 'windy': 1, 'exceptional': 1,
-  'partlycloudy': 0.7, 'windy-variant': 0.7,
-  'cloudy': 0.4,
-  'overcast': 0.25, 'fog': 0.25,
-  'rainy': 0, 'pouring': 0, 'snowy': 0, 'snowy-rainy': 0,
-  'hail': 0, 'lightning': 0, 'lightning-rainy': 0,
-};
-
-/**
- * Cloud multiplier for a weather entity state. Unset entity, unknown state
- * or a dead sensor → 1: a broken weather sensor must not kill the sun.
- */
-export function cloudFactor(state: string | null | undefined): number {
-  if (!state) return 1;
-  const f = CLOUD_FACTORS[String(state).toLowerCase()];
-  return f === undefined ? 1 : f;
-}
-
 // ---------------- settings inheritance (global → space) ----------------
 
 const intDeg = (v: any): number | null =>
@@ -561,12 +535,6 @@ export function sunRaysOn(settings: any, spaceSettings: any): boolean {
   const sp = spaceSettings?.sun_rays;
   if (typeof sp === 'boolean') return sp;
   return settings?.sun_rays === true;
-}
-
-/** The optional weather entity (GLOBAL settings only). */
-export function weatherEntityOf(settings: any): string | null {
-  const v = settings?.weather_entity;
-  return typeof v === 'string' && v.trim() ? v.trim() : null;
 }
 
 /** Read sun.sun out of a hass-like object; null when absent/garbage. */

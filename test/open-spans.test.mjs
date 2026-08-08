@@ -5,6 +5,7 @@ import {
   clearThicknessUnderSpan, thicknessOnClose, purgeOpeningsOnSpan, pointOnOpenCut,
   spanToEntry, entryToSeg, syncOpenToFromCuts, removeCut, hitOpenSpan,
   clipOpenSpansToShared, sanitizeOpenSpans, degradeOpenSpans, rekeyOpenSpansAfterMove,
+  resolveBoundaryTarget,
 } from '../test-build/open-spans.js';
 import { wallKey, setWallThickness, DRAW_WALL_DEFAULT_CM } from '../test-build/wall-thickness.js';
 
@@ -27,6 +28,15 @@ describe('open-spans', () => {
     const joints = [[0, 0], [10, 0], [4, 0]];
     const p = snapOpenPoint([4.1, 0.2], edge, joints, 1, 0.5);
     assert.ok(Math.abs(p[0] - 4) < 1e-9);
+  });
+
+  it('snapOpenPoint projects both rims of a thick wall onto the same boundary axis', () => {
+    const edge = [5, 0, 5, 4];
+    const joints = [[5, 0], [5, 4]];
+    const insideRim = snapOpenPoint([4.25, 2.2], edge, joints, 1, 0.5);
+    const outsideRim = snapOpenPoint([5.75, 2.2], edge, joints, 1, 0.5);
+    assert.deepEqual(insideRim, outsideRim);
+    assert.deepEqual(insideRim, [5, 2]);
   });
 
   it('resolveOpenCuts: legacy open_to expands to full shared boundary', () => {
@@ -126,6 +136,34 @@ describe('open-spans', () => {
     assert.ok(hitOpenSpan([5, 1], cuts, 0.5));
     const next = removeCut(cuts, [5, 0, 5, 2], eps);
     assert.equal(next.length, 1);
+  });
+
+  it('Boundary resolver gives an open span priority over its solid shared edge', () => {
+    const rooms = [
+      { id: 'a', poly: [[0, 0], [5, 0], [5, 4], [0, 4]] },
+      { id: 'b', poly: [[5, 0], [10, 0], [10, 4], [5, 4]] },
+    ];
+    const options = {
+      openPull: 0.5, openEndCap: 0.2, ambiguity: 0.25, eps,
+      solidPull: () => 0.5,
+    };
+    assert.equal(resolveBoundaryTarget([5, 2], rooms, [[5, 1, 5, 3]], options).kind, 'open');
+    assert.equal(resolveBoundaryTarget([5, 3.8], rooms, [[5, 1, 5, 3]], options).kind, 'shared',
+      'a click beyond the longitudinal endpoint cap must not restore the dash');
+  });
+
+  it('Boundary resolver refuses an ambiguous room-pair junction', () => {
+    const rooms = [
+      { id: 'left', poly: [[0, 0], [5, 0], [5, 10], [0, 10]] },
+      { id: 'top', poly: [[5, 0], [10, 0], [10, 5], [5, 5]] },
+      { id: 'bottom', poly: [[5, 5], [10, 5], [10, 10], [5, 10]] },
+    ];
+    const options = {
+      openPull: 0.5, openEndCap: 0.2, ambiguity: 0.6, eps,
+      solidPull: () => 0.5,
+    };
+    assert.equal(resolveBoundaryTarget([5, 5], rooms, [], options).kind, 'ambiguous');
+    assert.equal(resolveBoundaryTarget([5, 4], rooms, [], options).kind, 'shared');
   });
 
   it('clipOpenSpansToShared clips drifted span onto shared edge', () => {

@@ -200,12 +200,46 @@ const res = await page.evaluate(async () => {
   await c.updateComplete;
   out.doubleClickOpensObjectDialog = c._decorShapeDialog?.id === 'dcprobe'
     && !!sr().querySelector('hp-dialog .dfill') === false;
-  c._decorShapeDialog = { ...c._decorShapeDialog, color: '#123456', widthCm: 6.5 };
+  out.lineStyleDefaultsSolid = c._decorShapeDialog?.lineStyle === 'solid'
+    && sr().querySelectorAll('input[name="decor-line-style"]').length === 2
+    && !c._decorList.find((x) => x.id === 'dcprobe')?.line_style;
+  const angleInput = sr().querySelector('hp-dialog input[min="-180"][max="180"]');
+  if (angleInput) {
+    angleInput.value = '12.3456';
+    angleInput.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+    await c.updateComplete;
+  }
+  out.angleInputKeepsWorkingPrecision = c._decorShapeDialog?.angle === '12.3456'
+    && sr().querySelector('hp-dialog input[min="-180"][max="180"]')?.value === '12.3456';
+  out.lineStyleAbsentFromToolbar = !sr().querySelector('.editbar input[name="decor-line-style"]');
+  c._decorShapeDialog = {
+    ...c._decorShapeDialog, color: '#123456', widthCm: 6.5, lineStyle: 'dashed',
+  };
   c._decorSaveShape(); await c.updateComplete;
   const editedProbe = c._decorList.find((x) => x.id === 'dcprobe');
   out.objectDialogSavesStyle = editedProbe?.color === '#123456'
     && editedProbe?.width_cm === 6.5 && editedProbe?.width === undefined
+    && editedProbe?.line_style === 'dashed'
     && c._decorShapeDialog === null;
+  out.dashedLineRendered = !!probe()?.getAttribute('stroke-dasharray');
+  c._undoGeometry(); await c.updateComplete;
+  const undoSolid = !c._decorList.find((x) => x.id === 'dcprobe')?.line_style;
+  c._redoGeometry(); await c.updateComplete;
+  out.lineStyleUndoRedo = undoSolid
+    && c._decorList.find((x) => x.id === 'dcprobe')?.line_style === 'dashed';
+  const selectHit = sr().querySelector('.decorlayer line.dselecthit');
+  const dashedPaint = probe();
+  let gapPicked = null;
+  if (selectHit && dashedPaint) {
+    const sw = Number(dashedPaint.getAttribute('stroke-width')) || 1;
+    const gapPoint = dashedPaint.getPointAtLength(Math.min(dashedPaint.getTotalLength() * 0.75, sw * 5.5));
+    const screenPoint = new DOMPoint(gapPoint.x, gapPoint.y).matrixTransform(dashedPaint.getScreenCTM());
+    gapPicked = sr().elementFromPoint(screenPoint.x, screenPoint.y);
+  }
+  out.dashedLineSelectableAcrossGaps = gapPicked === selectHit
+    && selectHit?.classList.contains('dshape')
+    && selectHit?.dataset.hp === 'decor'
+    && selectHit?.dataset.id === 'dcprobe';
   // Erase gets a constant screen-space target around hairlines. Exercise the
   // browser's actual SVG hit-test 6 px away from a sub-pixel painted stroke;
   // dispatching directly to the proxy would only prove that its listener exists.

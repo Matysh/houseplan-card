@@ -1307,7 +1307,7 @@ export function wallBodiesUnionPath(
   gridPitch: number,
   coordScale = 1,
   /** Independent physical bodies are unioned only after room openings are cut,
-   * so a door/window can never punch a coincident partition or column. */
+   * so a door/window/gate can never punch a coincident partition or column. */
   extraBodies: number[][][] = [],
 ): { d: string; depthUnits: number; fillRule: 'evenodd' | 'nonzero' } | null {
   if (!walls?.length && !extraBodies.length) return null;
@@ -1596,9 +1596,12 @@ export function paperRoomShapesWithWalls(
 }
 
 /**
- * Half-depth from the centreline toward the door's inner face (the room the
- * leaf swings into). Association prefers a wall whose direction matches the
- * opening angle (T-junctions must not bind to the perpendicular receiver).
+ * Half-depth from the centreline toward the selected face of an opening.
+ * Normally that is the room's inner face; callers may invert `flip_v` when a
+ * symbol (a gate) must sit on the exterior face. `side` is the selected face
+ * in opening-local Y and remains available for zero-thickness walls.
+ * Association prefers a wall whose direction matches the opening angle
+ * (T-junctions must not bind to the perpendicular receiver).
  */
 export function openingInnerFaceOffset(
   rooms: any[],
@@ -1608,7 +1611,7 @@ export function openingInnerFaceOffset(
   cellCm: number,
   gridPitch: number,
   coordScale = 1,
-): { ox: number; oy: number; cm: number } {
+): { ox: number; oy: number; cm: number; side: -1 | 1 } {
   let best: { a: number[]; b: number[]; room: any; edge: number; dist: number; angled: boolean } | null = null;
   for (const room of rooms || []) {
     const poly = roomPoly(room);
@@ -1629,14 +1632,17 @@ export function openingInnerFaceOffset(
       }
     }
   }
-  if (!best || best.dist > pitch * coordScale) return { ox: 0, oy: 0, cm: 0 };
-  const cm = thicknessCmAt(walls, best.a, best.b, pitch, coordScale);
-  if (!(cm > 0)) return { ox: 0, oy: 0, cm: 0 };
-  const depth = wallCmToUnits(cm, cellCm, gridPitch);
+  if (!best || best.dist > pitch * coordScale) return { ox: 0, oy: 0, cm: 0, side: -1 };
   const poly = roomPoly(best.room)!;
   const [inx, iny] = inwardNormal(poly, best.edge);
   const s = opening.flip_v ? -1 : 1;
+  const rad = (-opening.angle * Math.PI) / 180;
+  const localY = inx * Math.sin(rad) + iny * Math.cos(rad);
+  const side = (localY * s >= 0 ? 1 : -1) as -1 | 1;
+  const cm = thicknessCmAt(walls, best.a, best.b, pitch, coordScale);
+  if (!(cm > 0)) return { ox: 0, oy: 0, cm: 0, side };
+  const depth = wallCmToUnits(cm, cellCm, gridPitch);
   // ±½ growth: the inner face is always half-depth from the centreline
   const along = depth / 2;
-  return { ox: inx * along * s, oy: iny * along * s, cm };
+  return { ox: inx * along * s, oy: iny * along * s, cm, side };
 }

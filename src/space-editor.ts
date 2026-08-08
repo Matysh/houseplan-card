@@ -46,6 +46,9 @@ class HouseplanSpaceCardEditor extends LitElement {
       { name: 'button_label', selector: { text: {} } },
       { name: 'button_target', selector: { text: {} } },
       { name: 'icon_size', selector: { number: { min: 1, max: 6, step: 0.1, mode: 'box' } } },
+      { name: 'show_temperature', selector: { boolean: {} } },
+      { name: 'live_states', selector: { boolean: {} } },
+      { name: 'show_signal', selector: { boolean: {} } },
     ];
   }
 
@@ -60,6 +63,9 @@ class HouseplanSpaceCardEditor extends LitElement {
       button_label: t(L, 'editor.button_label'),
       button_target: t(L, 'editor.button_target'),
       icon_size: t(L, 'editor.icon_size'),
+      show_temperature: t(L, 'editor.show_temperature'),
+      live_states: t(L, 'editor.live_states'),
+      show_signal: t(L, 'editor.show_signal'),
     };
     return html`<ha-form
       .hass=${this.hass}

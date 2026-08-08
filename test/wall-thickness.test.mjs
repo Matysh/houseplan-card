@@ -9,7 +9,7 @@ import {
   wallBodyRings, wallBodiesUnionPath, innerContourForRoom,
   paperRoomShapesWithWalls, WALL_MIN_CM, WALL_MAX_CM, MITRE_LIMIT,
   atomicPolyForRoom, insetOffsetsForRoom, wallIntervals, normalizeWallIntervals,
-  intervalCmAt, wallBodyNeedsSolid, WALL_HATCH_MIN_PX,
+  intervalCmAt, wallBodyNeedsSolid, openingInnerFaceOffset, WALL_HATCH_MIN_PX,
 } from '../test-build/wall-thickness.js';
 import { polygonArea, paperRoomShapes } from '../test-build/logic.js';
 import { GRID_PITCH } from '../test-build/space-geometry.js';
@@ -327,6 +327,23 @@ test('inwardNormal points into the rectangle', () => {
   const poly = [[0, 0], [10, 0], [10, 6], [0, 6]];
   const [nx, ny] = inwardNormal(poly, 0); // bottom edge → should point +y
   assert.ok(ny > 0.5, `expected +y inward, got ${nx},${ny}`);
+});
+
+test('opening face side is known without wall thickness and can be inverted for an outward gate', () => {
+  const rooms = [{ id: 'r', poly: [[0, 0], [10, 0], [10, 6], [0, 6]] }];
+  const topInner = openingInnerFaceOffset(
+    rooms, { x: 5, y: 0, angle: 0, length: 3 }, [], 1, cellCm, pitch,
+  );
+  assert.equal(topInner.cm, 0);
+  assert.equal(topInner.side, 1, 'the top wall room side is +Y');
+  const topOuter = openingInnerFaceOffset(
+    rooms, { x: 5, y: 0, angle: 0, length: 3, flip_v: true }, [], 1, cellCm, pitch,
+  );
+  assert.equal(topOuter.side, -1, 'inverting the selected face points outside the room');
+  const bottomInner = openingInnerFaceOffset(
+    rooms, { x: 5, y: 6, angle: 0, length: 3 }, [], 1, cellCm, pitch,
+  );
+  assert.equal(bottomInner.side, -1, 'the bottom wall room side is -Y');
 });
 
 // ------------------------------- bodies / paper -----------------------------

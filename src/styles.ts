@@ -502,7 +502,7 @@ export const cardStyles = css`
       fill-opacity: 0.18;
       stroke-opacity: 1;
     }
-    /* doors & windows */
+    /* doors, windows & gates */
     .op-leaf {
       transition: transform 0.6s ease;
     }
@@ -1007,6 +1007,21 @@ export const cardStyles = css`
     .stage.mode-decor.dtool-erase .decorlayer .derasehit {
       pointer-events: stroke;
     }
+    /* A dashed line must remain selectable across its gaps. This proxy also
+       makes the only entry to line-style properties — double click in Select —
+       practical for hairlines at every zoom. */
+    .decorlayer .dselecthit {
+      fill: none;
+      stroke: transparent;
+      stroke-width: 16px;
+      stroke-linecap: round;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
+    .stage.mode-decor.dtool-select .decorlayer .dselecthit {
+      pointer-events: stroke;
+      cursor: move;
+    }
     .decorlayer .dsel {
       filter: drop-shadow(0 0 3px var(--hp-accent));
     }
@@ -1196,8 +1211,6 @@ export const cardStyles = css`
     .stage.markup.tool-delroom {
       cursor: pointer;
     }
-    /* open-wall tool: default until a shared wall is under the cursor */
-
     .stage.markup.tool-wallthick { cursor: default; }
     .stage.markup.tool-wallthick.wallhot { cursor: pointer; }
     /* Solid wall colour sits under the hatch (owner: both, not either/or). */
@@ -1259,10 +1272,11 @@ export const cardStyles = css`
       background: var(--input-fill, transparent);
       color: var(--primary-text-color);
     }
-    .stage.markup.tool-openwall { cursor: crosshair; }
-    .stage.markup.tool-openwall.wallhot { cursor: crosshair; }
-    .stage.markup.tool-closewall { cursor: default; }
-    .stage.markup.tool-closewall.wallhot { cursor: pointer; }
+    /* Boundary is neutral off-target, then advertises its resolved action. */
+    .stage.markup.tool-boundary { cursor: default; }
+    .stage.markup.tool-boundary.boundary-solid { cursor: crosshair; }
+    .stage.markup.tool-boundary.boundary-open { cursor: pointer; }
+    .stage.markup.tool-boundary.boundary-invalid { cursor: not-allowed; }
     .openwall {
       stroke: var(--ow-stroke, var(--hp-muted));
       stroke-width: 2.5;
@@ -1304,10 +1318,6 @@ export const cardStyles = css`
       pointer-events: none;
       filter: drop-shadow(0 0 3px var(--hp-accent));
     }
-    .openwalls.hot .openwall {
-      stroke: #ffc14d;
-      opacity: 1;
-    }
     .openwall-preview {
       stroke: #ffc14d;
       stroke-width: 5;
@@ -1316,10 +1326,32 @@ export const cardStyles = css`
       pointer-events: none;
       opacity: 0.95;
     }
-    /* an already-open boundary under the cursor: the click will CLOSE it */
-    .openwall-preview.willclose {
-      stroke: #f25a4a;
+    .openwall-preview.boundary-range.invalid {
+      stroke: var(--error-color, #f44336);
+    }
+    .openwall-preview.boundary-restore {
+      fill: rgba(255, 193, 77, 0.28);
+      fill-rule: evenodd;
+      stroke: #ffc14d;
+      stroke-width: 2.5;
       stroke-dasharray: none;
+      stroke-linejoin: round;
+    }
+    .boundary-point {
+      fill: #ffc14d;
+      stroke: #24262d;
+      stroke-width: 1.5;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
+    .boundary-point.invalid circle {
+      fill: var(--error-color, #f44336);
+    }
+    .boundary-point.invalid path {
+      fill: none;
+      stroke: #fff;
+      stroke-width: 1.7;
+      vector-effect: non-scaling-stroke;
     }
     .stage.markup .room {
       pointer-events: none;
@@ -1473,9 +1505,15 @@ export const cardStyles = css`
          grew nothing). */
       width: auto;
       min-width: var(--dev-size, var(--icon-size, 2.5cqw));
+      max-width: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 4);
+      box-sizing: border-box;
       padding: 0 calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.16);
     }
     .dev.valonly .valtext {
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
       font-size: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.45);
       font-weight: 700;
       white-space: nowrap;
@@ -1671,6 +1709,48 @@ export const cardStyles = css`
       color: var(--hp-accent);
       box-shadow: none;
     }
+    /* HA-disabled is not a user hide: neutral grey + a power-off badge keeps
+       the two ghosts distinguishable without relying on colour alone. */
+    .dev.ghost.ha-disabled {
+      opacity: 0.62;
+      border-color: var(--secondary-text-color, #9aa0aa);
+      background: rgba(120, 124, 134, 0.2);
+      background: color-mix(in srgb, var(--secondary-text-color, #9aa0aa) 24%, var(--card-background-color, #1c2530));
+      color: var(--secondary-text-color, #9aa0aa);
+    }
+    .dev .habadge {
+      position: absolute;
+      right: -18%;
+      bottom: -18%;
+      display: grid;
+      place-items: center;
+      width: 46%;
+      height: 46%;
+      min-width: 12px;
+      min-height: 12px;
+      border-radius: 50%;
+      background: var(--card-background-color, #242832);
+      border: 1px solid currentColor;
+    }
+    .dev .habadge ha-icon { width: 72%; height: 72%; }
+    .habindingbanner {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-3);
+      padding: var(--sp-3) var(--sp-4);
+      margin-bottom: var(--sp-4);
+      border: 1px solid var(--warning-color, #ff9800);
+      border-radius: var(--rad-m);
+      background: color-mix(in srgb, var(--warning-color, #ff9800) 12%, transparent);
+      color: var(--primary-text-color, #f1f3f6);
+    }
+    .habindingbanner > span { flex: 1; min-width: 0; }
+    .habindingbanner > ha-icon { color: var(--warning-color, #ff9800); flex: 0 0 auto; }
+    .habindingbanner.limited {
+      border-color: var(--secondary-text-color, #9aa0aa);
+      background: color-mix(in srgb, var(--secondary-text-color, #9aa0aa) 10%, transparent);
+    }
+    .habindingbanner.limited > ha-icon { color: var(--secondary-text-color, #9aa0aa); }
     .dev.sel {
       border-color: #ffc14d;
       box-shadow: 0 0 0 3px rgba(255, 193, 77, 0.35);
@@ -2470,6 +2550,19 @@ export const cardStyles = css`
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+    .devicepreview-empty {
+      min-height: 82px;
+      margin: 4px 0 14px;
+      padding: var(--sp-4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--sp-3);
+      border: 1px dashed var(--hp-line);
+      border-radius: var(--rad-m);
+      color: var(--hp-muted);
+      text-align: center;
     }
     hp-dialog .row {
       display: flex;

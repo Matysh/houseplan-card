@@ -25,6 +25,8 @@ export interface DecorLine extends DecorBase {
   y1: number;
   x2: number;
   y2: number;
+  /** Missing/solid keeps the legacy appearance; dashed is selected in properties. */
+  line_style?: 'solid' | 'dashed';
 }
 
 export interface DecorBoxBase extends DecorBase {

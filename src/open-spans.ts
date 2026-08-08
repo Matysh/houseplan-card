@@ -130,6 +130,8 @@ interface SharedSeg {
   seg: number[];
   /** Room-pair identity. Adjacent pieces from different pairs must stay split. */
   pair: string;
+  a: any;
+  b: any;
 }
 
 /** Shared-boundary segments with their room-pair semantics (render units). */
@@ -142,7 +144,9 @@ function sharedSegsWithPairs(rooms: any[], eps: number): SharedSeg[] {
     for (let j = i + 1; j < list.length; j++) {
       const pb = roomPoly(list[j]);
       if (!pb) continue;
-      for (const sg of sharedBoundary(pa, pb, eps)) out.push({ seg: sg, pair: `${i}:${j}` });
+      for (const sg of sharedBoundary(pa, pb, eps)) {
+        out.push({ seg: sg, pair: `${list[i].id}:${list[j].id}`, a: list[i], b: list[j] });
+      }
     }
   }
   return out;
@@ -332,6 +336,137 @@ export function hitOpenSpan(
     if (d <= pull && (!best || d < best.d)) best = { sg, d };
   }
   return best ? best.sg : null;
+}
+
+/** One semantic result for the combined Boundary tool. */
+export type BoundaryTarget =
+  | { kind: 'open'; seg: number[]; distance: number }
+  | { kind: 'shared'; a: any; b: any; edge: number[]; distance: number }
+  | { kind: 'outer'; room: any; edge: number[]; distance: number }
+  | { kind: 'ambiguous'; group: 'open' | 'shared' | 'outer' }
+  | { kind: 'none' };
+
+export interface BoundaryResolveOptions {
+  /** Minimum transverse hit width, already converted from CSS px to render units. */
+  openPull: number;
+  /** How far past an open span endpoint a click may extend longitudinally. */
+  openEndCap: number;
+  /** Per-solid-segment hit width; lets thick walls use at least half their body. */
+  solidPull: (seg: number[]) => number;
+  /** Difference between two candidate distances that makes a junction ambiguous. */
+  ambiguity: number;
+  eps: number;
+}
+
+interface BoundaryCandidate<T> {
+  value: T;
+  seg: number[];
+  semantic: string;
+  distance: number;
+}
+
+/**
+ * Hit a finite segment by separate transverse and longitudinal tolerances.
+ * `distToSegment` alone grows a circular target around the ends; for virtual
+ * spans that made a click well beyond a short dash restore the wrong stretch.
+ */
+function finiteSegmentDistance(
+  raw: number[], seg: number[], transverse: number, endCap = 0,
+): number | null {
+  const dx = seg[2] - seg[0], dy = seg[3] - seg[1];
+  const len = Math.hypot(dx, dy);
+  if (!(len > 1e-9)) return null;
+  const ux = dx / len, uy = dy / len;
+  const along = (raw[0] - seg[0]) * ux + (raw[1] - seg[1]) * uy;
+  if (along < -endCap || along > len + endCap) return null;
+  const perpendicular = Math.abs((raw[0] - seg[0]) * uy - (raw[1] - seg[1]) * ux);
+  if (perpendicular > transverse) return null;
+  return distToSegment(raw, seg);
+}
+
+function collinear(a: number[], b: number[], eps: number): boolean {
+  const adx = a[2] - a[0], ady = a[3] - a[1];
+  const bdx = b[2] - b[0], bdy = b[3] - b[1];
+  const al = Math.hypot(adx, ady), bl = Math.hypot(bdx, bdy);
+  if (!(al > 1e-9 && bl > 1e-9)) return false;
+  if (Math.abs((adx / al) * (bdy / bl) - (ady / al) * (bdx / bl)) > 1e-6) return false;
+  return distToSegment([b[0], b[1]], a) <= eps * 4
+    || distToSegment([a[0], a[1]], b) <= eps * 4;
+}
+
+function chooseCandidate<T>(
+  candidates: BoundaryCandidate<T>[], ambiguity: number, eps: number,
+): BoundaryCandidate<T> | 'ambiguous' | null {
+  if (!candidates.length) return null;
+  candidates.sort((a, b) => a.distance - b.distance);
+  const first = candidates[0];
+  for (let i = 1; i < candidates.length; i++) {
+    const next = candidates[i];
+    if (next.distance - first.distance > ambiguity) break;
+    // Atomic pieces of the same semantic wall may meet at a harmless collinear
+    // joint. A real corner/T-junction or another room pair is ambiguous.
+    if (next.semantic !== first.semantic || !collinear(first.seg, next.seg, eps)) return 'ambiguous';
+  }
+  return first;
+}
+
+/**
+ * Resolve exactly what one Boundary click means. Category priority is part of
+ * the contract: an open span wins over the solid room edge beneath it, then a
+ * shared solid boundary wins over an outer wall. Ambiguity is evaluated only
+ * inside the winning category, so the priority itself never creates a false
+ * junction warning.
+ */
+export function resolveBoundaryTarget(
+  raw: number[], rooms: any[], cuts: number[][], options: BoundaryResolveOptions,
+): BoundaryTarget {
+  const { openPull, openEndCap, solidPull, ambiguity, eps } = options;
+  const shared = sharedSegsWithPairs(rooms, eps);
+
+  const openCandidates: BoundaryCandidate<number[]>[] = [];
+  for (const seg of cuts || []) {
+    const distance = finiteSegmentDistance(raw, seg, openPull, openEndCap);
+    if (distance == null) continue;
+    const mid = [(seg[0] + seg[2]) / 2, (seg[1] + seg[3]) / 2];
+    const owner = shared.find((item) => distToSegment(mid, item.seg) <= eps * 4);
+    openCandidates.push({ value: seg, seg, semantic: owner?.pair || `open:${seg.join(',')}`, distance });
+  }
+  const open = chooseCandidate(openCandidates, ambiguity, eps);
+  if (open === 'ambiguous') return { kind: 'ambiguous', group: 'open' };
+  if (open) return { kind: 'open', seg: open.value, distance: open.distance };
+
+  const sharedCandidates: BoundaryCandidate<SharedSeg>[] = [];
+  for (const item of shared) {
+    const distance = finiteSegmentDistance(raw, item.seg, solidPull(item.seg));
+    if (distance == null) continue;
+    sharedCandidates.push({ value: item, seg: item.seg, semantic: item.pair, distance });
+  }
+  const common = chooseCandidate(sharedCandidates, ambiguity, eps);
+  if (common === 'ambiguous') return { kind: 'ambiguous', group: 'shared' };
+  if (common) return {
+    kind: 'shared', a: common.value.a, b: common.value.b,
+    edge: common.value.seg, distance: common.distance,
+  };
+
+  const outerCandidates: BoundaryCandidate<{ room: any; edge: number[] }>[] = [];
+  for (const room of rooms || []) {
+    if (!room?.id) continue;
+    const poly = roomPoly(room);
+    if (!poly) continue;
+    for (let i = 0; i < poly.length; i++) {
+      const a = poly[i], b = poly[(i + 1) % poly.length];
+      const edge = [a[0], a[1], b[0], b[1]];
+      const distance = finiteSegmentDistance(raw, edge, solidPull(edge));
+      if (distance == null) continue;
+      const q = projectOnSeg(raw, edge).q;
+      if (shared.some((item) => distToSegment(q, item.seg) <= eps * 4)) continue;
+      outerCandidates.push({ value: { room, edge }, seg: edge, semantic: String(room.id), distance });
+    }
+  }
+  const outer = chooseCandidate(outerCandidates, ambiguity, eps);
+  if (outer === 'ambiguous') return { kind: 'ambiguous', group: 'outer' };
+  if (outer) return { kind: 'outer', ...outer.value, distance: outer.distance };
+  return { kind: 'none' };
 }
 
 /** Remove wall thickness entries whose midpoint lies on the open span. */

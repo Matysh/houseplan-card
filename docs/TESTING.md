@@ -32,6 +32,81 @@
 > plan picker (dev, unreleased — rows present, box 14 px tall, same story).
 > Both smokes measure heights now; write the third one that way from the start.
 
+## HA-disabled binding gate
+
+The source-of-truth matrix is
+`docs/superpowers/specs/2026-08-08-ha-disabled-devices-design.md` §17.
+`test/ha-binding-status.test.mjs` covers full/limited registry decisions and
+the active-only state projection. The standalone demo exposes complete
+`disabled_by` rows through both registry list WS commands plus
+`window.__setRegistryDisabled(kind, id, disabledBy)` and
+`window.__setRegistryAccess(mode)` for browser scenarios.
+
+- [ ] A saved device/entity marker disappears from View, room data, Glow,
+      controls, live text, openings and vacuum overlays after its registry row
+      becomes disabled; config/layout remain byte-for-byte unchanged.
+- [ ] Device editor → Hidden and disabled shows a labelled grey ghost. Show is
+      refused, metadata/Delete/Open in HA remain available, and the ghost is
+      not draggable.
+- [ ] Reactivating the same ID restores its metadata/layout without a false
+      new-device event; an explicitly user-hidden marker stays hidden.
+- [ ] A never-seen auto device disabled before discovery appears as new only
+      after its first activation.
+- [ ] All disabled child entities make an otherwise active device disabled;
+      one disabled auxiliary entity never suppresses active functional rows.
+- [ ] If full registry WS access is denied, positive live evidence stays
+      active, an unknown binding is `unverified`, and no false disabled/orphaned
+      ghost or service call is produced.
+- [ ] Two full cards plus a static space card share one registry fetch and one
+      subscription pair per HA connection; registry events invalidate all of
+      them without a reload.
+- [ ] `houseplanDiagnostics()` reports only redacted registry access/age/error
+      and binding-status counts; it contains no names, states or marker data.
+
+## Device display preview and face parity
+
+The behaviour matrix is defined in
+`docs/superpowers/specs/2026-08-08-device-display-preview-design.md` §22.
+Pure source/value/presentation rules live in `test/device-presentation.test.mjs`.
+`demo/smoke_device_preview_parity.mjs` compares the same live fixture across
+the interactive plan, `hp-device-preview` and `houseplan-space-card`, including
+semantic classes, icon/value/badges, scale variables, provider text and the
+public binding-status hook.
+
+- [ ] Every binding/display/icon/size/angle/control/temperature draft change
+      updates the preview before Save; Cancel writes neither config nor layout.
+- [ ] Working, open, cover, presence, short event, transition, alarm,
+      unavailable, media-neutral, composite-Power and `live_states: false`
+      explanations match the actual face.
+- [ ] The local activity demo lasts 3.3 seconds, sends no service call, survives
+      reduced motion as a static ring, and resets immediately on binding change,
+      real activity or alarm.
+- [ ] Provider metadata is cached between dialog openings and refreshed after
+      registry/config-entry changes; source integrations remain separate from
+      the binding provider.
+- [ ] Long provider/source/state text wraps without horizontal scroll; maximum
+      marker/ripple size fits the stage and reports its preview scale.
+- [ ] Derived temperature/humidity values keep the compact plan form (`22.4°`,
+      `48%`), while a direct entity value continues to use HA localization and
+      units.
+
+## Touch support and release gates
+
+The product contract is defined in `docs/TOUCH-SUPPORT.md`:
+
+| Surface | Touch release status |
+|---|---|
+| View and View dialogs/actions | Required and release-blocking |
+| Kiosk/wall tablet | Required and release-blocking |
+| Editor entry/exit and no accidental mutation during multi-touch | Safety floor; release-blocking |
+| Feature parity of Plan/Device/Background editors | Best effort; not a general release gate |
+
+All editors remain fully tested on desktop with mouse/keyboard. A touch-editor
+failure may be accepted only as a deliberate scope change with updated user
+documentation and test classification in the same change. “Best effort” cannot
+be used to waive data corruption, unsafe service calls, permission failures,
+missing destructive confirmation or an editor exception that breaks View.
+
 - [ ] Smoke harness itself (v1.43.2, audit T1/T2): every smoke asserts named
       facts via `check`/`checkAll` and exits non-zero on any mismatch or
       uncaught in-card exception; the suite runs in CI against a FRESHLY built
@@ -96,15 +171,17 @@
 
 ## Environments matrix
 
-Run the *core flows* (marked ★ below) in each environment at least once per minor release:
+Run View/kiosk core flows in every applicable touch environment. Run editor core
+flows in desktop environments; touch editors only need the safety floor and
+separately promised workflows:
 
-- [ ] Chrome / Edge (desktop, Windows or Linux)
-- [ ] Firefox (desktop) — SVG viewBox math and container queries differ historically
-- [ ] Safari (macOS) — pointer events / pinch behavior
-- [ ] HA Companion app, Android (cold start! the v1.7.2 race lived here)
-- [ ] HA Companion app, iOS
-- [ ] Tablet in kiosk/panel mode (wall-tablet scenario, landscape)
-- [ ] Phone portrait, narrow ≤400 px (adaptive header ≤620 px)
+- [ ] Chrome / Edge (desktop, Windows or Linux) — View + all editors
+- [ ] Firefox (desktop) — View + all editors; SVG viewBox math and container queries differ historically
+- [ ] Safari (macOS) — View + all editors; pointer events / pinch behavior
+- [ ] HA Companion app, Android — View only as the parity contract; cold start is mandatory
+- [ ] HA Companion app, iOS — View only as the parity contract
+- [ ] Tablet in kiosk/panel mode — View/kiosk, landscape, touch gestures
+- [ ] Phone portrait, narrow ≤400 px — View and View dialogs/actions
 - [ ] Dark theme and light theme (badges, dialogs, plan contrast)
 - [ ] RU profile locale and EN profile locale (+ `language:` card option forcing each)
 
@@ -130,7 +207,7 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
 - [ ] Devices: icon drag works, click opens the marker editor directly; +/👁/↺/⬡
       buttons; accent stage frame [manual]
 - [ ] Mode tabs hidden for non-admin users; segmented control highlights the active mode
-- [ ] Openings in View (v1.28.1): the door/window itself is a pure drawing — no
+- [ ] Openings in View (v1.28.1+): the door/window/gate itself is a pure drawing — no
       cursor change, no hover outline, no hit target, no click, regardless of
       bindings [manual]
 - [ ] The LOCK BADGE is the one exception: when a lock is bound it is shown and
@@ -677,15 +754,31 @@ Run the *core flows* (marked ★ below) in each environment at least once per mi
       rooms' solid strokes are trimmed out beneath it (hover doesn't bring
       them back), walls elsewhere stay solid; the dashes render ABOVE the
       glow pools [auto: smoke_openwall]
-- [ ] Open-wall hover (v1.37.1): with the tool active the cursor is default;
-      near a shared wall it turns pointer and the exact stretch that would
-      open is previewed (amber dashed); an already-open boundary previews red
-      solid (the click will close it); preview follows the cursor and clears
-      on miss [auto: smoke_openwall]
-- [ ] Open boundaries (v1.37.0): the Plan editor's "Virtual wall" tool
-      toggles a virtual wall between two rooms by clicking their shared wall
-      (pull like Split; miss → toast); open stretches render dashed (amber
-      highlight while the tool is active); glow light floods the whole
+- [ ] Unified Boundary tool: the Plan toolbar has exactly one Boundary button
+      and no separate Virtual wall / Physical wall buttons. A solid shared
+      wall shows a local start marker; two points on that same wall open the
+      chosen range. A dashed span previews the inherited physical wall body
+      and restores the whole canonical span with one click [auto:
+      smoke_openwall, smoke_openwall_hover]
+- [ ] Decor line style: a newly drawn or legacy line is solid and the drawing
+      toolbar has no dash control. Double-click it under Select, switch the
+      properties radio to Dashed and save: only that line receives
+      `line_style: dashed`, renders with a dash array, stays clickable inside
+      its gaps, and Undo restores the solid version [auto: smoke_decor]
+- [ ] Boundary hit safety: target widths remain 12 CSS px for a fine pointer
+      and 22 CSS px for touch at every zoom (or half the physical wall body,
+      whichever is larger); a dash accepts only 6/10 px past its endpoints.
+      Near an ambiguous junction the edit is refused until the pointer moves
+      farther away. Outer walls and boundaries covered by a partition, column
+      or unfinished contour are refused with an explanatory toast [manual +
+      auto: smoke_openwall_hover + open-spans unit resolver]
+- [ ] Boundary transient state: an invalid second point keeps P1 for retry; a
+      too-short range clears it. Esc, first Undo/Redo, editor/space navigation,
+      external config adoption, pointercancel and a second touch cancel P1
+      without advancing history. A double-click on a dash restores it once and
+      does not immediately arm a new opening [manual]
+- [ ] Open boundaries (v1.37.0): virtual stretches exist only between two
+      rooms on their shared wall and render dashed; glow light floods the whole
       connected open zone transitively, door sectors work from the zone's
       outer walls; merge/split keep links by room id [auto: smoke_openwall]
 - [ ] Sector wedge fix (v1.36.3): door sectors never darken the light INSIDE
@@ -995,7 +1088,7 @@ require hands on real hardware — they remain for the human pass.
       temp/humidity badges scale with the icon
 - [ ] With OS "reduce motion" enabled, activity/alarm rings are static
 
-## Doors & windows (v1.23.0)
+## Doors, windows & gates (v1.23.0+)
 
 - [ ] Markup → "Opening": a click away from any wall shows a toast; near a wall — the dialog
 - [ ] A door placed on a wall renders jambs + leaf + swing arc at the wall's angle; length in cm
@@ -1004,6 +1097,8 @@ require hands on real hardware — they remain for the human pass.
       closed → leaf lies along the wall, arc hidden; invert flips this
 - [ ] Sensor unavailable → the opening freezes at its static default (door open / window closed)
 - [ ] A door with a lock shows the padlock badge: green locked / orange unlocked / grey unknown
+- [ ] A gate defaults to 300 cm, has two equal leaves, no swing arc and opens
+      10° outwards; contact, inversion, lock, drag and resize anchoring match a door
 - [ ] Clicking an opening (or the padlock) in view mode opens the info card with both states;
       the lock can NOT be toggled from the plan
 - [ ] Flip toggles mirror the hinge side and the swing side
@@ -1064,9 +1159,9 @@ require hands on real hardware — they remain for the human pass.
       wall shows BOTH areas; all numbers update continuously
 - [ ] Stops: ~30 cm minimum for the own room AND the shrinking neighbour;
       a foreign room in the path (touch is ok, overlap never); islands
-      inside; a door/window on a shortening wall (the wall corner can not
+      inside; a door/window/gate on a shortening wall (the wall corner can not
       pass the opening edge)
-- [ ] A door/window ON the moving wall travels with it (openings x/y
+- [ ] A door/window/gate ON the moving wall travels with it (openings x/y
       recompute; angle unchanged)
 - [ ] Esc mid-drag cancels: the original geometry is back instantly
 - [ ] Click a room in the resize tool → dashed bbox frame with 4 corner
@@ -1135,11 +1230,11 @@ require hands on real hardware — they remain for the human pass.
       no rays at all, at/above 3° full strength; crossing the threshold fades
       the whole layer in/out over exactly 2 s (CSS on `.sunlayer`, the
       geometry never moves), and `prefers-reduced-motion` makes it instant.
-      Every other way of losing the wedges (editor, feature off, night, rain)
+      Every other way of losing the wedges (editor, feature off, night)
       stays instant [auto: smoke_sun «the 3° threshold» + unit rayAlpha/
       raysVisible/rayPeakAlpha; shots: demo/shot_sun_bright.mjs]
-- [ ] Weather entity (optional, global): cloudy fades the wedges, rain/snow
-      removes them, a dead/unknown weather sensor changes nothing
+- [ ] Weather independence: sunny, cloudy, rain and snow all leave the same
+      wedge geometry and peak opacity; a legacy `weather_entity` value is ignored
 - [ ] Sun geometry recomputes ONLY when the sun attributes or the config
       change — an unrelated `hass` tick reuses the memo
 - [ ] Editors (plan/devices/decor) render with NO wedges and NO day/night;
@@ -1459,9 +1554,9 @@ require hands on real hardware — they remain for the human pass.
       night — the rim is a subtle darker edge on the shaft, not a drawn contour
       around it [manual, visual]
 - [ ] **It lives and dies with the wedge**: below 3° it goes with the wedge in
-      the same two-second fade (not a frame before, not a frame after); rain or
-      an overcast `weather_entity` takes it away with the light; the editors
-      show neither; the kiosk and the plan view agree
+      the same two-second fade (not a frame before, not a frame after); weather
+      does not alter either layer; the editors show neither; the kiosk and the
+      plan view agree
       [auto: smoke_sun_rim + smoke_sun]
 - [ ] **A wall still stops it**: point the sun so a shaft runs into the
       opposite wall or into the inner corner of an L — the hairline stops on
@@ -1551,7 +1646,7 @@ require hands on real hardware — they remain for the human pass.
 - [ ] **The hooks are there and they are the config's ids**: open the plan's
       DOM (devtools → the card's shadow root) and check that a device marker
       carries `data-hp="device"`, `data-id`, `data-entity` and `data-area`; a
-      room `data-hp="room"` + `data-id` + `data-area`; a door/window
+      room `data-hp="room"` + `data-id` + `data-area`; a door/window/gate
       `data-hp="opening"` + `data-kind`; a decor shape `data-hp="decor"` +
       `data-kind`; a room caption `data-hp="room-label"`; a floor tab
       `data-hp="space-tab"`. The ids are the ones in your config, not DOM
@@ -1620,15 +1715,22 @@ require hands on real hardware — they remain for the human pass.
       path appears; room-card and tooltip m² both decrease to the same inner-
       contour area
       [auto: smoke_wall_thickness]
-- [ ] **Openings cut the slab**: a door/window on a thick wall leaves a gap in
-      the body; the door swing is offset toward the inner face; with
+- [ ] **Openings cut the slab**: a door/window/gate on a thick wall leaves a gap in
+      the body; the door swing is offset toward the inner face and gate leaves
+      toward the exterior face; with
       `hide_openings` the symbols hide but the cut remains
       [auto: smoke_wall_thickness]
-- [ ] **Door light uses the clear tunnel**: place an off-centre light beside a
-      door in a thick wall. In the neighbouring room the glow is limited by
+- [ ] **Door/gate light uses the clear tunnel**: place an off-centre light beside a
+      door or gate in a thick wall. In the neighbouring room the glow is limited by
       sight lines through both the near and far inner-face corners; neither
       side crosses a solid jamb return. Clearing wall thickness restores the
       wider centreline-based sector [auto: test/logic.test.mjs; manual visual]
+- [ ] **Wide gate stays compact**: add a 300–400 cm Gate. It has two equal
+      leaves with no swing arc; without a contact they open exactly 10°
+      outwards, and a closed/open contact changes the angle between 0° and
+      10°. A lock badge and Glow tunnel behave exactly like a door
+      [auto: test/logic.test.mjs + test/wall-thickness.test.mjs +
+      tests_backend/test_validation.py + smoke_styling_hooks]
 - [ ] **Shared once / clear → line / resize re-keys**: one body for a shared
       wall; clearing thickness restores the centreline; resizing a thick wall
       keeps the thickness on the moved stretch, including both atomic solid
@@ -1759,15 +1861,15 @@ require hands on real hardware — they remain for the human pass.
       editor. Open **Редактор подложки** — everything is back, editable, exactly
       where it was. Untick it: the plan looks as it did before you started
       [auto: smoke_hide_layers]
-- [ ] **«Скрыть проёмы»**: tick it on a space with doors and windows. The
+- [ ] **«Скрыть проёмы»**: tick it on a space with doors, windows and gates. The
       symbols are gone from View and from the Device editor; the **Plan editor
       still draws them**, or the Opening tool would be editing blind. Nothing
-      else changed: a lit room still spills light through the doorway, the sun
+      else changed: a lit room still spills light through a door/gate, the sun
       still comes in at the window, a door with a contact sensor still reports
       open/closed in the room card, and the resize tool still refuses to
       shorten a wall past its opening [auto: smoke_hide_layers, smoke_glow]
 - [ ] **Virtual walls follow the borders switch only in View** (owner 2026-08-05): make an
-      open boundary between two rooms (Plan → «Виртуальная стена»), then turn
+      open boundary between two rooms (Plan → «Граница», two points), then turn
       **«Всегда отображать границы комнат» OFF**. The dashed stretch goes with
       the borders — no floating dashes on a plan that draws no walls. Turn the
       borders back on and it returns. In Plan, Devices and Background editors

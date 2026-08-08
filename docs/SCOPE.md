@@ -6,6 +6,8 @@ idea appears, first find its row in this file; if there is none — it belongs t
 HA core, to another card, or nowhere. Companion documents:
 PRODUCT-IMPROVEMENT-PLAN.ru.md (current product audit and order of work),
 ROADMAP.md (engineering/quality backlog), UX-MODES.md (interaction model).
+TOUCH-SUPPORT.md fixes the input-support contract: touch is a guaranteed View
+surface, while every editor is desktop-first and best effort on touch.
 The old market snapshot is archived at `legacy/docs/PRODUCT-2026-07-05.md`.*
 
 ## Mission
@@ -28,6 +30,9 @@ obvious" is somebody else's job.
 Design consequence: **View mode is the product** for two of the three personas.
 Editors are admin-only tools and must never leak interactions into View
 (established by UX-MODES; lock guard, inert openings, no drag in View).
+The desktop browser with mouse/keyboard is the reference and recommended
+editing environment. Editor parity on touch is outside the product guarantee;
+deliberate degradation is allowed under `TOUCH-SUPPORT.md`.
 
 ## Core user jobs — the component must close these
 
@@ -43,8 +48,9 @@ Editors are admin-only tools and must never leak interactions into View
 
 ## Partially covered — improvement backlog stays inside these
 
-- **Touch ergonomics of the editors**: corner handles and grid clicks are small on
-  tablets; editors are desktop-first today. Improve, don't redesign.
+- **Touch ergonomics of the editors**: editors are desktop-first by product
+  decision. Touch support is best effort and may remain partial; spend on it
+  only when the improvement is cheap and does not complicate the desktop model.
 - **Value display**: single current value per device; units/precision follow HA
   formatting only.
 - **Accessibility**: `prefers-reduced-motion` only; no keyboard navigation in

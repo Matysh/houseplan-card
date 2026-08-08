@@ -118,7 +118,7 @@ solid-only in both full and static cards while a 20 cm body keeps its hatch.
 Their thickness is stored directly in centimetres: 1–100 cm for draft and
 partition segments, 1–150 cm for a column's outer side/diameter. Invalid input
 blocks the commit and reports the valid range; no editor path silently clamps
-it. These bodies are unioned with room-wall bodies only after door/window cuts,
+it. These bodies are unioned with room-wall bodies only after door/window/gate cuts,
 so an opening cannot punch a coincident independent wall. They are subtracted
 from the cached clean floor, and the same body set is used by Glow and sun-ray
 occlusion even when borders are hidden. A source inside/on a physical body is

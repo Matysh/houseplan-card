@@ -2,8 +2,8 @@
  * Shared STATIC renderer for a single houseplan space — used by the read-only
  * `houseplan-space-card`. Draws exactly what is CONFIGURED (plan background,
  * configured room borders/names, device markers at their saved positions), with NO interactivity
- * (pointer-events:none) and NO state subscription; room fills are rendered exactly as
- * configured on the full card (a snapshot of the current states passed via `hass`).
+ * (pointer-events:none). The owning card supplies current HA states and witnessed activity;
+ * device faces and room fills use the same semantic projection as the full plan.
  * Geometry/model math lives in space-geometry.ts (pure, unit-tested).
  */
 import { html, svg, nothing, type TemplateResult } from 'lit';
@@ -15,8 +15,13 @@ import {
 import { DEFAULT_ICON_RULES, compileIconRules, EXCLUDED_DOMAINS } from './rules';
 import { t, type Lang } from './i18n';
 import { bgModeOf, northDegOf, sunStateOf, dayPhase } from './sun';
-import type { ServerConfig } from './types';
+import type { DevItem, ServerConfig } from './types';
 import { physicalBodies } from './physical-geometry';
+import { activeRegistryHass, type HaRegistrySnapshot } from './ha-binding-status';
+import {
+  resolveDevicePresentation, type PresentationActivityRuntime,
+} from './device-presentation';
+import { deviceFaceStyle, renderDeviceFace } from './device-face';
 import {
   spaceModels, roomCenter, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, NORM_W,
   GRID_STEP_N, GRID_PITCH,
@@ -27,6 +32,7 @@ export { spaceModels } from './space-geometry';
 
 export interface StaticRenderOpts {
   hass: any;
+  registry?: HaRegistrySnapshot;
   cfg: ServerConfig;
   layout: Layout;
   spaceId: string;
@@ -34,6 +40,12 @@ export interface StaticRenderOpts {
   /** Measured CSS width of the static stage, used for screen-depth policies. */
   stageWidth?: number;
   lang: Lang;
+  /** Optional roster prepared by the card so its activity runtime sees the same instances. */
+  devices?: DevItem[];
+  activityRuntime?: ReadonlyMap<string, PresentationActivityRuntime>;
+  liveStates?: boolean;
+  showTemperature?: boolean;
+  showSignal?: boolean;
   /**
    * Resolve a stored content url to what the DOM may actually request — the
    * plan lives behind `requires_auth`, so it needs an `authSig` signature.
@@ -41,6 +53,41 @@ export interface StaticRenderOpts {
    * rather than an unsigned one, which would 401 (review R3-2).
    */
   displayUrl?: (raw: string) => string;
+}
+
+export interface StaticDeviceBuildOpts {
+  hass: any;
+  registry?: HaRegistrySnapshot;
+  cfg: ServerConfig;
+  lang: Lang;
+}
+
+/** Build the static card roster through the exact production device pipeline. */
+export function buildSpaceDevices(o: StaticDeviceBuildOpts): DevItem[] {
+  const models = spaceModels(o.cfg);
+  const areaToSpace: Record<string, string> = {};
+  for (const space of o.cfg.spaces || []) {
+    for (const room of (space as any).rooms || []) {
+      if (room.area) areaToSpace[room.area] = (space as any).id;
+    }
+  }
+  const excluded = o.cfg.settings?.exclude_integrations
+    ? new Set(o.cfg.settings.exclude_integrations) : EXCLUDED_DOMAINS;
+  const iconRules = compileIconRules(
+    o.cfg.settings?.icon_rules?.length ? o.cfg.settings.icon_rules : DEFAULT_ICON_RULES,
+  );
+  return buildDevices({
+    hass: o.hass,
+    registry: o.registry,
+    areaToSpace,
+    markers: o.cfg.markers || [],
+    settings: o.cfg.settings || {},
+    excluded,
+    showAll: !!o.cfg.settings?.show_all,
+    firstSpaceId: models[0]?.id || '',
+    loc: (key) => t(o.lang, key),
+    iconRules,
+  });
 }
 
 /**
@@ -55,24 +102,8 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const cfgSize = o.iconSize ?? 2.5;
   const iconPct = cfgSize > 8 ? 2.5 : cfgSize;
 
-  const areaToSpace: Record<string, string> = {};
-  for (const s of o.cfg.spaces || []) for (const r of (s as any).rooms || []) if (r.area) areaToSpace[r.area] = (s as any).id;
-  const excluded = o.cfg.settings?.exclude_integrations ? new Set(o.cfg.settings.exclude_integrations) : EXCLUDED_DOMAINS;
-  const iconRules = compileIconRules(
-    o.cfg.settings?.icon_rules?.length ? o.cfg.settings.icon_rules : DEFAULT_ICON_RULES,
-  );
-  const loc = (k: 'device.unnamed' | 'device.light_group' | 'device.fallback' | 'device.virtual') => t(o.lang, k);
-  const all = buildDevices({
-    hass: o.hass,
-    areaToSpace,
-    markers: o.cfg.markers || [],
-    settings: o.cfg.settings || {},
-    excluded,
-    showAll: !!o.cfg.settings?.show_all,
-    firstSpaceId: models[0]?.id || '',
-    loc,
-    iconRules,
-  });
+  const planHass = o.registry ? activeRegistryHass(o.hass, o.registry) : o.hass;
+  const all = o.devices || buildSpaceDevices(o);
   // Two lists, two jobs (HP-1510-01): AGGREGATION sees every device of the
   // space — hidden ones still count toward room LQI, same as the full card —
   // while RENDERING sees only the visible ones (there is no editor here, so
@@ -130,15 +161,15 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
         const fillC = fill === 'light'
           ? roomFillStyle(
               'light', null,
-              resolvedLightState(resolvedLightSources(o.hass, spaceDevs, r)),
+              resolvedLightState(resolvedLightSources(planHass, spaceDevs, r)),
               null, disp.tempMin, disp.tempMax, fillColorsOf(o.cfg?.settings),
             )
           : r.area
           ? roomFillStyle(
               fill,
-              fill === 'lqi' ? areaLqi(o.hass, spaceDevs, r.area) : null,
+              fill === 'lqi' ? areaLqi(planHass, spaceDevs, r.area) : null,
               'none',
-              fill === 'temp' ? areaTemp(o.hass, spaceDevs, r.area) : null,
+              fill === 'temp' ? areaTemp(planHass, spaceDevs, r.area) : null,
               disp.tempMin,
               disp.tempMax,
               fillColorsOf(o.cfg?.settings),
@@ -172,17 +203,19 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     const p = markerPos(d, o.layout, o.cfg, defPos, space);
     const left = ((p.x - vb[0]) / vb[2]) * 100;
     const top = ((p.y - vb[1]) / vb[3]) * 100;
-    // per-marker size and rotation, exactly as on the full card (HP-1513-01):
-    // the same stored marker must look the same on both cards. Geometry only —
-    // no live-state dressing here, the static card stays a schematic.
-    const scale = Number(d.marker?.size) > 0 ? Number(d.marker!.size) : 1;
-    const angle = Number(d.marker?.angle) || 0;
-    const st = [`left:${left}%`, `top:${top}%`];
-    if (scale !== 1) st.push(`--dev-scale:${scale}`);
-    return html`<div class="dev ${d.virtual ? 'virtual' : ''}"
+    const presentation = resolveDevicePresentation(planHass, d, {
+      liveStates: o.liveStates !== false,
+      showTemperature: o.showTemperature !== false,
+      showSignal: disp.showLqi ?? (o.showSignal !== false),
+      activityRuntime: o.activityRuntime?.get(d.id),
+    });
+    const st = [`left:${left}%`, `top:${top}%`, ...deviceFaceStyle(presentation)];
+    return html`<div class="dev ${presentation.classes.join(' ')} ${d.virtual ? 'virtual' : ''} ${presentation.valueText != null ? 'valonly' : ''}"
       data-hp="device" data-id="${d.id}" data-entity=${d.primary || nothing} data-area=${d.area || nothing}
+      data-binding-status=${d.bindingStatus?.kind === 'ha_disabled' ? 'ha-disabled' : d.bindingStatus?.kind || 'active'}
+      data-disabled-reason=${presentation.disabledReason ? presentation.disabledReason.replace('_', '-') : nothing}
       style="${st.join(';')}">
-      <ha-icon icon="${d.icon}" style=${angle ? `transform:rotate(${angle}deg)` : nothing}></ha-icon>
+      ${renderDeviceFace(presentation, { surface: 'static-card' })}
     </div>`;
   });
 

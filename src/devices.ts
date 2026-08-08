@@ -6,10 +6,16 @@ import { iconFor, iconFromDeviceClasses, DOMAIN_PRIORITY, FALLBACK_ICON, type Co
 import { averageLqi, isControllable } from './logic';
 import { isDevicePowerSwitch, isSemanticBinaryEntity } from './device-visual';
 import type { DevItem, Marker, ServerConfig } from './types';
+import {
+  activeRegistryHass, fullRegistryHass, haRegistrySnapshot, isRegistryEntryEnabled,
+  resolveHaBindingStatus, type HaRegistrySnapshot,
+} from './ha-binding-status';
 
 /** Build context: a slice of hass + config resolution. */
 export interface BuildCtx {
   hass: any;
+  /** Shared page-level full registry authority; omitted callers use its current snapshot. */
+  registry?: HaRegistrySnapshot;
   /** area_id → space_id (only zones bound to rooms). */
   areaToSpace: Record<string, string>;
   markers: Marker[];
@@ -28,6 +34,17 @@ export interface BuildCtx {
 export function entitiesByDevice(hass: any): Record<string, string[]> {
   const map: Record<string, string[]> = {};
   for (const [eid, ent] of Object.entries<any>(hass.entities)) {
+    if (!ent?.device_id || !isRegistryEntryEnabled(ent)) continue;
+    const parent = hass.devices?.[ent.device_id];
+    if (parent && !isRegistryEntryEnabled(parent)) continue;
+    (map[ent.device_id] = map[ent.device_id] || []).push(eid);
+  }
+  return map;
+}
+
+function allEntitiesByDevice(hass: any): Record<string, string[]> {
+  const map: Record<string, string[]> = {};
+  for (const [eid, ent] of Object.entries<any>(hass.entities || {})) {
     if (ent?.device_id) (map[ent.device_id] = map[ent.device_id] || []).push(eid);
   }
   return map;
@@ -424,12 +441,13 @@ export function lightGroups(hass: any, enabled: boolean): { eid: string; name: s
   if (!enabled) return [];
   const res: { eid: string; name: string; area: string }[] = [];
   for (const [eid, reg] of Object.entries<any>(hass.entities)) {
-    if (!eid.startsWith('light.') || reg.hidden) continue;
+    if (!eid.startsWith('light.') || reg.hidden || !isRegistryEntryEnabled(reg)) continue;
     let area: string | null = null;
     if (reg.platform === 'group') {
       area = reg.area_id || null;
     } else if (reg.device_id) {
       const dev = hass.devices[reg.device_id];
+      if (!isRegistryEntryEnabled(dev)) continue;
       if (dev?.model === 'Group') area = dev.area_id || reg.area_id || null;
       else continue;
     } else {
@@ -526,15 +544,20 @@ export function isRemovedPlanSource(
   return kind === 'entity' && isRemovedPlanEntity(hass, ref, removed);
 }
 
-function applyMarker(item: DevItem, m: Marker, hass: any, removed: RemovedPlanBindings): void {
+function applyMarker(
+  item: DevItem, m: Marker, hass: any, removed: RemovedPlanBindings,
+  registry: HaRegistrySnapshot,
+): void {
   const controls = effectiveMarkerControls(m.binding, m.controls, item.entities)
-    .filter((eid) => !isRemovedPlanEntity(hass, eid, removed));
+    .filter((eid) => !isRemovedPlanEntity(hass, eid, removed))
+    .filter((eid) => resolveHaBindingStatus(hass, 'entity:' + eid, registry).kind === 'active');
   // Keep persisted configuration lossless. Runtime consumers use the filtered
   // projection above; the dialog edits the original list and therefore cannot
   // silently write a temporarily suppressed control out of the marker.
   item.marker = m;
   item.controls = controls;
-  if (m.hidden) item.hidden = true;
+  item.userHidden = m.hidden === true;
+  item.hidden = item.userHidden || item.bindingStatus?.kind === 'ha_disabled';
   if (m.name) item.name = m.name;
   if (m.icon) item.icon = m.icon;
   if (m.model != null) item.model = m.model;
@@ -552,7 +575,10 @@ function applyMarker(item: DevItem, m: Marker, hass: any, removed: RemovedPlanBi
  * this function forever. Idempotent by construction.
  */
 export function seedHiddenBindings(ctx: Omit<BuildCtx, 'showAll' | 'loc'>): string[] {
-  const { hass: h, areaToSpace, markers, settings, excluded, iconRules } = ctx;
+  const baseHass = ctx.hass;
+  const registry = ctx.registry || haRegistrySnapshot(baseHass);
+  const h = activeRegistryHass(baseHass, registry);
+  const { areaToSpace, markers, settings, excluded, iconRules } = ctx;
   const groupLights = settings.group_lights !== false;
   const removed = removedPlanBindings(markers);
   const groups = lightGroups(h, groupLights)
@@ -566,6 +592,7 @@ export function seedHiddenBindings(ctx: Omit<BuildCtx, 'showAll' | 'loc'>): stri
     if (!area || !areaToSpace[area]) continue;
     if (dev.entry_type === 'service') continue;
     if (marked.has('device:' + dev.id)) continue;
+    if (resolveHaBindingStatus(baseHass, 'device:' + dev.id, registry).kind !== 'active') continue;
     // An entity tombstone suppresses that standalone binding, not the same
     // entity as data belonging to a still-live parent device.
     const entIds = entsBy[dev.id] || [];
@@ -587,13 +614,18 @@ export function seedHiddenBindings(ctx: Omit<BuildCtx, 'showAll' | 'loc'>): stri
 
 /** Filtering + light groups + markers (metadata/rebinding) + virtual ones. A hybrid. */
 export function buildDevices(ctx: BuildCtx): DevItem[] {
-  const { hass: h, areaToSpace, markers, settings, excluded, showAll, firstSpaceId, loc, iconRules } = ctx;
+  const baseHass = ctx.hass;
+  const registry = ctx.registry || haRegistrySnapshot(baseHass);
+  const h = activeRegistryHass(baseHass, registry);
+  const fullHass = fullRegistryHass(baseHass, registry);
+  const { areaToSpace, markers, settings, excluded, showAll, firstSpaceId, loc, iconRules } = ctx;
   const groupLights = settings.group_lights !== false;
   const removed = removedPlanBindings(markers);
   const groups = lightGroups(h, groupLights)
     .filter((g) => !isRemovedPlanEntity(h, g.eid, removed));
   const groupedAreas = new Set(groups.map((g) => g.area));
   const entsBy = entitiesByDevice(h);
+  const allEntsBy = allEntitiesByDevice(fullHass);
   const claimed = new Set<string>();
   for (const m of markers) {
     const [kind, ref] = m.binding.split(':');
@@ -609,6 +641,8 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
     if (!area || !areaToSpace[area]) continue;
     if (dev.entry_type === 'service') continue;
     if (claimed.has('device:' + dev.id)) continue; // a marker will take over below
+    const bindingStatus = resolveHaBindingStatus(baseHass, 'device:' + dev.id, registry);
+    if (bindingStatus.kind !== 'active') continue;
     const marker = markerFor('device', dev.id);
     if (marker && marker.hidden && !settings.filter_seeded) continue; // legacy: dropped entirely
     const entIds = entsBy[dev.id] || [];
@@ -639,6 +673,8 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
       space: areaToSpace[area],
       icon,
       entities: entIds,
+      allEntities: bindingStatus.allEntityIds,
+      bindingStatus,
       bindingKind: 'device',
       bindingRef: dev.id,
       pdfs: [],
@@ -661,6 +697,8 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
       space: areaToSpace[g.area],
       icon: 'mdi:lightbulb-group',
       entities: [g.eid],
+      allEntities: [g.eid],
+      bindingStatus: { kind: 'active', enabledEntityIds: [g.eid], allEntityIds: [g.eid] },
       primary: g.eid,
       bindingKind: 'entity',
       bindingRef: g.eid,
@@ -671,18 +709,23 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
   // 3) explicit markers (rebinding/metadata/virtual)
   for (const m of markers) {
     if (m.removed) continue;
+    const [kind, ref] = m.binding.split(':');
+    const markerBindingStatus = kind === 'device' || kind === 'entity'
+      ? resolveHaBindingStatus(baseHass, m.binding, registry) : null;
     // Hidden is a FLAG now, not an absence: the device is built (room LQI
     // still counts it) and the renderer decides. Legacy configs keep the old
     // "hidden = gone" until they are seeded (docs/FILTERING.md).
-    if (m.hidden && !settings.filter_seeded) continue;
-    const [kind, ref] = m.binding.split(':');
+    // HA-disabled still needs a manageable ghost even during that one-time
+    // legacy transition; it must not disappear just because user hidden was
+    // already true before the seeder ran.
+    if (m.hidden && !settings.filter_seeded && markerBindingStatus?.kind !== 'ha_disabled') continue;
     if (kind === 'device') {
-      const dev = h.devices[ref];
+      const bindingStatus = markerBindingStatus!;
+      if (bindingStatus.kind === 'unverified') continue;
+      const dev = fullHass.devices[ref];
       const area = m.area || dev?.area_id || '';
       const space = (area && areaToSpace[area]) || m.space || firstSpaceId;
-      const entIds = dev
-        ? (entsBy[dev.id] || [])
-        : [];
+      const entIds = bindingStatus.kind === 'active' ? bindingStatus.enabledEntityIds : [];
       let icon = dev
         ? resolveIcon(h, dev.name_by_user || dev.name || '', dev.model, entIds, iconRules)
         : 'mdi:help-circle';
@@ -695,19 +738,23 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
         space,
         icon,
         entities: entIds,
+        allEntities: bindingStatus.allEntityIds.length
+          ? bindingStatus.allEntityIds : (dev ? (allEntsBy[dev.id] || []) : []),
+        bindingStatus,
         bindingKind: 'device',
         bindingRef: ref,
       };
       item.primary = primaryEntity(h, entIds, icon);
       if (icon === 'mdi:thermometer' || icon === 'mdi:air-filter') item.temp = tempFor(h, entIds);
       if (item.primary && isHumEntity(h, item.primary)) item.hum = humFor(h, entIds);
-    if (item.primary && isHumEntity(h, item.primary)) item.hum = humFor(h, entIds);
-      applyMarker(item, m, h, removed);
+      applyMarker(item, m, fullHass, removed, registry);
       rest.push(item);
     } else if (kind === 'entity') {
-      if (isRemovedPlanEntity(h, ref, removed)) continue;
-      const reg = h.entities[ref];
-      const area = m.area || reg?.area_id || (reg?.device_id && h.devices[reg.device_id]?.area_id) || '';
+      if (isRemovedPlanEntity(fullHass, ref, removed)) continue;
+      const bindingStatus = markerBindingStatus!;
+      if (bindingStatus.kind === 'unverified') continue;
+      const reg = fullHass.entities[ref];
+      const area = m.area || reg?.area_id || (reg?.device_id && fullHass.devices[reg.device_id]?.area_id) || '';
       const space = (area && areaToSpace[area]) || m.space || firstSpaceId;
       const st = h.states[ref];
       const nm = reg?.name || st?.attributes?.friendly_name || ref;
@@ -720,14 +767,18 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
         area,
         space,
         icon,
-        entities: [ref],
-        primary: ref,
+        entities: bindingStatus.kind === 'active' ? [ref] : [],
+        allEntities: [ref],
+        bindingStatus,
+        primary: bindingStatus.kind === 'active' ? ref : undefined,
         bindingKind: 'entity',
         bindingRef: ref,
       };
-      if (icon === 'mdi:thermometer' || icon === 'mdi:air-filter') item.temp = tempFor(h, [ref]);
-      if (isHumEntity(h, ref)) item.hum = humFor(h, [ref]);
-      applyMarker(item, m, h, removed);
+      if ((icon === 'mdi:thermometer' || icon === 'mdi:air-filter') && item.entities.length) {
+        item.temp = tempFor(h, item.entities);
+      }
+      if (item.entities.length && isHumEntity(h, ref)) item.hum = humFor(h, item.entities);
+      applyMarker(item, m, fullHass, removed, registry);
       rest.push(item);
     } else {
       // virtual
@@ -741,14 +792,28 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
         space,
         icon: m.icon || 'mdi:map-marker',
         entities: [],
+        allEntities: [],
+        bindingStatus: { kind: 'active', enabledEntityIds: [], allEntityIds: [] },
         bindingKind: 'virtual',
         virtual: true,
       };
-      applyMarker(item, m, h, removed);
+      applyMarker(item, m, fullHass, removed, registry);
       rest.push(item);
     }
   }
   return rest;
+}
+
+/**
+ * Build one unsaved marker with the exact same registry, filtering, role and
+ * icon rules as the plan. The editor memoizes this call; keeping it as a thin
+ * projection over buildDevices prevents a second, subtly different preview
+ * implementation from growing beside the runtime one.
+ */
+export function deviceFromMarkerDraft(ctx: Omit<BuildCtx, 'markers'> & { marker: Marker }): DevItem | null {
+  const { marker, ...base } = ctx;
+  return buildDevices({ ...base, markers: [marker] })
+    .find((device) => device.id === marker.id) || null;
 }
 
 /**

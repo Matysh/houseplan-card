@@ -1,5 +1,7 @@
 /** Shared types of the House Plan card. */
 
+import type { HaBindingStatus } from './ha-binding-status';
+
 export interface RoomCfg {
   /** Rooms this one has an OPEN (virtual) boundary with - light flows through. */
   open_to?: string[] | null;
@@ -128,16 +130,16 @@ export interface Marker {
   use_climate_temp?: boolean | null;
 }
 
-/** A door or window: plan geometry (normalized coords), optionally live via entities. */
+/** A door, window or gate: plan geometry (normalized coords), optionally live via entities. */
 export interface OpeningCfg {
   id: string;
-  type: 'door' | 'window';
+  type: 'door' | 'window' | 'gate';
   x: number;       // center, normalized by plan width
   y: number;       // center, normalized by plan height
   angle: number;   // wall angle, degrees
   length: number;  // along the wall, normalized by plan width
   contact?: string | null; // binary_sensor / cover driving open-closed
-  lock?: string | null;    // lock entity (doors only)
+  lock?: string | null;    // lock entity (door-like openings: doors and gates)
   invert?: boolean;
   flip_h?: boolean; // hinge on the other jamb
   flip_v?: boolean; // opens to the other side of the wall
@@ -162,11 +164,17 @@ export interface DevItem {
   model: string;
   area: string;
   space: string;
-  /** "Hide from plan": built (so room LQI still counts it) but not rendered,
-   *  except ghosted in the device editor with "show hidden" on. */
+  /** Effective presentation hide: explicit user hide OR HA-disabled. */
   hidden?: boolean;
+  /** Persisted user choice only; never inferred from HA runtime status. */
+  userHidden?: boolean;
+  /** Central registry decision. Virtual/legacy items are active. */
+  bindingStatus?: HaBindingStatus;
   icon: string;
+  /** Active runtime entities only. */
   entities: string[];
+  /** Registry metadata only; never use for states/actions/aggregates. */
+  allEntities?: string[];
   primary?: string;
   temp?: number | null;
   hum?: number | null;

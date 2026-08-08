@@ -1063,3 +1063,35 @@ test('hidden lights cast no visible light, but count toward LQI', () => {
   assert.equal(areaLights(h, devices, 'living'), 'none', 'an invisible device casts no visible light');
   assert.equal(areaLightStats(h, devices, 'living'), null);
 });
+
+test('HA-disabled marker is built only as an inert service ghost', () => {
+  const devices = {
+    valve: dev('valve', 'Water valve', 'Valve', 'living', { disabled_by: 'user' }),
+  };
+  const entities = {
+    'switch.valve': {
+      entity_id: 'switch.valve', device_id: 'valve', platform: 'demo', disabled_by: null,
+    },
+  };
+  const h = mkHass({
+    devices,
+    entities,
+    states: { 'switch.valve': { state: 'on', attributes: {} } },
+  });
+  const registry = {
+    revision: 1, authoritative: true, access: 'full', devices, entities, lastSuccess: 1,
+  };
+  const auto = buildDevices(baseCtx(h, { registry, settings: { filter_seeded: true } }));
+  assert.deepEqual(auto, [], 'disabled auto-device is not discovered');
+
+  const [ghost] = buildDevices(baseCtx(h, {
+    registry,
+    settings: { filter_seeded: true },
+    markers: [{ id: 'valve', binding: 'device:valve', hidden: false }],
+  }));
+  assert.equal(ghost.hidden, true);
+  assert.equal(ghost.userHidden, false);
+  assert.equal(ghost.bindingStatus.kind, 'ha_disabled');
+  assert.deepEqual(ghost.entities, [], 'stale state cannot feed any runtime consumer');
+  assert.deepEqual(ghost.allEntities, ['switch.valve']);
+});

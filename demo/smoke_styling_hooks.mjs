@@ -4,7 +4,7 @@
 //   1) устройство: data-hp="device" + data-id + data-entity + data-area;
 //   2) комната: data-hp="room" + data-id + data-area;
 //   3) подпись комнаты: data-hp="room-label" + data-id (и в SVG, и в HTML-карточке);
-//   4) проём: data-hp="opening" + data-id + data-kind (door/window);
+//   4) проём: data-hp="opening" + data-id + data-kind (door/window/gate);
 //   5) декор: data-hp="decor" + data-id + data-kind (line/rect/ellipse/text);
 //   6) вкладка пространства: data-hp="space-tab" + data-id;
 //   7) «нет значения — нет атрибута»: у виртуального маркера нет data-entity,
@@ -75,14 +75,24 @@ const res = await page.evaluate(async () => {
   c._curSpaceCfg.openings = [
     { id: 'op_d', type: 'door', x: 0.55, y: 0.3, angle: 90, length: 0.09 },
     { id: 'op_w', type: 'window', x: 0.3, y: 0.14, angle: 0, length: 0.12 },
+    // bottom wall of r1: the room is above it, so an exterior gate must open
+    // toward +Y. The two compact leaves therefore rotate +10° / -10°.
+    { id: 'op_g', type: 'gate', x: 0.3, y: 0.58, angle: 0, length: 0.3 },
   ];
   c._cfgEpoch++; c.requestUpdate(); await c.updateComplete;
-  out.openingHookFindsBoth = qa('[data-hp="opening"]').length === 2;
+  out.openingHookFindsEveryType = qa('[data-hp="opening"]').length === 3;
   const door = q('[data-hp="opening"][data-kind="door"]');
   const win = q('[data-hp="opening"][data-kind="window"]');
+  const gate = q('[data-hp="opening"][data-kind="gate"]');
   out.openingKindDoor = door?.getAttribute('data-id') === 'op_d';
   out.openingKindWindow = win?.getAttribute('data-id') === 'op_w';
+  out.openingKindGate = gate?.getAttribute('data-id') === 'op_g';
   out.openingKeepsItsClass = !!door && door.classList.contains('opening');
+  const gateLeaves = [...(gate?.querySelectorAll('.op-leaf') || [])];
+  out.gateHasTwoLeaves = gateLeaves.length === 2;
+  out.gateOpensOnlyTenDegreesOutward = gateLeaves[0]?.getAttribute('style')?.includes('rotate(10deg)')
+    && gateLeaves[1]?.getAttribute('style')?.includes('rotate(-10deg)')
+    && !gate?.querySelector('.op-arc');
 
   // ============ 5. декор ============
   c._curSpaceCfg.decor = [

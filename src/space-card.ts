@@ -1,17 +1,24 @@
 /**
  * houseplan-space-card — a READ-ONLY, static schematic of a single houseplan space,
  * embeddable on any dashboard. Renders exactly what is configured (plan + configured
- * room borders/names + device markers at their saved positions) with NO interactivity
- * (no clicks/hover/tooltips/drag/more-info) and NO live states. A footer button opens
+ * room borders/names + live device markers at their saved positions) with NO marker interactivity
+ * (no clicks/hover/tooltips/drag/more-info). A footer button opens
  * the space in the full component via a deep-link (`#space=<id>`).
  */
 import { LitElement, html, nothing, css, type TemplateResult, type PropertyValues } from 'lit';
 import { cardStyles } from './styles';
-import { renderSpaceStatic, spaceModels } from './space-render';
+import { buildSpaceDevices, renderSpaceStatic, spaceModels } from './space-render';
 import { getConfig, onConfigChange, cachedSnapshot, type HpConfigSnapshot } from './config-store';
 import { t, langOf, type Lang } from './i18n';
 import { ContentSigner } from './signing';
 import { referencedContentUrls } from './logic';
+import { acquireHaRegistries, activeRegistryHass, haRegistrySnapshot } from './ha-binding-status';
+import { edgeActivity } from './device-visual';
+import {
+  presentationSourceSignature, resolvePresentationSources,
+  type PresentationActivityRuntime,
+} from './device-presentation';
+import type { DevItem } from './types';
 import './space-editor';
 
 const fireEvent = (node: EventTarget, type: string, detail?: unknown) => {
@@ -32,7 +39,15 @@ interface SpaceCardConfig {
   button_label?: string;
   button_target?: string;
   icon_size?: number;
+  show_temperature?: boolean;
+  live_states?: boolean;
+  show_signal?: boolean;
   language?: string;
+}
+
+interface StaticActivityRuntime extends PresentationActivityRuntime {
+  last: Record<string, string>;
+  timer: number;
 }
 
 class HouseplanSpaceCard extends LitElement {
@@ -44,6 +59,27 @@ class HouseplanSpaceCard extends LitElement {
   private _stageWidth = 0;
   private _stageObserver?: ResizeObserver;
   private _observedStage?: HTMLElement;
+  private _haRegistryRelease?: () => void;
+  private _haRegistryConnection: any = null;
+  private _haRegistryRevision = -1;
+  private _devices: DevItem[] = [];
+  private _activityRuntime = new Map<string, StaticActivityRuntime>();
+  private _onHaRegistryUpdate = () => {
+    const revision = haRegistrySnapshot(this.hass).revision;
+    if (revision === this._haRegistryRevision) return;
+    this._haRegistryRevision = revision;
+    this.requestUpdate();
+  };
+
+  private _ensureHaRegistryAuthority(): void {
+    const connection = this.hass?.connection || null;
+    if (!connection || connection === this._haRegistryConnection) return;
+    this._haRegistryRelease?.();
+    this._haRegistryConnection = connection;
+    this._haRegistryRevision = -1;
+    this._haRegistryRelease = acquireHaRegistries(this.hass, this._onHaRegistryUpdate);
+    this._onHaRegistryUpdate();
+  }
 
   static properties = {
     hass: { attribute: false },
@@ -58,20 +94,28 @@ class HouseplanSpaceCard extends LitElement {
   public static getStubConfig(hass: any): Partial<SpaceCardConfig> {
     const snap = cachedSnapshot();
     const first = spaceModels(snap?.config || null)[0]?.id || '';
-    return { type: 'custom:houseplan-space-card', space: first, show_button: true };
+    return {
+      type: 'custom:houseplan-space-card', space: first, show_button: true,
+      live_states: true, show_temperature: true, show_signal: true,
+    };
   }
 
   public setConfig(config: SpaceCardConfig): void {
     if (!config || !config.space) {
       throw new Error('houseplan-space-card: "space" is required');
     }
-    this._config = { show_button: true, button_target: '/plan-doma', ...config };
+    this._config = {
+      show_button: true, button_target: '/plan-doma',
+      live_states: true, show_temperature: true, show_signal: true,
+      ...config,
+    };
     // instant paint from the full card's localStorage snapshot, refresh in the background
     this._snap = this._snap || cachedSnapshot();
   }
 
   public connectedCallback(): void {
     super.connectedCallback();
+    if (this.hass) this._ensureHaRegistryAuthority();
     this._unsub = onConfigChange(() => {
       this._loading = false;
       this._snap = null;
@@ -88,13 +132,94 @@ class HouseplanSpaceCard extends LitElement {
     this._stageObserver = undefined;
     this._observedStage = undefined;
     this._signer.dispose();
+    this._haRegistryRelease?.();
+    this._haRegistryRelease = undefined;
+    this._haRegistryConnection = null;
+    for (const runtime of this._activityRuntime.values()) window.clearTimeout(runtime.timer);
+    this._activityRuntime.clear();
     super.disconnectedCallback();
   }
 
   protected willUpdate(changed: PropertyValues): void {
+    if (changed.has('hass') && this.hass) this._ensureHaRegistryAuthority();
     if (this.hass && !this._loading && (!this._snap || changed.has('hass'))) {
       if (!this._snap || !this._loadedOnce) this._load();
     }
+    this._refreshDevices();
+  }
+
+  private _stampActivity(runtime: StaticActivityRuntime, kind: 'event' | 'transition'): void {
+    if (runtime.flashTs && Date.now() - runtime.flashTs < 3300
+        && runtime.flashKind === 'event' && kind === 'transition') return;
+    runtime.flashTs = Date.now();
+    runtime.flashKind = kind;
+    runtime.gen++;
+    window.clearTimeout(runtime.timer);
+    runtime.timer = window.setTimeout(() => this.requestUpdate(), 3360);
+  }
+
+  /** Track witnessed edges for the read-only card without inventing activity on first load. */
+  private _syncActivity(devices: DevItem[], planHass: any): void {
+    if (this._config?.live_states === false) {
+      for (const runtime of this._activityRuntime.values()) window.clearTimeout(runtime.timer);
+      this._activityRuntime.clear();
+      return;
+    }
+    const live = new Set<string>();
+    for (const device of devices) {
+      if (device.hidden) continue;
+      live.add(device.id);
+      const sources = resolvePresentationSources(planHass, device);
+      const samples = sources.samples;
+      const signature = presentationSourceSignature(
+        planHass, device, this._config?.show_temperature !== false, sources,
+      );
+      let runtime = this._activityRuntime.get(device.id);
+      if (!runtime || runtime.sources !== signature) {
+        if (runtime) window.clearTimeout(runtime.timer);
+        runtime = {
+          sources: signature,
+          last: Object.fromEntries(samples.map((sample) => [sample.eid, sample.state])),
+          flashTs: 0,
+          flashKind: null,
+          timer: 0,
+          gen: 0,
+        };
+        this._activityRuntime.set(device.id, runtime);
+        continue;
+      }
+      if (runtime.flashKind === 'transition'
+          && samples.some((sample) => sample.activity === 'transition')) {
+        window.clearTimeout(runtime.timer);
+        runtime.flashTs = 0;
+        runtime.flashKind = null;
+      }
+      let edge: 'event' | 'transition' | null = null;
+      for (const sample of samples) {
+        const found = edgeActivity(runtime.last[sample.eid], sample);
+        if (found === 'event' || (!edge && found)) edge = found;
+        runtime.last[sample.eid] = sample.state;
+      }
+      if (edge) this._stampActivity(runtime, edge);
+    }
+    for (const [id, runtime] of this._activityRuntime) {
+      if (live.has(id)) continue;
+      window.clearTimeout(runtime.timer);
+      this._activityRuntime.delete(id);
+    }
+  }
+
+  private _refreshDevices(): void {
+    if (!this.hass || !this._snap?.config || !this._config) return;
+    const registry = haRegistrySnapshot(this.hass);
+    const devices = buildSpaceDevices({
+      hass: this.hass,
+      registry,
+      cfg: this._snap.config,
+      lang: this._lang,
+    });
+    this._syncActivity(devices, activeRegistryHass(this.hass, registry));
+    this._devices = devices;
   }
 
   protected updated(): void {
@@ -182,6 +307,12 @@ class HouseplanSpaceCard extends LitElement {
       lang: this._lang,
       // resolved at render time: a url baked in earlier would be the unsigned one
       displayUrl: (raw) => this._signer.display(this.hass, raw),
+      registry: haRegistrySnapshot(this.hass),
+      devices: this._devices,
+      activityRuntime: this._activityRuntime,
+      liveStates: this._config.live_states !== false,
+      showTemperature: this._config.show_temperature !== false,
+      showSignal: this._config.show_signal !== false,
     });
     if (!stage) {
       return this._errorCard(t(this._lang, 'space_card.not_found', { id: spaceId }));
@@ -298,7 +429,7 @@ if (!(window as any).customCards.find((c: any) => c.type === 'houseplan-space-ca
   (window as any).customCards.push({
     type: 'houseplan-space-card',
     name: 'House Plan — Space (static)',
-    description: 'Read-only static schematic of a single houseplan space, with a deep-link button.',
+    description: 'Read-only live schematic of a single houseplan space, with a deep-link button.',
     preview: false,
     documentation: 'https://github.com/Matysh/houseplan-card',
   });

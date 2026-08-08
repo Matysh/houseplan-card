@@ -79,7 +79,7 @@ tested. Input is a list of **items**, one per drawn/placed object:
 
 * every room (its own bounding box — polygon or legacy rect);
 * the backdrop image rectangle, when the space has one;
-* every opening (door/window) end-to-end segment;
+* every opening (door/window/gate) end-to-end segment;
 * every decor shape;
 * every device the layout actually places in this space **and that the card
   actually draws** — a HIDDEN device (docs/FILTERING.md) is not content: the

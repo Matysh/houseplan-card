@@ -4,12 +4,12 @@ import {
   norm360, planSunAngle, sunDirOnPlan, dayPhase,
   isExteriorWall, windowWallInfo, windowLit,
   rayLength, rayQuad, clipToRoom, computeSunRays,
-  rayAlpha, rayColor, cloudFactor, RAY_MAX_ALPHA,
+  rayAlpha, rayColor, RAY_MAX_ALPHA,
   raysVisible, rayPeakAlpha, RAY_ELEVATION_MIN, RAY_FADE_MS,
   RAY_LENGTH_K, RAY_FADE_END, rayStops, RAY_MIN_COS,
   rimStops, rimPeakAlpha, rayRimEdges, RIM_MAX_ALPHA, RIM_COLOR,
   SKY_SNAP_DEG, skyNeedsSnap, skyElevation,
-  northDegOf, bgModeOf, sunRaysOn, weatherEntityOf, sunStateOf,
+  northDegOf, bgModeOf, sunRaysOn, sunStateOf,
 } from '../test-build/sun.js';
 
 const near = (a, b, eps = 1e-9) => Math.abs(a - b) < eps;
@@ -167,11 +167,7 @@ test('rimStops: the rim dies on exactly the same curve as the fill', () => {
   // black, and visible on paper without becoming an ink contour on a dark scene
   assert.equal(RIM_COLOR, '#000000');
   assert.ok(RIM_MAX_ALPHA >= 0.35 && RIM_MAX_ALPHA <= 0.5, 'the owner\'s 0.35..0.5 window');
-  assert.ok(near(rimPeakAlpha(1), RIM_MAX_ALPHA));
-  assert.ok(near(rimPeakAlpha(), RIM_MAX_ALPHA));       // clear sky by default
-  assert.ok(near(rimPeakAlpha(0.4), RIM_MAX_ALPHA * 0.4)); // clouds dim it too
-  assert.equal(rimPeakAlpha(0), 0);                     // rain takes it with the light
-  assert.ok(near(rimPeakAlpha(5), RIM_MAX_ALPHA));      // garbage cloud factor clamps
+  assert.ok(near(rimPeakAlpha(), RIM_MAX_ALPHA));
 });
 
 test('rayRimEdges: the two SIDE edges only, cut exactly like the wedge', () => {
@@ -436,23 +432,17 @@ test('rayAlpha: nothing below 3°, full strength above (owner 2026-08-03)', () =
   assert.ok(near(rayAlpha(3.1), RAY_MAX_ALPHA));
   assert.ok(near(rayAlpha(30), RAY_MAX_ALPHA));
   assert.ok(near(rayAlpha(89), RAY_MAX_ALPHA));  // no elevation shaping at all
-  // clouds still scale it, rain still kills it
-  assert.ok(near(rayAlpha(30, 0.25), RAY_MAX_ALPHA * 0.25));
-  assert.equal(rayAlpha(30, 0), 0);
 });
 
-test('raysVisible / rayPeakAlpha: the threshold and the cloud-only ceiling', () => {
+test('raysVisible / rayPeakAlpha: the threshold and fixed ceiling', () => {
   assert.equal(RAY_ELEVATION_MIN, 3);
   assert.equal(RAY_FADE_MS, 2000); // «ровно 2 секунды», mirrored in styles.ts
   assert.equal(raysVisible(2.9), false);
   assert.equal(raysVisible(3), true);
   assert.equal(raysVisible(45), true);
   assert.equal(raysVisible(-10), false);
-  // the peak is what the gradient uses while the layer fades — cloud only
+  // the peak is fixed: weather does not participate in sunlight rendering
   assert.ok(near(rayPeakAlpha(), RAY_MAX_ALPHA));
-  assert.ok(near(rayPeakAlpha(1), RAY_MAX_ALPHA));
-  assert.ok(near(rayPeakAlpha(0.4), RAY_MAX_ALPHA * 0.4));
-  assert.equal(rayPeakAlpha(0), 0);
 });
 
 test('RAY_MAX_ALPHA is the brighter 0.3 ceiling (owner 2026-08-03)', () => {
@@ -463,24 +453,6 @@ test('rayColor: warm at the horizon, neutral by day', () => {
   assert.equal(rayColor(1), '#ff9a45');
   assert.equal(rayColor(0), '#ffe9c2');
   assert.notEqual(rayColor(0.5), rayColor(0));
-});
-
-test('cloudFactor: the state map, garbage-safe', () => {
-  assert.equal(cloudFactor('sunny'), 1);
-  assert.equal(cloudFactor('clear-night'), 1);
-  assert.equal(cloudFactor('partlycloudy'), 0.7);
-  assert.equal(cloudFactor('cloudy'), 0.4);
-  assert.equal(cloudFactor('overcast'), 0.25);
-  assert.equal(cloudFactor('fog'), 0.25);
-  assert.equal(cloudFactor('rainy'), 0);
-  assert.equal(cloudFactor('pouring'), 0);
-  assert.equal(cloudFactor('snowy'), 0);
-  assert.equal(cloudFactor('lightning-rainy'), 0);
-  assert.equal(cloudFactor('unknown'), 1);
-  assert.equal(cloudFactor('unavailable'), 1);
-  assert.equal(cloudFactor(null), 1);
-  assert.equal(cloudFactor(undefined), 1);
-  assert.equal(cloudFactor('CLOUDY'), 0.4);
 });
 
 test('northDegOf: space override wins, strict int 0–359, null = inert', () => {
@@ -513,10 +485,7 @@ test('sunRaysOn: default OFF, per-space tri-state inherit', () => {
   assert.equal(sunRaysOn({ sun_rays: 'yes' }, {}), false);
 });
 
-test('weatherEntityOf / sunStateOf: strings and hass shapes, garbage-safe', () => {
-  assert.equal(weatherEntityOf({ weather_entity: 'weather.home' }), 'weather.home');
-  assert.equal(weatherEntityOf({ weather_entity: '  ' }), null);
-  assert.equal(weatherEntityOf({}), null);
+test('sunStateOf: hass shapes, garbage-safe', () => {
   assert.deepEqual(
     sunStateOf({ states: { 'sun.sun': { attributes: { azimuth: 120.5, elevation: -3 } } } }),
     { azimuth: 120.5, elevation: -3 },

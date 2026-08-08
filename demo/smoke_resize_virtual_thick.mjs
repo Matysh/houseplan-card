@@ -34,8 +34,8 @@ const res = await page.evaluate(async () => {
 
   // The two-click rubber band used to be below .wallbodies and disappeared
   // exactly where it crossed the real T receiver.
-  c._tool = 'openwall';
-  c._openWallClick([550, 200]);
+  c._tool = 'boundary';
+  c._boundaryClick([550, 200]);
   c._cursorPt = [550, 300];
   await upd();
   const bodyGroup = sr().querySelector('.wallbodies');
@@ -44,7 +44,7 @@ const res = await page.evaluate(async () => {
   out.virtualPreviewAboveReal = !!bodyGroup && !!virtualGroup
     && !!(bodyGroup.compareDocumentPosition(virtualGroup) & Node.DOCUMENT_POSITION_FOLLOWING);
 
-  c._openWallClick([550, 300]);
+  c._boundaryClick([550, 300]);
   c._cursorPt = null;
   await upd();
   out.partialSpanCreated = (sp().open_spans || []).length === 1;

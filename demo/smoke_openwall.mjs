@@ -4,17 +4,21 @@ const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
-  c._setMode('plan'); c._tool = 'openwall'; await c.updateComplete;
+  c._setMode('plan'); c._tool = 'boundary'; await c.updateComplete;
   // Shared wall r1|r2 at x=550, y from 140..460. Two-click open full shared stretch.
-  c._openWallClick([550, 140]);
-  c._openWallClick([550, 460]);
+  c._boundaryClick([550, 140]);
+  c._boundaryClick([550, 460]);
   await c.updateComplete;
   const r1 = c._curSpaceCfg.rooms.find((r) => r.id === 'r1');
   const r2 = c._curSpaceCfg.rooms.find((r) => r.id === 'r2');
   out.linked = (r1.open_to || []).includes('r2') && (r2.open_to || []).includes('r1');
   out.hasSpans = Array.isArray(c._curSpaceCfg.open_spans) && c._curSpaceCfg.open_spans.length > 0;
   out.dashes = sr().querySelectorAll('.openwall').length > 0;
-  out.hotClass = !!sr().querySelector('.openwalls.hot');
+  const boundaryButtons = [...sr().querySelectorAll('.editbar button')]
+    .filter((b) => /Boundary|Граница/.test(b.textContent || ''));
+  out.oneBoundaryTool = boundaryButtons.length === 1;
+  out.boundaryToolUsesReviewedIcon = boundaryButtons[0]?.querySelector('ha-icon')
+    ?.getAttribute('icon') === 'mdi:border-style';
   // View: trimmed outlines + dash
   c._setMode('view'); await c.updateComplete;
   out.noedge = sr().querySelectorAll('.room.noedge').length >= 2;
@@ -35,19 +39,16 @@ const res = await page.evaluate(async () => {
     return Math.abs(x1 - 550) < 0.5 && Math.abs(x2 - 550) < 0.5
       && Math.min(y1, y2) < midY && Math.max(y1, y2) > midY;
   });
-  c._tool = 'openwall';
-  c._openWallClick([550, 300]); await c.updateComplete;
-  out.openToolCannotClose = (c._curSpaceCfg.open_spans || []).length > 0;
-  c._tool = 'closewall'; await c.updateComplete;
-  // Closing is a separate, single-purpose action (UX-02).
-  c._closeWallClick([550, 300]); await c.updateComplete;
+  c._tool = 'boundary';
+  c._boundaryClick([550, 300]); await c.updateComplete;
+  out.restoredBySameTool = !(c._curSpaceCfg.open_spans || []).length;
   out.toggledOff = !(c._curSpaceCfg.rooms.find((r) => r.id === 'r1').open_to || []).includes('r2');
   out.dashesGone = sr().querySelectorAll('.openwall').length === 0;
-  c._closeWallClick([100, 100]);
+  c._boundaryClick([100, 100]);
   out.missToast = !!c._toast;
   // reopen for glow
-  c._openWallClick([550, 140]);
-  c._openWallClick([550, 460]);
+  c._boundaryClick([550, 140]);
+  c._boundaryClick([550, 460]);
   await c.updateComplete;
   c._setMode('view'); await c.updateComplete;
   c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== c._space ? s : ({
@@ -64,20 +65,19 @@ const res = await page.evaluate(async () => {
     rr2.open_to = [...(rr2.open_to || []), 'r3'];
     rr3.open_to = [...(rr3.open_to || []), 'r2'];
     // legacy open_to without spans still expands on read for cuts — force spans for r2-r3
-    c._openWallClick = c._openWallClick.bind(c);
-    c._setMode('plan'); c._tool = 'openwall';
+    c._setMode('plan'); c._tool = 'boundary';
     // shared r2|r3 at y=460, x 550..960
-    c._openWallClick([700, 460]);
-    c._openWallClick([900, 460]);
+    c._boundaryClick([700, 460]);
+    c._boundaryClick([900, 460]);
     await c.updateComplete;
     c._setMode('view'); await c.updateComplete;
     const clip2 = sr().querySelector('defs clipPath[id^="hp-glowclip"]');
     out.transitive = clip2 ? clip2.querySelectorAll('path').length >= 3 : false;
   } else out.transitive = 'no r3';
   // outer wall refuses open
-  c._setMode('plan'); c._tool = 'openwall';
+  c._setMode('plan'); c._tool = 'boundary';
   c._toast = null;
-  c._openWallClick([40, 300]);
+  c._boundaryClick([40, 300]);
   out.outerToast = !!(c._toast && String(c._toast).length);
   return out;
 });
