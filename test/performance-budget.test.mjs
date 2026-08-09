@@ -13,6 +13,8 @@ const budgets = {
   },
   longTasks: {
     maxSingleMs: 200, maxCountP95: 10, maxTotalP95Ms: 500,
+    maxSingleRegressionRatio: 0.5, maxSingleNoiseAllowanceMs: 20,
+    maxCountRegressionRatio: 0.5, countNoiseAllowance: 2,
     maxTotalRegressionRatio: 0.5, noiseAllowanceMs: 20,
   },
   heap: {
@@ -73,6 +75,17 @@ test('performance budget rejects long tasks, heap growth, cache growth and missi
       'renderedDevices',
     ]),
   );
+});
+
+test('performance budget compares single/count Long Tasks to the same-runner baseline', () => {
+  const baseline = report({ long: 100 });
+  baseline.longTasks.countP95 = 4;
+  const candidate = report({ long: 130 });
+  candidate.longTasks.countP95 = 6;
+  const result = evaluatePerformanceBudget({ baseline, candidate, budgets });
+  assert.equal(result.pass, true);
+  assert.equal(result.checks.find((check) => check.id === 'longTask.maxSingleMs')?.baseline, 100);
+  assert.equal(result.checks.find((check) => check.id === 'longTask.countP95')?.baseline, 4);
 });
 
 test('performance budget refuses incomparable runtime profiles', () => {

@@ -34,7 +34,8 @@ not normal-performance targets; the base-relative comparison catches smaller
 regressions. Small fast operations receive an absolute noise
 allowance so normal scheduler jitter does not become a false regression. Heap,
 Long Tasks, warmed-cache growth and the expected rendered-device count are
-gated separately. Both raw reports and the comparison are always uploaded as
+gated separately. Long-Task maximum/count/total checks use the same
+relative-plus-absolute policy as timings. Both raw reports and the comparison are always uploaded as
 the `large-house-performance` artifact, and the table is written to the GitHub
 job summary.
 
@@ -71,3 +72,10 @@ changing the meaning of `large-house-v1`.
 The `cleanFloor` entry ceiling is 160: the reviewed fixture currently warms
 120 deterministic room/physical-body entries, and the extra 40 slots allow a
 legitimate fixture extension without weakening the separate zero-growth gate.
+
+The absolute switch-cycle/Long-Task ceilings include roughly 20–30% headroom
+over the paired 2026-08-09 Ubuntu run where the unchanged base and candidate
+both reached about 5.3 s / 2.45 s / 22 tasks / 9.9 s total under runner load.
+The same-runner relative checks remain tighter for an actual candidate-only
+regression; this prevents an overloaded but symmetric runner from turning an
+absolute safety ceiling into a flaky code-regression signal.

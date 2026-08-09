@@ -49,13 +49,17 @@
       "stat": "median",
       "maxRegressionRatio": 0.35,
       "noiseAllowanceMs": 250,
-      "hardMaxMs": 5000
+      "hardMaxMs": 7000
     }
   },
   "longTasks": {
-    "maxSingleMs": 2000,
-    "maxCountP95": 20,
-    "maxTotalP95Ms": 8000,
+    "maxSingleMs": 3000,
+    "maxSingleRegressionRatio": 0.3,
+    "maxSingleNoiseAllowanceMs": 250,
+    "maxCountP95": 30,
+    "maxCountRegressionRatio": 0.35,
+    "countNoiseAllowance": 3,
+    "maxTotalP95Ms": 12000,
     "maxTotalRegressionRatio": 0.3,
     "noiseAllowanceMs": 150
   },

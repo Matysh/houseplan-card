@@ -95,8 +95,28 @@ export const evaluatePerformanceBudget = ({ candidate, baseline, budgets }) => {
     return windows.length > 0 && windows.every((item) => item?.supported === true);
   });
   checks.push({ id: 'longTask.available', actual: longTasksAvailable ? 1 : 0, limit: 1, pass: longTasksAvailable });
-  checks.push(makeCheck('longTask.maxSingleMs', candidateLong.maxSingleMs, budgets.longTasks.maxSingleMs));
-  checks.push(makeCheck('longTask.countP95', candidateLong.countP95, budgets.longTasks.maxCountP95));
+  const singleRegressionLimit = relativeLimit(
+    baselineLong.maxSingleMs,
+    budgets.longTasks.maxSingleRegressionRatio,
+    budgets.longTasks.maxSingleNoiseAllowanceMs,
+  );
+  checks.push(makeCheck(
+    'longTask.maxSingleMs',
+    candidateLong.maxSingleMs,
+    Math.min(budgets.longTasks.maxSingleMs, singleRegressionLimit),
+    { baseline: baselineLong.maxSingleMs, hardLimit: budgets.longTasks.maxSingleMs },
+  ));
+  const countRegressionLimit = relativeLimit(
+    baselineLong.countP95,
+    budgets.longTasks.maxCountRegressionRatio,
+    budgets.longTasks.countNoiseAllowance,
+  );
+  checks.push(makeCheck(
+    'longTask.countP95',
+    candidateLong.countP95,
+    Math.min(budgets.longTasks.maxCountP95, countRegressionLimit),
+    { baseline: baselineLong.countP95, hardLimit: budgets.longTasks.maxCountP95 },
+  ));
   const longRegressionLimit = relativeLimit(
     baselineLong.totalP95Ms,
     budgets.longTasks.maxTotalRegressionRatio,
