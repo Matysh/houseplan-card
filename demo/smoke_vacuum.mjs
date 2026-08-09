@@ -59,12 +59,13 @@ const out = await page.evaluate(async () => {
       'camera.robo_map': { state: 'idle', attributes: mkAttrs(x, y) } } };
     await c.updateComplete; await new Promise((r) => setTimeout(r, 30));
   }
-  const trail = sr().querySelector('.vactrail polyline');
+  const trail = sr().querySelector('.vactrail path.case');
   // the trail LAGS one point behind the puck: after 3 telemetry points only
   // the first two are drawn — a segment never outruns the icon (owner)
-  o.trailDrawn = !!trail && trail.getAttribute('points').split(' ').length === 2;
-  o.trailScaledByMatrix = !!trail && trail.getAttribute('points').startsWith('300.0,400.0');
-  o.trailBehindPuck = !!trail && !trail.getAttribute('points').includes('450.0,550.0');
+  const localD = trail?.getAttribute('d') || '';
+  o.trailDrawn = (localD.match(/[ML]/g) || []).length === 2;
+  o.trailScaledByMatrix = localD.startsWith('M 300.0 400.0');
+  o.trailBehindPuck = !localD.includes('450.0 550.0');
   // a zoom/view change TELEPORTS the puck instead of gliding across the plan
   c._applyView(1.35); c.requestUpdate(); await c.updateComplete;
   o.zoomTeleports = sr().querySelector('.vacpuck').classList.contains('jump');
@@ -74,7 +75,7 @@ const out = await page.evaluate(async () => {
   const tcase = sr().querySelector('.vactrail .case');
   const tcore = sr().querySelector('.vactrail .core');
   o.trailCasing = !!tcase && !!tcore
-    && tcase.getAttribute('points') === tcore.getAttribute('points')
+    && tcase.getAttribute('d') === tcore.getAttribute('d')
     && parseFloat(getComputedStyle(tcase).strokeWidth) > parseFloat(getComputedStyle(tcore).strokeWidth)
     && getComputedStyle(tcase).stroke.includes('0, 0, 0')
     && getComputedStyle(tcore).stroke.includes('255, 255, 255');
@@ -92,7 +93,7 @@ const out = await page.evaluate(async () => {
   c._regSignature = ''; c.requestUpdate(); await c.updateComplete; await new Promise((r) => setTimeout(r, 30));
   o.puckGoneWhenDocked = !sr().querySelector('.vacpuck');
   // default mode 'cleaning': the trail HIDES the moment the run ends (owner)
-  o.trailHiddenAfterDock = !sr().querySelector('.vactrail polyline');
+  o.trailHiddenAfterDock = !sr().querySelector('.vactrail path, .vactrail polyline');
 
   // hidden marker renders neither puck nor trail
   c.hass = { ...c.hass, states: { ...c.hass.states,
@@ -124,11 +125,25 @@ const out = await page.evaluate(async () => {
   const prevG = sr().querySelector('.vactrail g.prev');
   o.srvPrevRunShown = !!prevG && prevG.querySelectorAll('polyline').length === 2
     && prevG.querySelector('.case').getAttribute('points').split(' ').length === 3;
-  const curLines = [...sr().querySelectorAll('.vactrail > polyline.case, .vactrail g:not(.prev) polyline.case')];
-  const cur = curLines.find((x) => !x.closest('g.prev'));
+  const cur = sr().querySelector('.vactrail > path.case');
   // 4 server points, the live tail trimmed while moving -> 3 rendered
-  o.srvCurTrimmed = !!cur && cur.getAttribute('points').split(' ').length === 3;
+  o.srvCurTrimmed = !!cur && (cur.getAttribute('d').match(/[ML]/g) || []).length === 3;
   o.srvPrevFaded = !!prevG && getComputedStyle(prevG).opacity === '0.4';
+  // XCME integration path outranks the simultaneous server run. Its two
+  // subpaths remain two SVG moveto sections: no synthetic bridge over a gap.
+  c.hass = { ...c.hass, states: { ...c.hass.states,
+    'camera.robo_map': { state: 'idle', attributes: {
+      vacuum_position: { x: 950, y: 1150, a: 0 }, map_name: 'm1',
+      path: { path: [
+        [{ x: 100, y: 100 }, { x: 200, y: 100 }],
+        [{ x: 800, y: 900 }, { x: 900, y: 900 }, { x: 950, y: 1150 }],
+      ] },
+    } },
+  } };
+  await c.updateComplete;
+  const integrationD = sr().querySelector('.vactrail > path.case')?.getAttribute('d') || '';
+  o.multiSubpathNoBridge = (integrationD.match(/M /g) || []).length === 2
+    && (integrationD.match(/L /g) || []).length === 2;
   // the growing tip is glued to the puck by the rAF sampler
   const tip = sr().querySelector('line.tip');
   o.tipExists = !!tip;
@@ -139,6 +154,12 @@ const out = await page.evaluate(async () => {
   const tx = sbT.left + ((parseFloat(tip.getAttribute('x2')) - vbT.x) / vbT.width) * sbT.width;
   const ty = sbT.top + ((parseFloat(tip.getAttribute('y2')) - vbT.y) / vbT.height) * sbT.height;
   o.tipGluedToPuck = Math.hypot(tx - (puckNow.left + puckNow.width / 2), ty - (puckNow.top + puckNow.height / 2)) < 12;
+  c.hass = { ...c.hass, states: { ...c.hass.states,
+    'vacuum.robo': { state: 'docked', attributes: { friendly_name: 'Робот' } },
+  } };
+  await c.updateComplete;
+  const restingIntegrationD = sr().querySelector('.vactrail > path.case')?.getAttribute('d') || '';
+  o.integrationPathAlwaysAtRest = (restingIntegrationD.match(/M /g) || []).length === 2;
   // 'never' kills every line including the previous run
   cfg.markers.find((m) => m.id === 'e_vacuum_robo').vacuum.trail_mode = 'never';
   c._regSignature = ''; c.requestUpdate(); await c.updateComplete;
@@ -208,6 +229,7 @@ const out = await page.evaluate(async () => {
   o.fitClosed = !c._vacFit && !sr().querySelector('.vacfit');
   o.oldWizardGone = typeof c._vacCalClick === 'undefined' && typeof c._vacStartWizard === 'undefined';
   c.hass = { ...c.hass, states: { ...c.hass.states,
+    'vacuum.robo': { state: 'cleaning', attributes: { friendly_name: 'Робот' } },
     'camera.robo_map': { state: 'idle', attributes: { vacuum_position: { x: 501, y: 501, a: 0 }, map_name: 'm2',
       rooms: {} } } } };
   await c.updateComplete;
@@ -226,6 +248,7 @@ checkAll(out, {
   puckGoneWhenDocked: true, trailHiddenAfterDock: true, hiddenNoPuck: true,
   unknownMapNoPuck: true,
   srvPrevRunShown: true, srvCurTrimmed: true, srvPrevFaded: true,
+  multiSubpathNoBridge: true, integrationPathAlwaysAtRest: true,
   tipExists: true, tipGluedToPuck: true, neverHidesAll: true,
   fitDevFound: true, fitOverlay: true, fitGhostRooms: true, fitLabels: true,
   fitHandles: true, fitHandleHittable: true, fitGhostHittable: true, fitBar: true, fitMirrorDefault: true, fitDragMoves: true,

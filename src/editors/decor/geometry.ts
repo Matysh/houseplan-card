@@ -1,4 +1,5 @@
 import type { DecorShape, DecorStyle } from './types';
+import { safeStoredColor } from '../../color';
 
 export interface DecorBox {
   x: number;
@@ -121,15 +122,13 @@ export function decorStyleOf(
 ): DecorStyle {
   const fillable = shape?.kind === 'rect' || shape?.kind === 'ellipse';
   const source = shape as any;
-  const color = /^#[0-9a-f]{6}$/i.test(String(source?.color || ''))
-    ? String(source.color) : fallback.color;
+  const color = safeStoredColor(source?.color, fallback.color);
   return {
     color,
     opacity: clamp01(source?.opacity, fallback.opacity),
     widthCm: decorStrokeCm(shape, cellCm, gridPitch, fallback.widthCm),
     fill: fillable ? source?.fill === true : false,
-    fillColor: /^#[0-9a-f]{6}$/i.test(String(source?.fill_color || ''))
-      ? String(source.fill_color) : (source?.fill ? color : fallback.fillColor),
+    fillColor: safeStoredColor(source?.fill_color, source?.fill ? color : fallback.fillColor),
     // Legacy fill was hard-coded to 0.25.
     fillOpacity: fillable && source?.fill
       ? clamp01(source?.fill_opacity, 0.25)

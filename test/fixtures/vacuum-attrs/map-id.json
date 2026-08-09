@@ -1,0 +1,9 @@
+[
+  { "source": { "map_index": 0 }, "vacuum": { "selected_map": "Vac" }, "expected": "0" },
+  { "source": { "map_index": "0" }, "vacuum": {}, "expected": "0" },
+  { "source": { "map_name": "" }, "vacuum": { "selected_map": "Vac" }, "expected": "" },
+  { "source": {}, "vacuum": { "selected_map": 0 }, "expected": "0" },
+  { "source": {}, "vacuum": { "selected_map": null }, "expected": "default" },
+  { "source": { "selected_map": "Floor", "vacuum_json_id": "nonce-a" }, "vacuum": {}, "expected": "Floor" },
+  { "source": { "selected_map": "Floor", "vacuum_json_id": "nonce-b" }, "vacuum": {}, "expected": "Floor" }
+]

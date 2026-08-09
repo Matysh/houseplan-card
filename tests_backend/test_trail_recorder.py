@@ -5,7 +5,7 @@ snapshot of sys.modules that is restored immediately afterwards. Injecting
 fake `homeassistant` modules globally poisons the real HA harness running in
 the same pytest session (it did, once).
 """
-import sys, types, pathlib, importlib.util
+import sys, types, pathlib, importlib.util, json
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
@@ -258,6 +258,21 @@ def test_map_id_contract_first_not_none_wins():
         assert trails.resolve_map_id(src_attrs, vac_attrs) == want, (src_attrs, vac_attrs)
 
 
+def test_map_id_shared_fixture_ignores_vacuum_json_nonce():
+    fixture = json.loads((ROOT / "test" / "fixtures" / "vacuum-attrs" / "map-id.json").read_text(
+        encoding="utf-8"
+    ))
+    for row in fixture:
+        assert trails.resolve_map_id(row["source"], row["vacuum"]) == row["expected"]
+    assert fixture[-2]["expected"] == fixture[-1]["expected"]
+    book = trails.TrailBook()
+    for index, row in enumerate(fixture[-2:]):
+        map_id = trails.resolve_map_id(row["source"], row["vacuum"])
+        book.on_point("m1", map_id, float(index), 0.0, float(index))
+    assert book.data["m1"]["current"]["points"] == [[0.0, 0.0], [1.0, 0.0]]
+    assert "previous" not in book.data["m1"]
+
+
 def test_one_source_two_floor_markers_both_record():
     # HP-1540-03: the multi-floor case — the same robot placed on two floors.
     # Both markers must receive the server-side run, on every map.
@@ -315,6 +330,158 @@ def test_refresh_builds_pair_lists_and_dedups_subscription():
         assert tracked == [["camera.map", "vacuum.x50"]]
     finally:
         trails.async_track_state_change_event = old_track
+
+
+def test_source_health_deduplicates_reason_changes_and_warns_after_recovery(caplog):
+    rec, hass, states = _rec()
+    key = {("m1", "camera.map")}
+
+    class Entry:
+        def __init__(self, disabled_by=None): self.disabled_by = disabled_by
+
+    class Registry:
+        row = None
+        def async_get(self, _eid): return self.row
+
+    registry = Registry()
+    old_get = trails.er.async_get
+    trails.er.async_get = lambda _hass: registry
+    try:
+        caplog.set_level("WARNING", logger=trails.__name__)
+        rec._refresh_source_health(key)  # available baseline
+        del states["camera.map"]
+        rec._refresh_source_health(key)  # missing: warning 1
+        registry.row = Entry("user")
+        rec._refresh_source_health(key)  # disabled: reason update, no warning
+        registry.row = None
+        rec._refresh_source_health(key)  # missing again, no warning
+        states["camera.map"] = S("unavailable", {})
+        rec._refresh_source_health(key)  # proven existence: recovery
+        del states["camera.map"]
+        rec._refresh_source_health(key)  # missing after recovery: warning 2
+        warnings = [record for record in caplog.records if record.levelname == "WARNING"]
+        assert len(warnings) == 2
+        assert rec._source_health[("m1", "camera.map")] == "missing"
+    finally:
+        trails.er.async_get = old_get
+
+
+def test_source_health_lifecycle_clears_removed_or_rebound_marker(caplog):
+    rec, _hass, states = _rec()
+    del states["camera.map"]
+    caplog.set_level("WARNING", logger=trails.__name__)
+    old_get = trails.er.async_get
+    trails.er.async_get = lambda _hass: type("Registry", (), {"async_get": lambda self, eid: None})()
+    try:
+        rec._refresh_source_health({("m1", "camera.map")})
+        assert rec._source_health
+        rec._refresh_source_health(set())
+        assert rec._source_health == {}
+    finally:
+        trails.er.async_get = old_get
+
+
+def test_source_health_unavailable_and_unsupported_are_proven_recovery(caplog):
+    rec, _hass, states = _rec()
+    key = {("m1", "camera.map")}
+    caplog.set_level("WARNING", logger=trails.__name__)
+    old_get = trails.er.async_get
+    trails.er.async_get = lambda _hass: type("Registry", (), {"async_get": lambda self, eid: None})()
+    try:
+        del states["camera.map"]
+        rec._refresh_source_health(key)
+        assert len([r for r in caplog.records if r.levelname == "WARNING"]) == 1
+        states["camera.map"] = S("unavailable", {})
+        rec._refresh_source_health(key)
+        assert rec._source_health == {}
+        del states["camera.map"]
+        rec._refresh_source_health(key)
+        states["camera.map"] = S("idle", {})  # exists, but no supported attrs
+        rec._refresh_source_health(key)
+        assert rec._source_health == {}
+        assert len([r for r in caplog.records if r.levelname == "WARNING"]) == 2
+    finally:
+        trails.er.async_get = old_get
+
+
+def test_source_health_startup_and_source_change_lifecycle(caplog):
+    rec, _hass, states = _rec()
+    caplog.set_level("WARNING", logger=trails.__name__)
+    old_get = trails.er.async_get
+    trails.er.async_get = lambda _hass: type("Registry", (), {"async_get": lambda self, eid: None})()
+    try:
+        del states["camera.map"]
+        rec._refresh_source_health({("m1", "camera.map")})
+        rec._refresh_source_health({("m1", "camera.other")})
+        assert ("m1", "camera.map") not in rec._source_health
+        assert rec._source_health[("m1", "camera.other")] == "missing"
+        assert len([r for r in caplog.records if r.levelname == "WARNING"]) == 2
+    finally:
+        trails.er.async_get = old_get
+
+
+def test_source_health_startup_existing_states_do_not_warn(caplog):
+    rec, _hass, states = _rec()
+    caplog.set_level("WARNING", logger=trails.__name__)
+    states["camera.map"] = S("unavailable", {})
+    rec._refresh_source_health({("m1", "camera.map")})
+    states["camera.map"] = S("idle", {})
+    rec._refresh_source_health({("m1", "camera.map")})
+    assert not [r for r in caplog.records if r.levelname == "WARNING"]
+
+
+def test_source_health_disabled_unsupported_disabled_warns_twice(caplog):
+    rec, _hass, states = _rec()
+    key = {("m1", "camera.map")}
+
+    class Entry:
+        def __init__(self, disabled_by=None): self.disabled_by = disabled_by
+
+    class Registry:
+        row = Entry()
+        def async_get(self, _eid): return self.row
+
+    registry = Registry()
+    old_get = trails.er.async_get
+    trails.er.async_get = lambda _hass: registry
+    try:
+        caplog.set_level("WARNING", logger=trails.__name__)
+        states["camera.map"] = S("idle", {})  # unsupported, but existing
+        rec._refresh_source_health(key)
+        registry.row = Entry("user")
+        rec._refresh_source_health(key)
+        registry.row = Entry()
+        rec._refresh_source_health(key)  # proven unsupported recovery
+        registry.row = Entry("user")
+        rec._refresh_source_health(key)
+        assert len([r for r in caplog.records if r.levelname == "WARNING"]) == 2
+        assert rec._source_health[("m1", "camera.map")] == "disabled"
+    finally:
+        trails.er.async_get = old_get
+
+
+def test_source_health_unverified_is_neutral(caplog):
+    rec, _hass, states = _rec()
+    key = {("m1", "camera.map")}
+
+    class Registry:
+        def async_get(self, _eid): return None
+
+    registry = Registry()
+    old_get = trails.er.async_get
+    try:
+        caplog.set_level("WARNING", logger=trails.__name__)
+        del states["camera.map"]
+        trails.er.async_get = lambda _hass: registry
+        rec._refresh_source_health(key)  # missing: warning 1
+        trails.er.async_get = lambda _hass: None
+        rec._refresh_source_health(key)  # unverified: neutral
+        trails.er.async_get = lambda _hass: registry
+        rec._refresh_source_health(key)  # same incident, no warning
+        assert len([r for r in caplog.records if r.levelname == "WARNING"]) == 1
+        assert rec._source_health[("m1", "camera.map")] == "missing"
+    finally:
+        trails.er.async_get = old_get
 
 
 def test_refresh_never_tracks_a_removed_marker_even_with_stale_vacuum_fields():

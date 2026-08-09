@@ -19,6 +19,7 @@ import {
   type DeviceDisplayMode,
 } from './logic';
 import type { DevItem } from './types';
+import { safeStoredColor } from './color';
 
 export type PresentationSourceKind =
   | 'cover' | 'light' | 'controls' | 'device_role' | 'primary' | 'none';
@@ -448,7 +449,8 @@ export function resolveDevicePresentation(
   const scale = Number(d.marker?.size) > 0 ? Number(d.marker!.size) : 1;
   const angle = Number(d.marker?.angle) || 0;
   const rippleScale = Number(d.marker?.ripple_size) > 0 ? Number(d.marker!.ripple_size) : 3;
-  const rippleColor = staticIcon ? null : d.marker?.ripple_color || lightColor || null;
+  const configuredRippleColor = safeStoredColor(d.marker?.ripple_color, null);
+  const rippleColor = staticIcon ? null : configuredRippleColor || lightColor || null;
   const valueText = display === 'value' && !effectiveHidden ? value.text : null;
   const disabledReason = status?.kind === 'ha_disabled' ? status.reason : null;
   const reason = explanationReason(

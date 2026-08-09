@@ -110,6 +110,9 @@ class TrailRecorder:
         self._unsub_track = None
         self._unsub_save = None
         self._last_fire = 0.0
+        # One active incident per saved marker/source. `reason` is mutable so
+        # missing↔disabled changes do not create warning storms.
+        self._source_health: dict[tuple[str, str], str] = {}
         # HP-1540-05: config/set fires refresh as a detached task; two of them
         # interleaving across the awaited load both subscribed and the loser's
         # unsub handle was overwritten — a leak until HA restart
@@ -134,6 +137,7 @@ class TrailRecorder:
                 return
             cfg = stored.get("config") or {}
             pairs: dict[str, list[tuple[str, str]]] = {}
+            health_pairs: set[tuple[str, str]] = set()
             for m in cfg.get("markers") or []:
                 if m.get("removed") is True:
                     continue
@@ -141,11 +145,14 @@ class TrailRecorder:
                 src = v.get("source")
                 if not src or v.get("live") is False:
                     continue
+                marker_id = str(m.get("id"))
+                health_pairs.add((marker_id, str(src)))
                 vac = self._vacuum_entity(m)
                 if vac:
                     # HP-1540-03: append, never overwrite — every floor's
                     # marker records its own copy of the run
-                    pairs.setdefault(src, []).append((str(m.get("id")), vac))
+                    pairs.setdefault(src, []).append((marker_id, vac))
+            self._refresh_source_health(health_pairs)
             self.pairs = pairs
             self._resubscribe()
             # A run already in progress (HA restarted mid-cleanup, or the user
@@ -154,6 +161,58 @@ class TrailRecorder:
             # lost.
             for src in self.pairs:
                 self._sample(src, time.time())
+
+    def _source_failure_reason(self, source: str) -> str | None:
+        """Classify only refresh-time health evidence.
+
+        A registry row or exact live state proves existence. No registry access
+        is neutral: it can neither create a loss incident nor recover one.
+        """
+        registry = er.async_get(self.hass)
+        state = self.hass.states.get(source)
+        if registry is None or not hasattr(registry, "async_get"):
+            return None if state is not None else "unverified"
+        entry = registry.async_get(source)
+        if entry is not None and getattr(entry, "disabled_by", None) is not None:
+            return "disabled"
+        # Registry-less YAML entities are valid: exact live state is stronger
+        # evidence than a missing registry row.
+        if entry is not None or state is not None:
+            return None
+        return "missing"
+
+    def _refresh_source_health(self, expected: set[tuple[str, str]]) -> None:
+        """Refresh deduplicated source incidents during config refresh/restart.
+
+        `unavailable` and unsupported-but-existing states count as proven
+        recovery. There is intentionally no registry subscription in Stage 1;
+        the next config refresh or restart observes a later transition.
+        """
+        for key in list(self._source_health):
+            if key not in expected:
+                del self._source_health[key]
+        for marker_id, source in sorted(expected):
+            key = (marker_id, source)
+            reason = self._source_failure_reason(source)
+            previous = self._source_health.get(key)
+            # Limited/unavailable registry evidence is neutral: keep an
+            # existing incident as-is, and never create or recover one.
+            if reason == "unverified":
+                continue
+            if reason is None:
+                if previous is not None:
+                    _LOGGER.info(
+                        "Vacuum source recovered: marker=%s source=%s (was %s)",
+                        marker_id, source, previous,
+                    )
+                    del self._source_health[key]
+                continue
+            if previous is None:
+                _LOGGER.warning(
+                    "Vacuum source %s: marker=%s source=%s",
+                    reason, marker_id, source,
+                )
+            self._source_health[key] = reason
 
     async def async_delete(self, marker: str) -> bool:
         """Stop and erase one marker without racing subscription refresh/save."""

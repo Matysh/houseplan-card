@@ -1,6 +1,6 @@
 # House Plan architecture
 
-Updated: 2026-08-09 (v1.60.3). The repository = a HACS integration (category **Integration**)
+Updated: 2026-08-09 (v1.61.0-beta.1). The repository = a HACS integration (category **Integration**)
 that contains both the backend (`custom_components/houseplan`) and the Lovelace card (`src/` → `dist/`).
 
 ## Layout
@@ -121,6 +121,23 @@ Built from the registries (`_buildDevices`), rules carried over 1-to-1 from the 
   source-glow fill mode: a light pool is spatial information, not a replacement
   for the universal working-state plate.
 
+### Vacuum telemetry authority
+
+`src/vacuum.ts` owns pure normalization and arbitration. Telemetry paths are
+always `Pt[][]`; non-drawable segments are discarded before the 64-segment and
+4000-point budgets, and the renderer emits one SVG path with independent `M`
+commands. `resolveCurrentVacPath()` is the only integration → server → local
+priority decision. `resolveVacSource()` is sticky for saved sources and limits
+automatic selection to compatible entities on the same HA device; the card
+adds registry status through the shared `resolveHaBindingStatus()` authority.
+
+Room auto-calibration uses the same shoelace `areaCentroid()` for plan polygons
+and robot outlines. Residuals are converted through resolved grid pitch and
+cell centimetres; matrices above the 40 cm threshold remain proposals until an
+explicit UI decision. `trails.py` owns persistent current/previous runs and a
+refresh-time `(marker, source)` health state whose missing/disabled reason is
+mutable and warning-deduplicated.
+
 ## Sizes
 
 `icon_size` in the config = **% of the visible plan area width** (default 2.5). Implementation:
@@ -179,6 +196,22 @@ Re-adding replaces the tombstone; virtual markers need no tombstone because
 they have no discovery source.
 
 ## Server-side configuration (current shape, v1.51+)
+
+### Persisted colour boundary
+
+Every colour stored in Houseplan config has exactly one representation:
+`#RRGGBB` (case-insensitive hexadecimal digits, no whitespace or CSS
+functions). `src/color.ts` owns the frontend resolver and
+`custom_components/houseplan/validation.py::_COLOR` owns the write schema.
+Resolvers apply a safe default again at render time because an old, imported or
+manually edited store is returned without a destructive read migration.
+
+Home Assistant `rgb_color` is live state rather than persisted user input. It
+is accepted only as three finite numeric channels, clamped/rounded to 0–255 and
+emitted by the application as canonical `rgb(R, G, B)`. The final inline-style
+boundary accepts only stored hex or that generated form. Supporting arbitrary
+CSS colour syntax would require a separate product/security decision; it must
+not be added to an individual sink.
 
 `.storage/houseplan.config` (Store):
 ```json

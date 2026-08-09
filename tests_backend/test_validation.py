@@ -342,6 +342,34 @@ def test_bg_color_setting():
         v.CONFIG_SCHEMA({"spaces": [], "settings": {"bg_color": "#1234567"}})
 
 
+def test_all_persisted_color_fields_share_the_strict_hex_contract():
+    """Issue #21: no CSS grammar reaches storage through any colour field."""
+    space = {"id": "f1", "title": "F", "view_box": [0, 0, 1, 1], "rooms": []}
+    line = {"id": "d", "kind": "line", "x1": 0, "y1": 0, "x2": 1, "y2": 1}
+    rect = {"id": "r", "kind": "rect", "x": 0, "y": 0, "w": 1, "h": 1}
+    marker = {"id": "m", "binding": "device:x"}
+    bad_colors = (
+        "#fff", " #123456", "#123456 ", "red", "rgb(1, 2, 3)",
+        "red;position:fixed", "#123456;inset:0", "url(https://example.test/x)",
+        "#123456/*x*/", "#12345\\36", "#123456\ncolor:red", "#12345678",
+    )
+    for color in bad_colors:
+        calls = (
+            lambda: v.SPACE_SCHEMA({**space, "settings": {"room_color": color}}),
+            lambda: v.SPACE_SCHEMA({**space, "settings": {"bg_color": color}}),
+            lambda: v.DECOR_SCHEMA({**line, "color": color}),
+            lambda: v.DECOR_SCHEMA({**rect, "fill_color": color}),
+            lambda: v.MARKER_SCHEMA({**marker, "ripple_color": color}),
+            lambda: v.CONFIG_SCHEMA({"spaces": [], "settings": {"bg_color": color}}),
+            lambda: v.CONFIG_SCHEMA({
+                "spaces": [], "settings": {"fill_colors": {"glow_base": {"c": color, "a": 1}}},
+            }),
+        )
+        for call in calls:
+            with pytest.raises(vol.Invalid):
+                call()
+
+
 def test_sun_settings_global():
     """Active sun settings plus the accepted-but-ignored legacy weather field."""
     v.CONFIG_SCHEMA({"spaces": [], "settings": {

@@ -2098,7 +2098,8 @@ export const cardStyles = css`
       z-index: 5;
       overflow: visible;
     }
-    .vactrail polyline {
+    .vactrail polyline,
+    .vactrail path {
       fill: none;
       stroke-linejoin: round;
       stroke-linecap: round;
@@ -2116,6 +2117,27 @@ export const cardStyles = css`
       stroke-width: 0.9;
     }
     .vacbox .vacbtns { display: flex; gap: var(--sp-4); margin: var(--sp-3) 0; flex-wrap: wrap; }
+    .vacdiag { display: grid; gap: 4px; margin-bottom: var(--sp-3); }
+    .vacdiag > div { display: flex; justify-content: space-between; gap: var(--sp-5); }
+    .vacdiag > div > span { color: var(--secondary-text-color); }
+    .vacdiag > div > b { text-align: right; overflow-wrap: anywhere; }
+    .vacpicker { margin: var(--sp-3) 0; }
+    .vacsource-warning { display: grid; gap: 8px; }
+    .vacsource-warning .btn { justify-self: start; }
+    .vacpicker > summary { display: inline-flex; width: auto; list-style: none; cursor: pointer; }
+    .vacpicker > summary::-webkit-details-marker { display: none; }
+    .vacsource-list { display: grid; gap: 6px; margin-top: 8px; }
+    .vacsource-list details { padding: 6px 0 0; }
+    .vacsource-list details > summary { cursor: pointer; font-weight: 600; }
+    .vacsource { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      width: 100%; min-width: 0; padding: 9px 10px; border: 1px solid var(--divider-color);
+      border-radius: 10px; color: var(--primary-text-color); background: var(--secondary-background-color);
+      text-align: left; cursor: pointer; }
+    .vacsource.on { border-color: var(--accent-color); box-shadow: inset 3px 0 var(--accent-color); }
+    .vacsource > span:first-child { min-width: 0; display: grid; gap: 2px; }
+    .vacsource small { color: var(--secondary-text-color); overflow-wrap: anywhere; }
+    .vacsource-meta { color: var(--secondary-text-color); text-align: right; font-size: 0.82em; }
+    .vacxcme pre { margin: 8px 0 0; white-space: pre-wrap; user-select: text; }
     .vacfit {
       position: absolute;
       inset: 0;

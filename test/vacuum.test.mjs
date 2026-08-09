@@ -1,6 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { solveAffine, applyAffine, affineResidual, readVacTelemetry, autoCalibrate, thinPath, pushTrailPoint, isVacMoving, isVacSourceState, vacMapIdFromAttrs, vacMapIdWithFallback } from '../test-build/vacuum.js';
+import { readFileSync } from 'node:fs';
+import {
+  solveAffine, applyAffine, affineResidual, readVacTelemetry, autoCalibrate,
+  thinPath, pushTrailPoint, isVacMoving, isVacSourceState, vacMapIdFromAttrs,
+  vacMapIdWithFallback, areaCentroid, normalizeVacPath, resolveCurrentVacPath,
+  trimVacPathTarget, parseVacSourceCandidate, resolveVacSource,
+  vacCalibrationResidualCm, vacRoomNameMatchCount, VAC_CALIBRATION_WARN_CM,
+} from '../test-build/vacuum.js';
 
 test('solveAffine recovers rotation+scale+mirror+offset exactly', () => {
   // target = mirror-X, rotate 90°, scale 0.02, offset (300, 400)
@@ -27,11 +34,11 @@ test('readVacTelemetry: Map Extractor shape', () => {
   const t = readVacTelemetry({
     vacuum_position: { x: 25500, y: 24800, a: 271 },
     path: [{ x: 25000, y: 24000 }, { x: 25100, y: 24100 }],
-    rooms: { 16: { name: 'Kitchen', x0: 20000, y0: 20000, x1: 26000, y1: 25000 } },
+    rooms: { 16: { name: 'Kitchen', cx: 23000, cy: 22500, x0: 20000, y0: 20000, x1: 26000, y1: 25000 } },
     map_name: '0',
   });
   assert.deepEqual(t.pos, { x: 25500, y: 24800, a: 271 });
-  assert.deepEqual(t.path, [[25000, 24000], [25100, 24100]]);
+  assert.deepEqual(t.path, [[[25000, 24000], [25100, 24100]]]);
   assert.equal(t.rooms[0].name, 'Kitchen');
   assert.equal(t.rooms[0].cx, 23000);
   assert.equal(t.mapId, '0');
@@ -55,10 +62,188 @@ test('readVacTelemetry: Tasshack room centres come as plain x/y', () => {
     rooms: { 2: { room_id: 2, name: 'Кладовка', x0: 800, y0: -2000, x1: 4200, y1: 300, x: 2575, y: -825 } },
   });
   assert.equal(t.rooms[0].name, 'Кладовка');
-  // bbox wins when present (both are valid anchors); x/y covers bbox-less dialects
-  assert.equal(t.rooms[0].cx, 2500);
+  // Explicit x/y is the calibration anchor; bbox is independently retained.
+  assert.equal(t.rooms[0].cx, 2575);
+  assert.deepEqual(
+    [t.rooms[0].x0, t.rooms[0].y0, t.rooms[0].x1, t.rooms[0].y1],
+    [800, -2000, 4200, 300],
+  );
   const t2 = readVacTelemetry({ vacuum_position: { x: 0, y: 0 }, rooms: { 2: { name: 'Кладовка', x: 2575, y: -825 } } });
   assert.equal(t2.rooms[0].cx, 2575);
+});
+
+test('readVacTelemetry keeps XCME subpath gaps and Valetudo outline geometry', () => {
+  const t = readVacTelemetry({
+    vacuum_position: { x: 5, y: 6 },
+    path: { path: [
+      [{ x: 0, y: 0 }, { x: 1, y: 1 }],
+      [{ x: 10, y: 10 }, { x: 11, y: 11 }, { x: null, y: 2 }],
+    ] },
+    rooms: {
+      l: { name: 'L', outline: [[0, 0], [4, 0], [4, 1], [1, 1], [1, 4], [0, 4], [0, 0]] },
+    },
+  });
+  assert.deepEqual(t.path, [
+    [[0, 0], [1, 1]],
+    [[10, 10], [11, 11]],
+  ]);
+  assert.deepEqual(
+    [t.rooms[0].x0, t.rooms[0].y0, t.rooms[0].x1, t.rooms[0].y1],
+    [0, 0, 4, 4],
+  );
+  assert.ok(Math.abs(t.rooms[0].cx - 1.3571428571428572) < 1e-12);
+  assert.ok(Math.abs(t.rooms[0].cy - 1.3571428571428572) < 1e-12);
+});
+
+test('room anchor priority never mixes fields from different tiers', () => {
+  const t = readVacTelemetry({
+    vacuum_position: { x: 0, y: 0 },
+    rooms: [{
+      id: 1, name: 'Atomic pair', cx: 999,
+      center: { x: 20, y: 30 }, x: 40, y: 50,
+      outline: [[0, 0], [10, 0], [10, 10], [0, 10]],
+    }],
+  });
+  assert.deepEqual([t.rooms[0].cx, t.rooms[0].cy], [20, 30]);
+});
+
+test('bbox centre is the final calibration-anchor fallback for bbox-only dialects', () => {
+  const t = readVacTelemetry({
+    vacuum_position: { x: 0, y: 0 },
+    rooms: [{ id: 1, name: 'BBox only', x0: 100, y0: 80, x1: 0, y1: -20 }],
+  });
+  assert.equal(t.rooms.length, 1);
+  assert.deepEqual(t.rooms[0], {
+    id: '1', name: 'BBox only', cx: 50, cy: 30,
+    x0: 0, y0: -20, x1: 100, y1: 80,
+  });
+  const incomplete = readVacTelemetry({
+    vacuum_position: { x: 0, y: 0 },
+    rooms: [{ id: 2, name: 'Incomplete bbox', x0: 0, y0: 0, x1: 100 }],
+  });
+  assert.deepEqual(incomplete.rooms, []);
+});
+
+test('areaCentroid has deterministic closing, zero-area, invalid and butterfly behaviour', () => {
+  assert.deepEqual(areaCentroid([[0, 0], [2, 0], [2, 2], [0, 2], [0, 0]]), [1, 1]);
+  assert.deepEqual(areaCentroid([[0, 0], [1, 0], [2, 0]]), [1, 0]);
+  assert.equal(areaCentroid([[0, 0], [1, Number.NaN], [0, 1]]), null);
+  assert.deepEqual(areaCentroid([[0, 0], [2, 2], [0, 2], [2, 0]]), [1, 1]);
+});
+
+test('normalizeVacPath filters before cap and distributes the exact 4000-point budget', () => {
+  const many = [];
+  for (let segment = 0; segment < 66; segment++) {
+    const length = 70 + (segment % 3) * 10;
+    many.push(Array.from({ length }, (_, point) => [segment, point]));
+    many.push([[segment, 999]]); // singleton must not displace a drawable segment
+  }
+  const out = normalizeVacPath(many);
+  assert.equal(out.length, 64);
+  assert.equal(out.reduce((sum, segment) => sum + segment.length, 0), 4000);
+  assert.equal(out[0][0][0], 2); // oldest two drawable segments were capped
+  for (const segment of out) {
+    const source = many.find((candidate) => candidate.length > 1 && candidate[0][0] === segment[0][0]);
+    assert.deepEqual(segment[0], source[0]);
+    assert.deepEqual(segment.at(-1), source.at(-1));
+  }
+});
+
+test('normalizeVacPath uses largest remainder over internal points', () => {
+  const lengths = [3002, 2002, 1002];
+  const out = normalizeVacPath(lengths.map((length, segment) =>
+    Array.from({ length }, (_, point) => [segment, point])));
+  assert.deepEqual(out.map((segment) => segment.length), [1999, 1333, 668]);
+  assert.equal(out.reduce((sum, segment) => sum + segment.length, 0), 4000);
+});
+
+test('normalizeVacPath largest-remainder ties prefer the older subpath', () => {
+  const out = normalizeVacPath([0, 1, 2].map((segment) =>
+    Array.from({ length: 10002 }, (_, point) => [segment, point])));
+  assert.deepEqual(out.map((segment) => segment.length), [1334, 1333, 1333]);
+  assert.equal(out.reduce((sum, segment) => sum + segment.length, 0), 4000);
+});
+
+test('resolveCurrentVacPath arbitrates only drawable sources and preserves gaps', () => {
+  const server = { points: [[1, 1], [2, 2]] };
+  assert.equal(resolveCurrentVacPath({ path: [[]] }, server, []).source, 'server');
+  assert.equal(resolveCurrentVacPath({ path: [[[9, 9]]] }, server, []).source, 'server');
+  assert.equal(resolveCurrentVacPath({ path: [[[NaN, 1], [2, Infinity]]] }, server, []).source, 'server');
+  const integration = resolveCurrentVacPath({ path: [
+    [[0, 0]], [[10, 10], [11, 11]], [[20, 20], [21, 21]],
+  ] }, server, []);
+  assert.equal(integration.source, 'integration');
+  assert.deepEqual(integration.path, [
+    [[10, 10], [11, 11]], [[20, 20], [21, 21]],
+  ]);
+  assert.deepEqual(trimVacPathTarget([[[0, 0], [1, 1]], [[5, 5], [6, 6], [7, 7]]]), [
+    [[0, 0], [1, 1]], [[5, 5], [6, 6]],
+  ]);
+});
+
+test('parseVacSourceCandidate is deterministic and explains XCME/camera capability', () => {
+  const positioned = parseVacSourceCandidate('camera.map', {
+    attributes: { friendly_name: 'Map', vacuum_position: { x: 1, y: 2 }, rooms: {} },
+  }, { platform: 'xiaomi_cloud_map_extractor' });
+  assert.equal(positioned.category, 'compatible');
+  assert.equal(positioned.score, 300);
+  const xcme = parseVacSourceCandidate('camera.map', { attributes: {} }, {
+    platform: 'xiaomi_cloud_map_extractor',
+  });
+  assert.equal(xcme.category, 'known_xcme_incomplete');
+  assert.equal(parseVacSourceCandidate('sensor.position', {
+    attributes: { position: '(1, 2, 3)' },
+  }), null);
+});
+
+test('resolveVacSource is sticky, order-independent and never auto-selects global cameras', () => {
+  const a = parseVacSourceCandidate('camera.a', {
+    attributes: { vacuum_position: { x: 1, y: 2 } },
+  }, { platform: 'demo' });
+  const z = parseVacSourceCandidate('camera.z', {
+    attributes: { vacuum_position: { x: 3, y: 4 } },
+  }, { platform: 'demo' });
+  const vacuum = parseVacSourceCandidate('vacuum.self', {
+    attributes: { vacuum_position: { x: 5, y: 6 } },
+  }, { platform: 'demo' });
+  const statuses = {
+    'camera.a': 'ok', 'camera.z': 'ok', 'camera.saved': 'missing', 'vacuum.self': 'ok',
+  };
+  const first = resolveVacSource(null, ['camera.z', 'camera.a'], [z, a], statuses);
+  const reordered = resolveVacSource(null, ['camera.a', 'camera.z'], [a, z], statuses);
+  assert.equal(first.entityId, 'camera.a');
+  assert.equal(reordered.entityId, 'camera.a');
+  assert.equal(resolveVacSource(null, ['vacuum.self', 'camera.z'], [vacuum, z], statuses).entityId, 'camera.z');
+  assert.equal(resolveVacSource(null, [], [a], statuses).entityId, null);
+  const sticky = resolveVacSource('camera.saved', ['camera.a'], [a], statuses);
+  assert.deepEqual(
+    { entityId: sticky.entityId, status: sticky.status, pinned: sticky.pinned },
+    { entityId: 'camera.saved', status: 'missing', pinned: true },
+  );
+  assert.equal(resolveVacSource('camera.unknown', [], [], {}).status, 'unverified');
+  for (const status of ['disabled', 'unavailable', 'unverified', 'unsupported']) {
+    const result = resolveVacSource('camera.saved', ['camera.a'], [a], {
+      ...statuses, 'camera.saved': status,
+    });
+    assert.equal(result.entityId, 'camera.saved');
+    assert.equal(result.status, status);
+  }
+});
+
+test('vacRoomNameMatchCount uses calibration canonicalisation and unique room names', () => {
+  const rooms = [
+    { id: '1', name: 'Living Room', cx: 0, cy: 0 },
+    { id: '2', name: 'living_room', cx: 1, cy: 1 },
+    { id: '3', name: 'Kitchen.', cx: 2, cy: 2 },
+    { id: '4', name: 'Bedroom', cx: 3, cy: 3 },
+  ];
+  assert.equal(vacRoomNameMatchCount(rooms, ['Living-room', 'Kitchen', 'Office']), 2);
+});
+
+test('calibration warning threshold is expressed in physical centimetres', () => {
+  assert.equal(vacCalibrationResidualCm(8, 10, 50), 40);
+  assert.equal(vacCalibrationResidualCm(8.01, 10, 50) > VAC_CALIBRATION_WARN_CM, true);
+  assert.equal(vacCalibrationResidualCm(1, 0, 5), Infinity);
 });
 
 test('autoCalibrate matches by name and solves', () => {
@@ -173,6 +358,17 @@ test('map-id contract: frontend chain matches backend resolve_map_id', () => {
   assert.equal(chain({}, 'Vac'), 'Vac');
   assert.equal(chain({}, undefined), 'default');
   assert.equal(chain({ map_index: 0 }, 'Vac'), '0'); // source wins over vacuum
+});
+
+test('map-id shared fixture ignores changing vacuum_json_id nonce', () => {
+  const fixture = JSON.parse(readFileSync(
+    new URL('./fixtures/vacuum-attrs/map-id.json', import.meta.url), 'utf8',
+  ));
+  for (const row of fixture) {
+    const got = vacMapIdWithFallback(vacMapIdFromAttrs(row.source), row.vacuum.selected_map);
+    assert.equal(got, row.expected, JSON.stringify(row));
+  }
+  assert.equal(fixture.at(-2).expected, fixture.at(-1).expected);
 });
 
 test('readVacTelemetry keeps numeric zero map_index as map id (HP-1540-02)', () => {

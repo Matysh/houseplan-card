@@ -8,7 +8,8 @@
     "resolveJsonModule": true
   },
   "include": [
-    "src/logic.ts", "src/device-visual.ts", "src/device-presentation.ts",
+    "src/color.ts", "src/logic.ts", "src/device-visual.ts", "src/device-presentation.ts",
+    "src/device-face.ts",
     "src/ha-binding-status.ts",
     "src/integration-provider.ts", "src/vacuum.ts",
     "src/sun.ts",

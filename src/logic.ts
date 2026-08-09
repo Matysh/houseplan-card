@@ -2,6 +2,7 @@
  * Pure functions with no Lit/DOM dependencies — easy to cover with unit tests.
  */
 import { union } from 'polyclip-ts';
+import { generatedRgbColor, safeStoredColor } from './color';
 
 /** Zigbee LQI color: ≤40 — red, ≥180 — green, in between — an hsl gradient. */
 export function lqiColor(lqi: number): string {
@@ -1282,7 +1283,7 @@ export function spaceDisplayOf(spaceCfg: any): SpaceDisplay {
   return {
     showBorders: s.show_borders ?? noPlan,
     showNames: s.show_names ?? noPlan,
-    color: typeof s.room_color === 'string' && /^#[0-9a-f]{6}$/i.test(s.room_color) ? s.room_color : DEFAULT_ROOM_COLOR,
+    color: safeStoredColor(s.room_color, DEFAULT_ROOM_COLOR),
     opacity: typeof s.room_opacity === 'number' ? Math.min(1, Math.max(0, s.room_opacity)) : DEFAULT_ROOM_OPACITY,
     fill: ['lqi', 'light', 'temp', 'glow'].includes(s.fill_mode) ? s.fill_mode : 'none',
     tempMin: typeof s.temp_min === 'number' ? s.temp_min : DEFAULT_TEMP_MIN,
@@ -1295,7 +1296,7 @@ export function spaceDisplayOf(spaceCfg: any): SpaceDisplay {
     labelHum: s.label_hum === true,
     labelLqi: s.label_lqi === true,
     labelLight: s.label_light === true,
-    bgColor: typeof s.bg_color === 'string' && /^#[0-9a-f]{6}$/i.test(s.bg_color) ? s.bg_color : null,
+    bgColor: safeStoredColor(s.bg_color, null),
     // absent = false = today's rendering, so no plan changes by being read
     hideDecor: s.hide_decor === true,
     hideOpenings: s.hide_openings === true,
@@ -1310,7 +1311,7 @@ export function spaceDisplayOf(spaceCfg: any): SpaceDisplay {
 export function stageBgOf(settings: any, disp: { bgColor: string | null }): string {
   if (disp.bgColor) return disp.bgColor;
   const g = settings?.bg_color;
-  return typeof g === 'string' && /^#[0-9a-f]{6}$/i.test(g) ? g : '';
+  return safeStoredColor(g, '');
 }
 
 // ---------------- global fill colors ----------------
@@ -1352,8 +1353,6 @@ export const DEFAULT_FILL_COLORS: FillColors = {
   wall_fill: { c: '#ffffff', a: 1 },
 };
 
-const HEX_RE = /^#[0-9a-f]{6}$/i;
-
 /** Merge stored overrides over the defaults, dropping malformed entries. */
 export function fillColorsOf(settings: any): FillColors {
   const out: any = {};
@@ -1362,7 +1361,7 @@ export function fillColorsOf(settings: any): FillColors {
     const d = DEFAULT_FILL_COLORS[k];
     const v = src[k];
     out[k] = {
-      c: v && typeof v.c === 'string' && HEX_RE.test(v.c) ? v.c : d.c,
+      c: safeStoredColor(v?.c, d.c),
       a: v && typeof v.a === 'number' ? Math.min(1, Math.max(0, v.a)) : d.a,
     };
   }
@@ -1586,11 +1585,7 @@ export function stateIcon(
  */
 export function lightColorOf(state: any): string | null {
   if (!state || state.state !== 'on') return null;
-  const rgb = state.attributes?.rgb_color;
-  if (Array.isArray(rgb) && rgb.length >= 3 && rgb.every((v: any) => Number.isFinite(v))) {
-    return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
-  }
-  return null;
+  return generatedRgbColor(state.attributes?.rgb_color);
 }
 
 // ---------------- glow fill (light sources) ----------------
@@ -1616,9 +1611,8 @@ export function glowColorOf(state: any, fallback: string): { c: string; bri: num
   const a = state.attributes || {};
   const briRaw = Number(a.brightness);
   const bri = Number.isFinite(briRaw) && briRaw > 0 ? Math.max(0.15, Math.min(1, briRaw / 255)) : 1;
-  const rgb = a.rgb_color;
-  if (Array.isArray(rgb) && rgb.length >= 3 && rgb.every((v: any) => Number.isFinite(v)))
-    return { c: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`, bri };
+  const rgb = generatedRgbColor(a.rgb_color);
+  if (rgb) return { c: rgb, bri };
   const kelvin = Number(a.color_temp_kelvin) || (Number(a.color_temp) > 0 ? 1e6 / Number(a.color_temp) : NaN);
   if (Number.isFinite(kelvin) && kelvin > 0) {
     const [r, g, b] = kelvinToRgb(kelvin);

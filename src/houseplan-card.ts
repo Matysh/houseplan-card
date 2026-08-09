@@ -69,10 +69,14 @@ import {
 import { ContentSigner } from './signing';
 import { mdiHomeCityOutline } from '@mdi/js';
 import {
-  Affine, applyAffine, solveAffine, affineResidual, readVacTelemetry, isVacSourceState,
-  autoCalibrate, pushTrailPoint, isVacMoving, vacTrailMode, vacMapIdWithFallback, VAC_TELEPORT_GAP_MS, VAC_STALE_MS,
+  Affine, applyAffine, readVacTelemetry,
+  autoCalibrate, pushTrailPoint, isVacMoving, vacTrailMode, vacMapIdWithFallback,
+  parseVacSourceCandidate, resolveVacSource, resolveCurrentVacPath, trimVacPathTarget, areaCentroid,
+  vacCalibrationResidualCm, vacRoomNameMatchCount, VAC_CALIBRATION_WARN_CM,
+  VAC_TELEPORT_GAP_MS, VAC_STALE_MS,
   FitParams, fitMatrix, fitFromMatrix, initialFit, reanchorFit, VacRoom,
-  VAC_TRAIL_LINGER_MS, Pt as VacPt,
+  Pt as VacPt, type VacPath, type VacSourceCandidate,
+  type VacSourceResolution, type VacSourceStatus,
 } from './vacuum';
 import {
   buildDevices, deviceFromMarkerDraft, seedHiddenBindings, lqiFor, tempFor, humFor, climateTempFor, isHumEntity,
@@ -138,8 +142,9 @@ import {
   type DecorBox, type SnapGeometry,
 } from './editors/decor/geometry';
 import { renderOpeningTunnelFills } from './render/opening-tunnels';
+import { safeStoredColor } from './color';
 
-const CARD_VERSION = '1.60.3';
+const CARD_VERSION = '1.61.0-beta.1';
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
 const CELL_CM_MIN = 0.1;
@@ -1161,6 +1166,15 @@ class HouseplanCard extends LitElement {
   private _vacFit: { markerId: string; source: string; mapId: string; p: FitParams;
     drag: null | { kind: 'move' | 'scale'; sx: number; sy: number; p0: FitParams;
       fx: number; fy: number } } | null = null;
+  /** Marker whose lazy «All cameras» candidate section is expanded. */
+  private _vacAllCamerasFor: string | null = null;
+  /** One snapshot per currently open global-camera section; rebuilt on reopen. */
+  private _vacAllCameraCache: { devId: string; candidates: VacSourceCandidate[] } | null = null;
+  /** Proposed high-residual auto-calibration. Config remains untouched until Apply. */
+  private _vacCalConfirm: {
+    markerId: string; source: string; mapId: string; matrix: Affine;
+    rooms: number; error: string;
+  } | null = null;
   private _kioskDots = false;
   private _kioskDotsTimer?: number;
   private _kioskHoldTimer?: number;
@@ -1248,6 +1262,8 @@ class HouseplanCard extends LitElement {
     _dtDrag: { state: true },
     _kioskDialog: { state: true },
     _vacFit: { state: true },
+    _vacAllCamerasFor: { state: true },
+    _vacCalConfirm: { state: true },
     _kioskDots: { state: true },
     _areaSel: { state: true },
     _nameSel: { state: true },
@@ -1421,6 +1437,7 @@ class HouseplanCard extends LitElement {
     if (e.key === 'Escape') {
       // close the topmost open dialog; info popups first, then editors
       if (this._tapConfirm) { this._tapConfirm = null; return; }
+      if (this._vacCalConfirm) { this._vacCalConfirm = null; return; }
       if (this._decorEraseConfirm) { this._decorEraseConfirm = null; return; }
       if (this._openingInfo) { this._openingInfo = null; return; }
       if (this._infoCard) { this._infoCard = null; return; }
@@ -6217,7 +6234,8 @@ class HouseplanCard extends LitElement {
         : `${text}${text ? ' ' : ''}${legacyToken}`;
     }
     this._decorTextDialog = {
-      id: shape.id, x: shape.x, y: shape.y, text, color: shape.color || this._decorStyle.color,
+      id: shape.id, x: shape.x, y: shape.y, text,
+      color: safeStoredColor(shape.color, this._decorStyle.color),
       opacity: clamp01(shape.opacity, this._decorStyle.opacity),
       angle: this._angleField(shape.angle),
       sizeCm: this._decorTextSizeCm(shape),
@@ -7491,7 +7509,7 @@ class HouseplanCard extends LitElement {
   }
 
   private get _editorSecondaryDialogBlocked(): boolean {
-    return !!(this._tapConfirm || this._roomDialog || this._mergeDialog
+    return !!(this._tapConfirm || this._vacCalConfirm || this._roomDialog || this._mergeDialog
       || this._openingDialog || this._physicalDialog || this._openingInfo
       || this._decorTextDialog || this._decorShapeDialog || this._backdropDialog
       || this._decorEraseConfirm || this._spaceDialog || this._markerDialog
@@ -9319,6 +9337,10 @@ class HouseplanCard extends LitElement {
   // ================= DEVICE EDITOR (markers) =================
 
   private _openMarkerDialog(d?: DevItem): void {
+    // A global-camera snapshot belongs to one explicit expansion only; never
+    // carry it across device-dialog sessions.
+    this._vacAllCamerasFor = null;
+    this._vacAllCameraCache = null;
     if (d) this._ackNewDevice(d.id);
     if (!this._norm) {
       this._showToast(this._t('toast.marker_needs_server'));
@@ -9337,7 +9359,7 @@ class HouseplanCard extends LitElement {
         icon: d.marker?.icon || '',
         autoIcon: d.icon || '',
         display: normalizeDeviceDisplay(d.marker?.display),
-        rippleColor: d.marker?.ripple_color || '',
+        rippleColor: safeStoredColor(d.marker?.ripple_color, ''),
         rippleSize: Number(d.marker?.ripple_size) > 0 ? Number(d.marker!.ripple_size) : 3,
         size: Number(d.marker?.size) > 0 ? Number(d.marker!.size) : 1,
         angle: Number(d.marker?.angle) || 0,
@@ -11784,6 +11806,21 @@ class HouseplanCard extends LitElement {
         ${this._decorEraseConfirm ? this._renderDecorEraseConfirm() : nothing}
         ${this._spaceDialog ? this._renderSpaceDialog() : nothing}
         ${this._markerDialog ? this._renderMarkerDialog() : nothing}
+        ${this._vacCalConfirm ? html`<hp-dialog .hass=${this.hass}
+          .title=${this._t('vac.residual_title')} icon="mdi:map-marker-alert-outline"
+          dismiss-on-scrim @hp-close=${() => (this._vacCalConfirm = null)}>
+            <div class="body">
+              <p>${this._t('vac.residual_message', { error: this._vacCalConfirm.error })}</p>
+            </div>
+            <div class="row" slot="footer">
+              <button class="btn ghost" @click=${() => (this._vacCalConfirm = null)}>${this._t('btn.cancel')}</button>
+              <span class="spacer"></span>
+              <button class="btn ghost" @click=${() => this._vacApplyCalibrationProposal(true)}>${this._t('vac.fit')}</button>
+              <button class="btn on" @click=${() => this._vacApplyCalibrationProposal(false)}>
+                <ha-icon icon="mdi:check"></ha-icon>${this._t('vac.apply_proposal')}
+              </button>
+            </div>
+        </hp-dialog>` : nothing}
         ${this._infoCard ? this._renderInfoCard() : nothing}
         ${this._rulesDialog ? this._renderRulesDialog() : nothing}
         ${this._settingsDialog ? this._renderSettingsDialog() : nothing}
@@ -11835,15 +11872,74 @@ class HouseplanCard extends LitElement {
 
   // ---------------- live robot vacuums (docs/VACUUM.md) ----------------
 
-  /** The live-position source entity for a vacuum device, or null. */
-  private _vacSource(d: DevItem): string | null {
-    const v = d.marker?.vacuum;
-    if (v?.live === false) return null;
-    if (v?.source && this.hass?.states[v.source]) return v.source;
-    for (const eid of d.entities || []) {
-      if (isVacSourceState(this.hass?.states[eid])) return eid;
+  private _vacCandidateStatus(entityId: string, candidate: VacSourceCandidate | null): VacSourceStatus {
+    const binding = this._bindingStatus('entity:' + entityId);
+    if (binding.kind === 'ha_disabled') return 'disabled';
+    if (binding.kind === 'orphaned') return 'missing';
+    if (binding.kind === 'unverified') return 'unverified';
+    const state = this.hass?.states?.[entityId];
+    if (state?.state === 'unavailable') return 'unavailable';
+    return candidate?.hasPosition ? 'ok' : 'unsupported';
+  }
+
+  /** Snapshot the expensive global camera classification once per opening. */
+  private _vacOpenAllCameras(d: DevItem): void {
+    const registry = this._haRegistry.entities || {};
+    const candidates: VacSourceCandidate[] = [];
+    for (const [entityId, state] of Object.entries<any>(this.hass?.states || {})) {
+      if (!entityId.startsWith('camera.')) continue;
+      const candidate = parseVacSourceCandidate(entityId, state, registry[entityId]);
+      if (candidate) candidates.push(candidate);
     }
-    return null;
+    this._vacAllCameraCache = { devId: d.id, candidates };
+    this._vacAllCamerasFor = d.id;
+  }
+
+  /** One sticky, order-independent source resolver for render/dialog/fit. */
+  private _vacSourceResolution(d: DevItem, includeAllCameras = false): VacSourceResolution {
+    const vacuum = d.marker?.vacuum;
+    const pinned = typeof vacuum?.source === 'string' && !!vacuum.source;
+    const sameDevice = new Set(d.entities || []);
+    const ids = new Set<string>(sameDevice);
+    if (pinned) ids.add(vacuum!.source!);
+    const registry = this._haRegistry.entities || {};
+    const candidates: VacSourceCandidate[] = [];
+    for (const entityId of ids) {
+      const state = this.hass?.states?.[entityId];
+      const candidate = parseVacSourceCandidate(entityId, state, registry[entityId]);
+      if (candidate) candidates.push(candidate);
+      else if (pinned && entityId === vacuum!.source) {
+        candidates.push({
+          entityId,
+          name: String(state?.attributes?.friendly_name || entityId),
+          platform: registry[entityId]?.platform ? String(registry[entityId].platform) : null,
+          category: entityId.startsWith('camera.') ? 'camera' : 'partial',
+          hasPosition: false, hasRooms: false, hasPath: false, hasMapId: false, score: 0,
+        });
+      }
+    }
+    if (includeAllCameras && this._vacAllCameraCache?.devId === d.id) {
+      const existing = new Set(candidates.map((candidate) => candidate.entityId));
+      for (const candidate of this._vacAllCameraCache.candidates) {
+        if (!existing.has(candidate.entityId)) candidates.push(candidate);
+      }
+    }
+    const statuses: Record<string, VacSourceStatus> = {};
+    for (const candidate of candidates) {
+      statuses[candidate.entityId] = this._vacCandidateStatus(candidate.entityId, candidate);
+    }
+    return resolveVacSource(vacuum?.source, sameDevice, candidates, statuses);
+  }
+
+  /** The sticky/automatic live-position source entity, or null. */
+  private _vacSource(d: DevItem): string | null {
+    if (d.marker?.vacuum?.live === false) return null;
+    const resolution = this._vacSourceResolution(d);
+    // A disabled/unavailable/unverified source must never leak stale HA
+    // attributes into plan overlays. `unsupported` remains usable because it
+    // may still provide rooms/path for calibration and trail rendering.
+    return resolution.status === 'ok' || resolution.status === 'unsupported'
+      ? resolution.entityId : null;
   }
 
   private _vacEntity(d: DevItem): string | null {
@@ -11987,7 +12083,7 @@ class HouseplanCard extends LitElement {
         this._vacRt.set(d.id, rt);
       }
       if (moving && !rt.moving) { rt.trail = []; rt.lastPos = null; } // a fresh run
-      const wantTrail = vacTrailMode(d.marker?.vacuum) !== 'never' && !tele?.path;
+      const wantTrail = vacTrailMode(d.marker?.vacuum) !== 'never' && !tele?.path.length;
       if (!moving && rt.moving) {
         rt.endedTs = Date.now();
         // the run is over: the puck has arrived everywhere it was going
@@ -12050,12 +12146,17 @@ class HouseplanCard extends LitElement {
     const dev = this._devices.find((x) => x.id === dlg.devId);
     if (!dev || !this._isVacDev(dev)) return nothing;
     const v = dev.marker?.vacuum || {};
-    const src = this._vacSource(dev);
+    const includeAllCameras = this._vacAllCamerasFor === dev.id;
+    const resolution = this._vacSourceResolution(dev, includeAllCameras);
+    const src = resolution.entityId;
+    const selected = resolution.candidates.find((candidate) => candidate.entityId === src) || null;
     const tele = src ? readVacTelemetry(this.hass?.states[src]?.attributes) : null;
-    const tierA = !!(tele && tele.rooms.length >= 3);
-    const status = tele?.pos
-      ? subst(this._t('vac.status_found'), { name: src || '' })
-      : this._t('vac.status_none');
+    const canUseSource = v.live !== false
+      && (resolution.status === 'ok' || resolution.status === 'unsupported');
+    const planRooms = this._vacPlanRoomAnchors(dev.space);
+    const roomMatches = tele
+      ? vacRoomNameMatchCount(tele.rooms, planRooms.map((room) => room.name)) : 0;
+    const tierA = !!(canUseSource && tele && roomMatches >= 3);
     const cals = Object.keys(v.calibration || {});
     const setVac = (patch: Record<string, unknown>) => {
       // HP-1540-01: materialise the marker first — find() alone silently
@@ -12064,18 +12165,105 @@ class HouseplanCard extends LitElement {
       if (!m) return;
       m.vacuum = { ...(m.vacuum || {}), ...patch };
       this._regSignature = '';
+      // First-use markers are materialised above, so the dialog must rebuild
+      // immediately instead of waiting for an unrelated HA state tick.
+      this._maybeRebuildDevices();
       this._saveConfig();
       this.requestUpdate();
+    };
+    const sameDevice = new Set(dev.entities || []);
+    const primaryCandidates = resolution.candidates.filter((candidate) =>
+      sameDevice.has(candidate.entityId) || candidate.entityId === v.source);
+    const globalCandidates = includeAllCameras
+      ? resolution.candidates.filter((candidate) => candidate.entityId.startsWith('camera.')
+        && !primaryCandidates.some((entry) => entry.entityId === candidate.entityId))
+      : [];
+    const capability = (candidate: VacSourceCandidate) => [
+      candidate.hasPosition ? this._t('vac.cap_position') : '',
+      candidate.hasRooms ? this._t('vac.cap_rooms_short') : '',
+      candidate.hasPath ? this._t('vac.cap_path') : '',
+      candidate.hasMapId ? this._t('vac.cap_map') : '',
+    ].filter(Boolean).join(' · ') || this._t('vac.cap_none');
+    const candidateButton = (candidate: VacSourceCandidate) => html`
+      <button type="button" class="vacsource ${candidate.entityId === src ? 'on' : ''}"
+        @click=${() => setVac({ source: candidate.entityId })}>
+        <span><b>${candidate.name}</b><small>${candidate.entityId}</small></span>
+        <span class="vacsource-meta">${candidate.platform || this._t('vac.platform_unknown')} · ${capability(candidate)}</span>
+      </button>`;
+    const knownSameDeviceXcme = resolution.candidates.some((candidate) =>
+      sameDevice.has(candidate.entityId) && candidate.category === 'known_xcme_incomplete');
+    const showXcmeHint = knownSameDeviceXcme
+      || (!!resolution.pinned && !!src?.startsWith('camera.') && !selected?.hasPosition);
+    const openPicker = () => {
+      const picker = [...this.renderRoot.querySelectorAll<HTMLDetailsElement>('details.vacpicker')]
+        .find((details) => details.dataset.devId === dev.id);
+      if (!picker) return;
+      picker.open = true;
+      picker.querySelector<HTMLElement>('summary')?.focus();
     };
     return html`
       <label>${this._t('vac.section')}</label>
       <div class="bindbox vacbox">
-        <div class="rhint">${status}</div>
-        ${tele ? html`
-          <div class="vacbtns">
-            ${tierA ? html`<button class="btn" @click=${() => this._vacAutoCalibrate(dev)}>${this._t('vac.autocal')}</button>` : nothing}
-            <button class="btn ghostbtn" @click=${() => this._vacStartFit(dev)}>${this._t('vac.fit')}</button>
+        <div class="vacdiag" role="status">
+          <div><span>${this._t('vac.diag_source')}</span><b>${src || this._t('vac.source_none')}</b></div>
+          ${selected?.platform ? html`<div><span>${this._t('vac.diag_platform')}</span><b>${selected.platform}</b></div>` : nothing}
+          <div><span>${this._t('vac.diag_status')}</span><b>${this._t((`vac.source_status_${resolution.status}`) as any)}</b></div>
+          <div><span>${this._t('vac.diag_position')}</span><b>${tele?.pos ? this._t('common.yes') : this._t('common.no')}</b></div>
+          <div><span>${this._t('vac.diag_rooms')}</span><b>${subst(this._t('vac.diag_rooms_value'), {
+            total: String(tele?.rooms.length || 0), matched: String(roomMatches),
+            readiness: this._t(roomMatches >= 3 ? 'vac.autocal_ready' : 'vac.autocal_not_ready'),
+          })}</b></div>
+          <div><span>${this._t('vac.diag_path')}</span><b>${tele?.path.length ? this._t('common.yes') : this._t('common.no')}</b></div>
+          <div><span>${this._t('vac.diag_map')}</span><b>${tele?.mapId ?? 'default'}</b></div>
+        </div>
+        ${(resolution.status === 'missing' || resolution.status === 'disabled' || resolution.status === 'unverified')
+          ? html`<div class="warn vacsource-warning">
+              <span>${this._t((`vac.source_banner_${resolution.status}`) as any)}</span>
+              <button type="button" class="btn ghostbtn" @click=${openPicker}>${this._t('vac.choose_source')}</button>
+            </div>` : nothing}
+        ${showXcmeHint ? html`<div class="warn vacxcme">
+          <b>${this._t('vac.xcme_hint')}</b>
+          <pre>attributes:
+  - vacuum_position
+  - rooms
+  - path
+  - map_name</pre>
+        </div>` : nothing}
+        <details class="vacpicker" data-dev-id=${dev.id}>
+          <summary class="btn ghostbtn">${this._t('vac.choose_source')}</summary>
+          <div class="vacsource-list">
+            <button type="button" class="vacsource ${!resolution.pinned ? 'on' : ''}"
+              @click=${() => setVac({ source: null })}>
+              <span><b>${this._t('vac.source_auto')}</b><small>${this._t('vac.source_auto_hint')}</small></span>
+            </button>
+            ${primaryCandidates.map(candidateButton)}
+            <details ?open=${includeAllCameras}
+              @toggle=${(event: Event) => {
+                const open = (event.currentTarget as HTMLDetailsElement).open;
+                if (open) this._vacOpenAllCameras(dev);
+                else {
+                  this._vacAllCamerasFor = null;
+                  this._vacAllCameraCache = null;
+                }
+              }}>
+              <summary>${this._t('vac.all_cameras')}</summary>
+              <div class="rhint">${this._t('vac.all_cameras_warn')}</div>
+              ${includeAllCameras
+                ? (globalCandidates.length ? globalCandidates.map(candidateButton)
+                  : html`<div class="rhint">${this._t('vac.all_cameras_empty')}</div>`)
+                : nothing}
+            </details>
           </div>
+        </details>
+        <div class="vacbtns">
+          ${tierA ? html`<button class="btn" @click=${() => this._vacAutoCalibrate(dev)}>${this._t('vac.autocal')}</button>` : nothing}
+          ${canUseSource
+            ? html`<button class="btn ghostbtn" @click=${() => this._vacStartFit(dev)}>${this._t('vac.fit')}</button>`
+            : nothing}
+          <a class="btn ghostbtn" href="https://github.com/Matysh/houseplan-card/blob/main/docs/VACUUM.md"
+            target="_blank" rel="noopener">${this._t('vac.documentation')}</a>
+        </div>
+        ${tele ? html`
           <label class="srcrow">
             ${this._boolInput(v.live !== false, (on) => setVac({ live: on ? null : false }))}
             <span>${this._t('vac.live')}</span>
@@ -12118,9 +12306,26 @@ class HouseplanCard extends LitElement {
     v.calibration = { ...(v.calibration || {}), [mapId]: matrix.map((n) => Number(n.toFixed(6))) };
     m.vacuum = v;
     this._regSignature = '';
+    this._maybeRebuildDevices();
     this._saveConfig();
     this.requestUpdate();
     return true;
+  }
+
+  /** The exact plan-room set accepted by auto-calibration and diagnostics. */
+  private _vacPlanRoomAnchors(spaceId: string | null | undefined): Array<{
+    name: string; cx: number; cy: number;
+  }> {
+    return (this._spaceModel(spaceId || undefined)?.rooms || [])
+      // HP-1540-04: legacy rectangle rooms (x/y/w/h) are still first-class;
+      // roomPoly() gives the same outline the renderer uses for them.
+      .map((room: any) => ({ room, poly: roomPoly(room) }))
+      .filter(({ room, poly }: any) => room.name && poly)
+      .map(({ room, poly }: any) => {
+        const centroid = areaCentroid(poly);
+        return centroid ? { name: String(room.name), cx: centroid[0], cy: centroid[1] } : null;
+      })
+      .filter(Boolean) as Array<{ name: string; cx: number; cy: number }>;
   }
 
   /** «Настроить автоматически»: robot rooms ↔ plan rooms by name. */
@@ -12131,31 +12336,48 @@ class HouseplanCard extends LitElement {
       this._showToast(this._t('vac.autocal_no_rooms'));
       return;
     }
-    const sp = this._spaceModel(d.space);
-    const planRooms = (sp?.rooms || [])
-      // HP-1540-04: legacy rectangle rooms (x/y/w/h) are still first-class
-      // everywhere else — roomPoly() gives the same 4-corner outline the
-      // renderer uses, so they must count for name-matching too. The old
-      // r.poly?.length filter dropped them and then blamed the room names.
-      .map((r: any) => ({ r, poly: roomPoly(r) }))
-      .filter(({ r, poly }: any) => r.name && poly)
-      .map(({ r, poly }: any) => {
-        const c = poleOfInaccessibility(poly);
-        return { name: r.name, cx: c[0], cy: c[1] };
-      });
+    const planRooms = this._vacPlanRoomAnchors(d.space);
     const res = autoCalibrate(tele.rooms, planRooms);
     if (!res) {
       this._showToast(this._t('vac.autocal_no_match'));
       return;
     }
-    // residual gate: 5% of the canvas ≈ 40 cm in a typical house
-    // HP-1540-01: toast success ONLY after the matrix verifiably landed in
-    // the config — the old code always claimed victory, even as a no-op
-    if (!this._vacSaveMatrix(d.id, src, this._vacMapId(d, tele), res.matrix)) return;
-    if (res.residual > NORM_W * 0.05) {
-      this._showToast(subst(this._t('vac.autocal_res_warn'), { rooms: String(res.matched.length) }));
+    const rawSpace = this._serverCfg?.spaces?.find((space: any) => space.id === d.space);
+    const rawCellCm = Number(rawSpace?.cell_cm);
+    const cellCm = Number.isFinite(rawCellCm) && rawCellCm > 0 ? rawCellCm : 5;
+    const residualCm = vacCalibrationResidualCm(res.residual, this._gridPitch, cellCm);
+    const mapId = this._vacMapId(d, tele);
+    if (residualCm > VAC_CALIBRATION_WARN_CM) {
+      this._vacCalConfirm = {
+        markerId: d.id, source: src, mapId, matrix: res.matrix,
+        rooms: res.matched.length,
+        error: formatLength(residualCm, this.hass?.config?.unit_system?.length === 'mi'),
+      };
+      return;
     }
+    if (!this._vacSaveMatrix(d.id, src, mapId, res.matrix)) return;
     this._showToast(subst(this._t('vac.autocal_done'), { rooms: String(res.matched.length) }));
+  }
+
+  private _vacApplyCalibrationProposal(manual: boolean): void {
+    const proposal = this._vacCalConfirm;
+    if (!proposal) return;
+    this._vacCalConfirm = null;
+    if (manual) {
+      const dev = this._devices.find((candidate) => candidate.id === proposal.markerId);
+      const fit = fitFromMatrix(proposal.matrix);
+      if (!dev || !fit) return;
+      this._markerDialog = null;
+      if (dev.space !== this._space) this._space = dev.space;
+      this._vacFit = {
+        markerId: proposal.markerId, source: proposal.source,
+        mapId: proposal.mapId, p: fit, drag: null,
+      };
+      return;
+    }
+    if (this._vacSaveMatrix(
+      proposal.markerId, proposal.source, proposal.mapId, proposal.matrix,
+    )) this._showToast(subst(this._t('vac.autocal_done'), { rooms: String(proposal.rooms) }));
   }
 
   /** «Подогнать вручную»: open the fit overlay and leave the dialog. */
@@ -12373,27 +12595,25 @@ class HouseplanCard extends LitElement {
         }).join(' ');
         trails.push(svg`<g class="prev"><polyline class="case" points="${pts}"></polyline><polyline class="core" points="${pts}"></polyline></g>`);
       }
-      // trail source order: server current run (survives reloads, shared by
-      // every screen) → integration path → the local live buffer
-      if (showCur && (moving || srvCur)) {
-        // any server/integration path ends at the CURRENT target — trim the
-        // live tail while moving so the line never runs ahead of the puck
-        const full: VacPt[] = (srvCur?.points as VacPt[]) || tele.path || rt?.trail || [];
-        const trim = moving && (srvCur || tele.path) && full.length > 1;
-        const raw: VacPt[] = trim ? full.slice(0, -1) : full;
-        if (raw.length > 1) {
-          const ptsStr = raw.map(([x, y]) => {
+      // One arbitration authority: integration multi-subpath → server run →
+      // local runtime. Only drawable segments participate.
+      if (showCur) {
+        const current = resolveCurrentVacPath(tele, srvCur, rt?.trail || []);
+        // Server/integration paths include the current target. Remove it from
+        // the final subpath only while moving so the line cannot outrun puck.
+        const raw: VacPath = moving && (current.source === 'integration' || current.source === 'server')
+          ? trimVacPathTarget(current.path) : current.path;
+        if (raw.length) {
+          const pathD = raw.map((segment) => segment.map(([x, y], index) => {
             const [cx, cy] = applyAffine(matrix, x, y);
-            return cx.toFixed(1) + ',' + cy.toFixed(1);
-          }).join(' ');
-          // cartography casing: a dark halo under a light core. Neutral and
-          // visible over ANY room fill — blend modes all have a blind
-          // luminance where the line vanishes (owner request 2026-07-31).
-          trails.push(svg`<polyline class="case" points="${ptsStr}"></polyline><polyline class="core" points="${ptsStr}"></polyline>`);
-          // the LAST segment grows glued to the icon (owner: «след появлялся
-          // строго за иконкой»): a rAF sampler drags x2/y2 to the puck centre
-          if (moving) {
-            const [ax, ay] = applyAffine(matrix, raw[raw.length - 1][0], raw[raw.length - 1][1]);
+            return `${index ? 'L' : 'M'} ${cx.toFixed(1)} ${cy.toFixed(1)}`;
+          }).join(' ')).join(' ');
+          // A single SVG path with several M commands keeps gaps literal.
+          trails.push(svg`<path class="case" d="${pathD}"></path><path class="core" d="${pathD}"></path>`);
+          const last = raw[raw.length - 1];
+          if (moving && last?.length >= 2) {
+            const anchor = last[last.length - 1];
+            const [ax, ay] = applyAffine(matrix, anchor[0], anchor[1]);
             const a1 = ax.toFixed(1), a2 = ay.toFixed(1);
             trails.push(svg`<line class="case tip" data-mid="${d.id}" x1="${a1}" y1="${a2}" x2="${a1}" y2="${a2}"></line><line class="core tip" data-mid="${d.id}" x1="${a1}" y1="${a2}" x2="${a1}" y2="${a2}"></line>`);
           }

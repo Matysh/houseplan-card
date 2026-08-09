@@ -9,6 +9,10 @@
 
 export type Affine = [number, number, number, number, number, number];
 export type Pt = [number, number];
+export type VacPath = Pt[][];
+
+export const VAC_PATH_MAX_SEGMENTS = 64;
+export const VAC_PATH_MAX_POINTS = 4000;
 
 /** target = [a b; d e]·source + [c f] */
 export function applyAffine(m: Affine, x: number, y: number): Pt {
@@ -71,15 +75,158 @@ export interface VacRoom { id: string; name: string; cx: number; cy: number;
   x0?: number; y0?: number; x1?: number; y1?: number }
 export interface VacTelemetry {
   pos: { x: number; y: number; a: number | null } | null;
-  path: Pt[] | null;      // integration-provided full path, vacuum coords
+  path: VacPath;          // integration-provided drawable subpaths, vacuum coords
   rooms: VacRoom[];       // for auto-calibration; empty when unknown
   mapId: string;          // multi-floor robots: one calibration per map
 }
 
 const num = (v: unknown): number | null => {
+  if (v == null || v === '') return null;
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
 };
+
+const pointOf = (value: unknown): Pt | null => {
+  const candidate = value as any;
+  const x = num(Array.isArray(candidate) ? candidate[0] : candidate?.x);
+  const y = num(Array.isArray(candidate) ? candidate[1] : candidate?.y);
+  return x == null || y == null ? null : [x, y];
+};
+
+const looksLikePoint = (value: unknown): boolean => {
+  if (Array.isArray(value)) {
+    return value.length >= 2 && !Array.isArray(value[0])
+      && (typeof value[0] !== 'object' || value[0] == null);
+  }
+  return !!value && typeof value === 'object'
+    && ('x' in (value as object) || 'y' in (value as object));
+};
+
+/** Shoelace area centroid. A zero-area outline deterministically falls back
+ * to its vertex average; invalid/non-finite outlines have no centroid. */
+export function areaCentroid(raw: unknown): Pt | null {
+  if (!Array.isArray(raw)) return null;
+  const points: Pt[] = [];
+  for (const value of raw) {
+    const point = pointOf(value);
+    if (!point) return null;
+    points.push(point);
+  }
+  if (points.length > 1) {
+    const first = points[0], last = points[points.length - 1];
+    if (first[0] === last[0] && first[1] === last[1]) points.pop();
+  }
+  if (points.length < 3) return null;
+  let crossSum = 0, cx = 0, cy = 0;
+  for (let i = 0; i < points.length; i++) {
+    const a = points[i], b = points[(i + 1) % points.length];
+    const cross = a[0] * b[1] - b[0] * a[1];
+    crossSum += cross;
+    cx += (a[0] + b[0]) * cross;
+    cy += (a[1] + b[1]) * cross;
+  }
+  if (Math.abs(crossSum) < 1e-12) {
+    return [
+      points.reduce((sum, point) => sum + point[0], 0) / points.length,
+      points.reduce((sum, point) => sum + point[1], 0) / points.length,
+    ];
+  }
+  return [cx / (3 * crossSum), cy / (3 * crossSum)];
+}
+
+function outlineGeometry(raw: unknown): { centroid: Pt; bbox: [number, number, number, number] } | null {
+  if (!Array.isArray(raw)) return null;
+  const points: Pt[] = [];
+  for (const value of raw) {
+    const point = pointOf(value);
+    if (!point) return null;
+    points.push(point);
+  }
+  if (points.length > 1) {
+    const first = points[0], last = points[points.length - 1];
+    if (first[0] === last[0] && first[1] === last[1]) points.pop();
+  }
+  const centroid = areaCentroid(points);
+  if (!centroid) return null;
+  const xs = points.map((point) => point[0]);
+  const ys = points.map((point) => point[1]);
+  return { centroid, bbox: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)] };
+}
+
+function thinPathToTarget(points: Pt[], target: number): Pt[] {
+  if (target >= points.length) return points.slice();
+  if (target <= 2) return [points[0], points[points.length - 1]];
+  const out: Pt[] = [];
+  for (let i = 0; i < target; i++) {
+    const index = Math.round((i * (points.length - 1)) / (target - 1));
+    out.push(points[index]);
+  }
+  return out;
+}
+
+/** Normalize legacy flat paths and integration multi-subpaths, then enforce
+ * drawable/cap/budget rules without ever joining across a gap. */
+export function normalizeVacPath(raw: unknown): VacPath {
+  let value: unknown = raw;
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const object = value as any;
+    value = object.path ?? object.points ?? value;
+  }
+  if (!Array.isArray(value) || !value.length) return [];
+  const flat = value.some((entry) => looksLikePoint(entry));
+  const rawSegments: unknown[][] = flat ? [value] : value.filter(Array.isArray) as unknown[][];
+  let segments = rawSegments
+    .map((segment) => segment.map(pointOf).filter((point): point is Pt => point != null))
+    .filter((segment) => segment.length >= 2);
+  if (segments.length > VAC_PATH_MAX_SEGMENTS) segments = segments.slice(-VAC_PATH_MAX_SEGMENTS);
+  const total = segments.reduce((sum, segment) => sum + segment.length, 0);
+  if (total <= VAC_PATH_MAX_POINTS) return segments.map((segment) => segment.slice());
+
+  const base = segments.length * 2;
+  const remaining = VAC_PATH_MAX_POINTS - base;
+  const weights = segments.map((segment) => segment.length - 2);
+  const weightTotal = weights.reduce((sum, weight) => sum + weight, 0);
+  const quotas = weights.map((weight) => remaining * weight / weightTotal);
+  const allocations = quotas.map(Math.floor);
+  let left = remaining - allocations.reduce((sum, allocation) => sum + allocation, 0);
+  const order = quotas.map((quota, index) => ({ index, fraction: quota - Math.floor(quota) }))
+    .sort((a, b) => b.fraction - a.fraction || a.index - b.index);
+  for (let i = 0; i < left; i++) allocations[order[i].index]++;
+  return segments.map((segment, index) => thinPathToTarget(segment, 2 + allocations[index]));
+}
+
+export type VacCurrentPathSource = 'integration' | 'server' | 'local' | 'none';
+
+/** One authority for the current visible path. Only drawable geometry wins. */
+export function resolveCurrentVacPath(
+  tele: { path?: unknown } | unknown,
+  server: { points?: unknown } | unknown,
+  local: unknown,
+): { path: VacPath; source: VacCurrentPathSource } {
+  const telePath = normalizeVacPath(
+    tele && typeof tele === 'object' && !Array.isArray(tele) && 'path' in tele
+      ? (tele as { path?: unknown }).path : tele,
+  );
+  if (telePath.length) return { path: telePath, source: 'integration' };
+  const serverPath = normalizeVacPath(
+    server && typeof server === 'object' && !Array.isArray(server) && 'points' in server
+      ? (server as { points?: unknown }).points : server,
+  );
+  if (serverPath.length) return { path: serverPath, source: 'server' };
+  const localPath = normalizeVacPath(local);
+  if (localPath.length) return { path: localPath, source: 'local' };
+  return { path: [], source: 'none' };
+}
+
+/** Remove the live target from only the final drawable subpath. */
+export function trimVacPathTarget(path: VacPath): VacPath {
+  const out = path.map((segment) => segment.slice());
+  const last = out[out.length - 1];
+  if (!last) return [];
+  if (last.length > 2) last.pop();
+  else out.pop();
+  return out;
+}
 
 /**
  * Map-id normalisation contract, shared with the backend recorder
@@ -119,18 +266,8 @@ export function readVacTelemetry(attrs: Record<string, any> | null | undefined):
   const pos = p && num(p.x) != null && num(p.y) != null
     ? { x: num(p.x)!, y: num(p.y)!, a: num(p.a ?? p.angle ?? p.theta) }
     : null;
-  // path: [{x,y},…] (Map Extractor) or [[x,y],…]
-  let path: Pt[] | null = null;
-  const rawPath = attrs.path?.points ?? attrs.path;
-  if (Array.isArray(rawPath) && rawPath.length) {
-    path = [];
-    for (const q of rawPath) {
-      const x = num(Array.isArray(q) ? q[0] : q?.x);
-      const y = num(Array.isArray(q) ? q[1] : q?.y);
-      if (x != null && y != null) path.push([x, y]);
-    }
-    if (!path.length) path = null;
-  }
+  // path: [{x,y},…], [[x,y],…] or XCME path.path: [[{x,y},…], …]
+  const path = normalizeVacPath(attrs.path?.path ?? attrs.path?.points ?? attrs.path);
   // rooms: {id:{name,x0,y0,x1,y1}} | [{id,name,x0..}] | {id:{name,outline}}
   const rooms: VacRoom[] = [];
   const rawRooms = attrs.rooms;
@@ -140,40 +277,175 @@ export function readVacTelemetry(attrs: Record<string, any> | null | undefined):
   for (const [id, r] of entries) {
     if (!r || typeof r !== 'object') continue;
     const name = String(r.name ?? r.label ?? '').trim();
-    let cx = num(r.cx ?? r.center?.x); let cy = num(r.cy ?? r.center?.y);
-    if (cx == null || cy == null) {
-      const x0 = num(r.x0), y0 = num(r.y0), x1 = num(r.x1), y1 = num(r.y1);
-      if (x0 != null && y0 != null && x1 != null && y1 != null) {
-        cx = (x0 + x1) / 2; cy = (y0 + y1) / 2;
-      }
+    // Anchor pairs are atomic: never mix cx with center.y (or another tier)
+    // when an integration publishes one incomplete spelling.
+    const anchorPairs = [
+      [num(r.cx), num(r.cy)],
+      [num(r.center?.x), num(r.center?.y)],
+      // Tasshack dreame-vacuum: the room centre is plain x/y (verified
+      // against a live X50 Master; x/y sits within its own x0..x1 bbox).
+      [num(r.x), num(r.y)],
+    ];
+    const anchor = anchorPairs.find(([x, y]) => x != null && y != null);
+    let cx = anchor?.[0] ?? null; let cy = anchor?.[1] ?? null;
+    const outline = outlineGeometry(r.outline);
+    const x0 = num(r.x0), y0 = num(r.y0), x1 = num(r.x1), y1 = num(r.y1);
+    const explicitBbox = x0 != null && y0 != null && x1 != null && y1 != null
+      ? [Math.min(x0, x1), Math.min(y0, y1), Math.max(x0, x1), Math.max(y0, y1)] as const
+      : null;
+    const bbox = explicitBbox || outline?.bbox || null;
+    if ((cx == null || cy == null) && outline) [cx, cy] = outline.centroid;
+    // Owner override after review F6: bbox-only dialects still get a usable
+    // ghost/calibration anchor. This is deliberately the LAST tier, after
+    // every explicit centre and the area centroid of a real outline.
+    if ((cx == null || cy == null) && bbox) {
+      cx = (bbox[0] + bbox[2]) / 2;
+      cy = (bbox[1] + bbox[3]) / 2;
     }
-    // Tasshack dreame-vacuum: the room centre is plain x/y (verified against
-    // a live X50 Master; x/y sits within its own x0..x1 bbox)
-    if (cx == null || cy == null) { cx = num(r.x); cy = num(r.y); }
     if (name && cx != null && cy != null) {
       const room: VacRoom = { id, name, cx, cy };
-      const x0 = num(r.x0), y0 = num(r.y0), x1 = num(r.x1), y1 = num(r.y1);
-      if (x0 != null && y0 != null && x1 != null && y1 != null) {
-        room.x0 = Math.min(x0, x1); room.y0 = Math.min(y0, y1);
-        room.x1 = Math.max(x0, x1); room.y1 = Math.max(y0, y1);
-      }
+      if (bbox) [room.x0, room.y0, room.x1, room.y1] = bbox;
       rooms.push(room);
     }
   }
   const mapId = vacMapIdFromAttrs(attrs);
-  if (!pos && !rooms.length && !path) return null;
+  if (!pos && !rooms.length && !path.length) return null;
   return { pos, path, rooms, mapId };
 }
 
 /** Attribute sets that mark an entity as a live-position source. */
 export function isVacSourceState(st: { attributes?: Record<string, any> } | null | undefined): boolean {
   const a = st?.attributes;
-  return !!(a && (a.vacuum_position || a.robot_position));
+  return !!pointOf(a?.vacuum_position ?? a?.robot_position);
+}
+
+export type VacSourceCandidateCategory =
+  | 'compatible' | 'partial' | 'known_xcme_incomplete' | 'camera';
+
+export interface VacSourceCandidate {
+  entityId: string;
+  name: string;
+  platform: string | null;
+  category: VacSourceCandidateCategory;
+  hasPosition: boolean;
+  hasRooms: boolean;
+  hasPath: boolean;
+  hasMapId: boolean;
+  score: number;
+}
+
+export type VacSourceStatus =
+  | 'ok' | 'missing' | 'disabled' | 'unavailable' | 'unverified' | 'unsupported' | 'none';
+
+export interface VacSourceResolution {
+  entityId: string | null;
+  status: VacSourceStatus;
+  pinned: boolean;
+  candidates: VacSourceCandidate[];
+}
+
+/**
+ * Resolve one source without depending on entity/registry iteration order.
+ * A saved source is sticky even while broken; automatic mode only considers
+ * proven-compatible entities attached to the same HA device.
+ */
+export function resolveVacSource(
+  savedSource: string | null | undefined,
+  sameDeviceIds: Iterable<string>,
+  rawCandidates: Iterable<VacSourceCandidate>,
+  statuses: Readonly<Record<string, VacSourceStatus>>,
+): VacSourceResolution {
+  const pinned = typeof savedSource === 'string' && savedSource.length > 0;
+  const sameDevice = new Set(sameDeviceIds);
+  const candidates = Array.from(rawCandidates).sort((a, b) => {
+    if (pinned && a.entityId === savedSource) return -1;
+    if (pinned && b.entityId === savedSource) return 1;
+    return b.score - a.score || a.entityId.localeCompare(b.entityId);
+  });
+  if (pinned) {
+    const selected = candidates.find((candidate) => candidate.entityId === savedSource);
+    return {
+      entityId: savedSource,
+      // Missing is an authoritative conclusion supplied by the caller. An
+      // absent status is insufficient evidence, so the pure helper stays
+      // conservative instead of inventing deletion.
+      status: statuses[savedSource] || (selected?.hasPosition ? 'ok' : 'unverified'),
+      pinned: true,
+      candidates,
+    };
+  }
+  const automatic = candidates.find((candidate) => sameDevice.has(candidate.entityId)
+    && candidate.hasPosition && statuses[candidate.entityId] === 'ok');
+  return automatic
+    ? { entityId: automatic.entityId, status: 'ok', pinned: false, candidates }
+    : { entityId: null, status: 'none', pinned: false, candidates };
+}
+
+/** Physical calibration error in centimetres; invalid scales cannot pass. */
+export function vacCalibrationResidualCm(
+  residualPlanUnits: number,
+  gridPitch: number,
+  cellCm: number,
+): number {
+  if (![residualPlanUnits, gridPitch, cellCm].every(Number.isFinite)
+      || residualPlanUnits < 0 || gridPitch <= 0 || cellCm <= 0) return Number.POSITIVE_INFINITY;
+  return (residualPlanUnits / gridPitch) * cellCm;
+}
+
+export const VAC_CALIBRATION_WARN_CM = 40;
+
+/** Classify one entity without relying on device/entity array order. */
+export function parseVacSourceCandidate(
+  entityId: string,
+  state: { attributes?: Record<string, any> } | null | undefined,
+  registryEntry?: Record<string, any> | null,
+): VacSourceCandidate | null {
+  if (!entityId || !state) return null;
+  const attrs = state.attributes || {};
+  const domain = entityId.split('.')[0] || '';
+  const platform = registryEntry?.platform != null ? String(registryEntry.platform) : null;
+  const hasPosition = !!pointOf(attrs.vacuum_position ?? attrs.robot_position);
+  const hasRooms = !!(attrs.rooms && typeof attrs.rooms === 'object');
+  const hasPath = normalizeVacPath(attrs.path?.path ?? attrs.path?.points ?? attrs.path).length > 0;
+  const hasMapId = [attrs.map_name, attrs.current_map, attrs.map_index, attrs.selected_map]
+    .some((value) => value != null);
+  const knownXcme = platform === 'xiaomi_cloud_map_extractor';
+  const hasVacuumClue = hasRooms || hasPath || hasMapId;
+  let category: VacSourceCandidateCategory | null = null;
+  if (hasPosition) category = 'compatible';
+  else if (knownXcme) category = 'known_xcme_incomplete';
+  else if (hasVacuumClue) category = 'partial';
+  else if (domain === 'camera') category = 'camera';
+  if (!category) return null;
+  const score = hasPosition ? (domain === 'camera' ? 300 : 200)
+    : knownXcme ? 100 : hasVacuumClue ? 50 : 0;
+  return {
+    entityId,
+    name: String(attrs.friendly_name || entityId),
+    platform,
+    category,
+    hasPosition,
+    hasRooms,
+    hasPath,
+    hasMapId,
+    score,
+  };
 }
 
 // ---------------- auto-calibration by rooms ----------------
 
 const canonName = (s: string): string => s.toLowerCase().replace(/[\s_\-.,]+/g, '');
+
+/** Diagnostic name coverage uses the exact same canonicalisation as solve. */
+export function vacRoomNameMatchCount(vacRooms: VacRoom[], planRoomNames: string[]): number {
+  const plan = new Set(planRoomNames.map(canonName).filter(Boolean));
+  const matched = new Set<string>();
+  for (const room of vacRooms) {
+    const name = canonName(room.name || '');
+    if (name && plan.has(name)) matched.add(name);
+  }
+  return matched.size;
+}
 
 /**
  * Match the robot's room list against plan rooms by name and solve the

@@ -102,6 +102,29 @@ test('always-static light keeps configured geometry but suppresses RGB and state
   assert.equal(fixed.angle, 315);
 });
 
+test('hostile stored ripple color cannot add CSS and does not mask a safe HA light color', () => {
+  const h = hass(
+    { 'light.rgb': state('light.rgb', 'on', { rgb_color: [12, 140, 250] }) },
+    { 'light.rgb': { entity_id: 'light.rgb', device_id: 'd1', platform: 'demo' } },
+  );
+  const result = resolveDevicePresentation(h, device({
+    icon: 'mdi:lightbulb', entities: ['light.rgb'], primary: 'light.rgb',
+    marker: {
+      id: 'd1', binding: 'device:d1', display: 'icon_ripple',
+      ripple_color: 'red;position:fixed;inset:0',
+    },
+  }), options);
+  assert.equal(result.rippleColor, 'rgb(12, 140, 250)');
+
+  const noLight = resolveDevicePresentation(hass({}), device({
+    marker: {
+      id: 'd1', binding: 'device:d1', display: 'icon_ripple',
+      ripple_color: '#123456;position:fixed',
+    },
+  }), options);
+  assert.equal(noLight.rippleColor, null);
+});
+
 test('static mode cannot revive HA-disabled or orphaned lifecycle diagnostics', () => {
   const h = hass({});
   const disabled = resolveDevicePresentation(h, device({

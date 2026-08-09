@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+## v1.61.0-beta.1 — 2026-08-09
+
+- Stored plan colours now use one strict `#RRGGBB` contract at both API and
+  render boundaries. Malformed legacy/imported values safely fall back instead
+  of being able to add CSS declarations; Home Assistant RGB light colours stay
+  supported through a separately generated numeric form.
+- Vacuum integration coverage is now explicit and diagnosable. One sticky,
+  order-independent source resolver supports same-device discovery and a lazy
+  picker for registry-less map cameras, distinguishes missing, disabled,
+  unavailable and limited-permission states, and never leaks stale disabled
+  telemetry onto the plan.
+- Xiaomi Cloud Map Extractor multi-subpath trails retain real gaps; path
+  arbitration, point budgets and map IDs are deterministic across frontend and
+  backend. Room calibration uses area centroids on both sides, keeps bbox-only
+  integration dialects through a final bbox-centre fallback, and a physical
+  error above 40 cm now requires Apply or manual fitting before config changes.
+- Server trail health reports one deduplicated warning per missing/disabled
+  source incident and records recovery. Documentation now states the verified
+  Dreame/XCME/Valetudo capability matrix; Roomba remains Stage 2.
+
 ## v1.60.3 — 2026-08-09
 
 - Editor toolbars now keep their working area stable: selection actions,

@@ -1,4 +1,5 @@
 import { LitElement, css, html, nothing } from 'lit';
+import { safeStoredColor } from './color';
 
 /**
  * Compact colour + opacity picker used by decor defaults and object dialogs.
@@ -258,29 +259,30 @@ export class HpColorOpacity extends LitElement {
 
   render() {
     const pct = Math.round(Math.min(1, Math.max(0, Number(this.opacity) || 0)) * 100);
-    const title = `${this.label || 'Color'}: ${this.color}, ${pct}%`;
+    const color = safeStoredColor(this.color, '#607d8b');
+    const title = `${this.label || 'Color'}: ${color}, ${pct}%`;
     return html`
       ${this.label ? html`<span class="label">${this.label}</span>` : nothing}
       <button class="trigger" type="button" .disabled=${this.disabled}
         aria-label=${title} aria-haspopup="dialog" aria-expanded=${this._open ? 'true' : 'false'}
         title=${title} @click=${this._toggle}>
-        <span class="swatch" style=${`background:${this.color};opacity:${pct / 100}`}></span>
+        <span class="swatch" style=${`background:${color};opacity:${pct / 100}`}></span>
       </button>
       ${this._open && !this.disabled ? html`
         <div class="picker" popover="manual" role="dialog" aria-label=${this.label || 'Color'}>
           <div class="row">
             <span class="caption">${this.label || 'Color'}</span>
-            <input type="color" .value=${this.color} aria-label=${this.label || 'Color'}
+            <input type="color" .value=${color} aria-label=${this.label || 'Color'}
               @input=${(e: Event) => this._emit((e.target as HTMLInputElement).value, this.opacity)} />
           </div>
           <div class="row">
             <span class="caption">${this.opacityLabel}</span>
             <input type="range" min="0" max="100" step="1" .value=${String(pct)}
               aria-label=${this.opacityLabel}
-              @input=${(e: Event) => this._emit(this.color, Number((e.target as HTMLInputElement).value) / 100)} />
+              @input=${(e: Event) => this._emit(color, Number((e.target as HTMLInputElement).value) / 100)} />
             <input type="number" min="0" max="100" step="1" .value=${String(pct)}
               aria-label=${`${this.opacityLabel}, %`}
-              @change=${(e: Event) => this._emit(this.color, Number((e.target as HTMLInputElement).value) / 100)} />
+              @change=${(e: Event) => this._emit(color, Number((e.target as HTMLInputElement).value) / 100)} />
             <span class="pct">%</span>
           </div>
         </div>` : nothing}

@@ -1,166 +1,151 @@
-# Live robot vacuums on the plan — the spec (source of truth)
+# Live robot vacuums on the plan
 
-Status: approved by the owner 2026-07-31. Scope decisions final: all
-three Tier-A adapters in P1, the trail ships in P1, the marker's placed
-position IS the dock, and tap-to-clean is out — display only, no
-commands (owner: «не нужно вообще»).
+Status: implemented contract for the v1.61 development cycle. Stage 1 covers
+Tier-A integrations. Roomba string-position support remains a separate Stage 2
+issue and is not claimed here.
 
-## Principle
+## What the user sees
 
-The device marker «Пылесос» NEVER moves: it stands where the user
-placed it — that is the base/dock — with its normal badge, states and
-tap actions. While the robot cleans, a SECOND visual appears: a round
-puck (the vacuum icon in a circle), no badge plate, with a soft
-pulse, driving around the plan on live coordinates. Owner's exact
-wording: «Иконка движущегося пылесоса должна быть круглой, без
-подложки и с легкой пульсацией. Основное устройство "Пылесос" при этом
-остается всегда на своем месте (база)». The puck is not clickable UI
-chrome duplicating the device — a tap on it opens the same more-info as
-the base marker. When the robot docks, the puck drives home and
-dissolves into the base marker.
+The placed vacuum marker is the dock and never moves. While the vacuum is in
+`cleaning`, `returning` or `on`, a second round puck follows the live position.
+Clicking the puck opens the vacuum's HA more-info dialog. A hidden, deleted,
+HA-disabled or `static_icon` marker has no puck, trail or room overlay.
 
-## Data tiers (auto-detected, zero user input)
+## Integration coverage
 
-- **Tier A — coordinates + own calibration data.** `vacuum_position
-  {x,y,angle}` (+ `calibration_points`, rooms, sometimes `path`):
-  Xiaomi Cloud Map Extractor, dreame-vacuum (Tasshack), Valetudo camera
-  (sca075). All three ship in P1.
-- **Tier B — bare coordinates.** Roomba core (`position {x,y,theta}`),
-  raw Valetudo MQTT, template sensors. Works after manual calibration.
-  P3.
-- **Tier C — current room only.** `current_room` / `current_segment`.
-  The room being cleaned gets a soft fill pulse + a 🤖 badge in the
-  room card; no puck. Segment→room matched by name, manual override in
-  the dialog.
-- **Tier D — nothing.** Today's behaviour; yellow badge on the base
-  marker while cleaning per the «yellow = working right now» principle.
+| Integration family | Position | Rooms / auto-calibration | Integration path | Map ID | Source discovery |
+|---|---:|---:|---:|---|---|
+| Xiaomi Cloud Map Extractor | Yes, when the attributes below are enabled | Yes | Yes, including `path.path` subpaths | `map_name` when exposed | Usually explicit camera selection |
+| dreame-vacuum (Tasshack) | Yes | Yes; explicit room `x/y` is the anchor | No | Vacuum `selected_map` fallback | Automatic on the same HA device |
+| Valetudo camera conventions | Yes | Yes when room data is exposed | No | Often `default`; no stable multi-floor promise | Automatic on the same HA device |
+| Roomba core `position` string | Not in Stage 1 | No | No | — | Stage 2 |
 
-Tiers degrade gracefully: coords gone → room highlight; that gone too →
-just the base marker.
+For Xiaomi Cloud Map Extractor the camera must expose:
 
-## Coordinate binding
+```yaml
+attributes:
+  - vacuum_position
+  - rooms
+  - path
+  - map_name
+```
 
-Affine transform (translate+rotate+scale+mirror), 6 numbers, least
-squares over ≥3 point pairs. Stored per robot map:
-`marker.vacuum.calibration[map_id]` — multi-floor robots get one matrix
-per map; an active map without a matrix falls back to Tier C.
+The card recognises finite `vacuum_position` or `robot_position` objects. A
+generic `position` string on an unrelated sensor or tracker is never treated as
+vacuum telemetry.
 
-- **Path 1, auto-calibration by rooms (the default):** Tier-A adapters
-  expose the robot's room list with coordinates; our rooms carry HA
-  area bindings. Match by name, take centroids of ≥3 matches, solve,
-  show a live preview («робот сейчас здесь») — one click to confirm.
-- **Path 2, the fit panel (replaced the 3-point wizard, owner call
-  2026-07-31):** the robot's rooms render as a translucent dashed ghost
-  over the plan; the user DRAGS the ghost into place and stretches it by
-  its four corner handles (uniform scale about the opposite corner, like
-  a graphics-editor frame). Rotation is quarter-turn buttons, mirror is
-  one toggle — both re-anchor about the ghost centre. Mirror defaults ON:
-  every robot map seen so far has Y flipped versus the screen. No numeric
-  fields; the old park-the-robot-three-times wizard is gone entirely —
-  it was the most fragile part of the feature.
-- The panel folds into the same stored 6-number matrix
-  (S·R(rot)·mirror + offset); legacy matrices reopen in the panel with
-  the rotation snapped to the nearest quarter.
+## Source resolution and diagnostics
 
-## Puck behaviour
+The device dialog has one diagnostic block and one source picker. It reports
+the selected entity, integration, status, position, room count, integration
+path and map ID. Automatic mode considers compatible entities attached to the
+same HA device. Candidate order cannot change the result; a compatible camera
+outranks a non-camera candidate. The collapsed **All cameras** section is
+scanned only when opened and is never used for automatic binding.
 
-Appears when the robot leaves `docked` AND live coords flow; CSS
-interpolation ~1.2 s between updates; a data gap over 10 s teleports
-without animation (no gliding through walls on sparse cloud updates).
-Soft pulse always while visible (respects prefers-reduced-motion: the
-pulse freezes, position still animates). Size: same --icon-size
-system as devices, circle, transparent background, no badge plate.
-Stale coords (>60 s while «cleaning»): puck freezes and dims. On
-`docked`/`idle`-at-base the puck rides home and fades out. Hidden
-markers render neither base nor puck (general hidden rules). Works in
-the full card, static card and kiosk; in editors no puck — the base
-marker is edited as usual.
+Choosing a candidate stores `marker.vacuum.source`. A stored source is pinned:
+it is never silently replaced when it becomes missing, disabled, unavailable,
+unverified or unsupported. Restoring the same HA entity restores operation
+without editing the plan.
 
-Deleting a vacuum marker is stronger than hiding it: its binding tombstone
-stops all plan rendering/aggregation, its layout is removed, and both stored
-server runs (current and previous) are erased. Re-adding starts uncalibrated at
-a fresh position; the old trail is not resurrected.
+| Status | Meaning and behaviour |
+|---|---|
+| `ok` | Valid live position is available |
+| `unsupported` | Entity exists but has no valid position; its rooms/path may still be usable |
+| `unavailable` | Exact HA entity exists but is currently unavailable; stale attributes are not rendered |
+| `disabled` | Entity is disabled in HA; stale attributes are not rendered |
+| `missing` | Authoritative registry and live states both prove that the saved entity is absent |
+| `unverified` | Current HA permissions cannot prove existence or removal; the pin is preserved |
+| `none` | No source was selected or found |
 
-## Trail (ships in P1)
+Registry-less YAML entities are valid: an exact live HA state is positive
+evidence even when a full entity-registry response has no row. A disabled row
+still wins. A selected camera without position data gets the XCME attribute
+hint; arbitrary unselected cameras do not.
 
-- Integration `path` when available (Map Extractor) — transform and
-  draw as-is, includes history from before the card was opened.
-- Otherwise self-recorded: client-side ring buffer, ~600 points with
-  Douglas-Peucker thinning, one SVG polyline.
-- Style fixed, no options: cartography casing — a dark translucent halo under a light core. Neutral (pure black/white alphas) and readable over any room fill; blend modes were rejected: each has a blind luminance where the line vanishes, and mix-blend-mode is costly on old kiosk WebViews. Lifecycle:
-  appears on cleaning start, lives until dock + 10 min, dissolves;
-  `docked → cleaning` clears the old trail. Recorded SERVER-SIDE by the integration itself (trails.py): it watches the source entity, so the path records with zero cards open and every screen sees the same line. Stored per marker: the current run and ONE previous run (owner call — users compare cleaned vs uncleaned). The previous run renders at 40% opacity even at rest; the current run trims its live tail while moving. Rotation on run start or map switch; 2000-point cap with decimation; store writes debounced 10 s; houseplan_trail_updated notifies live cards.
-- Marker option «Показывать след уборки», on by default where data
-  exists.
+## Calibration
 
-## Setup UX
+The stored transform is a six-number affine matrix per map:
+`marker.vacuum.calibration[map_id]`. Existing matrices are not migrated.
 
-A «Живая позиция» section in the device dialog, vacuum markers only:
-status line (which source was found / nothing), the «Настроить
-автоматически» button (Tier A — the integration reports a room list),
-the «Подогнать вручную» button opening the fit panel (drag the ghost
-map, stretch by the corners, rotate/mirror), one «Живая позиция на
-плане» checkbox (on by default), the «Показывать путь робота» select
-(never / while cleaning / always), and for multi-map robots a list of
-calibrated maps. The source entity is discovered via the device
-registry — no YAML, no entity pickers. The section works before the
-marker is ever saved: the first vacuum edit materialises the marker
-itself (HP-1540-01).
+- **Automatic:** at least three room names must match. Robot anchors use
+  `cx/cy`, then `center.x/y`, then explicit `x/y`, then the polygon area
+  centroid of `outline`, and finally the centre of a complete `x0/y0/x1/y1`
+  bounding box. The bbox tier is a compatibility fallback for integrations
+  that expose no better room geometry. Plan rooms use the area-centroid
+  definition.
+- **Manual fit:** move and uniformly resize the translucent robot-room map;
+  quarter-turn and mirror controls re-anchor around its centre.
 
-## Storage & validation
+The automatic residual is the worst matched-room error converted to physical
+centimetres from the current grid. At `≤ 40 cm` the matrix is saved normally.
+At `> 40 cm` nothing is saved until the user explicitly chooses **Apply**.
+**Fit manually** opens the proposal in the fit overlay; **Cancel** leaves the
+saved configuration byte-for-byte unchanged.
 
-`marker.vacuum: { live, trail, room_highlight, source, calibration:
-{[map_id]: [6 numbers]}, segment_map: {[segment]: room_id} }` — all
-optional (old configs stay valid), matrices are 6 finite numbers,
-backend-validated. Calibration is server-side state shared by every
-screen, like the whole plan.
+Map ID uses one nullish chain and deliberately ignores volatile values such as
+`vacuum_json_id`:
 
-## Cases covered explicitly
+`map_name → current_map → source map_index → source selected_map → vacuum selected_map → default`
 
-Two vacuums (independent markers, calibrations, pucks); one robot on
-two floors (maps ↔ spaces, the puck only renders in the space whose map
-is active); robot outside the plan (±4 canvas bounds allow it, trail
-clipped by viewport); integration restart changes map_id (rebind by
-room-list match, else ask to recalibrate); user redraws rooms (the
-matrix does not depend on rooms); demo stand gets a scripted synthetic
-robot as the showcase.
+Numeric `0`, string `"0"` and an empty string are valid IDs.
 
-## Out of scope
+## Paths and trails
 
-Commands of any kind (owner decision: display only) — no tap-to-clean,
-no zone sending. No-go zones, cleaned-area polygons, cleaning history,
-multi-robot collision avoidance — v2 candidates.
+The current visible path has one authority:
 
-## Trail display modes
+1. drawable integration path;
+2. drawable current server run;
+3. drawable local runtime buffer;
+4. no path.
 
-`marker.vacuum.trail_mode`: `never` | `cleaning` (default — the line hides
-the instant the run ends) | `always` (the only mode that also draws the
-previous run, at 40% opacity). The legacy boolean `trail` still maps in
-(`false` → never). Recording is independent of the mode: the server always
-records, the mode only decides what is drawn.
+An integration path can contain several subpaths. They are transformed and
+thinned independently and rendered with separate SVG `M` commands, so a data
+gap never becomes a long false line. Invalid points and segments shorter than
+two points are discarded before limits are applied. The newest 64 drawable
+subpaths are kept, with at most 4000 total points; both endpoints of every kept
+subpath survive deterministic proportional thinning.
 
-The device-level `display: static_icon` is a stronger visual override: it hides
-the moving puck, current/previous trails and room highlight regardless of the
-vacuum trail mode. It does not delete calibration or server history; changing
-back to a dynamic device display restores the applicable live overlays.
+| Display mode | While moving | After movement stops |
+|---|---|---|
+| `never` | Hidden | Hidden |
+| `cleaning` (default) | Current path | Hidden immediately |
+| `always` | Current path | Current integration path or stored current/previous runs |
 
-The last segment is a rAF-driven tip line whose endpoint is glued to the
-puck's animated centre every frame, so the path pours out from under the
-icon instead of popping in when the next telemetry point lands.
+Server trails are recorded by `custom_components/houseplan/trails.py`, even
+with no card open. It stores current and one previous run in raw robot
+coordinates. Server recording is independent of the display mode. The source
+health monitor checks saved marker/source pairs on config refresh and restart:
+one warning is emitted for a missing/disabled incident, reason changes are
+deduplicated, and another warning is possible only after proven recovery.
+Detection is intentionally refresh/restart based in Stage 1; no extra entity
+registry subscription is installed.
 
-## Phases
+## Storage and lifecycle
 
-- **P1:** adapter framework + all three Tier-A adapters +
-  auto-calibration by rooms + manual 3-point wizard + the puck + trail (both sources).
-- **P2 (next):** Tier C room highlight + the demo-stand scripted robot.
-- **P3:** Tier B zoo (Roomba, raw Valetudo MQTT), Deebot, multi-map
-  polish by feedback.
+```text
+marker.vacuum = {
+  live?, trail?, trail_mode?, source?,
+  calibration?: { [map_id]: [a,b,c,d,e,f] },
+  room_highlight?, segment_map?
+}
+```
 
-## Shipped in P1
+All fields are optional and old plans remain readable. Hiding retains the
+configuration. Deleting a vacuum marker removes its layout and server trails,
+creates the normal removal tombstone and makes the HA device available for a
+fresh add without resurrecting old runs.
 
-Adapters for the three Tier-A integrations, auto-calibration by room
-names, the drag-and-stretch fit panel, the puck, server-side trails
-(current + previous run) with the three display modes. Verified against a
-live Dreame X50 Master: room centres arrive as plain x/y, the active map
-name lives on the vacuum entity (`selected_map`), and the robot's Y axis
-is flipped versus the screen — hence mirror-on by default.
+## Troubleshooting
+
+1. Open the vacuum's device settings and read the source diagnostics.
+2. If no same-device source is found, open **Choose source → All cameras** and
+   select the actual map camera.
+3. For XCME, enable the four attributes shown above and reload that entity.
+4. Ensure the active map has a calibration and the vacuum state is
+   `cleaning`, `returning` or `on`.
+5. A disabled source must be re-enabled in HA or replaced explicitly; House
+   Plan will not guess a replacement.
+
+Commands, zones/no-go polygons, cleaning-history UI and Roomba string parsing
+are outside Stage 1.

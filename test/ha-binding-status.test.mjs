@@ -63,6 +63,24 @@ test('limited registry never guesses missing rows are disabled or orphaned', () 
   assert.equal(resolveHaBindingStatus(hass, 'device:unknown', snapshot).kind, 'unverified');
 });
 
+test('authoritative registry accepts an exact live YAML entity without a registry row', () => {
+  const live = { states: { 'camera.xcme': { entity_id: 'camera.xcme', state: 'idle' } } };
+  assert.deepEqual(resolveHaBindingStatus(live, 'entity:camera.xcme', full({}, {})), {
+    kind: 'active', enabledEntityIds: ['camera.xcme'], allEntityIds: ['camera.xcme'],
+  });
+  assert.equal(
+    resolveHaBindingStatus({ states: {} }, 'entity:camera.xcme', full({}, {})).kind,
+    'orphaned',
+  );
+  const disabled = {
+    'camera.xcme': { entity_id: 'camera.xcme', disabled_by: 'user' },
+  };
+  assert.equal(
+    resolveHaBindingStatus(live, 'entity:camera.xcme', full({}, disabled)).kind,
+    'ha_disabled',
+  );
+});
+
 test('active projection removes stale states of disabled rows', () => {
   const devices = {
     d1: { id: 'd1', disabled_by: null },

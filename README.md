@@ -62,8 +62,10 @@ right on your Lovelace dashboard.
 - 🤖 **Live robot vacuums** — the dock marker stays put while a round puck
   drives the plan in real time, pouring its path out from under itself;
   current and previous cleanup runs are recorded server-side. Calibration is
-  one click (rooms matched by name) or a drag-and-stretch overlay. Works with
-  Xiaomi Cloud Map Extractor, Tasshack dreame-vacuum and Valetudo.
+  one click (rooms matched by name) or a drag-and-stretch overlay. A diagnostic
+  source picker also covers registry-less map cameras without silently
+  rebinding broken sources. Works with Xiaomi Cloud Map Extractor, Tasshack
+  dreame-vacuum and Valetudo.
 - 🔔 New devices appear automatically with a red “new” dot; the layout is stored
   **server-side** — one shared plan for every user and screen, synced live.
 

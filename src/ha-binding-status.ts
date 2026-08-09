@@ -440,15 +440,21 @@ export function resolveHaBindingStatus(
       return { kind: 'active', enabledEntityIds, allEntityIds };
     }
     const entity = entities[ref];
-    if (!entity) return { kind: 'orphaned', reason: 'entity_missing', enabledEntityIds: [], allEntityIds: [] };
-    if (!isRegistryEntryEnabled(entity)) {
+    // YAML platforms without a unique_id (notably Xiaomi Cloud Map
+    // Extractor cameras) legitimately have a live state but no registry row.
+    // A disabled row still wins, otherwise that exact live state is positive
+    // evidence of existence even under an authoritative registry snapshot.
+    if (entity && !isRegistryEntryEnabled(entity)) {
       return { kind: 'ha_disabled', reason: 'entity', enabledEntityIds: [], allEntityIds: [ref] };
     }
-    if (entity.device_id && !devices[entity.device_id]) {
+    if (entity?.device_id && !devices[entity.device_id]) {
       return { kind: 'orphaned', reason: 'device_missing', enabledEntityIds: [], allEntityIds: [ref] };
     }
-    if (entity.device_id && !isRegistryEntryEnabled(devices[entity.device_id])) {
+    if (entity?.device_id && !isRegistryEntryEnabled(devices[entity.device_id])) {
       return { kind: 'ha_disabled', reason: 'device', enabledEntityIds: [], allEntityIds: [ref] };
+    }
+    if (!entity && !hass?.states?.[ref]) {
+      return { kind: 'orphaned', reason: 'entity_missing', enabledEntityIds: [], allEntityIds: [] };
     }
     return { kind: 'active', enabledEntityIds: [ref], allEntityIds: [ref] };
   }

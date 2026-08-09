@@ -1,6 +1,7 @@
 /** Shared icon/value/badge/activity DOM for every device surface. */
 import { html, nothing, type TemplateResult } from 'lit';
 import type { ResolvedDevicePresentation } from './device-presentation';
+import { safeRenderColor } from './color';
 
 export interface DeviceFaceOptions {
   surface: 'interactive-plan' | 'preview' | 'static-card';
@@ -15,7 +16,8 @@ export function deviceFaceStyle(presentation: ResolvedDevicePresentation): strin
   if (presentation.scale !== 1) out.push(`--dev-scale:${presentation.scale}`);
   if (presentation.display === 'icon_ripple') {
     out.push(`--ripple-scale:${presentation.rippleScale}`);
-    if (presentation.rippleColor) out.push(`--ripple-color:${presentation.rippleColor}`);
+    const rippleColor = safeRenderColor(presentation.rippleColor, null);
+    if (rippleColor) out.push(`--ripple-color:${rippleColor}`);
   }
   return out;
 }

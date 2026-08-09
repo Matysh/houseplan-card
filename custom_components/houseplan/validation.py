@@ -62,6 +62,11 @@ def _finite(value):
     return f
 
 
+# Persisted colours deliberately use one small, browser-independent format.
+# Keep this exact contract in sync with src/color.ts.
+_COLOR = vol.Match(r"^#[0-9a-fA-F]{6}$")
+
+
 # generous caps: the product targets 20-200 devices and a handful of floors
 MAX_SPACES = 50
 MAX_ROOMS = 400
@@ -249,9 +254,9 @@ SPACE_DISPLAY_SCHEMA = vol.Schema(
     {
         vol.Optional("show_borders"): bool,
         vol.Optional("show_names"): bool,
-        vol.Optional("room_color"): vol.Match(r"^#[0-9a-fA-F]{6}$"),
+        vol.Optional("room_color"): _COLOR,
         # per-space background around the plan; absent = inherit the global one
-        vol.Optional("bg_color"): vol.Match(r"^#[0-9a-fA-F]{6}$"),
+        vol.Optional("bg_color"): _COLOR,
         vol.Optional("room_opacity"): vol.All(vol.Coerce(float), vol.Range(min=0, max=1)),
         vol.Optional("fill_mode"): vol.In(["none", "lqi", "light", "temp", "glow"]),
         vol.Optional("temp_min"): vol.Coerce(float),
@@ -305,7 +310,7 @@ _FURN_SIZE = vol.All(_finite, vol.Range(min=0.0000001, max=CANVAS_LIMIT))
 
 _DECOR_COMMON = {
     vol.Required("id"): str,
-    vol.Optional("color"): vol.Match(r"^#[0-9a-fA-F]{6}$"),
+    vol.Optional("color"): _COLOR,
     vol.Optional("opacity"): vol.All(_finite, vol.Range(min=0.0, max=1.0)),
     # Physical centimetres are canonical. `width` remains accepted so plans
     # written by older cards keep their exact appearance until edited.
@@ -328,7 +333,7 @@ DECOR_SCHEMA = vol.Any(
                 vol.Required("h"): vol.All(_finite, vol.Range(min=0.001, max=CANVAS_LIMIT)),
                 vol.Optional("angle"): vol.All(_finite, vol.Range(min=-360.0, max=360.0)),
                 vol.Optional("fill"): bool,
-                vol.Optional("fill_color"): vol.Match(r"^#[0-9a-fA-F]{6}$"),
+                vol.Optional("fill_color"): _COLOR,
                 vol.Optional("fill_opacity"): vol.All(_finite, vol.Range(min=0.0, max=1.0))},
                extra=vol.ALLOW_EXTRA),
     vol.Schema({**_DECOR_COMMON, vol.Required("kind"): "text",
@@ -633,9 +638,7 @@ MARKER_SCHEMA = vol.Schema(
         # Keep in sync with DISPLAY_MODES in src/logic.ts. `ripple` is no longer
         # offered, but remains accepted while old stores migrate to icon_ripple.
         vol.Optional("display"): vol.Any("badge", "ripple", "icon_ripple", "value", "static_icon", None),
-        vol.Optional("ripple_color"): vol.Any(
-            None, vol.Match(r"^#[0-9a-fA-F]{6}$")
-        ),
+        vol.Optional("ripple_color"): vol.Any(None, _COLOR),
         vol.Optional("ripple_size"): vol.Any(vol.All(vol.Coerce(float), vol.Range(min=1, max=20)), None),
         vol.Optional("size"): vol.Any(vol.All(vol.Coerce(float), vol.Range(min=0.2, max=6)), None),
         vol.Optional("angle"): vol.Any(vol.All(vol.Coerce(float), vol.Range(min=-360, max=360)), None),
@@ -654,7 +657,7 @@ CONFIG_SCHEMA = vol.Schema(
             {
                 vol.Optional("glow_radius_cm"): vol.All(vol.Coerce(float), vol.Range(min=10, max=10000)),
                 # background around the plan, all spaces (a space may override)
-                vol.Optional("bg_color"): vol.Match(r"^#[0-9a-fA-F]{6}$"),
+                vol.Optional("bg_color"): _COLOR,
                 # sun on the plan (docs/SUN.md): global defaults
                 vol.Optional("north_deg"): _north_deg,
                 vol.Optional("bg_mode"): _BG_MODE,
@@ -669,7 +672,7 @@ CONFIG_SCHEMA = vol.Schema(
                     {
                         str: vol.Schema(
                             {
-                                vol.Required("c"): vol.Match(r"^#[0-9a-fA-F]{6}$"),
+                                vol.Required("c"): _COLOR,
                                 vol.Required("a"): vol.All(vol.Coerce(float), vol.Range(min=0, max=1)),
                             }
                         )
