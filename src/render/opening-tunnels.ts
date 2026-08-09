@@ -17,6 +17,10 @@ export interface OpeningTunnelRenderInput {
   openings: readonly RenderOpening[];
   geometries: readonly (OpeningTunnelGeometry | null)[];
   fillsByRoomId: ReadonlyMap<string, ResolvedRoomFill | null>;
+  /** Makes gradients unique when data-fill and Glow-base layers coexist. */
+  idPrefix?: string;
+  groupClass?: string;
+  dataLayer?: string;
 }
 
 /** Preserve the existing `data-hp`, gradient-id and hard centreline contract. */
@@ -24,6 +28,9 @@ export function renderOpeningTunnelFills({
   openings,
   geometries,
   fillsByRoomId,
+  idPrefix = 'data',
+  groupClass = 'opening-tunnels',
+  dataLayer = 'data',
 }: OpeningTunnelRenderInput): TemplateResult {
   const parts = openings.map((opening, index) => {
     const geometry = geometries[index];
@@ -50,7 +57,8 @@ export function renderOpeningTunnelFills({
     const axisOffset = `${(axis * 100).toFixed(6)}%`;
     const nf = negFill || { color: '#000000', opacity: 0, mode: 'none' as const };
     const pf = posFill || { color: '#000000', opacity: 0, mode: 'none' as const };
-    const gradientId = `hp-opening-tunnel-${index}`;
+    const safePrefix = idPrefix.replace(/[^a-zA-Z0-9_-]/g, '-');
+    const gradientId = `hp-opening-tunnel-${safePrefix}-${index}`;
     return svg`<g class="opening-tunnel" data-hp="opening-tunnel" data-id=${opening.id} data-kind=${opening.type}
       data-wall-key=${geometry.wallKey} aria-hidden="true" pointer-events="none"
       transform=${transform}>
@@ -64,5 +72,5 @@ export function renderOpeningTunnelFills({
       <path d=${d} fill=${`url(#${gradientId})`} fill-rule="nonzero"></path>
     </g>`;
   });
-  return svg`<g class="opening-tunnels" aria-hidden="true" pointer-events="none">${parts}</g>`;
+  return svg`<g class=${groupClass} data-layer=${dataLayer} aria-hidden="true" pointer-events="none">${parts}</g>`;
 }

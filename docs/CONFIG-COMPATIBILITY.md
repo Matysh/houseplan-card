@@ -47,3 +47,12 @@ no file it prints the current registry.
 Unknown future fields remain outside this report and continue to follow the
 backend's forward-compatibility policy. Absence from the report is therefore
 not permission to delete a field.
+
+## Independent Glow compatibility
+
+The historical space and room token `fill_mode: glow` remains accepted on read
+indefinitely. Runtime projects it into an ordinary inherited data fill plus an
+enabled Glow overlay; explicit `glow_enabled` / room `glow` booleans always win.
+A normal edit that replaces the legacy token writes the resolved boolean in the
+same operation. Optimize Plans applies the same lossless, idempotent model-v6
+migration while preserving unknown sibling settings.

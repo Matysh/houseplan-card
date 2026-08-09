@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "profile": "large-house-glow-overlay-v1",
+  "minimumSamples": 7,
+  "timings": {
+    "stateUpdate1Ms": { "stat": "median", "maxRegressionRatio": 0.5, "noiseAllowanceMs": 50, "hardMaxMs": 750 },
+    "stateUpdate10Ms": { "stat": "median", "maxRegressionRatio": 0.5, "noiseAllowanceMs": 75, "hardMaxMs": 1100 },
+    "stateUpdate30Ms": { "stat": "median", "maxRegressionRatio": 0.5, "noiseAllowanceMs": 100, "hardMaxMs": 1500 },
+    "stateUpdate60Ms": { "stat": "median", "maxRegressionRatio": 0.5, "noiseAllowanceMs": 150, "hardMaxMs": 2200 },
+    "screenshotCaptureMs": { "stat": "median", "maxRegressionRatio": 0.5, "noiseAllowanceMs": 250, "hardMaxMs": 3200 }
+  },
+  "longTasks": {
+    "maxSingleMs": 2700,
+    "maxSingleRegressionRatio": 0.5,
+    "maxSingleNoiseAllowanceMs": 200,
+    "maxCountP95": 12,
+    "maxCountRegressionRatio": 0.5,
+    "countNoiseAllowance": 2,
+    "maxTotalP95Ms": 5500,
+    "maxTotalRegressionRatio": 0.5,
+    "noiseAllowanceMs": 250
+  },
+  "heap": { "required": true, "hardMaxGrowthBytes": 67108864, "maxRegressionRatio": 0.75, "noiseAllowanceBytes": 16777216 },
+  "cacheEntries": { "cleanFloor": 80, "glowClip": 128, "wallUnion": 1, "openingTunnel": 1, "openingWallIndex": 1 },
+  "cacheGrowth": { "cleanFloor": 0, "glowClip": 0, "wallUnion": 0, "openingTunnel": 0, "openingWallIndex": 0 },
+  "renderedDevices": 200
+}

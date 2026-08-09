@@ -11,7 +11,7 @@ import {
   alignGuides, segmentAngle, is45,
   swipeTarget, clampScale,
   migratePdfUrls,
-  roomFillModeOf,
+  roomFillModeOf, roomGlowOf,
   contentUrl, chunk, referencedContentUrls, MAX_SIGN_PATHS,
   interiorPoint,
   segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointOnBoundary, pointStrictlyInside, roomsOverlap,
@@ -260,6 +260,7 @@ test('spaceDisplayOf: defaults differ for spaces with and without a plan', () =>
   assert.equal(withPlan.showBorders, false);
   assert.equal(withPlan.showNames, false);
   assert.equal(withPlan.fill, 'none');
+  assert.equal(withPlan.glow, false);
   const noPlan = spaceDisplayOf({ plan_url: null });
   assert.equal(noPlan.showBorders, true);
   assert.equal(noPlan.showNames, true);
@@ -271,6 +272,11 @@ test('spaceDisplayOf: defaults differ for spaces with and without a plan', () =>
   const g = spaceDisplayOf({ settings: { room_color: 'javascript:alert(1)', fill_mode: 'weird' } });
   assert.equal(g.color, '#55606c'); // dark-grey default since 2026-08-03
   assert.equal(g.fill, 'none');
+  assert.equal(g.glow, false);
+  const legacyGlow = spaceDisplayOf({ settings: { fill_mode: 'glow' } });
+  assert.deepEqual({ fill: legacyGlow.fill, glow: legacyGlow.glow }, { fill: 'none', glow: true });
+  const explicitOff = spaceDisplayOf({ settings: { fill_mode: 'glow', glow_enabled: false } });
+  assert.deepEqual({ fill: explicitOff.fill, glow: explicitOff.glow }, { fill: 'none', glow: false });
 });
 
 test('spaceDisplayOf: the two hide switches are opt-in and strictly boolean', () => {
@@ -1031,6 +1037,13 @@ test('roomFillModeOf: tier-3 override beats the space, junk inherits', () => {
   assert.equal(roomFillModeOf('temp', {}), 'temp');
   assert.equal(roomFillModeOf('temp', null), 'temp');
   assert.equal(roomFillModeOf('temp', { settings: { fill_mode: 'glow' } }), 'temp'); // glow нельзя выбрать per-room
+});
+
+test('roomGlowOf: explicit room data wins legacy and space fallbacks', () => {
+  assert.equal(roomGlowOf(false, { settings: { fill_mode: 'glow' } }), true);
+  assert.equal(roomGlowOf(true, { settings: { fill_mode: 'glow', glow: false } }), false);
+  assert.equal(roomGlowOf(false, { settings: { glow: true } }), true);
+  assert.equal(roomGlowOf(true, { settings: { fill_mode: 'temp' } }), true);
 });
 
 test('splitRoomPath: both ends on the SAME edge carve a niche (audit G1)', () => {

@@ -44,6 +44,20 @@ def test_browser_fixtures_match_backend_schema(module_name, expected_spaces):
     assert len(validated_layout) == len(fixture.get("layout", {}))
 
 
+def test_shared_additive_glow_fixture_matches_backend_schema():
+    path = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)),
+        "test", "fixtures", "glow", "additive-pools.json",
+    )
+    with open(path, encoding="utf-8") as handle:
+        fixture = json.load(handle)
+    validated = v.CONFIG_SCHEMA(fixture["config"])
+    validated_layout = v.LAYOUT_SCHEMA(fixture["layout"])
+    assert fixture["variants"] == [1, 10, 30, 60]
+    assert len(validated["markers"]) == 60
+    assert len(validated_layout) == 60
+
+
 def _load_pure(name):
     """Load one pure module of the integration without importing the package.
 
@@ -756,6 +770,21 @@ def test_every_fill_mode_the_editor_offers_is_accepted():
         v.SPACE_SCHEMA(_space(fill_mode=mode))
     with pytest.raises(vol.Invalid):
         v.SPACE_SCHEMA(_space(fill_mode="rainbow"))
+
+
+def test_independent_glow_fields_and_legacy_tokens_are_accepted():
+    # Current UI writes two independent fields; old dashboard bundles remain
+    # valid writers of the legacy enum forever.
+    v.SPACE_SCHEMA(_space(fill_mode="temp", glow_enabled=True))
+    v.SPACE_SCHEMA(_space(fill_mode="glow", glow_enabled=False))
+    legacy_room = _space(fill_mode="none", glow_enabled=False)
+    legacy_room["rooms"] = [{
+        "id": "r1", "name": "R", "x": 0.1, "y": 0.1, "w": 0.2, "h": 0.2,
+        "settings": {"fill_mode": "glow", "glow": False},
+    }]
+    v.SPACE_SCHEMA(legacy_room)
+    with pytest.raises(vol.Invalid):
+        v.SPACE_SCHEMA(_space(glow_enabled="yes"))
 
 
 def test_every_room_fill_mode_the_editor_offers_is_accepted():

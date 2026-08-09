@@ -17,15 +17,15 @@ change must pass through a published beta/RC before stable. Stable release
 commits are promotion-only (versions, generated bundles and release/changelog
 metadata). Only an explicit owner-approved emergency hotfix may skip this gate.
 
-## Snapshot (2026-08-09)
+## Snapshot (2026-08-10)
 
 | Item | State |
 |---|---|
-| Version | **v1.61.0-beta.1** everywhere (manifest, const.py, package.json, CARD_VERSION) — pre-release candidate with Stage 1 vacuum integration coverage and the strict stored-colour contract |
-| Current local cycle | Stable v1.60.3 is published. v1.61.0-beta.1 implements deterministic multi-subpath vacuum telemetry, sticky source resolution and XCME picker/diagnostics, physical calibration confirmation, owner-approved bbox-only final room-anchor fallback and backend source-health lifecycle. Issue #21 adds one strict persisted-colour contract and render-time protection for legacy/imported config. The targeted pre-release gate is green; publication waits for the mandatory exact-SHA GitHub Validate run. |
+| Version | **v1.61.0-beta.2** everywhere (manifest, const.py, package.json, CARD_VERSION) — pre-release candidate with independent/additive Glow and the long-press gesture fix |
+| Current local cycle | Stable v1.60.3 and pre-release v1.61.0-beta.1 are published. The current `dev` candidate for v1.61.0-beta.2 implements #55 (Glow independent from data fill, legacy-safe model-v6 migration and separate base/tunnel projection), #19 (flat additive pool composition with a cached real-pixel capability probe and normal fallback), and P1 #59 (a modal opened by mouse long-press now terminates the interrupted pan gesture). Deterministic fixtures, browser smokes, golden candidates and two same-runner performance profiles are included; publication waits for reviewed Linux golden baselines and the mandatory exact-SHA Validate run. |
 | Workflow | Owner's rule since 2026-08-07: ordinary fixes/features are made **locally, without tests and without commits**. A requested pre-release gets a production build plus the smallest targeted unit/smoke set covering the changed surfaces, one tested `dev` commit/tag and a GitHub Release with `prerelease=true`; `main` stays untouched. The complete local frontend/backend/smoke gate runs only before a stable release, after which `main` is fast-forwarded to the exact tested `dev` SHA and the GitHub Release uses `prerelease=false`. Release bodies are short and bilingual (Russian first): only significant user changes get individual bullets, while minor/code-only work is grouped as `Мелкие исправления и улучшения` / `Small fixes and improvements`; every body ends with separate links to the Russian and English changelogs. Nothing is copied to the home instance by hand |
 | GitHub | https://github.com/Matysh/houseplan-card — [Issues](https://github.com/Matysh/houseplan-card/issues) are the canonical task records and the linked [Project v2](https://github.com/users/Matysh/projects/1) is the canonical priority/status view; both must stay current. `main` carries stable releases; pre-release tags may point directly at `dev`. Work lands on `dev` and is merged into `main` for a stable release, so `dev` is normally equal to or ahead of `main`, never behind. Push via SSH key `ha_jb` (remote git@github.com:…); API releases via the fine-grained PAT in `~/.git-credentials` (Contents R/W, issued 2026-07-23) |
-| CI | v1.61.0-beta.1 passed its targeted local gate: 198 frontend tests, 114 pure-backend tests, both vacuum browser smokes plus decor/device-preview/static-icon regression smokes, and a production build whose three bundle snapshots have the same SHA-256. Exact-SHA Ubuntu Validate remains mandatory for the full HA harness and broader matrix; `release.yml` withholds assets until every matching run finishes green |
+| CI | The v1.61.0-beta.2 local targeted gate passed: typecheck, 146 focused frontend tests, 86 validation-schema backend tests, Glow/settings/tunnel/static-parity/#59 browser smokes, reviewed local golden candidates, the 7-sample additive profile and a diagnostic full-house overlay sample. Both profiles preserve exact 1/10/30/60 pool cardinality, one render per HA tick and stable caches; the mandatory exact-SHA Ubuntu Validate will run the full HA/smoke/golden matrix and both 7-sample performance profiles before publication. `release.yml` withholds the card asset unless it is green. |
 | HACS | Custom repository works. **Inclusion PR: hacs/default#9004** — open, valid, labeled, mergeable clean, never drafted. Queue: 1212 open, 835 older than ours. Merge rate COLLAPSED: 75 in July but almost all in the first decade, 0 in the last week (checked 2026-07-29) — maintainers process in rare bursts; ETA unknowable, months at best. Nothing actionable on our side |
 | Home instance | ha.jbstudio.pro (SSH port **22222**, key `ha_jb`; HA config root is `/mnt/data/supervisor/homeassistant` — `/config` does NOT exist in this SSH environment), last direct copy was **v1.57.0**; from v1.58.0 on it updates itself through HACS by tag (no scp) |
 | Localization | UI en/ru (src/i18n/*.json), everything user-visible localized incl. kiosk popover |
@@ -43,9 +43,12 @@ metadata). Only an explicit owner-approved emergency hotfix may skip this gate.
   across reloads (v1.38.2). **Kiosk mode** (v1.41.0): `kiosk: true` — no
   header/editors, swipe between spaces, double-tap zoom reset, `cycle: N`
   carousel, per-screen size multipliers in localStorage.
-- **Glow fill** (v1.35–v1.37): dark house + per-source light pools (rgb/color
-  temp/default; per-source radius), door sectors, open boundaries
-  (`room.open_to`, virtual walls, dashed, transitive light zones).
+- **Independent Glow overlay** (local #55/#19 over the v1.35–v1.37 model):
+  dark-room base and per-source pools can coexist with any data fill. Pools use
+  additive screen blending only after a cached real-pixel browser probe and
+  otherwise fall back to normal composition; legacy `fill_mode: glow` remains
+  losslessly readable/migratable. Existing RGB/colour-temperature/default
+  colour, per-source radius, door sectors and transitive open zones remain.
 - **Real switches** (v1.36): `marker.controls[]` group-toggle with HA-group
   semantics; icon mirrors targets; hidden grouped lamps fixed (tiered
   primaryEntity). **Lights toggle by default** (v1.39): primary domain light

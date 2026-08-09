@@ -17,7 +17,7 @@ import {
 import {
   lqiColor, snapToGrid, snapSegment45, samePoint, pointInPolygon, markerIdForBinding,
   segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointStrictlyInside, roomsOverlap,
-  pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, openZoneOf, distToSegment, outlineWithout, cutSegments, alignGuides, segmentAngle, is45, type AlignGuide, swipeTarget, clampScale, migratePdfUrls, roomFillModeOf, contentUrl,
+  pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, openZoneOf, distToSegment, outlineWithout, cutSegments, alignGuides, segmentAngle, is45, type AlignGuide, swipeTarget, clampScale, migratePdfUrls, roomFillModeOf, roomGlowOf, contentUrl,
   snapToWall, snapPointAlongPoly, openingAmount, openingShoulders, interiorPoint,
   poleOfInaccessibility, subst,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
@@ -118,6 +118,7 @@ import {
 import { optimizePlans, type OptimizeReport } from './plan-optimizer';
 import { langOf, t, type I18nKey } from './i18n';
 import { CommandStack } from './command-stack';
+import { svgScreenBlendSupported } from './glow-blend';
 import {
   combineVisualSamples, edgeActivity, entityVisualSample, entityVisualSamplesForDevice,
   type DeviceActivity, type DeviceVisualState, type EntityVisualSample,
@@ -144,7 +145,7 @@ import {
 import { renderOpeningTunnelFills } from './render/opening-tunnels';
 import { safeStoredColor } from './color';
 
-const CARD_VERSION = '1.61.0-beta.1';
+const CARD_VERSION = '1.61.0-beta.2';
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
 const CELL_CM_MIN = 0.1;
@@ -841,6 +842,8 @@ class HouseplanCard extends LitElement {
     floor: number[][]; geom: any; path: string; area: number;
   }>();
   private _glowClipCache = new Map<string, string[] | null>();
+  /** Pending/false uses the exact historical normal-layer fallback. */
+  private _glowScreenBlend = false;
   private _duplicateColumnId: string | null = null;
   private _duplicateColumnTimer = 0;
   // room resize tool (docs/RESIZE.md): selection and an immutable live preview
@@ -1069,7 +1072,8 @@ class HouseplanCard extends LitElement {
     bgMode: 'static' | 'daynight' | null; // plan background mode; null = inherit (docs/SUN.md)
     northDeg: number | null;       // per-space compass override; null = inherit
     sunRays: boolean | null;       // per-space wedges override; null = inherit
-    fillMode: 'none' | 'lqi' | 'light' | 'temp' | 'glow';
+    fillMode: 'none' | 'lqi' | 'light' | 'temp';
+    glowEnabled: boolean;
     tempMin: number;
     tempMax: number;
     showLqi: boolean;
@@ -1290,6 +1294,11 @@ class HouseplanCard extends LitElement {
   public connectedCallback(): void {
     document.addEventListener('visibilitychange', this._vacVisHandler);
     super.connectedCallback();
+    svgScreenBlendSupported(this.ownerDocument).then((supported) => {
+      if (!supported || this._glowScreenBlend) return;
+      this._glowScreenBlend = true;
+      if (this.isConnected) this.requestUpdate();
+    });
     if (this.hass) this._ensureHaRegistryAuthority();
     window.addEventListener('keydown', this._keyHandler);
     // signatures expire (24 h); refresh well before that on long-lived screens
@@ -1440,7 +1449,7 @@ class HouseplanCard extends LitElement {
       if (this._vacCalConfirm) { this._vacCalConfirm = null; return; }
       if (this._decorEraseConfirm) { this._decorEraseConfirm = null; return; }
       if (this._openingInfo) { this._openingInfo = null; return; }
-      if (this._infoCard) { this._infoCard = null; return; }
+      if (this._infoCard) { this._closeInfoCard(); return; }
       if (this._rulesDialog) { this._rulesDialog = null; return; }
       if (this._alignDialog) { this._alignDialog = null; return; }
       if (this._settingsDialog) { this._settingsDialog = null; return; }
@@ -2848,7 +2857,7 @@ class HouseplanCard extends LitElement {
     if (disabledNow) {
       if (this._infoCard?.bindingStatus?.kind === 'ha_disabled'
           || this._devices.find((d) => d.id === this._infoCard?.id)?.bindingStatus?.kind === 'ha_disabled') {
-        this._infoCard = null;
+        this._closeInfoCard();
       }
       if (this._drag && this._devices.find((d) => d.id === this._drag!.id)?.bindingStatus?.kind === 'ha_disabled') {
         this._drag = null;
@@ -3166,6 +3175,38 @@ class HouseplanCard extends LitElement {
     }
     this._nativeMoreInfoEntity = entityId;
     fireEvent(this, 'hass-more-info', { entityId });
+  }
+
+  /**
+   * A modal opened while a view pointer is still down interrupts the stage's
+   * normal pointerup lifecycle. Drop every navigation anchor immediately and
+   * release capture defensively, even though the current view path does not
+   * normally request it. This is intentionally separate from editor geometry.
+   */
+  private _interruptViewGesture(pointerId?: number, source?: Element | null): void {
+    clearTimeout(this._holdTimer);
+    clearTimeout(this._kioskHoldTimer);
+    if (pointerId !== undefined) {
+      for (const element of [source, this._stageEl]) {
+        try {
+          if (element?.hasPointerCapture?.(pointerId)) element.releasePointerCapture(pointerId);
+        } catch {
+          /* Pointer ownership may already have moved to the modal. */
+        }
+      }
+    }
+    this._pointers.clear();
+    this._panStart = null;
+    this._panLock = null;
+    this._pinchStart = null;
+    this._swipeStart = null;
+  }
+
+  /** Close the device card and make stale long-press state non-observable. */
+  private _closeInfoCard(): void {
+    this._interruptViewGesture();
+    this._holdFired = false;
+    this._infoCard = null;
   }
 
   /** Right click in VIEW mode always opens HA's more-info (owner's decision). */
@@ -3974,8 +4015,11 @@ class HouseplanCard extends LitElement {
       // long-press timer runs (cancelled by stage movement)
       this._holdFired = false;
       clearTimeout(this._holdTimer);
+      const pointerId = ev.pointerId;
+      const source = ev.currentTarget as Element | null;
       this._holdTimer = window.setTimeout(() => {
         this._holdFired = true;
+        this._interruptViewGesture(pointerId, source);
         this._infoCard = d;
       }, 600);
       return;
@@ -8453,7 +8497,11 @@ class HouseplanCard extends LitElement {
     const byRoom = new Map<RoomCfg, ResolvedRoomFill | null>();
     const byId = new Map<string, ResolvedRoomFill | null>();
     for (const room of space.rooms) {
-      const mode = roomFillModeOf(disp.fill, room);
+      // The dimmed plan behind the room dialog is a real preview, not a second
+      // renderer. Feed its pending selection through this same frame resolver.
+      const mode = this._roomDialog && room.id === this._roomEditId
+        ? (this._roomFill || disp.fill)
+        : roomFillModeOf(disp.fill, room);
       const resolved = resolveEffectiveRoomFill(
         mode,
         mode === 'lqi' && room.area ? this._roomLqi(room.area) : null,
@@ -8469,6 +8517,32 @@ class HouseplanCard extends LitElement {
       if (room.id) byId.set(room.id, resolved);
     }
     return { byRoom, byId };
+  }
+
+  /** Pending space-dialog values projected through the production resolver. */
+  private _spaceDisplayForRender(): SpaceDisplay {
+    const current = spaceDisplayOf(this._curSpaceCfg);
+    const dialog = this._spaceDialog;
+    if (!dialog || dialog.mode !== 'edit' || dialog.spaceId !== this._space) return current;
+    return {
+      ...current,
+      showBorders: dialog.showBorders,
+      showNames: dialog.showNames,
+      hideDecor: dialog.hideDecor,
+      hideOpenings: dialog.hideOpenings,
+      color: dialog.roomColor,
+      opacity: dialog.roomOpacity,
+      fill: dialog.fillMode,
+      glow: dialog.glowEnabled,
+      tempMin: dialog.tempMin,
+      tempMax: dialog.tempMax,
+      showLqi: dialog.showLqi,
+      cardFontScale: dialog.cardFontScale,
+      labelTemp: dialog.labelTemp,
+      labelHum: dialog.labelHum,
+      labelLqi: dialog.labelLqi,
+      labelLight: dialog.labelLight,
+    };
   }
 
   /** Atomic wall association shared by symbols, wall cuts and tunnel geometry. */
@@ -8507,10 +8581,16 @@ class HouseplanCard extends LitElement {
   private _renderOpeningTunnelFills(
     space: SpaceModel,
     roomFills: RoomFillFrame,
+    layer: 'data' | 'glow-base' = 'data',
   ): TemplateResult {
     // Plan mode replaces live fills with its blue editing wash. A coloured
     // tunnel there would no longer repeat the room and could obstruct handles.
     if (this._markup || !this._spaceWalls.length || !this._openingsR.length)
+      return svg`` as unknown as TemplateResult;
+    // Do not leave an empty presentation layer behind when Glow is disabled
+    // for every room. Besides keeping the DOM contract explicit, this avoids
+    // needless opening-index work on plans that do not use the overlay.
+    if (layer === 'glow-base' && ![...roomFills.byRoom.values()].some(Boolean))
       return svg`` as unknown as TemplateResult;
     const openCuts = this._openPairs().flatMap((p) => p.segs);
     const geometryInputs = this._openingsR.map((opening) => ({
@@ -8530,7 +8610,83 @@ class HouseplanCard extends LitElement {
       openings: this._openingsR,
       geometries: this._openingTunnelCache.value,
       fillsByRoomId: roomFills.byId,
+      idPrefix: `${space.id}-${layer}`,
+      groupClass: layer === 'data' ? 'opening-tunnels' : 'opening-tunnels glow-base-tunnels',
+      dataLayer: layer,
     });
+  }
+
+  /** Frame-local Glow-base projection, deliberately independent from data fill. */
+  private _resolvedGlowBase(space: SpaceModel, disp: SpaceDisplay): RoomFillFrame {
+    const byRoom = new Map<RoomCfg, ResolvedRoomFill | null>();
+    const byId = new Map<string, ResolvedRoomFill | null>();
+    const base = this._fillColors.glow_base;
+    for (const room of space.rooms) {
+      const resolved: ResolvedRoomFill | null = roomGlowOf(disp.glow, room)
+        ? { color: base.c, opacity: base.a, mode: 'glow' }
+        : null;
+      byRoom.set(room, resolved);
+      if (room.id) byId.set(room.id, resolved);
+    }
+    return { byRoom, byId };
+  }
+
+  /**
+   * Paint the same clean-floor geometry as the interactive room layer, but as
+   * a pointer-transparent source-over overlay above the resolved data fill.
+   */
+  private _renderGlowBaseRooms(space: SpaceModel, frame: RoomFillFrame): TemplateResult {
+    if (this._markup || ![...frame.byRoom.values()].some(Boolean))
+      return svg`` as unknown as TemplateResult;
+    const polys = new Map<RoomCfg, number[][] | null>(
+      space.rooms.map((room) => [room, roomPoly(room)]),
+    );
+    const openCuts = this._openPairs().flatMap((pair) => pair.segs);
+    const pathD = (points: number[][]) =>
+      'M ' + points.map((point) => point[0] + ' ' + point[1]).join(' L ') + ' Z';
+    const shapes = space.rooms.map((room) => {
+      const fill = frame.byRoom.get(room) || null;
+      const ownPoly = polys.get(room) || null;
+      if (!fill || !ownPoly) return nothing;
+      const floor = this._spaceWalls.length && room.id
+        ? (innerContourForRoom(
+            space.rooms, room.id, this._spaceWalls, openCuts,
+            this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+          ) || ownPoly)
+        : ownPoly;
+      const otherPolys = space.rooms
+        .filter((other) => other !== room)
+        .map((other) => polys.get(other))
+        .filter((poly): poly is number[][] => !!poly);
+      const holes = islandsOf(floor, otherPolys);
+      const cleanPath = this._cleanFloor(room, floor, space).path;
+      if (cleanPath || holes.length) {
+        return svg`<path class="glow-base" data-room-id=${room.id || nothing}
+          d="${[cleanPath || pathD(floor), ...holes.map(pathD)].join(' ')}"
+          fill=${fill.color} fill-opacity=${fill.opacity} fill-rule="evenodd"
+          pointer-events="none"></path>`;
+      }
+      if (room.poly || floor !== ownPoly) {
+        return svg`<polygon class="glow-base" data-room-id=${room.id || nothing}
+          points="${floor.map((point) => point.join(',')).join(' ')}"
+          fill=${fill.color} fill-opacity=${fill.opacity} pointer-events="none"></polygon>`;
+      }
+      return svg`<rect class="glow-base" data-room-id=${room.id || nothing}
+        x=${room.x} y=${room.y} width=${room.w} height=${room.h}
+        rx=${Math.min(room.w!, room.h!) * 0.03}
+        fill=${fill.color} fill-opacity=${fill.opacity} pointer-events="none"></rect>`;
+    });
+    return svg`<g class="glow-base-layer" aria-hidden="true" pointer-events="none">${shapes}</g>` as unknown as TemplateResult;
+  }
+
+  private _renderSvgRoomLabels(space: SpaceModel, disp: SpaceDisplay): TemplateResult {
+    if (space.bg || disp.showNames || this._markup) return svg`` as unknown as TemplateResult;
+    return svg`<g class="room-svg-labels" pointer-events="none">${space.rooms.map((room) => {
+      const center = this._roomCenter(room);
+      return svg`<text class="rlabel" data-hp="room-label"
+        data-id=${room.id || nothing} data-area=${room.area || nothing}
+        x=${center[0]} y=${center[1]}>${room.name}</text>`;
+    })}</g>` as unknown as TemplateResult;
   }
 
   private _renderWallBodies(disp: SpaceDisplay): TemplateResult {
@@ -9931,7 +10087,7 @@ class HouseplanCard extends LitElement {
           .catch(() => undefined);
       }
       this._markerDialog = null;
-      if (this._infoCard?.id === d.id) this._infoCard = null;
+      if (this._infoCard?.id === d.id) this._closeInfoCard();
       if (this._selId === d.id) this._selId = null;
       if (this._drag?.id === d.id) this._drag = null;
       this._regSignature = '';
@@ -9964,7 +10120,8 @@ class HouseplanCard extends LitElement {
         source: sp.plan_url ? 'file' : 'draw',
         showBorders: disp.showBorders, showNames: disp.showNames,
         hideDecor: disp.hideDecor, hideOpenings: disp.hideOpenings,
-        roomColor: disp.color, roomOpacity: disp.opacity, fillMode: disp.fill,
+        roomColor: disp.color, roomOpacity: disp.opacity, fillMode: disp.fill as 'none' | 'lqi' | 'light' | 'temp',
+        glowEnabled: disp.glow,
         bgColor: disp.bgColor,
         bgMode: sp.settings?.bg_mode === 'static' || sp.settings?.bg_mode === 'daynight' ? sp.settings.bg_mode : null,
         northDeg: northDegOf({}, sp.settings),
@@ -9983,7 +10140,8 @@ class HouseplanCard extends LitElement {
         source: 'file',
         showBorders: false, showNames: false,
         hideDecor: false, hideOpenings: false,
-        roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'glow',
+        roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'none',
+        glowEnabled: true,
         bgColor: null,
         bgMode: null, northDeg: null, sunRays: null,
         tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
@@ -10228,6 +10386,10 @@ class HouseplanCard extends LitElement {
         north_deg: d.northDeg ?? undefined,
         sun_rays: d.sunRays ?? undefined,
         fill_mode: d.fillMode,
+        // Always materialize the independent value. In particular, editing a
+        // legacy fill_mode:'glow' space preserves its appearance atomically
+        // while replacing the old token with the selected data fill.
+        glow_enabled: d.glowEnabled,
         temp_min: Number.isFinite(d.tempMin) ? Math.min(d.tempMin, d.tempMax) : DEFAULT_TEMP_MIN,
         temp_max: Number.isFinite(d.tempMax) ? Math.max(d.tempMin, d.tempMax) : DEFAULT_TEMP_MAX,
         show_lqi: d.showLqi,
@@ -10348,7 +10510,8 @@ class HouseplanCard extends LitElement {
       source: 'file',
       showBorders: false, showNames: false,
       hideDecor: false, hideOpenings: false,
-      roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'glow',
+      roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'none',
+      glowEnabled: true,
       bgColor: null,
       bgMode: null, northDeg: null, sunRays: null,
       tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
@@ -10949,13 +11112,15 @@ class HouseplanCard extends LitElement {
   }
 
   /** Light pools of the current space: dark house, glowing sources. */
-  private _renderGlowLayer(space: SpaceModel): TemplateResult {
+  private _renderGlowLayer(space: SpaceModel, disp: SpaceDisplay): TemplateResult {
     const colors = this._fillColors;
     const defaultR = (this._glowRadiusCm / this._cellCm) * this._gridPitch;
     const g = this._gridPitch;
     const polys = space.rooms
       .map((r) => ({ r, poly: roomPoly(r) }))
       .filter((x): x is { r: RoomCfg; poly: number[][] } => !!x.poly);
+    const enabled = polys.filter(({ r }) => roomGlowOf(disp.glow, r));
+    if (!enabled.length) return svg`` as unknown as TemplateResult;
     // Gates are door-like openings: their different symbol must not change
     // how light crosses the clear wall tunnel.
     const passages = this._openingsR.filter((o) => o.type !== 'window');
@@ -11054,6 +11219,26 @@ class HouseplanCard extends LitElement {
       spots.push({ pos, c: glow.c, alpha: colors.glow_light.a * glow.bri, clip, r: R });
     }
     if (!spots.length) return svg`` as unknown as TemplateResult;
+    // Per-room Glow overrides are visual clips only. The transport calculation
+    // above still crosses a disabled room, but no base/pool pixels are painted
+    // there. For the common all-enabled case this extra clip is omitted, which
+    // preserves the established doorway-sector geometry byte for byte.
+    const enabledClip = enabled.length === polys.length ? null : enabled.map(({ r, poly }) => {
+      const floor = walls.length && r.id
+        ? (innerContourForRoom(
+            space.rooms, r.id, walls, openCuts,
+            this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+          ) || poly)
+        : poly;
+      const clean = this._cleanFloor(r, floor, space).path;
+      const holes = islandsOf(
+        floor,
+        polys.filter((other) => other.r !== r).map((other) => other.poly),
+      );
+      const path = (points: number[][]) =>
+        'M ' + points.map((point) => point[0] + ' ' + point[1]).join(' L ') + ' Z';
+      return [clean || path(floor), ...holes.map(path)].join(' ');
+    });
     return svg`<defs>
         ${spots.map((sp, i) => svg`
           <radialGradient id="hp-glow-${i}">
@@ -11062,14 +11247,20 @@ class HouseplanCard extends LitElement {
             <stop offset="100%" stop-color="${sp.c}" stop-opacity="0"></stop>
           </radialGradient>
           ${sp.clip ? svg`<clipPath id="hp-glowclip-${i}">${sp.clip.map((d) => svg`<path d="${d}" clip-rule="evenodd" fill-rule="evenodd"></path>`)}</clipPath>` : nothing}`)}
+        ${enabledClip ? svg`<clipPath id="hp-glow-enabled">${enabledClip.map((d) => svg`<path d=${d} clip-rule="evenodd" fill-rule="evenodd"></path>`)}</clipPath>` : nothing}
       </defs>
       ${''/* Glow is presentation only. It is painted above room fills, but must
              not become the pointer target: room hover and its tooltip still
              belong to the room underneath the light pool. */}
-      <g class="glowlayer" pointer-events="none" opacity="0.7">
-        ${spots.map((sp, i) => svg`<circle cx="${sp.pos.x}" cy="${sp.pos.y}" r="${sp.r}"
-          fill="url(#hp-glow-${i})" ${''}
-          clip-path=${sp.clip ? `url(#hp-glowclip-${i})` : nothing}></circle>`)}
+      <g class="glowlayer glow-pools-frame" pointer-events="none" opacity="0.7">
+        <g class="glow-pools ${this._glowScreenBlend ? 'blend-screen' : 'blend-normal'}"
+          data-blend=${this._glowScreenBlend ? 'screen' : 'normal'}
+          clip-path=${enabledClip ? 'url(#hp-glow-enabled)' : nothing}>
+          ${spots.map((sp, i) => svg`<circle class="glow-pool"
+            cx="${sp.pos.x}" cy="${sp.pos.y}" r="${sp.r}"
+            fill="url(#hp-glow-${i})"
+            clip-path=${sp.clip ? `url(#hp-glowclip-${i})` : nothing}></circle>`)}
+        </g>
       </g>` as unknown as TemplateResult;
   }
 
@@ -11104,6 +11295,12 @@ class HouseplanCard extends LitElement {
                 m: String(r.migrated), c: String(r.canonicalized),
                 w: String(r.wallsMerged), s: String(r.spansMerged),
               })}</p>
+              ${r.glowSpacesMigrated || r.glowRoomsMigrated
+                ? html`<p class="alignmsg">${this._t('gs.optimize_glow_migration', {
+                    spaces: String(r.glowSpacesMigrated),
+                    rooms: String(r.glowRoomsMigrated),
+                  })}</p>`
+                : nothing}
               <div class="rhint">${this._t('gs.align_warn')}</div>`}
         </div>
         <div class="row" slot="footer">
@@ -11415,8 +11612,9 @@ class HouseplanCard extends LitElement {
     // from the build, so room LQI still counts them (docs/FILTERING.md)
     const showGhosts = this._mode === 'devices' && this._showAll;
     const devs = this._devices.filter((d) => d.space === space.id && (!d.hidden || showGhosts));
-    const disp = spaceDisplayOf(this._curSpaceCfg);
+    const disp = this._spaceDisplayForRender();
     const roomFills = this._resolvedRoomFills(space, disp);
+    const glowBase = this._resolvedGlowBase(space, disp);
     const showLqi = disp.showLqi ?? this._config.show_signal ?? true;
     const cfgSize = this._config.icon_size ?? 2.5;
     const iconPct = cfgSize > 8 ? 2.5 : cfgSize;
@@ -11622,8 +11820,6 @@ class HouseplanCard extends LitElement {
                   this._roomTemp(r),
                 );
               };
-              const label = !space.bg && !disp.showNames && !this._markup;
-              const c = this._roomCenter(r);
               // open boundaries: this room's solid stroke must not run beneath
               // the dashed stretches — suppress it and draw a trimmed outline.
               // Applies in the Plan editor too (picked rooms keep their full
@@ -11693,13 +11889,14 @@ class HouseplanCard extends LitElement {
                     d="${trimmed.map((sg) => `M ${sg[0]} ${sg[1]} L ${sg[2]} ${sg[3]}`).join(' ')}"
                     style=${this._markup ? nothing : `stroke:${disp.color};stroke-opacity:${disp.showBorders ? disp.opacity : 0}`}></path>`
                 : nothing;
-              return svg`${shape}${outline}${label ? svg`<text class="rlabel"
-                data-hp="room-label" data-id=${hpId} data-area=${hpArea}
-                x="${c[0]}" y="${c[1]}">${r.name}</text>` : nothing}`;
+              return svg`${shape}${outline}`;
               });
             })()}
             ${this._renderOpeningTunnelFills(space, roomFills)}
-            ${disp.fill === 'glow' && !this._markup ? this._renderGlowLayer(space) : nothing}
+            ${this._renderGlowBaseRooms(space, glowBase)}
+            ${this._renderOpeningTunnelFills(space, glowBase, 'glow-base')}
+            ${this._renderSvgRoomLabels(space, disp)}
+            ${!this._markup ? this._renderGlowLayer(space, disp) : nothing}
             ${this._renderSunRays(space)}
             ${this._editing ? this._renderAlignGuides() : nothing}
             ${opMeasure?.guide ? this._renderOpeningCenterTick(opMeasure.guide) : nothing}
@@ -12764,7 +12961,9 @@ class HouseplanCard extends LitElement {
     this._roomEditId = r.id;
     this._nameSel = r.name || '';
     this._areaSel = r.area || '';
-    this._roomFill = (r.settings?.fill_mode as any) || '';
+    this._roomFill = r.settings?.fill_mode === 'glow'
+      ? ''
+      : ((r.settings?.fill_mode as any) || '');
     this._roomTempSrc = r.settings?.temp_source || '';
     this._roomHumSrc = r.settings?.hum_source || '';
     this._roomNameScale = clampScale(r.settings?.name_scale);
@@ -12796,8 +12995,23 @@ class HouseplanCard extends LitElement {
     }
     room.name = this._nameSel.trim() || room.name;
     room.area = this._areaSel || null;
-    const st = this._roomSettingsFromDialog();
-    if (st) room.settings = st;
+    // Preserve unknown/future room settings. If this dialog replaces a legacy
+    // fill_mode:'glow', materialize its effective Glow in the same write so a
+    // seemingly unrelated room edit cannot switch the light overlay off.
+    const previous = room.settings || {};
+    const next: any = { ...previous };
+    if (this._roomFill) next.fill_mode = this._roomFill;
+    else delete next.fill_mode;
+    if (previous.fill_mode === 'glow' && typeof previous.glow !== 'boolean') next.glow = true;
+    if (this._roomTempSrc) next.temp_source = this._roomTempSrc;
+    else delete next.temp_source;
+    if (this._roomHumSrc) next.hum_source = this._roomHumSrc;
+    else delete next.hum_source;
+    if (this._roomNameScale !== 1) next.name_scale = this._roomNameScale;
+    else delete next.name_scale;
+    if (this._roomLabelScale !== 1) next.label_scale = this._roomLabelScale;
+    else delete next.label_scale;
+    if (Object.keys(next).length) room.settings = next;
     else delete room.settings;
     this._saveConfig();
     this._roomDialog = false;
@@ -13989,7 +14203,7 @@ class HouseplanCard extends LitElement {
     const controls = (d.controls ?? d.marker?.controls ?? [])
       .filter(isControllable).filter((eid) => this._planEntityAvailable(eid));
     return html`<hp-dialog .hass=${this.hass} .title=${d.name} .icon=${d.icon} wide
-      dismiss-on-scrim @hp-close=${() => (this._infoCard = null)}>
+      dismiss-on-scrim @hp-close=${this._closeInfoCard}>
         <div class="body">
           ${(() => {
             // Field feedback: on a wall tablet this card is for CONTROLLING the
@@ -14014,7 +14228,7 @@ class HouseplanCard extends LitElement {
                         @click=${() => this._cardToggle(eid)}>${val}</button>`
                     : kind === 'open'
                       ? html`<button class="entbtn"
-                          @click=${() => { this._infoCard = null; this._openMoreInfo(eid); }}>${val}</button>`
+                          @click=${() => { this._closeInfoCard(); this._openMoreInfo(eid); }}>${val}</button>`
                       : html`<span class="ev">${val}</span>`}
                 </div>`;
               })}
@@ -14052,15 +14266,15 @@ class HouseplanCard extends LitElement {
             : nothing}
         </div>
         <div class="row infofooter" slot="footer">
-          <button class="btn" @click=${() => { const dd = d; this._infoCard = null; this._openMarkerDialog(dd); }}>
+          <button class="btn" @click=${() => { const dd = d; this._closeInfoCard(); this._openMarkerDialog(dd); }}>
             <ha-icon icon="mdi:pencil"></ha-icon>${this._t('btn.edit')}
           </button>
           ${d.primary
-            ? html`<button class="btn" @click=${() => { const p = d.primary; this._infoCard = null; this._openMoreInfo(p); }}>
+            ? html`<button class="btn" @click=${() => { const p = d.primary; this._closeInfoCard(); this._openMoreInfo(p); }}>
                 <ha-icon icon="mdi:open-in-new"></ha-icon>${this._t('btn.open_in_ha')}
               </button>`
             : nothing}
-          <button class="btn ghost infofooter-close" @click=${() => (this._infoCard = null)}>${this._t('btn.close')}</button>
+          <button class="btn ghost infofooter-close" @click=${this._closeInfoCard}>${this._t('btn.close')}</button>
         </div>
     </hp-dialog>`;
   }
@@ -14683,6 +14897,12 @@ class HouseplanCard extends LitElement {
                 : nothing}
             </label>`,
           )}
+          <label class="srcrow">
+            ${this._boolInput(d.glowEnabled, (checked) => {
+              this._spaceDialog = { ...d, glowEnabled: checked };
+            })}
+            <span>${this._t('space.glow_enabled')}</span>
+          </label>
         </div>
         <div class="row" slot="footer">
           ${d.mode === 'edit'

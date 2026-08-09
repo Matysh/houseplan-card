@@ -168,6 +168,31 @@ test('optimizer repairs legacy cell_cm values into the server schema range', () 
   assert.equal(result.report.migrated, 6);
 });
 
+test('optimizer separates legacy Glow from data fill without losing explicit booleans', () => {
+  const result = optimizePlans({
+    spaces: [{
+      id: 'legacy', title: 'Legacy', view_box: [0, 0, 1, 1],
+      settings: { fill_mode: 'glow', glow_enabled: false, future: 'kept' },
+      rooms: [
+        { ...room('a', 0, 0.5), settings: { fill_mode: 'glow', future: 1 } },
+        { ...room('b', 0.5, 1), settings: { fill_mode: 'glow', glow: false } },
+      ],
+    }],
+    markers: [], settings: {},
+  }, {});
+  const space = result.config.spaces[0];
+  assert.equal(space.settings.fill_mode, 'none');
+  assert.equal(space.settings.glow_enabled, false);
+  assert.equal(space.settings.future, 'kept');
+  assert.deepEqual(space.rooms[0].settings, { future: 1, glow: true });
+  assert.deepEqual(space.rooms[1].settings, { glow: false });
+  assert.equal(result.report.migrated, 3);
+  assert.equal(result.report.glowSpacesMigrated, 1);
+  assert.equal(result.report.glowRoomsMigrated, 2);
+  const again = optimizePlans(result.config, result.layout);
+  assert.equal(again.changed, false);
+});
+
 test('optimizer canonicalises only an explicitly stored square-column angle', () => {
   const result = optimizePlans({
     spaces: [{

@@ -73,9 +73,31 @@ The `cleanFloor` entry ceiling is 160: the reviewed fixture currently warms
 120 deterministic room/physical-body entries, and the extra 40 slots allow a
 legitimate fixture extension without weakening the separate zero-growth gate.
 
-The absolute switch-cycle/Long-Task ceilings include roughly 20–30% headroom
-over the paired 2026-08-09 Ubuntu run where the unchanged base and candidate
-both reached about 5.3 s / 2.45 s / 22 tasks / 9.9 s total under runner load.
-The same-runner relative checks remain tighter for an actual candidate-only
-regression; this prevents an overloaded but symmetric runner from turning an
-absolute safety ceiling into a flaky code-regression signal.
+## Glow profiles
+
+Both Glow profiles run deterministic 1/10/30/60-pool variants at DPR 1 and
+Chromium CPU throttling x4, but deliberately exercise different fixtures:
+
+- `large-light-blend-v1` compares the isolated screen group with the previous
+  normal-layer implementation on the shared frontend/backend schema fixture
+  `test/fixtures/glow/additive-pools.json`;
+- `large-house-glow-overlay-v1` measures simultaneous temperature fill and
+  independent Glow on the existing 60-room/200-device large-house fixture,
+  without changing `large-house-v1`.
+
+```bash
+npm run benchmark:glow -- --profile=large-light-blend-v1 --output=artifacts/performance/glow.json
+npm run benchmark:glow -- --profile=large-house-glow-overlay-v1 --output=artifacts/performance/overlay.json
+```
+
+Reports include per-variant state-update timings, render/pool counts, Long
+Tasks, screenshot time, heap and cache growth. The first CI comparison against
+a base SHA that predates `glow_enabled` bootstraps only the overlay profile's
+relative baseline from the candidate; its absolute ceilings still gate that
+introduction. Every subsequent revision compares both profiles to the real
+base SHA.
+
+The initial absolute ceilings are intentionally conservative bootstrap limits;
+they must be reviewed against the first paired Ubuntu artifacts before the
+feature is promoted from beta. Same-runner relative checks remain the primary
+candidate-only regression signal.

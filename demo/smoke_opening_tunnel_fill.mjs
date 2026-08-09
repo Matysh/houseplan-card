@@ -59,18 +59,22 @@ const result = await page.evaluate(async () => {
   c._setMode('view');
   await update();
 
-  const tunnels = () => [...root().querySelectorAll('[data-hp="opening-tunnel"]')];
-  const byId = (id) => root().querySelector(`[data-hp="opening-tunnel"][data-id="${id}"]`);
+  const tunnels = (layer) => [...root().querySelectorAll(
+    `.opening-tunnels[data-layer="${layer}"] [data-hp="opening-tunnel"]`,
+  )];
+  const byId = (id, layer) => root().querySelector(
+    `.opening-tunnels[data-layer="${layer}"] [data-hp="opening-tunnel"][data-id="${id}"]`,
+  );
   const out = {};
-  out.allThreeTypes = tunnels().length === 3;
-  out.windowRepeatsColdRoom = byId('tunnel-window')?.getAttribute('fill') === '#112233'
+  out.allThreeTypes = new Set([...tunnels('data'), ...tunnels('glow-base')]
+    .map((node) => node.getAttribute('data-kind'))).size === 3;
+  out.windowRepeatsColdRoom = byId('tunnel-window', 'data')?.getAttribute('fill') === '#112233'
     && (root().querySelector('[data-hp="room"][data-id="tunnel-left"]')?.getAttribute('style') || '')
       .includes('--room-fill:#112233');
-  out.gateRepeatsHotRoom = byId('tunnel-gate')?.getAttribute('fill') === '#445566'
-    && (root().querySelector('[data-hp="room"][data-id="tunnel-right"]')?.getAttribute('style') || '')
-      .includes('--room-fill:#445566');
+  out.gateRepeatsHotRoom = byId('tunnel-gate', 'glow-base')?.getAttribute('fill') === '#445566'
+    && !!root().querySelector('.glow-base-layer [data-room-id="tunnel-right"]');
 
-  const shared = byId('tunnel-door');
+  const shared = byId('tunnel-door', 'data');
   const stops = [...(shared?.querySelectorAll('stop') || [])].map((s) => ({
     offset: s.getAttribute('offset'), color: s.getAttribute('stop-color'),
     opacity: s.getAttribute('stop-opacity'),
@@ -79,7 +83,8 @@ const result = await page.evaluate(async () => {
   out.sharedStopsOnWallAxis = stops[1]?.offset === '50.000000%'
     && stops[2]?.offset === '50.000000%';
   out.sharedCarriesBothRooms = new Set(stops.map((s) => s.color)).has('#112233')
-    && new Set(stops.map((s) => s.color)).has('#445566');
+    && stops.some((s) => s.color === '#000000' && s.opacity === '0')
+    && byId('tunnel-door', 'glow-base')?.getAttribute('fill') === '#445566';
 
   const svgEl = root().querySelector('.stage svg');
   const tunnelGroup = root().querySelector('.opening-tunnels');
@@ -90,22 +95,28 @@ const result = await page.evaluate(async () => {
   sp.settings.hide_openings = true;
   await update();
   out.hideSymbolKeepsTunnel = root().querySelectorAll('[data-hp="opening"]').length === 0
-    && tunnels().length === 3;
+    && tunnels('data').length === 2 && tunnels('glow-base').length === 3;
 
   sp.settings.show_borders = false;
   await update();
   out.hiddenBordersKeepTunnel = root().querySelectorAll('.wallbodies').length === 0
-    && tunnels().length === 3;
+    && tunnels('data').length === 2 && tunnels('glow-base').length === 3;
 
   c._setMode('decor');
   await update();
-  out.backdropUsesSingleGroupOpacity = tunnels().length === 3
-    && getComputedStyle(root().querySelector('.opening-tunnels')).opacity === '0.35'
-    && byId('tunnel-window')?.getAttribute('fill-opacity') === '0.21';
+  out.backdropUsesSingleGroupOpacity = tunnels('data').length === 2
+    && tunnels('glow-base').length === 3
+    && [...root().querySelectorAll('.opening-tunnels')]
+      .every((group) => getComputedStyle(group).opacity === '0.35')
+    && getComputedStyle(root().querySelector('.glow-base-layer')).opacity === '0.35'
+    && getComputedStyle(root().querySelector('.glow-pools-frame')).opacity === '0.35'
+    && byId('tunnel-window', 'data')?.getAttribute('fill-opacity') === '0.21'
+    && byId('tunnel-gate', 'glow-base')?.getAttribute('fill-opacity') === '0.42';
 
   c._setMode('plan');
   await update();
-  out.planGestureCannotLeaveStalePatch = tunnels().length === 0;
+  out.planGestureCannotLeaveStalePatch = tunnels('data').length === 0
+    && tunnels('glow-base').length === 0;
   return out;
 });
 

@@ -82,7 +82,7 @@ const lightingSpace = {
   view_box: [0, 0, 1, 1],
   cell_cm: 5,
   settings: {
-    fill_mode: 'glow', show_borders: true, show_names: true,
+    fill_mode: 'none', glow_enabled: true, show_borders: true, show_names: true,
     north_deg: 0, sun_rays: true, bg_mode: 'static',
   },
   rooms: lightingRooms,

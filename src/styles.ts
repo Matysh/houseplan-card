@@ -496,6 +496,22 @@ export const cardStyles = css`
       fill: var(--room-fill, transparent);
       fill-opacity: var(--room-fill-op, 0);
     }
+    .glow-base-layer,
+    .glow-base-tunnels,
+    .glow-pools-frame,
+    .glow-pools {
+      pointer-events: none;
+    }
+    /* The isolated group makes source pools blend with one another, never with
+       the room data fill, Glow base, paper or backdrop. Outer opacity is the
+       existing 0.7 and is applied once after this flat group is composited. */
+    .glow-pools-frame,
+    .glow-pools {
+      isolation: isolate;
+    }
+    .glow-pools.blend-screen .glow-pool {
+      mix-blend-mode: screen;
+    }
     /* View hover: brighten the current fill; accent wash when unfilled. */
     .stage.mode-view .room.styled.filled:hover {
       filter: brightness(1.2) saturate(1.08) drop-shadow(0 0 4px var(--hp-accent));
@@ -1150,6 +1166,8 @@ export const cardStyles = css`
     .stage.mode-decor .room-outline,
     .stage.mode-decor .wallbodies,
     .stage.mode-decor .opening-tunnels,
+    .stage.mode-decor .glow-base-layer,
+    .stage.mode-decor .glow-pools-frame,
     .stage.mode-decor .openwalls {
       opacity: 0.35;
     }

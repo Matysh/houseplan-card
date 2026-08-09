@@ -1,5 +1,5 @@
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 3;
+export const GOLDEN_MATRIX_VERSION = 4;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -38,17 +38,27 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'geometry-diagonal-45-opening-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'openings-thick-wall-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
-    fillMode: 'none', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+    fillMode: 'none', glowEnabled: false, theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'openings-hidden-view-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
-    fillMode: 'none', hideOpenings: true, theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+    fillMode: 'none', glowEnabled: false, hideOpenings: true, theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'lighting-glow-sun-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'lighting-fill-light-axis-split-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
-    fillMode: 'light', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+    fillMode: 'light', glowEnabled: false, theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'lighting-fill-temp-axis-split-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
-    fillMode: 'temp', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+    fillMode: 'temp', glowEnabled: false, theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'lighting-fill-lqi-axis-split-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
-    fillMode: 'lqi', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+    fillMode: 'lqi', glowEnabled: false, theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'lighting-temp-glow-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
+    fillMode: 'temp', glowEnabled: true, theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'lighting-temp-glow-light', fixture: 'visual', space: 'golden-lighting', mode: 'view',
+    fillMode: 'temp', glowEnabled: true, theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'lighting-temp-glow-no-sources-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
+    fillMode: 'temp', glowEnabled: true, allLightsOff: true,
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'lighting-temp-glow-room-override-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
+    fillMode: 'temp', glowEnabled: true, roomGlow: { 'light-left': true, 'light-right': false },
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'hover-over-glow-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
     hoverRoom: 'light-right', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'hover-nested-room-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',

@@ -124,7 +124,7 @@ missing destructive confirmation or an editor exception that breaks View.
       (stylus, paired mouse, vendor skins) [auto: smoke_feedback_v2]
 
 - [ ] Light-source flag (v1.44.0, user feedback): a smart SWITCH driving dumb
-      fixtures glows in the "Light sources" fill only once "This device is a
+      fixtures creates a Glow pool only once "This device is a
       light source" is ticked. External targets under "Controls" still feed
       group state/statistics but never create a pool at the switch coordinates;
       unticked devices without a light entity never glow [auto: smoke_glow]
@@ -816,13 +816,28 @@ separately promised workflows:
       [auto: smoke_controls; unit: devices.test.mjs, plan-optimizer.test.mjs].
       Repeat with a `device:*` binding whose controls contain one of that
       device's child switches; the child is excluded while external targets remain
-- [ ] Glow fill (v1.35.0): fill mode "Light sources" — every room painted with
-      one uniform darkness color; lit lamps glow with a radial gradient
-      (rgb_color → color temp → default color; brightness scales opacity),
-      clipped by the source's room plus door sectors into NEIGHBOUR rooms
-      (entrance doors leak nothing; windows don't spill); radius set in
-      general settings in HA units (m/ft, stored in cm); no shadow casting —
-      islands don't block light (documented limitation) [auto: smoke_glow]
+- [ ] Independent Glow (#55): the space has data-fill radios
+      None/LQI/Light/Temperature plus a separate Glow switch; every combination
+      persists and renders both layers in order. Legacy space/room
+      `fill_mode: glow` has identical effective state, explicit booleans win,
+      normal Save materialises both fields atomically and Optimize Plans makes
+      the same idempotent model-v6 migration without deleting unknown settings.
+      Glow-off everywhere creates no base/tunnel/pool SVG layer; static room
+      cards show the data fill plus base darkness but no live pools
+      [unit: logic, plan-optimizer, backend validation; auto: golden matrix].
+- [ ] Additive Glow (#19): 1/10/30/60-source fixture renders one flat isolated
+      pool group and exactly one outer opacity; brightness/palette alpha live
+      only in gradient stops. A real SVG raster probe is cached per Document:
+      pending/error/timeout/unsupported use `data-blend=normal`, success changes
+      mounted cards to `screen`. Warm/cool overlap, reverse DOM order,
+      same-colour brightening and a non-pool sector are pixel-checked
+      [unit: glow-blend, fixture schema; auto: smoke_glow_blending; golden and
+      large-light-blend-v1/large-house-glow-overlay-v1 performance profiles].
+- [ ] Long-press gesture interruption (#59): mouse pointerdown on a marker,
+      hold until the device card opens, release over the modal and close via X;
+      pointermove cannot pan, all stage pointer/pan anchors are empty and the
+      next clean short click follows the ordinary path
+      [auto: smoke_long_press_gesture].
 - [ ] Island rooms (v1.34.0): a contour drawn fully inside an existing room
       (or around one) saves as a nested room — column in a ring, inner room;
       the parent's fill renders with an evenodd hole so the ring paints

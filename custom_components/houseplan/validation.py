@@ -215,7 +215,8 @@ ROOM_SCHEMA = vol.All(
                 None,
                 vol.Schema(
                     {
-                        vol.Optional("fill_mode"): vol.Any(None, vol.In(["none", "lqi", "light", "temp"])),
+                        vol.Optional("fill_mode"): vol.Any(None, vol.In(["none", "lqi", "light", "temp", "glow"])),
+                        vol.Optional("glow"): vol.Any(bool, None),
                         vol.Optional("temp_source"): vol.Any(str, None),
                         vol.Optional("hum_source"): vol.Any(str, None),
                         vol.Optional("name_scale"): vol.Any(None, vol.All(vol.Coerce(float), vol.Range(min=0.5, max=3))),
@@ -259,6 +260,7 @@ SPACE_DISPLAY_SCHEMA = vol.Schema(
         vol.Optional("bg_color"): _COLOR,
         vol.Optional("room_opacity"): vol.All(vol.Coerce(float), vol.Range(min=0, max=1)),
         vol.Optional("fill_mode"): vol.In(["none", "lqi", "light", "temp", "glow"]),
+        vol.Optional("glow_enabled"): bool,
         vol.Optional("temp_min"): vol.Coerce(float),
         vol.Optional("temp_max"): vol.Coerce(float),
         vol.Optional("show_lqi"): bool,

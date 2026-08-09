@@ -8,7 +8,7 @@
  */
 import { html, svg, nothing, type TemplateResult } from 'lit';
 import { buildDevices, areaLqi, areaTemp, resolvedLightSources, resolvedLightState } from './devices';
-import { spaceDisplayOf, roomFillStyle, fillColorsOf, roomFillModeOf, stageBgOf, paperRoomShapes } from './logic';
+import { spaceDisplayOf, roomFillStyle, fillColorsOf, roomFillModeOf, roomGlowOf, stageBgOf, paperRoomShapes } from './logic';
 import {
   wallBodiesUnionPath, paperRoomShapesWithWalls, wallBodyNeedsSolid, type WallEntry,
 } from './wall-thickness';
@@ -99,6 +99,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const space = models.find((s) => s.id === o.spaceId);
   if (!space) return null;
   const disp = spaceDisplayOf(o.cfg.spaces.find((s: any) => s.id === o.spaceId));
+  const colors = fillColorsOf(o.cfg.settings);
   const cfgSize = o.iconSize ?? 2.5;
   const iconPct = cfgSize > 8 ? 2.5 : cfgSize;
 
@@ -183,8 +184,6 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
         }
         style = parts.join(';');
       }
-      const svgLabel = !space.bg && !disp.showNames;
-      const c = roomCenter(r);
       // docs/STYLING-HOOKS.md §3/§5: the static card carries the same hooks for
       // the objects it draws — a card-mod rule written for the plan reads here
       // too (in its own block: this is a different card, with its own root).
@@ -195,9 +194,31 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
             points="${r.poly.map((p) => p.join(',')).join(' ')}"></polygon>`
         : svg`<rect class="${cls}" style="${style}" data-hp="room" data-id=${hpId} data-area=${hpArea}
             x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="${Math.min(r.w!, r.h!) * 0.03}"></rect>`;
-      return svg`${shape}${svgLabel ? svg`<text class="rlabel" data-hp="room-label" data-id=${hpId} data-area=${hpArea}
-        x="${c[0]}" y="${c[1]}">${r.name}</text>` : nothing}`;
+      return shape;
     });
+
+  // The compact card intentionally has no live radial pools, but it shares the
+  // exact independent data/base projection with the full plan.
+  const glowBaseShapes = space.rooms
+    .filter((room) => roomGlowOf(disp.glow, room))
+    .map((room) => room.poly
+      ? svg`<polygon class="glow-base" aria-hidden="true" pointer-events="none"
+          data-room-id=${room.id || nothing}
+          points="${room.poly.map((point) => point.join(',')).join(' ')}"
+          fill=${colors.glow_base.c} fill-opacity=${colors.glow_base.a}></polygon>`
+      : svg`<rect class="glow-base" aria-hidden="true" pointer-events="none"
+          data-room-id=${room.id || nothing}
+          x=${room.x} y=${room.y} width=${room.w} height=${room.h}
+          rx=${Math.min(room.w!, room.h!) * 0.03}
+          fill=${colors.glow_base.c} fill-opacity=${colors.glow_base.a}></rect>`);
+  const staticSvgLabels = !space.bg && !disp.showNames
+    ? space.rooms.map((room) => {
+        const center = roomCenter(room);
+        return svg`<text class="rlabel" data-hp="room-label"
+          data-id=${room.id || nothing} data-area=${room.area || nothing}
+          x=${center[0]} y=${center[1]}>${room.name}</text>`;
+      })
+    : [];
 
   const markers = devs.map((d) => {
     const p = markerPos(d, o.layout, o.cfg, defPos, space);
@@ -256,7 +277,6 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const paperShapes = walls.length
     ? paperRoomShapesWithWalls(space.rooms, walls, [], GRID_STEP_N, cellCm, GRID_PITCH, NORM_W)
     : paperRoomShapes(space.rooms);
-  const colors = fillColorsOf(o.cfg.settings);
   const wallUnion = (walls.length || extras.length) && disp.showBorders
     ? wallBodiesUnionPath(space.rooms, walls, [], [], GRID_STEP_N, cellCm, GRID_PITCH, NORM_W, extras)
     : null;
@@ -286,6 +306,8 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
               preserveAspectRatio="none" />`
           : nothing}
         ${roomShapes}
+        <g class="glow-base-layer" aria-hidden="true" pointer-events="none">${glowBaseShapes}</g>
+        <g class="room-svg-labels" pointer-events="none">${staticSvgLabels}</g>
         ${wallUnion
           ? svg`<g class="wallbodies" style="--room-stroke:${wallStroke}">
               <path class="wallbody-fill" d="${wallUnion.d}"

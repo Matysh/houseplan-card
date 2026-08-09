@@ -1,6 +1,16 @@
 # Changelog
 
-## Unreleased
+## v1.61.0-beta.2 — 2026-08-10
+
+- Light-source Glow is now an independent overlay that can be combined with
+  temperature, Zigbee signal, light-state or no room fill. Existing plans that
+  used the legacy Glow fill keep the same effective appearance and migrate
+  losslessly on a normal save or Optimize Plans.
+- Overlapping light pools now blend additively, producing brighter mixed-colour
+  intersections. The card verifies real SVG support at runtime and falls back
+  safely to the previous normal composition on unsupported engines.
+- Closing a device card opened by mouse long-press no longer leaves the plan
+  attached to the cursor or reopens the dialog from a stale gesture.
 
 ## v1.61.0-beta.1 — 2026-08-09
 

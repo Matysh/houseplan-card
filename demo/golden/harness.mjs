@@ -53,13 +53,30 @@ export async function prepareGoldenScenario(page, scenario) {
   const fixture = fixtureFor(scenario.fixture);
   if (scenario.deviceName && fixture.devices?.[scenario.deviceId])
     fixture.devices[scenario.deviceId].name = scenario.deviceName;
-  if (scenario.fillMode) {
+  if (scenario.fillMode || typeof scenario.glowEnabled === 'boolean') {
     const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-    space.settings = { ...(space.settings || {}), fill_mode: scenario.fillMode };
+    space.settings = {
+      ...(space.settings || {}),
+      ...(scenario.fillMode ? { fill_mode: scenario.fillMode } : {}),
+      ...(typeof scenario.glowEnabled === 'boolean' ? { glow_enabled: scenario.glowEnabled } : {}),
+    };
   }
   if (scenario.hideOpenings) {
     const space = fixture.config.spaces.find((item) => item.id === scenario.space);
     space.settings = { ...(space.settings || {}), hide_openings: true };
+  }
+  if (scenario.roomGlow) {
+    const space = fixture.config.spaces.find((item) => item.id === scenario.space);
+    for (const room of space.rooms) {
+      if (!(room.id in scenario.roomGlow)) continue;
+      room.settings = { ...(room.settings || {}), glow: scenario.roomGlow[room.id] };
+    }
+  }
+  if (scenario.allLightsOff) {
+    for (const [entityId, state] of Object.entries(fixture.states || {})) {
+      if (!entityId.startsWith('light.')) continue;
+      fixture.states[entityId] = { ...state, state: 'off' };
+    }
   }
 
   return page.evaluate(async ({ fixture, scenario }) => {

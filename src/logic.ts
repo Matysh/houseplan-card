@@ -819,12 +819,8 @@ export function normalizeDeviceDisplay(value: unknown): DeviceDisplayMode {
     ? value as DeviceDisplayMode : 'badge';
 }
 export const TAP_ACTIONS = ['info', 'more-info', 'toggle', 'run', 'cover'] as const;
-/** Space-level fill: 'glow' is a whole-space light model, not a per-room one. */
-// 'glow' leads: it is the default for new spaces since v1.54 — the owner's
-// call, it sells the card best. Existing configs keep whatever they chose;
-// an absent fill_mode still falls back to 'none' (spaceDisplayOf), so an
-// update never repaints somebody's plan.
-export const SPACE_FILL_MODES = ['glow', 'none', 'lqi', 'light', 'temp'] as const;
+/** Current space-level data fills. Legacy `glow` is read separately as overlay. */
+export const SPACE_FILL_MODES = ['none', 'lqi', 'light', 'temp'] as const;
 export const ROOM_FILL_MODES = ['none', 'lqi', 'light', 'temp'] as const;
 
 export const TOGGLE_SAFE_DOMAINS = new Set(['light', 'switch', 'fan', 'humidifier', 'cover', 'valve']);
@@ -1242,6 +1238,8 @@ export interface SpaceDisplay {
   color: string;    // hex like #3ea6ff
   opacity: number;  // 0..1 — applied to borders, names and fills
   fill: RoomFillMode;
+  /** Independent light-source overlay; legacy fill_mode:'glow' projects here. */
+  glow: boolean;
   tempMin: number; // comfort range lower bound, °C
   tempMax: number; // comfort range upper bound, °C
   /** Per-space LQI badges near zigbee devices; null = follow the card option. */
@@ -1280,12 +1278,15 @@ export const DEFAULT_TEMP_MAX = 25;
 export function spaceDisplayOf(spaceCfg: any): SpaceDisplay {
   const s = spaceCfg?.settings || {};
   const noPlan = !spaceCfg?.plan_url;
+  const legacyGlow = s.fill_mode === 'glow';
   return {
     showBorders: s.show_borders ?? noPlan,
     showNames: s.show_names ?? noPlan,
     color: safeStoredColor(s.room_color, DEFAULT_ROOM_COLOR),
     opacity: typeof s.room_opacity === 'number' ? Math.min(1, Math.max(0, s.room_opacity)) : DEFAULT_ROOM_OPACITY,
-    fill: ['lqi', 'light', 'temp', 'glow'].includes(s.fill_mode) ? s.fill_mode : 'none',
+    fill: ['lqi', 'light', 'temp'].includes(s.fill_mode) ? s.fill_mode : 'none',
+    // Explicit new data wins. Reading an old config never writes it back.
+    glow: typeof s.glow_enabled === 'boolean' ? s.glow_enabled : legacyGlow,
     tempMin: typeof s.temp_min === 'number' ? s.temp_min : DEFAULT_TEMP_MIN,
     tempMax: typeof s.temp_max === 'number' ? s.temp_max : DEFAULT_TEMP_MAX,
     showLqi: typeof s.show_lqi === 'boolean' ? s.show_lqi : null,
@@ -1588,7 +1589,7 @@ export function lightColorOf(state: any): string | null {
   return generatedRgbColor(state.attributes?.rgb_color);
 }
 
-// ---------------- glow fill (light sources) ----------------
+// ---------------- independent light-source Glow overlay ----------------
 
 /** Blackbody color temperature → RGB (Tanner Helland approximation). */
 export function kelvinToRgb(kelvin: number): [number, number, number] {
@@ -1895,15 +1896,28 @@ export function contentUrl(url: string | null | undefined): string {
 /**
  * Effective fill mode of a room: its own override wins, otherwise the space's.
  * Four settings tiers (owner's principle, 2026-07-26): global > space > room >
- * device; the more specific tier overrides the more general one. A room may
- * override even in a glow space ('none' pulls it out of the darkness).
+ * device; the more specific tier overrides the more general one. The legacy
+ * room token `glow` means "inherit the data fill and enable Glow"; it is never
+ * returned as the current data-fill mode.
  */
 export function roomFillModeOf(
   spaceFill: RoomFillMode,
   room: { settings?: { fill_mode?: string | null } | null } | null | undefined,
 ): RoomFillMode {
   const o = room?.settings?.fill_mode;
-  return o === 'none' || o === 'lqi' || o === 'light' || o === 'temp' ? o : spaceFill;
+  const inherited = spaceFill === 'glow' ? 'none' : spaceFill;
+  return o === 'none' || o === 'lqi' || o === 'light' || o === 'temp' ? o : inherited;
+}
+
+/** Effective room Glow, independently of its data fill. */
+export function roomGlowOf(
+  spaceGlow: boolean,
+  room: { settings?: { fill_mode?: string | null; glow?: boolean | null } | null } | null | undefined,
+): boolean {
+  const settings = room?.settings;
+  if (typeof settings?.glow === 'boolean') return settings.glow;
+  if (settings?.fill_mode === 'glow') return true;
+  return spaceGlow;
 }
 
 // ---------------- marker files ----------------

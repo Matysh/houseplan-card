@@ -8,7 +8,10 @@ export interface RoomCfg {
   /** Room-level settings (tier 3 of 4: global > space > ROOM > device). */
   settings?: {
     /** Fill override; unset = inherit the space fill mode. */
-    fill_mode?: 'none' | 'lqi' | 'light' | 'temp' | null;
+    /** `glow` is a permanent legacy read token. */
+    fill_mode?: 'none' | 'lqi' | 'light' | 'temp' | 'glow' | null;
+    /** Independent per-room Glow override; null/absent inherits the space. */
+    glow?: boolean | null;
     /** 'device:<id>' or 'entity:<eid>'; unset = average over the room sensors. */
     temp_source?: string | null;
     hum_source?: string | null;

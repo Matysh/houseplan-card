@@ -1,6 +1,6 @@
 # House Plan architecture
 
-Updated: 2026-08-09 (v1.61.0-beta.1). The repository = a HACS integration (category **Integration**)
+Updated: 2026-08-10 (v1.61.0-beta.2). The repository = a HACS integration (category **Integration**)
 that contains both the backend (`custom_components/houseplan`) and the Lovelace card (`src/` → `dist/`).
 
 ## Layout
@@ -587,23 +587,31 @@ hash falls back to the default.
   `plan_scale` feeds both axes. The image is interactive only in its own
   Background tool, rotated corners contribute to content bounds, and the
   static card uses the same model. See `DECOR-EDITOR.md` and `BACKDROP.md`.
-- **Glow fill** (v1.35+): `fill_mode: 'glow'` paints every room with
-  `fill_colors.glow_base` and renders per-source radial gradients clipped by
-  a per-light `clipPath` = zone polygons + doorway sectors, each contour a
-  SEPARATE clipPath child (children union; subpaths of one nonzero path
-  cancel on opposite windings — field bug v1.36.3). Radius: global
-  `settings.glow_radius_cm` + per-marker `glow_radius_cm`. On a thick wall the
-  doorway sector is the angular intersection of its near- and far-face clear
-  spans, so the jamb returns clip the spill as a real opening tunnel. The
-  shared light resolver marks external `controls` as non-spatial: they still
-  vote in room state/statistics and drive group actions, but never place a Glow
-  pool at the controller. If the same entity also has a real lamp marker, that
-  physical marker owns its unique Glow position regardless of registry order.
-  Room-coloured opening tunnels are a separate layer below Glow/sun. Their
-  geometry and cache remain owned by `wall-thickness.ts`/the card orchestrator;
-  `render/opening-tunnels.ts` only maps resolved immutable inputs to the stable
-  SVG contract. This is the first render-only HP-ARCH-01 extraction and must not
-  become a second geometry or fill model.
+- **Independent Glow overlay** (#55): `settings.glow_enabled` is orthogonal to
+  the data `fill_mode`; room `settings.glow` is the tri-state-compatible model
+  foundation for #36. Legacy `fill_mode: 'glow'` remains a permanent read
+  token and projects to data fill `none` plus Glow `true` unless an explicit
+  boolean wins. Normal settings/room saves materialise that projection in the
+  same write; Optimize Plans performs the equivalent idempotent model-v6
+  migration. Render order is paper → data room/tunnel fill → pointer-free Glow
+  base room/tunnel fill → radial pools → sun/interactive layers. The static
+  room card uses the same data/base projection but deliberately has no live
+  pools.
+- **Glow pools and additive composition** (#19): every source retains its own
+  radial gradient and wall/door `clipPath`. All pools live in one flat isolated
+  group inside one outer `opacity=.7` frame; only the pool elements use SVG
+  `mix-blend-mode: screen`. Gradient-stop alpha contains source brightness and
+  palette alpha, so group opacity is applied exactly once. A cached per-
+  `Document` raster probe verifies actual SVG screen pixels rather than trusting
+  CSS syntax support; pending/unsupported/error/timeout states render with
+  deterministic normal blending and a successful probe requests one update.
+  Radius remains global `settings.glow_radius_cm` with optional per-marker
+  `glow_radius_cm`. On thick walls the doorway sector uses the near/far clear
+  spans so jamb returns clip the spill as a real opening tunnel. The shared
+  light resolver marks external `controls` as non-spatial: they vote in room
+  state/statistics and drive group actions but never place a pool at the
+  controller. `wall-thickness.ts` and the card orchestrator continue to own all
+  geometry/caches; `render/opening-tunnels.ts` only projects immutable inputs.
 - **Open boundaries** (v1.37, revised 2026-08): `space.open_spans` hold
   geometric virtual stretches; `room.open_to` remains the light-zone index
   derived from spans (legacy `open_to`-only configs expand to full

@@ -1,0 +1,3054 @@
+{
+  "fixture": "additive-pools-v1",
+  "variants": [
+    1,
+    10,
+    30,
+    60
+  ],
+  "config": {
+    "model_version": 6,
+    "spaces": [
+      {
+        "id": "glow-fixture",
+        "title": "Additive Glow fixture",
+        "plan_url": null,
+        "view_box": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "cell_cm": 5,
+        "settings": {
+          "fill_mode": "temp",
+          "glow_enabled": true,
+          "show_borders": true,
+          "show_names": false,
+          "temp_min": 20,
+          "temp_max": 25
+        },
+        "rooms": [
+          {
+            "id": "glow-left",
+            "name": "Warm room",
+            "area": "glow_left",
+            "poly": [
+              [
+                0.05,
+                0.08
+              ],
+              [
+                0.5,
+                0.08
+              ],
+              [
+                0.5,
+                0.92
+              ],
+              [
+                0.05,
+                0.92
+              ]
+            ]
+          },
+          {
+            "id": "glow-right",
+            "name": "Cool room",
+            "area": "glow_right",
+            "poly": [
+              [
+                0.5,
+                0.08
+              ],
+              [
+                0.95,
+                0.08
+              ],
+              [
+                0.95,
+                0.92
+              ],
+              [
+                0.5,
+                0.92
+              ]
+            ]
+          }
+        ],
+        "walls": [
+          {
+            "key": "glow-shared-wall",
+            "a": [
+              0.5,
+              0.08
+            ],
+            "b": [
+              0.5,
+              0.92
+            ],
+            "cm": 20
+          }
+        ],
+        "openings": [
+          {
+            "id": "glow-door",
+            "type": "door",
+            "x": 0.5,
+            "y": 0.5,
+            "angle": 90,
+            "length": 0.14
+          }
+        ],
+        "partitions": [
+          {
+            "id": "glow-partition",
+            "a": [
+              0.22,
+              0.3
+            ],
+            "b": [
+              0.22,
+              0.7
+            ],
+            "cm": 12
+          }
+        ]
+      }
+    ],
+    "markers": [
+      {
+        "id": "glow-device-001",
+        "binding": "device:glow-device-001",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-002",
+        "binding": "device:glow-device-002",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-003",
+        "binding": "device:glow-device-003",
+        "glow_radius_cm": 240
+      },
+      {
+        "id": "glow-device-004",
+        "binding": "device:glow-device-004",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-005",
+        "binding": "device:glow-device-005",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-006",
+        "binding": "device:glow-device-006",
+        "glow_radius_cm": 240
+      },
+      {
+        "id": "glow-device-007",
+        "binding": "device:glow-device-007",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-008",
+        "binding": "device:glow-device-008",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-009",
+        "binding": "device:glow-device-009",
+        "glow_radius_cm": 240
+      },
+      {
+        "id": "glow-device-010",
+        "binding": "device:glow-device-010",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-011",
+        "binding": "device:glow-device-011",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-012",
+        "binding": "device:glow-device-012",
+        "glow_radius_cm": 240
+      },
+      {
+        "id": "glow-device-013",
+        "binding": "device:glow-device-013",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-014",
+        "binding": "device:glow-device-014",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-015",
+        "binding": "device:glow-device-015",
+        "glow_radius_cm": 240
+      },
+      {
+        "id": "glow-device-016",
+        "binding": "device:glow-device-016",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-017",
+        "binding": "device:glow-device-017",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-018",
+        "binding": "device:glow-device-018",
+        "glow_radius_cm": 240
+      },
+      {
+        "id": "glow-device-019",
+        "binding": "device:glow-device-019",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-020",
+        "binding": "device:glow-device-020",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-021",
+        "binding": "device:glow-device-021",
+        "glow_radius_cm": 240
+      },
+      {
+        "id": "glow-device-022",
+        "binding": "device:glow-device-022",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-023",
+        "binding": "device:glow-device-023",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-024",
+        "binding": "device:glow-device-024",
+        "glow_radius_cm": 240
+      },
+      {
+        "id": "glow-device-025",
+        "binding": "device:glow-device-025",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-026",
+        "binding": "device:glow-device-026",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-027",
+        "binding": "device:glow-device-027",
+        "glow_radius_cm": 240
+      },
+      {
+        "id": "glow-device-028",
+        "binding": "device:glow-device-028",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-029",
+        "binding": "device:glow-device-029",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-030",
+        "binding": "device:glow-device-030",
+        "glow_radius_cm": 240
+      },
+      {
+        "id": "glow-device-031",
+        "binding": "device:glow-device-031",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-032",
+        "binding": "device:glow-device-032",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-033",
+        "binding": "device:glow-device-033",
+        "glow_radius_cm": 240
+      },
+      {
+        "id": "glow-device-034",
+        "binding": "device:glow-device-034",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-035",
+        "binding": "device:glow-device-035",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-036",
+        "binding": "device:glow-device-036",
+        "glow_radius_cm": 240
+      },
+      {
+        "id": "glow-device-037",
+        "binding": "device:glow-device-037",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-038",
+        "binding": "device:glow-device-038",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-039",
+        "binding": "device:glow-device-039",
+        "glow_radius_cm": 240
+      },
+      {
+        "id": "glow-device-040",
+        "binding": "device:glow-device-040",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-041",
+        "binding": "device:glow-device-041",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-042",
+        "binding": "device:glow-device-042",
+        "glow_radius_cm": 240
+      },
+      {
+        "id": "glow-device-043",
+        "binding": "device:glow-device-043",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-044",
+        "binding": "device:glow-device-044",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-045",
+        "binding": "device:glow-device-045",
+        "glow_radius_cm": 240
+      },
+      {
+        "id": "glow-device-046",
+        "binding": "device:glow-device-046",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-047",
+        "binding": "device:glow-device-047",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-048",
+        "binding": "device:glow-device-048",
+        "glow_radius_cm": 240
+      },
+      {
+        "id": "glow-device-049",
+        "binding": "device:glow-device-049",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-050",
+        "binding": "device:glow-device-050",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-051",
+        "binding": "device:glow-device-051",
+        "glow_radius_cm": 240
+      },
+      {
+        "id": "glow-device-052",
+        "binding": "device:glow-device-052",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-053",
+        "binding": "device:glow-device-053",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-054",
+        "binding": "device:glow-device-054",
+        "glow_radius_cm": 240
+      },
+      {
+        "id": "glow-device-055",
+        "binding": "device:glow-device-055",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-056",
+        "binding": "device:glow-device-056",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-057",
+        "binding": "device:glow-device-057",
+        "glow_radius_cm": 240
+      },
+      {
+        "id": "glow-device-058",
+        "binding": "device:glow-device-058",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-059",
+        "binding": "device:glow-device-059",
+        "glow_radius_cm": 180
+      },
+      {
+        "id": "glow-device-060",
+        "binding": "device:glow-device-060",
+        "glow_radius_cm": 240
+      }
+    ],
+    "settings": {
+      "glow_radius_cm": 210,
+      "north_deg": 0,
+      "sun_rays": false,
+      "bg_mode": "static",
+      "fill_colors": {
+        "glow_base": {
+          "c": "#172433",
+          "a": 0.62
+        },
+        "glow_light": {
+          "c": "#ffd9a0",
+          "a": 0.82
+        },
+        "temp_cold": {
+          "c": "#4fc3f7",
+          "a": 0.18
+        },
+        "temp_ok": {
+          "c": "#66d17a",
+          "a": 0.18
+        },
+        "temp_hot": {
+          "c": "#ffd45c",
+          "a": 0.18
+        },
+        "wall_fill": {
+          "c": "#d7d9dc",
+          "a": 1
+        }
+      }
+    }
+  },
+  "layout": {
+    "glow-device-001": {
+      "s": "glow-fixture",
+      "x": 0.13,
+      "y": 0.18
+    },
+    "glow-device-002": {
+      "s": "glow-fixture",
+      "x": 0.185,
+      "y": 0.18
+    },
+    "glow-device-003": {
+      "s": "glow-fixture",
+      "x": 0.24,
+      "y": 0.18
+    },
+    "glow-device-004": {
+      "s": "glow-fixture",
+      "x": 0.295,
+      "y": 0.18
+    },
+    "glow-device-005": {
+      "s": "glow-fixture",
+      "x": 0.35,
+      "y": 0.18
+    },
+    "glow-device-006": {
+      "s": "glow-fixture",
+      "x": 0.405,
+      "y": 0.18
+    },
+    "glow-device-007": {
+      "s": "glow-fixture",
+      "x": 0.13,
+      "y": 0.32
+    },
+    "glow-device-008": {
+      "s": "glow-fixture",
+      "x": 0.185,
+      "y": 0.32
+    },
+    "glow-device-009": {
+      "s": "glow-fixture",
+      "x": 0.24,
+      "y": 0.32
+    },
+    "glow-device-010": {
+      "s": "glow-fixture",
+      "x": 0.295,
+      "y": 0.32
+    },
+    "glow-device-011": {
+      "s": "glow-fixture",
+      "x": 0.35,
+      "y": 0.32
+    },
+    "glow-device-012": {
+      "s": "glow-fixture",
+      "x": 0.405,
+      "y": 0.32
+    },
+    "glow-device-013": {
+      "s": "glow-fixture",
+      "x": 0.13,
+      "y": 0.46
+    },
+    "glow-device-014": {
+      "s": "glow-fixture",
+      "x": 0.185,
+      "y": 0.46
+    },
+    "glow-device-015": {
+      "s": "glow-fixture",
+      "x": 0.24,
+      "y": 0.46
+    },
+    "glow-device-016": {
+      "s": "glow-fixture",
+      "x": 0.295,
+      "y": 0.46
+    },
+    "glow-device-017": {
+      "s": "glow-fixture",
+      "x": 0.35,
+      "y": 0.46
+    },
+    "glow-device-018": {
+      "s": "glow-fixture",
+      "x": 0.405,
+      "y": 0.46
+    },
+    "glow-device-019": {
+      "s": "glow-fixture",
+      "x": 0.13,
+      "y": 0.6
+    },
+    "glow-device-020": {
+      "s": "glow-fixture",
+      "x": 0.185,
+      "y": 0.6
+    },
+    "glow-device-021": {
+      "s": "glow-fixture",
+      "x": 0.24,
+      "y": 0.6
+    },
+    "glow-device-022": {
+      "s": "glow-fixture",
+      "x": 0.295,
+      "y": 0.6
+    },
+    "glow-device-023": {
+      "s": "glow-fixture",
+      "x": 0.35,
+      "y": 0.6
+    },
+    "glow-device-024": {
+      "s": "glow-fixture",
+      "x": 0.405,
+      "y": 0.6
+    },
+    "glow-device-025": {
+      "s": "glow-fixture",
+      "x": 0.13,
+      "y": 0.74
+    },
+    "glow-device-026": {
+      "s": "glow-fixture",
+      "x": 0.185,
+      "y": 0.74
+    },
+    "glow-device-027": {
+      "s": "glow-fixture",
+      "x": 0.24,
+      "y": 0.74
+    },
+    "glow-device-028": {
+      "s": "glow-fixture",
+      "x": 0.295,
+      "y": 0.74
+    },
+    "glow-device-029": {
+      "s": "glow-fixture",
+      "x": 0.35,
+      "y": 0.74
+    },
+    "glow-device-030": {
+      "s": "glow-fixture",
+      "x": 0.405,
+      "y": 0.74
+    },
+    "glow-device-031": {
+      "s": "glow-fixture",
+      "x": 0.58,
+      "y": 0.18
+    },
+    "glow-device-032": {
+      "s": "glow-fixture",
+      "x": 0.635,
+      "y": 0.18
+    },
+    "glow-device-033": {
+      "s": "glow-fixture",
+      "x": 0.69,
+      "y": 0.18
+    },
+    "glow-device-034": {
+      "s": "glow-fixture",
+      "x": 0.745,
+      "y": 0.18
+    },
+    "glow-device-035": {
+      "s": "glow-fixture",
+      "x": 0.8,
+      "y": 0.18
+    },
+    "glow-device-036": {
+      "s": "glow-fixture",
+      "x": 0.855,
+      "y": 0.18
+    },
+    "glow-device-037": {
+      "s": "glow-fixture",
+      "x": 0.58,
+      "y": 0.32
+    },
+    "glow-device-038": {
+      "s": "glow-fixture",
+      "x": 0.635,
+      "y": 0.32
+    },
+    "glow-device-039": {
+      "s": "glow-fixture",
+      "x": 0.69,
+      "y": 0.32
+    },
+    "glow-device-040": {
+      "s": "glow-fixture",
+      "x": 0.745,
+      "y": 0.32
+    },
+    "glow-device-041": {
+      "s": "glow-fixture",
+      "x": 0.8,
+      "y": 0.32
+    },
+    "glow-device-042": {
+      "s": "glow-fixture",
+      "x": 0.855,
+      "y": 0.32
+    },
+    "glow-device-043": {
+      "s": "glow-fixture",
+      "x": 0.58,
+      "y": 0.46
+    },
+    "glow-device-044": {
+      "s": "glow-fixture",
+      "x": 0.635,
+      "y": 0.46
+    },
+    "glow-device-045": {
+      "s": "glow-fixture",
+      "x": 0.69,
+      "y": 0.46
+    },
+    "glow-device-046": {
+      "s": "glow-fixture",
+      "x": 0.745,
+      "y": 0.46
+    },
+    "glow-device-047": {
+      "s": "glow-fixture",
+      "x": 0.8,
+      "y": 0.46
+    },
+    "glow-device-048": {
+      "s": "glow-fixture",
+      "x": 0.855,
+      "y": 0.46
+    },
+    "glow-device-049": {
+      "s": "glow-fixture",
+      "x": 0.58,
+      "y": 0.6
+    },
+    "glow-device-050": {
+      "s": "glow-fixture",
+      "x": 0.635,
+      "y": 0.6
+    },
+    "glow-device-051": {
+      "s": "glow-fixture",
+      "x": 0.69,
+      "y": 0.6
+    },
+    "glow-device-052": {
+      "s": "glow-fixture",
+      "x": 0.745,
+      "y": 0.6
+    },
+    "glow-device-053": {
+      "s": "glow-fixture",
+      "x": 0.8,
+      "y": 0.6
+    },
+    "glow-device-054": {
+      "s": "glow-fixture",
+      "x": 0.855,
+      "y": 0.6
+    },
+    "glow-device-055": {
+      "s": "glow-fixture",
+      "x": 0.58,
+      "y": 0.74
+    },
+    "glow-device-056": {
+      "s": "glow-fixture",
+      "x": 0.635,
+      "y": 0.74
+    },
+    "glow-device-057": {
+      "s": "glow-fixture",
+      "x": 0.69,
+      "y": 0.74
+    },
+    "glow-device-058": {
+      "s": "glow-fixture",
+      "x": 0.745,
+      "y": 0.74
+    },
+    "glow-device-059": {
+      "s": "glow-fixture",
+      "x": 0.8,
+      "y": 0.74
+    },
+    "glow-device-060": {
+      "s": "glow-fixture",
+      "x": 0.855,
+      "y": 0.74
+    }
+  },
+  "ha": {
+    "areas": {
+      "glow_left": {
+        "area_id": "glow_left",
+        "name": "Warm room"
+      },
+      "glow_right": {
+        "area_id": "glow_right",
+        "name": "Cool room"
+      }
+    },
+    "devices": {
+      "glow-device-001": {
+        "id": "glow-device-001",
+        "name": "Glow 001",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-001"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-002": {
+        "id": "glow-device-002",
+        "name": "Glow 002",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-002"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-003": {
+        "id": "glow-device-003",
+        "name": "Glow 003",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-003"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-004": {
+        "id": "glow-device-004",
+        "name": "Glow 004",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-004"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-005": {
+        "id": "glow-device-005",
+        "name": "Glow 005",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-005"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-006": {
+        "id": "glow-device-006",
+        "name": "Glow 006",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-006"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-007": {
+        "id": "glow-device-007",
+        "name": "Glow 007",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-007"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-008": {
+        "id": "glow-device-008",
+        "name": "Glow 008",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-008"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-009": {
+        "id": "glow-device-009",
+        "name": "Glow 009",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-009"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-010": {
+        "id": "glow-device-010",
+        "name": "Glow 010",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-010"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-011": {
+        "id": "glow-device-011",
+        "name": "Glow 011",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-011"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-012": {
+        "id": "glow-device-012",
+        "name": "Glow 012",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-012"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-013": {
+        "id": "glow-device-013",
+        "name": "Glow 013",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-013"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-014": {
+        "id": "glow-device-014",
+        "name": "Glow 014",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-014"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-015": {
+        "id": "glow-device-015",
+        "name": "Glow 015",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-015"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-016": {
+        "id": "glow-device-016",
+        "name": "Glow 016",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-016"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-017": {
+        "id": "glow-device-017",
+        "name": "Glow 017",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-017"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-018": {
+        "id": "glow-device-018",
+        "name": "Glow 018",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-018"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-019": {
+        "id": "glow-device-019",
+        "name": "Glow 019",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-019"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-020": {
+        "id": "glow-device-020",
+        "name": "Glow 020",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-020"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-021": {
+        "id": "glow-device-021",
+        "name": "Glow 021",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-021"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-022": {
+        "id": "glow-device-022",
+        "name": "Glow 022",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-022"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-023": {
+        "id": "glow-device-023",
+        "name": "Glow 023",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-023"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-024": {
+        "id": "glow-device-024",
+        "name": "Glow 024",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-024"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-025": {
+        "id": "glow-device-025",
+        "name": "Glow 025",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-025"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-026": {
+        "id": "glow-device-026",
+        "name": "Glow 026",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-026"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-027": {
+        "id": "glow-device-027",
+        "name": "Glow 027",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-027"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-028": {
+        "id": "glow-device-028",
+        "name": "Glow 028",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-028"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-029": {
+        "id": "glow-device-029",
+        "name": "Glow 029",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-029"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-030": {
+        "id": "glow-device-030",
+        "name": "Glow 030",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_left",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-030"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-031": {
+        "id": "glow-device-031",
+        "name": "Glow 031",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-031"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-032": {
+        "id": "glow-device-032",
+        "name": "Glow 032",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-032"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-033": {
+        "id": "glow-device-033",
+        "name": "Glow 033",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-033"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-034": {
+        "id": "glow-device-034",
+        "name": "Glow 034",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-034"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-035": {
+        "id": "glow-device-035",
+        "name": "Glow 035",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-035"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-036": {
+        "id": "glow-device-036",
+        "name": "Glow 036",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-036"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-037": {
+        "id": "glow-device-037",
+        "name": "Glow 037",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-037"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-038": {
+        "id": "glow-device-038",
+        "name": "Glow 038",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-038"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-039": {
+        "id": "glow-device-039",
+        "name": "Glow 039",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-039"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-040": {
+        "id": "glow-device-040",
+        "name": "Glow 040",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-040"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-041": {
+        "id": "glow-device-041",
+        "name": "Glow 041",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-041"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-042": {
+        "id": "glow-device-042",
+        "name": "Glow 042",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-042"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-043": {
+        "id": "glow-device-043",
+        "name": "Glow 043",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-043"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-044": {
+        "id": "glow-device-044",
+        "name": "Glow 044",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-044"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-045": {
+        "id": "glow-device-045",
+        "name": "Glow 045",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-045"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-046": {
+        "id": "glow-device-046",
+        "name": "Glow 046",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-046"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-047": {
+        "id": "glow-device-047",
+        "name": "Glow 047",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-047"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-048": {
+        "id": "glow-device-048",
+        "name": "Glow 048",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-048"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-049": {
+        "id": "glow-device-049",
+        "name": "Glow 049",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-049"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-050": {
+        "id": "glow-device-050",
+        "name": "Glow 050",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-050"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-051": {
+        "id": "glow-device-051",
+        "name": "Glow 051",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-051"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-052": {
+        "id": "glow-device-052",
+        "name": "Glow 052",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-052"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-053": {
+        "id": "glow-device-053",
+        "name": "Glow 053",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-053"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-054": {
+        "id": "glow-device-054",
+        "name": "Glow 054",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-054"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-055": {
+        "id": "glow-device-055",
+        "name": "Glow 055",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-055"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-056": {
+        "id": "glow-device-056",
+        "name": "Glow 056",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-056"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-057": {
+        "id": "glow-device-057",
+        "name": "Glow 057",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-057"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-058": {
+        "id": "glow-device-058",
+        "name": "Glow 058",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-058"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-059": {
+        "id": "glow-device-059",
+        "name": "Glow 059",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-059"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      },
+      "glow-device-060": {
+        "id": "glow-device-060",
+        "name": "Glow 060",
+        "model": "HP-GLOW-FIXTURE",
+        "area_id": "glow_right",
+        "identifiers": [
+          [
+            "houseplan_fixture",
+            "glow-device-060"
+          ]
+        ],
+        "config_entries": [
+          "glow_fixture"
+        ],
+        "entry_type": null,
+        "via_device_id": null,
+        "disabled_by": null
+      }
+    },
+    "entities": {
+      "light.glow_001": {
+        "entity_id": "light.glow_001",
+        "device_id": "glow-device-001",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_002": {
+        "entity_id": "light.glow_002",
+        "device_id": "glow-device-002",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_003": {
+        "entity_id": "light.glow_003",
+        "device_id": "glow-device-003",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_004": {
+        "entity_id": "light.glow_004",
+        "device_id": "glow-device-004",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_005": {
+        "entity_id": "light.glow_005",
+        "device_id": "glow-device-005",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_006": {
+        "entity_id": "light.glow_006",
+        "device_id": "glow-device-006",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_007": {
+        "entity_id": "light.glow_007",
+        "device_id": "glow-device-007",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_008": {
+        "entity_id": "light.glow_008",
+        "device_id": "glow-device-008",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_009": {
+        "entity_id": "light.glow_009",
+        "device_id": "glow-device-009",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_010": {
+        "entity_id": "light.glow_010",
+        "device_id": "glow-device-010",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_011": {
+        "entity_id": "light.glow_011",
+        "device_id": "glow-device-011",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_012": {
+        "entity_id": "light.glow_012",
+        "device_id": "glow-device-012",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_013": {
+        "entity_id": "light.glow_013",
+        "device_id": "glow-device-013",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_014": {
+        "entity_id": "light.glow_014",
+        "device_id": "glow-device-014",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_015": {
+        "entity_id": "light.glow_015",
+        "device_id": "glow-device-015",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_016": {
+        "entity_id": "light.glow_016",
+        "device_id": "glow-device-016",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_017": {
+        "entity_id": "light.glow_017",
+        "device_id": "glow-device-017",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_018": {
+        "entity_id": "light.glow_018",
+        "device_id": "glow-device-018",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_019": {
+        "entity_id": "light.glow_019",
+        "device_id": "glow-device-019",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_020": {
+        "entity_id": "light.glow_020",
+        "device_id": "glow-device-020",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_021": {
+        "entity_id": "light.glow_021",
+        "device_id": "glow-device-021",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_022": {
+        "entity_id": "light.glow_022",
+        "device_id": "glow-device-022",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_023": {
+        "entity_id": "light.glow_023",
+        "device_id": "glow-device-023",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_024": {
+        "entity_id": "light.glow_024",
+        "device_id": "glow-device-024",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_025": {
+        "entity_id": "light.glow_025",
+        "device_id": "glow-device-025",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_026": {
+        "entity_id": "light.glow_026",
+        "device_id": "glow-device-026",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_027": {
+        "entity_id": "light.glow_027",
+        "device_id": "glow-device-027",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_028": {
+        "entity_id": "light.glow_028",
+        "device_id": "glow-device-028",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_029": {
+        "entity_id": "light.glow_029",
+        "device_id": "glow-device-029",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_030": {
+        "entity_id": "light.glow_030",
+        "device_id": "glow-device-030",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_031": {
+        "entity_id": "light.glow_031",
+        "device_id": "glow-device-031",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_032": {
+        "entity_id": "light.glow_032",
+        "device_id": "glow-device-032",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_033": {
+        "entity_id": "light.glow_033",
+        "device_id": "glow-device-033",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_034": {
+        "entity_id": "light.glow_034",
+        "device_id": "glow-device-034",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_035": {
+        "entity_id": "light.glow_035",
+        "device_id": "glow-device-035",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_036": {
+        "entity_id": "light.glow_036",
+        "device_id": "glow-device-036",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_037": {
+        "entity_id": "light.glow_037",
+        "device_id": "glow-device-037",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_038": {
+        "entity_id": "light.glow_038",
+        "device_id": "glow-device-038",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_039": {
+        "entity_id": "light.glow_039",
+        "device_id": "glow-device-039",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_040": {
+        "entity_id": "light.glow_040",
+        "device_id": "glow-device-040",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_041": {
+        "entity_id": "light.glow_041",
+        "device_id": "glow-device-041",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_042": {
+        "entity_id": "light.glow_042",
+        "device_id": "glow-device-042",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_043": {
+        "entity_id": "light.glow_043",
+        "device_id": "glow-device-043",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_044": {
+        "entity_id": "light.glow_044",
+        "device_id": "glow-device-044",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_045": {
+        "entity_id": "light.glow_045",
+        "device_id": "glow-device-045",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_046": {
+        "entity_id": "light.glow_046",
+        "device_id": "glow-device-046",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_047": {
+        "entity_id": "light.glow_047",
+        "device_id": "glow-device-047",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_048": {
+        "entity_id": "light.glow_048",
+        "device_id": "glow-device-048",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_049": {
+        "entity_id": "light.glow_049",
+        "device_id": "glow-device-049",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_050": {
+        "entity_id": "light.glow_050",
+        "device_id": "glow-device-050",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_051": {
+        "entity_id": "light.glow_051",
+        "device_id": "glow-device-051",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_052": {
+        "entity_id": "light.glow_052",
+        "device_id": "glow-device-052",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_053": {
+        "entity_id": "light.glow_053",
+        "device_id": "glow-device-053",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_054": {
+        "entity_id": "light.glow_054",
+        "device_id": "glow-device-054",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_055": {
+        "entity_id": "light.glow_055",
+        "device_id": "glow-device-055",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_056": {
+        "entity_id": "light.glow_056",
+        "device_id": "glow-device-056",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_057": {
+        "entity_id": "light.glow_057",
+        "device_id": "glow-device-057",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_058": {
+        "entity_id": "light.glow_058",
+        "device_id": "glow-device-058",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_059": {
+        "entity_id": "light.glow_059",
+        "device_id": "glow-device-059",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      },
+      "light.glow_060": {
+        "entity_id": "light.glow_060",
+        "device_id": "glow-device-060",
+        "platform": "houseplan_fixture",
+        "config_entry_id": "glow_fixture",
+        "disabled_by": null
+      }
+    },
+    "states": {
+      "light.glow_001": {
+        "entity_id": "light.glow_001",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 001",
+          "brightness": 128,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_002": {
+        "entity_id": "light.glow_002",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 002",
+          "brightness": 160,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_003": {
+        "entity_id": "light.glow_003",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 003",
+          "brightness": 192,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_004": {
+        "entity_id": "light.glow_004",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 004",
+          "brightness": 224,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_005": {
+        "entity_id": "light.glow_005",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 005",
+          "brightness": 96,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_006": {
+        "entity_id": "light.glow_006",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 006",
+          "brightness": 128,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_007": {
+        "entity_id": "light.glow_007",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 007",
+          "brightness": 160,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_008": {
+        "entity_id": "light.glow_008",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 008",
+          "brightness": 192,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_009": {
+        "entity_id": "light.glow_009",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 009",
+          "brightness": 224,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_010": {
+        "entity_id": "light.glow_010",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 010",
+          "brightness": 96,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_011": {
+        "entity_id": "light.glow_011",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 011",
+          "brightness": 128,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_012": {
+        "entity_id": "light.glow_012",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 012",
+          "brightness": 160,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_013": {
+        "entity_id": "light.glow_013",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 013",
+          "brightness": 192,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_014": {
+        "entity_id": "light.glow_014",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 014",
+          "brightness": 224,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_015": {
+        "entity_id": "light.glow_015",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 015",
+          "brightness": 96,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_016": {
+        "entity_id": "light.glow_016",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 016",
+          "brightness": 128,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_017": {
+        "entity_id": "light.glow_017",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 017",
+          "brightness": 160,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_018": {
+        "entity_id": "light.glow_018",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 018",
+          "brightness": 192,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_019": {
+        "entity_id": "light.glow_019",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 019",
+          "brightness": 224,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_020": {
+        "entity_id": "light.glow_020",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 020",
+          "brightness": 96,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_021": {
+        "entity_id": "light.glow_021",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 021",
+          "brightness": 128,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_022": {
+        "entity_id": "light.glow_022",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 022",
+          "brightness": 160,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_023": {
+        "entity_id": "light.glow_023",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 023",
+          "brightness": 192,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_024": {
+        "entity_id": "light.glow_024",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 024",
+          "brightness": 224,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_025": {
+        "entity_id": "light.glow_025",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 025",
+          "brightness": 96,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_026": {
+        "entity_id": "light.glow_026",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 026",
+          "brightness": 128,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_027": {
+        "entity_id": "light.glow_027",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 027",
+          "brightness": 160,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_028": {
+        "entity_id": "light.glow_028",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 028",
+          "brightness": 192,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_029": {
+        "entity_id": "light.glow_029",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 029",
+          "brightness": 224,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_030": {
+        "entity_id": "light.glow_030",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 030",
+          "brightness": 96,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_031": {
+        "entity_id": "light.glow_031",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 031",
+          "brightness": 128,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_032": {
+        "entity_id": "light.glow_032",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 032",
+          "brightness": 160,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_033": {
+        "entity_id": "light.glow_033",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 033",
+          "brightness": 192,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_034": {
+        "entity_id": "light.glow_034",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 034",
+          "brightness": 224,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_035": {
+        "entity_id": "light.glow_035",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 035",
+          "brightness": 96,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_036": {
+        "entity_id": "light.glow_036",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 036",
+          "brightness": 128,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_037": {
+        "entity_id": "light.glow_037",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 037",
+          "brightness": 160,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_038": {
+        "entity_id": "light.glow_038",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 038",
+          "brightness": 192,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_039": {
+        "entity_id": "light.glow_039",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 039",
+          "brightness": 224,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_040": {
+        "entity_id": "light.glow_040",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 040",
+          "brightness": 96,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_041": {
+        "entity_id": "light.glow_041",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 041",
+          "brightness": 128,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_042": {
+        "entity_id": "light.glow_042",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 042",
+          "brightness": 160,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_043": {
+        "entity_id": "light.glow_043",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 043",
+          "brightness": 192,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_044": {
+        "entity_id": "light.glow_044",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 044",
+          "brightness": 224,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_045": {
+        "entity_id": "light.glow_045",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 045",
+          "brightness": 96,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_046": {
+        "entity_id": "light.glow_046",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 046",
+          "brightness": 128,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_047": {
+        "entity_id": "light.glow_047",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 047",
+          "brightness": 160,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_048": {
+        "entity_id": "light.glow_048",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 048",
+          "brightness": 192,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_049": {
+        "entity_id": "light.glow_049",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 049",
+          "brightness": 224,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_050": {
+        "entity_id": "light.glow_050",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 050",
+          "brightness": 96,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_051": {
+        "entity_id": "light.glow_051",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 051",
+          "brightness": 128,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_052": {
+        "entity_id": "light.glow_052",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 052",
+          "brightness": 160,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_053": {
+        "entity_id": "light.glow_053",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 053",
+          "brightness": 192,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_054": {
+        "entity_id": "light.glow_054",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 054",
+          "brightness": 224,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_055": {
+        "entity_id": "light.glow_055",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 055",
+          "brightness": 96,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_056": {
+        "entity_id": "light.glow_056",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 056",
+          "brightness": 128,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_057": {
+        "entity_id": "light.glow_057",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 057",
+          "brightness": 160,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_058": {
+        "entity_id": "light.glow_058",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 058",
+          "brightness": 192,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      },
+      "light.glow_059": {
+        "entity_id": "light.glow_059",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 059",
+          "brightness": 224,
+          "rgb_color": [
+            255,
+            176,
+            96
+          ]
+        }
+      },
+      "light.glow_060": {
+        "entity_id": "light.glow_060",
+        "state": "on",
+        "attributes": {
+          "friendly_name": "Glow 060",
+          "brightness": 96,
+          "rgb_color": [
+            112,
+            176,
+            255
+          ]
+        }
+      }
+    }
+  }
+}

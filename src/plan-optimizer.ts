@@ -25,7 +25,7 @@ import {
 } from './wall-thickness';
 
 /** Bump when a new lossless maintenance pass is added. */
-export const PLAN_MODEL_VERSION = 5;
+export const PLAN_MODEL_VERSION = 6;
 const DEFAULT_CELL_CM = 5;
 const CELL_CM_MIN = 0.1;
 const CELL_CM_MAX = 1000;
@@ -39,6 +39,10 @@ export interface OptimizeReport extends AlignReport {
   modelTo: number;
   /** Legacy fields converted or removed. */
   migrated: number;
+  /** Legacy space Glow tokens projected into data fill + overlay. */
+  glowSpacesMigrated: number;
+  /** Legacy room Glow tokens projected into inherited fill + overlay. */
+  glowRoomsMigrated: number;
   /** Spaces whose wall/open-span representation was rewritten canonically. */
   canonicalized: number;
   /** Redundant equal-thickness wall entries removed by canonicalisation. */
@@ -82,8 +86,12 @@ const edgePairs = (rooms: any[]): [number[], number[]][] => {
 };
 
 /** Convert read-compatible legacy fields where the conversion is exact. */
-const migrateLosslessly = (config: any): number => {
+const migrateLosslessly = (config: any): {
+  total: number; glowSpaces: number; glowRooms: number;
+} => {
   let n = 0;
+  let glowSpaces = 0;
+  let glowRooms = 0;
   for (const marker of config.markers || []) {
     if (marker.display === 'ripple') { marker.display = 'icon_ripple'; n++; }
     if (Array.isArray(marker.controls)) {
@@ -109,6 +117,21 @@ const migrateLosslessly = (config: any): number => {
   }
 
   for (const space of config.spaces || []) {
+    const spaceSettings = space.settings;
+    if (spaceSettings?.fill_mode === 'glow') {
+      if (typeof spaceSettings.glow_enabled !== 'boolean') spaceSettings.glow_enabled = true;
+      spaceSettings.fill_mode = 'none';
+      n++;
+      glowSpaces++;
+    }
+    for (const room of space.rooms || []) {
+      const roomSettings = room.settings;
+      if (roomSettings?.fill_mode !== 'glow') continue;
+      if (typeof roomSettings.glow !== 'boolean') roomSettings.glow = true;
+      delete roomSettings.fill_mode;
+      n++;
+      glowRooms++;
+    }
     if (own(space, 'segments')) { delete space.segments; n++; }
     if (own(space, 'plan_scale')) {
       const k = Number(space.plan_scale);
@@ -215,7 +238,7 @@ const migrateLosslessly = (config: any): number => {
       }
     }
   }
-  return n;
+  return { total: n, glowSpaces, glowRooms };
 };
 
 /**
@@ -229,7 +252,8 @@ export function optimizePlans(configIn: any, layoutIn: Record<string, any>): Opt
   const modelFrom = Number.isInteger(Number(config.model_version))
     ? Number(config.model_version)
     : 0;
-  let migrated = migrateLosslessly(config);
+  const migration = migrateLosslessly(config);
+  let migrated = migration.total;
 
   // Materialise legacy open_to before geometry moves. Once explicit spans
   // exist, they are the source of truth and open_to becomes a derived index.
@@ -372,6 +396,8 @@ export function optimizePlans(configIn: any, layoutIn: Record<string, any>): Opt
       modelFrom,
       modelTo,
       migrated,
+      glowSpacesMigrated: migration.glowSpaces,
+      glowRoomsMigrated: migration.glowRooms,
       canonicalized,
       wallsMerged,
       spansMerged,
