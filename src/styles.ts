@@ -314,7 +314,7 @@ export const cardStyles = css`
       opacity: 0;
     }
     .bootveil .boothouse {
-      position: static; /* .stage svg pins itself to inset:0 — not this one */
+      position: static; /* the main .zoomwrap SVG is pinned to inset:0 — not this icon */
       width: 56px;
       height: 56px;
       fill: var(--hp-accent);
@@ -417,7 +417,12 @@ export const cardStyles = css`
       font-weight: 600;
       pointer-events: none;
     }
-    .stage svg {
+    /* Only the plan canvas owns the whole zoom wrapper. Context trays now live
+       inside .stage as well, and may contain small SVG previews (furniture in
+       particular); the old descendant-wide stage-SVG selector stretched every
+       preview over the tray and stacked them into one blocking artefact. The
+       vacuum trail/fit overlays have their own explicit geometry below. */
+    .zoomwrap > svg {
       position: absolute;
       inset: 0;
       width: 100%;
@@ -1404,11 +1409,18 @@ export const cardStyles = css`
     }
     .modetab .closex:hover { opacity: 1; }
     .editbar .barclose {
-      padding: var(--sp-2) var(--sp-3);
+      box-sizing: border-box;
+      width: 40px;
+      height: 40px;
+      padding: 0;
       margin: 0;
       min-width: 40px;
       min-height: 40px;
+      justify-content: center;
+      gap: 0;
+      line-height: 0;
     }
+    .editbar .barclose ha-icon { flex: none; margin: 0; }
     .modetab.active {
       background: var(--hp-accent);
       color: var(--text-primary-color, #fff);

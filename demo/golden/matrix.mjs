@@ -1,5 +1,5 @@
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 2;
+export const GOLDEN_MATRIX_VERSION = 3;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -15,6 +15,26 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     theme: 'dark', viewport: { width: 1180, height: 900 }, ...page },
   { id: 'geometry-decor-editor-dark', fixture: 'visual', space: 'golden-geometry', mode: 'decor',
     theme: 'dark', viewport: { width: 1180, height: 900 }, ...page },
+  // HP-UX-11 visual contract: every adaptive width is captured in both
+  // languages while the six materially different tray contents are open.
+  { id: 'tray-wide-selection-en', fixture: 'visual', space: 'golden-geometry', mode: 'plan',
+    editorTray: 'plan-selection', language: 'en', theme: 'dark',
+    viewport: { width: 1180, height: 900 }, ...page },
+  { id: 'tray-wide-tool-ru', fixture: 'visual', space: 'golden-geometry', mode: 'plan',
+    editorTray: 'plan-tool', language: 'ru', theme: 'dark',
+    viewport: { width: 1180, height: 900 }, ...page },
+  { id: 'tray-medium-group-en', fixture: 'visual', space: 'golden-geometry', mode: 'plan',
+    editorTray: 'group', language: 'en', theme: 'dark',
+    viewport: { width: 760, height: 820 }, ...page },
+  { id: 'tray-medium-selection-ru', fixture: 'visual', space: 'golden-geometry', mode: 'decor',
+    editorTray: 'decor-selection', language: 'ru', theme: 'dark',
+    viewport: { width: 760, height: 820 }, ...page },
+  { id: 'tray-narrow-palette-en', fixture: 'visual', space: 'golden-geometry', mode: 'decor',
+    editorTray: 'furniture-palette', language: 'en', theme: 'dark',
+    viewport: { width: 390, height: 760 }, ...page },
+  { id: 'tray-narrow-tool-ru', fixture: 'visual', space: 'golden-geometry', mode: 'decor',
+    editorTray: 'decor-tool', language: 'ru', theme: 'dark',
+    viewport: { width: 390, height: 760 }, ...page },
   { id: 'geometry-diagonal-45-opening-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'openings-thick-wall-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',

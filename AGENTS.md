@@ -8,6 +8,23 @@ House Plan is one HACS package with two parts plus a demo harness:
 
 Standard commands live in `package.json` scripts, `CONTRIBUTING.md`, and `docs/DEVELOPMENT.md`. Read `docs/ARCHITECTURE.md` and `docs/STATUS.md` before non-trivial changes.
 
+## Canonical backlog
+
+GitHub is the only active backlog for House Plan:
+
+- [GitHub Issues](https://github.com/Matysh/houseplan-card/issues) are the
+  canonical task records: problem, scope, acceptance criteria and discussion.
+- [GitHub Projects (v2)](https://github.com/users/Matysh/projects/1) is
+  the canonical prioritization and workflow-status view. Every open in-scope
+  issue must be present there.
+
+Before starting planned work, find or create its issue and keep its description,
+labels and Project status current as decisions and implementation state change.
+Close an issue only after the result is verified. Specs, audits and ADRs may
+remain under `docs/`, but must link to their issue and must not become a parallel
+task list. When repository documentation disagrees with Issues or Project v2,
+the GitHub backlog wins.
+
 ## Cursor Cloud specific instructions
 
 The startup update script already runs `npm ci`, provisions a Python 3.13 backend venv at `.venv-backend`, and installs Playwright Chromium. You do not need to reinstall dependencies.

@@ -3720,15 +3720,10 @@ class HouseplanCard extends LitElement {
 
   private _stagePointerDown(ev: PointerEvent): void {
     if (this._vacFit) return; // no pan/swipe while fitting the robot map
-    // Furniture deliberately supports stay-open-on-canvas while a symbol is
-    // armed. With no symbol selected, the same outside press is only dismiss:
-    // consume it so it cannot also select or begin another canvas operation.
-    if (this._mode === 'decor' && this._decorTool === 'furniture' && !this._furnPalette) {
-      ev.preventDefault();
-      this._suppressClick = true;
-      this._decorTool = 'select';
-      return;
-    }
+    // The shared secondary controller owns palette dismissal in window
+    // capture, including the matching synthetic click. Do not duplicate that
+    // lifecycle here: the former fallback left `_suppressClick` stuck when a
+    // pointerup was lost or a pointercancel followed the dismiss press.
     if (this._kiosk) {
       this._cyclePausedUntil = Date.now() + 60000;
       if (this._pointers.size === 0) {

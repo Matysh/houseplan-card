@@ -417,7 +417,24 @@ test('openingTunnelGeometry: mixed atomic thickness clips each piece to its real
   assert.ok(g);
   assert.match(g.faces[0].d, /-1(?:\.0+)?\b/, '10 cm half-depth is present');
   assert.match(g.faces[0].d, /-2(?:\.0+)?\b/, '20 cm half-depth is present');
+  assert.match(g.faces[0].d, /M -0\.02\b/,
+    'touching thickness steps overlap instead of exposing an antialiasing seam');
   closeTo(g.maxY, 2);
+});
+
+test('openingTunnelGeometry: equal atomic strips collapse into one path without hairlines', () => {
+  const rooms = [{ id: 'r', poly: [[0, 0], [10, 0], [10, 6], [0, 6]] }];
+  const walls = [[0, 3], [3, 5], [5, 7], [7, 10]].map(([x0, x1]) => ({
+    key: wallKey([x0, 0], [x1, 0], pitch), a: [x0, 0], b: [x1, 0], cm: 15,
+  }));
+  const g = openingTunnelGeometry(
+    rooms, { x: 5, y: 0, angle: 0, length: 6 }, walls, [], pitch, 5, 1,
+  );
+  assert.ok(g);
+  for (const face of g.faces) {
+    assert.equal((face.d.match(/\bM /g) || []).length, 1,
+      'one continuous wall face must not expose the three internal SVG strip edges');
+  }
 });
 
 test('openingTunnelGeometry: virtual, zero-thickness, orphan and draft-only walls do not paint', () => {

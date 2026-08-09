@@ -9,7 +9,8 @@
 > `docs/CHANGELOG.md` (English) and `docs/CHANGELOG.ru.md` (Russian, since
 > v1.42.0 — the user base is largely Russian-speaking, see the Telegram chat)**, STATUS.md for state changes
 > (versions, publication, infrastructure), DEVELOPMENT.md for new gotchas,
-> ARCHITECTURE.md for design changes, ROADMAP.md when plans move.
+> ARCHITECTURE.md for design changes. Work scope and status live in GitHub
+> Issues + Project v2, not in a parallel backlog document.
 
 **Promotion rule (2026-08-08):** every new feature or material behaviour
 change must pass through a published beta/RC before stable. Stable release
@@ -23,7 +24,7 @@ metadata). Only an explicit owner-approved emergency hotfix may skip this gate.
 | Version | **v1.60.3-beta.2** everywhere (manifest, const.py, package.json, CARD_VERSION) — editor-context and touch-safety pre-release after v1.60.3-beta.1; `main` remains on stable v1.60.2 while the beta is published from `dev` |
 | Current local cycle | v1.60.3-beta.2 adds the touch pinch/misclick guard and HP-UX-11 editor chrome: primary toolbars are stable with pinned Close, while selection actions, transient tool controls and palettes use one stage-owned context tray. The review follow-up covers reduced motion, honest stale/group tests, vacuum-fit gesture isolation, global palette/group dismissal, focus and accessibility details. HP-PERF-01 now has same-runner base-vs-candidate reports and a blocking CI gate; HP-QA-01 keeps the reviewed Linux baseline of 20 deterministic scenarios. |
 | Workflow | Owner's rule since 2026-08-07: ordinary fixes/features are made **locally, without tests and without commits**. A requested pre-release gets a production build plus the smallest targeted unit/smoke set covering the changed surfaces, one tested `dev` commit/tag and a GitHub Release with `prerelease=true`; `main` stays untouched. The complete local frontend/backend/smoke gate runs only before a stable release, after which `main` is fast-forwarded to the exact tested `dev` SHA and the GitHub Release uses `prerelease=false`. Release bodies are short and bilingual (Russian first): only significant user changes get individual bullets, while minor/code-only work is grouped as `Мелкие исправления и улучшения` / `Small fixes and improvements`; every body ends with separate links to the Russian and English changelogs. Nothing is copied to the home instance by hand |
-| GitHub | https://github.com/Matysh/houseplan-card — `main` carries stable releases; pre-release tags may point directly at `dev`. Work lands on `dev` and is merged into `main` for a stable release, so `dev` is normally equal to or ahead of `main`, never behind. Push via SSH key `ha_jb` (remote git@github.com:…); API releases via the fine-grained PAT in `~/.git-credentials` (Contents R/W, issued 2026-07-23) |
+| GitHub | https://github.com/Matysh/houseplan-card — [Issues](https://github.com/Matysh/houseplan-card/issues) are the canonical task records and the linked [Project v2](https://github.com/users/Matysh/projects/1) is the canonical priority/status view; both must stay current. `main` carries stable releases; pre-release tags may point directly at `dev`. Work lands on `dev` and is merged into `main` for a stable release, so `dev` is normally equal to or ahead of `main`, never behind. Push via SSH key `ha_jb` (remote git@github.com:…); API releases via the fine-grained PAT in `~/.git-credentials` (Contents R/W, issued 2026-07-23) |
 | CI | v1.60.3-beta.2 uses the owner-approved targeted pre-release gate locally. Exact-SHA Ubuntu Validate remains mandatory and runs the broader matrix; `release.yml` withholds assets until every matching run finishes green |
 | HACS | Custom repository works. **Inclusion PR: hacs/default#9004** — open, valid, labeled, mergeable clean, never drafted. Queue: 1212 open, 835 older than ours. Merge rate COLLAPSED: 75 in July but almost all in the first decade, 0 in the last week (checked 2026-07-29) — maintainers process in rare bursts; ETA unknowable, months at best. Nothing actionable on our side |
 | Home instance | ha.jbstudio.pro (SSH port **22222**, key `ha_jb`; HA config root is `/mnt/data/supervisor/homeassistant` — `/config` does NOT exist in this SSH environment), last direct copy was **v1.57.0**; from v1.58.0 on it updates itself through HACS by tag (no scp) |
@@ -215,16 +216,13 @@ metadata). Only an explicit owner-approved emergency hotfix may skip this gate.
 
 ## Open items / watchlist
 
-0. **Current product audit (2026-08-06)** — [`PRODUCT-IMPROVEMENT-PLAN.ru.md`](PRODUCT-IMPROVEMENT-PLAN.ru.md)
-   (UX, functional integrity, architecture debt and prioritized roadmap). The
-   previous v1.58.0 market/quality pack is preserved under
-   [`legacy/docs/audit-v1.58.0`](../legacy/docs/audit-v1.58.0/AUDIT.md). Key
-   takeaway: engineering depth is strong; **easy-floorplan ≈430★** is now the
-   traction threat; P0s are demo GIF + forum posts + write-policy UI↔API align.
-   Agents: read the pack before proposing features or refactors.
-   **Partial follow-up from the archived audit landed on `dev` (2026-08-05):** P0-3 README diff, P0-4
-   write-policy (`can_write` + admin_only default on), P3-4/P3-5 validation &
-   hygiene. Still open: P0-1 demo GIF/video, P0-2 forum/Reddit posts.
+0. **Canonical backlog** — [GitHub Issues](https://github.com/Matysh/houseplan-card/issues)
+   contain task scope and acceptance criteria; the linked
+   [Project v2](https://github.com/users/Matysh/projects/1) contains the
+   current priority and workflow status. Every open in-scope issue belongs in
+   the Project. The former local product plan is preserved only as a snapshot at
+   [`legacy/docs/PRODUCT-IMPROVEMENT-PLAN.ru.md`](../legacy/docs/PRODUCT-IMPROVEMENT-PLAN.ru.md)
+   and must not be updated or used as a backlog.
 1. **hacs/default PR #9004** — accepted by the bot into the review queue ('New default
    repository' label). Minor issues ⇒ the bot drafts the PR (fix and re-ready).
 2. GitHub auth: fine-grained PAT (Contents R/W, issued 2026-07-23) in the sandbox

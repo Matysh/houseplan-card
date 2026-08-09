@@ -19,11 +19,30 @@ test('golden matrix covers required geometry, rendering and adaptive surfaces', 
   const ids = GOLDEN_SCENARIOS.map((scenario) => scenario.id).join(' ');
   for (const token of ['geometry', 'diagonal-45-opening', 'openings', 'openings-hidden',
     'fill-light', 'fill-temp', 'fill-lqi', 'lighting', 'hover', 'zoom-040', 'zoom-250',
-    'warm-remount', 'dialog-mobile', 'color-popover'])
+    'warm-remount', 'dialog-mobile', 'color-popover', 'tray-wide', 'tray-medium',
+    'tray-narrow'])
     assert.equal(ids.includes(token), true, token);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.mode)).has('plan'), true);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.mode)).has('devices'), true);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.mode)).has('decor'), true);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.theme)).has('light'), true);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.theme)).has('dark'), true);
+});
+
+test('editor tray golden contract covers every adaptive width in English and Russian', () => {
+  const tray = GOLDEN_SCENARIOS.filter((scenario) => scenario.editorTray);
+  assert.equal(tray.length, 6);
+  const widths = {
+    wide: (scenario) => scenario.viewport.width >= 1000,
+    medium: (scenario) => scenario.viewport.width >= 600 && scenario.viewport.width < 1000,
+    narrow: (scenario) => scenario.viewport.width < 600,
+  };
+  for (const [name, predicate] of Object.entries(widths)) {
+    const languages = new Set(tray.filter(predicate).map((scenario) => scenario.language));
+    assert.deepEqual(languages, new Set(['en', 'ru']), name);
+  }
+  assert.deepEqual(new Set(tray.map((scenario) => scenario.editorTray)), new Set([
+    'plan-selection', 'plan-tool', 'group', 'decor-selection',
+    'furniture-palette', 'decor-tool',
+  ]));
 });

@@ -8,6 +8,7 @@
 |---|---|
 | `docs/audit-v1.58.0/` | Снимок аудита v1.58.0; заменён аудитом и планом улучшений v1.59.0-rc.1 |
 | `docs/PRODUCT-2026-07-05.md` | Старая продуктовая оценка с устаревшей таблицей рынка |
+| `docs/PRODUCT-IMPROVEMENT-PLAN.ru.md` | Последний снимок локального backlog; все актуальные пункты перенесены в GitHub Issues + Project v2 9 августа 2026 года |
 | `docs/SUN-CONTRAST.md` | Отклонённая модель солнечного контраста; реализована только описанная в актуальном `docs/SUN.md` кромка |
 | `docs/implementation-plans/` | Завершённые пошаговые планы реализации; действующие спецификации остаются в `docs/superpowers/specs/` |
 | `demo/dbg_click.mjs` | Одноразовая диагностика старой проблемы клика |
@@ -16,6 +17,6 @@
 Актуальные точки входа:
 
 - [пользовательская документация](../docs/README.ru.md);
-- [продуктовый аудит и план улучшений](../docs/PRODUCT-IMPROVEMENT-PLAN.ru.md);
+- [GitHub Issues](https://github.com/Matysh/houseplan-card/issues) и [Project v2](https://github.com/users/Matysh/projects/1) — единственный актуальный backlog;
 - [статус проекта](../docs/STATUS.md);
 - [архитектура](../docs/ARCHITECTURE.md).

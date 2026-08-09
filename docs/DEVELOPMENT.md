@@ -199,6 +199,14 @@ cancelled or one-hour-timed-out Validate withholds the asset. Bump the version
 everywhere in sync: `src/houseplan-card.ts` (CARD_VERSION), `package.json`,
 `custom_components/houseplan/manifest.json`, `custom_components/houseplan/const.py`.
 
+Validate intentionally runs on branch pushes, not tag pushes, so an annotated
+release tag does not duplicate the expensive browser/performance matrix. Every
+tagged SHA must therefore already be pushed to a branch and have a completed
+green exact-SHA Validate run. For an owner-approved emergency hotfix, push a
+temporary `hotfix/*` branch and wait for Validate before creating the tag;
+never tag a detached or otherwise unpushed commit, because the release gate
+will wait for a run that cannot exist and then fail closed after one hour.
+
 The GitHub Release body is a concise **bilingual user summary**, not a copy of
 the exhaustive changelog. Put Russian first and English second, with equivalent
 meaning in both sections. Give separate bullets only to significant features
@@ -211,13 +219,11 @@ bodies of skipped releases. The full detail remains in both
 two explicit links, one to each language version of the changelog.
 
 ```md
-## Русский
+## Основное
 - Значимое изменение.
 - Мелкие исправления и улучшения.
 
----
-
-## English
+## Highlights
 - Significant change.
 - Small fixes and improvements.
 

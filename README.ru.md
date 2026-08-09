@@ -6,7 +6,7 @@
 [![Live demo](https://img.shields.io/badge/демо-попробовать-00c853?logo=homeassistant&logoColor=white)](https://demo.houseplan.tech)
 [![Telegram chat](https://img.shields.io/badge/Telegram-чат-2CA5E0?logo=telegram&logoColor=white)](https://t.me/ha_houseplan)
 
-📘 **[Полное руководство пользователя](docs/USER-GUIDE.ru.md)** · **[Продуктовый аудит и план улучшений](docs/PRODUCT-IMPROVEMENT-PLAN.ru.md)**
+📘 **[Полное руководство пользователя](docs/USER-GUIDE.ru.md)** · 🗂 **[Беклог проекта](https://github.com/users/Matysh/projects/1)**
 
 **Превратите Home Assistant в живую интерактивную карту дома.** Загрузите или
 нарисуйте план этажа, обведите комнаты мышкой — и умные устройства появятся на

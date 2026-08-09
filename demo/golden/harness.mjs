@@ -143,6 +143,55 @@ export async function prepareGoldenScenario(page, scenario) {
       card.requestUpdate();
       await card.updateComplete;
     }
+    if (scenario.editorTray) {
+      let expectedKind = '';
+      if (scenario.editorTray === 'plan-selection') {
+        card._physicalSel = { kind: 'partition', id: 'geo-partition-h' };
+        expectedKind = 'selection';
+      } else if (scenario.editorTray === 'plan-tool') {
+        card._physicalSel = null;
+        card._tool = 'draw';
+        expectedKind = 'tool';
+      } else if (scenario.editorTray === 'decor-selection') {
+        card._decorTool = 'select';
+        card._decorSel = 'geo-axis-h';
+        expectedKind = 'selection';
+      } else if (scenario.editorTray === 'decor-tool') {
+        card._decorSel = null;
+        card._decorTool = 'line';
+        expectedKind = 'tool';
+      } else if (scenario.editorTray === 'furniture-palette') {
+        card._decorSel = null;
+        card._furnPalette = null;
+        card._editorSecondary.openPalette();
+        card._decorTool = 'furniture';
+        expectedKind = 'palette';
+      } else if (scenario.editorTray === 'group') {
+        const group = {
+          id: 'golden-group', label: 'Arrange', icon: 'mdi:shape-outline', items: [
+            { id: 'align', label: 'Align', icon: 'mdi:format-align-center', role: 'command', invoke: () => undefined },
+            { id: 'distribute', label: 'Distribute', icon: 'mdi:format-horizontal-align-center', role: 'command', invoke: () => undefined },
+          ],
+        };
+        Object.defineProperty(card, '_editorToolbarGroups', {
+          configurable: true,
+          get: () => [group],
+        });
+        card.requestUpdate();
+        await card.updateComplete;
+        card._editorSecondary.toggleGroup(card._editorToolbarGroups, group.id);
+        expectedKind = 'group';
+      } else {
+        throw new Error(`unknown golden editor tray: ${scenario.editorTray}`);
+      }
+      card.requestUpdate();
+      await card.updateComplete;
+      await frame();
+      const tray = card.renderRoot.querySelector(
+        `.editor-secondary-host.open .editor-secondary.kind-${expectedKind}`,
+      );
+      if (!tray) throw new Error(`golden editor tray did not open: ${scenario.editorTray}`);
+    }
     if (scenario.hoverRoom) {
       const room = card._spaceModel().rooms.find((item) => item.id === scenario.hoverRoom);
       if (!room) throw new Error(`golden hover room missing: ${scenario.hoverRoom}`);
@@ -185,6 +234,8 @@ export async function prepareGoldenScenario(page, scenario) {
       mode: card._mode,
       devices: card._devices.length,
       dialog: !!card.renderRoot.querySelector('hp-dialog'),
+      editorTray: card.renderRoot.querySelector('.editor-secondary-host.open .editor-secondary')
+        ?.className || '',
     };
   }, { fixture, scenario });
 }

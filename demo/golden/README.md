@@ -2,7 +2,9 @@
 
 This layer catches visual regressions that DOM smokes cannot: wall seams and
 end caps, thick opening tunnels, Glow/sun clipping, hover contours, editor
-chrome, long dialog titles/footers, mobile clipping, themes and zoom/remount.
+chrome, the open contextual tray at wide/medium/narrow widths in English and
+Russian (selection, tool options, group and palette), long dialog
+titles/footers, mobile clipping, themes and zoom/remount.
 
 ## Safety contract
 

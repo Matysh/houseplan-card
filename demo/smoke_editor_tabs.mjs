@@ -15,6 +15,15 @@ const res = await page.evaluate(async () => {
   out.planActive = c._mode === 'plan' && tabs()[0].classList.contains('active');
   out.planBar = !!sr().querySelector('.editbar');
   out.planBarClose = !!sr().querySelector('.editbar .barclose');
+  const barClose = sr().querySelector('.editbar .barclose');
+  const barCloseIcon = barClose?.querySelector('ha-icon');
+  const barCloseRect = barClose?.getBoundingClientRect();
+  const barCloseIconRect = barCloseIcon?.getBoundingClientRect();
+  out.planBarCloseIconIsCentered = !!barCloseRect && !!barCloseIconRect
+    && Math.abs((barCloseIconRect.left + barCloseIconRect.width / 2)
+      - (barCloseRect.left + barCloseRect.width / 2)) <= 1
+    && Math.abs((barCloseIconRect.top + barCloseIconRect.height / 2)
+      - (barCloseRect.top + barCloseRect.height / 2)) <= 1;
   out.tabCross = !!tabs()[0].querySelector('.closex');
   // 3) повторный клик по активной вкладке — ничего
   tabs()[0].click(); await c.updateComplete;

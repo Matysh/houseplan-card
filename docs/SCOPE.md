@@ -3,9 +3,11 @@
 *Fixed with the owner on 2026-07-22. This document is a guard rail: features are
 built, improved and accepted **only** if they serve a job listed here. When a new
 idea appears, first find its row in this file; if there is none — it belongs to
-HA core, to another card, or nowhere. Companion documents:
-PRODUCT-IMPROVEMENT-PLAN.ru.md (current product audit and order of work),
-ROADMAP.md (engineering/quality backlog), UX-MODES.md (interaction model).
+HA core, to another card, or nowhere. The current order of work lives only in
+[GitHub Issues](https://github.com/Matysh/houseplan-card/issues) and the linked
+[Project v2](https://github.com/users/Matysh/projects/1). Companion
+documents: ROADMAP.md (historical engineering direction), UX-MODES.md
+(interaction model).
 TOUCH-SUPPORT.md fixes the input-support contract: touch is a guaranteed View
 surface, while every editor is desktop-first and best effort on touch.
 The old market snapshot is archived at `legacy/docs/PRODUCT-2026-07-05.md`.*

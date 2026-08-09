@@ -1867,16 +1867,48 @@ export interface OpeningTunnelGeometry {
 }
 
 function tunnelFacePath(side: -1 | 1, pieces: OpeningWallPiece[]): string {
+  const eps = 1e-9;
+  const compact: OpeningWallPiece[] = [];
+  for (const piece of [...pieces]
+    .filter((candidate) => candidate.x1 > candidate.x0 && candidate.half > 0)
+    .sort((a, b) => a.x0 - b.x0 || a.x1 - b.x1 || a.half - b.half)) {
+    const tail = compact[compact.length - 1];
+    // Atomic wall profiles may split one visually continuous wall at room or
+    // model vertices. Painting every atom as its own SVG rectangle exposes
+    // their shared edges as hairlines at fractional zoom. Equal-depth atoms
+    // are one physical tunnel surface, so collapse them before rendering.
+    if (tail
+      && piece.x0 <= tail.x1 + eps
+      && Math.abs(piece.half - tail.half) <= eps) {
+      tail.x1 = Math.max(tail.x1, piece.x1);
+    } else {
+      compact.push({ ...piece });
+    }
+  }
+
   const parts: string[] = [];
-  for (const p of pieces) {
-    if (!(p.x1 > p.x0) || !(p.half > 0)) continue;
+  for (let i = 0; i < compact.length; i++) {
+    const p = compact[i];
     const y = side * p.half;
     // Both faces overlap symmetrically across y=0 by a tiny amount. They are
     // subpaths of one SVG fill, so this closes fractional-zoom hairlines
     // without adding opacity or escaping the physical outer faces.
     const seam = Math.min(p.half * 0.02, 0.05);
     const y0 = -side * seam;
-    parts.push(`M ${p.x0} ${y0} L ${p.x1} ${y0} L ${p.x1} ${y} L ${p.x0} ${y} Z`);
+    let x0 = p.x0;
+    let x1 = p.x1;
+    const previous = compact[i - 1];
+    const next = compact[i + 1];
+    // A real thickness step cannot be collapsed into one rectangle. Overlap
+    // only its touching internal edge; all strips remain subpaths of one fill,
+    // so the overlap cannot stack alpha and never extends a tunnel endpoint.
+    if (previous && Math.abs(previous.x1 - p.x0) <= eps) {
+      x0 -= Math.min(Math.min(previous.half, p.half) * 0.02, 0.05);
+    }
+    if (next && Math.abs(p.x1 - next.x0) <= eps) {
+      x1 += Math.min(Math.min(next.half, p.half) * 0.02, 0.05);
+    }
+    parts.push(`M ${x0} ${y0} L ${x1} ${y0} L ${x1} ${y} L ${x0} ${y} Z`);
   }
   return parts.join(' ');
 }

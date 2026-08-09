@@ -72,6 +72,14 @@ const res = await page.evaluate(async () => {
   out.washerIsInThePalette = !!item('washer');
   const prevD = item('sofa')?.querySelector('svg.furnprev path')?.getAttribute('d') || '';
   out.previewIsDrawn = prevD.length > 10;
+  const previewEl = item('sofa')?.querySelector('svg.furnprev');
+  const previewRect = previewEl?.getBoundingClientRect();
+  const itemRect = item('sofa')?.getBoundingClientRect();
+  out.previewStaysInsideItsButton = !!previewRect && !!itemRect
+    && getComputedStyle(previewEl).position !== 'absolute'
+    && previewRect.width <= 42 && previewRect.height <= 42
+    && previewRect.left >= itemRect.left - 1 && previewRect.right <= itemRect.right + 1
+    && previewRect.top >= itemRect.top - 1 && previewRect.bottom <= itemRect.bottom + 1;
   out.namesAreLocalised = /\S/.test(item('sofa')?.querySelector('span')?.textContent || '');
 
   // An unarmed explicit palette closes on the first press anywhere outside
@@ -287,6 +295,8 @@ const res = await page.evaluate(async () => {
   ev('pointerdown', stageEl(), 320, 320);                   // символ НЕ выбран
   await c.updateComplete;
   out.noSymbolNoStamp = c._decorList.length === n0;
+  out.unarmedCanvasDismissReturnsToSelect = c._decorTool === 'select' && !pal();
+  out.unarmedCanvasDismissLeavesNoClickSuppression = c._suppressClick === false;
   c._decorTool = 'erase'; await c.updateComplete;
   ev('pointerdown', el(sofaId), 300, 300);
   await c.updateComplete;

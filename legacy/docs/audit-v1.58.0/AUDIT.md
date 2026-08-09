@@ -1,7 +1,9 @@
 # Project audit — index
 
-> **Archived:** this is the v1.58.0 snapshot. The current product audit is
-> [`docs/PRODUCT-IMPROVEMENT-PLAN.ru.md`](../../../docs/PRODUCT-IMPROVEMENT-PLAN.ru.md).
+> **Archived:** this is the v1.58.0 snapshot. Current work is tracked in
+> [GitHub Issues](https://github.com/Matysh/houseplan-card/issues) and Project v2;
+> the last local product-plan snapshot is archived at
+> [`legacy/docs/PRODUCT-IMPROVEMENT-PLAN.ru.md`](../PRODUCT-IMPROVEMENT-PLAN.ru.md).
 >
 > **Audience:** future humans and agents. Read this before proposing features,
 > refactors, or go-to-market work. Snapshot date: **2026-08-05**. Product
