@@ -3,7 +3,7 @@ on:
   push:
     # The branch commit is the release-gate authority. An annotated tag points
     # to the same SHA and must not duplicate every expensive browser/perf job.
-    tags-ignore:
+    branches:
       - '**'
   pull_request:
   schedule:
