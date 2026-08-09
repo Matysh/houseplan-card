@@ -137,6 +137,17 @@ jobs:
           else
             sha="$(git rev-parse HEAD^)"
           fi
+          # The first main promotion after HP-PERF-01 can legitimately point
+          # at an older stable commit which predates the benchmark's embedded
+          # bundle fingerprint. Comparing against that legacy tree would fail
+          # the freshness guard before any measurements are taken. Fall back
+          # to the candidate's direct parent, which is the last dev revision
+          # included in the promotion and already has the current harness.
+          git fetch --no-tags --depth=1 origin "$sha"
+          if ! git cat-file -e "${sha}:demo/bundle-freshness.mjs" 2>/dev/null; then
+            echo "comparison $sha predates HP-PERF-01; using HEAD^" >&2
+            sha="$(git rev-parse HEAD^)"
+          fi
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
       - name: Check out base SHA
         uses: actions/checkout@v4
