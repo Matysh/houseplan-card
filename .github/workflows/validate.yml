@@ -106,6 +106,72 @@ jobs:
           name: golden-images
           path: artifacts/golden
 
+  performance:
+    # Candidate and base SHA run sequentially on the same hosted runner with
+    # one Playwright/Chromium installation. This avoids turning a developer
+    # laptop or cross-runner variance into a timing budget.
+    needs: frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out candidate
+        uses: actions/checkout@v4
+        with:
+          path: candidate
+          fetch-depth: 2
+      - name: Resolve comparison SHA
+        id: base
+        working-directory: candidate
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ] && [ -n "$PR_BASE_SHA" ]; then
+            sha="$PR_BASE_SHA"
+          elif [ "$EVENT_NAME" = "push" ] && [ -n "$PUSH_BEFORE_SHA" ] && ! printf '%s' "$PUSH_BEFORE_SHA" | grep -Eq '^0+$'; then
+            sha="$PUSH_BEFORE_SHA"
+          else
+            sha="$(git rev-parse HEAD^)"
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+      - name: Check out base SHA
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.base.outputs.sha }}
+          path: baseline
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            candidate/package-lock.json
+            baseline/package-lock.json
+      - name: Install candidate and baseline dependencies
+        run: npm ci --prefix candidate && npm ci --prefix baseline
+      - name: Install pinned Chromium
+        working-directory: candidate
+        run: npx playwright install --with-deps chromium
+      - name: Build both exact source trees
+        run: |
+          npm --prefix candidate run build
+          cp candidate/dist/houseplan-card.js candidate/demo/srv/assets/houseplan-card.js
+          npm --prefix baseline run build
+          cp baseline/dist/houseplan-card.js baseline/demo/srv/assets/houseplan-card.js
+      - name: Capture base and candidate profiles
+        working-directory: candidate
+        run: |
+          npm run benchmark:large-house -- --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/baseline.json
+          npm run benchmark:large-house -- --target-root=. --samples=7 --warmups=1 --output=../artifacts/performance/candidate.json
+      - name: Enforce performance budgets
+        working-directory: candidate
+        run: npm run benchmark:compare -- --baseline=../artifacts/performance/baseline.json --candidate=../artifacts/performance/candidate.json --output=../artifacts/performance/comparison.json
+      - name: Upload performance reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: large-house-performance
+          path: artifacts/performance
+
   backend:
     runs-on: ubuntu-latest
     steps:

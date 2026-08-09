@@ -23,6 +23,80 @@ const res = await page.evaluate(async () => {
   // switch editors in the same zero-layout frame, and competing WAAPI/CSS
   // height animations in that frame are intentionally suppressed.
   await new Promise((resolve) => setTimeout(resolve, 220));
+  // HP-UX-11: transient tool controls live in a stage overlay. Opening the
+  // thickness controls must not resize/refit the stage or move pinned Close.
+  const stageBeforeContext = sr().querySelector('.stage').getBoundingClientRect();
+  const closeBeforeContext = sr().querySelector('.editbar .barclose').getBoundingClientRect();
+  const hdrBeforeContext = c._hdrH;
+  c._tool = 'draw'; c.requestUpdate(); await c.updateComplete;
+  await new Promise((resolve) => setTimeout(resolve, 40));
+  const stageWithContext = sr().querySelector('.stage').getBoundingClientRect();
+  const closeWithContext = sr().querySelector('.editbar .barclose').getBoundingClientRect();
+  const secondary = sr().querySelector('.editor-secondary-host.open .editor-secondary');
+  out.contextTrayLivesInStage = !!secondary
+    && secondary.closest('.stage') === sr().querySelector('.stage')
+    && !secondary.closest('.editorchrome');
+  out.contextDoesNotResizeStage = Math.abs(stageWithContext.top - stageBeforeContext.top) <= 1
+    && Math.abs(stageWithContext.height - stageBeforeContext.height) <= 1
+    && c._hdrH === hdrBeforeContext;
+  out.contextDoesNotMoveClose = Math.abs(closeWithContext.left - closeBeforeContext.left) <= 1
+    && Math.abs(closeWithContext.top - closeBeforeContext.top) <= 1;
+  out.closeHasPinnedEndCap = !!sr().querySelector('.editbar > .editbar-end > .barclose');
+  // No current tools are grouped automatically. Inject one declarative group
+  // to pin the generic launcher/keyboard/restore contract for future editors.
+  let groupInvokes = 0;
+  Object.defineProperty(c, '_editorToolbarGroups', { configurable: true, get: () => [{
+    id: 'smoke-group', label: 'Smoke group', icon: 'mdi:dots-grid', items: [{
+      id: 'smoke-command', label: 'Smoke command', icon: 'mdi:check',
+      role: 'command', invoke: () => { groupInvokes += 1; },
+    }],
+  }] });
+  c.requestUpdate(); await c.updateComplete;
+  const groupLauncher = sr().querySelector('[data-editor-group="smoke-group"]');
+  groupLauncher?.focus();
+  groupLauncher?.dispatchEvent(new KeyboardEvent('keydown', {
+    key: 'ArrowDown', bubbles: true, composed: true, cancelable: true,
+  }));
+  await c.updateComplete;
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+  out.groupUsesSharedTray = !!sr().querySelector('.editor-secondary.kind-group')
+    && sr().querySelectorAll('.editor-secondary-host').length === 1;
+  out.groupArrowDownMovesFocus = sr().activeElement?.classList?.contains('editor-group-item') === true;
+  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+  await c.updateComplete;
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+  out.groupEscapeRestoresToolContext = c._editorSecondary.hasOpenGroup === false
+    && !!sr().querySelector('.editor-secondary.kind-tool')
+    && sr().activeElement === groupLauncher;
+  groupLauncher?.click(); await c.updateComplete;
+  sr().querySelector('.editor-group-item')?.click(); await c.updateComplete;
+  out.groupCommandClosesBeforeInvoke = groupInvokes === 1
+    && c._editorSecondary.hasOpenGroup === false
+    && !!sr().querySelector('.editor-secondary.kind-tool');
+  groupLauncher?.click(); await c.updateComplete;
+  const outsideTool = document.createElement('button');
+  const unrelatedTool = document.createElement('button');
+  let outsideInvokes = 0;
+  let unrelatedInvokes = 0;
+  outsideTool.addEventListener('click', () => outsideInvokes++);
+  unrelatedTool.addEventListener('click', () => unrelatedInvokes++);
+  document.body.append(outsideTool, unrelatedTool);
+  outsideTool.dispatchEvent(new PointerEvent('pointerdown', {
+    pointerId: 301, pointerType: 'mouse', button: 0,
+    bubbles: true, composed: true, cancelable: true,
+  }));
+  outsideTool.dispatchEvent(new MouseEvent('click', {
+    button: 0, bubbles: true, composed: true, cancelable: true,
+  }));
+  unrelatedTool.click();
+  await c.updateComplete;
+  out.groupOutsideDismissIsConsumed = c._editorSecondary.hasOpenGroup === false
+    && outsideInvokes === 0 && c._tool === 'draw';
+  out.dismissTailDoesNotEatUnrelatedClick = unrelatedInvokes === 1;
+  outsideTool.remove();
+  unrelatedTool.remove();
+  delete c._editorToolbarGroups;
+  c._tool = 'select'; c.requestUpdate(); await c.updateComplete;
   // 4) прямое переключение План → Устройства
   // Deliberately make the outgoing bar taller: the editor transition must
   // interpolate real content height, not merely fade two equal-height rows.
@@ -58,6 +132,7 @@ const res = await page.evaluate(async () => {
   // Layout-independent editor history: physical KeyZ works when `key` is the
   // Russian «я», while an input keeps its native browser history.
   tabs()[0].click(); await c.updateComplete;
+  c._tool = 'draw'; c.requestUpdate(); await c.updateComplete;
   const realUndo = c._undoGeometry;
   const realRedo = c._redoGeometry;
   let undoCalls = 0;
@@ -68,7 +143,7 @@ const res = await page.evaluate(async () => {
     key: 'я', code: 'KeyZ', ctrlKey: true, bubbles: true, composed: true,
   }));
   out.layoutIndependentUndo = undoCalls === 1;
-  const editorInput = sr().querySelector('.editbar input');
+  const editorInput = sr().querySelector('.editor-secondary input');
   editorInput.dispatchEvent(new KeyboardEvent('keydown', {
     key: 'я', code: 'KeyZ', ctrlKey: true, bubbles: true, composed: true,
   }));

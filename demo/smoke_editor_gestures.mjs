@@ -26,6 +26,75 @@ out.pinchZoomsInPlanEditor = await page.evaluate(() => {
   return zoomed && c._path.length === 0;
 });
 
+// A child control may stop pointer events before the stage sees the first
+// finger. The card-level capture guard must still classify the sequence as a
+// pinch and swallow WebKit's synthetic click before it reaches that control.
+out.pinchCannotMisclickInteractiveChild = await page.evaluate(async () => {
+  const c = window.__card;
+  c._setMode('view');
+  await c.updateComplete;
+  const stage = c._stageEl;
+  const probe = document.createElement('button');
+  let clicks = 0;
+  probe.addEventListener('pointerdown', (ev) => ev.stopPropagation());
+  probe.addEventListener('pointermove', (ev) => ev.stopPropagation());
+  probe.addEventListener('pointerup', (ev) => ev.stopPropagation());
+  probe.addEventListener('click', () => clicks++);
+  stage.appendChild(probe);
+  const pointer = (type, id, target, x = id === 51 ? 300 : 400) => target.dispatchEvent(new PointerEvent(type, {
+    bubbles: true, composed: true, pointerId: id, pointerType: 'touch',
+    clientX: x, clientY: 300,
+  }));
+  c._resetZoom();
+  const zoom0 = c._zoom;
+  pointer('pointerdown', 51, probe);
+  pointer('pointerdown', 52, stage);
+  pointer('pointermove', 51, probe, 250);
+  pointer('pointermove', 52, stage, 450);
+  const pinchZoomed = c._zoom > zoom0 * 1.5;
+  pointer('pointerup', 51, probe);
+  pointer('pointerup', 52, stage);
+  probe.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true, cancelable: true }));
+  const gestureClickBlocked = clicks === 0;
+  await new Promise((resolve) => setTimeout(resolve, 520));
+  probe.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true, cancelable: true }));
+  probe.remove();
+  const ordinaryTapStillWorks = clicks === 1;
+  c._setMode('plan');
+  await c.updateComplete;
+  return pinchZoomed && gestureClickBlocked && ordinaryTapStillWorks;
+});
+
+// Robot-map calibration owns the gesture surface. The card-level capture
+// guard must still suppress a two-finger misclick, but must not seed or apply
+// the plan's pinch zoom underneath the calibration overlay.
+out.pinchDoesNotZoomBelowVacuumFit = await page.evaluate(async () => {
+  const c = window.__card;
+  c._setMode('view');
+  await c.updateComplete;
+  const stage = c._stageEl;
+  const previousFit = c._vacFit;
+  c._vacFit = { markerId: 'smoke', source: 'smoke', mapId: 'smoke',
+    p: { ox: 0, oy: 0, k: 1, rot: 0, mir: false }, drag: null };
+  c._resetZoom();
+  const zoom0 = c._zoom;
+  const pointer = (type, id, x) => stage.dispatchEvent(new PointerEvent(type, {
+    bubbles: true, composed: true, pointerId: id, pointerType: 'touch',
+    clientX: x, clientY: 300,
+  }));
+  pointer('pointerdown', 61, 300);
+  pointer('pointerdown', 62, 400);
+  pointer('pointermove', 61, 250);
+  pointer('pointermove', 62, 450);
+  const stayed = c._zoom === zoom0 && c._pinchStart === null && c._pointers.size === 0;
+  pointer('pointerup', 61, 250);
+  pointer('pointerup', 62, 450);
+  c._vacFit = previousFit;
+  c._setMode('plan');
+  await c.updateComplete;
+  return stayed;
+});
+
 // --- пан одним пальцем в редакторе, точка не рисуется --------------------
 out.panWorksAndDoesNotDraw = await page.evaluate(async () => {
   const c = window.__card;

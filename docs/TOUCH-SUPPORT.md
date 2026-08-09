@@ -71,6 +71,12 @@ If a desktop interaction cannot be translated safely to touch, prefer a clear
 disabled/absent action and a desktop recommendation over a deceptively working
 control.
 
+The shared editor context tray follows this safety floor: its visible surface
+owns its pointer events, narrow action rows scroll internally, and a press used
+only to dismiss an explicit group/palette is consumed instead of falling
+through to the plan. Pinch/pan outside the tray remains scene-owned. This is a
+safety guarantee, not a promise of full touch parity for editor precision work.
+
 ## Deliberate degradation rule
 
 When an editor change would be expensive to implement correctly for touch, the

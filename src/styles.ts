@@ -1405,7 +1405,9 @@ export const cardStyles = css`
     .modetab .closex:hover { opacity: 1; }
     .editbar .barclose {
       padding: var(--sp-2) var(--sp-3);
-      margin-left: var(--sp-3);
+      margin: 0;
+      min-width: 40px;
+      min-height: 40px;
     }
     .modetab.active {
       background: var(--hp-accent);
@@ -1805,13 +1807,29 @@ export const cardStyles = css`
       pointer-events: none;
     }
     .editbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: stretch;
+      border-bottom: 1px solid var(--hp-line);
+      font-size: var(--fs-m);
+    }
+    .editbar-tools {
       display: flex;
       align-items: center;
       gap: 10px;
       padding: var(--sp-4) var(--sp-5);
-      border-bottom: 1px solid var(--hp-line);
-      font-size: var(--fs-m);
       flex-wrap: wrap;
+      min-width: 0;
+      outline: none;
+    }
+    .editbar-end {
+      display: flex;
+      align-items: center;
+      padding: var(--sp-4) var(--sp-5);
+      border-inline-start: 1px solid var(--hp-line);
+      background: var(--card-background-color, var(--hp-bg));
+      position: relative;
+      z-index: 2;
     }
     .tab .tabedit {
       --mdc-icon-size: 13px;
@@ -2622,7 +2640,7 @@ export const cardStyles = css`
       .modetab { transition: none; }
       .editorchrome { transition: none; }
       .editorchrome-inner.nav-enter,
-      .editorchrome-inner.nav-exit { animation: none; }
+      .editorchrome-inner.nav-exit { animation: none; transition: none; }
     }
     /* Device info can have Edit + Open in HA + Close. It uses a wide dialog;
        wrapping remains as a phone fallback, but without a flex spacer (which
@@ -2750,7 +2768,7 @@ export const cardStyles = css`
       border-radius: var(--rad-m);
       font-size: var(--fs-m);
       box-shadow: var(--shadow-2);
-      z-index: 99;
+      z-index: 60;
       max-width: 260px;
     }
     .tip .m {

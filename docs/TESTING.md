@@ -901,6 +901,16 @@ separately promised workflows:
       bottom toolbar (Devices got its own bar with add/show-all/reset/rules);
       the bar and the active tab both show an X that returns to View; re-click
       on the active tab does nothing; Plan↔Devices switches directly [auto: smoke_editor_tabs]
+- [ ] Stable editor chrome (HP-UX-11): selection, tool parameters, operation
+      hints and furniture palette use the single stage-owned context tray;
+      opening/closing it leaves stage top/height, `_hdrH`, zoom/pan and the
+      pinned Close position unchanged. Context actions cannot execute for a
+      stale target, Delete/Backspace cannot fall through focused tray controls,
+      and injected explicit groups support ArrowDown, roving arrows,
+      Home/End, Escape focus restore and consumed outside-dismiss. Check
+      420/559/560/719/720/721/899/900/1200 px, RU/EN, light/dark and reduced
+      motion [auto: smoke_editor_tabs, smoke_decor, smoke_furniture; manual:
+      responsive/theme matrix]
 - [ ] Navigation motion is short and coherent for space changes, View↔editor
       and editor↔editor. A same-space editor switch fades in the new toolbar
       and interpolates from the outgoing measured height to the incoming one,
@@ -1050,19 +1060,24 @@ that it automatically runs blocking verification. Review and accept the
 `golden-images` CI artifact rather than treating a developer OS raster as the
 canonical set. See `demo/golden/README.md`.
 
-## Large-house performance baseline
+## Large-house performance gate
 
 `npm run benchmark:large-house` runs a deterministic fictional three-floor
 fixture with 60 rooms, 200 devices, 100 openings, 60 partitions, 40 columns and
 500 decor objects. It records model readiness, first stable render, space
-switch, HA state update, pan/zoom, settings-dialog render, repeated navigation,
-hot-cache sizes and post-stabilisation heap growth when Chromium exposes it.
+switch, HA state update, shared-wall resize preview, pan/zoom, settings-dialog render, repeated navigation,
+Long Tasks, warmed hot-cache growth and post-GC heap growth.
 
-This runner is **not a test yet** and has no arbitrary developer-machine
-thresholds. Store repeated JSON artefacts from one pinned Chromium/CI profile,
-approve baseline-relative budgets, then add a separate CI job. The old
-`smoke_edge_cases` 150-device ceiling remains a quick coarse guard but is not a
-substitute for HP-PERF-01.
+The blocking `performance` CI job builds the candidate and its base SHA, then
+captures seven measured samples for each sequentially on the same Node 22,
+Playwright Chromium and hosted runner. `demo/performance/compare.mjs` applies
+the tighter of the approved absolute ceiling and baseline-relative allowance
+from `demo/performance/budgets.json`. It fails on a runtime/profile mismatch,
+an incomplete sample set, a timing/Long Task/heap regression, cache growth or
+an incomplete 200-device render. Raw base/candidate reports and the comparison
+are always uploaded as `large-house-performance`; the check table is also
+written to the GitHub job summary. Local measurements remain diagnostic only.
+See `demo/performance/README.md` for the budget-review contract.
 
 ## Last self-run
 

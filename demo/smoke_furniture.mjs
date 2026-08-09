@@ -74,6 +74,28 @@ const res = await page.evaluate(async () => {
   out.previewIsDrawn = prevD.length > 10;
   out.namesAreLocalised = /\S/.test(item('sofa')?.querySelector('span')?.textContent || '');
 
+  // An unarmed explicit palette closes on the first press anywhere outside
+  // the card, consumes only that press/click pair, and returns to Select.
+  const outside = document.createElement('button');
+  const unrelated = document.createElement('button');
+  let outsideClicks = 0, unrelatedClicks = 0;
+  outside.addEventListener('click', () => outsideClicks++);
+  unrelated.addEventListener('click', () => unrelatedClicks++);
+  document.body.append(outside, unrelated);
+  outside.dispatchEvent(new PointerEvent('pointerdown', {
+    bubbles: true, composed: true, cancelable: true, pointerId: 71, pointerType: 'mouse',
+  }));
+  outside.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true, cancelable: true }));
+  unrelated.click();
+  await c.updateComplete;
+  out.paletteOutsideDismissIsConsumed = c._decorTool === 'select' && !pal() && outsideClicks === 0;
+  out.paletteDismissTailLeavesUnrelatedClick = unrelatedClicks === 1;
+  outside.remove(); unrelated.remove();
+  [...sr().querySelectorAll('.decorbar .dtool')]
+    .find((b) => /мебел|furnitur/i.test(b.textContent || ''))?.click();
+  await c.updateComplete;
+  out.paletteReopensAfterDismiss = c._decorTool === 'furniture' && !!pal();
+
   // ================= 2. размер по умолчанию и поля =========================
   pick('sofa'); await c.updateComplete;
   out.pickArmsTheSymbol = c._furnPalette?.symbol === 'sofa';

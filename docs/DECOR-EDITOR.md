@@ -76,10 +76,13 @@ rectangle or sofa does not make its outline thicker. A legacy object with render
 pixel-identical until edited or explicitly optimised; conversion is
 `width_cm = width / GRID_PITCH × cell_cm`.
 
-The toolbar values are session defaults for newly drawn objects. Colour is a
-compact swatch; its popover owns both the native colour field and opacity, so
-alpha controls do not consume permanent toolbar space. Double-click properties
-edit an existing object without creating a second style model.
+The active drawing tool's values are session defaults for newly drawn objects.
+They live in the shared context tray over the stage rather than changing the
+height of the permanent editor toolbar. Colour is a compact swatch; its popover
+owns both the native colour field and opacity. Double-click properties edit an
+existing object without creating a second style model. Select actions and the
+furniture palette use variants of the same overlay host, so opening them never
+refits the plan.
 
 Line style is intentionally absent from the drawing toolbar. Every new and
 legacy line is Solid by default. Double-click a line with **Select** to switch

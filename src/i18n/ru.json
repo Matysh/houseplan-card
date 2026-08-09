@@ -1,4 +1,10 @@
 {
+  "editor.context_actions": "Действия: {object}",
+  "editor.tool_options": "Параметры инструмента: {tool}",
+  "editor.palette": "Палитра: {tool}",
+  "editor.open_group": "Группа инструментов: {group}",
+  "editor.group_active": "{group} — активно: {item}",
+  "editor.disabled_action": "{action} недоступно: {reason}",
   "btn.properties": "Свойства",
   "btn.keep_as_walls": "Оставить замкнутыми стенами",
   "title.markup_partition": "Перегородка: нарисуйте одну независимую физическую стену",

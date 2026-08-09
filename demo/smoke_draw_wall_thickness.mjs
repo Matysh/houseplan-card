@@ -16,11 +16,14 @@ const res = await page.evaluate(async () => {
   c._tool = 'draw';
   await upd();
   out.fieldDefault = c._drawWallFieldValue === '15' || c._drawWallFieldValue === '15.0';
-  out.fieldInBar = !!sr().querySelector('.editbar .drawwall input');
+  const field = sr().querySelector('.editor-secondary.kind-tool .drawwall input');
+  out.fieldInContextTray = !!field;
+  out.fieldAbsentFromPrimaryBar = !sr().querySelector('.editbar .drawwall input');
+  out.fieldTrayIsStageOverlay = field?.closest('.editor-secondary-host')?.closest('.stage')
+    === sr().querySelector('.stage');
   const wallsButton = sr().querySelector('.editbar button.on');
   out.drawButtonNamedRoomOutline = ['Room outline', 'Контур комнаты']
     .includes((wallsButton?.textContent || '').trim());
-  out.fieldImmediatelyAfterWalls = wallsButton?.nextElementSibling?.matches('label.drawwall') === true;
 
   // draw a small room away from existing rooms (garden/demo f1 may have rooms)
   // use empty space if available, else clear rooms on a copy path

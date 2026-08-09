@@ -45,6 +45,7 @@ export async function launch(
   scale = 1,
   browserArgs = [],
   contextOptions = {},
+  serveRoot = ROOT,
 ) {
   const browser = await chromium.launch({ args: ['--no-sandbox', ...browserArgs] });
   const page = await (await browser.newContext({
@@ -56,7 +57,7 @@ export async function launch(
     const u = new URL(r.request().url());
     let p = decodeURIComponent(u.pathname);
     if (p === '/') p = '/demo.html';
-    const f = ROOT + p;
+    const f = serveRoot + p;
     existsSync(f)
       ? r.fulfill({ status: 200, headers: { 'content-type': CT[p.slice(p.lastIndexOf('.'))] || 'application/octet-stream' }, body: readFileSync(f) })
       : r.fulfill({ status: 404, body: 'nf' });

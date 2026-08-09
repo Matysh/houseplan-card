@@ -13,7 +13,10 @@ const res = await page.evaluate(async () => {
   out.decorBar = !!sr().querySelector('.editbar.decorbar');
   // The compact colour/opacity control must escape the clipped editor/dialog
   // surface through the browser top layer and remain inside the viewport.
-  const picker = sr().querySelector('.decorbar hp-color-opacity');
+  c._decorTool = 'line'; c.requestUpdate(); await c.updateComplete;
+  const picker = sr().querySelector('.editor-secondary hp-color-opacity');
+  out.transientStyleLivesInContextTray = !!picker
+    && !sr().querySelector('.decorbar hp-color-opacity');
   const trigger = picker?.shadowRoot?.querySelector('.trigger');
   trigger?.click();
   await picker?.updateComplete;
@@ -191,6 +194,29 @@ const res = await page.evaluate(async () => {
   out.selectStillGrabs = !!c._decorMove && c._decorMove.id === 'dcprobe';
   out.selectMakesNoDraft = !c._decorDraft;
   c._decorMove = null;
+  const selectionTray = sr().querySelector('.editor-secondary-host.open .editor-secondary.kind-selection');
+  out.selectionActionsUseContextTray = !!selectionTray
+    && !!selectionTray.querySelector('ha-icon[icon="mdi:tune"]')
+    && !!selectionTray.querySelector('ha-icon[icon="mdi:delete-outline"]')
+    && !sr().querySelector('.decorbar .danger');
+  const selectionAction = selectionTray?.querySelector('button');
+  selectionAction?.focus();
+  selectionAction?.dispatchEvent(new KeyboardEvent('keydown', {
+    key: 'Delete', bubbles: true, composed: true, cancelable: true,
+  }));
+  await c.updateComplete;
+  out.deleteDoesNotFallThroughContextTray = c._decorSel === 'dcprobe'
+    && c._decorList.some((shape) => shape.id === 'dcprobe');
+  const staleContextId = c._editorSecondaryContextId;
+  let staleInvokes = 0;
+  const staleInvoke = () => c._runEditorContext(staleContextId, () => { staleInvokes += 1; });
+  const otherShape = c._decorList.find((shape) => shape.id !== 'dcprobe');
+  c._decorSel = otherShape?.id || null;
+  c._decorShapeDialog = null;
+  c.requestUpdate(); await c.updateComplete;
+  staleInvoke();
+  out.staleContextActionIsIgnored = staleInvokes === 0 && c._decorShapeDialog === null;
+  c._decorSel = 'dcprobe'; c.requestUpdate(); await c.updateComplete;
   // Double click in Select is the universal properties gesture for every
   // object, not only text. It must go through the rendered listener so this
   // also pins the event wiring, then persist the common colour/width fields.

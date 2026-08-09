@@ -1,6 +1,6 @@
 # House Plan architecture
 
-Updated: 2026-08-08 (maintenance after v1.60.2). The repository = a HACS integration (category **Integration**)
+Updated: 2026-08-09 (v1.60.3-beta.2). The repository = a HACS integration (category **Integration**)
 that contains both the backend (`custom_components/houseplan`) and the Lovelace card (`src/` → `dist/`).
 
 ## Layout
@@ -10,6 +10,8 @@ houseplan-card/
 ├─ src/                          # card sources (TypeScript + Lit 3)
 │  ├─ houseplan-card.ts          # the card: rendering, states, drag, tooltip, sticky header
 │  ├─ hp-dialog.ts               # shared HA/native modal shell and focus lifecycle
+│  ├─ editor-secondary.ts        # context tray model, groups, focus/dismiss lifecycle and stable template
+│  ├─ editor-secondary.styles.ts # styles owned by the context tray/submenu surface
 │  ├─ render/opening-tunnels.ts  # immutable SVG projection of resolved tunnel geometry/fills
 │  ├─ editor.ts                  # GUI config editor (ha-form + selectors)
 │  ├─ rules.ts                   # icon rules (iconFor), filtering, groups, fallback order
@@ -18,6 +20,7 @@ houseplan-card/
 │     └─ backgrounds.ts          # VECTOR plans (SVG base64) + FLOOR_BG_RECT (positioning)
 ├─ dist/houseplan-card.js        # build (rollup+terser), ~290 KB, plans embedded
 ├─ demo/golden/                  # deterministic HP-QA-01 matrix, capture/verify/accept
+├─ demo/performance/             # large-house budgets and same-runner comparison
 ├─ custom_components/houseplan/  # the HA integration
 │  ├─ __init__.py                # setup: Store, WS commands, JS serving (add_extra_js_url)
 │  ├─ trails.py                  # server-side vacuum trail recorder (state-change driven)
@@ -269,6 +272,36 @@ legacy root `space.segments` array is still stripped on every save.
 While drawing, the length of the current segment follows the cursor (`_fmtLen` → `segmentCm`/
 `formatLength`): metres, or feet+inches when `hass.config.unit_system` is imperial. The scale is
 per-space `cell_cm` — cm represented by one grid cell (default 5, so 240 cells ≈ 12 m).
+
+## Editor chrome and contextual controls
+
+Every editor uses one stable primary `.editbar`. Its `.editbar-tools` contains
+only persistent tools and Undo/Redo; `.editbar-end` is a separate pinned end
+cap for Close. Selection, operation and tool-state changes must not insert
+controls into this measured row.
+
+Transient UI is resolved into one `EditorSecondaryModel` and rendered by the
+single `.editor-secondary-host` inside `.stage`. Generic state, group
+navigation, focus/animation lifecycle, outside-dismiss handling and the stable
+light-DOM template live in `editor-secondary.ts`; its CSS is isolated in
+`editor-secondary.styles.ts`. The root card only builds Plan/Decor models and
+supplies typed product callbacks. Keeping the existing light DOM is deliberate:
+layout selectors, focus queries and browser-smoke hooks remain unchanged.
+
+The host is absolutely positioned, has pointer events only on its visible
+surface and is outside the header/`_hdrH` measurement boundary. Plan selection
+actions, drawing thickness and operation hints, Background selection/style
+actions and the furniture palette all use this surface. The Device editor uses
+the same empty host and must route future marker quick actions through it.
+
+Every mutating secondary action captures a deterministic `contextId` and
+revalidates it before invocation, so a callback from an old selection cannot
+modify a newer target. `Delete`/`Backspace` do not fall through while focus is
+inside any secondary surface. The same host also implements an explicit
+second-level `EditorToolbarGroup` contract (launcher, one open group, keyboard
+navigation, focus restoration and outside-dismiss consumption), but no current
+tools are grouped without a separate product decision. The change is UI-only:
+plan/config models and geometry commands are unchanged.
 
 ## Doors, windows & gates (v1.23.0+)
 

@@ -1,4 +1,10 @@
 {
+  "editor.context_actions": "Actions: {object}",
+  "editor.tool_options": "Tool options: {tool}",
+  "editor.palette": "Palette: {tool}",
+  "editor.open_group": "Tool group: {group}",
+  "editor.group_active": "{group} — active: {item}",
+  "editor.disabled_action": "{action} is unavailable: {reason}",
   "btn.properties": "Properties",
   "btn.keep_as_walls": "Keep as closed walls",
   "title.markup_partition": "Partition: draw one independent physical wall",

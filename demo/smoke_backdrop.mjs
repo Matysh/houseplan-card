@@ -222,14 +222,15 @@ await settle();
 }
 
 // ---------- 5) the reset button ------------------------------------------
-check('reset_button_offered_once_moved', await q('.decorbar .bdreset'), 1);
+check('reset_button_offered_once_moved', await q('.editor-secondary .bdreset'), 1);
+check('reset_button_absent_from_primary_bar', await q('.decorbar .bdreset'), 0);
 await page.evaluate(() => { const c = window.__card; c._bdReset?.(); c.requestUpdate(); return c.updateComplete; });
 await settle();
 check('reset_puts_the_picture_back', await imageRect(), BASE);
 check('reset_clears_the_fields', await spaceCfg(), {
   x: null, y: null, sx: null, sy: null, legacy: null, angle: null,
 });
-check('reset_button_gone_again', await q('.decorbar .bdreset'), 0);
+check('reset_button_gone_again', await q('.editor-secondary .bdreset'), 0);
 
 // ---------- 5b) the SELECT tool still pans right over the picture ---------
 // The body of the picture is most of the screen; claiming it outside its own

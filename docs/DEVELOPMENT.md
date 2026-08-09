@@ -112,8 +112,8 @@ These commands are read-only diagnostics, not release gates:
 npm run audit:config
 npm run audit:config -- path/to/houseplan-config.json
 
-# Reproducible synthetic large-house baseline (defaults to three samples).
-npm run benchmark:large-house -- --samples=5 --output=artifacts/large-house.json
+# Reproducible synthetic large-house report (seven measured samples + warm-up).
+npm run benchmark:large-house -- --samples=7 --warmups=1 --output=artifacts/performance/local.json
 
 # Golden candidates never overwrite reviewed references.
 npm run golden:capture
@@ -123,9 +123,11 @@ npm run golden:accept -- --reviewed
 
 The config audit performs no network requests and does not rewrite the input.
 Its registry and lifecycle rules are documented in `CONFIG-COMPATIBILITY.md`.
-The performance runner has deliberately no pass/fail thresholds yet: collect
-repeated artefacts on one pinned Chromium/CI profile before approving budgets.
-Do not turn a developer-laptop timing into a CI limit.
+The blocking performance job captures the base SHA and candidate sequentially
+on one pinned Chromium/CI profile, applies relative and absolute budgets, and
+uploads both reports plus the comparison. A developer-laptop report remains a
+diagnostic and must not be used to loosen CI limits. See
+`demo/performance/README.md`.
 Both browser diagnostics require a freshly built/copied demo bundle. Rollup
 embeds a SHA-256 fingerprint of `src/` plus the locked package and
 Rollup/TypeScript build inputs; benchmark/golden runners fail before

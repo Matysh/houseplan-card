@@ -97,6 +97,13 @@ import {
 import './editor';
 import './space-card';
 import { cardStyles } from './styles';
+import { editorSecondaryStyles } from './editor-secondary.styles';
+import {
+  EditorSecondaryController,
+  type EditorSecondaryCopy,
+  type EditorSecondaryModel,
+  type EditorToolbarGroup,
+} from './editor-secondary';
 import {
   fitInSquare, planRect, contentBounds, spaceModels, contentFrame, contentItems, spaceFrame,
   spaceCenter, iconUnit, iconCqw, gridLevels, itemOf, snapPt,
@@ -132,7 +139,7 @@ import {
 } from './editors/decor/geometry';
 import { renderOpeningTunnelFills } from './render/opening-tunnels';
 
-const CARD_VERSION = '1.60.3-beta.1';
+const CARD_VERSION = '1.60.3-beta.2';
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
 const CELL_CM_MIN = 0.1;
@@ -627,6 +634,19 @@ class HouseplanCard extends LitElement {
   private _editorSwapAnimations: Animation[] = [];
   /** Last editor kept in the collapsing chrome so leaving it can animate out. */
   private _editorChromeMode: 'plan' | 'devices' | 'decor' = 'plan';
+  /** Explicit second-level toolbar group. No current tools are grouped yet;
+   *  the shared host/API prevents future editors from inventing dropdowns. */
+  private readonly _editorSecondary = new EditorSecondaryController({
+    root: () => this.renderRoot as ShadowRoot,
+    requestUpdate: () => this.requestUpdate(),
+    updateComplete: () => this.updateComplete,
+    clearTip: () => { this._tip = null; },
+  });
+  private readonly _editorSecondaryCopy: EditorSecondaryCopy = {
+    groupActive: (group, item) => this._t('editor.group_active', { group, item }),
+    openGroup: (group) => this._t('editor.open_group', { group }),
+    disabledAction: (action, reason) => this._t('editor.disabled_action', { action, reason }),
+  };
 
   private _startNavMotion(kind: 'enter' | 'exit' | 'swap'): void {
     clearTimeout(this._navMotionTimer);
@@ -711,6 +731,7 @@ class HouseplanCard extends LitElement {
     this._closingWallCm = null;
     this._selId = null;
     this._physicalSel = null;
+    this._editorSecondary.closeForNavigation();
     this._physicalDialog = null;
     this._physicalDrag = null;
     if (this._mode === 'plan' && this._tool === 'draw') this._resumeLastDraft();
@@ -901,6 +922,19 @@ class HouseplanCard extends LitElement {
   private _panLock: 'pan' | 'swipe' | null = null;
   private _pinchStart: { dist: number; zoom: number } | null = null;
   private _suppressClick = false;
+  /**
+   * Pointer events from an interactive child may stop before the stage sees
+   * them. Track touch contacts on the card in capture phase, so the second
+   * finger always turns the whole sequence into navigation and can never leave
+   * a synthetic tap on a device, room link, opening badge or editor control.
+   */
+  private _touchContacts = new Map<number, { x: number; y: number; inStage: boolean }>();
+  private _touchSequenceMultitouch = false;
+  private _touchClickBlockUntil = 0;
+  private readonly _touchGestureGuard = {
+    capture: true,
+    handleEvent: (ev: Event): void => this._guardTouchGesture(ev),
+  };
   private _roViewport?: ResizeObserver;
   private _roHdr?: ResizeObserver;
   private _onWinResize?: () => void;
@@ -1366,6 +1400,10 @@ class HouseplanCard extends LitElement {
     this._openWallAnchor = null;
     this._boundaryRestoreGuard = null;
     this._cursorPt = null;
+    this._touchContacts.clear();
+    this._touchSequenceMultitouch = false;
+    this._touchClickBlockUntil = 0;
+    this._editorSecondary.reset();
     // R1: the rAF is the only normal owner that clears this flag. Reset only
     // after the disconnect snapshot (which must still skip unstable geometry),
     // so a same-element reattach can start fresh instead of keeping the veil.
@@ -1402,12 +1440,22 @@ class HouseplanCard extends LitElement {
         this._importTotal = 0;
         return;
       }
+      if (this._editorSecondary.hasOpenGroup) {
+        e.preventDefault();
+        this._editorSecondary.closeGroup(true);
+        return;
+      }
     }
     // At the window listener `target` may be retargeted to the card host by
     // Shadow DOM. The composed path still contains the actual focused field.
-    const inField = (e.composedPath?.() || [e.target]).some((node: any) =>
+    const eventPath = e.composedPath?.() || [e.target];
+    const inField = eventPath.some((node: any) =>
       node?.matches?.('input, textarea, select, [contenteditable="true"]'),
     );
+    // The secondary toolbar is a focusable control surface, not the canvas.
+    // Delete/Backspace there must never fall through to the selected object.
+    const inEditorSecondary = eventPath.some((node: any) =>
+      node?.classList?.contains?.('editor-secondary'));
     const mod = e.ctrlKey || e.metaKey;
     const key = e.key.toLowerCase();
     // A Latin `key` names the shortcut the user actually pressed (including
@@ -1433,7 +1481,7 @@ class HouseplanCard extends LitElement {
         return;
       }
       if ((e.key === 'Delete' || e.key === 'Backspace') && this._decorSel &&
-          !inField) {
+          !inField && !inEditorSecondary) {
         e.preventDefault();
         this._decorDeleteSel();
         return;
@@ -1442,9 +1490,12 @@ class HouseplanCard extends LitElement {
         e.preventDefault();
         if (this._decorDraft) this._decorDraft = null;
         else if (this._decorMove || this._dtDrag || this._bdDrag) this._cancelDecorGesture();
-        // an armed symbol is the same kind of "half-done thing" a draft is:
-        // Escape disarms it before it lets go of the selection or the tool
-        else if (this._furnPalette) this._furnPalette = null;
+        // The palette is one explicit surface: Escape closes it and returns
+        // to Select in one step, regardless of whether a symbol was armed.
+        else if (this._decorTool === 'furniture') {
+          this._furnPalette = null;
+          this._decorTool = 'select';
+        }
         else if (this._decorSel) this._decorSel = null;
         else if (this._decorTool !== 'select') this._decorTool = 'select';
         else this._setMode('view');
@@ -1453,7 +1504,8 @@ class HouseplanCard extends LitElement {
     }
     if (!this._markup) return;
     if ((undo || redo) && inField) return; // keep native text-field history
-    if ((e.key === 'Delete' || e.key === 'Backspace') && this._physicalSel && !inField) {
+    if ((e.key === 'Delete' || e.key === 'Backspace') && this._physicalSel
+        && !inField && !inEditorSecondary) {
       e.preventDefault();
       this._deletePhysicalSelection();
       return;
@@ -2270,6 +2322,7 @@ class HouseplanCard extends LitElement {
       measure();
     }
     if (stage && !this._view) this._refitView();
+    this._editorSecondary.afterRender();
     // onboarding: on an empty server config, open the space dialog right away
     if (
       this._serverStorage &&
@@ -3667,6 +3720,15 @@ class HouseplanCard extends LitElement {
 
   private _stagePointerDown(ev: PointerEvent): void {
     if (this._vacFit) return; // no pan/swipe while fitting the robot map
+    // Furniture deliberately supports stay-open-on-canvas while a symbol is
+    // armed. With no symbol selected, the same outside press is only dismiss:
+    // consume it so it cannot also select or begin another canvas operation.
+    if (this._mode === 'decor' && this._decorTool === 'furniture' && !this._furnPalette) {
+      ev.preventDefault();
+      this._suppressClick = true;
+      this._decorTool = 'select';
+      return;
+    }
     if (this._kiosk) {
       this._cyclePausedUntil = Date.now() + 60000;
       if (this._pointers.size === 0) {
@@ -3988,6 +4050,99 @@ class HouseplanCard extends LitElement {
     }
   }
 
+  /**
+   * Capture-phase guard for browser clicks synthesized after touch gestures.
+   *
+   * `_suppressClick` covers a pan/pinch that the stage itself observed. The
+   * contact set closes the other path: an interactive child is allowed to stop
+   * pointer propagation, but it is not allowed to hide/navigate/toggle from one
+   * finger of a two-finger gesture. The short tail also covers WebKit emitting
+   * `click` after the final pointerup rather than in the same task.
+   */
+  private _guardTouchGesture(ev: Event): void {
+    if (this._editorSecondary.handleOutsideDismiss(ev)) return;
+    if (ev.type === 'click') {
+      if (!this._suppressClick && !this._touchSequenceMultitouch
+          && Date.now() > this._touchClickBlockUntil) return;
+      ev.preventDefault();
+      ev.stopImmediatePropagation();
+      return;
+    }
+    const pointer = ev as PointerEvent;
+    if (pointer.pointerType !== 'touch') return;
+    this._notePointer(pointer);
+    if (ev.type === 'pointerdown') {
+      this._touchContacts.set(pointer.pointerId, {
+        x: pointer.clientX,
+        y: pointer.clientY,
+        inStage: !!(pointer.target as Element | null)?.closest?.('.stage'),
+      });
+      if (this._touchContacts.size >= 2) {
+        this._touchSequenceMultitouch = true;
+        this._touchClickBlockUntil = Number.POSITIVE_INFINITY;
+        clearTimeout(this._holdTimer);
+        clearTimeout(this._kioskHoldTimer);
+        this._swipeStart = null;
+        // Viewing is the guaranteed touch surface. Seed its existing stage
+        // pinch pipeline even when a child swallowed the first pointerdown.
+        const contacts = [...this._touchContacts.values()];
+        if (this._mode === 'view' && !this._vacFit
+            && contacts.every((contact) => contact.inStage)) {
+          this._pointers = new Map([...this._touchContacts].map(([id, contact]) => [
+            id, { x: contact.x, y: contact.y },
+          ]));
+          const [a, b] = contacts;
+          this._pinchStart = { dist: Math.hypot(a.x - b.x, a.y - b.y), zoom: this._zoom };
+          this._panStart = null;
+          this._panLock = null;
+        } else if (this._vacFit) {
+          this._pointers.clear();
+          this._pinchStart = null;
+          this._panStart = null;
+          this._panLock = null;
+        }
+      }
+      return;
+    }
+    if (ev.type === 'pointermove') {
+      const contact = this._touchContacts.get(pointer.pointerId);
+      if (!contact) return;
+      const next = { ...contact, x: pointer.clientX, y: pointer.clientY };
+      this._touchContacts.set(pointer.pointerId, next);
+      if (this._touchSequenceMultitouch && this._mode === 'view' && !this._vacFit && this._pinchStart
+          && [...this._touchContacts.values()].every((item) => item.inStage)) {
+        this._pointers.set(pointer.pointerId, { x: pointer.clientX, y: pointer.clientY });
+        const contacts = [...this._touchContacts.values()];
+        if (contacts.length >= 2 && this._stageEl) {
+          const [a, b] = contacts;
+          const scale = Math.hypot(a.x - b.x, a.y - b.y) / (this._pinchStart.dist || 1);
+          const rect = this._stageEl.getBoundingClientRect();
+          this._zoomAt((a.x + b.x) / 2 - rect.left, (a.y + b.y) / 2 - rect.top,
+            this._pinchStart.zoom * scale);
+          this._saveZoom();
+        }
+      }
+      return;
+    }
+    if (ev.type !== 'pointerup' && ev.type !== 'pointercancel') return;
+    this._touchContacts.delete(pointer.pointerId);
+    if (this._touchSequenceMultitouch) {
+      this._touchClickBlockUntil = Date.now() + 500;
+      this._pointers.delete(pointer.pointerId);
+      if (!this._vacFit && this._pointers.size >= 2) {
+        const [a, b] = [...this._pointers.values()];
+        this._pinchStart = { dist: Math.hypot(a.x - b.x, a.y - b.y), zoom: this._zoom };
+      } else {
+        this._pinchStart = null;
+      }
+      if (this._pointers.size === 0) {
+        this._panStart = null;
+        this._panLock = null;
+      }
+    }
+    if (this._touchContacts.size === 0) this._touchSequenceMultitouch = false;
+  }
+
   private _showTip(ev: MouseEvent, title: string, meta: string, lqi?: number | null, temp?: number | null): void {
     if (this._noHover) return;
     if (this._drag) return;
@@ -4076,6 +4231,7 @@ class HouseplanCard extends LitElement {
       return;
     }
     const previousMode = this._mode;
+    this._editorSecondary.closeForNavigation();
     const editorSwap = previousMode !== 'view' && mode !== 'view';
     const editorFromHeight = editorSwap
       ? (this.renderRoot.querySelector('.editorchrome-inner') as HTMLElement | null)
@@ -6000,6 +6156,12 @@ class HouseplanCard extends LitElement {
     ev.stopPropagation();
     this._decorMove = null;
     this._decorSel = shape.id;
+    this._openDecorProperties(shape);
+  }
+
+  /** One properties entry point shared by double click and the context tray. */
+  private _openDecorProperties(shape: DecorShape): void {
+    if (this._mode !== 'decor' || this._decorTool !== 'select') return;
     if (shape.kind === 'text') {
       this._decorOpenText(shape);
       return;
@@ -7101,6 +7263,258 @@ class HouseplanCard extends LitElement {
     return svg`<g class="decorlayer">${shapes}${draft}</g>` as unknown as TemplateResult;
   }
 
+  // ================= shared editor secondary surface =================
+
+  /** No existing buttons are grouped without a separate product decision.
+   * Future editors declare a group here and use the shared launcher/host. */
+  private get _editorToolbarGroups(): readonly EditorToolbarGroup[] {
+    return [];
+  }
+
+  private _renderEditorGroupLauncher(group: EditorToolbarGroup): TemplateResult {
+    return this._editorSecondary.renderGroupLauncher(
+      group,
+      this._editorToolbarGroups,
+      this._editorSecondaryCopy,
+    );
+  }
+
+  /** Stable target identity + current config epoch + operation revision. */
+  private get _editorSecondaryContextId(): string {
+    const base = `editor:${this._mode}:${this._space}:${this._cfgEpoch}`;
+    const group = this._editorSecondary.activeGroup(this._editorToolbarGroups);
+    if (group) return `${base}:group:${group.id}:${this._editorSecondary.groupGeneration}`;
+    if (this._mode === 'plan') {
+      const sel = this._physicalSel;
+      if (sel) return `${base}:selection:${sel.kind}:${sel.id}:${sel.segment ?? ''}`;
+      return `${base}:tool:${this._tool}:${this._path.length}:${this._openWallAnchor ? 1 : 0}`;
+    }
+    if (this._mode === 'decor') {
+      if (this._decorTool === 'furniture')
+        return `${base}:palette:furniture:${this._furnPalette?.symbol || 'none'}`;
+      if (this._decorTool === 'select' && this._decorSel)
+        return `${base}:selection:decor:${this._decorSel}`;
+      return `${base}:tool:${this._decorTool}:${this._bdMoved ? 1 : 0}:${this._bdDrag ? 1 : 0}`;
+    }
+    return `${base}:none`;
+  }
+
+  private _runEditorContext(contextId: string, action: () => void): void {
+    this._editorSecondary.runContext(contextId, this._editorSecondaryContextId, action);
+  }
+
+  private _renderEditorGroupModel(group: EditorToolbarGroup): EditorSecondaryModel {
+    return this._editorSecondary.renderGroupModel(
+      group,
+      this._editorSecondaryContextId,
+      this._editorSecondaryCopy,
+    );
+  }
+
+  private _renderDrawWallControl(): TemplateResult {
+    return html`<label class="drawwall ${this._drawWallCm == null ? 'invalid' : ''}">${this._t('wallthick.field')}
+      <input type="number" min=${cmToField(1, this._imperial)}
+        max=${cmToField(150, this._imperial)} step="any"
+        .value=${this._drawWallFieldValue}
+        @input=${(e: Event) => {
+          this._drawWallField = (e.target as HTMLInputElement).value;
+        }}
+        title=${this._t(this._tool === 'draw' ? 'markup.draw_wall_title'
+          : this._tool === 'partition' ? 'physical.partition_size_title'
+          : 'physical.column_size_title')} />
+      <span class="opl">${this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span>
+      <span class="rangehint">${this._t('physical.allowed_range', {
+        max: cmToField(this._drawWallMaxCm, this._imperial),
+        unit: this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm'),
+      })}</span>
+    </label>`;
+  }
+
+  private _renderPlanSecondary(): EditorSecondaryModel | null {
+    const contextId = this._editorSecondaryContextId;
+    const sel = this._physicalSel;
+    if (sel) {
+      const exists = sel.kind === 'partition'
+        ? !!this._curSpaceCfg.partitions?.some((item: PartitionCfg) => item.id === sel.id)
+        : sel.kind === 'column'
+          ? !!this._curSpaceCfg.wall_columns?.some((item: WallColumnCfg) => item.id === sel.id)
+          : !!this._curSpaceCfg.room_drafts?.some((item: RoomDraftCfg) => item.id === sel.id);
+      if (!exists) return null;
+      const label = sel.kind === 'partition' ? this._t('markup.partition')
+        : sel.kind === 'column' ? this._t('markup.column') : this._t('markup.add');
+      return {
+        contextId,
+        kind: 'selection',
+        ariaLabel: this._t('editor.context_actions', { object: label }),
+        visibleLabel: label,
+        content: html`
+          <button class="btn ghost" @click=${() => this._runEditorContext(contextId, () => {
+            const current = this._physicalSel;
+            if (current) this._openPhysicalDialog(current.kind, current.id, current.segment);
+          })}><ha-icon icon="mdi:tune"></ha-icon>${this._t('btn.properties')}</button>
+          <button class="btn danger" @click=${() => this._runEditorContext(contextId, () => this._deletePhysicalSelection())}>
+            <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.delete')}
+          </button>`,
+      };
+    }
+
+    const hasThickness = this._tool === 'draw' || this._tool === 'partition' || this._tool === 'column';
+    const hintKey = this._tool === 'partition' ? 'markup.hint_partition'
+      : this._tool === 'column' ? 'markup.hint_column'
+      : this._tool === 'resize' ? 'markup.hint_resize'
+      : this._tool === 'wallthick' ? 'markup.hint_wallthick'
+      : this._tool === 'boundary' ? this._boundaryHintKey
+      : null;
+    const drawHint = this._tool === 'draw'
+      ? this._t(this._path.length ? 'markup.hint_points' : 'markup.hint_start',
+          this._path.length ? { n: this._path.length } : undefined)
+      : '';
+    if (!hasThickness && !hintKey && !drawHint) return null;
+    const operation = (this._tool === 'draw' && this._path.length > 0)
+      || (this._tool === 'boundary' && !!this._openWallAnchor);
+    return {
+      contextId,
+      kind: operation ? 'operation' : 'tool',
+      ariaLabel: this._t('editor.tool_options', {
+        tool: this._t((this._tool === 'draw' ? 'markup.add'
+          : this._tool === 'partition' ? 'markup.partition'
+          : this._tool === 'column' ? 'markup.column'
+          : this._tool === 'resize' ? 'markup.resize'
+          : this._tool === 'wallthick' ? 'markup.wallthick'
+          : 'markup.boundary') as any),
+      }),
+      content: html`
+        ${hasThickness ? this._renderDrawWallControl() : nothing}
+        ${drawHint ? html`<span class="hint">${drawHint}</span>` : nothing}
+        ${hintKey ? html`<span class="hint" role=${this._tool === 'boundary' ? 'status' : nothing}
+          aria-live=${this._tool === 'boundary' ? 'polite' : nothing}>${this._t(hintKey as any)}</span>` : nothing}
+        ${this._tool === 'draw' && this._path.length
+          ? html`<button class="btn ghost" @click=${() => this._runEditorContext(contextId, () => this._cancelPath())}>
+              ${this._t('btn.reset')}
+            </button>` : nothing}`,
+    };
+  }
+
+  private _renderDecorSecondary(): EditorSecondaryModel | null {
+    const contextId = this._editorSecondaryContextId;
+    if (this._decorTool === 'furniture') {
+      return {
+        contextId,
+        kind: 'palette',
+        ariaLabel: this._t('editor.palette', { tool: this._t('decor.furniture') }),
+        launcherId: 'furniture',
+        dismissPolicy: this._furnPalette ? 'stay-open-on-canvas' : 'outside',
+        dismiss: () => {
+          if (this._decorTool !== 'furniture') return;
+          this._furnPalette = null;
+          this._decorTool = 'select';
+          this.requestUpdate();
+        },
+        content: this._renderFurnPalette(),
+      };
+    }
+    const selected = this._dtSel;
+    if (selected) {
+      const label = this._t((`decor.${selected.kind}`) as any);
+      return {
+        contextId,
+        kind: 'selection',
+        ariaLabel: this._t('editor.context_actions', { object: label }),
+        visibleLabel: label,
+        content: html`
+          <button class="btn ghost" @click=${() => this._runEditorContext(contextId, () => {
+            const current = this._dtSel;
+            if (current) this._openDecorProperties(current);
+          })}><ha-icon icon="mdi:tune"></ha-icon>${this._t('btn.properties')}</button>
+          <button class="btn danger" @click=${() => this._runEditorContext(contextId, () => this._decorDeleteSel())}>
+            <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.delete')}
+          </button>`,
+      };
+    }
+
+    const draws = this._decorTool === 'line' || this._decorTool === 'rect' || this._decorTool === 'ellipse';
+    const canFill = this._decorTool === 'rect' || this._decorTool === 'ellipse';
+    const backdrop = this._decorTool === 'backdrop' && !!this._bdRect;
+    if (!draws && !backdrop) return null;
+    return {
+      contextId,
+      kind: 'tool',
+      ariaLabel: this._t('editor.tool_options', {
+        tool: this._t((draws ? `decor.${this._decorTool}` : 'decor.backdrop') as any),
+      }),
+      content: html`
+        ${draws ? html`
+          <hp-color-opacity .label=${this._t('decor.color')} .color=${this._decorStyle.color}
+            .opacity=${this._decorStyle.opacity} .opacityLabel=${this._t('space.opacity')}
+            @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
+              (this._decorStyle = { ...this._decorStyle, ...e.detail })}></hp-color-opacity>
+          <label class="drawwall">${this._t('decor.width')}
+            <input type="number" min=${this._decorSmallField(0.1)}
+              max=${this._decorSmallField(100)} step="0.1"
+              .value=${String(this._decorSmallField(this._decorStyle.widthCm))}
+              @input=${(e: Event) => (this._decorStyle = { ...this._decorStyle,
+                widthCm: this._decorSmallCm(Number((e.target as HTMLInputElement).value)) })} />
+            <span class="opl">${this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span>
+          </label>
+          ${canFill ? html`<label class="dfill"><input type="checkbox" .checked=${this._decorStyle.fill}
+              @change=${(e: Event) => (this._decorStyle = { ...this._decorStyle,
+                fill: (e.target as HTMLInputElement).checked })} />${this._t('decor.fill')}</label>
+            <hp-color-opacity .label=${this._t('decor.fill_color')} .color=${this._decorStyle.fillColor}
+              .opacity=${this._decorStyle.fillOpacity} .opacityLabel=${this._t('space.opacity')}
+              .disabled=${!this._decorStyle.fill}
+              @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
+                (this._decorStyle = { ...this._decorStyle,
+                  fillColor: e.detail.color, fillOpacity: e.detail.opacity })}></hp-color-opacity>` : nothing}
+        ` : nothing}
+        ${backdrop ? html`<span class="bdhint">${this._t('decor.backdrop_hint')}</span>` : nothing}`,
+    };
+  }
+
+  /** Backdrop reset is a space-level maintenance action, not a tool option.
+   * Keep it reachable from every ordinary decor context as it was before the
+   * contextual tray extraction; an explicit palette keeps priority. */
+  private _withBackdropReset(model: EditorSecondaryModel | null): EditorSecondaryModel | null {
+    if (!this._bdMoved || this._bdDrag || model?.kind === 'palette') return model;
+    const contextId = this._editorSecondaryContextId;
+    const reset = html`<button class="btn bdreset" title=${this._t('decor.backdrop_reset')}
+      @click=${() => this._runEditorContext(contextId, () => this._bdReset())}>
+      <ha-icon icon="mdi:image-refresh-outline"></ha-icon>${this._t('decor.backdrop_reset')}
+    </button>`;
+    if (!model) {
+      return {
+        contextId,
+        kind: 'tool',
+        ariaLabel: this._t('editor.tool_options', { tool: this._t('decor.backdrop') }),
+        content: reset,
+      };
+    }
+    return {
+      ...model,
+      kind: model.kind === 'selection' ? 'mixed' : model.kind,
+      content: html`${model.content}${reset}`,
+    };
+  }
+
+  private get _editorSecondaryDialogBlocked(): boolean {
+    return !!(this._tapConfirm || this._roomDialog || this._mergeDialog
+      || this._openingDialog || this._physicalDialog || this._openingInfo
+      || this._decorTextDialog || this._decorShapeDialog || this._backdropDialog
+      || this._decorEraseConfirm || this._spaceDialog || this._markerDialog
+      || this._infoCard || this._rulesDialog || this._settingsDialog
+      || this._alignDialog || this._importDialog || this._kioskDialog
+      || this._wallDialog);
+  }
+
+  private _renderEditorSecondary(): TemplateResult | typeof nothing {
+    if (!this._editing) return nothing;
+    const group = this._editorSecondary.activeGroup(this._editorToolbarGroups);
+    const model = group ? this._renderEditorGroupModel(group)
+      : this._mode === 'plan' ? this._renderPlanSecondary()
+      : this._mode === 'decor' ? this._withBackdropReset(this._renderDecorSecondary())
+      : null;
+    return this._editorSecondary.render(model, this._editorSecondaryDialogBlocked);
+  }
+
   private _renderDecorBar(): TemplateResult {
     const tools = [
       ['select', 'mdi:cursor-default-outline', 'decor.select'],
@@ -7115,15 +7529,20 @@ class HouseplanCard extends LitElement {
       ['furniture', 'mdi:sofa-outline', 'decor.furniture'],
       ['erase', 'mdi:eraser', 'decor.erase'],
     ] as const;
-    const selected = this._decorSel ? this._decorList.find((shape) => shape.id === this._decorSel) : null;
-    const canFill = this._decorTool === 'rect' || this._decorTool === 'ellipse'
-      || selected?.kind === 'rect' || selected?.kind === 'ellipse';
     const undoName = this._geometryHistory.undoName;
     const redoName = this._geometryHistory.redoName;
     return html`<div class="editbar decorbar">
+      <div class="editbar-tools" tabindex="-1">
       ${tools.map(
         ([t, ic, k]) => html`<button class="btn dtool ${this._decorTool === t ? 'on' : ''}"
+          data-editor-palette=${t === 'furniture' ? 'furniture' : nothing}
           @click=${() => {
+            if (t === 'furniture' && this._decorTool === 'furniture') {
+              this._furnPalette = null;
+              this._decorTool = 'select';
+              return;
+            }
+            if (t === 'furniture') this._editorSecondary.openPalette();
             this._decorTool = t as typeof this._decorTool;
             this._decorDraft = null;
             // the palette belongs to its tool and to nothing else: leaving the
@@ -7134,27 +7553,7 @@ class HouseplanCard extends LitElement {
           <ha-icon icon=${ic}></ha-icon><span class="ml">${this._t(k)}</span>
         </button>`,
       )}
-      <hp-color-opacity .label=${this._t('decor.color')} .color=${this._decorStyle.color}
-        .opacity=${this._decorStyle.opacity} .opacityLabel=${this._t('space.opacity')}
-        @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
-          (this._decorStyle = { ...this._decorStyle, ...e.detail })}></hp-color-opacity>
-      <label class="drawwall">${this._t('decor.width')}
-        <input type="number" min=${this._decorSmallField(0.1)}
-          max=${this._decorSmallField(100)} step="0.1"
-          .value=${String(this._decorSmallField(this._decorStyle.widthCm))}
-          @input=${(e: Event) => (this._decorStyle = { ...this._decorStyle,
-            widthCm: this._decorSmallCm(Number((e.target as HTMLInputElement).value)) })} />
-        <span class="opl">${this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span>
-      </label>
-      ${canFill ? html`<label class="dfill"><input type="checkbox" .checked=${this._decorStyle.fill}
-          @change=${(e: Event) => (this._decorStyle = { ...this._decorStyle, fill: (e.target as HTMLInputElement).checked })} />
-          ${this._t('decor.fill')}</label>
-        <hp-color-opacity .label=${this._t('decor.fill_color')} .color=${this._decorStyle.fillColor}
-          .opacity=${this._decorStyle.fillOpacity} .opacityLabel=${this._t('space.opacity')}
-          .disabled=${!this._decorStyle.fill}
-          @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
-            (this._decorStyle = { ...this._decorStyle,
-              fillColor: e.detail.color, fillOpacity: e.detail.opacity })}></hp-color-opacity>` : nothing}
+      ${this._editorToolbarGroups.map((group) => this._renderEditorGroupLauncher(group))}
       <button class="btn ghost" @click=${this._undoGeometry} ?disabled=${!undoName}
         title=${undoName ? this._t('history.undo_named', { name: undoName }) : this._t('history.undo_empty')}>
         <ha-icon icon="mdi:undo-variant"></ha-icon>${this._t('history.undo')}
@@ -7163,25 +7562,13 @@ class HouseplanCard extends LitElement {
         title=${redoName ? this._t('history.redo_named', { name: redoName }) : this._t('history.redo_empty')}>
         <ha-icon icon="mdi:redo-variant"></ha-icon>${this._t('history.redo')}
       </button>
-      ${''/* the picture's own affordance: only offered once it HAS been moved,
-             so an untouched plan gains no button and no explaining to do.
-             NOT while a gesture is live — this bar sits above the stage, and a
-             button appearing mid-drag changes the stage's height, i.e. how
-             many plan units a screen pixel is worth, under the finger. */}
-      ${this._bdMoved && !this._bdDrag
-        ? html`<button class="btn bdreset" title=${this._t('decor.backdrop_reset')}
-            @click=${() => this._bdReset()}>
-            <ha-icon icon="mdi:image-refresh-outline"></ha-icon><span class="ml">${this._t('decor.backdrop_reset')}</span>
-          </button>`
-        : nothing}
-      <span class="spacer"></span>
-      ${this._bdMovable
-        ? html`<span class="bdhint">${this._t('decor.backdrop_hint')}</span>`
-        : nothing}
-      <button class="btn barclose" title=${this._t('title.close_editor')}
-        @click=${() => this._setMode('view')}>
-        <ha-icon icon="mdi:close"></ha-icon>
-      </button>
+      </div>
+      <div class="editbar-end">
+        <button class="btn barclose" title=${this._t('title.close_editor')}
+          @click=${() => this._setMode('view')}>
+          <ha-icon icon="mdi:close"></ha-icon>
+        </button>
+      </div>
     </div>`;
   }
 
@@ -11034,7 +11421,12 @@ class HouseplanCard extends LitElement {
       <ha-card
         data-ha-registry-access=${diagnostics.registry.access}
         data-ha-disabled-bindings=${diagnostics.bindings.ha_disabled}
-        data-ha-unverified-bindings=${diagnostics.bindings.unverified}>
+        data-ha-unverified-bindings=${diagnostics.bindings.unverified}
+        @pointerdown=${this._touchGestureGuard}
+        @pointermove=${this._touchGestureGuard}
+        @pointerup=${this._touchGestureGuard}
+        @pointercancel=${this._touchGestureGuard}
+        @click=${this._touchGestureGuard}>
         <div class="hdr ${this._kiosk ? 'kioskhide' : ''}">
         <div class="head">
           <div class="title">
@@ -11111,12 +11503,6 @@ class HouseplanCard extends LitElement {
                   : editorChromeMode === 'devices'
                     ? this._renderDevicesBar()
                     : this._renderDecorBar()}
-                ${''/* the palette lives UNDER the bar, above the stage: it is part of
-                       the tool, not a modal — the plan stays visible while a symbol is
-                       chosen, because where a sofa goes is a question about the plan */}
-                ${editorChromeMode === 'decor' && this._decorTool === 'furniture'
-                  ? this._renderFurnPalette()
-                  : nothing}
               </div>
             </div>`
           : nothing}
@@ -11130,6 +11516,7 @@ class HouseplanCard extends LitElement {
           @pointermove=${(e: PointerEvent) => this._stagePointerMove(e)}
           @pointerup=${(e: PointerEvent) => this._stagePointerUp(e)}
           @pointercancel=${(e: PointerEvent) => this._stagePointerCancel(e)}>
+          ${this._renderEditorSecondary()}
           <div class="zoomwrap ${this._slide ? 'slide-' + this._slide : ''}${this._navMotion ? ' nav-' + this._navMotion : ''}"
             style="${dayNight ? `filter:brightness(${(1 - planDim).toFixed(3)})` : ''}">
           <svg viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="xMidYMid meet">
@@ -13238,9 +13625,10 @@ class HouseplanCard extends LitElement {
       : redoName
       ? this._t('history.redo_named', { name: redoName })
       : this._t('history.redo_empty');
-    return html`<div class="editbar">
-      <ha-icon icon="mdi:vector-square-edit" class="warn"></ha-icon>
-      <span class="wallsgroup">
+    return html`<div class="editbar planbar">
+      <div class="editbar-tools" tabindex="-1">
+        <ha-icon icon="mdi:vector-square-edit" class="warn"></ha-icon>
+        <span class="wallsgroup">
         <button class="btn ${this._tool === 'select' ? 'on' : ''}"
           @click=${() => { this._cancelPath(); this._tool = 'select'; }}
           title=${this._t('title.markup_select')}>
@@ -13253,24 +13641,6 @@ class HouseplanCard extends LitElement {
           title=${this._t('title.markup_add')}>
           <ha-icon icon="mdi:vector-polyline-plus"></ha-icon>${this._t('markup.add')}
         </button>
-        ${this._tool === 'draw' || this._tool === 'partition' || this._tool === 'column'
-          ? html`<label class="drawwall ${this._drawWallCm == null ? 'invalid' : ''}">${this._t('wallthick.field')}
-              <input type="number" min=${cmToField(1, this._imperial)}
-                max=${cmToField(150, this._imperial)} step="any"
-                .value=${this._drawWallFieldValue}
-                @input=${(e: Event) => {
-                  this._drawWallField = (e.target as HTMLInputElement).value;
-                }}
-                title=${this._t(this._tool === 'draw' ? 'markup.draw_wall_title'
-                  : this._tool === 'partition' ? 'physical.partition_size_title'
-                  : 'physical.column_size_title')} />
-              <span class="opl">${this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span>
-              <span class="rangehint">${this._t('physical.allowed_range', {
-                max: cmToField(this._drawWallMaxCm, this._imperial),
-                unit: this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm'),
-              })}</span>
-            </label>`
-          : nothing}
         <button class="btn ${this._tool === 'partition' ? 'on' : ''}"
           @click=${() => { this._cancelPath(); this._tool = 'partition'; }}
           title=${this._t('title.markup_partition')}>
@@ -13318,6 +13688,7 @@ class HouseplanCard extends LitElement {
         title=${this._t('title.markup_delroom')}>
         <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('markup.delete_room')}
       </button>
+      ${this._editorToolbarGroups.map((group) => this._renderEditorGroupLauncher(group))}
       <button class="btn ghost" @click=${this._undoGeometry}
         ?disabled=${!undoName && !boundaryPending}
         title=${undoTitle} aria-label=${undoTitle}>
@@ -13328,54 +13699,38 @@ class HouseplanCard extends LitElement {
         title=${redoTitle} aria-label=${redoTitle}>
         <ha-icon icon="mdi:redo-variant" aria-hidden="true"></ha-icon>
       </button>
-      <span class="spacer"></span>
-      ${this._tool === 'draw'
-        ? html`<span class="hint">${this._path.length
-              ? this._t('markup.hint_points', { n: this._path.length })
-              : this._t('markup.hint_start')}</span>
-            ${this._path.length ? html`<button class="btn ghost" @click=${this._cancelPath}>${this._t('btn.reset')}</button>` : nothing}`
-        : nothing}
-      ${this._tool === 'partition' ? html`<span class="hint">${this._t('markup.hint_partition')}</span>` : nothing}
-      ${this._tool === 'column' ? html`<span class="hint">${this._t('markup.hint_column')}</span>` : nothing}
-      ${this._tool === 'resize' ? html`<span class="hint">${this._t('markup.hint_resize')}</span>` : nothing}
-      ${this._tool === 'boundary'
-        ? html`<span class="hint" role="status" aria-live="polite">${this._t(this._boundaryHintKey)}</span>`
-        : nothing}
-      ${this._tool === 'wallthick' ? html`<span class="hint">${this._t('markup.hint_wallthick')}</span>` : nothing}
-      ${this._physicalSel
-        ? html`<button class="btn ghost" @click=${() => {
-              const s = this._physicalSel!;
-              this._openPhysicalDialog(s.kind, s.id, s.segment);
-            }}><ha-icon icon="mdi:tune"></ha-icon>${this._t('btn.properties')}</button>
-            <button class="btn danger" @click=${this._deletePhysicalSelection}>
-              <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.delete')}
-            </button>`
-        : nothing}
-      <button class="btn barclose" title=${this._t('title.close_editor')}
-        @click=${() => this._setMode('view')}>
-        <ha-icon icon="mdi:close"></ha-icon>
-      </button>
+      </div>
+      <div class="editbar-end">
+        <button class="btn barclose" title=${this._t('title.close_editor')}
+          @click=${() => this._setMode('view')}>
+          <ha-icon icon="mdi:close"></ha-icon>
+        </button>
+      </div>
     </div>`;
   }
 
   private _renderDevicesBar(): TemplateResult {
     return html`<div class="editbar devbar">
-      <ha-icon icon="mdi:tune-variant" class="warn"></ha-icon>
-      <button class="btn" @click=${() => this._openMarkerDialog()} title=${this._t('title.add_device')}>
-        <ha-icon icon="mdi:plus-box-outline"></ha-icon>${this._t('devbar.add')}
-      </button>
-      <button class="btn ${this._showAll ? 'on' : ''}" @click=${this._toggleShowAll}
-        title=${this._t('title.show_all')}>
-        <ha-icon icon="${this._showAll ? 'mdi:eye' : 'mdi:eye-off-outline'}"></ha-icon>${this._t('devbar.show_all')}
-      </button>
-      <button class="btn" @click=${this._openRulesDialog} title=${this._t('title.icon_rules')}>
-        <ha-icon icon="mdi:shape-plus-outline"></ha-icon>${this._t('devbar.rules')}
-      </button>
-      <span class="spacer"></span>
-      <button class="btn barclose" title=${this._t('title.close_editor')}
-        @click=${() => this._setMode('view')}>
-        <ha-icon icon="mdi:close"></ha-icon>
-      </button>
+      <div class="editbar-tools" tabindex="-1">
+        <ha-icon icon="mdi:tune-variant" class="warn"></ha-icon>
+        <button class="btn" @click=${() => this._openMarkerDialog()} title=${this._t('title.add_device')}>
+          <ha-icon icon="mdi:plus-box-outline"></ha-icon>${this._t('devbar.add')}
+        </button>
+        <button class="btn ${this._showAll ? 'on' : ''}" @click=${this._toggleShowAll}
+          title=${this._t('title.show_all')}>
+          <ha-icon icon="${this._showAll ? 'mdi:eye' : 'mdi:eye-off-outline'}"></ha-icon>${this._t('devbar.show_all')}
+        </button>
+        <button class="btn" @click=${this._openRulesDialog} title=${this._t('title.icon_rules')}>
+          <ha-icon icon="mdi:shape-plus-outline"></ha-icon>${this._t('devbar.rules')}
+        </button>
+        ${this._editorToolbarGroups.map((group) => this._renderEditorGroupLauncher(group))}
+      </div>
+      <div class="editbar-end">
+        <button class="btn barclose" title=${this._t('title.close_editor')}
+          @click=${() => this._setMode('view')}>
+          <ha-icon icon="mdi:close"></ha-icon>
+        </button>
+      </div>
     </div>`;
   }
 
@@ -14302,7 +14657,7 @@ class HouseplanCard extends LitElement {
     </hp-dialog>`;
   }
 
-  static styles = cardStyles;
+  static styles = [cardStyles, editorSecondaryStyles];
 }
 
 if (!customElements.get('houseplan-card')) {

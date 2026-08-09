@@ -4,7 +4,7 @@
 > Driven by the owner's mandate and confirmed by real user feedback
 > ([issue #3](https://github.com/Matysh/houseplan-card/issues/3): *"When moving the
 > map around, I sometimes move the doors/sensors around"*). This document is the
-> source of truth for the implementation iterations below. No code has been changed yet.
+> source of truth for the implemented mode architecture and later iterations.
 
 ## Principle
 
@@ -28,6 +28,12 @@ inert everywhere outside its editor).
   does nothing; editors switch directly with a short content fade and an
   interpolation between their measured toolbar heights, including wrapped
   multi-row layouts. Reduced-motion preferences disable this transition.
+- An editor's primary toolbar contains only persistent tools. Close is pinned
+  in its own end cap. Selection actions, active-tool parameters, operation
+  hints and palettes appear in one translucent context tray over the top of the
+  stage, so they do not shrink/refit the plan or move Close. The tray is also
+  the shared second-level surface for future explicitly approved tool groups;
+  existing tools are not grouped automatically.
 - All editor tabs are shown only to admins when
   `admin_only` is on.
 

@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+## v1.60.3-beta.2 — 2026-08-09
+
+- Editor toolbars now keep a stable height while selecting objects or changing
+  active-tool context. Properties, Delete, drawing parameters, operation hints
+  and the furniture palette use one translucent tray over the stage, so the
+  plan no longer shrinks/refits and Close stays pinned. The same accessible
+  surface is prepared for future explicitly designed tool groups without
+  grouping any current buttons automatically.
+- Two-finger gestures no longer activate an interactive plan item when a pinch
+  starts over it, and robot-map calibration no longer zooms the plan underneath
+  its overlay. Furniture palettes and future tool groups now dismiss reliably
+  outside the card without swallowing an unrelated following click.
+- Small fixes and improvements: reduced-motion navigation is respected again,
+  stale contextual actions are rejected immediately after local edits, and the
+  editor/performance regression checks now exercise their real UI and state.
+
 ## v1.60.3-beta.1 — 2026-08-08
 
 - Returning to a briefly backgrounded browser tab no longer forces a one-frame
