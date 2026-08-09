@@ -139,7 +139,7 @@ import {
 } from './editors/decor/geometry';
 import { renderOpeningTunnelFills } from './render/opening-tunnels';
 
-const CARD_VERSION = '1.60.3-beta.2';
+const CARD_VERSION = '1.60.3';
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
 const CELL_CM_MIN = 0.1;

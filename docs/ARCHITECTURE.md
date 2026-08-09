@@ -1,6 +1,6 @@
 # House Plan architecture
 
-Updated: 2026-08-09 (v1.60.3-beta.2). The repository = a HACS integration (category **Integration**)
+Updated: 2026-08-09 (v1.60.3). The repository = a HACS integration (category **Integration**)
 that contains both the backend (`custom_components/houseplan`) and the Lovelace card (`src/` → `dist/`).
 
 ## Layout

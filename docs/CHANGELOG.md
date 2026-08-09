@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+## v1.60.3 — 2026-08-09
+
+- Editor toolbars now keep their working area stable: selection actions,
+  transient tool settings and the furniture palette open in one accessible
+  context tray over the stage, while Close remains pinned. Adaptive wide,
+  medium and narrow layouts are covered by deterministic golden scenarios.
+- Returning to a browser tab no longer causes the plan to flash or briefly
+  reset its zoom/day state. Two-finger gestures cannot activate an underlying
+  marker, and vacuum-map fitting isolates its own gesture surface.
+- Thick-wall openings use one wall association for their symbol, cut and
+  room-coloured tunnel. Detached/T-junction walls no longer steal a side,
+  overlapping openings do not compound opacity, and adjacent atomic tunnel
+  strips no longer expose thin SVG seams.
+- Furniture previews stay inside their palette buttons, the editor Close icon
+  is centred, and dismissing an unarmed palette no longer leaves click
+  suppression behind.
+- Maintenance improvements include deterministic golden-image coverage,
+  same-runner performance gates and migration of the active backlog to GitHub
+  Issues + Project v2.
+- Small fixes and improvements.
+
 ## v1.60.3-beta.2 — 2026-08-09
 
 - Editor toolbars now keep a stable height while selecting objects or changing
