@@ -47,7 +47,7 @@ check('bundleVersionFound', typeof BUNDLE_VERSION === 'string' && BUNDLE_VERSION
 checkAll(res, {
   "rows": 15, // 11 цветов (включая wall_fill) + радиус свечения + фон
                // + «Оптимизировать планы» (docs/CANVAS.md §9)
-  "groups": ["Fill: lights", "Fill: temperature", "Fill: zigbee signal", "Light-sources fill", "Walls", "Stage background", "Sun", "Plan maintenance", "About"],
+  "groups": ["Fill: lights", "Fill: temperature", "Fill: zigbee signal", "Light-source glow", "Walls", "Stage background", "Sun", "Plan maintenance", "About"],
   "aboutVersion": `Houseplan Card v${BUNDLE_VERSION}`, // та же константа, что в баннере
   "aboutLinks": [
     { "href": "https://github.com/Matysh/houseplan-card", "target": "_blank", "rel": "noopener" },

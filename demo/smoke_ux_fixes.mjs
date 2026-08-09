@@ -29,6 +29,9 @@ const res = await page.evaluate(async () => {
   // диалог: радио заливки, компактные поля, ширина
   c._openSpaceDialog('edit', 'f1'); await c.updateComplete;
   out.fillRadios = sr().querySelectorAll('input[name="fillmode"]').length;
+  out.glowToggle = [...sr().querySelectorAll('hp-dialog label.srcrow')].some((label) =>
+    label.textContent.trim() === c._t('space.glow_enabled')
+      && !!label.querySelector('ha-switch,input[type="checkbox"]'));
   out.tempInputs = sr().querySelectorAll('.temprange .tempin').length;
   const hpDialog = sr().querySelector('hp-dialog');
   out.dialogWide = !!hpDialog?.hasAttribute('wide') && !!hpDialog.querySelector('.srcrow');
@@ -51,7 +54,7 @@ checkAll(res, {
   "filledClass": 1,
   "unfilled": 3,
   "tipTemp": 22.4,
-  "fillRadios": 5,
+  "fillRadios": 4,
   "tempInputs": 2,
   "dialogWidth": 500,
 });

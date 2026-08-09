@@ -10,12 +10,10 @@ const res = await page.evaluate(async () => {
     ...s, settings: { ...(s.settings || {}), fill_mode: 'glow' } })) };
   c.requestUpdate(); await c.updateComplete;
   await new Promise((r) => setTimeout(r, 250));
-  // 1) все комнаты залиты темнотой одинаково (независимо от ламп)
-  const rooms = [...sr().querySelectorAll('.room.styled')];
-  out.roomsDark = rooms.length > 0 && rooms.every((el) => {
-    const st = el.getAttribute('style') || '';
-    return st.includes('--room-fill:#0d1b2a');
-  });
+  // 1) legacy glow переносится в отдельный base-overlay, не в data-fill комнат
+  const modelRooms = c._spaceModel().rooms.length;
+  out.dataFillSeparated = sr().querySelectorAll('.room.filled').length === 0;
+  out.glowBaseRooms = sr().querySelectorAll('.glow-base-layer .glow-base').length === modelRooms;
   // 2) пятна от включённых ламп
   const litLight = c._devices.find((d) => d.space === spId && d.entities.some((e) => e.startsWith('light.') && c.hass.states[e]?.state === 'on'));
   out.hasLitLight = !!litLight;

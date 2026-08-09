@@ -46,16 +46,13 @@ const res = await page.evaluate(async () => {
   out.createHasSection = [...sr().querySelectorAll('hp-dialog label')].some((l) => l.textContent === c._t('room.settings_section'));
   out.createHasInherit = [...sr().querySelectorAll('hp-dialog .srcrow')].some((l) => l.textContent.trim() === c._t('fill.inherit'));
   c._roomDialogCancel(); await c.updateComplete;
-  // 6) glow-пространство: оверрайд none выводит комнату из тьмы
+  // 6) room fill:none не выключает независимый Glow пространства
   c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== spId ? s : ({
     ...s, settings: { ...(s.settings || {}), fill_mode: 'glow' } })) };
   c._setMode('view'); c.requestUpdate(); await c.updateComplete;
   await new Promise((r) => setTimeout(r, 250));
-  const styledRooms = [...sr().querySelectorAll('.room.styled')];
-  const darkCount = styledRooms.filter((el) => (el.getAttribute('style') || '').includes('--room-fill:#0d1b2a')).length;
-  const areaRooms = c._spaceModel().rooms.filter((r) => r.area).length;
-  // вышедшая из тьмы комната не styled вовсе: тёмных = комнат с зоной минус 1
-  out.glowOptOut = darkCount === areaRooms - 1 && darkCount === styledRooms.length;
+  out.fillDoesNotOptOutGlow = !sr().querySelector('clipPath#hp-glow-enabled')
+    && sr().querySelectorAll('.glow-base-layer .glow-base').length === c._spaceModel().rooms.length;
   return out;
 });
 checkAll(res);
