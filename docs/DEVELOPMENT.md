@@ -238,8 +238,9 @@ by any process).
 
 `Publish prerelease` in GitHub Actions is the browser/button equivalent. Select
 the `dev` branch and enter the exact tag. It performs the same contract and
-draft-first publication entirely on GitHub, including both assets and the
-Telegram announcement. GitHub exposes a `workflow_dispatch` button only after
+draft-first publication entirely on GitHub, including both assets. Prereleases
+are intentionally silent in Telegram; only stable releases are announced.
+GitHub exposes a `workflow_dispatch` button only after
 the workflow file exists on the default branch; until the next promotion to
 `main`, use the local command. The button deliberately does not close Issues or
 edit the user-owned Project because the repository `GITHUB_TOKEN` has no safe

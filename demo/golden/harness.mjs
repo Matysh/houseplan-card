@@ -86,6 +86,16 @@ export async function prepareGoldenScenario(page, scenario) {
       fixture.states[entityId] = { ...state, state: 'off' };
     }
   }
+  if (scenario.markerOverrides) {
+    const ids = new Set(scenario.markerOverrides.map((marker) => marker.id));
+    fixture.config.markers = [
+      ...(fixture.config.markers || []).filter((marker) => !ids.has(marker.id)),
+      ...structuredClone(scenario.markerOverrides),
+    ];
+  }
+  if (scenario.layoutOverrides) {
+    fixture.layout = { ...(fixture.layout || {}), ...structuredClone(scenario.layoutOverrides) };
+  }
 
   return page.evaluate(async ({ fixture, scenario }) => {
     const wait = (ms) => new Promise((done) => setTimeout(done, ms));

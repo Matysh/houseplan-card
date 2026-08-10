@@ -4,6 +4,7 @@ import { dirname, resolve } from 'node:path';
 import { evaluatePerformanceBudget, performanceSummaryMarkdown } from './evaluate.mjs';
 
 const valueArg = (name) => process.argv.find((arg) => arg.startsWith(`--${name}=`))?.slice(name.length + 3);
+const absoluteOnly = process.argv.includes('--absolute-only');
 const candidatePath = resolve(valueArg('candidate') ?? 'artifacts/performance/candidate.json');
 const baselinePath = resolve(valueArg('baseline') ?? 'artifacts/performance/baseline.json');
 const budgetsPath = resolve(valueArg('budgets') ?? 'demo/performance/budgets.json');
@@ -12,8 +13,9 @@ const outputPath = resolve(valueArg('output') ?? 'artifacts/performance/comparis
 const readJson = (path) => JSON.parse(readFileSync(path, 'utf8'));
 const evaluation = evaluatePerformanceBudget({
   candidate: readJson(candidatePath),
-  baseline: readJson(baselinePath),
+  baseline: absoluteOnly ? null : readJson(baselinePath),
   budgets: readJson(budgetsPath),
+  absoluteOnly,
 });
 
 mkdirSync(dirname(outputPath), { recursive: true });

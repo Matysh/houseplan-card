@@ -1,0 +1,172 @@
+name: Full Performance
+
+on:
+  # Every main promotion is a stable-release candidate and must have an
+  # exact-SHA full comparison before stable assets are published.
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+    inputs:
+      comparison_ref:
+        description: "Optional baseline tag, branch or SHA; empty uses the candidate parent"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: full-performance-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  performance:
+    # Base and candidate stay sequential on one hosted runner. Splitting them
+    # across runners would turn machine variance into a false regression.
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out candidate
+        uses: actions/checkout@v4
+        with:
+          path: candidate
+          fetch-depth: 2
+
+      - name: Resolve comparison SHA
+        id: base
+        working-directory: candidate
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+          MANUAL_BASE: ${{ inputs.comparison_ref }}
+        run: |
+          set -euo pipefail
+          if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
+            git fetch --force --tags --prune --unshallow origin
+          else
+            git fetch --force --tags --prune origin
+          fi
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ -n "$MANUAL_BASE" ]; then
+            sha="$(git rev-parse "${MANUAL_BASE}^{commit}" 2>/dev/null || true)"
+            source="manual comparison ref $MANUAL_BASE"
+          elif [ "$EVENT_NAME" = "push" ] && [ -n "$PUSH_BEFORE_SHA" ] && ! printf '%s' "$PUSH_BEFORE_SHA" | grep -Eq '^0+$'; then
+            sha="$PUSH_BEFORE_SHA"
+            source="push before"
+          else
+            sha="$(git rev-parse HEAD^ 2>/dev/null || true)"
+            source="candidate parent"
+          fi
+          requested_sha="$sha"
+
+          usable=true
+          reason=""
+          if [ -z "$sha" ] || ! git cat-file -e "${sha}^{commit}" 2>/dev/null; then
+            usable=false
+            reason="commit is not present after fetching all remote refs"
+          elif [ "$source" = "push before" ] && ! git merge-base --is-ancestor "$sha" HEAD; then
+            usable=false
+            reason="commit is no longer an ancestor of the pushed revision"
+          fi
+
+          if [ "$usable" != true ]; then
+            parent_sha="$(git rev-parse HEAD^ 2>/dev/null || true)"
+            if [ -n "$parent_sha" ] && [ "$parent_sha" != "$(git rev-parse HEAD)" ]; then
+              sha="$parent_sha"
+              source="candidate parent (unusable requested-base fallback)"
+              echo "::warning::Comparison SHA ${requested_sha:-none} is unusable ($reason); using candidate parent $sha."
+              usable=true
+            fi
+          fi
+
+          if [ "$usable" != true ]; then
+            fallback_tag=""
+            fallback_sha=""
+            head_sha="$(git rev-parse HEAD)"
+            while IFS= read -r tag; do
+              case "$tag" in
+                v[0-9]*.[0-9]*.[0-9]*) ;;
+                *) continue ;;
+              esac
+              tag_sha="$(git rev-list -n 1 "$tag")"
+              if [ "$tag_sha" != "$head_sha" ]; then
+                fallback_tag="$tag"
+                fallback_sha="$tag_sha"
+                break
+              fi
+            done < <(git tag --merged HEAD --sort=-version:refname)
+            if [ -z "$fallback_sha" ]; then
+              echo "::error::No usable comparison commit or previous release tag is reachable from HEAD."
+              exit 1
+            fi
+            sha="$fallback_sha"
+            source="release tag $fallback_tag"
+            echo "::warning::Using $fallback_tag ($sha) as the comparison base."
+          fi
+
+          if ! git cat-file -e "${sha}:demo/bundle-freshness.mjs" 2>/dev/null; then
+            echo "::warning::Comparison $sha predates HP-PERF-01; using candidate parent HEAD^."
+            sha="$(git rev-parse HEAD^)"
+            source="candidate parent (HP-PERF-01 compatibility)"
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "Comparison base: $sha ($source)" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check out base SHA
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.base.outputs.sha }}
+          path: baseline
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            candidate/package-lock.json
+            baseline/package-lock.json
+
+      - name: Install candidate and baseline dependencies
+        run: npm ci --prefix candidate && npm ci --prefix baseline
+
+      - name: Install pinned Chromium
+        working-directory: candidate
+        run: npx playwright install --with-deps chromium
+
+      - name: Build both exact source trees
+        run: |
+          npm --prefix candidate run build
+          cp candidate/dist/houseplan-card.js candidate/demo/srv/assets/houseplan-card.js
+          npm --prefix baseline run build
+          cp baseline/dist/houseplan-card.js baseline/demo/srv/assets/houseplan-card.js
+
+      - name: Capture base and candidate profiles
+        working-directory: candidate
+        run: |
+          npm run benchmark:large-house -- --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/baseline.json
+          npm run benchmark:large-house -- --target-root=. --samples=7 --warmups=1 --output=../artifacts/performance/candidate.json
+          npm run benchmark:glow -- --profile=large-light-blend-v1 --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/blend-baseline.json
+          npm run benchmark:glow -- --profile=large-light-blend-v1 --target-root=. --samples=7 --warmups=1 --output=../artifacts/performance/blend-candidate.json
+          npm run benchmark:glow -- --profile=large-house-glow-overlay-v1 --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/overlay-baseline.json
+          npm run benchmark:glow -- --profile=large-house-glow-overlay-v1 --target-root=. --samples=7 --warmups=1 --output=../artifacts/performance/overlay-candidate.json
+          if ! grep -q "glow_enabled" ../baseline/src/logic.ts; then
+            echo "Base predates independent Glow; bootstrap relative overlay baseline, keep absolute gate"
+            cp ../artifacts/performance/overlay-candidate.json ../artifacts/performance/overlay-baseline.json
+          fi
+
+      - name: Enforce relative and absolute performance budgets
+        working-directory: candidate
+        run: |
+          npm run benchmark:compare -- --baseline=../artifacts/performance/baseline.json --candidate=../artifacts/performance/candidate.json --output=../artifacts/performance/comparison.json
+          npm run benchmark:compare -- --budgets=demo/performance/budgets-large-light-blend.json --baseline=../artifacts/performance/blend-baseline.json --candidate=../artifacts/performance/blend-candidate.json --output=../artifacts/performance/blend-comparison.json
+          npm run benchmark:compare -- --budgets=demo/performance/budgets-large-house-glow-overlay.json --baseline=../artifacts/performance/overlay-baseline.json --candidate=../artifacts/performance/overlay-candidate.json --output=../artifacts/performance/overlay-comparison.json
+
+      - name: Upload full performance reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-performance
+          path: artifacts/performance

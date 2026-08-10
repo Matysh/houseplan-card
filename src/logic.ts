@@ -1636,23 +1636,84 @@ export function kelvinToRgb(kelvin: number): [number, number, number] {
   return [cl(r), cl(g), cl(b)];
 }
 
-/**
- * Color and relative brightness of a light's glow: rgb_color as is, else the
- * color temperature via blackbody, else the configured fallback. Off → null.
- */
-export function glowColorOf(state: any, fallback: string): { c: string; bri: number } | null {
-  if (!state || state.state !== 'on') return null;
-  const a = state.attributes || {};
-  const briRaw = Number(a.brightness);
-  const bri = Number.isFinite(briRaw) && briRaw > 0 ? Math.max(0.15, Math.min(1, briRaw / 255)) : 1;
+export interface GlowColorOverride { c: string; bri?: number | null }
+export interface ResolvedGlowValues { c: string; bri: number }
+
+export const GLOW_SCALE_MAX = 0.7;
+export const GLOW_MIN_FRAC = 0.4;
+export const GLOW_GAMMA = 1 / 2.2;
+
+function rgbCssToHex(value: string): string | null {
+  const match = /^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/.exec(value);
+  if (!match) return null;
+  return '#' + match.slice(1).map((part) => Math.min(255, Number(part)).toString(16).padStart(2, '0')).join('');
+}
+
+function rgbTupleToHex(value: readonly number[]): string {
+  return '#' + value.slice(0, 3).map((part) =>
+    Math.min(255, Math.max(0, Math.round(Number(part) || 0))).toString(16).padStart(2, '0')).join('');
+}
+
+/** Strict, all-or-nothing parser for the persisted Glow override. */
+export function normalizeGlowColorOverride(value: unknown): GlowColorOverride | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const raw = value as Record<string, unknown>;
+  if (Object.keys(raw).some((key) => key !== 'c' && key !== 'bri')) return null;
+  const c = safeStoredColor(raw.c, null);
+  if (!c) return null;
+  if (raw.bri === undefined || raw.bri === null) return { c };
+  if (typeof raw.bri !== 'number' || !Number.isFinite(raw.bri) || raw.bri < 0.01 || raw.bri > 1) return null;
+  return { c, bri: raw.bri };
+}
+
+/** Live HA brightness normalized to 0..1. Missing/invalid means full output. */
+export function liveGlowBrightness(state: any): number {
+  const attr = state?.attributes?.brightness;
+  const raw = typeof attr === 'number'
+    ? attr
+    : (typeof attr === 'string' && attr.trim() !== '' ? Number(attr) : Number.NaN);
+  return Number.isFinite(raw) ? Math.max(0, Math.min(1, raw / 255)) : 1;
+}
+
+/** Resolve colour and brightness without applying the entity's on/off gate. */
+export function resolveGlowValues(
+  state: any,
+  override: unknown,
+  fallback: string,
+): ResolvedGlowValues {
+  const normalized = normalizeGlowColorOverride(override);
+  const a = state?.attributes || {};
+  const bri = normalized?.bri ?? liveGlowBrightness(state);
+  if (normalized) return { c: normalized.c, bri };
   const rgb = generatedRgbColor(a.rgb_color);
-  if (rgb) return { c: rgb, bri };
+  if (rgb) return { c: rgbCssToHex(rgb) || safeStoredColor(fallback, '#ffd9a0'), bri };
   const kelvin = Number(a.color_temp_kelvin) || (Number(a.color_temp) > 0 ? 1e6 / Number(a.color_temp) : NaN);
   if (Number.isFinite(kelvin) && kelvin > 0) {
-    const [r, g, b] = kelvinToRgb(kelvin);
-    return { c: `rgb(${r}, ${g}, ${b})`, bri };
+    return { c: rgbTupleToHex(kelvinToRgb(kelvin)), bri };
   }
-  return { c: fallback, bri };
+  return { c: safeStoredColor(fallback, '#ffd9a0'), bri };
+}
+
+/** Resolve the visible Glow. Off/unavailable/missing state is not painted. */
+export function resolveGlowAppearance(
+  state: any,
+  override: unknown,
+  fallback: string,
+): ResolvedGlowValues | null {
+  return state?.state === 'on' ? resolveGlowValues(state, override, fallback) : null;
+}
+
+/** Final per-stop opacity; the SVG layer itself must not apply another alpha. */
+export function glowAlpha(brightness: number, paletteAlpha = 1): number {
+  const bri = Math.max(0, Math.min(1, Number.isFinite(brightness) ? brightness : 1));
+  const palette = Math.max(0, Math.min(1, Number.isFinite(paletteAlpha) ? paletteAlpha : 1));
+  const alpha = palette * GLOW_SCALE_MAX * (GLOW_MIN_FRAC + (1 - GLOW_MIN_FRAC) * Math.pow(bri, GLOW_GAMMA));
+  return Math.max(0, Math.min(1, alpha));
+}
+
+/** @deprecated Use resolveGlowAppearance(). */
+export function glowColorOf(state: any, fallback: string): ResolvedGlowValues | null {
+  return resolveGlowAppearance(state, null, fallback);
 }
 
 /**

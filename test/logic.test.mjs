@@ -4,7 +4,8 @@ import {
   lqiColor, snapToGrid, snapSegment45, segKey, samePoint, pointInPolygon, markerIdForBinding, averageLqi,
   fitView, declump, safeUrl, resolveTapAction, floorsOf, subst, spaceDisplayOf, roomFillColor,
   splitRoomPath, polyContainsPoly, islandsOf,
-  kelvinToRgb, glowColorOf, doorSector, hasRoomBehind,
+  kelvinToRgb, glowColorOf, normalizeGlowColorOverride, liveGlowBrightness,
+  resolveGlowValues, resolveGlowAppearance, glowAlpha, doorSector, hasRoomBehind,
   controlsAction, isControllable,
   sharedBoundary, openZoneOf, distToSegment,
   outlineWithout,
@@ -842,18 +843,63 @@ test('kelvinToRgb: warm is orange-ish, cool is blue-ish white', () => {
 });
 
 test('glowColorOf: rgb wins, then color temp, then fallback; off = null', () => {
-  assert.equal(glowColorOf({ state: 'off', attributes: {} }, '#fff'), null);
-  assert.equal(glowColorOf(null, '#fff'), null);
-  const rgb = glowColorOf({ state: 'on', attributes: { rgb_color: [10, 20, 30], brightness: 128 } }, '#fff');
-  assert.equal(rgb.c, 'rgb(10, 20, 30)');
+  assert.equal(glowColorOf({ state: 'off', attributes: {} }, '#ffffff'), null);
+  assert.equal(glowColorOf(null, '#ffffff'), null);
+  const rgb = glowColorOf({ state: 'on', attributes: { rgb_color: [10, 20, 30], brightness: 128 } }, '#ffffff');
+  assert.equal(rgb.c, '#0a141e');
   assert.ok(Math.abs(rgb.bri - 0.5) < 0.01);
-  const ct = glowColorOf({ state: 'on', attributes: { color_temp_kelvin: 2700 } }, '#fff');
-  assert.ok(ct.c.startsWith('rgb(255'));
-  const mireds = glowColorOf({ state: 'on', attributes: { color_temp: 370 } }, '#fff'); // ~2700K
-  assert.ok(mireds.c.startsWith('rgb(255'));
+  const ct = glowColorOf({ state: 'on', attributes: { color_temp_kelvin: 2700 } }, '#ffffff');
+  assert.ok(ct.c.startsWith('#ff'));
+  const mireds = glowColorOf({ state: 'on', attributes: { color_temp: 370 } }, '#ffffff'); // ~2700K
+  assert.ok(mireds.c.startsWith('#ff'));
   const fb = glowColorOf({ state: 'on', attributes: {} }, '#abcdef');
   assert.equal(fb.c, '#abcdef');
   assert.equal(fb.bri, 1);
+});
+
+test('Glow overrides are strict and values resolve independently from on/off', () => {
+  const off = { state: 'off', attributes: { rgb_color: [10, 20, 30], brightness: '128' } };
+  assert.deepEqual(resolveGlowValues(off, null, '#abcdef'), { c: '#0a141e', bri: 128 / 255 });
+  assert.equal(resolveGlowAppearance(off, null, '#abcdef'), null);
+  assert.deepEqual(resolveGlowAppearance(
+    { ...off, state: 'on' }, { c: '#123456' }, '#abcdef',
+  ), { c: '#123456', bri: 128 / 255 });
+  assert.deepEqual(resolveGlowAppearance(
+    { ...off, state: 'on' }, { c: '#123456', bri: 0.25 }, '#abcdef',
+  ), { c: '#123456', bri: 0.25 });
+  assert.deepEqual(normalizeGlowColorOverride({ c: '#123456', bri: null }), { c: '#123456' });
+  for (const invalid of [
+    { c: 'red' }, { c: '#123456', bri: 0 }, { c: '#123456', bri: Number.NaN },
+    { c: '#123456', bri: '0.5' }, { c: '#123456', extra: true }, { bri: 0.5 }, [],
+  ]) assert.equal(normalizeGlowColorOverride(invalid), null);
+});
+
+test('live Glow brightness and perceptual alpha keep the documented bounds', () => {
+  assert.equal(liveGlowBrightness({ attributes: { brightness: 0 } }), 0);
+  assert.equal(liveGlowBrightness({ attributes: { brightness: -5 } }), 0);
+  assert.equal(liveGlowBrightness({ attributes: { brightness: 300 } }), 1);
+  assert.equal(liveGlowBrightness({ attributes: { brightness: '128' } }), 128 / 255);
+  for (const invalid of [null, '', '  ', true, Number.NaN, Number.POSITIVE_INFINITY]) {
+    assert.equal(liveGlowBrightness({ attributes: { brightness: invalid } }), 1);
+  }
+  const table = [
+    [1 / 255, 0.267],
+    [0.01, 0.282],
+    [0.1, 0.363],
+    [0.2, 0.410],
+    [0.5, 0.499],
+    [0.8, 0.561],
+    [1, 0.595],
+  ];
+  for (const [brightness, expected] of table) {
+    assert.ok(
+      Math.abs(glowAlpha(brightness, 0.85) - expected) <= 0.001,
+      `alpha(${brightness}) must match the acceptance table`,
+    );
+  }
+  assert.ok(Math.abs(glowAlpha(0, 0.85) - 0.238) < 1e-12);
+  assert.ok(glowAlpha(0.1, 0.85) < glowAlpha(0.5, 0.85));
+  assert.ok(glowAlpha(0.5, 0.85) < glowAlpha(1, 0.85));
 });
 
 test('doorSector: sector through a door, clamped and guarded', () => {

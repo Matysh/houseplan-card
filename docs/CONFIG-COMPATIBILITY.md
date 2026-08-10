@@ -75,3 +75,23 @@ or remove the Glow base by default. A zero-opacity resolved fill still receives
 the Glow base. `none` remains accepted by the model and exposed at room level,
 where it is still required to suppress an inherited
 LQI/light/temperature/custom fill for one room.
+
+## Per-marker light role and Glow appearance
+
+`marker.is_light` is tri-state. Missing/null means automatic device-role
+discovery, `true` forces the marker's own controllable entity to be a spatial
+source, and `false` suppresses that own source. External `controls` are not
+suppressed: they continue to contribute to room light state and counts without
+placing a Glow pool at the controller. This intentionally changes the read
+semantics of hand-written legacy `is_light: false`: older frontends treated it
+like Auto, while current frontends treat it as Never. The historical writer
+only emitted `true` or `null`, so ordinary UI-authored configs are unaffected.
+
+`marker.glow_color` is optional and strict: `{c:'#RRGGBB'}` fixes colour while
+keeping live brightness; `{c:'#RRGGBB',bri:0.01..1}` fixes both. Missing/null
+uses the live source. Invalid objects fall back atomically to live values and
+never partially reach SVG. `{c,bri:null}` is accepted for compatibility,
+projects like `{c}`, and is canonicalised to `{c}` by the next marker save.
+Older frontends ignore this field at render time and may erase it when they
+rebuild the same marker after a downgrade; this limitation cannot be repaired
+retroactively.

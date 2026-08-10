@@ -21,7 +21,8 @@ import {
   snapToWall, snapPointAlongPoly, openingAmount, openingShoulders, interiorPoint,
   poleOfInaccessibility, subst,
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
-  stateIcon, lightColorOf, parseRoomRef, diffNewDevices, glowColorOf, doorSector, hasRoomBehind, controlsAction, isControllable,
+  stateIcon, lightColorOf, parseRoomRef, diffNewDevices, resolveGlowValues, resolveGlowAppearance,
+  glowAlpha, normalizeGlowColorOverride, doorSector, hasRoomBehind, controlsAction, isControllable,
   spaceDisplayOf, resolveEffectiveRoomFill, fillColorsOf, DEFAULT_FILL_COLORS,
   customFillOf, roomCustomFillOf, DEFAULT_CUSTOM_FILL,
   type FillColors, type FillColorEntry, type ResolvedRoomFill, runServiceFor, RUN_TARGET_DOMAINS,
@@ -83,6 +84,7 @@ import {
   buildDevices, deviceFromMarkerDraft, seedHiddenBindings, lqiFor, tempFor, humFor, climateTempFor, isHumEntity,
   areaTemp, areaHum, sourceValue, areaClimateMap,
   resolvedLightSources, resolvedLightState, resolvedLightStats,
+  hasOwnSpatialSource, selectSpatialGlowSource,
   resolvedDeviceStateEntities, removedPlanBindings, isRemovedPlanEntity,
   deletePlanMarkerRecords, effectiveMarkerControls, persistedExternalControls,
   resolveIcon,
@@ -146,7 +148,7 @@ import {
 import { renderOpeningTunnelFills } from './render/opening-tunnels';
 import { safeStoredColor } from './color';
 
-const CARD_VERSION = '1.61.0-beta.4';
+const CARD_VERSION = '1.61.0-beta.5';
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
 const CELL_CM_MIN = 0.1;
@@ -1039,7 +1041,18 @@ class HouseplanCard extends LitElement {
     controls: string[];  // entities this icon toggles as a group
     controlsFilter: string;
     glowRadius: string;  // per-device glow radius in display units; '' = global default
-    isLight: boolean;    // force this marker to glow (dumb fixtures behind a switch)
+    lightRole: 'auto' | 'always' | 'never';
+    lightRoleTouched: boolean;
+    originalHasIsLight: boolean;
+    originalIsLight: boolean | null | undefined;
+    glowMode: 'auto' | 'color' | 'fixed';
+    glowColor: string;
+    glowBrightness: number; // 1..100 for the fixed mode
+    glowColorDrafted: boolean;
+    glowBrightnessDrafted: boolean;
+    glowTouched: boolean;
+    originalHasGlowColor: boolean;
+    originalGlowColor: { c: string; bri?: number | null } | null | undefined;
     useClimateTemp: boolean; // badge + room-average vote from climate current_temperature
     model: string;
     link: string;
@@ -9522,6 +9535,10 @@ class HouseplanCard extends LitElement {
       return;
     }
     if (d) {
+      const marker = d.marker;
+      const hasIsLight = Object.prototype.hasOwnProperty.call(marker || {}, 'is_light');
+      const hasGlowColor = Object.prototype.hasOwnProperty.call(marker || {}, 'glow_color');
+      const glowOverride = normalizeGlowColorOverride(marker?.glow_color);
       this._markerDialog = {
         devId: d.id,
         name: d.name,
@@ -9548,7 +9565,18 @@ class HouseplanCard extends LitElement {
         // effective projection; a legacy self-reference is not a light source.
         controls: persistedExternalControls(d.marker?.binding, d.marker?.controls, d.entities),
         controlsFilter: '',
-        isLight: d.marker?.is_light === true,
+        lightRole: marker?.is_light === true ? 'always' : marker?.is_light === false ? 'never' : 'auto',
+        lightRoleTouched: false,
+        originalHasIsLight: hasIsLight,
+        originalIsLight: marker?.is_light,
+        glowMode: glowOverride?.bri != null ? 'fixed' : glowOverride ? 'color' : 'auto',
+        glowColor: glowOverride?.c || this._fillColors.glow_light.c,
+        glowBrightness: Math.max(1, Math.round((glowOverride?.bri ?? 1) * 100)),
+        glowColorDrafted: !!glowOverride,
+        glowBrightnessDrafted: glowOverride?.bri != null,
+        glowTouched: false,
+        originalHasGlowColor: hasGlowColor && (!!glowOverride || marker?.glow_color === null),
+        originalGlowColor: glowOverride || (marker?.glow_color === null ? null : undefined),
         useClimateTemp: d.marker?.use_climate_temp === true,
         glowRadius: Number(d.marker?.glow_radius_cm) > 0
           ? String(this._imperial
@@ -9571,7 +9599,12 @@ class HouseplanCard extends LitElement {
         showEntities: false, bindingFilter: '', icon: '', autoIcon: '',
         display: 'badge', rippleColor: '', rippleSize: 3, size: 1, angle: 0,
         tapAction: '', tapTarget: '', tapConfirm: false, runFilter: '',
-        defaultTap: 'info', controls: [], controlsFilter: '', isLight: false,
+        defaultTap: 'info', controls: [], controlsFilter: '',
+        lightRole: 'auto', lightRoleTouched: false,
+        originalHasIsLight: false, originalIsLight: undefined,
+        glowMode: 'auto', glowColor: this._fillColors.glow_light.c, glowBrightness: 100,
+        glowColorDrafted: false, glowBrightnessDrafted: false, glowTouched: false,
+        originalHasGlowColor: false, originalGlowColor: undefined,
         useClimateTemp: false, glowRadius: '', model: '',
         link: '', description: '', pdfs: [], room: '', hideFromPlan: false, busy: false,
         uploadId: 'up_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
@@ -9870,6 +9903,28 @@ class HouseplanCard extends LitElement {
     };
   }
 
+  /** Persist only deliberate role/appearance edits; untouched legacy absence stays absent. */
+  private _markerLightFields(d: NonNullable<HouseplanCard['_markerDialog']>): Partial<Marker> {
+    const fields: Partial<Marker> = {};
+    if (!d.lightRoleTouched) {
+      if (d.originalHasIsLight) fields.is_light = d.originalIsLight ?? null;
+    } else if (d.lightRole === 'always') fields.is_light = true;
+    else if (d.lightRole === 'never') fields.is_light = false;
+
+    if (!d.glowTouched) {
+      if (d.originalHasGlowColor) fields.glow_color = d.originalGlowColor ?? null;
+    } else if (d.glowMode !== 'auto') {
+      const glow: NonNullable<Marker['glow_color']> = {
+        c: safeStoredColor(d.glowColor, this._fillColors.glow_light.c),
+      };
+      if (d.glowMode === 'fixed') {
+        glow.bri = Math.max(0.01, Math.min(1, Math.round(d.glowBrightness) / 100));
+      }
+      fields.glow_color = glow;
+    }
+    return fields;
+  }
+
   private async _saveMarker(): Promise<void> {
     const dlg = this._markerDialog;
     if (!dlg || dlg.busy) return;
@@ -9943,7 +9998,7 @@ class HouseplanCard extends LitElement {
         tap_confirm: dlg.tapConfirm ? true : null,
         controls: controls.length ? controls : null,
         // pdfs may be rewritten below when rebinding changes the marker id
-        is_light: dlg.isLight ? true : null,
+        ...this._markerLightFields(dlg),
         use_climate_temp: dlg.useClimateTemp ? true : null,
         glow_radius_cm: (() => {
           const v = strictNumber(dlg.glowRadius);
@@ -11111,14 +11166,19 @@ class HouseplanCard extends LitElement {
    *  ha-slider emits `input` while dragging and `change` on release
    *  (which of the two carries the final value differs between HA
    *  versions - listen to both, the handler is idempotent). */
-  private _rangeInput(min: number, max: number, step: number, value: number, onInput: (v: number) => void): TemplateResult {
+  private _rangeInput(
+    min: number, max: number, step: number, value: number,
+    onInput: (v: number) => void, disabled = false, ariaLabel?: string,
+  ): TemplateResult {
     const h = (e: Event) => {
       const n = Number((e.target as HTMLInputElement).value);
       if (Number.isFinite(n)) onInput(n);
     };
     return customElements.get('ha-slider')
-      ? html`<ha-slider .min=${min} .max=${max} .step=${step} .value=${value} @input=${h} @change=${h}></ha-slider>`
-      : html`<input type="range" min=${min} max=${max} step=${step} .value=${String(value)} @input=${h} />`;
+      ? html`<ha-slider .min=${min} .max=${max} .step=${step} .value=${value}
+          .disabled=${disabled} aria-label=${ariaLabel || nothing} @input=${h} @change=${h}></ha-slider>`
+      : html`<input type="range" min=${min} max=${max} step=${step} .value=${String(value)}
+          ?disabled=${disabled} aria-label=${ariaLabel || nothing} @input=${h} />`;
   }
 
   private _renderColorRow(key: keyof FillColors, labelKey: string): TemplateResult {
@@ -11178,20 +11238,25 @@ class HouseplanCard extends LitElement {
         if (cm > 0) passageTunnelDepth.set(o.id, wallCmToUnits(cm, this._cellCm, this._gridPitch));
       }
     }
-    const litByDevice = new Map<string, string>();
-    for (const source of resolvedLightSources(
+    const resolvedSources = resolvedLightSources(
       this._planHass,
       this._devices.filter((d) => d.space === space.id),
-    )) {
-      if (source.on && source.castsGlow && source.device.id && !litByDevice.has(source.device.id))
-        litByDevice.set(source.device.id, source.eid);
+    );
+    const sourcesByDevice = new Map<string, typeof resolvedSources>();
+    for (const source of resolvedSources) {
+      if (!source.device.id) continue;
+      const list = sourcesByDevice.get(source.device.id) || [];
+      list.push(source);
+      sourcesByDevice.set(source.device.id, list);
     }
     const spots: { pos: { x: number; y: number }; c: string; alpha: number; clip: string[] | null; r: number }[] = [];
     for (const d of this._devices) {
       if (d.space !== space.id) continue;
-      const lightEid = litByDevice.get(d.id);
-      if (!lightEid) continue;
-      const glow = glowColorOf(this.hass.states[lightEid], colors.glow_light.c);
+      const source = selectSpatialGlowSource(sourcesByDevice.get(d.id) || []);
+      if (!source) continue;
+      const glow = resolveGlowAppearance(
+        this._planHass.states[source.eid], d.marker?.glow_color, colors.glow_light.c,
+      );
       if (!glow) continue;
       // per-source radius (owner's decision v1.36.2): marker override, else global
       const ownCm = Number(d.marker?.glow_radius_cm);
@@ -11253,7 +11318,7 @@ class HouseplanCard extends LitElement {
         clip = shapes;
         lruWrite(this._glowClipCache, clipKey, clip, 256);
       }
-      spots.push({ pos, c: glow.c, alpha: colors.glow_light.a * glow.bri, clip, r: R });
+      spots.push({ pos, c: glow.c, alpha: glowAlpha(glow.bri, colors.glow_light.a), clip, r: R });
     }
     if (!spots.length) return svg`` as unknown as TemplateResult;
     // Per-room Glow overrides are visual clips only. The transport calculation
@@ -11289,7 +11354,7 @@ class HouseplanCard extends LitElement {
       ${''/* Glow is presentation only. It is painted above room fills, but must
              not become the pointer target: room hover and its tooltip still
              belong to the room underneath the light pool. */}
-      <g class="glowlayer glow-pools-frame" pointer-events="none" opacity="0.7">
+      <g class="glowlayer glow-pools-frame" pointer-events="none">
         <g class="glow-pools ${this._glowScreenBlend ? 'blend-screen' : 'blend-normal'}"
           data-blend=${this._glowScreenBlend ? 'screen' : 'normal'}
           clip-path=${enabledClip ? 'url(#hp-glow-enabled)' : nothing}>
@@ -14347,7 +14412,7 @@ class HouseplanCard extends LitElement {
       tap_target: d.tapAction === 'run' ? d.tapTarget || null : null,
       tap_confirm: d.tapConfirm ? true : null,
       controls: controls.length ? controls : null,
-      is_light: d.isLight ? true : null,
+      ...this._markerLightFields(d),
       use_climate_temp: d.useClimateTemp ? true : null,
       glow_radius_cm: (() => {
         const value = strictNumber(d.glowRadius);
@@ -14393,6 +14458,51 @@ class HouseplanCard extends LitElement {
     return device;
   }
 
+  private _markerSpatialSource(d: NonNullable<HouseplanCard['_markerDialog']>) {
+    const device = this._markerPreviewDevice(d);
+    if (!device) return null;
+    return selectSpatialGlowSource(resolvedLightSources(this._planHass, [{ ...device, hidden: false }]));
+  }
+
+  private _markerAutoHasSpatialSource(d: NonNullable<HouseplanCard['_markerDialog']>): boolean {
+    const autoDraft = { ...d, lightRole: 'auto' as const, lightRoleTouched: true };
+    const device = this._markerPreviewDevice(autoDraft);
+    return !!device && hasOwnSpatialSource(this._planHass, { ...device, hidden: false });
+  }
+
+  private _setMarkerLightRole(role: 'auto' | 'always' | 'never'): void {
+    const d = this._markerDialog;
+    if (!d) return;
+    this._markerDialog = { ...d, lightRole: role, lightRoleTouched: true };
+  }
+
+  /** Switch modes without losing manual drafts; entering a manual mode snapshots live values once. */
+  private _setMarkerGlowMode(mode: 'auto' | 'color' | 'fixed'): void {
+    const d = this._markerDialog;
+    if (!d) return;
+    if (mode === 'auto') {
+      this._markerDialog = { ...d, glowMode: mode, glowTouched: true };
+      return;
+    }
+    const source = this._markerSpatialSource(d);
+    const values = resolveGlowValues(
+      source ? this._planHass.states[source.eid] : undefined,
+      null,
+      this._fillColors.glow_light.c,
+    );
+    const needColor = !d.glowColorDrafted;
+    const needBrightness = mode === 'fixed' && !d.glowBrightnessDrafted;
+    this._markerDialog = {
+      ...d,
+      glowMode: mode,
+      glowColor: needColor ? values.c : d.glowColor,
+      glowBrightness: needBrightness ? Math.max(1, Math.round(values.bri * 100)) : d.glowBrightness,
+      glowColorDrafted: true,
+      glowBrightnessDrafted: d.glowBrightnessDrafted || mode === 'fixed',
+      glowTouched: true,
+    };
+  }
+
   private _renderMarkerDialog(): TemplateResult {
     const d = this._markerDialog!;
     const isVirtual = d.bindingMode === 'virtual';
@@ -14413,6 +14523,14 @@ class HouseplanCard extends LitElement {
           activityRuntime: this._activityRt.get(previewDevice.id),
         })
       : null;
+    const autoHasSpatialSource = this._markerAutoHasSpatialSource(d);
+    const spatialSource = this._markerSpatialSource(d);
+    const glowControlsDisabled = d.lightRole === 'never' || !spatialSource;
+    const glowDisabledHint = d.lightRole === 'never'
+      ? this._t('marker.glow_disabled_never')
+      : d.lightRole === 'auto' && !autoHasSpatialSource
+        ? this._t('marker.glow_disabled_auto')
+        : this._t('marker.glow_disabled_no_entity');
     const curLabel = (() => {
       if (isVirtual) return null;
       const found = cands.find((c) => c.value === d.binding);
@@ -14602,19 +14720,76 @@ class HouseplanCard extends LitElement {
                 <span>${this._t('marker.use_climate_temp')}</span>
               </label>`
             : nothing}
-          <label class="srcrow" title=${this._t('marker.is_light_tip')}>
-            ${this._boolInput(d.isLight, (v) => (this._markerDialog = { ...d, isLight: v }))}
-            <span>${this._t('marker.is_light')}</span>
-          </label>
-          <label>${this._t('marker.glow_radius_label')}</label>
-          <div class="colorrow">
-            <input class="tempin" type="number" min="0.5" step="0.5"
-              placeholder=${this._glowRadiusPlaceholder}
-              .value=${d.glowRadius}
-              @input=${(e: Event) => (this._markerDialog = { ...d, glowRadius: (e.target as HTMLInputElement).value })} />
-            <span class="opl">${this._imperial ? this._t('gs.unit_ft') : this._t('gs.unit_m')}</span>
-            <span class="opl muted">${this._t('marker.glow_radius_hint')}</span>
-          </div>
+          <fieldset class="markerlightgroup">
+            <legend>${this._t('marker.light_role_label')}</legend>
+            <p class="muted markerlighttip">${this._t('marker.light_role_tip')}</p>
+            <div class="markerradios" role="radiogroup" aria-label=${this._t('marker.light_role_label')}>
+              <label class="srcrow"><input type="radio" name="marker-light-role" value="auto"
+                .checked=${d.lightRole === 'auto'} @change=${() => this._setMarkerLightRole('auto')} />
+                <span>${this._t(autoHasSpatialSource ? 'marker.light_role_auto_yes' : 'marker.light_role_auto_no')}</span></label>
+              <label class="srcrow"><input type="radio" name="marker-light-role" value="always"
+                .checked=${d.lightRole === 'always'} @change=${() => this._setMarkerLightRole('always')} />
+                <span>${this._t('marker.light_role_always')}</span></label>
+              <label class="srcrow"><input type="radio" name="marker-light-role" value="never"
+                .checked=${d.lightRole === 'never'} @change=${() => this._setMarkerLightRole('never')} />
+                <span>${this._t('marker.light_role_never')}</span></label>
+            </div>
+          </fieldset>
+
+          <fieldset class="markerlightgroup" ?disabled=${glowControlsDisabled}
+            aria-describedby=${glowControlsDisabled ? 'marker-glow-disabled-hint' : nothing}>
+            <legend>${this._t('marker.glow_color_label')}</legend>
+            <p class="muted markerlighttip">${this._t('marker.glow_color_tip')}</p>
+            <div class="markerradios" role="radiogroup" aria-label=${this._t('marker.glow_color_label')}>
+              <label class="srcrow"><input type="radio" name="marker-glow-mode" value="auto"
+                .checked=${d.glowMode === 'auto'} ?disabled=${glowControlsDisabled}
+                @change=${() => this._setMarkerGlowMode('auto')} />
+                <span>${this._t('marker.glow_mode_auto')}</span></label>
+              <label class="srcrow"><input type="radio" name="marker-glow-mode" value="color"
+                .checked=${d.glowMode === 'color'} ?disabled=${glowControlsDisabled}
+                @change=${() => this._setMarkerGlowMode('color')} />
+                <span>${this._t('marker.glow_mode_color')}</span></label>
+              <label class="srcrow"><input type="radio" name="marker-glow-mode" value="fixed"
+                .checked=${d.glowMode === 'fixed'} ?disabled=${glowControlsDisabled}
+                @change=${() => this._setMarkerGlowMode('fixed')} />
+                <span>${this._t('marker.glow_mode_fixed')}</span></label>
+            </div>
+            ${d.glowMode !== 'auto' ? html`<div class="colorrow markerglowvalue">
+              <hp-color-opacity .label=${this._t('marker.glow_color')}
+                .color=${d.glowColor} .opacity=${1} .showOpacity=${false}
+                .disabled=${glowControlsDisabled}
+                @hp-color-opacity-change=${(e: CustomEvent<{ color: string }>) => {
+                  this._markerDialog = {
+                    ...d, glowColor: e.detail.color, glowColorDrafted: true, glowTouched: true,
+                  };
+                }}></hp-color-opacity>
+              ${d.glowMode === 'fixed' ? html`
+                <span class="opl">${this._t('marker.glow_brightness')}</span>
+                ${this._rangeInput(1, 100, 1, d.glowBrightness, (n) => {
+                  this._markerDialog = {
+                    ...d, glowBrightness: n, glowBrightnessDrafted: true, glowTouched: true,
+                  };
+                }, glowControlsDisabled, this._t('marker.glow_brightness'))}
+                <span class="opv">${Math.round(d.glowBrightness)}%</span>` : nothing}
+            </div>` : nothing}
+            ${d.glowMode === 'fixed'
+              ? html`<p class="muted markerlighttip">${this._t('marker.glow_brightness_hint')}</p>`
+              : nothing}
+            <label>${this._t('marker.glow_radius_label')}</label>
+            <div class="colorrow">
+              <input class="tempin" type="number" min="0.5" step="0.5"
+                placeholder=${this._glowRadiusPlaceholder} ?disabled=${glowControlsDisabled}
+                .value=${d.glowRadius}
+                @input=${(e: Event) => (this._markerDialog = { ...d, glowRadius: (e.target as HTMLInputElement).value })} />
+              <span class="opl">${this._imperial ? this._t('gs.unit_ft') : this._t('gs.unit_m')}</span>
+              <span class="opl muted">${this._t('marker.glow_radius_hint')}</span>
+            </div>
+          </fieldset>
+          ${glowControlsDisabled
+            ? html`<p id="marker-glow-disabled-hint" class="muted markerlightdisabled" role="note">
+                <ha-icon icon="mdi:information-outline"></ha-icon>${glowDisabledHint}
+              </p>`
+            : nothing}
 
           <label>${this._t('marker.icon_label')}</label>
           ${customElements.get('ha-icon-picker')

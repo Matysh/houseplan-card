@@ -29,7 +29,7 @@ const res = await page.evaluate(async () => {
   // 4) rgb-лампа красит градиент своим цветом (форсируем rgb у лампы)
   c.hass = { ...c.hass, states: { ...c.hass.states, [eid]: { ...st0, state: 'on', attributes: { ...st0.attributes, rgb_color: [255, 0, 0] } } } };
   await c.updateComplete;
-  out.gradientColored = [...sr().querySelectorAll('defs radialGradient stop')].some((s2) => s2.getAttribute('stop-color') === 'rgb(255, 0, 0)');
+  out.gradientColored = [...sr().querySelectorAll('defs radialGradient stop')].some((s2) => s2.getAttribute('stop-color') === '#ff0000');
   c.hass = { ...c.hass, states: { ...c.hass.states, [eid]: st0 } }; await c.updateComplete;
   // 5) пятно обрезано комнатой (есть clipPath)
   out.clipped = sr().querySelectorAll('defs clipPath[id^="hp-glowclip"]').length > 0;
@@ -79,15 +79,39 @@ const res = await page.evaluate(async () => {
   const offs = stops ? [...stops.querySelectorAll('stop')].map((st2) => [st2.getAttribute('offset'), st2.getAttribute('stop-opacity')]) : [];
   out.plateau80 = offs.length === 3 && offs[0][0] === '0%' && offs[1][0] === '70%'
     && offs[0][1] === offs[1][1] && offs[2][1] === '0';
-  // 7а) персональный радиус источника перекрывает глобальный
+  // Tri-state role is live: Auto -> Never -> Auto removes and restores only
+  // this marker's own spatial pool.
   const litMarkerId = litLight.id;
+  const litBinding = litLight.bindingKind === 'virtual'
+    ? 'virtual'
+    : litLight.bindingKind + ':' + litLight.bindingRef;
+  const autoSpotCount = sr().querySelectorAll('.glowlayer circle').length;
   c._serverCfg = { ...c._serverCfg, markers: [
     ...(c._serverCfg.markers || []).filter((m) => m.id !== litMarkerId),
-    { id: litMarkerId, binding: litLight.bindingKind === 'virtual' ? 'virtual' : litLight.bindingKind + ':' + litLight.bindingRef, glow_radius_cm: 150 },
+    { id: litMarkerId, binding: litBinding, is_light: false },
+  ] };
+  c._regSignature = ''; c._maybeRebuildDevices(); c.requestUpdate(); await c.updateComplete;
+  out.roleNeverHidesOwnPool = sr().querySelectorAll('.glowlayer circle').length === autoSpotCount - 1;
+  c._serverCfg = { ...c._serverCfg, markers: (c._serverCfg.markers || []).filter((m) => m.id !== litMarkerId) };
+  c._regSignature = ''; c._maybeRebuildDevices(); c.requestUpdate(); await c.updateComplete;
+  out.roleAutoRestoresOwnPool = sr().querySelectorAll('.glowlayer circle').length === autoSpotCount;
+  // 7а) персональный радиус источника перекрывает глобальный
+  c._serverCfg = { ...c._serverCfg, markers: [
+    ...(c._serverCfg.markers || []).filter((m) => m.id !== litMarkerId),
+    {
+      id: litMarkerId,
+      binding: litBinding,
+      glow_radius_cm: 150,
+      glow_color: { c: '#123456', bri: 0.25 },
+    },
   ] };
   c._regSignature = ''; c._maybeRebuildDevices(); c.requestUpdate(); await c.updateComplete;
   const rOwn = Number(sr().querySelector('.glowlayer circle')?.getAttribute('r'));
   out.perSourceRadius = Math.abs(rOwn - c._cmToUnits(150)) < 0.5;
+  const ownStop = sr().querySelector('defs radialGradient stop');
+  out.perSourceAppearance = ownStop?.getAttribute('stop-color') === '#123456'
+    && Math.abs(Number(ownStop.getAttribute('stop-opacity')) - 0.428) < 0.002
+    && !sr().querySelector('.glow-pools-frame')?.hasAttribute('opacity');
   c._serverCfg = { ...c._serverCfg, markers: (c._serverCfg.markers || []).filter((m) => m.id !== litMarkerId) };
   c._regSignature = ''; c._maybeRebuildDevices(); c.requestUpdate(); await c.updateComplete;
   // 6в) флаг «источник света»: умный выключатель с обычными светильниками

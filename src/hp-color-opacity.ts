@@ -4,9 +4,9 @@ import { safeStoredColor } from './color';
 /**
  * Compact colour + opacity picker used by decor defaults and object dialogs.
  *
- * Only the swatch lives in the parent toolbar/form. The alpha controls are in
- * the picker itself, so every consumer gets the same compact layout without
- * relying on the still-inconsistent native `input[type=color][alpha]` support.
+ * Only the swatch lives in the parent toolbar/form. Alpha controls are in the
+ * picker when `showOpacity` is enabled; colour-only consumers reuse the same
+ * compact surface without exposing a meaningless opacity value.
  */
 export class HpColorOpacity extends LitElement {
   public label = '';
@@ -14,6 +14,7 @@ export class HpColorOpacity extends LitElement {
   public color = '#607d8b';
   public opacity = 1;
   public disabled = false;
+  public showOpacity = true;
 
   private _open = false;
   private _pickerRaf = 0;
@@ -24,6 +25,7 @@ export class HpColorOpacity extends LitElement {
     color: { type: String },
     opacity: { type: Number },
     disabled: { type: Boolean, reflect: true },
+    showOpacity: { type: Boolean, attribute: 'show-opacity' },
     _open: { state: true },
   };
 
@@ -260,13 +262,15 @@ export class HpColorOpacity extends LitElement {
   render() {
     const pct = Math.round(Math.min(1, Math.max(0, Number(this.opacity) || 0)) * 100);
     const color = safeStoredColor(this.color, '#607d8b');
-    const title = `${this.label || 'Color'}: ${color}, ${pct}%`;
+    const title = this.showOpacity
+      ? `${this.label || 'Color'}: ${color}, ${pct}%`
+      : `${this.label || 'Color'}: ${color}`;
     return html`
       ${this.label ? html`<span class="label">${this.label}</span>` : nothing}
       <button class="trigger" type="button" .disabled=${this.disabled}
         aria-label=${title} aria-haspopup="dialog" aria-expanded=${this._open ? 'true' : 'false'}
         title=${title} @click=${this._toggle}>
-        <span class="swatch" style=${`background:${color};opacity:${pct / 100}`}></span>
+        <span class="swatch" style=${`background:${color};opacity:${this.showOpacity ? pct / 100 : 1}`}></span>
       </button>
       ${this._open && !this.disabled ? html`
         <div class="picker" popover="manual" role="dialog" aria-label=${this.label || 'Color'}>
@@ -275,16 +279,16 @@ export class HpColorOpacity extends LitElement {
             <input type="color" .value=${color} aria-label=${this.label || 'Color'}
               @input=${(e: Event) => this._emit((e.target as HTMLInputElement).value, this.opacity)} />
           </div>
-          <div class="row">
-            <span class="caption">${this.opacityLabel}</span>
-            <input type="range" min="0" max="100" step="1" .value=${String(pct)}
-              aria-label=${this.opacityLabel}
-              @input=${(e: Event) => this._emit(color, Number((e.target as HTMLInputElement).value) / 100)} />
-            <input type="number" min="0" max="100" step="1" .value=${String(pct)}
-              aria-label=${`${this.opacityLabel}, %`}
-              @change=${(e: Event) => this._emit(color, Number((e.target as HTMLInputElement).value) / 100)} />
-            <span class="pct">%</span>
-          </div>
+          ${this.showOpacity ? html`<div class="row">
+              <span class="caption">${this.opacityLabel}</span>
+              <input type="range" min="0" max="100" step="1" .value=${String(pct)}
+                aria-label=${this.opacityLabel}
+                @input=${(e: Event) => this._emit(color, Number((e.target as HTMLInputElement).value) / 100)} />
+              <input type="number" min="0" max="100" step="1" .value=${String(pct)}
+                aria-label=${`${this.opacityLabel}, %`}
+                @change=${(e: Event) => this._emit(color, Number((e.target as HTMLInputElement).value) / 100)} />
+              <span class="pct">%</span>
+            </div>` : nothing}
         </div>` : nothing}
     `;
   }

@@ -1,5 +1,5 @@
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 5;
+export const GOLDEN_MATRIX_VERSION = 6;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -66,6 +66,14 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'lighting-temp-glow-room-override-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
     fillMode: 'temp', glowEnabled: true, roomGlow: { 'light-left': true, 'light-right': false },
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'lighting-manual-auto-spill-overlap-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
+    fillMode: 'temp', glowEnabled: true,
+    markerOverrides: [{
+      id: 'golden-light-two', binding: 'device:golden-light-two',
+      glow_color: { c: '#3a8fff', bri: 0.35 }, glow_radius_cm: 420,
+    }],
+    layoutOverrides: { 'golden-light-two': { s: 'golden-lighting', x: 0.39, y: 0.57 } },
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'hover-over-glow-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
     hoverRoom: 'light-right', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },

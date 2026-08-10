@@ -96,3 +96,18 @@ test('performance budget refuses incomparable runtime profiles', () => {
     /runtime mismatch for chromium/,
   );
 });
+
+test('absolute performance smoke needs no baseline and enforces hard ceilings', () => {
+  const accepted = evaluatePerformanceBudget({
+    candidate: report({ timing: 450, heap: 900, long: 190 }), budgets, absoluteOnly: true,
+  });
+  assert.equal(accepted.pass, true);
+  assert.equal(accepted.mode, 'absolute');
+  assert.equal(accepted.checks.find((check) => check.id === 'timing.firstStableRenderMs.median')?.baseline, undefined);
+
+  const rejected = evaluatePerformanceBudget({
+    candidate: report({ timing: 501 }), budgets, absoluteOnly: true,
+  });
+  assert.equal(rejected.pass, false);
+  assert.ok(rejected.failures.some((check) => check.id === 'timing.firstStableRenderMs.median'));
+});

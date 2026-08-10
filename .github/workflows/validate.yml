@@ -1,13 +1,19 @@
 name: Validate
+
 on:
   push:
     # The branch commit is the release-gate authority. An annotated tag points
-    # to the same SHA and must not duplicate every expensive browser/perf job.
+    # to the same SHA and must not duplicate the browser validation jobs.
     branches:
       - '**'
   pull_request:
-  schedule:
-    - cron: "0 4 * * 1"
+
+# A new push supersedes an unfinished validation for the same branch or PR.
+# Exact-SHA release gates never depend on an obsolete commit.
+concurrency:
+  group: validate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   hacs:
     runs-on: ubuntu-latest
@@ -17,18 +23,22 @@ jobs:
         uses: hacs/action@main
         with:
           category: integration
+
   hassfest:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Hassfest validation
         uses: home-assistant/actions/hassfest@master
+
   frontend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 22 }
+        with:
+          node-version: 22
+          cache: npm
       - run: npm ci
       - name: Typecheck
         run: npm run typecheck
@@ -40,21 +50,21 @@ jobs:
         run: |
           cmp dist/houseplan-card.js custom_components/houseplan/frontend/houseplan-card.js
           cmp dist/houseplan-card.js demo/srv/assets/houseplan-card.js
+
   smoke:
-    # audit T2: the end-to-end layer used to run only when a human remembered.
     # Gated on `frontend` so a typecheck failure does not burn browser minutes.
     needs: frontend
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 22 }
+        with:
+          node-version: 22
+          cache: npm
       - run: npm ci
       - name: Install Chromium for Playwright
         run: npx playwright install --with-deps chromium
-      - name: Build a FRESH bundle for the smokes
-        # Never depend on a previous job's artefact; build the exact source
-        # under test again before the browser suite.
+      - name: Build a fresh bundle for the smokes
         run: npm run build && cp dist/houseplan-card.js demo/srv/assets/houseplan-card.js
       - name: Smoke suite
         run: |
@@ -79,15 +89,16 @@ jobs:
           path: /tmp/smoke-logs
 
   golden:
-    # Separate deterministic pixel layer. Before the first reviewed baseline
-    # set it captures candidates; once baselines exist the same job becomes a
-    # blocking comparison and uploads actual/diff/report on failure.
+    # Deterministic visual correctness stays in every prerelease gate: it is
+    # inexpensive and catches a different class of regressions than timings.
     needs: frontend
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 22 }
+        with:
+          node-version: 22
+          cache: npm
       - run: npm ci
       - name: Install pinned Chromium
         run: npx playwright install --with-deps chromium
@@ -110,156 +121,35 @@ jobs:
           name: golden-images
           path: artifacts/golden
 
-  performance:
-    # Candidate and base SHA run sequentially on the same hosted runner with
-    # one Playwright/Chromium installation. This avoids turning a developer
-    # laptop or cross-runner variance into a timing budget.
+  performance_smoke:
+    # Candidate-only catastrophic-regression guard for ordinary pushes and
+    # prereleases. The expensive same-runner comparison lives in performance.yml.
     needs: frontend
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - name: Check out candidate
-        uses: actions/checkout@v4
-        with:
-          path: candidate
-          fetch-depth: 2
-      - name: Resolve comparison SHA
-        id: base
-        working-directory: candidate
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          PUSH_BEFORE_SHA: ${{ github.event.before }}
-        run: |
-          if [ "$EVENT_NAME" = "pull_request" ] && [ -n "$PR_BASE_SHA" ]; then
-            sha="$PR_BASE_SHA"
-            source="pull-request base"
-          elif [ "$EVENT_NAME" = "push" ] && [ -n "$PUSH_BEFORE_SHA" ] && ! printf '%s' "$PUSH_BEFORE_SHA" | grep -Eq '^0+$'; then
-            sha="$PUSH_BEFORE_SHA"
-            source="push before"
-          else
-            sha="$(git rev-parse HEAD^)"
-            source="candidate parent"
-          fi
-          requested_sha="$sha"
-
-          # A force-push can leave github.event.before outside every remote
-          # ref. Fetch the complete graph first, then verify the object and,
-          # for push events, that it is still an ancestor of the candidate.
-          # Never ask checkout to resolve a known-unreachable object.
-          if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
-            git fetch --force --tags --prune --unshallow origin
-          else
-            git fetch --force --tags --prune origin
-          fi
-          usable=true
-          reason=""
-          if ! git cat-file -e "${sha}^{commit}" 2>/dev/null; then
-            usable=false
-            reason="commit is not present after fetching all remote refs"
-          elif [ "$source" = "push before" ] && ! git merge-base --is-ancestor "$sha" HEAD; then
-            usable=false
-            reason="commit is no longer an ancestor of the pushed revision"
-          fi
-
-          if [ "$usable" != true ]; then
-            # For a rewritten push, the direct parent is the closest honest
-            # comparison and normally carries the same benchmark generation.
-            # Prefer it over an arbitrarily old release tag. PR bases keep the
-            # tag fallback because HEAD^ is not necessarily their base.
-            parent_sha="$(git rev-parse HEAD^ 2>/dev/null || true)"
-            if [ "$source" = "push before" ] && [ -n "$parent_sha" ] && [ "$parent_sha" != "$(git rev-parse HEAD)" ]; then
-              sha="$parent_sha"
-              source="candidate parent (unusable push-before fallback)"
-              echo "::warning::Comparison SHA $requested_sha is unusable ($reason); using candidate parent $sha."
-              usable=true
-            fi
-          fi
-
-          if [ "$usable" != true ]; then
-            fallback_tag=""
-            fallback_sha=""
-            head_sha="$(git rev-parse HEAD)"
-            while IFS= read -r tag; do
-              case "$tag" in
-                v[0-9]*.[0-9]*.[0-9]*) ;;
-                *) continue ;;
-              esac
-              tag_sha="$(git rev-list -n 1 "$tag")"
-              if [ "$tag_sha" != "$head_sha" ]; then
-                fallback_tag="$tag"
-                fallback_sha="$tag_sha"
-                break
-              fi
-            done < <(git tag --merged HEAD --sort=-version:refname)
-            if [ -z "$fallback_sha" ]; then
-              echo "::error::Comparison SHA $requested_sha is unusable ($reason), and no previous release tag is reachable from HEAD."
-              exit 1
-            fi
-            sha="$fallback_sha"
-            source="release tag $fallback_tag"
-            echo "::warning::Comparison SHA $requested_sha is unusable ($reason); using $fallback_tag ($sha)."
-          fi
-
-          # The first main promotion after HP-PERF-01 can legitimately point
-          # at an older stable commit which predates the benchmark's embedded
-          # bundle fingerprint. Comparing against that legacy tree would fail
-          # the freshness guard before any measurements are taken. Fall back
-          # to the candidate's direct parent, which is the last dev revision
-          # included in the promotion and already has the current harness.
-          if ! git cat-file -e "${sha}:demo/bundle-freshness.mjs" 2>/dev/null; then
-            echo "::warning::Comparison $sha predates HP-PERF-01; using candidate parent HEAD^."
-            sha="$(git rev-parse HEAD^)"
-            source="candidate parent (HP-PERF-01 compatibility)"
-          fi
-          echo "sha=$sha" >> "$GITHUB_OUTPUT"
-      - name: Check out base SHA
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ steps.base.outputs.sha }}
-          path: baseline
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: |
-            candidate/package-lock.json
-            baseline/package-lock.json
-      - name: Install candidate and baseline dependencies
-        run: npm ci --prefix candidate && npm ci --prefix baseline
+      - run: npm ci
       - name: Install pinned Chromium
-        working-directory: candidate
         run: npx playwright install --with-deps chromium
-      - name: Build both exact source trees
+      - name: Build the exact candidate source
+        run: npm run build && cp dist/houseplan-card.js demo/srv/assets/houseplan-card.js
+      - name: Capture the heaviest Glow state
         run: |
-          npm --prefix candidate run build
-          cp candidate/dist/houseplan-card.js candidate/demo/srv/assets/houseplan-card.js
-          npm --prefix baseline run build
-          cp baseline/dist/houseplan-card.js baseline/demo/srv/assets/houseplan-card.js
-      - name: Capture base and candidate profiles
-        working-directory: candidate
+          npm run benchmark:glow -- --profile=large-house-glow-overlay-v1 --variants=60 --samples=3 --warmups=1 --output=artifacts/performance-smoke/candidate.json
+      - name: Enforce absolute smoke ceilings
         run: |
-          npm run benchmark:large-house -- --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/baseline.json
-          npm run benchmark:large-house -- --target-root=. --samples=7 --warmups=1 --output=../artifacts/performance/candidate.json
-          npm run benchmark:glow -- --profile=large-light-blend-v1 --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/blend-baseline.json
-          npm run benchmark:glow -- --profile=large-light-blend-v1 --target-root=. --samples=7 --warmups=1 --output=../artifacts/performance/blend-candidate.json
-          npm run benchmark:glow -- --profile=large-house-glow-overlay-v1 --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/overlay-baseline.json
-          npm run benchmark:glow -- --profile=large-house-glow-overlay-v1 --target-root=. --samples=7 --warmups=1 --output=../artifacts/performance/overlay-candidate.json
-          if ! grep -q "glow_enabled" ../baseline/src/logic.ts; then
-            echo "Base predates independent Glow; bootstrap relative overlay baseline, keep absolute gate"
-            cp ../artifacts/performance/overlay-candidate.json ../artifacts/performance/overlay-baseline.json
-          fi
-      - name: Enforce performance budgets
-        working-directory: candidate
-        run: |
-          npm run benchmark:compare -- --baseline=../artifacts/performance/baseline.json --candidate=../artifacts/performance/candidate.json --output=../artifacts/performance/comparison.json
-          npm run benchmark:compare -- --budgets=demo/performance/budgets-large-light-blend.json --baseline=../artifacts/performance/blend-baseline.json --candidate=../artifacts/performance/blend-candidate.json --output=../artifacts/performance/blend-comparison.json
-          npm run benchmark:compare -- --budgets=demo/performance/budgets-large-house-glow-overlay.json --baseline=../artifacts/performance/overlay-baseline.json --candidate=../artifacts/performance/overlay-candidate.json --output=../artifacts/performance/overlay-comparison.json
-      - name: Upload performance reports
+          npm run benchmark:compare -- --absolute-only --budgets=demo/performance/budgets-glow-smoke.json --candidate=artifacts/performance-smoke/candidate.json --output=artifacts/performance-smoke/comparison.json
+      - name: Upload performance smoke report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: large-house-performance
-          path: artifacts/performance
+          name: performance-smoke
+          path: artifacts/performance-smoke
 
   backend:
     runs-on: ubuntu-latest

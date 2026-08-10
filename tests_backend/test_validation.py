@@ -275,6 +275,31 @@ def test_marker_use_climate_temp_is_bool_or_none():
         v.MARKER_SCHEMA({"id": "m1", "binding": "device:abc", "use_climate_temp": "yes"})
 
 
+def test_marker_light_role_and_glow_override_contract():
+    base = {"id": "m1", "binding": "device:abc"}
+    for role in (True, False, None):
+        assert v.MARKER_SCHEMA({**base, "is_light": role})["is_light"] is role
+
+    assert v.MARKER_SCHEMA({**base, "glow_color": {"c": "#123456"}})["glow_color"] == {
+        "c": "#123456",
+    }
+    assert v.MARKER_SCHEMA({
+        **base, "glow_color": {"c": "#123456", "bri": None},
+    })["glow_color"] == {"c": "#123456", "bri": None}
+    assert v.MARKER_SCHEMA({
+        **base, "glow_color": {"c": "#123456", "bri": 0.01},
+    })["glow_color"]["bri"] == 0.01
+
+    for glow in (
+        {"c": "red"}, {"c": "#123456", "bri": 0},
+        {"c": "#123456", "bri": 1.01}, {"c": "#123456", "bri": float("nan")},
+        {"c": "#123456", "bri": float("inf")}, {"c": "#123456", "extra": True},
+        {"bri": 0.5},
+    ):
+        with pytest.raises(vol.Invalid):
+            v.MARKER_SCHEMA({**base, "glow_color": glow})
+
+
 def test_config_schema_defaults_and_extra():
     out = v.CONFIG_SCHEMA({"spaces": []})
     assert out["markers"] == [] and out["settings"] == {}

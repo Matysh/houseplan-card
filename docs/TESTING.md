@@ -812,7 +812,8 @@ separately promised workflows:
       light source/group, opens with no self chip and its explicit Toggle acts
       directly on the switch. When ON it may still show the ordinary yellow
       working-state plate, but creates no Glow/Light fill/statistics; setting
-      `is_light` explicitly restores those light behaviours
+      role «Always» (`is_light: true`) explicitly restores those light behaviours;
+      role «Never» suppresses the own source but keeps genuine external controls
       [auto: smoke_controls; unit: devices.test.mjs, plan-optimizer.test.mjs].
       Repeat with a `device:*` binding whose controls contain one of that
       device's child switches; the child is excluded while external targets remain
@@ -827,9 +828,9 @@ separately promised workflows:
       without usable HA data falls back to base darkness instead of bright
       paper; static room cards show the same data/base projection but no live pools
       [unit: logic, plan-optimizer, backend validation; auto: golden matrix].
-- [ ] Additive Glow (#19): 1/10/30/60-source fixture renders one flat isolated
-      pool group and exactly one outer opacity; brightness/palette alpha live
-      only in gradient stops. A real SVG raster probe is cached per Document:
+- [ ] Additive Glow (#19/#67): 1/10/30/60-source fixture renders one flat isolated
+      pool group with no outer opacity; the shared 0.7 ceiling, perceptual
+      brightness curve and palette alpha live only in gradient stops. A real SVG raster probe is cached per Document:
       pending/error/timeout/unsupported use `data-blend=normal`, success changes
       mounted cards to `screen`. Warm/cool overlap, reverse DOM order,
       same-colour brightening and a non-pool sector are pixel-checked
@@ -1066,8 +1067,8 @@ is validated before any reference is copied.
 
 The matrix covers thick wall junctions, virtual/physical boundaries,
 partitions/columns, axis-aligned and 45° door/window/gate tunnels, hidden
-opening symbols, Glow and sun, light/temperature/LQI fill splits on a wall
-axis, hover over Glow and nested rooms, all three editors, dark/light themes,
+opening symbols, Glow and sun, live/manual Glow overlap with doorway spill,
+light/temperature/LQI fill splits on a wall axis, hover over Glow and nested rooms, all three editors, dark/light themes,
 0.4×/fit/2.5×, warm remount and adaptive RU/EN dialogs including focus and the
 decor colour popover. In the
 canonical Linux CI profile Chromium, viewport, DPR, locale, timezone, colour
@@ -1085,16 +1086,20 @@ fixture with 60 rooms, 200 devices, 100 openings, 60 partitions, 40 columns and
 switch, HA state update, shared-wall resize preview, pan/zoom, settings-dialog render, repeated navigation,
 Long Tasks, warmed hot-cache growth and post-GC heap growth.
 
-The blocking `performance` CI job builds the candidate and its base SHA, then
-captures seven measured samples for each sequentially on the same Node 22,
-Playwright Chromium and hosted runner. `demo/performance/compare.mjs` applies
-the tighter of the approved absolute ceiling and baseline-relative allowance
-from `demo/performance/budgets.json`. It fails on a runtime/profile mismatch,
-an incomplete sample set, a timing/Long Task/heap regression, cache growth or
-an incomplete 200-device render. Raw base/candidate reports and the comparison
-are always uploaded as `large-house-performance`; the check table is also
-written to the GitHub job summary. Local measurements remain diagnostic only.
-See `demo/performance/README.md` for the budget-review contract.
+Every blocking `Validate` uses a candidate-only `performance_smoke`: one
+warm-up and three measured samples of the heaviest 60-source Glow state. It
+enforces absolute timing, Long Task, heap, cache and 200-device ceilings, but
+does not claim to detect small relative regressions.
+
+The dedicated `Full Performance` workflow builds the candidate and base SHA,
+then captures seven measured samples for each sequentially on the same Node 22,
+Playwright Chromium and hosted runner. It runs on `main`, weekly and by manual
+dispatch. `demo/performance/compare.mjs` applies the tighter of the approved
+absolute ceiling and baseline-relative allowance. Stable release assets need
+an exact-SHA green full run; prereleases need the fast exact-SHA `Validate`
+only. Raw reports and comparisons are uploaded as CI artifacts, and the check
+tables are written to the job summary. Local measurements remain diagnostic.
+See `demo/performance/README.md` for commands and the budget-review contract.
 
 ## Last self-run
 

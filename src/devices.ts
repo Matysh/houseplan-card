@@ -183,6 +183,8 @@ export interface LightSourceDevice {
     room_id?: string | null;
     is_light?: boolean | null;
     controls?: string[] | null;
+    glow_radius_cm?: number | null;
+    glow_color?: { c: string; bri?: number | null } | null;
   } | null;
 }
 
@@ -205,7 +207,8 @@ export interface ResolvedLightSource<D extends LightSourceDevice = LightSourceDe
  * operates its own bound entity/device through the normal tap action; storing
  * one of those same entities in controls made a plain fan/socket look like an
  * explicitly configured light source. `is_light` is the sole explicit way to
- * say that the bound switch itself drives a real fixture.
+ * say that the bound switch itself drives a real fixture; `false` explicitly
+ * suppresses the marker's own light role without touching external controls.
  */
 export function effectiveMarkerControls(
   binding: string | null | undefined,
@@ -223,7 +226,7 @@ export function effectiveMarkerControls(
  * opening and saving the dialog must not rewrite YAML-only targets or collapse
  * repeated entries. Only the marker's own target is removed: it belongs to the
  * normal tap action. Classifying that relay as a lamp is a separate, explicit
- * `is_light` decision.
+ * tri-state `is_light` decision.
  */
 export function persistedExternalControls(
   binding: string | null | undefined,
@@ -263,6 +266,36 @@ function forcedLightEntityOf(d: LightSourceDevice): string | null {
   return (bound && isControllable(bound) ? bound : null) || primary || controllable[0] || null;
 }
 
+function ownLightCandidatesOf(hass: any, d: LightSourceDevice): LightEntityCandidate[] {
+  if (d.marker?.is_light === false) return [];
+  if (d.marker?.is_light === true) {
+    const forced = forcedLightEntityOf(d);
+    // A disabled registry entry has no runtime state. It cannot be toggled and
+    // must not be presented as a usable spatial source.
+    return forced && hass.states?.[forced] ? [{ eid: forced, via: 'forced' }] : [];
+  }
+
+  // Automatic discovery describes the DEVICE, not every auxiliary entity it
+  // happens to expose. The resolved functional role prevents status LEDs of a
+  // TV/soundbar/etc. from turning the whole device into a plan light.
+  const role = d.primary || resolvedDeviceStateEntities(hass, d.entities)[0];
+  if (role && !role.startsWith('light.')) return [];
+  return d.entities
+    .filter((eid) => eid.startsWith('light.') && !!hass.states?.[eid])
+    .map((eid) => ({ eid, via: 'light' as const }));
+}
+
+/** Whether the marker currently has a real, position-bearing source of its own. */
+export function hasOwnSpatialSource(hass: any, d: LightSourceDevice): boolean {
+  const controls = effectiveMarkerControls(
+    d.marker?.binding,
+    d.controls ?? d.marker?.controls,
+    d.entities,
+  );
+  if (d.marker?.is_light == null && controls.length) return false;
+  return ownLightCandidatesOf(hass, d).length > 0;
+}
+
 function lightEntitiesOf(hass: any, d: LightSourceDevice): LightEntityCandidate[] {
   const controls = effectiveMarkerControls(
     d.marker?.binding,
@@ -271,39 +304,22 @@ function lightEntitiesOf(hass: any, d: LightSourceDevice): LightEntityCandidate[
   );
   const out: LightEntityCandidate[] = controls.map((eid) => ({ eid, via: 'controls' }));
 
-  if (d.marker?.is_light === true) {
-    // A forced source is a smart switch (or light) driving real fixtures.
-    // Prefer its primary entity, but never treat measurements or service
-    // entities as light switches merely because they belong to the device.
-    // The marker is one physical source, so do not count its auxiliary
-    // controllable entities as additional lamps in room statistics.
-    const forced = forcedLightEntityOf(d);
-    if (forced && !out.some((candidate) => candidate.eid === forced)) {
-      out.push({ eid: forced, via: 'forced' });
-    }
+  // In Auto mode explicit controls retain the historic priority and suppress
+  // own-source discovery. Always is deliberately additive: controls continue
+  // to describe the room while the marker itself owns a spatial Glow source.
+  const own = hasOwnSpatialSource(hass, d)
+    ? ownLightCandidatesOf(hass, d)
+    : [];
+  for (const candidate of own) {
+    if (!out.some((existing) => existing.eid === candidate.eid)) out.push(candidate);
   }
-
-  // Explicit external controls and the marker's own explicit source are
-  // additive. Automatic discovery remains the fallback only when neither was
-  // configured, so a device status LED still cannot leak into the room light set.
-  if (out.length) return out;
-
-  // Automatic light discovery describes the DEVICE, not every auxiliary
-  // entity it happens to expose. TVs, soundbars, air cleaners and similar
-  // devices often publish a light.* for a status LED / display illumination;
-  // letting that entity win turned the whole marker yellow and made it a room
-  // light source. The resolved functional role is the shared systemic answer.
-  // Explicit controls/is_light above still override it when the user says the
-  // auxiliary light really is a plan light.
-  const role = d.primary || resolvedDeviceStateEntities(hass, d.entities)[0];
-  if (role && !role.startsWith('light.')) return [];
-  return d.entities.filter((eid) => eid.startsWith('light.'))
-    .map((eid) => ({ eid, via: 'light' as const }));
+  return out;
 }
 
 /**
  * One source of truth for every light-related room feature. Within a marker,
- * explicit controls win, then `is_light`, then automatic `light.*` discovery.
+ * external controls stay independent; Always adds a forced own source, Never
+ * removes it, and Auto keeps the historical controls-first/light-role fallback.
  * Across markers the real/forced source owns spatial Glow over a controller
  * naming the same entity. Passing a room scopes sources by room_id/area;
  * omitting it resolves the supplied devices (used by Glow and controls).
@@ -334,6 +350,14 @@ export function resolvedLightSources<D extends LightSourceDevice>(
     }
   }
   return out;
+}
+
+/** Select the single source whose state and position drive a marker's Glow. */
+export function selectSpatialGlowSource<D extends LightSourceDevice>(
+  sources: readonly ResolvedLightSource<D>[],
+): ResolvedLightSource<D> | null {
+  const spatial = sources.filter((source) => source.castsGlow);
+  return spatial.find((source) => source.on) || spatial[0] || null;
 }
 
 /** Tri-state used by room fill. */

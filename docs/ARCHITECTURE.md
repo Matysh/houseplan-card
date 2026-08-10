@@ -48,6 +48,11 @@ public release is assembled as a draft, receives and verifies
 `houseplan-card.js` plus `houseplan.zip`, and becomes visible only after the
 exact candidate SHA has a green Validate. Existing release-event workflows are
 kept as an independent recovery path; they enforce the same exact-SHA gate.
+`Validate` contains only the candidate performance smoke so ordinary betas do
+not wait for a full comparison. Every `main` promotion starts the dedicated
+`performance.yml` workflow; stable release assets additionally require that
+workflow to be green for the exact tagged SHA. Weekly and manual full runs keep
+the same profiler available between stable promotions.
 
 ## Key decisions
 
@@ -235,7 +240,7 @@ not be added to an individual sink.
                "room_drafts":[…], "partitions":[…], "wall_columns":[…],
                "openings":[…], "decor":[…], "settings":{…} }],
   "markers": [{ "id","binding":"device:<id>|entity:<eid>|virtual","hidden","removed",
-                "name","icon","display","controls","is_light","tap_action",
+                "name","icon","display","controls","is_light","glow_color","tap_action",
                 "room_id","pdfs",… }],
   "settings": { "exclude_integrations":[], "group_lights":true,
                 "filter_seeded":true, "fill_colors":{…}, "icon_rules":[…],
@@ -623,9 +628,11 @@ hash falls back to the default.
   tunnel colors; stored `room_color` continues to control borders/names only.
 - **Glow pools and additive composition** (#19): every source retains its own
   radial gradient and wall/door `clipPath`. All pools live in one flat isolated
-  group inside one outer `opacity=.7` frame; only the pool elements use SVG
-  `mix-blend-mode: screen`. Gradient-stop alpha contains source brightness and
-  palette alpha, so group opacity is applied exactly once. A cached per-
+  group with no outer opacity; only the pool elements use SVG
+  `mix-blend-mode: screen`. `resolveGlowAppearance` resolves the marker-owned
+  live/manual colour and brightness, while `glowAlpha` is the only intensity
+  formula: `paletteAlpha * .7 * (.4 + .6 * bri^(1/2.2))`. The resulting stop
+  alpha is shared by the room pool and doorway spill. A cached per-
   `Document` raster probe verifies actual SVG screen pixels rather than trusting
   CSS syntax support; pending/unsupported/error/timeout states render with
   deterministic normal blending and a successful probe requests one update.
@@ -674,12 +681,17 @@ hash falls back to the default.
   non-off state advertised by `hvac_modes` (or a standard HA HVAC mode) is the
   best available enabled-mode fallback.
 - **Resolved light sources** (UX-12): `resolvedLightSources(hass, devices,
-  room?)` is the only light-membership resolver. Per marker the precedence is
-  `controls[]` -> the primary controllable entity when `is_light` is set ->
-  automatic `light.*`. It excludes hidden markers, de-duplicates entity ids,
+  room?)` is the only light-membership resolver. `marker.is_light` is a real
+  tri-state: absent/null keeps automatic role discovery, `true` adds the
+  marker's own controllable source, and `false` suppresses only that own
+  candidate. External `controls[]` remain independent room-state votes;
+  `selectSpatialGlowSource` filters them before choosing the first on (or first
+  available) physical source. The resolver excludes hidden markers, de-duplicates entity ids,
   and honours `marker.room_id` before an HA area. Glow, Light fill, room light
   stats, marker indication/card ordering and group toggle all consume this
-  result instead of maintaining separate domain tests.
+  result instead of maintaining separate domain tests. Per-marker
+  `glow_color:{c,bri?}` can override colour alone or colour plus brightness;
+  strict invalid overrides fall back atomically to live source values.
 - **Island rooms** (v1.34): full nesting is legal (`polyContainsPoly`);
   parents render as evenodd paths with holes (`islandsOf`).
 - **Kiosk mode** (v1.41): a card-config flag, not a mode — `_setMode` is

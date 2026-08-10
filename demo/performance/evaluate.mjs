@@ -60,16 +60,19 @@ const makeCheck = (id, actual, limit, details = {}) => ({
 });
 
 /**
- * Evaluate a candidate report against both stable absolute ceilings and a
- * report captured from the base SHA on the same runner.
+ * Evaluate a candidate report against stable absolute ceilings. Full captures
+ * additionally compare a base-SHA report from the same runner; fast smoke
+ * captures deliberately enforce only the hard candidate limits.
  */
-export const evaluatePerformanceBudget = ({ candidate, baseline, budgets }) => {
+export const evaluatePerformanceBudget = ({ candidate, baseline, budgets, absoluteOnly = false }) => {
   requireReport(candidate, budgets, 'candidate');
-  requireReport(baseline, budgets, 'baseline');
-  if (!sameJson(candidate.fixture, baseline.fixture)) throw new Error('fixture mismatch');
-  for (const key of ['node', 'chromium', 'platform', 'arch']) {
-    if (candidate.runtime?.[key] !== baseline.runtime?.[key]) {
-      throw new Error(`runtime mismatch for ${key}`);
+  if (!absoluteOnly) {
+    requireReport(baseline, budgets, 'baseline');
+    if (!sameJson(candidate.fixture, baseline.fixture)) throw new Error('fixture mismatch');
+    for (const key of ['node', 'chromium', 'platform', 'arch']) {
+      if (candidate.runtime?.[key] !== baseline.runtime?.[key]) {
+        throw new Error(`runtime mismatch for ${key}`);
+      }
     }
   }
 
@@ -77,63 +80,74 @@ export const evaluatePerformanceBudget = ({ candidate, baseline, budgets }) => {
   for (const [metric, budget] of Object.entries(budgets.timings)) {
     const stat = budget.stat ?? 'median';
     const actual = candidate.summary?.[metric]?.[stat];
-    const base = baseline.summary?.[metric]?.[stat];
-    if (!finite(actual) || !finite(base)) throw new Error(`missing ${stat} for ${metric}`);
-    const regressionLimit = relativeLimit(base, budget.maxRegressionRatio, budget.noiseAllowanceMs);
+    const base = absoluteOnly ? null : baseline.summary?.[metric]?.[stat];
+    if (!finite(actual) || (!absoluteOnly && !finite(base))) throw new Error(`missing ${stat} for ${metric}`);
+    const regressionLimit = absoluteOnly
+      ? Number.POSITIVE_INFINITY
+      : relativeLimit(base, budget.maxRegressionRatio, budget.noiseAllowanceMs);
     checks.push(makeCheck(
       `timing.${metric}.${stat}`,
       actual,
       Math.min(budget.hardMaxMs, regressionLimit),
-      { baseline: round(base), hardLimit: budget.hardMaxMs, regressionLimit: round(regressionLimit) },
+      {
+        ...(absoluteOnly ? {} : { baseline: round(base), regressionLimit: round(regressionLimit) }),
+        hardLimit: budget.hardMaxMs,
+      },
     ));
   }
 
   const candidateLong = candidate.longTasks ?? summarizeLongTasks(candidate.rows);
-  const baselineLong = baseline.longTasks ?? summarizeLongTasks(baseline.rows);
+  const baselineLong = absoluteOnly ? null : (baseline.longTasks ?? summarizeLongTasks(baseline.rows));
   const longTasksAvailable = candidate.rows.every((row) => {
     const windows = Object.values(row.longTasks ?? {});
     return windows.length > 0 && windows.every((item) => item?.supported === true);
   });
   checks.push({ id: 'longTask.available', actual: longTasksAvailable ? 1 : 0, limit: 1, pass: longTasksAvailable });
-  const singleRegressionLimit = relativeLimit(
-    baselineLong.maxSingleMs,
-    budgets.longTasks.maxSingleRegressionRatio,
+  const singleRegressionLimit = absoluteOnly ? Number.POSITIVE_INFINITY : relativeLimit(
+    baselineLong.maxSingleMs, budgets.longTasks.maxSingleRegressionRatio,
     budgets.longTasks.maxSingleNoiseAllowanceMs,
   );
   checks.push(makeCheck(
     'longTask.maxSingleMs',
     candidateLong.maxSingleMs,
     Math.min(budgets.longTasks.maxSingleMs, singleRegressionLimit),
-    { baseline: baselineLong.maxSingleMs, hardLimit: budgets.longTasks.maxSingleMs },
+    {
+      ...(absoluteOnly ? {} : { baseline: baselineLong.maxSingleMs }),
+      hardLimit: budgets.longTasks.maxSingleMs,
+    },
   ));
-  const countRegressionLimit = relativeLimit(
-    baselineLong.countP95,
-    budgets.longTasks.maxCountRegressionRatio,
+  const countRegressionLimit = absoluteOnly ? Number.POSITIVE_INFINITY : relativeLimit(
+    baselineLong.countP95, budgets.longTasks.maxCountRegressionRatio,
     budgets.longTasks.countNoiseAllowance,
   );
   checks.push(makeCheck(
     'longTask.countP95',
     candidateLong.countP95,
     Math.min(budgets.longTasks.maxCountP95, countRegressionLimit),
-    { baseline: baselineLong.countP95, hardLimit: budgets.longTasks.maxCountP95 },
+    {
+      ...(absoluteOnly ? {} : { baseline: baselineLong.countP95 }),
+      hardLimit: budgets.longTasks.maxCountP95,
+    },
   ));
-  const longRegressionLimit = relativeLimit(
-    baselineLong.totalP95Ms,
-    budgets.longTasks.maxTotalRegressionRatio,
+  const longRegressionLimit = absoluteOnly ? Number.POSITIVE_INFINITY : relativeLimit(
+    baselineLong.totalP95Ms, budgets.longTasks.maxTotalRegressionRatio,
     budgets.longTasks.noiseAllowanceMs,
   );
   checks.push(makeCheck(
     'longTask.totalP95Ms',
     candidateLong.totalP95Ms,
     Math.min(budgets.longTasks.maxTotalP95Ms, longRegressionLimit),
-    { baseline: baselineLong.totalP95Ms, hardLimit: budgets.longTasks.maxTotalP95Ms },
+    {
+      ...(absoluteOnly ? {} : { baseline: baselineLong.totalP95Ms }),
+      hardLimit: budgets.longTasks.maxTotalP95Ms,
+    },
   ));
 
   const candidateHeap = candidate.rows
     .map((row) => row.heapGrowthBytes)
     .filter(finite)
     .map((value) => Math.max(0, value));
-  const baselineHeap = baseline.rows
+  const baselineHeap = absoluteOnly ? [] : baseline.rows
     .map((row) => row.heapGrowthBytes)
     .filter(finite)
     .map((value) => Math.max(0, value));
@@ -142,17 +156,22 @@ export const evaluatePerformanceBudget = ({ candidate, baseline, budgets }) => {
     id: 'heap.preciseGc', actual: preciseGc ? 1 : 0, limit: budgets.heap.required ? 1 : 0,
     pass: !budgets.heap.required || preciseGc,
   });
-  if (budgets.heap.required && (!candidateHeap.length || !baselineHeap.length)) {
+  if (budgets.heap.required && (!candidateHeap.length || (!absoluteOnly && !baselineHeap.length))) {
     checks.push({ id: 'heap.available', actual: candidateHeap.length, limit: 1, pass: false });
-  } else if (candidateHeap.length && baselineHeap.length) {
+  } else if (candidateHeap.length && (absoluteOnly || baselineHeap.length)) {
     const actual = percentile(candidateHeap, 0.95);
-    const base = percentile(baselineHeap, 0.95);
-    const regressionLimit = relativeLimit(base, budgets.heap.maxRegressionRatio, budgets.heap.noiseAllowanceBytes);
+    const base = absoluteOnly ? null : percentile(baselineHeap, 0.95);
+    const regressionLimit = absoluteOnly ? Number.POSITIVE_INFINITY : relativeLimit(
+      base, budgets.heap.maxRegressionRatio, budgets.heap.noiseAllowanceBytes,
+    );
     checks.push(makeCheck(
       'heap.growthP95Bytes',
       actual,
       Math.min(budgets.heap.hardMaxGrowthBytes, regressionLimit),
-      { baseline: base, hardLimit: budgets.heap.hardMaxGrowthBytes },
+      {
+        ...(absoluteOnly ? {} : { baseline: base }),
+        hardLimit: budgets.heap.hardMaxGrowthBytes,
+      },
     ));
   }
 
@@ -178,8 +197,9 @@ export const evaluatePerformanceBudget = ({ candidate, baseline, budgets }) => {
     schema: 1,
     profile: budgets.profile,
     pass: failures.length === 0,
+    mode: absoluteOnly ? 'absolute' : 'relative',
     candidateFingerprint: candidate.buildFingerprint,
-    baselineFingerprint: baseline.buildFingerprint,
+    baselineFingerprint: baseline?.buildFingerprint ?? null,
     checks,
     failures,
   };

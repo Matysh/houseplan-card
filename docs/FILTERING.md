@@ -141,15 +141,16 @@ Hidden, removed or HA-disabled lifecycle rules still outrank display mode.
    «Открыть/закрыть» (`tap_action: 'cover'` — `coverEntityOf`, the same helper
    and the same entity the tap drives). It wins over EVERYTHING below;
 2. the marker's **resolved light sources** (`resolvedLightSources`): external
-   `controls` plus its own primary controllable entity when `is_light` is set
+   `controls` plus its own primary controllable entity when `is_light: true`
    (an `entity:*` marker's bound entity and a `device:*` marker's child entities
-   are excluded from the external list), otherwise automatic `light.*` only when `light` is the
+   are excluded from the external list); `is_light: false` suppresses that own
+   candidate, while missing/null discovers automatic `light.*` only when `light` is the
    device's resolved functional role. An auxiliary LED/display light on a
    media player or appliance does not turn the whole marker into a lamp. This
    exact set feeds Light fill, room light stats, marker feedback and group
    toggle. Glow additionally requires a spatial source: an external control
    never places a pool at the controller, while a real lamp marker or explicit
-   `is_light` marker does. When both name the same entity, the physical marker
+   `is_light: true` marker does. When both name the same entity, the physical marker
    owns its one Glow position regardless of registry order;
 
    A pre-v1.60 marker that lists its own `switch.*` in `controls` is ignored as

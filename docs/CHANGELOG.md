@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+## v1.61.0-beta.5 — 2026-08-10
+
+- Device settings now offer Auto / Always / Never light-source roles. Per-source
+  Glow can follow Home Assistant, use a custom colour with live brightness, or
+  fix both colour and brightness; dim lights remain visibly readable through a
+  perceptual intensity curve. ([#65](https://github.com/Matysh/houseplan-card/issues/65),
+  [#66](https://github.com/Matysh/houseplan-card/issues/66),
+  [#67](https://github.com/Matysh/houseplan-card/issues/67))
+- Compatibility note: an explicitly stored `is_light: false` now means Never,
+  rather than behaving like Auto. UI-authored historical configs normally used
+  `null`, so this primarily affects hand-written YAML.
+
+- Prerelease validation now uses a short candidate-only 60-source Glow
+  performance smoke. The expensive same-runner baseline comparison remains
+  mandatory for stable releases and runs on `main`, weekly and on demand.
+  ([#69](https://github.com/Matysh/houseplan-card/issues/69))
+
+- Telegram release announcements are now sent only for stable releases; betas
+  and release candidates publish silently.
+  ([#70](https://github.com/Matysh/houseplan-card/issues/70))
+
 ## v1.61.0-beta.4 — 2026-08-10
 
 - Performance comparison now keeps newly introduced private members optional

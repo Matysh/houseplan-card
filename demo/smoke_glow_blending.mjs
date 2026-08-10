@@ -56,9 +56,9 @@ try {
       a = [224, 80, 32], b = [32, 112, 224], bg = [20, 30, 40],
     ) => {
       const shapes = reverse
-        ? `<rect x="1" width="2" height="1" fill="rgb(${b})" style="mix-blend-mode:${screen ? 'screen' : 'normal'}"/><rect x="0" width="2" height="1" fill="rgb(${a})" style="mix-blend-mode:${screen ? 'screen' : 'normal'}"/>`
-        : `<rect x="0" width="2" height="1" fill="rgb(${a})" style="mix-blend-mode:${screen ? 'screen' : 'normal'}"/><rect x="1" width="2" height="1" fill="rgb(${b})" style="mix-blend-mode:${screen ? 'screen' : 'normal'}"/>`;
-      const source = `<svg xmlns="http://www.w3.org/2000/svg" width="4" height="1"><rect width="4" height="1" fill="rgb(${bg})"/><path d="M3 0H4V1H3Z" fill="#6a7b8c"/><g opacity="0.7" style="isolation:isolate"><g style="isolation:isolate">${shapes}</g></g></svg>`;
+        ? `<rect x="1" width="2" height="1" fill="url(#pool-b)" style="mix-blend-mode:${screen ? 'screen' : 'normal'}"/><rect x="0" width="2" height="1" fill="url(#pool-a)" style="mix-blend-mode:${screen ? 'screen' : 'normal'}"/>`
+        : `<rect x="0" width="2" height="1" fill="url(#pool-a)" style="mix-blend-mode:${screen ? 'screen' : 'normal'}"/><rect x="1" width="2" height="1" fill="url(#pool-b)" style="mix-blend-mode:${screen ? 'screen' : 'normal'}"/>`;
+      const source = `<svg xmlns="http://www.w3.org/2000/svg" width="4" height="1"><defs><linearGradient id="pool-a"><stop stop-color="rgb(${a})" stop-opacity="0.7"/></linearGradient><linearGradient id="pool-b"><stop stop-color="rgb(${b})" stop-opacity="0.7"/></linearGradient></defs><rect width="4" height="1" fill="rgb(${bg})"/><path d="M3 0H4V1H3Z" fill="#6a7b8c"/><g style="isolation:isolate"><g style="isolation:isolate">${shapes}</g></g></svg>`;
       const url = URL.createObjectURL(new Blob([source], { type: 'image/svg+xml' }));
       try {
         const image = await new Promise((resolve, reject) => {
@@ -120,6 +120,7 @@ try {
     const customBaseTunnel = card.renderRoot.querySelector('.opening-tunnels[data-layer="glow-base"]');
     return {
       blend: poolGroup?.getAttribute('data-blend'),
+      poolFrameHasOpacity: poolFrame?.hasAttribute('opacity'),
       pools: card.renderRoot.querySelectorAll('.glow-pool').length,
       clippedPools,
       baseLayerOrder: follows(dataTunnel, fullBase)
@@ -135,13 +136,26 @@ try {
     };
   }, fixture);
   const pixel = (data, index) => data.slice(index * 4, index * 4 + 4);
-  const screen = (a, b) => a.map((value, index) => Math.round(255 - ((255 - value) * (255 - b[index])) / 255));
   const over = (fg, bg, alpha) => fg.map((value, index) => Math.round(value * alpha + bg[index] * (1 - alpha)));
+  // Pools blend against the transparent backdrop of their isolated group,
+  // then that group is composited over the room. Account for the backdrop
+  // alpha here instead of treating the room itself as the blend backdrop.
+  const isolatedScreenOver = (first, second, background, alpha) => {
+    const outputAlpha = alpha + alpha * (1 - alpha);
+    return first.map((backdrop, index) => {
+      const source = second[index];
+      const blended = 255 - ((255 - backdrop) * (255 - source)) / 255;
+      const sourceColor = (1 - alpha) * source + alpha * blended;
+      const groupPremultiplied = alpha * sourceColor + alpha * (1 - alpha) * backdrop;
+      return Math.round(groupPremultiplied + background[index] * (1 - outputAlpha));
+    });
+  };
   const bg = [20, 30, 40];
-  const expected = [...over(screen([224, 80, 32], [32, 112, 224]), bg, 0.7), 255];
-  const expectedFallback = [...over([32, 112, 224], bg, 0.7), 255];
+  const expected = [...isolatedScreenOver([224, 80, 32], [32, 112, 224], bg, 0.7), 255];
+  const expectedFallback = [...over([32, 112, 224], over([224, 80, 32], bg, 0.7), 0.7), 255];
   const close = (actual, wanted) => actual.every((value, index) => Math.abs(value - wanted[index]) <= 2);
   if (out.blend !== 'screen') throw new Error(`runtime probe did not enable screen: ${out.blend}`);
+  if (out.poolFrameHasOpacity) throw new Error('Glow pool frame still applies a second opacity');
   if (out.pools !== 60) throw new Error(`expected 60 pools, got ${out.pools}`);
   if (!close(pixel(out.forward, 1), expected)) throw new Error(`screen pixel mismatch: ${pixel(out.forward, 1)} vs ${expected}`);
   if (!close(pixel(out.reverse, 1), expected)) throw new Error('screen result depends on marker order');

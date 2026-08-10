@@ -4,7 +4,7 @@ import {
   buildDevices, lightGroups, primaryEntity, lqiFor, tempFor, humFor, climateTempFor,
   areaLights, areaTemp, areaHum, areaLightStats, sourceValue, areaClimate, areaClimateMap,
   litLightEntity, resolvedDeviceStateEntities, resolvedLightSources, resolvedLightState,
-  resolvedLightStats, seedHiddenBindings,
+  resolvedLightStats, hasOwnSpatialSource, selectSpatialGlowSource, seedHiddenBindings,
   deletePlanMarkerRecords, effectiveMarkerControls, persistedExternalControls,
 } from '../test-build/devices.js';
 import { compileIconRules, iconFor } from '../test-build/rules.js';
@@ -921,6 +921,66 @@ test('resolvedLightSources: one source set feeds room fill, card, glow and contr
   assert.deepEqual(resolvedLightStats(sources), { on: 3, total: 4 });
   assert.ok(!sources.some((source) => source.eid === 'light.own'), 'controls replace automatic device lights');
   assert.ok(!sources.some((source) => source.eid === 'light.hidden'), 'hidden markers cast and count no light');
+});
+
+test('resolvedLightSources: tri-state source role follows the controls matrix', () => {
+  const hass = { states: {
+    'light.own': { state: 'off' },
+    'light.external': { state: 'on' },
+  } };
+  const make = (role, withControls) => ({
+    id: 'lamp', area: 'living', primary: 'light.own', entities: ['light.own'],
+    marker: {
+      ...(role === undefined ? {} : { is_light: role }),
+      ...(withControls ? { controls: ['light.external'] } : {}),
+    },
+  });
+  const result = (role, controls) => resolvedLightSources(hass, [make(role, controls)])
+    .map(({ eid, via, castsGlow }) => ({ eid, via, castsGlow }));
+
+  assert.deepEqual(result(undefined, false), [
+    { eid: 'light.own', via: 'light', castsGlow: true },
+  ]);
+  assert.deepEqual(result(true, false), [
+    { eid: 'light.own', via: 'forced', castsGlow: true },
+  ]);
+  assert.deepEqual(result(false, false), []);
+  assert.deepEqual(result(undefined, true), [
+    { eid: 'light.external', via: 'controls', castsGlow: false },
+  ]);
+  assert.deepEqual(result(true, true), [
+    { eid: 'light.external', via: 'controls', castsGlow: false },
+    { eid: 'light.own', via: 'forced', castsGlow: true },
+  ]);
+  assert.deepEqual(result(false, true), [
+    { eid: 'light.external', via: 'controls', castsGlow: false },
+  ]);
+
+  const forced = resolvedLightSources(hass, [make(true, true)]);
+  assert.equal(selectSpatialGlowSource(forced)?.eid, 'light.own', 'external on control is never the snapshot source');
+  assert.equal(selectSpatialGlowSource(resolvedLightSources(hass, [make(false, true)])), null);
+  const multiple = resolvedLightSources({ states: {
+    'light.first': { state: 'off' }, 'light.second': { state: 'on' },
+  } }, [{ id: 'multi', area: 'living', primary: 'light.first', entities: ['light.first', 'light.second'] }]);
+  assert.equal(selectSpatialGlowSource(multiple)?.eid, 'light.second');
+  const bothOn = resolvedLightSources({ states: {
+    'light.first': { state: 'on' }, 'light.second': { state: 'on' },
+  } }, [{ id: 'multi', area: 'living', primary: 'light.first', entities: ['light.first', 'light.second'] }]);
+  assert.equal(selectSpatialGlowSource(bothOn)?.eid, 'light.first', 'stable candidate order wins');
+});
+
+test('hasOwnSpatialSource requires a live controllable entity and ignores visibility/state', () => {
+  const hass = { states: { 'switch.relay': { state: 'unavailable' } } };
+  const relay = {
+    id: 'relay', area: 'living', hidden: true, primary: 'switch.relay', entities: ['switch.relay'],
+    marker: { is_light: true },
+  };
+  assert.equal(hasOwnSpatialSource(hass, relay), true);
+  assert.equal(hasOwnSpatialSource({ states: {} }, relay), false, 'HA-disabled binding has no runtime entity');
+  assert.equal(hasOwnSpatialSource(hass, {
+    id: 'sensor', area: 'living', primary: 'sensor.temp', entities: ['sensor.temp'],
+    marker: { is_light: true },
+  }), false);
 });
 
 test('resolvedLightSources: marker room_id is more precise than a shared HA area', () => {

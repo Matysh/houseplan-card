@@ -34,6 +34,15 @@ jobs:
           SHA=$(git rev-parse HEAD)
           echo "release tag: $TAG; exact commit: $SHA"
           node scripts/release-gate.mjs "$SHA"
+      - name: Require full performance for a stable release
+        if: ${{ !github.event.release.prerelease }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          SHA=$(git rev-parse HEAD)
+          node scripts/release-gate.mjs "$SHA" --workflow=performance.yml --label="Full Performance"
   build:
     needs: gate
     runs-on: ubuntu-latest

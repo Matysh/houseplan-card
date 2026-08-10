@@ -20,11 +20,22 @@ high-tail guard rather than a population estimate:
 Every report is tied to the source fingerprint embedded by Rollup. A stale
 bundle is a hard failure.
 
-## CI contract
+## CI contracts
 
-The `performance` job checks out the candidate and its base SHA, builds both,
-and runs them sequentially with the same Node.js 22 process family, pinned
-Playwright Chromium and hosted runner. `compare.mjs` then applies two limits:
+Ordinary pushes, pull requests and prereleases use the blocking
+`performance_smoke` job in `validate.yml`. It builds only the candidate and
+measures the heaviest 60-source `large-house-glow-overlay-v1` state after one
+warm-up, with three recorded samples. `compare.mjs --absolute-only` enforces the
+reviewed hard timing, Long Task, heap, cache and rendered-device ceilings from
+`budgets-glow-smoke.json`; it deliberately makes no noisy base-relative claim.
+This is a catastrophic-regression guard, not a performance trend detector.
+
+The dedicated `performance.yml` workflow is the full comparison. It runs on
+every `main` promotion, weekly and on manual dispatch for an important beta or
+performance-sensitive change. It checks out the candidate and its base SHA,
+builds both, and runs them sequentially with the same Node.js 22 process
+family, pinned Playwright Chromium and hosted runner. `compare.mjs` then
+applies two limits:
 
 1. a relative regression allowance against the base-SHA report;
 2. an absolute safety ceiling from `budgets.json`.
@@ -35,23 +46,24 @@ regressions. Small fast operations receive an absolute noise
 allowance so normal scheduler jitter does not become a false regression. Heap,
 Long Tasks, warmed-cache growth and the expected rendered-device count are
 gated separately. Long-Task maximum/count/total checks use the same
-relative-plus-absolute policy as timings. Both raw reports and the comparison are always uploaded as
-the `large-house-performance` artifact, and the table is written to the GitHub
-job summary.
+relative-plus-absolute policy as timings. Both raw reports and the comparison
+are always uploaded as the `full-performance` artifact, and the table is
+written to the GitHub job summary. Stable release assets require both exact-SHA
+`Validate` and exact-SHA `Full Performance`; prereleases require only
+`Validate`.
 
 This base-vs-candidate design intentionally does not compare timings captured
 on different machines or different Chromium builds. A runtime/profile mismatch
 fails closed.
 
 Before the base checkout, CI fetches the complete commit graph and verifies the
-requested comparison revision. A push `github.event.before` must both exist and
-remain an ancestor of the candidate; this catches the unreachable SHA left by a
-force-push. For that rewritten-push case, CI warns and prefers the candidate's
-direct parent as the closest honest comparison. An unusable PR base or another
-case without a safe parent falls back, with a warning, to the newest semver
-release tag reachable from the candidate and excludes a tag on the candidate
-itself. If no safe comparison exists, the job fails closed instead of comparing
-against an arbitrary commit.
+requested comparison revision. A `main` push uses `github.event.before`, which
+must both exist and remain an ancestor of the candidate; this catches the
+unreachable SHA left by a force-push. A manual run may name an explicit tag,
+branch or SHA, while an empty manual input and the weekly run use the candidate
+parent. An unusable requested revision falls back with a warning to the direct
+parent, then to the newest reachable semver release. If no safe comparison
+exists, the job fails closed instead of comparing against an arbitrary commit.
 
 ## Private card contract
 
@@ -129,6 +141,8 @@ Chromium CPU throttling x4, but deliberately exercise different fixtures:
 ```bash
 npm run benchmark:glow -- --profile=large-light-blend-v1 --output=artifacts/performance/glow.json
 npm run benchmark:glow -- --profile=large-house-glow-overlay-v1 --output=artifacts/performance/overlay.json
+npm run benchmark:glow -- --profile=large-house-glow-overlay-v1 --variants=60 --samples=3 --warmups=1 --output=artifacts/performance-smoke/candidate.json
+npm run benchmark:compare -- --absolute-only --budgets=demo/performance/budgets-glow-smoke.json --candidate=artifacts/performance-smoke/candidate.json --output=artifacts/performance-smoke/comparison.json
 ```
 
 Reports include per-variant state-update timings, render/pool counts, Long
@@ -140,5 +154,6 @@ base SHA.
 
 The initial absolute ceilings are intentionally conservative bootstrap limits;
 they must be reviewed against the first paired Ubuntu artifacts before the
-feature is promoted from beta. Same-runner relative checks remain the primary
-candidate-only regression signal.
+feature is promoted from beta. Same-runner relative checks in the full workflow
+remain the primary regression signal; the candidate-only smoke only guards
+against catastrophic failures.

@@ -183,7 +183,9 @@ test('manual publish workflow is draft-first, exact-SHA gated and self-contained
   assert.ok(announce.includes('if: ${{ inputs.reusable == true }}'));
   assert.ok(announce.includes('CALLED: ${{ inputs.reusable }}'));
   assert.ok(announce.includes('BODY=$(cat docs/RELEASE-NOTES.md)'));
-  assert.ok(!announce.includes("github.event_name == 'workflow_call'"));
+  assert.ok(announce.includes("github.event_name == 'release' && github.event.release.prerelease == false"));
+  assert.ok(announce.includes("github.event_name == 'workflow_call' && inputs.prerelease == false"));
+  assert.ok(announce.includes('Prerelease Telegram announcement is disabled'));
 
   const local = readFileSync(new URL('../scripts/release-prerelease.mjs', import.meta.url), 'utf8');
   assert.ok(local.includes("'core.autocrlf=false', 'archive', '--format=zip'"));

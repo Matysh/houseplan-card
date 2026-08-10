@@ -36,13 +36,15 @@ const res = await page.evaluate(async () => {
 
   c._openMarkerDialog(c._devices[0]); await c.updateComplete;
   const switches = [...sr().querySelectorAll('hp-dialog ha-switch')];
-  out.haSwitchRendered = switches.length >= 2; // is_light + hide-from-plan at minimum
+  out.haSwitchRendered = switches.length >= 2; // confirmation + hide-from-plan at minimum
   out.haNoPlainCheckbox = !sr().querySelector('hp-dialog .srcrow input[type=checkbox]');
+  out.lightRoleRadios = sr().querySelectorAll('hp-dialog input[name="marker-light-role"]').length === 3;
+  out.glowModeRadios = sr().querySelectorAll('hp-dialog input[name="marker-glow-mode"]').length === 3;
   const sliders = [...sr().querySelectorAll('hp-dialog ha-slider')];
   out.haSliderRendered = sliders.length >= 2; // size + angle
 
   // --- 3) card -> control: state is pushed into the element --------------
-  c._markerDialog = { ...c._markerDialog, isLight: true, hideFromPlan: false };
+  c._markerDialog = { ...c._markerDialog, tapConfirm: true, hideFromPlan: false };
   await c.updateComplete;
   out.downstreamChecked = [...sr().querySelectorAll('hp-dialog ha-switch')].some((el) => el.checked === true);
 
@@ -52,7 +54,7 @@ const res = await page.evaluate(async () => {
   sw.checked = !before;
   sw.dispatchEvent(new Event('change', { bubbles: true }));
   await c.updateComplete;
-  out.upstreamChecked = c._markerDialog.hideFromPlan === !before || c._markerDialog.isLight === !before
+  out.upstreamChecked = c._markerDialog.hideFromPlan === !before
     || c._markerDialog.useClimateTemp === !before || c._markerDialog.tapConfirm === !before;
 
   // --- 5) slider both ways ----------------------------------------------

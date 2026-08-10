@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "profile": "large-house-glow-overlay-v1",
+  "minimumSamples": 3,
+  "timings": {
+    "stateUpdate60Ms": {
+      "stat": "median",
+      "hardMaxMs": 2200
+    },
+    "screenshotCaptureMs": {
+      "stat": "median",
+      "hardMaxMs": 3200
+    }
+  },
+  "longTasks": {
+    "maxSingleMs": 2700,
+    "maxCountP95": 12,
+    "maxTotalP95Ms": 5500
+  },
+  "heap": {
+    "required": true,
+    "hardMaxGrowthBytes": 67108864
+  },
+  "cacheEntries": {
+    "cleanFloor": 80,
+    "glowClip": 128,
+    "wallUnion": 1,
+    "openingTunnel": 1,
+    "openingWallIndex": 1
+  },
+  "cacheGrowth": {
+    "cleanFloor": 0,
+    "glowClip": 0,
+    "wallUnion": 0,
+    "openingTunnel": 0,
+    "openingWallIndex": 0
+  },
+  "renderedDevices": 200
+}

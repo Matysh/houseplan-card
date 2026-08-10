@@ -503,8 +503,8 @@ export const cardStyles = css`
       pointer-events: none;
     }
     /* The isolated group makes source pools blend with one another, never with
-       the room data fill, Glow base, paper or backdrop. Outer opacity is the
-       existing 0.7 and is applied once after this flat group is composited. */
+       the room data fill, Glow base, paper or backdrop. Per-stop alpha already
+       contains the shared 0.7 ceiling; an outer opacity would apply it twice. */
     .glow-pools-frame,
     .glow-pools {
       isolation: isolate;
@@ -1928,6 +1928,35 @@ export const cardStyles = css`
     .srcrow > span:first-of-type { white-space: nowrap; }
     .colorrow .opl { color: var(--hp-muted); font-size: var(--fs-s); }
     .colorrow .opv { font-size: var(--fs-s); min-width: 34px; text-align: right; }
+    .markerlightgroup {
+      min-width: 0;
+      margin: var(--sp-5) 0 0;
+      padding: var(--sp-4);
+      border: 1px solid var(--hp-line);
+      border-radius: var(--rad-m);
+    }
+    .markerlightgroup legend {
+      padding: 0 var(--sp-2);
+      color: var(--hp-txt);
+      font-weight: 600;
+    }
+    .markerlightgroup[disabled] { opacity: .62; }
+    .markerlighttip { margin: 0 0 var(--sp-3) !important; }
+    .markerradios { display: grid; gap: var(--sp-1); min-width: 0; }
+    .markerlightgroup .srcrow > span:first-of-type {
+      min-width: 0;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .markerglowvalue { margin: var(--sp-3) 0; flex-wrap: wrap; }
+    .markerglowvalue hp-color-opacity { flex: none; }
+    .markerlightdisabled {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      margin-top: var(--sp-2) !important;
+    }
+    .markerlightdisabled ha-icon { --mdc-icon-size: 18px; flex: none; }
     .planrow {
       display: flex;
       align-items: center;

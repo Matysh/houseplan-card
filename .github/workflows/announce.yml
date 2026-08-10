@@ -1,9 +1,8 @@
 name: Announce release
 # Telegram notifications for t.me/ha_houseplan (owner request, 2026-08-07).
-# Fires on every published release, prereleases included: the workflow file
-# lives at the TAGGED commit, so it works for beta tags cut from dev as soon
-# as this file is on dev, and for stable tags once it reaches main.
-# workflow_dispatch exists purely as a connectivity test button.
+# Stable releases are announced; prereleases are deliberately silent.
+# workflow_dispatch exists purely as a connectivity test button and therefore
+# remains allowed to send a test message.
 on:
   release:
     types: [published]
@@ -37,6 +36,7 @@ permissions:
   contents: read
 jobs:
   telegram:
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'release' && github.event.release.prerelease == false) || (github.event_name == 'workflow_call' && inputs.prerelease == false) }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out release notes for a reusable call
@@ -79,7 +79,11 @@ jobs:
               PRE=$RELEASE_PRE
               BODY=$RELEASE_BODY
             fi
-            KIND=$([ "$PRE" = "true" ] && echo "🧪 Пре-релиз" || echo "🏠 Релиз")
+            if [ "$PRE" = "true" ]; then
+              echo "Prerelease Telegram announcement is disabled"
+              exit 0
+            fi
+            KIND="🏠 Релиз"
             SUMMARY=$(printf '%s' "$BODY" | head -c 2500)
             TEXT=$(printf '%s houseplan-card %s — %s\n\n%s\n\n%s' \
               "$KIND" "$TAG" "$NAME" "$SUMMARY" "$URL")

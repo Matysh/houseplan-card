@@ -17,6 +17,9 @@ const parsedSamples = Number(valueArg('samples'));
 const parsedWarmups = Number(valueArg('warmups'));
 const samples = Math.max(1, Math.min(20, Number.isFinite(parsedSamples) && parsedSamples > 0 ? parsedSamples : 7));
 const warmups = Math.max(0, Math.min(5, Number.isFinite(parsedWarmups) && parsedWarmups >= 0 ? parsedWarmups : 1));
+const requestedVariants = valueArg('variants')?.split(',').map(Number);
+if (requestedVariants?.some((count) => ![1, 10, 30, 60].includes(count)))
+  throw new Error(`invalid Glow variants: ${valueArg('variants')}`);
 const output = valueArg('output') ? resolve(valueArg('output')) : null;
 const targetRoot = resolve(valueArg('target-root') ?? '.');
 const additiveFixture = JSON.parse(readFileSync(
@@ -78,6 +81,7 @@ const makeOverlayFixture = () => {
   };
 };
 const fixture = profile === 'large-light-blend-v1' ? additiveFixture : makeOverlayFixture();
+if (requestedVariants?.length) fixture.variants = [...new Set(requestedVariants)];
 const viewport = { width: 1280, height: 900 };
 
 const { page, browser } = await launch(
@@ -267,7 +271,7 @@ try {
 }
 
 const metricNames = [
-  'stateUpdate1Ms', 'stateUpdate10Ms', 'stateUpdate30Ms', 'stateUpdate60Ms', 'screenshotCaptureMs',
+  ...fixture.variants.map((count) => `stateUpdate${count}Ms`), 'screenshotCaptureMs',
 ];
 const report = {
   schema: 2,

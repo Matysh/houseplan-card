@@ -121,9 +121,14 @@ export interface Marker {
   /** Per-source glow radius in cm (glow fill); null = the global default. */
   glow_radius_cm?: number | null;
   /**
-   * Treat this marker as a light source in the glow fill even when it has no
-   * light.* entity (a smart switch driving dumb fixtures — field request).
-   * null/undefined = auto: any light.* entity of the device.
+   * Optional visual override for this source's Glow. Missing/null = use the
+   * live light colour and brightness; `bri` omitted/null keeps live brightness.
+   */
+  glow_color?: { c: string; bri?: number | null } | null;
+  /**
+   * Light-source role: true = always use the marker's own controllable entity,
+   * false = never use its own entity, null/undefined = automatic discovery.
+   * External `controls` remain independent room-light votes in every mode.
    */
   is_light?: boolean | null;
   /**
