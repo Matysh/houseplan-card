@@ -6,7 +6,7 @@ import { launch } from './serve.mjs';
 import { LARGE_HOUSE_COUNTS, makeLargeHouseFixture } from './fixtures/large-house.mjs';
 import { assertFreshDemoBundle } from './bundle-freshness.mjs';
 import { summarizeLongTasks, summarizeTimings } from './performance/evaluate.mjs';
-import { LARGE_HOUSE_CARD_CONTRACT } from './performance/card-contract.mjs';
+import { assertCardContract, LARGE_HOUSE_CARD_CONTRACT } from './performance/card-contract.mjs';
 
 const valueArg = (name) => process.argv.find((arg) => arg.startsWith(`--${name}=`))?.slice(name.length + 3);
 const samples = Math.max(1, Math.min(20, Number(valueArg('samples')) || 7));
@@ -26,6 +26,9 @@ const { page, browser } = await launch(
 await page.emulateMedia({ reducedMotion: 'reduce' });
 await page.addStyleTag({
   content: '*,*::before,*::after{animation-duration:0s!important;transition-duration:0s!important;caret-color:transparent!important}',
+});
+await page.addScriptTag({
+  content: `window.__hpAssertCardContract = ${assertCardContract.toString()};`,
 });
 const chromium = await browser.version();
 let buildFingerprint;
@@ -96,20 +99,6 @@ try {
         openingTunnel: card._openingTunnelCache ? 1 : 0,
         openingWallIndex: card._openingWallIndexCache ? 1 : 0,
       });
-      const assertCardContract = (card) => {
-        const missingMethods = cardContract.methods
-          .filter((name) => typeof card[name] !== 'function')
-          .map((name) => `${name}()`);
-        const missingFields = cardContract.fields.filter((name) => !(name in card));
-        const missing = [...missingMethods, ...missingFields];
-        if (missing.length) {
-          throw new Error(
-            `${cardContract.label} performance harness is incompatible with this houseplan-card bundle; `
-            + `missing private API: ${missing.join(', ')}. `
-            + 'Update the explicit candidate/base compatibility contract before profiling.',
-          );
-        }
-      };
 
       window.__card?.remove?.();
       localStorage.clear();
@@ -154,7 +143,7 @@ try {
       const loadStarted = performance.now();
       host.replaceChildren(card);
       card.hass = hassFor(fixture.states);
-      assertCardContract(card);
+      window.__hpAssertCardContract(card, cardContract);
       await until(() => card._loadOk && card._model?.length === fixture.counts.floors);
       await card.updateComplete;
       await frame();

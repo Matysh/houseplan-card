@@ -29,6 +29,11 @@ const res = await page.evaluate(async () => {
   // диалог: радио заливки, компактные поля, ширина
   c._openSpaceDialog('edit', 'f1'); await c.updateComplete;
   out.fillRadios = sr().querySelectorAll('input[name="fillmode"]').length;
+  out.fillLabels = [...sr().querySelectorAll('input[name="fillmode"]')]
+    // Read the radio's own label only. The selected temperature mode also
+    // renders two nested range controls inside this label.
+    .map((input) => input.nextElementSibling?.textContent?.trim());
+  out.fillHasNone = out.fillLabels.includes(c._t('fill.none'));
   out.glowToggle = [...sr().querySelectorAll('hp-dialog label.srcrow')].some((label) =>
     label.textContent.trim() === c._t('space.glow_enabled')
       && !!label.querySelector('ha-switch,input[type="checkbox"]'));
@@ -42,6 +47,17 @@ const res = await page.evaluate(async () => {
   // симулируем input с пустым значением через обработчик радио-строки — парсер должен сохранить старое
   const n = parseFloat('');
   out.nanGuard = !Number.isFinite(n) && c._spaceDialog.tempMax === before;
+  // Space-level `none` remains readable, but the current dialog offers the
+  // ordinary selectable custom colour in its place.
+  c._spaceDialog = null;
+  c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== 'f1' ? s : ({
+    ...s, settings: { ...(s.settings || {}), fill_mode: 'none', glow_enabled: true },
+  })) };
+  c._openSpaceDialog('edit', 'f1');
+  await c.updateComplete;
+  out.legacyNoneProjection = c._spaceDialog.fillMode;
+  out.legacyNoneAlpha = c._spaceDialog.customFill?.a;
+  out.legacyNoneGlowBases = sr().querySelectorAll('.glow-base-layer .glow-base').length;
   return out;
 });
 // артефакт для глазами: путь берём у ОС, а не хардкодим unix-овый — на Windows
@@ -54,7 +70,12 @@ checkAll(res, {
   "filledClass": 1,
   "unfilled": 3,
   "tipTemp": 22.4,
-  "fillRadios": 5,
+  "fillRadios": 4,
+  "fillLabels": ["Свой цвет", "По силе зигби-сигнала", "По освещению", "По температуре"],
+  "fillHasNone": false,
+  "legacyNoneProjection": "custom",
+  "legacyNoneAlpha": 0,
+  "legacyNoneGlowBases": 4,
   "tempInputs": 2,
   "dialogWidth": 500,
 });

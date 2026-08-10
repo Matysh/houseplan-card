@@ -151,6 +151,25 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const fr = spaceFrame(space, placed);
   const vb = [fr.x, fr.y, fr.w, fr.h];
 
+  // Resolve once per room and reuse the exact result for the visible fill and
+  // the Glow fallback. A selected data mode with no data is effectively empty
+  // and therefore receives the same base darkness as explicit `none`.
+  const resolvedRoomFills = new Map(space.rooms.map((room) => {
+    const fill = roomFillModeOf(disp.fill, room);
+    return [room, resolveEffectiveRoomFill(
+      fill,
+      fill === 'lqi' && room.area ? areaLqi(planHass, spaceDevs, room.area) : null,
+      fill === 'light'
+        ? resolvedLightState(resolvedLightSources(planHass, spaceDevs, room))
+        : 'none',
+      fill === 'temp' && room.area ? areaTemp(planHass, spaceDevs, room.area) : null,
+      disp.tempMin,
+      disp.tempMax,
+      colors,
+      roomCustomFillOf(disp.customFill, room),
+    )] as const;
+  }));
+
   const roomShapes = space.rooms
     .filter((r) => r.area || disp.showBorders || roomFillModeOf(disp.fill, r) !== 'none')
     .map((r) => {
@@ -162,18 +181,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
         cls += ' styled';
         const parts = [`--room-stroke:${disp.color}`, `--room-stroke-op:${disp.showBorders ? disp.opacity : 0}`];
         // fill rendered exactly as configured on the full card (snapshot of current states)
-        const fillC = resolveEffectiveRoomFill(
-          fill,
-          fill === 'lqi' && r.area ? areaLqi(planHass, spaceDevs, r.area) : null,
-          fill === 'light'
-            ? resolvedLightState(resolvedLightSources(planHass, spaceDevs, r))
-            : 'none',
-          fill === 'temp' && r.area ? areaTemp(planHass, spaceDevs, r.area) : null,
-          disp.tempMin,
-          disp.tempMax,
-          colors,
-          roomCustomFillOf(disp.customFill, r),
-        );
+        const fillC = resolvedRoomFills.get(r) || null;
         if (fillC) {
           cls += ' filled';
           parts.push(`--room-fill:${fillC.color}`, `--room-fill-op:${fillC.opacity.toFixed(3)}`);
@@ -198,7 +206,10 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   // The compact card intentionally has no live radial pools, but it shares the
   // exact independent data/base projection with the full plan.
   const glowBaseShapes = space.rooms
-    .filter((room) => roomGlowOf(disp.glow, room) && roomFillModeOf(disp.fill, room) === 'none')
+    .filter((room) => {
+      const fill = resolvedRoomFills.get(room);
+      return roomGlowOf(disp.glow, room) && (!fill || fill.opacity <= 0);
+    })
     .map((room) => room.poly
       ? svg`<polygon class="glow-base" aria-hidden="true" pointer-events="none"
           data-room-id=${room.id || nothing}

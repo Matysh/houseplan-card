@@ -192,6 +192,58 @@ cp dist/houseplan-card.js custom_components/houseplan/frontend/
 
 ## Release
 
+### Primary prerelease path
+
+Prepare the candidate as usual: synchronize every version field, add dated RU
+and EN changelog sections, update the production bundle snapshots and write the
+short bilingual body in `docs/RELEASE-NOTES.md`. That file is the one current
+instance of the canonical `## Основное` / `## Highlights` template; its two
+changelog links must be pinned to the new tag.
+
+After the candidate commit is pushed to `dev` and its exact-SHA Validate is
+green, publication is one command:
+
+```powershell
+npm run release:prerelease -- v1.61.0-beta.4 --issues=63,64 --yes
+```
+
+Omit `--yes` for an interactive tag confirmation. Use the same fail-closed
+preflight without creating a tag or release with:
+
+```powershell
+npm run release:check -- v1.61.0-beta.4 --issues=63,64
+```
+
+The orchestrator requires a clean, synchronized `dev`, byte-identical bundle
+snapshots and a completed green Validate for `HEAD`. It creates or verifies an
+annotated exact-SHA tag, builds `houseplan.zip` directly from that committed
+tree, verifies its manifest and embedded frontend against the candidate hash,
+stages a draft prerelease and uploads both assets. Only then does it make the
+release public. It locates the Release, HACS-zip and Telegram runs by workflow
+file plus exact tag/SHA, verifies the downloaded public asset contents and
+paginated HACS prerelease order, and finally closes only the explicitly supplied
+issues and moves their Project v2 items to Done. Re-running the same command
+after a partial failure is safe when local/remote tags still resolve to the same
+SHA: stale public assets are replaced and verified rather than accepted or left
+for manual deletion. ZIP inspection is implemented in Node and does not depend
+on the host's `tar`/`unzip` variant. A per-tag local lock and GitHub workflow
+concurrency reject parallel runs; the local lock is removed on normal exit and
+on handled `SIGHUP`/`SIGINT`/`SIGTERM` interruption (`SIGKILL` cannot be handled
+by any process).
+
+`Publish prerelease` in GitHub Actions is the browser/button equivalent. Select
+the `dev` branch and enter the exact tag. It performs the same contract and
+draft-first publication entirely on GitHub, including both assets and the
+Telegram announcement. GitHub exposes a `workflow_dispatch` button only after
+the workflow file exists on the default branch; until the next promotion to
+`main`, use the local command. The button deliberately does not close Issues or
+edit the user-owned Project because the repository `GITHUB_TOKEN` has no safe
+authority over that Project.
+
+The older release-event workflows remain supported as a recovery/manual
+fallback. They still gate assets on the exact tagged SHA, so adopting the new
+path does not weaken releases created through the old path.
+
 Tag `vX.Y.Z` + GitHub Release → `.github/workflows/release.yml` resolves that
 tag to its exact commit, waits for every Validate run of the SHA to complete
 successfully, then builds and attaches `houseplan-card.js`. A missing, failed,
@@ -226,6 +278,8 @@ invent issues for minor work, do not link open or partially delivered issues,
 and do not expand the grouped small-fixes bullet into an issue inventory.
 
 ```md
+<!-- release: vX.Y.Z -->
+
 ## Основное
 - Значимое изменение.
 - Исправлена конкретная проблема ([#123](https://github.com/Matysh/houseplan-card/issues/123)).

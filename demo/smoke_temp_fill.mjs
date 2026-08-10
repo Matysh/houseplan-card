@@ -21,8 +21,8 @@ const res = await page.evaluate(async () => {
   // диалог: поля границ видны только в режиме temp
   c._openSpaceDialog('edit', 'f1'); await c.updateComplete;
   out.dialogTempFields = sr().querySelectorAll('.tempin').length;
-  c._spaceDialog = { ...c._spaceDialog, fillMode: 'none' }; await c.updateComplete;
-  out.dialogHiddenWhenNone = sr().querySelectorAll('.tempin').length;
+  c._spaceDialog = { ...c._spaceDialog, fillMode: 'custom' }; await c.updateComplete;
+  out.dialogHiddenWhenCustom = sr().querySelectorAll('.tempin').length;
   c._spaceDialog = null;
   return out;
 });
@@ -33,6 +33,6 @@ checkAll(res, {
   "hot": ["#ffd45c", "transparent", "transparent", "transparent"],
   "swapped": ["#66d17a", "transparent", "transparent", "transparent"],
   "dialogTempFields": 4, // масштаб + мин/макс + компас пространства (docs/SUN.md)
-  "dialogHiddenWhenNone": 2, // мин/макс скрыты; масштаб и компас остаются
+  "dialogHiddenWhenCustom": 2, // мин/макс скрыты; масштаб и компас остаются
 });
 await finish(browser, res);

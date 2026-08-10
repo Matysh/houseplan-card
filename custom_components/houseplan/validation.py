@@ -64,7 +64,9 @@ def _finite(value):
 
 # Persisted colours deliberately use one small, browser-independent format.
 # Keep this exact contract in sync with src/color.ts.
-_COLOR = vol.Match(r"^#[0-9a-fA-F]{6}$")
+# `^...$` accepts a trailing newline in Python. Persisted CSS tokens must
+# match the whole string exactly, in parity with the frontend validator.
+_COLOR = vol.Match(r"\A#[0-9a-fA-F]{6}\Z")
 _CUSTOM_FILL = vol.Schema(
     {
         vol.Required("c"): _COLOR,
@@ -267,7 +269,7 @@ SPACE_DISPLAY_SCHEMA = vol.Schema(
         vol.Optional("bg_color"): _COLOR,
         vol.Optional("room_opacity"): vol.All(vol.Coerce(float), vol.Range(min=0, max=1)),
         vol.Optional("fill_mode"): vol.In(["none", "lqi", "light", "temp", "custom", "glow"]),
-        vol.Optional("custom_fill"): _CUSTOM_FILL,
+        vol.Optional("custom_fill"): vol.Any(None, _CUSTOM_FILL),
         vol.Optional("glow_enabled"): bool,
         vol.Optional("temp_min"): vol.Coerce(float),
         vol.Optional("temp_max"): vol.Coerce(float),

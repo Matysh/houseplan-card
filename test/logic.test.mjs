@@ -566,11 +566,22 @@ test('roomFillStyle: palette-driven fills, lqi gradient between custom endpoints
 
 test('custom fill projection is safe and follows room -> space -> default inheritance', () => {
   assert.deepEqual(customFillOf(null), { c: '#607d8b', a: 0.18 });
-  assert.deepEqual(customFillOf({ c: 'url(javascript:x)', a: Infinity }), { c: '#607d8b', a: 0.18 });
+  for (const hostile of [
+    'url(javascript:x)', 'red;position:fixed', 'var(--primary-color)',
+    '#fff', 'rgb(1, 2, 3)', '#123456\ncolor:red', '#'.padEnd(100001, '1'),
+    null, 123456, [], { nested: '#123456' },
+  ]) {
+    assert.deepEqual(customFillOf({ c: hostile, a: Infinity }),
+      { c: '#607d8b', a: 0.18 }, String(hostile));
+  }
   assert.deepEqual(customFillOf({ c: '#abcdef', a: -2 }), { c: '#abcdef', a: 0 });
   const space = { c: '#112233', a: 0.25 };
   assert.deepEqual(roomCustomFillOf(space, {}), space);
   assert.deepEqual(roomCustomFillOf(space, { settings: { custom_fill: null } }), space);
+  assert.deepEqual(roomCustomFillOf(space, { settings: { custom_fill: { c: '#445566' } } }),
+    { c: '#445566', a: 0.25 });
+  assert.deepEqual(roomCustomFillOf(space, { settings: { custom_fill: { a: 0.7 } } }),
+    { c: '#112233', a: 0.7 });
   assert.deepEqual(roomCustomFillOf(space, { settings: { custom_fill: { c: '#445566', a: 0.7 } } }),
     { c: '#445566', a: 0.7 });
 });

@@ -7,7 +7,7 @@ import { launch } from './serve.mjs';
 import { assertFreshDemoBundle } from './bundle-freshness.mjs';
 import { summarizeLongTasks, summarizeTimings } from './performance/evaluate.mjs';
 import { makeLargeHouseFixture } from './fixtures/large-house.mjs';
-import { GLOW_CARD_CONTRACT } from './performance/card-contract.mjs';
+import { assertCardContract, GLOW_CARD_CONTRACT } from './performance/card-contract.mjs';
 
 const valueArg = (name) => process.argv.find((arg) => arg.startsWith(`--${name}=`))?.slice(name.length + 3);
 const profile = valueArg('profile') || 'large-light-blend-v1';
@@ -85,6 +85,9 @@ const { page, browser } = await launch(
   ['--enable-precise-memory-info', '--js-flags=--expose-gc'],
   {}, resolve(targetRoot, 'demo/srv'),
 );
+await page.addScriptTag({
+  content: `window.__hpAssertCardContract = ${assertCardContract.toString()};`,
+});
 const cdp = await page.context().newCDPSession(page);
 await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
 await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -195,21 +198,6 @@ try {
         openingTunnel: card._openingTunnelCache ? 1 : 0,
         openingWallIndex: card._openingWallIndexCache ? 1 : 0,
       });
-      const assertCardContract = (card) => {
-        const missingMethods = cardContract.methods
-          .filter((name) => typeof card[name] !== 'function')
-          .map((name) => `${name}()`);
-        const missingFields = cardContract.fields.filter((name) => !(name in card));
-        const missing = [...missingMethods, ...missingFields];
-        if (missing.length) {
-          throw new Error(
-            `${cardContract.label} harness is incompatible with this houseplan-card bundle; `
-            + `missing private API: ${missing.join(', ')}. `
-            + 'Update the explicit candidate/base compatibility contract before profiling.',
-          );
-        }
-      };
-
       window.__card?.remove?.();
       localStorage.clear();
       const host = document.getElementById('host');
@@ -218,7 +206,7 @@ try {
       card.setConfig({ type: 'custom:houseplan-card', title: `Glow ${profile}`, icon_size: 2.4 });
       host.replaceChildren(card);
       card.hass = hassFor(statesFor(1));
-      assertCardContract(card);
+      window.__hpAssertCardContract(card, cardContract);
       await until(() => card._loadOk && card._devices?.length === fixture.deviceCount);
       if ('_glowScreenBlend' in card) {
         const probeDeadline = performance.now() + 2500;

@@ -28,7 +28,7 @@ import {
   DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY, stageBgOf,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
   referencedContentUrls,
-  DISPLAY_MODES, TAP_ACTIONS, SPACE_FILL_MODES, ROOM_FILL_MODES,
+  DISPLAY_MODES, TAP_ACTIONS, SPACE_FILL_UI_MODES, ROOM_FILL_MODES,
   normalizeDeviceDisplay, isAlarmCapable, type DeviceDisplayMode,
   coverService, coverEntityOf, COVER_GUARDED_CLASSES,
   liveText, liveTextReference, liveTextToken, hassValue, valueWithUnit, decorTextScale, decorTextLines,
@@ -146,7 +146,7 @@ import {
 import { renderOpeningTunnelFills } from './render/opening-tunnels';
 import { safeStoredColor } from './color';
 
-const CARD_VERSION = '1.61.0-beta.3';
+const CARD_VERSION = '1.61.0-beta.4';
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
 const CELL_CM_MIN = 0.1;
@@ -8630,16 +8630,18 @@ class HouseplanCard extends LitElement {
   }
 
   /** Frame-local Glow-base projection. Data/static fills keep their exact
-   * colors; only rooms whose effective fill is `none` receive darkness. */
-  private _resolvedGlowBase(space: SpaceModel, disp: SpaceDisplay): RoomFillFrame {
+   * colors; a room receives darkness only when its selected data mode resolves
+   * to no visible data object (for example Temperature without a sensor). */
+  private _resolvedGlowBase(
+    space: SpaceModel, disp: SpaceDisplay, dataFills: RoomFillFrame,
+  ): RoomFillFrame {
     const byRoom = new Map<RoomCfg, ResolvedRoomFill | null>();
     const byId = new Map<string, ResolvedRoomFill | null>();
     const base = this._fillColors.glow_base;
     for (const room of space.rooms) {
-      const mode = this._roomDialog && room.id === this._roomEditId
-        ? (this._roomFill || disp.fill)
-        : roomFillModeOf(disp.fill, room);
-      const resolved: ResolvedRoomFill | null = roomGlowOf(disp.glow, room) && mode === 'none'
+      const dataFill = dataFills.byRoom.get(room);
+      const resolved: ResolvedRoomFill | null = roomGlowOf(disp.glow, room)
+        && (!dataFill || dataFill.opacity <= 0)
         ? { color: base.c, opacity: base.a, mode: 'glow' }
         : null;
       byRoom.set(room, resolved);
@@ -10132,14 +10134,24 @@ class HouseplanCard extends LitElement {
       const sp = this._serverCfg!.spaces.find((x: any) => x.id === spaceId);
       if (!sp) return;
       const disp = spaceDisplayOf(sp);
+      const storedCustom = sp.settings?.custom_fill && typeof sp.settings.custom_fill === 'object'
+        ? customFillOf(sp.settings.custom_fill) : null;
+      // Space-level None is no longer a separate UI choice. Project it to the
+      // same custom colour at zero opacity, so merely opening/saving settings
+      // cannot change either the visible floor or the Glow darkness.
+      const dialogCustom = disp.fill === 'none'
+        ? { ...(storedCustom || DEFAULT_CUSTOM_FILL), a: 0 }
+        : storedCustom;
       this._spaceDialog = {
         mode, spaceId, title: sp.title, planUrl: sp.plan_url || null, planFile: null,
         source: sp.plan_url ? 'file' : 'draw',
         showBorders: disp.showBorders, showNames: disp.showNames,
         hideDecor: disp.hideDecor, hideOpenings: disp.hideOpenings,
-        roomColor: disp.color, roomOpacity: disp.opacity, fillMode: disp.fill,
-        customFill: sp.settings?.custom_fill && typeof sp.settings.custom_fill === 'object'
-          ? customFillOf(sp.settings.custom_fill) : null,
+        roomColor: disp.color, roomOpacity: disp.opacity,
+        // `none` is a legacy space token. The current editor represents its
+        // exact appearance as a transparent user colour.
+        fillMode: disp.fill === 'none' ? 'custom' : disp.fill,
+        customFill: dialogCustom,
         glowEnabled: disp.glow,
         bgColor: disp.bgColor,
         bgMode: sp.settings?.bg_mode === 'static' || sp.settings?.bg_mode === 'daynight' ? sp.settings.bg_mode : null,
@@ -10159,8 +10171,11 @@ class HouseplanCard extends LitElement {
         source: 'file',
         showBorders: false, showNames: false,
         hideDecor: false, hideOpenings: false,
-        roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'none',
-        customFill: null,
+        roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'custom',
+        // `custom` replaces the old `none` choice in the editor, but creating
+        // a space must preserve the old no-floor visual by default. The user
+        // can make this colour visible explicitly with the opacity control.
+        customFill: { ...DEFAULT_CUSTOM_FILL, a: 0 },
         glowEnabled: true,
         bgColor: null,
         bgMode: null, northDeg: null, sunRays: null,
@@ -10531,7 +10546,7 @@ class HouseplanCard extends LitElement {
       source: 'file',
       showBorders: false, showNames: false,
       hideDecor: false, hideOpenings: false,
-      roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'none',
+      roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'custom',
       customFill: null,
       glowEnabled: true,
       bgColor: null,
@@ -11636,7 +11651,7 @@ class HouseplanCard extends LitElement {
     const devs = this._devices.filter((d) => d.space === space.id && (!d.hidden || showGhosts));
     const disp = this._spaceDisplayForRender();
     const roomFills = this._resolvedRoomFills(space, disp);
-    const glowBase = this._resolvedGlowBase(space, disp);
+    const glowBase = this._resolvedGlowBase(space, disp, roomFills);
     const showLqi = disp.showLqi ?? this._config.show_signal ?? true;
     const cfgSize = this._config.icon_size ?? 2.5;
     const iconPct = cfgSize > 8 ? 2.5 : cfgSize;
@@ -14904,7 +14919,7 @@ class HouseplanCard extends LitElement {
             <option value="0" ?selected=${d.sunRays === false}>${this._t('space.sun_off')}</option>
           </select>
           <label>${this._t('space.fill_label')}</label>
-          ${SPACE_FILL_MODES.map((v) => [v, 'fill.' + v] as const).map(
+          ${SPACE_FILL_UI_MODES.map((v) => [v, 'fill.' + v] as const).map(
             ([v, k]) => html`<label class="srcrow">
               <input type="radio" name="fillmode" .checked=${d.fillMode === v}
                 @change=${() => (this._spaceDialog = { ...d, fillMode: v as any })} />

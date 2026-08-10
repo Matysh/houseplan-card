@@ -1,6 +1,6 @@
 # House Plan architecture
 
-Updated: 2026-08-10 (v1.61.0-beta.2). The repository = a HACS integration (category **Integration**)
+Updated: 2026-08-10 (v1.61.0-beta.3). The repository = a HACS integration (category **Integration**)
 that contains both the backend (`custom_components/houseplan`) and the Lovelace card (`src/` → `dist/`).
 
 ## Layout
@@ -21,6 +21,9 @@ houseplan-card/
 ├─ dist/houseplan-card.js        # build (rollup+terser), ~290 KB, plans embedded
 ├─ demo/golden/                  # deterministic HP-QA-01 matrix, capture/verify/accept
 ├─ demo/performance/             # large-house budgets and same-runner comparison
+├─ scripts/release-*.mjs         # exact-SHA publication contract and local orchestrator
+├─ .github/workflows/
+│  └─ publish-prerelease.yml     # draft-first one-button prerelease publication
 ├─ custom_components/houseplan/  # the HA integration
 │  ├─ __init__.py                # setup: Store, WS commands, JS serving (add_extra_js_url)
 │  ├─ trails.py                  # server-side vacuum trail recorder (state-change driven)
@@ -36,6 +39,15 @@ Rollup embeds a source fingerprint in the bundle. Performance and golden-image
 tooling compares it with the current `src/` tree before recording results, so a
 committed demo snapshot from an older source revision cannot produce a false
 baseline.
+
+Prerelease publication has one fail-closed contract shared by the local command
+and the manual GitHub workflow. The tag version must match all six shipped
+version authorities, both changelogs need a dated section, and the canonical
+bilingual `docs/RELEASE-NOTES.md` must link to immutable tagged changelogs. A
+public release is assembled as a draft, receives and verifies
+`houseplan-card.js` plus `houseplan.zip`, and becomes visible only after the
+exact candidate SHA has a green Validate. Existing release-event workflows are
+kept as an independent recovery path; they enforce the same exact-SHA gate.
 
 ## Key decisions
 
@@ -593,11 +605,14 @@ hash falls back to the default.
   token and projects to data fill `none` plus Glow `true` unless an explicit
   boolean wins. Normal settings/room saves materialise that projection in the
   same write; Optimize Plans performs the equivalent idempotent model-v6
-  migration. Render order is paper → data room/tunnel fill → conditional
-  pointer-free Glow base for rooms whose effective fill is `none` → radial
-  pools → sun/interactive layers. A data/static fill (`lqi`, `light`, `temp`,
-  `custom`) never receives the dark base, so its exact color and alpha remain
-  visible; radial pools stay independent and continue to render. The static
+  migration. Render order is paper → resolved data room/tunnel fill → conditional
+  pointer-free Glow base for rooms whose resolver result is absent or fully
+  transparent → radial
+  pools → sun/interactive layers. A resolved data/static fill (`lqi`, `light`,
+  `temp`, `custom`) never receives the dark base, so its exact color and alpha
+  remain visible; a dynamic mode without usable data or a custom fill with
+  zero opacity receives the base instead of exposing bright paper. Radial pools stay
+  independent and continue to render. The static
   room card uses the same data/base projection, omits empty base groups, and
   deliberately has no live pools.
 - **Custom room fill** (#56): `space.settings.custom_fill` is the space color

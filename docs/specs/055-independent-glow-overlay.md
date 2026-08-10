@@ -15,9 +15,10 @@
 
 Пользователь может одновременно видеть LQI/освещённость/температуру/свой цвет
 и световые пятна Glow. Тёмная базовая подложка Glow применяется только когда
-effective data fill равен `none`, поэтому полезная заливка не затемняется и не
-меняет оттенок. Модель геометрии комнат, распространения света и проёмов не
-меняется.
+resolver не вернул видимый data/static fill (`null` или opacity 0): это включает
+явный режим `none`, его прозрачную custom-проекцию и динамический режим без
+доступных данных. Реально полученная полезная заливка не затемняется и не меняет
+оттенок. Модель геометрии комнат, распространения света и проёмов не меняется.
 
 ## Границы этапа и зависимости
 
@@ -153,7 +154,8 @@ Preview показывает число затронутых пространс�
 
 1. paper/backdrop;
 2. resolved data/static room fill и matching data fill внутреннего тоннеля;
-3. Glow base только для effective-Glow rooms с effective fill `none` и
+3. Glow base только для effective-Glow rooms без видимого resolved fill
+   (`null` или opacity 0) и
    соответствующих частей тоннеля;
 4. tunnel light sectors и radial pools;
 5. sun и interactive layers по текущему контракту.
@@ -165,7 +167,8 @@ Glow base и pools pointer-transparent. Room hover, tooltip и editor hit target
 
 Glow base — отдельная SVG-геометрия с обычным `source-over`/`normal`
 композитингом, которая создаётся только при
-`effectiveGlow == true && effectiveFill == none`. `multiply`, `screen`, CSS
+`effectiveGlow == true && (resolvedFill == null || resolvedFill.opacity == 0)`.
+`multiply`, `screen`, CSS
 filter и дополнительная групповая opacity не применяются.
 
 ```text
@@ -180,14 +183,15 @@ base повторяет прежние room/tunnel shapes, поэтому при
 с Glow обязательный контракт обратный: data/static fill сохраняет exact color и
 alpha, Glow base отсутствует, а radial pools продолжают рисоваться поверх.
 
-Room с effective Glow on и fill `none` получает base даже при отсутствии
-источников света; radial pools тогда отсутствуют. Room с любым другим fill или
-Glow off не получает base. Glow-off room исключается
+Room с effective Glow on и отсутствующим/прозрачным resolved fill получает base даже при
+отсутствии источников света; radial pools тогда отсутствуют. Это относится и к
+динамическому режиму без подходящих HA-данных. Room с реально разрешённым fill
+или Glow off не получает base. Glow-off room исключается
 из визуальных clip pools, но это не меняет физический transport через неё по
 #36. Если Glow off у всех комнат, overlay не создаёт пустые SVG layers.
 
 Тоннель сначала повторяет resolved data fill своей стороны. Glow-base overlay
-получает только сторона с effective Glow и fill `none`; сторона с любой
+получает только сторона с effective Glow и отсутствующим/прозрачным resolved fill; сторона с любой
 data/static заливкой сохраняет её точный цвет. Геометрия световых
 секторов, отсечение откосами и проникновение через двери/ворота не меняются.
 
@@ -202,7 +206,7 @@ data/static заливкой сохраняет её точный цвет. Ге
 Статическая карточка использует тот же effective resolver и показывает:
 
 - data/static fill;
-- Glow base поверх него только для effective-Glow rooms с fill `none`;
+- Glow base вместо отсутствующего/прозрачного resolved fill для effective-Glow rooms;
 - matching базовую заливку поддерживаемых тоннелей.
 
 Live radial pools и tunnel light sectors в статической карточке не рисуются —
@@ -214,7 +218,8 @@ pools.
 
 Space dialog разделяет controls:
 
-- «Заливка комнаты»: Нет / LQI / Свет / Температура / Свой цвет после #56;
+- «Заливка комнаты» на уровне пространства после #64: Свой цвет / LQI / Свет /
+  Температура; `none` остаётся room-level override и read-compatible token;
 - «Свечение источников»: отдельный switch.
 
 Room dialog после #36 показывает независимый fill override и tri-state Glow.

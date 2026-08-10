@@ -816,14 +816,16 @@ separately promised workflows:
       [auto: smoke_controls; unit: devices.test.mjs, plan-optimizer.test.mjs].
       Repeat with a `device:*` binding whose controls contain one of that
       device's child switches; the child is excluded while external targets remain
-- [ ] Independent Glow (#55): the space has data-fill radios
-      None/LQI/Light/Temperature plus a separate Glow switch; every combination
+- [ ] Independent Glow (#55/#64): the space has data-fill radios
+      Custom/LQI/Light/Temperature plus a separate Glow switch; every combination
       persists and renders both layers in order. Legacy space/room
-      `fill_mode: glow` has identical effective state, explicit booleans win,
+      `fill_mode: glow` has identical effective state; legacy space `none`
+      remains losslessly readable and projects to Custom when edited; explicit booleans win,
       normal Save materialises both fields atomically and Optimize Plans makes
       the same idempotent model-v6 migration without deleting unknown settings.
-      Glow-off everywhere creates no base/tunnel/pool SVG layer; static room
-      cards show the data fill plus base darkness but no live pools
+      Glow-off everywhere creates no base/tunnel/pool SVG layer; a dynamic mode
+      without usable HA data falls back to base darkness instead of bright
+      paper; static room cards show the same data/base projection but no live pools
       [unit: logic, plan-optimizer, backend validation; auto: golden matrix].
 - [ ] Additive Glow (#19): 1/10/30/60-source fixture renders one flat isolated
       pool group and exactly one outer opacity; brightness/palette alpha live

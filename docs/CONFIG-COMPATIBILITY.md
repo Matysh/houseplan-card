@@ -62,4 +62,16 @@ as `{c:'#RRGGBB',a:0..1}` in `space.settings.custom_fill` and, for an explicit
 room override, `room.settings.custom_fill`. Missing or invalid historical data
 is projected at render time through room → space → `#607d8b`/`0.18`; merely
 reading it never rewrites the config. Backend writes keep the strict shared
-hex/finite-alpha contract.
+hex/finite-alpha contract. An explicit `null` is accepted at either level and
+has the same projection semantics as a missing override.
+
+The current space editor presents `custom` as the ordinary/default room fill
+instead of offering a separate `none` choice. A historical space-level `none`
+is still rendered losslessly until edited, then the dialog projects it to
+`custom` with the existing/default color at zero opacity and materializes that
+visually equivalent choice on Save. Newly created spaces use the same
+zero-opacity custom value, so the UI change does not introduce a visible floor
+or remove the Glow base by default. A zero-opacity resolved fill still receives
+the Glow base. `none` remains accepted by the model and exposed at room level,
+where it is still required to suppress an inherited
+LQI/light/temperature/custom fill for one room.

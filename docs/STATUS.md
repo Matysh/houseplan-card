@@ -21,11 +21,11 @@ metadata). Only an explicit owner-approved emergency hotfix may skip this gate.
 
 | Item | State |
 |---|---|
-| Version | **v1.61.0-beta.3** everywhere (manifest, const.py, package.json, CARD_VERSION) — pre-release candidate with custom room colors, exact data fills under Glow and performance-infrastructure hardening |
-| Current local cycle | The v1.61.0-beta.3 candidate implements #56 (safe custom room/space fill), #61 (Glow base only when effective fill is `none`, while pools remain independent), #60 (Glow radius grouped with Glow settings), review L1/L2, and infrastructure #15/#16 (explicit performance-card API contract plus force-push-safe comparison SHA). #17 is closed after aligning the one canonical release-body template. Publication waits for the targeted local gate, reviewed Linux golden matrix v5 and mandatory green exact-SHA Validate. |
-| Workflow | Owner's rule since 2026-08-07: ordinary fixes/features are made **locally, without tests and without commits**. A requested pre-release gets a production build plus the smallest targeted unit/smoke set covering the changed surfaces, one tested `dev` commit/tag and a GitHub Release with `prerelease=true`; `main` stays untouched. The complete local frontend/backend/smoke gate runs only before a stable release, after which `main` is fast-forwarded to the exact tested `dev` SHA and the GitHub Release uses `prerelease=false`. Release bodies are short and bilingual (Russian first): only significant user changes get individual bullets, while minor/code-only work is grouped as `Мелкие исправления и улучшения` / `Small fixes and improvements`; every body ends with separate links to the Russian and English changelogs. Detailed RU/EN changelog bullets may link the corresponding closed GitHub Issues; open or partially delivered issues are never presented as shipped. Nothing is copied to the home instance by hand |
+| Version | **v1.61.0-beta.4** everywhere (manifest, const.py, package.json, CARD_VERSION) — prerelease with reviewed one-command publication, portable/content-bound assets, safer performance infrastructure and backward-compatible Custom color/Glow behavior |
+| Current local cycle | The v1.61.0-beta.4 line completes #15, #16, #61, #63 and #64: twice-reviewed one-command/one-button fail-closed prerelease publication with portable Node ZIP inspection, content-bound/recoverable assets, interruption-safe local locking and workflow concurrency; Custom color replaces the redundant space-level None choice while legacy and newly created spaces remain at 0% opacity until explicitly changed; performance contracts tolerate supported old baselines, force-push comparison is safer and Glow falls back by resolved result rather than mode. |
+| Workflow | Owner's rule since 2026-08-07: ordinary fixes/features are made **locally, without tests and without commits**. A requested pre-release gets a production build plus the smallest targeted unit/smoke set covering the changed surfaces, one tested `dev` commit/tag and a GitHub Release with `prerelease=true`; `main` stays untouched. The complete local frontend/backend/smoke gate runs only before a stable release, after which `main` is fast-forwarded to the exact tested `dev` SHA and the GitHub Release uses `prerelease=false`. Release bodies are short and bilingual (Russian first): only significant user changes get individual bullets, while minor/code-only work is grouped as `Мелкие исправления и улучшения` / `Small fixes and improvements`; every body ends with separate links to the Russian and English changelogs. Detailed RU/EN changelog bullets may link the corresponding closed GitHub Issues; open or partially delivered issues are never presented as shipped. `docs/RELEASE-NOTES.md` is the current canonical body instance; `npm run release:prerelease -- <tag> --issues=… --yes` is the primary local publication path and the manual `Publish prerelease` workflow is its GitHub-only equivalent once present on `main`. Nothing is copied to the home instance by hand |
 | GitHub | https://github.com/Matysh/houseplan-card — [Issues](https://github.com/Matysh/houseplan-card/issues) are the canonical task records and the linked [Project v2](https://github.com/users/Matysh/projects/1) is the canonical priority/status view; both must stay current. `main` carries stable releases; pre-release tags may point directly at `dev`. Work lands on `dev` and is merged into `main` for a stable release, so `dev` is normally equal to or ahead of `main`, never behind. Push via SSH key `ha_jb` (remote git@github.com:…); API releases via the fine-grained PAT in `~/.git-credentials` (Contents R/W, issued 2026-07-23) |
-| CI | The published v1.61.0-beta.2 exact-SHA Validate run is green. The v1.61.0-beta.3 targeted gate covers logic/backend enum+color validation, performance-card contracts, settings/room/tunnel/Glow/static browser smokes, golden matrix v5 and diagnostic samples of both performance profiles. `release.yml` withholds the card asset unless the final exact-SHA Validate is green. |
+| CI | Publication of v1.61.0-beta.4 requires a green exact-SHA Validate before the tag/release gate can complete. `release.yml` still withholds fallback assets unless the exact tagged SHA is green; the prerelease orchestrators additionally verify release metadata and both assets before completion. |
 | HACS | Custom repository works. **Inclusion PR: hacs/default#9004** — open, valid, labeled, mergeable clean, never drafted. Queue: 1212 open, 835 older than ours. Merge rate COLLAPSED: 75 in July but almost all in the first decade, 0 in the last week (checked 2026-07-29) — maintainers process in rare bursts; ETA unknowable, months at best. Nothing actionable on our side |
 | Home instance | ha.jbstudio.pro (SSH port **22222**, key `ha_jb`; HA config root is `/mnt/data/supervisor/homeassistant` — `/config` does NOT exist in this SSH environment), last direct copy was **v1.57.0**; from v1.58.0 on it updates itself through HACS by tag (no scp) |
 | Localization | UI en/ru (src/i18n/*.json), everything user-visible localized incl. kiosk popover |
@@ -44,16 +44,19 @@ metadata). Only an explicit owner-approved emergency hotfix may skip this gate.
   header/editors, swipe between spaces, double-tap zoom reset, `cycle: N`
   carousel, per-screen size multipliers in localStorage.
 - **Independent Glow overlay** (#55/#19, refined locally by #61): dark-room
-  base is used only with effective fill `none`; LQI/light/temp/custom colors
-  keep their exact alpha while per-source pools remain visible. Pools use
+  base is used only when the effective fill resolver returns `null`, including
+  dynamic modes without usable data; resolved LQI/light/temp/custom colors keep
+  their exact alpha while per-source pools remain visible. Pools use
   additive screen blending only after a cached real-pixel browser probe and
   otherwise fall back to normal composition; legacy `fill_mode: glow` remains
   losslessly readable/migratable. Existing RGB/colour-temperature/default
   colour, per-source radius, door sectors and transitive open zones remain.
-- **Custom room fill** (local #56): space and room dialogs offer a persistent
-  user color/opacity independent of HA state and border/name color. Effective
-  inheritance is room → space → safe documented default; room reset restores
-  space inheritance, and full/static renderers share the same projection.
+- **Custom room fill** (#56, space UX refined locally by #64): the space dialog
+  uses persistent user color/opacity as its ordinary first/default fill instead
+  of a redundant None option; a room keeps None as an explicit inherited-fill
+  suppression. Effective inheritance is room → space → safe documented default;
+  room reset restores space inheritance, and full/static renderers share the
+  same projection.
 - **Real switches** (v1.36): `marker.controls[]` group-toggle with HA-group
   semantics; icon mirrors targets; hidden grouped lamps fixed (tiered
   primaryEntity). **Lights toggle by default** (v1.39): primary domain light

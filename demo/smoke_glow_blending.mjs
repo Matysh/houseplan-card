@@ -95,13 +95,42 @@ try {
     await staticCard.updateComplete;
     const staticBase = staticCard.renderRoot.querySelector('.glow-base-layer .glow-base');
     const staticPools = staticCard.renderRoot.querySelectorAll('.glow-pool, .glowlayer').length;
+    const baseParity = !!fullBase && !!staticBase
+      && fullBase.getAttribute('fill') === staticBase.getAttribute('fill')
+      && fullBase.getAttribute('fill-opacity') === staticBase.getAttribute('fill-opacity');
     staticCard.remove();
+
+    // The fixture deliberately has Temperature mode without temperature
+    // entities, which verifies the Glow fallback above. Now switch the same
+    // mounted plan to a real data fill and verify that the base disappears
+    // without changing the data colour/alpha or its layer order.
+    const spaceCfg = card._serverCfg.spaces[0];
+    spaceCfg.settings = {
+      ...(spaceCfg.settings || {}),
+      fill_mode: 'custom', custom_fill: { c: '#486a8f', a: 0.42 },
+    };
+    card._cfgEpoch++;
+    card.requestUpdate();
+    await card.updateComplete;
+    await frame();
+    const customRoom = card.renderRoot.querySelector('.room.filled');
+    const customDataTunnel = card.renderRoot.querySelector('.opening-tunnels[data-layer="data"]');
+    const customPoolFrame = card.renderRoot.querySelector('.glow-pools-frame');
+    const customBase = card.renderRoot.querySelector('.glow-base-layer .glow-base');
+    const customBaseTunnel = card.renderRoot.querySelector('.opening-tunnels[data-layer="glow-base"]');
     return {
       blend: poolGroup?.getAttribute('data-blend'),
       pools: card.renderRoot.querySelectorAll('.glow-pool').length,
-      clippedPools, layerOrder: follows(dataTunnel, poolFrame),
+      clippedPools,
+      baseLayerOrder: follows(dataTunnel, fullBase)
+        && follows(fullBase, baseTunnel) && follows(baseTunnel, poolFrame),
       fullBase: !!fullBase, baseTunnel: !!baseTunnel,
-      staticBase: !!staticBase, staticPools,
+      staticBase: !!staticBase, staticPools, baseParity,
+      customFill: customRoom?.style.getPropertyValue('--room-fill'),
+      customOpacity: customRoom?.style.getPropertyValue('--room-fill-op'),
+      customBase: !!customBase, customBaseTunnel: !!customBaseTunnel,
+      customLayerOrder: follows(customRoom, customDataTunnel)
+        && follows(customDataTunnel, customPoolFrame),
       forward, reverse, fallback, sameDim,
     };
   }, fixture);
@@ -123,9 +152,13 @@ try {
     throw new Error(`same-colour dim overlap did not brighten without clipping: ${singleDim} -> ${overlapDim}`);
   if (!close(pixel(out.forward, 3), [106, 123, 140, 255])) throw new Error('non-pool sector/background changed');
   if (out.clippedPools !== out.pools) throw new Error(`lost per-source clips: ${out.clippedPools}/${out.pools}`);
-  if (!out.layerOrder) throw new Error('data/base/tunnel/pool layer order changed');
-  if (out.fullBase || out.baseTunnel || out.staticBase || out.staticPools !== 0)
-    throw new Error(`data fill was tinted by Glow base: full=${out.fullBase}, tunnel=${out.baseTunnel}, static=${out.staticBase}`);
+  if (!out.baseLayerOrder) throw new Error('data/base/tunnel/pool layer order changed');
+  if (!out.fullBase || !out.baseTunnel || !out.staticBase || out.staticPools !== 0 || !out.baseParity)
+    throw new Error(`missing-data Glow fallback/parity failed: full=${out.fullBase}, tunnel=${out.baseTunnel}, static=${out.staticBase}, parity=${out.baseParity}`);
+  if (out.customFill !== '#486a8f' || Number(out.customOpacity) !== 0.42)
+    throw new Error(`custom data fill changed: ${out.customFill}/${out.customOpacity}`);
+  if (out.customBase || out.customBaseTunnel || !out.customLayerOrder)
+    throw new Error(`data fill was tinted/reordered by Glow base: full=${out.customBase}, tunnel=${out.customBaseTunnel}, order=${out.customLayerOrder}`);
   console.log(JSON.stringify({ ok: true, blend: out.blend, pools: out.pools, staticParity: true }));
 } finally {
   await browser.close();

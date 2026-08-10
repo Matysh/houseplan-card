@@ -46,10 +46,12 @@ fails closed.
 Before the base checkout, CI fetches the complete commit graph and verifies the
 requested comparison revision. A push `github.event.before` must both exist and
 remain an ancestor of the candidate; this catches the unreachable SHA left by a
-force-push. An unusable revision falls back to the newest semver release tag
-reachable from the candidate, excluding a tag on the candidate itself. If no
-such release exists, the job fails closed instead of comparing against an
-arbitrary commit.
+force-push. For that rewritten-push case, CI warns and prefers the candidate's
+direct parent as the closest honest comparison. An unusable PR base or another
+case without a safe parent falls back, with a warning, to the newest semver
+release tag reachable from the candidate and excludes a tag on the candidate
+itself. If no safe comparison exists, the job fails closed instead of comparing
+against an arbitrary commit.
 
 ## Private card contract
 
@@ -57,8 +59,17 @@ The candidate benchmark runner is also executed against the base bundle, so
 every private `houseplan-card` field or method it reads is an explicit API of
 the performance harness. `card-contract.mjs` lists that surface for the
 large-house and Glow profiles. Each runner verifies it immediately after card
-creation and fails with the exact missing names before waiting for readiness or
-recording timings. Missing caches must never be converted to plausible zeroes.
+creation and fails with the exact missing names or invalid runtime types before
+waiting for readiness or recording timings. Required caches must be real
+`Map` instances and must never be converted from missing/invalid values to
+plausible zeroes.
+
+`fields` are required in every supported comparison base. `optionalFields` are
+newer members whose absence has an explicit safe fallback in the runner; if an
+optional member exists, its declared `fieldTypes` contract still applies. Add a
+new safely degradable field to `optionalFields` until every supported base has
+it, then promote it to `fields`. A member without a truthful fallback must be
+introduced through a compatibility revision before the benchmark consumes it.
 
 Rename a consumed private member in two revisions:
 

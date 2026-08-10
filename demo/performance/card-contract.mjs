@@ -37,6 +37,17 @@ export const LARGE_HOUSE_CARD_CONTRACT = Object.freeze({
     '_settingsDialog',
     '_tool',
   ]),
+  optionalFields: Object.freeze([]),
+  fieldTypes: Object.freeze({
+    _booting: 'boolean',
+    _cleanFloorCache: 'map',
+    _devices: 'array',
+    _glowClipCache: 'map',
+    _gridPitch: 'number',
+    _loadOk: 'boolean',
+    _model: 'array',
+    _tool: 'string',
+  }),
 });
 
 export const GLOW_CARD_CONTRACT = Object.freeze({
@@ -45,7 +56,46 @@ export const GLOW_CARD_CONTRACT = Object.freeze({
   fields: Object.freeze([
     ...CACHE_FIELDS,
     '_devices',
-    '_glowScreenBlend',
     '_loadOk',
   ]),
+  // Additive blending was introduced after the first supported performance
+  // bases. Its absence is safe: the runner keeps the historical normal blend.
+  optionalFields: Object.freeze(['_glowScreenBlend']),
+  fieldTypes: Object.freeze({
+    _cleanFloorCache: 'map',
+    _devices: 'array',
+    _glowClipCache: 'map',
+    _glowScreenBlend: 'boolean',
+    _loadOk: 'boolean',
+  }),
 });
+
+/** Single fail-fast implementation injected into both browser runners. Keep
+ * this function self-contained: runners serialize it with `toString()`. */
+export function assertCardContract(card, contract) {
+  const matches = (value, expected) => {
+    if (expected === 'array') return Array.isArray(value);
+    if (expected === 'map') return value instanceof Map;
+    return typeof value === expected;
+  };
+  const missingMethods = contract.methods
+    .filter((name) => typeof card[name] !== 'function')
+    .map((name) => `${name}()`);
+  const missingFields = contract.fields
+    .filter((name) => !(name in card) || card[name] === undefined);
+  const invalidFields = [...contract.fields, ...(contract.optionalFields || [])]
+    .filter((name) => name in card && contract.fieldTypes?.[name]
+      && !matches(card[name], contract.fieldTypes[name]))
+    .map((name) => `${name}:${contract.fieldTypes[name]}`);
+  const missing = [...missingMethods, ...missingFields];
+  if (missing.length || invalidFields.length) {
+    const details = [
+      missing.length ? `missing private API: ${missing.join(', ')}` : '',
+      invalidFields.length ? `invalid private API types: ${invalidFields.join(', ')}` : '',
+    ].filter(Boolean).join('; ');
+    throw new Error(
+      `${contract.label} harness is incompatible with this houseplan-card bundle; ${details}. `
+      + 'Update the explicit candidate/base compatibility contract before profiling.',
+    );
+  }
+}

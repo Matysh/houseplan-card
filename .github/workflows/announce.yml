@@ -8,28 +8,77 @@ on:
   release:
     types: [published]
   workflow_dispatch: {}
-permissions: {}
+  workflow_call:
+    inputs:
+      reusable:
+        required: true
+        type: boolean
+      tag:
+        required: true
+        type: string
+      release_name:
+        required: true
+        type: string
+      url:
+        required: true
+        type: string
+      prerelease:
+        required: true
+        type: boolean
+      ref:
+        required: true
+        type: string
+    secrets:
+      TELEGRAM_BOT_TOKEN:
+        required: true
+      TELEGRAM_CHAT_ID:
+        required: true
+permissions:
+  contents: read
 jobs:
   telegram:
     runs-on: ubuntu-latest
     steps:
+      - name: Check out release notes for a reusable call
+        if: ${{ inputs.reusable == true }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
       - name: Send to Telegram
         env:
           TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
-          TAG: ${{ github.event.release.tag_name }}
-          NAME: ${{ github.event.release.name }}
-          URL: ${{ github.event.release.html_url }}
-          PRE: ${{ github.event.release.prerelease }}
+          CALLED: ${{ inputs.reusable }}
+          INPUT_TAG: ${{ inputs.tag }}
+          INPUT_NAME: ${{ inputs.release_name }}
+          INPUT_URL: ${{ inputs.url }}
+          INPUT_PRE: ${{ inputs.prerelease }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_NAME: ${{ github.event.release.name }}
+          RELEASE_URL: ${{ github.event.release.html_url }}
+          RELEASE_PRE: ${{ github.event.release.prerelease }}
           # The body goes through env, never through shell interpolation —
           # release notes are arbitrary text.
-          BODY: ${{ github.event.release.body }}
+          RELEASE_BODY: ${{ github.event.release.body }}
           EVENT: ${{ github.event_name }}
         run: |
           set -euo pipefail
-          if [ "$EVENT" = "workflow_dispatch" ]; then
+          if [ "$EVENT" = "workflow_dispatch" ] && [ "$CALLED" != "true" ]; then
             TEXT="✅ Тест: оповещения о релизах houseplan-card подключены."
           else
+            if [ "$CALLED" = "true" ]; then
+              TAG=$INPUT_TAG
+              NAME=$INPUT_NAME
+              URL=$INPUT_URL
+              PRE=$INPUT_PRE
+              BODY=$(cat docs/RELEASE-NOTES.md)
+            else
+              TAG=$RELEASE_TAG
+              NAME=$RELEASE_NAME
+              URL=$RELEASE_URL
+              PRE=$RELEASE_PRE
+              BODY=$RELEASE_BODY
+            fi
             KIND=$([ "$PRE" = "true" ] && echo "🧪 Пре-релиз" || echo "🏠 Релиз")
             SUMMARY=$(printf '%s' "$BODY" | head -c 2500)
             TEXT=$(printf '%s houseplan-card %s — %s\n\n%s\n\n%s' \

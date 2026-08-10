@@ -328,7 +328,7 @@
   "fill.lqi": "Zigbee signal",
   "fill.light": "Lights",
   "fill.custom": "Custom color",
-  "space.custom_fill": "Custom fill color",
+  "space.custom_fill": "Fill color",
   "space.source_file": "I have a floor-plan image",
   "space.source_draw": "No image — I'll outline rooms by hand",
   "space.orientation": "Canvas",

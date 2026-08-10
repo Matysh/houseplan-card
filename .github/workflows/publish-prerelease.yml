@@ -1,0 +1,205 @@
+name: Publish prerelease
+run-name: Publish ${{ inputs.tag }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Exact prerelease tag, for example v1.61.0-beta.4"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: publish-prerelease-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.candidate.outputs.sha }}
+      tag: ${{ steps.candidate.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Pin the current dev candidate
+        id: candidate
+        env:
+          TAG: ${{ inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          test "$REF_NAME" = "dev" || {
+            echo "::error::Prereleases must be dispatched from the dev branch, got $REF_NAME"
+            exit 1
+          }
+          SHA=$(git rev-parse HEAD)
+          git fetch origin dev
+          test "$(git rev-parse origin/dev)" = "$SHA" || {
+            echo "::error::The dispatched SHA is no longer the origin/dev tip"
+            exit 1
+          }
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+      - name: Verify version, changelogs and bilingual release notes
+        env:
+          TAG: ${{ inputs.tag }}
+        run: node scripts/release-contract.mjs "$TAG" --repo="$GITHUB_REPOSITORY"
+      - name: Require green Validate for this exact SHA
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ steps.candidate.outputs.sha }}
+        run: node scripts/release-gate.mjs "$SHA"
+
+  publish:
+    needs: gate
+    runs-on: ubuntu-latest
+    outputs:
+      url: ${{ steps.verify.outputs.url }}
+      newly_published: ${{ steps.release.outputs.newly_published }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.gate.outputs.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Build and verify both release assets before publication
+        env:
+          TAG: ${{ needs.gate.outputs.tag }}
+        run: |
+          set -euo pipefail
+          npm ci
+          npm run build
+          cmp dist/houseplan-card.js custom_components/houseplan/frontend/houseplan-card.js
+          cmp dist/houseplan-card.js demo/srv/assets/houseplan-card.js
+          VERSION=${TAG#v}
+          grep -Fq "$VERSION" dist/houseplan-card.js
+          (cd custom_components/houseplan && zip -qr ../../houseplan.zip .)
+          unzip -l houseplan.zip | grep -q "manifest.json"
+          ZIP_VERSION=$(unzip -p houseplan.zip manifest.json | node -e \
+            "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.stdout.write(JSON.parse(s).version))")
+          test "$ZIP_VERSION" = "$VERSION" || {
+            echo "::error::houseplan.zip manifest version $ZIP_VERSION != $VERSION"
+            exit 1
+          }
+          test -s dist/houseplan-card.js
+          test -s houseplan.zip
+      - name: Create or verify the annotated tag
+        env:
+          TAG: ${{ needs.gate.outputs.tag }}
+          SHA: ${{ needs.gate.outputs.sha }}
+        run: |
+          set -euo pipefail
+          REMOTE=$(git ls-remote --tags origin "refs/tags/$TAG" "refs/tags/$TAG^{}")
+          if [ -n "$REMOTE" ]; then
+            PEELED=$(printf '%s\n' "$REMOTE" | awk -v ref="refs/tags/$TAG^{}" '$2 == ref {print $1}')
+            test -n "$PEELED" || {
+              echo "::error::Existing remote tag $TAG is not annotated"
+              exit 1
+            }
+            test "$PEELED" = "$SHA" || {
+              echo "::error::Existing tag $TAG points to $PEELED, expected $SHA"
+              exit 1
+            }
+            git fetch --force origin "refs/tags/$TAG:refs/tags/$TAG"
+            test "$(git cat-file -t "refs/tags/$TAG")" = "tag"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "$TAG" "$SHA" -m "$TAG"
+            git push origin "$TAG"
+          fi
+      - name: Stage, verify and publish the prerelease
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.gate.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag \
+              --draft --prerelease --title "$TAG" --notes-file docs/RELEASE-NOTES.md
+          fi
+          WAS_DRAFT=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)
+          echo "newly_published=$WAS_DRAFT" >> "$GITHUB_OUTPUT"
+          gh release upload "$TAG" dist/houseplan-card.js houseplan.zip \
+            --repo "$GITHUB_REPOSITORY" --clobber
+          RELEASE_JSON=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --json tagName,isDraft,isPrerelease,assets,url)
+          export RELEASE_JSON TAG
+          node <<'NODE'
+          const release = JSON.parse(process.env.RELEASE_JSON);
+          if (release.tagName !== process.env.TAG) throw new Error('release tag mismatch');
+          const assets = new Map(release.assets.map((asset) => [asset.name, asset]));
+          for (const name of ['houseplan-card.js', 'houseplan.zip']) {
+            if (!(Number(assets.get(name)?.size) > 0)) throw new Error(`${name} is missing or empty`);
+          }
+          NODE
+          gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease \
+            --title "$TAG" --notes-file docs/RELEASE-NOTES.md
+      - name: Verify the public release and assets
+        id: verify
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.gate.outputs.tag }}
+          SHA: ${{ needs.gate.outputs.sha }}
+        run: |
+          set -euo pipefail
+          RELEASE_JSON=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --json tagName,isDraft,isPrerelease,assets,url)
+          export RELEASE_JSON TAG
+          node <<'NODE'
+          const release = JSON.parse(process.env.RELEASE_JSON);
+          if (release.tagName !== process.env.TAG || release.isDraft || !release.isPrerelease)
+            throw new Error('release is not a public prerelease for the requested tag');
+          const assets = new Map(release.assets.map((asset) => [asset.name, asset]));
+          for (const name of ['houseplan-card.js', 'houseplan.zip']) {
+            if (!(Number(assets.get(name)?.size) > 0)) throw new Error(`${name} is missing or empty`);
+          }
+          NODE
+          test "$(git rev-list -n 1 "$TAG")" = "$SHA"
+          URL=$(node -p "JSON.parse(process.env.RELEASE_JSON).url")
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          printf '### Published %s\n\n- exact SHA: `%s`\n- [GitHub prerelease](%s)\n- assets: `houseplan-card.js`, `houseplan.zip`\n' \
+            "$TAG" "$SHA" "$URL" >> "$GITHUB_STEP_SUMMARY"
+      - name: Verify HACS prerelease discovery order
+        uses: actions/github-script@v7
+        env:
+          EXPECTED_TAG: ${{ needs.gate.outputs.tag }}
+        with:
+          script: |
+            const releases = await github.paginate(github.rest.repos.listReleases, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100,
+            });
+            const first = releases.find((release) => release.prerelease && !release.draft);
+            if (first?.tag_name !== process.env.EXPECTED_TAG) {
+              core.setFailed(
+                `HACS prerelease discovery is stale: ${first?.tag_name ?? 'none'} precedes ` +
+                process.env.EXPECTED_TAG,
+              );
+            }
+
+  announce:
+    needs: [gate, publish]
+    if: ${{ needs.publish.outputs.newly_published == 'true' }}
+    uses: ./.github/workflows/announce.yml
+    with:
+      reusable: true
+      tag: ${{ needs.gate.outputs.tag }}
+      release_name: ${{ needs.gate.outputs.tag }}
+      url: ${{ needs.publish.outputs.url }}
+      prerelease: true
+      ref: ${{ needs.gate.outputs.tag }}
+    secrets: inherit

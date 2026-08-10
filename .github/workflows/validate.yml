@@ -162,6 +162,20 @@ jobs:
           fi
 
           if [ "$usable" != true ]; then
+            # For a rewritten push, the direct parent is the closest honest
+            # comparison and normally carries the same benchmark generation.
+            # Prefer it over an arbitrarily old release tag. PR bases keep the
+            # tag fallback because HEAD^ is not necessarily their base.
+            parent_sha="$(git rev-parse HEAD^ 2>/dev/null || true)"
+            if [ "$source" = "push before" ] && [ -n "$parent_sha" ] && [ "$parent_sha" != "$(git rev-parse HEAD)" ]; then
+              sha="$parent_sha"
+              source="candidate parent (unusable push-before fallback)"
+              echo "::warning::Comparison SHA $requested_sha is unusable ($reason); using candidate parent $sha."
+              usable=true
+            fi
+          fi
+
+          if [ "$usable" != true ]; then
             fallback_tag=""
             fallback_sha=""
             head_sha="$(git rev-parse HEAD)"
@@ -183,7 +197,7 @@ jobs:
             fi
             sha="$fallback_sha"
             source="release tag $fallback_tag"
-            echo "::notice::Comparison SHA $requested_sha is unusable ($reason); using $fallback_tag ($sha)."
+            echo "::warning::Comparison SHA $requested_sha is unusable ($reason); using $fallback_tag ($sha)."
           fi
 
           # The first main promotion after HP-PERF-01 can legitimately point
@@ -193,12 +207,11 @@ jobs:
           # to the candidate's direct parent, which is the last dev revision
           # included in the promotion and already has the current harness.
           if ! git cat-file -e "${sha}:demo/bundle-freshness.mjs" 2>/dev/null; then
-            echo "comparison $sha predates HP-PERF-01; using HEAD^" >&2
+            echo "::warning::Comparison $sha predates HP-PERF-01; using candidate parent HEAD^."
             sha="$(git rev-parse HEAD^)"
             source="candidate parent (HP-PERF-01 compatibility)"
           fi
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
-          echo "source=$source" >> "$GITHUB_OUTPUT"
       - name: Check out base SHA
         uses: actions/checkout@v4
         with:

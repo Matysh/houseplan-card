@@ -1,5 +1,38 @@
 # Changelog
 
+## Unreleased
+
+## v1.61.0-beta.4 — 2026-08-10
+
+- Performance comparison now keeps newly introduced private members optional
+  for older supported baselines while validating every present field's runtime
+  type. Rewritten-push baselines prefer the candidate parent and emit a warning
+  instead of silently jumping to an older release. ([#15](https://github.com/Matysh/houseplan-card/issues/15),
+  [#16](https://github.com/Matysh/houseplan-card/issues/16))
+
+- In Glow spaces, LQI/Light/Temperature modes without usable HA data now fall
+  back to the dark room base instead of exposing a bright unfilled paper hole.
+  A genuinely resolved data or custom fill still keeps its exact color and
+  opacity. ([#61](https://github.com/Matysh/houseplan-card/issues/61))
+
+- In space settings, Custom color is now the ordinary first room-fill mode and
+  replaces the separate None choice. Historical spaces with `fill_mode: none`
+  open as a zero-opacity custom color, preserving the same floor and Glow
+  appearance through Preview and Save. New spaces also start at zero opacity,
+  so replacing the choice does not change their previous initial appearance.
+  An individual room can still suppress an inherited dynamic fill. ([#64](https://github.com/Matysh/houseplan-card/issues/64))
+
+- Prerelease publication can now be completed with one fail-closed local
+  command or a manual GitHub Actions run. Version files, bilingual release
+  notes, the exact-SHA Validate result, annotated tag, both release assets and
+  HACS discovery are checked before completion. Downloaded JS/ZIP contents are
+  bound to the candidate hash and manifest version; per-tag concurrency rejects
+  parallel publication. ZIP inspection is portable across Windows and Linux
+  without a system `tar`; stale assets are repaired automatically and handled
+  interruptions release the local lock. The public release is staged as a draft
+  first and partial failures are safe to retry. Existing release workflows remain
+  available as a fallback. ([#63](https://github.com/Matysh/houseplan-card/issues/63))
+
 ## v1.61.0-beta.3 — 2026-08-10
 
 - Performance tooling now fails before measurement when a candidate/base card

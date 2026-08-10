@@ -328,7 +328,7 @@
   "fill.lqi": "По силе зигби-сигнала",
   "fill.light": "По освещению",
   "fill.custom": "Свой цвет",
-  "space.custom_fill": "Свой цвет заливки",
+  "space.custom_fill": "Цвет заливки",
   "space.source_file": "У меня есть картинка плана",
   "space.source_draw": "Нет подложки — нарисую комнаты вручную",
   "space.orientation": "Холст",

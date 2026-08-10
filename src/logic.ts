@@ -819,8 +819,13 @@ export function normalizeDeviceDisplay(value: unknown): DeviceDisplayMode {
     ? value as DeviceDisplayMode : 'badge';
 }
 export const TAP_ACTIONS = ['info', 'more-info', 'toggle', 'run', 'cover'] as const;
-/** Current space-level data fills. Legacy `glow` is read separately as overlay. */
+/** Persisted space-level data fills. `none` remains a read-compatibility token;
+ * the space editor projects it to `custom` because every room has a visible
+ * base colour and the user can now choose that colour directly. */
 export const SPACE_FILL_MODES = ['none', 'lqi', 'light', 'temp', 'custom'] as const;
+/** Choices written by the current space editor. Keep `none` available only to
+ * old configs and to the room-level override that disables an inherited fill. */
+export const SPACE_FILL_UI_MODES = ['custom', 'lqi', 'light', 'temp'] as const;
 export const ROOM_FILL_MODES = ['none', 'lqi', 'light', 'temp', 'custom'] as const;
 
 export const TOGGLE_SAFE_DOMAINS = new Set(['light', 'switch', 'fan', 'humidifier', 'cover', 'valve']);

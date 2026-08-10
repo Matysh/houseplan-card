@@ -2,7 +2,7 @@
 
 - Issue: https://github.com/Matysh/houseplan-card/issues/56
 - Приоритет: P2
-- Статус ТЗ: реализовано в v1.61.0-beta.3
+- Статус ТЗ: реализовано в v1.61.0-beta.3; space-level UX уточнён в #64
 - Совместимо: независимый Glow #55
 
 ## Цель
@@ -13,7 +13,7 @@
 ## Модель
 
 - `fill_mode:'custom'` добавляется frontend/backend enum;
-- `space.settings.custom_fill?: {c:string,a:number}` — default пространства;
+- `space.settings.custom_fill?: {c:string,a:number}|null` — default пространства;
 - `room.settings.custom_fill?: {c:string,a:number}|null` — explicit override;
 - effective color при room `fill_mode:'custom'`: room value → space value →
   documented default `#607d8b` с alpha 0.18.
@@ -30,7 +30,12 @@ default без silent config rewrite. Opacity finite/clamp 0..1.
 
 ## UX
 
-- Space dialog fill options: Нет, LQI, Свет, Температура, Свой цвет.
+- Space dialog fill options после #64: Свой цвет, LQI, Свет, Температура.
+  Новое пространство начинает со «Своего цвета» и alpha 0, сохраняя прежний
+  визуальный default без заливки и с Glow-базой до явного выбора прозрачности.
+  Persisted space `none` остаётся read-compatible и при редактировании
+  проецируется в `custom` с alpha 0, поэтому Preview и Save без изменений не
+  меняют внешний вид или Glow-базу; room-level `none` остаётся явным override.
 - При «Свой цвет» появляется общий `hp-color-opacity`.
 - Room dialog: inherit/modes; для custom — «Цвет пространства» либо explicit
   color+opacity с Reset.
@@ -41,7 +46,10 @@ default без silent config rewrite. Opacity finite/clamp 0..1.
 
 Custom entry добавляется в единый fill resolver и автоматически используется
 room floor, clean-floor holes и thick-wall opening tunnel fill. Hover сохраняет
-effective color. Glow #55 рисуется поверх, но не изменяет stored custom alpha.
+effective color. Источник-pools Glow #55 рисуются поверх; тёмная Glow-база для
+видимого resolved custom fill отсутствует и не изменяет stored custom alpha.
+Если custom alpha равен 0 или динамический fill разрешился в `null` из-за
+отсутствия данных, вместо светлой дыры применяется Glow-база.
 
 ## Edge cases
 
@@ -56,5 +64,5 @@ color, не поддержанный browser, безопасно fallback-итс
 - frontend/backend enum and range parity #33;
 - hostile/invalid/modern color corpus #21;
 - room/tunnel/hover/nested visual golden, custom+Glow;
-- Save/reload/reset/Cancel и old config no-op roundtrip;
+- Save/reload/reset/Cancel, new-space transparent default и old config no-op roundtrip;
 - пользователь может назначить устойчивый цвет комнате без влияния HA state.
