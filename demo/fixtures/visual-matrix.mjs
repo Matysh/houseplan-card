@@ -163,7 +163,10 @@ export const VISUAL_MATRIX_COUNTS = Object.freeze({
 export const makeVisualMatrixFixture = () => ({
   config: {
     spaces: [structuredClone(geometrySpace), structuredClone(lightingSpace)],
-    markers: [],
+    // A persisted marker is part of the fixture contract for scenarios that
+    // override per-source Glow controls. The device/layout alone are not a
+    // saved marker configuration and must not be silently treated as one.
+    markers: [{ id: 'golden-light-two', binding: 'device:golden-light-two' }],
     settings: {
       glow_radius_cm: 360,
       north_deg: 0,
