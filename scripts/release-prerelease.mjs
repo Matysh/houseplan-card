@@ -187,6 +187,19 @@ if (invokedDirectly) {
       stderr: `${result.stderr || ''}`.trim(),
     };
   };
+  const runBytes = (command, commandArgs, { cwd = root } = {}) => {
+    const result = spawnSync(command, commandArgs, {
+      cwd,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    if (result.error) throw result.error;
+    if (result.status !== 0) {
+      const detail = Buffer.concat([result.stderr || Buffer.alloc(0), result.stdout || Buffer.alloc(0)])
+        .toString('utf8').trim();
+      throw new Error(`${command} ${commandArgs.join(' ')} failed${detail ? `: ${detail}` : ''}`);
+    }
+    return result.stdout;
+  };
   const ghJson = (commandArgs, options) => JSON.parse(run('gh', commandArgs, options).stdout);
   const owner = repo.split('/')[0];
 
@@ -210,18 +223,32 @@ if (invokedDirectly) {
     return result.ok ? JSON.parse(result.stdout) : null;
   };
 
-  const sha256Path = (name) => createHash('sha256').update(readFileSync(name)).digest('hex');
-  const sha256 = (name) => sha256Path(resolve(root, name));
-  const assertBundleSnapshots = () => {
+  const sha256Bytes = (contents) => createHash('sha256').update(contents).digest('hex');
+  const sha256Path = (name) => sha256Bytes(readFileSync(name));
+  const committedFile = (sha, name) => runBytes('git', ['show', `${sha}:${name}`]);
+  const assertBundleSnapshots = (sha) => {
     const names = [
       'dist/houseplan-card.js',
       'custom_components/houseplan/frontend/houseplan-card.js',
       'demo/srv/assets/houseplan-card.js',
     ];
-    const hashes = names.map((name) => [name, sha256(name)]);
+    // Hash Git blobs, not checkout bytes. On Windows, Git can expose CRLF in
+    // the worktree while the exact tagged blobs and Linux release checkout use
+    // LF. The release must be bound to the immutable commit representation.
+    const hashes = names.map((name) => [name, sha256Bytes(committedFile(sha, name))]);
     if (new Set(hashes.map(([, hash]) => hash)).size !== 1)
       throw new Error(`Committed bundle snapshots differ: ${hashes.map(([name, hash]) => `${name}=${hash}`).join(', ')}`);
     return hashes[0][1];
+  };
+
+  const materializeCommittedBundle = (sha, expectedSha256, artifactsDir) => {
+    const contents = committedFile(sha, 'dist/houseplan-card.js');
+    const actual = sha256Bytes(contents);
+    if (actual !== expectedSha256)
+      throw new Error(`Committed bundle hash ${actual} != preflight ${expectedSha256}`);
+    const bundlePath = resolve(artifactsDir, 'houseplan-card.js');
+    writeFileSync(bundlePath, contents);
+    return bundlePath;
   };
 
   const verifyZipContents = (zipPath, version, bundleSha256) => {
@@ -238,7 +265,9 @@ if (invokedDirectly) {
   const buildZip = (sha, version, bundleSha256, artifactsDir) => {
     const zipPath = resolve(artifactsDir, 'houseplan.zip');
     run('git', [
-      'archive', '--format=zip', `--output=${zipPath}`,
+      // `git archive` on Windows otherwise applies local core.autocrlf and
+      // produces bytes that differ from the tagged blobs/Linux fallback.
+      '-c', 'core.autocrlf=false', 'archive', '--format=zip', `--output=${zipPath}`,
       `${sha}:custom_components/houseplan`,
     ]);
     verifyZipContents(zipPath, version, bundleSha256);
@@ -420,7 +449,7 @@ if (invokedDirectly) {
     const sha = run('git', ['rev-parse', 'HEAD']).stdout;
     const remoteBranch = run('git', ['rev-parse', `origin/${branch}`]).stdout;
     if (sha !== remoteBranch) throw new Error(`HEAD ${sha} is not synchronized with origin/${branch} ${remoteBranch}`);
-    const bundleSha256 = assertBundleSnapshots();
+    const bundleSha256 = assertBundleSnapshots(sha);
     const validateRuns = assertGreenValidate(sha);
     validateIssues();
     const existingTag = remoteTag();
@@ -460,6 +489,7 @@ if (invokedDirectly) {
     for (const [signal, handler] of signalHandlers) process.once(signal, handler);
     try {
       artifactsDir = mkdtempSync(resolve(tmpdir(), 'houseplan-release-'));
+      const bundlePath = materializeCommittedBundle(sha, bundleSha256, artifactsDir);
       if (existingRelease && !existingRelease.isDraft) {
         let complete;
         try {
@@ -509,7 +539,7 @@ if (invokedDirectly) {
       }
 
       run('gh', [
-        'release', 'upload', tag, 'dist/houseplan-card.js', zipPath,
+        'release', 'upload', tag, bundlePath, zipPath,
         '--repo', repo, '--clobber',
       ], { inherit: true });
       const staged = releaseView();

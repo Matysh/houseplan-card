@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -136,12 +137,16 @@ test('release ZIP inspection is portable and does not depend on tar', () => {
   const zip = join(temp, 'houseplan.zip');
   try {
     const archived = spawnSync('git', [
-      'archive', '--format=zip', `--output=${zip}`, 'HEAD:custom_components/houseplan',
+      '-c', 'core.autocrlf=false', 'archive', '--format=zip', `--output=${zip}`,
+      'HEAD:custom_components/houseplan',
     ], { cwd: root, encoding: 'utf8' });
     assert.equal(archived.status, 0, archived.stderr || archived.stdout);
     const entries = readZipEntries(zip, ['manifest.json', 'frontend/houseplan-card.js']);
     assert.equal(typeof JSON.parse(entries.get('manifest.json').toString('utf8')).version, 'string');
     assert.ok(entries.get('frontend/houseplan-card.js').length > 1_000);
+    const committed = spawnSync('git', ['show', 'HEAD:dist/houseplan-card.js'], { cwd: root }).stdout;
+    const hash = (contents) => createHash('sha256').update(contents).digest('hex');
+    assert.equal(hash(entries.get('frontend/houseplan-card.js')), hash(committed));
   } finally {
     rmSync(temp, { recursive: true, force: true });
   }
@@ -181,7 +186,7 @@ test('manual publish workflow is draft-first, exact-SHA gated and self-contained
   assert.ok(!announce.includes("github.event_name == 'workflow_call'"));
 
   const local = readFileSync(new URL('../scripts/release-prerelease.mjs', import.meta.url), 'utf8');
-  assert.ok(local.includes("'archive', '--format=zip'"));
+  assert.ok(local.includes("'core.autocrlf=false', 'archive', '--format=zip'"));
   assert.ok(local.includes("'release', 'download'"));
   assert.ok(local.includes("'release-zip.yml'"));
   assert.ok(local.includes('Published release needs stale-asset recovery'));

@@ -215,7 +215,12 @@ npm run release:check -- v1.61.0-beta.4 --issues=63,64
 ```
 
 The orchestrator requires a clean, synchronized `dev`, byte-identical bundle
-snapshots and a completed green Validate for `HEAD`. It creates or verifies an
+snapshots and a completed green Validate for `HEAD`. Snapshot hashes and the
+uploaded standalone JS are read from the exact Git blobs rather than checkout
+bytes, so Windows CRLF conversion cannot disagree with the LF-tagged archive.
+The archive command additionally forces `core.autocrlf=false` for that one
+operation; it does not modify the developer's Git configuration.
+It creates or verifies an
 annotated exact-SHA tag, builds `houseplan.zip` directly from that committed
 tree, verifies its manifest and embedded frontend against the candidate hash,
 stages a draft prerelease and uploads both assets. Only then does it make the

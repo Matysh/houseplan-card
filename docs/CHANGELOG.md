@@ -28,7 +28,9 @@
   HACS discovery are checked before completion. Downloaded JS/ZIP contents are
   bound to the candidate hash and manifest version; per-tag concurrency rejects
   parallel publication. ZIP inspection is portable across Windows and Linux
-  without a system `tar`; stale assets are repaired automatically and handled
+  without a system `tar`, while standalone JS and hashes come from exact Git
+  blobs rather than CRLF-sensitive worktree bytes; stale assets are repaired
+  automatically and handled
   interruptions release the local lock. The public release is staged as a draft
   first and partial failures are safe to retry. Existing release workflows remain
   available as a fallback. ([#63](https://github.com/Matysh/houseplan-card/issues/63))
