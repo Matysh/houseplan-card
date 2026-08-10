@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.61.0-beta.3 — 2026-08-10
+
+- Performance tooling now fails before measurement when a candidate/base card
+  no longer exposes a private API consumed by the benchmark, documents the
+  safe two-revision rename path, and falls back from an unreachable force-push
+  comparison SHA to the latest reachable release. The bilingual release-body
+  headings now have one explicit canonical template. ([#15](https://github.com/Matysh/houseplan-card/issues/15),
+  [#16](https://github.com/Matysh/houseplan-card/issues/16),
+  [#17](https://github.com/Matysh/houseplan-card/issues/17))
+- Rooms and spaces can now use a persistent custom fill color and opacity,
+  independently of border/name color and Home Assistant state. Room overrides
+  inherit safely from the space and can be reset. ([#56](https://github.com/Matysh/houseplan-card/issues/56))
+- Glow no longer darkens or tints LQI, light, temperature, or custom room
+  fills: those colors stay exact while live radial light pools remain visible.
+  ([#61](https://github.com/Matysh/houseplan-card/issues/61))
+- The global Glow radius now sits with the other Glow settings. Small code
+  review cleanups also remove an unreachable legacy branch and empty static
+  SVG layers. ([#60](https://github.com/Matysh/houseplan-card/issues/60))
+
 ## v1.61.0-beta.2 — 2026-08-10
 
 - Light-source Glow is now an independent overlay that can be combined with

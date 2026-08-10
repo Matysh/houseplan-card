@@ -32,7 +32,7 @@ const result = await page.evaluate(async () => {
   sp.rooms = [
     { id: 'tunnel-left', name: 'Left', area: 'tunnel_left_area',
       poly: [[0.1, 0.2], [0.5, 0.2], [0.5, 0.7], [0.1, 0.7]],
-      settings: { fill_mode: 'light' } },
+      settings: { fill_mode: 'custom', custom_fill: { c: '#112233', a: 0.21 } } },
     { id: 'tunnel-right', name: 'Right', area: 'tunnel_right_area',
       poly: [[0.5, 0.2], [0.9, 0.2], [0.9, 0.7], [0.5, 0.7]],
       settings: {} },
@@ -68,9 +68,10 @@ const result = await page.evaluate(async () => {
   const out = {};
   out.allThreeTypes = new Set([...tunnels('data'), ...tunnels('glow-base')]
     .map((node) => node.getAttribute('data-kind'))).size === 3;
-  out.windowRepeatsColdRoom = byId('tunnel-window', 'data')?.getAttribute('fill') === '#112233'
+  out.windowRepeatsCustomRoom = byId('tunnel-window', 'data')?.getAttribute('fill') === '#112233'
     && (root().querySelector('[data-hp="room"][data-id="tunnel-left"]')?.getAttribute('style') || '')
-      .includes('--room-fill:#112233');
+      .includes('--room-fill:#112233')
+    && !byId('tunnel-window', 'glow-base');
   out.gateRepeatsHotRoom = byId('tunnel-gate', 'glow-base')?.getAttribute('fill') === '#445566'
     && !!root().querySelector('.glow-base-layer [data-room-id="tunnel-right"]');
 
@@ -82,9 +83,14 @@ const result = await page.evaluate(async () => {
   out.sharedUsesOneHardGradient = !!shared?.querySelector('linearGradient') && stops.length === 4;
   out.sharedStopsOnWallAxis = stops[1]?.offset === '50.000000%'
     && stops[2]?.offset === '50.000000%';
+  const sharedGlow = byId('tunnel-door', 'glow-base');
+  const glowStops = [...(sharedGlow?.querySelectorAll('stop') || [])].map((s) => ({
+    color: s.getAttribute('stop-color'), opacity: s.getAttribute('stop-opacity'),
+  }));
   out.sharedCarriesBothRooms = new Set(stops.map((s) => s.color)).has('#112233')
     && stops.some((s) => s.color === '#000000' && s.opacity === '0')
-    && byId('tunnel-door', 'glow-base')?.getAttribute('fill') === '#445566';
+    && glowStops.some((s) => s.color === '#445566' && s.opacity === '0.42')
+    && glowStops.some((s) => s.color === '#000000' && s.opacity === '0');
 
   const svgEl = root().querySelector('.stage svg');
   const tunnelGroup = root().querySelector('.opening-tunnels');
@@ -95,17 +101,17 @@ const result = await page.evaluate(async () => {
   sp.settings.hide_openings = true;
   await update();
   out.hideSymbolKeepsTunnel = root().querySelectorAll('[data-hp="opening"]').length === 0
-    && tunnels('data').length === 2 && tunnels('glow-base').length === 3;
+    && tunnels('data').length === 2 && tunnels('glow-base').length === 2;
 
   sp.settings.show_borders = false;
   await update();
   out.hiddenBordersKeepTunnel = root().querySelectorAll('.wallbodies').length === 0
-    && tunnels('data').length === 2 && tunnels('glow-base').length === 3;
+    && tunnels('data').length === 2 && tunnels('glow-base').length === 2;
 
   c._setMode('decor');
   await update();
   out.backdropUsesSingleGroupOpacity = tunnels('data').length === 2
-    && tunnels('glow-base').length === 3
+    && tunnels('glow-base').length === 2
     && [...root().querySelectorAll('.opening-tunnels')]
       .every((group) => getComputedStyle(group).opacity === '0.35')
     && getComputedStyle(root().querySelector('.glow-base-layer')).opacity === '0.35'

@@ -95,16 +95,13 @@ try {
     await staticCard.updateComplete;
     const staticBase = staticCard.renderRoot.querySelector('.glow-base-layer .glow-base');
     const staticPools = staticCard.renderRoot.querySelectorAll('.glow-pool, .glowlayer').length;
-    const baseParity = !!fullBase && !!staticBase
-      && fullBase.getAttribute('fill') === staticBase.getAttribute('fill')
-      && fullBase.getAttribute('fill-opacity') === staticBase.getAttribute('fill-opacity');
     staticCard.remove();
     return {
       blend: poolGroup?.getAttribute('data-blend'),
       pools: card.renderRoot.querySelectorAll('.glow-pool').length,
-      clippedPools, layerOrder: follows(dataTunnel, fullBase)
-        && follows(fullBase, baseTunnel) && follows(baseTunnel, poolFrame),
-      staticBase: !!staticBase, staticPools, baseParity,
+      clippedPools, layerOrder: follows(dataTunnel, poolFrame),
+      fullBase: !!fullBase, baseTunnel: !!baseTunnel,
+      staticBase: !!staticBase, staticPools,
       forward, reverse, fallback, sameDim,
     };
   }, fixture);
@@ -127,8 +124,8 @@ try {
   if (!close(pixel(out.forward, 3), [106, 123, 140, 255])) throw new Error('non-pool sector/background changed');
   if (out.clippedPools !== out.pools) throw new Error(`lost per-source clips: ${out.clippedPools}/${out.pools}`);
   if (!out.layerOrder) throw new Error('data/base/tunnel/pool layer order changed');
-  if (!out.staticBase || out.staticPools !== 0 || !out.baseParity)
-    throw new Error(`static-card Glow contract failed: base=${out.staticBase}, pools=${out.staticPools}, parity=${out.baseParity}`);
+  if (out.fullBase || out.baseTunnel || out.staticBase || out.staticPools !== 0)
+    throw new Error(`data fill was tinted by Glow base: full=${out.fullBase}, tunnel=${out.baseTunnel}, static=${out.staticBase}`);
   console.log(JSON.stringify({ ok: true, blend: out.blend, pools: out.pools, staticParity: true }));
 } finally {
   await browser.close();

@@ -218,18 +218,32 @@ bodies of skipped releases. The full detail remains in both
 `docs/CHANGELOG.ru.md` and `docs/CHANGELOG.md`; finish every release body with
 two explicit links, one to each language version of the changelog.
 
+Changelog entries may link directly to a **closed** GitHub Issue when that
+issue is the canonical task for the shipped change. Append a normal Markdown
+link such as `([#55](https://github.com/Matysh/houseplan-card/issues/55))` to
+the relevant bullet in both language changelogs. Keep this optional: do not
+invent issues for minor work, do not link open or partially delivered issues,
+and do not expand the grouped small-fixes bullet into an issue inventory.
+
 ```md
 ## Основное
 - Значимое изменение.
+- Исправлена конкретная проблема ([#123](https://github.com/Matysh/houseplan-card/issues/123)).
 - Мелкие исправления и улучшения.
 
 ## Highlights
 - Significant change.
+- Fixed a specific problem ([#123](https://github.com/Matysh/houseplan-card/issues/123)).
 - Small fixes and improvements.
 
 [Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/vX.Y.Z/docs/CHANGELOG.ru.md)
 · [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/vX.Y.Z/docs/CHANGELOG.md)
 ```
+
+The literal `## Основное` and `## Highlights` headings above are the canonical
+release-body format. Do not maintain a second `## Русский` / `## English`
+template in scripts or release notes; change this single template if the
+product format changes again.
 
 Replace `vX.Y.Z` with the release tag so the links remain pinned to the
 published version instead of drifting with `dev` or `main`.

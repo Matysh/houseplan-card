@@ -65,6 +65,12 @@ def _finite(value):
 # Persisted colours deliberately use one small, browser-independent format.
 # Keep this exact contract in sync with src/color.ts.
 _COLOR = vol.Match(r"^#[0-9a-fA-F]{6}$")
+_CUSTOM_FILL = vol.Schema(
+    {
+        vol.Required("c"): _COLOR,
+        vol.Required("a"): vol.All(_finite, vol.Range(min=0.0, max=1.0)),
+    }
+)
 
 
 # generous caps: the product targets 20-200 devices and a handful of floors
@@ -215,7 +221,8 @@ ROOM_SCHEMA = vol.All(
                 None,
                 vol.Schema(
                     {
-                        vol.Optional("fill_mode"): vol.Any(None, vol.In(["none", "lqi", "light", "temp", "glow"])),
+                        vol.Optional("fill_mode"): vol.Any(None, vol.In(["none", "lqi", "light", "temp", "custom", "glow"])),
+                        vol.Optional("custom_fill"): vol.Any(None, _CUSTOM_FILL),
                         vol.Optional("glow"): vol.Any(bool, None),
                         vol.Optional("temp_source"): vol.Any(str, None),
                         vol.Optional("hum_source"): vol.Any(str, None),
@@ -259,7 +266,8 @@ SPACE_DISPLAY_SCHEMA = vol.Schema(
         # per-space background around the plan; absent = inherit the global one
         vol.Optional("bg_color"): _COLOR,
         vol.Optional("room_opacity"): vol.All(vol.Coerce(float), vol.Range(min=0, max=1)),
-        vol.Optional("fill_mode"): vol.In(["none", "lqi", "light", "temp", "glow"]),
+        vol.Optional("fill_mode"): vol.In(["none", "lqi", "light", "temp", "custom", "glow"]),
+        vol.Optional("custom_fill"): _CUSTOM_FILL,
         vol.Optional("glow_enabled"): bool,
         vol.Optional("temp_min"): vol.Coerce(float),
         vol.Optional("temp_max"): vol.Coerce(float),

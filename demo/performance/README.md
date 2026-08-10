@@ -43,6 +43,36 @@ This base-vs-candidate design intentionally does not compare timings captured
 on different machines or different Chromium builds. A runtime/profile mismatch
 fails closed.
 
+Before the base checkout, CI fetches the complete commit graph and verifies the
+requested comparison revision. A push `github.event.before` must both exist and
+remain an ancestor of the candidate; this catches the unreachable SHA left by a
+force-push. An unusable revision falls back to the newest semver release tag
+reachable from the candidate, excluding a tag on the candidate itself. If no
+such release exists, the job fails closed instead of comparing against an
+arbitrary commit.
+
+## Private card contract
+
+The candidate benchmark runner is also executed against the base bundle, so
+every private `houseplan-card` field or method it reads is an explicit API of
+the performance harness. `card-contract.mjs` lists that surface for the
+large-house and Glow profiles. Each runner verifies it immediately after card
+creation and fails with the exact missing names before waiting for readiness or
+recording timings. Missing caches must never be converted to plausible zeroes.
+
+Rename a consumed private member in two revisions:
+
+1. teach the contract and every reader to understand both the old and proposed
+   name while production still exposes the old name; land that compatibility
+   revision so it can become a comparison base;
+2. rename the production member and prefer the new name while retaining the
+   old reader fallback. Remove the fallback only after all supported comparison
+   bases expose the new member.
+
+This sequencing keeps the current harness capable of profiling both source
+trees. A one-step rename that merely edits the candidate reader is forbidden:
+it would make the same runner incompatible with its base bundle.
+
 ## Local diagnostics
 
 Build and copy a fresh demo bundle first, then run:

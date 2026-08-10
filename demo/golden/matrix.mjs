@@ -1,5 +1,5 @@
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 4;
+export const GOLDEN_MATRIX_VERSION = 5;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -53,6 +53,14 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     fillMode: 'temp', glowEnabled: true, theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'lighting-temp-glow-light', fixture: 'visual', space: 'golden-lighting', mode: 'view',
     fillMode: 'temp', glowEnabled: true, theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'lighting-custom-glow-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
+    fillMode: 'custom', customFill: { c: '#486a8f', a: 0.42 }, glowEnabled: true,
+    roomCustomFill: { 'light-right': { c: '#8f5f48', a: 0.56 } },
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'lighting-custom-glow-light', fixture: 'visual', space: 'golden-lighting', mode: 'view',
+    fillMode: 'custom', customFill: { c: '#486a8f', a: 0.42 }, glowEnabled: true,
+    roomCustomFill: { 'light-right': { c: '#8f5f48', a: 0.56 } },
+    theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'lighting-temp-glow-no-sources-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
     fillMode: 'temp', glowEnabled: true, allLightsOff: true,
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },

@@ -2,7 +2,7 @@
 
 - Issue: https://github.com/Matysh/houseplan-card/issues/56
 - Приоритет: P2
-- Статус ТЗ: ready after security gate #21
+- Статус ТЗ: реализовано в v1.61.0-beta.3
 - Совместимо: независимый Glow #55
 
 ## Цель

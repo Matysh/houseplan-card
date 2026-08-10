@@ -132,23 +132,73 @@ jobs:
         run: |
           if [ "$EVENT_NAME" = "pull_request" ] && [ -n "$PR_BASE_SHA" ]; then
             sha="$PR_BASE_SHA"
+            source="pull-request base"
           elif [ "$EVENT_NAME" = "push" ] && [ -n "$PUSH_BEFORE_SHA" ] && ! printf '%s' "$PUSH_BEFORE_SHA" | grep -Eq '^0+$'; then
             sha="$PUSH_BEFORE_SHA"
+            source="push before"
           else
             sha="$(git rev-parse HEAD^)"
+            source="candidate parent"
           fi
+          requested_sha="$sha"
+
+          # A force-push can leave github.event.before outside every remote
+          # ref. Fetch the complete graph first, then verify the object and,
+          # for push events, that it is still an ancestor of the candidate.
+          # Never ask checkout to resolve a known-unreachable object.
+          if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
+            git fetch --force --tags --prune --unshallow origin
+          else
+            git fetch --force --tags --prune origin
+          fi
+          usable=true
+          reason=""
+          if ! git cat-file -e "${sha}^{commit}" 2>/dev/null; then
+            usable=false
+            reason="commit is not present after fetching all remote refs"
+          elif [ "$source" = "push before" ] && ! git merge-base --is-ancestor "$sha" HEAD; then
+            usable=false
+            reason="commit is no longer an ancestor of the pushed revision"
+          fi
+
+          if [ "$usable" != true ]; then
+            fallback_tag=""
+            fallback_sha=""
+            head_sha="$(git rev-parse HEAD)"
+            while IFS= read -r tag; do
+              case "$tag" in
+                v[0-9]*.[0-9]*.[0-9]*) ;;
+                *) continue ;;
+              esac
+              tag_sha="$(git rev-list -n 1 "$tag")"
+              if [ "$tag_sha" != "$head_sha" ]; then
+                fallback_tag="$tag"
+                fallback_sha="$tag_sha"
+                break
+              fi
+            done < <(git tag --merged HEAD --sort=-version:refname)
+            if [ -z "$fallback_sha" ]; then
+              echo "::error::Comparison SHA $requested_sha is unusable ($reason), and no previous release tag is reachable from HEAD."
+              exit 1
+            fi
+            sha="$fallback_sha"
+            source="release tag $fallback_tag"
+            echo "::notice::Comparison SHA $requested_sha is unusable ($reason); using $fallback_tag ($sha)."
+          fi
+
           # The first main promotion after HP-PERF-01 can legitimately point
           # at an older stable commit which predates the benchmark's embedded
           # bundle fingerprint. Comparing against that legacy tree would fail
           # the freshness guard before any measurements are taken. Fall back
           # to the candidate's direct parent, which is the last dev revision
           # included in the promotion and already has the current harness.
-          git fetch --no-tags --depth=1 origin "$sha"
           if ! git cat-file -e "${sha}:demo/bundle-freshness.mjs" 2>/dev/null; then
             echo "comparison $sha predates HP-PERF-01; using HEAD^" >&2
             sha="$(git rev-parse HEAD^)"
+            source="candidate parent (HP-PERF-01 compatibility)"
           fi
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "source=$source" >> "$GITHUB_OUTPUT"
       - name: Check out base SHA
         uses: actions/checkout@v4
         with:

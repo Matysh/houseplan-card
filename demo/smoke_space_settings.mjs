@@ -32,7 +32,27 @@ const res = await page.evaluate(async () => {
   })};
   c.requestUpdate(); await c.updateComplete;
   out.lqiFills = [...sr().querySelectorAll('.room.styled')].filter((r) => (r.getAttribute('style') || '').includes('hsl(')).length;
-  // 4) drag лейбла → layout rl_ (только в редакторе плана, с v1.25)
+  // 4) custom fill is static, room-overridable, and Glow pools do not tint it
+  c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== 'f1' ? s : ({
+    ...s,
+    settings: { ...s.settings, fill_mode: 'custom', glow_enabled: true,
+      custom_fill: { c: '#123456', a: 0.37 } },
+    rooms: s.rooms.map((room, index) => index ? room : ({ ...room,
+      settings: { ...(room.settings || {}), custom_fill: { c: '#abcdef', a: 0.61 } } })),
+  })) };
+  c.requestUpdate(); await c.updateComplete;
+  const customStyles = [...sr().querySelectorAll('.room.styled')].map((r) => r.getAttribute('style') || '');
+  out.customSpaceFill = customStyles.some((s) => s.includes('--room-fill:#123456') && s.includes('--room-fill-op:0.37'));
+  out.customRoomOverride = customStyles.some((s) => s.includes('--room-fill:#abcdef') && s.includes('--room-fill-op:0.61'));
+  out.customNotTintedByBase = !sr().querySelector('.glow-base-layer, .glow-base-tunnels')
+    && sr().querySelectorAll('.glow-pool').length > 0;
+  c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== 'f1' ? s : ({
+    ...s, rooms: s.rooms.map((room, index) => index ? room : ({ ...room,
+      settings: { ...(room.settings || {}), fill_mode: 'none' } })),
+  })) };
+  c.requestUpdate(); await c.updateComplete;
+  out.noneOverrideGetsGlowBase = sr().querySelectorAll('.glow-base-layer .glow-base').length === 1;
+  // 5) drag лейбла → layout rl_ (только в редакторе плана, с v1.25)
   c._setMode('plan'); await c.updateComplete;
   const lbl = sr().querySelector('.roomlabel');
   c._labelDown({ preventDefault(){}, stopPropagation(){}, clientX: 100, clientY: 100, target: { setPointerCapture(){} }, pointerId: 5 },
@@ -40,7 +60,7 @@ const res = await page.evaluate(async () => {
   c._labelMove({ clientX: 160, clientY: 140 }, c._spaceModel().rooms[0], 'f1');
   c._labelUp(c._spaceModel().rooms[0]);
   out.labelSaved = !!c._layout['rl_r1'];
-  // 5) диалог: create + draw
+  // 6) диалог: create + draw
   c._openSpaceDialog('create'); await c.updateComplete;
   c._spaceDialog = { ...c._spaceDialog, title: 'Attic', source: 'draw', orientation: 'square' };
   await c.updateComplete;

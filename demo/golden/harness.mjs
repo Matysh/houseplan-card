@@ -59,6 +59,7 @@ export async function prepareGoldenScenario(page, scenario) {
       ...(space.settings || {}),
       ...(scenario.fillMode ? { fill_mode: scenario.fillMode } : {}),
       ...(typeof scenario.glowEnabled === 'boolean' ? { glow_enabled: scenario.glowEnabled } : {}),
+      ...(scenario.customFill ? { custom_fill: scenario.customFill } : {}),
     };
   }
   if (scenario.hideOpenings) {
@@ -70,6 +71,13 @@ export async function prepareGoldenScenario(page, scenario) {
     for (const room of space.rooms) {
       if (!(room.id in scenario.roomGlow)) continue;
       room.settings = { ...(room.settings || {}), glow: scenario.roomGlow[room.id] };
+    }
+  }
+  if (scenario.roomCustomFill) {
+    const space = fixture.config.spaces.find((item) => item.id === scenario.space);
+    for (const room of space.rooms) {
+      if (!(room.id in scenario.roomCustomFill)) continue;
+      room.settings = { ...(room.settings || {}), custom_fill: scenario.roomCustomFill[room.id] };
     }
   }
   if (scenario.allLightsOff) {

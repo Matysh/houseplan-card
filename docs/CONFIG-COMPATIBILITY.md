@@ -56,3 +56,10 @@ enabled Glow overlay; explicit `glow_enabled` / room `glow` booleans always win.
 A normal edit that replaces the legacy token writes the resolved boolean in the
 same operation. Optimize Plans applies the same lossless, idempotent model-v6
 migration while preserving unknown sibling settings.
+
+Current `fill_mode` additionally accepts `custom`. Its optional color is stored
+as `{c:'#RRGGBB',a:0..1}` in `space.settings.custom_fill` and, for an explicit
+room override, `room.settings.custom_fill`. Missing or invalid historical data
+is projected at render time through room → space → `#607d8b`/`0.18`; merely
+reading it never rewrites the config. Backend writes keep the strict shared
+hex/finite-alpha contract.

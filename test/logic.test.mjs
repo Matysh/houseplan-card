@@ -11,7 +11,7 @@ import {
   alignGuides, segmentAngle, is45,
   swipeTarget, clampScale,
   migratePdfUrls,
-  roomFillModeOf, roomGlowOf,
+  roomFillModeOf, roomGlowOf, customFillOf, roomCustomFillOf,
   contentUrl, chunk, referencedContentUrls, MAX_SIGN_PATHS,
   interiorPoint,
   segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointOnBoundary, pointStrictlyInside, roomsOverlap,
@@ -277,6 +277,10 @@ test('spaceDisplayOf: defaults differ for spaces with and without a plan', () =>
   assert.deepEqual({ fill: legacyGlow.fill, glow: legacyGlow.glow }, { fill: 'none', glow: true });
   const explicitOff = spaceDisplayOf({ settings: { fill_mode: 'glow', glow_enabled: false } });
   assert.deepEqual({ fill: explicitOff.fill, glow: explicitOff.glow }, { fill: 'none', glow: false });
+  const custom = spaceDisplayOf({ settings: { fill_mode: 'custom', custom_fill: { c: '#123456', a: 0.37 } } });
+  assert.deepEqual({ fill: custom.fill, customFill: custom.customFill }, {
+    fill: 'custom', customFill: { c: '#123456', a: 0.37 },
+  });
 });
 
 test('spaceDisplayOf: the two hide switches are opt-in and strictly boolean', () => {
@@ -556,6 +560,19 @@ test('roomFillStyle: palette-driven fills, lqi gradient between custom endpoints
   assert.deepEqual(roomFillStyle('light', null, 'on', null, 20, 25, colors), colors.light_on);
   assert.deepEqual(roomFillStyle('temp', 18, 'none', 18, 20, 25, colors), colors.temp_cold);
   assert.equal(roomFillStyle('none', 100, 'on', 22, 20, 25, colors), null);
+  assert.deepEqual(roomFillStyle('custom', null, 'none', null, 20, 25, colors, { c: '#123456', a: 0.42 }),
+    { c: '#123456', a: 0.42 });
+});
+
+test('custom fill projection is safe and follows room -> space -> default inheritance', () => {
+  assert.deepEqual(customFillOf(null), { c: '#607d8b', a: 0.18 });
+  assert.deepEqual(customFillOf({ c: 'url(javascript:x)', a: Infinity }), { c: '#607d8b', a: 0.18 });
+  assert.deepEqual(customFillOf({ c: '#abcdef', a: -2 }), { c: '#abcdef', a: 0 });
+  const space = { c: '#112233', a: 0.25 };
+  assert.deepEqual(roomCustomFillOf(space, {}), space);
+  assert.deepEqual(roomCustomFillOf(space, { settings: { custom_fill: null } }), space);
+  assert.deepEqual(roomCustomFillOf(space, { settings: { custom_fill: { c: '#445566', a: 0.7 } } }),
+    { c: '#445566', a: 0.7 });
 });
 
 test('spaceDisplayOf: show_lqi tri-state (null = follow the card option)', () => {
@@ -592,10 +609,12 @@ test('resolveEffectiveRoomFill preserves the existing palette contract for room 
     ['temp', null, 'none', 22, { color: '#444444', opacity: 0.44, mode: 'temp' }],
     ['temp', null, 'none', 27, { color: '#555555', opacity: 0.55, mode: 'temp' }],
     ['temp', null, 'none', null, null],
-    ['glow', null, 'none', null, { color: '#666666', opacity: 0.66, mode: 'glow' }],
+    ['custom', null, 'none', null, { color: '#123456', opacity: 0.42, mode: 'custom' }],
   ];
   for (const [mode, lqi, lights, temp, expected] of cases) {
-    assert.deepEqual(resolveEffectiveRoomFill(mode, lqi, lights, temp, 20, 25, colors), expected);
+    assert.deepEqual(resolveEffectiveRoomFill(
+      mode, lqi, lights, temp, 20, 25, colors, { c: '#123456', a: 0.42 },
+    ), expected);
   }
 });
 
@@ -1033,10 +1052,10 @@ test('migratePdfUrls: rebinding rewrites file urls', () => {
 
 test('roomFillModeOf: tier-3 override beats the space, junk inherits', () => {
   assert.equal(roomFillModeOf('temp', { settings: { fill_mode: 'light' } }), 'light');
-  assert.equal(roomFillModeOf('glow', { settings: { fill_mode: 'none' } }), 'none'); // выход из тьмы
+  assert.equal(roomFillModeOf('temp', { settings: { fill_mode: 'custom' } }), 'custom');
   assert.equal(roomFillModeOf('temp', {}), 'temp');
   assert.equal(roomFillModeOf('temp', null), 'temp');
-  assert.equal(roomFillModeOf('temp', { settings: { fill_mode: 'glow' } }), 'temp'); // glow нельзя выбрать per-room
+  assert.equal(roomFillModeOf('temp', { settings: { fill_mode: 'glow' } }), 'temp'); // legacy glow is projected separately
 });
 
 test('roomGlowOf: explicit room data wins legacy and space fallbacks', () => {

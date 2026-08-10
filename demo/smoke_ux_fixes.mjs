@@ -54,7 +54,7 @@ checkAll(res, {
   "filledClass": 1,
   "unfilled": 3,
   "tipTemp": 22.4,
-  "fillRadios": 4,
+  "fillRadios": 5,
   "tempInputs": 2,
   "dialogWidth": 500,
 });

@@ -8,7 +8,10 @@
  */
 import { html, svg, nothing, type TemplateResult } from 'lit';
 import { buildDevices, areaLqi, areaTemp, resolvedLightSources, resolvedLightState } from './devices';
-import { spaceDisplayOf, roomFillStyle, fillColorsOf, roomFillModeOf, roomGlowOf, stageBgOf, paperRoomShapes } from './logic';
+import {
+  spaceDisplayOf, fillColorsOf, roomFillModeOf, roomGlowOf,
+  roomCustomFillOf, resolveEffectiveRoomFill, stageBgOf, paperRoomShapes,
+} from './logic';
 import {
   wallBodiesUnionPath, paperRoomShapesWithWalls, wallBodyNeedsSolid, type WallEntry,
 } from './wall-thickness';
@@ -149,7 +152,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const vb = [fr.x, fr.y, fr.w, fr.h];
 
   const roomShapes = space.rooms
-    .filter((r) => r.area || disp.showBorders || roomFillModeOf(disp.fill, r) === 'light')
+    .filter((r) => r.area || disp.showBorders || roomFillModeOf(disp.fill, r) !== 'none')
     .map((r) => {
       let cls = 'room ' + (space.bg ? 'overlay' : 'yard');
       let style = '';
@@ -159,26 +162,21 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
         cls += ' styled';
         const parts = [`--room-stroke:${disp.color}`, `--room-stroke-op:${disp.showBorders ? disp.opacity : 0}`];
         // fill rendered exactly as configured on the full card (snapshot of current states)
-        const fillC = fill === 'light'
-          ? roomFillStyle(
-              'light', null,
-              resolvedLightState(resolvedLightSources(planHass, spaceDevs, r)),
-              null, disp.tempMin, disp.tempMax, fillColorsOf(o.cfg?.settings),
-            )
-          : r.area
-          ? roomFillStyle(
-              fill,
-              fill === 'lqi' ? areaLqi(planHass, spaceDevs, r.area) : null,
-              'none',
-              fill === 'temp' ? areaTemp(planHass, spaceDevs, r.area) : null,
-              disp.tempMin,
-              disp.tempMax,
-              fillColorsOf(o.cfg?.settings),
-            )
-          : null;
+        const fillC = resolveEffectiveRoomFill(
+          fill,
+          fill === 'lqi' && r.area ? areaLqi(planHass, spaceDevs, r.area) : null,
+          fill === 'light'
+            ? resolvedLightState(resolvedLightSources(planHass, spaceDevs, r))
+            : 'none',
+          fill === 'temp' && r.area ? areaTemp(planHass, spaceDevs, r.area) : null,
+          disp.tempMin,
+          disp.tempMax,
+          colors,
+          roomCustomFillOf(disp.customFill, r),
+        );
         if (fillC) {
           cls += ' filled';
-          parts.push(`--room-fill:${fillC.c}`, `--room-fill-op:${fillC.a.toFixed(3)}`);
+          parts.push(`--room-fill:${fillC.color}`, `--room-fill-op:${fillC.opacity.toFixed(3)}`);
         } else {
           parts.push('--room-fill:transparent', '--room-fill-op:0');
         }
@@ -200,7 +198,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   // The compact card intentionally has no live radial pools, but it shares the
   // exact independent data/base projection with the full plan.
   const glowBaseShapes = space.rooms
-    .filter((room) => roomGlowOf(disp.glow, room))
+    .filter((room) => roomGlowOf(disp.glow, room) && roomFillModeOf(disp.fill, room) === 'none')
     .map((room) => room.poly
       ? svg`<polygon class="glow-base" aria-hidden="true" pointer-events="none"
           data-room-id=${room.id || nothing}
@@ -306,7 +304,9 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
               preserveAspectRatio="none" />`
           : nothing}
         ${roomShapes}
-        <g class="glow-base-layer" aria-hidden="true" pointer-events="none">${glowBaseShapes}</g>
+        ${glowBaseShapes.length
+          ? svg`<g class="glow-base-layer" aria-hidden="true" pointer-events="none">${glowBaseShapes}</g>`
+          : nothing}
         <g class="room-svg-labels" pointer-events="none">${staticSvgLabels}</g>
         ${wallUnion
           ? svg`<g class="wallbodies" style="--room-stroke:${wallStroke}">

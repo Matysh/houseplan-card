@@ -2,7 +2,7 @@
 
 - Issue: https://github.com/Matysh/houseplan-card/issues/55
 - Приоритет: P2
-- Статус ТЗ: реализовано в кандидате v1.61.0-beta.2; exact-SHA verification/golden approval — release gate
+- Статус ТЗ: реализовано в v1.61.0-beta.2; уточнение #61 входит в v1.61.0-beta.3
 - Связано: room override #36; additive pools #19; compatibility registry #33;
   custom fill #56
 
@@ -14,7 +14,10 @@
 2. световой Glow как отдельный слой поверх этой заливки.
 
 Пользователь может одновременно видеть LQI/освещённость/температуру/свой цвет
-и Glow. Модель геометрии комнат, распространения света и проёмов не меняется.
+и световые пятна Glow. Тёмная базовая подложка Glow применяется только когда
+effective data fill равен `none`, поэтому полезная заливка не затемняется и не
+меняет оттенок. Модель геометрии комнат, распространения света и проёмов не
+меняется.
 
 ## Границы этапа и зависимости
 
@@ -24,10 +27,10 @@
 - #19 может заменить обычную группу световых пятен на isolated additive group,
   но не блокирует модель и миграцию #55.
 
-Порядок поставки: **#55 → (#36, #56)**; #36 и #56 могут выйти вместе с #55,
-если их schema/UI/tests входят в тот же beta gate. Пока #56 не реализована,
-frontend и backend #55 не принимают `fill_mode:'custom'`: будущий enum нельзя
-открывать частично.
+Порядок поставки: **#55 → (#36, #56)**. Базовая часть #55 опубликована в
+`v1.61.0-beta.2`; #56 реализована в текущей локальной итерации целиком — enum,
+schema, UI и проверки добавлены вместе. Частично открывать будущий enum до
+готовности всего этого вертикального среза по-прежнему запрещено.
 
 ## Persisted model и effective projection
 
@@ -150,7 +153,8 @@ Preview показывает число затронутых пространс�
 
 1. paper/backdrop;
 2. resolved data/static room fill и matching data fill внутреннего тоннеля;
-3. Glow base для effective-Glow rooms и соответствующих частей тоннеля;
+3. Glow base только для effective-Glow rooms с effective fill `none` и
+   соответствующих частей тоннеля;
 4. tunnel light sectors и radial pools;
 5. sun и interactive layers по текущему контракту.
 
@@ -160,30 +164,31 @@ Glow base и pools pointer-transparent. Room hover, tooltip и editor hit target
 ### Нормативное смешивание Glow base
 
 Glow base — отдельная SVG-геометрия с обычным `source-over`/`normal`
-композитингом. `multiply`, `screen`, CSS filter и дополнительная групповая
-opacity не применяются.
+композитингом, которая создаётся только при
+`effectiveGlow == true && effectiveFill == none`. `multiply`, `screen`, CSS
+filter и дополнительная групповая opacity не применяются.
 
 ```text
 a = clamp(fill_colors.glow_base.a, 0, 1)
 Cout = Cglow_base * a + Cunderlay * (1 - a)
 ```
 
-`Cunderlay` — уже скомпозированный результат paper + data fill. Используется
-существующий пользовательский token `glow_base`; data fill color и alpha не
-мутируются. Для legacy `fill_mode:'glow'` под Glow base лежит paper, а геометрия
+`Cunderlay` — paper без data fill. Используется существующий пользовательский
+token `glow_base`. Для legacy `fill_mode:'glow'` под Glow base лежит paper, а геометрия
 base повторяет прежние room/tunnel shapes, поэтому при штатной палитре результат
-должен сохранять pixel parity старого режима. Для новых сочетаний temp+Glow и
-custom+Glow обязательны owner-reviewed golden baselines в light/dark theme;
-после принятия они становятся визуальным контрактом и не обновляются
-автоматически.
+должен сохранять pixel parity старого режима. Для сочетаний LQI/light/temp/custom
+с Glow обязательный контракт обратный: data/static fill сохраняет exact color и
+alpha, Glow base отсутствует, а radial pools продолжают рисоваться поверх.
 
-Room с effective Glow on получает base даже при отсутствии источников света;
-radial pools тогда отсутствуют. Room с Glow off не получает base и исключается
+Room с effective Glow on и fill `none` получает base даже при отсутствии
+источников света; radial pools тогда отсутствуют. Room с любым другим fill или
+Glow off не получает base. Glow-off room исключается
 из визуальных clip pools, но это не меняет физический transport через неё по
 #36. Если Glow off у всех комнат, overlay не создаёт пустые SVG layers.
 
-Тоннель сначала повторяет resolved data fill своей стороны, затем получает тот
-же Glow-base overlay только со стороны effective-Glow room. Геометрия световых
+Тоннель сначала повторяет resolved data fill своей стороны. Glow-base overlay
+получает только сторона с effective Glow и fill `none`; сторона с любой
+data/static заливкой сохраняет её точный цвет. Геометрия световых
 секторов, отсечение откосами и проникновение через двери/ворота не меняются.
 
 ### Radial pools
@@ -197,7 +202,7 @@ radial pools тогда отсутствуют. Room с Glow off не получ
 Статическая карточка использует тот же effective resolver и показывает:
 
 - data/static fill;
-- Glow base поверх него для effective-Glow rooms;
+- Glow base поверх него только для effective-Glow rooms с fill `none`;
 - matching базовую заливку поддерживаемых тоннелей.
 
 Live radial pools и tunnel light sectors в статической карточке не рисуются —
@@ -251,7 +256,7 @@ review артефактов.
   соответствующая страница существует;
 - compatibility registry/audit #33;
 - скриншот новых независимых controls;
-- owner-reviewed golden matrix temp+Glow/custom+Glow и static-card state.
+- owner-reviewed golden matrix temp+Glow/custom+Glow без base и static-card state.
 
 Release body выделяет независимый Glow как пользовательскую функцию; чисто
 технические детали группируются по общему release-правилу.
@@ -265,9 +270,9 @@ Release body выделяет независимый Glow как пользов�
 3. Обычный Save, заменяющий legacy token, атомарно материализует effective Glow;
    untouched Save, Cancel и reload не создают silent migration.
 4. Optimize preview/apply/undo идемпотентен и сохраняет future fields.
-5. Старый config до migration имеет pixel parity; normal source-over formula и
-   layer order проверены DOM/style unit-тестами.
-6. Golden: dark/light, temp+Glow, custom+Glow, mixed room overrides, no-source,
+5. Старый config до migration имеет pixel parity; normal source-over formula,
+   отсутствие base поверх data/static fill и layer order проверены DOM/style unit-тестами.
+6. Golden: dark/light, temp+Glow без base, custom+Glow без base, mixed room overrides, no-source,
    tunnel и hover; baseline принят владельцем до merge.
 7. `houseplan-space-card` совпадает по data/base projection и не рисует pools.
 8. Doors/gates, virtual/physical walls, nested holes, partitions/columns и

@@ -6,6 +6,7 @@ import { launch } from './serve.mjs';
 import { LARGE_HOUSE_COUNTS, makeLargeHouseFixture } from './fixtures/large-house.mjs';
 import { assertFreshDemoBundle } from './bundle-freshness.mjs';
 import { summarizeLongTasks, summarizeTimings } from './performance/evaluate.mjs';
+import { LARGE_HOUSE_CARD_CONTRACT } from './performance/card-contract.mjs';
 
 const valueArg = (name) => process.argv.find((arg) => arg.startsWith(`--${name}=`))?.slice(name.length + 3);
 const samples = Math.max(1, Math.min(20, Number(valueArg('samples')) || 7));
@@ -39,7 +40,7 @@ const rows = [];
 try {
   for (let iteration = 0; iteration < warmups + samples; iteration++) {
     const measuredSample = iteration - warmups;
-    const row = await page.evaluate(async ({ fixture, sample }) => {
+    const row = await page.evaluate(async ({ fixture, sample, cardContract }) => {
       const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
       const until = async (predicate, timeout = 10000) => {
         const started = performance.now();
@@ -95,6 +96,20 @@ try {
         openingTunnel: card._openingTunnelCache ? 1 : 0,
         openingWallIndex: card._openingWallIndexCache ? 1 : 0,
       });
+      const assertCardContract = (card) => {
+        const missingMethods = cardContract.methods
+          .filter((name) => typeof card[name] !== 'function')
+          .map((name) => `${name}()`);
+        const missingFields = cardContract.fields.filter((name) => !(name in card));
+        const missing = [...missingMethods, ...missingFields];
+        if (missing.length) {
+          throw new Error(
+            `${cardContract.label} performance harness is incompatible with this houseplan-card bundle; `
+            + `missing private API: ${missing.join(', ')}. `
+            + 'Update the explicit candidate/base compatibility contract before profiling.',
+          );
+        }
+      };
 
       window.__card?.remove?.();
       localStorage.clear();
@@ -139,6 +154,7 @@ try {
       const loadStarted = performance.now();
       host.replaceChildren(card);
       card.hass = hassFor(fixture.states);
+      assertCardContract(card);
       await until(() => card._loadOk && card._model?.length === fixture.counts.floors);
       await card.updateComplete;
       await frame();
@@ -268,7 +284,7 @@ try {
       card.remove();
       await frame();
       return result;
-    }, { fixture, sample: measuredSample });
+    }, { fixture, sample: measuredSample, cardContract: LARGE_HOUSE_CARD_CONTRACT });
     if (measuredSample >= 0) rows.push(row);
   }
 } finally {

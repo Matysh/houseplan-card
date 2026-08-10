@@ -23,7 +23,8 @@ import {
   averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
   stateIcon, lightColorOf, parseRoomRef, diffNewDevices, glowColorOf, doorSector, hasRoomBehind, controlsAction, isControllable,
   spaceDisplayOf, resolveEffectiveRoomFill, fillColorsOf, DEFAULT_FILL_COLORS,
-  type FillColors, type ResolvedRoomFill, runServiceFor, RUN_TARGET_DOMAINS,
+  customFillOf, roomCustomFillOf, DEFAULT_CUSTOM_FILL,
+  type FillColors, type FillColorEntry, type ResolvedRoomFill, runServiceFor, RUN_TARGET_DOMAINS,
   DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY, stageBgOf,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
   referencedContentUrls,
@@ -145,7 +146,7 @@ import {
 import { renderOpeningTunnelFills } from './render/opening-tunnels';
 import { safeStoredColor } from './color';
 
-const CARD_VERSION = '1.61.0-beta.2';
+const CARD_VERSION = '1.61.0-beta.3';
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
 const CELL_CM_MIN = 0.1;
@@ -902,7 +903,9 @@ class HouseplanCard extends LitElement {
   private _nameSel = '';
   private _roomDialog = false;
   private _roomEditId: string | null = null; // gear on a room card (edit mode)
-  private _roomFill: '' | 'none' | 'lqi' | 'light' | 'temp' = ''; // '' = inherit
+  private _roomFill: '' | 'none' | 'lqi' | 'light' | 'temp' | 'custom' = ''; // '' = inherit
+  /** null = inherit the space custom color; value = explicit room override. */
+  private _roomCustomFill: FillColorEntry | null = null;
   private _roomTempSrc = ''; // '' = average
   private _roomHumSrc = '';
   private _roomSrcOpen: 'temp' | 'hum' | null = null;
@@ -1072,7 +1075,9 @@ class HouseplanCard extends LitElement {
     bgMode: 'static' | 'daynight' | null; // plan background mode; null = inherit (docs/SUN.md)
     northDeg: number | null;       // per-space compass override; null = inherit
     sunRays: boolean | null;       // per-space wedges override; null = inherit
-    fillMode: 'none' | 'lqi' | 'light' | 'temp';
+    fillMode: 'none' | 'lqi' | 'light' | 'temp' | 'custom';
+    /** null keeps the optional persisted field absent and uses product default. */
+    customFill: FillColorEntry | null;
     glowEnabled: boolean;
     tempMin: number;
     tempMax: number;
@@ -1274,6 +1279,7 @@ class HouseplanCard extends LitElement {
     _roomDialog: { state: true },
     _roomEditId: { state: true },
     _roomFill: { state: true },
+    _roomCustomFill: { state: true },
     _roomTempSrc: { state: true },
     _roomHumSrc: { state: true },
     _roomSrcOpen: { state: true },
@@ -1998,7 +2004,8 @@ class HouseplanCard extends LitElement {
     if (this._decorTextDialog) return at('decorText', this._decorTextDialog);
     if (this._roomDialog) {
       return at('room', {
-        editId: this._roomEditId, fill: this._roomFill, tempSrc: this._roomTempSrc,
+        editId: this._roomEditId, fill: this._roomFill, customFill: this._roomCustomFill,
+        tempSrc: this._roomTempSrc,
         humSrc: this._roomHumSrc, srcOpen: this._roomSrcOpen, srcFilter: this._roomSrcFilter,
         nameScale: this._roomNameScale, labelScale: this._roomLabelScale,
         areaSel: this._areaSel, nameSel: this._nameSel,
@@ -2063,7 +2070,8 @@ class HouseplanCard extends LitElement {
       }
       case 'room': {
         const r = d.data;
-        this._roomEditId = r.editId; this._roomFill = r.fill; this._roomTempSrc = r.tempSrc;
+        this._roomEditId = r.editId; this._roomFill = r.fill;
+        this._roomCustomFill = r.customFill || null; this._roomTempSrc = r.tempSrc;
         this._roomHumSrc = r.humSrc; this._roomSrcOpen = r.srcOpen; this._roomSrcFilter = r.srcFilter;
         this._roomNameScale = r.nameScale; this._roomLabelScale = r.labelScale;
         this._areaSel = r.areaSel; this._nameSel = r.nameSel;
@@ -8502,6 +8510,9 @@ class HouseplanCard extends LitElement {
       const mode = this._roomDialog && room.id === this._roomEditId
         ? (this._roomFill || disp.fill)
         : roomFillModeOf(disp.fill, room);
+      const customFill = this._roomDialog && room.id === this._roomEditId
+        ? (this._roomCustomFill || disp.customFill)
+        : roomCustomFillOf(disp.customFill, room);
       const resolved = resolveEffectiveRoomFill(
         mode,
         mode === 'lqi' && room.area ? this._roomLqi(room.area) : null,
@@ -8512,6 +8523,7 @@ class HouseplanCard extends LitElement {
         disp.tempMin,
         disp.tempMax,
         this._fillColors,
+        customFill,
       );
       byRoom.set(room, resolved);
       if (room.id) byId.set(room.id, resolved);
@@ -8533,6 +8545,7 @@ class HouseplanCard extends LitElement {
       color: dialog.roomColor,
       opacity: dialog.roomOpacity,
       fill: dialog.fillMode,
+      customFill: dialog.customFill ? customFillOf(dialog.customFill) : DEFAULT_CUSTOM_FILL,
       glow: dialog.glowEnabled,
       tempMin: dialog.tempMin,
       tempMax: dialog.tempMax,
@@ -8616,13 +8629,17 @@ class HouseplanCard extends LitElement {
     });
   }
 
-  /** Frame-local Glow-base projection, deliberately independent from data fill. */
+  /** Frame-local Glow-base projection. Data/static fills keep their exact
+   * colors; only rooms whose effective fill is `none` receive darkness. */
   private _resolvedGlowBase(space: SpaceModel, disp: SpaceDisplay): RoomFillFrame {
     const byRoom = new Map<RoomCfg, ResolvedRoomFill | null>();
     const byId = new Map<string, ResolvedRoomFill | null>();
     const base = this._fillColors.glow_base;
     for (const room of space.rooms) {
-      const resolved: ResolvedRoomFill | null = roomGlowOf(disp.glow, room)
+      const mode = this._roomDialog && room.id === this._roomEditId
+        ? (this._roomFill || disp.fill)
+        : roomFillModeOf(disp.fill, room);
+      const resolved: ResolvedRoomFill | null = roomGlowOf(disp.glow, room) && mode === 'none'
         ? { color: base.c, opacity: base.a, mode: 'glow' }
         : null;
       byRoom.set(room, resolved);
@@ -10120,7 +10137,9 @@ class HouseplanCard extends LitElement {
         source: sp.plan_url ? 'file' : 'draw',
         showBorders: disp.showBorders, showNames: disp.showNames,
         hideDecor: disp.hideDecor, hideOpenings: disp.hideOpenings,
-        roomColor: disp.color, roomOpacity: disp.opacity, fillMode: disp.fill as 'none' | 'lqi' | 'light' | 'temp',
+        roomColor: disp.color, roomOpacity: disp.opacity, fillMode: disp.fill,
+        customFill: sp.settings?.custom_fill && typeof sp.settings.custom_fill === 'object'
+          ? customFillOf(sp.settings.custom_fill) : null,
         glowEnabled: disp.glow,
         bgColor: disp.bgColor,
         bgMode: sp.settings?.bg_mode === 'static' || sp.settings?.bg_mode === 'daynight' ? sp.settings.bg_mode : null,
@@ -10141,6 +10160,7 @@ class HouseplanCard extends LitElement {
         showBorders: false, showNames: false,
         hideDecor: false, hideOpenings: false,
         roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'none',
+        customFill: null,
         glowEnabled: true,
         bgColor: null,
         bgMode: null, northDeg: null, sunRays: null,
@@ -10386,6 +10406,7 @@ class HouseplanCard extends LitElement {
         north_deg: d.northDeg ?? undefined,
         sun_rays: d.sunRays ?? undefined,
         fill_mode: d.fillMode,
+        custom_fill: d.customFill || undefined,
         // Always materialize the independent value. In particular, editing a
         // legacy fill_mode:'glow' space preserves its appearance atomically
         // while replacing the old token with the selected data fill.
@@ -10511,6 +10532,7 @@ class HouseplanCard extends LitElement {
       showBorders: false, showNames: false,
       hideDecor: false, hideOpenings: false,
       roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'none',
+      customFill: null,
       glowEnabled: true,
       bgColor: null,
       bgMode: null, northDeg: null, sunRays: null,
@@ -11333,8 +11355,6 @@ class HouseplanCard extends LitElement {
           <label class="dispsection">${this._t('gs.glow_group')}</label>
           ${this._renderColorRow('glow_base', 'gs.glow_base')}
           ${this._renderColorRow('glow_light', 'gs.glow_light')}
-          <label class="dispsection">${this._t('gs.wall_group')}</label>
-          ${this._renderColorRow('wall_fill', 'gs.wall_fill')}
           <div class="colorrow gsrow">
             <span class="gsl">${this._t('gs.glow_radius')}</span>
             <input type="number" class="tempin" min="0.5" step="0.5"
@@ -11346,6 +11366,8 @@ class HouseplanCard extends LitElement {
               }} />
             <span class="opl">${this._imperial ? this._t('gs.unit_ft') : this._t('gs.unit_m')}</span>
           </div>
+          <label class="dispsection">${this._t('gs.wall_group')}</label>
+          ${this._renderColorRow('wall_fill', 'gs.wall_fill')}
           <label class="dispsection">${this._t('gs.bg_group')}</label>
           <div class="colorrow gsrow">
             <span class="gsl">${this._t('gs.bg_mode')}</span>
@@ -12947,6 +12969,7 @@ class HouseplanCard extends LitElement {
   private _resetRoomDialogFields(): void {
     this._roomEditId = null;
     this._roomFill = '';
+    this._roomCustomFill = null;
     this._roomTempSrc = '';
     this._roomHumSrc = '';
     this._roomSrcOpen = null;
@@ -12964,6 +12987,10 @@ class HouseplanCard extends LitElement {
     this._roomFill = r.settings?.fill_mode === 'glow'
       ? ''
       : ((r.settings?.fill_mode as any) || '');
+    const rawCustom = r.settings?.custom_fill;
+    this._roomCustomFill = rawCustom && typeof rawCustom === 'object'
+      ? customFillOf(rawCustom, spaceDisplayOf(this._curSpaceCfg).customFill)
+      : null;
     this._roomTempSrc = r.settings?.temp_source || '';
     this._roomHumSrc = r.settings?.hum_source || '';
     this._roomNameScale = clampScale(r.settings?.name_scale);
@@ -12977,6 +13004,7 @@ class HouseplanCard extends LitElement {
   private _roomSettingsFromDialog(): RoomCfg['settings'] {
     const st: any = {};
     if (this._roomFill) st.fill_mode = this._roomFill;
+    if (this._roomCustomFill) st.custom_fill = this._roomCustomFill;
     if (this._roomTempSrc) st.temp_source = this._roomTempSrc;
     if (this._roomHumSrc) st.hum_source = this._roomHumSrc;
     if (this._roomNameScale !== 1) st.name_scale = this._roomNameScale;
@@ -13002,6 +13030,8 @@ class HouseplanCard extends LitElement {
     const next: any = { ...previous };
     if (this._roomFill) next.fill_mode = this._roomFill;
     else delete next.fill_mode;
+    if (this._roomCustomFill) next.custom_fill = this._roomCustomFill;
+    else delete next.custom_fill;
     if (previous.fill_mode === 'glow' && typeof previous.glow !== 'boolean') next.glow = true;
     if (this._roomTempSrc) next.temp_source = this._roomTempSrc;
     else delete next.temp_source;
@@ -14895,7 +14925,25 @@ class HouseplanCard extends LitElement {
                     °C
                   </span>`
                 : nothing}
-            </label>`,
+            </label>
+              ${v === 'custom' && d.fillMode === 'custom'
+                ? html`<div class="colorrow gsrow">
+                    <span class="gsl">${this._t('space.custom_fill')}</span>
+                    <hp-color-opacity
+                      .label=${this._t('space.custom_fill')}
+                      .opacityLabel=${this._t('space.opacity')}
+                      .color=${(d.customFill || DEFAULT_CUSTOM_FILL).c}
+                      .opacity=${(d.customFill || DEFAULT_CUSTOM_FILL).a}
+                      @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) => {
+                        this._spaceDialog = { ...d, customFill: { c: e.detail.color, a: e.detail.opacity } };
+                      }}></hp-color-opacity>
+                    ${d.customFill
+                      ? html`<button class="btn ghost" type="button"
+                          @click=${() => (this._spaceDialog = { ...d, customFill: null })}>
+                          ${this._t('btn.reset')}</button>`
+                      : nothing}
+                  </div>`
+                : nothing}`,
           )}
           <label class="srcrow">
             ${this._boolInput(d.glowEnabled, (checked) => {
@@ -15018,6 +15066,9 @@ class HouseplanCard extends LitElement {
   private _renderRoomDialog(): TemplateResult {
     const edit = !!this._roomEditId;
     const canSaveNew = !!this._areaSel || !!this._nameSel.trim();
+    const spaceDisplay = spaceDisplayOf(this._curSpaceCfg);
+    const effectiveFill = this._roomFill || spaceDisplay.fill;
+    const customFill = this._roomCustomFill || spaceDisplay.customFill;
     // the free-areas list must include the edited room's CURRENT area
     const areas = [...this._freeAreas];
     if (edit && this._areaSel && !areas.some((a) => a.area_id === this._areaSel)) {
@@ -15055,6 +15106,26 @@ class HouseplanCard extends LitElement {
               <span>${this._t(k as any)}</span>
             </label>`,
           )}
+          ${effectiveFill === 'custom'
+            ? html`<div class="colorrow gsrow">
+                <span class="gsl">${this._roomCustomFill
+                  ? this._t('room.custom_fill_own') : this._t('room.custom_fill_space')}</span>
+                <hp-color-opacity
+                  .label=${this._roomCustomFill
+                    ? this._t('room.custom_fill_own') : this._t('room.custom_fill_space')}
+                  .opacityLabel=${this._t('space.opacity')}
+                  .color=${customFill.c}
+                  .opacity=${customFill.a}
+                  @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) => {
+                    this._roomCustomFill = { c: e.detail.color, a: e.detail.opacity };
+                  }}></hp-color-opacity>
+                ${this._roomCustomFill
+                  ? html`<button class="btn ghost" type="button" @click=${() => {
+                      this._roomCustomFill = null;
+                    }}>${this._t('btn.reset')}</button>`
+                  : nothing}
+              </div>`
+            : nothing}
           ${this._renderRoomSource('temp')}
           ${this._renderRoomSource('hum')}
 

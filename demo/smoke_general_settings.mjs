@@ -9,6 +9,12 @@ const res = await page.evaluate(async () => {
   c._openSettingsDialog(); await c.updateComplete;
   out.rows = sr().querySelectorAll('.gsrow').length;
   out.groups = [...sr().querySelectorAll('hp-dialog .dispsection')].map((l) => l.textContent.trim());
+  const glowRadius = [...sr().querySelectorAll('hp-dialog .gsrow')]
+    .find((row) => row.textContent.includes(c._t('gs.glow_radius')));
+  const wallGroup = [...sr().querySelectorAll('hp-dialog .dispsection')]
+    .find((row) => row.textContent.trim() === c._t('gs.wall_group'));
+  out.glowRadiusInsideGlowGroup = !!glowRadius && !!wallGroup
+    && !!(glowRadius.compareDocumentPosition(wallGroup) & Node.DOCUMENT_POSITION_FOLLOWING);
   // 1b) блок About: версия + две внешние ссылки (target=_blank rel=noopener)
   out.aboutVersion = sr().querySelector('hp-dialog .aboutver')?.textContent.trim() ?? null;
   out.aboutLinks = [...sr().querySelectorAll('hp-dialog a.aboutlink')].map((a) => ({

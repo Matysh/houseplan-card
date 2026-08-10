@@ -593,10 +593,19 @@ hash falls back to the default.
   token and projects to data fill `none` plus Glow `true` unless an explicit
   boolean wins. Normal settings/room saves materialise that projection in the
   same write; Optimize Plans performs the equivalent idempotent model-v6
-  migration. Render order is paper → data room/tunnel fill → pointer-free Glow
-  base room/tunnel fill → radial pools → sun/interactive layers. The static
-  room card uses the same data/base projection but deliberately has no live
-  pools.
+  migration. Render order is paper → data room/tunnel fill → conditional
+  pointer-free Glow base for rooms whose effective fill is `none` → radial
+  pools → sun/interactive layers. A data/static fill (`lqi`, `light`, `temp`,
+  `custom`) never receives the dark base, so its exact color and alpha remain
+  visible; radial pools stay independent and continue to render. The static
+  room card uses the same data/base projection, omits empty base groups, and
+  deliberately has no live pools.
+- **Custom room fill** (#56): `space.settings.custom_fill` is the space color
+  and `room.settings.custom_fill` is an optional explicit override. The pure
+  projection is room → space → `{c:'#607d8b',a:.18}` and every read crosses
+  `safeStoredColor` plus finite alpha clamping. `resolveEffectiveRoomFill`
+  remains the single source for room floor, clean-floor holes and thick-wall
+  tunnel colors; stored `room_color` continues to control borders/names only.
 - **Glow pools and additive composition** (#19): every source retains its own
   radial gradient and wall/door `clipPath`. All pools live in one flat isolated
   group inside one outer `opacity=.7` frame; only the pool elements use SVG

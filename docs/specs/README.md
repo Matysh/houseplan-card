@@ -51,9 +51,9 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#11](https://github.com/Matysh/houseplan-card/issues/11) Vacuum source health | [011-vacuum-source-health.md](011-vacuum-source-health.md) | в реализации |
 | [#12](https://github.com/Matysh/houseplan-card/issues/12) Room cleaning highlight | [012-vacuum-room-cleaning-highlight.md](012-vacuum-room-cleaning-highlight.md) | готово к ревью |
 | [#13](https://github.com/Matysh/houseplan-card/issues/13) Golden open context tray | [013-golden-open-context-tray.md](013-golden-open-context-tray.md) | реализовано |
-| [#19](https://github.com/Matysh/houseplan-card/issues/19) Additive Glow blending | [019-glow-additive-blending.md](019-glow-additive-blending.md) | v1.61.0-beta.2 candidate; exact-SHA gate |
+| [#19](https://github.com/Matysh/houseplan-card/issues/19) Additive Glow blending | [019-glow-additive-blending.md](019-glow-additive-blending.md) | реализовано в v1.61.0-beta.2 |
 | [#20](https://github.com/Matysh/houseplan-card/issues/20) Glow through open doors | [020-glow-open-door-spill.md](020-glow-open-door-spill.md) | готово к реализации |
-| [#21](https://github.com/Matysh/houseplan-card/issues/21) Safe color CSS variables | [021-color-css-injection.md](021-color-css-injection.md) | готово к реализации |
+| [#21](https://github.com/Matysh/houseplan-card/issues/21) Safe color CSS variables | [021-color-css-injection.md](021-color-css-injection.md) | реализовано в v1.61.0-beta.1 |
 | [#36](https://github.com/Matysh/houseplan-card/issues/36) Room Glow override | [036-room-glow-override.md](036-room-glow-override.md) | черновик продуктового решения |
 | [#37](https://github.com/Matysh/houseplan-card/issues/37) Room scale system | [037-room-scale-system.md](037-room-scale-system.md) | черновик migration semantics |
 | [#38](https://github.com/Matysh/houseplan-card/issues/38) Icon rule builder | [038-icon-rule-builder.md](038-icon-rule-builder.md) | черновик data model |
@@ -66,8 +66,8 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#51](https://github.com/Matysh/houseplan-card/issues/51) Custom decor images | [051-custom-decor-images.md](051-custom-decor-images.md) | черновик: security dependencies |
 | [#52](https://github.com/Matysh/houseplan-card/issues/52) Dimensions in View | [052-view-dimensions.md](052-view-dimensions.md) | готово к ревью |
 | [#54](https://github.com/Matysh/houseplan-card/issues/54) Zigbee topology overlay | [054-zigbee-topology-overlay.md](054-zigbee-topology-overlay.md) | research + adapter contract |
-| [#55](https://github.com/Matysh/houseplan-card/issues/55) Independent Glow overlay | [055-independent-glow-overlay.md](055-independent-glow-overlay.md) | v1.61.0-beta.2 candidate; exact-SHA gate |
-| [#56](https://github.com/Matysh/houseplan-card/issues/56) Static room color | [056-static-room-color.md](056-static-room-color.md) | готово после security gate #21 |
+| [#55](https://github.com/Matysh/houseplan-card/issues/55) Independent Glow overlay | [055-independent-glow-overlay.md](055-independent-glow-overlay.md) | реализовано в v1.61.0-beta.2; #61 — v1.61.0-beta.3 |
+| [#56](https://github.com/Matysh/houseplan-card/issues/56) Static room color | [056-static-room-color.md](056-static-room-color.md) | реализовано в v1.61.0-beta.3 |
 
 ## Правило актуализации
 

@@ -772,6 +772,20 @@ def test_every_fill_mode_the_editor_offers_is_accepted():
         v.SPACE_SCHEMA(_space(fill_mode="rainbow"))
 
 
+def test_custom_fill_color_and_alpha_are_strict_on_space_and_room():
+    v.SPACE_SCHEMA(_space(fill_mode="custom", custom_fill={"c": "#123ABC", "a": 0.4}))
+    custom_room = _space(fill_mode="none")
+    custom_room["rooms"] = [{
+        "id": "r1", "name": "R", "x": 0.1, "y": 0.1, "w": 0.2, "h": 0.2,
+        "settings": {"fill_mode": "custom", "custom_fill": {"c": "#abcdef", "a": 1}},
+    }]
+    v.SPACE_SCHEMA(custom_room)
+    for bad in ({"c": "red", "a": 0.2}, {"c": "#123456", "a": float("nan")},
+                {"c": "#123456", "a": 1.1}):
+        with pytest.raises(vol.Invalid):
+            v.SPACE_SCHEMA(_space(fill_mode="custom", custom_fill=bad))
+
+
 def test_independent_glow_fields_and_legacy_tokens_are_accepted():
     # Current UI writes two independent fields; old dashboard bundles remain
     # valid writers of the legacy enum forever.

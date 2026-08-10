@@ -7,6 +7,7 @@ import { launch } from './serve.mjs';
 import { assertFreshDemoBundle } from './bundle-freshness.mjs';
 import { summarizeLongTasks, summarizeTimings } from './performance/evaluate.mjs';
 import { makeLargeHouseFixture } from './fixtures/large-house.mjs';
+import { GLOW_CARD_CONTRACT } from './performance/card-contract.mjs';
 
 const valueArg = (name) => process.argv.find((arg) => arg.startsWith(`--${name}=`))?.slice(name.length + 3);
 const profile = valueArg('profile') || 'large-light-blend-v1';
@@ -103,7 +104,7 @@ const rows = [];
 try {
   for (let iteration = 0; iteration < warmups + samples; iteration++) {
     const sample = iteration - warmups;
-    const row = await page.evaluate(async ({ fixture, profile, sample }) => {
+    const row = await page.evaluate(async ({ fixture, profile, sample, cardContract }) => {
       const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
       const until = async (predicate, timeout = 10000) => {
         const started = performance.now();
@@ -194,6 +195,20 @@ try {
         openingTunnel: card._openingTunnelCache ? 1 : 0,
         openingWallIndex: card._openingWallIndexCache ? 1 : 0,
       });
+      const assertCardContract = (card) => {
+        const missingMethods = cardContract.methods
+          .filter((name) => typeof card[name] !== 'function')
+          .map((name) => `${name}()`);
+        const missingFields = cardContract.fields.filter((name) => !(name in card));
+        const missing = [...missingMethods, ...missingFields];
+        if (missing.length) {
+          throw new Error(
+            `${cardContract.label} harness is incompatible with this houseplan-card bundle; `
+            + `missing private API: ${missing.join(', ')}. `
+            + 'Update the explicit candidate/base compatibility contract before profiling.',
+          );
+        }
+      };
 
       window.__card?.remove?.();
       localStorage.clear();
@@ -203,6 +218,7 @@ try {
       card.setConfig({ type: 'custom:houseplan-card', title: `Glow ${profile}`, icon_size: 2.4 });
       host.replaceChildren(card);
       card.hass = hassFor(statesFor(1));
+      assertCardContract(card);
       await until(() => card._loadOk && card._devices?.length === fixture.deviceCount);
       if ('_glowScreenBlend' in card) {
         const probeDeadline = performance.now() + 2500;
@@ -251,7 +267,7 @@ try {
       result.renderedDevices = card._devices?.length ?? 0;
       result.screenBlend = card._glowScreenBlend === true;
       return result;
-    }, { fixture, profile, sample });
+    }, { fixture, profile, sample, cardContract: GLOW_CARD_CONTRACT });
     const captureStarted = performance.now();
     await page.screenshot({ type: 'png' });
     row.screenshotCaptureMs = Number((performance.now() - captureStarted).toFixed(2));

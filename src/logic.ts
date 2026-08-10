@@ -820,8 +820,8 @@ export function normalizeDeviceDisplay(value: unknown): DeviceDisplayMode {
 }
 export const TAP_ACTIONS = ['info', 'more-info', 'toggle', 'run', 'cover'] as const;
 /** Current space-level data fills. Legacy `glow` is read separately as overlay. */
-export const SPACE_FILL_MODES = ['none', 'lqi', 'light', 'temp'] as const;
-export const ROOM_FILL_MODES = ['none', 'lqi', 'light', 'temp'] as const;
+export const SPACE_FILL_MODES = ['none', 'lqi', 'light', 'temp', 'custom'] as const;
+export const ROOM_FILL_MODES = ['none', 'lqi', 'light', 'temp', 'custom'] as const;
 
 export const TOGGLE_SAFE_DOMAINS = new Set(['light', 'switch', 'fan', 'humidifier', 'cover', 'valve']);
 
@@ -1229,7 +1229,8 @@ export function subst(s: string, vars?: Record<string, string | number>): string
 
 // ---------------- room fills & colors ----------------
 
-export type RoomFillMode = 'none' | 'lqi' | 'light' | 'temp' | 'glow';
+/** Effective data/static fill. Legacy persisted `glow` is projected separately. */
+export type RoomFillMode = typeof SPACE_FILL_MODES[number];
 
 /** Per-space display settings with their defaults resolved. */
 export interface SpaceDisplay {
@@ -1238,6 +1239,8 @@ export interface SpaceDisplay {
   color: string;    // hex like #3ea6ff
   opacity: number;  // 0..1 — applied to borders, names and fills
   fill: RoomFillMode;
+  /** Resolved space-level custom fill; rooms may override it. */
+  customFill: FillColorEntry;
   /** Independent light-source overlay; legacy fill_mode:'glow' projects here. */
   glow: boolean;
   tempMin: number; // comfort range lower bound, °C
@@ -1273,6 +1276,29 @@ export const DEFAULT_ROOM_COLOR = '#55606c';
 export const DEFAULT_ROOM_OPACITY = 0.55;
 export const DEFAULT_TEMP_MIN = 20;
 export const DEFAULT_TEMP_MAX = 25;
+export const DEFAULT_CUSTOM_FILL: FillColorEntry = { c: '#607d8b', a: 0.18 };
+
+/** Safe read boundary for a persisted custom fill. Invalid legacy/future data
+ * is projected to a known color without silently rewriting the config. */
+export function customFillOf(value: unknown, fallback: FillColorEntry = DEFAULT_CUSTOM_FILL): FillColorEntry {
+  const raw = value && typeof value === 'object' ? value as any : null;
+  const alpha = raw?.a;
+  return {
+    c: safeStoredColor(raw?.c, fallback.c),
+    a: typeof alpha === 'number' && Number.isFinite(alpha)
+      ? Math.min(1, Math.max(0, alpha)) : fallback.a,
+  };
+}
+
+/** Effective custom fill: explicit room value -> space value -> product default. */
+export function roomCustomFillOf(
+  spaceCustom: unknown,
+  room: { settings?: { custom_fill?: unknown } | null } | null | undefined,
+): FillColorEntry {
+  const spaceFill = customFillOf(spaceCustom);
+  const own = room?.settings?.custom_fill;
+  return own && typeof own === 'object' ? customFillOf(own, spaceFill) : spaceFill;
+}
 
 /** Resolve a space's display settings; spaces without a plan default to visible markup. */
 export function spaceDisplayOf(spaceCfg: any): SpaceDisplay {
@@ -1284,7 +1310,8 @@ export function spaceDisplayOf(spaceCfg: any): SpaceDisplay {
     showNames: s.show_names ?? noPlan,
     color: safeStoredColor(s.room_color, DEFAULT_ROOM_COLOR),
     opacity: typeof s.room_opacity === 'number' ? Math.min(1, Math.max(0, s.room_opacity)) : DEFAULT_ROOM_OPACITY,
-    fill: ['lqi', 'light', 'temp'].includes(s.fill_mode) ? s.fill_mode : 'none',
+    fill: ['lqi', 'light', 'temp', 'custom'].includes(s.fill_mode) ? s.fill_mode : 'none',
+    customFill: customFillOf(s.custom_fill),
     // Explicit new data wins. Reading an old config never writes it back.
     glow: typeof s.glow_enabled === 'boolean' ? s.glow_enabled : legacyGlow,
     tempMin: typeof s.temp_min === 'number' ? s.temp_min : DEFAULT_TEMP_MIN,
@@ -1333,7 +1360,7 @@ export interface FillColors {
   temp_hot: FillColorEntry;
   lqi_low: FillColorEntry;
   lqi_high: FillColorEntry;
-  /** Glow mode: uniform "darkness" over every room + default light color. */
+  /** Glow darkness for rooms whose effective data/static fill is `none`. */
   glow_base: FillColorEntry;
   glow_light: FillColorEntry;
   /** Thick-wall body fill (docs/WALL-THICKNESS.md); default opaque white. */
@@ -1391,7 +1418,9 @@ export function roomFillStyle(
   tempMin: number,
   tempMax: number,
   colors: FillColors,
+  customFill: FillColorEntry = DEFAULT_CUSTOM_FILL,
 ): FillColorEntry | null {
+  if (mode === 'custom') return customFillOf(customFill);
   if (mode === 'lqi') {
     if (lqi == null) return null;
     const t = (lqi - 40) / 140;
@@ -1430,7 +1459,7 @@ export function roomFillStyle(
 export interface ResolvedRoomFill {
   color: string;
   opacity: number;
-  mode: RoomFillMode;
+  mode: RoomFillMode | 'glow';
 }
 
 export function resolveEffectiveRoomFill(
@@ -1441,10 +1470,9 @@ export function resolveEffectiveRoomFill(
   tempMin: number,
   tempMax: number,
   colors: FillColors,
+  customFill: FillColorEntry = DEFAULT_CUSTOM_FILL,
 ): ResolvedRoomFill | null {
-  const entry = mode === 'glow'
-    ? colors.glow_base
-    : roomFillStyle(mode, lqi, lights, temp, tempMin, tempMax, colors);
+  const entry = roomFillStyle(mode, lqi, lights, temp, tempMin, tempMax, colors, customFill);
   return entry ? { color: entry.c, opacity: entry.a, mode } : null;
 }
 
@@ -1905,8 +1933,8 @@ export function roomFillModeOf(
   room: { settings?: { fill_mode?: string | null } | null } | null | undefined,
 ): RoomFillMode {
   const o = room?.settings?.fill_mode;
-  const inherited = spaceFill === 'glow' ? 'none' : spaceFill;
-  return o === 'none' || o === 'lqi' || o === 'light' || o === 'temp' ? o : inherited;
+  return o === 'none' || o === 'lqi' || o === 'light' || o === 'temp' || o === 'custom'
+    ? o : spaceFill;
 }
 
 /** Effective room Glow, independently of its data fill. */
