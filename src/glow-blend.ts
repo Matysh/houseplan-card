@@ -1,6 +1,7 @@
 /** Runtime proof that this document can rasterize isolated SVG screen blend. */
 
-const documentProbes = new WeakMap<Document, Promise<boolean>>();
+type ProbeState = { promise: Promise<boolean>; resolved?: boolean };
+const documentProbes = new WeakMap<Document, ProbeState>();
 
 export type Rgb = readonly [number, number, number];
 
@@ -59,9 +60,17 @@ async function renderProbe(doc: Document): Promise<boolean> {
 /** One cached Promise per real Document; errors are a normal false fallback. */
 export function svgScreenBlendSupported(doc: Document): Promise<boolean> {
   const cached = documentProbes.get(doc);
-  if (cached) return cached;
-  const probe = renderProbe(doc).catch(() => false);
-  documentProbes.set(doc, probe);
-  return probe;
+  if (cached) return cached.promise;
+  const state: ProbeState = { promise: Promise.resolve(false) };
+  state.promise = renderProbe(doc).catch(() => false).then((resolved) => {
+    state.resolved = resolved;
+    return resolved;
+  });
+  documentProbes.set(doc, state);
+  return state.promise;
 }
 
+/** Synchronous warm-remount path: undefined means the first cold probe is pending. */
+export function resolvedSvgScreenBlend(doc: Document): boolean | undefined {
+  return documentProbes.get(doc)?.resolved;
+}

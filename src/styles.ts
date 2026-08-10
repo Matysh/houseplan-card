@@ -282,16 +282,6 @@ export const cardStyles = css`
     .stage.hpboot .zoombadge {
       visibility: hidden;
     }
-    /* A long-suspended normal View wakes through transient HA/viewport
-       geometry. Keep those few frames behind the already-correct stage
-       background; the final viewport and reveal are committed together.
-       This class is never set in kiosk or an editor. */
-    .stage.hpresume .zoomwrap,
-    .stage.hpresume .zoombadge,
-    .stage.hpresume .farhint,
-    .stage.hpresume .homearrow {
-      visibility: hidden;
-    }
     /* AUD-1552-02: post-veil grace — HA chrome landing after the cap moves
        the stage height smoothly; the viewport ResizeObserver refits the plan
        along the transition, so a late panel glides instead of jumping. */
@@ -321,6 +311,38 @@ export const cardStyles = css`
       opacity: 0.85;
       animation: hp-boot-pulse 1.3s ease-in-out infinite;
     }
+    .recoveryoverlay {
+      position: absolute;
+      inset: 0;
+      /* Above the contextual editor tray (70): recovery is the one state in
+         which every stage-editing surface must be inert. Dialogs live outside
+         the stage and retain their own higher card-level stacking context. */
+      z-index: 75;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--sp-4);
+      padding: var(--sp-6);
+      box-sizing: border-box;
+      background: var(--ha-card-background, var(--card-background-color, #111));
+      color: var(--primary-text-color, #fff);
+      text-align: center;
+      pointer-events: auto;
+      transition: opacity 0.15s ease;
+    }
+    .recoveryoverlay.phase-entering,
+    .recoveryoverlay.phase-leaving {
+      opacity: 0;
+    }
+    .recoveryoverlay.phase-fading-in,
+    .recoveryoverlay.phase-opaque {
+      opacity: 1;
+    }
+    .recoveryoverlay ha-icon {
+      --mdc-icon-size: 44px;
+      color: var(--hp-accent);
+    }
     @keyframes hp-boot-pulse {
       0%, 100% { opacity: 0.3; transform: scale(0.94); }
       50% { opacity: 0.9; transform: scale(1); }
@@ -329,6 +351,9 @@ export const cardStyles = css`
       .bootveil .boothouse {
         animation: none;
         opacity: 0.7;
+      }
+      .recoveryoverlay {
+        transition: none;
       }
       .stage.hpsettle {
         transition: none;
@@ -498,8 +523,7 @@ export const cardStyles = css`
     .glow-base-tunnels,
     .glow-pools-frame,
     .glow-pools,
-    .glow-spot,
-    .glow-soft {
+    .glow-spot {
       pointer-events: none;
     }
     /* The parent isolates all source spots from the room data fill, Glow base,
@@ -1344,12 +1368,14 @@ export const cardStyles = css`
       stroke: rgba(62, 166, 255, 0.55);
       stroke-opacity: 1;
     }
-    /* View hover follows the clean-floor face above the unioned wall body.
-       Plain fill/strokes deliberately replace CSS filters: GPU promotion of a
-       filtered SVG sibling used to flash the screen-blended Glow layer. */
+    /* The wash is rendered directly above the resolved room fill but below
+       tunnels, Glow, sun and walls. Black at 22% reproduces the old
+       brightness(.78) contract without filtering/promoting an SVG ancestor or
+       changing the room's hue. The halo/outline are rendered again late, above
+       the wall bodies. */
     .room-hover-fill {
-      fill: var(--hp-accent);
-      fill-opacity: 0.10;
+      fill: #000;
+      fill-opacity: 0.22;
       pointer-events: none;
     }
     .room-hover-halo {
@@ -1681,21 +1707,22 @@ export const cardStyles = css`
     }
     .stage.mode-devices .dev { cursor: grab; }
     .stage.mode-devices .dev:active { cursor: grabbing; }
-    .dev:hover {
-      background: var(--hp-accent);
-      color: var(--text-primary-color, #fff);
-      z-index: 5;
-    }
     .dev.on {
       background: var(--hp-on);
       border-color: var(--hp-on);
       color: #503c00;
-      box-shadow: 0 0 8px rgba(255, 212, 92, 0.7);
     }
     .dev.open {
       background: var(--hp-open);
       border-color: var(--hp-open);
       color: #4a2800;
+    }
+    /* Interaction wins ordinary state colours. Alarm keeps priority through
+       the more-specific .dev.alarm:hover rule above. */
+    .dev:hover {
+      background: var(--hp-accent);
+      color: var(--text-primary-color, #fff);
+      z-index: 5;
     }
     .dev.unavail {
       opacity: 0.35;

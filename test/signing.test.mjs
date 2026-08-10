@@ -163,7 +163,7 @@ test('resign prunes to the referenced set and gives everything a fresh chance', 
   assert.deepEqual(calls[1].paths, [URL_A]);
 });
 
-test('dispose(): a late answer neither renders nor throws, start() revives it', async () => {
+test('dispose(): a late answer warms the shared cache without rendering the old card', async () => {
   const { hass, calls } = makeHass();
   const { s, updates } = signer();
   s.display(hass, URL_A);
@@ -174,14 +174,39 @@ test('dispose(): a late answer neither renders nor throws, start() revives it', 
   assert.equal(updates(), 0, 'no re-render after teardown');
 
   s.start(() => hass, () => new Set([URL_A]));
-  s.display(hass, URL_A);
+  assert.equal(s.display(hass, URL_A), URL_A + '?authSig=LATE');
   await tick();
-  assert.equal(calls.length, 2, 'a reconnected card asks again');
-  calls[1].res({ urls: { [URL_A]: URL_A + '?authSig=NEW' } });
-  await tick();
-  assert.equal(updates(), 1);
-  assert.equal(s.display(hass, URL_A), URL_A + '?authSig=NEW');
+  assert.equal(calls.length, 1, 'a reconnected card reuses the late shared result');
+  assert.equal(updates(), 0);
   s.dispose();
+});
+
+test('two placements dedupe the same authority request and share readiness', async () => {
+  const { hass, calls } = makeHass();
+  const first = signer();
+  const second = signer();
+  first.s.display(hass, URL_A);
+  second.s.display(hass, URL_A);
+  await tick();
+  assert.equal(calls.length, 1);
+  calls[0].res({ urls: { [URL_A]: URL_A + '?authSig=SHARED' } });
+  await tick();
+  assert.equal(first.s.display(hass, URL_A), URL_A + '?authSig=SHARED');
+  assert.equal(second.s.display(hass, URL_A), URL_A + '?authSig=SHARED');
+  assert.equal(first.s.isReady(hass, URL_A), false, 'signed is not yet paintable');
+  second.s.markLoaded(hass, URL_A);
+  assert.equal(first.s.isReady(hass, URL_A), true, 'loaded state is authority-scoped');
+});
+
+test('prepareImage waits for a protected structural asset before adoption', async () => {
+  const { hass, calls } = makeHass();
+  const { s } = signer();
+  const prepared = s.prepareImage(hass, URL_A);
+  await tick();
+  assert.equal(calls.length, 1);
+  calls[0].res({ urls: { [URL_A]: URL_A + '?authSig=PREPARED' } });
+  assert.equal(await prepared, true);
+  assert.equal(s.isReady(hass, URL_A), true);
 });
 
 test('R5-1: an empty but successful answer still backs off', async () => {

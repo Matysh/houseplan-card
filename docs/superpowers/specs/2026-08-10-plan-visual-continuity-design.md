@@ -1,7 +1,7 @@
 # ТЗ: визуальная непрерывность плана при возврате на вкладку
 
 **Issue:** [#73 — Исключить мигание плана при возврате на вкладку](https://github.com/Matysh/houseplan-card/issues/73)<br>
-**Статус:** ТЗ принято после двух раундов ревью; implementation gate пока не пройден, реализация не начата<br>
+**Статус:** ТЗ принято после двух раундов ревью; implementation gate подтверждён публикацией `v1.61.0-beta.6` на SHA `d2bc9082807452c88e735c72d4a06d1ff873eaa9`; локальная реализация начата 2026-08-11 по прямому поручению владельца<br>
 **Область:** `houseplan-card`, `houseplan-space-card`, lifecycle браузера и Home Assistant<br>
 **Модель данных:** без изменений<br>
 **Backend API:** без обязательных изменений
@@ -687,7 +687,7 @@ Sampler запускается внутри страницы, используе
 
 **Implementation gate.** Реализация #73 не начинается, пока не закрыты и не прошли code review renderer-задачи [#67](https://github.com/Matysh/houseplan-card/issues/67), [#71](https://github.com/Matysh/houseplan-card/issues/71) и [#72](https://github.com/Matysh/houseplan-card/issues/72). После их закрытия действующие golden images переснимаются только при подтверждённом ожидаемом изменении, переутверждаются и фиксируются как авторитетный baseline для frame-sequence fixture. SHA baseline записывается в issue #73/тестовую документацию до первой реализации continuity controller.
 
-**Текущий статус gate на 2026-08-10.** Зависимость #67 закрыта после code review. Финальные локальные реализации #71 и #72 присутствуют и проходят целевые проверки, но обе issue ещё открыты и изменения не зафиксированы в `dev`, поэтому renderer-gate пока не выполнен. После пересборки `test-build` прошли 152/152 теста в `test/logic.test.mjs`, `test/golden-matrix.test.mjs` и `test/release-contract.test.mjs`; `demo/smoke_glow.mjs` и `demo/smoke_glow_blending.mjs` также зелёные. Детерминированная golden-матрица v7 снята локально полностью: 34/34 сценария без runtime-ошибок, build fingerprint `82ddcb9a6909d1bf624e4a95e511d9c15a6adbab6ae6082cd0e31472c49ad56a`. Windows-кандидат `lighting-opaque-glow-two-doorways-dark` имеет SHA-256 `b0bbb9949e661f0f46b27ea018f9bd0e1485b7e8beb30e7c41af20f83f85ae10`, но служит только диагностическим предпросмотром: владельцем не утверждён и не заменяет авторитетный Linux CI artifact. До закрытия #71/#72, owner approval полного Linux artifact и записи авторитетного baseline SHA реализация continuity controller не начинается. Отдельный frame-sequence baseline будет создан уже на этапе 5 из утверждённого статического renderer baseline, а не подменяет этот gate.
+**Текущий статус gate на 2026-08-11.** Gate выполнен релизом `v1.61.0-beta.6` на exact SHA `d2bc9082807452c88e735c72d4a06d1ff873eaa9`: зависимости #71/#72 опубликованы и закрыты, Linux golden matrix v7, full browser smoke и performance smoke прошли в Validate run `31437504173` без candidate/diff artifact. Каноническое описание света после этих изменений — `docs/LIGHT.md`. По прямому поручению владельца #73 переведена в In Progress и реализация controller начата от этого baseline; отдельный frame-sequence baseline создаётся на этапе 5 и не подменяет зафиксированный renderer baseline.
 
 ### Этап 1. Наблюдаемость и state machine
 

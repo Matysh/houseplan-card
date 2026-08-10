@@ -783,12 +783,12 @@ separately promised workflows:
       does not immediately arm a new opening [manual]
 - [ ] Open boundaries (v1.37.0): virtual stretches exist only between two
       rooms on their shared wall and render dashed; glow light floods the whole
-      connected open zone transitively, door sectors work from the zone's
-      outer walls; merge/split keep links by room id [auto: smoke_openwall]
+      connected floor transitively wherever the source has line of sight;
+      merge/split keep links by room id [auto: smoke_openwall]
 - [ ] Light transport (#71, model: `docs/LIGHT.md`): a source paints exactly
       ONE region — the floor it can see. Opaque: the drawn wall bodies with their real thickness, plus
       independent bodies, plus untouched outlines of edges without thickness.
-      Transparent: doorways, gates, arches and virtual boundaries — but only
+      Transparent: doorways, gates and virtual boundaries — but only
       where BOTH sides are floor; a window and an outside door are opaque, and
       an outside door must not change the lit region at all (no half-lit
       tunnel). Light must never appear inside a wall body: at an opening it
@@ -801,8 +801,9 @@ separately promised workflows:
       beam stays no wider than twice the opening. Behind a column there is no
       light at all (delta ≤ 3) while the floor beside it is lit (≥ 8), and the
       lit→unlit border is at most 4 stage pixels wide — a geometric edge, not a
-      Gaussian. A spot contains exactly one painted child; no `mask`, `filter`
-      or `feGaussianBlur` may appear anywhere in the light layer, and the pool
+      Gaussian. A spot contains exactly one painted child; no `mask` or
+      per-source filter may appear in the light layer, exactly one
+      `feGaussianBlur` feathers the complete layer, and the pool
       clip may never leave the rooms. The pool gradient falls off monotonically
       over the whole radius (no plateau; at 70% at most 75% of the centre
       alpha). A lamp lights a room across a virtual boundary, and across two of
@@ -812,7 +813,7 @@ separately promised workflows:
       golden: lighting-opaque-glow-two-doorways-dark]
 - [ ] Per-source glow radius (v1.36.2): the device dialog has a "Glow radius"
       field (HA units; empty = general-settings default shown as placeholder);
-      an override changes that source's pool and door sectors only [auto: smoke_glow]
+      an override changes that source's visibility-clipped pool only [auto: smoke_glow]
 - [ ] Hidden-light primary (v1.36.1): a lamp whose light entity is HIDDEN in
       the registry (folded into a light group) still toggles/reflects the lamp,
       not its do-not-disturb switch or identify button; visible entities of the
@@ -1105,19 +1106,28 @@ that it automatically runs blocking verification. Review and accept the
 `golden-images` CI artifact rather than treating a developer OS raster as the
 canonical set. See `demo/golden/README.md`.
 
-### Issue #73 preparation gate (2026-08-10)
+### Issue #73 baseline and implementation (2026-08-11)
 
-Visual-continuity implementation starts only after renderer dependencies #67,
-#71 and #72 are published, closed and verified by the exact-SHA prerelease
-gate. The v1.61.0-beta.6 candidate contains the accepted visibility-based light
-model and filter-free room hover, together with matrix-v7 baselines including
-`lighting-opaque-glow-two-doorways-dark`. The owner approved the complete
-visual result on 2026-08-11; the canonical behaviour is `docs/LIGHT.md`.
+The published v1.61.0-beta.6 exact SHA is the renderer baseline for #73: it
+contains the accepted visibility-based light model and the matrix-v7 published
+baseline; local review fixes prepare matrix-v8 with a semantic warm-pixel gate,
+including `lighting-opaque-glow-two-doorways-dark`; canonical light behaviour
+is `docs/LIGHT.md`. The owner explicitly started #73 on 2026-08-11.
 
-Do not start #73 from a merely local result. First record the successful
-v1.61.0-beta.6 Validate SHA and the blocking Linux golden verification in the
-issue; the published exact SHA, rather than an ad-hoc local capture, is the
-continuity baseline.
+`test/visual-continuity.test.mjs` covers tokens, quick/long return, delayed
+overlay timing, paint barriers and fingerprints. `demo/smoke_visual_continuity.mjs`
+samples presented frames and rejects hidden/empty plans, viewport rollback,
+overlay over a stale frame, missing production attributes and unbounded or
+sensitive trace data. It supplements rather than replaces warm-remount,
+websocket-resilience and golden verification.
+
+`npm run continuity:screencast` is the separate compositor-level gate required
+before a stable release. It captures acknowledged PNG frames through CDP
+`Page.startScreencast`, crops the real plan stage, rejects uniform/black frame
+regressions and writes the exact frames plus metrics to
+`artifacts/continuity-screencast`. Prereleases keep the faster mandatory rAF
+smoke; the stable release workflow installs Chromium and runs the screencast
+before attaching the public card asset.
 
 ## Large-house performance gate
 
@@ -1727,9 +1737,17 @@ require hands on real hardware — they remain for the human pass.
 
 - [ ] **A quick return does not flash**: leave the browser tab or minimise the
       window for a few seconds and return. The existing viewport, day/night
-      background and room hover remain painted continuously; neither
-      `skysnap` nor the long-sleep `hpresume` veil is armed
-      [auto: smoke_sun_live_bg]
+      background and room hover remain painted continuously; the continuity
+      token stays unchanged and no recovery overlay is created
+      [auto: smoke_sun_live_bg, smoke_visual_continuity]
+- [ ] **A long return holds the complete frame**: every sampled frame keeps a
+      visible `.zoomwrap`, non-empty rooms and the same viewport while
+      config/layout reconnect data is revalidated. A stale frame never gets a
+      recovery overlay [auto: smoke_visual_continuity, smoke_ws_resilience]
+- [ ] **Protected backdrops survive remount and refresh**: a loaded authority-
+      scoped signed URL is available synchronously to another placement; an
+      aging URL remains painted until its replacement decodes
+      [unit: signing.test; auto: smoke_plan_signed, smoke_space_card_bg]
 - [ ] **The view does not twitch**: pan the plan into a corner and zoom in
       (say 2.5×), leave the tab for long enough that HA reconnects, come back —
       the plan is in exactly the same place at exactly the same scale. Not

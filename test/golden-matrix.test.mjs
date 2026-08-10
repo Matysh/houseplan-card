@@ -14,6 +14,13 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
     assert.equal(scenario.viewport.width > 0 && scenario.viewport.height > 0, true, scenario.id);
     assert.equal(scenario.threshold.maxChannelDelta >= 0 && scenario.threshold.maxChannelDelta <= 32, true, scenario.id);
     assert.equal(scenario.threshold.maxDiffRatio >= 0 && scenario.threshold.maxDiffRatio <= 0.01, true, scenario.id);
+    if (scenario.warmPixelRegion) {
+      const region = scenario.warmPixelRegion;
+      assert.equal(region.x >= 0 && region.y >= 0 && region.w > 0 && region.h > 0, true, scenario.id);
+      assert.equal(region.x + region.w <= 1 && region.y + region.h <= 1, true, scenario.id);
+      assert.equal(Number.isInteger(region.minPixels) && region.minPixels > 0, true, scenario.id);
+      assert.equal(region.minRedBlueDelta > 0, true, scenario.id);
+    }
   }
 });
 
@@ -42,8 +49,10 @@ test('doorway spill golden exposes the opaque-fill failure mode from issue 71', 
   assert.equal(scenario.extraOpenings?.filter((opening) => opening.type === 'door').length, 1);
   assert.equal(scenario.stateOverrides?.['light.golden_light_one']?.state, 'on');
   assert.deepEqual(scenario.layoutOverrides?.['golden-light-one'], {
-    s: 'golden-lighting', x: 0.22, y: 0.48,
+    s: 'golden-lighting', x: 0.40, y: 0.48,
   });
+  assert.equal(scenario.warmPixelRegion?.minPixels >= 2500, true);
+  assert.equal(scenario.warmPixelRegion?.x >= 0.5, true);
 });
 
 test('golden harness applies doorway, state and layout overrides to a cloned fixture', () => {
@@ -53,10 +62,27 @@ test('golden harness applies doorway, state and layout overrides to a cloned fix
   assert.equal(space.openings.filter((opening) => opening.type === 'door').length, 2);
   assert.equal(fixture.states['light.golden_light_one'].state, 'on');
   assert.deepEqual(fixture.layout['golden-light-one'], {
-    s: 'golden-lighting', x: 0.22, y: 0.48,
+    s: 'golden-lighting', x: 0.40, y: 0.48,
   });
   assert.equal(space.settings.sun_rays, false);
   assert.equal(space.settings.custom_fill.a, 1);
+});
+
+test('golden overrides fail closed on misspelled fixture references', () => {
+  const base = {
+    id: 'invalid', fixture: 'visual', space: 'golden-lighting', mode: 'view',
+    theme: 'dark', viewport: { width: 1000, height: 900 }, capture: 'stage',
+    threshold: { maxChannelDelta: 10, maxDiffRatio: 0.001 },
+  };
+  assert.throws(() => prepareGoldenFixture({
+    ...base, stateOverrides: { 'light.golden_light_onee': { state: 'on' } },
+  }), /missing entity/);
+  assert.throws(() => prepareGoldenFixture({
+    ...base, layoutOverrides: { 'golden-light-onee': { x: 0.4, y: 0.5 } },
+  }), /missing item/);
+  assert.throws(() => prepareGoldenFixture({
+    ...base, roomGlow: { 'light-rightt': true },
+  }), /missing room/);
 });
 
 test('a light source paints exactly one region: the floor it can see', () => {
@@ -75,11 +101,31 @@ test('a light source paints exactly one region: the floor it can see', () => {
   // Exactly one blur, for the whole layer, sized in screen pixels.
   assert.equal((glow.match(/<feGaussianBlur/g) || []).length, 1);
   assert.doesNotMatch(glow, /<mask /);
-  assert.match(source, /GLOW_EDGE_FEATHER_PX \/ 2 \/ \(perUnit > 0 \? perUnit : 1\)/);
+  assert.match(source, /const nextFeather = GLOW_EDGE_FEATHER_PX \/ 2 \/ \(perUnit > 0 \? perUnit : 1\)/);
+  assert.match(source, /const featherEnabled = !this\._pinchStart && !this\._panStart[\s\S]*_glowFeatherSuspendUntil/);
+  assert.match(source, /filter=\$\{featherEnabled \? 'url\(#hp-glowfeather\)' : nothing\}/,
+    'the expensive whole-layer filter must be bypassed during a viewport gesture/transition');
   // Barriers are keyed by their own content: `_cfgEpoch` lags behind geometry
   // edited in place, and a stale barrier set lights straight through a wall.
   assert.doesNotMatch(glow, /_cfgEpoch/);
   assert.match(source, /const fingerprint = hash\.toString\(36\)/);
+  assert.match(source, /for \(const point of body\) \{ mix\(point\[0\]\); mix\(point\[1\]\); \}/);
+  assert.match(source, /mix\(wall\.b\?\.\[0\] \?\? 0\); mix\(wall\.b\?\.\[1\] \?\? 0\)/);
+  assert.match(source, /const cacheKey = `\$\{space\.id\}\|\$\{fingerprint\}`/);
+  assert.match(source, /mix\(this\._cellCm\)[\s\S]*mix\(this\._gridPitch\)/);
+});
+
+test('all destructive editor dialogs use the shared responsive footer groups', () => {
+  const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  for (const method of ['_renderOpeningDialog', '_renderPhysicalDialog', '_renderSpaceDialog']) {
+    const start = source.indexOf(`private ${method}`);
+    assert.notEqual(start, -1, method);
+    const end = source.indexOf('\n  private ', start + 10);
+    const body = source.slice(start, end < 0 ? undefined : end);
+    assert.match(body, /dialog-action-footer/, method);
+    assert.match(body, /dialog-action-danger/, method);
+    assert.match(body, /dialog-action-commit/, method);
+  }
 });
 
 test('editor tray golden contract covers every adaptive width in English and Russian', () => {

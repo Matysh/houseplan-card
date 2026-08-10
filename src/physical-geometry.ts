@@ -114,15 +114,18 @@ const ringPath = (poly: number[][]): string =>
   `M ${poly.map((p) => `${p[0]} ${p[1]}`).join(' L ')} Z`;
 
 /**
- * One `d` per resulting polygon (its outer ring plus its holes), never one
- * merged string. Two separate paths cannot cancel each other, while a single
- * path with the default nonzero rule silently erases the overlap of two
- * subpaths wound the opposite way — the way ten joined shadow quads once
- * collapsed into nothing.
+ * One `d` fragment per resulting polygon (its outer ring plus its holes).
+ * Callers may keep the fragments as separate paths or join them into one `d`
+ * only with an explicit `evenodd` rule. Relying on default nonzero winding
+ * can erase oppositely wound subpaths.
  */
 export function geometryPolygonPaths(geom: any): string[] {
   const out: string[] = [];
   for (const poly of geom || []) {
+    // Polyclip can leave zero-area needles when a visibility fan merely
+    // touches a floor boundary. Rendering those makes an outside source leak
+    // a few bright hairlines into the plan; they are not visible floor.
+    if (geometryArea([poly]) <= 1e-6) continue;
     const parts: string[] = [];
     for (const ring of poly || []) {
       const pts = (ring || []).filter((p: any) => Array.isArray(p) && p.length >= 2);
@@ -134,39 +137,20 @@ export function geometryPolygonPaths(geom: any): string[] {
   return out;
 }
 
-/** Union of overlapping polygons as disjoint paths: no pixel is painted twice. */
-export function unionPaths(polygons: number[][][]): string[] {
-  const usable = polygons.filter((poly) => poly.length >= 3);
-  if (!usable.length) return [];
-  const geom = unionBodies(usable);
-  return geom ? geometryPolygonPaths(geom) : usable.map(ringPath);
-}
-
 /** `polygons` clipped to `bounds`, as disjoint paths. Empty when they miss. */
 export function intersectionPaths(polygons: number[][][], bounds: number[][][]): string[] {
   const base = unionBodies(polygons.filter((poly) => poly.length >= 3));
   const limit = unionBodies(bounds.filter((poly) => poly.length >= 3));
   if (!base) return [];
-  if (!limit) return geometryPolygonPaths(base);
+  if (!limit) return [];
   try {
     return geometryPolygonPaths(intersection(base, limit));
   } catch {
-    return geometryPolygonPaths(base);
-  }
-}
-
-/** `polygons` minus `subtract`, as disjoint paths. Falls back to the union. */
-export function differencePaths(polygons: number[][][], subtract: number[][][]): string[] {
-  const usable = polygons.filter((poly) => poly.length >= 3);
-  if (!usable.length) return [];
-  const base = unionBodies(usable);
-  if (!base) return usable.map(ringPath);
-  const cut = unionBodies(subtract.filter((poly) => poly.length >= 3));
-  if (!cut) return geometryPolygonPaths(base);
-  try {
-    return geometryPolygonPaths(difference(base, cut));
-  } catch {
-    return geometryPolygonPaths(base);
+    // The un-clipped visibility fan may cover the backdrop and the area
+    // outside the house. A boolean failure must therefore fail dark: returning
+    // `base` here turns a numerical polyclip exception into a light leak and
+    // then persists it in the per-source clip cache.
+    return [];
   }
 }
 
@@ -258,55 +242,6 @@ export function directionalOccluders(
     ...body,
     ...body.map((p) => [p[0] + dir[0] * length, p[1] + dir[1] * length]),
   ])).filter((p) => p.length >= 3);
-}
-
-/** Approximate the hard shadow cast by each body away from a point source. */
-export function radialOccluders(
-  bodies: number[][][], source: number[], radius: number,
-): number[][][] {
-  if (!(radius > 0)) return [];
-  const boundaryEps = Math.max(1e-9, radius * 1e-9);
-  const onBoundary = (body: number[][]): boolean => body.some((a, i) => {
-    const b = body[(i + 1) % body.length];
-    const dx = b[0] - a[0], dy = b[1] - a[1];
-    const len2 = dx * dx + dy * dy;
-    if (!(len2 > 0)) return Math.hypot(source[0] - a[0], source[1] - a[1]) <= boundaryEps;
-    const t = Math.max(0, Math.min(1,
-      ((source[0] - a[0]) * dx + (source[1] - a[1]) * dy) / len2));
-    return Math.hypot(source[0] - (a[0] + t * dx), source[1] - (a[1] + t * dy))
-      <= boundaryEps;
-  });
-  // A misplaced source inside/on masonry is invalid input. Cover its entire
-  // pool so it cannot illuminate through the body in any direction.
-  if (bodies.some((body) => pointInPhysicalBody(source, body) || onBoundary(body))) {
-    return [Array.from({ length: 128 }, (_, i) => {
-      const a = (i / 128) * Math.PI * 2;
-      return [source[0] + Math.cos(a) * radius * 1.01,
-        source[1] + Math.sin(a) * radius * 1.01];
-    })];
-  }
-  const out: number[][][] = [];
-  for (const body of bodies) {
-    if (body.length < 2) continue;
-    out.push(body);
-    // One quad per edge. Its far chord is deliberately pushed beyond the
-    // glow circle even for an edge subtending almost 180°; a single hull with
-    // a fixed projection distance lets that chord cut back through the pool.
-    for (let i = 0; i < body.length; i++) {
-      const a = body[i], b = body[(i + 1) % body.length];
-      const ax = a[0] - source[0], ay = a[1] - source[1];
-      const bx = b[0] - source[0], by = b[1] - source[1];
-      const da = Math.hypot(ax, ay), db = Math.hypot(bx, by);
-      if (!(da > boundaryEps) || !(db > boundaryEps)) continue;
-      const cosTheta = Math.max(-1, Math.min(1, (ax * bx + ay * by) / (da * db)));
-      const halfCos = Math.sqrt(Math.max(0, (1 + cosTheta) / 2));
-      const far = Math.max(radius * 2, (radius * 1.02) / Math.max(halfCos, 1e-3));
-      const pa = [source[0] + (ax / da) * far, source[1] + (ay / da) * far];
-      const pb = [source[0] + (bx / db) * far, source[1] + (by / db) * far];
-      out.push([a, b, pb, pa]);
-    }
-  }
-  return out;
 }
 
 export function pointInPhysicalBody(point: number[], body: number[][]): boolean {

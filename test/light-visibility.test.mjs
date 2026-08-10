@@ -66,11 +66,22 @@ test('an occluder outside the radius changes nothing', () => {
   }
 });
 
-test('an edge through the lamp itself is ignored instead of collapsing the ring', () => {
+test('a source on an opaque edge is rejected instead of deleting the wall', () => {
   const source = [0, 0];
   const ring = visibilityPolygon(source, RAD, [[-50, 0, 50, 0]]);
-  assert.ok(ring.length >= 12);
-  assert.ok(reachAt(ring, source, 90) > RAD * 0.98);
+  assert.deepEqual(ring, []);
+});
+
+test('the angular seam at pi does not cut a wedge out of the visible region', () => {
+  const source = [25, 12];
+  const room = [[0, 0], [40, 0], [40, 30], [0, 30]];
+  const wall = [15, 12, 15, 30];
+  const ring = visibilityPolygon(source, 40, [...polygonSegments(room), wall]);
+  const area = Math.abs(ring.reduce((sum, point, index) => {
+    const next = ring[(index + 1) % ring.length];
+    return sum + point[0] * next[1] - next[0] * point[1];
+  }, 0)) / 2;
+  assert.ok(area > 925, `the -x seam must not lose a full angular wedge (${area})`);
 });
 
 test('a corner made by two crossing barriers is lit right up to the corner', () => {

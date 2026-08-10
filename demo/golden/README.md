@@ -54,3 +54,8 @@ Future updates must still use the `golden-images` artifact produced by the Linux
 CI job as the review set: desktop font rasterisation can differ from the CI
 environment even with the same pinned Chromium. Pass its unpacked root via
 `--from=...` when accepting it locally.
+
+Scenarios may also declare a semantic pixel region (for example, a receiving
+room that must contain warm light). `golden:capture` and `golden:verify` reject
+the capture before baseline comparison when that visual precondition is empty;
+a reviewed but meaningless PNG therefore cannot become the contract.

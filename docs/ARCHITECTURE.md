@@ -552,6 +552,29 @@ out must not queue the same url again, a failure backs off rather than retrying
 on the next frame, and an in-flight entry expires after `SIGN_INFLIGHT_MS` so a
 promise that never settles cannot block retries forever.
 
+**Visual continuity is a frame contract, not a loading screen** (#73).
+`src/visual-continuity.ts` owns one tokenised state machine shared by the full
+and static cards. A complete frame remains mounted during resume, reconnect,
+structural revalidation and positive-size changes; `0×0` observations never
+change the viewport. Config and layout carry independent revision plus
+content-fingerprint identities, so revision-only echoes preserve authoritative
+objects and geometry caches while changed content cannot hide behind an equal
+revision. A candidate becomes complete only after Lit settles, required signed
+assets are loaded, and two animation-frame opportunities pass for the current
+token. A bounded trace and the production `data-continuity-state`,
+`data-continuity-token`, `data-frame-fingerprint` and conditional
+`data-recovery-reason` attributes expose this contract without entity ids or
+URLs.
+
+The signed-asset runtime is authority-scoped (`hass.connection`), bounded and
+shared across placements. A warm remount can therefore use an already loaded
+backdrop synchronously. Refresh is stale-while-decode: the painted signed URL
+stays authoritative until its replacement has loaded and decoded off-DOM.
+Only when no complete/stale frame can be retained may the controller show the
+localized opaque recovery overlay, after a 150 ms delay. The overlay never
+steals initial focus; while visible it alone is interactive and the scene is
+`inert`.
+
 **Room climate is one pass per hass snapshot** (review R2-3). `areaClimateMap()`
 classifies the whole registry once and returns `Map<area, {temp, hum}>`; the
 card memoizes it on `hass` identity, which Home Assistant replaces on every
@@ -582,9 +605,12 @@ Shared, framework-light modules keep the two views from diverging:
   use the shared `ResolvedDevicePresentation` and `renderDeviceFace`; optional card settings
   can disable ordinary live dressing, temperature or signal without creating another
   semantic implementation.
-- `src/config-store.ts` — module-level `{config, rev, layout}` cache shared by all embedded
+- `src/config-store.ts` — module-level `{config, rev, configFingerprint, layout,
+  layoutRev, layoutFingerprint}` cache shared by all embedded
   cards (dedupes `houseplan/config/get`), seeded synchronously from the full card's
-  localStorage snapshot (`houseplan_card_cfg_v1`) and invalidated on `houseplan_config_updated`.
+  localStorage snapshot (`houseplan_card_cfg_v1`) and invalidated on
+  `houseplan_config_updated` or `houseplan_layout_updated` without first
+  clearing the visible static snapshot.
 
 **Static contract:** the schematic layer (`.hp-static-stage`) is `pointer-events:none`; the
 footer button lives outside it and stays clickable.
@@ -652,8 +678,8 @@ hash falls back to the default.
   `_lightBarriers` collects everything opaque: the wall bodies exactly as the
   plan draws them (`wallBodiesGeometry`, real thickness, mitred junctions),
   every independent body (partition, column, draft), and the bare outline of
-  any edge that carries no thickness. It cuts out the exceptions: doorways,
-  gates and arches — cut through the masonry, so an opening is a real gap
+  any edge that carries no thickness. It cuts out the exceptions: doorways
+  and gates — cut through the masonry, so an opening is a real gap
   between two jamb faces and a beam is narrowed by the returns of a thick wall
   — plus virtual (open) boundaries, which are not walls at all. Windows stay
   solid, so an indoor lamp never washes the street; the light's masonry is cut
@@ -680,7 +706,8 @@ hash falls back to the default.
   room ignored). There is no spill layer, no sector, no tunnel rectangle, no
   open-zone graph and no shadow mask left in the light path.
 
-  Barriers are cached by a fingerprint of their own geometry, never by
+  Barriers are cached per space by a fingerprint of their complete geometry
+  (every body point, both wall endpoints and scale inputs), never by
   `_cfgEpoch`: the epoch lags behind geometry edited in place, and a stale
   barrier set is invisible — the plan simply keeps lighting through a wall that
   now exists. The same fingerprint keys the per-source region cache. A cached per-

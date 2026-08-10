@@ -141,8 +141,6 @@ const out = await page.evaluate(async () => {
   const mockTitleRect = mockTitle?.getBoundingClientRect();
   const dangerRect = partitionLayout.danger?.getBoundingClientRect();
   const commitRect = partitionLayout.commit?.getBoundingClientRect();
-  o.physicalTitleUsesAutoHeight = !!haDialog && getComputedStyle(haDialog)
-    .getPropertyValue('--ha-dialog-header-title-height').trim() === 'auto';
   o.physicalTitleWrapsAndIsContained = !!titleRect && !!mockTitleRect
     && titleRect.height > 35
     && titleRect.top >= mockTitleRect.top - 1

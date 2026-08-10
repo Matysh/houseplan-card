@@ -105,6 +105,30 @@ async function comparePng(page, actual, baseline, threshold) {
   });
 }
 
+/** Assert scenario semantics against the actual capture, not only its data.
+ *  This protects a reviewed-but-empty baseline from becoming the reference. */
+async function countWarmPixels(page, png, region) {
+  return page.evaluate(async ({ png64, region }) => {
+    const bytes = Uint8Array.from(atob(png64), (char) => char.charCodeAt(0));
+    const image = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+    const canvas = document.createElement('canvas');
+    canvas.width = image.width;
+    canvas.height = image.height;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    context.drawImage(image, 0, 0);
+    const left = Math.max(0, Math.min(image.width, Math.floor(region.x * image.width)));
+    const top = Math.max(0, Math.min(image.height, Math.floor(region.y * image.height)));
+    const right = Math.max(left, Math.min(image.width, Math.ceil((region.x + region.w) * image.width)));
+    const bottom = Math.max(top, Math.min(image.height, Math.ceil((region.y + region.h) * image.height)));
+    const pixels = context.getImageData(left, top, right - left, bottom - top).data;
+    let warm = 0;
+    for (let offset = 0; offset < pixels.length; offset += 4) {
+      if (pixels[offset] - pixels[offset + 2] > region.minRedBlueDelta) warm++;
+    }
+    return { warm, bounds: [left, top, right, bottom] };
+  }, { png64: png.toString('base64'), region });
+}
+
 let baselineManifest = null;
 const baselineManifestPath = resolve(baselineRoot, GOLDEN_BASELINE_MANIFEST);
 if (existsSync(baselineManifestPath)) {
@@ -147,6 +171,17 @@ try {
       writeFileSync(actualPath, actual);
       result.actualSha256 = sha256(actual);
       result.actual = actualPath;
+      if (scenario.warmPixelRegion) {
+        const sample = await countWarmPixels(page, actual, scenario.warmPixelRegion);
+        result.warmPixels = sample.warm;
+        result.warmPixelBounds = sample.bounds;
+        if (sample.warm < scenario.warmPixelRegion.minPixels) {
+          throw new Error(
+            `semantic golden assertion failed: ${sample.warm} warm pixels, expected at least `
+            + `${scenario.warmPixelRegion.minPixels}`,
+          );
+        }
+      }
       const baselinePath = resolve(baselineRoot, `${scenario.id}.png`);
       result.baseline = baselinePath;
       if (!existsSync(baselinePath)) {

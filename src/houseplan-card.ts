@@ -125,7 +125,15 @@ import {
 import { optimizePlans, type OptimizeReport } from './plan-optimizer';
 import { langOf, t, type I18nKey } from './i18n';
 import { CommandStack } from './command-stack';
-import { svgScreenBlendSupported } from './glow-blend';
+import { resolvedSvgScreenBlend, svgScreenBlendSupported } from './glow-blend';
+import {
+  CONTINUITY_LONG_HIDDEN_MS,
+  VisualContinuityController,
+  contentFingerprint,
+  subscribePageVisibility,
+  visualFrameFingerprint,
+  type PageVisibilitySignal,
+} from './visual-continuity';
 import {
   combineVisualSamples, edgeActivity, entityVisualSample, entityVisualSamplesForDevice,
   type DeviceActivity, type DeviceVisualState, type EntityVisualSample,
@@ -152,7 +160,7 @@ import {
 import { renderOpeningTunnelFills } from './render/opening-tunnels';
 import { safeStoredColor } from './color';
 
-const CARD_VERSION = '1.61.0-beta.6';
+const CARD_VERSION = '1.61.0-beta.7';
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
 const CELL_CM_MIN = 0.1;
@@ -170,18 +178,6 @@ const BOOT_MAX_MS = 1200;
 /** AUD-1552-02: post-reveal grace during which late chrome shifts glide
  *  (CSS height transition on the stage) instead of snapping. */
 const BOOT_SOFT_MS = 1500;
-/** A long-backgrounded browser tab may resume through several stale/partial
- *  layout frames (HA chrome, dynamic viewport and a websocket warm re-mount
- *  do not necessarily wake in the same frame). In normal View we keep those
- *  frames behind the stage background and reveal one viewport computed from
- *  a quiet, measurable stage. Quick tab switches stay instant; kiosk and all
- *  editors deliberately bypass this path. */
-const RESUME_LONG_HIDDEN_MS = 15000;
-const RESUME_RECENT_MS = 15000;
-const RESUME_MIN_MS = 220;
-const RESUME_QUIET_MS = 80;
-const RESUME_MAX_MS = 750;
-
 /** Numeric editor fields must consume the whole value: `50abc` is invalid,
  * not a surprisingly accepted 50. Decimal comma remains supported. */
 const strictNumber = (value: string): number | null => {
@@ -208,12 +204,6 @@ const lruWrite = <K, V>(cache: Map<K, V>, key: K, value: V, limit: number): void
     cache.delete(oldest);
   }
 };
-let pageHiddenAt = typeof document !== 'undefined' && document.visibilityState === 'hidden' ? Date.now() : 0;
-let pageResumedAt = 0;
-/** All card instances receive the same visibilitychange Event object. Keep the
- *  long-return decision on that event so a second card does not mistake the
- *  first card's cleared pageHiddenAt for a quick return. */
-let pageLongResumeEvent: Event | null = null;
 /** DEV-B703-01: warm re-mount memo — MODULE scope, so it lives with the loaded
  *  PAGE, not with any card instance. Lovelace re-creates card elements when
  *  the websocket reconnects after a long-backgrounded tab; the fresh instance
@@ -275,6 +265,11 @@ type WarmEntry = {
   hdrH: number;
   stageH: number;
   vp: WarmViewport | null;
+  /** Last complete visual frame for #73; safe only inside the same placement. */
+  frameFingerprint: string;
+  /** Metadata projection is immutable-by-replacement and avoids an empty
+   *  device layer on a same-document warm remount before registry refresh. */
+  devices: readonly DevItem[] | null;
   dlg: WarmDialog | null;
   /** when the instance that wrote `dlg` detached; 0 = it is still alive */
   freed: number;
@@ -530,9 +525,11 @@ class HouseplanCard extends LitElement {
   private _loadTries = 0;
   private _serverCfg: ServerConfig | null = null;
   private _cfgRev = 0;
+  private _cfgContentFingerprint = '';
   private _unsubCfg: (() => void) | null = null;
   private _unsubLayout: (() => void) | null = null;
   private _layoutRev = 0;
+  private _layoutContentFingerprint = '';
   /** One-deep server snapshot; invalidated by the first later plan edit. */
   private _canOptimizeUndo = false;
   private _devices: DevItem[] = [];
@@ -883,12 +880,17 @@ class HouseplanCard extends LitElement {
     key: string;
     value: { occluders: LightSegment[]; floor: number[][][]; fingerprint: string };
   } | null = null;
+  /** Freeze the SVG blur while a pinch/pan emits animation frames, then adopt
+   *  the final screen-space value after the gesture. */
+  private _glowFeatherUnits: number | null = null;
   /** Active pools survive an off transition until their 500 ms fade completes. */
   private _glowRenderedSources = new Map<string, number>();
   private _glowLastAppearance = new Map<string, { c: string; alpha: number }>();
   private _glowEnteringSources = new Set<string>();
   private _glowEnterRafs = new Map<string, number>();
   private _glowFadeTimers = new Map<string, number>();
+  private _glowFeatherSuspendUntil = 0;
+  private _glowFeatherResumeTimer = 0;
   private _glowSourceSeq = 0;
   /** Pending/false uses the exact historical normal-layer fallback. */
   private _glowScreenBlend = false;
@@ -1194,41 +1196,45 @@ class HouseplanCard extends LitElement {
   private _vacSrvTrails: Record<string, any> = {};
   private _unsubTrail?: () => void;
   private _vacJumpOnce = false;
-  private _vacVisHandler = (event: Event) => {
-    if (document.visibilityState === 'hidden') {
-      if (!pageHiddenAt) pageHiddenAt = Date.now();
-      pageLongResumeEvent = null;
-      return;
-    }
-    if (document.visibilityState === 'visible') {
-      const now = Date.now();
-      const hiddenFor = pageHiddenAt ? now - pageHiddenAt : 0;
-      if (hiddenFor >= RESUME_LONG_HIDDEN_MS) {
-        pageResumedAt = now;
-        pageLongResumeEvent = event;
-      }
-      const longReturn = pageLongResumeEvent === event;
-      pageHiddenAt = 0;
-      this._vacJumpOnce = true;
-      if (longReturn) {
-        // A genuinely sleeping tab paints nothing, so the 45 s sky transition
-        // stood still while the sun kept moving. Catch it up behind the resume
-        // veil. A quick tab switch must preserve the already painted sky and
-        // hover; resetting them created a visible one-frame flash on every
-        // return even when the tab was hidden for only a couple of seconds.
-        this._skyElev = null;
-        this._tip = null;
-        this._hoverRoom = null;
-        this._beginResumeSettle();
-      }
-      this.requestUpdate();
+  private _continuity = this._newContinuityController();
+  private _continuityUnsub?: () => void;
+  private _continuityEpoch = 0;
+  private _continuityDataReady = true;
+  private _continuityPaintToken = -1;
+  private _continuityDisposed = false;
+  private _renderSnapshotAt = Date.now();
+  private _hassSequence = 0;
+  private _lastValidStageSize: [number, number] | null = null;
+  private _pendingRefitSize: [number, number] | null = null;
+  private _refitRaf = 0;
+
+  private _newContinuityController(): VisualContinuityController {
+    return new VisualContinuityController(() => {
+      this._resumeSettling = this._continuity.state !== 'steady';
+      this._continuityEpoch++;
+      if (this.isConnected) this.requestUpdate();
+    });
+  }
+
+  private _pageVisibility = (signal: PageVisibilitySignal): void => {
+    const token = this._continuity.visibility(signal);
+    if (signal.kind === 'hidden') return;
+    this._vacJumpOnce = true;
+    if (!signal.long) return; // strict quick-return no-op: preserve hover and DOM
+    // A long sleep may have frozen the sky/activity clocks. Recompute them as
+    // one candidate without clearing the currently visible hover or frame,
+    // and revalidate config+layout as one structural pair.
+    this._skyElev = null;
+    if (Date.now() - this._renderSnapshotAt > 1000) this._continuity.note('device-snapshot-stale');
+    this._continuityDataReady = false;
+    this._continuityPaintToken = -1;
+    this._resumeSettling = true;
+    if (token === this._continuity.token) {
+      if (!this._loading) void this._loadFromServer();
+      else this.requestUpdate();
     }
   };
   private _resumeSettling = false;
-  private _resumeRaf = 0;
-  private _resumeStarted = 0;
-  private _resumeLastSize = '';
-  private _resumeLastChange = 0;
   private _viewportInvalidAt = 0;
   private _vacFit: { markerId: string; source: string; mapId: string; p: FitParams;
     drag: null | { kind: 'move' | 'scale'; sx: number; sy: number; p0: FitParams;
@@ -1283,6 +1289,7 @@ class HouseplanCard extends LitElement {
     _booting: { state: true },
     _bootFading: { state: true },
     _bootSoft: { state: true },
+    _continuityEpoch: { state: true },
     _tapConfirm: { state: true },
     hass: { attribute: false },
     _config: { state: true },
@@ -1356,11 +1363,19 @@ class HouseplanCard extends LitElement {
   };
 
   public connectedCallback(): void {
-    document.addEventListener('visibilitychange', this._vacVisHandler);
+    if (this._continuityDisposed) {
+      this._continuity = this._newContinuityController();
+      this._continuityDisposed = false;
+      this._continuityPaintToken = -1;
+    }
+    const resolvedBlend = resolvedSvgScreenBlend(this.ownerDocument);
+    if (resolvedBlend !== undefined) this._glowScreenBlend = resolvedBlend;
+    this._continuityUnsub?.();
+    this._continuityUnsub = subscribePageVisibility(this.ownerDocument, this._pageVisibility);
     super.connectedCallback();
     svgScreenBlendSupported(this.ownerDocument).then((supported) => {
-      if (!supported || this._glowScreenBlend) return;
-      this._glowScreenBlend = true;
+      if (supported === this._glowScreenBlend) return;
+      this._glowScreenBlend = supported;
       if (this.isConnected) this.requestUpdate();
     });
     if (this.hass) this._ensureHaRegistryAuthority();
@@ -1398,16 +1413,9 @@ class HouseplanCard extends LitElement {
       this._warmRevivePending = true;
       this._warmReviveTimer = window.setTimeout(() => this._warmReviveDialog(), 0);
     }
-    // A successor created by Lovelace after the visibility event did not see
-    // that event itself. Module time bridges that small reconnect gap; if no
-    // card instance survived to hear `visible`, consume the pending hidden
-    // timestamp here instead.
-    const now = Date.now();
-    if (document.visibilityState === 'visible' && pageHiddenAt) {
-      if (now - pageHiddenAt >= RESUME_LONG_HIDDEN_MS) pageResumedAt = now;
-      pageHiddenAt = 0;
-    }
-    if (this._warmLongReturn || now - pageResumedAt <= RESUME_RECENT_MS) this._beginResumeSettle();
+    // If no card survived the document event, the placement tombstone still
+    // carries its detach age and enters the same shared controller here.
+    if (this._warmLongReturn) this._beginResumeSettle();
     this._warmLongReturn = false;
     // Transient navigation/resume fields are intentionally not reactive. A
     // same-element reconnect keeps Lit's previous DOM, so explicitly repaint
@@ -1416,9 +1424,10 @@ class HouseplanCard extends LitElement {
   }
 
   public disconnectedCallback(): void {
-    document.removeEventListener('visibilitychange', this._vacVisHandler);
+    this._continuityUnsub?.();
+    this._continuityUnsub = undefined;
     if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
-    if (this._resumeRaf) { cancelAnimationFrame(this._resumeRaf); this._resumeRaf = 0; }
+    if (this._refitRaf) { cancelAnimationFrame(this._refitRaf); this._refitRaf = 0; }
     if (this._skySnapRaf) { cancelAnimationFrame(this._skySnapRaf); this._skySnapRaf = 0; }
     for (const rt of this._activityRt.values()) clearTimeout(rt.timer); // pending activity-window repaints
     window.removeEventListener('keydown', this._keyHandler);
@@ -1429,6 +1438,8 @@ class HouseplanCard extends LitElement {
     clearTimeout(this._loadRetryTimer);
     this._loadRetryTimer = undefined; // a cleared id must not block a reschedule
     this._connHooked?.removeEventListener?.('ready', this._onConnReady);
+    this._connHooked?.removeEventListener?.('disconnected', this._onConnLost);
+    this._connHooked?.removeEventListener?.('reconnect-error', this._onConnLost);
     this._connHooked = null;
     this._haRegistryRelease?.();
     this._haRegistryRelease = undefined;
@@ -1471,6 +1482,9 @@ class HouseplanCard extends LitElement {
     clearTimeout(this._duplicateColumnTimer);
     for (const timer of this._glowFadeTimers.values()) clearTimeout(timer);
     for (const raf of this._glowEnterRafs.values()) cancelAnimationFrame(raf);
+    clearTimeout(this._glowFeatherResumeTimer);
+    this._glowFeatherResumeTimer = 0;
+    this._glowFeatherSuspendUntil = 0;
     this._glowFadeTimers.clear();
     this._glowEnterRafs.clear();
     this._glowEnteringSources.clear();
@@ -1505,6 +1519,8 @@ class HouseplanCard extends LitElement {
     // after the disconnect snapshot (which must still skip unstable geometry),
     // so a same-element reattach can start fresh instead of keeping the veil.
     this._resumeSettling = false;
+    this._continuity.dispose();
+    this._continuityDisposed = true;
     super.disconnectedCallback();
   }
 
@@ -1797,7 +1813,10 @@ class HouseplanCard extends LitElement {
         this._serverCfg = c.config;
         this._cfgEpoch++;
         this._cfgRev = c.rev || 0;
+        this._cfgContentFingerprint = c.config_fingerprint || contentFingerprint(c.config);
         this._layout = c.layout || {};
+        this._layoutRev = c.layout_rev || 0;
+        this._layoutContentFingerprint = c.layout_fingerprint || contentFingerprint(this._layout);
         this._serverStorage = true;
         const hs = this._hashSpace();
         const nav = this._savedNav();
@@ -1855,15 +1874,17 @@ class HouseplanCard extends LitElement {
     // is waiting for us, and our live state is newer than anything in it
     const mine = list.find((s) => s.owner === this._warmGen);
     if (mine) {
-      this._warmLongReturn = !!mine.freed && Date.now() - mine.freed >= RESUME_LONG_HIDDEN_MS;
+      this._warmLongReturn = !!mine.freed && Date.now() - mine.freed >= CONTINUITY_LONG_HIDDEN_MS;
       clearTimeout(mine.evict); mine.evict = 0; mine.freed = 0; mine.live = true;
       this._warmSlot = mine;
       this._warmKey = key;
+      if (mine.frameFingerprint) this._continuity.adoptCompleteFrame(mine.frameFingerprint);
+      if (!this._devices.length && mine.devices?.length) this._devices = [...mine.devices];
       return;
     }
     const { slot, sure } = warmMatch(list, this._warmGen, place, idx);
     if (!slot) return;
-    this._warmLongReturn = !!slot.freed && Date.now() - slot.freed >= RESUME_LONG_HIDDEN_MS;
+    this._warmLongReturn = !!slot.freed && Date.now() - slot.freed >= CONTINUITY_LONG_HIDDEN_MS;
     this._booting = false;
     this._bootFading = false;
     this._hdrH = slot.hdrH;
@@ -1882,6 +1903,8 @@ class HouseplanCard extends LitElement {
       slot.live = true;
       this._warmSlot = slot;
       this._warmVp = slot.vp; // adopted below, once the model is in hand
+      if (slot.frameFingerprint) this._continuity.adoptCompleteFrame(slot.frameFingerprint);
+      if (!this._devices.length && slot.devices?.length) this._devices = [...slot.devices];
       this._warmAdoptViewport(this._config!);
     } else {
       // Two identical cards on one view and no way to tell which slot is ours:
@@ -1889,7 +1912,8 @@ class HouseplanCard extends LitElement {
       // viewport and the dialog belong to somebody and must not be guessed.
       this._warmSlot = {
         owner: this._warmGen, place: place ? new WeakRef(place) : null, idx, live: true,
-        hdrH: slot.hdrH, stageH: slot.stageH, vp: null, dlg: null, freed: 0, evict: 0,
+        hdrH: slot.hdrH, stageH: slot.stageH, vp: null,
+        frameFingerprint: '', devices: null, dlg: null, freed: 0, evict: 0,
       };
       list.push(this._warmSlot);
       this._warmTrim(list);
@@ -2007,7 +2031,8 @@ class HouseplanCard extends LitElement {
       this._warmKey = k;
       this._warmSlot = {
         owner: this._warmGen, place: place ? new WeakRef(place) : null, idx: this._warmIdx(place), live: true,
-        hdrH: this._hdrH, stageH: 0, vp: null, dlg: null, freed: 0, evict: 0,
+        hdrH: this._hdrH, stageH: 0, vp: null,
+        frameFingerprint: '', devices: null, dlg: null, freed: 0, evict: 0,
       };
       const list = warmBoot.get(k) || [];
       list.push(this._warmSlot);
@@ -2087,10 +2112,16 @@ class HouseplanCard extends LitElement {
    *  next one must open at — and a dialog closed with Esc/Cancel/Save writes
    *  `dlg: null` here on the very next render, so it can never come back. */
   private _warmSnapshot(): void {
-    // The hidden resume frame still carries the pre-suspension viewport. Do
-    // not replace the warm memo with it; the settled frame writes the truth.
-    if (this._booting || this._resumeSettling || this._config?.kiosk) return;
-    const patch: Partial<WarmEntry> = { vp: this._warmViewportState() };
+    // A candidate may already exist in fields while the DOM still presents the
+    // previous complete frame. Never pair those fields with the old frame
+    // fingerprint in the placement memo; the successful paint barrier writes
+    // the coherent snapshot from its completion callback.
+    if (this._booting || this._config?.kiosk || this._continuity.state !== 'steady') return;
+    const patch: Partial<WarmEntry> = {
+      vp: this._warmViewportState(),
+      frameFingerprint: this._continuity.frameFingerprint,
+      devices: this._devices,
+    };
     // do not overwrite the snapshot we are about to revive FROM
     if (!this._warmRevivePending) patch.dlg = this._warmDialogState();
     // AUD-159B1-01: the placement is re-measured from the live DOM, so a card
@@ -2165,10 +2196,143 @@ class HouseplanCard extends LitElement {
   private _cacheSnapshot(): void {
     if (!this._serverCfg) return;
     try {
-      localStorage.setItem(LS_CFG, JSON.stringify({ config: this._serverCfg, rev: this._cfgRev, layout: this._layout }));
+      // Local edits may mutate nested config/layout before the debounced write;
+      // keep the accepted identity paired with exactly what is cached.
+      this._cfgContentFingerprint = contentFingerprint(this._serverCfg);
+      this._layoutContentFingerprint = contentFingerprint(this._layout);
+      localStorage.setItem(LS_CFG, JSON.stringify({
+        config: this._serverCfg,
+        rev: this._cfgRev,
+        config_fingerprint: this._cfgContentFingerprint,
+        layout: this._layout,
+        layout_rev: this._layoutRev,
+        layout_fingerprint: this._layoutContentFingerprint,
+      }));
     } catch {
       /* ignore */
     }
+  }
+
+  private _beginContinuityCandidate(
+    reason: string,
+    dataReady: boolean,
+    recoveryReason: 'plan' | 'connection' | 'stage-size' | 'asset' = 'plan',
+  ): number {
+    // Cold boot remains under the existing boot veil; #73 governs a frame
+    // that has already been complete at least once.
+    if (this._booting && !this._continuity.hasCompleteFrame) return this._continuity.token;
+    this._continuityDataReady = dataReady;
+    this._continuityPaintToken = -1;
+    this._resumeSettling = true;
+    return this._continuity.beginCandidate(reason, recoveryReason);
+  }
+
+  private _continuityStageValid(): boolean {
+    const stage = this._stageEl;
+    return !!stage && stage.clientWidth > 0 && stage.clientHeight > 0;
+  }
+
+  private _continuityAssetsReady(): boolean {
+    const space = this._model.length ? this._spaceModel() : null;
+    return !space?.bg?.href || this._signer.isReady(this.hass, space.bg.href);
+  }
+
+  private _candidateBackdrop(config: ServerConfig | null, spaceId = this._space): string {
+    const models = spaceModels(config);
+    const hashSpace = this._hashSpace();
+    const savedSpace = this._savedNav()?.space || '';
+    const preferred = !this._hashApplied && models.some((space) => space.id === hashSpace) ? hashSpace
+      : !this._hashApplied && !this._navApplied && models.some((space) => space.id === savedSpace) ? savedSpace
+        : models.some((space) => space.id === spaceId) ? spaceId : models[0]?.id;
+    return models.find((space) => space.id === preferred)?.bg?.href || '';
+  }
+
+  private _visualFrameFingerprint(): string {
+    const stage = this._stageEl;
+    const size = stage ? [stage.clientWidth, stage.clientHeight] : [0, 0];
+    return visualFrameFingerprint([
+      this._cfgRev,
+      this._cfgContentFingerprint || contentFingerprint(this._serverCfg),
+      this._layoutRev,
+      this._layoutContentFingerprint || contentFingerprint(this._layout),
+      this._space,
+      this._mode,
+      this._view,
+      size,
+      this._glowScreenBlend ? 'screen' : 'normal',
+      this._hassSequence,
+      this.hass?.themes?.darkMode ?? this.hass?.themes?.default_theme ?? '',
+    ]);
+  }
+
+  /** Called from updated(): one token owns at most one paint barrier. */
+  private _settleContinuityFrame(): void {
+    if (this._booting || !this._continuityStageValid()) return;
+    if (!this._continuity.hasCompleteFrame && this._continuity.state === 'steady') {
+      if (!this._continuityAssetsReady()) {
+        this._beginContinuityCandidate('asset-wait', true, 'asset');
+        return;
+      }
+      this._renderSnapshotAt = Date.now();
+      this._continuity.markCompleteFrame(this._visualFrameFingerprint());
+      return;
+    }
+    if (!this._continuityDataReady || !this._continuityAssetsReady()) return;
+    if (!['holding', 'offline-stale', 'overlay-pending', 'overlay-visible', 'candidate-ready']
+      .includes(this._continuity.state)) return;
+    const token = this._continuity.token;
+    if (this._continuityPaintToken === token) return;
+    this._continuityPaintToken = token;
+    if (!this._continuity.candidateReady(token)) return;
+    void this._continuity.commitAfterPaint(token, {
+      updateComplete: () => this.updateComplete,
+      stageValid: () => this.isConnected && this._continuityStageValid(),
+      assetsReady: () => this._continuityAssetsReady(),
+      frameFingerprint: () => this._visualFrameFingerprint(),
+    }).then((committed) => {
+      if (!committed || token !== this._continuity.token) {
+        if (token === this._continuity.token) this._continuityPaintToken = -1;
+        return;
+      }
+      this._resumeSettling = false;
+      this._renderSnapshotAt = Date.now();
+      this._warmSnapshot();
+    });
+  }
+
+  private _onBackdropLoaded(raw: string): void {
+    this._signer.markLoaded(this.hass, raw);
+    this._continuity.note('asset-ready');
+    this._continuityPaintToken = -1;
+    if (this._continuity.state !== 'steady') this.requestUpdate();
+  }
+
+  private _retryContinuity = (): void => {
+    this._continuityDataReady = false;
+    this._continuityPaintToken = -1;
+    this._continuity.retry(this._continuity.recoveryReason || 'plan');
+    if (!this._loading) void this._loadFromServer();
+  };
+
+  private _renderRecoveryOverlay(): TemplateResult | typeof nothing {
+    if (!this._continuity.overlayVisible && this._continuity.state !== 'recovery-error') return nothing;
+    const connection = this._continuity.recoveryReason === 'connection';
+    return html`<div class="recoveryoverlay phase-${this._continuity.overlayPhase}"
+      role="status" aria-live="polite" aria-atomic="true"
+      @pointerdown=${(event: Event) => event.stopPropagation()}
+      @click=${(event: Event) => event.stopPropagation()}
+      @wheel=${(event: Event) => event.stopPropagation()}>
+        <ha-icon icon="mdi:home-sync-outline"></ha-icon>
+        <span>${this._t(connection ? 'continuity.restore_connection' : 'continuity.restore_plan')}</span>
+        ${this._continuity.state === 'recovery-error'
+          ? html`<button class="btn on" @click=${this._retryContinuity}>${this._t('continuity.retry')}</button>`
+          : nothing}
+      </div>`;
+  }
+
+  /** Redacted lifecycle diagnostics used by the deterministic sampler. */
+  public houseplanContinuityTrace(): readonly import('./visual-continuity').ContinuityTraceEvent[] {
+    return this._continuity.trace;
   }
 
   public getCardSize(): number {
@@ -2360,6 +2524,9 @@ class HouseplanCard extends LitElement {
     if (changed.has('_serverCfg')) this._cfgEpoch++;
     this._skyPlan();
     if (changed.has('hass') && this.hass) {
+      this._hassSequence++;
+      this._renderSnapshotAt = Date.now();
+      this._continuity.note('hass-snapshot');
       this._ensureHaRegistryAuthority();
       this._planHassMemo = null;
       this._hookConnection();
@@ -2371,6 +2538,9 @@ class HouseplanCard extends LitElement {
       this._maybeRebuildDevices();
       this._vacTick();
       this._activityTick();
+    }
+    if (this._continuity.hasCompleteFrame && this._continuity.state === 'steady') {
+      this._continuity.refreshCompleteFrame(this._visualFrameFingerprint());
     }
   }
 
@@ -2423,6 +2593,7 @@ class HouseplanCard extends LitElement {
     }
     if (stage && !this._view) this._refitView();
     this._editorSecondary.afterRender();
+    this._settleContinuityFrame();
     // onboarding: on an empty server config, open the space dialog right away
     if (
       this._serverStorage &&
@@ -2444,14 +2615,82 @@ class HouseplanCard extends LitElement {
 
   // ================= server: config + layout =================
 
+  /**
+   * Adopt one structural WS candidate by revision + actual content identity.
+   * Equal payloads keep their authoritative object references and geometry
+   * epoch; equal revisions never hide changed content (#73 §9.4).
+   */
+  private _adoptStructuralResponses(
+    cfgResp: any,
+    layResp?: any,
+    layoutOverride?: Record<string, any>,
+  ): { configChanged: boolean; layoutChanged: boolean } {
+    const rawConfig = cfgResp?.config;
+    const nextConfig = rawConfig && Array.isArray(rawConfig.spaces)
+      ? rawConfig as ServerConfig : null;
+    const nextCfgFingerprint = contentFingerprint(nextConfig);
+    const configChanged = nextCfgFingerprint !== (this._cfgContentFingerprint
+      || contentFingerprint(this._serverCfg));
+    if (configChanged) {
+      // A genuinely different baseline invalidates local geometry undo. A
+      // reconnect echo with identical content deliberately does not.
+      this._geometryHistory.clear();
+      if (this._serverCfg) this._clearGeometryGesture();
+      this._serverCfg = nextConfig;
+      this._cfgContentFingerprint = nextCfgFingerprint;
+    }
+    this._cfgRev = cfgResp?.rev ?? this._cfgRev;
+
+    let layoutChanged = false;
+    if (layResp !== undefined || layoutOverride !== undefined) {
+      const nextLayout = layoutOverride ?? layResp?.layout ?? {};
+      const nextLayoutFingerprint = contentFingerprint(nextLayout);
+      layoutChanged = nextLayoutFingerprint !== (this._layoutContentFingerprint
+        || contentFingerprint(this._layout));
+      if (layoutChanged) {
+        this._layout = nextLayout;
+        this._layoutContentFingerprint = nextLayoutFingerprint;
+      }
+      this._layoutRev = layResp?.rev ?? this._layoutRev;
+    }
+
+    this._canOptimizeUndo = !!(cfgResp?.can_optimize_undo || layResp?.can_optimize_undo);
+    if (typeof cfgResp?.can_write === 'boolean') this._serverCanWrite = cfgResp.can_write;
+    if (configChanged) this._continuity.note('config-candidate', { configRev: this._cfgRev });
+    if (layoutChanged) this._continuity.note('layout-candidate', { layoutRev: this._layoutRev });
+    return { configChanged, layoutChanged };
+  }
+
   private async _loadFromServer(): Promise<void> {
     this._loading = true;
     this._loadTries++;
+    const visibleSpace = this._space;
+    const hadViewport = !!this._view;
     try {
       const [cfgResp, layResp] = await Promise.all([
         this.hass.callWS({ type: 'houseplan/config/get' }),
         this.hass.callWS({ type: 'houseplan/layout/get' }),
       ]);
+      const candidateConfig = cfgResp?.config && Array.isArray(cfgResp.config.spaces)
+        ? cfgResp.config : null;
+      const structuralChanged = contentFingerprint(candidateConfig)
+          !== (this._cfgContentFingerprint || contentFingerprint(this._serverCfg))
+        || contentFingerprint(layResp?.layout ?? {})
+          !== (this._layoutContentFingerprint || contentFingerprint(this._layout));
+      if (structuralChanged) {
+        const assetReady = await this._signer.prepareImage(
+          this.hass, this._candidateBackdrop(candidateConfig),
+        );
+        if (!assetReady) {
+          this._continuity.note('asset-failed');
+          this._scheduleLoadRetry(true);
+          return;
+        }
+      }
+      if (structuralChanged && this._continuity.hasCompleteFrame
+          && this._continuity.state === 'steady') {
+        this._beginContinuityCandidate('structural-response', true);
+      }
       this._loadOk = true;
       this._serverStorage = true;
       // absent can_write = older backend / demo stub → keep null (legacy admin fallback)
@@ -2461,16 +2700,7 @@ class HouseplanCard extends LitElement {
         this._mode = this._pendingNavMode;
         this._pendingNavMode = null;
       }
-      const cfg = cfgResp?.config;
-      // A server reload is a new history baseline. Replaying snapshots made
-      // against an older revision would overwrite somebody else's geometry.
-      this._geometryHistory.clear();
-      if (this._serverCfg) this._clearGeometryGesture();
-      this._serverCfg = cfg && Array.isArray(cfg.spaces) ? cfg : null;
-      this._cfgEpoch++;
-      this._cfgRev = cfgResp?.rev || 0;
-      this._layout = layResp?.layout || {};
-      this._layoutRev = layResp?.rev ?? 0;
+      this._adoptStructuralResponses(cfgResp, layResp);
       // live sync: the config was changed in another window → re-read it
       if (!this._unsubCfg) {
         this._unsubCfg = await this.hass.connection.subscribeEvents((ev: any) => {
@@ -2524,7 +2754,7 @@ class HouseplanCard extends LitElement {
       // reported jerk. Only a genuine navigation (the hash/nav landed us on
       // another space) still needs it.
       if (this._warmVpArmed && this._space === this._warmVp?.space) this._warmVpArmed = false;
-      else this._restoreZoom();
+      else if (!hadViewport || this._space !== visibleSpace) this._restoreZoom();
     } catch (e) {
       if (this._serverCfg) {
         // DEV-B703-02: this instance already RENDERS a valid config (the LS
@@ -2534,7 +2764,7 @@ class HouseplanCard extends LitElement {
         // revalidate: the last valid config stays on screen until a
         // successful reload replaces it, and revalidation keeps running on
         // our own clock (willUpdate stops driving loads after 8 tries).
-        this._scheduleLoadRetry();
+        this._scheduleLoadRetry(true);
       } else if (this._loadTries >= 8) {
         // nothing was ever shown — genuine no-backend: local-only fallback
         this._serverStorage = false;
@@ -2549,6 +2779,7 @@ class HouseplanCard extends LitElement {
     } finally {
       this._loading = false;
     }
+    this._continuityDataReady = true;
     this._regSignature = '';
     this._maybeRebuildDevices();
     this.requestUpdate();
@@ -2576,16 +2807,21 @@ class HouseplanCard extends LitElement {
         return;
       }
     }
+    this._beginContinuityCandidate('config-reload', false);
     try {
       const resp = await this.hass.callWS({ type: 'houseplan/config/get' });
-      const cfg = resp?.config;
-      this._geometryHistory.clear();
-      this._clearGeometryGesture();
-      this._serverCfg = cfg && Array.isArray(cfg.spaces) ? cfg : null;
-      this._cfgEpoch++;
-      this._cfgRev = resp?.rev || 0;
-      this._canOptimizeUndo = !!resp?.can_optimize_undo;
-      if (typeof resp?.can_write === 'boolean') this._serverCanWrite = resp.can_write;
+      const candidateConfig = resp?.config && Array.isArray(resp.config.spaces)
+        ? resp.config as ServerConfig : null;
+      const configChanged = contentFingerprint(candidateConfig)
+        !== (this._cfgContentFingerprint || contentFingerprint(this._serverCfg));
+      if (configChanged && !await this._signer.prepareImage(
+        this.hass, this._candidateBackdrop(candidateConfig),
+      )) {
+        this._continuity.note('asset-failed');
+        this._scheduleLoadRetry(true);
+        return;
+      }
+      this._adoptStructuralResponses(resp);
       if (this._pendingNavMode && this._canEdit && !this._config?.kiosk) {
         this._mode = this._pendingNavMode;
         this._pendingNavMode = null;
@@ -2598,6 +2834,9 @@ class HouseplanCard extends LitElement {
       // a failed reload leaves the card on its last known config; tell the user
       // rather than silently diverging from the server (audit L2 note)
       this._showToast(this._t('toast.cfg_reload_failed', { err: this._errText(e) }));
+    } finally {
+      this._continuityDataReady = true;
+      this.requestUpdate();
     }
   }
 
@@ -2608,12 +2847,12 @@ class HouseplanCard extends LitElement {
    *  after 8 tries). Exponential backoff capped at 8 s; single timer;
    *  cleared on disconnect and on a connection 'ready'. */
   private _loadRetryTimer?: number;
-  private _scheduleLoadRetry(): void {
+  private _scheduleLoadRetry(force = false): void {
     if (this._loadRetryTimer !== undefined) return;
     const delay = Math.min(8000, 500 * 2 ** Math.min(4, Math.max(1, this._loadTries - 7)));
     this._loadRetryTimer = window.setTimeout(() => {
       this._loadRetryTimer = undefined;
-      if (!this._loadOk && !this._loading && this.hass) this._loadFromServer();
+      if ((force || !this._loadOk) && !this._loading && this.hass) this._loadFromServer();
     }, delay);
   }
 
@@ -2751,17 +2990,29 @@ class HouseplanCard extends LitElement {
     clearTimeout(this._loadRetryTimer);
     this._loadRetryTimer = undefined;
     refreshHaRegistries(this.hass);
+    this._beginContinuityCandidate('connection-ready', false, 'connection');
     if (this._loading) return;
     // a subscribe lost mid-load leaves _loadOk=true without _unsubCfg — the
     // full load path repairs both (every subscribe in it is guarded)
-    if (!this._loadOk || !this._unsubCfg) this._loadFromServer();
-    else this._reloadConfigOnly();
+    // Re-read config and layout as one candidate. `_loadFromServer` now adopts
+    // each side by revision+fingerprint and preserves equal references.
+    this._loadFromServer();
+  };
+  private _onConnLost = (): void => {
+    if (this._booting && !this._continuity.hasCompleteFrame) return;
+    this._continuityDataReady = false;
+    this._continuityPaintToken = -1;
+    this._continuity.connectionLost();
   };
   private _hookConnection(): void {
     const conn = (this.hass as any)?.connection;
     if (!conn || conn === this._connHooked) return;
     this._connHooked?.removeEventListener?.('ready', this._onConnReady);
+    this._connHooked?.removeEventListener?.('disconnected', this._onConnLost);
+    this._connHooked?.removeEventListener?.('reconnect-error', this._onConnLost);
     conn.addEventListener?.('ready', this._onConnReady);
+    conn.addEventListener?.('disconnected', this._onConnLost);
+    conn.addEventListener?.('reconnect-error', this._onConnLost);
     this._connHooked = conn;
   }
   /**
@@ -2820,6 +3071,7 @@ class HouseplanCard extends LitElement {
    */
   private async _reloadLayoutOnly(): Promise<void> {
     if (!this._serverStorage || !this.hass?.callWS) return;
+    this._beginContinuityCandidate('layout-reload', false);
     // Snapshot BEFORE flushing. `flush()` runs the debounced writer
     // synchronously, and the first thing that does is empty `_dirtyPos` — so
     // reading the dirty set afterwards found nothing to protect and the server's
@@ -2837,13 +3089,20 @@ class HouseplanCard extends LitElement {
       const remote = resp?.layout || {};
       const merged: Record<string, any> = { ...remote };
       for (const [id, pos] of mine) merged[id] = pos;
-      this._layout = merged;
+      const fingerprint = contentFingerprint(merged);
+      if (fingerprint !== (this._layoutContentFingerprint || contentFingerprint(this._layout))) {
+        this._layout = merged;
+        this._layoutContentFingerprint = fingerprint;
+      }
       this._layoutRev = resp?.rev ?? this._layoutRev;
       this._canOptimizeUndo = !!resp?.can_optimize_undo;
       this._cacheSnapshot();
       this.requestUpdate();
     } catch {
       /* a failed refresh just leaves the positions we already had */
+    } finally {
+      this._continuityDataReady = true;
+      this.requestUpdate();
     }
   }
 
@@ -3615,7 +3874,7 @@ class HouseplanCard extends LitElement {
   }
 
   /** Set the zoom (centered on vb point cx,cy, or on the center of the current view). */
-  private _applyView(zoom: number, cx?: number, cy?: number): void {
+  private _applyView(zoom: number, cx?: number, cy?: number): boolean {
     const vb = this._baseVb();
     const fit = fitView(vb, this._stageAspect());
     const z = Math.min(HouseplanCard.ZOOM_MAX, Math.max(HouseplanCard.ZOOM_MIN, zoom));
@@ -3623,8 +3882,17 @@ class HouseplanCard extends LitElement {
     const cur = this._viewOr(vb);
     const ccx = cx ?? cur.x + cur.w / 2;
     const ccy = cy ?? cur.y + cur.h / 2;
+    const next = this._clampView({ x: ccx - w / 2, y: ccy - h / 2, w, h }, fit);
+    const same = this._view
+      && Math.abs(this._zoom - z) < 1e-9
+      && Math.abs(this._view.x - next.x) < 1e-6
+      && Math.abs(this._view.y - next.y) < 1e-6
+      && Math.abs(this._view.w - next.w) < 1e-6
+      && Math.abs(this._view.h - next.h) < 1e-6;
+    if (same) return false;
     this._zoom = z;
-    this._view = this._clampView({ x: ccx - w / 2, y: ccy - h / 2, w, h }, fit);
+    this._view = next;
+    return true;
   }
 
   /**
@@ -3686,56 +3954,18 @@ class HouseplanCard extends LitElement {
     this._bootSoft = false;
   }
 
-  /** Hide only the unstable plan frames after a genuinely long tab sleep.
-   *  The header remains usable and the existing stage background stays put;
-   *  once its measured size has been quiet, viewport + reveal land in the
-   *  same Lit update. */
+  /** Hold the last complete frame after a long sleep; never hide the scene. */
   private _beginResumeSettle(): void {
-    if (this._kiosk || this._mode !== 'view' || this._booting || this._resumeSettling) return;
-    this._resumeSettling = true;
-    this._resumeStarted = performance.now();
-    this._resumeLastSize = '';
-    this._resumeLastChange = this._resumeStarted;
+    if (this._booting || this._resumeSettling) return;
     this._viewportInvalidAt = 0;
-    this.requestUpdate();
-    if (this._resumeRaf) cancelAnimationFrame(this._resumeRaf);
-    this._resumeRaf = requestAnimationFrame(() => this._resumeSettleTick());
-  }
-
-  private _resumeSettleTick(): void {
-    this._resumeRaf = 0;
-    if (!this._resumeSettling || !this.isConnected) return;
-    if (this._kiosk || this._mode !== 'view') {
-      this._resumeSettling = false;
-      this.requestUpdate();
-      return;
-    }
-    const now = performance.now();
-    const stage = this._stageEl;
-    const measurable = !!stage && stage.clientWidth > 0 && stage.clientHeight > 0;
-    if (measurable) {
-      const size = `${stage!.clientWidth}x${stage!.clientHeight}`;
-      if (size !== this._resumeLastSize) {
-        this._resumeLastSize = size;
-        this._resumeLastChange = now;
-      }
-    }
-    const elapsed = now - this._resumeStarted;
-    const settled = measurable && elapsed >= RESUME_MIN_MS && now - this._resumeLastChange >= RESUME_QUIET_MS;
-    if (settled || elapsed >= RESUME_MAX_MS) {
-      const cur = this._view;
-      this._resumeSettling = false;
-      if (measurable) {
-        this._applyView(
-          this._zoom,
-          cur ? cur.x + cur.w / 2 : undefined,
-          cur ? cur.y + cur.h / 2 : undefined,
-        );
-      }
-      this.requestUpdate();
-      return;
-    }
-    this._resumeRaf = requestAnimationFrame(() => this._resumeSettleTick());
+    const token = this._beginContinuityCandidate('warm-resume', false);
+    // A card can be detached for the whole visibility event and reattached as
+    // the same already-loaded instance. In that case `willUpdate()` has no
+    // reason to reload, so the warm tombstone must start its own revalidation
+    // instead of immediately blessing the stale frame as current.
+    if (token !== this._continuity.token) return;
+    if (!this._loading) void this._loadFromServer();
+    else this.requestUpdate();
   }
 
   /** Recompute the view for a new scene size, preserving zoom and center. */
@@ -3748,20 +3978,51 @@ class HouseplanCard extends LitElement {
       if (!this._viewportInvalidAt) this._viewportInvalidAt = Date.now();
       return;
     }
-    if (this._viewportInvalidAt) {
-      const invalidFor = Date.now() - this._viewportInvalidAt;
-      this._viewportInvalidAt = 0;
-      // Lovelace's own view tabs can hide a card without hiding `document`.
-      // A long zero-box interval is the equivalent suspension signal.
-      if (invalidFor >= RESUME_LONG_HIDDEN_MS && !this._resumeSettling) {
-        this._beginResumeSettle();
-        if (this._resumeSettling) return;
-      }
+    const size: [number, number] = [stage.clientWidth, stage.clientHeight];
+    const previous = this._lastValidStageSize;
+    const sameSize = !!previous
+      && Math.abs(previous[0] - size[0]) <= 0.5
+      && Math.abs(previous[1] - size[1]) <= 0.5;
+    const invalidFor = this._viewportInvalidAt ? Date.now() - this._viewportInvalidAt : 0;
+    this._viewportInvalidAt = 0;
+    if (!previous) {
+      this._lastValidStageSize = size;
+      if (!this._view) this._applyView(this._zoom);
+      return;
     }
-    if (this._resumeSettling) return;
-    const cur = this._view;
-    this._applyView(this._zoom, cur ? cur.x + cur.w / 2 : undefined, cur ? cur.y + cur.h / 2 : undefined);
-    this.requestUpdate();
+    // 0x0 -> the same positive size is explicitly a no-op.
+    if (sameSize) {
+      this._pendingRefitSize = null;
+      return;
+    }
+    this._pendingRefitSize = size;
+    if (this._refitRaf) return;
+    this._refitRaf = requestAnimationFrame(() => {
+      this._refitRaf = 0;
+      const target = this._pendingRefitSize;
+      this._pendingRefitSize = null;
+      const live = this._stageEl;
+      if (!target || !live || live.clientWidth <= 0 || live.clientHeight <= 0) return;
+      if (Math.abs(live.clientWidth - target[0]) > 0.5
+          || Math.abs(live.clientHeight - target[1]) > 0.5) {
+        this._refitView();
+        return;
+      }
+      const old = this._lastValidStageSize;
+      if (old && Math.abs(old[0] - target[0]) <= 0.5 && Math.abs(old[1] - target[1]) <= 0.5) return;
+      this._lastValidStageSize = target;
+      const cur = this._view;
+      if (invalidFor >= CONTINUITY_LONG_HIDDEN_MS) {
+        this._beginContinuityCandidate('stage-size-restored', true, 'stage-size');
+      } else if (this._continuity.hasCompleteFrame) {
+        this._beginContinuityCandidate('stage-resize', true, 'stage-size');
+      }
+      this._applyView(
+        this._zoom,
+        cur ? cur.x + cur.w / 2 : undefined,
+        cur ? cur.y + cur.h / 2 : undefined,
+      );
+    });
   }
 
   /** Change the zoom while keeping the point (sx,sy relative to the scene) in place. */
@@ -4067,6 +4328,7 @@ class HouseplanCard extends LitElement {
       this._decorMove = null;
       return;
     }
+    const viewportGestureEnded = !!this._pinchStart || !!this._panStart;
     this._pointers.delete(ev.pointerId);
     if (this._pointers.size < 2) this._pinchStart = null;
     if (this._pointers.size === 0) {
@@ -4075,6 +4337,7 @@ class HouseplanCard extends LitElement {
       // reset click suppression on the next tick (so that a click right after a pan does not fire)
       setTimeout(() => (this._suppressClick = false), 0);
     }
+    if (viewportGestureEnded && this._pointers.size === 0) this.requestUpdate();
   }
 
   private _clickRoom(r: RoomCfg): void {
@@ -4756,12 +5019,14 @@ class HouseplanCard extends LitElement {
       return;
     }
     this._cancelBoundaryAnchor();
+    const viewportGestureEnded = !!this._pinchStart || !!this._panStart;
     this._pointers.delete(ev.pointerId);
     if (this._pointers.size < 2) this._pinchStart = null;
     if (this._pointers.size === 0) {
       this._panStart = null;
       this._panLock = null;
     }
+    if (viewportGestureEnded && this._pointers.size === 0) this.requestUpdate();
   }
 
   private _applyGeometryState(state: SpaceGeometryState): boolean {
@@ -8826,15 +9091,15 @@ class HouseplanCard extends LitElement {
    * opposite (outward) wall face. Open spans stay dashed in their own layer;
    * doors, windows and gates remain gaps instead of being bridged by a solid accent.
    */
-  private _renderRoomHover(space: SpaceModel): TemplateResult {
+  private _roomHoverPaths(space: SpaceModel): { fillD: string; outlineD: string } | null {
     const hover = this._hoverRoom;
     if (this._mode !== 'view' || !hover || hover.space !== space.id) {
-      return svg`` as unknown as TemplateResult;
+      return null;
     }
     const room = space.rooms.find((r) => r === hover.room || (!!r.id && r.id === hover.room.id));
-    if (!room) return svg`` as unknown as TemplateResult;
+    if (!room) return null;
     const poly = roomPoly(room);
-    if (!poly) return svg`` as unknown as TemplateResult;
+    if (!poly) return null;
 
     // A parent room also owns the floor-facing side of walls around rooms
     // nested inside it. Keep the room together with its cached polygon so a
@@ -8933,15 +9198,30 @@ class HouseplanCard extends LitElement {
         .map((sg) => `M ${sg[0]} ${sg[1]} L ${sg[2]} ${sg[3]}`)
         .join(' ');
     }).filter(Boolean).join(' ');
-    if (!d) return svg`` as unknown as TemplateResult;
+    if (!d) return null;
     const pathOf = (points: number[][]) =>
       `M ${points.map((p) => `${p[0]} ${p[1]}`).join(' L ')} Z`;
     const cleanFloor = this._cleanFloor(room, floor, space).path || pathOf(floor);
     const fillD = [cleanFloor, ...islandPolys.map(pathOf)].join(' ');
-    return svg`<g class="room-hover" pointer-events="none">
-      <path class="room-hover-fill" d="${fillD}" fill-rule="evenodd"></path>
-      <path class="room-hover-halo" d="${d}"></path>
-      <path class="room-hover-outline" d="${d}"></path>
+    return { fillD, outlineD: d };
+  }
+
+  private _renderRoomHoverFill(
+    paths: { fillD: string; outlineD: string } | null,
+  ): TemplateResult {
+    if (!paths) return svg`` as unknown as TemplateResult;
+    return svg`<g class="room-hover room-hover-fill-layer" pointer-events="none">
+      <path class="room-hover-fill" d="${paths.fillD}" fill-rule="evenodd"></path>
+    </g>` as unknown as TemplateResult;
+  }
+
+  private _renderRoomHoverOutline(
+    paths: { fillD: string; outlineD: string } | null,
+  ): TemplateResult {
+    if (!paths) return svg`` as unknown as TemplateResult;
+    return svg`<g class="room-hover room-hover-outline-layer" pointer-events="none">
+      <path class="room-hover-halo" d="${paths.outlineD}"></path>
+      <path class="room-hover-outline" d="${paths.outlineD}"></path>
     </g>` as unknown as TemplateResult;
   }
 
@@ -11286,6 +11566,7 @@ class HouseplanCard extends LitElement {
         this._glowFadeTimers.delete(key);
       }
       if (domId == null) {
+        this._suspendGlowFeatherForTransition();
         domId = ++this._glowSourceSeq;
         this._glowRenderedSources.set(key, domId);
         this._glowEnteringSources.add(key);
@@ -11305,6 +11586,7 @@ class HouseplanCard extends LitElement {
     this._glowEnterRafs.delete(key);
     this._glowEnteringSources.delete(key);
     if (!this._glowFadeTimers.has(key)) {
+      this._suspendGlowFeatherForTransition();
       const timer = window.setTimeout(() => {
         if (this._glowFadeTimers.get(key) !== timer) return;
         this._glowFadeTimers.delete(key);
@@ -11315,6 +11597,31 @@ class HouseplanCard extends LitElement {
       this._glowFadeTimers.set(key, timer);
     }
     return { domId, entering: false, leaving: true };
+  }
+
+  /** A whole-layer Gaussian blur is needlessly re-evaluated for every frame
+   * of a source opacity transition. The 1 px penumbra is imperceptible while
+   * the pool itself is moving between transparent and opaque, so bypass it
+   * for that bounded interval and restore it once at the settled frame. */
+  private _suspendGlowFeatherForTransition(): void {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    this._glowFeatherSuspendUntil = Math.max(
+      this._glowFeatherSuspendUntil, Date.now() + GLOW_FADE_MS,
+    );
+    clearTimeout(this._glowFeatherResumeTimer);
+    const delay = Math.max(0, this._glowFeatherSuspendUntil - Date.now()) + 17;
+    const resume = () => {
+      this._glowFeatherResumeTimer = 0;
+      if (Date.now() < this._glowFeatherSuspendUntil) {
+        this._glowFeatherResumeTimer = window.setTimeout(
+          resume, this._glowFeatherSuspendUntil - Date.now() + 17,
+        );
+        return;
+      }
+      this._glowFeatherSuspendUntil = 0;
+      if (this.isConnected) this.requestUpdate();
+    };
+    this._glowFeatherResumeTimer = window.setTimeout(resume, delay);
   }
 
   private _forgetGlowSource(key: string): void {
@@ -11342,7 +11649,7 @@ class HouseplanCard extends LitElement {
    * Opaque: the wall bodies exactly as the plan draws them — with their real
    * thickness — plus every independent body (partition, column, room draft),
    * plus the bare outline of any edge that carries no thickness at all.
-   * Transparent: doorways, gates and arches, cut out of the masonry so the
+   * Transparent: doorways and gates, cut out of the masonry so the
    * opening is a real gap between two jamb faces; and virtual (open)
    * boundaries, which are not walls to begin with. A window stays solid: an
    * indoor lamp must not wash the street, so the light's masonry is cut by
@@ -11387,12 +11694,23 @@ class HouseplanCard extends LitElement {
       hash = Math.imul(hash, 0x01000193) >>> 0;
     };
     const walls = this._spaceWalls;
+    mix(this._cellCm);
+    mix(this._gridPitch);
+    mix(this._wallKeyPitch);
     for (const { poly } of polys) { mix(poly.length); for (const p of poly) { mix(p[0]); mix(p[1]); } }
     for (const cut of cuts) for (const value of cut) mix(value);
-    for (const body of physical) { mix(body.length); mix(body[0]?.[0] ?? 0); mix(body[0]?.[1] ?? 0); }
-    for (const wall of walls) { mix(wall.cm); mix(wall.a?.[0] ?? 0); mix(wall.a?.[1] ?? 0); }
+    for (const body of physical) {
+      mix(body.length);
+      for (const point of body) { mix(point[0]); mix(point[1]); }
+    }
+    for (const wall of walls) {
+      mix(wall.cm);
+      mix(wall.a?.[0] ?? 0); mix(wall.a?.[1] ?? 0);
+      mix(wall.b?.[0] ?? 0); mix(wall.b?.[1] ?? 0);
+    }
     const fingerprint = hash.toString(36);
-    if (this._lightBarrierCache?.key === fingerprint) return this._lightBarrierCache.value;
+    const cacheKey = `${space.id}|${fingerprint}`;
+    if (this._lightBarrierCache?.key === cacheKey) return this._lightBarrierCache.value;
     const eps = this._gridPitch * 0.02;
     const occluders: LightSegment[] = [];
     // The masonry the plan draws, cut by passages only — real thickness, real
@@ -11420,7 +11738,7 @@ class HouseplanCard extends LitElement {
       floor: polys.map((x) => x.poly),
       fingerprint,
     };
-    this._lightBarrierCache = { key: fingerprint, value };
+    this._lightBarrierCache = { key: cacheKey, value };
     return value;
   }
 
@@ -11428,7 +11746,6 @@ class HouseplanCard extends LitElement {
   private _renderGlowLayer(space: SpaceModel, disp: SpaceDisplay): TemplateResult {
     const colors = this._fillColors;
     const defaultR = (this._glowRadiusCm / this._cellCm) * this._gridPitch;
-    const g = this._gridPitch;
     const polys = space.rooms
       .map((r) => ({ r, poly: roomPoly(r) }))
       .filter((x): x is { r: RoomCfg; poly: number[][] } => !!x.poly);
@@ -11478,11 +11795,13 @@ class HouseplanCard extends LitElement {
       const ownCm = Number(d.marker?.glow_radius_cm);
       const R = Number.isFinite(ownCm) && ownCm > 0 ? (ownCm / this._cellCm) * this._gridPitch : defaultR;
       const pos = this._pos(d);
-      // Invalid placement in masonry must remain dark. radialOccluders() also
-      // guards this case, but the partial shadow mask below intentionally
-      // never turns an otherwise valid room completely black.
+      // Invalid placement in an independent physical body must remain dark.
+      // The visibility sweep separately rejects a source on any opaque edge.
       if (physical.some((body) => pointInPhysicalBody([pos.x, pos.y], body))) {
-        this._glowTransition(key, false);
+        // This placement cannot produce a valid previous-frame fade: the old
+        // clip belongs to a different position. Remove its transition state as
+        // well, rather than leaving a timer for a DOM node no longer rendered.
+        this._forgetGlowSource(key);
         continue;
       }
       const transition = this._glowTransition(key, !!visibleGlow);
@@ -11536,10 +11855,13 @@ class HouseplanCard extends LitElement {
     // above still crosses a disabled room, but no base/pool pixels are painted
     // there. For the common all-enabled case this extra clip is omitted.
     const walls = this._spaceWalls;
+    const openCuts = enabled.length === polys.length
+      ? []
+      : this._openPairs().flatMap((pair) => pair.segs);
     const enabledClip = enabled.length === polys.length ? null : enabled.map(({ r, poly }) => {
       const floorPoly = walls.length && r.id
         ? (innerContourForRoom(
-            space.rooms, r.id, walls, this._openPairs().flatMap((p) => p.segs),
+            space.rooms, r.id, walls, openCuts,
             this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
           ) || poly)
         : poly;
@@ -11558,7 +11880,12 @@ class HouseplanCard extends LitElement {
     const perUnit = this._stageEl?.clientWidth && view.w
       ? this._stageEl.clientWidth / view.w
       : 1;
-    const feather = GLOW_EDGE_FEATHER_PX / 2 / (perUnit > 0 ? perUnit : 1);
+    const nextFeather = GLOW_EDGE_FEATHER_PX / 2 / (perUnit > 0 ? perUnit : 1);
+    const featherEnabled = !this._pinchStart && !this._panStart
+      && Date.now() >= this._glowFeatherSuspendUntil;
+    if (this._glowFeatherUnits == null || featherEnabled)
+      this._glowFeatherUnits = nextFeather;
+    const feather = this._glowFeatherUnits ?? nextFeather;
     const pad = feather * 4;
     const featherBox = spots.reduce((box, sp) => ({
       x: Math.min(box.x, sp.pos.x - sp.r - pad),
@@ -11616,7 +11943,7 @@ class HouseplanCard extends LitElement {
              not become the pointer target: room hover and its tooltip still
              belong to the room underneath the light pool. */}
       <g class="glowlayer glow-pools-frame" pointer-events="none"
-        filter="url(#hp-glowfeather)">
+        filter=${featherEnabled ? 'url(#hp-glowfeather)' : nothing}>
         <g class="glow-pools ${this._glowScreenBlend ? 'blend-screen' : 'blend-normal'}"
           data-blend=${this._glowScreenBlend ? 'screen' : 'normal'}
           data-feather-px="${GLOW_EDGE_FEATHER_PX}"
@@ -11958,6 +12285,11 @@ class HouseplanCard extends LitElement {
     const diagnostics = this.houseplanDiagnostics();
     if (!model.length) {
       return html`<ha-card
+        data-continuity-state=${this._continuity.state}
+        data-continuity-token=${this._continuity.token}
+        data-frame-fingerprint=${this._continuity.frameFingerprint || nothing}
+        data-recovery-reason=${(this._continuity.overlayVisible || this._continuity.state === 'recovery-error')
+          ? this._continuity.recoveryReason || nothing : nothing}
         data-ha-registry-access=${diagnostics.registry.access}
         data-ha-disabled-bindings=${diagnostics.bindings.ha_disabled}
         data-ha-unverified-bindings=${diagnostics.bindings.unverified}>
@@ -12005,9 +12337,17 @@ class HouseplanCard extends LitElement {
     const bdLive = this._bdLive;
     const furnLive = this._furnLive;
     const editorChromeMode = this._mode === 'view' ? this._editorChromeMode : this._mode;
+    const roomHover = this._roomHoverPaths(space);
+    const backdropHref = space.bg ? this._display(space.bg.href) : '';
+    const recoveryReason = (this._continuity.overlayVisible || this._continuity.state === 'recovery-error')
+      ? this._continuity.recoveryReason : null;
 
     return html`
       <ha-card
+        data-continuity-state=${this._continuity.state}
+        data-continuity-token=${this._continuity.token}
+        data-frame-fingerprint=${this._continuity.frameFingerprint || nothing}
+        data-recovery-reason=${recoveryReason || nothing}
         data-ha-registry-access=${diagnostics.registry.access}
         data-ha-disabled-bindings=${diagnostics.bindings.ha_disabled}
         data-ha-unverified-bindings=${diagnostics.bindings.unverified}
@@ -12097,7 +12437,7 @@ class HouseplanCard extends LitElement {
           : nothing}
         </div>
 
-        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'boundary' ? this._boundaryStageClass : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._bdMovable ? ' bdgrab' : ''}${this._bdDrag ? ' bdgrabbing' : ''}${dayNight ? ' daynight' : ''}${dayNight && this._skySnap ? ' skysnap' : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}${this._navMotion ? ' hpnav' : ''}${this._resumeSettling && this._mode === 'view' && !this._kiosk ? ' hpresume' : ''}"
+        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'boundary' ? this._boundaryStageClass : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._bdMovable ? ' bdgrab' : ''}${this._bdDrag ? ' bdgrabbing' : ''}${dayNight ? ' daynight' : ''}${dayNight && this._skySnap ? ' skysnap' : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}${this._navMotion ? ' hpnav' : ''}"
           style="height:${this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}${stageBg ? `;background:${stageBg}` : ''};--wall-fill:${this._fillColors.wall_fill.c};--wall-fill-op:${this._fillColors.wall_fill.a}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
@@ -12107,6 +12447,7 @@ class HouseplanCard extends LitElement {
           @pointercancel=${(e: PointerEvent) => this._stagePointerCancel(e)}>
           ${this._renderEditorSecondary()}
           <div class="zoomwrap ${this._slide ? 'slide-' + this._slide : ''}${this._navMotion ? ' nav-' + this._navMotion : ''}"
+            ?inert=${this._continuity.overlayBlocksInteraction}
             style="${dayNight ? `filter:brightness(${(1 - planDim).toFixed(3)})` : ''}">
           <svg viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="xMidYMid meet">
             ${''/* THE PAPER IS THE ROOMS (docs/BACKDROP.md §3, owner
@@ -12136,9 +12477,10 @@ class HouseplanCard extends LitElement {
             ${this._editing && !this._markup && this._gridLevels()
               ? svg`<rect x="${view.x}" y="${view.y}" width="${view.w}" height="${view.h}" fill="url(#hp-grid-major)" pointer-events="none"></rect>`
               : nothing}
-            ${space.bg && this._display(space.bg.href)
-              ? svg`<image href="${this._display(space.bg.href)}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}"
+            ${space.bg && backdropHref
+              ? svg`<image href="${backdropHref}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}"
                   opacity="${this._mode === 'decor' && this._decorTool !== 'backdrop' ? 0.5 : 1}"
+                  @load=${() => this._onBackdropLoaded(space.bg!.href)}
                   transform=${space.bg.angle
                     ? `rotate(${space.bg.angle} ${space.bg.x + space.bg.w / 2} ${space.bg.y + space.bg.h / 2})`
                     : nothing}
@@ -12266,6 +12608,7 @@ class HouseplanCard extends LitElement {
               return svg`${shape}${outline}`;
               });
             })()}
+            ${this._renderRoomHoverFill(roomHover)}
             ${this._renderOpeningTunnelFills(space, roomFills)}
             ${this._renderGlowBaseRooms(space, glowBase)}
             ${this._renderOpeningTunnelFills(space, glowBase, 'glow-base')}
@@ -12287,7 +12630,7 @@ class HouseplanCard extends LitElement {
                    inside thick jambs without changing the stored span. */}
             ${!this._editing ? this._renderOpenWalls(disp) : nothing}
             ${this._renderWallBodies(disp)}
-            ${this._renderRoomHover(space)}
+            ${this._renderRoomHoverOutline(roomHover)}
             ${''/* Editors: saved virtual boundaries and the live two-click
                    preview deliberately paint AFTER real wall bodies. Their
                    full centreline geometry remains visible for editing. */}
@@ -12359,6 +12702,7 @@ class HouseplanCard extends LitElement {
             : nothing}
           ${this._renderFarHint()}
           ${this._renderHomeArrow()}
+          ${this._renderRecoveryOverlay()}
           ${this._booting || this._bootFading
             ? html`<div class="bootveil ${this._booting ? '' : 'off'}" aria-hidden="true">
                 <svg class="boothouse" viewBox="0 0 24 24"><path d="${mdiHomeCityOutline}"></path></svg>
@@ -14133,17 +14477,20 @@ class HouseplanCard extends LitElement {
           <label class="srcrow">${this._boolInput(d.flipV, (v) => (this._openingDialog = { ...d, flipV: v }))}
             <span>${this._t('opening.flip_v')}</span></label>
         </div>
-        <div class="row" slot="footer">
+        <div class="row dialog-action-footer" slot="footer">
           ${d.id
-            ? html`<button class="btn danger" @click=${this._deleteOpening}>
-                <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.delete')}
-              </button>`
+            ? html`<div class="dialog-action-group dialog-action-danger">
+                <button class="btn danger" @click=${this._deleteOpening}>
+                  <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.delete')}
+                </button>
+              </div>`
             : nothing}
-          <span class="spacer"></span>
-          <button class="btn ghost" @click=${() => (this._openingDialog = null)}>${this._t('btn.cancel')}</button>
-          <button class="btn on" @click=${this._saveOpening}>
-            <ha-icon icon="mdi:check"></ha-icon>${this._t('btn.save')}
-          </button>
+          <div class="dialog-action-group dialog-action-commit">
+            <button class="btn ghost" @click=${() => (this._openingDialog = null)}>${this._t('btn.cancel')}</button>
+            <button class="btn on" @click=${this._saveOpening}>
+              <ha-icon icon="mdi:check"></ha-icon>${this._t('btn.save')}
+            </button>
+          </div>
         </div>
     </hp-dialog>`;
   }
@@ -15417,22 +15764,25 @@ class HouseplanCard extends LitElement {
             <span>${this._t('space.glow_enabled')}</span>
           </label>
         </div>
-        <div class="row" slot="footer">
+        <div class="row dialog-action-footer" slot="footer">
           ${d.mode === 'edit'
-            ? html`<button class="btn danger" @click=${this._deleteSpace}>
-                <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.delete')}
-              </button>`
+            ? html`<div class="dialog-action-group dialog-action-danger">
+                <button class="btn danger" @click=${this._deleteSpace}>
+                  <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.delete')}
+                </button>
+              </div>`
             : nothing}
-          <span class="spacer"></span>
-          ${this._importTotal > 0 && d.mode === 'create'
-            ? html`<button class="btn ghost" @click=${() => this._skipImport()}>${this._t('btn.skip')}</button>`
-            : nothing}
-          <button class="btn ghost" @click=${close}>${this._t('btn.cancel')}</button>
-          <button class="btn on" @click=${this._saveSpaceDialog}
-            ?disabled=${!d.title.trim() || (d.source === 'file' && !(d.planFile || d.planUrl)) || d.busy}
-            title=${d.source === 'file' && !(d.planFile || d.planUrl) ? this._t('title.need_plan') : ''}>
-            <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this._t('btn.save')}
-          </button>
+          <div class="dialog-action-group dialog-action-commit">
+            ${this._importTotal > 0 && d.mode === 'create'
+              ? html`<button class="btn ghost" @click=${() => this._skipImport()}>${this._t('btn.skip')}</button>`
+              : nothing}
+            <button class="btn ghost" @click=${close}>${this._t('btn.cancel')}</button>
+            <button class="btn on" @click=${this._saveSpaceDialog}
+              ?disabled=${!d.title.trim() || (d.source === 'file' && !(d.planFile || d.planUrl)) || d.busy}
+              title=${d.source === 'file' && !(d.planFile || d.planUrl) ? this._t('title.need_plan') : ''}>
+              <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this._t('btn.save')}
+            </button>
+          </div>
         </div>
     </hp-dialog>`;
   }

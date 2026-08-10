@@ -1,5 +1,5 @@
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 7;
+export const GOLDEN_MATRIX_VERSION = 8;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -66,7 +66,10 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     extraOpenings: [
       { id: 'light-door-second', type: 'door', x: 0.50, y: 0.32, angle: 90, length: 0.13 },
     ],
-    layoutOverrides: { 'golden-light-one': { s: 'golden-lighting', x: 0.22, y: 0.48 } },
+    layoutOverrides: { 'golden-light-one': { s: 'golden-lighting', x: 0.40, y: 0.48 } },
+    // The golden is protection only if the receiving half actually contains
+    // rendered light. A data-only check once let a visually empty baseline pass.
+    warmPixelRegion: { x: 0.5, y: 0, w: 0.5, h: 1, minPixels: 2500, minRedBlueDelta: 25 },
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'lighting-custom-glow-light', fixture: 'visual', space: 'golden-lighting', mode: 'view',
     fillMode: 'custom', customFill: { c: '#486a8f', a: 0.42 }, glowEnabled: true,

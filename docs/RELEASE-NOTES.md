@@ -1,14 +1,16 @@
-<!-- release: v1.61.0-beta.6 -->
+<!-- release: v1.61.0-beta.7 -->
 
 ## Основное
 
-- Свет на плане переведён на единую геометрическую модель: лампа освещает только видимый ей пол, реальные стены и колонны отбрасывают тени, а свет через дверные проёмы остаётся непрерывным и ограничивается откосами ([#71](https://github.com/Matysh/houseplan-card/issues/71)).
+- План сохраняет последний цельный кадр при возврате на вкладку, reconnect и remount, поэтому больше не должен мигать или пересобираться без необходимости ([#73](https://github.com/Matysh/houseplan-card/issues/73)).
+- Исправлены редкие сбои геометрии Glow, способные засветить область вне дома или исказить тени у стен.
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- Plan lighting now uses one geometric visibility model: a lamp lights only the floor it can see, real walls and columns cast shadows, and doorway light remains continuous and constrained by the jambs ([#71](https://github.com/Matysh/houseplan-card/issues/71)).
+- The plan keeps its last coherent frame through tab resume, reconnect and remount, avoiding unnecessary flashes and rebuilds ([#73](https://github.com/Matysh/houseplan-card/issues/73)).
+- Fixed rare Glow geometry failures that could light outside the house or distort wall shadows.
 - Small fixes and improvements.
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.61.0-beta.6/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.61.0-beta.6/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.61.0-beta.7/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.61.0-beta.7/docs/CHANGELOG.md)

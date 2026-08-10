@@ -32,7 +32,7 @@ plan geometry and shares it between every lamp in the space.
 
 **Transparent**
 
-- doorways, gates and arches — cut through the masonry, so an opening is a real
+- doorways and gates — cut through the masonry, so an opening is a real
   gap between two jamb faces and a thick wall's returns narrow the beam;
 - virtual (open) boundaries, which are not walls to begin with.
 
@@ -103,9 +103,10 @@ region cache (`_glowClipCache`).
 
 - `test/light-visibility.test.mjs` — the sweep itself: a wall stops light, a
   doorway lets a beam through and only through, a column's shadow has the
-  angular width its size dictates, an occluder out of range changes nothing, an
-  edge through the lamp is ignored, and a corner made by two crossing barriers
-  is lit right up to the corner.
+  angular width its size dictates, an occluder out of range changes nothing, a
+  source on an opaque edge is rejected, the ±π seam cannot cut a wedge from
+  the fan, and a corner made by two crossing barriers is lit right up to the
+  corner.
 - `demo/smoke_glow.mjs` — pixels on a rendered plan: the aperture itself is lit,
   the floor behind a door is lit, the visible beam is no wider than twice the
   opening, there is no light behind a column while the floor beside it is lit,
@@ -121,6 +122,11 @@ region cache (`_glowClipCache`).
 
 ## Performance
 
-One clipped circle per source and one blur for the layer: 60 sources in the
-`large-light-blend-v1` profile render in ~75 ms against ~259 ms for the layered
-model on the same runner (CPU throttled 4×).
+The large cold geometry recalculation (20 rooms, 20 partitions, 14 columns,
+61 sources) dropped from about 23.5 s in beta.5 to about 0.33 s in beta.6 on
+the review runner — roughly 70×. The official warm `large-light-blend-v1`
+path is generally level with beta.5; the 30-source sample was temporarily
+slower and remains a performance watch item. During pinch/pan and the bounded
+500 ms source fade, the whole-layer blur is bypassed and its parameters stay
+frozen; the final screen-space feather is restored once after the transition
+instead of rebuilding and evaluating the filter for every animation frame.

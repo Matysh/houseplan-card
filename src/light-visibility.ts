@@ -115,9 +115,9 @@ const rayHit = (
  * Region lit by a point source, as a single ring in plan coordinates.
  *
  * `segments` may contain anything: only the ones that can reach into the
- * radius are considered. A source sitting exactly on an opaque edge would make
- * the sweep degenerate, so such edges are dropped — the caller is expected to
- * reject a lamp placed inside masonry before asking.
+ * radius are considered. A source on an opaque edge is invalid and returns no
+ * lit region. Dropping that edge would make the wall disappear precisely at a
+ * grid-snapped placement and illuminate the room on its other side.
  */
 export function visibilityPolygon(
   source: readonly number[],
@@ -131,7 +131,8 @@ export function visibilityPolygon(
     if (!seg || seg.length < 4) continue;
     if (![seg[0], seg[1], seg[2], seg[3]].every(Number.isFinite)) continue;
     const distance = distanceToSegment(source, seg);
-    if (distance > radius || distance < 1e-7) continue;
+    if (distance < 1e-7) return [];
+    if (distance > radius) continue;
     near.push(seg);
   }
   const angles: number[] = [];
@@ -143,6 +144,11 @@ export function visibilityPolygon(
       angles.push(angle - CORNER_NUDGE, angle, angle + CORNER_NUDGE);
     }
   }
+  // atan2's seam is a geometric non-event. Normalising every ray onto one
+  // cyclic interval keeps the +nudge ray beside its corner instead of sorting
+  // it to the opposite end and closing the fan with a long chord.
+  const turn = Math.PI * 2;
+  for (let i = 0; i < angles.length; i++) angles[i] = ((angles[i] % turn) + turn) % turn;
   angles.sort((left, right) => left - right);
   const ring: number[][] = [];
   let previous = Number.NEGATIVE_INFINITY;

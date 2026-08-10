@@ -1302,8 +1302,9 @@ export function wallBodyRings(
  * with opening slots cut through. Drawing uses it as one path; the light model
  * uses the same geometry as its occluders, so a wall blocks light exactly
  * where the plan shows a wall — with its real thickness, and with a doorway
- * that is a real gap between two jamb faces. Null when there is nothing solid,
- * or when the boolean pass fails (callers fall back to their own outlines).
+ * that is a real gap between two jamb faces. A successful empty operation is
+ * returned as an empty geometry; null means the boolean pass itself failed,
+ * so drawing callers may distinguish it from "nothing solid" and fall back.
  */
 export function wallBodiesGeometry(
   rooms: any[],
@@ -1386,7 +1387,7 @@ export function wallBodiesGeometry(
       if (extra.length < 3) continue;
       body = body ? union(body, closedRing(extra) as any) : [closedRing(extra)];
     }
-    return body ? { geom: body, depthUnits: maxDepth } : null;
+    return { geom: body || [], depthUnits: maxDepth };
   } catch {
     return null;
   }
@@ -1411,11 +1412,14 @@ export function wallBodiesUnionPath(
   );
   const d = united ? polyclipToPathD(united.geom) : '';
   if (united && d) return { d, depthUnits: united.depthUnits, fillRule: 'evenodd' };
+  if (united) return null; // successful empty result: do not resurrect raw rings
   // fall back to evenodd rings concatenated
   const rings = wallBodyRings(rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
   const extraD = extraBodies.map((poly) => polyToPath(poly)).join(' ');
   if (!rings.length && !extraD) return null;
-  let maxDepth = united?.depthUnits || 0;
+  // `united` is null on this branch: a successful-but-empty union returned
+  // above and must not be resurrected by the raw-ring fallback.
+  let maxDepth = 0;
   for (const ring of rings) maxDepth = Math.max(maxDepth, ring.depthUnits);
   // Each room ring already reverses its inset. `nonzero` therefore keeps
   // floors as holes while overlapping independent rings add instead of

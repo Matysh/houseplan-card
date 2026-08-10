@@ -2,6 +2,31 @@
 
 ## Unreleased
 
+## v1.61.0-beta.7 — 2026-08-11
+
+- Fixed rare but severe Glow geometry failures: a clipping exception can no
+  longer paint outside the house, a grid-snapped source on a wall stays dark,
+  and the angular seam no longer cuts a wedge from an otherwise valid pool.
+  Light barriers now invalidate for every changed body point, wall endpoint,
+  scale or space.
+- Delete/Cancel/Save in opening and space dialogs now use the same responsive
+  grouped footer as physical-object properties, keeping localized actions
+  inside narrow dialogs.
+- Returning to a dashboard no longer hides or rebuilds an already complete
+  plan. Full and compact cards keep the last coherent frame through tab sleep,
+  reconnect, remount and transient resize; identical config/layout echoes are
+  adopted without geometry churn, and protected backdrops share a bounded
+  loaded cache. A localized recovery layer is reserved for the rare case where
+  no complete frame can be retained. ([#73](https://github.com/Matysh/houseplan-card/issues/73))
+- Restored the room-hover contract without bringing back the Glow flash: a
+  neutral clean-floor wash now darkens the resolved room fill while its late
+  outline remains above walls; Glow, sun, openings and devices stay visually
+  independent. ([#79](https://github.com/Matysh/houseplan-card/issues/79))
+- Working device markers keep their yellow resting plate with the ordinary
+  neutral elevation shadow, use the same hover as other interactive markers,
+  and no longer add an unrelated yellow outer glow.
+  ([#80](https://github.com/Matysh/houseplan-card/issues/80))
+
 ## v1.61.0-beta.6 — 2026-08-11
 
 - Fixed shared dialog layout for localized content: multi-line titles now grow
@@ -22,8 +47,9 @@
   for light — there is no floor behind a front door to light, so it no longer
   glows halfway. Pools also fade over their whole radius instead of holding a
   flat plateau to 70%, so distant floor is faint because it is distant. As a
-  side effect the light layer became a single clipped circle per source and got
-  about four times cheaper to paint on a large plan.
+  side effect the light layer became a single clipped circle per source. Cold
+  geometry calculation on a complex plan became dramatically faster; the warm
+  render path remains broadly comparable with beta.5 and is tracked separately.
   ([#71](https://github.com/Matysh/houseplan-card/issues/71))
 - Fixed a one-frame Glow brightness flash when hovering any room. Room hover
   now uses a plain SVG wash and double outline without compositor filters.

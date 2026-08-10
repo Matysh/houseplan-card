@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { screenRgb, svgScreenBlendSupported } from '../test-build/glow-blend.js';
+import {
+  resolvedSvgScreenBlend, screenRgb, svgScreenBlendSupported,
+} from '../test-build/glow-blend.js';
 
 test('screenRgb implements rounded 8-bit screen blending', () => {
   assert.deepEqual(screenRgb([0, 0, 0], [12, 34, 56]), [12, 34, 56]);
@@ -16,5 +18,7 @@ test('capability result is one cached Promise per document', async () => {
   const first = svgScreenBlendSupported(document);
   const second = svgScreenBlendSupported(document);
   assert.equal(first, second);
+  assert.equal(resolvedSvgScreenBlend(document), undefined);
   assert.equal(await first, false);
+  assert.equal(resolvedSvgScreenBlend(document), false);
 });

@@ -12,7 +12,7 @@
 
 - тёплый и холодный источник дают смешанный цвет в пересечении;
 - два одинаковых dim-источника дают более светлое пересечение;
-- room/data fill, Glow base, tunnel sectors, backdrop и sun не участвуют в
+- room/data fill, Glow base, opening tunnel fills, backdrop и sun не участвуют в
   аддитивной группе.
 
 Модель источников, `resolvedLightSources(room)`, радиусы, clipping светом стен и
@@ -36,9 +36,7 @@
 <g class="glow-pools-frame" pointer-events="none">
   <g class="glow-pools blend-screen" data-blend="screen">
     <g class="glow-spot">
-      <g class="glow-shadow-target" mask="url(#per-source-shadow)">
-        <circle class="glow-pool" clip-path="url(#per-source-clip)">…</circle>
-      </g>
+      <circle class="glow-pool" clip-path="url(#per-source-visibility)">…</circle>
     </g>
   </g>
 </g>
@@ -56,16 +54,16 @@ screen/normal состояний между источниками не быва
 .glow-pools.blend-normal > .glow-spot { mix-blend-mode: normal; }
 ```
 
-После #71 screen-композиция принадлежит внешнему `.glow-spot`, а luminance
-mask — обычной внутренней `.glow-shadow-target`. Маску запрещено возвращать на
-тот же SVG primitive, который несёт `mix-blend-mode`: Chromium может принять
-атрибут в DOM, но проигнорировать его при compositor promotion.
+После #71 screen-композиция принадлежит `.glow-spot`, а единственная форма
+источника — один circle, обрезанный полигоном видимости, пересечённым с
+полом. Per-source luminance mask и отдельный shadow layer удалены: тень — это
+пол, не попавший в visibility polygon.
 
-`glow_base`, resolved room/data fill, opening tunnel sectors и sun rays
+`glow_base`, resolved room/data fill, opening tunnel fills и sun rays
 остаются sibling layers вне `glow-pools-frame`. Их порядок относительно друг
 друга сохраняется по #55.
 
-Каждый circle сохраняет собственный `clip-path` после re-parenting. Clip ids
+Каждый circle сохраняет собственный visibility `clip-path` после re-parenting. Clip ids
 остаются уникальными и стабильными в пределах SVG; объединять per-source clips
 в один общий clip запрещено, иначе свет начнёт проходить сквозь чужие стены.
 
@@ -74,8 +72,11 @@ mask — обычной внутренней `.glow-shadow-target`. Маску �
 Альфа отдельного pool задаётся только `stop-opacity` его radial gradient:
 
 ```text
-Aplateau = clamp(fill_colors.glow_light.a * 0.7 * (0.4 + 0.6 * sourceBrightness^(1/2.2)), 0, 1)
-A(r <= 70%) = Aplateau
+Acenter = clamp(fill_colors.glow_light.a * 0.7 * (0.4 + 0.6 * sourceBrightness^(1/2.2)), 0, 1)
+A(r = 0%) = Acenter
+A(r = 45%) = 0.88 * Acenter
+A(r = 70%) = 0.62 * Acenter
+A(r = 86%) = 0.32 * Acenter
 A(r = 100%) = 0
 screen(S, D) = 1 - (1 - S) * (1 - D)   // отдельно для R, G, B в 0..1
 ```
@@ -83,8 +84,12 @@ screen(S, D) = 1 - (1 - S) * (1 - D)   // отдельно для R, G, B в 0..
 На `.glow-pool` запрещены `opacity`, `fill-opacity`, filter и дополнительная
 alpha: полупрозрачность должна участвовать в blend через gradient stops, а не
 создавать отдельную element-композицию. Коэффициент `0.7` уже входит в
-`Aplateau`; внешний `glow-pools-frame` не имеет opacity и не применяет его
+`Acenter`; внешний `glow-pools-frame` не имеет постоянного opacity и не применяет его
 повторно.
+
+`.glow-spot` может временно анимировать opacity 0→1/1→0 в течение 500 мс.
+Это только transition появления/исчезновения; в steady-state opacity равна 1 и не
+меняет alpha-формулу.
 
 Glow base использует собственный alpha-контракт #55 и не входит в эту формулу.
 Blend не меняет base/tunnel opacity и не осветляет paper/backdrop.
@@ -191,7 +196,7 @@ research без скрытого fallback toggle.
 
 - warm+cool overlap соответствует screen-формуле с установленным допуском;
 - две одинаковые dim-лампы дают overlap светлее одного pool без channel clip;
-- background/base и tunnel sector сохраняют baseline pixels;
+- background/base и opening tunnel fill сохраняют baseline pixels;
 - перестановка markers не меняет overlap;
 - принудительный test-only fallback совпадает с current normal baseline;
 - per-room clips переживают re-parenting: pool не появляется за физической
@@ -238,9 +243,10 @@ Release body описывает видимую пользователю смес
    SVG render probe; `CSS.supports` сам по себе недостаточен.
 2. Все pools документа используют одно screen/normal решение; смешанного режима
    нет.
-3. Альфа живёт в gradient stops, per-pool и outer-frame opacity отсутствуют;
+3. Альфа steady-state живёт в gradient stops; outer-frame opacity
+   отсутствует, а opacity `.glow-spot` используется только для 500 ms transition;
    коэффициент `0.7` применяется ровно один раз внутри формулы stop-opacity.
-4. Glow base, data fill, paper/backdrop, tunnel sectors и sun остаются вне
+4. Glow base, data fill, paper/backdrop, opening tunnel fills и sun остаются вне
    isolated group и сохраняют baseline pixels.
 5. Каждый pool сохраняет собственный clip-path после re-parenting.
 6. Shared fixture 1/10/30/60 проходит frontend и backend schema tests.
@@ -250,5 +256,5 @@ Release body описывает видимую пользователю смес
 9. #55 повторно использует ту же pool group и не создаёт второе смешивание.
 10. Документация и ru/en changelog обновлены.
 
-ТЗ готово к реализации только после повторного ревью capability probe,
-alpha-семантики и измеримого performance gate.
+Фактическая структура после #71 зафиксирована выше; каноническая модель
+транспорта света и её ограничения живут в `docs/LIGHT.md`.

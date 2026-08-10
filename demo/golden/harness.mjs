@@ -51,11 +51,19 @@ async function stableEnvironment(page, scenario) {
 /** Apply every data-only scenario override before the fixture crosses into the browser. */
 export function prepareGoldenFixture(scenario) {
   const fixture = fixtureFor(scenario.fixture);
-  if (scenario.deviceName && fixture.devices?.[scenario.deviceId])
+  const requireSpace = () => {
+    const space = fixture.config.spaces.find((item) => item.id === scenario.space);
+    if (!space) throw new Error(`golden override references missing space: ${scenario.space}`);
+    return space;
+  };
+  if (scenario.deviceName) {
+    if (!scenario.deviceId || !fixture.devices?.[scenario.deviceId])
+      throw new Error(`golden deviceName references missing device: ${scenario.deviceId || '<empty>'}`);
     fixture.devices[scenario.deviceId].name = scenario.deviceName;
+  }
   if (scenario.fillMode || typeof scenario.glowEnabled === 'boolean'
       || typeof scenario.sunRays === 'boolean') {
-    const space = fixture.config.spaces.find((item) => item.id === scenario.space);
+    const space = requireSpace();
     space.settings = {
       ...(space.settings || {}),
       ...(scenario.fillMode ? { fill_mode: scenario.fillMode } : {}),
@@ -65,26 +73,41 @@ export function prepareGoldenFixture(scenario) {
     };
   }
   if (scenario.extraOpenings?.length) {
-    const space = fixture.config.spaces.find((item) => item.id === scenario.space);
+    const space = requireSpace();
+    const known = new Set((space.openings || []).map((opening) => opening.id));
+    for (const opening of scenario.extraOpenings) {
+      if (!opening?.id || known.has(opening.id))
+        throw new Error(`golden extraOpening has missing/duplicate id: ${opening?.id || '<empty>'}`);
+      if (!['door', 'window', 'gate'].includes(opening.type))
+        throw new Error(`golden extraOpening has unknown type: ${opening.type}`);
+      known.add(opening.id);
+    }
     space.openings = [...(space.openings || []), ...structuredClone(scenario.extraOpenings)];
   }
   if (scenario.hideOpenings) {
-    const space = fixture.config.spaces.find((item) => item.id === scenario.space);
+    const space = requireSpace();
     space.settings = { ...(space.settings || {}), hide_openings: true };
   }
   if (scenario.roomGlow) {
-    const space = fixture.config.spaces.find((item) => item.id === scenario.space);
+    const space = requireSpace();
+    const unknown = new Set(Object.keys(scenario.roomGlow));
     for (const room of space.rooms) {
       if (!(room.id in scenario.roomGlow)) continue;
+      unknown.delete(room.id);
       room.settings = { ...(room.settings || {}), glow: scenario.roomGlow[room.id] };
     }
+    if (unknown.size) throw new Error(`golden roomGlow references missing room(s): ${[...unknown].join(', ')}`);
   }
   if (scenario.roomCustomFill) {
-    const space = fixture.config.spaces.find((item) => item.id === scenario.space);
+    const space = requireSpace();
+    const unknown = new Set(Object.keys(scenario.roomCustomFill));
     for (const room of space.rooms) {
       if (!(room.id in scenario.roomCustomFill)) continue;
+      unknown.delete(room.id);
       room.settings = { ...(room.settings || {}), custom_fill: scenario.roomCustomFill[room.id] };
     }
+    if (unknown.size)
+      throw new Error(`golden roomCustomFill references missing room(s): ${[...unknown].join(', ')}`);
   }
   if (scenario.allLightsOff) {
     for (const [entityId, state] of Object.entries(fixture.states || {})) {
@@ -94,7 +117,8 @@ export function prepareGoldenFixture(scenario) {
   }
   if (scenario.stateOverrides) {
     for (const [entityId, override] of Object.entries(scenario.stateOverrides)) {
-      const current = fixture.states?.[entityId] || { entity_id: entityId, attributes: {} };
+      const current = fixture.states?.[entityId];
+      if (!current) throw new Error(`golden stateOverride references missing entity: ${entityId}`);
       fixture.states[entityId] = {
         ...current,
         ...structuredClone(override),
@@ -104,12 +128,17 @@ export function prepareGoldenFixture(scenario) {
   }
   if (scenario.markerOverrides) {
     const ids = new Set(scenario.markerOverrides.map((marker) => marker.id));
+    const known = new Set((fixture.config.markers || []).map((marker) => marker.id));
+    const missing = [...ids].filter((id) => !known.has(id));
+    if (missing.length) throw new Error(`golden markerOverrides reference missing marker(s): ${missing.join(', ')}`);
     fixture.config.markers = [
       ...(fixture.config.markers || []).filter((marker) => !ids.has(marker.id)),
       ...structuredClone(scenario.markerOverrides),
     ];
   }
   if (scenario.layoutOverrides) {
+    const missing = Object.keys(scenario.layoutOverrides).filter((id) => !(id in (fixture.layout || {})));
+    if (missing.length) throw new Error(`golden layoutOverrides reference missing item(s): ${missing.join(', ')}`);
     fixture.layout = { ...(fixture.layout || {}), ...structuredClone(scenario.layoutOverrides) };
   }
 

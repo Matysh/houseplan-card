@@ -5,9 +5,9 @@ import {
   fitView, declump, safeUrl, resolveTapAction, floorsOf, subst, spaceDisplayOf, roomFillColor,
   splitRoomPath, polyContainsPoly, islandsOf,
   kelvinToRgb, glowColorOf, normalizeGlowColorOverride, liveGlowBrightness,
-  resolveGlowValues, resolveGlowAppearance, glowAlpha, doorSector, doorSpillRange, hasRoomBehind,
+  resolveGlowValues, resolveGlowAppearance, glowAlpha,
   controlsAction, isControllable,
-  sharedBoundary, openZoneOf, distToSegment,
+  sharedBoundary, distToSegment,
   outlineWithout,
   alignGuides, segmentAngle, is45,
   swipeTarget, clampScale,
@@ -902,63 +902,6 @@ test('live Glow brightness and perceptual alpha keep the documented bounds', () 
   assert.ok(glowAlpha(0.5, 0.85) < glowAlpha(1, 0.85));
 });
 
-test('doorSector: sector through a door, clamped and guarded', () => {
-  const s = [0, 0];
-  const sec = doorSector(s, [10, -2], [10, 2], 50);
-  assert.ok(sec && sec.length === 10 + 0); // вершина + 9 точек дуги
-  assert.deepEqual(sec[0], [0, 0]);
-  for (const p of sec.slice(1)) {
-    const d = Math.hypot(p[0], p[1]);
-    assert.ok(Math.abs(d - 50) < 1e-6);
-    assert.ok(p[0] > 0); // сектор смотрит в сторону двери
-  }
-  // дверь за радиусом
-  assert.equal(doorSector(s, [60, -2], [60, 2], 50), null);
-  // источник на краю двери
-  assert.equal(doorSector(s, [0, 0], [10, 2], 50), null);
-});
-
-test('doorSector: thick doorway is clipped by both tunnel jamb faces', () => {
-  const src = [0, 3];
-  const a = [10, -2];
-  const b = [10, 2];
-  const thin = doorSector(src, a, b, 50);
-  const thick = doorSector(src, a, b, 50, 170, 4);
-  assert.ok(thin && thick);
-  assert.deepEqual(doorSector(src, a, b, 50, 170, 0), thin);
-
-  // The vertical wall occupies x=8..12. Every limiting ray must remain inside
-  // the clear opening y=-2..2 at BOTH faces, not only at the centreline.
-  const yAtX = (p, x) => src[1] + (p[1] - src[1]) * ((x - src[0]) / (p[0] - src[0]));
-  for (const p of [thick[1], thick.at(-1)]) {
-    for (const x of [8, 12]) assert.ok(Math.abs(yAtX(p, x)) <= 2 + 1e-9);
-  }
-
-  const spreadAtFarFace = (sector) => Math.abs(yAtX(sector[1], 12) - yAtX(sector.at(-1), 12));
-  assert.ok(spreadAtFarFace(thick) < spreadAtFarFace(thin));
-});
-
-test('doorSpillRange: near and distant apertures retain only bounded post-aperture reach', () => {
-  const near = doorSpillRange(250, 60, 95);
-  assert.deepEqual(near, { reach: 95, outerRadius: 155 });
-  assert.ok(near.reach < 250);
-
-  const distant = doorSpillRange(250, 230, 95);
-  assert.deepEqual(distant, { reach: 20, outerRadius: 250 });
-  assert.ok(distant.reach < 250);
-  assert.equal(doorSpillRange(250, 250, 95), null);
-  assert.equal(doorSpillRange(250, 100, 0), null);
-});
-
-test('hasRoomBehind: neighbour room yes, street no', () => {
-  const neighbour = [[10, -5], [20, -5], [20, 5], [10, 5]];
-  // дверь в стене x=10 (стена вертикальна: угол 90°), источник слева в (5,0)
-  assert.ok(hasRoomBehind([10, 0], 90, [5, 0], [neighbour], 1));
-  // за дверью пусто
-  assert.ok(!hasRoomBehind([10, 0], 90, [5, 0], [], 1));
-  assert.ok(!hasRoomBehind([10, 0], 90, [5, 0], [[[30, 30], [40, 30], [40, 40], [30, 40]]], 1));
-});
-
 test('controlsAction: HA-group semantics', () => {
   assert.equal(controlsAction(['off', 'off']), 'turn_on');
   assert.equal(controlsAction(['off', 'on']), 'turn_off');
@@ -991,18 +934,6 @@ test('sharedBoundary: exact, partial-collinear and none', () => {
   assert.equal(sharedBoundary(A, [[5, 5], [6, 5], [6, 6], [5, 6]]).length, 0);
   // перпендикулярное касание — не граница
   assert.equal(sharedBoundary(A, [[2, 2], [3, 2], [3, 3], [2, 3]]).filter((s) => len(s) > 1e-6).length, 0);
-});
-
-test('openZoneOf: transitive, either-direction links', () => {
-  const rooms = [
-    { id: 'a', open_to: ['b'] },
-    { id: 'b' },                    // связь только со стороны a
-    { id: 'c', open_to: ['b'] },    // b↔c со стороны c
-    { id: 'd' },                    // не связан
-  ];
-  const z = openZoneOf('a', rooms);
-  assert.deepEqual([...z].sort(), ['a', 'b', 'c']);
-  assert.deepEqual([...openZoneOf('d', rooms)], ['d']);
 });
 
 test('distToSegment', () => {

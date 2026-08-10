@@ -68,4 +68,41 @@ const out = await page.evaluate(() => {
   }) === 'on';
   return o;
 });
+const working = page.locator('.dev.on').first();
+const neutral = page.locator('.dev:not(.on):not(.open):not(.alarm):not(.unavail)').first();
+out.hasWorkingAndNeutralMarkers = await working.count() > 0 && await neutral.count() > 0;
+if (out.hasWorkingAndNeutralMarkers) {
+  const visual = (locator) => locator.evaluate((el) => {
+    const style = getComputedStyle(el);
+    return {
+      background: style.backgroundColor,
+      color: style.color,
+      shadow: style.boxShadow,
+      z: style.zIndex,
+    };
+  });
+  const restingWorking = await visual(working);
+  const restingNeutral = await visual(neutral);
+  out.workingUsesNeutralShadow = restingWorking.shadow === restingNeutral.shadow
+    && !/255,\s*212,\s*92/.test(restingWorking.shadow);
+  await working.hover();
+  await page.waitForTimeout(180);
+  const hoverWorking = await visual(working);
+  await neutral.hover();
+  await page.waitForTimeout(180);
+  const hoverNeutral = await visual(neutral);
+  out.workingHoverMatchesNeutral = hoverWorking.background === hoverNeutral.background
+    && hoverWorking.color === hoverNeutral.color
+    && hoverWorking.shadow === hoverNeutral.shadow
+    && hoverWorking.z === '5';
+  await page.mouse.move(0, 0);
+  await page.waitForTimeout(180);
+  const restoredWorking = await visual(working);
+  out.workingReturnsToYellow = restoredWorking.background === restingWorking.background
+    && restoredWorking.color === restingWorking.color;
+} else {
+  out.workingUsesNeutralShadow = false;
+  out.workingHoverMatchesNeutral = false;
+  out.workingReturnsToYellow = false;
+}
 await finish(browser, checkAll(out));

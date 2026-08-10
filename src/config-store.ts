@@ -8,12 +8,17 @@
  * localStorage (`houseplan_card_cfg_v1`) for its own instant start — we seed from it
  * so embedded cards paint immediately, then refresh from the server in the background.
  */
+import { contentFingerprint } from './visual-continuity';
+
 const LS_CFG = 'houseplan_card_cfg_v1';
 
 export interface HpConfigSnapshot {
   config: any | null;
   rev: number;
+  configFingerprint: string;
   layout: Record<string, any>;
+  layoutRev: number;
+  layoutFingerprint: string;
 }
 
 let cache: HpConfigSnapshot | null = null;
@@ -27,7 +32,15 @@ export function cachedSnapshot(): HpConfigSnapshot | null {
   try {
     const c = JSON.parse(localStorage.getItem(LS_CFG) || 'null');
     if (c && c.config && Array.isArray(c.config.spaces)) {
-      return { config: c.config, rev: c.rev || 0, layout: c.layout || {} };
+      const layout = c.layout || {};
+      return {
+        config: c.config,
+        rev: c.rev || 0,
+        configFingerprint: c.config_fingerprint || contentFingerprint(c.config),
+        layout,
+        layoutRev: c.layout_rev || 0,
+        layoutFingerprint: c.layout_fingerprint || contentFingerprint(layout),
+      };
     }
   } catch {
     /* ignore */
@@ -43,7 +56,10 @@ async function fetchFresh(hass: any): Promise<HpConfigSnapshot> {
   cache = {
     config: cfgResp?.config ?? null,
     rev: cfgResp?.rev ?? 0,
+    configFingerprint: contentFingerprint(cfgResp?.config ?? null),
     layout: layResp?.layout ?? {},
+    layoutRev: layResp?.rev ?? 0,
+    layoutFingerprint: contentFingerprint(layResp?.layout ?? {}),
   };
   if (!subscribed && hass.connection?.subscribeEvents) {
     subscribed = true;
@@ -66,7 +82,8 @@ async function fetchFresh(hass: any): Promise<HpConfigSnapshot> {
 }
 
 /** Get the shared config snapshot (cached, deduped across cards). */
-export function getConfig(hass: any): Promise<HpConfigSnapshot> {
+export function getConfig(hass: any, force = false): Promise<HpConfigSnapshot> {
+  if (force) cache = null;
   if (cache) return Promise.resolve(cache);
   if (inflight) return inflight;
   inflight = fetchFresh(hass).finally(() => {

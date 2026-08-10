@@ -2,9 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   canonicalColumnAngle, columnBody, floorMinusBodies, geometryArea,
-  directionalOccluders, partitionBody, pointInPhysicalBody, radialOccluders,
+  directionalOccluders, intersectionPaths, partitionBody, pointInPhysicalBody,
   sameColumnPlacement,
 } from '../test-build/physical-geometry.js';
+import {
+  polygonSegments, splitAtIntersections, visibilityPolygon,
+} from '../test-build/light-visibility.js';
 
 const closeTo = (got, want, tol = 1e-6) =>
   assert.ok(Math.abs(got - want) <= tol, `expected ${want}, got ${got}`);
@@ -40,25 +43,20 @@ test('physical bodies are removed from clean floor area', () => {
   closeTo(geometryArea(floorMinusBodies(floor, [obstacle])), 3);
 });
 
-test('radial occluder extends a wall away from the source', () => {
-  const body = [[1, -0.1], [1.2, -0.1], [1.2, 0.1], [1, 0.1]];
-  const shadows = radialOccluders([body], [0, 0], 10);
-  assert.ok(Math.max(...shadows.flat().map((p) => p[0])) > 9);
-});
-
-test('radial shadow covers the far side of a long nearby partition', () => {
-  const body = partitionBody([1, -3], [1, 3], 10, 5, 0.25);
-  assert.ok(body);
-  const shadows = radialOccluders([body], [0, 0], 10);
-  assert.ok(shadows.some((poly) => pointInPhysicalBody([5, 0], poly)),
-    'the far side of the wall must remain occluded inside the glow radius');
-});
-
-test('a source inside a physical body is fully blocked', () => {
-  const body = [[-1, -1], [1, -1], [1, 1], [-1, 1]];
-  const shadows = radialOccluders([body], [0, 0], 10);
-  for (const point of [[5, 0], [-5, 0], [0, 5], [0, -5]])
-    assert.ok(shadows.some((poly) => pointInPhysicalBody(point, poly)));
+test('intersection failure is fail-dark and never returns the unclipped fan', () => {
+  const rooms = [
+    [[100, 70], [160, 70], [160, 120], [100, 120]],
+    [[10, 150], [60, 150], [60, 170], [10, 170]],
+    [[240, 20], [250, 20], [250, 80], [240, 80]],
+    [[180, 150], [230, 150], [230, 220], [180, 220]],
+    [[180, 110], [240, 110], [240, 170], [180, 170]],
+  ];
+  // This exact sweep used to make polyclip throw on nudge-generated decimals.
+  const barriers = splitAtIntersections(rooms.flatMap(polygonSegments));
+  const fan = visibilityPolygon([170, 380], 285, barriers);
+  const paths = intersectionPaths([fan], rooms);
+  assert.deepEqual(paths, [], 'a source outside every room must never return its raw visibility fan');
+  assert.deepEqual(intersectionPaths([fan], []), [], 'missing floor bounds are dark, not unbounded');
 });
 
 test('overlapping physical bodies are subtracted from floor only once', () => {

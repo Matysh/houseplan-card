@@ -109,9 +109,12 @@ const res = await page.evaluate(async () => {
   // region: a hair on screen, never a soft sector pasted over the plan.
   const glowFilters = [...sr().querySelectorAll('defs filter[id^="hp-glow"]')];
   const pools = sr().querySelector('.glow-pools');
+  const frameFilter = sr().querySelector('.glow-pools-frame')?.getAttribute('filter');
+  const featherTemporarilySuspended = frameFilter === null
+    && Date.now() < Number(c._glowFeatherSuspendUntil || 0);
   out.edgeFeatherIsAHair = glowFilters.length === 1
     && glowFilters[0].querySelectorAll('feGaussianBlur').length === 1
-    && sr().querySelector('.glow-pools-frame')?.getAttribute('filter') === 'url(#hp-glowfeather)'
+    && (frameFilter === 'url(#hp-glowfeather)' || featherTemporarilySuspended)
     && Number(pools?.dataset.featherPx) > 0 && Number(pools?.dataset.featherPx) <= 3
     && [...sr().querySelectorAll('.glowlayer [mask], .glow-pools [filter]')].length === 0;
   // Дверь наружу: свет через неё не выходит — есть проём, но за ним нет пола.
@@ -239,14 +242,27 @@ const res = await page.evaluate(async () => {
   roomEl?.dispatchEvent(new MouseEvent('mouseenter'));
   await c.updateComplete;
   const hoverFill = sr().querySelector('.room-hover-fill');
+  const hoverFillLayer = sr().querySelector('.room-hover-fill-layer');
   const hoverHalo = sr().querySelector('.room-hover-halo');
   const hoverOutline = sr().querySelector('.room-hover-outline');
+  const hoverOutlineLayer = sr().querySelector('.room-hover-outline-layer');
+  const glowLayer = sr().querySelector('.glow-pools-frame');
+  const wallLayer = sr().querySelector('.wallbodies');
   out.hoverKeepsGlowDom = poolBeforeHover === sr().querySelector('.glow-pool')
     && gradientBeforeHover === sr().querySelector('radialGradient[id^="hp-glow-"]');
   out.hoverUsesPlainSvg = !!roomEl && !!hoverFill && !!hoverHalo && !!hoverOutline
     && getComputedStyle(roomEl).filter === 'none'
     && getComputedStyle(hoverHalo).filter === 'none'
     && getComputedStyle(hoverOutline).filter === 'none';
+  const fillStyle = hoverFill ? getComputedStyle(hoverFill) : null;
+  out.hoverUsesNeutralDarkening = fillStyle?.fill === 'rgb(0, 0, 0)'
+    && Math.abs(Number(fillStyle.fillOpacity) - 0.22) < 0.001;
+  out.hoverLayerOrder = !!hoverFillLayer && !!glowLayer && !!hoverOutlineLayer
+    && !!(hoverFillLayer.compareDocumentPosition(glowLayer) & Node.DOCUMENT_POSITION_FOLLOWING)
+    // The default smoke fixture has no thick wall body. When one exists, the
+    // late outline must follow it; absence is not a layer-order failure.
+    && (!wallLayer
+      || !!(wallLayer.compareDocumentPosition(hoverOutlineLayer) & Node.DOCUMENT_POSITION_FOLLOWING));
   roomEl?.dispatchEvent(new MouseEvent('mouseleave'));
   await c.updateComplete;
   return out;

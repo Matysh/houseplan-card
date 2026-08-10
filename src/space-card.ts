@@ -19,6 +19,13 @@ import {
   type PresentationActivityRuntime,
 } from './device-presentation';
 import type { DevItem } from './types';
+import {
+  VisualContinuityController,
+  contentFingerprint,
+  subscribePageVisibility,
+  visualFrameFingerprint,
+  type PageVisibilitySignal,
+} from './visual-continuity';
 import './space-editor';
 
 const fireEvent = (node: EventTarget, type: string, detail?: unknown) => {
@@ -55,14 +62,28 @@ class HouseplanSpaceCard extends LitElement {
   private _config?: SpaceCardConfig;
   private _snap: HpConfigSnapshot | null = null;
   private _loading = false;
+  private _reloadQueued = false;
+  private _forceReloadQueued = false;
+  private _reloadRetryTimer = 0;
   private _unsub?: () => void;
   private _stageWidth = 0;
+  private _pendingStageWidth = 0;
+  private _stageWidthRaf = 0;
   private _stageObserver?: ResizeObserver;
   private _observedStage?: HTMLElement;
   private _haRegistryRelease?: () => void;
   private _haRegistryConnection: any = null;
   private _haRegistryRevision = -1;
   private _devices: DevItem[] = [];
+  private _continuity = this._newContinuityController();
+  private _continuityUnsub?: () => void;
+  private _continuityEpoch = 0;
+  private _continuityDataReady = true;
+  private _continuityPaintToken = -1;
+  private _continuityDisposed = false;
+  private _renderSnapshotAt = Date.now();
+  private _hassSequence = 0;
+  private _connHooked: any = null;
   private _activityRuntime = new Map<string, StaticActivityRuntime>();
   private _onHaRegistryUpdate = () => {
     const revision = haRegistrySnapshot(this.hass).revision;
@@ -85,7 +106,47 @@ class HouseplanSpaceCard extends LitElement {
     hass: { attribute: false },
     _config: { state: true },
     _snap: { state: true },
+    _continuityEpoch: { state: true },
   };
+
+  private _newContinuityController(): VisualContinuityController {
+    return new VisualContinuityController(() => {
+      this._continuityEpoch++;
+      if (this.isConnected) this.requestUpdate();
+    });
+  }
+
+  private _pageVisibility = (signal: PageVisibilitySignal): void => {
+    const token = this._continuity.visibility(signal);
+    if (signal.kind === 'hidden' || !signal.long) return;
+    if (Date.now() - this._renderSnapshotAt > 1000) this._continuity.note('device-snapshot-stale');
+    this._continuityDataReady = false;
+    this._continuityPaintToken = -1;
+    if (token === this._continuity.token) void this._load(true);
+  };
+
+  private _onConnLost = (): void => {
+    this._continuityDataReady = false;
+    this._continuityPaintToken = -1;
+    this._continuity.connectionLost();
+  };
+
+  private _onConnReady = (): void => {
+    this._beginContinuityCandidate('connection-ready', false, 'connection');
+    void this._load(true);
+  };
+
+  private _hookConnection(): void {
+    const connection = this.hass?.connection;
+    if (!connection || connection === this._connHooked) return;
+    this._connHooked?.removeEventListener?.('ready', this._onConnReady);
+    this._connHooked?.removeEventListener?.('disconnected', this._onConnLost);
+    this._connHooked?.removeEventListener?.('reconnect-error', this._onConnLost);
+    connection.addEventListener?.('ready', this._onConnReady);
+    connection.addEventListener?.('disconnected', this._onConnLost);
+    connection.addEventListener?.('reconnect-error', this._onConnLost);
+    this._connHooked = connection;
+  }
 
   public static getConfigElement() {
     return document.createElement('houseplan-space-card-editor');
@@ -114,38 +175,67 @@ class HouseplanSpaceCard extends LitElement {
   }
 
   public connectedCallback(): void {
+    if (this._continuityDisposed) {
+      this._continuity = this._newContinuityController();
+      this._continuityDisposed = false;
+      this._continuityPaintToken = -1;
+    }
     super.connectedCallback();
     if (this.hass) this._ensureHaRegistryAuthority();
+    this._continuityUnsub?.();
+    this._continuityUnsub = subscribePageVisibility(this.ownerDocument, this._pageVisibility);
     this._unsub = onConfigChange(() => {
-      this._loading = false;
-      this._snap = null;
-      this.requestUpdate();
+      this._beginContinuityCandidate('config-event', false);
+      this._reloadQueued = true;
+      void this._load();
     });
     // a dashboard on a wall tablet outlives a 24 h signature
     this._signer.start(() => this.hass, () => this._referenced());
   }
 
   public disconnectedCallback(): void {
+    this._continuityUnsub?.();
+    this._continuityUnsub = undefined;
     this._unsub?.();
     this._unsub = undefined;
+    window.clearTimeout(this._reloadRetryTimer);
+    this._reloadRetryTimer = 0;
     this._stageObserver?.disconnect();
     this._stageObserver = undefined;
     this._observedStage = undefined;
+    if (this._stageWidthRaf) cancelAnimationFrame(this._stageWidthRaf);
+    this._stageWidthRaf = 0;
+    this._pendingStageWidth = 0;
     this._signer.dispose();
     this._haRegistryRelease?.();
     this._haRegistryRelease = undefined;
     this._haRegistryConnection = null;
+    this._connHooked?.removeEventListener?.('ready', this._onConnReady);
+    this._connHooked?.removeEventListener?.('disconnected', this._onConnLost);
+    this._connHooked?.removeEventListener?.('reconnect-error', this._onConnLost);
+    this._connHooked = null;
     for (const runtime of this._activityRuntime.values()) window.clearTimeout(runtime.timer);
     this._activityRuntime.clear();
+    this._continuity.dispose();
+    this._continuityDisposed = true;
     super.disconnectedCallback();
   }
 
   protected willUpdate(changed: PropertyValues): void {
-    if (changed.has('hass') && this.hass) this._ensureHaRegistryAuthority();
+    if (changed.has('hass') && this.hass) {
+      this._hassSequence++;
+      this._renderSnapshotAt = Date.now();
+      this._continuity.note('hass-snapshot');
+      this._ensureHaRegistryAuthority();
+      this._hookConnection();
+    }
     if (this.hass && !this._loading && (!this._snap || changed.has('hass'))) {
       if (!this._snap || !this._loadedOnce) this._load();
     }
     this._refreshDevices();
+    if (this._continuity.hasCompleteFrame && this._continuity.state === 'steady') {
+      this._continuity.refreshCompleteFrame(this._frameFingerprint());
+    }
   }
 
   private _stampActivity(runtime: StaticActivityRuntime, kind: 'event' | 'transition'): void {
@@ -223,40 +313,188 @@ class HouseplanSpaceCard extends LitElement {
     this._devices = devices;
   }
 
-  protected updated(): void {
-    const stage = this.renderRoot.querySelector<HTMLElement>('.hp-static-stage') || undefined;
-    if (stage === this._observedStage) return;
-    this._stageObserver?.disconnect();
-    this._observedStage = stage;
-    if (!stage) {
-      this._stageObserver = undefined;
+  private _beginContinuityCandidate(
+    reason: string,
+    dataReady: boolean,
+    recoveryReason: 'plan' | 'connection' | 'stage-size' | 'asset' = 'plan',
+  ): number {
+    this._continuityDataReady = dataReady;
+    this._continuityPaintToken = -1;
+    return this._continuity.beginCandidate(reason, recoveryReason);
+  }
+
+  private _backdropRaw(): string {
+    if (!this._snap?.config || !this._config) return '';
+    return spaceModels(this._snap.config).find((space) => space.id === this._config!.space)?.bg?.href || '';
+  }
+
+  private _candidateBackdrop(config: any): string {
+    if (!config || !this._config) return '';
+    return spaceModels(config).find((space) => space.id === this._config!.space)?.bg?.href || '';
+  }
+
+  private _assetsReady(): boolean {
+    const raw = this._backdropRaw();
+    return !raw || this._signer.isReady(this.hass, raw);
+  }
+
+  private _frameFingerprint(): string {
+    const snap = this._snap;
+    return visualFrameFingerprint([
+      snap?.rev || 0,
+      snap?.configFingerprint || contentFingerprint(snap?.config),
+      snap?.layoutRev || 0,
+      snap?.layoutFingerprint || contentFingerprint(snap?.layout),
+      this._config?.space || '',
+      this._stageWidth,
+      this._hassSequence,
+      this.hass?.themes?.darkMode ?? this.hass?.themes?.default_theme ?? '',
+    ]);
+  }
+
+  private _stageValid(): boolean {
+    const stage = this._observedStage;
+    return !!stage && stage.clientWidth > 0 && stage.clientHeight > 0;
+  }
+
+  private _settleContinuityFrame(): void {
+    if (!this._stageValid()) return;
+    if (!this._continuity.hasCompleteFrame && this._continuity.state === 'steady') {
+      if (!this._assetsReady()) {
+        this._beginContinuityCandidate('asset-wait', true, 'asset');
+        return;
+      }
+      this._renderSnapshotAt = Date.now();
+      this._continuity.markCompleteFrame(this._frameFingerprint());
       return;
     }
-    const measure = () => {
-      const width = stage.clientWidth;
-      if (width > 0 && Math.abs(width - this._stageWidth) > 0.5) {
-        this._stageWidth = width;
-        this.requestUpdate();
+    if (!this._continuityDataReady || !this._assetsReady()) return;
+    if (!['holding', 'offline-stale', 'overlay-pending', 'overlay-visible', 'candidate-ready']
+      .includes(this._continuity.state)) return;
+    const token = this._continuity.token;
+    if (this._continuityPaintToken === token) return;
+    this._continuityPaintToken = token;
+    if (!this._continuity.candidateReady(token)) return;
+    void this._continuity.commitAfterPaint(token, {
+      updateComplete: () => this.updateComplete,
+      stageValid: () => this.isConnected && this._stageValid(),
+      assetsReady: () => this._assetsReady(),
+      frameFingerprint: () => this._frameFingerprint(),
+    }).then((committed) => {
+      if (!committed || token !== this._continuity.token) {
+        if (token === this._continuity.token) this._continuityPaintToken = -1;
+        return;
       }
-    };
-    this._stageObserver = new ResizeObserver(measure);
-    this._stageObserver.observe(stage);
-    measure();
+      this._renderSnapshotAt = Date.now();
+    });
+  }
+
+  private _onAssetLoaded = (raw: string): void => {
+    this._signer.markLoaded(this.hass, raw);
+    this._continuity.note('asset-ready');
+    this._continuityPaintToken = -1;
+    if (this._continuity.state !== 'steady') this.requestUpdate();
+  };
+
+  protected updated(): void {
+    const stage = this.renderRoot.querySelector<HTMLElement>('.hp-static-stage') || undefined;
+    if (stage !== this._observedStage) {
+      this._stageObserver?.disconnect();
+      this._observedStage = stage;
+      if (!stage) {
+        this._stageObserver = undefined;
+      } else {
+        const measure = () => {
+          const width = stage.clientWidth;
+          if (width <= 0 || Math.abs(width - this._stageWidth) <= 0.5) return;
+          if (this._stageWidth <= 0) {
+            this._stageWidth = width;
+            this.requestUpdate();
+            return;
+          }
+          this._pendingStageWidth = width;
+          if (this._stageWidthRaf) return;
+          this._stageWidthRaf = requestAnimationFrame(() => {
+            this._stageWidthRaf = 0;
+            const target = this._pendingStageWidth;
+            this._pendingStageWidth = 0;
+            if (!target || !this._observedStage || this._observedStage.clientWidth <= 0) return;
+            if (Math.abs(this._observedStage.clientWidth - target) > 0.5) {
+              measure();
+              return;
+            }
+            if (Math.abs(target - this._stageWidth) <= 0.5) return;
+            if (this._continuity.hasCompleteFrame) {
+              this._beginContinuityCandidate('stage-resize', true, 'stage-size');
+            }
+            this._stageWidth = target;
+            this.requestUpdate();
+          });
+        };
+        this._stageObserver = new ResizeObserver(measure);
+        this._stageObserver.observe(stage);
+        measure();
+      }
+    }
+    this._settleContinuityFrame();
   }
 
   private _loadedOnce = false;
-  private async _load(): Promise<void> {
-    if (!this.hass || this._loading) return;
+  private async _load(force = false): Promise<void> {
+    if (!this.hass) return;
+    if (this._loading) {
+      this._reloadQueued = true;
+      this._forceReloadQueued ||= force;
+      return;
+    }
     this._loading = true;
+    this._reloadQueued = false;
+    let loaded = false;
     try {
-      const snap = await getConfig(this.hass);
-      this._snap = snap;
+      const snap = await getConfig(this.hass, force);
+      const configChanged = !this._snap
+        || this._snap.configFingerprint !== snap.configFingerprint;
+      const layoutChanged = !this._snap
+        || this._snap.layoutFingerprint !== snap.layoutFingerprint;
+      if (configChanged && !await this._signer.prepareImage(
+        this.hass, this._candidateBackdrop(snap.config),
+      )) {
+        this._continuity.note('asset-failed');
+        window.clearTimeout(this._reloadRetryTimer);
+        this._reloadRetryTimer = window.setTimeout(() => void this._load(true), 1000);
+        return;
+      }
+      window.clearTimeout(this._reloadRetryTimer);
+      this._reloadRetryTimer = 0;
+      if ((configChanged || layoutChanged) && this._continuity.hasCompleteFrame
+          && this._continuity.state === 'steady') {
+        this._beginContinuityCandidate('structural-response', true);
+      }
+      if (configChanged || layoutChanged) {
+        this._snap = snap;
+      } else if (this._snap) {
+        // Revision-only echoes are metadata, not a new visual candidate.
+        this._snap.rev = snap.rev;
+        this._snap.layoutRev = snap.layoutRev;
+      }
+      if (configChanged) this._continuity.note('config-candidate', { configRev: snap.rev });
+      if (layoutChanged) this._continuity.note('layout-candidate', { layoutRev: snap.layoutRev });
       this._loadedOnce = true;
+      loaded = true;
+      this._continuityDataReady = true;
+      this._refreshDevices();
     } catch {
       /* keep any localStorage snapshot */
     } finally {
       this._loading = false;
+      if (!loaded && !this._continuity.hasCompleteFrame) this._continuityDataReady = true;
       this.requestUpdate();
+      if (this._reloadQueued) {
+        const forceAgain = this._forceReloadQueued;
+        this._reloadQueued = false;
+        this._forceReloadQueued = false;
+        void this._load(forceAgain);
+      }
     }
   }
 
@@ -275,7 +513,14 @@ class HouseplanSpaceCard extends LitElement {
   }
 
   private _errorCard(msg: string): TemplateResult {
-    return html`<ha-card><div class="hp-static-error">${msg}</div></ha-card>`;
+    return html`<ha-card
+      data-continuity-state=${this._continuity.state}
+      data-continuity-token=${this._continuity.token}
+      data-frame-fingerprint=${this._continuity.frameFingerprint || nothing}
+      data-recovery-reason=${(this._continuity.overlayVisible || this._continuity.state === 'recovery-error')
+        ? this._continuity.recoveryReason || nothing : nothing}>
+        <div class="hp-static-error">${msg}</div>
+      </ha-card>`;
   }
 
   /**
@@ -290,12 +535,38 @@ class HouseplanSpaceCard extends LitElement {
     return referencedContentUrls(this._snap?.config);
   }
 
+  private _retryContinuity = (): void => {
+    this._continuityDataReady = false;
+    this._continuityPaintToken = -1;
+    this._continuity.retry(this._continuity.recoveryReason || 'plan');
+    void this._load(true);
+  };
+
+  private _renderRecoveryOverlay(): TemplateResult | typeof nothing {
+    if (!this._continuity.overlayVisible && this._continuity.state !== 'recovery-error') return nothing;
+    const connection = this._continuity.recoveryReason === 'connection';
+    return html`<div class="recoveryoverlay phase-${this._continuity.overlayPhase}"
+      role="status" aria-live="polite" aria-atomic="true">
+        <ha-icon icon="mdi:home-sync-outline"></ha-icon>
+        <span>${t(this._lang, connection
+          ? 'continuity.restore_connection' : 'continuity.restore_plan')}</span>
+        ${this._continuity.state === 'recovery-error'
+          ? html`<button class="btn on" @click=${this._retryContinuity}>${t(this._lang, 'continuity.retry')}</button>`
+          : nothing}
+      </div>`;
+  }
+
+  /** Redacted lifecycle diagnostics shared with the full card's sampler. */
+  public houseplanContinuityTrace(): readonly import('./visual-continuity').ContinuityTraceEvent[] {
+    return this._continuity.trace;
+  }
+
   protected render(): TemplateResult | typeof nothing {
     if (!this._config) return nothing;
     const cfg = this._snap?.config;
     if (!cfg) {
       // still loading and no snapshot yet
-      return html`<ha-card><div class="hp-static-error">${t(this._lang, 'space_card.loading')}</div></ha-card>`;
+      return this._errorCard(t(this._lang, 'space_card.loading'));
     }
     const spaceId = this._config.space;
     const stage = renderSpaceStatic({
@@ -308,6 +579,7 @@ class HouseplanSpaceCard extends LitElement {
       lang: this._lang,
       // resolved at render time: a url baked in earlier would be the unsigned one
       displayUrl: (raw) => this._signer.display(this.hass, raw),
+      assetLoaded: this._onAssetLoaded,
       registry: haRegistrySnapshot(this.hass),
       devices: this._devices,
       activityRuntime: this._activityRuntime,
@@ -322,10 +594,19 @@ class HouseplanSpaceCard extends LitElement {
     const title = this._config.title !== undefined ? this._config.title : sp?.title || '';
     const showButton = this._config.show_button !== false;
     const label = this._config.button_label || t(this._lang, 'space_card.button');
+    const recoveryReason = (this._continuity.overlayVisible || this._continuity.state === 'recovery-error')
+      ? this._continuity.recoveryReason : null;
     return html`
-      <ha-card>
+      <ha-card
+        data-continuity-state=${this._continuity.state}
+        data-continuity-token=${this._continuity.token}
+        data-frame-fingerprint=${this._continuity.frameFingerprint || nothing}
+        data-recovery-reason=${recoveryReason || nothing}>
         ${title ? html`<div class="hp-static-title">${title}</div>` : nothing}
-        ${stage}
+        <div class="hp-static-body">
+          ${stage}
+          ${this._renderRecoveryOverlay()}
+        </div>
         ${showButton
           ? html`<div class="hp-static-foot">
               <button class="hp-static-btn" @click=${this._goToSpace}>${label}</button>
@@ -348,6 +629,9 @@ class HouseplanSpaceCard extends LitElement {
         padding: 10px 14px 6px;
         font-size: 16px;
         color: var(--primary-text-color);
+      }
+      .hp-static-body {
+        position: relative;
       }
       .hp-static-stage {
         position: relative;

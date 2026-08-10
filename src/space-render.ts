@@ -56,6 +56,8 @@ export interface StaticRenderOpts {
    * rather than an unsigned one, which would 401 (review R3-2).
    */
   displayUrl?: (raw: string) => string;
+  /** Marks a protected backdrop as loaded/paintable for continuity barriers. */
+  assetLoaded?: (raw: string) => void;
 }
 
 export interface StaticDeviceBuildOpts {
@@ -309,6 +311,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
         )}
         ${bgHref
           ? svg`<image href="${bgHref}" x="${space.bg!.x}" y="${space.bg!.y}" width="${space.bg!.w}" height="${space.bg!.h}"
+              @load=${() => o.assetLoaded?.(space.bg!.href)}
               transform=${space.bg!.angle
                 ? `rotate(${space.bg!.angle} ${space.bg!.x + space.bg!.w / 2} ${space.bg!.y + space.bg!.h / 2})`
                 : nothing}
