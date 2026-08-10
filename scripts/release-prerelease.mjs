@@ -72,6 +72,12 @@ export function verifyReleaseProjection(release, { tag }) {
   return release;
 }
 
+/** Telegram announcements are deliberately skipped for prereleases. */
+export function prereleaseWorkflowSucceeded(label, conclusion) {
+  return conclusion === 'success'
+    || (label === 'Announce release' && conclusion === 'skipped');
+}
+
 /**
  * Read selected root entries from an ordinary ZIP archive without relying on
  * platform-specific `tar`/`unzip` executables. GitHub runners, Git Bash, WSL
@@ -339,7 +345,8 @@ if (invokedDirectly) {
       if (state !== last) console.log(`${label}: ${state} ${row.url}`);
       last = state;
       if (row.status === 'completed') {
-        if (row.conclusion !== 'success') throw new Error(`${label} concluded ${row.conclusion}: ${row.url}`);
+        if (!prereleaseWorkflowSucceeded(label, row.conclusion))
+          throw new Error(`${label} concluded ${row.conclusion}: ${row.url}`);
         return row;
       }
       await sleep(10_000);

@@ -15,7 +15,8 @@ import {
   versionFromTag,
 } from '../scripts/release-contract.mjs';
 import {
-  parseIssueList, parsePrereleaseArgs, readZipEntries, verifyReleaseProjection,
+  parseIssueList, parsePrereleaseArgs, prereleaseWorkflowSucceeded,
+  readZipEntries, verifyReleaseProjection,
 } from '../scripts/release-prerelease.mjs';
 
 const repo = 'Matysh/houseplan-card';
@@ -129,6 +130,10 @@ test('local orchestrator validates issue lists and public release assets', () =>
     () => verifyReleaseProjection({ ...release, assets: release.assets.slice(0, 1) }, { tag }),
     /houseplan\.zip/,
   );
+  assert.equal(prereleaseWorkflowSucceeded('Release', 'success'), true);
+  assert.equal(prereleaseWorkflowSucceeded('Announce release', 'skipped'), true);
+  assert.equal(prereleaseWorkflowSucceeded('Release', 'skipped'), false);
+  assert.equal(prereleaseWorkflowSucceeded('Announce release', 'failure'), false);
 });
 
 test('release ZIP inspection is portable and does not depend on tar', () => {
