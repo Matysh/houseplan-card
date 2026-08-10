@@ -51,16 +51,47 @@ const res = await page.evaluate(async () => {
   c._boundaryClick([550, 460]);
   await c.updateComplete;
   c._setMode('view'); await c.updateComplete;
-  c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== c._space ? s : ({
-    ...s, settings: { ...(s.settings || {}), fill_mode: 'glow' } })) };
+  // 9 m of reach: the question here is whether light CROSSES the virtual
+  // boundary, so the lamp must have enough radius to arrive at the far room.
+  c._serverCfg = {
+    ...c._serverCfg,
+    settings: { ...(c._serverCfg.settings || {}), glow_radius_cm: 900 },
+    spaces: c._serverCfg.spaces.map((s) => s.id !== c._space ? s : ({
+      ...s, settings: { ...(s.settings || {}), fill_mode: 'glow' } })),
+  };
   const litLight = c._devices.find((d) => d.space === c._space && d.entities.some((e) => e.startsWith('light.') && c.hass.states[e]?.state === 'on'));
   const c1 = c._roomCenter(c._spaceModel().rooms.find((r) => r.id === 'r1'));
   c._layout = { ...c._layout, [litLight.id]: { s: c._space, x: c1[0] / 1000, y: c1[1] / 1000 } };
   c.requestUpdate(); await c.updateComplete;
-  const clip = sr().querySelector('defs clipPath[id^="hp-glowclip"]');
-  out.zoneClip = clip ? clip.querySelectorAll('path').length >= 2 : false;
+  // A virtual boundary is simply not a wall: light crosses it, so the lit
+  // region of a lamp in r1 must reach past r1's own outline into r2. Counting
+  // clip children no longer says anything — there is one region, not one path
+  // per room.
+  // Every vertex of a visibility region sits ON a wall, so "is this floor
+  // lit?" has to be asked as a point-in-region test, not by looking at
+  // coordinates.
+  const litRings = () => [...sr().querySelectorAll('defs clipPath[id^="hp-glowclip"] path.glow-lit')]
+    .flatMap((p) => p.getAttribute('d').split('M').filter(Boolean).map((sub) => {
+      const numbers = (sub.match(/-?\d+(?:\.\d+)?/g) || []).map(Number);
+      const ring = [];
+      for (let i = 0; i + 1 < numbers.length; i += 2) ring.push([numbers[i], numbers[i + 1]]);
+      return ring;
+    }));
+  const isLit = (point) => litRings().some((ring) => {
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const [xi, yi] = ring[i]; const [xj, yj] = ring[j];
+      if ((yi > point[1]) !== (yj > point[1])
+        && point[0] < ((xj - xi) * (point[1] - yi)) / ((yj - yi) || 1e-12) + xi) inside = !inside;
+    }
+    return inside;
+  });
+  out.zoneClip = isLit(c._roomCenter(c._spaceModel().rooms.find((r) => r.id === 'r2')));
   const rr2 = c._curSpaceCfg.rooms.find((r) => r.id === 'r2');
   const rr3 = c._curSpaceCfg.rooms.find((r) => r.id === 'r3');
+  // Just inside r3, in line with the gap that is about to be opened.
+  const probeR3 = [802, 480];
+  const beforeReachesR3 = isLit(probeR3);
   if (rr3) {
     rr2.open_to = [...(rr2.open_to || []), 'r3'];
     rr3.open_to = [...(rr3.open_to || []), 'r2'];
@@ -71,8 +102,10 @@ const res = await page.evaluate(async () => {
     c._boundaryClick([900, 460]);
     await c.updateComplete;
     c._setMode('view'); await c.updateComplete;
-    const clip2 = sr().querySelector('defs clipPath[id^="hp-glowclip"]');
-    out.transitive = clip2 ? clip2.querySelectorAll('path').length >= 3 : false;
+    // Two hops: through the r1|r2 boundary, then through the r2|r3 one. Only
+    // the part of r3 that the lamp can actually see through both gaps lights
+    // up — but that part must, and none of it did before.
+    out.transitive = !beforeReachesR3 && isLit(probeR3);
   } else out.transitive = 'no r3';
   // outer wall refuses open
   c._setMode('plan'); c._tool = 'boundary';

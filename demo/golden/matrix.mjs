@@ -1,5 +1,5 @@
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 6;
+export const GOLDEN_MATRIX_VERSION = 7;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -57,6 +57,17 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     fillMode: 'custom', customFill: { c: '#486a8f', a: 0.42 }, glowEnabled: true,
     roomCustomFill: { 'light-right': { c: '#8f5f48', a: 0.56 } },
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'lighting-opaque-glow-two-doorways-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
+    fillMode: 'custom', customFill: { c: '#3f4854', a: 1 }, glowEnabled: true, sunRays: false,
+    allLightsOff: true,
+    stateOverrides: {
+      'light.golden_light_one': { state: 'on', attributes: { rgb_color: [255, 196, 112], brightness: 255 } },
+    },
+    extraOpenings: [
+      { id: 'light-door-second', type: 'door', x: 0.50, y: 0.32, angle: 90, length: 0.13 },
+    ],
+    layoutOverrides: { 'golden-light-one': { s: 'golden-lighting', x: 0.22, y: 0.48 } },
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'lighting-custom-glow-light', fixture: 'visual', space: 'golden-lighting', mode: 'view',
     fillMode: 'custom', customFill: { c: '#486a8f', a: 0.42 }, glowEnabled: true,
     roomCustomFill: { 'light-right': { c: '#8f5f48', a: 0.56 } },
@@ -86,13 +97,13 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'large-house-warm-remount-dark', fixture: 'large', space: 'perf-floor-2', mode: 'view',
     warmRemount: true, theme: 'dark', viewport: { width: 1180, height: 900 }, ...stage },
   { id: 'device-dialog-desktop-en', fixture: 'visual', space: 'golden-lighting',
-    dialog: 'device', deviceId: 'golden-climate',
-    deviceName: 'Living room climate controller with an intentionally long title',
-    focusDialogClose: true, language: 'en', theme: 'dark', viewport: { width: 1180, height: 900 }, ...page },
+    dialog: 'device', deviceId: 'golden-light-two', deviceLightControls: true,
+    deviceName: 'Living room light controller with an intentionally long title',
+    focusDialogClose: true, language: 'en', theme: 'dark', viewport: { width: 1180, height: 1200 }, ...page },
   { id: 'device-dialog-mobile-ru', fixture: 'visual', space: 'golden-lighting',
-    dialog: 'device', deviceId: 'golden-climate',
-    deviceName: 'Контроллер климата гостиной с намеренно очень длинным названием',
-    language: 'ru', theme: 'dark', viewport: { width: 390, height: 760 }, ...page },
+    dialog: 'device', deviceId: 'golden-light-two', deviceLightControls: true,
+    deviceName: 'Контроллер освещения гостиной с намеренно очень длинным названием',
+    language: 'ru', theme: 'dark', viewport: { width: 390, height: 1000 }, ...page },
   { id: 'decor-color-popover-mobile-ru', fixture: 'visual', space: 'golden-geometry',
     dialog: 'decor-color', language: 'ru', theme: 'dark',
     viewport: { width: 390, height: 760 }, ...page },

@@ -5,7 +5,7 @@ import {
   fitView, declump, safeUrl, resolveTapAction, floorsOf, subst, spaceDisplayOf, roomFillColor,
   splitRoomPath, polyContainsPoly, islandsOf,
   kelvinToRgb, glowColorOf, normalizeGlowColorOverride, liveGlowBrightness,
-  resolveGlowValues, resolveGlowAppearance, glowAlpha, doorSector, hasRoomBehind,
+  resolveGlowValues, resolveGlowAppearance, glowAlpha, doorSector, doorSpillRange, hasRoomBehind,
   controlsAction, isControllable,
   sharedBoundary, openZoneOf, distToSegment,
   outlineWithout,
@@ -936,6 +936,18 @@ test('doorSector: thick doorway is clipped by both tunnel jamb faces', () => {
 
   const spreadAtFarFace = (sector) => Math.abs(yAtX(sector[1], 12) - yAtX(sector.at(-1), 12));
   assert.ok(spreadAtFarFace(thick) < spreadAtFarFace(thin));
+});
+
+test('doorSpillRange: near and distant apertures retain only bounded post-aperture reach', () => {
+  const near = doorSpillRange(250, 60, 95);
+  assert.deepEqual(near, { reach: 95, outerRadius: 155 });
+  assert.ok(near.reach < 250);
+
+  const distant = doorSpillRange(250, 230, 95);
+  assert.deepEqual(distant, { reach: 20, outerRadius: 250 });
+  assert.ok(distant.reach < 250);
+  assert.equal(doorSpillRange(250, 250, 95), null);
+  assert.equal(doorSpillRange(250, 100, 0), null);
 });
 
 test('hasRoomBehind: neighbour room yes, street no', () => {

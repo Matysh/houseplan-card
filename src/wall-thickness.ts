@@ -1297,7 +1297,15 @@ export function wallBodyRings(
  * room would then erase a wall owned by another room, leaving half-depth strips
  * and tiny holes at junctions.
  */
-export function wallBodiesUnionPath(
+/**
+ * The masonry itself, as polygons: room wall rings joined at their mitres,
+ * with opening slots cut through. Drawing uses it as one path; the light model
+ * uses the same geometry as its occluders, so a wall blocks light exactly
+ * where the plan shows a wall — with its real thickness, and with a doorway
+ * that is a real gap between two jamb faces. Null when there is nothing solid,
+ * or when the boolean pass fails (callers fall back to their own outlines).
+ */
+export function wallBodiesGeometry(
   rooms: any[],
   walls: WallEntry[] | null | undefined,
   openCuts: number[][],
@@ -1306,10 +1314,8 @@ export function wallBodiesUnionPath(
   cellCm: number,
   gridPitch: number,
   coordScale = 1,
-  /** Independent physical bodies are unioned only after room openings are cut,
-   * so a door/window/gate can never punch a coincident partition or column. */
   extraBodies: number[][][] = [],
-): { d: string; depthUnits: number; fillRule: 'evenodd' | 'nonzero' } | null {
+): { geom: any; depthUnits: number } | null {
   if (!walls?.length && !extraBodies.length) return null;
   const roomRings: { outset: number[][]; inset: number[][] | null }[] = [];
   let maxDepth = 0;
@@ -1380,24 +1386,46 @@ export function wallBodiesUnionPath(
       if (extra.length < 3) continue;
       body = body ? union(body, closedRing(extra) as any) : [closedRing(extra)];
     }
-    const d = polyclipToPathD(body);
-    if (!d) return null;
-    return { d, depthUnits: maxDepth, fillRule: 'evenodd' };
+    return body ? { geom: body, depthUnits: maxDepth } : null;
   } catch {
-    // fall back to evenodd rings concatenated
-    const rings = wallBodyRings(rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
-    const extraD = extraBodies.map((poly) => polyToPath(poly)).join(' ');
-    if (!rings.length && !extraD) return null;
-    // Each room ring already reverses its inset. `nonzero` therefore keeps
-    // floors as holes while overlapping independent rings add instead of
-    // cancelling one another (the old even-odd fallback produced pinholes at
-    // exactly the complex junctions for which a fallback is needed).
-    return {
-      d: [rings.map((r) => r.d).join(' '), extraD].filter(Boolean).join(' '),
-      depthUnits: maxDepth,
-      fillRule: 'nonzero',
-    };
+    return null;
   }
+}
+
+export function wallBodiesUnionPath(
+  rooms: any[],
+  walls: WallEntry[] | null | undefined,
+  openCuts: number[][],
+  openings: Array<{ x: number; y: number; angle: number; length: number }> = [],
+  pitch: number,
+  cellCm: number,
+  gridPitch: number,
+  coordScale = 1,
+  /** Independent physical bodies are unioned only after room openings are cut,
+   * so a door/window/gate can never punch a coincident partition or column. */
+  extraBodies: number[][][] = [],
+): { d: string; depthUnits: number; fillRule: 'evenodd' | 'nonzero' } | null {
+  if (!walls?.length && !extraBodies.length) return null;
+  const united = wallBodiesGeometry(
+    rooms, walls, openCuts, openings, pitch, cellCm, gridPitch, coordScale, extraBodies,
+  );
+  const d = united ? polyclipToPathD(united.geom) : '';
+  if (united && d) return { d, depthUnits: united.depthUnits, fillRule: 'evenodd' };
+  // fall back to evenodd rings concatenated
+  const rings = wallBodyRings(rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
+  const extraD = extraBodies.map((poly) => polyToPath(poly)).join(' ');
+  if (!rings.length && !extraD) return null;
+  let maxDepth = united?.depthUnits || 0;
+  for (const ring of rings) maxDepth = Math.max(maxDepth, ring.depthUnits);
+  // Each room ring already reverses its inset. `nonzero` therefore keeps
+  // floors as holes while overlapping independent rings add instead of
+  // cancelling one another (the old even-odd fallback produced pinholes at
+  // exactly the complex junctions for which a fallback is needed).
+  return {
+    d: [rings.map((r) => r.d).join(' '), extraD].filter(Boolean).join(' '),
+    depthUnits: maxDepth,
+    fillRule: 'nonzero',
+  };
 }
 
 /**

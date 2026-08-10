@@ -1,6 +1,6 @@
 # House Plan architecture
 
-Updated: 2026-08-10 (v1.61.0-beta.3). The repository = a HACS integration (category **Integration**)
+Updated: 2026-08-11 (v1.61.0-beta.6 light-transport rewrite). The repository = a HACS integration (category **Integration**)
 that contains both the backend (`custom_components/houseplan`) and the Lovelace card (`src/` → `dist/`).
 
 ## Layout
@@ -84,6 +84,11 @@ the same profiler available between stable promotions.
    trigger and dialog replacement still returns to the original outside opener.
    Its footer wrapper is a full-width slot item: HA lays the footer slot out as
    flex, so flattening that wrapper would shrink action rows to their content.
+   The wrapper opts HA's title-height custom property into content sizing so
+   localized titles may wrap without clipping. Dialogs with destructive and
+   commit actions use two explicit wrapping groups: destructive actions stay
+   left, while Cancel/Save move together to a right-aligned second line when
+   translated labels do not fit.
 
 ## Coordinate system
 
@@ -131,7 +136,10 @@ Built from the registries (`_buildDevices`), rules carried over 1-to-1 from the 
 - LQI (zigbee): the average over `*_linkquality` entities → label under the icon; color via
   `lqiColor()`: ≤40 red → ≥180 green (hsl gradient). The room average is shown in the room tooltip.
   The same tooltip includes the formatted clean-floor area (inner contour for
-  thick walls), and View hover gives every room an accent/brightness highlight.
+  thick walls). View hover is a late plain-SVG wash plus wide/narrow accent
+  strokes over that clean-floor geometry. It deliberately uses no CSS/SVG
+  filters: promoting a filtered sibling makes Chromium briefly recompose and
+  brighten the isolated screen-blended Glow layer.
 - Icon state classes: on (yellow), open (orange: cover/valve/lock/binary_sensor
   of problem classes), unavail (transparency, also used by a powered-down
   media endpoint). Yellow remains on the marker in
@@ -626,19 +634,61 @@ hash falls back to the default.
   `safeStoredColor` plus finite alpha clamping. `resolveEffectiveRoomFill`
   remains the single source for room floor, clean-floor holes and thick-wall
   tunnel colors; stored `room_color` continues to control borders/names only.
-- **Glow pools and additive composition** (#19): every source retains its own
-  radial gradient and wall/door `clipPath`. All pools live in one flat isolated
-  group with no outer opacity; only the pool elements use SVG
-  `mix-blend-mode: screen`. `resolveGlowAppearance` resolves the marker-owned
+- **Glow pools and additive composition** (#19, #71): every source retains its
+  own radial gradient and one `clipPath` — the floor that source can see. A spot
+  is a single circle, screen-blended by `mix-blend-mode: screen`; all spots
+  share one isolated parent and no outer opacity. `resolveGlowAppearance` resolves the marker-owned
   live/manual colour and brightness, while `glowAlpha` is the only intensity
-  formula: `paletteAlpha * .7 * (.4 + .6 * bri^(1/2.2))`. The resulting stop
-  alpha is shared by the room pool and doorway spill. A cached per-
+  formula: `paletteAlpha * .7 * (.4 + .6 * bri^(1/2.2))`. That alpha is the
+  gradient's centre; `GLOW_FALLOFF` then spends it over the whole radius
+  (100/88/62/32/0 %) instead of holding a plateau to 70 % — a clipped shape
+  used to become a slab of solid colour with a rim. The gradient is
+  `userSpaceOnUse` and centred on the lamp, so attenuation is a property of
+  distance from the lamp and of nothing else.
+
+  **Transport is one question, asked once per source: what can this lamp see?**
+  The full model, its exceptions and the reasoning behind them live in
+  `docs/LIGHT.md`; the summary here is the map, not the territory.
+  `_lightBarriers` collects everything opaque: the wall bodies exactly as the
+  plan draws them (`wallBodiesGeometry`, real thickness, mitred junctions),
+  every independent body (partition, column, draft), and the bare outline of
+  any edge that carries no thickness. It cuts out the exceptions: doorways,
+  gates and arches — cut through the masonry, so an opening is a real gap
+  between two jamb faces and a beam is narrowed by the returns of a thick wall
+  — plus virtual (open) boundaries, which are not walls at all. Windows stay
+  solid, so an indoor lamp never washes the street; the light's masonry is cut
+  by passages only and therefore differs on purpose from the drawn one. So does
+  a door with no floor behind it: an opening is transparent only where BOTH
+  sides are floor, otherwise a front door glows halfway — up to the centreline
+  where the room polygon ends — and the plan shows a lit doorway to nowhere. A wall
+  treated as its centreline instead (the first cut of this model) let light
+  bleed half a wall deep, which showed up as a bright bar at every opening, and
+  started each shadow half a wall away from the corner casting it.
+  Barriers are then split at every point where they CROSS each other
+  (`splitAtIntersections`): the sweep casts a ray at each endpoint, so a corner
+  formed by two faces crossing in their middles — normal where wall bodies meet
+  at a junction — would otherwise never be sampled, and the fan would close it
+  with a chord, leaving a sliver of floor dark next to a corner the lamp plainly
+  sees. `visibilityPolygon` (`src/light-visibility.ts`) then sweeps the corners
+  of those segments and returns the region the lamp reaches; intersecting it
+  with the room floors gives ONE clip for ONE circle. A beam through a doorway, the
+  room it lands in, the shadow of a column, a wall corner cutting that beam
+  two rooms away and light crossing a virtual boundary are all the same
+  computation, so they cannot disagree with each other — which is what every
+  earlier bug here was made of (a doorway painted as an unlit bar, a beam
+  detached from its aperture, a shadow blurred into a smear, walls in a farther
+  room ignored). There is no spill layer, no sector, no tunnel rectangle, no
+  open-zone graph and no shadow mask left in the light path.
+
+  Barriers are cached by a fingerprint of their own geometry, never by
+  `_cfgEpoch`: the epoch lags behind geometry edited in place, and a stale
+  barrier set is invisible — the plan simply keeps lighting through a wall that
+  now exists. The same fingerprint keys the per-source region cache. A cached per-
   `Document` raster probe verifies actual SVG screen pixels rather than trusting
   CSS syntax support; pending/unsupported/error/timeout states render with
   deterministic normal blending and a successful probe requests one update.
   Radius remains global `settings.glow_radius_cm` with optional per-marker
-  `glow_radius_cm`. On thick walls the doorway sector uses the near/far clear
-  spans so jamb returns clip the spill as a real opening tunnel. The shared
+  `glow_radius_cm`. The shared
   light resolver marks external `controls` as non-spatial: they vote in room
   state/statistics and drive group actions but never place a pool at the
   controller. `wall-thickness.ts` and the card orchestrator continue to own all

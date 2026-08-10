@@ -48,19 +48,25 @@ async function stableEnvironment(page, scenario) {
   }, { variables: themeVars[scenario.theme] || themeVars.dark, theme: scenario.theme });
 }
 
-export async function prepareGoldenScenario(page, scenario) {
-  await stableEnvironment(page, scenario);
+/** Apply every data-only scenario override before the fixture crosses into the browser. */
+export function prepareGoldenFixture(scenario) {
   const fixture = fixtureFor(scenario.fixture);
   if (scenario.deviceName && fixture.devices?.[scenario.deviceId])
     fixture.devices[scenario.deviceId].name = scenario.deviceName;
-  if (scenario.fillMode || typeof scenario.glowEnabled === 'boolean') {
+  if (scenario.fillMode || typeof scenario.glowEnabled === 'boolean'
+      || typeof scenario.sunRays === 'boolean') {
     const space = fixture.config.spaces.find((item) => item.id === scenario.space);
     space.settings = {
       ...(space.settings || {}),
       ...(scenario.fillMode ? { fill_mode: scenario.fillMode } : {}),
       ...(typeof scenario.glowEnabled === 'boolean' ? { glow_enabled: scenario.glowEnabled } : {}),
+      ...(typeof scenario.sunRays === 'boolean' ? { sun_rays: scenario.sunRays } : {}),
       ...(scenario.customFill ? { custom_fill: scenario.customFill } : {}),
     };
+  }
+  if (scenario.extraOpenings?.length) {
+    const space = fixture.config.spaces.find((item) => item.id === scenario.space);
+    space.openings = [...(space.openings || []), ...structuredClone(scenario.extraOpenings)];
   }
   if (scenario.hideOpenings) {
     const space = fixture.config.spaces.find((item) => item.id === scenario.space);
@@ -86,6 +92,16 @@ export async function prepareGoldenScenario(page, scenario) {
       fixture.states[entityId] = { ...state, state: 'off' };
     }
   }
+  if (scenario.stateOverrides) {
+    for (const [entityId, override] of Object.entries(scenario.stateOverrides)) {
+      const current = fixture.states?.[entityId] || { entity_id: entityId, attributes: {} };
+      fixture.states[entityId] = {
+        ...current,
+        ...structuredClone(override),
+        attributes: { ...(current.attributes || {}), ...(override.attributes || {}) },
+      };
+    }
+  }
   if (scenario.markerOverrides) {
     const ids = new Set(scenario.markerOverrides.map((marker) => marker.id));
     fixture.config.markers = [
@@ -96,6 +112,13 @@ export async function prepareGoldenScenario(page, scenario) {
   if (scenario.layoutOverrides) {
     fixture.layout = { ...(fixture.layout || {}), ...structuredClone(scenario.layoutOverrides) };
   }
+
+  return fixture;
+}
+
+export async function prepareGoldenScenario(page, scenario) {
+  await stableEnvironment(page, scenario);
+  const fixture = prepareGoldenFixture(scenario);
 
   return page.evaluate(async ({ fixture, scenario }) => {
     const wait = (ms) => new Promise((done) => setTimeout(done, ms));
@@ -241,6 +264,33 @@ export async function prepareGoldenScenario(page, scenario) {
       if (!device) throw new Error(`golden device missing: ${scenario.deviceId}`);
       card._openMarkerDialog(device);
       await card.updateComplete;
+      if (scenario.deviceLightControls) {
+        card._setMarkerLightRole('always');
+        await card.updateComplete;
+        card._setMarkerGlowMode('fixed');
+        await card.updateComplete;
+        const dialog = card.renderRoot.querySelector('hp-dialog');
+        const body = dialog?.querySelector('.body');
+        const groups = [...(dialog?.querySelectorAll('.markerlightgroup') || [])];
+        const roleInputs = groups[0]?.querySelectorAll('input[name="marker-light-role"]');
+        const glowInputs = groups[1]?.querySelectorAll('input[name="marker-glow-mode"]');
+        const color = groups[1]?.querySelector('hp-color-opacity');
+        const brightness = groups[1]?.querySelector('input[type="range"]');
+        const radius = groups[1]?.querySelector('input.tempin[type="number"]');
+        if (!body || groups.length !== 2 || roleInputs?.length !== 3 || glowInputs?.length !== 3
+          || !roleInputs[1]?.checked || !glowInputs[2]?.checked
+          || !color || color.disabled || !brightness || brightness.disabled || !radius || radius.disabled)
+          throw new Error('golden device light-source controls are incomplete');
+        const bodyRect = body.getBoundingClientRect();
+        const roleRect = groups[0].getBoundingClientRect();
+        body.scrollTop += roleRect.top - bodyRect.top - 8;
+        await frame();
+        const visibleBody = body.getBoundingClientRect();
+        const visibleRole = groups[0].getBoundingClientRect();
+        const visibleGlow = groups[1].getBoundingClientRect();
+        if (visibleRole.top < visibleBody.top - 1 || visibleGlow.bottom > visibleBody.bottom + 1)
+          throw new Error('golden viewport does not show the complete device light-source controls');
+      }
       if (scenario.focusDialogClose) {
         const dialog = card.renderRoot.querySelector('hp-dialog');
         await dialog?.updateComplete;

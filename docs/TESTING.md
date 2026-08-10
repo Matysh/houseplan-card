@@ -167,8 +167,9 @@ missing destructive confirmation or an editor exception that breaks View.
 - [ ] Room hover + tooltip: in View, hovering any room visibly highlights it
       (filled, transparent and area-less alike) and shows its name plus clean-
       floor area; temperature/signal follow when available. Thick walls reduce
-      the area to the inner contour. Editors do neither [auto: smoke_ux_fixes;
-      manual visual]
+      the area to the inner contour. The wash/halo use plain SVG without CSS
+      filters, and hovering never replaces or flashes the Glow pool/gradient
+      DOM. Editors do neither [auto: smoke_ux_fixes + smoke_glow; manual visual]
 
 ## Environments matrix
 
@@ -257,7 +258,8 @@ separately promised workflows:
 - [ ] Fill "lights": yellow when any light on, grey when all off, unfilled when the room has no lights [manual]; toggling a light from the plan recolors the room
 - [ ] Fill "temperature": blue below the comfort range, green inside, yellow above [manual]; comfort bounds editable inline on the radio row (swapped bounds tolerated [manual], clearing a field cannot zero a bound [manual]); rooms without a temperature reading stay unfilled [manual]
 - [ ] Fill mode is a radio group (no dropdown); labels carry no color legend
-- [ ] Room hover darkens the current fill (no recolor to blue); unfilled rooms hover light grey
+- [ ] Room hover adds a subtle accent wash and double contour without changing
+      the underlying room fill or Glow brightness
 - [ ] Room tooltip shows the average room temperature when any thermometer reports [manual]
 - [ ] Average room temperature counts ONLY thermometer/air-monitor devices — fridges, TRV heads,
       smart-plug chip temperatures (`*_device_temperature`) and diagnostic-category temps are excluded [manual]
@@ -783,9 +785,31 @@ separately promised workflows:
       rooms on their shared wall and render dashed; glow light floods the whole
       connected open zone transitively, door sectors work from the zone's
       outer walls; merge/split keep links by room id [auto: smoke_openwall]
-- [ ] Sector wedge fix (v1.36.3): door sectors never darken the light INSIDE
-      the room — room outline and sectors are separate clipPath children
-      (union), not subpaths of one nonzero path [auto: smoke_glow]
+- [ ] Light transport (#71, model: `docs/LIGHT.md`): a source paints exactly
+      ONE region — the floor it can see. Opaque: the drawn wall bodies with their real thickness, plus
+      independent bodies, plus untouched outlines of edges without thickness.
+      Transparent: doorways, gates, arches and virtual boundaries — but only
+      where BOTH sides are floor; a window and an outside door are opaque, and
+      an outside door must not change the lit region at all (no half-lit
+      tunnel). Light must never appear inside a wall body: at an opening it
+      shows only within the gap between the jamb faces, never as a bright bar
+      along the wall, and a shadow starts at the corner that casts it rather
+      than half a wall away from it.
+      Therefore, with an opaque floor: the aperture itself gains at least 8
+      brightness units when the light turns on (a doorway is never an unlit
+      bar), the floor just beyond it gains at least 8 as well, and the visible
+      beam stays no wider than twice the opening. Behind a column there is no
+      light at all (delta ≤ 3) while the floor beside it is lit (≥ 8), and the
+      lit→unlit border is at most 4 stage pixels wide — a geometric edge, not a
+      Gaussian. A spot contains exactly one painted child; no `mask`, `filter`
+      or `feGaussianBlur` may appear anywhere in the light layer, and the pool
+      clip may never leave the rooms. The pool gradient falls off monotonically
+      over the whole radius (no plateau; at 70% at most 75% of the centre
+      alpha). A lamp lights a room across a virtual boundary, and across two of
+      them in sequence, only where it can actually see through both
+      [auto: smoke_glow, smoke_openwall;
+      unit: light-visibility, golden-matrix;
+      golden: lighting-opaque-glow-two-doorways-dark]
 - [ ] Per-source glow radius (v1.36.2): the device dialog has a "Glow radius"
       field (HA units; empty = general-settings default shown as placeholder);
       an override changes that source's pool and door sectors only [auto: smoke_glow]
@@ -1067,16 +1091,33 @@ is validated before any reference is copied.
 
 The matrix covers thick wall junctions, virtual/physical boundaries,
 partitions/columns, axis-aligned and 45° door/window/gate tunnels, hidden
-opening symbols, Glow and sun, live/manual Glow overlap with doorway spill,
+opening symbols, Glow and sun, live/manual Glow overlap and light through a doorway,
 light/temperature/LQI fill splits on a wall axis, hover over Glow and nested rooms, all three editors, dark/light themes,
 0.4×/fit/2.5×, warm remount and adaptive RU/EN dialogs including focus and the
-decor colour popover. In the
+decor colour popover. The two device-dialog scenes deliberately bind a real
+light, select Always plus fixed colour/brightness, and scroll the complete
+role/colour/brightness/radius block into the captured viewport; a screenshot
+that contains only its heading is a scenario error, not an acceptable baseline. In the
 canonical Linux CI profile Chromium, viewport, DPR, locale, timezone, colour
 profile, font rendering, animations and caret are deterministic. The separate
 CI job captures review candidates until the first baseline is accepted; after
 that it automatically runs blocking verification. Review and accept the
 `golden-images` CI artifact rather than treating a developer OS raster as the
 canonical set. See `demo/golden/README.md`.
+
+### Issue #73 preparation gate (2026-08-10)
+
+Visual-continuity implementation starts only after renderer dependencies #67,
+#71 and #72 are published, closed and verified by the exact-SHA prerelease
+gate. The v1.61.0-beta.6 candidate contains the accepted visibility-based light
+model and filter-free room hover, together with matrix-v7 baselines including
+`lighting-opaque-glow-two-doorways-dark`. The owner approved the complete
+visual result on 2026-08-11; the canonical behaviour is `docs/LIGHT.md`.
+
+Do not start #73 from a merely local result. First record the successful
+v1.61.0-beta.6 Validate SHA and the blocking Linux golden verification in the
+issue; the published exact SHA, rather than an ad-hoc local capture, is the
+continuity baseline.
 
 ## Large-house performance gate
 
@@ -1953,7 +1994,10 @@ require hands on real hardware — they remain for the human pass.
 - [ ] **Delete contract**: Delete on a selected draft asks once and removes the
       whole outline. Its properties dialog has distinct “Delete segment” and
       “Delete entire outline” actions; a middle-segment split respects the
-      draft-count cap [auto: smoke_free_walls; manual dialog labels].
+      draft-count cap. A localized two-line title is fully contained by the HA
+      header, and the three/four footer actions remain inside their padding:
+      destructive actions left, Cancel/Save right or together on a second row
+      when they do not fit [auto: smoke_free_walls; manual dialog labels].
 - [ ] **Area and light**: overlapping bodies are subtracted once from clean
       area; closed partition rings keep the enclosed floor; bodies outside all
       rooms create no paper. Glow does not cross a long nearby partition and a

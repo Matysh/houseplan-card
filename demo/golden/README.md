@@ -4,7 +4,13 @@ This layer catches visual regressions that DOM smokes cannot: wall seams and
 end caps, thick opening tunnels, Glow/sun clipping, hover contours, editor
 chrome, the open contextual tray at wide/medium/narrow widths in English and
 Russian (selection, tool options, group and palette), long dialog
-titles/footers, mobile clipping, themes and zoom/remount.
+titles/footers, mobile clipping, themes and zoom/remount. The desktop and
+mobile device-dialog scenarios use a real light and make the complete
+source-role, Glow colour, brightness and radius controls visible; capturing
+only the top of that section fails the scenario before comparison.
+The Glow matrix also keeps one deliberately opaque custom-fill scene with a
+single source and two doorways: it makes hard spill wedges and fully unlit
+radial spokes visible instead of hiding them under a translucent room fill.
 
 ## Safety contract
 

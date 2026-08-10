@@ -475,9 +475,8 @@ export const cardStyles = css`
       stroke-width: 2;
     }
     .stage.mode-view .room.overlay:not(.styled):hover {
-      fill: var(--hp-accent);
-      fill-opacity: 0.18;
       stroke: var(--hp-accent);
+      stroke-opacity: 1;
     }
     .room.yard {
       fill: rgba(75, 140, 90, 0.14);
@@ -485,9 +484,8 @@ export const cardStyles = css`
       stroke-width: 2;
     }
     .stage.mode-view .room.yard:not(.styled):hover {
-      fill: var(--hp-accent);
-      fill-opacity: 0.2;
       stroke: var(--hp-accent);
+      stroke-opacity: 1;
     }
     .room.styled {
       stroke: var(--room-stroke, transparent);
@@ -499,28 +497,43 @@ export const cardStyles = css`
     .glow-base-layer,
     .glow-base-tunnels,
     .glow-pools-frame,
-    .glow-pools {
+    .glow-pools,
+    .glow-spot,
+    .glow-soft {
       pointer-events: none;
     }
-    /* The isolated group makes source pools blend with one another, never with
-       the room data fill, Glow base, paper or backdrop. Per-stop alpha already
-       contains the shared 0.7 ceiling; an outer opacity would apply it twice. */
+    /* The parent isolates all source spots from the room data fill, Glow base,
+       paper and backdrop. A spot is one circle clipped to the floor its lamp
+       can see, so the whole spot screen-blends as a single primitive — there is
+       no mask left to be dropped on a promoted layer. Per-stop alpha already
+       contains the shared 0.7 ceiling; the spot opacity below only animates
+       between 0 and 1 and is never another persistent alpha ceiling. */
     .glow-pools-frame,
-    .glow-pools {
+    .glow-pools,
+    .glow-spot {
       isolation: isolate;
     }
-    .glow-pools.blend-screen .glow-pool {
+    .glow-pools.blend-screen .glow-spot {
       mix-blend-mode: screen;
     }
-    /* View hover: brighten the current fill; accent wash when unfilled. */
-    .stage.mode-view .room.styled.filled:hover {
-      filter: brightness(1.2) saturate(1.08) drop-shadow(0 0 4px var(--hp-accent));
-      stroke: var(--hp-accent);
-      stroke-opacity: 1;
+    .glow-spot {
+      opacity: 1;
+      transition: opacity 500ms ease;
     }
-    .stage.mode-view .room.styled:not(.filled):hover {
-      fill: var(--hp-accent);
-      fill-opacity: 0.18;
+    .glow-spot.is-entering,
+    .glow-spot.is-leaving {
+      opacity: 0;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .glow-spot {
+        transition: none;
+      }
+    }
+    /* The explicit late room-hover layer owns the wash and halo. Keeping CSS
+       filters off room paths prevents Chromium from recompositing the sibling
+       screen-blended Glow layer for one bright frame on every hover. */
+    .stage.mode-view .room.styled:hover {
+      stroke: var(--hp-accent);
       stroke-opacity: 1;
     }
     /* doors, windows & gates */
@@ -1331,8 +1344,23 @@ export const cardStyles = css`
       stroke: rgba(62, 166, 255, 0.55);
       stroke-opacity: 1;
     }
-    /* View hover follows the clean-floor face above the unioned wall body. The
-       original room stroke remains responsible for fill and thin-wall fallback. */
+    /* View hover follows the clean-floor face above the unioned wall body.
+       Plain fill/strokes deliberately replace CSS filters: GPU promotion of a
+       filtered SVG sibling used to flash the screen-blended Glow layer. */
+    .room-hover-fill {
+      fill: var(--hp-accent);
+      fill-opacity: 0.10;
+      pointer-events: none;
+    }
+    .room-hover-halo {
+      fill: none;
+      stroke: var(--hp-accent);
+      stroke-opacity: 0.28;
+      stroke-width: 8;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+      pointer-events: none;
+    }
     .room-hover-outline {
       fill: none;
       stroke: var(--hp-accent);
@@ -1340,7 +1368,6 @@ export const cardStyles = css`
       stroke-linejoin: round;
       stroke-linecap: round;
       pointer-events: none;
-      filter: drop-shadow(0 0 3px var(--hp-accent));
     }
     .openwall-preview {
       stroke: #ffc14d;
@@ -2668,8 +2695,42 @@ export const cardStyles = css`
       display: flex;
       justify-content: flex-end;
       gap: var(--sp-4);
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
       padding: var(--sp-5) var(--sp-6);
       border-top: 1px solid var(--hp-line);
+    }
+    /* Stable destructive/commit footer contract.  A flex spacer cannot react
+       when translated labels no longer fit: justify-content then overflows
+       the destructive button through the left inset.  Two real groups wrap
+       as units instead — destructive actions stay left, while Cancel/Save
+       move together to a right-aligned second row when necessary. */
+    hp-dialog .row.dialog-action-footer {
+      align-items: center;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+      row-gap: var(--sp-4);
+    }
+    hp-dialog .dialog-action-group {
+      display: flex;
+      flex: 0 1 auto;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--sp-4);
+      max-width: 100%;
+      min-width: 0;
+    }
+    hp-dialog .dialog-action-group .btn {
+      flex: 0 0 auto;
+      min-height: 44px;
+    }
+    hp-dialog .dialog-action-danger {
+      margin-right: auto;
+    }
+    hp-dialog .dialog-action-commit {
+      margin-left: auto;
+      justify-content: flex-end;
     }
     hp-dialog .row.markerfooter {
       justify-content: space-between;

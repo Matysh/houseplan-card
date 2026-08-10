@@ -134,6 +134,14 @@ test('local orchestrator validates issue lists and public release assets', () =>
   assert.equal(prereleaseWorkflowSucceeded('Announce release', 'skipped'), true);
   assert.equal(prereleaseWorkflowSucceeded('Release', 'skipped'), false);
   assert.equal(prereleaseWorkflowSucceeded('Announce release', 'failure'), false);
+  const orchestrator = readFileSync(
+    new URL('../scripts/release-prerelease.mjs', import.meta.url), 'utf8',
+  );
+  assert.match(
+    orchestrator,
+    /if \(!prereleaseWorkflowSucceeded\(label, row\.conclusion\)\)/,
+    'the workflow waiter must use the prerelease-aware conclusion policy',
+  );
 });
 
 test('release ZIP inspection is portable and does not depend on tar', () => {

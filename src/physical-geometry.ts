@@ -1,5 +1,5 @@
 /** Geometry shared by independent partitions, saved room drafts and columns. */
-import { difference, union } from 'polyclip-ts';
+import { difference, intersection, union } from 'polyclip-ts';
 import { polygonArea } from './logic';
 import { wallCmToUnits } from './wall-thickness';
 import type {
@@ -110,6 +110,66 @@ export function unionBodies(bodies: number[][][]): any | null {
   }
 }
 
+const ringPath = (poly: number[][]): string =>
+  `M ${poly.map((p) => `${p[0]} ${p[1]}`).join(' L ')} Z`;
+
+/**
+ * One `d` per resulting polygon (its outer ring plus its holes), never one
+ * merged string. Two separate paths cannot cancel each other, while a single
+ * path with the default nonzero rule silently erases the overlap of two
+ * subpaths wound the opposite way — the way ten joined shadow quads once
+ * collapsed into nothing.
+ */
+export function geometryPolygonPaths(geom: any): string[] {
+  const out: string[] = [];
+  for (const poly of geom || []) {
+    const parts: string[] = [];
+    for (const ring of poly || []) {
+      const pts = (ring || []).filter((p: any) => Array.isArray(p) && p.length >= 2);
+      if (pts.length < 4) continue;
+      parts.push(ringPath(pts.slice(0, -1)));
+    }
+    if (parts.length) out.push(parts.join(' '));
+  }
+  return out;
+}
+
+/** Union of overlapping polygons as disjoint paths: no pixel is painted twice. */
+export function unionPaths(polygons: number[][][]): string[] {
+  const usable = polygons.filter((poly) => poly.length >= 3);
+  if (!usable.length) return [];
+  const geom = unionBodies(usable);
+  return geom ? geometryPolygonPaths(geom) : usable.map(ringPath);
+}
+
+/** `polygons` clipped to `bounds`, as disjoint paths. Empty when they miss. */
+export function intersectionPaths(polygons: number[][][], bounds: number[][][]): string[] {
+  const base = unionBodies(polygons.filter((poly) => poly.length >= 3));
+  const limit = unionBodies(bounds.filter((poly) => poly.length >= 3));
+  if (!base) return [];
+  if (!limit) return geometryPolygonPaths(base);
+  try {
+    return geometryPolygonPaths(intersection(base, limit));
+  } catch {
+    return geometryPolygonPaths(base);
+  }
+}
+
+/** `polygons` minus `subtract`, as disjoint paths. Falls back to the union. */
+export function differencePaths(polygons: number[][][], subtract: number[][][]): string[] {
+  const usable = polygons.filter((poly) => poly.length >= 3);
+  if (!usable.length) return [];
+  const base = unionBodies(usable);
+  if (!base) return usable.map(ringPath);
+  const cut = unionBodies(subtract.filter((poly) => poly.length >= 3));
+  if (!cut) return geometryPolygonPaths(base);
+  try {
+    return geometryPolygonPaths(difference(base, cut));
+  } catch {
+    return geometryPolygonPaths(base);
+  }
+}
+
 export function physicalBodiesPath(bodies: number[][][]): string {
   const geom = unionBodies(bodies);
   if (geom) return polyclipPathD(geom);
@@ -145,6 +205,20 @@ export function geometryArea(geom: any): number {
     for (let i = 1; i < poly.length; i++) area -= polygonArea(poly[i] || []);
   }
   return Math.max(0, area);
+}
+
+/**
+ * Every ring of a geometry, holes included. For an occluder set the holes are
+ * the important part: the room-facing faces of a wall ring ARE its holes.
+ */
+export function geometryAllRings(geom: any): number[][][] {
+  const out: number[][][] = [];
+  for (const poly of geom || []) {
+    for (const ring of poly || []) {
+      if (ring?.length >= 4) out.push(ring.slice(0, -1).map((p: number[]) => [p[0], p[1]]));
+    }
+  }
+  return out;
 }
 
 export function geometryOuterRings(geom: any): number[][][] {

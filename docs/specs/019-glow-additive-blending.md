@@ -33,9 +33,13 @@
 группу. Нормативная структура:
 
 ```html
-<g class="glow-pools-frame" opacity="0.7" pointer-events="none">
+<g class="glow-pools-frame" pointer-events="none">
   <g class="glow-pools blend-screen" data-blend="screen">
-    <circle class="glow-pool" clip-path="url(#per-source-clip)">…</circle>
+    <g class="glow-spot">
+      <g class="glow-shadow-target" mask="url(#per-source-shadow)">
+        <circle class="glow-pool" clip-path="url(#per-source-clip)">…</circle>
+      </g>
+    </g>
   </g>
 </g>
 ```
@@ -47,9 +51,15 @@ screen/normal состояний между источниками не быва
 
 ```css
 .glow-pools { isolation: isolate; }
-.glow-pools.blend-screen > .glow-pool { mix-blend-mode: screen; }
-.glow-pools.blend-normal > .glow-pool { mix-blend-mode: normal; }
+.glow-spot { isolation: isolate; }
+.glow-pools.blend-screen > .glow-spot { mix-blend-mode: screen; }
+.glow-pools.blend-normal > .glow-spot { mix-blend-mode: normal; }
 ```
+
+После #71 screen-композиция принадлежит внешнему `.glow-spot`, а luminance
+mask — обычной внутренней `.glow-shadow-target`. Маску запрещено возвращать на
+тот же SVG primitive, который несёт `mix-blend-mode`: Chromium может принять
+атрибут в DOM, но проигнорировать его при compositor promotion.
 
 `glow_base`, resolved room/data fill, opening tunnel sectors и sun rays
 остаются sibling layers вне `glow-pools-frame`. Их порядок относительно друг
@@ -64,7 +74,7 @@ screen/normal состояний между источниками не быва
 Альфа отдельного pool задаётся только `stop-opacity` его radial gradient:
 
 ```text
-Aplateau = clamp(fill_colors.glow_light.a * sourceBrightness, 0, 1)
+Aplateau = clamp(fill_colors.glow_light.a * 0.7 * (0.4 + 0.6 * sourceBrightness^(1/2.2)), 0, 1)
 A(r <= 70%) = Aplateau
 A(r = 100%) = 0
 screen(S, D) = 1 - (1 - S) * (1 - D)   // отдельно для R, G, B в 0..1
@@ -72,9 +82,9 @@ screen(S, D) = 1 - (1 - S) * (1 - D)   // отдельно для R, G, B в 0..
 
 На `.glow-pool` запрещены `opacity`, `fill-opacity`, filter и дополнительная
 alpha: полупрозрачность должна участвовать в blend через gradient stops, а не
-создавать отдельную element-композицию. После внутреннего screen-blending весь
-плоский результат получает существующую общую opacity `0.7` через внешний
-`glow-pools-frame`. Это значение применяется ровно один раз.
+создавать отдельную element-композицию. Коэффициент `0.7` уже входит в
+`Aplateau`; внешний `glow-pools-frame` не имеет opacity и не применяет его
+повторно.
 
 Glow base использует собственный alpha-контракт #55 и не входит в эту формулу.
 Blend не меняет base/tunnel opacity и не осветляет paper/backdrop.
@@ -119,7 +129,8 @@ localStorage или по UA: обновившийся WebView должен пр�
 Fallback сохраняет текущую визуальную семантику:
 
 - pools идут в normal DOM layering;
-- gradient alpha, общая opacity `0.7`, radius и per-source clips не меняются;
+- gradient alpha (включая единственный коэффициент `0.7`), radius и per-source
+  clips не меняются;
 - порядок остальных SVG layers идентичен screen-path;
 - отсутствие поддержки не создаёт warning/toast: это штатная деградация.
 
@@ -227,8 +238,8 @@ Release body описывает видимую пользователю смес
    SVG render probe; `CSS.supports` сам по себе недостаточен.
 2. Все pools документа используют одно screen/normal решение; смешанного режима
    нет.
-3. Альфа живёт в gradient stops, per-pool element opacity отсутствует, общая
-   opacity `0.7` применяется один раз после внутреннего blending.
+3. Альфа живёт в gradient stops, per-pool и outer-frame opacity отсутствуют;
+   коэффициент `0.7` применяется ровно один раз внутри формулы stop-opacity.
 4. Glow base, data fill, paper/backdrop, tunnel sectors и sun остаются вне
    isolated group и сохраняют baseline pixels.
 5. Каждый pool сохраняет собственный clip-path после re-parenting.

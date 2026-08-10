@@ -2,6 +2,35 @@
 
 ## Unreleased
 
+## v1.61.0-beta.6 — 2026-08-11
+
+- Fixed shared dialog layout for localized content: multi-line titles now grow
+  the Home Assistant header instead of being clipped, and physical-object
+  footers keep Delete inside the left inset while Cancel/Save wrap together on
+  narrow dialogs. ([#77](https://github.com/Matysh/houseplan-card/issues/77),
+  [#78](https://github.com/Matysh/houseplan-card/issues/78))
+- Light now works one way, everywhere: a lamp lights the floor it can see.
+  Walls block it with their real thickness — the same bodies the plan draws —
+  as do columns and free-standing partitions; doorways, gates and virtual
+  boundaries simply are not walls, so light crosses them, and a thick wall's
+  jambs narrow the beam exactly as they would in the house. Everything
+  else follows from that single rule — a doorway carries one continuous light
+  instead of an unlit bar and a detached blob, a beam ends where the receiving
+  room's own walls end, a column and a wall corner cast crisp shadows (also
+  when they belong to a room further away), and shadow edges are lines with a
+  hairline penumbra rather than smears. A window and an outside door stay solid
+  for light — there is no floor behind a front door to light, so it no longer
+  glows halfway. Pools also fade over their whole radius instead of holding a
+  flat plateau to 70%, so distant floor is faint because it is distant. As a
+  side effect the light layer became a single clipped circle per source and got
+  about four times cheaper to paint on a large plan.
+  ([#71](https://github.com/Matysh/houseplan-card/issues/71))
+- Fixed a one-frame Glow brightness flash when hovering any room. Room hover
+  now uses a plain SVG wash and double outline without compositor filters.
+  ([#72](https://github.com/Matysh/houseplan-card/issues/72))
+- Prerelease publishing now accepts an intentionally skipped announcement job,
+  so recovery after a partial workflow run no longer rejects a valid release.
+
 ## v1.61.0-beta.5 — 2026-08-10
 
 - Device settings now offer Auto / Always / Never light-source roles. Per-source

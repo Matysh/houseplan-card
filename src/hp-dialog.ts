@@ -39,6 +39,13 @@ export class HpDialog extends LitElement {
       --dialog-content-padding: 0;
       --dialog-surface-background: var(--card-background-color, var(--hp-bg, #202126));
       --ha-dialog-border-radius: var(--rad-l, 18px);
+      /* HA's ha-dialog-header defaults this custom property to a one-line
+         fixed height.  Our localized slot is intentionally allowed to wrap,
+         so leaving that default in place clips every line after the first at
+         the bottom of the header.  auto is HA's public sizing hook and also
+         stays harmless on older ha-dialog implementations that do not consume
+         it. */
+      --ha-dialog-header-title-height: auto;
       color: inherit;
     }
 

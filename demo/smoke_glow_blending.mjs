@@ -80,6 +80,9 @@ try {
     const poolFrame = card.renderRoot.querySelector('.glow-pools-frame');
     const follows = (left, right) => !!left && !!right
       && !!(left.compareDocumentPosition(right) & Node.DOCUMENT_POSITION_FOLLOWING);
+    // Each source is limited to the floor its own lamp can see; that region is
+    // a luminance mask on the inner group, so the spot itself stays a single
+    // screen-blended primitive.
     const clippedPools = [...card.renderRoot.querySelectorAll('.glow-pool')]
       .filter((pool) => pool.hasAttribute('clip-path')).length;
 

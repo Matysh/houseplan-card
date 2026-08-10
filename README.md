@@ -44,8 +44,9 @@ right on your Lovelace dashboard.
   you drag, so the drawing and the photo of your plan finally line up.
 - 💡 **Lights toggle on click** out of the box; wall-switch markers can control
   whole groups of lights (works for dumb switches and stateless remotes too).
-- 🌒 **“Light sources” fill** — a dark house where every lit lamp casts a pool
-  of its own color that spills through doorways and open zone boundaries.
+- 🌒 **“Light sources” fill** — a dark house where every lit lamp lights exactly
+  the floor it can see: through doorways and open boundaries, stopped by walls,
+  columns and partitions, which cast real shadows.
 - ☀️ **The sun on the plan** — set the compass and the backdrop lives with
   the day (white noon → golden hour → deep night), while windows on exterior
   walls cast real wedges of sunlight into the rooms; optional cloud cover

@@ -11,6 +11,36 @@ const out = await page.evaluate(async () => {
   const c = window.__card;
   const PITCH = 1000 / 240;
   window.confirm = () => true;
+  // Exercise hp-dialog's HA branch without depending on the Home Assistant
+  // frontend in the standalone demo.  The fixed one-line fallback below
+  // reproduces ha-dialog-header's public custom-property contract: Houseplan
+  // must explicitly opt into content-sized localized titles.
+  if (!customElements.get('ha-dialog')) {
+    customElements.define('ha-dialog', class extends HTMLElement {
+      constructor() {
+        super();
+        const root = this.attachShadow({ mode: 'open' });
+        root.innerHTML = `<style>
+          :host { display:block; width:300px; }
+          .surface { width:300px; box-sizing:border-box; overflow:hidden; }
+          .mock-header { padding:8px; overflow:hidden; }
+          .mock-title {
+            height:var(--ha-dialog-header-title-height, 35px);
+            overflow:hidden;
+            font-size:28px;
+            line-height:1.25;
+          }
+          .mock-footer { display:flex; width:100%; box-sizing:border-box; }
+        </style>
+        <div class="surface">
+          <div class="mock-header"><div class="mock-title"><slot name="headerTitle"></slot></div></div>
+          <slot></slot>
+          <div class="mock-footer"><slot name="footer"></slot></div>
+        </div>`;
+      }
+    });
+  }
+  c.hass = { ...c.hass, locale: { ...(c.hass.locale || {}), language: 'ru' } };
   c._serverCfg = {
     spaces: [{ id: 'physical', title: 'Physical', cell_cm: 5,
       view_box: [0, 0, 1, 1], rooms: [] }],
@@ -76,6 +106,66 @@ const out = await page.evaluate(async () => {
   o.partitionDragIsRigidAndGridBound = Math.abs(sp.partitions[0].a[0] - (0.1 + PITCH / 1000)) < 1e-9
     && Math.abs((sp.partitions[0].b[0] - sp.partitions[0].a[0]) - 0.2) < 1e-9
     && Math.abs(sp.partitions[0].a[1] - sp.partitions[0].b[1]) < 1e-9;
+
+  const actionLayout = () => {
+    const root = c.shadowRoot || c.renderRoot;
+    const dialog = root.querySelector('hp-dialog');
+    const footer = dialog?.querySelector('.physicalfooter');
+    const danger = footer?.querySelector('.dialog-action-danger');
+    const commit = footer?.querySelector('.dialog-action-commit');
+    const footerRect = footer?.getBoundingClientRect();
+    const footerStyle = footer ? getComputedStyle(footer) : null;
+    const innerLeft = footerRect && footerStyle
+      ? footerRect.left + parseFloat(footerStyle.paddingLeft) : 0;
+    const innerRight = footerRect && footerStyle
+      ? footerRect.right - parseFloat(footerStyle.paddingRight) : 0;
+    const buttons = [...(footer?.querySelectorAll('button') || [])];
+    return {
+      dialog, footer, danger, commit, footerRect, innerLeft, innerRight, buttons,
+      contained: !!footerRect && buttons.every((button) => {
+        const rect = button.getBoundingClientRect();
+        return rect.left >= innerLeft - 1 && rect.right <= innerRight + 1
+          && rect.top >= footerRect.top - 1 && rect.bottom <= footerRect.bottom + 1;
+      }),
+    };
+  };
+
+  c._openPhysicalDialog('partition', sp.partitions[0].id);
+  await c.updateComplete;
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+  const partitionLayout = actionLayout();
+  const haDialog = partitionLayout.dialog?.shadowRoot?.querySelector('ha-dialog');
+  const title = partitionLayout.dialog?.shadowRoot?.querySelector('.title-text');
+  const mockTitle = haDialog?.shadowRoot?.querySelector('.mock-title');
+  const titleRect = title?.getBoundingClientRect();
+  const mockTitleRect = mockTitle?.getBoundingClientRect();
+  const dangerRect = partitionLayout.danger?.getBoundingClientRect();
+  const commitRect = partitionLayout.commit?.getBoundingClientRect();
+  o.physicalTitleUsesAutoHeight = !!haDialog && getComputedStyle(haDialog)
+    .getPropertyValue('--ha-dialog-header-title-height').trim() === 'auto';
+  o.physicalTitleWrapsAndIsContained = !!titleRect && !!mockTitleRect
+    && titleRect.height > 35
+    && titleRect.top >= mockTitleRect.top - 1
+    && titleRect.bottom <= mockTitleRect.bottom + 1;
+  o.partitionFooterActionsContained = partitionLayout.contained
+    && partitionLayout.buttons.length === 3;
+  o.partitionFooterGroupsWrapCleanly = !!dangerRect && !!commitRect
+    && commitRect.top >= dangerRect.bottom - 1
+    && Math.abs(commitRect.right - partitionLayout.innerRight) <= 1;
+  o.partitionFooterTouchTargets = partitionLayout.buttons.every((button) =>
+    button.getBoundingClientRect().height >= 44);
+
+  c._physicalDialog = {
+    kind: 'draft', id: 'join-a', segment: 0, cm: '10', length: '1 m',
+  };
+  await c.updateComplete;
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+  const draftLayout = actionLayout();
+  o.draftFooterFourActionsContained = draftLayout.contained
+    && draftLayout.buttons.length === 4
+    && draftLayout.buttons.every((button) => button.scrollWidth <= button.clientWidth + 1);
+  c._physicalDialog = null;
+  await c.updateComplete;
 
   c._physicalSel = { kind: 'partition', id: sp.partitions[0].id };
   c._deletePhysicalSelection();

@@ -1717,6 +1717,29 @@ export function glowColorOf(state: any, fallback: string): ResolvedGlowValues | 
 }
 
 /**
+ * Bound a doorway spill to the part of the source radius that remains after
+ * the aperture. `reach` is deliberately aperture-relative: callers use it for
+ * the spill gradient, while `outerRadius` remains source-relative for the
+ * sight-line sector built by `doorSector`.
+ */
+export function doorSpillRange(
+  sourceRadius: number,
+  apertureEdgeDistance: number,
+  requestedReach: number,
+): { reach: number; outerRadius: number } | null {
+  if (!Number.isFinite(sourceRadius) || sourceRadius <= 0
+      || !Number.isFinite(apertureEdgeDistance) || apertureEdgeDistance < 0
+      || !Number.isFinite(requestedReach) || requestedReach <= 0
+      || apertureEdgeDistance >= sourceRadius) return null;
+  const reach = Math.min(requestedReach, sourceRadius - apertureEdgeDistance);
+  if (!(reach > 1e-6)) return null;
+  return {
+    reach,
+    outerRadius: Math.min(sourceRadius, apertureEdgeDistance + reach),
+  };
+}
+
+/**
  * Light spilling through a doorway: the sector of the glow circle between the
  * rays source→A and source→B (door edge points), out to radius r.
  *

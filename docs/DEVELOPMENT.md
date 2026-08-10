@@ -189,6 +189,22 @@ cp dist/houseplan-card.js custom_components/houseplan/frontend/
 - **Redeploying the same version keeps the resource URL** (`/houseplan_files/houseplan-card.js?v=X`),
   so browsers may serve the previous bundle from cache. Bump the version for anything users must
   pick up, or hard-refresh (Ctrl+Shift+R) when testing a hotfix redeploy.
+- **CSS `filter: blur()` on an SVG group is applied in name only** in Chromium:
+  `getComputedStyle` returns `blur(1px)`, and the rendered result changes by a
+  couple of hundred pixels on a whole plan — i.e. not at all. Use an SVG
+  `<filter>` with `feGaussianBlur` and `filterUnits="userSpaceOnUse"`. One
+  filter over the light layer costs about a fifth of one blurred mask per
+  source (60 sources: 66 ms vs 206 ms).
+- **A geometry cache must be keyed by the geometry, not by `_cfgEpoch`.** The
+  epoch lags behind edits made in place (boundary/opening tools mutate the
+  space object), and a stale barrier set is invisible: the plan keeps lighting
+  through a wall that already exists. `_lightBarriers` hashes its own inputs
+  instead, and the same fingerprint keys the per-source region cache.
+- **Segments that cross must be split before a visibility sweep.** The sweep
+  casts a ray at every barrier ENDPOINT; two faces crossing in their middles —
+  normal where wall bodies meet at a junction — leave that corner unsampled and
+  the fan closes it with a chord, so a sliver of floor next to a corner the
+  lamp plainly sees goes dark. `splitAtIntersections` removes the whole class.
 
 ## Release
 
