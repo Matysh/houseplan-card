@@ -130,6 +130,7 @@ export class HpHelp extends LitElement {
   private _positionRaf = 0;
   private _forceFallback = false;
   private _overlayDispose: (() => void) | null = null;
+  private _scrollDialog: HpDialog | null = null;
   private readonly _descriptionId = `hp-help-description-${++helpSequence}`;
 
   connectedCallback(): void {
@@ -140,7 +141,8 @@ export class HpHelp extends LitElement {
     win?.addEventListener('orientationchange', this._queuePosition);
     win?.visualViewport?.addEventListener('resize', this._queuePosition);
     win?.visualViewport?.addEventListener('scroll', this._queuePosition);
-    this._dialog()?.addEventListener('scroll', this._dialogScroll, true);
+    this._scrollDialog = this._dialog();
+    this._scrollDialog?.addEventListener('scroll', this._dialogScroll, true);
     this.addEventListener('keydown', this._keyDown, true);
   }
 
@@ -151,7 +153,8 @@ export class HpHelp extends LitElement {
     win?.removeEventListener('orientationchange', this._queuePosition);
     win?.visualViewport?.removeEventListener('resize', this._queuePosition);
     win?.visualViewport?.removeEventListener('scroll', this._queuePosition);
-    this._dialog()?.removeEventListener('scroll', this._dialogScroll, true);
+    this._scrollDialog?.removeEventListener('scroll', this._dialogScroll, true);
+    this._scrollDialog = null;
     this.removeEventListener('keydown', this._keyDown, true);
     this._clearTimers();
     if (this._positionRaf) win?.cancelAnimationFrame(this._positionRaf);

@@ -9,6 +9,7 @@ import {
   resolveBindingProviders,
   resolveEntityProvider,
 } from '../test-build/integration-provider.js';
+import { valueBadgeWriteFields } from '../test-build/device-value-badge.js';
 
 const state = (entity_id, value, attributes = {}) => ({ entity_id, state: value, attributes });
 const hass = (states, entities = {}) => ({
@@ -417,4 +418,104 @@ test('preview explanations distinguish activity display and composite Power sour
     entities: ['switch.voice', 'switch.power'], primary: 'switch.power',
   }), options);
   assert.ok(composite.explanation.notices.includes('composite_power_source'));
+});
+
+test('issue 90 explicit value badge overrides legacy gates and keeps its position', () => {
+  const h = hass({
+    'sensor.power': state('sensor.power', '0', { unit_of_measurement: 'W' }),
+  }, {
+    'sensor.power': { entity_id: 'sensor.power', device_id: 'd1', platform: 'demo' },
+  });
+  const result = resolveDevicePresentation(h, device({
+    entities: ['sensor.power'], primary: 'sensor.power',
+    marker: {
+      id: 'd1', binding: 'device:d1',
+      value_badge: {
+        enabled: true,
+        source: { kind: 'entity_state', entity_id: 'sensor.power' },
+        position: 'left',
+      },
+    },
+  }), { ...options, showTemperature: false, showSignal: false });
+  assert.equal(result.valueBadge?.text, '0 W');
+  assert.equal(result.valueBadge?.position, 'left');
+  assert.equal(result.valueBadge?.configured, true);
+});
+
+test('issue 90 explicit off suppresses legacy and static display preserves but hides badge', () => {
+  const h = hass({
+    'sensor.temp': state('sensor.temp', '22.4', { device_class: 'temperature', unit_of_measurement: '°C' }),
+  }, {
+    'sensor.temp': { entity_id: 'sensor.temp', device_id: 'd1', platform: 'demo' },
+  });
+  const base = device({
+    icon: 'mdi:thermometer', entities: ['sensor.temp'], primary: 'sensor.temp',
+  });
+  assert.equal(resolveDevicePresentation(h, base, options).valueBadge?.text, '22.4°');
+  assert.equal(resolveDevicePresentation(h, {
+    ...base, marker: {
+      ...base.marker,
+      value_badge: { enabled: false, source: null, position: 'right' },
+    },
+  }, options).valueBadge, null);
+  assert.equal(resolveDevicePresentation(h, {
+    ...base, marker: {
+      ...base.marker, display: 'static_icon',
+      value_badge: {
+        enabled: true,
+        source: { kind: 'entity_state', entity_id: 'sensor.temp' },
+        position: 'top',
+      },
+    },
+  }, options).valueBadge, null);
+});
+
+test('issue 90 untouched persistence gate never materializes a legacy badge', () => {
+  assert.deepEqual(valueBadgeWriteFields({
+    touched: false, originalHas: false, original: undefined,
+    enabled: true, source: { kind: 'entity_state', entity_id: 'sensor.temp' }, position: 'right',
+  }), {});
+  const original = {
+    enabled: false,
+    source: { kind: 'entity_state', entity_id: 'sensor.old' },
+    position: 'left',
+    future: { preserved: true },
+  };
+  assert.equal(valueBadgeWriteFields({
+    touched: false, originalHas: true, original,
+    enabled: true, source: null, position: 'top',
+  }).value_badge, original);
+});
+
+test('issue 90 missing source never falls back and derived LQI renders only once', () => {
+  const h = hass({
+    'sensor.value': state('sensor.value', '42'),
+    'sensor.linkquality': state('sensor.linkquality', '150', { unit_of_measurement: 'lqi' }),
+  }, {
+    'sensor.value': { entity_id: 'sensor.value', device_id: 'd1', platform: 'demo' },
+    'sensor.linkquality': { entity_id: 'sensor.linkquality', device_id: 'd1', platform: 'demo' },
+  });
+  const missing = resolveDevicePresentation(h, device({
+    entities: ['sensor.value'], primary: 'sensor.value',
+    marker: {
+      id: 'd1', binding: 'device:d1',
+      value_badge: {
+        enabled: true,
+        source: { kind: 'entity_state', entity_id: 'sensor.missing' },
+        position: 'right',
+      },
+    },
+  }), options);
+  assert.equal(missing.valueBadge?.text, '—');
+  assert.equal(missing.valueBadge?.availability, 'missing');
+
+  const lqi = resolveDevicePresentation(h, device({
+    entities: ['sensor.value', 'sensor.linkquality'], primary: 'sensor.value',
+    marker: {
+      id: 'd1', binding: 'device:d1',
+      value_badge: { enabled: true, source: { kind: 'derived_lqi' }, position: 'bottom' },
+    },
+  }), options);
+  assert.equal(lqi.valueBadge?.text, '150');
+  assert.equal(lqi.lqiText, null);
 });

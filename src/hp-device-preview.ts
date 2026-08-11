@@ -172,10 +172,36 @@ class HpDevicePreview extends LitElement {
     const providers = this._providers();
     const realEffect = actual.visual.status === 'alarm' || actual.activity !== 'none';
     const diameter = shown.scale * (shown.activity !== 'none' ? shown.rippleScale : 1);
-    // The narrow layout may give the stage only ~170 px. One base face is
-    // 54 px, so 2.5 diameters leave room for borders and the status satellites.
-    const fit = Math.min(1, 2.5 / Math.max(1, diameter));
+    // Fit the complete face, not only the activity ring. The value satellite
+    // is intentionally capped by CSS at four face widths; measure its likely
+    // rendered width conservatively so every position keeps a safe inset.
+    let left = -diameter / 2;
+    let right = diameter / 2;
+    let top = -diameter / 2;
+    let bottom = diameter / 2;
+    if (shown.valueBadge) {
+      const badgeWidth = shown.scale
+        * Math.min(4, Math.max(0.9, shown.valueBadge.text.length * 0.29 + 0.28));
+      const badgeHeight = shown.scale * 0.7;
+      const badgeEdge = shown.scale * 0.6;
+      if (shown.valueBadge.position === 'right') right = Math.max(right, badgeEdge + badgeWidth);
+      if (shown.valueBadge.position === 'left') left = Math.min(left, -badgeEdge - badgeWidth);
+      if (shown.valueBadge.position === 'top') top = Math.min(top, -badgeEdge - badgeHeight);
+      if (shown.valueBadge.position === 'bottom') bottom = Math.max(bottom, badgeEdge + badgeHeight);
+    }
+    if (shown.lqiText != null) {
+      const lqiBottom = shown.scale * (shown.valueBadge?.position === 'bottom' ? 1.55 : 0.95);
+      bottom = Math.max(bottom, lqiBottom);
+    }
+    const fit = Math.min(1, 2.35 / Math.max(1, right - left), 2.35 / Math.max(1, bottom - top));
     const fitPct = Math.round(fit * 100);
+    const centerX = (left + right) / 2;
+    const centerY = (top + bottom) / 2;
+    const previewFitStyle = [
+      `left:calc(50% - ${centerX * 54 * fit}px)`,
+      `top:calc(50% - ${centerY * 54 * fit}px)`,
+      fit < 1 ? `transform:scale(${fit})` : '',
+    ].filter(Boolean).join(';');
     const rootClasses = [
       'dev', ...shown.classes,
       shown.binding === 'virtual' ? 'virtual' : '',
@@ -191,6 +217,8 @@ class HpDevicePreview extends LitElement {
       this._stateSummary(actual),
       result,
       actual.valueFullText || '',
+      actual.valueBadge
+        ? `${actual.valueBadge.sourceLabel}: ${actual.valueBadge.fullText}` : '',
     ].filter(Boolean).join('. ');
 
     return html`<section class="devicepreview">
@@ -202,7 +230,7 @@ class HpDevicePreview extends LitElement {
       </div>
       <div class="previewgrid">
         <div class="previewstage" role="img" aria-label=${aria}>
-          <div class="previewfit" style=${fit < 1 ? `transform:scale(${fit})` : nothing}>
+          <div class="previewfit" style=${previewFitStyle}>
             <div class=${rootClasses} style=${faceStyle}>
               ${renderDeviceFace(shown, {
                 surface: 'preview',

@@ -26,9 +26,12 @@ from custom_components.houseplan.import_export import (
     prepare_apply,
     revalidate_candidate,
 )
+from custom_components.houseplan import import_export as import_export_api
 from custom_components.houseplan import websocket_api as wsapi
+from custom_components.houseplan.http_api import HouseplanImportPreviewView, KEY_HASS
 from custom_components.houseplan.const import (
     DOMAIN,
+    MAX_IMPORT_PREVIEWS_PER_USER,
     MAX_IMPORT_PREVIEWS_TOTAL,
     PLAN_MODEL_VERSION,
     PLANS_DIR,
@@ -200,6 +203,78 @@ def test_full_export_has_versioned_envelope_and_live_layout(tmp_path: Path) -> N
     assert set(document["payload"]["layout"]) == {"lamp"}
     assert document["placement_manifest"][0]["layout_id"] == "lamp"
     assert filename.startswith("houseplan-full-") and filename.endswith(".json")
+
+
+def test_full_export_import_round_trip_restores_model_version(tmp_path: Path) -> None:
+    """The portable envelope version must return to the persisted config."""
+    document = _document(tmp_path)
+    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    response = create_preview(
+        runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
+        current_config_data={"config": {"spaces": [], "markers": []}, "rev": 0},
+        current_layout_data={"layout": {}, "rev": 0}, config_root=tmp_path,
+    )
+    candidate = get_candidate(runtime, response["token"], "alice")
+    config, _layout, _details = prepare_apply(
+        candidate, {"spaces": [], "markers": []}, {}, confirm_missing_content=False,
+    )
+    assert config["model_version"] == document["model_version"] == PLAN_MODEL_VERSION
+    assert config == _config()
+
+
+def test_preview_tokens_are_bounded_owned_expiring_and_single_use(
+    tmp_path: Path, monkeypatch,
+) -> None:
+    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    raw = json.dumps(_document(tmp_path)).encode()
+    # Separate the two equal production limits so this assertion still kills a
+    # mutant that accidentally removes only the per-user eviction branch.
+    monkeypatch.setattr(
+        import_export_api, "MAX_IMPORT_PREVIEWS_TOTAL", MAX_IMPORT_PREVIEWS_PER_USER + 5,
+    )
+    tokens = []
+    for _index in range(MAX_IMPORT_PREVIEWS_PER_USER + 1):
+        response = create_preview(
+            runtime, raw, owner_id="alice", duplicate_policy="skip",
+            current_config_data={"config": _config(), "rev": 1},
+            current_layout_data={"layout": {}, "rev": 1}, config_root=tmp_path,
+        )
+        tokens.append(response["token"])
+    assert len(runtime.import_previews) == MAX_IMPORT_PREVIEWS_PER_USER
+    assert tokens[0] not in runtime.import_previews
+
+    live = tokens[-1]
+    with pytest.raises(ImportFailure) as wrong_owner:
+        get_candidate(runtime, live, "bob")
+    assert wrong_owner.value.code == "preview_owner_mismatch"
+    get_candidate(runtime, live, "alice", consume=True)
+    with pytest.raises(ImportFailure) as consumed:
+        get_candidate(runtime, live, "alice")
+    assert consumed.value.code == "preview_expired"
+
+    expiring = create_preview(
+        runtime, raw, owner_id="alice", duplicate_policy="skip",
+        current_config_data={"config": _config(), "rev": 1},
+        current_layout_data={"layout": {}, "rev": 1}, config_root=tmp_path,
+    )["token"]
+    runtime.import_previews[expiring]["expires"] = 0
+    with pytest.raises(ImportFailure) as expired:
+        get_candidate(runtime, expiring, "alice")
+    assert expired.value.code == "preview_expired"
+    assert expiring not in runtime.import_previews
+
+    monkeypatch.setattr(import_export_api, "MAX_IMPORT_PREVIEWS_TOTAL", MAX_IMPORT_PREVIEWS_TOTAL)
+    global_runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    global_tokens = [
+        create_preview(
+            global_runtime, raw, owner_id=f"owner-{index}", duplicate_policy="skip",
+            current_config_data={"config": _config(), "rev": 1},
+            current_layout_data={"layout": {}, "rev": 1}, config_root=tmp_path,
+        )["token"]
+        for index in range(MAX_IMPORT_PREVIEWS_TOTAL + 1)
+    ]
+    assert len(global_runtime.import_previews) == MAX_IMPORT_PREVIEWS_TOTAL
+    assert global_tokens[0] not in global_runtime.import_previews
 
 
 @pytest.mark.parametrize(("stored", "envelope"), [(None, 0), (0, 0), (3, 3), (9, 9)])
@@ -398,6 +473,29 @@ def test_space_merge_remaps_internal_marker_light_links(tmp_path: Path) -> None:
     assert details["dropped_marker_links"] == 0
 
 
+def test_issue_90_space_merge_remaps_internal_badge_marker_link(tmp_path: Path) -> None:
+    document = _document(tmp_path, "space")
+    markers = document["payload"]["config"]["markers"]
+    markers[0]["name"] = "Controller"
+    markers[0]["value_badge"] = {
+        "enabled": True,
+        "source": {"kind": "derived_marker_state", "ref": "marker:dumb"},
+        "position": "bottom",
+    }
+    markers.append({
+        "id": "dumb", "binding": "virtual", "space": "ground",
+        "room_id": "living", "name": "Dumb lamp", "is_light": True,
+    })
+    merged, _layout, details = build_space_merge(
+        document, {"spaces": [], "markers": [], "settings": {}}, {}, "skip",
+    )
+    imported = [m for m in merged["markers"] if m.get("space") == details["space_id"]]
+    by_name = {m.get("name"): m for m in imported}
+    assert by_name["Controller"]["value_badge"]["source"]["ref"] == \
+        "marker:" + by_name["Dumb lamp"]["id"]
+    assert details["dropped_marker_links"] == 0
+
+
 def test_space_export_drops_marker_links_outside_selection(tmp_path: Path) -> None:
     config = _config()
     config["markers"][0]["controls"] = ["marker:outside", "light.keep"]
@@ -412,6 +510,27 @@ def test_space_export_drops_marker_links_outside_selection(tmp_path: Path) -> No
     )
     marker = document["payload"]["config"]["markers"][0]
     assert marker["controls"] == ["light.keep"]
+    assert document["transfer"]["dropped_marker_links"] == 1
+
+
+def test_issue_90_space_export_disables_badge_link_outside_selection(tmp_path: Path) -> None:
+    config = _config()
+    config["markers"][0]["value_badge"] = {
+        "enabled": True,
+        "source": {"kind": "derived_marker_state", "ref": "marker:outside"},
+        "position": "left",
+    }
+    config["markers"].append({
+        "id": "outside", "binding": "virtual", "space": "other",
+        "name": "Other lamp", "is_light": True,
+    })
+    document, _ = create_export(
+        SimpleNamespace(instance_id="instance-a"), {"config": config},
+        {"layout": {"lamp": {"s": "ground", "x": 0.5, "y": 0.5}}},
+        kind="space", space_id="ground", card_version="1.61.0", config_root=tmp_path,
+    )
+    badge = document["payload"]["config"]["markers"][0]["value_badge"]
+    assert badge == {"enabled": False, "source": None, "position": "left"}
     assert document["transfer"]["dropped_marker_links"] == 1
 
 
@@ -503,8 +622,8 @@ async def _setup(hass: HomeAssistant) -> MockConfigEntry:
 
 
 class _Connection:
-    def __init__(self) -> None:
-        self.user = SimpleNamespace(id="review-owner", is_admin=True)
+    def __init__(self, *, is_admin: bool = True) -> None:
+        self.user = SimpleNamespace(id="review-owner", is_admin=is_admin)
         self.result: dict[str, Any] | None = None
         self.error: tuple[str, str] | None = None
 
@@ -589,6 +708,65 @@ async def test_export_and_revalidate_ws_endpoints_use_server_owned_state(
     assert refreshed.result["token"] == response["token"]
     assert refreshed.result["expected_config_rev"] == response["expected_config_rev"]
     assert refreshed.result["expected_layout_rev"] == response["expected_layout_rev"]
+
+
+@pytest.mark.parametrize(("endpoint", "message"), [
+    (wsapi.ws_export_create, {
+        "id": 50, "type": "houseplan/export/create", "kind": "full", "card_version": "review",
+    }),
+    (wsapi.ws_import_revalidate, {
+        "id": 51, "type": "houseplan/import/revalidate", "token": "opaque",
+        "duplicate_policy": "skip",
+    }),
+    (wsapi.ws_import_apply, {
+        "id": 52, "type": "houseplan/import/apply", "token": "opaque",
+        "expected_config_rev": 0, "expected_layout_rev": 0,
+        "confirm_missing_content": False,
+    }),
+])
+async def test_portable_backup_ws_endpoints_reject_non_editors(
+    hass: HomeAssistant, endpoint, message: dict[str, Any],
+) -> None:
+    connection = _Connection(is_admin=False)
+    await endpoint.__wrapped__(hass, connection, message)
+    assert connection.result is None
+    assert connection.error and connection.error[0] == "unauthorized"
+
+
+class _ImportPreviewRequest:
+    def __init__(self, hass: HomeAssistant, *, is_admin: bool) -> None:
+        self.app = {KEY_HASS: hass}
+        self.query: dict[str, str] = {}
+        self.content_length = 0
+        self._user = SimpleNamespace(id="http-review", is_admin=is_admin)
+
+    def get(self, key: str, default=None):
+        return self._user if key == "hass_user" else default
+
+
+async def test_import_preview_http_rejects_non_editor_and_reports_not_ready(
+    hass: HomeAssistant,
+) -> None:
+    view = HouseplanImportPreviewView()
+    forbidden = await view.post(_ImportPreviewRequest(hass, is_admin=False))
+    assert forbidden.status == 403
+    unavailable = await view.post(_ImportPreviewRequest(hass, is_admin=True))
+    assert unavailable.status == 503
+
+
+async def test_import_apply_conflict_preserves_state_and_preview_token(
+    hass: HomeAssistant, tmp_path: Path,
+) -> None:
+    await _setup(hass)
+    rt, response, _document_value = await _candidate(hass, tmp_path)
+    current = await rt.config_store.async_load()
+    await rt.config_store.async_save({**current, "rev": 2})
+    connection = await _apply(hass, response)
+    assert connection.result is None
+    assert connection.error and connection.error[0] == "conflict"
+    assert response["token"] in rt.import_previews
+    assert (await rt.config_store.async_load())["config"]["spaces"][0]["title"] == "Ground"
+    assert (await rt.store.async_load())["layout"]["lamp"]["x"] == 0.1
 
 
 async def test_apply_confirmed_detach_does_not_collect_files_and_commits_pair(

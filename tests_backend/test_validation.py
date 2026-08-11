@@ -1750,3 +1750,54 @@ def test_light_entity_schema_is_literal_and_domain_bounded():
             v.CONFIG_SCHEMA({"spaces": [], "markers": [
                 {"id": "lamp", "binding": "virtual", "light_entity": invalid},
             ]})
+
+
+def test_issue_90_value_badge_validation_is_strict_only_when_changed():
+    valid = {
+        "enabled": True,
+        "source": {"kind": "entity_attribute", "entity_id": "climate.room",
+                   "attribute": "current_temperature", "future_source": 1},
+        "position": "top",
+        "future_badge": {"kept": True},
+    }
+    config = {"markers": [{"id": "m1", "binding": "entity:climate.room",
+                            "value_badge": valid}]}
+    v.validate_marker_value_badges(config, {"markers": []})
+    stored = v.MARKER_SCHEMA(config["markers"][0])
+    assert stored["value_badge"]["future_badge"] == {"kept": True}
+    assert stored["value_badge"]["source"]["future_source"] == 1
+
+    broken = {"markers": [{"id": "m1", "binding": "virtual", "value_badge": {
+        "enabled": True, "source": None, "position": "right",
+    }}]}
+    v.validate_marker_value_badges(broken, broken)
+    with pytest.raises(v.MarkerControlError) as missing:
+        v.validate_marker_value_badges(broken, {"markers": []})
+    assert missing.value.code == "value_badge_source_required"
+
+    invalid_attr = {"markers": [{"id": "m1", "binding": "entity:sensor.x",
+                                  "value_badge": {
+        "enabled": True,
+        "source": {"kind": "entity_attribute", "entity_id": "sensor.x",
+                   "attribute": "entity_picture"},
+        "position": "right",
+    }}]}
+    with pytest.raises(v.MarkerControlError) as attribute:
+        v.validate_marker_value_badges(invalid_attr, {"markers": []})
+    assert attribute.value.code == "invalid_value_badge_attribute"
+
+
+def test_issue_90_marker_value_badge_reference_uses_canonical_ref():
+    config = {"markers": [
+        {"id": "lamp", "binding": "virtual", "is_light": True},
+        {"id": "controller", "binding": "entity:switch.wall", "value_badge": {
+            "enabled": True,
+            "source": {"kind": "derived_marker_state", "ref": "marker:lamp"},
+            "position": "bottom",
+        }},
+    ]}
+    v.validate_marker_value_badges(config, {"markers": []})
+    config["markers"][1]["value_badge"]["source"]["ref"] = "lamp"
+    with pytest.raises(v.MarkerControlError) as invalid:
+        v.validate_marker_value_badges(config, {"markers": []})
+    assert invalid.value.code == "invalid_value_badge_source"

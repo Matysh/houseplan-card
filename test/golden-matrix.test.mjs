@@ -59,7 +59,12 @@ test('filled opening golden has a pixel-level seam detector', () => {
   assert.equal(scenario.glowEnabled, false);
   assert.equal(scenario.hideOpenings, true, 'opening symbols must not mask the sampled tunnel pixels');
   assert.equal(scenario.tunnelContinuity.openingId, 'light-door');
-  assert.equal(scenario.tunnelContinuity.maxChannelJump <= 8, true);
+  assert.equal(scenario.tunnelContinuity.maxChannelJump <= 3, true);
+  assert.equal(scenario.wallReplacements[0].segments.length, 2);
+  assert.notEqual(
+    scenario.wallReplacements[0].segments[0].cm,
+    scenario.wallReplacements[0].segments[1].cm,
+  );
 });
 
 test('doorway spill golden exposes the opaque-fill failure mode from issue 71', () => {

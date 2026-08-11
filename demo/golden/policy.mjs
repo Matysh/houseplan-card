@@ -9,6 +9,15 @@ export const assertGoldenInvocation = (mode, scenarioFilter = '') => {
     throw new Error('golden verify must run the complete matrix; use capture for a diagnostic --scenario run');
 };
 
+/** A reviewed golden matrix is exact: neither an orphan PNG nor a stale hash
+ * entry may survive after a scenario is removed or renamed. */
+export const goldenScenarioSetsMatch = (expected, indexed, baselineFiles) => {
+  const normalized = (values) => [...new Set(values)].sort();
+  const wanted = normalized(expected);
+  return JSON.stringify(normalized(indexed)) === JSON.stringify(wanted)
+    && JSON.stringify(normalized(baselineFiles)) === JSON.stringify(wanted);
+};
+
 export const goldenRunFailed = (mode, manifestValid, results) => {
   if (results.some((result) => result.status === 'error')) return true;
   return mode === 'verify'

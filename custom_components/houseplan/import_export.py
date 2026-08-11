@@ -45,6 +45,7 @@ from .validation import (
     sanitize_filename,
     sanitize_marker_id,
     validate_marker_controls,
+    validate_marker_value_badges,
     MarkerControlError,
 )
 
@@ -257,16 +258,24 @@ def create_export(
         selected_ids = {str(marker.get("id")) for marker in selected_markers}
         for marker in selected_markers:
             controls = marker.get("controls")
-            if not isinstance(controls, list):
-                continue
-            kept = []
-            for ref in controls:
-                if isinstance(ref, str) and ref.startswith("marker:") \
-                        and ref[len("marker:"):] not in selected_ids:
-                    dropped_marker_links += 1
-                    continue
-                kept.append(ref)
-            marker["controls"] = kept or None
+            if isinstance(controls, list):
+                kept = []
+                for ref in controls:
+                    if isinstance(ref, str) and ref.startswith("marker:") \
+                            and ref[len("marker:"):] not in selected_ids:
+                        dropped_marker_links += 1
+                        continue
+                    kept.append(ref)
+                marker["controls"] = kept or None
+            badge = marker.get("value_badge")
+            source = badge.get("source") if isinstance(badge, dict) else None
+            ref = source.get("ref") if isinstance(source, dict) \
+                and source.get("kind") == "derived_marker_state" else None
+            if isinstance(ref, str) and ref.startswith("marker:") \
+                    and ref[len("marker:"):] not in selected_ids:
+                badge["enabled"] = False
+                badge["source"] = None
+                dropped_marker_links += 1
         config = {
             "spaces": [_json_copy(space)],
             "markers": _json_copy(selected_markers),
@@ -437,7 +446,7 @@ def _transfer_dropped_marker_links(document: dict[str, Any]) -> int:
     if not isinstance(transfer, dict):
         raise ImportFailure("invalid_format", "Transfer metadata must be an object")
     value = transfer.get("dropped_marker_links", 0)
-    maximum = MAX_MARKERS * MAX_CONTROLS
+    maximum = MAX_MARKERS * (MAX_CONTROLS + 1)
     if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= maximum:
         raise ImportFailure("invalid_format", "Invalid dropped marker link count")
     return value
@@ -460,32 +469,42 @@ def _drop_invalid_import_marker_links(
         if clean_ids is not None and marker_id not in clean_ids:
             continue
         controls = marker.get("controls")
-        if not isinstance(controls, list):
-            continue
-        kept: list[Any] = []
-        seen_targets: set[str] = set()
-        for ref in controls:
-            if not isinstance(ref, str) or not ref.startswith("marker:"):
-                kept.append(ref)
-                continue
-            target_id = ref[len("marker:"):]
-            # Preserve one self-link so the semantic validator returns the
-            # stable marker_control_self error instead of silently repairing it.
-            if target_id == marker_id:
-                if target_id in seen_targets:
+        if isinstance(controls, list):
+            kept: list[Any] = []
+            seen_targets: set[str] = set()
+            for ref in controls:
+                if not isinstance(ref, str) or not ref.startswith("marker:"):
+                    kept.append(ref)
+                    continue
+                target_id = ref[len("marker:"):]
+                # Preserve one self-link so the semantic validator returns the
+                # stable marker_control_self error instead of silently repairing it.
+                if target_id == marker_id:
+                    if target_id in seen_targets:
+                        dropped += 1
+                        continue
+                    seen_targets.add(target_id)
+                    kept.append(ref)
+                    continue
+                target = by_id.get(target_id)
+                if target_id in seen_targets or target is None or target.get("removed") is True \
+                        or target.get("is_light") is not True:
                     dropped += 1
                     continue
                 seen_targets.add(target_id)
                 kept.append(ref)
-                continue
+            marker["controls"] = kept or None
+        badge = marker.get("value_badge")
+        source = badge.get("source") if isinstance(badge, dict) else None
+        if isinstance(source, dict) and source.get("kind") == "derived_marker_state":
+            ref = source.get("ref")
+            target_id = ref[len("marker:"):] if isinstance(ref, str) and ref.startswith("marker:") else ""
             target = by_id.get(target_id)
-            if target_id in seen_targets or target is None or target.get("removed") is True \
+            if not target_id or target is None or target.get("removed") is True \
                     or target.get("is_light") is not True:
+                badge["enabled"] = False
+                badge["source"] = None
                 dropped += 1
-                continue
-            seen_targets.add(target_id)
-            kept.append(ref)
-        marker["controls"] = kept or None
     return dropped
 
 
@@ -608,12 +627,17 @@ def build_space_merge(
                 1 for ref in marker.get("controls") or []
                 if isinstance(ref, str) and ref.startswith("marker:")
             )
+            badge = marker.get("value_badge")
+            source = badge.get("source") if isinstance(badge, dict) else None
+            if isinstance(source, dict) and source.get("kind") == "derived_marker_state":
+                dropped_marker_links += 1
             marker["binding"] = "virtual"
             marker["display"] = "static_icon"
             for field in (
                 "area", "controls", "tap_action", "tap_target", "tap_confirm",
                 "vacuum", "is_light", "use_climate_temp", "glow_color",
                 "glow_radius_cm", "light_entity", "hidden", "removed",
+                "value_badge",
             ):
                 marker.pop(field, None)
         output_markers.append(marker)
@@ -624,20 +648,31 @@ def build_space_merge(
     # the imported independent copy.
     for marker in output_markers:
         controls = marker.get("controls")
-        if not isinstance(controls, list):
-            continue
-        remapped = []
-        for ref in controls:
-            if not isinstance(ref, str) or not ref.startswith("marker:"):
-                remapped.append(ref)
-                continue
-            old_target = ref[len("marker:"):]
+        if isinstance(controls, list):
+            remapped = []
+            for ref in controls:
+                if not isinstance(ref, str) or not ref.startswith("marker:"):
+                    remapped.append(ref)
+                    continue
+                old_target = ref[len("marker:"):]
+                target = None if old_target in virtualized_targets else marker_map.get(old_target)
+                if not target:
+                    dropped_marker_links += 1
+                    continue
+                remapped.append("marker:" + target)
+            marker["controls"] = remapped or None
+        badge = marker.get("value_badge")
+        source = badge.get("source") if isinstance(badge, dict) else None
+        if isinstance(source, dict) and source.get("kind") == "derived_marker_state":
+            ref = source.get("ref")
+            old_target = ref[len("marker:"):] if isinstance(ref, str) and ref.startswith("marker:") else ""
             target = None if old_target in virtualized_targets else marker_map.get(old_target)
-            if not target:
+            if target:
+                source["ref"] = "marker:" + target
+            else:
+                badge["enabled"] = False
+                badge["source"] = None
                 dropped_marker_links += 1
-                continue
-            remapped.append("marker:" + target)
-        marker["controls"] = remapped or None
 
     output_layout: dict[str, Any] = {}
     for key, pos in (document["payload"].get("layout") or {}).items():
@@ -684,6 +719,7 @@ def build_space_merge(
         raise ImportFailure("invalid_config", str(err)) from err
     try:
         validate_marker_controls(merged_config, current_config)
+        validate_marker_value_badges(merged_config, current_config)
     except MarkerControlError as err:
         raise ImportFailure(err.code, str(err)) from err
     try:
@@ -855,6 +891,7 @@ def create_preview(
         details["dropped_marker_links"] = dropped_marker_links
         try:
             validate_marker_controls(incoming_config, validate_all=True)
+            validate_marker_value_badges(incoming_config, validate_all=True)
         except MarkerControlError as err:
             raise ImportFailure(err.code, str(err)) from err
     content, confirmation = _content_state(document, same_source, config_root)
@@ -999,6 +1036,14 @@ def prepare_apply(
         _detach_missing(imported_config, candidate.get("content") or [])
     if document["kind"] == "full":
         config = imported_config
+        # Full exports keep the data-model version in the portable envelope so
+        # the payload can be validated independently.  Restore it before the
+        # configuration is persisted; otherwise every full round-trip silently
+        # downgrades the stored plan to an unversioned document.
+        model_version = document.get("model_version", 0)
+        if isinstance(model_version, int) and not isinstance(model_version, bool) \
+                and model_version > 0:
+            config["model_version"] = model_version
         layout = _json_copy(document["payload"]["layout"])
         if not candidate.get("same_source"):
             settings = config.get("settings") or {}

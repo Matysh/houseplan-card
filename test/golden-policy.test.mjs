@@ -4,6 +4,7 @@ import {
   assertGoldenInvocation,
   GOLDEN_BASELINE_MANIFEST,
   goldenRunFailed,
+  goldenScenarioSetsMatch,
 } from '../demo/golden/policy.mjs';
 
 test('golden metadata cannot be mistaken for a Home Assistant integration manifest', () => {
@@ -27,4 +28,11 @@ test('golden verification cannot make a partial success claim', () => {
   assert.doesNotThrow(() => assertGoldenInvocation('verify', ''));
   assert.throws(() => assertGoldenInvocation('verify', 'one-scenario'), /complete matrix/);
   assert.throws(() => assertGoldenInvocation('unknown', ''), /unknown golden mode/);
+});
+
+test('golden baseline inventory rejects orphan hashes and PNGs', () => {
+  assert.equal(goldenScenarioSetsMatch(['a', 'b'], ['b', 'a'], ['a', 'b']), true);
+  assert.equal(goldenScenarioSetsMatch(['a'], ['a', 'orphan'], ['a']), false);
+  assert.equal(goldenScenarioSetsMatch(['a'], ['a'], ['a', 'orphan']), false);
+  assert.equal(goldenScenarioSetsMatch(['a', 'b'], ['a'], ['a', 'b']), false);
 });

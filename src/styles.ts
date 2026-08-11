@@ -1848,14 +1848,15 @@ export const cardStyles = css`
       box-shadow: 0 0 0 3px rgba(255, 193, 77, 0.35);
     }
 
-    .dev .tval {
+    .dev .value-badge {
       position: absolute;
-      left: 100%;
-      top: 50%;
-      transform: translateY(-50%);
-      margin-left: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.1);
+      z-index: 2;
+      box-sizing: border-box;
+      max-width: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 4);
+      overflow: hidden;
+      text-overflow: ellipsis;
       background: var(--card-background-color, var(--hp-bg));
-      border: 1px solid var(--hp-accent);
+      border: 1px solid var(--hp-accent, #ff9800);
       border-radius: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.18);
       padding: 0 calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.14);
       font-size: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.45);
@@ -1865,22 +1866,32 @@ export const cardStyles = css`
       white-space: nowrap;
       pointer-events: none;
     }
-.dev .hval {
-      position: absolute;
+    .dev .value-badge.tone-humidity { border-color: #4fc3f7; }
+    .dev .value-badge.unavailable,
+    .dev .value-badge.missing { opacity: 0.66; }
+    .dev .value-badge.pos-right {
       left: 100%;
       top: 50%;
       transform: translateY(-50%);
       margin-left: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.1);
-      background: var(--card-background-color, var(--hp-bg));
-      border: 1px solid #4fc3f7;
-      border-radius: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.18);
-      padding: 0 calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.14);
-      font-size: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.45);
-      font-weight: 700;
-      line-height: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.68);
-      color: var(--hp-txt);
-      white-space: nowrap;
-      pointer-events: none;
+    }
+    .dev .value-badge.pos-left {
+      right: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      margin-right: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.1);
+    }
+    .dev .value-badge.pos-top {
+      left: 50%;
+      bottom: 100%;
+      transform: translateX(-50%);
+      margin-bottom: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.1);
+    }
+    .dev .value-badge.pos-bottom {
+      left: 50%;
+      top: 100%;
+      transform: translateX(-50%);
+      margin-top: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.1);
     }
     .dev .lqi {
       position: absolute;
@@ -1894,6 +1905,9 @@ export const cardStyles = css`
       text-shadow: 0 0 3px rgba(0, 0, 0, 0.9), 0 0 2px rgba(0, 0, 0, 0.9);
       white-space: nowrap;
       pointer-events: none;
+    }
+    .dev .lqi.below-value-badge {
+      margin-top: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.88);
     }
     .editbar {
       display: grid;
@@ -2029,6 +2043,12 @@ export const cardStyles = css`
       margin-top: var(--sp-2) !important;
     }
     .markerlightdisabled ha-icon { --mdc-icon-size: 18px; flex: none; }
+    .markerbadgetechnical {
+      min-width: 0;
+      margin: var(--sp-1) 0 var(--sp-2) !important;
+      overflow-wrap: anywhere;
+    }
+    .markerbadgetechnical code { white-space: normal; }
     .planrow {
       display: flex;
       align-items: center;

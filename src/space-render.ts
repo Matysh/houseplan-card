@@ -235,6 +235,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       })
     : [];
 
+  const planLightSources = resolvedLightSources(planHass, devs);
   const markers = devs.map((d) => {
     const p = markerPos(d, o.layout, o.cfg, defPos, space);
     const left = ((p.x - vb[0]) / vb[2]) * 100;
@@ -247,10 +248,18 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       showSignal: showLqi,
       activityRuntime: o.activityRuntime?.get(d.id),
       sourceDetails: false,
+      lightDevices: devs,
+      lightSources: planLightSources,
     });
     const st = [`left:${left}%`, `top:${top}%`, ...deviceFaceStyle(presentation)];
+    const deviceAriaLabel = [
+      d.name,
+      presentation.valueBadge
+        ? `${presentation.valueBadge.sourceLabel}: ${presentation.valueBadge.fullText}` : '',
+    ].filter(Boolean).join(', ');
     return html`<div class="dev ${presentation.classes.join(' ')} ${d.virtual ? 'virtual' : ''} ${presentation.valueText != null ? 'valonly' : ''}"
       data-hp="device" data-id="${d.id}" data-entity=${d.primary || nothing} data-area=${d.area || nothing}
+      aria-label=${deviceAriaLabel}
       data-binding-status=${d.bindingStatus?.kind === 'ha_disabled' ? 'ha-disabled' : d.bindingStatus?.kind || 'active'}
       data-disabled-reason=${presentation.disabledReason ? presentation.disabledReason.replace('_', '-') : nothing}
       style="${st.join(';')}">

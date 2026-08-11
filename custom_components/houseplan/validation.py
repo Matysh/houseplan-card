@@ -32,6 +32,105 @@ class MarkerControlError(ValueError):
         self.code = code
 
 
+VALUE_BADGE_ATTRIBUTES = {
+    "current_temperature", "temperature", "current_humidity", "humidity",
+    "current_position", "percentage", "brightness", "volume_level",
+    "battery_level", "fan_speed",
+}
+VALUE_BADGE_POSITIONS = {"right", "bottom", "left", "top"}
+VALUE_BADGE_SOURCE_KINDS = {
+    "entity_state", "entity_attribute", "derived_lqi", "derived_marker_state",
+}
+
+
+def _matching_previous_marker(
+    marker: dict, marker_id: str, old_by_id: dict[str, dict], old_markers: list[dict],
+    new_ids: set[str], consumed_old_ids: set[str], validate_all: bool,
+) -> dict | None:
+    """Match the previous marker across the binding-stable id rename path."""
+    old_marker = old_by_id.get(marker_id)
+    if old_marker is not None:
+        consumed_old_ids.add(marker_id)
+        return old_marker
+    if validate_all:
+        return None
+    binding = marker.get("binding")
+    matches = [
+        old for old in old_markers
+        if binding not in (None, "virtual")
+        and old.get("binding") == binding
+        and str(old.get("id")) not in new_ids
+        and str(old.get("id")) not in consumed_old_ids
+    ]
+    if len(matches) == 1:
+        consumed_old_ids.add(str(matches[0].get("id")))
+        return matches[0]
+    return None
+
+
+def validate_marker_value_badges(
+    config: dict, previous: dict | None = None, *, validate_all: bool = False
+) -> None:
+    """Validate only new/changed badge data; dormant future/legacy data round-trips."""
+    markers = config.get("markers") or []
+    by_id = {str(marker.get("id")): marker for marker in markers}
+    old_markers = (previous or {}).get("markers") or []
+    old_by_id = {str(marker.get("id")): marker for marker in old_markers}
+    new_ids = set(by_id)
+    consumed_old_ids: set[str] = set()
+    known_source_fields = {"kind", "entity_id", "attribute", "ref"}
+
+    for marker_id, marker in by_id.items():
+        old_marker = _matching_previous_marker(
+            marker, marker_id, old_by_id, old_markers, new_ids,
+            consumed_old_ids, validate_all,
+        )
+        badge = marker.get("value_badge")
+        old_badge = None if validate_all else (old_marker or {}).get("value_badge")
+        if not validate_all and badge == old_badge:
+            continue
+        if badge is None:
+            continue
+        if not isinstance(badge, dict):
+            raise MarkerControlError("invalid_value_badge", "Value badge must be an object")
+        if not isinstance(badge.get("enabled"), bool):
+            raise MarkerControlError("invalid_value_badge", "Value badge enabled must be boolean")
+        if badge.get("position") not in VALUE_BADGE_POSITIONS:
+            raise MarkerControlError("invalid_value_badge_position", "Invalid value badge position")
+        source = badge.get("source")
+        if badge["enabled"] and not isinstance(source, dict):
+            raise MarkerControlError("value_badge_source_required", "Enabled value badge needs a source")
+        if source is None:
+            continue
+        if not isinstance(source, dict) or source.get("kind") not in VALUE_BADGE_SOURCE_KINDS:
+            raise MarkerControlError("invalid_value_badge_source", "Invalid value badge source")
+        kind = source["kind"]
+        allowed_fields = {
+            "entity_state": {"kind", "entity_id"},
+            "entity_attribute": {"kind", "entity_id", "attribute"},
+            "derived_lqi": {"kind"},
+            "derived_marker_state": {"kind", "ref"},
+        }[kind]
+        if (known_source_fields & set(source)) - allowed_fields:
+            raise MarkerControlError("invalid_value_badge_source", "Inconsistent value badge source")
+        if kind in {"entity_state", "entity_attribute"}:
+            entity_id = source.get("entity_id")
+            if not isinstance(entity_id, str) or not _CONTROL_ENTITY_ID_RE.fullmatch(entity_id):
+                raise MarkerControlError("invalid_value_badge_source", "Invalid value badge entity id")
+        if kind == "entity_attribute":
+            if source.get("attribute") not in VALUE_BADGE_ATTRIBUTES:
+                raise MarkerControlError("invalid_value_badge_attribute", "Invalid value badge attribute")
+        if kind == "derived_marker_state":
+            ref = source.get("ref")
+            if not isinstance(ref, str) or not ref.startswith(MARKER_CONTROL_PREFIX) or not ref[len(MARKER_CONTROL_PREFIX):]:
+                raise MarkerControlError("invalid_value_badge_source", "Invalid marker value badge target")
+            target = by_id.get(ref[len(MARKER_CONTROL_PREFIX):])
+            if target is None or target.get("removed") is True:
+                raise MarkerControlError("value_badge_marker_missing", "Marker value badge target does not exist")
+            if target.get("is_light") is not True:
+                raise MarkerControlError("value_badge_marker_not_light", "Marker value badge target is not a forced light")
+
+
 def validate_marker_controls(
     config: dict, previous: dict | None = None, *, validate_all: bool = False
 ) -> None:
@@ -51,25 +150,10 @@ def validate_marker_controls(
     graph: dict[str, list[str]] = {}
     added: list[tuple[str, str]] = []
     for marker_id, marker in by_id.items():
-        old_marker = old_by_id.get(marker_id)
-        if old_marker is not None:
-            consumed_old_ids.add(marker_id)
-        elif not validate_all:
-            # HA-bound marker ids may be regenerated while their binding stays
-            # stable. Treat that as a rename, not as every dormant legacy edge
-            # suddenly becoming a new write. Never borrow an old marker that
-            # still exists in the candidate or has already been matched.
-            binding = marker.get("binding")
-            matches = [
-                old for old in old_markers
-                if binding not in (None, "virtual")
-                and old.get("binding") == binding
-                and str(old.get("id")) not in new_ids
-                and str(old.get("id")) not in consumed_old_ids
-            ]
-            if len(matches) == 1:
-                old_marker = matches[0]
-                consumed_old_ids.add(str(old_marker.get("id")))
+        old_marker = _matching_previous_marker(
+            marker, marker_id, old_by_id, old_markers, new_ids,
+            consumed_old_ids, validate_all,
+        )
         raw_controls = [
             ref for ref in marker.get("controls") or [] if isinstance(ref, str)
         ]
@@ -768,6 +852,22 @@ MARKER_SCHEMA = vol.Schema(
         vol.Optional("light_entity"): vol.Any(
             None,
             vol.All(str, vol.Length(max=MAX_TEXT), vol.Match(r"^(?:light|switch)\.[a-z0-9_]+\Z")),
+        ),
+        vol.Optional("value_badge"): vol.Any(
+            None,
+            vol.Schema(
+                {
+                    # Required semantically for changed/new data. Optional here
+                    # keeps old/future configs readable until the user edits it.
+                    vol.Optional("enabled"): object,
+                    vol.Optional("position"): object,
+                    vol.Optional("source"): vol.Any(
+                        None,
+                        vol.Schema({}, extra=vol.ALLOW_EXTRA),
+                    ),
+                },
+                extra=vol.ALLOW_EXTRA,
+            ),
         ),
         # climate current_temperature: badge + room-average vote (off unless True)
         vol.Optional("use_climate_temp"): vol.Any(bool, None),

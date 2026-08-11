@@ -8,6 +8,7 @@
 import {
   climateTempFor, humFor, isHumEntity, isTempEntity, lqiFor,
   persistedExternalControls, resolvedDeviceStateEntities, resolvedLightSources, tempFor,
+  type ResolvedLightSource,
 } from './devices';
 import {
   combineVisualSamples, entityVisualSample, entityVisualSamplesForDevice,
@@ -20,6 +21,7 @@ import {
 } from './logic';
 import type { DevItem } from './types';
 import { safeStoredColor } from './color';
+import { resolveDeviceValueBadge, type ResolvedValueBadge } from './device-value-badge';
 
 export type PresentationSourceKind =
   | 'cover' | 'light' | 'controls' | 'device_role' | 'primary' | 'none';
@@ -96,6 +98,8 @@ export interface ResolvePresentationOptions {
   sourceDetails?: boolean;
   /** Whole-plan light graph; needed for passive sources driven from another marker. */
   lightDevices?: readonly DevItem[];
+  /** Pre-resolved whole-plan graph. Render/activity passes must build it once. */
+  lightSources?: readonly ResolvedLightSource<DevItem>[];
   now?: number;
 }
 
@@ -119,6 +123,7 @@ export interface ResolvedDevicePresentation {
   classes: string[];
   tempText: string | null;
   humText: string | null;
+  valueBadge: ResolvedValueBadge | null;
   lqiText: string | null;
   lqiColor: string | null;
   lightColor: string | null;
@@ -183,6 +188,7 @@ function sourceOf(
 /** Resolve the effective visual role once; every surface uses this graph. */
 export function resolvePresentationSources(
   hass: any, device: DevItem, lightDevices: readonly DevItem[] = [device],
+  planLightSources?: readonly ResolvedLightSource<DevItem>[],
 ): ResolvedPresentationSources {
   // User-hidden is a renderer concern. It must not erase the source graph used
   // by the design preview. HA-disabled devices already carry no active entities.
@@ -207,7 +213,7 @@ export function resolvePresentationSources(
   // path instead of resolving the complete plan once per rendered marker.
   const needsGlobalGraph = d.marker?.is_light === true || markerRefs.size > 0;
   const globalLights = needsGlobalGraph
-    ? resolvedLightSources(hass, lightDevices)
+    ? planLightSources || resolvedLightSources(hass, lightDevices)
     : localLights;
   // Keep controller projections local, but take sources owned by this marker
   // from the plan-wide graph. This matters for passive sources: their `on`
@@ -464,7 +470,9 @@ export function resolveDevicePresentation(
   const display = normalizeDeviceDisplay(d.marker?.display);
   const staticIcon = display === 'static_icon';
   const sources = staticIcon && options.sourceDetails === false
-    ? EMPTY_SOURCES : resolvePresentationSources(hass, d, options.lightDevices || [d]);
+    ? EMPTY_SOURCES : resolvePresentationSources(
+        hass, d, options.lightDevices || [d], options.lightSources,
+      );
   const status = d.bindingStatus;
   const haDisabled = status?.kind === 'ha_disabled';
   const orphaned = status?.kind === 'orphaned';
@@ -499,6 +507,19 @@ export function resolveDevicePresentation(
   const hum = !staticIcon && !effectiveHidden && options.showTemperature && d.primary && isHumEntity(hass, d.primary)
     ? humFor(hass, d.entities) : null;
   const lqi = !staticIcon && !effectiveHidden && options.showSignal && !d.virtual ? lqiFor(hass, d.entities) : null;
+  const valueBadge = resolveDeviceValueBadge(hass, d, {
+    showTemperature: options.showTemperature,
+    showSignal: options.showSignal,
+    display,
+    effectiveHidden,
+    markerStates: sources.visualSources
+      .filter((source) => source.eid.startsWith('marker:'))
+      .map((source) => ({
+        ref: source.eid,
+        on: source.state === 'on',
+        name: source.name,
+      })),
+  });
   const actEid = sources.sourceKind === 'cover'
     ? sources.visualSources[0]?.eid
     : d.primary || sources.visualSources[0]?.eid;
@@ -555,7 +576,8 @@ export function resolveDevicePresentation(
     classes: [],
     tempText: temp == null ? null : String(temp),
     humText: hum == null ? null : String(hum),
-    lqiText: lqi == null ? null : String(lqi),
+    valueBadge,
+    lqiText: lqi == null || valueBadge?.isLqi ? null : String(lqi),
     lqiColor: lqi == null ? null : lqiColor(lqi),
     lightColor,
     scale,

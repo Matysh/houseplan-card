@@ -223,8 +223,15 @@ export const makeLargeHouseFixture = () => {
     };
   });
   const runtime = makeRuntime(spaces);
+  const lightMarkers = Object.entries(runtime.entities)
+    .filter(([entityId]) => entityId.startsWith('light.'))
+    .map(([_entityId, entity]) => ({
+      id: entity.device_id,
+      binding: `device:${entity.device_id}`,
+      is_light: true,
+    }));
   return {
-    config: { spaces, markers: [], settings: { glow_radius_cm: 300 } },
+    config: { spaces, markers: lightMarkers, settings: { glow_radius_cm: 300 } },
     ...runtime,
     counts: LARGE_HOUSE_COUNTS,
   };

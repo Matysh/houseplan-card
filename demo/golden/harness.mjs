@@ -84,6 +84,21 @@ export function prepareGoldenFixture(scenario) {
     }
     space.openings = [...(space.openings || []), ...structuredClone(scenario.extraOpenings)];
   }
+  if (scenario.wallReplacements?.length) {
+    const space = requireSpace();
+    const samePoint = (a, b) => Array.isArray(a) && Array.isArray(b)
+      && Math.abs(a[0] - b[0]) < 1e-9 && Math.abs(a[1] - b[1]) < 1e-9;
+    for (const replacement of scenario.wallReplacements) {
+      const index = (space.walls || []).findIndex((wall) => (
+        samePoint(wall.a, replacement.match?.a) && samePoint(wall.b, replacement.match?.b)
+      ) || (
+        samePoint(wall.a, replacement.match?.b) && samePoint(wall.b, replacement.match?.a)
+      ));
+      if (index < 0 || !replacement.segments?.length)
+        throw new Error(`golden wallReplacement cannot find a valid wall in ${space.id}`);
+      space.walls.splice(index, 1, ...structuredClone(replacement.segments));
+    }
+  }
   if (scenario.hideOpenings) {
     const space = requireSpace();
     space.settings = { ...(space.settings || {}), hide_openings: true };
@@ -300,22 +315,23 @@ export async function prepareGoldenScenario(page, scenario) {
         await card.updateComplete;
         const dialog = card.renderRoot.querySelector('hp-dialog');
         const body = dialog?.querySelector('.body');
-        const groups = [...(dialog?.querySelectorAll('.markerlightgroup') || [])];
-        const roleInputs = groups[0]?.querySelectorAll('input[name="marker-light-role"]');
-        const glowInputs = groups[1]?.querySelectorAll('input[name="marker-glow-mode"]');
-        const color = groups[1]?.querySelector('hp-color-opacity');
-        const brightness = groups[1]?.querySelector('input[type="range"]');
+        const roleGroup = dialog?.querySelector('input[name="marker-light-role"]')?.closest('fieldset');
+        const glowGroup = dialog?.querySelector('input[name="marker-glow-mode"]')?.closest('fieldset');
+        const roleInputs = roleGroup?.querySelectorAll('input[name="marker-light-role"]');
+        const glowInputs = glowGroup?.querySelectorAll('input[name="marker-glow-mode"]');
+        const color = glowGroup?.querySelector('hp-color-opacity');
+        const brightness = glowGroup?.querySelector('input[type="range"]');
         const radius = dialog?.querySelector('#marker-glow-radius');
-        if (!body || groups.length !== 2 || roleInputs?.length !== 3 || glowInputs?.length !== 3
+        if (!body || !roleGroup || !glowGroup || roleInputs?.length !== 3 || glowInputs?.length !== 3
           || !roleInputs[1]?.checked || !glowInputs[2]?.checked
           || !color || color.disabled || !brightness || brightness.disabled || !radius || radius.disabled)
           throw new Error('golden device light-source controls are incomplete');
         const bodyRect = body.getBoundingClientRect();
-        const roleRect = groups[0].getBoundingClientRect();
+        const roleRect = roleGroup.getBoundingClientRect();
         body.scrollTop += roleRect.top - bodyRect.top - 8;
         await frame();
         const visibleBody = body.getBoundingClientRect();
-        const visibleRole = groups[0].getBoundingClientRect();
+        const visibleRole = roleGroup.getBoundingClientRect();
         const visibleRadius = radius.getBoundingClientRect();
         if (visibleRole.top < visibleBody.top - 1 || visibleRadius.bottom > visibleBody.bottom + 1)
           throw new Error('golden viewport does not show the complete device light-source controls');

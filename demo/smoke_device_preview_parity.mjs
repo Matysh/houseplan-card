@@ -14,8 +14,9 @@ const res = await page.evaluate(async () => {
       classes: semantic.filter((name) => node.classList.contains(name)),
       icon: node.querySelector(':scope > ha-icon')?.getAttribute('icon') || '',
       value: node.querySelector('.valtext')?.textContent?.trim() || '',
-      temp: node.querySelector('.tval')?.textContent?.trim() || '',
-      hum: node.querySelector('.hval')?.textContent?.trim() || '',
+      badge: node.querySelector('.value-badge')?.textContent?.trim() || '',
+      badgePosition: [...(node.querySelector('.value-badge')?.classList || [])]
+        .find((name) => name.startsWith('pos-')) || '',
       scale: node.style.getPropertyValue('--dev-scale'),
       rippleScale: node.style.getPropertyValue('--ripple-scale'),
       rippleColor: node.style.getPropertyValue('--ripple-color'),
@@ -36,6 +37,32 @@ const res = await page.evaluate(async () => {
   const previewFace = face(preview?.renderRoot?.querySelector('.dev'));
   const providerShown = /demo/i.test(preview?.renderRoot?.querySelector('.previewfacts')?.textContent || '');
 
+  // Issue #90: every explicit anchor, including a long value and the largest
+  // activity ring, stays inside the preview safe area with a real measured gap.
+  c.hass.states['sensor.hp_preview_long'] = {
+    entity_id: 'sensor.hp_preview_long', state: '12345678901234567890', attributes: {},
+  };
+  let badgeBounds = true;
+  for (const position of ['right', 'bottom', 'left', 'top']) {
+    c._markerDialog = {
+      ...c._markerDialog,
+      display: 'icon_ripple', rippleSize: 8,
+      valueBadgeEnabled: true, valueBadgeTouched: true,
+      valueBadgeSource: { kind: 'entity_state', entity_id: 'sensor.hp_preview_long' },
+      valueBadgePosition: position,
+    };
+    c.requestUpdate();
+    await c.updateComplete;
+    const currentPreview = sr().querySelector('hp-device-preview');
+    await currentPreview?.updateComplete;
+    const stage = currentPreview?.renderRoot?.querySelector('.previewstage')?.getBoundingClientRect();
+    const badge = currentPreview?.renderRoot?.querySelector('.value-badge')?.getBoundingClientRect();
+    const gap = 3;
+    badgeBounds &&= !!stage && !!badge
+      && badge.left >= stage.left + gap && badge.right <= stage.right - gap
+      && badge.top >= stage.top + gap && badge.bottom <= stage.bottom - gap;
+  }
+
   await customElements.whenDefined('houseplan-space-card');
   const card = document.createElement('houseplan-space-card');
   card.setConfig({ type: 'custom:houseplan-space-card', space: 'f1' });
@@ -52,6 +79,7 @@ const res = await page.evaluate(async () => {
     planPreviewEqual: JSON.stringify(planFace) === JSON.stringify(previewFace),
     planStaticEqual: JSON.stringify(planFace) === JSON.stringify(staticFace),
     providerShown,
+    badgeBounds,
     staticBindingHook: staticNode?.getAttribute('data-binding-status') === 'active',
   };
 });

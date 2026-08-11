@@ -1175,6 +1175,18 @@ test('issue 84 lifecycle: delete/rebind updates marker links and cycles are reje
   ];
   assert.deepEqual(removeMarkerControlReferences(markers, new Set(['b']))[0].controls, ['light.one']);
   assert.equal(rewriteMarkerControlReferences(markers, 'b', 'renamed')[0].controls[0], 'marker:renamed');
+  const withBadge = [{
+    id: 'a',
+    value_badge: {
+      enabled: true,
+      source: { kind: 'derived_marker_state', ref: 'marker:b' },
+      position: 'right',
+    },
+  }];
+  assert.equal(
+    rewriteMarkerControlReferences(withBadge, 'b', 'renamed')[0].value_badge.source.ref,
+    'marker:renamed',
+  );
   assert.equal(markerControlWouldCycle(markers, 'c', 'a'), true);
   assert.equal(markerControlWouldCycle(markers, 'a', 'c'), false);
   assert.equal(markerControlWouldCycle(markers, 'a', 'a'), true);

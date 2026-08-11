@@ -24,8 +24,14 @@ const BUILD_INPUTS = [
 export const sourceFingerprint = (root = process.cwd()) => {
   const sourceRoot = resolve(root, 'src');
   const hash = createHash('sha256');
+  const deterministicFixtureInputs = ['demo/fixtures', 'demo/golden']
+    .map((name) => resolve(root, name))
+    .filter(existsSync)
+    .flatMap(sourceFiles)
+    .filter((file) => file.endsWith('.mjs'));
   const files = [
     ...sourceFiles(sourceRoot),
+    ...deterministicFixtureInputs,
     ...BUILD_INPUTS.map((name) => resolve(root, name)).filter(existsSync),
   ].sort((a, b) => relative(root, a).localeCompare(relative(root, b)));
   for (const file of files) {

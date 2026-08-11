@@ -112,3 +112,15 @@ allowed to round-trip so unrelated edits cannot lock the plan. Deleting or
 rebinding a target removes or rewrites references atomically. A space export
 remaps links whose two ends are inside the exported space and reports/drops
 links leaving it; full export preserves them literally.
+
+`marker.value_badge` is an optional explicit value satellite. Its absence is
+the legacy compatibility state: the historical temperature/humidity heuristic
+and global `show_temperature` gate remain in force. An explicit
+`{enabled:false,...}` suppresses that heuristic; an enabled badge stores one
+discriminated source and one of four stable positions. Unknown sibling keys in
+the badge and source objects are preserved. New/changed records are validated,
+while an untouched old broken source remains readable and round-trippable.
+`derived_marker_state.ref` uses the same `marker:<id>` namespace as controls:
+space transfer remaps an internal target and disables/counts a link whose
+target is outside the transfer. Older clients ignore the field and may erase
+it if they reconstruct the same marker after a downgrade.

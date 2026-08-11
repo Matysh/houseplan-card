@@ -208,7 +208,8 @@ Object.assign(out, await page.evaluate(async () => {
   while (!card.renderRoot?.querySelector('[style*="left"]') && Date.now() - t0 < 6000) {
     await new Promise((r) => setTimeout(r, 60));
   }
-  await card.updateComplete;
+  await Promise.all([c.updateComplete, card.updateComplete]);
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   const st = [...card.renderRoot.querySelectorAll('[style*="left"]')]
     .find((el) => /%$/.test(el.style.left || '') && el.style.top);
   // docs/CANVAS.md §4: статичная карточка теперь кадрирует СОДЕРЖИМОЕ, как и
@@ -265,7 +266,8 @@ Object.assign(out, await page.evaluate(async () => {
   while (!card.renderRoot?.querySelector('.room') && Date.now() - t0 < 6000) {
     await new Promise((r) => setTimeout(r, 60));
   }
-  await card.updateComplete;
+  await Promise.all([c.updateComplete, card.updateComplete]);
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   const stRoom = [...card.renderRoot.querySelectorAll('.room')]
     .find((r) => (r.getAttribute('style') || '').includes('--room-fill'));
   const stFill = stRoom ? (stRoom.getAttribute('style').match(/--room-fill:([^;]+)/) || [])[1] : null;

@@ -8,7 +8,8 @@ import {
   wallCmToUnits, insetContour, inwardNormal, edgeKinds, wallEdgeBodies,
   wallBodyRings, wallBodiesUnionPath, innerContourForRoom,
   paperRoomShapesWithWalls, WALL_MIN_CM, WALL_MAX_CM, MITRE_LIMIT,
-  atomicPolyForRoom, insetOffsetsForRoom, wallIntervals, normalizeWallIntervals,
+  atomicPolyForRoom, insetOffsetsForRoom, wallIntervals, materializeWallIntervals,
+  normalizeWallIntervals,
   intervalCmAt, wallBodyNeedsSolid, openingInnerFaceOffset, openingTunnelGeometry,
   openingTunnelGeometries, tunnelFacePath,
   WALL_HATCH_MIN_PX,
@@ -727,6 +728,37 @@ test('applyWallThicknessToNewRoom skips edges that already have thickness', () =
 test('applyWallThicknessToNewRoom with null cm is a no-op', () => {
   const room = { id: 'r', poly: [[0, 0], [1, 0], [1, 1], [0, 1]] };
   assert.deepEqual(applyWallThicknessToNewRoom([], [room], 'r', null, pitch), []);
+});
+
+test('split materialisation preserves legacy source walls around a new divider', () => {
+  const original = [
+    { id: 'source', poly: [[0, 0], [10, 0], [10, 10], [0, 10]] },
+  ];
+  // Valid profiles saved by older House Plan versions have no exact a/b span.
+  const legacy = [
+    { key: wallKey([0, 0], [10, 0], pitch), cm: 15 },
+    { key: wallKey([10, 0], [10, 10], pitch), cm: 15 },
+    { key: wallKey([10, 10], [0, 10], pitch), cm: 15 },
+    { key: wallKey([0, 10], [0, 0], pitch), cm: 15 },
+  ];
+  const preserved = materializeWallIntervals(
+    original, legacy, [], pitch, cellCm, GRID_PITCH,
+  );
+  const split = [
+    { id: 'source', poly: [[4, 0], [10, 0], [10, 10], [4, 10]] },
+    { id: 'fresh', poly: [[0, 0], [4, 0], [4, 10], [0, 10]] },
+  ];
+  const changed = setWallThickness(preserved, [4, 0], [4, 10], 22, pitch);
+  const next = normalizeWallIntervals(split, changed, [], pitch, cellCm, GRID_PITCH);
+  const cmAt = (seg) => intervalCmAt(
+    split, next, [], seg, pitch, cellCm, GRID_PITCH,
+  );
+
+  assert.equal(cmAt([4, 0, 10, 0]), 15);
+  assert.equal(cmAt([0, 0, 4, 0]), 15);
+  assert.equal(cmAt([4, 10, 10, 10]), 15);
+  assert.equal(cmAt([0, 10, 4, 10]), 15);
+  assert.equal(cmAt([4, 0, 4, 10]), 22);
 });
 
 test('drawWallPreviewD returns a path for open and closed outlines', () => {

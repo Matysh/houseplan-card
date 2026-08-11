@@ -47,12 +47,16 @@ export function renderDeviceFace(
           aria-label=${presentation.valueFullText || presentation.valueText}>${presentation.valueText}</span>`
       : html`<ha-icon icon=${presentation.icon}
           style=${presentation.angle ? `transform:rotate(${presentation.angle}deg)` : nothing}></ha-icon>`}
-    ${presentation.tempText != null && presentation.valueText == null
-      ? html`<span class="tval">${presentation.tempText}°</span>` : nothing}
-    ${presentation.humText != null && presentation.valueText == null
-      ? html`<span class="hval">${presentation.humText}%</span>` : nothing}
+    ${presentation.valueBadge
+      ? html`<span
+          class="value-badge pos-${presentation.valueBadge.position} ${presentation.valueBadge.availability} tone-${presentation.valueBadge.tone}"
+          title=${`${presentation.valueBadge.sourceLabel}: ${presentation.valueBadge.fullText}`}
+          aria-hidden="true"
+        >${presentation.valueBadge.text}</span>`
+      : nothing}
     ${presentation.lqiText != null
-      ? html`<span class="lqi" style=${presentation.lqiColor ? `color:${presentation.lqiColor}` : nothing}>${presentation.lqiText}</span>`
+      ? html`<span class="lqi ${presentation.valueBadge?.position === 'bottom' ? 'below-value-badge' : ''}"
+          style=${presentation.lqiColor ? `color:${presentation.lqiColor}` : nothing}>${presentation.lqiText}</span>`
       : nothing}
   `;
 }

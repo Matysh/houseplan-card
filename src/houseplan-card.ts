@@ -60,7 +60,8 @@ import {
   innerContourForRoom, roomWallProfile, outsetContour,
   openingInnerFaceOffsetFromIndex, openingTunnelGeometriesFromIndex,
   openingWallIndex as buildOpeningWallIndex, applyWallThicknessToNewRoom,
-  drawWallPreviewD, DRAW_WALL_DEFAULT_CM, wallIntervals, normalizeWallIntervals,
+  drawWallPreviewD, DRAW_WALL_DEFAULT_CM, wallIntervals, materializeWallIntervals,
+  normalizeWallIntervals,
   intervalCmAt, wallBodyNeedsSolid, type OpeningTunnelGeometry, type OpeningWallIndex, type WallEntry,
 } from './wall-thickness';
 import {
@@ -100,6 +101,7 @@ import type {
   OpeningCfg,
   RoomCfg, RoomDraftCfg, PartitionCfg, WallColumnCfg,
   SpaceModel, PdfRef, Marker, ServerConfig, DevItem, CardConfig,
+  MarkerValueBadge, ValueBadgePosition, ValueBadgeSource,
 } from './types';
 import {
   COLUMN_MAX_CM, canonicalColumnAngle, clampColumnCm, columnBody,
@@ -148,6 +150,10 @@ import {
   resolvePresentationSources, type ResolvedDevicePresentation,
 } from './device-presentation';
 import {
+  recommendedValueBadgeSource, valueBadgeCandidates, valueBadgeSourceFromKey,
+  valueBadgeSourceKey, valueBadgeWriteFields, type ValueBadgeCandidate,
+} from './device-value-badge';
+import {
   createRenderDeviceSnapshot, presentationSnapshotKey, type RenderDeviceSnapshot,
 } from './render-device-snapshot';
 import { deviceFaceStyle, renderDeviceFace } from './device-face';
@@ -168,7 +174,7 @@ import {
 import { renderOpeningTunnelFills } from './render/opening-tunnels';
 import { safeStoredColor } from './color';
 
-const CARD_VERSION = '1.62.0-beta.1';
+const CARD_VERSION = '1.62.0-beta.2';
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
 const CELL_CM_MIN = 0.1;
@@ -1124,6 +1130,12 @@ class HouseplanCard extends LitElement {
     glowTouched: boolean;
     originalHasGlowColor: boolean;
     originalGlowColor: { c: string; bri?: number | null } | null | undefined;
+    valueBadgeEnabled: boolean;
+    valueBadgeSource: ValueBadgeSource | null;
+    valueBadgePosition: ValueBadgePosition;
+    valueBadgeTouched: boolean;
+    originalHasValueBadge: boolean;
+    originalValueBadge: MarkerValueBadge | null | undefined;
     useClimateTemp: boolean; // badge + room-average vote from climate current_temperature
     model: string;
     link: string;
@@ -3038,6 +3050,7 @@ class HouseplanCard extends LitElement {
         ));
       }
     }
+    const planLightSources = resolvedLightSources(planHass, this._devices);
     for (const device of this._devices) {
       for (const showLqi of [false, true]) {
         presentations.set(presentationSnapshotKey(device.id, showLqi), resolveDevicePresentation(
@@ -3048,6 +3061,7 @@ class HouseplanCard extends LitElement {
             activityRuntime: this._activityRt.get(device.id),
             sourceDetails: false,
             lightDevices: this._devices,
+            lightSources: planLightSources,
           },
         ));
       }
@@ -9935,6 +9949,16 @@ class HouseplanCard extends LitElement {
     const before = this._geometrySnapshot();
     const H = this._spaceH;
     const wasSplit = !!this._pendingSplit;
+    // Split changes the two source-wall edges into shorter children. Preserve
+    // the effective old profile while the original outline still proves the
+    // full extent of legacy midpoint-only wall keys; after the mutation that
+    // information is irrecoverable and one child would normalise to 0 cm.
+    const splitWalls = wasSplit
+      ? materializeWallIntervals(
+          this._spaceModel().rooms, sp.walls, this._openCuts(),
+          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+        )
+      : null;
     let verts: number[][];
     if (this._pendingSplit) {
       // apply the cut now: the bigger part keeps the original room, this dialog names the rest
@@ -9971,7 +9995,12 @@ class HouseplanCard extends LitElement {
     // Geometry first, then spans and the derived open_to — otherwise border
     // trimming reads the new geometry while glow reads the old connectivity
     // (AUD-159B6-02).
-    if (wasSplit) this._commitOpenSpans();
+    if (wasSplit) {
+      this._commitOpenSpans();
+      const next = this._normalizeWalls(splitWalls, this._openCuts());
+      if (next.length) sp.walls = next;
+      else delete sp.walls;
+    }
     // Draw-session wall thickness: apply to new edges only; keep neighbour cm
     // on shared stretches. Split naming does not use the Draw field.
     if (!wasSplit) {
@@ -10123,7 +10152,11 @@ class HouseplanCard extends LitElement {
       const hasIsLight = Object.prototype.hasOwnProperty.call(marker || {}, 'is_light');
       const hasLightEntity = Object.prototype.hasOwnProperty.call(marker || {}, 'light_entity');
       const hasGlowColor = Object.prototype.hasOwnProperty.call(marker || {}, 'glow_color');
+      const hasValueBadge = Object.prototype.hasOwnProperty.call(marker || {}, 'value_badge');
       const glowOverride = normalizeGlowColorOverride(marker?.glow_color);
+      const currentBadge = this._devicePresentation(d, true).valueBadge;
+      const badgeCandidates = valueBadgeCandidates(this._planHass, d, this._devices);
+      const recommendedBadge = recommendedValueBadgeSource(this._planHass, d, badgeCandidates);
       this._markerDialog = {
         devId: d.id,
         name: d.name,
@@ -10166,6 +10199,12 @@ class HouseplanCard extends LitElement {
         glowTouched: false,
         originalHasGlowColor: hasGlowColor && (!!glowOverride || marker?.glow_color === null),
         originalGlowColor: glowOverride || (marker?.glow_color === null ? null : undefined),
+        valueBadgeEnabled: hasValueBadge ? marker?.value_badge?.enabled === true : !!currentBadge,
+        valueBadgeSource: marker?.value_badge?.source || currentBadge?.source || recommendedBadge,
+        valueBadgePosition: marker?.value_badge?.position || currentBadge?.position || 'right',
+        valueBadgeTouched: false,
+        originalHasValueBadge: hasValueBadge,
+        originalValueBadge: marker?.value_badge,
         useClimateTemp: d.marker?.use_climate_temp === true,
         glowRadius: Number(d.marker?.glow_radius_cm) > 0
           ? String(this._imperial
@@ -10196,6 +10235,8 @@ class HouseplanCard extends LitElement {
         glowMode: 'auto', glowColor: this._fillColors.glow_light.c, glowBrightness: 100,
         glowColorDrafted: false, glowBrightnessDrafted: false, glowTouched: false,
         originalHasGlowColor: false, originalGlowColor: undefined,
+        valueBadgeEnabled: false, valueBadgeSource: null, valueBadgePosition: 'right',
+        valueBadgeTouched: false, originalHasValueBadge: false, originalValueBadge: undefined,
         useClimateTemp: false, glowRadius: '', model: '',
         link: '', description: '', pdfs: [], room: '', hideFromPlan: false, busy: false,
         uploadId: 'up_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
@@ -10544,6 +10585,10 @@ class HouseplanCard extends LitElement {
       this._showToast(this._t('toast.run_target_required'));
       return;
     }
+    if (dlg.valueBadgeTouched && dlg.valueBadgeEnabled && !dlg.valueBadgeSource) {
+      this._showToast(this._t('toast.value_badge_source_required'));
+      return;
+    }
     if (dlg.bindingMode === 'ha') {
       const status = this._bindingStatus(dlg.binding);
       const previous = dlg.devId
@@ -10606,6 +10651,7 @@ class HouseplanCard extends LitElement {
         controls: controls.length ? controls : null,
         // pdfs may be rewritten below when rebinding changes the marker id
         ...this._markerLightFields(dlg),
+        ...this._markerValueBadgeFields(dlg),
         use_climate_temp: dlg.useClimateTemp ? true : null,
         glow_radius_cm: (() => {
           const v = strictNumber(dlg.glowRadius);
@@ -10656,6 +10702,10 @@ class HouseplanCard extends LitElement {
       // Rebinding changes source identity. Rewrite every marker:* edge in the
       // same config transaction before replacing the marker itself.
       if (oldId && oldId !== id) cfg.markers = rewriteMarkerControlReferences(cfg.markers, oldId, id);
+      if (oldId && oldId !== id && marker.value_badge?.source?.kind === 'derived_marker_state'
+          && marker.value_badge.source.ref === `marker:${oldId}`) {
+        marker.value_badge.source = { kind: 'derived_marker_state', ref: `marker:${id}` };
+      }
       // remove the previous marker (by the old id and by the new id)
       cfg.markers = cfg.markers.filter(
         (m) => m.id !== id && m.id !== oldId
@@ -13482,8 +13532,13 @@ class HouseplanCard extends LitElement {
     );
   }
 
-  private _activitySnapshot(d: DevItem): { samples: EntityVisualSample[]; sourceKey: string } {
-    const sources = resolvePresentationSources(this._planHass, d, this._devices);
+  private _activitySnapshot(
+    d: DevItem,
+    planLightSources = resolvedLightSources(this._planHass, this._devices),
+  ): { samples: EntityVisualSample[]; sourceKey: string } {
+    const sources = resolvePresentationSources(
+      this._planHass, d, this._devices, planLightSources,
+    );
     return {
       samples: sources.samples,
       sourceKey: presentationSourceSignature(
@@ -13518,11 +13573,12 @@ class HouseplanCard extends LitElement {
     const snapshots = new Map<string, { samples: EntityVisualSample[]; sourceKey: string }>();
     if (!this.hass) return snapshots;
     const live = new Set<string>();
+    const planLightSources = resolvedLightSources(this._planHass, this._devices);
     for (const d of this._devices) {
       if (d.hidden) continue;
       if (normalizeDeviceDisplay(d.marker?.display) === 'static_icon') continue;
       live.add(d.id);
-      const snapshot = this._activitySnapshot(d);
+      const snapshot = this._activitySnapshot(d, planLightSources);
       snapshots.set(d.id, snapshot);
       const { samples, sourceKey } = snapshot;
       let rt = this._activityRt.get(d.id);
@@ -14177,10 +14233,14 @@ class HouseplanCard extends LitElement {
     const ghostLabel = presentation.haDisabled
       ? this._t((`marker.ha_disabled_${disabledReason}`) as any)
       : d.userHidden ? this._t('marker.hidden_ghost') : d.name;
+    const deviceAriaLabel = [
+      ghostLabel,
+      presentation.valueBadge
+        ? `${presentation.valueBadge.sourceLabel}: ${presentation.valueBadge.fullText}` : '',
+    ].filter(Boolean).join(', ');
     const metrics = [
       d.model,
-      presentation.tempText != null ? presentation.tempText + '°' : '',
-      presentation.humText != null ? presentation.humText + '%' : '',
+      presentation.valueBadge?.fullText || '',
       presentation.lqiText != null ? 'LQI ' + presentation.lqiText : '',
     ].filter(Boolean).join(' · ');
 
@@ -14194,7 +14254,7 @@ class HouseplanCard extends LitElement {
       data-area=${d.area || nothing}
       data-binding-status=${presentation.haDisabled ? 'ha-disabled' : d.bindingStatus?.kind || 'active'}
       data-disabled-reason=${disabledReason ? disabledReason.replace('_', '-') : nothing}
-      aria-label=${ghostLabel}
+      aria-label=${deviceAriaLabel}
       class="dev ${presentation.classes.join(' ')} ${this._selId === d.id ? 'sel' : ''} ${d.virtual ? 'virtual' : ''} ${d.hidden ? 'ghost' : ''} ${presentation.haDisabled ? 'ha-disabled' : ''} ${presentation.valueText != null ? 'valonly' : ''}"
       style="${st.join(';')}"
       @click=${(e: MouseEvent) => this._clickDevice(e, d)}
@@ -15631,6 +15691,20 @@ class HouseplanCard extends LitElement {
     </hp-dialog>`;
   }
 
+  /** Preserve absence/future fields until the user explicitly edits the badge. */
+  private _markerValueBadgeFields(
+    d: NonNullable<HouseplanCard['_markerDialog']>,
+  ): Pick<Marker, 'value_badge'> | Record<string, never> {
+    return valueBadgeWriteFields({
+      touched: d.valueBadgeTouched,
+      originalHas: d.originalHasValueBadge,
+      original: d.originalValueBadge,
+      enabled: d.valueBadgeEnabled,
+      source: d.valueBadgeSource,
+      position: d.valueBadgePosition,
+    });
+  }
+
   /** Convert the transactional dialog state into the marker that Save would write. */
   private _markerDraft(d: NonNullable<HouseplanCard['_markerDialog']>): Marker | null {
     if (d.bindingMode === 'ha' && (!d.binding || d.binding === 'virtual')) return null;
@@ -15655,6 +15729,7 @@ class HouseplanCard extends LitElement {
       tap_confirm: d.tapConfirm ? true : null,
       controls: controls.length ? controls : null,
       ...this._markerLightFields(d),
+      ...this._markerValueBadgeFields(d),
       use_climate_temp: d.useClimateTemp ? true : null,
       glow_radius_cm: (() => {
         const value = strictNumber(d.glowRadius);
@@ -15698,6 +15773,26 @@ class HouseplanCard extends LitElement {
     });
     this._markerPreviewMemo = { key, device };
     return device;
+  }
+
+  private _valueBadgeForBinding(
+    d: NonNullable<HouseplanCard['_markerDialog']>, binding: string,
+  ): Pick<NonNullable<HouseplanCard['_markerDialog']>,
+    'valueBadgeEnabled' | 'valueBadgeSource' | 'valueBadgeTouched'> {
+    const draft = {
+      ...d, binding,
+      valueBadgeEnabled: false, valueBadgeSource: null, valueBadgeTouched: true,
+    };
+    const device = this._markerPreviewDevice(draft);
+    if (!device) return { valueBadgeEnabled: false, valueBadgeSource: null, valueBadgeTouched: true };
+    const lightDevices = [...this._devices.filter((item) => item.id !== device.id), device];
+    const candidates = valueBadgeCandidates(this._planHass, device, lightDevices);
+    const source = recommendedValueBadgeSource(this._planHass, device, candidates);
+    return {
+      valueBadgeEnabled: d.valueBadgeEnabled && !!source,
+      valueBadgeSource: source,
+      valueBadgeTouched: true,
+    };
   }
 
   private _markerSpatialSource(d: NonNullable<HouseplanCard['_markerDialog']>) {
@@ -15747,6 +15842,20 @@ class HouseplanCard extends LitElement {
     };
   }
 
+  private _valueBadgeCandidateLabel(candidate: ValueBadgeCandidate): string {
+    const source = candidate.source;
+    if (source.kind === 'derived_lqi') return this._t('marker.value_badge_lqi');
+    if (source.kind === 'derived_marker_state') {
+      return this._t('marker.value_badge_marker_state', { name: candidate.label });
+    }
+    if (source.kind === 'entity_state') {
+      return this._t('marker.value_badge_state', { name: candidate.label });
+    }
+    const entityName = this.hass.states[source.entity_id]?.attributes?.friendly_name
+      || this._fullRegistryHass.entities[source.entity_id]?.name || source.entity_id;
+    return this._t((`marker.value_badge_attr_${source.attribute}`) as any, { name: entityName });
+  }
+
   private _controlCandidates(d: NonNullable<HouseplanCard['_markerDialog']>): {
     value: string; label: string; sub: string; icon: string;
   }[] {
@@ -15784,6 +15893,10 @@ class HouseplanCard extends LitElement {
   private _addControlRef(d: NonNullable<HouseplanCard['_markerDialog']>, ref: string): void {
     if (ref.startsWith('marker:')) {
       const controllerId = this._markerDraft(d)?.id || d.devId || '';
+      if (!controllerId) {
+        this._showToast(this._t('toast.marker_binding_required'));
+        return;
+      }
       const targetId = ref.slice('marker:'.length);
       const draft = this._markerDraft(d);
       const graph = draft
@@ -15835,6 +15948,9 @@ class HouseplanCard extends LitElement {
     const previewSpaceDisplay = previewDevice
       ? spaceDisplayOf(this._serverCfg?.spaces.find((space: any) => space.id === previewDevice.space))
       : null;
+    const previewLightDevices = previewDevice
+      ? [...this._devices.filter((item) => item.id !== previewDevice.id), previewDevice]
+      : this._devices;
     const previewPresentation = previewDevice
       ? resolveDevicePresentation(this._planHass, previewDevice, {
           liveStates: this._config?.live_states !== false,
@@ -15842,12 +15958,28 @@ class HouseplanCard extends LitElement {
           showSignal: previewSpaceDisplay?.showLqi ?? (this._config?.show_signal !== false),
           designPreview: true,
           activityRuntime: this._activityRt.get(previewDevice.id),
-          lightDevices: [
-            ...this._devices.filter((item) => item.id !== previewDevice.id),
-            previewDevice,
-          ],
+          lightDevices: previewLightDevices,
         })
       : null;
+    const badgeCandidates = previewDevice
+      ? valueBadgeCandidates(this._planHass, previewDevice, previewLightDevices) : [];
+    const badgeRecommendation = previewDevice
+      ? recommendedValueBadgeSource(this._planHass, previewDevice, badgeCandidates) : null;
+    const effectiveBadgeEnabled = d.valueBadgeTouched
+      ? d.valueBadgeEnabled : !!previewPresentation?.valueBadge;
+    const effectiveBadgeSource = d.valueBadgeTouched
+      ? d.valueBadgeSource : previewPresentation?.valueBadge?.source || d.valueBadgeSource;
+    const effectiveBadgePosition = d.valueBadgeTouched
+      ? d.valueBadgePosition : previewPresentation?.valueBadge?.position || d.valueBadgePosition;
+    const badgeSourceKey = valueBadgeSourceKey(effectiveBadgeSource);
+    const badgeSourceMissing = !!effectiveBadgeSource
+      && !badgeCandidates.some((item) => item.key === badgeSourceKey);
+    const selectedBadgeCandidate = badgeCandidates.find((item) => item.key === badgeSourceKey);
+    const innerValueSourceKey = previewPresentation?.valueSource
+      ? previewPresentation.valueSource.attribute
+        ? `attr:${previewPresentation.valueSource.eid}:${previewPresentation.valueSource.attribute}`
+        : `state:${previewPresentation.valueSource.eid}`
+      : '';
     const autoHasSpatialSource = this._markerAutoHasSpatialSource(d);
     const statefulSource = !!previewDevice
       && hasOwnStatefulLightSource(this._planHass, { ...previewDevice, hidden: false });
@@ -15907,11 +16039,14 @@ class HouseplanCard extends LitElement {
           <div class="bindsel">
             <label class="srcrow">
               <input type="radio" name="bmode" .checked=${d.bindingMode === 'virtual'}
-                @change=${() => (this._markerDialog = {
-                  ...d, bindingMode: 'virtual', binding: 'virtual', bindingOpen: false,
-                  controls: persistedExternalControls('virtual', d.controls),
-                  autoIcon: this._autoIconForBinding('virtual'),
-                })} />
+                @change=${() => {
+                  const next = {
+                    ...d, bindingMode: 'virtual' as const, binding: 'virtual', bindingOpen: false,
+                    controls: persistedExternalControls('virtual', d.controls),
+                    autoIcon: this._autoIconForBinding('virtual'),
+                  };
+                  this._markerDialog = { ...next, ...this._valueBadgeForBinding(next, 'virtual') };
+                }} />
               <span>${this._t('marker.virtual_option')}</span>
             </label>
             <div class="bindharow">
@@ -15947,13 +16082,16 @@ class HouseplanCard extends LitElement {
                         <div class="candlist">
                           ${cands.map(
                             (c) => html`<div class="cand ${c.value === d.binding ? 'sel' : ''}"
-                              @click=${() => (this._markerDialog = {
-                                ...d, binding: c.value, bindingOpen: false,
-                                controls: persistedExternalControls(
-                                  c.value, d.controls, this._bindingEntities(c.value),
-                                ),
-                                autoIcon: this._autoIconForBinding(c.value),
-                              })}>
+                              @click=${() => {
+                                const next = {
+                                  ...d, binding: c.value, bindingOpen: false,
+                                  controls: persistedExternalControls(
+                                    c.value, d.controls, this._bindingEntities(c.value),
+                                  ),
+                                  autoIcon: this._autoIconForBinding(c.value),
+                                };
+                                this._markerDialog = { ...next, ...this._valueBadgeForBinding(next, c.value) };
+                              }}>
                               <span class="cl">${c.label}</span><span class="cs">${c.sub}</span>
                             </div>`,
                           )}
@@ -16205,6 +16343,76 @@ class HouseplanCard extends LitElement {
                 <span>${this._t('marker.static_alarm_warning')}</span>
               </div>`
             : nothing}
+          <fieldset class="markerlightgroup markerbadgegroup">
+            <legend><span>${this._t('marker.value_badge_title')}</span>${this._help('marker.value_badge.help')}</legend>
+            <label class="srcrow">
+              ${this._boolInput(effectiveBadgeEnabled, (enabled) => {
+                const source = effectiveBadgeSource || badgeRecommendation;
+                this._markerDialog = {
+                  ...d,
+                  valueBadgeEnabled: enabled && !!source,
+                  valueBadgeSource: source,
+                  valueBadgeTouched: true,
+                };
+              }, d.display === 'static_icon' || (!badgeCandidates.length && !d.valueBadgeSource))}
+              <span>${this._t('marker.value_badge_enabled')}</span>
+            </label>
+            ${d.display === 'static_icon'
+              ? html`<p class="muted markerlightdisabled" role="note">
+                  <ha-icon icon="mdi:information-outline"></ha-icon>${this._t('marker.value_badge_static')}
+                </p>`
+              : !badgeCandidates.length && !d.valueBadgeSource
+                ? html`<p class="muted markerlightdisabled" role="note">
+                    <ha-icon icon="mdi:information-outline"></ha-icon>${this._t('marker.value_badge_empty')}
+                  </p>`
+                : nothing}
+            ${effectiveBadgeEnabled ? html`
+              <div class="markerhelplabel">
+                <label for="marker-value-badge-source">${this._t('marker.value_badge_source')}</label>
+                ${this._help('marker.value_badge_source.help')}
+              </div>
+              <select id="marker-value-badge-source" class="areasel" .value=${badgeSourceKey}
+                @change=${(e: Event) => (this._markerDialog = {
+                  ...d,
+                  valueBadgeSource: valueBadgeSourceFromKey((e.target as HTMLSelectElement).value),
+                  valueBadgeEnabled: true,
+                  valueBadgeTouched: true,
+                })}>
+                ${badgeSourceMissing ? html`<option value=${badgeSourceKey}>
+                  ${this._t('marker.value_badge_missing')}
+                </option>` : nothing}
+                ${badgeCandidates.map((candidate) => html`<option value=${candidate.key}
+                  title=${candidate.technical}>
+                  ${this._valueBadgeCandidateLabel(candidate)} · ${candidate.value}
+                </option>`)}
+              </select>
+              ${selectedBadgeCandidate
+                ? html`<p class="muted markerbadgetechnical"><code>${selectedBadgeCandidate.technical}</code></p>`
+                : nothing}
+              ${badgeSourceMissing ? html`<p class="muted markerlightwarning" role="status">
+                <ha-icon icon="mdi:alert-outline"></ha-icon>${this._t('marker.value_badge_missing_hint')}
+              </p>` : nothing}
+              ${d.display === 'value' && badgeSourceKey === innerValueSourceKey
+                ? html`<p class="muted markerlightwarning" role="note">
+                    <ha-icon icon="mdi:information-outline"></ha-icon>${this._t('marker.value_badge_duplicate')}
+                  </p>` : nothing}
+              <div class="markerhelplabel">
+                <label for="marker-value-badge-position">${this._t('marker.value_badge_position')}</label>
+                ${this._help('marker.value_badge_position.help')}
+              </div>
+              <select id="marker-value-badge-position" class="areasel" .value=${effectiveBadgePosition}
+                @change=${(e: Event) => (this._markerDialog = {
+                  ...d,
+                  valueBadgeEnabled: effectiveBadgeEnabled,
+                  valueBadgeSource: effectiveBadgeSource,
+                  valueBadgePosition: (e.target as HTMLSelectElement).value as ValueBadgePosition,
+                  valueBadgeTouched: true,
+                })}>
+                ${(['right', 'bottom', 'left', 'top'] as const).map((position) => html`
+                  <option value=${position}>${this._t((`marker.value_badge_${position}`) as any)}</option>`)}
+              </select>
+            ` : nothing}
+          </fieldset>
           ${previewPresentation
             ? html`<hp-device-preview
                 .hass=${this.hass}

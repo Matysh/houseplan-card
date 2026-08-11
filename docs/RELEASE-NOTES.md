@@ -1,18 +1,16 @@
-<!-- release: v1.62.0-beta.1 -->
+<!-- release: v1.62.0-beta.2 -->
 
 ## Основное
 
-- Добавлены экспорт, проверенный предпросмотр и безопасный импорт полной конфигурации или отдельного пространства.
-- Виртуальные и другие пассивные светильники теперь могут иметь собственный Glow и управляться умными выключателями.
-- Добавлены переиспользуемые контекстные подсказки для сложных настроек.
+- Добавлен управляемый бейдж со значением рядом с устройством.
+- Исправлена потеря толщины примыкающих стен после разделения комнаты.
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- Added export, validated preview and safe import for the complete configuration or one space.
-- Virtual and other passive lights can now own their Glow and follow smart switches.
-- Added reusable contextual help for complex settings.
+- Added a user-controlled value badge beside devices.
+- Fixed adjoining wall thickness being lost after splitting a room.
 - Small fixes and improvements.
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.62.0-beta.1/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.62.0-beta.1/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.62.0-beta.2/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.62.0-beta.2/docs/CHANGELOG.md)

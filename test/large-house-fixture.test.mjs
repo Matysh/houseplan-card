@@ -14,6 +14,8 @@ test('large-house fixture meets the HP-PERF-01 reference counts', () => {
   assert.equal(count('decor'), LARGE_HOUSE_COUNTS.decor);
   assert.equal(Object.keys(fixture.devices).length, LARGE_HOUSE_COUNTS.devices);
   assert.equal(Object.keys(fixture.entities).length, LARGE_HOUSE_COUNTS.devices);
+  assert.equal(fixture.config.markers.length > 0, true);
+  assert.equal(fixture.config.markers.every((marker) => marker.is_light === true), true);
 });
 
 test('large-house fixture is deterministic and geometry ids are unique per space', () => {

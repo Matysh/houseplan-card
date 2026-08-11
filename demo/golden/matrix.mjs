@@ -1,5 +1,7 @@
+import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
+
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 11;
+export const GOLDEN_MATRIX_VERSION = 12;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -42,7 +44,14 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'openings-filled-tunnel-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
     fillMode: 'custom', customFill: { c: '#66717c', a: 0.55 }, glowEnabled: false,
     hideOpenings: true,
-    tunnelContinuity: { openingId: 'light-door', insetPx: 2, maxChannelJump: 8 },
+    wallReplacements: [{
+      match: { a: [0.5, 0.1], b: [0.5, 0.88] },
+      segments: [
+        { key: fixtureWallKey([0.5, 0.1], [0.5, 0.5]), a: [0.5, 0.1], b: [0.5, 0.5], cm: 18 },
+        { key: fixtureWallKey([0.5, 0.5], [0.5, 0.88]), a: [0.5, 0.5], b: [0.5, 0.88], cm: 32 },
+      ],
+    }],
+    tunnelContinuity: { openingId: 'light-door', insetPx: 2, maxChannelJump: 3 },
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'openings-hidden-view-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
     fillMode: 'none', glowEnabled: false, hideOpenings: true, theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },

@@ -981,6 +981,33 @@ export function wallIntervals(
 }
 
 /**
+ * Upgrade the effective current profile to lossless interval endpoints before
+ * a room-outline mutation. Legacy entries contain only midpoint + direction,
+ * which is enough while the original edge still exists but cannot tell two
+ * child edges apart after Split. Materialising first preserves the resolved
+ * value without broadening the legacy midpoint fallback to unrelated walls.
+ */
+export function materializeWallIntervals(
+  rooms: any[],
+  walls: WallEntry[] | null | undefined,
+  openCuts: number[][],
+  pitch: number,
+  cellCm: number,
+  gridPitch: number,
+  coordScale = 1,
+): WallEntry[] {
+  let out = walls ? walls.slice() : [];
+  const resolved = wallIntervals(
+    rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
+  );
+  for (const iv of resolved) {
+    if (iv.open || !(iv.cm > 0)) continue;
+    out = setWallThickness(out, iv.a, iv.b, iv.cm, pitch, coordScale);
+  }
+  return out;
+}
+
+/**
  * Rewrite `walls` so every entry names a maximal equal-thickness interval of
  * the CURRENT geometry, and no entry survives under an open span. Atomic
  * entries compact across every consecutive solid run; a thickness change or

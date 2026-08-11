@@ -78,6 +78,20 @@ export interface PdfRef {
   url: string;
 }
 
+export type ValueBadgePosition = 'right' | 'bottom' | 'left' | 'top';
+
+export type ValueBadgeSource =
+  | { kind: 'entity_state'; entity_id: string }
+  | { kind: 'entity_attribute'; entity_id: string; attribute: string }
+  | { kind: 'derived_lqi' }
+  | { kind: 'derived_marker_state'; ref: `marker:${string}` };
+
+export interface MarkerValueBadge {
+  enabled: boolean;
+  source?: ValueBadgeSource | null;
+  position: ValueBadgePosition;
+}
+
 /** Config marker: edits/augments an auto-discovered device OR describes a manual/virtual icon. */
 export interface Marker {
   id: string;
@@ -134,6 +148,9 @@ export interface Marker {
   /** Explicit leading controllable entity for an Always source. Missing keeps
    * the compatibility fallback (entity binding -> primary -> first control). */
   light_entity?: string | null;
+  /** Optional, user-controlled value satellite around the device face.
+   * Missing keeps the legacy temperature/humidity compatibility heuristic. */
+  value_badge?: MarkerValueBadge | null;
   /**
    * Climate devices (AC, thermostat) know the room temperature
    * (attributes.current_temperature). Opt-in per marker: show it as a badge

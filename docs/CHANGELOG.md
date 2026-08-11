@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+## v1.62.0-beta.2 — 2026-08-11
+
+- Added a user-controlled value badge beside each device. Users can select the
+  exact reading and place it on the right, bottom, left or top; preview, the
+  main plan and the static space card consume one resolver, while untouched
+  legacy markers retain their previous automatic behaviour
+  ([#90](https://github.com/Matysh/houseplan-card/issues/90)).
+- Fixed room Split losing the thickness of adjoining walls. Split now
+  materializes exact intervals from the legacy wall profile before changing
+  geometry, so the new thickness applies only to the divider
+  ([#91](https://github.com/Matysh/houseplan-card/issues/91)).
+- Hardened portable backups: full import retains the model version, write
+  endpoints and preview tokens have negative coverage, and the test harness
+  clears temporary plans and attachments.
+- Removed the contextual-help scroll-listener leak and made the plan-wide light
+  graph resolve once per frame instead of once for every marker.
+- Strengthened golden, smoke and repository gates: the seam scenario now
+  crosses a stepped wall, baseline inventory is exact, and temporary-file plus
+  browser-quiescence flakes are eliminated.
+
 ## v1.62.0-beta.1 — 2026-08-11
 
 - Fixed layout maintenance silently discarding the one-deep Optimize/Import

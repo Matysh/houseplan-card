@@ -1,5 +1,22 @@
 # Manual testing checklist
 
+## Device value badge (#90)
+
+- [ ] An untouched legacy thermometer/humidity marker remains pixel-identical;
+  saving another field does not materialize `value_badge`. [auto: device-presentation]
+- [ ] Explicit on/off overrides the legacy temperature gate; zero, false and
+  off remain visible, while missing/unknown/unavailable render a stable `—`. [auto: device-presentation]
+- [ ] State, every allowlisted attribute, derived LQI and `marker:<id>` light
+  state resolve identically on the full plan, static space card and preview. [auto: smoke_device_preview_parity]
+- [ ] Right, bottom, left and top update live in the editor; bottom stacks above
+  system LQI and derived LQI suppresses the duplicate system row. [auto: device-presentation]
+- [ ] Browser bounding boxes stay inside `.previewstage` with a safe gap for
+  all positions, a long value, scale ×3 and the maximum activity ring. [auto: smoke_device_preview_parity]
+- [ ] Rebind resets the source, delete leaves a missing diagnostic reference,
+  and space import remaps internal refs or disables/counts external refs. [auto: test_ha_import_export]
+- [ ] `static_icon` suppresses but preserves the setting; live-state and room
+  label toggles do not suppress an explicit badge. [auto: device-presentation]
+
 > **Policy:** this checklist is updated **in the same commit** as any functional
 > change (like CHANGELOG.md). For a pre-release, build the production bundle and
 > run the smallest unit/smoke subset that covers its changed surfaces. Run the

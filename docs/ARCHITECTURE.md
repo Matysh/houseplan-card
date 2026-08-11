@@ -144,7 +144,11 @@ Built from the registries (`_buildDevices`), rules carried over 1-to-1 from the 
 
 ## Live data
 
-- Temperature: an entity with device_class=temperature / °C / `_temperature$` → label on the right.
+- Value satellite: `src/device-value-badge.ts` resolves one explicit
+  `marker.value_badge` source/position, or projects the legacy automatic
+  temperature/humidity label when that field is absent. The resolver owns HA
+  formatting, units, unavailable state, candidate discovery and deterministic
+  recommendation; renderers consume only `ResolvedDevicePresentation.valueBadge`.
 - LQI (zigbee): the average over `*_linkquality` entities → label under the icon; color via
   `lqiColor()`: ≤40 red → ≥180 green (hsl gradient). The room average is shown in the room tooltip.
   The same tooltip includes the formatted clean-floor area (inner contour for
@@ -200,6 +204,12 @@ in every dynamic presentation. `static_icon` deliberately keeps the configured/a
 base icon on one neutral dark plate: state morphing, work/open/alarm/unavailable paint,
 activity, RGB, value, temperature/humidity/LQI badges and live vacuum overlays are all
 suppressed. Hover/focus, taps, controls and light aggregation keep their normal behaviour.
+An optional `marker.value_badge` adds one independent boxed state/attribute,
+derived LQI or canonical `marker:<id>` light state at right/bottom/left/top.
+Explicit settings override the global legacy temperature gate; explicit off
+suppresses legacy output. Bottom badges stack above system LQI, and a derived
+LQI badge de-duplicates that system row. `hp-device-preview` fits and centres
+the complete face bounding box rather than allowing satellites to clip.
 `normalizeDeviceDisplay()` is the mandatory compatibility gate for every consumer and maps
 legacy `ripple` to `icon_ripple`. The marker dialog builds its unsaved draft through `buildDevices`,
 then `hp-device-preview` shows the actual projection, integration provenance from

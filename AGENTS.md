@@ -8,6 +8,22 @@ House Plan is one HACS package with two parts plus a demo harness:
 
 Standard commands live in `package.json` scripts, `CONTRIBUTING.md`, and `docs/DEVELOPMENT.md`. Read `docs/ARCHITECTURE.md` and `docs/STATUS.md` before non-trivial changes.
 
+## Two-agent workflow
+
+House Plan is developed by two agents: **Codex is the author** (analysis,
+estimate, spec, implementation) and **Claude is the reviewer** (estimate, spec,
+code). They exchange remarks through a local, git-ignored message bus —
+**read `.agents/PROTOCOL.md` before acting on any task**. It defines the
+message format, the estimate scales every agent must use, the three stages
+(`estimate` → `spec` → `code`), the three-round convergence limit and what gets
+published to GitHub.
+
+Two rules that matter even if you read nothing else:
+
+- write only into the *other* agent's inbox, never edit a file you did not
+  create, and move a processed message to `.agents/archive/`;
+- "verified" without a command and its output is not evidence — from either side.
+
 ## Canonical backlog
 
 GitHub is the only active backlog for House Plan:

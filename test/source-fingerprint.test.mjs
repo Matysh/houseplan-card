@@ -36,3 +36,23 @@ test('source fingerprint changes with source and build inputs', () => {
     rmSync(directory, { recursive: true, force: true });
   }
 });
+
+test('source fingerprint includes deterministic visual fixtures and golden code', () => {
+  const directory = mkdtempSync(resolve(tmpdir(), 'houseplan-fingerprint-fixture-'));
+  try {
+    mkdirSync(resolve(directory, 'src'), { recursive: true });
+    mkdirSync(resolve(directory, 'demo/fixtures'), { recursive: true });
+    mkdirSync(resolve(directory, 'demo/golden'), { recursive: true });
+    writeFileSync(resolve(directory, 'src/example.ts'), 'export const value = 1;\n', 'utf8');
+    writeFileSync(resolve(directory, 'demo/fixtures/plan.mjs'), 'export const fixture = 1;\n', 'utf8');
+    writeFileSync(resolve(directory, 'demo/golden/matrix.mjs'), 'export const matrix = 1;\n', 'utf8');
+    const initial = sourceFingerprint(directory);
+    writeFileSync(resolve(directory, 'demo/fixtures/plan.mjs'), 'export const fixture = 2;\n', 'utf8');
+    const fixtureChanged = sourceFingerprint(directory);
+    assert.notEqual(fixtureChanged, initial);
+    writeFileSync(resolve(directory, 'demo/golden/matrix.mjs'), 'export const matrix = 2;\n', 'utf8');
+    assert.notEqual(sourceFingerprint(directory), fixtureChanged);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});

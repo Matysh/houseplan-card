@@ -1,13 +1,18 @@
 #!/usr/bin/env node
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launch } from '../serve.mjs';
 import { assertFreshDemoBundle } from '../bundle-freshness.mjs';
 import { goldenClip, prepareGoldenScenario } from './harness.mjs';
 import { GOLDEN_MATRIX_VERSION, GOLDEN_SCENARIOS } from './matrix.mjs';
-import { assertGoldenInvocation, GOLDEN_BASELINE_MANIFEST, goldenRunFailed } from './policy.mjs';
+import {
+  assertGoldenInvocation,
+  GOLDEN_BASELINE_MANIFEST,
+  goldenRunFailed,
+  goldenScenarioSetsMatch,
+} from './policy.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const mode = process.argv.find((arg) => arg.startsWith('--mode='))?.slice(7) || 'capture';
@@ -330,11 +335,17 @@ try {
   await browser.close();
 }
 
+const expectedScenarioIds = GOLDEN_SCENARIOS.map((scenario) => scenario.id);
+const indexedScenarioIds = Object.keys(baselineManifest?.scenarios || {});
+const baselineScenarioIds = readdirSync(baselineRoot)
+  .filter((name) => name.endsWith('.png'))
+  .map((name) => name.slice(0, -'.png'.length));
 const manifestValid = !!baselineManifest
   && !baselineManifest.invalid
   && baselineManifest.matrixVersion === GOLDEN_MATRIX_VERSION
   && baselineManifest.chromium === chromium
-  && GOLDEN_SCENARIOS.every((scenario) => typeof baselineManifest.scenarios?.[scenario.id] === 'string');
+  && expectedScenarioIds.every((id) => typeof baselineManifest.scenarios?.[id] === 'string')
+  && goldenScenarioSetsMatch(expectedScenarioIds, indexedScenarioIds, baselineScenarioIds);
 const report = {
   schema: 1,
   mode,

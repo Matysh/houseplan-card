@@ -2,8 +2,10 @@
 // renders whole, devices can be placed and saved out there, the opening view
 // follows the content, one far stray neither breaks the view nor hides itself,
 // zoom-out stops at 3x the content and the icons keep their proportion to it.
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { resolve } from 'node:path';
 import { launch, check, checkAll, finish } from './serve.mjs';
 
 const SHOTS = process.env.HP_SHOTS || '';
@@ -125,22 +127,33 @@ out.wsCarriedFarPosition = !!layMsg && JSON.stringify(layMsg).includes('3.4');
 // §3: ±5000). Skipped, not failed, where voluptuous is not installed.
 out.backendAcceptsFarPayload = (() => {
   if (!cfgMsg) return false;
-  const f = '/tmp/hp_infinite_payload.json';
+  const directory = mkdtempSync(resolve(tmpdir(), 'hp-infinite-'));
+  const f = resolve(directory, 'payload.json');
   writeFileSync(f, JSON.stringify({ config: cfgMsg.config, layout: (layMsg || {}).layout || ws.layout }));
   try {
-    execFileSync('python3', ['-c', 'import voluptuous'], { stdio: 'ignore' });
-  } catch { console.log('(voluptuous absent — backend schema check skipped)'); return true; }
-  const code = [
-    'import json,sys',
-    'sys.path.insert(0, "custom_components/houseplan")',
-    'import validation as v',
-    `d=json.load(open(${JSON.stringify(f)}))`,
-    'v.CONFIG_SCHEMA(d["config"]); v.LAYOUT_SCHEMA(d["layout"])',
-    'print("VALID")',
-  ].join('\n');
-  try {
-    return execFileSync('python3', ['-c', code], { encoding: 'utf8' }).includes('VALID');
-  } catch (e) { console.log('backend refused the payload:', String(e.stdout || e.message).slice(-400)); return false; }
+    try {
+      execFileSync('python3', ['-c', 'import voluptuous'], { stdio: 'ignore' });
+    } catch {
+      console.log('(voluptuous absent — backend schema check skipped)');
+      return true;
+    }
+    const code = [
+      'import json,sys',
+      'sys.path.insert(0, "custom_components/houseplan")',
+      'import validation as v',
+      `d=json.load(open(${JSON.stringify(f)}))`,
+      'v.CONFIG_SCHEMA(d["config"]); v.LAYOUT_SCHEMA(d["layout"])',
+      'print("VALID")',
+    ].join('\n');
+    try {
+      return execFileSync('python3', ['-c', code], { encoding: 'utf8' }).includes('VALID');
+    } catch (e) {
+      console.log('backend refused the payload:', String(e.stdout || e.message).slice(-400));
+      return false;
+    }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
 })();
 
 // ---- an OUTLIER: the view ignores it, the hint offers it ------------------

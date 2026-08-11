@@ -714,9 +714,19 @@ export function rewriteMarkerControlReferences(
   if (!oldId || !newId || oldId === newId) return [...markers];
   const from = `marker:${oldId}`;
   const to = `marker:${newId}`;
-  return markers.map((marker) => !Array.isArray(marker.controls) ? marker : {
-    ...marker,
-    controls: marker.controls.map((ref) => ref === from ? to : ref),
+  return markers.map((marker) => {
+    const controls = Array.isArray(marker.controls)
+      ? marker.controls.map((ref) => ref === from ? to : ref)
+      : marker.controls;
+    const valueBadge = marker.value_badge?.source?.kind === 'derived_marker_state'
+      && marker.value_badge.source.ref === from
+      ? {
+          ...marker.value_badge,
+          source: { ...marker.value_badge.source, ref: to as `marker:${string}` },
+        }
+      : marker.value_badge;
+    return controls === marker.controls && valueBadge === marker.value_badge
+      ? marker : { ...marker, controls, value_badge: valueBadge };
   });
 }
 

@@ -14,6 +14,7 @@ import { ContentSigner } from './signing';
 import { normalizeDeviceDisplay, referencedContentUrls } from './logic';
 import { acquireHaRegistries, activeRegistryHass, haRegistrySnapshot } from './ha-binding-status';
 import { edgeActivity } from './device-visual';
+import { resolvedLightSources } from './devices';
 import {
   presentationSourceSignature, resolveDevicePresentation, resolvePresentationSources,
   type PresentationActivityRuntime,
@@ -281,11 +282,12 @@ class HouseplanSpaceCard extends LitElement {
       return;
     }
     const live = new Set<string>();
+    const planLightSources = resolvedLightSources(planHass, devices);
     for (const device of devices) {
       if (device.hidden) continue;
       if (normalizeDeviceDisplay(device.marker?.display) === 'static_icon') continue;
       live.add(device.id);
-      const sources = resolvePresentationSources(planHass, device);
+      const sources = resolvePresentationSources(planHass, device, devices, planLightSources);
       const samples = sources.samples;
       const signature = presentationSourceSignature(
         planHass, device, this._config?.show_temperature !== false, sources,
@@ -370,6 +372,7 @@ class HouseplanSpaceCard extends LitElement {
       if (opening.contact) entityIds.add(opening.contact);
       if (opening.lock) entityIds.add(opening.lock);
     }
+    const planLightSources = resolvedLightSources(planHass, this._devices);
     for (const device of this._devices) {
       for (const showLqi of [false, true]) {
         presentations.set(presentationSnapshotKey(device.id, showLqi), resolveDevicePresentation(
@@ -379,6 +382,8 @@ class HouseplanSpaceCard extends LitElement {
             showSignal: showLqi,
             activityRuntime: this._activityRuntime.get(device.id),
             sourceDetails: false,
+            lightDevices: this._devices,
+            lightSources: planLightSources,
           },
         ));
       }

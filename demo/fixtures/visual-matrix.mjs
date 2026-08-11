@@ -6,7 +6,7 @@ const round = (value) => Number(value.toFixed(6));
 // data. Arbitrary labels make every configured wall look virtual to the
 // renderer, which lets a visually ineffective baseline pass unnoticed.
 const WALL_KEY_PITCH = 1 / 240;
-const wallKey = (a, b) => {
+export const fixtureWallKey = (a, b) => {
   const quantize = (value) => Math.round(value / WALL_KEY_PITCH) * WALL_KEY_PITCH;
   const mx = quantize((a[0] + b[0]) / 2);
   const my = quantize((a[1] + b[1]) / 2);
@@ -35,7 +35,7 @@ const uniqueEdges = (rooms) => {
 };
 
 const wallsFor = (prefix, rooms, thickness) => uniqueEdges(rooms).map((edge, index) => ({
-  key: wallKey(edge.a, edge.b),
+  key: fixtureWallKey(edge.a, edge.b),
   a: edge.a,
   b: edge.b,
   cm: typeof thickness === 'function' ? thickness(edge, index) : thickness,

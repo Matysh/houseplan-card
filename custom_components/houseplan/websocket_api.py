@@ -50,7 +50,7 @@ from .registry_snapshot import import_registry_snapshot
 from .validation import (
     CONFIG_SCHEMA, LAYOUT_SCHEMA, MAX_CONFIG_BYTES, MAX_PLAN_BYTES,
     PLAN_EXTENSIONS, POS_SCHEMA, MarkerControlError, sanitize_filename,
-    validate_marker_controls, valid_space_id,
+    validate_marker_controls, validate_marker_value_badges, valid_space_id,
 )
 
 
@@ -1147,6 +1147,7 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         # write so an unrelated edit can still round-trip a legacy broken ref.
         try:
             validate_marker_controls(msg["config"], data.get("config"))
+            validate_marker_value_badges(msg["config"], data.get("config"))
         except MarkerControlError as err:
             connection.send_error(msg["id"], err.code, str(err))
             return
@@ -1250,6 +1251,7 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
         # as config/set; otherwise a crafted client can persist a new cycle.
         try:
             validate_marker_controls(msg["config"], config_data.get("config"))
+            validate_marker_value_badges(msg["config"], config_data.get("config"))
         except MarkerControlError as err:
             connection.send_error(msg["id"], err.code, str(err))
             return
