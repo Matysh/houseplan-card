@@ -163,7 +163,7 @@ import {
 import { renderOpeningTunnelFills } from './render/opening-tunnels';
 import { safeStoredColor } from './color';
 
-const CARD_VERSION = '1.61.0-beta.8';
+const CARD_VERSION = '1.61.0';
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
 const CELL_CM_MIN = 0.1;

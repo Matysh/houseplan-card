@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+## v1.61.0 — 2026-08-11
+
+- Expanded robot-vacuum integration coverage with deterministic source
+  selection, explicit capability and health diagnostics, gap-preserving trails,
+  safer map arbitration and stricter calibration checks.
+- Reworked room colour and lighting controls. Glow is an independent additive
+  overlay, room fills keep their exact configured colour, and each source can
+  use automatic, always-on or disabled behaviour with manual colour, brightness
+  and radius where applicable.
+- Light propagation now follows the same physical wall bodies drawn on the
+  plan, including wall thickness, jambs, partitions and columns. Doorways and
+  virtual boundaries transmit light without seams, while walls and corners cast
+  stable clipped shadows.
+- Returning to a tab, reconnecting Home Assistant or remounting the card keeps
+  the last coherent plan frame. Devices, rooms, Glow, sun, openings, vacuums and
+  live decorative text update atomically instead of flashing partial state.
+- Small fixes and improvements to dialogs, room hover, device markers, editor
+  stability, validation and release tooling.
+
 ## v1.61.0-beta.8 — 2026-08-11
 
 - Plan recovery now has one bounded two-second barrier: a stalled signature or
