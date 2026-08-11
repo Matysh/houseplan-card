@@ -7,8 +7,12 @@ import {
 } from '../demo/golden/policy.mjs';
 
 test('golden metadata cannot be mistaken for a Home Assistant integration manifest', () => {
-  assert.equal(GOLDEN_BASELINE_MANIFEST, 'baseline-manifest.json');
-  assert.notEqual(GOLDEN_BASELINE_MANIFEST, 'manifest.json');
+  assert.equal(GOLDEN_BASELINE_MANIFEST, 'baselines-index.json');
+  // The old check compared against 'manifest.json' and passed while the file
+  // was called 'baseline-manifest.json' — which is exactly what the HACS glob
+  // `*manifest.json` matches, and what turned Hassfest red on PR #9004
+  // (2026-08-11). Ending with the word is enough to break the submission.
+  assert.equal(GOLDEN_BASELINE_MANIFEST.endsWith('manifest.json'), false);
 });
 
 test('golden capture fails on runtime errors but permits missing baselines', () => {

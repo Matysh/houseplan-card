@@ -1,4 +1,7 @@
-export const GOLDEN_BASELINE_MANIFEST = 'baseline-manifest.json';
+// The name must NOT end with `manifest.json`: the HACS submission check globs
+// `*manifest.json` over the whole clone of the default branch and refuses a
+// repository with more than one match (test/repo-hygiene.test.mjs).
+export const GOLDEN_BASELINE_MANIFEST = 'baselines-index.json';
 
 export const assertGoldenInvocation = (mode, scenarioFilter = '') => {
   if (!['capture', 'verify'].includes(mode)) throw new Error(`unknown golden mode: ${mode}`);
