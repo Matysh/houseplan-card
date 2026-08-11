@@ -19,7 +19,7 @@ const res = await page.evaluate(async () => {
   c._openMarkerDialog();
   const room = c._spaceModel().rooms.find((r) => r.id && r.area);
   c._markerDialog = { ...c._markerDialog, name: 'Выключатель', binding: 'virtual',
-    room: c._space + '#' + room.area, tapAction: 'toggle', controls: lights,
+    room: c._space + '#' + room.area, tapAction: 'toggle', tapActionTouched: true, controls: lights,
     icon: 'mdi:light-switch', display: 'icon_ripple' };
   await c._saveMarker(); await c.updateComplete;
   const dev = c._devices.find((d) => d.name === 'Выключатель');
@@ -105,8 +105,9 @@ const res = await page.evaluate(async () => {
   if (self) {
     await setSt({ [own]: 'off' });
     c._clickDevice(new MouseEvent('click'), self);
-    out.selfControlUsesDirectToggle = JSON.stringify(calls.at(-1))
-      === JSON.stringify(['homeassistant', 'toggle', own]);
+    const selfCall = calls.at(-1);
+    out.selfControlUsesDirectToggle = ['switch', 'homeassistant'].includes(selfCall?.[0])
+      && selfCall?.[1] === 'turn_on' && selfCall?.[2] === own;
     c._openMarkerDialog(self); await c.updateComplete;
     out.selfControlAbsentFromDialog = c._markerDialog?.controls.length === 0;
     c._markerDialog = null;

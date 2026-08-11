@@ -22,7 +22,7 @@ const out = await page.evaluate(async () => {
   const d = c._devices.find((x) => x.space === 'f1' && x.bindingKind === 'device');
   c._setMode('devices'); await c.updateComplete;
   c._openMarkerDialog(d); await c.updateComplete;
-  c._markerDialog = { ...c._markerDialog, tapAction: 'run' }; await c.updateComplete;
+  c._markerDialog = { ...c._markerDialog, tapAction: 'run', tapActionTouched: true }; await c.updateComplete;
   // ВИДИМОСТЬ, не просто наличие в DOM: список — flex-item со скроллом и
   // однажды схлопнулся в полоску 1px при 26 кандидатах внутри (репорт
   // пользователя 2026-07-30, поймано только замером высоты)

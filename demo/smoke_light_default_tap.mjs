@@ -10,9 +10,14 @@ const res = await page.evaluate(async () => {
   // лампа (primary light) без явного действия → клик = toggle
   const lamp = c._devices.find((d) => d.primary?.startsWith('light.') && !d.tapAction);
   out.hasLamp = !!lamp;
+  const lampState = c.hass.states[lamp.primary]?.state;
+  const expectedService = lampState === 'off' ? 'turn_on'
+    : (lampState === 'unknown' || lampState === '' ? 'toggle' : 'turn_off');
   c._infoCard = null;
   c._clickDevice(new MouseEvent('click'), lamp);
-  out.lampToggles = JSON.stringify(calls.at(-1)) === JSON.stringify(['homeassistant', 'toggle', lamp.primary]);
+  const lampCall = calls.at(-1);
+  out.lampToggles = ['light', 'homeassistant'].includes(lampCall?.[0])
+    && lampCall?.[1] === expectedService && lampCall?.[2] === lamp.primary;
   // устройство с не-light primary (сенсор) → клик = инфо
   const sensorDev = c._devices.find((d) => d.primary?.startsWith('sensor.') && !d.tapAction);
   const n = calls.length;
