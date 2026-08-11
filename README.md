@@ -299,6 +299,16 @@ You can also place a **single entity** (not just a whole device): start typing i
 
 Not everything has to be left to the automation. With the **＋** button in the header you can place any device, group or a **virtual point** on the plan (for example, an "Inlet valve" that does not exist as a device). Set a name, icon, model, link, description and, if you wish, attach a **PDF manual**.
 
+To represent a dumb physical lamp controlled by a smart relay, place a virtual
+point where the lamp really is and set **Light source → Always**. Manual colour,
+brightness and radius stay available even though the point has no HA entity.
+Then open the relay and add that plan source under **Controls other light
+sources**. The relay continues to show the aggregate working state, while Glow,
+room fill and statistics belong to the lamp's position. An unlinked passive
+Always source is deliberately constant-on. With several own `light.*`/`switch.*`
+entities, Always also offers a leading-entity selector; a missing saved choice
+is warned about and retained while a deterministic fallback is used.
+
 The same dialog controls how the device looks on the plan. **Display** switches between the
 icon badge, an animated **presence ripple** (pulsing rings while the entity is active, a faint
 dot when idle — great for motion sensors) or both, with a per-device ring colour and size. The

@@ -5,6 +5,16 @@ type FocusSession = {
   opener: HTMLElement | null;
 };
 
+export type HpOverlayCloseReason = 'escape' | 'exclusive' | 'outside' | 'scroll' | 'toast' | 'disconnect';
+
+export type HpOverlayRegistration = {
+  owner: HTMLElement;
+  close: (reason: HpOverlayCloseReason) => void;
+  group?: 'transient' | string;
+};
+
+type OverlayEntry = HpOverlayRegistration & { token: symbol };
+
 // A card can replace one dialog with another in the same Lit update (for
 // example, device info -> device editor) or open a child dialog above a parent.
 // Keep the original opener per render root so those transitions do not lose it.
@@ -187,6 +197,22 @@ export class HpDialog extends LitElement {
       display: flex;
       flex-direction: column;
     }
+
+    .overlay-portal {
+      position: fixed;
+      z-index: 2147483647;
+      inset: 0;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .overlay-portal:empty {
+      display: none;
+    }
+
+    .overlay-portal > * {
+      pointer-events: auto;
+    }
   `;
 
   title = '';
@@ -199,6 +225,7 @@ export class HpDialog extends LitElement {
   private _focusRoot: Node | null = null;
   private _useHaDialog = false;
   private _closing = false;
+  private _overlays: OverlayEntry[] = [];
   private readonly _titleId = `hp-dialog-title-${++dialogSequence}`;
 
   connectedCallback(): void {
@@ -216,6 +243,9 @@ export class HpDialog extends LitElement {
 
   disconnectedCallback(): void {
     this.removeEventListener('keydown', this._onKeyDown, true);
+    const overlays = [...this._overlays];
+    this._overlays = [];
+    for (const entry of overlays.reverse()) entry.close('disconnect');
     const root = this._focusRoot;
     const opener = this._opener;
     this._opener = null;
@@ -268,15 +298,30 @@ export class HpDialog extends LitElement {
       '[contenteditable="true"]',
       '[tabindex]:not([tabindex="-1"])',
     ].join(',');
-    return Array.from(this.querySelectorAll<HTMLElement>(selector)).filter((el) => {
+    const out: HTMLElement[] = [];
+    const visit = (node: Node): void => {
+      if (node instanceof HTMLElement) {
+        if (node.matches(selector)) out.push(node);
+        if (node.shadowRoot) {
+          for (const child of node.shadowRoot.childNodes) visit(child);
+          return;
+        }
+      }
+      for (const child of node.childNodes) visit(child);
+    };
+    for (const child of this.childNodes) visit(child);
+    const portal = this.overlayPortal();
+    if (portal) visit(portal);
+    return out.filter((el) => {
       const style = getComputedStyle(el);
       return !el.hidden && style.display !== 'none' && style.visibility !== 'hidden';
     });
   }
 
   private _focusInitial = (): void => {
-    const autofocus = this.querySelector<HTMLElement>('[autofocus]');
-    const target = autofocus || this._focusableElements()[0]
+    const focusable = this._focusableElements();
+    const autofocus = focusable.find((el) => el.hasAttribute('autofocus'));
+    const target = autofocus || focusable[0]
       || (!this._useHaDialog ? this.renderRoot.querySelector<HTMLElement>('.close') : null)
       || this.renderRoot.querySelector<HTMLElement>('.surface')
       || this.renderRoot.querySelector<HTMLElement>('ha-dialog');
@@ -289,10 +334,56 @@ export class HpDialog extends LitElement {
     this.dispatchEvent(new CustomEvent('hp-close', { bubbles: true, composed: true }));
   };
 
+  private _pruneOverlays(): void {
+    this._overlays = this._overlays.filter((entry) => entry.owner.isConnected);
+  }
+
+  private _closeOverlay(entry: OverlayEntry, reason: HpOverlayCloseReason): void {
+    const index = this._overlays.findIndex((item) => item.token === entry.token);
+    if (index >= 0) this._overlays.splice(index, 1);
+    entry.close(reason);
+  }
+
+  public registerOverlay(registration: HpOverlayRegistration): () => void {
+    this._pruneOverlays();
+    const priorOwner = this._overlays.find((entry) => entry.owner === registration.owner);
+    if (priorOwner) this._overlays.splice(this._overlays.indexOf(priorOwner), 1);
+    const group = registration.group || 'transient';
+    for (const entry of [...this._overlays].reverse()) {
+      if (entry.group === group) this._closeOverlay(entry, 'exclusive');
+    }
+    const entry: OverlayEntry = { ...registration, group, token: Symbol('hp-overlay') };
+    this._overlays.push(entry);
+    let disposed = false;
+    return () => {
+      if (disposed) return;
+      disposed = true;
+      const index = this._overlays.findIndex((item) => item.token === entry.token);
+      if (index >= 0) this._overlays.splice(index, 1);
+    };
+  }
+
+  public closeTransientOverlays(reason: HpOverlayCloseReason = 'outside'): boolean {
+    this._pruneOverlays();
+    const entries = [...this._overlays].filter((entry) => (entry.group || 'transient') === 'transient');
+    for (const entry of entries.reverse()) this._closeOverlay(entry, reason);
+    return entries.length > 0;
+  }
+
+  public overlayPortal(): HTMLElement | null {
+    return this.renderRoot.querySelector<HTMLElement>('.overlay-portal');
+  }
+
   private _onKeyDown = (event: KeyboardEvent): void => {
     if (event.key === 'Escape') {
       event.preventDefault();
       event.stopImmediatePropagation();
+      this._pruneOverlays();
+      const overlay = this._overlays[this._overlays.length - 1];
+      if (overlay) {
+        this._closeOverlay(overlay, 'escape');
+        return;
+      }
       this._requestClose();
       return;
     }
@@ -344,7 +435,7 @@ export class HpDialog extends LitElement {
         <span class="header-title-slot" slot="headerTitle">${title}</span>
         <slot></slot>
         <span class="footer" slot="footer"><slot name="footer"></slot></span>
-      </ha-dialog>`;
+      </ha-dialog><div class="overlay-portal"></div>`;
     }
 
     return html`<dialog
@@ -366,6 +457,7 @@ export class HpDialog extends LitElement {
         <div class="content"><slot></slot></div>
         <div class="footer"><slot name="footer"></slot></div>
       </section>
+      <div class="overlay-portal"></div>
     </dialog>`;
   }
 }

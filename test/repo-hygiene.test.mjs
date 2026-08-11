@@ -5,7 +5,10 @@ import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
-const SKIP = new Set(['.git', 'node_modules', 'dist', 'coverage', '.venv', '__pycache__', '.pytest_cache']);
+const SKIP = new Set([
+  '.git', 'node_modules', 'dist', 'coverage', 'artifacts',
+  '.venv', '__pycache__', '.pytest_cache',
+]);
 
 const walk = (dir, out = []) => {
   for (const name of readdirSync(dir)) {

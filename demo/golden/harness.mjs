@@ -305,7 +305,7 @@ export async function prepareGoldenScenario(page, scenario) {
         const glowInputs = groups[1]?.querySelectorAll('input[name="marker-glow-mode"]');
         const color = groups[1]?.querySelector('hp-color-opacity');
         const brightness = groups[1]?.querySelector('input[type="range"]');
-        const radius = groups[1]?.querySelector('input.tempin[type="number"]');
+        const radius = dialog?.querySelector('#marker-glow-radius');
         if (!body || groups.length !== 2 || roleInputs?.length !== 3 || glowInputs?.length !== 3
           || !roleInputs[1]?.checked || !glowInputs[2]?.checked
           || !color || color.disabled || !brightness || brightness.disabled || !radius || radius.disabled)
@@ -316,15 +316,50 @@ export async function prepareGoldenScenario(page, scenario) {
         await frame();
         const visibleBody = body.getBoundingClientRect();
         const visibleRole = groups[0].getBoundingClientRect();
-        const visibleGlow = groups[1].getBoundingClientRect();
-        if (visibleRole.top < visibleBody.top - 1 || visibleGlow.bottom > visibleBody.bottom + 1)
+        const visibleRadius = radius.getBoundingClientRect();
+        if (visibleRole.top < visibleBody.top - 1 || visibleRadius.bottom > visibleBody.bottom + 1)
           throw new Error('golden viewport does not show the complete device light-source controls');
+      }
+      if (scenario.openHelp) {
+        const help = card.renderRoot.querySelector(`hp-help[data-help-key="${scenario.openHelp}"]`);
+        await help?.updateComplete;
+        const trigger = help?.renderRoot?.querySelector('.trigger');
+        if (!trigger) throw new Error(`golden help trigger missing: ${scenario.openHelp}`);
+        trigger.click();
+        await help.updateComplete;
+        await frame();
+        const surface = help.renderRoot?.querySelector('.tooltip:popover-open')
+          || card.renderRoot.querySelector('hp-dialog')?.renderRoot
+            ?.querySelector('[data-hp-overlay="help"]')?.shadowRoot?.querySelector('.tooltip');
+        if (trigger.getAttribute('aria-expanded') !== 'true' || !surface?.getBoundingClientRect().width)
+          throw new Error(`golden help surface did not open: ${scenario.openHelp}`);
       }
       if (scenario.focusDialogClose) {
         const dialog = card.renderRoot.querySelector('hp-dialog');
         await dialog?.updateComplete;
         dialog?.renderRoot?.querySelector('.close')?.focus();
       }
+    } else if (scenario.dialog === 'backup-full' || scenario.dialog === 'backup-space') {
+      const full = scenario.dialog === 'backup-full';
+      card._backupImportDialog = {
+        filename: full ? 'houseplan-full-2026-08-11.json' : 'houseplan-space-ground.json',
+        size: 12345,
+        token: 'golden-token',
+        preview: {
+          kind: full ? 'full' : 'space', source: full ? 'foreign' : 'same',
+          created_at: '2026-08-11T10:00:00Z', space_title: 'Ground (2)',
+          counts: { spaces: 1, rooms: 4, markers: 12, layout: 15 },
+          duplicates: full ? 0 : 2,
+          confirmation_required: full,
+          content: full
+            ? [{ url: '/api/houseplan/content/plans/_/ground.svg', state: 'detach_required' }]
+            : [{ url: 'https://example.test/ground.svg', state: 'external' }],
+        },
+        expectedConfigRev: 1, expectedLayoutRev: 1,
+        duplicatePolicy: 'skip', confirmMissing: false, busy: false, error: '',
+      };
+      card.requestUpdate();
+      await card.updateComplete;
     } else if (scenario.dialog === 'decor-color') {
       card._setMode('decor');
       card._decorTool = 'select';
@@ -348,6 +383,8 @@ export async function prepareGoldenScenario(page, scenario) {
       mode: card._mode,
       devices: card._devices.length,
       dialog: !!card.renderRoot.querySelector('hp-dialog'),
+      helpOpen: [...card.renderRoot.querySelectorAll('hp-help')]
+        .some((help) => help.renderRoot?.querySelector('.trigger')?.getAttribute('aria-expanded') === 'true'),
       editorTray: card.renderRoot.querySelector('.editor-secondary-host.open .editor-secondary')
         ?.className || '',
     };

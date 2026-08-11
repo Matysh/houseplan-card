@@ -54,6 +54,11 @@ class HouseplanData:
     # directly — a test that fakes a 24 h jump proves the timer fires, not that
     # the work happens, and those are different claims.
     sweep: Callable[[], Awaitable[None]] | None = None
+    # Stable HA instance id used only through a one-way export fingerprint.
+    instance_id: str = ""
+    # Parsed import candidates are short-lived, user-bound and memory-only.
+    # dict keeps insertion order, which lets the preview service evict oldest.
+    import_previews: dict[str, dict[str, Any]] = field(default_factory=dict)
 
 
 HouseplanConfigEntry = ConfigEntry[HouseplanData]
@@ -79,3 +84,57 @@ def get_entry(hass: HomeAssistant) -> ConfigEntry | None:
     """The loaded config entry, or None."""
     entries = hass.config_entries.async_loaded_entries(DOMAIN)
     return entries[0] if entries else None
+
+
+OPTIMIZE_BACKUP = "optimize_backup"
+OPTIMIZE_PENDING = "optimize_pending"
+
+
+def layout_store_payload(
+    stored: dict[str, Any],
+    layout: dict[str, Any],
+    rev: int,
+    *,
+    metadata: dict[str, Any] | None = None,
+    remove: tuple[str, ...] = (),
+    replace_metadata: bool = False,
+) -> dict[str, Any]:
+    """Build one layout-store write without silently dropping metadata.
+
+    Layout used to be saved by several independent dict comprehensions.  Every
+    new metadata key therefore had to be added to every caller or was lost on
+    the next drag.  All writers now express only the metadata they intentionally
+    add/remove and this helper preserves the rest.
+    """
+    excluded = {"layout", "rev", *remove}
+    out = {} if replace_metadata else {
+        key: value for key, value in stored.items() if key not in excluded
+    }
+    if metadata:
+        out.update(metadata)
+    out["layout"] = layout
+    out["rev"] = rev
+    return out
+
+
+async def async_save_layout_state(
+    runtime: HouseplanData,
+    stored: dict[str, Any],
+    layout: dict[str, Any],
+    rev: int,
+    *,
+    metadata: dict[str, Any] | None = None,
+    remove: tuple[str, ...] = (),
+    replace_metadata: bool = False,
+) -> dict[str, Any]:
+    """Persist layout and return the exact store document written."""
+    payload = layout_store_payload(
+        stored,
+        layout,
+        rev,
+        metadata=metadata,
+        remove=remove,
+        replace_metadata=replace_metadata,
+    )
+    await runtime.store.async_save(payload)
+    return payload

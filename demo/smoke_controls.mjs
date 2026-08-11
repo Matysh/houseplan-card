@@ -24,6 +24,25 @@ const res = await page.evaluate(async () => {
   await c._saveMarker(); await c.updateComplete;
   const dev = c._devices.find((d) => d.name === 'Выключатель');
   out.markerSaved = !!dev && JSON.stringify(dev.marker.controls) === JSON.stringify(lights);
+
+  // #84: a forced plan source without its own HA entity is selectable as a
+  // target and marker:* never leaks into the controller's HA service list.
+  const passiveId = 'smoke_passive_lamp';
+  c._serverCfg.markers.push({
+    id: passiveId, binding: 'virtual', name: 'Passive lamp', is_light: true,
+    space: c._space, area: room.area,
+  });
+  c._regSignature = ''; c._maybeRebuildDevices(); await c.updateComplete;
+  const controller = c._devices.find((item) => item.id === dev.id);
+  c._openMarkerDialog(controller); await c.updateComplete;
+  c._markerDialog = { ...c._markerDialog, controlsFilter: 'Passive lamp' };
+  await c.updateComplete;
+  const planCandidate = c._controlCandidates(c._markerDialog)
+    .find((candidate) => candidate.value === `marker:${passiveId}`);
+  out.passivePlanSourceCandidate = !!planCandidate;
+  c._addControlRef(c._markerDialog, `marker:${passiveId}`); await c.updateComplete;
+  out.passiveRefStoredInDraft = c._markerDialog.controls.includes(`marker:${passiveId}`);
+  c._markerDialog = null;
   c._setMode('view'); await c.updateComplete;
   // 1) все выключены → клик включает все
   await setSt({ [lights[0]]: 'off', [lights[1]]: 'off' });

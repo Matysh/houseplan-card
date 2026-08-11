@@ -131,6 +131,9 @@ export interface Marker {
    * External `controls` remain independent room-light votes in every mode.
    */
   is_light?: boolean | null;
+  /** Explicit leading controllable entity for an Always source. Missing keeps
+   * the compatibility fallback (entity binding -> primary -> first control). */
+  light_entity?: string | null;
   /**
    * Climate devices (AC, thermostat) know the room temperature
    * (attributes.current_temperature). Opt-in per marker: show it as a badge

@@ -2,6 +2,33 @@
 
 ## Unreleased
 
+## v1.62.0-beta.1 — 2026-08-11
+
+- Fixed layout maintenance silently discarding the one-deep Optimize/Import
+  undo snapshot. Explicit geometry repair and its undo now preserve all store
+  metadata and keep the plan snapshot valid for the resulting layout revision
+  ([#87](https://github.com/Matysh/houseplan-card/issues/87)).
+- Added passive plan light sources and explicit leading-entity selection. A
+  virtual dumb lamp can now own its Glow position, colour, brightness and
+  radius while following a smart relay; multiple controllers use OR, and
+  `marker:*` links are validated without ever reaching Home Assistant as entity
+  IDs. Multi-channel Always sources can select the meaningful `light.*` or
+  `switch.*` instead of silently using registry order
+  ([#84](https://github.com/Matysh/houseplan-card/issues/84),
+  [#88](https://github.com/Matysh/houseplan-card/issues/88)).
+- Added portable House Plan backups: editors can export the complete model or
+  one space, inspect a server-validated JSON import before any write, safely
+  handle duplicate HA bindings and undo a full replacement until the next plan
+  edit. Internal plans and attachments remain local references rather than
+  being silently copied between Home Assistant instances
+  ([#50](https://github.com/Matysh/houseplan-card/issues/50)).
+- Fixed recurring one-pixel SVG seams in room-coloured door, window and gate
+  tunnels. Equal and stepped wall profiles now render as continuous contours
+  without translucent overlaps or gaps at fractional zoom ([#81](https://github.com/Matysh/houseplan-card/issues/81)).
+- Added reusable localized help buttons for complex settings. They work with
+  mouse, keyboard and touch, stay inside the viewport, and share the dialog's
+  Escape and focus lifecycle ([#68](https://github.com/Matysh/houseplan-card/issues/68)).
+
 ## v1.61.0 — 2026-08-11
 
 - Expanded robot-vacuum integration coverage with deterministic source

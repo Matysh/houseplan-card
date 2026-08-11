@@ -4,6 +4,7 @@ Kept separate so it can be covered by unit tests (only voluptuous is needed).
 """
 from __future__ import annotations
 
+from collections import Counter
 import re
 
 import voluptuous as vol
@@ -19,6 +20,111 @@ _SAFE_NAME_RE = re.compile(r"[^A-Za-z0-9._-]+")
 # The name length the content view will accept back in a request. Anything a
 # generated name must fit inside, collision tag included (HP-1460-01).
 MAX_FILENAME = 120
+MARKER_CONTROL_PREFIX = "marker:"
+_CONTROL_ENTITY_ID_RE = re.compile(r"^[a-z0-9_]+\.[a-z0-9_]+\Z")
+
+
+class MarkerControlError(ValueError):
+    """Semantic marker-link error with a stable public code."""
+
+    def __init__(self, code: str, message: str) -> None:
+        super().__init__(message)
+        self.code = code
+
+
+def validate_marker_controls(
+    config: dict, previous: dict | None = None, *, validate_all: bool = False
+) -> None:
+    """Validate newly introduced marker:* edges without rewriting old data.
+
+    Existing broken refs remain editable and round-trip losslessly. Imports use
+    validate_all because their complete candidate graph is new to this plan.
+    """
+    markers = config.get("markers") or []
+    by_id = {str(marker.get("id")): marker for marker in markers}
+    old_markers = (previous or {}).get("markers") or []
+    old_by_id = {
+        str(marker.get("id")): marker for marker in (previous or {}).get("markers") or []
+    }
+    new_ids = set(by_id)
+    consumed_old_ids: set[str] = set()
+    graph: dict[str, list[str]] = {}
+    added: list[tuple[str, str]] = []
+    for marker_id, marker in by_id.items():
+        old_marker = old_by_id.get(marker_id)
+        if old_marker is not None:
+            consumed_old_ids.add(marker_id)
+        elif not validate_all:
+            # HA-bound marker ids may be regenerated while their binding stays
+            # stable. Treat that as a rename, not as every dormant legacy edge
+            # suddenly becoming a new write. Never borrow an old marker that
+            # still exists in the candidate or has already been matched.
+            binding = marker.get("binding")
+            matches = [
+                old for old in old_markers
+                if binding not in (None, "virtual")
+                and old.get("binding") == binding
+                and str(old.get("id")) not in new_ids
+                and str(old.get("id")) not in consumed_old_ids
+            ]
+            if len(matches) == 1:
+                old_marker = matches[0]
+                consumed_old_ids.add(str(old_marker.get("id")))
+        raw_controls = [
+            ref for ref in marker.get("controls") or [] if isinstance(ref, str)
+        ]
+        old_controls = [] if validate_all else [
+            ref for ref in (old_marker or {}).get("controls") or [] if isinstance(ref, str)
+        ]
+        refs = [
+            ref for ref in raw_controls
+            if isinstance(ref, str) and ref.startswith(MARKER_CONTROL_PREFIX)
+        ]
+        graph[marker_id] = [ref[len(MARKER_CONTROL_PREFIX):] for ref in refs]
+        old_refs = [
+            ref for ref in old_controls
+            if isinstance(ref, str) and ref.startswith(MARKER_CONTROL_PREFIX)
+        ]
+        remaining = list(old_refs)
+        for ref in refs:
+            if ref in remaining:
+                remaining.remove(ref)
+            else:
+                added.append((marker_id, ref[len(MARKER_CONTROL_PREFIX):]))
+        new_counts, old_counts = Counter(refs), Counter(old_refs)
+        if any(count > 1 and count > old_counts[ref] for ref, count in new_counts.items()):
+            raise MarkerControlError("duplicate_marker_control", "Duplicate marker light target")
+        remaining_controls = list(old_controls)
+        for ref in raw_controls:
+            if ref in remaining_controls:
+                remaining_controls.remove(ref)
+            elif not ref.startswith(MARKER_CONTROL_PREFIX) and not _CONTROL_ENTITY_ID_RE.fullmatch(ref):
+                raise MarkerControlError("invalid_marker_control", f"Invalid entity target: {ref}")
+
+    def reaches(start: str, wanted: str) -> bool:
+        stack, seen = [start], set()
+        while stack:
+            node = stack.pop()
+            if node == wanted:
+                return True
+            if node in seen:
+                continue
+            seen.add(node)
+            stack.extend(graph.get(node, []))
+        return False
+
+    for controller, target in added:
+        if not target:
+            raise MarkerControlError("invalid_marker_control", "Marker target id is empty")
+        if target == controller:
+            raise MarkerControlError("marker_control_self", "A marker cannot control itself")
+        target_marker = by_id.get(target)
+        if target_marker is None or target_marker.get("removed") is True:
+            raise MarkerControlError("marker_control_missing", f"Marker target does not exist: {target}")
+        if target_marker.get("is_light") is not True:
+            raise MarkerControlError("marker_control_not_light", f"Marker target is not a forced light: {target}")
+        if reaches(target, controller):
+            raise MarkerControlError("marker_control_cycle", "Marker light controls contain a cycle")
 
 # ---------- sanitizers ----------
 
@@ -656,6 +762,13 @@ MARKER_SCHEMA = vol.Schema(
             ),
         ),
         vol.Optional("is_light"): vol.Any(bool, None),
+        # Explicit leading entity for composite Always sources. It is kept
+        # literally when temporarily absent; runtime falls back without
+        # deleting the user's choice.
+        vol.Optional("light_entity"): vol.Any(
+            None,
+            vol.All(str, vol.Length(max=MAX_TEXT), vol.Match(r"^(?:light|switch)\.[a-z0-9_]+\Z")),
+        ),
         # climate current_temperature: badge + room-average vote (off unless True)
         vol.Optional("use_climate_temp"): vol.Any(bool, None),
         vol.Optional("room_id"): vol.Any(str, None),

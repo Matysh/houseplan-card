@@ -1995,12 +1995,25 @@ export const cardStyles = css`
       border-radius: var(--rad-m);
     }
     .markerlightgroup legend {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--sp-1);
       padding: 0 var(--sp-2);
       color: var(--hp-txt);
       font-weight: 600;
     }
-    .markerlightgroup[disabled] { opacity: .62; }
-    .markerlighttip { margin: 0 0 var(--sp-3) !important; }
+    .markerlightgroup legend > span { min-width: 0; overflow-wrap: anywhere; }
+    .markerlightgroup[disabled] > :not(legend) { opacity: .62; }
+    .markerhelpfield { margin-top: var(--sp-4); }
+    .markerhelplabel {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--sp-1);
+      margin-bottom: var(--sp-1);
+    }
+    .markerhelplabel > label { min-width: 0; overflow-wrap: anywhere; }
     .markerradios { display: grid; gap: var(--sp-1); min-width: 0; }
     .markerlightgroup .srcrow > span:first-of-type {
       min-width: 0;
@@ -2083,6 +2096,8 @@ export const cardStyles = css`
     .filebtn {
       cursor: pointer;
     }
+    .fileupload { display: inline-flex; min-width: 0; }
+    .fileupload > input { display: none; }
     .btn.danger {
       border-color: #b3402a;
       color: #ff7a5c;
@@ -2646,6 +2661,57 @@ export const cardStyles = css`
     }
     .alignmsg { margin: 0 0 8px; font-size: 13px; line-height: 1.45; }
     .btn.alignall { width: 100%; justify-content: center; }
+    .backupactions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--sp-3);
+    }
+    .backupactions .btn { justify-content: center; min-width: 0; }
+    .backupupload { display: inline-flex; min-width: 0; }
+    .backupupload > .btn { width: 100%; justify-content: center; }
+    .backupupload input { display: none; }
+    .backupbody { min-width: 0; }
+    .backupfile, .backupsummary, .backupcontent {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      gap: var(--sp-1);
+    }
+    .backupfile b, .backupcontent span {
+      overflow-wrap: anywhere;
+    }
+    .backupfile span, .backupsummary span, .backupcontent span {
+      color: var(--hp-muted);
+      font-size: var(--fs-s);
+    }
+    .backupcounts {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--sp-2) var(--sp-4);
+      font-size: var(--fs-s);
+    }
+    .backupwarn, .backuperror {
+      border-radius: var(--rad-s);
+      padding: var(--sp-3);
+      font-size: var(--fs-s);
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+    .backupwarn { background: color-mix(in srgb, var(--hp-accent) 12%, transparent); }
+    .backuperror { background: rgba(179, 64, 42, .16); color: #ff7a5c; }
+    .backupchoices {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-2);
+      border: 1px solid var(--hp-line);
+      border-radius: var(--rad-s);
+      min-width: 0;
+    }
+    .backupchoices label { margin: 0 !important; display: flex; gap: var(--sp-2); }
+    .backupconfirm { align-items: flex-start !important; }
+    @media (max-width: 520px) {
+      .backupactions, .backupcounts { grid-template-columns: 1fr; }
+    }
     .aboutver {
       font-size: var(--fs-s);
       color: var(--hp-muted);

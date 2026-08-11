@@ -172,10 +172,80 @@ async def test_config_rev_conflict(hass: HomeAssistant, hass_ws_client: WebSocke
     assert resp["result"]["rev"] == 1
 
 
-async def test_plan_optimize_pair_and_one_deep_undo(
+async def test_config_set_validates_new_marker_light_links(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+) -> None:
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    base = {
+        "spaces": [], "settings": {},
+        "markers": [{"id": "lamp", "binding": "virtual", "is_light": True}],
+    }
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": base, "expected_rev": 0,
+    })
+    assert (await client.receive_json())["success"]
+
+    invalid = {
+        **base,
+        "markers": [*base["markers"], {
+            "id": "controller", "binding": "virtual",
+            "controls": ["marker:missing"],
+        }],
+    }
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": invalid, "expected_rev": 1,
+    })
+    response = await client.receive_json()
+    assert not response["success"]
+    assert response["error"]["code"] == "marker_control_missing"
+
+    # Rejection is atomic: the failed graph never increments the revision.
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    stored = (await client.receive_json())["result"]
+    assert stored["rev"] == 1 and stored["config"] == base
+
+
+async def test_plan_optimize_rejects_new_marker_light_cycle(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+) -> None:
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    base = {
+        "spaces": [], "settings": {},
+        "markers": [
+            {"id": "a", "binding": "virtual", "is_light": True},
+            {"id": "b", "binding": "virtual", "is_light": True},
+        ],
+    }
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": base, "expected_rev": 0,
+    })
+    assert (await client.receive_json())["success"]
+    cyclic = {
+        **base,
+        "markers": [
+            {**base["markers"][0], "controls": ["marker:b"]},
+            {**base["markers"][1], "controls": ["marker:a"]},
+        ],
+    }
+    await client.send_json_auto_id({
+        "type": "houseplan/plan/optimize", "config": cyclic, "layout": {},
+        "expected_config_rev": 1, "expected_layout_rev": 0,
+    })
+    response = await client.receive_json()
+    assert not response["success"]
+    assert response["error"]["code"] == "marker_control_cycle"
+
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    stored = (await client.receive_json())["result"]
+    assert stored["rev"] == 1 and stored["config"] == base
+
+
+async def test_plan_optimize_pair_and_one_deep_undo_survives_geometry_repair(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator
 ) -> None:
-    """Config and layout move together; the snapshot restores both revisions."""
+    """Maintenance preserves the one-deep snapshot and its revision guard."""
     await _setup(hass)
     client = await hass_ws_client(hass)
     original = {"spaces": [], "markers": [], "settings": {}}
@@ -208,10 +278,40 @@ async def test_plan_optimize_pair_and_one_deep_undo(
     await client.send_json_auto_id({"type": "houseplan/config/get"})
     assert (await client.receive_json())["result"]["can_optimize_undo"] is True
 
+    # Explicit geometry maintenance must not silently consume the advertised
+    # one-deep plan undo (#87).  It advances only the layout revision, so the
+    # preserved snapshot must advance its freshness marker with it.
+    await client.send_json_auto_id({
+        "type": "houseplan/geometry/repair", "space_id": "f1", "aspect": 2.0,
+    })
+    repaired = await client.receive_json()
+    assert repaired["success"] and repaired["result"]["rev"] == 3
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    assert (await client.receive_json())["result"]["can_optimize_undo"] is True
+
+    # Repair's own undo is maintenance as well and must carry the outer plan
+    # snapshot forward instead of consuming it.
+    await client.send_json_auto_id({
+        "type": "houseplan/geometry/repair", "space_id": "f1",
+        "aspect": 2.0, "undo": True,
+    })
+    repaired_undo = await client.receive_json()
+    assert repaired_undo["success"] and repaired_undo["result"]["rev"] == 4
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    assert (await client.receive_json())["result"]["can_optimize_undo"] is True
+
+    # Re-apply repair so the final assertion covers Optimize Undo directly
+    # after a geometry mutation, exactly as reported in #87.
+    await client.send_json_auto_id({
+        "type": "houseplan/geometry/repair", "space_id": "f1", "aspect": 2.0,
+    })
+    repaired_again = await client.receive_json()
+    assert repaired_again["success"] and repaired_again["result"]["rev"] == 5
+
     await client.send_json_auto_id({
         "type": "houseplan/plan/optimize_undo",
         "expected_config_rev": 2,
-        "expected_layout_rev": 2,
+        "expected_layout_rev": 5,
     })
     resp = await client.receive_json()
     assert resp["success"] and resp["result"]["can_undo"] is False
@@ -223,6 +323,13 @@ async def test_plan_optimize_pair_and_one_deep_undo(
     await client.send_json_auto_id({"type": "houseplan/layout/get"})
     layout = (await client.receive_json())["result"]
     assert layout["layout"] == original_layout
+
+    from custom_components.houseplan.store import get_data
+
+    stored = await get_data(hass).store.async_load()
+    assert "repair_backup" not in stored, (
+        "full plan undo invalidates the nested repair undo"
+    )
 
 
 async def test_not_ready_without_entry(hass: HomeAssistant, hass_ws_client: WebSocketGenerator) -> None:
@@ -1535,6 +1642,15 @@ async def test_geometry_repair_is_explicit_previewable_and_undoable(
                    "other": {"s": "elsewhere", "x": 0.9, "y": 0.9}},
     })
     assert (await client.receive_json())["success"]
+    # Unknown/new service metadata must survive every layout writer. This is
+    # the mutation guard against restoring geometry/repair's old allow-list
+    # payload, which silently erased import/optimizer state (#50/R4, #87).
+    from custom_components.houseplan.store import get_data
+
+    runtime = get_data(hass)
+    stored = await runtime.store.async_load()
+    stored["future_metadata"] = {"must": "survive-repair"}
+    await runtime.store.async_save(stored)
 
     # preview does not touch the store
     await client.send_json_auto_id({
@@ -1551,6 +1667,9 @@ async def test_geometry_repair_is_explicit_previewable_and_undoable(
     })
     res = (await client.receive_json())["result"]
     assert res["moved"] == 1
+    repaired_store = await runtime.store.async_load()
+    assert repaired_store["future_metadata"] == {"must": "survive-repair"}
+    assert repaired_store["repair_backup"]["space"] == "wide"
     await client.send_json_auto_id({"type": "houseplan/layout/get"})
     lay = (await client.receive_json())["result"]["layout"]
     assert lay["lamp"] == {"s": "wide", "x": 0.2, "y": 0.3}

@@ -1885,7 +1885,7 @@ export function openingInnerFaceOffsetFromIndex(
 export interface OpeningTunnelFace {
   side: -1 | 1;
   roomId: string;
-  /** One SVG path, possibly containing several non-overlapping atomic strips. */
+  /** One SVG path containing one contour per disconnected physical span. */
   d: string;
 }
 
@@ -1898,51 +1898,79 @@ export interface OpeningTunnelGeometry {
   wallKey: string;
 }
 
-function tunnelFacePath(side: -1 | 1, pieces: OpeningWallPiece[]): string {
+/** @internal Exported so the non-overlapping union profile has a direct mutation guard. */
+export function tunnelFacePath(side: -1 | 1, pieces: OpeningWallPiece[]): string {
   const eps = 1e-9;
-  const compact: OpeningWallPiece[] = [];
-  for (const piece of [...pieces]
-    .filter((candidate) => candidate.x1 > candidate.x0 && candidate.half > 0)
-    .sort((a, b) => a.x0 - b.x0 || a.x1 - b.x1 || a.half - b.half)) {
-    const tail = compact[compact.length - 1];
-    // Atomic wall profiles may split one visually continuous wall at room or
-    // model vertices. Painting every atom as its own SVG rectangle exposes
-    // their shared edges as hairlines at fractional zoom. Equal-depth atoms
-    // are one physical tunnel surface, so collapse them before rendering.
-    if (tail
-      && piece.x0 <= tail.x1 + eps
-      && Math.abs(piece.half - tail.half) <= eps) {
-      tail.x1 = Math.max(tail.x1, piece.x1);
+  const valid = pieces.filter((piece) => (
+    Number.isFinite(piece.x0) && Number.isFinite(piece.x1)
+    && Number.isFinite(piece.half) && piece.x1 > piece.x0 && piece.half > 0
+  ));
+  if (!valid.length) return '';
+
+  // Turn overlapping atomic wall intervals into a non-overlapping depth
+  // profile. A profile slab uses the deepest physical body covering that X;
+  // this is the exact union of all candidate rectangles and never extends an
+  // opening past either jamb.
+  const rawBreaks = valid.flatMap((piece) => [piece.x0, piece.x1]).sort((a, b) => a - b);
+  const breaks: number[] = [];
+  for (const value of rawBreaks) {
+    const tail = breaks[breaks.length - 1];
+    if (tail === undefined || value > tail + eps) breaks.push(value);
+  }
+  const profile: Array<{ x0: number; x1: number; half: number }> = [];
+  for (let i = 0; i + 1 < breaks.length; i++) {
+    const x0 = breaks[i], x1 = breaks[i + 1];
+    if (!(x1 > x0 + eps)) continue;
+    const mid = (x0 + x1) / 2;
+    const half = valid.reduce((depth, piece) => (
+      mid >= piece.x0 - eps && mid <= piece.x1 + eps ? Math.max(depth, piece.half) : depth
+    ), 0);
+    if (!(half > 0)) continue;
+    const tail = profile[profile.length - 1];
+    if (tail && x0 <= tail.x1 + eps && Math.abs(half - tail.half) <= eps) {
+      tail.x1 = x1;
     } else {
-      compact.push({ ...piece });
+      profile.push({ x0, x1, half });
     }
   }
 
-  const parts: string[] = [];
-  for (let i = 0; i < compact.length; i++) {
-    const p = compact[i];
-    const y = side * p.half;
-    // Both faces overlap symmetrically across y=0 by a tiny amount. They are
-    // subpaths of one SVG fill, so this closes fractional-zoom hairlines
-    // without adding opacity or escaping the physical outer faces.
-    const seam = Math.min(p.half * 0.02, 0.05);
-    const y0 = -side * seam;
-    let x0 = p.x0;
-    let x1 = p.x1;
-    const previous = compact[i - 1];
-    const next = compact[i + 1];
-    // A real thickness step cannot be collapsed into one rectangle. Overlap
-    // only its touching internal edge; all strips remain subpaths of one fill,
-    // so the overlap cannot stack alpha and never extends a tunnel endpoint.
-    if (previous && Math.abs(previous.x1 - p.x0) <= eps) {
-      x0 -= Math.min(Math.min(previous.half, p.half) * 0.02, 0.05);
+  // Build one simple outline for every connected span. Thickness changes are
+  // vertices on its outer envelope, not shared edges between translucent SVG
+  // rectangles, so neither antialiasing seams nor double-alpha bands exist.
+  const components: Array<Array<{ x0: number; x1: number; half: number }>> = [];
+  for (const slab of profile) {
+    const component = components[components.length - 1];
+    const tail = component?.[component.length - 1];
+    if (tail && slab.x0 <= tail.x1 + eps) {
+      slab.x0 = tail.x1;
+      component.push(slab);
+    } else {
+      components.push([slab]);
     }
-    if (next && Math.abs(p.x1 - next.x0) <= eps) {
-      x1 += Math.min(Math.min(next.half, p.half) * 0.02, 0.05);
-    }
-    parts.push(`M ${x0} ${y0} L ${x1} ${y0} L ${x1} ${y} L ${x0} ${y} Z`);
   }
-  return parts.join(' ');
+
+  return components.map((component) => {
+    const first = component[0], last = component[component.length - 1];
+    const seam = Math.min(Math.min(...component.map((slab) => slab.half)) * 0.02, 0.05);
+    const axisY = -side * seam;
+    const commands: string[] = [];
+    if (side === 1) {
+      commands.push(`M ${first.x0} ${axisY} L ${last.x1} ${axisY}`);
+      for (let i = component.length - 1; i >= 0; i--) {
+        const slab = component[i];
+        commands.push(`L ${slab.x1} ${slab.half} L ${slab.x0} ${slab.half}`);
+      }
+    } else {
+      // Keep the same winding direction as the positive face. The two faces
+      // overlap only around y=0; matching winding makes that overlap solid
+      // under the nonzero fill rule instead of cancelling into a hairline.
+      commands.push(`M ${last.x1} ${axisY} L ${first.x0} ${axisY}`);
+      for (const slab of component)
+        commands.push(`L ${slab.x0} ${-slab.half} L ${slab.x1} ${-slab.half}`);
+    }
+    commands.push('Z');
+    return commands.join(' ');
+  }).join(' ');
 }
 
 type TunnelOccupancy = Map<string, Array<[number, number]>>;

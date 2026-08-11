@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   presentationSourceSignature,
   resolveDevicePresentation,
+  resolvePresentationSources,
 } from '../test-build/device-presentation.js';
 import {
   resolveBindingProviders,
@@ -39,6 +40,54 @@ const options = {
   showTemperature: true,
   showSignal: true,
 };
+
+test('passive source and its controller share the plan-wide derived state', () => {
+  const h = hass({
+    'switch.wall': state('switch.wall', 'on'),
+  });
+  const controller = device({
+    id: 'controller',
+    name: 'Wall switch',
+    entities: ['switch.wall'],
+    primary: 'switch.wall',
+    bindingRef: 'switch.wall',
+    marker: {
+      id: 'controller', binding: 'entity:switch.wall', controls: ['marker:bulb'],
+    },
+  });
+  const bulb = device({
+    id: 'bulb',
+    name: 'Dumb bulb',
+    entities: [],
+    primary: null,
+    bindingKind: 'virtual',
+    bindingRef: 'bulb',
+    marker: { id: 'bulb', binding: 'virtual:bulb', is_light: true },
+  });
+
+  const target = resolvePresentationSources(h, bulb, [controller, bulb]);
+  const switchPresentation = resolvePresentationSources(h, controller, [controller, bulb]);
+
+  assert.equal(target.sourceKind, 'light');
+  assert.equal(target.visualSources[0].eid, 'marker:bulb');
+  assert.equal(target.visualSources[0].sample.status, 'working');
+  assert.equal(switchPresentation.sourceKind, 'controls');
+  assert.equal(switchPresentation.visualSources[0].eid, 'marker:bulb');
+  assert.equal(switchPresentation.visualSources[0].sample.status, 'working');
+});
+
+test('ordinary presentation stays on the local light path', () => {
+  const h = hass({ 'switch.relay': state('switch.relay', 'on') });
+  const forbiddenGlobalGraph = new Proxy([], {
+    get(target, prop, receiver) {
+      if (prop === Symbol.iterator) throw new Error('ordinary marker traversed the global graph');
+      return Reflect.get(target, prop, receiver);
+    },
+  });
+  const sources = resolvePresentationSources(h, device(), forbiddenGlobalGraph);
+  assert.equal(sources.sourceKind, 'device_role');
+  assert.equal(sources.visualSources[0].eid, 'switch.relay');
+});
 
 test('always-static display suppresses every live visual but keeps diagnostics', () => {
   const h = hass({

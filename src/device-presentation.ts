@@ -7,7 +7,7 @@
  */
 import {
   climateTempFor, humFor, isHumEntity, isTempEntity, lqiFor,
-  resolvedDeviceStateEntities, resolvedLightSources, tempFor,
+  persistedExternalControls, resolvedDeviceStateEntities, resolvedLightSources, tempFor,
 } from './devices';
 import {
   combineVisualSamples, entityVisualSample, entityVisualSamplesForDevice,
@@ -94,6 +94,8 @@ export interface ResolvePresentationOptions {
   /** The preview needs real source facts even for a static face. Plan surfaces
    * may skip that work because the static projection cannot consume it. */
   sourceDetails?: boolean;
+  /** Whole-plan light graph; needed for passive sources driven from another marker. */
+  lightDevices?: readonly DevItem[];
   now?: number;
 }
 
@@ -179,7 +181,9 @@ function sourceOf(
 }
 
 /** Resolve the effective visual role once; every surface uses this graph. */
-export function resolvePresentationSources(hass: any, device: DevItem): ResolvedPresentationSources {
+export function resolvePresentationSources(
+  hass: any, device: DevItem, lightDevices: readonly DevItem[] = [device],
+): ResolvedPresentationSources {
   // User-hidden is a renderer concern. It must not erase the source graph used
   // by the design preview. HA-disabled devices already carry no active entities.
   const d = device.hidden && device.userHidden ? { ...device, hidden: false } : device;
@@ -187,20 +191,81 @@ export function resolvePresentationSources(hass: any, device: DevItem): Resolved
   let visualSources: ResolvedPresentationSource[] = [];
 
   const cover = d.tapAction === 'cover' ? coverEntityOf(d.entities) : null;
-  const lights = resolvedLightSources(hass, [d]);
+  // A target owns Glow and room statistics, while a controller still needs to
+  // present the aggregate state of what it controls. Resolve the controller
+  // locally for ordinary entity refs, then project marker:* targets from the
+  // plan-wide graph. Filtering the global graph only by source owner would
+  // make a wall switch lose its yellow working state as soon as its target was
+  // represented by a separate plan marker.
+  const localLights = resolvedLightSources(hass, [d]);
+  const persistedControls = persistedExternalControls(
+    d.marker?.binding, d.marker?.controls ?? d.controls, d.entities,
+  );
+  const markerRefs = new Set(persistedControls.filter((ref) => ref.startsWith('marker:')));
+  // The global graph is needed only for incoming links to an Always marker or
+  // for outgoing marker:* aliases. Ordinary devices stay on the O(1) local
+  // path instead of resolving the complete plan once per rendered marker.
+  const needsGlobalGraph = d.marker?.is_light === true || markerRefs.size > 0;
+  const globalLights = needsGlobalGraph
+    ? resolvedLightSources(hass, lightDevices)
+    : localLights;
+  // Keep controller projections local, but take sources owned by this marker
+  // from the plan-wide graph. This matters for passive sources: their `on`
+  // state is derived from incoming marker:* links and cannot be known from an
+  // isolated marker. Fall back to the local owned source for design previews
+  // whose temporary marker is not present in `lightDevices`.
+  const globalOwned = globalLights.filter((source) =>
+    source.device.id === d.id && source.via !== 'controls'
+  );
+  const localOwned = localLights.filter((source) => source.via !== 'controls');
+  const lights = [
+    ...localLights.filter((source) => source.via === 'controls'),
+    ...(globalOwned.length ? globalOwned : localOwned),
+  ];
+  if (markerRefs.size) {
+    for (const source of globalLights) {
+      if (!markerRefs.has(source.key)) continue;
+      const aliasesExisting = source.stateEids.length > 0 && lights.some((existing) =>
+        existing.stateEids.some((eid) => source.stateEids.includes(eid)),
+      );
+      if (!aliasesExisting && !lights.some((existing) => existing.key === source.key)) {
+        lights.push({ ...source, via: 'controls', castsGlow: false });
+      }
+    }
+  }
   if (cover) {
     sourceKind = 'cover';
     visualSources = [sourceOf(hass, cover, 'cover')];
   } else if (lights.length) {
     sourceKind = lights.some((source) => source.via === 'controls') ? 'controls' : 'light';
-    visualSources = lights.map((source) => sourceOf(
-      hass,
-      source.eid,
-      source.via === 'controls' ? 'control'
-        : source.via === 'forced' ? 'forced_light' : 'light',
-    ));
+    visualSources = lights.map((source) => {
+      const role = source.via === 'controls' ? 'control'
+        : source.via === 'forced' ? 'forced_light' : 'light';
+      if (!source.passive) return sourceOf(hass, source.eid, role);
+      const state = source.on ? 'on' : 'off';
+      return {
+        eid: source.key,
+        role,
+        name: device.name,
+        state,
+        stateText: state,
+        integrationDomain: null,
+        sample: {
+          eid: source.key, state, availability: 'available' as const,
+          status: source.on ? 'working' as const : 'neutral' as const,
+          activity: 'none' as const, edge: 'none' as const,
+        },
+      };
+    });
   } else {
-    const ids = resolvedDeviceStateEntities(hass, d.entities);
+    // Registry metadata is authoritative when present, but a few integrations
+    // (and early HA startup snapshots) expose live states before the entity
+    // registry arrives. Keep the historical whole-device role in that case
+    // instead of silently downgrading the same entity to a generic primary.
+    const resolvedIds = resolvedDeviceStateEntities(hass, d.entities);
+    const ids = resolvedIds.length
+      ? resolvedIds
+      : d.entities.filter((eid) => !!hass?.states?.[eid]);
     if (ids.length) {
       sourceKind = 'device_role';
       const samples = entityVisualSamplesForDevice(hass, ids, d.entities);
@@ -399,7 +464,7 @@ export function resolveDevicePresentation(
   const display = normalizeDeviceDisplay(d.marker?.display);
   const staticIcon = display === 'static_icon';
   const sources = staticIcon && options.sourceDetails === false
-    ? EMPTY_SOURCES : resolvePresentationSources(hass, d);
+    ? EMPTY_SOURCES : resolvePresentationSources(hass, d, options.lightDevices || [d]);
   const status = d.bindingStatus;
   const haDisabled = status?.kind === 'ha_disabled';
   const orphaned = status?.kind === 'orphaned';
@@ -443,6 +508,7 @@ export function resolveDevicePresentation(
     : d.icon;
   const lightColor = options.liveStates && !staticIcon && !effectiveHidden
     ? resolvedLightSources(hass, [{ ...d, hidden: false }])
+        .filter((source) => !!source.eid)
         .map((source) => lightColorOf(hass?.states?.[source.eid]))
         .find((color): color is string => !!color) || null
     : null;

@@ -9,7 +9,10 @@ that contains both the backend (`custom_components/houseplan`) and the Lovelace 
 houseplan-card/
 ├─ src/                          # card sources (TypeScript + Lit 3)
 │  ├─ houseplan-card.ts          # the card: rendering, states, drag, tooltip, sticky header
-│  ├─ hp-dialog.ts               # shared HA/native modal shell and focus lifecycle
+│  ├─ hp-dialog.ts               # shared HA/native modal shell, focus and transient-overlay lifecycle
+│  ├─ hp-help.ts                 # presentation-only, localized contextual-help surface
+│  ├─ floating-surface.ts        # pure visual-viewport flip/shift geometry for dialog surfaces
+│  ├─ floating-surface-controller.ts # shared Popover/fallback portal DOM lifecycle
 │  ├─ editor-secondary.ts        # context tray model, groups, focus/dismiss lifecycle and stable template
 │  ├─ editor-secondary.styles.ts # styles owned by the context tray/submenu surface
 │  ├─ render/opening-tunnels.ts  # immutable SVG projection of resolved tunnel geometry/fills
@@ -89,6 +92,15 @@ the same profiler available between stable promotions.
    commit actions use two explicit wrapping groups: destructive actions stay
    left, while Cancel/Save move together to a right-aligned second line when
    translated labels do not fit.
+6. **One transient-surface contract.** `hp-dialog` owns a scoped LIFO registry
+   for explanatory/help and colour-picker surfaces. Escape and toast close the
+   upper transient surface before the dialog, and a new transient surface
+   replaces the previous one only inside the same dialog. `hp-help` and
+   `hp-color-opacity` share the pure `floating-surface.ts` placement helper
+   and `floating-surface-controller.ts` fallback/portal lifecycle,
+   prefer the browser top-layer Popover API and use a real dialog-owned portal
+   when that API is unavailable. Help text is localized by the owning card so
+   two cards with different explicit languages remain independent.
 
 ## Coordinate system
 
@@ -423,9 +435,27 @@ spans are clipped per atomic body.
 | `houseplan/files/migrate` | `from_id`, `to_id` | `{mapping}` — COPY, never move |
 | `houseplan/files/cleanup` | `marker_id`, `keep?` | replacement-only collection |
 | `houseplan/content/sign` | `paths[]` | `{urls}` — authSig for `<image>`/`<a>` fetches |
+| `houseplan/export/create` | `kind`, `space_id?`, `card_version` | consistent versioned JSON document + safe filename |
+| `houseplan/import/revalidate` | preview `token`, `duplicate_policy?` | refreshed bounded preview and current expected revisions |
+| `houseplan/import/apply` | token, both expected revisions, content confirmation | crash-resumable paired config/layout commit; full import gets one-deep undo |
 
 Manual attachments upload over HTTP (streaming, transactional staging), not WS —
 the old `houseplan/file/set` was removed in v1.10.0.
+
+Portable import preview uses authenticated
+`POST /api/houseplan/import/preview`. The endpoint streams at most 8 MiB,
+strictly rejects duplicate/prototype keys, non-finite numbers and future model
+versions, and retains the parsed candidate only in memory for ten minutes. Its
+opaque token is bound to the HA user, normalized-candidate digest and the exact
+config/layout revisions. Parsed candidates are capped globally as well as per
+user.
+The browser never parses imported configuration. Full import and maintenance
+share the `optimize_pending` crash-recovery intent and the one-deep backup slot;
+the backup carries `kind: optimize|import`, while every layout-store writer
+goes through `async_save_layout_state` so unrelated store metadata survives.
+Apply rechecks local plan files under the write lock. A failed pair is retried
+toward the target once, then gets an explicit rollback intent so a later
+restart never finishes an import already reported as failed.
 
 **If the v1.48 migration crashed halfway** (HP-1500-01): the config write
 landed, the layout write did not, and both triggers are gone — markers of that
@@ -720,6 +750,11 @@ hash falls back to the default.
   state/statistics and drive group actions but never place a pool at the
   controller. `wall-thickness.ts` and the card orchestrator continue to own all
   geometry/caches; `render/opening-tunnels.ts` only projects immutable inputs.
+  Opening-tunnel faces are emitted as one simple union contour per connected
+  physical span: thickness steps are vertices on the outer envelope, never
+  touching translucent rectangles. The negative and positive halves use the
+  same nonzero winding across their tiny centre overlap, so fractional SVG
+  rasterisation cannot cancel the fill into a seam or stack its opacity.
 - **Open boundaries** (v1.37, revised 2026-08): `space.open_spans` hold
   geometric virtual stretches; `room.open_to` remains the light-zone index
   derived from spans (legacy `open_to`-only configs expand to full
@@ -760,13 +795,18 @@ hash falls back to the default.
 - **Resolved light sources** (UX-12): `resolvedLightSources(hass, devices,
   room?)` is the only light-membership resolver. `marker.is_light` is a real
   tri-state: absent/null keeps automatic role discovery, `true` adds the
-  marker's own controllable source, and `false` suppresses only that own
-  candidate. External `controls[]` remain independent room-state votes;
-  `selectSpatialGlowSource` filters them before choosing the first on (or first
-  available) physical source. The resolver excludes hidden markers, de-duplicates entity ids,
-  and honours `marker.room_id` before an HA area. Glow, Light fill, room light
-  stats, marker indication/card ordering and group toggle all consume this
-  result instead of maintaining separate domain tests. Per-marker
+  marker's own source (including a passive source without HA entities), and
+  `false` suppresses only that own candidate. A resolved source separates its
+  `key` from `stateEids` and `serviceEids`: `marker:*` links are graph identity,
+  never fake HA entities or service targets. Optional `marker.light_entity`
+  selects the leading entity of a multi-channel forced source. External entity
+  and marker controls remain independent room-state votes; a target marker owns
+  position/statistics while the controller presentation still mirrors its
+  aggregate working state. The graph uses a content fingerprint, excludes
+  hidden/disabled targets, de-duplicates aliases, and honours `marker.room_id`
+  before an HA area. Glow, Light fill, room light stats, marker indication/card
+  ordering and group toggle all consume this result instead of maintaining
+  separate domain tests. Per-marker
   `glow_color:{c,bri?}` can override colour alone or colour plus brightness;
   strict invalid overrides fall back atomically to live source values.
 - **Island rooms** (v1.34): full nesting is legal (`polyContainsPoly`);

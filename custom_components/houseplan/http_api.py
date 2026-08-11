@@ -8,6 +8,7 @@ from __future__ import annotations
 import logging
 import os
 import tempfile
+from functools import partial
 from pathlib import Path
 
 from aiohttp import web
@@ -22,10 +23,13 @@ from homeassistant.core import HomeAssistant
 
 from .const import (
     CONF_ADMIN_ONLY, CONTENT_URL, FILES_DIR, FILES_URL, MAX_FILES_BYTES,
-    MAX_FILES_COUNT, PLANS_DIR,
+    MAX_FILES_COUNT, MAX_EXPORT_BYTES, PLANS_DIR,
 )
 from .auth import may_write
+from .import_export import ImportFailure, create_preview
 from .plans import TMP_PREFIX, QuotaError, check_quota, reserve_filename
+from .registry_snapshot import import_registry_snapshot
+from .store import get_data
 from .validation import (
     FILE_EXTENSIONS,
     MAX_FILE_BYTES,
@@ -50,6 +54,66 @@ _MIME = {
     ".gif": "image/gif",
     ".txt": "text/plain",
 }
+
+
+class HouseplanImportPreviewView(HomeAssistantView):
+    """Upload a bounded JSON backup and return a server-side preview token."""
+
+    url = "/api/houseplan/import/preview"
+    name = "api:houseplan:import-preview"
+    requires_auth = True
+
+    async def post(self, request: web.Request) -> web.Response:
+        hass: HomeAssistant = request.app[KEY_HASS]
+        user = request.get("hass_user")
+        if not may_write(hass, user):
+            return web.json_response({"error": "unauthorized"}, status=403)
+        runtime = get_data(hass)
+        if runtime is None:
+            return web.json_response({"error": "not_ready"}, status=503)
+        policy = request.query.get("duplicate_policy", "skip")
+        if policy not in ("skip", "virtual"):
+            return web.json_response({"error": "invalid_format"}, status=400)
+        declared = request.content_length
+        if declared is not None and declared > MAX_EXPORT_BYTES:
+            return web.json_response({"error": "too_large"}, status=413)
+        blocks: list[bytes] = []
+        size = 0
+        async for block in request.content.iter_chunked(_CHUNK):
+            size += len(block)
+            if size > MAX_EXPORT_BYTES:
+                return web.json_response({"error": "too_large"}, status=413)
+            blocks.append(block)
+        owner_id = str(getattr(user, "id", ""))
+        try:
+            async with runtime.write_lock:
+                config_data = await runtime.config_store.async_load() or {}
+                layout_data = await runtime.store.async_load() or {}
+                try:
+                    registry_snapshot = import_registry_snapshot(hass)
+                except Exception:  # noqa: BLE001 - summary must not block a valid backup
+                    _LOGGER.debug("House Plan import registry summary unavailable", exc_info=True)
+                    registry_snapshot = None
+                result = await hass.async_add_executor_job(
+                    partial(
+                        create_preview,
+                        runtime,
+                        b"".join(blocks),
+                        owner_id=owner_id,
+                        duplicate_policy=policy,
+                        current_config_data=config_data,
+                        current_layout_data=layout_data,
+                        config_root=Path(hass.config.path("")),
+                        registry_snapshot=registry_snapshot,
+                    )
+                )
+        except ImportFailure as err:
+            status = 413 if err.code == "too_large" else 400
+            return web.json_response({"error": err.code, "message": err.message}, status=status)
+        except Exception:  # noqa: BLE001
+            _LOGGER.exception("House Plan import preview failed")
+            return web.json_response({"error": "invalid_format"}, status=400)
+        return web.json_response(result)
 
 
 class HouseplanContentView(HomeAssistantView):

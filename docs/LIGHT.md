@@ -99,6 +99,50 @@ set is invisible — the plan simply keeps lighting through a wall that now
 exists. The same fingerprint, plus position and radius, keys the per-source
 region cache (`_glowClipCache`).
 
+## Source, state and service identity
+
+The geometry above consumes `resolvedLightSources()`; it never discovers light
+entities on its own. Since #84/#88 a source has three deliberately separate
+identities:
+
+- `key` (`entity:*` or `marker:*`) identifies and de-duplicates the physical
+  source on the plan;
+- `stateEids` are the real HA entities whose states feed a stateful source;
+- `serviceEids` are the real HA entities which may be sent to `callService`.
+
+`marker:*` is configuration graph syntax, never an HA entity id. It is never
+looked up in `hass.states` and never sent to a service. A stateful marker target
+projects to its selected leading `light.*`/`switch.*`; a passive marker may
+legitimately have empty state and service lists.
+
+`is_light` remains tri-state. Auto keeps functional device-role discovery,
+Never suppresses only the marker's own source, and Always creates one spatial
+source even when the marker has no controllable HA entity. That last case is a
+**passive forced source**:
+
+- with no incoming controller link it is explicitly constant-on;
+- with one or more links it is on when any active controller driver is on;
+- links with no active driver make it dormant/off, not constant-on;
+- its position, room, colour, brightness and radius belong to the target lamp,
+  not to the switch which drives it.
+
+The controller picker can therefore link a smart relay to a virtual marker for
+a dumb physical lamp. Multiple controllers use OR. A direct entity reference
+and a marker reference resolving to the same stateful source are deduplicated.
+The controller still presents the aggregate working state of its targets, but
+does not steal their Glow position or room statistics.
+
+For Always devices with several own controllable entities, optional
+`marker.light_entity` selects the leading state/service entity. Absence keeps
+the compatibility fallback (`entity:` binding, resolved primary, then the
+first controllable candidate). A stored selection which temporarily disappears
+is retained and visibly warned about; runtime uses the fallback until it
+returns. Capability comes from binding/registry metadata, never from a
+transient `unknown`, `unavailable` or missing state snapshot.
+
+The complete UI and runtime truth table lives in
+[`DEVICE-LIGHT-SETTINGS-MATRIX.ru.md`](DEVICE-LIGHT-SETTINGS-MATRIX.ru.md).
+
 ## What the tests hold
 
 - `test/light-visibility.test.mjs` — the sweep itself: a wall stops light, a

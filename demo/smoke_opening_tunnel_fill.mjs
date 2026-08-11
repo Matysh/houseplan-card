@@ -123,6 +123,32 @@ const result = await page.evaluate(async () => {
   await update();
   out.planGestureCannotLeaveStalePatch = tunnels('data').length === 0
     && tunnels('glow-base').length === 0;
+
+  // Regression #81: atomic wall pieces, including real thickness steps, are
+  // one continuous SVG surface per side. Two faces therefore mean exactly two
+  // contours in one path, never a row of touching translucent rectangles.
+  c._setMode('view');
+  sp.rooms = [{ id: 'atomic-room', name: 'Atomic', area: 'atomic_area',
+    poly: [[0.1, 0.2], [0.9, 0.2], [0.9, 0.7], [0.1, 0.7]],
+    settings: { fill_mode: 'custom', custom_fill: { c: '#112233', a: 0.21 } } }];
+  const atomicSegments = [[0.1, 0.3], [0.3, 0.5], [0.5, 0.7], [0.7, 0.9]];
+  sp.walls = atomicSegments.map(([x0, x1]) => wall([x0, 0.2], [x1, 0.2], 15));
+  sp.openings = [{ id: 'atomic-door', type: 'door', x: 0.5, y: 0.2, angle: 0, length: 0.6 }];
+  sp.settings.hide_openings = true;
+  sp.settings.show_borders = true;
+  await update();
+  const sameDepth = byId('atomic-door', 'data');
+  out.equalAtomicPiecesAreOneSurface = sameDepth?.tagName.toLowerCase() === 'path'
+    && ((sameDepth.getAttribute('d') || '').match(/\bM /g) || []).length === 2;
+
+  sp.walls = atomicSegments.map(([x0, x1], index) => (
+    wall([x0, 0.2], [x1, 0.2], [10, 20, 15, 15][index])
+  ));
+  await update();
+  const stepped = byId('atomic-door', 'data');
+  out.steppedAtomicPiecesAreOneSurface = stepped?.tagName.toLowerCase() === 'path'
+    && ((stepped.getAttribute('d') || '').match(/\bM /g) || []).length === 2
+    && stepped.getAttribute('fill-opacity') === '0.21';
   return out;
 });
 

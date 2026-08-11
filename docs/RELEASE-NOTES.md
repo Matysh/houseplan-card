@@ -1,18 +1,18 @@
-<!-- release: v1.61.0 -->
+<!-- release: v1.62.0-beta.1 -->
 
 ## Основное
 
-- Улучшена поддержка роботов-пылесосов: выбор источника, диагностика, маршруты и калибровка стали надёжнее.
-- Переработаны Glow, заливки комнат и распространение света с учётом реальной геометрии стен, проёмов, перегородок и колонн.
-- Возврат на вкладку и восстановление соединения больше не показывают частично собранный план; динамические данные обновляются одним согласованным кадром.
+- Добавлены экспорт, проверенный предпросмотр и безопасный импорт полной конфигурации или отдельного пространства.
+- Виртуальные и другие пассивные светильники теперь могут иметь собственный Glow и управляться умными выключателями.
+- Добавлены переиспользуемые контекстные подсказки для сложных настроек.
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- Improved robot-vacuum source selection, diagnostics, trails and calibration.
-- Reworked Glow, room fills and light propagation around real walls, openings, partitions and columns.
-- Tab resume and connection recovery no longer expose a partially rebuilt plan; dynamic data updates as one coherent frame.
+- Added export, validated preview and safe import for the complete configuration or one space.
+- Virtual and other passive lights can now own their Glow and follow smart switches.
+- Added reusable contextual help for complex settings.
 - Small fixes and improvements.
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.61.0/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.61.0/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.62.0-beta.1/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.62.0-beta.1/docs/CHANGELOG.md)

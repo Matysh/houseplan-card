@@ -141,6 +141,17 @@ export class ContentSigner {
     this.queued.clear();
   }
 
+  /** Drop signed/runtime state after a whole-model replacement. */
+  invalidate(hass: any): void {
+    const shared = this.bind(hass);
+    clearTimeout(this.batchTimer);
+    this.queued.clear();
+    shared.queued.clear();
+    shared.inFlight.clear();
+    shared.retry.clear();
+    shared.signed = {};
+  }
+
   private stopTimer(): void {
     if (this.resignTimer !== undefined) clearInterval(this.resignTimer);
     this.resignTimer = undefined;

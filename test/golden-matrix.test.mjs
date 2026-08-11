@@ -21,6 +21,19 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
       assert.equal(Number.isInteger(region.minPixels) && region.minPixels > 0, true, scenario.id);
       assert.equal(region.minRedBlueDelta > 0, true, scenario.id);
     }
+    if (scenario.tunnelContinuity) {
+      assert.match(scenario.tunnelContinuity.openingId, /^[a-z0-9-]+$/, scenario.id);
+      assert.equal(Number.isInteger(scenario.tunnelContinuity.insetPx)
+        && scenario.tunnelContinuity.insetPx >= 1, true, scenario.id);
+      assert.equal(scenario.tunnelContinuity.maxChannelJump >= 0
+        && scenario.tunnelContinuity.maxChannelJump <= 32, true, scenario.id);
+    }
+    if (scenario.helpTextRegion) {
+      assert.match(scenario.helpTextRegion.key, /^[a-z0-9_.-]+\.help$/, scenario.id);
+      assert.equal(Number.isInteger(scenario.helpTextRegion.minPixels)
+        && scenario.helpTextRegion.minPixels > 0, true, scenario.id);
+      assert.equal(scenario.openHelp, scenario.helpTextRegion.key, scenario.id);
+    }
   }
 });
 
@@ -29,13 +42,24 @@ test('golden matrix covers required geometry, rendering and adaptive surfaces', 
   for (const token of ['geometry', 'diagonal-45-opening', 'openings', 'openings-hidden',
     'fill-light', 'fill-temp', 'fill-lqi', 'lighting', 'hover', 'zoom-040', 'zoom-250',
     'warm-remount', 'dialog-mobile', 'color-popover', 'tray-wide', 'tray-medium',
-    'tray-narrow', 'opaque-glow-two-doorways'])
+    'tray-narrow', 'opaque-glow-two-doorways', 'filled-tunnel', 'backup-full', 'backup-space'])
     assert.equal(ids.includes(token), true, token);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.mode)).has('plan'), true);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.mode)).has('devices'), true);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.mode)).has('decor'), true);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.theme)).has('light'), true);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.theme)).has('dark'), true);
+});
+
+test('filled opening golden has a pixel-level seam detector', () => {
+  const scenario = GOLDEN_SCENARIOS.find((item) => item.id === 'openings-filled-tunnel-dark');
+  assert.ok(scenario);
+  assert.equal(scenario.fillMode, 'custom');
+  assert.equal(scenario.customFill.a > 0 && scenario.customFill.a < 1, true);
+  assert.equal(scenario.glowEnabled, false);
+  assert.equal(scenario.hideOpenings, true, 'opening symbols must not mask the sampled tunnel pixels');
+  assert.equal(scenario.tunnelContinuity.openingId, 'light-door');
+  assert.equal(scenario.tunnelContinuity.maxChannelJump <= 8, true);
 });
 
 test('doorway spill golden exposes the opaque-fill failure mode from issue 71', () => {
@@ -159,4 +183,14 @@ test('device dialog goldens expose the complete light-source controls at desktop
   const harness = readFileSync(new URL('../demo/golden/harness.mjs', import.meta.url), 'utf8');
   assert.match(harness, /if \(scenario\.deviceLightControls\)/,
     'the harness must activate the declared light-controls scenario flag');
+});
+
+test('help affordance golden covers an open text-bearing surface in both themes', () => {
+  const help = GOLDEN_SCENARIOS.filter((scenario) => scenario.openHelp);
+  assert.equal(help.length >= 2, true);
+  assert.deepEqual(new Set(help.map((scenario) => scenario.theme)), new Set(['dark', 'light']));
+  for (const scenario of help) {
+    assert.equal(scenario.helpTextRegion?.key, scenario.openHelp, scenario.id);
+    assert.equal(scenario.helpTextRegion?.minPixels >= 30, true, scenario.id);
+  }
 });

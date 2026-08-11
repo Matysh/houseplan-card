@@ -6,6 +6,9 @@ import {
   litLightEntity, resolvedDeviceStateEntities, resolvedLightSources, resolvedLightState,
   resolvedLightStats, hasOwnSpatialSource, selectSpatialGlowSource, seedHiddenBindings,
   deletePlanMarkerRecords, effectiveMarkerControls, persistedExternalControls,
+  hasOwnStatefulLightSource, ownControllableEntities, forcedLightEntityOf,
+  resolvedControlServiceEntities, removeMarkerControlReferences,
+  rewriteMarkerControlReferences, markerControlWouldCycle, resolveDeviceLightSettings,
 } from '../test-build/devices.js';
 import { compileIconRules, iconFor } from '../test-build/rules.js';
 
@@ -969,18 +972,18 @@ test('resolvedLightSources: tri-state source role follows the controls matrix', 
   assert.equal(selectSpatialGlowSource(bothOn)?.eid, 'light.first', 'stable candidate order wins');
 });
 
-test('hasOwnSpatialSource requires a live controllable entity and ignores visibility/state', () => {
+test('hasOwnSpatialSource is capability-based and ignores visibility/transient state', () => {
   const hass = { states: { 'switch.relay': { state: 'unavailable' } } };
   const relay = {
     id: 'relay', area: 'living', hidden: true, primary: 'switch.relay', entities: ['switch.relay'],
     marker: { is_light: true },
   };
   assert.equal(hasOwnSpatialSource(hass, relay), true);
-  assert.equal(hasOwnSpatialSource({ states: {} }, relay), false, 'HA-disabled binding has no runtime entity');
+  assert.equal(hasOwnSpatialSource({ states: {} }, relay), true, 'a missing snapshot does not turn stateful into passive');
   assert.equal(hasOwnSpatialSource(hass, {
     id: 'sensor', area: 'living', primary: 'sensor.temp', entities: ['sensor.temp'],
     marker: { is_light: true },
-  }), false);
+  }), true, 'Always deliberately turns a non-controllable marker into a passive source');
 });
 
 test('resolvedLightSources: marker room_id is more precise than a shared HA area', () => {
@@ -1073,6 +1076,167 @@ test('a real lamp marker owns Glow even when a controller names the same entity 
     false,
     'a controller without a physical lamp marker never casts from the switch coordinates',
   );
+});
+
+test('issue 84: Always without an own entity is a constant passive source', () => {
+  const marker = {
+    id: 'dumb', area: 'living', entities: [],
+    marker: { id: 'dumb', binding: 'virtual', is_light: true },
+  };
+  const [source] = resolvedLightSources({ states: {} }, [marker]);
+  assert.deepEqual({
+    key: source.key, eid: source.eid, state: source.stateEids,
+    service: source.serviceEids, passive: source.passive, on: source.on,
+  }, {
+    key: 'marker:dumb', eid: '', state: [], service: [], passive: true, on: true,
+  });
+  assert.equal(hasOwnSpatialSource({ states: {} }, marker), true);
+  assert.equal(hasOwnStatefulLightSource({ states: {} }, marker), false);
+  assert.deepEqual(resolvedLightStats([source]), { on: 1, total: 1 });
+});
+
+test('issue 84: passive target state is OR of controller drivers and remains target-owned', () => {
+  const target = {
+    id: 'dumb', area: 'bedroom', entities: [],
+    marker: { id: 'dumb', binding: 'virtual', is_light: true, room_id: 'bed' },
+  };
+  const controllerA = {
+    id: 'a', area: 'hall', primary: 'switch.a', entities: ['switch.a'],
+    marker: { id: 'a', binding: 'entity:switch.a', controls: ['marker:dumb'] },
+  };
+  const controllerB = {
+    id: 'b', area: 'yard', entities: [], controls: ['light.external'],
+    marker: { id: 'b', binding: 'virtual', controls: ['light.external', 'marker:dumb'] },
+  };
+  const hass = { states: {
+    'switch.a': { state: 'off' }, 'light.external': { state: 'on' },
+  } };
+  const [source] = resolvedLightSources(hass, [controllerA, controllerB, target], { id: 'bed', area: null });
+  assert.equal(source.key, 'marker:dumb');
+  assert.equal(source.device.id, 'dumb');
+  assert.equal(source.on, true);
+  hass.states['light.external'].state = 'off';
+  assert.equal(resolvedLightSources(hass, [controllerA, controllerB, target])
+    .find((item) => item.key === 'marker:dumb').on, false);
+});
+
+test('issue 84: a saved link with no active driver makes passive source dormant', () => {
+  const target = { id: 'dumb', area: 'r', entities: [], marker: { id: 'dumb', is_light: true } };
+  const controller = {
+    id: 'controller', area: 'r', entities: [], controls: [],
+    marker: { id: 'controller', controls: ['light.gone', 'marker:dumb'] },
+  };
+  const source = resolvedLightSources({ states: {} }, [controller, target])
+    .find((item) => item.key === 'marker:dumb');
+  assert.equal(source.on, false);
+});
+
+test('issue 84: marker and entity aliases dedupe and services never receive marker refs', () => {
+  const target = {
+    id: 'smart', area: 'r', primary: 'light.smart', entities: ['light.smart'],
+    marker: { id: 'smart', binding: 'device:smart', is_light: true },
+  };
+  const controller = {
+    id: 'controller', area: 'r', entities: [], controls: ['light.smart'],
+    marker: { id: 'controller', controls: ['light.smart', 'marker:smart'] },
+  };
+  const hass = { states: { 'light.smart': { state: 'on' } } };
+  const sources = resolvedLightSources(hass, [controller, target]);
+  assert.equal(sources.filter((source) => source.key === 'marker:smart').length, 1);
+  assert.deepEqual(resolvedControlServiceEntities(hass, [controller, target], controller), ['light.smart']);
+});
+
+test('issue 88: explicit leading entity wins; stale selection falls back without state dependence', () => {
+  const base = {
+    id: 'composite', area: 'r', primary: 'switch.power',
+    entities: ['switch.power', 'light.channel'],
+    marker: { id: 'composite', binding: 'device:composite', is_light: true },
+  };
+  assert.deepEqual(ownControllableEntities(base), ['switch.power', 'light.channel']);
+  assert.equal(forcedLightEntityOf({
+    ...base, marker: { ...base.marker, light_entity: 'light.channel' },
+  }), 'light.channel');
+  assert.equal(forcedLightEntityOf({
+    ...base, marker: { ...base.marker, light_entity: 'light.disappeared' },
+  }), 'switch.power');
+  const [source] = resolvedLightSources({ states: {} }, [{
+    ...base, marker: { ...base.marker, light_entity: 'light.channel' },
+  }]);
+  assert.deepEqual(source.stateEids, ['light.channel']);
+  assert.deepEqual(source.serviceEids, ['light.channel']);
+  assert.equal(source.on, false);
+});
+
+test('issue 84 lifecycle: delete/rebind updates marker links and cycles are rejected', () => {
+  const markers = [
+    { id: 'a', controls: ['marker:b', 'light.one'] },
+    { id: 'b', controls: ['marker:c'] },
+    { id: 'c' },
+  ];
+  assert.deepEqual(removeMarkerControlReferences(markers, new Set(['b']))[0].controls, ['light.one']);
+  assert.equal(rewriteMarkerControlReferences(markers, 'b', 'renamed')[0].controls[0], 'marker:renamed');
+  assert.equal(markerControlWouldCycle(markers, 'c', 'a'), true);
+  assert.equal(markerControlWouldCycle(markers, 'a', 'c'), false);
+  assert.equal(markerControlWouldCycle(markers, 'a', 'a'), true);
+});
+
+test('issue 84 graph cache invalidates from content, not an external epoch', () => {
+  const devices = [
+    {
+      id: 'controller', area: 'r', entities: [],
+      marker: { id: 'controller', controls: [] },
+    },
+    {
+      id: 'lamp', area: 'r', entities: [],
+      marker: { id: 'lamp', is_light: true },
+    },
+  ];
+  assert.equal(resolvedLightSources({ states: {} }, devices)
+    .find((source) => source.key === 'marker:lamp').on, true);
+  // Mutate only the cached marker graph. An epoch-only cache would return the
+  // old unlinked state because no external revision is advanced here.
+  devices[0].marker.controls.push('light.driver', 'marker:lamp');
+  assert.equal(resolvedLightSources({ states: { 'light.driver': { state: 'off' } } }, devices)
+    .find((source) => source.key === 'marker:lamp').on, false);
+});
+
+test('issue 84 source-key dedupe keeps two marker-owned sources over one entity', () => {
+  const devices = ['left', 'right'].map((id) => ({
+    id, area: 'r', primary: 'light.shared', entities: ['light.shared'],
+    marker: { id, binding: `device:${id}`, is_light: true },
+  }));
+  const sources = resolvedLightSources({ states: { 'light.shared': { state: 'on' } } }, devices);
+  assert.deepEqual(sources.map((source) => source.key), ['marker:left', 'marker:right']);
+  assert.deepEqual(resolvedLightStats(sources), { on: 2, total: 2 });
+});
+
+test('Auto ignores a registry light whose live state is absent; Always retains capability', () => {
+  const auto = {
+    id: 'auto', area: 'r', primary: 'light.gone', entities: ['light.gone'], marker: { id: 'auto' },
+  };
+  assert.deepEqual(resolvedLightSources({ states: {} }, [auto]), []);
+  const forced = { ...auto, marker: { id: 'auto', is_light: true } };
+  assert.equal(resolvedLightSources({ states: {} }, [forced])[0].key, 'marker:auto');
+});
+
+test('issues 84/88: exhaustive 36-case light settings matrix is internally consistent', () => {
+  const roles = ['auto', 'always', 'never'];
+  const modes = ['auto', 'color', 'fixed'];
+  let cases = 0;
+  for (const role of roles) for (const autoHasSource of [false, true]) {
+    for (const stateful of [false, true]) for (const mode of modes) {
+      cases++;
+      const row = resolveDeviceLightSettings(role, autoHasSource, stateful, mode);
+      const exists = role === 'always' || (role === 'auto' && autoHasSource);
+      assert.equal(row.sourceExists, exists);
+      assert.equal(row.manualEnabled, exists);
+      assert.equal(row.radiusEnabled, exists);
+      assert.equal(row.fromSourceEnabled, exists && stateful);
+      assert.equal(row.passive, exists && !stateful);
+      assert.equal(row.effectiveMode, exists && !stateful && mode === 'auto' ? 'fixed' : mode);
+    }
+  }
+  assert.equal(cases, 36);
 });
 
 

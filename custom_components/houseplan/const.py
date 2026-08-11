@@ -45,7 +45,21 @@ PLAN_ORPHAN_TTL_S = 3600
 SCHEDULED_GRACE_S = 30 * 24 * 3600
 FILES_DIR = "houseplan/files"
 CONF_ADMIN_ONLY = "admin_only"
-VERSION = "1.61.0"
+VERSION = "1.62.0-beta.1"
+
+# Portable backup format.  This is deliberately independent from the Home
+# Assistant Store version above: storage migrations and files exported by a
+# user have different compatibility lifecycles.
+PLAN_MODEL_VERSION = 6
+EXPORT_VERSION = 1
+MAX_EXPORT_BYTES = 8 * 1024 * 1024
+IMPORT_PREVIEW_TTL_S = 10 * 60
+MAX_IMPORT_PREVIEWS_PER_USER = 3
+# Parsed documents are larger than their wire representation.  Keep the
+# original three-preview memory ceiling global as well as per user so turning
+# off the admin-only policy cannot multiply it by the number of household
+# accounts.
+MAX_IMPORT_PREVIEWS_TOTAL = 3
 
 DEFAULT_CONFIG: dict = {
     "spaces": [],

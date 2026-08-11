@@ -49,7 +49,7 @@ export function renderOpeningTunnelFills({
       return svg`<path class="opening-tunnel" data-hp="opening-tunnel" data-id=${opening.id} data-kind=${opening.type}
         data-wall-key=${geometry.wallKey} aria-hidden="true" pointer-events="none"
         transform=${transform} d=${d} fill=${negFill!.color}
-        fill-opacity=${negFill!.opacity}></path>`;
+        fill-opacity=${negFill!.opacity} fill-rule="nonzero"></path>`;
     }
     const span = geometry.maxY - geometry.minY;
     if (!(span > 0)) return nothing;

@@ -95,3 +95,20 @@ projects like `{c}`, and is canonicalised to `{c}` by the next marker save.
 Older frontends ignore this field at render time and may erase it when they
 rebuild the same marker after a downgrade; this limitation cannot be repaired
 retroactively.
+
+`marker.light_entity` optionally stores the leading `light.*`/`switch.*` for an
+Always source with several controllable entities. It is copied literally by
+full and space transfer: entity ids are instance-specific and are never
+remapped. Missing/invalid selections remain stored, produce a dialog warning
+and temporarily fall back to the normal deterministic selection; merely
+opening or saving another field does not erase them. Older frontends ignore the
+unknown field and may erase it only if they reconstruct that marker.
+
+`marker.controls[]` additionally accepts `marker:<marker_id>` links to forced
+plan sources. Runtime and old frontends continue to filter those strings out of
+HA service calls. New writes validate target existence, forced-source role,
+self-reference, duplicates and cycles; an already stored broken legacy link is
+allowed to round-trip so unrelated edits cannot lock the plan. Deleting or
+rebinding a target removes or rewrites references atomically. A space export
+remaps links whose two ends are inside the exported space and reports/drops
+links leaving it; full export preserves them literally.

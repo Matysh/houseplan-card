@@ -9,7 +9,9 @@
 import { LitElement, html, svg, nothing, TemplateResult, PropertyValues } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import './hp-dialog';
+import type { HpDialog } from './hp-dialog';
 import './hp-color-opacity';
+import './hp-help';
 import './hp-device-preview';
 import {
   EXCLUDED_DOMAINS, DEFAULT_ICON_RULES, compileIconRules, isValidPattern, iconFor,
@@ -85,9 +87,12 @@ import {
   buildDevices, deviceFromMarkerDraft, seedHiddenBindings, lqiFor, tempFor, humFor, climateTempFor, isHumEntity,
   areaTemp, areaHum, sourceValue, areaClimateMap,
   resolvedLightSources, resolvedLightState, resolvedLightStats,
-  hasOwnSpatialSource, selectSpatialGlowSource,
+  hasOwnSpatialSource, hasOwnStatefulLightSource, ownControllableEntities,
+  forcedLightEntityOf,
+  resolvedControlServiceEntities, resolveDeviceLightSettings, selectSpatialGlowSource,
   resolvedDeviceStateEntities, removedPlanBindings, isRemovedPlanEntity,
   deletePlanMarkerRecords, effectiveMarkerControls, persistedExternalControls,
+  removeMarkerControlReferences, rewriteMarkerControlReferences, markerControlWouldCycle,
   resolveIcon,
   type AreaClimate,
 } from './devices';
@@ -163,7 +168,7 @@ import {
 import { renderOpeningTunnelFills } from './render/opening-tunnels';
 import { safeStoredColor } from './color';
 
-const CARD_VERSION = '1.61.0';
+const CARD_VERSION = '1.62.0-beta.1';
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
 const CELL_CM_MIN = 0.1;
@@ -535,6 +540,7 @@ class HouseplanCard extends LitElement {
   private _layoutContentFingerprint = '';
   /** One-deep server snapshot; invalidated by the first later plan edit. */
   private _canOptimizeUndo = false;
+  private _undoKind: 'optimize' | 'import' | null = null;
   private _devices: DevItem[] = [];
   private _regSignature = '';
   private _defPos: Record<string, { x: number; y: number }> = {};
@@ -1044,6 +1050,15 @@ class HouseplanCard extends LitElement {
     northDeg: number | null; bgMode: 'static' | 'daynight'; sunRays: boolean;
     busy: boolean;
   } | null = null;
+  private _backupExportDialog: {
+    kind: 'full' | 'space'; busy: boolean; error: string;
+  } | null = null;
+  private _backupImportDialog: {
+    filename: string; size: number; token: string; preview: any;
+    expectedConfigRev: number; expectedLayoutRev: number;
+    duplicatePolicy: 'skip' | 'virtual'; confirmMissing: boolean;
+    busy: boolean; error: string;
+  } | null = null;
   /** Wedge memo: recomputed only when (azimuth, elevation, north, cfg rev) change (docs/SUN.md). */
   private _sunRaysCache: { key: string; rays: SunRay[]; rims: number[][][][] } | null = null;
   /** Sun elevation (0.1°) the day/night sky is currently PAINTED with, and
@@ -1097,6 +1112,10 @@ class HouseplanCard extends LitElement {
     lightRoleTouched: boolean;
     originalHasIsLight: boolean;
     originalIsLight: boolean | null | undefined;
+    lightEntity: string;
+    lightEntityTouched: boolean;
+    originalHasLightEntity: boolean;
+    originalLightEntity: string | null | undefined;
     glowMode: 'auto' | 'color' | 'fixed';
     glowColor: string;
     glowBrightness: number; // 1..100 for the fixed mode
@@ -1368,6 +1387,8 @@ class HouseplanCard extends LitElement {
     _rulesDialog: { state: true },
     _settingsDialog: { state: true },
     _alignDialog: { state: true },
+    _backupExportDialog: { state: true },
+    _backupImportDialog: { state: true },
     _importDialog: { state: true },
     _markerDialog: { state: true },
     _zoom: { state: true },
@@ -1555,6 +1576,8 @@ class HouseplanCard extends LitElement {
       if (this._infoCard) { this._closeInfoCard(); return; }
       if (this._rulesDialog) { this._rulesDialog = null; return; }
       if (this._alignDialog) { this._alignDialog = null; return; }
+      if (this._backupImportDialog) { this._backupImportDialog = null; return; }
+      if (this._backupExportDialog) { this._backupExportDialog = null; return; }
       if (this._settingsDialog) { this._settingsDialog = null; return; }
       if (this._markerDialog) { this._markerDialog = null; return; }
       if (this._openingDialog) { this._openingDialog = null; return; }
@@ -2098,7 +2121,8 @@ class HouseplanCard extends LitElement {
   private _warmDialogState(): WarmDialog | null {
     const at = (kind: WarmDialogKind, data: any): WarmDialog =>
       ({ kind, space: this._space, mode: this._mode, data });
-    if (this._tapConfirm || this._alignDialog || this._mergeDialog || this._importDialog) return null;
+    if (this._tapConfirm || this._alignDialog || this._mergeDialog || this._importDialog
+        || this._backupExportDialog || this._backupImportDialog) return null;
     if (this._openingInfo) return at('openingInfo', (this._openingInfo as any).id);
     if (this._infoCard) return at('info', this._infoCard.id);
     if (this._rulesDialog) return this._rulesDialog.busy ? null : at('rules', this._rulesDialog);
@@ -2694,6 +2718,7 @@ class HouseplanCard extends LitElement {
     }
 
     this._canOptimizeUndo = !!(cfgResp?.can_optimize_undo || layResp?.can_optimize_undo);
+    this._undoKind = (cfgResp?.undo_kind || layResp?.undo_kind || null) as any;
     if (typeof cfgResp?.can_write === 'boolean') this._serverCanWrite = cfgResp.can_write;
     if (configChanged) this._continuity.note('config-candidate', { configRev: this._cfgRev });
     if (layoutChanged) this._continuity.note('layout-candidate', { layoutRev: this._layoutRev });
@@ -3022,6 +3047,7 @@ class HouseplanCard extends LitElement {
             showSignal: showLqi && this._config?.show_signal !== false,
             activityRuntime: this._activityRt.get(device.id),
             sourceDetails: false,
+            lightDevices: this._devices,
           },
         ));
       }
@@ -3278,6 +3304,7 @@ class HouseplanCard extends LitElement {
       }
       this._layoutRev = resp?.rev ?? this._layoutRev;
       this._canOptimizeUndo = !!resp?.can_optimize_undo;
+      this._undoKind = (resp?.undo_kind || null) as any;
       this._cacheSnapshot();
       this.requestUpdate();
     } catch {
@@ -3575,7 +3602,7 @@ class HouseplanCard extends LitElement {
    * functional source.
    */
   private _visualSamples(d: DevItem): EntityVisualSample[] {
-    return resolvePresentationSources(this._renderPlanHass, d).samples;
+    return resolvePresentationSources(this._renderPlanHass, d, this._renderDevices).samples;
   }
 
   /** One semantic projection consumed by the plan, preview and static card. */
@@ -3593,6 +3620,7 @@ class HouseplanCard extends LitElement {
       designPreview,
       activityRuntime: this._activityRt.get(d.id),
       sourceDetails: false,
+      lightDevices: this._renderDevices,
     });
   }
 
@@ -3771,9 +3799,7 @@ class HouseplanCard extends LitElement {
     // a switch with bound targets: the EXPLICIT per-marker toggle flips them
     // all with HA-group semantics (any on -> all off). Owner's decision:
     // controls never fire on the card-wide default action.
-    const controls = resolvedLightSources(this._planHass, [d])
-      .filter((source) => source.via === 'controls')
-      .map((source) => source.eid);
+    const controls = resolvedControlServiceEntities(this._planHass, this._devices, d);
     if (d.tapAction === 'toggle' && controls.length) {
       const act = controlsAction(controls.map((e) => this.hass.states[e]?.state));
       guarded(this._t('confirm.tap_toggle', { name: d.name }), () => {
@@ -3843,6 +3869,13 @@ class HouseplanCard extends LitElement {
   /** Translate a key in the card's current language. */
   private _t(key: I18nKey, vars?: Record<string, string | number>): string {
     return t(langOf(this.hass, this._config?.language), key, vars);
+  }
+
+  /** Localize both parts of a help affordance while hp-help stays presentation-only. */
+  private _help(key: Extract<I18nKey, `${string}.help`>): TemplateResult {
+    const ariaKey = `${key}.aria` as I18nKey;
+    return html`<hp-help data-help-key=${key}
+      .text=${this._t(key)} .ariaLabel=${this._t(ariaKey)}></hp-help>`;
   }
 
   private get _stageEl(): HTMLElement | null {
@@ -4611,6 +4644,11 @@ class HouseplanCard extends LitElement {
   }
 
   private _showToast(msg: string): void {
+    // A toast supersedes transient explanatory surfaces in this card only.
+    // Dialogs own their portal/overlay registry, so another card stays intact.
+    for (const dialog of this.renderRoot.querySelectorAll<HpDialog>('hp-dialog')) {
+      dialog.closeTransientOverlays('toast');
+    }
     this._toast = msg;
     clearTimeout(this._toastTimer);
     this._toastTimer = window.setTimeout(() => {
@@ -8102,6 +8140,7 @@ class HouseplanCard extends LitElement {
       || this._decorEraseConfirm || this._spaceDialog || this._markerDialog
       || this._infoCard || this._rulesDialog || this._settingsDialog
       || this._alignDialog || this._importDialog || this._kioskDialog
+      || this._backupExportDialog || this._backupImportDialog
       || this._wallDialog);
   }
 
@@ -10082,6 +10121,7 @@ class HouseplanCard extends LitElement {
     if (d) {
       const marker = d.marker;
       const hasIsLight = Object.prototype.hasOwnProperty.call(marker || {}, 'is_light');
+      const hasLightEntity = Object.prototype.hasOwnProperty.call(marker || {}, 'light_entity');
       const hasGlowColor = Object.prototype.hasOwnProperty.call(marker || {}, 'glow_color');
       const glowOverride = normalizeGlowColorOverride(marker?.glow_color);
       this._markerDialog = {
@@ -10114,6 +10154,10 @@ class HouseplanCard extends LitElement {
         lightRoleTouched: false,
         originalHasIsLight: hasIsLight,
         originalIsLight: marker?.is_light,
+        lightEntity: marker?.light_entity || '',
+        lightEntityTouched: false,
+        originalHasLightEntity: hasLightEntity,
+        originalLightEntity: marker?.light_entity,
         glowMode: glowOverride?.bri != null ? 'fixed' : glowOverride ? 'color' : 'auto',
         glowColor: glowOverride?.c || this._fillColors.glow_light.c,
         glowBrightness: Math.max(1, Math.round((glowOverride?.bri ?? 1) * 100)),
@@ -10147,6 +10191,8 @@ class HouseplanCard extends LitElement {
         defaultTap: 'info', controls: [], controlsFilter: '',
         lightRole: 'auto', lightRoleTouched: false,
         originalHasIsLight: false, originalIsLight: undefined,
+        lightEntity: '', lightEntityTouched: false,
+        originalHasLightEntity: false, originalLightEntity: undefined,
         glowMode: 'auto', glowColor: this._fillColors.glow_light.c, glowBrightness: 100,
         glowColorDrafted: false, glowBrightnessDrafted: false, glowTouched: false,
         originalHasGlowColor: false, originalGlowColor: undefined,
@@ -10393,6 +10439,16 @@ class HouseplanCard extends LitElement {
     }
   }
 
+  private _backupErrorText(e: any): string {
+    const code = e?.code ?? e?.error;
+    if (typeof code === 'string') {
+      const key = `backup.error.${code}`;
+      const translated = this._t(key as I18nKey);
+      if (translated !== key) return translated;
+    }
+    return this._errText(e);
+  }
+
   /**
    * Manual files are uploaded via HTTP (multipart) — not via WebSocket, whose message size
    * limit breaks the connection on large PDFs.
@@ -10455,6 +10511,12 @@ class HouseplanCard extends LitElement {
       if (d.originalHasIsLight) fields.is_light = d.originalIsLight ?? null;
     } else if (d.lightRole === 'always') fields.is_light = true;
     else if (d.lightRole === 'never') fields.is_light = false;
+
+    if (!d.lightEntityTouched) {
+      if (d.originalHasLightEntity) fields.light_entity = d.originalLightEntity ?? null;
+    } else if (d.lightEntity) {
+      fields.light_entity = d.lightEntity;
+    }
 
     if (!d.glowTouched) {
       if (d.originalHasGlowColor) fields.glow_color = d.originalGlowColor ?? null;
@@ -10591,6 +10653,9 @@ class HouseplanCard extends LitElement {
           this._showToast(this._t('toast.files_migrate_failed', { err: this._errText(e) }));
         }
       }
+      // Rebinding changes source identity. Rewrite every marker:* edge in the
+      // same config transaction before replacing the marker itself.
+      if (oldId && oldId !== id) cfg.markers = rewriteMarkerControlReferences(cfg.markers, oldId, id);
       // remove the previous marker (by the old id and by the new id)
       cfg.markers = cfg.markers.filter(
         (m) => m.id !== id && m.id !== oldId
@@ -10680,7 +10745,7 @@ class HouseplanCard extends LitElement {
     const deletion = deletePlanMarkerRecords(
       cfg.markers, d.id, binding, d.bindingKind === 'virtual',
     );
-    cfg.markers = deletion.markers;
+    cfg.markers = removeMarkerControlReferences(deletion.markers, deletion.cleanupIds);
     const cleanupIds = deletion.cleanupIds;
     this._markerDialog = { ...dlg, busy: true };
     try {
@@ -11584,6 +11649,7 @@ class HouseplanCard extends LitElement {
       this._cfgRev = resp?.config_rev ?? this._cfgRev + 1;
       this._layoutRev = resp?.layout_rev ?? this._layoutRev + 1;
       this._canOptimizeUndo = !!resp?.can_undo;
+      this._undoKind = resp?.can_undo ? 'optimize' : null;
       this._dirtyPos.clear();
       this._sentPos.clear();
       this._cfgEpoch++;
@@ -11612,6 +11678,7 @@ class HouseplanCard extends LitElement {
   /** Restore the one-deep snapshot, provided no later plan edit exists. */
   private async _undoPlanOptimization(): Promise<void> {
     if (!this._canOptimizeUndo || this._optimizeUndoBusy) return;
+    const undoKind = this._undoKind;
     this._clearGeometryGesture();
     this._optimizeUndoBusy = true;
     this.requestUpdate();
@@ -11631,19 +11698,329 @@ class HouseplanCard extends LitElement {
       this._geometryHistory.clear();
       this._layoutRev = layResp?.rev ?? this._layoutRev;
       this._canOptimizeUndo = false;
+      this._undoKind = null;
       this._cfgEpoch++;
       this._modelCache = null;
       this._frame = null;
       this._cacheSnapshot();
       this.requestUpdate();
-      this._showToast(this._t('gs.optimize_undone'));
+      this._showToast(this._t(undoKind === 'import' ? 'backup.import_undone' : 'gs.optimize_undone'));
     } catch (e: any) {
       this._canOptimizeUndo = false;
+      this._undoKind = null;
       this._showToast(this._t('toast.error', { err: this._errText(e) }));
     } finally {
       this._optimizeUndoBusy = false;
       this.requestUpdate();
     }
+  }
+
+  private _openBackupExport = (): void => {
+    this._settingsDialog = null;
+    this._backupExportDialog = { kind: 'full', busy: false, error: '' };
+  };
+
+  private async _runBackupExport(): Promise<void> {
+    const d = this._backupExportDialog;
+    if (!d || d.busy) return;
+    this._backupExportDialog = { ...d, busy: true, error: '' };
+    try {
+      const response: any = await this.hass.callWS({
+        type: 'houseplan/export/create',
+        kind: d.kind,
+        space_id: d.kind === 'space' ? this._space : undefined,
+        card_version: CARD_VERSION,
+      });
+      const blob = new Blob([JSON.stringify(response.document, null, 2) + '\n'], {
+        type: 'application/json;charset=utf-8',
+      });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = response.filename || `houseplan-${d.kind}.json`;
+      anchor.style.display = 'none';
+      document.body.append(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
+      this._backupExportDialog = null;
+      this._showToast(this._t('backup.export_done'));
+    } catch (error: any) {
+      if (this._backupExportDialog) {
+        this._backupExportDialog = { ...this._backupExportDialog, busy: false, error: this._backupErrorText(error) };
+      }
+    }
+  }
+
+  private async _pickBackupImport(ev: Event): Promise<void> {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    this._settingsDialog = null;
+    this._backupImportDialog = {
+      filename: file.name, size: file.size, token: '', preview: null,
+      expectedConfigRev: this._cfgRev, expectedLayoutRev: this._layoutRev,
+      duplicatePolicy: 'skip', confirmMissing: false, busy: true, error: '',
+    };
+    try {
+      if (this._saveConfigDebounced.pending()) this._saveConfigDebounced.flush();
+      await this._writeChain;
+      if (this._persistLayout.pending()) this._persistLayout.flush();
+      const path = '/api/houseplan/import/preview?duplicate_policy=skip';
+      const init = { method: 'POST', body: file, headers: { 'content-type': 'application/json' } };
+      const response: Response = this.hass?.fetchWithAuth
+        ? await this.hass.fetchWithAuth(path, init)
+        : await fetch(path, {
+            ...init,
+            headers: {
+              ...init.headers,
+              ...(this.hass?.auth?.data?.access_token
+                ? { authorization: `Bearer ${this.hass.auth.data.access_token}` } : {}),
+            },
+          });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.error) throw Object.assign(new Error(data.message || data.error || `HTTP ${response.status}`), { code: data.error });
+      if (this._backupImportDialog) {
+        this._backupImportDialog = {
+          ...this._backupImportDialog,
+          token: data.token,
+          preview: data.preview,
+          expectedConfigRev: data.expected_config_rev,
+          expectedLayoutRev: data.expected_layout_rev,
+          busy: false,
+        };
+      }
+    } catch (error: any) {
+      if (this._backupImportDialog) {
+        this._backupImportDialog = { ...this._backupImportDialog, busy: false, error: this._backupErrorText(error) };
+      }
+    }
+  }
+
+  private async _setBackupDuplicatePolicy(policy: 'skip' | 'virtual'): Promise<void> {
+    const d = this._backupImportDialog;
+    if (!d || d.busy || !d.token || policy === d.duplicatePolicy) return;
+    this._backupImportDialog = { ...d, duplicatePolicy: policy, busy: true, error: '' };
+    try {
+      const response: any = await this.hass.callWS({
+        type: 'houseplan/import/revalidate', token: d.token, duplicate_policy: policy,
+      });
+      if (this._backupImportDialog) {
+        this._backupImportDialog = {
+          ...this._backupImportDialog,
+          preview: { ...d.preview, ...response.preview },
+          expectedConfigRev: response.expected_config_rev,
+          expectedLayoutRev: response.expected_layout_rev,
+          confirmMissing: false,
+          busy: false,
+        };
+      }
+    } catch (error: any) {
+      if (this._backupImportDialog) {
+        this._backupImportDialog = {
+          ...this._backupImportDialog,
+          duplicatePolicy: d.duplicatePolicy,
+          preview: d.preview,
+          confirmMissing: d.confirmMissing,
+          busy: false,
+          error: this._backupErrorText(error),
+        };
+      }
+    }
+  }
+
+  private async _applyBackupImport(): Promise<void> {
+    const d = this._backupImportDialog;
+    if (!d || d.busy || !d.token || !d.preview) return;
+    if (d.preview.confirmation_required && !d.confirmMissing) return;
+    this._backupImportDialog = { ...d, busy: true, error: '' };
+    const previousSpace = this._space;
+    try {
+      const result: any = await this.hass.callWS({
+        type: 'houseplan/import/apply',
+        token: d.token,
+        expected_config_rev: d.expectedConfigRev,
+        expected_layout_rev: d.expectedLayoutRev,
+        duplicate_policy: d.duplicatePolicy,
+        confirm_missing_content: d.confirmMissing,
+      });
+      const [configResponse, layoutResponse] = await Promise.all([
+        this.hass.callWS({ type: 'houseplan/config/get' }),
+        this.hass.callWS({ type: 'houseplan/layout/get' }),
+      ]);
+      this._adoptStructuralResponses(configResponse, layoutResponse);
+      this._geometryHistory.clear();
+      this._dirtyPos.clear();
+      this._sentPos.clear();
+      this._defPos = {};
+      this._cfgEpoch++;
+      this._modelCache = null;
+      this._frame = null;
+      this._visibleDeviceSnapshot = null;
+      this._candidateDeviceSnapshot = null;
+      this._stagedDeviceSnapshotToken = -1;
+      this._capturedSnapshotConfigEpoch = -1;
+      this._regSignature = '';
+      this._signer.invalidate(this.hass);
+      this._resign();
+      this._maybeRebuildDevices();
+      const spaces = this._serverCfg?.spaces || [];
+      this._space = result.kind === 'space' && result.space_id
+        ? result.space_id
+        : spaces.some((space: any) => space.id === previousSpace)
+          ? previousSpace : spaces[0]?.id || this._space;
+      this._backupImportDialog = null;
+      this._cacheSnapshot();
+      this.requestUpdate();
+      const outcomeCounts = result.kind === 'space' ? d.preview.counts : result.counts;
+      this._showToast(this._t(result.kind === 'space' ? 'backup.space_done' : 'backup.full_done', {
+        spaces: String(outcomeCounts?.spaces || 0), rooms: String(outcomeCounts?.rooms || 0),
+        markers: String(outcomeCounts?.markers || 0),
+      }));
+    } catch (error: any) {
+      if (error?.code === 'conflict' && this._backupImportDialog?.token) {
+        try {
+          const current = this._backupImportDialog;
+          const refreshed: any = await this.hass.callWS({
+            type: 'houseplan/import/revalidate', token: current.token,
+            duplicate_policy: current.duplicatePolicy,
+          });
+          this._backupImportDialog = {
+            ...current,
+            preview: { ...current.preview, ...refreshed.preview },
+            expectedConfigRev: refreshed.expected_config_rev,
+            expectedLayoutRev: refreshed.expected_layout_rev,
+            confirmMissing: false,
+            busy: false,
+            error: this._t('backup.revalidated'),
+          };
+          return;
+        } catch (refreshError: any) {
+          error = refreshError;
+        }
+      }
+      if (this._backupImportDialog) {
+        this._backupImportDialog = { ...this._backupImportDialog, busy: false, error: this._backupErrorText(error) };
+      }
+    }
+  }
+
+  private _renderBackupExportDialog(): TemplateResult {
+    const d = this._backupExportDialog!;
+    const currentSpace = (this._serverCfg?.spaces || []).find((space: any) => space.id === this._space);
+    return html`<hp-dialog .hass=${this.hass} .title=${this._t('backup.export_title')}
+      icon="mdi:download" dismiss-on-scrim @hp-close=${() => (this._backupExportDialog = null)}>
+      <div class="body backupbody">
+        <div class="rhint">${this._t('backup.export_hint')}</div>
+        <label class="srcrow"><input type="radio" name="backup-kind" value="full"
+          .checked=${d.kind === 'full'} @change=${() => (this._backupExportDialog = { ...d, kind: 'full' })} />
+          <span>${this._t('backup.full')}</span></label>
+        <label class="srcrow"><input type="radio" name="backup-kind" value="space"
+          .checked=${d.kind === 'space'} ?disabled=${!currentSpace}
+          @change=${() => (this._backupExportDialog = { ...d, kind: 'space' })} />
+          <span>${currentSpace
+            ? this._t('backup.current_space_title', { title: currentSpace.title || currentSpace.id })
+            : this._t('backup.no_current_space')}</span></label>
+        <div class="backupwarn">${this._t('backup.privacy_warning')}</div>
+        ${d.error ? html`<div class="backuperror" role="alert">${d.error}</div>` : nothing}
+      </div>
+      <div class="row" slot="footer">
+        <button class="btn ghost" autofocus @click=${() => (this._backupExportDialog = null)}>${this._t('btn.cancel')}</button>
+        <span class="spacer"></span>
+        <button class="btn on" ?disabled=${d.busy || (d.kind === 'space' && !currentSpace)}
+          @click=${this._runBackupExport}>
+          <ha-icon icon="mdi:download"></ha-icon>${d.busy ? '…' : this._t('backup.download')}
+        </button>
+      </div>
+    </hp-dialog>`;
+  }
+
+  private _renderBackupImportDialog(): TemplateResult {
+    const d = this._backupImportDialog!;
+    const p = d.preview;
+    const counts = p?.counts || {};
+    return html`<hp-dialog .hass=${this.hass} .title=${this._t('backup.import_title')}
+      icon="mdi:upload" wide dismiss-on-scrim @hp-close=${() => (this._backupImportDialog = null)}>
+      <div class="body backupbody" aria-busy=${d.busy ? 'true' : 'false'}>
+        <div class="backupfile"><b>${d.filename}</b><span>${(d.size / 1024).toFixed(1)} KB</span></div>
+        ${d.busy && !p ? html`<div class="rhint" role="status" aria-live="polite">${this._t('backup.reading')}</div>` : nothing}
+        ${d.error ? html`<div class="backuperror" role="alert">${d.error}</div>` : nothing}
+        ${p ? html`
+          <div class="backupsummary">
+            <b>${this._t(p.kind === 'full' ? 'backup.full' : 'backup.current_space')}</b>
+            <span>${this._t(p.source === 'same' ? 'backup.same_source' : 'backup.foreign_source')}</span>
+            <span>${this._t('backup.created', { value: p.created_at || '—' })}</span>
+            <span>${this._t('backup.versions', {
+              card: p.card_version || '—', integration: p.integration_version || '—',
+              model: String(p.model_version ?? '—'),
+            })}</span>
+          </div>
+          <div class="backupcounts">
+            <span>${this._t('backup.count_spaces', { n: p.kind === 'full'
+              ? `${p.current_counts?.spaces || 0} → ${counts.spaces || 0}` : String(counts.spaces || 0) })}</span>
+            <span>${this._t('backup.count_rooms', { n: p.kind === 'full'
+              ? `${p.current_counts?.rooms || 0} → ${counts.rooms || 0}` : String(counts.rooms || 0) })}</span>
+            <span>${this._t('backup.count_walls', { n: p.kind === 'full'
+              ? `${p.current_counts?.walls || 0} → ${counts.walls || 0}` : String(counts.walls || 0) })}</span>
+            <span>${this._t('backup.count_openings', { n: p.kind === 'full'
+              ? `${p.current_counts?.openings || 0} → ${counts.openings || 0}` : String(counts.openings || 0) })}</span>
+            <span>${this._t('backup.count_decor', { n: p.kind === 'full'
+              ? `${p.current_counts?.decor || 0} → ${counts.decor || 0}` : String(counts.decor || 0) })}</span>
+            <span>${this._t('backup.count_markers', { n: p.kind === 'full'
+              ? `${p.current_counts?.markers || 0} → ${counts.markers || 0}` : String(counts.markers || 0) })}</span>
+            <span>${this._t('backup.count_layout', { n: p.kind === 'full'
+              ? `${p.current_counts?.layout || 0} → ${counts.layout || 0}` : String(counts.layout || 0) })}</span>
+          </div>
+          ${p.bindings ? html`<div class="rhint">${this._t('backup.bindings', {
+            device: String(p.bindings.device || 0), entity: String(p.bindings.entity || 0),
+            virtual: String(p.bindings.virtual || 0), legacy: String(p.legacy_positions || 0),
+          })}</div><div class="rhint">${this._t('backup.binding_status', {
+            active: String(p.bindings.active || 0), disabled: String(p.bindings.disabled || 0),
+            missing: String(p.bindings.missing || 0),
+          })}</div>` : nothing}
+          ${p.missing_areas?.length ? html`<div class="backupwarn">${this._t('backup.missing_areas', {
+            areas: p.missing_areas.join(', '),
+          })}</div>` : nothing}
+          ${p.dropped_marker_links ? html`<div class="backupwarn">${this._t('backup.dropped_marker_links', {
+            n: String(p.dropped_marker_links),
+          })}</div>` : nothing}
+          ${p.kind === 'full' ? html`
+            <div class="backupwarn">${this._t('backup.replace_warning')}</div>
+            ${p.source === 'foreign' ? html`<div class="rhint">${this._t('backup.foreign_bookkeeping')}</div>` : nothing}` : html`
+            <div class="backupsummary"><b>${this._t('backup.final_name')}</b><span>${p.space_title}</span></div>
+            <div class="rhint">${this._t('backup.target_settings')}</div>
+            ${p.duplicates ? html`<fieldset class="backupchoices"><legend>${this._t('backup.duplicates', { n: String(p.duplicates) })}</legend>
+              <label><input type="radio" name="duplicate-policy" .checked=${d.duplicatePolicy === 'skip'}
+                @change=${() => this._setBackupDuplicatePolicy('skip')} />${this._t('backup.skip')}</label>
+              <label><input type="radio" name="duplicate-policy" .checked=${d.duplicatePolicy === 'virtual'}
+                @change=${() => this._setBackupDuplicatePolicy('virtual')} />${this._t('backup.virtual_copy')}</label>
+            </fieldset>` : nothing}`}
+          ${p.content?.length ? html`<div class="backupcontent">
+            <b>${this._t('backup.content')}</b>
+            ${p.content.map((item: any) => html`<span>${item.url} · ${this._t(
+              item.state === 'available' ? 'backup.content_available'
+                : item.state === 'external' ? 'backup.content_external'
+                  : 'backup.content_detach_required',
+            )}</span>`)}
+          </div>` : nothing}
+          ${p.confirmation_required ? html`<label class="srcrow backupconfirm">
+            <input type="checkbox" .checked=${d.confirmMissing}
+              @change=${(e: Event) => (this._backupImportDialog = { ...d, confirmMissing: (e.target as HTMLInputElement).checked })} />
+            <span>${this._t('backup.confirm_detach')}</span>
+          </label>` : nothing}
+        ` : nothing}
+      </div>
+      <div class="row" slot="footer">
+        <button class="btn ghost" autofocus @click=${() => (this._backupImportDialog = null)}>${this._t('btn.cancel')}</button>
+        <span class="spacer"></span>
+        ${p ? html`<button class="btn ${p.kind === 'full' ? 'danger' : 'on'}"
+          ?disabled=${d.busy || (p.confirmation_required && !d.confirmMissing)} @click=${this._applyBackupImport}>
+          <ha-icon icon=${p.kind === 'full' ? 'mdi:database-import' : 'mdi:plus'}></ha-icon>
+          ${d.busy ? '…' : this._t(p.kind === 'full' ? 'backup.replace' : 'backup.add')}
+        </button>` : nothing}
+      </div>
+    </hp-dialog>`;
   }
 
   private _setFillColor(key: keyof FillColors, patch: Partial<{ c: string; a: number }>): void {
@@ -11960,10 +12337,10 @@ class HouseplanCard extends LitElement {
     }
     const physical = this._physicalBodiesR(space);
     const { occluders, floor, fingerprint } = this._lightBarriers(space, polys, physical);
-    const resolvedSources = resolvedLightSources(
-      this._renderPlanHass,
-      this._renderDevices.filter((d) => d.space === space.id),
-    );
+    // Resolve against the whole plan: a controller and its passive lamp may
+    // legitimately live in different spaces. Ownership is filtered afterwards.
+    const resolvedSources = resolvedLightSources(this._renderPlanHass, this._renderDevices)
+      .filter((source) => source.device.space === space.id);
     const sourcesByDevice = new Map<string, typeof resolvedSources>();
     for (const source of resolvedSources) {
       if (!source.device.id) continue;
@@ -11993,7 +12370,11 @@ class HouseplanCard extends LitElement {
       const key = `${space.id}|${d.id}`;
       seenSourceKeys.add(key);
       const visibleGlow = resolveGlowAppearance(
-        this._renderPlanHass.states[source.eid], d.marker?.glow_color, colors.glow_light.c,
+        source.passive
+          ? { state: source.on ? 'on' : 'off', attributes: {} }
+          : this._renderPlanHass.states[source.eid],
+        d.marker?.glow_color,
+        colors.glow_light.c,
       );
       // per-source radius (owner's decision v1.36.2): marker override, else global
       const ownCm = Number(d.marker?.glow_radius_cm);
@@ -12308,6 +12689,21 @@ class HouseplanCard extends LitElement {
               (this._settingsDialog = { ...this._settingsDialog!, sunRays: v }))}
             <span>${this._t('gs.sun_rays')}</span>
           </label>
+          ${this._canEdit ? html`
+            <label class="dispsection">${this._t('gs.backup_group')}</label>
+            <div class="rhint">${this._t('gs.backup_hint')}</div>
+            <div class="backupactions">
+              <button class="btn ghost" @click=${this._openBackupExport}>
+                <ha-icon icon="mdi:download"></ha-icon>${this._t('backup.export_open')}
+              </button>
+              <span class="backupupload">
+                <button class="btn ghost" type="button" @click=${(e: Event) =>
+                  ((e.currentTarget as HTMLElement).nextElementSibling as HTMLInputElement | null)?.click()}>
+                  <ha-icon icon="mdi:upload"></ha-icon>${this._t('backup.import_open')}
+                </button>
+                <input type="file" accept="application/json,.json" @change=${this._pickBackupImport} />
+              </span>
+            </div>` : nothing}
           <label class="dispsection">${this._t('gs.grid_group')}</label>
           <div class="rhint">${this._t('gs.grid_hint')}</div>
           <div class="colorrow gsrow">
@@ -12318,7 +12714,8 @@ class HouseplanCard extends LitElement {
           ${this._canOptimizeUndo ? html`<div class="colorrow gsrow">
             <button class="btn ghost alignall" @click=${this._undoPlanOptimization}
               ?disabled=${this._optimizeUndoBusy}>
-              <ha-icon icon="mdi:undo-variant"></ha-icon>${this._t('gs.optimize_undo')}
+              <ha-icon icon="mdi:undo-variant"></ha-icon>${this._t(this._undoKind === 'import'
+                ? 'backup.undo_import' : 'gs.optimize_undo')}
             </button>
           </div>` : nothing}
           <label class="dispsection">${this._t('gs.about_group')}</label>
@@ -12946,6 +13343,8 @@ class HouseplanCard extends LitElement {
         ${this._rulesDialog ? this._renderRulesDialog() : nothing}
         ${this._settingsDialog ? this._renderSettingsDialog() : nothing}
         ${this._alignDialog ? this._renderAlignDialog() : nothing}
+        ${this._backupExportDialog ? this._renderBackupExportDialog() : nothing}
+        ${this._backupImportDialog ? this._renderBackupImportDialog() : nothing}
         ${this._importDialog ? this._renderImportDialog() : nothing}
         ${this._tip
           ? html`<div class="tip" style="left:${this._tip.x + 12}px;top:${this._tip.y + 12}px">
@@ -13084,7 +13483,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _activitySnapshot(d: DevItem): { samples: EntityVisualSample[]; sourceKey: string } {
-    const sources = resolvePresentationSources(this._planHass, d);
+    const sources = resolvePresentationSources(this._planHass, d, this._devices);
     return {
       samples: sources.samples,
       sourceKey: presentationSourceSignature(
@@ -15131,7 +15530,10 @@ class HouseplanCard extends LitElement {
       else if (['sensor', 'binary_sensor', 'number', 'select'].includes(dom))
         out.push({ eid, kind: 'value' });
     };
-    for (const source of resolvedLightSources(h, [d])) push(source.eid);
+    for (const source of resolvedLightSources(h, this._devices)) {
+      if (source.device.id !== d.id) continue;
+      for (const eid of [...source.serviceEids, ...source.stateEids]) push(eid);
+    }
     if (d.primary) push(d.primary);
     for (const e of d.entities) push(e);
     return out.slice(0, 12);
@@ -15301,7 +15703,10 @@ class HouseplanCard extends LitElement {
   private _markerSpatialSource(d: NonNullable<HouseplanCard['_markerDialog']>) {
     const device = this._markerPreviewDevice(d);
     if (!device) return null;
-    return selectSpatialGlowSource(resolvedLightSources(this._planHass, [{ ...device, hidden: false }]));
+    const preview = { ...device, hidden: false };
+    return selectSpatialGlowSource(resolvedLightSources(this._planHass, [
+      ...this._devices.filter((item) => item.id !== preview.id), preview,
+    ]).filter((source) => source.device.id === preview.id));
   }
 
   private _markerAutoHasSpatialSource(d: NonNullable<HouseplanCard['_markerDialog']>): boolean {
@@ -15314,6 +15719,82 @@ class HouseplanCard extends LitElement {
     const d = this._markerDialog;
     if (!d) return;
     this._markerDialog = { ...d, lightRole: role, lightRoleTouched: true };
+  }
+
+  private _controlRefInfo(ref: string): { label: string; sub: string; icon: string; warning: boolean } {
+    if (!ref.startsWith('marker:')) {
+      return {
+        label: this.hass.states[ref]?.attributes?.friendly_name || ref,
+        sub: ref,
+        icon: ref.startsWith('light.') ? 'mdi:lightbulb' : 'mdi:toggle-switch',
+        warning: !this._planEntityAvailable(ref),
+      };
+    }
+    const id = ref.slice('marker:'.length);
+    const marker = this._markers.find((item) => item.id === id);
+    const device = this._devices.find((item) => item.id === id);
+    if (!marker || marker.removed || marker.is_light !== true) {
+      return { label: ref, sub: this._t('marker.control_broken'), icon: 'mdi:alert-outline', warning: true };
+    }
+    const space = this._serverCfg?.spaces.find((item: any) => item.id === (device?.space || marker.space));
+    const stateful = !!device && ownControllableEntities(device).length > 0;
+    return {
+      label: marker.name || device?.name || id,
+      sub: [space?.title || device?.space || marker.space, marker.room_id || device?.area,
+        stateful ? '' : this._t('marker.control_passive')].filter(Boolean).join(' · '),
+      icon: marker.icon || device?.icon || 'mdi:lightbulb-outline',
+      warning: marker.hidden === true || device?.hidden === true,
+    };
+  }
+
+  private _controlCandidates(d: NonNullable<HouseplanCard['_markerDialog']>): {
+    value: string; label: string; sub: string; icon: string;
+  }[] {
+    const currentId = this._markerDraft(d)?.id || d.devId || '';
+    const plan: { value: string; label: string; sub: string; icon: string; search: string }[] = [];
+    const coveredEntities = new Set<string>();
+    for (const marker of this._markers) {
+      if (marker.id === currentId || marker.removed || marker.hidden || marker.is_light !== true) continue;
+      if (marker.binding !== 'virtual' && this._bindingStatus(marker.binding).kind !== 'active') continue;
+      const device = this._devices.find((item) => item.id === marker.id);
+      if (!device || device.hidden) continue;
+      const info = this._controlRefInfo(`marker:${marker.id}`);
+      for (const eid of ownControllableEntities(device)) coveredEntities.add(eid);
+      plan.push({
+        value: `marker:${marker.id}`, label: info.label, sub: info.sub, icon: info.icon,
+        search: `${info.label} ${info.sub} ${marker.id} ${ownControllableEntities(device).join(' ')}`.toLowerCase(),
+      });
+    }
+    const ha = Object.keys(this.hass.states || {})
+      .filter((eid) => isControllable(eid) && !coveredEntities.has(eid)
+        && effectiveMarkerControls(d.binding, [eid], this._bindingEntities(d.binding)).length > 0
+        && this._planEntityAvailable(eid))
+      .map((eid) => {
+        const info = this._controlRefInfo(eid);
+        return { value: eid, label: info.label, sub: eid, icon: info.icon,
+          search: `${info.label} ${eid}`.toLowerCase() };
+      });
+    const q = d.controlsFilter.trim().toLowerCase();
+    return [...plan, ...ha]
+      .filter((item) => !d.controls.includes(item.value) && (!q || item.search.includes(q)))
+      .slice(0, 12)
+      .map(({ search: _search, ...item }) => item);
+  }
+
+  private _addControlRef(d: NonNullable<HouseplanCard['_markerDialog']>, ref: string): void {
+    if (ref.startsWith('marker:')) {
+      const controllerId = this._markerDraft(d)?.id || d.devId || '';
+      const targetId = ref.slice('marker:'.length);
+      const draft = this._markerDraft(d);
+      const graph = draft
+        ? [...this._markers.filter((marker) => marker.id !== controllerId), draft]
+        : this._markers;
+      if (markerControlWouldCycle(graph, controllerId, targetId)) {
+        this._showToast(this._t('toast.marker_control_cycle'));
+        return;
+      }
+    }
+    this._markerDialog = { ...d, controls: [...d.controls, ref], controlsFilter: '' };
   }
 
   /** Switch modes without losing manual drafts; entering a manual mode snapshots live values once. */
@@ -15361,16 +15842,34 @@ class HouseplanCard extends LitElement {
           showSignal: previewSpaceDisplay?.showLqi ?? (this._config?.show_signal !== false),
           designPreview: true,
           activityRuntime: this._activityRt.get(previewDevice.id),
+          lightDevices: [
+            ...this._devices.filter((item) => item.id !== previewDevice.id),
+            previewDevice,
+          ],
         })
       : null;
     const autoHasSpatialSource = this._markerAutoHasSpatialSource(d);
-    const spatialSource = this._markerSpatialSource(d);
-    const glowControlsDisabled = d.lightRole === 'never' || !spatialSource;
+    const statefulSource = !!previewDevice
+      && hasOwnStatefulLightSource(this._planHass, { ...previewDevice, hidden: false });
+    const lightSettings = resolveDeviceLightSettings(
+      d.lightRole, autoHasSpatialSource, statefulSource, d.glowMode,
+    );
+    const glowSourceDisabled = !lightSettings.sourceExists;
+    const liveGlowDisabled = !lightSettings.fromSourceEnabled;
+    const passiveSource = lightSettings.passive;
+    const displayedGlowMode = lightSettings.effectiveMode;
     const glowDisabledHint = d.lightRole === 'never'
       ? this._t('marker.glow_disabled_never')
       : d.lightRole === 'auto' && !autoHasSpatialSource
         ? this._t('marker.glow_disabled_auto')
-        : this._t('marker.glow_disabled_no_entity');
+        : passiveSource ? this._t('marker.glow_passive_hint')
+          : this._t('marker.glow_disabled_no_entity');
+    const leadingEntities = previewDevice ? ownControllableEntities(previewDevice) : [];
+    // Keep the fallback text aligned with the production resolver. In
+    // particular, an entity binding or the resolved primary may precede the
+    // registry order used for the remaining candidates.
+    const effectiveLeading = previewDevice ? forcedLightEntityOf(previewDevice) || '' : '';
+    const staleLeading = !!d.lightEntity && !leadingEntities.includes(d.lightEntity);
     const curLabel = (() => {
       if (isVirtual) return null;
       const found = cands.find((c) => c.value === d.binding);
@@ -15410,7 +15909,7 @@ class HouseplanCard extends LitElement {
               <input type="radio" name="bmode" .checked=${d.bindingMode === 'virtual'}
                 @change=${() => (this._markerDialog = {
                   ...d, bindingMode: 'virtual', binding: 'virtual', bindingOpen: false,
-                  controls: effectiveMarkerControls('virtual', d.controls),
+                  controls: persistedExternalControls('virtual', d.controls),
                   autoIcon: this._autoIconForBinding('virtual'),
                 })} />
               <span>${this._t('marker.virtual_option')}</span>
@@ -15450,7 +15949,7 @@ class HouseplanCard extends LitElement {
                             (c) => html`<div class="cand ${c.value === d.binding ? 'sel' : ''}"
                               @click=${() => (this._markerDialog = {
                                 ...d, binding: c.value, bindingOpen: false,
-                                controls: effectiveMarkerControls(
+                                controls: persistedExternalControls(
                                   c.value, d.controls, this._bindingEntities(c.value),
                                 ),
                                 autoIcon: this._autoIconForBinding(c.value),
@@ -15466,22 +15965,22 @@ class HouseplanCard extends LitElement {
           </div>
 
           <label>${this._t('marker.room_label')}${isVirtual ? '' : this._t('marker.room_override')}</label>
-          <select class="areasel"
+          <select class="areasel" .value=${d.room}
             @change=${(e: Event) => (this._markerDialog = { ...d, room: (e.target as HTMLSelectElement).value })}>
             <option value="">${isVirtual ? this._t('marker.room_choose') : this._t('marker.room_auto')}</option>
             ${this._allRoomsFlat().map(
-              (r) => html`<option value=${r.value} ?selected=${r.value === d.room}>${r.label}</option>`,
+              (r) => html`<option value=${r.value}>${r.label}</option>`,
             )}
           </select>
 
           ${this._renderVacSection(d)}
 
           <label>${this._t('marker.tap_label')}</label>
-          <select class="areasel"
+          <select class="areasel" .value=${d.tapAction || d.defaultTap}
             @change=${(e: Event) => (this._markerDialog = { ...d, tapAction: (e.target as HTMLSelectElement).value })}>
             ${TAP_ACTIONS.filter((v) => v !== 'cover' || this._bindingCoverTap(d.binding))
               .map((v) => [v, 'tap.' + v.replace('-', '_')] as const).map(
-              ([v, k]) => html`<option value=${v} ?selected=${(d.tapAction || d.defaultTap) === v}>${this._t(k as any)}</option>`,
+              ([v, k]) => html`<option value=${v}>${this._t(k as any)}</option>`,
             )}
           </select>
           ${d.tapAction === 'run'
@@ -15524,11 +16023,14 @@ class HouseplanCard extends LitElement {
           <div class="rhint">${this._t('marker.controls_hint')}</div>
           ${d.controls.length
             ? html`<div class="ctrlchips">
-                ${d.controls.map((eid) => html`<span class="ctrlchip">
-                  ${this.hass.states[eid]?.attributes?.friendly_name || eid}
+                ${d.controls.map((eid) => {
+                  const info = this._controlRefInfo(eid);
+                  return html`<span class="ctrlchip ${info.warning ? 'warning' : ''}" title=${info.sub}>
+                  <ha-icon icon=${info.icon}></ha-icon>${info.label}
                   <ha-icon icon="mdi:close" @click=${() =>
                     (this._markerDialog = { ...d, controls: d.controls.filter((x) => x !== eid) })}></ha-icon>
-                </span>`)}
+                </span>`;
+                })}
               </div>`
             : nothing}
           <input class="namein" type="text" placeholder=${this._t('marker.controls_filter')}
@@ -15536,20 +16038,11 @@ class HouseplanCard extends LitElement {
             @input=${(e: Event) => (this._markerDialog = { ...d, controlsFilter: (e.target as HTMLInputElement).value })} />
           ${d.controlsFilter.trim()
             ? html`<div class="ctrllist">
-                ${Object.keys(this.hass.states)
-                  .filter((eid) => effectiveMarkerControls(d.binding, [eid], ownEntities).length > 0
-                    && !d.controls.includes(eid) && this._planEntityAvailable(eid))
-                  .filter((eid) => {
-                    const q = d.controlsFilter.trim().toLowerCase();
-                    const name = String(this.hass.states[eid]?.attributes?.friendly_name || '');
-                    return eid.toLowerCase().includes(q) || name.toLowerCase().includes(q);
-                  })
-                  .slice(0, 8)
-                  .map((eid) => html`<button class="ctrlopt"
-                    @click=${() => (this._markerDialog = { ...d, controls: [...d.controls, eid], controlsFilter: '' })}>
-                    <ha-icon icon=${eid.startsWith('light.') ? 'mdi:lightbulb' : 'mdi:toggle-switch'}></ha-icon>
-                    ${this.hass.states[eid]?.attributes?.friendly_name || eid}
-                    <span class="sub">${eid}</span>
+                ${this._controlCandidates(d).map((candidate) => html`<button class="ctrlopt"
+                    @click=${() => this._addControlRef(d, candidate.value)}>
+                    <ha-icon icon=${candidate.icon}></ha-icon>
+                    ${candidate.label}
+                    <span class="sub">${candidate.sub}</span>
                   </button>`)}
               </div>`
             : nothing}
@@ -15561,8 +16054,7 @@ class HouseplanCard extends LitElement {
               </label>`
             : nothing}
           <fieldset class="markerlightgroup">
-            <legend>${this._t('marker.light_role_label')}</legend>
-            <p class="muted markerlighttip">${this._t('marker.light_role_tip')}</p>
+            <legend><span>${this._t('marker.light_role_label')}</span>${this._help('marker.light_role.help')}</legend>
             <div class="markerradios" role="radiogroup" aria-label=${this._t('marker.light_role_label')}>
               <label class="srcrow"><input type="radio" name="marker-light-role" value="auto"
                 .checked=${d.lightRole === 'auto'} @change=${() => this._setMarkerLightRole('auto')} />
@@ -15576,56 +16068,93 @@ class HouseplanCard extends LitElement {
             </div>
           </fieldset>
 
-          <fieldset class="markerlightgroup" ?disabled=${glowControlsDisabled}
-            aria-describedby=${glowControlsDisabled ? 'marker-glow-disabled-hint' : nothing}>
-            <legend>${this._t('marker.glow_color_label')}</legend>
-            <p class="muted markerlighttip">${this._t('marker.glow_color_tip')}</p>
+          ${d.lightRole === 'always' && (leadingEntities.length > 1 || staleLeading)
+            ? html`<div class="markerhelpfield markerleadingentity">
+                <div class="markerhelplabel">
+                  <label for="marker-light-entity">${this._t('marker.light_entity_label')}</label>
+                  ${this._help('marker.light_entity.help')}
+                </div>
+                <select id="marker-light-entity" class="areasel"
+                  .value=${staleLeading ? '' : d.lightEntity}
+                  @change=${(e: Event) => (this._markerDialog = {
+                    ...d,
+                    lightEntity: (e.target as HTMLSelectElement).value,
+                    lightEntityTouched: true,
+                  })}>
+                  <option value="">
+                    ${this._t('marker.light_entity_auto', {
+                      entity: effectiveLeading || this._t('marker.light_entity_none'),
+                    })}
+                  </option>
+                  ${leadingEntities.map((eid) => html`<option value=${eid}>
+                    ${this.hass.states[eid]?.attributes?.friendly_name
+                      || this._fullRegistryHass.entities[eid]?.name || eid} · ${eid}
+                  </option>`)}
+                </select>
+                ${staleLeading ? html`<p class="muted markerlightwarning" role="status">
+                  <ha-icon icon="mdi:alert-outline"></ha-icon>
+                  ${this._t('marker.light_entity_missing', {
+                    entity: d.lightEntity, fallback: effectiveLeading || '—',
+                  })}
+                </p>` : nothing}
+              </div>`
+            : nothing}
+
+          <fieldset class="markerlightgroup" ?disabled=${glowSourceDisabled}>
+            <legend><span>${this._t('marker.glow_color_label')}</span>${this._help('marker.glow_mode.help')}</legend>
             <div class="markerradios" role="radiogroup" aria-label=${this._t('marker.glow_color_label')}>
               <label class="srcrow"><input type="radio" name="marker-glow-mode" value="auto"
-                .checked=${d.glowMode === 'auto'} ?disabled=${glowControlsDisabled}
+                .checked=${displayedGlowMode === 'auto'} ?disabled=${liveGlowDisabled}
+                aria-describedby=${liveGlowDisabled ? 'marker-glow-disabled-hint' : nothing}
                 @change=${() => this._setMarkerGlowMode('auto')} />
                 <span>${this._t('marker.glow_mode_auto')}</span></label>
               <label class="srcrow"><input type="radio" name="marker-glow-mode" value="color"
-                .checked=${d.glowMode === 'color'} ?disabled=${glowControlsDisabled}
+                .checked=${displayedGlowMode === 'color'} ?disabled=${glowSourceDisabled}
+                aria-describedby=${glowSourceDisabled ? 'marker-glow-disabled-hint' : nothing}
                 @change=${() => this._setMarkerGlowMode('color')} />
                 <span>${this._t('marker.glow_mode_color')}</span></label>
               <label class="srcrow"><input type="radio" name="marker-glow-mode" value="fixed"
-                .checked=${d.glowMode === 'fixed'} ?disabled=${glowControlsDisabled}
+                .checked=${displayedGlowMode === 'fixed'} ?disabled=${glowSourceDisabled}
+                aria-describedby=${glowSourceDisabled ? 'marker-glow-disabled-hint' : nothing}
                 @change=${() => this._setMarkerGlowMode('fixed')} />
                 <span>${this._t('marker.glow_mode_fixed')}</span></label>
             </div>
-            ${d.glowMode !== 'auto' ? html`<div class="colorrow markerglowvalue">
+            ${displayedGlowMode !== 'auto' ? html`<div class="colorrow markerglowvalue">
               <hp-color-opacity .label=${this._t('marker.glow_color')}
                 .color=${d.glowColor} .opacity=${1} .showOpacity=${false}
-                .disabled=${glowControlsDisabled}
+                .disabled=${glowSourceDisabled}
                 @hp-color-opacity-change=${(e: CustomEvent<{ color: string }>) => {
                   this._markerDialog = {
-                    ...d, glowColor: e.detail.color, glowColorDrafted: true, glowTouched: true,
+                    ...d, glowMode: displayedGlowMode,
+                    glowColor: e.detail.color, glowColorDrafted: true, glowTouched: true,
                   };
                 }}></hp-color-opacity>
-              ${d.glowMode === 'fixed' ? html`
+              ${displayedGlowMode === 'fixed' ? html`
                 <span class="opl">${this._t('marker.glow_brightness')}</span>
                 ${this._rangeInput(1, 100, 1, d.glowBrightness, (n) => {
                   this._markerDialog = {
-                    ...d, glowBrightness: n, glowBrightnessDrafted: true, glowTouched: true,
+                    ...d, glowMode: displayedGlowMode,
+                    glowBrightness: n, glowBrightnessDrafted: true, glowTouched: true,
                   };
-                }, glowControlsDisabled, this._t('marker.glow_brightness'))}
+                }, glowSourceDisabled, this._t('marker.glow_brightness'))}
                 <span class="opv">${Math.round(d.glowBrightness)}%</span>` : nothing}
             </div>` : nothing}
-            ${d.glowMode === 'fixed'
-              ? html`<p class="muted markerlighttip">${this._t('marker.glow_brightness_hint')}</p>`
-              : nothing}
-            <label>${this._t('marker.glow_radius_label')}</label>
+          </fieldset>
+          <div class="markerhelpfield">
+            <div class="markerhelplabel">
+              <label for="marker-glow-radius">${this._t('marker.glow_radius_label')}</label>
+              ${this._help('marker.glow_radius.help')}
+            </div>
             <div class="colorrow">
-              <input class="tempin" type="number" min="0.5" step="0.5"
-                placeholder=${this._glowRadiusPlaceholder} ?disabled=${glowControlsDisabled}
+              <input id="marker-glow-radius" class="tempin" type="number" min="0.5" step="0.5"
+                placeholder=${this._glowRadiusPlaceholder} ?disabled=${glowSourceDisabled}
+                aria-describedby=${glowSourceDisabled || passiveSource ? 'marker-glow-disabled-hint' : nothing}
                 .value=${d.glowRadius}
                 @input=${(e: Event) => (this._markerDialog = { ...d, glowRadius: (e.target as HTMLInputElement).value })} />
               <span class="opl">${this._imperial ? this._t('gs.unit_ft') : this._t('gs.unit_m')}</span>
-              <span class="opl muted">${this._t('marker.glow_radius_hint')}</span>
             </div>
-          </fieldset>
-          ${glowControlsDisabled
+          </div>
+          ${glowSourceDisabled || passiveSource
             ? html`<p id="marker-glow-disabled-hint" class="muted markerlightdisabled" role="note">
                 <ha-icon icon="mdi:information-outline"></ha-icon>${glowDisabledHint}
               </p>`
@@ -15660,13 +16189,13 @@ class HouseplanCard extends LitElement {
             : nothing}
 
           <label>${this._t('marker.display_label')}</label>
-          <select class="areasel"
+          <select class="areasel" .value=${d.display}
             @change=${(e: Event) => (this._markerDialog = {
               ...d,
               display: normalizeDeviceDisplay((e.target as HTMLSelectElement).value),
             })}>
             ${DISPLAY_MODES.map((v) => [v, 'display.' + v] as const).map(
-              ([v, k]) => html`<option value=${v} ?selected=${d.display === v}>${this._t(k as any)}</option>`,
+              ([v, k]) => html`<option value=${v}>${this._t(k as any)}</option>`,
             )}
           </select>
           <p class="muted">${this._t('marker.display_hint')}</p>
@@ -15731,11 +16260,14 @@ class HouseplanCard extends LitElement {
                 <a href="${safeUrl(this._display(p.url)) || '#'}" target="_blank" rel="noreferrer noopener">${p.name}</a>
                 <ha-icon class="x" icon="mdi:close" @click=${() => this._removeMarkerPdf(p.url)}></ha-icon></span>`,
             )}
-            <label class="btn filebtn">
-              <ha-icon icon="mdi:paperclip"></ha-icon>${this._t('btn.attach')}
+            <span class="fileupload">
+              <button class="btn filebtn" type="button" @click=${(e: Event) =>
+                ((e.currentTarget as HTMLElement).nextElementSibling as HTMLInputElement | null)?.click()}>
+                <ha-icon icon="mdi:paperclip"></ha-icon>${this._t('btn.attach')}
+              </button>
               <input type="file" hidden multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,application/pdf"
                 @change=${(e: Event) => this._pickMarkerFiles(e)} />
-            </label>
+            </span>
           </div>
         </div>
         <div class="row markerfooter" slot="footer">
@@ -15805,11 +16337,14 @@ class HouseplanCard extends LitElement {
                   : d.planUrl
                     ? html`<img class="planprev" src=${this._display(d.planUrl)} alt=${this._t('space.plan_alt')} />`
                     : html`<span class="planname muted">${this._t('space.no_plan')}</span>`}
-                <label class="btn filebtn">
-                  <ha-icon icon="mdi:upload"></ha-icon>${d.planUrl || d.planFile ? this._t('btn.replace') : this._t('btn.upload')}
+                <span class="fileupload">
+                  <button class="btn filebtn" type="button" @click=${(e: Event) =>
+                    ((e.currentTarget as HTMLElement).nextElementSibling as HTMLInputElement | null)?.click()}>
+                    <ha-icon icon="mdi:upload"></ha-icon>${d.planUrl || d.planFile ? this._t('btn.replace') : this._t('btn.upload')}
+                  </button>
                   <input type="file" hidden accept=".svg,.png,.jpg,.jpeg,.webp,image/svg+xml,image/png,image/jpeg,image/webp"
                     @change=${(e: Event) => this._pickPlanFile(e)} />
-                </label>
+                </span>
                 <button class="btn ghost" @click=${this._toggleServerPlans}
                   title=${this._t('space.pick_saved_hint')}>
                   <ha-icon icon="mdi:folder-image"></ha-icon>${this._t('space.pick_saved')}

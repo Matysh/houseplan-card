@@ -179,9 +179,11 @@ export interface LightSourceDevice {
   /** Runtime-effective controls; marker.controls remains the persisted list. */
   controls?: string[];
   marker?: {
+    id?: string;
     binding?: string;
     room_id?: string | null;
     is_light?: boolean | null;
+    light_entity?: string | null;
     controls?: string[] | null;
     glow_radius_cm?: number | null;
     glow_color?: { c: string; bri?: number | null } | null;
@@ -191,14 +193,22 @@ export interface LightSourceDevice {
 export type LightSourceRoom = string | { id?: string | null; area?: string | null };
 
 export interface ResolvedLightSource<D extends LightSourceDevice = LightSourceDevice> {
-  /** HA entity that carries the source's on/off state and accepts controls. */
+  /** Stable identity. A passive source deliberately has no HA entity id. */
+  key: `entity:${string}` | `marker:${string}`;
+  /** Compatibility projection for old consumers; empty for a passive source. */
   eid: string;
+  /** Entities whose state determines this source. */
+  stateEids: string[];
+  /** Real HA entities which may be sent to callService. Never marker:* refs. */
+  serviceEids: string[];
   /** Device/marker which declares or physically places this source on the plan. */
   device: D;
   /** Why this entity belongs to the light-source set. */
   via: 'controls' | 'forced' | 'light';
   /** False for remote controls: they describe room light but have no lamp position. */
   castsGlow: boolean;
+  /** Always + no own controllable entity. */
+  passive: boolean;
   on: boolean;
 }
 
@@ -252,27 +262,39 @@ function lightSourceBelongsToRoom(d: LightSourceDevice, room: LightSourceRoom): 
 }
 
 interface LightEntityCandidate {
-  eid: string;
+  eid: string | null;
   via: ResolvedLightSource['via'];
 }
 
-function forcedLightEntityOf(d: LightSourceDevice): string | null {
+/** Controllable own entities in deterministic compatibility order. */
+export function ownControllableEntities(d: LightSourceDevice): string[] {
   const bound = d.marker?.binding?.startsWith('entity:')
     ? d.marker.binding.slice('entity:'.length) : null;
   const controllable = d.entities.filter(isControllable);
   const primary = d.primary && isControllable(d.primary) ? d.primary : null;
+  return [...new Set([bound, primary, ...controllable].filter(
+    (eid): eid is string => !!eid && isControllable(eid),
+  ))];
+}
+
+/** Effective leading entity. A stale explicit choice is retained in config but
+ * falls back until that entity returns to the marker's own active candidates. */
+export function forcedLightEntityOf(d: LightSourceDevice): string | null {
+  const candidates = ownControllableEntities(d);
+  const selected = d.marker?.light_entity;
+  if (selected && candidates.includes(selected)) return selected;
   // An explicitly forced entity marker names the physical relay exactly. Do
   // not let a different registry-derived primary entity steal that decision.
-  return (bound && isControllable(bound) ? bound : null) || primary || controllable[0] || null;
+  return candidates[0] || null;
 }
 
 function ownLightCandidatesOf(hass: any, d: LightSourceDevice): LightEntityCandidate[] {
   if (d.marker?.is_light === false) return [];
   if (d.marker?.is_light === true) {
     const forced = forcedLightEntityOf(d);
-    // A disabled registry entry has no runtime state. It cannot be toggled and
-    // must not be presented as a usable spatial source.
-    return forced && hass.states?.[forced] ? [{ eid: forced, via: 'forced' }] : [];
+    // Capability is registry/config based, never inferred from a transient HA
+    // state snapshot. No candidate is a valid passive forced source.
+    return [{ eid: forced, via: 'forced' }];
   }
 
   // Automatic discovery describes the DEVICE, not every auxiliary entity it
@@ -281,8 +303,51 @@ function ownLightCandidatesOf(hass: any, d: LightSourceDevice): LightEntityCandi
   const role = d.primary || resolvedDeviceStateEntities(hass, d.entities)[0];
   if (role && !role.startsWith('light.')) return [];
   return d.entities
+    // Auto describes a currently available HA light. Unlike the explicit
+    // Always role, a registry entry whose state has disappeared must not turn
+    // the room from “no sources” into a phantom “0 of 1” source.
     .filter((eid) => eid.startsWith('light.') && !!hass.states?.[eid])
     .map((eid) => ({ eid, via: 'light' as const }));
+}
+
+interface CachedLightGraph<D extends LightSourceDevice> {
+  fingerprint: string;
+  visible: D[];
+  markerById: Map<string, D>;
+  persistedByDevice: Map<D, string[]>;
+}
+
+const LIGHT_GRAPH_CACHE = new WeakMap<object, CachedLightGraph<any>>();
+
+function lightGraphFingerprint(devices: readonly LightSourceDevice[]): string {
+  return devices.map((device) => [
+    device.id || '', device.hidden === true ? 1 : 0, device.primary || '',
+    [...device.entities].join(','), device.controls === undefined
+      ? '<runtime-undefined>' : [...device.controls].join(','),
+    device.marker?.id || '', device.marker?.binding || '', device.marker?.is_light,
+    device.marker?.light_entity || '', device.marker?.controls == null
+      ? '<persisted-null>' : [...device.marker.controls].join(','),
+  ].join('\u001f')).join('\u001e');
+}
+
+function lightGraphOf<D extends LightSourceDevice>(devices: readonly D[]): CachedLightGraph<D> {
+  const fingerprint = lightGraphFingerprint(devices);
+  const previous = LIGHT_GRAPH_CACHE.get(devices as object) as CachedLightGraph<D> | undefined;
+  if (previous?.fingerprint === fingerprint) return previous;
+  const visible = devices.filter((device) => !device.hidden);
+  const markerById = new Map<string, D>();
+  const persistedByDevice = new Map<D, string[]>();
+  for (const device of devices) {
+    persistedByDevice.set(device, persistedExternalControls(
+      device.marker?.binding, device.marker?.controls ?? device.controls, device.entities,
+    ));
+    const id = !device.hidden && device.marker?.is_light === true
+      ? device.marker?.id || device.id : null;
+    if (id) markerById.set(String(id), device);
+  }
+  const value = { fingerprint, visible, markerById, persistedByDevice };
+  LIGHT_GRAPH_CACHE.set(devices as object, value);
+  return value;
 }
 
 /** Whether the marker currently has a real, position-bearing source of its own. */
@@ -292,8 +357,43 @@ export function hasOwnSpatialSource(hass: any, d: LightSourceDevice): boolean {
     d.controls ?? d.marker?.controls,
     d.entities,
   );
-  if (d.marker?.is_light == null && controls.length) return false;
+  const persisted = persistedExternalControls(
+    d.marker?.binding, d.marker?.controls ?? d.controls, d.entities,
+  );
+  if (d.marker?.is_light == null
+      && (controls.length || persisted.some((ref) => ref.startsWith('marker:')))) return false;
   return ownLightCandidatesOf(hass, d).length > 0;
+}
+
+/** Whether the source owns a real state/service entity (as opposed to passive). */
+export function hasOwnStatefulLightSource(hass: any, d: LightSourceDevice): boolean {
+  return ownLightCandidatesOf(hass, d).some((candidate) => !!candidate.eid);
+}
+
+export type LightRole = 'auto' | 'always' | 'never';
+export type GlowMode = 'auto' | 'color' | 'fixed';
+
+/** Normative UI matrix shared by the dialog and exhaustive tests. */
+export function resolveDeviceLightSettings(
+  role: LightRole, autoHasSource: boolean, statefulCapability: boolean, storedMode: GlowMode,
+): {
+  sourceExists: boolean;
+  fromSourceEnabled: boolean;
+  manualEnabled: boolean;
+  radiusEnabled: boolean;
+  passive: boolean;
+  effectiveMode: GlowMode;
+} {
+  const sourceExists = role === 'always' || (role === 'auto' && autoHasSource);
+  const passive = sourceExists && !statefulCapability;
+  return {
+    sourceExists,
+    fromSourceEnabled: sourceExists && statefulCapability,
+    manualEnabled: sourceExists,
+    radiusEnabled: sourceExists,
+    passive,
+    effectiveMode: passive && storedMode === 'auto' ? 'fixed' : storedMode,
+  };
 }
 
 function lightEntitiesOf(hass: any, d: LightSourceDevice): LightEntityCandidate[] {
@@ -311,7 +411,7 @@ function lightEntitiesOf(hass: any, d: LightSourceDevice): LightEntityCandidate[
     ? ownLightCandidatesOf(hass, d)
     : [];
   for (const candidate of own) {
-    if (!out.some((existing) => existing.eid === candidate.eid)) out.push(candidate);
+    if (!candidate.eid || !out.some((existing) => existing.eid === candidate.eid)) out.push(candidate);
   }
   return out;
 }
@@ -329,27 +429,117 @@ export function resolvedLightSources<D extends LightSourceDevice>(
   devices: readonly D[],
   room?: LightSourceRoom | null,
 ): ResolvedLightSource<D>[] {
-  const out: ResolvedLightSource<D>[] = [];
-  const byEntity = new Map<string, number>();
-  for (const d of devices) {
-    if (d.hidden || (room != null && !lightSourceBelongsToRoom(d, room))) continue;
-    const candidates = lightEntitiesOf(hass, d);
-    for (const { eid, via } of candidates) {
-      if (!eid) continue;
-      const castsGlow = via !== 'controls';
-      const source = { eid, device: d, via, castsGlow, on: hass.states[eid]?.state === 'on' };
-      const previous = byEntity.get(eid);
-      if (previous == null) {
-        byEntity.set(eid, out.length);
-        out.push(source);
-      } else if (castsGlow && !out[previous].castsGlow) {
-        // A remote controller may be encountered before the real lamp marker.
-        // Keep one room/statistics vote, but let the physical marker own Glow.
-        out[previous] = source;
+  type Candidate = ResolvedLightSource<D>;
+  const { visible, markerById, persistedByDevice } = lightGraphOf(devices);
+  // Room consumers need sources owned by that room, not a full resolution of
+  // every marker followed by a final filter. Controllers outside the room are
+  // still scanned below because they may drive a source whose owner is inside.
+  const sourceDevices = room == null
+    ? visible
+    : visible.filter((device) => lightSourceBelongsToRoom(device, room));
+
+  const ownByDevice = new Map<D, Candidate[]>();
+  const ownerByEntity = new Map<string, Candidate>();
+  for (const device of sourceDevices) {
+    const own = lightEntitiesOf(hass, device).filter((candidate) => candidate.via !== 'controls');
+    // Auto may expose several light.* entities. Each remains an independent
+    // source; forced Always deliberately has exactly one leading source.
+    for (const candidate of own) {
+      const markerId = device.marker?.is_light === true
+        ? String(device.marker?.id || device.id || '') : '';
+      const key = markerId ? `marker:${markerId}` as const : `entity:${candidate.eid}` as const;
+      const eids = candidate.eid ? [candidate.eid] : [];
+      const source: Candidate = {
+        key, eid: candidate.eid || '', stateEids: eids, serviceEids: eids,
+        device, via: candidate.via, castsGlow: true, passive: !candidate.eid,
+        on: candidate.eid ? hass.states?.[candidate.eid]?.state === 'on' : true,
+      };
+      ownByDevice.set(device, [...(ownByDevice.get(device) || []), source]);
+      if (candidate.eid) ownerByEntity.set(candidate.eid, source);
+    }
+  }
+
+  const incoming = new Map<string, { linked: boolean; drivers: Set<string> }>();
+  const activeEntityTargetsByDevice = new Map<D, Set<string>>();
+  for (const controller of devices) {
+    const persisted = persistedByDevice.get(controller) || [];
+    const activeEntityTargets = new Set(controller.hidden ? []
+      : controller.controls === undefined ? persisted.filter(isControllable) : controller.controls);
+    activeEntityTargetsByDevice.set(controller, activeEntityTargets);
+    const ownDriver = controller.hidden ? null : forcedLightEntityOf(controller);
+    for (const ref of persisted) {
+      if (ref.startsWith('marker:')) {
+        const targetId = ref.slice('marker:'.length);
+        const target = markerById.get(targetId);
+        if (!target || !ownByDevice.has(target)) continue;
+        const state = incoming.get(targetId) || { linked: false, drivers: new Set<string>() };
+        state.linked = true;
+        const drivers = activeEntityTargets.size ? activeEntityTargets : new Set(ownDriver ? [ownDriver] : []);
+        for (const eid of drivers) state.drivers.add(eid);
+        incoming.set(targetId, state);
       }
     }
   }
-  return out;
+
+  for (const sources of ownByDevice.values()) {
+    for (const source of sources) {
+      if (!source.passive) continue;
+      const markerId = source.key.slice('marker:'.length);
+      const control = incoming.get(markerId);
+      source.on = !control?.linked || [...control.drivers].some((eid) => hass.states?.[eid]?.state === 'on');
+    }
+  }
+
+  const byKey = new Map<string, Candidate>();
+  const add = (source: Candidate): void => {
+    const previous = byKey.get(source.key);
+    if (!previous || (source.castsGlow && !previous.castsGlow)) byKey.set(source.key, source);
+  };
+  for (const controller of visible) {
+    const persisted = persistedByDevice.get(controller) || [];
+    const controllerInRoom = room == null || lightSourceBelongsToRoom(controller, room);
+    for (const ref of persisted) {
+      if (ref.startsWith('marker:')) {
+        const target = markerById.get(ref.slice('marker:'.length));
+        const owned = target ? ownByDevice.get(target) : null;
+        if (owned) for (const source of owned) add(source);
+        continue;
+      }
+      if (!isControllable(ref) || !activeEntityTargetsByDevice.get(controller)?.has(ref)) continue;
+      const owned = ownerByEntity.get(ref);
+      if (owned) add(owned);
+      else if (controllerInRoom) add({
+        key: `entity:${ref}`, eid: ref, stateEids: [ref], serviceEids: [ref],
+        device: controller, via: 'controls', castsGlow: false, passive: false,
+        on: hass.states?.[ref]?.state === 'on',
+      });
+    }
+    for (const source of ownByDevice.get(controller) || []) add(source);
+  }
+  return [...byKey.values()];
+}
+
+/** Real service targets for the controller's persisted entity/marker refs. */
+export function resolvedControlServiceEntities<D extends LightSourceDevice>(
+  hass: any, devices: readonly D[], controller: D,
+): string[] {
+  const markerTargets = new Map<string, string[]>(
+    resolvedLightSources(hass, devices)
+      .filter((source) => source.key.startsWith('marker:'))
+      .map((source) => [source.key, source.serviceEids] as [string, string[]]),
+  );
+  const persisted = persistedExternalControls(
+    controller.marker?.binding, controller.marker?.controls ?? controller.controls, controller.entities,
+  );
+  const active = new Set(
+    controller.controls === undefined ? persisted.filter(isControllable) : controller.controls,
+  );
+  const out: string[] = [];
+  for (const ref of persisted) {
+    if (ref.startsWith('marker:')) out.push(...(markerTargets.get(ref) || []));
+    else if (isControllable(ref) && active.has(ref)) out.push(ref);
+  }
+  return [...new Set(out)];
 }
 
 /** Select the single source whose state and position drive a marker's Glow. */
@@ -379,7 +569,8 @@ export function litLightEntity(
   hass: any,
   d: Omit<LightSourceDevice, 'area'> & { area?: string },
 ): string | null {
-  return resolvedLightSources(hass, [{ ...d, area: d.area || '' }]).find((source) => source.on)?.eid || null;
+  return resolvedLightSources(hass, [{ ...d, area: d.area || '' }])
+    .find((source) => source.on && !!source.eid)?.eid || null;
 }
 
 /** Average zigbee LQI across the device's entities (*_linkquality/*_lqi sensors or an attribute). */
@@ -499,6 +690,57 @@ export interface RemovedPlanBindings {
 export interface DeletePlanMarkerResult {
   markers: Marker[];
   cleanupIds: Set<string>;
+}
+
+/** Remove every link to deleted marker ids without touching entity/unknown refs. */
+export function removeMarkerControlReferences(
+  markers: readonly Marker[], removedIds: ReadonlySet<string>,
+): Marker[] {
+  return markers.map((marker) => {
+    if (!Array.isArray(marker.controls)) return marker;
+    const controls = marker.controls.filter((ref) =>
+      !(typeof ref === 'string' && ref.startsWith('marker:')
+        && removedIds.has(ref.slice('marker:'.length))),
+    );
+    return controls.length === marker.controls.length
+      ? marker : { ...marker, controls: controls.length ? controls : null };
+  });
+}
+
+/** Keep stable plan-source links when a marker id changes during rebind. */
+export function rewriteMarkerControlReferences(
+  markers: readonly Marker[], oldId: string, newId: string,
+): Marker[] {
+  if (!oldId || !newId || oldId === newId) return [...markers];
+  const from = `marker:${oldId}`;
+  const to = `marker:${newId}`;
+  return markers.map((marker) => !Array.isArray(marker.controls) ? marker : {
+    ...marker,
+    controls: marker.controls.map((ref) => ref === from ? to : ref),
+  });
+}
+
+/** Whether adding controller -> target would close a directed marker cycle. */
+export function markerControlWouldCycle(
+  markers: readonly Pick<Marker, 'id' | 'controls'>[], controllerId: string, targetId: string,
+): boolean {
+  if (!controllerId || controllerId === targetId) return true;
+  const graph = new Map<string, string[]>();
+  for (const marker of markers) {
+    graph.set(marker.id, (marker.controls || [])
+      .filter((ref): ref is string => typeof ref === 'string' && ref.startsWith('marker:'))
+      .map((ref) => ref.slice('marker:'.length)));
+  }
+  const seen = new Set<string>();
+  const stack = [targetId];
+  while (stack.length) {
+    const id = stack.pop()!;
+    if (id === controllerId) return true;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    stack.push(...(graph.get(id) || []));
+  }
+  return false;
 }
 
 /** Remove one marker binding without letting the shared literal `virtual`

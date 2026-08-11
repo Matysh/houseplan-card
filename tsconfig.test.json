@@ -26,6 +26,7 @@
     "src/align-grid.ts",
     "src/plan-optimizer.ts",
     "src/furniture.ts",
+    "src/floating-surface.ts",
     "src/wall-thickness.ts",
     "src/physical-geometry.ts",
     "src/open-spans.ts",

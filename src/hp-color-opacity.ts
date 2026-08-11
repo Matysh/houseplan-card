@@ -1,5 +1,8 @@
-import { LitElement, css, html, nothing } from 'lit';
+import { LitElement, css, html, nothing, type PropertyValues, type TemplateResult } from 'lit';
 import { safeStoredColor } from './color';
+import { floatingViewport, placeFloatingSurface } from './floating-surface';
+import { FloatingSurfaceController } from './floating-surface-controller';
+import type { HpDialog, HpOverlayCloseReason } from './hp-dialog';
 
 /**
  * Compact colour + opacity picker used by decor defaults and object dialogs.
@@ -18,6 +21,8 @@ export class HpColorOpacity extends LitElement {
 
   private _open = false;
   private _pickerRaf = 0;
+  private _forceFallback = false;
+  private _overlayDispose: (() => void) | null = null;
 
   static properties = {
     label: { type: String },
@@ -153,44 +158,102 @@ export class HpColorOpacity extends LitElement {
 
   connectedCallback(): void {
     super.connectedCallback();
-    document.addEventListener('pointerdown', this._outsidePointerDown, true);
-    document.addEventListener('scroll', this._queuePickerPosition, true);
-    window.addEventListener('resize', this._queuePickerPosition);
+    this.ownerDocument.addEventListener('pointerdown', this._outsidePointerDown, true);
+    this.ownerDocument.addEventListener('scroll', this._queuePickerPosition, true);
+    const win = this.ownerDocument.defaultView;
+    win?.addEventListener('resize', this._queuePickerPosition);
+    win?.addEventListener('orientationchange', this._queuePickerPosition);
+    win?.visualViewport?.addEventListener('resize', this._queuePickerPosition);
+    win?.visualViewport?.addEventListener('scroll', this._queuePickerPosition);
     this.addEventListener('keydown', this._keyDown, true);
   }
 
   disconnectedCallback(): void {
-    document.removeEventListener('pointerdown', this._outsidePointerDown, true);
-    document.removeEventListener('scroll', this._queuePickerPosition, true);
-    window.removeEventListener('resize', this._queuePickerPosition);
+    this.ownerDocument.removeEventListener('pointerdown', this._outsidePointerDown, true);
+    this.ownerDocument.removeEventListener('scroll', this._queuePickerPosition, true);
+    const win = this.ownerDocument.defaultView;
+    win?.removeEventListener('resize', this._queuePickerPosition);
+    win?.removeEventListener('orientationchange', this._queuePickerPosition);
+    win?.visualViewport?.removeEventListener('resize', this._queuePickerPosition);
+    win?.visualViewport?.removeEventListener('scroll', this._queuePickerPosition);
     this.removeEventListener('keydown', this._keyDown, true);
     if (this._pickerRaf) cancelAnimationFrame(this._pickerRaf);
     this._pickerRaf = 0;
+    this._closePicker(false, 'disconnect');
     super.disconnectedCallback();
   }
 
+  protected updated(changed: PropertyValues): void {
+    if (this.disabled && this._open) {
+      this._closePicker();
+      return;
+    }
+    if (!this._open) return;
+    if (!this._supportsPopover()) this._renderFallback();
+    if (changed.has('color') || changed.has('opacity') || changed.has('showOpacity')
+      || changed.has('label') || changed.has('opacityLabel')) {
+      this._queuePickerPosition();
+    }
+  }
+
+  private _window(): Window | null {
+    return this._floating.window();
+  }
+
+  private _supportsPopover(): boolean {
+    return this._floating.usesPopover(this._forceFallback);
+  }
+
+  private _dialog(): HpDialog | null {
+    return this._floating.dialog();
+  }
+
   private _outsidePointerDown = (event: PointerEvent): void => {
-    if (this._open && !event.composedPath().includes(this)) this._closePicker();
+    if (!this._open) return;
+    const path = event.composedPath();
+    if (!this._floating.containsPath(path)) {
+      this._closePicker(false, 'outside');
+    }
   };
 
   private _keyDown = (event: KeyboardEvent): void => {
     if (!this._open || event.key !== 'Escape') return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    this._closePicker(true);
+    this._closePicker(this._floating.ownsActiveElement(), 'escape');
   };
 
-  private _toggle(): void {
+  private readonly _floating = new FloatingSurfaceController(this, 'color-opacity', this._keyDown);
+
+  private async _toggle(): Promise<void> {
     if (this.disabled) return;
     if (this._open) {
       this._closePicker();
       return;
     }
+    this._forceFallback = false;
     this._open = true;
-    this.updateComplete.then(() => this._positionPicker());
+    await this.updateComplete;
+    if (!this._open) return;
+    if (!this._supportsPopover()) this._renderFallback();
+    if (!this._positionPicker()) {
+      this._closePicker();
+      return;
+    }
+    this._overlayDispose = this._dialog()?.registerOverlay({
+      owner: this,
+      group: 'transient',
+      close: (reason) => this._closePicker(
+        reason === 'escape' && this._floating.ownsActiveElement(), reason,
+      ),
+    }) || null;
   }
 
-  private _closePicker(refocus = false): void {
+  private _closePicker(refocus = false, _reason: HpOverlayCloseReason = 'exclusive'): void {
+    if (!this._open && !this._floating.hasFallback) return;
+    const dispose = this._overlayDispose;
+    this._overlayDispose = null;
+    dispose?.();
     const popup = this.renderRoot.querySelector<HTMLElement>('.picker') as any;
     if (popup?.hidePopover) {
       try {
@@ -200,6 +263,7 @@ export class HpColorOpacity extends LitElement {
       }
     }
     this._open = false;
+    this._floating.destroy();
     if (refocus) {
       this.updateComplete.then(() => this.renderRoot.querySelector<HTMLButtonElement>('.trigger')?.focus());
     }
@@ -208,41 +272,55 @@ export class HpColorOpacity extends LitElement {
   private _queuePickerPosition = (): void => {
     if (!this._open) return;
     if (this._pickerRaf) cancelAnimationFrame(this._pickerRaf);
-    this._pickerRaf = requestAnimationFrame(() => {
+    const win = this._window();
+    if (!win) return;
+    this._pickerRaf = win.requestAnimationFrame(() => {
       this._pickerRaf = 0;
-      this._positionPicker();
+      if (!this._positionPicker()) this._closePicker();
     });
   };
 
-  private _positionPicker(): void {
-    if (!this._open) return;
+  private _surface(): HTMLElement | null {
+    return this._floating.surface('.picker', this._supportsPopover());
+  }
+
+  private _renderFallback(): void {
+    const styleText = (HpColorOpacity.styles as unknown as { cssText: string }).cssText;
+    this._floating.renderFallback(this._pickerTemplate(false), styleText);
+  }
+
+  private _positionPicker(): boolean {
+    if (!this._open) return false;
+    const win = this._window();
     const trigger = this.renderRoot.querySelector<HTMLElement>('.trigger');
-    const popup = this.renderRoot.querySelector<HTMLElement>('.picker') as any;
-    if (!trigger || !popup) return;
+    let popup = this._surface() as any;
+    if (!win || !trigger?.isConnected || !popup?.isConnected) return false;
+    const viewport = floatingViewport(win);
+    popup.style.maxWidth = `${Math.max(0, viewport.width - 16)}px`;
+    popup.style.maxHeight = `${Math.max(0, viewport.height - 16)}px`;
     popup.style.visibility = 'hidden';
-    if (popup.showPopover) {
+    if (this._supportsPopover() && popup.showPopover) {
       try {
         if (!popup.matches(':popover-open')) popup.showPopover();
       } catch {
-        /* fixed-position fallback remains usable without the Popover API */
+        this._forceFallback = true;
+        this._renderFallback();
+        popup = this._surface();
+        if (!popup?.isConnected) return false;
+        popup.style.maxWidth = `${Math.max(0, viewport.width - 16)}px`;
+        popup.style.maxHeight = `${Math.max(0, viewport.height - 16)}px`;
+        popup.style.visibility = 'hidden';
       }
     }
     const anchor = trigger.getBoundingClientRect();
     const box = popup.getBoundingClientRect();
-    const gap = 7;
-    const edge = 8;
-    const maxLeft = Math.max(edge, window.innerWidth - box.width - edge);
-    let left = anchor.left;
-    if (left + box.width > window.innerWidth - edge) left = anchor.right - box.width;
-    left = Math.min(maxLeft, Math.max(edge, left));
-    const below = anchor.bottom + gap;
-    const above = anchor.top - gap - box.height;
-    let top = below;
-    if (below + box.height > window.innerHeight - edge && above >= edge) top = above;
-    else top = Math.min(Math.max(edge, top), Math.max(edge, window.innerHeight - box.height - edge));
-    popup.style.left = `${Math.round(left)}px`;
-    popup.style.top = `${Math.round(top)}px`;
+    if (!anchor.width || !anchor.height || !box.width || !box.height) return false;
+    const placement = placeFloatingSurface(anchor, box, viewport);
+    popup.style.left = `${placement.left}px`;
+    popup.style.top = `${placement.top}px`;
+    popup.dataset.side = placement.side;
     popup.style.visibility = '';
+    return true;
   }
 
   private _emit(color: string, opacity: number): void {
@@ -259,6 +337,29 @@ export class HpColorOpacity extends LitElement {
     }));
   }
 
+  private _pickerTemplate(usePopover: boolean): TemplateResult {
+    const pct = Math.round(Math.min(1, Math.max(0, Number(this.opacity) || 0)) * 100);
+    const color = safeStoredColor(this.color, '#607d8b');
+    return html`
+      <div class="picker" popover=${usePopover ? 'manual' : nothing} role="dialog" aria-label=${this.label || 'Color'}>
+        <div class="row">
+          <span class="caption">${this.label || 'Color'}</span>
+          <input type="color" .value=${color} aria-label=${this.label || 'Color'}
+            @input=${(e: Event) => this._emit((e.target as HTMLInputElement).value, this.opacity)} />
+        </div>
+        ${this.showOpacity ? html`<div class="row">
+          <span class="caption">${this.opacityLabel}</span>
+          <input type="range" min="0" max="100" step="1" .value=${String(pct)}
+            aria-label=${this.opacityLabel}
+            @input=${(e: Event) => this._emit(color, Number((e.target as HTMLInputElement).value) / 100)} />
+          <input type="number" min="0" max="100" step="1" .value=${String(pct)}
+            aria-label=${`${this.opacityLabel}, %`}
+            @change=${(e: Event) => this._emit(color, Number((e.target as HTMLInputElement).value) / 100)} />
+          <span class="pct">%</span>
+        </div>` : nothing}
+      </div>`;
+  }
+
   render() {
     const pct = Math.round(Math.min(1, Math.max(0, Number(this.opacity) || 0)) * 100);
     const color = safeStoredColor(this.color, '#607d8b');
@@ -272,24 +373,7 @@ export class HpColorOpacity extends LitElement {
         title=${title} @click=${this._toggle}>
         <span class="swatch" style=${`background:${color};opacity:${this.showOpacity ? pct / 100 : 1}`}></span>
       </button>
-      ${this._open && !this.disabled ? html`
-        <div class="picker" popover="manual" role="dialog" aria-label=${this.label || 'Color'}>
-          <div class="row">
-            <span class="caption">${this.label || 'Color'}</span>
-            <input type="color" .value=${color} aria-label=${this.label || 'Color'}
-              @input=${(e: Event) => this._emit((e.target as HTMLInputElement).value, this.opacity)} />
-          </div>
-          ${this.showOpacity ? html`<div class="row">
-              <span class="caption">${this.opacityLabel}</span>
-              <input type="range" min="0" max="100" step="1" .value=${String(pct)}
-                aria-label=${this.opacityLabel}
-                @input=${(e: Event) => this._emit(color, Number((e.target as HTMLInputElement).value) / 100)} />
-              <input type="number" min="0" max="100" step="1" .value=${String(pct)}
-                aria-label=${`${this.opacityLabel}, %`}
-                @change=${(e: Event) => this._emit(color, Number((e.target as HTMLInputElement).value) / 100)} />
-              <span class="pct">%</span>
-            </div>` : nothing}
-        </div>` : nothing}
+      ${this._open && !this.disabled && this._supportsPopover() ? this._pickerTemplate(true) : nothing}
     `;
   }
 }

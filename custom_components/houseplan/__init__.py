@@ -1,6 +1,7 @@
 """House Plan: server-side house plan configuration + Lovelace card serving."""
 from __future__ import annotations
 
+import inspect
 import logging
 from datetime import timedelta
 from pathlib import Path
@@ -23,7 +24,7 @@ from .const import (
 from .geometry_migration import migrate_config, migrate_layout, pending_from_config
 from .plans import collect_attachments, collect_plans, sweep_upload_temps
 from .repairs import async_check_plan_files
-from .store import HouseplanConfigEntry, create_data
+from .store import HouseplanConfigEntry, async_save_layout_state, create_data
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,16 +33,27 @@ async def async_setup(hass: HomeAssistant, config) -> bool:
     """Register global handlers (survive config-entry reloads): WS commands, HTTP view."""
     hass.data.setdefault(DOMAIN, {})
     hp_ws.async_register(hass)
-    from .http_api import HouseplanContentView, HouseplanUploadView
+    from .http_api import HouseplanContentView, HouseplanImportPreviewView, HouseplanUploadView
 
     hass.http.register_view(HouseplanUploadView())
     hass.http.register_view(HouseplanContentView())
+    hass.http.register_view(HouseplanImportPreviewView())
     return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) -> bool:
     """Config entry: stores in runtime_data, static paths, card auto-registration."""
     data = create_data(hass)
+    # Home Assistant's installation id never leaves the instance.  Exports
+    # carry only a salted SHA-256 fingerprint so same-instance internal files
+    # can be distinguished from cross-instance references.
+    try:
+        from homeassistant.helpers import instance_id as ha_instance_id
+
+        value = ha_instance_id.async_get(hass)
+        data.instance_id = str(await value if inspect.isawaitable(value) else value)
+    except Exception:  # noqa: BLE001 - old HA/test harness fallback
+        data.instance_id = str(entry.entry_id)
     # test-before-setup: storage must be readable, otherwise retry later
     try:
         await data.store.async_load()
@@ -126,10 +138,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
         cfg = stored.get("config")
         lay_stored = await data.store.async_load() or {}
         layout = lay_stored.get("layout") or {}
-        lay_meta = {
-            k: v for k, v in lay_stored.items()
-            if k not in ("layout", "rev", "geom_pending")
-        }
         pending = {
             str(k): v for k, v in (lay_stored.get("geom_pending") or {}).items()
         }
@@ -137,15 +145,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
         if merged:
             lay_rev = int(lay_stored.get("rev", 0))
             if merged != pending:  # 1. the durable intent, before anything moves
-                await data.store.async_save(
-                    {**lay_meta, "layout": layout, "rev": lay_rev, "geom_pending": merged}
+                await async_save_layout_state(
+                    data, lay_stored, layout, lay_rev,
+                    metadata={"geom_pending": merged}, remove=("geom_pending",),
                 )
             rev = int(stored.get("rev", 0))
             if cfg and migrate_config(cfg):  # 2. the config half
                 rev += 1
                 await data.config_store.async_save({"config": cfg, "rev": rev})
             migrate_layout(layout, merged)  # 3. the layout half + intent cleared
-            await data.store.async_save({**lay_meta, "layout": layout, "rev": lay_rev + 1})
+            await async_save_layout_state(
+                data, lay_stored, layout, lay_rev + 1, remove=("geom_pending",)
+            )
             _LOGGER.info(
                 "House Plan: migrated %s space(s) to the square canvas", len(merged)
             )
@@ -157,6 +168,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
     # config and layout store writes. The target was persisted before either
     # visible half changed, so setup can always converge on the requested pair.
     optimize_revs: tuple[int, int] | None = None
+    recovered_import = False
     async with data.write_lock:
         stored = await data.config_store.async_load() or {}
         lay_stored = await data.store.async_load() or {}
@@ -167,30 +179,57 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
             target_layout = pending["layout"]
             config_rev = int(stored.get("rev", 0))
             layout_rev = int(lay_stored.get("rev", 0))
-            if stored.get("config") != target_config:
-                config_rev += 1
+            target_config_rev = int(pending.get(
+                "config_rev", config_rev + (stored.get("config") != target_config)
+            ))
+            target_layout_rev = int(pending.get(
+                "layout_rev", layout_rev + (lay_stored.get("layout", {}) != target_layout)
+            ))
+            if stored.get("config") != target_config or config_rev < target_config_rev:
+                config_rev = max(config_rev, target_config_rev)
                 await data.config_store.async_save({
                     "config": target_config,
                     "rev": config_rev,
                 })
-            if lay_stored.get("layout", {}) != target_layout:
-                layout_rev += 1
-            layout_meta = {
-                k: v for k, v in lay_stored.items()
-                if k not in ("layout", "rev", "optimize_pending", "optimize_backup")
-            }
-            if not pending.get("clear_backup") and "optimize_backup" in lay_stored:
-                layout_meta["optimize_backup"] = lay_stored["optimize_backup"]
-            await data.store.async_save({
-                **layout_meta,
-                "layout": target_layout,
-                "rev": layout_rev,
-            })
+            if lay_stored.get("layout", {}) != target_layout or layout_rev < target_layout_rev:
+                layout_rev = max(layout_rev, target_layout_rev)
+            exact_metadata = pending.get("final_metadata")
+            replace_metadata = isinstance(exact_metadata, dict)
+            metadata = dict(exact_metadata) if replace_metadata else None
+            if not replace_metadata and not pending.get("clear_backup") \
+                    and "optimize_backup" in lay_stored:
+                metadata = {"optimize_backup": lay_stored["optimize_backup"]}
+            remove_metadata = ["optimize_pending", "optimize_backup"]
+            if pending.get("clear_backup"):
+                # A recovered whole-plan undo replaces the complete layout;
+                # a point-wise repair snapshot from the replaced layout must
+                # not survive and later restore coordinates into the new pair.
+                remove_metadata.append("repair_backup")
+            await async_save_layout_state(
+                data,
+                lay_stored,
+                target_layout,
+                layout_rev,
+                metadata=metadata,
+                remove=tuple(remove_metadata),
+                replace_metadata=replace_metadata,
+            )
             optimize_revs = (config_rev, layout_rev)
-            _LOGGER.warning("House Plan: completed an interrupted plan optimization")
+            recovered_import = str(pending.get("kind") or "").startswith("import")
+            _LOGGER.warning(
+                "House Plan: completed an interrupted %s",
+                str(pending.get("kind") or "plan optimization").replace("_", " "),
+            )
     if optimize_revs is not None:
         hass.bus.async_fire("houseplan_config_updated", {"rev": optimize_revs[0]})
         hass.bus.async_fire("houseplan_layout_updated", {"rev": optimize_revs[1]})
+        if recovered_import:
+            await recorder.async_refresh()
+            current = (await data.config_store.async_load() or {}).get("config") or {}
+            live_ids = {str(marker.get("id")) for marker in current.get("markers") or []}
+            for marker_id in list(recorder.book.data):
+                if marker_id not in live_ids:
+                    await recorder.async_delete(marker_id)
 
     await async_check_plan_files(hass, entry)
 

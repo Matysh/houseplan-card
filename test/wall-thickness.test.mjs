@@ -10,7 +10,7 @@ import {
   paperRoomShapesWithWalls, WALL_MIN_CM, WALL_MAX_CM, MITRE_LIMIT,
   atomicPolyForRoom, insetOffsetsForRoom, wallIntervals, normalizeWallIntervals,
   intervalCmAt, wallBodyNeedsSolid, openingInnerFaceOffset, openingTunnelGeometry,
-  openingTunnelGeometries,
+  openingTunnelGeometries, tunnelFacePath,
   WALL_HATCH_MIN_PX,
 } from '../test-build/wall-thickness.js';
 import { polygonArea, paperRoomShapes } from '../test-build/logic.js';
@@ -383,8 +383,9 @@ test('openingTunnelGeometry: a 45° wall keeps the opening-local width and physi
   assert.ok(g);
   closeTo(g.minY, -2);
   closeTo(g.maxY, 2);
-  assert.match(g.faces[0].d, /M -2(?:\.\d+)? /);
-  assert.match(g.faces[0].d, /L 2(?:\.\d+)? /);
+  const positive = g.faces.find((face) => face.side === 1);
+  assert.match(positive.d, /M -2(?:\.\d+)? /);
+  assert.match(positive.d, /L 2(?:\.\d+)? /);
 });
 
 test('openingTunnelGeometry: a shared wall is owned by the room on each local side', () => {
@@ -417,9 +418,47 @@ test('openingTunnelGeometry: mixed atomic thickness clips each piece to its real
   assert.ok(g);
   assert.match(g.faces[0].d, /-1(?:\.0+)?\b/, '10 cm half-depth is present');
   assert.match(g.faces[0].d, /-2(?:\.0+)?\b/, '20 cm half-depth is present');
-  assert.match(g.faces[0].d, /M -0\.02\b/,
-    'touching thickness steps overlap instead of exposing an antialiasing seam');
+  for (const face of g.faces) {
+    assert.equal((face.d.match(/\bM /g) || []).length, 1,
+      'a thickness step is part of one outer contour, not two touching rectangles');
+    assert.doesNotMatch(face.d, /-2\.02|2\.02/,
+      'the contour does not overpaint past either physical jamb');
+  }
   closeTo(g.maxY, 2);
+});
+
+test('openingTunnelGeometry: overlapping wall pieces use their physical union depth', () => {
+  const path = tunnelFacePath(1, [
+    { x0: -3, x1: 3, half: 1, cm: 10, key: 'shallow', axis: [1, 0] },
+    { x0: -1, x1: 1, half: 2, cm: 20, key: 'deep', axis: [1, 0] },
+  ]);
+  assert.match(path, /L 1 2 L -1 2/,
+    'the overlap must reach the deeper body instead of taking the minimum depth');
+  assert.match(path, /L 3 1 L 1 1/,
+    'the shallow shoulders remain part of the same non-overlapping contour');
+});
+
+test('openingTunnelGeometry: three stepped atomic strips form one non-overlapping contour', () => {
+  const rooms = [{ id: 'r', poly: [[0, 0], [10, 0], [10, 6], [0, 6]] }];
+  const walls = [
+    { key: wallKey([0, 0], [3, 0], pitch), a: [0, 0], b: [3, 0], cm: 10 },
+    { key: wallKey([3, 0], [5, 0], pitch), a: [3, 0], b: [5, 0], cm: 20 },
+    { key: wallKey([5, 0], [7, 0], pitch), a: [5, 0], b: [7, 0], cm: 15 },
+    { key: wallKey([7, 0], [10, 0], pitch), a: [7, 0], b: [10, 0], cm: 15 },
+  ];
+  const g = openingTunnelGeometry(
+    rooms, { x: 5, y: 0, angle: 0, length: 6 }, walls, [], pitch, 5, 1,
+  );
+  assert.ok(g);
+  const negative = g.faces.find((face) => face.side === -1);
+  const positive = g.faces.find((face) => face.side === 1);
+  assert.equal((negative.d.match(/\bM /g) || []).length, 1);
+  assert.equal((positive.d.match(/\bM /g) || []).length, 1);
+  assert.match(negative.d, /^M 3 0\.02 L -3 0\.02 /,
+    'negative and positive faces use matching nonzero winding around the wall axis');
+  assert.match(positive.d, /^M -3 -0\.02 L 3 -0\.02 /);
+  assert.match(positive.d, /L -2 1 L -3 1 Z$/,
+    'the one contour follows every real thickness step back to the first jamb');
 });
 
 test('openingTunnelGeometry: equal atomic strips collapse into one path without hairlines', () => {
@@ -516,8 +555,9 @@ test('openingTunnelGeometry: a legacy opening outside the span is clipped to the
     rooms, { x: 10.5, y: 0, angle: 0, length: 4 }, walls, [], pitch, 5, 1,
   );
   assert.ok(g);
-  assert.match(g.faces[0].d, /M -2(?:\.0+)? [^L]+L -0\.5(?:0+)? /);
-  assert.doesNotMatch(g.faces[0].d, /L 2(?:\.0+)? /, 'the missing wall extension is not painted');
+  const positive = g.faces.find((face) => face.side === 1);
+  assert.match(positive.d, /M -2(?:\.0+)? [^L]+L -0\.5(?:0+)? /);
+  assert.doesNotMatch(positive.d, /L 2(?:\.0+)? /, 'the missing wall extension is not painted');
 });
 
 test('openingTunnelGeometries removes overlap so translucent fills never composite twice', () => {
@@ -537,7 +577,8 @@ test('openingTunnelGeometries removes overlap so translucent fills never composi
     walls, [], pitch, 5, 1,
   );
   assert.ok(partial[0] && partial[1]);
-  assert.match(partial[1].faces[0].d, /M 0(?:\.0+)? /, 'only the non-overlapping extension remains');
+  const positive = partial[1].faces.find((face) => face.side === 1);
+  assert.match(positive.d, /M 0(?:\.0+)? /, 'only the non-overlapping extension remains');
 });
 
 // ------------------------------- bodies / paper -----------------------------

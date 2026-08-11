@@ -1,5 +1,5 @@
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 8;
+export const GOLDEN_MATRIX_VERSION = 11;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -39,6 +39,11 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'openings-thick-wall-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
     fillMode: 'none', glowEnabled: false, theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'openings-filled-tunnel-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
+    fillMode: 'custom', customFill: { c: '#66717c', a: 0.55 }, glowEnabled: false,
+    hideOpenings: true,
+    tunnelContinuity: { openingId: 'light-door', insetPx: 2, maxChannelJump: 8 },
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'openings-hidden-view-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
     fillMode: 'none', glowEnabled: false, hideOpenings: true, theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'lighting-glow-sun-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
@@ -102,12 +107,23 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'device-dialog-desktop-en', fixture: 'visual', space: 'golden-lighting',
     dialog: 'device', deviceId: 'golden-light-two', deviceLightControls: true,
     deviceName: 'Living room light controller with an intentionally long title',
+    openHelp: 'marker.glow_mode.help', helpTextRegion: { key: 'marker.glow_mode.help', minPixels: 30 },
     focusDialogClose: true, language: 'en', theme: 'dark', viewport: { width: 1180, height: 1200 }, ...page },
   { id: 'device-dialog-mobile-ru', fixture: 'visual', space: 'golden-lighting',
     dialog: 'device', deviceId: 'golden-light-two', deviceLightControls: true,
     deviceName: 'Контроллер освещения гостиной с намеренно очень длинным названием',
     language: 'ru', theme: 'dark', viewport: { width: 390, height: 1000 }, ...page },
+  { id: 'device-help-popover-light-ru', fixture: 'visual', space: 'golden-lighting',
+    dialog: 'device', deviceId: 'golden-light-two', deviceLightControls: true,
+    openHelp: 'marker.glow_mode.help', helpTextRegion: { key: 'marker.glow_mode.help', minPixels: 30 },
+    language: 'ru', theme: 'light', viewport: { width: 760, height: 900 }, ...page },
   { id: 'decor-color-popover-mobile-ru', fixture: 'visual', space: 'golden-geometry',
     dialog: 'decor-color', language: 'ru', theme: 'dark',
     viewport: { width: 390, height: 760 }, ...page },
+  { id: 'backup-full-preview-desktop-en', fixture: 'visual', space: 'golden-geometry',
+    dialog: 'backup-full', language: 'en', theme: 'dark',
+    viewport: { width: 1000, height: 900 }, ...page },
+  { id: 'backup-space-preview-mobile-ru', fixture: 'visual', space: 'golden-geometry',
+    dialog: 'backup-space', language: 'ru', theme: 'light',
+    viewport: { width: 390, height: 820 }, ...page },
 ]);

@@ -1644,3 +1644,109 @@ def test_space_open_spans():
     dup = v.CONFIG_SCHEMA({"spaces": [{**base, "open_spans": [
         ok, dict(ok), {"a": ok["b"], "b": ok["a"]}]}]})
     assert dup["spaces"][0]["open_spans"] == [ok]
+
+
+def test_marker_control_semantics_validate_only_new_edges():
+    old = {"markers": [
+        {"id": "legacy", "controls": ["marker:gone"]},
+        {"id": "lamp", "is_light": True},
+    ]}
+    # An unrelated edit never makes a pre-existing broken ref fatal.
+    v.validate_marker_controls({"markers": [
+        {"id": "legacy", "name": "renamed", "controls": ["marker:gone"]},
+        {"id": "lamp", "is_light": True},
+    ]}, old)
+
+    with pytest.raises(v.MarkerControlError) as missing:
+        v.validate_marker_controls({"markers": [
+            *old["markers"], {"id": "new", "controls": ["marker:gone"]},
+        ]}, old)
+    assert missing.value.code == "marker_control_missing"
+
+    with pytest.raises(v.MarkerControlError) as not_light:
+        v.validate_marker_controls({"markers": [
+            {"id": "plain"}, {"id": "new", "controls": ["marker:plain"]},
+        ]})
+    assert not_light.value.code == "marker_control_not_light"
+
+
+def test_marker_control_semantics_reject_self_duplicates_and_cycles():
+    with pytest.raises(v.MarkerControlError) as self_ref:
+        v.validate_marker_controls({"markers": [
+            {"id": "a", "is_light": True, "controls": ["marker:a"]},
+        ]}, validate_all=True)
+    assert self_ref.value.code == "marker_control_self"
+
+    with pytest.raises(v.MarkerControlError) as duplicate:
+        v.validate_marker_controls({"markers": [
+            {"id": "a", "is_light": True},
+            {"id": "b", "controls": ["marker:a", "marker:a"]},
+        ]}, validate_all=True)
+    assert duplicate.value.code == "duplicate_marker_control"
+
+    with pytest.raises(v.MarkerControlError) as cycle:
+        v.validate_marker_controls({"markers": [
+            {"id": "a", "is_light": True, "controls": ["marker:b"]},
+            {"id": "b", "is_light": True, "controls": ["marker:a"]},
+        ]}, validate_all=True)
+    assert cycle.value.code == "marker_control_cycle"
+
+
+def test_marker_control_duplicate_replacement_and_id_rename_are_delta_safe():
+    old = {"markers": [
+        {"id": "controller-old", "binding": "device:controller", "controls": [
+            "marker:lamp", "marker:lamp2", "legacy target",
+        ]},
+        {"id": "lamp", "binding": "virtual", "is_light": True},
+        {"id": "lamp2", "binding": "virtual", "is_light": True},
+    ]}
+    with pytest.raises(v.MarkerControlError) as duplicate:
+        v.validate_marker_controls({"markers": [
+            {"id": "controller-old", "binding": "device:controller", "controls": [
+                "marker:lamp", "marker:lamp",
+            ]},
+            *old["markers"][1:],
+        ]}, old)
+    assert duplicate.value.code == "duplicate_marker_control"
+
+    # A stable binding identifies a renamed HA marker. Its dormant legacy
+    # controls remain old data rather than becoming newly-invalid writes.
+    renamed = {"markers": [
+        {**old["markers"][0], "id": "controller-new"},
+        *old["markers"][1:],
+    ]}
+    v.validate_marker_controls(renamed, old)
+
+
+def test_marker_control_new_entity_refs_require_real_entity_id_syntax():
+    old = {"markers": [{
+        "id": "controller", "binding": "device:controller", "controls": ["legacy target"],
+    }]}
+    v.validate_marker_controls(old, old)
+    with pytest.raises(v.MarkerControlError) as invalid:
+        v.validate_marker_controls({"markers": [{
+            "id": "controller", "binding": "device:controller",
+            "controls": ["legacy target", "not an entity"],
+        }]}, old)
+    assert invalid.value.code == "invalid_marker_control"
+    v.validate_marker_controls({"markers": [{
+        "id": "controller", "binding": "device:controller",
+        "controls": ["legacy target", "switch.valid_target"],
+    }]}, old)
+
+
+def test_light_entity_schema_is_literal_and_domain_bounded():
+    cfg = v.CONFIG_SCHEMA({"spaces": [], "markers": [
+        {"id": "lamp", "binding": "device:lamp", "is_light": True,
+         "light_entity": "light.channel_2"},
+    ]})
+    assert cfg["markers"][0]["light_entity"] == "light.channel_2"
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA({"spaces": [], "markers": [
+            {"id": "lamp", "binding": "virtual", "light_entity": "sensor.bad"},
+        ]})
+    for invalid in ("light.Uppercase", "light.trailing\n"):
+        with pytest.raises(vol.Invalid):
+            v.CONFIG_SCHEMA({"spaces": [], "markers": [
+                {"id": "lamp", "binding": "virtual", "light_entity": invalid},
+            ]})

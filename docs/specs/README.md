@@ -40,8 +40,10 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#33](https://github.com/Matysh/houseplan-card/issues/33) Config schema lifecycle | [033-config-schema-lifecycle.md](033-config-schema-lifecycle.md) | в реализации |
 | [#34](https://github.com/Matysh/houseplan-card/issues/34) Frontend decomposition | [034-frontend-decomposition.md](034-frontend-decomposition.md) | в реализации |
 | [#35](https://github.com/Matysh/houseplan-card/issues/35) Current UX documentation | [035-current-ux-docs.md](035-current-ux-docs.md) | готово к реализации |
-| [#50](https://github.com/Matysh/houseplan-card/issues/50) Config export/import | [050-config-export-import.md](050-config-export-import.md) | готово к ревью |
+| [#50](https://github.com/Matysh/houseplan-card/issues/50) Экспорт и импорт конфигурации | [050-config-export-import.md](050-config-export-import.md) | реализовано локально; проверки на следующем пре-релизе |
 | [#58](https://github.com/Matysh/houseplan-card/issues/58) Vacuum integration coverage — Stage 1 | [058-vacuum-stage1.md](058-vacuum-stage1.md) | в реализации |
+| [#89](https://github.com/Matysh/houseplan-card/issues/89) Опциональный объёмный 2.5D/изометрический вид | [089-isometric-view.md](089-isometric-view.md) | исследование завершено; продуктовый контекст |
+| [#89](https://github.com/Matysh/houseplan-card/issues/89) Этап 1: объёмный вид за флагом Labs | [089-isometric-view-stage1.md](089-isometric-view-stage1.md) | готово к реализации |
 
 ## P2
 
@@ -68,6 +70,8 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#54](https://github.com/Matysh/houseplan-card/issues/54) Zigbee topology overlay | [054-zigbee-topology-overlay.md](054-zigbee-topology-overlay.md) | research + adapter contract |
 | [#55](https://github.com/Matysh/houseplan-card/issues/55) Independent Glow overlay | [055-independent-glow-overlay.md](055-independent-glow-overlay.md) | реализовано в v1.61.0-beta.2; #61 — v1.61.0-beta.3 |
 | [#56](https://github.com/Matysh/houseplan-card/issues/56) Static room color | [056-static-room-color.md](056-static-room-color.md) | реализовано в v1.61.0-beta.3 |
+| [#68](https://github.com/Matysh/houseplan-card/issues/68) Подсказки к настройкам | [068-help-affordance.md](068-help-affordance.md) | реализовано локально; проверки на пре-релизе |
+| [#84](https://github.com/Matysh/houseplan-card/issues/84) Источник «Всегда» без сущности HA + [#88](https://github.com/Matysh/houseplan-card/issues/88) ведущая сущность | [084-passive-forced-light-sources.md](084-passive-forced-light-sources.md) | реализовано локально вместе; ожидает prerelease/CI gate |
 
 ## Правило актуализации
 

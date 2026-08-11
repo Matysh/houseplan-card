@@ -73,7 +73,80 @@ const res = await page.evaluate(async () => {
 
   c._markerDialog = null; await c.updateComplete;
 
-  // --- 6) general settings: opacity sliders take the ha branch too -------
+  // --- 6) #88: the leading-entity selector is contextual ---------------
+  // Give one demo device a second controllable channel in the same registry
+  // shape that Home Assistant provides for real multi-channel relays.
+  const extra = 'switch.ceiling_aux';
+  c.hass = { ...c.hass, states: { ...c.hass.states,
+    [extra]: { entity_id: extra, state: 'on', attributes: { friendly_name: 'Ceiling auxiliary' } } } };
+  const multi = c._devices.find((device) => device.id === 'd_light1');
+  // The production registry adapter is covered by unit/backend tests. Stub
+  // only the transactional projection here so the smoke owns no shared
+  // registry singleton state and remains deterministic.
+  const realPreview = c._markerPreviewDevice.bind(c);
+  c._markerPreviewDevice = (draft) => draft.devId === multi.id ? {
+    ...multi,
+    entities: [multi.primary, extra],
+    marker: {
+      ...(multi.marker || {}), id: multi.id, binding: `device:${multi.id}`,
+      is_light: draft.lightRole === 'always' ? true : null,
+      light_entity: draft.lightEntity || null,
+    },
+  } : realPreview(draft);
+  c._openMarkerDialog(multi); await c.updateComplete;
+  c._setMarkerLightRole('always'); await c.updateComplete;
+  out.leadingDraftIsAlways = c._markerDialog.lightRole === 'always';
+  out.leadingPreviewHasExtra = c._markerPreviewDevice(c._markerDialog)?.entities?.includes(extra) === true;
+  const leading = sr().querySelector('hp-dialog #marker-light-entity');
+  out.leadingSelectorForMultiple = !!leading && leading.options.length === 3;
+  if (leading) {
+    leading.value = extra;
+    leading.dispatchEvent(new Event('change', { bubbles: true }));
+    await c.updateComplete;
+    out.leadingUpdatesPreview = c._markerDialog.lightEntity === extra
+      && c._markerSpatialSource(c._markerDialog)?.eid === extra;
+  } else {
+    out.leadingUpdatesPreview = false;
+  }
+  c._markerDialog = null; await c.updateComplete;
+  c._markerPreviewDevice = realPreview;
+
+  const single = c._devices.find((device) => device.id === 'd_lamp');
+  c._openMarkerDialog(single); await c.updateComplete;
+  c._setMarkerLightRole('always'); await c.updateComplete;
+  out.noLeadingSelectorForSingle = !sr().querySelector('hp-dialog #marker-light-entity');
+  c._markerDialog = null; await c.updateComplete;
+
+  // --- 7) Rebinding keeps lossless marker:* links -----------------------
+  const rebindDevice = c._devices.find((item) => item.bindingKind !== 'virtual');
+  c._openMarkerDialog(rebindDevice); await c.updateComplete;
+  c._markerDialog = { ...c._markerDialog, controls: ['marker:future-passive-lamp'] };
+  await c.updateComplete;
+  sr().querySelector('hp-dialog input[name="bmode"]')?.click();
+  await c.updateComplete;
+  out.rebindKeepsMarkerLink = c._markerDialog.controls.includes('marker:future-passive-lamp');
+  c._markerDialog = null; await c.updateComplete;
+
+  // --- 8) #84: passive Always keeps and persists manual Glow -----------
+  c._openMarkerDialog(); await c.updateComplete;
+  c._markerDialog = { ...c._markerDialog, name: 'Passive lamp', bindingMode: 'virtual',
+    binding: 'virtual', lightRole: 'always', lightRoleTouched: true };
+  await c.updateComplete;
+  const glowRadios = [...sr().querySelectorAll('hp-dialog input[name="marker-glow-mode"]')];
+  out.passiveLiveModeDisabled = glowRadios.find((radio) => radio.value === 'auto')?.disabled === true;
+  out.passiveManualModesEnabled = glowRadios.filter((radio) => radio.value !== 'auto')
+    .every((radio) => radio.disabled === false);
+  out.passiveRadiusEnabled = sr().querySelector('hp-dialog #marker-glow-radius')?.disabled === false;
+  const brightness = sr().querySelector('hp-dialog .markerglowvalue ha-slider');
+  brightness.value = 42;
+  brightness.dispatchEvent(new Event('input', { bubbles: true }));
+  await c.updateComplete;
+  const passiveFields = c._markerLightFields(c._markerDialog);
+  out.passiveManualGlowPersists = c._markerDialog.glowMode === 'fixed'
+    && passiveFields.glow_color?.bri === 0.42;
+  c._markerDialog = null; await c.updateComplete;
+
+  // --- 9) general settings: opacity sliders take the ha branch too -------
   c._openSettingsDialog(); await c.updateComplete;
   out.gsHaSliders = sr().querySelectorAll('hp-dialog ha-slider').length >= 9;
   const gsl = sr().querySelector('hp-dialog ha-slider');
