@@ -77,13 +77,13 @@ const out2 = await page.evaluate(async () => {
 
   // --- temp-плашка (.tval) рядом со значком ---
   await setMarker({ size: 1 });
-  const t1 = devEl().querySelector('.tval').getBoundingClientRect();
-  const tf1 = fs(devEl().querySelector('.tval'));
+  const t1 = devEl().querySelector('.value-badge').getBoundingClientRect();
+  const tf1 = fs(devEl().querySelector('.value-badge'));
   // дефолт: line-height 0.68 * icon-size + рамка 1px×2
   o.tvalDefaultKept = Math.abs(t1.height - (iconPx * 0.68 + 2)) < 1;
   await setMarker({ size: 2 });
-  const t2 = devEl().querySelector('.tval').getBoundingClientRect();
-  const tf2 = fs(devEl().querySelector('.tval'));
+  const t2 = devEl().querySelector('.value-badge').getBoundingClientRect();
+  const tf2 = fs(devEl().querySelector('.value-badge'));
   o.tvalScales = (t2.height - 2) / (t1.height - 2) > 1.8 && (t2.height - 2) / (t1.height - 2) < 2.2
     && tf2 / tf1 > 1.8 && tf2 / tf1 < 2.2;
 

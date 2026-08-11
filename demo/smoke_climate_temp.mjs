@@ -101,7 +101,7 @@ Object.assign(out, await page.evaluate(async () => {
   await c.updateComplete;
   const ac = c._devices.find((d) => d.entities?.includes('climate.ac'));
   o.liveTempFromClimate = c._liveTemp(ac); // === 23.5
-  const badges = [...sr().querySelectorAll('.dev .tval')].map((el) => el.textContent.trim());
+  const badges = [...sr().querySelectorAll('.dev .value-badge')].map((el) => el.textContent.trim());
   o.badgeVisible = badges.includes('23.5°');
   // средняя гостиной: (20 + 23.5) / 2 = 21.75 → 21.8 по сетке карточки (0.1°)
   o.avgWithOption = c._climate().get('living_room')?.temp;
