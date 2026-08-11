@@ -23,9 +23,9 @@ import {
   pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, distToSegment, outlineWithout, cutSegments, alignGuides, segmentAngle, is45, type AlignGuide, swipeTarget, clampScale, migratePdfUrls, roomFillModeOf, roomGlowOf, contentUrl,
   snapToWall, snapPointAlongPoly, openingAmount, openingShoulders, interiorPoint,
   poleOfInaccessibility, subst,
-  averageLqi, fitView, declump, safeUrl, resolveTapAction, floorsOf, type FloorInfo,
+  averageLqi, fitView, declump, safeUrl, floorsOf, type FloorInfo,
   stateIcon, lightColorOf, parseRoomRef, diffNewDevices, resolveGlowValues, resolveGlowAppearance,
-  glowAlpha, normalizeGlowColorOverride, controlsAction, isControllable,
+  glowAlpha, normalizeGlowColorOverride, isControllable,
   spaceDisplayOf, resolveEffectiveRoomFill, fillColorsOf, DEFAULT_FILL_COLORS,
   customFillOf, roomCustomFillOf, DEFAULT_CUSTOM_FILL,
   type FillColors, type FillColorEntry, type ResolvedRoomFill, runServiceFor, RUN_TARGET_DOMAINS,
@@ -34,7 +34,6 @@ import {
   referencedContentUrls,
   DISPLAY_MODES, TAP_ACTIONS, SPACE_FILL_UI_MODES, ROOM_FILL_MODES,
   normalizeDeviceDisplay, isAlarmCapable, type DeviceDisplayMode,
-  coverService, coverEntityOf, COVER_GUARDED_CLASSES,
   liveText, liveTextReference, liveTextToken, hassValue, valueWithUnit, decorTextScale, decorTextLines,
   DECOR_TEXT_BASE,
 } from './logic';
@@ -90,13 +89,19 @@ import {
   resolvedLightSources, resolvedLightState, resolvedLightStats,
   hasOwnSpatialSource, hasOwnStatefulLightSource, ownControllableEntities,
   forcedLightEntityOf,
-  resolvedControlServiceEntities, resolveDeviceLightSettings, selectSpatialGlowSource,
+  resolveDeviceLightSettings, selectSpatialGlowSource,
   resolvedDeviceStateEntities, removedPlanBindings, isRemovedPlanEntity,
   deletePlanMarkerRecords, effectiveMarkerControls, persistedExternalControls,
   removeMarkerControlReferences, rewriteMarkerControlReferences, markerControlWouldCycle,
   resolveIcon,
   type AreaClimate,
 } from './devices';
+import {
+  formatToggleIntent, projectedTapAction, resolveToggleIntent,
+  sameToggleCommandTargets, toggleCoverEntity, toggleIntentName,
+  type ResolvedToggleIntent, type ToggleNextEffect, type ToggleNoneReason,
+  type ToggleSkipReason,
+} from './device-toggle';
 import type {
   OpeningCfg,
   RoomCfg, RoomDraftCfg, PartitionCfg, WallColumnCfg,
@@ -107,7 +112,7 @@ import {
   COLUMN_MAX_CM, canonicalColumnAngle, clampColumnCm, columnBody,
   directionalOccluders, draftBodies, floorMinusBodies, geometryArea, geometryOuterRings,
   geometryAllRings, intersectionPaths, partitionBody, polyclipPathD,
-  pointInPhysicalBody, sameColumnPlacement,
+  pointInPhysicalBody, pointInPhysicalGeometry, sameColumnPlacement,
 } from './physical-geometry';
 import {
   LightSegment, polygonSegments, splitAtIntersections, visibilityPolygon,
@@ -174,7 +179,7 @@ import {
 import { renderOpeningTunnelFills } from './render/opening-tunnels';
 import { safeStoredColor } from './color';
 
-const CARD_VERSION = '1.62.0-beta.2';
+const CARD_VERSION = '1.62.0-beta.3';
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
 const CELL_CM_MIN = 0.1;
@@ -361,7 +366,7 @@ const DT_LINE = 1.2;
 const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
-const LS_NAV = 'houseplan_card_nav_v1'; // last space + editor mode (owner: restore where you were)
+const LS_NAV = 'houseplan_card_nav_v1'; // last space only; editor sessions never survive page navigation
 const LS_KIOSK = 'houseplan_card_kiosk_v1'; // per-SCREEN size multipliers (each wall tablet differs)
 const NORM_W = 1000; // side of the render space — the canvas is square (v1.48.0)
 /** Short semantic-event / direct-terminal-transition window. Event uses
@@ -564,7 +569,7 @@ class HouseplanCard extends LitElement {
    * editing, devices = marker placement/config. Never persisted — every load
    * starts in view. */
   private _mode: 'view' | 'plan' | 'devices' | 'decor' = 'view';
-  /** Editor mode from nav/hash when can_write was still unknown (AUD-159B4-05). */
+  /** Editor mode from a same-route warm remount while can_write is unknown. */
   private _pendingNavMode: 'plan' | 'devices' | 'decor' | null = null;
   // ---- decor (background) editor ----
   private _decorTool: DecorTool = 'select';
@@ -893,7 +898,10 @@ class HouseplanCard extends LitElement {
   private _glowClipCache = new Map<string, GlowClipGeometry | null>();
   private _lightBarrierCache: {
     key: string;
-    value: { occluders: LightSegment[]; floor: number[][][]; fingerprint: string };
+    value: {
+      occluders: LightSegment[]; floor: number[][][]; fingerprint: string;
+      masonryGeometry: any;
+    };
   } | null = null;
   /** Freeze the SVG blur while a pinch/pan emits animation frames, then adopt
    *  the final screen-space value after the gesture. */
@@ -1006,6 +1014,19 @@ class HouseplanCard extends LitElement {
   private _touchContacts = new Map<number, { x: number; y: number; inStage: boolean }>();
   private _touchSequenceMultitouch = false;
   private _touchClickBlockUntil = 0;
+  /** Route occupied by this live card. Persistent navigation remembers only
+   *  the space; leaving this HA route ends the transient editor session. */
+  private _connectedPath = '';
+  private _routeDepartureHandled = false;
+  private readonly _onLocationChanged = (): void => {
+    if (this._connectedPath && location.pathname !== this._connectedPath) {
+      this._leaveCardRoute();
+    } else if (location.pathname === this._connectedPath) {
+      // Some HA routers keep the old view connected but hidden. Returning to
+      // it re-arms the guard so a later departure ends the next edit session.
+      this._routeDepartureHandled = false;
+    }
+  };
   private readonly _touchGestureGuard = {
     capture: true,
     handleEvent: (ev: Event): void => this._guardTouchGesture(ev),
@@ -1106,11 +1127,16 @@ class HouseplanCard extends LitElement {
     rippleSize: number;  // in icon diameters
     size: number;        // icon size multiplier
     angle: number;       // icon rotation, degrees
+    /** UI projection. A legacy persisted `cover` is shown as `toggle`. */
     tapAction: string;
+    tapActionTouched: boolean;
+    originalHasTapAction: boolean;
+    originalTapAction: string | null | undefined;
+    /** Snapshot announced only after a user edit; live HA ticks do not rewrite it. */
+    tapHintAnnouncement: string;
     tapTarget: string;    // 'run': automation./script./scene. entity id
     tapConfirm: boolean;  // ask before toggle/run
-    runFilter: string;   // '' = the effective default (defaultTap)
-    defaultTap: 'info' | 'toggle';
+    runFilter: string;
     controls: string[];  // entities this icon toggles as a group
     controlsFilter: string;
     glowRadius: string;  // per-device glow radius in display units; '' = global default
@@ -1408,6 +1434,10 @@ class HouseplanCard extends LitElement {
   };
 
   public connectedCallback(): void {
+    this._connectedPath = location.pathname;
+    this._routeDepartureHandled = false;
+    window.addEventListener('location-changed', this._onLocationChanged);
+    window.addEventListener('popstate', this._onLocationChanged);
     if (this._continuityDisposed) {
       this._continuity = this._newContinuityController();
       this._continuityDisposed = false;
@@ -1469,6 +1499,14 @@ class HouseplanCard extends LitElement {
   }
 
   public disconnectedCallback(): void {
+    // HA normally changes the route before removing the old Lovelace tree.
+    // The explicit event covers routers that keep that tree connected for a
+    // beat; this fallback covers a direct remove after history navigation.
+    if (this._connectedPath && location.pathname !== this._connectedPath) {
+      this._leaveCardRoute();
+    }
+    window.removeEventListener('location-changed', this._onLocationChanged);
+    window.removeEventListener('popstate', this._onLocationChanged);
     this._continuityUnsub?.();
     this._continuityUnsub = undefined;
     if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
@@ -1874,13 +1912,6 @@ class HouseplanCard extends LitElement {
         else if (nav?.space && this._model.find((sp) => sp.id === nav.space)) { this._space = nav.space; this._navApplied = true; }
         else if (config.default_floor) this._space = config.default_floor;
         else if (!this._model.find((sp) => sp.id === this._space)) this._space = this._model[0]?.id || this._space;
-        // reopenning the tab lands you in the same editor you left (admins only);
-        // kiosk screens always stay in View. If can_write is still unknown /
-        // false-closed, remember the mode and apply once the server answers.
-        if (nav?.mode && nav.mode !== 'view' && !config.kiosk) {
-          if (this._canEdit) this._mode = nav.mode;
-          else this._pendingNavMode = nav.mode;
-        }
       }
     } catch {
       /* ignore */
@@ -3586,29 +3617,6 @@ class HouseplanCard extends LitElement {
   // ================= live states =================
 
   /**
-   * The device's own cover, when the marker is EXPLICITLY «Open/close»
-   * (`tap_action: 'cover'`) — otherwise null. One helper, one answer: the tap
-   * acts on it, the badge speaks for it, the icon morphs with it.
-   *
-   * The rule and why it is the least surprising one (owner, 2026-08-04 —
-   * docs/FILTERING.md «What a marker SHOWS»): a marker keeps indicating its
-   * PRIMARY entity, unless its owner has said, in the marker dialog, that
-   * this thing is a curtain. Saying so is the only statement the card has
-   * that means «the cover is what this device does»; a mixed marker (a lamp
-   * with a sensor, a TRV with a service switch) is never touched behind the
-   * user's back, and there is no third notion of «what this marker is»
-   * besides the option the dialog offers and the entity the tap drives.
-   */
-  private _coverIndicator(d: DevItem): string | null {
-    return d.tapAction === 'cover' ? coverEntityOf(d.entities) : null;
-  }
-
-  /** The entity a marker's tap acts on and its indication speaks for. */
-  private _actEntity(d: DevItem): string | undefined {
-    return this._coverIndicator(d) || d.primary;
-  }
-
-  /**
    * Entities that jointly describe the marker. Explicit cover intent wins;
    * otherwise the same resolved light set used by Glow/fill/controls wins;
    * a non-light marker uses its resolved device-state role. Critical secondary
@@ -3690,24 +3698,6 @@ class HouseplanCard extends LitElement {
           || registry?.original_device_class,
       );
     });
-  }
-
-  /** The cover entity behind the dialog's binding, or null. */
-  private _bindingCoverEntity(binding: string): string | null {
-    return coverEntityOf(this._bindingEntities(binding));
-  }
-
-  /**
-   * Does the dialog's binding deserve the «Open/close» tap option? Gates it
-   * exactly like the climate checkbox above: only a device that HAS a cover
-   * entity sees it — and never a garage door, a gate or a driveway door
-   * (COVER_GUARDED_CLASSES; owner 2026-08-03: «нет, только шторы/жалюзи»).
-   */
-  private _bindingCoverTap(binding: string): boolean {
-    const eid = this._bindingCoverEntity(binding);
-    if (!eid) return false;
-    const dc = String(this.hass?.states?.[eid]?.attributes?.device_class || '');
-    return !COVER_GUARDED_CLASSES.has(dc);
   }
 
   private _liveHum(d: DevItem): number | null {
@@ -3793,16 +3783,7 @@ class HouseplanCard extends LitElement {
       this._openMarkerDialog(d);
       return;
     }
-    if (!this._deviceBindingActive(d)) return;
-    // The entity a tap ACTS ON. Normally the primary one — but the explicit
-    // «Open/close» drives the device's cover wherever it sits in the entity
-    // list (coverEntityOf): a curtain driver whose primary is a service
-    // switch used to resolve on the domain `switch` and fall back to the info
-    // card, which is exactly what the owner saw (2026-08-04). The guarded
-    // class is read off that same cover, so a garage still degrades.
-    const coverEid = this._coverIndicator(d);
-    const actEid = this._actEntity(d);
-    const domain = actEid ? actEid.split('.')[0] : null;
+    const action = projectedTapAction(d.tapAction, d.primary?.split('.')[0]);
     // the accidental-tap guard (owner's spec 2026-07-29): any state-changing
     // action — toggle or run — may ask first. The dialog is ours, not the
     // browser confirm(), so it works and looks right on a wall tablet.
@@ -3810,25 +3791,33 @@ class HouseplanCard extends LitElement {
       if (d.marker?.tap_confirm) this._tapConfirm = { text, exec };
       else exec();
     };
-    // a switch with bound targets: the EXPLICIT per-marker toggle flips them
-    // all with HA-group semantics (any on -> all off). Owner's decision:
-    // controls never fire on the card-wide default action.
-    const controls = resolvedControlServiceEntities(this._planHass, this._devices, d);
-    if (d.tapAction === 'toggle' && controls.length) {
-      const act = controlsAction(controls.map((e) => this.hass.states[e]?.state));
-      guarded(this._t('confirm.tap_toggle', { name: d.name }), () => {
-        if (!this._deviceBindingActive(d)
-            || controls.some((eid) => !this._planEntityAvailable(eid))) return;
-        this.hass
-          .callService('homeassistant', act, { entity_id: controls })
+    if (action === 'toggle') {
+      const initial = this._toggleIntent(d);
+      if (!initial?.command) return; // configured no-target is an intentional, quiet no-op
+      const execute = (intent: ResolvedToggleIntent): void => {
+        const command = intent.command;
+        if (!command) return;
+        this.hass.callService(command.domain, command.service, command.data)
           .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
-      });
+      };
+      const name = toggleIntentName(initial) || d.name;
+      if (d.marker?.tap_confirm) {
+        this._tapConfirm = {
+          text: this._t('confirm.tap_toggle', { name }),
+          exec: () => {
+            const currentDevice = this._devices.find((item) => item.id === d.id);
+            const current = currentDevice ? this._toggleIntent(currentDevice) : null;
+            if (!current?.command || !sameToggleCommandTargets(initial.command, current.command)) {
+              this._showToast(this._t('toast.tap_target_changed'));
+              return;
+            }
+            execute(current); // current state decides the current direction
+          },
+        };
+      } else execute(initial);
       return;
     }
-    const action = resolveTapAction(
-      d.tapAction, undefined, domain,
-      actEid ? this.hass.states[actEid]?.attributes?.device_class : null,
-    );
+    if (!this._deviceBindingActive(d)) return;
     if (action === 'run') {
       const target = d.marker?.tap_target || '';
       const svc = runServiceFor(target);
@@ -3847,28 +3836,6 @@ class HouseplanCard extends LitElement {
             this.requestUpdate();
             this._showToast(this._t('toast.run_started', { name }));
           })
-          .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
-      });
-      return;
-    }
-    if (action === 'cover' && coverEid) {
-      // open / close / stop, decided by the CURRENT state
-      // (legacy/docs/PRODUCT-2026-07-05.md — original interaction decision);
-      // a tap while the curtain travels stops it, the next one reverses
-      const svc = coverService(this.hass.states[coverEid]?.state);
-      guarded(this._t('confirm.tap_cover', { name: d.name }), () => {
-        if (!this._deviceBindingActive(d) || !this._planEntityAvailable(coverEid)) return;
-        this.hass
-          .callService('cover', svc, { entity_id: coverEid })
-          .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
-      });
-      return;
-    }
-    if (action === 'toggle' && d.primary) {
-      guarded(this._t('confirm.tap_toggle', { name: d.name }), () => {
-        if (!this._deviceBindingActive(d) || !this._planEntityAvailable(d.primary)) return;
-        this.hass
-          .callService('homeassistant', 'toggle', { entity_id: d.primary })
           .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
       });
       return;
@@ -4854,7 +4821,7 @@ class HouseplanCard extends LitElement {
     return roomEdges(sp?.rooms || []).map((s) => [s[0] * NORM_W, s[1] * H, s[2] * NORM_W, s[3] * H]);
   }
 
-  private _savedNav(): { space?: string; mode?: 'view' | 'plan' | 'devices' | 'decor' } | null {
+  private _savedNav(): { space?: string } | null {
     try {
       return JSON.parse(localStorage.getItem(LS_NAV) || 'null');
     } catch {
@@ -4864,10 +4831,70 @@ class HouseplanCard extends LitElement {
 
   private _saveNav(): void {
     try {
-      localStorage.setItem(LS_NAV, JSON.stringify({ space: this._space, mode: this._mode }));
+      // Writing on every mode/space change also migrates legacy
+      // `{ space, mode }` records by dropping their obsolete editor field.
+      localStorage.setItem(LS_NAV, JSON.stringify({ space: this._space }));
     } catch {
       /* private mode etc. */
     }
+  }
+
+  /**
+   * A route change is a real departure from the card, unlike a same-route
+   * Lovelace remount. End the editing session before its old warm slot can be
+   * adopted on return. Space remains persisted; editor mode, selections,
+   * dialogs and editor viewport do not.
+   */
+  private _leaveCardRoute(): void {
+    if (this._routeDepartureHandled) return;
+    this._routeDepartureHandled = true;
+    if (this._mode !== 'view') this._setMode('view');
+    this._pendingNavMode = null;
+    this._geometryHistory.clear();
+    this._activeDraftId = null;
+    this._resumeDraftBySpace = {};
+    this._draftSegmentCms = [];
+    this._closingWallCm = null;
+    this._drawWallField = null;
+    this._showHidden = false;
+
+    // A same-element reattach must not render an editor-only modal over View.
+    this._tapConfirm = null;
+    this._vacCalConfirm = null;
+    this._decorEraseConfirm = null;
+    this._openingInfo = null;
+    this._closeInfoCard();
+    this._rulesDialog = null;
+    this._alignDialog = null;
+    this._backupImportDialog = null;
+    this._backupExportDialog = null;
+    this._settingsDialog = null;
+    this._markerDialog = null;
+    this._openingDialog = null;
+    this._physicalDialog = null;
+    this._wallDialog = null;
+    this._backdropDialog = null;
+    this._decorShapeDialog = null;
+    this._decorTextDialog = null;
+    this._mergeDialog = null;
+    this._roomDialog = false;
+    this._spaceDialog = null;
+    this._importDialog = null;
+
+    // `_warmPatch()` intentionally refuses to write under a different path,
+    // because warmBootKey already belongs to the route we just left. Seal the
+    // owned slot directly with the safe return state and discard its painted
+    // editor fingerprint; a later instance may still reuse settled dimensions
+    // and device metadata, but never the editor or its draft.
+    const slot = this._warmSlot;
+    if (slot?.owner === this._warmGen) {
+      slot.vp = this._warmViewportState();
+      slot.dlg = null;
+      slot.frameFingerprint = '';
+      clearTimeout(slot.evict);
+      slot.evict = 0;
+    }
+    this._saveNav();
   }
 
   private _setMode(mode: 'view' | 'plan' | 'devices' | 'decor'): void {
@@ -4923,7 +4950,8 @@ class HouseplanCard extends LitElement {
         this._zoom = snap.zoom;
         this._view = null;
         requestAnimationFrame(() => {
-          if (!this._stageEl || this._mode !== 'view' || this._space !== snap.space) return;
+          if (!this.isConnected || !this._stageEl
+              || this._mode !== 'view' || this._space !== snap.space) return;
           this._applyView(snap.zoom, snap.cx, snap.cy);
           this._saveZoom(); // editor wheel zoom wrote itself to LS_ZOOM — put the view zoom back
           this.requestUpdate();
@@ -10153,6 +10181,7 @@ class HouseplanCard extends LitElement {
       const hasLightEntity = Object.prototype.hasOwnProperty.call(marker || {}, 'light_entity');
       const hasGlowColor = Object.prototype.hasOwnProperty.call(marker || {}, 'glow_color');
       const hasValueBadge = Object.prototype.hasOwnProperty.call(marker || {}, 'value_badge');
+      const hasTapAction = Object.prototype.hasOwnProperty.call(marker || {}, 'tap_action');
       const glowOverride = normalizeGlowColorOverride(marker?.glow_color);
       const currentBadge = this._devicePresentation(d, true).valueBadge;
       const badgeCandidates = valueBadgeCandidates(this._planHass, d, this._devices);
@@ -10173,11 +10202,14 @@ class HouseplanCard extends LitElement {
         rippleSize: Number(d.marker?.ripple_size) > 0 ? Number(d.marker!.ripple_size) : 3,
         size: Number(d.marker?.size) > 0 ? Number(d.marker!.size) : 1,
         angle: Number(d.marker?.angle) || 0,
-        tapAction: d.marker?.tap_action || '',
+        tapAction: projectedTapAction(d.marker?.tap_action, d.primary?.split('.')[0]),
+        tapActionTouched: false,
+        originalHasTapAction: hasTapAction,
+        originalTapAction: d.marker?.tap_action,
+        tapHintAnnouncement: '',
         tapTarget: d.marker?.tap_target || '',
         tapConfirm: d.marker?.tap_confirm === true,
         runFilter: '',
-        defaultTap: d.primary?.split('.')[0] === 'light' ? 'toggle' : 'info',
         // Keep unknown, temporarily inactive and duplicate external targets
         // byte-for-byte across Open → Save. Runtime uses the filtered
         // effective projection; a legacy self-reference is not a light source.
@@ -10226,8 +10258,10 @@ class HouseplanCard extends LitElement {
         name: '', binding: 'virtual', bindingMode: 'virtual', bindingOpen: false,
         showEntities: false, bindingFilter: '', icon: '', autoIcon: '',
         display: 'badge', rippleColor: '', rippleSize: 3, size: 1, angle: 0,
-        tapAction: '', tapTarget: '', tapConfirm: false, runFilter: '',
-        defaultTap: 'info', controls: [], controlsFilter: '',
+        tapAction: 'info', tapActionTouched: false,
+        originalHasTapAction: false, originalTapAction: undefined, tapHintAnnouncement: '',
+        tapTarget: '', tapConfirm: false, runFilter: '',
+        controls: [], controlsFilter: '',
         lightRole: 'auto', lightRoleTouched: false,
         originalHasIsLight: false, originalIsLight: undefined,
         lightEntity: '', lightEntityTouched: false,
@@ -10573,6 +10607,16 @@ class HouseplanCard extends LitElement {
     return fields;
   }
 
+  /** Preserve absent/default and legacy cover until the user edits the select. */
+  private _markerTapActionFields(
+    d: NonNullable<HouseplanCard['_markerDialog']>,
+  ): Pick<Marker, 'tap_action'> | Record<string, never> {
+    if (!d.tapActionTouched) {
+      return d.originalHasTapAction ? { tap_action: d.originalTapAction ?? null } : {};
+    }
+    return { tap_action: d.tapAction || null };
+  }
+
   private async _saveMarker(): Promise<void> {
     const dlg = this._markerDialog;
     if (!dlg || dlg.busy) return;
@@ -10645,7 +10689,7 @@ class HouseplanCard extends LitElement {
         ripple_size: dlg.display === 'icon_ripple' && dlg.rippleSize !== 3 ? dlg.rippleSize : null,
         size: dlg.size !== 1 ? dlg.size : null,
         angle: dlg.angle ? dlg.angle : null,
-        tap_action: dlg.tapAction || null,
+        ...this._markerTapActionFields(dlg),
         tap_target: dlg.tapAction === 'run' ? dlg.tapTarget || null : null,
         tap_confirm: dlg.tapConfirm ? true : null,
         controls: controls.length ? controls : null,
@@ -12290,7 +12334,10 @@ class HouseplanCard extends LitElement {
    */
   private _lightBarriers(
     space: SpaceModel, polys: { r: RoomCfg; poly: number[][] }[], physical: number[][][],
-  ): { occluders: LightSegment[]; floor: number[][][]; fingerprint: string } {
+  ): {
+    occluders: LightSegment[]; floor: number[][][]; fingerprint: string;
+    masonryGeometry: any;
+  } {
     // Gates are door-like: their different symbol must not change how light
     // crosses the clear opening.
     const openCuts = this._openPairs().flatMap((p) => p.segs);
@@ -12310,6 +12357,9 @@ class HouseplanCard extends LitElement {
       return onFloor([o.rx + nx * probe, o.ry + ny * probe])
         && onFloor([o.rx - nx * probe, o.ry - ny * probe]);
     });
+    // Openings omitted from `passages` remain part of light's opaque masonry.
+    // Consequently a source centred in an exterior door/gate or any window is
+    // rejected below exactly like a source centred inside the wall itself.
     for (const o of passages) {
       const rad = (o.angle * Math.PI) / 180;
       const dx = (Math.cos(rad) * o.rlen) / 2;
@@ -12368,6 +12418,7 @@ class HouseplanCard extends LitElement {
       occluders: splitAtIntersections(occluders),
       floor: polys.map((x) => x.poly),
       fingerprint,
+      masonryGeometry: masonry?.geom || [],
     };
     this._lightBarrierCache = { key: cacheKey, value };
     return value;
@@ -12386,7 +12437,9 @@ class HouseplanCard extends LitElement {
       return svg`` as unknown as TemplateResult;
     }
     const physical = this._physicalBodiesR(space);
-    const { occluders, floor, fingerprint } = this._lightBarriers(space, polys, physical);
+    const {
+      occluders, floor, fingerprint, masonryGeometry,
+    } = this._lightBarriers(space, polys, physical);
     // Resolve against the whole plan: a controller and its passive lamp may
     // legitimately live in different spaces. Ownership is filtered afterwards.
     const resolvedSources = resolvedLightSources(this._renderPlanHass, this._renderDevices)
@@ -12430,9 +12483,17 @@ class HouseplanCard extends LitElement {
       const ownCm = Number(d.marker?.glow_radius_cm);
       const R = Number.isFinite(ownCm) && ownCm > 0 ? (ownCm / this._cellCm) * this._gridPitch : defaultR;
       const pos = this._pos(d);
-      // Invalid placement in an independent physical body must remain dark.
-      // The visibility sweep separately rejects a source on any opaque edge.
-      if (physical.some((body) => pointInPhysicalBody([pos.x, pos.y], body))) {
+      // Invalid placement inside any opaque body must remain dark. The
+      // masonry geometry already contains the exact passage cuts, so a valid
+      // interior doorway remains transparent while a source embedded in the
+      // surrounding wall cannot light one side of its tunnel. The visibility
+      // sweep separately rejects a source that lies exactly on an opaque edge.
+      const sourcePoint = [pos.x, pos.y];
+      // Exterior opening tunnels deliberately remain in `masonryGeometry`,
+      // so placing the source there suppresses the entire pool rather than
+      // lighting only the indoor half of the tunnel.
+      if (pointInPhysicalGeometry(sourcePoint, masonryGeometry)
+          || physical.some((body) => pointInPhysicalBody(sourcePoint, body))) {
         // This placement cannot produce a valid previous-frame fade: the old
         // clip belongs to a different position. Remove its transition state as
         // well, rather than leaving a timer for a DOM node no longer rendered.
@@ -15724,7 +15785,7 @@ class HouseplanCard extends LitElement {
       ripple_size: d.display === 'icon_ripple' && d.rippleSize !== 3 ? d.rippleSize : null,
       size: d.size !== 1 ? d.size : null,
       angle: d.angle || null,
-      tap_action: d.tapAction || null,
+      ...this._markerTapActionFields(d),
       tap_target: d.tapAction === 'run' ? d.tapTarget || null : null,
       tap_confirm: d.tapConfirm ? true : null,
       controls: controls.length ? controls : null,
@@ -15773,6 +15834,91 @@ class HouseplanCard extends LitElement {
     });
     this._markerPreviewMemo = { key, device };
     return device;
+  }
+
+  private _toggleIntent(
+    device: DevItem,
+    devices: readonly DevItem[] = this._devices,
+  ): ResolvedToggleIntent | null {
+    return resolveToggleIntent({
+      hass: this._planHass,
+      registryHass: this._fullRegistryHass,
+      devices,
+      device,
+    });
+  }
+
+  private _toggleIntentForDialog(
+    d: NonNullable<HouseplanCard['_markerDialog']>,
+  ): ResolvedToggleIntent | null {
+    const preview = this._markerPreviewDevice(d);
+    if (!preview) return null;
+    const devices = [...this._devices.filter((item) => item.id !== preview.id), preview];
+    return this._toggleIntent(preview, devices);
+  }
+
+  private _toggleStateText(entityId: string, fallback: string): string {
+    const state = this._planHass?.states?.[entityId] || this.hass?.states?.[entityId];
+    try {
+      return state && typeof this.hass?.formatEntityState === 'function'
+        ? this.hass.formatEntityState(state) : fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
+  private _toggleHintLines(intent: ResolvedToggleIntent | null): string[] {
+    if (!intent) return [];
+    const effect = (value: ToggleNextEffect): string =>
+      this._t((`marker.toggle_effect_${value.replace('-', '_')}`) as any);
+    const skipReason = (value: ToggleSkipReason): string =>
+      this._t((`marker.toggle_skip_${value.replace('-', '_')}`) as any);
+    return formatToggleIntent(intent, {
+      single: (target) => {
+        const entityId = target.entityId || ('ref' in target ? target.ref : '');
+        const name = target.name || entityId;
+        return this._t('marker.toggle_hint_single', { name, id: entityId });
+      },
+      group: (targets) => this._t('marker.toggle_hint_group', {
+        count: targets.length,
+        names: targets.map((target) => `${target.name} (${target.entityId})`).join(', '),
+      }),
+      currentNext: (target, next) => this._t('marker.toggle_hint_current', {
+        state: this._toggleStateText(target.entityId, target.state),
+        effect: effect(next),
+      }),
+      groupCurrentNext: (targets, next) => this._t('marker.toggle_hint_group_current', {
+        on: targets.filter((target) => target.state === 'on').length,
+        count: targets.length,
+        effect: effect(next),
+      }),
+      skipped: (targets) => this._t('marker.toggle_hint_skipped', {
+        count: targets.length,
+        targets: targets.map((target) => {
+          const id = target.entityId || target.ref;
+          return `${target.name || id} (${id}: ${skipReason(target.reason)})`;
+        }).join(', '),
+      }),
+      none: (reason: ToggleNoneReason) =>
+        this._t((`marker.toggle_none_${reason.replaceAll('-', '_')}`) as any),
+    });
+  }
+
+  /** Store one user-triggered announcement; live HA state ticks do not mutate it. */
+  private _announceToggleDraft(
+    d: NonNullable<HouseplanCard['_markerDialog']>,
+  ): NonNullable<HouseplanCard['_markerDialog']> {
+    const preview = this._markerPreviewDevice(d);
+    const next = !d.tapActionTouched
+      ? { ...d, tapAction: projectedTapAction(
+          d.originalHasTapAction ? d.originalTapAction : null,
+          preview?.primary?.split('.')[0],
+        ) }
+      : d;
+    const text = next.tapAction === 'toggle'
+      ? this._toggleHintLines(this._toggleIntentForDialog(next)).join(' ')
+      : '';
+    return { ...next, tapHintAnnouncement: text };
   }
 
   private _valueBadgeForBinding(
@@ -15907,7 +16053,9 @@ class HouseplanCard extends LitElement {
         return;
       }
     }
-    this._markerDialog = { ...d, controls: [...d.controls, ref], controlsFilter: '' };
+    this._markerDialog = this._announceToggleDraft({
+      ...d, controls: [...d.controls, ref], controlsFilter: '',
+    });
   }
 
   /** Switch modes without losing manual drafts; entering a manual mode snapshots live values once. */
@@ -15951,6 +16099,9 @@ class HouseplanCard extends LitElement {
     const previewLightDevices = previewDevice
       ? [...this._devices.filter((item) => item.id !== previewDevice.id), previewDevice]
       : this._devices;
+    const toggleIntent = d.tapAction === 'toggle' && previewDevice
+      ? this._toggleIntent(previewDevice, previewLightDevices) : null;
+    const toggleHintLines = this._toggleHintLines(toggleIntent);
     const previewPresentation = previewDevice
       ? resolveDevicePresentation(this._planHass, previewDevice, {
           liveStates: this._config?.live_states !== false,
@@ -16045,18 +16196,20 @@ class HouseplanCard extends LitElement {
                     controls: persistedExternalControls('virtual', d.controls),
                     autoIcon: this._autoIconForBinding('virtual'),
                   };
-                  this._markerDialog = { ...next, ...this._valueBadgeForBinding(next, 'virtual') };
+                  this._markerDialog = this._announceToggleDraft({
+                    ...next, ...this._valueBadgeForBinding(next, 'virtual'),
+                  });
                 }} />
               <span>${this._t('marker.virtual_option')}</span>
             </label>
             <div class="bindharow">
               <label class="srcrow">
                 <input type="radio" name="bmode" .checked=${d.bindingMode === 'ha'}
-                  @change=${() => (this._markerDialog = {
+                  @change=${() => (this._markerDialog = this._announceToggleDraft({
                     ...d, bindingMode: 'ha',
                     binding: d.binding === 'virtual' ? '' : d.binding,
                     bindingOpen: d.binding === 'virtual' || !d.binding,
-                  })} />
+                  }))} />
                 <span>${this._t('marker.from_ha_option')}</span>
               </label>
               <label class="srcrow inline entcheck" title=${this._t('marker.show_entities_tip')}>
@@ -16090,7 +16243,9 @@ class HouseplanCard extends LitElement {
                                   ),
                                   autoIcon: this._autoIconForBinding(c.value),
                                 };
-                                this._markerDialog = { ...next, ...this._valueBadgeForBinding(next, c.value) };
+                                this._markerDialog = this._announceToggleDraft({
+                                  ...next, ...this._valueBadgeForBinding(next, c.value),
+                                });
                               }}>
                               <span class="cl">${c.label}</span><span class="cs">${c.sub}</span>
                             </div>`,
@@ -16114,13 +16269,26 @@ class HouseplanCard extends LitElement {
           ${this._renderVacSection(d)}
 
           <label>${this._t('marker.tap_label')}</label>
-          <select class="areasel" .value=${d.tapAction || d.defaultTap}
-            @change=${(e: Event) => (this._markerDialog = { ...d, tapAction: (e.target as HTMLSelectElement).value })}>
-            ${TAP_ACTIONS.filter((v) => v !== 'cover' || this._bindingCoverTap(d.binding))
-              .map((v) => [v, 'tap.' + v.replace('-', '_')] as const).map(
+          <select class="areasel" .value=${d.tapAction}
+            aria-describedby=${d.tapAction === 'toggle' ? 'marker-toggle-hint' : nothing}
+            @change=${(e: Event) => {
+              const next = {
+                ...d,
+                tapAction: (e.target as HTMLSelectElement).value,
+                tapActionTouched: true,
+              };
+              this._markerDialog = this._announceToggleDraft(next);
+            }}>
+            ${TAP_ACTIONS.map((v) => [v, 'tap.' + v.replace('-', '_')] as const).map(
               ([v, k]) => html`<option value=${v}>${this._t(k as any)}</option>`,
             )}
           </select>
+          ${d.tapAction === 'toggle'
+            ? html`<div id="marker-toggle-hint" class="rhint togglehint">
+                ${toggleHintLines.map((line) => html`<div>${line}</div>`)}
+              </div>
+              <div class="sr-only" role="status" aria-live="polite">${d.tapHintAnnouncement}</div>`
+            : nothing}
           ${d.tapAction === 'run'
             ? (() => {
                 const q = d.runFilter.trim().toLowerCase();
@@ -16150,7 +16318,7 @@ class HouseplanCard extends LitElement {
                     : nothing}`;
               })()
             : nothing}
-          ${d.tapAction === 'run' || d.tapAction === 'toggle' || d.tapAction === 'cover' || (!d.tapAction && d.defaultTap === 'toggle')
+          ${d.tapAction === 'run' || (d.tapAction === 'toggle' && !!toggleIntent?.command)
             ? html`<label class="srcrow" title=${this._t('marker.tap_confirm_tip')}>
                 ${this._boolInput(d.tapConfirm, (v) => (this._markerDialog = { ...d, tapConfirm: v }))}
                 <span>${this._t('marker.tap_confirm')}</span>
@@ -16166,7 +16334,9 @@ class HouseplanCard extends LitElement {
                   return html`<span class="ctrlchip ${info.warning ? 'warning' : ''}" title=${info.sub}>
                   <ha-icon icon=${info.icon}></ha-icon>${info.label}
                   <ha-icon icon="mdi:close" @click=${() =>
-                    (this._markerDialog = { ...d, controls: d.controls.filter((x) => x !== eid) })}></ha-icon>
+                    (this._markerDialog = this._announceToggleDraft({
+                      ...d, controls: d.controls.filter((x) => x !== eid),
+                    }))}></ha-icon>
                 </span>`;
                 })}
               </div>`

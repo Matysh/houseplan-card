@@ -16,9 +16,10 @@ import {
   type DeviceActivity, type DeviceVisualState, type EntityVisualSample,
 } from './device-visual';
 import {
-  coverEntityOf, hassValue, lightColorOf, lqiColor, normalizeDeviceDisplay, stateIcon, valueWithUnit,
+  hassValue, lightColorOf, lqiColor, normalizeDeviceDisplay, stateIcon, valueWithUnit,
   type DeviceDisplayMode,
 } from './logic';
+import { resolveToggleIntent, toggleCoverEntity } from './device-toggle';
 import type { DevItem } from './types';
 import { safeStoredColor } from './color';
 import { resolveDeviceValueBadge, type ResolvedValueBadge } from './device-value-badge';
@@ -196,7 +197,12 @@ export function resolvePresentationSources(
   let sourceKind: PresentationSourceKind = 'none';
   let visualSources: ResolvedPresentationSource[] = [];
 
-  const cover = d.tapAction === 'cover' ? coverEntityOf(d.entities) : null;
+  const cover = toggleCoverEntity(resolveToggleIntent({
+    hass,
+    devices: lightDevices,
+    device: d,
+    lightSources: planLightSources,
+  }));
   // A target owns Glow and room statistics, while a controller still needs to
   // present the aggregate state of what it controls. Resolve the controller
   // locally for ordinary entity refs, then project marker:* targets from the

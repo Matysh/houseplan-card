@@ -46,6 +46,12 @@ plan geometry and shares it between every lamp in the space.
 So the light's masonry is cut by passages only and differs on purpose from the
 drawn one.
 
+Source placement follows the same geometry, fail-dark. If the source centre is
+inside an opaque wall body, a window tunnel, or an exterior door/gate opening,
+the source produces no Glow at all. It does not light the indoor half of the
+opening. An interior door/gate passage remains a real hole and is therefore a
+valid source position.
+
 ## From barriers to a lit region
 
 1. **Split at crossings** (`splitAtIntersections`). The sweep casts a ray at

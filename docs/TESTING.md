@@ -402,26 +402,23 @@ separately promised workflows:
       list has "Run automation/script/scene" with a searchable picker; saving
       without a target is refused; the confirm checkbox guards toggle AND run
       (our dialog, Esc/cancel = no call); automation.trigger / script.turn_on /
-      scene.turn_on per domain; a deleted target toasts and calls nothing;
-      covers/valves joined the card-wide toggle EXCEPT garage/door/gate
-      device classes (explicit per-device toggle still works for them)
+      scene.turn_on per domain; a deleted target toasts and calls nothing
       [auto: smoke_tap_run + unit resolveTapAction/runServiceFor + backend
       test_run_target_is_bounded_to_runnable_domains]
-- [ ] Tap opens/closes a cover (dev, owner's spec 2026-08-03): the tap-action
-      list gains "Open/close (curtains/blinds)" — offered ONLY when the binding
-      has a cover entity, and never for the guarded classes garage/door/gate
-      (a value smuggled into the config there degrades to the info card).
-      closed -> cover.open_cover, open (incl. ajar) -> cover.close_cover,
-      opening/closing -> cover.stop_cover, no readable state -> cover.toggle;
-      the «ask for confirmation» checkbox guards it like toggle/run.
-      Indication: while travelling the icon breathes a soft activity ring
-      (`.activity-transition`, 2.2s, static under prefers-reduced-motion) in
-      display «Icon + activity» and the plate stays NEUTRAL in EVERY state
-      (2026-08-04, see the next item); the icon
-      morphs by state + device_class (blinds/shutter/curtain…), unknown state
-      morphs nothing; no position percentages anywhere
-      [auto: smoke_cover_tap + units resolveTapAction/coverService/stateIcon +
-      backend test_cover_tap_action_is_accepted]
+- [ ] Universal Toggle state (#94): the option is visible for device, entity
+      and virtual markers; the separate Open/close option is absent. The hint
+      names the exact target(s), current state, next effect and skipped refs.
+      Exact entity never retargets to a sibling; explicit controls never fall
+      back to the controller; partial groups call exactly the shown available
+      subset; a no-target tap is a quiet no-op. Locks, alarm panels and
+      garage/door/gate covers are explained secure no-ops. Cover/valve use
+      closed→open, open→close, moving→stop when supported, otherwise their
+      domain toggle. Confirmation re-resolves current state but cancels if the
+      target set changed. Opening and saving an untouched legacy `cover` or an
+      absent light default preserves the original token/absence; an intentional
+      selector edit writes `toggle`
+      [auto: test/device-toggle.test.mjs + smoke_cover_tap +
+      smoke_cover_not_primary + backend action-schema parity]
 - [ ] A cover is NEVER painted (dev, owner 2026-08-04): «у штор не должно быть
       жёлтой подложки никогда, индикация открыто/закрыто за счёт морфинга
       иконки». Walk one curtain through closed / open / ajar / opening /
@@ -439,38 +436,15 @@ separately promised workflows:
       orange «открыто» frame (a valve has no icon pair, so the frame is all it
       has) [auto: smoke_cover_no_plate + unit stateIcon «every class, both
       ways»]
-- [ ] Open/close works when the cover is NOT the primary entity (dev, owner's
-      report 2026-08-04): a curtain driver that ships its `cover.*` hidden by
-      the integration next to a visible `switch.*_reverse_direction` (Aqara
-      E1 — his own) has a SWITCH for a primary; picking «Open/close» in the
-      dialog, saving it and tapping the marker sends `cover.open_cover` to the
-      cover, never touches the service switch and never falls back to the info
-      card. The guarded class is read off that same cover, so a garage still
-      degrades to info and is still not offered in the dialog
-      [auto: smoke_cover_not_primary + unit coverEntityOf]
-- [ ] Curtain INDICATION follows the same cover (dev, owner 2026-08-04): with
-      «Open/close» chosen on that same Aqara marker, the plan shows the cover
-      and not the service switch — the breathing ring while it travels
-      (`activity-transition`, opening AND closing), the `mdi:curtains-closed` /
-      `mdi:curtains` morph, a neutral plate throughout (the «открыто» frame
-      was retired for covers later the same day), and no yellow plate when
-      `switch.*_reverse_direction` happens to be on. The rule is exactly
-      the explicit action (docs/FILTERING.md «What a marker SHOWS»): take the
-      action away and the marker speaks for its primary again; a lit lamp that
-      also owns a cover keeps its yellow and its own icon
-      [auto: smoke_cover_not_primary (the indication section)]
-- [ ] Nothing paints over an explicit curtain (dev, audit DEV-1DA1-01): the
-      cover is the FIRST rule of «What a marker SHOWS», above `controls` and
-      above a lit light. Two markers set to «Открыть/закрыть»: one on a mixed
-      device whose own `light.*` is ON, one whose bound `controls` switch is
-      ON. In every cover state (closed / open / opening / closing) the plate
-      stays neutral — never the yellow «включено», never the orange «открыто»
-      — with «Icon + activity» the travelling ring breathes, the icon morphs
-      with the cover, and in glow fill the ring is still there (that is where a yellow-plated curtain
-      used to lose BOTH indicators). Untouched: the same mixed device without
-      the explicit action is yellow again, a wall switch still mirrors its
-      controls, and an «Открыть/закрыть» marker whose device has no `cover.*`
-      at all falls back to its primary [auto: smoke_cover_plate_precedence]
+- [ ] Cover target and indication parity: on a device where a hidden functional
+      `cover.*` competes with an auxiliary option switch, the shared resolver
+      selects the cover, calls only it and supplies the same entity to icon
+      morph/activity. A mixed lamp+cover remains a lamp unless the universal
+      toggle result actually selects the cover. Cover presentation remains
+      neutral in every state and cannot be painted yellow by its controls;
+      secure cover classes call nothing and never fall back to info
+      [auto: smoke_cover_not_primary + smoke_cover_plate_precedence +
+      test/device-toggle.test.mjs]
 - [ ] Light-source badges (current contract): in glow fill a lit lamp's badge
       stays yellow just like a lit socket; the pool keeps the source's RGB while
       the marker keeps semantic yellow. Other fills behave identically;
@@ -756,13 +730,16 @@ separately promised workflows:
 - [ ] Dashed boundaries in the Plan editor (v1.38.3): open stretches render as
       a true dash in markup too (blue trimmed outlines); merge/split-picked
       rooms keep their full amber highlight [auto: smoke_openwall]
-- [ ] Nav persistence (v1.38.2): closing/reopening the tab restores the last
-      space AND editor mode (admins; localStorage); a #space= deep link beats
-      the saved space; a stale cache without the saved space retries after the
-      live config loads [manual]
-- [ ] Tap action cleanup + right click (v1.38.1): the per-device action list
-      has three options (Device card / HA more-info / Toggle), no "card
-      default" — the card editor's global tap option is gone and ignored;
+- [ ] Nav persistence (#93): reload or another-HA-route → return restores only
+      the last space and always starts in View; legacy `{space, mode}` ignores
+      `mode` and is rewritten without it. A `#space=` deep link beats the saved
+      space but still opens View. A technical same-route remount preserves an
+      unfinished editor/dialog, while a real route departure clears both
+      [auto: smoke_nav_persist + smoke_warm_dialogs]
+- [ ] Tap action cleanup + right click (v1.38.1, #94): the per-device action
+      list has four options (Device card / HA more-info / Toggle state / Run),
+      no separate cover or "card default" option — the card editor's global
+      tap option is gone and ignored;
       right click on an icon in VIEW opens HA more-info (native menu kept in
       editors; virtual w/o entity → device card) [auto: smoke_tap_ctx]
 - [ ] Binding section redesign (v1.38.0): two radios — Virtual / Pick from
@@ -808,7 +785,10 @@ separately promised workflows:
       Transparent: doorways, gates and virtual boundaries — but only
       where BOTH sides are floor; a window and an outside door are opaque, and
       an outside door must not change the lit region at all (no half-lit
-      tunnel). Light must never appear inside a wall body: at an opening it
+      tunnel). A source centred inside an exterior door, gate or window
+      opening produces no Glow pool at all, while the same placement inside an
+      interior door/gate passage remains valid. Light must never appear inside
+      a wall body: at an opening it
       shows only within the gap between the jamb faces, never as a bright bar
       along the wall, and a shadow starts at the corner that casts it rather
       than half a wall away from it.
@@ -1045,8 +1025,14 @@ separately promised workflows:
 
 ## Tap actions & gestures ★
 
-- [ ] Default: tap → info card; card option `toggle`: tap toggles lights/switches/fans/humidifiers only [manual]
-- [ ] Locks/alarms never toggle, even with per-device override [manual]; covers/valves toggle only with explicit per-device override [manual]
+- [ ] Default: tap → info card, except a primary light's lossless toggle default.
+      Universal Toggle state is visible for every marker and its inline hint
+      exactly matches the eventual service target/effect [manual +
+      test/device-toggle.test.mjs]
+- [ ] Locks, alarms and secure garage/door/gate covers resolve to explained
+      no-op. Ordinary covers/valves use open/close/stop through the same option;
+      virtual/no-target toggle saves but neither calls a service nor opens info
+      [manual + smoke_cover_tap]
 - [ ] Long-press (600 ms) always opens the info card, also when tap=toggle [manual]
 - [ ] Drag > 3 px cancels both tap and long-press; pinch/pan never triggers taps
 - [ ] `pointercancel` (touch interrupted) does not leave a phantom info card [manual]

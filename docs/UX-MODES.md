@@ -17,11 +17,12 @@ NO tab (since v1.30.2). The Background editor (v1.33.0) manages a purely visual
 decor layer (lines/rects/ovals/text in `space.decor`, drawn under the rooms,
 inert everywhere outside its editor).
 
-- **View** is the implicit default state: no editor tab is active. Since
-  v1.38.2 the last space AND editor mode are restored across reloads
-  (localStorage, admins only for edit modes) — closing and reopening the tab
-  lands you where you were (owner's decision, reversing the earlier
-  "never restore" rule).
+- **View** is the implicit default state: no editor tab is active. Navigation
+  persistence remembers only the last space. Reloading the page or leaving
+  House Plan for another Home Assistant route and returning always opens View
+  for that space; editor mode, selection and open editor dialogs are session
+  state. A purely technical same-route Lovelace remount may preserve an
+  unfinished editor session so an internal DOM rebuild does not destroy work.
 - Activating an editor tab highlights it and opens that editor's bottom toolbar
   (all three editors have one). The toolbar and the active tab each
   carry an **X** that closes the editor back to View; re-clicking the active tab

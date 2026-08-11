@@ -113,6 +113,22 @@ const res = await page.evaluate(async () => {
   c = mk(); await sleep(120); await c.updateComplete; await sleep(60);
   out.dAlignNotRevived = !c._alignDialog;
 
+  // ================= E. реальный уход с маршрута завершает редактор =======
+  c._setMode('devices'); await c.updateComplete; await sleep(60);
+  const returnUrl = `${location.pathname}${location.search}${location.hash}`;
+  const returnSpace = c._space;
+  const routeDev = c._devices.find((d) => d.space === returnSpace);
+  c._openMarkerDialog(routeDev); await c.updateComplete;
+  history.pushState({}, '', '/__houseplan-away__');
+  window.dispatchEvent(new CustomEvent('location-changed'));
+  await c.updateComplete;
+  out.eLiveDepartureEndsEditor = c._mode === 'view' && !c._markerDialog;
+  c.remove(); await sleep(20);
+  history.replaceState({}, '', returnUrl);
+  c = mk(); await sleep(120); await c.updateComplete; await sleep(60);
+  out.eWarmReturnKeepsOnlySpace = c._space === returnSpace
+    && c._mode === 'view' && !c._markerDialog;
+
   c.remove(); wrap.remove();
   return out;
 });

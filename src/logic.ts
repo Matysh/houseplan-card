@@ -789,7 +789,6 @@ export function safeUrl(url: string | null | undefined): string | null {
 
 export type TapAction = 'info' | 'more-info' | 'toggle' | 'run' | 'cover';
 
-/** Domains a card-wide `tap_action: toggle` may toggle (accidental-tap safe). */
 /**
  * The option lists the editors offer, in one place — and the reason they are
  * here rather than inline in the templates.
@@ -818,7 +817,8 @@ export function normalizeDeviceDisplay(value: unknown): DeviceDisplayMode {
   return (DISPLAY_MODES as readonly unknown[]).includes(value)
     ? value as DeviceDisplayMode : 'badge';
 }
-export const TAP_ACTIONS = ['info', 'more-info', 'toggle', 'run', 'cover'] as const;
+/** Current editor choices. `cover` remains a read/backend compatibility token. */
+export const TAP_ACTIONS = ['info', 'more-info', 'toggle', 'run'] as const;
 /** Persisted space-level data fills. `none` remains a read-compatibility token;
  * the space editor projects it to `custom` because every room has a visible
  * base colour and the user can now choose that colour directly. */
@@ -831,9 +831,9 @@ export const ROOM_FILL_MODES = ['none', 'lqi', 'light', 'temp', 'custom'] as con
 export const TOGGLE_SAFE_DOMAINS = new Set(['light', 'switch', 'fan', 'humidifier', 'cover', 'valve']);
 
 /**
- * Domains that must NEVER toggle from a plan tap, even with an explicit
- * per-device override: an accidental tap unlocking a door or disarming an
- * alarm is a security incident, not a UX shortcut.
+ * Domains forbidden to the deprecated card-wide default. The current UI may
+ * still persist a universal explicit toggle; `device-toggle.ts` resolves that
+ * choice to a visible secure no-op instead of silently changing the action.
  */
 export const TOGGLE_FORBIDDEN_DOMAINS = new Set(['lock', 'alarm_control_panel']);
 
@@ -841,13 +841,13 @@ export const TOGGLE_FORBIDDEN_DOMAINS = new Set(['lock', 'alarm_control_panel'])
  * Resolve the effective tap action for a device icon.
  *
  * Order: per-device override → card-wide default → 'info'.
- * 'toggle' is applied conservatively: a card-wide toggle only affects
- * TOGGLE_SAFE_DOMAINS; an explicit per-device toggle affects any domain
- * except TOGGLE_FORBIDDEN_DOMAINS. Everything else falls back to 'info'.
+ * This compatibility helper only projects the persisted action. Actual target,
+ * capability and security resolution belongs to `device-toggle.ts`; an
+ * explicit toggle must never silently become an info action.
  */
-/** Cover classes that stay OUT of the card-wide toggle: an accidental tap
- *  opening the garage or the driveway gate is a security matter, like locks.
- *  An explicit per-device toggle remains the owner's conscious choice. */
+/** Cover classes that stay OUT of the deprecated card-wide toggle. The shared
+ * runtime resolver also blocks them for an explicit action, but does so after
+ * resolving the exact target so the UI can explain why the command is a no-op. */
 export const COVER_GUARDED_CLASSES = new Set(['garage', 'door', 'gate']);
 
 export function resolveTapAction(
@@ -865,17 +865,15 @@ export function resolveTapAction(
   // 'run' is EXPLICIT-only by construction: it needs a per-marker target, so
   // it can never arrive as a card-wide default
   if (want === 'run') return explicit === 'run' ? 'run' : 'info';
-  // 'cover' (open/close/stop, owner's spec 2026-08-03) is EXPLICIT-only and
-  // cover-only. The guarded classes never get it: the option is not offered
-  // in the dialog, and a value smuggled into the config degrades to 'info'
-  // — exactly what a card-wide toggle does for a garage door.
+  // Legacy cover stays distinguishable at the read boundary. The current UI
+  // projects it to toggle without rewriting it on a plain Open → Save.
   if (want === 'cover') {
     if (explicit !== 'cover' || domain !== 'cover') return 'info';
-    return COVER_GUARDED_CLASSES.has(String(deviceClass || '')) ? 'info' : 'cover';
+    return 'cover';
   }
   if (want !== 'toggle') return 'info';
-  if (!domain || TOGGLE_FORBIDDEN_DOMAINS.has(domain)) return 'info';
   if (explicit === 'toggle') return 'toggle';
+  if (!domain || TOGGLE_FORBIDDEN_DOMAINS.has(domain)) return 'info';
   if (!TOGGLE_SAFE_DOMAINS.has(domain)) return 'info';
   // covers joined the safe set for curtains and blinds (owner, 2026-07-29) —
   // but the garage door is a cover too, and it stays shut on a default tap
@@ -902,18 +900,16 @@ export function coverService(state: string | null | undefined): string {
 }
 
 /**
- * The cover entity a marker's «Open/close» acts on: the FIRST `cover.*` among
- * ALL the device's entities — not necessarily the primary one.
+ * Legacy compatibility helper: the FIRST `cover.*` among all entities.
+ * Current actions use `resolveToggleIntent()` from `device-toggle.ts` so the
+ * click, dialog hint and presentation cannot choose different targets.
  *
  * Why this exists (owner's report 2026-08-04, verified on his own install):
  * an Aqara E1 curtain driver ships the `cover.*` HIDDEN by the integration and
  * a perfectly visible `switch.*_reverse_direction` next to it. `primaryEntity`
  * ranks visible before hidden, so the marker's primary was the service switch;
- * the tap then resolved on the domain `switch`, and the action the user had
- * explicitly chosen in the dialog degraded to the info card — while the dialog
- * kept offering it, because THAT check already looked at every entity of the
- * device. Same lesson as the climate temperature: what a device DOES is not
- * always what its primary entity is.
+ * the old tap path then resolved on `switch`. The retained helper documents
+ * that compatibility lesson even though it no longer owns runtime actions.
  */
 export function coverEntityOf(entIds: string[] | null | undefined): string | null {
   return (entIds || []).find((e) => e.startsWith('cover.')) || null;

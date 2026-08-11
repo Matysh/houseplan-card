@@ -780,9 +780,19 @@ hash falls back to the default.
   ordered external-target list. Opening and saving the dialog preserves
   duplicates and temporarily unknown/vendor targets, removing only the
   marker's own bound/device entities. The runtime projection separately
-  de-duplicates and filters to currently controllable lights/switches, then
-  toggles them as one HA-group-semantics service call on the marker's explicit
-  `tap_action=toggle`; icon state/tint mirrors those effective targets.
+  de-duplicates and filters to currently controllable lights/switches. For an
+  explicit `tap_action=toggle`, `resolveToggleIntent` executes the available
+  subset with HA-group semantics and reports missing/disabled/unsupported refs;
+  icon state/tint mirrors the effective light graph.
+- **Universal device action** (#94): `src/device-toggle.ts` is the only authority
+  for toggle origin, exact target, capability/security filtering, next effect
+  and service command. The dialog hint, click path, confirmation re-resolution
+  and cover presentation consume the same immutable result. Exact `entity:`
+  bindings never retarget to siblings; persisted controls never fall back to a
+  controller's own entity; secure targets are explicit no-ops. The removed UI
+  action `cover` remains accepted and losslessly round-tripped as a legacy
+  origin until the user deliberately changes the selector. An absent action on
+  a primary `light.*` likewise stays absent on an untouched Open → Save.
 - **Resolved device state** (2026-08-06): HA provides states per entity, not
   one state per device. `resolvedDeviceStateEntities` therefore starts from
   uncategorised registry entities, resolves one functional role (whole-device
@@ -824,8 +834,11 @@ hash falls back to the default.
 - **Kiosk mode** (v1.41): a card-config flag, not a mode — `_setMode` is
   hard-blocked, header hidden, swipe/carousel handled in the stage pointer
   pipeline (`swipeTarget`), per-screen multipliers in `LS_KIOSK`.
-- **Nav persistence** (v1.38.2): `LS_NAV` stores {space, mode}; hash
-  deep-link > saved > default_floor; stale-cache retry after the live load.
+- **Nav persistence** (#93): `LS_NAV` stores `{space}` only; hash deep-link >
+  saved > `default_floor`, with stale-cache retry after the live load. Editor
+  mode is transient: cold load, reload and return from another HA route start
+  in View. The warm memo may carry an editor only across a technical remount
+  on the same route.
 
 
 ## Settings tiers (owner's principle, 2026-07-26)
@@ -834,7 +847,7 @@ Four levels: **global (config.settings) → space (space.settings) → room
 (room.settings) → device (marker.*)**. Duplicated options are deliberate: the
 more specific tier overrides the more general one; "unset" always means
 "inherit". Resolution lives in pure helpers (`spaceDisplayOf`,
-`roomFillModeOf`, `sourceValue`, `resolveTapAction`) — never inline in render.
+`roomFillModeOf`, `sourceValue`, `resolveToggleIntent`) — never inline in render.
 The UI will later be unified around this model; until then each tier keeps its
 own dialog (general settings gear / space gear / room-card gear / marker
 dialog).

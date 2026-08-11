@@ -125,8 +125,10 @@ the old behaviour until an editing client materialises it.
 ## What a marker SHOWS
 
 A marker's live indication — status plate, state-morphed icon and semantic
-activity — is derived by one resolver from one effective source set. Its
-source precedence is (`_visualSamples` / `_actEntity`):
+activity — is derived by one resolver from one effective source set. Action
+selection is separate but shares `resolveToggleIntent` whenever the effective
+action is Toggle state; `_actEntity` is legacy terminology and is not an
+independent target resolver. Presentation source precedence is:
 
 `display: static_icon` is the deliberate presentation exception to the matrix
 below. The resolver still retains source metadata for preview diagnostics, but
@@ -137,9 +139,10 @@ are also suppressed. This changes presentation only: hover/focus, service-call
 feedback, controls, Glow and room light aggregation keep using the real device.
 Hidden, removed or HA-disabled lifecycle rules still outrank display mode.
 
-1. the device's **cover**, when the marker's tap action is explicitly
-   «Открыть/закрыть» (`tap_action: 'cover'` — `coverEntityOf`, the same helper
-   and the same entity the tap drives). It wins over EVERYTHING below;
+1. the resolved **cover** when `resolveToggleIntent` selected cover semantics.
+   This includes current explicit `toggle` and losslessly-read legacy
+   `tap_action: 'cover'`; the same exact entity drives open/close/stop and icon
+   morph/activity. It wins over EVERYTHING below;
 2. the marker's **resolved light sources** (`resolvedLightSources`): external
    `controls` plus its own primary controllable entity when `is_light: true`
    (an `entity:*` marker's bound entity and a `device:*` marker's child entities
@@ -179,20 +182,20 @@ the normal enabled-mode fallback. If the integration exposes no recognized
 action, the current non-off state is matched against HA's `hvac_modes` (plus the
 standard modes) and used as the best available enabled/working approximation.
 
-Rule 1 was added 2026-08-04 on the owner's report: his Aqara «Roller shade
+The original cover-first rule was added 2026-08-04 on the owner's report: his Aqara «Roller shade
 driver E1» curtains ship the `cover.*` hidden by the integration and a visible
 `switch.*_reverse_direction`, so `primaryEntity` picked the service switch —
 the plan showed no ring while a curtain travelled, no `curtains` /
 `curtains-closed` morph, and a yellow «включено» plate whenever the
-reverse-direction option happened to be on. The tap had already been
-taught to find the cover among ALL the device's entities (2026-08-04, the
-same `coverEntityOf`); the indication now follows it.
+reverse-direction option happened to be on. Issue #94 moves target selection
+from the former `coverEntityOf` branch into the shared action resolver; the
+indication still follows exactly the entity the tap would drive.
 
 **Why the cover is FIRST and not third** (audit DEV-1DA1-01, fixed the same
 day). It went in below `controls` and the lit light at first, and that left
 the contract below («у штор не должно быть жёлтой подложки НИКОГДА») with two
 holes big enough to walk through: a mixed device — a lamp that also ships a
-blind — told «Открыть/закрыть» went yellow off its own lit `light.*`, and a
+blind — using the former explicit «Открыть/закрыть» action went yellow off its own lit `light.*`, and a
 curtain marker with a bound wall switch went yellow off `controls`. In both
 the early `return 'on'` never reached the cover branch, so the travelling
 curtain also lost its breathing ring, and in glow fill (where the renderer
@@ -200,20 +203,13 @@ strips `on` from a shining source) it was left with no indicator at all —
 while the tap still drove the cover. A rule that «шторы никогда не жёлтые»
 cannot have exceptions decided by the neighbours in the entity list.
 
-**Why it hangs on the explicit action and not on «the device has a cover».**
-Choosing «Открыть/закрыть» in the marker dialog is the only statement the card
-has that means *this marker IS the curtain* — and the dialog offers that option
-for exactly the devices where a cover exists. Tying the indication to it keeps
-one answer to «what is this marker»: the option offered, the entity tapped and
-the state shown are the same entity, decided in one place. Nothing changes
-behind the user's back for a mixed device (a lamp that also owns a blind, a TRV
-with a service switch) that was NOT told it is a curtain: it keeps its primary
-and the same controls/light/primary precedence until its owner
-says otherwise. Two edges follow from the wording: a marker set to
-«Открыть/закрыть» whose device carries no `cover.*` at all falls through to
-rules 2–3 (the statement is only as strong as the entity behind it), and a
-curtain left on «Инфо-карточка» still indicates its primary — one click in the
-dialog away, and the honest reading of what the marker was told it is.
+**Why it hangs on the resolved action target and not merely on “the device has
+a cover”.** A mixed device may be a lamp with an auxiliary blind. The universal
+action resolver first honours explicit controls, then an exact entity binding,
+then the device's resolved functional role. Presentation adopts cover semantics
+only when that same result selected the cover, so the option, hint, service call
+and state shown cannot disagree. A no-target or unsupported result falls through
+to ordinary light/device-role presentation and never invents a service target.
 
 ### A media player is powered, not "working" (owner 2026-08-07)
 
@@ -234,8 +230,8 @@ user override for a real light source.
 ### A cover is never painted (owner 2026-08-04)
 
 «У штор не должно быть жёлтой подложки НИКОГДА, индикация открыто/закрыто за
-счёт морфинга иконки.» For the `cover` domain — and for the cover an
-«Открыть/закрыть» marker indicates, rule 1 above — the visual resolver returns
+счёт морфинга иконки.» For the `cover` domain — and for the cover selected by
+the universal toggle resolver, rule 1 above — the visual resolver returns
 no working/open plate in any state:
 
 | cover state | plate | ring | icon |

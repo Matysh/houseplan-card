@@ -255,6 +255,28 @@ export function pointInPhysicalBody(point: number[], body: number[][]): boolean 
   return inside;
 }
 
+/**
+ * Test a point against polygon-clipping geometry while respecting holes.
+ * `pointInPhysicalBody()` is intentionally a ring primitive; applying it to
+ * every ring independently would classify a room floor or an opening cut as
+ * solid just because it lies inside a hole ring.
+ */
+export function pointInPhysicalGeometry(point: number[], geom: any): boolean {
+  for (const polygon of geom || []) {
+    const outer = polygon?.[0];
+    if (!outer?.length || !pointInPhysicalBody(point, outer)) continue;
+    let inHole = false;
+    for (let i = 1; i < polygon.length; i++) {
+      if (polygon[i]?.length && pointInPhysicalBody(point, polygon[i])) {
+        inHole = true;
+        break;
+      }
+    }
+    if (!inHole) return true;
+  }
+  return false;
+}
+
 export function sameColumnPlacement(a: WallColumnCfg, b: WallColumnCfg, eps: number): boolean {
   if (Math.hypot(a.center[0] - b.center[0], a.center[1] - b.center[1]) > eps) return false;
   if (Math.abs(clampColumnCm(a.cm) - clampColumnCm(b.cm)) > 1e-6) return false;

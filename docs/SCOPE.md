@@ -65,8 +65,10 @@ deliberate degradation is allowed under `TOUCH-SUPPORT.md`.
 ### The lock invariant, stated precisely (review CR-1)
 
 No lock or alarm panel is ever actuated **by a tap on the plan**: icons, lock
-badges, `marker.controls[]` and the device card all refuse (`resolveTapAction`
-+ `TOGGLE_FORBIDDEN_DOMAINS`, `isControllable`, `_cardToggle`). There is exactly
+badges, `marker.controls[]` and the device card all refuse
+(`resolveToggleIntent` secure targets, `isControllable`, `_cardToggle`). The
+universal Toggle state option may be selected and saved, but its hint explicitly
+reports a secure no-op and the click path makes no service call. There is exactly
 **one** sanctioned actuation surface: the labeled Unlock/Lock button inside an
 opened door card, which additionally confirms before unlocking. That is a
 product decision (2026-07-22), not an oversight — but it means the invariant is

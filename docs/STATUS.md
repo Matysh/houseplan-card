@@ -17,12 +17,12 @@ change must pass through a published beta/RC before stable. Stable release
 commits are promotion-only (versions, generated bundles and release/changelog
 metadata). Only an explicit owner-approved emergency hotfix may skip this gate.
 
-## Snapshot (2026-08-11)
+## Snapshot (2026-08-12)
 
 | Item | State |
 |---|---|
-| Version | **v1.62.0-beta.2** everywhere (manifest, const.py, package.json, CARD_VERSION) — prerelease candidate with explicit device value badges and the Split wall-profile fix |
-| Current local cycle | The v1.62.0-beta.2 candidate contains issues #90 and #91 plus the complete beta.1 code-review follow-up. #90 adds one explicit four-position value badge with shared plan/preview/static resolution, stable HA entity or attribute references, LQI conflict handling and legacy compatibility. #91 materializes exact legacy wall intervals before Split so changing the divider never clears adjoining thickness. Audit hardening restores `model_version` during full import, covers every new write gate and preview-token lifecycle, removes the `hp-help` listener leak, resolves the plan light graph once per frame and strengthens golden/smoke/repository gates. Issue #89 remains specification-only and is not represented as shipped behaviour. |
+| Version | **v1.62.0-beta.3** everywhere (manifest, const.py, package.json, CARD_VERSION) — prerelease candidate for issues #92–#94 |
+| Current local cycle | The v1.62.0-beta.3 candidate makes Glow fail dark when a source is embedded inside final opaque thick-wall geometry, including exterior openings (#92); persists only the selected space across real HA navigation and always returns in View while preserving same-route technical remount continuity (#93); and replaces separate toggle/cover choices with one explained `Toggle state` resolver shared by preview, click, confirmation and cover presentation (#94). Exact bindings, partial groups, secure no-op and lossless legacy/default records are explicit contracts. Issue #89 remains specification-only. |
 | Workflow | Owner's rule since 2026-08-07: ordinary fixes/features are made **locally, without tests and without commits**. A requested pre-release gets a production build plus the smallest targeted unit/smoke set covering the changed surfaces, one tested `dev` commit/tag and a GitHub Release with `prerelease=true`; `main` stays untouched. The complete local frontend/backend/smoke gate runs only before a stable release, after which `main` is fast-forwarded to the exact tested `dev` SHA and the GitHub Release uses `prerelease=false`. Release bodies are short and bilingual (Russian first): only significant user changes get individual bullets, while minor/code-only work is grouped as `Мелкие исправления и улучшения` / `Small fixes and improvements`; every body ends with separate links to the Russian and English changelogs. Detailed RU/EN changelog bullets may link the corresponding closed GitHub Issues; open or partially delivered issues are never presented as shipped. Telegram announcements are sent only for stable releases; beta and RC publication is silent. `docs/RELEASE-NOTES.md` is the current canonical body instance; `npm run release:prerelease -- <tag> --issues=… --yes` is the primary local publication path and the manual `Publish prerelease` workflow is its GitHub-only equivalent once present on `main`. Nothing is copied to the home instance by hand |
 | GitHub | https://github.com/Matysh/houseplan-card — [Issues](https://github.com/Matysh/houseplan-card/issues) are the canonical task records and the linked [Project v2](https://github.com/users/Matysh/projects/1) is the canonical priority/status view; both must stay current. `main` carries stable releases; pre-release tags may point directly at `dev`. Work lands on `dev` and is merged into `main` for a stable release, so `dev` is normally equal to or ahead of `main`, never behind. Push via SSH key `ha_jb` (remote git@github.com:…); API releases via the fine-grained PAT in `~/.git-credentials` (Contents R/W, issued 2026-07-23) |
 | CI | Prerelease publication requires a green exact-SHA Validate: frontend/backend, smoke (including the #73 rAF frame sampler), golden, HACS/Hassfest and a short absolute-ceiling performance smoke. Obsolete same-ref Validate runs are cancelled. Full seven-sample base/candidate performance moved to `performance.yml` (`main` push, weekly, manual); stable release assets fail closed unless Validate and Full Performance are green for the exact tagged SHA and the stable-only CDP compositor screencast finds no empty/black presented frame. |
@@ -39,8 +39,9 @@ metadata). Only an explicit owner-approved emergency hotfix may skip this gate.
 ## Current feature surface (since the 2026-07-17 snapshot)
 
 - **Three editors + View**: Plan / Devices / Background (decor layer v1.33) as
-  tabs with an X to close; View is the default; nav (space+mode) persists
-  across reloads (v1.38.2). **Kiosk mode** (v1.41.0): `kiosk: true` — no
+  tabs with an X to close; View is the default; only the last space persists,
+  while reload/return from another HA route always starts in View (#93).
+  **Kiosk mode** (v1.41.0): `kiosk: true` — no
   header/editors, swipe between spaces, double-tap zoom reset, `cycle: N`
   carousel, per-screen size multipliers in localStorage.
 - **Independent Glow overlay** (#55/#19, refined locally by #61/#65–#67): dark-room
@@ -61,10 +62,13 @@ metadata). Only an explicit owner-approved emergency hotfix may skip this gate.
   suppression. Effective inheritance is room → space → safe documented default;
   room reset restores space inheritance, and full/static renderers share the
   same projection.
-- **Real switches** (v1.36): `marker.controls[]` group-toggle with HA-group
-  semantics; icon mirrors targets; hidden grouped lamps fixed (tiered
-  primaryEntity). **Lights toggle by default** (v1.39): primary domain light
-  → tap toggles, kettle-style devices keep the card default.
+- **Universal device toggle** (#94, v1.62.0-beta.3): one `Toggle state` option is visible
+  for every marker and resolves the exact binding, functional device role or
+  explicitly configured controls. Hint, click, confirmation and cover
+  presentation share one result; partial groups call only the shown available
+  subset, stale controls never fall back, secure targets are no-op, and legacy
+  `cover`/absent light defaults round-trip losslessly. **Lights toggle by
+  default** (v1.39); other devices still default to the House Plan card.
 - **Plan geometry**: polyline split (v1.32), island rooms w/ evenodd holes
   (v1.34), smart guides + 45° angle badge (v1.40), opening hover preview.
   Openings support doors, windows and compact wide gates; gates retain door

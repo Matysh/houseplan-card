@@ -1,5 +1,5 @@
-// Covers: the «Open/close» tap action + the travelling indication
-// (owner's contract 2026-08-03).
+// Covers after issue #94: the unified «Toggle state» action + the travelling
+// indication. Persisted `cover` remains a lossless legacy runtime token.
 //
 //   closed              -> cover.open_cover
 //   open / ajar         -> cover.close_cover
@@ -7,9 +7,8 @@
 //                          the next tap simply travels the other way)
 //   unknown             -> cover.toggle, no morphing, no pulse
 //
-// The option is offered ONLY for a binding that HAS a cover entity, and never
-// for the guarded classes (garage/door/gate) — for those a value smuggled into
-// the config degrades to 'info', exactly like a card-wide toggle does.
+// The editor never offers a separate cover option. Secure cover classes
+// (garage/door/gate) resolve to a quiet no-op rather than an info-card fallback.
 // With «Icon + activity», travelling breathes a soft activity ring (the
 // vacuum puck's 2.2s period) and the plate stays NEUTRAL — yellow means work.
 // Since 2026-08-04 the plate is neutral in EVERY cover state, the «открыто»
@@ -71,26 +70,35 @@ const out = await page.evaluate(async () => {
   c.requestUpdate();
   await c.updateComplete;
 
-  // ---- the dialog offers the option only where it makes sense ------------
+  // ---- the dialog offers one universal action -----------------------------
   await setCover('closed', { device_class: 'curtain' });
+  await setMarker('cover');
   c._setMode('devices'); await c.updateComplete;
   const optionValues = () => [...sr().querySelectorAll('hp-dialog option')].map((e) => e.value);
   c._openMarkerDialog(gate()); await c.updateComplete;
-  o.dialogOffersCoverForCurtain = optionValues().includes('cover');
-  // …and the confirmation checkbox follows the choice, like it does for run/toggle
-  const rowsBefore = sr().querySelectorAll('hp-dialog .srcrow').length;
-  c._markerDialog = { ...c._markerDialog, tapAction: 'cover' }; await c.updateComplete;
-  o.confirmCheckboxShownForCover = sr().querySelectorAll('hp-dialog .srcrow').length > rowsBefore;
+  o.dialogOffersOnlyUnifiedToggle = optionValues().includes('toggle')
+    && !optionValues().includes('cover');
+  // Opening a legacy marker projects it to the unified selector without
+  // rewriting the persisted token until the user intentionally changes it.
+  o.legacyCoverProjectsToToggle = c._markerDialog?.tapAction === 'toggle'
+    && c._markerDialog?.tapActionTouched === false;
+  o.untouchedLegacyCoverRemainsLossless =
+    c._markerTapActionFields(c._markerDialog)?.tap_action === 'cover';
+  o.intentionalEditWritesUnifiedToggle = c._markerTapActionFields({
+    ...c._markerDialog, tapAction: 'toggle', tapActionTouched: true,
+  })?.tap_action === 'toggle';
   c._markerDialog = null; await c.updateComplete;
 
-  // a GARAGE door never gets the option (owner: «нет, только шторы/жалюзи»)
+  // The same universal option is visible for a garage; runtime safety decides.
   await setCover('closed', { device_class: 'garage' });
   c._openMarkerDialog(gate()); await c.updateComplete;
-  o.dialogHidesCoverForGarage = !optionValues().includes('cover');
+  o.garageAlsoShowsUnifiedToggle = optionValues().includes('toggle')
+    && !optionValues().includes('cover');
   c._markerDialog = null; await c.updateComplete;
   // …and neither does a device without a cover entity at all
   c._openMarkerDialog(c._devices.find((x) => x.bindingRef === 'd_mower')); await c.updateComplete;
-  o.dialogHidesCoverWithoutCover = !optionValues().includes('cover');
+  o.virtualAlsoShowsUnifiedToggle = optionValues().includes('toggle')
+    && !optionValues().includes('cover');
   c._markerDialog = null; await c.updateComplete;
   c._setMode('view'); c._space = 'garden'; c.requestUpdate(); await c.updateComplete;
 
@@ -138,14 +146,14 @@ const out = await page.evaluate(async () => {
   await new Promise((r) => setTimeout(r, 10));
   o.confirmOkOpens = calls.length === 1 && calls[0][1] === 'open_cover';
 
-  // ---- a saved 'cover' on a GARAGE degrades to the info card -------------
+  // ---- a saved 'cover' on a GARAGE is a secure, quiet no-op ---------------
   await setMarker('cover');
   await setCover('closed', { device_class: 'garage' });
   calls.length = 0;
   await tap();
   await new Promise((r) => setTimeout(r, 10));
   o.garageSavedCoverCallsNothing = calls.length === 0;
-  o.garageSavedCoverShowsInfo = !!c._infoCard;
+  o.garageSavedCoverDoesNotFallbackToInfo = !c._infoCard;
   c._infoCard = null; await c.updateComplete;
 
   // ---- the indication ----------------------------------------------------

@@ -774,11 +774,9 @@ def test_every_tap_action_the_editor_offers_is_accepted():
 
 
 def test_cover_tap_action_is_accepted():
-    """Owner's spec 2026-08-03: a marker may carry tap_action='cover'
-    (open/close/stop). The card offers it only for non-guarded covers, but the
-    schema is the door the config walks through — reject it and the whole plan
-    stops saving (the v1.26.0 'value' lesson, see DISPLAY_MODES above)."""
-    assert "cover" in _ts_list("TAP_ACTIONS")
+    """Issue #94: the editor no longer offers the separate cover action, but
+    old plans must keep loading and round-tripping it losslessly."""
+    assert "cover" not in _ts_list("TAP_ACTIONS")
     v.MARKER_SCHEMA(_marker(tap_action="cover"))
     v.MARKER_SCHEMA(_marker(tap_action="cover", tap_confirm=True))
 

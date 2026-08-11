@@ -80,17 +80,21 @@ const out = await page.evaluate(async () => {
   o.primaryIsTheCover = curtain()?.primary === 'cover.office_curtain';
   o.coverIsAmongTheEntities = (curtain()?.entities || []).includes('cover.office_curtain');
 
-  // ---- the dialog offers the action and SAVES it -------------------------
+  // ---- the dialog offers the unified action and SAVES an intentional edit
   c._setMode('devices'); await c.updateComplete;
   c._openMarkerDialog(curtain()); await c.updateComplete;
   const optionValues = () => [...sr().querySelectorAll('hp-dialog option')].map((e) => e.value);
-  o.dialogOffersCover = optionValues().includes('cover');
-  c._markerDialog = { ...c._markerDialog, tapAction: 'cover', display: 'icon_ripple' };
+  o.dialogOffersUnifiedToggle = optionValues().includes('toggle')
+    && !optionValues().includes('cover');
+  c._markerDialog = {
+    ...c._markerDialog,
+    tapAction: 'toggle', tapActionTouched: true, display: 'icon_ripple',
+  };
   await c.updateComplete;
   await c._saveMarker();
   await c.updateComplete;
   const saved = (c._serverCfg.markers || []).find((m) => m.binding === 'device:d_curtain');
-  o.markerSaved = saved?.tap_action === 'cover';
+  o.markerSavedAsUnifiedToggle = saved?.tap_action === 'toggle';
 
   // ---- and the tap on THAT marker opens the curtain -----------------------
   c._setMode('view'); c._regSignature = ''; c._maybeRebuildDevices();
@@ -100,7 +104,7 @@ const out = await page.evaluate(async () => {
     await c.updateComplete;
     await new Promise((r) => setTimeout(r, 10));
   };
-  o.tapActionSurvivedTheRebuild = curtain()?.tapAction === 'cover';
+  o.tapActionSurvivedTheRebuild = curtain()?.tapAction === 'toggle';
   calls.length = 0;
   await tap();
   o.closedOpensTheCover = JSON.stringify(calls[calls.length - 1] || [])
@@ -122,12 +126,12 @@ const out = await page.evaluate(async () => {
   // the service switch, which used to be the whole story, is never touched
   o.serviceSwitchNeverCalled = !calls.some((x) => String(x[2]?.entity_id).startsWith('switch.'));
 
-  // ---- the guarded classes still degrade, read off the COVER --------------
+  // ---- guarded classes are an explicit secure no-op -----------------------
   await push('closed', { device_class: 'garage' });
   calls.length = 0;
   await tap();
   o.garageCallsNothing = calls.length === 0;
-  o.garageShowsInfo = !!c._infoCard;
+  o.garageDoesNotFallbackToInfo = !c._infoCard;
   c._infoCard = null; await c.updateComplete;
   c._setMode('devices'); await c.updateComplete;
   c._openMarkerDialog(curtain()); await c.updateComplete;

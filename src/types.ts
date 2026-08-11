@@ -108,7 +108,9 @@ export interface Marker {
   link?: string | null;
   description?: string | null;
   pdfs?: PdfRef[];
-  tap_action?: string | null; // per-device override: 'info' | 'more-info' | 'toggle'
+  /** Per-device override. `cover` is legacy read/import compatibility only;
+   * the current editor writes `toggle`. */
+  tap_action?: string | null;
   /** 'run' target: automation./script./scene. entity id. */
   tap_target?: string | null;
   /** Ask before toggle/run — accidental-tap guard (owner's spec). */

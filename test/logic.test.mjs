@@ -212,24 +212,24 @@ test('tap action: defaults — info everywhere except pure lights (v1.39.0)', ()
   assert.equal(resolveTapAction(null, 'more-info', 'sensor'), 'more-info');
 });
 
-test('tap action: card-wide toggle only touches safe domains', () => {
+test('tap action: legacy card-wide defaults remain conservative', () => {
   assert.equal(resolveTapAction(null, 'toggle', 'light'), 'toggle');
   assert.equal(resolveTapAction(null, 'toggle', 'switch'), 'toggle');
   // covers/valves joined the safe set for curtains (owner, 2026-07-29)…
   assert.equal(resolveTapAction(null, 'toggle', 'cover', 'curtain'), 'toggle');
   assert.equal(resolveTapAction(null, 'toggle', 'valve'), 'toggle');
-  // …but the garage door is a cover too, and it STAYS SHUT on a default tap
+  // Card-wide defaults are legacy-only and remain conservative.
   assert.equal(resolveTapAction(null, 'toggle', 'cover', 'garage'), 'info');
   assert.equal(resolveTapAction(null, 'toggle', 'cover', 'gate'), 'info');
-  assert.equal(resolveTapAction('toggle', null, 'cover', 'garage'), 'toggle', 'explicit stays a conscious choice');
+  assert.equal(resolveTapAction('toggle', null, 'cover', 'garage'), 'toggle');
   assert.equal(resolveTapAction(null, 'toggle', 'sensor'), 'info');
 });
 
-test('tap action: explicit per-device toggle works for cover but never for lock/alarm', () => {
+test('tap action projection: explicit per-device toggle is preserved for every binding', () => {
   assert.equal(resolveTapAction('toggle', 'info', 'cover'), 'toggle'); // conscious choice
-  assert.equal(resolveTapAction('toggle', 'toggle', 'lock'), 'info'); // hard security block
-  assert.equal(resolveTapAction('toggle', 'toggle', 'alarm_control_panel'), 'info');
-  assert.equal(resolveTapAction('toggle', 'info', undefined), 'info'); // no entity → nothing to toggle
+  assert.equal(resolveTapAction('toggle', 'toggle', 'lock'), 'toggle');
+  assert.equal(resolveTapAction('toggle', 'toggle', 'alarm_control_panel'), 'toggle');
+  assert.equal(resolveTapAction('toggle', 'info', undefined), 'toggle');
 });
 
 test('tap action: per-device override beats the card default', () => {
@@ -732,14 +732,14 @@ test('coverMoving: only opening/closing breathe', () => {
   assert.equal(coverMoving(null), false);
 });
 
-test("tap action 'cover': explicit-only, cover-only, never a guarded class", () => {
+test("tap action 'cover': legacy token remains readable until an intentional edit", () => {
   assert.equal(resolveTapAction('cover', null, 'cover', 'curtain'), 'cover');
   assert.equal(resolveTapAction('cover', null, 'cover', 'blind'), 'cover');
   assert.equal(resolveTapAction('cover', null, 'cover', null), 'cover'); // no class = a plain cover
-  // the guarded classes degrade to the info card even if the value was saved
-  assert.equal(resolveTapAction('cover', null, 'cover', 'garage'), 'info');
-  assert.equal(resolveTapAction('cover', null, 'cover', 'door'), 'info');
-  assert.equal(resolveTapAction('cover', null, 'cover', 'gate'), 'info');
+  // Projection is lossless; the runtime resolver supplies the secure no-op.
+  assert.equal(resolveTapAction('cover', null, 'cover', 'garage'), 'cover');
+  assert.equal(resolveTapAction('cover', null, 'cover', 'door'), 'cover');
+  assert.equal(resolveTapAction('cover', null, 'cover', 'gate'), 'cover');
   // and it is meaningless anywhere but the cover domain
   assert.equal(resolveTapAction('cover', null, 'light'), 'info');
   assert.equal(resolveTapAction('cover', null, 'lock'), 'info');
@@ -967,8 +967,8 @@ test('resolveTapAction: pure lights toggle by default (v1.39.0)', () => {
   // не-световые домены не трогаем
   assert.equal(resolveTapAction(null, null, 'switch'), 'info');
   assert.equal(resolveTapAction(null, null, 'sensor'), 'info');
-  // замок никогда
-  assert.equal(resolveTapAction('toggle', null, 'lock'), 'info');
+  // Security is enforced by resolveToggleIntent, after target resolution.
+  assert.equal(resolveTapAction('toggle', null, 'lock'), 'toggle');
 });
 
 test('alignGuides: nearest per axis, indication only', () => {
@@ -1189,8 +1189,8 @@ test('tap action run: explicit-only, with runnable targets (owner spec 2026-07-2
   // covers and valves joined the card-wide toggle domains
   assert.ok(TOGGLE_SAFE_DOMAINS.has('cover') && TOGGLE_SAFE_DOMAINS.has('valve'));
   assert.equal(resolveTapAction(null, 'toggle', 'cover', 'shutter'), 'toggle');
-  // locks and alarms stay forbidden, run or not
-  assert.equal(resolveTapAction('toggle', undefined, 'lock'), 'info');
+  // The action remains selected; resolveToggleIntent turns secure targets into no-op.
+  assert.equal(resolveTapAction('toggle', undefined, 'lock'), 'toggle');
 });
 
 

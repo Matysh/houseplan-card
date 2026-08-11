@@ -278,12 +278,15 @@ Switch to the **Devices** tab to arrange icons: drag them with the mouse, click 
 
 ### Tap actions: control devices from the plan
 
-By default a tap on an icon opens its info card. In the card settings you can switch
-**Tap on a device** to *Toggle* — a tap then switches lights, sockets, fans and
-humidifiers directly on the plan (wall-tablet style). For safety, a card-wide toggle
-never affects locks, alarms, covers or valves; you can consciously enable toggle for a
-specific device (except locks and alarms — those never toggle from the plan) in its
-edit dialog. A **long press** always opens the info card.
+By default a tap on an icon opens its info card. A device can instead use the
+universal **Toggle state** action. Its editor shows the exact entity or configured
+group, the current state and what the next tap will do; when nothing can be toggled,
+it says so and the tap is a quiet no-op rather than an unexpected info-card fallback.
+Lights keep their convenient toggle default. Covers and valves use open/close/stop
+semantics automatically, while locks, alarm panels and secure garage/door/gate covers
+remain blocked. An exact entity binding never falls through to a sibling switch, and
+temporarily unavailable group members are skipped without erasing the configuration.
+A **long press** still opens the info card and right-click still opens HA more-info.
 
 ### Icon rules
 

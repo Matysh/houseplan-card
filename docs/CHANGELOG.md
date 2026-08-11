@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+## v1.62.0-beta.3 — 2026-08-12
+
+- Replaced the separate Toggle and cover actions with one universal **Toggle
+  state** action. The device editor now shows the exact target, current/next
+  effect and any skipped or unsupported entities; covers and valves retain
+  open/close/stop behaviour, secure devices remain no-op, and configured
+  no-target actions never fall back to an info card. Existing `cover` records
+  remain lossless until deliberately edited
+  ([#94](https://github.com/Matysh/houseplan-card/issues/94)).
+- Returning to House Plan now restores only the last space and always opens
+  View. Editor mode and dialogs no longer survive page reloads or navigation
+  through other Home Assistant pages; same-route technical remounts still
+  protect unfinished work ([#93](https://github.com/Matysh/houseplan-card/issues/93)).
+- Fixed Glow starting from inside a thick wall or an exterior opening and
+  lighting one half of an exterior door or gate tunnel. Sources embedded in
+  the final opaque masonry geometry now produce no Glow at all, while real
+  interior passages remain transparent
+  ([#92](https://github.com/Matysh/houseplan-card/issues/92)).
+
 ## v1.62.0-beta.2 — 2026-08-11
 
 - Added a user-controlled value badge beside each device. Users can select the

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   canonicalColumnAngle, columnBody, floorMinusBodies, geometryArea,
   directionalOccluders, intersectionPaths, partitionBody, pointInPhysicalBody,
+  pointInPhysicalGeometry,
   sameColumnPlacement,
 } from '../test-build/physical-geometry.js';
 import {
@@ -80,6 +81,21 @@ test('directional occluder extrudes a body along the ray direction', () => {
   const [shadow] = directionalOccluders([body], [1, 0], 8);
   assert.ok(Math.max(...shadow.map((p) => p[0])) >= 9);
   assert.ok(pointInPhysicalBody([5, 0.5], shadow));
+});
+
+test('a source in an exterior opening is opaque while an interior passage hole is valid', () => {
+  const geometry = [[
+    [[0, 0], [10, 0], [10, 10], [0, 10], [0, 0]],
+    [[2, 2], [8, 2], [8, 8], [2, 8], [2, 2]],
+  ]];
+  // Exterior doors/gates and every window are deliberately absent from the
+  // passage cuts, so their drawn tunnel remains part of light's opaque
+  // masonry. A source centred there must emit no pool at all.
+  assert.equal(pointInPhysicalGeometry([1, 5], geometry), true, 'opaque exterior opening');
+  // A door/gate with floor on both sides is a real cut through the light
+  // masonry. Placing a source in that internal passage remains valid.
+  assert.equal(pointInPhysicalGeometry([5, 5], geometry), false, 'transparent interior passage');
+  assert.equal(pointInPhysicalGeometry([12, 5], geometry), false, 'outside body');
 });
 
 test('exact column overlays are rejected but rotated square bodies remain distinct', () => {
