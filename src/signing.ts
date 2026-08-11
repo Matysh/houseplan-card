@@ -20,11 +20,17 @@ type SharedSignerRuntime = {
   inFlight: Map<string, number>;
   retry: Map<string, { notBefore: number; delay: number }>;
   listeners: Set<() => void>;
+  /** Internal terminal-attempt listeners used by prepareImage(). */
+  settlers: Set<() => void>;
   references: Map<object, Set<string>>;
 };
 
 const sharedSignerRuntimes = new WeakMap<object, SharedSignerRuntime>();
-const SHARED_SIGNED_MAX = 96;
+// A single marker may legitimately carry more than MAX_SIGN_PATHS attachments:
+// signing is chunked at the transport boundary, while the shared cache must
+// retain the complete referenced set. Keep it bounded, but comfortably above
+// the 201-item regression contract (and ordinary multi-card plans).
+const SHARED_SIGNED_MAX = 512;
 
 const signerAuthority = (hass: any, fallback: object): object => {
   const authority = hass?.connection || hass;
@@ -37,7 +43,7 @@ const signerRuntime = (authority: object): SharedSignerRuntime => {
   if (!runtime) {
     runtime = {
       signed: {}, queued: new Set(), inFlight: new Map(), retry: new Map(),
-      listeners: new Set(), references: new Map(),
+      listeners: new Set(), settlers: new Set(), references: new Map(),
     };
     sharedSignerRuntimes.set(authority, runtime);
   }
@@ -237,6 +243,11 @@ export class ContentSigner {
         .finally(() => {
           // release only our own attempt: a later one may have superseded it
           for (const p of claimed) if (shared.inFlight.get(p) === sentAt) shared.inFlight.delete(p);
+          // `prepareImage()` also listens for terminal failures. Without this
+          // notification it waited for the full 15 s lost-request timeout even
+          // when the websocket had already rejected, delaying the card's
+          // bounded retry and keeping the previous frame far too long.
+          for (const settle of [...shared.settlers]) settle();
         });
     }
   }
@@ -326,6 +337,11 @@ export class ContentSigner {
         return this.preloadCurrentImage(shared, path, entry);
       }
       this.display(hass, path);
+      const retry = shared.retry.get(path);
+      if (retry && retry.notBefore > this.now()
+          && !shared.inFlight.has(path) && !shared.queued.has(path)) {
+        return Promise.resolve(false);
+      }
       return null;
     };
     const immediate = attempt();
@@ -337,7 +353,7 @@ export class ContentSigner {
         if (done) return;
         done = true;
         clearTimeout(timer);
-        shared.listeners.delete(check);
+        shared.settlers.delete(check);
         resolve(ready);
       };
       const check = (): void => {
@@ -347,7 +363,7 @@ export class ContentSigner {
         active.then(finish).catch(() => finish(false));
       };
       const timer = setTimeout(() => finish(false), SIGN_INFLIGHT_MS);
-      shared.listeners.add(check);
+      shared.settlers.add(check);
       check();
     });
   }

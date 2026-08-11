@@ -11,7 +11,10 @@ const res = await page.evaluate(async () => {
   const batchSizes = [];
   let round = 0;
 
-  c.hass = { ...c.hass, callWS: async (m) => {
+  // This probe owns its signer authority. Reusing the demo card's connection
+  // would intentionally share its cache and make the batch contract depend on
+  // whichever smoke content the main card has already rendered.
+  c.hass = { ...c.hass, connection: Object.create(c.hass.connection), callWS: async (m) => {
     if (m.type === 'houseplan/content/sign') {
       batchSizes.push(m.paths.length);
       const urls = {};
@@ -25,7 +28,12 @@ const res = await page.evaluate(async () => {
   // 201 вложение, разложенное по маркерам: столько же подписанных ссылок
   const pdfs = [];
   for (let i = 0; i < 201; i++) pdfs.push({ name: 'm' + i, url: '/api/houseplan/content/files/m/doc' + i + '.pdf' });
-  c._serverCfg = { ...c._serverCfg, markers: [{ id: 'mk1', pdfs }] };
+  c._serverCfg = {
+    ...c._serverCfg,
+    markers: [{
+      id: 'mk1', binding: 'virtual', name: 'Attachment probe', space: c._space, pdfs,
+    }],
+  };
   c._cfgEpoch++;
 
   round = 1;
@@ -44,7 +52,13 @@ const res = await page.evaluate(async () => {
   out.allRefreshed = vals.length === 201 && vals.every((u) => u.endsWith('authSig=R2'));
 
   // ссылка, исчезнувшая из конфига, выбывает из кэша и не занимает слот
-  c._serverCfg = { ...c._serverCfg, markers: [{ id: 'mk1', pdfs: pdfs.slice(0, 5) }] };
+  c._serverCfg = {
+    ...c._serverCfg,
+    markers: [{
+      id: 'mk1', binding: 'virtual', name: 'Attachment probe', space: c._space,
+      pdfs: pdfs.slice(0, 5),
+    }],
+  };
   c._cfgEpoch++;
   batchSizes.length = 0;
   round = 3;
@@ -55,11 +69,15 @@ const res = await page.evaluate(async () => {
 
   // протухшая подпись не отдаётся: она вернула бы 401 и «попытку входа»
   const one = pdfs[0].url;
-  c._signer.entries[one] = { url: one + '?authSig=OLD', at: Date.now() - 25 * 3600 * 1000 };
+  c._signer.shared.signed[one] = {
+    url: one + '?authSig=OLD', at: Date.now() - 25 * 3600 * 1000, loaded: true,
+  };
   out.expiredNotServed = c._display(one) === '';
   out.expiredDropped = c._signer.entries[one] === undefined;
   // а стареющая, но ещё живая — отдаётся, пока едет замена
-  c._signer.entries[one] = { url: one + '?authSig=AGING', at: Date.now() - 20 * 3600 * 1000 };
+  c._signer.shared.signed[one] = {
+    url: one + '?authSig=AGING', at: Date.now() - 20 * 3600 * 1000, loaded: true,
+  };
   out.agingStillServed = c._display(one) === one + '?authSig=AGING';
   return out;
 });

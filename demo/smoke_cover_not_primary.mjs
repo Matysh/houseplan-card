@@ -146,12 +146,10 @@ const out = await page.evaluate(async () => {
   // SHOWS»): the marker indicates the entity its tap ACTS ON — the cover
   // exactly when the owner has explicitly chosen «Открыть/закрыть».
   const devEl = (dev) => {
-    const v = c._viewOr(c._baseVb());
-    const p = c._pos(dev);
-    const left = ((p.x - v.x) / v.w) * 100;
-    const top = ((p.y - v.y) / v.h) * 100;
-    return [...sr().querySelectorAll('.devlayer .dev')].find((e) =>
-      Math.abs(parseFloat(e.style.left) - left) < 0.4 && Math.abs(parseFloat(e.style.top) - top) < 0.4);
+    // The viewport may refit asynchronously after an editor transition. Use
+    // the stable public styling hook instead of racing rendered percentages
+    // against the next viewBox.
+    return dev ? sr().querySelector(`.devlayer .dev[data-id="${CSS.escape(dev.id)}"]`) : null;
   };
   const clsOf = (dev) => [...(devEl(dev)?.classList || [])];
   const iconOf = (dev) => devEl(dev)?.querySelector('ha-icon')?.getAttribute('icon') || '';
