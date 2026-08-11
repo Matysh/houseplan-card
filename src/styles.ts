@@ -2709,6 +2709,11 @@ export const cardStyles = css`
     }
     .backupchoices label { margin: 0 !important; display: flex; gap: var(--sp-2); }
     .backupconfirm { align-items: flex-start !important; }
+    .backupconfirm > span:first-of-type {
+      min-width: 0;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
     @media (max-width: 520px) {
       .backupactions, .backupcounts { grid-template-columns: 1fr; }
     }
