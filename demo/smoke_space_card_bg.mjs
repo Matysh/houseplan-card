@@ -4,7 +4,7 @@
 // каждом рендере получал 401. Проверяем весь контракт подписи для этой карточки.
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch({ width: 900, height: 900 }, 1);
-await page.route('**/api/houseplan/content/plans/_/f1.tok.svg?authSig=*', (route) => route.fulfill({
+await page.route('**/api/houseplan/content/plans/_/*.tok.svg?authSig=*', (route) => route.fulfill({
   status: 200,
   contentType: 'image/svg+xml',
   body: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><rect width="16" height="16" fill="#789"/></svg>',
@@ -14,12 +14,20 @@ const res = await page.evaluate(async () => {
   await customElements.whenDefined('houseplan-space-card');
   const main = window.__card;
   const raw = '/api/houseplan/content/plans/_/f1.tok.svg';
+  const baselineRaw = '/api/houseplan/content/plans/_/f1-baseline.tok.svg';
 
   // подложка на защищённом эндпоинте + управляемый ответ на подпись
-  const cfg = JSON.parse(JSON.stringify(main._serverCfg));
-  cfg.spaces = cfg.spaces.map((s) => (s.id === 'f1' ? { ...s, plan_url: raw } : s));
+  const baselineCfg = JSON.parse(JSON.stringify(main._serverCfg));
+  baselineCfg.spaces = baselineCfg.spaces.map((s) => (
+    s.id === 'f1' ? { ...s, plan_url: baselineRaw } : s
+  ));
+  const candidateCfg = JSON.parse(JSON.stringify(baselineCfg));
+  candidateCfg.spaces = candidateCfg.spaces.map((s) => (
+    s.id === 'f1' ? { ...s, plan_url: raw } : s
+  ));
+  let servedCfg = baselineCfg;
   let signCalls = 0;
-  let failFirst = true;
+  let failCandidateOnce = true;
   const requestedHrefs = [];
   // A separately mounted test card gets its own HA connection authority. In
   // production cards sharing one connection deliberately share config/signing
@@ -28,11 +36,14 @@ const res = await page.evaluate(async () => {
     ...main.hass,
     connection: Object.create(main.hass.connection),
     callWS: async (m) => {
-      if (m.type === 'houseplan/config/get') return { config: cfg, rev: 1 };
+      if (m.type === 'houseplan/config/get') return { config: servedCfg, rev: signCalls + 1 };
       if (m.type === 'houseplan/layout/get') return { layout: {} };
       if (m.type === 'houseplan/content/sign') {
         signCalls++;
-        if (failFirst && signCalls === 1) throw new Error('ws down');
+        if (failCandidateOnce && m.paths.includes(raw)) {
+          failCandidateOnce = false;
+          throw new Error('ws down');
+        }
         const urls = {};
         for (const p of m.paths) urls[p] = p + '?authSig=SIG' + signCalls;
         return { urls };
@@ -62,23 +73,32 @@ const res = await page.evaluate(async () => {
   };
   const href = async () => { const im = await stage(); return im ? im.getAttribute('href') : null; };
 
+  // Establish a decoded protected baseline first. A failed replacement must
+  // retain this exact URL, not an unrelated public image from the warm cache.
+  await stage();
+  const baselineHref = await href();
+  servedCfg = candidateCfg;
+  await card._load(true);
+
   // 1) первая подпись упала → сырой URL в DOM не попадает (иначе 401)
   await stage();
   await new Promise((r) => setTimeout(r, 120));
   out.hrefAfterFailedSign = await href();
+  out.failedSignKeptProtectedBaseline = baselineHref?.includes('f1-baseline.tok.svg?authSig=SIG1')
+    && out.hrefAfterFailedSign === baselineHref;
 
   // 2) сразу повтора нет: после ошибки подпись уходит в backoff (ревью R4-2),
   //    иначе нестабильный сокет получал бы по запросу на каждый рендер
   for (let i = 0; i < 5; i++) { card.requestUpdate(); await card.updateComplete; }
   await new Promise((r) => setTimeout(r, 150));
-  out.noRetryStorm = signCalls === 1;
+  out.noRetryStorm = signCalls === 2;
 
   // 3) после выдержки повтор проходит
   await new Promise((r) => setTimeout(r, 2100));
   card.requestUpdate(); await card.updateComplete;
   await new Promise((r) => setTimeout(r, 150));
   out.hrefAfterRetry = await href();
-  out.retried = signCalls === 2;
+  out.retried = signCalls === 3;
 
   // 4) повторный рендер не теряет подпись и не просит её заново
   const before = signCalls;
@@ -104,11 +124,12 @@ const res = await page.evaluate(async () => {
 checkAll(res, {
   // #73 keeps the last complete frame until the replacement is signed and
   // decoded, so a transient signing failure must not blank the background.
-  hrefAfterFailedSign: '/assets/f1.svg',
+  hrefAfterFailedSign: '/api/houseplan/content/plans/_/f1-baseline.tok.svg?authSig=SIG1',
+  failedSignKeptProtectedBaseline: true,
   noRetryStorm: true,
-  hrefAfterRetry: '/api/houseplan/content/plans/_/f1.tok.svg?authSig=SIG2',
+  hrefAfterRetry: '/api/houseplan/content/plans/_/f1.tok.svg?authSig=SIG3',
   retried: true,
-  hrefStable: '/api/houseplan/content/plans/_/f1.tok.svg?authSig=SIG2',
+  hrefStable: '/api/houseplan/content/plans/_/f1.tok.svg?authSig=SIG3',
   noExtraSignOnRerender: true,
   hrefWhenExpired: null,
   hrefWhenAging: '/api/houseplan/content/plans/_/f1.tok.svg?authSig=AGING',

@@ -142,6 +142,9 @@ import {
   presentationClasses, presentationSourceSignature, resolveDevicePresentation,
   resolvePresentationSources, type ResolvedDevicePresentation,
 } from './device-presentation';
+import {
+  createRenderDeviceSnapshot, presentationSnapshotKey, type RenderDeviceSnapshot,
+} from './render-device-snapshot';
 import { deviceFaceStyle, renderDeviceFace } from './device-face';
 import {
   acquireHaRegistries, activeRegistryHass, cacheHaBindingStatuses,
@@ -160,7 +163,7 @@ import {
 import { renderOpeningTunnelFills } from './render/opening-tunnels';
 import { safeStoredColor } from './color';
 
-const CARD_VERSION = '1.61.0-beta.7';
+const CARD_VERSION = '1.61.0-beta.8';
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
 const CELL_CM_MIN = 0.1;
@@ -1011,6 +1014,8 @@ class HouseplanCard extends LitElement {
    *  First open only; kiosk is 100dvh and never jumps. */
   private _booting = true;
   private _bootFading = false; // veil kept one beat for the opacity-out
+  private _bootSettling = false;
+  private _bootSettleRaf = 0;
   private _bootTimer?: number;
   private _bootLastH = -1;
   private _bootStart = 0;
@@ -1197,6 +1202,7 @@ class HouseplanCard extends LitElement {
   private _unsubTrail?: () => void;
   private _vacJumpOnce = false;
   private _continuity = this._newContinuityController();
+  private _continuityHistory: import('./visual-continuity').ContinuityTraceEvent[] = [];
   private _continuityUnsub?: () => void;
   private _continuityEpoch = 0;
   private _continuityDataReady = true;
@@ -1204,6 +1210,14 @@ class HouseplanCard extends LitElement {
   private _continuityDisposed = false;
   private _renderSnapshotAt = Date.now();
   private _hassSequence = 0;
+  private _visibleDeviceSnapshot: RenderDeviceSnapshot | null = null;
+  private _candidateDeviceSnapshot: RenderDeviceSnapshot | null = null;
+  private _stagedDeviceSnapshotToken = -1;
+  private _capturedSnapshotSequence = -1;
+  private _capturedSnapshotDevices: DevItem[] | null = null;
+  private _capturedSnapshotLayout: Record<string, { x: number; y: number; s?: string; k?: number }> | null = null;
+  private _capturedSnapshotActivity = '';
+  private _capturedSnapshotConfigEpoch = -1;
   private _lastValidStageSize: [number, number] | null = null;
   private _pendingRefitSize: [number, number] | null = null;
   private _refitRaf = 0;
@@ -1217,7 +1231,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _pageVisibility = (signal: PageVisibilitySignal): void => {
-    const token = this._continuity.visibility(signal);
+    this._continuity.visibility(signal);
     if (signal.kind === 'hidden') return;
     this._vacJumpOnce = true;
     if (!signal.long) return; // strict quick-return no-op: preserve hover and DOM
@@ -1229,10 +1243,8 @@ class HouseplanCard extends LitElement {
     this._continuityDataReady = false;
     this._continuityPaintToken = -1;
     this._resumeSettling = true;
-    if (token === this._continuity.token) {
-      if (!this._loading) void this._loadFromServer();
-      else this.requestUpdate();
-    }
+    if (!this._loading) void this._loadFromServer();
+    else this.requestUpdate();
   };
   private _resumeSettling = false;
   private _viewportInvalidAt = 0;
@@ -1429,6 +1441,8 @@ class HouseplanCard extends LitElement {
     if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
     if (this._refitRaf) { cancelAnimationFrame(this._refitRaf); this._refitRaf = 0; }
     if (this._skySnapRaf) { cancelAnimationFrame(this._skySnapRaf); this._skySnapRaf = 0; }
+    if (this._bootSettleRaf) { cancelAnimationFrame(this._bootSettleRaf); this._bootSettleRaf = 0; }
+    this._bootSettling = false;
     for (const rt of this._activityRt.values()) clearTimeout(rt.timer); // pending activity-window repaints
     window.removeEventListener('keydown', this._keyHandler);
     clearInterval(this._cycleTimer);
@@ -1519,6 +1533,7 @@ class HouseplanCard extends LitElement {
     // after the disconnect snapshot (which must still skip unstable geometry),
     // so a same-element reattach can start fresh instead of keeping the veil.
     this._resumeSettling = false;
+    this._continuityHistory = [...this._continuityHistory, ...this._continuity.trace].slice(-80);
     this._continuity.dispose();
     this._continuityDisposed = true;
     super.disconnectedCallback();
@@ -2223,6 +2238,7 @@ class HouseplanCard extends LitElement {
     if (this._booting && !this._continuity.hasCompleteFrame) return this._continuity.token;
     this._continuityDataReady = dataReady;
     this._continuityPaintToken = -1;
+    this._stagedDeviceSnapshotToken = -1;
     this._resumeSettling = true;
     return this._continuity.beginCandidate(reason, recoveryReason);
   }
@@ -2233,6 +2249,10 @@ class HouseplanCard extends LitElement {
   }
 
   private _continuityAssetsReady(): boolean {
+    // An empty/transient model is not a complete plan frame. Returning true
+    // here used to let the previous DOM be blessed while the replacement
+    // config was still being projected.
+    if (!this._model.length) return false;
     const space = this._model.length ? this._spaceModel() : null;
     return !space?.bg?.href || this._signer.isReady(this.hass, space.bg.href);
   }
@@ -2260,7 +2280,6 @@ class HouseplanCard extends LitElement {
       this._view,
       size,
       this._glowScreenBlend ? 'screen' : 'normal',
-      this._hassSequence,
       this.hass?.themes?.darkMode ?? this.hass?.themes?.default_theme ?? '',
     ]);
   }
@@ -2269,18 +2288,25 @@ class HouseplanCard extends LitElement {
   private _settleContinuityFrame(): void {
     if (this._booting || !this._continuityStageValid()) return;
     if (!this._continuity.hasCompleteFrame && this._continuity.state === 'steady') {
-      if (!this._continuityAssetsReady()) {
-        this._beginContinuityCandidate('asset-wait', true, 'asset');
-        return;
+      // Cold start belongs to the boot veil. Do not replace it with a recovery
+      // error just because a protected backdrop is still signing/decoding.
+      if (this._continuityAssetsReady()) {
+        this._renderSnapshotAt = Date.now();
+        this._continuity.markCompleteFrame(this._visualFrameFingerprint());
       }
-      this._renderSnapshotAt = Date.now();
-      this._continuity.markCompleteFrame(this._visualFrameFingerprint());
       return;
     }
-    if (!this._continuityDataReady || !this._continuityAssetsReady()) return;
+    if (!this._continuityDataReady) return;
     if (!['holding', 'offline-stale', 'overlay-pending', 'overlay-visible', 'candidate-ready']
       .includes(this._continuity.state)) return;
     const token = this._continuity.token;
+    if (this._candidateDeviceSnapshot
+        && this._candidateDeviceSnapshot !== this._visibleDeviceSnapshot
+        && this._stagedDeviceSnapshotToken !== token) {
+      this._stagedDeviceSnapshotToken = token;
+      this.requestUpdate();
+      return;
+    }
     if (this._continuityPaintToken === token) return;
     this._continuityPaintToken = token;
     if (!this._continuity.candidateReady(token)) return;
@@ -2291,17 +2317,25 @@ class HouseplanCard extends LitElement {
       frameFingerprint: () => this._visualFrameFingerprint(),
     }).then((committed) => {
       if (!committed || token !== this._continuity.token) {
-        if (token === this._continuity.token) this._continuityPaintToken = -1;
+        if (token === this._continuity.token) {
+          this._continuityPaintToken = -1;
+          this._stagedDeviceSnapshotToken = -1;
+          this._candidateDeviceSnapshot = null;
+          this.requestUpdate();
+        }
         return;
       }
       this._resumeSettling = false;
       this._renderSnapshotAt = Date.now();
+      if (this._candidateDeviceSnapshot) this._visibleDeviceSnapshot = this._candidateDeviceSnapshot;
+      this._candidateDeviceSnapshot = null;
+      this._stagedDeviceSnapshotToken = -1;
       this._warmSnapshot();
     });
   }
 
-  private _onBackdropLoaded(raw: string): void {
-    this._signer.markLoaded(this.hass, raw);
+  private _onBackdropLoaded(raw: string, paintedUrl?: string): void {
+    this._signer.markLoaded(this.hass, raw, paintedUrl);
     this._continuity.note('asset-ready');
     this._continuityPaintToken = -1;
     if (this._continuity.state !== 'steady') this.requestUpdate();
@@ -2332,7 +2366,8 @@ class HouseplanCard extends LitElement {
 
   /** Redacted lifecycle diagnostics used by the deterministic sampler. */
   public houseplanContinuityTrace(): readonly import('./visual-continuity').ContinuityTraceEvent[] {
-    return this._continuity.trace;
+    return [...this._continuityHistory, ...this._continuity.trace].slice(-80)
+      .map((event) => ({ ...event, ...(event.stage ? { stage: [...event.stage] as [number, number] } : {}) }));
   }
 
   public getCardSize(): number {
@@ -2522,7 +2557,6 @@ class HouseplanCard extends LitElement {
     // invariant local to that reactive assignment so imports, reconnects and
     // demo harnesses cannot accidentally reuse an older config object's data.
     if (changed.has('_serverCfg')) this._cfgEpoch++;
-    this._skyPlan();
     if (changed.has('hass') && this.hass) {
       this._hassSequence++;
       this._renderSnapshotAt = Date.now();
@@ -2542,6 +2576,11 @@ class HouseplanCard extends LitElement {
     if (this._continuity.hasCompleteFrame && this._continuity.state === 'steady') {
       this._continuity.refreshCompleteFrame(this._visualFrameFingerprint());
     }
+    this._captureRenderDeviceSnapshot();
+    // The sky is part of the same atomic frame as sun rays and devices. Plan
+    // it only after the candidate/visible render snapshot has been refreshed;
+    // doing this first made day/night presentation lag every HA tick by one.
+    this._skyPlan();
   }
 
   protected updated(): void {
@@ -2692,6 +2731,7 @@ class HouseplanCard extends LitElement {
         this._beginContinuityCandidate('structural-response', true);
       }
       this._loadOk = true;
+      this._connectionWasLost = false;
       this._serverStorage = true;
       // absent can_write = older backend / demo stub → keep null (legacy admin fallback)
       if (typeof cfgResp?.can_write === 'boolean') this._serverCanWrite = cfgResp.can_write;
@@ -2778,11 +2818,14 @@ class HouseplanCard extends LitElement {
       // next hass update (WS warm-up)
     } finally {
       this._loading = false;
+      // Readiness belongs to the candidate attempt, including a bounded asset
+      // failure. Leaving it false on an early return stranded the controller
+      // before its own two-second barrier could ever start.
+      this._continuityDataReady = true;
+      this._regSignature = '';
+      this._maybeRebuildDevices();
+      this.requestUpdate();
     }
-    this._continuityDataReady = true;
-    this._regSignature = '';
-    this._maybeRebuildDevices();
-    this.requestUpdate();
   }
 
   /**
@@ -2864,6 +2907,7 @@ class HouseplanCard extends LitElement {
    *  down would never run again. 'ready' fires on every (re)connect: reset
    *  the budget and quietly re-read the config. */
   private _connHooked: { removeEventListener?: (t: string, cb: () => void) => void } | null = null;
+  private _connectionWasLost = false;
   /** Shared, page-level full HA registry authority (one fetch/subscription per connection). */
   private _haRegistryRelease?: () => void;
   private _haRegistryConnection: any = null;
@@ -2908,6 +2952,131 @@ class HouseplanCard extends LitElement {
     const full = fullRegistryHass(this.hass, snapshot);
     this._planHassMemo = { hass: this.hass, sig, active, full };
     return active;
+  }
+
+  private _captureRenderDeviceSnapshot(): void {
+    if (!this.hass) return;
+    const now = Date.now();
+    const activity = [...this._activityRt.entries()]
+      .map(([id, runtime]) => `${id}:${runtime.gen}:${runtime.flashTs}:`
+        + `${runtime.flashTs > 0 && now - runtime.flashTs <= ACTIVITY_WINDOW_MS ? 1 : 0}`)
+      .join('|');
+    if (this._capturedSnapshotSequence === this._hassSequence
+        && this._capturedSnapshotDevices === this._devices
+        && this._capturedSnapshotLayout === this._layout
+        && this._capturedSnapshotConfigEpoch === this._cfgEpoch
+        && this._capturedSnapshotActivity === activity) return;
+    const planHass = this._planHass;
+    const presentations = new Map<string, ResolvedDevicePresentation>();
+    const facts = new Map<string, unknown>();
+    const entityIds = new Set<string>(['sun.sun']);
+    if (this._vacFit?.source) entityIds.add(this._vacFit.source);
+    const deviceIds = new Set<string>();
+    const areaIds = new Set<string>();
+    const addSource = (source: string | null | undefined): void => {
+      if (!source) return;
+      const separator = source.indexOf(':');
+      if (separator < 0) { entityIds.add(source); return; }
+      const kind = source.slice(0, separator), reference = source.slice(separator + 1);
+      if (kind === 'device') deviceIds.add(reference);
+      else if (kind === 'entity') entityIds.add(reference);
+    };
+    for (const space of this._model) for (const room of space.rooms) {
+      if (room.area) areaIds.add(room.area);
+      addSource(room.settings?.temp_source);
+      addSource(room.settings?.hum_source);
+    }
+    for (const rawSpace of this._serverCfg?.spaces || []) for (const opening of rawSpace.openings || []) {
+      if (opening.contact) entityIds.add(opening.contact);
+      if (opening.lock) entityIds.add(opening.lock);
+    }
+    // Inline HA variables on the decorative layer are part of the painted
+    // frame too. Capture both the current token format and the legacy
+    // one-entity fields so a reconnect cannot update a label ahead of the
+    // rooms, devices and light layers around it.
+    for (const rawSpace of this._serverCfg?.spaces || []) {
+      for (const shape of rawSpace.decor || []) {
+        if (shape.kind !== 'text') continue;
+        for (const match of String(shape.text || '').matchAll(/\{([^{}\r\n]+)\}/g)) {
+          const reference = liveTextReference(match[1]);
+          if (reference?.entity) entityIds.add(reference.entity);
+        }
+        if (shape.entity) entityIds.add(shape.entity);
+        // HA's formatter functions are runtime capabilities and must not cross
+        // the immutable render-snapshot boundary. Freeze the already formatted
+        // caption instead, so locale/precision/unit and every surrounding plan
+        // layer belong to one atomic HA frame.
+        facts.set(`decor:${rawSpace.id}:${shape.id}`, liveText(
+          shape.text, shape, planHass,
+          (entityId) => !!planHass.entities?.[entityId] && !!planHass.states?.[entityId]
+            && !isRemovedPlanEntity(planHass, entityId, removedPlanBindings(this._markers)),
+        ));
+      }
+    }
+    for (const device of this._devices) {
+      for (const showLqi of [false, true]) {
+        presentations.set(presentationSnapshotKey(device.id, showLqi), resolveDevicePresentation(
+          planHass, device, {
+            liveStates: this._config?.live_states !== false,
+            showTemperature: this._config?.show_temperature !== false,
+            showSignal: showLqi && this._config?.show_signal !== false,
+            activityRuntime: this._activityRt.get(device.id),
+            sourceDetails: false,
+          },
+        ));
+      }
+      if (this._isVacDev(device)) {
+        const source = this._vacSource(device, planHass);
+        const telemetry = source ? readVacTelemetry(planHass?.states?.[source]?.attributes) : null;
+        const runtime = this._vacRt.get(device.id);
+        facts.set(`vacuum:${device.id}`, {
+          source,
+          telemetry,
+          mapId: telemetry ? this._vacMapId(device, telemetry, planHass) : null,
+          runtime: runtime ? {
+            trail: runtime.trail,
+            lastTs: runtime.lastTs,
+            moving: runtime.moving,
+            jump: runtime.jump,
+          } : null,
+          server: this._vacSrvTrails[device.id] || null,
+        });
+      }
+    }
+    const snapshot = createRenderDeviceSnapshot({
+      sourceSequence: this._hassSequence, hass: planHass,
+      devices: this._devices, presentations,
+      positions: new Map(this._devices.map((device) => [device.id, this._livePos(device)])),
+      facts,
+      entityIds,
+      deviceIds,
+      areaIds,
+    });
+    this._capturedSnapshotSequence = this._hassSequence;
+    this._capturedSnapshotDevices = this._devices;
+    this._capturedSnapshotLayout = this._layout;
+    this._capturedSnapshotActivity = activity;
+    this._capturedSnapshotConfigEpoch = this._cfgEpoch;
+    if (!this._visibleDeviceSnapshot || this._continuity.state === 'steady') {
+      this._visibleDeviceSnapshot = snapshot;
+      this._candidateDeviceSnapshot = null;
+    } else {
+      this._candidateDeviceSnapshot = snapshot;
+    }
+  }
+
+  private get _renderDeviceSnapshot(): RenderDeviceSnapshot | null {
+    return this._stagedDeviceSnapshotToken === this._continuity.token
+      ? this._candidateDeviceSnapshot || this._visibleDeviceSnapshot
+      : this._visibleDeviceSnapshot || this._candidateDeviceSnapshot;
+  }
+
+  private get _renderPlanHass(): any {
+    return this._renderDeviceSnapshot?.hass || this._planHass;
+  }
+
+  private get _renderDevices(): readonly DevItem[] {
+    return this._renderDeviceSnapshot?.devices || this._devices;
   }
 
   /** Full registry metadata for dialogs/ghost labels; never use for actions. */
@@ -2990,7 +3159,19 @@ class HouseplanCard extends LitElement {
     clearTimeout(this._loadRetryTimer);
     this._loadRetryTimer = undefined;
     refreshHaRegistries(this.hass);
-    this._beginContinuityCandidate('connection-ready', false, 'connection');
+    if (this._saveConfigDebounced.pending()) this._saveConfigDebounced.flush();
+    if (this._cfgWriting) {
+      clearTimeout(this._reloadRetry);
+      this._reloadRetry = window.setTimeout(this._onConnReady, 400);
+      return;
+    }
+    if (!this._connectionWasLost && this._continuity.hasCompleteFrame) {
+      this._beginContinuityCandidate('connection-ready', false, 'plan');
+    } else {
+      // A confirmed loss already owns the connection candidate/token.
+      this._continuityDataReady = false;
+      this._continuityPaintToken = -1;
+    }
     if (this._loading) return;
     // a subscribe lost mid-load leaves _loadOk=true without _unsubCfg — the
     // full load path repairs both (every subscribe in it is guarded)
@@ -3000,6 +3181,7 @@ class HouseplanCard extends LitElement {
   };
   private _onConnLost = (): void => {
     if (this._booting && !this._continuity.hasCompleteFrame) return;
+    this._connectionWasLost = true;
     this._continuityDataReady = false;
     this._continuityPaintToken = -1;
     this._continuity.connectionLost();
@@ -3258,9 +3440,9 @@ class HouseplanCard extends LitElement {
   private _roomLqi(area: string | null): number | null {
     if (!area) return null;
     const vals: number[] = [];
-    for (const d of this._devices) {
+    for (const d of this._renderDevices) {
       if (d.area !== area || d.virtual) continue;
-      const l = lqiFor(this.hass, d.entities);
+      const l = lqiFor(this._renderPlanHass, d.entities);
       if (l != null) vals.push(l);
     }
     return averageLqi(vals);
@@ -3318,6 +3500,11 @@ class HouseplanCard extends LitElement {
 
   /** Device position in render units of the current space. */
   private _pos(d: DevItem): { x: number; y: number } {
+    const captured = this._renderDeviceSnapshot?.positions.get(d.id);
+    return captured ? { x: captured.x, y: captured.y } : this._livePos(d);
+  }
+
+  private _livePos(d: DevItem): { x: number; y: number } {
     const s = this._spaceModel(d.space);
     const saved = this._layout[d.id];
     if (saved) {
@@ -3388,14 +3575,18 @@ class HouseplanCard extends LitElement {
    * functional source.
    */
   private _visualSamples(d: DevItem): EntityVisualSample[] {
-    return resolvePresentationSources(this._planHass, d).samples;
+    return resolvePresentationSources(this._renderPlanHass, d).samples;
   }
 
   /** One semantic projection consumed by the plan, preview and static card. */
   private _devicePresentation(
     d: DevItem, showLqi = true, designPreview = false,
   ): ResolvedDevicePresentation {
-    return resolveDevicePresentation(this._planHass, d, {
+    const captured = !designPreview
+      ? this._renderDeviceSnapshot?.presentations.get(presentationSnapshotKey(d.id, showLqi))
+      : null;
+    if (captured) return captured;
+    return resolveDevicePresentation(this._renderPlanHass, d, {
       liveStates: this._config?.live_states !== false,
       showTemperature: this._config?.show_temperature !== false,
       showSignal: showLqi && this._config?.show_signal !== false,
@@ -3426,11 +3617,11 @@ class HouseplanCard extends LitElement {
     // current_temperature gets the same badge a thermometer has. No valid
     // reading (missing attribute, unavailable) -> no badge at all.
     if (d.marker?.use_climate_temp === true) {
-      const t = climateTempFor(this.hass, d.entities);
+      const t = climateTempFor(this._renderPlanHass, d.entities);
       if (t != null) return t;
     }
     if (d.icon !== 'mdi:thermometer' && d.icon !== 'mdi:air-filter') return null;
-    return tempFor(this.hass, d.entities);
+    return tempFor(this._renderPlanHass, d.entities);
   }
 
   /** Every HA entity owned by a dialog binding. */
@@ -3926,9 +4117,22 @@ class HouseplanCard extends LitElement {
   }
 
   private _bootSettled(): void {
+    if (!this._booting || this._bootSettling) return;
+    this._bootSettling = true;
+    this._refitView(); // calculate the final geometry while still covered
+    this._bootSettleRaf = requestAnimationFrame(() => {
+      this._bootSettleRaf = 0;
+      this._finishBootSettled();
+    });
+  }
+
+  private _finishBootSettled(): void {
     if (!this._booting) return;
-    this._refitView(); // reveal in the final geometry, never mid-jump
+    // `_applyView()` is reactive: wait one paint opportunity, refit once more,
+    // and only then remove the veil. This prevents a default-view reveal.
+    this._refitView();
     this._booting = false;
+    this._bootSettling = false;
     // DEV-B703-01: the page has settled once — the next instance with the
     // same config at the same viewport opens warm (no veil, no wait).
     const settledH = this._stageEl?.clientHeight ?? 0;
@@ -3958,12 +4162,11 @@ class HouseplanCard extends LitElement {
   private _beginResumeSettle(): void {
     if (this._booting || this._resumeSettling) return;
     this._viewportInvalidAt = 0;
-    const token = this._beginContinuityCandidate('warm-resume', false);
+    this._beginContinuityCandidate('warm-resume', false);
     // A card can be detached for the whole visibility event and reattached as
     // the same already-loaded instance. In that case `willUpdate()` has no
     // reason to reload, so the warm tombstone must start its own revalidation
     // instead of immediately blessing the stale frame as current.
-    if (token !== this._continuity.token) return;
     if (!this._loading) void this._loadFromServer();
     else this.requestUpdate();
   }
@@ -7619,8 +7822,9 @@ class HouseplanCard extends LitElement {
         // entity `liveText` gives the stored text back byte-for-byte, so a
         // plain label is the plain label it always was (docs/LIVE-TEXT.md).
         const fs = this._decorTextUnits(sh);
-        const lines = decorTextLines(liveText(
-          sh.text, sh, this.hass, (eid) => this._planEntityAvailable(eid),
+        const frozenText = this._renderDeviceSnapshot?.facts.get(`decor:${this._space}:${sh.id}`);
+        const lines = decorTextLines(typeof frozenText === 'string' ? frozenText : liveText(
+          sh.text, sh, this._renderPlanHass, (eid) => this._renderEntityAvailable(eid),
         ));
         const ax = sh.x * W, ay = sh.y * H;
         const ang = Number(sh.angle) || 0;
@@ -8848,7 +9052,7 @@ class HouseplanCard extends LitElement {
         mode,
         mode === 'lqi' && room.area ? this._roomLqi(room.area) : null,
         mode === 'light'
-          ? resolvedLightState(resolvedLightSources(this._planHass, this._devices, room))
+          ? resolvedLightState(resolvedLightSources(this._renderPlanHass, this._renderDevices, room))
           : 'none',
         mode === 'temp' ? this._roomTemp(room) : null,
         disp.tempMin,
@@ -11042,7 +11246,7 @@ class HouseplanCard extends LitElement {
 
   /** sun.sun, but only when the feature is armed (north_deg set somewhere). */
   private _sunNow(): { azimuth: number; elevation: number } | null {
-    return this._effNorth() !== null ? sunStateOf(this.hass) : null;
+    return this._effNorth() !== null ? sunStateOf(this._renderPlanHass) : null;
   }
 
   /**
@@ -11056,7 +11260,7 @@ class HouseplanCard extends LitElement {
     // with rays off, or night. Those never fade, they just are not there.
     if (this._editing || !this._effSunRays()) { this._sunFadeReset(); return empty; }
     const north = this._effNorth();
-    const sun = north !== null ? sunStateOf(this.hass) : null;
+    const sun = north !== null ? sunStateOf(this._renderPlanHass) : null;
     if (!sun || sun.elevation <= 0) { this._sunFadeReset(); return empty; }
     const alpha = rayPeakAlpha();
     // The ONE thing that fades (owner 2026-08-03): the 3° threshold. Above it
@@ -11757,8 +11961,8 @@ class HouseplanCard extends LitElement {
     const physical = this._physicalBodiesR(space);
     const { occluders, floor, fingerprint } = this._lightBarriers(space, polys, physical);
     const resolvedSources = resolvedLightSources(
-      this._planHass,
-      this._devices.filter((d) => d.space === space.id),
+      this._renderPlanHass,
+      this._renderDevices.filter((d) => d.space === space.id),
     );
     const sourcesByDevice = new Map<string, typeof resolvedSources>();
     for (const source of resolvedSources) {
@@ -11780,7 +11984,7 @@ class HouseplanCard extends LitElement {
       r: number;
     }[] = [];
     const seenSourceKeys = new Set<string>();
-    for (const d of this._devices) {
+    for (const d of this._renderDevices) {
       if (d.space !== space.id) continue;
       const source = selectSpatialGlowSource(sourcesByDevice.get(d.id) || []);
       if (!source) continue;
@@ -11789,7 +11993,7 @@ class HouseplanCard extends LitElement {
       const key = `${space.id}|${d.id}`;
       seenSourceKeys.add(key);
       const visibleGlow = resolveGlowAppearance(
-        this._planHass.states[source.eid], d.marker?.glow_color, colors.glow_light.c,
+        this._renderPlanHass.states[source.eid], d.marker?.glow_color, colors.glow_light.c,
       );
       // per-source radius (owner's decision v1.36.2): marker override, else global
       const ownCm = Number(d.marker?.glow_radius_cm);
@@ -12317,7 +12521,8 @@ class HouseplanCard extends LitElement {
     // (ghosted); everywhere else the flag removes them from sight — but not
     // from the build, so room LQI still counts them (docs/FILTERING.md)
     const showGhosts = this._mode === 'devices' && this._showAll;
-    const devs = this._devices.filter((d) => d.space === space.id && (!d.hidden || showGhosts));
+    const devs = this._renderDevices.filter((d) => d.space === space.id && (!d.hidden || showGhosts));
+    const deviceSnapshot = this._renderDeviceSnapshot;
     const disp = this._spaceDisplayForRender();
     const roomFills = this._resolvedRoomFills(space, disp);
     const glowBase = this._resolvedGlowBase(space, disp, roomFills);
@@ -12347,6 +12552,7 @@ class HouseplanCard extends LitElement {
         data-continuity-state=${this._continuity.state}
         data-continuity-token=${this._continuity.token}
         data-frame-fingerprint=${this._continuity.frameFingerprint || nothing}
+        data-device-snapshot-sequence=${deviceSnapshot?.sourceSequence ?? nothing}
         data-recovery-reason=${recoveryReason || nothing}
         data-ha-registry-access=${diagnostics.registry.access}
         data-ha-disabled-bindings=${diagnostics.bindings.ha_disabled}
@@ -12480,7 +12686,7 @@ class HouseplanCard extends LitElement {
             ${space.bg && backdropHref
               ? svg`<image href="${backdropHref}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}"
                   opacity="${this._mode === 'decor' && this._decorTool !== 'backdrop' ? 0.5 : 1}"
-                  @load=${() => this._onBackdropLoaded(space.bg!.href)}
+                  @load=${() => this._onBackdropLoaded(space.bg!.href, backdropHref)}
                   transform=${space.bg.angle
                     ? `rotate(${space.bg.angle} ${space.bg.x + space.bg.w / 2} ${space.bg.y + space.bg.h / 2})`
                     : nothing}
@@ -12787,12 +12993,14 @@ class HouseplanCard extends LitElement {
 
   // ---------------- live robot vacuums (docs/VACUUM.md) ----------------
 
-  private _vacCandidateStatus(entityId: string, candidate: VacSourceCandidate | null): VacSourceStatus {
+  private _vacCandidateStatus(
+    entityId: string, candidate: VacSourceCandidate | null, planHass = this._planHass,
+  ): VacSourceStatus {
     const binding = this._bindingStatus('entity:' + entityId);
     if (binding.kind === 'ha_disabled') return 'disabled';
     if (binding.kind === 'orphaned') return 'missing';
     if (binding.kind === 'unverified') return 'unverified';
-    const state = this.hass?.states?.[entityId];
+    const state = planHass?.states?.[entityId];
     if (state?.state === 'unavailable') return 'unavailable';
     return candidate?.hasPosition ? 'ok' : 'unsupported';
   }
@@ -12811,16 +13019,18 @@ class HouseplanCard extends LitElement {
   }
 
   /** One sticky, order-independent source resolver for render/dialog/fit. */
-  private _vacSourceResolution(d: DevItem, includeAllCameras = false): VacSourceResolution {
+  private _vacSourceResolution(
+    d: DevItem, includeAllCameras = false, planHass = this._planHass,
+  ): VacSourceResolution {
     const vacuum = d.marker?.vacuum;
     const pinned = typeof vacuum?.source === 'string' && !!vacuum.source;
     const sameDevice = new Set(d.entities || []);
     const ids = new Set<string>(sameDevice);
     if (pinned) ids.add(vacuum!.source!);
-    const registry = this._haRegistry.entities || {};
+    const registry = planHass?.entities || {};
     const candidates: VacSourceCandidate[] = [];
     for (const entityId of ids) {
-      const state = this.hass?.states?.[entityId];
+      const state = planHass?.states?.[entityId];
       const candidate = parseVacSourceCandidate(entityId, state, registry[entityId]);
       if (candidate) candidates.push(candidate);
       else if (pinned && entityId === vacuum!.source) {
@@ -12841,15 +13051,15 @@ class HouseplanCard extends LitElement {
     }
     const statuses: Record<string, VacSourceStatus> = {};
     for (const candidate of candidates) {
-      statuses[candidate.entityId] = this._vacCandidateStatus(candidate.entityId, candidate);
+      statuses[candidate.entityId] = this._vacCandidateStatus(candidate.entityId, candidate, planHass);
     }
     return resolveVacSource(vacuum?.source, sameDevice, candidates, statuses);
   }
 
   /** The sticky/automatic live-position source entity, or null. */
-  private _vacSource(d: DevItem): string | null {
+  private _vacSource(d: DevItem, planHass = this._planHass): string | null {
     if (d.marker?.vacuum?.live === false) return null;
-    const resolution = this._vacSourceResolution(d);
+    const resolution = this._vacSourceResolution(d, false, planHass);
     // A disabled/unavailable/unverified source must never leak stale HA
     // attributes into plan overlays. `unsupported` remains usable because it
     // may still provide rooms/path for calibration and trail rendering.
@@ -13199,11 +13409,11 @@ class HouseplanCard extends LitElement {
    * human-readable one on the vacuum entity (selected_map, verified against a
    * live X50 Master) — without this both floors would share one matrix.
    */
-  private _vacMapId(d: DevItem, tele: { mapId: string }): string {
+  private _vacMapId(d: DevItem, tele: { mapId: string }, planHass = this._planHass): string {
     // HP-1541-01: nullish, not truthy — selected_map: 0 is a real map id and
     // must equal what trails.py resolve_map_id stores server-side.
     const ve = this._vacEntity(d);
-    const sel = ve ? this.hass?.states[ve]?.attributes?.selected_map : null;
+    const sel = ve ? planHass?.states?.[ve]?.attributes?.selected_map : null;
     return vacMapIdWithFallback(tele.mapId, sel);
   }
 
@@ -13399,7 +13609,7 @@ class HouseplanCard extends LitElement {
   private _renderVacFit(view: { x: number; y: number; w: number; h: number }): TemplateResult | typeof nothing {
     const f = this._vacFit;
     if (!f) return nothing;
-    const tele = readVacTelemetry(this.hass?.states[f.source]?.attributes);
+    const tele = readVacTelemetry(this._renderPlanHass?.states?.[f.source]?.attributes);
     if (!tele) return nothing;
     const m = fitMatrix(f.p);
     const rects: TemplateResult[] = [];
@@ -13485,20 +13695,21 @@ class HouseplanCard extends LitElement {
     for (const d of devs) {
       if (d.hidden || !this._isVacDev(d)) continue;
       if (normalizeDeviceDisplay(d.marker?.display) === 'static_icon') continue;
-      const src = this._vacSource(d);
+      const fact = this._renderDeviceSnapshot?.facts.get(`vacuum:${d.id}`) as any;
+      const src = fact?.source ?? this._vacSource(d, this._renderPlanHass);
       if (!src) continue;
-      const tele = readVacTelemetry(this.hass?.states[src]?.attributes);
+      const tele = fact?.telemetry ?? readVacTelemetry(this._renderPlanHass?.states[src]?.attributes);
       if (!tele) continue;
-      const matrix = d.marker?.vacuum?.calibration?.[this._vacMapId(d, tele)] as Affine | undefined;
+      const mapNow = String(fact?.mapId ?? this._vacMapId(d, tele, this._renderPlanHass));
+      const matrix = d.marker?.vacuum?.calibration?.[mapNow] as Affine | undefined;
       if (!matrix || matrix.length !== 6) continue;
-      const rt = this._vacRt.get(d.id);
+      const rt = fact?.runtime ?? this._vacRt.get(d.id);
       const moving = rt?.moving ?? false;
       const tmode = vacTrailMode(d.marker?.vacuum);
       // owner 2026-07-31: hide when the cleanup is over (default), unless the
       // mode says always; the previous run only ever shows in 'always'
       const showCur = tmode === 'always' || (tmode === 'cleaning' && moving);
-      const srv = this._vacSrvTrails[d.id];
-      const mapNow = this._vacMapId(d, tele);
+      const srv = fact?.server ?? this._vacSrvTrails[d.id];
       const srvCur = srv?.current?.map_id === mapNow && Array.isArray(srv.current.points) ? srv.current : null;
       const srvPrev = srv?.previous?.map_id === mapNow && Array.isArray(srv.previous.points) ? srv.previous : null;
       // the PREVIOUS run stays visible even at rest: users compare where the
@@ -13622,14 +13833,14 @@ class HouseplanCard extends LitElement {
     const cmPerUnit = this._cellCm / this._gridPitch;
     return formatArea(
       (clean.area * cmPerUnit * cmPerUnit) / 1e4,
-      this.hass?.config?.unit_system?.length === 'mi',
+      this._renderPlanHass?.config?.unit_system?.length === 'mi',
     );
   }
 
   /** Room temperature honouring the tier-3 source override. */
   private _roomTemp(r: RoomCfg): number | null {
     const src = r.settings?.temp_source;
-    if (src) return sourceValue(this._planHass, src, 'temp', this._markers);
+    if (src) return sourceValue(this._renderPlanHass, src, 'temp', this._markers);
     // every sensor of the area, placed on the plan or not (field report)
     return r.area ? this._climate().get(r.area)?.temp ?? null : null;
   }
@@ -13637,7 +13848,7 @@ class HouseplanCard extends LitElement {
   /** Room humidity honouring the tier-3 source override. */
   private _roomHum(r: RoomCfg): number | null {
     const src = r.settings?.hum_source;
-    if (src) return sourceValue(this._planHass, src, 'hum', this._markers);
+    if (src) return sourceValue(this._renderPlanHass, src, 'hum', this._markers);
     return r.area ? this._climate().get(r.area)?.hum ?? null : null;
   }
 
@@ -13654,7 +13865,7 @@ class HouseplanCard extends LitElement {
     // markers are part of the key: ticking "use the device's temperature
     // sensor" replaces the markers array, so the average recomputes at once
     const mk = this._serverCfg?.markers;
-    const planHass = this._planHass;
+    const planHass = this._renderPlanHass;
     const c = this._climateCache;
     if (c && c.h === planHass && c.r === this._iconRules && c.mk === mk) return c.m;
     const m = areaClimateMap(planHass, this._iconRules, mk);
@@ -13947,7 +14158,7 @@ class HouseplanCard extends LitElement {
         if (l != null) rows.push(html`<span class="rlm"><ha-icon icon="mdi:zigbee"></ha-icon>${l}</span>`);
       }
       if (disp.labelLight) {
-        const ls = resolvedLightStats(resolvedLightSources(this._planHass, this._devices, r));
+        const ls = resolvedLightStats(resolvedLightSources(this._renderPlanHass, this._renderDevices, r));
         if (ls) {
           const txt = ls.on === 0
             ? this._t('roomcard.light_off')
@@ -14172,8 +14383,8 @@ class HouseplanCard extends LitElement {
 
   /** Live state of an opening's contact, 0..1 drawn amount. */
   private _openingAmt(o: OpeningCfg): number {
-    const st = o.contact && this._planEntityAvailable(o.contact)
-      ? this.hass.states[o.contact]?.state
+    const st = o.contact && this._renderEntityAvailable(o.contact)
+      ? this._renderPlanHass.states[o.contact]?.state
       : null;
     return openingAmount(o.type, st, !!o.invert);
   }
@@ -14183,6 +14394,13 @@ class HouseplanCard extends LitElement {
     if (!eid) return false;
     if (isRemovedPlanEntity(this._fullRegistryHass, eid, removedPlanBindings(this._markers))) return false;
     return this._bindingStatus('entity:' + eid).kind === 'active';
+  }
+
+  /** Availability from the same immutable projection as the painted frame. */
+  private _renderEntityAvailable(eid: string | null | undefined): boolean {
+    if (!eid) return false;
+    if (isRemovedPlanEntity(this._renderPlanHass, eid, removedPlanBindings(this._markers))) return false;
+    return !!this._renderPlanHass.entities?.[eid] && !!this._renderPlanHass.states?.[eid];
   }
 
   /**
@@ -14200,7 +14418,7 @@ class HouseplanCard extends LitElement {
     return svg`${items.map((o) => {
       const half = o.rlen / 2;
       const amt = this._openingAmt(o);
-      const active = amt > 0 && !!o.contact && this._planEntityAvailable(o.contact);
+      const active = amt > 0 && !!o.contact && this._renderEntityAvailable(o.contact);
       const tone = active ? 'var(--hp-open)' : base;
       // A normal door/window uses the selected room-side face. A gate's
       // architectural symbol sits and opens on the opposite (exterior) face;
@@ -14315,13 +14533,13 @@ class HouseplanCard extends LitElement {
   /** Padlock badges for door-like openings with a lock entity. */
   private _renderOpeningLocks(view: { x: number; y: number; w: number; h: number }): TemplateResult {
     const items = this._openingsR.filter(
-      (o) => o.type !== 'window' && o.lock && this._planEntityAvailable(o.lock),
+      (o) => o.type !== 'window' && o.lock && this._renderEntityAvailable(o.lock),
     );
     if (!items.length) return html``;
     const openCuts = this._openPairs().flatMap((pair) => pair.segs);
     const openingWallIndex = this._openingWallIndexFor(this._spaceModel(), openCuts).value;
     return html`${items.map((o) => {
-      const st = this.hass.states[o.lock!]?.state;
+      const st = this._renderPlanHass.states[o.lock!]?.state;
       const locked = st === 'locked';
       const known = locked || ['unlocked', 'open', 'opening', 'unlocking', 'locking'].includes(String(st));
       // Perpendicular offset from the opening center, away from the swing side.

@@ -155,22 +155,24 @@ test('a stale recovery token can never commit', async () => {
   assert.equal(controller.frameFingerprint, 'old');
 });
 
-test('a readiness loss rejects recoverably without masquerading as a timeout', async () => {
+test('asset readiness is polled inside the bounded barrier and keeps a stale frame on timeout', async () => {
   const clock = new FakeClock();
   const controller = new VisualContinuityController(() => undefined, clock);
   controller.markCompleteFrame('old');
   const token = controller.beginCandidate('asset-refresh', 'asset');
   controller.candidateReady(token);
-  const committed = await controller.commitAfterPaint(token, {
+  const committed = controller.commitAfterPaint(token, {
     updateComplete: async () => undefined,
     stageValid: () => true,
     assetsReady: () => false,
     frameFingerprint: () => 'bad',
   });
-  assert.equal(committed, false);
-  assert.equal(controller.state, 'holding');
+  await Promise.resolve();
+  clock.advance(PAINT_BARRIER_MAX_MS);
+  assert.equal(await committed, false);
+  assert.equal(controller.state, 'steady');
   assert.equal(controller.frameFingerprint, 'old');
-  assert.equal(controller.trace.at(-1)?.event, 'paint-barrier-rejected');
+  assert.equal(controller.trace.at(-1)?.event, 'paint-barrier-timeout');
 });
 
 test('a real paint timeout without a complete frame becomes a recoverable error', async () => {
@@ -195,4 +197,21 @@ test('content fingerprints are stable across object key order and frame parts', 
   assert.equal(contentFingerprint({ b: 2, a: 1 }), contentFingerprint({ a: 1, b: 2 }));
   assert.notEqual(contentFingerprint({ a: 1 }), contentFingerprint({ a: 2 }));
   assert.equal(visualFrameFingerprint([1, 'x']), visualFrameFingerprint([1, 'x']));
+  const shared = { value: 1 };
+  assert.equal(
+    contentFingerprint({ a: shared, b: shared }),
+    contentFingerprint({ a: { value: 1 }, b: { value: 1 } }),
+    'a shared acyclic reference is hashed by value, not misclassified as a cycle',
+  );
+});
+
+test('trace diagnostics are returned as a defensive copy', () => {
+  const clock = new FakeClock();
+  const controller = new VisualContinuityController(() => undefined, clock);
+  controller.note('sample', { stage: [10, 20] });
+  const trace = controller.trace;
+  trace[0].event = 'mutated';
+  trace[0].stage[0] = 999;
+  assert.equal(controller.trace[0].event, 'sample');
+  assert.deepEqual(controller.trace[0].stage, [10, 20]);
 });

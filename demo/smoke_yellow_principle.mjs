@@ -9,6 +9,8 @@ const out = await page.evaluate(() => {
   const c = window.__card;
   const cls = (d, states) => {
     const saved = c.hass;
+    const visibleSnapshot = c._visibleDeviceSnapshot;
+    const candidateSnapshot = c._candidateDeviceSnapshot;
     const entities = Object.fromEntries(Object.keys(states).map((entity_id) => [
       entity_id,
       { entity_id, platform: 'demo', disabled_by: null },
@@ -18,8 +20,15 @@ const out = await page.evaluate(() => {
       entities: { ...c.hass.entities, ...entities },
       states: { ...c.hass.states, ...states },
     };
+    // Synthetic devices are deliberately outside the acquired demo registry.
+    // Exercise the resolver against the injected HA shape, not the previously
+    // committed plan frame used by the real DOM.
+    c._visibleDeviceSnapshot = null;
+    c._candidateDeviceSnapshot = null;
     const r = c._stateClass(d);
     c.hass = saved;
+    c._visibleDeviceSnapshot = visibleSnapshot;
+    c._candidateDeviceSnapshot = candidateSnapshot;
     return r;
   };
   const trv = { id: 't', primary: 'climate.trv', entities: ['climate.trv', 'switch.trv_anti_scaling'], marker: null };

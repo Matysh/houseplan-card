@@ -112,6 +112,9 @@ const runtime = () => {
       attributes: { azimuth: 180, elevation: 24 },
     },
   };
+  entities['sun.sun'] = {
+    entity_id: 'sun.sun', device_id: null, platform: 'sun', disabled_by: null,
+  };
   const layout = {};
   const areas = Object.fromEntries(
     [...geometryRooms, ...lightingRooms].map((room) => [room.area, { area_id: room.area, name: room.name }]),

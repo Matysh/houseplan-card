@@ -15,9 +15,12 @@ import { normalizeDeviceDisplay, referencedContentUrls } from './logic';
 import { acquireHaRegistries, activeRegistryHass, haRegistrySnapshot } from './ha-binding-status';
 import { edgeActivity } from './device-visual';
 import {
-  presentationSourceSignature, resolvePresentationSources,
+  presentationSourceSignature, resolveDevicePresentation, resolvePresentationSources,
   type PresentationActivityRuntime,
 } from './device-presentation';
+import {
+  createRenderDeviceSnapshot, presentationSnapshotKey, type RenderDeviceSnapshot,
+} from './render-device-snapshot';
 import type { DevItem } from './types';
 import {
   VisualContinuityController,
@@ -76,6 +79,7 @@ class HouseplanSpaceCard extends LitElement {
   private _haRegistryRevision = -1;
   private _devices: DevItem[] = [];
   private _continuity = this._newContinuityController();
+  private _continuityHistory: import('./visual-continuity').ContinuityTraceEvent[] = [];
   private _continuityUnsub?: () => void;
   private _continuityEpoch = 0;
   private _continuityDataReady = true;
@@ -84,11 +88,20 @@ class HouseplanSpaceCard extends LitElement {
   private _renderSnapshotAt = Date.now();
   private _hassSequence = 0;
   private _connHooked: any = null;
+  private _connectionWasLost = false;
+  private _visibleDeviceSnapshot: RenderDeviceSnapshot | null = null;
+  private _candidateDeviceSnapshot: RenderDeviceSnapshot | null = null;
+  private _stagedDeviceSnapshotToken = -1;
+  private _capturedSnapshotSequence = -1;
+  private _capturedSnapshotDevices: DevItem[] | null = null;
+  private _capturedSnapshotActivity = '';
   private _activityRuntime = new Map<string, StaticActivityRuntime>();
   private _onHaRegistryUpdate = () => {
     const revision = haRegistrySnapshot(this.hass).revision;
     if (revision === this._haRegistryRevision) return;
     this._haRegistryRevision = revision;
+    this._refreshDevices();
+    this._capturedSnapshotSequence = -1;
     this.requestUpdate();
   };
 
@@ -117,22 +130,30 @@ class HouseplanSpaceCard extends LitElement {
   }
 
   private _pageVisibility = (signal: PageVisibilitySignal): void => {
-    const token = this._continuity.visibility(signal);
+    this._continuity.visibility(signal);
     if (signal.kind === 'hidden' || !signal.long) return;
     if (Date.now() - this._renderSnapshotAt > 1000) this._continuity.note('device-snapshot-stale');
     this._continuityDataReady = false;
     this._continuityPaintToken = -1;
-    if (token === this._continuity.token) void this._load(true);
+    void this._load(true);
   };
 
   private _onConnLost = (): void => {
+    this._connectionWasLost = true;
     this._continuityDataReady = false;
     this._continuityPaintToken = -1;
     this._continuity.connectionLost();
   };
 
   private _onConnReady = (): void => {
-    this._beginContinuityCandidate('connection-ready', false, 'connection');
+    // `ready` also fires for a healthy initial connection. Only a preceding
+    // confirmed loss is allowed to put the card into offline-stale semantics.
+    if (!this._connectionWasLost && this._continuity.hasCompleteFrame) {
+      this._beginContinuityCandidate('connection-ready', false, 'plan');
+    } else {
+      this._continuityDataReady = false;
+      this._continuityPaintToken = -1;
+    }
     void this._load(true);
   };
 
@@ -216,6 +237,7 @@ class HouseplanSpaceCard extends LitElement {
     this._connHooked = null;
     for (const runtime of this._activityRuntime.values()) window.clearTimeout(runtime.timer);
     this._activityRuntime.clear();
+    this._continuityHistory = [...this._continuityHistory, ...this._continuity.trace].slice(-80);
     this._continuity.dispose();
     this._continuityDisposed = true;
     super.disconnectedCallback();
@@ -232,7 +254,10 @@ class HouseplanSpaceCard extends LitElement {
     if (this.hass && !this._loading && (!this._snap || changed.has('hass'))) {
       if (!this._snap || !this._loadedOnce) this._load();
     }
-    this._refreshDevices();
+    if (changed.has('hass') || changed.has('_snap') || changed.has('_config') || !this._devices.length) {
+      this._refreshDevices();
+    }
+    this._captureRenderDeviceSnapshot();
     if (this._continuity.hasCompleteFrame && this._continuity.state === 'steady') {
       this._continuity.refreshCompleteFrame(this._frameFingerprint());
     }
@@ -313,6 +338,72 @@ class HouseplanSpaceCard extends LitElement {
     this._devices = devices;
   }
 
+  private _captureRenderDeviceSnapshot(): void {
+    if (!this.hass) return;
+    const activity = [...this._activityRuntime.entries()]
+      .map(([id, runtime]) => `${id}:${runtime.gen}:${runtime.flashTs}`).join('|');
+    if (this._capturedSnapshotSequence === this._hassSequence
+        && this._capturedSnapshotDevices === this._devices
+        && this._capturedSnapshotActivity === activity) return;
+    const planHass = activeRegistryHass(this.hass, haRegistrySnapshot(this.hass));
+    const presentations = new Map<string, ReturnType<typeof resolveDevicePresentation>>();
+    const entityIds = new Set<string>(['sun.sun']);
+    const deviceIds = new Set<string>();
+    const areaIds = new Set<string>();
+    const addSource = (source: string | null | undefined): void => {
+      if (!source) return;
+      const separator = source.indexOf(':');
+      if (separator < 0) { entityIds.add(source); return; }
+      const kind = source.slice(0, separator), reference = source.slice(separator + 1);
+      if (kind === 'device') deviceIds.add(reference);
+      else if (kind === 'entity') entityIds.add(reference);
+    };
+    const selectedSpace = spaceModels(this._snap?.config || null)
+      .find((space) => space.id === this._config?.space);
+    for (const room of selectedSpace?.rooms || []) {
+      if (room.area) areaIds.add(room.area);
+      addSource(room.settings?.temp_source);
+      addSource(room.settings?.hum_source);
+    }
+    const rawSpace = this._snap?.config?.spaces?.find((space: any) => space.id === this._config?.space);
+    for (const opening of rawSpace?.openings || []) {
+      if (opening.contact) entityIds.add(opening.contact);
+      if (opening.lock) entityIds.add(opening.lock);
+    }
+    for (const device of this._devices) {
+      for (const showLqi of [false, true]) {
+        presentations.set(presentationSnapshotKey(device.id, showLqi), resolveDevicePresentation(
+          planHass, device, {
+            liveStates: this._config?.live_states !== false,
+            showTemperature: this._config?.show_temperature !== false,
+            showSignal: showLqi,
+            activityRuntime: this._activityRuntime.get(device.id),
+            sourceDetails: false,
+          },
+        ));
+      }
+    }
+    const snapshot = createRenderDeviceSnapshot({
+      sourceSequence: this._hassSequence, hass: planHass,
+      devices: this._devices, presentations, entityIds, deviceIds, areaIds,
+    });
+    this._capturedSnapshotSequence = this._hassSequence;
+    this._capturedSnapshotDevices = this._devices;
+    this._capturedSnapshotActivity = activity;
+    if (!this._visibleDeviceSnapshot || this._continuity.state === 'steady') {
+      this._visibleDeviceSnapshot = snapshot;
+      this._candidateDeviceSnapshot = null;
+    } else {
+      this._candidateDeviceSnapshot = snapshot;
+    }
+  }
+
+  private get _renderDeviceSnapshot(): RenderDeviceSnapshot | null {
+    return this._stagedDeviceSnapshotToken === this._continuity.token
+      ? this._candidateDeviceSnapshot || this._visibleDeviceSnapshot
+      : this._visibleDeviceSnapshot || this._candidateDeviceSnapshot;
+  }
+
   private _beginContinuityCandidate(
     reason: string,
     dataReady: boolean,
@@ -320,6 +411,7 @@ class HouseplanSpaceCard extends LitElement {
   ): number {
     this._continuityDataReady = dataReady;
     this._continuityPaintToken = -1;
+    this._stagedDeviceSnapshotToken = -1;
     return this._continuity.beginCandidate(reason, recoveryReason);
   }
 
@@ -347,7 +439,6 @@ class HouseplanSpaceCard extends LitElement {
       snap?.layoutFingerprint || contentFingerprint(snap?.layout),
       this._config?.space || '',
       this._stageWidth,
-      this._hassSequence,
       this.hass?.themes?.darkMode ?? this.hass?.themes?.default_theme ?? '',
     ]);
   }
@@ -360,18 +451,24 @@ class HouseplanSpaceCard extends LitElement {
   private _settleContinuityFrame(): void {
     if (!this._stageValid()) return;
     if (!this._continuity.hasCompleteFrame && this._continuity.state === 'steady') {
-      if (!this._assetsReady()) {
-        this._beginContinuityCandidate('asset-wait', true, 'asset');
-        return;
-      }
+      if (!this._assetsReady()) this._beginContinuityCandidate('asset-wait', true, 'asset');
+      else {
       this._renderSnapshotAt = Date.now();
       this._continuity.markCompleteFrame(this._frameFingerprint());
       return;
+      }
     }
-    if (!this._continuityDataReady || !this._assetsReady()) return;
+    if (!this._continuityDataReady) return;
     if (!['holding', 'offline-stale', 'overlay-pending', 'overlay-visible', 'candidate-ready']
       .includes(this._continuity.state)) return;
     const token = this._continuity.token;
+    if (this._candidateDeviceSnapshot
+        && this._candidateDeviceSnapshot !== this._visibleDeviceSnapshot
+        && this._stagedDeviceSnapshotToken !== token) {
+      this._stagedDeviceSnapshotToken = token;
+      this.requestUpdate();
+      return;
+    }
     if (this._continuityPaintToken === token) return;
     this._continuityPaintToken = token;
     if (!this._continuity.candidateReady(token)) return;
@@ -382,15 +479,23 @@ class HouseplanSpaceCard extends LitElement {
       frameFingerprint: () => this._frameFingerprint(),
     }).then((committed) => {
       if (!committed || token !== this._continuity.token) {
-        if (token === this._continuity.token) this._continuityPaintToken = -1;
+        if (token === this._continuity.token) {
+          this._continuityPaintToken = -1;
+          this._stagedDeviceSnapshotToken = -1;
+          this._candidateDeviceSnapshot = null;
+          this.requestUpdate();
+        }
         return;
       }
       this._renderSnapshotAt = Date.now();
+      if (this._candidateDeviceSnapshot) this._visibleDeviceSnapshot = this._candidateDeviceSnapshot;
+      this._candidateDeviceSnapshot = null;
+      this._stagedDeviceSnapshotToken = -1;
     });
   }
 
-  private _onAssetLoaded = (raw: string): void => {
-    this._signer.markLoaded(this.hass, raw);
+  private _onAssetLoaded = (raw: string, paintedUrl: string): void => {
+    this._signer.markLoaded(this.hass, raw, paintedUrl);
     this._continuity.note('asset-ready');
     this._continuityPaintToken = -1;
     if (this._continuity.state !== 'steady') this.requestUpdate();
@@ -449,7 +554,6 @@ class HouseplanSpaceCard extends LitElement {
     }
     this._loading = true;
     this._reloadQueued = false;
-    let loaded = false;
     try {
       const snap = await getConfig(this.hass, force);
       const configChanged = !this._snap
@@ -480,14 +584,17 @@ class HouseplanSpaceCard extends LitElement {
       if (configChanged) this._continuity.note('config-candidate', { configRev: snap.rev });
       if (layoutChanged) this._continuity.note('layout-candidate', { layoutRev: snap.layoutRev });
       this._loadedOnce = true;
-      loaded = true;
+      this._connectionWasLost = false;
       this._continuityDataReady = true;
       this._refreshDevices();
     } catch {
       /* keep any localStorage snapshot */
     } finally {
       this._loading = false;
-      if (!loaded && !this._continuity.hasCompleteFrame) this._continuityDataReady = true;
+      // A failed signing/decode attempt is still a completed candidate attempt;
+      // the paint barrier decides whether to keep the stale frame or show the
+      // bounded fallback. Never leave the state machine waiting without a timer.
+      this._continuityDataReady = true;
       this.requestUpdate();
       if (this._reloadQueued) {
         const forceAgain = this._forceReloadQueued;
@@ -558,7 +665,8 @@ class HouseplanSpaceCard extends LitElement {
 
   /** Redacted lifecycle diagnostics shared with the full card's sampler. */
   public houseplanContinuityTrace(): readonly import('./visual-continuity').ContinuityTraceEvent[] {
-    return this._continuity.trace;
+    return [...this._continuityHistory, ...this._continuity.trace].slice(-80)
+      .map((event) => ({ ...event, ...(event.stage ? { stage: [...event.stage] as [number, number] } : {}) }));
   }
 
   protected render(): TemplateResult | typeof nothing {
@@ -569,8 +677,9 @@ class HouseplanSpaceCard extends LitElement {
       return this._errorCard(t(this._lang, 'space_card.loading'));
     }
     const spaceId = this._config.space;
+    const deviceSnapshot = this._renderDeviceSnapshot;
     const stage = renderSpaceStatic({
-      hass: this.hass,
+      hass: deviceSnapshot?.hass || this.hass,
       cfg,
       layout: this._snap?.layout || {},
       spaceId,
@@ -580,12 +689,23 @@ class HouseplanSpaceCard extends LitElement {
       // resolved at render time: a url baked in earlier would be the unsigned one
       displayUrl: (raw) => this._signer.display(this.hass, raw),
       assetLoaded: this._onAssetLoaded,
-      registry: haRegistrySnapshot(this.hass),
-      devices: this._devices,
+      registry: deviceSnapshot
+        ? {
+          revision: deviceSnapshot.sourceSequence,
+          authoritative: false,
+          access: 'limited' as const,
+          entities: { ...deviceSnapshot.hass.entities },
+          devices: { ...deviceSnapshot.hass.devices },
+          lastSuccess: deviceSnapshot.capturedAt,
+        }
+        : haRegistrySnapshot(this.hass),
+      devices: [...(deviceSnapshot?.devices || this._devices)],
+      presentations: deviceSnapshot?.presentations,
       activityRuntime: this._activityRuntime,
       liveStates: this._config.live_states !== false,
       showTemperature: this._config.show_temperature !== false,
       showSignal: this._config.show_signal !== false,
+      inert: this._continuity.overlayBlocksInteraction,
     });
     if (!stage) {
       return this._errorCard(t(this._lang, 'space_card.not_found', { id: spaceId }));
@@ -601,6 +721,7 @@ class HouseplanSpaceCard extends LitElement {
         data-continuity-state=${this._continuity.state}
         data-continuity-token=${this._continuity.token}
         data-frame-fingerprint=${this._continuity.frameFingerprint || nothing}
+        data-device-snapshot-sequence=${deviceSnapshot?.sourceSequence ?? nothing}
         data-recovery-reason=${recoveryReason || nothing}>
         ${title ? html`<div class="hp-static-title">${title}</div>` : nothing}
         <div class="hp-static-body">

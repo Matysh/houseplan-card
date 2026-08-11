@@ -325,7 +325,12 @@ export const cardStyles = css`
       gap: var(--sp-4);
       padding: var(--sp-6);
       box-sizing: border-box;
-      background: var(--ha-card-background, var(--card-background-color, #111));
+      /* The final solid layer guarantees an opaque recovery surface even when
+         a custom HA theme exposes its card colour as rgba(). */
+      background:
+        linear-gradient(var(--ha-card-background, var(--card-background-color, #111)),
+          var(--ha-card-background, var(--card-background-color, #111))),
+        #111;
       color: var(--primary-text-color, #fff);
       text-align: center;
       pointer-events: auto;

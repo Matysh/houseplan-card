@@ -22,8 +22,9 @@ import type { DevItem, ServerConfig } from './types';
 import { physicalBodies } from './physical-geometry';
 import { activeRegistryHass, type HaRegistrySnapshot } from './ha-binding-status';
 import {
-  resolveDevicePresentation, type PresentationActivityRuntime,
+  resolveDevicePresentation, type PresentationActivityRuntime, type ResolvedDevicePresentation,
 } from './device-presentation';
+import { presentationSnapshotKey } from './render-device-snapshot';
 import { deviceFaceStyle, renderDeviceFace } from './device-face';
 import {
   spaceModels, roomCenter, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, NORM_W,
@@ -46,6 +47,7 @@ export interface StaticRenderOpts {
   /** Optional roster prepared by the card so its activity runtime sees the same instances. */
   devices?: DevItem[];
   activityRuntime?: ReadonlyMap<string, PresentationActivityRuntime>;
+  presentations?: ReadonlyMap<string, ResolvedDevicePresentation>;
   liveStates?: boolean;
   showTemperature?: boolean;
   showSignal?: boolean;
@@ -57,7 +59,9 @@ export interface StaticRenderOpts {
    */
   displayUrl?: (raw: string) => string;
   /** Marks a protected backdrop as loaded/paintable for continuity barriers. */
-  assetLoaded?: (raw: string) => void;
+  assetLoaded?: (raw: string, paintedUrl: string) => void;
+  /** Recovery overlay owns input while an atomic candidate is being painted. */
+  inert?: boolean;
 }
 
 export interface StaticDeviceBuildOpts {
@@ -235,10 +239,12 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     const p = markerPos(d, o.layout, o.cfg, defPos, space);
     const left = ((p.x - vb[0]) / vb[2]) * 100;
     const top = ((p.y - vb[1]) / vb[3]) * 100;
-    const presentation = resolveDevicePresentation(planHass, d, {
+    const showLqi = disp.showLqi ?? (o.showSignal !== false);
+    const presentation = o.presentations?.get(presentationSnapshotKey(d.id, showLqi))
+      || resolveDevicePresentation(planHass, d, {
       liveStates: o.liveStates !== false,
       showTemperature: o.showTemperature !== false,
-      showSignal: disp.showLqi ?? (o.showSignal !== false),
+      showSignal: showLqi,
       activityRuntime: o.activityRuntime?.get(d.id),
       sourceDetails: false,
     });
@@ -296,7 +302,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const wallStroke = disp.color || '#607d8b';
 
   return html`
-    <div class="hp-static-stage" style="aspect-ratio:${vb[2]}/${vb[3]}${stageBg ? ';background:' + stageBg : ''};--wall-fill:${colors.wall_fill.c};--wall-fill-op:${colors.wall_fill.a}">
+    <div class="hp-static-stage" ?inert=${!!o.inert} style="aspect-ratio:${vb[2]}/${vb[3]}${stageBg ? ';background:' + stageBg : ''};--wall-fill:${colors.wall_fill.c};--wall-fill-op:${colors.wall_fill.a}">
       <svg viewBox="${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}" preserveAspectRatio="xMidYMid meet">
         ${wallUnion ? svg`<defs>
           <pattern id="hp-wall-hatch" patternUnits="userSpaceOnUse" width="8" height="8"
@@ -311,7 +317,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
         )}
         ${bgHref
           ? svg`<image href="${bgHref}" x="${space.bg!.x}" y="${space.bg!.y}" width="${space.bg!.w}" height="${space.bg!.h}"
-              @load=${() => o.assetLoaded?.(space.bg!.href)}
+              @load=${() => o.assetLoaded?.(space.bg!.href, bgHref)}
               transform=${space.bg!.angle
                 ? `rotate(${space.bg!.angle} ${space.bg!.x + space.bg!.w / 2} ${space.bg!.y + space.bg!.h / 2})`
                 : nothing}

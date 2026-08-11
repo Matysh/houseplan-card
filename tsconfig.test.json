@@ -21,6 +21,7 @@
     "src/space-geometry.ts",
     "src/signing.ts",
     "src/visual-continuity.ts",
+    "src/render-device-snapshot.ts",
     "src/command-stack.ts",
     "src/align-grid.ts",
     "src/plan-optimizer.ts",

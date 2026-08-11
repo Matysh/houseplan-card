@@ -91,6 +91,8 @@ const DEVICES=Object.fromEntries([
   dev('d_gate','Gate','GDO-4','garden'),
 ]);
 const ENTITIES={
+  'sun.sun':{entity_id:'sun.sun',device_id:null,platform:'sun',disabled_by:null},
+  'camera.static_robot_map':{entity_id:'camera.static_robot_map',device_id:null,platform:'demo',disabled_by:null},
   'light.ceiling':{entity_id:'light.ceiling',device_id:'d_light1',platform:'demo',config_entry_id:'ce_demo',disabled_by:null},
   'light.floor_lamp':{entity_id:'light.floor_lamp',device_id:'d_lamp',platform:'demo',disabled_by:null},
   'media_player.tv':{entity_id:'media_player.tv',device_id:'d_tv',platform:'demo',disabled_by:null},

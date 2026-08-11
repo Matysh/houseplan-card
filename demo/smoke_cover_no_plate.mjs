@@ -181,6 +181,8 @@ const out = await page.evaluate(async () => {
   const valve = { id: 'v', primary: 'valve.water', entities: ['valve.water'], marker: null };
   const clsOfState = (d, states) => {
     const saved = c.hass;
+    const visibleSnapshot = c._visibleDeviceSnapshot;
+    const candidateSnapshot = c._candidateDeviceSnapshot;
     const entities = Object.fromEntries(Object.keys(states).map((entity_id) => [
       entity_id,
       { entity_id, platform: 'demo', disabled_by: null },
@@ -190,8 +192,12 @@ const out = await page.evaluate(async () => {
       entities: { ...c.hass.entities, ...entities },
       states: { ...c.hass.states, ...states },
     };
+    c._visibleDeviceSnapshot = null;
+    c._candidateDeviceSnapshot = null;
     const r = c._stateClass(d);
     c.hass = saved;
+    c._visibleDeviceSnapshot = visibleSnapshot;
+    c._candidateDeviceSnapshot = candidateSnapshot;
     return r;
   };
   o.valveOpenKeepsTheFrame = clsOfState(valve, { 'valve.water': { state: 'open', attributes: {} } }) === 'open';

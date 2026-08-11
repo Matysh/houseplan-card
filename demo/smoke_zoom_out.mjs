@@ -206,7 +206,7 @@ out.crossFloorLsIntact = out.crossFloorEditorExit.lsIntactCrossFloor;
 delete out.crossFloorEditorExit;
 
 // -- devices outside rooms stretch the default frame ---------------------
-out.devicesStretchFrame = await page.evaluate(() => {
+out.devicesStretchFrame = await page.evaluate(async () => {
   const c = window.__card;
   const cfg = JSON.parse(JSON.stringify(c._serverCfg));
   cfg.spaces[0].plan_url = null; cfg.spaces[0].plan_aspect = null;
@@ -214,6 +214,8 @@ out.devicesStretchFrame = await page.evaluate(() => {
   const before = c._baseVb();
   // walk one lamp far outside every room
   c._layout = { ...c._layout, d_lamp: { s: 'f1', x: 0.99, y: 0.5 } };
+  c.requestUpdate();
+  await c.updateComplete;
   const after = c._baseVb();
   return after[0] + after[2] > before[0] + before[2] + 20; // right edge follows the lamp
 });

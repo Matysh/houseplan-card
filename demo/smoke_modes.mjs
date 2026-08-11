@@ -55,13 +55,14 @@ out.planIconsHidden = await page.evaluate(() => {
 await page.evaluate(() => window.__card._setMode('devices'));
 await page.waitForTimeout(200);
 out.devices = await st();
-out.devDragWorks = await page.evaluate(() => {
+out.devDragWorks = await page.evaluate(async () => {
   const c = window.__card;
   const d = c._devices.find((x) => x.space === 'f1');
   const before = { ...c._pos(d) };
   c._pointerDown({ preventDefault(){}, clientX: 10, clientY: 10, target: { setPointerCapture(){} }, pointerId: 3 }, d);
   c._pointerMove({ clientX: 100, clientY: 70 }, d);
   c._pointerUp({}, d);
+  await c.updateComplete;
   const after = { ...c._pos(d) };
   return Math.abs(after.x - before.x) + Math.abs(after.y - before.y) > 0.5;
 });

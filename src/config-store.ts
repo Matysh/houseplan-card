@@ -23,6 +23,8 @@ export interface HpConfigSnapshot {
 
 let cache: HpConfigSnapshot | null = null;
 let inflight: Promise<HpConfigSnapshot> | null = null;
+let fetchGeneration = 0;
+let inflightGeneration = -1;
 let subscribed = false;
 const listeners = new Set<() => void>();
 
@@ -48,12 +50,12 @@ export function cachedSnapshot(): HpConfigSnapshot | null {
   return null;
 }
 
-async function fetchFresh(hass: any): Promise<HpConfigSnapshot> {
+async function fetchFresh(hass: any, generation: number): Promise<HpConfigSnapshot> {
   const [cfgResp, layResp] = await Promise.all([
     hass.callWS({ type: 'houseplan/config/get' }),
     hass.callWS({ type: 'houseplan/layout/get' }),
   ]);
-  cache = {
+  const snapshot: HpConfigSnapshot = {
     config: cfgResp?.config ?? null,
     rev: cfgResp?.rev ?? 0,
     configFingerprint: contentFingerprint(cfgResp?.config ?? null),
@@ -61,10 +63,15 @@ async function fetchFresh(hass: any): Promise<HpConfigSnapshot> {
     layoutRev: layResp?.rev ?? 0,
     layoutFingerprint: contentFingerprint(layResp?.layout ?? {}),
   };
+  // A force request may arrive while this fetch is in flight. Its older
+  // response remains useful to its original caller, but must not repopulate
+  // the shared cache after the newer generation invalidated it.
+  if (generation === fetchGeneration) cache = snapshot;
   if (!subscribed && hass.connection?.subscribeEvents) {
     subscribed = true;
     const invalidate = () => {
       cache = null; // invalidate; listeners reload
+      fetchGeneration++;
       listeners.forEach((l) => l());
     };
     try {
@@ -78,16 +85,32 @@ async function fetchFresh(hass: any): Promise<HpConfigSnapshot> {
       subscribed = false;
     }
   }
-  return cache;
+  return snapshot;
 }
 
 /** Get the shared config snapshot (cached, deduped across cards). */
 export function getConfig(hass: any, force = false): Promise<HpConfigSnapshot> {
-  if (force) cache = null;
+  if (force) {
+    cache = null;
+    fetchGeneration++;
+    if (inflight) {
+      // Do not let `force` silently join the stale request it was meant to
+      // supersede. Wait for that transport slot, then issue a fresh generation.
+      return inflight.catch(() => null).then(() => getConfig(hass, false));
+    }
+  }
   if (cache) return Promise.resolve(cache);
-  if (inflight) return inflight;
-  inflight = fetchFresh(hass).finally(() => {
+  if (inflight) {
+    if (inflightGeneration !== fetchGeneration) {
+      return inflight.catch(() => null).then(() => getConfig(hass, false));
+    }
+    return inflight;
+  }
+  const generation = fetchGeneration;
+  inflightGeneration = generation;
+  inflight = fetchFresh(hass, generation).finally(() => {
     inflight = null;
+    inflightGeneration = -1;
   });
   return inflight;
 }

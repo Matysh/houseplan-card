@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## v1.61.0-beta.8 — 2026-08-11
+
+- Plan recovery now has one bounded two-second barrier: a stalled signature or
+  protected-backdrop decode can no longer leave an already complete plan below
+  an opaque layer forever. The card retains its last coherent frame, while a
+  cold failure exposes an explicit retryable error.
+- Added an immutable per-frame data snapshot. Devices, positions, room fills,
+  Glow, sun, openings, vacuums and HA variables in decorative text now update
+  together instead of mixing old and new state during reconnect.
+- Connection readiness is treated as recovery only after a confirmed loss;
+  ordinary HA ticks no longer alter the structural frame fingerprint. Forced
+  config refreshes, signed-URL caching and late image load events are now
+  protected from their respective races.
+- Strengthened deterministic continuity, protected-backdrop and screencast
+  coverage. The browser scenario now exercises the production visibility
+  listener while checking geometry, devices, Glow, sun and decor together.
+
 ## v1.61.0-beta.7 — 2026-08-11
 
 - Fixed rare but severe Glow geometry failures: a clipping exception can no

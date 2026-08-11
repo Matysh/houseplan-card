@@ -16,11 +16,21 @@ session.on('Page.screencastFrame', (event) => {
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 try {
+  await page.waitForFunction(() => {
+    const card = window.__card;
+    const root = card?.shadowRoot || card?.renderRoot;
+    const host = root?.querySelector('ha-card');
+    return host?.dataset.continuityState === 'steady' && !!host?.dataset.frameFingerprint;
+  });
   const stage = await page.locator('houseplan-card').evaluate((card) => {
     const node = (card.shadowRoot || card.renderRoot).querySelector('.stage');
     const rect = node.getBoundingClientRect();
     return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
   });
+  // The reference is an explicitly settled DOM screenshot, never the first
+  // compositor frame emitted by the screencast itself. A degraded first frame
+  // must fail against this baseline rather than widening its own tolerance.
+  const baselinePng = await page.screenshot({ clip: stage });
 
   await session.send('Page.startScreencast', {
     format: 'png', everyNthFrame: 1, maxWidth: 820, maxHeight: 760,
@@ -39,7 +49,7 @@ try {
   await session.send('Page.stopScreencast');
   stopped = true;
 
-  const metrics = await page.evaluate(async ({ encoded, crop }) => {
+  const allMetrics = await page.evaluate(async ({ encoded, crop }) => {
     const decode = (data) => new Promise((resolve, reject) => {
       const image = new Image();
       image.onload = () => resolve(image);
@@ -84,9 +94,10 @@ try {
       });
     }
     return out;
-  }, { encoded: frames, crop: stage });
+  }, { encoded: [baselinePng.toString('base64'), ...frames], crop: stage });
 
-  const baseline = metrics[0] || { mean: 0, variance: 0, darkRatio: 1 };
+  const baseline = allMetrics[0] || { mean: 0, variance: 0, darkRatio: 1 };
+  const metrics = allMetrics.slice(1);
   const forbidden = metrics.filter((frame) => (
     frame.variance < Math.max(12, baseline.variance * 0.08)
     || frame.mean < Math.max(4, baseline.mean * 0.35)

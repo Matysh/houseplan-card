@@ -1,4 +1,5 @@
 import { contentUrl, chunk, MAX_SIGN_PATHS, SIGN_TTL_MS, SIGN_REFRESH_MS } from './logic';
+import { PAINT_BARRIER_MAX_MS } from './visual-continuity';
 
 /** A request older than this is presumed lost, and the url may be asked again. */
 export const SIGN_INFLIGHT_MS = 15000;
@@ -33,7 +34,11 @@ const sharedSignerRuntimes = new WeakMap<object, SharedSignerRuntime>();
 const SHARED_SIGNED_MAX = 512;
 
 const signerAuthority = (hass: any, fallback: object): object => {
-  const authority = hass?.connection || hass;
+  // `hass` itself is commonly replaced on every HA state tick. Keying the
+  // shared signer by it discarded the cache continuously in reduced/demo
+  // environments without a Connection object. The transport function is the
+  // next stable authority; a per-signer fallback is the final option.
+  const authority = hass?.connection || hass?.callWS || fallback;
   return authority && (typeof authority === 'object' || typeof authority === 'function')
     ? authority : fallback;
 };
@@ -301,7 +306,11 @@ export class ContentSigner {
     const url = entry.url;
     entry.preload = new Promise<boolean>((resolve) => {
       const image = new Image();
+      let settled = false;
       const finish = (ready: boolean): void => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
         const current = shared.signed[path];
         if (current === entry) delete current.preload;
         if (ready && current === entry && current.url === url) {
@@ -318,6 +327,10 @@ export class ContentSigner {
         decoded.then(() => finish(true)).catch(() => finish(false));
       };
       image.onerror = () => finish(false);
+      // A browser may leave an image request pending forever (sleep, dead
+      // service worker, stalled authenticated endpoint). Release the shared
+      // preload slot so Retry can start a genuinely new request.
+      const timer = setTimeout(() => finish(false), PAINT_BARRIER_MAX_MS);
       image.src = url;
     });
     return entry.preload;
@@ -344,8 +357,19 @@ export class ContentSigner {
       }
       return null;
     };
+    const bounded = (promise: Promise<boolean>): Promise<boolean> => new Promise((resolve) => {
+      let done = false;
+      const finish = (ready: boolean): void => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        resolve(ready);
+      };
+      const timer = setTimeout(() => finish(false), PAINT_BARRIER_MAX_MS);
+      promise.then(finish).catch(() => finish(false));
+    });
     const immediate = attempt();
-    if (immediate) return immediate;
+    if (immediate) return bounded(immediate);
     return new Promise<boolean>((resolve) => {
       let done = false;
       let active: Promise<boolean> | null = null;
@@ -362,7 +386,7 @@ export class ContentSigner {
         if (!active) return;
         active.then(finish).catch(() => finish(false));
       };
-      const timer = setTimeout(() => finish(false), SIGN_INFLIGHT_MS);
+      const timer = setTimeout(() => finish(false), PAINT_BARRIER_MAX_MS);
       shared.settlers.add(check);
       check();
     });
@@ -378,8 +402,18 @@ export class ContentSigner {
   private trimShared(shared: SharedSignerRuntime): void {
     const entries = Object.entries(shared.signed);
     if (entries.length <= SHARED_SIGNED_MAX) return;
+    const protectedPaths = new Set<string>(shared.inFlight.keys());
+    for (const refs of shared.references.values()) for (const path of refs) protectedPaths.add(path);
+    for (const [path, entry] of entries) {
+      if (entry.pending || entry.preload) protectedPaths.add(path);
+    }
     entries.sort((left, right) => right[1].at - left[1].at);
-    shared.signed = Object.fromEntries(entries.slice(0, SHARED_SIGNED_MAX));
+    const kept = entries.filter(([path]) => protectedPaths.has(path));
+    for (const entry of entries) {
+      if (kept.length >= SHARED_SIGNED_MAX) break;
+      if (!protectedPaths.has(entry[0])) kept.push(entry);
+    }
+    shared.signed = Object.fromEntries(kept);
   }
 
   /**
@@ -404,11 +438,13 @@ export class ContentSigner {
   }
 
   /** Mark a protected image as decoded/paintable; shared warm mounts inherit it. */
-  markLoaded(hass: any, url: string | null | undefined): void {
+  markLoaded(hass: any, url: string | null | undefined, paintedUrl?: string): void {
     const path = contentUrl(url);
     if (!path.startsWith('/api/houseplan/content/')) return;
     const entry = this.bind(hass).signed[path];
-    if (entry && !entry.loaded) {
+    // A late load event from an expired/re-signed URL must not bless the newer
+    // entry that happens to share the same raw content path.
+    if (entry && (!paintedUrl || entry.url === paintedUrl) && !entry.loaded) {
       entry.loaded = true;
       for (const listener of [...this.bind(hass).listeners]) listener();
     }

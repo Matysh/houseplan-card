@@ -45,6 +45,8 @@ const out = await page.evaluate(async () => {
   // =======================================================================
   const withStates = (states, fn) => {
     const saved = c.hass;
+    const visibleSnapshot = c._visibleDeviceSnapshot;
+    const candidateSnapshot = c._candidateDeviceSnapshot;
     const entities = Object.fromEntries(Object.keys(states).map((entity_id) => [
       entity_id,
       { entity_id, platform: 'demo', disabled_by: null },
@@ -54,8 +56,12 @@ const out = await page.evaluate(async () => {
       entities: { ...c.hass.entities, ...entities },
       states: { ...c.hass.states, ...states },
     };
+    c._visibleDeviceSnapshot = null;
+    c._candidateDeviceSnapshot = null;
     const r = fn();
     c.hass = saved;
+    c._visibleDeviceSnapshot = visibleSnapshot;
+    c._candidateDeviceSnapshot = candidateSnapshot;
     return r;
   };
   const st = (state, attrs = {}) => ({ state, attributes: attrs });

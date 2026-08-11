@@ -24,6 +24,8 @@ const out = await page.evaluate(async () => {
     angle: node.querySelector(':scope > ha-icon')?.style.transform || '',
   });
   const show = (device, states) => {
+    const visibleSnapshot = card._visibleDeviceSnapshot;
+    const candidateSnapshot = card._candidateDeviceSnapshot;
     card.hass = {
       ...saved,
       entities: {
@@ -34,8 +36,12 @@ const out = await page.evaluate(async () => {
       },
       states: { ...saved.states, ...states },
     };
+    card._visibleDeviceSnapshot = null;
+    card._candidateDeviceSnapshot = null;
     const presentation = card._devicePresentation(device);
     card.hass = saved;
+    card._visibleDeviceSnapshot = visibleSnapshot;
+    card._candidateDeviceSnapshot = candidateSnapshot;
     return {
       classes: presentation.classes,
       icon: presentation.icon,

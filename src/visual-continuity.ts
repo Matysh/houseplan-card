@@ -169,7 +169,12 @@ export class VisualContinuityController {
   get overlayVisible(): boolean { return this._overlayPhase !== 'none'; }
   get overlayBlocksInteraction(): boolean { return this.overlayVisible; }
   get recoveryReason(): RecoveryReason { return this._recoveryReason; }
-  get trace(): readonly ContinuityTraceEvent[] { return this._trace; }
+  get trace(): readonly ContinuityTraceEvent[] {
+    return this._trace.map((event) => ({
+      ...event,
+      ...(event.stage ? { stage: [...event.stage] as [number, number] } : {}),
+    }));
+  }
 
   /** Redacted card-owned lifecycle markers; never pass ids or urls here. */
   note(event: string, detail: Partial<ContinuityTraceEvent> = {}): void {
@@ -274,13 +279,24 @@ export class VisualContinuityController {
    */
   async commitAfterPaint(token: number, hooks: PaintBarrierHooks): Promise<boolean> {
     if (this._disposed || token !== this._token) return false;
+    let barrierActive = true;
     const barrier = (async () => {
       await hooks.updateComplete();
-      if (token !== this._token || !hooks.stageValid() || !hooks.assetsReady()) return false;
-      await this.nextFrame();
-      if (token !== this._token || !hooks.stageValid() || !hooks.assetsReady()) return false;
-      await this.nextFrame();
-      return token === this._token && hooks.stageValid() && hooks.assetsReady();
+      // Candidate data readiness starts the bounded barrier. Stage dimensions
+      // and protected-image decode may become ready a little later, so keep
+      // sampling them inside the same two-second budget instead of returning
+      // early and leaving an opaque recovery overlay without a running timer.
+      while (barrierActive && !this._disposed && token === this._token) {
+        if (hooks.stageValid() && hooks.assetsReady()) {
+          await this.nextFrame();
+          if (token !== this._token || !hooks.stageValid() || !hooks.assetsReady()) continue;
+          await this.nextFrame();
+          if (token === this._token && hooks.stageValid() && hooks.assetsReady()) return true;
+        } else {
+          await this.nextFrame();
+        }
+      }
+      return false;
     })();
     let timeout = 0;
     const timed = new Promise<{ ready: false; timedOut: true }>((resolve) => {
@@ -292,22 +308,10 @@ export class VisualContinuityController {
       barrier.then((ready) => ({ ready, timedOut: false as const })),
       timed,
     ]);
+    barrierActive = false;
     this.clock.clearTimeout(timeout);
     if (this._disposed || token !== this._token) return false;
-    if (!outcome.ready && !outcome.timedOut) {
-      // Stage/resource readiness can change between the two paint checks.
-      // This is a recoverable rejection, not the two-second timeout: retain
-      // the token and let the card retry when the missing readiness signal
-      // arrives, without converting a transient image decode into an error.
-      this.record('paint-barrier-rejected');
-      if (this._hasCompleteFrame) {
-        this._state = this._recoveryReason === 'connection' ? 'offline-stale' : 'holding';
-      } else {
-        this._state = this.overlayVisible ? 'overlay-visible' : 'overlay-pending';
-      }
-      this.changed();
-      return false;
-    }
+    if (!outcome.ready && !outcome.timedOut) return false;
     if (!outcome.ready) {
       this.record('paint-barrier-timeout');
       if (this._hasCompleteFrame) {
@@ -315,7 +319,10 @@ export class VisualContinuityController {
         this.clearOverlay();
       } else {
         this._state = 'recovery-error';
-        if (this._overlayPhase === 'none') this.showOverlayNow();
+        // A throttled/background tab may reach the terminal timeout while the
+        // entry rAF is still pending. Recovery-error is a terminal fallback,
+        // so never leave it in a transparent/intermediate animation phase.
+        if (this._overlayPhase !== 'opaque') this.showOverlayNow();
       }
       this.changed();
       return false;
@@ -346,7 +353,8 @@ export class VisualContinuityController {
     this._recoveryReason = reason;
     this._overlayTimer = this.clock.setTimeout(() => {
       this._overlayTimer = 0;
-      if (this._hasCompleteFrame || this._state !== 'overlay-pending') return;
+      if (this._hasCompleteFrame
+          || (this._state !== 'overlay-pending' && this._state !== 'candidate-ready')) return;
       this._state = 'overlay-visible';
       this._overlayPhase = 'entering';
       this.record('overlay-enter');
@@ -431,7 +439,10 @@ export class VisualContinuityController {
 export function contentFingerprint(value: unknown): string {
   let a = 0x811c9dc5;
   let b = 0x9e3779b9;
-  const seen = new WeakSet<object>();
+  // This is the active recursion stack, not a global "seen" set. A shared but
+  // acyclic child must hash by value at every occurrence; only an ancestor
+  // reference is a cycle.
+  const stack = new WeakSet<object>();
   const feed = (text: string): void => {
     for (let index = 0; index < text.length; index++) {
       const code = text.charCodeAt(index);
@@ -449,12 +460,13 @@ export function contentFingerprint(value: unknown): string {
     if (type === 'undefined') { feed('u'); return; }
     if (type !== 'object') { feed(`${type}:${String(node)}`); return; }
     const object = node as object;
-    if (seen.has(object)) { feed('[cycle]'); return; }
-    seen.add(object);
+    if (stack.has(object)) { feed('[cycle]'); return; }
+    stack.add(object);
     if (Array.isArray(node)) {
       feed('[');
       for (const item of node) visit(item);
       feed(']');
+      stack.delete(object);
       return;
     }
     feed('{');
@@ -463,6 +475,7 @@ export function contentFingerprint(value: unknown): string {
       visit((node as Record<string, unknown>)[key]);
     }
     feed('}');
+    stack.delete(object);
   };
   visit(value);
   return `${(a >>> 0).toString(16).padStart(8, '0')}${(b >>> 0).toString(16).padStart(8, '0')}`;

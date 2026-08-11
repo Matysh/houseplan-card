@@ -83,7 +83,7 @@ const out = await page.evaluate(async () => {
 
   // trail off via marker option
   cfg.markers.find((m) => m.id === 'e_vacuum_robo').vacuum.trail = false;
-  c._regSignature = ''; c.requestUpdate(); await c.updateComplete;
+  c._cfgEpoch++; c._regSignature = ''; c.requestUpdate(); await c.updateComplete;
   o.trailToggleOff = !sr().querySelector('.vactrail');
   cfg.markers.find((m) => m.id === 'e_vacuum_robo').vacuum.trail = null;
 
@@ -162,7 +162,7 @@ const out = await page.evaluate(async () => {
   o.integrationPathAlwaysAtRest = (restingIntegrationD.match(/M /g) || []).length === 2;
   // 'never' kills every line including the previous run
   cfg.markers.find((m) => m.id === 'e_vacuum_robo').vacuum.trail_mode = 'never';
-  c._regSignature = ''; c.requestUpdate(); await c.updateComplete;
+  c._cfgEpoch++; c._regSignature = ''; c.requestUpdate(); await c.updateComplete;
   o.neverHidesAll = !sr().querySelector('.vactrail');
   cfg.markers.find((m) => m.id === 'e_vacuum_robo').vacuum.trail_mode = null;
   c._vacSrvTrails = {};
