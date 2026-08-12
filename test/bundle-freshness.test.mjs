@@ -39,3 +39,19 @@ test('bundle freshness rejects a missing or stale fingerprint', async () => {
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test('bundle freshness uses the target tree fingerprint contract', async () => {
+  const root = fixtureRoot();
+  try {
+    mkdirSync(resolve(root, 'scripts'), { recursive: true });
+    writeFileSync(
+      resolve(root, 'scripts/source-fingerprint.mjs'),
+      "export const sourceFingerprint = () => 'legacy-tree-fingerprint';\n",
+      'utf8',
+    );
+    const page = { evaluate: async () => 'legacy-tree-fingerprint' };
+    assert.equal(await assertFreshDemoBundle(page, root), 'legacy-tree-fingerprint');
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
