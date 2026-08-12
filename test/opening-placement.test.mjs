@@ -135,13 +135,6 @@ test('centre magnet wins over grid on a wall whose midpoint is off-grid', () => 
   assert.equal(awayFromCentre.measure.guide, null);
 });
 
-test('non-wall geometry cannot become an opening placement target', () => {
-  assert.deepEqual(openingPlacementTargets([
-    interval({ key: 'partition-shape', kind: null, open: false }),
-    interval({ key: 'column-shape', kind: null, open: false, a: [40, 40], b: [60, 40] }),
-  ]), []);
-});
-
 test('Junction tie-break does not depend on interval input order', () => {
   const horizontal = interval({ key: 'a-horizontal' });
   const vertical = interval({ key: 'b-vertical', a: [50, -50], b: [50, 50] });

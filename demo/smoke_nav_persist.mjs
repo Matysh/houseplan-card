@@ -3,6 +3,18 @@ const { page, browser } = await launch();
 const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
+  // Permission-delayed warm navigation must use the complete transition
+  // authority instead of assigning the private mode field directly.
+  c._setMode('view', false); await c.updateComplete;
+  const realSetMode = c._setMode.bind(c);
+  let resumedThroughSetMode = 0;
+  c._setMode = (...args) => { resumedThroughSetMode += 1; return realSetMode(...args); };
+  c._pendingNavMode = 'devices';
+  c._serverCanWrite = true;
+  out.pendingModeUsesTransitionAuthority = c._resumePendingNavMode() === true
+    && resumedThroughSetMode === 1 && c._mode === 'devices' && c._pendingNavMode == null;
+  delete c._setMode;
+  c._setMode('view', false); await c.updateComplete;
   // выбрать f2 и редактор устройств
   c._space = 'garden'; c._setMode('devices'); await c.updateComplete;
   const nav = JSON.parse(localStorage.getItem('houseplan_card_nav_v1'));

@@ -354,9 +354,16 @@ function resolveEntity(
 
 function ownRoleCandidates(device: DevItem, registryHass: any): string[] {
   if (device.bindingKind === 'entity' && device.bindingRef) {
-    // Entity bindings are exact by contract: a controllable sibling from the
-    // same HA device must never replace the entity selected by the user.
-    return [device.bindingRef];
+    // The binding remains exact unless the user explicitly selected the
+    // marker's light driver. That persisted override is shared by rendering,
+    // Glow and tap handling, so the face must never represent light.lamp while
+    // a tap silently toggles the original relay instead.
+    const explicitLight = device.marker?.light_entity
+      ? forcedLightEntityOf(device)
+      : null;
+    return [...new Set([explicitLight, device.bindingRef].filter(
+      (eid): eid is string => !!eid,
+    ))];
   }
   const candidates = device.entities.length ? device.entities : device.allEntities || [];
   const leading = (device.marker?.light_entity

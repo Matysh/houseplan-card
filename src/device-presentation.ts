@@ -267,9 +267,10 @@ export function resolvePresentationSources(
   // More info. On a mixed device, however, an unrelated cover capability must
   // not hijack a primary/owned light unless the legacy explicit cover action
   // (or the primary entity itself) says that the marker represents the cover.
-  const resolvedDeviceRole = resolvedDeviceStateEntities(hass, d.entities);
+  const resolvedDeviceRole = resolvedDeviceStateEntities(registryHass, d.entities);
   const coverOwnsFace = !!cover && (
     d.tapAction === 'cover'
+    || d.primary?.startsWith('cover.')
     || resolvedDeviceRole.some((eid) => eid.startsWith('cover.'))
   );
   if (coverOwnsFace) {
@@ -301,7 +302,7 @@ export function resolvePresentationSources(
     // (and early HA startup snapshots) expose live states before the entity
     // registry arrives. Keep the historical whole-device role in that case
     // instead of silently downgrading the same entity to a generic primary.
-    const resolvedIds = resolvedDeviceStateEntities(hass, d.entities);
+    const resolvedIds = resolvedDeviceStateEntities(registryHass, d.entities);
     const ids = resolvedIds.length
       ? resolvedIds
       : d.entities.filter((eid) => !!hass?.states?.[eid]);

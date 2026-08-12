@@ -282,6 +282,20 @@ const rasterFixture = await page.evaluate(async () => {
   if (!source || !sourceEid || !current) return { ready: false };
 
   const edgeKey = (a, b) => `${a.join(',')}/${b.join(',')}`;
+  const wallKey = (a, b) => {
+    const pitch = 1 / 240;
+    const q = (value) => Math.round(value / pitch) * pitch;
+    let dx = b[0] - a[0], dy = b[1] - a[1];
+    const length = Math.hypot(dx, dy) || 1;
+    dx /= length; dy /= length;
+    if (dx < -1e-12 || (Math.abs(dx) <= 1e-12 && dy < 0)) {
+      dx = -dx; dy = -dy;
+    }
+    let angle = Math.atan2(dy, dx);
+    if (angle < 0) angle += Math.PI;
+    const angleBucket = Math.round(angle * 1800) / 1800;
+    return `${q((a[0] + b[0]) / 2).toFixed(6)},${q((a[1] + b[1]) / 2).toFixed(6)}@${angleBucket.toFixed(4)}`;
+  };
   const edges = new Map();
   for (const room of current.rooms || []) {
     for (let index = 0; index < room.poly.length; index++) {
@@ -291,13 +305,21 @@ const rasterFixture = await page.evaluate(async () => {
       if (!edges.has(reverse) && !edges.has(edgeKey(a, b))) edges.set(edgeKey(a, b), { a, b });
     }
   }
-  const walls = [...edges.values()].map(({ a, b }, index) => ({
-    key: `glow-raster-wall-${index}`, a, b, cm: 15,
+  const walls = [...edges.values()].map(({ a, b }) => ({
+    key: wallKey(a, b), a, b, cm: 15,
   }));
   const openings = [
     { id: 'glow-raster-east', type: 'door', x: 0.55, y: 0.32, angle: 90, length: 0.09 },
     { id: 'glow-raster-south', type: 'door', x: 0.32, y: 0.58, angle: 0, length: 0.09 },
   ];
+  const wallSource = [...edges.values()]
+    .map(({ a, b }) => ({
+      point: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2],
+      clearance: Math.min(...openings.map((opening) => Math.hypot(
+        (a[0] + b[0]) / 2 - opening.x, (a[1] + b[1]) / 2 - opening.y,
+      ))),
+    }))
+    .sort((left, right) => right.clearance - left.clearance)[0]?.point;
   c._serverCfg = {
     ...c._serverCfg,
     settings: { ...(c._serverCfg.settings || {}), glow_radius_cm: 600 },
@@ -425,7 +447,7 @@ const rasterFixture = await page.evaluate(async () => {
       }),
     };
   }
-  return { ready: true, litParts, sourceEid, doors, shadow };
+  return { ready: true, litParts, sourceEid, sourceId: source.id, wallSource, doors, shadow };
 });
 
 if (rasterFixture.ready) {
@@ -531,6 +553,39 @@ if (rasterFixture.ready) {
   res.shadowEdgeIsCrisp = !!metrics.shadow
     && metrics.shadow.high - metrics.shadow.low >= 8
     && metrics.shadow.edgeWidth <= 4;
+  const sourceInsideWall = await page.evaluate(async ({ sourceEid, sourceId, wallSource }) => {
+    if (!wallSource) return false;
+    const c = window.__card;
+    const state = c.hass.states[sourceEid];
+    c._layout = {
+      ...c._layout,
+      [sourceId]: { s: c._space, x: wallSource[0], y: wallSource[1] },
+    };
+    c.hass = {
+      ...c.hass,
+      states: { ...c.hass.states, [sourceEid]: { ...state, state: 'on' } },
+    };
+    c._glowClipCache.clear();
+    c.requestUpdate();
+    await c.updateComplete;
+    // The continuity contract may keep the last complete device frame briefly
+    // while the moved source and its HA snapshot are staged atomically. Wait
+    // for that bounded hand-off instead of mistaking the allowed stale frame
+    // for a geometry leak.
+    const root = c.shadowRoot || c.renderRoot;
+    const selector = `[data-glow-source="${CSS.escape(sourceEid)}"] .glow-pool`;
+    const deadline = performance.now() + 1800;
+    while (root.querySelector(selector) && performance.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 40));
+      await c.updateComplete;
+    }
+    return !root.querySelector(selector);
+  }, {
+    sourceEid: rasterFixture.sourceEid,
+    sourceId: rasterFixture.sourceId,
+    wallSource: rasterFixture.wallSource,
+  });
+  res.sourceInsideWallSuppressed = sourceInsideWall;
 } else {
   res.litPartsMatchClip = false;
   res.doorwayCarriesLight = false;
@@ -538,6 +593,7 @@ if (rasterFixture.ready) {
   res.apertureItselfLit = false;
   res.occluderCastsShadow = false;
   res.shadowEdgeIsCrisp = false;
+  res.sourceInsideWallSuppressed = false;
 }
 // значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
 checkAll(res, {

@@ -651,6 +651,27 @@ test('cover presentation follows the same service target selected by toggle reso
   assert.equal(result.visualSources[0].state, 'opening');
 });
 
+test('presentation role uses the full registry projection with a frozen state snapshot', () => {
+  const planHass = hass({
+    'sensor.position': state('sensor.position', '45'),
+    'cover.curtain': state('cover.curtain', 'opening', {
+      device_class: 'curtain', supported_features: 15,
+    }),
+  });
+  const registryHass = hass(planHass.states, {
+    'sensor.position': {
+      entity_id: 'sensor.position', device_id: 'd1', platform: 'demo',
+      entity_category: 'diagnostic',
+    },
+    'cover.curtain': { entity_id: 'cover.curtain', device_id: 'd1', platform: 'demo' },
+  });
+  const result = resolvePresentationSources(planHass, device({
+    entities: ['sensor.position', 'cover.curtain'], primary: 'sensor.position',
+  }), undefined, undefined, registryHass);
+  assert.equal(result.sourceKind, 'cover');
+  assert.deepEqual(result.visualSources.map((source) => source.eid), ['cover.curtain']);
+});
+
 test('an incidental cover does not hijack the light face of a mixed device', () => {
   const h = hass({
     'light.mixed': state('light.mixed', 'on'),
@@ -672,6 +693,23 @@ test('an incidental cover does not hijack the light face of a mixed device', () 
   }));
   assert.equal(explicitCover.sourceKind, 'cover');
   assert.equal(explicitCover.visualSources[0].eid, 'cover.mixed');
+});
+
+test('an explicitly primary cover keeps the face when a light sibling exists', () => {
+  const h = hass({
+    'cover.mixed': state('cover.mixed', 'opening', {
+      device_class: 'curtain', supported_features: 15,
+    }),
+    'light.mixed': state('light.mixed', 'on'),
+  }, {
+    'cover.mixed': { entity_id: 'cover.mixed', device_id: 'd1', platform: 'demo' },
+    'light.mixed': { entity_id: 'light.mixed', device_id: 'd1', platform: 'demo' },
+  });
+  const result = resolvePresentationSources(h, device({
+    entities: ['cover.mixed', 'light.mixed'], primary: 'cover.mixed', tapAction: 'info',
+  }));
+  assert.equal(result.sourceKind, 'cover');
+  assert.deepEqual(result.visualSources.map((source) => source.eid), ['cover.mixed']);
 });
 
 test('an incidental cover does not hijack another whole-device role on info tap', () => {

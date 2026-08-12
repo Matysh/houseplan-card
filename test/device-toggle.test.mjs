@@ -86,6 +86,24 @@ test('exact entity binding never retargets to a controllable sibling', () => {
   assert.equal(intent.skippedTargets[0].entityId, 'sensor.room');
 });
 
+test('explicit light driver overrides an exact entity binding consistently', () => {
+  const h = hass({
+    'switch.relay': state('switch.relay', 'off'),
+    'light.lamp': state('light.lamp', 'on'),
+  });
+  const d = device({
+    bindingKind: 'entity', bindingRef: 'switch.relay', primary: 'switch.relay',
+    entities: ['switch.relay', 'light.lamp'],
+    marker: {
+      id: 'marker', binding: 'entity:switch.relay', controls: [],
+      is_light: true, light_entity: 'light.lamp',
+    },
+  });
+  const intent = resolveToggleIntent({ hass: h, devices: [d], device: d });
+  assert.deepEqual(toggleCommandEntityIds(intent.command), ['light.lamp']);
+  assert.equal(intent.command?.service, 'turn_off');
+});
+
 test('default light ignores external controls until toggle is explicitly selected', () => {
   const h = hass({
     'light.room': state('light.room', 'off'),

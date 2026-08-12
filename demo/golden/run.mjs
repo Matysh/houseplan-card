@@ -202,6 +202,82 @@ async function countChangedPixels(page, actual, control, spec) {
   });
 }
 
+/** Count preview pixels which are actually painted over the physical wall
+ * fill. A global changed-pixel threshold can pass even when the complete
+ * symbol is accidentally hidden below masonry because its swing arc remains
+ * outside the body. */
+async function countOpeningPreviewPixelsInsideWall(
+  page, actual, control, clip, minChannelDelta,
+) {
+  return page.evaluate(async ({ actual64, control64, clipRect, minDelta }) => {
+    const decode = async (base64) => {
+      const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
+      return createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+    };
+    const [actualImage, controlImage] = await Promise.all([decode(actual64), decode(control64)]);
+    const canvas = document.createElement('canvas');
+    const controlCanvas = document.createElement('canvas');
+    canvas.width = controlCanvas.width = actualImage.width;
+    canvas.height = controlCanvas.height = actualImage.height;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    const controlContext = controlCanvas.getContext('2d', { willReadFrequently: true });
+    context.drawImage(actualImage, 0, 0);
+    controlContext.drawImage(controlImage, 0, 0);
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    const controls = controlContext.getImageData(0, 0, canvas.width, canvas.height).data;
+    const card = window.__goldenCard;
+    const preview = card?.renderRoot?.querySelector('.opening-preview');
+    const walls = [...(card?.renderRoot?.querySelectorAll('.wallbody-fill') || [])]
+      .map((wall) => {
+        const matrix = wall.getScreenCTM?.();
+        return matrix ? { wall, rect: wall.getBoundingClientRect(), inverse: matrix.inverse() } : null;
+      })
+      .filter(Boolean);
+    if (!preview || !walls.length) return { changed: 0, sampled: 0 };
+    const previewRect = preview.getBoundingClientRect();
+    const candidates = walls.filter(({ rect }) => rect.right >= previewRect.left
+      && rect.left <= previewRect.right && rect.bottom >= previewRect.top
+      && rect.top <= previewRect.bottom);
+    if (!candidates.length) return { changed: 0, sampled: 0 };
+    const left = Math.ceil(previewRect.left);
+    const top = Math.ceil(previewRect.top);
+    const right = Math.floor(previewRect.right);
+    const bottom = Math.floor(previewRect.bottom);
+    const originX = clipRect?.x || 0;
+    const originY = clipRect?.y || 0;
+    let changed = 0;
+    let sampled = 0;
+    for (let y = top; y <= bottom; y++) {
+      for (let x = left; x <= right; x++) {
+        const screenPoint = new DOMPoint(x + 0.5, y + 0.5);
+        const insideWall = candidates.some(({ wall, rect, inverse }) => {
+          if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) return false;
+          return wall.isPointInFill(screenPoint.matrixTransform(inverse));
+        });
+        if (!insideWall) continue;
+        const px = Math.round(x - originX);
+        const py = Math.round(y - originY);
+        if (px < 0 || py < 0 || px >= canvas.width || py >= canvas.height) continue;
+        sampled += 1;
+        const offset = (py * canvas.width + px) * 4;
+        const delta = Math.max(
+          Math.abs(pixels[offset] - controls[offset]),
+          Math.abs(pixels[offset + 1] - controls[offset + 1]),
+          Math.abs(pixels[offset + 2] - controls[offset + 2]),
+          Math.abs(pixels[offset + 3] - controls[offset + 3]),
+        );
+        if (delta >= minDelta) changed += 1;
+      }
+    }
+    return { changed, sampled };
+  }, {
+    actual64: actual.toString('base64'),
+    control64: control.toString('base64'),
+    clipRect: clip || null,
+    minDelta: minChannelDelta,
+  });
+}
+
 /** Assert scenario semantics against the actual capture, not only its data.
  *  This protects a reviewed-but-empty baseline from becoming the reference. */
 async function countWarmPixels(page, png, region) {
@@ -394,7 +470,15 @@ try {
           if (!opening) return null;
           const transform = opening.getAttribute('transform') || '';
           const angle = Number(transform.match(/rotate\(([-+0-9.eE]+)\)/)?.[1]);
-          const bounds = opening.getBoundingClientRect();
+          const painted = [...opening.querySelectorAll('.op-leaf, .op-arc, .op-glass')]
+            .map((part) => part.getBoundingClientRect())
+            .filter((rect) => rect.width > 0 || rect.height > 0);
+          const bounds = painted.length ? {
+            width: Math.max(...painted.map((rect) => rect.right))
+              - Math.min(...painted.map((rect) => rect.left)),
+            height: Math.max(...painted.map((rect) => rect.bottom))
+              - Math.min(...painted.map((rect) => rect.top)),
+          } : { width: 0, height: 0 };
           return {
             type: opening.getAttribute('data-kind'), angle,
             width: bounds.width, height: bounds.height,
@@ -446,6 +530,11 @@ try {
         result.openingPreviewParts = control.parts;
         result.openingPreviewChangedPixels = sample.changed;
         result.openingPreviewMaxChannelDelta = sample.maxDelta;
+        const insideWall = await countOpeningPreviewPixelsInsideWall(
+          page, actual, control.png, clip, scenario.openingPreviewPixels.minChannelDelta,
+        );
+        result.openingPreviewPixelsInsideWall = insideWall.changed;
+        result.openingPreviewWallSamples = insideWall.sampled;
         if (control.parts < 2) {
           throw new Error(
             `semantic golden assertion failed: opening preview is incomplete (${control.parts} parts)`,
@@ -455,6 +544,13 @@ try {
           throw new Error(
             `semantic golden assertion failed: opening preview paints ${sample.changed} pixels, `
             + `expected at least ${scenario.openingPreviewPixels.minPixels}`,
+          );
+        }
+        if (insideWall.changed < scenario.openingPreviewPixels.minInsideWallPixels) {
+          throw new Error(
+            `semantic golden assertion failed: opening preview paints ${insideWall.changed} pixels `
+            + `inside the wall body, expected at least `
+            + `${scenario.openingPreviewPixels.minInsideWallPixels}`,
           );
         }
       }

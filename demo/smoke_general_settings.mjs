@@ -38,6 +38,13 @@ const res = await page.evaluate(async () => {
     settings: { ...(s.settings||{}), show_lqi: false } })) };
   c.requestUpdate(); await c.updateComplete;
   out.lqiAfter = sr().querySelectorAll('.dev .lqi').length;
+  // The space value is an explicit override, not another condition ANDed with
+  // the card default. This is the projection shared by preview/static cards.
+  c._config = { ...c._config, show_signal: false };
+  c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== 'f1' ? s : ({ ...s,
+    settings: { ...(s.settings||{}), show_lqi: true } })) };
+  c.requestUpdate(); await c.updateComplete;
+  out.spaceLqiOverridesCardDefault = sr().querySelectorAll('.dev .lqi').length > 0;
   return out;
 });
 // CARD_VERSION из собранного бандла (тот же текст уходит в console-баннер).

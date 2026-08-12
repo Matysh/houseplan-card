@@ -50,7 +50,9 @@ Source placement follows the same geometry, fail-dark. If the source centre is
 inside an opaque wall body, a window tunnel, or an exterior door/gate opening,
 the source produces no Glow at all. It does not light the indoor half of the
 opening. An interior door/gate passage remains a real hole and is therefore a
-valid source position.
+valid source position. This is an intentional placement rule, not a temporary
+availability state: move the source marker onto the clean room floor to make it
+emit Glow again ([#92](https://github.com/Matysh/houseplan-card/issues/92)).
 
 ## From barriers to a lit region
 

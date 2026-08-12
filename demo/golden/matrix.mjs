@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 15;
+export const GOLDEN_MATRIX_VERSION = 16;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -19,7 +19,7 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     // complete 90 cm door preset while still proving rotation, inner-face
     // offset and ruler placement on a thick wall.
     mode: 'plan', openingPreview: { type: 'door', pointer: [0.48, 0.65] },
-    openingPreviewPixels: { minPixels: 150, minChannelDelta: 4 },
+    openingPreviewPixels: { minPixels: 150, minInsideWallPixels: 8, minChannelDelta: 4 },
     theme: 'dark', viewport: { width: 1180, height: 900 }, ...page },
   { id: 'geometry-devices-editor-dark', fixture: 'visual', space: 'golden-geometry', mode: 'devices',
     theme: 'dark', viewport: { width: 1180, height: 900 }, ...page },

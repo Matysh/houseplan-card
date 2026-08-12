@@ -196,7 +196,7 @@ import {
 } from './opening-placement';
 import { safeStoredColor } from './color';
 
-const CARD_VERSION = '1.62.0-beta.9';
+const CARD_VERSION = '1.62.0-beta.10';
 const DISPLAY_LABEL_KEYS: Record<DeviceDisplayMode, I18nKey> = {
   badge: 'display.badge',
   icon_ripple: 'display.icon_ripple',
@@ -3067,6 +3067,18 @@ class HouseplanCard extends LitElement {
     return { configChanged, layoutChanged };
   }
 
+  /** Resume only a same-route warm editor intent after permissions arrive.
+   * Always enter through _setMode: it owns transition state, contextual tray
+   * cleanup and navigation persistence. Direct assignment leaves those
+   * surfaces in mutually inconsistent modes. */
+  private _resumePendingNavMode(): boolean {
+    if (!this._pendingNavMode || !this._canEdit || this._config?.kiosk) return false;
+    const pendingMode = this._pendingNavMode;
+    this._pendingNavMode = null;
+    this._setMode(pendingMode, false);
+    return true;
+  }
+
   private async _loadFromServer(): Promise<void> {
     this._loading = true;
     this._loadTries++;
@@ -3103,11 +3115,7 @@ class HouseplanCard extends LitElement {
       // absent can_write = older backend / demo stub → keep null (legacy admin fallback)
       if (typeof cfgResp?.can_write === 'boolean') this._serverCanWrite = cfgResp.can_write;
       this._canOptimizeUndo = !!(cfgResp?.can_optimize_undo || layResp?.can_optimize_undo);
-      if (this._pendingNavMode && this._canEdit && !this._config?.kiosk) {
-        const pendingMode = this._pendingNavMode;
-        this._pendingNavMode = null;
-        this._setMode(pendingMode, false);
-      }
+      this._resumePendingNavMode();
       this._adoptStructuralResponses(cfgResp, layResp);
       // live sync: the config was changed in another window → re-read it
       if (!this._unsubCfg) {
@@ -3233,11 +3241,7 @@ class HouseplanCard extends LitElement {
         return;
       }
       this._adoptStructuralResponses(resp);
-      if (this._pendingNavMode && this._canEdit && !this._config?.kiosk) {
-        const pendingMode = this._pendingNavMode;
-        this._pendingNavMode = null;
-        this._setMode(pendingMode, false);
-      }
+      this._resumePendingNavMode();
       this._cacheSnapshot();
       this._regSignature = '';
       this._maybeRebuildDevices();
@@ -3390,7 +3394,10 @@ class HouseplanCard extends LitElement {
           planHass, device, {
             liveStates: this._config?.live_states !== false,
             showTemperature: this._config?.show_temperature !== false,
-            showSignal: showLqi && this._config?.show_signal !== false,
+            // A per-space show_lqi value is an explicit override of the card
+            // default. Snapshot both projections exactly as requested so the
+            // full card, preview and static card cannot disagree.
+            showSignal: showLqi,
             activityRuntime: this._activityRt.get(device.id),
             sourceDetails: false,
             lightDevices: this._devices,
@@ -3948,7 +3955,7 @@ class HouseplanCard extends LitElement {
     return resolveDevicePresentation(this._renderPlanHass, d, {
       liveStates: this._config?.live_states !== false,
       showTemperature: this._config?.show_temperature !== false,
-      showSignal: showLqi && this._config?.show_signal !== false,
+      showSignal: showLqi,
       designPreview,
       activityRuntime: this._activityRt.get(d.id),
       sourceDetails: false,
@@ -9658,16 +9665,16 @@ class HouseplanCard extends LitElement {
       roomFingerprint, wallFingerprint, cutFingerprint,
     ].join('|');
     let value = this._openingWallIndexCache.get(key);
-    if (!value) {
+    if (value) {
+      // Refresh recency on hit; the pool is intentionally tiny because each
+      // entry retains derived wall/tunnel geometry.
+      lruWrite(this._openingWallIndexCache, key, value, 4);
+    } else {
       value = buildOpeningWallIndex(
         space.rooms, this._spaceWalls, openCuts,
         this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
       );
-      this._openingWallIndexCache.set(key, value);
-      if (this._openingWallIndexCache.size > 4) {
-        const oldest = this._openingWallIndexCache.keys().next().value;
-        if (oldest) this._openingWallIndexCache.delete(oldest);
-      }
+      lruWrite(this._openingWallIndexCache, key, value, 4);
     }
     return { key, value };
   }

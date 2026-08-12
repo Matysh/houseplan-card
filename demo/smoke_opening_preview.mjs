@@ -195,6 +195,30 @@ const res = await page.evaluate(async () => {
   card._cursorPt = card._roomCenter(room);
   await settle();
   out.noPreviewAwayFromWalls = !root().querySelector('.opening-preview');
+
+  // Real independent bodies are occluders, not room-owned wall intervals.
+  // They must never become accidental opening-placement targets.
+  const bodyCentre = card._roomCenter(room);
+  const bodyX = bodyCentre[0] / 1000;
+  const bodyY = bodyCentre[1] / card._spaceH;
+  card._curSpaceCfg.partitions = [{
+    id: 'opening-smoke-partition', a: [bodyX - 0.05, bodyY], b: [bodyX + 0.05, bodyY], cm: 20,
+  }];
+  card._cfgEpoch++;
+  card._openingPlacementIntervalsCache = null;
+  card._cursorPt = bodyCentre;
+  await settle();
+  out.partitionIsNotOpeningTarget = !root().querySelector('.opening-preview')
+    && card._resolveOpeningPlacement(bodyCentre) == null;
+  card._curSpaceCfg.partitions = [];
+  card._curSpaceCfg.wall_columns = [{
+    id: 'opening-smoke-column', shape: 'square', cm: 30, center: [bodyX, bodyY], angle: 0,
+  }];
+  card._cfgEpoch++;
+  card._openingPlacementIntervalsCache = null;
+  await settle();
+  out.columnIsNotOpeningTarget = !root().querySelector('.opening-preview')
+    && card._resolveOpeningPlacement(bodyCentre) == null;
   card._cancelPath();
   card._tool = 'draw';
   await settle();

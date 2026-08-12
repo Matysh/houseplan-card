@@ -295,10 +295,27 @@ export class HpHelp extends LitElement {
   };
 
   private _keyDown = (event: KeyboardEvent): void => {
-    if (!this._open || event.key !== 'Escape') return;
+    if (!this._open || event.defaultPrevented) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      this._closeHelp(this._floating.ownsActiveElement(), 'escape');
+      return;
+    }
+    const trigger = this.renderRoot.querySelector<HTMLButtonElement>('.trigger');
+    if (!trigger || !event.composedPath().includes(trigger)) return;
+    const surface = this._surface();
+    if (!surface || surface.scrollHeight <= surface.clientHeight) return;
+    const page = Math.max(40, surface.clientHeight * 0.8);
+    const offsets: Record<string, number> = {
+      ArrowDown: 40, ArrowUp: -40, PageDown: page, PageUp: -page,
+    };
+    if (event.key === 'Home') surface.scrollTop = 0;
+    else if (event.key === 'End') surface.scrollTop = surface.scrollHeight;
+    else if (event.key in offsets) surface.scrollBy({ top: offsets[event.key], behavior: 'auto' });
+    else return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    this._closeHelp(this._floating.ownsActiveElement(), 'escape');
   };
 
   private readonly _floating = new FloatingSurfaceController(this, 'help', this._keyDown);

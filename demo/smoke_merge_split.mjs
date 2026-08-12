@@ -43,8 +43,25 @@ await restore();
 // grid-aligned test room (real rooms are snapped; demo rooms are not)
 await page.evaluate(()=>{
   const c=window.__card;
-  c._serverCfg.spaces.find(s=>s.id==='f1').rooms.push(
+  const sp = c._serverCfg.spaces.find(s=>s.id==='f1');
+  const pitch = 1 / 240;
+  const wallKey = (a, b) => {
+    const q = (v) => Math.round(v / pitch) * pitch;
+    let dx = b[0] - a[0], dy = b[1] - a[1];
+    const len = Math.hypot(dx, dy) || 1;
+    dx /= len; dy /= len;
+    if (dx < -1e-12 || (Math.abs(dx) <= 1e-12 && dy < 0)) { dx = -dx; dy = -dy; }
+    let angle = Math.atan2(dy, dx);
+    if (angle < 0) angle += Math.PI;
+    angle = Math.round(angle * 1800) / 1800;
+    return `${q((a[0] + b[0]) / 2).toFixed(6)},${q((a[1] + b[1]) / 2).toFixed(6)}@${angle.toFixed(4)}`;
+  };
+  const outline = [[0.05,0.0625],[0.5,0.0625],[0.5,0.5],[0.05,0.5]];
+  sp.rooms.push(
     {id:'rg', name:'GridRoom', area:null, poly:[[0.05,0.0625],[0.5,0.0625],[0.5,0.5],[0.05,0.5]]});
+  sp.walls = [...(sp.walls || []), ...outline.map((a, index) => ({
+    key: wallKey(a, outline[(index + 1) % outline.length]), cm: 15,
+  }))];
   c._regSignature=''; c._maybeRebuildDevices(); c.requestUpdate();
 });
 // SPLIT rg vertical chord x=0.25 (all on grid nodes)
@@ -66,6 +83,12 @@ s = await S();
 out.splitRooms = s.rooms.length===6;                      // 4 базовых + rg разрезанная надвое
 out.bigKeepsLiving = s.rooms.some(r=>r.id==='r1' && r.area==='living_room');
 out.newRoom = s.rooms.find(r=>!['r1','r2','r3','r4','rg'].includes(r.id))?.name;
+out.splitKeepsLegacyWallThickness = await page.evaluate(() => {
+  const c = window.__card;
+  const y = 0.0625 * c._spaceH;
+  return Math.abs(c._intervalCm([50, y, 250, y]) - 15) < 1e-9
+    && Math.abs(c._intervalCm([250, y, 500, y]) - 15) < 1e-9;
+});
 await restore();
 
 // AUD-159B7-01: one open span crossing the Split point belongs to two room

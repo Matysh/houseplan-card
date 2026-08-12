@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## v1.62.0-beta.10 — 2026-08-13
+
+- Fixed composite device presentation and actions after the beta review:
+  an explicitly selected light entity now remains the tap target, a primary
+  cover keeps the cover face, and registry-backed state selection is identical
+  in the full plan, preview and static card. Strengthened Split, Glow,
+  contextual-help and opening-preview regression coverage.
+- A light source placed inside a physical wall, window tunnel or exterior
+  door/gate opening intentionally produces no Glow; move its marker onto the
+  room floor to restore illumination ([#92](https://github.com/Matysh/houseplan-card/issues/92)).
+- Small fixes and improvements
+  ([#108](https://github.com/Matysh/houseplan-card/issues/108)).
+
 ## v1.62.0-beta.9 — 2026-08-12
 
 - Fixed post-review inconsistencies between device state and tap behaviour:
@@ -12,7 +25,8 @@
   correct centre snapping and a stricter visual preview gate. Restored the
   public activity and preview-dot CSS hooks, improved help accessibility and
   strengthened internal process checks.
-- Small fixes and improvements.
+- Small fixes and improvements
+  ([#108](https://github.com/Matysh/houseplan-card/issues/108)).
 
 ## v1.62.0-beta.8 — 2026-08-12
 

@@ -1,6 +1,6 @@
 {
   "name": "houseplan-card",
-  "version": "1.62.0-beta.9",
+  "version": "1.62.0-beta.10",
   "description": "Interactive house plan Lovelace card for Home Assistant",
   "license": "MIT",
   "type": "module",
@@ -19,7 +19,8 @@
     "continuity:screencast": "node demo/screencast_visual_continuity.mjs",
     "golden:accept": "node demo/golden/accept.mjs",
     "release:check": "node scripts/release-prerelease.mjs --check",
-    "release:prerelease": "node scripts/release-prerelease.mjs"
+    "release:prerelease": "node scripts/release-prerelease.mjs",
+    "prepare": "node scripts/install-hooks.mjs"
   },
   "devDependencies": {
     "@mdi/js": "^7.4.47",

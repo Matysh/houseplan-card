@@ -66,6 +66,20 @@ const res = await page.evaluate(async () => {
   const restoredTrigger = incompleteHelp.shadowRoot?.querySelector('.trigger');
   out.circledQuestionIcon = restoredTrigger?.querySelector('svg[viewBox="0 0 24 24"] path')
     ?.getAttribute('d')?.length > 0;
+  incompleteHelp.text = Array.from({ length: 320 }, (_, index) => `Line ${index + 1}`).join(' · ');
+  await incompleteHelp.updateComplete;
+  const overflowTrigger = incompleteHelp.shadowRoot?.querySelector('.trigger');
+  overflowTrigger?.click();
+  await incompleteHelp.updateComplete;
+  await frame();
+  const longSurface = incompleteHelp.shadowRoot?.querySelector('.tooltip');
+  overflowTrigger?.dispatchEvent(new KeyboardEvent('keydown', {
+    key: 'PageDown', bubbles: true, composed: true, cancelable: true,
+  }));
+  await frame();
+  out.overflowHelpScrollsFromTrigger = !!longSurface
+    && longSurface.scrollHeight > longSurface.clientHeight && longSurface.scrollTop > 0;
+  overflowTrigger?.click();
   incompleteHelp.remove();
 
   card._setMode('devices');

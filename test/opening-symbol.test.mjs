@@ -14,8 +14,13 @@ const spec = (patch = {}) => ({
 });
 
 const templateText = (value) => {
-  if (!value || !value.strings) return '';
-  return value.strings.join('') + value.values.map(templateText).join('');
+  if (value == null || value === false) return '';
+  if (typeof value === 'string' || typeof value === 'number') return String(value);
+  if (Array.isArray(value)) return value.map(templateText).join('');
+  if (!value.strings) return '';
+  return value.strings.reduce((text, part, index) => (
+    text + part + (index < value.values.length ? templateText(value.values[index]) : '')
+  ), '');
 };
 
 test('opening metrics expand hit and outline zones with a thick wall face', () => {
@@ -31,11 +36,30 @@ test('shared renderer emits the expected visible symbol for every opening type',
   const windowText = templateText(renderOpeningVisibleGeometry(spec({
     type: 'window', face: { ox: 0, oy: 20, cm: 20, side: 1 },
   })));
-  const doorText = templateText(renderOpeningVisibleGeometry(spec({ type: 'door' })));
+  const doorText = templateText(renderOpeningVisibleGeometry(spec({ type: 'door', amount: 1 })));
   const gateText = templateText(renderOpeningVisibleGeometry(spec({ type: 'gate' })));
   assert.match(windowText, /op-glass/);
   assert.match(doorText, /op-leaf/);
   assert.match(doorText, /op-arc/);
+  assert.match(doorText, /A 100 100/);
+  assert.match(doorText, /rotate\(-90deg\)/);
   assert.equal((gateText.match(/op-leaf/g) || []).length, 2);
   assert.ok(openingVisibleMetrics(spec({ type: 'gate' })).gateDepth > 0);
+});
+
+test('shared renderer preserves flips, wall-face offset and animated geometry', () => {
+  const text = templateText(renderOpeningVisibleGeometry(spec({
+    type: 'window', amount: 0.5, flipH: true, flipV: true,
+    face: { ox: 0, oy: 20, cm: 20, side: 1 },
+  })));
+  assert.match(text, /scale\(-1 -1\)/);
+  assert.match(text, /translate\(0 -20\)/);
+  assert.match(text, /rotate\(45deg\)/);
+  assert.match(text, /stroke-dashoffset="39\.269/);
+
+  const gate = templateText(renderOpeningVisibleGeometry(spec({
+    type: 'gate', amount: 1, face: { ox: 0, oy: 20, cm: 20, side: 1 },
+  })));
+  assert.match(gate, /rotate\(10deg\)/);
+  assert.match(gate, /rotate\(-10deg\)/);
 });

@@ -150,4 +150,6 @@ it. These bodies are unioned with room-wall bodies only after door/window/gate c
 so an opening cannot punch a coincident independent wall. They are subtracted
 from the cached clean floor, and the same body set is used by Glow and sun-ray
 occlusion even when borders are hidden. A source inside/on a physical body is
-fully occluded instead of leaking around its own masonry.
+fully occluded instead of leaking around its own masonry. The same fail-dark
+placement rule applies to window tunnels and exterior door/gate openings;
+interior passages remain valid source positions (#92).

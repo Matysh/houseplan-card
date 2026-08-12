@@ -32,10 +32,11 @@ Baseline-Reviewed: <CI run or artifact reference>
 Never invent a review reference merely to pass a gate. Baselines are accepted
 only from the complete Linux CI artifact via `golden:accept -- --reviewed`.
 
-Install the repository hook once per clone:
+Install dependencies once per clone; the `prepare` script activates the
+repository hook automatically:
 
 ```bash
-git config core.hooksPath .githooks
+npm install
 ```
 
 The hook checks message provenance locally; `validate.yml` enforces the same

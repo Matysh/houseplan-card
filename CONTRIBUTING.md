@@ -35,7 +35,7 @@ npm run typecheck         # tsc --noEmit (strict)
 npm test                  # node:test — pure logic, i18n parity, tap-action security
 npm run build             # tsc + rollup → dist/houseplan-card.js
 pip install pytest voluptuous && python -m pytest tests_backend -q   # pure backend tests
-git config core.hooksPath .githooks  # issue/release provenance trailers
+npm install                # also installs .githooks through the prepare script
 ```
 
 The HA-harness backend tests (`tests_backend/test_ha_*.py`) need Python ≥3.13 and

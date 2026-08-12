@@ -14,6 +14,7 @@ test('help is absent unless both visible copy and an accessible name exist', () 
 
 test('only scrolling the owning dialog outside the floating surface dismisses help', () => {
   assert.equal(helpScrollShouldDismiss(true, true), false);
+  assert.equal(helpScrollShouldDismiss(true, false), false);
   assert.equal(helpScrollShouldDismiss(false, true), true);
   assert.equal(helpScrollShouldDismiss(false, false), false);
 });

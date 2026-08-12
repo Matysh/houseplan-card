@@ -1,16 +1,16 @@
-<!-- release: v1.62.0-beta.9 -->
+<!-- release: v1.62.0-beta.10 -->
 
 ## Основное
 
-- Исправлены выбор управляемой сущности и отображение составных устройств.
-- Улучшены стабильность и визуальная проверка предпросмотра проёмов.
+- Исправлены отображение и переключение составных устройств.
+- Усилены проверки разделения комнат, Glow, подсказок и предпросмотра проёмов.
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- Fixed target selection and presentation for composite devices.
-- Improved opening-preview stability and visual verification.
+- Fixed presentation and toggling for composite devices.
+- Strengthened Split, Glow, contextual-help and opening-preview checks.
 - Small fixes and improvements.
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.62.0-beta.9/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.62.0-beta.9/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.62.0-beta.10/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.62.0-beta.10/docs/CHANGELOG.md)
