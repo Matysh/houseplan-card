@@ -2,6 +2,32 @@
 
 ## Unreleased
 
+## v1.62.0-beta.4 — 2026-08-12
+
+- Fixed contextual help showing a dead icon when its explanation was absent.
+  Incomplete help content is now omitted entirely, and the plain `?` glyph was
+  replaced with the consistent outlined circled-question icon
+  ([#68](https://github.com/Matysh/houseplan-card/issues/68)).
+- Hardened universal **Toggle state** after the beta code review. Climate,
+  water-heater, siren, camera, media-player and legacy-vacuum actions now
+  require the exact HA entity capability bits as well as a live service;
+  clicks resolve current controls instead of a retained visual frame, and a
+  disabled legacy cover keeps its original, explainable target
+  ([#94](https://github.com/Matysh/houseplan-card/issues/94)).
+- Fixed the device editor showing **Device card** for a lamp whose effective
+  default action is **Toggle state**. Untouched actions now follow the current
+  preview entity in real time, while explicit choices and lossless legacy
+  storage remain unchanged
+  ([#97](https://github.com/Matysh/houseplan-card/issues/97)).
+- Fixed **Device card** taps doing nothing on compound curtain/cover devices.
+  The local House Plan card now opens independently of a momentary HA registry
+  revalidation, while HA more-info and service actions retain their safety gate
+  ([#96](https://github.com/Matysh/houseplan-card/issues/96)).
+- Fixed an editor-close race after a same-route technical remount. A visible
+  editor now closes on the first press even while write permission is still
+  resolving; the late server response can no longer reopen it
+  ([#95](https://github.com/Matysh/houseplan-card/issues/95)).
+
 ## v1.62.0-beta.3 — 2026-08-12
 
 - Replaced the separate Toggle and cover actions with one universal **Toggle

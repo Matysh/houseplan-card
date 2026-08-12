@@ -18,6 +18,29 @@ const res = await page.evaluate(async () => {
   const lampCall = calls.at(-1);
   out.lampToggles = ['light', 'homeassistant'].includes(lampCall?.[0])
     && lampCall?.[1] === expectedService && lampCall?.[2] === lamp.primary;
+  // The untouched select is an effective projection, not a frozen draft.
+  // Reproduce the field race where a dialog was opened before HA identified
+  // the leading entity as light: runtime already sees light-default toggle,
+  // and the UI must catch up without materializing a stored tap_action.
+  c._setMode('devices'); await c.updateComplete;
+  c._openMarkerDialog(lamp); await c.updateComplete;
+  c._markerDialog = {
+    ...c._markerDialog,
+    tapAction: 'info', tapActionTouched: false,
+    originalHasTapAction: false, originalTapAction: undefined,
+  };
+  await c.updateComplete;
+  const tapSelect = c.renderRoot.querySelector('#marker-tap-action');
+  out.defaultLampDialogShowsEffectiveToggle = tapSelect?.value === 'toggle';
+  out.defaultLampActionRemainsUnmaterialized = !c._markerDialog.tapActionTouched
+    && !c._markerDialog.originalHasTapAction;
+  tapSelect.value = 'info';
+  tapSelect.dispatchEvent(new Event('change'));
+  await c.updateComplete;
+  out.explicitDeviceCardStaysSelected = c.renderRoot.querySelector('#marker-tap-action')?.value === 'info'
+    && c._markerDialog.tapActionTouched;
+  c._markerDialog = null;
+  c._setMode('view'); await c.updateComplete;
   // устройство с не-light primary (сенсор) → клик = инфо
   const sensorDev = c._devices.find((d) => d.primary?.startsWith('sensor.') && !d.tapAction);
   const n = calls.length;

@@ -1,18 +1,18 @@
-<!-- release: v1.62.0-beta.3 -->
+<!-- release: v1.62.0-beta.4 -->
 
 ## Основное
 
-- Добавлено универсальное действие «Переключить состояние» с точным предпросмотром цели.
-- При возвращении к карточке восстанавливается пространство, но всегда открывается режим просмотра.
-- Исправлен Glow от источника внутри толстой стены или внешнего проёма.
+- Редактор устройств теперь закрывается с первого нажатия.
+- Исправлены действия ламп и составных устройств штор; универсальное переключение точнее учитывает возможности Home Assistant.
+- Значок подсказки больше не показывается без текста и заменён на «вопрос в кружке».
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- Added a universal Toggle state action with an exact target preview.
-- Returning to the card restores the space but always opens View mode.
-- Fixed Glow from a source embedded in a thick wall or exterior opening.
+- The Device editor now closes on the first press.
+- Fixed lamp and compound-cover actions; universal toggle now observes Home Assistant capabilities more precisely.
+- Help is no longer shown without explanatory text and now uses the circled-question icon.
 - Small fixes and improvements.
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.62.0-beta.3/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.62.0-beta.3/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.62.0-beta.4/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.62.0-beta.4/docs/CHANGELOG.md)

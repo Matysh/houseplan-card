@@ -128,13 +128,34 @@ let STATES={
   'vacuum.mower':{entity_id:'vacuum.mower',state:'cleaning',attributes:{friendly_name:'Mower'}},
   'cover.gate':{entity_id:'cover.gate',state:'closed',attributes:{friendly_name:'Gate'}},
 };
+// Mirror the service catalog exposed by a live Home Assistant frontend. Action
+// resolution deliberately fails closed when a service is not registered, so
+// the synthetic demo must declare every service it intends to exercise.
+const SERVICES={
+  homeassistant:{turn_on:{},turn_off:{},toggle:{}},
+  light:{turn_on:{},turn_off:{},toggle:{}},
+  switch:{turn_on:{},turn_off:{},toggle:{}},
+  fan:{turn_on:{},turn_off:{},toggle:{}},
+  humidifier:{turn_on:{},turn_off:{},toggle:{}},
+  input_boolean:{turn_on:{},turn_off:{},toggle:{}},
+  automation:{turn_on:{},turn_off:{},toggle:{}},
+  remote:{turn_on:{},turn_off:{},toggle:{}},
+  climate:{turn_on:{},turn_off:{},toggle:{}},
+  media_player:{turn_on:{},turn_off:{},toggle:{}},
+  siren:{turn_on:{},turn_off:{},toggle:{}},
+  vacuum:{turn_on:{},turn_off:{},toggle:{}},
+  water_heater:{turn_on:{},turn_off:{},toggle:{}},
+  camera:{turn_on:{},turn_off:{}},
+  cover:{open_cover:{},close_cover:{},stop_cover:{},toggle:{}},
+  valve:{open_valve:{},close_valve:{},stop_valve:{},toggle:{}},
+};
 function mkHass(){
   return {
     language:'en', locale:{language:'en'},
     // audit P0-4: the card fail-closes editors without an admin user /
     // can_write flag — the demo admin mirrors a real HA admin session.
     user:{id:'demo', name:'Demo', is_admin:true},
-    devices:DEVICES, entities:ENTITIES, areas:AREAS, states:STATES,
+    devices:DEVICES, entities:ENTITIES, areas:AREAS, states:STATES, services:SERVICES,
     floors:{g:{floor_id:'g',name:'Ground floor',level:0},u:{floor_id:'u',name:'Upstairs',level:1}},
     callWS:async (m)=>{
       if(m.type==='config/device_registry/list'){

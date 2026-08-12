@@ -75,17 +75,71 @@ export interface ResolveToggleOptions {
   lightSources?: readonly ResolvedLightSource<DevItem>[];
 }
 
-const POWER_DOMAINS = new Set([
-  'light', 'switch', 'fan', 'humidifier', 'climate', 'media_player',
-  'input_boolean', 'automation', 'remote', 'siren', 'vacuum', 'water_heater',
-  'camera',
-]);
+type PowerService = 'turn_on' | 'turn_off' | 'toggle';
 
-const TURN_FEATURES: Record<string, Partial<Record<'turn_on' | 'turn_off', number>>> = {
-  // Home Assistant VacuumEntityFeature.TURN_ON / TURN_OFF.
-  vacuum: { turn_on: 1, turn_off: 2 },
-  // Home Assistant MediaPlayerEntityFeature.TURN_ON / TURN_OFF.
-  media_player: { turn_on: 128, turn_off: 256 },
+interface PowerToggleAdapter {
+  /** States which mean disabled. Every other known state is active/on. */
+  offStates: readonly string[];
+  /** Whether an indeterminate state may use the domain/generic toggle. */
+  unknownUsesToggle: boolean;
+  /**
+   * Per-entity capability bits required by Home Assistant for each command.
+   * An absent entry means that the entity domain itself guarantees the basic
+   * turn-on/turn-off contract (for example light, switch and fan).
+   */
+  featureMasks?: Partial<Record<PowerService, number>>;
+}
+
+const BASIC_POWER_ADAPTER: PowerToggleAdapter = {
+  offStates: ['off'],
+  unknownUsesToggle: true,
+};
+
+/**
+ * Explicit domain adapters are the capability allow-list for issue #94.
+ * `hass.services` is only a second, runtime guard: a service registered for a
+ * domain says nothing about whether one particular entity implements it.
+ */
+const POWER_ADAPTERS: Readonly<Record<string, PowerToggleAdapter>> = {
+  light: BASIC_POWER_ADAPTER,
+  switch: BASIC_POWER_ADAPTER,
+  fan: BASIC_POWER_ADAPTER,
+  humidifier: BASIC_POWER_ADAPTER,
+  input_boolean: BASIC_POWER_ADAPTER,
+  automation: BASIC_POWER_ADAPTER,
+  remote: BASIC_POWER_ADAPTER,
+  climate: {
+    ...BASIC_POWER_ADAPTER,
+    // Home Assistant ClimateEntityFeature.TURN_OFF / TURN_ON.
+    featureMasks: { turn_on: 256, turn_off: 128, toggle: 128 | 256 },
+  },
+  media_player: {
+    ...BASIC_POWER_ADAPTER,
+    // Home Assistant MediaPlayerEntityFeature.TURN_ON / TURN_OFF.
+    featureMasks: { turn_on: 128, turn_off: 256, toggle: 128 | 256 },
+  },
+  siren: {
+    ...BASIC_POWER_ADAPTER,
+    // Home Assistant SirenEntityFeature.TURN_ON / TURN_OFF.
+    featureMasks: { turn_on: 1, turn_off: 2, toggle: 1 | 2 },
+  },
+  vacuum: {
+    ...BASIC_POWER_ADAPTER,
+    // Deprecated but still supported legacy VacuumEntityFeature bits. Modern
+    // StateVacuumEntity instances deliberately do not advertise these and are
+    // therefore not treated as a binary power toggle.
+    featureMasks: { turn_on: 1, turn_off: 2, toggle: 1 | 2 },
+  },
+  water_heater: {
+    ...BASIC_POWER_ADAPTER,
+    // Home Assistant WaterHeaterEntityFeature.ON_OFF.
+    featureMasks: { turn_on: 8, turn_off: 8, toggle: 8 },
+  },
+  camera: {
+    ...BASIC_POWER_ADAPTER,
+    // Home Assistant CameraEntityFeature.ON_OFF.
+    featureMasks: { turn_on: 1, turn_off: 1, toggle: 1 },
+  },
 };
 
 const FEATURE_OPEN = 1;
@@ -96,13 +150,8 @@ function domainOf(entityId: string): string {
   return entityId.slice(0, entityId.indexOf('.'));
 }
 
-function serviceCatalogPresent(hass: any): boolean {
-  return !!hass?.services && typeof hass.services === 'object'
-    && Object.keys(hass.services).length > 0;
-}
-
 function serviceExists(hass: any, domain: string, service: string): boolean {
-  if (!serviceCatalogPresent(hass)) return true;
+  if (!hass?.services || typeof hass.services !== 'object') return false;
   const services = hass.services?.[domain];
   return !!services && Object.prototype.hasOwnProperty.call(services, service);
 }
@@ -134,9 +183,9 @@ function registryDisabled(registryHass: any, entityId: string): boolean {
 
 function supportedFeature(state: any, mask: number): boolean {
   const raw = state?.attributes?.supported_features;
-  if (raw == null || raw === '') return true;
+  if (raw == null || raw === '') return false;
   const features = Number(raw);
-  return Number.isFinite(features) && (features & mask) !== 0;
+  return Number.isFinite(features) && (features & mask) === mask;
 }
 
 function secureEntity(hass: any, registryHass: any, entityId: string): boolean {
@@ -198,16 +247,20 @@ function resolvePowerEntity(
   if (stateObject.state === 'unavailable') {
     return unsupportedSingle(hass, registryHass, ref, entityId, 'unavailable', 'power');
   }
-  if (!POWER_DOMAINS.has(domain)) {
+  const adapter = POWER_ADAPTERS[domain];
+  if (!adapter) {
     return unsupportedSingle(hass, registryHass, ref, entityId, 'unsupported');
   }
 
   let nextEffect: ToggleNextEffect;
-  let requested: 'turn_on' | 'turn_off' | 'toggle';
+  let requested: PowerService;
   if (stateObject.state === 'unknown' || stateObject.state === '') {
+    if (!adapter.unknownUsesToggle) {
+      return unsupportedSingle(hass, registryHass, ref, entityId, 'unsupported', 'power');
+    }
     nextEffect = 'toggle';
     requested = 'toggle';
-  } else if (stateObject.state === 'off') {
+  } else if (adapter.offStates.includes(String(stateObject.state))) {
     nextEffect = 'turn-on';
     requested = 'turn_on';
   } else {
@@ -215,7 +268,7 @@ function resolvePowerEntity(
     requested = 'turn_off';
   }
 
-  const featureMask = TURN_FEATURES[domain]?.[requested as 'turn_on' | 'turn_off'];
+  const featureMask = adapter.featureMasks?.[requested];
   if (featureMask && !supportedFeature(stateObject, featureMask)) {
     return unsupportedSingle(hass, registryHass, ref, entityId, 'unsupported', 'power');
   }
@@ -291,20 +344,54 @@ function resolveEntity(
   };
 }
 
-function entityCanRepresentToggle(entityId: string): boolean {
-  const domain = domainOf(entityId);
-  return domain === 'cover' || domain === 'valve' || domain === 'lock'
-    || domain === 'alarm_control_panel' || POWER_DOMAINS.has(domain);
-}
-
-function ownCandidate(device: DevItem, registryHass: any): { entityId: string; via: ToggleTargetVia } | null {
+function ownRoleCandidates(device: DevItem, registryHass: any): string[] {
   if (device.bindingKind === 'entity' && device.bindingRef) {
-    return { entityId: device.bindingRef, via: 'binding' };
+    return [device.bindingRef];
   }
   const candidates = device.entities.length ? device.entities : device.allEntities || [];
-  const role = resolvedDeviceStateEntities(registryHass, candidates);
-  const entityId = role.find(entityCanRepresentToggle) || role[0] || null;
-  return entityId ? { entityId, via: 'device-role' } : null;
+  return resolvedDeviceStateEntities(registryHass, candidates);
+}
+
+function ownControllableCandidate(
+  device: DevItem, registryHass: any,
+): { entityId: string; via: ToggleTargetVia } | null {
+  const role = ownRoleCandidates(device, registryHass);
+  const entityId = role.find(isControllable) || null;
+  return entityId ? {
+    entityId,
+    via: device.bindingKind === 'entity' ? 'binding' : 'device-role',
+  } : null;
+}
+
+/**
+ * Resolve the first supported member of the already-selected functional role.
+ * Missing/unavailable/secure members remain the explained target and never
+ * retarget. Capability-unsupported peers may be skipped only within that same
+ * role; `resolvedDeviceStateEntities` has already excluded random sibling
+ * config switches from a stronger cover/climate/media role.
+ */
+function resolveOwnEntity(
+  hass: any, registryHass: any, device: DevItem,
+): SingleResolution | null {
+  const role = ownRoleCandidates(device, registryHass);
+  if (!role.length) return null;
+  const via: ToggleTargetVia = device.bindingKind === 'entity' ? 'binding' : 'device-role';
+  if (via === 'binding') return resolveEntity(hass, registryHass, role[0], via);
+
+  let firstUnsupported: SingleResolution | null = null;
+  let firstDisabled: SingleResolution | null = null;
+  for (const entityId of role) {
+    const result = resolveEntity(hass, registryHass, entityId, via);
+    if (result.command) return result;
+    const reason = result.skipped?.reason;
+    if (reason === 'missing' || reason === 'unavailable' || reason === 'secure') return result;
+    if (reason === 'ha-disabled') {
+      firstDisabled ||= result;
+      continue;
+    }
+    firstUnsupported ||= result;
+  }
+  return firstUnsupported || firstDisabled;
 }
 
 function reasonForSingle(result: SingleResolution): ToggleNoneReason {
@@ -333,7 +420,12 @@ export function projectedTapAction(
 ): 'info' | 'more-info' | 'toggle' | 'run' {
   if (persisted === 'cover' || persisted === 'toggle') return 'toggle';
   if (persisted === 'more-info' || persisted === 'run' || persisted === 'info') return persisted;
-  return defaultDomain === 'light' ? 'toggle' : 'info';
+  // Only actual absence activates the light default. An unknown persisted
+  // token is invalid data, not an absent choice: fail closed to the local card
+  // so the UI projection and `toggleOriginOf()` cannot disagree.
+  return persisted == null || persisted === ''
+    ? (defaultDomain === 'light' ? 'toggle' : 'info')
+    : 'info';
 }
 
 export function toggleOriginOf(device: DevItem): ToggleOrigin | null {
@@ -372,7 +464,7 @@ function resolveControls(options: ResolveToggleOptions): ResolvedToggleIntent {
     list.push(source);
     markerSources.set(source.key, list);
   }
-  const own = ownCandidate(device, registryHass);
+  const own = ownControllableCandidate(device, registryHass);
   const markerDevices = new Map<string, DevItem>();
   for (const item of devices) {
     const markerId = String(item.marker?.id || item.id || '');
@@ -485,22 +577,23 @@ export function resolveToggleIntent(options: ResolveToggleOptions): ResolvedTogg
   }
 
   if (origin === 'legacy-cover') {
-    const candidates = device.entities.length ? device.entities : device.allEntities || [];
-    const entityId = candidates.find((eid) => eid.startsWith('cover.'));
+    // Legacy cover is an explicit historical target choice. Keep its identity
+    // even if HA later disables that cover while other active siblings remain.
+    // An active cover still wins: `allEntities` may contain an older disabled
+    // peer before it, and registry order must not downgrade a working target.
+    const entityId = device.entities.find((eid) => eid.startsWith('cover.'))
+      || device.allEntities?.find((eid) => eid.startsWith('cover.'));
     return entityId
       ? singleIntent(origin, resolveEntity(hass, registryHass, entityId, 'device-role'))
       : emptyIntent(origin, 'no-actionable-entity');
   }
 
-  const candidate = ownCandidate(device, registryHass);
-  if (!candidate) {
+  const own = resolveOwnEntity(hass, registryHass, device);
+  if (!own) {
     return emptyIntent(origin, device.virtual || device.bindingKind === 'virtual'
       ? 'no-actionable-entity' : 'no-binding');
   }
-  return singleIntent(
-    origin,
-    resolveEntity(hass, registryHass, candidate.entityId, candidate.via),
-  );
+  return singleIntent(origin, own);
 }
 
 /** Entity which owns cover presentation, even while temporarily unavailable. */

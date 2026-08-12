@@ -59,8 +59,28 @@ const res = await page.evaluate(async () => {
   out.aggregateActivityRuns = c._stateClass(dev2()).includes('activity-running');
   await setSt({ [lights[0]]: 'off' });
   out.stateOff = c._stateClass(dev2()) === '';
-  // 4) без tap_action=toggle клик НЕ переключает (инфо)
+  // #94/#73 boundary: a complete visual frame may temporarily retain the old
+  // DevItem while live config has already changed. The click must resolve the
+  // current marker by id and never call the controls captured by that frame.
   const cfg = c._serverCfg.markers.find((m) => m.name === 'Выключатель');
+  const staleSource = dev2();
+  const visuallyStale = {
+    ...staleSource,
+    controls: [...(staleSource.controls || [])],
+    marker: staleSource.marker ? {
+      ...staleSource.marker,
+      controls: [...(staleSource.marker.controls || [])],
+    } : null,
+  };
+  cfg.controls = [lights[1]];
+  c._regSignature = ''; c._maybeRebuildDevices(); await c.updateComplete;
+  await setSt({ [lights[0]]: 'off', [lights[1]]: 'off' });
+  c._clickDevice(new MouseEvent('click'), visuallyStale);
+  out.staleFrameUsesCurrentControls = JSON.stringify(calls.at(-1))
+    === JSON.stringify(['homeassistant', 'turn_on', [lights[1]]]);
+  cfg.controls = [...lights];
+  c._regSignature = ''; c._maybeRebuildDevices(); await c.updateComplete;
+  // 4) без tap_action=toggle клик НЕ переключает (инфо)
   cfg.tap_action = 'info'; c._regSignature = ''; c._maybeRebuildDevices(); await c.updateComplete;
   const n = calls.length;
   c._clickDevice(new MouseEvent('click'), dev2());
@@ -96,12 +116,17 @@ const res = await page.evaluate(async () => {
   // operates the entity, and an ON hood/fan still has working-state yellow.
   const own = Object.keys(c.hass.states).find((eid) => eid.startsWith('switch.'));
   out.hasStandaloneSwitch = !!own;
-  const self = own && {
-    id: 'self-control-regression', name: 'Hood', icon: 'mdi:fan',
-    space: c._space, area: room.area, entities: [own], primary: own,
-    bindingKind: 'entity', bindingRef: own, tapAction: 'toggle',
-    marker: { id: 'self-control-regression', binding: `entity:${own}`, controls: [own] },
-  };
+  const selfId = 'self-control-regression';
+  if (own) {
+    c._serverCfg.markers.push({
+      id: selfId, name: 'Hood', icon: 'mdi:fan', binding: `entity:${own}`,
+      space: c._space, area: room.area, tap_action: 'toggle', controls: [own],
+    });
+    c._regSignature = '';
+    c._maybeRebuildDevices();
+    await c.updateComplete;
+  }
+  const self = c._devices.find((device) => device.id === selfId);
   if (self) {
     await setSt({ [own]: 'off' });
     c._clickDevice(new MouseEvent('click'), self);

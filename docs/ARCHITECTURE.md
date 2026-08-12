@@ -100,7 +100,10 @@ the same profiler available between stable promotions.
    and `floating-surface-controller.ts` fallback/portal lifecycle,
    prefer the browser top-layer Popover API and use a real dialog-owned portal
    when that API is unavailable. Help text is localized by the owning card so
-   two cards with different explicit languages remain independent.
+   two cards with different explicit languages remain independent. A help
+   affordance exists only when both its localized body and complete accessible
+   label are non-empty; the card factory and `hp-help` enforce this independently,
+   so incomplete content cannot leave a dead focus target or a layout gap.
 
 ## Coordinate system
 
@@ -793,6 +796,11 @@ hash falls back to the default.
   action `cover` remains accepted and losslessly round-tripped as a legacy
   origin until the user deliberately changes the selector. An absent action on
   a primary `light.*` likewise stays absent on an untouched Open → Save.
+  `POWER_ADAPTERS` is the explicit domain allow-list and carries per-entity HA
+  feature masks where a domain-wide service is not capability proof. The
+  service catalog is a second fail-closed guard. A click resolves the current
+  marker by id rather than using a retained #73 visual snapshot; the snapshot
+  remains valid only for read-only presentation.
 - **Resolved device state** (2026-08-06): HA provides states per entity, not
   one state per device. `resolvedDeviceStateEntities` therefore starts from
   uncategorised registry entities, resolves one functional role (whole-device

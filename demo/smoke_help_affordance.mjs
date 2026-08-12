@@ -48,6 +48,26 @@ const res = await page.evaluate(async () => {
       || root().querySelector('hp-dialog')?.shadowRoot?.querySelector('[data-hp-overlay="help"]')?.shadowRoot?.querySelector('.tooltip');
   };
 
+  // Empty or incomplete content must not leave a dead focus target behind.
+  const incompleteHelp = document.createElement('hp-help');
+  incompleteHelp.text = '   ';
+  incompleteHelp.ariaLabel = 'Help: unavailable description';
+  document.body.append(incompleteHelp);
+  await incompleteHelp.updateComplete;
+  out.emptyTextHidesTrigger = !incompleteHelp.shadowRoot?.querySelector('.trigger')
+    && getComputedStyle(incompleteHelp).display === 'none';
+  incompleteHelp.text = 'Available description';
+  incompleteHelp.ariaLabel = '   ';
+  await incompleteHelp.updateComplete;
+  out.emptyAriaHidesTrigger = !incompleteHelp.shadowRoot?.querySelector('.trigger')
+    && getComputedStyle(incompleteHelp).display === 'none';
+  incompleteHelp.ariaLabel = 'Help: available description';
+  await incompleteHelp.updateComplete;
+  const restoredTrigger = incompleteHelp.shadowRoot?.querySelector('.trigger');
+  out.circledQuestionIcon = restoredTrigger?.querySelector('svg[viewBox="0 0 24 24"] path')
+    ?.getAttribute('d')?.length > 0;
+  incompleteHelp.remove();
+
   card._setMode('devices');
   const marker = card._devices[0];
   card._openMarkerDialog(marker);

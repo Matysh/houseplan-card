@@ -1,7 +1,7 @@
 # Issue #94 — универсальное действие «Переключить состояние»
 
-- **Статус:** ТЗ принято владельцем; редакция 2 после технического ревью
-  2026-08-12; готово к реализации
+- **Статус:** реализовано в `v1.62.0-beta.3`; полный code-review и hardening
+  capability/live-target contracts включены в кандидат `v1.62.0-beta.4`
 - **Issue:** https://github.com/Matysh/houseplan-card/issues/94
 - **Область:** frontend, marker action model, HA service dispatch, backend
   compatibility, i18n, документация и QA
@@ -215,6 +215,13 @@ unavailable/disabled/secure либо исчез service/adapter), действи
 тем же toast и без вызова HA.
 
 ### 6.4. Save
+
+Отображаемое значение select для нетронутого action является живой эффективной
+проекцией, а не копией, зафиксированной при открытии диалога. Оно пересчитывается
+из `originalTapAction` и актуального `previewDevice.primary` на каждом render:
+если HA позднее уточнил ведущую сущность как `light.*`, UI сразу показывает
+`Переключить состояние`, как и runtime. После явного изменения select значение
+становится пользовательским и больше автоматически не меняется.
 
 - `toggle` разрешено сохранять всегда, даже при `kind: none`.
 - Save не требует target.
@@ -443,6 +450,14 @@ siren, vacuum, water_heater и других domains. Появление ново
 toggle только из-за наличия `turn_on`: их запуск остаётся action `run`.
 Список adapters и state semantics не копируется по renderer/click paths.
 
+Реализация использует один декларативный `POWER_ADAPTERS`. Для доменов, где
+Home Assistant регистрирует service на весь domain, но ограничивает конкретную
+entity через `supported_features`, adapter требует точные bits: climate
+`TURN_OFF/TURN_ON`, water heater `ON_OFF`, siren `TURN_OFF/TURN_ON`, camera
+`ON_OFF`, media player `TURN_OFF/TURN_ON` и legacy vacuum `TURN_OFF/TURN_ON`.
+Отсутствующий или пустой `hass.services` не считается оптимистическим
+разрешением.
+
 Для automation hint обязан говорить «включить/выключить автоматизацию», а не
 «запустить»: запуск остаётся отдельным action `run`.
 
@@ -582,9 +597,11 @@ cover indicator, который управляет morph/activity marker. Отд
 | Весь device disabled | Marker скрыт по действующему contract; action/config не стираются |
 | Friendly name изменён | Hint обновляет имя, entity id остаётся тем же |
 | Integration добавила более сильную role entity | Auto-target device binding может измениться; hint отражает результат |
+| Пока #73 показывает последний цельный visual frame | Click повторно находит текущий marker по id и разрешает action/controls только из live devices; исчезнувший marker даёт no-op |
 | Explicit controls + own relay | Controls полностью выигрывают; relay не fallback |
 | Default light + controls | Собственный light default сохраняется; controls не перехватывают tap |
 | Legacy cover + controls | До явного изменения action сохраняется старая cover-цель; controls игнорируются |
+| Legacy device содержит disabled и active cover | Active cover имеет приоритет; disabled cover используется только как историческая объяснимая цель, если активной больше нет |
 | Group: one on, others off | Turn off all |
 | Group: all off | Turn on all |
 | Group: часть unavailable/missing | Команда для доступного подмножества; hint перечисляет пропущенные цели |

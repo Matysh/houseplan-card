@@ -26,4 +26,10 @@ export function t(lang: Lang, key: Key, vars?: Record<string, string | number>):
   return subst(DICTS[lang][key] ?? en[key] ?? key, vars);
 }
 
+/** Whether a localized value exists and contains useful text after fallback. */
+export function hasTranslation(lang: Lang, key: string): boolean {
+  const value = DICTS[lang][key] ?? DICTS.en[key];
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
 export type { Key as I18nKey };

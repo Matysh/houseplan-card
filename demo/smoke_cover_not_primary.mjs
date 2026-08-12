@@ -34,7 +34,7 @@ const out = await page.evaluate(async () => {
   };
   const coverState = (state, attrs = {}) => ({
     entity_id: 'cover.office_curtain', state,
-    attributes: { friendly_name: 'Office curtain', ...attrs },
+    attributes: { friendly_name: 'Office curtain', supported_features: 11, ...attrs },
   });
   const push = async (state, attrs = {}) => {
     c.hass = {
@@ -105,7 +105,12 @@ const out = await page.evaluate(async () => {
     await new Promise((r) => setTimeout(r, 10));
   };
   o.tapActionSurvivedTheRebuild = curtain()?.tapAction === 'toggle';
+  o.coverServicesDeclared = ['open_cover', 'close_cover', 'stop_cover']
+    .every((service) => Object.hasOwn(c.hass.services?.cover || {}, service));
   calls.length = 0;
+  const closedIntent = c._toggleIntent(curtain());
+  o.closedIntentResolvesExactTarget = closedIntent?.command?.service === 'open_cover'
+    && closedIntent.command.data.entity_id === 'cover.office_curtain';
   await tap();
   o.closedOpensTheCover = JSON.stringify(calls[calls.length - 1] || [])
     === JSON.stringify(['cover', 'open_cover', { entity_id: 'cover.office_curtain' }]);
@@ -196,6 +201,19 @@ const out = await page.evaluate(async () => {
   await setSwitch('on');
   o.withoutTheActionResolvedCoverSpeaks = clsOf(curtain()).includes('activity-transition')
     && !clsOf(curtain()).includes('on');
+  calls.length = 0;
+  c._infoCard = null;
+  // A local card must not depend on a second registry read at click time. The
+  // already-rendered curtain remains a valid informational snapshot while HA's
+  // registry is transiently unavailable; service-backed actions stay gated.
+  const liveBindingStatus = c._bindingStatus;
+  c._bindingStatus = () => ({
+    kind: 'unverified', reason: 'registry_unavailable', enabledEntityIds: [], allEntityIds: [],
+  });
+  try { await tap(); } finally { c._bindingStatus = liveBindingStatus; }
+  o.infoActionOpensTheHousePlanCard = c._infoCard?.id === curtain()?.id;
+  o.infoActionCallsNoHaService = calls.length === 0;
+  c._infoCard = null;
   savedMarker.tap_action = 'cover';
   await push('closed', { device_class: 'curtain' });
   await setSwitch('off');

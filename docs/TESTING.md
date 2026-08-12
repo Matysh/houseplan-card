@@ -416,9 +416,14 @@ separately promised workflows:
       domain toggle. Confirmation re-resolves current state but cancels if the
       target set changed. Opening and saving an untouched legacy `cover` or an
       absent light default preserves the original token/absence; an intentional
-      selector edit writes `toggle`
+      selector edit writes `toggle`. Feature-gated climate/water-heater/siren/
+      camera/media-player/legacy-vacuum entities require their exact HA bits;
+      an empty service catalog is unsupported. If #73 retains an older visual
+      device while live controls change, click calls only the current controls
       [auto: test/device-toggle.test.mjs + smoke_cover_tap +
-      smoke_cover_not_primary + backend action-schema parity]
+      smoke_cover_not_primary + smoke_controls + backend action-schema parity]
+      The synthetic HA fixture publishes its service catalog explicitly, so
+      browser checks exercise the same fail-closed resolver as production
 - [ ] A cover is NEVER painted (dev, owner 2026-08-04): «у штор не должно быть
       жёлтой подложки никогда, индикация открыто/закрыто за счёт морфинга
       иконки». Walk one curtain through closed / open / ajar / opening /
@@ -723,7 +728,9 @@ separately promised workflows:
       out of the box — no per-device setting needed; the device dialog shows
       "Toggle" as its effective default; devices where light is a side
       function (kettle: primary = sensor) keep the Device-card default;
-      explicit per-device "Device card" wins over the default [auto: smoke_light_default_tap]
+      an untouched open dialog follows a newly resolved light primary instead
+      of retaining a stale Device-card label (#97); explicit per-device
+      "Device card" wins over the default [auto: smoke_light_default_tap]
 - [ ] Derived walls cut too (v1.38.4): in the Plan editor the derived wall
       segments (.seg) no longer run solid through an open stretch — only the
       dash remains there [auto: smoke_openwall]
@@ -735,11 +742,17 @@ separately promised workflows:
       `mode` and is rewritten without it. A `#space=` deep link beats the saved
       space but still opens View. A technical same-route remount preserves an
       unfinished editor/dialog, while a real route departure clears both
-      [auto: smoke_nav_persist + smoke_warm_dialogs]
+      [auto: smoke_nav_persist + smoke_warm_dialogs]. During a pending
+      `can_write` warm restore, one press on the visible editor close button
+      cancels the deferred editor and a late response cannot reopen it (#95)
+      [auto: smoke_nav_persist]
 - [ ] Tap action cleanup + right click (v1.38.1, #94): the per-device action
       list has four options (Device card / HA more-info / Toggle state / Run),
       no separate cover or "card default" option — the card editor's global
       tap option is gone and ignored;
+      Device card opens locally for compound curtains/covers even during a
+      transient registry revalidation and calls no HA service (#96)
+      [auto: smoke_cover_not_primary];
       right click on an icon in VIEW opens HA more-info (native menu kept in
       editors; virtual w/o entity → device card) [auto: smoke_tap_ctx]
 - [ ] Binding section redesign (v1.38.0): two radios — Virtual / Pick from
@@ -2030,6 +2043,19 @@ require hands on real hardware — they remain for the human pass.
       polygon boolean work; clean floor and Glow clips are reused until the
       config/space/source changes [auto: editor/preloader smokes; performance
       profile for a dense plan].
+
+## Contextual help (issue #68, v1.62)
+
+- [ ] A setting with complete RU/EN help body and ARIA copy shows one 32 px
+      desktop / 40 px coarse-pointer button with the outlined circled-question
+      icon. Mouse hover, keyboard focus and tap open the same text surface
+      [auto: `smoke_help_affordance`].
+- [ ] Empty or whitespace-only help body produces no trigger. A non-empty body
+      without a complete ARIA label also produces no trigger; neither case adds
+      a tab stop or reserves visible space [auto: `smoke_help_affordance`].
+- [ ] Escape, outside pointer, owning-dialog scroll, toast and a competing colour
+      picker close help in the documented order. The Popover and portal fallback
+      paths stay inside the visual viewport [auto: `smoke_help_affordance`].
 
 ## Hiding layers: decor, openings, virtual walls (docs/UX-MODES.md, dev, unreleased)
 

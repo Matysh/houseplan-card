@@ -70,10 +70,10 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#54](https://github.com/Matysh/houseplan-card/issues/54) Zigbee topology overlay | [054-zigbee-topology-overlay.md](054-zigbee-topology-overlay.md) | research + adapter contract |
 | [#55](https://github.com/Matysh/houseplan-card/issues/55) Independent Glow overlay | [055-independent-glow-overlay.md](055-independent-glow-overlay.md) | реализовано в v1.61.0-beta.2; #61 — v1.61.0-beta.3 |
 | [#56](https://github.com/Matysh/houseplan-card/issues/56) Static room color | [056-static-room-color.md](056-static-room-color.md) | реализовано в v1.61.0-beta.3 |
-| [#68](https://github.com/Matysh/houseplan-card/issues/68) Подсказки к настройкам | [068-help-affordance.md](068-help-affordance.md) | реализовано локально; проверки на пре-релизе |
+| [#68](https://github.com/Matysh/houseplan-card/issues/68) Подсказки к настройкам | [068-help-affordance.md](068-help-affordance.md) | выпущено в v1.62.0-beta.1; локально усилено после ревью |
 | [#84](https://github.com/Matysh/houseplan-card/issues/84) Источник «Всегда» без сущности HA + [#88](https://github.com/Matysh/houseplan-card/issues/88) ведущая сущность | [084-passive-forced-light-sources.md](084-passive-forced-light-sources.md) | реализовано локально вместе; ожидает prerelease/CI gate |
 | [#90](https://github.com/Matysh/houseplan-card/issues/90) Управляемый бейдж со значением | [090-device-value-badge.md](090-device-value-badge.md) | реализовано локально; ожидает prerelease/CI gate |
-| [#94](https://github.com/Matysh/houseplan-card/issues/94) Универсальное действие «Переключить состояние» | [094-universal-state-toggle.md](094-universal-state-toggle.md) | реализовано в v1.62.0-beta.3 по редакции 2; следующий gate — beta feedback и code review |
+| [#94](https://github.com/Matysh/houseplan-card/issues/94) Универсальное действие «Переключить состояние» | [094-universal-state-toggle.md](094-universal-state-toggle.md) | реализовано в v1.62.0-beta.3; review/hardening включены в кандидат v1.62.0-beta.4 |
 
 ## Правило актуализации
 

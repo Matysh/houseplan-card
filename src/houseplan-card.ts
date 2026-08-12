@@ -135,7 +135,7 @@ import {
   clampCanvasR, clampCanvasN, type ContentItem, type Rect,
 } from './space-geometry';
 import { optimizePlans, type OptimizeReport } from './plan-optimizer';
-import { langOf, t, type I18nKey } from './i18n';
+import { hasTranslation, langOf, t, type I18nKey } from './i18n';
 import { CommandStack } from './command-stack';
 import { resolvedSvgScreenBlend, svgScreenBlendSupported } from './glow-blend';
 import {
@@ -179,7 +179,7 @@ import {
 import { renderOpeningTunnelFills } from './render/opening-tunnels';
 import { safeStoredColor } from './color';
 
-const CARD_VERSION = '1.62.0-beta.3';
+const CARD_VERSION = '1.62.0-beta.4';
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
 const CELL_CM_MIN = 0.1;
@@ -3150,7 +3150,11 @@ class HouseplanCard extends LitElement {
     return this._renderDeviceSnapshot?.devices || this._devices;
   }
 
-  /** Full registry metadata for dialogs/ghost labels; never use for actions. */
+  /**
+   * Full registry metadata for diagnostics and action safety checks. Entity
+   * states/services for actions always come from the active `_planHass`;
+   * disabled rows are exposed here only so the resolver can reject/explain.
+   */
   private get _fullRegistryHass(): any {
     void this._planHass;
     return this._planHassMemo?.full || this.hass;
@@ -3783,16 +3787,24 @@ class HouseplanCard extends LitElement {
       this._openMarkerDialog(d);
       return;
     }
-    const action = projectedTapAction(d.tapAction, d.primary?.split('.')[0]);
+    // The renderer may deliberately keep an older, complete visual snapshot
+    // on screen while a new HA/config frame is being committed (#73). Actions
+    // must never inherit that visual staleness: resolve the current DevItem by
+    // stable marker id before reading tap_action, controls or the binding.
+    const actionDevice = this._devices.find((item) => item.id === d.id);
+    if (!actionDevice) return; // marker disappeared from the live config
+    const action = projectedTapAction(
+      actionDevice.tapAction, actionDevice.primary?.split('.')[0],
+    );
     // the accidental-tap guard (owner's spec 2026-07-29): any state-changing
     // action — toggle or run — may ask first. The dialog is ours, not the
     // browser confirm(), so it works and looks right on a wall tablet.
     const guarded = (text: string, exec: () => void): void => {
-      if (d.marker?.tap_confirm) this._tapConfirm = { text, exec };
+      if (actionDevice.marker?.tap_confirm) this._tapConfirm = { text, exec };
       else exec();
     };
     if (action === 'toggle') {
-      const initial = this._toggleIntent(d);
+      const initial = this._toggleIntent(actionDevice);
       if (!initial?.command) return; // configured no-target is an intentional, quiet no-op
       const execute = (intent: ResolvedToggleIntent): void => {
         const command = intent.command;
@@ -3800,12 +3812,12 @@ class HouseplanCard extends LitElement {
         this.hass.callService(command.domain, command.service, command.data)
           .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
       };
-      const name = toggleIntentName(initial) || d.name;
-      if (d.marker?.tap_confirm) {
+      const name = toggleIntentName(initial) || actionDevice.name;
+      if (actionDevice.marker?.tap_confirm) {
         this._tapConfirm = {
           text: this._t('confirm.tap_toggle', { name }),
           exec: () => {
-            const currentDevice = this._devices.find((item) => item.id === d.id);
+            const currentDevice = this._devices.find((item) => item.id === actionDevice.id);
             const current = currentDevice ? this._toggleIntent(currentDevice) : null;
             if (!current?.command || !sameToggleCommandTargets(initial.command, current.command)) {
               this._showToast(this._t('toast.tap_target_changed'));
@@ -3817,9 +3829,20 @@ class HouseplanCard extends LitElement {
       } else execute(initial);
       return;
     }
-    if (!this._deviceBindingActive(d)) return;
+    // The House Plan device card is a local informational surface built from
+    // the DevItem that is already on screen. It does not call an HA service
+    // and must not disappear behind a second, momentary registry-status check
+    // (notably on compound cover/curtain devices). HA-backed actions below
+    // keep the active-binding gate. Closing the stage gesture first also
+    // prevents a pending pan/long-press lifecycle from swallowing the modal.
+    if (action === 'info') {
+      this._interruptViewGesture();
+      this._infoCard = d;
+      return;
+    }
+    if (!this._deviceBindingActive(actionDevice)) return;
     if (action === 'run') {
-      const target = d.marker?.tap_target || '';
+      const target = actionDevice.marker?.tap_target || '';
       const svc = runServiceFor(target);
       const st = this.hass.states[target];
       if (!svc || !st) {
@@ -3828,11 +3851,13 @@ class HouseplanCard extends LitElement {
       }
       const name = st.attributes?.friendly_name || target;
       guarded(this._t('confirm.tap_run', { name }), () => {
-        if (!this._deviceBindingActive(d) || !this._planEntityAvailable(target)) return;
+        if (!this._deviceBindingActive(actionDevice) || !this._planEntityAvailable(target)) return;
         this.hass
           .callService(svc.domain, svc.service, { entity_id: target })
           .then(() => {
-            this._stampActivity(d.id, 'event', this._activitySourceKey(d));
+            this._stampActivity(
+              actionDevice.id, 'event', this._activitySourceKey(actionDevice),
+            );
             this.requestUpdate();
             this._showToast(this._t('toast.run_started', { name }));
           })
@@ -3840,8 +3865,8 @@ class HouseplanCard extends LitElement {
       });
       return;
     }
-    if (action === 'more-info' && d.primary) {
-      this._openMoreInfo(d.primary);
+    if (action === 'more-info' && actionDevice.primary) {
+      this._openMoreInfo(actionDevice.primary);
       return;
     }
     this._infoCard = d;
@@ -3853,10 +3878,12 @@ class HouseplanCard extends LitElement {
   }
 
   /** Localize both parts of a help affordance while hp-help stays presentation-only. */
-  private _help(key: Extract<I18nKey, `${string}.help`>): TemplateResult {
+  private _help(key: Extract<I18nKey, `${string}.help`>): TemplateResult | typeof nothing {
     const ariaKey = `${key}.aria` as I18nKey;
+    const lang = langOf(this.hass, this._config?.language);
+    if (!hasTranslation(lang, key) || !hasTranslation(lang, ariaKey)) return nothing;
     return html`<hp-help data-help-key=${key}
-      .text=${this._t(key)} .ariaLabel=${this._t(ariaKey)}></hp-help>`;
+      .text=${t(lang, key)} .ariaLabel=${t(lang, ariaKey)}></hp-help>`;
   }
 
   private get _stageEl(): HTMLElement | null {
@@ -4899,6 +4926,13 @@ class HouseplanCard extends LitElement {
 
   private _setMode(mode: 'view' | 'plan' | 'devices' | 'decor'): void {
     if (this._kiosk && mode !== 'view') return; // wall devices never edit
+    // A mode command is newer than the editor remembered by a same-route warm
+    // remount. Clear it before the same-mode early return: while can_write is
+    // pending, Lit may still be presenting the previous editor DOM even though
+    // the new instance already fails closed to `view`. Its close button must
+    // cancel the deferred editor in one press, not let the server response
+    // reopen it and force a second press (#95).
+    this._pendingNavMode = null;
     if (this._mode === mode) return;
     this._bootSoftCancel(); // navigation owns its own short, bounded transition
     if ((mode === 'plan' || mode === 'decor') && !this._norm) {
@@ -15904,16 +15938,26 @@ class HouseplanCard extends LitElement {
     });
   }
 
+  /** One projection for the untouched select, hints and draft transitions. */
+  private _effectiveMarkerTapAction(
+    d: NonNullable<HouseplanCard['_markerDialog']>,
+    preview = this._markerPreviewDevice(d),
+  ): string {
+    return d.tapActionTouched
+      ? d.tapAction
+      : projectedTapAction(
+          d.originalHasTapAction ? d.originalTapAction : null,
+          preview?.primary?.split('.')[0],
+        );
+  }
+
   /** Store one user-triggered announcement; live HA state ticks do not mutate it. */
   private _announceToggleDraft(
     d: NonNullable<HouseplanCard['_markerDialog']>,
   ): NonNullable<HouseplanCard['_markerDialog']> {
     const preview = this._markerPreviewDevice(d);
     const next = !d.tapActionTouched
-      ? { ...d, tapAction: projectedTapAction(
-          d.originalHasTapAction ? d.originalTapAction : null,
-          preview?.primary?.split('.')[0],
-        ) }
+      ? { ...d, tapAction: this._effectiveMarkerTapAction(d, preview) }
       : d;
     const text = next.tapAction === 'toggle'
       ? this._toggleHintLines(this._toggleIntentForDialog(next)).join(' ')
@@ -16093,13 +16137,20 @@ class HouseplanCard extends LitElement {
     const bindingStatus = isVirtual ? null : this._bindingStatus(d.binding);
     const canOpenBindingInHa = !isVirtual && this._bindingHasHaPage(d.binding);
     const previewDevice = this._markerPreviewDevice(d);
+    // Untouched defaults are projections, not stored values. Re-resolve the
+    // select from the current preview on every render: HA may reveal a more
+    // meaningful leading entity (most visibly `light.*`) after the dialog was
+    // opened. Runtime already uses that current primary, so keeping the stale
+    // draft value here made the select say "Device card" while a tap toggled
+    // the lamp. An explicit user choice remains authoritative and stable.
+    const effectiveTapAction = this._effectiveMarkerTapAction(d, previewDevice);
     const previewSpaceDisplay = previewDevice
       ? spaceDisplayOf(this._serverCfg?.spaces.find((space: any) => space.id === previewDevice.space))
       : null;
     const previewLightDevices = previewDevice
       ? [...this._devices.filter((item) => item.id !== previewDevice.id), previewDevice]
       : this._devices;
-    const toggleIntent = d.tapAction === 'toggle' && previewDevice
+    const toggleIntent = effectiveTapAction === 'toggle' && previewDevice
       ? this._toggleIntent(previewDevice, previewLightDevices) : null;
     const toggleHintLines = this._toggleHintLines(toggleIntent);
     const previewPresentation = previewDevice
@@ -16269,8 +16320,8 @@ class HouseplanCard extends LitElement {
           ${this._renderVacSection(d)}
 
           <label>${this._t('marker.tap_label')}</label>
-          <select class="areasel" .value=${d.tapAction}
-            aria-describedby=${d.tapAction === 'toggle' ? 'marker-toggle-hint' : nothing}
+          <select id="marker-tap-action" class="areasel"
+            aria-describedby=${effectiveTapAction === 'toggle' ? 'marker-toggle-hint' : nothing}
             @change=${(e: Event) => {
               const next = {
                 ...d,
@@ -16280,16 +16331,18 @@ class HouseplanCard extends LitElement {
               this._markerDialog = this._announceToggleDraft(next);
             }}>
             ${TAP_ACTIONS.map((v) => [v, 'tap.' + v.replace('-', '_')] as const).map(
-              ([v, k]) => html`<option value=${v}>${this._t(k as any)}</option>`,
+              ([v, k]) => html`<option value=${v} ?selected=${v === effectiveTapAction}>
+                ${this._t(k as any)}
+              </option>`,
             )}
           </select>
-          ${d.tapAction === 'toggle'
+          ${effectiveTapAction === 'toggle'
             ? html`<div id="marker-toggle-hint" class="rhint togglehint">
                 ${toggleHintLines.map((line) => html`<div>${line}</div>`)}
               </div>
               <div class="sr-only" role="status" aria-live="polite">${d.tapHintAnnouncement}</div>`
             : nothing}
-          ${d.tapAction === 'run'
+          ${effectiveTapAction === 'run'
             ? (() => {
                 const q = d.runFilter.trim().toLowerCase();
                 const cands = this._runCandidates().filter(
@@ -16318,7 +16371,7 @@ class HouseplanCard extends LitElement {
                     : nothing}`;
               })()
             : nothing}
-          ${d.tapAction === 'run' || (d.tapAction === 'toggle' && !!toggleIntent?.command)
+          ${effectiveTapAction === 'run' || (effectiveTapAction === 'toggle' && !!toggleIntent?.command)
             ? html`<label class="srcrow" title=${this._t('marker.tap_confirm_tip')}>
                 ${this._boolInput(d.tapConfirm, (v) => (this._markerDialog = { ...d, tapConfirm: v }))}
                 <span>${this._t('marker.tap_confirm')}</span>

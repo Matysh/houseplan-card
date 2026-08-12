@@ -1,4 +1,5 @@
 import { LitElement, css, html, nothing, type PropertyValues, type TemplateResult } from 'lit';
+import { mdiHelpCircleOutline } from '@mdi/js';
 import { floatingViewport, placeFloatingSurface } from './floating-surface';
 import { FloatingSurfaceController } from './floating-surface-controller';
 import type { HpDialog, HpOverlayCloseReason } from './hp-dialog';
@@ -21,9 +22,13 @@ export class HpHelp extends LitElement {
 
   static styles = css`
     :host {
-      display: inline-flex;
+      display: none;
       flex: none;
       vertical-align: middle;
+    }
+
+    :host([data-has-content]) {
+      display: inline-flex;
     }
 
     .trigger {
@@ -39,9 +44,15 @@ export class HpHelp extends LitElement {
       background: transparent;
       border: 0;
       border-radius: 50%;
-      font: 700 15px/1 system-ui, sans-serif;
       cursor: help;
       -webkit-tap-highlight-color: transparent;
+    }
+
+    .trigger svg {
+      display: block;
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
     }
 
     .trigger:hover,
@@ -146,6 +157,10 @@ export class HpHelp extends LitElement {
     this.addEventListener('keydown', this._keyDown, true);
   }
 
+  protected willUpdate(): void {
+    this.toggleAttribute('data-has-content', this._hasContent());
+  }
+
   disconnectedCallback(): void {
     this.ownerDocument.removeEventListener('pointerdown', this._outsidePointerDown, true);
     const win = this.ownerDocument.defaultView;
@@ -164,7 +179,7 @@ export class HpHelp extends LitElement {
   }
 
   protected updated(changed: PropertyValues): void {
-    if (!this.text && this._open) {
+    if (!this._hasContent() && this._open) {
       this._closeHelp();
       return;
     }
@@ -184,6 +199,11 @@ export class HpHelp extends LitElement {
 
   private _usesPopover(): boolean {
     return this._floating.usesPopover(this._forceFallback);
+  }
+
+  private _hasContent(): boolean {
+    return typeof this.text === 'string' && this.text.trim().length > 0
+      && typeof this.ariaLabel === 'string' && this.ariaLabel.trim().length > 0;
   }
 
   private _clearTimers(): void {
@@ -279,7 +299,7 @@ export class HpHelp extends LitElement {
   private readonly _floating = new FloatingSurfaceController(this, 'help', this._keyDown);
 
   private async _openHelp(): Promise<void> {
-    if (this._open || !this.text) return;
+    if (this._open || !this._hasContent()) return;
     this._clearTimers();
     this._forceFallback = false;
     this._open = true;
@@ -382,7 +402,8 @@ export class HpHelp extends LitElement {
   }
 
   render() {
-    const label = this.ariaLabel || 'Help';
+    if (!this._hasContent()) return nothing;
+    const label = this.ariaLabel.trim();
     return html`
       <span id=${this._descriptionId} class="sr-only" role="tooltip" ?hidden=${!this._open}>${this.text}</span>
       <button class="trigger" type="button" aria-label=${label}
@@ -390,7 +411,9 @@ export class HpHelp extends LitElement {
         aria-expanded=${this._open ? 'true' : 'false'}
         @pointerenter=${this._triggerPointerEnter} @pointerleave=${this._triggerPointerLeave}
         @focus=${this._triggerFocus} @blur=${this._triggerBlur} @click=${this._triggerClick}>
-        <span aria-hidden="true">?</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d=${mdiHelpCircleOutline}></path>
+        </svg>
       </button>
       ${this._usesPopover() ? this._tooltipTemplate(true) : nothing}
     `;

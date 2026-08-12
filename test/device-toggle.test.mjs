@@ -14,6 +14,15 @@ const services = {
   light: { turn_on: {}, turn_off: {}, toggle: {} },
   switch: { turn_on: {}, turn_off: {}, toggle: {} },
   fan: { turn_on: {}, turn_off: {}, toggle: {} },
+  humidifier: { turn_on: {}, turn_off: {}, toggle: {} },
+  input_boolean: { turn_on: {}, turn_off: {}, toggle: {} },
+  automation: { turn_on: {}, turn_off: {}, toggle: {} },
+  remote: { turn_on: {}, turn_off: {}, toggle: {} },
+  climate: { turn_on: {}, turn_off: {}, toggle: {} },
+  media_player: { turn_on: {}, turn_off: {}, toggle: {} },
+  siren: { turn_on: {}, turn_off: {}, toggle: {} },
+  water_heater: { turn_on: {}, turn_off: {}, toggle: {} },
+  camera: { turn_on: {}, turn_off: {} },
   cover: { open_cover: {}, close_cover: {}, stop_cover: {}, toggle: {} },
   valve: { open_valve: {}, close_valve: {}, stop_valve: {}, toggle: {} },
   vacuum: { turn_on: {}, turn_off: {}, toggle: {} },
@@ -43,7 +52,9 @@ function device(overrides = {}) {
 test('action projection is universal while persisted legacy/default origins stay distinguishable', () => {
   assert.equal(projectedTapAction('cover', 'cover'), 'toggle');
   assert.equal(projectedTapAction(undefined, 'light'), 'toggle');
+  assert.equal(projectedTapAction('', 'light'), 'toggle');
   assert.equal(projectedTapAction(undefined, 'switch'), 'info');
+  assert.equal(projectedTapAction('future-action', 'light'), 'info');
   assert.equal(toggleOriginOf(device({ tapAction: 'toggle' })), 'explicit-toggle');
   assert.equal(toggleOriginOf(device({ tapAction: 'cover' })), 'legacy-cover');
   assert.equal(toggleOriginOf(device({ tapAction: null, primary: 'light.lamp' })), 'default-light');
@@ -166,6 +177,47 @@ test('legacy cover keeps cover priority, ignores controls and uses open/close/st
   assert.equal(toggleCoverEntity(intent), 'cover.curtain');
 });
 
+test('legacy cover keeps a disabled cover identity when active siblings remain', () => {
+  const h = hass({
+    'switch.reverse': state('switch.reverse', 'off'),
+    'cover.curtain': state('cover.curtain', 'closed', {
+      device_class: 'curtain', supported_features: 3,
+    }),
+  }, {
+    'switch.reverse': { entity_id: 'switch.reverse', device_id: 'dev' },
+    'cover.curtain': {
+      entity_id: 'cover.curtain', device_id: 'dev', disabled_by: 'user', device_class: 'curtain',
+    },
+  });
+  const d = device({
+    tapAction: 'cover', bindingKind: 'device', bindingRef: 'dev', primary: 'switch.reverse',
+    entities: ['switch.reverse'], allEntities: ['switch.reverse', 'cover.curtain'],
+    marker: { id: 'marker', binding: 'device:dev' },
+  });
+  const intent = resolveToggleIntent({ hass: h, registryHass: h, devices: [d], device: d });
+  assert.equal(intent.command, null);
+  assert.equal(intent.noneReason, 'ha-disabled');
+  assert.equal(intent.skippedTargets[0].entityId, 'cover.curtain');
+  assert.equal(toggleCoverEntity(intent), 'cover.curtain');
+});
+
+test('legacy cover prefers an active cover over an earlier disabled peer', () => {
+  const h = hass({
+    'cover.active': state('cover.active', 'closed', { supported_features: 3 }),
+  }, {
+    'cover.disabled': { entity_id: 'cover.disabled', device_id: 'dev', disabled_by: 'user' },
+    'cover.active': { entity_id: 'cover.active', device_id: 'dev', disabled_by: null },
+  });
+  const d = device({
+    tapAction: 'cover', bindingKind: 'device', bindingRef: 'dev', primary: 'cover.active',
+    entities: ['cover.active'], allEntities: ['cover.disabled', 'cover.active'],
+    marker: { id: 'marker', binding: 'device:dev' },
+  });
+  const intent = resolveToggleIntent({ hass: h, registryHass: h, devices: [d], device: d });
+  assert.deepEqual(toggleCommandEntityIds(intent.command), ['cover.active']);
+  assert.equal(toggleCoverEntity(intent), 'cover.active');
+});
+
 test('cover and valve adapters resolve open, close, stop and unknown fallback', () => {
   const matrix = [
     ['cover.blind', 'closed', 1, 'open_cover', 'open'],
@@ -278,6 +330,155 @@ test('missing services make an otherwise supported entity an explicit no-op', ()
   const intent = resolveToggleIntent({ hass: h, devices: [d], device: d });
   assert.equal(intent.noneReason, 'unsupported');
   assert.equal(intent.command, null);
+});
+
+test('an absent service catalog is not optimistic proof of a service', () => {
+  const entityId = 'switch.plug';
+  const h = hass({ [entityId]: state(entityId, 'off') }, {}, {});
+  const d = device({
+    bindingKind: 'entity', bindingRef: entityId, primary: entityId, entities: [entityId],
+    marker: { id: 'marker', binding: `entity:${entityId}` },
+  });
+  const intent = resolveToggleIntent({ hass: h, devices: [d], device: d });
+  assert.equal(intent.noneReason, 'unsupported');
+  assert.equal(intent.command, null);
+});
+
+test('basic power adapters expose the same off/on state contract', () => {
+  for (const domain of [
+    'light', 'switch', 'fan', 'humidifier', 'input_boolean', 'automation', 'remote',
+  ]) {
+    const entityId = `${domain}.sample`;
+    const d = device({
+      bindingKind: 'entity', bindingRef: entityId, primary: entityId, entities: [entityId],
+      marker: { id: 'marker', binding: `entity:${entityId}` },
+    });
+    const off = resolveToggleIntent({
+      hass: hass({ [entityId]: state(entityId, 'off') }), devices: [d], device: d,
+    });
+    assert.equal(off.command?.service, 'turn_on', `${domain} off`);
+    const on = resolveToggleIntent({
+      hass: hass({ [entityId]: state(entityId, 'on') }), devices: [d], device: d,
+    });
+    assert.equal(on.command?.service, 'turn_off', `${domain} on`);
+  }
+});
+
+test('feature-gated HA domains require the exact entity capability bits', () => {
+  const matrix = [
+    ['climate.room', 'off', 256, 'turn_on'],
+    ['climate.room', 'heat', 128, 'turn_off'],
+    ['media_player.tv', 'off', 128, 'turn_on'],
+    ['media_player.tv', 'playing', 256, 'turn_off'],
+    ['siren.alarm', 'off', 1, 'turn_on'],
+    ['siren.alarm', 'on', 2, 'turn_off'],
+    ['water_heater.boiler', 'off', 8, 'turn_on'],
+    ['water_heater.boiler', 'eco', 8, 'turn_off'],
+    ['camera.garden', 'off', 1, 'turn_on'],
+    ['camera.garden', 'idle', 1, 'turn_off'],
+    ['vacuum.legacy', 'off', 1, 'turn_on'],
+    ['vacuum.legacy', 'on', 2, 'turn_off'],
+  ];
+  for (const [entityId, value, features, expectedService] of matrix) {
+    const h = hass({
+      [entityId]: state(entityId, value, { supported_features: features }),
+    });
+    const d = device({
+      bindingKind: 'entity', bindingRef: entityId, primary: entityId, entities: [entityId],
+      marker: { id: 'marker', binding: `entity:${entityId}` },
+    });
+    const intent = resolveToggleIntent({ hass: h, devices: [d], device: d });
+    assert.equal(intent.command?.service, expectedService, `${entityId} ${value}`);
+
+    const withoutCapability = hass({
+      [entityId]: state(entityId, value, { supported_features: 0 }),
+    });
+    const blocked = resolveToggleIntent({
+      hass: withoutCapability, devices: [d], device: d,
+    });
+    assert.equal(blocked.command, null, `${entityId} without feature`);
+    assert.equal(blocked.noneReason, 'unsupported', `${entityId} without feature`);
+
+    const withoutFeatureAttribute = hass({ [entityId]: state(entityId, value) });
+    const missingCapability = resolveToggleIntent({
+      hass: withoutFeatureAttribute, devices: [d], device: d,
+    });
+    assert.equal(missingCapability.command, null, `${entityId} without feature attribute`);
+    assert.equal(
+      missingCapability.noneReason, 'unsupported', `${entityId} without feature attribute`,
+    );
+  }
+});
+
+test('unknown state uses toggle only when the complete capability is present', () => {
+  const lightId = 'light.unknown';
+  const lightDevice = device({
+    bindingKind: 'entity', bindingRef: lightId, primary: lightId, entities: [lightId],
+    marker: { id: 'marker', binding: `entity:${lightId}` },
+  });
+  const lightIntent = resolveToggleIntent({
+    hass: hass({ [lightId]: state(lightId, 'unknown') }),
+    devices: [lightDevice], device: lightDevice,
+  });
+  assert.equal(lightIntent.command?.service, 'toggle');
+  assert.equal(lightIntent.nextEffect, 'toggle');
+
+  const climateId = 'climate.unknown';
+  const climateDevice = device({
+    bindingKind: 'entity', bindingRef: climateId, primary: climateId, entities: [climateId],
+    marker: { id: 'marker', binding: `entity:${climateId}` },
+  });
+  const capable = resolveToggleIntent({
+    hass: hass({ [climateId]: state(climateId, 'unknown', { supported_features: 384 }) }),
+    devices: [climateDevice], device: climateDevice,
+  });
+  assert.equal(capable.command?.service, 'toggle');
+  assert.equal(capable.nextEffect, 'toggle');
+
+  const onlyTurnOn = resolveToggleIntent({
+    hass: hass({ [climateId]: state(climateId, 'unknown', { supported_features: 256 }) }),
+    devices: [climateDevice], device: climateDevice,
+  });
+  assert.equal(onlyTurnOn.command, null);
+  assert.equal(onlyTurnOn.noneReason, 'unsupported');
+});
+
+test('device binding chooses the first capable peer inside one functional role', () => {
+  const h = hass({
+    'camera.first': state('camera.first', 'idle', { supported_features: 0 }),
+    'camera.second': state('camera.second', 'idle', { supported_features: 1 }),
+    'switch.option': state('switch.option', 'off'),
+  }, {
+    'camera.first': { entity_id: 'camera.first', device_id: 'dev' },
+    'camera.second': { entity_id: 'camera.second', device_id: 'dev' },
+    'switch.option': { entity_id: 'switch.option', device_id: 'dev' },
+  });
+  const d = device({
+    bindingKind: 'device', bindingRef: 'dev', primary: 'camera.first',
+    entities: ['camera.first', 'camera.second', 'switch.option'],
+    marker: { id: 'marker', binding: 'device:dev' },
+  });
+  const intent = resolveToggleIntent({ hass: h, devices: [d], device: d });
+  assert.deepEqual(toggleCommandEntityIds(intent.command), ['camera.second']);
+  assert.equal(intent.targets[0].via, 'device-role');
+});
+
+test('device binding preserves an unavailable first role entity instead of retargeting', () => {
+  const h = hass({
+    'camera.first': state('camera.first', 'unavailable', { supported_features: 1 }),
+    'camera.second': state('camera.second', 'idle', { supported_features: 1 }),
+  }, {
+    'camera.first': { entity_id: 'camera.first', device_id: 'dev' },
+    'camera.second': { entity_id: 'camera.second', device_id: 'dev' },
+  });
+  const d = device({
+    bindingKind: 'device', bindingRef: 'dev', primary: 'camera.first',
+    entities: ['camera.first', 'camera.second'], marker: { id: 'marker', binding: 'device:dev' },
+  });
+  const intent = resolveToggleIntent({ hass: h, devices: [d], device: d });
+  assert.equal(intent.command, null);
+  assert.equal(intent.noneReason, 'unavailable');
+  assert.equal(intent.skippedTargets[0].entityId, 'camera.first');
 });
 
 test('confirmation target comparison ignores order but detects target-set changes', () => {
