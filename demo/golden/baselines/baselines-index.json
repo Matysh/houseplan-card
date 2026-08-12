@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "matrixVersion": 15,
-  "acceptedAt": "2026-08-12T16:51:44.947Z",
-  "sourceFingerprint": "14d6c54e38e6888a587267c80ee5cded6444a02a68354d6ee8a83e5a3d3c73e4",
+  "acceptedAt": "2026-08-12T18:55:55.794Z",
+  "sourceFingerprint": "6f00b83152c35deb5c63a73ae35a22177199fb8bdaf178abe676a6dfb133d2a9",
   "chromium": "151.0.7922.34",
   "scenarios": {
     "geometry-view-dark-fit": "a538deed6141b98b3e396d7da1024b18aee345312edd7954ad458751f08f48a3",
@@ -17,7 +17,7 @@
     "tray-medium-selection-ru": "ab91e88583b2863305434ce2775e31328638414671ff0a4f8ee82c8274c04405",
     "tray-narrow-palette-en": "fb63483e7101d457d7fb1c83ae50435410ed797771adcbfde14dc2798a000ce1",
     "tray-narrow-tool-ru": "60ce3c75de88b72fdb5d3fe7a16790184a8265c74f0f97e5be4fd83dbe0259fd",
-    "geometry-diagonal-45-opening-dark": "a538deed6141b98b3e396d7da1024b18aee345312edd7954ad458751f08f48a3",
+    "geometry-diagonal-45-opening-dark": "3736a75163d47a71f60c45cd554d604f27cfbc81119b5b55e8134da61a2a0f0a",
     "openings-thick-wall-dark": "5aa0b3d26894bef9ab9fca25c31bbef2f13f2c410f5f6d3f61c8d608ceb929f8",
     "openings-filled-tunnel-dark": "167d92c11e6a8b3ff0f31177ac5905f8db4b5fb03ee78b4965c40bc45aeee50f",
     "openings-hidden-view-dark": "c85cc04d1d8622b98215e2bb83f5bb233a7cfb0ac684c912475ef7bc44245897",
