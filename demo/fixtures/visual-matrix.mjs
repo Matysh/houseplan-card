@@ -131,9 +131,9 @@ const runtime = () => {
       attributes: { azimuth: 180, elevation: 24 },
     },
   };
-  entities['sun.sun'] = {
-    entity_id: 'sun.sun', device_id: null, platform: 'sun', disabled_by: null,
-  };
+  // Keep sun.sun state-only on purpose. Core/runtime entities and YAML
+  // entities without unique_id may have a live state without a registry row.
+  // The production projection must preserve them.
   const layout = {};
   const areas = Object.fromEntries(
     [...geometryRooms, ...lightingRooms].map((room) => [room.area, { area_id: room.area, name: room.name }]),

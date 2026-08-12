@@ -110,6 +110,69 @@ async function comparePng(page, actual, baseline, threshold) {
   });
 }
 
+/** Capture the identical visual frame with only the rendered sun-ray SVG
+ * hidden. Comparing this control frame with the reviewed golden proves that
+ * the layer changes real browser pixels, not merely that its DOM exists. */
+async function captureWithoutSunRays(page, screenshotOptions) {
+  const layerState = await page.evaluate(async () => {
+    const layer = window.__goldenCard?.renderRoot?.querySelector('.sunlayer');
+    if (!layer) throw new Error('semantic golden sun layer is missing');
+    const shapes = layer.querySelectorAll('path, polygon').length;
+    if (!shapes) throw new Error('semantic golden sun layer has no painted shapes');
+    const previous = layer.style.visibility;
+    layer.style.visibility = 'hidden';
+    await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+    return { previous, shapes };
+  });
+  try {
+    return { png: await page.screenshot(screenshotOptions), shapes: layerState.shapes };
+  } finally {
+    await page.evaluate(async (previous) => {
+      const layer = window.__goldenCard?.renderRoot?.querySelector('.sunlayer');
+      if (layer) layer.style.visibility = previous;
+      await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+    }, layerState.previous);
+  }
+}
+
+async function countChangedPixels(page, actual, control, spec) {
+  return page.evaluate(async ({ actual64, control64, minChannelDelta }) => {
+    const decode = async (base64) => {
+      const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
+      return createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+    };
+    const [actualImage, controlImage] = await Promise.all([decode(actual64), decode(control64)]);
+    if (actualImage.width !== controlImage.width || actualImage.height !== controlImage.height)
+      throw new Error('semantic golden sun control has different dimensions');
+    const canvas = document.createElement('canvas');
+    const controlCanvas = document.createElement('canvas');
+    canvas.width = controlCanvas.width = actualImage.width;
+    canvas.height = controlCanvas.height = actualImage.height;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    const controlContext = controlCanvas.getContext('2d', { willReadFrequently: true });
+    context.drawImage(actualImage, 0, 0);
+    controlContext.drawImage(controlImage, 0, 0);
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    const controlPixels = controlContext.getImageData(0, 0, canvas.width, canvas.height).data;
+    let changed = 0;
+    let maxDelta = 0;
+    for (let offset = 0; offset < pixels.length; offset += 4) {
+      const delta = Math.max(
+        Math.abs(pixels[offset] - controlPixels[offset]),
+        Math.abs(pixels[offset + 1] - controlPixels[offset + 1]),
+        Math.abs(pixels[offset + 2] - controlPixels[offset + 2]),
+      );
+      maxDelta = Math.max(maxDelta, delta);
+      if (delta >= minChannelDelta) changed++;
+    }
+    return { changed, maxDelta, size: [canvas.width, canvas.height] };
+  }, {
+    actual64: actual.toString('base64'),
+    control64: control.toString('base64'),
+    minChannelDelta: spec.minChannelDelta,
+  });
+}
+
 /** Assert scenario semantics against the actual capture, not only its data.
  *  This protects a reviewed-but-empty baseline from becoming the reference. */
 async function countWarmPixels(page, png, region) {
@@ -251,16 +314,30 @@ try {
       result.runtime = await prepareGoldenScenario(page, scenario);
       if (pageErrors.length) throw new Error(`browser exception: ${pageErrors.join(' | ')}`);
       const clip = await goldenClip(page, scenario.capture);
-      const actual = await page.screenshot({
+      const screenshotOptions = {
         ...(clip ? { clip } : {}),
         animations: 'disabled',
         caret: 'hide',
         scale: 'css',
-      });
+      };
+      const actual = await page.screenshot(screenshotOptions);
       const actualPath = resolve(actualRoot, `${scenario.id}.png`);
       writeFileSync(actualPath, actual);
       result.actualSha256 = sha256(actual);
       result.actual = actualPath;
+      if (scenario.sunRayPixels) {
+        const control = await captureWithoutSunRays(page, screenshotOptions);
+        const sample = await countChangedPixels(page, actual, control.png, scenario.sunRayPixels);
+        result.sunRayShapes = control.shapes;
+        result.sunRayChangedPixels = sample.changed;
+        result.sunRayMaxChannelDelta = sample.maxDelta;
+        if (sample.changed < scenario.sunRayPixels.minPixels) {
+          throw new Error(
+            `semantic golden assertion failed: sun rays paint ${sample.changed} pixels, expected at least `
+            + `${scenario.sunRayPixels.minPixels}`,
+          );
+        }
+      }
       if (scenario.warmPixelRegion) {
         const sample = await countWarmPixels(page, actual, scenario.warmPixelRegion);
         result.warmPixels = sample.warm;

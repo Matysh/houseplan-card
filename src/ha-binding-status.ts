@@ -339,7 +339,11 @@ export function activeRegistryHass(hass: any, snapshot = haRegistrySnapshot(hass
   }
   for (const [eid, state] of Object.entries<any>(hass?.states || {})) {
     const entity = snapshot.entities?.[eid];
-    if (snapshot.authoritative && !entity) continue;
+    // A complete Entity Registry is not a complete list of HA states: YAML
+    // entities without unique_id and core runtime entities such as sun.sun can
+    // legitimately have a live state without any registry row. Absence is
+    // therefore not evidence of disablement. Explicit disabled entity/device
+    // rows below remain authoritative and are still removed.
     if (entity && !isRegistryEntryEnabled(entity)) continue;
     const parent = entity?.device_id ? snapshot.devices?.[entity.device_id] : null;
     if (snapshot.authoritative && entity?.device_id && !parent) continue;

@@ -21,6 +21,10 @@ only — no entities are created, no services are called.
   clockwise; `attributes.elevation` in degrees, negative below the
   horizon). No `sun.sun` in the install → the whole feature stays
   silent and the settings dialog says why.
+- `sun.sun` is consumed from the live HA state machine. It is valid for
+  this core/runtime entity to have no Entity Registry row; registry
+  projection must preserve its live state while still excluding rows
+  that are explicitly disabled.
 - Sun attributes update rarely (~30–120 s). Sun geometry is recomputed
   ONLY when (azimuth, elevation) or the config change — never on every
   `hass` tick. The wedge layer memoises on

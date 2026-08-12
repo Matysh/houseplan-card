@@ -1,18 +1,14 @@
-<!-- release: v1.62.0-beta.5 -->
+<!-- release: v1.62.0-beta.6 -->
 
 ## Основное
 
-- Все виды активности устройств объединены в понятную систему пульсаций без статичных колец.
-- Переходы между просмотром и редакторами теперь плавно меняют панель, рабочую область, масштаб и фон.
-- Восстановлено отображение солнечных лучей из окон.
+- Исправлено отображение солнечных лучей из окон в реальных установках Home Assistant ([#102](https://github.com/Matysh/houseplan-card/issues/102)).
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- All device activity now uses one predictable pulse system without static rings.
-- View/editor transitions now animate the toolbar, workspace, camera and background together.
-- Restored window sun rays after a transition regression.
+- Fixed window sun rays in real Home Assistant installations ([#102](https://github.com/Matysh/houseplan-card/issues/102)).
 - Small fixes and improvements.
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.62.0-beta.5/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.62.0-beta.5/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.62.0-beta.6/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.62.0-beta.6/docs/CHANGELOG.md)

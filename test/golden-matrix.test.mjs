@@ -10,7 +10,7 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
   for (const scenario of GOLDEN_SCENARIOS) {
     assert.match(scenario.id, /^[a-z0-9-]+$/);
     assert.equal(['visual', 'large'].includes(scenario.fixture), true, scenario.id);
-    assert.equal(['page', 'stage'].includes(scenario.capture), true, scenario.id);
+    assert.equal(['page', 'stage', 'sun-window'].includes(scenario.capture), true, scenario.id);
     assert.equal(scenario.viewport.width > 0 && scenario.viewport.height > 0, true, scenario.id);
     assert.equal(scenario.threshold.maxChannelDelta >= 0 && scenario.threshold.maxChannelDelta <= 32, true, scenario.id);
     assert.equal(scenario.threshold.maxDiffRatio >= 0 && scenario.threshold.maxDiffRatio <= 0.01, true, scenario.id);
@@ -20,6 +20,13 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
       assert.equal(region.x + region.w <= 1 && region.y + region.h <= 1, true, scenario.id);
       assert.equal(Number.isInteger(region.minPixels) && region.minPixels > 0, true, scenario.id);
       assert.equal(region.minRedBlueDelta > 0, true, scenario.id);
+    }
+    if (scenario.sunRayPixels) {
+      assert.equal(Number.isInteger(scenario.sunRayPixels.minPixels)
+        && scenario.sunRayPixels.minPixels > 0, true, scenario.id);
+      assert.equal(Number.isInteger(scenario.sunRayPixels.minChannelDelta)
+        && scenario.sunRayPixels.minChannelDelta > 0
+        && scenario.sunRayPixels.minChannelDelta <= 32, true, scenario.id);
     }
     if (scenario.tunnelContinuity) {
       assert.match(scenario.tunnelContinuity.openingId, /^[a-z0-9-]+$/, scenario.id);
@@ -41,7 +48,7 @@ test('golden matrix covers required geometry, rendering and adaptive surfaces', 
   const ids = GOLDEN_SCENARIOS.map((scenario) => scenario.id).join(' ');
   for (const token of ['geometry', 'diagonal-45-opening', 'openings', 'openings-hidden',
     'fill-light', 'fill-temp', 'fill-lqi', 'lighting', 'hover', 'zoom-040', 'zoom-250',
-    'warm-remount', 'dialog-mobile', 'color-popover', 'tray-wide', 'tray-medium',
+    'warm-remount', 'dialog-mobile', 'color-popover', 'tray-wide', 'tray-medium', 'sun-window',
     'tray-narrow', 'opaque-glow-two-doorways', 'filled-tunnel', 'backup-full', 'backup-space'])
     assert.equal(ids.includes(token), true, token);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.mode)).has('plan'), true);
@@ -82,6 +89,23 @@ test('doorway spill golden exposes the opaque-fill failure mode from issue 71', 
   });
   assert.equal(scenario.warmPixelRegion?.minPixels >= 2500, true);
   assert.equal(scenario.warmPixelRegion?.x >= 0.5, true);
+});
+
+test('sun-ray golden requires browser-painted light from a state-only sun entity', () => {
+  const scenario = GOLDEN_SCENARIOS.find((item) => item.id === 'lighting-sun-window-state-only-dark');
+  assert.ok(scenario);
+  const fixture = prepareGoldenFixture(scenario);
+  const space = fixture.config.spaces.find((item) => item.id === scenario.space);
+  assert.equal(space.settings.sun_rays, true);
+  assert.equal(space.openings.some((opening) => opening.type === 'window'), true);
+  assert.equal(fixture.states['sun.sun']?.state, 'above_horizon');
+  assert.equal(fixture.entities['sun.sun'], undefined,
+    'sun.sun must exercise the real state-only HA path');
+  assert.equal(scenario.capture, 'sun-window');
+  assert.equal(scenario.glowEnabled, false);
+  assert.equal(scenario.allLightsOff, true);
+  assert.equal(scenario.sunRayPixels.minPixels >= 500, true);
+  assert.equal(scenario.sunRayPixels.minChannelDelta >= 4, true);
 });
 
 test('golden harness applies doorway, state and layout overrides to a cloned fixture', () => {

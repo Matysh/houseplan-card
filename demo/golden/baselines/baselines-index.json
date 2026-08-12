@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "matrixVersion": 12,
-  "acceptedAt": "2026-08-12T10:10:45.897Z",
-  "sourceFingerprint": "117e675d4314f3ef3d16b7d94885f953bbc856da645e488f37045ef5a04716eb",
+  "matrixVersion": 13,
+  "acceptedAt": "2026-08-12T10:53:18.675Z",
+  "sourceFingerprint": "0581cf065ba06734ce9bd00277f3fbe18483ac09914323070e321cba319cdc68",
   "chromium": "151.0.7922.34",
   "scenarios": {
     "geometry-view-dark-fit": "a538deed6141b98b3e396d7da1024b18aee345312edd7954ad458751f08f48a3",
@@ -21,6 +21,7 @@
     "openings-filled-tunnel-dark": "074fb859d2ae1dc2ccd2045e2d6fb6d8389e430cbef20287419b8840cbbd5094",
     "openings-hidden-view-dark": "c85cc04d1d8622b98215e2bb83f5bb233a7cfb0ac684c912475ef7bc44245897",
     "lighting-glow-sun-dark": "a98eee332f25a43c8d9d126c118c8cfea4ee73752b1060227548efedaf0efcdd",
+    "lighting-sun-window-state-only-dark": "3bd581a23a2e0ebba58530db5182adea5cba6ec10bc032bee024415c19108a17",
     "lighting-fill-light-axis-split-dark": "4f867528aeb9124229f81659876b03ff297a3a7a92bc57ffb32d5c24913c4938",
     "lighting-fill-temp-axis-split-dark": "e0535b70701c9fe6753f74c943b9f288a0fb1a23a9cfc8590d4945e0a1724eb5",
     "lighting-fill-lqi-axis-split-dark": "485ab183144913569ddc11154553ab4ac7db522ab188de74d652b717dc786d9c",

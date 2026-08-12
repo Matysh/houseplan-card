@@ -1,10 +1,11 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 12;
+export const GOLDEN_MATRIX_VERSION = 13;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
+const sunWindow = { capture: 'sun-window', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.001 } };
 
 export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'geometry-view-dark-fit', fixture: 'visual', space: 'golden-geometry', mode: 'view',
@@ -57,6 +58,14 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     fillMode: 'none', glowEnabled: false, hideOpenings: true, theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'lighting-glow-sun-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'lighting-sun-window-state-only-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
+    // The golden screenshot is backed by a second, sun-layer-hidden capture.
+    // A real painted ray must account for enough changed pixels; DOM-only
+    // presence or an accidentally accepted empty baseline is not sufficient.
+    glowEnabled: false, allLightsOff: true,
+    stateOverrides: { 'sun.sun': { attributes: { azimuth: 0, elevation: 24 } } },
+    sunRayPixels: { minPixels: 500, minChannelDelta: 4 },
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...sunWindow },
   { id: 'lighting-fill-light-axis-split-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
     fillMode: 'light', glowEnabled: false, theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'lighting-fill-temp-axis-split-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',

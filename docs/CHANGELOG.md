@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v1.62.0-beta.6 — 2026-08-12
+
+- Fixed the remaining cause of invisible window sun rays in real Home Assistant
+  installations. Core/runtime entities such as `sun.sun` may have a live state
+  without an Entity Registry row; House Plan now preserves that state while
+  continuing to exclude explicitly disabled entities and devices
+  ([#102](https://github.com/Matysh/houseplan-card/issues/102)).
+- Added a deterministic visual regression crop of an exterior window and its
+  ray. The browser now compares the reviewed image with the same frame after
+  hiding only the sun layer and fails unless the ray paints a material number
+  of pixels, so an empty screenshot cannot be accepted as success.
+
 ## v1.62.0-beta.5 — 2026-08-12
 
 - Unified all device activity around one predictable pulse system. Alerts use

@@ -98,6 +98,20 @@ test('active projection removes stale states of disabled rows', () => {
   assert.deepEqual(Object.keys(projected.states), ['switch.good']);
 });
 
+test('authoritative active projection keeps live states without registry rows', () => {
+  const state = {
+    entity_id: 'sun.sun', state: 'above_horizon',
+    attributes: { azimuth: 180, elevation: 35 },
+  };
+  const projected = activeRegistryHass(
+    { devices: {}, entities: {}, states: { 'sun.sun': state } },
+    full({}, {}),
+  );
+
+  assert.equal(projected.states['sun.sun'], state);
+  assert.equal(projected.entities['sun.sun'], undefined);
+});
+
 test('limited active projection keeps a live entity when its parent row is unavailable', () => {
   const entities = {
     'switch.live': { entity_id: 'switch.live', device_id: 'not_exposed', disabled_by: null },

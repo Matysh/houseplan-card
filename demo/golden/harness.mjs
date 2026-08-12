@@ -411,22 +411,42 @@ export async function prepareGoldenScenario(page, scenario) {
         .some((help) => help.renderRoot?.querySelector('.trigger')?.getAttribute('aria-expanded') === 'true'),
       editorTray: card.renderRoot.querySelector('.editor-secondary-host.open .editor-secondary')
         ?.className || '',
+      ...(scenario.sunRayPixels ? { sun: {
+        raw: card.hass?.states?.['sun.sun']?.attributes || null,
+        plan: card._planHass?.states?.['sun.sun']?.attributes || null,
+        render: card._renderPlanHass?.states?.['sun.sun']?.attributes || null,
+        north: card._effNorth(),
+        enabled: card._effSunRays(),
+        editing: card._editing,
+        cachedRays: card._sunRaysCache?.rays?.length || 0,
+      } } : {}),
     };
   }, { fixture, scenario });
 }
 
 export async function goldenClip(page, capture) {
   if (capture === 'page') return null;
-  return page.evaluate(() => {
+  return page.evaluate((captureKind) => {
     const card = window.__goldenCard;
     const target = card?.renderRoot?.querySelector('.stage');
     if (!target) throw new Error('golden stage capture target missing');
     const rect = target.getBoundingClientRect();
+    if (captureKind === 'sun-window') {
+      // Stable crop around the exterior window and the first part of its ray:
+      // deliberately excludes room labels and device markers, whose font/icon
+      // rasterisation would add noise unrelated to the visual contract.
+      return {
+        x: Math.max(0, Math.floor(rect.left + rect.width * 0.10)),
+        y: Math.max(0, Math.floor(rect.top + rect.height * 0.02)),
+        width: Math.max(1, Math.ceil(rect.width * 0.35)),
+        height: Math.max(1, Math.ceil(rect.height * 0.25)),
+      };
+    }
     const pad = 2;
     const x = Math.max(0, Math.floor(rect.left - pad));
     const y = Math.max(0, Math.floor(rect.top - pad));
     const right = Math.min(window.innerWidth, Math.ceil(rect.right + pad));
     const bottom = Math.min(window.innerHeight, Math.ceil(rect.bottom + pad));
     return { x, y, width: Math.max(1, right - x), height: Math.max(1, bottom - y) };
-  });
+  }, capture);
 }
