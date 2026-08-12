@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "matrixVersion": 15,
-  "acceptedAt": "2026-08-12T18:55:55.794Z",
-  "sourceFingerprint": "6f00b83152c35deb5c63a73ae35a22177199fb8bdaf178abe676a6dfb133d2a9",
+  "matrixVersion": 16,
+  "acceptedAt": "2026-08-12T21:22:37.135Z",
+  "sourceFingerprint": "77bbdf1b5122aeb9747fad3107a2b7eb7f05edee890ea6bebcce915f8b0b83e2",
   "chromium": "151.0.7922.34",
   "scenarios": {
     "geometry-view-dark-fit": "a538deed6141b98b3e396d7da1024b18aee345312edd7954ad458751f08f48a3",
