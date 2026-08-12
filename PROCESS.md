@@ -32,6 +32,12 @@ Baseline-Reviewed: <CI run or artifact reference>
 Never invent a review reference merely to pass a gate. Baselines are accepted
 only from the complete Linux CI artifact via `golden:accept -- --reviewed`.
 
+## Prerelease naming
+
+Use `beta.1` through `beta.9`, then continue the same version line with
+`rc.1`. GitHub/HACS prerelease discovery orders `beta.10` behind `beta.9`, so
+the publisher rejects beta numbers greater than nine before creating a tag.
+
 Install dependencies once per clone; the `prepare` script activates the
 repository hook automatically:
 

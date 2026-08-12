@@ -15,7 +15,7 @@ import {
   versionFromTag,
 } from '../scripts/release-contract.mjs';
 import {
-  parseIssueList, parsePrereleaseArgs, prereleaseWorkflowSucceeded,
+  assertHacsDiscoverableTag, parseIssueList, parsePrereleaseArgs, prereleaseWorkflowSucceeded,
   readZipEntries, verifyReleaseProjection,
 } from '../scripts/release-prerelease.mjs';
 
@@ -45,6 +45,15 @@ test('release SemVer parser accepts prereleases and rejects unsafe tags', () => 
   assert.throws(() => versionFromTag('1.2.3-beta.1'), /start with v/);
   assert.throws(() => versionFromTag('v1.2.3-beta.01'), /leading zeroes/);
   assert.throws(() => validateVersionSources('v1.2.3', { source: '1.2.3' }), /requires a prerelease/);
+});
+
+test('HACS prerelease naming switches from beta.9 to rc.1', () => {
+  assert.equal(assertHacsDiscoverableTag('v1.62.0-beta.9'), 'v1.62.0-beta.9');
+  assert.equal(assertHacsDiscoverableTag('v1.62.0-rc.1'), 'v1.62.0-rc.1');
+  assert.throws(
+    () => assertHacsDiscoverableTag('v1.62.0-beta.10'),
+    /not HACS-discoverable.*use rc\.1/,
+  );
 });
 
 test('version sources include every shipped authority and must match the tag', () => {

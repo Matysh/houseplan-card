@@ -60,6 +60,20 @@ export function parsePrereleaseArgs(args) {
   };
 }
 
+/** GitHub's prerelease discovery order is lexicographic inside a beta line:
+ * beta.10 can be returned behind beta.9 and HACS will keep offering beta.9.
+ * Stop before any tag or release is created; after beta.9 the line continues
+ * as rc.1 (or on a new patch/minor version). */
+export function assertHacsDiscoverableTag(tag) {
+  const beta = /^v\d+\.\d+\.\d+-beta\.([1-9]\d*)$/.exec(tag);
+  if (beta && Number(beta[1]) >= 10) {
+    throw new Error(
+      `${tag} is not HACS-discoverable after beta.9; use rc.1 or a new version line`,
+    );
+  }
+  return tag;
+}
+
 export function verifyReleaseProjection(release, { tag }) {
   if (!release || release.tagName !== tag) throw new Error(`GitHub release ${tag} is missing`);
   if (release.isDraft) throw new Error(`GitHub release ${tag} is still a draft`);
@@ -446,6 +460,7 @@ if (invokedDirectly) {
 
   const main = async () => {
     issues = parseIssueList(issueOption);
+    assertHacsDiscoverableTag(tag);
     const contract = assertReleaseContract({ root, tag, repo, requirePrerelease: true });
     run('gh', ['auth', 'status']);
     const currentBranch = run('git', ['branch', '--show-current']).stdout;

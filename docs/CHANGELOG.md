@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v1.62.0-rc.1 — 2026-08-13
+
+- Republished the reviewed beta.10 candidate under an RC identifier so HACS
+  discovers it after beta.9; the application code and user-visible behaviour
+  are unchanged.
+
 ## v1.62.0-beta.10 — 2026-08-13
 
 - Fixed composite device presentation and actions after the beta review:
