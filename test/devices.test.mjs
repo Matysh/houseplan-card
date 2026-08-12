@@ -999,6 +999,24 @@ test('resolvedLightSources: marker room_id is more precise than a shared HA area
   );
 });
 
+test('room-scoped light graph keeps a source controlled from another room', () => {
+  const hass = { states: { 'light.bed': { state: 'on' } } };
+  const source = {
+    id: 'bed-light', area: 'bedroom', primary: 'light.bed', entities: ['light.bed'],
+    marker: { id: 'bed-light', room_id: 'bedroom-room', is_light: true },
+  };
+  const remote = {
+    id: 'hall-switch', area: 'hall', primary: 'switch.hall', entities: ['switch.hall'],
+    controls: ['light.bed'], marker: { id: 'hall-switch', room_id: 'hall-room', controls: ['light.bed'] },
+  };
+  const roomSources = resolvedLightSources(
+    hass, [remote, source], { id: 'bedroom-room', area: 'bedroom' },
+  );
+  assert.deepEqual(roomSources.map((item) => ({ eid: item.eid, owner: item.device.id })), [
+    { eid: 'light.bed', owner: 'bed-light' },
+  ]);
+});
+
 test('self-control is not external and only explicit is_light makes the switch shine', () => {
   assert.deepEqual(
     persistedExternalControls('entity:switch.hood', [

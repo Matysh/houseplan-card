@@ -267,10 +267,10 @@ export function resolvePresentationSources(
   // More info. On a mixed device, however, an unrelated cover capability must
   // not hijack a primary/owned light unless the legacy explicit cover action
   // (or the primary entity itself) says that the marker represents the cover.
+  const resolvedDeviceRole = resolvedDeviceStateEntities(hass, d.entities);
   const coverOwnsFace = !!cover && (
     d.tapAction === 'cover'
-    || !!d.primary?.startsWith('cover.')
-    || lights.length === 0
+    || resolvedDeviceRole.some((eid) => eid.startsWith('cover.'))
   );
   if (coverOwnsFace) {
     sourceKind = 'cover';
@@ -564,8 +564,12 @@ export function resolveDevicePresentation(
     ? (d.marker?.use_climate_temp === true ? climateTempFor(hass, d.entities)
       : (d.icon === 'mdi:thermometer' || d.icon === 'mdi:air-filter') ? tempFor(hass, d.entities) : null)
     : null;
+  // Legacy inline humidity belongs only to a humidity-led marker. A random
+  // diagnostic humidity sibling must not turn a composite device into a
+  // humidity marker; users can still select that sibling explicitly through
+  // the configurable value badge.
   const hum = !staticIcon && !effectiveHidden && options.showTemperature
-    && d.entities.some((eid) => isHumEntity(hass, eid))
+    && !!d.primary && isHumEntity(hass, d.primary)
     ? humFor(hass, d.entities) : null;
   const lqi = !staticIcon && !effectiveHidden && options.showSignal && !d.virtual ? lqiFor(hass, d.entities) : null;
   const markerStateGraph = options.lightSources || (d.marker?.value_badge?.source?.kind === 'derived_marker_state'

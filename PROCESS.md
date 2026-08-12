@@ -38,7 +38,9 @@ Install the repository hook once per clone:
 git config core.hooksPath .githooks
 ```
 
-The hook checks message provenance only. Test, build and release gates remain
+The hook checks message provenance locally; `validate.yml` enforces the same
+terminal-trailer contract for every non-merge commit in a push or PR, so
+`--no-verify`, rebases and fresh clones cannot bypass it. Test, build and release gates remain
 the commands documented in `CONTRIBUTING.md` and `docs/TESTING.md`.
 
 ## Release history

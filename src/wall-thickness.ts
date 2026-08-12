@@ -1017,7 +1017,6 @@ export function materializeWallIntervals(
   cellCm: number,
   gridPitch: number,
   coordScale = 1,
-  breakPoints: readonly number[][] = [],
 ): WallEntry[] {
   // Rebuild from the effective profile instead of retaining midpoint-only
   // legacy rows beside their lossless replacements. Keeping both lets the
@@ -1028,21 +1027,7 @@ export function materializeWallIntervals(
   );
   for (const iv of resolved) {
     if (iv.open || !(iv.cm > 0)) continue;
-    const dx = iv.b[0] - iv.a[0], dy = iv.b[1] - iv.a[1];
-    const length2 = dx * dx + dy * dy;
-    const eps = openEps(pitch, coordScale) * 4;
-    const cuts = length2 > 0 ? breakPoints.flatMap((point) => {
-      const t = ((point[0] - iv.a[0]) * dx + (point[1] - iv.a[1]) * dy) / length2;
-      if (t <= 0 || t >= 1) return [];
-      const projected = [iv.a[0] + dx * t, iv.a[1] + dy * t];
-      return Math.hypot(point[0] - projected[0], point[1] - projected[1]) <= eps ? [t] : [];
-    }) : [];
-    const stops = [0, ...new Set(cuts), 1].sort((a, b) => a - b);
-    for (let i = 0; i + 1 < stops.length; i++) {
-      const a = [iv.a[0] + dx * stops[i], iv.a[1] + dy * stops[i]];
-      const b = [iv.a[0] + dx * stops[i + 1], iv.a[1] + dy * stops[i + 1]];
-      out = setWallThickness(out, a, b, iv.cm, pitch, coordScale);
-    }
+    out = setWallThickness(out, iv.a, iv.b, iv.cm, pitch, coordScale);
   }
   return out;
 }

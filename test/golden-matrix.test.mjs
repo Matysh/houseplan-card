@@ -36,6 +36,11 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
         && scenario.openingPreviewPixels.minChannelDelta > 0
         && scenario.openingPreviewPixels.minChannelDelta <= 32, true, scenario.id);
     }
+    if (scenario.openingGeometry) {
+      assert.match(scenario.openingGeometry.id, /^[a-z0-9-]+$/, scenario.id);
+      assert.equal(['door', 'window', 'gate'].includes(scenario.openingGeometry.type), true, scenario.id);
+      assert.equal(Number.isFinite(scenario.openingGeometry.angle), true, scenario.id);
+    }
     if (scenario.tunnelContinuity) {
       assert.match(scenario.tunnelContinuity.openingId, /^[a-z0-9-]+$/, scenario.id);
       assert.equal(Number.isInteger(scenario.tunnelContinuity.insetPx)
@@ -145,8 +150,21 @@ test('opening placement golden requires browser-painted preview pixels', () => {
   assert.equal(scenario.mode, 'plan');
   assert.equal(scenario.openingPreview?.type, 'door');
   assert.deepEqual(scenario.openingPreview?.pointer, [0.48, 0.65]);
-  assert.equal(scenario.openingPreviewPixels.minPixels >= 40, true);
+  assert.equal(scenario.openingPreviewPixels.minPixels >= 150, true);
   assert.equal(scenario.openingPreviewPixels.minChannelDelta >= 4, true);
+});
+
+test('diagonal opening golden asserts a real painted 45 degree symbol', () => {
+  const scenario = GOLDEN_SCENARIOS.find(
+    (item) => item.id === 'geometry-diagonal-45-opening-dark',
+  );
+  assert.ok(scenario);
+  assert.deepEqual(scenario.openingGeometry, {
+    id: 'geo-diagonal-window', type: 'window', angle: 45,
+  });
+  const fixture = prepareGoldenFixture(scenario);
+  const space = fixture.config.spaces.find((item) => item.id === scenario.space);
+  assert.deepEqual(space.openings.map((opening) => opening.id), ['geo-diagonal-window']);
 });
 
 test('golden harness applies doorway, state and layout overrides to a cloned fixture', () => {

@@ -15,6 +15,29 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  provenance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Validate commit trailers and hook mode
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            range="$BASE_SHA..$HEAD_SHA"
+          elif [ -n "$BEFORE_SHA" ] && ! echo "$BEFORE_SHA" | grep -Eq '^0+$'; then
+            range="$BEFORE_SHA..$HEAD_SHA"
+          else
+            range="$HEAD_SHA^..$HEAD_SHA"
+          fi
+          node scripts/validate-commit-provenance.mjs --check-hook-mode --range "$range"
+
   hacs:
     runs-on: ubuntu-latest
     steps:

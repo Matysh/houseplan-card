@@ -102,6 +102,21 @@ test('passive sensor source keeps its normal scalar value and never probes marke
   assert.deepEqual(hits, []);
 });
 
+test('secondary humidity diagnostics do not create a legacy humidity satellite', () => {
+  const h = hass({
+    'switch.relay': state('switch.relay', 'on'),
+    'sensor.relay_humidity': state('sensor.relay_humidity', '49', {
+      device_class: 'humidity', unit_of_measurement: '%',
+    }),
+  });
+  const relay = device({
+    entities: ['switch.relay', 'sensor.relay_humidity'],
+    primary: 'switch.relay',
+  });
+  const presentation = resolveDevicePresentation(h, relay, options);
+  assert.equal(presentation.humText, null);
+});
+
 test('derived marker-state badge follows a stateful Always source', () => {
   const h = hass({ 'light.bulb': state('light.bulb', 'on') });
   const bulb = device({
@@ -443,7 +458,7 @@ test('derived temperature and humidity retain compact plan formatting', () => {
   assert.equal(humidity.valueText, '48%');
 });
 
-test('one legacy marker keeps both temperature and humidity for face compatibility', () => {
+test('temperature-led composite marker does not add a legacy humidity satellite', () => {
   const h = hass({
     'sensor.temp': state('sensor.temp', '22.4', { device_class: 'temperature', unit_of_measurement: '°C' }),
     'sensor.humidity': state('sensor.humidity', '47.7', { device_class: 'humidity', unit_of_measurement: '%' }),
@@ -457,7 +472,7 @@ test('one legacy marker keeps both temperature and humidity for face compatibili
   }), options);
   assert.equal(result.valueBadge?.text, '22.4°');
   assert.equal(result.tempText, '22.4');
-  assert.equal(result.humText, '48');
+  assert.equal(result.humText, null);
 });
 
 test('preview explanations distinguish activity display and composite Power source', () => {
@@ -657,4 +672,22 @@ test('an incidental cover does not hijack the light face of a mixed device', () 
   }));
   assert.equal(explicitCover.sourceKind, 'cover');
   assert.equal(explicitCover.visualSources[0].eid, 'cover.mixed');
+});
+
+test('an incidental cover does not hijack another whole-device role on info tap', () => {
+  const h = hass({
+    'media_player.screen': state('media_player.screen', 'playing'),
+    'cover.screen': state('cover.screen', 'opening', {
+      device_class: 'curtain', supported_features: 15,
+    }),
+  }, {
+    'media_player.screen': { entity_id: 'media_player.screen', device_id: 'd1', platform: 'demo' },
+    'cover.screen': { entity_id: 'cover.screen', device_id: 'd1', platform: 'demo' },
+  });
+  const result = resolvePresentationSources(h, device({
+    entities: ['cover.screen', 'media_player.screen'],
+    primary: 'media_player.screen', tapAction: 'info',
+  }));
+  assert.equal(result.sourceKind, 'device_role');
+  assert.deepEqual(result.visualSources.map((source) => source.eid), ['media_player.screen']);
 });

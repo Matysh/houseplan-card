@@ -59,11 +59,16 @@ const DEFAULTS: Record<OpeningPlacementType, number> = {
   gate: 300,
 };
 
+/** One authority for toolbar presets and dialog type changes. */
+export function openingDefaultLengthCm(type: OpeningPlacementType): number {
+  return DEFAULTS[type];
+}
+
 export function openingPlacementPreset(
   type: OpeningPlacementType,
   revision: number,
 ): OpeningPlacementPreset {
-  return { type, lengthCm: DEFAULTS[type], flipH: false, flipV: false, revision };
+  return { type, lengthCm: openingDefaultLengthCm(type), flipH: false, flipV: false, revision };
 }
 
 function pointOrder(a: readonly number[], b: readonly number[]): number {

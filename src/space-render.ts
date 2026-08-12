@@ -20,7 +20,7 @@ import { t, type Lang } from './i18n';
 import { bgModeOf, northDegOf, sunStateOf, dayPhase } from './sun';
 import type { DevItem, ServerConfig } from './types';
 import { physicalBodies } from './physical-geometry';
-import { activeRegistryHass, type HaRegistrySnapshot } from './ha-binding-status';
+import { activeRegistryHass, fullRegistryHass, type HaRegistrySnapshot } from './ha-binding-status';
 import {
   resolveDevicePresentation, type PresentationActivityRuntime, type ResolvedDevicePresentation,
 } from './device-presentation';
@@ -115,6 +115,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const iconPct = cfgSize > 8 ? 2.5 : cfgSize;
 
   const planHass = o.registry ? activeRegistryHass(o.hass, o.registry) : o.hass;
+  const registryHass = o.registry ? fullRegistryHass(o.hass, o.registry) : o.hass;
   const all = o.devices || buildSpaceDevices(o);
   // Two lists, two jobs (HP-1510-01): AGGREGATION sees every device of the
   // space — hidden ones still count toward room LQI, same as the full card —
@@ -252,6 +253,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       sourceDetails: false,
       lightDevices: devs,
       lightSources: planLightSources,
+      registryHass,
       reducedMotion: o.reducedMotion,
     });
     const st = [`left:${left}%`, `top:${top}%`, ...deviceFaceStyle(presentation)];

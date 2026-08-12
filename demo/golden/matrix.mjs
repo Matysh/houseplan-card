@@ -19,7 +19,7 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     // complete 90 cm door preset while still proving rotation, inner-face
     // offset and ruler placement on a thick wall.
     mode: 'plan', openingPreview: { type: 'door', pointer: [0.48, 0.65] },
-    openingPreviewPixels: { minPixels: 40, minChannelDelta: 4 },
+    openingPreviewPixels: { minPixels: 150, minChannelDelta: 4 },
     theme: 'dark', viewport: { width: 1180, height: 900 }, ...page },
   { id: 'geometry-devices-editor-dark', fixture: 'visual', space: 'golden-geometry', mode: 'devices',
     theme: 'dark', viewport: { width: 1180, height: 900 }, ...page },
@@ -46,6 +46,7 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     editorTray: 'decor-tool', language: 'ru', theme: 'dark',
     viewport: { width: 390, height: 760 }, ...page },
   { id: 'geometry-diagonal-45-opening-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
+    openingGeometry: { id: 'geo-diagonal-window', type: 'window', angle: 45 },
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'openings-thick-wall-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
     fillMode: 'none', glowEnabled: false, theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },

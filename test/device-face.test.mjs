@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  deviceFaceStyle, legacySupplementalMetrics, lqiClassName, valueBadgeClassName,
+  deviceFaceStyle, legacySupplementalMetrics, lqiClassName, renderDeviceFace,
+  valueBadgeClassName,
 } from '../test-build/device-face.js';
 
 const face = (rippleColor) => ({
@@ -58,4 +59,17 @@ test('value badge classes cover all four positions and only bottom displaces LQI
     );
   }
   assert.equal(lqiClassName(null), 'lqi');
+});
+
+test('rendered pulse retains the documented activity-ring compatibility hook', () => {
+  const presentation = {
+    ...face('#ff9800'), classes: [], icon: 'mdi:lightbulb', angle: 0,
+    valueText: null, valueFullText: null, valueBadge: null,
+    lqiText: null, lqiColor: null, haDisabled: false,
+    tempText: null, humText: null,
+  };
+  const root = renderDeviceFace(presentation, { surface: 'preview' });
+  const nested = root.values.find((value) => value?.strings);
+  assert.ok(nested);
+  assert.match(nested.strings.join(''), /device-pulse activity-ring/);
 });

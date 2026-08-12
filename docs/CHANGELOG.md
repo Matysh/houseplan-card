@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v1.62.0-beta.9 — 2026-08-12
+
+- Fixed post-review inconsistencies between device state and tap behaviour:
+  exact bindings no longer toggle a sibling entity, a passive relay controls
+  its leading entity, and incidental cover or humidity entities no longer
+  take over a composite device's presentation.
+- Hardened opening placement with shared defaults, a stable geometry cache,
+  correct centre snapping and a stricter visual preview gate. Restored the
+  public activity and preview-dot CSS hooks, improved help accessibility and
+  strengthened internal process checks.
+- Small fixes and improvements.
+
 ## v1.62.0-beta.8 — 2026-08-12
 
 - Reworked opening placement in the Plan editor. **Opening** now opens a compact

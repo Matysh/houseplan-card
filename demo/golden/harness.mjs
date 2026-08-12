@@ -84,6 +84,22 @@ export function prepareGoldenFixture(scenario) {
     }
     space.openings = [...(space.openings || []), ...structuredClone(scenario.extraOpenings)];
   }
+  if (scenario.openingGeometry) {
+    const space = requireSpace();
+    const opening = (space.openings || []).find(
+      (item) => item.id === scenario.openingGeometry.id,
+    );
+    if (!opening || opening.type !== scenario.openingGeometry.type
+        || Math.abs(Number(opening.angle) - scenario.openingGeometry.angle) > 0.001) {
+      throw new Error(
+        `golden openingGeometry references a missing/mismatched opening: `
+        + `${scenario.openingGeometry.id}`,
+      );
+    }
+    // This scenario must not remain byte-identical to the generic geometry
+    // capture: isolate the intended diagonal symbol in the rendered fixture.
+    space.openings = [opening];
+  }
   if (scenario.wallReplacements?.length) {
     const space = requireSpace();
     const samePoint = (a, b) => Array.isArray(a) && Array.isArray(b)

@@ -9,23 +9,6 @@ case "$(basename "$message_file")" in
   MERGE_MSG) exit 0 ;;
 esac
 
-if ! grep -Eq '^Issue: #[0-9]+[[:space:]]*$' "$message_file"; then
-  echo "House Plan: missing 'Issue: #<number>' trailer (see PROCESS.md)." >&2
-  exit 1
-fi
-if ! grep -Eq '^User-Visible: (yes|no)[[:space:]]*$' "$message_file"; then
-  echo "House Plan: missing 'User-Visible: yes|no' trailer (see PROCESS.md)." >&2
-  exit 1
-fi
-
-if git diff --cached --name-only --diff-filter=ACMR \
-    | grep -Eq '^demo/golden/baselines/.*\.(png|json)$'; then
-  if ! grep -Eq '^Release: [^[:space:]].*$' "$message_file"; then
-    echo "House Plan: a golden baseline commit requires a Release trailer." >&2
-    exit 1
-  fi
-  if ! grep -Eq '^Baseline-Reviewed: [^[:space:]].*$' "$message_file"; then
-    echo "House Plan: a golden baseline commit requires Baseline-Reviewed provenance." >&2
-    exit 1
-  fi
-fi
+repo_root=$(git rev-parse --show-toplevel)
+node "$repo_root/scripts/validate-commit-provenance.mjs" \
+  --message-file "$message_file" --staged --check-hook-mode

@@ -75,7 +75,7 @@ export function renderDeviceFace(
   const legacyMetrics = legacySupplementalMetrics(presentation);
   return html`
     ${pulse.kind !== 'none' && pulse.reducedMotionIndicator !== 'dot'
-      ? html`<span class="device-pulse ${pulse.kind} ${pulse.reason} reason-${pulse.reason} ${gen2 ? 'gen2' : ''}"
+      ? html`<span class="device-pulse activity-ring ${pulse.kind} ${pulse.reason} reason-${pulse.reason} ${gen2 ? 'gen2' : ''}"
           aria-hidden="true"><i></i><i></i><i></i></span>`
       : nothing}
     ${pulse.reducedMotionIndicator === 'dot'

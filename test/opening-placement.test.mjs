@@ -124,6 +124,24 @@ test('Grid snap and soft centre magnet are deterministic', () => {
   assert.equal(resolve({ pointer: [34, 0] }).measure.guide, null);
 });
 
+test('centre magnet wins over grid on a wall whose midpoint is off-grid', () => {
+  const offGridWall = interval({ b: [105, 0] });
+  const centred = resolve({ pointer: [50, 0], intervals: [offGridWall] });
+  assert.equal(centred.x, 52.5);
+  assert.deepEqual(centred.measure.guide, { x: 52.5, y: 0, angle: 0 });
+
+  const awayFromCentre = resolve({ pointer: [43, 0], intervals: [offGridWall] });
+  assert.equal(awayFromCentre.x, 40);
+  assert.equal(awayFromCentre.measure.guide, null);
+});
+
+test('non-wall geometry cannot become an opening placement target', () => {
+  assert.deepEqual(openingPlacementTargets([
+    interval({ key: 'partition-shape', kind: null, open: false }),
+    interval({ key: 'column-shape', kind: null, open: false, a: [40, 40], b: [60, 40] }),
+  ]), []);
+});
+
 test('Junction tie-break does not depend on interval input order', () => {
   const horizontal = interval({ key: 'a-horizontal' });
   const vertical = interval({ key: 'b-vertical', a: [50, -50], b: [50, 50] });

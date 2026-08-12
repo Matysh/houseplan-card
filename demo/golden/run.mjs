@@ -385,6 +385,34 @@ try {
       pageErrors.length = 0;
       result.runtime = await prepareGoldenScenario(page, scenario);
       if (pageErrors.length) throw new Error(`browser exception: ${pageErrors.join(' | ')}`);
+      if (scenario.openingGeometry) {
+        result.openingGeometry = await page.evaluate((expected) => {
+          const card = window.__goldenCard;
+          const opening = card?.renderRoot?.querySelector(
+            `.opening[data-id="${CSS.escape(expected.id)}"]`,
+          );
+          if (!opening) return null;
+          const transform = opening.getAttribute('transform') || '';
+          const angle = Number(transform.match(/rotate\(([-+0-9.eE]+)\)/)?.[1]);
+          const bounds = opening.getBoundingClientRect();
+          return {
+            type: opening.getAttribute('data-kind'), angle,
+            width: bounds.width, height: bounds.height,
+            visibleParts: opening.querySelectorAll('.op-leaf, .op-arc, .op-glass').length,
+          };
+        }, scenario.openingGeometry);
+        const expected = scenario.openingGeometry;
+        const actualOpening = result.openingGeometry;
+        if (!actualOpening || actualOpening.type !== expected.type
+            || Math.abs(actualOpening.angle - expected.angle) > 0.001
+            || actualOpening.width <= 0 || actualOpening.height <= 0
+            || actualOpening.visibleParts <= 0) {
+          throw new Error(
+            `semantic golden opening geometry failed for ${expected.id}: `
+            + JSON.stringify(actualOpening),
+          );
+        }
+      }
       const clip = await goldenClip(page, scenario.capture);
       const screenshotOptions = {
         ...(clip ? { clip } : {}),
@@ -418,6 +446,11 @@ try {
         result.openingPreviewParts = control.parts;
         result.openingPreviewChangedPixels = sample.changed;
         result.openingPreviewMaxChannelDelta = sample.maxDelta;
+        if (control.parts < 2) {
+          throw new Error(
+            `semantic golden assertion failed: opening preview is incomplete (${control.parts} parts)`,
+          );
+        }
         if (sample.changed < scenario.openingPreviewPixels.minPixels) {
           throw new Error(
             `semantic golden assertion failed: opening preview paints ${sample.changed} pixels, `

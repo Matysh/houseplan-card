@@ -770,7 +770,7 @@ test('split materialisation cuts a partial shared interval at the new divider', 
     key: wallKey([0, 0], [6, 0], pitch), a: [0, 0], b: [6, 0], cm: 15,
   }];
   const preserved = materializeWallIntervals(
-    original, walls, [], pitch, cellCm, GRID_PITCH, 1, [[4, 0], [4, 10]],
+    original, walls, [], pitch, cellCm, GRID_PITCH,
   );
   const split = [
     { id: 'source', poly: [[4, 0], [10, 0], [10, 10], [4, 10]] },

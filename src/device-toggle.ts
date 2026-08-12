@@ -353,13 +353,16 @@ function resolveEntity(
 }
 
 function ownRoleCandidates(device: DevItem, registryHass: any): string[] {
-  const leading = device.marker?.is_light === true || device.marker?.light_entity
-    ? forcedLightEntityOf(device)
-    : null;
   if (device.bindingKind === 'entity' && device.bindingRef) {
-    return [...new Set([leading, device.bindingRef].filter((eid): eid is string => !!eid))];
+    // Entity bindings are exact by contract: a controllable sibling from the
+    // same HA device must never replace the entity selected by the user.
+    return [device.bindingRef];
   }
   const candidates = device.entities.length ? device.entities : device.allEntities || [];
+  const leading = (device.marker?.light_entity
+    || (device.primary && isControllable(device.primary)))
+    ? forcedLightEntityOf(device)
+    : null;
   return [...new Set([
     leading,
     ...resolvedDeviceStateEntities(registryHass, candidates),

@@ -191,12 +191,24 @@ import {
   type OpeningFaceOffset, type OpeningVisibleSpec,
 } from './render/opening-symbol';
 import {
-  openingPlacementPreset, resolveOpeningPlacement, sameOpeningPlacementInput,
+  openingDefaultLengthCm, openingPlacementPreset, resolveOpeningPlacement, sameOpeningPlacementInput,
   type OpeningPlacementCore, type OpeningPlacementPreset, type OpeningPlacementType,
 } from './opening-placement';
 import { safeStoredColor } from './color';
 
-const CARD_VERSION = '1.62.0-beta.8';
+const CARD_VERSION = '1.62.0-beta.9';
+const DISPLAY_LABEL_KEYS: Record<DeviceDisplayMode, I18nKey> = {
+  badge: 'display.badge',
+  icon_ripple: 'display.icon_ripple',
+  value: 'display.value',
+  static_icon: 'display.static_icon',
+};
+const DISPLAY_HINT_KEYS: Record<DeviceDisplayMode, I18nKey> = {
+  badge: 'marker.display_hint_badge',
+  icon_ripple: 'marker.display_hint_icon_ripple',
+  value: 'marker.display_hint_value',
+  static_icon: 'marker.display_hint_static_icon',
+};
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
 const CELL_CM_MIN = 0.1;
@@ -1128,7 +1140,10 @@ class HouseplanCard extends LitElement {
     key: string;
     value: Array<OpeningTunnelGeometry | null>;
   } | null = null;
-  private _openingWallIndexCache: { key: string; value: OpeningWallIndex } | null = null;
+  /** A few consumers use intentionally different open-cut projections in one
+   * frame. Keep a tiny keyed pool so hit-testing cannot evict placement data
+   * (and vice versa) on every pointer move. */
+  private _openingWallIndexCache = new Map<string, OpeningWallIndex>();
   private _openingPlacementIntervalsCache: { key: string; value: WallInterval[] } | null = null;
   private _physicalBodiesCache: {
     key: string; drafts: number[][][]; partitions: number[][][];
@@ -2738,6 +2753,9 @@ class HouseplanCard extends LitElement {
   } | null = null;
   /** Last unsaved marker projection; invalidated by the complete dialog draft. */
   private _markerPreviewMemo: { key: string; device: DevItem | null } | null = null;
+  private _markerPreviewDevicesMemo: {
+    base: readonly DevItem[]; preview: DevItem; devices: readonly DevItem[];
+  } | null = null;
 
   /** Cheap structural fingerprint of the config (audit L1 cache key). */
   private _cfgFingerprint(): string {
@@ -3930,7 +3948,7 @@ class HouseplanCard extends LitElement {
     return resolveDevicePresentation(this._renderPlanHass, d, {
       liveStates: this._config?.live_states !== false,
       showTemperature: this._config?.show_temperature !== false,
-      showSignal: showLqi,
+      showSignal: showLqi && this._config?.show_signal !== false,
       designPreview,
       activityRuntime: this._activityRt.get(d.id),
       sourceDetails: false,
@@ -9639,16 +9657,19 @@ class HouseplanCard extends LitElement {
       space.id, this._cfgEpoch, this._wallKeyPitch, this._cellCm, this._gridPitch,
       roomFingerprint, wallFingerprint, cutFingerprint,
     ].join('|');
-    if (!this._openingWallIndexCache || this._openingWallIndexCache.key !== key) {
-      this._openingWallIndexCache = {
-        key,
-        value: buildOpeningWallIndex(
-          space.rooms, this._spaceWalls, openCuts,
-          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-        ),
-      };
+    let value = this._openingWallIndexCache.get(key);
+    if (!value) {
+      value = buildOpeningWallIndex(
+        space.rooms, this._spaceWalls, openCuts,
+        this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+      );
+      this._openingWallIndexCache.set(key, value);
+      if (this._openingWallIndexCache.size > 4) {
+        const oldest = this._openingWallIndexCache.keys().next().value;
+        if (oldest) this._openingWallIndexCache.delete(oldest);
+      }
     }
-    return this._openingWallIndexCache;
+    return { key, value };
   }
 
   /**
@@ -10541,10 +10562,6 @@ class HouseplanCard extends LitElement {
       ? materializeWallIntervals(
           this._spaceModel().rooms, sp.walls, this._openCuts(),
           this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-          [
-            ...(this._pendingSplit?.mainPoly || []),
-            ...(this._pendingSplit?.newPoly || []),
-          ],
         )
       : null;
     const wallsBeforeSplit = wasSplit && Array.isArray(sp.walls) ? sp.walls : null;
@@ -14182,7 +14199,7 @@ class HouseplanCard extends LitElement {
 
   /** Start/restart a short semantic event or direct-terminal transition. */
   private _activitySourceKey(d: DevItem): string {
-    return activitySourceSignature(this._planHass, d);
+    return this._activitySnapshot(d).sourceKey;
   }
 
   private _activitySnapshot(
@@ -14190,7 +14207,7 @@ class HouseplanCard extends LitElement {
     planLightSources = resolvedLightSources(this._planHass, this._devices),
   ): { samples: EntityVisualSample[]; sourceKey: string } {
     const sources = resolvePresentationSources(
-      this._planHass, d, this._devices, planLightSources,
+      this._planHass, d, this._devices, planLightSources, this._fullRegistryHass,
     );
     return {
       samples: sources.samples,
@@ -15529,7 +15546,7 @@ class HouseplanCard extends LitElement {
       transform="translate(${candidate.x} ${candidate.y}) rotate(${candidate.angle})">
       ${renderOpeningVisibleGeometry(visibleSpec)}
     </g>
-    <circle class="opening-preview-dot" aria-hidden="true" pointer-events="none"
+    <circle class="opening-preview-dot opghost-dot" aria-hidden="true" pointer-events="none"
       cx=${candidate.x} cy=${candidate.y} r=${this._gridPitch * 0.18}></circle>` as unknown as TemplateResult;
   }
 
@@ -15713,14 +15730,19 @@ class HouseplanCard extends LitElement {
         <div class="body">
           <label>${this._t('opening.type_label')}</label>
           <label class="srcrow"><input type="radio" name="optype" .checked=${d.type === 'door'}
-            @change=${() => (this._openingDialog = { ...d, type: 'door', lengthCm: d.id ? d.lengthCm : 90 })} />
+            @change=${() => (this._openingDialog = {
+              ...d, type: 'door', lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('door'),
+            })} />
             <span>${this._t('opening.door')}</span></label>
           <label class="srcrow"><input type="radio" name="optype" .checked=${d.type === 'window'}
-            @change=${() => (this._openingDialog = { ...d, type: 'window', lengthCm: d.id ? d.lengthCm : 120 })} />
+            @change=${() => (this._openingDialog = {
+              ...d, type: 'window', lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('window'),
+            })} />
             <span>${this._t('opening.window')}</span></label>
           <label class="srcrow"><input type="radio" name="optype" .checked=${d.type === 'gate'}
             @change=${() => (this._openingDialog = {
-              ...d, type: 'gate', lengthCm: d.id ? d.lengthCm : 300, flipH: false,
+              ...d, type: 'gate',
+              lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('gate'), flipH: false,
             })} />
             <span>${this._t('opening.gate')}</span></label>
 
@@ -16359,6 +16381,16 @@ class HouseplanCard extends LitElement {
     return device;
   }
 
+  /** Preserve array identity while the dialog draft and runtime roster stay
+   * unchanged, allowing light/value resolvers to reuse their WeakMap caches. */
+  private _markerPreviewDevices(preview: DevItem): readonly DevItem[] {
+    const memo = this._markerPreviewDevicesMemo;
+    if (memo?.base === this._devices && memo.preview === preview) return memo.devices;
+    const devices = [...this._devices.filter((item) => item.id !== preview.id), preview];
+    this._markerPreviewDevicesMemo = { base: this._devices, preview, devices };
+    return devices;
+  }
+
   private _toggleIntent(
     device: DevItem,
     devices: readonly DevItem[] = this._devices,
@@ -16376,7 +16408,7 @@ class HouseplanCard extends LitElement {
   ): ResolvedToggleIntent | null {
     const preview = this._markerPreviewDevice(d);
     if (!preview) return null;
-    const devices = [...this._devices.filter((item) => item.id !== preview.id), preview];
+    const devices = this._markerPreviewDevices(preview);
     return this._toggleIntent(preview, devices);
   }
 
@@ -16647,7 +16679,7 @@ class HouseplanCard extends LitElement {
       ? spaceDisplayOf(this._serverCfg?.spaces.find((space: any) => space.id === previewDevice.space))
       : null;
     const previewLightDevices = previewDevice
-      ? [...this._devices.filter((item) => item.id !== previewDevice.id), previewDevice]
+      ? this._markerPreviewDevices(previewDevice)
       : this._devices;
     const toggleIntent = effectiveTapAction === 'toggle' && previewDevice
       ? this._toggleIntent(previewDevice, previewLightDevices) : null;
@@ -17058,13 +17090,11 @@ class HouseplanCard extends LitElement {
               ...d,
               display: normalizeDeviceDisplay((e.target as HTMLSelectElement).value),
             })}>
-            ${DISPLAY_MODES.map((v) => [v, 'display.' + v] as const).map(
-              ([v, k]) => html`<option value=${v} ?selected=${v === d.display}>
-                ${this._t(k as any)}
-              </option>`,
-            )}
+            ${DISPLAY_MODES.map((v) => html`<option value=${v} ?selected=${v === d.display}>
+              ${this._t(DISPLAY_LABEL_KEYS[v])}
+            </option>`)}
           </select>
-          <p class="muted">${this._t((`marker.display_hint_${d.display}`) as any)}</p>
+          <p class="muted">${this._t(DISPLAY_HINT_KEYS[d.display])}</p>
           ${d.display === 'static_icon' && this._bindingHasAlarm(d.binding)
             ? html`<div class="habindingbanner" role="note">
                 <ha-icon icon="mdi:alert-outline"></ha-icon>

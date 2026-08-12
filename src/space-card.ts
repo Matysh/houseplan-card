@@ -297,7 +297,7 @@ class HouseplanSpaceCard extends LitElement {
   }
 
   /** Track witnessed edges for the read-only card without inventing activity on first load. */
-  private _syncActivity(devices: DevItem[], planHass: any): void {
+  private _syncActivity(devices: DevItem[], planHass: any, registryHass = this.hass): void {
     if (this._config?.live_states === false) {
       for (const runtime of this._activityRuntime.values()) window.clearTimeout(runtime.timer);
       this._activityRuntime.clear();
@@ -312,7 +312,9 @@ class HouseplanSpaceCard extends LitElement {
       // event that happened while no pulse was visible (#98 edge contract).
       if (normalizeDeviceDisplay(device.marker?.display) !== 'icon_ripple') continue;
       live.add(device.id);
-      const sources = resolvePresentationSources(planHass, device, devices, planLightSources);
+      const sources = resolvePresentationSources(
+        planHass, device, devices, planLightSources, registryHass,
+      );
       const samples = sources.samples;
       const signature = activitySourceSignature(planHass, device, sources);
       let runtime = this._activityRuntime.get(device.id);
@@ -341,7 +343,7 @@ class HouseplanSpaceCard extends LitElement {
       cfg: this._snap.config,
       lang: this._lang,
     });
-    this._syncActivity(devices, activeRegistryHass(this.hass, registry));
+    this._syncActivity(devices, activeRegistryHass(this.hass, registry), this.hass);
     this._devices = devices;
   }
 

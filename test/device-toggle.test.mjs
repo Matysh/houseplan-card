@@ -160,6 +160,25 @@ test('passive forced-light marker is driven by the controller own relay and de-d
   assert.equal(intent.targets[0].via, 'control-marker-driver');
 });
 
+test('passive marker driver matches the light graph without explicit light flags', () => {
+  const h = hass({
+    'switch.wall': state('switch.wall', 'off'),
+    'light.indicator': state('light.indicator', 'on'),
+  });
+  const lamp = device({
+    id: 'lamp', name: 'Dumb lamp', tapAction: null, primary: undefined, entities: [],
+    marker: { id: 'lamp', binding: 'virtual', is_light: true, controls: [] },
+  });
+  const controller = device({
+    id: 'wall', bindingKind: 'device', bindingRef: 'wall', primary: 'switch.wall',
+    entities: ['switch.wall', 'light.indicator'], controls: ['marker:lamp'],
+    marker: { id: 'wall', binding: 'device:wall', controls: ['marker:lamp'] },
+  });
+  const intent = resolveToggleIntent({ hass: h, devices: [controller, lamp], device: controller });
+  assert.deepEqual(toggleCommandEntityIds(intent.command), ['switch.wall']);
+  assert.equal(intent.targets[0].via, 'control-marker-driver');
+});
+
 test('legacy cover keeps cover priority, ignores controls and uses open/close/stop semantics', () => {
   const h = hass({
     'light.mixed': state('light.mixed', 'on'),

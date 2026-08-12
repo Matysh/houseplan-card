@@ -3,6 +3,7 @@ import { mdiHelpCircleOutline } from '@mdi/js';
 import { floatingViewport, placeFloatingSurface } from './floating-surface';
 import { FloatingSurfaceController } from './floating-surface-controller';
 import type { HpDialog, HpOverlayCloseReason } from './hp-dialog';
+import { helpHasContent, helpScrollShouldDismiss } from './help-behavior';
 
 let helpSequence = 0;
 
@@ -203,8 +204,7 @@ export class HpHelp extends LitElement {
   }
 
   private _hasContent(): boolean {
-    return typeof this.text === 'string' && this.text.trim().length > 0
-      && typeof this.ariaLabel === 'string' && this.ariaLabel.trim().length > 0;
+    return helpHasContent(this.text, this.ariaLabel);
   }
 
   private _clearTimers(): void {
@@ -284,11 +284,12 @@ export class HpHelp extends LitElement {
   };
 
   private _dialogScroll = (event: Event): void => {
-    if (this._floating.containsPath(event.composedPath())) return;
+    const insideSurface = this._floating.containsPath(event.composedPath());
     const target = event.target;
     const dialog = this._dialog();
-    if (this._open && target instanceof Node
-        && (target === dialog || (target instanceof Element && target.contains(this)))) {
+    const targetOwnsHelp = target instanceof Node
+      && (target === dialog || (target instanceof Element && target.contains(this)));
+    if (this._open && helpScrollShouldDismiss(insideSurface, targetOwnsHelp)) {
       this._closeHelp(false, 'scroll');
     }
   };
@@ -372,7 +373,7 @@ export class HpHelp extends LitElement {
 
   private _tooltipTemplate(usePopover: boolean): TemplateResult {
     return html`<div class="tooltip" data-side="bottom" popover=${usePopover ? 'manual' : nothing}
-      role="tooltip" aria-hidden="true" tabindex="0"
+      role="tooltip" aria-hidden="true" tabindex="-1"
       @pointerenter=${this._surfacePointerEnter} @pointerleave=${this._surfacePointerLeave}>${this.text}</div>`;
   }
 
