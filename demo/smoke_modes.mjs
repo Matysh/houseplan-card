@@ -44,7 +44,7 @@ await page.evaluate(async () => {
 out.viewHoldInfo = await page.evaluate(() => { const r = !!window.__card._infoCard; window.__card._infoCard = null; window.__card._holdFired = false; return r; });
 // 3) режим План
 await page.evaluate(() => window.__card._setMode('plan'));
-await page.waitForTimeout(200);
+await page.waitForFunction(() => window.__card._modeTransitionBusy === false);
 out.plan = await st();
 out.planIconsHidden = await page.evaluate(() => {
   const sr = window.__card.shadowRoot || window.__card.renderRoot;
@@ -53,7 +53,7 @@ out.planIconsHidden = await page.evaluate(() => {
 });
 // 4) режим Устройства: drag работает, клик открывает редактор
 await page.evaluate(() => window.__card._setMode('devices'));
-await page.waitForTimeout(200);
+await page.waitForFunction(() => window.__card._modeTransitionBusy === false);
 out.devices = await st();
 out.devDragWorks = await page.evaluate(async () => {
   const c = window.__card;
@@ -78,6 +78,7 @@ out.devClickOpensEditor = await page.evaluate(async () => {
 });
 // 5) назад в view
 await page.evaluate(() => window.__card._setMode('view'));
+await page.waitForFunction(() => window.__card._modeTransitionBusy === false);
 out.backToView = (await st()).mode;
 // значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
 checkAll(out, {

@@ -62,7 +62,8 @@ export function resolveDevicePulse(options: ResolveDevicePulseOptions): Resolved
   const diameterScale = Number.isFinite(options.diameterScale)
     ? Math.max(1, Number(options.diameterScale)) : 3;
   const color = options.color || null;
-  if (effectiveHidden || bindingUnavailable || display === 'static_icon') {
+  if (effectiveHidden || bindingUnavailable || visual.availability === 'unavailable'
+      || display === 'static_icon') {
     return noPulse(generation, color, diameterScale);
   }
 

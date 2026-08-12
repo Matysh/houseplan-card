@@ -8,6 +8,12 @@ const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
+  const settleMode = async () => {
+    const started = performance.now();
+    do { await new Promise((resolve) => requestAnimationFrame(resolve)); }
+    while (c._modeTransitionBusy && performance.now() - started < 1500);
+    await c.updateComplete;
+  };
   const stageBg = async () => {
     c.requestUpdate();
     await c.updateComplete;
@@ -90,9 +96,11 @@ const res = await page.evaluate(async () => {
 
   // 8) editors keep their own canvas (inline bg only in view/kiosk)
   c._setMode('decor');
+  await settleMode();
   const editorBg = await waitStageBg((value) => value !== rgb('#0a2a4a'));
   out.editorUnpainted = editorBg !== rgb('#0a2a4a');
   c._setMode('view');
+  await settleMode();
   out.viewPaintedAgain = (await waitStageBg((value) => value === rgb('#0a2a4a'))) === rgb('#0a2a4a');
 
   // 9) kiosk instance respects the setting
@@ -165,6 +173,12 @@ const paper = await page.evaluate(async () => {
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
   const upd = async () => { c.requestUpdate(); await c.updateComplete; };
+  const settleMode = async () => {
+    const started = performance.now();
+    do { await new Promise((resolve) => requestAnimationFrame(resolve)); }
+    while (c._modeTransitionBusy && performance.now() - started < 1500);
+    await c.updateComplete;
+  };
   c._serverCfg.settings = { ...(c._serverCfg.settings || {}), bg_color: '#ff00ff' };
   c._cfgRev = (c._cfgRev || 0) + 1;
   await upd();
@@ -189,12 +203,10 @@ const paper = await page.evaluate(async () => {
   out.imageBelowRooms = idxOf('image') < idxOf('.room, .room-outline');
   // editors keep the paper too (their canvas ignores bg_color anyway)
   c._setMode('decor');
-  await upd();
-  await new Promise((resolve) => setTimeout(resolve, 220));
+  await upd(); await settleMode();
   out.editorKeepsPaper = !!sr().querySelector('.stage svg .hp-paper');
   c._setMode('view');
-  await upd();
-  await new Promise((resolve) => setTimeout(resolve, 220));
+  await upd(); await settleMode();
   // daynight night: the paper dims via the brightness filter ONLY, never alpha
   c._serverCfg.settings.bg_mode = 'daynight';
   c._serverCfg.settings.north_deg = 0;

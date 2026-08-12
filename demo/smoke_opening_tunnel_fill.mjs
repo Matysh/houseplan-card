@@ -15,6 +15,12 @@ const result = await page.evaluate(async () => {
     c.requestUpdate();
     await c.updateComplete;
   };
+  const settleMode = async () => {
+    const started = performance.now();
+    do { await new Promise((resolve) => requestAnimationFrame(resolve)); }
+    while (c._modeTransitionBusy && performance.now() - started < 1500);
+    await c.updateComplete;
+  };
   const pitch = 1 / 240;
   const wallKey = (a, b) => {
     const q = (v) => Math.round(v / pitch) * pitch;
@@ -57,7 +63,7 @@ const result = await page.evaluate(async () => {
     },
   };
   c._setMode('view');
-  await update();
+  await update(); await settleMode();
 
   const tunnels = (layer) => [...root().querySelectorAll(
     `.opening-tunnels[data-layer="${layer}"] [data-hp="opening-tunnel"]`,
@@ -109,7 +115,7 @@ const result = await page.evaluate(async () => {
     && tunnels('data').length === 2 && tunnels('glow-base').length === 2;
 
   c._setMode('decor');
-  await update();
+  await update(); await settleMode();
   out.backdropUsesSingleGroupOpacity = tunnels('data').length === 2
     && tunnels('glow-base').length === 2
     && [...root().querySelectorAll('.opening-tunnels')]
@@ -120,7 +126,7 @@ const result = await page.evaluate(async () => {
     && byId('tunnel-gate', 'glow-base')?.getAttribute('fill-opacity') === '0.42';
 
   c._setMode('plan');
-  await update();
+  await update(); await settleMode();
   out.planGestureCannotLeaveStalePatch = tunnels('data').length === 0
     && tunnels('glow-base').length === 0;
 
@@ -136,7 +142,7 @@ const result = await page.evaluate(async () => {
   sp.openings = [{ id: 'atomic-door', type: 'door', x: 0.5, y: 0.2, angle: 0, length: 0.6 }];
   sp.settings.hide_openings = true;
   sp.settings.show_borders = true;
-  await update();
+  await update(); await settleMode();
   const sameDepth = byId('atomic-door', 'data');
   out.equalAtomicPiecesAreOneSurface = sameDepth?.tagName.toLowerCase() === 'path'
     && ((sameDepth.getAttribute('d') || '').match(/\bM /g) || []).length === 2;

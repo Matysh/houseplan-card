@@ -21,6 +21,12 @@ const res = await page.evaluate(async () => {
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const settleMode = async () => {
+    const started = performance.now();
+    do { await new Promise((resolve) => requestAnimationFrame(resolve)); }
+    while (c._modeTransitionBusy && performance.now() - started < 1500);
+    await c.updateComplete;
+  };
   // null-safe: на сборке ДО этих правок у надписи нет ни data-id, ни tspan —
   // смок должен показать список провалов, а не упасть с исключением
   const el = (id) => sr().querySelector(`.decorlayer text.dtext[data-id="${id}"]`);
@@ -41,7 +47,7 @@ const res = await page.evaluate(async () => {
       cancelable: true, pointerId: 7, clientX, clientY, button: 0, isPrimary: true, ...extra }));
   };
 
-  sr().querySelectorAll('.modetab')[2].click(); await c.updateComplete;
+  sr().querySelectorAll('.modetab')[2].click(); await settleMode();
   c._curSpaceCfg.decor = [];
   c._decorTool = 'select'; c._decorSel = null; await c.updateComplete;
 

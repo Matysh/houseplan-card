@@ -5,6 +5,12 @@ const res = await page.evaluate(async () => {
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
   const tabs = () => [...sr().querySelectorAll('.modetab')];
+  const settleMode = async () => {
+    const started = performance.now();
+    do { await new Promise((resolve) => requestAnimationFrame(resolve)); }
+    while (c._modeTransitionBusy && performance.now() - started < 1500);
+    await c.updateComplete;
+  };
   // 1) две вкладки, Просмотра нет, крестиков в неактивных нет
   out.twoTabs = tabs().length === 3; // третья — Редактор подложки (v1.33.0)
   out.labels = tabs().map((t) => t.textContent.trim());
@@ -28,10 +34,7 @@ const res = await page.evaluate(async () => {
   // 3) повторный клик по активной вкладке — ничего
   tabs()[0].click(); await c.updateComplete;
   out.reclickNoop = c._mode === 'plan';
-  // Let the View -> editor grid transition finish first. A real user cannot
-  // switch editors in the same zero-layout frame, and competing WAAPI/CSS
-  // height animations in that frame are intentionally suppressed.
-  await new Promise((resolve) => setTimeout(resolve, 220));
+  await settleMode();
   // HP-UX-11: transient tool controls live in a stage overlay. Opening the
   // thickness controls must not resize/refit the stage or move pinned Close.
   const stageBeforeContext = sr().querySelector('.stage').getBoundingClientRect();
@@ -117,30 +120,31 @@ const res = await page.evaluate(async () => {
   out.devBarBtns = sr().querySelectorAll('.editbar.devbar .btn:not(.barclose)').length === 3; // add/show-all/rules (v1.33.2: Reset removed)
   const swapChrome = sr().querySelector('.editorchrome');
   const swapInner = swapChrome.querySelector('.editorchrome-inner');
-  out.editorSwapAnimatesHeight = swapChrome.getAnimations()
-    .some((animation) => animation.id === 'hp-editor-height-swap');
-  out.editorSwapAnimatesContent = swapInner.getAnimations()
-    .some((animation) => animation.id === 'hp-editor-content-swap');
+  out.editorSwapAnimatesHeight = c._modeTransitionBusy
+    && sr().querySelector('.stage').classList.contains('mode-transition');
+  out.editorSwapAnimatesContent = c._modeTransitionBusy && !!swapInner
+    && (c._modeTransitionVisual?.toolbarContentOpacity ?? 1) < 1;
+  await settleMode();
   // 5) инструменты устройств из шапки исчезли (в .bar их больше нет)
   out.headerCleanInDev = !sr().querySelector('.bar > .btn[title*="' + (c._t('title.add_device')) + '"]');
   // 6) крестик на панели → Просмотр
   sr().querySelector('.editbar .barclose').click(); await c.updateComplete;
   const chrome = sr().querySelector('.editorchrome');
-  out.barCloseStarts = c._mode === 'view' && !chrome.classList.contains('open')
-    && chrome.getAttribute('aria-hidden') === 'true';
-  // The last bar deliberately remains mounted while its grid row collapses.
-  await new Promise((resolve) => setTimeout(resolve, 220));
+  out.barCloseStarts = c._mode === 'view' && c._modeTransitionBusy
+    && sr().querySelector('.stage').inert
+    && sr().querySelector('.stage').classList.contains('mode-transition');
+  await settleMode();
   out.barCloseWorks = c._mode === 'view'
     && getComputedStyle(chrome).visibility === 'hidden'
     && chrome.getBoundingClientRect().height < 1;
   // 7) крестик в самой вкладке → Просмотр (и не переключает режим)
-  tabs()[1].click(); await c.updateComplete;
-  tabs()[1].querySelector('.closex').click(); await c.updateComplete;
+  tabs()[1].click(); await settleMode();
+  tabs()[1].querySelector('.closex').click(); await settleMode();
   out.tabCrossWorks = c._mode === 'view';
 
   // Layout-independent editor history: physical KeyZ works when `key` is the
   // Russian «я», while an input keeps its native browser history.
-  tabs()[0].click(); await c.updateComplete;
+  tabs()[0].click(); await settleMode();
   c._tool = 'draw'; c.requestUpdate(); await c.updateComplete;
   const realUndo = c._undoGeometry;
   const realRedo = c._redoGeometry;

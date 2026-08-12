@@ -7,6 +7,12 @@ const out = await page.evaluate(async () => {
   const o = {};
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
+  const settleMode = async () => {
+    const started = performance.now();
+    do { await new Promise((resolve) => requestAnimationFrame(resolve)); }
+    while (c._modeTransitionBusy && performance.now() - started < 1500);
+    await c.updateComplete;
+  };
   const setFill = async (mode) => {
     const cfg = JSON.parse(JSON.stringify(c._serverCfg));
     const f1 = cfg.spaces.find((s) => s.id === 'f1');
@@ -47,18 +53,18 @@ const out = await page.evaluate(async () => {
   o.morphInGlow = le?.querySelector('ha-icon')?.getAttribute('icon')?.includes('lightbulb') ?? false;
 
   // --- редакторы используют ту же жёлтую подложку независимо от слоя glow --
-  c._setMode('devices'); c.requestUpdate(); await c.updateComplete;
+  c._setMode('devices'); await settleMode();
   le = devEl('d_lamp');
   o.devicesEditorLampYellow = !!le && le.classList.contains('on');
   o.devicesEditorHasGlow = !!sr().querySelector('.stage svg radialGradient, .stage svg [id*=glow]');
-  c._setMode('plan'); c.requestUpdate(); await c.updateComplete;
+  c._setMode('plan'); await settleMode();
   // ИМЕННО лампа (mutation-проверка аудита HP-1521-01: розетка тоже on и
   // удовлетворяла бы поиску «любой .dev.on», пряча регресс самой лампы)
   le = devEl('d_lamp');
   o.planEditorLampYellow = !!le && le.classList.contains('on'); // слой скрыт — жёлтый вернулся
   o.planEditorKettleStillOn = !!devEl('d_kettle')?.classList.contains('on');
   o.planEditorNoGlow = !sr().querySelector('.stage svg radialGradient, .stage svg [id*=glow]');
-  c._setMode('view'); c.requestUpdate(); await c.updateComplete;
+  c._setMode('view'); await settleMode();
 
   // --- выключенная лампа тёмная в обоих режимах ---------------------------
   c.hass = { ...c.hass, states: { ...c.hass.states,

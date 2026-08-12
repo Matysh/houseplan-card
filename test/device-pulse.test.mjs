@@ -63,3 +63,18 @@ test('inactive projection retains configured preview colour and diameter', () =>
   assert.equal(pulse.color, '#123456');
   assert.equal(pulse.diameterScale, 4.25);
 });
+
+test('unknown and unavailable device state cannot retain an activity pulse', () => {
+  for (const kind of ['short', 'continuous']) {
+    const pulse = resolveDevicePulse({
+      display: 'icon_ripple',
+      visual: { availability: 'unavailable', status: 'neutral', activity: 'transition' },
+      semanticActivity: 'transition',
+      shortReason: kind === 'short' ? 'transition' : null,
+      shortExpiresAt: kind === 'short' ? Date.now() + 1_000 : null,
+      liveStates: true,
+      effectiveHidden: false,
+    });
+    assert.equal(pulse.kind, 'none');
+  }
+});

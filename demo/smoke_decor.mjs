@@ -4,11 +4,17 @@ const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
+  const settleMode = async () => {
+    const started = performance.now();
+    do { await new Promise((resolve) => requestAnimationFrame(resolve)); }
+    while (c._modeTransitionBusy && performance.now() - started < 1500);
+    await c.updateComplete;
+  };
   const esc = async () => { window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); await c.updateComplete; };
   // 1) третья вкладка есть
   const tabs = [...sr().querySelectorAll('.modetab')];
   out.threeTabs = tabs.length === 3;
-  tabs[2].click(); await c.updateComplete;
+  tabs[2].click(); await settleMode();
   out.decorMode = c._mode === 'decor';
   out.decorBar = !!sr().querySelector('.editbar.decorbar');
   // The compact colour/opacity control must escape the clipped editor/dialog
@@ -253,7 +259,10 @@ const res = await page.evaluate(async () => {
   c._redoGeometry(); await c.updateComplete;
   out.lineStyleUndoRedo = undoSolid
     && c._decorList.find((x) => x.id === 'dcprobe')?.line_style === 'dashed';
-  const selectHit = sr().querySelector('.decorlayer line.dselecthit');
+  // Selection handles intentionally sit above the hit proxy. Clear the frame
+  // so this assertion measures the dashed line's gap, not an endpoint handle.
+  c._decorSel = null; c.requestUpdate(); await c.updateComplete;
+  const selectHit = sr().querySelector('.decorlayer line.dselecthit[data-id="dcprobe"]');
   const dashedPaint = probe();
   let gapPicked = null;
   if (selectHit && dashedPaint) {

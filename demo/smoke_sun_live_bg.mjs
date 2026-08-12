@@ -34,7 +34,7 @@ const res = await page.evaluate(async () => {
 
   await setSun(180, 40);
   out.dayComputedWhite = comp() === 'rgb(255, 255, 255)';
-  out.dayNoDim = dim().includes('brightness(1.000)');
+  out.dayNoDim = !dim().includes('brightness(') || dim().includes('brightness(1.000)');
   out.dayRays = polys() > 0;
 
   // the whole point: a NEW hass, nothing else. No reload, no requestUpdate.

@@ -174,6 +174,11 @@ export async function prepareGoldenScenario(page, scenario) {
         await wait(15);
       }
     };
+    const settleMode = async (card) => {
+      await until(() => !card._modeTransitionBusy);
+      await card.updateComplete;
+      await frame();
+    };
     window.__goldenCard?.remove?.();
     window.__card?.remove?.();
     localStorage.clear();
@@ -239,6 +244,7 @@ export async function prepareGoldenScenario(page, scenario) {
     if (scenario.mode) {
       card._setMode(scenario.mode);
       await card.updateComplete;
+      await settleMode(card);
     }
     if (Number.isFinite(scenario.zoom)) {
       card._applyView(scenario.zoom, 500, 500);
@@ -304,6 +310,7 @@ export async function prepareGoldenScenario(page, scenario) {
     if (scenario.dialog === 'device') {
       card._setMode('devices');
       await card.updateComplete;
+      await settleMode(card);
       const device = card._devices.find((item) => item.id === scenario.deviceId);
       if (!device) throw new Error(`golden device missing: ${scenario.deviceId}`);
       card._openMarkerDialog(device);
@@ -380,6 +387,7 @@ export async function prepareGoldenScenario(page, scenario) {
       card._setMode('decor');
       card._decorTool = 'select';
       await card.updateComplete;
+      await settleMode(card);
       const shape = card._decorList.find((item) => item.kind === 'line');
       if (!shape) throw new Error('golden decor line missing');
       card._decorShapeDbl(new MouseEvent('dblclick'), shape);

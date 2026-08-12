@@ -13,6 +13,12 @@ const res = await page.evaluate(async () => {
   const sr = () => c.shadowRoot || c.renderRoot;
   const sp = () => c._serverCfg.spaces.find((s) => s.id === c._space);
   const upd = async () => { c._cfgEpoch++; c.requestUpdate(); await c.updateComplete; };
+  const settleMode = async () => {
+    const started = performance.now();
+    do { await new Promise((resolve) => requestAnimationFrame(resolve)); }
+    while (c._modeTransitionBusy && performance.now() - started < 1500);
+    await c.updateComplete;
+  };
 
   sp().settings = { ...(sp().settings || {}), show_borders: true };
   delete sp().walls;
@@ -22,7 +28,7 @@ const res = await page.evaluate(async () => {
 
   c._setMode('plan');
   c._tool = 'wallthick';
-  await upd();
+  await upd(); await settleMode();
   c._wallThickClick([550, 250]);
   await upd();
   if (c._wallDialog) {
@@ -53,13 +59,13 @@ const res = await page.evaluate(async () => {
   out.savedVirtualAboveRealInEditor = !!editorBody && !!editorVirtual
     && !!(editorBody.compareDocumentPosition(editorVirtual) & Node.DOCUMENT_POSITION_FOLLOWING);
   c._setMode('view');
-  await upd();
+  await upd(); await settleMode();
   const viewBody = sr().querySelector('.wallbodies');
   const viewVirtual = sr().querySelector('.openwalls');
   out.savedVirtualBelowRealInView = !!viewBody && !!viewVirtual
     && !!(viewVirtual.compareDocumentPosition(viewBody) & Node.DOCUMENT_POSITION_FOLLOWING);
   c._setMode('decor');
-  await upd();
+  await upd(); await settleMode();
   const decorBody = sr().querySelector('.wallbodies');
   const decorVirtual = sr().querySelector('.openwalls');
   out.realWallsFadeBehindDecor = !!decorBody
@@ -67,7 +73,7 @@ const res = await page.evaluate(async () => {
   out.virtualWallsFadeBehindDecor = !!decorVirtual
     && getComputedStyle(decorVirtual).opacity === '0.35';
   c._setMode('plan');
-  await upd();
+  await upd(); await settleMode();
   out.atomicThicknessBefore = c._intervalCm([550, 145, 550, 195]) === 20
     && c._intervalCm([550, 205, 550, 295]) === 0
     && c._intervalCm([550, 305, 550, 455]) === 20;

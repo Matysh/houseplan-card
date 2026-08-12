@@ -16,13 +16,13 @@ const stageBox = () => page.evaluate(() => {
 const vh = await page.evaluate(() => window.innerHeight);
 const inView = await stageBox();
 await page.evaluate(() => window.__card._setMode('plan'));
-await page.waitForTimeout(400);
+await page.waitForFunction(() => window.__card._modeTransitionBusy === false);
 const inPlan = await stageBox();
 out.viewFitsViewport = inView.bottom <= vh + 2;
 out.editorFitsViewport = inPlan.bottom <= vh + 2; // used to overflow by ~90px
 out.editorStageShrinks = inPlan.top > inView.top && inPlan.bottom <= inView.bottom + 2;
 await page.evaluate(() => window.__card._setMode('view'));
-await page.waitForTimeout(300);
+await page.waitForFunction(() => window.__card._modeTransitionBusy === false);
 
 // -- zoom out below the base fit -----------------------------------------
 out.zoomOut = await page.evaluate(() => {
@@ -56,16 +56,21 @@ await page.evaluate(() => window.__card._resetZoom());
 // (zoom AND center) comes back; the editor keeps its own zoom while open.
 out.editorZoomNotSaved = await page.evaluate(async () => {
   const c = window.__card;
-  const raf2 = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  const settleMode = async () => {
+    const started = performance.now();
+    do { await new Promise((resolve) => requestAnimationFrame(resolve)); }
+    while (c._modeTransitionBusy && performance.now() - started < 1500);
+    await c.updateComplete;
+  };
   const center = () => { const v = c._view; return [v.x + v.w / 2, v.y + v.h / 2]; };
   c._setMode('view');
   c._resetZoom();
   c._zoomAt(10, 10, 1.6); c._saveZoom(); // off-center on purpose
   const want = { zoom: c._zoom, c: center() };
-  c._setMode('devices'); await raf2();
+  c._setMode('devices'); await settleMode();
   c._zoomAt(10, 10, 2.5); c._saveZoom(); // off-center too: the center must not leak either
   const editorZoomFree = Math.abs(c._zoom - 2.5) < 0.01; // zooming inside stays
-  c._setMode('view'); await raf2();
+  c._setMode('view'); await settleMode();
   const got = { zoom: c._zoom, c: center() };
   const ls = JSON.parse(localStorage.getItem('houseplan_card_zoom_v1') || '{}');
   return {
@@ -84,21 +89,19 @@ delete out.editorZoomNotSaved;
 // -- editor entered and left without touching zoom: no jump ---------------
 out.untouchedEditorNoJump = await page.evaluate(async () => {
   const c = window.__card;
-  const raf2 = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  const settleMode = async () => {
+    const started = performance.now();
+    do { await new Promise((resolve) => requestAnimationFrame(resolve)); }
+    while (c._modeTransitionBusy && performance.now() - started < 1500);
+    await c.updateComplete;
+  };
   c._setMode('view');
-  // The previous case has only waited two frames after leaving an editor.
-  // Let its 180 ms chrome collapse and ResizeObservers settle before taking a
-  // new baseline; otherwise this case measures the previous transition, not
-  // the untouched editor round-trip it is meant to verify.
-  await new Promise((resolve) => setTimeout(resolve, 240));
+  await settleMode();
   c._resetZoom();
   c._zoomAt(30, 30, 1.6); c._saveZoom();
   const before = { ...c._view };
-  c._setMode('plan'); await raf2();
-  c._setMode('view'); await raf2();
-  // Header ResizeObserver publishes its final measured height one frame after
-  // the 180 ms chrome collapse, then the stage observer performs the last fit.
-  await new Promise((resolve) => setTimeout(resolve, 320));
+  c._setMode('plan'); await settleMode();
+  c._setMode('view'); await settleMode();
   const v = c._view;
   const beforeCenter = [before.x + before.w / 2, before.y + before.h / 2];
   const afterCenter = [v.x + v.w / 2, v.y + v.h / 2];
@@ -130,12 +133,17 @@ await page.evaluate(() => window.__card._resetZoom());
 out.editorZoomNeverInSpaceStore = await page.evaluate(async () => {
   const c = window.__card;
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-  const raf2 = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  const settleMode = async () => {
+    const started = performance.now();
+    do { await new Promise((resolve) => requestAnimationFrame(resolve)); }
+    while (c._modeTransitionBusy && performance.now() - started < 1500);
+    await c.updateComplete;
+  };
   c._setMode('view');
   c._resetZoom(); c._zoomAt(10, 10, 1.6); c._saveZoom();      // floor 1 view zoom
   c._slideTo('garden', 'left'); await wait(350);
   c._resetZoom(); c._zoomAt(10, 10, 1.4); c._saveZoom();      // floor 2 view zoom
-  c._setMode('devices'); await raf2();
+  c._setMode('devices'); await settleMode();
   c._zoomAt(10, 10, 5.0); c._saveZoom();                      // 500% — a working tool
   const lsInEditor = JSON.parse(localStorage.getItem('houseplan_card_zoom_v1') || '{}');
   c._setMode('view');
@@ -167,20 +175,25 @@ delete out.editorZoomNeverInSpaceStore;
 out.crossFloorEditorExit = await page.evaluate(async () => {
   const c = window.__card;
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-  const raf2 = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  const settleMode = async () => {
+    const started = performance.now();
+    do { await new Promise((resolve) => requestAnimationFrame(resolve)); }
+    while (c._modeTransitionBusy && performance.now() - started < 1500);
+    await c.updateComplete;
+  };
   const sr = c.shadowRoot || c.renderRoot;
   c._setMode('view');
   c._resetZoom(); c._zoomAt(10, 10, 1.6); c._saveZoom();      // f1 view zoom
   c._slideTo('garden', 'left'); await wait(350);
   c._resetZoom(); c._zoomAt(10, 10, 1.4); c._saveZoom();      // garden view zoom
   c._slideTo('f1', 'right'); await wait(350);
-  c._setMode('devices'); await raf2();
+  c._setMode('devices'); await settleMode();
   // этаж меняется НАСТОЯЩЕЙ вкладкой — именно этот путь под подозрением
   const idx = c._model.findIndex((s) => s.id === 'garden');
   sr.querySelectorAll('.tabs .tab')[idx].click();
-  await c.updateComplete; await raf2();
+  await c.updateComplete; await settleMode();
   c._zoomAt(10, 10, 5.0); c._saveZoom();                      // 500% — рабочий инструмент
-  c._setMode('view'); await raf2(); await wait(60);
+  c._setMode('view'); await settleMode();
   const stillGarden = c._space === 'garden';
   const gotZoom = c._zoom;
   const v = c._view; const vb = c._baseVb();

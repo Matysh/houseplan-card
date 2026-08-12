@@ -13375,6 +13375,11 @@ class HouseplanCard extends LitElement {
     const recoveryReason = (this._continuity.overlayVisible || this._continuity.state === 'recovery-error')
       ? this._continuity.recoveryReason : null;
     const modeVisual = this._modeTransitionVisual;
+    const transitionFromMode = this._modeTransition.state?.from.presentedMode;
+    const glowLayerVisible = !this._markup || !!modeVisual && (
+      modeVisual.presentedMode === 'view' || modeVisual.presentedMode === 'devices'
+      || transitionFromMode === 'view' || transitionFromMode === 'devices'
+    );
     const transitionStageBg = modeVisual?.stageColor || stageBg;
     const transitionBrightness = modeVisual?.sceneBrightness ?? (dayNight ? 1 - planDim : 1);
 
@@ -13654,7 +13659,7 @@ class HouseplanCard extends LitElement {
             ${this._renderGlowBaseRooms(space, glowBase)}
             ${this._renderOpeningTunnelFills(space, glowBase, 'glow-base')}
             ${this._renderSvgRoomLabels(space, disp)}
-            ${this._renderGlowLayer(space, disp)}
+            ${glowLayerVisible ? this._renderGlowLayer(space, disp) : nothing}
             ${this._renderSunRays(space)}
             ${this._editing ? this._renderAlignGuides() : nothing}
             ${opMeasure?.guide ? this._renderOpeningCenterTick(opMeasure.guide) : nothing}

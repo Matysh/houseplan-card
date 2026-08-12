@@ -37,7 +37,7 @@ const res = await page.evaluate(async () => {
   };
   const settle = async (c) => {
     const t0 = performance.now();
-    while (c._booting && performance.now() - t0 < 2500) await sleep(30);
+    while ((c._booting || c._modeTransitionBusy) && performance.now() - t0 < 2500) await sleep(30);
     await sleep(250);
   };
   const near = (a, b) => Math.abs(a - b) < 1e-6;
@@ -54,7 +54,7 @@ const res = await page.evaluate(async () => {
 
   const B = mk();                      // вторая карточка, тот же конфиг
   await settle(B);
-  B._setMode('devices'); await B.updateComplete; await sleep(120);
+  B._setMode('devices'); await B.updateComplete; await settle(B);
   B._applyView(3.35, 200, 200);
   B.requestUpdate(); await B.updateComplete; await sleep(60);
   const zoomB = B._zoom;
