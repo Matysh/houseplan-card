@@ -161,7 +161,7 @@ const out = await page.evaluate(async () => {
 
   // ---- the indication ----------------------------------------------------
   const afterAnim = () => {
-    const el = devEl()?.querySelector('.activity-ring.transition i:first-child');
+    const el = devEl()?.querySelector('.device-pulse.continuous.transition i:first-child');
     if (!el) return null;
     const cs = getComputedStyle(el);
     return { name: cs.animationName, dur: cs.animationDuration };

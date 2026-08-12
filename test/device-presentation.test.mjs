@@ -635,3 +635,26 @@ test('cover presentation follows the same service target selected by toggle reso
   assert.equal(result.visualSources[0].eid, 'cover.curtain');
   assert.equal(result.visualSources[0].state, 'opening');
 });
+
+test('an incidental cover does not hijack the light face of a mixed device', () => {
+  const h = hass({
+    'light.mixed': state('light.mixed', 'on'),
+    'cover.mixed': state('cover.mixed', 'opening', {
+      device_class: 'curtain', supported_features: 15,
+    }),
+  }, {
+    'light.mixed': { entity_id: 'light.mixed', device_id: 'd1', platform: 'demo' },
+    'cover.mixed': { entity_id: 'cover.mixed', device_id: 'd1', platform: 'demo' },
+  });
+  const plain = resolvePresentationSources(h, device({
+    entities: ['light.mixed', 'cover.mixed'], primary: 'light.mixed', tapAction: null,
+  }));
+  assert.equal(plain.sourceKind, 'light');
+  assert.deepEqual(plain.visualSources.map((source) => source.eid), ['light.mixed']);
+
+  const explicitCover = resolvePresentationSources(h, device({
+    entities: ['light.mixed', 'cover.mixed'], primary: 'light.mixed', tapAction: 'cover',
+  }));
+  assert.equal(explicitCover.sourceKind, 'cover');
+  assert.equal(explicitCover.visualSources[0].eid, 'cover.mixed');
+});

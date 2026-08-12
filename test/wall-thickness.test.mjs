@@ -371,8 +371,8 @@ test('openingTunnelGeometry: an outer thick wall gives the one room both tunnel 
   assert.deepEqual(g.faces.map((f) => [f.side, f.roomId]), [[-1, 'r'], [1, 'r']]);
   closeTo(g.minY, -2);
   closeTo(g.maxY, 2);
-  assert.match(g.faces[0].d, / 0\.04\b/, 'the negative face crosses the axis symmetrically');
-  assert.match(g.faces[1].d, / -0\.04\b/, 'the positive face crosses the axis symmetrically');
+  assert.match(g.faces[0].d, / 0\.5\b/, 'the negative face overlaps the axis by a raster-safe amount');
+  assert.match(g.faces[1].d, / -0\.5\b/, 'the positive face overlaps the axis symmetrically');
 });
 
 test('openingTunnelGeometry: a 45° wall keeps the opening-local width and physical depth', () => {
@@ -455,9 +455,9 @@ test('openingTunnelGeometry: three stepped atomic strips form one non-overlappin
   const positive = g.faces.find((face) => face.side === 1);
   assert.equal((negative.d.match(/\bM /g) || []).length, 1);
   assert.equal((positive.d.match(/\bM /g) || []).length, 1);
-  assert.match(negative.d, /^M 3 0\.02 L -3 0\.02 /,
+  assert.match(negative.d, /^M 3 0\.25 L -3 0\.25 /,
     'negative and positive faces use matching nonzero winding around the wall axis');
-  assert.match(positive.d, /^M -3 -0\.02 L 3 -0\.02 /);
+  assert.match(positive.d, /^M -3 -0\.25 L 3 -0\.25 /);
   assert.match(positive.d, /L -2 1 L -3 1 Z$/,
     'the one contour follows every real thickness step back to the first jamb');
 });

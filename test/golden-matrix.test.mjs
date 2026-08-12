@@ -144,7 +144,7 @@ test('opening placement golden requires browser-painted preview pixels', () => {
   assert.ok(scenario);
   assert.equal(scenario.mode, 'plan');
   assert.equal(scenario.openingPreview?.type, 'door');
-  assert.deepEqual(scenario.openingPreview?.pointer, [0.78, 0.32]);
+  assert.deepEqual(scenario.openingPreview?.pointer, [0.48, 0.65]);
   assert.equal(scenario.openingPreviewPixels.minPixels >= 40, true);
   assert.equal(scenario.openingPreviewPixels.minChannelDelta >= 4, true);
 });

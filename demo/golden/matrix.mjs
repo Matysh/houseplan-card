@@ -15,10 +15,10 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'geometry-plan-editor-dark', fixture: 'visual', space: 'golden-geometry', mode: 'plan',
     theme: 'dark', viewport: { width: 1180, height: 900 }, ...page },
   { id: 'opening-placement-door-thick-wall-dark', fixture: 'visual', space: 'golden-geometry',
-    // The lower-right edge of the nested diamond is a real 45-degree thick
-    // wall. Keep this diagonal: it catches regressions hidden by horizontal
-    // preview-only captures (rotation, face offset and ruler placement).
-    mode: 'plan', openingPreview: { type: 'door', pointer: [0.78, 0.32] },
+    // The shared centre edge is a long 25 cm physical wall. It can contain the
+    // complete 90 cm door preset while still proving rotation, inner-face
+    // offset and ruler placement on a thick wall.
+    mode: 'plan', openingPreview: { type: 'door', pointer: [0.48, 0.65] },
     openingPreviewPixels: { minPixels: 40, minChannelDelta: 4 },
     theme: 'dark', viewport: { width: 1180, height: 900 }, ...page },
   { id: 'geometry-devices-editor-dark', fixture: 'visual', space: 'golden-geometry', mode: 'devices',

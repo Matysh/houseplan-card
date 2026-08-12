@@ -266,10 +266,10 @@ async function countHelpTextPixels(page, png, clip, spec) {
   }, { png64: png.toString('base64'), clip, spec });
 }
 
-/** Detect one-pixel SVG seams inside a room-coloured opening tunnel. The
- * opening symbol is hidden by the scenario, so both centre lines should be a
- * locally constant translucent surface. Sampling both axes catches the wall
- * centre split as well as boundaries between atomic wall-profile pieces. */
+/** Detect one-pixel SVG seams inside a room-coloured opening tunnel. Sample a
+ * narrow strip around local y=0: this crosses the join between both tunnel
+ * half-faces at any opening angle while excluding legitimate outer-profile
+ * steps where adjacent wall intervals have different physical thicknesses. */
 async function inspectTunnelContinuity(page, png, clip, spec) {
   return page.evaluate(async ({ png64, clip, spec }) => {
     const card = window.__goldenCard;
@@ -278,6 +278,10 @@ async function inspectTunnelContinuity(page, png, clip, spec) {
     );
     if (!tunnel) throw new Error(`semantic golden tunnel missing: ${spec.openingId}`);
     const rect = tunnel.getBoundingClientRect();
+    const matrix = tunnel.getScreenCTM();
+    if (!matrix) throw new Error(`semantic golden tunnel has no screen transform: ${spec.openingId}`);
+    const inverse = matrix.inverse();
+    const localBounds = tunnel.getBBox();
     const bytes = Uint8Array.from(atob(png64), (char) => char.charCodeAt(0));
     const image = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
     const canvas = document.createElement('canvas');
@@ -306,22 +310,43 @@ async function inspectTunnelContinuity(page, png, clip, spec) {
       const offset = (y * image.width + x) * 4;
       return [pixels[offset], pixels[offset + 1], pixels[offset + 2]];
     };
-    let maxJump = 0, samplePairs = 0;
-    const compare = (a, b) => {
-      maxJump = Math.max(maxJump,
+    let maxJump = 0, maxPair = null, samplePairs = 0;
+    const compare = (a, b, x, y, direction) => {
+      const jump = Math.max(
         Math.abs(a[0] - b[0]), Math.abs(a[1] - b[1]), Math.abs(a[2] - b[2]));
+      if (jump > maxJump) {
+        maxJump = jump;
+        maxPair = { x, y, direction, a, b };
+      }
       samplePairs++;
     };
-    // Inspect every adjacent pair in the interior, not just two centre lines:
-    // a transverse seam near an end cap must fail the semantic guard too.
+    const localXScale = Math.max(1e-6, Math.hypot(matrix.a, matrix.b));
+    const localYScale = Math.max(1e-6, Math.hypot(matrix.c, matrix.d));
+    const endInset = Math.max(1, spec.insetPx) / localXScale;
+    const axisBand = Math.max(1.5, spec.axisBandPx || 2.5) / localYScale;
+    const insideAxisBand = (x, y) => {
+      const cssX = originX + (x + 0.5) / scaleX;
+      const cssY = originY + (y + 0.5) / scaleY;
+      const local = new DOMPoint(cssX, cssY).matrixTransform(inverse);
+      return local.x >= localBounds.x + endInset
+        && local.x <= localBounds.x + localBounds.width - endInset
+        && Math.abs(local.y) <= axisBand;
+    };
     for (let y = top; y <= bottom; y++) {
-      for (let x = left + 1; x <= right; x++) compare(rgb(x - 1, y), rgb(x, y));
+      for (let x = left + 1; x <= right; x++) {
+        if (insideAxisBand(x - 1, y) && insideAxisBand(x, y))
+          compare(rgb(x - 1, y), rgb(x, y), x, y, 'horizontal');
+      }
     }
     for (let x = left; x <= right; x++) {
-      for (let y = top + 1; y <= bottom; y++) compare(rgb(x, y - 1), rgb(x, y));
+      for (let y = top + 1; y <= bottom; y++) {
+        if (insideAxisBand(x, y - 1) && insideAxisBand(x, y))
+          compare(rgb(x, y - 1), rgb(x, y), x, y, 'vertical');
+      }
     }
+    if (!samplePairs) throw new Error(`semantic golden tunnel axis strip is empty: ${spec.openingId}`);
     return {
-      maxJump, samplePairs, bounds: [left, top, right, bottom],
+      maxJump, maxPair, samplePairs, bounds: [left, top, right, bottom],
       scale: [scaleX, scaleY],
     };
   }, { png64: png.toString('base64'), clip, spec });
@@ -427,6 +452,7 @@ try {
           page, actual, clip, scenario.tunnelContinuity,
         );
         result.tunnelMaxChannelJump = sample.maxJump;
+        result.tunnelMaxJumpPair = sample.maxPair;
         result.tunnelSamplePairs = sample.samplePairs;
         result.tunnelPixelBounds = sample.bounds;
         result.tunnelImageScale = sample.scale;

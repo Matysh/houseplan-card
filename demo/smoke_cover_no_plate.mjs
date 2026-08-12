@@ -103,7 +103,7 @@ const out = await page.evaluate(async () => {
   plateIsNeutral('opening');
   o.openingRings = cls().includes('activity-transition');
   o.openingRingIsTheBreathingOne = (() => {
-    const ring = devEl()?.querySelector('.activity-ring.transition i:first-child');
+    const ring = devEl()?.querySelector('.device-pulse.continuous.transition i:first-child');
     const cs = ring ? getComputedStyle(ring) : null;
     return !!cs && cs.animationName === 'hp-pulse-continuous' && cs.animationDuration === '2.4s';
   })();

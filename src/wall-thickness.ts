@@ -2018,7 +2018,11 @@ export function tunnelFacePath(side: -1 | 1, pieces: OpeningWallPiece[]): string
 
   return components.map((component) => {
     const first = component[0], last = component[component.length - 1];
-    const seam = Math.min(Math.min(...component.map((slab) => slab.half)) * 0.02, 0.05);
+    // Both half-faces are subpaths of one nonzero-filled path. Give them a
+    // real device-pixel overlap at ordinary wall depths: a 0.1 px overlap was
+    // still rasterised as a faint centre seam by Chromium. Because winding is
+    // identical this remains one alpha application, not a double-fill band.
+    const seam = Math.min(Math.min(...component.map((slab) => slab.half)) * 0.25, 0.75);
     const axisY = -side * seam;
     const commands: string[] = [];
     if (side === 1) {

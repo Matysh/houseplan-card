@@ -708,7 +708,10 @@ async def _candidate(
     await rt.store.async_save({
         "layout": current_layout, "rev": 1,
         "repair_backup": {"must": "survive-failure"},
-        "geom_pending": {"ground": {"aspect": 1.5}},
+        # The durable geometry-migration intent is ``space_id -> old aspect``.
+        # Keep a valid intent here so rollback preservation can also be proven
+        # safe across the subsequent integration reload.
+        "geom_pending": {"ground": 1.5},
     })
     incoming = json.loads(json.dumps(target_config or current_config))
     incoming["spaces"][0]["title"] = "Imported"
@@ -1113,7 +1116,7 @@ async def test_pair_rolls_back_before_reporting_a_persistent_target_failure(
     assert config_data["config"]["spaces"][0]["title"] == "Ground"
     assert layout_data["layout"]["lamp"]["x"] == 0.1
     assert layout_data["repair_backup"] == {"must": "survive-failure"}
-    assert layout_data["geom_pending"] == {"ground": {"aspect": 1.5}}
+    assert layout_data["geom_pending"] == {"ground": 1.5}
     assert "optimize_pending" not in layout_data
 
     monkeypatch.setattr(rt.config_store, "async_save", real_save)

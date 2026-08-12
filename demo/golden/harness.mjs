@@ -265,13 +265,39 @@ export async function prepareGoldenScenario(page, scenario) {
         throw new Error(`invalid golden openingPreview: ${scenario.id}`);
       }
       card._activateOpeningPlacement(type);
-      card._cursorPt = [pointer[0] * 1000, pointer[1] * card._spaceH];
       card.requestUpdate();
+      await card.updateComplete;
+      await frame();
+      // Exercise the production pointer path after the toolbar update has
+      // settled. Writing `_cursorPt` before that update is racy: replacing the
+      // stage under Chromium's real pointer legitimately emits pointerleave
+      // and clears the preview before capture.
+      const svgRoot = card.renderRoot.querySelector('.stage svg');
+      const stage = card.renderRoot.querySelector('.stage');
+      const screen = new DOMPoint(pointer[0] * 1000, pointer[1] * card._spaceH)
+        .matrixTransform(svgRoot.getScreenCTM());
+      stage.dispatchEvent(new PointerEvent('pointermove', {
+        bubbles: true, composed: true, pointerId: 991, pointerType: 'mouse',
+        clientX: screen.x, clientY: screen.y,
+      }));
       await card.updateComplete;
       await frame();
       const preview = card.renderRoot.querySelector(`.opening-preview[data-kind="${type}"]`);
       if (!preview || !preview.querySelector('.op-leaf')) {
-        throw new Error(`golden opening preview did not render: ${scenario.id}`);
+        const intervals = card._openingPlacementIntervalsCache?.value || [];
+        const nearest = intervals.map((interval) => {
+          const [px, py] = card._cursorPt || [0, 0];
+          const [ax, ay] = interval.a, [bx, by] = interval.b;
+          const dx = bx - ax, dy = by - ay, length2 = dx * dx + dy * dy || 1;
+          const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / length2));
+          return {
+            a: interval.a, b: interval.b, cm: interval.cm, open: interval.open,
+            kind: interval.kind,
+            distance: Math.hypot(px - (ax + dx * t), py - (ay + dy * t)),
+          };
+        }).sort((a, b) => a.distance - b.distance).slice(0, 3);
+        throw new Error(`golden opening preview did not render: ${scenario.id}; `
+          + `cursor=${JSON.stringify(card._cursorPt)} nearest=${JSON.stringify(nearest)}`);
       }
     }
     if (scenario.editorTray) {

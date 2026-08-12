@@ -17,7 +17,7 @@ await page.evaluate(async () => {
   c.requestUpdate();
   await c.updateComplete;
   const st = document.createElement('style');
-  st.textContent = '.activity-ring.transition i:first-child{animation-delay:-1.1s!important;animation-play-state:paused!important;}';
+  st.textContent = '.device-pulse.continuous.transition i:first-child{animation-delay:-1.1s!important;animation-play-state:paused!important;}';
   (c.shadowRoot || c.renderRoot).appendChild(st);
 });
 await page.waitForTimeout(400);

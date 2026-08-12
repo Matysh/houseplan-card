@@ -263,7 +263,16 @@ export function resolvePresentationSources(
       }
     }
   }
-  if (cover) {
+  // A cover-only device still gets cover visuals even when its click action is
+  // More info. On a mixed device, however, an unrelated cover capability must
+  // not hijack a primary/owned light unless the legacy explicit cover action
+  // (or the primary entity itself) says that the marker represents the cover.
+  const coverOwnsFace = !!cover && (
+    d.tapAction === 'cover'
+    || !!d.primary?.startsWith('cover.')
+    || lights.length === 0
+  );
+  if (coverOwnsFace) {
     sourceKind = 'cover';
     visualSources = [sourceOf(hass, cover, 'cover')];
   } else if (lights.length) {

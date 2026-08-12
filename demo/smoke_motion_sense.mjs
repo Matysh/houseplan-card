@@ -53,7 +53,7 @@ const res = await page.evaluate(async () => {
   const flashEl = sr().querySelector('.dev.activity-event');
   out.motionTripFlashes = !!flashEl;
   out.flashIsNotOn = !!flashEl && !flashEl.classList.contains('on') && !flashEl.classList.contains('open');
-  const waves = flashEl ? [...flashEl.querySelectorAll('.activity-ring.event i')] : [];
+  const waves = flashEl ? [...flashEl.querySelectorAll('.device-pulse.short.event i')] : [];
   const firstWave = waves[0] ? getComputedStyle(waves[0]) : null;
   out.flashAnimated = !!firstWave && firstWave.animationName.startsWith('hp-pulse-short');
   out.flashFinite = waves.length === 3
@@ -105,17 +105,17 @@ const res = await page.evaluate(async () => {
   const a3 = senseAnim(el3);
   out.rapidSecondFlashStillPlays = !!a3 && a3.playState === 'running';
   out.rapidRingVisibleAfterFirstWindow = !!el3
-    && [...el3.querySelectorAll('.activity-ring.event i')]
+    && [...el3.querySelectorAll('.device-pulse.short.event i')]
       .some((w) => parseFloat(getComputedStyle(w).opacity) > 0.03);
   // и класс уходит через полные ~3.3s после ВТОРОГО trip (flashTs/таймер обновлены)
   await sleep(1400); await c.updateComplete;
   out.rapidFlashEndsAfterSecondWindow = sr().querySelectorAll('.dev.activity-event').length === 0;
 
-  // --- occupancy: статичное кольцо presence, без анимации -----------------
+  // --- occupancy: continuous presence pulse --------------------------------
   await setMotion('on', 'occupancy');
   const holdEl = sr().querySelector('.dev.activity-presence');
   out.occupancyHolds = !!holdEl;
-  const holdRing = holdEl?.querySelector('.activity-ring.presence i:first-child');
+  const holdRing = holdEl?.querySelector('.device-pulse.continuous.presence i:first-child');
   const hAfter = holdRing ? getComputedStyle(holdRing) : null;
   out.holdAnimated = !!hAfter && hAfter.animationName === 'hp-pulse-continuous';
   out.holdAnimationCalm = !!hAfter && hAfter.animationDuration === '2.4s';
@@ -154,7 +154,7 @@ const res = await page.evaluate(async () => {
   c._showHidden = true; c._setMode('devices'); c.requestUpdate(); await c.updateComplete;
   const ghost = sr().querySelector('.dev.ghost');
   out.ghostNoSense = !!ghost && !ghost.classList.contains('activity-event') && !ghost.classList.contains('activity-presence')
-    && !ghost.querySelector('.activity-ring');
+    && !ghost.querySelector('.device-pulse');
   return out;
 });
 checkAll(res, {});

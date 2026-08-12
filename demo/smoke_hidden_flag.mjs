@@ -154,7 +154,7 @@ Object.assign(out, await page.evaluate(async () => {
   const ghosts = [...sr().querySelectorAll('.dev.ghost')];
   o.rippleGhostHasIcon = ghosts.length > 0 && ghosts.every((x) => !!x.querySelector('ha-icon'));
   o.rippleGhostNoNoicon = ghosts.every((x) => !x.classList.contains('noicon'));
-  o.rippleGhostNoRipple = ghosts.every((x) => !x.querySelector('.activity-ring'));
+  o.rippleGhostNoRipple = ghosts.every((x) => !x.querySelector('.device-pulse'));
   c._serverCfg.markers = c._serverCfg.markers.filter((m) => m.id !== lamp.id);
   c._cfgEpoch++; c._regSignature = ''; c._maybeRebuildDevices();
   c._setMode('view'); c._showHidden = false;

@@ -17,7 +17,7 @@ await page.evaluate(async () => {
   await set('on');
   // freeze the pulse at a visible frame for a deterministic capture
   const st = document.createElement('style');
-  st.textContent = '.activity-ring.event i{animation-delay:-0.4s!important;animation-play-state:paused!important;}';
+  st.textContent = '.device-pulse.short.event i{animation-delay:-0.4s!important;animation-play-state:paused!important;}';
   (c.shadowRoot || c.renderRoot).appendChild(st);
 });
 await page.waitForTimeout(300);

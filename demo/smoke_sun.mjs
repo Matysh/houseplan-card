@@ -9,6 +9,13 @@ const res = await page.evaluate(async () => {
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
   const upd = async () => { c.requestUpdate(); await c.updateComplete; };
+  const settleMode = async () => {
+    const started = performance.now();
+    while (c._modeTransitionBusy && performance.now() - started < 1800) {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      await c.updateComplete;
+    }
+  };
   const setSun = async (azimuth, elevation) => {
     c.hass = { ...c.hass, states: { ...c.hass.states, 'sun.sun': {
       entity_id: 'sun.sun', state: elevation > 0 ? 'above_horizon' : 'below_horizon',
@@ -150,10 +157,12 @@ const res = await page.evaluate(async () => {
   await setSun(90, 5);
   c._setMode('plan');
   await upd();
+  await settleMode();
   out.editorNoRays = domPolys().length === 0;
   out.editorNoDaynight = !sr().querySelector('.stage.daynight');
   c._setMode('view');
   await upd();
+  await settleMode();
   out.viewRaysBack = domPolys().length > 0;
 
   return out;
