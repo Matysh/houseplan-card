@@ -2,6 +2,37 @@
 
 ## Unreleased
 
+## v1.62.0 — 2026-08-13
+
+- Added portable full-plan and single-space backups with server-validated
+  preview, safe import and one-step undo, plus reusable contextual help for
+  complex settings ([#50](https://github.com/Matysh/houseplan-card/issues/50),
+  [#68](https://github.com/Matysh/houseplan-card/issues/68)).
+- Added passive light markers, explicit leading-entity selection and
+  user-controlled value badges, while unifying device actions and activity
+  presentation across the plan, preview and static cards
+  ([#84](https://github.com/Matysh/houseplan-card/issues/84),
+  [#88](https://github.com/Matysh/houseplan-card/issues/88),
+  [#90](https://github.com/Matysh/houseplan-card/issues/90),
+  [#94](https://github.com/Matysh/houseplan-card/issues/94),
+  [#98](https://github.com/Matysh/houseplan-card/issues/98)).
+- Reworked opening placement with a Window / Door / Gate submenu and a
+  full-symbol preview on thick walls. Fixed room Split wall thickness, opening
+  tunnel seams and Glow sources embedded in walls or exterior openings
+  ([#75](https://github.com/Matysh/houseplan-card/issues/75),
+  [#76](https://github.com/Matysh/houseplan-card/issues/76),
+  [#81](https://github.com/Matysh/houseplan-card/issues/81),
+  [#91](https://github.com/Matysh/houseplan-card/issues/91),
+  [#92](https://github.com/Matysh/houseplan-card/issues/92)).
+- Added coherent transitions between View and editors, restored reliable
+  window sun rays, and hardened editor lifecycle, composite-device selection,
+  previews and regression coverage
+  ([#93](https://github.com/Matysh/houseplan-card/issues/93),
+  [#95](https://github.com/Matysh/houseplan-card/issues/95),
+  [#101](https://github.com/Matysh/houseplan-card/issues/101),
+  [#102](https://github.com/Matysh/houseplan-card/issues/102)).
+- Small fixes and improvements.
+
 ## v1.62.0-rc.1 — 2026-08-13
 
 - Republished the reviewed beta.10 candidate under an RC identifier so HACS

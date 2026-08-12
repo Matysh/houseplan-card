@@ -8,6 +8,39 @@
 
 ## Unreleased
 
+## v1.62.0 — 2026-08-13
+
+- Добавлены переносимые резервные копии всего плана и отдельных пространств с
+  серверной проверкой, безопасным импортом и одношаговой отменой, а также
+  переиспользуемые контекстные подсказки для сложных настроек
+  ([#50](https://github.com/Matysh/houseplan-card/issues/50),
+  [#68](https://github.com/Matysh/houseplan-card/issues/68)).
+- Добавлены пассивные маркеры света, явный выбор ведущей сущности и управляемые
+  пользователем бейджи значений. Действия и отображение активности устройств
+  унифицированы для плана, предпросмотра и статичных карточек
+  ([#84](https://github.com/Matysh/houseplan-card/issues/84),
+  [#88](https://github.com/Matysh/houseplan-card/issues/88),
+  [#90](https://github.com/Matysh/houseplan-card/issues/90),
+  [#94](https://github.com/Matysh/houseplan-card/issues/94),
+  [#98](https://github.com/Matysh/houseplan-card/issues/98)).
+- Переработано размещение проёмов: подменю «Окно / Дверь / Ворота» и полный
+  предпросмотр символа на толстых стенах. Исправлены толщина примыкающих стен
+  при разделении комнат, швы тоннелей проёмов и Glow для источников внутри стен
+  и внешних проёмов
+  ([#75](https://github.com/Matysh/houseplan-card/issues/75),
+  [#76](https://github.com/Matysh/houseplan-card/issues/76),
+  [#81](https://github.com/Matysh/houseplan-card/issues/81),
+  [#91](https://github.com/Matysh/houseplan-card/issues/91),
+  [#92](https://github.com/Matysh/houseplan-card/issues/92)).
+- Добавлены согласованные переходы между просмотром и редакторами, восстановлены
+  надёжные солнечные лучи из окон, усилены жизненный цикл редакторов, выбор
+  состояния составных устройств, предпросмотры и регрессионные проверки
+  ([#93](https://github.com/Matysh/houseplan-card/issues/93),
+  [#95](https://github.com/Matysh/houseplan-card/issues/95),
+  [#101](https://github.com/Matysh/houseplan-card/issues/101),
+  [#102](https://github.com/Matysh/houseplan-card/issues/102)).
+- Мелкие исправления и улучшения.
+
 ## v1.62.0-rc.1 — 2026-08-13
 
 - Проверенный кандидат beta.10 переопубликован с RC-идентификатором, чтобы HACS
