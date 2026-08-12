@@ -2,7 +2,7 @@
 // в момент обнаружения; cool-down не пульсирует; присутствие = статичное
 // кольцо пока обитаемо». Датчик ДВИЖЕНИЯ (device_class motion) при переходе
 // off→on получает activity-event — три последовательные волны
-// (hp-activity-event, ~3.3 c), после чего эффект снимается, ДАЖЕ если сущность всё ещё
+// (hp-pulse-short, ~3.3 c), после чего эффект снимается, ДАЖЕ если сущность всё ещё
 // висит в on (это cool-down датчика, а не движение). Новый цикл off→on —
 // новая вспышка. Датчики ПРИСУТСТВИЯ (occupancy/presence) при on несут
 // activity-presence — статичное кольцо без анимации (opacity 0.4). Жёлтая
@@ -55,7 +55,7 @@ const res = await page.evaluate(async () => {
   out.flashIsNotOn = !!flashEl && !flashEl.classList.contains('on') && !flashEl.classList.contains('open');
   const waves = flashEl ? [...flashEl.querySelectorAll('.activity-ring.event i')] : [];
   const firstWave = waves[0] ? getComputedStyle(waves[0]) : null;
-  out.flashAnimated = !!firstWave && firstWave.animationName.startsWith('hp-activity-event');
+  out.flashAnimated = !!firstWave && firstWave.animationName.startsWith('hp-pulse-short');
   out.flashFinite = waves.length === 3
     && waves.every((w) => getComputedStyle(w).animationIterationCount === '1');
   // подложка нейтральная — как у обычного .dev, не как у .dev.on
@@ -85,7 +85,7 @@ const res = await page.evaluate(async () => {
   // timeline, и после его конца (base opacity 0) второй trip был невидим.
   await sleep(3600); await c.updateComplete;   // дать текущей вспышке догореть
   const senseAnim = (el) => el && el.getAnimations({ subtree: true })
-    .find((a) => a.animationName && a.animationName.startsWith('hp-activity-event') && a.playState === 'running');
+    .find((a) => a.animationName && a.animationName.startsWith('hp-pulse-short') && a.playState === 'running');
   await setMotion('off', 'motion');
   await setMotion('on', 'motion');             // trip №1
   out.rapidFirstTripFlashes = sr().querySelectorAll('.dev.activity-event').length === 1;
@@ -117,8 +117,8 @@ const res = await page.evaluate(async () => {
   out.occupancyHolds = !!holdEl;
   const holdRing = holdEl?.querySelector('.activity-ring.presence i:first-child');
   const hAfter = holdRing ? getComputedStyle(holdRing) : null;
-  out.holdNotAnimated = !!hAfter && hAfter.animationName === 'none';
-  out.holdRingFaint = !!hAfter && Math.abs(parseFloat(hAfter.opacity) - 0.4) < 0.01;
+  out.holdAnimated = !!hAfter && hAfter.animationName === 'hp-pulse-continuous';
+  out.holdAnimationCalm = !!hAfter && hAfter.animationDuration === '2.4s';
   out.holdBgNeutral = !!holdEl && !!neutral
     && getComputedStyle(holdEl).backgroundColor === getComputedStyle(neutral).backgroundColor;
   out.holdNoFlashClass = !!holdEl && !holdEl.classList.contains('activity-event');

@@ -151,7 +151,7 @@ import {
   type DeviceActivity, type DeviceVisualState, type EntityVisualSample,
 } from './device-visual';
 import {
-  presentationClasses, presentationSourceSignature, resolveDevicePresentation,
+  activitySourceSignature, presentationClasses, resolveDevicePresentation,
   resolvePresentationSources, type ResolvedDevicePresentation,
 } from './device-presentation';
 import {
@@ -162,6 +162,10 @@ import {
   createRenderDeviceSnapshot, presentationSnapshotKey, type RenderDeviceSnapshot,
 } from './render-device-snapshot';
 import { deviceFaceStyle, renderDeviceFace } from './device-face';
+import {
+  ModeTransitionController, viewportFromViewBox,
+  type HouseplanMode, type ModeTransitionState, type ModeVisualState, type ModeViewBox,
+} from './mode-transition';
 import {
   acquireHaRegistries, activeRegistryHass, cacheHaBindingStatuses,
   fullRegistryHass, haRegistryBuildSignature, haRegistryDiagnostics, haRegistrySnapshot,
@@ -179,7 +183,7 @@ import {
 import { renderOpeningTunnelFills } from './render/opening-tunnels';
 import { safeStoredColor } from './color';
 
-const CARD_VERSION = '1.62.0-beta.4';
+const CARD_VERSION = '1.62.0-beta.5';
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
 const CELL_CM_MIN = 0.1;
@@ -687,13 +691,40 @@ class HouseplanCard extends LitElement {
   private _slide: '' | 'left' | 'right' = '';
   private _slideTimer?: number;
 
-  /** Short shared transition for View ↔ editor and editor ↔ editor changes. */
-  private _navMotion: '' | 'enter' | 'exit' | 'swap' = '';
-  private _navMotionTimer?: number;
-  /** WAAPI owns editor↔editor content and auto-height interpolation. */
-  private _editorSwapAnimations: Animation[] = [];
+  private _reducedMotion = false;
+  private _motionMedia?: MediaQueryList;
+  private _onMotionChange = (event: MediaQueryListEvent): void => {
+    this._reducedMotion = event.matches;
+    // A preference change to reduced motion is authoritative immediately: do
+    // not leave a 220 ms camera/chrome tween running until its old deadline.
+    if (event.matches && this._modeTransitionPreparing) {
+      this._modeTransitionForceAtomic = true;
+    } else if (event.matches && this._modeTransition.active) {
+      this._cancelModeTransition(true);
+    }
+    this.requestUpdate();
+  };
   /** Last editor kept in the collapsing chrome so leaving it can animate out. */
   private _editorChromeMode: 'plan' | 'devices' | 'decor' = 'plan';
+  private _modeTransitionVisual: ModeVisualState | null = null;
+  private _modeTransitionPreparing = false;
+  /** A visibility/reduced-motion interruption during the measurement frame
+   * must still publish the measured target atomically, without waiting for a
+   * RAF that a hidden document may throttle. */
+  private _modeTransitionForceAtomic = false;
+  private _modeTransitionRequest = 0;
+  private _modeTransitionTargetZoom = 1;
+  private _modeTransitionTargetCenterX: number | undefined;
+  private _modeTransitionTargetCenterY: number | undefined;
+  /** Last intended editor camera retained while an exit-to-View can still be
+   * retargeted back to an editor. It is session-only, like `_viewModeSnap`. */
+  private _modeTransitionEditorCamera: {
+    zoom: number; centerX?: number; centerY?: number;
+  } | null = null;
+  private readonly _modeTransition = new ModeTransitionController({
+    frame: (state) => this._applyModeTransitionFrame(state),
+    settled: (state) => this._settleModeTransition(state),
+  });
   /** Explicit second-level toolbar group. No current tools are grouped yet;
    *  the shared host/API prevents future editors from inventing dropdowns. */
   private readonly _editorSecondary = new EditorSecondaryController({
@@ -708,77 +739,230 @@ class HouseplanCard extends LitElement {
     disabledAction: (action, reason) => this._t('editor.disabled_action', { action, reason }),
   };
 
-  private _startNavMotion(kind: 'enter' | 'exit' | 'swap'): void {
-    clearTimeout(this._navMotionTimer);
-    this._navMotionTimer = undefined;
-    if (window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) {
-      this._cancelEditorSwapAnimations();
-      this._navMotion = '';
-      return;
+  private get _modeTransitionBusy(): boolean {
+    return this._modeTransitionPreparing || this._modeTransition.active;
+  }
+
+  private _cssColor(value: string | null | undefined, fallback: string): string {
+    const text = String(value || '').trim();
+    if (!text) return fallback;
+    const probe = document.createElement('span');
+    probe.style.cssText = `position:absolute;visibility:hidden;color:${text}`;
+    this.renderRoot.append(probe);
+    const resolved = getComputedStyle(probe).color || fallback;
+    probe.remove();
+    return resolved;
+  }
+
+  private _currentModeVisual(mode = this._mode as HouseplanMode): ModeVisualState | null {
+    // During the one-frame target measurement the controller has not started
+    // yet, but `_modeTransitionVisual` is already the exact painted endpoint.
+    // A rapid second click must retarget from that frame instead of rebuilding
+    // an approximation from the newly committed logical mode.
+    const presented = this._modeTransition.presented || this._modeTransitionVisual;
+    if (presented) return { ...presented, viewport: {
+      ...presented.viewport, viewBox: { ...presented.viewport.viewBox },
+    } };
+    const stage = this._stageEl;
+    if (!stage || stage.clientWidth <= 0 || stage.clientHeight <= 0) return null;
+    const chrome = this.renderRoot.querySelector('.editorchrome') as HTMLElement | null;
+    const view = this._viewOr(this._baseVb());
+    const paper = this.renderRoot.querySelector('.hp-paper') as SVGElement | null;
+    const backdrop = this.renderRoot.querySelector('.hp-backdrop') as SVGElement | null;
+    const zoomwrap = this.renderRoot.querySelector('.zoomwrap') as HTMLElement | null;
+    const filter = zoomwrap ? getComputedStyle(zoomwrap).filter : '';
+    const brightness = Number(/brightness\(([^)]+)\)/.exec(filter)?.[1]);
+    return {
+      presentedMode: mode,
+      editorChromeHeight: mode === 'view' ? 0 : chrome?.getBoundingClientRect().height || 0,
+      stageWidth: stage.clientWidth,
+      stageHeight: stage.clientHeight,
+      viewport: viewportFromViewBox(view, stage.clientWidth),
+      stageColor: getComputedStyle(stage).backgroundColor || 'rgb(255, 255, 255)',
+      paperColor: paper ? getComputedStyle(paper).fill : 'rgb(255, 255, 255)',
+      sceneBrightness: Number.isFinite(brightness) ? brightness : 1,
+      architectureOpacity: mode === 'decor' ? 0.35 : 1,
+      backdropOpacity: backdrop ? Number(getComputedStyle(backdrop).opacity) || 1 : 1,
+      viewWeight: mode === 'view' ? 1 : 0,
+      editorWeight: mode === 'view' ? 0 : 1,
+      toolbarContentOpacity: mode === 'view' ? 0 : 1,
+    };
+  }
+
+  private _viewForModeTarget(
+    zoom: number, centerX: number | undefined, centerY: number | undefined,
+    stageWidth: number, stageHeight: number,
+  ): ModeViewBox {
+    const vb = this._baseVb();
+    const fit = fitView(vb, stageWidth / Math.max(1, stageHeight));
+    const z = Math.min(HouseplanCard.ZOOM_MAX, Math.max(HouseplanCard.ZOOM_MIN, zoom));
+    const w = fit.w / z, h = fit.h / z;
+    const cx = centerX ?? fit.x + fit.w / 2;
+    const cy = centerY ?? fit.y + fit.h / 2;
+    return this._clampView({ x: cx - w / 2, y: cy - h / 2, w, h }, fit);
+  }
+
+  private _targetStageColor(mode: HouseplanMode): string {
+    if (mode !== 'view') return 'rgb(255, 255, 255)';
+    return this._cssColor(this._stageBg(this._spaceDisplayForRender()),
+      this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', 'rgb(17, 17, 17)'));
+  }
+
+  private _targetPaperColor(mode: HouseplanMode): string {
+    if (mode !== 'view' || !this._spaceModel().bg) return 'rgb(255, 255, 255)';
+    return this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', 'rgb(17, 17, 17)');
+  }
+
+  private _targetBrightness(mode: HouseplanMode): number {
+    if (mode !== 'view' || this._effBgMode() !== 'daynight') return 1;
+    const sun = this._sunNow();
+    return sun ? 1 - dayPhase(skyElevation(sun.elevation)).planDim : 1;
+  }
+
+  private _applyModeTransitionFrame(state: ModeTransitionState): void {
+    if (state.targetMode !== this._mode) return;
+    this._modeTransitionVisual = state.presented;
+    this._view = { ...state.presented.viewport.viewBox };
+    this.requestUpdate();
+  }
+
+  private _settleModeTransition(state: ModeTransitionState): void {
+    if (state.targetMode !== this._mode) return;
+    const settledRequest = this._modeTransitionRequest;
+    this._view = { ...state.to.viewport.viewBox };
+    this._zoom = this._modeTransitionTargetZoom;
+    this._modeTransitionVisual = null;
+    this._modeTransitionPreparing = false;
+    this._lastValidStageSize = [state.to.stageWidth, state.to.stageHeight];
+    if (this._mode === 'view') {
+      this._saveZoom();
+      this._viewModeSnap = null;
+      this._modeTransitionEditorCamera = null;
     }
-    this._navMotion = kind;
-    this._navMotionTimer = window.setTimeout(() => {
-      this._navMotionTimer = undefined;
-      this._navMotion = '';
-      this.requestUpdate();
-    }, 190);
-  }
-
-  private _cancelEditorSwapAnimations(): void {
-    for (const animation of this._editorSwapAnimations) animation.cancel();
-    this._editorSwapAnimations = [];
-    (this.renderRoot.querySelector('.editorchrome') as HTMLElement | null)
-      ?.classList.remove('resizing');
-  }
-
-  /** Fade in a newly selected editor and interpolate the toolbar's real
-   * content height. CSS cannot transition height:auto, and the three editors
-   * wrap to different row counts at different card widths. Measuring both
-   * ends keeps the stage/header ResizeObservers following one smooth change. */
-  private _animateEditorSwap(fromHeight: number): void {
+    this.requestUpdate();
     void this.updateComplete.then(() => {
-      if (!this.isConnected || this._navMotion !== 'swap'
-        || window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) return;
+      if (!this.isConnected || settledRequest !== this._modeTransitionRequest
+          || this._modeTransitionBusy || state.targetMode !== this._mode) return;
+      // Natural responsive layout remains the final authority. A breakpoint,
+      // font load or outer resize may land while ResizeObserver is suppressed
+      // by the transition; reconcile it before the next visible interaction.
+      const stage = this._stageEl;
+      if (stage && stage.clientWidth > 0 && stage.clientHeight > 0
+          && (Math.abs(stage.clientWidth - state.to.stageWidth) > 0.5
+            || Math.abs(stage.clientHeight - state.to.stageHeight) > 0.5)) {
+        const current = this._view;
+        this._lastValidStageSize = [stage.clientWidth, stage.clientHeight];
+        this._applyView(
+          this._zoom,
+          current ? current.x + current.w / 2 : undefined,
+          current ? current.y + current.h / 2 : undefined,
+        );
+        this.requestUpdate();
+      }
+      const focused = (this.renderRoot as ShadowRoot).activeElement as HTMLElement | null;
+      const lostWithOutgoingUi = !focused || !focused.isConnected
+        || !!focused.closest?.('.editorchrome, .stage');
+      if (lostWithOutgoingUi) {
+        (this.renderRoot.querySelector('.modetab.active') as HTMLElement | null)
+          ?.focus?.({ preventScroll: true });
+      }
+    });
+  }
+
+  private _cancelModeTransition(commitTarget = true): void {
+    const hadControllerState = !!this._modeTransition.state;
+    this._modeTransitionRequest++;
+    this._modeTransitionPreparing = false;
+    this._modeTransitionForceAtomic = false;
+    this._modeTransition.cancel(commitTarget);
+    // A preparing transition has no controller state to settle. Its measured
+    // callback is invalidated above, so always discard the retained frame;
+    // otherwise a space switch/recovery during measurement can leave inline
+    // height/background/camera coordinates attached indefinitely.
+    if (!commitTarget || !hadControllerState) this._modeTransitionVisual = null;
+  }
+
+  /** Route departure cannot wait for a decorative frame that will never be
+   * shown. Publish the pending View camera directly before warm persistence. */
+  private _commitViewModeAtomic(
+    from: ModeVisualState | null,
+    targetZoom: number,
+    targetCenterX?: number,
+    targetCenterY?: number,
+  ): void {
+    this._modeTransitionPreparing = false;
+    this._modeTransitionVisual = null;
+    this._modeTransitionForceAtomic = false;
+    this._zoom = targetZoom;
+    if (from) {
+      const targetStageWidth = this._stageEl?.clientWidth || from.stageWidth;
+      const targetStageHeight = Math.max(1, from.stageHeight + from.editorChromeHeight);
+      this._view = this._viewForModeTarget(
+        targetZoom, targetCenterX, targetCenterY, targetStageWidth, targetStageHeight,
+      );
+      this._lastValidStageSize = [targetStageWidth, targetStageHeight];
+    } else {
+      this._view = null;
+    }
+    this._viewModeSnap = null;
+    this._modeTransitionEditorCamera = null;
+    this._saveZoom();
+    this.requestUpdate();
+  }
+
+  private _prepareModeTransition(
+    request: number,
+    from: ModeVisualState,
+    targetMode: HouseplanMode,
+    targetZoom: number,
+    targetCenterX?: number,
+    targetCenterY?: number,
+  ): void {
+    void this.updateComplete.then(() => {
+      if (!this.isConnected || request !== this._modeTransitionRequest || this._mode !== targetMode) return;
       const chrome = this.renderRoot.querySelector('.editorchrome') as HTMLElement | null;
       const inner = chrome?.querySelector('.editorchrome-inner') as HTMLElement | null;
-      if (!chrome || !inner) return;
-      // A rapid second switch may arrive while the previous WAAPI transform is
-      // still scaling this same inner node. Cancel it before measuring the new
-      // natural height; `fromHeight` already captured the presented midpoint.
-      this._cancelEditorSwapAnimations();
-      const toHeight = inner.getBoundingClientRect().height;
-      chrome.classList.add('resizing');
-      const timing: KeyframeAnimationOptions = {
-        duration: 190,
-        easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)',
-      };
-      const animations: Animation[] = [];
-      if (fromHeight > 0 && toHeight > 0 && Math.abs(fromHeight - toHeight) > 0.5) {
-        const height = chrome.animate([
-          { height: `${fromHeight}px` },
-          { height: `${toHeight}px` },
-        ], timing);
-        height.id = 'hp-editor-height-swap';
-        animations.push(height);
+      const targetChromeHeight = targetMode === 'view' ? 0 : inner?.scrollHeight || inner?.getBoundingClientRect().height || 0;
+      const totalHeight = Math.max(1, from.stageHeight + from.editorChromeHeight);
+      const targetStageHeight = Math.max(1, totalHeight - targetChromeHeight);
+      const targetStageWidth = this._stageEl?.clientWidth || from.stageWidth;
+      if (targetStageWidth <= 0 || targetStageHeight <= 0) {
+        this._modeTransitionPreparing = false;
+        this._modeTransitionVisual = null;
+        this._applyView(targetZoom, targetCenterX, targetCenterY);
+        this.requestUpdate();
+        return;
       }
-      const content = inner.animate([
-        { opacity: 0.42, transform: 'translateY(5px) scale(0.995)' },
-        { opacity: 1, transform: 'translateY(0) scale(1)' },
-      ], timing);
-      content.id = 'hp-editor-content-swap';
-      animations.push(content);
-      this._editorSwapAnimations = animations;
-      void Promise.allSettled(animations.map((animation) => animation.finished)).then(() => {
-        if (this._editorSwapAnimations !== animations) return;
-        this._editorSwapAnimations = [];
-        chrome.classList.remove('resizing');
-      });
+      const targetView = this._viewForModeTarget(
+        targetZoom, targetCenterX, targetCenterY, targetStageWidth, targetStageHeight,
+      );
+      const to: ModeVisualState = {
+        presentedMode: targetMode,
+        editorChromeHeight: targetChromeHeight,
+        stageWidth: targetStageWidth,
+        stageHeight: targetStageHeight,
+        viewport: viewportFromViewBox(targetView, targetStageWidth),
+        stageColor: this._targetStageColor(targetMode),
+        paperColor: this._targetPaperColor(targetMode),
+        sceneBrightness: this._targetBrightness(targetMode),
+        architectureOpacity: targetMode === 'decor' ? 0.35 : 1,
+        backdropOpacity: targetMode === 'decor' && this._decorTool !== 'backdrop' ? 0.5 : 1,
+        viewWeight: targetMode === 'view' ? 1 : 0,
+        editorWeight: targetMode === 'view' ? 0 : 1,
+        toolbarContentOpacity: targetMode === 'view' ? 0 : 1,
+      };
+      this._modeTransitionPreparing = false;
+      const forceAtomic = this._modeTransitionForceAtomic;
+      this._modeTransitionForceAtomic = false;
+      this._modeTransition.start(from, to, targetMode,
+        this._reducedMotion || forceAtomic ? 0 : 220);
     });
   }
 
   /** Change the space with the usual sideways transition. */
   private _slideTo(id: string, dir: 'left' | 'right'): void {
     if (id === this._space) return;
+    this._cancelModeTransition(true);
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
     if (this._activeDraftId) this._resumeDraftBySpace[this._space] = this._activeDraftId;
     this._space = id;
@@ -1244,6 +1428,8 @@ class HouseplanCard extends LitElement {
     flashKind: 'event' | 'transition' | null;
     timer: number;
     gen: number;
+    expiresAt?: number;
+    alarmActive?: boolean;
   }>();
   /** live-vacuum runtime per marker: RAW robot coords (matrix applied at render) */
   private _vacRt = new Map<string, { trail: VacPt[]; lastKey: string; lastTs: number;
@@ -1289,9 +1475,31 @@ class HouseplanCard extends LitElement {
 
   private _pageVisibility = (signal: PageVisibilitySignal): void => {
     this._continuity.visibility(signal);
-    if (signal.kind === 'hidden') return;
+    if (signal.kind === 'hidden') {
+      if (this._modeTransitionPreparing) {
+        // There is no measured controller endpoint to commit yet. Keep the
+        // already queued measurement but force its synchronous atomic path;
+        // cancelling here would expose target chrome with the old camera.
+        this._modeTransitionForceAtomic = true;
+      } else {
+        this._cancelModeTransition(true);
+      }
+      return;
+    }
     this._vacJumpOnce = true;
-    if (!signal.long) return; // strict quick-return no-op: preserve hover and DOM
+    if (!signal.long) {
+      const now = Date.now();
+      let expired = false;
+      for (const runtime of this._activityRt.values()) {
+        if (!runtime.flashKind || (runtime.expiresAt || runtime.flashTs + ACTIVITY_WINDOW_MS) > now) continue;
+        runtime.flashTs = 0;
+        runtime.flashKind = null;
+        runtime.expiresAt = 0;
+        expired = true;
+      }
+      if (expired) this.requestUpdate();
+      return; // preserve hover and the completed visual frame
+    }
     // A long sleep may have frozen the sky/activity clocks. Recompute them as
     // one candidate without clearing the currently visible hover or frame,
     // and revalidate config+layout as one structural pair.
@@ -1448,6 +1656,9 @@ class HouseplanCard extends LitElement {
     this._continuityUnsub?.();
     this._continuityUnsub = subscribePageVisibility(this.ownerDocument, this._pageVisibility);
     super.connectedCallback();
+    this._motionMedia = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    this._reducedMotion = !!this._motionMedia?.matches;
+    this._motionMedia?.addEventListener?.('change', this._onMotionChange);
     svgScreenBlendSupported(this.ownerDocument).then((supported) => {
       if (supported === this._glowScreenBlend) return;
       this._glowScreenBlend = supported;
@@ -1509,6 +1720,8 @@ class HouseplanCard extends LitElement {
     window.removeEventListener('popstate', this._onLocationChanged);
     this._continuityUnsub?.();
     this._continuityUnsub = undefined;
+    this._motionMedia?.removeEventListener?.('change', this._onMotionChange);
+    this._motionMedia = undefined;
     if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
     if (this._refitRaf) { cancelAnimationFrame(this._refitRaf); this._refitRaf = 0; }
     if (this._skySnapRaf) { cancelAnimationFrame(this._skySnapRaf); this._skySnapRaf = 0; }
@@ -1532,15 +1745,14 @@ class HouseplanCard extends LitElement {
     this._signer.dispose();
     clearTimeout(this._toastTimer);
     clearTimeout(this._slideTimer);
-    clearTimeout(this._navMotionTimer);
-    this._cancelEditorSwapAnimations();
+    this._modeTransition.dispose();
+    this._modeTransitionVisual = null;
+    this._modeTransitionPreparing = false;
+    this._modeTransitionForceAtomic = false;
+    this._modeTransitionRequest++;
     this._slideTimer = undefined;
-    this._navMotionTimer = undefined;
-    // The timers are the normal owners of these transient classes. Once the
-    // timers are cleared on detach, reset their state too or a same-element
-    // reattach keeps nav-enter overflow clipping / hpnav transitions forever.
+    // Navigation transitions are session-only and never survive a remount.
     this._slide = '';
-    this._navMotion = '';
     clearTimeout(this._bootTimer);
     this._bootTimer = undefined; // AUD-1552-01: a cleared id must not block the reconnect watcher
     clearTimeout(this._bootSoftTimer);
@@ -3027,7 +3239,8 @@ class HouseplanCard extends LitElement {
     const now = Date.now();
     const activity = [...this._activityRt.entries()]
       .map(([id, runtime]) => `${id}:${runtime.gen}:${runtime.flashTs}:`
-        + `${runtime.flashTs > 0 && now - runtime.flashTs <= ACTIVITY_WINDOW_MS ? 1 : 0}`)
+        + `${runtime.flashKind
+          && (runtime.expiresAt || runtime.flashTs + ACTIVITY_WINDOW_MS) > now ? 1 : 0}`)
       .join('|');
     if (this._capturedSnapshotSequence === this._hassSequence
         && this._capturedSnapshotDevices === this._devices
@@ -3093,6 +3306,7 @@ class HouseplanCard extends LitElement {
             sourceDetails: false,
             lightDevices: this._devices,
             lightSources: planLightSources,
+            reducedMotion: this._reducedMotion,
           },
         ));
       }
@@ -3647,6 +3861,7 @@ class HouseplanCard extends LitElement {
       activityRuntime: this._activityRt.get(d.id),
       sourceDetails: false,
       lightDevices: this._renderDevices,
+      reducedMotion: this._reducedMotion,
     });
   }
 
@@ -4202,6 +4417,8 @@ class HouseplanCard extends LitElement {
   /** Hold the last complete frame after a long sleep; never hide the scene. */
   private _beginResumeSettle(): void {
     if (this._booting || this._resumeSettling) return;
+    if (this._modeTransitionPreparing) this._modeTransitionForceAtomic = true;
+    else this._cancelModeTransition(true);
     this._viewportInvalidAt = 0;
     this._beginContinuityCandidate('warm-resume', false);
     // A card can be detached for the whole visibility event and reattached as
@@ -4214,6 +4431,7 @@ class HouseplanCard extends LitElement {
 
   /** Recompute the view for a new scene size, preserving zoom and center. */
   private _refitView(): void {
+    if (this._modeTransitionBusy) return;
     const stage = this._stageEl;
     // ResizeObserver may deliver a zero/transitional box while a browser tab
     // is frozen or while Lovelace replaces the card. Mutating `_view` from
@@ -4875,7 +5093,10 @@ class HouseplanCard extends LitElement {
   private _leaveCardRoute(): void {
     if (this._routeDepartureHandled) return;
     this._routeDepartureHandled = true;
-    if (this._mode !== 'view') this._setMode('view');
+    // The destination page cannot display this decorative transition and may
+    // disconnect us before its first measured frame. Commit View atomically so
+    // the warm tombstone never records an editor camera under `mode: view`.
+    if (this._mode !== 'view') this._setMode('view', false);
     this._pendingNavMode = null;
     this._geometryHistory.clear();
     this._activeDraftId = null;
@@ -4924,7 +5145,7 @@ class HouseplanCard extends LitElement {
     this._saveNav();
   }
 
-  private _setMode(mode: 'view' | 'plan' | 'devices' | 'decor'): void {
+  private _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): void {
     if (this._kiosk && mode !== 'view') return; // wall devices never edit
     // A mode command is newer than the editor remembered by a same-route warm
     // remount. Clear it before the same-mode early return: while can_write is
@@ -4933,26 +5154,53 @@ class HouseplanCard extends LitElement {
     // cancel the deferred editor in one press, not let the server response
     // reopen it and force a second press (#95).
     this._pendingNavMode = null;
-    if (this._mode === mode) return;
+    if (this._mode === mode) {
+      if (!animate && mode === 'view' && this._modeTransitionBusy) {
+        const from = this._currentModeVisual(mode);
+        const targetZoom = this._modeTransitionTargetZoom;
+        const targetCenterX = this._modeTransitionTargetCenterX;
+        const targetCenterY = this._modeTransitionTargetCenterY;
+        this._cancelModeTransition(false);
+        this._commitViewModeAtomic(from, targetZoom, targetCenterX, targetCenterY);
+      }
+      return;
+    }
     this._bootSoftCancel(); // navigation owns its own short, bounded transition
     if ((mode === 'plan' || mode === 'decor') && !this._norm) {
       this._showToast(this._t('toast.markup_needs_server'));
       return;
     }
     const previousMode = this._mode;
+    const capturedVisual = this._currentModeVisual(previousMode);
+    const retargeting = this._modeTransitionBusy;
+    // The target toolbar replaces the old editor markup during the hidden
+    // measurement frame. Give that incoming content its own coordinate on the
+    // shared controller so editor-to-editor switches do not pop abruptly.
+    const fromVisual = capturedVisual && previousMode !== 'view' && mode !== 'view'
+      ? { ...capturedVisual, toolbarContentOpacity: this._reducedMotion ? 1 : 0.35 }
+      : capturedVisual;
+    this._cancelModeTransition(false);
     this._editorSecondary.closeForNavigation();
-    const editorSwap = previousMode !== 'view' && mode !== 'view';
-    const editorFromHeight = editorSwap
-      ? (this.renderRoot.querySelector('.editorchrome-inner') as HTMLElement | null)
-        ?.getBoundingClientRect().height || 0
-      : 0;
-    if (!editorSwap) this._cancelEditorSwapAnimations();
     // A live decor transform is a transaction. Switching tabs must cancel and
     // restore it, not merely forget its pointer record after the config has
     // already been mutated by move/resize.
     if (this._decorMove || this._dtDrag || this._bdDrag) this._cancelDecorGesture();
-    const baseChanges = !this._spaceModel().bg && (mode === 'view') !== (this._mode === 'view');
-    if (this._mode === 'view' && mode !== 'view') {
+    const baseChanges = !this._spaceModel().bg && (mode === 'view') !== (previousMode === 'view');
+    // A running/preparing transition has not committed its target to `_zoom`
+    // yet. Retarget from the painted frame, but preserve the latest camera
+    // intent; otherwise rapid View -> editor A -> editor B resurrects the old
+    // View zoom/center and settles somewhere a direct transition never would.
+    const returningToEditor = retargeting && previousMode === 'view' && mode !== 'view'
+      ? this._modeTransitionEditorCamera : null;
+    let targetZoom = returningToEditor?.zoom
+      ?? (retargeting ? this._modeTransitionTargetZoom : this._zoom);
+    let targetCenterX = returningToEditor
+      ? returningToEditor.centerX
+      : retargeting ? this._modeTransitionTargetCenterX : fromVisual?.viewport.centerX;
+    let targetCenterY = returningToEditor
+      ? returningToEditor.centerY
+      : retargeting ? this._modeTransitionTargetCenterY : fromVisual?.viewport.centerY;
+    if (previousMode === 'view' && mode !== 'view' && !retargeting) {
       // remember the view-mode viewport: whatever zooming happens inside the
       // editors is a working tool, not what the user wants to see afterwards
       const v = this._view;
@@ -4962,34 +5210,30 @@ class HouseplanCard extends LitElement {
         cx: v ? v.x + v.w / 2 : undefined,
         cy: v ? v.y + v.h / 2 : undefined,
       };
+      if (baseChanges) {
+        targetZoom = 1;
+        targetCenterX = undefined;
+        targetCenterY = undefined;
+      }
     }
     if (previousMode === 'plan' && this._activeDraftId)
       this._resumeDraftBySpace[this._space] = this._activeDraftId;
     this._mode = mode;
     this._editorChromeMode = mode === 'view' ? previousMode as 'plan' | 'devices' | 'decor' : mode;
-    this._startNavMotion(previousMode === 'view' ? 'enter' : mode === 'view' ? 'exit' : 'swap');
-    if (editorSwap) this._animateEditorSwap(editorFromHeight);
-    if (baseChanges) {
-      // refit against the new base: the editors measure from the full square,
-      // the view from the content frame — a view clamped to one is nonsense
-      // against the other (HP-1490-03)
-      this._zoom = 1;
-      this._view = null; // updated() refits on the next frame
-    }
     if (mode === 'view') {
+      if (previousMode !== 'view' && !retargeting) {
+        this._modeTransitionEditorCamera = {
+          zoom: this._zoom,
+          centerX: fromVisual?.viewport.centerX,
+          centerY: fromVisual?.viewport.centerY,
+        };
+      }
       const snap = this._viewModeSnap;
-      this._viewModeSnap = null;
       // restore the snapshot only for the space it was taken in
       if (snap && snap.space === this._space) {
-        this._zoom = snap.zoom;
-        this._view = null;
-        requestAnimationFrame(() => {
-          if (!this.isConnected || !this._stageEl
-              || this._mode !== 'view' || this._space !== snap.space) return;
-          this._applyView(snap.zoom, snap.cx, snap.cy);
-          this._saveZoom(); // editor wheel zoom wrote itself to LS_ZOOM — put the view zoom back
-          this.requestUpdate();
-        });
+        targetZoom = snap.zoom;
+        targetCenterX = snap.cx;
+        targetCenterY = snap.cy;
       } else if (snap) {
         // HP-1543-01: the floor CHANGED inside the editor — the snapshot
         // belongs to the floor the editor was entered from, while _zoom still
@@ -5000,8 +5244,47 @@ class HouseplanCard extends LitElement {
         // _restoreZoom() puts back this floor's saved VIEW viewport. Its rAF
         // reads _zoomBySpace, not the snapshot, so the same-tick floor-tab
         // race the view-only guard protects against stays closed.
-        this._restoreZoom();
+        targetZoom = this._zoomBySpace[this._space] || 1;
+        targetCenterX = undefined;
+        targetCenterY = undefined;
       }
+    } else {
+      this._modeTransitionEditorCamera = {
+        zoom: targetZoom, centerX: targetCenterX, centerY: targetCenterY,
+      };
+    }
+    this._modeTransitionTargetZoom = targetZoom;
+    this._modeTransitionTargetCenterX = targetCenterX;
+    this._modeTransitionTargetCenterY = targetCenterY;
+    const request = ++this._modeTransitionRequest;
+    if (!animate) {
+      // The only non-animated caller is route departure; keep the guard local
+      // so a future editor caller cannot accidentally use View geometry.
+      if (mode === 'view') {
+        this._commitViewModeAtomic(fromVisual, targetZoom, targetCenterX, targetCenterY);
+      }
+    } else if (fromVisual) {
+      this._modeTransitionPreparing = true;
+      this._modeTransitionVisual = fromVisual;
+      this._prepareModeTransition(
+        request, fromVisual, mode, targetZoom, targetCenterX, targetCenterY,
+      );
+    } else {
+      // A zero-sized stage cannot animate. Keep the functional fallback
+      // atomic and publish the exact target as soon as it is measurable.
+      this._modeTransitionPreparing = false;
+      this._modeTransitionVisual = null;
+      this._zoom = targetZoom;
+      this._view = null;
+      requestAnimationFrame(() => {
+        if (!this.isConnected || request !== this._modeTransitionRequest || this._mode !== mode) return;
+        this._applyView(targetZoom, targetCenterX, targetCenterY);
+        if (mode === 'view') {
+          this._viewModeSnap = null;
+          this._modeTransitionEditorCamera = null;
+        }
+        this.requestUpdate();
+      });
     }
     this._path = [];
     this._cursorPt = null;
@@ -11451,7 +11734,10 @@ class HouseplanCard extends LitElement {
     const empty = svg`` as unknown as TemplateResult;
     // HARD gates — the feature is simply not on: leaving an editor, a space
     // with rays off, or night. Those never fade, they just are not there.
-    if (this._editing || !this._effSunRays()) { this._sunFadeReset(); return empty; }
+    if (this._editing || !this._effSunRays()) {
+      this._sunFadeReset();
+      return empty;
+    }
     const north = this._effNorth();
     const sun = north !== null ? sunStateOf(this._renderPlanHass) : null;
     if (!sun || sun.elevation <= 0) { this._sunFadeReset(); return empty; }
@@ -13088,6 +13374,9 @@ class HouseplanCard extends LitElement {
     const backdropHref = space.bg ? this._display(space.bg.href) : '';
     const recoveryReason = (this._continuity.overlayVisible || this._continuity.state === 'recovery-error')
       ? this._continuity.recoveryReason : null;
+    const modeVisual = this._modeTransitionVisual;
+    const transitionStageBg = modeVisual?.stageColor || stageBg;
+    const transitionBrightness = modeVisual?.sceneBrightness ?? (dayNight ? 1 - planDim : 1);
 
     return html`
       <ha-card
@@ -13172,9 +13461,12 @@ class HouseplanCard extends LitElement {
             : nothing}
         </div>
         ${this._canEdit && !this._kiosk
-          ? html`<div class="editorchrome ${this._editing ? 'open' : ''}${this._navMotion ? ' nav-' + this._navMotion : ''}"
-              aria-hidden=${this._editing ? 'false' : 'true'} ?inert=${!this._editing}>
-              <div class="editorchrome-inner ${this._navMotion ? 'nav-' + this._navMotion : ''}">
+          ? html`<div class="editorchrome ${this._editing || this._modeTransitionBusy ? 'open' : ''}${this._modeTransitionBusy ? ' transitioning' : ''}"
+              style=${modeVisual ? `height:${modeVisual.editorChromeHeight}px;opacity:${modeVisual.editorWeight}` : nothing}
+              aria-hidden=${this._editing && !this._modeTransitionBusy ? 'false' : 'true'}
+              ?inert=${!this._editing || this._modeTransitionBusy}>
+              <div class="editorchrome-inner"
+                style=${modeVisual ? `opacity:${modeVisual.toolbarContentOpacity}` : nothing}>
                 ${editorChromeMode === 'plan'
                   ? this._renderMarkupBar()
                   : editorChromeMode === 'devices'
@@ -13185,8 +13477,9 @@ class HouseplanCard extends LitElement {
           : nothing}
         </div>
 
-        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'boundary' ? this._boundaryStageClass : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._bdMovable ? ' bdgrab' : ''}${this._bdDrag ? ' bdgrabbing' : ''}${dayNight ? ' daynight' : ''}${dayNight && this._skySnap ? ' skysnap' : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}${this._navMotion ? ' hpnav' : ''}"
-          style="height:${this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}${stageBg ? `;background:${stageBg}` : ''};--wall-fill:${this._fillColors.wall_fill.c};--wall-fill-op:${this._fillColors.wall_fill.a}"
+        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'boundary' ? this._boundaryStageClass : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._bdMovable ? ' bdgrab' : ''}${this._bdDrag ? ' bdgrabbing' : ''}${dayNight ? ' daynight' : ''}${dayNight && this._skySnap ? ' skysnap' : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}${this._modeTransitionBusy ? ' mode-transition' : ''}"
+          ?inert=${this._modeTransitionBusy}
+          style="height:${modeVisual ? `${modeVisual.stageHeight}px` : this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}${transitionStageBg ? `;background:${transitionStageBg}` : ''};--wall-fill:${this._fillColors.wall_fill.c};--wall-fill-op:${this._fillColors.wall_fill.a};--hp-mode-architecture-opacity:${modeVisual ? modeVisual.architectureOpacity : this._mode === 'decor' ? 0.35 : 1}${modeVisual ? `;--hp-mode-paper:${modeVisual.paperColor}` : ''}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
           @pointerdown=${(e: PointerEvent) => { this._notePointer(e); this._stagePointerDown(e); }}
@@ -13194,9 +13487,9 @@ class HouseplanCard extends LitElement {
           @pointerup=${(e: PointerEvent) => this._stagePointerUp(e)}
           @pointercancel=${(e: PointerEvent) => this._stagePointerCancel(e)}>
           ${this._renderEditorSecondary()}
-          <div class="zoomwrap ${this._slide ? 'slide-' + this._slide : ''}${this._navMotion ? ' nav-' + this._navMotion : ''}"
-            ?inert=${this._continuity.overlayBlocksInteraction}
-            style="${dayNight ? `filter:brightness(${(1 - planDim).toFixed(3)})` : ''}">
+          <div class="zoomwrap ${this._slide ? 'slide-' + this._slide : ''}"
+            ?inert=${this._continuity.overlayBlocksInteraction || this._modeTransitionBusy}
+            style="${transitionBrightness !== 1 ? `filter:brightness(${transitionBrightness.toFixed(3)})` : ''}">
           <svg viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="xMidYMid meet">
             ${''/* THE PAPER IS THE ROOMS (docs/BACKDROP.md §3, owner
                    2026-08-04). Opaque shapes stop the scene background —
@@ -13226,8 +13519,8 @@ class HouseplanCard extends LitElement {
               ? svg`<rect x="${view.x}" y="${view.y}" width="${view.w}" height="${view.h}" fill="url(#hp-grid-major)" pointer-events="none"></rect>`
               : nothing}
             ${space.bg && backdropHref
-              ? svg`<image href="${backdropHref}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}"
-                  opacity="${this._mode === 'decor' && this._decorTool !== 'backdrop' ? 0.5 : 1}"
+              ? svg`<image class="hp-backdrop" href="${backdropHref}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}"
+                  opacity="${modeVisual?.backdropOpacity ?? (this._mode === 'decor' && this._decorTool !== 'backdrop' ? 0.5 : 1)}"
                   @load=${() => this._onBackdropLoaded(space.bg!.href, backdropHref)}
                   transform=${space.bg.angle
                     ? `rotate(${space.bg.angle} ${space.bg.x + space.bg.w / 2} ${space.bg.y + space.bg.h / 2})`
@@ -13361,7 +13654,7 @@ class HouseplanCard extends LitElement {
             ${this._renderGlowBaseRooms(space, glowBase)}
             ${this._renderOpeningTunnelFills(space, glowBase, 'glow-base')}
             ${this._renderSvgRoomLabels(space, disp)}
-            ${!this._markup ? this._renderGlowLayer(space, disp) : nothing}
+            ${this._renderGlowLayer(space, disp)}
             ${this._renderSunRays(space)}
             ${this._editing ? this._renderAlignGuides() : nothing}
             ${opMeasure?.guide ? this._renderOpeningCenterTick(opMeasure.guide) : nothing}
@@ -13622,9 +13915,7 @@ class HouseplanCard extends LitElement {
 
   /** Start/restart a short semantic event or direct-terminal transition. */
   private _activitySourceKey(d: DevItem): string {
-    return presentationSourceSignature(
-      this._planHass, d, this._config?.show_temperature !== false,
-    );
+    return activitySourceSignature(this._planHass, d);
   }
 
   private _activitySnapshot(
@@ -13636,22 +13927,22 @@ class HouseplanCard extends LitElement {
     );
     return {
       samples: sources.samples,
-      sourceKey: presentationSourceSignature(
-        this._planHass, d, this._config?.show_temperature !== false, sources,
-      ),
+      sourceKey: activitySourceSignature(this._planHass, d, sources),
     };
   }
 
   private _stampActivity(id: string, kind: 'event' | 'transition', sources?: string): void {
     let rt = this._activityRt.get(id);
     if (!rt) {
-      rt = { sources: sources || '', last: {}, flashTs: 0, flashKind: null, timer: 0, gen: 0 };
+      rt = { sources: sources || '', last: {}, flashTs: 0, flashKind: null, timer: 0, gen: 0,
+        expiresAt: 0, alarmActive: false };
       this._activityRt.set(id, rt);
     }
     if (sources != null) rt.sources = sources;
     // Event outranks a transition when two sources change in the same hass tick.
     if (rt.flashTs && Date.now() - rt.flashTs < ACTIVITY_WINDOW_MS && rt.flashKind === 'event' && kind === 'transition') return;
     rt.flashTs = Date.now();
+    rt.expiresAt = rt.flashTs + ACTIVITY_WINDOW_MS;
     rt.flashKind = kind;
     rt.gen++;
     clearTimeout(rt.timer);
@@ -13667,18 +13958,27 @@ class HouseplanCard extends LitElement {
   private _syncActivityRuntime(): Map<string, { samples: EntityVisualSample[]; sourceKey: string }> {
     const snapshots = new Map<string, { samples: EntityVisualSample[]; sourceKey: string }>();
     if (!this.hass) return snapshots;
+    if (this._config?.live_states === false) {
+      for (const runtime of this._activityRt.values()) clearTimeout(runtime.timer);
+      this._activityRt.clear();
+      return snapshots;
+    }
     const live = new Set<string>();
     const planLightSources = resolvedLightSources(this._planHass, this._devices);
     for (const d of this._devices) {
       if (d.hidden) continue;
-      if (normalizeDeviceDisplay(d.marker?.display) === 'static_icon') continue;
+      // Alarm/continuous semantics are resolved from the current samples and
+      // need no finite history. Keep that history only while its display mode
+      // can actually show it, so a later mode change cannot replay old edges.
+      if (normalizeDeviceDisplay(d.marker?.display) !== 'icon_ripple') continue;
       live.add(d.id);
       const snapshot = this._activitySnapshot(d, planLightSources);
       snapshots.set(d.id, snapshot);
       const { samples, sourceKey } = snapshot;
       let rt = this._activityRt.get(d.id);
       if (!rt) {
-        rt = { sources: sourceKey, last: {}, flashTs: 0, flashKind: null, timer: 0, gen: 0 };
+        rt = { sources: sourceKey, last: {}, flashTs: 0, flashKind: null, timer: 0, gen: 0,
+          expiresAt: 0, alarmActive: combineVisualSamples(samples).status === 'alarm' };
         for (const sample of samples) rt.last[sample.eid] = sample.state;
         this._activityRt.set(d.id, rt);
         continue;
@@ -13691,6 +13991,8 @@ class HouseplanCard extends LitElement {
       rt.last = {};
       rt.flashTs = 0;
       rt.flashKind = null;
+      rt.expiresAt = 0;
+      rt.alarmActive = combineVisualSamples(samples).status === 'alarm';
       for (const sample of samples) rt.last[sample.eid] = sample.state;
     }
     for (const [id, rt] of this._activityRt) {
@@ -13711,11 +14013,28 @@ class HouseplanCard extends LitElement {
     const snapshots = this._syncActivityRuntime();
     for (const d of this._devices) {
       if (d.hidden) continue;
-      if (normalizeDeviceDisplay(d.marker?.display) === 'static_icon') continue;
+      if (normalizeDeviceDisplay(d.marker?.display) !== 'icon_ripple') continue;
       const snapshot = snapshots.get(d.id) || this._activitySnapshot(d);
       const { samples, sourceKey } = snapshot;
       const rt = this._activityRt.get(d.id);
       if (!rt || rt.sources !== sourceKey) continue;
+      const alarm = combineVisualSamples(samples).status === 'alarm';
+      if (alarm) {
+        if (!rt.alarmActive) {
+          clearTimeout(rt.timer);
+          rt.flashTs = 0;
+          rt.flashKind = null;
+          rt.expiresAt = 0;
+        }
+        for (const sample of samples) rt.last[sample.eid] = sample.state;
+        rt.alarmActive = true;
+        continue;
+      }
+      if (rt.alarmActive) {
+        for (const sample of samples) rt.last[sample.eid] = sample.state;
+        rt.alarmActive = false;
+        continue;
+      }
       // A direct closed↔open fallback is only a substitute for integrations
       // that omit opening/closing. Once a real travelling state is observed,
       // it owns the ring and the old 3.3 s fallback is discarded.
@@ -13723,6 +14042,7 @@ class HouseplanCard extends LitElement {
         clearTimeout(rt.timer);
         rt.flashTs = 0;
         rt.flashKind = null;
+        rt.expiresAt = 0;
       }
       let edge: 'event' | 'transition' | null = null;
       for (const sample of samples) {
@@ -14330,6 +14650,8 @@ class HouseplanCard extends LitElement {
       : d.userHidden ? this._t('marker.hidden_ghost') : d.name;
     const deviceAriaLabel = [
       ghostLabel,
+      presentation.pulse.kind !== 'none'
+        ? this._t((`marker.pulse_a11y_${presentation.pulse.reason}`) as I18nKey) : '',
       presentation.valueBadge
         ? `${presentation.valueBadge.sourceLabel}: ${presentation.valueBadge.fullText}` : '',
     ].filter(Boolean).join(', ');
@@ -16161,6 +16483,7 @@ class HouseplanCard extends LitElement {
           designPreview: true,
           activityRuntime: this._activityRt.get(previewDevice.id),
           lightDevices: previewLightDevices,
+          reducedMotion: this._reducedMotion,
         })
       : null;
     const badgeCandidates = previewDevice
@@ -16594,17 +16917,18 @@ class HouseplanCard extends LitElement {
                 <label for="marker-value-badge-source">${this._t('marker.value_badge_source')}</label>
                 ${this._help('marker.value_badge_source.help')}
               </div>
-              <select id="marker-value-badge-source" class="areasel" .value=${badgeSourceKey}
+              <select id="marker-value-badge-source" class="areasel"
                 @change=${(e: Event) => (this._markerDialog = {
                   ...d,
                   valueBadgeSource: valueBadgeSourceFromKey((e.target as HTMLSelectElement).value),
                   valueBadgeEnabled: true,
                   valueBadgeTouched: true,
                 })}>
-                ${badgeSourceMissing ? html`<option value=${badgeSourceKey}>
+                ${badgeSourceMissing ? html`<option value=${badgeSourceKey} selected>
                   ${this._t('marker.value_badge_missing')}
                 </option>` : nothing}
                 ${badgeCandidates.map((candidate) => html`<option value=${candidate.key}
+                  ?selected=${candidate.key === badgeSourceKey}
                   title=${candidate.technical}>
                   ${this._valueBadgeCandidateLabel(candidate)} · ${candidate.value}
                 </option>`)}
@@ -16623,7 +16947,7 @@ class HouseplanCard extends LitElement {
                 <label for="marker-value-badge-position">${this._t('marker.value_badge_position')}</label>
                 ${this._help('marker.value_badge_position.help')}
               </div>
-              <select id="marker-value-badge-position" class="areasel" .value=${effectiveBadgePosition}
+              <select id="marker-value-badge-position" class="areasel"
                 @change=${(e: Event) => (this._markerDialog = {
                   ...d,
                   valueBadgeEnabled: effectiveBadgeEnabled,
@@ -16632,7 +16956,9 @@ class HouseplanCard extends LitElement {
                   valueBadgeTouched: true,
                 })}>
                 ${(['right', 'bottom', 'left', 'top'] as const).map((position) => html`
-                  <option value=${position}>${this._t((`marker.value_badge_${position}`) as any)}</option>`)}
+                  <option value=${position} ?selected=${position === effectiveBadgePosition}>
+                    ${this._t((`marker.value_badge_${position}`) as any)}
+                  </option>`)}
               </select>
             ` : nothing}
           </fieldset>

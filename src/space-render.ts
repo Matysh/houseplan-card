@@ -51,6 +51,7 @@ export interface StaticRenderOpts {
   liveStates?: boolean;
   showTemperature?: boolean;
   showSignal?: boolean;
+  reducedMotion?: boolean;
   /**
    * Resolve a stored content url to what the DOM may actually request — the
    * plan lives behind `requires_auth`, so it needs an `authSig` signature.
@@ -250,10 +251,13 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       sourceDetails: false,
       lightDevices: devs,
       lightSources: planLightSources,
+      reducedMotion: o.reducedMotion,
     });
     const st = [`left:${left}%`, `top:${top}%`, ...deviceFaceStyle(presentation)];
     const deviceAriaLabel = [
       d.name,
+      presentation.pulse.kind !== 'none'
+        ? t(o.lang, (`marker.pulse_a11y_${presentation.pulse.reason}`) as any) : '',
       presentation.valueBadge
         ? `${presentation.valueBadge.sourceLabel}: ${presentation.valueBadge.fullText}` : '',
     ].filter(Boolean).join(', ');

@@ -28,7 +28,11 @@ inert everywhere outside its editor).
   carry an **X** that closes the editor back to View; re-clicking the active tab
   does nothing; editors switch directly with a short content fade and an
   interpolation between their measured toolbar heights, including wrapped
-  multi-row layouts. Reduced-motion preferences disable this transition.
+  multi-row layouts. Toolbar height, usable plan height, zoom/centre, canvas
+  background and editor-specific layers move on one short timeline, so opening
+  an editor never flashes a default scale or a mixed dark/white frame. A rapid
+  second choice retargets from the visible intermediate frame. Reduced-motion
+  preferences apply the same final state immediately.
 - An editor's primary toolbar contains only persistent tools. Close is pinned
   in its own end cap. Selection actions, active-tool parameters, operation
   hints and palettes appear in one translucent context tray over the top of the

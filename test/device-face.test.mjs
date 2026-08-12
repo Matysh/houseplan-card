@@ -3,7 +3,11 @@ import assert from 'node:assert/strict';
 import { deviceFaceStyle } from '../test-build/device-face.js';
 
 const face = (rippleColor) => ({
-  display: 'icon_ripple', scale: 1, rippleScale: 3, rippleColor,
+  display: 'icon_ripple', scale: 1,
+  pulse: {
+    kind: 'continuous', reason: 'running', generation: 1, expiresAt: null,
+    color: rippleColor, diameterScale: 3, animated: true, reducedMotionIndicator: 'none',
+  },
 });
 
 test('device face never emits an arbitrary persisted ripple declaration', () => {

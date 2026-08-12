@@ -13,10 +13,10 @@ import { t, langOf, type Lang } from './i18n';
 import { ContentSigner } from './signing';
 import { normalizeDeviceDisplay, referencedContentUrls } from './logic';
 import { acquireHaRegistries, activeRegistryHass, haRegistrySnapshot } from './ha-binding-status';
-import { edgeActivity } from './device-visual';
+import { combineVisualSamples, edgeActivity } from './device-visual';
 import { resolvedLightSources } from './devices';
 import {
-  presentationSourceSignature, resolveDevicePresentation, resolvePresentationSources,
+  activitySourceSignature, resolveDevicePresentation, resolvePresentationSources,
   type PresentationActivityRuntime,
 } from './device-presentation';
 import {
@@ -97,6 +97,13 @@ class HouseplanSpaceCard extends LitElement {
   private _capturedSnapshotDevices: DevItem[] | null = null;
   private _capturedSnapshotActivity = '';
   private _activityRuntime = new Map<string, StaticActivityRuntime>();
+  private _reducedMotion = false;
+  private _motionMedia?: MediaQueryList;
+  private _onMotionChange = (event: MediaQueryListEvent): void => {
+    this._reducedMotion = event.matches;
+    this._capturedSnapshotSequence = -1;
+    this.requestUpdate();
+  };
   private _onHaRegistryUpdate = () => {
     const revision = haRegistrySnapshot(this.hass).revision;
     if (revision === this._haRegistryRevision) return;
@@ -132,7 +139,23 @@ class HouseplanSpaceCard extends LitElement {
 
   private _pageVisibility = (signal: PageVisibilitySignal): void => {
     this._continuity.visibility(signal);
-    if (signal.kind === 'hidden' || !signal.long) return;
+    if (signal.kind === 'hidden') return;
+    if (!signal.long) {
+      const now = Date.now();
+      let expired = false;
+      for (const runtime of this._activityRuntime.values()) {
+        if (!runtime.flashKind || (runtime.expiresAt || runtime.flashTs + 3300) > now) continue;
+        runtime.flashTs = 0;
+        runtime.flashKind = null;
+        runtime.expiresAt = 0;
+        expired = true;
+      }
+      if (expired) {
+        this._capturedSnapshotSequence = -1;
+        this.requestUpdate();
+      }
+      return;
+    }
     if (Date.now() - this._renderSnapshotAt > 1000) this._continuity.note('device-snapshot-stale');
     this._continuityDataReady = false;
     this._continuityPaintToken = -1;
@@ -203,6 +226,9 @@ class HouseplanSpaceCard extends LitElement {
       this._continuityPaintToken = -1;
     }
     super.connectedCallback();
+    this._motionMedia = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    this._reducedMotion = !!this._motionMedia?.matches;
+    this._motionMedia?.addEventListener?.('change', this._onMotionChange);
     if (this.hass) this._ensureHaRegistryAuthority();
     this._continuityUnsub?.();
     this._continuityUnsub = subscribePageVisibility(this.ownerDocument, this._pageVisibility);
@@ -218,6 +244,8 @@ class HouseplanSpaceCard extends LitElement {
   public disconnectedCallback(): void {
     this._continuityUnsub?.();
     this._continuityUnsub = undefined;
+    this._motionMedia?.removeEventListener?.('change', this._onMotionChange);
+    this._motionMedia = undefined;
     this._unsub?.();
     this._unsub = undefined;
     window.clearTimeout(this._reloadRetryTimer);
@@ -268,6 +296,7 @@ class HouseplanSpaceCard extends LitElement {
     if (runtime.flashTs && Date.now() - runtime.flashTs < 3300
         && runtime.flashKind === 'event' && kind === 'transition') return;
     runtime.flashTs = Date.now();
+    runtime.expiresAt = runtime.flashTs + 3300;
     runtime.flashKind = kind;
     runtime.gen++;
     window.clearTimeout(runtime.timer);
@@ -285,13 +314,14 @@ class HouseplanSpaceCard extends LitElement {
     const planLightSources = resolvedLightSources(planHass, devices);
     for (const device of devices) {
       if (device.hidden) continue;
-      if (normalizeDeviceDisplay(device.marker?.display) === 'static_icon') continue;
+      // Finite edge history belongs only to the one mode that can present it.
+      // Otherwise badge/value/static -> icon_ripple can resurrect a short
+      // event that happened while no pulse was visible (#98 edge contract).
+      if (normalizeDeviceDisplay(device.marker?.display) !== 'icon_ripple') continue;
       live.add(device.id);
       const sources = resolvePresentationSources(planHass, device, devices, planLightSources);
       const samples = sources.samples;
-      const signature = presentationSourceSignature(
-        planHass, device, this._config?.show_temperature !== false, sources,
-      );
+      const signature = activitySourceSignature(planHass, device, sources);
       let runtime = this._activityRuntime.get(device.id);
       if (!runtime || runtime.sources !== signature) {
         if (runtime) window.clearTimeout(runtime.timer);
@@ -302,6 +332,8 @@ class HouseplanSpaceCard extends LitElement {
           flashKind: null,
           timer: 0,
           gen: 0,
+          expiresAt: 0,
+          alarmActive: combineVisualSamples(samples).status === 'alarm',
         };
         this._activityRuntime.set(device.id, runtime);
         continue;
@@ -311,6 +343,24 @@ class HouseplanSpaceCard extends LitElement {
         window.clearTimeout(runtime.timer);
         runtime.flashTs = 0;
         runtime.flashKind = null;
+        runtime.expiresAt = 0;
+      }
+      const alarm = combineVisualSamples(samples).status === 'alarm';
+      if (alarm) {
+        if (!runtime.alarmActive) {
+          window.clearTimeout(runtime.timer);
+          runtime.flashTs = 0;
+          runtime.flashKind = null;
+          runtime.expiresAt = 0;
+        }
+        for (const sample of samples) runtime.last[sample.eid] = sample.state;
+        runtime.alarmActive = true;
+        continue;
+      }
+      if (runtime.alarmActive) {
+        for (const sample of samples) runtime.last[sample.eid] = sample.state;
+        runtime.alarmActive = false;
+        continue;
       }
       let edge: 'event' | 'transition' | null = null;
       for (const sample of samples) {
@@ -342,8 +392,11 @@ class HouseplanSpaceCard extends LitElement {
 
   private _captureRenderDeviceSnapshot(): void {
     if (!this.hass) return;
+    const now = Date.now();
     const activity = [...this._activityRuntime.entries()]
-      .map(([id, runtime]) => `${id}:${runtime.gen}:${runtime.flashTs}`).join('|');
+      .map(([id, runtime]) => `${id}:${runtime.gen}:${runtime.flashTs}:`
+        + `${runtime.flashKind && (runtime.expiresAt || runtime.flashTs + 3300) > now ? 1 : 0}`)
+      .join('|');
     if (this._capturedSnapshotSequence === this._hassSequence
         && this._capturedSnapshotDevices === this._devices
         && this._capturedSnapshotActivity === activity) return;
@@ -384,6 +437,7 @@ class HouseplanSpaceCard extends LitElement {
             sourceDetails: false,
             lightDevices: this._devices,
             lightSources: planLightSources,
+            reducedMotion: this._reducedMotion,
           },
         ));
       }
@@ -707,6 +761,7 @@ class HouseplanSpaceCard extends LitElement {
       devices: [...(deviceSnapshot?.devices || this._devices)],
       presentations: deviceSnapshot?.presentations,
       activityRuntime: this._activityRuntime,
+      reducedMotion: this._reducedMotion,
       liveStates: this._config.live_states !== false,
       showTemperature: this._config.show_temperature !== false,
       showSignal: this._config.show_signal !== false,

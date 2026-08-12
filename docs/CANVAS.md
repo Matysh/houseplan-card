@@ -52,6 +52,17 @@ coordinate system.
   plan; it only changes what zoom `100 %` means and where panning
   stops.
 
+### View/editor camera handoff
+
+Entering or leaving an editor does not clear `_view` and wait for a later fit.
+The current view is expressed as a world-space centre plus screen
+pixels-per-unit. `ModeTransitionController` interpolates that representation
+together with the measured stage width/height, and derives a correctly
+aspect-matched viewBox on every frame. The editor may use its own working zoom,
+but View restores the saved same-space centre and zoom on exit; editor zoom is
+never written to View persistence. A zero-sized or reduced-motion path commits
+the exact target atomically without exposing a default-fit frame.
+
 ## §3 Validation limits
 
 `custom_components/houseplan/validation.py`:

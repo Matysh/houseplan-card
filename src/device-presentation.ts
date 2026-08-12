@@ -23,6 +23,7 @@ import { resolveToggleIntent, toggleCoverEntity } from './device-toggle';
 import type { DevItem } from './types';
 import { safeStoredColor } from './color';
 import { resolveDeviceValueBadge, type ResolvedValueBadge } from './device-value-badge';
+import { resolveDevicePulse, type ResolvedDevicePulse } from './device-pulse';
 
 export type PresentationSourceKind =
   | 'cover' | 'light' | 'controls' | 'device_role' | 'primary' | 'none';
@@ -85,6 +86,10 @@ export interface PresentationActivityRuntime {
   flashTs: number;
   flashKind: 'event' | 'transition' | null;
   gen: number;
+  /** Absolute deadline avoids reviving a frozen CSS animation after tab resume. */
+  expiresAt?: number;
+  /** Alarm owns the timeline and baselines source changes while it is active. */
+  alarmActive?: boolean;
 }
 
 export interface ResolvePresentationOptions {
@@ -102,6 +107,7 @@ export interface ResolvePresentationOptions {
   /** Pre-resolved whole-plan graph. Render/activity passes must build it once. */
   lightSources?: readonly ResolvedLightSource<DevItem>[];
   now?: number;
+  reducedMotion?: boolean;
 }
 
 export interface ResolvedDevicePresentation {
@@ -120,6 +126,7 @@ export interface ResolvedDevicePresentation {
   fallbackReason: ValueFallbackReason | null;
   activity: DeviceActivity;
   activityGeneration: number;
+  pulse: ResolvedDevicePulse;
 
   classes: string[];
   tempText: string | null;
@@ -417,6 +424,17 @@ export function presentationSourceSignature(
   return signatureOf(d, sources, value.source);
 }
 
+/** Activity runtime identity deliberately excludes the optional value badge
+ * source: changing a displayed value must not restart or cancel a pulse. */
+export function activitySourceSignature(
+  hass: any,
+  d: DevItem,
+  resolved?: ResolvedPresentationSources,
+): string {
+  const sources = resolved || resolvePresentationSources(hass, d);
+  return signatureOf(d, sources, null).replace(/\nvalue:none$/, '');
+}
+
 function explanationReason(
   d: DevItem,
   visual: DeviceVisualState,
@@ -447,22 +465,24 @@ function explanationReason(
 
 export function presentationClasses(presentation: Pick<
   ResolvedDevicePresentation,
-  'visual' | 'activity' | 'display' | 'effectiveHidden' | 'activityGeneration'
+  'visual' | 'activity' | 'display' | 'effectiveHidden' | 'activityGeneration' | 'pulse'
 >): string[] {
   if (presentation.effectiveHidden) return [];
   if (presentation.display === 'static_icon') return ['static-icon'];
   const classes: string[] = [];
   const { visual } = presentation;
-  if (visual.status === 'alarm') classes.push('alarm');
+  if (presentation.pulse.kind === 'alarm') classes.push('alarm');
   else if (visual.availability === 'unavailable') classes.push('unavail');
   else if (visual.status === 'working') classes.push('on');
   else if (visual.status === 'open') classes.push('open');
-  if (presentation.display === 'icon_ripple' && visual.status !== 'alarm'
-      && presentation.activity !== 'none') {
-    classes.push('activity-' + presentation.activity);
-    if (presentation.activity === 'event' && presentation.activityGeneration % 2 === 0) {
-      classes.push('activity-gen2');
-    }
+  // Keep the semantic class names as styling/debug hooks during the beta;
+  // they no longer select a separate renderer or animation implementation.
+  if (presentation.pulse.reason !== 'none' && presentation.pulse.reason !== 'alarm') {
+    classes.push('activity-' + presentation.pulse.reason);
+  }
+  if (presentation.pulse.generation % 2 === 0) {
+    classes.push('pulse-gen2');
+    if (presentation.pulse.kind === 'short') classes.push('activity-gen2');
   }
   return classes;
 }
@@ -496,11 +516,13 @@ export function resolveDevicePresentation(
     ? { source: null, text: null, fallback: null }
     : resolveValue(hass, d, sources, options.showTemperature);
   const sourceSignature = signatureOf(d, sources, value.source);
+  const activitySignature = activitySourceSignature(hass, d, sources);
   const rt = options.activityRuntime;
   const now = options.now ?? Date.now();
+  const shortExpiresAt = rt?.expiresAt || (rt?.flashTs ? rt.flashTs + ACTIVITY_WINDOW_MS : 0);
   if (!staticIcon && !effectiveHidden && options.liveStates && combined.status !== 'alarm'
-      && rt?.sources === sourceSignature && rt.flashTs && rt.flashKind
-      && now - rt.flashTs < ACTIVITY_WINDOW_MS) {
+      && rt?.sources === activitySignature && rt.flashTs && rt.flashKind
+      && shortExpiresAt > now) {
     visual = { ...visual, activity: rt.flashKind };
   }
 
@@ -534,8 +556,8 @@ export function resolveDevicePresentation(
     ? stateIcon(d.icon, actEid?.split('.')[0], state?.attributes?.device_class, state?.state, !!d.marker?.icon)
     : d.icon;
   const lightColor = options.liveStates && !staticIcon && !effectiveHidden
-    ? resolvedLightSources(hass, [{ ...d, hidden: false }])
-        .filter((source) => !!source.eid)
+    ? sources.visualSources
+        .filter((source) => !source.eid.startsWith('marker:'))
         .map((source) => lightColorOf(hass?.states?.[source.eid]))
         .find((color): color is string => !!color) || null
     : null;
@@ -544,6 +566,21 @@ export function resolveDevicePresentation(
   const rippleScale = Number(d.marker?.ripple_size) > 0 ? Number(d.marker!.ripple_size) : 3;
   const configuredRippleColor = safeStoredColor(d.marker?.ripple_color, null);
   const rippleColor = staticIcon ? null : configuredRippleColor || lightColor || null;
+  const pulse = resolveDevicePulse({
+    display,
+    visual,
+    semanticActivity: combined.activity,
+    shortReason: rt?.sources === activitySignature ? rt?.flashKind : null,
+    shortGeneration: rt?.gen,
+    shortExpiresAt: rt?.sources === activitySignature ? shortExpiresAt : null,
+    now,
+    liveStates: options.liveStates,
+    effectiveHidden,
+    bindingUnavailable: haDisabled || orphaned,
+    reducedMotion: options.reducedMotion,
+    color: rippleColor,
+    diameterScale: rippleScale,
+  });
   const valueText = display === 'value' && !effectiveHidden ? value.text : null;
   const disabledReason = status?.kind === 'ha_disabled' ? status.reason : null;
   const reason = explanationReason(
@@ -579,6 +616,7 @@ export function resolveDevicePresentation(
     fallbackReason: display === 'value' && !valueText ? value.fallback : null,
     activity,
     activityGeneration: rt?.gen || 1,
+    pulse,
     classes: [],
     tempText: temp == null ? null : String(temp),
     humText: hum == null ? null : String(hum),
@@ -599,19 +637,4 @@ export function resolveDevicePresentation(
     explanation: { reason, notices },
   };
   return { ...presentation, classes: presentationClasses(presentation) };
-}
-
-/** Local preview-only activity; does not touch the witnessed runtime map. */
-export function presentationWithDemoActivity(
-  source: ResolvedDevicePresentation,
-  generation: number,
-): ResolvedDevicePresentation {
-  if (source.display !== 'icon_ripple') return source;
-  const out: ResolvedDevicePresentation = {
-    ...source,
-    activity: 'event',
-    activityGeneration: generation,
-    classes: [],
-  };
-  return { ...out, classes: presentationClasses(out) };
 }

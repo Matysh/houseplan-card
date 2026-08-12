@@ -14,9 +14,9 @@ export interface DeviceFaceOptions {
 export function deviceFaceStyle(presentation: ResolvedDevicePresentation): string[] {
   const out: string[] = [];
   if (presentation.scale !== 1) out.push(`--dev-scale:${presentation.scale}`);
-  if (presentation.display === 'icon_ripple') {
-    out.push(`--ripple-scale:${presentation.rippleScale}`);
-    const rippleColor = safeRenderColor(presentation.rippleColor, null);
+  if (presentation.pulse.kind !== 'none') {
+    out.push(`--ripple-scale:${presentation.pulse.diameterScale}`);
+    const rippleColor = safeRenderColor(presentation.pulse.color, null);
     if (rippleColor) out.push(`--ripple-color:${rippleColor}`);
   }
   return out;
@@ -30,11 +30,15 @@ export function renderDeviceFace(
   presentation: ResolvedDevicePresentation,
   options: DeviceFaceOptions,
 ): TemplateResult {
-  const activity = presentation.activity;
-  const gen2 = presentation.classes.includes('activity-gen2');
+  const pulse = presentation.pulse;
+  const gen2 = pulse.generation % 2 === 0;
   return html`
-    ${activity !== 'none'
-      ? html`<span class="activity-ring ${activity} ${gen2 ? 'gen2' : ''}" aria-hidden="true"><i></i><i></i><i></i></span>`
+    ${pulse.kind !== 'none' && pulse.reducedMotionIndicator !== 'dot'
+      ? html`<span class="device-pulse activity-ring ${pulse.kind} ${pulse.reason} reason-${pulse.reason} ${gen2 ? 'gen2' : ''}"
+          aria-hidden="true"><i></i><i></i><i></i></span>`
+      : nothing}
+    ${pulse.reducedMotionIndicator === 'dot'
+      ? html`<span class="activity-dot" aria-hidden="true"></span>`
       : nothing}
     ${options.newDevice
       ? html`<span class="newdot" title=${options.newDeviceTitle || ''} aria-hidden="true"></span>`

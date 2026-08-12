@@ -20,6 +20,9 @@ const res = await page.evaluate(async () => {
       scale: node.style.getPropertyValue('--dev-scale'),
       rippleScale: node.style.getPropertyValue('--ripple-scale'),
       rippleColor: node.style.getPropertyValue('--ripple-color'),
+      pulse: [...(node.querySelector('.device-pulse')?.classList || [])]
+        .filter((name) => ['alarm', 'short', 'continuous', 'event', 'presence', 'transition', 'running'].includes(name)),
+      reducedMotionDot: !!node.querySelector('.activity-dot'),
     };
   };
 
@@ -36,6 +39,33 @@ const res = await page.evaluate(async () => {
   await preview?.updateComplete;
   const previewFace = face(preview?.renderRoot?.querySelector('.dev'));
   const providerShown = /demo/i.test(preview?.renderRoot?.querySelector('.previewfacts')?.textContent || '');
+
+  // Issue #100: dynamic option creation must not leave the native select on
+  // its first row when a different source/position is already persisted.
+  const badgeDevice = c._devices.find((item) => item.id === 'd_temp');
+  c._openMarkerDialog({
+    ...badgeDevice,
+    marker: {
+      ...(badgeDevice.marker || {}),
+      value_badge: {
+        enabled: true,
+        source: { kind: 'derived_lqi' },
+        position: 'left',
+      },
+    },
+  });
+  await c.updateComplete;
+  const badgeSourceSelect = sr().querySelector('#marker-value-badge-source');
+  const badgePositionSelect = sr().querySelector('#marker-value-badge-position');
+  const savedBadgePreview = sr().querySelector('hp-device-preview');
+  await savedBadgePreview?.updateComplete;
+  const savedBadgeSourceSelected = badgeSourceSelect?.value === 'derived:lqi'
+    && badgeSourceSelect?.selectedOptions?.[0]?.value === 'derived:lqi';
+  const savedBadgePositionSelected = badgePositionSelect?.value === 'left'
+    && badgePositionSelect?.selectedOptions?.[0]?.value === 'left';
+  const savedBadgePreviewMatches = savedBadgePreview?.renderRoot
+    ?.querySelector('.value-badge')?.textContent?.trim() === '154';
+  const savedBadgeUntouched = c._markerDialog?.valueBadgeTouched === false;
 
   // Issue #90: every explicit anchor, including a long value and the largest
   // activity ring, stays inside the preview safe area with a real measured gap.
@@ -79,6 +109,10 @@ const res = await page.evaluate(async () => {
     planPreviewEqual: JSON.stringify(planFace) === JSON.stringify(previewFace),
     planStaticEqual: JSON.stringify(planFace) === JSON.stringify(staticFace),
     providerShown,
+    savedBadgeSourceSelected,
+    savedBadgePositionSelected,
+    savedBadgePreviewMatches,
+    savedBadgeUntouched,
     badgeBounds,
     staticBindingHook: staticNode?.getAttribute('data-binding-status') === 'active',
   };

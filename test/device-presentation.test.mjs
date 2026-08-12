@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  activitySourceSignature,
   presentationSourceSignature,
   resolveDevicePresentation,
   resolvePresentationSources,
@@ -206,7 +207,7 @@ test('switching through static mode cannot reuse a finite activity window', () =
     icon: 'mdi:motion-sensor', entities: ['binary_sensor.motion'], primary: 'binary_sensor.motion',
     marker: { id: 'd1', binding: 'device:d1', display: 'icon_ripple' },
   });
-  const sourceSignature = presentationSourceSignature(h, base);
+  const sourceSignature = activitySourceSignature(h, base);
   const active = resolveDevicePresentation(h, base, {
     ...options,
     now: 2_000,
@@ -215,6 +216,8 @@ test('switching through static mode cannot reuse a finite activity window', () =
     },
   });
   assert.equal(active.activity, 'event');
+  assert.equal(active.pulse.kind, 'short');
+  assert.equal(active.pulse.reason, 'event');
   assert.ok(active.classes.includes('activity-gen2'));
   const fixed = resolveDevicePresentation(h, {
     ...base, marker: { ...base.marker, display: 'static_icon' },

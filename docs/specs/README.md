@@ -1,6 +1,6 @@
 # Спецификации задач P1 и P2
 
-Актуально на 2026-08-09.
+Актуально на 2026-08-12.
 
 GitHub Issues и GitHub Projects (v2) остаются единственным каноническим backlog проекта. Этот каталог содержит развёрнутые ТЗ: каждое ТЗ ссылается на issue, а issue — на соответствующий файл. Статус, приоритет и факт завершения меняются только в GitHub.
 
@@ -44,6 +44,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#58](https://github.com/Matysh/houseplan-card/issues/58) Vacuum integration coverage — Stage 1 | [058-vacuum-stage1.md](058-vacuum-stage1.md) | в реализации |
 | [#89](https://github.com/Matysh/houseplan-card/issues/89) Опциональный объёмный 2.5D/изометрический вид | [089-isometric-view.md](089-isometric-view.md) | исследование завершено; продуктовый контекст |
 | [#89](https://github.com/Matysh/houseplan-card/issues/89) Этап 1: объёмный вид за флагом Labs | [089-isometric-view-stage1.md](089-isometric-view-stage1.md) | готово к реализации |
+| [#98](https://github.com/Matysh/houseplan-card/issues/98) Единая система пульсаций и активностей устройства | [098-device-pulse-system.md](098-device-pulse-system.md) | реализовано локально; ожидает prerelease/CI gate |
 
 ## P2
 
@@ -74,6 +75,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#84](https://github.com/Matysh/houseplan-card/issues/84) Источник «Всегда» без сущности HA + [#88](https://github.com/Matysh/houseplan-card/issues/88) ведущая сущность | [084-passive-forced-light-sources.md](084-passive-forced-light-sources.md) | реализовано локально вместе; ожидает prerelease/CI gate |
 | [#90](https://github.com/Matysh/houseplan-card/issues/90) Управляемый бейдж со значением | [090-device-value-badge.md](090-device-value-badge.md) | реализовано локально; ожидает prerelease/CI gate |
 | [#94](https://github.com/Matysh/houseplan-card/issues/94) Универсальное действие «Переключить состояние» | [094-universal-state-toggle.md](094-universal-state-toggle.md) | реализовано в v1.62.0-beta.3; review/hardening включены в кандидат v1.62.0-beta.4 |
+| [#101](https://github.com/Matysh/houseplan-card/issues/101) Плавный переход View ↔ редакторы | [101-view-editor-transition.md](101-view-editor-transition.md) | реализовано локально; ожидает prerelease/CI gate |
 
 ## Правило актуализации
 

@@ -234,11 +234,11 @@ user override for a real light source.
 the universal toggle resolver, rule 1 above — the visual resolver returns
 no working/open plate in any state:
 
-| cover state | plate | ring | icon |
+| cover state | plate | pulse | icon |
 |---|---|---|---|
 | `closed` | neutral | — | closed glyph |
 | `open`, ajar (`open` + position) | neutral | — | open glyph |
-| `opening`, `closing` | neutral | `.activity-transition` breathes in Icon + activity | open glyph |
+| `opening`, `closing` | neutral | continuous pulse in Icon + state and activity | open glyph |
 | `unknown` / no state | neutral | — | base icon, no morph |
 | `unavailable` | neutral, faded (`.unavail`) | — | base icon |
 

@@ -231,6 +231,12 @@ Escape и outside-pointer для изолированного demo/test прим
 контролируется event path/принадлежность к тому же document+dialog, а не глобальный
 `document.scroll` без фильтра.
 
+Открытие/закрытие подсказки не меняет `clientHeight`, `scrollHeight` или `scrollTop`
+тела диалога. Вспомогательный текст для `aria-describedby` постоянно остаётся вне
+scroll-flow; его доступность переключается ARIA-состоянием, а не добавлением
+абсолютно спозиционированного узла в overflow-геометрию. Требование одинаково для
+native Popover и portal fallback.
+
 ### 3.9 Триггер и `<label>` (R6)
 
 Help-trigger не размещается внутри `<label>`: клик по нему переключал бы связанный

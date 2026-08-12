@@ -178,17 +178,16 @@ export const cardStyles = css`
       touch-action: none; /* custom pinch/pan gestures */
       background: var(--ha-card-background, var(--card-background-color, #111));
     }
-    /* A deliberate navigation change gets one short visual settle. The class
-       is transient, so normal day/night breathing keeps its slow cadence. */
-    .stage.hpnav,
-    .stage.daynight.hpnav {
-      transition:
-        background-color 0.18s ease,
-        outline-color 0.18s ease;
-    }
     .zoomwrap {
       position: absolute;
       inset: 0;
+    }
+    .stage.mode-transition,
+    .stage.mode-transition .zoomwrap {
+      transition: none !important;
+    }
+    .stage.mode-transition .hp-paper {
+      fill: var(--hp-mode-paper) !important;
     }
     /* Sun on the plan (docs/SUN.md): the stage breathes with the day over tens
        of seconds; the plan itself dims at most ~10%. Reduced motion = static. */
@@ -659,13 +658,13 @@ export const cardStyles = css`
     @media (prefers-reduced-motion: reduce) {
       .op-leaf, .op-arc { transition: none; }
     }
-    /* Semantic activity: event / presence / transition / actual running all
-       share one ring layer and one colour/size override. */
+    /* Unified device activity: alarm, short event and continuous state all
+       share this one renderer. No static rings are allowed. */
     .dev ha-icon {
       position: relative;
       z-index: 1;
     }
-    .activity-ring {
+    .device-pulse {
       position: absolute;
       left: 50%;
       top: 50%;
@@ -675,7 +674,7 @@ export const cardStyles = css`
       pointer-events: none;
       z-index: 0;
     }
-    .activity-ring i {
+    .device-pulse i {
       position: absolute;
       inset: 0;
       border-radius: 50%;
@@ -683,49 +682,54 @@ export const cardStyles = css`
       opacity: 0;
     }
     /* A witnessed edge: exactly three waves over the 3.3 s runtime window. */
-    .activity-ring.event i {
-      animation: hp-activity-event 1.1s ease-out 1 forwards;
+    .device-pulse.short i {
+      animation: hp-pulse-short 1.1s ease-out 1 forwards;
     }
-    .activity-ring.event i:nth-child(2) { animation-delay: 1.1s; }
-    .activity-ring.event i:nth-child(3) { animation-delay: 2.2s; }
-    .activity-ring.event.gen2 i { animation-name: hp-activity-event-b; }
-    /* Presence is a state, not an event: calm and deliberately static. */
-    .activity-ring.presence i:first-child { opacity: 0.4; }
-    .activity-ring.presence i:nth-child(n + 2),
-    .activity-ring.transition i:nth-child(n + 2),
-    .activity-ring.running i:nth-child(n + 2) { display: none; }
-    /* Physical travel and actual work use related but distinct tempos. */
-    .activity-ring.transition i:first-child {
-      animation: hp-activity-breathe 2.2s ease-in-out infinite;
+    .device-pulse.short i:nth-child(2) { animation-delay: 1.1s; }
+    .device-pulse.short i:nth-child(3) { animation-delay: 2.2s; }
+    .device-pulse.short.gen2 i { animation-name: hp-pulse-short-b; }
+    .device-pulse.continuous i:nth-child(n + 2),
+    .device-pulse.alarm i:nth-child(n + 2) { display: none; }
+    .device-pulse.continuous i:first-child {
+      animation: hp-pulse-continuous 2.4s ease-in-out infinite;
     }
-    .activity-ring.running i:first-child {
-      animation: hp-activity-running 2.8s ease-in-out infinite;
+    .device-pulse.alarm i:first-child {
+      border-color: #f25a4a;
+      animation: hp-pulse-alarm 1s ease-out infinite;
     }
-    @keyframes hp-activity-event {
+    @keyframes hp-pulse-short {
       0% { transform: scale(0.18); opacity: 0.7; }
       70% { opacity: 0.22; }
       100% { transform: scale(1); opacity: 0; }
     }
     /* Alternate identity: a rapid retrigger restarts the browser timeline. */
-    @keyframes hp-activity-event-b {
+    @keyframes hp-pulse-short-b {
       0% { transform: scale(0.18); opacity: 0.7; }
       70% { opacity: 0.22; }
       100% { transform: scale(1); opacity: 0; }
     }
-    @keyframes hp-activity-breathe {
-      0% { transform: scale(0.92); opacity: 0.16; }
-      50% { transform: scale(1.04); opacity: 0.5; }
-      100% { transform: scale(0.92); opacity: 0.16; }
+    @keyframes hp-pulse-continuous {
+      0% { transform: scale(0.26); opacity: 0.5; }
+      65% { opacity: 0.18; }
+      100% { transform: scale(1); opacity: 0; }
     }
-    @keyframes hp-activity-running {
-      0% { transform: scale(0.94); opacity: 0.18; }
-      50% { transform: scale(1.02); opacity: 0.42; }
-      100% { transform: scale(0.94); opacity: 0.18; }
+    @keyframes hp-pulse-alarm {
+      0% { transform: scale(0.3); opacity: 0.95; }
+      100% { transform: scale(1); opacity: 0; }
     }
-    @media (prefers-reduced-motion: reduce) {
-      .activity-ring i { animation: none !important; }
-      .activity-ring i:first-child { opacity: 0.4; }
-      .activity-ring i:nth-child(n + 2) { display: none; }
+    .activity-dot {
+      position: absolute;
+      right: 8%;
+      bottom: 8%;
+      width: 18%;
+      height: 18%;
+      min-width: 4px;
+      min-height: 4px;
+      border-radius: 50%;
+      background: var(--ripple-color, var(--hp-accent));
+      border: 1px solid color-mix(in srgb, var(--hp-bg) 82%, transparent);
+      pointer-events: none;
+      z-index: 3;
     }
     .roomlabel {
       pointer-events: none; /* draggable only in plan mode (rule below) */
@@ -760,31 +764,11 @@ export const cardStyles = css`
       0%   { transform: translateX(-4%); opacity: 0.72; }
       100% { transform: translateX(0);    opacity: 1; }
     }
-    @keyframes hp-editor-enter {
-      0%   { transform: translateY(5px) scale(0.997); opacity: 0.72; }
-      100% { transform: translateY(0) scale(1); opacity: 1; }
-    }
-    @keyframes hp-editor-exit {
-      0%   { transform: translateY(-4px) scale(1.002); opacity: 0.72; }
-      100% { transform: translateY(0) scale(1); opacity: 1; }
-    }
-    @keyframes hp-editor-swap {
-      0%   { transform: scale(0.997); opacity: 0.68; }
-      100% { transform: scale(1); opacity: 1; }
-    }
     .zoomwrap.slide-left  { animation: hp-slide-left 0.18s cubic-bezier(0.2, 0.7, 0.2, 1); }
     .zoomwrap.slide-right { animation: hp-slide-right 0.18s cubic-bezier(0.2, 0.7, 0.2, 1); }
-    .zoomwrap.nav-enter   { animation: hp-editor-enter 0.18s cubic-bezier(0.2, 0.7, 0.2, 1); }
-    .zoomwrap.nav-exit    { animation: hp-editor-exit 0.18s cubic-bezier(0.2, 0.7, 0.2, 1); }
-    .zoomwrap.nav-swap    { animation: hp-editor-swap 0.16s ease-out; }
     @media (prefers-reduced-motion: reduce) {
-      .stage.hpnav,
-      .stage.daynight.hpnav { transition: none; }
       .zoomwrap.slide-left,
-      .zoomwrap.slide-right,
-      .zoomwrap.nav-enter,
-      .zoomwrap.nav-exit,
-      .zoomwrap.nav-swap { animation: none; }
+      .zoomwrap.slide-right { animation: none; }
     }
     /* The name is the anchor: the label box is centred on the room point, so
        anything that takes part in its layout SHIFTS THE NAME. The gear button
@@ -1200,18 +1184,20 @@ export const cardStyles = css`
     }
     .stage.mode-decor .room, .stage.mode-decor .devlayer { pointer-events: none; }
     .stage.mode-decor .oplock { pointer-events: none; }
-    /* decor mode: everything but the decor itself fades back */
-    .stage.mode-decor .room,
-    .stage.mode-decor .devlayer,
-    .stage.mode-decor .opening,
-    .stage.mode-decor .rlabel,
-    .stage.mode-decor .room-outline,
-    .stage.mode-decor .wallbodies,
-    .stage.mode-decor .opening-tunnels,
-    .stage.mode-decor .glow-base-layer,
-    .stage.mode-decor .glow-pools-frame,
-    .stage.mode-decor .openwalls {
-      opacity: 0.35;
+    /* Backdrop-editor de-emphasis is a shared mode-transition coordinate.
+       It multiplies whole presentation groups and never changes Glow source
+       alpha, additive blending, or the underlying resolved state. */
+    .stage .room,
+    .stage .devlayer,
+    .stage .opening,
+    .stage .rlabel,
+    .stage .room-outline,
+    .stage .wallbodies,
+    .stage .opening-tunnels,
+    .stage .glow-base-layer,
+    .stage .glow-pools-frame,
+    .stage .openwalls {
+      opacity: var(--hp-mode-architecture-opacity, 1);
     }
     .decorbar .dcolor {
       width: 30px; height: 26px; padding: 0; border: none; background: none; cursor: pointer;
@@ -1645,21 +1631,8 @@ export const cardStyles = css`
       color: #fff;
       box-shadow: 0 0 10px rgba(242, 90, 74, 0.65);
     }
-    .dev.alarm::after {
-      content: '';
-      position: absolute;
-      inset: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * -0.35);
-      border: 3px solid #f25a4a;
-      border-radius: 50%;
-      animation: hp-alarm 1s ease-out infinite;
-      pointer-events: none;
-    }
-    @keyframes hp-alarm {
-      0% { transform: scale(0.7); opacity: 1; }
-      100% { transform: scale(1.25); opacity: 0; }
-    }
     @media (prefers-reduced-motion: reduce) {
-      .dev.alarm::after { animation: none; opacity: 0.9; }
+      .device-pulse { display: none; }
     }
     .dev .newdot {
       position: absolute;
@@ -2885,44 +2858,35 @@ export const cardStyles = css`
        both entering and leaving an editor change the card geometry gradually;
        the header ResizeObserver keeps the stage fitted throughout. */
     .editorchrome {
-      display: grid;
-      grid-template-rows: 0fr;
+      display: block;
+      height: 0;
       opacity: 0;
       visibility: hidden;
       overflow: hidden;
-      transition:
-        grid-template-rows 0.18s cubic-bezier(0.2, 0.7, 0.2, 1),
-        opacity 0.12s ease,
-        visibility 0s linear 0.18s;
     }
     .editorchrome:not(.open) {
       pointer-events: none;
     }
     .editorchrome.open {
-      grid-template-rows: 1fr;
+      height: auto;
       opacity: 1;
       visibility: visible;
       overflow: visible;
-      transition-delay: 0s;
     }
-    .editorchrome.resizing {
+    .editorchrome.transitioning {
       overflow: hidden;
       will-change: height;
-    }
-    .editorchrome.open.nav-enter {
-      overflow: hidden;
+      pointer-events: none;
     }
     .editorchrome-inner {
       min-height: 0;
       transform-origin: top center;
     }
-    .editorchrome-inner.nav-enter { animation: hp-editor-enter 0.18s cubic-bezier(0.2, 0.7, 0.2, 1); }
-    .editorchrome-inner.nav-exit  { animation: hp-editor-exit 0.18s cubic-bezier(0.2, 0.7, 0.2, 1); }
+    .editorchrome.transitioning .editorchrome-inner {
+      will-change: opacity;
+    }
     @media (prefers-reduced-motion: reduce) {
       .modetab { transition: none; }
-      .editorchrome { transition: none; }
-      .editorchrome-inner.nav-enter,
-      .editorchrome-inner.nav-exit { animation: none; transition: none; }
     }
     /* Device info can have Edit + Open in HA + Close. It uses a wide dialog;
        wrapping remains as a phone fallback, but without a flex spacer (which

@@ -3,10 +3,10 @@ import { LitElement, css, html, nothing, type PropertyValues, type TemplateResul
 import { cardStyles } from './styles';
 import { deviceFaceStyle, renderDeviceFace } from './device-face';
 import {
-  presentationWithDemoActivity,
   type PresentationReason,
   type ResolvedDevicePresentation,
 } from './device-presentation';
+import { withDemoPulse } from './device-pulse';
 import {
   acquireIntegrationMetadata, integrationMetadataSnapshot,
   resolveBindingProviders, resolveEntityProvider, type IntegrationProvider,
@@ -27,6 +27,7 @@ class HpDevicePreview extends LitElement {
   private _demoUntil = 0;
   private _demoTimer = 0;
   private _demoGeneration = 1;
+  private _demoKind: 'short' | 'continuous' | null = null;
   private _reducedMotion = false;
   private _motionMedia?: MediaQueryList;
   private _onMotionChange = (event: MediaQueryListEvent): void => {
@@ -64,8 +65,8 @@ class HpDevicePreview extends LitElement {
     const p = this.presentation;
     const previous = changed.get('presentation') as ResolvedDevicePresentation | undefined;
     if (changed.has('presentation') && previous?.binding !== p?.binding) this._clearDemo();
-    if (p && this._demoUntil > Date.now()
-        && (p.display !== 'icon_ripple' || p.visual.status === 'alarm' || p.activity !== 'none')) {
+    if (p && this._demoKind
+        && (p.display !== 'icon_ripple' || p.pulse.kind !== 'none')) {
       this._clearDemo();
     }
   }
@@ -82,19 +83,36 @@ class HpDevicePreview extends LitElement {
     window.clearTimeout(this._demoTimer);
     this._demoTimer = 0;
     this._demoUntil = 0;
+    this._demoKind = null;
   }
 
-  private _startDemo = (): void => {
+  private _startShortDemo = (): void => {
     const p = this.presentation;
-    if (!p || p.display !== 'icon_ripple' || p.visual.status === 'alarm' || p.activity !== 'none') return;
+    if (!p || p.display !== 'icon_ripple' || p.pulse.kind !== 'none') return;
     this._demoGeneration++;
+    this._demoKind = 'short';
     this._demoUntil = Date.now() + DEMO_MS;
     window.clearTimeout(this._demoTimer);
     this._demoTimer = window.setTimeout(() => {
       this._demoUntil = 0;
       this._demoTimer = 0;
+      this._demoKind = null;
       this.requestUpdate();
     }, DEMO_MS + 30);
+    this.requestUpdate();
+  };
+
+  private _toggleContinuousDemo = (): void => {
+    const p = this.presentation;
+    if (!p || p.display !== 'icon_ripple' || p.pulse.kind !== 'none') return;
+    if (this._demoKind === 'continuous') {
+      this._clearDemo();
+    } else {
+      this._clearDemo();
+      this._demoGeneration++;
+      this._demoKind = 'continuous';
+      this._demoUntil = Number.POSITIVE_INFINITY;
+    }
     this.requestUpdate();
   };
 
@@ -163,15 +181,24 @@ class HpDevicePreview extends LitElement {
   protected render(): TemplateResult | typeof nothing {
     const actual = this.presentation;
     if (!actual) return nothing;
-    const demoActive = this._demoUntil > Date.now()
+    const demoActive = !!this._demoKind && this._demoUntil > Date.now()
       && actual.display === 'icon_ripple'
-      && actual.visual.status !== 'alarm'
-      && actual.activity === 'none';
+      && actual.pulse.kind === 'none';
     const shown = demoActive
-      ? presentationWithDemoActivity(actual, this._demoGeneration) : actual;
+      ? (() => {
+          const pulse = withDemoPulse(
+            actual.pulse, this._demoKind!, this._demoGeneration, this._reducedMotion,
+            this._demoKind === 'short' ? this._demoUntil : null,
+          );
+          return { ...actual, pulse, classes: [
+            ...actual.classes.filter((name) => !name.startsWith('pulse-')),
+            `pulse-${pulse.kind}`,
+            ...(pulse.generation % 2 === 0 ? ['pulse-gen2'] : []),
+          ] };
+        })() : actual;
     const providers = this._providers();
-    const realEffect = actual.visual.status === 'alarm' || actual.activity !== 'none';
-    const diameter = shown.scale * (shown.activity !== 'none' ? shown.rippleScale : 1);
+    const realEffect = actual.pulse.kind !== 'none';
+    const diameter = shown.scale * (shown.pulse.animated ? shown.pulse.diameterScale : 1);
     // Fit the complete face, not only the activity ring. The value satellite
     // is intentionally capped by CSS at four face widths; measure its likely
     // rendered width conservatively so every position keeps a safe inset.
@@ -210,7 +237,9 @@ class HpDevicePreview extends LitElement {
     ].filter(Boolean).join(' ');
     const faceStyle = deviceFaceStyle(shown).join(';');
     const result = demoActive
-      ? this._t('marker.preview.demo_notice') : this._reason(actual.explanation.reason);
+      ? this._t(this._demoKind === 'continuous'
+        ? 'marker.preview.demo_continuous_notice' : 'marker.preview.demo_short_notice')
+      : this._reason(actual.explanation.reason);
     const aria = [
       this.deviceName,
       this._providerSummary(providers),
@@ -266,13 +295,23 @@ class HpDevicePreview extends LitElement {
             </div>
           </details>` : nothing}
       ${actual.display === 'icon_ripple'
-        ? html`<button class="previewdemo" type="button"
-            ?disabled=${realEffect}
-            title=${realEffect ? this._t('marker.preview.demo_already_visible') : ''}
-            @click=${this._startDemo}>
-            <ha-icon icon="mdi:motion-play-outline"></ha-icon>
-            ${this._t('marker.preview.demo_activity')}
-          </button>` : nothing}
+        ? html`<div class="previewdemos">
+            <button class="previewdemo" type="button"
+              ?disabled=${realEffect || this._demoKind === 'continuous'}
+              title=${realEffect ? this._t('marker.preview.demo_already_visible') : ''}
+              @click=${this._startShortDemo}>
+              <ha-icon icon="mdi:motion-play-outline"></ha-icon>
+              ${this._t('marker.preview.demo_short')}
+            </button>
+            <button class="previewdemo" type="button"
+              ?disabled=${realEffect}
+              title=${realEffect ? this._t('marker.preview.demo_already_visible') : ''}
+              @click=${this._toggleContinuousDemo}>
+              <ha-icon icon=${this._demoKind === 'continuous' ? 'mdi:stop-circle-outline' : 'mdi:repeat'}></ha-icon>
+              ${this._t(this._demoKind === 'continuous'
+                ? 'marker.preview.stop_continuous' : 'marker.preview.demo_continuous')}
+            </button>
+          </div>` : nothing}
     </section>`;
   }
 
@@ -325,7 +364,6 @@ class HpDevicePreview extends LitElement {
       .previewsource > * { min-width: 0; overflow-wrap: anywhere; }
       .previewsource code { color: var(--secondary-text-color, #9aa0aa); }
       .previewdemo {
-        margin-top: 12px;
         min-height: 40px;
         display: inline-flex;
         align-items: center;
@@ -337,6 +375,7 @@ class HpDevicePreview extends LitElement {
         color: inherit;
         cursor: pointer;
       }
+      .previewdemos { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
       .previewdemo:focus-visible { outline: 2px solid var(--primary-color, #03a9f4); outline-offset: 2px; }
       .previewdemo:disabled { opacity: 0.5; cursor: not-allowed; }
       @media (max-width: 640px) {

@@ -2,6 +2,32 @@
 
 ## Unreleased
 
+## v1.62.0-beta.5 — 2026-08-12
+
+- Unified all device activity around one predictable pulse system. Alerts use
+  the red alarm pulse, witnessed events use three finite waves, and ongoing
+  work, movement or presence uses one continuous pulse. Static rings are gone;
+  reduced-motion users get a compact dot for ordinary activity. The full plan,
+  device preview and static space card now share the same resolver and renderer
+  ([#98](https://github.com/Matysh/houseplan-card/issues/98)).
+- Made transitions between View and all three editors coherent. Toolbar height,
+  usable plan area, camera, background and editor presentation now move on one
+  short timeline; editor-to-editor switches fade their incoming controls, rapid
+  choices retarget from the visible frame, and reduced motion remains atomic
+  ([#101](https://github.com/Matysh/houseplan-card/issues/101)).
+- Fixed the device editor's **Value** selector visually showing its first row
+  instead of the source that was actually saved and rendered on the plan.
+  Saved source and position are now selected explicitly when the dialog opens,
+  including temporarily missing sources ([#100](https://github.com/Matysh/houseplan-card/issues/100)).
+- Fixed contextual help temporarily adding a vertical scrollbar to its owning
+  dialog. The accessibility-only description no longer participates in the
+  dialog's scroll geometry in either native Popover or fallback mode
+  ([#99](https://github.com/Matysh/houseplan-card/issues/99)).
+- Fixed a transition regression that could leave window sun rays invisible in
+  View. The ray layer again owns its lifecycle independently from editor
+  transitions, without changing sun position, window geometry or the existing
+  threshold fade ([#102](https://github.com/Matysh/houseplan-card/issues/102)).
+
 ## v1.62.0-beta.4 — 2026-08-12
 
 - Fixed contextual help showing a dead icon when its explanation was absent.

@@ -21,8 +21,8 @@ metadata). Only an explicit owner-approved emergency hotfix may skip this gate.
 
 | Item | State |
 |---|---|
-| Version | **v1.62.0-beta.4** everywhere (manifest, const.py, package.json, CARD_VERSION) — prerelease candidate for issues #95–#97 plus #68/#94 hardening |
-| Current local cycle | The v1.62.0-beta.4 candidate fixes three interaction/UI races: explicit mode commands cancel an older `_pendingNavMode`, so the Device editor closes on the first press (#95); the local House Plan device card opens independently of transient HA registry revalidation for compound covers (#96); and an untouched tap-action selector follows the current preview primary, keeping a lamp's label aligned with its effective action (#97). The #94 review additionally makes domain adapters fail closed on exact HA capability bits and service availability, resolves clicks from live controls and preserves disabled legacy-cover identity. The #68 review suppresses incomplete help at both factory and component boundaries, removes the hard-coded English ARIA fallback and uses the outlined circled-question MDI icon. Targeted prerelease gates cover these surfaces; issue #89 remains specification-only. |
+| Version | **v1.62.0-beta.5** everywhere (manifest, const.py, package.json, CARD_VERSION) — prerelease candidate for issues #98–#102 |
+| Current local cycle | v1.62.0-beta.5 unifies device activity pulses, adds one coordinated View/editor transition, fixes the help popover and value-badge selector regressions, and restores window sun rays after the transition-layer regression. Issue #89 remains specification-only. |
 | Workflow | Owner's rule since 2026-08-07: ordinary fixes/features are made **locally, without tests and without commits**. A requested pre-release gets a production build plus the smallest targeted unit/smoke set covering the changed surfaces, one tested `dev` commit/tag and a GitHub Release with `prerelease=true`; `main` stays untouched. The complete local frontend/backend/smoke gate runs only before a stable release, after which `main` is fast-forwarded to the exact tested `dev` SHA and the GitHub Release uses `prerelease=false`. Release bodies are short and bilingual (Russian first): only significant user changes get individual bullets, while minor/code-only work is grouped as `Мелкие исправления и улучшения` / `Small fixes and improvements`; every body ends with separate links to the Russian and English changelogs. Detailed RU/EN changelog bullets may link the corresponding closed GitHub Issues; open or partially delivered issues are never presented as shipped. Telegram announcements are sent only for stable releases; beta and RC publication is silent. `docs/RELEASE-NOTES.md` is the current canonical body instance; `npm run release:prerelease -- <tag> --issues=… --yes` is the primary local publication path and the manual `Publish prerelease` workflow is its GitHub-only equivalent once present on `main`. Nothing is copied to the home instance by hand |
 | GitHub | https://github.com/Matysh/houseplan-card — [Issues](https://github.com/Matysh/houseplan-card/issues) are the canonical task records and the linked [Project v2](https://github.com/users/Matysh/projects/1) is the canonical priority/status view; both must stay current. `main` carries stable releases; pre-release tags may point directly at `dev`. Work lands on `dev` and is merged into `main` for a stable release, so `dev` is normally equal to or ahead of `main`, never behind. Push via SSH key `ha_jb` (remote git@github.com:…); API releases via the fine-grained PAT in `~/.git-credentials` (Contents R/W, issued 2026-07-23) |
 | CI | Prerelease publication requires a green exact-SHA Validate: frontend/backend, smoke (including the #73 rAF frame sampler), golden, HACS/Hassfest and a short absolute-ceiling performance smoke. Obsolete same-ref Validate runs are cancelled. Full seven-sample base/candidate performance moved to `performance.yml` (`main` push, weekly, manual); stable release assets fail closed unless Validate and Full Performance are green for the exact tagged SHA and the stable-only CDP compositor screencast finds no empty/black presented frame. |
@@ -105,12 +105,12 @@ metadata). Only an explicit owner-approved emergency hotfix may skip this gate.
   the integration omits the action; service switches can no longer become
   primary, and glow pool and icon share one condition. Editor gestures on touch
   (pinch/pan) landed the same release.
-- **Unified device status/activity** (v1.59.0-beta.10; extended 2026-08-08): four display
-  modes (Icon + dynamic plate / Icon + activity / Value / Always static icon),
+- **Unified device status/activity** (v1.59.0-beta.10; pulse pipeline #98 local): four display
+  modes (Icon + state / Icon + state and activity / Value + state / Always static icon),
   one semantic resolver for yellow
   actual work, orange open/unlocked, unavailable and always-red alarms;
-  activity distinguishes a short event, presence, mechanical travel and
-  running. Always-static deliberately suppresses every state-driven visual,
+  activity projects to three finite waves for a short event or one continuous
+  pulse for presence, mechanical travel and running. Always-static deliberately suppresses every state-driven visual,
   satellite badge and live vacuum overlay while leaving hover, actions, Glow and
   controls intact. Legacy Ripple-only migrates to Icon + activity on the next save.
 - **Passive media lifecycle** (v1.60.0-beta.1): every `media_player`,

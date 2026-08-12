@@ -77,6 +77,12 @@ only to dismiss an explicit group/palette is consumed instead of falling
 through to the plan. Pinch/pan outside the tray remains scene-owned. This is a
 safety guarantee, not a promise of full touch parity for editor precision work.
 
+During a View/editor visual transition the moving stage is inert while the
+header tabs remain available. A pinch, cancelled pointer or synthetic click
+cannot operate stale geometry; leaving the editor is always a single safe
+action. The decorative smoothness of the editor chrome remains best effort on
+coarse-pointer devices, while the correct final View frame is release-blocking.
+
 ## Deliberate degradation rule
 
 When an editor change would be expensive to implement correctly for touch, the

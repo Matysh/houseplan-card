@@ -74,6 +74,13 @@ const res = await page.evaluate(async () => {
   await card.updateComplete;
   await frame();
 
+  const dialogBody = root().querySelector('hp-dialog .body');
+  const scrollGeometry = () => dialogBody ? {
+    clientHeight: dialogBody.clientHeight,
+    scrollHeight: dialogBody.scrollHeight,
+    scrollTop: dialogBody.scrollTop,
+  } : null;
+
   const roleHelp = root().querySelector('hp-help[data-help-key="marker.light_role.help"]');
   const roleButton = helpButton('marker.light_role.help');
   const roleDescription = roleHelp?.shadowRoot?.querySelector('[role="tooltip"]');
@@ -81,11 +88,14 @@ const res = await page.evaluate(async () => {
     && !!roleDescription?.id
     && !roleButton.hasAttribute('aria-describedby');
 
+  const beforeHoverGeometry = scrollGeometry();
   roleButton?.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse', bubbles: true, composed: true }));
   await wait(330);
   out.mouseHover = roleButton?.getAttribute('aria-expanded') === 'true'
     && roleButton.getAttribute('aria-describedby') === roleDescription?.id
     && !!helpSurface('marker.light_role.help');
+  out.hoverKeepsDialogScrollGeometry = JSON.stringify(scrollGeometry())
+    === JSON.stringify(beforeHoverGeometry);
   roleButton?.dispatchEvent(new PointerEvent('pointerleave', { pointerType: 'mouse', bubbles: true, composed: true }));
   await wait(180);
   out.mouseLeave = roleButton?.getAttribute('aria-expanded') === 'false';
@@ -175,12 +185,15 @@ const res = await page.evaluate(async () => {
   const hide = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'hidePopover');
   Object.defineProperty(HTMLElement.prototype, 'showPopover', { configurable: true, value: undefined });
   Object.defineProperty(HTMLElement.prototype, 'hidePopover', { configurable: true, value: undefined });
+  const beforeFallbackGeometry = scrollGeometry();
   glowHelpButton?.click();
   await frame();
   const dialog = root().querySelector('hp-dialog');
   const fallback = dialog?.shadowRoot?.querySelector('[data-hp-overlay="help"]');
   const fallbackBox = fallback?.shadowRoot?.querySelector('.tooltip')?.getBoundingClientRect();
   out.realFallback = !!fallback && !!fallbackBox?.width && !!fallbackBox?.height;
+  out.fallbackKeepsDialogScrollGeometry = JSON.stringify(scrollGeometry())
+    === JSON.stringify(beforeFallbackGeometry);
   glowHelpButton?.click();
   pickerButton?.click();
   await frame();

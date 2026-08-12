@@ -8,6 +8,8 @@
   off remain visible, while missing/unknown/unavailable render a stable `—`. [auto: device-presentation]
 - [ ] State, every allowlisted attribute, derived LQI and `marker:<id>` light
   state resolve identically on the full plan, static space card and preview. [auto: smoke_device_preview_parity]
+- [ ] Opening the editor explicitly selects the persisted source and position,
+  even when they are not the first dynamic options, without touching config. [auto: smoke_device_preview_parity]
 - [ ] Right, bottom, left and top update live in the editor; bottom stacks above
   system LQI and derived LQI suppresses the duplicate system row. [auto: device-presentation]
 - [ ] Browser bounding boxes stay inside `.previewstage` with a safe gap for
@@ -95,9 +97,10 @@ public binding-status hook.
 - [ ] Working, open, cover, presence, short event, transition, alarm, static,
       unavailable, media-neutral, composite-Power and `live_states: false`
       explanations match the actual face.
-- [ ] The local activity demo lasts 3.3 seconds, sends no service call, survives
-      reduced motion as a static ring, and resets immediately on binding change,
-      real activity or alarm.
+- [ ] The local short-activity demo lasts 3.3 seconds and the continuous demo
+      runs until stopped. Neither sends a service call; reduced motion uses a
+      compact dot, and both reset immediately on binding change, real activity
+      or alarm.
 - [ ] Provider metadata is cached between dialog openings and refreshed after
       registry/config-entry changes; source integrations remain separate from
       the binding provider.
@@ -965,13 +968,13 @@ separately promised workflows:
       motion [auto: smoke_editor_tabs, smoke_decor, smoke_furniture; manual:
       responsive/theme matrix]
 - [ ] Navigation motion is short and coherent for space changes, View↔editor
-      and editor↔editor. A same-space editor switch fades in the new toolbar
-      and interpolates from the outgoing measured height to the incoming one,
-      including wrapped multi-row bars and a rapid second switch. Hidden editor
-      chrome is `aria-hidden`, inert and cannot receive pointer input;
-      disconnect/reconnect clears transient slide/resume
-      classes instead of replaying a stale transition [auto: smoke_editor_tabs,
-      smoke_preloader_lifecycle, smoke_zoom_out]
+      and editor↔editor. One controller interpolates measured toolbar height,
+      stage geometry, world centre + screen scale, background/paper and layer
+      weights. Every intermediate viewBox matches the current stage aspect; a
+      same-space switch fades in the new toolbar, supports wrapped bars and
+      retargets a rapid second choice. Hidden editor chrome and the moving stage
+      are inert; disconnect/reconnect leaves no RAF or transient class
+      [auto: smoke_mode_transition, smoke_preloader_lifecycle, smoke_zoom_out]
 - [ ] Space gear (v1.30.1): the cog next to the space name is visible in every
       mode (admins only), vertically centered with the tab text; clicking it
       opens space settings without switching the tab; "+" tab stays Plan-only [auto: smoke_gear_tabs / smoke_gs_always]
@@ -1205,10 +1208,10 @@ require hands on real hardware — they remain for the human pass.
 - [ ] `show_button: false` hides the footer
 - [ ] Full card honours `#space=<id>` on load and on hashchange; invalid id ignored [manual]
 
-## Unified device status and activity (dev, owner 2026-08-05)
+## Unified device status and pulse activity (#98)
 
-- [ ] The Display list contains exactly Icon + dynamic plate, Icon + activity,
-      Value instead of an icon, Always static icon, in that order. Legacy
+- [ ] The Display list contains exactly Icon + state, Icon + state and activity,
+      Value + state, Always static icon, in that order. Legacy
       `display: ripple` reads and saves back as `icon_ripple`
 - [ ] Icon + dynamic plate shows state plate/morph but no ordinary activity
       effect; Icon + activity adds the semantic effect; Value keeps the
@@ -1217,8 +1220,8 @@ require hands on real hardware — they remain for the human pass.
 - [ ] Motion/vibration/sound/contact rising edges render exactly three waves
       for about 3.3 s; initial load and recovery from unknown/unavailable do
       not fake an event; a rapid retrigger restarts it
-- [ ] Occupancy/presence is one calm static ring for the whole active state
-- [ ] Cover/lock/valve movement breathes until the travelling state ends;
+- [ ] Occupancy/presence is one calm continuous pulse for the whole active state
+- [ ] Cover/lock/valve movement continuously pulses until the travelling state ends;
       direct terminal `closed ↔ open` / `locked ↔ unlocked` without an
       intermediate state breathes for about 3.3 s
 - [ ] Actual work (light/switch/fan/humidifier on, active climate action,
@@ -1244,7 +1247,9 @@ require hands on real hardware — they remain for the human pass.
 - [ ] Activity colour and size (×2..×8) apply per device; alarm ignores them
 - [ ] Icon size ×0.5..×3 and rotation 0..355° apply per device; the
       temp/humidity badges scale with the icon
-- [ ] With OS "reduce motion" enabled, activity/alarm rings are static
+- [ ] With OS "reduce motion" enabled, ordinary activity becomes a compact
+      solid dot; alarm keeps the red plate and accessible alarm description,
+      without an animated or static ring
 
 ## Doors, windows & gates (v1.23.0+)
 
@@ -2056,6 +2061,10 @@ require hands on real hardware — they remain for the human pass.
 - [ ] Escape, outside pointer, owning-dialog scroll, toast and a competing colour
       picker close help in the documented order. The Popover and portal fallback
       paths stay inside the visual viewport [auto: `smoke_help_affordance`].
+- [ ] Opening help by hover, focus or tap changes neither `clientHeight`,
+      `scrollHeight` nor `scrollTop` of the owning dialog body. The native
+      Popover and forced portal fallback have the same no-layout-shift contract
+      [auto: `smoke_help_affordance`].
 
 ## Hiding layers: decor, openings, virtual walls (docs/UX-MODES.md, dev, unreleased)
 

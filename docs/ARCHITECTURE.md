@@ -196,11 +196,14 @@ mutable and warning-deduplicated.
 
 Per-marker appearance: `display: badge|icon_ripple|value|static_icon`. Entity semantics originate in
 `src/device-visual.ts`; `src/device-presentation.ts` resolves the complete renderer-ready
-projection (sources, value, icon, classes, metrics and explanation), and
+projection (sources, value, icon, classes, metrics and explanation),
+`src/device-pulse.ts` is the single pure projection from semantic activity to
+`none|alarm|short|continuous`, and
 `src/device-face.ts` renders that projection on the full plan, device preview and static
 space card. `badge`
-shows the icon/morph and status plate; `icon_ripple` additionally shows a finite event,
-static presence, mechanical transition or actual-work ring; `value` replaces the icon
+shows the icon/morph and status plate; `icon_ripple` additionally shows three finite
+event waves or one continuous wave for presence, mechanical transition and actual work;
+`value` replaces the icon
 with the HA-formatted numeric or text value. Ambiguous/missing/unavailable sources fall
 back to the icon instead of selecting an arbitrary registry row. A critical alarm is red
 in every dynamic presentation. `static_icon` deliberately keeps the configured/automatic
@@ -216,11 +219,12 @@ the complete face bounding box rather than allowing satellites to clip.
 `normalizeDeviceDisplay()` is the mandatory compatibility gate for every consumer and maps
 legacy `ripple` to `icon_ripple`. The marker dialog builds its unsaved draft through `buildDevices`,
 then `hp-device-preview` shows the actual projection, integration provenance from
-registry/config-entry metadata and an isolated 3.3 s activity demonstration.
+registry/config-entry metadata and isolated short/continuous activity demonstrations.
 Runtime baselines are seeded as soon as a rebuilt registry becomes authoritative, before
 the next HA snapshot is classified; source-key changes reset any finite effect immediately.
 The backend accepts legacy `display: ripple` only for compatibility. `ripple_color` and `ripple_size` remain the
-stored names for the ordinary activity effect. `size` (icon multiplier via the
+stored names used by every unified pulse kind (alarm keeps its safety-red colour).
+`size` (icon multiplier via the
 `--dev-size` CSS var — value badges scale along) and `angle` rotate/scale a single icon.
 Room drawing shows a live **ruler** (`segmentCm` +
 `formatLength`, metres or feet+inches by `hass.config.unit_system`); the scale is per-space
@@ -847,6 +851,19 @@ hash falls back to the default.
   mode is transient: cold load, reload and return from another HA route start
   in View. The warm memo may carry an editor only across a technical remount
   on the same route.
+
+## View/editor transition ownership (#101)
+
+`src/mode-transition.ts` owns the only RAF/token timeline for entering, leaving
+and switching editors. `ModeTransitionController` interpolates measured editor
+chrome height, stage geometry, world-space camera centre, logarithmic screen
+pixels-per-unit, stage/paper colours, day/night brightness and presentation
+weights together. Every intermediate SVG viewBox is derived from the current
+stage aspect, so no default-fit or letterbox frame can appear. The stage is
+inert while geometry is moving; header mode tabs remain available for a rapid
+retarget. Reduced motion commits the exact target atomically. Visibility loss,
+space change, recovery and disconnect cancel or settle this same owner rather
+than leaving CSS timers or WAAPI animations behind.
 
 
 ## Settings tiers (owner's principle, 2026-07-26)

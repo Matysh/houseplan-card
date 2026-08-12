@@ -8,7 +8,7 @@
     "resolveJsonModule": true
   },
   "include": [
-    "src/color.ts", "src/logic.ts", "src/glow-blend.ts", "src/device-visual.ts", "src/device-presentation.ts",
+    "src/color.ts", "src/logic.ts", "src/glow-blend.ts", "src/device-visual.ts", "src/device-pulse.ts", "src/device-presentation.ts",
     "src/device-face.ts", "src/device-toggle.ts",
     "src/ha-binding-status.ts",
     "src/integration-provider.ts", "src/vacuum.ts",
@@ -20,7 +20,7 @@
     "src/types.ts",
     "src/space-geometry.ts",
     "src/signing.ts",
-    "src/visual-continuity.ts",
+    "src/visual-continuity.ts", "src/mode-transition.ts",
     "src/render-device-snapshot.ts",
     "src/command-stack.ts",
     "src/align-grid.ts",

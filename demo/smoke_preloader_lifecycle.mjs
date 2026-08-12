@@ -48,21 +48,34 @@ const rec = await page.evaluate(async () => {
   out.noHpbootClass = !!stage && !stage.classList.contains('hpboot');
   out.veilGone = !sr().querySelector('.bootveil');
 
-  // A detach during resume/nav motion kills their timers. The transient state
-  // must die with the timers, otherwise the same element comes back veiled or
-  // permanently clipped by nav-enter.
+  // A detach during resume/mode motion kills the one RAF owner. The transient
+  // state must die with it, otherwise the same element comes back inert or
+  // permanently pinned to an intermediate camera.
   c._resumeSettling = true;
-  c._navMotion = 'enter';
   c._slide = 'left';
+  const from = c._currentModeVisual('view');
+  c._mode = 'plan';
+  if (from) c._modeTransition.start(from, {
+    ...from,
+    presentedMode: 'plan',
+    editorChromeHeight: 80,
+    stageHeight: Math.max(1, from.stageHeight - 80),
+    architectureOpacity: 1,
+    backdropOpacity: 1,
+    editorWeight: 1,
+    viewWeight: 0,
+    toolbarContentOpacity: 1,
+  }, 'plan', 1000);
   c.requestUpdate(); await c.updateComplete;
   c.remove();
   out.detachClearsResumeAndNav = c._resumeSettling === false
-    && c._navMotion === '' && c._slide === '';
+    && c._modeTransition.active === false
+    && c._modeTransitionVisual === null && c._slide === '';
   wrap.appendChild(c);
   await c.updateComplete;
   const stageAfterMotionReattach = sr().querySelector('.stage');
   out.reattachHasNoStuckMotionClasses = !!stageAfterMotionReattach
-    && !stageAfterMotionReattach.classList.contains('hpnav')
+    && !stageAfterMotionReattach.classList.contains('mode-transition')
     && !stageAfterMotionReattach.classList.contains('hpresume');
 
   // A2: a second detach DURING the fade must not leave a zombie veil either

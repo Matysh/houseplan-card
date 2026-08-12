@@ -107,13 +107,20 @@ export class HpHelp extends LitElement {
     }
 
     .sr-only {
-      position: absolute;
+      /* Keep the accessibility-only description outside every dialog scroll
+         container's overflow geometry. Toggling the hidden attribute on the former
+         absolutely-positioned node made some browsers add a vertical
+         scrollbar while help was open, even though the visible tooltip was
+         already in the Popover top layer / fixed fallback portal. */
+      position: fixed;
+      inset: 0 auto auto 0;
       width: 1px;
       height: 1px;
       padding: 0;
-      margin: -1px;
+      margin: 0;
       overflow: hidden;
       clip: rect(0, 0, 0, 0);
+      clip-path: inset(50%);
       white-space: nowrap;
       border: 0;
     }
@@ -405,7 +412,8 @@ export class HpHelp extends LitElement {
     if (!this._hasContent()) return nothing;
     const label = this.ariaLabel.trim();
     return html`
-      <span id=${this._descriptionId} class="sr-only" role="tooltip" ?hidden=${!this._open}>${this.text}</span>
+      <span id=${this._descriptionId} class="sr-only" role="tooltip"
+        aria-hidden=${this._open ? 'false' : 'true'}>${this.text}</span>
       <button class="trigger" type="button" aria-label=${label}
         aria-describedby=${this._open ? this._descriptionId : nothing}
         aria-expanded=${this._open ? 'true' : 'false'}

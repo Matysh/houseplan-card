@@ -142,6 +142,14 @@ device editor), `.virtual` (a marker with no entity), `.valonly` (value
 instead of icon), `.static-icon` (the always-static display mode), `.noicon`,
 `.sel` (selected in an editor).
 
+Unified device activity is exposed by one descendant `.device-pulse` with
+exactly one kind class: `.alarm`, `.short` or `.continuous`. Semantic reason is
+available as `.reason-alarm`, `.reason-event`, `.reason-presence`,
+`.reason-transition` or `.reason-running`. Reduced-motion ordinary activity is
+the compact `.activity-dot`; no static ring is emitted. The legacy
+`.activity-ring` descendant class remains a beta compatibility alias only and
+must not be used by new integrations.
+
 The full plan and `houseplan-space-card` emit the same binding-status data
 attributes. A forced-hidden HA-disabled marker is absent from ordinary View;
 the attributes are visible on its service ghost in the Device editor.
@@ -155,6 +163,7 @@ These exist in the DOM and **will** change without notice. Do not build on
 them:
 
 - **Boot and transition classes** — `.hpboot`, `.hpsettle`, `.skysnap`,
+  `.mode-transition`, `.editorchrome.transitioning`,
   `.daynight` on `.stage`. They exist for one animation frame each and their
   whole job is to be replaced.
 - **Editor chrome and previews** — `.dtframe`, `.dthandle`, `.dtknob`,

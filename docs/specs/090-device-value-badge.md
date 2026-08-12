@@ -758,7 +758,10 @@ Linux-артефакта CI по действующему HP-QA-01 контра�
 14. Badge не меняет свет, Glow, controls и комнатные агрегаты.
 15. Config проходит backend validation и import/export round-trip.
 16. RU/EN, keyboard, screen reader и touch-view контракты выполнены.
-17. Реализация выходит сначала в beta/RC.
+17. При открытии editor нативные source/position selectors показывают именно
+    сохранённые effective values, даже если они не первые в динамическом списке;
+    открытие не помечает `value_badge` как touched и не меняет config (#100).
+18. Реализация выходит сначала в beta/RC.
 
 ## 22. Сложность, риски и оценка
 

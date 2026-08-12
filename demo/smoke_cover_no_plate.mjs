@@ -105,7 +105,7 @@ const out = await page.evaluate(async () => {
   o.openingRingIsTheBreathingOne = (() => {
     const ring = devEl()?.querySelector('.activity-ring.transition i:first-child');
     const cs = ring ? getComputedStyle(ring) : null;
-    return !!cs && cs.animationName === 'hp-activity-breathe' && cs.animationDuration === '2.2s';
+    return !!cs && cs.animationName === 'hp-pulse-continuous' && cs.animationDuration === '2.4s';
   })();
 
   await setCover('closing', { device_class: 'curtain' });

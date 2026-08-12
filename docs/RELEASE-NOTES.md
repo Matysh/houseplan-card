@@ -1,18 +1,18 @@
-<!-- release: v1.62.0-beta.4 -->
+<!-- release: v1.62.0-beta.5 -->
 
 ## Основное
 
-- Редактор устройств теперь закрывается с первого нажатия.
-- Исправлены действия ламп и составных устройств штор; универсальное переключение точнее учитывает возможности Home Assistant.
-- Значок подсказки больше не показывается без текста и заменён на «вопрос в кружке».
+- Все виды активности устройств объединены в понятную систему пульсаций без статичных колец.
+- Переходы между просмотром и редакторами теперь плавно меняют панель, рабочую область, масштаб и фон.
+- Восстановлено отображение солнечных лучей из окон.
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- The Device editor now closes on the first press.
-- Fixed lamp and compound-cover actions; universal toggle now observes Home Assistant capabilities more precisely.
-- Help is no longer shown without explanatory text and now uses the circled-question icon.
+- All device activity now uses one predictable pulse system without static rings.
+- View/editor transitions now animate the toolbar, workspace, camera and background together.
+- Restored window sun rays after a transition regression.
 - Small fixes and improvements.
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.62.0-beta.4/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.62.0-beta.4/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.62.0-beta.5/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.62.0-beta.5/docs/CHANGELOG.md)
