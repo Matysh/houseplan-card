@@ -25,7 +25,10 @@ const out = await page.evaluate(async () => {
 
   const gateEntity = (state, attrs) => ({
     entity_id: 'cover.gate', state,
-    attributes: { friendly_name: 'Gate', ...attrs },
+    // Declare the capabilities exercised below. Issue #94 intentionally
+    // resolves services fail-closed, so an entity without feature metadata is
+    // not a valid fixture for open / close / stop dispatch.
+    attributes: { friendly_name: 'Gate', supported_features: 11, ...attrs },
   });
   /** Push a cover state into hass keeping the service recorder in place. */
   const setCover = async (state, attrs = {}) => {

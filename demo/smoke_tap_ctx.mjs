@@ -4,16 +4,19 @@ const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
-  // 1) в селекте действий 3 опции, дефолт «Карточка устройства»
+  // 1) Единый селектор содержит ровно четыре актуальных действия;
+  // legacy cover и пустая авто-опция в UI не возвращаются.
   c._setMode('devices'); await c.updateComplete;
   // v1.39.0: у ЛАМП дефолт 'toggle', поэтому для проверки дефолта 'info'
   // берём заведомо не-световое устройство
   const dev = c._devices.find((d) => !d.virtual && d.primary && !d.primary.startsWith('light.'));
   c._openMarkerDialog(dev); await c.updateComplete;
-  const sel = [...sr().querySelectorAll('hp-dialog select')].find((s) =>
-    [...s.options].some((o) => o.textContent === c._t('tap.toggle')));
-  out.threeOptions = sel && sel.options.length === 4; // + «Запустить…» (2026-07-29)
-  out.noAutoOption = sel && ![...sel.options].some((o) => o.value === '');
+  const sel = sr().querySelector('#marker-tap-action');
+  const values = sel ? [...sel.options].map((o) => o.value) : [];
+  out.fourCurrentOptions = JSON.stringify(values) === JSON.stringify([
+    'info', 'more-info', 'toggle', 'run',
+  ]);
+  out.noLegacyOptions = !values.includes('') && !values.includes('cover');
   out.defaultInfo = sel && sel.value === 'info';
   c._markerDialog = null; await c.updateComplete;
   // 2) правый клик в Просмотре открывает more-info
