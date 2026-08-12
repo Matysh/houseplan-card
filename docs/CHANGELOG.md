@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## v1.62.0-beta.7 — 2026-08-12
+
+- Fixed the first opening of device settings: **Display**, **Room** and
+  **Leading light entity** now immediately show the value that is actually
+  persisted instead of the first option. The form and its preview can no
+  longer report different settings.
+- Added a shared native-select contract and browser checks that reopen a device
+  with non-first persisted choices. Future selectors can no longer silently
+  reintroduce the unsafe binding pattern.
+
 ## v1.62.0-beta.6 — 2026-08-12
 
 - Fixed the remaining cause of invisible window sun rays in real Home Assistant

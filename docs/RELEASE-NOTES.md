@@ -1,14 +1,14 @@
-<!-- release: v1.62.0-beta.6 -->
+<!-- release: v1.62.0-beta.7 -->
 
 ## Основное
 
-- Исправлено отображение солнечных лучей из окон в реальных установках Home Assistant ([#102](https://github.com/Matysh/houseplan-card/issues/102)).
+- Настройки устройства теперь сразу показывают фактически сохранённые варианты отображения, комнаты и источника света.
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- Fixed window sun rays in real Home Assistant installations ([#102](https://github.com/Matysh/houseplan-card/issues/102)).
+- Device settings now immediately show the persisted display, room and light-source choices.
 - Small fixes and improvements.
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.62.0-beta.6/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.62.0-beta.6/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.62.0-beta.7/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.62.0-beta.7/docs/CHANGELOG.md)

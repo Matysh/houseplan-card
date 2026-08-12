@@ -93,18 +93,23 @@ const res = await page.evaluate(async () => {
       light_entity: draft.lightEntity || null,
     },
   } : realPreview(draft);
-  c._openMarkerDialog(multi); await c.updateComplete;
-  c._setMarkerLightRole('always'); await c.updateComplete;
+  c._openMarkerDialog({
+    ...multi,
+    marker: { ...(multi.marker || {}), is_light: true, light_entity: extra },
+  });
+  await c.updateComplete;
   out.leadingDraftIsAlways = c._markerDialog.lightRole === 'always';
   out.leadingPreviewHasExtra = c._markerPreviewDevice(c._markerDialog)?.entities?.includes(extra) === true;
   const leading = sr().querySelector('hp-dialog #marker-light-entity');
   out.leadingSelectorForMultiple = !!leading && leading.options.length === 3;
+  out.savedLeadingEntitySelected = leading?.value === extra
+    && leading?.selectedOptions?.[0]?.value === extra;
   if (leading) {
-    leading.value = extra;
+    leading.value = multi.primary;
     leading.dispatchEvent(new Event('change', { bubbles: true }));
     await c.updateComplete;
-    out.leadingUpdatesPreview = c._markerDialog.lightEntity === extra
-      && c._markerSpatialSource(c._markerDialog)?.eid === extra;
+    out.leadingUpdatesPreview = c._markerDialog.lightEntity === multi.primary
+      && c._markerSpatialSource(c._markerDialog)?.eid === multi.primary;
   } else {
     out.leadingUpdatesPreview = false;
   }

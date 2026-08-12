@@ -40,13 +40,18 @@ const res = await page.evaluate(async () => {
   const previewFace = face(preview?.renderRoot?.querySelector('.dev'));
   const providerShown = /demo/i.test(preview?.renderRoot?.querySelector('.previewfacts')?.textContent || '');
 
-  // Issue #100: dynamic option creation must not leave the native select on
-  // its first row when a different source/position is already persisted.
+  // Dynamic option creation must not leave a freshly mounted native select on
+  // its first row when a different display/room/badge choice is persisted.
+  // Unmount the dialog first: replacing one open marker can leave old option
+  // nodes around and would miss the real first-open regression.
+  c._markerDialog = null;
+  await c.updateComplete;
   const badgeDevice = c._devices.find((item) => item.id === 'd_temp');
   c._openMarkerDialog({
     ...badgeDevice,
     marker: {
       ...(badgeDevice.marker || {}),
+      display: 'value',
       value_badge: {
         enabled: true,
         source: { kind: 'derived_lqi' },
@@ -55,10 +60,17 @@ const res = await page.evaluate(async () => {
     },
   });
   await c.updateComplete;
+  const displaySelect = sr().querySelector('#marker-display');
+  const roomSelect = sr().querySelector('#marker-room');
   const badgeSourceSelect = sr().querySelector('#marker-value-badge-source');
   const badgePositionSelect = sr().querySelector('#marker-value-badge-position');
   const savedBadgePreview = sr().querySelector('hp-device-preview');
   await savedBadgePreview?.updateComplete;
+  const savedDisplaySelected = displaySelect?.value === 'value'
+    && displaySelect?.selectedOptions?.[0]?.value === 'value';
+  const expectedRoom = c._markerDialog?.room || '';
+  const savedRoomSelected = expectedRoom !== '' && roomSelect?.value === expectedRoom
+    && roomSelect?.selectedOptions?.[0]?.value === expectedRoom;
   const savedBadgeSourceSelected = badgeSourceSelect?.value === 'derived:lqi'
     && badgeSourceSelect?.selectedOptions?.[0]?.value === 'derived:lqi';
   const savedBadgePositionSelected = badgePositionSelect?.value === 'left'
@@ -109,6 +121,8 @@ const res = await page.evaluate(async () => {
     planPreviewEqual: JSON.stringify(planFace) === JSON.stringify(previewFace),
     planStaticEqual: JSON.stringify(planFace) === JSON.stringify(staticFace),
     providerShown,
+    savedDisplaySelected,
+    savedRoomSelected,
     savedBadgeSourceSelected,
     savedBadgePositionSelected,
     savedBadgePreviewMatches,

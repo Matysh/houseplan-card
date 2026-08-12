@@ -183,7 +183,7 @@ import {
 import { renderOpeningTunnelFills } from './render/opening-tunnels';
 import { safeStoredColor } from './color';
 
-const CARD_VERSION = '1.62.0-beta.6';
+const CARD_VERSION = '1.62.0-beta.7';
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
 const CELL_CM_MIN = 0.1;
@@ -8640,7 +8640,7 @@ class HouseplanCard extends LitElement {
           </datalist>
           ${ent ? html`
             <label>${this._t('decor.live_attr')}</label>
-            <select class="namein" .value=${''}
+            <select id="decor-live-attribute" class="namein" .value=${''}
               @change=${(e: Event) => {
                 const value = (e.target as HTMLSelectElement).value;
                 if (value) this._decorInsertLiveVariable(value === '__state__' ? null : value);
@@ -16636,12 +16636,14 @@ class HouseplanCard extends LitElement {
               : nothing}
           </div>
 
-          <label>${this._t('marker.room_label')}${isVirtual ? '' : this._t('marker.room_override')}</label>
-          <select class="areasel" .value=${d.room}
+          <label for="marker-room">${this._t('marker.room_label')}${isVirtual ? '' : this._t('marker.room_override')}</label>
+          <select id="marker-room" class="areasel"
             @change=${(e: Event) => (this._markerDialog = { ...d, room: (e.target as HTMLSelectElement).value })}>
-            <option value="">${isVirtual ? this._t('marker.room_choose') : this._t('marker.room_auto')}</option>
+            <option value="" ?selected=${!d.room}>
+              ${isVirtual ? this._t('marker.room_choose') : this._t('marker.room_auto')}
+            </option>
             ${this._allRoomsFlat().map(
-              (r) => html`<option value=${r.value}>${r.label}</option>`,
+              (r) => html`<option value=${r.value} ?selected=${r.value === d.room}>${r.label}</option>`,
             )}
           </select>
 
@@ -16764,18 +16766,18 @@ class HouseplanCard extends LitElement {
                   ${this._help('marker.light_entity.help')}
                 </div>
                 <select id="marker-light-entity" class="areasel"
-                  .value=${staleLeading ? '' : d.lightEntity}
                   @change=${(e: Event) => (this._markerDialog = {
                     ...d,
                     lightEntity: (e.target as HTMLSelectElement).value,
                     lightEntityTouched: true,
                   })}>
-                  <option value="">
+                  <option value="" ?selected=${staleLeading || !d.lightEntity}>
                     ${this._t('marker.light_entity_auto', {
                       entity: effectiveLeading || this._t('marker.light_entity_none'),
                     })}
                   </option>
-                  ${leadingEntities.map((eid) => html`<option value=${eid}>
+                  ${leadingEntities.map((eid) => html`<option value=${eid}
+                    ?selected=${!staleLeading && eid === d.lightEntity}>
                     ${this.hass.states[eid]?.attributes?.friendly_name
                       || this._fullRegistryHass.entities[eid]?.name || eid} · ${eid}
                   </option>`)}
@@ -16877,14 +16879,16 @@ class HouseplanCard extends LitElement {
                 </button></p>`
             : nothing}
 
-          <label>${this._t('marker.display_label')}</label>
-          <select class="areasel" .value=${d.display}
+          <label for="marker-display">${this._t('marker.display_label')}</label>
+          <select id="marker-display" class="areasel"
             @change=${(e: Event) => (this._markerDialog = {
               ...d,
               display: normalizeDeviceDisplay((e.target as HTMLSelectElement).value),
             })}>
             ${DISPLAY_MODES.map((v) => [v, 'display.' + v] as const).map(
-              ([v, k]) => html`<option value=${v}>${this._t(k as any)}</option>`,
+              ([v, k]) => html`<option value=${v} ?selected=${v === d.display}>
+                ${this._t(k as any)}
+              </option>`,
             )}
           </select>
           <p class="muted">${this._t('marker.display_hint')}</p>
