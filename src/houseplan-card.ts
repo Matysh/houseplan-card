@@ -61,7 +61,8 @@ import {
   openingWallIndex as buildOpeningWallIndex, applyWallThicknessToNewRoom,
   drawWallPreviewD, DRAW_WALL_DEFAULT_CM, wallIntervals, materializeWallIntervals,
   normalizeWallIntervals,
-  intervalCmAt, wallBodyNeedsSolid, type OpeningTunnelGeometry, type OpeningWallIndex, type WallEntry,
+  intervalCmAt, wallBodyNeedsSolid, type OpeningTunnelGeometry, type OpeningWallIndex,
+  type WallEntry, type WallInterval,
 } from './wall-thickness';
 import {
   resolveOpenCuts, resolveBoundaryTarget, snapOpenPoint,
@@ -112,7 +113,7 @@ import {
   COLUMN_MAX_CM, canonicalColumnAngle, clampColumnCm, columnBody,
   directionalOccluders, draftBodies, floorMinusBodies, geometryArea, geometryOuterRings,
   geometryAllRings, intersectionPaths, partitionBody, polyclipPathD,
-  pointInPhysicalBody, pointInPhysicalGeometry, sameColumnPlacement,
+  pointInOpaquePlanBody, pointInPhysicalBody, sameColumnPlacement,
 } from './physical-geometry';
 import {
   LightSegment, polygonSegments, splitAtIntersections, visibilityPolygon,
@@ -147,7 +148,7 @@ import {
   type PageVisibilitySignal,
 } from './visual-continuity';
 import {
-  combineVisualSamples, edgeActivity, entityVisualSample, entityVisualSamplesForDevice,
+  entityVisualSample, entityVisualSamplesForDevice,
   type DeviceActivity, type DeviceVisualState, type EntityVisualSample,
 } from './device-visual';
 import {
@@ -155,8 +156,12 @@ import {
   resolvePresentationSources, type ResolvedDevicePresentation,
 } from './device-presentation';
 import {
+  ACTIVITY_WINDOW_MS, advanceFiniteActivity, createFiniteActivityRuntime,
+  resetFiniteActivityRuntime, stampFiniteActivity, type FiniteActivityRuntime,
+} from './activity-runtime';
+import {
   recommendedValueBadgeSource, valueBadgeCandidates, valueBadgeSourceFromKey,
-  valueBadgeSourceKey, valueBadgeWriteFields, type ValueBadgeCandidate,
+  valueBadgeSourceKey, valueBadgeTitle, valueBadgeWriteFields, type ValueBadgeCandidate,
 } from './device-value-badge';
 import {
   createRenderDeviceSnapshot, presentationSnapshotKey, type RenderDeviceSnapshot,
@@ -181,9 +186,17 @@ import {
   type DecorBox, type SnapGeometry,
 } from './editors/decor/geometry';
 import { renderOpeningTunnelFills } from './render/opening-tunnels';
+import {
+  openingVisibleMetrics, renderOpeningVisibleGeometry,
+  type OpeningFaceOffset, type OpeningVisibleSpec,
+} from './render/opening-symbol';
+import {
+  openingPlacementPreset, resolveOpeningPlacement, sameOpeningPlacementInput,
+  type OpeningPlacementCore, type OpeningPlacementPreset, type OpeningPlacementType,
+} from './opening-placement';
 import { safeStoredColor } from './color';
 
-const CARD_VERSION = '1.62.0-beta.7';
+const CARD_VERSION = '1.62.0-beta.8';
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
 const CELL_CM_MIN = 0.1;
@@ -265,6 +278,22 @@ type WarmViewport = {
   rszSel: string | null;
   decorSel: string | null;
 };
+const expiredWarmViewport = (vp: WarmViewport | null): WarmViewport | null => {
+  if (!vp || vp.mode === 'view') return vp;
+  return {
+    ...vp,
+    mode: 'view',
+    zoom: vp.snap?.space === vp.space ? vp.snap.zoom : vp.zoom,
+    view: null,
+    snap: null,
+    tool: 'draw',
+    decorTool: 'select',
+    showHidden: false,
+    selId: null,
+    rszSel: null,
+    decorSel: null,
+  };
+};
 /** Which dialog was open and its draft (docs/WARM-REMOUNT.md §3). `data` is
  *  the live draft OBJECT — the memo is module state, never serialised, so a
  *  half-filled device dialog with its uploaded pdfs survives for free. */
@@ -279,6 +308,8 @@ type WarmDialog = { kind: WarmDialogKind; space: string; mode: string; data: any
 type WarmEntry = {
   /** generation id of the instance that currently owns the slot */
   owner: number;
+  /** HA route where this placement was captured. */
+  path: string;
   /** the parent element the owner was mounted in (weak — never keep DOM alive) */
   place: WeakRef<Node> | null;
   /** the owner's index among that parent's children */
@@ -375,7 +406,6 @@ const LS_KIOSK = 'houseplan_card_kiosk_v1'; // per-SCREEN size multipliers (each
 const NORM_W = 1000; // side of the render space — the canvas is square (v1.48.0)
 /** Short semantic-event / direct-terminal-transition window. Event uses
     three sequential 1.1 s waves; motion cool-down itself never animates. */
-const ACTIVITY_WINDOW_MS = 3300;
 /**
  * How finely the lit region is traced where nothing blocks the light. 96 steps
  * put the chord error at 0.05% of the radius — under a tenth of a pixel on a
@@ -425,6 +455,9 @@ const MARKUP_TOOLS = new Set<MarkupTool>([
 /** Warm viewport is page-memory, so it may contain a tool name from the old bundle. */
 const normalizeMarkupTool = (value: unknown): MarkupTool => {
   if (value === 'openwall' || value === 'closewall') return 'boundary';
+  // Opening placement is valid only together with its explicit session-only
+  // type preset. Warm viewport state does not persist that preset.
+  if (value === 'opening') return 'draw';
   return typeof value === 'string' && MARKUP_TOOLS.has(value as MarkupTool)
     ? value as MarkupTool
     : 'draw';
@@ -526,13 +559,15 @@ const capturePointer = (ev: PointerEvent): void => {
 /** Ruler badges on both shoulders of an opening + the centre-magnet tick.
  *  The same shape serves the DRAG of an existing opening and the PLACEMENT
  *  preview of a new one (owner 2026-08-03). */
-/** Default length of a freshly placed opening, cm (the dialog's door preset). */
-const OPENING_DEFAULT_CM = 90;
-
 interface OpMeasure {
   labels: { x: number; y: number; text: string }[];
   guide: { x: number; y: number; angle: number } | null;
 }
+
+type OpeningPlacementCandidate = Omit<OpeningPlacementCore, 'measure'> & {
+  face: OpeningFaceOffset;
+  measure: OpMeasure;
+};
 
 class HouseplanCard extends LitElement {
   public hass?: any;
@@ -882,6 +917,14 @@ class HouseplanCard extends LitElement {
     if (!commitTarget || !hadControllerState) this._modeTransitionVisual = null;
   }
 
+  /** Adopt a mode from configuration/recovery without leaving a measured
+   * transition alive. User navigation continues to go through `_setMode()`. */
+  private _adoptMode(mode: HouseplanMode): void {
+    this._cancelModeTransition(false);
+    this._mode = mode;
+    if (mode !== 'view') this._editorChromeMode = mode;
+  }
+
   /** Route departure cannot wait for a decorative frame that will never be
    * shown. Publish the pending View camera directly before warm persistence. */
   private _commitViewModeAtomic(
@@ -919,7 +962,19 @@ class HouseplanCard extends LitElement {
     targetCenterY?: number,
   ): void {
     void this.updateComplete.then(() => {
-      if (!this.isConnected || request !== this._modeTransitionRequest || this._mode !== targetMode) return;
+      if (!this.isConnected || request !== this._modeTransitionRequest || this._mode !== targetMode) {
+        // Only clean the generation that still owns the preparing flag. A
+        // stale callback must not cancel a newer transition, but a config or
+        // recovery mode adoption in the measurement window must never strand
+        // the scene in its inert/busy state.
+        if (request === this._modeTransitionRequest) {
+          this._modeTransitionPreparing = false;
+          this._modeTransitionVisual = null;
+          this._modeTransitionForceAtomic = false;
+          this.requestUpdate();
+        }
+        return;
+      }
       const chrome = this.renderRoot.querySelector('.editorchrome') as HTMLElement | null;
       const inner = chrome?.querySelector('.editorchrome-inner') as HTMLElement | null;
       const targetChromeHeight = targetMode === 'view' ? 0 : inner?.scrollHeight || inner?.getBoundingClientRect().height || 0;
@@ -968,6 +1023,8 @@ class HouseplanCard extends LitElement {
     this._space = id;
     this._path = [];
     this._cursorPt = null;
+    this._clearOpeningPlacement(true);
+    this._tool = 'draw';
     this._openWallAnchor = null;
     this._boundaryRestoreGuard = null;
     this._activeDraftId = null;
@@ -1072,6 +1129,7 @@ class HouseplanCard extends LitElement {
     value: Array<OpeningTunnelGeometry | null>;
   } | null = null;
   private _openingWallIndexCache: { key: string; value: OpeningWallIndex } | null = null;
+  private _openingPlacementIntervalsCache: { key: string; value: WallInterval[] } | null = null;
   private _physicalBodiesCache: {
     key: string; drafts: number[][][]; partitions: number[][][];
     columns: number[][][]; all: number[][][];
@@ -1126,6 +1184,11 @@ class HouseplanCard extends LitElement {
   private _path: number[][] = []; // current outline (render units, vertices snapped to the grid)
   private _cursorPt: number[] | null = null;
   private _mergeSel: string | null = null;
+  /** Session-only explicit type/width chosen in the Opening sub-panel. */
+  private _openingPreset: OpeningPlacementPreset | null = null;
+  private _openingPresetRevision = 0;
+  /** Last painted hover candidate. Click may reuse it only for the same input epoch. */
+  private _openingHoverCandidate: OpeningPlacementCandidate | null = null;
   private _openingDialog: {
     id?: string;                 // editing an existing opening
     type: 'door' | 'window' | 'gate';
@@ -1421,16 +1484,7 @@ class HouseplanCard extends LitElement {
    * timer repaints when the 3.3 s window closes, and the generation bit forces
    * a CSS event animation to restart on a rapid retrigger.
    */
-  private _activityRt = new Map<string, {
-    sources: string;
-    last: Record<string, string>;
-    flashTs: number;
-    flashKind: 'event' | 'transition' | null;
-    timer: number;
-    gen: number;
-    expiresAt?: number;
-    alarmActive?: boolean;
-  }>();
+  private _activityRt = new Map<string, FiniteActivityRuntime>();
   /** live-vacuum runtime per marker: RAW robot coords (matrix applied at render) */
   private _vacRt = new Map<string, { trail: VacPt[]; lastKey: string; lastTs: number;
     moving: boolean; jump: boolean; endedTs: number; lastPos: VacPt | null }>();
@@ -1545,6 +1599,8 @@ class HouseplanCard extends LitElement {
       this._selId = null;
       this._path = [];
       this._cursorPt = null;
+      this._clearOpeningPlacement(true);
+      this._tool = 'draw';
       this._openWallAnchor = null;
       this._boundaryRestoreGuard = null;
       this._activeDraftId = null;
@@ -1594,6 +1650,7 @@ class HouseplanCard extends LitElement {
     _path: { state: true },
     _cursorPt: { state: true },
     _mergeSel: { state: true },
+    _openingPreset: { state: true },
     _openingDialog: { state: true },
     _openingInfo: { state: true },
     _mergeDialog: { state: true },
@@ -1808,6 +1865,7 @@ class HouseplanCard extends LitElement {
     this._openWallAnchor = null;
     this._boundaryRestoreGuard = null;
     this._cursorPt = null;
+    this._clearOpeningPlacement(true);
     this._touchContacts.clear();
     this._touchSequenceMultitouch = false;
     this._touchClickBlockUntil = 0;
@@ -2021,6 +2079,7 @@ class HouseplanCard extends LitElement {
     if (this._tool === 'opening' || this._tool === 'wallthick' || this._tool === 'delroom'
         || this._tool === 'partition' || this._tool === 'column') {
       e.preventDefault();
+      if (this._tool === 'opening') this._clearOpeningPlacement(true);
       this._tool = 'draw';
     }
   }
@@ -2204,7 +2263,8 @@ class HouseplanCard extends LitElement {
       // the height is interchangeable (they settle at the same chrome), the
       // viewport and the dialog belong to somebody and must not be guessed.
       this._warmSlot = {
-        owner: this._warmGen, place: place ? new WeakRef(place) : null, idx, live: true,
+        owner: this._warmGen, path: location.pathname,
+        place: place ? new WeakRef(place) : null, idx, live: true,
         hdrH: slot.hdrH, stageH: slot.stageH, vp: null,
         frameFingerprint: '', devices: null, dlg: null, freed: 0, evict: 0,
       };
@@ -2252,7 +2312,7 @@ class HouseplanCard extends LitElement {
    */
   private _warmScheduleEvict(s: WarmEntry, key: string): void {
     clearTimeout(s.evict);
-    if (!s.dlg) return;
+    if (!s.dlg && (!s.vp || s.vp.mode === 'view')) return;
     const freed = s.freed;
     const gen = s.owner;
     s.evict = window.setTimeout(() => {
@@ -2260,6 +2320,11 @@ class HouseplanCard extends LitElement {
       if (s.freed !== freed || s.owner !== gen) return; // a successor took over
       // the dialog is unrevivable now, whoever is sitting in the slot
       s.dlg = null;
+      // Route events can arrive after Lovelace has detached the old tree. The
+      // TTL is the order-independent backstop: a stale editor viewport is
+      // never revived after the short technical-remount window.
+      s.vp = expiredWarmViewport(s.vp);
+      s.frameFingerprint = '';
       // a slot nobody re-claimed is also what makes the NEXT claim ambiguous
       const list = warmBoot.get(key);
       if (!s.live && list && list.length > 1) {
@@ -2280,7 +2345,10 @@ class HouseplanCard extends LitElement {
    */
   private _warmAdoptViewport(config: CardConfig): void {
     const vp = this._warmVp;
-    if (!vp) return;
+    if (!vp || this._warmSlot?.path !== location.pathname) {
+      this._warmVp = null;
+      return;
+    }
     if (this._hashApplied || !this._model.find((sp) => sp.id === vp.space)) {
       this._warmVp = null; // another space is on screen — the memo is not about it
       return;
@@ -2288,7 +2356,7 @@ class HouseplanCard extends LitElement {
     this._space = vp.space;
     this._navApplied = true;
     // the editor comes back only where an editor is allowed at all
-    this._mode = vp.mode !== 'view' && this._canEdit && !config.kiosk ? vp.mode : 'view';
+    this._adoptMode(vp.mode !== 'view' && this._canEdit && !config.kiosk ? vp.mode : 'view');
     // AUD-159B6-04: the memo is the NEWER and MORE SPECIFIC record than the
     // global LS nav — a neighbour card writing `mode=devices` into localStorage
     // must not be replayed over this owner's viewport once can_write answers
@@ -2323,7 +2391,8 @@ class HouseplanCard extends LitElement {
       const place = this.parentNode;
       this._warmKey = k;
       this._warmSlot = {
-        owner: this._warmGen, place: place ? new WeakRef(place) : null, idx: this._warmIdx(place), live: true,
+        owner: this._warmGen, path: location.pathname,
+        place: place ? new WeakRef(place) : null, idx: this._warmIdx(place), live: true,
         hdrH: this._hdrH, stageH: 0, vp: null,
         frameFingerprint: '', devices: null, dlg: null, freed: 0, evict: 0,
       };
@@ -3017,8 +3086,9 @@ class HouseplanCard extends LitElement {
       if (typeof cfgResp?.can_write === 'boolean') this._serverCanWrite = cfgResp.can_write;
       this._canOptimizeUndo = !!(cfgResp?.can_optimize_undo || layResp?.can_optimize_undo);
       if (this._pendingNavMode && this._canEdit && !this._config?.kiosk) {
-        this._mode = this._pendingNavMode;
+        const pendingMode = this._pendingNavMode;
         this._pendingNavMode = null;
+        this._setMode(pendingMode, false);
       }
       this._adoptStructuralResponses(cfgResp, layResp);
       // live sync: the config was changed in another window → re-read it
@@ -3146,8 +3216,9 @@ class HouseplanCard extends LitElement {
       }
       this._adoptStructuralResponses(resp);
       if (this._pendingNavMode && this._canEdit && !this._config?.kiosk) {
-        this._mode = this._pendingNavMode;
+        const pendingMode = this._pendingNavMode;
         this._pendingNavMode = null;
+        this._setMode(pendingMode, false);
       }
       this._cacheSnapshot();
       this._regSignature = '';
@@ -3306,6 +3377,7 @@ class HouseplanCard extends LitElement {
             sourceDetails: false,
             lightDevices: this._devices,
             lightSources: planLightSources,
+            registryHass: this._fullRegistryHass,
             reducedMotion: this._reducedMotion,
           },
         ));
@@ -3842,12 +3914,14 @@ class HouseplanCard extends LitElement {
    * functional source.
    */
   private _visualSamples(d: DevItem): EntityVisualSample[] {
-    return resolvePresentationSources(this._renderPlanHass, d, this._renderDevices).samples;
+    return resolvePresentationSources(
+      this._renderPlanHass, d, this._renderDevices, undefined, this._fullRegistryHass,
+    ).samples;
   }
 
   /** One semantic projection consumed by the plan, preview and static card. */
   private _devicePresentation(
-    d: DevItem, showLqi = true, designPreview = false,
+    d: DevItem, showLqi = this._config?.show_signal !== false, designPreview = false,
   ): ResolvedDevicePresentation {
     const captured = !designPreview
       ? this._renderDeviceSnapshot?.presentations.get(presentationSnapshotKey(d.id, showLqi))
@@ -3856,11 +3930,12 @@ class HouseplanCard extends LitElement {
     return resolveDevicePresentation(this._renderPlanHass, d, {
       liveStates: this._config?.live_states !== false,
       showTemperature: this._config?.show_temperature !== false,
-      showSignal: showLqi && this._config?.show_signal !== false,
+      showSignal: showLqi,
       designPreview,
       activityRuntime: this._activityRt.get(d.id),
       sourceDetails: false,
       lightDevices: this._renderDevices,
+      registryHass: this._fullRegistryHass,
       reducedMotion: this._reducedMotion,
     });
   }
@@ -4052,7 +4127,7 @@ class HouseplanCard extends LitElement {
     // prevents a pending pan/long-press lifecycle from swallowing the modal.
     if (action === 'info') {
       this._interruptViewGesture();
-      this._infoCard = d;
+      this._infoCard = actionDevice;
       return;
     }
     if (!this._deviceBindingActive(actionDevice)) return;
@@ -4084,7 +4159,7 @@ class HouseplanCard extends LitElement {
       this._openMoreInfo(actionDevice.primary);
       return;
     }
-    this._infoCard = d;
+    this._infoCard = actionDevice;
   }
 
   /** Translate a key in the card's current language. */
@@ -4337,6 +4412,10 @@ class HouseplanCard extends LitElement {
       && Math.abs(this._view.w - next.w) < 1e-6
       && Math.abs(this._view.h - next.h) < 1e-6;
     if (same) return false;
+    if (this._tool === 'opening') {
+      this._cursorPt = null;
+      this._clearOpeningPlacement(false);
+    }
     this._zoom = z;
     this._view = next;
     return true;
@@ -4494,6 +4573,10 @@ class HouseplanCard extends LitElement {
     const vb = this._baseVb();
     const fit = fitView(vb, this._stageAspect());
     const z = Math.min(HouseplanCard.ZOOM_MAX, Math.max(HouseplanCard.ZOOM_MIN, newZoom));
+    if (this._tool === 'opening') {
+      this._cursorPt = null;
+      this._clearOpeningPlacement(false);
+    }
     const w = stage.clientWidth, h = stage.clientHeight;
     const pt = this._screenToVb(sx, sy);
     const nw = fit.w / z, nh = fit.h / z;
@@ -4523,6 +4606,10 @@ class HouseplanCard extends LitElement {
    *  `all` it also takes in the far strays the opening view leaves out. */
   private _resetZoom(): void {
     const vb = this._baseVb();
+    if (this._tool === 'opening') {
+      this._cursorPt = null;
+      this._clearOpeningPlacement(false);
+    }
     this._zoom = 1;
     this._view = fitView(vb, this._stageAspect());
     this._saveZoom();
@@ -4617,8 +4704,15 @@ class HouseplanCard extends LitElement {
       this._suppressClick = false;
     } else if (this._pointers.size === 2) {
       // A second pointer turns the gesture into navigation. An unfinished
-      // two-click Boundary edit must never survive underneath that pinch.
+      // two-click Boundary edit and an Opening hover must never survive
+      // underneath that pinch. Keep the selected opening preset: lifting the
+      // fingers returns to the same placement session, just without a stale
+      // preview at the pre-gesture coordinate.
       this._cancelBoundaryAnchor();
+      if (this._tool === 'opening') {
+        this._cursorPt = null;
+        this._clearOpeningPlacement(false);
+      }
       const pts = [...this._pointers.values()];
       const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
       this._pinchStart = { dist, zoom: this._zoom };
@@ -4680,6 +4774,10 @@ class HouseplanCard extends LitElement {
     // the tool preview (snap dot, measure label) keeps following the finger
     if (this._markup && this._pointers.size === 1) this._markupMove(ev);
     if (this._pinchStart && this._pointers.size >= 2) {
+      if (this._tool === 'opening') {
+        this._cursorPt = null;
+        this._clearOpeningPlacement(false);
+      }
       const pts = [...this._pointers.values()];
       const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
       const scale = dist / (this._pinchStart.dist || 1);
@@ -4695,6 +4793,10 @@ class HouseplanCard extends LitElement {
       if (Math.abs(ddx) + Math.abs(ddy) > 4) {
         this._suppressClick = true;
         clearTimeout(this._holdTimer);
+        if (this._tool === 'opening') {
+          this._cursorPt = null;
+          this._clearOpeningPlacement(false);
+        }
       }
       // Which gesture is this? Decided once, on the first movement worth the
       // name, and kept for the rest of the drag so the plan cannot flip-flop
@@ -4722,6 +4824,12 @@ class HouseplanCard extends LitElement {
         );
       }
     }
+  }
+
+  private _stagePointerLeave(_ev: PointerEvent): void {
+    if (!this._markup || this._tool !== 'opening') return;
+    this._cursorPt = null;
+    this._clearOpeningPlacement(false);
   }
 
   private _stagePointerUp(ev: PointerEvent): void {
@@ -5146,7 +5254,6 @@ class HouseplanCard extends LitElement {
   }
 
   private _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): void {
-    if (this._kiosk && mode !== 'view') return; // wall devices never edit
     // A mode command is newer than the editor remembered by a same-route warm
     // remount. Clear it before the same-mode early return: while can_write is
     // pending, Lit may still be presenting the previous editor DOM even though
@@ -5154,6 +5261,7 @@ class HouseplanCard extends LitElement {
     // cancel the deferred editor in one press, not let the server response
     // reopen it and force a second press (#95).
     this._pendingNavMode = null;
+    if (this._kiosk && mode !== 'view') return; // wall devices never edit
     if (this._mode === mode) {
       if (!animate && mode === 'view' && this._modeTransitionBusy) {
         const from = this._currentModeVisual(mode);
@@ -5288,6 +5396,7 @@ class HouseplanCard extends LitElement {
     }
     this._path = [];
     this._cursorPt = null;
+    this._clearOpeningPlacement(true);
     this._openWallAnchor = null;
     this._boundaryRestoreGuard = null;
     this._tool = 'draw';
@@ -5565,6 +5674,7 @@ class HouseplanCard extends LitElement {
   private _clearGeometryGesture(): void {
     this._path = [];
     this._cursorPt = null;
+    this._clearOpeningPlacement(false);
     this._mergeSel = null;
     this._mergeDialog = null;
     this._splitSel = null;
@@ -5619,6 +5729,10 @@ class HouseplanCard extends LitElement {
       return;
     }
     this._cancelBoundaryAnchor();
+    if (this._tool === 'opening') {
+      this._cursorPt = null;
+      this._clearOpeningPlacement(false);
+    }
     const viewportGestureEnded = !!this._pinchStart || !!this._panStart;
     this._pointers.delete(ev.pointerId);
     if (this._pointers.size < 2) this._pinchStart = null;
@@ -8262,10 +8376,28 @@ class HouseplanCard extends LitElement {
 
   // ================= shared editor secondary surface =================
 
-  /** No existing buttons are grouped without a separate product decision.
-   * Future editors declare a group here and use the shared launcher/host. */
   private get _editorToolbarGroups(): readonly EditorToolbarGroup[] {
-    return [];
+    if (this._mode !== 'plan') return [];
+    return [{
+      id: 'opening',
+      label: this._t('markup.opening'),
+      icon: 'mdi:door',
+      activeItemId: this._tool === 'opening' ? this._openingPreset?.type : undefined,
+      items: [
+        {
+          id: 'window', label: this._t('opening.window'), icon: 'mdi:window-closed-variant',
+          role: 'tool', invoke: () => this._activateOpeningPlacement('window'),
+        },
+        {
+          id: 'door', label: this._t('opening.door'), icon: 'mdi:door-open',
+          role: 'tool', invoke: () => this._activateOpeningPlacement('door'),
+        },
+        {
+          id: 'gate', label: this._t('opening.gate'), icon: 'mdi:gate',
+          role: 'tool', invoke: () => this._activateOpeningPlacement('gate'),
+        },
+      ],
+    }];
   }
 
   private _renderEditorGroupLauncher(group: EditorToolbarGroup): TemplateResult {
@@ -8530,7 +8662,7 @@ class HouseplanCard extends LitElement {
     const undoName = this._geometryHistory.undoName;
     const redoName = this._geometryHistory.redoName;
     return html`<div class="editbar decorbar">
-      <div class="editbar-tools" tabindex="-1">
+      <div class="editbar-tools" tabindex="-1" ?inert=${this._modeTransitionBusy}>
       ${tools.map(
         ([t, ic, k]) => html`<button class="btn dtool ${this._decorTool === t ? 'on' : ''}"
           data-editor-palette=${t === 'furniture' ? 'furniture' : nothing}
@@ -8563,6 +8695,7 @@ class HouseplanCard extends LitElement {
       </div>
       <div class="editbar-end">
         <button class="btn barclose" title=${this._t('title.close_editor')}
+          data-editor-navigation="view"
           @click=${() => this._setMode('view')}>
           <ha-icon icon="mdi:close"></ha-icon>
         </button>
@@ -9865,33 +9998,142 @@ class HouseplanCard extends LitElement {
   }
 
 
+  private _openingAt(raw: readonly number[]): (OpeningCfg & { rx: number; ry: number; rlen: number }) | null {
+    if (!this._openingsR.length) return null;
+    const roughHits = this._openingsR.flatMap((o) => {
+      const rad = o.angle * Math.PI / 180;
+      const dx = raw[0] - o.rx, dy = raw[1] - o.ry;
+      const localX = dx * Math.cos(rad) + dy * Math.sin(rad);
+      if (Math.abs(localX) > o.rlen / 2 + 12) return [];
+      return [{ o, localY: -dx * Math.sin(rad) + dy * Math.cos(rad) }];
+    });
+    if (!roughHits.length) return null;
+    const openCuts = this._openPairs().flatMap((pair) => pair.segs);
+    const wallIndex = this._openingWallIndexFor(this._spaceModel(), openCuts).value;
+    return roughHits.find(({ o, localY }) => {
+      const faceFlipV = o.type === 'gate' ? !o.flip_v : o.flip_v;
+      const face = this._spaceWalls.length || o.type === 'gate'
+        ? openingInnerFaceOffsetFromIndex(
+            wallIndex,
+            { x: o.rx, y: o.ry, angle: o.angle, length: o.rlen, flip_v: faceFlipV },
+          )
+        : { ox: 0, oy: 0, cm: 0, side: -1 as -1 | 1 };
+      const metrics = openingVisibleMetrics({
+        type: o.type,
+        length: o.rlen,
+        angle: o.angle,
+        amount: this._openingAmt(o),
+        flipH: !!o.flip_h,
+        flipV: !!o.flip_v,
+        base: '', tone: '',
+        cellCm: this._cellCm,
+        gridPitch: this._gridPitch,
+        face,
+      });
+      // Match the committed `.op-hit` rectangle exactly. The old radial test
+      // made a 3 m gate suppress placement in a huge circular area far away
+      // from its visible/hit geometry.
+      return Math.abs(localY) <= metrics.hitHalf;
+    })?.o || null;
+  }
+
+  private _resolveOpeningPlacement(raw: readonly number[]): OpeningPlacementCandidate | null {
+    const preset = this._openingPreset;
+    if (this._tool !== 'opening' || !preset) return null;
+    const space = this._spaceModel();
+    const openCuts = this._openCuts();
+    const wallIndex = this._openingWallIndexFor(space, openCuts);
+    if (!this._openingPlacementIntervalsCache
+        || this._openingPlacementIntervalsCache.key !== wallIndex.key) {
+      this._openingPlacementIntervalsCache = {
+        key: wallIndex.key,
+        value: wallIntervals(
+          space.rooms, this._spaceWalls, openCuts,
+          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+        ),
+      };
+    }
+    const core = resolveOpeningPlacement({
+      pointer: [raw[0], raw[1]],
+      preset,
+      geometryRevision: this._cfgEpoch,
+      renderedLength: this._cmToUnits(preset.lengthCm),
+      intervals: this._openingPlacementIntervalsCache.value,
+      baseTolerance: this._gridPitch * 1.5,
+      bodyPointerPadding: this._cssPxToRender(this._boundaryCoarse ? 10 : 6),
+      gridStep: this._gridPitch,
+    });
+    if (!core) return null;
+    const faceFlipV = core.type === 'gate' ? !core.flipV : core.flipV;
+    const face = openingInnerFaceOffsetFromIndex(
+      wallIndex.value,
+      { x: core.x, y: core.y, angle: core.angle, length: core.renderedLength, flip_v: faceFlipV },
+    );
+    const imperial = this.hass?.config?.unit_system?.length === 'mi';
+    // Placement validity and magnetism belong to the selected atomic physical
+    // interval. Ruler copy keeps the established UX contract, however: it
+    // measures to the ends of the owning room edge rather than to an atomic
+    // breakpoint introduced solely by a neighbour or virtual span.
+    const shoulders = openingShoulders(
+      [core.x, core.y], core.angle, core.renderedLength, space.rooms, this._gridPitch / 2,
+    );
+    const measureLabels = shoulders
+      ? [
+          { distance: shoulders.sideA, midpoint: shoulders.midA as [number, number] },
+          { distance: shoulders.sideB, midpoint: shoulders.midB as [number, number] },
+        ]
+      : core.measure.labels;
+    const labels = measureLabels.map((label) => ({
+      x: label.midpoint[0],
+      y: label.midpoint[1],
+      text: formatLength((label.distance / this._gridPitch) * this._cellCm, imperial),
+    }));
+    return { ...core, face, measure: { labels, guide: core.measure.guide } };
+  }
+
+  private _activateOpeningPlacement(type: OpeningPlacementType): void {
+    this._cancelPath();
+    this._openingPreset = openingPlacementPreset(type, ++this._openingPresetRevision);
+    this._openingHoverCandidate = null;
+    this._cursorPt = null;
+    this._tool = 'opening';
+  }
+
+  private _clearOpeningPlacement(clearPreset: boolean): void {
+    this._openingHoverCandidate = null;
+    if (clearPreset) this._openingPreset = null;
+  }
+
   /** Opening tool: click an existing opening to edit it, or a wall to place one. */
   private _openingClick(raw: number[]): void {
-    const eps = this._gridPitch * 1.5;
-    const hit = this._openingsR.find(
-      (o) => Math.hypot(raw[0] - o.rx, raw[1] - o.ry) <= Math.max(o.rlen / 2, eps),
-    );
+    const hit = this._openingAt(raw);
     if (hit) {
       this._editOpening(hit);
       return;
     }
-    const snap = snapToWall(raw, this._spaceModel().rooms, eps);
-    if (!snap) {
+    const preset = this._openingPreset;
+    if (!preset) return;
+    const cached = this._openingHoverCandidate;
+    const place = cached && sameOpeningPlacementInput(
+      cached, [raw[0], raw[1]], preset.revision, this._cfgEpoch,
+    ) ? cached : this._resolveOpeningPlacement(raw);
+    if (!place) {
+      const eps = this._gridPitch * 1.5;
+      const snap = snapToWall(raw, this._spaceModel().rooms, eps);
+      if (snap && pointOnOpenCut(snap.x, snap.y, snap.angle, this._openCuts(), eps)) {
+        this._showToast(this._t('toast.opening_on_virtual'));
+        return;
+      }
       this._showToast(this._t('toast.opening_no_wall'));
       return;
     }
-    if (pointOnOpenCut(snap.x, snap.y, snap.angle, this._openCuts(), eps)) {
-      this._showToast(this._t('toast.opening_on_virtual'));
-      return;
-    }
-    // the opening is born where the PREVIEW showed it — magnet included
-    const place = this._opRuler(snap, this._cmToUnits(OPENING_DEFAULT_CM));
     this._openingDialog = {
-      type: 'door', lengthCm: OPENING_DEFAULT_CM, contact: '', lock: '',
-      invert: false, flipH: false, flipV: false,
+      type: place.type, lengthCm: place.lengthCm, contact: '', lock: '',
+      invert: false, flipH: place.flipH, flipV: place.flipV,
       x: place.x, y: place.y, angle: place.angle,
     };
     // rulers, tick and ghost live only through the placement gesture
+    this._openingHoverCandidate = null;
     this._cursorPt = null;
   }
 
@@ -10253,26 +10495,23 @@ class HouseplanCard extends LitElement {
       : this._snap(raw);
   }
 
-  /**
-   * Dashed hover preview of an opening: same snap, same default length and —
-   * since 2026-08-03 — the same shoulder rulers and centre magnet as a drag.
-   * Pure: it writes nothing, the render just reads it.
-   */
-  private get _openingPreview():
-    { x: number; y: number; angle: number; rlen: number; measure: OpMeasure | null } | null {
-    if (this._tool !== 'opening' || !this._cursorPt) return null;
+  /** One resolved architectural candidate shared by hover and click. */
+  private get _openingPreview(): OpeningPlacementCandidate | null {
+    const preset = this._openingPreset;
+    if (this._tool !== 'opening' || !preset || !this._cursorPt) return null;
     const raw = this._cursorPt;
+    const cached = this._openingHoverCandidate;
+    if (cached && sameOpeningPlacementInput(
+      cached, [raw[0], raw[1]], preset.revision, this._cfgEpoch,
+    )) return cached;
     // an existing opening under the cursor will be edited, not added — no preview
-    const eps = this._gridPitch * 1.5;
-    const hit = this._openingsR.find(
-      (o) => Math.hypot(raw[0] - o.rx, raw[1] - o.ry) <= Math.max(o.rlen / 2, eps),
-    );
-    if (hit) return null;
-    const rlen = this._cmToUnits(OPENING_DEFAULT_CM);
-    const snap = snapToWall(raw, this._spaceModel().rooms, eps);
-    if (!snap) return null;
-    const r = this._opRuler(snap, rlen);
-    return { x: r.x, y: r.y, angle: r.angle, rlen, measure: r.measure };
+    if (this._openingAt(raw)) {
+      this._openingHoverCandidate = null;
+      return null;
+    }
+    const resolved = this._resolveOpeningPlacement(raw);
+    this._openingHoverCandidate = resolved;
+    return resolved;
   }
 
   /** The rulers to draw right now: from the DRAG of an existing opening, or
@@ -10302,8 +10541,13 @@ class HouseplanCard extends LitElement {
       ? materializeWallIntervals(
           this._spaceModel().rooms, sp.walls, this._openCuts(),
           this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+          [
+            ...(this._pendingSplit?.mainPoly || []),
+            ...(this._pendingSplit?.newPoly || []),
+          ],
         )
       : null;
+    const wallsBeforeSplit = wasSplit && Array.isArray(sp.walls) ? sp.walls : null;
     let verts: number[][];
     if (this._pendingSplit) {
       // apply the cut now: the bigger part keeps the original room, this dialog names the rest
@@ -10344,7 +10588,8 @@ class HouseplanCard extends LitElement {
       this._commitOpenSpans();
       const next = this._normalizeWalls(splitWalls, this._openCuts());
       if (next.length) sp.walls = next;
-      else delete sp.walls;
+      else if (!wallsBeforeSplit?.length) delete sp.walls;
+      else sp.walls = wallsBeforeSplit;
     }
     // Draw-session wall thickness: apply to new edges only; keep neighbour cm
     // on shared stretches. Split naming does not use the Draw field.
@@ -10439,6 +10684,7 @@ class HouseplanCard extends LitElement {
     this._physicalSel = null;
     this._physicalDrag = null;
     this._physicalRotate = null;
+    this._clearOpeningPlacement(true);
   }
 
   private _resumeLastDraft(): void {
@@ -10937,12 +11183,13 @@ class HouseplanCard extends LitElement {
   private async _saveMarker(): Promise<void> {
     const dlg = this._markerDialog;
     if (!dlg || dlg.busy) return;
+    const effectiveTapAction = this._effectiveMarkerTapAction(dlg);
     if (dlg.bindingMode === 'ha' && (!dlg.binding || dlg.binding === 'virtual')) return;
     if (dlg.binding === 'virtual' && !dlg.name.trim()) {
       this._showToast(this._t('toast.virtual_name_required'));
       return;
     }
-    if (dlg.tapAction === 'run' && !dlg.tapTarget) {
+    if (effectiveTapAction === 'run' && !dlg.tapTarget) {
       this._showToast(this._t('toast.run_target_required'));
       return;
     }
@@ -11007,7 +11254,7 @@ class HouseplanCard extends LitElement {
         size: dlg.size !== 1 ? dlg.size : null,
         angle: dlg.angle ? dlg.angle : null,
         ...this._markerTapActionFields(dlg),
-        tap_target: dlg.tapAction === 'run' ? dlg.tapTarget || null : null,
+        tap_target: effectiveTapAction === 'run' ? dlg.tapTarget || null : null,
         tap_confirm: dlg.tapConfirm ? true : null,
         controls: controls.length ? controls : null,
         // pdfs may be rewritten below when rebinding changes the marker id
@@ -11529,7 +11776,7 @@ class HouseplanCard extends LitElement {
         // guide the user onward: straight into room markup mode
         this._importTotal = 0;
         this._space = this._serverCfg!.spaces[0]?.id || this._space;
-        this._mode = 'plan';
+        this._setMode('plan');
         this._tool = 'draw';
         this._path = [];
         this._cursorPt = null;
@@ -11643,7 +11890,7 @@ class HouseplanCard extends LitElement {
     else if (this._importTotal > 0 && this._model.length) {
       this._importTotal = 0;
       this._space = this._serverCfg!.spaces[0]?.id || this._space;
-      this._mode = 'plan';
+      this._setMode('plan');
       this._showToast(this._t('import.done'));
     }
   }
@@ -11734,7 +11981,11 @@ class HouseplanCard extends LitElement {
     const empty = svg`` as unknown as TemplateResult;
     // HARD gates — the feature is simply not on: leaving an editor, a space
     // with rays off, or night. Those never fade, they just are not there.
-    if (this._editing || !this._effSunRays()) {
+    // Logical mode changes at transition start. Keep the outgoing view-only
+    // layer alive until #101's `viewWeight` reaches zero instead of dropping
+    // the rays in frame zero.
+    const transitionViewWeight = this._modeTransitionVisual?.viewWeight ?? 0;
+    if ((this._editing && transitionViewWeight <= 0) || !this._effSunRays()) {
       this._sunFadeReset();
       return empty;
     }
@@ -11868,7 +12119,8 @@ class HouseplanCard extends LitElement {
           </linearGradient>`;
         })}
       </defs>
-      <g class="sunlayer ${this._sunOut ? 'out' : ''}">
+      <g class="sunlayer hp-view-only-layer ${this._sunOut ? 'out' : ''}"
+        opacity="${this._modeTransitionVisual?.viewWeight ?? 1}">
         ${rays.map((r, i) => r.paths?.length
           ? r.paths.map((d) => svg`<path d=${d} fill-rule="evenodd" fill="url(#hp-sun-${i})"></path>`)
           : r.polys.map((p) => svg`<polygon
@@ -12812,8 +13064,7 @@ class HouseplanCard extends LitElement {
       // Exterior opening tunnels deliberately remain in `masonryGeometry`,
       // so placing the source there suppresses the entire pool rather than
       // lighting only the indoor half of the tunnel.
-      if (pointInPhysicalGeometry(sourcePoint, masonryGeometry)
-          || physical.some((body) => pointInPhysicalBody(sourcePoint, body))) {
+      if (pointInOpaquePlanBody(sourcePoint, masonryGeometry, physical)) {
         // This placement cannot produce a valid previous-frame fade: the old
         // clip belongs to a different position. Remove its transition state as
         // well, rather than leaving a timer for a DOM node no longer rendered.
@@ -13134,6 +13385,11 @@ class HouseplanCard extends LitElement {
                 </button>
                 <input type="file" accept="application/json,.json" @change=${this._pickBackupImport} />
               </span>
+              ${this._canOptimizeUndo && this._undoKind === 'import' ? html`
+                <button class="btn ghost" @click=${this._undoPlanOptimization}
+                  ?disabled=${this._optimizeUndoBusy}>
+                  <ha-icon icon="mdi:undo-variant"></ha-icon>${this._t('backup.undo_import')}
+                </button>` : nothing}
             </div>` : nothing}
           <label class="dispsection">${this._t('gs.grid_group')}</label>
           <div class="rhint">${this._t('gs.grid_hint')}</div>
@@ -13142,11 +13398,10 @@ class HouseplanCard extends LitElement {
               <ha-icon icon="mdi:broom"></ha-icon>${this._t('gs.align_all')}
             </button>
           </div>
-          ${this._canOptimizeUndo ? html`<div class="colorrow gsrow">
+          ${this._canOptimizeUndo && this._undoKind !== 'import' ? html`<div class="colorrow gsrow">
             <button class="btn ghost alignall" @click=${this._undoPlanOptimization}
               ?disabled=${this._optimizeUndoBusy}>
-              <ha-icon icon="mdi:undo-variant"></ha-icon>${this._t(this._undoKind === 'import'
-                ? 'backup.undo_import' : 'gs.optimize_undo')}
+              <ha-icon icon="mdi:undo-variant"></ha-icon>${this._t('gs.optimize_undo')}
             </button>
           </div>` : nothing}
           <label class="dispsection">${this._t('gs.about_group')}</label>
@@ -13437,11 +13692,13 @@ class HouseplanCard extends LitElement {
             ? html`<div class="modes">
                 ${([['plan', 'mdi:floor-plan'], ['devices', 'mdi:tune-variant'], ['decor', 'mdi:draw']] as const).map(
                   ([m, ic]) => html`<button class="modetab ${this._mode === m ? 'active' : ''}"
+                    data-editor-navigation=${m}
                     title=${this._t(('mode.' + m + '_tip') as any)}
-                    @click=${() => { if (this._mode !== m) this._setMode(m); }}>
+                    @click=${() => this._setMode(m)}>
                     <ha-icon icon=${ic}></ha-icon><span class="ml">${this._t(('mode.' + m) as any)}</span>
                     ${this._mode === m
                       ? html`<ha-icon class="closex" icon="mdi:close" title=${this._t('title.close_editor')}
+                          data-editor-navigation="view"
                           @click=${(e: Event) => { e.stopPropagation(); this._setMode('view'); }}></ha-icon>`
                       : nothing}
                   </button>`,
@@ -13468,8 +13725,8 @@ class HouseplanCard extends LitElement {
         ${this._canEdit && !this._kiosk
           ? html`<div class="editorchrome ${this._editing || this._modeTransitionBusy ? 'open' : ''}${this._modeTransitionBusy ? ' transitioning' : ''}"
               style=${modeVisual ? `height:${modeVisual.editorChromeHeight}px;opacity:${modeVisual.editorWeight}` : nothing}
-              aria-hidden=${this._editing && !this._modeTransitionBusy ? 'false' : 'true'}
-              ?inert=${!this._editing || this._modeTransitionBusy}>
+              aria-hidden=${this._editing ? 'false' : 'true'}
+              ?inert=${!this._editing}>
               <div class="editorchrome-inner"
                 style=${modeVisual ? `opacity:${modeVisual.toolbarContentOpacity}` : nothing}>
                 ${editorChromeMode === 'plan'
@@ -13484,11 +13741,12 @@ class HouseplanCard extends LitElement {
 
         <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'boundary' ? this._boundaryStageClass : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._bdMovable ? ' bdgrab' : ''}${this._bdDrag ? ' bdgrabbing' : ''}${dayNight ? ' daynight' : ''}${dayNight && this._skySnap ? ' skysnap' : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}${this._modeTransitionBusy ? ' mode-transition' : ''}"
           ?inert=${this._modeTransitionBusy}
-          style="height:${modeVisual ? `${modeVisual.stageHeight}px` : this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}${transitionStageBg ? `;background:${transitionStageBg}` : ''};--wall-fill:${this._fillColors.wall_fill.c};--wall-fill-op:${this._fillColors.wall_fill.a};--hp-mode-architecture-opacity:${modeVisual ? modeVisual.architectureOpacity : this._mode === 'decor' ? 0.35 : 1}${modeVisual ? `;--hp-mode-paper:${modeVisual.paperColor}` : ''}"
+          style="height:${modeVisual ? `${modeVisual.stageHeight}px` : this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}${transitionStageBg ? `;background:${transitionStageBg}` : ''};--wall-fill:${this._fillColors.wall_fill.c};--wall-fill-op:${this._fillColors.wall_fill.a};--hp-mode-architecture-opacity:${modeVisual ? modeVisual.architectureOpacity : this._mode === 'decor' ? 0.35 : 1};--hp-mode-view-weight:${modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0)};--hp-mode-editor-weight:${modeVisual?.editorWeight ?? (this._mode === 'view' ? 0 : 1)}${modeVisual ? `;--hp-mode-paper:${modeVisual.paperColor}` : ''}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
           @pointerdown=${(e: PointerEvent) => { this._notePointer(e); this._stagePointerDown(e); }}
           @pointermove=${(e: PointerEvent) => this._stagePointerMove(e)}
+          @pointerleave=${(e: PointerEvent) => this._stagePointerLeave(e)}
           @pointerup=${(e: PointerEvent) => this._stagePointerUp(e)}
           @pointercancel=${(e: PointerEvent) => this._stagePointerCancel(e)}>
           ${this._renderEditorSecondary()}
@@ -13661,9 +13919,10 @@ class HouseplanCard extends LitElement {
             ${this._renderSvgRoomLabels(space, disp)}
             ${glowLayerVisible ? this._renderGlowLayer(space, disp) : nothing}
             ${this._renderSunRays(space)}
-            ${this._editing ? this._renderAlignGuides() : nothing}
-            ${opMeasure?.guide ? this._renderOpeningCenterTick(opMeasure.guide) : nothing}
-            ${this._markup ? this._renderMarkupLayer(vb) : nothing}
+            ${this._editing ? svg`<g class="hp-editor-only-layer"
+              opacity="${modeVisual?.editorWeight ?? 1}">${this._renderAlignGuides()}</g>` : nothing}
+            ${this._markup ? svg`<g class="hp-editor-only-layer"
+              opacity="${modeVisual?.editorWeight ?? 1}">${this._renderMarkupLayer(vb)}</g>` : nothing}
             ${''/* «Скрыть проёмы» (space.hide_openings) — same deal: the plan
                    editor keeps drawing doors, windows and gates so they stay
                    editable, and only the symbols are hidden elsewhere. What
@@ -13676,6 +13935,9 @@ class HouseplanCard extends LitElement {
                    inside thick jambs without changing the stored span. */}
             ${!this._editing ? this._renderOpenWalls(disp) : nothing}
             ${this._renderWallBodies(disp)}
+            ${this._markup ? svg`<g class="hp-editor-only-layer"
+              opacity="${modeVisual?.editorWeight ?? 1}">${this._renderOpeningPlacementPreview()}</g>` : nothing}
+            ${opMeasure?.guide ? this._renderOpeningCenterTick(opMeasure.guide) : nothing}
             ${this._renderRoomHoverOutline(roomHover)}
             ${''/* Editors: saved virtual boundaries and the live two-click
                    preview deliberately paint AFTER real wall bodies. Their
@@ -13939,19 +14201,14 @@ class HouseplanCard extends LitElement {
   private _stampActivity(id: string, kind: 'event' | 'transition', sources?: string): void {
     let rt = this._activityRt.get(id);
     if (!rt) {
-      rt = { sources: sources || '', last: {}, flashTs: 0, flashKind: null, timer: 0, gen: 0,
-        expiresAt: 0, alarmActive: false };
+      rt = createFiniteActivityRuntime(sources || '', []);
       this._activityRt.set(id, rt);
     }
     if (sources != null) rt.sources = sources;
-    // Event outranks a transition when two sources change in the same hass tick.
-    if (rt.flashTs && Date.now() - rt.flashTs < ACTIVITY_WINDOW_MS && rt.flashKind === 'event' && kind === 'transition') return;
-    rt.flashTs = Date.now();
-    rt.expiresAt = rt.flashTs + ACTIVITY_WINDOW_MS;
-    rt.flashKind = kind;
-    rt.gen++;
-    clearTimeout(rt.timer);
-    rt.timer = window.setTimeout(() => this.requestUpdate(), ACTIVITY_WINDOW_MS + 60);
+    stampFiniteActivity(
+      rt, kind, Date.now(), window.clearTimeout.bind(window),
+      (delay) => window.setTimeout(() => this.requestUpdate(), delay),
+    );
   }
 
   /**
@@ -13982,23 +14239,14 @@ class HouseplanCard extends LitElement {
       const { samples, sourceKey } = snapshot;
       let rt = this._activityRt.get(d.id);
       if (!rt) {
-        rt = { sources: sourceKey, last: {}, flashTs: 0, flashKind: null, timer: 0, gen: 0,
-          expiresAt: 0, alarmActive: combineVisualSamples(samples).status === 'alarm' };
-        for (const sample of samples) rt.last[sample.eid] = sample.state;
+        rt = createFiniteActivityRuntime(sourceKey, samples);
         this._activityRt.set(d.id, rt);
         continue;
       }
       if (rt.sources === sourceKey) continue;
       // A brief unknown/unavailable state can change the effective role graph.
       // Resetting here prevents recovery from becoming a false fresh event.
-      clearTimeout(rt.timer);
-      rt.sources = sourceKey;
-      rt.last = {};
-      rt.flashTs = 0;
-      rt.flashKind = null;
-      rt.expiresAt = 0;
-      rt.alarmActive = combineVisualSamples(samples).status === 'alarm';
-      for (const sample of samples) rt.last[sample.eid] = sample.state;
+      resetFiniteActivityRuntime(rt, sourceKey, samples, window.clearTimeout.bind(window));
     }
     for (const [id, rt] of this._activityRt) {
       if (live.has(id)) continue;
@@ -14023,38 +14271,10 @@ class HouseplanCard extends LitElement {
       const { samples, sourceKey } = snapshot;
       const rt = this._activityRt.get(d.id);
       if (!rt || rt.sources !== sourceKey) continue;
-      const alarm = combineVisualSamples(samples).status === 'alarm';
-      if (alarm) {
-        if (!rt.alarmActive) {
-          clearTimeout(rt.timer);
-          rt.flashTs = 0;
-          rt.flashKind = null;
-          rt.expiresAt = 0;
-        }
-        for (const sample of samples) rt.last[sample.eid] = sample.state;
-        rt.alarmActive = true;
-        continue;
-      }
-      if (rt.alarmActive) {
-        for (const sample of samples) rt.last[sample.eid] = sample.state;
-        rt.alarmActive = false;
-        continue;
-      }
+      const edge = advanceFiniteActivity(rt, samples, window.clearTimeout.bind(window));
       // A direct closed↔open fallback is only a substitute for integrations
       // that omit opening/closing. Once a real travelling state is observed,
       // it owns the ring and the old 3.3 s fallback is discarded.
-      if (rt.flashKind === 'transition' && samples.some((sample) => sample.activity === 'transition')) {
-        clearTimeout(rt.timer);
-        rt.flashTs = 0;
-        rt.flashKind = null;
-        rt.expiresAt = 0;
-      }
-      let edge: 'event' | 'transition' | null = null;
-      for (const sample of samples) {
-        const found = edgeActivity(rt.last[sample.eid], sample);
-        if (found === 'event' || (!edge && found)) edge = found;
-        rt.last[sample.eid] = sample.state;
-      }
       if (edge) this._stampActivity(d.id, edge, sourceKey);
     }
   }
@@ -14657,8 +14877,7 @@ class HouseplanCard extends LitElement {
       ghostLabel,
       presentation.pulse.kind !== 'none'
         ? this._t((`marker.pulse_a11y_${presentation.pulse.reason}`) as I18nKey) : '',
-      presentation.valueBadge
-        ? `${presentation.valueBadge.sourceLabel}: ${presentation.valueBadge.fullText}` : '',
+      valueBadgeTitle(presentation.valueBadge),
     ].filter(Boolean).join(', ');
     const metrics = [
       d.model,
@@ -15289,6 +15508,31 @@ class HouseplanCard extends LitElement {
    * pan with the plan. Doors/windows follow the easy-floorplan (MIT) symbol
    * language; a gate is a compact pair of leaves opening only 10° outwards.
    */
+  private _renderOpeningPlacementPreview(): TemplateResult {
+    const candidate = this._openingPreview;
+    if (!candidate) return svg``;
+    const visibleSpec: OpeningVisibleSpec = {
+      type: candidate.type,
+      length: candidate.renderedLength,
+      angle: candidate.angle,
+      amount: openingAmount(candidate.type, null),
+      flipH: candidate.flipH,
+      flipV: candidate.flipV,
+      base: 'var(--hp-open)',
+      tone: 'var(--hp-open)',
+      cellCm: this._cellCm,
+      gridPitch: this._gridPitch,
+      face: candidate.face,
+    };
+    return svg`<g class="opening-preview" data-kind=${candidate.type}
+      aria-hidden="true" pointer-events="none"
+      transform="translate(${candidate.x} ${candidate.y}) rotate(${candidate.angle})">
+      ${renderOpeningVisibleGeometry(visibleSpec)}
+    </g>
+    <circle class="opening-preview-dot" aria-hidden="true" pointer-events="none"
+      cx=${candidate.x} cy=${candidate.y} r=${this._gridPitch * 0.18}></circle>` as unknown as TemplateResult;
+  }
+
   private _renderOpenings(disp: SpaceDisplay): TemplateResult {
     const items = this._openingsR;
     if (!items.length) return svg``;
@@ -15297,7 +15541,6 @@ class HouseplanCard extends LitElement {
     const openCuts = this._openPairs().flatMap((pair) => pair.segs);
     const openingWallIndex = this._openingWallIndexFor(this._spaceModel(), openCuts).value;
     return svg`${items.map((o) => {
-      const half = o.rlen / 2;
       const amt = this._openingAmt(o);
       const active = amt > 0 && !!o.contact && this._renderEntityAvailable(o.contact);
       const tone = active ? 'var(--hp-open)' : base;
@@ -15314,92 +15557,23 @@ class HouseplanCard extends LitElement {
             { x: o.rx, y: o.ry, angle: o.angle, length: o.rlen, flip_v: faceFlipV },
           )
         : { ox: 0, oy: 0, cm: 0, side: -1 as -1 | 1 };
-      // jambs span the full wall depth, centred on the centreline
-      const jambHalf = face.cm > 0
-        ? ((face.cm / this._cellCm) * this._gridPitch) / 2
-        : 4;
-      const sx = o.flip_h ? -1 : 1;
-      const sy = o.flip_v ? -1 : 1;
-      // Shift swing geometry to its selected face (plan space → local via
-      // inverse rotate): room-side for door/window, exterior for a gate.
-      let swingTx = 0, swingTy = 0;
-      if (face.cm > 0 && (face.ox || face.oy)) {
-        const rad = (-o.angle * Math.PI) / 180;
-        const c = Math.cos(rad), s = Math.sin(rad);
-        swingTx = face.ox * c - face.oy * s;
-        swingTy = face.ox * s + face.oy * c;
-        // undo flip_v on the offset — scale(sy) will re-apply it
-        swingTy *= sy;
-        swingTx *= sx;
-      }
-      let body;
-      if (o.type === 'window') {
-        const arcLen = (Math.PI / 2) * half;
-        const glass = face.cm > 0
-          ? svg`<line class="op-glass" x1="0" y1="${-jambHalf}" x2="0" y2="${jambHalf}"
-              stroke="${tone}" stroke-width="1.5"></line>`
-          : nothing;
-        body = svg`
-          <g transform="translate(${swingTx} ${swingTy})">
-          <path class="op-arc" d="M 0 0 A ${half} ${half} 0 0 0 ${-half} ${-half}" fill="none"
-            stroke="${tone}" stroke-dasharray="${arcLen}" stroke-dashoffset="${arcLen * (1 - amt)}"></path>
-          <path class="op-arc" d="M 0 0 A ${half} ${half} 0 0 1 ${half} ${-half}" fill="none"
-            stroke="${tone}" stroke-dasharray="${arcLen}" stroke-dashoffset="${arcLen * (1 - amt)}"></path>
-          <g transform="translate(${-half} 0)">
-            <g class="op-leaf" style="transform:rotate(${-90 * amt}deg)">
-              <rect x="0" y="-1.5" width="${half}" height="3" fill="${tone}"></rect>
-            </g>
-          </g>
-          <g transform="translate(${half} 0)">
-            <g class="op-leaf" style="transform:rotate(${90 * amt}deg)">
-              <rect x="${-half}" y="-1.5" width="${half}" height="3" fill="${tone}"></rect>
-            </g>
-          </g>
-          ${glass}
-          </g>`;
-      } else if (o.type === 'gate') {
-        // The leaf endpoint must land on face.side AFTER the outer flip_v
-        // scale is applied. Conjugating a rotation through scaleY(-1) reverses
-        // its sign, hence the extra `sy` here. No swing arc: at 3–4 m it would
-        // recreate exactly the huge, plan-obscuring graphic gates avoid.
-        const gateAngle = face.side * sy * 10 * amt;
-        body = svg`
-          <g transform="translate(${swingTx} ${swingTy})">
-          <g transform="translate(${-half} 0)">
-            <g class="op-leaf" style="transform:rotate(${gateAngle}deg)">
-              <rect x="0" y="-1.75" width="${half}" height="3.5" fill="${tone}"></rect>
-            </g>
-          </g>
-          <g transform="translate(${half} 0)">
-            <g class="op-leaf" style="transform:rotate(${-gateAngle}deg)">
-              <rect x="${-half}" y="-1.75" width="${half}" height="3.5" fill="${tone}"></rect>
-            </g>
-          </g>
-          </g>`;
-      } else {
-        const L = o.rlen;
-        const arcLen = (Math.PI / 2) * L;
-        body = svg`
-          <g transform="translate(${swingTx} ${swingTy})">
-          <path class="op-arc" d="M ${half} 0 A ${L} ${L} 0 0 0 ${-half} ${-L}" fill="none"
-            stroke="${tone}" stroke-dasharray="${arcLen}" stroke-dashoffset="${arcLen * (1 - amt)}"></path>
-          <g transform="translate(${-half} 0)">
-            <g class="op-leaf" style="transform:rotate(${-90 * amt}deg)">
-              <rect x="0" y="-1.75" width="${L}" height="3.5" fill="${tone}"></rect>
-            </g>
-          </g>
-          </g>`;
-      }
-      const gateDepth = o.type === 'gate' ? Math.sin((10 * Math.PI) / 180) * half : 0;
-      const outlineHalf = Math.max(16, jambHalf + 8, gateDepth + 8);
-      const hitHalf = Math.max(20, jambHalf + 10, gateDepth + 12);
+      const visibleSpec: OpeningVisibleSpec = {
+        type: o.type,
+        length: o.rlen,
+        angle: o.angle,
+        amount: amt,
+        flipH: !!o.flip_h,
+        flipV: !!o.flip_v,
+        base,
+        tone,
+        cellCm: this._cellCm,
+        gridPitch: this._gridPitch,
+        face,
+      };
+      const { half, outlineHalf, hitHalf } = openingVisibleMetrics(visibleSpec);
       return svg`<g class="opening" data-hp="opening" data-id="${o.id}" data-kind="${o.type}"
         transform="translate(${o.rx} ${o.ry}) rotate(${o.angle})">
-        <g transform="scale(${sx} ${sy})">
-          <line x1="${-half}" y1="${-jambHalf}" x2="${-half}" y2="${jambHalf}" stroke="${base}" stroke-width="2.5"></line>
-          <line x1="${half}" y1="${-jambHalf}" x2="${half}" y2="${jambHalf}" stroke="${base}" stroke-width="2.5"></line>
-          ${body}
-        </g>
+        ${renderOpeningVisibleGeometry(visibleSpec)}
         <rect class="op-outline" x="${-half - 10}" y="${-outlineHalf}" width="${o.rlen + 20}" height="${outlineHalf * 2}" rx="6"></rect>
         <rect class="op-hit" x="${-half - 12}" y="${-hitHalf}" width="${o.rlen + 24}" height="${hitHalf * 2}"
           @click=${(e: MouseEvent) => this._opClick(e, o)}
@@ -15789,16 +15963,6 @@ class HouseplanCard extends LitElement {
             x2="${this._cursorPt[0]}" y2="${this._cursorPt[1]}"></line>`
         : nothing}
       ${path.map((p, i) => svg`<circle class="vertex ${i === 0 ? 'first' : ''}" cx="${p[0]}" cy="${p[1]}" r="${g * 0.22}"></circle>`)}
-      ${(() => {
-        const op = this._openingPreview;
-        if (!op) return nothing;
-        const rad = (op.angle * Math.PI) / 180;
-        const dx = (Math.cos(rad) * op.rlen) / 2;
-        const dy = (Math.sin(rad) * op.rlen) / 2;
-        return svg`<line class="opghost" x1="${op.x - dx}" y1="${op.y - dy}"
-          x2="${op.x + dx}" y2="${op.y + dy}"></line>
-          <circle class="opghost-dot" cx="${op.x}" cy="${op.y}" r="${g * 0.18}"></circle>`;
-      })()}
       ${this._tool === 'split' && this._splitSel?.pts?.length
         ? svg`${this._splitSel.pts.length > 1
               ? svg`<polyline class="pathline" points="${this._splitSel.pts.map((p) => p.join(',')).join(' ')}"></polyline>`
@@ -15886,7 +16050,7 @@ class HouseplanCard extends LitElement {
       ? this._t('history.redo_named', { name: redoName })
       : this._t('history.redo_empty');
     return html`<div class="editbar planbar">
-      <div class="editbar-tools" tabindex="-1">
+      <div class="editbar-tools" tabindex="-1" ?inert=${this._modeTransitionBusy}>
         <ha-icon icon="mdi:vector-square-edit" class="warn"></ha-icon>
         <span class="wallsgroup">
         <button class="btn ${this._tool === 'select' ? 'on' : ''}"
@@ -15927,11 +16091,7 @@ class HouseplanCard extends LitElement {
         title=${this._t('title.markup_resize')}>
         <ha-icon icon="mdi:arrow-expand-all"></ha-icon>${this._t('markup.resize')}
       </button>
-      <button class="btn ${this._tool === 'opening' ? 'on' : ''}"
-        @click=${() => { this._cancelPath(); this._tool = 'opening'; }}
-        title=${this._t('title.markup_opening')}>
-        <ha-icon icon="mdi:door"></ha-icon>${this._t('markup.opening')}
-      </button>
+      ${this._editorToolbarGroups.map((group) => this._renderEditorGroupLauncher(group))}
       <button class="btn ${this._tool === 'boundary' ? 'on' : ''}"
         @click=${() => { this._cancelPath(); this._tool = 'boundary'; this._wallDialog = null; }}
         aria-pressed=${this._tool === 'boundary' ? 'true' : 'false'}
@@ -15948,7 +16108,6 @@ class HouseplanCard extends LitElement {
         title=${this._t('title.markup_delroom')}>
         <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('markup.delete_room')}
       </button>
-      ${this._editorToolbarGroups.map((group) => this._renderEditorGroupLauncher(group))}
       <button class="btn ghost" @click=${this._undoGeometry}
         ?disabled=${!undoName && !boundaryPending}
         title=${undoTitle} aria-label=${undoTitle}>
@@ -15962,6 +16121,7 @@ class HouseplanCard extends LitElement {
       </div>
       <div class="editbar-end">
         <button class="btn barclose" title=${this._t('title.close_editor')}
+          data-editor-navigation="view"
           @click=${() => this._setMode('view')}>
           <ha-icon icon="mdi:close"></ha-icon>
         </button>
@@ -15971,7 +16131,7 @@ class HouseplanCard extends LitElement {
 
   private _renderDevicesBar(): TemplateResult {
     return html`<div class="editbar devbar">
-      <div class="editbar-tools" tabindex="-1">
+      <div class="editbar-tools" tabindex="-1" ?inert=${this._modeTransitionBusy}>
         <ha-icon icon="mdi:tune-variant" class="warn"></ha-icon>
         <button class="btn" @click=${() => this._openMarkerDialog()} title=${this._t('title.add_device')}>
           <ha-icon icon="mdi:plus-box-outline"></ha-icon>${this._t('devbar.add')}
@@ -15987,6 +16147,7 @@ class HouseplanCard extends LitElement {
       </div>
       <div class="editbar-end">
         <button class="btn barclose" title=${this._t('title.close_editor')}
+          data-editor-navigation="view"
           @click=${() => this._setMode('view')}>
           <ha-icon icon="mdi:close"></ha-icon>
         </button>
@@ -16136,6 +16297,7 @@ class HouseplanCard extends LitElement {
     const controls = persistedExternalControls(
       d.binding, d.controls, this._bindingEntities(d.binding),
     );
+    const effectiveTapAction = this._effectiveStoredTapAction(d);
     const marker: Marker = {
       id,
       binding: d.binding,
@@ -16147,7 +16309,7 @@ class HouseplanCard extends LitElement {
       size: d.size !== 1 ? d.size : null,
       angle: d.angle || null,
       ...this._markerTapActionFields(d),
-      tap_target: d.tapAction === 'run' ? d.tapTarget || null : null,
+      tap_target: effectiveTapAction === 'run' ? d.tapTarget || null : null,
       tap_confirm: d.tapConfirm ? true : null,
       controls: controls.length ? controls : null,
       ...this._markerLightFields(d),
@@ -16266,16 +16428,22 @@ class HouseplanCard extends LitElement {
   }
 
   /** One projection for the untouched select, hints and draft transitions. */
-  private _effectiveMarkerTapAction(
-    d: NonNullable<HouseplanCard['_markerDialog']>,
-    preview = this._markerPreviewDevice(d),
+  private _effectiveStoredTapAction(
+    d: NonNullable<HouseplanCard['_markerDialog']>, primaryDomain?: string,
   ): string {
     return d.tapActionTouched
       ? d.tapAction
       : projectedTapAction(
           d.originalHasTapAction ? d.originalTapAction : null,
-          preview?.primary?.split('.')[0],
+          primaryDomain,
         );
+  }
+
+  private _effectiveMarkerTapAction(
+    d: NonNullable<HouseplanCard['_markerDialog']>,
+    preview = this._markerPreviewDevice(d),
+  ): string {
+    return this._effectiveStoredTapAction(d, preview?.primary?.split('.')[0]);
   }
 
   /** Store one user-triggered announcement; live HA state ticks do not mutate it. */
@@ -16346,7 +16514,11 @@ class HouseplanCard extends LitElement {
     const marker = this._markers.find((item) => item.id === id);
     const device = this._devices.find((item) => item.id === id);
     if (!marker || marker.removed || marker.is_light !== true) {
-      return { label: ref, sub: this._t('marker.control_broken'), icon: 'mdi:alert-outline', warning: true };
+      return {
+        label: this._t('marker.control_missing_label'),
+        sub: `${this._t('marker.control_broken')} (${ref})`,
+        icon: 'mdi:alert-outline', warning: true,
+      };
     }
     const space = this._serverCfg?.spaces.find((item: any) => item.id === (device?.space || marker.space));
     const stateful = !!device && ownControllableEntities(device).length > 0;
@@ -16488,6 +16660,7 @@ class HouseplanCard extends LitElement {
           designPreview: true,
           activityRuntime: this._activityRt.get(previewDevice.id),
           lightDevices: previewLightDevices,
+          registryHass: this._fullRegistryHass,
           reducedMotion: this._reducedMotion,
         })
       : null;
@@ -16701,7 +16874,7 @@ class HouseplanCard extends LitElement {
                     : nothing}`;
               })()
             : nothing}
-          ${effectiveTapAction === 'run' || (effectiveTapAction === 'toggle' && !!toggleIntent?.command)
+          ${effectiveTapAction === 'run' || effectiveTapAction === 'toggle'
             ? html`<label class="srcrow" title=${this._t('marker.tap_confirm_tip')}>
                 ${this._boolInput(d.tapConfirm, (v) => (this._markerDialog = { ...d, tapConfirm: v }))}
                 <span>${this._t('marker.tap_confirm')}</span>
@@ -16891,7 +17064,7 @@ class HouseplanCard extends LitElement {
               </option>`,
             )}
           </select>
-          <p class="muted">${this._t('marker.display_hint')}</p>
+          <p class="muted">${this._t((`marker.display_hint_${d.display}`) as any)}</p>
           ${d.display === 'static_icon' && this._bindingHasAlarm(d.binding)
             ? html`<div class="habindingbanner" role="note">
                 <ha-icon icon="mdi:alert-outline"></ha-icon>
@@ -16926,7 +17099,7 @@ class HouseplanCard extends LitElement {
                 <label for="marker-value-badge-source">${this._t('marker.value_badge_source')}</label>
                 ${this._help('marker.value_badge_source.help')}
               </div>
-              <select id="marker-value-badge-source" class="areasel"
+          <select id="marker-value-badge-source" class="areasel"
                 @change=${(e: Event) => (this._markerDialog = {
                   ...d,
                   valueBadgeSource: valueBadgeSourceFromKey((e.target as HTMLSelectElement).value),
@@ -16956,7 +17129,7 @@ class HouseplanCard extends LitElement {
                 <label for="marker-value-badge-position">${this._t('marker.value_badge_position')}</label>
                 ${this._help('marker.value_badge_position.help')}
               </div>
-              <select id="marker-value-badge-position" class="areasel"
+          <select id="marker-value-badge-position" class="areasel"
                 @change=${(e: Event) => (this._markerDialog = {
                   ...d,
                   valueBadgeEnabled: effectiveBadgeEnabled,
@@ -16990,7 +17163,8 @@ class HouseplanCard extends LitElement {
                 <span class="opl">${this._t('marker.ripple_size')}</span>
                 ${this._rangeInput(2, 8, 0.5, d.rippleSize, (n) => (this._markerDialog = { ...d, rippleSize: n }))}
                 <span class="opv">×${d.rippleSize}</span>
-              </div>`
+              </div>
+              <p class="muted" role="note">${this._t('marker.activity_alarm_note')}</p>`
             : nothing}
 
           <label>${this._t('marker.size_label')}</label>

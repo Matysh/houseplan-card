@@ -13,12 +13,14 @@ import { t, langOf, type Lang } from './i18n';
 import { ContentSigner } from './signing';
 import { normalizeDeviceDisplay, referencedContentUrls } from './logic';
 import { acquireHaRegistries, activeRegistryHass, haRegistrySnapshot } from './ha-binding-status';
-import { combineVisualSamples, edgeActivity } from './device-visual';
 import { resolvedLightSources } from './devices';
 import {
   activitySourceSignature, resolveDevicePresentation, resolvePresentationSources,
-  type PresentationActivityRuntime,
 } from './device-presentation';
+import {
+  advanceFiniteActivity, createFiniteActivityRuntime,
+  stampFiniteActivity, type FiniteActivityRuntime,
+} from './activity-runtime';
 import {
   createRenderDeviceSnapshot, presentationSnapshotKey, type RenderDeviceSnapshot,
 } from './render-device-snapshot';
@@ -56,11 +58,6 @@ interface SpaceCardConfig {
   language?: string;
 }
 
-interface StaticActivityRuntime extends PresentationActivityRuntime {
-  last: Record<string, string>;
-  timer: number;
-}
-
 class HouseplanSpaceCard extends LitElement {
   public hass?: any;
   private _config?: SpaceCardConfig;
@@ -96,7 +93,7 @@ class HouseplanSpaceCard extends LitElement {
   private _capturedSnapshotSequence = -1;
   private _capturedSnapshotDevices: DevItem[] | null = null;
   private _capturedSnapshotActivity = '';
-  private _activityRuntime = new Map<string, StaticActivityRuntime>();
+  private _activityRuntime = new Map<string, FiniteActivityRuntime>();
   private _reducedMotion = false;
   private _motionMedia?: MediaQueryList;
   private _onMotionChange = (event: MediaQueryListEvent): void => {
@@ -292,15 +289,11 @@ class HouseplanSpaceCard extends LitElement {
     }
   }
 
-  private _stampActivity(runtime: StaticActivityRuntime, kind: 'event' | 'transition'): void {
-    if (runtime.flashTs && Date.now() - runtime.flashTs < 3300
-        && runtime.flashKind === 'event' && kind === 'transition') return;
-    runtime.flashTs = Date.now();
-    runtime.expiresAt = runtime.flashTs + 3300;
-    runtime.flashKind = kind;
-    runtime.gen++;
-    window.clearTimeout(runtime.timer);
-    runtime.timer = window.setTimeout(() => this.requestUpdate(), 3360);
+  private _stampActivity(runtime: FiniteActivityRuntime, kind: 'event' | 'transition'): void {
+    stampFiniteActivity(
+      runtime, kind, Date.now(), window.clearTimeout.bind(window),
+      (delay) => window.setTimeout(() => this.requestUpdate(), delay),
+    );
   }
 
   /** Track witnessed edges for the read-only card without inventing activity on first load. */
@@ -325,49 +318,11 @@ class HouseplanSpaceCard extends LitElement {
       let runtime = this._activityRuntime.get(device.id);
       if (!runtime || runtime.sources !== signature) {
         if (runtime) window.clearTimeout(runtime.timer);
-        runtime = {
-          sources: signature,
-          last: Object.fromEntries(samples.map((sample) => [sample.eid, sample.state])),
-          flashTs: 0,
-          flashKind: null,
-          timer: 0,
-          gen: 0,
-          expiresAt: 0,
-          alarmActive: combineVisualSamples(samples).status === 'alarm',
-        };
+        runtime = createFiniteActivityRuntime(signature, samples);
         this._activityRuntime.set(device.id, runtime);
         continue;
       }
-      if (runtime.flashKind === 'transition'
-          && samples.some((sample) => sample.activity === 'transition')) {
-        window.clearTimeout(runtime.timer);
-        runtime.flashTs = 0;
-        runtime.flashKind = null;
-        runtime.expiresAt = 0;
-      }
-      const alarm = combineVisualSamples(samples).status === 'alarm';
-      if (alarm) {
-        if (!runtime.alarmActive) {
-          window.clearTimeout(runtime.timer);
-          runtime.flashTs = 0;
-          runtime.flashKind = null;
-          runtime.expiresAt = 0;
-        }
-        for (const sample of samples) runtime.last[sample.eid] = sample.state;
-        runtime.alarmActive = true;
-        continue;
-      }
-      if (runtime.alarmActive) {
-        for (const sample of samples) runtime.last[sample.eid] = sample.state;
-        runtime.alarmActive = false;
-        continue;
-      }
-      let edge: 'event' | 'transition' | null = null;
-      for (const sample of samples) {
-        const found = edgeActivity(runtime.last[sample.eid], sample);
-        if (found === 'event' || (!edge && found)) edge = found;
-        runtime.last[sample.eid] = sample.state;
-      }
+      const edge = advanceFiniteActivity(runtime, samples, window.clearTimeout.bind(window));
       if (edge) this._stampActivity(runtime, edge);
     }
     for (const [id, runtime] of this._activityRuntime) {
@@ -437,6 +392,7 @@ class HouseplanSpaceCard extends LitElement {
             sourceDetails: false,
             lightDevices: this._devices,
             lightSources: planLightSources,
+            registryHass: this.hass,
             reducedMotion: this._reducedMotion,
           },
         ));

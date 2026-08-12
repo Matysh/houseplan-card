@@ -120,6 +120,10 @@ export class EditorSecondaryController {
     this._openGroupId = null;
     dismissPalette?.();
     if (dismissPalette) this._currentModel = null;
+    // Navigation is an explicit, higher-priority command. Never leave the
+    // synthetic-click tail of an earlier outside dismissal armed: it could
+    // otherwise consume the first click on the editor Close control.
+    this._clearDismissClick();
     if (changed) this.host.requestUpdate();
     this._syncGlobalDismissListener();
   }
@@ -167,6 +171,7 @@ export class EditorSecondaryController {
       item.id === group.activeItemId && !item.disabled);
     return html`<button class="btn editor-group-launcher ${open || activeItem ? 'on' : ''}"
       data-editor-group=${group.id} aria-expanded=${open ? 'true' : 'false'}
+      aria-pressed=${activeItem ? 'true' : 'false'}
       aria-controls="hp-editor-secondary" @click=${() => this.toggleGroup(groups, group.id)}
       @keydown=${(event: KeyboardEvent) => {
         if (event.key !== 'ArrowDown') return;
@@ -206,7 +211,7 @@ export class EditorSecondaryController {
           aria-pressed=${item.role === 'tool' || item.role === 'toggle'
             ? (activeItemId === item.id ? 'true' : 'false') : nothing}
           title=${item.disabled ? item.disabledReason || item.label : item.label}
-          @click=${() => this._activateGroupItem(group, item.id)}>
+          @click=${(event: MouseEvent) => this._activateGroupItem(group, item.id, event)}>
           <ha-icon icon=${item.icon}></ha-icon><span>${item.label}</span>
         </button>`)}
       </div>`,
@@ -290,6 +295,16 @@ export class EditorSecondaryController {
 
   /** Consume the first outside press and its synthetic click while a group is open. */
   handleOutsideDismiss(event: Event): boolean {
+    const onNavigation = eventPathHas(event, (element) =>
+      (element as HTMLElement).hasAttribute('data-editor-navigation'));
+    if (onNavigation) {
+      // A close/editor-tab click is not an accidental canvas press. Collapse
+      // the transient surface, but let the same pointer sequence continue to
+      // the navigation handler so one deliberate click always navigates.
+      if (event.type === 'pointerdown') this.closeForNavigation();
+      else if (event.type === 'click' && this._dismissPointerTarget) this._clearDismissClick();
+      return false;
+    }
     if (event.type === 'click' && this._dismissPointerTarget) {
       const path = event.composedPath?.() || [event.target];
       if (!path.includes(this._dismissPointerTarget)) return false;
@@ -326,17 +341,25 @@ export class EditorSecondaryController {
     return false;
   }
 
-  private _activateGroupItem(group: EditorToolbarGroup, itemId: string): void {
+  private _activateGroupItem(group: EditorToolbarGroup, itemId: string, event: MouseEvent): void {
     if (group.id !== this._openGroupId) return;
     const item = group.items.find((entry) => entry.id === itemId);
     if (!item || item.disabled) return;
     const stayOpen = item.role === 'toggle' && item.closePolicy === 'stay-open';
+    const keyboardActivation = event.detail === 0;
     if (!stayOpen) {
       this._openGroupId = null;
       this.host.requestUpdate();
       this._syncGlobalDismissListener();
     }
     item.invoke();
+    if (!stayOpen && keyboardActivation) {
+      void this.host.updateComplete().then(() => {
+        const launcher = [...this.host.root().querySelectorAll<HTMLButtonElement>('[data-editor-group]')]
+          .find((button) => button.dataset.editorGroup === group.id && button.offsetParent !== null);
+        launcher?.focus();
+      });
+    }
   }
 
   private _groupKeydown(event: KeyboardEvent): void {

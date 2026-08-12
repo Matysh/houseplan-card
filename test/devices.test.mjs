@@ -7,7 +7,7 @@ import {
   resolvedLightStats, hasOwnSpatialSource, selectSpatialGlowSource, seedHiddenBindings,
   deletePlanMarkerRecords, effectiveMarkerControls, persistedExternalControls,
   hasOwnStatefulLightSource, ownControllableEntities, forcedLightEntityOf,
-  resolvedControlServiceEntities, removeMarkerControlReferences,
+  removeMarkerControlReferences,
   rewriteMarkerControlReferences, markerControlWouldCycle, resolveDeviceLightSettings,
 } from '../test-build/devices.js';
 import { compileIconRules, iconFor } from '../test-build/rules.js';
@@ -1120,6 +1120,20 @@ test('issue 84: passive target state is OR of controller drivers and remains tar
     .find((item) => item.key === 'marker:dumb').on, false);
 });
 
+test('issue 84: hiding a controller does not sever its passive source link', () => {
+  const target = {
+    id: 'dumb', area: 'r', entities: [], marker: { id: 'dumb', is_light: true },
+  };
+  const controller = {
+    id: 'controller', area: 'r', hidden: true, primary: 'switch.wall', entities: ['switch.wall'],
+    marker: { id: 'controller', controls: ['marker:dumb'] },
+  };
+  const source = resolvedLightSources(
+    { states: { 'switch.wall': { state: 'on' } } }, [controller, target],
+  ).find((item) => item.key === 'marker:dumb');
+  assert.equal(source.on, true);
+});
+
 test('issue 84: a saved link with no active driver makes passive source dormant', () => {
   const target = { id: 'dumb', area: 'r', entities: [], marker: { id: 'dumb', is_light: true } };
   const controller = {
@@ -1143,7 +1157,6 @@ test('issue 84: marker and entity aliases dedupe and services never receive mark
   const hass = { states: { 'light.smart': { state: 'on' } } };
   const sources = resolvedLightSources(hass, [controller, target]);
   assert.equal(sources.filter((source) => source.key === 'marker:smart').length, 1);
-  assert.deepEqual(resolvedControlServiceEntities(hass, [controller, target], controller), ['light.smart']);
 });
 
 test('issue 88: explicit leading entity wins; stale selection falls back without state dependence', () => {

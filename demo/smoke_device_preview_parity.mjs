@@ -105,9 +105,53 @@ const res = await page.evaluate(async () => {
       && badge.top >= stage.top + gap && badge.bottom <= stage.bottom - gap;
   }
 
+  // One persisted bottom badge is then projected through all three renderers.
+  // It intentionally coexists with LQI to guard the vertical stack contract.
+  const persistedBadge = {
+    id: 'd_temp', binding: 'device:d_temp',
+    value_badge: {
+      enabled: true,
+      source: { kind: 'entity_state', entity_id: 'sensor.living_temp' },
+      position: 'bottom',
+    },
+  };
+  c._serverCfg.markers = [
+    ...(c._serverCfg.markers || []).filter((marker) => marker.id !== 'd_temp'),
+    persistedBadge,
+  ];
+  c._regSignature = '';
+  c._maybeRebuildDevices();
+  c._setMode('view');
+  c.requestUpdate();
+  await c.updateComplete;
+  const planBadgeNode = sr().querySelector('.dev[data-id="d_temp"]');
+  const planBadgeFace = face(planBadgeNode);
+  const planBadgeRect = planBadgeNode?.querySelector('.value-badge')?.getBoundingClientRect();
+  const planLqiRect = planBadgeNode?.querySelector('.lqi')?.getBoundingClientRect();
+  const bottomBadgeLqiStacked = !!planBadgeRect && !!planLqiRect
+    && planLqiRect.top >= planBadgeRect.bottom - 1;
+
+  c._openMarkerDialog(c._devices.find((item) => item.id === 'd_temp'));
+  await c.updateComplete;
+  const persistedPreview = sr().querySelector('hp-device-preview');
+  await persistedPreview?.updateComplete;
+  const persistedPreviewFace = face(persistedPreview?.renderRoot?.querySelector('.dev'));
+
   await customElements.whenDefined('houseplan-space-card');
   const card = document.createElement('houseplan-space-card');
   card.setConfig({ type: 'custom:houseplan-space-card', space: 'f1' });
+  // A real static card reads the latest complete server/cache snapshot. Inject
+  // that same revision explicitly here so this smoke compares renderers, not
+  // the demo server's intentionally non-persistent websocket fixture.
+  card._snap = {
+    config: structuredClone(c._serverCfg),
+    rev: c._cfgRev,
+    configFingerprint: `fixture-${c._cfgRev}`,
+    layout: structuredClone(c._layout),
+    layoutRev: c._layoutRev,
+    layoutFingerprint: `fixture-${c._layoutRev}`,
+  };
+  card._loadedOnce = true;
   card.hass = c.hass;
   document.body.appendChild(card);
   const started = Date.now();
@@ -115,6 +159,7 @@ const res = await page.evaluate(async () => {
   await card.updateComplete;
   const staticNode = card.renderRoot.querySelector('.dev[data-id="d_light1"]');
   const staticFace = face(staticNode);
+  const staticBadgeFace = face(card.renderRoot.querySelector('.dev[data-id="d_temp"]'));
 
   return {
     allFacesPresent: !!planFace && !!previewFace && !!staticFace,
@@ -128,6 +173,9 @@ const res = await page.evaluate(async () => {
     savedBadgePreviewMatches,
     savedBadgeUntouched,
     badgeBounds,
+    valueBadgePlanPreviewParity: JSON.stringify(planBadgeFace) === JSON.stringify(persistedPreviewFace),
+    valueBadgePlanStaticParity: JSON.stringify(planBadgeFace) === JSON.stringify(staticBadgeFace),
+    bottomBadgeLqiStacked,
     staticBindingHook: staticNode?.getAttribute('data-binding-status') === 'active',
   };
 });

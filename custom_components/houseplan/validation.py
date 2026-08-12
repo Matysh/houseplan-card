@@ -41,6 +41,7 @@ VALUE_BADGE_POSITIONS = {"right", "bottom", "left", "top"}
 VALUE_BADGE_SOURCE_KINDS = {
     "entity_state", "entity_attribute", "derived_lqi", "derived_marker_state",
 }
+_LIGHT_ENTITY_RE = re.compile(r"^(?:light|switch)\.[a-z0-9_]+\Z")
 
 
 def _matching_previous_marker(
@@ -129,6 +130,38 @@ def validate_marker_value_badges(
                 raise MarkerControlError("value_badge_marker_missing", "Marker value badge target does not exist")
             if target.get("is_light") is not True:
                 raise MarkerControlError("value_badge_marker_not_light", "Marker value badge target is not a forced light")
+
+
+def validate_marker_light_entities(
+    config: dict, previous: dict | None = None, *, validate_all: bool = False
+) -> None:
+    """Validate new/changed leading-light choices without rejecting dormant data.
+
+    The top-level schema must stay lossless: an old or future literal that the
+    current frontend cannot edit may round-trip unchanged. Imports validate the
+    whole incoming document because every imported value is new to this plan.
+    """
+    markers = config.get("markers") or []
+    old_markers = (previous or {}).get("markers") or []
+    old_by_id = {str(marker.get("id")): marker for marker in old_markers}
+    new_ids = {str(marker.get("id")) for marker in markers}
+    consumed_old_ids: set[str] = set()
+    for marker in markers:
+        marker_id = str(marker.get("id"))
+        old_marker = _matching_previous_marker(
+            marker, marker_id, old_by_id, old_markers, new_ids,
+            consumed_old_ids, validate_all,
+        )
+        value = marker.get("light_entity")
+        old_value = None if validate_all else (old_marker or {}).get("light_entity")
+        if not validate_all and value == old_value:
+            continue
+        if value is None:
+            continue
+        if not isinstance(value, str) or not _LIGHT_ENTITY_RE.fullmatch(value):
+            raise MarkerControlError(
+                "invalid_light_entity", "Leading light entity must be light.* or switch.*"
+            )
 
 
 def validate_marker_controls(
@@ -849,10 +882,9 @@ MARKER_SCHEMA = vol.Schema(
         # Explicit leading entity for composite Always sources. It is kept
         # literally when temporarily absent; runtime falls back without
         # deleting the user's choice.
-        vol.Optional("light_entity"): vol.Any(
-            None,
-            vol.All(str, vol.Length(max=MAX_TEXT), vol.Match(r"^(?:light|switch)\.[a-z0-9_]+\Z")),
-        ),
+        # Semantic delta validation below the schema preserves unknown/future
+        # literals until that exact field is edited (lossless config doctrine).
+        vol.Optional("light_entity"): object,
         vol.Optional("value_badge"): vol.Any(
             None,
             vol.Schema(

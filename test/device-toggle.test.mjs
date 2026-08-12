@@ -223,11 +223,11 @@ test('cover and valve adapters resolve open, close, stop and unknown fallback', 
     ['cover.blind', 'closed', 1, 'open_cover', 'open'],
     ['cover.blind', 'open', 2, 'close_cover', 'close'],
     ['cover.blind', 'closing', 8, 'stop_cover', 'stop'],
-    ['cover.blind', 'unknown', 0, 'toggle', 'toggle'],
+    ['cover.blind', 'unknown', 3, 'toggle', 'toggle'],
     ['valve.water', 'closed', 1, 'open_valve', 'open'],
     ['valve.water', 'open', 2, 'close_valve', 'close'],
     ['valve.water', 'opening', 8, 'stop_valve', 'stop'],
-    ['valve.water', 'unknown', 0, 'toggle', 'toggle'],
+    ['valve.water', 'unknown', 3, 'toggle', 'toggle'],
   ];
   for (const [entityId, value, features, service, effect] of matrix) {
     const h = hass({
@@ -255,6 +255,47 @@ test('moving cover without stop capability falls back to its toggle service', ()
   assert.equal(intent.nextEffect, 'toggle');
 });
 
+test('cover toggle fallback requires both open and close capabilities', () => {
+  for (const supported_features of [0, 1, 2]) {
+    const entityId = 'cover.one_way';
+    const h = hass({
+      [entityId]: state(entityId, 'unknown', { supported_features }),
+    });
+    const d = device({
+      bindingKind: 'entity', bindingRef: entityId, primary: entityId, entities: [entityId],
+      marker: { id: 'marker', binding: `entity:${entityId}` },
+    });
+    assert.equal(resolveToggleIntent({ hass: h, devices: [d], device: d }).command, null);
+  }
+});
+
+test('explicit leading light entity drives the same entity used by the presentation', () => {
+  const h = hass({
+    'light.channel': state('light.channel', 'on'),
+    'switch.power': state('switch.power', 'off'),
+  });
+  const d = device({
+    bindingKind: 'device', bindingRef: 'dev', primary: 'light.channel',
+    entities: ['light.channel', 'switch.power'],
+    marker: {
+      id: 'marker', binding: 'device:dev', is_light: true, light_entity: 'switch.power',
+    },
+  });
+  const intent = resolveToggleIntent({ hass: h, devices: [d], device: d });
+  assert.deepEqual(toggleCommandEntityIds(intent.command), ['switch.power']);
+});
+
+test('group domain remains a universal power target', () => {
+  const entityId = 'group.downstairs';
+  const h = hass({ [entityId]: state(entityId, 'on') });
+  const d = device({
+    bindingKind: 'entity', bindingRef: entityId, primary: entityId, entities: [entityId],
+    marker: { id: 'marker', binding: `entity:${entityId}` },
+  });
+  const intent = resolveToggleIntent({ hass: h, devices: [d], device: d });
+  assert.equal(intent.command?.service, 'turn_off');
+});
+
 test('locks, alarms and guarded covers are secure no-ops even without a live state', () => {
   for (const entityId of ['lock.front', 'alarm_control_panel.home', 'cover.garage']) {
     const registry = { [entityId]: {
@@ -279,6 +320,21 @@ test('HA-disabled and unavailable targets never produce service calls', () => {
   const d = device({
     bindingKind: 'entity', bindingRef: entityId, primary: entityId, entities: [entityId],
     marker: { id: 'marker', binding: `entity:${entityId}` },
+  });
+  const intent = resolveToggleIntent({ hass: h, registryHass: h, devices: [d], device: d });
+  assert.equal(intent.noneReason, 'ha-disabled');
+  assert.equal(intent.command, null);
+});
+
+test('device-level disabled_by also blocks every entity of that device', () => {
+  const entityId = 'switch.child';
+  const h = hass({ [entityId]: state(entityId, 'on') }, {
+    [entityId]: { entity_id: entityId, platform: 'test', device_id: 'dev-disabled', disabled_by: null },
+  });
+  h.devices['dev-disabled'] = { id: 'dev-disabled', disabled_by: 'user' };
+  const d = device({
+    bindingKind: 'device', bindingRef: 'dev-disabled', primary: entityId, entities: [entityId],
+    marker: { id: 'marker', binding: 'device:dev-disabled' },
   });
   const intent = resolveToggleIntent({ hass: h, registryHass: h, devices: [d], device: d });
   assert.equal(intent.noneReason, 'ha-disabled');

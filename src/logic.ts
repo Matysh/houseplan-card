@@ -787,8 +787,6 @@ export function safeUrl(url: string | null | undefined): string | null {
 
 // ---------------- tap actions ----------------
 
-export type TapAction = 'info' | 'more-info' | 'toggle' | 'run' | 'cover';
-
 /**
  * The option lists the editors offer, in one place — and the reason they are
  * here rather than inline in the templates.
@@ -828,92 +826,10 @@ export const SPACE_FILL_MODES = ['none', 'lqi', 'light', 'temp', 'custom'] as co
 export const SPACE_FILL_UI_MODES = ['custom', 'lqi', 'light', 'temp'] as const;
 export const ROOM_FILL_MODES = ['none', 'lqi', 'light', 'temp', 'custom'] as const;
 
-export const TOGGLE_SAFE_DOMAINS = new Set(['light', 'switch', 'fan', 'humidifier', 'cover', 'valve']);
-
-/**
- * Domains forbidden to the deprecated card-wide default. The current UI may
- * still persist a universal explicit toggle; `device-toggle.ts` resolves that
- * choice to a visible secure no-op instead of silently changing the action.
- */
-export const TOGGLE_FORBIDDEN_DOMAINS = new Set(['lock', 'alarm_control_panel']);
-
-/**
- * Resolve the effective tap action for a device icon.
- *
- * Order: per-device override → card-wide default → 'info'.
- * This compatibility helper only projects the persisted action. Actual target,
- * capability and security resolution belongs to `device-toggle.ts`; an
- * explicit toggle must never silently become an info action.
- */
 /** Cover classes that stay OUT of the deprecated card-wide toggle. The shared
  * runtime resolver also blocks them for an explicit action, but does so after
  * resolving the exact target so the UI can explain why the command is a no-op. */
 export const COVER_GUARDED_CLASSES = new Set(['garage', 'door', 'gate']);
-
-export function resolveTapAction(
-  explicit: string | null | undefined,
-  cardDefault: string | null | undefined,
-  domain: string | null | undefined,
-  deviceClass?: string | null,
-): TapAction {
-  // Pure light sources (the device's PRIMARY function is a lamp: bulbs,
-  // chandeliers, night lights, light groups) toggle by default — no explicit
-  // setting needed. Devices where light is a side function (a kettle's
-  // backlight) have a non-light primary and keep the info default.
-  const want = explicit || cardDefault || (domain === 'light' ? 'toggle' : 'info');
-  if (want === 'more-info') return 'more-info';
-  // 'run' is EXPLICIT-only by construction: it needs a per-marker target, so
-  // it can never arrive as a card-wide default
-  if (want === 'run') return explicit === 'run' ? 'run' : 'info';
-  // Legacy cover stays distinguishable at the read boundary. The current UI
-  // projects it to toggle without rewriting it on a plain Open → Save.
-  if (want === 'cover') {
-    if (explicit !== 'cover' || domain !== 'cover') return 'info';
-    return 'cover';
-  }
-  if (want !== 'toggle') return 'info';
-  if (explicit === 'toggle') return 'toggle';
-  if (!domain || TOGGLE_FORBIDDEN_DOMAINS.has(domain)) return 'info';
-  if (!TOGGLE_SAFE_DOMAINS.has(domain)) return 'info';
-  // covers joined the safe set for curtains and blinds (owner, 2026-07-29) —
-  // but the garage door is a cover too, and it stays shut on a default tap
-  if (domain === 'cover' && COVER_GUARDED_CLASSES.has(String(deviceClass || ''))) return 'info';
-  return 'toggle';
-}
-
-/**
- * The cover service one tap should call, from the entity's CURRENT state
- * (owner's spec 2026-08-03):
- *   closed                 -> open_cover
- *   open (incl. ajar)      -> close_cover
- *   opening / closing      -> stop_cover  (a tap during travel is a STOP;
- *                             the next tap then travels the other way, which
- *                             is simply what HA's own state machine does)
- *   anything else/unknown  -> toggle      (no meaningful state to reason about)
- */
-export function coverService(state: string | null | undefined): string {
-  const s = String(state || '');
-  if (s === 'closed') return 'open_cover';
-  if (s === 'open') return 'close_cover';
-  if (s === 'opening' || s === 'closing') return 'stop_cover';
-  return 'toggle';
-}
-
-/**
- * Legacy compatibility helper: the FIRST `cover.*` among all entities.
- * Current actions use `resolveToggleIntent()` from `device-toggle.ts` so the
- * click, dialog hint and presentation cannot choose different targets.
- *
- * Why this exists (owner's report 2026-08-04, verified on his own install):
- * an Aqara E1 curtain driver ships the `cover.*` HIDDEN by the integration and
- * a perfectly visible `switch.*_reverse_direction` next to it. `primaryEntity`
- * ranks visible before hidden, so the marker's primary was the service switch;
- * the old tap path then resolved on `switch`. The retained helper documents
- * that compatibility lesson even though it no longer owns runtime actions.
- */
-export function coverEntityOf(entIds: string[] | null | undefined): string | null {
-  return (entIds || []).find((e) => e.startsWith('cover.')) || null;
-}
 
 /** Is a cover travelling right now? Drives the breathing ring on the icon. */
 export function coverMoving(state: string | null | undefined): boolean {

@@ -6,6 +6,7 @@
  * silently falling back to an info card or an arbitrary sibling entity.
  */
 import {
+  forcedLightEntityOf,
   persistedExternalControls,
   resolvedDeviceStateEntities,
   resolvedLightSources,
@@ -108,6 +109,7 @@ const POWER_ADAPTERS: Readonly<Record<string, PowerToggleAdapter>> = {
   input_boolean: BASIC_POWER_ADAPTER,
   automation: BASIC_POWER_ADAPTER,
   remote: BASIC_POWER_ADAPTER,
+  group: BASIC_POWER_ADAPTER,
   climate: {
     ...BASIC_POWER_ADAPTER,
     // Home Assistant ClimateEntityFeature.TURN_OFF / TURN_ON.
@@ -306,7 +308,13 @@ function coverLikeService(
       && serviceExists(hass, domain, candidate.service)) {
     return candidate;
   }
-  return serviceExists(hass, domain, 'toggle') ? { service: 'toggle', effect: 'toggle' } : null;
+  // A cover/valve toggle is only a safe substitute when the entity advertises
+  // both directions. A domain-level `toggle` service is not proof that this
+  // particular entity can perform the missing direction.
+  const supportsBothDirections = supportedFeature(stateObject, FEATURE_OPEN | FEATURE_CLOSE);
+  return supportsBothDirections && serviceExists(hass, domain, 'toggle')
+    ? { service: 'toggle', effect: 'toggle' }
+    : null;
 }
 
 function resolveEntity(
@@ -345,11 +353,17 @@ function resolveEntity(
 }
 
 function ownRoleCandidates(device: DevItem, registryHass: any): string[] {
+  const leading = device.marker?.is_light === true || device.marker?.light_entity
+    ? forcedLightEntityOf(device)
+    : null;
   if (device.bindingKind === 'entity' && device.bindingRef) {
-    return [device.bindingRef];
+    return [...new Set([leading, device.bindingRef].filter((eid): eid is string => !!eid))];
   }
   const candidates = device.entities.length ? device.entities : device.allEntities || [];
-  return resolvedDeviceStateEntities(registryHass, candidates);
+  return [...new Set([
+    leading,
+    ...resolvedDeviceStateEntities(registryHass, candidates),
+  ].filter((eid): eid is string => !!eid))];
 }
 
 function ownControllableCandidate(

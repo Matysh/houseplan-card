@@ -7,15 +7,6 @@ const res = await page.evaluate(async () => {
   c._space = 'garden'; c._setMode('devices'); await c.updateComplete;
   const nav = JSON.parse(localStorage.getItem('houseplan_card_nav_v1'));
   out.saved = nav.space === 'garden' && !Object.hasOwn(nav, 'mode');
-  // #95: during a same-route remount Lit may still present the old editor DOM
-  // while the new instance fails closed to View and holds the editor only as a
-  // pending intent until can_write arrives. The visible close button is a
-  // newer user command and must cancel that pending intent even though the
-  // runtime field already equals View.
-  c._mode = 'view';
-  c._pendingNavMode = 'devices';
-  c._setMode('view');
-  out.sameModeCloseCancelsPendingEditor = c._mode === 'view' && c._pendingNavMode === null;
   c._setMode('devices'); await c.updateComplete;
   // пересоздать карточку (эмуляция закрытия вкладки; кэш конфига в LS уже есть)
   const c2 = document.createElement('houseplan-card');

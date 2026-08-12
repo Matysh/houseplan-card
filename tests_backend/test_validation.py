@@ -17,6 +17,16 @@ v = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(v)
 
 
+def test_backend_model_version_matches_frontend_constant():
+    root = os.path.dirname(os.path.dirname(__file__))
+    source = open(os.path.join(root, "src", "plan-optimizer.ts"), encoding="utf-8").read()
+    const_path = os.path.join(root, "custom_components", "houseplan", "const.py")
+    const_spec = importlib.util.spec_from_file_location("hp_const", const_path)
+    const = importlib.util.module_from_spec(const_spec)
+    const_spec.loader.exec_module(const)
+    assert f"PLAN_MODEL_VERSION = {const.PLAN_MODEL_VERSION}" in source
+
+
 @pytest.mark.parametrize("module_name, expected_spaces", [
     ("large-house", 3),
     ("visual-matrix", 2),
@@ -1733,21 +1743,30 @@ def test_marker_control_new_entity_refs_require_real_entity_id_syntax():
     }]}, old)
 
 
-def test_light_entity_schema_is_literal_and_domain_bounded():
+def test_light_entity_is_domain_bounded_only_when_new_or_changed():
     cfg = v.CONFIG_SCHEMA({"spaces": [], "markers": [
         {"id": "lamp", "binding": "device:lamp", "is_light": True,
          "light_entity": "light.channel_2"},
     ]})
     assert cfg["markers"][0]["light_entity"] == "light.channel_2"
-    with pytest.raises(vol.Invalid):
-        v.CONFIG_SCHEMA({"spaces": [], "markers": [
-            {"id": "lamp", "binding": "virtual", "light_entity": "sensor.bad"},
-        ]})
+    old = {"markers": [
+        {"id": "lamp", "binding": "virtual", "light_entity": "sensor.legacy"},
+    ]}
+    # Dormant unknown data survives an unrelated edit byte-for-byte.
+    v.CONFIG_SCHEMA({"spaces": [], **old})
+    v.validate_marker_light_entities(old, old)
+    with pytest.raises(v.MarkerControlError) as changed:
+        v.validate_marker_light_entities({"markers": [
+            {"id": "lamp", "binding": "virtual", "light_entity": "sensor.changed"},
+        ]}, old)
+    assert changed.value.code == "invalid_light_entity"
     for invalid in ("light.Uppercase", "light.trailing\n"):
-        with pytest.raises(vol.Invalid):
-            v.CONFIG_SCHEMA({"spaces": [], "markers": [
+        with pytest.raises(v.MarkerControlError):
+            v.validate_marker_light_entities({"markers": [
                 {"id": "lamp", "binding": "virtual", "light_entity": invalid},
-            ]})
+            ]}, {"markers": []})
+    with pytest.raises(v.MarkerControlError):
+        v.validate_marker_light_entities(old, validate_all=True)
 
 
 def test_issue_90_value_badge_validation_is_strict_only_when_changed():

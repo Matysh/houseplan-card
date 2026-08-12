@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   canonicalColumnAngle, columnBody, floorMinusBodies, geometryArea,
   directionalOccluders, intersectionPaths, partitionBody, pointInPhysicalBody,
-  pointInPhysicalGeometry,
+  pointInOpaquePlanBody, pointInPhysicalGeometry,
   sameColumnPlacement,
 } from '../test-build/physical-geometry.js';
 import {
@@ -96,6 +96,18 @@ test('a source in an exterior opening is opaque while an interior passage hole i
   // masonry. Placing a source in that internal passage remains valid.
   assert.equal(pointInPhysicalGeometry([5, 5], geometry), false, 'transparent interior passage');
   assert.equal(pointInPhysicalGeometry([12, 5], geometry), false, 'outside body');
+});
+
+test('the source guard combines wall masonry with partitions and columns', () => {
+  const masonry = [[
+    [[0, 0], [10, 0], [10, 10], [0, 10], [0, 0]],
+    [[2, 2], [8, 2], [8, 8], [2, 8], [2, 2]],
+  ]];
+  const partition = [[12, 0], [14, 0], [14, 10], [12, 10]];
+  assert.equal(pointInOpaquePlanBody([1, 5], masonry, [partition]), true, 'wall body');
+  assert.equal(pointInOpaquePlanBody([5, 5], masonry, [partition]), false, 'interior opening');
+  assert.equal(pointInOpaquePlanBody([13, 5], masonry, [partition]), true, 'partition/column');
+  assert.equal(pointInOpaquePlanBody([20, 5], masonry, [partition]), false, 'clear floor');
 });
 
 test('exact column overlays are rejected but rotated square bodies remain distinct', () => {

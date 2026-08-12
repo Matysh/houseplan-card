@@ -86,27 +86,30 @@ class HouseplanImportPreviewView(HomeAssistantView):
             blocks.append(block)
         owner_id = str(getattr(user, "id", ""))
         try:
+            # Hold the global writer only while taking one coherent store
+            # snapshot. Parsing up to 8 MiB, schema validation and space remap
+            # are CPU work and apply will revalidate both revisions anyway.
             async with runtime.write_lock:
                 config_data = await runtime.config_store.async_load() or {}
                 layout_data = await runtime.store.async_load() or {}
-                try:
-                    registry_snapshot = import_registry_snapshot(hass)
-                except Exception:  # noqa: BLE001 - summary must not block a valid backup
-                    _LOGGER.debug("House Plan import registry summary unavailable", exc_info=True)
-                    registry_snapshot = None
-                result = await hass.async_add_executor_job(
-                    partial(
-                        create_preview,
-                        runtime,
-                        b"".join(blocks),
-                        owner_id=owner_id,
-                        duplicate_policy=policy,
-                        current_config_data=config_data,
-                        current_layout_data=layout_data,
-                        config_root=Path(hass.config.path("")),
-                        registry_snapshot=registry_snapshot,
-                    )
+            try:
+                registry_snapshot = import_registry_snapshot(hass)
+            except Exception:  # noqa: BLE001 - summary must not block a valid backup
+                _LOGGER.debug("House Plan import registry summary unavailable", exc_info=True)
+                registry_snapshot = None
+            result = await hass.async_add_executor_job(
+                partial(
+                    create_preview,
+                    runtime,
+                    b"".join(blocks),
+                    owner_id=owner_id,
+                    duplicate_policy=policy,
+                    current_config_data=config_data,
+                    current_layout_data=layout_data,
+                    config_root=Path(hass.config.path("")),
+                    registry_snapshot=registry_snapshot,
                 )
+            )
         except ImportFailure as err:
             status = 413 if err.code == "too_large" else 400
             return web.json_response({"error": err.code, "message": err.message}, status=status)

@@ -48,6 +48,24 @@ Unknown future fields remain outside this report and continue to follow the
 backend's forward-compatibility policy. Absence from the report is therefore
 not permission to delete a field.
 
+## Legacy device tap action
+
+The historical marker token `tap_action: cover` remains accepted indefinitely.
+It is projected in the current UI as the universal **Toggle state** action and
+keeps cover-first target priority at runtime. Merely opening and saving an
+unrelated marker field preserves the literal `cover` token; once the user edits
+the action selector, the current canonical `toggle` token is written. The UI
+never creates new `cover` values. Unknown or unavailable cover capabilities
+remain a safe no-op and are never replaced by a guessed service call.
+
+The universal `toggle` resolver uses the current HA registry as its capability
+boundary. A disabled, orphaned or not-yet-verified device target is therefore
+a visible/explained safe no-op; it is not silently retargeted to a sibling
+entity and does not fall back to opening the info card. Entity bindings that
+still have a live, enabled service target may continue to work while registry
+metadata is refreshing. Persisted actions are preserved in both cases so a
+temporarily unavailable binding recovers without a config rewrite.
+
 ## Independent Glow compatibility
 
 The historical space and room token `fill_mode: glow` remains accepted on read

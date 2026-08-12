@@ -639,13 +639,16 @@ Space import использует тот же paired commit без пользо�
 - `future_model`, `invalid_config`, `invalid_layout`, `invalid_content`;
 - `space_not_found`, `capacity_exceeded`;
 - `preview_expired`, `preview_owner_mismatch`, `conflict`;
-- `content_confirmation_required`, `missing_plan`, `commit_failed`, `no_backup`.
+- `content_confirmation_required`, `missing_plan`, `missing_content`,
+  `commit_failed`, `no_backup`.
 
 Preview обязан заранее поймать недостающий plan и предложить отсоединение
 (§5.3). Но файл может исчезнуть после preview, поэтому apply повторяет проверку
-под write-lock и в этой гонке возвращает стабильный `missing_plan`. Frontend
-локализует code; backend message остаётся диагностикой, но не является
-единственным пользовательским текстом.
+под write-lock и в этой гонке возвращает стабильный `missing_plan`. Та же
+проверка применяется к локальным PDF-вложениям и возвращает
+`missing_content`, если файл исчез после preview. Frontend локализует code;
+backend message остаётся диагностикой, но не является единственным
+пользовательским текстом.
 
 ## 12. Проверки
 

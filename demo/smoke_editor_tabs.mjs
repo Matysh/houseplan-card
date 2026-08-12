@@ -25,6 +25,22 @@ const res = await page.evaluate(async () => {
   const barCloseIcon = barClose?.querySelector('ha-icon');
   const barCloseRect = barClose?.getBoundingClientRect();
   const barCloseIconRect = barCloseIcon?.getBoundingClientRect();
+  const enteringChrome = sr().querySelector('.editorchrome');
+  // Regression #95 follow-up: the bar is already painted during the 220 ms
+  // mode transition, so its explicit Close command must not be inert together
+  // with the editing tools.
+  out.closeRemainsInteractiveDuringEnter = c._modeTransitionBusy
+    && enteringChrome?.inert === false
+    && sr().querySelector('.editbar-tools')?.inert === true
+    && getComputedStyle(barClose).pointerEvents === 'auto';
+  const enteringStage = sr().querySelector('.stage');
+  const editorSceneLayer = enteringStage?.querySelector('.hp-editor-only-layer');
+  const enteringVisual = c._modeTransitionVisual;
+  out.sceneLayersUseTransitionWeights = c._modeTransitionBusy && !!enteringVisual
+    && !!editorSceneLayer
+    && Math.abs(Number(editorSceneLayer.getAttribute('opacity')) - enteringVisual.editorWeight) < 0.001
+    && Math.abs(Number(getComputedStyle(enteringStage).getPropertyValue('--hp-mode-view-weight'))
+      - enteringVisual.viewWeight) < 0.001;
   out.planBarCloseIconIsCentered = !!barCloseRect && !!barCloseIconRect
     && Math.abs((barCloseIconRect.left + barCloseIconRect.width / 2)
       - (barCloseRect.left + barCloseRect.width / 2)) <= 1
@@ -54,8 +70,9 @@ const res = await page.evaluate(async () => {
   out.contextDoesNotMoveClose = Math.abs(closeWithContext.left - closeBeforeContext.left) <= 1
     && Math.abs(closeWithContext.top - closeBeforeContext.top) <= 1;
   out.closeHasPinnedEndCap = !!sr().querySelector('.editbar > .editbar-end > .barclose');
-  // No current tools are grouped automatically. Inject one declarative group
-  // to pin the generic launcher/keyboard/restore contract for future editors.
+  // Replace the real Opening group with a side-effect-free command group to
+  // pin the generic launcher/keyboard/restore contract independently of any
+  // one editor tool's business logic.
   let groupInvokes = 0;
   Object.defineProperty(c, '_editorToolbarGroups', { configurable: true, get: () => [{
     id: 'smoke-group', label: 'Smoke group', icon: 'mdi:dots-grid', items: [{
@@ -107,6 +124,23 @@ const res = await page.evaluate(async () => {
   out.dismissTailDoesNotEatUnrelatedClick = unrelatedInvokes === 1;
   outsideTool.remove();
   unrelatedTool.remove();
+  // An open grouped submenu still consumes ordinary outside clicks, but an
+  // explicit editor navigation command has higher priority and must close both
+  // surfaces in the same pointer sequence.
+  groupLauncher?.click(); await c.updateComplete;
+  const closeWithOpenGroup = sr().querySelector('.editbar .barclose');
+  closeWithOpenGroup?.dispatchEvent(new PointerEvent('pointerdown', {
+    pointerId: 302, pointerType: 'mouse', button: 0,
+    bubbles: true, composed: true, cancelable: true,
+  }));
+  closeWithOpenGroup?.dispatchEvent(new MouseEvent('click', {
+    button: 0, bubbles: true, composed: true, cancelable: true,
+  }));
+  await c.updateComplete;
+  out.editorNavigationOutranksGroupDismiss = c._mode === 'view'
+    && c._editorSecondary.hasOpenGroup === false;
+  await settleMode();
+  tabs()[0].click(); await settleMode();
   delete c._editorToolbarGroups;
   c._tool = 'select'; c.requestUpdate(); await c.updateComplete;
   // 4) прямое переключение План → Устройства

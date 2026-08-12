@@ -30,6 +30,14 @@ test('ordinary activity belongs only to icon plus activity mode', () => {
   assert.equal(resolve({ liveStates: false, semanticActivity: 'running' }).kind, 'none');
 });
 
+test('critical alarm survives live-state and face-mode gates but not disabled binding', () => {
+  assert.equal(resolve({ liveStates: false, visual: visual('alarm') }).kind, 'alarm');
+  for (const display of ['badge', 'value']) {
+    assert.equal(resolve({ display, liveStates: false, visual: visual('alarm') }).kind, 'alarm');
+  }
+  assert.equal(resolve({ bindingUnavailable: true, visual: visual('alarm') }).kind, 'none');
+});
+
 test('reduced motion replaces ordinary waves with a dot and keeps alarm semantic', () => {
   const ordinary = resolve({
     semanticActivity: 'running', reducedMotion: true,
@@ -39,6 +47,13 @@ test('reduced motion replaces ordinary waves with a dot and keeps alarm semantic
   assert.equal(ordinary.reducedMotionIndicator, 'dot');
   assert.equal(ordinary.color, null);
   assert.equal(ordinary.diameterScale, 1);
+  const short = resolve({
+    shortReason: 'event', shortExpiresAt: 2_000, reducedMotion: true,
+  });
+  assert.equal(short.kind, 'short');
+  assert.equal(short.animated, false);
+  assert.equal(short.reducedMotionIndicator, 'dot');
+  assert.equal(short.diameterScale, 1);
   const alarm = resolve({
     visual: visual('alarm'), reducedMotion: true,
     color: '#123456', diameterScale: 5,

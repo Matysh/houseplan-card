@@ -863,6 +863,28 @@ function cmsForPoly(
   const scale = coordScale > 0 ? coordScale : 1;
   const tol = Math.max(pitch * 0.5, 1e-9) * scale;
   const parsed = parseKeys(walls, scale).filter((e) => e.w.cm > 0);
+  // An exact run materialised before Split may cover only part of the new
+  // polygon parent edge. Resolve those lossless spans against each orphaned
+  // atomic child first: [0..6] must cover new child [4..6], but never [6..10].
+  for (let oi = orphans.length - 1; oi >= 0; oi--) {
+    const i = orphans[oi];
+    const a = at.poly[i], b = at.poly[(i + 1) % n];
+    const ang = segAngle(a, b);
+    let best: { cm: number; extra: number } | null = null;
+    for (const e of parsed) {
+      const span = entrySpan(e.w, scale);
+      if (!span || !angleClose(segAngle(span[0], span[1]), ang)) continue;
+      if (distToSeg(a[0], a[1], span[0][0], span[0][1], span[1][0], span[1][1]) > tol
+          || distToSeg(b[0], b[1], span[0][0], span[0][1], span[1][0], span[1][1]) > tol) continue;
+      const childLen = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      const spanLen = Math.hypot(span[1][0] - span[0][0], span[1][1] - span[0][1]);
+      const extra = Math.max(0, spanLen - childLen);
+      if (!best || extra < best.extra) best = { cm: clampWallCm(e.w.cm), extra };
+    }
+    if (!best) continue;
+    cms[i] = best.cm;
+    orphans.splice(oi, 1);
+  }
   const byParent = new Map<number, number[]>();
   for (const i of orphans) {
     const p = at.parent[i];
@@ -995,14 +1017,32 @@ export function materializeWallIntervals(
   cellCm: number,
   gridPitch: number,
   coordScale = 1,
+  breakPoints: readonly number[][] = [],
 ): WallEntry[] {
-  let out = walls ? walls.slice() : [];
+  // Rebuild from the effective profile instead of retaining midpoint-only
+  // legacy rows beside their lossless replacements. Keeping both lets the
+  // tolerant lookup match a stale collinear stretch between these two calls.
+  let out: WallEntry[] = [];
   const resolved = wallIntervals(
     rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
   );
   for (const iv of resolved) {
     if (iv.open || !(iv.cm > 0)) continue;
-    out = setWallThickness(out, iv.a, iv.b, iv.cm, pitch, coordScale);
+    const dx = iv.b[0] - iv.a[0], dy = iv.b[1] - iv.a[1];
+    const length2 = dx * dx + dy * dy;
+    const eps = openEps(pitch, coordScale) * 4;
+    const cuts = length2 > 0 ? breakPoints.flatMap((point) => {
+      const t = ((point[0] - iv.a[0]) * dx + (point[1] - iv.a[1]) * dy) / length2;
+      if (t <= 0 || t >= 1) return [];
+      const projected = [iv.a[0] + dx * t, iv.a[1] + dy * t];
+      return Math.hypot(point[0] - projected[0], point[1] - projected[1]) <= eps ? [t] : [];
+    }) : [];
+    const stops = [0, ...new Set(cuts), 1].sort((a, b) => a - b);
+    for (let i = 0; i + 1 < stops.length; i++) {
+      const a = [iv.a[0] + dx * stops[i], iv.a[1] + dy * stops[i]];
+      const b = [iv.a[0] + dx * stops[i + 1], iv.a[1] + dy * stops[i + 1]];
+      out = setWallThickness(out, a, b, iv.cm, pitch, coordScale);
+    }
   }
   return out;
 }

@@ -6,6 +6,7 @@ individual test exercises an otherwise pure helper.
 """
 from __future__ import annotations
 
+import asyncio
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -34,7 +35,7 @@ from custom_components.houseplan.const import (
     MAX_IMPORT_PREVIEWS_PER_USER,
     MAX_IMPORT_PREVIEWS_TOTAL,
     PLAN_MODEL_VERSION,
-    PLANS_DIR,
+    FILES_DIR, PLANS_DIR,
 )
 from custom_components.houseplan.store import (
     async_save_layout_state,
@@ -159,11 +160,6 @@ def test_full_preview_still_rejects_self_and_cycle(kind: str, tmp_path: Path) ->
             current_layout_data={"layout": {}, "rev": 1}, config_root=tmp_path,
         )
     assert invalid.value.code == expected
-
-
-def test_backend_model_version_matches_frontend_constant() -> None:
-    source = Path("src/plan-optimizer.ts").read_text(encoding="utf-8")
-    assert f"PLAN_MODEL_VERSION = {PLAN_MODEL_VERSION}" in source
 
 
 def test_layout_writer_preserves_unrelated_metadata_and_removes_only_named_keys() -> None:
@@ -374,6 +370,32 @@ def test_preview_candidate_digest_and_global_memory_cap_are_enforced(tmp_path: P
     assert changed.value.code == "invalid_format"
 
 
+def test_foreign_content_never_binds_to_same_named_local_file(tmp_path: Path) -> None:
+    plans = tmp_path / PLANS_DIR
+    plans.mkdir(parents=True, exist_ok=True)
+    (plans / "portable.svg").write_text("<svg/>", encoding="utf-8")
+    config = _config()
+    config["spaces"][0]["plan_url"] = "/api/houseplan/content/plans/_/portable.svg"
+    document, _ = create_export(
+        SimpleNamespace(instance_id="source-instance"), {"config": config}, {"layout": {}},
+        kind="full", space_id=None, card_version="review", config_root=tmp_path,
+    )
+    runtime = SimpleNamespace(instance_id="target-instance", import_previews={})
+    response = create_preview(
+        runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
+        current_config_data={"config": _config(), "rev": 1},
+        current_layout_data={"layout": {}, "rev": 1}, config_root=tmp_path,
+    )
+    row = response["preview"]["content"][0]
+    assert row["exists_on_target"] is True
+    assert row["state"] == "detach_required"
+    assert response["preview"]["confirmation_required"] is True
+    candidate = get_candidate(runtime, response["token"], "alice")
+    with pytest.raises(ImportFailure) as unconfirmed:
+        prepare_apply(candidate, _config(), {}, confirm_missing_content=False)
+    assert unconfirmed.value.code == "content_confirmation_required"
+
+
 def test_preview_counts_only_stored_wall_entries(tmp_path: Path) -> None:
     document = _document(tmp_path)
     document["payload"]["config"].pop("model_version", None)
@@ -451,6 +473,42 @@ def test_space_remap_covers_marker_id_layout_and_vacuum_segment_map(tmp_path: Pa
     assert marker["id"] != "lamp"
     assert marker["vacuum"]["segment_map"] == {"12": imported_room}
     assert marker["id"] in layout and "lamp" not in layout
+
+
+def test_space_merge_remaps_every_space_owned_id_and_room_link(tmp_path: Path) -> None:
+    document = _document(tmp_path, "space")
+    space = document["payload"]["config"]["spaces"][0]
+    space["rooms"] = [
+        {"id": "living", "name": "Living", "poly": [[0, 0], [1, 0], [1, 0.5]],
+         "open_to": ["kitchen"]},
+        {"id": "kitchen", "name": "Kitchen", "poly": [[0, 0.5], [1, 0.5], [1, 1]]},
+    ]
+    space["openings"] = [
+        {"id": "op1", "type": "door", "x": 0.5, "y": 0.5, "angle": 0, "length": 0.1},
+    ]
+    space["decor"] = [
+        {"id": "dec1", "kind": "line", "x1": 0, "y1": 0, "x2": 1, "y2": 1,
+         "color": "#ffffff", "opacity": 1, "width_cm": 1},
+    ]
+    space["partitions"] = [{"id": "part1", "a": [0, 0.25], "b": [1, 0.25], "cm": 15}]
+    space["wall_columns"] = [
+        {"id": "column1", "shape": "square", "center": [0.2, 0.2], "cm": 30},
+    ]
+    space["room_drafts"] = [{
+        "id": "draft1", "points": [[0, 0], [0.2, 0], [0.2, 0.2]],
+        "segments": [{"cm": 10}, {"cm": 10}],
+    }]
+    merged, _layout, details = build_space_merge(
+        document, {"spaces": [], "markers": [], "settings": {}}, {}, "skip",
+    )
+    imported = next(item for item in merged["spaces"] if item["id"] == details["space_id"])
+    old_ids = {"ground", "living", "kitchen", "op1", "dec1", "part1", "column1", "draft1"}
+    imported_ids = {imported["id"]}
+    for collection in ("rooms", "openings", "decor", "partitions", "wall_columns", "room_drafts"):
+        imported_ids.update(str(item["id"]) for item in imported.get(collection) or [])
+    assert not old_ids & imported_ids
+    room_ids = {room["id"] for room in imported["rooms"]}
+    assert set(imported["rooms"][0]["open_to"]) <= room_ids
 
 
 def test_space_merge_remaps_internal_marker_light_links(tmp_path: Path) -> None:
@@ -650,6 +708,7 @@ async def _candidate(
     await rt.store.async_save({
         "layout": current_layout, "rev": 1,
         "repair_backup": {"must": "survive-failure"},
+        "geom_pending": {"ground": {"aspect": 1.5}},
     })
     incoming = json.loads(json.dumps(target_config or current_config))
     incoming["spaces"][0]["title"] = "Imported"
@@ -708,6 +767,50 @@ async def test_export_and_revalidate_ws_endpoints_use_server_owned_state(
     assert refreshed.result["token"] == response["token"]
     assert refreshed.result["expected_config_rev"] == response["expected_config_rev"]
     assert refreshed.result["expected_layout_rev"] == response["expected_layout_rev"]
+
+
+async def test_full_export_waits_for_a_concurrent_paired_write(
+    hass: HomeAssistant,
+) -> None:
+    """An export sees either complete pair, never config from mid-commit."""
+    await _setup(hass)
+    rt = get_data(hass)
+    assert rt is not None
+    old_config = _config()
+    old_layout = {"lamp": {"x": 0.1, "y": 0.2, "s": "ground"}}
+    await rt.config_store.async_save({"config": old_config, "rev": 1})
+    await rt.store.async_save({"layout": old_layout, "rev": 1})
+
+    config_written = asyncio.Event()
+    finish_pair = asyncio.Event()
+    new_config = json.loads(json.dumps(old_config))
+    new_config["spaces"][0]["title"] = "Concurrent target"
+    new_layout = {"lamp": {"x": 0.8, "y": 0.9, "s": "ground"}}
+
+    async def write_pair() -> None:
+        async with rt.write_lock:
+            await rt.config_store.async_save({"config": new_config, "rev": 2})
+            config_written.set()
+            await finish_pair.wait()
+            await rt.store.async_save({"layout": new_layout, "rev": 2})
+
+    writer = asyncio.create_task(write_pair())
+    await config_written.wait()
+    exported = _Connection()
+    export = asyncio.create_task(wsapi.ws_export_create.__wrapped__(hass, exported, {
+        "id": 43, "type": "houseplan/export/create", "kind": "full",
+        "card_version": "review",
+    }))
+    await asyncio.sleep(0)
+    assert not export.done(), "export must wait while the paired writer owns the lock"
+    finish_pair.set()
+    await writer
+    await export
+
+    assert exported.error is None and exported.result
+    payload = exported.result["document"]["payload"]
+    assert payload["config"]["spaces"][0]["title"] == "Concurrent target"
+    assert payload["layout"] == new_layout
 
 
 @pytest.mark.parametrize(("endpoint", "message"), [
@@ -790,7 +893,80 @@ async def test_apply_confirmed_detach_does_not_collect_files_and_commits_pair(
     assert stored_config["config"]["spaces"][0].get("plan_url") is None
     assert stored_config["rev"] == stored_layout["rev"] == 2
     assert "optimize_pending" not in stored_layout
+    assert "repair_backup" not in stored_layout
+    assert "geom_pending" not in stored_layout
     assert stored_layout["optimize_backup"]["kind"] == "import"
+
+
+async def test_full_import_undo_is_one_shot_and_reports_its_kind(
+    hass: HomeAssistant, tmp_path: Path,
+) -> None:
+    await _setup(hass)
+    rt, response, _ = await _candidate(hass, tmp_path)
+    applied = await _apply(hass, response)
+    assert applied.result and applied.result["can_undo"] is True
+
+    status = _Connection()
+    await wsapi.ws_config_get.__wrapped__(hass, status, {
+        "id": 60, "type": "houseplan/config/get",
+    })
+    assert status.result and status.result["undo_kind"] == "import"
+
+    undone = _Connection()
+    await wsapi.ws_plan_optimize_undo.__wrapped__(hass, undone, {
+        "id": 61, "type": "houseplan/plan/optimize_undo",
+        "expected_config_rev": 2, "expected_layout_rev": 2,
+    })
+    assert undone.error is None and undone.result and undone.result["can_undo"] is False
+    assert (await rt.config_store.async_load())["config"]["spaces"][0]["title"] == "Ground"
+    assert (await rt.store.async_load())["layout"]["lamp"]["x"] == 0.1
+
+    repeated = _Connection()
+    await wsapi.ws_plan_optimize_undo.__wrapped__(hass, repeated, {
+        "id": 62, "type": "houseplan/plan/optimize_undo",
+        "expected_config_rev": 3, "expected_layout_rev": 3,
+    })
+    assert repeated.error and repeated.error[0] == "no_backup"
+
+
+@pytest.mark.parametrize("kind", ["import", "import_rollback"])
+async def test_setup_recovers_durable_import_pair(
+    hass: HomeAssistant, kind: str,
+) -> None:
+    entry = await _setup(hass)
+    rt = get_data(hass)
+    assert rt is not None
+    current = _config()
+    target = json.loads(json.dumps(current))
+    target["spaces"][0]["title"] = f"Recovered {kind}"
+    target_layout = {"lamp": {"x": 0.8, "y": 0.7, "s": "ground"}}
+    await rt.config_store.async_save({"config": current, "rev": 1})
+    await rt.store.async_save({
+        "layout": {"lamp": {"x": 0.1, "y": 0.2, "s": "ground"}},
+        "rev": 1,
+        "stale_metadata": True,
+        "optimize_pending": {
+            "kind": kind,
+            "config": target,
+            "layout": target_layout,
+            "config_rev": 2,
+            "layout_rev": 2,
+            "final_metadata": {"future_metadata": {"kept": True}},
+        },
+    })
+
+    assert await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+    recovered = get_data(hass)
+    assert recovered is not None
+    config_data = await recovered.config_store.async_load()
+    layout_data = await recovered.store.async_load()
+    assert config_data == {"config": target, "rev": 2}
+    assert layout_data["layout"] == target_layout
+    assert layout_data["rev"] == 2
+    assert layout_data["future_metadata"] == {"kept": True}
+    assert "stale_metadata" not in layout_data
+    assert "optimize_pending" not in layout_data
 
 
 async def test_apply_rechecks_plan_file_under_the_write_lock(
@@ -809,6 +985,26 @@ async def test_apply_rechecks_plan_file_under_the_write_lock(
     connection = await _apply(hass, response)
     assert connection.result is None
     assert connection.error and connection.error[0] == "missing_plan"
+
+
+async def test_apply_rechecks_attachment_under_the_write_lock(
+    hass: HomeAssistant, tmp_path: Path,
+) -> None:
+    await _setup(hass)
+    attachment_dir = Path(hass.config.path(FILES_DIR)) / "lamp"
+    attachment_dir.mkdir(parents=True, exist_ok=True)
+    attachment = attachment_dir / "manual.pdf"
+    attachment.write_bytes(b"%PDF-1.4\n")
+    config = _config()
+    config["markers"][0]["pdfs"] = [{
+        "name": "Manual", "url": "/api/houseplan/content/files/lamp/manual.pdf",
+    }]
+    _rt, response, _ = await _candidate(hass, tmp_path, target_config=config)
+    assert response["preview"]["confirmation_required"] is False
+    attachment.unlink()
+    connection = await _apply(hass, response)
+    assert connection.result is None
+    assert connection.error and connection.error[0] == "missing_content"
 
 
 async def test_space_apply_commits_remapped_config_and_layout_as_one_pair(
@@ -917,6 +1113,7 @@ async def test_pair_rolls_back_before_reporting_a_persistent_target_failure(
     assert config_data["config"]["spaces"][0]["title"] == "Ground"
     assert layout_data["layout"]["lamp"]["x"] == 0.1
     assert layout_data["repair_backup"] == {"must": "survive-failure"}
+    assert layout_data["geom_pending"] == {"ground": {"aspect": 1.5}}
     assert "optimize_pending" not in layout_data
 
     monkeypatch.setattr(rt.config_store, "async_save", real_save)

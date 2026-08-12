@@ -28,12 +28,21 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
         && scenario.sunRayPixels.minChannelDelta > 0
         && scenario.sunRayPixels.minChannelDelta <= 32, true, scenario.id);
     }
+    if (scenario.openingPreviewPixels) {
+      assert.ok(scenario.openingPreview, scenario.id);
+      assert.equal(Number.isInteger(scenario.openingPreviewPixels.minPixels)
+        && scenario.openingPreviewPixels.minPixels > 0, true, scenario.id);
+      assert.equal(Number.isInteger(scenario.openingPreviewPixels.minChannelDelta)
+        && scenario.openingPreviewPixels.minChannelDelta > 0
+        && scenario.openingPreviewPixels.minChannelDelta <= 32, true, scenario.id);
+    }
     if (scenario.tunnelContinuity) {
       assert.match(scenario.tunnelContinuity.openingId, /^[a-z0-9-]+$/, scenario.id);
       assert.equal(Number.isInteger(scenario.tunnelContinuity.insetPx)
         && scenario.tunnelContinuity.insetPx >= 1, true, scenario.id);
       assert.equal(scenario.tunnelContinuity.maxChannelJump >= 0
         && scenario.tunnelContinuity.maxChannelJump <= 32, true, scenario.id);
+      assert.equal(typeof scenario.tunnelContinuity.dpr2, 'boolean', scenario.id);
     }
     if (scenario.helpTextRegion) {
       assert.match(scenario.helpTextRegion.key, /^[a-z0-9_.-]+\.help$/, scenario.id);
@@ -49,7 +58,8 @@ test('golden matrix covers required geometry, rendering and adaptive surfaces', 
   for (const token of ['geometry', 'diagonal-45-opening', 'openings', 'openings-hidden',
     'fill-light', 'fill-temp', 'fill-lqi', 'lighting', 'hover', 'zoom-040', 'zoom-250',
     'warm-remount', 'dialog-mobile', 'color-popover', 'tray-wide', 'tray-medium', 'sun-window',
-    'tray-narrow', 'opaque-glow-two-doorways', 'filled-tunnel', 'backup-full', 'backup-space'])
+    'tray-narrow', 'opaque-glow-two-doorways', 'filled-tunnel', 'opening-placement',
+    'backup-full', 'backup-space', 'value-badge-positions'])
     assert.equal(ids.includes(token), true, token);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.mode)).has('plan'), true);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.mode)).has('devices'), true);
@@ -67,6 +77,7 @@ test('filled opening golden has a pixel-level seam detector', () => {
   assert.equal(scenario.hideOpenings, true, 'opening symbols must not mask the sampled tunnel pixels');
   assert.equal(scenario.tunnelContinuity.openingId, 'light-door');
   assert.equal(scenario.tunnelContinuity.maxChannelJump <= 3, true);
+  assert.equal(scenario.tunnelContinuity.dpr2, true);
   assert.equal(scenario.wallReplacements[0].segments.length, 2);
   assert.notEqual(
     scenario.wallReplacements[0].segments[0].cm,
@@ -106,6 +117,36 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.equal(scenario.allLightsOff, true);
   assert.equal(scenario.sunRayPixels.minPixels >= 500, true);
   assert.equal(scenario.sunRayPixels.minChannelDelta >= 4, true);
+});
+
+test('value badge golden covers four positions and bottom badge with separate LQI', () => {
+  const scenario = GOLDEN_SCENARIOS.find((item) => item.id === 'device-value-badge-positions-dark');
+  assert.ok(scenario);
+  assert.deepEqual(
+    new Set(scenario.markerOverrides.map((marker) => marker.value_badge.position)),
+    new Set(['right', 'bottom', 'left', 'top']),
+  );
+  const bottom = scenario.markerOverrides.find((marker) => marker.value_badge.position === 'bottom');
+  assert.equal(bottom.id, 'golden-climate');
+  assert.notEqual(bottom.value_badge.source.kind, 'derived_lqi');
+  const fixture = prepareGoldenFixture(scenario);
+  assert.equal(fixture.states['climate.golden_climate'].attributes.lqi, 190);
+  assert.equal(
+    fixture.config.markers.find((marker) => marker.id === 'golden-climate').value_badge.position,
+    'bottom',
+  );
+});
+
+test('opening placement golden requires browser-painted preview pixels', () => {
+  const scenario = GOLDEN_SCENARIOS.find(
+    (item) => item.id === 'opening-placement-door-thick-wall-dark',
+  );
+  assert.ok(scenario);
+  assert.equal(scenario.mode, 'plan');
+  assert.equal(scenario.openingPreview?.type, 'door');
+  assert.deepEqual(scenario.openingPreview?.pointer, [0.78, 0.32]);
+  assert.equal(scenario.openingPreviewPixels.minPixels >= 40, true);
+  assert.equal(scenario.openingPreviewPixels.minChannelDelta >= 4, true);
 });
 
 test('golden harness applies doorway, state and layout overrides to a cloned fixture', () => {

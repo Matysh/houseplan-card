@@ -10,7 +10,8 @@ import {
   resolveBindingProviders,
   resolveEntityProvider,
 } from '../test-build/integration-provider.js';
-import { valueBadgeWriteFields } from '../test-build/device-value-badge.js';
+import { valueBadgeTitle, valueBadgeWriteFields } from '../test-build/device-value-badge.js';
+import { resolvedLightSources } from '../test-build/devices.js';
 
 const state = (entity_id, value, attributes = {}) => ({ entity_id, state: value, attributes });
 const hass = (states, entities = {}) => ({
@@ -19,6 +20,8 @@ const hass = (states, entities = {}) => ({
   devices: {},
   config: { unit_system: { temperature: '°C' } },
   formatEntityState: (item) => item.state === 'on' ? 'On' : item.state,
+  localize: (key) => key === 'state.default.on' ? 'On'
+    : key === 'state.default.off' ? 'Off' : undefined,
 });
 
 const device = (overrides = {}) => ({
@@ -76,6 +79,52 @@ test('passive source and its controller share the plan-wide derived state', () =
   assert.equal(switchPresentation.sourceKind, 'controls');
   assert.equal(switchPresentation.visualSources[0].eid, 'marker:bulb');
   assert.equal(switchPresentation.visualSources[0].sample.status, 'working');
+});
+
+test('passive sensor source keeps its normal scalar value and never probes marker ids', () => {
+  const hits = [];
+  const h = hass(new Proxy({
+    'sensor.lux': state('sensor.lux', '234', { unit_of_measurement: 'lx' }),
+  }, {
+    get(target, key) {
+      if (String(key).startsWith('marker:')) hits.push(key);
+      return target[key];
+    },
+  }));
+  const sensor = device({
+    id: 'lux', name: 'Lux', primary: 'sensor.lux', entities: ['sensor.lux'],
+    marker: {
+      id: 'lux', binding: 'entity:sensor.lux', is_light: true, display: 'value',
+    },
+  });
+  const presentation = resolveDevicePresentation(h, sensor, options);
+  assert.equal(presentation.valueText, '234 lx');
+  assert.deepEqual(hits, []);
+});
+
+test('derived marker-state badge follows a stateful Always source', () => {
+  const h = hass({ 'light.bulb': state('light.bulb', 'on') });
+  const bulb = device({
+    id: 'bulb', name: 'Bulb', primary: 'light.bulb', entities: ['light.bulb'],
+    marker: { id: 'bulb', binding: 'entity:light.bulb', is_light: true },
+  });
+  const controller = device({
+    id: 'controller', primary: 'switch.wall', entities: ['switch.wall'],
+    marker: {
+      id: 'controller', binding: 'entity:switch.wall',
+      value_badge: {
+        enabled: true,
+        source: { kind: 'derived_marker_state', ref: 'marker:bulb' },
+        position: 'right',
+      },
+    },
+  });
+  const graph = resolvedLightSources(h, [controller, bulb]);
+  const presentation = resolveDevicePresentation(h, controller, {
+    ...options, lightDevices: [controller, bulb], lightSources: graph,
+  });
+  assert.equal(presentation.valueBadge?.availability, 'available');
+  assert.equal(presentation.valueBadge?.text, 'On');
 });
 
 test('ordinary presentation stays on the local light path', () => {
@@ -394,6 +443,23 @@ test('derived temperature and humidity retain compact plan formatting', () => {
   assert.equal(humidity.valueText, '48%');
 });
 
+test('one legacy marker keeps both temperature and humidity for face compatibility', () => {
+  const h = hass({
+    'sensor.temp': state('sensor.temp', '22.4', { device_class: 'temperature', unit_of_measurement: '°C' }),
+    'sensor.humidity': state('sensor.humidity', '47.7', { device_class: 'humidity', unit_of_measurement: '%' }),
+  }, {
+    'sensor.temp': { entity_id: 'sensor.temp', device_id: 'd1', platform: 'demo' },
+    'sensor.humidity': { entity_id: 'sensor.humidity', device_id: 'd1', platform: 'demo' },
+  });
+  const result = resolveDevicePresentation(h, device({
+    icon: 'mdi:thermometer', primary: 'sensor.temp',
+    entities: ['sensor.temp', 'sensor.humidity'],
+  }), options);
+  assert.equal(result.valueBadge?.text, '22.4°');
+  assert.equal(result.tempText, '22.4');
+  assert.equal(result.humText, '48');
+});
+
 test('preview explanations distinguish activity display and composite Power source', () => {
   const workingHass = hass(
     { 'switch.relay': state('switch.relay', 'on') },
@@ -473,6 +539,34 @@ test('issue 90 explicit off suppresses legacy and static display preserves but h
   }, options).valueBadge, null);
 });
 
+test('legacy climate-temperature flag does not fall through when the attribute is absent', () => {
+  const h = hass({
+    'climate.room': state('climate.room', 'heat', {}),
+    'sensor.temp': state('sensor.temp', '22.4', {
+      device_class: 'temperature', unit_of_measurement: '°C',
+    }),
+  }, {
+    'climate.room': { entity_id: 'climate.room', device_id: 'd1', platform: 'demo' },
+    'sensor.temp': { entity_id: 'sensor.temp', device_id: 'd1', platform: 'demo' },
+  });
+  const d = device({
+    icon: 'mdi:thermometer', primary: 'sensor.temp',
+    entities: ['climate.room', 'sensor.temp'], marker: { use_climate_temp: true },
+  });
+  assert.equal(resolveDevicePresentation(h, d, options).valueBadge, null);
+});
+
+test('an incomplete explicit enabled badge remains visible as unavailable', () => {
+  const h = hass({}, {});
+  const d = device({ marker: { value_badge: { enabled: true, position: 'top' } } });
+  const badge = resolveDevicePresentation(h, d, options).valueBadge;
+  assert.equal(badge?.text, '—');
+  assert.equal(badge?.availability, 'missing');
+  assert.equal(badge?.position, 'top');
+  assert.equal(badge?.source, null);
+  assert.equal(valueBadgeTitle(badge), 'Unavailable');
+});
+
 test('issue 90 untouched persistence gate never materializes a legacy badge', () => {
   assert.deepEqual(valueBadgeWriteFields({
     touched: false, originalHas: false, original: undefined,
@@ -521,4 +615,23 @@ test('issue 90 missing source never falls back and derived LQI renders only once
   }), options);
   assert.equal(lqi.valueBadge?.text, '150');
   assert.equal(lqi.lqiText, null);
+});
+
+test('cover presentation follows the same service target selected by toggle resolution', () => {
+  const h = hass({
+    'cover.curtain': state('cover.curtain', 'opening', {
+      device_class: 'curtain', supported_features: 15,
+    }),
+    'sensor.position': state('sensor.position', '45'),
+  }, {
+    'cover.curtain': { entity_id: 'cover.curtain', device_id: 'd1', platform: 'demo' },
+    'sensor.position': { entity_id: 'sensor.position', device_id: 'd1', platform: 'demo' },
+  });
+  const result = resolvePresentationSources(h, device({
+    entities: ['sensor.position', 'cover.curtain'], primary: 'sensor.position',
+  }));
+  assert.equal(result.sourceKind, 'cover');
+  assert.equal(result.visualSources.length, 1);
+  assert.equal(result.visualSources[0].eid, 'cover.curtain');
+  assert.equal(result.visualSources[0].state, 'opening');
 });

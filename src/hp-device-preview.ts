@@ -7,6 +7,7 @@ import {
   type ResolvedDevicePresentation,
 } from './device-presentation';
 import { withDemoPulse } from './device-pulse';
+import { valueBadgeTitle } from './device-value-badge';
 import {
   acquireIntegrationMetadata, integrationMetadataSnapshot,
   resolveBindingProviders, resolveEntityProvider, type IntegrationProvider,
@@ -246,8 +247,7 @@ class HpDevicePreview extends LitElement {
       this._stateSummary(actual),
       result,
       actual.valueFullText || '',
-      actual.valueBadge
-        ? `${actual.valueBadge.sourceLabel}: ${actual.valueBadge.fullText}` : '',
+      valueBadgeTitle(actual.valueBadge),
     ].filter(Boolean).join('. ');
 
     return html`<section class="devicepreview">

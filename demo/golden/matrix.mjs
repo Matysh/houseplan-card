@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 13;
+export const GOLDEN_MATRIX_VERSION = 15;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -13,6 +13,13 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'geometry-view-light-fit', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'geometry-plan-editor-dark', fixture: 'visual', space: 'golden-geometry', mode: 'plan',
+    theme: 'dark', viewport: { width: 1180, height: 900 }, ...page },
+  { id: 'opening-placement-door-thick-wall-dark', fixture: 'visual', space: 'golden-geometry',
+    // The lower-right edge of the nested diamond is a real 45-degree thick
+    // wall. Keep this diagonal: it catches regressions hidden by horizontal
+    // preview-only captures (rotation, face offset and ruler placement).
+    mode: 'plan', openingPreview: { type: 'door', pointer: [0.78, 0.32] },
+    openingPreviewPixels: { minPixels: 40, minChannelDelta: 4 },
     theme: 'dark', viewport: { width: 1180, height: 900 }, ...page },
   { id: 'geometry-devices-editor-dark', fixture: 'visual', space: 'golden-geometry', mode: 'devices',
     theme: 'dark', viewport: { width: 1180, height: 900 }, ...page },
@@ -52,11 +59,37 @@ export const GOLDEN_SCENARIOS = Object.freeze([
         { key: fixtureWallKey([0.5, 0.5], [0.5, 0.88]), a: [0.5, 0.5], b: [0.5, 0.88], cm: 32 },
       ],
     }],
-    tunnelContinuity: { openingId: 'light-door', insetPx: 2, maxChannelJump: 3 },
+    tunnelContinuity: { openingId: 'light-door', insetPx: 2, maxChannelJump: 3, dpr2: true },
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'openings-hidden-view-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
     fillMode: 'none', glowEnabled: false, hideOpenings: true, theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'lighting-glow-sun-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'device-value-badge-positions-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
+    glowEnabled: false, sunRays: false,
+    markerOverrides: [
+      { id: 'golden-light-one', binding: 'device:golden-light-one', value_badge: {
+        enabled: true, source: { kind: 'entity_state', entity_id: 'light.golden_light_one' }, position: 'right',
+      } },
+      { id: 'golden-light-two', binding: 'device:golden-light-two', value_badge: {
+        enabled: true, source: { kind: 'entity_state', entity_id: 'light.golden_light_two' }, position: 'left',
+      } },
+      { id: 'golden-presence', binding: 'device:golden-presence', value_badge: {
+        enabled: true, source: { kind: 'entity_state', entity_id: 'binary_sensor.golden_presence' }, position: 'top',
+      } },
+      { id: 'golden-climate', binding: 'device:golden-climate', value_badge: {
+        enabled: true,
+        source: { kind: 'entity_attribute', entity_id: 'climate.golden_climate', attribute: 'current_temperature' },
+        position: 'bottom',
+      } },
+    ],
+    stateOverrides: { 'climate.golden_climate': { attributes: { lqi: 190 } } },
+    layoutOverrides: {
+      'golden-light-one': { s: 'golden-lighting', x: 0.20, y: 0.32 },
+      'golden-light-two': { s: 'golden-lighting', x: 0.20, y: 0.72 },
+      'golden-presence': { s: 'golden-lighting', x: 0.80, y: 0.68 },
+      'golden-climate': { s: 'golden-lighting', x: 0.80, y: 0.28 },
+    },
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'lighting-sun-window-state-only-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
     // The golden screenshot is backed by a second, sun-layer-hidden capture.

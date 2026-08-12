@@ -106,6 +106,8 @@ export interface ResolvePresentationOptions {
   lightDevices?: readonly DevItem[];
   /** Pre-resolved whole-plan graph. Render/activity passes must build it once. */
   lightSources?: readonly ResolvedLightSource<DevItem>[];
+  /** Registry view must match the action resolver, including disabled rows. */
+  registryHass?: any;
   now?: number;
   reducedMotion?: boolean;
 }
@@ -197,6 +199,7 @@ function sourceOf(
 export function resolvePresentationSources(
   hass: any, device: DevItem, lightDevices: readonly DevItem[] = [device],
   planLightSources?: readonly ResolvedLightSource<DevItem>[],
+  registryHass: any = hass,
 ): ResolvedPresentationSources {
   // User-hidden is a renderer concern. It must not erase the source graph used
   // by the design preview. HA-disabled devices already carry no active entities.
@@ -204,11 +207,19 @@ export function resolvePresentationSources(
   let sourceKind: PresentationSourceKind = 'none';
   let visualSources: ResolvedPresentationSource[] = [];
 
+  // A cover remains the device's visual state source even when tap_action is
+  // More info. Resolve the same exact cover role/capability path as the toggle
+  // adapter without changing the persisted action selected by the user.
+  const coverDevice = [...d.entities, ...(d.allEntities || [])]
+    .some((eid) => eid.startsWith('cover.'))
+    ? { ...d, tapAction: 'cover' as const }
+    : d;
   const cover = toggleCoverEntity(resolveToggleIntent({
     hass,
     devices: lightDevices,
-    device: d,
+    device: coverDevice,
     lightSources: planLightSources,
+    registryHass,
   }));
   // A target owns Glow and room statistics, while a controller still needs to
   // present the aggregate state of what it controls. Resolve the controller
@@ -384,14 +395,25 @@ function resolveValue(
       return { source: { kind: 'humidity', eid: hum.eid, text: hum.text }, text: hum.text, fallback: null };
     }
   }
-  if (sources.visualSources.length !== 1) {
+  // Passive marker sources deliberately use a `marker:*` identity. They are
+  // presentation graph nodes, never HA entity ids. For a value face keep the
+  // device's ordinary functional role as the value source instead of probing
+  // `hass.states['marker:*']` or turning a sensor into an empty value.
+  const realVisualSources = sources.visualSources.filter((source) => !source.eid.startsWith('marker:'));
+  let valueEids = realVisualSources.map((source) => source.eid);
+  if (!valueEids.length && sources.visualSources.some((source) => source.eid.startsWith('marker:'))) {
+    valueEids = resolvedDeviceStateEntities(hass, d.entities);
+    if (!valueEids.length && d.primary && hass?.states?.[d.primary]) valueEids = [d.primary];
+  }
+  valueEids = [...new Set(valueEids)];
+  if (valueEids.length !== 1) {
     return {
       source: null,
       text: null,
-      fallback: sources.visualSources.length ? 'value_ambiguous_sources' : 'value_no_state',
+      fallback: valueEids.length ? 'value_ambiguous_sources' : 'value_no_state',
     };
   }
-  const eid = sources.visualSources[0].eid;
+  const eid = valueEids[0];
   const value = validStateValue(hass, eid);
   if (value.fallback) return { source: null, text: null, fallback: value.fallback };
   return { source: { kind: 'entity', eid, text: value.text }, text: value.text, fallback: null };
@@ -498,6 +520,7 @@ export function resolveDevicePresentation(
   const sources = staticIcon && options.sourceDetails === false
     ? EMPTY_SOURCES : resolvePresentationSources(
         hass, d, options.lightDevices || [d], options.lightSources,
+        options.registryHass || hass,
       );
   const status = d.bindingStatus;
   const haDisabled = status?.kind === 'ha_disabled';
@@ -532,25 +555,26 @@ export function resolveDevicePresentation(
     ? (d.marker?.use_climate_temp === true ? climateTempFor(hass, d.entities)
       : (d.icon === 'mdi:thermometer' || d.icon === 'mdi:air-filter') ? tempFor(hass, d.entities) : null)
     : null;
-  const hum = !staticIcon && !effectiveHidden && options.showTemperature && d.primary && isHumEntity(hass, d.primary)
+  const hum = !staticIcon && !effectiveHidden && options.showTemperature
+    && d.entities.some((eid) => isHumEntity(hass, eid))
     ? humFor(hass, d.entities) : null;
   const lqi = !staticIcon && !effectiveHidden && options.showSignal && !d.virtual ? lqiFor(hass, d.entities) : null;
+  const markerStateGraph = options.lightSources || (d.marker?.value_badge?.source?.kind === 'derived_marker_state'
+    ? resolvedLightSources(hass, options.lightDevices || [d])
+    : []);
   const valueBadge = resolveDeviceValueBadge(hass, d, {
     showTemperature: options.showTemperature,
     showSignal: options.showSignal,
     display,
     effectiveHidden,
-    markerStates: sources.visualSources
-      .filter((source) => source.eid.startsWith('marker:'))
-      .map((source) => ({
-        ref: source.eid,
-        on: source.state === 'on',
-        name: source.name,
-      })),
+    markerStates: markerStateGraph
+      .filter((source) => source.key.startsWith('marker:'))
+      .map((source) => ({ ref: source.key, on: source.on, name: source.device.name })),
   });
+  const realVisualSource = sources.visualSources.find((source) => !source.eid.startsWith('marker:'));
   const actEid = sources.sourceKind === 'cover'
-    ? sources.visualSources[0]?.eid
-    : d.primary || sources.visualSources[0]?.eid;
+    ? realVisualSource?.eid
+    : d.primary || realVisualSource?.eid;
   const state = actEid ? hass?.states?.[actEid] : null;
   const icon = options.liveStates && !staticIcon && !effectiveHidden
     ? stateIcon(d.icon, actEid?.split('.')[0], state?.attributes?.device_class, state?.state, !!d.marker?.icon)
@@ -589,8 +613,8 @@ export function resolveDevicePresentation(
   const notices: PresentationReason[] = [];
   if (options.designPreview && userHidden) notices.push('hidden_design_preview');
   if (!staticIcon && d.marker?.vacuum?.live === true) notices.push('vacuum_live_plan_only');
-  const powerSource = sources.visualSources.length === 1
-    && isDevicePowerSwitch(hass, sources.visualSources[0].eid);
+  const powerSource = sources.visualSources.length === 1 && !!realVisualSource
+    && isDevicePowerSwitch(hass, realVisualSource.eid);
   const uncategorisedSwitches = d.entities.filter((eid) =>
     eid.startsWith('switch.') && !hass?.entities?.[eid]?.entity_category,
   ).length;

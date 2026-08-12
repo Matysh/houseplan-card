@@ -186,6 +186,11 @@ export const cardStyles = css`
     .stage.mode-transition .zoomwrap {
       transition: none !important;
     }
+    .stage.mode-transition .hp-view-only-layer,
+    .stage.mode-transition .hp-editor-only-layer {
+      pointer-events: none;
+      will-change: opacity;
+    }
     .stage.mode-transition .hp-paper {
       fill: var(--hp-mode-paper) !important;
     }
@@ -1231,17 +1236,16 @@ export const cardStyles = css`
       gap: var(--sp-3);
       cursor: pointer;
     }
-    .opghost {
-      stroke: var(--hp-open, #ff9800);
-      stroke-width: 5;
-      stroke-linecap: round;
-      stroke-dasharray: 7 6;
-      opacity: 0.85;
+    .opening-preview {
+      opacity: 0.5;
       pointer-events: none;
     }
-    .opghost-dot {
+    .opening-preview .op-leaf,
+    .opening-preview .op-arc {
+      transition: none;
+    }
+    .opening-preview-dot {
       fill: var(--hp-open, #ff9800);
-      opacity: 0.85;
       pointer-events: none;
     }
     .rlabel {
@@ -1847,6 +1851,9 @@ export const cardStyles = css`
       top: 50%;
       transform: translateY(-50%);
       margin-left: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.1);
+    }
+    .dev .value-badge.legacy-secondary.pos-right {
+      top: calc(50% + var(--dev-size, var(--icon-size, 2.5cqw)) * 0.78);
     }
     .dev .value-badge.pos-left {
       right: 100%;
@@ -2877,6 +2884,12 @@ export const cardStyles = css`
       overflow: hidden;
       will-change: height;
       pointer-events: none;
+    }
+    /* The toolbar is already visible while its height is interpolating. Its
+       explicit navigation control must remain usable even though all editing
+       tools stay frozen until the transition settles. */
+    .editorchrome.transitioning .barclose {
+      pointer-events: auto;
     }
     .editorchrome-inner {
       min-height: 0;

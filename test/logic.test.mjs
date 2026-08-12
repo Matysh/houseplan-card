@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   lqiColor, snapToGrid, snapSegment45, segKey, samePoint, pointInPolygon, markerIdForBinding, averageLqi,
-  fitView, declump, safeUrl, resolveTapAction, floorsOf, subst, spaceDisplayOf, roomFillColor,
+  fitView, declump, safeUrl, floorsOf, subst, spaceDisplayOf, roomFillColor,
   splitRoomPath, polyContainsPoly, islandsOf,
   kelvinToRgb, glowColorOf, normalizeGlowColorOverride, liveGlowBrightness,
   resolveGlowValues, resolveGlowAppearance, glowAlpha,
@@ -16,7 +16,7 @@ import {
   contentUrl, chunk, referencedContentUrls, MAX_SIGN_PATHS,
   interiorPoint,
   segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointOnBoundary, pointStrictlyInside, roomsOverlap,
-  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, openingShoulders, fillColorsOf, lerpColor, roomFillStyle, resolveEffectiveRoomFill, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, poleOfInaccessibility, runServiceFor, TOGGLE_SAFE_DOMAINS, coverService, coverMoving, coverEntityOf,
+  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, openingShoulders, fillColorsOf, lerpColor, roomFillStyle, resolveEffectiveRoomFill, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, poleOfInaccessibility, runServiceFor, coverMoving,
   normalizeDeviceDisplay, isAlarmCapable,
   liveText, liveTextValue, liveTextReference, liveTextToken,
   hassValue, valueWithUnit, decorTextScale, decorTextLines,
@@ -203,38 +203,6 @@ test('icon rules: device_class fallback', () => {
   assert.equal(iconFromDeviceClasses(['presence']), 'mdi:motion-sensor');
   assert.equal(iconFromDeviceClasses(['unknown']), null);
   assert.equal(iconFromDeviceClasses([]), null);
-});
-
-test('tap action: defaults — info everywhere except pure lights (v1.39.0)', () => {
-  assert.equal(resolveTapAction(undefined, undefined, 'light'), 'toggle'); // лампы кликабельны из коробки
-  assert.equal(resolveTapAction(undefined, undefined, 'switch'), 'info');
-  assert.equal(resolveTapAction(null, 'info', 'switch'), 'info');
-  assert.equal(resolveTapAction(null, 'more-info', 'sensor'), 'more-info');
-});
-
-test('tap action: legacy card-wide defaults remain conservative', () => {
-  assert.equal(resolveTapAction(null, 'toggle', 'light'), 'toggle');
-  assert.equal(resolveTapAction(null, 'toggle', 'switch'), 'toggle');
-  // covers/valves joined the safe set for curtains (owner, 2026-07-29)…
-  assert.equal(resolveTapAction(null, 'toggle', 'cover', 'curtain'), 'toggle');
-  assert.equal(resolveTapAction(null, 'toggle', 'valve'), 'toggle');
-  // Card-wide defaults are legacy-only and remain conservative.
-  assert.equal(resolveTapAction(null, 'toggle', 'cover', 'garage'), 'info');
-  assert.equal(resolveTapAction(null, 'toggle', 'cover', 'gate'), 'info');
-  assert.equal(resolveTapAction('toggle', null, 'cover', 'garage'), 'toggle');
-  assert.equal(resolveTapAction(null, 'toggle', 'sensor'), 'info');
-});
-
-test('tap action projection: explicit per-device toggle is preserved for every binding', () => {
-  assert.equal(resolveTapAction('toggle', 'info', 'cover'), 'toggle'); // conscious choice
-  assert.equal(resolveTapAction('toggle', 'toggle', 'lock'), 'toggle');
-  assert.equal(resolveTapAction('toggle', 'toggle', 'alarm_control_panel'), 'toggle');
-  assert.equal(resolveTapAction('toggle', 'info', undefined), 'toggle');
-});
-
-test('tap action: per-device override beats the card default', () => {
-  assert.equal(resolveTapAction('info', 'toggle', 'light'), 'info');
-  assert.equal(resolveTapAction('more-info', 'toggle', 'light'), 'more-info');
 });
 
 test('floorsOf: sorts by level, tolerates missing registry and odd entries', () => {
@@ -693,36 +661,6 @@ test('stateIcon: a cover morphs for EVERY class, both ways (owner 2026-08-04)', 
   assert.equal(stateIcon('mdi:lock', 'lock', undefined, 'unlocked', true), 'mdi:lock');
 });
 
-test('coverService: closed→open, open→close, travelling→stop (owner 2026-08-03)', () => {
-  assert.equal(coverService('closed'), 'open_cover');
-  assert.equal(coverService('open'), 'close_cover');       // incl. ajar: HA reports 'open'
-  assert.equal(coverService('opening'), 'stop_cover');     // a tap during travel STOPS
-  assert.equal(coverService('closing'), 'stop_cover');
-  assert.equal(coverService('unknown'), 'toggle');         // no readable state → plain toggle
-  assert.equal(coverService('unavailable'), 'toggle');
-  assert.equal(coverService(null), 'toggle');
-  assert.equal(coverService(undefined), 'toggle');
-});
-
-test('coverEntityOf: the cover among ALL entities, primary or not (owner 2026-08-04)', () => {
-  // the owner's Aqara E1 curtain driver, entity for entity: the cover is
-  // hidden by the integration and sits BEHIND the service switch, so
-  // primaryEntity picks the switch — the tap has to look wider than that
-  const aqara = [
-    'cover.office_curtain', 'sensor.office_curtain_battery',
-    'switch.office_curtain_reverse', 'sensor.office_curtain_motor_state',
-  ];
-  assert.equal(coverEntityOf(aqara), 'cover.office_curtain');
-  assert.equal(coverEntityOf(['switch.a', 'cover.b']), 'cover.b'); // order does not matter
-  assert.equal(coverEntityOf(['cover.first', 'cover.second']), 'cover.first');
-  assert.equal(coverEntityOf(['light.only']), null);
-  assert.equal(coverEntityOf([]), null);
-  assert.equal(coverEntityOf(null), null);
-  assert.equal(coverEntityOf(undefined), null);
-  // a `cover_something` sensor is not a cover
-  assert.equal(coverEntityOf(['sensor.cover_position']), null);
-});
-
 test('coverMoving: only opening/closing breathe', () => {
   assert.equal(coverMoving('opening'), true);
   assert.equal(coverMoving('closing'), true);
@@ -730,21 +668,6 @@ test('coverMoving: only opening/closing breathe', () => {
   assert.equal(coverMoving('closed'), false);
   assert.equal(coverMoving('unknown'), false);
   assert.equal(coverMoving(null), false);
-});
-
-test("tap action 'cover': legacy token remains readable until an intentional edit", () => {
-  assert.equal(resolveTapAction('cover', null, 'cover', 'curtain'), 'cover');
-  assert.equal(resolveTapAction('cover', null, 'cover', 'blind'), 'cover');
-  assert.equal(resolveTapAction('cover', null, 'cover', null), 'cover'); // no class = a plain cover
-  // Projection is lossless; the runtime resolver supplies the secure no-op.
-  assert.equal(resolveTapAction('cover', null, 'cover', 'garage'), 'cover');
-  assert.equal(resolveTapAction('cover', null, 'cover', 'door'), 'cover');
-  assert.equal(resolveTapAction('cover', null, 'cover', 'gate'), 'cover');
-  // and it is meaningless anywhere but the cover domain
-  assert.equal(resolveTapAction('cover', null, 'light'), 'info');
-  assert.equal(resolveTapAction('cover', null, 'lock'), 'info');
-  // never a card-wide default (like 'run'): it needs a conscious per-marker choice
-  assert.equal(resolveTapAction(null, 'cover', 'cover', 'curtain'), 'info');
 });
 
 test('lightColorOf: rgb of an on light; off/unavailable/no-color → null', () => {
@@ -959,18 +882,6 @@ test('outlineWithout: removes the cut stretch, keeps the rest', () => {
   assert.ok(Math.abs(outlineWithout(sq, []).reduce((a, s) => a + len(s), 0) - 40) < 1e-6);
 });
 
-test('resolveTapAction: pure lights toggle by default (v1.39.0)', () => {
-  assert.equal(resolveTapAction(null, null, 'light'), 'toggle');
-  assert.equal(resolveTapAction('', undefined, 'light'), 'toggle');
-  // явный выбор пользователя сильнее дефолта
-  assert.equal(resolveTapAction('info', null, 'light'), 'info');
-  // не-световые домены не трогаем
-  assert.equal(resolveTapAction(null, null, 'switch'), 'info');
-  assert.equal(resolveTapAction(null, null, 'sensor'), 'info');
-  // Security is enforced by resolveToggleIntent, after target resolution.
-  assert.equal(resolveTapAction('toggle', null, 'lock'), 'toggle');
-});
-
 test('alignGuides: nearest per axis, indication only', () => {
   const cands = [[10, 50], [10, 90], [70, 20], [40, 40]];
   const g = alignGuides([10, 60], cands, 0.5);
@@ -1177,20 +1088,12 @@ test('poleOfInaccessibility: the VISUAL centre, not just any interior point', ()
 
 
 test('tap action run: explicit-only, with runnable targets (owner spec 2026-07-29)', () => {
-  // 'run' resolves only as an explicit per-marker action
-  assert.equal(resolveTapAction('run', undefined, 'switch'), 'run');
-  assert.equal(resolveTapAction(null, 'run', 'switch'), 'info', 'never a card-wide default');
   // runnable domains map to their services; anything else is not runnable
   assert.deepEqual(runServiceFor('automation.morning'), { domain: 'automation', service: 'trigger' });
   assert.deepEqual(runServiceFor('script.curtains'), { domain: 'script', service: 'turn_on' });
   assert.deepEqual(runServiceFor('scene.movie'), { domain: 'scene', service: 'turn_on' });
   assert.equal(runServiceFor('light.lamp'), null);
   assert.equal(runServiceFor(''), null);
-  // covers and valves joined the card-wide toggle domains
-  assert.ok(TOGGLE_SAFE_DOMAINS.has('cover') && TOGGLE_SAFE_DOMAINS.has('valve'));
-  assert.equal(resolveTapAction(null, 'toggle', 'cover', 'shutter'), 'toggle');
-  // The action remains selected; resolveToggleIntent turns secure targets into no-op.
-  assert.equal(resolveTapAction('toggle', undefined, 'lock'), 'toggle');
 });
 
 

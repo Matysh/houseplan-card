@@ -233,8 +233,7 @@ export interface CardConfig {
   show_signal?: boolean;
   language?: string; // 'en' | 'ru' | '' (auto — HA profile)
   /** @deprecated Ignored since v1.38.1 — per-marker `tap_action` only.
-   *  Kept so old YAML does not break; `resolveTapAction`'s cardDefault is
-   *  never wired from this field (audit P3-5). */
+   *  Kept so old YAML does not break; no runtime action reads this field. */
   tap_action?: string;
   /** Wall-device (kiosk) mode: no header, no editors, swipe between spaces. */
   kiosk?: boolean;

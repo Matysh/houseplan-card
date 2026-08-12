@@ -277,6 +277,21 @@ export function pointInPhysicalGeometry(point: number[], geom: any): boolean {
   return false;
 }
 
+/**
+ * True when a light source is embedded in any opaque plan body.
+ *
+ * Wall masonry is polygon-clipping geometry because openings are represented
+ * as holes. Partitions and columns are plain bodies. Keeping this decision in
+ * one helper prevents render call sites from accidentally checking only one
+ * of the two representations and re-introducing a half-lit wall/opening.
+ */
+export function pointInOpaquePlanBody(
+  point: number[], masonryGeometry: any, bodies: number[][][],
+): boolean {
+  return pointInPhysicalGeometry(point, masonryGeometry)
+    || bodies.some((body) => pointInPhysicalBody(point, body));
+}
+
 export function sameColumnPlacement(a: WallColumnCfg, b: WallColumnCfg, eps: number): boolean {
   if (Math.hypot(a.center[0] - b.center[0], a.center[1] - b.center[1]) > eps) return false;
   if (Math.abs(clampColumnCm(a.cm) - clampColumnCm(b.cm)) > 1e-6) return false;

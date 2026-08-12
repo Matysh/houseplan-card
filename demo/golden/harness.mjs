@@ -143,7 +143,13 @@ export function prepareGoldenFixture(scenario) {
   }
   if (scenario.markerOverrides) {
     const ids = new Set(scenario.markerOverrides.map((marker) => marker.id));
-    const known = new Set((fixture.config.markers || []).map((marker) => marker.id));
+    // Runtime devices without explicit marker settings are still valid saved
+    // marker targets. A visual scenario may materialize their first setting,
+    // just like the real device dialog does on save.
+    const known = new Set([
+      ...(fixture.config.markers || []).map((marker) => marker.id),
+      ...Object.keys(fixture.devices || {}),
+    ]);
     const missing = [...ids].filter((id) => !known.has(id));
     if (missing.length) throw new Error(`golden markerOverrides reference missing marker(s): ${missing.join(', ')}`);
     fixture.config.markers = [
@@ -250,6 +256,23 @@ export async function prepareGoldenScenario(page, scenario) {
       card._applyView(scenario.zoom, 500, 500);
       card.requestUpdate();
       await card.updateComplete;
+    }
+    if (scenario.openingPreview) {
+      const { type, pointer } = scenario.openingPreview;
+      if (!['window', 'door', 'gate'].includes(type)
+        || !Array.isArray(pointer) || pointer.length !== 2
+        || !pointer.every(Number.isFinite)) {
+        throw new Error(`invalid golden openingPreview: ${scenario.id}`);
+      }
+      card._activateOpeningPlacement(type);
+      card._cursorPt = [pointer[0] * 1000, pointer[1] * card._spaceH];
+      card.requestUpdate();
+      await card.updateComplete;
+      await frame();
+      const preview = card.renderRoot.querySelector(`.opening-preview[data-kind="${type}"]`);
+      if (!preview || !preview.querySelector('.op-leaf')) {
+        throw new Error(`golden opening preview did not render: ${scenario.id}`);
+      }
     }
     if (scenario.editorTray) {
       let expectedKind = '';

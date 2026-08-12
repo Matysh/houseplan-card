@@ -761,6 +761,29 @@ test('split materialisation preserves legacy source walls around a new divider',
   assert.equal(cmAt([4, 0, 4, 10]), 22);
 });
 
+test('split materialisation cuts a partial shared interval at the new divider', () => {
+  const original = [
+    { id: 'source', poly: [[0, 0], [10, 0], [10, 10], [0, 10]] },
+    { id: 'neighbour', poly: [[0, -6], [6, -6], [6, 0], [0, 0]] },
+  ];
+  const walls = [{
+    key: wallKey([0, 0], [6, 0], pitch), a: [0, 0], b: [6, 0], cm: 15,
+  }];
+  const preserved = materializeWallIntervals(
+    original, walls, [], pitch, cellCm, GRID_PITCH, 1, [[4, 0], [4, 10]],
+  );
+  const split = [
+    { id: 'source', poly: [[4, 0], [10, 0], [10, 10], [4, 10]] },
+    original[1],
+    { id: 'fresh', poly: [[0, 0], [4, 0], [4, 10], [0, 10]] },
+  ];
+  const next = normalizeWallIntervals(split, preserved, [], pitch, cellCm, GRID_PITCH);
+  const cmAt = (seg) => intervalCmAt(split, next, [], seg, pitch, cellCm, GRID_PITCH);
+  assert.equal(cmAt([0, 0, 4, 0]), 15);
+  assert.equal(cmAt([4, 0, 6, 0]), 15);
+  assert.equal(cmAt([6, 0, 10, 0]), 0);
+});
+
 test('drawWallPreviewD returns a path for open and closed outlines', () => {
   const open = drawWallPreviewD([[0, 0], [10, 0], [10, 6]], 1, false);
   assert.ok(open.includes('M'));

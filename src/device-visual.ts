@@ -266,7 +266,7 @@ export function entityVisualSamplesForDevice(
 }
 
 /** Combine the entities that jointly describe one marker. */
-export function combineVisualSamples(samples: EntityVisualSample[]): DeviceVisualState {
+export function combineVisualSamples(samples: readonly EntityVisualSample[]): DeviceVisualState {
   if (!samples.length) return { availability: 'available', status: 'neutral', activity: 'none' };
   const available = samples.filter((s) => s.availability === 'available');
   if (!available.length) return { availability: 'unavailable', status: 'neutral', activity: 'none' };

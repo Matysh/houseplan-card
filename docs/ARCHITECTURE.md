@@ -409,7 +409,7 @@ Its default width in the editor is 300 cm. `openingAmount` (pure) maps the conta
 0..1: no sensor → door/gate drawn open / window closed (static-plan convention);
 `unavailable`/`unknown` freeze that default. The lock renders as an HTML padlock badge
 (`.oplock`) in the device layer; a lock is
-**never** toggled from the plan (TOGGLE_FORBIDDEN_DOMAINS rule). View-mode UX: hover outline,
+**never** toggled from the plan (`resolveToggleIntent` returns a secure no-op). View-mode UX: hover outline,
 drag along walls (continuous re-snap, saved on release), click → status card (250 ms timer),
 double click → properties dialog. In markup mode the "Opening" tool handles clicks instead.
 
@@ -583,6 +583,9 @@ order — the write lock orders the requests but says nothing about whether the
 file survived. `config/set` therefore checks every `/api/houseplan/content/plans/`
 url against the disk before saving, and refuses with `missing_plan`. External and
 legacy urls are the user's own and are never second-guessed.
+Portable import repeats the same check under its paired-write lock for both
+plans and local marker PDF attachments, so content that disappears after the
+preview cannot leave a newly broken reference in the restored config.
 
 **Signed content urls are batched, aged and deduplicated** (reviews R2-2, R3-2, R4-2). `ContentSigner`
 in `src/signing.ts` is the single implementation, used by both cards; the

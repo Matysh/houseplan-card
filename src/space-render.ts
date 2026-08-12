@@ -26,6 +26,7 @@ import {
 } from './device-presentation';
 import { presentationSnapshotKey } from './render-device-snapshot';
 import { deviceFaceStyle, renderDeviceFace } from './device-face';
+import { valueBadgeTitle } from './device-value-badge';
 import {
   spaceModels, roomCenter, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, NORM_W,
   GRID_STEP_N, GRID_PITCH,
@@ -258,8 +259,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       d.name,
       presentation.pulse.kind !== 'none'
         ? t(o.lang, (`marker.pulse_a11y_${presentation.pulse.reason}`) as any) : '',
-      presentation.valueBadge
-        ? `${presentation.valueBadge.sourceLabel}: ${presentation.valueBadge.fullText}` : '',
+      valueBadgeTitle(presentation.valueBadge),
     ].filter(Boolean).join(', ');
     return html`<div class="dev ${presentation.classes.join(' ')} ${d.virtual ? 'virtual' : ''} ${presentation.valueText != null ? 'valonly' : ''}"
       data-hp="device" data-id="${d.id}" data-entity=${d.primary || nothing} data-area=${d.area || nothing}

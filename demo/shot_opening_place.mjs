@@ -6,7 +6,7 @@ await page.evaluate(() => {
   const c = window.__card;
   const sp = c._serverCfg.spaces.find((s) => s.id === 'f1');
   sp.openings = [];
-  c._setMode('plan'); c._tool = 'opening';
+  c._setMode('plan'); c._activateOpeningPlacement('door');
   c._cfgEpoch++; c.requestUpdate();
   return c.updateComplete && true;
 });

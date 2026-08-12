@@ -157,6 +157,11 @@ The complete UI and runtime truth table lives in
   source on an opaque edge is rejected, the ±π seam cannot cut a wedge from
   the fan, and a corner made by two crossing barriers is lit right up to the
   corner.
+- `test/physical-geometry.test.mjs` plus
+  `test/houseplan-runtime-contract.test.mjs` — the source-placement guard:
+  exterior opening masonry, wall bodies, partitions and columns are fail-dark,
+  while a real interior passage remains a valid source position; the rendered
+  Glow path is pinned to that shared guard.
 - `demo/smoke_glow.mjs` — pixels on a rendered plan: the aperture itself is lit,
   the floor behind a door is lit, the visible beam is no wider than twice the
   opening, there is no light behind a column while the floor beside it is lit,

@@ -184,19 +184,20 @@ await page.evaluate(() => {
     { id: 'r2', name: 'Kitchen', poly: [[0.55, 0.14], [0.96, 0.14], [0.96, 0.46], [0.55, 0.46]] },
   ];
   sp.openings = [];
-  c._setMode('plan'); c._tool = 'opening';
+  c._setMode('plan'); c._activateOpeningPlacement('door');
   c._cfgEpoch++; c.requestUpdate();
   return c.updateComplete && true;
 });
 await settle();
-const ghosts = () => page.evaluate(() => window.__card.renderRoot.querySelectorAll('.opghost').length);
+const previews = () => page.evaluate(() =>
+  window.__card.renderRoot.querySelectorAll('.opening-preview').length);
 
 // hover off-centre on r1's top wall (own edge 40..550, y = 140)
 {
   const [hx, hy] = await screenPt(460, 141);
   await page.mouse.move(hx, hy, { steps: 3 });
   await settle();
-  check('place_ghost_shown', await ghosts(), 1);
+  check('place_preview_shown', await previews(), 1);
   check('place_two_badges', (await badges()).length, 2);
   // edges 422.5 / 497.5 -> 382.5 u (4.59 m) left, 52.5 u (0.63 m) right
   const [a, b] = await nums();
@@ -231,12 +232,13 @@ const ghosts = () => page.evaluate(() => window.__card.renderRoot.querySelectorA
   });
   check('place_tick_perpendicular', !!g && near(g.x1, 295, 1e-6) && near(g.x2, 295, 1e-6)
     && near(g.y2 - g.y1, 30, 1e-6));
-  // the ghost itself already sits on the magnetised centre
+  // the architectural preview itself already sits on the magnetised centre
   const gh = await page.evaluate(() => {
-    const el = window.__card.renderRoot.querySelector('.opghost');
-    return el && (+el.getAttribute('x1') + +el.getAttribute('x2')) / 2;
+    const el = window.__card.renderRoot.querySelector('.opening-preview');
+    const match = /translate\(\s*([-+\d.eE]+)/.exec(el?.getAttribute('transform') || '');
+    return match ? Number(match[1]) : null;
   });
-  check('place_ghost_magnetised', near(gh, 295, 1e-6));
+  check('place_preview_magnetised', near(gh, 295, 1e-6));
 }
 
 // Shift cannot opt out of the magnet, the badges stay
@@ -248,10 +250,11 @@ const ghosts = () => page.evaluate(() => window.__card.renderRoot.querySelectorA
   check('place_tick_with_shift', await tick(), 1);
   check('place_badges_with_shift', (await badges()).length, 2);
   const gh = await page.evaluate(() => {
-    const el = window.__card.renderRoot.querySelector('.opghost');
-    return el && (+el.getAttribute('x1') + +el.getAttribute('x2')) / 2;
+    const el = window.__card.renderRoot.querySelector('.opening-preview');
+    const match = /translate\(\s*([-+\d.eE]+)/.exec(el?.getAttribute('transform') || '');
+    return match ? Number(match[1]) : null;
   });
-  check('place_ghost_magnetised_with_shift', near(gh, 295, 1e-6));
+  check('place_preview_magnetised_with_shift', near(gh, 295, 1e-6));
   await page.keyboard.up('Shift');
 }
 
@@ -266,7 +269,7 @@ const ghosts = () => page.evaluate(() => window.__card.renderRoot.querySelectorA
   check('place_dialog_x_magnetised', near(await page.evaluate(() => window.__card._openingDialog.x), 295, 1e-6));
   check('place_badges_gone', (await badges()).length, 0);
   check('place_tick_gone', await tick(), 0);
-  check('place_ghost_gone', await ghosts(), 0);
+  check('place_preview_gone', await previews(), 0);
   // …and confirming the dialog writes the opening at the magnetised point
   await page.evaluate(() => { const c = window.__card; c._saveOpening(); return c.updateComplete && true; });
   await settle();

@@ -88,6 +88,7 @@ def get_entry(hass: HomeAssistant) -> ConfigEntry | None:
 
 OPTIMIZE_BACKUP = "optimize_backup"
 OPTIMIZE_PENDING = "optimize_pending"
+LAYOUT_STORE_CORE_KEYS = frozenset({"layout", "rev"})
 
 
 def layout_store_payload(
@@ -106,7 +107,7 @@ def layout_store_payload(
     the next drag.  All writers now express only the metadata they intentionally
     add/remove and this helper preserves the rest.
     """
-    excluded = {"layout", "rev", *remove}
+    excluded = {*LAYOUT_STORE_CORE_KEYS, *remove}
     out = {} if replace_metadata else {
         key: value for key, value in stored.items() if key not in excluded
     }

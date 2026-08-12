@@ -51,6 +51,40 @@ export interface ResolveValueBadgeOptions {
   markerStates?: readonly { ref: string; on: boolean; name: string }[];
 }
 
+export function valueBadgeTitle(badge: ResolvedValueBadge | null | undefined): string {
+  if (!badge) return '';
+  return badge.sourceLabel ? `${badge.sourceLabel}: ${badge.fullText}` : badge.fullText;
+}
+
+interface CandidateCacheEntry {
+  states: object | null;
+  entities: object | null;
+  devices: object | null;
+  signature: string;
+  result: ValueBadgeCandidate[];
+}
+
+/**
+ * The device dialog renders on every HA state frame.  Candidate discovery is
+ * plan-wide (derived marker values need the light graph), so keep the result
+ * while the HA registry/state snapshots and the relevant marker wiring are
+ * unchanged. Home Assistant replaces these snapshots on state/registry
+ * updates; the structural signature also catches local draft edits made in
+ * place before the next HA frame.
+ */
+const CANDIDATE_CACHE = new WeakMap<object, CandidateCacheEntry>();
+
+function candidateSignature(d: DevItem, lightDevices: readonly DevItem[]): string {
+  const devicePart = (item: DevItem): string => [
+    item.id, item.primary, item.hidden ? 1 : 0, item.userHidden ? 1 : 0,
+    item.entities.join(','), (item.controls || []).join(','),
+    item.marker?.binding || '', item.marker?.is_light === true ? 1 : 0,
+    item.marker?.light_entity || '',
+    (item.marker?.controls || []).join(','),
+  ].join('|');
+  return `${devicePart(d)}\n${lightDevices.map(devicePart).join('\n')}`;
+}
+
 export function valueBadgeSourceKey(source: ValueBadgeSource | null | undefined): string {
   if (!source) return '';
   if (source.kind === 'entity_state') return `state:${source.entity_id}`;
@@ -179,6 +213,9 @@ function legacySource(hass: any, d: DevItem): ValueBadgeSource | null {
     const eid = d.entities.find((id) => id.startsWith('climate.')
       && Number.isFinite(Number(hass?.states?.[id]?.attributes?.current_temperature)));
     if (eid) return { kind: 'entity_attribute', entity_id: eid, attribute: 'current_temperature' };
+    // This explicit legacy flag never fell through to a thermometer/humidity
+    // heuristic. Preserve that contract when the climate attribute is absent.
+    return null;
   }
   if (d.icon === 'mdi:thermometer' || d.icon === 'mdi:air-filter') {
     const eid = d.entities.find((id) => isTempEntity(hass, id)
@@ -199,7 +236,23 @@ export function resolveDeviceValueBadge(
   if (options.effectiveHidden || options.display === 'static_icon') return null;
   const stored = d.marker?.value_badge;
   if (configured) {
-    if (!stored?.enabled || !stored.source) return null;
+    if (!stored?.enabled) return null;
+    // Delta validation prevents newly written enabled badges without a source,
+    // but old/future documents must remain renderable and lossless. An
+    // incomplete explicit badge is visible as an unavailable value instead of
+    // silently disappearing from the plan.
+    if (!stored.source) return {
+      configured: true,
+      enabled: true,
+      source: null,
+      sourceLabel: '',
+      text: '—',
+      fullText: hass?.localize?.('state.default.unavailable') || 'Unavailable',
+      position: stored.position || 'right',
+      availability: 'missing',
+      isLqi: false,
+      tone: 'default',
+    };
     return {
       configured: true, enabled: true, position: stored.position || 'right',
       ...resolveSource(hass, d, stored.source, options.markerStates),
@@ -247,6 +300,13 @@ function activeEntity(hass: any, entityId: string): boolean {
 export function valueBadgeCandidates(
   hass: any, d: DevItem, lightDevices: readonly DevItem[] = [d],
 ): ValueBadgeCandidate[] {
+  const signature = candidateSignature(d, lightDevices);
+  const cached = CANDIDATE_CACHE.get(d as object);
+  if (cached
+    && cached.states === (hass?.states || null)
+    && cached.entities === (hass?.entities || null)
+    && cached.devices === (hass?.devices || null)
+    && cached.signature === signature) return cached.result;
   const entityIds = new Set<string>(d.entities);
   for (const ref of d.controls || []) if (!ref.startsWith('marker:')) entityIds.add(ref);
   const candidates: ValueBadgeCandidate[] = [];
@@ -285,6 +345,13 @@ export function valueBadgeCandidates(
     if (lightKeys.has(ref as `marker:${string}`)) add({ kind: 'derived_marker_state', ref: ref as `marker:${string}` });
   }
   if (!d.virtual && lqiFor(hass, d.entities) != null) add({ kind: 'derived_lqi' });
+  CANDIDATE_CACHE.set(d as object, {
+    states: hass?.states || null,
+    entities: hass?.entities || null,
+    devices: hass?.devices || null,
+    signature,
+    result: candidates,
+  });
   return candidates;
 }
 

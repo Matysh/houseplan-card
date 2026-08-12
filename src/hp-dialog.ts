@@ -299,9 +299,16 @@ export class HpDialog extends LitElement {
       '[tabindex]:not([tabindex="-1"])',
     ].join(',');
     const out: HTMLElement[] = [];
+    const seen = new Set<Node>();
     const visit = (node: Node): void => {
+      if (seen.has(node)) return;
+      seen.add(node);
       if (node instanceof HTMLElement) {
         if (node.matches(selector)) out.push(node);
+        if (node instanceof HTMLSlotElement) {
+          for (const assigned of node.assignedNodes({ flatten: true })) visit(assigned);
+          return;
+        }
         if (node.shadowRoot) {
           for (const child of node.shadowRoot.childNodes) visit(child);
           return;
@@ -313,8 +320,19 @@ export class HpDialog extends LitElement {
     const portal = this.overlayPortal();
     if (portal) visit(portal);
     return out.filter((el) => {
-      const style = getComputedStyle(el);
-      return !el.hidden && style.display !== 'none' && style.visibility !== 'hidden';
+      let current: HTMLElement | null = el;
+      while (current) {
+        const style = getComputedStyle(current);
+        if (current.hidden || current.inert || current.getAttribute('aria-hidden') === 'true'
+            || style.display === 'none' || style.visibility === 'hidden') return false;
+        current = current.assignedSlot
+          || current.parentElement
+          || (current.getRootNode() instanceof ShadowRoot
+            ? (current.getRootNode() as ShadowRoot).host as HTMLElement
+            : null);
+        if (current === this) break;
+      }
+      return true;
     });
   }
 

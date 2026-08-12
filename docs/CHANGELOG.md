@@ -2,6 +2,33 @@
 
 ## Unreleased
 
+## v1.62.0-beta.8 — 2026-08-12
+
+- Reworked opening placement in the Plan editor. **Opening** now opens a compact
+  Window / Door / Gate sub-menu; choosing a type arms its 120 / 90 / 300 cm
+  preset and shows the complete future architectural symbol at 50% opacity on
+  top of physical walls. Thick-wall targeting, junction selection, click
+  without prior hover and repeated placement are now deterministic, while the
+  persisted opening model remains unchanged
+  ([#75](https://github.com/Matysh/houseplan-card/issues/75),
+  [#76](https://github.com/Matysh/houseplan-card/issues/76)).
+- Hardened the beta after the full review: editor close/navigation can no
+  longer be swallowed by an active transition or context tray; device taps,
+  passive light state and value badges now use the same resolved sources on
+  every surface; legacy temperature/humidity satellites are preserved; help,
+  paired import/export and split-wall geometry gained the missing guards and
+  regression coverage. Small fixes and internal improvements
+  ([#50](https://github.com/Matysh/houseplan-card/issues/50),
+  [#68](https://github.com/Matysh/houseplan-card/issues/68),
+  [#84](https://github.com/Matysh/houseplan-card/issues/84),
+  [#90](https://github.com/Matysh/houseplan-card/issues/90),
+  [#91](https://github.com/Matysh/houseplan-card/issues/91),
+  [#92](https://github.com/Matysh/houseplan-card/issues/92),
+  [#94](https://github.com/Matysh/houseplan-card/issues/94),
+  [#95](https://github.com/Matysh/houseplan-card/issues/95),
+  [#98](https://github.com/Matysh/houseplan-card/issues/98),
+  [#101](https://github.com/Matysh/houseplan-card/issues/101)).
+
 ## v1.62.0-beta.7 — 2026-08-12
 
 - Fixed the first opening of device settings: **Display**, **Room** and

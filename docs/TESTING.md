@@ -248,13 +248,18 @@ separately promised workflows:
       perpendicular dashed tick appears and the center magnet-snaps; there is
       no modifier that disables the magnet; badges and tick vanish on release
       [auto: smoke_opening_measure + unit openingShoulders]
-- [ ] The SAME rulers while PLACING a new opening (2026-08-03): with the
-      Opening tool, moving along a wall shows the dashed ghost together with a
-      badge on each shoulder of the would-be opening (default 90 cm, measured
-      on the snapped room's OWN edge), a perpendicular tick + magnet at that
-      edge's centre; the click places the opening at the
-      magnetised point and ghost, badges and tick all disappear at once
-      [auto: smoke_opening_measure, the «PLACING a new opening» section]
+- [ ] The SAME rulers while PLACING a new opening: pressing **Opening** only
+      opens the shared secondary tray; choosing Window / Door / Gate arms the
+      120 / 90 / 300 cm session preset. Moving over a physical wall shows the
+      complete architectural symbol at 50% opacity, above the masonry, together
+      with one badge on each shoulder and the existing centre tick/magnet. The
+      preview accepts pointer hits anywhere inside a thick wall body, is absent
+      on virtual spans and existing openings, and never carries an interactive
+      or persistent identity. A direct click without prior hover resolves the
+      same candidate authoritatively and opens its dialog. Save and Cancel keep
+      the selected preset for repeated placement; tool/mode/space exit and Esc
+      clear it [unit: opening-placement; auto: smoke_opening_preview +
+      smoke_opening_measure; golden: opening-placement-door-thick-wall-dark]
 
 ## Onboarding ★
 
@@ -406,7 +411,7 @@ separately promised workflows:
       without a target is refused; the confirm checkbox guards toggle AND run
       (our dialog, Esc/cancel = no call); automation.trigger / script.turn_on /
       scene.turn_on per domain; a deleted target toasts and calls nothing
-      [auto: smoke_tap_run + unit resolveTapAction/runServiceFor + backend
+      [auto: smoke_tap_run + unit resolveToggleIntent/runServiceFor + backend
       test_run_target_is_bounded_to_runnable_domains]
 - [ ] Universal Toggle state (#94): the option is visible for device, entity
       and virtual markers; the separate Open/close option is absent. The hint
@@ -549,6 +554,11 @@ separately promised workflows:
       store a plan url whose file is gone: `missing_plan`, and the revision does
       not move [auto: smoke_saved_plans + backend
       test_config_set_refuses_a_plan_that_no_longer_exists]
+- [ ] Portable import rechecks local content under its paired-write lock: a
+      plan or marker PDF deleted after preview fails with `missing_plan` or
+      `missing_content`, and neither store advances
+      [auto: backend test_apply_rechecks_plan_file_under_the_write_lock +
+      test_apply_rechecks_attachment_under_the_write_lock]
 - [ ] Uploads are bounded (v1.49.0, HP-1470-01): past the store quota an upload
       is refused with a clear error and the disk does not grow; the plan list
       returns the newest 60 with a total
@@ -919,10 +929,13 @@ separately promised workflows:
       restores the pointer-down snapshot; resizing a rotated box keeps the
       opposite corner fixed without a post-resize grid wobble
       [auto: smoke_decor; unit: decor-geometry.test.mjs]
-- [ ] Opening hover preview (v1.32.1): with the Opening tool, hovering near a
-      wall shows a dashed 90 cm ghost snapped onto the wall (with a center
-      dot); no ghost far from walls, over an existing opening (click = edit),
-      or in other tools [manual]
+- [ ] Opening placement preview: after a type is selected in the Opening
+      sub-menu, hover paints the complete window/door/gate symbol at 50%
+      opacity on the resolved physical wall interval. It uses the same visible
+      renderer as a committed opening, remains pointer/ARIA inert, and is
+      absent far from walls, on virtual spans, over an existing opening, before
+      a type is selected, or in other tools [auto: smoke_opening_preview;
+      golden: opening-placement-door-thick-wall-dark]
 - [ ] Split polyline + cursors + Esc (v1.32.0): Merge shows a pointer cursor,
       Split shows pointer until a room is picked then crosshair; the cut can be
       a polyline — start on a wall, intermediate clicks inside the room, finish

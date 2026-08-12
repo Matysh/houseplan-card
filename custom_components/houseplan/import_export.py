@@ -45,6 +45,7 @@ from .validation import (
     sanitize_filename,
     sanitize_marker_id,
     validate_marker_controls,
+    validate_marker_light_entities,
     validate_marker_value_badges,
     MarkerControlError,
 )
@@ -719,6 +720,7 @@ def build_space_merge(
         raise ImportFailure("invalid_config", str(err)) from err
     try:
         validate_marker_controls(merged_config, current_config)
+        validate_marker_light_entities(merged_config, current_config)
         validate_marker_value_badges(merged_config, current_config)
     except MarkerControlError as err:
         raise ImportFailure(err.code, str(err)) from err
@@ -891,6 +893,7 @@ def create_preview(
         details["dropped_marker_links"] = dropped_marker_links
         try:
             validate_marker_controls(incoming_config, validate_all=True)
+            validate_marker_light_entities(incoming_config, validate_all=True)
             validate_marker_value_badges(incoming_config, validate_all=True)
         except MarkerControlError as err:
             raise ImportFailure(err.code, str(err)) from err

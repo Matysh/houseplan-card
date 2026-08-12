@@ -319,6 +319,15 @@ interface CachedLightGraph<D extends LightSourceDevice> {
 
 const LIGHT_GRAPH_CACHE = new WeakMap<object, CachedLightGraph<any>>();
 
+interface CachedResolvedLightSources<D extends LightSourceDevice> {
+  graphFingerprint: string;
+  stateFingerprint: string;
+  registry: unknown;
+  sources: ResolvedLightSource<D>[];
+}
+
+const RESOLVED_LIGHT_CACHE = new WeakMap<object, CachedResolvedLightSources<any>>();
+
 function lightGraphFingerprint(devices: readonly LightSourceDevice[]): string {
   return devices.map((device) => [
     device.id || '', device.hidden === true ? 1 : 0, device.primary || '',
@@ -328,6 +337,20 @@ function lightGraphFingerprint(devices: readonly LightSourceDevice[]): string {
     device.marker?.light_entity || '', device.marker?.controls == null
       ? '<persisted-null>' : [...device.marker.controls].join(','),
   ].join('\u001f')).join('\u001e');
+}
+
+/** Cheap state projection used to reuse the plan-wide graph for every room in
+ * one frame. It deliberately includes persisted entity refs that are not own
+ * entities: a controller outside a room may drive a source inside it. */
+function lightStateFingerprint(hass: any, devices: readonly LightSourceDevice[]): string {
+  const ids = new Set<string>();
+  for (const device of devices) {
+    for (const id of device.entities) ids.add(id);
+    for (const ref of device.controls || device.marker?.controls || []) {
+      if (typeof ref === 'string' && !ref.startsWith('marker:')) ids.add(ref);
+    }
+  }
+  return [...ids].sort().map((id) => `${id}:${hass?.states?.[id]?.state ?? '<missing>'}`).join('|');
 }
 
 function lightGraphOf<D extends LightSourceDevice>(devices: readonly D[]): CachedLightGraph<D> {
@@ -429,6 +452,20 @@ export function resolvedLightSources<D extends LightSourceDevice>(
   devices: readonly D[],
   room?: LightSourceRoom | null,
 ): ResolvedLightSource<D>[] {
+  // Resolve the graph once per frame and scope by the source owner's precise
+  // room binding. This preserves cross-room controllers while avoiding a full
+  // O(devices + links) graph walk for every room consumer.
+  if (room != null) {
+    return resolvedLightSources(hass, devices).filter((source) =>
+      lightSourceBelongsToRoom(source.device, room));
+  }
+  const graphFingerprint = lightGraphFingerprint(devices);
+  const stateFingerprint = lightStateFingerprint(hass, devices);
+  const cached = RESOLVED_LIGHT_CACHE.get(devices as object) as CachedResolvedLightSources<D> | undefined;
+  if (cached?.graphFingerprint === graphFingerprint
+      && cached.stateFingerprint === stateFingerprint
+      && cached.registry === hass?.entities) return cached.sources;
+
   type Candidate = ResolvedLightSource<D>;
   const { visible, markerById, persistedByDevice } = lightGraphOf(devices);
   // Room consumers need sources owned by that room, not a full resolution of
@@ -463,13 +500,17 @@ export function resolvedLightSources<D extends LightSourceDevice>(
   const activeEntityTargetsByDevice = new Map<D, Set<string>>();
   for (const controller of devices) {
     const persisted = persistedByDevice.get(controller) || [];
-    const activeEntityTargets = new Set(controller.hidden ? []
-      : controller.controls === undefined ? persisted.filter(isControllable) : controller.controls);
+    // `hidden` is a visual setting. It must not sever a saved controller link
+    // and make a physically active passive lamp look off.
+    const activeEntityTargets = new Set(
+      controller.controls === undefined ? persisted.filter(isControllable) : controller.controls,
+    );
     activeEntityTargetsByDevice.set(controller, activeEntityTargets);
-    const ownDriver = controller.hidden ? null : forcedLightEntityOf(controller);
+    const ownDriver = forcedLightEntityOf(controller);
     for (const ref of persisted) {
       if (ref.startsWith('marker:')) {
         const targetId = ref.slice('marker:'.length);
+        if (targetId === String(controller.marker?.id || controller.id || '')) continue;
         const target = markerById.get(targetId);
         if (!target || !ownByDevice.has(target)) continue;
         const state = incoming.get(targetId) || { linked: false, drivers: new Set<string>() };
@@ -516,30 +557,11 @@ export function resolvedLightSources<D extends LightSourceDevice>(
     }
     for (const source of ownByDevice.get(controller) || []) add(source);
   }
-  return [...byKey.values()];
-}
-
-/** Real service targets for the controller's persisted entity/marker refs. */
-export function resolvedControlServiceEntities<D extends LightSourceDevice>(
-  hass: any, devices: readonly D[], controller: D,
-): string[] {
-  const markerTargets = new Map<string, string[]>(
-    resolvedLightSources(hass, devices)
-      .filter((source) => source.key.startsWith('marker:'))
-      .map((source) => [source.key, source.serviceEids] as [string, string[]]),
-  );
-  const persisted = persistedExternalControls(
-    controller.marker?.binding, controller.marker?.controls ?? controller.controls, controller.entities,
-  );
-  const active = new Set(
-    controller.controls === undefined ? persisted.filter(isControllable) : controller.controls,
-  );
-  const out: string[] = [];
-  for (const ref of persisted) {
-    if (ref.startsWith('marker:')) out.push(...(markerTargets.get(ref) || []));
-    else if (isControllable(ref) && active.has(ref)) out.push(ref);
-  }
-  return [...new Set(out)];
+  const sources = [...byKey.values()];
+  RESOLVED_LIGHT_CACHE.set(devices as object, {
+    graphFingerprint, stateFingerprint, registry: hass?.entities, sources,
+  });
+  return sources;
 }
 
 /** Select the single source whose state and position drive a marker's Glow. */

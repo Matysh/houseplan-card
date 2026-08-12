@@ -18,6 +18,7 @@ export class HpHelp extends LitElement {
     text: { type: String },
     ariaLabel: { type: String, attribute: 'aria-label' },
     _open: { state: true },
+    _forceFallback: { state: true },
   };
 
   static styles = css`
@@ -106,6 +107,13 @@ export class HpHelp extends LitElement {
       display: none;
     }
 
+    @starting-style {
+      .tooltip {
+        opacity: 0;
+        transform: translateY(3px);
+      }
+    }
+
     .sr-only {
       /* Keep the accessibility-only description outside every dialog scroll
          container's overflow geometry. Toggling the hidden attribute on the former
@@ -153,14 +161,6 @@ export class HpHelp extends LitElement {
 
   connectedCallback(): void {
     super.connectedCallback();
-    this.ownerDocument.addEventListener('pointerdown', this._outsidePointerDown, true);
-    const win = this.ownerDocument.defaultView;
-    win?.addEventListener('resize', this._queuePosition);
-    win?.addEventListener('orientationchange', this._queuePosition);
-    win?.visualViewport?.addEventListener('resize', this._queuePosition);
-    win?.visualViewport?.addEventListener('scroll', this._queuePosition);
-    this._scrollDialog = this._dialog();
-    this._scrollDialog?.addEventListener('scroll', this._dialogScroll, true);
     this.addEventListener('keydown', this._keyDown, true);
   }
 
@@ -169,14 +169,8 @@ export class HpHelp extends LitElement {
   }
 
   disconnectedCallback(): void {
-    this.ownerDocument.removeEventListener('pointerdown', this._outsidePointerDown, true);
     const win = this.ownerDocument.defaultView;
-    win?.removeEventListener('resize', this._queuePosition);
-    win?.removeEventListener('orientationchange', this._queuePosition);
-    win?.visualViewport?.removeEventListener('resize', this._queuePosition);
-    win?.visualViewport?.removeEventListener('scroll', this._queuePosition);
-    this._scrollDialog?.removeEventListener('scroll', this._dialogScroll, true);
-    this._scrollDialog = null;
+    this._unsubscribeOpenListeners();
     this.removeEventListener('keydown', this._keyDown, true);
     this._clearTimers();
     if (this._positionRaf) win?.cancelAnimationFrame(this._positionRaf);
@@ -290,8 +284,11 @@ export class HpHelp extends LitElement {
   };
 
   private _dialogScroll = (event: Event): void => {
+    if (this._floating.containsPath(event.composedPath())) return;
     const target = event.target;
-    if (this._open && target instanceof Node && (target === this._dialog() || (target as Element).contains?.(this))) {
+    const dialog = this._dialog();
+    if (this._open && target instanceof Node
+        && (target === dialog || (target instanceof Element && target.contains(this)))) {
       this._closeHelp(false, 'scroll');
     }
   };
@@ -305,11 +302,36 @@ export class HpHelp extends LitElement {
 
   private readonly _floating = new FloatingSurfaceController(this, 'help', this._keyDown);
 
+  private _subscribeOpenListeners(): void {
+    this.ownerDocument.addEventListener('pointerdown', this._outsidePointerDown, true);
+    this.ownerDocument.addEventListener('keydown', this._keyDown, true);
+    const win = this._window();
+    win?.addEventListener('resize', this._queuePosition);
+    win?.addEventListener('orientationchange', this._queuePosition);
+    win?.visualViewport?.addEventListener('resize', this._queuePosition);
+    win?.visualViewport?.addEventListener('scroll', this._queuePosition);
+    this._scrollDialog = this._dialog();
+    this._scrollDialog?.addEventListener('scroll', this._dialogScroll, true);
+  }
+
+  private _unsubscribeOpenListeners(): void {
+    this.ownerDocument.removeEventListener('pointerdown', this._outsidePointerDown, true);
+    this.ownerDocument.removeEventListener('keydown', this._keyDown, true);
+    const win = this._window();
+    win?.removeEventListener('resize', this._queuePosition);
+    win?.removeEventListener('orientationchange', this._queuePosition);
+    win?.visualViewport?.removeEventListener('resize', this._queuePosition);
+    win?.visualViewport?.removeEventListener('scroll', this._queuePosition);
+    this._scrollDialog?.removeEventListener('scroll', this._dialogScroll, true);
+    this._scrollDialog = null;
+  }
+
   private async _openHelp(): Promise<void> {
     if (this._open || !this._hasContent()) return;
     this._clearTimers();
     this._forceFallback = false;
     this._open = true;
+    this._subscribeOpenListeners();
     await this.updateComplete;
     if (!this._open) return;
     if (!this._usesPopover()) this._renderFallback();
@@ -341,6 +363,7 @@ export class HpHelp extends LitElement {
       }
     }
     this._open = false;
+    this._unsubscribeOpenListeners();
     this._floating.destroy();
     if (refocus) {
       this.updateComplete.then(() => this.renderRoot.querySelector<HTMLButtonElement>('.trigger')?.focus());
@@ -349,7 +372,7 @@ export class HpHelp extends LitElement {
 
   private _tooltipTemplate(usePopover: boolean): TemplateResult {
     return html`<div class="tooltip" data-side="bottom" popover=${usePopover ? 'manual' : nothing}
-      role="tooltip" aria-hidden="true"
+      role="tooltip" aria-hidden="true" tabindex="0"
       @pointerenter=${this._surfacePointerEnter} @pointerleave=${this._surfacePointerLeave}>${this.text}</div>`;
   }
 

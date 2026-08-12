@@ -106,7 +106,7 @@ const out = await page.evaluate(async () => {
 
   // ---- 1e) an OPENING is WALL-bound: on its wall, whole steps along it ---
   c._setMode('plan'); await c.updateComplete;
-  c._tool = 'opening';
+  c._activateOpeningPlacement('door');
   const spm = c._spaceModel(c._space);
   const wall = (() => {
     for (const r of spm.rooms) {

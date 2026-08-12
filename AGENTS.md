@@ -7,6 +7,8 @@ House Plan is one HACS package with two parts plus a demo harness:
 - **Demo harness** (`demo/`) — a self-contained Playwright page (`demo/srv/demo.html`) that renders the card against a fake `hass`, used for screenshots and the `smoke_*.mjs` end-to-end suite.
 
 Standard commands live in `package.json` scripts, `CONTRIBUTING.md`, and `docs/DEVELOPMENT.md`. Read `docs/ARCHITECTURE.md` and `docs/STATUS.md` before non-trivial changes.
+Issue and commit provenance is defined in repository-visible `PROCESS.md`;
+install its commit-message hook in every writable clone.
 
 ## Two-agent workflow
 

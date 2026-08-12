@@ -28,6 +28,7 @@ from .const import (
 from .auth import may_write
 from .import_export import (
     ImportFailure,
+    content_manifest,
     create_export,
     get_candidate,
     live_layout,
@@ -39,6 +40,7 @@ from .plans import (
     plan_basename, plan_refs, reserve_filename,
 )
 from .store import (
+    LAYOUT_STORE_CORE_KEYS,
     OPTIMIZE_BACKUP as _OPTIMIZE_BACKUP,
     OPTIMIZE_PENDING as _OPTIMIZE_PENDING,
     HouseplanData,
@@ -50,7 +52,8 @@ from .registry_snapshot import import_registry_snapshot
 from .validation import (
     CONFIG_SCHEMA, LAYOUT_SCHEMA, MAX_CONFIG_BYTES, MAX_PLAN_BYTES,
     PLAN_EXTENSIONS, POS_SCHEMA, MarkerControlError, sanitize_filename,
-    validate_marker_controls, validate_marker_value_badges, valid_space_id,
+    validate_marker_controls, validate_marker_light_entities,
+    validate_marker_value_badges, valid_space_id,
 )
 
 
@@ -167,7 +170,7 @@ def _layout_metadata(stored: dict[str, Any]) -> dict[str, Any]:
     """Return the exact non-layout portion of a layout-store document."""
     return {
         key: value for key, value in stored.items()
-        if key not in {"layout", "rev"}
+        if key not in LAYOUT_STORE_CORE_KEYS
     }
 
 
@@ -397,6 +400,14 @@ async def ws_import_apply(hass: HomeAssistant, connection, msg: dict[str, Any]) 
                     "missing_plan",
                     "Plan file no longer exists: " + ", ".join(sorted(missing)),
                 )
+            missing_attachments = _missing_internal_attachments(
+                Path(hass.config.path("")), target_config, config_data.get("config")
+            )
+            if missing_attachments:
+                raise ImportFailure(
+                    "missing_content",
+                    "Attachment no longer exists: " + ", ".join(sorted(missing_attachments)),
+                )
             new_config_rev = config_rev + 1
             new_layout_rev = layout_rev + 1
             backup = None
@@ -410,9 +421,12 @@ async def ws_import_apply(hass: HomeAssistant, connection, msg: dict[str, Any]) 
                     "after_layout_rev": new_layout_rev,
                 }
             original_metadata = _layout_metadata(layout_data)
+            replaced_metadata = {_OPTIMIZE_PENDING, _OPTIMIZE_BACKUP}
+            if kind == "full":
+                replaced_metadata.update({"repair_backup", "geom_pending"})
             final_metadata = {
                 key: value for key, value in original_metadata.items()
-                if key not in {_OPTIMIZE_PENDING, _OPTIMIZE_BACKUP}
+                if key not in replaced_metadata
             }
             if backup is not None:
                 final_metadata[_OPTIMIZE_BACKUP] = backup
@@ -621,6 +635,7 @@ async def ws_layout_update(hass: HomeAssistant, connection, msg: dict[str, Any])
         vol.Required("aspect"): vol.All(vol.Coerce(float), vol.Range(min=0.05, max=20)),
         vol.Optional("dry_run"): bool,
         vol.Optional("undo"): bool,
+        vol.Optional("expected_rev"): int,
     }
 )
 @websocket_api.async_response
@@ -653,6 +668,12 @@ async def ws_geometry_repair(hass: HomeAssistant, connection, msg: dict[str, Any
         data = await rt.store.async_load() or {}
         layout = data.get("layout") or {}
         current_rev = int(data.get("rev", 0))
+        if "expected_rev" in msg and msg["expected_rev"] != current_rev:
+            connection.send_error(
+                msg["id"], "conflict",
+                f"Layout was changed in another window (rev {current_rev} != {msg['expected_rev']})",
+            )
+            return
         if msg.get("undo"):
             backup = data.get("repair_backup")
             if not isinstance(backup, dict) or backup.get("space") != space_id:
@@ -1093,6 +1114,30 @@ def _missing_internal_plans(
     }
 
 
+def _missing_internal_attachments(
+    config_root: Path, config: dict[str, Any], previous: dict[str, Any] | None = None
+) -> set[str]:
+    """New local attachments that vanished between import preview and apply.
+
+    Existing broken references stay writable for the same reason as historical
+    plan URLs: refusing every unrelated write would prevent the user from
+    detaching or repairing them.
+    """
+    known = {
+        str(item["url"])
+        for item in content_manifest(previous or {}, config_root)
+        if item.get("kind") == "attachment" and item.get("storage") == "internal"
+    }
+    return {
+        str(item["url"])
+        for item in content_manifest(config, config_root)
+        if item.get("kind") == "attachment"
+        and item.get("storage") == "internal"
+        and item.get("exists_at_export") is False
+        and str(item["url"]) not in known
+    }
+
+
 @websocket_api.websocket_command(
     {
         vol.Required("type"): "houseplan/config/set",
@@ -1147,6 +1192,7 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         # write so an unrelated edit can still round-trip a legacy broken ref.
         try:
             validate_marker_controls(msg["config"], data.get("config"))
+            validate_marker_light_entities(msg["config"], data.get("config"))
             validate_marker_value_badges(msg["config"], data.get("config"))
         except MarkerControlError as err:
             connection.send_error(msg["id"], err.code, str(err))
@@ -1251,6 +1297,7 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
         # as config/set; otherwise a crafted client can persist a new cycle.
         try:
             validate_marker_controls(msg["config"], config_data.get("config"))
+            validate_marker_light_entities(msg["config"], config_data.get("config"))
             validate_marker_value_badges(msg["config"], config_data.get("config"))
         except MarkerControlError as err:
             connection.send_error(msg["id"], err.code, str(err))
@@ -1297,7 +1344,7 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
         await async_save_layout_state(
             rt, layout_data, msg["layout"], new_layout_rev,
             metadata={_OPTIMIZE_BACKUP: backup},
-            remove=(_OPTIMIZE_BACKUP, _OPTIMIZE_PENDING),
+            remove=(_OPTIMIZE_BACKUP, _OPTIMIZE_PENDING, "repair_backup", "geom_pending"),
         )
 
     hass.bus.async_fire("houseplan_config_updated", {"rev": new_config_rev})

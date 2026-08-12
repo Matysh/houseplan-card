@@ -112,6 +112,20 @@ test('authoritative active projection keeps live states without registry rows', 
   assert.equal(projected.entities['sun.sun'], undefined);
 });
 
+test('authoritative projection removes a live entity whose registry parent is missing', () => {
+  const entities = {
+    'switch.orphan': {
+      entity_id: 'switch.orphan', device_id: 'missing-device', disabled_by: null,
+    },
+  };
+  const states = { 'switch.orphan': { entity_id: 'switch.orphan', state: 'on' } };
+  const projected = activeRegistryHass(
+    { devices: {}, entities, states }, full({}, entities),
+  );
+  assert.equal(projected.entities['switch.orphan'], undefined);
+  assert.equal(projected.states['switch.orphan'], undefined);
+});
+
 test('limited active projection keeps a live entity when its parent row is unavailable', () => {
   const entities = {
     'switch.live': { entity_id: 'switch.live', device_id: 'not_exposed', disabled_by: null },

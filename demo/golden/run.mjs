@@ -135,6 +135,35 @@ async function captureWithoutSunRays(page, screenshotOptions) {
   }
 }
 
+/** Capture a control frame with only the transient opening symbol hidden.
+ * Comparing it with the actual frame proves the preview paints browser pixels;
+ * the smoke test separately locks its DOM order above the wall body. */
+async function captureWithoutOpeningPreview(page, screenshotOptions) {
+  const layerState = await page.evaluate(async () => {
+    const card = window.__goldenCard;
+    const parts = [...(card?.renderRoot?.querySelectorAll(
+      '.opening-preview, .opening-preview-dot',
+    ) || [])];
+    if (!parts.length) throw new Error('semantic golden opening preview is missing');
+    const previous = parts.map((part) => part.style.visibility);
+    for (const part of parts) part.style.visibility = 'hidden';
+    await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+    return { previous, count: parts.length };
+  });
+  try {
+    return { png: await page.screenshot(screenshotOptions), parts: layerState.count };
+  } finally {
+    await page.evaluate(async (previous) => {
+      const card = window.__goldenCard;
+      const parts = [...(card?.renderRoot?.querySelectorAll(
+        '.opening-preview, .opening-preview-dot',
+      ) || [])];
+      parts.forEach((part, index) => { part.style.visibility = previous[index] || ''; });
+      await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+    }, layerState.previous);
+  }
+}
+
 async function countChangedPixels(page, actual, control, spec) {
   return page.evaluate(async ({ actual64, control64, minChannelDelta }) => {
     const decode = async (base64) => {
@@ -143,7 +172,7 @@ async function countChangedPixels(page, actual, control, spec) {
     };
     const [actualImage, controlImage] = await Promise.all([decode(actual64), decode(control64)]);
     if (actualImage.width !== controlImage.width || actualImage.height !== controlImage.height)
-      throw new Error('semantic golden sun control has different dimensions');
+      throw new Error('semantic golden control frame has different dimensions');
     const canvas = document.createElement('canvas');
     const controlCanvas = document.createElement('canvas');
     canvas.width = controlCanvas.width = actualImage.width;
@@ -257,10 +286,19 @@ async function inspectTunnelContinuity(page, png, clip, spec) {
     const context = canvas.getContext('2d', { willReadFrequently: true });
     context.drawImage(image, 0, 0);
     const originX = clip?.x || 0, originY = clip?.y || 0;
-    const left = Math.max(0, Math.ceil(rect.left - originX) + spec.insetPx);
-    const top = Math.max(0, Math.ceil(rect.top - originY) + spec.insetPx);
-    const right = Math.min(image.width - 1, Math.floor(rect.right - originX) - spec.insetPx);
-    const bottom = Math.min(image.height - 1, Math.floor(rect.bottom - originY) - spec.insetPx);
+    // Screenshots may be captured at DPR > 1. DOMRect/clip are CSS pixels,
+    // image coordinates are device pixels, so derive the scale instead of
+    // silently sampling the wrong strip at high DPI.
+    const cssWidth = clip?.width || document.documentElement.clientWidth;
+    const cssHeight = clip?.height || document.documentElement.clientHeight;
+    const scaleX = image.width / Math.max(1, cssWidth);
+    const scaleY = image.height / Math.max(1, cssHeight);
+    const insetX = Math.max(1, Math.round(spec.insetPx * scaleX));
+    const insetY = Math.max(1, Math.round(spec.insetPx * scaleY));
+    const left = Math.max(0, Math.ceil((rect.left - originX) * scaleX) + insetX);
+    const top = Math.max(0, Math.ceil((rect.top - originY) * scaleY) + insetY);
+    const right = Math.min(image.width - 1, Math.floor((rect.right - originX) * scaleX) - insetX);
+    const bottom = Math.min(image.height - 1, Math.floor((rect.bottom - originY) * scaleY) - insetY);
     if (right - left < 3 || bottom - top < 3)
       throw new Error(`semantic golden tunnel is too small: ${left},${top},${right},${bottom}`);
     const pixels = context.getImageData(0, 0, image.width, image.height).data;
@@ -274,11 +312,18 @@ async function inspectTunnelContinuity(page, png, clip, spec) {
         Math.abs(a[0] - b[0]), Math.abs(a[1] - b[1]), Math.abs(a[2] - b[2]));
       samplePairs++;
     };
-    const centreX = Math.round((left + right) / 2);
-    const centreY = Math.round((top + bottom) / 2);
-    for (let x = left + 1; x <= right; x++) compare(rgb(x - 1, centreY), rgb(x, centreY));
-    for (let y = top + 1; y <= bottom; y++) compare(rgb(centreX, y - 1), rgb(centreX, y));
-    return { maxJump, samplePairs, bounds: [left, top, right, bottom] };
+    // Inspect every adjacent pair in the interior, not just two centre lines:
+    // a transverse seam near an end cap must fail the semantic guard too.
+    for (let y = top; y <= bottom; y++) {
+      for (let x = left + 1; x <= right; x++) compare(rgb(x - 1, y), rgb(x, y));
+    }
+    for (let x = left; x <= right; x++) {
+      for (let y = top + 1; y <= bottom; y++) compare(rgb(x, y - 1), rgb(x, y));
+    }
+    return {
+      maxJump, samplePairs, bounds: [left, top, right, bottom],
+      scale: [scaleX, scaleY],
+    };
   }, { png64: png.toString('base64'), clip, spec });
 }
 
@@ -289,11 +334,13 @@ if (existsSync(baselineManifestPath)) {
   catch { baselineManifest = { invalid: true }; }
 }
 
+const browserArgs = ['--force-color-profile=srgb', '--font-render-hinting=none', '--disable-lcd-text'];
+const browserContext = { locale: 'en-US', timezoneId: 'UTC', colorScheme: 'dark', reducedMotion: 'reduce' };
 const { page, browser } = await launch(
   { width: 1000, height: 900 },
   1,
-  ['--force-color-profile=srgb', '--font-render-hinting=none', '--disable-lcd-text'],
-  { locale: 'en-US', timezoneId: 'UTC', colorScheme: 'dark', reducedMotion: 'reduce' },
+  browserArgs,
+  browserContext,
 );
 const chromium = await browser.version();
 const results = [];
@@ -338,6 +385,21 @@ try {
           );
         }
       }
+      if (scenario.openingPreviewPixels) {
+        const control = await captureWithoutOpeningPreview(page, screenshotOptions);
+        const sample = await countChangedPixels(
+          page, actual, control.png, scenario.openingPreviewPixels,
+        );
+        result.openingPreviewParts = control.parts;
+        result.openingPreviewChangedPixels = sample.changed;
+        result.openingPreviewMaxChannelDelta = sample.maxDelta;
+        if (sample.changed < scenario.openingPreviewPixels.minPixels) {
+          throw new Error(
+            `semantic golden assertion failed: opening preview paints ${sample.changed} pixels, `
+            + `expected at least ${scenario.openingPreviewPixels.minPixels}`,
+          );
+        }
+      }
       if (scenario.warmPixelRegion) {
         const sample = await countWarmPixels(page, actual, scenario.warmPixelRegion);
         result.warmPixels = sample.warm;
@@ -367,12 +429,45 @@ try {
         result.tunnelMaxChannelJump = sample.maxJump;
         result.tunnelSamplePairs = sample.samplePairs;
         result.tunnelPixelBounds = sample.bounds;
+        result.tunnelImageScale = sample.scale;
         if (sample.maxJump > scenario.tunnelContinuity.maxChannelJump) {
           throw new Error(
             `semantic golden assertion failed: opening ${scenario.tunnelContinuity.openingId} `
             + `has a ${sample.maxJump}-channel local jump, expected at most `
             + `${scenario.tunnelContinuity.maxChannelJump}`,
           );
+        }
+        if (scenario.tunnelContinuity.dpr2) {
+          // A CSS-pixel capture cannot prove that half-device-pixel joins are
+          // clean. Run the same semantic assertion once at DPR 2 without
+          // adding a second reviewed baseline to the matrix.
+          const highDpi = await launch(
+            scenario.viewport, 2, browserArgs, browserContext,
+          );
+          try {
+            await assertFreshDemoBundle(highDpi.page, ROOT);
+            await prepareGoldenScenario(highDpi.page, scenario);
+            const highDpiClip = await goldenClip(highDpi.page, scenario.capture);
+            const highDpiPng = await highDpi.page.screenshot({
+              ...(highDpiClip ? { clip: highDpiClip } : {}),
+              animations: 'disabled', caret: 'hide', scale: 'device',
+            });
+            const highDpiSample = await inspectTunnelContinuity(
+              highDpi.page, highDpiPng, highDpiClip, scenario.tunnelContinuity,
+            );
+            result.tunnelDpr2MaxChannelJump = highDpiSample.maxJump;
+            result.tunnelDpr2SamplePairs = highDpiSample.samplePairs;
+            result.tunnelDpr2PixelBounds = highDpiSample.bounds;
+            if (highDpiSample.maxJump > scenario.tunnelContinuity.maxChannelJump) {
+              throw new Error(
+                `semantic golden assertion failed at DPR 2: opening ${scenario.tunnelContinuity.openingId} `
+                + `has a ${highDpiSample.maxJump}-channel local jump, expected at most `
+                + `${scenario.tunnelContinuity.maxChannelJump}`,
+              );
+            }
+          } finally {
+            await highDpi.browser.close();
+          }
         }
       }
       const baselinePath = resolve(baselineRoot, `${scenario.id}.png`);
