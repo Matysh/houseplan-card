@@ -157,6 +157,7 @@
   "display.icon_ripple": "Icon + state and activity",
   "display.static_icon": "Always static icon",
   "marker.display_hint": "Icon + state changes the plate for work, open, alarm and unavailable states. Icon + state and activity additionally shows a short pulse for events and a continuous pulse for ongoing work, movement or presence. Value + state replaces the icon with one unambiguous HA value. A static icon never reacts to device states.",
+  "marker.display_hint_badge": "The icon and dynamic plate show device state without the ordinary activity pulse. Red alarms remain visible.",
   "marker.display_hint_icon": "The icon and dynamic plate show device state without the ordinary activity pulse. Red alarms remain visible.",
   "marker.display_hint_icon_ripple": "The icon, dynamic plate and pulse show a short pulse for events and a continuous pulse for work, motion or presence. Red alarms have separate priority.",
   "marker.display_hint_value": "One unambiguous Home Assistant value replaces the icon while the plate continues to show state. Red alarms remain visible.",
