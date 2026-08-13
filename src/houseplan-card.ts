@@ -55,7 +55,8 @@ import {
 import {
   degradeWalls, rekeyWallsAfterMove,
   setWallThickness, setWallThicknessForRoom, cmToField, wallCmToUnits,
-  wallEdgeBodies, wallBodiesGeometry, wallBodiesUnionPath, paperRoomShapesWithWalls,
+  wallEdgeBodies, wallBodiesGeometry, wallBodiesPathFromGeometry, wallBodiesUnionPath,
+  paperRoomShapesWithWalls,
   innerContourForRoom, roomWallProfile, outsetContour,
   openingInnerFaceOffsetFromIndex, openingTunnelGeometriesFromIndex,
   openingWallIndex as buildOpeningWallIndex, applyWallThicknessToNewRoom,
@@ -4418,7 +4419,15 @@ class HouseplanCard extends LitElement {
   }
 
   /** The rectangle "fit to screen" fits — always the content (docs/CANVAS.md). */
-  private _isoSource(): { key: string; build: () => any } {
+  private _wallUnionKey(): string {
+    return `${this._space}|${this._cfgEpoch}|${this._spaceModel().rooms.length}`;
+  }
+
+  private _isoSource(): {
+    key: string;
+    wallKey: string;
+    build: () => { geom: any; depthUnits: number };
+  } {
     const space = this._spaceModel();
     const walls = this._spaceWalls;
     const openCuts = this._openPairs().flatMap((pair) => pair.segs);
@@ -4436,6 +4445,7 @@ class HouseplanCard extends LitElement {
     })}`;
     return {
       key,
+      wallKey: this._wallUnionKey(),
       build: () => {
         const extras = physicalBodies(space, this._cellCm, this._gridPitch);
         const united = walls.length || extras.length
@@ -4443,9 +4453,9 @@ class HouseplanCard extends LitElement {
               space.rooms, walls, openCuts, openings,
               this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, extras,
             )
-          : { geom: [] };
+          : { geom: [], depthUnits: 0 };
         if (!united) throw new Error('wall boolean geometry failed');
-        return united.geom;
+        return united;
       },
     };
   }
@@ -4461,7 +4471,15 @@ class HouseplanCard extends LitElement {
     if (cached) return { key: source.key, ...cached };
     const flat = this._frameOf().rect;
     const frame = projectedFrame({ rect: flat, wallHeight: ISO_WALL_HEIGHT });
-    const geometry = buildIsoWallGeometry(source.build());
+    const united = source.build();
+    const geometry = buildIsoWallGeometry(united.geom);
+    // Flat and iso are two projections of the same canonical union. Seed the
+    // existing one-entry flat cache while that union is already in hand so a
+    // Flat -> Volumetric toggle does not repeat the polygon boolean pass.
+    this._wallUnionCache = {
+      key: source.wallKey,
+      value: wallBodiesPathFromGeometry(united),
+    };
     const value = { geometry, frame };
     lruWrite(this._isoGeometryCache, source.key, value, 8);
     return { key: source.key, ...value };
@@ -10018,7 +10036,7 @@ class HouseplanCard extends LitElement {
       angle: Number(o.angle) || 0,
       length: (Number(o.length) > 0 ? Number(o.length) : 0.9) * NORM_W,
     }));
-    const unionKey = `${this._space}|${this._cfgEpoch}|${this._spaceModel().rooms.length}`;
+    const unionKey = this._wallUnionKey();
     if (!this._wallUnionCache || this._wallUnionCache.key !== unionKey) {
       this._wallUnionCache = {
         key: unionKey,

@@ -1226,6 +1226,20 @@ function polyclipToPathD(geom: any): string {
 }
 
 /**
+ * Project an already computed canonical wall union into the flat SVG path.
+ * Isometric rendering and the ordinary flat wall layer share the same boolean
+ * result; keeping this conversion separate prevents a projection toggle from
+ * repeating the expensive polygon union merely to obtain its path string.
+ */
+export function wallBodiesPathFromGeometry(
+  united: { geom: any; depthUnits: number } | null,
+): { d: string; depthUnits: number; fillRule: 'evenodd' } | null {
+  if (!united) return null;
+  const d = polyclipToPathD(united.geom);
+  return d ? { d, depthUnits: united.depthUnits, fillRule: 'evenodd' } : null;
+}
+
+/**
  * Mitre patches at an endpoint where a virtual stretch meets real walls that
  * belong to different room contours.
  *
@@ -1462,8 +1476,8 @@ export function wallBodiesUnionPath(
   const united = wallBodiesGeometry(
     rooms, walls, openCuts, openings, pitch, cellCm, gridPitch, coordScale, extraBodies,
   );
-  const d = united ? polyclipToPathD(united.geom) : '';
-  if (united && d) return { d, depthUnits: united.depthUnits, fillRule: 'evenodd' };
+  const projected = wallBodiesPathFromGeometry(united);
+  if (projected) return projected;
   if (united) return null; // successful empty result: do not resurrect raw rings
   // fall back to evenodd rings concatenated
   const rings = wallBodyRings(rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale);

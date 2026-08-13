@@ -6,7 +6,8 @@ import {
   setWallThickness, setWallThicknessForRoom, applyWallThicknessToNewRoom,
   drawWallPreviewD, DRAW_WALL_DEFAULT_CM, clampWallCm, cmToField, fieldToCm,
   wallCmToUnits, insetContour, inwardNormal, edgeKinds, wallEdgeBodies,
-  wallBodyRings, wallBodiesUnionPath, innerContourForRoom,
+  wallBodyRings, wallBodiesGeometry, wallBodiesPathFromGeometry, wallBodiesUnionPath,
+  innerContourForRoom,
   paperRoomShapesWithWalls, WALL_MIN_CM, WALL_MAX_CM, MITRE_LIMIT,
   atomicPolyForRoom, insetOffsetsForRoom, wallIntervals, materializeWallIntervals,
   normalizeWallIntervals,
@@ -667,6 +668,19 @@ test('wallBodiesUnionPath: single fully-thick room keeps a floor hole', () => {
   const united = wallBodiesUnionPath([room], walls, [], [], 0.01, cellCm, 4.166666666666667, 1000);
   assert.ok(united);
   assert.ok((united.d.match(/M/g) || []).length >= 2, united.d);
+});
+
+test('wallBodiesPathFromGeometry reuses the canonical union without changing its flat path', () => {
+  const room = { id: 'shared', poly: [[100, 100], [300, 100], [300, 300], [100, 300]] };
+  const walls = applyWallThicknessToNewRoom([], [room], 'shared', 15, 0.01, [], 1000);
+  const geometry = wallBodiesGeometry(
+    [room], walls, [], [], 0.01, cellCm, GRID_PITCH, 1000,
+  );
+  const reused = wallBodiesPathFromGeometry(geometry);
+  const direct = wallBodiesUnionPath(
+    [room], walls, [], [], 0.01, cellCm, GRID_PITCH, 1000,
+  );
+  assert.deepEqual(reused, direct);
 });
 
 test('wallBodiesUnionPath: a parent floor never erases a nested room wall', () => {
