@@ -102,6 +102,7 @@ jobs:
       # в issue/<NN>-slug. Если ветка запушена — переключаемся на неё, иначе
       # ревьюер прочтёт dev и не найдёт того, что должен оценивать.
       - name: Перейти на ветку задачи
+        id: branch
         env:
           NUM: ${{ github.event.issue.number }}
         run: |
@@ -110,6 +111,7 @@ jobs:
           if [ -n "$branch" ]; then
             git checkout -q "origin/$branch"
             echo "материал ревью: ветка $branch, $(git rev-parse --short HEAD)"
+            echo "name=$branch" >> "$GITHUB_OUTPUT"
           else
             echo "::warning::ветка issue/${NUM}-* не найдена на origin — ревью пойдёт по dev"
             echo "МАТЕРИАЛ НЕ ЗАПУШЕН" >> "$GITHUB_STEP_SUMMARY"
@@ -180,18 +182,52 @@ jobs:
             S1-new. «Оставили в тексте ревью» закрытием не считается и прямо
             запрещено §12.
 
-            Оставь в issue комментарий с разбором: находки с воспроизведением,
-            что проверено и корректно, чего не проверял. Комментарий и есть
-            документ ревью для прогонов в CI — отдельный файл не создаётся.
-            Первой строкой — вердикт в формате §7.2:
+            Напиши полный документ ревью в файл
+            docs/reviews/<SPEC|CODE>-REVIEW-${{ github.event.issue.number }}-r${{ needs.guard.outputs.cycle }}.md
+            (SPEC для этапа spec, CODE для code): скоуп, как проверялось,
+            находки с воспроизведением, что проверено и корректно, чего не
+            проверял. Каталог docs/reviews/ создай, если его нет. Больше не
+            пиши ничего: любой файл вне docs/reviews/ опубликован не будет.
+
+            Затем оставь в issue краткий комментарий: вердикт, ключевые находки
+            и ссылка на документ. Первой строкой — вердикт в формате §7.2:
             `Вердикт: зелёный/жёлтый/красный · цикл r${{ needs.guard.outputs.cycle }}/${{ needs.guard.outputs.limit }} · High: N · Medium: N → #…`
 
             Затем верни JSON по схеме. Это последнее действие и оно обязательно:
             без него метка не переставится и конвейер встанет.
           claude_args: |
             --max-turns 150
-            --allowedTools Read,Grep,Glob,Bash,mcp__github__add_issue_comment,mcp__github__issue_write,mcp__github__issue_read
+            --allowedTools Read,Write,Grep,Glob,Bash,mcp__github__add_issue_comment,mcp__github__issue_write,mcp__github__issue_read
             --json-schema '{"type":"object","properties":{"verdict":{"type":"string","enum":["green","yellow","red"]},"high":{"type":"integer"},"medium":{"type":"integer"},"summary":{"type":"string"}},"required":["verdict","high","medium","summary"]}'
+
+      # Ревьюер пишет только в docs/reviews/. Что именно попадёт в коммит,
+      # решает этот шаг, а не модель: всё остальное откатывается.
+      - name: Опубликовать документ ревью
+        env:
+          TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          BRANCH: ${{ steps.branch.outputs.name }}
+          NUM: ${{ github.event.issue.number }}
+        run: |
+          if [ -z "$BRANCH" ]; then
+            echo "ветки задачи нет — документ некуда класть"; exit 0
+          fi
+          git checkout -- . 2>/dev/null || true
+          git clean -fd -e docs/reviews >/dev/null 2>&1 || true
+          git add docs/reviews 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "документ ревью не создан"; exit 0
+          fi
+          git -c user.name="claude[bot]" \
+              -c user.email="209825114+claude[bot]@users.noreply.github.com" \
+              commit -q -F - <<EOF
+          docs: review document for #$NUM
+
+          Issue: #$NUM
+          User-Visible: no
+          EOF
+          git push -q "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" \
+            "HEAD:$BRANCH"
+          echo "документ опубликован в $BRANCH"
 
       - name: Переставить метку
         env:
