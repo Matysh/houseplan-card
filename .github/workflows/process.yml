@@ -1,0 +1,206 @@
+name: Process
+
+# Событийный конвейер процесса (PROCESS.md). Смена статусной метки — это
+# сообщение: она порождает событие, событие запускает следующий шаг.
+#
+# S4-spec-review -> ревью ТЗ    -> S5-ready | S3-spec
+# S7-code-review -> код-ревью   -> S8-merged | S6-in-progress
+#
+# Две вещи, без которых конвейер молча не работает:
+#
+# 1. Метки переставляются токеном HP_PROCESS_TOKEN, а не GITHUB_TOKEN. GitHub
+#    намеренно не запускает workflow от событий, вызванных GITHUB_TOKEN, чтобы
+#    не было циклов — цепочка оборвалась бы после первого шага.
+# 2. Этот файл обязан лежать в ветке по умолчанию (main). Для события `issues`
+#    GitHub берёт workflow только оттуда, независимо от того, что в dev.
+
+on:
+  issues:
+    types: [labeled]
+
+concurrency:
+  # Два события по одному issue не должны запускать два прогона.
+  group: process-issue-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    outputs:
+      stage: ${{ steps.decide.outputs.stage }}
+      cycle: ${{ steps.decide.outputs.cycle }}
+      limit: ${{ steps.decide.outputs.limit }}
+    steps:
+      - id: decide
+        env:
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          LABEL: ${{ github.event.label.name }}
+          AUTHOR: ${{ github.event.issue.user.login }}
+          BLOCKED: ${{ contains(github.event.issue.labels.*.name, 'blocked') }}
+          EXHAUSTED: ${{ contains(github.event.issue.labels.*.name, 'review-4') }}
+          SMALL: ${{ contains(github.event.issue.labels.*.name, 'small') }}
+          NUM: ${{ github.event.issue.number }}
+        run: |
+          stage=""
+          # Лимит циклов: 4 обычный, 2 на лёгком треке (PROCESS.md §4).
+          limit=4; [ "$SMALL" = "true" ] && limit=2
+
+          # Счётчик — по числу уже опубликованных вердиктов в issue.
+          done_cycles=$(gh issue view "$NUM" --repo "${{ github.repository }}" \
+            --json comments -q '[.comments[] | select(.body | test("Вердикт:"))] | length')
+
+          # В процесс идут только issue, созданные владельцем: репозиторий
+          # публичный, чужие отчёты бывают невалидны и статусов не несут.
+          if [ "$AUTHOR" != "Matysh" ]; then
+            echo "issue от $AUTHOR, не от владельца — пропуск"
+          elif [ "$BLOCKED" = "true" ]; then
+            echo "стоит blocked — конвейер не запускается"
+          elif [ "$EXHAUSTED" = "true" ]; then
+            echo "стоит review-4 — решение за владельцем"
+          elif [ "$done_cycles" -ge "$limit" ]; then
+            echo "циклов пройдено $done_cycles из $limit — лимит исчерпан"
+            gh issue edit "$NUM" --repo "${{ github.repository }}" --add-label review-4
+            gh issue comment "$NUM" --repo "${{ github.repository }}" --body \
+              "Лимит циклов ревью исчерпан ($done_cycles из $limit). Пятого захода нет: решение владельца — разделить задачу, отклонить или арбитраж (PROCESS.md §4)."
+          else
+            case "$LABEL" in
+              S4-spec-review) stage="spec" ;;
+              S7-code-review) stage="code" ;;
+              *) echo "метка $LABEL конвейер не запускает" ;;
+            esac
+          fi
+          echo "stage=$stage" >> "$GITHUB_OUTPUT"
+          echo "cycle=$((done_cycles + 1))" >> "$GITHUB_OUTPUT"
+          echo "limit=$limit" >> "$GITHUB_OUTPUT"
+
+  review:
+    needs: guard
+    if: needs.guard.outputs.stage != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: dev
+
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+
+      - name: Review
+        id: review
+        uses: anthropics/claude-code-action@v1
+        with:
+          # Подписка, а не отдельный счёт API: токен выпускается через
+          # `claude setup-token` (Pro/Max). Действуют лимиты подписки.
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            Ты ревьюер проекта House Plan. Язык ответа — русский.
+
+            Issue: #${{ github.event.issue.number }}
+            Репозиторий: ${{ github.repository }}
+            Этап: ${{ needs.guard.outputs.stage }}
+              spec — ревью ТЗ (PROCESS.md §2.4)
+              code — код-ревью (PROCESS.md §2.7)
+
+            Прочитай в этом порядке, прежде чем судить:
+              1. docs/SCOPE.md — зачем продукт существует и для кого. Он
+                 ограничитель: «features are built, improved and accepted only
+                 if they serve a job listed here». Первый вопрос к задаче —
+                 какую строку Core user jobs она закрывает.
+              2. AGENTS.md и PROCESS.md — процесс, классы изменений, трейлеры,
+                 лимит циклов, формат вердикта.
+              3. Тело issue #${{ github.event.issue.number }} и все комментарии.
+              4. Если меняется видимое поведение — docs/USER-GUIDE.ru.md:
+                 терминология интерфейса берётся оттуда, а не изобретается.
+              5. Канонический документ затронутой подсистемы: docs/SUN.md,
+                 LIGHT.md, CANVAS.md, WALL-THICKNESS.md, UX-MODES.md,
+                 CONFIG-COMPATIBILITY.md, TOUCH-SUPPORT.md.
+
+            Для этапа spec: если issue помечен small, ТЗ живёт в теле issue и
+            файла в docs/specs/ быть не должно. Иначе ТЗ — docs/specs/<NN>-*.md.
+            Проверь обязательные разделы §7.1, однозначность каждого AC и
+            указание способа доказательства. Отдельно проверь, что автор не
+            выдал догадку за решение: утверждение о поведении, которого нет ни
+            в одном документе и которое не помечено как предположение, —
+            замечание. Не бывает сложной задачи без единого открытого вопроса.
+
+            Для этапа code: материал — diff по issue. Ручного тестирования в
+            цикле нет, поэтому именно ты отвечаешь на вопрос «оно вообще
+            работает». По каждому AC: либо он доказан автотестом и ты убедился,
+            что тест умеет падать, либо разобран по коду с явной записью
+            «проверено чтением, не исполнением». «Verified» без названной
+            команды и её результата доказательством не является. Проверь
+            трейлеры Issue и User-Visible, при User-Visible: yes — правки в оба
+            changelog в том же коммите.
+
+            Ты НЕ правишь ни ТЗ, ни продуктовый код. Только оцениваешь.
+
+            Серьёзность: High блокирует; Medium обязан стать отдельным issue;
+            Low либо правится, либо снимается с записью. Жёлтый вердикт
+            допустим при полностью выполненных AC, если изменение не решает
+            заявленный сценарий или ухудшает смежный. Продуктовое рассуждение
+            расширяет вопросы, но не отменяет AC и не даёт права менять скоуп.
+
+            Каждую Medium-находку заведи отдельным issue со ссылкой на
+            #${{ github.event.issue.number }} и метками: тип, приоритет,
+            S1-new. «Оставили в тексте ревью» закрытием не считается и прямо
+            запрещено §12.
+
+            Оставь в issue комментарий с разбором: находки с воспроизведением,
+            что проверено и корректно, чего не проверял. Первой строкой —
+            вердикт в формате §7.2:
+            `Вердикт: зелёный/жёлтый/красный · цикл r${{ needs.guard.outputs.cycle }}/${{ needs.guard.outputs.limit }} · High: N · Medium: N → #…`
+
+            Затем верни JSON по схеме.
+          claude_args: |
+            --max-turns 40
+            --allowedTools Read,Grep,Glob,Bash,mcp__github__add_issue_comment,mcp__github__issue_write,mcp__github__issue_read
+            --json-schema '{"type":"object","properties":{"verdict":{"type":"string","enum":["green","yellow","red"]},"high":{"type":"integer"},"medium":{"type":"integer"},"summary":{"type":"string"}},"required":["verdict","high","medium","summary"]}'
+
+      - name: Переставить метку
+        env:
+          # Именно PAT: с GITHUB_TOKEN следующий шаг конвейера не запустится.
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          OUT: ${{ steps.review.outputs.structured_output }}
+          STAGE: ${{ needs.guard.outputs.stage }}
+          NUM: ${{ github.event.issue.number }}
+        run: |
+          verdict=$(echo "$OUT" | jq -r '.verdict')
+          high=$(echo "$OUT" | jq -r '.high')
+          echo "вердикт: $verdict, High: $high"
+
+          # Вперёд двигает ТОЛЬКО зелёный.
+          #
+          # Жёлтый возвращает автору, и это не перестраховка. На первом живом
+          # прогоне (#111) жёлтый означал, что AC описывает неверное изменение
+          # контракта: реализовать такое ТЗ — сделать ошибку по инструкции.
+          # Разница между жёлтым и красным остаётся содержательной для человека
+          # и считается циклом, но ни один из них не пропускает дальше.
+          if [ "$verdict" = "green" ] && [ "$high" -eq 0 ]; then
+            case "$STAGE" in
+              spec) from=S4-spec-review; to=S5-ready ;;
+              code) from=S7-code-review; to=S8-merged ;;
+            esac
+          else
+            case "$STAGE" in
+              spec) from=S4-spec-review; to=S3-spec ;;
+              code) from=S7-code-review; to=S6-in-progress ;;
+            esac
+          fi
+
+          gh issue edit "$NUM" --repo "${{ github.repository }}" \
+            --add-label "$to" --remove-label "$from"
+          echo "$from -> $to"
+
+      - name: Позвать владельца, если ревью упало
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+        run: |
+          gh issue comment "${{ github.event.issue.number }}" --repo "${{ github.repository }}" \
+            --body "Автоматическое ревью не отработало: [прогон](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}). Статусная метка не менялась, задача осталась на месте."
