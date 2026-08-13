@@ -1,7 +1,8 @@
 # Issue #104 — HA-привязка проёма после удаления маркера
 
 - **Issue:** https://github.com/Matysh/houseplan-card/issues/104
-- **Статус:** первая редакция ТЗ; требуется независимое ревью
+- **Статус:** правки после ревью r1; `S3-spec + blocked`, ожидаются ответы
+  владельца на Q1–Q3
 - **Тип / приоритет:** bug / P2
 - **Оценка:** пользовательская ценность 8/10; сложность и риск 5/10
 - **Область:** настройки проёма в Plan, состояние проёма и замка в View/киоске,
@@ -51,9 +52,37 @@ View или киоск, когда House Plan показывает фактич�
 описывает отсутствие самостоятельного маркера, ошибочно выключает явно
 сохранённые `opening.contact` и `opening.lock`.
 
-При этом immutable render snapshot уже захватывает `contact` и `lock` каждого
-проёма. Дефект находится в политике доступности, а не в формате конфигурации или
-доставке HA state в кадр.
+В full card метод `_captureRenderDeviceSnapshot()` явно добавляет `contact` и
+`lock` каждого проёма в общий `entityIds`, после чего generic
+`createRenderDeviceSnapshot()` замораживает запрошенную HA-проекцию. Сам модуль
+`render-device-snapshot.ts` ничего не знает о проёмах. Поэтому основной дефект
+на registry-backed пути находится в политике доступности, а не в формате
+конфигурации или списке entity IDs, переданном snapshot builder.
+
+### 2.1. Конфликт с действующим письменным контрактом
+
+`docs/FILTERING.md` сейчас объединяет три разных вида сохранённых ссылок одним
+правилом: ссылки в проёмах, live text и `marker.controls[]` сохраняются, но
+становятся неактивными после удаления соответствующего marker; повторное
+добавление binding оживляет их.
+
+#104 намеренно отменяет эту норму как минимум для проёмов. Это не простое
+исправление расхождения кода и документа: это частичная замена записанного
+продуктового решения. Новая формулировка должна описать все три случая, даже
+если меняется только один.
+
+**Предлагаемая формулировка по умолчанию, ожидает ответа владельца Q1:**
+
+- exact `opening.contact` и `opening.lock` живут по HA binding status и не
+  выключаются tombstone самостоятельного marker;
+- live text и `marker.controls[]` по-прежнему сохраняются, но не действуют,
+  пока tombstone существует; повторное добавление binding оживляет их;
+- HA-disabled и authoritative orphaned entity не действует ни в одном из трёх
+  случаев; конфигурация при этом не стирается.
+
+Если владелец распространит новый принцип на live text или `controls[]`, эти
+поверхности, их runtime и доказательства должны быть добавлены в scope и AC до
+следующего ревью; скрыто расширять реализацию запрещено.
 
 ## 3. Скоуп
 
@@ -73,8 +102,10 @@ View или киоск, когда House Plan показывает фактич�
 
 - восстановление, повторное создание или перемещение удалённого маркера;
 - изменение `removed` tombstone, списка **Добавить** или повторного добавления;
-- ослабление фильтрации LQI, температуры, влажности, света, Glow, live text,
-  controls, vacuum и других plan-level contributions;
+- ослабление фильтрации LQI, температуры, влажности, света, Glow, vacuum и
+  других plan-level contributions;
+- по предлагаемому ответу Q1 — изменение tombstone-семантики live text и
+  `marker.controls[]`; окончательный не-скоуп фиксируется ответом владельца;
 - новый picker, поиск, группировка, предупреждения или подписи в диалоге;
 - новые состояния, цвета, иконки, анимации или геометрия проёмов;
 - изменение правил lock/unlock, confirmation или разрешение действия по тапу
@@ -107,7 +138,7 @@ Entity- или device-tombstone продолжает их выключать.
 | Активная entity, удалён `entity:*` marker | да | работает |
 | Активная entity, удалён parent `device:*` marker | да | работает |
 | Активная registry entity со state `unavailable`/`unknown` | да | сохраняется; показывается существующее неизвестное состояние |
-| Точный live YAML entity без registry row | да | работает по действующему HA binding contract |
+| Точный live YAML entity без registry row | да | picker уже принимает; render-поведение — открытое решение Q3 |
 | Entity или parent device имеет `disabled_by` | нет | конфиг не стирается, runtime не действует |
 | Authoritative registry подтверждает missing entity/parent | нет | конфиг не стирается, runtime не действует |
 | Limited registry, есть точный live state | да | работает как подтверждённая active ссылка |
@@ -124,9 +155,29 @@ Entity- или device-tombstone продолжает их выключать.
 видимого кадра. Эта projection уже исключает HA-disabled и authoritative
 orphaned entries, но не применяет marker tombstone к явным ссылкам проёма.
 
-Render-проверка должна требовать frozen state точной entity. Registry-less live
-entity допустима, поскольку `activeRegistryHass()` уже считает точный live state
-положительным свидетельством и сохраняет его в projection.
+Сегодня `_renderEntityAvailable()` требует одновременно registry entity row и
+frozen state. `activeRegistryHass()` сохраняет state registry-less live entity,
+но не синтезирует для неё строку в `entities`; поэтому picker такую entity уже
+принимает, а render — нет. Это отдельное текущее расхождение, а не сохранённое
+поведение #104.
+
+**Предлагаемый ответ Q3:** не расширять #104. Новая opening render-проверка
+игнорирует marker tombstone, но сохраняет требование frozen active registry row
+и state. Исправление registry-less render создаётся отдельным issue. Если
+владелец включит его в #104, render-проверка будет state-positive, а scope, AC,
+unit и changelog получат отдельную строку об этом изменении.
+
+### 5.4. Открытые решения владельца
+
+Единый комментарий с вопросами и defaults:
+https://github.com/Matysh/houseplan-card/issues/104#issuecomment-5278365217
+
+- **Q1:** opening-only или также live text / `controls[]`;
+- **Q2:** требуется ли правка lock invariant CR-1 в `docs/SCOPE.md`;
+- **Q3:** включать ли registry-less render в #104.
+
+До ответов таблица и формулировки выше являются предложением автора, а не
+принятым продуктовым решением.
 
 ## 6. Контракт поведения
 
@@ -157,6 +208,9 @@ entity допустима, поскольку `activeRegistryHass()` уже сч
 ### 6.3. View и киоск
 
 - contact управляет существующей анимацией и active tone только своего проёма;
+- то же значение amount участвует в существующем hit-test проёма через
+  `_openingAt()`; смена availability не должна разъединить видимую и кликабельную
+  геометрию;
 - `unavailable`, `unknown` и отсутствие frozen state используют существующий
   unknown/default визуальный контракт, не ложное открытие/закрытие;
 - lock показывает существующий locked/unlocked/unknown badge и строку в
@@ -183,7 +237,8 @@ controls, Glow или других plan-level contributions. Исключени�
    `resolveHaBindingStatus()` и не принимает marker tombstones.
 2. В full card разделить:
    - live availability для picker и service action;
-   - render availability для frozen active projection.
+   - render availability для frozen active projection; требование registry row
+     зависит от ответа Q3, по умолчанию сохраняется.
 3. Перевести на новую политику только:
    - `_contactCandidates()`;
    - `_lockCandidates()`;
@@ -240,14 +295,15 @@ labels, сортировка, keyboard/native select semantics, dialog focus и 
   присутствуют в picker после удаления их exact `entity:*` marker.
 - **AC2 (`unit` + `smoke`):** те же entity присутствуют и работают после
   удаления `device:*` marker их parent device.
-- **AC3 (`smoke`):** contact/lock, выбранные до удаления маркера, продолжают
-  управлять анимацией, badge и карточкой проёма; выбранные после удаления дают
-  тот же результат.
+- **AC3 (`unit` + `smoke`):** pure policy даёт одинаковый результат независимо
+  от того, была exact opening reference сохранена до или после marker
+  tombstone; browser smoke подтверждает анимацию, badge и карточку проёма.
 - **AC4 (`unit` + `smoke`):** выбор contact/lock не снимает tombstone, не создаёт
   marker/layout и не возвращает entity в LQI, климат, свет, Glow, live text или
   controls.
-- **AC5 (`smoke`):** повторное добавление marker не дублирует и не изменяет
-  `opening.contact` / `opening.lock`.
+- **AC5 (`unit` + `smoke`):** операции удаления/повторного добавления marker в
+  pure config fixture не дублируют и не изменяют `opening.contact` /
+  `opening.lock`; browser smoke подтверждает интеграцию диалога.
 - **AC6 (`unit` + `smoke`):** одна entity может обслуживать несколько проёмов;
   изменение/очистка одного поля не меняет остальные.
 - **AC7 (`unit` + `smoke`):** entity-disabled, parent-device-disabled,
@@ -256,11 +312,16 @@ labels, сортировка, keyboard/native select semantics, dialog focus и 
 - **AC8 (`unit` + `smoke`):** active registry entity со state `unavailable` или
   `unknown` остаётся выбранной и показывает существующий unknown state без
   ложного движения и service call.
-- **AC9 (`unit` + `smoke`):** live YAML entity и limited-registry entity с
-  точным live state доступны; `unverified` и cached-disabled — недоступны.
-- **AC10 (`smoke` + ревью кода):** lock/unlock возможен только из карточки
-  проёма; unlock требует confirmation; stale/disabled/orphaned lock не вызывает
-  service.
+- **AC9 (`unit` + `smoke`):** limited-registry entity с точным live state
+  доступна; `unverified` и cached-disabled — недоступны. Picker продолжает
+  принимать live YAML entity; её render-поведение фиксируется ответом Q3 и
+  получает отдельное unit-доказательство, если войдёт в scope.
+- **AC10 (`unit` + source-contract + `smoke` + ревью кода):** lock/unlock
+  возможен только из карточки проёма; availability guard стоит до
+  confirmation/service, `callService('lock', …)` не появляется на другой
+  plan-поверхности, unlock требует confirmation, а stale/disabled/orphaned lock
+  не вызывает service. Unit и source-contract выполняются до code review;
+  browser smoke повторяет пользовательский путь перед бетой.
 - **AC11 (`unit` + ревью кода):** `_planEntityAvailable()` и все потребители
   plan-level tombstone сохраняют прежнее поведение.
 - **AC12 (`unit` + `build`):** typecheck, полный unit suite и production build
@@ -280,11 +341,28 @@ Pure matrix должна покрыть:
 3. `unavailable`/`unknown` как active binding с неизвестным state;
 4. registry-less live YAML entity;
 5. limited live, limited unverified и cached disabled;
-6. render projection: exact frozen state принимается без требования marker;
+6. render projection: exact frozen registry row + state принимаются без
+   требования marker; при ответе Q3 «включить» отдельный fixture доказывает
+   state-only registry-less путь;
 7. regression: `isRemovedPlanEntity()` по-прежнему подавляет entity- и
-   device-tombstone у обычных plan consumers.
+   device-tombstone у обычных plan consumers;
+8. pure config fixture: marker delete/re-add не меняет opening fields и не
+   связывает несколько проёмов друг с другом;
+9. lock action policy: active проходит, disabled/orphaned/unverified не
+   достигают service intent.
 
-### 11.2. Browser smoke
+### 11.2. Source-contract для lock safety
+
+До code review отдельный Node test читает `src/houseplan-card.ts` через уже
+применяемый в suite приём `methodBody()` и доказывает:
+
+1. `_lockAction()` вызывает exact opening availability guard до confirmation и
+   `callService`;
+2. unlock confirmation остаётся внутри санкционированного метода;
+3. `callService('lock', ...)` не появляется в другом plan interaction path;
+4. сам opening hit и device marker не получают lock actuation.
+
+### 11.3. Browser smoke
 
 Один узкий сценарий на full card:
 
@@ -302,7 +380,7 @@ Pure matrix должна покрыть:
 перед бетой; в обычном цикле реализации выполняются только typecheck, unit и
 build.
 
-### 11.3. Golden и performance
+### 11.4. Golden и performance
 
 Golden не нужен: стиль, геометрия и новый визуальный state не вводятся. Отдельный
 performance benchmark не нужен; beta проходит общий performance gate. Code
@@ -323,6 +401,11 @@ markers в render hot path.
   reference availability;
 - `docs/STATUS.md` — уточнить shipped-контракт true plan deletion после
   фактической реализации.
+
+`docs/SCOPE.md` и lock invariant CR-1 проверены обязательно. По предлагаемому
+ответу Q2 текст не меняется: санкционированная поверхность остаётся той же
+единственной кнопкой карточки проёма, меняется лишь availability exact lock.
+Если владелец потребует правку, она входит в тот же user-visible commit.
 
 Скриншоты и новые golden baselines не требуются. Отдельного security-артефакта
 нет; lock safety доказывается targeted smoke и независимым code review. Issue
@@ -367,4 +450,5 @@ markers в render hot path.
    state не изображается как известное состояние.
 3. Новый узкий smoke предпочтительнее расширения геометрических opening smoke;
    имя файла может измениться при сохранении того же покрытия.
-4. Блокирующих продуктовых вопросов перед ревью ТЗ нет.
+4. Q1–Q3 из §5.4 — блокирующие продуктовые решения, а не предположения; этот
+   раздел к ним не применяется.
