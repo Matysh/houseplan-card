@@ -1,4 +1,4 @@
-// #89 Stage 1: Q6 live-floor preservation plus touch, kiosk and remount paths.
+// #122 Stage 2: live-floor preservation, vertical openings, touch and remount paths.
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch(
@@ -26,6 +26,8 @@ const out = await page.evaluate(async () => {
       contact: 'binary_sensor.window' },
     { id: 'iso-door', type: 'door', x: 0.55, y: 0.36, angle: 90, length: 0.12,
       contact: 'binary_sensor.window', lock: 'lock.front_door' },
+    { id: 'iso-gate', type: 'gate', x: 0.72, y: 0.14, angle: 0, length: 0.16,
+      contact: 'binary_sensor.gate', lock: 'lock.front_door' },
   ];
   configSpace.partitions = [{
     id: 'iso-live-wall', a: [0.15, 0.12], b: [0.85, 0.12], cm: 15,
@@ -86,6 +88,7 @@ const out = await page.evaluate(async () => {
     glowSources: count('.glowlayer [data-glow-source]'),
     sun: count('.sunlayer'),
     openings: count('[data-hp="opening"]'),
+    verticalOpenings: count('[data-hp="iso-openings"] .iso-opening-panel'),
     devices: count('[data-hp="device"]'),
     hover: count('.room-hover-fill'),
     vacuumPucks: count('.vacpuck'),
@@ -104,12 +107,17 @@ const out = await page.evaluate(async () => {
   const wallFingerprint = root(original).querySelector('[data-hp="iso-walls"]')?.dataset.fingerprint;
   const cachedGeometry = original._isoGeometryCache.get(wallFingerprint)?.geometry;
   const light = original.hass.states['light.ceiling'];
+  const openingPanelBefore = root(original)
+    .querySelector('[data-hp="iso-openings"] [data-id="iso-door"]')?.getAttribute('d');
   original.hass = {
     ...original.hass,
     states: {
       ...original.hass.states,
       'light.ceiling': {
         ...light, attributes: { ...light.attributes, rgb_color: [255, 64, 32] },
+      },
+      'binary_sensor.window': {
+        ...original.hass.states['binary_sensor.window'], state: 'off',
       },
     },
   };
@@ -118,22 +126,26 @@ const out = await page.evaluate(async () => {
   const afterSpillParts = [...root(original).querySelectorAll('.glow-pool')]
     .map((node) => node.getAttribute('data-lit-parts'));
   const ordered = [
+    root(original).querySelector('.iso-underlay-svg'),
     root(original).querySelector('.hp-backdrop'),
     root(original).querySelector('.decorlayer'),
     root(original).querySelector('[data-hp="room"]'),
     root(original).querySelector('.glow-base-layer'),
     root(original).querySelector('.glowlayer'),
     root(original).querySelector('.sunlayer'),
+    root(original).querySelector('.iso-shadows-svg'),
     root(original).querySelector('.iso-walls-svg'),
     root(original).querySelector('.vacpuck'),
   ];
   const result = {
     isoOnTouch: !!root(original).querySelector('[data-hp="iso-walls"]'),
-    flatIsoLayerParity: JSON.stringify(flat) === JSON.stringify(before)
+    flatIsoLayerParity: JSON.stringify({ ...flat, openings: 0, verticalOpenings: before.verticalOpenings })
+        === JSON.stringify(before)
       && JSON.stringify(flatSpillParts) === JSON.stringify(beforeSpillParts),
     liveLayersPresent: before.rooms > 0 && before.roomFills > 0 && before.decor >= 2
       && before.furniture > 0 && before.backdrop > 0 && before.glowBase > 0
-      && before.glowSources >= 2 && before.sun > 0 && before.openings >= 2
+      && before.glowSources >= 2 && before.sun > 0 && before.openings === 0
+      && before.verticalOpenings === 5
       && before.devices > 0 && before.hover > 0 && before.vacuumPucks > 0
       && before.vacuumTrails >= 2,
     liveLayersStable: JSON.stringify(after) === JSON.stringify(before),
@@ -147,8 +159,49 @@ const out = await page.evaluate(async () => {
       .some((stop) => stop.getAttribute('stop-color') === '#ff4020'),
     sameWallFingerprint: root(original).querySelector('[data-hp="iso-walls"]')?.dataset.fingerprint === wallFingerprint,
     haUpdateReusesGeometry: original._isoGeometryCache.get(wallFingerprint)?.geometry === cachedGeometry,
-    noStage1VerticalOpenings: !root(original).querySelector('.iso-window,.window-light,.vertical-door'),
+    contactUpdateMovesOnlyLivePanel: !!openingPanelBefore
+      && root(original).querySelector('[data-hp="iso-openings"] [data-id="iso-door"]')?.getAttribute('d')
+        !== openingPanelBefore
+      && original._isoGeometryCache.size === 1,
+    oneLightModel: !root(original).querySelector('.window-light,.iso-window-light,.iso-glow,.iso-sun'),
+    oldFloorSymbolsNotDuplicated: before.openings === 0,
   };
+
+  configSpace.settings.hide_openings = true;
+  original._cfgEpoch++;
+  original.requestUpdate();
+  await original.updateComplete;
+  result.hideOpeningsKeepsStructure = !!root(original).querySelector('[data-hp="iso-walls"]')
+    && !root(original).querySelector('[data-hp="iso-openings"]')
+    && !root(original).querySelector('[data-hp="opening"]')
+    && root(original).querySelectorAll('.glowlayer [data-glow-source]').length >= 2;
+
+  configSpace.settings.hide_openings = false;
+  configSpace.settings.show_borders = false;
+  original._cfgEpoch++;
+  original.requestUpdate();
+  await original.updateComplete;
+  result.noBordersUsesFloorSymbols = !root(original).querySelector('[data-hp="iso-walls"]')
+    && !root(original).querySelector('[data-hp="iso-underlay"]')
+    && root(original).querySelectorAll('[data-hp="opening"]').length === 3;
+
+  configSpace.settings.show_borders = true;
+  original._cfgEpoch++;
+  original.requestUpdate();
+  await original.updateComplete;
+  result.visibleBordersRestoreStage2 = !!root(original).querySelector('[data-hp="iso-openings"]')
+    && original._isoGeometryCache.size === 1;
+
+  const supports = CSS.supports;
+  CSS.supports = () => false;
+  original.requestUpdate();
+  await original.updateComplete;
+  result.unsupportedDecorationKeepsIsoStructure = !!root(original).querySelector('[data-hp="iso-walls"]')
+    && !!root(original).querySelector('[data-hp="iso-openings"]')
+    && !root(original).querySelector('[data-hp="iso-shadows"]');
+  CSS.supports = supports;
+  original.requestUpdate();
+  await original.updateComplete;
 
   const calls = [];
   original.hass = {

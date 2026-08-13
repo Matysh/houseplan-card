@@ -340,6 +340,31 @@ cache guarded by a structural geometry fingerprint. This is computed render
 state only: it never rewrites rooms or wall entries, and an HA state tick does
 not rebuild topology.
 
+### Hidden Isometric Stage 2 composition (#122)
+
+The hidden `iso` View reuses that masonry but has one bounded structural scene,
+not a second house model. `_isoGeometryCache` remains an eight-entry LRU keyed
+by room/wall/opening geometry (including opening flips), scale/camera, fixed
+wall/floor-edge heights and an algorithm revision. Each value holds wall faces,
+the room/exterior slab edge, immutable opening jamb bases and the projected
+frame. HA state, theme, hover and filter support are presentation inputs and
+never enter this key.
+
+`floorFootprintGeometry()` derives only the union of room floors and exterior
+masonry; unlike wall volume, it has no independent partition/column input.
+`buildIsoFloorGeometry()` emits visible low faces for outer component rings,
+not internal edges or holes. `src/iso-openings.ts` stores jamb/axis topology and
+applies `openingAmount()` only during live projection, keeping contact updates
+out of the boolean geometry path.
+
+Composition is shared-viewBox SVG: ambient shadow/floor edge → the existing
+affine-projected floor/live scene → contact/leaf shadows → wall material and
+vertical panels → existing screen-facing HTML overlays. A constant set of
+gradients/filters serves every face. Unsupported decoration or forced colours
+remove nuance/shadows without changing projection; only structural failure
+uses the Stage 1 latched Flat fallback. Details and fixed ratios are recorded in
+`docs/adr/122-isometric-stage2-composition.md`.
+
 ## Markup editor (v1.4.0+)
 
 State inside the card: `_markup` (mode), `_tool` (draw/partition/column/merge/split/resize/opening/

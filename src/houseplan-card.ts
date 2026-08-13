@@ -56,6 +56,7 @@ import {
   degradeWalls, rekeyWallsAfterMove,
   setWallThickness, setWallThicknessForRoom, cmToField, wallCmToUnits,
   wallEdgeBodies, wallBodiesGeometry, wallBodiesUnionPath,
+  floorFootprintGeometry,
   innerContourForRoom, roomWallProfile, outsetContour,
   openingInnerFaceOffsetFromIndex, openingTunnelGeometriesFromIndex,
   openingWallIndex as buildOpeningWallIndex, applyWallThicknessToNewRoom,
@@ -176,12 +177,18 @@ import {
   currentLabs, hashSpace, noteLabsRender, subscribeLabs, type LabsSnapshot,
 } from './labs';
 import {
-  ISO_CAMERA, ISO_WALL_HEIGHT, projectPlanPoint, projectedFrame,
+  ISO_CAMERA, ISO_FLOOR_EDGE_HEIGHT, ISO_WALL_HEIGHT, isoFloorMatrixCss,
+  projectPlanPoint, projectedFrame,
   unprojectFloorPoint, type ScenePoint, type ViewRect,
 } from './iso-projection';
 import {
-  buildIsoWallGeometry, isoEffectiveView, isoGeometryFingerprint, type IsoWallGeometry,
+  buildIsoFloorGeometry, buildIsoWallGeometry, isoEffectiveView, isoGeometryFingerprint,
+  type IsoFloorGeometry, type IsoWallGeometry,
 } from './iso-walls';
+import {
+  buildIsoOpeningBasis, isoOpeningBounds, projectIsoOpening, resolveIsoDecoration,
+  type IsoDecorationLayers, type IsoOpeningBasis, type IsoOpeningPanel,
+} from './iso-openings';
 import {
   acquireHaRegistries, activeRegistryHass, cacheHaBindingStatuses,
   fullRegistryHass, haRegistryBuildSignature, haRegistryDiagnostics, haRegistrySnapshot,
@@ -1152,7 +1159,12 @@ class HouseplanCard extends LitElement {
     key: string;
     value: ReturnType<typeof wallBodiesUnionPath>;
   } | null = null;
-  private _isoGeometryCache = new Map<string, { geometry: IsoWallGeometry; frame: Rect }>();
+  private _isoGeometryCache = new Map<string, {
+    geometry: IsoWallGeometry;
+    floor: IsoFloorGeometry;
+    openings: readonly IsoOpeningBasis[];
+    frame: Rect;
+  }>();
   private _isoFallback = new Set<string>();
   private _openingTunnelCache: {
     key: string;
@@ -4418,21 +4430,31 @@ class HouseplanCard extends LitElement {
   }
 
   /** The rectangle "fit to screen" fits — always the content (docs/CANVAS.md). */
-  private _isoSource(): { key: string; build: () => any } {
+  private _isoSource(): { key: string; build: () => {
+    walls: any;
+    floor: any;
+    openings: readonly IsoOpeningBasis[];
+  } } {
     const space = this._spaceModel();
     const walls = this._spaceWalls;
     const openCuts = this._openPairs().flatMap((pair) => pair.segs);
-    const openings = (this._curSpaceCfg?.openings || []).map((opening: any) => ({
-      x: Number(opening.x) * NORM_W,
-      y: Number(opening.y) * NORM_W,
+    const openings = this._openingsR.map((opening, sourceIndex) => ({
+      id: String(opening.id || sourceIndex),
+      sourceIndex,
+      type: opening.type,
+      x: opening.rx,
+      y: opening.ry,
       angle: Number(opening.angle) || 0,
-      length: (Number(opening.length) > 0 ? Number(opening.length) : 0.9) * NORM_W,
+      length: opening.rlen > 0 ? opening.rlen : 0.9 * NORM_W,
+      flipH: !!opening.flip_h,
+      flipV: !!opening.flip_v,
     }));
     const key = `${space.id}|${isoGeometryFingerprint({
       rooms: space.rooms, walls, openCuts, openings,
       partitions: space.partitions, roomDrafts: space.room_drafts, columns: space.wall_columns,
       cellCm: this._cellCm, gridPitch: this._gridPitch, wallKeyPitch: this._wallKeyPitch,
-      camera: ISO_CAMERA, wallHeight: ISO_WALL_HEIGHT, algorithm: 2,
+      camera: ISO_CAMERA, wallHeight: ISO_WALL_HEIGHT,
+      floorEdgeHeight: ISO_FLOOR_EDGE_HEIGHT, algorithm: 3,
     })}`;
     return {
       key,
@@ -4443,9 +4465,32 @@ class HouseplanCard extends LitElement {
               space.rooms, walls, openCuts, openings,
               this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, extras,
             )
-          : { geom: [] };
-        if (!united) throw new Error('wall boolean geometry failed');
-        return united.geom;
+          : null;
+        if ((walls.length || extras.length) && !united)
+          throw new Error('wall boolean geometry failed');
+        const floor = united?.paperGeom ?? floorFootprintGeometry(
+          space.rooms, walls, openCuts,
+          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+        );
+        if (!floor) throw new Error('floor boolean geometry failed');
+        const openingIndex = united?.openingIndex || buildOpeningWallIndex(
+          space.rooms, walls, openCuts,
+          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+        );
+        const openingBases = openings.map((opening) => {
+          const faceFlipV = opening.type === 'gate' ? !opening.flipV : opening.flipV;
+          const face = walls.length || opening.type === 'gate'
+            ? openingInnerFaceOffsetFromIndex(openingIndex, {
+                x: opening.x,
+                y: opening.y,
+                angle: opening.angle,
+                length: opening.length,
+                flip_v: faceFlipV,
+              })
+            : { ox: 0, oy: 0, cm: 0, side: -1 as -1 | 1 };
+          return buildIsoOpeningBasis({ ...opening, face });
+        });
+        return { walls: united?.geom || [], floor, openings: Object.freeze(openingBases) };
       },
     };
   }
@@ -4455,14 +4500,29 @@ class HouseplanCard extends LitElement {
     try { return this._isoSource().key; } catch { return `${this._space}|invalid`; }
   }
 
-  private _isoScene(): { key: string; geometry: IsoWallGeometry; frame: Rect } {
+  private _isoScene(): {
+    key: string;
+    geometry: IsoWallGeometry;
+    floor: IsoFloorGeometry;
+    openings: readonly IsoOpeningBasis[];
+    frame: Rect;
+  } {
     const source = this._isoSource();
     const cached = this._isoGeometryCache.get(source.key);
     if (cached) return { key: source.key, ...cached };
     const flat = this._frameOf().rect;
-    const frame = projectedFrame({ rect: flat, wallHeight: ISO_WALL_HEIGHT });
-    const geometry = buildIsoWallGeometry(source.build());
-    const value = { geometry, frame };
+    const structural = source.build();
+    const openingFrame = isoOpeningBounds(structural.openings);
+    const structuralFrame = openingFrame ? unionRect(flat, openingFrame) : flat;
+    const frame = projectedFrame({
+      rect: structuralFrame,
+      wallHeight: ISO_WALL_HEIGHT,
+      openingHeight: ISO_WALL_HEIGHT,
+      floorDepth: ISO_FLOOR_EDGE_HEIGHT,
+    });
+    const geometry = buildIsoWallGeometry(structural.walls);
+    const floor = buildIsoFloorGeometry(structural.floor, ISO_FLOOR_EDGE_HEIGHT);
+    const value = { geometry, floor, openings: structural.openings, frame };
     lruWrite(this._isoGeometryCache, source.key, value, 8);
     return { key: source.key, ...value };
   }
@@ -10057,15 +10117,102 @@ class HouseplanCard extends LitElement {
     </g>` as unknown as TemplateResult;
   }
 
-  private _renderIsoWalls(): TemplateResult {
+  private _isoDecorationLayers(disp: SpaceDisplay): IsoDecorationLayers {
+    const filtersSupported = typeof CSS === 'undefined'
+      || typeof CSS.supports !== 'function'
+      || CSS.supports('filter', 'blur(1px)');
+    const forcedColors = typeof matchMedia === 'function'
+      && matchMedia('(forced-colors: active)').matches;
+    return resolveIsoDecoration({
+      showBorders: disp.showBorders,
+      hideOpenings: disp.hideOpenings,
+      filtersSupported,
+      forcedColors,
+    });
+  }
+
+  private _isoOpeningPanels(layers: IsoDecorationLayers): IsoOpeningPanel[] {
+    if (!layers.panels) return [];
+    const scene = this._isoScene();
+    const panels = scene.openings.flatMap((basis) => {
+      const opening = this._openingsR[basis.sourceIndex];
+      return opening ? projectIsoOpening(basis, this._openingAmt(opening)) : [];
+    });
+    return panels.sort((a, b) => a.depth - b.depth
+      || a.sourceIndex - b.sourceIndex || a.leaf - b.leaf);
+  }
+
+  private _renderIsoDefs(
+    layers: IsoDecorationLayers,
+    root: 'underlay' | 'shadows' | 'walls',
+  ): TemplateResult {
+    return svg`<defs>
+      ${root === 'walls' && layers.materialNuance ? svg`
+        <linearGradient id="hp-iso-wall-side" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" class="iso-side-hi"></stop><stop offset="1" class="iso-side-lo"></stop>
+        </linearGradient>
+        <linearGradient id="hp-iso-wall-top" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" class="iso-top-hi"></stop><stop offset="1" class="iso-top-lo"></stop>
+        </linearGradient>` : nothing}
+      ${root === 'underlay' && layers.shadows ? svg`
+        <filter id="hp-iso-ambient-shadow" x="-12%" y="-12%" width="124%" height="130%">
+          <feGaussianBlur stdDeviation="7"></feGaussianBlur>
+        </filter>` : nothing}
+      ${root === 'shadows' && layers.shadows ? svg`
+        <filter id="hp-iso-contact-shadow" x="-8%" y="-20%" width="116%" height="140%">
+          <feGaussianBlur stdDeviation="2.5"></feGaussianBlur>
+        </filter>
+        <filter id="hp-iso-leaf-shadow" x="-12%" y="-30%" width="124%" height="160%">
+          <feGaussianBlur stdDeviation="2"></feGaussianBlur>
+        </filter>` : nothing}
+    </defs>` as unknown as TemplateResult;
+  }
+
+  private _renderIsoUnderlay(layers: IsoDecorationLayers): TemplateResult {
+    if (!layers.structural) return svg`` as unknown as TemplateResult;
+    const floor = this._isoScene().floor;
+    return svg`<g class="iso-underlay" data-hp="iso-underlay" aria-hidden="true" pointer-events="none">
+      ${this._renderIsoDefs(layers, 'underlay')}
+      ${layers.shadows && floor.footprintPath
+        ? svg`<path class="iso-ambient-shadow" d=${floor.footprintPath} transform="translate(0 8)"></path>`
+        : nothing}
+      <g class="iso-floor-edge">${floor.sides.map((face) =>
+        svg`<path class="iso-floor-side" d=${face.d} data-component=${face.component}
+          data-edge=${face.edge}></path>`)}</g>
+    </g>` as unknown as TemplateResult;
+  }
+
+  private _renderIsoShadows(
+    layers: IsoDecorationLayers,
+    panels: readonly IsoOpeningPanel[],
+  ): TemplateResult {
+    if (!layers.shadows) return svg`` as unknown as TemplateResult;
+    const geometry = this._isoScene().geometry;
+    return svg`<g class="iso-shadows" data-hp="iso-shadows" aria-hidden="true" pointer-events="none">
+      ${this._renderIsoDefs(layers, 'shadows')}
+      <path class="iso-contact-shadow" d=${geometry.contactPath}></path>
+      <g class="iso-leaf-shadows">${panels.map((panel) =>
+        svg`<path class="iso-leaf-shadow" d=${panel.shadowD}
+          data-id=${panel.id} data-leaf=${panel.leaf}></path>`)}</g>
+    </g>` as unknown as TemplateResult;
+  }
+
+  private _renderIsoWalls(
+    layers: IsoDecorationLayers,
+    panels: readonly IsoOpeningPanel[],
+  ): TemplateResult {
     if (this._renderProjection !== 'iso') return svg`` as unknown as TemplateResult;
-    const disp = this._spaceDisplayForRender();
-    if (!disp.showBorders) return svg`` as unknown as TemplateResult;
+    if (!layers.structural) return svg`` as unknown as TemplateResult;
     const scene = this._isoScene();
     return svg`<g class="iso-walls" data-hp="iso-walls" data-fingerprint=${scene.key}>
+      ${this._renderIsoDefs(layers, 'walls')}
       <g class="iso-wall-sides">${scene.geometry.sides.map((face) =>
         svg`<path class="iso-wall-side" d=${face.d} data-edge=${face.edge}></path>`)}</g>
       <path class="iso-wall-top" d=${scene.geometry.topPath} fill-rule="evenodd"></path>
+      ${layers.panels ? svg`<g class="iso-openings" data-hp="iso-openings"
+          aria-hidden="true" pointer-events="none">${panels.map((panel) =>
+          svg`<path class="iso-opening-panel iso-${panel.type}" d=${panel.d}
+            data-id=${panel.id} data-kind=${panel.type} data-leaf=${panel.leaf}></path>`)}</g>` : nothing}
     </g>` as unknown as TemplateResult;
   }
 
@@ -13858,6 +14005,10 @@ class HouseplanCard extends LitElement {
     const devs = this._renderDevices.filter((d) => d.space === space.id && (!d.hidden || showGhosts));
     const deviceSnapshot = this._renderDeviceSnapshot;
     const disp = this._spaceDisplayForRender();
+    // Stage 2 capability work is deliberately absent from Flat/Labs-off
+    // renders. Decorative capability never enters the structural cache key.
+    const isoLayers = iso ? this._isoDecorationLayers(disp) : null;
+    const isoPanels = isoLayers ? this._isoOpeningPanels(isoLayers) : [];
     const roomFills = this._resolvedRoomFills(space, disp);
     const glowBase = this._resolvedGlowBase(space, disp, roomFills);
     const showLqi = disp.showLqi ?? this._config.show_signal ?? true;
@@ -14014,8 +14165,17 @@ class HouseplanCard extends LitElement {
           <div class="zoomwrap ${this._slide ? 'slide-' + this._slide : ''}"
             ?inert=${this._continuity.overlayBlocksInteraction || this._modeTransitionBusy}
             style="${transitionBrightness !== 1 ? `filter:brightness(${transitionBrightness.toFixed(3)})` : ''}">
-          <svg viewBox="${floorView.x} ${floorView.y} ${floorView.w} ${floorView.h}"
-            preserveAspectRatio=${iso ? 'none' : 'xMidYMid meet'}>
+          ${iso && isoLayers?.structural ? svg`<svg class="iso-underlay-svg"
+              viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
+              preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">
+              ${this._renderIsoUnderlay(isoLayers)}
+            </svg>` : nothing}
+          <svg class="plan-svg" viewBox=${iso
+              ? `${view.x} ${view.y} ${view.w} ${view.h}`
+              : `${floorView.x} ${floorView.y} ${floorView.w} ${floorView.h}`}
+            preserveAspectRatio="xMidYMid meet">
+            <g class=${iso ? 'iso-floor-scene' : nothing}
+              transform=${iso ? isoFloorMatrixCss() : nothing}>
             ${''/* THE PAPER IS THE ROOMS (docs/BACKDROP.md §3, owner
                    2026-08-04). Opaque shapes stop the scene background —
                    bg_color or the 'daynight' sky — from bleeding through the
@@ -14207,7 +14367,11 @@ class HouseplanCard extends LitElement {
                    preview deliberately paint AFTER real wall bodies. Their
                    full centreline geometry remains visible for editing. */}
             ${this._editing ? this._renderOpenWalls(disp) : nothing}
-            ${disp.hideOpenings && !this._markup ? nothing : this._renderOpenings(disp)}
+            ${disp.hideOpenings && !this._markup
+              ? nothing
+              : isoLayers && !isoLayers.floorSymbols
+                ? nothing
+                : this._renderOpenings(disp)}
             ${this._renderWallThickUi()}
             ${this._markup && this._tool === 'resize' ? this._renderResizeLayer(view) : nothing}
             ${''/* editor chrome, not plan content: the backdrop frame sits on
@@ -14216,10 +14380,16 @@ class HouseplanCard extends LitElement {
                    backdrop editor, where rooms and devices are pointer-inert. */}
             ${this._renderBackdropFrame(view)}
             ${this._renderTextFrame(view)}
+            </g>
           </svg>
-          ${iso ? svg`<svg class="iso-walls-svg" viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
+          ${iso && isoLayers?.structural ? svg`<svg class="iso-shadows-svg"
+              viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
               preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">
-              ${this._renderIsoWalls()}
+              ${this._renderIsoShadows(isoLayers, isoPanels)}
+            </svg>
+            <svg class="iso-walls-svg" viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
+              preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">
+              ${this._renderIsoWalls(isoLayers, isoPanels)}
             </svg>` : nothing}
           ${''/* docs/CANVAS.md §6: an icon is a percentage of the PLAN and
                  scales with it when you zoom — the behaviour the card always

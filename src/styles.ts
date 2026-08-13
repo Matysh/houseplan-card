@@ -469,25 +469,97 @@ export const cardStyles = css`
       height: 100%;
       display: block;
     }
+    .plan-svg { z-index: 1; }
+    .iso-underlay-svg { z-index: 0; overflow: visible; }
+    .iso-shadows-svg { z-index: 3; overflow: visible; }
     .iso-walls-svg {
       z-index: 4;
       overflow: visible;
     }
+    .iso-underlay-svg,
+    .iso-shadows-svg,
+    .iso-walls-svg,
+    .iso-underlay,
+    .iso-shadows,
+    .iso-walls,
+    .iso-openings {
+      pointer-events: none;
+    }
+    .iso-side-hi { stop-color: #b9bdbe; }
+    .iso-side-lo { stop-color: #969c9f; }
+    .iso-top-hi { stop-color: #fafaf7; }
+    .iso-top-lo { stop-color: #e2e4e2; }
     .iso-wall-side {
-      fill: #a8acae;
+      fill: url(#hp-iso-wall-side) #a8acae;
       stroke: #92989b;
       stroke-width: 0.7;
       vector-effect: non-scaling-stroke;
     }
     .iso-wall-top {
-      fill: #f3f3f1;
+      fill: url(#hp-iso-wall-top) #f3f3f1;
       stroke: #d7d9d8;
       stroke-width: 0.8;
       vector-effect: non-scaling-stroke;
     }
+    .iso-floor-side {
+      fill: #858b8d;
+      stroke: #71787b;
+      stroke-width: 0.7;
+      vector-effect: non-scaling-stroke;
+    }
+    .iso-opening-panel {
+      fill: #d7d9d7;
+      fill-opacity: 0.96;
+      stroke: #7f878b;
+      stroke-width: 0.9;
+      vector-effect: non-scaling-stroke;
+    }
+    .iso-opening-panel.iso-window {
+      fill: #dfeff4;
+      fill-opacity: 0.72;
+      stroke: #8aa7b1;
+    }
+    .iso-ambient-shadow {
+      fill: rgba(15, 21, 25, 0.22);
+      filter: url(#hp-iso-ambient-shadow);
+    }
+    .iso-contact-shadow {
+      fill: none;
+      stroke: rgba(22, 28, 31, 0.25);
+      stroke-width: 3;
+      filter: url(#hp-iso-contact-shadow);
+      vector-effect: non-scaling-stroke;
+    }
+    .iso-leaf-shadow {
+      fill: none;
+      stroke: rgba(18, 23, 27, 0.24);
+      stroke-width: 4;
+      filter: url(#hp-iso-leaf-shadow);
+      vector-effect: non-scaling-stroke;
+    }
     @media (prefers-color-scheme: dark) {
-      .iso-wall-side { fill: #3f474c; stroke: #333a3e; }
-      .iso-wall-top { fill: #596166; stroke: #747d82; }
+      .iso-side-hi { stop-color: #4c555a; }
+      .iso-side-lo { stop-color: #343c40; }
+      .iso-top-hi { stop-color: #687176; }
+      .iso-top-lo { stop-color: #50585d; }
+      .iso-wall-side { stroke: #30373b; }
+      .iso-wall-top { stroke: #7b858a; }
+      .iso-floor-side { fill: #2d3438; stroke: #20272a; }
+      .iso-opening-panel { fill: #626b70; stroke: #899399; }
+      .iso-opening-panel.iso-window { fill: #75919b; stroke: #abc6ce; }
+      .iso-ambient-shadow { fill: rgba(0, 0, 0, 0.34); }
+      .iso-contact-shadow, .iso-leaf-shadow { stroke: rgba(0, 0, 0, 0.38); }
+    }
+    @media (forced-colors: active) {
+      .iso-wall-side, .iso-wall-top, .iso-floor-side, .iso-opening-panel {
+        fill: Canvas;
+        stroke: CanvasText;
+        forced-color-adjust: auto;
+      }
+      .iso-ambient-shadow, .iso-contact-shadow, .iso-leaf-shadow { display: none; }
+    }
+    @supports not (filter: blur(1px)) {
+      .iso-ambient-shadow, .iso-contact-shadow, .iso-leaf-shadow { display: none; }
     }
     /* Opaque plan paper (owner 2026-08-03): the scene bg_color / daynight sky
        shows ONLY around the plan, never through it. The colour is the

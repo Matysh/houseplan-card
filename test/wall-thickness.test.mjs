@@ -6,7 +6,8 @@ import {
   setWallThickness, setWallThicknessForRoom, applyWallThicknessToNewRoom,
   drawWallPreviewD, DRAW_WALL_DEFAULT_CM, clampWallCm, cmToField, fieldToCm,
   wallCmToUnits, insetContour, inwardNormal, edgeKinds, wallEdgeBodies,
-  wallBodyRings, wallBodiesGeometry, wallBodiesUnionPath, innerContourForRoom,
+  wallBodyRings, wallBodiesGeometry, wallBodiesUnionPath, floorFootprintGeometry,
+  innerContourForRoom,
   paperRoomShapesWithWalls, WALL_MIN_CM, WALL_MAX_CM, MITRE_LIMIT,
   atomicPolyForRoom, insetOffsetsForRoom, wallIntervals, materializeWallIntervals,
   normalizeWallIntervals,
@@ -39,6 +40,17 @@ const geometryBounds = (geom) => {
     Math.max(...points.map((point) => point[1])),
   ];
 };
+
+test('Stage floor footprint excludes detached independent physical bodies', () => {
+  const rooms = [{ id: 'room', poly: [[0, 0], [100, 0], [100, 100], [0, 100]] }];
+  const detached = [[[200, 20], [220, 20], [220, 80], [200, 80]]];
+  const footprint = floorFootprintGeometry(rooms, [], [], 20, 250, 40, 1);
+  const withBody = wallBodiesGeometry(rooms, [], [], [], 20, 250, 40, 1, detached);
+  assert.ok(footprint && withBody);
+  assert.deepEqual(geometryBounds(footprint), [0, 0, 100, 100]);
+  assert.deepEqual(geometryBounds(withBody.paperGeom), [0, 0, 100, 100]);
+  assert.deepEqual(geometryBounds(withBody.geom), [200, 20, 220, 80]);
+});
 
 const geometryDifferenceArea = (a, b) => geometryArea(difference(a, b));
 

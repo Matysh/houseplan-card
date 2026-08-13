@@ -1,4 +1,4 @@
-# Isometric Stage 1 internals
+# Hidden Isometric View internals
 
 Issue [#89](https://github.com/Matysh/houseplan-card/issues/89) implements a
 hidden, presentation-only volumetric View experiment. The normative contract is
@@ -90,3 +90,78 @@ the rollback path and does not depend on the iso cache.
 Golden references are accepted only from the complete reviewed Linux artifact.
 The full `large-house-isometric-v1` performance comparison is also canonical on
 the exact Linux CI SHA.
+
+## Stage 2 composition (#122)
+
+Stage 2 evolves the same hidden `iso` experiment; it does not add a flag,
+setting or public activation path. The accepted implementation contract is
+`docs/specs/122-isometric-stage2.md` and the fixed composition decisions are in
+`docs/adr/122-isometric-stage2-composition.md`. The Labs `since: 1.62.0` and
+exclusive `expires: 1.65.0` boundary are unchanged.
+
+### One structural scene, live opening leaves
+
+The per-card LRU remains capped at eight entries. Its Stage 2 value contains:
+
+- canonical wall top/sides and the physical-wall contact path;
+- a room/exterior floor footprint and its low visible outer faces;
+- immutable opening jamb/axis bases, including type, flips and selected wall
+  face;
+- the shared projected frame, including wall/opening tops and the low floor
+  edge.
+
+The key includes rooms, masonry/opening geometry, flips, scale/camera, wall and
+edge heights and algorithm revision. It excludes HA state, theme, hover,
+day/night and filter capability. `openingAmount()` is applied only after an LRU
+hit by `projectIsoOpening()`, so a contact update projects O(O) leaves without
+repeating a wall or floor boolean operation.
+
+`floorFootprintGeometry()` deliberately accepts no independent physical-body
+input. The slab is the union of room floors and derived exterior masonry:
+internal room boundaries and nested holes make no decorative step, detached
+room components keep separate outside edges, while partitions and columns do
+not enlarge it.
+
+### Layer order and materials
+
+All geometry roots use one scene `viewBox`. The existing floor/live nodes are
+grouped under the Stage 1 affine matrix; HTML anchors still use
+`projectPlanPoint()`.
+
+```text
+stage background
+→ shared ambient shadow + low exterior floor edge
+→ existing floor SVG (paper/image, room fills/hover, decor, Glow, sun)
+→ shared contact and live leaf shadows
+→ canonical wall sides/top + inert vertical opening panels
+→ existing HTML devices, labels/cards, locks and vacuum overlays
+```
+
+Wall top and side use two shared matte gradients. Ambient, contact and leaf
+shadows use three shared filters; definition count is constant per card, never
+per face or opening. Forced colours use solid `Canvas`/`CanvasText` faces and
+omit decoration. A runtime without the required filter paint keeps solid
+structure, floor edge and vertical panels but emits no Stage 2 shadows; this
+does not enter the structural fallback latch.
+
+### Vertical openings and display settings
+
+`src/iso-openings.ts` mirrors the existing opening-symbol transform algebra:
+door has one jamb-hinged leaf, gate has two leaves with the established
+0–10° exterior-face turn, and window has two light neutral casements. Heights
+are fixed presentation ratios of `ISO_WALL_HEIGHT`; there is no schema field.
+Panels/shadows are pointer- and ARIA-inert. Existing lock badges/cards and HA
+actions remain the only interactive opening surface.
+
+- borders visible: vertical panels replace the floor-plane symbols;
+- `hide_openings: true`: panels and leaf shadows disappear, while masonry
+  cuts, Glow/sun and contact/lock meaning remain;
+- `show_borders: false`: Stage 2 roots are absent and the established floor
+  symbols return (subject to `hide_openings`), avoiding floating panels;
+- Flat, editors and `houseplan-space-card` retain their old symbols and DOM.
+
+Stage 2 adds no window beam, Glow source, sun renderer, material config,
+network request or HA service path. Structural topology/projection exceptions
+still use the Stage 1 latched Flat fallback. The known independent exact-SHA
+view-toggle performance debt remains tracked in #124; #122 neither weakens its
+budget nor treats fallback as benchmark success.

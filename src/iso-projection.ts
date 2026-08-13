@@ -14,6 +14,8 @@ export interface ViewRect { x: number; y: number; w: number; h: number; }
 export interface IsoFrameInput {
   rect: ViewRect;
   wallHeight: number;
+  openingHeight?: number;
+  floorDepth?: number;
 }
 
 export const ISO_CAMERA: Readonly<IsoCamera> = Object.freeze({
@@ -25,6 +27,7 @@ export const ISO_CAMERA: Readonly<IsoCamera> = Object.freeze({
 });
 
 export const ISO_WALL_HEIGHT = 64;
+export const ISO_FLOOR_EDGE_HEIGHT = 10;
 
 function finiteCamera(camera: IsoCamera): boolean {
   return [camera.rotDeg, camera.tiltDeg, camera.xyScale, camera.zScale,
@@ -97,17 +100,21 @@ export function projectedFrame(
   input: IsoFrameInput, camera: IsoCamera = ISO_CAMERA,
 ): ViewRect {
   const { rect, wallHeight } = input;
-  if (!(rect.w >= 0) || !(rect.h >= 0) || !Number.isFinite(wallHeight))
+  const openingHeight = input.openingHeight ?? wallHeight;
+  const floorDepth = input.floorDepth ?? 0;
+  if (!(rect.w >= 0) || !(rect.h >= 0) || !Number.isFinite(wallHeight)
+      || !Number.isFinite(openingHeight) || !Number.isFinite(floorDepth)
+      || wallHeight < 0 || openingHeight < 0 || floorDepth < 0)
     throw new Error('invalid isometric frame');
   const corners: PlanPoint[] = [
     [rect.x, rect.y], [rect.x + rect.w, rect.y],
     [rect.x + rect.w, rect.y + rect.h], [rect.x, rect.y + rect.h],
   ];
+  const top = Math.max(wallHeight, openingHeight);
   const points = corners.flatMap((point) => [
-    projectPlanPoint(point, 0, camera), projectPlanPoint(point, wallHeight, camera),
+    projectPlanPoint(point, -floorDepth, camera), projectPlanPoint(point, top, camera),
   ]);
   const xs = points.map((point) => point[0]), ys = points.map((point) => point[1]);
   const x = Math.min(...xs), y = Math.min(...ys);
   return { x, y, w: Math.max(...xs) - x, h: Math.max(...ys) - y };
 }
-

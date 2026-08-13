@@ -46,6 +46,17 @@ test('projected frame includes raised wall tops and is view-state independent', 
   assert.deepEqual(projectedFrame({ rect, wallHeight: ISO_WALL_HEIGHT }), frame);
 });
 
+test('Stage 2 frame includes opening tops and the structural floor edge, not blur', () => {
+  const rect = { x: 100, y: 200, w: 400, h: 300 };
+  const stage1 = projectedFrame({ rect, wallHeight: ISO_WALL_HEIGHT });
+  const stage2 = projectedFrame({
+    rect, wallHeight: ISO_WALL_HEIGHT, openingHeight: ISO_WALL_HEIGHT + 5, floorDepth: 10,
+  });
+  assert.ok(stage2.y < stage1.y);
+  assert.ok(stage2.h > stage1.h);
+  assert.deepEqual(Object.keys(stage2).sort(), ['h', 'w', 'x', 'y']);
+});
+
 test('client coordinates map through the current scene view', () => {
   const scene = clientToScenePoint([250, 175], { left: 50, top: 25, width: 400, height: 300 },
     { x: 100, y: 200, w: 800, h: 600 });
@@ -58,4 +69,3 @@ test('degenerate cameras and frames throw instead of mixing projections', () => 
   assert.throws(() => clientToScenePoint([0, 0], { left: 0, top: 0, width: 0, height: 1 },
     { x: 0, y: 0, w: 1, h: 1 }));
 });
-

@@ -1313,6 +1313,34 @@ function exteriorEnvelopeGeometry(
   return { centre, shell: shell || [] };
 }
 
+/**
+ * Canonical Stage floor footprint: room union plus derived exterior masonry.
+ * Independent partitions/columns are deliberately not accepted here, so they
+ * can never enlarge the slab perimeter. Null is a boolean failure; an empty
+ * array is a valid space without room geometry.
+ */
+export function floorFootprintGeometry(
+  rooms: any[],
+  walls: WallEntry[] | null | undefined,
+  openCuts: number[][],
+  pitch: number,
+  cellCm: number,
+  gridPitch: number,
+  coordScale = 1,
+): any | null {
+  try {
+    const exterior = exteriorEnvelopeGeometry(
+      rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
+    );
+    if (!exterior) return [];
+    return exterior.shell?.length
+      ? union(exterior.centre, exterior.shell)
+      : exterior.centre;
+  } catch {
+    return null;
+  }
+}
+
 function polyclipToPathD(geom: any): string {
   if (!geom) return '';
   let d = '';
@@ -1475,7 +1503,7 @@ export function wallBodiesGeometry(
   gridPitch: number,
   coordScale = 1,
   extraBodies: number[][][] = [],
-): { geom: any; paperGeom: any; depthUnits: number } | null {
+): { geom: any; paperGeom: any; depthUnits: number; openingIndex: OpeningWallIndex | null } | null {
   if (!walls?.length && !extraBodies.length) return null;
   const roomRings: { outset: number[][]; inset: number[][] | null }[] = [];
   let maxDepth = 0;
@@ -1583,7 +1611,7 @@ export function wallBodiesGeometry(
       if (extra.length < 3) continue;
       body = body ? union(body, closedRing(extra) as any) : [closedRing(extra)];
     }
-    return { geom: body || [], paperGeom, depthUnits: maxDepth };
+    return { geom: body || [], paperGeom, depthUnits: maxDepth, openingIndex };
   } catch {
     return null;
   }

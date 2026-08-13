@@ -1,4 +1,4 @@
-// #89 Stage 1: Labs lifecycle, toggle, projection parity and flat editor boundary.
+// #122 Stage 2: Labs lifecycle, structural composition and flat editor boundary.
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 1000, height: 850 });
@@ -44,7 +44,12 @@ const out = await page.evaluate(async () => {
   const device = root().querySelector('[data-hp="device"]');
   const roomLabel = root().querySelector('[data-hp="room-label"]');
   result.isoRendered = isoToggle?.getAttribute('aria-pressed') === 'true'
+    && !!root().querySelector('[data-hp="iso-underlay"] .iso-floor-side')
     && !!root().querySelector('[data-hp="iso-walls"] .iso-wall-top');
+  result.sharedProjectionSnapshot = ['.iso-underlay-svg', '.plan-svg', '.iso-shadows-svg', '.iso-walls-svg']
+    .map((selector) => root().querySelector(selector)?.getAttribute('viewBox'))
+    .every((value, _index, values) => !!value && value === values[0]);
+  result.stage2DefinitionsBounded = root().querySelectorAll('[id^="hp-iso-"]').length <= 5;
   result.preferenceStored = JSON.parse(localStorage.getItem('houseplan_card_view_v1') || '{}').f1 === 'iso';
   result.anchorsFinite = [device, roomLabel].every((node) => node
     && center(node).every((value) => Number.isFinite(value)));
@@ -79,7 +84,7 @@ const out = await page.evaluate(async () => {
     build: () => {
       attempts++;
       if (shouldFail) throw new Error('injected isometric failure');
-      return [];
+      return { walls: [], floor: [], openings: [] };
     },
   });
   card.requestUpdate();
@@ -108,7 +113,8 @@ const out = await page.evaluate(async () => {
   await frame();
   result.removalIsImmediateFlat = JSON.stringify(window.__hpLabs) === '[]'
     && !root().querySelector('[data-hp="projection-toggle"]')
-    && !root().querySelector('[data-hp="iso-walls"]');
+    && !root().querySelector('[data-hp="iso-walls"]')
+    && !root().querySelector('[id^="hp-iso-"]');
   return result;
 });
 
