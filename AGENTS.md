@@ -115,6 +115,14 @@ nothing to review, and reviewing twenty tasks at once is not review. `dev` may h
 unreviewed code while a task is in flight; what matters is its state when the
 reviewer says it is accepted.
 
+**Standing permission: push `issue/<NN>-slug` without asking.** The reviewer runs
+in CI and can only read what is on the remote — an unpushed spec or commit means
+the review either stalls or judges the wrong tree. Pushing a task branch publishes
+nothing to users and does not touch the integration branch, so it needs no command.
+
+Everything else still requires the owner's explicit command: pushing `dev` or
+`main`, merging a task branch, creating tags, publishing betas and releases.
+
 ## Two-agent workflow
 
 **Codex** writes analysis, specs and all product code. **Claude** reviews specs and
