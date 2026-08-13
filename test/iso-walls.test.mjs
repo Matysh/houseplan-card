@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildIsoWallGeometry, isoGeometryFingerprint } from '../test-build/iso-walls.js';
+import {
+  buildIsoWallGeometry, isoEffectiveView, isoGeometryFingerprint,
+} from '../test-build/iso-walls.js';
 
 const closed = (points) => [...points, points[0]];
 const square = closed([[0, 0], [100, 0], [100, 100], [0, 100]]);
@@ -42,3 +44,11 @@ test('fingerprint is content based, stable and sensitive to in-place geometry ed
     isoGeometryFingerprint({ rooms: value.rooms, showBorders: false }));
 });
 
+test('latched renderer failures stay flat until explicit retry or a new fingerprint', () => {
+  const failed = new Set(['space|old']);
+  assert.equal(isoEffectiveView('iso', 'space|old', failed), 'flat');
+  assert.equal(isoEffectiveView('iso', 'space|new', failed), 'iso');
+  assert.equal(isoEffectiveView('flat', 'space|new', failed), 'flat');
+  failed.delete('space|old');
+  assert.equal(isoEffectiveView('iso', 'space|old', failed), 'iso');
+});

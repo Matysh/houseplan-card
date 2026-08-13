@@ -183,7 +183,8 @@ export function subscribeLabs(
   version: string, subscriber: (value: LabsSnapshot) => void,
 ): () => void {
   subscribers.add(subscriber);
-  subscriber(ensureBrowserLabs(version));
+  const current = ensureBrowserLabs(version);
+  if (typeof window === 'undefined') subscriber(current);
   return () => { subscribers.delete(subscriber); };
 }
 
@@ -193,7 +194,8 @@ export function currentLabs(version: string): LabsSnapshot {
 
 /** Diagnostics are emitted only when an active Labs frame is actually rendered. */
 export function noteLabsRender(version: string): void {
-  const current = currentLabs(version);
+  if (!configuredVersion) ensureBrowserLabs(version);
+  const current = snapshot;
   const signature = current.active.join(',');
   if (!signature || signature === loggedSignature) return;
   loggedSignature = signature;

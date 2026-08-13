@@ -17,6 +17,12 @@ export interface IsoWallGeometry {
   edgeCount: number;
 }
 
+export function isoEffectiveView(
+  desired: 'flat' | 'iso', fingerprint: string, failed: ReadonlySet<string>,
+): 'flat' | 'iso' {
+  return desired === 'iso' && fingerprint && !failed.has(fingerprint) ? 'iso' : 'flat';
+}
+
 const pointText = (point: ScenePoint): string =>
   `${Number(point[0].toFixed(4))} ${Number(point[1].toFixed(4))}`;
 
