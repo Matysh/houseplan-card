@@ -126,8 +126,14 @@ nothing to users and does not touch the integration branch, so it needs no comma
 **Do not merge into `dev` by hand.** On a green code review the pipeline rebases
 the task branch onto `dev`, pushes it, and only then sets `S8-merged` — the label
 asserts the code is in `dev`, so the merge has to happen first or the label lies
-in between. If the rebase conflicts, the pipeline says so in the issue and leaves
-the task in `S7-code-review`; resolving the conflict is the author's job.
+in between.
+
+If the rebase conflicts the pipeline says so in the issue and sends the task back
+to `S6-in-progress`. The verdict still stands: nothing needs reviewing again, the
+remaining work is the rebase. Resolve it, push the branch, re-apply
+`S7-code-review`. The second review run is not a formality — after a rebase onto a
+moved `dev` this is different code, and accepting it unchecked is how regressions
+arrive. Cycles are counted per stage, so a code review spends its own budget.
 
 Everything else still requires the owner's explicit command: pushing `main`,
 creating tags, publishing betas and releases, closing issues.
@@ -171,10 +177,18 @@ the comment only explains it. Do not wait at all while `blocked` is set — the 
 is waiting on the owner, not on the reviewer. On exhausting the attempts, stop and
 tell the owner: a failed run leaves the label where it was, forever.
 
-What the new label means: `S5-ready` — write the code; `S3-spec` — read the verdict
-and revise the spec, then re-apply `S4-spec-review`; `S6-in-progress` — revise the
-code, then re-apply `S7-code-review`; `S8-merged` — accepted and already in `dev`,
-nothing left to do; `review-4` — the cycle limit is spent, stop and wait for the owner.
+What the new label means:
+
+| Now reads | What happened | What you do |
+|---|---|---|
+| `S5-ready` | the spec is accepted | write the code |
+| `S3-spec` | the spec came back | read the verdict, revise, re-apply `S4-spec-review` |
+| `S6-in-progress` | the code came back | revise, re-apply `S7-code-review` — **or**, if the verdict was green and only the merge conflicted, just rebase and re-apply. The comment says which |
+| `S8-merged` | accepted and already in `dev` | nothing |
+| `review-4` | the cycle limit is spent | stop, the owner decides |
+
+**After a review run the label always changes.** If it did not, the run itself
+failed rather than the work — say so to the owner instead of polling on.
 
 The exchange happens in **issue comments** — there is no local message bus. Verdict
 format:
