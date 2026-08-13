@@ -249,14 +249,21 @@ jobs:
           BRANCH: ${{ steps.branch.outputs.name }}
           NUM: ${{ github.event.issue.number }}
         run: |
+          # Ветки задачи может не быть: у задач, размеченных до появления
+          # конвейера, ТЗ лежит прямо в dev. Раньше шаг в этом случае молча
+          # выходил с нулём, и разбор ревью терялся — оставался только вердикт
+          # комментарием. Это тот же тихий отказ: шаг сообщал об успехе тем, что
+          # ничего не сделал. Документ ложится туда же, где лежит само ТЗ.
+          target="${BRANCH:-dev}"
           if [ -z "$BRANCH" ]; then
-            echo "ветки задачи нет — документ некуда класть"; exit 0
+            echo "::warning::ветки задачи нет — документ ревью ляжет в dev"
           fi
           git checkout -- . 2>/dev/null || true
           git clean -fd -e docs/reviews -e node_modules >/dev/null 2>&1 || true
           git add docs/reviews 2>/dev/null || true
           if git diff --cached --quiet; then
-            echo "документ ревью не создан"; exit 0
+            echo "::warning::документ ревью не создан"
+            exit 0
           fi
           git -c user.name="claude[bot]" \
               -c user.email="209825114+claude[bot]@users.noreply.github.com" \
@@ -266,9 +273,23 @@ jobs:
           Issue: #$NUM
           User-Visible: no
           EOF
-          git push -q "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" \
-            "HEAD:$BRANCH"
-          echo "документ опубликован в $BRANCH"
+          # Публикация в dev идёт из детачнутого состояния поверх ветки задачи
+          # либо dev, поэтому push нужен с явным перебазированием при гонке:
+          # dev мог уйти вперёд, пока шло ревью — оно длится до 45 минут.
+          if ! git push -q "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" \
+               "HEAD:$target"; then
+            git fetch -q origin "$target"
+            if ! git -c user.name="claude[bot]" \
+                     -c user.email="209825114+claude[bot]@users.noreply.github.com" \
+                     rebase "origin/$target"; then
+              git rebase --abort || true
+              echo "::error::документ ревью не удалось опубликовать в $target: конфликт"
+              exit 0
+            fi
+            git push -q "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" \
+              "HEAD:$target"
+          fi
+          echo "документ опубликован в $target"
 
       - name: Решение по вердикту
         id: decide
