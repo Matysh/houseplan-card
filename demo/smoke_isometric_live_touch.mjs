@@ -65,7 +65,7 @@ const out = await page.evaluate(async () => {
       },
       'sun.sun': {
         entity_id: 'sun.sun', state: 'above_horizon',
-        attributes: { azimuth: 180, elevation: 24 },
+        attributes: { azimuth: 0, elevation: 24 },
       },
     },
   };
