@@ -337,5 +337,5 @@ jobs:
 
           Если вердикт выше всё же опубликован — сбой произошёл после него. Перестановку метки в этом случае выполняет чат обслуживания или владелец, но не автор задачи: автор не толкует вердикт о своей же работе.
           EOF
-          gh issue comment "${{ github.event.issue.number }}" \\
+          gh issue comment "${{ github.event.issue.number }}" \
             --repo "${{ github.repository }}" --body-file /tmp/failure.md
