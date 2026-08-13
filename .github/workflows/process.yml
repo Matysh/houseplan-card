@@ -26,6 +26,9 @@ concurrency:
 permissions:
   contents: read
   issues: write
+  # Обязательно: claude-code-action получает OIDC-токен для авторизации
+  # GitHub App. Без этого прогон падает с «Could not fetch an OIDC token».
+  id-token: write
 
 jobs:
   guard:
@@ -90,6 +93,23 @@ jobs:
 
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
+
+      # Материал ревью живёт в ветке задачи: ТЗ в docs/specs/ и код коммитятся
+      # в issue/<NN>-slug. Если ветка запушена — переключаемся на неё, иначе
+      # ревьюер прочитает dev и не найдёт того, что должен оценивать.
+      - name: Перейти на ветку задачи
+        env:
+          NUM: ${{ github.event.issue.number }}
+        run: |
+          branch=$(git ls-remote --heads origin "issue/${NUM}-*" \
+            | head -1 | sed 's|.*refs/heads/||')
+          if [ -n "$branch" ]; then
+            git checkout -q "origin/$branch"
+            echo "материал ревью: ветка $branch, $(git rev-parse --short HEAD)"
+          else
+            echo "::warning::ветка issue/${NUM}-* не найдена на origin — ревью пойдёт по dev"
+            echo "МАТЕРИАЛ НЕ ЗАПУШЕН" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Review
         id: review
