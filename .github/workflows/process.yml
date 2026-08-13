@@ -283,8 +283,15 @@ jobs:
           echo "to=$to"       >> "$GITHUB_OUTPUT"
 
       # S8-merged утверждает, что код в dev. Значит слияние обязано произойти
-      # ДО метки, иначе она врờt в промежутке. Конфликт — метка не двигается.
+      # ДО метки, иначе она врёт в промежутке.
+      #
+      # При конфликте шаг НЕ падает и метку не оставляет на месте. Первая
+      # редакция делала именно так, и это оказалось тупиком: автор ждёт смену
+      # метки, метка не менялась, и он тридцать раз опрашивал впустую, чтобы
+      # затем отчитаться «лимит исчерпан» — при зелёном вердикте. Инвариант
+      # теперь жёстче: ПОСЛЕ ПРОГОНА РЕВЬЮ МЕТКА МЕНЯЕТСЯ ВСЕГДА.
       - name: Слить ветку в dev
+        id: merge
         if: needs.guard.outputs.stage == 'code' && steps.decide.outputs.green == 'true'
         env:
           TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
@@ -293,7 +300,9 @@ jobs:
           NUM: ${{ github.event.issue.number }}
         run: |
           if [ -z "$BRANCH" ]; then
-            echo "::error::ветки задачи нет — сливать нечего"; exit 1
+            echo "::error::ветки задачи нет — сливать нечего"
+            echo "merged=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
           git fetch -q origin dev
           git checkout -q -B merge-into-dev "origin/$BRANCH"
@@ -301,15 +310,24 @@ jobs:
                    -c user.email="209825114+claude[bot]@users.noreply.github.com" \
                    rebase origin/dev; then
             git rebase --abort || true
+            echo "merged=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::ветка $BRANCH не сливается в dev без конфликта"
             cat > /tmp/conflict.md <<EOF
-          Код-ревью зелёное, но ветка $BRANCH не сливается в dev без конфликта. Статусная метка не менялась: задача осталась в S7-code-review.
+          **Код-ревью зелёное — вердикт выше в силе, переделывать работу не нужно.** Не удалось только слияние: ветка \`$BRANCH\` конфликтует с \`dev\`.
 
-          Разрешить конфликт и запушить dev — на стороне автора, затем снять и вернуть метку S7-code-review для повторного прогона.
+          Задача переведена в \`S6-in-progress\`, потому что работа вернулась к автору. Осталась не правка кода, а ребейз:
+
+          1. \`git fetch origin\`, затем \`git rebase origin/dev\` в ветке задачи, разрешить конфликт;
+          2. запушить ветку;
+          3. вернуть метку \`S7-code-review\`.
+
+          Повторный прогон ревью — не формальность: после ребейза на новый \`dev\` это другой код, и принимать его без проверки нельзя. Цикл считается по этапу, лимит на код-ревью тратится отдельно от ревью ТЗ.
           EOF
             gh issue comment "$NUM" --repo "${{ github.repository }}" --body-file /tmp/conflict.md
-            exit 1
+            exit 0
           fi
           git push -q "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" HEAD:dev
+          echo "merged=true" >> "$GITHUB_OUTPUT"
           echo "слито в dev: $(git rev-parse --short HEAD)"
 
       - name: Переставить метку
@@ -318,7 +336,9 @@ jobs:
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           NUM: ${{ github.event.issue.number }}
           FROM: ${{ steps.decide.outputs.from }}
-          TO: ${{ steps.decide.outputs.to }}
+          # Зелёное код-ревью без слияния ведёт не в S8-merged, а обратно к
+          # автору: метка утверждала бы, что код в dev, а его там нет.
+          TO: ${{ (needs.guard.outputs.stage == 'code' && steps.decide.outputs.green == 'true' && steps.merge.outputs.merged != 'true') && 'S6-in-progress' || steps.decide.outputs.to }}
         run: |
           gh issue edit "$NUM" --repo "${{ github.repository }}" \
             --add-label "$TO" --remove-label "$FROM"
