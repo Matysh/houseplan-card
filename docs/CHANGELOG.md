@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## v1.63.0 — 2026-08-13
+
+- Preserved explicit door, window and gate bindings when their standalone
+  sensor or lock marker is removed, and fixed the supported empty state after
+  deleting the last space
+  ([#104](https://github.com/Matysh/houseplan-card/issues/104),
+  [#111](https://github.com/Matysh/houseplan-card/issues/111)).
+- Splitting a room from an existing corner no longer deforms the exterior
+  facade, including with thick dividers. Flat, static and hidden isometric
+  rendering use the same preserved wall geometry
+  ([#123](https://github.com/Matysh/houseplan-card/issues/123)).
+- Small fixes and improvements.
+
 ## v1.63.0-beta.2 — 2026-08-13
 
 - Splitting a room from an existing corner no longer deforms the exterior wall
