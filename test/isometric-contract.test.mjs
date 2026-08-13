@@ -46,6 +46,11 @@ test('structural cache includes opening flips and excludes live HA amount', () =
   assert.doesNotMatch(source, /_openingAmt|openingAmount|\.hass|matchMedia|CSS\.supports|theme|hover/);
   assert.match(card, /projectIsoOpening\(basis, this\._openingAmt\(opening\)\)/);
   assert.match(card, /isoLayers && !isoLayers\.floorSymbols/);
+  assert.match(card, /if \(!this\._spaceDisplayForRender\(\)\.showBorders\)/);
+  assert.match(card, /projectedFrame\(\{ rect: flat, wallHeight: ISO_WALL_HEIGHT \}\)/);
+  assert.match(card, /viewBox=\$\{isoLayers\?\.structural[\s\S]*?: `\$\{floorView\.x\}/);
+  assert.match(card, /preserveAspectRatio=\$\{isoLayers\?\.structural \|\| !iso \? 'xMidYMid meet' : 'none'\}/);
+  assert.match(card, /transform=\$\{isoLayers\?\.structural \? isoFloorMatrixCss\(\) : nothing\}/);
 });
 
 test('Stage 2 adds no schema, dependency, storage, network or HA action surface', () => {

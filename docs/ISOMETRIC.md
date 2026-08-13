@@ -157,7 +157,8 @@ actions remain the only interactive opening surface.
 - `hide_openings: true`: panels and leaf shadows disappear, while masonry
   cuts, Glow/sun and contact/lock meaning remain;
 - `show_borders: false`: Stage 2 roots are absent and the established floor
-  symbols return (subject to `hide_openings`), avoiding floating panels;
+  symbols and Stage 1 projected frame return (subject to `hide_openings`),
+  avoiding floating panels or an invisible Stage 2 bound that reframes them;
 - Flat, editors and `houseplan-space-card` retain their old symbols and DOM.
 
 Stage 2 adds no window beam, Glow source, sun renderer, material config,

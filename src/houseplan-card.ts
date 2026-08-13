@@ -4557,6 +4557,14 @@ class HouseplanCard extends LitElement {
 
   private _baseVb(): number[] {
     if (this._effectiveProjection() === 'iso') {
+      // No-borders is the accepted Stage 1 no-volume scene. Stage 2 structure
+      // is absent there, so its opening/floor-edge bounds must be absent too;
+      // otherwise merely hiding volume reframes every live floor pixel.
+      if (!this._spaceDisplayForRender().showBorders) {
+        const flat = this._frameOf().rect;
+        const frame = projectedFrame({ rect: flat, wallHeight: ISO_WALL_HEIGHT });
+        return [frame.x, frame.y, frame.w, frame.h];
+      }
       const frame = this._isoScene().frame;
       return [frame.x, frame.y, frame.w, frame.h];
     }
@@ -14170,12 +14178,13 @@ class HouseplanCard extends LitElement {
               preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">
               ${this._renderIsoUnderlay(isoLayers)}
             </svg>` : nothing}
-          <svg class="plan-svg" viewBox=${iso
+          <svg class=${isoLayers?.structural ? 'plan-svg' : nothing}
+            viewBox=${isoLayers?.structural
               ? `${view.x} ${view.y} ${view.w} ${view.h}`
               : `${floorView.x} ${floorView.y} ${floorView.w} ${floorView.h}`}
-            preserveAspectRatio="xMidYMid meet">
-            <g class=${iso ? 'iso-floor-scene' : nothing}
-              transform=${iso ? isoFloorMatrixCss() : nothing}>
+            preserveAspectRatio=${isoLayers?.structural || !iso ? 'xMidYMid meet' : 'none'}>
+            <g class=${isoLayers?.structural ? 'iso-floor-scene' : nothing}
+              transform=${isoLayers?.structural ? isoFloorMatrixCss() : nothing}>
             ${''/* THE PAPER IS THE ROOMS (docs/BACKDROP.md §3, owner
                    2026-08-04). Opaque shapes stop the scene background —
                    bg_color or the 'daynight' sky — from bleeding through the

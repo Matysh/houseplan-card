@@ -73,7 +73,11 @@ exception enters the established `space|fingerprint` Flat fallback latch.
 These are presentation constants, not persisted fields. With visible borders,
 vertical panels replace the old floor symbols. `hide_openings` hides panels and
 leaf shadows. With borders disabled, every Stage 2 root is absent and the
-existing floor symbols return, so there are no floating vertical leaves.
+existing floor symbols return, so there are no floating vertical leaves. The
+no-borders branch also keeps the accepted Stage 1 projected frame (floor plus
+the fixed wall-height allowance): absent Stage 2 floor/opening geometry cannot
+contribute invisible bounds and reframe the live floor. With borders visible,
+fit includes every Stage 2 structural bound; blur capability never changes it.
 
 ## Consequences
 
