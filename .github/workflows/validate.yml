@@ -32,6 +32,30 @@ jobs:
         run: |
           node scripts/validate-commit-provenance.mjs --check-hook-mode --github-range
 
+  # Догоняющая проверка процесса (PROCESS.md §10.3). Хуки ловят нарушение на
+  # машине автора, но их можно обойти `--no-verify`, а коммиты идут прямо в dev
+  # без PR — GitHub на своей стороне не блокирует ничего. Это последнее место,
+  # где нарушение правила №1 ловится машиной. Job независимый: краснеет сам и
+  # не роняет остальные, откат — удалить его отсюда, скрипт остаётся рабочим.
+  process-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Process gate
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.sha }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          # Публичный репозиторий: штатного токена хватает на чтение issue.
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node scripts/process-gate.mjs --github-range --issues
+
   hacs:
     runs-on: ubuntu-latest
     steps:

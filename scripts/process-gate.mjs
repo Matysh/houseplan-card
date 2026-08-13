@@ -1,0 +1,463 @@
+#!/usr/bin/env node
+// Гейт процесса houseplan-card. Проверяет диапазон коммитов по PROCESS.md §10.2.
+// Node, без зависимостей. Ничего не изменяет — только читает git, файлы и issue.
+//
+//   node scripts/process-gate.mjs --range <base>..<head>
+//   node scripts/process-gate.mjs --github-range        # диапазон из события CI
+//   node scripts/process-gate.mjs --issues              # + проверка 8 через gh
+//   node scripts/process-gate.mjs --json                # машинный вывод
+//   node scripts/process-gate.mjs --report              # печатать, но не краснеть
+//
+// Код выхода: 0 — чисто, 1 — есть нарушения, 2 — не смог проверить.
+//
+// Зачем гейт нужен: коммиты идут прямо в dev, без PR, и GitHub на своей стороне
+// не блокирует ничего (§10). Это единственное место, где нарушение правила №1
+// может быть поймано машиной, а не добросовестностью агента.
+//
+// Решения, принятые при реализации. Продуктового поведения не касаются, поэтому
+// приняты здесь, а не у владельца; ревьюер вправе оспорить любое.
+//
+// 1. «Release vX.Y.Z-beta.N candidate» — НЕ релизный коммит. Promotion-only по
+//    AGENTS.md — это стабильный релиз; кандидат беты несёт саму работу и живёт
+//    по общим правилам, включая трейлер Issue.
+// 2. Классы дополнены: package.json, package-lock.json, pytest.ini, .gitignore,
+//    .gitattributes, .githooks/** — класс B (конфигурация сборки и гейтов).
+//    CONTRIBUTING.md, PROCESS*.md, CODE-REVIEW-*.md, SPEC-REVIEW-*.md — класс C.
+//    §1 их не перечисляет вовсе; без этого они попадали в «путь вне классов».
+// 3. Документы ревью ищутся и в docs/reviews/, и в корне: три штуки закоммичены
+//    в корень до того, как появилась договорённость о каталоге.
+// 4. `S8-merged` входит в множество допустимых статусов, хотя issue #105
+//    предлагал обратное. Причина выяснилась при реализации: конвейер сначала
+//    сливает ветку в dev, а метку ставит после — Validate успевает прочитать
+//    issue уже в `S8-merged`, и строгое множество красило бы каждую принятую
+//    задачу. Локально строгость возвращается флагом `--no-merged`.
+
+import { spawnSync } from 'node:child_process';
+import { existsSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { resolveValidationRange } from './validate-commit-provenance.mjs';
+
+// --- классы изменений, PROCESS.md §1 ---
+// Порядок важен: D проверяется первым, иначе собранный бандл попадёт в A,
+// а demo/golden/baselines — в B.
+const CLASS_D = [
+  /^dist\//,
+  /^custom_components\/houseplan\/frontend\//,
+  /^demo\/srv\/assets\/houseplan-card\.js$/,
+  /^demo\/golden\/baselines\//,
+];
+const CLASS_A = [
+  /^src\//,
+  /^custom_components\/houseplan\/.*\.py$/,
+  /^hacs\.json$/,
+  /^custom_components\/.*\/manifest\.json$/,
+  /^custom_components\/.*\/translations\//,
+];
+const CLASS_B = [
+  /^test\//, /^tests_backend\//, /^demo\//, /^scripts\//,
+  /^\.github\//, /^\.githooks\//, /^rollup\.config\.mjs$/, /^tsconfig.*\.json$/,
+  /^package(-lock)?\.json$/, /^pytest\.ini$/, /^\.gitignore$/, /^\.gitattributes$/,
+];
+const CLASS_C = [
+  /^docs\//, /^README/, /^CHANGELOG/, /^AGENTS\.md$/, /^LICENSE$/,
+  /^CONTRIBUTING\.md$/, /^PROCESS.*\.md$/, /^(CODE|SPEC)-REVIEW-.*\.md$/,
+];
+
+const CHANGELOGS = ['docs/CHANGELOG.md', 'docs/CHANGELOG.ru.md'];
+
+export const ALLOWED_STATUS = ['S5-ready', 'S6-in-progress', 'S7-code-review', 'S8-merged'];
+export const STRICT_STATUS = ['S5-ready', 'S6-in-progress', 'S7-code-review'];
+
+export const RULES = {
+  0: 'классификация путей',
+  1: 'трейлер Issue',
+  2: 'имя ветки',
+  3: 'ТЗ для класса A',
+  4: 'User-Visible и changelog',
+  5: 'класс D без основания',
+  6: 'релизный коммит',
+  7: 'лимит документов ревью',
+  8: 'статус issue',
+  9: 'Gates: light',
+};
+
+export function classify(path) {
+  if (CLASS_D.some((r) => r.test(path))) return 'D';
+  if (CLASS_A.some((r) => r.test(path))) return 'A';
+  if (CLASS_B.some((r) => r.test(path))) return 'B';
+  if (CLASS_C.some((r) => r.test(path))) return 'C';
+  return '?';
+}
+
+// --- разбор коммитов ---
+// Тело коммита многострочное, поэтому поля режутся не по переводам строк:
+// %x1f разделяет поля, %x1e — записи. Разбор по строкам ломался на первом же
+// коммите с абзацем в теле.
+export const FS = '\x1f';
+export const RS = '\x1e';
+export const LOG_FORMAT = `%H${FS}%s${FS}%b${RS}`;
+
+export function makeCommit({ sha = '', subject = '', body = '', files = [] }) {
+  const text = `${subject}\n${body}`;
+  const all = (name) =>
+    [...text.matchAll(new RegExp(`^${name}:\\s*(.+)$`, 'gmi'))].map((m) => m[1].trim());
+  const one = (name) => all(name)[0] ?? null;
+  return {
+    sha,
+    short: sha.slice(0, 8),
+    subject,
+    files,
+    classes: new Set(files.map(classify)),
+    issues: all('Issue'),
+    userVisible: one('User-Visible'),
+    release: one('Release'),
+    baselineReviewed: one('Baseline-Reviewed'),
+    gates: one('Gates'),
+    // Кандидат беты несёт работу и живёт по общим правилам — решение 1.
+    isRelease:
+      (/^Release v\d/.test(subject) && !/-(beta|rc|alpha)\.|candidate/i.test(subject))
+      || Boolean(one('Release')),
+  };
+}
+
+export function parseRecords(raw, filesOf = () => []) {
+  if (!raw.trim()) return [];
+  return raw
+    .split(RS)
+    .map((r) => r.replace(/^\n/, ''))
+    .filter((r) => r.trim())
+    .map((rec) => {
+      const [sha, subject, body = ''] = rec.split(FS);
+      return makeCommit({ sha, subject, body, files: filesOf(sha) });
+    });
+}
+
+// --- проверки по одному коммиту: 1, 4, 5, 6, 9 ---
+export function evaluateCommit(c) {
+  const out = [];
+  const fail = (rule, msg) => out.push({ level: 'fail', rule, sha: c.short, msg });
+  const warn = (rule, msg) => out.push({ level: 'warn', rule, sha: c.short, msg });
+  const has = (k) => c.classes.has(k);
+  const onlyD = c.classes.size === 1 && has('D');
+  const sources = c.files.filter(
+    (f) => /^src\//.test(f) || /^custom_components\/houseplan\/.*\.py$/.test(f),
+  );
+
+  if (c.isRelease) {
+    // Релизный коммит: §10.2 п.5 и п.6. Трейлер Issue от него не требуется —
+    // публикация версии не продуктовое изменение.
+    if (!c.release) {
+      fail(5, `релизный коммит «${c.subject.slice(0, 50)}» без трейлера «Release: vX.Y.Z»`);
+    }
+    if (sources.length) {
+      fail(6, `релизный коммит содержит продуктовый исходник: ${sources.slice(0, 3).join(', ')}`);
+    }
+    if ((c.gates ?? '').toLowerCase() === 'light') {
+      fail(9, '«Gates: light» на релизном коммите запрещён');
+    }
+    return out;
+  }
+
+  if ((has('A') || has('B')) && !c.issues.length) {
+    fail(1, `класс ${has('A') ? 'A' : 'B'} без трейлера «Issue: #NN» — ${c.subject.slice(0, 60)}`);
+  }
+  for (const t of c.issues) {
+    if (!/^#\d+$/.test(t)) fail(1, `трейлер Issue должен быть вида «#NN», получено «${t}»`);
+  }
+
+  if ((c.userVisible ?? '').toLowerCase() === 'yes') {
+    const missing = CHANGELOGS.filter((f) => !c.files.includes(f));
+    if (missing.length) fail(4, `User-Visible: yes, но не тронуты: ${missing.join(', ')}`);
+  }
+  if ((has('A') || has('B')) && !c.userVisible) {
+    warn(4, 'класс A/B без трейлера «User-Visible: yes|no»');
+  }
+
+  if (onlyD && !c.release && !c.baselineReviewed) {
+    fail(5, 'изменена только генерируемая часть (класс D) без «Release: vX.Y.Z» либо «Baseline-Reviewed: <ссылка>»');
+  }
+
+  if ((c.gates ?? '').toLowerCase() === 'light' && onlyD) {
+    fail(9, '«Gates: light» на коммите класса D запрещён');
+  }
+
+  const unknown = c.files.filter((f) => classify(f) === '?');
+  if (unknown.length) warn(0, `путь вне классов A/B/C/D: ${unknown.slice(0, 3).join(', ')}`);
+
+  return out;
+}
+
+// 2. имя ветки issue/NN-slug соответствует трейлерам
+export function checkBranchRule(branch, commits) {
+  const m = (branch ?? '').match(/^issue\/(\d+)-/);
+  if (!m) return [];
+  const want = `#${m[1]}`;
+  const out = [];
+  for (const c of commits) {
+    for (const t of c.issues) {
+      if (t !== want) {
+        out.push({
+          level: 'fail', rule: 2, sha: c.short,
+          msg: `ветка ${branch} про ${want}, а трейлер указывает ${t}`,
+        });
+      }
+    }
+  }
+  return out;
+}
+
+// 3. для класса A нужно ТЗ docs/specs/NN-*.md, либо метка small (лёгкий трек).
+// Офлайн это предупреждение: лёгкий трек держит ТЗ в теле issue, и без чтения
+// меток отличить «ТЗ в issue» от «ТЗ не написано» невозможно. С метками — отказ.
+export function checkSpecs(commits, specFiles, labelsOf = null) {
+  if (specFiles === null) {
+    return [{ level: 'warn', rule: 3, sha: '-', msg: 'нет docs/specs/ — проверка 3 пропущена' }];
+  }
+  const out = [];
+  const seen = new Set();
+  for (const c of commits) {
+    if (!c.classes.has('A') || c.isRelease) continue;
+    for (const t of c.issues) {
+      const nn = t.slice(1);
+      if (seen.has(nn)) continue;
+      seen.add(nn);
+      if (specFiles.some((f) => new RegExp(`^0*${nn}[-_]`).test(f))) continue;
+
+      const labels = labelsOf ? labelsOf(nn) : null;
+      if (labels === null) {
+        out.push({
+          level: 'warn', rule: 3, sha: c.short,
+          msg: `класс A по ${t}, но ТЗ docs/specs/${nn}-*.md не найдено — допустимо только при метке small`,
+        });
+      } else if (!labels.includes('small')) {
+        out.push({
+          level: 'fail', rule: 3, sha: c.short,
+          msg: `класс A по ${t}: ТЗ docs/specs/${nn}-*.md нет, и метки small на issue нет — код без ТЗ`,
+        });
+      }
+    }
+  }
+  return out;
+}
+
+// 7. документов ревью на issue не больше четырёх (§4, лимит циклов)
+export function checkReviewDocLimit(files) {
+  if (!files.length) {
+    return [{ level: 'warn', rule: 7, sha: '-', msg: 'документов ревью не найдено — проверка 7 пропущена' }];
+  }
+  const byIssue = new Map();
+  for (const f of files) {
+    const m = f.match(/-(\d+)-r(\d+)\.md$/) || f.match(/(\d+).*-r(\d+)\.md$/);
+    if (!m) continue;
+    const arr = byIssue.get(m[1]) ?? [];
+    arr.push(Number(m[2]));
+    byIssue.set(m[1], arr);
+  }
+  const out = [];
+  for (const [nn, rounds] of byIssue) {
+    if (Math.max(...rounds) > 4 || rounds.length > 4) {
+      out.push({
+        level: 'fail', rule: 7, sha: '-',
+        msg: `issue #${nn}: документов ревью ${rounds.length}, максимум r${Math.max(...rounds)} — лимит 4 цикла исчерпан`,
+      });
+    }
+  }
+  return out;
+}
+
+// Правило №1 говорит о продуктовом коде и инструментах, а не о документации.
+// Поэтому статус issue спрашивается только у коммитов класса A/B. Иначе краснел
+// бы каждый документ ревью: он ложится в ветку, пока issue в S4-spec-review или
+// S7-code-review, и рабочего статуса у задачи в этот момент нет.
+export function commitsUnderRuleOne(commits) {
+  return commits.filter(
+    (c) => !c.isRelease && (c.classes.has('A') || c.classes.has('B')),
+  );
+}
+
+// 8. статус issue. Fail closed: недоступный или закрытый issue — отказ, а не
+// пропуск. Гейт, который молчит при недоступном источнике правды, бесполезен.
+export function checkIssueStatuses(numbers, runner, { allowed = ALLOWED_STATUS } = {}) {
+  const out = [];
+  for (const nn of numbers) {
+    const r = runner(nn);
+    if (!r || r.ok !== true) {
+      const why = (r && r.error ? String(r.error) : 'нет ответа').split('\n')[0];
+      out.push({
+        level: 'fail', rule: 8, sha: '-',
+        msg: `issue #${nn}: не удалось прочитать — отказ (fail closed). ${why}`,
+      });
+      continue;
+    }
+    let issue;
+    try {
+      issue = typeof r.json === 'string' ? JSON.parse(r.json) : r.json;
+    } catch (e) {
+      out.push({
+        level: 'fail', rule: 8, sha: '-',
+        msg: `issue #${nn}: ответ не разобран — отказ (fail closed). ${e.message}`,
+      });
+      continue;
+    }
+    if (String(issue.state).toUpperCase() !== 'OPEN') {
+      out.push({
+        level: 'fail', rule: 8, sha: '-',
+        msg: `issue #${nn} закрыт — коммит по закрытой задаче отклоняется`,
+      });
+      continue;
+    }
+    const names = (issue.labels ?? []).map((l) => (typeof l === 'string' ? l : l.name));
+    if (!names.some((n) => allowed.includes(n))) {
+      const status = names.filter((n) => /^S\d-/.test(n));
+      out.push({
+        level: 'fail', rule: 8, sha: '-',
+        msg: `issue #${nn}: статус ${status.length ? status.join(',') : 'не проставлен'}, а нужен один из ${allowed.join(' / ')}`,
+      });
+    }
+    if (names.includes('blocked')) {
+      out.push({
+        level: 'fail', rule: 8, sha: '-',
+        msg: `issue #${nn} помечен blocked — задача ждёт владельца`,
+      });
+    }
+  }
+  return out;
+}
+
+export function buildReport({ range, branch, commits, findings }) {
+  const fails = findings.filter((f) => f.level === 'fail');
+  return {
+    range,
+    branch,
+    commits,
+    ok: fails.length === 0,
+    fails: fails.length,
+    warns: findings.length - fails.length,
+    findings,
+  };
+}
+
+// --- CLI ---
+function git(args, repo) {
+  const r = spawnSync('git', ['-C', repo, ...args], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  if (r.status !== 0) {
+    process.stderr.write(`git ${args.join(' ')} → ${(r.stderr || '').trim()}\n`);
+    process.exit(2);
+  }
+  return r.stdout;
+}
+
+function ghRunner(nwo, bin) {
+  return (nn) => {
+    const r = spawnSync(bin, ['issue', 'view', String(nn), '--repo', nwo, '--json', 'number,state,labels'],
+      { encoding: 'utf8' });
+    return r.status === 0
+      ? { ok: true, json: r.stdout }
+      : { ok: false, error: (r.stderr || r.stdout || 'gh завершился с ошибкой').trim() };
+  };
+}
+
+function main(argv) {
+  const flag = (name) => argv.includes(`--${name}`);
+  const value = (name, dflt = null) => {
+    const i = argv.indexOf(`--${name}`);
+    if (i === -1) return dflt;
+    const next = argv[i + 1];
+    return !next || next.startsWith('--') ? true : next;
+  };
+
+  const repo = value('repo', process.cwd());
+  const allowed = flag('no-merged') ? STRICT_STATUS : ALLOWED_STATUS;
+
+  let range = value('range');
+  if (!range && flag('github-range')) {
+    range = resolveValidationRange({
+      eventName: process.env.EVENT_NAME,
+      beforeSha: process.env.BEFORE_SHA,
+      baseSha: process.env.BASE_SHA,
+      headSha: process.env.HEAD_SHA,
+      defaultBranch: process.env.DEFAULT_BRANCH,
+    }, (args) => git(args, repo).trim());
+  }
+  if (!range) {
+    const hasDev = spawnSync('git', ['-C', repo, 'rev-parse', '--verify', 'origin/dev'],
+      { encoding: 'utf8' }).status === 0;
+    range = hasDev ? 'origin/dev..HEAD' : 'HEAD~20..HEAD';
+  }
+
+  const filesOf = (sha) =>
+    git(['show', '--name-only', '--pretty=format:', sha], repo)
+      .split('\n').map((s) => s.trim()).filter(Boolean);
+  const commits = parseRecords(
+    git(['log', '--reverse', `--pretty=format:${LOG_FORMAT}`, range], repo), filesOf,
+  );
+  const branch = git(['rev-parse', '--abbrev-ref', 'HEAD'], repo).trim();
+
+  const findings = [];
+  for (const c of commits) findings.push(...evaluateCommit(c));
+  findings.push(...checkBranchRule(branch, commits));
+
+  // Метки читаются один раз и используются дважды: проверкой 8 и escalation
+  // проверки 3. Второй запрос по тому же issue — лишний сетевой вызов.
+  let labelsOf = null;
+  if (flag('issues')) {
+    const numbers = [...new Set(commitsUnderRuleOne(commits).flatMap((c) => c.issues).map((t) => t.slice(1)))];
+    const runner = ghRunner(process.env.HP_REPO ?? 'Matysh/houseplan-card', process.env.GH_BIN ?? 'gh');
+    const cache = new Map();
+    const cached = (nn) => {
+      if (!cache.has(nn)) cache.set(nn, runner(nn));
+      return cache.get(nn);
+    };
+    findings.push(...checkIssueStatuses(numbers, cached, { allowed }));
+    labelsOf = (nn) => {
+      const r = cached(nn);
+      if (!r || r.ok !== true) return null;
+      try {
+        const issue = typeof r.json === 'string' ? JSON.parse(r.json) : r.json;
+        return (issue.labels ?? []).map((l) => (typeof l === 'string' ? l : l.name));
+      } catch {
+        return null;
+      }
+    };
+  }
+
+  const specsDir = join(repo, 'docs', 'specs');
+  findings.push(...checkSpecs(commits, existsSync(specsDir) ? readdirSync(specsDir) : null, labelsOf));
+
+  const reviewDir = join(repo, 'docs', 'reviews');
+  const reviewFiles = [
+    ...(existsSync(reviewDir) ? readdirSync(reviewDir) : []),
+    ...readdirSync(repo).filter((f) => /^(CODE|SPEC)-REVIEW-.*\.md$/.test(f)),
+  ];
+  findings.push(...checkReviewDocLimit(reviewFiles));
+
+  const report = buildReport({ range, branch, commits: commits.length, findings });
+
+  if (flag('json')) {
+    process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
+  } else {
+    process.stdout.write(`process-gate: диапазон ${range}, коммитов ${commits.length}\n`);
+    for (const f of findings.filter((x) => x.level === 'fail')) {
+      process.stdout.write(`FAIL п.${f.rule} ${RULES[f.rule]} ${f.sha}  ${f.msg}\n`);
+    }
+    for (const f of findings.filter((x) => x.level === 'warn')) {
+      process.stdout.write(`WARN п.${f.rule} ${RULES[f.rule]} ${f.sha}  ${f.msg}\n`);
+    }
+    process.stdout.write(report.ok
+      ? `гейт пройден, предупреждений ${report.warns}\n`
+      : `нарушений ${report.fails}, предупреждений ${report.warns}\n`);
+    if (!flag('issues')) {
+      process.stdout.write('проверка 8 (статус issue) не выполнялась — добавьте --issues\n');
+    }
+  }
+
+  // --report печатает находки, но не краснеет: нужен для догоняющего прогона по
+  // исторической части, где нарушения известны и чиниться не будут.
+  return flag('report') ? 0 : (report.ok ? 0 : 1);
+}
+
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  process.exit(main(process.argv.slice(2)));
+}
