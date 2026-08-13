@@ -55,7 +55,7 @@ import {
 import {
   degradeWalls, rekeyWallsAfterMove,
   setWallThickness, setWallThicknessForRoom, cmToField, wallCmToUnits,
-  wallEdgeBodies, wallBodiesGeometry, wallBodiesUnionPath, paperRoomShapesWithWalls,
+  wallEdgeBodies, wallBodiesGeometry, wallBodiesUnionPath,
   innerContourForRoom, roomWallProfile, outsetContour,
   openingInnerFaceOffsetFromIndex, openingTunnelGeometriesFromIndex,
   openingWallIndex as buildOpeningWallIndex, applyWallThicknessToNewRoom,
@@ -4432,7 +4432,7 @@ class HouseplanCard extends LitElement {
       rooms: space.rooms, walls, openCuts, openings,
       partitions: space.partitions, roomDrafts: space.room_drafts, columns: space.wall_columns,
       cellCm: this._cellCm, gridPitch: this._gridPitch, wallKeyPitch: this._wallKeyPitch,
-      camera: ISO_CAMERA, wallHeight: ISO_WALL_HEIGHT, algorithm: 1,
+      camera: ISO_CAMERA, wallHeight: ISO_WALL_HEIGHT, algorithm: 2,
     })}`;
     return {
       key,
@@ -9646,13 +9646,39 @@ class HouseplanCard extends LitElement {
   }
 
   /** Paper under rooms, grown by shared-wall half-thickness when set. */
-  private _paperShapes(rooms: any[]): Array<{ poly: string } | { rect: { x: number; y: number; w: number; h: number; rx: number } }> {
+  private _paperShapes(rooms: any[]): Array<
+    | { path: string }
+    | { poly: string }
+    | { rect: { x: number; y: number; w: number; h: number; rx: number } }
+  > {
     const walls = this._spaceWalls;
     if (!walls.length) return paperRoomShapes(rooms);
+    const united = this._wallUnionGeometry();
+    return united?.paperD ? [{ path: united.paperD }] : paperRoomShapes(rooms);
+  }
+
+  /** Canonical paper + masonry geometry, cached by structural config epoch. */
+  private _wallUnionGeometry(): ReturnType<typeof wallBodiesUnionPath> {
+    const walls = this._spaceWalls;
+    const extras = this._physicalBodiesR();
+    if (!walls.length && !extras.length) return null;
     const openCuts = this._openPairs().flatMap((p) => p.segs);
-    return paperRoomShapesWithWalls(
-      rooms, walls, openCuts, this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-    );
+    const openings = (this._curSpaceCfg?.openings || []).map((o: any) => ({
+      x: Number(o.x) * NORM_W, y: Number(o.y) * NORM_W,
+      angle: Number(o.angle) || 0,
+      length: (Number(o.length) > 0 ? Number(o.length) : 0.9) * NORM_W,
+    }));
+    const unionKey = `${this._space}|${this._cfgEpoch}|${this._spaceModel().rooms.length}`;
+    if (!this._wallUnionCache || this._wallUnionCache.key !== unionKey) {
+      this._wallUnionCache = {
+        key: unionKey,
+        value: wallBodiesUnionPath(
+          this._spaceModel().rooms, walls, openCuts, openings,
+          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, extras,
+        ),
+      };
+    }
+    return this._wallUnionCache.value;
   }
 
   /** Thick-wall spans in render units — suppress centreline stroke under bodies. */
@@ -10009,26 +10035,7 @@ class HouseplanCard extends LitElement {
     if (this._renderProjection === 'iso') return svg`` as unknown as TemplateResult;
     if (disp && !disp.showBorders && (this._mode === 'view' || this._mode === 'devices'))
       return svg`` as unknown as TemplateResult;
-    const walls = this._spaceWalls;
-    const extras = this._physicalBodiesR();
-    if (!walls.length && !extras.length) return svg`` as unknown as TemplateResult;
-    const openCuts = this._openPairs().flatMap((p) => p.segs);
-    const openings = (this._curSpaceCfg?.openings || []).map((o: any) => ({
-      x: Number(o.x) * NORM_W, y: Number(o.y) * NORM_W,
-      angle: Number(o.angle) || 0,
-      length: (Number(o.length) > 0 ? Number(o.length) : 0.9) * NORM_W,
-    }));
-    const unionKey = `${this._space}|${this._cfgEpoch}|${this._spaceModel().rooms.length}`;
-    if (!this._wallUnionCache || this._wallUnionCache.key !== unionKey) {
-      this._wallUnionCache = {
-        key: unionKey,
-        value: wallBodiesUnionPath(
-          this._spaceModel().rooms, walls, openCuts, openings,
-          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, extras,
-        ),
-      };
-    }
-    const united = this._wallUnionCache.value;
+    const united = this._wallUnionGeometry();
     if (!united) return svg`` as unknown as TemplateResult;
     const stage = this._stageEl;
     const v = this._viewOr(this._baseVb());
@@ -14026,7 +14033,9 @@ class HouseplanCard extends LitElement {
                    (styles.ts) is composited once for the whole sheet, so
                    adjacent rooms never cast seams onto each other's paper. */}
             ${this._wallHatchDefs(disp.color)}${svg`<g class="hp-paperg">${this._paperShapes(space.rooms).map((sh) =>
-              'poly' in sh
+              'path' in sh
+                ? svg`<path class="hp-paper" d="${sh.path}" fill-rule="evenodd" pointer-events="none"></path>`
+              : 'poly' in sh
                 ? svg`<polygon class="hp-paper" points="${sh.poly}" pointer-events="none"></polygon>`
                 : svg`<rect class="hp-paper" x="${sh.rect.x}" y="${sh.rect.y}" width="${sh.rect.w}" height="${sh.rect.h}" rx="${sh.rect.rx}" pointer-events="none"></rect>`,
               )}</g>`}

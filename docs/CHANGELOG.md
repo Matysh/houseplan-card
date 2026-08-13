@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Splitting a room from an existing corner no longer deforms the exterior wall
+  or pulls a thick internal divider through the facade. Plan, View, kiosk,
+  static cards, hidden isometric rendering and light obstacles now use the same
+  preserved exterior geometry, including already saved plans
+  ([#123](https://github.com/Matysh/houseplan-card/issues/123)).
+
 ## v1.63.0-beta.1 — 2026-08-13
 
 - Deleting a standalone sensor or lock marker no longer breaks its explicit

@@ -290,9 +290,10 @@ View и киоск полностью поддерживаются: исправ
 - **AC10 (`unit`):** обычный Split от середины стены, wall materialisation,
   partial shared intervals, virtual-T mitre, openings и independent partitions
   сохраняют действующее поведение.
-- **AC11 (`performance` + ревью кода):** новый exterior/shared расчёт использует
-  существующее geometry caching; HA state tick не пересчитывает topology, а
-  общий pre-beta performance gate остаётся зелёным.
+- **AC11 (ревью кода):** новый exterior/shared расчёт использует существующее
+  geometry caching; HA state tick не пересчитывает topology. Существующие
+  `performance_smoke` и large-house benchmark остаются общим предрелизным
+  подтверждением, а не отдельным типом доказательства AC.
 - **AC12 (`typecheck` + `unit` + `build`):** быстрые гейты зелёные; три bundle
   snapshot побайтно совпадают.
 - **AC13 (ревью документации):** RU/EN changelog и пользовательские документы

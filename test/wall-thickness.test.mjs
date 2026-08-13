@@ -6,7 +6,7 @@ import {
   setWallThickness, setWallThicknessForRoom, applyWallThicknessToNewRoom,
   drawWallPreviewD, DRAW_WALL_DEFAULT_CM, clampWallCm, cmToField, fieldToCm,
   wallCmToUnits, insetContour, inwardNormal, edgeKinds, wallEdgeBodies,
-  wallBodyRings, wallBodiesUnionPath, innerContourForRoom,
+  wallBodyRings, wallBodiesGeometry, wallBodiesUnionPath, innerContourForRoom,
   paperRoomShapesWithWalls, WALL_MIN_CM, WALL_MAX_CM, MITRE_LIMIT,
   atomicPolyForRoom, insetOffsetsForRoom, wallIntervals, materializeWallIntervals,
   normalizeWallIntervals,
@@ -14,14 +14,69 @@ import {
   openingTunnelGeometries, tunnelFacePath,
   WALL_HATCH_MIN_PX,
 } from '../test-build/wall-thickness.js';
-import { polygonArea, paperRoomShapes } from '../test-build/logic.js';
+import { polygonArea, paperRoomShapes, splitRoomPath, sharedBoundary } from '../test-build/logic.js';
 import { GRID_PITCH } from '../test-build/space-geometry.js';
+import { geometryArea } from '../test-build/physical-geometry.js';
+import { difference, union } from 'polyclip-ts';
 
 const closeTo = (got, want, tol = 1e-6) =>
   assert.ok(Math.abs(got - want) <= tol, `expected ${want}, got ${got}`);
 
 const pitch = 1 / 240; // normalised grid step
 const cellCm = 5;
+
+const closedGeometry = (poly) => {
+  const ring = [...poly, poly[0]].map((point) => [...point]);
+  return [[ring]];
+};
+
+const geometryBounds = (geom) => {
+  const points = geom.flat(2);
+  return [
+    Math.min(...points.map((point) => point[0])),
+    Math.min(...points.map((point) => point[1])),
+    Math.max(...points.map((point) => point[0])),
+    Math.max(...points.map((point) => point[1])),
+  ];
+};
+
+const geometryDifferenceArea = (a, b) => geometryArea(difference(a, b));
+
+function cornerSplitFixture({
+  poly = [[100, 100], [900, 100], [900, 700], [100, 700]],
+  path = [[100, 100], [900, 500]],
+  outerCm = 15,
+  dividerCm = 15,
+  outerOverrides = [],
+} = {}) {
+  const original = { id: 'source', poly: poly.map((point) => [...point]) };
+  const split = splitRoomPath(original.poly, path);
+  assert.ok(split, 'fixture must be a valid corner split');
+
+  let walls = outerCm > 0
+    ? applyWallThicknessToNewRoom([], [original], original.id, outerCm, pitch)
+    : [];
+  for (const [a, b, cm] of outerOverrides)
+    walls = setWallThickness(walls, a, b, cm, pitch);
+  const before = walls.length
+    ? wallBodiesGeometry([original], walls, [], [], pitch, cellCm, GRID_PITCH)
+    : null;
+
+  walls = materializeWallIntervals([original], walls, [], pitch, cellCm, GRID_PITCH);
+  const rooms = [
+    { id: 'source', poly: split[0] },
+    { id: 'fresh', poly: split[1] },
+  ];
+  const divider = sharedBoundary(rooms[0].poly, rooms[1].poly);
+  assert.equal(divider.length, 1);
+  walls = setWallThickness(
+    walls, divider[0].slice(0, 2), divider[0].slice(2), dividerCm, pitch,
+  );
+  walls = normalizeWallIntervals(rooms, walls, [], pitch, cellCm, GRID_PITCH);
+  const after = wallBodiesGeometry(rooms, walls, [], [], pitch, cellCm, GRID_PITCH);
+  assert.ok(after, `wall geometry missing for outer=${outerCm}, divider=${dividerCm}`);
+  return { original, rooms, walls, before, after };
+}
 
 // ------------------------------- key ----------------------------------------
 
@@ -687,6 +742,123 @@ test('wallBodiesUnionPath: a parent floor never erases a nested room wall', () =
   assert.ok((united.d.match(/M/g) || []).length >= 4, united.d);
 });
 
+test('corner Split keeps the original exterior wall body and paper', () => {
+  const { original, rooms, walls, before, after } = cornerSplitFixture();
+  assert.ok(before);
+  assert.deepEqual(geometryBounds(after.geom), geometryBounds(before.geom));
+
+  const centre = closedGeometry(original.poly);
+  const beforeExterior = difference(before.geom, centre);
+  const afterExterior = difference(after.geom, centre);
+  closeTo(geometryDifferenceArea(beforeExterior, afterExterior), 0, 1e-7);
+  closeTo(geometryDifferenceArea(afterExterior, beforeExterior), 0, 1e-7);
+  closeTo(geometryDifferenceArea(before.paperGeom, after.paperGeom), 0, 1e-7);
+  closeTo(geometryDifferenceArea(after.paperGeom, before.paperGeom), 0, 1e-7);
+
+  const paper = paperRoomShapesWithWalls(
+    rooms, walls, [], pitch, cellCm, GRID_PITCH,
+  );
+  assert.equal(paper.length, 1);
+  assert.ok('path' in paper[0]);
+  const nums = paper[0].path.match(/-?\d+(?:\.\d+)?/g).map(Number);
+  const paperPoints = [];
+  for (let i = 0; i < nums.length; i += 2) paperPoints.push([nums[i], nums[i + 1]]);
+  assert.deepEqual(geometryBounds([[paperPoints]]), geometryBounds(before.geom));
+
+  const canonical = wallBodiesUnionPath(
+    rooms, walls, [], [], pitch, cellCm, GRID_PITCH,
+  );
+  assert.ok(canonical?.paperD, 'canonical render pass must include its paper path');
+  assert.equal(canonical.paperD, paper[0].path);
+});
+
+test('corner Split clips every divider thickness when exterior walls are absent', () => {
+  for (const dividerCm of [1, 15, 100]) {
+    const { original, after } = cornerSplitFixture({ outerCm: 0, dividerCm });
+    closeTo(geometryArea(difference(after.geom, closedGeometry(original.poly))), 0, 1e-7);
+  }
+});
+
+test('corner Split preserves the facade for thin and thick outer/divider matrices', () => {
+  for (const outerCm of [1, 15, 100]) {
+    for (const dividerCm of [0, 1, 15, 100]) {
+      const { original, before, after } = cornerSplitFixture({ outerCm, dividerCm });
+      assert.ok(before);
+      const centre = closedGeometry(original.poly);
+      const beforeExterior = difference(before.geom, centre);
+      const afterExterior = difference(after.geom, centre);
+      closeTo(geometryDifferenceArea(beforeExterior, afterExterior), 0, 1e-7);
+      closeTo(geometryDifferenceArea(afterExterior, beforeExterior), 0, 1e-7);
+    }
+  }
+});
+
+test('corner Split keeps unequal exterior arms and is order/id/winding independent', () => {
+  const fixture = cornerSplitFixture({
+    outerOverrides: [
+      [[100, 100], [900, 100], 5],
+      [[100, 700], [100, 100], 40],
+    ],
+    dividerCm: 100,
+  });
+  const shuffled = fixture.rooms
+    .map((room, at) => ({ id: `renamed-${at}`, poly: [...room.poly].reverse() }))
+    .reverse();
+  const permuted = wallBodiesGeometry(
+    shuffled, fixture.walls, [], [], pitch, cellCm, GRID_PITCH,
+  );
+  assert.ok(permuted);
+  closeTo(geometryDifferenceArea(fixture.after.geom, permuted.geom), 0, 1e-7);
+  closeTo(geometryDifferenceArea(permuted.geom, fixture.after.geom), 0, 1e-7);
+
+  const centre = closedGeometry(fixture.original.poly);
+  const beforeExterior = difference(fixture.before.geom, centre);
+  const afterExterior = difference(fixture.after.geom, centre);
+  closeTo(geometryDifferenceArea(beforeExterior, afterExterior), 0, 1e-7);
+  closeTo(geometryDifferenceArea(afterExterior, beforeExterior), 0, 1e-7);
+});
+
+test('Split from a concave vertex does not turn the child mitre into facade', () => {
+  const poly = [[100, 100], [900, 100], [900, 800], [600, 800], [600, 400], [100, 400]];
+  const fixture = cornerSplitFixture({ poly, path: [[600, 400], [900, 250]], dividerCm: 100 });
+  const centre = closedGeometry(poly);
+  const beforeExterior = difference(fixture.before.geom, centre);
+  const afterExterior = difference(fixture.after.geom, centre);
+  closeTo(geometryDifferenceArea(beforeExterior, afterExterior), 0, 1e-7);
+  closeTo(geometryDifferenceArea(afterExterior, beforeExterior), 0, 1e-7);
+});
+
+test('Split with both endpoints at exterior vertices preserves both corners', () => {
+  const fixture = cornerSplitFixture({ path: [[100, 100], [900, 700]], dividerCm: 100 });
+  const centre = closedGeometry(fixture.original.poly);
+  const beforeExterior = difference(fixture.before.geom, centre);
+  const afterExterior = difference(fixture.after.geom, centre);
+  closeTo(geometryDifferenceArea(beforeExterior, afterExterior), 0, 1e-7);
+  closeTo(geometryDifferenceArea(afterExterior, beforeExterior), 0, 1e-7);
+});
+
+test('corner Split clean floors are exactly the room union minus canonical walls', () => {
+  const fixture = cornerSplitFixture({ dividerCm: 100 });
+  const floors = fixture.rooms.map((room) => innerContourForRoom(
+    fixture.rooms, room.id, fixture.walls, [], pitch, cellCm, GRID_PITCH,
+  ));
+  assert.ok(floors.every(Boolean));
+  const actual = union(...floors.map((floor) => closedGeometry(floor)));
+  const expected = difference(closedGeometry(fixture.original.poly), fixture.after.geom);
+  closeTo(geometryDifferenceArea(actual, expected), 0, 1e-7);
+  closeTo(geometryDifferenceArea(expected, actual), 0, 1e-7);
+});
+
+test('corner Split rendering does not materialize or mutate saved geometry', () => {
+  const fixture = cornerSplitFixture({ dividerCm: 100 });
+  const rooms = structuredClone(fixture.rooms);
+  const walls = structuredClone(fixture.walls);
+  const before = JSON.stringify({ rooms, walls });
+  assert.ok(wallBodiesGeometry(rooms, walls, [], [], pitch, cellCm, GRID_PITCH));
+  assert.ok(paperRoomShapesWithWalls(rooms, walls, [], pitch, cellCm, GRID_PITCH).length);
+  assert.equal(JSON.stringify({ rooms, walls }), before);
+});
+
 test('paper with walls covers shared centreline; without walls matches paperRoomShapes', () => {
   const rooms = [
     { id: 'a', poly: [[0, 0], [5, 0], [5, 4], [0, 4]] },
@@ -698,9 +870,8 @@ test('paper with walls covers shared centreline; without walls matches paperRoom
 
   const walls = [{ key: wallKey([5, 0], [5, 4], pitch), cm: 20 }];
   const grown = paperRoomShapesWithWalls(rooms, walls, [], pitch, cellCm, pitch);
-  assert.equal(grown.length, 2);
-  // grown polys are still present (strings)
-  assert.ok('poly' in grown[0]);
+  assert.equal(grown.length, 1);
+  assert.ok('path' in grown[0], 'wall-aware paper is one canonical union path');
 });
 
 test('area of the room polygon is unchanged by thickness helpers', () => {

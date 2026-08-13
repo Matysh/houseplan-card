@@ -71,13 +71,32 @@ test('golden matrix covers required geometry, rendering and adaptive surfaces', 
     'tray-narrow', 'opaque-glow-two-doorways', 'filled-tunnel', 'opening-placement',
     'backup-full', 'backup-space', 'value-badge-positions', 'isometric-geometry',
     'isometric-live-layers', 'isometric-no-borders', 'isometric-touch-kiosk',
-    'isometric-large-warm-remount'])
+    'isometric-large-warm-remount', 'split-corner-wall'])
     assert.equal(ids.includes(token), true, token);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.mode)).has('plan'), true);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.mode)).has('devices'), true);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.mode)).has('decor'), true);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.theme)).has('light'), true);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.theme)).has('dark'), true);
+});
+
+test('corner Split golden captures before, thin and thick facade states', () => {
+  const scenarios = GOLDEN_SCENARIOS.filter((scenario) => scenario.cornerSplitWall);
+  assert.deepEqual(scenarios.map((scenario) => scenario.cornerSplitWall), ['before', 'thin', 'thick']);
+  for (const scenario of scenarios) {
+    const fixture = prepareGoldenFixture(scenario);
+    const space = fixture.config.spaces.find((item) => item.id === scenario.space);
+    assert.ok(space);
+    assert.equal(space.settings.show_borders, true);
+    assert.equal(space.rooms.length, scenario.cornerSplitWall === 'before' ? 1 : 2);
+    if (scenario.cornerSplitWall !== 'before') {
+      const divider = space.walls.find((wall) => (
+        wall.a?.[0] === 0.10 && wall.a?.[1] === 0.10
+        && wall.b?.[0] === 0.90 && wall.b?.[1] === 0.50
+      ));
+      assert.equal(divider?.cm, scenario.cornerSplitWall === 'thin' ? 15 : 100);
+    }
+  }
 });
 
 test('filled opening golden has a pixel-level seam detector', () => {

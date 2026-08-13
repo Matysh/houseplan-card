@@ -1,5 +1,5 @@
 import { makeLargeHouseFixture } from '../fixtures/large-house.mjs';
-import { makeVisualMatrixFixture } from '../fixtures/visual-matrix.mjs';
+import { fixtureWallKey, makeVisualMatrixFixture } from '../fixtures/visual-matrix.mjs';
 
 const fixtureFor = (name) => name === 'large' ? makeLargeHouseFixture() : makeVisualMatrixFixture();
 
@@ -51,6 +51,34 @@ async function stableEnvironment(page, scenario) {
 /** Apply every data-only scenario override before the fixture crosses into the browser. */
 export function prepareGoldenFixture(scenario) {
   const fixture = fixtureFor(scenario.fixture);
+  if (scenario.cornerSplitWall) {
+    const stage = scenario.cornerSplitWall;
+    if (!['before', 'thin', 'thick'].includes(stage))
+      throw new Error(`unknown cornerSplitWall stage: ${stage}`);
+    const a = [0.10, 0.10], tr = [0.90, 0.10], split = [0.90, 0.50];
+    const br = [0.90, 0.90], bl = [0.10, 0.90];
+    const entry = (from, to, cm) => ({
+      key: fixtureWallKey(from, to), a: [...from], b: [...to], cm,
+    });
+    const before = stage === 'before';
+    fixture.config.spaces.push({
+      id: scenario.space,
+      name: 'Corner Split',
+      rooms: before
+        ? [{ id: 'corner-source', name: 'Before Split', area: null, poly: [a, tr, br, bl] }]
+        : [
+          { id: 'corner-source', name: 'Main room', area: null, poly: [a, tr, split] },
+          { id: 'corner-fresh', name: 'New room', area: null, poly: [split, br, bl, a] },
+        ],
+      walls: before
+        ? [entry(a, tr, 15), entry(tr, br, 15), entry(br, bl, 15), entry(bl, a, 15)]
+        : [
+          entry(a, tr, 15), entry(tr, split, 15), entry(split, br, 15),
+          entry(br, bl, 15), entry(bl, a, 15), entry(a, split, stage === 'thin' ? 15 : 100),
+        ],
+      settings: { show_borders: true, fill_mode: 'custom', custom_fill: { c: '#536b82', a: 0.42 } },
+    });
+  }
   const requireSpace = () => {
     const space = fixture.config.spaces.find((item) => item.id === scenario.space);
     if (!space) throw new Error(`golden override references missing space: ${scenario.space}`);

@@ -42,6 +42,17 @@ Every thick wall grows **half outward and half inward** from the polygon edge
 (outer and shared alike). Silhouette is wider than the polygon by `cm/2` on
 outer walls. Paper and the content frame grow under that outer half.
 
+The exterior silhouette is generated from the boolean union of room
+centrelines and its surviving `outer` atomic intervals. A shared Split edge
+therefore disappears before exterior mitres are built. When Split ends at an
+existing corner, its divider is clipped to the interior side of this envelope:
+the real exterior mitre/bevel and unequal arm depths stay unchanged, while any
+divider thickness remains inside the facade. The same computed geometry is
+used for the full/static/hidden-isometric renderers and light occlusion. The
+paper and masonry paths come from one cached structural pass in flat renderers;
+live HA state ticks do not repeat the boolean topology. Saved room and wall data
+is not migrated or rewritten.
+
 ## 3. Body render
 
 Production body is the **ring** `outset(poly, half) − inset(poly, half)` per
@@ -132,14 +143,17 @@ virtual-T mitre; angle-aware opening; 45° wall; T-junction; detached parallel
 room; nested-room tie; partially out-of-span legacy opening; overlapping
 opening de-duplication; shared symbol/cut/tunnel rejection; thick-door tunnel
 clipping and room-side colour ownership; whole and
-atomic rekey after edge/scale.
+atomic rekey after edge/scale; corner Split exterior equality across
+0/1/15/100 cm, unequal arms, both windings and convex/concave endpoints.
 Browser: seamless frame; fill not in hatch; m² drops with thickness; a partial
 virtual stretch, its solid thick remainders and Undo move as one real resize;
 the virtual rubber band paints above the real body; sun starts at the room-side
 opening corners; nav mode restores after `can_write`; a 1 cm body uses
 solid-only in both full and static cards while a 20 cm body keeps its hatch;
 door/window/gate tunnels repeat outer/shared room fills without an axis seam
-(`demo/smoke_opening_tunnel_fill.mjs`).
+(`demo/smoke_opening_tunnel_fill.mjs`); corner Split keeps the same facade in
+Plan/View/kiosk/static/isometric surfaces and the light barrier
+(`demo/smoke_split_corner_wall.mjs`).
 
 ## 9. Independent partitions, drafts and columns
 
