@@ -84,7 +84,8 @@ jobs:
     needs: guard
     if: needs.guard.outputs.stage != ''
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # Время — единственный настоящий ограничитель зациклившегося прогона.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
@@ -96,7 +97,7 @@ jobs:
 
       # Материал ревью живёт в ветке задачи: ТЗ в docs/specs/ и код коммитятся
       # в issue/<NN>-slug. Если ветка запушена — переключаемся на неё, иначе
-      # ревьюер прочитает dev и не найдёт того, что должен оценивать.
+      # ревьюер прочтёт dev и не найдёт того, что должен оценивать.
       - name: Перейти на ветку задачи
         env:
           NUM: ${{ github.event.issue.number }}
@@ -149,6 +150,11 @@ jobs:
             в одном документе и которое не помечено как предположение, —
             замечание. Не бывает сложной задачи без единого открытого вопроса.
 
+            Владельцу задаются только продуктовые вопросы: что человек видит или
+            делает и каков объём видимых изменений в этом issue. Технический
+            вопрос, вынесенный владельцу, — тоже замечание: ты его снимаешь и
+            решаешь по существу в своём вердикте.
+
             Для этапа code: материал — diff по issue. Ручного тестирования в
             цикле нет, поэтому именно ты отвечаешь на вопрос «оно вообще
             работает». По каждому AC: либо он доказан автотестом и ты убедился,
@@ -176,9 +182,10 @@ jobs:
             вердикт в формате §7.2:
             `Вердикт: зелёный/жёлтый/красный · цикл r${{ needs.guard.outputs.cycle }}/${{ needs.guard.outputs.limit }} · High: N · Medium: N → #…`
 
-            Затем верни JSON по схеме.
+            Затем верни JSON по схеме. Это последнее действие и оно обязательно:
+            без него метка не переставится и конвейер встанет.
           claude_args: |
-            --max-turns 40
+            --max-turns 150
             --allowedTools Read,Grep,Glob,Bash,mcp__github__add_issue_comment,mcp__github__issue_write,mcp__github__issue_read
             --json-schema '{"type":"object","properties":{"verdict":{"type":"string","enum":["green","yellow","red"]},"high":{"type":"integer"},"medium":{"type":"integer"},"summary":{"type":"string"}},"required":["verdict","high","medium","summary"]}'
 
@@ -223,4 +230,6 @@ jobs:
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
         run: |
           gh issue comment "${{ github.event.issue.number }}" --repo "${{ github.repository }}" \
-            --body "Автоматическое ревью не отработало: [прогон](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}). Статусная метка не менялась, задача осталась на месте."
+            --body "Автоматическое ревью не отработало: [прогон](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}). Статусная метка не менялась, задача осталась на месте.
+
+Если вердикт выше всё же опубликован — сбой произошёл после него. Перестановку метки в этом случае выполняет чат обслуживания или владелец, но не автор задачи: автор не толкует вердикт о своей же работе."
