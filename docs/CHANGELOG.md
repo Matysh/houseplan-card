@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Read-only View and kiosk cards now paint a complete first frame even when
+  Home Assistant refuses live-sync event subscriptions. The selected space,
+  room fills, decor, walls, Glow and device values no longer require clicking
+  the already active space tab ([#131](https://github.com/Matysh/houseplan-card/issues/131)).
+
 ## v1.63.0 — 2026-08-13
 
 - Preserved explicit door, window and gate bindings when their standalone
