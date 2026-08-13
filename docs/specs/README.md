@@ -43,7 +43,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#50](https://github.com/Matysh/houseplan-card/issues/50) Экспорт и импорт конфигурации | [050-config-export-import.md](050-config-export-import.md) | реализовано локально; проверки на следующем пре-релизе |
 | [#58](https://github.com/Matysh/houseplan-card/issues/58) Vacuum integration coverage — Stage 1 | [058-vacuum-stage1.md](058-vacuum-stage1.md) | в реализации |
 | [#89](https://github.com/Matysh/houseplan-card/issues/89) Опциональный объёмный 2.5D/изометрический вид | [089-isometric-view.md](089-isometric-view.md) | исследование завершено; продуктовый контекст |
-| [#89](https://github.com/Matysh/houseplan-card/issues/89) Этап 1: объёмный вид за флагом Labs | [089-isometric-view-stage1.md](089-isometric-view-stage1.md) | ТЗ на ревью, ревизия 3 |
+| [#89](https://github.com/Matysh/houseplan-card/issues/89) Этап 1: объёмный вид за флагом Labs | [089-isometric-view-stage1.md](089-isometric-view-stage1.md) | ТЗ принято, ревизия 3 |
 | [#98](https://github.com/Matysh/houseplan-card/issues/98) Единая система пульсаций и активностей устройства | [098-device-pulse-system.md](098-device-pulse-system.md) | реализовано локально; ожидает prerelease/CI gate |
 
 ## P2

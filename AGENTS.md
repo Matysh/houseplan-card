@@ -272,6 +272,22 @@ Chromium — a `1e-6`-tolerance magnet-snap on the opening-*placement* path. It
 reproduces against the pristine committed bundle, so treat it as
 pre-existing/pixel-precision, not a regression you introduced.
 
+## Labs flags
+
+`src/labs.ts` is the single registry and resolver for hidden presentation
+experiments. Activate a live flag through `?hp-labs=<id>` or the shared hash
+grammar, remove it with `-<id>`, and use `off` to clear the set. Do not add a
+YAML/config switch for a Labs-only experiment. A new entry needs a unique
+lowercase id, issue, numeric-core `since`, numeric-core `expires`, summary and
+unit/browser coverage. Invalid or duplicate registry entries fail closed.
+
+Expiry is exclusive and ignores prerelease suffixes: an entry expiring at
+`1.65.0` is unavailable in `1.65.0-beta.1`. Before that cycle, either remove the
+experiment or graduate it through its own reviewed issue; never extend expiry as
+an incidental change. Labs may alter presentation only and must not gate data,
+migrations, stores, HA actions or network calls. Current renderer details are in
+`docs/ISOMETRIC.md`.
+
 Demo harness render quirk: the fake `hass` in `demo.html` is set once, so opening the
 page directly in a browser renders the floor plan but **device icons only appear
 after a re-render** (an F5 refresh, or nudging `card.hass = {...card.hass}`). The

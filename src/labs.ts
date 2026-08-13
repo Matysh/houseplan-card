@@ -59,16 +59,23 @@ export function validLabsFlag(flag: LabsFlag): boolean {
   return !!since && !!expires && compareVersion(since, expires) < 0;
 }
 
+/** A malformed or ambiguous registry disables the whole mechanism. */
+export function validLabsRegistry(registry: readonly LabsFlag[]): boolean {
+  const ids = new Set<string>();
+  for (const flag of registry) {
+    if (!validLabsFlag(flag) || ids.has(flag.id)) return false;
+    ids.add(flag.id);
+  }
+  return true;
+}
+
 export function liveLabsFlags(
   version: string, registry: readonly LabsFlag[] = LABS_FLAGS,
 ): ReadonlyMap<string, LabsFlag> {
   const current = parseVersionCore(version);
   const live = new Map<string, LabsFlag>();
-  if (!current) return live;
-  const ids = new Set<string>();
+  if (!current || !validLabsRegistry(registry)) return live;
   for (const flag of registry) {
-    if (!validLabsFlag(flag) || ids.has(flag.id)) continue;
-    ids.add(flag.id);
     const since = parseVersionCore(flag.since)!;
     const expires = parseVersionCore(flag.expires)!;
     if (compareVersion(current, since) >= 0 && compareVersion(current, expires) < 0) {
@@ -110,7 +117,7 @@ export function resolveLabs(
   registry: readonly LabsFlag[] = LABS_FLAGS,
 ): LabsResolution {
   const live = liveLabsFlags(version, registry);
-  const known = new Set(registry.filter(validLabsFlag).map((flag) => flag.id));
+  const known = new Set(validLabsRegistry(registry) ? registry.map((flag) => flag.id) : []);
   const active = new Set(storedFlags(storageValue).filter((id) => live.has(id)));
   let knownUrlOperation = false;
   const apply = (token: string) => {

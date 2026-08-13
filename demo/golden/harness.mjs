@@ -62,13 +62,14 @@ export function prepareGoldenFixture(scenario) {
     fixture.devices[scenario.deviceId].name = scenario.deviceName;
   }
   if (scenario.fillMode || typeof scenario.glowEnabled === 'boolean'
-      || typeof scenario.sunRays === 'boolean') {
+      || typeof scenario.sunRays === 'boolean' || typeof scenario.showBorders === 'boolean') {
     const space = requireSpace();
     space.settings = {
       ...(space.settings || {}),
       ...(scenario.fillMode ? { fill_mode: scenario.fillMode } : {}),
       ...(typeof scenario.glowEnabled === 'boolean' ? { glow_enabled: scenario.glowEnabled } : {}),
       ...(typeof scenario.sunRays === 'boolean' ? { sun_rays: scenario.sunRays } : {}),
+      ...(typeof scenario.showBorders === 'boolean' ? { show_borders: scenario.showBorders } : {}),
       ...(scenario.customFill ? { custom_fill: scenario.customFill } : {}),
     };
   }
@@ -204,10 +205,21 @@ export async function prepareGoldenScenario(page, scenario) {
     window.__goldenCard?.remove?.();
     window.__card?.remove?.();
     localStorage.clear();
+    history.replaceState(null, '', scenario.labs?.length
+      ? `?hp-labs=${encodeURIComponent(scenario.labs.join(','))}` : location.pathname);
+    if (scenario.labs?.length) {
+      localStorage.setItem('houseplan_card_labs_v1', JSON.stringify(scenario.labs));
+    }
+    if (scenario.projection && scenario.space) {
+      localStorage.setItem('houseplan_card_view_v1', JSON.stringify({
+        [scenario.space]: scenario.projection,
+      }));
+    }
     const host = document.getElementById('host');
     const cardConfig = {
       type: 'custom:houseplan-card', title: `Golden ${scenario.id}`, icon_size: 3.4,
       language: scenario.language || 'en',
+      ...(scenario.kiosk ? { kiosk: true } : {}),
     };
     const hassFor = () => ({
       language: scenario.language || 'en', locale: { language: scenario.language || 'en' },
@@ -267,6 +279,11 @@ export async function prepareGoldenScenario(page, scenario) {
       card._setMode(scenario.mode);
       await card.updateComplete;
       await settleMode(card);
+    }
+    if (scenario.projection === 'iso' && typeof card._setProjection === 'function') {
+      card._setProjection('iso');
+      await card.updateComplete;
+      await frame();
     }
     if (Number.isFinite(scenario.zoom)) {
       card._applyView(scenario.zoom, 500, 500);

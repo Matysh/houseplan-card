@@ -148,6 +148,8 @@ jobs:
         run: |
           npm run benchmark:large-house -- --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/baseline.json
           npm run benchmark:large-house -- --target-root=. --samples=7 --warmups=1 --output=../artifacts/performance/candidate.json
+          npm run benchmark:large-house-isometric -- --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/isometric-baseline.json
+          npm run benchmark:large-house-isometric -- --target-root=. --samples=7 --warmups=1 --output=../artifacts/performance/isometric-candidate.json
           npm run benchmark:glow -- --profile=large-light-blend-v1 --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/blend-baseline.json
           npm run benchmark:glow -- --profile=large-light-blend-v1 --target-root=. --samples=7 --warmups=1 --output=../artifacts/performance/blend-candidate.json
           npm run benchmark:glow -- --profile=large-house-glow-overlay-v1 --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/overlay-baseline.json
@@ -161,6 +163,7 @@ jobs:
         working-directory: candidate
         run: |
           npm run benchmark:compare -- --baseline=../artifacts/performance/baseline.json --candidate=../artifacts/performance/candidate.json --output=../artifacts/performance/comparison.json
+          npm run benchmark:compare -- --budgets=demo/performance/budgets-large-house-isometric.json --baseline=../artifacts/performance/isometric-baseline.json --candidate=../artifacts/performance/isometric-candidate.json --output=../artifacts/performance/isometric-comparison.json
           npm run benchmark:compare -- --budgets=demo/performance/budgets-large-light-blend.json --baseline=../artifacts/performance/blend-baseline.json --candidate=../artifacts/performance/blend-candidate.json --output=../artifacts/performance/blend-comparison.json
           npm run benchmark:compare -- --budgets=demo/performance/budgets-large-house-glow-overlay.json --baseline=../artifacts/performance/overlay-baseline.json --candidate=../artifacts/performance/overlay-candidate.json --output=../artifacts/performance/overlay-comparison.json
 

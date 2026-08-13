@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /** Reproducible browser benchmark and report producer for HP-PERF-01. */
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { launch } from './serve.mjs';
 import { LARGE_HOUSE_COUNTS, makeLargeHouseFixture } from './fixtures/large-house.mjs';
@@ -13,6 +13,11 @@ const samples = Math.max(1, Math.min(20, Number(valueArg('samples')) || 7));
 const warmups = Math.max(0, Math.min(5, Number(valueArg('warmups')) || 1));
 const output = valueArg('output') ? resolve(valueArg('output')) : null;
 const targetRoot = resolve(valueArg('target-root') ?? '.');
+const profile = valueArg('profile') ?? 'large-house-v1';
+if (!['large-house-v1', 'large-house-isometric-v1'].includes(profile))
+  throw new Error(`unknown large-house profile: ${profile}`);
+const isometric = profile === 'large-house-isometric-v1';
+const requiresIsometric = isometric && existsSync(resolve(targetRoot, 'src/iso-projection.ts'));
 const fixture = makeLargeHouseFixture();
 const viewport = { width: 1440, height: 1000 };
 
@@ -43,7 +48,7 @@ const rows = [];
 try {
   for (let iteration = 0; iteration < warmups + samples; iteration++) {
     const measuredSample = iteration - warmups;
-    const row = await page.evaluate(async ({ fixture, sample, cardContract }) => {
+    const row = await page.evaluate(async ({ fixture, sample, cardContract, isometric, requiresIsometric }) => {
       const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
       const until = async (predicate, timeout = 10000) => {
         const started = performance.now();
@@ -98,10 +103,18 @@ try {
         wallUnion: card._wallUnionCache ? 1 : 0,
         openingTunnel: card._openingTunnelCache ? 1 : 0,
         openingWallIndex: card._openingWallIndexCache ? 1 : 0,
+        isoGeometry: card._isoGeometryCache?.size ?? 0,
       });
 
       window.__card?.remove?.();
       localStorage.clear();
+      if (isometric) {
+        localStorage.setItem('houseplan_card_labs_v1', JSON.stringify(['iso']));
+        localStorage.setItem('houseplan_card_view_v1', JSON.stringify(Object.fromEntries(
+          fixture.config.spaces.map((space) => [space.id, 'iso']),
+        )));
+        history.replaceState(null, '', '?hp-labs=iso');
+      } else history.replaceState(null, '', location.pathname);
       const host = document.getElementById('host');
       const card = document.createElement('houseplan-card');
       card.setConfig({
@@ -144,6 +157,10 @@ try {
       host.replaceChildren(card);
       card.hass = hassFor(fixture.states);
       window.__hpAssertCardContract(card, cardContract);
+      if (requiresIsometric && (typeof card._setProjection !== 'function'
+          || !(card._isoGeometryCache instanceof Map))) {
+        throw new Error('large-house-isometric-v1 candidate has no renderer contract');
+      }
       await until(() => card._loadOk && card._model?.length === fixture.counts.floors);
       await card.updateComplete;
       await frame();
@@ -152,6 +169,18 @@ try {
       await frame();
       const firstStableRenderMs = Number((performance.now() - loadStarted).toFixed(2));
       const loadLongTaskResult = await loadLongTasks.stop();
+      const viewToggle = isometric ? await duration(async () => {
+        if (typeof card._setProjection === 'function') {
+          card._setProjection('flat');
+          await card.updateComplete;
+          card._setProjection('iso');
+          await card.updateComplete;
+        } else {
+          // Comparison SHAs before #89 intentionally ignore the Labs operation.
+          card.requestUpdate();
+          await card.updateComplete;
+        }
+      }) : null;
       const spaceSwitch = await duration(async () => {
         card._pickSpace('perf-floor-2');
         await card.updateComplete;
@@ -249,6 +278,7 @@ try {
         sample,
         modelReadyMs,
         firstStableRenderMs,
+        ...(viewToggle ? { viewToggleMs: viewToggle.ms } : {}),
         spaceSwitchMs: spaceSwitch.ms,
         stateUpdateMs: stateUpdate.ms,
         resizePreviewMs: resizePreview.ms,
@@ -257,6 +287,7 @@ try {
         switchCycleMs: switchCycle.ms,
         longTasks: {
           load: loadLongTaskResult,
+          ...(viewToggle ? { viewToggle: viewToggle.longTasks } : {}),
           spaceSwitch: spaceSwitch.longTasks,
           stateUpdate: stateUpdate.longTasks,
           resizePreview: resizePreview.longTasks,
@@ -273,7 +304,10 @@ try {
       card.remove();
       await frame();
       return result;
-    }, { fixture, sample: measuredSample, cardContract: LARGE_HOUSE_CARD_CONTRACT });
+    }, {
+      fixture, sample: measuredSample, cardContract: LARGE_HOUSE_CARD_CONTRACT,
+      isometric, requiresIsometric,
+    });
     if (measuredSample >= 0) rows.push(row);
   }
 } finally {
@@ -284,9 +318,10 @@ const metricNames = [
   'modelReadyMs', 'firstStableRenderMs', 'spaceSwitchMs', 'stateUpdateMs',
   'resizePreviewMs', 'panZoomMs', 'settingsDialogMs', 'switchCycleMs',
 ];
+if (isometric) metricNames.splice(2, 0, 'viewToggleMs');
 const report = {
   schema: 2,
-  profile: 'large-house-v1',
+  profile,
   generatedAt: new Date().toISOString(),
   buildFingerprint,
   runtime: {
@@ -304,7 +339,7 @@ const report = {
   summary: summarizeTimings(rows, metricNames),
   longTasks: summarizeLongTasks(rows),
   rows,
-  note: 'Compare with a base-SHA report captured by the same runner and evaluate demo/performance/budgets.json.',
+  note: `Compare with a base-SHA report captured by the same runner and evaluate the ${profile} budget.`,
 };
 
 const text = `${JSON.stringify(report, null, 2)}\n`;

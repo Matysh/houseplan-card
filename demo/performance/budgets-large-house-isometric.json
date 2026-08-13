@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "profile": "large-house-isometric-v1",
+  "minimumSamples": 7,
+  "timings": {
+    "modelReadyMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 200, "hardMaxMs": 3000 },
+    "firstStableRenderMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 250, "hardMaxMs": 3500 },
+    "viewToggleMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 100, "hardMaxMs": 1500 },
+    "spaceSwitchMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 100, "hardMaxMs": 1800 },
+    "stateUpdateMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 75, "hardMaxMs": 1000 },
+    "resizePreviewMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 150, "hardMaxMs": 2200 },
+    "panZoomMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 60, "hardMaxMs": 600 },
+    "settingsDialogMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 100, "hardMaxMs": 1200 },
+    "switchCycleMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 250, "hardMaxMs": 8000 }
+  },
+  "longTasks": {
+    "maxSingleMs": 3000,
+    "maxSingleRegressionRatio": 0.2,
+    "maxSingleNoiseAllowanceMs": 250,
+    "maxCountP95": 30,
+    "maxCountRegressionRatio": 0.2,
+    "countNoiseAllowance": 3,
+    "maxTotalP95Ms": 12000,
+    "maxTotalRegressionRatio": 0.2,
+    "noiseAllowanceMs": 150
+  },
+  "heap": {
+    "required": true,
+    "hardMaxGrowthBytes": 67108864,
+    "maxRegressionRatio": 0.2,
+    "noiseAllowanceBytes": 16777216
+  },
+  "cacheEntries": {
+    "cleanFloor": 160,
+    "glowClip": 200,
+    "wallUnion": 1,
+    "openingTunnel": 1,
+    "openingWallIndex": 1,
+    "isoGeometry": 8
+  },
+  "cacheGrowth": {
+    "cleanFloor": 0,
+    "glowClip": 0,
+    "wallUnion": 0,
+    "openingTunnel": 0,
+    "openingWallIndex": 0,
+    "isoGeometry": 0
+  },
+  "renderedDevices": 200
+}

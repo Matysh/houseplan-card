@@ -1,13 +1,29 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 16;
+export const GOLDEN_MATRIX_VERSION = 17;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
 const sunWindow = { capture: 'sun-window', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.001 } };
 
 export const GOLDEN_SCENARIOS = Object.freeze([
+  { id: 'isometric-geometry-view-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
+    labs: ['iso'], projection: 'iso', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'isometric-geometry-view-light', fixture: 'visual', space: 'golden-geometry', mode: 'view',
+    labs: ['iso'], projection: 'iso', theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'isometric-live-layers-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
+    labs: ['iso'], projection: 'iso', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'isometric-no-borders-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
+    labs: ['iso'], projection: 'iso', showBorders: false, fillMode: 'custom',
+    customFill: { c: '#486a8f', a: 0.42 }, glowEnabled: true,
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'isometric-touch-kiosk-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
+    labs: ['iso'], projection: 'iso', kiosk: true,
+    theme: 'dark', viewport: { width: 390, height: 760 }, ...stage },
+  { id: 'isometric-large-warm-remount-dark', fixture: 'large', space: 'perf-floor-2', mode: 'view',
+    labs: ['iso'], projection: 'iso', warmRemount: true,
+    theme: 'dark', viewport: { width: 1180, height: 900 }, ...stage },
   { id: 'geometry-view-dark-fit', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'geometry-view-light-fit', fixture: 'visual', space: 'golden-geometry', mode: 'view',

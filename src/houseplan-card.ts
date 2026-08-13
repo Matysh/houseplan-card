@@ -4469,11 +4469,12 @@ class HouseplanCard extends LitElement {
 
   private _effectiveProjection(): 'flat' | 'iso' {
     if (this._desiredProjection !== 'iso' || !this._model.length) return 'flat';
+    const key = this._isoSceneKey() || `${this._space}|invalid`;
+    if (this._isoFallback.has(key)) return 'flat';
     try {
       const scene = this._isoScene();
       return isoEffectiveView('iso', scene.key, this._isoFallback);
     } catch (error) {
-      const key = this._isoSceneKey() || `${this._space}|invalid`;
       if (!this._isoFallback.has(key)) {
         this._isoFallback.add(key);
         const parts = key.split('|');
