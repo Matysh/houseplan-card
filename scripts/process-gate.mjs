@@ -289,6 +289,22 @@ export function commitsUnderRuleOne(commits) {
   );
 }
 
+export function isStableTarget(targetRef) {
+  return /^(?:refs\/heads\/)?main$/.test(targetRef ?? '');
+}
+
+// При stable promotion диапазон main..candidate закономерно содержит коммиты,
+// уже выпущенные prerelease-тегом. Их issue к этому моменту обязаны быть закрыты
+// (§2.8), поэтому повторная online-проверка статуса дала бы ложный отказ. Новые
+// post-beta коммиты остаются в выборке и проверяются fail-closed как обычно.
+export function commitsNeedingIssueStatus(
+  commits, { targetRef = '', isPublishedPrereleaseCommit = () => false } = {},
+) {
+  const underRuleOne = commitsUnderRuleOne(commits);
+  if (!isStableTarget(targetRef)) return underRuleOne;
+  return underRuleOne.filter((commit) => !isPublishedPrereleaseCommit(commit.sha));
+}
+
 // 8. статус issue. Fail closed: недоступный или закрытый issue — отказ, а не
 // пропуск. Гейт, который молчит при недоступном источнике правды, бесполезен.
 export function checkIssueStatuses(numbers, runner, { allowed = ALLOWED_STATUS } = {}) {
@@ -382,6 +398,7 @@ function main(argv) {
 
   const repo = value('repo', process.cwd());
   const allowed = flag('no-merged') ? STRICT_STATUS : ALLOWED_STATUS;
+  const targetRef = value('target-ref', process.env.TARGET_REF ?? '');
 
   let range = value('range');
   if (!range && flag('github-range')) {
@@ -428,7 +445,23 @@ function main(argv) {
   // проверки 3. Второй запрос по тому же issue — лишний сетевой вызов.
   let labelsOf = null;
   if (flag('issues')) {
-    const numbers = [...new Set(commitsUnderRuleOne(commits).flatMap((c) => c.issues).map((t) => t.slice(1)))];
+    const prereleaseTags = isStableTarget(targetRef)
+      ? git(['tag', '--list'], repo).split('\n').map((s) => s.trim()).filter((tag) =>
+        /^v(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)-[0-9A-Za-z.-]+$/.test(tag))
+      : [];
+    const publishedCache = new Map();
+    const isPublishedPrereleaseCommit = (sha) => {
+      if (!publishedCache.has(sha)) {
+        publishedCache.set(sha, prereleaseTags.some((tag) =>
+          spawnSync('git', ['-C', repo, 'merge-base', '--is-ancestor', sha, `${tag}^{commit}`],
+            { encoding: 'utf8' }).status === 0));
+      }
+      return publishedCache.get(sha);
+    };
+    const statusCommits = commitsNeedingIssueStatus(commits, {
+      targetRef, isPublishedPrereleaseCommit,
+    });
+    const numbers = [...new Set(statusCommits.flatMap((c) => c.issues).map((t) => t.slice(1)))];
     const runner = ghRunner(process.env.HP_REPO ?? 'Matysh/houseplan-card', process.env.GH_BIN ?? 'gh');
     const cache = new Map();
     const cached = (nn) => {

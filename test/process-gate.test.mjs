@@ -14,6 +14,7 @@ import {
   checkReviewDocLimit,
   checkSpecs,
   classify,
+  commitsNeedingIssueStatus,
   commitsUnderRuleOne,
   evaluateCommit,
   makeCommit,
@@ -168,6 +169,36 @@ test('only class A/B commits are held to the issue status', () => {
 
   assert.deepEqual(commitsUnderRuleOne([reviewDoc, code, release]).map((c) => c.subject), ['Fix']);
   assert.deepEqual(commitsUnderRuleOne([reviewDoc]), []);
+});
+
+test('stable promotion skips status recheck only for commits already published in a prerelease', () => {
+  const published = makeCommit({
+    sha: 'a'.repeat(40), subject: 'Fix shipped in beta', body: 'Issue: #123', files: ['src/a.ts'],
+  });
+  const postBeta = makeCommit({
+    sha: 'b'.repeat(40), subject: 'New promotion work', body: 'Issue: #130', files: ['scripts/a.mjs'],
+  });
+  const publishedShas = new Set([published.sha]);
+  assert.deepEqual(
+    commitsNeedingIssueStatus([published, postBeta], {
+      targetRef: 'refs/heads/main',
+      isPublishedPrereleaseCommit: (sha) => publishedShas.has(sha),
+    }).map((commit) => commit.sha),
+    [postBeta.sha],
+  );
+  assert.deepEqual(
+    rules(checkIssueStatuses(['130'], () => ({
+      ok: true, json: { state: 'CLOSED', labels: [] },
+    }))),
+    [8],
+  );
+  assert.deepEqual(
+    commitsNeedingIssueStatus([published, postBeta], {
+      targetRef: 'refs/heads/dev',
+      isPublishedPrereleaseCommit: (sha) => publishedShas.has(sha),
+    }).map((commit) => commit.sha),
+    [published.sha, postBeta.sha],
+  );
 });
 
 test('issue status check is fail closed when the source of truth is unreachable', () => {

@@ -51,6 +51,7 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.sha }}
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          TARGET_REF: ${{ github.ref }}
           # Публичный репозиторий: штатного токена хватает на чтение issue.
           GH_TOKEN: ${{ github.token }}
         run: |

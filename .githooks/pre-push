@@ -58,7 +58,7 @@ while read -r local_ref local_sha remote_ref remote_sha; do
 
   echo "process-gate: $local_ref, диапазон ${base}..${local_sha}" >&2
   # shellcheck disable=SC2086
-  if ! node "$gate" --range "${base}..${local_sha}" $issues_flag >&2; then
+  if ! node "$gate" --range "${base}..${local_sha}" --target-ref "$remote_ref" $issues_flag >&2; then
     status=1
   fi
 done
