@@ -51,33 +51,53 @@ jobs:
           SMALL: ${{ contains(github.event.issue.labels.*.name, 'small') }}
           NUM: ${{ github.event.issue.number }}
         run: |
-          stage=""
+          # Этап определяется первым: от него зависит, какие вердикты считать.
+          stage=""; marker=""
+          case "$LABEL" in
+            S4-spec-review) stage="spec"; marker="SPEC-REVIEW" ;;
+            S7-code-review) stage="code"; marker="CODE-REVIEW" ;;
+            *) echo "метка $LABEL конвейер не запускает" ;;
+          esac
+
           # Лимит циклов: 4 обычный, 2 на лёгком треке (PROCESS.md §4).
           limit=4; [ "$SMALL" = "true" ] && limit=2
 
-          # Счётчик — по числу уже опубликованных вердиктов в issue.
-          done_cycles=$(gh issue view "$NUM" --repo "${{ github.repository }}" \
-            --json comments -q '[.comments[] | select(.body | test("Вердикт:"))] | length')
+          # Счётчик считает вердикты ТОЛЬКО своего этапа. Раньше он брал все
+          # подряд, и вердикт по ТЗ съедал цикл из бюджета код-ревью: на #89
+          # первое код-ревью получило r2/4. На задаче с двумя циклами ТЗ второе
+          # код-ревью упиралось бы в review-4 после одной правки.
+          #
+          # Этап опознаётся по имени документа в теле комментария. Если документа
+          # нет, вердикт не посчитается — недосчёт даёт лишний цикл, а перерасчёт
+          # остановил бы работу досрочно; из двух ошибок выбрана обратимая.
+          done_cycles=0
+          if [ -n "$stage" ]; then
+            done_cycles=$(gh issue view "$NUM" --repo "${{ github.repository }}" \
+              --json comments \
+              -q "[.comments[] | select(.body | test(\"Вердикт:\")) | select(.body | test(\"$marker\"))] | length")
+          fi
 
           # В процесс идут только issue, созданные владельцем: репозиторий
           # публичный, чужие отчёты бывают невалидны и статусов не несут.
-          if [ "$AUTHOR" != "Matysh" ]; then
+          if [ -z "$stage" ]; then
+            :
+          elif [ "$AUTHOR" != "Matysh" ]; then
             echo "issue от $AUTHOR, не от владельца — пропуск"
+            stage=""
           elif [ "$BLOCKED" = "true" ]; then
             echo "стоит blocked — конвейер не запускается"
+            stage=""
           elif [ "$EXHAUSTED" = "true" ]; then
             echo "стоит review-4 — решение за владельцем"
+            stage=""
           elif [ "$done_cycles" -ge "$limit" ]; then
-            echo "циклов пройдено $done_cycles из $limit — лимит исчерпан"
+            echo "циклов этапа $stage пройдено $done_cycles из $limit — лимит исчерпан"
             gh issue edit "$NUM" --repo "${{ github.repository }}" --add-label review-4
             gh issue comment "$NUM" --repo "${{ github.repository }}" --body \
-              "Лимит циклов ревью исчерпан ($done_cycles из $limit). Пятого захода нет: решение владельца — разделить задачу, отклонить или арбитраж (PROCESS.md §4)."
+              "Лимит циклов ревью исчерпан ($done_cycles из $limit на этапе \`$stage\`). Пятого захода нет: решение владельца — разделить задачу, отклонить или арбитраж (PROCESS.md §4)."
+            stage=""
           else
-            case "$LABEL" in
-              S4-spec-review) stage="spec" ;;
-              S7-code-review) stage="code" ;;
-              *) echo "метка $LABEL конвейер не запускает" ;;
-            esac
+            echo "этап $stage, цикл $((done_cycles + 1)) из $limit"
           fi
           echo "stage=$stage" >> "$GITHUB_OUTPUT"
           echo "cycle=$((done_cycles + 1))" >> "$GITHUB_OUTPUT"
