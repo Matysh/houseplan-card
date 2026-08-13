@@ -19,7 +19,7 @@
     "src/devices.ts",
     "src/types.ts",
     "src/space-geometry.ts",
-    "src/signing.ts",
+    "src/signing.ts", "src/initial-load.ts",
     "src/visual-continuity.ts", "src/mode-transition.ts",
     "src/render-device-snapshot.ts",
     "src/command-stack.ts",

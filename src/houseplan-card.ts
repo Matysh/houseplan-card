@@ -74,6 +74,9 @@ import {
   type OpenSpanEntry, type BoundaryTarget,
 } from './open-spans';
 import { ContentSigner } from './signing';
+import {
+  resolveInitialSpace, settleBestEffort, type InitialSpaceSelection,
+} from './initial-load';
 import { mdiHomeCityOutline } from '@mdi/js';
 import {
   Affine, applyAffine, readVacTelemetry,
@@ -621,6 +624,8 @@ class HouseplanCard extends LitElement {
   private _cfgContentFingerprint = '';
   private _unsubCfg: (() => void) | null = null;
   private _unsubLayout: (() => void) | null = null;
+  private _liveSyncAttempt: Promise<void> | null = null;
+  private _liveSyncGeneration = 0;
   private _layoutRev = 0;
   private _layoutContentFingerprint = '';
   /** One-deep server snapshot; invalidated by the first later plan edit. */
@@ -1854,6 +1859,7 @@ class HouseplanCard extends LitElement {
     if (!this._loadOk && this._serverCfg && this.hass) this._scheduleLoadRetry();
     // AUD-159B1-01: the placement is only knowable once we are IN the DOM.
     if (!this._warmSlot && this._config) this._warmAdopt();
+    if (this._loadOk) this._ensureLiveSyncSubscriptions();
     // DEV-B703-03: one task later the element Lovelace replaced has detached
     // — only then is its open dialog ours to take over.
     if (this._warmVp && !this._warmRevivePending && this._warmReviveTimer === undefined) {
@@ -1938,6 +1944,12 @@ class HouseplanCard extends LitElement {
       this._unsubLayout();
       this._unsubLayout = null;
     }
+    if (this._unsubTrail) {
+      this._unsubTrail();
+      this._unsubTrail = undefined;
+    }
+    this._liveSyncGeneration++;
+    this._liveSyncAttempt = null;
     clearTimeout(this._layoutSyncTimer);
     clearTimeout(this._duplicateColumnTimer);
     for (const timer of this._glowFadeTimers.values()) clearTimeout(timer);
@@ -2291,12 +2303,7 @@ class HouseplanCard extends LitElement {
         this._layoutRev = c.layout_rev || 0;
         this._layoutContentFingerprint = c.layout_fingerprint || contentFingerprint(this._layout);
         this._serverStorage = true;
-        const hs = this._hashSpace();
-        const nav = this._savedNav();
-        if (hs && this._model.find((sp) => sp.id === hs)) { this._space = hs; this._hashApplied = true; }
-        else if (nav?.space && this._model.find((sp) => sp.id === nav.space)) { this._space = nav.space; this._navApplied = true; }
-        else if (config.default_floor) this._space = config.default_floor;
-        else if (!this._model.find((sp) => sp.id === this._space)) this._space = this._model[0]?.id || this._space;
+        this._adoptInitialSpace(this._model);
       }
     } catch {
       /* ignore */
@@ -2731,13 +2738,32 @@ class HouseplanCard extends LitElement {
     return !space?.bg?.href || this._signer.isReady(this.hass, space.bg.href);
   }
 
+  private _initialSpaceSelection(models: SpaceModel[]): InitialSpaceSelection {
+    return resolveInitialSpace({
+      spaceIds: models.map((space) => space.id),
+      hashSpace: this._hashSpace(),
+      acceptHash: !this._hashApplied,
+      currentSpace: this._space,
+      preserveCurrent: this._hashApplied || this._navApplied || this._warmVpArmed,
+      savedSpace: this._savedNav()?.space,
+      defaultSpace: this._config?.default_floor,
+    });
+  }
+
+  /** Install one exact raw-space authority before any spatial candidate paints. */
+  private _adoptInitialSpace(models: SpaceModel[]): InitialSpaceSelection {
+    const selection = this._initialSpaceSelection(models);
+    if (!selection.id) return selection;
+    this._space = selection.id;
+    if (selection.source === 'hash') this._hashApplied = true;
+    if (selection.source === 'saved') this._navApplied = true;
+    return selection;
+  }
+
   private _candidateBackdrop(config: ServerConfig | null, spaceId = this._space): string {
     const models = spaceModels(config);
-    const hashSpace = this._hashSpace();
-    const savedSpace = this._savedNav()?.space || '';
-    const preferred = !this._hashApplied && models.some((space) => space.id === hashSpace) ? hashSpace
-      : !this._hashApplied && !this._navApplied && models.some((space) => space.id === savedSpace) ? savedSpace
-        : models.some((space) => space.id === spaceId) ? spaceId : models[0]?.id;
+    const preferred = this._initialSpaceSelection(models).id
+      || (models.some((space) => space.id === spaceId) ? spaceId : models[0]?.id);
     return models.find((space) => space.id === preferred)?.bg?.href || '';
   }
 
@@ -3220,61 +3246,14 @@ class HouseplanCard extends LitElement {
           && this._continuity.state === 'steady') {
         this._beginContinuityCandidate('structural-response', true);
       }
-      this._loadOk = true;
       this._connectionWasLost = false;
       this._serverStorage = true;
       // absent can_write = older backend / demo stub → keep null (legacy admin fallback)
       if (typeof cfgResp?.can_write === 'boolean') this._serverCanWrite = cfgResp.can_write;
       this._canOptimizeUndo = !!(cfgResp?.can_optimize_undo || layResp?.can_optimize_undo);
-      this._resumePendingNavMode();
       this._adoptStructuralResponses(cfgResp, layResp);
-      // live sync: the config was changed in another window → re-read it
-      if (!this._unsubCfg) {
-        this._unsubCfg = await this.hass.connection.subscribeEvents((ev: any) => {
-          // Flush a pending local edit BEFORE adopting a remote revision:
-          // otherwise the debounced write reads a config that this reload has
-          // already replaced, and the user's edit vanishes (audit L2).
-          const observedRev = Number(ev?.data?.rev ?? -1);
-          if (observedRev !== this._cfgRev) this._reloadConfigOnly(false, observedRev);
-        }, 'houseplan_config_updated');
-      }
-      // server-side trails are additive: an older backend without the WS
-      // command just leaves the map empty and the card shows live-only trails
-      this.hass.callWS({ type: 'houseplan/trail/get' })
-        .then((r: any) => { this._vacSrvTrails = r?.trails || {}; this.requestUpdate(); })
-        .catch(() => undefined);
-      if (!this._unsubTrail) {
-        this._unsubTrail = await this.hass.connection.subscribeEvents(async () => {
-          try {
-            const r: any = await this.hass.callWS({ type: 'houseplan/trail/get' });
-            this._vacSrvTrails = r?.trails || {};
-            this.requestUpdate();
-          } catch { /* transient WS hiccup — the next event retries */ }
-        }, 'houseplan_trail_updated');
-      }
-      if (!this._unsubLayout) {
-        // Positions are separate state. The static card learned to follow them
-        // in v1.46.0 and the full one did not, so two full cards side by side
-        // stayed out of sync until a reload (HP-1460-03).
-        this._unsubLayout = await this.hass.connection.subscribeEvents(
-          (ev: any) => this._onLayoutEvent(Number(ev?.data?.rev ?? -1)),
-          'houseplan_layout_updated',
-        );
-      }
-      const hs = this._hashSpace();
-      const nav = this._savedNav();
-      if (!this._hashApplied && hs && this._model.find((s) => s.id === hs)) {
-        this._space = hs;
-        this._hashApplied = true;
-      } else if (nav?.space && !this._navApplied && !this._hashApplied
-          && this._model.find((s) => s.id === nav.space)) {
-        // the cached config might have been stale (no such space) — retry once
-        // the live config is in
-        this._space = nav.space;
-        this._navApplied = true;
-      } else if (this._norm && !this._model.find((s) => s.id === this._space)) {
-        this._space = this._model[0]?.id || this._space;
-      }
+      this._adoptInitialSpace(this._model);
+      this._resumePendingNavMode();
       this._cacheSnapshot();
       // DEV-B703-03: a warm re-mount already holds the exact viewport of the
       // instance that was thrown away; the centred restore here IS the
@@ -3282,6 +3261,14 @@ class HouseplanCard extends LitElement {
       // another space) still needs it.
       if (this._warmVpArmed && this._space === this._warmVp?.space) this._warmVpArmed = false;
       else if (!hadViewport || this._space !== visibleSpace) this._restoreZoom();
+      this._loadOk = true;
+      // Trails and event subscriptions enrich an already complete snapshot.
+      // A read-only HA session may reject these; that must never roll the
+      // accepted config back into the mandatory load catch.
+      void this.hass.callWS({ type: 'houseplan/trail/get' })
+        .then((r: any) => { this._vacSrvTrails = r?.trails || {}; this.requestUpdate(); })
+        .catch(() => undefined);
+      this._ensureLiveSyncSubscriptions();
     } catch (e) {
       if (this._serverCfg) {
         // DEV-B703-02: this instance already RENDERS a valid config (the LS
@@ -3313,6 +3300,67 @@ class HouseplanCard extends LitElement {
       this._maybeRebuildDevices();
       this.requestUpdate();
     }
+  }
+
+  /** Best-effort live sync starts only after the initial snapshot is usable. */
+  private _ensureLiveSyncSubscriptions(): void {
+    const connection = this.hass?.connection;
+    if (!connection || this._liveSyncAttempt) return;
+    const generation = this._liveSyncGeneration;
+    const attempts: Array<() => Promise<void>> = [];
+    const subscribe = (
+      current: () => (() => void) | null | undefined,
+      adopt: (unsubscribe: () => void) => void,
+      event: string,
+      callback: (event: any) => void | Promise<void>,
+    ): void => {
+      if (current()) return;
+      attempts.push(async () => {
+        const unsubscribe = await connection.subscribeEvents(callback, event);
+        const valid = generation === this._liveSyncGeneration
+          && this.isConnected && this.hass?.connection === connection && !current();
+        if (valid) adopt(unsubscribe);
+        else unsubscribe?.();
+      });
+    };
+
+    subscribe(
+      () => this._unsubCfg,
+      (unsubscribe) => { this._unsubCfg = unsubscribe; },
+      'houseplan_config_updated',
+      (ev: any) => {
+        // Flush a pending local edit BEFORE adopting a remote revision:
+        // otherwise the debounced write reads a config that this reload has
+        // already replaced, and the user's edit vanishes (audit L2).
+        const observedRev = Number(ev?.data?.rev ?? -1);
+        if (observedRev !== this._cfgRev) void this._reloadConfigOnly(false, observedRev);
+      },
+    );
+    subscribe(
+      () => this._unsubTrail,
+      (unsubscribe) => { this._unsubTrail = unsubscribe; },
+      'houseplan_trail_updated',
+      async () => {
+        try {
+          const r: any = await this.hass.callWS({ type: 'houseplan/trail/get' });
+          this._vacSrvTrails = r?.trails || {};
+          this.requestUpdate();
+        } catch { /* transient WS hiccup — the next event retries */ }
+      },
+    );
+    subscribe(
+      () => this._unsubLayout,
+      (unsubscribe) => { this._unsubLayout = unsubscribe; },
+      'houseplan_layout_updated',
+      (ev: any) => this._onLayoutEvent(Number(ev?.data?.rev ?? -1)),
+    );
+
+    if (!attempts.length) return;
+    const task = settleBestEffort(attempts).then(() => undefined);
+    this._liveSyncAttempt = task;
+    void task.finally(() => {
+      if (this._liveSyncAttempt === task) this._liveSyncAttempt = null;
+    });
   }
 
   /**
@@ -3351,9 +3399,12 @@ class HouseplanCard extends LitElement {
         this._scheduleLoadRetry(true);
         return;
       }
+      const visibleSpace = this._space;
       this._adoptStructuralResponses(resp);
+      this._adoptInitialSpace(this._model);
       this._resumePendingNavMode();
       this._cacheSnapshot();
+      if (this._space !== visibleSpace) this._restoreZoom();
       this._regSignature = '';
       this._maybeRebuildDevices();
       this.requestUpdate();
@@ -3674,10 +3725,11 @@ class HouseplanCard extends LitElement {
       this._continuityPaintToken = -1;
     }
     if (this._loading) return;
-    // a subscribe lost mid-load leaves _loadOk=true without _unsubCfg — the
-    // full load path repairs both (every subscribe in it is guarded)
-    // Re-read config and layout as one candidate. `_loadFromServer` now adopts
-    // each side by revision+fingerprint and preserves equal references.
+    // Re-read config and layout as one mandatory candidate. Optional live-sync
+    // subscriptions are then retried independently for whichever channels are
+    // still missing; their rejection cannot invalidate this snapshot.
+    // `_loadFromServer` adopts each side by revision+fingerprint and preserves
+    // equal references.
     this._loadFromServer();
   };
   private _onConnLost = (): void => {

@@ -676,6 +676,24 @@ localized opaque recovery overlay, after a 150 ms delay. The overlay never
 steals initial focus; while visible it alone is interactive and the scene is
 `inert`.
 
+**The initial snapshot does not depend on live-sync subscriptions** (#131).
+`houseplan-card` first accepts config and layout, builds the model, chooses one
+exact space, caches the accepted snapshot and restores its viewport. Only then
+is the mandatory load complete. Config, trail and layout event subscriptions
+start together as independent best-effort enrichments: one rejected channel
+does not prevent the others from subscribing, does not erase the usable
+snapshot and does not schedule a full-load retry solely for that rejection.
+Missing channels get another attempt on the next normal load or reconnect.
+
+`src/initial-load.ts` is the shared authority for the exact space used by a
+cached snapshot, a live snapshot and its protected-backdrop candidate. A cold
+load considers only valid ids in this order: URL hash, saved navigation,
+`default_floor`, first live space. Once an initial URL hash has been consumed,
+a valid same-route current selection is preserved instead of repeatedly
+snapping back to that hash. The legacy field initializer is never a cold-start
+choice by itself. A plan with no spaces keeps `null` authority and does not
+invent an id.
+
 **Room climate is one pass per hass snapshot** (review R2-3). `areaClimateMap()`
 classifies the whole registry once and returns `Map<area, {temp, hum}>`; the
 card memoizes it on `hass` identity, which Home Assistant replaces on every
