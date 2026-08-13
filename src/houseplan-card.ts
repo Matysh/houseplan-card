@@ -2744,7 +2744,8 @@ class HouseplanCard extends LitElement {
       hashSpace: this._hashSpace(),
       acceptHash: !this._hashApplied,
       currentSpace: this._space,
-      preserveCurrent: this._hashApplied || this._navApplied || this._warmVpArmed,
+      preserveCurrent: this._loadOk
+        || this._hashApplied || this._navApplied || this._warmVpArmed,
       savedSpace: this._savedNav()?.space,
       defaultSpace: this._config?.default_floor,
     });

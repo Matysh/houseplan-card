@@ -690,9 +690,11 @@ cached snapshot, a live snapshot and its protected-backdrop candidate. A cold
 load considers only valid ids in this order: URL hash, saved navigation,
 `default_floor`, first live space. Once an initial URL hash has been consumed,
 a valid same-route current selection is preserved instead of repeatedly
-snapping back to that hash. The legacy field initializer is never a cold-start
-choice by itself. A plan with no spaces keeps `null` authority and does not
-invent an id.
+snapping back to that hash. Every later revalidation of an already complete
+snapshot likewise keeps its valid exact current space; cold precedence is only
+for an unsettled initial snapshot. The legacy field initializer is never a
+cold-start choice by itself. A plan with no spaces keeps `null` authority and
+does not invent an id.
 
 **Room climate is one pass per hass snapshot** (review R2-3). `areaClimateMap()`
 classifies the whole registry once and returns `Map<area, {temp, hum}>`; the
