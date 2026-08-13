@@ -191,6 +191,60 @@ jobs:
               );
             }
 
+  # PROCESS.md 10.2 item 10: closing issues and stripping status labels happens
+  # because a beta was published, not because someone remembered to do it. The
+  # manual step was skipped twice, and both times it broke the invariant that a
+  # closed issue carries no status label — the one thing `verify` relies on.
+  #
+  # A manual step after a successful release is the worst kind: by the time it is
+  # due, the work already looks finished, which is exactly why it gets forgotten.
+  close-merged:
+    needs: [gate, publish]
+    if: ${{ needs.publish.outputs.newly_published == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Deliberately the stock token, not a PAT: events caused by GITHUB_TOKEN do
+      # not start workflows, so removing the label cannot wake the review
+      # pipeline. A PAT here would build a cascade out of a bookkeeping step.
+      issues: write
+    steps:
+      - name: Close the S8-merged queue and strip status labels
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ needs.gate.outputs.tag }}
+          URL: ${{ needs.publish.outputs.url }}
+        run: |
+          set -euo pipefail
+          # Only the owner's issues take part in the process; issues filed by
+          # anyone else never carry status labels and are not ours to close.
+          numbers=$(gh issue list --repo "$REPO" --state open --label S8-merged \
+            --author Matysh --limit 100 --json number --jq '.[].number')
+          if [ -z "$numbers" ]; then
+            echo "the S8-merged queue is empty, nothing to close"
+          else
+            for n in $numbers; do
+              gh issue comment "$n" --repo "$REPO" \
+                --body "Выпущено в \`$TAG\` · [релиз]($URL)"
+              # Label first, then close. If the run dies between the two steps an
+              # open issue without a status is visible and fixable in the flow;
+              # the reverse order would recreate the exact breakage this job is
+              # here to prevent.
+              gh issue edit "$n" --repo "$REPO" --remove-label S8-merged
+              gh issue close "$n" --repo "$REPO" --reason completed
+              echo "closed #$n"
+            done
+          fi
+          # Targeted at the defect that actually recurs, not at the invariant in
+          # general: no closed issue may still carry S8-merged.
+          leftover=$(gh issue list --repo "$REPO" --state closed --label S8-merged \
+            --limit 100 --json number --jq 'length')
+          test "$leftover" = "0" || {
+            echo "::error::$leftover closed issues still carry S8-merged"
+            exit 1
+          }
+
   announce:
     needs: [gate, publish]
     if: ${{ needs.publish.outputs.newly_published == 'true' }}
