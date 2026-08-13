@@ -139,6 +139,23 @@ Author and reviewer are different models, which is what "a fresh session without
 implementation context" means in practice. The reviewer never edits product code;
 the author never grades their own work.
 
+**Infrastructure-only work runs outside this flow.** CI, scripts, labels, demo
+stands, the landing page and distribution are Claude's alone, and running them
+through spec-writing and review buys nothing: the spec would restate what is
+already unambiguous, and author and reviewer would be the same role. So no spec
+file, no spec review, no code review, no walk through `S1`…`S8`.
+
+The test for "infrastructure only" is mechanical: **not a single class A file** —
+nothing under `src/**`, no `custom_components/**/*.py`, no manifests, no i18n. A
+task that touches class A even once is not infrastructure and takes the full flow;
+there is no such thing as "mostly infrastructure". The strictness is deliberate:
+a loose reading would turn this into the route by which product changes skip
+review.
+
+What stays mandatory either way: an issue exists, both trailers are on every
+commit, `typecheck`, `test` and `build` are green, and any non-obvious decision is
+written down in the code or the issue rather than kept in someone's head.
+
 **Review starts by itself.** Applying `S4-spec-review` or `S7-code-review` fires the
 pipeline, which reviews without anyone asking and takes ten to forty-five minutes.
 
