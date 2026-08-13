@@ -120,12 +120,11 @@ in CI and can only read what is on the remote — an unpushed spec or commit mea
 the review either stalls or judges the wrong tree. Pushing a task branch publishes
 nothing to users and does not touch the integration branch, so it needs no command.
 
-**Standing permission: after a green code review, merge the task branch into `dev`
-and push `dev`.** Without it `S8-merged` would be a lie — the label asserts the code
-is in `dev`. What lands is what the reviewer just accepted, and `dev` is allowed to
-carry unreviewed code anyway, so the merge adds no risk the branch did not already
-carry. Rebase the task branch onto `dev` first so history stays linear; the commit
-is unpublished at that point, so this is not a rewrite of published history.
+**Do not merge into `dev` by hand.** On a green code review the pipeline rebases
+the task branch onto `dev`, pushes it, and only then sets `S8-merged` — the label
+asserts the code is in `dev`, so the merge has to happen first or the label lies
+in between. If the rebase conflicts, the pipeline says so in the issue and leaves
+the task in `S7-code-review`; resolving the conflict is the author's job.
 
 Everything else still requires the owner's explicit command: pushing `main`,
 creating tags, publishing betas and releases, closing issues.
@@ -139,6 +138,23 @@ issues and commands releases.
 Author and reviewer are different models, which is what "a fresh session without
 implementation context" means in practice. The reviewer never edits product code;
 the author never grades their own work.
+
+**Review starts by itself.** Applying `S4-spec-review` or `S7-code-review` fires the
+pipeline, which reviews without anyone asking and takes ten to forty-five minutes.
+
+**Having applied one of those labels, wait for the result instead of ending the
+session.** Reporting "handed over for review" stops a conveyor that could have kept
+moving on its own. An agent has no clock — it exists only during its own turn — so
+waiting means polling: every 90 seconds, at most 30 times. A single long sleep hits
+the command timeout. Watch the **label**, not the comment: the label is the state,
+the comment only explains it. Do not wait at all while `blocked` is set — the task
+is waiting on the owner, not on the reviewer. On exhausting the attempts, stop and
+tell the owner: a failed run leaves the label where it was, forever.
+
+What the new label means: `S5-ready` — write the code; `S3-spec` — read the verdict
+and revise the spec, then re-apply `S4-spec-review`; `S6-in-progress` — revise the
+code, then re-apply `S7-code-review`; `S8-merged` — accepted and already in `dev`,
+nothing left to do; `review-4` — the cycle limit is spent, stop and wait for the owner.
 
 The exchange happens in **issue comments** — there is no local message bus. Verdict
 format:
