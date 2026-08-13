@@ -73,9 +73,12 @@ Start with the spec?" is the correct answer, not a smaller patch.
 | **C — documentation** | `docs/**`, `README*`, `CHANGELOG*`, `AGENTS.md` | not if it is part of its issue's DoD |
 | **D — generated** | `dist/**`, `custom_components/houseplan/frontend/**`, `demo/srv/assets/houseplan-card.js`, `demo/golden/baselines/**` | never changes on its own |
 
-`PROCESS.md` §1 is the authority; it does not yet list `package.json`,
-`package-lock.json`, `.githooks/**`, the rest of `.github/**`, `.gitignore` or
-`pytest.ini`. Treat them as class B and tell the owner §1 needs the addition.
+The table above is a summary; `PROCESS.md` §1 is the authority and now covers the
+configuration files this one omits — `package.json`, `package-lock.json`,
+`pytest.ini`, `.gitignore`, `.gitattributes`, `.githooks/**` and the rest of
+`.github/**` are class B. Where paths overlap, **D beats A**: the built bundle
+lives inside `custom_components/houseplan/frontend/` and would otherwise read as
+product source.
 
 ## Commits
 
