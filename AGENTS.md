@@ -120,8 +120,15 @@ in CI and can only read what is on the remote — an unpushed spec or commit mea
 the review either stalls or judges the wrong tree. Pushing a task branch publishes
 nothing to users and does not touch the integration branch, so it needs no command.
 
-Everything else still requires the owner's explicit command: pushing `dev` or
-`main`, merging a task branch, creating tags, publishing betas and releases.
+**Standing permission: after a green code review, merge the task branch into `dev`
+and push `dev`.** Without it `S8-merged` would be a lie — the label asserts the code
+is in `dev`. What lands is what the reviewer just accepted, and `dev` is allowed to
+carry unreviewed code anyway, so the merge adds no risk the branch did not already
+carry. Rebase the task branch onto `dev` first so history stays linear; the commit
+is unpublished at that point, so this is not a rewrite of published history.
+
+Everything else still requires the owner's explicit command: pushing `main`,
+creating tags, publishing betas and releases, closing issues.
 
 ## Two-agent workflow
 
