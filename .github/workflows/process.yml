@@ -4,7 +4,7 @@ name: Process
 # сообщение: она порождает событие, событие запускает следующий шаг.
 #
 # S4-spec-review -> ревью ТЗ    -> S5-ready | S3-spec
-# S7-code-review -> код-ревью   -> S8-merged | S6-in-progress
+# S7-code-review -> код-ревью   -> слияние в dev -> S8-merged | S6-in-progress
 #
 # Три вещи, без которых конвейер молча не работает:
 #
@@ -160,14 +160,16 @@ jobs:
             вопрос, вынесенный владельцу, — тоже замечание: ты его снимаешь и
             решаешь по существу в своём вердикте.
 
-            Для этапа code: материал — diff по issue. Ручного тестирования в
-            цикле нет, поэтому именно ты отвечаешь на вопрос «оно вообще
-            работает». По каждому AC: либо он доказан автотестом и ты убедился,
-            что тест умеет падать, либо разобран по коду с явной записью
-            «проверено чтением, не исполнением». «Verified» без названной
-            команды и её результата доказательством не является. Проверь
-            трейлеры Issue и User-Visible, при User-Visible: yes — правки в оба
-            changelog в том же коммите.
+            Для этапа code: материал — диапазон `git log --oneline origin/dev..HEAD`
+            и `git diff origin/dev...HEAD`. Ручного тестирования в цикле нет,
+            поэтому именно ты отвечаешь на вопрос «оно вообще работает».
+            По каждому AC: либо он доказан автотестом и ты убедился, что тест
+            умеет падать, либо разобран по коду с явной записью «проверено
+            чтением, не исполнением». «Verified» без названной команды и её
+            результата доказательством не является. Зависимостей в рабочей
+            копии нет: перед гейтами выполни `npm ci`. Проверь трейлеры Issue и
+            User-Visible, при User-Visible: yes — правки в оба changelog в том же
+            коммите.
 
             Ты НЕ правишь ни ТЗ, ни продуктовый код. Только оцениваешь.
 
@@ -212,7 +214,7 @@ jobs:
             echo "ветки задачи нет — документ некуда класть"; exit 0
           fi
           git checkout -- . 2>/dev/null || true
-          git clean -fd -e docs/reviews >/dev/null 2>&1 || true
+          git clean -fd -e docs/reviews -e node_modules >/dev/null 2>&1 || true
           git add docs/reviews 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "документ ревью не создан"; exit 0
@@ -229,13 +231,11 @@ jobs:
             "HEAD:$BRANCH"
           echo "документ опубликован в $BRANCH"
 
-      - name: Переставить метку
+      - name: Решение по вердикту
+        id: decide
         env:
-          # Именно PAT: с GITHUB_TOKEN следующий шаг конвейера не запустится.
-          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           OUT: ${{ steps.review.outputs.structured_output }}
           STAGE: ${{ needs.guard.outputs.stage }}
-          NUM: ${{ github.event.issue.number }}
         run: |
           verdict=$(echo "$OUT" | jq -r '.verdict')
           high=$(echo "$OUT" | jq -r '.high')
@@ -246,20 +246,63 @@ jobs:
           # изменение контракта — реализовать такое ТЗ значит сделать ошибку
           # по инструкции. Оба считаются циклом.
           if [ "$verdict" = "green" ] && [ "$high" -eq 0 ]; then
+            green=true
             case "$STAGE" in
               spec) from=S4-spec-review; to=S5-ready ;;
               code) from=S7-code-review; to=S8-merged ;;
             esac
           else
+            green=false
             case "$STAGE" in
               spec) from=S4-spec-review; to=S3-spec ;;
               code) from=S7-code-review; to=S6-in-progress ;;
             esac
           fi
+          echo "green=$green" >> "$GITHUB_OUTPUT"
+          echo "from=$from"   >> "$GITHUB_OUTPUT"
+          echo "to=$to"       >> "$GITHUB_OUTPUT"
 
+      # S8-merged утверждает, что код в dev. Значит слияние обязано произойти
+      # ДО метки, иначе она врờt в промежутке. Конфликт — метка не двигается.
+      - name: Слить ветку в dev
+        if: needs.guard.outputs.stage == 'code' && steps.decide.outputs.green == 'true'
+        env:
+          TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          BRANCH: ${{ steps.branch.outputs.name }}
+          NUM: ${{ github.event.issue.number }}
+        run: |
+          if [ -z "$BRANCH" ]; then
+            echo "::error::ветки задачи нет — сливать нечего"; exit 1
+          fi
+          git fetch -q origin dev
+          git checkout -q -B merge-into-dev "origin/$BRANCH"
+          if ! git -c user.name="claude[bot]" \
+                   -c user.email="209825114+claude[bot]@users.noreply.github.com" \
+                   rebase origin/dev; then
+            git rebase --abort || true
+            cat > /tmp/conflict.md <<EOF
+          Код-ревью зелёное, но ветка $BRANCH не сливается в dev без конфликта. Статусная метка не менялась: задача осталась в S7-code-review.
+
+          Разрешить конфликт и запушить dev — на стороне автора, затем снять и вернуть метку S7-code-review для повторного прогона.
+          EOF
+            gh issue comment "$NUM" --repo "${{ github.repository }}" --body-file /tmp/conflict.md
+            exit 1
+          fi
+          git push -q "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" HEAD:dev
+          echo "слито в dev: $(git rev-parse --short HEAD)"
+
+      - name: Переставить метку
+        env:
+          # Именно PAT: с GITHUB_TOKEN следующий шаг конвейера не запустится.
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          NUM: ${{ github.event.issue.number }}
+          FROM: ${{ steps.decide.outputs.from }}
+          TO: ${{ steps.decide.outputs.to }}
+        run: |
           gh issue edit "$NUM" --repo "${{ github.repository }}" \
-            --add-label "$to" --remove-label "$from"
-          echo "$from -> $to"
+            --add-label "$TO" --remove-label "$FROM"
+          echo "$FROM -> $TO"
 
       - name: Позвать владельца, если ревью упало
         if: failure()
