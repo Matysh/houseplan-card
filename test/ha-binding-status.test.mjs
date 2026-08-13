@@ -6,6 +6,8 @@ import {
   activeRegistryHass,
   cacheHaBindingStatuses,
   haRegistrySnapshot,
+  openingEntityAvailable,
+  renderOpeningEntityAvailable,
   resolveHaBindingStatus,
 } from '../test-build/ha-binding-status.js';
 
@@ -61,6 +63,8 @@ test('limited registry never guesses missing rows are disabled or orphaned', () 
   assert.equal(resolveHaBindingStatus(hass, 'entity:switch.live_only', snapshot).kind, 'active');
   assert.equal(resolveHaBindingStatus(hass, 'entity:switch.unknown', snapshot).kind, 'unverified');
   assert.equal(resolveHaBindingStatus(hass, 'device:unknown', snapshot).kind, 'unverified');
+  assert.equal(openingEntityAvailable(hass, 'switch.live_only', snapshot), true);
+  assert.equal(openingEntityAvailable(hass, 'switch.unknown', snapshot), false);
 });
 
 test('authoritative registry accepts an exact live YAML entity without a registry row', () => {
@@ -170,9 +174,14 @@ test('limited live rows cannot override the last authoritative disabled result',
     getItem: () => '{}',
     setItem: () => undefined,
   };
-  cacheHaBindingStatuses(new Map([['device:cached-disabled', {
-    kind: 'ha_disabled', reason: 'all_entities', enabledEntityIds: [], allEntityIds: ['switch.cached'],
-  }]]));
+  cacheHaBindingStatuses(new Map([
+    ['device:cached-disabled', {
+      kind: 'ha_disabled', reason: 'all_entities', enabledEntityIds: [], allEntityIds: ['switch.cached'],
+    }],
+    ['entity:switch.cached', {
+      kind: 'ha_disabled', reason: 'entity', enabledEntityIds: [], allEntityIds: ['switch.cached'],
+    }],
+  ]));
   const devices = { 'cached-disabled': { id: 'cached-disabled', disabled_by: null } };
   const entities = {
     'switch.cached': { entity_id: 'switch.cached', device_id: 'cached-disabled', disabled_by: null },
@@ -181,6 +190,7 @@ test('limited live rows cannot override the last authoritative disabled result',
   assert.deepEqual(resolveHaBindingStatus(hass, 'device:cached-disabled', limited(devices, entities)), {
     kind: 'ha_disabled', reason: 'all_entities', enabledEntityIds: [], allEntityIds: ['switch.cached'],
   });
+  assert.equal(openingEntityAvailable(hass, 'switch.cached', limited(devices, entities)), false);
   globalThis.localStorage = previousStorage;
 });
 
@@ -192,4 +202,64 @@ test('entity with a missing parent reports device_missing', () => {
     resolveHaBindingStatus({ devices: {}, entities, states: {} }, 'entity:sensor.orphan', full({}, entities)).reason,
     'device_missing',
   );
+});
+
+test('opening entity availability ignores marker lifecycle and follows exact HA status', () => {
+  const devices = {
+    active: { id: 'active', disabled_by: null },
+    disabled: { id: 'disabled', disabled_by: 'user' },
+  };
+  const entities = {
+    'binary_sensor.door': {
+      entity_id: 'binary_sensor.door', device_id: 'active', disabled_by: null,
+    },
+    'lock.front': { entity_id: 'lock.front', device_id: 'active', disabled_by: null },
+    'lock.disabled_entity': {
+      entity_id: 'lock.disabled_entity', device_id: 'active', disabled_by: 'user',
+    },
+    'lock.disabled_parent': {
+      entity_id: 'lock.disabled_parent', device_id: 'disabled', disabled_by: null,
+    },
+    'lock.orphan': { entity_id: 'lock.orphan', device_id: 'missing', disabled_by: null },
+  };
+  const hass = {
+    devices, entities,
+    states: {
+      'binary_sensor.door': { state: 'unavailable' },
+      'lock.front': { state: 'locked' },
+      'lock.disabled_entity': { state: 'locked' },
+      'lock.disabled_parent': { state: 'locked' },
+      'lock.orphan': { state: 'locked' },
+    },
+  };
+  const snapshot = full(devices, entities);
+
+  // Marker lifecycle is intentionally not an input: the opening is an exact
+  // independent consumer before deletion, after either tombstone and re-add.
+  for (const _markerLifecycle of ['present', 'entity-tombstone', 'device-tombstone', 're-added']) {
+    assert.equal(openingEntityAvailable(hass, 'binary_sensor.door', snapshot), true);
+    assert.equal(openingEntityAvailable(hass, 'lock.front', snapshot), true);
+  }
+  assert.equal(openingEntityAvailable(hass, 'lock.disabled_entity', snapshot), false);
+  assert.equal(openingEntityAvailable(hass, 'lock.disabled_parent', snapshot), false);
+  assert.equal(openingEntityAvailable(hass, 'lock.orphan', snapshot), false);
+  assert.equal(openingEntityAvailable(hass, 'lock.missing', snapshot), false);
+  assert.equal(openingEntityAvailable(hass, null, snapshot), false);
+});
+
+test('opening render availability requires one frozen registry-backed frame', () => {
+  const frame = {
+    entities: {
+      'binary_sensor.door': { entity_id: 'binary_sensor.door' },
+      'lock.no_state': { entity_id: 'lock.no_state' },
+    },
+    states: {
+      'binary_sensor.door': { state: 'unknown' },
+      'binary_sensor.yaml_only': { state: 'on' },
+    },
+  };
+  assert.equal(renderOpeningEntityAvailable(frame, 'binary_sensor.door'), true);
+  assert.equal(renderOpeningEntityAvailable(frame, 'lock.no_state'), false);
+  assert.equal(renderOpeningEntityAvailable(frame, 'binary_sensor.yaml_only'), false, '#117 owns YAML parity');
+  assert.equal(renderOpeningEntityAvailable(frame, ''), false);
 });

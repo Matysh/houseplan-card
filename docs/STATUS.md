@@ -98,8 +98,10 @@ metadata). Only an explicit owner-approved emergency hotfix may skip this gate.
 - **True plan deletion** (v1.60.0-beta.1, 2026-08-07): confirmed Delete beside Hide/Show;
   a minimal `marker.removed` tombstone prevents auto-rediscovery but exposes
   the binding to Add. Deleted devices are absent from every plan aggregate and
-  linked presentation; layout/files/trails are cleaned and stale layout writes
-  are rejected.
+  linked marker presentation; layout/files/trails are cleaned and stale layout
+  writes are rejected. Exact contact/lock references owned by architectural
+  openings remain active without restoring the standalone marker; live text
+  and other marker controls retain the older re-add-to-reactivate contract.
 - **Yellow = working right now** (v1.51.0): climate uses `hvac_action` when
   available and falls back to a current advertised non-off HVAC mode only when
   the integration omits the action; service switches can no longer become

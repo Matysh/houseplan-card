@@ -515,6 +515,35 @@ export function resolveHaBindingStatus(
   return { kind: 'unverified', reason: 'registry_unavailable', enabledEntityIds: [], allEntityIds: [] };
 }
 
+/**
+ * Availability of an exact entity explicitly assigned to an architectural
+ * opening. This is deliberately independent of plan-marker tombstones: the
+ * opening is its own configured consumer of the HA entity. Registry status
+ * still rejects disabled, orphaned and unverified references.
+ */
+export function openingEntityAvailable(
+  hass: any,
+  entityId: string | null | undefined,
+  snapshot = haRegistrySnapshot(hass),
+): boolean {
+  return !!entityId
+    && resolveHaBindingStatus(hass, `entity:${entityId}`, snapshot).kind === 'active';
+}
+
+/**
+ * Frame-local counterpart of `openingEntityAvailable`. The caller supplies an
+ * immutable active-registry projection, so both the registry row and state
+ * must belong to the same painted frame. Registry-less render parity is #117.
+ */
+export function renderOpeningEntityAvailable(
+  projectedHass: any,
+  entityId: string | null | undefined,
+): boolean {
+  return !!entityId
+    && !!projectedHass?.entities?.[entityId]
+    && !!projectedHass?.states?.[entityId];
+}
+
 export function haRegistryDiagnostics(hass: any): {
   access: HaRegistrySnapshot['access']; authoritative: boolean; revision: number;
   lastSuccess: number; error?: string;

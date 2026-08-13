@@ -63,7 +63,7 @@ test('RenderDeviceSnapshot keeps immutable facts and excludes live HA capabiliti
 });
 
 const methodBody = (source, name) => {
-  const start = source.indexOf(`private ${name}(`);
+  const start = source.search(new RegExp(`private\\s+(?:async\\s+)?${name}\\(`));
   assert.notEqual(start, -1, `${name} exists`);
   const tail = source.slice(start + 1);
   const next = tail.search(/\n  (?:private|protected|public)\s/);
@@ -94,4 +94,45 @@ test('the card gates snapshot positions on the render model', () => {
     /positions:\s*new Map\(this\._devices\.map\(/,
     'the previous unconditional position path must not return',
   );
+});
+
+test('opening references use their own availability policy without weakening plan tombstones', () => {
+  const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  for (const name of [
+    '_contactCandidates', '_lockCandidates', '_openingAmt', '_renderOpenings',
+    '_renderOpeningLocks', '_renderOpeningInfoCard', '_lockAction',
+  ]) {
+    assert.match(
+      methodBody(source, name),
+      /_openingEntityAvailable|_renderOpeningEntityAvailable/,
+      `${name} uses the explicit opening-reference policy`,
+    );
+  }
+  const planAvailability = methodBody(source, '_planEntityAvailable');
+  const renderAvailability = methodBody(source, '_renderEntityAvailable');
+  assert.match(planAvailability, /isRemovedPlanEntity/);
+  assert.match(renderAvailability, /isRemovedPlanEntity/);
+  assert.doesNotMatch(planAvailability, /openingEntityAvailable/);
+  assert.doesNotMatch(renderAvailability, /renderOpeningEntityAvailable/);
+});
+
+test('lock actuation remains guarded inside the one sanctioned opening-card method', () => {
+  const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  const action = methodBody(source, '_lockAction');
+  const guardAt = action.indexOf('_openingEntityAvailable(entityId)');
+  const confirmAt = action.indexOf('confirm(');
+  const serviceAt = action.indexOf("callService?.('lock'");
+  assert.ok(guardAt >= 0 && guardAt < confirmAt && confirmAt < serviceAt);
+  assert.equal(source.match(/callService\?\.\('lock'/g)?.length, 1);
+  assert.equal(source.match(/this\._lockAction\(/g)?.length, 1, 'only the opening card button calls it');
+});
+
+test('marker delete/re-add and opening save remain separate config transactions', () => {
+  const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  const saveOpening = methodBody(source, '_saveOpening');
+  const saveMarker = methodBody(source, '_saveMarker');
+  assert.match(saveOpening, /sp\.openings/);
+  assert.doesNotMatch(saveOpening, /cfg\.markers|this\._markers/);
+  assert.match(saveMarker, /cfg\.markers/);
+  assert.doesNotMatch(saveMarker, /\.openings/);
 });

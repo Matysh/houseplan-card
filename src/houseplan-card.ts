@@ -175,7 +175,8 @@ import {
 import {
   acquireHaRegistries, activeRegistryHass, cacheHaBindingStatuses,
   fullRegistryHass, haRegistryBuildSignature, haRegistryDiagnostics, haRegistrySnapshot,
-  refreshHaRegistries, resolveHaBindingStatus,
+  openingEntityAvailable, refreshHaRegistries, renderOpeningEntityAvailable,
+  resolveHaBindingStatus,
   type HaBindingStatus, type HaRegistrySnapshot,
 } from './ha-binding-status';
 import type { DecorShape, DecorStyle } from './editors/decor/types';
@@ -10362,7 +10363,7 @@ class HouseplanCard extends LitElement {
   private _contactCandidates(): { value: string; label: string }[] {
     const out: [string, string, number][] = [];
     for (const eid of Object.keys(this.hass.states)) {
-      if (!this._planEntityAvailable(eid)) continue;
+      if (!this._openingEntityAvailable(eid)) continue;
       const dom = eid.split('.')[0];
       if (dom !== 'binary_sensor' && dom !== 'cover') continue;
       const st = this.hass.states[eid];
@@ -10378,7 +10379,7 @@ class HouseplanCard extends LitElement {
 
   private _lockCandidates(): { value: string; label: string }[] {
     return Object.keys(this.hass.states)
-      .filter((eid) => eid.startsWith('lock.') && this._planEntityAvailable(eid))
+      .filter((eid) => eid.startsWith('lock.') && this._openingEntityAvailable(eid))
       .map((eid) => ({ value: eid, label: this.hass.states[eid]?.attributes?.friendly_name || eid }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }
@@ -15512,7 +15513,7 @@ class HouseplanCard extends LitElement {
 
   /** Live state of an opening's contact, 0..1 drawn amount. */
   private _openingAmt(o: OpeningCfg): number {
-    const st = o.contact && this._renderEntityAvailable(o.contact)
+    const st = o.contact && this._renderOpeningEntityAvailable(o.contact)
       ? this._renderPlanHass.states[o.contact]?.state
       : null;
     return openingAmount(o.type, st, !!o.invert);
@@ -15530,6 +15531,16 @@ class HouseplanCard extends LitElement {
     if (!eid) return false;
     if (isRemovedPlanEntity(this._renderPlanHass, eid, removedPlanBindings(this._markers))) return false;
     return !!this._renderPlanHass.entities?.[eid] && !!this._renderPlanHass.states?.[eid];
+  }
+
+  /** Exact opening references ignore marker tombstones but keep HA status. */
+  private _openingEntityAvailable(eid: string | null | undefined): boolean {
+    return openingEntityAvailable(this.hass, eid, this._haRegistry);
+  }
+
+  /** Opening availability from the same immutable projection as the frame. */
+  private _renderOpeningEntityAvailable(eid: string | null | undefined): boolean {
+    return renderOpeningEntityAvailable(this._renderPlanHass, eid);
   }
 
   /**
@@ -15571,7 +15582,7 @@ class HouseplanCard extends LitElement {
     const openingWallIndex = this._openingWallIndexFor(this._spaceModel(), openCuts).value;
     return svg`${items.map((o) => {
       const amt = this._openingAmt(o);
-      const active = amt > 0 && !!o.contact && this._renderEntityAvailable(o.contact);
+      const active = amt > 0 && !!o.contact && this._renderOpeningEntityAvailable(o.contact);
       const tone = active ? 'var(--hp-open)' : base;
       // A normal door/window uses the selected room-side face. A gate's
       // architectural symbol sits and opens on the opposite (exterior) face;
@@ -15617,7 +15628,7 @@ class HouseplanCard extends LitElement {
   /** Padlock badges for door-like openings with a lock entity. */
   private _renderOpeningLocks(view: { x: number; y: number; w: number; h: number }): TemplateResult {
     const items = this._openingsR.filter(
-      (o) => o.type !== 'window' && o.lock && this._renderEntityAvailable(o.lock),
+      (o) => o.type !== 'window' && o.lock && this._renderOpeningEntityAvailable(o.lock),
     );
     if (!items.length) return html``;
     const openCuts = this._openPairs().flatMap((pair) => pair.segs);
@@ -15662,7 +15673,7 @@ class HouseplanCard extends LitElement {
     // button is a deliberate, labeled control inside an opened card, the same
     // contract as Home Assistant's own more-info dialog. Unlocking additionally
     // asks for confirmation; locking does not (locking is never destructive).
-    if (!this._planEntityAvailable(entityId)) return;
+    if (!this._openingEntityAvailable(entityId)) return;
     if (action === 'unlock') {
       const name = this.hass?.states?.[entityId]?.attributes?.friendly_name || entityId;
       if (!confirm(this._t('confirm.unlock', { name }))) return;
@@ -15672,8 +15683,8 @@ class HouseplanCard extends LitElement {
 
   private _renderOpeningInfoCard(): TemplateResult {
     const o = this._openingInfo!;
-    const contact = o.contact && this._planEntityAvailable(o.contact) ? o.contact : null;
-    const lock = o.lock && this._planEntityAvailable(o.lock) ? o.lock : null;
+    const contact = o.contact && this._openingEntityAvailable(o.contact) ? o.contact : null;
+    const lock = o.lock && this._openingEntityAvailable(o.lock) ? o.lock : null;
     const cSt = contact ? this.hass.states[contact]?.state : null;
     const amt = this._openingAmt(o);
     const lSt = lock ? this.hass.states[lock]?.state : null;

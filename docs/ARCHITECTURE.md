@@ -245,7 +245,13 @@ HA binding against automatic discovery while intentionally exposing that same
 binding to the Add picker. A device tombstone excludes all data of that device;
 an entity tombstone excludes the standalone entity binding but does not mutate
 the same entity out of a still-live parent device. Runtime-filtered references
-such as `controls` remain persisted and become active again after re-add.
+such as `controls` and live text remain persisted and become active again after
+re-add. Exact `opening.contact` / `opening.lock` fields are a separate
+architectural-object role: their HA availability ignores marker tombstones but
+still uses `resolveHaBindingStatus()` to reject disabled, orphaned or unverified
+entities. Their painted state comes from the immutable active-registry frame,
+not directly from live `hass`. Re-adding a marker therefore cannot duplicate or
+rewrite an opening reference.
 Re-adding replaces the tombstone; virtual markers need no tombstone because
 they have no discovery source.
 
@@ -412,6 +418,12 @@ Its default width in the editor is 300 cm. `openingAmount` (pure) maps the conta
 **never** toggled from the plan (`resolveToggleIntent` returns a secure no-op). View-mode UX: hover outline,
 drag along walls (continuous re-snap, saved on release), click → status card (250 ms timer),
 double click → properties dialog. In markup mode the "Opening" tool handles clicks instead.
+
+Contact and lock are exact HA references owned by the opening, not aliases of
+standalone markers. Their candidate/action path follows HA binding status while
+their render path follows the frozen active-registry projection; neither path
+consults marker tombstones. Plan-level consumers keep the tombstone policy
+described above.
 
 For a wall with thickness, one `OpeningWallIndex` resolves the atomic wall
 interval and adjacent room on each side of the centreline. Opening symbols,

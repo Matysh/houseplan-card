@@ -104,10 +104,15 @@ the old behaviour until an editing client materialises it.
   standalone plan object; it does not remove the same entity from the data of
   a still-live parent HA device. Tombstones are binding-scoped, not mutations
   of the HA registry.
-- References in openings, live text and another marker's persisted `controls`
-  are retained but become inactive (no lock/contact badge, `—`, or control
-  action respectively). Adding the binding again restores them without
-  reconstructing configuration or performing an unrelated Save first.
+- Exact `opening.contact` and `opening.lock` references are independent of a
+  standalone plan marker: deleting that marker does not remove the entity from
+  the opening picker and does not stop the saved opening from following its HA
+  state. The tombstone still suppresses every marker-level contribution and is
+  not removed or rewritten by choosing the entity in an opening.
+- References in live text and another marker's persisted `controls` are
+  retained but become inactive (`—` or no control action respectively).
+  Adding the binding again restores those references without reconstructing
+  configuration or performing an unrelated Save first.
 - The same inactive rule applies while a saved binding is HA-disabled. The
   marker, room metrics, Glow/light fill, registry-wide climate, live text,
   openings, controls, vacuum puck and trails all ignore it. Reactivation of the
