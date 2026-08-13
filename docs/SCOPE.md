@@ -98,8 +98,12 @@ the file — and if a future version wants to reclaim that space, it asks.
 - History, graphs, statistics → recorder/history cards. We show now, not then.
 - Camera streams, media controls → their own cards; our more-info opens HA's.
 - Energy monitoring/analytics → HA Energy.
-- 3D / isometric / photorealistic rendering, furniture drawing → niche tools
-  (easy-floorplan et al.); we are a schematic live map, not an interior editor.
+- Photorealistic rendering, a free 3D camera, a separate 3D model and 3D
+  furniture/interior editing → niche tools (easy-floorplan et al.); we are a
+  live spatial map, not an interior editor. A narrow exception approved for
+  [#89](https://github.com/Matysh/houseplan-card/issues/89) is a deterministic
+  2.5D presentation of the existing canonical plan: the same J1/J2/J3 state,
+  actions and geometry, with no second model and no free camera.
 - A general dashboard framework (menus, popups, theming engine) → Bubble Card,
   Dwains and friends.
 
