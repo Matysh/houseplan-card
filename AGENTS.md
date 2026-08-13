@@ -41,6 +41,15 @@ of a status and `rejected` on a closed issue. Exactly one `S*` label per open
 issue. [GitHub Projects (v2)](https://github.com/users/Matysh/projects/1) is a
 human-facing view synchronised from the labels, not the source of truth.
 
+Two shortcuts exist for small work. `small` — the light track: the spec lives in
+the issue body and its review is a comment. `trivial` — the short track: no spec
+stage at all, `S2-analysis` straight to `S5-ready`, with the AC written into the
+issue body first. `trivial` requires a bug confined to one surface with no new UX
+contract, no migration, no i18n, no perf or touch impact, at most three checkable
+AC, **and expected behaviour already on record** — nothing left to decide. Code
+review is never skipped on either track; it is what stands in for testing.
+`PROCESS.md` §5 and §5.1 hold the criteria.
+
 An issue filed by an outsider is worked exactly like one of the owner's own, once
 the owner has decided to take it. The check sits **at the entrance**, not on every
 step: while an issue carries no status label it is outside the process and the
