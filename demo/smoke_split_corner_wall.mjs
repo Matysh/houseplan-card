@@ -84,7 +84,12 @@ const res = await page.evaluate(async () => {
 
   const persisted = JSON.stringify({ rooms: space.rooms, walls: space.walls });
   const planD = sr().querySelector('.wallbody')?.getAttribute('d') || '';
-  const lightGeom = c._lightBarriers(c._spaceModel()).masonryGeometry;
+  const lightSpace = c._spaceModel();
+  const lightPolys = lightSpace.rooms
+    .filter((room) => Array.isArray(room.poly))
+    .map((room) => ({ r: room, poly: room.poly }));
+  const lightPhysical = c._physicalBodiesR(lightSpace);
+  const lightGeom = c._lightBarriers(lightSpace, lightPolys, lightPhysical).masonryGeometry;
   const lightPoints = lightGeom.flat(2);
   const lightBox = lightPoints.length ? [
     Math.min(...lightPoints.map((point) => point[0])),
