@@ -12,9 +12,7 @@ import {
   spaceDisplayOf, fillColorsOf, roomFillModeOf, roomGlowOf,
   roomCustomFillOf, resolveEffectiveRoomFill, stageBgOf, paperRoomShapes,
 } from './logic';
-import {
-  wallBodiesUnionPath, paperRoomShapesWithWalls, wallBodyNeedsSolid, type WallEntry,
-} from './wall-thickness';
+import { wallBodiesUnionPath, wallBodyNeedsSolid, type WallEntry } from './wall-thickness';
 import { DEFAULT_ICON_RULES, compileIconRules, EXCLUDED_DOMAINS } from './rules';
 import { t, type Lang } from './i18n';
 import { bgModeOf, northDegOf, sunStateOf, dayPhase } from './sun';
@@ -27,6 +25,7 @@ import {
 import { presentationSnapshotKey } from './render-device-snapshot';
 import { deviceFaceStyle, renderDeviceFace } from './device-face';
 import { valueBadgeTitle } from './device-value-badge';
+import { contentFingerprint } from './visual-continuity';
 import {
   spaceModels, roomCenter, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, NORM_W,
   GRID_STEP_N, GRID_PITCH,
@@ -34,6 +33,29 @@ import {
 } from './space-geometry';
 
 export { spaceModels } from './space-geometry';
+
+type StaticWallGeometry = ReturnType<typeof wallBodiesUnionPath>;
+type StaticWallGeometryEntry = { fingerprint: string; value: StaticWallGeometry };
+const staticWallGeometryCache = new WeakMap<object, Map<string, StaticWallGeometryEntry>>();
+
+/** Static cards receive the same immutable server-config object on HA ticks. */
+function cachedStaticWallGeometry(
+  cfg: ServerConfig,
+  spaceId: string,
+  fingerprint: string,
+  build: () => StaticWallGeometry,
+): StaticWallGeometry {
+  let spaces = staticWallGeometryCache.get(cfg as object);
+  if (!spaces) {
+    spaces = new Map<string, StaticWallGeometryEntry>();
+    staticWallGeometryCache.set(cfg as object, spaces);
+  }
+  const cached = spaces.get(spaceId);
+  if (cached?.fingerprint === fingerprint) return cached.value;
+  const value = build();
+  spaces.set(spaceId, { fingerprint, value });
+  return value;
+}
 
 export interface StaticRenderOpts {
   hass: any;
@@ -306,12 +328,19 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   // gaps between detached buildings, and an empty space has no paper at all,
   // image or no image. The picture is drawn ON the paper, one layer above.
 
-  const paperShapes = walls.length
-    ? paperRoomShapesWithWalls(space.rooms, walls, [], GRID_STEP_N, cellCm, GRID_PITCH, NORM_W)
-    : paperRoomShapes(space.rooms);
-  const wallUnion = (walls.length || extras.length) && disp.showBorders
-    ? wallBodiesUnionPath(space.rooms, walls, [], [], GRID_STEP_N, cellCm, GRID_PITCH, NORM_W, extras)
+  const needsCanonicalWallGeometry = !!(walls.length || (extras.length && disp.showBorders));
+  const wallGeometryFingerprint = needsCanonicalWallGeometry
+    ? contentFingerprint({ rooms: space.rooms, walls, extras, cellCm })
+    : '';
+  const canonicalWallGeometry = needsCanonicalWallGeometry
+    ? cachedStaticWallGeometry(o.cfg, space.id, wallGeometryFingerprint, () => wallBodiesUnionPath(
+      space.rooms, walls, [], [], GRID_STEP_N, cellCm, GRID_PITCH, NORM_W, extras,
+    ))
     : null;
+  const paperShapes = walls.length && canonicalWallGeometry?.paperD
+    ? [{ path: canonicalWallGeometry.paperD }]
+    : paperRoomShapes(space.rooms);
+  const wallUnion = disp.showBorders ? canonicalWallGeometry : null;
   const pxPerUnit = o.stageWidth && vb[2] ? o.stageWidth / vb[2] : 1;
   const solidWall = !!wallUnion && wallBodyNeedsSolid(wallUnion.depthUnits, pxPerUnit);
   const wallStroke = disp.color || '#607d8b';
@@ -326,7 +355,9 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
           </pattern>
         </defs>` : nothing}
         ${paperShapes.map((sh) =>
-          'poly' in sh
+          'path' in sh
+            ? svg`<path class="hp-paper" d="${sh.path}" fill-rule="evenodd"></path>`
+          : 'poly' in sh
             ? svg`<polygon class="hp-paper" points="${sh.poly}"></polygon>`
             : svg`<rect class="hp-paper" x="${sh.rect.x}" y="${sh.rect.y}" width="${sh.rect.w}" height="${sh.rect.h}" rx="${sh.rect.rx}"></rect>`,
         )}

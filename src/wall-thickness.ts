@@ -6,8 +6,8 @@
  * displayed m² use the inner (inset) contour. Wall-length rulers stay on the
  * centreline.
  */
-import { union, difference } from 'polyclip-ts';
-import { polygonArea, roomPoly, roomEdges, sharedBoundary } from './logic';
+import { union, difference, intersection } from 'polyclip-ts';
+import { polygonArea, roomPoly, roomEdges, sharedBoundary, paperRoomShapes } from './logic';
 
 export interface WallEntry {
   key: string;
@@ -1206,6 +1206,113 @@ function closedRing(poly: number[][]): number[][][] {
   return [ring];
 }
 
+interface ExteriorEnvelopeGeometry {
+  /** Union of room centrelines. Shared Split edges disappear from this shape. */
+  centre: any;
+  /** Wall shell generated only from the surviving exterior boundary. */
+  shell: any;
+}
+
+/** Open every ring of a polyclip MultiPolygon and drop its closing duplicate. */
+function geometryRings(geom: any): number[][][] {
+  const out: number[][][] = [];
+  for (const polygon of Array.isArray(geom) ? geom : []) {
+    if (!Array.isArray(polygon)) continue;
+    for (const raw of polygon) {
+      if (!Array.isArray(raw) || raw.length < 4) continue;
+      const ring = raw.slice(0, -1).map((p: number[]) => [p[0], p[1]]);
+      if (ring.length >= 3) out.push(ring);
+    }
+  }
+  return out;
+}
+
+function pointOnSegment(p: number[], a: number[], b: number[], eps: number): boolean {
+  if (distToSeg(p[0], p[1], a[0], a[1], b[0], b[1]) > eps) return false;
+  const dx = b[0] - a[0], dy = b[1] - a[1];
+  const dot = (p[0] - a[0]) * dx + (p[1] - a[1]) * dy;
+  const len2 = dx * dx + dy * dy;
+  return dot >= -eps && dot <= len2 + eps;
+}
+
+/**
+ * Split a boolean-union boundary at every stored exterior interval endpoint.
+ * Polyclip is allowed to collapse a collinear child-room vertex; retaining the
+ * interval breakpoints is what preserves unequal wall depths on the two sides.
+ */
+function exteriorBoundaryProfile(
+  ring: number[][],
+  outer: WallInterval[],
+  eps: number,
+): { poly: number[][]; offsets: number[] } | null {
+  const poly: number[][] = [];
+  const offsets: number[] = [];
+  for (let i = 0; i < ring.length; i++) {
+    const a = ring[i], b = ring[(i + 1) % ring.length];
+    const dx = b[0] - a[0], dy = b[1] - a[1];
+    const len2 = dx * dx + dy * dy;
+    if (!(len2 > eps * eps)) continue;
+    const cuts = [0, 1];
+    for (const iv of outer) {
+      for (const p of [iv.a, iv.b]) {
+        if (!pointOnSegment(p, a, b, eps)) continue;
+        const t = ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / len2;
+        if (t > eps && t < 1 - eps) cuts.push(t);
+      }
+    }
+    cuts.sort((x, y) => x - y);
+    const unique = cuts.filter((t, at) => at === 0 || Math.abs(t - cuts[at - 1]) > eps);
+    for (let at = 0; at < unique.length - 1; at++) {
+      const t0 = unique[at], t1 = unique[at + 1];
+      const p = [a[0] + dx * t0, a[1] + dy * t0];
+      const mid = [a[0] + dx * (t0 + t1) / 2, a[1] + dy * (t0 + t1) / 2];
+      let half = 0;
+      for (const iv of outer) {
+        if (pointOnSegment(mid, iv.a, iv.b, eps)) half = Math.max(half, iv.half);
+      }
+      poly.push(p);
+      offsets.push(half);
+    }
+  }
+  return poly.length >= 3 && offsets.length === poly.length ? { poly, offsets } : null;
+}
+
+/**
+ * Exterior masonry is derived from the union of room centrelines, not from
+ * each room independently. A Split edge therefore vanishes before mitres are
+ * built and cannot turn its artificial child corner into part of the facade.
+ */
+function exteriorEnvelopeGeometry(
+  rooms: any[],
+  walls: WallEntry[] | null | undefined,
+  openCuts: number[][],
+  pitch: number,
+  cellCm: number,
+  gridPitch: number,
+  coordScale: number,
+): ExteriorEnvelopeGeometry | null {
+  const polys = (rooms || []).map(roomPoly).filter((p): p is number[][] => !!p && p.length >= 3);
+  if (!polys.length) return null;
+  let centre: any = union(closedRing(polys[0]) as any);
+  for (let i = 1; i < polys.length; i++) centre = union(centre, closedRing(polys[i]) as any);
+
+  const outer = wallIntervals(
+    rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
+  ).filter((iv) => iv.kind === 'outer' && iv.half > 0);
+  const eps = openEps(pitch, coordScale) * 4;
+  let shell: any = null;
+  for (const ring of geometryRings(centre)) {
+    const profile = exteriorBoundaryProfile(ring, outer, eps);
+    if (!profile || !profile.offsets.some((o) => o > 0)) continue;
+    const outset = outsetContour(profile.poly, profile.offsets);
+    const inset = insetContour(profile.poly, profile.offsets);
+    if (!outset || !inset) continue;
+    const piece = difference(closedRing(outset) as any, closedRing(inset) as any);
+    shell = shell ? union(shell, piece) : piece;
+  }
+  return { centre, shell: shell || [] };
+}
+
 function polyclipToPathD(geom: any): string {
   if (!geom) return '';
   let d = '';
@@ -1368,7 +1475,7 @@ export function wallBodiesGeometry(
   gridPitch: number,
   coordScale = 1,
   extraBodies: number[][][] = [],
-): { geom: any; depthUnits: number } | null {
+): { geom: any; paperGeom: any; depthUnits: number } | null {
   if (!walls?.length && !extraBodies.length) return null;
   const roomRings: { outset: number[][]; inset: number[][] | null }[] = [];
   let maxDepth = 0;
@@ -1404,17 +1511,54 @@ export function wallBodiesGeometry(
     ? openingWallIndex(rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale)
     : null;
   try {
+    const exterior = exteriorEnvelopeGeometry(
+      rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
+    );
+    // Paper and masonry share this one structural pass. Renderers cache the
+    // returned pair, so a live HA state update never repeats exterior topology.
+    const paperGeom = exterior
+      ? (exterior.shell?.length ? union(exterior.centre, exterior.shell) : exterior.centre)
+      : [];
     const bodyOf = (ring: typeof roomRings[number]): any => {
       const outset: any = closedRing(ring.outset);
       return ring.inset ? difference(outset, closedRing(ring.inset) as any) : outset;
     };
-    let body: any = roomRings.length ? bodyOf(roomRings[0]) : null;
-    for (let i = 1; i < roomRings.length; i++) body = union(body, bodyOf(roomRings[i]));
+    let body: any = null;
+    for (const ring of roomRings) {
+      try {
+        const piece = bodyOf(ring);
+        body = body ? union(body, piece) : piece;
+      } catch {
+        // An acute child contour may be invalid for boolean subtraction. The
+        // interval pass below still supplies its physical wall without letting
+        // the artificial mitre back into the exterior envelope.
+      }
+    }
+    // Per-room rings preserve established L/T/nested joins. Atomic quads are
+    // also included so a rejected acute child ring cannot remove a divider or
+    // an interior half-wall. Clipping them to the centre union gives a hard
+    // facade boundary; the canonical exterior shell is added afterwards.
+    if (exterior) {
+      for (const edge of wallEdgeBodies(
+        rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
+      )) {
+        try {
+          const piece = intersection(closedRing(edge.quad) as any, exterior.centre);
+          body = body ? union(body, piece) : piece;
+        } catch {
+          // A valid per-room ring may already own this interval. If neither
+          // representation is usable the final result fails closed below.
+        }
+      }
+    }
     // The room-ring subtraction above cannot infer a mitre between real arms
     // owned by different contours at a virtual T. Add only those missing
     // junction pieces, then let physical openings cut through them as usual.
     for (const patch of junctions)
       body = body ? union(body, closedRing(patch) as any) : closedRing(patch);
+    if (body && exterior) body = intersection(body, exterior.centre);
+    if (exterior?.shell?.length)
+      body = body ? union(body, exterior.shell) : exterior.shell;
     // cut opening tunnels (axis-aligned to opening angle)
     for (const o of openings) {
       if (!(o.length > 0)) continue;
@@ -1439,7 +1583,7 @@ export function wallBodiesGeometry(
       if (extra.length < 3) continue;
       body = body ? union(body, closedRing(extra) as any) : [closedRing(extra)];
     }
-    return { geom: body || [], depthUnits: maxDepth };
+    return { geom: body || [], paperGeom, depthUnits: maxDepth };
   } catch {
     return null;
   }
@@ -1457,31 +1601,19 @@ export function wallBodiesUnionPath(
   /** Independent physical bodies are unioned only after room openings are cut,
    * so a door/window/gate can never punch a coincident partition or column. */
   extraBodies: number[][][] = [],
-): { d: string; depthUnits: number; fillRule: 'evenodd' | 'nonzero' } | null {
+): { d: string; paperD: string; depthUnits: number; fillRule: 'evenodd' | 'nonzero' } | null {
   if (!walls?.length && !extraBodies.length) return null;
   const united = wallBodiesGeometry(
     rooms, walls, openCuts, openings, pitch, cellCm, gridPitch, coordScale, extraBodies,
   );
   const d = united ? polyclipToPathD(united.geom) : '';
-  if (united && d) return { d, depthUnits: united.depthUnits, fillRule: 'evenodd' };
+  const paperD = united ? polyclipToPathD(united.paperGeom) : '';
+  if (united && d) return { d, paperD, depthUnits: united.depthUnits, fillRule: 'evenodd' };
   if (united) return null; // successful empty result: do not resurrect raw rings
-  // fall back to evenodd rings concatenated
-  const rings = wallBodyRings(rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
-  const extraD = extraBodies.map((poly) => polyToPath(poly)).join(' ');
-  if (!rings.length && !extraD) return null;
-  // `united` is null on this branch: a successful-but-empty union returned
-  // above and must not be resurrected by the raw-ring fallback.
-  let maxDepth = 0;
-  for (const ring of rings) maxDepth = Math.max(maxDepth, ring.depthUnits);
-  // Each room ring already reverses its inset. `nonzero` therefore keeps
-  // floors as holes while overlapping independent rings add instead of
-  // cancelling one another (the old even-odd fallback produced pinholes at
-  // exactly the complex junctions for which a fallback is needed).
-  return {
-    d: [rings.map((r) => r.d).join(' '), extraD].filter(Boolean).join(' '),
-    depthUnits: maxDepth,
-    fillRule: 'nonzero',
-  };
+  // Fail closed. The old raw per-room-ring fallback is the exact algorithm
+  // that creates an exterior tooth at a corner Split, so resurrecting it after
+  // a boolean failure would make malformed input violate the facade invariant.
+  return null;
 }
 
 /**
@@ -1666,22 +1798,28 @@ export function paperRoomShapesWithWalls(
   cellCm: number,
   gridPitch: number,
   coordScale = 1,
-): Array<{ poly: string } | { rect: { x: number; y: number; w: number; h: number; rx: number } }> {
-  const out: Array<{ poly: string } | { rect: { x: number; y: number; w: number; h: number; rx: number } }> = [];
-  for (const r of rooms || []) {
-    const poly = roomPoly(r);
-    if (poly && poly.length >= 3) {
-      const pr = roomWallProfile(rooms, r.id, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
-      const grown = pr && pr.offsets.some((o) => o > 0)
-        ? outsetContour(pr.poly, pr.offsets)
-        : null;
-      const use = grown || poly;
-      out.push({ poly: use.map((p) => p.join(',')).join(' ') });
-    } else if (r && r.x != null && r.y != null && r.w != null && r.h != null) {
-      out.push({ rect: { x: r.x, y: r.y, w: r.w, h: r.h, rx: Math.min(r.w, r.h) * 0.03 } });
+): Array<
+  | { path: string }
+  | { poly: string }
+  | { rect: { x: number; y: number; w: number; h: number; rx: number } }
+> {
+  if (!walls?.length) return paperRoomShapes(rooms);
+  try {
+    const exterior = exteriorEnvelopeGeometry(
+      rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
+    );
+    if (exterior) {
+      const paper = exterior.shell?.length
+        ? union(exterior.centre, exterior.shell)
+        : exterior.centre;
+      const path = polyclipToPathD(paper);
+      if (path) return [{ path }];
     }
+  } catch {
+    // Safe fallback below: exact room centrelines never reproduce the known
+    // exterior Split spike, even when boolean offsetting rejected bad input.
   }
-  return out;
+  return paperRoomShapes(rooms);
 }
 
 interface OpeningWallEdge {

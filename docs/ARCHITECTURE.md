@@ -326,6 +326,20 @@ its types declare named exports — breaking either tsc or the runtime): merge a
 when the union collapses into one hole-free outline; split cuts wall-to-wall with a chord, the
 bigger part keeps the room identity (name/area/devices).
 
+`wallBodiesGeometry()` is the canonical physical masonry for flat full/static
+rendering, hidden isometric projection and Glow/sun occlusion. Its exterior
+shell is derived from the union of room centrelines plus the surviving `outer`
+atomic intervals; internal/shared interval bodies are clipped to that union
+before the shell is restored. Consequently a Split edge ending at an exterior
+vertex cannot contribute a child-room mitre to the facade. Per-room rings remain
+an interior join/nested-room representation, and atomic quads provide a safe
+physical interval when an acute child ring cannot be subtracted. Paper and
+masonry paths are emitted by that same geometry pass. The full card retains the
+pair in `_wallUnionCache`; static cards retain it in a weak server-snapshot
+cache guarded by a structural geometry fingerprint. This is computed render
+state only: it never rewrites rooms or wall entries, and an HA state tick does
+not rebuild topology.
+
 ## Markup editor (v1.4.0+)
 
 State inside the card: `_markup` (mode), `_tool` (draw/partition/column/merge/split/resize/opening/

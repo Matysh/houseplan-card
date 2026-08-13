@@ -1,13 +1,19 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 17;
+export const GOLDEN_MATRIX_VERSION = 18;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
 const sunWindow = { capture: 'sun-window', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.001 } };
 
 export const GOLDEN_SCENARIOS = Object.freeze([
+  { id: 'split-corner-wall-before-dark', fixture: 'visual', space: 'golden-corner-split',
+    cornerSplitWall: 'before', mode: 'view', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'split-corner-wall-thin-dark', fixture: 'visual', space: 'golden-corner-split',
+    cornerSplitWall: 'thin', mode: 'view', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'split-corner-wall-thick-dark', fixture: 'visual', space: 'golden-corner-split',
+    cornerSplitWall: 'thick', mode: 'view', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'isometric-geometry-view-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     labs: ['iso'], projection: 'iso', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'isometric-geometry-view-light', fixture: 'visual', space: 'golden-geometry', mode: 'view',
