@@ -1,0 +1,80 @@
+#!/bin/sh
+set -eu
+
+# PROCESS.md 10.1: the blocking process gate lives here, because commits go
+# straight to dev without pull requests and GitHub blocks nothing on its side.
+# CI still runs the same script (10.3), but by then the code is already in dev —
+# that catch-up pass reports, it does not prevent.
+#
+# Git feeds one line per ref on stdin:
+#   <local ref> <local sha> <remote ref> <remote sha>
+
+repo_root=$(git rev-parse --show-toplevel)
+gate="$repo_root/scripts/process-gate.mjs"
+zero=$(printf '%040d' 0)
+
+# The gate reasons about commits. A repository without it — an old checkout, a
+# bisect, a worktree from before the script existed — must still be pushable.
+if [ ! -f "$gate" ]; then
+  exit 0
+fi
+
+# Reading issue status needs gh, and a hook that cannot work on a train is a
+# hook people disable. Offline the checks that need no network still run, and the
+# strict pass happens in CI, where gh is always present.
+issues_flag=""
+if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
+  issues_flag="--issues"
+else
+  echo "process-gate: gh недоступен, проверка статуса issue пропущена — её выполнит CI" >&2
+fi
+
+status=0
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  # Deleting a remote branch pushes nothing to examine.
+  if [ "$local_sha" = "$zero" ]; then
+    continue
+  fi
+
+  # Tags carry no process state of their own: the commit they point at was
+  # already checked when it was pushed.
+  case "$local_ref" in
+    refs/tags/*) continue ;;
+  esac
+
+  if [ "$remote_sha" = "$zero" ]; then
+    # A branch that does not exist on the remote yet. Everything it adds on top
+    # of dev is new, so that is the range — not the whole history, which would
+    # drag in every violation committed before the gate existed.
+    base=$(git merge-base "$local_sha" refs/remotes/origin/dev 2>/dev/null || true)
+    if [ -z "$base" ]; then
+      echo "process-gate: не нашёл общего предка с origin/dev, проверяю последние 20 коммитов" >&2
+      base="$local_sha~20"
+    fi
+  else
+    base="$remote_sha"
+  fi
+
+  echo "process-gate: $local_ref, диапазон ${base}..${local_sha}" >&2
+  # shellcheck disable=SC2086
+  if ! node "$gate" --range "${base}..${local_sha}" $issues_flag >&2; then
+    status=1
+  fi
+done
+
+if [ "$status" -ne 0 ]; then
+  cat >&2 <<'EOF'
+
+Push остановлен: нарушен процесс (PROCESS.md §10.2).
+
+Починить надо причину, а не симптом. Если нарушение уже опубликовано, его
+исправляет следующий коммит плюс issue с меткой `process` — не force-push
+(§12, правило 17).
+
+Обойти проверку можно через `git push --no-verify`, и тогда то же самое найдёт
+job `process-gate` в Validate — уже после того, как код окажется в dev.
+EOF
+fi
+
+exit "$status"

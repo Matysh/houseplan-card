@@ -1,7 +1,28 @@
 #!/usr/bin/env node
 import { execFileSync } from 'node:child_process';
-import { existsSync, realpathSync } from 'node:fs';
+import { chmodSync, existsSync, readdirSync, realpathSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+const HOOKS = ['commit-msg', 'pre-push'];
+
+// Git skips a hook that is not executable, and says nothing about it. A hook that
+// silently does not run is worse than no hook: the gate reports success by being
+// absent. The bit cannot be set through the GitHub API either — a file pushed
+// that way arrives as 100644 — so it is restored here, on every install.
+function makeHooksExecutable(hooksDir) {
+  if (!existsSync(hooksDir)) return;
+  for (const name of readdirSync(hooksDir)) {
+    if (!HOOKS.includes(name)) continue;
+    const file = join(hooksDir, name);
+    try {
+      const mode = statSync(file).mode & 0o777;
+      if ((mode & 0o111) !== 0o111) chmodSync(file, mode | 0o111);
+    } catch {
+      // Windows reports modes it cannot change; git there runs hooks regardless.
+    }
+  }
+}
 
 const packageRoot = realpathSync(fileURLToPath(new URL('..', import.meta.url)));
 
@@ -19,6 +40,7 @@ try {
   execFileSync('git', ['config', 'core.hooksPath', '.githooks'], {
     cwd: packageRoot, stdio: 'ignore',
   });
+  makeHooksExecutable(join(packageRoot, '.githooks'));
   console.log('House Plan: installed repository hooks from .githooks');
 } catch {
   // npm also runs prepare for source archives and dependency installs where
