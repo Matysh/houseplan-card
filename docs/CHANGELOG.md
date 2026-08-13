@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Fixed a crash after deleting the last space: the supported empty state now
+  stays usable so a new space can be added ([#111](https://github.com/Matysh/houseplan-card/issues/111)).
+
 ## v1.62.0 — 2026-08-13
 
 - Added portable full-plan and single-space backups with server-validated

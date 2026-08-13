@@ -164,7 +164,8 @@ import {
   valueBadgeSourceKey, valueBadgeTitle, valueBadgeWriteFields, type ValueBadgeCandidate,
 } from './device-value-badge';
 import {
-  createRenderDeviceSnapshot, presentationSnapshotKey, type RenderDeviceSnapshot,
+  createRenderDeviceSnapshot, presentationSnapshotKey, renderDeviceSnapshotPositions,
+  type RenderDeviceSnapshot,
 } from './render-device-snapshot';
 import { deviceFaceStyle, renderDeviceFace } from './device-face';
 import {
@@ -3428,7 +3429,11 @@ class HouseplanCard extends LitElement {
     const snapshot = createRenderDeviceSnapshot({
       sourceSequence: this._hassSequence, hass: planHass,
       devices: this._devices, presentations,
-      positions: new Map(this._devices.map((device) => [device.id, this._livePos(device)])),
+      positions: renderDeviceSnapshotPositions(
+        this._model.length > 0,
+        this._devices,
+        (device) => this._livePos(device),
+      ),
       facts,
       entityIds,
       deviceIds,

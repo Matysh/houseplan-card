@@ -22,6 +22,23 @@ export interface RenderDeviceSnapshot {
   readonly facts: ReadonlyMap<string, unknown>;
 }
 
+/**
+ * Resolve device positions only when a plan model exists to own them.
+ *
+ * A snapshot without a renderable plan still carries its immutable HA facts,
+ * but there is no geometry against which a position can be resolved. Keeping
+ * the map empty also preserves the stricter contract of the geometry helpers:
+ * they continue to require a real SpaceModel.
+ */
+export function renderDeviceSnapshotPositions(
+  hasRenderablePlan: boolean,
+  devices: readonly DevItem[],
+  resolve: (device: DevItem) => { x: number; y: number },
+): ReadonlyMap<string, { x: number; y: number }> {
+  if (!hasRenderablePlan) return new Map();
+  return new Map(devices.map((device) => [device.id, resolve(device)]));
+}
+
 function cloneFact<T>(value: T, stack = new WeakMap<object, unknown>()): T {
   if (value === null || typeof value !== 'object') return value;
   const object = value as unknown as object;

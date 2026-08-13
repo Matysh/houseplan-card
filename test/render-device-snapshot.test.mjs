@@ -3,8 +3,31 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  createRenderDeviceSnapshot, presentationSnapshotKey,
+  createRenderDeviceSnapshot, presentationSnapshotKey, renderDeviceSnapshotPositions,
 } from '../test-build/render-device-snapshot.js';
+
+test('snapshot positions skip resolution until a renderable plan exists', () => {
+  const devices = [{ id: 'one' }, { id: 'two' }];
+  let calls = 0;
+  const empty = renderDeviceSnapshotPositions(false, devices, () => {
+    calls++;
+    throw new Error('a missing plan has no position geometry');
+  });
+
+  assert.equal(empty.size, 0);
+  assert.equal(calls, 0, 'the resolver is not called without a plan model');
+
+  const positions = renderDeviceSnapshotPositions(true, devices, (device) => {
+    calls++;
+    return device.id === 'one' ? { x: 12, y: 34 } : { x: 56, y: 78 };
+  });
+
+  assert.equal(calls, 2);
+  assert.deepEqual([...positions], [
+    ['one', { x: 12, y: 34 }],
+    ['two', { x: 56, y: 78 }],
+  ]);
+});
 
 test('RenderDeviceSnapshot keeps immutable facts and excludes live HA capabilities', () => {
   const state = { entity_id: 'light.one', state: 'on', attributes: { brightness: 120 } };
@@ -56,4 +79,19 @@ test('atomic plan render paths do not bypass RenderDeviceSnapshot with this.hass
   ]) {
     assert.doesNotMatch(methodBody(source, name), /this\.hass\b/, name);
   }
+});
+
+test('the card gates snapshot positions on the render model', () => {
+  const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  const capture = methodBody(source, '_captureRenderDeviceSnapshot');
+  assert.match(
+    capture,
+    /positions:\s*renderDeviceSnapshotPositions\(\s*this\._model\.length > 0,/s,
+    'the empty-plan predicate is the same render-model predicate used by the empty state',
+  );
+  assert.doesNotMatch(
+    capture,
+    /positions:\s*new Map\(this\._devices\.map\(/,
+    'the previous unconditional position path must not return',
+  );
 });
