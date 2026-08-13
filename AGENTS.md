@@ -190,6 +190,29 @@ What the new label means:
 **After a review run the label always changes.** If it did not, the run itself
 failed rather than the work — say so to the owner instead of polling on.
 
+**A failed pre-release gate does not send the issue back to review.** The
+implementation loop runs only typecheck, unit and build; golden, browser smokes,
+performance and the full HA harness run before a beta, which is after the code
+review has passed and the issue sits in `S8-merged`. Some defects cannot surface
+any earlier.
+
+Fix it, re-run what failed, and a green run is enough for the release to continue.
+The issue stays in `S8-merged`. Record the **exact command and its result** in the
+issue — "verified" without a command proves nothing. Trailers as usual, and
+`User-Visible: yes` still means both changelogs in the same commit.
+
+The exception covers repairing the defect the gate named, not carrying on
+development under the name of a repair. It goes through the normal flow — a new
+issue, or back to `S6-in-progress` — if the fix changes a behaviour contract, gives
+the user something new, reaches a subsystem the task never touched, or is
+comparable in size to the task itself. And editing the gate so it stops failing is
+concealment, not repair; the exception is a defect proven to be **in the fixture**,
+as on #89, where the sun sat at azimuth 180° and the only window faced north, so no
+ray was ever built.
+
+Baselines are still accepted only via `npm run golden:accept -- --reviewed` on a
+complete Linux CI artefact. "So the gate goes green" is not a reason.
+
 The exchange happens in **issue comments** — there is no local message bus. Verdict
 format:
 
