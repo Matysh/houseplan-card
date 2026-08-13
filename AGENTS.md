@@ -41,9 +41,17 @@ of a status and `rejected` on a closed issue. Exactly one `S*` label per open
 issue. [GitHub Projects (v2)](https://github.com/users/Matysh/projects/1) is a
 human-facing view synchronised from the labels, not the source of truth.
 
-Only issues **created by the owner** enter the process. The repository is public;
-outside reports may be malformed or invalid, carry no status labels, and are not
-picked up until the owner converts them into his own issue.
+An issue filed by an outsider is worked exactly like one of the owner's own, once
+the owner has decided to take it. The check sits **at the entrance**, not on every
+step: while an issue carries no status label it is outside the process and the
+invariants do not apply to it; once a label is on, the task is in flight and **who
+filed it stops mattering**.
+
+Applying that first label *is* the owner's explicit decision, and the platform
+already guarantees it — only someone with write access can label. The earlier rule
+made outside reports be refiled as the owner's own issues, which turned out to be
+work for nothing: on #123 the spec was already written by the time the guard
+refused.
 
 Specs, audits and ADRs may live under `docs/`, but must link to their issue and
 must not become a parallel task list. When repository documentation disagrees with
