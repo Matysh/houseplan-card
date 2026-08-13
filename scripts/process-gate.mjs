@@ -189,7 +189,13 @@ export function evaluateCommit(c) {
   return out;
 }
 
-// 2. имя ветки issue/NN-slug соответствует трейлерам
+// 2. имя ветки issue/NN-slug соответствует трейлерам.
+//
+// Судить можно только коммиты САМОЙ ветки. Диапазон, который приходит из события
+// CI, шире: после ребейза `before` указывает на снесённый коммит, merge-base
+// уезжает назад, и в диапазон попадают коммиты `dev` с чужими номерами issue —
+// каждый из них выглядел бы нарушением. Проверено на реальной истории: сидя на
+// issue/89 с диапазоном по dev, гейт дал 26 ложных отказов из 26 коммитов.
 export function checkBranchRule(branch, commits) {
   const m = (branch ?? '').match(/^issue\/(\d+)-/);
   if (!m) return [];
@@ -397,7 +403,20 @@ function main(argv) {
 
   const findings = [];
   for (const c of commits) findings.push(...evaluateCommit(c));
-  findings.push(...checkBranchRule(branch, commits));
+
+  // Проверке 2 отдаются только коммиты самой ветки: origin/dev..HEAD, а не
+  // диапазон события. См. комментарий у checkBranchRule.
+  const ownCommits = /^issue\/\d+-/.test(branch)
+    ? (() => {
+      const hasDev = spawnSync('git', ['-C', repo, 'rev-parse', '--verify', 'origin/dev'],
+        { encoding: 'utf8' }).status === 0;
+      if (!hasDev) return commits;
+      return parseRecords(
+        git(['log', '--reverse', `--pretty=format:${LOG_FORMAT}`, 'origin/dev..HEAD'], repo),
+      );
+    })()
+    : commits;
+  findings.push(...checkBranchRule(branch, ownCommits));
 
   // Метки читаются один раз и используются дважды: проверкой 8 и escalation
   // проверки 3. Второй запрос по тому же issue — лишний сетевой вызов.

@@ -287,6 +287,38 @@ test('the CLI exits 0 on a clean range and 1 on a broken one', (t) => {
     const parsed = JSON.parse(asJson.stdout);
     assert.equal(parsed.ok, false);
     assert.equal(parsed.commits, 2);
+
+    // Проверка 2 судит только коммиты самой ветки. Диапазон из события CI шире:
+    // после ребейза merge-base уезжает назад и втягивает коммиты dev с чужими
+    // номерами issue. На реальной истории это давало 26 ложных отказов из 26.
+    git('checkout', '-q', 'dev');
+    git('reset', '-q', '--hard', base);
+    write('src/on-dev.ts', 'export const d = 1;\n');
+    write('docs/CHANGELOG.md', 'ru\n');
+    write('docs/CHANGELOG.ru.md', 'en\n');
+    commitAll('Land on dev\n\nIssue: #1\nUser-Visible: yes');
+    const devTip = git('rev-parse', 'HEAD').trim();
+    git('update-ref', 'refs/remotes/origin/dev', devTip);
+
+    git('checkout', '-q', '-b', 'issue/2-own-work');
+    write('src/on-branch.ts', 'export const b = 1;\n');
+    commitAll('Work on the task branch\n\nIssue: #2\nUser-Visible: no');
+
+    // Диапазон намеренно захватывает коммит dev про #1, пока HEAD на ветке #2.
+    const spanning = spawnSync(process.execPath,
+      [gate, '--repo', dir, '--range', `${base}..HEAD`, '--json'], { encoding: 'utf8' });
+    const spanned = JSON.parse(spanning.stdout);
+    assert.equal(spanned.commits, 2);
+    assert.deepEqual(spanned.findings.filter((f) => f.rule === 2), [], spanning.stdout);
+    assert.equal(spanned.ok, true, spanning.stdout);
+
+    // А своё же нарушение ветка по-прежнему получает.
+    write('src/wrong-issue.ts', 'export const w = 1;\n');
+    commitAll('Wrong trailer for this branch\n\nIssue: #3\nUser-Visible: no');
+    const wrong = spawnSync(process.execPath,
+      [gate, '--repo', dir, '--range', `${devTip}..HEAD`, '--json'], { encoding: 'utf8' });
+    const wrongReport = JSON.parse(wrong.stdout);
+    assert.equal(wrongReport.findings.some((f) => f.rule === 2), true, wrong.stdout);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
