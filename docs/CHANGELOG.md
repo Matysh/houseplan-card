@@ -2,12 +2,15 @@
 
 ## Unreleased
 
+## v1.63.0-beta.1 — 2026-08-13
+
 - Deleting a standalone sensor or lock marker no longer breaks its explicit
   door, window or gate binding: the entity stays available in opening settings
   and continues to drive its state without restoring the marker on the plan
   ([#104](https://github.com/Matysh/houseplan-card/issues/104)).
 - Fixed a crash after deleting the last space: the supported empty state now
   stays usable so a new space can be added ([#111](https://github.com/Matysh/houseplan-card/issues/111)).
+- Small fixes and improvements.
 
 ## v1.62.0 — 2026-08-13
 
