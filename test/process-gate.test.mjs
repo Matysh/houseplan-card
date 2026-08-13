@@ -134,8 +134,9 @@ test('a class A commit without a spec warns offline and fails with labels', () =
   assert.equal(offline[0].level, 'warn');
   assert.equal(offline[0].rule, 3);
 
-  // С метками: small оправдывает отсутствие файла, его отсутствие — нет.
+  // С метками: small и trivial оправдывают отсутствие файла, их отсутствие — нет.
   assert.deepEqual(checkSpecs([c], [], () => ['small', 'S5-ready']), []);
+  assert.deepEqual(checkSpecs([c], [], () => ['trivial', 'S5-ready']), []);
   const strict = checkSpecs([c], [], () => ['S5-ready']);
   assert.equal(strict.length, 1);
   assert.equal(strict[0].level, 'fail');

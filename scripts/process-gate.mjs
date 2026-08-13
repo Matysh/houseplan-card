@@ -67,6 +67,12 @@ const CLASS_C = [
 
 const CHANGELOGS = ['docs/CHANGELOG.md', 'docs/CHANGELOG.ru.md'];
 
+// Метки, при которых файла ТЗ в docs/specs/ быть не должно: на лёгком треке ТЗ
+// живёт в теле issue (§5), на коротком — там же, и ревью ТЗ вообще не проводится
+// (§5.1, issue #128). Офлайн эти случаи неотличимы от «ТЗ не написано», поэтому
+// проверка 3 краснеет только когда метки прочитаны.
+export const NO_SPEC_FILE = ['small', 'trivial'];
+
 export const ALLOWED_STATUS = ['S5-ready', 'S6-in-progress', 'S7-code-review', 'S8-merged'];
 export const STRICT_STATUS = ['S5-ready', 'S6-in-progress', 'S7-code-review'];
 
@@ -235,12 +241,12 @@ export function checkSpecs(commits, specFiles, labelsOf = null) {
       if (labels === null) {
         out.push({
           level: 'warn', rule: 3, sha: c.short,
-          msg: `класс A по ${t}, но ТЗ docs/specs/${nn}-*.md не найдено — допустимо только при метке small`,
+          msg: `класс A по ${t}, но ТЗ docs/specs/${nn}-*.md не найдено — допустимо при метке small или trivial`,
         });
-      } else if (!labels.includes('small')) {
+      } else if (!labels.some((l) => NO_SPEC_FILE.includes(l))) {
         out.push({
           level: 'fail', rule: 3, sha: c.short,
-          msg: `класс A по ${t}: ТЗ docs/specs/${nn}-*.md нет, и метки small на issue нет — код без ТЗ`,
+          msg: `класс A по ${t}: ТЗ docs/specs/${nn}-*.md нет, и метки ${NO_SPEC_FILE.join(' / ')} на issue нет — код без ТЗ`,
         });
       }
     }
