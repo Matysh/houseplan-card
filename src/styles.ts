@@ -383,6 +383,12 @@ export const cardStyles = css`
       opacity: 0.4;
       pointer-events: none;
     }
+    .projection-toggle {
+      min-width: 44px;
+      min-height: 44px;
+      justify-content: center;
+      padding: var(--sp-3);
+    }
     /* docs/CANVAS.md §4.1: objects an order of magnitude away from the plan
        do not decide the opening view — one quiet chip says so and offers to
        take them in. Never a modal (owner). */
@@ -462,6 +468,26 @@ export const cardStyles = css`
       width: 100%;
       height: 100%;
       display: block;
+    }
+    .iso-walls-svg {
+      z-index: 4;
+      overflow: visible;
+    }
+    .iso-wall-side {
+      fill: #a8acae;
+      stroke: #92989b;
+      stroke-width: 0.7;
+      vector-effect: non-scaling-stroke;
+    }
+    .iso-wall-top {
+      fill: #f3f3f1;
+      stroke: #d7d9d8;
+      stroke-width: 0.8;
+      vector-effect: non-scaling-stroke;
+    }
+    @media (prefers-color-scheme: dark) {
+      .iso-wall-side { fill: #3f474c; stroke: #333a3e; }
+      .iso-wall-top { fill: #596166; stroke: #747d82; }
     }
     /* Opaque plan paper (owner 2026-08-03): the scene bg_color / daynight sky
        shows ONLY around the plan, never through it. The colour is the
@@ -1654,6 +1680,7 @@ export const cardStyles = css`
       position: absolute;
       inset: 0;
       pointer-events: none;
+      z-index: 6;
     }
     .dev {
       position: absolute;

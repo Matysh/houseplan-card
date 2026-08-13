@@ -2,12 +2,13 @@
 
 - Issue: https://github.com/Matysh/houseplan-card/issues/89
 - Приоритет: **P1**, feature
-- Статус ТЗ: **готово к реализации** (ревизия 2, ревью 2026-08-11).
-  До ADR (§13.1) задача ведётся как spike/implementation-prep: renderer не
-  считается выбранным, пока решения ADR не записаны.
+- Статус ТЗ: **принято к реализации** (ревизия 3, решения владельца и зелёное
+  независимое ревью ТЗ 2026-08-13).
+  Ревизия 2 предшествует действующему процессу и новым визуальным референсам.
 - Исследование и продуктовое обоснование: [`089-isometric-view.md`](089-isometric-view.md)
   (контекст; нормативен настоящий файл)
-- Ревью ревизии 1: `SPEC-REVIEW-089-isometric-view-stage1.md`
+- Историческое ревью ревизии 1 не является доступным артефактом репозитория и
+  не заменяет новое ревью по `PROCESS.md`.
 - Связано: #82 (анимация zoom/fit), #73 (визуальная непрерывность), #85 (тесты
   должны уметь падать), #50 (перенос конфигурации)
 
@@ -31,11 +32,11 @@
 
 | # | Находка | Куда внесено |
 |---|---|---|
-| B1 | Проекция точек описана, а три реальные системы координат — нет. `IsoCamera` без pivot и zScale: проекция вокруг `(0,0)` сдвинет план, а `_baseVb()` (`houseplan-card.ts:3995`) не знает про поднятые верхние грани и начнёт их обрезать | §4.4 — plan/scene/client, pivot-константа, `projectedFrame` |
-| B2 | Нет алгоритма переноса viewport между проекциями. `_view` и `_viewModeSnap` (`:982`) хранят прямоугольник и `cx/cy` в координатах *текущей* сцены; требование «не менять фокус» было недоказуемо | §4.5 — алгоритм из шести шагов |
-| B3 | Несовместимость с `docs/WARM-REMOUNT.md`: `warmBoot` (`:287`) переносит `_view`/`_viewModeSnap`/mode, а один и тот же `ViewRect` теперь имеет два разных смысла | §7.1 — projection в warm-состоянии, усыновление только при совпадении |
+| B1 | Проекция точек описана, а три реальные системы координат — нет. `IsoCamera` без pivot и zScale: проекция вокруг `(0,0)` сдвинет план, а `_baseVb()` не знает про поднятые верхние грани и начнёт их обрезать | §4.4 — plan/scene/client, pivot-константа, `projectedFrame` |
+| B2 | Нет алгоритма переноса viewport между проекциями. `_view` и `_viewModeSnap` хранят прямоугольник и `cx/cy` в координатах *текущей* сцены; требование «не менять фокус» было недоказуемо | §4.5 — алгоритм из шести шагов |
+| B3 | Несовместимость с `docs/WARM-REMOUNT.md`: `warmBoot` переносит `_view`/`_viewModeSnap`/mode, а один и тот же `ViewRect` теперь имеет два разных смысла | §7.1 — projection в warm-состоянии, усыновление только при совпадении |
 | B4 | Правило «все попадания через unproject» технически неверно: SVG сам хит-тестит содержимое трансформированного `<g>`, HTML-маркер получает клик как обычный DOM-узел; плюс смок про перетаскивание маркера противоречил «редакторы всегда плоские» | §7.1 — нативный hit-test, смок про drag убран |
-| B5 | Кнопка «в киоске рядом с шапкой» невозможна: `.hdr.kioskhide { display: none }` (`styles.ts:987`) | §3, §7.1 — кнопка только в обычном View, аварийный выход из киоска через URL |
+| B5 | Кнопка «в киоске рядом с шапкой» невозможна: `.hdr.kioskhide { display: none }` в `src/styles.ts` | §3, §7.1 — кнопка только в обычном View, аварийный выход из киоска через URL |
 | B6 | Грамматика Labs противоречива: неясен приоритет query и хэша, смысл `off,iso`, повторного параметра, и §2.2 против §2.3 про очистку URL | §2.2.1 — точный контракт операций |
 | B7 | Не определена топология граней. `wallBodiesGeometry().geom` — MultiPolygon с внешними и внутренними rings после union и вырезов; «граничных рёбер» недостаточно. Формулировка «без торцов в проёме» запрещала бы корректные jamb faces | §5.1, §12 AC 6 |
 | B8 | Fallback «вернуться в flat на этом кадре» не отвечает, что будет на следующем рендере и что показывает кнопка | §9 — state machine с latch |
@@ -53,12 +54,35 @@
 | T4 | Не определено поведение при первом запуске и при истёкшем флаге с сохранённым `iso` | §10.2 |
 | T5 | Issue и файл ТЗ расходились в статусе | §13.2 |
 
+### 0.3 Решения владельца 2026-08-13
+
+| # | Решение | Следствие для этапа 1 |
+|---|---|---|
+| O1 | Детерминированный 2.5D допускается как узкое исключение из прежнего абсолютного запрета в `docs/SCOPE.md` | Это альтернативное представление J1/J2/J3, не отдельная модель, interior editor или свободная 3D-камера |
+| O2 | Новые изображения задают обязательное направление Stage 2 | Stage 1 сразу использует почти верхнюю ортографическую камеру без диагонального yaw, но не обещает материал/фотореализм референса |
+| O3 | Labs — общий переиспользуемый механизм | Одноразовый флаг #89 запрещён; пользовательской настройки Labs нет |
+| O4 | #89 заканчивается полностью реализованным Stage 1 | Stage 2/public rollout получает отдельную feature issue только после зелёного Stage 1 |
+| O5 | Вертикальные створки и светлые оконные элементы отложены | Двери, окна и ворота сохраняют текущие символы на плоскости пола; стеновые разрывы полноценны |
+| O6 | Все текущие live-эффекты пола сохраняются | Glow/spill, солнце, room fills/hover, decor/backdrop и vacuum не заменяются новым оконным светом |
+
 ---
 
 ## 1. Цель и границы этапа
 
 Получить работающий объёмный вид на реальных планах, не показывая его никому,
 кроме тех, кто явно включил флаг.
+
+**Job и персона.** Этап служит J1 «показать весь дом и происходящее сейчас»;
+на целевой поверхности View домашний администратор оценивает скрытый прототип,
+а household member/guest в обычной установке продолжает видеть неизменный
+плоский план. Touch View и kiosk остаются обязательными поверхностями даже для
+скрытого режима: включивший Labs администратор не должен получить сломанный
+ежедневный план на планшете.
+
+**До → после, без терминов реализации.** До этапа явно включённый
+экспериментальный режим отсутствует; после этапа тестировщик может одним
+переключателем увидеть тот же живой дом с низкими объёмными стенами и вернуться
+к прежнему плоскому виду без потери состояния, фокуса и действий.
 
 Входит: механизм Labs (§2); системы координат и проекция (§4); объём стен,
 перегородок, колонн и разрывы в проёмах (§5); поведение слоёв (§6);
@@ -89,9 +113,9 @@ export const LABS_FLAGS: readonly LabsFlag[] = [ /* … */ ];
 
 ### 2.2 Источники активации
 
-Читаются и query-строка, и хэш. Хэш — потому что карточка уже им владеет
-(`_hashSpace()`, `houseplan-card.ts:1290`, слушатель `hashchange` на `:1422`) и
-он реактивен внутри Lovelace; query — потому что его удобно давать тестировщику.
+Читаются и query-строка, и хэш. Хэш — потому что карточка уже использует его в
+`_hashSpace()` и реактивно слушает `hashchange` внутри Lovelace; query — потому
+что его удобно давать тестировщику.
 
 ```
 ?hp-labs=iso        #hp-labs=iso        включить
@@ -184,9 +208,17 @@ YAML-опция карточки (`labs: [iso]`) не вводится: конф
 
 ### 4.2 Камера
 
-Один зафиксированный ракурс; константы выбираются на spike и после этого
-меняются только вместе с пересъёмкой golden. Свободное вращение и tilt в этап 1
-не входят.
+Один зафиксированный почти верхний ортографический ракурс, следующий новым
+референсам владельца: исходные горизонтали и вертикали плана остаются
+параллельны экранным осям, диагонального yaw/поворота плана нет, перспектива и
+схождение линий отсутствуют, высота стен заметна, но не закрывает комнаты.
+
+Нормативная семья проекции для spike: `rotDeg = 0`; наклон от вида строго
+сверху находится в диапазоне **18–22°**; логическая высота и `zScale` должны
+давать низкую видимую боковую грань. Точное значение внутри диапазона выбирает
+ADR по golden/performance, после чего оно меняется только вместе с пересъёмкой
+новых iso-эталонов. Свободное вращение, пользовательский tilt и пресеты камеры
+в Stage 1 не входят.
 
 ### 4.3 Одна проекция на всё
 
@@ -223,9 +255,9 @@ projectedFrame(input: IsoFrameInput, cam: IsoCamera): ViewRect;
 2. `unprojectFloorPoint` инвертирует **только плоскость `z = 0`**: точке на
    вертикальной грани не соответствует единственная точка плана.
 3. **Pivot — фиксированная константа плана**, рекомендуется
-   `[NORM_W / 2, NORM_W / 2]` (`NORM_W = 1000`, `space-geometry.ts:11`).
+   `[NORM_W / 2, NORM_W / 2]` (`NORM_W = 1000` в `space-geometry.ts`).
    Не центр viewport и не центр содержимого: иначе появление дальнего объекта
-   или переключение `_showFar` (`houseplan-card.ts:806`) сдвинет уже построенные
+   или переключение `_showFar` сдвинет уже построенные
    стены без изменения их геометрии.
 4. Высота стены задаётся одной константой, переводится в plan units и только
    потом умножается на `zScale`. Значения фиксируются ADR.
@@ -246,8 +278,8 @@ projectedFrame(input: IsoFrameInput, cam: IsoCamera): ViewRect;
    плана; в iso — пропустить центр `_view` через `unprojectFloorPoint`.
 2. Построить целевой `projectedFrame` и целевой fit.
 3. Сохранить тот же скалярный zoom.
-4. Спроецировать логический центр в целевую сцену и вызвать `_applyView()`
-   (`:4101`) с этим центром.
+4. Спроецировать логический центр в целевую сцену и вызвать `_applyView()` с
+   этим центром.
 5. Сырые `x/y/w/h` между видами не переиспользуются никогда.
 6. Вход в редактор выполняет тот же переход iso → flat, выход — обратный к
    предыдущему виду. Смена пространства внутри редактора сбрасывает старый
@@ -294,7 +326,23 @@ runtime/warm-состоянием.
 ## 6. Слои
 
 Поведение слоёв — таблица §6 исследования, она нормативна. Дополнительно как
-запреты:
+обязательный контракт Stage 1:
+
+- floor plane сохраняет **все** нынешние live-слои и их порядок: room
+  fills/hover, Glow/spill, солнце, backdrop/decor, furniture и vacuum
+  path/outline; состояния HA продолжают обновлять их без перестройки граней;
+- дверь, окно и ворота сохраняют нынешний floor-plane symbol и live state;
+  вертикальные створки, светлые оконные вставки и новый оконный свет не
+  появляются;
+- room/device actions, badges, live text и screen-facing HTML остаются теми же
+  пользовательскими поверхностями; объёмный renderer не создаёт новых service
+  paths и не ослабляет lock invariant из `docs/SCOPE.md`;
+- слои пола проецируются одной матрицей с нижними точками стен; HTML overlay
+  использует те же projected anchors, но сам остаётся screen-facing;
+- `show_borders: false` не рисует top/side faces, но не выключает room fill,
+  Glow/spill, sunlight или их барьерную семантику;
+
+Запреты:
 
 - существующее дерево карточки **не оборачивается** в CSS 3D-контекст;
   `perspective`, `rotateX/Z`, `preserve-3d` не появляются ни на `.zoomwrap`, ни
@@ -311,6 +359,12 @@ runtime/warm-состоянием.
 - **Редакторы всегда плоские.** Вход показывает плоский вид, выход
   восстанавливает предыдущий; переключение не пишет в command stack и не создаёт
   записей в сторе.
+- **Touch editor: не exposed.** Объёмной геометрии внутри Plan/Devices/Backdrop
+  нет; редакторы используют прежний desktop-first flat contract.
+- **Touch View и kiosk: полностью поддерживаются.** Pan/pinch, space switching,
+  room/device dialogs, безопасные действия, orientation/background/remount и
+  kiosk gestures проходят тот же safety floor, что flat View. Переключение
+  проекции атомарно и само не считается жестом #82.
 
 ### 7.1 Hit-test, непрерывность и киоск (B3, B4, B5)
 
@@ -322,7 +376,7 @@ HTML-маркер получает клик как обычный DOM-узел. 
 - цепочка `client → scene → unprojectFloorPoint` применяется только там, где
   событие сцены действительно должно дать координату плана;
 - на этапе 1 объёмный вид ничего не создаёт, не редактирует и не перетаскивает,
-  поэтому `_svgPoint()` (`:5018`) остаётся плоским;
+  поэтому `_svgPoint()` остаётся плоским;
 - тесты кликают реальные DOM-узлы комнат, устройств и проёмов и проверяют
   действие; отдельный юнит проверяет цепочку `client → scene → floor`.
 
@@ -345,6 +399,13 @@ HTML-маркер получает клик как обычный DOM-узел. 
 Новых панелей и диалогов этап 1 в киоске не добавляет. Если переключатель в
 киоске понадобится, его место — существующий long-press диалог, отдельным
 решением.
+
+**Touch/Companion.** На coarse pointer toggle в обычном View остаётся минимум
+44×44 CSS px; после переключения pinch midpoint и tap/long-press попадают в
+видимый объект, а не в его flat-позицию. Orientation change, background →
+foreground и Companion warm-remount используют §4.5/§7.1 и не показывают
+полуплоский смешанный кадр. Эти случаи release-blocking по
+`docs/TOUCH-SUPPORT.md`.
 
 ## 8. Производительность и кэш
 
@@ -452,6 +513,12 @@ Pan/zoom меняют только transform/viewBox и ничего не пер
   порядках, версии §2.4, валидность реестра.
 - Отсутствие вызова построителя геометрии объёма при выключенном флаге —
   проверяется шпионом (T1).
+- Camera contract: `rotDeg = 0`, диапазон tilt 18–22°, отсутствие perspective
+  term и сохранение параллельности plan axes; поднятая высота не меняет floor
+  round-trip.
+- Layer contract: state-only HA updates не меняют geometry fingerprint/cache;
+  `show_borders: false` убирает только faces, а не floor layers; door/window/gate
+  Stage 1 geometry не содержит вертикальных leaf/window panels.
 
 ### 11.2 Смоки
 
@@ -471,12 +538,27 @@ Pan/zoom меняют только transform/viewBox и ничего не пер
 кадр; iso → снять флаг → remount → плоский кадр без вуали; загрузка киоска с
 сохранённым `iso` и возврат в плоский через URL.
 
+Отдельный smoke live-layer parity последовательно меняет room fill/hover,
+несколько Glow/spill sources, солнце, backdrop/decor, furniture и vacuum state;
+между flat и iso совпадают resolved source count/state, service-action outcome и
+логические floor anchors, а geometry build counter не растёт от HA-only update.
+Проверяются текущие opening symbols/states без vertical leaf/window DOM.
+
+Touch/Companion smoke: toggle имеет ≥44×44 CSS px; pinch и space switching в
+iso; tap/long-press по реальному DOM room/device/opening; orientation resize;
+background/foreground и warm-remount; kiosk с сохранённым iso и аварийным
+`off`. В каждом случае нет phantom click, unintended edit/service call,
+смешанного flat/iso frame или permanently stuck View.
+
 ### 11.3 Golden (M7)
 
 Минимальная матрица этапа: desktop dark (смешанные толщины, проёмы, Glow и
 солнце, устройства); desktop light (тема, затенение граней, паритет фильтров);
 узкий мобильный или киоск (fit, совпадение маркеров и подписей, отсутствие
 обрезки); `show_borders: false` (стены не нарисованы, заливка и Glow на месте).
+Каждая iso-сцена показывает `rotDeg = 0`: стены, параллельные plan X/Y, не
+получают диагонального поворота. Референсы владельца не являются baseline
+Stage 1 и не принимаются как обещание фотореалистичных материалов.
 Ветка активации флага добавляется в `demo/golden/harness.mjs`,
 `GOLDEN_MATRIX_VERSION` поднимается. Существующие плоские сцены не принимаются
 заново: ненулевой diff — регресс. Новые эталоны принимаются только из полного
@@ -505,30 +587,67 @@ Linux-артефакта CI по действующему контракту HP-
 свап атомарный (если анимация появится через #82, `prefers-reduced-motion`
 делает её мгновенной).
 
+### 11.6 Матрица доказательств AC
+
+| AC | Доказательство до code review | Обязательная проверка ревьюера |
+|---|---|---|
+| AC1 | unit spy + flat smoke + существующие golden + performance profile | убедиться мутантом, что включение iso без флага краснит smoke |
+| AC2–AC3 | unit Labs grammar/version + URL smoke | запустить команды и проверить fail-closed malformed/expired |
+| AC4 | unit camera + desktop/touch smoke + iso golden | проверить чтением отсутствие perspective/free camera и исполнением fixed view |
+| AC5–AC6 | unit face topology + iso golden | применить один geometry mutant из §11.4 |
+| AC7 | unit fingerprint/layer contract + live-layer smoke + golden | выполнить HA-only update и проверить cache/source/action parity |
+| AC8 | projection unit + DOM interaction/touch smoke | внести контролируемый anchor shift и получить красный smoke |
+| AC9 | editor/warm/touch smoke | проверить View → editor → View и Companion remount исполнением |
+| AC10 | fallback unit + smoke | инъекция renderer exception, затем повторный HA update |
+| AC11 | reviewed performance profile на exact SHA | проверить report provenance/environment fail-closed |
+| AC12 | schema/config source-contract + smoke второй карточки | чтение diff и исполнение flat `houseplan-space-card` |
+| AC13 | source-contract + opening/live-layer smoke | проверить отсутствие vertical leaf/window и нового window-light layer |
+| AC14 | touch/Companion smoke + mobile/kiosk golden | исполнить coarse-pointer safety matrix |
+| AC15 | review документации и provenance | проверить issue ↔ spec ↔ SCOPE и отсутствие user changelog |
+
 ## 12. Acceptance criteria
 
-1. При выключенном флаге карточка идентична текущей: DOM, запросы, сторы,
-   производительность в пределах допуска на шум, все существующие golden.
-2. Флаг включается из query и из хэша по грамматике §2.2.1, переживает переход
-   между видами и снимается через `off`.
-3. Флаг с достигнутым `expires` не включается никаким способом.
-4. Под флагом в обычном View доступен объёмный вид с фиксированным ракурсом;
-   плоский вид остаётся значением по умолчанию, в том числе при первом запуске.
-5. Физические стены, перегородки и колонны имеют непрерывные верх и боковые
-   грани; виртуальные границы плоские.
-6. Проём является разрывом на всю высоту: внутри разрыва нет полосы верха или
-   бока, а две вертикальные грани откосов на границах разрыва — ожидаемая часть
-   объёма.
-7. Glow, spill, солнце, заливки и hover сохраняют текущую семантику; второго
-   слоя света не появилось.
-8. Маркеры, подписи и попадания курсора используют одну проекцию и не расходятся
-   с планом; переключение вида не меняет зум и не сдвигает логический центр.
-9. Редакторы всегда плоские; переключение не пишет в сторы и не создаёт записей
-   в истории; warm-remount не подменяет проекцию.
-10. Исключение в renderer даёт плоский fallback с защёлкой, кнопка отражает
-    фактический вид, предпочтение не перезаписывается.
-11. Перф-профиль §8.2 выполнен на полном workflow по точному SHA.
-12. Формат конфигурации не изменился; `houseplan-space-card` остался плоским.
+1. **AC1 (`unit` + `smoke` + `golden` + `performance`):** при выключенном
+   флаге карточка сохраняет прежние DOM, запросы, сторы, flat golden и бюджет;
+   geometry/cache объёмного вида не создаются.
+2. **AC2 (`unit` + `smoke`):** флаг включается query/hash по §2.2.1, реактивно
+   переживает навигацию и снимается через `-iso`/`off` без переписывания URL.
+3. **AC3 (`unit`):** malformed registry/version и достигнутый `expires`
+   fail-closed; ни URL, ни storage не включают мёртвый флаг.
+4. **AC4 (`unit` + `smoke` + `golden`):** Labs View использует один почти
+   верхний ортографический ракурс: `rotDeg = 0`, tilt 18–22°, без перспективы;
+   план не повёрнут диагонально, комнаты не перекрыты стенами, flat default.
+5. **AC5 (`unit` + `golden`):** physical walls, partitions и columns имеют
+   непрерывные top/visible side faces O(E); virtual boundaries остаются flat.
+6. **AC6 (`unit` + `golden`):** door/window/gate opening — full-height gap без
+   top/side strip внутри; jamb faces присутствуют, независимые extra bodies не
+   вырезаются.
+7. **AC7 (`unit` + `smoke` + `golden`):** room fills/hover, Glow/spill, солнце,
+   backdrop/decor, furniture и vacuum сохраняют state, source count, порядок,
+   actions и barrier semantics между flat/iso; HA-only update не rebuild-ит
+   geometry; второго light layer нет.
+8. **AC8 (`unit` + `smoke`):** SVG floor, markers, room labels/cards и native
+   hit targets используют один projection snapshot; anchor error ≤1 CSS px;
+   toggle сохраняет scalar zoom и logical floor center.
+9. **AC9 (`smoke`):** все редакторы flat; View → editor → View, space change и
+   warm-remount не смешивают projections, не меняют config/history/view intent.
+10. **AC10 (`unit` + `smoke`):** renderer/projection exception даёт latched flat
+    fallback на fingerprint, отражается кнопкой, не стирает preference и не
+    повторяется на каждом HA update.
+11. **AC11 (`performance`):** профиль §8.2 зелёный на exact SHA; pan/zoom и HA
+    update не recompute geometry, flat path остаётся в noise budget.
+12. **AC12 (`unit` + `smoke` + code review):** plan schema/backend/import-export
+    не меняются; `houseplan-space-card` остаётся flat; Labs не создаёт network
+    calls и не гейтит migrations.
+13. **AC13 (`unit` + `smoke` + code review):** Stage 1 сохраняет нынешние
+    floor-plane opening symbols и states; vertical leaf/window panels, floor
+    edges, new window light и reference-grade materials отсутствуют.
+14. **AC14 (`smoke` + `golden`):** desktop View, touch View и kiosk полностью
+    работоспособны; toggle ≥44×44, pinch/tap/long-press/space/orientation/
+    background/remount безопасны; touch editors остаются flat/not exposed.
+15. **AC15 (code review):** `SCOPE`, issue, spec, internal Labs/ISO docs и
+    `STATUS` согласованы; en+ru i18n ключи toggle перечислены; README,
+    User Guide и оба changelog не обещают скрытую функцию.
 
 ## 13. Артефакты этапа
 
@@ -545,6 +664,8 @@ WebKit; причины отказа от проигравшего прототи
 
 ### 13.2 Документы
 
+- `docs/SCOPE.md` — узкое owner-approved исключение для детерминированного
+  2.5D без расширения в photorealistic/free-camera/interior editor;
 - `docs/ISOMETRIC.md` — внутреннее описание координат, проекции, топологии
   граней и ограничений;
 - запись про Labs в `docs/DEVELOPMENT.md` и `AGENTS.md`: как включать, как
@@ -553,9 +674,58 @@ WebKit; причины отказа от проигравшего прототи
 - issue #89: ссылка на это ТЗ как на нормативное, синхронизация scope и
   acceptance criteria, Project остаётся в `Todo` до фактического старта. Issue
   не закрывается после ADR — только после всех AC этапа (T5).
+- После зелёного Stage 1 — отдельная feature issue `S1-new` для Stage 2/public
+  rollout; в ней хранятся новые референсы владельца и решения о vertical
+  doors/windows, materials, shadows/floor edges и публичном UX.
 
 Не трогаются: `README.md`, `README.ru.md`, `docs/USER-GUIDE.ru.md`,
 `docs/CHANGELOG.md`, `docs/CHANGELOG.ru.md`.
+
+### 13.3 Предполагаемые файлы реализации
+
+Точный список подтверждается ADR, но code review ожидает как минимум:
+
+- новый pure geometry/projection слой: `src/iso-projection.ts` и
+  `src/iso-walls.ts` либо эквивалентные модули без Lit/HA;
+- reusable Labs resolver `src/labs.ts`;
+- интеграцию только в `src/houseplan-card.ts`, `src/styles.ts`,
+  `src/i18n/en.json`, `src/i18n/ru.json`; `src/space-card.ts` и
+  `src/space-render.ts` разрешены только для negative/source-contract tests,
+  не для iso-rendering;
+- unit: новые `test/iso-*.test.mjs`, `test/labs.test.mjs` и узкие
+  source-contract/regression additions;
+- browser: целевые `demo/smoke_isometric_*.mjs`, touch/warm/live-layer paths;
+- golden matrix/harness и **новые** iso baselines, принимаемые отдельно только
+  по reviewed Linux artifact; существующие flat baselines не обновляются;
+- performance profile/budget `large-house-isometric-v1` и workflow wiring;
+- `docs/ISOMETRIC.md`, `docs/DEVELOPMENT.md`, `AGENTS.md`, `docs/STATUS.md`.
+
+Backend Python, manifest/HACS metadata, config schema, import/export и package
+dependencies не меняются. Новая runtime dependency требует возврата в S3 и
+отдельного архитектурного решения.
+
+### 13.4 i18n, compatibility и security
+
+- Новые ключи только для toggle: `view.volumetric` и `view.flat` либо
+  эквивалентные согласованные имена, одновременно EN/RU. Текст берётся из
+  действующей терминологии: «Объёмный вид» / «Плоский вид» и “Volumetric view” /
+  “Flat view”.
+- Config/schema migration отсутствует; новые localStorage keys namespaced и
+  fail-soft, удаление keys полностью откатывает пользовательское состояние.
+- Labs parser принимает только известные registry ids, не исполняет и не
+  логирует произвольный input; diagnostics не содержат entity ids, URLs,
+  config или персональные данные.
+- Новый renderer не создаёт service calls. Все safe actions и единственная
+  sanctioned lock surface остаются прежними.
+
+### 13.5 Откат
+
+Пользовательский аварийный откат без новой сборки: `?hp-labs=-iso` или
+`?hp-labs=off`; flat View немедленно становится effective, сохранённый iso не
+воскрешается warm-state. Полный code rollback — revert одного принятого
+behavior commit/серии #89 и удаление `iso` из Labs registry; plan/config/backend
+данные не требуют обратной миграции. Если Stage 1 ломает flat path, Labs flag
+не считается достаточным смягчением: issue возвращается в S6 и beta блокируется.
 
 ## 14. Вне этапа 1
 
@@ -566,3 +736,15 @@ WebKit; причины отказа от проигравшего прототи
 - Объёмный вид в `houseplan-space-card`.
 - Редактирование в перспективе, пользовательская высота, 3D-мебель, WebGL.
 - YAML-опция карточки для Labs.
+
+## 15. Принятые предположения — можно изменить без пересмотра продукта
+
+1. Имена pure modules и i18n keys из §13.3–13.4 предварительные; review может
+   выбрать более согласованные имена без изменения поведения.
+2. Точная wall height, `zScale`, palette и side-face contrast выбираются ADR
+   внутри ограничений §4.2 и требуют новых iso golden, но не нового owner
+   decision.
+3. LocalStorage keys версионируются суффиксом `_v1`; внутренняя форма может
+   меняться до публичного Stage 2, если чтение malformed/old данных fail-soft.
+4. Stage 2 issue создаётся после зелёного code review/интеграции Stage 1, не
+   обязательно после beta; закрытие самой #89 всё равно следует beta-процессу.

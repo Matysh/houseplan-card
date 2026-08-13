@@ -4,6 +4,14 @@
 fixture. The fixture has 60 rooms, 200 devices, 100 openings, 60 partitions,
 40 columns and 500 decor objects on three floors.
 
+Issue #89 adds `large-house-isometric-v1` through the same runner. It enables
+`hp-labs=iso`, selects iso per fixture space, measures the View toggle and
+records the capped `isoGeometry` cache. A comparison SHA predating #89 remains
+flat while reporting the same profile. The dedicated
+`budgets-large-house-isometric.json` applies the reviewed 20% relative allowance
+plus absolute noise/ceiling checks. Only the exact-SHA Linux workflow is gate
+evidence; a local report is diagnostic.
+
 The runner records seven measured samples after one discarded warm-up. With
 this intentionally small CI sample, the nearest-rank `p95` is the observed
 maximum; reports keep the conventional field name but should be read as a

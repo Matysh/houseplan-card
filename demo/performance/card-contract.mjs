@@ -37,7 +37,9 @@ export const LARGE_HOUSE_CARD_CONTRACT = Object.freeze({
     '_settingsDialog',
     '_tool',
   ]),
-  optionalFields: Object.freeze([]),
+  // A comparison SHA before #89 is intentionally flat; the isometric runner
+  // checks these two members only when the target source tree supports Stage 1.
+  optionalFields: Object.freeze(['_isoGeometryCache', '_setProjection']),
   fieldTypes: Object.freeze({
     _booting: 'boolean',
     _cleanFloorCache: 'map',
@@ -46,6 +48,8 @@ export const LARGE_HOUSE_CARD_CONTRACT = Object.freeze({
     _gridPitch: 'number',
     _loadOk: 'boolean',
     _model: 'array',
+    _isoGeometryCache: 'map',
+    _setProjection: 'function',
     _tool: 'string',
   }),
 });

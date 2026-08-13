@@ -21,6 +21,11 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
       assert.equal(Number.isInteger(region.minPixels) && region.minPixels > 0, true, scenario.id);
       assert.equal(region.minRedBlueDelta > 0, true, scenario.id);
     }
+    if (scenario.labs) {
+      assert.deepEqual(scenario.labs, ['iso'], scenario.id);
+      assert.equal(scenario.projection, 'iso', scenario.id);
+      assert.equal(scenario.mode, 'view', scenario.id);
+    }
     if (scenario.sunRayPixels) {
       assert.equal(Number.isInteger(scenario.sunRayPixels.minPixels)
         && scenario.sunRayPixels.minPixels > 0, true, scenario.id);
@@ -64,7 +69,9 @@ test('golden matrix covers required geometry, rendering and adaptive surfaces', 
     'fill-light', 'fill-temp', 'fill-lqi', 'lighting', 'hover', 'zoom-040', 'zoom-250',
     'warm-remount', 'dialog-mobile', 'color-popover', 'tray-wide', 'tray-medium', 'sun-window',
     'tray-narrow', 'opaque-glow-two-doorways', 'filled-tunnel', 'opening-placement',
-    'backup-full', 'backup-space', 'value-badge-positions'])
+    'backup-full', 'backup-space', 'value-badge-positions', 'isometric-geometry',
+    'isometric-live-layers', 'isometric-no-borders', 'isometric-touch-kiosk',
+    'isometric-large-warm-remount'])
     assert.equal(ids.includes(token), true, token);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.mode)).has('plan'), true);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.mode)).has('devices'), true);

@@ -105,6 +105,23 @@ git config core.untrackedCache true
 
 ## Maintenance diagnostics
 
+### Labs presentation flags
+
+Labs is an internal, presentation-only runtime in `src/labs.ts`; it must never
+gate config/schema migrations, persistence writes, HA services or network
+requests. Enable the current experiment with `?hp-labs=iso` (or
+`#hp-labs=iso&space=<id>`), remove it with `-iso`, and clear all flags with
+`hp-labs=off`. Known URL operations persist to
+`houseplan_card_labs_v1` without rewriting the URL. Active flags are exposed for
+diagnostics as the frozen sorted `window.__hpLabs` array.
+
+To add a flag, add one unique lowercase id plus issue, `since`, `expires` and a
+non-empty summary to `LABS_FLAGS`, then cover URL/storage ordering, runtime
+subscription and expiry. Versions compare the numeric `major.minor.patch` core:
+at `expires` (including its first beta) the flag is dead and every activation
+path fails closed. Remove or graduate a flag before its expiry cycle; do not
+extend an expiry silently. See `docs/ISOMETRIC.md` for the current Stage 1 use.
+
 These commands are read-only diagnostics, not release gates:
 
 ```bash
@@ -114,6 +131,9 @@ npm run audit:config -- path/to/houseplan-config.json
 
 # Reproducible synthetic large-house report (seven measured samples + warm-up).
 npm run benchmark:large-house -- --samples=7 --warmups=1 --output=artifacts/performance/local.json
+
+# Hidden isometric profile; diagnostic only outside exact-SHA Linux CI.
+npm run benchmark:large-house-isometric -- --samples=7 --warmups=1 --output=artifacts/performance/isometric-local.json
 
 # Golden candidates never overwrite reviewed references.
 npm run golden:capture

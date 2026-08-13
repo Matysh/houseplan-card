@@ -31,6 +31,7 @@
     "src/opening-placement.ts", "src/render/opening-symbol.ts",
     "src/wall-thickness.ts",
     "src/physical-geometry.ts",
+    "src/labs.ts", "src/iso-projection.ts", "src/iso-walls.ts",
     "src/open-spans.ts",
     "src/editors/decor/geometry.ts"
   ]
