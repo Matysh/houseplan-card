@@ -5,7 +5,7 @@ message_file=$1
 
 # Git-generated merge commits do not represent an independently authored
 # product change and inherit provenance from their parents.
-case "$(basename "$message_file")" in
+case "${message_file##*/}" in
   MERGE_MSG) exit 0 ;;
 esac
 
