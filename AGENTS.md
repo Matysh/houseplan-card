@@ -167,11 +167,28 @@ sections are in `PROCESS.md` §7.1, plus two product ones: which persona meets t
 on which surface, at what moment; and what the person sees before and after, in one
 sentence without implementation terms.
 
-**Ambiguity is asked, not guessed.** A guess written as fact is the worst kind of
-defect: it passes review because it looks like a decision. Ask the owner in one
-batched issue comment, each question carrying a proposed default, and put `blocked`
-on top of `S3-spec` while waiting. Small or cheap calls are decided and recorded in
-an explicit "assumed, change freely" block at the end of the spec.
+**Ambiguity is asked, not guessed — but only product ambiguity.** A guess written as
+fact is the worst kind of defect: it passes review because it looks like a decision.
+
+The owner answers exactly two kinds of question: **what a person sees or does**, and
+**how much user-visible change belongs in this issue**. Behaviour in a boundary case,
+which persona wins when two conflict, what counts as acceptable degradation, whether
+a neighbouring behaviour is in scope here or becomes its own issue.
+
+Everything a user cannot observe is yours to settle: where state is stored, which
+module carries the guard, naming, file layout, test strategy, migration mechanics,
+development policy. Decide it, record it in an explicit "assumed, change freely"
+block, and let the reviewer challenge it. A technical disagreement between author and
+reviewer is settled by the verdict, not by the owner; it reaches him only when the
+cycle limit is exhausted.
+
+Split a mixed question instead of escalating all of it. "Where does this state live"
+is technical. "Does it survive a page reload and follow the plan across screens" is
+product. Ask the second, decide the first.
+
+Ask in one batched issue comment, each question carrying a proposed default, and put
+`blocked` on top of `S3-spec` while waiting. A question with a default costs the
+owner seconds; one without costs him minutes.
 
 ## Gates
 
