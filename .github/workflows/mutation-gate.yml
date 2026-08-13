@@ -1,0 +1,61 @@
+name: Mutation gate
+
+# Реестр известных поломок (issue #85): каждый мутант ломает продуктовый код
+# известным способом, и объявленный тест ОБЯЗАН на этом покраснеть. Тест,
+# оставшийся зелёным на сломанном коде, ничего не защищает — он лишь выглядит
+# защитой, и это хуже его отсутствия.
+#
+# Прогон дорогой: пересборка бандла на каждого мутанта. Поэтому он не входит в
+# Validate и не идёт на каждый push. Его место — перед стабильным релизом
+# (PROCESS.md §8) и раз в неделю по расписанию, чтобы дрейф тестов не копился
+# до релиза. Дешёвая половина — «якоря патчей живы, guard-файлы существуют» —
+# идёт с обычными юнитами: test/mutation-gate.test.mjs.
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Понедельник, 05:20 UTC — до начала рабочего дня владельца.
+    - cron: '20 5 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mutation-gate
+  cancel-in-progress: true
+
+jobs:
+  mutants:
+    runs-on: ubuntu-latest
+    # Шесть мутантов × (сборка + браузерный смок) — это десятки минут, и это
+    # нормально: гейт предрелизный. Час — потолок против зависшего Chromium.
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Кэш браузеров Playwright
+        id: pw
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Установить Chromium
+        if: steps.pw.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Реестр применим к текущему коду
+        run: node scripts/mutation-gate.mjs --check
+
+      - name: Каждый тест ловит свою поломку
+        run: node scripts/mutation-gate.mjs
