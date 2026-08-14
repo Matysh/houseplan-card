@@ -1664,6 +1664,67 @@ export const cardStyles = css`
       fill: #4bd28f;
       stroke: #04121f;
     }
+    .plan-snap-overlay,
+    .plan-snap-overlay * {
+      pointer-events: none;
+    }
+    .plan-snap-line {
+      fill: none;
+      stroke: color-mix(in srgb, var(--hp-accent) 82%, white 18%);
+      stroke-width: 1;
+      stroke-linecap: round;
+      opacity: 0.92;
+    }
+    .plan-snap-node {
+      fill: var(--ha-card-background, var(--card-background-color, #fff));
+      stroke: color-mix(in srgb, var(--hp-accent) 88%, #07131c 12%);
+      stroke-width: 1;
+      vector-effect: non-scaling-stroke;
+    }
+    .plan-snap-node.active {
+      fill: #ffc14d;
+      stroke: #171006;
+      stroke-width: 2;
+    }
+    .plan-snap-node.active.dynamic {
+      fill: #4bd28f;
+      stroke: #04121f;
+    }
+    @media (prefers-color-scheme: dark) {
+      .plan-snap-line {
+        stroke: color-mix(in srgb, var(--hp-accent) 72%, white 28%);
+      }
+      .plan-snap-node {
+        fill: #17242c;
+        stroke: #9bdcf5;
+      }
+      .plan-snap-node.active {
+        fill: #ffc14d;
+        stroke: #fff4d6;
+      }
+      .plan-snap-node.active.dynamic {
+        fill: #4bd28f;
+        stroke: #eafff4;
+      }
+    }
+    @media (forced-colors: active) {
+      .plan-snap-line {
+        stroke: CanvasText;
+        opacity: 1;
+        forced-color-adjust: auto;
+      }
+      .plan-snap-node {
+        fill: Canvas;
+        stroke: CanvasText;
+        forced-color-adjust: auto;
+      }
+      .plan-snap-node.active,
+      .plan-snap-node.active.dynamic {
+        fill: Highlight;
+        stroke: HighlightText;
+        forced-color-adjust: auto;
+      }
+    }
     .areasel,
     .namein {
       background: var(--hp-bg);

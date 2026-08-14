@@ -14,11 +14,26 @@ const warmups = Math.max(0, Math.min(5, Number(valueArg('warmups')) || 1));
 const output = valueArg('output') ? resolve(valueArg('output')) : null;
 const targetRoot = resolve(valueArg('target-root') ?? '.');
 const profile = valueArg('profile') ?? 'large-house-v1';
-if (!['large-house-v1', 'large-house-isometric-v1'].includes(profile))
+if (!['large-house-v1', 'large-house-isometric-v1', 'large-house-plan-snap-v1'].includes(profile))
   throw new Error(`unknown large-house profile: ${profile}`);
 const isometric = profile === 'large-house-isometric-v1';
+const planSnap = profile === 'large-house-plan-snap-v1';
 const requiresIsometric = isometric && existsSync(resolve(targetRoot, 'src/iso-projection.ts'));
+const requiresPlanSnap = planSnap && existsSync(resolve(targetRoot, 'src/plan-snap-overlay.ts'));
 const fixture = makeLargeHouseFixture();
+if (planSnap) {
+  for (const [floor, space] of fixture.config.spaces.entries()) {
+    space.room_drafts = [0, 1].map((draft) => {
+      const y = 0.985 + draft * 0.025;
+      return {
+        id: `perf-draft-${floor}-${draft}`,
+        points: [[0.10, y], [0.38, y], [0.46, y + 0.035]],
+        segments: [{ cm: 15 }, { cm: 20 }],
+      };
+    });
+  }
+  fixture.counts = { ...fixture.counts, drafts: 6, pointerMoves: 120 };
+}
 const viewport = { width: 1440, height: 1000 };
 
 const { page, browser } = await launch(
@@ -48,7 +63,9 @@ const rows = [];
 try {
   for (let iteration = 0; iteration < warmups + samples; iteration++) {
     const measuredSample = iteration - warmups;
-    const row = await page.evaluate(async ({ fixture, sample, cardContract, isometric, requiresIsometric }) => {
+    const row = await page.evaluate(async ({
+      fixture, sample, cardContract, isometric, requiresIsometric, planSnap, requiresPlanSnap,
+    }) => {
       const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
       const until = async (predicate, timeout = 10000) => {
         const started = performance.now();
@@ -104,6 +121,7 @@ try {
         openingTunnel: card._openingTunnelCache ? 1 : 0,
         openingWallIndex: card._openingWallIndexCache ? 1 : 0,
         isoGeometry: card._isoGeometryCache?.size ?? 0,
+        planSnapGeometry: card._planSnapGeometryCache ? 1 : 0,
       });
 
       window.__card?.remove?.();
@@ -120,6 +138,7 @@ try {
       card.setConfig({
         type: 'custom:houseplan-card', title: `Performance baseline ${sample}`, icon_size: 3.4,
       });
+      let wsCalls = 0;
       const connection = {
         subscribeEvents: async () => () => undefined,
         subscribeMessage: async () => () => undefined,
@@ -134,6 +153,7 @@ try {
           three: { floor_id: 'three', name: 'Three', level: 2 },
         },
         callWS: async (message) => {
+          wsCalls++;
           if (message.type === 'houseplan/config/get')
             return { config: structuredClone(fixture.config), rev: 1, can_write: true };
           if (message.type === 'houseplan/layout/get')
@@ -195,6 +215,85 @@ try {
         card.hass = hassFor(nextStates);
         await card.updateComplete;
       });
+
+      let planSnapDiagnostics = null;
+      const planSnapPointer = planSnap ? await duration(async () => {
+        card._setMode('plan');
+        card._tool = 'draw';
+        card._path = [];
+        card.requestUpdate();
+        await card.updateComplete;
+        await frame();
+        const stage = card.renderRoot.querySelector('.stage');
+        const overlay = card.renderRoot.querySelector('[data-hp="plan-snap-overlay"]');
+        if (requiresPlanSnap && !overlay) throw new Error('plan-snap candidate has no overlay');
+        const staticLines = overlay?.querySelectorAll('.plan-snap-line').length ?? 0;
+        const staticNodes = overlay?.querySelectorAll('.plan-snap-node[data-kind="endpoint"]').length ?? 0;
+        const cacheValue = card._planSnapGeometryCache?.value ?? null;
+        const configBefore = JSON.stringify(card._serverCfg);
+        const callsBefore = wsCalls;
+        const view = card._viewOr(card._baseVb());
+        const rect = stage.getBoundingClientRect();
+        const fromPlan = (x, y) => ({
+          clientX: rect.left + ((x - view.x) / view.w) * rect.width,
+          clientY: rect.top + ((y - view.y) / view.h) * rect.height,
+        });
+        const firstEndpoint = overlay?.querySelector('.plan-snap-node[data-kind="endpoint"]');
+        const longLine = [...(overlay?.querySelectorAll('.plan-snap-line') || [])]
+          .map((line) => ({
+            line,
+            a: [+line.getAttribute('x1'), +line.getAttribute('y1')],
+            b: [+line.getAttribute('x2'), +line.getAttribute('y2')],
+          }))
+          .sort((a, b) => Math.hypot(b.b[0] - b.a[0], b.b[1] - b.a[1])
+            - Math.hypot(a.b[0] - a.a[0], a.b[1] - a.a[1]))[0];
+        const points = [
+          firstEndpoint
+            ? [+firstEndpoint.getAttribute('cx'), +firstEndpoint.getAttribute('cy')]
+            : [40, 40],
+          longLine
+            ? [(longLine.a[0] + longLine.b[0]) / 2, (longLine.a[1] + longLine.b[1]) / 2]
+            : [120, 40],
+          [10, 10],
+        ];
+        const seenKinds = new Set();
+        for (let index = 0; index < 120; index++) {
+          const point = points[index % points.length];
+          stage.dispatchEvent(new PointerEvent('pointermove', {
+            ...fromPlan(point[0], point[1]),
+            bubbles: true, composed: true, pointerId: 880, pointerType: 'mouse',
+          }));
+          await card.updateComplete;
+          const active = card.renderRoot.querySelector(
+            '[data-hp="plan-snap-overlay"] .plan-snap-node[data-active="true"]',
+          );
+          if (active) seenKinds.add(active.getAttribute('data-kind'));
+          if (requiresPlanSnap && card.renderRoot.querySelectorAll(
+            '[data-hp="plan-snap-overlay"] .plan-snap-node[data-active="true"]',
+          ).length > 1) throw new Error('plan-snap rendered more than one active candidate');
+        }
+        const finalOverlay = card.renderRoot.querySelector('[data-hp="plan-snap-overlay"]');
+        planSnapDiagnostics = {
+          supported: requiresPlanSnap,
+          staticLines,
+          staticNodes,
+          activeKinds: [...seenKinds].sort(),
+          cacheStable: cacheValue != null && card._planSnapGeometryCache?.value === cacheValue,
+          domStable: (finalOverlay?.querySelectorAll('.plan-snap-line').length ?? 0) === staticLines
+            && (finalOverlay?.querySelectorAll('.plan-snap-node[data-kind="endpoint"]').length ?? 0)
+              === staticNodes,
+          configStable: JSON.stringify(card._serverCfg) === configBefore,
+          wsWrites: wsCalls - callsBefore,
+        };
+        if (requiresPlanSnap && (
+          staticLines < fixture.counts.rooms || staticNodes < fixture.counts.rooms
+          || !planSnapDiagnostics.cacheStable || !planSnapDiagnostics.domStable
+          || !planSnapDiagnostics.configStable || planSnapDiagnostics.wsWrites !== 0
+          || !seenKinds.has('endpoint') || !seenKinds.has('line')
+        )) throw new Error(`plan-snap structural contract failed: ${JSON.stringify(planSnapDiagnostics)}`);
+        card._setMode('view');
+        await card.updateComplete;
+      }) : null;
 
       const resizePreview = await duration(async () => {
         card._setMode('plan');
@@ -279,6 +378,10 @@ try {
         modelReadyMs,
         firstStableRenderMs,
         ...(viewToggle ? { viewToggleMs: viewToggle.ms } : {}),
+        ...(planSnapPointer ? {
+          planSnapPointerMs: planSnapPointer.ms,
+          planSnapDiagnostics,
+        } : {}),
         spaceSwitchMs: spaceSwitch.ms,
         stateUpdateMs: stateUpdate.ms,
         resizePreviewMs: resizePreview.ms,
@@ -288,6 +391,7 @@ try {
         longTasks: {
           load: loadLongTaskResult,
           ...(viewToggle ? { viewToggle: viewToggle.longTasks } : {}),
+          ...(planSnapPointer ? { planSnapPointer: planSnapPointer.longTasks } : {}),
           spaceSwitch: spaceSwitch.longTasks,
           stateUpdate: stateUpdate.longTasks,
           resizePreview: resizePreview.longTasks,
@@ -306,7 +410,7 @@ try {
       return result;
     }, {
       fixture, sample: measuredSample, cardContract: LARGE_HOUSE_CARD_CONTRACT,
-      isometric, requiresIsometric,
+      isometric, requiresIsometric, planSnap, requiresPlanSnap,
     });
     if (measuredSample >= 0) rows.push(row);
   }
@@ -319,6 +423,7 @@ const metricNames = [
   'resizePreviewMs', 'panZoomMs', 'settingsDialogMs', 'switchCycleMs',
 ];
 if (isometric) metricNames.splice(2, 0, 'viewToggleMs');
+if (planSnap) metricNames.splice(2, 0, 'planSnapPointerMs');
 const report = {
   schema: 2,
   profile,

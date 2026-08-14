@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Room outline and Partition drawing now shows wall centre lines and exact
+  endpoints above existing walls. The enlarged target previews whether the
+  next click will join an endpoint or create a wall-bound T-connection, while
+  door/window/gate and intentional open-span gaps remain excluded
+  ([#137](https://github.com/Matysh/houseplan-card/issues/137)).
+
 ## v1.64.0-beta.1 — 2026-08-14
 
 - Read-only View and kiosk cards now paint a complete first frame even when

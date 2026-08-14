@@ -318,6 +318,39 @@ export async function prepareGoldenScenario(page, scenario) {
       card.requestUpdate();
       await card.updateComplete;
     }
+    if (scenario.planSnap) {
+      const { tool, anchor, pointer, expectedKind } = scenario.planSnap;
+      const validPoint = (point) => Array.isArray(point) && point.length === 2
+        && point.every(Number.isFinite);
+      if (!['draw', 'partition'].includes(tool) || !validPoint(pointer)
+          || (anchor != null && !validPoint(anchor))
+          || !['endpoint', 'line'].includes(expectedKind)) {
+        throw new Error(`invalid golden planSnap contract: ${scenario.id}`);
+      }
+      card._tool = tool;
+      card._activeDraftId = null;
+      card._path = anchor ? [[anchor[0] * 1000, anchor[1] * card._spaceH]] : [];
+      card._clearPlanSnapHover();
+      card.requestUpdate();
+      await card.updateComplete;
+      await frame();
+      const svgRoot = card.renderRoot.querySelector('.stage svg');
+      const stage = card.renderRoot.querySelector('.stage');
+      const screen = new DOMPoint(pointer[0] * 1000, pointer[1] * card._spaceH)
+        .matrixTransform(svgRoot.getScreenCTM());
+      stage.dispatchEvent(new PointerEvent('pointermove', {
+        bubbles: true, composed: true, pointerId: 992, pointerType: 'mouse',
+        clientX: screen.x, clientY: screen.y,
+      }));
+      await card.updateComplete;
+      await frame();
+      const overlay = card.renderRoot.querySelector('[data-hp="plan-snap-overlay"]');
+      const active = overlay?.querySelector('.plan-snap-node[data-active="true"]');
+      if (!overlay || active?.getAttribute('data-kind') !== expectedKind
+          || overlay.querySelectorAll('.plan-snap-node[data-active="true"]').length !== 1) {
+        throw new Error(`golden plan snap candidate did not render: ${scenario.id}`);
+      }
+    }
     if (scenario.openingPreview) {
       const { type, pointer } = scenario.openingPreview;
       if (!['window', 'door', 'gate'].includes(type)

@@ -60,6 +60,12 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
         && scenario.helpTextRegion.minPixels > 0, true, scenario.id);
       assert.equal(scenario.openHelp, scenario.helpTextRegion.key, scenario.id);
     }
+    if (scenario.planSnap) {
+      assert.equal(['draw', 'partition'].includes(scenario.planSnap.tool), true, scenario.id);
+      assert.equal(['endpoint', 'line'].includes(scenario.planSnap.expectedKind), true, scenario.id);
+      assert.equal(scenario.mode, 'plan', scenario.id);
+      assert.equal(scenario.capture, 'page', scenario.id);
+    }
   }
 });
 
@@ -71,7 +77,8 @@ test('golden matrix covers required geometry, rendering and adaptive surfaces', 
     'tray-narrow', 'opaque-glow-two-doorways', 'filled-tunnel', 'opening-placement',
     'backup-full', 'backup-space', 'value-badge-positions', 'isometric-geometry',
     'isometric-live-layers', 'isometric-no-borders', 'isometric-touch-kiosk',
-    'isometric-large-warm-remount', 'split-corner-wall'])
+    'isometric-large-warm-remount', 'split-corner-wall', 'plan-snap-endpoint',
+    'plan-snap-line-gaps'])
     assert.equal(ids.includes(token), true, token);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.mode)).has('plan'), true);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.mode)).has('devices'), true);
