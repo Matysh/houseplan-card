@@ -257,7 +257,12 @@ const layers = await page.evaluate(() => {
   const c = window.__card;
   const m = c._spaceModel();
   const svgEl = c.renderRoot.querySelector('.stage svg');
-  const kids = [...svgEl.children];
+  // Stage 2 keeps the flat floor DOM byte-for-byte equivalent but places it
+  // in one transformable scene group shared with Iso. Ordering is therefore
+  // measured inside the group that actually owns paper/image/rooms.
+  const layerRoot = [...svgEl.children].find((node) =>
+    node.querySelector?.('.hp-paperg') && node.querySelector?.('.room')) || svgEl;
+  const kids = [...layerRoot.children];
   const idx = (sel) => kids.findIndex((n) => n.matches(sel) || n.querySelector?.(sel));
   const papers = [...svgEl.querySelectorAll('.hp-paper')];
   return {

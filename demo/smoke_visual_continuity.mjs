@@ -42,6 +42,11 @@ const result = await page.evaluate(async (visualFixture) => {
   card._serverCfg = visualFixture.config;
   card._layout = visualFixture.layout;
   card._space = 'golden-lighting';
+  // This fixture starts after a same-route space choice. #131 deliberately
+  // refuses to treat the class initializer/current id as cold-start intent;
+  // mark this injected selection as already adopted navigation so the reload
+  // exercises continuity instead of cold-start precedence.
+  card._navApplied = true;
   card._regSignature = '';
   card.hass = {
     ...card.hass,

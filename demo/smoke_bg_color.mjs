@@ -197,7 +197,10 @@ const paper = await page.evaluate(async () => {
       && cs.fill !== 'none' && !/rgba\(.*,\s*0\)/.test(cs.fill);
   }
   // …and the picture is drawn ON that paper: image after paper, before walls
-  const kids = [...sr().querySelector('.stage svg').children];
+  const svgEl = sr().querySelector('.stage svg');
+  const layerRoot = [...svgEl.children].find((node) =>
+    node.querySelector?.('.hp-paperg') && node.querySelector?.('.room')) || svgEl;
+  const kids = [...layerRoot.children];
   const idxOf = (sel) => kids.findIndex((n) => n.matches(sel) || n.querySelector?.(sel));
   out.imageAbovePaper = idxOf('image') > idxOf('.hp-paper') && idxOf('image') >= 0;
   out.imageBelowRooms = idxOf('image') < idxOf('.room, .room-outline');
@@ -266,7 +269,9 @@ const drawn = await page.evaluate(async () => {
   });
   // paper first, everything else on top of it (one .hp-paperg group wraps
   // all paper shapes so the daynight drop shadow composites without seams)
-  const first = sr().querySelector('.stage.noplan svg').firstElementChild;
+  const noplanSvg = sr().querySelector('.stage.noplan svg');
+  const noplanLayers = [...noplanSvg.children].find((node) => node.querySelector?.('.hp-paperg')) || noplanSvg;
+  const first = [...noplanLayers.children].find((node) => node.tagName.toLowerCase() !== 'defs');
   out.paperUnderneath = !!first && first.classList.contains('hp-paperg')
     && !!first.firstElementChild && first.firstElementChild.classList.contains('hp-paper');
   // live resize preview: drag the L's right wall 0.625 -> 0.6875 — the paper

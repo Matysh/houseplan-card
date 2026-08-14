@@ -197,7 +197,13 @@ Object.assign(out, await page.evaluate(async () => {
   },
   // модульный кэш конфига инвалидируется только через это событие — стаб
   // сохраняет колбэк, чтобы следующий тест мог сбросить кэш
-  connection: { subscribeEvents: async (cb) => { window.__hpInvalidate = cb; return () => {}; } } };
+  connection: { subscribeEvents: async (cb, type) => {
+    // #107 added a third, virtual-light subscription. Keep the config event
+    // callback specifically; otherwise the next fixture calls the unrelated
+    // virtual-light listener and reuses this stale shared config snapshot.
+    if (type === 'houseplan_config_updated') window.__hpInvalidate = cb;
+    return () => {};
+  } } };
   const host = document.createElement('div');
   document.body.appendChild(host);
   const card = document.createElement('houseplan-space-card');

@@ -116,7 +116,7 @@ const res = await page.evaluate(async () => {
   c._setProjection('iso');
   await update();
   out.isoUsesCanonicalBody = !!sr().querySelector('.iso-walls .iso-wall-top')
-    && c._isoSource().build().flat(2).length > 0;
+    && c._isoSource().build().walls.flat(2).length > 0;
   c._setProjection('flat');
   await update();
 
