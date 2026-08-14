@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.64.0-beta.1 — 2026-08-14
+
 - Read-only View and kiosk cards now paint a complete first frame even when
   Home Assistant refuses live-sync event subscriptions. The selected space,
   room fills, decor, walls, Glow and device values no longer require clicking
@@ -12,6 +14,7 @@
   presentation, full cards and static space cards, including markers that retain
   saved outgoing controls
   ([#107](https://github.com/Matysh/houseplan-card/issues/107)).
+- Small fixes and improvements.
 
 ## v1.63.0 — 2026-08-13
 

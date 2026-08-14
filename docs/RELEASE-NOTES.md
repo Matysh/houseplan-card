@@ -1,18 +1,16 @@
-<!-- release: v1.63.0 -->
+<!-- release: v1.64.0-beta.1 -->
 
 ## Основное
 
-- Удаление отдельного маркера больше не разрывает явную привязку двери, окна или ворот.
-- После удаления последнего пространства интеграция остаётся рабочей и позволяет создать новое.
-- Разделение комнаты из существующего угла больше не искажает наружный фасад даже при толстом разделителе.
+- Карточки View и киоска теперь сразу показывают полный первый кадр даже без доступа к подпискам live-sync.
+- Виртуальные светильники «Всегда» с действием «Переключить состояние» теперь работают без helper Home Assistant и синхронизируются между карточками.
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- Removing a standalone marker no longer breaks an explicit door, window or gate binding.
-- The integration remains usable after deleting the last space and allows a new one to be created.
-- Splitting a room from an existing corner no longer deforms the exterior facade, even with a thick divider.
+- View and kiosk cards now paint a complete first frame even without access to live-sync subscriptions.
+- Always-on virtual light sources with Toggle state now work without a Home Assistant helper and stay synchronized across cards.
 - Small fixes and improvements.
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.63.0/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.63.0/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.64.0-beta.1/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.64.0-beta.1/docs/CHANGELOG.md)
