@@ -9,7 +9,8 @@
 - Virtual markers configured as **Light source → Always** with **Toggle state**
   can now be switched directly without an HA helper. Their shared state
   survives reloads/restarts and stays consistent across Glow, room light
-  presentation, full cards and static space cards
+  presentation, full cards and static space cards, including markers that retain
+  saved outgoing controls
   ([#107](https://github.com/Matysh/houseplan-card/issues/107)).
 
 ## v1.63.0 — 2026-08-13

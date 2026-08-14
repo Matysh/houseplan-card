@@ -24,6 +24,7 @@ import type { DevItem } from './types';
 import { safeStoredColor } from './color';
 import { resolveDeviceValueBadge, type ResolvedValueBadge } from './device-value-badge';
 import { resolveDevicePulse, type ResolvedDevicePulse } from './device-pulse';
+import { isManualVirtualLightMarker } from './virtual-light-state';
 
 export type PresentationSourceKind =
   | 'cover' | 'light' | 'controls' | 'device_role' | 'primary' | 'none';
@@ -248,9 +249,14 @@ export function resolvePresentationSources(
     source.device.id === d.id && source.via !== 'controls'
   );
   const localOwned = localLights.filter((source) => source.via !== 'controls');
-  const lights = [
+  const ownedLights = globalOwned.length ? globalOwned : localOwned;
+  // In #107's exact manual mode, outgoing controls remain saved and active in
+  // the plan graph, but they do not own this marker's face. Its icon/status is
+  // the same canonical manual source used by Glow, room fill and statistics.
+  const manualVirtualFace = isManualVirtualLightMarker(d.marker);
+  const lights = manualVirtualFace ? [...ownedLights] : [
     ...localLights.filter((source) => source.via === 'controls'),
-    ...(globalOwned.length ? globalOwned : localOwned),
+    ...ownedLights,
   ];
   if (markerRefs.size) {
     for (const source of globalLights) {
@@ -277,7 +283,8 @@ export function resolvePresentationSources(
     sourceKind = 'cover';
     visualSources = [sourceOf(hass, cover, 'cover')];
   } else if (lights.length) {
-    sourceKind = lights.some((source) => source.via === 'controls') ? 'controls' : 'light';
+    sourceKind = !manualVirtualFace && lights.some((source) => source.via === 'controls')
+      ? 'controls' : 'light';
     visualSources = lights.map((source) => {
       const role = source.via === 'controls' ? 'control'
         : source.via === 'forced' ? 'forced_light' : 'light';

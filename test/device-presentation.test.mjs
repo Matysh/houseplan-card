@@ -81,6 +81,50 @@ test('passive source and its controller share the plan-wide derived state', () =
   assert.equal(switchPresentation.visualSources[0].sample.status, 'working');
 });
 
+test('issue 107 manual virtual source owns its face despite saved outgoing controls', () => {
+  const h = hass({
+    'light.ceiling': state('light.ceiling', 'on'),
+  });
+  const lamp = device({
+    id: 'manual-lamp',
+    name: 'Manual lamp',
+    entities: [],
+    primary: null,
+    bindingKind: 'virtual',
+    bindingRef: 'manual-lamp',
+    marker: {
+      id: 'manual-lamp',
+      binding: 'virtual',
+      is_light: true,
+      tap_action: 'toggle',
+      controls: ['light.ceiling'],
+    },
+  });
+  const offState = { rev: 2, configRev: 1, off: new Set(['manual-lamp']) };
+  const offSources = resolvedLightSources(h, [lamp], null, offState);
+  const off = resolveDevicePresentation(h, lamp, {
+    ...options,
+    lightDevices: [lamp],
+    lightSources: offSources,
+  });
+  assert.equal(off.sourceKind, 'light');
+  assert.deepEqual(off.visualSources.map((source) => source.eid), ['marker:manual-lamp']);
+  assert.equal(off.visual.status, 'neutral');
+  assert.ok(!off.classes.includes('on'));
+
+  const onSources = resolvedLightSources(
+    h, [lamp], null, { rev: 3, configRev: 1, off: new Set() },
+  );
+  const on = resolveDevicePresentation(h, lamp, {
+    ...options,
+    lightDevices: [lamp],
+    lightSources: onSources,
+  });
+  assert.equal(on.sourceKind, 'light');
+  assert.equal(on.visual.status, 'working');
+  assert.ok(on.classes.includes('on'));
+});
+
 test('passive sensor source keeps its normal scalar value and never probes marker ids', () => {
   const hits = [];
   const h = hass(new Proxy({

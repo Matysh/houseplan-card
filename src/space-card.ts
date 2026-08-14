@@ -357,7 +357,7 @@ class HouseplanSpaceCard extends LitElement {
       .map(([id, runtime]) => `${id}:${runtime.gen}:${runtime.flashTs}:`
         + `${runtime.flashKind && (runtime.expiresAt || runtime.flashTs + 3300) > now ? 1 : 0}`)
       .join('|');
-    const virtualFingerprint = this._snap
+    const virtualFingerprint = this._snap?.virtualLights
       ? `${this._snap.virtualLights.configRev}:${this._snap.virtualLights.rev}` : '';
     if (this._capturedSnapshotSequence === this._hassSequence
         && this._capturedSnapshotDevices === this._devices
@@ -463,7 +463,7 @@ class HouseplanSpaceCard extends LitElement {
       snap?.configFingerprint || contentFingerprint(snap?.config),
       snap?.layoutRev || 0,
       snap?.layoutFingerprint || contentFingerprint(snap?.layout),
-      snap ? `${snap.virtualLights.configRev}:${snap.virtualLights.rev}` : '',
+      snap?.virtualLights ? `${snap.virtualLights.configRev}:${snap.virtualLights.rev}` : '',
       this._config?.space || '',
       this._stageWidth,
       this.hass?.themes?.darkMode ?? this.hass?.themes?.default_theme ?? '',
