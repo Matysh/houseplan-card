@@ -969,6 +969,8 @@ test('split materialisation cuts a partial shared interval at the new divider', 
 });
 
 test('drawWallPreviewD returns a path for open and closed outlines', () => {
+  const single = drawWallPreviewD([[0, 0], [10, 0]], 1, false);
+  assert.ok(single.includes('M'), 'one flat-capped segment remains a visible preview');
   const open = drawWallPreviewD([[0, 0], [10, 0], [10, 6]], 1, false);
   assert.ok(open.includes('M'));
   assert.match(open, /11 -1(?:\D|$)/, 'open preview already contains the 90-degree mitre');

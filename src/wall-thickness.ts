@@ -625,7 +625,11 @@ function unionSimpleBodies(bodies: number[][][]): any | null {
     for (const body of bodies) {
       if (body.length < 3) continue;
       const piece: any = closedRing(body);
-      geom = geom ? union(geom, piece) : piece;
+      // Keep the same MultiPolygon shape for one body and for a union. Returning
+      // the bare Polygon made `polyclipToPathD()` see points where it expects
+      // rings, so every single-segment preview (including Thickness hover)
+      // became an empty path.
+      geom = geom ? union(geom, piece) : [piece];
     }
     return geom;
   } catch {
