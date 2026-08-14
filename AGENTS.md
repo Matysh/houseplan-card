@@ -154,6 +154,28 @@ arrive. Cycles are counted per stage, so a code review spends its own budget.
 Everything else still requires the owner's explicit command: pushing `main`,
 creating tags, publishing betas and releases, closing issues.
 
+## Working trees (#115)
+
+One checkout, one `HEAD`: two agents sharing a directory inherit each other's
+branch, and twice in one hour a commit landed on someone else's task branch that
+way. The layout is therefore fixed:
+
+- **`houseplan-card-src/houseplan-card`** — the author's tree. Task branches live
+  here; nobody else commits in it. Unfamiliar local changes belong to the author
+  or the owner — never reset or clean them away.
+- **`houseplan-card-src/hp-dev`** — the owner's worktree, permanently on `dev`. For owner-side operations that must not disturb the
+  author's tree: pushing `dev`, restoring a hook's executable bit, emergencies.
+- **The reviewer and the infrastructure agent own no local tree.** The reviewer
+  runs in CI on a fresh checkout. The infrastructure agent reads via `git show`
+  and publishes through the GitHub API; it makes no local commits at all, so it
+  needs no `HEAD` of its own. Its scratch worktrees live outside the repo and are
+  pruned after use.
+
+A worktree is only usable on the machine that created it: the `.git` file records
+an absolute path in that machine's format. One created from a Linux sandbox is
+dead on Windows and vice versa — create worktrees on the machine that will use
+them, which for `hp-dev` means the owner's.
+
 ## Two-agent workflow
 
 **Codex** writes analysis, specs and all product code. **Claude** reviews specs and
