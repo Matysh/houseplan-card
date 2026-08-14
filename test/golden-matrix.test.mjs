@@ -66,6 +66,12 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
       assert.equal(scenario.mode, 'plan', scenario.id);
       assert.equal(scenario.capture, 'page', scenario.id);
     }
+    if (scenario.wallJunctionPreview) {
+      assert.equal(scenario.wallJunctions, true, scenario.id);
+      assert.equal(scenario.mode, 'plan', scenario.id);
+      assert.equal(scenario.capture, 'page', scenario.id);
+      assert.ok(scenario.wallJunctionPreview.path.length >= 1, scenario.id);
+    }
   }
 });
 
@@ -78,13 +84,30 @@ test('golden matrix covers required geometry, rendering and adaptive surfaces', 
     'backup-full', 'backup-space', 'value-badge-positions', 'isometric-geometry',
     'isometric-live-layers', 'isometric-no-borders', 'isometric-touch-kiosk',
     'isometric-large-warm-remount', 'split-corner-wall', 'plan-snap-endpoint',
-    'plan-snap-line-gaps'])
+    'plan-snap-line-gaps', 'wall-junctions', 'isometric-wall-junctions'])
     assert.equal(ids.includes(token), true, token);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.mode)).has('plan'), true);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.mode)).has('devices'), true);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.mode)).has('decor'), true);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.theme)).has('light'), true);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.theme)).has('dark'), true);
+});
+
+test('wall junction goldens cover live L/T previews plus saved flat and isometric bodies', () => {
+  const scenarios = GOLDEN_SCENARIOS.filter((scenario) => scenario.wallJunctions);
+  assert.deepEqual(scenarios.map((scenario) => scenario.id), [
+    'wall-junctions-plan-preview-light',
+    'wall-junctions-plan-t-dark',
+    'wall-junctions-view-dark',
+    'isometric-wall-junctions-dark',
+  ]);
+  for (const scenario of scenarios) {
+    const fixture = prepareGoldenFixture(scenario);
+    const space = fixture.config.spaces.find((item) => item.id === scenario.space);
+    assert.equal(space.partitions.length, 7);
+    assert.equal(space.room_drafts[0].segments.length, 2);
+    assert.ok(space.partitions.some((item) => item.b[1] === 0.94), 'room-wall T fixture');
+  }
 });
 
 test('corner Split golden captures before, thin and thick facade states', () => {

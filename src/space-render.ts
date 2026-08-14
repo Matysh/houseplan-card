@@ -38,6 +38,8 @@ export { spaceModels } from './space-geometry';
 type StaticWallGeometry = ReturnType<typeof wallBodiesUnionPath>;
 type StaticWallGeometryEntry = { fingerprint: string; value: StaticWallGeometry };
 const staticWallGeometryCache = new WeakMap<object, Map<string, StaticWallGeometryEntry>>();
+type StaticPhysicalBodiesEntry = { fingerprint: string; value: number[][][] };
+const staticPhysicalBodiesCache = new WeakMap<object, Map<string, StaticPhysicalBodiesEntry>>();
 
 /** Static cards receive the same immutable server-config object on HA ticks. */
 function cachedStaticWallGeometry(
@@ -50,6 +52,24 @@ function cachedStaticWallGeometry(
   if (!spaces) {
     spaces = new Map<string, StaticWallGeometryEntry>();
     staticWallGeometryCache.set(cfg as object, spaces);
+  }
+  const cached = spaces.get(spaceId);
+  if (cached?.fingerprint === fingerprint) return cached.value;
+  const value = build();
+  spaces.set(spaceId, { fingerprint, value });
+  return value;
+}
+
+function cachedStaticPhysicalBodies(
+  cfg: ServerConfig,
+  spaceId: string,
+  fingerprint: string,
+  build: () => number[][][],
+): number[][][] {
+  let spaces = staticPhysicalBodiesCache.get(cfg as object);
+  if (!spaces) {
+    spaces = new Map<string, StaticPhysicalBodiesEntry>();
+    staticPhysicalBodiesCache.set(cfg as object, spaces);
   }
   const cached = spaces.get(spaceId);
   if (cached?.fingerprint === fingerprint) return cached.value;
@@ -173,7 +193,16 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const spCfg: any = o.cfg.spaces.find((s: any) => s.id === o.spaceId) || {};
   const walls: WallEntry[] = Array.isArray(spCfg.walls) ? spCfg.walls : [];
   const cellCm = Number(spCfg.cell_cm) > 0 ? Number(spCfg.cell_cm) : 5;
-  const extras = physicalBodies(space, cellCm, GRID_PITCH);
+  const physicalFingerprint = contentFingerprint({
+    partitions: space.partitions,
+    roomDrafts: space.room_drafts,
+    columns: space.wall_columns,
+    cellCm,
+  });
+  const extras = cachedStaticPhysicalBodies(
+    o.cfg, space.id, physicalFingerprint,
+    () => physicalBodies(space, cellCm, GRID_PITCH),
+  );
   for (const body of extras) {
     const xs = body.map((p) => p[0]), ys = body.map((p) => p[1]);
     if (xs.length) placed.push({

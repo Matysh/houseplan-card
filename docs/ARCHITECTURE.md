@@ -318,6 +318,16 @@ physical bodies are unioned with room walls for rendering and light occlusion,
 and subtracted from clean room floor area. Openings (doors, windows and gates)
 still belong only to derived room walls and never cut an independent object.
 
+Independent linear objects have two deliberate projections. Raw flat-capped
+quads preserve source identity for hit/selection/drag/properties/delete/history
+and furniture magnet behaviour. `physicalBodySet()` also derives exact
+endpoint↔endpoint and endpoint↔line topology, adds bounded mitre/bevel patches
+without persisted nodes or segment splits, and exposes the joined geometry to
+presentation and physics. Degree-one caps remain flat; an interior X crossing
+is only a boolean overlap. The full card caches this structural frame by
+space/config geometry, while static cards use a weak server-snapshot cache;
+cursor and HA state updates do not repeat the saved O(N²) node search.
+
 Rooms may not overlap
 (`pointStrictlyInside` + `roomsOverlap`; being ON a shared wall is legal — real neighbouring
 walls overlap collinearly rather than match exactly). **Merge/Split** use boolean geometry from
@@ -334,7 +344,10 @@ before the shell is restored. Consequently a Split edge ending at an exterior
 vertex cannot contribute a child-room mitre to the facade. Per-room rings remain
 an interior join/nested-room representation, and atomic quads provide a safe
 physical interval when an acute child ring cannot be subtracted. Paper and
-masonry paths are emitted by that same geometry pass. The full card retains the
+masonry paths are emitted by that same geometry pass. Computed independent
+junction patches enter as extras only after room opening cuts, so an opening
+cannot cut a coincident partition and room exterior authority remains intact.
+The full card retains the
 pair in `_wallUnionCache`; static cards retain it in a weak server-snapshot
 cache guarded by a structural geometry fingerprint. This is computed render
 state only: it never rewrites rooms or wall entries, and an HA state tick does

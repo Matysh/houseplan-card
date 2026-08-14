@@ -2089,6 +2089,16 @@ require hands on real hardware — they remain for the human pass.
       source inside masonry lights nothing. Window rays are blocked by the same
       bodies. `show_borders: false` changes paint only [auto:
       physical-geometry.test; manual visual].
+- [ ] **Seamless junctions**: saved draft/partition L corners (right, acute and
+      obtuse), unequal thickness, endpoint-on-line T and a branch touching a
+      room wall use one bounded joined body; near-miss, X crossing, malformed
+      segments and flat free caps keep their documented semantics. The active
+      rubber-band has the same contour before and after commit, target records
+      are not split, Plan/View/static/hidden-iso paths agree, clean floor and
+      light use the joined corner, and preview/render never writes config
+      [auto: wall-thickness.test, physical-geometry.test,
+      smoke_wall_junctions, wall-junctions golden scenarios; manual golden
+      artifact review].
 - [ ] **Lifecycle/performance**: an external config revision cancels live
       move/rotate state before replacing geometry. Drag preview performs no
       polygon boolean work; clean floor and Glow clips are reused until the

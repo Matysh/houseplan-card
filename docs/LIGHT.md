@@ -26,7 +26,9 @@ plan geometry and shares it between every lamp in the space.
 
 - the wall bodies exactly as the plan draws them (`wallBodiesGeometry`), with
   their real thickness and mitred junctions;
-- independent bodies: partitions, columns, room drafts;
+- independent bodies: partitions, columns and room drafts. Exact connected
+  draft/partition segments enter as one joined volume, not as raw rectangles
+  whose former butt faces could become false barriers;
 - the bare outline of any room edge that carries no thickness — a wall is still
   a wall when it is drawn as a line.
 
@@ -106,6 +108,12 @@ Barriers are keyed by a fingerprint of their own geometry, never by
 set is invisible — the plan simply keeps lighting through a wall that now
 exists. The same fingerprint, plus position and radius, keys the per-source
 region cache (`_glowClipCache`).
+
+The masonry boolean receives room walls after passage cuts plus the cached
+joined independent body set. Its outer/hole rings are the authoritative
+barriers for both visibility and the fail-dark source guard. A boolean failure
+falls back to the raw independent bodies as opaque obstacles; it never turns a
+malformed wall transparent.
 
 ## Source, state and service identity
 

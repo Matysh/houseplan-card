@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   canonicalColumnAngle, columnBody, floorMinusBodies, geometryArea,
   directionalOccluders, intersectionPaths, partitionBody, pointInPhysicalBody,
-  pointInOpaquePlanBody, pointInPhysicalGeometry,
+  physicalBodySet, pointInOpaquePlanBody, pointInPhysicalGeometry,
   sameColumnPlacement,
 } from '../test-build/physical-geometry.js';
 import {
@@ -19,6 +19,51 @@ test('partition body keeps the centreline and requested physical width', () => {
   closeTo(body[0][1], 0.25);
   closeTo(body[2][1], -0.25);
   closeTo(geometryArea([[[...body, body[0]]]]), 0.5);
+});
+
+test('joined partitions fill straight and oblique endpoint teeth without changing flat free caps', () => {
+  const base = {
+    room_drafts: [], wall_columns: [],
+    partitions: [
+      { id: 'horizontal', a: [-2, 0], b: [0, 0], cm: 10 },
+      { id: 'vertical', a: [0, 0], b: [0, 2], cm: 10 },
+      { id: 'oblique', a: [4, 2], b: [3, 0], cm: 20 },
+      { id: 'oblique-arm', a: [3, 0], b: [5, -1], cm: 10 },
+    ],
+  };
+  const frame = physicalBodySet(base, 5, 0.25);
+  assert.ok(frame.patches.length >= 2, 'each non-collinear endpoint node gains a bounded patch');
+  assert.equal(pointInPhysicalGeometry([0.2, -0.2], frame.geometry), true,
+    'the missing outer quadrant at the right angle is solid');
+  assert.equal(pointInPhysicalGeometry([5.3, -1.15], frame.geometry), false,
+    'an unrelated flat free cap is not extended');
+
+  const reversed = physicalBodySet({
+    ...base,
+    partitions: [...base.partitions].reverse().map((segment) => ({
+      ...segment, a: segment.b, b: segment.a,
+    })),
+  }, 5, 0.25);
+  closeTo(geometryArea(frame.geometry), geometryArea(reversed.geometry), 1e-8);
+});
+
+test('endpoint-on-line T join is computed without splitting or mutating source records', () => {
+  const space = {
+    room_drafts: [{
+      id: 'draft-branch', points: [[1, -2], [1, 0]], segments: [{ cm: 15 }],
+    }],
+    wall_columns: [],
+    partitions: [
+      { id: 'through', a: [-2, 0], b: [2, 0], cm: 20 },
+      { id: 'branch', a: [0, -2], b: [0, 0], cm: 10 },
+    ],
+  };
+  const before = JSON.stringify(space);
+  const frame = physicalBodySet(space, 5, 0.25);
+  assert.ok(frame.patches.length >= 2, 'partition and saved-draft branches share the T primitive');
+  assert.equal(pointInPhysicalGeometry([0.2, -0.1], frame.geometry), true);
+  assert.equal(pointInPhysicalGeometry([1.2, -0.1], frame.geometry), true);
+  assert.equal(JSON.stringify(space), before, 'computed node topology is render-only');
 });
 
 test('column size means square side or circle diameter', () => {
