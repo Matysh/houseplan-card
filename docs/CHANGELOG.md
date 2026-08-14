@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+## v1.64.0 — 2026-08-14
+
+- **Follows the Sun** now gives the plan a four-phase dawn/day/dusk/night
+  environment with moving soft light while preserving the plan's live fills,
+  Glow, devices, decor, vacuum, hover and window rays
+  ([#146](https://github.com/Matysh/houseplan-card/issues/146)).
+- Room outline and Partition drawing now exposes exact wall snap nodes and
+  centre lines, closes valid contours along an existing room wall, and forms
+  seamless thick corner and T-junctions in flat, static and hidden isometric
+  geometry ([#137](https://github.com/Matysh/houseplan-card/issues/137),
+  [#138](https://github.com/Matysh/houseplan-card/issues/138),
+  [#141](https://github.com/Matysh/houseplan-card/issues/141)).
+- Read-only View and kiosk cards now paint a complete first frame even when
+  Home Assistant refuses live-sync event subscriptions
+  ([#131](https://github.com/Matysh/houseplan-card/issues/131)).
+- Virtual markers configured as an always-on light source can now be toggled
+  without a Home Assistant helper, with persistent shared state across full
+  and static cards ([#107](https://github.com/Matysh/houseplan-card/issues/107)).
+- Opening and physical-object property dialogs keep their footer actions on one
+  desktop line while retaining responsive narrow-screen wrapping
+  ([#140](https://github.com/Matysh/houseplan-card/issues/140)).
+- Small fixes and improvements.
+
 ## v1.64.0-beta.2 — 2026-08-14
 
 - **Follows the Sun** now gives the plan a four-phase dawn/day/dusk/night
