@@ -320,9 +320,19 @@ cp dist/houseplan-card.js custom_components/houseplan/frontend/houseplan-card.js
 cp dist/houseplan-card.js demo/srv/assets/houseplan-card.js
 ```
 
-During the implementation cycle only the fast gates run. `smoke`, `golden` and
-`performance_smoke` spin up Chromium and belong to the pre-beta run — which is then
-mandatory and complete.
+During the implementation cycle the fast gates always run. Since 2026-08-14 the
+owner's machine also carries Playwright with Chromium (Windows) and a full WSL
+environment, which changes one thing (#151): **before moving an issue to
+`S7-code-review`, run the smokes named in its AC locally** — `node
+demo/smoke_<name>.mjs`. A red smoke that reaches the review costs a cycle; run
+locally it costs a minute. Precedent: on #89 a fixture error lived through a
+whole review round that a local run would have caught immediately.
+
+The full smoke set, `golden` and `performance_smoke` still belong to the
+pre-beta run — which is then mandatory and complete. WSL runs of the full HA
+harness (`~/houseplan-card`, venv) and `golden:verify` are advisory; **the canon
+does not move**: the beta gate is CI at the exact SHA, and baselines are accepted
+only via `npm run golden:accept -- --reviewed` on a complete Linux CI artefact.
 
 **Backend.** A full Home Assistant harness cannot run on native Windows at all:
 Home Assistant imports the Unix-only `fcntl` module. Its canon is Linux CI or WSL.
