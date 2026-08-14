@@ -48,6 +48,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#131](https://github.com/Matysh/houseplan-card/issues/131) Полный первый кадр View у read-only-пользователя | [131-readonly-cold-start.md](131-readonly-cold-start.md) |
 | [#138](https://github.com/Matysh/houseplan-card/issues/138) Автозамыкание комнаты по существующей стене | [138-adjacent-room-autoclose.md](138-adjacent-room-autoclose.md) |
 | [#146](https://github.com/Matysh/houseplan-card/issues/146) Четырёхфазный фон «Следует за Солнцем» | [146-four-phase-sun-background.md](146-four-phase-sun-background.md) |
+| [#156](https://github.com/Matysh/houseplan-card/issues/156) Регрессии Full Performance перед v1.64.0 stable | [156-full-performance-regressions.md](156-full-performance-regressions.md) |
 
 ## P2
 
