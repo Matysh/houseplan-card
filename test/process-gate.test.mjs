@@ -16,6 +16,7 @@ import {
   checkSpecs,
   classify,
   commitsNeedingIssueStatus,
+  commitsNeedingTargetValidation,
   commitsUnderRuleOne,
   evaluateCommit,
   makeCommit,
@@ -199,6 +200,55 @@ test('stable promotion skips status recheck only for commits already published i
       isPublishedPrereleaseCommit: (sha) => publishedShas.has(sha),
     }).map((commit) => commit.sha),
     [published.sha, postBeta.sha],
+  );
+});
+
+test('dev reconciliation ignores published main commits but keeps new post-merge work', () => {
+  const mainOnly = makeCommit({
+    sha: 'a'.repeat(40), subject: 'Main-only workflow fix', body: 'Issue: #85',
+    files: ['.github/workflows/mutation-gate.yml'],
+  });
+  const postMerge = makeCommit({
+    sha: 'b'.repeat(40), subject: 'New gate fix', body: 'Issue: #155',
+    files: ['scripts/process-gate.mjs'],
+  });
+  const commits = [mainOnly, postMerge];
+  const isCommitOnMain = (sha) => sha === mainOnly.sha;
+
+  const dev = commitsNeedingTargetValidation(commits, {
+    targetRef: 'refs/heads/dev', isCommitOnMain,
+  });
+  assert.deepEqual(dev.map((commit) => commit.sha), [postMerge.sha]);
+
+  const statusByIssue = (nn) => ({
+    ok: true,
+    json: nn === '85'
+      ? { state: 'CLOSED', labels: [] }
+      : { state: 'OPEN', labels: [{ name: 'S6-in-progress' }] },
+  });
+  assert.deepEqual(
+    rules(checkIssueStatuses(
+      dev.flatMap((candidate) => candidate.issues).map((issue) => issue.slice(1)),
+      statusByIssue,
+    )),
+    [],
+  );
+  assert.deepEqual(rules(checkIssueStatuses(['85', '155'], statusByIssue)), [8]);
+
+  // The exemption belongs only to a dev destination. Main promotion, issue
+  // branches and an ordinary dev push with no main-reachable commits keep the
+  // complete input set.
+  for (const targetRef of ['refs/heads/main', 'refs/heads/issue/155-gate']) {
+    assert.deepEqual(
+      commitsNeedingTargetValidation(commits, { targetRef, isCommitOnMain }),
+      commits,
+    );
+  }
+  assert.deepEqual(
+    commitsNeedingTargetValidation(commits, {
+      targetRef: 'refs/heads/dev', isCommitOnMain: () => false,
+    }),
+    commits,
   );
 });
 

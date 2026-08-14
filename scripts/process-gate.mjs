@@ -293,6 +293,24 @@ export function isStableTarget(targetRef) {
   return /^(?:refs\/heads\/)?main$/.test(targetRef ?? '');
 }
 
+export function isDevTarget(targetRef) {
+  return /^(?:refs\/heads\/)?dev$/.test(targetRef ?? '');
+}
+
+// A main-only infrastructure commit is already published and already passed
+// the process gate. When main is merged back into dev, `old-dev..merge` walks
+// that second parent as if it were fresh issue-branch work. Requiring its
+// closed issue to become active again makes the mandatory main -> dev
+// reconciliation impossible. Exclude only commits proven reachable from the
+// remote main ref, and only while the destination itself is dev. The merge
+// commit and every genuinely new commit remain in the checked set.
+export function commitsNeedingTargetValidation(
+  commits, { targetRef = '', isCommitOnMain = () => false } = {},
+) {
+  if (!isDevTarget(targetRef)) return commits;
+  return commits.filter((commit) => !isCommitOnMain(commit.sha));
+}
+
 // При stable promotion диапазон main..candidate закономерно содержит коммиты,
 // уже выпущенные prerelease-тегом. Их issue к этому моменту обязаны быть закрыты
 // (§2.8), поэтому повторная online-проверка статуса дала бы ложный отказ. Новые
@@ -424,8 +442,27 @@ function main(argv) {
   );
   const branch = git(['rev-parse', '--abbrev-ref', 'HEAD'], repo).trim();
 
+  const hasOriginMain = spawnSync(
+    'git', ['-C', repo, 'rev-parse', '--verify', 'refs/remotes/origin/main'],
+    { encoding: 'utf8' },
+  ).status === 0;
+  const mainCache = new Map();
+  const isCommitOnMain = (sha) => {
+    if (!hasOriginMain) return false;
+    if (!mainCache.has(sha)) {
+      mainCache.set(sha, spawnSync(
+        'git', ['-C', repo, 'merge-base', '--is-ancestor', sha, 'refs/remotes/origin/main'],
+        { encoding: 'utf8' },
+      ).status === 0);
+    }
+    return mainCache.get(sha);
+  };
+  const checkedCommits = commitsNeedingTargetValidation(
+    commits, { targetRef, isCommitOnMain },
+  );
+
   const findings = [];
-  for (const c of commits) findings.push(...evaluateCommit(c));
+  for (const c of checkedCommits) findings.push(...evaluateCommit(c));
 
   // Проверке 2 отдаются только коммиты самой ветки: origin/dev..HEAD, а не
   // диапазон события. См. комментарий у checkBranchRule.
@@ -433,12 +470,13 @@ function main(argv) {
     ? (() => {
       const hasDev = spawnSync('git', ['-C', repo, 'rev-parse', '--verify', 'origin/dev'],
         { encoding: 'utf8' }).status === 0;
-      if (!hasDev) return commits;
-      return parseRecords(
+      if (!hasDev) return checkedCommits;
+      const own = parseRecords(
         git(['log', '--reverse', `--pretty=format:${LOG_FORMAT}`, 'origin/dev..HEAD'], repo),
       );
+      return commitsNeedingTargetValidation(own, { targetRef, isCommitOnMain });
     })()
-    : commits;
+    : checkedCommits;
   findings.push(...checkBranchRule(branch, ownCommits));
 
   // Метки читаются один раз и используются дважды: проверкой 8 и escalation
@@ -458,7 +496,7 @@ function main(argv) {
       }
       return publishedCache.get(sha);
     };
-    const statusCommits = commitsNeedingIssueStatus(commits, {
+    const statusCommits = commitsNeedingIssueStatus(checkedCommits, {
       targetRef, isPublishedPrereleaseCommit,
     });
     const numbers = [...new Set(statusCommits.flatMap((c) => c.issues).map((t) => t.slice(1)))];
@@ -482,7 +520,9 @@ function main(argv) {
   }
 
   const specsDir = join(repo, 'docs', 'specs');
-  findings.push(...checkSpecs(commits, existsSync(specsDir) ? readdirSync(specsDir) : null, labelsOf));
+  findings.push(...checkSpecs(
+    checkedCommits, existsSync(specsDir) ? readdirSync(specsDir) : null, labelsOf,
+  ));
 
   const reviewDir = join(repo, 'docs', 'reviews');
   const reviewFiles = [
