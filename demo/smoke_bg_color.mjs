@@ -103,6 +103,19 @@ const res = await page.evaluate(async () => {
   await settleMode();
   out.viewPaintedAgain = (await waitStageBg((value) => value === rgb('#0a2a4a'))) === rgb('#0a2a4a');
 
+  // Review r1 for #146: the environment is before the plan in DOM, so the
+  // plan wrapper needs no positive stacking level. Giving it one hides the
+  // later zoom badge behind the whole plan at every zoom above 100%.
+  c._zoom = 2.5;
+  c.requestUpdate(); await c.updateComplete;
+  const zoomWrap = sr().querySelector('.zoomwrap');
+  const zoomBadge = sr().querySelector('.zoombadge');
+  out.zoomBadgeStaysAbovePlan = !!zoomBadge
+    && getComputedStyle(zoomWrap).zIndex === 'auto'
+    && !!(zoomWrap.compareDocumentPosition(zoomBadge) & Node.DOCUMENT_POSITION_FOLLOWING);
+  c._zoom = 1;
+  c.requestUpdate(); await c.updateComplete;
+
   // 9) kiosk instance respects the setting
   const k = document.createElement('houseplan-card');
   k.setConfig({ type: 'custom:houseplan-card', kiosk: true, cycle: 0 });

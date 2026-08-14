@@ -181,7 +181,6 @@ export const cardStyles = css`
     .zoomwrap {
       position: absolute;
       inset: 0;
-      z-index: 1;
     }
     .stage.mode-transition,
     .stage.mode-transition .zoomwrap {

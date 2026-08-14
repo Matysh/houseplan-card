@@ -9,7 +9,8 @@
   hover and window rays remain visually unchanged across phases. Full View,
   kiosk and static space cards share the result. New installations and spaces
   enable it explicitly, while a one-time migration and portable import/export
-  preserve every existing plan's prior background choice
+  preserve every existing plan's prior background choice. Existing zoom
+  percentage badges remain visible above the plan at magnification
   ([#146](https://github.com/Matysh/houseplan-card/issues/146)).
 - Opening and physical-object property dialogs now use the existing 500 px
   desktop shell, keeping Delete, Cancel and Save on one line with localization
