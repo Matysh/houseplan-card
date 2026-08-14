@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- A new room outline that starts and ends on one uninterrupted solid interval
+  of an existing room wall now closes automatically and opens the normal room
+  dialog. Endpoints and wall-bound T-connection points work alike; openings,
+  intentional gaps, different edges and a second point without enough sides do
+  not trigger the shortcut ([#138](https://github.com/Matysh/houseplan-card/issues/138)).
 - Connected Room outline and Partition segments now form one seamless thick
   wall immediately, including the live rubber-band. Right and oblique corners
   use bounded mitre/bevel joins, T-connections have no visible butt face, each

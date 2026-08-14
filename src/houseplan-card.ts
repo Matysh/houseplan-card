@@ -132,7 +132,7 @@ import {
   physicalBodies, physicalBodySet,
 } from './physical-geometry';
 import {
-  buildPlanSnapGeometry, resolvePlanSnap,
+  buildPlanSnapGeometry, findSharedRoomSnapSegment, resolvePlanSnap,
   type PlanSnapCandidate, type PlanSnapGeometry, type PlanSnapSegment,
 } from './plan-snap-overlay';
 import {
@@ -6424,33 +6424,85 @@ class HouseplanCard extends LitElement {
     return false;
   }
 
-  /** Validate and close the draft without using the closing click as a vertex. */
-  private _closeRoomContour(showMinimumError = false): void {
+  /** Validate one prospective room ring without mutating the live draft. */
+  private _validateRoomContour(
+    path: number[][], showMinimumError = false,
+  ): { closingCm: number } | null {
     // Three placed vertices mean two existing edges; the closing edge becomes
     // the third one. Anything shorter cannot enclose a room.
-    if (this._path.length < 3) {
+    if (path.length < 3) {
       if (showMinimumError) this._showToast(this._t('toast.contour_min_edges'));
-      return;
+      return null;
     }
     const closingCm = this._drawWallCm;
-    if (closingCm == null) { this._showPhysicalRange(100); return; }
-    if (this._contourSelfIntersects(this._path) || polygonArea(this._path) <= 1e-6) {
+    if (closingCm == null) { this._showPhysicalRange(100); return null; }
+    if (this._contourSelfIntersects(path) || polygonArea(path) <= 1e-6) {
       this._showToast(this._t('toast.contour_cannot_close'));
-      return; // keep the draft editable
+      return null; // keep the draft editable
     }
     // A contour can enclose an existing room without any vertex inside it.
-    const clash = this._overlapRoom(this._path);
+    const clash = this._overlapRoom(path);
     if (clash) {
       this._showToast(this._t('toast.room_overlap', { name: clash.name || '' }));
-      return;
+      return null;
     }
-    this._path = [...this._path, [...this._path[0]]];
+    return { closingCm };
+  }
+
+  private _openRoomContourDialog(path: number[][], closingCm: number): void {
+    this._path = [...path, [...path[0]]];
     this._closingWallCm = closingCm;
     this._clearPlanSnapHover();
     this._nameSel = '';
     this._areaSel = '';
     this._resetRoomDialogFields();
     this._roomDialog = true;
+  }
+
+  /** Validate and close the draft without using the closing click as a vertex. */
+  private _closeRoomContour(showMinimumError = false): void {
+    const valid = this._validateRoomContour(this._path, showMinimumError);
+    if (!valid) return;
+    this._openRoomContourDialog(this._path, valid.closingCm);
+  }
+
+  /** The same append limits guard both an ordinary point and an auto-close terminal point. */
+  private _canAppendRoomDraftPoint(): boolean {
+    if (this._drawWallCm == null) { this._showPhysicalRange(100); return false; }
+    if (this._path.length >= MAX_DRAFT_POINTS) {
+      this._showToast(this._t('toast.physical_limit'));
+      return false;
+    }
+    const spCfg = this._curSpaceCfg as any;
+    const newDraft = !this._activeDraftId;
+    if ((newDraft && (spCfg?.room_drafts || []).length >= MAX_ROOM_DRAFTS)
+        || this._draftSegmentCount(spCfg) >= MAX_DRAFT_SEGMENTS) {
+      this._showToast(this._t('toast.physical_limit'));
+      return false;
+    }
+    return true;
+  }
+
+  /** Consume a qualifying click whether it closes successfully or reports a validation error. */
+  private _tryAutoCloseRoomContour(pt: number[]): boolean {
+    // One existing point plus B is only a line. Preserve the ordinary second
+    // click, symmetrically with the existing first-point closure gate.
+    if (this._path.length < 2) return false;
+    const shared = findSharedRoomSnapSegment(
+      this._planSnapGeometrySnapshot().value,
+      this._path[0],
+      pt,
+      this._gridPitch * 0.0002,
+    );
+    if (!shared) return false;
+    if (!this._canAppendRoomDraftPoint()) return true;
+    const prospective = [...this._path, pt];
+    const valid = this._validateRoomContour(prospective);
+    if (!valid) return true;
+    this._path = prospective;
+    this._persistActiveDraftSegment();
+    this._openRoomContourDialog(this._path, valid.closingCm);
+    return true;
   }
 
   private _markupClick(ev: MouseEvent): void {
@@ -6555,23 +6607,13 @@ class HouseplanCard extends LitElement {
       this._closeRoomContour();
       return;
     }
+    if (this._tryAutoCloseRoomContour(pt)) return;
     const join = this._draftEndAt(pt, this._activeDraftId || undefined);
     if (join) {
       this._mergeDraftEndpoint(join);
       return;
     }
-    if (this._drawWallCm == null) { this._showPhysicalRange(100); return; }
-    if (this._path.length >= MAX_DRAFT_POINTS) {
-      this._showToast(this._t('toast.physical_limit'));
-      return;
-    }
-    const spCfg = this._curSpaceCfg as any;
-    const newDraft = !this._activeDraftId;
-    if ((newDraft && (spCfg?.room_drafts || []).length >= MAX_ROOM_DRAFTS)
-        || this._draftSegmentCount(spCfg) >= MAX_DRAFT_SEGMENTS) {
-      this._showToast(this._t('toast.physical_limit'));
-      return;
-    }
+    if (!this._canAppendRoomDraftPoint()) return;
     this._path = [...this._path, pt];
     this._persistActiveDraftSegment();
   }

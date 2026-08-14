@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   buildPlanSnapGeometry,
+  findSharedRoomSnapSegment,
   resolvePlanSnap,
 } from '../test-build/plan-snap-overlay.js';
 
@@ -69,6 +70,51 @@ test('room cuts leave solid intervals but do not create cut-boundary endpoints',
   assert.ok(!geometry.endpoints.some((entry) => entry.point[0] === 70 && entry.point[1] === 0));
   assert.ok(geometry.endpoints.some((entry) => entry.point[0] === 0 && entry.point[1] === 100),
     'an original endpoint remains when another solid wall still meets it');
+});
+
+test('shared-room interval contains endpoints and interior wall-bound points only on one edge', () => {
+  const geometry = buildPlanSnapGeometry({
+    space: space({ rooms: [{ id: 'room', x: 0, y: 0, w: 100, h: 100 }] }),
+  });
+  assert.ok(findSharedRoomSnapSegment(geometry, [0, 0], [100, 0]));
+  assert.ok(findSharedRoomSnapSegment(geometry, [0, 0], [40, 0]));
+  assert.ok(findSharedRoomSnapSegment(geometry, [20, 0], [80, 0]));
+  assert.equal(findSharedRoomSnapSegment(geometry, [0, 0], [100, 100]), null,
+    'different room edges never imply an auto-closing wall');
+  assert.equal(findSharedRoomSnapSegment(geometry, [40, 0], [40, 0]), null,
+    'one point cannot define a closing interval');
+  assert.equal(findSharedRoomSnapSegment(geometry, [-1, 0], [40, 0], 0.001), null,
+    'collinearity outside the closed segment is insufficient');
+});
+
+test('shared-room interval respects cuts and rejects draft or partition-only axes', () => {
+  const cut = buildPlanSnapGeometry({
+    space: space({ rooms: [{ id: 'room', x: 0, y: 0, w: 100, h: 100 }] }),
+    roomCuts: [[40, 0, 60, 0]],
+  });
+  assert.ok(findSharedRoomSnapSegment(cut, [0, 0], [30, 0]));
+  assert.equal(findSharedRoomSnapSegment(cut, [0, 0], [100, 0]), null,
+    'opening or open-span cuts split eligibility');
+
+  const independent = buildPlanSnapGeometry({
+    space: space({
+      room_drafts: [{ id: 'draft', points: [[0, 10], [100, 10]], segments: [{ cm: 15 }] }],
+      partitions: [{ id: 'partition', a: [0, 20], b: [100, 20], cm: 15 }],
+    }),
+  });
+  assert.equal(findSharedRoomSnapSegment(independent, [0, 10], [100, 10]), null);
+  assert.equal(findSharedRoomSnapSegment(independent, [0, 20], [100, 20]), null);
+});
+
+test('a completed room remains the authority for a coincident deduplicated axis', () => {
+  const geometry = buildPlanSnapGeometry({
+    space: space({
+      rooms: [{ id: 'room', x: 0, y: 0, w: 100, h: 100 }],
+      partitions: [{ id: 'partition', a: [100, 0], b: [0, 0], cm: 15 }],
+    }),
+  });
+  const shared = findSharedRoomSnapSegment(geometry, [0, 0], [100, 0]);
+  assert.equal(shared?.sourceKind, 'room');
 });
 
 test('endpoint wins over a closer line and tie resolution is stable', () => {
