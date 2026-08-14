@@ -79,6 +79,36 @@ export function prepareGoldenFixture(scenario) {
       settings: { show_borders: true, fill_mode: 'custom', custom_fill: { c: '#536b82', a: 0.42 } },
     });
   }
+  if (scenario.wallJunctions) {
+    const a = [0.06, 0.06], tr = [0.94, 0.06], br = [0.94, 0.94], bl = [0.06, 0.94];
+    const entry = (from, to, cm) => ({
+      key: fixtureWallKey(from, to), a: [...from], b: [...to], cm,
+    });
+    fixture.config.spaces.push({
+      id: scenario.space,
+      title: 'Wall junctions',
+      plan_url: null,
+      view_box: [0, 0, 1, 1],
+      cell_cm: 5,
+      settings: { fill_mode: 'none', show_borders: true, show_names: false },
+      rooms: [{ id: 'junction-room', name: 'Room', area: null, poly: [a, tr, br, bl] }],
+      walls: [entry(a, tr, 10), entry(tr, br, 10), entry(br, bl, 10), entry(bl, a, 10)],
+      partitions: [
+        { id: 'junction-l-a', a: [0.16, 0.25], b: [0.38, 0.25], cm: 18 },
+        { id: 'junction-l-b', a: [0.38, 0.25], b: [0.38, 0.46], cm: 30 },
+        { id: 'junction-oblique-a', a: [0.58, 0.22], b: [0.78, 0.38], cm: 22 },
+        { id: 'junction-oblique-b', a: [0.78, 0.38], b: [0.62, 0.52], cm: 14 },
+        { id: 'junction-t-through', a: [0.18, 0.70], b: [0.78, 0.70], cm: 24 },
+        { id: 'junction-t-branch', a: [0.50, 0.54], b: [0.50, 0.70], cm: 16 },
+        { id: 'junction-room-branch', a: [0.30, 0.82], b: [0.30, 0.94], cm: 18 },
+      ],
+      room_drafts: [{
+        id: 'junction-draft', points: [[0.16, 0.54], [0.30, 0.54], [0.30, 0.64]],
+        segments: [{ cm: 12 }, { cm: 20 }],
+      }],
+      wall_columns: [],
+    });
+  }
   const requireSpace = () => {
     const space = fixture.config.spaces.find((item) => item.id === scenario.space);
     if (!space) throw new Error(`golden override references missing space: ${scenario.space}`);
@@ -317,6 +347,27 @@ export async function prepareGoldenScenario(page, scenario) {
       card._applyView(scenario.zoom, 500, 500);
       card.requestUpdate();
       await card.updateComplete;
+    }
+    if (scenario.wallJunctionPreview) {
+      const { path, pointer, cms, cm } = scenario.wallJunctionPreview;
+      const validPoint = (point) => Array.isArray(point) && point.length === 2
+        && point.every(Number.isFinite);
+      if (!Array.isArray(path) || !path.length || !path.every(validPoint)
+          || !validPoint(pointer) || !Array.isArray(cms) || !cms.every(Number.isFinite)
+          || !(Number(cm) > 0)) {
+        throw new Error(`invalid golden wallJunctionPreview contract: ${scenario.id}`);
+      }
+      card._tool = 'draw';
+      card._activeDraftId = null;
+      card._path = path.map((point) => [point[0] * 1000, point[1] * card._spaceH]);
+      card._draftSegmentCms = [...cms];
+      card._drawWallField = String(cm);
+      card._cursorPt = [pointer[0] * 1000, pointer[1] * card._spaceH];
+      card.requestUpdate();
+      await card.updateComplete;
+      await frame();
+      if (!card.renderRoot.querySelector('.drawwall-preview'))
+        throw new Error(`golden wall junction preview did not render: ${scenario.id}`);
     }
     if (scenario.planSnap) {
       const { tool, anchor, pointer, expectedKind } = scenario.planSnap;

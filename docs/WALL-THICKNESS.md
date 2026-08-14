@@ -65,6 +65,15 @@ thinner than 3 CSS px on screen, the shared full/static render policy suppresses
 only the hatch so it does not collapse into noise; the solid fill remains. Mitre
 joins; bevel when the mitre spike exceeds `MITRE_LIMIT × thickness`.
 
+Independent draft/partition segments keep flat raw quads for editor identity,
+but exact endpoint↔endpoint and endpoint↔line nodes add computed join patches
+before the presentation union. Each incident ray keeps its own half-depth;
+ordinary corners use the same bounded `MITRE_LIMIT = 4` rule and excessive
+spikes become bevels. A degree-one endpoint receives no patch and therefore
+keeps its flat cap. This topology is render-only: a T does not split or rewrite
+the saved target segment. The live open-outline/rubber-band preview calls the
+same primitive with saved per-segment thicknesses plus the current field value.
+
 Openings cut the body full-depth; jambs cap the cut; window glass mid-tunnel;
 door swing from the **inner face**. Association uses wall direction ≈ opening
 angle (mod 180°), then nearest span — never a perpendicular neighbour at a T.
@@ -167,3 +176,13 @@ occlusion even when borders are hidden. A source inside/on a physical body is
 fully occluded instead of leaking around its own masonry. The same fail-dark
 placement rule applies to window tunnels and exterior door/gate openings;
 interior passages remain valid source positions (#92).
+
+`physicalBodySet()` separates raw draft/partition/column bodies from computed
+junction patches and their joined geometry. Raw bodies remain authoritative for
+hit testing, selection, drag, properties, deletion, history and furniture
+magnet semantics. Flat full/static render, hidden isometric, clean floor, Glow,
+sun and source placement consume the joined set through the canonical masonry
+pass, so an old butt face cannot become a visible seam or a false light barrier.
+Exact near-misses remain separate, an interior↔interior X crossing keeps normal
+boolean-union semantics, and malformed legacy segments fall back opaque without
+writing configuration.

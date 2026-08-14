@@ -61,10 +61,11 @@ import {
   openingInnerFaceOffsetFromIndex, openingTunnelGeometriesFromIndex,
   openingWallIndex as buildOpeningWallIndex, resolveOpeningWallAssociation,
   applyWallThicknessToNewRoom,
-  drawWallPreviewD, DRAW_WALL_DEFAULT_CM, wallIntervals, materializeWallIntervals,
+  drawWallPreviewD, linearWallJoinPatches, DRAW_WALL_DEFAULT_CM,
+  wallIntervals, materializeWallIntervals,
   normalizeWallIntervals,
   intervalCmAt, wallBodyNeedsSolid, type OpeningTunnelGeometry, type OpeningWallIndex,
-  type WallEntry, type WallInterval,
+  type LinearWallSegment, type WallEntry, type WallInterval,
 } from './wall-thickness';
 import {
   resolveOpenCuts, resolveBoundaryTarget, snapOpenPoint,
@@ -125,13 +126,14 @@ import type {
 } from './types';
 import {
   COLUMN_MAX_CM, canonicalColumnAngle, clampColumnCm, columnBody,
-  directionalOccluders, draftBodies, floorMinusBodies, geometryArea, geometryOuterRings,
+  directionalOccluders, floorMinusBodies, geometryArea, geometryOuterRings,
   geometryAllRings, intersectionPaths, partitionBody, polyclipPathD,
-  pointInOpaquePlanBody, pointInPhysicalBody, sameColumnPlacement, physicalBodies,
+  pointInOpaquePlanBody, pointInPhysicalBody, sameColumnPlacement,
+  physicalBodies, physicalBodySet,
 } from './physical-geometry';
 import {
   buildPlanSnapGeometry, resolvePlanSnap,
-  type PlanSnapCandidate, type PlanSnapGeometry,
+  type PlanSnapCandidate, type PlanSnapGeometry, type PlanSnapSegment,
 } from './plan-snap-overlay';
 import {
   LightSegment, polygonSegments, splitAtIntersections, visibilityPolygon,
@@ -1200,7 +1202,7 @@ class HouseplanCard extends LitElement {
   private _planSnapGeometryCache: { key: string; value: PlanSnapGeometry } | null = null;
   private _physicalBodiesCache: {
     key: string; drafts: number[][][]; partitions: number[][][];
-    columns: number[][][]; all: number[][][];
+    columns: number[][][]; patches: number[][][]; all: number[][][]; geometry: any | null;
   } | null = null;
   private _cleanFloorCache = new Map<string, {
     floor: number[][]; geom: any; path: string; area: number;
@@ -8228,7 +8230,7 @@ class HouseplanCard extends LitElement {
    * partitions/drafts/columns. Openings intentionally still use room walls
    * only; furniture is allowed to lean against every real obstacle. */
   private get _furnWalls(): number[][] {
-    const faces = this._physicalBodiesR().flatMap((body) =>
+    const faces = this._rawPhysicalBodiesR().flatMap((body) =>
       body.map((a, i) => {
         const b = body[(i + 1) % body.length];
         return [a[0], a[1], b[0], b[1]];
@@ -11621,17 +11623,18 @@ class HouseplanCard extends LitElement {
   private _physicalBodiesR(space = this._spaceModel()): number[][][] {
     const key = `${space.id}|${this._cfgEpoch}|${this._cellCm}|${this._gridPitch}`;
     if (this._physicalBodiesCache?.key === key) return this._physicalBodiesCache.all;
-    const drafts = (space.room_drafts || []).flatMap((d) =>
-      draftBodies(d, this._cellCm, this._gridPitch));
-    const partitions = (space.partitions || []).flatMap((p) => {
-      const body = partitionBody(p.a, p.b, p.cm, this._cellCm, this._gridPitch);
-      return body ? [body] : [];
-    });
-    const columns = (space.wall_columns || []).map((c) =>
-      columnBody(c, this._cellCm, this._gridPitch));
-    const all = [...drafts, ...partitions, ...columns];
-    this._physicalBodiesCache = { key, drafts, partitions, columns, all };
-    return all;
+    const frame = physicalBodySet(
+      space, this._cellCm, this._gridPitch, this._gridPitch * 0.0002,
+    );
+    this._physicalBodiesCache = { key, ...frame };
+    return frame.all;
+  }
+
+  /** Per-record bodies remain the editor/furniture identity surface. */
+  private _rawPhysicalBodiesR(space = this._spaceModel()): number[][][] {
+    this._physicalBodiesR(space);
+    const frame = this._physicalBodiesCache;
+    return frame ? [...frame.drafts, ...frame.partitions, ...frame.columns] : [];
   }
 
   /** Cached clean floor. A cheap bbox pass is the spatial index needed for
@@ -13619,14 +13622,20 @@ class HouseplanCard extends LitElement {
     // jamb faces. Treating a wall as its centreline let light bleed half a wall
     // deep (a bright bar at every opening) and started every shadow half a wall
     // away from the corner that casts it.
-    const masonry = walls.length
+    const masonry = walls.length || physical.length
       ? wallBodiesGeometry(
         space.rooms, walls, openCuts,
         passages.map((o) => ({ x: o.rx, y: o.ry, angle: o.angle, length: o.rlen })),
-        this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+        this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, physical,
       )
       : null;
-    for (const ring of geometryAllRings(masonry?.geom)) occluders.push(...polygonSegments(ring));
+    if (masonry) {
+      for (const ring of geometryAllRings(masonry.geom)) occluders.push(...polygonSegments(ring));
+    } else {
+      // Malformed legacy geometry must remain opaque even when the canonical
+      // boolean pass cannot produce a joined result.
+      for (const body of physical) occluders.push(...polygonSegments(body));
+    }
     // Edges without any thickness are still walls; so is a room outline when
     // the boolean pass above could not run at all.
     for (const { poly } of polys) {
@@ -13634,7 +13643,6 @@ class HouseplanCard extends LitElement {
         occluders.push(seg as LightSegment);
       }
     }
-    for (const body of physical) occluders.push(...polygonSegments(body));
     const value = {
       occluders: splitAtIntersections(occluders),
       floor: polys.map((x) => x.poly),
@@ -16676,6 +16684,57 @@ class HouseplanCard extends LitElement {
     </g>` as unknown as TemplateResult;
   }
 
+  /** Physical depth for one immutable architectural snap segment. */
+  private _planSnapPhysicalSegment(segment: PlanSnapSegment): LinearWallSegment | null {
+    let cm = 0;
+    const space = this._spaceModel();
+    if (segment.sourceKind === 'partition') {
+      cm = Number(space.partitions.find((item) => item.id === segment.sourceId)?.cm) || 0;
+    } else if (segment.sourceKind === 'draft') {
+      const match = /^(.*):(\d+)$/.exec(segment.sourceId);
+      const draft = match ? space.room_drafts.find((item) => item.id === match[1]) : null;
+      cm = draft && match ? Number(draft.segments[Number(match[2])]?.cm) || 0 : 0;
+    } else {
+      cm = intervalCmAt(
+        space.rooms, this._spaceWalls, this._openCuts(),
+        [segment.a[0], segment.a[1], segment.b[0], segment.b[1]],
+        this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+      );
+    }
+    if (!(cm > 0)) return null;
+    return {
+      a: [...segment.a], b: [...segment.b],
+      halfDepth: wallCmToUnits(cm, this._cellCm, this._gridPitch) / 2,
+    };
+  }
+
+  /**
+   * Local target patches make a snapped rubber-band meet saved masonry before
+   * the click. The expensive saved union stays cached; pointermove examines
+   * only immutable snap axes touching a preview vertex.
+   */
+  private _drawPreviewJoinPatchD(
+    points: number[][], halfDepths: number[],
+  ): string {
+    if (points.length < 2) return '';
+    const preview: LinearWallSegment[] = [];
+    for (let i = 0; i + 1 < points.length; i++) {
+      if (!(halfDepths[i] > 0)) continue;
+      preview.push({ a: points[i], b: points[i + 1], halfDepth: halfDepths[i] });
+    }
+    if (!preview.length) return '';
+    const eps = this._gridPitch * 0.0002;
+    const touching = this._planSnapGeometrySnapshot().value.segments
+      .filter((segment) => points.some((point) => distToSegment(point, [
+        segment.a[0], segment.a[1], segment.b[0], segment.b[1],
+      ]) <= eps))
+      .map((segment) => this._planSnapPhysicalSegment(segment))
+      .filter((segment): segment is LinearWallSegment => !!segment);
+    const patches = linearWallJoinPatches([...preview, ...touching], eps);
+    return patches.map((patch) =>
+      `M ${patch.map((point) => `${point[0]} ${point[1]}`).join(' L ')} Z`).join(' ');
+  }
+
   private _renderMarkupLayer(vb: number[]): TemplateResult {
     // derived walls minus the open stretches — those are drawn dashed on top
     const openCuts = this._openPairs().flatMap((p) => p.segs);
@@ -16694,12 +16753,26 @@ class HouseplanCard extends LitElement {
       if (this._cursorPt) return [...path, this._cursorPt];
       return path.length >= 2 ? path : null;
     })();
+    const previewHalfDepths = previewPts
+      ? previewPts.slice(0, -1).map((_, i) => {
+          const cm = Number(this._draftSegmentCms[i]) > 0
+            ? Number(this._draftSegmentCms[i])
+            : this._contourClosed && i === previewPts.length - 2
+              ? (this._closingWallCm || drawCm || DRAW_WALL_DEFAULT_CM)
+              : (drawCm || DRAW_WALL_DEFAULT_CM);
+          return wallCmToUnits(cm, this._cellCm, this._gridPitch) / 2;
+        })
+      : [];
     const previewD = previewPts
       ? drawWallPreviewD(
           previewPts,
           wallCmToUnits(drawCm!, this._cellCm, this._gridPitch) / 2,
           this._contourClosed,
+          previewHalfDepths,
         )
+      : '';
+    const previewJoinPatchD = previewPts
+      ? this._drawPreviewJoinPatchD(previewPts, previewHalfDepths)
       : '';
     return svg`
       ${this._gridLevels()
@@ -16717,6 +16790,10 @@ class HouseplanCard extends LitElement {
       ${previewD
         ? svg`<path class="drawwall-preview-fill" d="${previewD}"></path>
              <path class="drawwall-preview" d="${previewD}"></path>`
+        : nothing}
+      ${previewJoinPatchD
+        ? svg`<path class="drawwall-preview-fill" d="${previewJoinPatchD}"></path>
+             <path class="drawwall-preview" style="stroke:none" d="${previewJoinPatchD}"></path>`
         : nothing}
       ${path.length > 1
         ? svg`<polyline class="pathline" points="${path.map((p) => p.join(',')).join(' ')}"></polyline>`

@@ -53,6 +53,11 @@ physical bodies have been resolved. It normalizes outer/hole winding, builds one
 evenodd top path and at most one visible side per ring edge, then uses a stable
 depth/order tie-break. Complexity is O(E) in canonical ring edges.
 
+For connected drafts and partitions those extras already contain computed
+bounded junction patches. Isometric wall tops/sides therefore use the same
+seamless L/T footprint as flat full/static cards; raw per-record rectangles are
+reserved for editor identity and never projected as competing wall faces.
+
 The content fingerprint includes rooms, wall geometry/thickness, open cuts,
 openings, partitions, drafts, columns, scale/grid inputs, camera, wall height and
 algorithm version. It deliberately excludes `_cfgEpoch`, HA state, hover and

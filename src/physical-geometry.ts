@@ -1,7 +1,10 @@
 /** Geometry shared by independent partitions, saved room drafts and columns. */
 import { difference, intersection, union } from 'polyclip-ts';
 import { polygonArea } from './logic';
-import { wallCmToUnits } from './wall-thickness';
+import {
+  linearWallBody, linearWallJoinPatches, wallCmToUnits,
+  type LinearWallSegment,
+} from './wall-thickness';
 import type {
   PartitionCfg, RoomDraftCfg, SpaceModel, WallColumnCfg,
 } from './types';
@@ -37,19 +40,12 @@ export function polyclipPathD(geom: any): string {
   return out.join(' ');
 }
 
-/** A wall segment has flat ends. Joining is delegated to polygon union. */
+/** A wall segment has flat ends. Canonical node joins are added by `physicalBodySet`. */
 export function partitionBody(
   a: number[], b: number[], cm: number, cellCm: number, gridPitch: number,
 ): number[][] | null {
-  const dx = b[0] - a[0], dy = b[1] - a[1];
-  const len = Math.hypot(dx, dy);
-  if (!(len > 1e-9)) return null;
   const half = wallCmToUnits(cm, cellCm, gridPitch) / 2;
-  const nx = (-dy / len) * half, ny = (dx / len) * half;
-  return [
-    [a[0] + nx, a[1] + ny], [b[0] + nx, b[1] + ny],
-    [b[0] - nx, b[1] - ny], [a[0] - nx, a[1] - ny],
-  ];
+  return linearWallBody({ a, b, halfDepth: half });
 }
 
 export function columnBody(
@@ -91,14 +87,62 @@ export function physicalBodies(
   cellCm: number,
   gridPitch: number,
 ): number[][][] {
-  const out: number[][][] = [];
-  for (const p of space.partitions || []) {
-    const body = partitionBody(p.a, p.b, p.cm, cellCm, gridPitch);
-    if (body) out.push(body);
+  return physicalBodySet(space, cellCm, gridPitch).all;
+}
+
+export interface PhysicalBodySet {
+  drafts: number[][][];
+  partitions: number[][][];
+  columns: number[][][];
+  /** Bounded mitre/bevel volumes; never persisted or independently editable. */
+  patches: number[][][];
+  /** Canonical independent volume inputs for boolean render/floor/light consumers. */
+  all: number[][][];
+  /** Unioned geometry without raw overlap/butt-face boundaries. */
+  geometry: any | null;
+}
+
+/** Raw editable bodies plus their computed, order-independent junction volumes. */
+export function physicalBodySet(
+  space: Pick<SpaceModel, 'partitions' | 'room_drafts' | 'wall_columns'>,
+  cellCm: number,
+  gridPitch: number,
+  epsilon = Math.max(gridPitch * 0.0002, 1e-9),
+): PhysicalBodySet {
+  const draftSegments: LinearWallSegment[] = [];
+  const partitionSegments: LinearWallSegment[] = [];
+  const drafts: number[][][] = [];
+  const partitions: number[][][] = [];
+  for (const draft of space.room_drafts || []) {
+    for (let i = 0; i + 1 < draft.points.length; i++) {
+      const halfDepth = wallCmToUnits(
+        draft.segments[i]?.cm || 15, cellCm, gridPitch,
+      ) / 2;
+      const segment = { a: draft.points[i], b: draft.points[i + 1], halfDepth };
+      const body = linearWallBody(segment);
+      if (!body) continue;
+      draftSegments.push(segment);
+      drafts.push(body);
+    }
   }
-  for (const d of space.room_drafts || []) out.push(...draftBodies(d, cellCm, gridPitch));
-  for (const c of space.wall_columns || []) out.push(columnBody(c, cellCm, gridPitch));
-  return out;
+  for (const partition of space.partitions || []) {
+    const segment = {
+      a: partition.a,
+      b: partition.b,
+      halfDepth: wallCmToUnits(partition.cm, cellCm, gridPitch) / 2,
+    };
+    const body = linearWallBody(segment);
+    if (!body) continue;
+    partitionSegments.push(segment);
+    partitions.push(body);
+  }
+  const columns = (space.wall_columns || []).map((column) =>
+    columnBody(column, cellCm, gridPitch));
+  const patches = linearWallJoinPatches(
+    [...draftSegments, ...partitionSegments], epsilon,
+  );
+  const all = [...drafts, ...partitions, ...patches, ...columns];
+  return { drafts, partitions, columns, patches, all, geometry: unionBodies(all) };
 }
 
 export function unionBodies(bodies: number[][][]): any | null {
