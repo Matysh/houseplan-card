@@ -1,8 +1,8 @@
 # Issue #138 — автозамыкание комнаты по существующей стене
 
 - **Issue:** https://github.com/Matysh/houseplan-card/issues/138
-- **Редакция:** первая редакция для независимого ревью; статус определяется только
-  метками issue
+- **Редакция:** r2 после High из `docs/reviews/SPEC-REVIEW-138-r1.md`;
+  статус определяется только метками issue
 - **Тип / приоритет:** bug / P1
 - **Оценка:** пользовательская ценность 9/10; ценность для разработки 7/10;
   сложность 5/10; риск 7/10
@@ -113,15 +113,21 @@ resolver #137. Hover-кандидат не используется как со�
 
 1. клик в собственную первую точку замыкает контур как сейчас;
 2. `Ctrl`/`Cmd` + click выполняет существующее быстрое замыкание;
-3. только отличный от первой точки обычный клик проверяется как новое
+3. только отличный от первой точки обычный клик, после добавления которого в
+   prospective path будет не меньше трёх вершин, проверяется как новое
    автозамыкание по существующей стене.
 
 Повторный клик в текущий anchor остаётся no-op и не создаёт нулевой сегмент.
+Если в path пока находится только первая точка `A`, второй клик `B` не считается
+попыткой автозамыкания даже при общем solid interval `A—B`: он без validation
+toast добавляется в draft обычным способом. Это тот же минимальный gate, который
+уже защищает ручное замыкание кликом в первую точку.
 
 ### 7.2 Допустимый существующий интервал
 
-Автозамыкание разрешено, если существует хотя бы один сегмент текущего
-архитектурного snap snapshot, который одновременно:
+После прохождения gate минимального числа вершин автозамыкание разрешено, если
+существует хотя бы один сегмент текущего архитектурного snap snapshot, который
+одновременно:
 
 - имеет `sourceKind: room` и происходит из завершённого контура комнаты;
 - является одним прямым сплошным интервалом после канонических cuts #137;
@@ -157,7 +163,9 @@ pixels. Если угол принадлежит двум стенам, дост
 Пусть `A` — первая точка draft, `P` — его текущий конец, `B` — отличный от `A`
 resolved-финал на общем solid interval `A—B`.
 
-Для подходящего клика редактор рассматривает prospective polygon
+Проверка автозамыкания начинается только когда до клика path уже содержит минимум
+две вершины, поэтому добавление `B` создаёт prospective path минимум из трёх
+вершин. Для подходящего клика редактор рассматривает prospective polygon
 `[..., P, B] + B—A` и требует минимум три различные вершины. До пользовательского
 диалога он применяет те же проверки минимального размера, нулевой площади,
 self-intersection, overlap и общих geometry limits, что и обычное замыкание.
@@ -174,7 +182,8 @@ self-intersection, overlap и общих geometry limits, что и обычно
 
 ### 8.2 Невалидный prospective contour
 
-Если подходящий клик дал невалидный prospective polygon:
+Если при достаточном количестве вершин подходящий клик дал невалидный prospective
+polygon:
 
 - диалог комнаты не открывается;
 - `B`, `P—B` и `B—A` не записываются;
@@ -184,13 +193,18 @@ self-intersection, overlap и общих geometry limits, что и обычно
 
 Клик не превращается после ошибки в обычное добавление `B`: подходящая точка уже
 означает намерение замкнуть контур, как клик в собственную первую точку.
+Недостаточное количество вершин не является такой ошибкой: оно отсекается до
+eligibility и обрабатывается как обычный клик по §8.3 без toast.
 
 ### 8.3 Обычный клик
 
-Если общего room-owned solid interval нет, поведение остаётся полностью текущим:
+Если общего room-owned solid interval нет либо после добавления resolved-точки в
+path всё ещё будет меньше трёх вершин, поведение остаётся полностью текущим:
 resolved-точка добавляется в открытый draft, сегмент сохраняется, а диалог не
 открывается. Это относится в том числе к:
 
+- второму клику `B` после единственной первой точки `A`, даже если `A` и `B` —
+  разные endpoints одной существующей стены;
 - разным рёбрам одной комнаты;
 - разным комнатам;
 - точкам по разные стороны opening/open-span cut;
@@ -268,38 +282,43 @@ resolved-точка добавляется в открытый draft, сегме
 - **AC2 (`unit` + `smoke`; разработчик):** тот же результат получается, когда `A`,
   `B` или обе точки являются line-snap точками внутри одного solid room interval;
   сохранённые координаты остаются точно на существующей стене.
-- **AC3 (`unit` + `smoke`; разработчик):** разные рёбра одной комнаты, стены разных
+- **AC3 (`unit` + `smoke`; разработчик):** если path содержит только первую точку
+  `A`, второй click в отличный endpoint/line-node `B` того же solid room interval
+  не запускает автозамыкание и validation: `B` добавляется как обычная точка
+  открытого draft без dialog и toast, после чего контур можно продолжить.
+- **AC4 (`unit` + `smoke`; разработчик):** разные рёбра одной комнаты, стены разных
   комнат, saved draft и partition не запускают автозамыкание: финальная точка
   остаётся обычной точкой открытого draft, а явное замыкание первой точкой и
   `Ctrl`/`Cmd` продолжают работать.
-- **AC4 (`unit` + `smoke`; разработчик):** door/window/gate или `open_span` между
+- **AC5 (`unit` + `smoke`; разработчик):** door/window/gate или `open_span` между
   `A` и `B` разрывает общий interval и не допускает автозамыкание; cut boundary не
   становится новым endpoint и отдельный resolver проёмов не появляется.
-- **AC5 (`unit` + `smoke`; разработчик):** zero-area, self-intersecting,
-  overlapping, слишком маленький или выходящий за лимиты prospective contour не
+- **AC6 (`unit` + `smoke`; разработчик):** при достаточном числе вершин zero-area,
+  self-intersecting, overlapping, слишком маленький или выходящий за лимиты
+  prospective contour не
   открывает диалог, показывает существующий validation toast и оставляет draft,
   config и history в состоянии до финального клика.
-- **AC6 (`unit` + `smoke`; разработчик):** успешный финальный `P—B` сохраняет
+- **AC7 (`unit` + `smoke`; разработчик):** успешный финальный `P—B` сохраняет
   выбранную толщину; Cancel оставляет открытый draft с `B`, Save создаёт комнату и
   удаляет draft, а secondary action создаёт замкнутые стены по текущему контракту.
-- **AC7 (`unit` + wall-thickness regression; разработчик):** `B—A` использует
+- **AC8 (`unit` + wall-thickness regression; разработчик):** `B—A` использует
   существующую толщину общей стены, новые внешние рёбра сохраняют свои per-segment
   значения, room geometry не создаёт duplicate partition или двойное физическое
   wall body.
-- **AC8 (`unit` + code review; разработчик/ревьюер):** собственная первая точка и
+- **AC9 (`unit` + code review; разработчик/ревьюер):** собственная первая точка и
   `Ctrl`/`Cmd` имеют прежний приоритет, current anchor остаётся no-op, а eligibility
   решается до resume/draft endpoint handling.
-- **AC9 (`smoke`; разработчик):** tap без hover выполняет тот же результат; pan,
+- **AC10 (`smoke`; разработчик):** tap без hover выполняет тот же результат; pan,
   pinch, pointercancel и suppressed synthetic click не меняют geometry. View,
   kiosk, остальные Plan tools и другие editors не меняются.
-- **AC10 (`unit` + performance review; разработчик/ревьюер):** общий interval
+- **AC11 (`unit` + performance review; разработчик/ревьюер):** общий interval
   определяется из уже кэшированного snapshot чистым O(S) helper только на click;
   pointermove, cache size, DOM count и network/storage activity #137 не растут.
-- **AC11 (`typecheck` + `unit` + `build` + documentation review; разработчик):**
+- **AC12 (`typecheck` + `unit` + `build` + documentation review; разработчик):**
   implementation-loop gates зелёные, три bundle-копии побайтно одинаковы,
   пользовательская документация и оба changelog обновлены в том же видимом
   коммите.
-- **AC12 (`schema/security review`; ревьюер):** backend, schema, import/export,
+- **AC13 (`schema/security review`; ревьюер):** backend, schema, import/export,
   i18n, HA permissions/calls и зависимости не меняются; старые планы совместимы.
 
 ## 14. План автотестов
@@ -310,14 +329,16 @@ resolved-точка добавляется в открытый draft, сегме
 
 1. оба endpoints одного room segment дают общий interval;
 2. endpoint + interior point и две interior line-snap точки дают общий interval;
-3. угол, принадлежащий двум рёбрам, соединяется только с точкой на одном из них;
-4. разные рёбра/rooms, draft и partition возвращают отсутствие eligibility;
-5. opening/open-span cut разделяет исходную прямую на разные intervals;
-6. reversed segment, floating tolerance и stable tie дают тот же результат;
-7. одинаковые `A/B`, zero-length и current anchor не подходят;
-8. prospective polygon валидируется до mutation для success и каждого класса
+3. при path `[A]` второй click `B` на том же room interval не вызывает eligibility,
+   dialog или toast, а добавляет `B` и `A—B` в открытый draft;
+4. угол, принадлежащий двум рёбрам, соединяется только с точкой на одном из них;
+5. разные рёбра/rooms, draft и partition возвращают отсутствие eligibility;
+6. opening/open-span cut разделяет исходную прямую на разные intervals;
+7. reversed segment, floating tolerance и stable tie дают тот же результат;
+8. одинаковые `A/B`, zero-length и current anchor не подходят;
+9. prospective polygon валидируется до mutation для success и каждого класса
    существующей ошибки;
-9. shared-wall thickness и внешние per-segment thickness сохраняются.
+10. shared-wall thickness и внешние per-segment thickness сохраняются.
 
 Каждый тест должен падать отдельно при ослаблении `sourceKind`, игнорировании cut,
 смешивании разных рёбер, добавлении точки до validation или перезаписи толщины.
@@ -328,14 +349,16 @@ resolved-точка добавляется в открытый draft, сегме
 production-bundle smoke:
 
 1. создать существующую комнату, opening/open span, draft и partition;
-2. нарисовать соседний контур endpoint→внешние точки→endpoint той же стены и
+2. начать `A→B` по двум точкам одной существующей стены и проверить, что второй
+   click добавляет `B` без dialog/toast и оставляет открытый draft;
+3. нарисовать соседний контур endpoint→внешние точки→endpoint той же стены и
    проверить немедленное открытие room dialog;
-3. повторить с mid-line point и diagonal room edge;
-4. доказать отрицательные случаи different edge, cut, draft и partition;
-5. доказать отсутствие partial write при self-intersection/overlap;
-6. проверить Cancel, Save, secondary action, reload/resume и Undo/Redo;
-7. проверить inherited shared thickness и разные толщины внешних сегментов;
-8. повторить tap без pointermove и gesture-safety случаи.
+4. повторить с mid-line point и diagonal room edge;
+5. доказать отрицательные случаи different edge, cut, draft и partition;
+6. доказать отсутствие partial write при self-intersection/overlap;
+7. проверить Cancel, Save, secondary action, reload/resume и Undo/Redo;
+8. проверить inherited shared thickness и разные толщины внешних сегментов;
+9. повторить tap без pointermove и gesture-safety случаи.
 
 Targeted smoke пишется вместе с кодом; полный smoke-suite запускается перед бетой.
 
@@ -400,6 +423,7 @@ network или storage путей нет. Публикация проходит 
 |---|---|---|
 | Разные рёбра ошибочно считаются одной стеной | средняя / высокий | проверять один canonical segment, unit на corner/different edge |
 | Автозамыкание проходит через проём | средняя / высокий | использовать cut snapshot #137, unit + smoke opening/open-span |
+| Второй узел общей стены ошибочно трактуется как невалидное замыкание | средняя / высокий | minimum-vertex gate до eligibility, отдельные unit + smoke |
 | Невалидный click частично сохраняет draft | средняя / высокий | prospective validation до mutation, state/history assertions |
 | Resume endpoint перехватывает финальный click | средняя / высокий | eligibility до `_draftEndAt()`, integration smoke |
 | Общая стена получает новую толщину | средняя / высокий | действующий wall inheritance helper + regression matrix |
@@ -427,8 +451,9 @@ changelog и bundle-копиями. Persisted schema не меняется, по
    либо параметризовать существующий путь, если success/error contract не меняется.
 5. Успешное добавление `B` может использовать текущий `_persistActiveDraftSegment()`;
    отдельной транзакции backend не требуется.
-6. При ошибке подходящий финальный click не добавляет `B`. Это соответствует
-   существующему поведению невалидного клика в первую точку и оставляет draft
-   доступным для исправления.
+6. При достаточном числе вершин geometry validation error не добавляет `B`. Если
+   же `B` была бы только второй вершиной, eligibility не запускается и `B`
+   добавляется обычным способом без ошибки; это воспроизводит существующий
+   minimum-vertex gate ручного замыкания.
 7. Никаких открытых продуктовых вопросов нет: Q1–Q5 и технические defaults приняты
    владельцем 2026-08-14.
