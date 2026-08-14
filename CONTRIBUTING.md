@@ -18,13 +18,12 @@ requests still belong in [issues](https://github.com/Matysh/houseplan-card/issue
 
 ## Backlog and work status
 
-[GitHub Issues](https://github.com/Matysh/houseplan-card/issues) and the linked
-[GitHub Project v2](https://github.com/users/Matysh/projects/1) are the
-only active project backlog. Issues own scope and acceptance criteria; Project
-v2 owns prioritization and workflow status. Before starting planned work, link
-it to an existing issue or create one, add it to the Project, and keep both
-surfaces current until the verified result is closed. Design specs and ADRs may
-support an issue, but they do not replace it or maintain a separate checklist.
+[GitHub Issues](https://github.com/Matysh/houseplan-card/issues) are the only
+active backlog. An issue owns scope and acceptance criteria; its **labels** own
+priority and workflow status — `PROCESS.md` §9 holds the vocabulary. Before
+starting planned work, link it to an existing issue or create one, and keep it
+current until the verified result is closed. Design specs and ADRs may support an
+issue, but they do not replace it or maintain a separate checklist.
 
 ## Five-minute setup
 

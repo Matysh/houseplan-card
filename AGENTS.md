@@ -38,8 +38,7 @@ task records: problem, scope, acceptance criteria and discussion.
 **Status lives in labels:** `S1-new`, `S2-analysis`, `S3-spec`, `S4-spec-review`,
 `S5-ready`, `S6-in-progress`, `S7-code-review`, `S8-merged`, plus `blocked` on top
 of a status and `rejected` on a closed issue. Exactly one `S*` label per open
-issue. [GitHub Projects (v2)](https://github.com/users/Matysh/projects/1) is a
-human-facing view synchronised from the labels, not the source of truth.
+issue. Labels are the whole of it: GitHub Projects is no longer used.
 
 Two shortcuts exist for small work. `small` — the light track: the spec lives in
 the issue body and its review is a comment. `trivial` — the short track: no spec
