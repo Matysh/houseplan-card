@@ -542,3 +542,30 @@ the ±`CANVAS_LIMIT` guard. Rigid partition drag clamps one shared delta against
 both endpoints, so it cannot deform the segment or let its far endpoint cross
 the backend boundary. Hit areas and drag thresholds are expressed in CSS
 pixels, therefore selection remains usable at every zoom.
+
+## Architectural connection overlay
+
+When **Room outline** or **Partition** is active in the Plan editor, a derived
+pointer-transparent SVG layer exposes the centre axes of completed room walls,
+saved inactive outlines and independent partitions. It is painted after their
+physical wall bodies, but before interactive editor chrome. Columns, decor,
+devices, the active outline and its live preview are not candidates. Door,
+window, gate and intentionally open-span intervals are cut from room axes; a
+cut boundary does not become a new endpoint.
+
+The layer and hit resolver share one immutable geometry snapshot. Original
+segment endpoints are deduplicated and drawn at a physical radius of 5 cm.
+Inside a 12 CSS px hit zone, an endpoint wins over every line and grows to
+10 cm. Otherwise the nearest solid line receives one 10 cm dynamic node: the
+raw pointer is projected onto that line, then quantized by the grid step along
+the line from its stable start. This keeps diagonal connections wall-bound even
+when neither resulting coordinate is a global grid multiple. The same resolver
+runs again on click, so hover is only a preview and never authoritative.
+
+Endpoint and line candidates override the normal grid and Shift/45° result.
+Outside the hit zone, §9.3–9.4 remain unchanged. A line connection adds only the
+new segment endpoint; it does not split or rewrite the existing wall. The
+current anchor is excluded to prevent zero-length segments, while the first
+point of a valid room outline remains an explicit closure target. The static
+geometry is cached by structural editor state; pointer movement changes at
+most the single active candidate and never writes config, layout or storage.

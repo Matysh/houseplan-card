@@ -1,0 +1,95 @@
+{
+  "schema": 1,
+  "profile": "large-house-plan-snap-v1",
+  "minimumSamples": 7,
+  "timings": {
+    "modelReadyMs": {
+      "stat": "median",
+      "maxRegressionRatio": 0.3,
+      "noiseAllowanceMs": 200,
+      "hardMaxMs": 2500
+    },
+    "firstStableRenderMs": {
+      "stat": "median",
+      "maxRegressionRatio": 0.3,
+      "noiseAllowanceMs": 250,
+      "hardMaxMs": 3000
+    },
+    "planSnapPointerMs": {
+      "stat": "median",
+      "maxRegressionRatio": 0.5,
+      "noiseAllowanceMs": 250,
+      "hardMaxMs": 5000
+    },
+    "spaceSwitchMs": {
+      "stat": "median",
+      "maxRegressionRatio": 0.5,
+      "noiseAllowanceMs": 75,
+      "hardMaxMs": 1500
+    },
+    "stateUpdateMs": {
+      "stat": "median",
+      "maxRegressionRatio": 0.5,
+      "noiseAllowanceMs": 75,
+      "hardMaxMs": 1000
+    },
+    "resizePreviewMs": {
+      "stat": "median",
+      "maxRegressionRatio": 0.4,
+      "noiseAllowanceMs": 150,
+      "hardMaxMs": 2000
+    },
+    "panZoomMs": {
+      "stat": "median",
+      "maxRegressionRatio": 0.5,
+      "noiseAllowanceMs": 60,
+      "hardMaxMs": 500
+    },
+    "settingsDialogMs": {
+      "stat": "median",
+      "maxRegressionRatio": 0.5,
+      "noiseAllowanceMs": 100,
+      "hardMaxMs": 1000
+    },
+    "switchCycleMs": {
+      "stat": "median",
+      "maxRegressionRatio": 0.35,
+      "noiseAllowanceMs": 250,
+      "hardMaxMs": 7000
+    }
+  },
+  "longTasks": {
+    "maxSingleMs": 3000,
+    "maxSingleRegressionRatio": 0.3,
+    "maxSingleNoiseAllowanceMs": 250,
+    "maxCountP95": 30,
+    "maxCountRegressionRatio": 0.35,
+    "countNoiseAllowance": 3,
+    "maxTotalP95Ms": 12000,
+    "maxTotalRegressionRatio": 0.3,
+    "noiseAllowanceMs": 150
+  },
+  "heap": {
+    "required": true,
+    "hardMaxGrowthBytes": 67108864,
+    "maxRegressionRatio": 0.75,
+    "noiseAllowanceBytes": 16777216
+  },
+  "cacheEntries": {
+    "cleanFloor": 160,
+    "glowClip": 200,
+    "wallUnion": 1,
+    "openingTunnel": 1,
+    "openingWallIndex": 1,
+    "planSnapGeometry": 1
+  },
+  "cacheGrowth": {
+    "cleanFloor": 0,
+    "glowClip": 0,
+    "wallUnion": 0,
+    "openingTunnel": 0,
+    "openingWallIndex": 0,
+    "planSnapGeometry": 0
+  },
+  "renderedDevices": 200
+}

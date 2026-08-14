@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 19;
+export const GOLDEN_MATRIX_VERSION = 20;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -36,6 +36,14 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'geometry-view-light-fit', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'geometry-plan-editor-dark', fixture: 'visual', space: 'golden-geometry', mode: 'plan',
+    theme: 'dark', viewport: { width: 1180, height: 900 }, ...page },
+  { id: 'plan-snap-endpoint-light', fixture: 'visual', space: 'golden-geometry', mode: 'plan',
+    planSnap: { tool: 'draw', pointer: [0.48, 0.48], expectedKind: 'endpoint' },
+    theme: 'light', viewport: { width: 1180, height: 900 }, ...page },
+  { id: 'plan-snap-line-gaps-dark', fixture: 'visual', space: 'golden-geometry', mode: 'plan',
+    planSnap: {
+      tool: 'draw', anchor: [0.70, 0.455], pointer: [0.482, 0.455], expectedKind: 'line',
+    },
     theme: 'dark', viewport: { width: 1180, height: 900 }, ...page },
   { id: 'opening-placement-door-thick-wall-dark', fixture: 'visual', space: 'golden-geometry',
     // The shared centre edge is a long 25 cm physical wall. It can contain the

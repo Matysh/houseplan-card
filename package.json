@@ -13,6 +13,7 @@
     "audit:config": "node scripts/config-audit.mjs",
     "benchmark:large-house": "node demo/benchmark_large_house.mjs",
     "benchmark:large-house-isometric": "node demo/benchmark_large_house.mjs --profile=large-house-isometric-v1",
+    "benchmark:large-house-plan-snap": "node demo/benchmark_large_house.mjs --profile=large-house-plan-snap-v1",
     "benchmark:glow": "node demo/benchmark_glow.mjs",
     "benchmark:compare": "node demo/performance/compare.mjs",
     "golden:capture": "node demo/golden/run.mjs --mode=capture",

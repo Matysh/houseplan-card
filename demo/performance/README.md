@@ -12,6 +12,16 @@ flat while reporting the same profile. The dedicated
 plus absolute noise/ceiling checks. Only the exact-SHA Linux workflow is gate
 evidence; a local report is diagnostic.
 
+Issue #137 adds `large-house-plan-snap-v1` without changing the meaning or
+budgets of the original profile. The same 60-room/60-partition fixture gains
+six saved open outlines, renders the Plan snap overlay, and sends 120 real
+pointer moves across endpoint, line and miss targets. Candidate bundles fail
+inside the runner if the static DOM or geometry cache grows, more than one
+active node appears, endpoint/line paths are not both exercised, or config and
+websocket traffic change. Its dedicated budget retains every original timing,
+heap and cache ceiling and adds the measured pointer series plus a one-entry
+snap-geometry cache cap. Exact-SHA Linux output is the only gate evidence.
+
 The runner records seven measured samples after one discarded warm-up. With
 this intentionally small CI sample, the nearest-rank `p95` is the observed
 maximum; reports keep the conventional field name but should be read as a
@@ -110,6 +120,7 @@ Build and copy a fresh demo bundle first, then run:
 
 ```bash
 npm run benchmark:large-house -- --samples=7 --warmups=1 --output=artifacts/performance/local.json
+npm run benchmark:large-house-plan-snap -- --samples=7 --warmups=1 --output=artifacts/performance/plan-snap-local.json
 ```
 
 A local report is diagnostic only; it cannot replace the CI comparison.

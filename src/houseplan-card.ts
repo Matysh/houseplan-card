@@ -59,7 +59,8 @@ import {
   floorFootprintGeometry,
   innerContourForRoom, roomWallProfile, outsetContour,
   openingInnerFaceOffsetFromIndex, openingTunnelGeometriesFromIndex,
-  openingWallIndex as buildOpeningWallIndex, applyWallThicknessToNewRoom,
+  openingWallIndex as buildOpeningWallIndex, resolveOpeningWallAssociation,
+  applyWallThicknessToNewRoom,
   drawWallPreviewD, DRAW_WALL_DEFAULT_CM, wallIntervals, materializeWallIntervals,
   normalizeWallIntervals,
   intervalCmAt, wallBodyNeedsSolid, type OpeningTunnelGeometry, type OpeningWallIndex,
@@ -128,6 +129,10 @@ import {
   geometryAllRings, intersectionPaths, partitionBody, polyclipPathD,
   pointInOpaquePlanBody, pointInPhysicalBody, sameColumnPlacement, physicalBodies,
 } from './physical-geometry';
+import {
+  buildPlanSnapGeometry, resolvePlanSnap,
+  type PlanSnapCandidate, type PlanSnapGeometry,
+} from './plan-snap-overlay';
 import {
   LightSegment, polygonSegments, splitAtIntersections, visibilityPolygon,
 } from './light-visibility';
@@ -1074,7 +1079,7 @@ class HouseplanCard extends LitElement {
     if (this._activeDraftId) this._resumeDraftBySpace[this._space] = this._activeDraftId;
     this._space = id;
     this._path = [];
-    this._cursorPt = null;
+    this._clearPlanSnapHover();
     this._clearOpeningPlacement(true);
     this._tool = 'draw';
     this._openWallAnchor = null;
@@ -1192,6 +1197,7 @@ class HouseplanCard extends LitElement {
    * (and vice versa) on every pointer move. */
   private _openingWallIndexCache = new Map<string, OpeningWallIndex>();
   private _openingPlacementIntervalsCache: { key: string; value: WallInterval[] } | null = null;
+  private _planSnapGeometryCache: { key: string; value: PlanSnapGeometry } | null = null;
   private _physicalBodiesCache: {
     key: string; drafts: number[][][]; partitions: number[][][];
     columns: number[][][]; all: number[][][];
@@ -1245,6 +1251,7 @@ class HouseplanCard extends LitElement {
   private _rszLive: { x: number; y: number; text: string; area?: boolean }[] | null = null;
   private _path: number[][] = []; // current outline (render units, vertices snapped to the grid)
   private _cursorPt: number[] | null = null;
+  private _planSnapHover: { contextKey: string; candidate: PlanSnapCandidate | null } | null = null;
   private _mergeSel: string | null = null;
   /** Session-only explicit type/width chosen in the Opening sub-panel. */
   private _openingPreset: OpeningPlacementPreset | null = null;
@@ -1718,7 +1725,7 @@ class HouseplanCard extends LitElement {
       this._space = id;
       this._selId = null;
       this._path = [];
-      this._cursorPt = null;
+      this._clearPlanSnapHover();
       this._clearOpeningPlacement(true);
       this._tool = 'draw';
       this._openWallAnchor = null;
@@ -2000,7 +2007,7 @@ class HouseplanCard extends LitElement {
     // the user's first click after returning into P2.
     this._openWallAnchor = null;
     this._boundaryRestoreGuard = null;
-    this._cursorPt = null;
+    this._clearPlanSnapHover();
     this._clearOpeningPlacement(true);
     this._touchContacts.clear();
     this._touchSequenceMultitouch = false;
@@ -5127,6 +5134,8 @@ class HouseplanCard extends LitElement {
       if (this._tool === 'opening') {
         this._cursorPt = null;
         this._clearOpeningPlacement(false);
+      } else if (this._tool === 'draw' || this._tool === 'partition') {
+        this._clearPlanSnapHover();
       }
       const pts = [...this._pointers.values()];
       const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
@@ -5192,6 +5201,8 @@ class HouseplanCard extends LitElement {
       if (this._tool === 'opening') {
         this._cursorPt = null;
         this._clearOpeningPlacement(false);
+      } else if (this._tool === 'draw' || this._tool === 'partition') {
+        this._clearPlanSnapHover();
       }
       const pts = [...this._pointers.values()];
       const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
@@ -5211,6 +5222,8 @@ class HouseplanCard extends LitElement {
         if (this._tool === 'opening') {
           this._cursorPt = null;
           this._clearOpeningPlacement(false);
+        } else if (this._tool === 'draw' || this._tool === 'partition') {
+          this._clearPlanSnapHover();
         }
       }
       // Which gesture is this? Decided once, on the first movement worth the
@@ -5242,9 +5255,13 @@ class HouseplanCard extends LitElement {
   }
 
   private _stagePointerLeave(_ev: PointerEvent): void {
-    if (!this._markup || this._tool !== 'opening') return;
-    this._cursorPt = null;
-    this._clearOpeningPlacement(false);
+    if (!this._markup) return;
+    if (this._tool === 'opening') {
+      this._cursorPt = null;
+      this._clearOpeningPlacement(false);
+    } else if (this._tool === 'draw' || this._tool === 'partition') {
+      this._clearPlanSnapHover();
+    }
   }
 
   private _stagePointerUp(ev: PointerEvent): void {
@@ -5827,7 +5844,7 @@ class HouseplanCard extends LitElement {
       });
     }
     this._path = [];
-    this._cursorPt = null;
+    this._clearPlanSnapHover();
     this._clearOpeningPlacement(true);
     this._openWallAnchor = null;
     this._boundaryRestoreGuard = null;
@@ -5939,6 +5956,91 @@ class HouseplanCard extends LitElement {
       ? snapSegment45(anchor, p, this._gridPitch, SANE_LIMIT)
       : p;
     return this._snap(candidate);
+  }
+
+  /** Canonical physical opening slots on room-wall centrelines. */
+  private _planSnapOpeningCuts(space: SpaceModel, openCuts: number[][]): number[][] {
+    if (!this._openingsR.length) return [];
+    const index = this._openingWallIndexFor(space, openCuts).value;
+    const cuts: number[][] = [];
+    for (const opening of this._openingsR) {
+      const input = {
+        x: opening.rx, y: opening.ry,
+        angle: Number(opening.angle) || 0,
+        length: opening.rlen,
+      };
+      const association = resolveOpeningWallAssociation(index, input);
+      if (!association.negative && !association.positive) continue;
+      const rad = input.angle * Math.PI / 180;
+      const dx = Math.cos(rad) * input.length / 2;
+      const dy = Math.sin(rad) * input.length / 2;
+      cuts.push([input.x - dx, input.y - dy, input.x + dx, input.y + dy]);
+    }
+    return cuts;
+  }
+
+  /** Static architectural axes are rebuilt only when structural editor state changes. */
+  private _planSnapGeometrySnapshot(): { key: string; value: PlanSnapGeometry } {
+    const space = this._spaceModel();
+    const key = [
+      this._space, this._cfgEpoch, this._activeDraftId || '',
+      space.rooms.length, space.room_drafts.length, space.partitions.length,
+    ].join('|');
+    if (this._planSnapGeometryCache?.key === key) return this._planSnapGeometryCache;
+    const openCuts = this._openCuts();
+    const value = buildPlanSnapGeometry({
+      space,
+      activeDraftId: this._activeDraftId,
+      roomCuts: [...openCuts, ...this._planSnapOpeningCuts(space, openCuts)],
+      epsilon: this._gridPitch * 0.0002,
+    });
+    this._planSnapGeometryCache = { key, value };
+    return this._planSnapGeometryCache;
+  }
+
+  private _planSnapContextKey(geometryKey: string): string {
+    const first = this._path[0];
+    const anchor = this._path[this._path.length - 1];
+    return [
+      geometryKey, this._tool, this._path.length,
+      first ? `${first[0]},${first[1]}` : '',
+      anchor ? `${anchor[0]},${anchor[1]}` : '',
+    ].join('|');
+  }
+
+  private _resolvePlanDrawPoint(
+    raw: number[], lock45: boolean,
+  ): { point: number[]; candidate: PlanSnapCandidate | null; contextKey: string } {
+    const snapshot = this._planSnapGeometrySnapshot();
+    const anchor = this._path[this._path.length - 1];
+    const closure = this._tool === 'draw' && this._path.length >= 3
+      ? [{ point: this._path[0], key: 'closure:first-point' }]
+      : [];
+    const candidate = resolvePlanSnap(snapshot.value, raw, {
+      tolerance: this._cssPxToRender(12),
+      gridStep: this._gridPitch,
+      excludePoints: anchor ? [anchor] : [],
+      extraEndpoints: closure,
+      epsilon: this._gridPitch * 0.0002,
+    });
+    return {
+      point: candidate ? [...candidate.point] : this._snapDrawPoint(raw, lock45),
+      candidate,
+      contextKey: this._planSnapContextKey(snapshot.key),
+    };
+  }
+
+  private get _activePlanSnapCandidate(): PlanSnapCandidate | null {
+    if (!this._markup || (this._tool !== 'draw' && this._tool !== 'partition')) return null;
+    const hover = this._planSnapHover;
+    if (!hover) return null;
+    const snapshot = this._planSnapGeometrySnapshot();
+    return hover.contextKey === this._planSnapContextKey(snapshot.key) ? hover.candidate : null;
+  }
+
+  private _clearPlanSnapHover(clearCursor = true): void {
+    this._planSnapHover = null;
+    if (clearCursor) this._cursorPt = null;
   }
 
   private _samePt(a: number[], b: number[]): boolean {
@@ -6105,7 +6207,7 @@ class HouseplanCard extends LitElement {
   /** Drop every transient gesture before replacing committed geometry. */
   private _clearGeometryGesture(): void {
     this._path = [];
-    this._cursorPt = null;
+    this._clearPlanSnapHover();
     this._clearOpeningPlacement(false);
     this._mergeSel = null;
     this._mergeDialog = null;
@@ -6137,7 +6239,7 @@ class HouseplanCard extends LitElement {
     if (this._tool !== 'boundary' || !this._openWallAnchor) return false;
     this._openWallAnchor = null;
     this._boundaryRestoreGuard = null;
-    this._cursorPt = null;
+    this._clearPlanSnapHover();
     this.requestUpdate();
     return true;
   }
@@ -6164,6 +6266,8 @@ class HouseplanCard extends LitElement {
     if (this._tool === 'opening') {
       this._cursorPt = null;
       this._clearOpeningPlacement(false);
+    } else if (this._tool === 'draw' || this._tool === 'partition') {
+      this._clearPlanSnapHover();
     }
     const viewportGestureEnded = !!this._pinchStart || !!this._panStart;
     this._pointers.delete(ev.pointerId);
@@ -6340,7 +6444,7 @@ class HouseplanCard extends LitElement {
     }
     this._path = [...this._path, [...this._path[0]]];
     this._closingWallCm = closingCm;
-    this._cursorPt = null;
+    this._clearPlanSnapHover();
     this._nameSel = '';
     this._areaSel = '';
     this._resetRoomDialogFields();
@@ -6409,7 +6513,7 @@ class HouseplanCard extends LitElement {
     }
     // draw: clicks on grid points build the outline. Nothing is written to the config
     // until the contour closes — an abandoned outline leaves no lines behind.
-    const pt = this._snapDrawPoint(raw, ev.shiftKey);
+    const pt = this._resolvePlanDrawPoint(raw, ev.shiftKey).point;
     if (ev.ctrlKey || ev.metaKey) {
       ev.preventDefault();
       this._closeRoomContour(true);
@@ -6573,7 +6677,7 @@ class HouseplanCard extends LitElement {
       this._closingWallCm = Number(mergedSegments[mergedSegments.length - 1]?.cm)
         || DRAW_WALL_DEFAULT_CM;
       this._path = [...persistedPoints, [...persistedPoints[0]]];
-      this._cursorPt = null;
+      this._clearPlanSnapHover();
       this._nameSel = '';
       this._areaSel = '';
       this._resetRoomDialogFields();
@@ -6608,7 +6712,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _partitionClick(raw: number[], lock45: boolean): void {
-    const pt = this._snapDrawPoint(raw, lock45);
+    const pt = this._resolvePlanDrawPoint(raw, lock45).point;
     if (!this._path.length) { this._path = [pt]; return; }
     const a = this._path[0];
     if (this._samePt(a, pt)) return;
@@ -6625,7 +6729,7 @@ class HouseplanCard extends LitElement {
     this._activeDraftId = null;
     this._draftSegmentCms = [];
     this._closingWallCm = null;
-    this._cursorPt = null;
+    this._clearPlanSnapHover();
     this._recordGeometry(this._t('history.partition_add'), before);
     this._saveConfig();
   }
@@ -11030,14 +11134,18 @@ class HouseplanCard extends LitElement {
       this._cursorPt = this._svgPoint(ev);
       return;
     }
-    const drawing = (this._tool === 'draw' || this._tool === 'partition')
-      && this._path.length && !this._contourClosed;
+    const architectural = (this._tool === 'draw' || this._tool === 'partition')
+      && !this._contourClosed;
     const cutting = this._tool === 'split' && !!this._splitSel?.pts?.length;
-    if (!drawing && !cutting) return;
+    if (!architectural && !cutting) return;
     const raw = this._svgPoint(ev);
-    this._cursorPt = drawing
-      ? this._snapDrawPoint(raw, ev.shiftKey)
-      : this._snap(raw);
+    if (architectural) {
+      const resolved = this._resolvePlanDrawPoint(raw, ev.shiftKey);
+      this._planSnapHover = { contextKey: resolved.contextKey, candidate: resolved.candidate };
+      this._cursorPt = resolved.point;
+      return;
+    }
+    this._cursorPt = this._snap(raw);
   }
 
   /** One resolved architectural candidate shared by hover and click. */
@@ -11214,7 +11322,7 @@ class HouseplanCard extends LitElement {
     this._activeDraftId = null;
     this._draftSegmentCms = [];
     this._closingWallCm = null;
-    this._cursorPt = null;
+    this._clearPlanSnapHover();
     this._roomDialog = false;
     this._pendingSplit = null;
     this._splitSel = null;
@@ -11236,7 +11344,7 @@ class HouseplanCard extends LitElement {
     this._activeDraftId = id;
     this._path = draft.points.map((p) => [...p]);
     this._draftSegmentCms = draft.segments.map((s) => s.cm);
-    this._cursorPt = null;
+    this._clearPlanSnapHover();
   }
 
   /** Cancel in the dialog: the outline is open again (the closing point is removed). */
@@ -14510,6 +14618,8 @@ class HouseplanCard extends LitElement {
             ${!this._editing ? this._renderOpenWalls(disp) : nothing}
             ${this._renderWallBodies(disp)}
             ${this._markup ? svg`<g class="hp-editor-only-layer"
+              opacity="${modeVisual?.editorWeight ?? 1}">${this._renderPlanSnapOverlay()}</g>` : nothing}
+            ${this._markup ? svg`<g class="hp-editor-only-layer"
               opacity="${modeVisual?.editorWeight ?? 1}">${this._renderOpeningPlacementPreview()}</g>` : nothing}
             ${opMeasure?.guide ? this._renderOpeningCenterTick(opMeasure.guide) : nothing}
             ${this._renderRoomHoverOutline(roomHover)}
@@ -16527,6 +16637,43 @@ class HouseplanCard extends LitElement {
       </g>`;
     })();
     return svg`<g class="physical-editor">${draftSegs}${partitions}${columns}${ghost}${chrome}</g>`;
+  }
+
+  private _renderPlanSnapOverlay(): TemplateResult {
+    if (!this._markup || (this._tool !== 'draw' && this._tool !== 'partition')) {
+      return svg`` as unknown as TemplateResult;
+    }
+    const geometry = this._planSnapGeometrySnapshot().value;
+    const active = this._activePlanSnapCandidate;
+    const staticRadius = wallCmToUnits(5, this._cellCm, this._gridPitch);
+    const activeRadius = wallCmToUnits(10, this._cellCm, this._gridPitch);
+    const activeAt = (point: readonly number[]) => !!active && samePoint(
+      [point[0], point[1]], active.point, this._gridPitch * 0.0002,
+    );
+    const activeHasStaticNode = !!active && geometry.endpoints.some((endpoint) => activeAt(endpoint.point));
+    return svg`<g class="plan-snap-overlay" data-hp="plan-snap-overlay"
+      data-segment-count=${geometry.segments.length}
+      data-endpoint-count=${geometry.endpoints.length}
+      aria-hidden="true" pointer-events="none">
+      ${geometry.segments.map((segment) => svg`<line class="plan-snap-line"
+        data-key=${segment.key} data-source-kind=${segment.sourceKind}
+        x1=${segment.a[0]} y1=${segment.a[1]} x2=${segment.b[0]} y2=${segment.b[1]}
+        vector-effect="non-scaling-stroke" pointer-events="none"></line>`)}
+      ${geometry.endpoints.map((endpoint) => {
+        const isActive = activeAt(endpoint.point);
+        return svg`<circle class="plan-snap-node ${isActive ? 'active' : ''}"
+          data-kind="endpoint" data-key=${endpoint.key} data-active=${isActive ? 'true' : 'false'}
+          cx=${endpoint.point[0]} cy=${endpoint.point[1]}
+          r=${isActive ? activeRadius : staticRadius}
+          pointer-events="none"></circle>`;
+      })}
+      ${active && !activeHasStaticNode
+        ? svg`<circle class="plan-snap-node active dynamic" data-kind=${active.kind}
+            data-key=${active.key} data-active="true"
+            cx=${active.point[0]} cy=${active.point[1]} r=${activeRadius}
+            pointer-events="none"></circle>`
+        : nothing}
+    </g>` as unknown as TemplateResult;
   }
 
   private _renderMarkupLayer(vb: number[]): TemplateResult {
