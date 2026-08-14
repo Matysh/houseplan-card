@@ -181,6 +181,7 @@ export const cardStyles = css`
     .zoomwrap {
       position: absolute;
       inset: 0;
+      z-index: 1;
     }
     .stage.mode-transition,
     .stage.mode-transition .zoomwrap {
@@ -470,6 +471,7 @@ export const cardStyles = css`
     }
     .zoombadge {
       position: absolute;
+      z-index: 12;
       left: var(--sp-4);
       bottom: var(--sp-4);
       background: var(--card-background-color, var(--hp-bg));

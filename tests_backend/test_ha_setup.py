@@ -10,7 +10,7 @@ def _enable_custom_integrations(enable_custom_integrations):
 from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.houseplan.const import DOMAIN
+from custom_components.houseplan.const import DOMAIN, STORAGE_MINOR_VERSION
 
 
 async def _setup(hass: HomeAssistant) -> MockConfigEntry:
@@ -69,14 +69,15 @@ async def test_square_migration_finishes_after_a_crash_between_the_writes(
     from custom_components.houseplan.store import HouseplanStore
 
     hass_storage["houseplan.config"] = {
-        "version": 1, "data": {
+        "version": 1, "minor_version": STORAGE_MINOR_VERSION, "data": {
             "config": {"spaces": [{"id": "f1", "aspect": 2.0, "rooms": []}],
                        "markers": [], "settings": {}},
             "rev": 3,
         },
     }
     hass_storage["houseplan.layout"] = {
-        "version": 1, "data": {"layout": {"m": {"s": "f1", "x": 0.1, "y": 0.1}}, "rev": 7},
+        "version": 1, "minor_version": STORAGE_MINOR_VERSION,
+        "data": {"layout": {"m": {"s": "f1", "x": 0.1, "y": 0.1}}, "rev": 7},
     }
 
     real_save = HouseplanStore.async_save

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.64.0-beta.2 — 2026-08-14
+
 - **Follows the Sun** now gives the plan a four-phase dawn/day/dusk/night
   environment with a moving soft light and alpha-aware outer outline. It uses
   `sun.sun` when its sample is complete, falls back to local browser time, and
@@ -33,6 +35,7 @@
   next click will join an endpoint or create a wall-bound T-connection, while
   door/window/gate and intentional open-span gaps remain excluded
   ([#137](https://github.com/Matysh/houseplan-card/issues/137)).
+- Small fixes and improvements.
 
 ## v1.64.0-beta.1 — 2026-08-14
 

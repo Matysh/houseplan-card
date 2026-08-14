@@ -103,16 +103,22 @@ const res = await page.evaluate(async () => {
   await settleMode();
   out.viewPaintedAgain = (await waitStageBg((value) => value === rgb('#0a2a4a'))) === rgb('#0a2a4a');
 
-  // Review r1 for #146: the environment is before the plan in DOM, so the
-  // plan wrapper needs no positive stacking level. Giving it one hides the
-  // later zoom badge behind the whole plan at every zoom above 100%.
+  // The environment, plan and zoom badge own explicit stacking levels. DOM
+  // order alone let an opaque cross-fade layer cover the plan, while raising
+  // only the plan hid the later percentage badge behind it.
+  const previousBgMode = c._serverCfg.settings.bg_mode;
+  c._serverCfg.settings.bg_mode = 'daynight';
   c._zoom = 2.5;
   c.requestUpdate(); await c.updateComplete;
   const zoomWrap = sr().querySelector('.zoomwrap');
   const zoomBadge = sr().querySelector('.zoombadge');
+  const environment = sr().querySelector('.hp-day-cycle-env');
+  out.dayCycleStaysBehindPlan = getComputedStyle(environment).zIndex === '0'
+    && getComputedStyle(zoomWrap).zIndex === '1';
   out.zoomBadgeStaysAbovePlan = !!zoomBadge
-    && getComputedStyle(zoomWrap).zIndex === 'auto'
-    && !!(zoomWrap.compareDocumentPosition(zoomBadge) & Node.DOCUMENT_POSITION_FOLLOWING);
+    && getComputedStyle(zoomBadge).zIndex === '12';
+  if (previousBgMode === undefined) delete c._serverCfg.settings.bg_mode;
+  else c._serverCfg.settings.bg_mode = previousBgMode;
   c._zoom = 1;
   c.requestUpdate(); await c.updateComplete;
 
