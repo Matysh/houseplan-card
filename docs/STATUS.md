@@ -10,7 +10,7 @@
 > v1.42.0 — the user base is largely Russian-speaking, see the Telegram chat)**, STATUS.md for state changes
 > (versions, publication, infrastructure), DEVELOPMENT.md for new gotchas,
 > ARCHITECTURE.md for design changes. Work scope and status live in GitHub
-> Issues + Project v2, not in a parallel backlog document.
+> Issues and their labels, not in a parallel backlog document.
 
 **Promotion rule (2026-08-08):** every new feature or material behaviour
 change must pass through a published beta/RC before stable. Stable release
@@ -25,7 +25,7 @@ metadata). Only an explicit owner-approved emergency hotfix may skip this gate.
 | Current local cycle | v1.64.0-beta.1 packages the merged #122 hidden isometric Stage 2, #131 read-only cold-start fix and #107 persistent virtual-light toggles. The independent #124 exact-SHA view-toggle performance debt remains open under the owner's accepted exception. |
 | Hidden Labs Stage | #89 Stage 1 ships in v1.63.0-beta.1. #122 Stage 2 is included in the v1.64.0-beta.1 candidate and evolves the same hidden, expiring `iso` experiment with matte walls, a low exterior floor edge, restrained shared shadows and live vertical door/window/gate panels. Flat remains default; editors and `houseplan-space-card` remain flat; live floor effects and HA actions remain unchanged. Public activation is explicitly a separate task. |
 | Workflow | Owner's rule since 2026-08-07: ordinary fixes/features are made **locally, without tests and without commits**. A requested pre-release gets a production build plus the smallest targeted unit/smoke set covering the changed surfaces, one tested `dev` commit/tag and a GitHub Release with `prerelease=true`; `main` stays untouched. The complete local frontend/backend/smoke gate runs only before a stable release, after which `main` is fast-forwarded to the exact tested `dev` SHA and the GitHub Release uses `prerelease=false`. Release bodies are short and bilingual (Russian first): only significant user changes get individual bullets, while minor/code-only work is grouped as `Мелкие исправления и улучшения` / `Small fixes and improvements`; every body ends with separate links to the Russian and English changelogs. Detailed RU/EN changelog bullets may link the corresponding closed GitHub Issues; open or partially delivered issues are never presented as shipped. Telegram announcements are sent only for stable releases; beta and RC publication is silent. `docs/RELEASE-NOTES.md` is the current canonical body instance; `npm run release:prerelease -- <tag> --issues=… --yes` is the primary local publication path and the manual `Publish prerelease` workflow is its GitHub-only equivalent once present on `main`. Nothing is copied to the home instance by hand |
-| GitHub | https://github.com/Matysh/houseplan-card — [Issues](https://github.com/Matysh/houseplan-card/issues) are the canonical task records and the linked [Project v2](https://github.com/users/Matysh/projects/1) is the canonical priority/status view; both must stay current. `main` carries stable releases; pre-release tags may point directly at `dev`. Work lands on `dev` and is merged into `main` for a stable release, so `dev` is normally equal to or ahead of `main`, never behind. Push via SSH key `ha_jb` (remote git@github.com:…); API releases via the fine-grained PAT in `~/.git-credentials` (Contents R/W, issued 2026-07-23) |
+| GitHub | https://github.com/Matysh/houseplan-card — [Issues](https://github.com/Matysh/houseplan-card/issues) are the canonical task records; their labels carry priority and workflow status (`PROCESS.md` §9). GitHub Projects is no longer used. `main` carries stable releases; pre-release tags may point directly at `dev`. Work lands on `dev` and is merged into `main` for a stable release, so `dev` is normally equal to or ahead of `main`, never behind. Push via SSH key `ha_jb` (remote git@github.com:…); API releases via the fine-grained PAT in `~/.git-credentials` (Contents R/W, issued 2026-07-23) |
 | CI | Prerelease publication requires a green exact-SHA Validate: frontend/backend, smoke (including the #73 rAF frame sampler), golden, HACS/Hassfest and a short absolute-ceiling performance smoke. Obsolete same-ref Validate runs are cancelled. Full seven-sample base/candidate performance moved to `performance.yml` (`main` push, weekly, manual); stable release assets fail closed unless Validate and Full Performance are green for the exact tagged SHA and the stable-only CDP compositor screencast finds no empty/black presented frame. |
 | HACS | Custom repository works. **Inclusion PR: hacs/default#9004** — open, valid, labeled, mergeable clean, never drafted. Queue: 1212 open, 835 older than ours. Merge rate COLLAPSED: 75 in July but almost all in the first decade, 0 in the last week (checked 2026-07-29) — maintainers process in rare bursts; ETA unknowable, months at best. Nothing actionable on our side |
 | Home instance | ha.jbstudio.pro (SSH port **22222**, key `ha_jb`; HA config root is `/mnt/data/supervisor/homeassistant` — `/config` does NOT exist in this SSH environment), last direct copy was **v1.57.0**; from v1.58.0 on it updates itself through HACS by tag (no scp) |
@@ -239,10 +239,9 @@ metadata). Only an explicit owner-approved emergency hotfix may skip this gate.
 ## Open items / watchlist
 
 0. **Canonical backlog** — [GitHub Issues](https://github.com/Matysh/houseplan-card/issues)
-   contain task scope and acceptance criteria; the linked
-   [Project v2](https://github.com/users/Matysh/projects/1) contains the
-   current priority and workflow status. Every open in-scope issue belongs in
-   the Project. The former local product plan is preserved only as a snapshot at
+   contain task scope and acceptance criteria; their **labels** carry priority
+   and workflow status (`PROCESS.md` §9). GitHub Projects is no longer used.
+   The former local product plan is preserved only as a snapshot at
    [`legacy/docs/PRODUCT-IMPROVEMENT-PLAN.ru.md`](../legacy/docs/PRODUCT-IMPROVEMENT-PLAN.ru.md)
    and must not be updated or used as a backlog.
 1. **hacs/default PR #9004** — accepted by the bot into the review queue ('New default

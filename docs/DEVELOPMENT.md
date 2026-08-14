@@ -263,7 +263,7 @@ stages a draft prerelease and uploads both assets. Only then does it make the
 release public. It locates the Release, HACS-zip and Telegram runs by workflow
 file plus exact tag/SHA, verifies the downloaded public asset contents and
 paginated HACS prerelease order, and finally closes only the explicitly supplied
-issues and moves their Project v2 items to Done. Re-running the same command
+issues and strips their status label. Re-running the same command
 after a partial failure is safe when local/remote tags still resolve to the same
 SHA: stale public assets are replaced and verified rather than accepted or left
 for manual deletion. ZIP inspection is implemented in Node and does not depend
@@ -278,9 +278,9 @@ draft-first publication entirely on GitHub, including both assets. Prereleases
 are intentionally silent in Telegram; only stable releases are announced.
 GitHub exposes a `workflow_dispatch` button only after
 the workflow file exists on the default branch; until the next promotion to
-`main`, use the local command. The button deliberately does not close Issues or
-edit the user-owned Project because the repository `GITHUB_TOKEN` has no safe
-authority over that Project.
+`main`, use the local command. The button deliberately does not close Issues:
+closing them is the release manager's call, and the `close-merged` job does it
+from the beta itself (#120).
 
 The older release-event workflows remain supported as a recovery/manual
 fallback. They still gate assets on the exact tagged SHA, so adopting the new
