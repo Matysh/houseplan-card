@@ -414,6 +414,16 @@ field. Double click edits physical-object properties, pointer drag moves the
 whole object on the grid, and Delete removes only the selected object. The
 legacy root `space.segments` array is still stripped on every save.
 
+Adjacent-room auto-close reuses the immutable architectural snap snapshot and
+requires the first and prospective terminal points to belong to one completed
+room's same solid segment after opening/open-span cuts. It runs only after the
+draft has two edges and after explicit first-point/Ctrl closure handling. The
+prospective polygon is checked for range, self-intersection and room overlap
+before `_path` or `room_drafts` changes; success persists the terminal segment
+and then opens the ordinary room dialog. Cancel therefore returns to the open
+draft at that terminal point, while Save lets the normal room/wall
+normalization preserve an existing shared wall's thickness.
+
 While drawing, the length of the current segment follows the cursor (`_fmtLen` → `segmentCm`/
 `formatLength`): metres, or feet+inches when `hass.config.unit_system` is imperial. The scale is
 per-space `cell_cm` — cm represented by one grid cell (default 5, so 240 cells ≈ 12 m).

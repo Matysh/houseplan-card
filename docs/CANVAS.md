@@ -569,3 +569,13 @@ current anchor is excluded to prevent zero-length segments, while the first
 point of a valid room outline remains an explicit closure target. The static
 geometry is cached by structural editor state; pointer movement changes at
 most the single active candidate and never writes config, layout or storage.
+
+For **Room outline**, the same completed-room provenance also enables adjacent
+auto-close. Once the draft already has two edges, a click that places its next
+point on the same uninterrupted solid room-wall segment as the first point is
+validated as the prospective polygon before any mutation. A valid click
+persists that terminal draft segment and opens the standard room dialog with
+the existing wall as the closing edge. A cut, a different edge, a saved draft
+or an independent partition is ineligible; an eligible but invalid polygon is
+reported without appending a point or segment. Explicit first-point and
+Ctrl/Cmd closure retain priority.

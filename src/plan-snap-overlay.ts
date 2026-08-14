@@ -101,6 +101,10 @@ function segmentKey(source: SourceSegment, a: readonly number[], b: readonly num
   return `${sourceKey(source)}|${pointKey(ca)}|${pointKey(cb)}`;
 }
 
+function sourceRank(kind: PlanSnapSourceKind): number {
+  return kind === 'room' ? 0 : kind === 'draft' ? 1 : 2;
+}
+
 function touches(point: readonly number[], segment: readonly number[], epsilon: number): boolean {
   return pointsEqual(point, [segment[0], segment[1]], epsilon)
     || pointsEqual(point, [segment[2], segment[3]], epsilon);
@@ -171,7 +175,10 @@ export function buildPlanSnapGeometry(options: BuildPlanSnapGeometryOptions): Pl
         sourceId: source.id,
       };
       const existing = segmentsByAxis.get(axisKey);
-      if (!existing || candidate.key.localeCompare(existing.key) < 0) {
+      if (!existing
+          || sourceRank(candidate.sourceKind) < sourceRank(existing.sourceKind)
+          || (sourceRank(candidate.sourceKind) === sourceRank(existing.sourceKind)
+            && candidate.key.localeCompare(existing.key) < 0)) {
         segmentsByAxis.set(axisKey, candidate);
       }
     }
@@ -187,6 +194,39 @@ export function buildPlanSnapGeometry(options: BuildPlanSnapGeometryOptions): Pl
     segments: [...segmentsByAxis.values()].sort((a, b) => a.key.localeCompare(b.key)),
     endpoints: [...endpointKeys.values()].sort((a, b) => a.key.localeCompare(b.key)),
   };
+}
+
+function pointOnSnapSegment(
+  point: readonly number[], segment: PlanSnapSegment, epsilon: number,
+): boolean {
+  const dx = segment.b[0] - segment.a[0];
+  const dy = segment.b[1] - segment.a[1];
+  const length = Math.hypot(dx, dy);
+  if (!(length > epsilon)) return false;
+  const ux = dx / length;
+  const uy = dy / length;
+  const px = point[0] - segment.a[0];
+  const py = point[1] - segment.a[1];
+  const along = px * ux + py * uy;
+  const perpendicular = Math.abs(px * uy - py * ux);
+  return perpendicular <= epsilon && along >= -epsilon && along <= length + epsilon;
+}
+
+/**
+ * Return the stable completed-room solid interval that contains both points.
+ * Because room openings and open spans are cut while the snapshot is built,
+ * points on opposite sides of a gap can never share a returned segment.
+ */
+export function findSharedRoomSnapSegment(
+  geometry: PlanSnapGeometry,
+  a: readonly number[],
+  b: readonly number[],
+  epsilon = DEFAULT_EPSILON,
+): PlanSnapSegment | null {
+  if (!finitePoint(a) || !finitePoint(b) || pointsEqual(a, b, epsilon)) return null;
+  return geometry.segments.find((segment) => segment.sourceKind === 'room'
+    && pointOnSnapSegment(a, segment, epsilon)
+    && pointOnSnapSegment(b, segment, epsilon)) || null;
 }
 
 function isExcluded(

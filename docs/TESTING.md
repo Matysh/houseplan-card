@@ -362,6 +362,18 @@ separately promised workflows:
 - [ ] Ctrl/Cmd+click closes the current endpoint back to the first point without
       adding another vertex. It requires at least two existing edges and refuses
       degenerate or self-intersecting closure [auto: smoke_editor_tabs]
+- [ ] Adjacent-room auto-close: after two drawn edges, ending on the same
+      uninterrupted solid existing-room wall interval as the first point adds
+      the terminal segment and opens the normal room dialog. Endpoints and
+      wall-interior snap points both work; Save creates one room without an
+      independent partition and preserves the shared wall thickness. Cancel
+      restores the open draft ending at that point [auto: smoke_room_autoclose;
+      unit: plan-snap-overlay.test.mjs]
+- [ ] Adjacent-room auto-close safety: a second point alone stays open; different
+      room edges, draft/partition-only axes and points separated by an opening
+      or open-span cut do not trigger it. An eligible self-intersecting contour
+      shows the existing error and writes neither the terminal point nor segment
+      [auto: smoke_room_autoclose; unit: plan-snap-overlay.test.mjs]
 - [ ] Room dialog: area list shows only unassigned areas; picking an area prefills the name
 - [ ] Room dialog uses the medium width and its body has no horizontal overflow;
       long options stay inside it at desktop and narrow widths [auto:
