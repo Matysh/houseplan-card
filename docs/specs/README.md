@@ -46,6 +46,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#89](https://github.com/Matysh/houseplan-card/issues/89) Этап 1: объёмный вид за флагом Labs | [089-isometric-view-stage1.md](089-isometric-view-stage1.md) |
 | [#98](https://github.com/Matysh/houseplan-card/issues/98) Единая система пульсаций и активностей устройства | [098-device-pulse-system.md](098-device-pulse-system.md) |
 | [#131](https://github.com/Matysh/houseplan-card/issues/131) Полный первый кадр View у read-only-пользователя | [131-readonly-cold-start.md](131-readonly-cold-start.md) |
+| [#138](https://github.com/Matysh/houseplan-card/issues/138) Автозамыкание комнаты по существующей стене | [138-adjacent-room-autoclose.md](138-adjacent-room-autoclose.md) |
 
 ## P2
 
