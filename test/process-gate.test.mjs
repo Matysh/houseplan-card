@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import {
   ALLOWED_STATUS,
@@ -270,7 +271,10 @@ test('the CLI exits 0 on a clean range and 1 on a broken one', (t) => {
     return;
   }
   const dir = mkdtempSync(join(tmpdir(), 'hp-gate-'));
-  const gate = new URL('../scripts/process-gate.mjs', import.meta.url).pathname;
+  // fileURLToPath, а не URL.pathname: на Windows pathname даёт «/C:/…», и
+  // spawnSync прочитал бы его как «C:\C:\…» (#133). Linux CI это не ловил —
+  // оба варианта там совпадают.
+  const gate = fileURLToPath(new URL('../scripts/process-gate.mjs', import.meta.url));
   const git = (...args) => {
     const r = spawnSync('git', ['-C', dir, ...args], { encoding: 'utf8' });
     assert.equal(r.status, 0, `git ${args.join(' ')}: ${r.stderr}`);
