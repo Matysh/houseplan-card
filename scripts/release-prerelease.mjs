@@ -30,7 +30,7 @@ export function parsePrereleaseArgs(args) {
   const values = new Map();
   const switches = new Set();
   const positionals = [];
-  const valueNames = new Set(['repo', 'branch', 'project', 'issues']);
+  const valueNames = new Set(['repo', 'branch', 'issues']);
   const switchNames = new Set(['check', 'yes']);
   for (const arg of args) {
     if (!arg.startsWith('--')) { positionals.push(arg); continue; }
@@ -53,7 +53,6 @@ export function parsePrereleaseArgs(args) {
     tag: positionals[0],
     repo: values.get('repo') || 'Matysh/houseplan-card',
     branch: values.get('branch') || 'dev',
-    projectNumber: values.get('project') || '1',
     issueOption: values.get('issues') || '',
     checkOnly: switches.has('check'),
     confirmed: switches.has('yes'),
@@ -184,7 +183,7 @@ const invokedDirectly = process.argv[1]
 if (invokedDirectly) {
   try {
     const {
-      tag, repo, branch, projectNumber, issueOption, checkOnly, confirmed,
+      tag, repo, branch, issueOption, checkOnly, confirmed,
     } = parsePrereleaseArgs(process.argv.slice(2));
   let issues = [];
   const root = process.cwd();
@@ -400,38 +399,29 @@ if (invokedDirectly) {
     }
   };
 
+  // Project v2 больше не используется (решение владельца 2026-08-14). Раньше
+  // здесь выяснялся id проекта, список его элементов и опция Status=Done, а
+  // отсутствие задачи в проекте роняло публикацию. Статус живёт в метках
+  // (PROCESS.md §9), и релизу нечего синхронизировать: он закрывает issue и
+  // снимает статусную метку, как это делает job close-merged (#120).
   const finishIssues = (releaseUrl) => {
     if (!issues.length) return;
-    const projectInfo = ghJson([
-      'project', 'view', projectNumber, '--owner', owner, '--format', 'json',
-    ]);
-    const project = ghJson([
-      'project', 'item-list', projectNumber, '--owner', owner, '--limit', '1000', '--format', 'json',
-    ]);
-    const fields = ghJson(['project', 'field-list', projectNumber, '--owner', owner, '--format', 'json']);
-    const statusField = fields.fields.find((field) => field.name === 'Status');
-    const done = statusField?.options?.find((entry) => entry.name === 'Done');
-    if (!statusField || !done) throw new Error(`Project ${owner}/${projectNumber} has no Status=Done option`);
-    const items = new Map(project.items
-      .filter((item) => item.content?.repository === repo && issues.includes(item.content?.number))
-      .map((item) => [item.content.number, item]));
-    const missing = issues.filter((issue) => !items.has(issue));
-    if (missing.length) throw new Error(`Issues are missing from Project ${projectNumber}: ${missing.join(', ')}`);
-
     for (const issue of issues) {
-      const row = ghJson(['issue', 'view', String(issue), '--repo', repo, '--json', 'state']);
+      const row = ghJson(['issue', 'view', String(issue), '--repo', repo, '--json', 'state,labels']);
       if (row.state === 'OPEN') {
+        const status = (row.labels || [])
+          .map((label) => label.name)
+          .filter((name) => /^S\d-/.test(name));
+        // Метка снимается ДО закрытия: инвариант «закрытый issue не несёт
+        // статусных меток» ломался уже дважды, и оба раза из-за обратного
+        // порядка в ручном шаге.
+        for (const name of status) {
+          run('gh', ['issue', 'edit', String(issue), '--repo', repo, '--remove-label', name]);
+        }
         run('gh', [
           'issue', 'close', String(issue), '--repo', repo, '--reason', 'completed',
           '--comment', `Реализовано и опубликовано в [${tag}](${releaseUrl}).`,
         ], { inherit: true });
-      }
-      const item = items.get(issue);
-      if (item.status !== 'Done') {
-        run('gh', [
-          'project', 'item-edit', '--id', item.id, '--project-id', projectInfo.id,
-          '--field-id', statusField.id, '--single-select-option-id', done.id,
-        ]);
       }
     }
   };

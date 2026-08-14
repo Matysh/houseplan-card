@@ -121,10 +121,13 @@ test('local orchestrator validates issue lists and public release assets', () =>
   assert.deepEqual(parseIssueList('63, 56,63'), [63, 56]);
   assert.throws(() => parseIssueList('63,nope'), /positive issue numbers/);
   assert.deepEqual(parsePrereleaseArgs([tag, '--issues=63,64', '--yes']), {
-    tag, repo, branch: 'dev', projectNumber: '1', issueOption: '63,64',
+    tag, repo, branch: 'dev', issueOption: '63,64',
     checkOnly: false, confirmed: true,
   });
   assert.throws(() => parsePrereleaseArgs([tag, '--isues=63']), /Unknown or malformed/);
+  // Project v2 больше не используется: опция снята вместе с синхронизацией
+  // статуса, и её молчаливое принятие обещало бы работу, которой нет.
+  assert.throws(() => parsePrereleaseArgs([tag, '--project=1']), /Unknown or malformed/);
   assert.throws(() => parsePrereleaseArgs([tag, 'extra']), /Exactly one/);
   const release = {
     tagName: tag, isDraft: false, isPrerelease: true,
