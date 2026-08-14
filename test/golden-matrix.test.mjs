@@ -283,13 +283,15 @@ test('a light source paints exactly one region: the floor it can see', () => {
   assert.match(source, /mix\(this\._cellCm\)[\s\S]*mix\(this\._gridPitch\)/);
 });
 
-test('all destructive editor dialogs use the shared responsive footer groups', () => {
+test('all destructive editor dialogs use the medium shell and shared responsive footer groups', () => {
   const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
   for (const method of ['_renderOpeningDialog', '_renderPhysicalDialog', '_renderSpaceDialog']) {
     const start = source.indexOf(`private ${method}`);
     assert.notEqual(start, -1, method);
     const end = source.indexOf('\n  private ', start + 10);
     const body = source.slice(start, end < 0 ? undefined : end);
+    const openTag = body.match(/<hp-dialog[\s\S]*?>/)?.[0] || '';
+    assert.match(openTag, /\bwide\b/, `${method} must reserve the existing 500 px desktop shell`);
     assert.match(body, /dialog-action-footer/, method);
     assert.match(body, /dialog-action-danger/, method);
     assert.match(body, /dialog-action-commit/, method);

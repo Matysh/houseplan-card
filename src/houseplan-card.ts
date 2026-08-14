@@ -16478,7 +16478,7 @@ class HouseplanCard extends LitElement {
         <option value="" ?selected=${!cur}>${this._t('opening.none')}</option>
         ${list.map((c) => html`<option value=${c.value} ?selected=${c.value === cur}>${c.label}</option>`)}
       </select>`;
-    return html`<hp-dialog .hass=${this.hass}
+    return html`<hp-dialog .hass=${this.hass} wide
       .title=${d.id ? this._t('opening.edit') : this._t('opening.new')} icon=${icon}
       @hp-close=${() => (this._openingDialog = null)}>
         <div class="body">
@@ -16861,7 +16861,7 @@ class HouseplanCard extends LitElement {
   private _renderPhysicalDialog(): TemplateResult {
     const d = this._physicalDialog!;
     const column = d.kind === 'column';
-    return html`<hp-dialog .hass=${this.hass}
+    return html`<hp-dialog .hass=${this.hass} wide
       .title=${this._t(column ? 'physical.column_properties' : d.kind === 'partition'
         ? 'physical.partition_properties' : 'physical.draft_properties')}
       icon=${column ? 'mdi:vector-square' : 'mdi:wall'}

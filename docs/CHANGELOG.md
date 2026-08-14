@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Opening and physical-object property dialogs now use the existing 500 px
+  desktop shell, keeping Delete, Cancel and Save on one line with localization
+  headroom while preserving responsive wrapping on narrow screens
+  ([#140](https://github.com/Matysh/houseplan-card/issues/140)).
 - A new room outline that starts and ends on one uninterrupted solid interval
   of an existing room wall now closes automatically and opens the normal room
   dialog. Endpoints and wall-bound T-connection points work alike; openings,
