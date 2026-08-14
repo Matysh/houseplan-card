@@ -48,6 +48,27 @@ Unknown future fields remain outside this report and continue to follow the
 backend's forward-compatibility policy. Absence from the report is therefore
 not permission to delete a field.
 
+## Four-phase background default and transfer (#146)
+
+The schema remains `settings.bg_mode: static | daynight` globally and per
+space; absence is still accepted for older files and the runtime's final
+fallback remains `static`. New semantics are materialized instead of changing
+that fallback:
+
+- new integration config uses explicit global `daynight`;
+- manual and Floors/Areas space creation writes explicit per-space `daynight`;
+- storage minor v1.2 migrates a missing or invalid legacy global token to
+  `static` once, while preserving valid global/per-space values, unknown
+  siblings, revisions, and the other stores;
+- full export/import always carries an explicit global mode, with legacy
+  missing mode becoming `static` before preview/apply;
+- a space export copies its effective mode into the exported space; a legacy
+  space import without a mode becomes `static` before merge, regardless of the
+  target installation's global setting.
+
+Import preview and apply therefore operate on the same normalized candidate.
+Explicit `static` and `daynight` survive same-instance and foreign transfer.
+
 ## Legacy device tap action
 
 The historical marker token `tap_action: cover` remains accepted indefinitely.

@@ -1,6 +1,6 @@
 // Sun on the plan (docs/SUN.md): compass gating, window wedges on all four
 // walls, direction follows north_deg, night is empty, wedges clip to rooms,
-// day/night background vs static, per-space inheritance, weather independence,
+// four-phase background vs static, per-space inheritance, weather independence,
 // memoisation across hass ticks, editors stay clean.
 import { launch, check, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch({ width: 900, height: 900 }, 1);
@@ -19,7 +19,7 @@ const res = await page.evaluate(async () => {
   const setSun = async (azimuth, elevation) => {
     c.hass = { ...c.hass, states: { ...c.hass.states, 'sun.sun': {
       entity_id: 'sun.sun', state: elevation > 0 ? 'above_horizon' : 'below_horizon',
-      attributes: { azimuth, elevation },
+      attributes: { azimuth, elevation, rising: azimuth <= 180 },
     } } };
     await upd();
   };
@@ -51,12 +51,12 @@ const res = await page.evaluate(async () => {
   ];
   touchCfg();
 
-  // 1) sun present + rays enabled, but NO north_deg anywhere → dead silence
+  // 1) sun present + rays enabled, but NO north_deg anywhere → no window rays
   cfg().settings = { ...(cfg().settings || {}), sun_rays: true };
   touchCfg();
   await setSun(90, 5);
   out.silentWithoutNorth = domPolys().length === 0;
-  out.noDaynightWithoutNorth = !sr().querySelector('.stage.daynight');
+  out.noBackgroundWhenStatic = !sr().querySelector('.stage.daycycle');
 
   // 2) compass set → morning east sun lights ONLY the east window
   cfg().settings.north_deg = 0;
@@ -99,21 +99,21 @@ const res = await page.evaluate(async () => {
   await setSun(91, 5);
   out.memoFollowsSun = c._sunRaysCache !== cacheBefore;
 
-  // 8) day/night background: daynight breathes, static does not
+  // 8) four-phase background: daynight paints environment, static does not
   await setSun(180, 60);
   out.staticBgAtNoon = !stageStyle().includes('background:#ffffff');
   cfg().settings.bg_mode = 'daynight';
   touchCfg();
   await setSun(180, 60);
-  out.daynightNoonBg = stageStyle().includes('background:#ffffff');
-  out.daynightClass = !!sr().querySelector('.stage.daynight');
+  out.daynightNoonBg = sr().querySelector('.hp-day-cycle-bg.active')?.dataset.dayCycleLayer === 'day';
+  out.daynightClass = !!sr().querySelector('.stage.daycycle');
   await setSun(180, -20);
-  out.daynightNightBg = stageStyle().includes('background:#070c14');
-  out.nightPlanDimmed = (sr().querySelector('.zoomwrap').getAttribute('style') || '').includes('brightness(0.900');
+  out.daynightNightBg = sr().querySelector('.hp-day-cycle-bg.active')?.dataset.dayCycleLayer === 'night';
+  out.nightPlanUnchanged = !(sr().querySelector('.zoomwrap').getAttribute('style') || '').includes('brightness(0.');
   cfg().settings.bg_mode = 'static';
   touchCfg();
   await setSun(180, -20);
-  out.staticNightKeepsTheme = !stageStyle().includes('background:#070c14');
+  out.staticNightKeepsTheme = !sr().querySelector('.hp-day-cycle-env');
   delete cfg().settings.bg_mode;
   touchCfg();
 
@@ -153,13 +153,13 @@ const res = await page.evaluate(async () => {
   cfg().settings.bg_mode = 'daynight';
   touchCfg();
 
-  // 12) editors stay clean: no wedges, no day/night canvas
+  // 12) editors stay clean: no wedges, no day-cycle environment
   await setSun(90, 5);
   c._setMode('plan');
   await upd();
   await settleMode();
   out.editorNoRays = domPolys().length === 0;
-  out.editorNoDaynight = !sr().querySelector('.stage.daynight');
+  out.editorNoDaynight = !sr().querySelector('.stage.daycycle');
   c._setMode('view');
   await upd();
   await settleMode();

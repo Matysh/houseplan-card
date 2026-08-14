@@ -1408,16 +1408,24 @@ require hands on real hardware — they remain for the human pass.
 
 ## Sun on the plan (docs/SUN.md)
 
-- [ ] Everything below is INERT until `north_deg` is set (general ⚙ or the
-      space settings) AND the install has `sun.sun`; both dialogs hint at
-      whichever is missing
+- [ ] Four-phase background resolves strict real `sun.sun` data atomically:
+      `<= -6°` night, `>= +6°` day, the middle band dawn while rising and dusk
+      while falling. Missing/garbage elevation, azimuth, or rising switches the
+      whole sample to local-clock fallback at exact 05:00/08:00/18:00/21:00
+      boundaries [auto: `test/sun.test.mjs`, `smoke_sun_live_bg`]
+- [ ] Background works without `north_deg` and without valid `sun.sun`; the
+      latter arms one visible-only 30-second fallback timer, stops it while
+      hidden/disconnected, and catches up on pageshow/visible return. Window
+      rays independently remain gated by valid sun + compass
+      [auto: `smoke_sun_live_bg`]
 - [ ] The ⚙ compass: dragging the «N» arrow turns it in 1° steps (15° with
       Shift); the number field mirrors the dial and accepts 0–359; «Clear»
       returns the unset state
 - [ ] «Plan background» selector: `static` keeps the existing color picker
-      and behaviour byte-for-byte; `daynight` hides the picker and the stage
-      follows the sun — neutral day, warm golden hour, dark night — with a
-      slow (tens of seconds) transition; the PLAN dims only ~10% at night
+      and behaviour byte-for-byte; `daynight` hides the picker and shows exact
+      dawn/day/dusk/night environment tokens. Only environment and outer
+      plan-paper outline cross-fade for 1100 ms; reduced motion is instant
+      [auto: `smoke_sun_live_bg`, golden `day-cycle-*`]
 - [ ] Opaque plan paper (2026-08-03, owner): the scene background —
       `bg_color` or the daynight sky — is visible ONLY around the plan and
       NEVER bleeds through it, in view/kiosk/editors and on the static
@@ -1430,8 +1438,8 @@ require hands on real hardware — they remain for the human pass.
       empty drawn space has no paper at all. A live resize preview
       (`_rszPreview`) moves the paper together with the dragged wall.
       Colours: historical white for drawn plans, the theme card background
-      under an image. At night (`daynight`) the paper dims via the zoomwrap
-      `brightness` filter only — its alpha stays 1. Pixel-proofed against
+      under an image. Across all four phases the paper and every plan pixel
+      remain unchanged: no brightness/tint/opacity/blend filter. Pixel-proofed against
       an acid `#ff00ff` background [auto: smoke_bg_color]
 - [ ] Per-space overrides (background mode, north, sun-in-windows) inherit
       when empty, exactly like show_lqi/fill_mode
@@ -1458,10 +1466,14 @@ require hands on real hardware — they remain for the human pass.
       wedge geometry and peak opacity; a legacy `weather_entity` value is ignored
 - [ ] Sun geometry recomputes ONLY when the sun attributes or the config
       change — an unrelated `hass` tick reuses the memo
-- [ ] Editors (plan/devices/decor) render with NO wedges and NO day/night;
-      kiosk works; the static space-card honours the background mode
-      (wedges are full-card-only in v1)
-- [ ] `prefers-reduced-motion` → no transitions, static colors
+- [ ] Editors (plan/devices/decor) render with NO wedges and NO four-phase
+      environment; kiosk and static space-card share phase/palette/fallback
+      (wedges remain full-card-only)
+- [ ] New install and new manual/Floors spaces materialize `daynight`; legacy
+      missing global mode migrates once to `static`; full/space transfer
+      materializes source semantics before preview/apply
+      [auto: `test_ha_import_export.py`]
+- [ ] `prefers-reduced-motion` → no transitions, current phase renders directly
 - [ ] Smoke: `node demo/smoke_sun.mjs`; units: `test/sun.test.mjs`;
       backend: `tests_backend/test_validation.py` (sun settings)
 

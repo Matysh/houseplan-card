@@ -104,6 +104,18 @@ the same profiler available between stable promotions.
    affordance exists only when both its localized body and complete accessible
    label are non-empty; the card factory and `hp-help` enforce this independently,
    so incomplete content cannot leave a dead focus target or a layout gap.
+7. **One four-phase environment resolver.** `resolveDayCycle()` in `src/sun.ts`
+   atomically chooses a strict real `sun.sun` sample or browser-local clock
+   fallback and returns only phase/source/light tokens. `src/day-cycle-render.ts`
+   owns the constant four-layer DOM and exact palette used by full View, kiosk,
+   and `houseplan-space-card`; no surface copies thresholds or formulas. The
+   environment is a pointer-inert sibling behind the plan. The only
+   phase-dependent effect touching the SVG is a zero-offset filter on the one
+   grouped `.hp-paperg` footprint; the content tree has no brightness, tint,
+   opacity, or blend changes. Full and static card lifecycles arm a 30-second
+   timer only during clock fallback while visible, catch up on visibility return,
+   and dispose it on disconnect. Window-ray geometry remains a separate
+   north-gated consumer of `sun.sun`.
 
 ## Coordinate system
 

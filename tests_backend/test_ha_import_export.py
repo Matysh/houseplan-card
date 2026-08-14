@@ -31,6 +31,7 @@ from custom_components.houseplan import import_export as import_export_api
 from custom_components.houseplan import websocket_api as wsapi
 from custom_components.houseplan.http_api import HouseplanImportPreviewView, KEY_HASS
 from custom_components.houseplan.const import (
+    DEFAULT_CONFIG,
     DOMAIN,
     MAX_IMPORT_PREVIEWS_PER_USER,
     MAX_IMPORT_PREVIEWS_TOTAL,
@@ -41,6 +42,7 @@ from custom_components.houseplan.store import (
     async_save_layout_state,
     get_data,
     layout_store_payload,
+    migrate_config_background_mode,
 )
 from custom_components.houseplan.validation import MAX_LAYOUT
 
@@ -63,7 +65,11 @@ def _config() -> dict:
             "id": "lamp", "binding": "entity:light.living", "space": "ground",
             "room_id": "living", "controls": ["switch.wall"],
         }],
-        "settings": {"known_devices": ["old-device"], "new_device_ids": ["new-device"]},
+        "settings": {
+            "bg_mode": "static",
+            "known_devices": ["old-device"],
+            "new_device_ids": ["new-device"],
+        },
     }
 
 
@@ -79,6 +85,69 @@ def _document(tmp_path: Path, kind: str = "full") -> dict:
         config_root=tmp_path,
     )
     return document
+
+
+def test_background_defaults_and_store_migration_preserve_legacy_view() -> None:
+    assert DEFAULT_CONFIG["settings"]["bg_mode"] == "daynight"
+
+    legacy = {
+        "config": {
+            "spaces": [{
+                "id": "ground",
+                "settings": {"bg_mode": "daynight", "future_space": 1},
+            }],
+            "markers": [],
+            "settings": {"future_global": {"kept": True}},
+            "future_root": "kept",
+        },
+        "rev": 17,
+        "future_store": [1, 2],
+    }
+    migrated = migrate_config_background_mode(legacy)
+    assert migrated["config"]["settings"] == {
+        "future_global": {"kept": True}, "bg_mode": "static",
+    }
+    assert migrated["config"]["spaces"][0]["settings"] == {
+        "bg_mode": "daynight", "future_space": 1,
+    }
+    assert migrated["rev"] == 17 and migrated["future_store"] == [1, 2]
+    assert "bg_mode" not in legacy["config"]["settings"]
+    assert migrate_config_background_mode(migrated) is migrated
+
+    layout = {"layout": {}, "rev": 4}
+    assert migrate_config_background_mode(layout) is layout
+
+
+def test_background_mode_is_materialized_across_export_and_legacy_import(tmp_path: Path) -> None:
+    runtime = SimpleNamespace(instance_id="instance-a")
+    inherited = _config()
+    inherited["settings"]["bg_mode"] = "daynight"
+    inherited["spaces"][0].setdefault("settings", {}).pop("bg_mode", None)
+
+    space_document, _ = create_export(
+        runtime, {"config": inherited}, {"layout": {}},
+        kind="space", space_id="ground", card_version="1.64.0", config_root=tmp_path,
+    )
+    exported_space = space_document["payload"]["config"]["spaces"][0]
+    assert exported_space["settings"]["bg_mode"] == "daynight"
+
+    full_document, _ = create_export(
+        runtime, {"config": {**_config(), "settings": {}}}, {"layout": {}},
+        kind="full", space_id=None, card_version="1.64.0", config_root=tmp_path,
+    )
+    assert full_document["payload"]["config"]["settings"]["bg_mode"] == "static"
+
+    full_document["payload"]["config"]["settings"].pop("bg_mode")
+    parsed_full = parse_document(json.dumps(full_document).encode())
+    assert parsed_full["payload"]["config"]["settings"]["bg_mode"] == "static"
+
+    space_document["payload"]["config"]["spaces"][0]["settings"].pop("bg_mode")
+    parsed_space = parse_document(json.dumps(space_document).encode())
+    assert parsed_space["payload"]["config"]["spaces"][0]["settings"]["bg_mode"] == "static"
+    target = _config()
+    target["settings"]["bg_mode"] = "daynight"
+    merged, _layout, _details = build_space_merge(parsed_space, target, {}, "skip")
+    assert merged["spaces"][-1]["settings"]["bg_mode"] == "static"
 
 
 def test_strict_parser_rejects_duplicate_proto_and_future_model(tmp_path: Path) -> None:

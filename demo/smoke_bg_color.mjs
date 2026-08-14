@@ -112,19 +112,27 @@ const res = await page.evaluate(async () => {
   await new Promise((r) => setTimeout(r, 300));
   // the kiosk instance re-reads the pristine demo config — inject the color
   // into ITS copy; what matters here is the kiosk rendering path
-  k._serverCfg.settings = { ...(k._serverCfg.settings || {}), bg_color: '#0a2a4a' };
-  k.hass = { ...c.hass };
+  k._serverCfg.settings = { ...(k._serverCfg.settings || {}), bg_color: '#0a2a4a', bg_mode: 'daynight' };
+  k.hass = { ...c.hass, states: { ...c.hass.states, 'sun.sun': {
+    entity_id: 'sun.sun', state: 'above_horizon',
+    attributes: { azimuth: 180, elevation: 42, rising: false },
+  } } };
   k.requestUpdate();
   await k.updateComplete;
   const kStage = (k.shadowRoot || k.renderRoot).querySelector('.stage');
   out.kioskApplies = !!kStage && getComputedStyle(kStage).backgroundColor === rgb('#0a2a4a');
+  out.kioskSharesDay = kStage?.classList.contains('phase-day')
+    && kStage.querySelector('.hp-day-cycle-bg.active')?.dataset.dayCycleLayer === 'day';
   k.remove();
 
   // 10) the static space-card paints the same background
   await customElements.whenDefined('houseplan-space-card');
   const cfg = JSON.parse(JSON.stringify(c._serverCfg));
-  cfg.settings = { ...(cfg.settings || {}), bg_color: '#123456' };
-  const hass2 = { ...c.hass, callWS: async (m) => {
+  cfg.settings = { ...(cfg.settings || {}), bg_color: '#123456', bg_mode: 'daynight' };
+  const hass2 = { ...c.hass, states: { ...c.hass.states, 'sun.sun': {
+    entity_id: 'sun.sun', state: 'below_horizon',
+    attributes: { azimuth: 95, elevation: -2, rising: true },
+  } }, callWS: async (m) => {
     if (m.type === 'houseplan/config/get') return { config: cfg, rev: 1 };
     if (m.type === 'houseplan/layout/get') return { layout: {} };
     return origWS.call(c.hass, m);
@@ -140,6 +148,11 @@ const res = await page.evaluate(async () => {
   await sc.updateComplete;
   const st = sc.renderRoot.querySelector('.hp-static-stage');
   out.staticCardApplies = !!st && getComputedStyle(st).backgroundColor === rgb('#123456');
+  out.staticCardSharesDawn = st?.classList.contains('phase-dawn')
+    && st.querySelector('.hp-day-cycle-env')?.dataset.dayCycleSource === 'sun'
+    && st.querySelector('.hp-day-cycle-bg.active')?.dataset.dayCycleLayer === 'dawn';
+  out.staticCardLayersStayOrdered = getComputedStyle(st.querySelector('svg')).zIndex === '1'
+    && getComputedStyle(st.querySelector('.devlayer')).zIndex === '2';
   // ...and the space override beats the global there too
   cfg.spaces.find((s) => s.id === c._space).settings = { bg_color: '#654321' };
   sc.hass = { ...hass2 };
@@ -166,8 +179,8 @@ checkAll(res);
 // bounding box (section 12), and never the backdrop image rect either
 // (docs/BACKDROP.md §3). The demo's f1 IS an image plan, so this section now
 // asserts the new rule on exactly the case that used to be the exception.
-// The scene colour is visible ONLY around the paper; the 'daynight' night
-// dims the paper via brightness only.
+// The scene colour is visible ONLY around the paper. The four-phase
+// environment changes only outside it and adds an alpha-aware outer outline.
 const paper = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
@@ -210,16 +223,18 @@ const paper = await page.evaluate(async () => {
   out.editorKeepsPaper = !!sr().querySelector('.stage svg .hp-paper');
   c._setMode('view');
   await upd(); await settleMode();
-  // daynight night: the paper dims via the brightness filter ONLY, never alpha
+  // daynight night: the paper stays pixel-identical and opaque; only its
+  // grouped outer outline and the environment may change.
   c._serverCfg.settings.bg_mode = 'daynight';
   c._serverCfg.settings.north_deg = 0;
   c._cfgRev++;
   c.hass = { ...c.hass, states: { ...c.hass.states, 'sun.sun': {
     entity_id: 'sun.sun', state: 'below_horizon',
-    attributes: { azimuth: 180, elevation: -20 },
+    attributes: { azimuth: 180, elevation: -20, rising: false },
   } } };
   await upd();
-  out.nightDimsByBrightness = (sr().querySelector('.zoomwrap').getAttribute('style') || '').includes('brightness(0.900');
+  out.nightDoesNotDimPlan = !(sr().querySelector('.zoomwrap').getAttribute('style') || '').includes('brightness(0.');
+  out.nightEnvironment = sr().querySelector('.hp-day-cycle-bg.active')?.dataset.dayCycleLayer === 'night';
   const pn = sr().querySelector('.stage svg .hp-paper');
   out.nightPaperStaysOpaque = !!pn && getComputedStyle(pn).fillOpacity === '1' && getComputedStyle(pn).opacity === '1';
   delete c._serverCfg.settings.bg_mode;
@@ -268,7 +283,7 @@ const drawn = await page.evaluate(async () => {
     return cs.stroke === 'none' || cs.strokeOpacity === '0' || cs.strokeWidth === '0px';
   });
   // paper first, everything else on top of it (one .hp-paperg group wraps
-  // all paper shapes so the daynight drop shadow composites without seams)
+  // all paper shapes so the day-cycle outline composites without seams)
   const noplanSvg = sr().querySelector('.stage.noplan svg');
   const noplanLayers = [...noplanSvg.children].find((node) => node.querySelector?.('.hp-paperg')) || noplanSvg;
   const first = [...noplanLayers.children].find((node) => node.tagName.toLowerCase() !== 'defs');

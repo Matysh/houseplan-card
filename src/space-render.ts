@@ -15,7 +15,8 @@ import {
 import { wallBodiesUnionPath, wallBodyNeedsSolid, type WallEntry } from './wall-thickness';
 import { DEFAULT_ICON_RULES, compileIconRules, EXCLUDED_DOMAINS } from './rules';
 import { t, type Lang } from './i18n';
-import { bgModeOf, northDegOf, sunStateOf, dayPhase } from './sun';
+import { bgModeOf, resolveDayCycle } from './sun';
+import { dayCycleStageVars, renderDayCycleEnvironment } from './day-cycle-render';
 import type { DevItem, ServerConfig } from './types';
 import { physicalBodies } from './physical-geometry';
 import { activeRegistryHass, fullRegistryHass, type HaRegistrySnapshot } from './ha-binding-status';
@@ -96,6 +97,8 @@ export interface StaticRenderOpts {
   showTemperature?: boolean;
   showSignal?: boolean;
   reducedMotion?: boolean;
+  /** Deterministic clock injection for unit/smoke fixtures; production omits it. */
+  dayCycleNow?: Date | number;
   virtualLights?: VirtualLightSnapshot | null;
   /**
    * Resolve a stored content url to what the DOM may actually request — the
@@ -341,16 +344,12 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     : [];
 
   const bgHref = space.bg ? (o.displayUrl ? o.displayUrl(space.bg.href) : space.bg.href) : '';
-  // The static card paints the same background around the plan as the full
-  // one. In 'daynight' mode (docs/SUN.md) the sun's elevation paints it —
-  // wedges stay full-card-only in v1, the background alone follows the sky.
+  // The static card paints the same four-phase environment as full View.
+  // Wedges stay full-card-only; the decorative background is independent.
   const spaceSettings = (o.cfg.spaces.find((sp: any) => sp.id === o.spaceId) as any)?.settings || {};
-  let sunBg = '';
-  if (bgModeOf(o.cfg?.settings, spaceSettings) === 'daynight' && northDegOf(o.cfg?.settings, spaceSettings) !== null) {
-    const sun = sunStateOf(o.hass);
-    if (sun) sunBg = dayPhase(sun.elevation).bg;
-  }
-  const stageBg = sunBg || stageBgOf(o.cfg?.settings, disp);
+  const dayCycle = bgModeOf(o.cfg?.settings, spaceSettings) === 'daynight'
+    ? resolveDayCycle(planHass, o.dayCycleNow ?? new Date()) : null;
+  const stageBg = stageBgOf(o.cfg?.settings, disp);
 
   // Opaque plan paper, same contract as the full card (docs/BACKDROP.md §3):
   // the paper is ALWAYS the ROOM CONTOURS and only them — never their bounding
@@ -377,7 +376,10 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const wallStroke = disp.color || '#607d8b';
 
   return html`
-    <div class="hp-static-stage" ?inert=${!!o.inert} style="aspect-ratio:${vb[2]}/${vb[3]}${stageBg ? ';background:' + stageBg : ''};--wall-fill:${colors.wall_fill.c};--wall-fill-op:${colors.wall_fill.a}">
+    <div class="hp-static-stage${dayCycle ? ` daycycle phase-${dayCycle.phase}` : ''}"
+      ?inert=${!!o.inert}
+      style="aspect-ratio:${vb[2]}/${vb[3]}${stageBg ? ';background:' + stageBg : ''};--wall-fill:${colors.wall_fill.c};--wall-fill-op:${colors.wall_fill.a}${dayCycle ? `;${dayCycleStageVars(dayCycle)}` : ''}">
+      ${renderDayCycleEnvironment(dayCycle)}
       <svg viewBox="${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}" preserveAspectRatio="xMidYMid meet">
         ${wallUnion ? svg`<defs>
           <pattern id="hp-wall-hatch" patternUnits="userSpaceOnUse" width="8" height="8"
@@ -385,13 +387,13 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
             <path d="M0 0 L0 8" stroke="${wallStroke}" stroke-width="2"></path>
           </pattern>
         </defs>` : nothing}
-        ${paperShapes.map((sh) =>
+        <g class="hp-paperg">${paperShapes.map((sh) =>
           'path' in sh
             ? svg`<path class="hp-paper" d="${sh.path}" fill-rule="evenodd"></path>`
           : 'poly' in sh
             ? svg`<polygon class="hp-paper" points="${sh.poly}"></polygon>`
             : svg`<rect class="hp-paper" x="${sh.rect.x}" y="${sh.rect.y}" width="${sh.rect.w}" height="${sh.rect.h}" rx="${sh.rect.rx}"></rect>`,
-        )}
+        )}</g>
         ${bgHref
           ? svg`<image href="${bgHref}" x="${space.bg!.x}" y="${space.bg!.y}" width="${space.bg!.w}" height="${space.bg!.h}"
               @load=${() => o.assetLoaded?.(space.bg!.href, bgHref)}

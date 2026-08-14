@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import copy
 import logging
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
@@ -22,6 +23,32 @@ from .const import (
 
 
 _LOGGER = logging.getLogger(__name__)
+_BG_MODES = frozenset({"static", "daynight"})
+
+
+def migrate_config_background_mode(old_data: dict[str, Any]) -> dict[str, Any]:
+    """Materialize the legacy implicit background mode without changing its view.
+
+    Only the config-store document has a top-level ``config`` object. Layout
+    and virtual-light stores pass through this helper unchanged even though
+    they share the same Store subclass and minor version.
+    """
+    config = old_data.get("config")
+    if not isinstance(config, dict):
+        return old_data
+    settings = config.get("settings")
+    mode = settings.get("bg_mode") if isinstance(settings, dict) else None
+    if mode in _BG_MODES:
+        return old_data
+
+    data = copy.deepcopy(old_data)
+    migrated_config = data["config"]
+    migrated_settings = migrated_config.get("settings")
+    if not isinstance(migrated_settings, dict):
+        migrated_settings = {}
+        migrated_config["settings"] = migrated_settings
+    migrated_settings["bg_mode"] = "static"
+    return data
 
 
 class HouseplanStore(Store):
@@ -39,10 +66,9 @@ class HouseplanStore(Store):
         old_minor_version: int,
         old_data: dict[str, Any],
     ) -> dict[str, Any]:
-        data = old_data
-        # if old_major_version == 1 and old_minor_version < 2:
-        #     ...migrate...
-        return data
+        if old_major_version == 1 and old_minor_version < 2:
+            return migrate_config_background_mode(old_data)
+        return old_data
 
 
 @dataclass

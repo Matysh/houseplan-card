@@ -44,9 +44,10 @@ import {
 import {
   computeSunRays, dayPhase, northDegOf, bgModeOf, sunRaysOn,
   sunStateOf, rayPeakAlpha, raysVisible, rayColor, RAY_FADE_MS, type SunRay,
-  rayStops, skyElevation, skyNeedsSnap,
+  rayStops, resolveDayCycle, dayCycleFingerprint, type DayCycleState,
   rayRimEdges, rimStops, rimPeakAlpha, RIM_COLOR,
 } from './sun';
+import { dayCycleStageVars, renderDayCycleEnvironment } from './day-cycle-render';
 import {
   FURNITURE_GROUPS, furnitureOfGroup, furnitureSymbol, furnitureDefaultCm,
   furniturePathD, furnitureCorners, snapFurnitureToWall,
@@ -907,10 +908,8 @@ class HouseplanCard extends LitElement {
     return this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', 'rgb(17, 17, 17)');
   }
 
-  private _targetBrightness(mode: HouseplanMode): number {
-    if (mode !== 'view' || this._effBgMode() !== 'daynight') return 1;
-    const sun = this._sunNow();
-    return sun ? 1 - dayPhase(skyElevation(sun.elevation)).planDim : 1;
+  private _targetBrightness(_mode: HouseplanMode): number {
+    return 1;
   }
 
   private _applyModeTransitionFrame(state: ModeTransitionState): void {
@@ -1406,11 +1405,9 @@ class HouseplanCard extends LitElement {
   } | null = null;
   /** Wedge memo: recomputed only when (azimuth, elevation, north, cfg rev) change (docs/SUN.md). */
   private _sunRaysCache: { key: string; rays: SunRay[]; rims: number[][][][] } | null = null;
-  /** Sun elevation (0.1°) the day/night sky is currently PAINTED with, and
-   *  whether the next paint must jump to it instead of gliding (docs/SUN.md). */
-  private _skyElev: number | null = null;
-  private _skySnap = false;
-  private _skySnapRaf = 0;
+  /** Browser-local fallback lifecycle; real sun updates arrive through hass. */
+  private _dayCycleTimer = 0;
+  private _dayCycleClockKey = '';
   private _compassDrag = false;
   private _importDialog: { floors: (FloorInfo & { checked: boolean })[] } | null = null;
   private _importQueue: string[] = []; // floor titles still to create
@@ -1605,6 +1602,7 @@ class HouseplanCard extends LitElement {
 
   private _pageVisibility = (signal: PageVisibilitySignal): void => {
     this._continuity.visibility(signal);
+    this._dayCycleVisibility(signal);
     if (signal.kind === 'hidden') {
       if (this._modeTransitionPreparing) {
         // There is no measured controller endpoint to commit yet. Keep the
@@ -1630,10 +1628,9 @@ class HouseplanCard extends LitElement {
       if (expired) this.requestUpdate();
       return; // preserve hover and the completed visual frame
     }
-    // A long sleep may have frozen the sky/activity clocks. Recompute them as
+    // A long sleep may have frozen activity clocks. Recompute them as
     // one candidate without clearing the currently visible hover or frame,
     // and revalidate config+layout as one structural pair.
-    this._skyElev = null;
     if (Date.now() - this._renderSnapshotAt > 1000) this._continuity.note('device-snapshot-stale');
     this._continuityDataReady = false;
     this._continuityPaintToken = -1;
@@ -1913,7 +1910,8 @@ class HouseplanCard extends LitElement {
     this._motionMedia = undefined;
     if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
     if (this._refitRaf) { cancelAnimationFrame(this._refitRaf); this._refitRaf = 0; }
-    if (this._skySnapRaf) { cancelAnimationFrame(this._skySnapRaf); this._skySnapRaf = 0; }
+    if (this._dayCycleTimer) { clearInterval(this._dayCycleTimer); this._dayCycleTimer = 0; }
+    this._dayCycleClockKey = '';
     if (this._bootSettleRaf) { cancelAnimationFrame(this._bootSettleRaf); this._bootSettleRaf = 0; }
     this._bootSettling = false;
     for (const rt of this._activityRt.values()) clearTimeout(rt.timer); // pending activity-window repaints
@@ -3112,14 +3110,10 @@ class HouseplanCard extends LitElement {
       this._continuity.refreshCompleteFrame(this._visualFrameFingerprint());
     }
     this._captureRenderDeviceSnapshot();
-    // The sky is part of the same atomic frame as sun rays and devices. Plan
-    // it only after the candidate/visible render snapshot has been refreshed;
-    // doing this first made day/night presentation lag every HA tick by one.
-    this._skyPlan();
   }
 
   protected updated(): void {
-    this._skyRelease();
+    this._syncDayCycleClock();
     this._warmSnapshot(); // DEV-B703-03: the memo follows what is on screen
     this._dtMeasure();    // the selected label's frame follows the glyphs
     const stage = this._stageEl;
@@ -12195,7 +12189,7 @@ class HouseplanCard extends LitElement {
         customFill: { ...DEFAULT_CUSTOM_FILL, a: 0 },
         glowEnabled: true,
         bgColor: null,
-        bgMode: null, northDeg: null, sunRays: null,
+        bgMode: 'daynight', northDeg: null, sunRays: null,
         tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
         showLqi: this._config?.show_signal ?? true,
         cardFontScale: 1,
@@ -12567,7 +12561,7 @@ class HouseplanCard extends LitElement {
       customFill: null,
       glowEnabled: true,
       bgColor: null,
-      bgMode: null, northDeg: null, sunRays: null,
+      bgMode: 'daynight', northDeg: null, sunRays: null,
       tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
       showLqi: this._config?.show_signal ?? true,
       cardFontScale: 1,
@@ -12655,6 +12649,50 @@ class HouseplanCard extends LitElement {
 
   private _effBgMode(): 'static' | 'daynight' {
     return bgModeOf(this._sunGlobal(), this._sunSpace());
+  }
+
+  /** Current four-phase environment. Editors stay static; #101 supplies viewWeight. */
+  private _dayCycleState(now: Date | number = new Date()): DayCycleState | null {
+    const viewWeight = this._modeTransitionVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0);
+    if (viewWeight <= 0 || this._effBgMode() !== 'daynight') return null;
+    return resolveDayCycle(this._renderPlanHass, now);
+  }
+
+  private _dayCycleTick = (): void => {
+    if (!this.isConnected || this.ownerDocument.visibilityState === 'hidden') return;
+    const state = this._dayCycleState();
+    if (!state) {
+      if (this._dayCycleTimer) { clearInterval(this._dayCycleTimer); this._dayCycleTimer = 0; }
+      this._dayCycleClockKey = '';
+      return;
+    }
+    const key = dayCycleFingerprint(state);
+    if (key === this._dayCycleClockKey) return;
+    this._dayCycleClockKey = key;
+    this.requestUpdate();
+  };
+
+  /** Arm a 30 s timer only for the browser-clock fallback while visible. */
+  private _syncDayCycleClock(): void {
+    const state = this._dayCycleState();
+    this._dayCycleClockKey = state ? dayCycleFingerprint(state) : '';
+    const needsTimer = state?.source === 'clock'
+      && this.ownerDocument.visibilityState !== 'hidden' && this.isConnected;
+    if (needsTimer && !this._dayCycleTimer) {
+      this._dayCycleTimer = window.setInterval(this._dayCycleTick, 30_000);
+    } else if (!needsTimer && this._dayCycleTimer) {
+      clearInterval(this._dayCycleTimer);
+      this._dayCycleTimer = 0;
+    }
+  }
+
+  private _dayCycleVisibility(signal: PageVisibilitySignal): void {
+    if (signal.kind === 'hidden') {
+      if (this._dayCycleTimer) { clearInterval(this._dayCycleTimer); this._dayCycleTimer = 0; }
+      return;
+    }
+    this._dayCycleTick();
+    this._syncDayCycleClock();
   }
 
   private _effSunRays(): boolean {
@@ -12833,38 +12871,6 @@ class HouseplanCard extends LitElement {
   private _sunOut = false;
   private _sunOutTimer = 0;
 
-  /**
-   * Day/night sky bookkeeping, once per update (docs/SUN.md).
-   *
-   * The sky colour and the plan dimming are delivered by a 45 s CSS transition
-   * — and a transition only advances while the card is being PAINTED. Whenever
-   * it was not (a background tab, another dashboard view, an editor session, a
-   * fresh mount), the sun moved on without it, and the transition then crawls
-   * toward the truth instead of showing it: the owner's «фон не меняется сам,
-   * только после обновления страницы» (2026-08-04). So: glide while we are
-   * keeping up (the sun moves ≲1° between two `sun.sun` updates), JUMP once
-   * when the gap says we were not watching.
-   */
-  private _skyPlan(): void {
-    const sun = !this._editing && this._effBgMode() === 'daynight' ? this._sunNow() : null;
-    if (!sun) { this._skyElev = null; this._skySnap = false; return; }
-    const e = skyElevation(sun.elevation);
-    if (skyNeedsSnap(this._skyElev, e)) this._skySnap = true;
-    this._skyElev = e;
-  }
-
-  /** Hand the 45 s transition back once the jumped-to colour is on screen. */
-  private _skyRelease(): void {
-    if (!this._skySnap || this._skySnapRaf) return;
-    this._skySnapRaf = requestAnimationFrame(() => {
-      this._skySnapRaf = requestAnimationFrame(() => {
-        this._skySnapRaf = 0;
-        this._skySnap = false;
-        this.requestUpdate();
-      });
-    });
-  }
-
   /** Drop the layer at once: used by every gate that is NOT the 3° threshold. */
   private _sunFadeReset(): void {
     if (this._sunOutTimer) { clearTimeout(this._sunOutTimer); this._sunOutTimer = 0; }
@@ -12915,14 +12921,10 @@ class HouseplanCard extends LitElement {
   /**
    * Effective stage background: per-space override → global setting → '' (the
    * theme default from the stylesheet). An open dialog previews its pending
-   * value, so the color can be picked against the live plan. In 'daynight'
-   * mode (docs/SUN.md) the sun's elevation paints the stage instead.
+   * value, so the color can be picked against the live plan. The four-phase
+   * environment is a separate layer behind the plan (#146).
    */
   private _stageBg(disp: SpaceDisplay): string {
-    if (this._effBgMode() === 'daynight') {
-      const sun = this._sunNow();
-      if (sun) return dayPhase(skyElevation(sun.elevation)).bg;
-    }
     const gd = this._settingsDialog;
     const sd = this._spaceDialog;
     const globalBg = gd ? gd.bgColor || '' : stageBgOf(this._settings, { bgColor: null });
@@ -13403,12 +13405,12 @@ class HouseplanCard extends LitElement {
       else delete settings.glow_radius_cm;
       if (d.bgColor) settings.bg_color = d.bgColor;
       else delete settings.bg_color;
-      // sun on the plan (docs/SUN.md): defaults are never stored
+      // Sun background compatibility is explicit: legacy absence means static,
+      // while new installations and spaces materialise daynight.
       if (d.northDeg !== null && Number.isInteger(d.northDeg) && d.northDeg >= 0 && d.northDeg <= 359)
         settings.north_deg = d.northDeg;
       else delete settings.north_deg;
-      if (d.bgMode === 'daynight') settings.bg_mode = 'daynight';
-      else delete settings.bg_mode;
+      settings.bg_mode = d.bgMode;
       if (d.sunRays) settings.sun_rays = true;
       else delete settings.sun_rays;
       // Legacy compatibility: old configs may still contain this accepted
@@ -14114,7 +14116,7 @@ class HouseplanCard extends LitElement {
         </div>
         <div class="row" slot="footer">
           <button class="btn ghost" @click=${() =>
-            (this._settingsDialog = { ...this._settingsDialog!, colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: this._imperial ? 9.8 : 3, bgColor: null, northDeg: null, bgMode: 'static', sunRays: false })}>
+            (this._settingsDialog = { ...this._settingsDialog!, colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: this._imperial ? 9.8 : 3, bgColor: null, northDeg: null, bgMode: 'daynight', sunRays: false })}>
             ${this._t('gs.reset')}
           </button>
           <span class="spacer"></span>
@@ -14326,9 +14328,6 @@ class HouseplanCard extends LitElement {
     // Background around the plan (view/kiosk; editors keep their own canvas).
     // Both settings dialogs preview their pending value live.
     const stageBg = this._editing ? '' : this._stageBg(disp);
-    // day/night breathing: armed only with a compass AND sun.sun (docs/SUN.md)
-    const dayNight = !this._editing && this._effBgMode() === 'daynight' ? this._sunNow() : null;
-    const planDim = dayNight ? dayPhase(skyElevation(dayNight.elevation)).planDim : 0;
     // opening rulers: the drag of an existing one OR the placement preview
     const opMeasure = this._opMeasureView;
     const decorMeasure = this._decorMeasure;
@@ -14340,13 +14339,15 @@ class HouseplanCard extends LitElement {
     const recoveryReason = (this._continuity.overlayVisible || this._continuity.state === 'recovery-error')
       ? this._continuity.recoveryReason : null;
     const modeVisual = this._modeTransitionVisual;
+    const dayCycle = this._dayCycleState();
+    const dayCycleWeight = modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0);
     const transitionFromMode = this._modeTransition.state?.from.presentedMode;
     const glowLayerVisible = !this._markup || !!modeVisual && (
       modeVisual.presentedMode === 'view' || modeVisual.presentedMode === 'devices'
       || transitionFromMode === 'view' || transitionFromMode === 'devices'
     );
     const transitionStageBg = modeVisual?.stageColor || stageBg;
-    const transitionBrightness = modeVisual?.sceneBrightness ?? (dayNight ? 1 - planDim : 1);
+    const transitionBrightness = modeVisual?.sceneBrightness ?? 1;
 
     return html`
       <ha-card
@@ -14458,9 +14459,9 @@ class HouseplanCard extends LitElement {
           : nothing}
         </div>
 
-        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'boundary' ? this._boundaryStageClass : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._bdMovable ? ' bdgrab' : ''}${this._bdDrag ? ' bdgrabbing' : ''}${dayNight ? ' daynight' : ''}${dayNight && this._skySnap ? ' skysnap' : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}${this._modeTransitionBusy ? ' mode-transition' : ''}"
+        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'boundary' ? this._boundaryStageClass : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._bdMovable ? ' bdgrab' : ''}${this._bdDrag ? ' bdgrabbing' : ''}${dayCycle ? ` daycycle phase-${dayCycle.phase}` : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}${this._modeTransitionBusy ? ' mode-transition' : ''}"
           ?inert=${this._modeTransitionBusy}
-          style="height:${modeVisual ? `${modeVisual.stageHeight}px` : this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}${transitionStageBg ? `;background:${transitionStageBg}` : ''};--wall-fill:${this._fillColors.wall_fill.c};--wall-fill-op:${this._fillColors.wall_fill.a};--hp-mode-architecture-opacity:${modeVisual ? modeVisual.architectureOpacity : this._mode === 'decor' ? 0.35 : 1};--hp-mode-view-weight:${modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0)};--hp-mode-editor-weight:${modeVisual?.editorWeight ?? (this._mode === 'view' ? 0 : 1)}${modeVisual ? `;--hp-mode-paper:${modeVisual.paperColor}` : ''}"
+          style="height:${modeVisual ? `${modeVisual.stageHeight}px` : this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}${transitionStageBg ? `;background:${transitionStageBg}` : ''};--wall-fill:${this._fillColors.wall_fill.c};--wall-fill-op:${this._fillColors.wall_fill.a};--hp-mode-architecture-opacity:${modeVisual ? modeVisual.architectureOpacity : this._mode === 'decor' ? 0.35 : 1};--hp-mode-view-weight:${modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0)};--hp-mode-editor-weight:${modeVisual?.editorWeight ?? (this._mode === 'view' ? 0 : 1)}${modeVisual ? `;--hp-mode-paper:${modeVisual.paperColor}` : ''}${dayCycle ? `;${dayCycleStageVars(dayCycle)}` : ''}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
           @pointerdown=${(e: PointerEvent) => { this._notePointer(e); this._stagePointerDown(e); }}
@@ -14468,6 +14469,7 @@ class HouseplanCard extends LitElement {
           @pointerleave=${(e: PointerEvent) => this._stagePointerLeave(e)}
           @pointerup=${(e: PointerEvent) => this._stagePointerUp(e)}
           @pointercancel=${(e: PointerEvent) => this._stagePointerCancel(e)}>
+          ${renderDayCycleEnvironment(dayCycle, dayCycleWeight)}
           ${this._renderEditorSecondary()}
           <div class="zoomwrap ${this._slide ? 'slide-' + this._slide : ''}"
             ?inert=${this._continuity.overlayBlocksInteraction || this._modeTransitionBusy}
@@ -14486,7 +14488,7 @@ class HouseplanCard extends LitElement {
               transform=${isoLayers?.structural ? isoFloorMatrixCss() : nothing}>
             ${''/* THE PAPER IS THE ROOMS (docs/BACKDROP.md §3, owner
                    2026-08-04). Opaque shapes stop the scene background —
-                   bg_color or the 'daynight' sky — from bleeding through the
+                   bg_color or the day-cycle environment — from bleeding through the
                    plan. They follow the ROOM CONTOURS and nothing else: one
                    shape per room in exactly the room's own geometry, so an
                    L-shaped house or a pair of detached buildings never grows a
@@ -14497,7 +14499,7 @@ class HouseplanCard extends LitElement {
                    scene through, which is the deliberate consequence.
                    `space` comes from _renderCfg, so a live resize preview
                    (_rszPreview) moves the paper together with the rooms.
-                   One <g> around ALL paper shapes: the daynight drop shadow
+                   One <g> around ALL paper shapes: the external day-cycle outline
                    (styles.ts) is composited once for the whole sheet, so
                    adjacent rooms never cast seams onto each other's paper. */}
             ${this._wallHatchDefs(disp.color)}${svg`<g class="hp-paperg">${this._paperShapes(space.rooms).map((sh) =>

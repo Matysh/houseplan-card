@@ -1,4 +1,4 @@
-// Three stills of the daynight scale (noon/sunset/night) for the white-day review.
+// Four stills of the #146 day-cycle environment.
 import { launch } from './serve.mjs';
 const outDir = process.argv[2] || '/tmp';
 const { page, browser } = await launch({ width: 700, height: 700 }, 1);
@@ -16,21 +16,22 @@ await page.evaluate(async () => {
   c._serverCfg.settings = { ...(c._serverCfg.settings || {}), north_deg: 0, sun_rays: true, bg_mode: 'daynight' };
   c._cfgRev = (c._cfgRev || 0) + 1;
 });
-const shot = async (az, el, name) => {
-  await page.evaluate(async ([az, el]) => {
+const shot = async (az, el, rising, name) => {
+  await page.evaluate(async ([az, el, rising]) => {
     const c = window.__card;
     c.hass = { ...c.hass, states: { ...c.hass.states, 'sun.sun': {
       entity_id: 'sun.sun', state: el > 0 ? 'above_horizon' : 'below_horizon',
-      attributes: { azimuth: az, elevation: el },
+      attributes: { azimuth: az, elevation: el, rising },
     } } };
     c.requestUpdate(); await c.updateComplete;
-  }, [az, el]);
+  }, [az, el, rising]);
   await page.waitForTimeout(300);
   const stage = await page.evaluateHandle(() => window.__card.shadowRoot.querySelector('.stage'));
   await stage.asElement().screenshot({ path: `${outDir}/${name}.png` });
 };
-await shot(180, 60, 'dn_noon');
-await shot(265, 3, 'dn_sunset');
-await shot(0, -20, 'dn_night');
+await shot(95, -2, true, 'dn_dawn');
+await shot(180, 60, false, 'dn_noon');
+await shot(265, -2, false, 'dn_sunset');
+await shot(0, -20, false, 'dn_night');
 await browser.close();
 console.log('shots done');

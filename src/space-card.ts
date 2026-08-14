@@ -32,6 +32,9 @@ import {
   visualFrameFingerprint,
   type PageVisibilitySignal,
 } from './visual-continuity';
+import {
+  bgModeOf, resolveDayCycle, dayCycleFingerprint, type DayCycleState,
+} from './sun';
 import './space-editor';
 
 const fireEvent = (node: EventTarget, type: string, detail?: unknown) => {
@@ -66,6 +69,8 @@ class HouseplanSpaceCard extends LitElement {
   private _reloadQueued = false;
   private _forceReloadQueued = false;
   private _reloadRetryTimer = 0;
+  private _dayCycleTimer = 0;
+  private _dayCycleClockKey = '';
   private _unsub?: () => void;
   private _stageWidth = 0;
   private _pendingStageWidth = 0;
@@ -135,8 +140,53 @@ class HouseplanSpaceCard extends LitElement {
     });
   }
 
+  private _dayCycleState(now: Date | number = new Date()): DayCycleState | null {
+    const cfg = this._snap?.config;
+    if (!cfg || !this._config) return null;
+    const spaceSettings = cfg.spaces?.find((space: any) => space.id === this._config?.space)?.settings || {};
+    if (bgModeOf(cfg.settings, spaceSettings) !== 'daynight') return null;
+    return resolveDayCycle(this._renderDeviceSnapshot?.hass || this.hass, now);
+  }
+
+  private _dayCycleTick = (): void => {
+    if (!this.isConnected || this.ownerDocument.visibilityState === 'hidden') return;
+    const state = this._dayCycleState();
+    if (!state) {
+      if (this._dayCycleTimer) { window.clearInterval(this._dayCycleTimer); this._dayCycleTimer = 0; }
+      this._dayCycleClockKey = '';
+      return;
+    }
+    const key = dayCycleFingerprint(state);
+    if (key === this._dayCycleClockKey) return;
+    this._dayCycleClockKey = key;
+    this.requestUpdate();
+  };
+
+  private _syncDayCycleClock(): void {
+    const state = this._dayCycleState();
+    this._dayCycleClockKey = state ? dayCycleFingerprint(state) : '';
+    const needsTimer = state?.source === 'clock'
+      && this.ownerDocument.visibilityState !== 'hidden' && this.isConnected;
+    if (needsTimer && !this._dayCycleTimer) {
+      this._dayCycleTimer = window.setInterval(this._dayCycleTick, 30_000);
+    } else if (!needsTimer && this._dayCycleTimer) {
+      window.clearInterval(this._dayCycleTimer);
+      this._dayCycleTimer = 0;
+    }
+  }
+
+  private _dayCycleVisibility(signal: PageVisibilitySignal): void {
+    if (signal.kind === 'hidden') {
+      if (this._dayCycleTimer) { window.clearInterval(this._dayCycleTimer); this._dayCycleTimer = 0; }
+      return;
+    }
+    this._dayCycleTick();
+    this._syncDayCycleClock();
+  }
+
   private _pageVisibility = (signal: PageVisibilitySignal): void => {
     this._continuity.visibility(signal);
+    this._dayCycleVisibility(signal);
     if (signal.kind === 'hidden') return;
     if (!signal.long) {
       const now = Date.now();
@@ -248,6 +298,8 @@ class HouseplanSpaceCard extends LitElement {
     this._unsub = undefined;
     window.clearTimeout(this._reloadRetryTimer);
     this._reloadRetryTimer = 0;
+    if (this._dayCycleTimer) { window.clearInterval(this._dayCycleTimer); this._dayCycleTimer = 0; }
+    this._dayCycleClockKey = '';
     this._stageObserver?.disconnect();
     this._stageObserver = undefined;
     this._observedStage = undefined;
@@ -568,6 +620,7 @@ class HouseplanSpaceCard extends LitElement {
         measure();
       }
     }
+    this._syncDayCycleClock();
     this._settleContinuityFrame();
   }
 
@@ -800,8 +853,9 @@ class HouseplanSpaceCard extends LitElement {
         width: 100%;
         height: 100%;
         display: block;
+        z-index: 1;
       }
-      /* Opaque plan paper — the scene bg_color/daynight sky shows only AROUND
+      /* Opaque plan paper — the scene bg_color/day-cycle environment shows only AROUND
          the plan (owner 2026-08-03). The static card keeps its historical
          canvas colour: the theme card background. Drawn plans paper the room
          contours (per-room shapes, fill only, no stroke) — same contract as
@@ -830,6 +884,7 @@ class HouseplanSpaceCard extends LitElement {
       .hp-static-stage .devlayer {
         position: absolute;
         inset: 0;
+        z-index: 2;
       }
       .hp-static-foot {
         padding: 8px 12px 12px;

@@ -17,12 +17,41 @@ const res = await page.evaluate(async () => {
   r1.open_to = [r2.id]; r2.open_to = [r1.id];
   c._saveConfig(); c.requestUpdate(); await c.updateComplete;
   pairsCalls = 0; buildCalls = 0;
+  const devicesBeforeHassTicks = c._devices;
   for (let i = 0; i < 10; i++) {
     c.hass = { ...c.hass, states: { ...c.hass.states } };
     await c.updateComplete;
   }
   out.pairsBounded = pairsCalls <= 20;
   out.modelBuildsPer10Renders = buildCalls;
+  out.devicesStableAcrossHassTicks = c._devices === devicesBeforeHassTicks;
+
+  // #146: the browser-clock fallback repaints only the environment. A 30 s
+  // tick must not rebuild the plan, devices, wall union, or sun-ray geometry.
+  c._serverCfg = {
+    ...c._serverCfg,
+    settings: { ...(c._serverCfg?.settings || {}), bg_mode: 'daynight' },
+  };
+  const statesWithoutSun = { ...c.hass.states };
+  delete statesWithoutSun['sun.sun'];
+  c.hass = { ...c.hass, states: statesWithoutSun };
+  c.requestUpdate(); await c.updateComplete;
+  const clockModel = c._model;
+  const clockDevices = c._devices;
+  const clockWallUnion = c._wallUnionCache;
+  const clockSunRays = c._sunRaysCache;
+  buildCalls = 0;
+  c._dayCycleClockKey = 'force-next-clock-tick';
+  c._dayCycleTick();
+  await c.updateComplete;
+  out.fallbackClockActive = (c.shadowRoot || c.renderRoot)
+    .querySelector('.hp-day-cycle-env')?.dataset.dayCycleSource === 'clock';
+  out.clockTickModelBuilds = buildCalls;
+  out.clockTickKeepsModel = c._model === clockModel;
+  out.clockTickKeepsDevices = c._devices === clockDevices;
+  out.clockTickKeepsWallUnion = c._wallUnionCache === clockWallUnion;
+  out.clockTickKeepsSunRays = c._sunRaysCache === clockSunRays;
+
   const before = pairsCalls;
   const r3 = sp.rooms[2] || sp.rooms[0];
   r3.open_to = [r1.id]; r1.open_to = [r2.id, r3.id];
@@ -35,5 +64,6 @@ const res = await page.evaluate(async () => {
 });
 checkAll(res, {
   modelBuildsPer10Renders: 0,
+  clockTickModelBuilds: 0,
 });
 await finish(browser, res);

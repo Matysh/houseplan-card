@@ -10,6 +10,9 @@ import {
   rimStops, rimPeakAlpha, rayRimEdges, RIM_MAX_ALPHA, RIM_COLOR,
   SKY_SNAP_DEG, skyNeedsSnap, skyElevation,
   northDegOf, bgModeOf, sunRaysOn, sunStateOf,
+  DAY_CYCLE_PALETTES, dayCycleSunOf, dayCyclePhaseFromSun,
+  dayCyclePhaseFromMinutes, dayCyclePositionFromSun,
+  dayCyclePositionFromMinutes, resolveDayCycle, dayCycleFingerprint,
 } from '../test-build/sun.js';
 
 const near = (a, b, eps = 1e-9) => Math.abs(a - b) < eps;
@@ -70,6 +73,119 @@ test('dayPhase: night is dark and dim, noon is white, sunrise is warm', () => {
   assert.ok(near(dawn.warmth, 0.8));
   // garbage elevation never throws and stays inside the palette
   assert.ok(dayPhase(NaN).bg.startsWith('#'));
+});
+
+test('day cycle: real sun selects exact four-phase boundaries', () => {
+  assert.equal(dayCyclePhaseFromSun({ elevation: -6.1, rising: true }), 'night');
+  assert.equal(dayCyclePhaseFromSun({ elevation: -6, rising: true }), 'night');
+  assert.equal(dayCyclePhaseFromSun({ elevation: -5.9, rising: true }), 'dawn');
+  assert.equal(dayCyclePhaseFromSun({ elevation: 5.9, rising: true }), 'dawn');
+  assert.equal(dayCyclePhaseFromSun({ elevation: -5.9, rising: false }), 'dusk');
+  assert.equal(dayCyclePhaseFromSun({ elevation: 5.9, rising: false }), 'dusk');
+  assert.equal(dayCyclePhaseFromSun({ elevation: 6, rising: false }), 'day');
+  assert.equal(dayCyclePhaseFromSun({ elevation: 6.1, rising: false }), 'day');
+});
+
+test('day cycle: browser-local fallback has exact schedule boundaries', () => {
+  const cases = [
+    [299, 'night'], [300, 'dawn'], [479, 'dawn'], [480, 'day'],
+    [1079, 'day'], [1080, 'dusk'], [1259, 'dusk'], [1260, 'night'],
+    [-1, 'night'], [1440 + 300, 'dawn'],
+  ];
+  for (const [minutes, phase] of cases) assert.equal(dayCyclePhaseFromMinutes(minutes), phase);
+});
+
+test('day cycle: strict sun snapshot keeps rays compatibility separate', () => {
+  const hass = (attributes) => ({ states: { 'sun.sun': { attributes } } });
+  assert.deepEqual(dayCycleSunOf(hass({ azimuth: 450, elevation: 2, rising: true })), {
+    azimuth: 90, elevation: 2, rising: true,
+  });
+  for (const attributes of [
+    { elevation: 2, rising: true },
+    { azimuth: NaN, elevation: 2, rising: true },
+    { azimuth: 90, elevation: Infinity, rising: true },
+    { azimuth: 90, elevation: 2, rising: 'yes' },
+  ]) assert.equal(dayCycleSunOf(hass(attributes)), null);
+  assert.equal(dayCycleSunOf(null), null);
+  // Window rays never acquired the new rising requirement.
+  assert.deepEqual(sunStateOf(hass({ azimuth: 90, elevation: 2 })), { azimuth: 90, elevation: 2 });
+});
+
+test('day cycle: real decorative position follows elevation and azimuth', () => {
+  const east = dayCyclePositionFromSun({ azimuth: 90, elevation: 0, rising: true });
+  const south = dayCyclePositionFromSun({ azimuth: 180, elevation: 45, rising: true });
+  const west = dayCyclePositionFromSun({ azimuth: 270, elevation: 0, rising: false });
+  const north = dayCyclePositionFromSun({ azimuth: 0, elevation: 90, rising: false });
+  assert.ok(near(east.sunX, 8) && near(east.sunY, 78) && near(east.sunOpacity, 0.5));
+  assert.ok(near(south.sunX, 50) && near(south.sunY, 46) && near(south.sunOpacity, 1));
+  assert.ok(near(west.sunX, 92) && near(west.sunY, 78) && near(west.sunOpacity, 0.5));
+  assert.ok(near(north.sunX, 50) && near(north.sunY, 14) && near(north.sunOpacity, 1));
+  assert.equal(dayCyclePositionFromSun({ azimuth: 90, elevation: -6, rising: true }).sunOpacity, 0);
+});
+
+test('day cycle: fallback arc and night visibility match the prototype', () => {
+  const dawn = dayCyclePositionFromMinutes(300);
+  const morning = dayCyclePositionFromMinutes(420);
+  const noon = dayCyclePositionFromMinutes(780);
+  const evening = dayCyclePositionFromMinutes(1140);
+  const night = dayCyclePositionFromMinutes(1260);
+  assert.ok(near(dawn.sunX, 8) && near(dawn.sunY, 78) && near(dawn.sunOpacity, 0.18));
+  assert.equal(morning.sunOpacity, 1);
+  assert.ok(near(noon.sunX, 50) && near(noon.sunY, 14) && near(noon.sunOpacity, 1));
+  assert.equal(evening.sunOpacity, 1);
+  assert.equal(night.sunOpacity, 0);
+});
+
+test('day cycle: resolver is atomic and palette is complete', () => {
+  const live = resolveDayCycle({ states: { 'sun.sun': { attributes: {
+    azimuth: 90, elevation: 2, rising: false,
+  } } } }, 600);
+  assert.equal(live.source, 'sun');
+  assert.equal(live.phase, 'dusk');
+
+  const fallback = resolveDayCycle({ states: { 'sun.sun': { attributes: {
+    azimuth: NaN, elevation: 20, rising: true,
+  } } } }, 600);
+  assert.equal(fallback.source, 'clock');
+  assert.equal(fallback.phase, 'day');
+  assert.match(dayCycleFingerprint(fallback), /^clock\|day\|/);
+
+  assert.deepEqual(DAY_CYCLE_PALETTES, {
+    dawn: {
+      top: '#aabdd1', bottom: '#e8c8b7',
+      horizon: 'rgba(255,201,156,.56)', sun: 'rgba(255,188,125,.78)',
+      vignette: 'rgba(65,72,99,.21)',
+      outlineNear: 'rgba(74,57,61,.25)', outlineMid: 'rgba(255,238,224,.40)',
+      outlineFar: 'rgba(255,224,202,.18)',
+    },
+    day: {
+      top: '#dce9ef', bottom: '#cbdce3',
+      horizon: 'rgba(255,245,220,.45)', sun: 'rgba(255,239,190,.72)',
+      vignette: 'rgba(65,91,105,.16)',
+      outlineNear: 'rgba(45,62,71,.28)', outlineMid: 'rgba(255,255,255,.42)',
+      outlineFar: 'rgba(255,255,255,.20)',
+    },
+    dusk: {
+      top: '#48536c', bottom: '#9a7380',
+      horizon: 'rgba(242,156,114,.34)', sun: 'rgba(255,167,113,.55)',
+      vignette: 'rgba(20,26,44,.39)',
+      outlineNear: 'rgba(238,219,225,.40)', outlineMid: 'rgba(229,207,218,.26)',
+      outlineFar: 'rgba(215,190,205,.12)',
+    },
+    night: {
+      top: '#111a27', bottom: '#1f2f3e',
+      horizon: 'rgba(79,120,151,.16)', sun: 'rgba(169,208,231,0)',
+      vignette: 'rgba(3,8,14,.58)',
+      outlineNear: 'rgba(218,238,249,.56)', outlineMid: 'rgba(174,215,238,.30)',
+      outlineFar: 'rgba(136,194,226,.14)',
+    },
+  });
+  for (const palette of Object.values(DAY_CYCLE_PALETTES)) {
+    assert.match(palette.top, /^#[0-9a-f]{6}$/i);
+    for (const key of ['horizon', 'sun', 'vignette', 'outlineNear', 'outlineMid', 'outlineFar']) {
+      assert.match(palette[key], /^rgba\(/);
+    }
+  }
 });
 
 test('windowWallInfo: exterior windows on all four sides get outward normals', () => {

@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- **Follows the Sun** now gives the plan a four-phase dawn/day/dusk/night
+  environment with a moving soft light and alpha-aware outer outline. It uses
+  `sun.sun` when its sample is complete, falls back to local browser time, and
+  no longer needs the compass; the plan, Glow, fills, devices, decor, vacuum,
+  hover and window rays remain visually unchanged across phases. Full View,
+  kiosk and static space cards share the result. New installations and spaces
+  enable it explicitly, while a one-time migration and portable import/export
+  preserve every existing plan's prior background choice
+  ([#146](https://github.com/Matysh/houseplan-card/issues/146)).
 - Opening and physical-object property dialogs now use the existing 500 px
   desktop shell, keeping Delete, Cancel and Save on one line with localization
   headroom while preserving responsive wrapping on narrow screens

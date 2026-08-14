@@ -73,6 +73,35 @@ def _json_copy(value: Any) -> Any:
     return json.loads(json.dumps(value, ensure_ascii=False, allow_nan=False))
 
 
+def _background_mode(settings: Any) -> str | None:
+    if not isinstance(settings, dict):
+        return None
+    mode = settings.get("bg_mode")
+    return mode if mode in ("static", "daynight") else None
+
+
+def _materialize_global_background(config: dict[str, Any], fallback: str = "static") -> str:
+    """Make the global mode portable instead of relying on a code default."""
+    settings = config.get("settings")
+    if not isinstance(settings, dict):
+        settings = {}
+        config["settings"] = settings
+    mode = _background_mode(settings) or fallback
+    settings["bg_mode"] = mode
+    return mode
+
+
+def _materialize_space_background(space: dict[str, Any], fallback: str) -> str:
+    """Make one space independent from the target installation's default."""
+    settings = space.get("settings")
+    if not isinstance(settings, dict):
+        settings = {}
+        space["settings"] = settings
+    mode = _background_mode(settings) or fallback
+    settings["bg_mode"] = mode
+    return mode
+
+
 def _stored_model_version(config: dict[str, Any]) -> int:
     """Return the model actually stored without silently upgrading it."""
     value = config.get("model_version", 0)
@@ -239,6 +268,7 @@ def create_export(
     # payload would either duplicate it or tempt an exporter to silently stamp
     # the current version over an older/future stored model.
     config.pop("model_version", None)
+    global_background = _materialize_global_background(config)
     layout = live_layout(config, LAYOUT_SCHEMA(_json_copy(layout_data.get("layout") or {})))
     stamp = datetime.now(UTC).strftime("%Y-%m-%d_%H-%M-%S")
     title = ""
@@ -247,6 +277,7 @@ def create_export(
         space = next((sp for sp in config.get("spaces") or [] if str(sp.get("id")) == space_id), None)
         if not space:
             raise ImportFailure("space_not_found", "Space was not found")
+        _materialize_space_background(space, global_background)
         title = str(space.get("title") or space.get("id") or "space")
         selected_layout = {
             key: pos for key, pos in layout.items()
@@ -358,6 +389,12 @@ def parse_document(raw: bytes) -> dict[str, Any]:
         config = CONFIG_SCHEMA(_json_copy(payload.get("config")))
     except (vol.Invalid, TypeError, ValueError) as err:
         raise ImportFailure("invalid_config", str(err)) from err
+    if document["kind"] == "full":
+        _materialize_global_background(config)
+    else:
+        for space in config.get("spaces") or []:
+            if isinstance(space, dict):
+                _materialize_space_background(space, "static")
     try:
         layout = LAYOUT_SCHEMA(_json_copy(payload.get("layout") or {}))
     except (vol.Invalid, TypeError, ValueError) as err:
@@ -560,6 +597,7 @@ def build_space_merge(
     if len(spaces) != 1:
         raise ImportFailure("invalid_config", "A space export must contain exactly one space")
     space = spaces[0]
+    _materialize_space_background(space, "static")
     used = {
         str(value)
         for sp in current_config.get("spaces") or []
@@ -1039,6 +1077,7 @@ def prepare_apply(
         _detach_missing(imported_config, candidate.get("content") or [])
     if document["kind"] == "full":
         config = imported_config
+        _materialize_global_background(config)
         # Full exports keep the data-model version in the portable envelope so
         # the payload can be validated independently.  Restore it before the
         # configuration is persisted; otherwise every full round-trip silently

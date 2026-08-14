@@ -5,7 +5,7 @@ STORAGE_KEY = f"{DOMAIN}.layout"
 STORAGE_CONFIG_KEY = f"{DOMAIN}.config"
 STORAGE_VIRTUAL_LIGHTS_KEY = f"{DOMAIN}.virtual_lights"
 STORAGE_VERSION = 1
-STORAGE_MINOR_VERSION = 1
+STORAGE_MINOR_VERSION = 2
 FRONTEND_URL = "/houseplan_files/houseplan-card.js"
 PLANS_URL = "/houseplan_files/plans"
 PLANS_DIR = "houseplan/plans"  # relative to the HA configuration directory
@@ -65,5 +65,5 @@ MAX_IMPORT_PREVIEWS_TOTAL = 3
 DEFAULT_CONFIG: dict = {
     "spaces": [],
     "markers": [],
-    "settings": {},
+    "settings": {"bg_mode": "daynight"},
 }

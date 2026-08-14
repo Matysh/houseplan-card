@@ -5,6 +5,13 @@ const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
+  c._openSpaceDialog('create');
+  out.newSpaceUsesDaynight = c._spaceDialog?.bgMode === 'daynight';
+  c._spaceDialog = null;
+  c._importQueue = ['Imported floor'];
+  c._openNextImport();
+  out.floorImportUsesDaynight = c._spaceDialog?.bgMode === 'daynight';
+  c._spaceDialog = null;
   // 1) диалог общих настроек: инвентарь строк и групп (обновлён фичей «Солнце»)
   c._openSettingsDialog(); await c.updateComplete;
   out.rows = sr().querySelectorAll('.gsrow').length;
@@ -67,6 +74,8 @@ checkAll(res, {
     { "href": "https://t.me/ha_houseplan", "target": "_blank", "rel": "noopener" },
   ],
   "saved": {"c": "#ff00ff", "a": 0.5},
+  "newSpaceUsesDaynight": true,
+  "floorImportUsesDaynight": true,
   "lqiBefore": 7,
   "lqiAfter": 0,
 });

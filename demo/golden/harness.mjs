@@ -119,12 +119,13 @@ export function prepareGoldenFixture(scenario) {
       throw new Error(`golden deviceName references missing device: ${scenario.deviceId || '<empty>'}`);
     fixture.devices[scenario.deviceId].name = scenario.deviceName;
   }
-  if (scenario.fillMode || typeof scenario.glowEnabled === 'boolean'
+  if (scenario.fillMode || scenario.bgMode || typeof scenario.glowEnabled === 'boolean'
       || typeof scenario.sunRays === 'boolean' || typeof scenario.showBorders === 'boolean') {
     const space = requireSpace();
     space.settings = {
       ...(space.settings || {}),
       ...(scenario.fillMode ? { fill_mode: scenario.fillMode } : {}),
+      ...(scenario.bgMode ? { bg_mode: scenario.bgMode } : {}),
       ...(typeof scenario.glowEnabled === 'boolean' ? { glow_enabled: scenario.glowEnabled } : {}),
       ...(typeof scenario.sunRays === 'boolean' ? { sun_rays: scenario.sunRays } : {}),
       ...(typeof scenario.showBorders === 'boolean' ? { show_borders: scenario.showBorders } : {}),
@@ -593,6 +594,17 @@ export async function prepareGoldenScenario(page, scenario) {
       if (!trigger) throw new Error('golden decor color trigger missing');
       trigger.click();
       await picker.updateComplete;
+    }
+    if (scenario.dayCycle) {
+      const environment = card.renderRoot.querySelector('.hp-day-cycle-env');
+      const active = card.renderRoot.querySelector('.hp-day-cycle-bg.active');
+      const paper = card.renderRoot.querySelector('.hp-paperg');
+      if (environment?.dataset.dayCyclePhase !== scenario.dayCycle.phase
+          || active?.dataset.dayCycleLayer !== scenario.dayCycle.phase
+          || !active?.getAttribute('style')?.includes(scenario.dayCycle.top)
+          || !paper) {
+        throw new Error(`golden day-cycle contract did not render: ${scenario.id}`);
+      }
     }
     await document.fonts?.ready;
     await frame();

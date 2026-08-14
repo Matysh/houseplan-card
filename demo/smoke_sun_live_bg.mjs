@@ -1,9 +1,7 @@
-// Owner 2026-08-04: «цвет фона не меняется сам с течением времени суток, только
-// после обновления страницы». The day/night sky must follow sun.sun on a plain
-// hass tick — no reload, no requestUpdate() from the outside — and the COMPUTED
-// background of the stage (what the eye sees, not the style attribute) must
-// actually arrive at the sky colour (docs/SUN.md).
-import { launch, check, checkAll, finish } from './serve.mjs';
+// Four-phase Sun background (#146): plain hass ticks update one constant
+// environment tree, never dim the plan, and clock fallback owns a visible-only
+// 30-second lifecycle. Window rays retain their separate north/sun gates.
+import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch({ width: 900, height: 900 }, 1);
 
 const res = await page.evaluate(async () => {
@@ -11,81 +9,76 @@ const res = await page.evaluate(async () => {
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
   const cfg = c._serverCfg;
-  cfg.settings = { ...(cfg.settings || {}), north_deg: 0, bg_mode: 'daynight', sun_rays: true };
-  cfg.spaces.find((s) => s.id === 'f1').openings = [
+  cfg.settings = { ...(cfg.settings || {}), bg_mode: 'daynight', sun_rays: true };
+  cfg.spaces.find((space) => space.id === 'f1').openings = [
     { id: 'wS', type: 'window', x: 0.30, y: 0.86, angle: 0, length: 0.08 },
   ];
   c._cfgEpoch++;
-  // NO requestUpdate anywhere below: production only ever assigns `hass`.
-  const setSun = async (az, el) => {
+
+  // No external requestUpdate: production advances through the hass setter.
+  const setSun = async (azimuth, elevation, rising) => {
     c.hass = { ...c.hass, states: { ...c.hass.states, 'sun.sun': {
-      entity_id: 'sun.sun', state: el > 0 ? 'above_horizon' : 'below_horizon',
-      attributes: { azimuth: az, elevation: el },
+      entity_id: 'sun.sun', state: elevation > 0 ? 'above_horizon' : 'below_horizon',
+      attributes: { azimuth, elevation, rising },
     } } };
     await c.updateComplete;
-    // one paint so the sky lands on screen, not only in the attribute
-    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
   };
   const stage = () => sr().querySelector('.stage');
-  const comp = () => getComputedStyle(stage()).backgroundColor;
-  const dim = () => (sr().querySelector('.zoomwrap').getAttribute('style') || '');
-  const polys = () => sr().querySelectorAll('.sunlayer polygon').length;
-  const hexToRgb = (h) => 'rgb(' + [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)).join(', ') + ')';
+  const env = () => sr().querySelector('.hp-day-cycle-env');
+  const active = () => sr().querySelector('.hp-day-cycle-bg.active');
+  const zoomStyle = () => sr().querySelector('.zoomwrap').getAttribute('style') || '';
+  const rayCount = () => sr().querySelectorAll('.sunlayer polygon').length;
 
-  await setSun(180, 40);
-  out.dayComputedWhite = comp() === 'rgb(255, 255, 255)';
-  out.dayNoDim = !dim().includes('brightness(') || dim().includes('brightness(1.000)');
-  out.dayRays = polys() > 0;
+  // Background needs neither compass nor window-ray geometry.
+  delete cfg.settings.north_deg;
+  await setSun(90, -2, true);
+  out.dawnOnPlainTick = stage().classList.contains('phase-dawn')
+    && env()?.dataset.dayCycleSource === 'sun'
+    && active()?.dataset.dayCycleLayer === 'dawn';
+  out.constantFourLayers = sr().querySelectorAll('.hp-day-cycle-bg').length === 4;
+  out.backgroundIndependentOfNorth = !!stage().classList.contains('daycycle');
+  out.raysStillNeedNorth = rayCount() === 0;
 
-  // the whole point: a NEW hass, nothing else. No reload, no requestUpdate.
-  await setSun(180, -10);
-  out.nightComputedDark = comp() === 'rgb(10, 16, 25)';
-  out.nightDimmed = dim().includes('brightness(0.900');
-  out.nightNoRays = polys() === 0;
+  cfg.settings.north_deg = 0;
+  c._cfgEpoch++;
+  await setSun(180, 40, false);
+  out.dayOnPlainTick = stage().classList.contains('phase-day')
+    && active()?.getAttribute('style').includes('#dce9ef');
+  out.dayRays = rayCount() > 0;
+  out.dayPlanUnfiltered = !zoomStyle().includes('brightness(0.');
 
-  // ...and back, again on a plain tick
-  await setSun(180, 40);
-  out.backToDayComputed = comp() === 'rgb(255, 255, 255)';
-  out.backToDayRays = polys() > 0;
+  await setSun(180, 0, false);
+  out.duskOnPlainTick = stage().classList.contains('phase-dusk')
+    && active()?.dataset.dayCycleLayer === 'dusk';
+  await setSun(180, -6, false);
+  out.exactMinusSixIsNight = stage().classList.contains('phase-night');
+  out.nightLightHidden = env()?.style.getPropertyValue('--hp-day-cycle-sun-opacity') === '0.000';
+  out.nightPlanUnfiltered = !zoomStyle().includes('brightness(0.');
+  out.nightNoRays = rayCount() === 0;
 
-  // a small step still moves the sky (0.1° granularity of the model)...
-  await setSun(180, 20);
-  const twenty = comp();
-  await setSun(180, 12);
-  out.smallStepMovesSky = comp() !== twenty;
+  await setSun(180, 6, true);
+  out.exactPlusSixIsDay = stage().classList.contains('phase-day');
+  out.phaseTransitionIs1100ms = getComputedStyle(active()).transitionDuration === '1.1s';
 
-  // ...but a step the size of a REAL sun update (~1° per 4 minutes) must still
-  // GLIDE: the catch-up jump is for a card that was not watching, never for the
-  // day/night breathing itself (docs/SUN.md).
-  await setSun(180, 12.6);
-  const target = stage().getAttribute('style').split('background:')[1];
-  out.realStepNoSnapClass = !sr().querySelector('.stage.skysnap');
-  out.realStepStillGlides = comp() !== hexToRgb(target); // 45 s transition, not a jump
+  // One invalid required field switches the whole environment atomically to
+  // browser-local time and arms the fallback timer only while visible.
+  await setSun(180, 6, undefined);
+  out.invalidSampleUsesClock = env()?.dataset.dayCycleSource === 'clock';
+  out.clockTimerArmed = c._dayCycleTimer !== 0;
 
-  // A quick tab switch is not a suspended renderer: keep the current painted
-  // sky and hover in place. The old visibility handler cleared both on every
-  // return, producing a one-frame whole-plan flash even after two seconds.
   const ownVisibilityState = Object.getOwnPropertyDescriptor(document, 'visibilityState');
   const room = c._spaceModel().rooms[0];
   c._hoverRoom = { space: c._space, room };
-  c.requestUpdate();
-  await c.updateComplete;
-  const skyBeforeQuickReturn = c._skyElev;
   Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' });
   document.dispatchEvent(new Event('visibilitychange'));
+  out.hiddenStopsClock = c._dayCycleTimer === 0;
   Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
   document.dispatchEvent(new Event('visibilitychange'));
   await c.updateComplete;
-  out.quickReturnKeepsSky = c._skyElev === skyBeforeQuickReturn;
-  out.quickReturnKeepsHover = c._hoverRoom?.room === room;
-  out.quickReturnHasNoSnapFrame = !stage().classList.contains('skysnap')
-    && !stage().classList.contains('hpresume');
+  out.visibleRestartsClock = c._dayCycleTimer !== 0;
+  out.visibilityKeepsHover = c._hoverRoom?.room === room;
   if (ownVisibilityState) Object.defineProperty(document, 'visibilityState', ownVisibilityState);
   else delete document.visibilityState;
-
-  // the tab came back from the background: the sky catches up at once
-  await setSun(180, 25);          // 12° of sun happened while we were not painting
-  out.returnFromHiddenSnaps = comp() === hexToRgb(stage().getAttribute('style').split('background:')[1]);
 
   return out;
 });

@@ -162,9 +162,9 @@ On a room shape: `.filled` (a fill mode is painting it), `.styled`,
 These exist in the DOM and **will** change without notice. Do not build on
 them:
 
-- **Boot and transition classes** — `.hpboot`, `.hpsettle`, `.skysnap`,
-  `.mode-transition`, `.editorchrome.transitioning`,
-  `.daynight` on `.stage`. They exist for one animation frame each and their
+- **Boot and transition classes** — `.hpboot`, `.hpsettle`,
+  `.mode-transition`, `.editorchrome.transitioning`, and the four-phase
+  `.daycycle` / `.phase-*` environment classes. Their
   whole job is to be replaced.
 - **Editor chrome and previews** — `.dtframe`, `.dthandle`, `.dtknob`,
   `.dtbox`, `.dtstem`, `.bdhandle`, `.rszhandle`, `.rszicon`, `.rszframe`,

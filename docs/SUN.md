@@ -1,6 +1,9 @@
 # Sun on the plan — the spec (source of truth)
 
-Status: approved by the owner 2026-08-03. Shipped in v1.56.0.
+Status: window rays approved 2026-08-03 and shipped in v1.56.0; the
+four-phase background was replaced by the owner-approved #146 contract in
+2026-08. The current background contract below supersedes the retained legacy
+notes explicitly marked as historical.
 Scope decisions final: the compass lives in the GENERAL settings with a
 per-space override, the feature is silent until `north_deg` is set
 anywhere, wedges ship for the FULL card only in v1, and mutual shading
@@ -8,19 +11,18 @@ of the building's wings is explicitly NOT computed.
 
 ## Principle
 
-The plan learns where north is, and from that single number plus HA's
-own `sun.sun` the card knows where the sun stands relative to every
-wall. Two visuals follow: the stage background can breathe with the
-day (day → golden hour → dusk → night), and windows on exterior walls
-cast soft wedges of light into their rooms. Everything is display
-only — no entities are created, no services are called.
+Two independent display-only visuals use solar data. The four-phase stage
+background follows a valid `sun.sun` sample or browser-local clock fallback and
+does not need a compass. Window rays use `sun.sun` plus the plan's north to cast
+soft wedges from exterior windows. Neither creates entities nor calls services.
 
 ## Data
 
-- Source: the `sun.sun` entity (`attributes.azimuth` 0–360, 0 = north,
+- Real source: the `sun.sun` entity (`attributes.azimuth` 0–360, 0 = north,
   clockwise; `attributes.elevation` in degrees, negative below the
-  horizon). No `sun.sun` in the install → the whole feature stays
-  silent and the settings dialog says why.
+  horizon; boolean `attributes.rising`). Missing/invalid data sends the
+  background to local-clock fallback; window rays stay off and the settings
+  dialog says why.
 - `sun.sun` is consumed from the live HA state machine. It is valid for
   this core/runtime entity to have no Entity Registry row; registry
   projection must preserve its live state while still excluding rows
@@ -42,12 +44,57 @@ only — no entities are created, no services are called.
   plain number input sits next to it for accessibility and precision.
 - Per-space override in the space settings (empty = inherit), the same
   pattern as `show_lqi` / `fill_mode`.
-- While `north_deg` is null at BOTH levels the whole sun feature is
-  inert: static background, no wedges, nothing computed. The settings
-  dialogs show a hint.
+- While `north_deg` is null at BOTH levels window rays are inert and the
+  settings dialogs show a hint. The four-phase background remains active.
 - Backend validation: integer in 0–359 at both levels.
 
-## Plan background — `settings.bg_mode: 'static' | 'daynight'`
+## Current four-phase background — `settings.bg_mode: 'static' | 'daynight'`
+
+The public setting remains a two-value selector. `static` uses `bg_color`.
+`daynight` paints a decorative environment behind the unchanged plan:
+`dawn`, `day`, `dusk`, or `night`.
+
+- A valid real sample is atomic: finite `sun.sun` azimuth and elevation plus a
+  boolean `rising`. Elevation `<= -6°` is night, `>= +6°` is day, and the band
+  between them is dawn while rising or dusk while falling. Invalid or missing
+  required data switches the whole resolver to browser-local clock time; real
+  and fallback fields are never mixed.
+- Clock fallback uses dawn 05:00–08:00, day 08:00–18:00, dusk 18:00–21:00,
+  and night otherwise. A visible card checks it every 30 seconds, catches up on
+  `pageshow`/visibility return, pauses while hidden, and removes the timer on
+  disconnect.
+- The soft decorative light follows real azimuth/elevation, or the fixed
+  05:00→13:00→21:00 fallback arc. It has zero visible opacity at night.
+- Four constant environment layers cross-fade for exactly 1100 ms with
+  `cubic-bezier(.22,.61,.36,1)`. Reduced motion disables the transition.
+- Only the environment and the zero-offset alpha-aware outline outside the
+  grouped plan-paper footprint change. The plan, paper, floors, room fills,
+  Glow/spill, devices, labels, decor/backdrop, vacuum, hover, and window rays
+  are never dimmed, tinted, faded, blended, or otherwise phase-filtered.
+- Full View, kiosk, and `houseplan-space-card` share the same pure resolver,
+  palette, outline, and clock lifecycle. Plan/Devices/Decor editors remain
+  static.
+- The background is independent of `north_deg`. North remains required only
+  for direction-dependent window rays.
+
+New installations materialize global `daynight`; every manually or
+Floors/Areas-created space materializes its own `daynight`. The storage v1.2
+migration materializes a missing/invalid legacy global token as `static`, so an
+upgrade cannot change an existing plan's appearance. Full and per-space
+export/import likewise materialize compatibility modes; a per-space export
+carries its effective mode and a legacy space import without one becomes
+`static` before merge. Runtime's last-resort missing-token fallback remains
+`static`.
+
+The exact palette, positioning formulas, migration matrix, lifecycle, and
+acceptance criteria are in `docs/specs/146-four-phase-sun-background.md`.
+
+## Historical continuous background (removed by #146)
+
+The remainder of this section documents the pre-#146 elevation-interpolated
+implementation for archaeology only. It is not a current runtime or UX
+contract: the 45-second sky glide, `skysnap`, compass gate, and night
+brightness filter described below were removed.
 
 - Global default in the general settings, per-space override (null =
   inherit). Default `'static'`.
@@ -313,15 +360,17 @@ saving General settings removes it.
 
 ## Edge cases and limits
 
-- No `sun.sun` → silent feature + a hint in the settings dialog.
-- `north_deg` unset everywhere → silent feature + a hint.
+- No valid `sun.sun` sample → the background follows browser-local time;
+  window rays stay off and the settings dialog explains the fallback.
+- `north_deg` unset everywhere → the background still works; window rays stay
+  off and the settings dialog shows the compass hint.
 - Any weather state, including rain and snow → no effect on rays.
 - `prefers-reduced-motion` → no transitions; colors and wedges render
   statically for the current sun position.
 - Kiosk mode → works (same view path).
 - Static `houseplan-space-card` → the background honours the effective
-  `bg_mode`/color; wedges are v1 FULL-CARD ONLY (documented limit).
-- Editors (plan/devices/decor) → no wedges and no day/night: the
+  four-phase `bg_mode`/color and fallback lifecycle; wedges are FULL-CARD ONLY.
+- Editors (plan/devices/decor) → no wedges and no four-phase environment: the
   editor canvases render exactly as before.
 - Mutual shading of the building's own wings (an L-shaped house
   shadowing its inner corner) is NOT computed — a lit window casts its
@@ -335,9 +384,12 @@ saving General settings removes it.
 - `src/sun.ts` — pure logic (angles, day phase, exterior walls, wedge
   quads + clipping, the rim edges and its stops, settings
   inheritance); unit-tested in `test/sun.test.mjs`.
-- `src/houseplan-card.ts` — the memoised wedge layer, the day/night
-  stage background, both settings dialogs (compass dial included).
-- `src/space-render.ts` — the static card's background only.
+- `src/day-cycle-render.ts` — the shared constant environment layers and
+  plan-outline variables for full and static cards.
+- `src/houseplan-card.ts` — the memoised wedge layer, four-phase background
+  lifecycle, and both settings dialogs (compass dial included).
+- `src/space-render.ts` / `src/space-card.ts` — static-card environment and
+  visible-only clock lifecycle.
 - `custom_components/houseplan/validation.py` — the three active sun
   settings plus the accepted legacy global weather field; tests in
   `tests_backend/test_validation.py`.
@@ -359,9 +411,10 @@ saving General settings removes it.
   editor, unaffected by legacy weather settings — and a pixel probe on
   WHITE paper proving the side of the wedge is measurably darker than the paper on either hand
   (the point of the whole change).
-- `demo/smoke_sun_live_bg.mjs` — the sky follows `sun.sun` on a plain
-  `hass` tick with no reload, asserted on the COMPUTED background of the
-  stage; small steps still glide, big ones catch up at once.
+- `demo/smoke_sun_live_bg.mjs` — phases follow real samples on plain `hass`
+  ticks, the plan remains unfiltered, compass independence and atomic clock
+  fallback are preserved, and the fallback timer follows visibility.
+- `demo/golden/matrix.mjs` — deterministic dawn/day/dusk/night visual scenes.
 - `demo/shot_sun_short.mjs` — stills at a low and a high sun
   (`node demo/shot_sun_short.mjs <outdir> <prefix>`).
 - `demo/shot_sun_rim.mjs` — the rim on white paper and on the dark glow

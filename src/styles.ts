@@ -181,6 +181,7 @@ export const cardStyles = css`
     .zoomwrap {
       position: absolute;
       inset: 0;
+      z-index: 1;
     }
     .stage.mode-transition,
     .stage.mode-transition .zoomwrap {
@@ -194,29 +195,54 @@ export const cardStyles = css`
     .stage.mode-transition .hp-paper {
       fill: var(--hp-mode-paper) !important;
     }
-    /* Sun on the plan (docs/SUN.md): the stage breathes with the day over tens
-       of seconds; the plan itself dims at most ~10%. Reduced motion = static. */
-    .stage.daynight {
-      transition: background-color 45s linear;
+    /* Four-phase environment (#146): constant layers cross-fade because CSS
+       gradients themselves are not reliably interpolated. Everything stays
+       behind the plan; the plan tree is never dimmed, tinted or faded. */
+    .hp-day-cycle-env {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+      isolation: isolate;
     }
-    .stage.daynight .zoomwrap {
-      transition: filter 45s linear;
+    .hp-day-cycle-bg {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      overflow: hidden;
+      transition: opacity 1100ms cubic-bezier(.22, .61, .36, 1);
     }
-    .stage.daynight.hpsettle {
-      transition: height 0.25s ease, background-color 45s linear;
+    .hp-day-cycle-bg.active { opacity: 1; }
+    .hp-day-cycle-sun {
+      position: absolute;
+      left: var(--hp-day-cycle-sun-x);
+      top: var(--hp-day-cycle-sun-y);
+      width: clamp(140px, 25cqw, 250px);
+      height: clamp(140px, 25cqw, 250px);
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      filter: blur(10px);
+      opacity: var(--hp-day-cycle-sun-opacity);
+      transition:
+        left 1100ms cubic-bezier(.22, .61, .36, 1),
+        top 1100ms cubic-bezier(.22, .61, .36, 1),
+        opacity 1100ms cubic-bezier(.22, .61, .36, 1);
     }
-    /* Catch-up frame (docs/SUN.md): the sky is out of date because the card
-       was not painting — show the truth at once, the glide comes back on the
-       very next frame. */
-    .stage.daynight.skysnap,
-    .stage.daynight.skysnap .zoomwrap,
-    .stage.daynight.skysnap.hpsettle {
-      transition: none;
+    .stage.mode-transition .hp-day-cycle-env { transition: none; }
+    .stage.daycycle .hp-paperg,
+    .hp-static-stage.daycycle .hp-paperg {
+      filter:
+        drop-shadow(0 0 1px var(--hp-day-cycle-outline-near))
+        drop-shadow(0 0 5px var(--hp-day-cycle-outline-mid))
+        drop-shadow(0 0 10px var(--hp-day-cycle-outline-far));
+      transition: filter 1100ms cubic-bezier(.22, .61, .36, 1);
     }
     @media (prefers-reduced-motion: reduce) {
-      .stage.daynight,
-      .stage.daynight .zoomwrap,
-      .stage.daynight.hpsettle {
+      .hp-day-cycle-bg,
+      .hp-day-cycle-sun,
+      .stage.daycycle .hp-paperg,
+      .hp-static-stage.daycycle .hp-paperg {
         transition: none;
       }
     }
@@ -578,14 +604,6 @@ export const cardStyles = css`
     .stage.mode-devices .hp-paper,
     .stage.mode-decor .hp-paper {
       fill: #ffffff;
-    }
-    /* White day (owner 2026-08-03): at high sun the daynight sky is #ffffff —
-       the same white as a drawn plan's paper. A whisper of a drop shadow on
-       the paper GROUP keeps the sheet's contour readable on the white sky
-       (user units on the 1000-unit canvas ≈ a few screen px). Invisible at
-       night against the dark sky; 'static' mode never gets it. */
-    .stage.daynight .hp-paperg {
-      filter: drop-shadow(0 2px 8px rgba(10, 16, 26, 0.28));
     }
     /* Owner 2026-08-04: «углы границ комнат всё ещё с зубцами». A miter join
        on a 30-45° corner shoots a spike far past the wall (and flips to an

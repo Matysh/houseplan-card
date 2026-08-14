@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 21;
+export const GOLDEN_MATRIX_VERSION = 22;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -35,6 +35,22 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'geometry-view-light-fit', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'day-cycle-dawn-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
+    bgMode: 'daynight', dayCycle: { phase: 'dawn', top: '#aabdd1' },
+    stateOverrides: { 'sun.sun': { attributes: { azimuth: 95, elevation: -2, rising: true } } },
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'day-cycle-day-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
+    bgMode: 'daynight', dayCycle: { phase: 'day', top: '#dce9ef' },
+    stateOverrides: { 'sun.sun': { attributes: { azimuth: 180, elevation: 42, rising: false } } },
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'day-cycle-dusk-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
+    bgMode: 'daynight', dayCycle: { phase: 'dusk', top: '#48536c' },
+    stateOverrides: { 'sun.sun': { attributes: { azimuth: 265, elevation: -2, rising: false } } },
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'day-cycle-night-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
+    bgMode: 'daynight', dayCycle: { phase: 'night', top: '#111a27' },
+    stateOverrides: { 'sun.sun': { attributes: { azimuth: 0, elevation: -12, rising: false } } },
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'geometry-plan-editor-dark', fixture: 'visual', space: 'golden-geometry', mode: 'plan',
     theme: 'dark', viewport: { width: 1180, height: 900 }, ...page },
   { id: 'plan-snap-endpoint-light', fixture: 'visual', space: 'golden-geometry', mode: 'plan',

@@ -34,6 +34,154 @@ export function sunDirOnPlan(azimuth: number, northDeg: number): [number, number
 
 // ---------------- day phase (bg_mode: 'daynight') ----------------
 
+export type DayCyclePhase = 'dawn' | 'day' | 'dusk' | 'night';
+export type DayCycleSource = 'sun' | 'clock';
+
+export interface DayCyclePalette {
+  top: string;
+  bottom: string;
+  horizon: string;
+  sun: string;
+  vignette: string;
+  outlineNear: string;
+  outlineMid: string;
+  outlineFar: string;
+}
+
+/** Exact visual tokens approved in issue #146. One table feeds every surface. */
+export const DAY_CYCLE_PALETTES: Readonly<Record<DayCyclePhase, Readonly<DayCyclePalette>>> =
+  Object.freeze({
+    dawn: Object.freeze({
+      top: '#aabdd1', bottom: '#e8c8b7',
+      horizon: 'rgba(255,201,156,.56)', sun: 'rgba(255,188,125,.78)',
+      vignette: 'rgba(65,72,99,.21)',
+      outlineNear: 'rgba(74,57,61,.25)', outlineMid: 'rgba(255,238,224,.40)',
+      outlineFar: 'rgba(255,224,202,.18)',
+    }),
+    day: Object.freeze({
+      top: '#dce9ef', bottom: '#cbdce3',
+      horizon: 'rgba(255,245,220,.45)', sun: 'rgba(255,239,190,.72)',
+      vignette: 'rgba(65,91,105,.16)',
+      outlineNear: 'rgba(45,62,71,.28)', outlineMid: 'rgba(255,255,255,.42)',
+      outlineFar: 'rgba(255,255,255,.20)',
+    }),
+    dusk: Object.freeze({
+      top: '#48536c', bottom: '#9a7380',
+      horizon: 'rgba(242,156,114,.34)', sun: 'rgba(255,167,113,.55)',
+      vignette: 'rgba(20,26,44,.39)',
+      outlineNear: 'rgba(238,219,225,.40)', outlineMid: 'rgba(229,207,218,.26)',
+      outlineFar: 'rgba(215,190,205,.12)',
+    }),
+    night: Object.freeze({
+      top: '#111a27', bottom: '#1f2f3e',
+      horizon: 'rgba(79,120,151,.16)', sun: 'rgba(169,208,231,0)',
+      vignette: 'rgba(3,8,14,.58)',
+      outlineNear: 'rgba(218,238,249,.56)', outlineMid: 'rgba(174,215,238,.30)',
+      outlineFar: 'rgba(136,194,226,.14)',
+    }),
+  });
+
+export interface DayCycleSun {
+  azimuth: number;
+  elevation: number;
+  rising: boolean;
+}
+
+export interface DayCycleState {
+  phase: DayCyclePhase;
+  source: DayCycleSource;
+  sunX: number;
+  sunY: number;
+  sunOpacity: number;
+}
+
+const finiteNumber = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value);
+
+const clamp = (value: number, min: number, max: number): number =>
+  Math.min(max, Math.max(min, value));
+
+/** Strict environment sample. Window rays deliberately keep using sunStateOf(). */
+export function dayCycleSunOf(hass: any): DayCycleSun | null {
+  const attrs = hass?.states?.['sun.sun']?.attributes;
+  if (!attrs || !finiteNumber(attrs.azimuth) || !finiteNumber(attrs.elevation)
+      || typeof attrs.rising !== 'boolean') return null;
+  return {
+    azimuth: norm360(attrs.azimuth),
+    elevation: attrs.elevation,
+    rising: attrs.rising,
+  };
+}
+
+/** Owner-approved real-sun thresholds. Exact -6 is night; exact +6 is day. */
+export function dayCyclePhaseFromSun(sun: Pick<DayCycleSun, 'elevation' | 'rising'>): DayCyclePhase {
+  if (sun.elevation <= -6) return 'night';
+  if (sun.elevation >= 6) return 'day';
+  return sun.rising ? 'dawn' : 'dusk';
+}
+
+/** Fixed browser-local fallback schedule from the issue attachment. */
+export function dayCyclePhaseFromMinutes(minutes: number): DayCyclePhase {
+  const m = ((Math.floor(Number(minutes) || 0) % 1440) + 1440) % 1440;
+  if (m >= 300 && m < 480) return 'dawn';
+  if (m >= 480 && m < 1080) return 'day';
+  if (m >= 1080 && m < 1260) return 'dusk';
+  return 'night';
+}
+
+export function localDayCycleMinutes(now: Date = new Date()): number {
+  return now.getHours() * 60 + now.getMinutes();
+}
+
+/** Hemisphere-independent east -> centre -> west projection of real azimuth. */
+export function dayCyclePositionFromSun(sun: DayCycleSun): Pick<DayCycleState, 'sunX' | 'sunY' | 'sunOpacity'> {
+  const phase = dayCyclePhaseFromSun(sun);
+  const azimuthRad = (sun.azimuth * Math.PI) / 180;
+  return {
+    sunX: 50 - Math.sin(azimuthRad) * 42,
+    sunY: 78 - (clamp(sun.elevation, 0, 90) / 90) * 64,
+    sunOpacity: phase === 'night' ? 0 : clamp((sun.elevation + 6) / 12, 0, 1),
+  };
+}
+
+/** Decorative 05:00 -> 13:00 -> 21:00 fallback arc from the prototype. */
+export function dayCyclePositionFromMinutes(minutes: number): Pick<DayCycleState, 'sunX' | 'sunY' | 'sunOpacity'> {
+  const m = ((Math.floor(Number(minutes) || 0) % 1440) + 1440) % 1440;
+  if (m < 300 || m >= 1260) return { sunX: 50, sunY: 78, sunOpacity: 0 };
+  const progress = (m - 300) / 960;
+  const dawnRamp = (m - 300) / 120;
+  const duskRamp = (1260 - m) / 120;
+  return {
+    sunX: 8 + progress * 84,
+    sunY: 78 - Math.sin(progress * Math.PI) * 64,
+    sunOpacity: Math.max(0.18, Math.min(dawnRamp, duskRamp, 1)),
+  };
+}
+
+/** One atomic snapshot for phase and decorative light. */
+export function resolveDayCycle(hass: any, now: Date | number = new Date()): DayCycleState {
+  const sun = dayCycleSunOf(hass);
+  if (sun) {
+    return {
+      phase: dayCyclePhaseFromSun(sun),
+      source: 'sun',
+      ...dayCyclePositionFromSun(sun),
+    };
+  }
+  const minutes = typeof now === 'number' ? now : localDayCycleMinutes(now);
+  return {
+    phase: dayCyclePhaseFromMinutes(minutes),
+    source: 'clock',
+    ...dayCyclePositionFromMinutes(minutes),
+  };
+}
+
+/** Stable enough for the fallback ticker; avoids a Lit update when nothing moved. */
+export function dayCycleFingerprint(state: DayCycleState): string {
+  return `${state.source}|${state.phase}|${state.sunX.toFixed(2)}|${state.sunY.toFixed(2)}|`
+    + state.sunOpacity.toFixed(3);
+}
+
 export interface DayPhase {
   /** Stage background color for the current elevation. */
   bg: string;
