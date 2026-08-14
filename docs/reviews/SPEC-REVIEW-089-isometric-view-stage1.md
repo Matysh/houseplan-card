@@ -268,7 +268,7 @@ localStorage и когда разрешён retry.
 - `effectiveView` — реально нарисованный `flat|iso`;
 - исключение в pure geometry/iso template ловится на границе
   `renderIsoScene()`, для `(space, geometryFingerprint)` ставится session latch;
-- при latch effective view = flat, iso geometry больше не вызывается на каждый
+- при latch effective view = flat, iso geometry больше не вызывается на каждом
   HA state update;
 - конфиг/layout и сохранённое предпочтение не меняются автоматически;
 - кнопка отражает `effectiveView` (`aria-pressed=false`), явное повторное
