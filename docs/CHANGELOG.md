@@ -32,6 +32,10 @@
 - Opening and physical-object property dialogs keep their footer actions on one
   desktop line while retaining responsive narrow-screen wrapping
   ([#140](https://github.com/Matysh/houseplan-card/issues/140)).
+- Large plans no longer recompute an unused physical-wall union on every floor
+  switch, and the Plan snap target before the first click updates without
+  rerendering the complete card
+  ([#156](https://github.com/Matysh/houseplan-card/issues/156)).
 - Small fixes and improvements.
 
 ## v1.64.0-beta.2 — 2026-08-14
