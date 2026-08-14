@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   canonicalColumnAngle, columnBody, floorMinusBodies, geometryArea,
   directionalOccluders, intersectionPaths, partitionBody, pointInPhysicalBody,
-  physicalBodySet, pointInOpaquePlanBody, pointInPhysicalGeometry,
+  physicalBodyParts, physicalBodySet, pointInOpaquePlanBody, pointInPhysicalGeometry,
   sameColumnPlacement,
 } from '../test-build/physical-geometry.js';
 import {
@@ -45,6 +45,28 @@ test('joined partitions fill straight and oblique endpoint teeth without changin
     })),
   }, 5, 0.25);
   closeTo(geometryArea(frame.geometry), geometryArea(reversed.geometry), 1e-8);
+});
+
+test('runtime physical parts preserve joined bodies without materializing union geometry', () => {
+  const space = {
+    room_drafts: [], wall_columns: [],
+    partitions: [
+      { id: 'horizontal', a: [-2, 0], b: [0, 0], cm: 10 },
+      { id: 'vertical', a: [0, 0], b: [0, 2], cm: 10 },
+    ],
+  };
+  const parts = physicalBodyParts(space, 5, 0.25);
+  const set = physicalBodySet(space, 5, 0.25);
+  assert.equal(Object.hasOwn(parts, 'geometry'), false,
+    'the production parts API must not hide an eager polygon union');
+  assert.deepEqual(parts, {
+    drafts: set.drafts,
+    partitions: set.partitions,
+    columns: set.columns,
+    patches: set.patches,
+    all: set.all,
+  });
+  assert.ok(set.geometry, 'the explicit geometry API still returns the canonical union');
 });
 
 test('endpoint-on-line T join is computed without splitting or mutating source records', () => {

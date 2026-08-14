@@ -88,12 +88,38 @@ const out = await page.evaluate(async () => {
       || (close(x, 500) && (close(y, 200) || close(y, 300)));
   });
   const cachedGeometry = card._planSnapGeometryCache?.value;
+  const staticNodesBefore = [...overlay().querySelectorAll(
+    '.plan-snap-line, .plan-snap-node[data-kind="endpoint"]',
+  )];
+  const originalRequestUpdate = card.requestUpdate;
+  let initialHoverUpdates = 0;
+  card.requestUpdate = function (...args) {
+    initialHoverUpdates++;
+    return originalRequestUpdate.apply(this, args);
+  };
 
   stage.dispatchEvent(eventAt(104, 104));
   await card.updateComplete;
   result.endpointHoverIsActive = active()?.getAttribute('data-kind') === 'endpoint'
     && close(+active().getAttribute('cx'), 100) && close(+active().getAttribute('cy'), 100)
     && close(+active().getAttribute('r'), card._cmToUnits(10));
+  stage.dispatchEvent(eventAt(735, 606));
+  await card.updateComplete;
+  const initialLineActive = active()?.getAttribute('data-kind') === 'line';
+  stage.dispatchEvent(eventAt(300, 100));
+  await card.updateComplete;
+  const initialMissInactive = !active();
+  stage.dispatchEvent(eventAt(104, 104));
+  await card.updateComplete;
+  card.requestUpdate = originalRequestUpdate;
+  result.initialHoverAvoidsFullCardUpdate = initialHoverUpdates === 0;
+  result.initialHoverCyclesCandidateKinds = initialLineActive && initialMissInactive
+    && active()?.getAttribute('data-kind') === 'endpoint';
+  result.initialHoverKeepsStaticNodeIdentity = staticNodesBefore.every(
+    (node, index) => node === overlay().querySelectorAll(
+      '.plan-snap-line, .plan-snap-node[data-kind="endpoint"]',
+    )[index],
+  );
   card._markupClick(eventAt(104, 104, 'click', { shiftKey: true }));
   await card.updateComplete;
   result.endpointOverridesGridAndShift = card._path.length === 1

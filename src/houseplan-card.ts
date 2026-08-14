@@ -7,6 +7,7 @@
  * The icon layout is stored on the server (houseplan/layout/*), fallback — localStorage.
  */
 import { LitElement, html, svg, nothing, TemplateResult, PropertyValues } from 'lit';
+import { guard } from 'lit/directives/guard.js';
 import { repeat } from 'lit/directives/repeat.js';
 import './hp-dialog';
 import type { HpDialog } from './hp-dialog';
@@ -130,7 +131,7 @@ import {
   directionalOccluders, floorMinusBodies, geometryArea, geometryOuterRings,
   geometryAllRings, intersectionPaths, partitionBody, polyclipPathD,
   pointInOpaquePlanBody, pointInPhysicalBody, sameColumnPlacement,
-  physicalBodies, physicalBodySet,
+  physicalBodies, physicalBodyParts,
 } from './physical-geometry';
 import {
   buildPlanSnapGeometry, findSharedRoomSnapSegment, resolvePlanSnap,
@@ -1201,7 +1202,7 @@ class HouseplanCard extends LitElement {
   private _planSnapGeometryCache: { key: string; value: PlanSnapGeometry } | null = null;
   private _physicalBodiesCache: {
     key: string; drafts: number[][][]; partitions: number[][][];
-    columns: number[][][]; patches: number[][][]; all: number[][][]; geometry: any | null;
+    columns: number[][][]; patches: number[][][]; all: number[][][];
   } | null = null;
   private _cleanFloorCache = new Map<string, {
     floor: number[][]; geom: any; path: string; area: number;
@@ -6036,6 +6037,7 @@ class HouseplanCard extends LitElement {
 
   private _clearPlanSnapHover(clearCursor = true): void {
     this._planSnapHover = null;
+    this._syncPlanSnapActiveMarker(null);
     if (clearCursor) this._cursorPt = null;
   }
 
@@ -11180,6 +11182,13 @@ class HouseplanCard extends LitElement {
     if (architectural) {
       const resolved = this._resolvePlanDrawPoint(raw, ev.shiftKey);
       this._planSnapHover = { contextKey: resolved.contextKey, candidate: resolved.candidate };
+      // Before the first click there is no rubber-band to repaint. Updating the
+      // dedicated marker avoids walking the complete large-house Lit tree for
+      // every mouse move while click still resolves from the event coordinate.
+      if (!this._path.length) {
+        this._syncPlanSnapActiveMarker(resolved.candidate);
+        return;
+      }
       this._cursorPt = resolved.point;
       return;
     }
@@ -11659,7 +11668,7 @@ class HouseplanCard extends LitElement {
   private _physicalBodiesR(space = this._spaceModel()): number[][][] {
     const key = `${space.id}|${this._cfgEpoch}|${this._cellCm}|${this._gridPitch}`;
     if (this._physicalBodiesCache?.key === key) return this._physicalBodiesCache.all;
-    const frame = physicalBodySet(
+    const frame = physicalBodyParts(
       space, this._cellCm, this._gridPitch, this._gridPitch * 0.0002,
     );
     this._physicalBodiesCache = { key, ...frame };
@@ -16699,33 +16708,50 @@ class HouseplanCard extends LitElement {
     const active = this._activePlanSnapCandidate;
     const staticRadius = wallCmToUnits(5, this._cellCm, this._gridPitch);
     const activeRadius = wallCmToUnits(10, this._cellCm, this._gridPitch);
-    const activeAt = (point: readonly number[]) => !!active && samePoint(
-      [point[0], point[1]], active.point, this._gridPitch * 0.0002,
-    );
-    const activeHasStaticNode = !!active && geometry.endpoints.some((endpoint) => activeAt(endpoint.point));
     return svg`<g class="plan-snap-overlay" data-hp="plan-snap-overlay"
       data-segment-count=${geometry.segments.length}
       data-endpoint-count=${geometry.endpoints.length}
       aria-hidden="true" pointer-events="none">
-      ${geometry.segments.map((segment) => svg`<line class="plan-snap-line"
-        data-key=${segment.key} data-source-kind=${segment.sourceKind}
-        x1=${segment.a[0]} y1=${segment.a[1]} x2=${segment.b[0]} y2=${segment.b[1]}
-        vector-effect="non-scaling-stroke" pointer-events="none"></line>`)}
-      ${geometry.endpoints.map((endpoint) => {
-        const isActive = activeAt(endpoint.point);
-        return svg`<circle class="plan-snap-node ${isActive ? 'active' : ''}"
-          data-kind="endpoint" data-key=${endpoint.key} data-active=${isActive ? 'true' : 'false'}
-          cx=${endpoint.point[0]} cy=${endpoint.point[1]}
-          r=${isActive ? activeRadius : staticRadius}
-          pointer-events="none"></circle>`;
-      })}
-      ${active && !activeHasStaticNode
-        ? svg`<circle class="plan-snap-node active dynamic" data-kind=${active.kind}
-            data-key=${active.key} data-active="true"
-            cx=${active.point[0]} cy=${active.point[1]} r=${activeRadius}
-            pointer-events="none"></circle>`
-        : nothing}
+      ${guard([geometry, staticRadius], () => svg`
+        ${geometry.segments.map((segment) => svg`<line class="plan-snap-line"
+          data-key=${segment.key} data-source-kind=${segment.sourceKind}
+          x1=${segment.a[0]} y1=${segment.a[1]} x2=${segment.b[0]} y2=${segment.b[1]}
+          vector-effect="non-scaling-stroke" pointer-events="none"></line>`)}
+        ${geometry.endpoints.map((endpoint) => svg`<circle class="plan-snap-node"
+          data-kind="endpoint" data-key=${endpoint.key} data-active="false"
+          cx=${endpoint.point[0]} cy=${endpoint.point[1]} r=${staticRadius}
+          pointer-events="none"></circle>`)}
+      `)}
+      <circle class="plan-snap-node ${active ? 'active' : ''} ${active?.kind === 'line' ? 'dynamic' : ''}"
+        data-hp="plan-snap-active-marker"
+        data-kind=${active?.kind ?? nothing} data-key=${active?.key ?? nothing}
+        data-active=${active ? 'true' : 'false'}
+        cx=${active?.point[0] ?? 0} cy=${active?.point[1] ?? 0} r=${activeRadius}
+        visibility=${active ? 'visible' : 'hidden'} pointer-events="none"></circle>
     </g>` as unknown as TemplateResult;
+  }
+
+  /** Update the only pointer-dependent node without scheduling a full card render. */
+  private _syncPlanSnapActiveMarker(candidate: PlanSnapCandidate | null): void {
+    const marker = this.renderRoot?.querySelector<SVGCircleElement>(
+      '[data-hp="plan-snap-active-marker"]',
+    );
+    if (!marker) return;
+    marker.setAttribute('class', `plan-snap-node${candidate ? ' active' : ''}${
+      candidate?.kind === 'line' ? ' dynamic' : ''
+    }`);
+    marker.setAttribute('data-active', candidate ? 'true' : 'false');
+    marker.setAttribute('visibility', candidate ? 'visible' : 'hidden');
+    if (!candidate) {
+      marker.removeAttribute('data-kind');
+      marker.removeAttribute('data-key');
+      return;
+    }
+    marker.setAttribute('data-kind', candidate.kind);
+    marker.setAttribute('data-key', candidate.key);
+    marker.setAttribute('cx', String(candidate.point[0]));
+    marker.setAttribute('cy', String(candidate.point[1]));
+    marker.setAttribute('r', String(wallCmToUnits(10, this._cellCm, this._gridPitch)));
   }
 
   /** Physical depth for one immutable architectural snap segment. */

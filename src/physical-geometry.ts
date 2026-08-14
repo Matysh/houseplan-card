@@ -87,10 +87,10 @@ export function physicalBodies(
   cellCm: number,
   gridPitch: number,
 ): number[][][] {
-  return physicalBodySet(space, cellCm, gridPitch).all;
+  return physicalBodyParts(space, cellCm, gridPitch).all;
 }
 
-export interface PhysicalBodySet {
+export interface PhysicalBodyParts {
   drafts: number[][][];
   partitions: number[][][];
   columns: number[][][];
@@ -98,17 +98,24 @@ export interface PhysicalBodySet {
   patches: number[][][];
   /** Canonical independent volume inputs for boolean render/floor/light consumers. */
   all: number[][][];
+}
+
+export interface PhysicalBodySet extends PhysicalBodyParts {
   /** Unioned geometry without raw overlap/butt-face boundaries. */
   geometry: any | null;
 }
 
-/** Raw editable bodies plus their computed, order-independent junction volumes. */
-export function physicalBodySet(
+/**
+ * Raw editable bodies plus their computed, order-independent junction volumes.
+ * Most runtime consumers need these polygons directly and must not pay for an
+ * additional polygon union which they never read.
+ */
+export function physicalBodyParts(
   space: Pick<SpaceModel, 'partitions' | 'room_drafts' | 'wall_columns'>,
   cellCm: number,
   gridPitch: number,
   epsilon = Math.max(gridPitch * 0.0002, 1e-9),
-): PhysicalBodySet {
+): PhysicalBodyParts {
   const draftSegments: LinearWallSegment[] = [];
   const partitionSegments: LinearWallSegment[] = [];
   const drafts: number[][][] = [];
@@ -142,7 +149,18 @@ export function physicalBodySet(
     [...draftSegments, ...partitionSegments], epsilon,
   );
   const all = [...drafts, ...partitions, ...patches, ...columns];
-  return { drafts, partitions, columns, patches, all, geometry: unionBodies(all) };
+  return { drafts, partitions, columns, patches, all };
+}
+
+/** Explicit union consumer retained for geometry queries and pure tests. */
+export function physicalBodySet(
+  space: Pick<SpaceModel, 'partitions' | 'room_drafts' | 'wall_columns'>,
+  cellCm: number,
+  gridPitch: number,
+  epsilon = Math.max(gridPitch * 0.0002, 1e-9),
+): PhysicalBodySet {
+  const parts = physicalBodyParts(space, cellCm, gridPitch, epsilon);
+  return { ...parts, geometry: unionBodies(parts.all) };
 }
 
 export function unionBodies(bodies: number[][][]): any | null {

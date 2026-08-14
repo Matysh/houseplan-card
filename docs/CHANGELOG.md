@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Large plans no longer recompute an unused physical-wall union on every floor
+  switch, and the Plan snap target before the first click updates without
+  rerendering the complete card, removing the `v1.64.0` release performance
+  regressions while preserving the same geometry and snap behaviour
+  ([#156](https://github.com/Matysh/houseplan-card/issues/156)).
+
 ## v1.64.0 — 2026-08-14
 
 - **Follows the Sun** now gives the plan a four-phase dawn/day/dusk/night
