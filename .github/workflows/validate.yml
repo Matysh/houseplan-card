@@ -57,7 +57,57 @@ jobs:
         run: |
           node scripts/process-gate.mjs --github-range --issues
 
+  # Классификация изменённых путей: тяжёлые job идут только там, где менялось
+  # относящееся к ним. НА DEV ФИЛЬТРОВ НЕТ: гейт беты принимает «зелёный Validate
+  # на точном SHA», и если объём прогона зависит от diff, «зелёный» перестаёт
+  # значить одно и то же — кандидат релиза (манифесты + changelog) пропустил бы
+  # браузерные тесты, а прогон с пропущенными job всё равно success. Фильтры
+  # экономят на ветках задач, где Validate — ранний сигнал: настоящую приёмку
+  # там делает код-ревью, которое гоняет гейты само (#127).
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.classify.outputs.frontend }}
+      backend: ${{ steps.classify.outputs.backend }}
+      integration: ${{ steps.classify.outputs.integration }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - id: classify
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.sha }}
+          REF: ${{ github.ref }}
+        run: |
+          if [ "$REF" = "refs/heads/dev" ]; then
+            echo "dev: без фильтров, всё true"
+            printf 'frontend=true\nbackend=true\nintegration=true\n' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          zero=$(printf '%040d' 0)
+          base="$BEFORE_SHA"
+          if [ "$EVENT_NAME" = "pull_request" ]; then base="$BASE_SHA"; fi
+          # Новая ветка: before нулевой, диапазон считается от merge-base с dev,
+          # иначе классифицировалась бы вся история.
+          if [ -z "$base" ] || [ "$base" = "$zero" ] \
+             || ! git cat-file -e "$base" 2>/dev/null; then
+            git fetch -q origin dev
+            base=$(git merge-base origin/dev "$HEAD_SHA" || echo "$HEAD_SHA~1")
+          fi
+          files=$(git diff --name-only "$base" "$HEAD_SHA")
+          printf '%s\n' "$files" | head -50
+          has() { printf '%s\n' "$files" | grep -qE "$1" && echo true || echo false; }
+          {
+            echo "frontend=$(has '^(src/|demo/|test/|dist/|custom_components/houseplan/frontend/|package(-lock)?\.json$|rollup\.config\.mjs$|tsconfig)')"
+            echo "backend=$(has '^(custom_components/.*\.py$|tests_backend/|pytest\.ini$)')"
+            echo "integration=$(has '^(custom_components/houseplan/manifest\.json$|hacs\.json$|custom_components/.*\.py$|custom_components/.*/translations/)')"
+          } >> "$GITHUB_OUTPUT"
+
   hacs:
+    needs: changes
+    if: needs.changes.outputs.integration == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -67,6 +117,8 @@ jobs:
           category: integration
 
   hassfest:
+    needs: changes
+    if: needs.changes.outputs.integration == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -74,6 +126,8 @@ jobs:
         uses: home-assistant/actions/hassfest@master
 
   frontend:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -194,6 +248,8 @@ jobs:
           path: artifacts/performance-smoke
 
   backend:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
