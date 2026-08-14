@@ -26,6 +26,7 @@ import { presentationSnapshotKey } from './render-device-snapshot';
 import { deviceFaceStyle, renderDeviceFace } from './device-face';
 import { valueBadgeTitle } from './device-value-badge';
 import { contentFingerprint } from './visual-continuity';
+import type { VirtualLightSnapshot } from './virtual-light-state';
 import {
   spaceModels, roomCenter, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, NORM_W,
   GRID_STEP_N, GRID_PITCH,
@@ -75,6 +76,7 @@ export interface StaticRenderOpts {
   showTemperature?: boolean;
   showSignal?: boolean;
   reducedMotion?: boolean;
+  virtualLights?: VirtualLightSnapshot | null;
   /**
    * Resolve a stored content url to what the DOM may actually request — the
    * plan lives behind `requires_auth`, so it needs an `authSig` signature.
@@ -191,7 +193,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       fill,
       fill === 'lqi' && room.area ? areaLqi(planHass, spaceDevs, room.area) : null,
       fill === 'light'
-        ? resolvedLightState(resolvedLightSources(planHass, spaceDevs, room))
+        ? resolvedLightState(resolvedLightSources(planHass, spaceDevs, room, o.virtualLights))
         : 'none',
       fill === 'temp' && room.area ? areaTemp(planHass, spaceDevs, room.area) : null,
       disp.tempMin,
@@ -260,7 +262,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       })
     : [];
 
-  const planLightSources = resolvedLightSources(planHass, devs);
+  const planLightSources = resolvedLightSources(planHass, devs, null, o.virtualLights);
   const markers = devs.map((d) => {
     const p = markerPos(d, o.layout, o.cfg, defPos, space);
     const left = ((p.x - vb[0]) / vb[2]) * 100;

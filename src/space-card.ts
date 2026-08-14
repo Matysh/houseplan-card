@@ -93,6 +93,7 @@ class HouseplanSpaceCard extends LitElement {
   private _capturedSnapshotSequence = -1;
   private _capturedSnapshotDevices: DevItem[] | null = null;
   private _capturedSnapshotActivity = '';
+  private _capturedSnapshotVirtual = '';
   private _activityRuntime = new Map<string, FiniteActivityRuntime>();
   private _reducedMotion = false;
   private _motionMedia?: MediaQueryList;
@@ -304,7 +305,9 @@ class HouseplanSpaceCard extends LitElement {
       return;
     }
     const live = new Set<string>();
-    const planLightSources = resolvedLightSources(planHass, devices);
+    const planLightSources = resolvedLightSources(
+      planHass, devices, null, this._snap?.virtualLights,
+    );
     for (const device of devices) {
       if (device.hidden) continue;
       // Finite edge history belongs only to the one mode that can present it.
@@ -354,9 +357,12 @@ class HouseplanSpaceCard extends LitElement {
       .map(([id, runtime]) => `${id}:${runtime.gen}:${runtime.flashTs}:`
         + `${runtime.flashKind && (runtime.expiresAt || runtime.flashTs + 3300) > now ? 1 : 0}`)
       .join('|');
+    const virtualFingerprint = this._snap
+      ? `${this._snap.virtualLights.configRev}:${this._snap.virtualLights.rev}` : '';
     if (this._capturedSnapshotSequence === this._hassSequence
         && this._capturedSnapshotDevices === this._devices
-        && this._capturedSnapshotActivity === activity) return;
+        && this._capturedSnapshotActivity === activity
+        && this._capturedSnapshotVirtual === virtualFingerprint) return;
     const planHass = activeRegistryHass(this.hass, haRegistrySnapshot(this.hass));
     const presentations = new Map<string, ReturnType<typeof resolveDevicePresentation>>();
     const entityIds = new Set<string>(['sun.sun']);
@@ -382,7 +388,9 @@ class HouseplanSpaceCard extends LitElement {
       if (opening.contact) entityIds.add(opening.contact);
       if (opening.lock) entityIds.add(opening.lock);
     }
-    const planLightSources = resolvedLightSources(planHass, this._devices);
+    const planLightSources = resolvedLightSources(
+      planHass, this._devices, null, this._snap?.virtualLights,
+    );
     for (const device of this._devices) {
       for (const showLqi of [false, true]) {
         presentations.set(presentationSnapshotKey(device.id, showLqi), resolveDevicePresentation(
@@ -407,6 +415,7 @@ class HouseplanSpaceCard extends LitElement {
     this._capturedSnapshotSequence = this._hassSequence;
     this._capturedSnapshotDevices = this._devices;
     this._capturedSnapshotActivity = activity;
+    this._capturedSnapshotVirtual = virtualFingerprint;
     if (!this._visibleDeviceSnapshot || this._continuity.state === 'steady') {
       this._visibleDeviceSnapshot = snapshot;
       this._candidateDeviceSnapshot = null;
@@ -454,6 +463,7 @@ class HouseplanSpaceCard extends LitElement {
       snap?.configFingerprint || contentFingerprint(snap?.config),
       snap?.layoutRev || 0,
       snap?.layoutFingerprint || contentFingerprint(snap?.layout),
+      snap ? `${snap.virtualLights.configRev}:${snap.virtualLights.rev}` : '',
       this._config?.space || '',
       this._stageWidth,
       this.hass?.themes?.darkMode ?? this.hass?.themes?.default_theme ?? '',
@@ -577,6 +587,8 @@ class HouseplanSpaceCard extends LitElement {
         || this._snap.configFingerprint !== snap.configFingerprint;
       const layoutChanged = !this._snap
         || this._snap.layoutFingerprint !== snap.layoutFingerprint;
+      const virtualLightsChanged = !this._snap
+        || this._snap.virtualLights !== snap.virtualLights;
       if (configChanged && !await this._signer.prepareImage(
         this.hass, this._candidateBackdrop(snap.config),
       )) {
@@ -591,7 +603,7 @@ class HouseplanSpaceCard extends LitElement {
           && this._continuity.state === 'steady') {
         this._beginContinuityCandidate('structural-response', true);
       }
-      if (configChanged || layoutChanged) {
+      if (configChanged || layoutChanged || virtualLightsChanged) {
         this._snap = snap;
       } else if (this._snap) {
         // Revision-only echoes are metadata, not a new visual candidate.
@@ -600,6 +612,7 @@ class HouseplanSpaceCard extends LitElement {
       }
       if (configChanged) this._continuity.note('config-candidate', { configRev: snap.rev });
       if (layoutChanged) this._continuity.note('layout-candidate', { layoutRev: snap.layoutRev });
+      if (virtualLightsChanged) this._capturedSnapshotSequence = -1;
       this._loadedOnce = true;
       this._connectionWasLost = false;
       this._continuityDataReady = true;
@@ -720,6 +733,7 @@ class HouseplanSpaceCard extends LitElement {
       presentations: deviceSnapshot?.presentations,
       activityRuntime: this._activityRuntime,
       reducedMotion: this._reducedMotion,
+      virtualLights: this._snap?.virtualLights,
       liveStates: this._config.live_states !== false,
       showTemperature: this._config.show_temperature !== false,
       showSignal: this._config.show_signal !== false,

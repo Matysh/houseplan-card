@@ -103,10 +103,19 @@ import {
 } from './devices';
 import {
   formatToggleIntent, projectedTapAction, resolveToggleIntent,
-  sameToggleCommandTargets, toggleCoverEntity, toggleIntentName,
+  sameToggleOperationTargets, toggleCoverEntity, toggleIntentName, toggleOperation,
   type ResolvedToggleIntent, type ToggleNextEffect, type ToggleNoneReason,
   type ToggleSkipReason,
 } from './device-toggle';
+import {
+  adoptVirtualLightServerSnapshot,
+  applyVirtualLightEvent,
+  reconcileVirtualLightSnapshot,
+  virtualLightFingerprint,
+  virtualLightSnapshot,
+  virtualLightWire,
+  type VirtualLightSnapshot,
+} from './virtual-light-state';
 import type {
   OpeningCfg,
   RoomCfg, RoomDraftCfg, PartitionCfg, WallColumnCfg,
@@ -624,10 +633,13 @@ class HouseplanCard extends LitElement {
   private _cfgContentFingerprint = '';
   private _unsubCfg: (() => void) | null = null;
   private _unsubLayout: (() => void) | null = null;
+  private _unsubVirtual: (() => void) | null = null;
   private _liveSyncAttempt: Promise<void> | null = null;
   private _liveSyncGeneration = 0;
+  private _liveSyncConnection: any = null;
   private _layoutRev = 0;
   private _layoutContentFingerprint = '';
+  private _virtualLights: VirtualLightSnapshot = virtualLightSnapshot(null);
   /** One-deep server snapshot; invalidated by the first later plan edit. */
   private _canOptimizeUndo = false;
   private _undoKind: 'optimize' | 'import' | null = null;
@@ -1569,6 +1581,7 @@ class HouseplanCard extends LitElement {
   private _capturedSnapshotLayout: Record<string, { x: number; y: number; s?: string; k?: number }> | null = null;
   private _capturedSnapshotActivity = '';
   private _capturedSnapshotConfigEpoch = -1;
+  private _capturedSnapshotVirtual = '';
   private _lastValidStageSize: [number, number] | null = null;
   private _pendingRefitSize: [number, number] | null = null;
   private _refitRaf = 0;
@@ -1944,12 +1957,17 @@ class HouseplanCard extends LitElement {
       this._unsubLayout();
       this._unsubLayout = null;
     }
+    if (this._unsubVirtual) {
+      this._unsubVirtual();
+      this._unsubVirtual = null;
+    }
     if (this._unsubTrail) {
       this._unsubTrail();
       this._unsubTrail = undefined;
     }
     this._liveSyncGeneration++;
     this._liveSyncAttempt = null;
+    this._liveSyncConnection = null;
     clearTimeout(this._layoutSyncTimer);
     clearTimeout(this._duplicateColumnTimer);
     for (const timer of this._glowFadeTimers.values()) clearTimeout(timer);
@@ -2302,6 +2320,7 @@ class HouseplanCard extends LitElement {
         this._layout = c.layout || {};
         this._layoutRev = c.layout_rev || 0;
         this._layoutContentFingerprint = c.layout_fingerprint || contentFingerprint(this._layout);
+        this._virtualLights = virtualLightSnapshot(c.virtual_lights, this._cfgRev);
         this._serverStorage = true;
         this._adoptInitialSpace(this._model);
       }
@@ -2696,6 +2715,9 @@ class HouseplanCard extends LitElement {
       // keep the accepted identity paired with exactly what is cached.
       this._cfgContentFingerprint = contentFingerprint(this._serverCfg);
       this._layoutContentFingerprint = contentFingerprint(this._layout);
+      this._virtualLights = reconcileVirtualLightSnapshot(
+        this._virtualLights, this._serverCfg, this._cfgRev,
+      );
       localStorage.setItem(LS_CFG, JSON.stringify({
         config: this._serverCfg,
         rev: this._cfgRev,
@@ -2703,6 +2725,7 @@ class HouseplanCard extends LitElement {
         layout: this._layout,
         layout_rev: this._layoutRev,
         layout_fingerprint: this._layoutContentFingerprint,
+        virtual_lights: virtualLightWire(this._virtualLights),
       }));
     } catch {
       /* ignore */
@@ -3182,6 +3205,19 @@ class HouseplanCard extends LitElement {
       this._cfgContentFingerprint = nextCfgFingerprint;
     }
     this._cfgRev = cfgResp?.rev ?? this._cfgRev;
+    if (cfgResp && ('virtual_lights' in cfgResp || 'config' in cfgResp)) {
+      const nextVirtualLights = adoptVirtualLightServerSnapshot(
+        this._virtualLights,
+        cfgResp.virtual_lights,
+        this._cfgRev,
+        'virtual_lights' in cfgResp,
+      );
+      if (virtualLightFingerprint(nextVirtualLights)
+          !== virtualLightFingerprint(this._virtualLights)) {
+        this._virtualLights = nextVirtualLights;
+        this._capturedSnapshotVirtual = '';
+      }
+    }
 
     let layoutChanged = false;
     if (layResp !== undefined || layoutOverride !== undefined) {
@@ -3305,7 +3341,21 @@ class HouseplanCard extends LitElement {
   /** Best-effort live sync starts only after the initial snapshot is usable. */
   private _ensureLiveSyncSubscriptions(): void {
     const connection = this.hass?.connection;
-    if (!connection || this._liveSyncAttempt) return;
+    if (!connection) return;
+    if (connection !== this._liveSyncConnection) {
+      this._unsubCfg?.();
+      this._unsubCfg = null;
+      this._unsubLayout?.();
+      this._unsubLayout = null;
+      this._unsubTrail?.();
+      this._unsubTrail = undefined;
+      this._unsubVirtual?.();
+      this._unsubVirtual = null;
+      this._liveSyncGeneration++;
+      this._liveSyncAttempt = null;
+      this._liveSyncConnection = connection;
+    }
+    if (this._liveSyncAttempt) return;
     const generation = this._liveSyncGeneration;
     const attempts: Array<() => Promise<void>> = [];
     const subscribe = (
@@ -3353,6 +3403,19 @@ class HouseplanCard extends LitElement {
       (unsubscribe) => { this._unsubLayout = unsubscribe; },
       'houseplan_layout_updated',
       (ev: any) => this._onLayoutEvent(Number(ev?.data?.rev ?? -1)),
+    );
+    subscribe(
+      () => this._unsubVirtual,
+      (unsubscribe) => { this._unsubVirtual = unsubscribe; },
+      'houseplan_virtual_light_updated',
+      (ev: any) => {
+        const next = applyVirtualLightEvent(this._virtualLights, ev?.data);
+        if (next === this._virtualLights) return;
+        this._virtualLights = next;
+        this._capturedSnapshotVirtual = '';
+        this._cacheSnapshot();
+        this.requestUpdate();
+      },
     );
 
     if (!attempts.length) return;
@@ -3497,10 +3560,12 @@ class HouseplanCard extends LitElement {
         + `${runtime.flashKind
           && (runtime.expiresAt || runtime.flashTs + ACTIVITY_WINDOW_MS) > now ? 1 : 0}`)
       .join('|');
+    const virtualFingerprint = virtualLightFingerprint(this._virtualLights);
     if (this._capturedSnapshotSequence === this._hassSequence
         && this._capturedSnapshotDevices === this._devices
         && this._capturedSnapshotLayout === this._layout
         && this._capturedSnapshotConfigEpoch === this._cfgEpoch
+        && this._capturedSnapshotVirtual === virtualFingerprint
         && this._capturedSnapshotActivity === activity) return;
     const planHass = this._planHass;
     const presentations = new Map<string, ResolvedDevicePresentation>();
@@ -3549,7 +3614,9 @@ class HouseplanCard extends LitElement {
         ));
       }
     }
-    const planLightSources = resolvedLightSources(planHass, this._devices);
+    const planLightSources = resolvedLightSources(
+      planHass, this._devices, null, this._virtualLights,
+    );
     for (const device of this._devices) {
       for (const showLqi of [false, true]) {
         presentations.set(presentationSnapshotKey(device.id, showLqi), resolveDevicePresentation(
@@ -3605,6 +3672,7 @@ class HouseplanCard extends LitElement {
     this._capturedSnapshotLayout = this._layout;
     this._capturedSnapshotActivity = activity;
     this._capturedSnapshotConfigEpoch = this._cfgEpoch;
+    this._capturedSnapshotVirtual = virtualFingerprint;
     if (!this._visibleDeviceSnapshot || this._continuity.state === 'steady') {
       this._visibleDeviceSnapshot = snapshot;
       this._candidateDeviceSnapshot = null;
@@ -4287,10 +4355,27 @@ class HouseplanCard extends LitElement {
     };
     if (action === 'toggle') {
       const initial = this._toggleIntent(actionDevice);
-      if (!initial?.command) return; // configured no-target is an intentional, quiet no-op
+      if (!initial || !toggleOperation(initial)) return; // configured no-target is an intentional, quiet no-op
       const execute = (intent: ResolvedToggleIntent): void => {
-        const command = intent.command;
-        if (!command) return;
+        const operation = toggleOperation(intent);
+        if (!operation) return;
+        if (operation.kind === 'virtual-light') {
+          this.hass.callWS({
+            type: 'houseplan/virtual_light/toggle',
+            marker_id: operation.markerId,
+          }).then((result: any) => {
+            const next = applyVirtualLightEvent(this._virtualLights, result);
+            if (next === this._virtualLights) return;
+            this._virtualLights = next;
+            this._capturedSnapshotVirtual = '';
+            this._cacheSnapshot();
+            this.requestUpdate();
+          }).catch((e: any) => this._showToast(this._t(
+            'toast.virtual_light_toggle_failed', { err: this._errText(e) },
+          )));
+          return;
+        }
+        const { command } = operation;
         this.hass.callService(command.domain, command.service, command.data)
           .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
       };
@@ -4301,7 +4386,7 @@ class HouseplanCard extends LitElement {
           exec: () => {
             const currentDevice = this._devices.find((item) => item.id === actionDevice.id);
             const current = currentDevice ? this._toggleIntent(currentDevice) : null;
-            if (!current?.command || !sameToggleCommandTargets(initial.command, current.command)) {
+            if (!current || !sameToggleOperationTargets(initial, current)) {
               this._showToast(this._t('toast.tap_target_changed'));
               return;
             }
@@ -9956,7 +10041,9 @@ class HouseplanCard extends LitElement {
         mode,
         mode === 'lqi' && room.area ? this._roomLqi(room.area) : null,
         mode === 'light'
-          ? resolvedLightState(resolvedLightSources(this._renderPlanHass, this._renderDevices, room))
+          ? resolvedLightState(resolvedLightSources(
+            this._renderPlanHass, this._renderDevices, room, this._virtualLights,
+          ))
           : 'none',
         mode === 'temp' ? this._roomTemp(room) : null,
         disp.tempMin,
@@ -13468,7 +13555,9 @@ class HouseplanCard extends LitElement {
     } = this._lightBarriers(space, polys, physical);
     // Resolve against the whole plan: a controller and its passive lamp may
     // legitimately live in different spaces. Ownership is filtered afterwards.
-    const resolvedSources = resolvedLightSources(this._renderPlanHass, this._renderDevices)
+    const resolvedSources = resolvedLightSources(
+      this._renderPlanHass, this._renderDevices, null, this._virtualLights,
+    )
       .filter((source) => source.device.space === space.id);
     const sourcesByDevice = new Map<string, typeof resolvedSources>();
     for (const source of resolvedSources) {
@@ -14686,7 +14775,9 @@ class HouseplanCard extends LitElement {
 
   private _activitySnapshot(
     d: DevItem,
-    planLightSources = resolvedLightSources(this._planHass, this._devices),
+    planLightSources = resolvedLightSources(
+      this._planHass, this._devices, null, this._virtualLights,
+    ),
   ): { samples: EntityVisualSample[]; sourceKey: string } {
     const sources = resolvePresentationSources(
       this._planHass, d, this._devices, planLightSources, this._fullRegistryHass,
@@ -14725,7 +14816,9 @@ class HouseplanCard extends LitElement {
       return snapshots;
     }
     const live = new Set<string>();
-    const planLightSources = resolvedLightSources(this._planHass, this._devices);
+    const planLightSources = resolvedLightSources(
+      this._planHass, this._devices, null, this._virtualLights,
+    );
     for (const d of this._devices) {
       if (d.hidden) continue;
       // Alarm/continuous semantics are resolved from the current samples and
@@ -15763,7 +15856,9 @@ class HouseplanCard extends LitElement {
         if (l != null) rows.push(html`<span class="rlm"><ha-icon icon="mdi:zigbee"></ha-icon>${l}</span>`);
       }
       if (disp.labelLight) {
-        const ls = resolvedLightStats(resolvedLightSources(this._renderPlanHass, this._renderDevices, r));
+        const ls = resolvedLightStats(resolvedLightSources(
+          this._renderPlanHass, this._renderDevices, r, this._virtualLights,
+        ));
         if (ls) {
           const txt = ls.on === 0
             ? this._t('roomcard.light_off')
@@ -16694,7 +16789,7 @@ class HouseplanCard extends LitElement {
       else if (['sensor', 'binary_sensor', 'number', 'select'].includes(dom))
         out.push({ eid, kind: 'value' });
     };
-    for (const source of resolvedLightSources(h, this._devices)) {
+    for (const source of resolvedLightSources(h, this._devices, null, this._virtualLights)) {
       if (source.device.id !== d.id) continue;
       for (const eid of [...source.serviceEids, ...source.stateEids]) push(eid);
     }
@@ -16899,6 +16994,7 @@ class HouseplanCard extends LitElement {
       registryHass: this._fullRegistryHass,
       devices,
       device,
+      virtualLights: this._virtualLights,
     });
   }
 
@@ -16929,6 +17025,9 @@ class HouseplanCard extends LitElement {
       this._t((`marker.toggle_skip_${value.replace('-', '_')}`) as any);
     return formatToggleIntent(intent, {
       single: (target) => {
+        if ('via' in target && target.via === 'virtual-light') {
+          return this._t('marker.virtual_light_target', { name: target.name });
+        }
         const entityId = target.entityId || ('ref' in target ? target.ref : '');
         const name = target.name || entityId;
         return this._t('marker.toggle_hint_single', { name, id: entityId });
@@ -16937,10 +17036,16 @@ class HouseplanCard extends LitElement {
         count: targets.length,
         names: targets.map((target) => `${target.name} (${target.entityId})`).join(', '),
       }),
-      currentNext: (target, next) => this._t('marker.toggle_hint_current', {
-        state: this._toggleStateText(target.entityId, target.state),
-        effect: effect(next),
-      }),
+      currentNext: (target, next) => target.via === 'virtual-light'
+        ? this._t('marker.virtual_light_current', {
+          state: this._t(target.state === 'on'
+            ? 'marker.virtual_light_state_on' : 'marker.virtual_light_state_off'),
+          effect: effect(next),
+        })
+        : this._t('marker.toggle_hint_current', {
+          state: this._toggleStateText(target.entityId, target.state),
+          effect: effect(next),
+        }),
       groupCurrentNext: (targets, next) => this._t('marker.toggle_hint_group_current', {
         on: targets.filter((target) => target.state === 'on').length,
         count: targets.length,
@@ -17017,7 +17122,7 @@ class HouseplanCard extends LitElement {
     const preview = { ...device, hidden: false };
     return selectSpatialGlowSource(resolvedLightSources(this._planHass, [
       ...this._devices.filter((item) => item.id !== preview.id), preview,
-    ]).filter((source) => source.device.id === preview.id));
+    ], null, this._virtualLights).filter((source) => source.device.id === preview.id));
   }
 
   private _markerAutoHasSpatialSource(d: NonNullable<HouseplanCard['_markerDialog']>): boolean {

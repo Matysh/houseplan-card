@@ -3,6 +3,7 @@
 DOMAIN = "houseplan"
 STORAGE_KEY = f"{DOMAIN}.layout"
 STORAGE_CONFIG_KEY = f"{DOMAIN}.config"
+STORAGE_VIRTUAL_LIGHTS_KEY = f"{DOMAIN}.virtual_lights"
 STORAGE_VERSION = 1
 STORAGE_MINOR_VERSION = 1
 FRONTEND_URL = "/houseplan_files/houseplan-card.js"

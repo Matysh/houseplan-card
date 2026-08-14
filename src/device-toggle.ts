@@ -14,6 +14,11 @@ import {
 } from './devices';
 import { COVER_GUARDED_CLASSES, isControllable } from './logic';
 import type { DevItem } from './types';
+import {
+  isManualVirtualLightMarker,
+  virtualLightIsOn,
+  type VirtualLightSnapshot,
+} from './virtual-light-state';
 
 export type ToggleOrigin = 'explicit-toggle' | 'default-light' | 'legacy-cover';
 export type ToggleSemantics = 'power' | 'group-power' | 'cover' | 'valve';
@@ -32,7 +37,8 @@ export type ToggleTargetVia =
   | 'binding'
   | 'device-role'
   | 'control-entity'
-  | 'control-marker-driver';
+  | 'control-marker-driver'
+  | 'virtual-light';
 
 export interface ResolvedToggleTarget {
   entityId: string;
@@ -54,6 +60,10 @@ export interface ToggleCommand {
   data: { entity_id: string | string[] };
 }
 
+export type ToggleOperation =
+  | { kind: 'ha-service'; command: ToggleCommand }
+  | { kind: 'virtual-light'; markerId: string };
+
 export interface ResolvedToggleIntent {
   origin: ToggleOrigin;
   kind: 'single' | 'group' | 'none';
@@ -64,6 +74,8 @@ export interface ResolvedToggleIntent {
   noneReason: ToggleNoneReason | null;
   nextEffect: ToggleNextEffect | null;
   command: ToggleCommand | null;
+  /** Non-HA operational target. HA intents continue to expose `command`. */
+  operation?: ToggleOperation | null;
 }
 
 export interface ResolveToggleOptions {
@@ -74,6 +86,7 @@ export interface ResolveToggleOptions {
   device: DevItem;
   /** Reuse a plan-wide light graph when the caller already has one. */
   lightSources?: readonly ResolvedLightSource<DevItem>[];
+  virtualLights?: VirtualLightSnapshot | null;
 }
 
 type PowerService = 'turn_on' | 'turn_off' | 'toggle';
@@ -480,7 +493,8 @@ function resolveControls(options: ResolveToggleOptions): ResolvedToggleIntent {
   const refs = persistedExternalControls(
     device.marker?.binding, device.marker?.controls ?? device.controls, device.entities,
   );
-  const sources = options.lightSources || resolvedLightSources(hass, devices);
+  const sources = options.lightSources
+    || resolvedLightSources(hass, devices, null, options.virtualLights);
   const markerSources = new Map<string, ResolvedLightSource<DevItem>[]>();
   for (const source of sources) {
     if (!source.key.startsWith('marker:')) continue;
@@ -593,6 +607,30 @@ export function resolveToggleIntent(options: ResolveToggleOptions): ResolvedTogg
   const origin = toggleOriginOf(device);
   if (!origin) return null;
 
+  // This operational target intentionally precedes `controls`: controls stay
+  // persisted losslessly, but while the exact manual mode is active a tap
+  // changes the marker's own server state and never calls an HA service.
+  const marker = device.marker;
+  if (origin === 'explicit-toggle' && isManualVirtualLightMarker(marker)) {
+    const on = virtualLightIsOn(marker, options.virtualLights);
+    return {
+      origin,
+      kind: 'single',
+      semantics: 'power',
+      targets: [{
+        entityId: '',
+        name: device.name,
+        state: on ? 'on' : 'off',
+        via: 'virtual-light',
+      }],
+      skippedTargets: [],
+      noneReason: null,
+      nextEffect: on ? 'turn-off' : 'turn-on',
+      command: null,
+      operation: { kind: 'virtual-light', markerId: marker!.id! },
+    };
+  }
+
   if (origin === 'explicit-toggle') {
     const refs = persistedExternalControls(
       device.marker?.binding, device.marker?.controls ?? device.controls, device.entities,
@@ -636,6 +674,27 @@ export function sameToggleCommandTargets(a: ToggleCommand | null, b: ToggleComma
   const left = toggleCommandEntityIds(a);
   const right = toggleCommandEntityIds(b);
   return left.length === right.length && left.every((entityId, index) => entityId === right[index]);
+}
+
+export function toggleOperation(intent: ResolvedToggleIntent | null): ToggleOperation | null {
+  if (!intent) return null;
+  if (intent.operation) return intent.operation;
+  return intent.command ? { kind: 'ha-service', command: intent.command } : null;
+}
+
+/** Stable confirmation identity; direction is deliberately re-resolved later. */
+export function sameToggleOperationTargets(
+  a: ResolvedToggleIntent | null,
+  b: ResolvedToggleIntent | null,
+): boolean {
+  const left = toggleOperation(a);
+  const right = toggleOperation(b);
+  if (!left || !right || left.kind !== right.kind) return false;
+  if (left.kind === 'virtual-light' && right.kind === 'virtual-light') {
+    return left.markerId === right.markerId;
+  }
+  return left.kind === 'ha-service' && right.kind === 'ha-service'
+    && sameToggleCommandTargets(left.command, right.command);
 }
 
 export interface ToggleIntentFormatter {

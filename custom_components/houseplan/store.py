@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any
@@ -10,7 +11,17 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
 
-from .const import DOMAIN, STORAGE_CONFIG_KEY, STORAGE_KEY, STORAGE_MINOR_VERSION, STORAGE_VERSION
+from .const import (
+    DOMAIN,
+    STORAGE_CONFIG_KEY,
+    STORAGE_KEY,
+    STORAGE_MINOR_VERSION,
+    STORAGE_VERSION,
+    STORAGE_VIRTUAL_LIGHTS_KEY,
+)
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class HouseplanStore(Store):
@@ -40,6 +51,7 @@ class HouseplanData:
 
     store: HouseplanStore
     config_store: HouseplanStore
+    virtual_light_store: HouseplanStore
     # One lock for every load→modify→save cycle of both stores: prevents
     # lost updates from concurrent WS calls and makes the rev check atomic.
     write_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
@@ -70,6 +82,12 @@ def create_data(hass: HomeAssistant) -> HouseplanData:
         store=HouseplanStore(hass, STORAGE_VERSION, STORAGE_KEY, minor_version=STORAGE_MINOR_VERSION),
         config_store=HouseplanStore(
             hass, STORAGE_VERSION, STORAGE_CONFIG_KEY, minor_version=STORAGE_MINOR_VERSION
+        ),
+        virtual_light_store=HouseplanStore(
+            hass,
+            STORAGE_VERSION,
+            STORAGE_VIRTUAL_LIGHTS_KEY,
+            minor_version=STORAGE_MINOR_VERSION,
         ),
     )
 
@@ -138,4 +156,44 @@ async def async_save_layout_state(
         replace_metadata=replace_metadata,
     )
     await runtime.store.async_save(payload)
+    return payload
+
+
+async def async_save_config_state(
+    runtime: HouseplanData,
+    config: dict[str, Any],
+    rev: int,
+    *,
+    previous_rev: int | None = None,
+) -> dict[str, Any]:
+    """Persist configuration and reconcile dependent operational state.
+
+    Callers already hold ``runtime.write_lock``.  Reading the previous
+    revision here keeps less common writers (import recovery and undo) on the
+    same path as ordinary editor saves without duplicating lifecycle rules.
+    """
+    if previous_rev is None:
+        previous = await runtime.config_store.async_load() or {}
+        try:
+            previous_rev = int(previous.get("rev", 0))
+        except (TypeError, ValueError):
+            previous_rev = 0
+
+    payload = {"config": config, "rev": rev}
+    await runtime.config_store.async_save(payload)
+
+    # The config is already durable at this point.  Reconciliation remains a
+    # separate Store write; an interrupted pair is detected from config_rev on
+    # the next read and fails safe to the compatibility default (all on).
+    from .virtual_lights import async_reconcile_virtual_lights
+
+    try:
+        await async_reconcile_virtual_lights(
+            runtime.virtual_light_store,
+            config,
+            rev,
+            previous_config_rev=previous_rev,
+        )
+    except Exception:  # noqa: BLE001 - config commit already stands
+        _LOGGER.exception("House Plan: virtual-light state reconciliation failed")
     return payload

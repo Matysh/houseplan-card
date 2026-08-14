@@ -1113,6 +1113,36 @@ test('issue 84: Always without an own entity is a constant passive source', () =
   assert.deepEqual(resolvedLightStats([source]), { on: 1, total: 1 });
 });
 
+test('issue 107: manual virtual state is canonical and invalidates the light cache', () => {
+  const target = {
+    id: 'dumb', area: 'bedroom', entities: [],
+    marker: {
+      id: 'dumb', binding: 'virtual', is_light: true, tap_action: 'toggle', room_id: 'bed',
+    },
+  };
+  const controller = {
+    id: 'controller', area: 'hall', primary: 'switch.wall', entities: ['switch.wall'],
+    marker: {
+      id: 'controller', binding: 'entity:switch.wall', controls: ['marker:dumb'],
+    },
+  };
+  const devices = [controller, target];
+  const hass = { states: { 'switch.wall': { state: 'on' } } };
+  const onSnapshot = { rev: 1, configRev: 3, off: new Set() };
+  const offSnapshot = { rev: 2, configRev: 3, off: new Set(['dumb']) };
+
+  const first = resolvedLightSources(hass, devices, { id: 'bed', area: null }, onSnapshot);
+  assert.equal(first[0].on, true);
+  const second = resolvedLightSources(hass, devices, { id: 'bed', area: null }, offSnapshot);
+  assert.equal(second[0].on, false, 'manual off overrides an incoming on controller');
+  assert.notEqual(second, first, 'operational revision participates in resolver caching');
+
+  const legacy = resolvedLightSources(hass, [{
+    ...target, marker: { ...target.marker, tap_action: 'info' },
+  }, controller], { id: 'bed', area: null }, offSnapshot);
+  assert.equal(legacy[0].on, true, 'leaving the exact triple restores issue #84 semantics');
+});
+
 test('issue 84: passive target state is OR of controller drivers and remains target-owned', () => {
   const target = {
     id: 'dumb', area: 'bedroom', entities: [],

@@ -17,6 +17,7 @@
     "src/resize.ts",
     "src/rules.ts",
     "src/devices.ts",
+    "src/virtual-light-state.ts",
     "src/types.ts",
     "src/space-geometry.ts",
     "src/signing.ts", "src/initial-load.ts",

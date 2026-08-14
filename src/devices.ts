@@ -7,6 +7,12 @@ import { averageLqi, isControllable } from './logic';
 import { isDevicePowerSwitch, isSemanticBinaryEntity } from './device-visual';
 import type { DevItem, Marker, ServerConfig } from './types';
 import {
+  isManualVirtualLightMarker,
+  virtualLightFingerprint,
+  virtualLightIsOn,
+  type VirtualLightSnapshot,
+} from './virtual-light-state';
+import {
   activeRegistryHass, fullRegistryHass, haRegistrySnapshot, isRegistryEntryEnabled,
   resolveHaBindingStatus, type HaRegistrySnapshot,
 } from './ha-binding-status';
@@ -322,6 +328,7 @@ const LIGHT_GRAPH_CACHE = new WeakMap<object, CachedLightGraph<any>>();
 interface CachedResolvedLightSources<D extends LightSourceDevice> {
   graphFingerprint: string;
   stateFingerprint: string;
+  virtualLightFingerprint: string;
   registry: unknown;
   sources: ResolvedLightSource<D>[];
 }
@@ -334,6 +341,7 @@ function lightGraphFingerprint(devices: readonly LightSourceDevice[]): string {
     [...device.entities].join(','), device.controls === undefined
       ? '<runtime-undefined>' : [...device.controls].join(','),
     device.marker?.id || '', device.marker?.binding || '', device.marker?.is_light,
+    (device.marker as any)?.tap_action || '', (device.marker as any)?.removed === true ? 1 : 0,
     device.marker?.light_entity || '', device.marker?.controls == null
       ? '<persisted-null>' : [...device.marker.controls].join(','),
   ].join('\u001f')).join('\u001e');
@@ -451,19 +459,22 @@ export function resolvedLightSources<D extends LightSourceDevice>(
   hass: any,
   devices: readonly D[],
   room?: LightSourceRoom | null,
+  virtualLights?: VirtualLightSnapshot | null,
 ): ResolvedLightSource<D>[] {
   // Resolve the graph once per frame and scope by the source owner's precise
   // room binding. This preserves cross-room controllers while avoiding a full
   // O(devices + links) graph walk for every room consumer.
   if (room != null) {
-    return resolvedLightSources(hass, devices).filter((source) =>
+    return resolvedLightSources(hass, devices, null, virtualLights).filter((source) =>
       lightSourceBelongsToRoom(source.device, room));
   }
   const graphFingerprint = lightGraphFingerprint(devices);
   const stateFingerprint = lightStateFingerprint(hass, devices);
+  const manualFingerprint = virtualLightFingerprint(virtualLights);
   const cached = RESOLVED_LIGHT_CACHE.get(devices as object) as CachedResolvedLightSources<D> | undefined;
   if (cached?.graphFingerprint === graphFingerprint
       && cached.stateFingerprint === stateFingerprint
+      && cached.virtualLightFingerprint === manualFingerprint
       && cached.registry === hass?.entities) return cached.sources;
 
   type Candidate = ResolvedLightSource<D>;
@@ -528,6 +539,11 @@ export function resolvedLightSources<D extends LightSourceDevice>(
       const markerId = source.key.slice('marker:'.length);
       const control = incoming.get(markerId);
       source.on = !control?.linked || [...control.drivers].some((eid) => hass.states?.[eid]?.state === 'on');
+      // Manual persistent state overrides incoming controller links only while
+      // the exact virtual + light + toggle eligibility triple remains active.
+      if (isManualVirtualLightMarker(source.device.marker)) {
+        source.on = virtualLightIsOn(source.device.marker, virtualLights);
+      }
     }
   }
 
@@ -559,7 +575,8 @@ export function resolvedLightSources<D extends LightSourceDevice>(
   }
   const sources = [...byKey.values()];
   RESOLVED_LIGHT_CACHE.set(devices as object, {
-    graphFingerprint, stateFingerprint, registry: hass?.entities, sources,
+    graphFingerprint, stateFingerprint, virtualLightFingerprint: manualFingerprint,
+    registry: hass?.entities, sources,
   });
   return sources;
 }

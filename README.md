@@ -312,6 +312,17 @@ Always source is deliberately constant-on. With several own `light.*`/`switch.*`
 entities, Always also offers a leading-entity selector; a missing saved choice
 is warned about and retained while a deterministic fallback is used.
 
+To make that virtual lamp manually switchable without creating a Home
+Assistant helper, also choose **Tap action → Toggle state** on the lamp itself.
+This exact combination — virtual binding, **Light source → Always**, and
+**Toggle state** — stores a shared on/off state in the House Plan integration.
+It survives page reloads and Home Assistant restarts and updates Glow, room
+fill/statistics, full cards and `houseplan-space-card` together. Any signed-in
+dashboard viewer may toggle it. While this manual mode is active, saved
+**Controls other light sources** remain intact but are not called; changing the
+role, binding or tap action restores their normal behaviour. This operational
+state is deliberately not part of plan exports or Home Assistant entities.
+
 The same dialog controls how the device looks on the plan. **Display** switches between the
 icon badge, an animated **presence ripple** (pulsing rings while the entity is active, a faint
 dot when idle — great for motion sensors) or both, with a per-device ring colour and size. The

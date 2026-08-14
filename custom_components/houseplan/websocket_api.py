@@ -44,9 +44,15 @@ from .store import (
     OPTIMIZE_BACKUP as _OPTIMIZE_BACKUP,
     OPTIMIZE_PENDING as _OPTIMIZE_PENDING,
     HouseplanData,
+    async_save_config_state,
     async_save_layout_state,
     get_data,
     get_entry,
+)
+from .virtual_lights import (
+    EVENT_VIRTUAL_LIGHT_UPDATED,
+    async_toggle_virtual_light,
+    async_virtual_light_snapshot,
 )
 from .registry_snapshot import import_registry_snapshot
 from .validation import (
@@ -126,6 +132,7 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_layout_update)
     websocket_api.async_register_command(hass, ws_layout_delete)
     websocket_api.async_register_command(hass, ws_config_get)
+    websocket_api.async_register_command(hass, ws_virtual_light_toggle)
     websocket_api.async_register_command(hass, ws_config_set)
     websocket_api.async_register_command(hass, ws_plan_optimize)
     websocket_api.async_register_command(hass, ws_plan_optimize_undo)
@@ -194,10 +201,11 @@ async def _persist_pair_intent(
 
 async def _converge_pair(rt: HouseplanData, pending: dict[str, Any]) -> None:
     """Write both target halves and remove the durable intent last."""
-    await rt.config_store.async_save({
-        "config": pending["config"],
-        "rev": int(pending["config_rev"]),
-    })
+    await async_save_config_state(
+        rt,
+        pending["config"],
+        int(pending["config_rev"]),
+    )
     stored = await rt.store.async_load() or {}
     await async_save_layout_state(
         rt,
@@ -1058,19 +1066,69 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
     rt = _runtime(hass, connection, msg["id"])
     if rt is None:
         return
-    data = await rt.config_store.async_load() or {}
-    layout_data = await rt.store.async_load() or {}
-    config = {**DEFAULT_CONFIG, **data.get("config", {})}
+    async with rt.write_lock:
+        data = await rt.config_store.async_load() or {}
+        layout_data = await rt.store.async_load() or {}
+        config = {**DEFAULT_CONFIG, **data.get("config", {})}
+        config_rev = int(data.get("rev", 0))
+        try:
+            virtual_lights = await async_virtual_light_snapshot(
+                rt.virtual_light_store,
+                config,
+                config_rev,
+            )
+        except Exception:  # noqa: BLE001 - config remains independently readable
+            _LOGGER.exception("House Plan: reading virtual-light state failed")
+            # Never expose a stale off bit after an unreadable/revision-gap
+            # operational store. Compatibility/default on is the safe frame.
+            virtual_lights = {"rev": 0, "config_rev": config_rev, "off": []}
     connection.send_result(
         msg["id"],
         {
             "config": config,
-            "rev": data.get("rev", 0),
+            "rev": config_rev,
+            "virtual_lights": virtual_lights,
             "can_write": may_write(hass, getattr(connection, "user", None)),
             "can_optimize_undo": _optimizer_backup_is_current(data, layout_data),
             "undo_kind": _undo_kind(data, layout_data),
         },
     )
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "houseplan/virtual_light/toggle",
+        vol.Required("marker_id"): vol.All(str, vol.Length(min=1, max=500)),
+    }
+)
+@websocket_api.async_response
+async def ws_virtual_light_toggle(
+    hass: HomeAssistant, connection, msg: dict[str, Any]
+) -> None:
+    """Atomically toggle one eligible virtual light for any signed-in user."""
+    rt = _runtime(hass, connection, msg["id"])
+    if rt is None:
+        return
+    async with rt.write_lock:
+        data = await rt.config_store.async_load() or {}
+        config = {**DEFAULT_CONFIG, **data.get("config", {})}
+        result = await async_toggle_virtual_light(
+            rt.virtual_light_store,
+            config,
+            int(data.get("rev", 0)),
+            msg["marker_id"],
+        )
+        if result is None:
+            connection.send_error(
+                msg["id"],
+                "not_toggleable",
+                "Marker is not an active virtual light with tap_action=toggle",
+            )
+            return
+    # Both the reply and event follow the durable Store write.  There is no
+    # optimistic client state, so all cards converge on this revision.
+    connection.send_result(msg["id"], result)
+    hass.bus.async_fire(EVENT_VIRTUAL_LIGHT_UPDATED, result)
 
 
 
@@ -1215,7 +1273,12 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             )
             return
         new_rev = current_rev + 1
-        await rt.config_store.async_save({"config": msg["config"], "rev": new_rev})
+        await async_save_config_state(
+            rt,
+            msg["config"],
+            new_rev,
+            previous_rev=int(current_rev),
+        )
         try:
             await _discard_optimizer_snapshot(rt)
         except Exception:  # noqa: BLE001 — stale backup cleanup is best-effort
@@ -1340,7 +1403,12 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
             metadata={_OPTIMIZE_BACKUP: backup, _OPTIMIZE_PENDING: pending},
             remove=(_OPTIMIZE_BACKUP, _OPTIMIZE_PENDING),
         )
-        await rt.config_store.async_save({"config": msg["config"], "rev": new_config_rev})
+        await async_save_config_state(
+            rt,
+            msg["config"],
+            new_config_rev,
+            previous_rev=config_rev,
+        )
         await async_save_layout_state(
             rt, layout_data, msg["layout"], new_layout_rev,
             metadata={_OPTIMIZE_BACKUP: backup},
@@ -1410,7 +1478,12 @@ async def ws_plan_optimize_undo(hass: HomeAssistant, connection, msg: dict[str, 
             metadata={_OPTIMIZE_BACKUP: backup, _OPTIMIZE_PENDING: pending},
             remove=(_OPTIMIZE_BACKUP, _OPTIMIZE_PENDING),
         )
-        await rt.config_store.async_save({"config": restored_config, "rev": new_config_rev})
+        await async_save_config_state(
+            rt,
+            restored_config,
+            new_config_rev,
+            previous_rev=config_rev,
+        )
         await async_save_layout_state(
             rt, layout_data, restored_layout, new_layout_rev,
             remove=(_OPTIMIZE_BACKUP, _OPTIMIZE_PENDING, "repair_backup"),

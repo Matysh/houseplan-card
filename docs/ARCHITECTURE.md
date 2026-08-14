@@ -489,7 +489,8 @@ spans are clipped per atomic body.
 | `houseplan/layout/get` | — | `{layout: {device_id: {x,y}}, rev}` |
 | `houseplan/layout/set` | `layout`, `expected_rev?` | `{ok, rev}` / err `conflict`; event `houseplan_layout_updated` |
 | `houseplan/layout/update` | `device_id`, `pos` | `{ok, rev}`; event `houseplan_layout_updated` |
-| `houseplan/config/get` | — | `{config, rev}` |
+| `houseplan/config/get` | — | `{config, rev, virtual_lights:{rev,config_rev,off[]}}` (`virtual_lights` optional for rolling compatibility) |
+| `houseplan/virtual_light/toggle` | `marker_id` | `{marker_id,on,rev}` / err `not_toggleable`; event `houseplan_virtual_light_updated` |
 | `houseplan/trail/get` | — | `{trails: {marker: {current, previous}}}` — vacuum runs, raw robot coords |
 | `houseplan/trail/delete` | `marker_id` | `{ok, removed}` — erase current/previous runs after marker deletion |
 | `houseplan/config/set` | `config`, `expected_rev?` | `{ok, rev}` / err `conflict`; event `houseplan_config_updated` |
@@ -509,6 +510,23 @@ spans are clipped per atomic body.
 
 Manual attachments upload over HTTP (streaming, transactional staging), not WS —
 the old `houseplan/file/set` was removed in v1.10.0.
+
+Manual virtual-light state is operational data, not plan configuration. The
+integration owns a separate versioned `houseplan.virtual_lights` Store whose
+bounded payload contains only `{rev, config_rev, off[]}`. The existing shared
+write lock serializes config reconciliation and atomic toggles. Eligibility is
+always recalculated from server config; the toggle command accepts no desired
+state, entity id or service. It is intentionally available to every
+authenticated View user, while config writers remain governed by `may_write`.
+The durable save precedes both reply and event. A config-revision gap from an
+older writer clears manual off bits to the compatibility default `on`.
+
+The first `config/get` frame carries the coherent operational snapshot. Full
+cards subscribe directly to the update event; all `houseplan-space-card`
+instances share the module-level config cache and one subscription. Local
+storage may retain the last snapshot for continuity, but never authorizes an
+optimistic toggle. The data is excluded from marker/layout schemas, portable
+export/import and the HA entity registry.
 
 Portable import preview uses authenticated
 `POST /api/houseplan/import/preview`. The endpoint streams at most 8 MiB,

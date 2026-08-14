@@ -24,7 +24,12 @@ from .const import (
 from .geometry_migration import migrate_config, migrate_layout, pending_from_config
 from .plans import collect_attachments, collect_plans, sweep_upload_temps
 from .repairs import async_check_plan_files
-from .store import HouseplanConfigEntry, async_save_layout_state, create_data
+from .store import (
+    HouseplanConfigEntry,
+    async_save_config_state,
+    async_save_layout_state,
+    create_data,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -60,6 +65,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
         await data.config_store.async_load()
     except Exception as err:  # noqa: BLE001 — corrupt/unreadable .storage
         raise ConfigEntryNotReady(f"House Plan storage is not readable: {err}") from err
+    try:
+        await data.virtual_light_store.async_load()
+    except Exception:  # noqa: BLE001 — operational state fails safe to default on
+        _LOGGER.exception("House Plan: virtual-light storage is not readable; using default on")
     entry.runtime_data = data
 
     # server-side vacuum trails: the integration records the path itself
@@ -152,7 +161,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
             rev = int(stored.get("rev", 0))
             if cfg and migrate_config(cfg):  # 2. the config half
                 rev += 1
-                await data.config_store.async_save({"config": cfg, "rev": rev})
+                await async_save_config_state(data, cfg, rev, previous_rev=rev - 1)
             migrate_layout(layout, merged)  # 3. the layout half + intent cleared
             await async_save_layout_state(
                 data, lay_stored, layout, lay_rev + 1, remove=("geom_pending",)
@@ -186,11 +195,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
                 "layout_rev", layout_rev + (lay_stored.get("layout", {}) != target_layout)
             ))
             if stored.get("config") != target_config or config_rev < target_config_rev:
+                previous_config_rev = config_rev
                 config_rev = max(config_rev, target_config_rev)
-                await data.config_store.async_save({
-                    "config": target_config,
-                    "rev": config_rev,
-                })
+                await async_save_config_state(
+                    data,
+                    target_config,
+                    config_rev,
+                    previous_rev=previous_config_rev,
+                )
             if lay_stored.get("layout", {}) != target_layout or layout_rev < target_layout_rev:
                 layout_rev = max(layout_rev, target_layout_rev)
             exact_metadata = pending.get("final_metadata")

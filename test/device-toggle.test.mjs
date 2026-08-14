@@ -4,6 +4,8 @@ import {
   projectedTapAction,
   resolveToggleIntent,
   sameToggleCommandTargets,
+  sameToggleOperationTargets,
+  toggleOperation,
   toggleCommandEntityIds,
   toggleCoverEntity,
   toggleOriginOf,
@@ -66,6 +68,41 @@ test('virtual marker without controls is a saved, quiet no-op', () => {
   assert.equal(intent.kind, 'none');
   assert.equal(intent.noneReason, 'no-actionable-entity');
   assert.equal(intent.command, null);
+});
+
+test('issue 107: exact manual virtual light wins over saved HA controls', () => {
+  const d = device({
+    marker: {
+      id: 'marker', binding: 'virtual', is_light: true, tap_action: 'toggle',
+      controls: ['light.saved'],
+    },
+    controls: ['light.saved'],
+  });
+  const h = hass({ 'light.saved': state('light.saved', 'on') });
+  const on = resolveToggleIntent({
+    hass: h, devices: [d], device: d,
+    virtualLights: { rev: 4, configRev: 9, off: new Set() },
+  });
+  assert.equal(on.command, null, 'manual mode must not call the saved HA target');
+  assert.deepEqual(toggleOperation(on), { kind: 'virtual-light', markerId: 'marker' });
+  assert.equal(on.targets[0].via, 'virtual-light');
+  assert.equal(on.targets[0].state, 'on');
+  assert.equal(on.nextEffect, 'turn-off');
+
+  const off = resolveToggleIntent({
+    hass: h, devices: [d], device: d,
+    virtualLights: { rev: 5, configRev: 9, off: new Set(['marker']) },
+  });
+  assert.equal(off.targets[0].state, 'off');
+  assert.equal(off.nextEffect, 'turn-on');
+  assert.equal(sameToggleOperationTargets(on, off), true, 'direction may change, target may not');
+
+  const resumed = resolveToggleIntent({
+    hass: h,
+    devices: [{ ...d, marker: { ...d.marker, is_light: false } }],
+    device: { ...d, marker: { ...d.marker, is_light: false } },
+  });
+  assert.equal(toggleOperation(resumed).kind, 'ha-service', 'saved controls resume outside the triple');
 });
 
 test('exact entity binding never retargets to a controllable sibling', () => {

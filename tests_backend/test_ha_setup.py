@@ -27,6 +27,25 @@ async def test_setup_creates_runtime_data(hass: HomeAssistant) -> None:
     assert entry.runtime_data is not None
     assert entry.runtime_data.store is not None
     assert entry.runtime_data.config_store is not None
+    assert entry.runtime_data.virtual_light_store is not None
+
+
+async def test_setup_tolerates_unreadable_virtual_light_state(
+    hass: HomeAssistant, monkeypatch
+) -> None:
+    """Operational light state must not take the whole integration offline."""
+    from custom_components.houseplan.store import HouseplanStore
+
+    real_load = HouseplanStore.async_load
+
+    async def failing_load(self):
+        if self.key == "houseplan.virtual_lights":
+            raise OSError("corrupt operational store")
+        return await real_load(self)
+
+    monkeypatch.setattr(HouseplanStore, "async_load", failing_load)
+    entry = await _setup(hass)
+    assert entry.state.value == "loaded"
 
 
 async def test_unload(hass: HomeAssistant) -> None:

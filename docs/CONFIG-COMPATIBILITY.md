@@ -142,3 +142,29 @@ while an untouched old broken source remains readable and round-trippable.
 space transfer remaps an internal target and disables/counts a link whose
 target is outside the transfer. Older clients ignore the field and may erase
 it if they reconstruct the same marker after a downgrade.
+
+## Persistent manual virtual-light state
+
+The exact `virtual` + `is_light:true` + `tap_action:toggle` combination has a
+shared operational on/off state. It is not a Marker/ServerConfig field: the
+integration stores `{rev, config_rev, off[]}` under a separate versioned Store
+key and exposes an optional `virtual_lights` snapshot in `houseplan/config/get`.
+It is excluded from layout, full/space export, import and HA entities. Missing
+Store data or a missing wire field projects to `on`.
+
+Compatibility matrix:
+
+| Frontend | Backend | Behaviour |
+|---|---|---|
+| old | new | Extra snapshot/event are ignored; the marker keeps historical #84/#94 behaviour and config remains intact |
+| new | old | Missing snapshot starts `on`; an unsupported toggle command reports an error and creates no optimistic local state |
+| new | new | Server snapshot is authoritative; revisioned events synchronize full and static cards |
+
+Every current config writer reconciles the Store. Rename, move, hide and
+unrelated edits preserve off bits for still-eligible stable marker ids;
+binding/role/action changes, tombstones and deletion prune them. Re-entering the
+triple therefore starts on. If `config_rev` skips the revision recorded by the
+operational Store — for example after downgrade, an old writer or an interrupted
+pair — all off bits are cleared rather than resurrected against unknown marker
+lifecycle history. Older integrations safely ignore the separate Store on
+downgrade.
