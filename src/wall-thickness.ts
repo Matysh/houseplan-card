@@ -27,6 +27,13 @@ export const WALL_HATCH_MIN_PX = 3;
 /** Mitre spikes longer than this × thickness fall back to a bevel. */
 export const MITRE_LIMIT = 4;
 
+/** One finite physical wall centreline with its already-converted half depth. */
+export interface LinearWallSegment {
+  a: number[];
+  b: number[];
+  halfDepth: number;
+}
+
 // ------------------------------- units --------------------------------------
 
 /** Shared full/static render policy for the thin-on-screen fallback. */
@@ -483,14 +490,165 @@ export function applyWallThicknessToNewRoom(
   return out;
 }
 
+/** A flat-capped body for one already-scaled centreline segment. */
+export function linearWallBody(segment: LinearWallSegment): number[][] | null {
+  const { a, b, halfDepth } = segment;
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length < 2 || b.length < 2
+      || ![a[0], a[1], b[0], b[1]].every(Number.isFinite)) return null;
+  const dx = b[0] - a[0], dy = b[1] - a[1];
+  const len = Math.hypot(dx, dy);
+  if (!(len > 1e-9) || !(halfDepth > 0) || !Number.isFinite(halfDepth)) return null;
+  const nx = (-dy / len) * halfDepth, ny = (dx / len) * halfDepth;
+  return [
+    [a[0] + nx, a[1] + ny], [b[0] + nx, b[1] + ny],
+    [b[0] - nx, b[1] - ny], [a[0] - nx, a[1] - ny],
+  ];
+}
+
+interface JunctionRay {
+  u: [number, number];
+  halfDepth: number;
+}
+
+function closePoint(a: number[], b: number[], epsilon: number): boolean {
+  return Math.hypot(a[0] - b[0], a[1] - b[1]) <= epsilon;
+}
+
+function pointOnSegmentInterior(
+  point: number[], segment: LinearWallSegment, epsilon: number,
+): boolean {
+  const dx = segment.b[0] - segment.a[0], dy = segment.b[1] - segment.a[1];
+  const len2 = dx * dx + dy * dy;
+  if (!(len2 > epsilon * epsilon)) return false;
+  const t = ((point[0] - segment.a[0]) * dx + (point[1] - segment.a[1]) * dy) / len2;
+  if (!(t > 0 && t < 1)) return false;
+  const q = [segment.a[0] + dx * t, segment.a[1] + dy * t];
+  return Math.hypot(point[0] - q[0], point[1] - q[1]) <= epsilon;
+}
+
+function addJunctionRay(rays: JunctionRay[], dx: number, dy: number, halfDepth: number): void {
+  const len = Math.hypot(dx, dy);
+  if (!(len > 1e-9) || !(halfDepth > 0)) return;
+  const u: [number, number] = [dx / len, dy / len];
+  const same = rays.find((ray) =>
+    Math.abs(ray.u[0] * u[1] - ray.u[1] * u[0]) < 1e-9
+      && ray.u[0] * u[0] + ray.u[1] * u[1] > 1 - 1e-9);
+  if (same) same.halfDepth = Math.max(same.halfDepth, halfDepth);
+  else rays.push({ u, halfDepth });
+}
+
+/**
+ * Missing node volumes for flat-capped linear wall segments.
+ *
+ * Endpoints are the only nodes. An endpoint may also land in another segment's
+ * interior (the non-persisted T produced by #137); that through segment then
+ * contributes two incident rays. Each non-collinear ray pair receives the
+ * same bounded mitre/bevel used by room contours. Unioning these patches with
+ * the raw bodies removes the tooth without changing caps at degree-one nodes.
+ */
+export function linearWallJoinPatches(
+  input: LinearWallSegment[], epsilon = 1e-6,
+): number[][][] {
+  const segments = (input || []).filter((segment) =>
+    segment && Array.isArray(segment.a) && Array.isArray(segment.b)
+      && segment.a.length >= 2 && segment.b.length >= 2
+      && segment.a.every(Number.isFinite) && segment.b.every(Number.isFinite)
+      && Number.isFinite(segment.halfDepth) && segment.halfDepth > 0
+      && Math.hypot(segment.b[0] - segment.a[0], segment.b[1] - segment.a[1]) > 1e-9);
+  if (segments.length < 2) return [];
+  const eps = Math.max(Number.isFinite(epsilon) ? epsilon : 0, 1e-9);
+  const endpoints = segments.flatMap((segment) => [segment.a, segment.b])
+    .map((point) => [point[0], point[1]])
+    .sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const nodes: number[][] = [];
+  for (const point of endpoints) {
+    if (!nodes.some((node) => closePoint(node, point, eps))) nodes.push(point);
+  }
+
+  const patches: number[][][] = [];
+  for (const node of nodes) {
+    const rays: JunctionRay[] = [];
+    for (const segment of segments) {
+      if (closePoint(node, segment.a, eps)) {
+        addJunctionRay(
+          rays, segment.b[0] - segment.a[0], segment.b[1] - segment.a[1],
+          segment.halfDepth,
+        );
+      } else if (closePoint(node, segment.b, eps)) {
+        addJunctionRay(
+          rays, segment.a[0] - segment.b[0], segment.a[1] - segment.b[1],
+          segment.halfDepth,
+        );
+      } else if (pointOnSegmentInterior(node, segment, eps)) {
+        addJunctionRay(
+          rays, segment.a[0] - node[0], segment.a[1] - node[1], segment.halfDepth,
+        );
+        addJunctionRay(
+          rays, segment.b[0] - node[0], segment.b[1] - node[1], segment.halfDepth,
+        );
+      }
+    }
+    if (rays.length < 2) continue;
+    rays.sort((a, b) => Math.atan2(a.u[1], a.u[0]) - Math.atan2(b.u[1], b.u[0])
+      || a.halfDepth - b.halfDepth);
+    for (let i = 0; i < rays.length; i++) {
+      for (let j = i + 1; j < rays.length; j++) {
+        const a = rays[i], b = rays[j];
+        const cross = a.u[0] * b.u[1] - a.u[1] * b.u[0];
+        if (Math.abs(cross) < 1e-9) continue;
+        const nA = [-a.u[1], a.u[0]];
+        const nB = [-b.u[1], b.u[0]];
+        const sign = cross < 0 ? 1 : -1;
+        const pA = [
+          node[0] + nA[0] * a.halfDepth * sign,
+          node[1] + nA[1] * a.halfDepth * sign,
+        ];
+        const pB = [
+          node[0] - nB[0] * b.halfDepth * sign,
+          node[1] - nB[1] * b.halfDepth * sign,
+        ];
+        const hit = lineIntersect(pA, a.u, pB, b.u);
+        const limit = MITRE_LIMIT * Math.max(a.halfDepth, b.halfDepth);
+        const patch = hit && Math.hypot(hit[0] - node[0], hit[1] - node[1]) <= limit
+          ? [node.slice(), pA, hit, pB]
+          : [node.slice(), pA, pB];
+        if (Math.abs(signedArea(patch)) > eps * eps) patches.push(patch);
+      }
+    }
+  }
+  return patches;
+}
+
+function unionSimpleBodies(bodies: number[][][]): any | null {
+  let geom: any = null;
+  try {
+    for (const body of bodies) {
+      if (body.length < 3) continue;
+      const piece: any = closedRing(body);
+      // Keep the same MultiPolygon shape for one body and for a union. Returning
+      // the bare Polygon made `polyclipToPathD()` see points where it expects
+      // rings, so every single-segment preview (including Thickness hover)
+      // became an empty path.
+      geom = geom ? union(geom, piece) : [piece];
+    }
+    return geom;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * SVG path for the thick-wall preview while drawing a room outline.
- * Closed contours use outset−inset; open polylines use per-segment quads.
+ * Closed contours use outset−inset; open polylines use the same bounded joins
+ * as persisted independent walls. `segmentHalfDepths` preserves the thickness
+ * already committed for each draft segment while the last rubber-band uses the
+ * current session value.
  */
 export function drawWallPreviewD(
   pts: number[][],
   halfDepth: number,
   closed: boolean,
+  segmentHalfDepths?: number[],
 ): string {
   if (!(halfDepth > 0) || !pts || pts.length < 2) return '';
   if (closed && pts.length >= 3) {
@@ -501,7 +659,7 @@ export function drawWallPreviewD(
       poly = pts.slice(0, -1);
     }
     if (poly.length >= 3) {
-      const offs = poly.map(() => halfDepth);
+      const offs = poly.map((_, i) => segmentHalfDepths?.[i] || halfDepth);
       const outset = outsetContour(poly, offs);
       const inset = insetContour(poly, offs);
       if (outset && inset) {
@@ -509,24 +667,18 @@ export function drawWallPreviewD(
       }
     }
   }
-  let d = '';
+  const segments: LinearWallSegment[] = [];
   for (let i = 0; i < pts.length - 1; i++) {
     const a = pts[i], b = pts[i + 1];
-    const dx = b[0] - a[0], dy = b[1] - a[1];
-    const L = Math.hypot(dx, dy);
-    if (L < 1e-9) continue;
-    const ux = dx / L, uy = dy / L;
-    const nx = -uy, ny = ux;
-    const h = halfDepth;
-    const quad = [
-      [a[0] + nx * h, a[1] + ny * h],
-      [b[0] + nx * h, b[1] + ny * h],
-      [b[0] - nx * h, b[1] - ny * h],
-      [a[0] - nx * h, a[1] - ny * h],
-    ];
-    d += (d ? ' ' : '') + polyToPath(quad);
+    const h = segmentHalfDepths?.[i] || halfDepth;
+    if (Math.hypot(b[0] - a[0], b[1] - a[1]) >= 1e-9 && h > 0)
+      segments.push({ a, b, halfDepth: h });
   }
-  return d;
+  const bodies = segments.map(linearWallBody).filter((body): body is number[][] => !!body);
+  const joined = [...bodies, ...linearWallJoinPatches(segments)];
+  const geom = unionSimpleBodies(joined);
+  if (geom) return polyclipToPathD(geom);
+  return joined.map((body) => polyToPath(body)).join(' ');
 }
 
 /**

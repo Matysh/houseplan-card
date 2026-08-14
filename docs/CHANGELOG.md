@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Connected Room outline and Partition segments now form one seamless thick
+  wall immediately, including the live rubber-band. Right and oblique corners
+  use bounded mitre/bevel joins, T-connections have no visible butt face, each
+  segment keeps its own thickness, and single-segment thickness hover and free
+  ends remain visible and flat consistently in
+  Plan, View, static cards, hidden isometric, clean-floor and light geometry
+  ([#141](https://github.com/Matysh/houseplan-card/issues/141)).
 - Room outline and Partition drawing now shows wall centre lines and exact
   endpoints above existing walls. The enlarged target previews whether the
   next click will join an endpoint or create a wall-bound T-connection, while

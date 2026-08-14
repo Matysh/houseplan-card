@@ -98,10 +98,14 @@ export const MUTANTS = [
   },
   {
     id: 'golden-lamp-out-of-reach',
-    guard: 'node demo/golden/run.mjs --mode=verify --scenario=lighting-opaque-glow-two-doorways-dark',
+    guard: 'node demo/golden/run.mjs --mode=capture --scenario=lighting-opaque-glow-two-doorways-dark',
     because: 'сцена заведена как защита дверного света (#71) и однажды уже была '
       + 'пустой: лампа стояла так, что пятно не доходило до стены. Уведённая лампа '
-      + 'обязана ронять семантический ассерт сцены, а не только пиксельный дифф',
+      + 'обязана ронять семантический ассерт warmPixelRegion, а не только пиксельный дифф. '
+      + 'Режим capture, а не verify: политика запрещает verify по одной сцене '
+      + '(demo/golden/policy.mjs) — частичный verify это лазейка «чтобы CI позеленел». '
+      + 'На capture семантический провал даёт status error, и goldenRunFailed '
+      + 'краснеет в любом режиме — то есть проверка сохраняется полностью',
     // Мутируется фикстура сцены, не продуктовый код: пустота сцены — свойство
     // фикстуры. Пересборка бандла всё равно нужна, путь тот же.
     patches: [{

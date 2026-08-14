@@ -4,7 +4,8 @@ import assert from 'node:assert/strict';
 import {
   wallKey, lookupWall, thicknessCmAt, degradeWalls, rekeyWallsAfterMove,
   setWallThickness, setWallThicknessForRoom, applyWallThicknessToNewRoom,
-  drawWallPreviewD, DRAW_WALL_DEFAULT_CM, clampWallCm, cmToField, fieldToCm,
+  drawWallPreviewD, linearWallBody, linearWallJoinPatches,
+  DRAW_WALL_DEFAULT_CM, clampWallCm, cmToField, fieldToCm,
   wallCmToUnits, insetContour, inwardNormal, edgeKinds, wallEdgeBodies,
   wallBodyRings, wallBodiesGeometry, wallBodiesUnionPath, floorFootprintGeometry,
   innerContourForRoom,
@@ -968,9 +969,39 @@ test('split materialisation cuts a partial shared interval at the new divider', 
 });
 
 test('drawWallPreviewD returns a path for open and closed outlines', () => {
+  const single = drawWallPreviewD([[0, 0], [10, 0]], 1, false);
+  assert.ok(single.includes('M'), 'one flat-capped segment remains a visible preview');
   const open = drawWallPreviewD([[0, 0], [10, 0], [10, 6]], 1, false);
   assert.ok(open.includes('M'));
+  assert.match(open, /11 -1(?:\D|$)/, 'open preview already contains the 90-degree mitre');
+  const stepped = drawWallPreviewD(
+    [[0, 0], [10, 0], [10, 6]], 1, false, [1, 2],
+  );
+  assert.match(stepped, /12 -1(?:\D|$)/,
+    'the joined preview respects the second segment own half-depth');
   const closed = drawWallPreviewD([[0, 0], [10, 0], [10, 6], [0, 6]], 1, true);
   assert.ok(closed.includes('M'));
   assert.equal(drawWallPreviewD([[0, 0]], 1, false), '');
+});
+
+test('linear wall joins bevel an excessive mitre and ignore malformed or near-miss inputs', () => {
+  const acute = linearWallJoinPatches([
+    { a: [0, 0], b: [10, 0], halfDepth: 1 },
+    { a: [0, 0], b: [10, 0.1], halfDepth: 1 },
+  ], 1e-6);
+  assert.equal(acute.length, 1);
+  assert.equal(acute[0].length, 3, 'a mitre beyond the limit becomes a bevel triangle');
+  assert.ok(acute[0].every((point) => Math.hypot(point[0], point[1]) <= MITRE_LIMIT));
+
+  const separate = linearWallJoinPatches([
+    { a: [-2, 0], b: [0, 0], halfDepth: 1 },
+    { a: [0.001, 0], b: [0.001, 2], halfDepth: 1 },
+  ], 1e-6);
+  assert.deepEqual(separate, [], 'a point outside geometry epsilon remains disconnected');
+  assert.equal(linearWallBody({ a: [0, 0], b: [Infinity, 1], halfDepth: 1 }), null);
+  assert.deepEqual(linearWallJoinPatches([
+    { a: [-2, 0], b: [0, 0], halfDepth: 1 },
+    { a: [0, 0], b: [0, 0], halfDepth: 1 },
+    { a: [0, 0], b: [Infinity, 1], halfDepth: 1 },
+  ]), [], 'invalid neighbours do not alter a valid flat-capped segment');
 });

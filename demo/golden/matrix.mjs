@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 20;
+export const GOLDEN_MATRIX_VERSION = 21;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -45,6 +45,24 @@ export const GOLDEN_SCENARIOS = Object.freeze([
       tool: 'draw', anchor: [0.70, 0.455], pointer: [0.482, 0.455], expectedKind: 'line',
     },
     theme: 'dark', viewport: { width: 1180, height: 900 }, ...page },
+  { id: 'wall-junctions-plan-preview-light', fixture: 'visual',
+    space: 'golden-wall-junctions', wallJunctions: true, mode: 'plan',
+    wallJunctionPreview: {
+      path: [[0.16, 0.15], [0.38, 0.15]], pointer: [0.38, 0.25], cms: [12], cm: 24,
+    },
+    theme: 'light', viewport: { width: 1180, height: 900 }, ...page },
+  { id: 'wall-junctions-plan-t-dark', fixture: 'visual',
+    space: 'golden-wall-junctions', wallJunctions: true, mode: 'plan',
+    wallJunctionPreview: {
+      path: [[0.50, 0.54]], pointer: [0.50, 0.70], cms: [], cm: 24,
+    },
+    theme: 'dark', viewport: { width: 1180, height: 900 }, ...page },
+  { id: 'wall-junctions-view-dark', fixture: 'visual',
+    space: 'golden-wall-junctions', wallJunctions: true, mode: 'view',
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'isometric-wall-junctions-dark', fixture: 'visual',
+    space: 'golden-wall-junctions', wallJunctions: true, mode: 'view',
+    labs: ['iso'], projection: 'iso', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'opening-placement-door-thick-wall-dark', fixture: 'visual', space: 'golden-geometry',
     // The shared centre edge is a long 25 cm physical wall. It can contain the
     // complete 90 cm door preset while still proving rotation, inner-face
