@@ -27,7 +27,7 @@ jobs:
           EVENT_TAG: ${{ github.event.release.tag_name }}
           INPUT_TAG: ${{ github.event.inputs.tag }}
         run: echo "tag=${EVENT_TAG:-$INPUT_TAG}" >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ steps.tag.outputs.tag }}
       - name: Build houseplan.zip (contents of custom_components/houseplan at zip root)
