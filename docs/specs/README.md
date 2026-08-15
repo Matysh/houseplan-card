@@ -1,6 +1,6 @@
 # Спецификации задач P1 и P2
 
-Актуально на 2026-08-14.
+Актуально на 2026-08-15.
 
 GitHub Issues и GitHub Projects (v2) остаются единственным каноническим backlog проекта. Этот каталог содержит развёрнутые ТЗ: каждое ТЗ ссылается на issue, а issue — на соответствующий файл. Статус, приоритет и факт завершения меняются только в GitHub.
 
@@ -82,6 +82,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#94](https://github.com/Matysh/houseplan-card/issues/94) Универсальное действие «Переключить состояние» | [094-universal-state-toggle.md](094-universal-state-toggle.md) |
 | [#101](https://github.com/Matysh/houseplan-card/issues/101) Плавный переход View ↔ редакторы | [101-view-editor-transition.md](101-view-editor-transition.md) |
 | [#107](https://github.com/Matysh/houseplan-card/issues/107) Переключение виртуального источника света «Всегда» | [107-virtual-light-toggle.md](107-virtual-light-toggle.md) |
+| [#109](https://github.com/Matysh/houseplan-card/issues/109) Отдельные markers для каналов многоканального HA-устройства | [109-multichannel-entity-binding.md](109-multichannel-entity-binding.md) |
 | [#122](https://github.com/Matysh/houseplan-card/issues/122) Изометрический режим Stage 2: скрытый режим и визуальная полировка | [122-isometric-stage2.md](122-isometric-stage2.md) |
 | [#123](https://github.com/Matysh/houseplan-card/issues/123) Split из вершины не меняет наружную геометрию стен | [123-corner-split-wall.md](123-corner-split-wall.md) |
 | [#137](https://github.com/Matysh/houseplan-card/issues/137) Узлы и линии привязки в редакторе Плана | [137-plan-snap-overlay.md](137-plan-snap-overlay.md) |
