@@ -69,8 +69,10 @@ export const MUTANTS = [
       + 'тень; исторически смок теней был зелёным, пока тени физически не рисовались',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: 'for (const body of physical) occluders.push(...polygonSegments(body));',
-      replace: 'void physical;',
+      // Physical bodies now enter the canonical masonry union. Mutating only
+      // its legacy fallback is a no-op on every valid thick-wall fixture.
+      find: 'this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, physical,',
+      replace: 'this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, [],',
     }],
   },
   {

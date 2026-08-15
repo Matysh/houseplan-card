@@ -431,20 +431,44 @@ const rasterFixture = await page.evaluate(async () => {
     const away = Math.hypot(centre[0] - sourcePos.x, centre[1] - sourcePos.y);
     const base = Math.atan2(centre[1] - sourcePos.y, centre[0] - sourcePos.x);
     const half = Math.asin(Math.max(0.02, Math.min(0.9, radius / away)));
-    const at = (angle, distance) => toStage([
+    const atPlan = (angle, distance) => [
       sourcePos.x + Math.cos(angle) * distance,
       sourcePos.y + Math.sin(angle) * distance,
-    ]);
+    ];
     const far = away + radius + Math.max(10, c._gridPitch);
+    const insidePlan = [atPlan(base, far), atPlan(base, away + radius * 2.2)];
+    const besidePlan = [atPlan(base + half * 4, far), atPlan(base - half * 4, far)];
+    const edgePlan = Array.from({ length: 41 }, (_, index) => {
+      const offset = (index - 20) * 1.0;
+      const angle = base + half + Math.atan2(offset, far);
+      return { offset, point: atPlan(angle, far) };
+    });
+    const distanceToSegment = (point, a, b) => {
+      const dx = b[0] - a[0], dy = b[1] - a[1];
+      const length2 = dx * dx + dy * dy;
+      const share = length2 > 0
+        ? Math.max(0, Math.min(1, ((point[0] - a[0]) * dx + (point[1] - a[1]) * dy) / length2))
+        : 0;
+      return Math.hypot(point[0] - (a[0] + dx * share), point[1] - (a[1] + dy * share));
+    };
+    const rooms = c._spaceModel().rooms;
+    const renderedWalls = c._spaceWalls || [];
+    const sampleClearance = Math.max(2, c._gridPitch * 0.5);
+    const liesOnCleanFloor = (point) => {
+      const insideRoom = rooms.some((room) => c._pointInRoom(point, room));
+      const outsideColumn = Math.hypot(point[0] - centre[0], point[1] - centre[1])
+        >= radius + sampleClearance;
+      const outsideWalls = renderedWalls.every((wall) =>
+        distanceToSegment(point, wall.a, wall.b) >= wallDepth / 2 + sampleClearance);
+      return insideRoom && outsideColumn && outsideWalls;
+    };
+    const samplePoints = [...insidePlan, ...besidePlan, ...edgePlan.map((sample) => sample.point)];
     shadow = {
-      inside: [at(base, far), at(base, away + radius * 2.2)],
-      beside: [at(base + half * 4, far), at(base - half * 4, far)],
+      inside: insidePlan.map(toStage),
+      beside: besidePlan.map(toStage),
+      samplesAreValid: samplePoints.every(liesOnCleanFloor),
       // Across the shadow edge, one plan unit at a time.
-      edge: Array.from({ length: 41 }, (_, index) => {
-        const offset = (index - 20) * 1.0;
-        const angle = base + half + Math.atan2(offset, far);
-        return { offset, point: at(angle, far) };
-      }),
+      edge: edgePlan.map(({ offset, point }) => ({ offset, point: toStage(point) })),
     };
   }
   return { ready: true, litParts, sourceEid, sourceId: source.id, wallSource, doors, shadow };
@@ -546,6 +570,7 @@ if (rasterFixture.ready) {
     && metrics.doors.every((door) => door.visibleWidth <= door.openingLength * 2);
   res.apertureItselfLit = metrics.doors.length === 2
     && metrics.doors.every((door) => door.tunnelDelta >= 8);
+  res.shadowSamplesAreValid = rasterFixture.shadow?.samplesAreValid === true;
   // An opaque body leaves no light behind it, keeps the floor beside it lit,
   // and the border between the two is a line rather than a soft ramp.
   res.occluderCastsShadow = !!metrics.shadow
@@ -591,6 +616,7 @@ if (rasterFixture.ready) {
   res.doorwayCarriesLight = false;
   res.beamWidthBounded = false;
   res.apertureItselfLit = false;
+  res.shadowSamplesAreValid = false;
   res.occluderCastsShadow = false;
   res.shadowEdgeIsCrisp = false;
   res.sourceInsideWallSuppressed = false;
