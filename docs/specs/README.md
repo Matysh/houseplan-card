@@ -91,6 +91,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#137](https://github.com/Matysh/houseplan-card/issues/137) Узлы и линии привязки в редакторе Плана | [137-plan-snap-overlay.md](137-plan-snap-overlay.md) |
 | [#141](https://github.com/Matysh/houseplan-card/issues/141) Бесшовные стыки перегородок и открытых контуров | [141-wall-junctions.md](141-wall-junctions.md) |
 | [#157](https://github.com/Matysh/houseplan-card/issues/157) Тип проёма «Открытый проём» | [157-open-passage.md](157-open-passage.md) |
+| [#150](https://github.com/Matysh/houseplan-card/issues/150) Точная геометрия коллинеарного перепада толщины | [150-wall-thickness-transition.md](150-wall-thickness-transition.md) |
 
 ## Правило актуализации
 
