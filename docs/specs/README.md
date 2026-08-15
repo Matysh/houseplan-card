@@ -112,6 +112,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#68](https://github.com/Matysh/houseplan-card/issues/68) Подсказки к настройкам | [068-help-affordance.md](068-help-affordance.md) |
 | [#75](https://github.com/Matysh/houseplan-card/issues/75) + [#76](https://github.com/Matysh/houseplan-card/issues/76) Единый поток размещения проёмов | [075-076-opening-placement-flow.md](075-076-opening-placement-flow.md) |
 | [#84](https://github.com/Matysh/houseplan-card/issues/84) Источник «Всегда» без сущности HA + [#88](https://github.com/Matysh/houseplan-card/issues/88) ведущая сущность | [084-passive-forced-light-sources.md](084-passive-forced-light-sources.md) |
+| [#86](https://github.com/Matysh/houseplan-card/issues/86) Подсказки к настройкам, партия 1 | [086-settings-help-content-party1.md](086-settings-help-content-party1.md) |
 | [#90](https://github.com/Matysh/houseplan-card/issues/90) Управляемый бейдж со значением | [090-device-value-badge.md](090-device-value-badge.md) |
 | [#378](https://github.com/Matysh/houseplan-card/issues/378) Выбираемый источник для режима «Значение + состояние» | [378-value-face-source.md](378-value-face-source.md) |
 | [#381](https://github.com/Matysh/houseplan-card/issues/381) Действие по нажатию «Ничего не делать» | [381-no-op-tap-action.md](381-no-op-tap-action.md) |
