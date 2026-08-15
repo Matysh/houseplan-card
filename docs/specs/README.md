@@ -112,6 +112,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#68](https://github.com/Matysh/houseplan-card/issues/68) Подсказки к настройкам | [068-help-affordance.md](068-help-affordance.md) |
 | [#74](https://github.com/Matysh/houseplan-card/issues/74) Position-only Undo/Redo устройств | [074-device-position-undo.md](074-device-position-undo.md) |
 | [#75](https://github.com/Matysh/houseplan-card/issues/75) + [#76](https://github.com/Matysh/houseplan-card/issues/76) Единый поток размещения проёмов | [075-076-opening-placement-flow.md](075-076-opening-placement-flow.md) |
+| [#82](https://github.com/Matysh/houseplan-card/issues/82) Плавное масштабирование zoom/fit/reset | [082-smooth-zoom.md](082-smooth-zoom.md) |
 | [#84](https://github.com/Matysh/houseplan-card/issues/84) Источник «Всегда» без сущности HA + [#88](https://github.com/Matysh/houseplan-card/issues/88) ведущая сущность | [084-passive-forced-light-sources.md](084-passive-forced-light-sources.md) |
 | [#86](https://github.com/Matysh/houseplan-card/issues/86) Подсказки к настройкам, партия 1 | [086-settings-help-content-party1.md](086-settings-help-content-party1.md) |
 | [#90](https://github.com/Matysh/houseplan-card/issues/90) Управляемый бейдж со значением | [090-device-value-badge.md](090-device-value-badge.md) |
