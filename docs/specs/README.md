@@ -87,6 +87,12 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#137](https://github.com/Matysh/houseplan-card/issues/137) Узлы и линии привязки в редакторе Плана | [137-plan-snap-overlay.md](137-plan-snap-overlay.md) |
 | [#141](https://github.com/Matysh/houseplan-card/issues/141) Бесшовные стыки перегородок и открытых контуров | [141-wall-junctions.md](141-wall-junctions.md) |
 
+## P3
+
+| Issue | ТЗ |
+|---|---|
+| [#22](https://github.com/Matysh/houseplan-card/issues/22) Мгновенный отклик actionable-маркера на нажатие | [022-device-press-feedback.md](022-device-press-feedback.md) |
+
 ## Правило актуализации
 
 При изменении продуктового решения сначала обновляется соответствующее issue, затем ТЗ. Реализация не считается завершённой только по наличию кода: нужны выполненные acceptance criteria, предусмотренная ТЗ проверка и актуальный статус Project v2.
