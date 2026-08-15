@@ -106,6 +106,12 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 |---|---|
 | [#103](https://github.com/Matysh/houseplan-card/issues/103) Состояния в Toggle confirmation | [103-toggle-confirmation-state.md](103-toggle-confirmation-state.md) |
 
+## P3
+
+| Issue | ТЗ |
+|---|---|
+| [#57](https://github.com/Matysh/houseplan-card/issues/57) Единый выбор цвета и прозрачности | [057-color-opacity-picker.md](057-color-opacity-picker.md) |
+
 ## Правило актуализации
 
 При изменении продуктового решения сначала обновляется соответствующее issue, затем ТЗ. Реализация не считается завершённой только по наличию кода: нужны выполненные acceptance criteria, предусмотренная ТЗ проверка и актуальный статус Project v2.
