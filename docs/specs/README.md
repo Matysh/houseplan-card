@@ -86,6 +86,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#123](https://github.com/Matysh/houseplan-card/issues/123) Split из вершины не меняет наружную геометрию стен | [123-corner-split-wall.md](123-corner-split-wall.md) |
 | [#137](https://github.com/Matysh/houseplan-card/issues/137) Узлы и линии привязки в редакторе Плана | [137-plan-snap-overlay.md](137-plan-snap-overlay.md) |
 | [#141](https://github.com/Matysh/houseplan-card/issues/141) Бесшовные стыки перегородок и открытых контуров | [141-wall-junctions.md](141-wall-junctions.md) |
+| [#149](https://github.com/Matysh/houseplan-card/issues/149) Явный вход в настройки вида на touch | [149-touch-view-settings-affordance.md](149-touch-view-settings-affordance.md) |
 
 ## Правило актуализации
 
