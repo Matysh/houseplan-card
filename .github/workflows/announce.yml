@@ -41,7 +41,7 @@ jobs:
     steps:
       - name: Check out release notes for a reusable call
         if: ${{ inputs.reusable == true }}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ inputs.ref }}
       - name: Send to Telegram
