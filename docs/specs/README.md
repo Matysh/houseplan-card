@@ -77,6 +77,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#56](https://github.com/Matysh/houseplan-card/issues/56) Static room color | [056-static-room-color.md](056-static-room-color.md) |
 | [#68](https://github.com/Matysh/houseplan-card/issues/68) Подсказки к настройкам | [068-help-affordance.md](068-help-affordance.md) |
 | [#75](https://github.com/Matysh/houseplan-card/issues/75) + [#76](https://github.com/Matysh/houseplan-card/issues/76) Единый поток размещения проёмов | [075-076-opening-placement-flow.md](075-076-opening-placement-flow.md) |
+| [#82](https://github.com/Matysh/houseplan-card/issues/82) Плавное масштабирование zoom/fit/reset | [082-smooth-zoom.md](082-smooth-zoom.md) |
 | [#84](https://github.com/Matysh/houseplan-card/issues/84) Источник «Всегда» без сущности HA + [#88](https://github.com/Matysh/houseplan-card/issues/88) ведущая сущность | [084-passive-forced-light-sources.md](084-passive-forced-light-sources.md) |
 | [#90](https://github.com/Matysh/houseplan-card/issues/90) Управляемый бейдж со значением | [090-device-value-badge.md](090-device-value-badge.md) |
 | [#94](https://github.com/Matysh/houseplan-card/issues/94) Универсальное действие «Переключить состояние» | [094-universal-state-toggle.md](094-universal-state-toggle.md) |
