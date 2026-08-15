@@ -1,4 +1,4 @@
-# Спецификации задач P1 и P2
+# Спецификации задач
 
 Актуально на 2026-08-14.
 
@@ -86,6 +86,12 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#123](https://github.com/Matysh/houseplan-card/issues/123) Split из вершины не меняет наружную геометрию стен | [123-corner-split-wall.md](123-corner-split-wall.md) |
 | [#137](https://github.com/Matysh/houseplan-card/issues/137) Узлы и линии привязки в редакторе Плана | [137-plan-snap-overlay.md](137-plan-snap-overlay.md) |
 | [#141](https://github.com/Matysh/houseplan-card/issues/141) Бесшовные стыки перегородок и открытых контуров | [141-wall-junctions.md](141-wall-junctions.md) |
+
+## P3
+
+| Issue | ТЗ |
+|---|---|
+| [#62](https://github.com/Matysh/houseplan-card/issues/62) Масштабируемая i18n-инфраструктура | [062-i18n-registry.md](062-i18n-registry.md) |
 
 ## Правило актуализации
 
