@@ -86,6 +86,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#94](https://github.com/Matysh/houseplan-card/issues/94) Универсальное действие «Переключить состояние» | [094-universal-state-toggle.md](094-universal-state-toggle.md) |
 | [#101](https://github.com/Matysh/houseplan-card/issues/101) Плавный переход View ↔ редакторы | [101-view-editor-transition.md](101-view-editor-transition.md) |
 | [#107](https://github.com/Matysh/houseplan-card/issues/107) Переключение виртуального источника света «Всегда» | [107-virtual-light-toggle.md](107-virtual-light-toggle.md) |
+| [#113](https://github.com/Matysh/houseplan-card/issues/113) Optional-контракт SpaceModel | [113-optional-space-model.md](113-optional-space-model.md) |
 | [#117](https://github.com/Matysh/houseplan-card/issues/117) Registry-less entity у проёма | [117-registryless-opening-entity.md](117-registryless-opening-entity.md) |
 | [#122](https://github.com/Matysh/houseplan-card/issues/122) Изометрический режим Stage 2: скрытый режим и визуальная полировка | [122-isometric-stage2.md](122-isometric-stage2.md) |
 | [#123](https://github.com/Matysh/houseplan-card/issues/123) Split из вершины не меняет наружную геометрию стен | [123-corner-split-wall.md](123-corner-split-wall.md) |
