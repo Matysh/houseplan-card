@@ -1,6 +1,6 @@
 # Спецификации задач P1 и P2
 
-Актуально на 2026-08-14.
+Актуально на 2026-08-15.
 
 GitHub Issues и GitHub Projects (v2) остаются единственным каноническим backlog проекта. Этот каталог содержит развёрнутые ТЗ: каждое ТЗ ссылается на issue, а issue — на соответствующий файл. Статус, приоритет и факт завершения меняются только в GitHub.
 
@@ -86,6 +86,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#123](https://github.com/Matysh/houseplan-card/issues/123) Split из вершины не меняет наружную геометрию стен | [123-corner-split-wall.md](123-corner-split-wall.md) |
 | [#137](https://github.com/Matysh/houseplan-card/issues/137) Узлы и линии привязки в редакторе Плана | [137-plan-snap-overlay.md](137-plan-snap-overlay.md) |
 | [#141](https://github.com/Matysh/houseplan-card/issues/141) Бесшовные стыки перегородок и открытых контуров | [141-wall-junctions.md](141-wall-junctions.md) |
+| [#162](https://github.com/Matysh/houseplan-card/issues/162) Многоэтажный робот: карты отдельно от пространства базы | [162-vacuum-map-space-routing.md](162-vacuum-map-space-routing.md) |
 
 ## Правило актуализации
 
