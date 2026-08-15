@@ -20,8 +20,6 @@
     "golden:verify": "node demo/golden/run.mjs --mode=verify",
     "continuity:screencast": "node demo/screencast_visual_continuity.mjs",
     "golden:accept": "node demo/golden/accept.mjs",
-    "docs:capture": "npm run build && node demo/docs/capture.mjs",
-    "docs:check": "node scripts/check-docs.mjs",
     "release:check": "node scripts/release-prerelease.mjs --check",
     "release:prerelease": "node scripts/release-prerelease.mjs",
     "prepare": "node scripts/install-hooks.mjs"

@@ -150,8 +150,8 @@ concurrent clients, but avoid editing the same object in two browsers at once.
   may be replaced with fictional ones.
 
 Documentation screenshots are produced by the reproducible
-`npm run docs:capture` command using synthetic data only. Scenario version,
+`npm run build && node demo/docs/capture.mjs` command using synthetic data only. Scenario version,
 source fingerprint and every image hash are recorded in the
-[screenshot manifest](docs/images/manifest.json).
+[screenshot index](docs/images/screenshots.json).
 
 License: [MIT](LICENSE).

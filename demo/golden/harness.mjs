@@ -1,16 +1,7 @@
 import { makeLargeHouseFixture } from '../fixtures/large-house.mjs';
 import { fixtureWallKey, makeVisualMatrixFixture } from '../fixtures/visual-matrix.mjs';
 
-const fixtureFor = (name) => {
-  if (name === 'large') return makeLargeHouseFixture();
-  if (name === 'empty') {
-    return {
-      config: { spaces: [], markers: [], settings: {} },
-      layout: {}, devices: {}, entities: {}, states: {}, areas: {},
-    };
-  }
-  return makeVisualMatrixFixture();
-};
+const fixtureFor = (name) => name === 'large' ? makeLargeHouseFixture() : makeVisualMatrixFixture();
 
 const themeVars = {
   dark: {
@@ -129,8 +120,7 @@ export function prepareGoldenFixture(scenario) {
     fixture.devices[scenario.deviceId].name = scenario.deviceName;
   }
   if (scenario.fillMode || scenario.bgMode || typeof scenario.glowEnabled === 'boolean'
-      || typeof scenario.sunRays === 'boolean' || typeof scenario.showBorders === 'boolean'
-      || scenario.roomMetrics) {
+      || typeof scenario.sunRays === 'boolean' || typeof scenario.showBorders === 'boolean') {
     const space = requireSpace();
     space.settings = {
       ...(space.settings || {}),
@@ -139,9 +129,6 @@ export function prepareGoldenFixture(scenario) {
       ...(typeof scenario.glowEnabled === 'boolean' ? { glow_enabled: scenario.glowEnabled } : {}),
       ...(typeof scenario.sunRays === 'boolean' ? { sun_rays: scenario.sunRays } : {}),
       ...(typeof scenario.showBorders === 'boolean' ? { show_borders: scenario.showBorders } : {}),
-      ...(scenario.roomMetrics ? {
-        label_temp: true, label_hum: true, label_lqi: true, label_light: true,
-      } : {}),
       ...(scenario.customFill ? { custom_fill: scenario.customFill } : {}),
     };
   }
@@ -289,7 +276,7 @@ export async function prepareGoldenScenario(page, scenario) {
     }
     const host = document.getElementById('host');
     const cardConfig = {
-      type: 'custom:houseplan-card', title: scenario.title || `Golden ${scenario.id}`, icon_size: 3.4,
+      type: 'custom:houseplan-card', title: `Golden ${scenario.id}`, icon_size: 3.4,
       language: scenario.language || 'en',
       ...(scenario.kiosk ? { kiosk: true } : {}),
     };
@@ -298,7 +285,7 @@ export async function prepareGoldenScenario(page, scenario) {
       user: { id: 'golden', name: 'Golden fixture', is_admin: true },
       devices: fixture.devices || {}, entities: fixture.entities || {},
       areas: fixture.areas || {}, states: fixture.states || {},
-      floors: scenario.noFloors ? {} : {
+      floors: {
         one: { floor_id: 'one', name: 'One', level: 0 },
         two: { floor_id: 'two', name: 'Two', level: 1 },
         three: { floor_id: 'three', name: 'Three', level: 2 },
@@ -551,21 +538,6 @@ export async function prepareGoldenScenario(page, scenario) {
         if (visibleRole.top < visibleBody.top - 1 || visibleRadius.bottom > visibleBody.bottom + 1)
           throw new Error('golden viewport does not show the complete device light-source controls');
       }
-      if (scenario.devicePresentationPreview) {
-        const dialog = card.renderRoot.querySelector('hp-dialog');
-        const body = dialog?.querySelector('.body');
-        const preview = dialog?.querySelector('hp-device-preview');
-        await preview?.updateComplete;
-        if (!body || !preview) throw new Error('golden device presentation preview is missing');
-        const bodyRect = body.getBoundingClientRect();
-        const previewRect = preview.getBoundingClientRect();
-        body.scrollTop += previewRect.top - bodyRect.top - 180;
-        await frame();
-        const visibleBody = body.getBoundingClientRect();
-        const visiblePreview = preview.getBoundingClientRect();
-        if (visiblePreview.top < visibleBody.top - 1 || visiblePreview.bottom > visibleBody.bottom + 1)
-          throw new Error('golden viewport does not show the device presentation preview');
-      }
       if (scenario.openHelp) {
         const help = card.renderRoot.querySelector(`hp-help[data-help-key="${scenario.openHelp}"]`);
         await help?.updateComplete;
@@ -585,15 +557,6 @@ export async function prepareGoldenScenario(page, scenario) {
         await dialog?.updateComplete;
         dialog?.renderRoot?.querySelector('.close')?.focus();
       }
-    } else if (scenario.dialog === 'device-info') {
-      const device = card._devices.find((item) => item.id === scenario.deviceId);
-      if (!device) throw new Error(`golden device missing: ${scenario.deviceId}`);
-      card._infoCard = device;
-      card.requestUpdate();
-      await card.updateComplete;
-      await frame();
-      if (!card.renderRoot.querySelector('hp-dialog'))
-        throw new Error(`golden device info did not open: ${scenario.deviceId}`);
     } else if (scenario.dialog === 'backup-full' || scenario.dialog === 'backup-space') {
       const full = scenario.dialog === 'backup-full';
       card._backupImportDialog = {

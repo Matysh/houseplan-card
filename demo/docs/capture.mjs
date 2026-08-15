@@ -102,6 +102,74 @@ const roomCardClip = (page) => page.evaluate(() => {
   };
 });
 
+/**
+ * Documentation-only presentation state. Keep these mutations out of the
+ * golden harness: changing that release fixture would invalidate every visual
+ * baseline even though the production component and golden matrix are intact.
+ */
+const applyDocumentationState = (page, scenario) => page.evaluate(async (current) => {
+  const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+  const card = window.__goldenCard;
+  if (!card) throw new Error(`documentation card is missing: ${current.id}`);
+
+  if (current.title) {
+    card.setConfig({ ...card._config, title: current.title });
+  }
+
+  if (current.roomMetrics) {
+    const space = card._serverCfg?.spaces?.find((item) => item.id === current.space);
+    if (!space) throw new Error(`documentation room metrics space is missing: ${current.space}`);
+    space.settings = {
+      ...(space.settings || {}),
+      label_temp: true,
+      label_hum: true,
+      label_lqi: true,
+      label_light: true,
+    };
+    card._cfgEpoch += 1;
+    card._modelCache = null;
+  }
+
+  if (current.fixture === 'empty') {
+    card._serverCfg = { ...(card._serverCfg || {}), spaces: [] };
+    card._cfgEpoch += 1;
+    card._modelCache = null;
+    card._space = '';
+    card._onboardingShown = true;
+    card.hass = { ...card.hass, floors: {} };
+    card._openSpaceDialog('create');
+  }
+
+  if (current.dialog === 'device-info') {
+    const device = card._devices.find((item) => item.id === current.deviceId);
+    if (!device) throw new Error(`documentation device is missing: ${current.deviceId}`);
+    card._infoCard = device;
+  }
+
+  card.requestUpdate();
+  await card.updateComplete;
+  await frame();
+
+  if (current.devicePresentationPreview) {
+    const dialog = card.renderRoot.querySelector('hp-dialog');
+    const body = dialog?.querySelector('.body');
+    const preview = dialog?.querySelector('hp-device-preview');
+    await preview?.updateComplete;
+    if (!body || !preview)
+      throw new Error('documentation device presentation preview is missing');
+    const bodyRect = body.getBoundingClientRect();
+    const previewRect = preview.getBoundingClientRect();
+    body.scrollTop += previewRect.top - bodyRect.top - 180;
+    await frame();
+    const visibleBody = body.getBoundingClientRect();
+    const visiblePreview = preview.getBoundingClientRect();
+    if (visiblePreview.top < visibleBody.top - 1 || visiblePreview.bottom > visibleBody.bottom + 1)
+      throw new Error('documentation viewport does not show the device presentation preview');
+  }
+
+  return { dialog: !!card.renderRoot.querySelector('hp-dialog') };
+}, scenario);
+
 mkdirSync(OUTPUT, { recursive: true });
 copyFileSync(BUNDLE, DEMO_BUNDLE);
 copyFileSync(BUNDLE, INTEGRATION_BUNDLE);
@@ -114,7 +182,8 @@ try {
   const fingerprint = await assertFreshDemoBundle(page, ROOT);
   const scenarios = {};
   for (const scenario of DOC_SCREENSHOTS) {
-    const runtime = await prepareGoldenScenario(page, scenario);
+    await prepareGoldenScenario(page, scenario);
+    const runtime = await applyDocumentationState(page, scenario);
     if (scenario.expectDialog && !runtime.dialog)
       throw new Error(`documentation scenario did not open its dialog: ${scenario.id}`);
     const clip = scenario.capture === 'room-card'
@@ -140,10 +209,10 @@ try {
     fixture: 'synthetic-only',
     sourceFingerprint: fingerprint,
     captureScriptSha256: sha256(readFileSync(SCRIPT)),
-    command: 'npm run docs:capture',
+    command: 'npm run build && node demo/docs/capture.mjs',
     scenarios,
   };
-  writeFileSync(resolve(OUTPUT, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
+  writeFileSync(resolve(OUTPUT, 'screenshots.json'), `${JSON.stringify(manifest, null, 2)}\n`);
 } finally {
   await browser.close();
 }

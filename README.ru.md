@@ -154,8 +154,8 @@ default_floor: ground
   воспроизведения; приватные entity ID можно заменить вымышленными.
 
 Скриншоты в документации получены воспроизводимой командой
-`npm run docs:capture` только на синтетических данных. Версия сценариев,
+`npm run build && node demo/docs/capture.mjs` только на синтетических данных. Версия сценариев,
 fingerprint исходников и хеш каждого изображения находятся в
-[манифесте снимков](docs/images/manifest.json).
+[индексе снимков](docs/images/screenshots.json).
 
 Лицензия: [MIT](LICENSE).

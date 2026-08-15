@@ -123,16 +123,17 @@ for (const relative of PUBLIC_DOCS.slice(0, 4)) {
   }
 }
 
-const manifestPath = resolve(ROOT, 'docs/images/manifest.json');
+const manifestPath = resolve(ROOT, 'docs/images/screenshots.json');
 if (!existsSync(manifestPath)) {
-  errors.push('docs/images/manifest.json: missing screenshot manifest');
+  errors.push('docs/images/screenshots.json: missing screenshot index');
 } else {
   const manifest = JSON.parse(canonicalText(manifestPath));
   if (manifest.fixture !== 'synthetic-only') errors.push('screenshot manifest must declare synthetic-only fixture');
-  if (manifest.sourceFingerprint !== sourceFingerprint(ROOT)) errors.push('screenshot source fingerprint is stale; run npm run docs:capture');
+  if (manifest.sourceFingerprint !== sourceFingerprint(ROOT))
+    errors.push('screenshot source fingerprint is stale; run npm run build && node demo/docs/capture.mjs');
   const scriptPath = resolve(ROOT, 'demo/docs/capture.mjs');
   if (manifest.captureScriptSha256 !== sha256(readFileSync(scriptPath)))
-    errors.push('screenshot capture script changed; run npm run docs:capture');
+    errors.push('screenshot capture script changed; run npm run build && node demo/docs/capture.mjs');
   const ids = Object.keys(manifest.scenarios || {});
   if (JSON.stringify(ids.sort()) !== JSON.stringify([...EXPECTED_SCREENSHOTS].sort()))
     errors.push('screenshot manifest scenario set is incomplete');

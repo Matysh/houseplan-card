@@ -22,7 +22,7 @@ jobs:
       - uses: actions/setup-node@v7
         with: { node-version: 22 }
       - name: Validate public documentation
-        run: npm run docs:check -- --external
+        run: node scripts/check-docs.mjs --external
 
   provenance:
     runs-on: ubuntu-latest
