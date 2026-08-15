@@ -114,6 +114,20 @@ export const MUTANTS = [
       replace: "layoutOverrides: { 'golden-light-one': { s: 'golden-lighting', x: 0.06, y: 0.90 } },",
     }],
   },
+  {
+    id: 'golden-filled-tunnel-removed',
+    guard: 'node demo/golden/run.mjs --mode=capture --scenario=openings-filled-tunnel-dark',
+    because: 'сцена защищает непрерывную room-coloured заливку толстого тоннеля (#81): '
+      + 'если fixture перестаёт рисовать заливку, semantic tunnelContinuity обязан упасть, '
+      + 'а не принять пустой проём как корректный golden',
+    // Ломаем только заявленное условие fixture. Capture сохраняет полный
+    // semantic gate даже для одной сцены и не зависит от pixel baseline.
+    patches: [{
+      file: 'demo/golden/matrix.mjs',
+      find: "{ id: 'openings-filled-tunnel-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',\n    fillMode: 'custom', customFill: { c: '#66717c', a: 0.55 }, glowEnabled: false,",
+      replace: "{ id: 'openings-filled-tunnel-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',\n    fillMode: 'none', customFill: { c: '#66717c', a: 0.55 }, glowEnabled: false,",
+    }],
+  },
 ];
 
 // --- механика ---------------------------------------------------------------
