@@ -84,6 +84,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#107](https://github.com/Matysh/houseplan-card/issues/107) Переключение виртуального источника света «Всегда» | [107-virtual-light-toggle.md](107-virtual-light-toggle.md) |
 | [#122](https://github.com/Matysh/houseplan-card/issues/122) Изометрический режим Stage 2: скрытый режим и визуальная полировка | [122-isometric-stage2.md](122-isometric-stage2.md) |
 | [#123](https://github.com/Matysh/houseplan-card/issues/123) Split из вершины не меняет наружную геометрию стен | [123-corner-split-wall.md](123-corner-split-wall.md) |
+| [#126](https://github.com/Matysh/houseplan-card/issues/126) HA Area переносит marker в новую комнату | [126-ha-area-marker-relocation.md](126-ha-area-marker-relocation.md) |
 | [#137](https://github.com/Matysh/houseplan-card/issues/137) Узлы и линии привязки в редакторе Плана | [137-plan-snap-overlay.md](137-plan-snap-overlay.md) |
 | [#141](https://github.com/Matysh/houseplan-card/issues/141) Бесшовные стыки перегородок и открытых контуров | [141-wall-junctions.md](141-wall-junctions.md) |
 
