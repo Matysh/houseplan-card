@@ -165,6 +165,12 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#57](https://github.com/Matysh/houseplan-card/issues/57) Единый выбор цвета и прозрачности | [057-color-opacity-picker.md](057-color-opacity-picker.md) |
 | [#180](https://github.com/Matysh/houseplan-card/issues/180) Единый picker во всех местах выбора цвета | [180-all-color-call-sites.md](180-all-color-call-sites.md) |
 
+## P3
+
+| Issue | ТЗ |
+|---|---|
+| [#62](https://github.com/Matysh/houseplan-card/issues/62) Масштабируемая i18n-инфраструктура | [062-i18n-registry.md](062-i18n-registry.md) |
+
 ## Правило актуализации
 
 При изменении продуктового решения сначала обновляется соответствующее issue, затем ТЗ. Реализация не считается завершённой только по наличию кода: нужны выполненные acceptance criteria, предусмотренная ТЗ проверка и актуальный статус Project v2.
