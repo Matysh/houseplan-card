@@ -1,4 +1,4 @@
-# Спецификации задач P1 и P2
+# Спецификации задач
 
 Актуально на 2026-08-17.
 
@@ -99,6 +99,12 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#173](https://github.com/Matysh/houseplan-card/issues/173) Единый инструмент рисования стен и предложение комнаты по замыканию | [173-unified-wall-tool.md](173-unified-wall-tool.md) |
 | [#174](https://github.com/Matysh/houseplan-card/issues/174) Связанный виртуальный источник следует реальному контроллеру | [174-linked-virtual-light-controller.md](174-linked-virtual-light-controller.md) |
 | [#178](https://github.com/Matysh/houseplan-card/issues/178) Выбор сущности для действия «Переключить состояние» | [178-toggle-entity.md](178-toggle-entity.md) |
+
+## P3
+
+| Issue | ТЗ |
+|---|---|
+| [#103](https://github.com/Matysh/houseplan-card/issues/103) Состояния в Toggle confirmation | [103-toggle-confirmation-state.md](103-toggle-confirmation-state.md) |
 
 ## Правило актуализации
 
