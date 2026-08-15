@@ -1,8 +1,8 @@
 # ТЗ #35 — Документация текущего пользовательского опыта
 
 - Issue: https://github.com/Matysh/houseplan-card/issues/35
-- Приоритет: P1
-- Статус ТЗ: ready for implementation
+- Приоритет: P2
+- Статус ТЗ: implemented
 - Тип: docs-only, без изменения поведения
 
 ## Цель и аудитория

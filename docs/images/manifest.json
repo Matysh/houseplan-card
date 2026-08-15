@@ -1,0 +1,119 @@
+{
+  "version": 1,
+  "fixture": "synthetic-only",
+  "sourceFingerprint": "7f726b212839add4f9fc4491fd23f053b09bf82e38ea380a7cc84d1dc2bcf81a",
+  "captureScriptSha256": "a0022c98553c5baae8335d7ba26f64129699c4ef6162dd1d88df9f70226ec404",
+  "command": "npm run docs:capture",
+  "scenarios": {
+    "view-desktop": {
+      "file": "01-view-desktop.png",
+      "viewport": {
+        "width": 1180,
+        "height": 900
+      },
+      "theme": "dark",
+      "language": "en",
+      "sourceSha256": "7f726b212839add4f9fc4491fd23f053b09bf82e38ea380a7cc84d1dc2bcf81a",
+      "imageSha256": "d36b6f9f8139f31ef73a780c6511a640a26055efd9d7a24c24fd48b1d8379bf0"
+    },
+    "view-touch": {
+      "file": "02-view-touch.png",
+      "viewport": {
+        "width": 390,
+        "height": 760
+      },
+      "theme": "dark",
+      "language": "en",
+      "sourceSha256": "7f726b212839add4f9fc4491fd23f053b09bf82e38ea380a7cc84d1dc2bcf81a",
+      "imageSha256": "358e25ff9984d0fb0c03cfbb848df40c425fdfe64cd5f4f613b1e754ca9d4249"
+    },
+    "space-create": {
+      "file": "03-space-create.png",
+      "viewport": {
+        "width": 900,
+        "height": 850
+      },
+      "theme": "dark",
+      "language": "en",
+      "sourceSha256": "7f726b212839add4f9fc4491fd23f053b09bf82e38ea380a7cc84d1dc2bcf81a",
+      "imageSha256": "c53db2e5c642a5549c13f3c93a5b359fed69bdb2621bf71a243a877ffcb95e6b"
+    },
+    "room-contour-close": {
+      "file": "04-room-contour-close.png",
+      "viewport": {
+        "width": 1180,
+        "height": 900
+      },
+      "theme": "dark",
+      "language": "en",
+      "sourceSha256": "7f726b212839add4f9fc4491fd23f053b09bf82e38ea380a7cc84d1dc2bcf81a",
+      "imageSha256": "59fe5b9df034d255840e7ae6984efb675d39e84ad80dee6f9ad9394c54fb9cda"
+    },
+    "plan-context-tray": {
+      "file": "05-plan-context-tray.png",
+      "viewport": {
+        "width": 1180,
+        "height": 900
+      },
+      "theme": "dark",
+      "language": "en",
+      "sourceSha256": "7f726b212839add4f9fc4491fd23f053b09bf82e38ea380a7cc84d1dc2bcf81a",
+      "imageSha256": "997bba208897b219051131dc51254ee3c76ed9f73597fde33070ac8cefdcd745"
+    },
+    "device-editor": {
+      "file": "06-device-editor.png",
+      "viewport": {
+        "width": 1180,
+        "height": 1100
+      },
+      "theme": "dark",
+      "language": "en",
+      "sourceSha256": "7f726b212839add4f9fc4491fd23f053b09bf82e38ea380a7cc84d1dc2bcf81a",
+      "imageSha256": "7a22a81e2abedf5a520bd36b7509d953cbfa9962b48c0ffbc233666a6215c04b"
+    },
+    "device-display-preview": {
+      "file": "06-device-display-preview.png",
+      "viewport": {
+        "width": 1180,
+        "height": 1100
+      },
+      "theme": "dark",
+      "language": "en",
+      "sourceSha256": "7f726b212839add4f9fc4491fd23f053b09bf82e38ea380a7cc84d1dc2bcf81a",
+      "imageSha256": "f6014caed7b7d28790b8548996ba09d806a4e4d51fbb7e8d3fb3c582ebe49167"
+    },
+    "background-editor": {
+      "file": "07-background-editor.png",
+      "viewport": {
+        "width": 1180,
+        "height": 900
+      },
+      "theme": "dark",
+      "language": "en",
+      "sourceSha256": "7f726b212839add4f9fc4491fd23f053b09bf82e38ea380a7cc84d1dc2bcf81a",
+      "imageSha256": "4e7b3b1220a3fe104cf11e5b32a31b343dc95c45fd2cbe3365d145f0a66a560d"
+    },
+    "room-card": {
+      "file": "08-room-card.png",
+      "viewport": {
+        "width": 1180,
+        "height": 900
+      },
+      "theme": "dark",
+      "language": "en",
+      "sourceSha256": "7f726b212839add4f9fc4491fd23f053b09bf82e38ea380a7cc84d1dc2bcf81a",
+      "imageSha256": "176abba71d41cfb045a33f82a794d9fbb2a5d3c48e6df66e6ec3a8e448311b11"
+    },
+    "device-info": {
+      "file": "09-device-info.png",
+      "viewport": {
+        "width": 1000,
+        "height": 900
+      },
+      "theme": "dark",
+      "language": "en",
+      "sourceSha256": "7f726b212839add4f9fc4491fd23f053b09bf82e38ea380a7cc84d1dc2bcf81a",
+      "imageSha256": "655873ba709a2a702fde533b33ef109343ce0c6ca85ff985fdd7c4d41c877b33"
+    }
+  }
+}

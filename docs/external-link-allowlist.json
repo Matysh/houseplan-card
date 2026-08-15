@@ -1,0 +1,9 @@
+{
+  "transientHosts": [
+    "demo.houseplan.tech",
+    "github.com",
+    "hacs.xyz",
+    "my.home-assistant.io",
+    "t.me"
+  ]
+}

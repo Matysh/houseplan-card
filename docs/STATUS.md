@@ -249,18 +249,19 @@ metadata). Only an explicit owner-approved emergency hotfix may skip this gate.
 2. GitHub auth: fine-grained PAT (Contents R/W, issued 2026-07-23) in the sandbox
    `~/.git-credentials`; pushes go over SSH with the `ha_jb` key. The old classic PAT
    expired and is gone.
-3. Privacy: legacy real-house plan sources (`assets/`) removed from the tree in
-   v1.13.3, but they persist in git history and old release archives; 8 README
-   screenshots in docs/images are still from the real house (replacement with
-   synthetic ones is a standing watchlist item). History rewrite deliberately NOT
-   done — it would break existing release tags/HACS installs.
+3. Privacy: legacy real-house plan sources (`assets/`) and screenshots were
+   removed from the current tree. Public documentation images are generated
+   from synthetic fixtures by `npm run docs:capture` and indexed in
+   `docs/images/manifest.json`. Old images persist in git history and release
+   archives; history rewrite is deliberately not done because it would break
+   release tags and HACS installs.
 4. Stale files on the mount that cannot be deleted from the sandbox: `src/data/` leftovers,
    `brand_preview.png`, old nested bundle copies — ignore, git is authoritative.
-4. Roadmap: phases 7–10 are DONE (v1.12.0 quality scale, v1.13.0 universality,
-   v1.13.1 distribution). Next candidates: replace the remaining real-house README
-   screenshots with synthetic ones; measure backend coverage (>95% goal); mypy strict.
-5. The demo harness lives in /tmp/demo (synthetic home: demo.html + capture.mjs) —
-   rebuildable from this repo + docs/DEVELOPMENT.md notes; frames → PIL → GIF.
+5. Roadmap: phases 7–10 are DONE (v1.12.0 quality scale, v1.13.0 universality,
+   v1.13.1 distribution). Next candidates: measure backend coverage (>95% goal);
+   mypy strict.
+6. The public-doc screenshot harness is versioned in `demo/docs/capture.mjs` and
+   reuses the production component plus deterministic golden fixtures.
 
 ## How to resume work in a fresh session (checklist)
 

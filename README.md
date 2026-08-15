@@ -1,379 +1,157 @@
-# 🏠 House Plan — interactive floor plan card for Home Assistant
+# 🏠 House Plan — a live home map for Home Assistant
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
 [![GitHub release](https://img.shields.io/github/v/release/Matysh/houseplan-card)](https://github.com/Matysh/houseplan-card/releases)
-[![GitHub stars](https://img.shields.io/github/stars/Matysh/houseplan-card)](https://github.com/Matysh/houseplan-card/stargazers)
 [![CI](https://github.com/Matysh/houseplan-card/actions/workflows/validate.yml/badge.svg)](https://github.com/Matysh/houseplan-card/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Live demo](https://img.shields.io/badge/demo-try_it_live-00c853?logo=homeassistant&logoColor=white)](https://demo.houseplan.tech)
 [![Telegram chat](https://img.shields.io/badge/Telegram-chat-2CA5E0?logo=telegram&logoColor=white)](https://t.me/ha_houseplan)
 
-**Turn Home Assistant into a live, interactive map of your home.** Upload or draw
-a floor plan, outline the rooms with your mouse — and every smart device appears
-in its real place: live states, tap-to-toggle lights, temperature and humidity per
-room, Zigbee signal maps, glowing light pools and a fullscreen kiosk mode for wall
-tablets. No YAML, no Inkscape, no external editors — the whole floorplan lives
-right on your Lovelace dashboard.
+📘 **[Full user guide](docs/USER-GUIDE.md)** · 🇷🇺 **[Русский](README.ru.md)** · 🗂 **[Project issues](https://github.com/Matysh/houseplan-card/issues)**
 
-> **Use a desktop computer to edit plans.** View and kiosk are fully supported
-> on phones and tablets. The editors are designed primarily for a desktop
-> browser with a mouse and keyboard; individual editing operations on touch
-> devices may be awkward, limited, or unavailable.
+<!-- docs-section: overview -->
 
-![Interactive Home Assistant floor plan: live rooms, devices, lights and climate on a real floorplan card](docs/images/demo.gif)
+## Your whole home at a glance
 
-> ### 🚀 Try it live — no install needed
-> **[demo.houseplan.tech](https://demo.houseplan.tech)** — a real Home Assistant
-> with a ready-made plan. Log in as **`demo`** / **`demo`** and click anything:
-> toggle lights, open the editors, break things. The stand resets itself to a
-> pristine state every hour.
+House Plan turns Home Assistant into a live map of your home. Upload a plan or
+draw rooms directly on the dashboard, bind them to Home Assistant areas, and
+the area's devices appear automatically. You can immediately see where a light
+is on, a door is open, a room is too cold, Zigbee signal is weak, or a leak
+sensor has fired.
 
-🇷🇺 [Документация на русском](README.ru.md) · 💬 [Telegram chat: **@ha_houseplan**](https://t.me/ha_houseplan)
+![Synthetic home in View mode with rooms, devices, light and climate](docs/images/01-view-desktop.png)
 
-**Feature highlights**
+Setup is entirely graphical: no floor-plan YAML, Inkscape, or external editor.
+Plan data and device positions live on the Home Assistant server and stay in
+sync across screens.
 
-- ♾️ **An infinite canvas** — there is no "plan size" and no edge to run
-  past: draw and place devices anywhere, pan at any zoom, zoom out to see
-  everything, and let one tap fit the whole plan back on screen.
-- 🖱 **GUI-first floorplan editor** — rooms, doors & windows, island rooms,
-  virtual walls and a visual decor layer, all drawn with clicks; room resize
-  by dragging walls, with live lengths and areas as you drag; smart
-  alignment guides and a live ruler in real meters/feet.
-- 🖼 **A backdrop you can move and scale** — drag the floor-plan picture into
-  place and pull a corner to size it, with its real size in metres shown as
-  you drag, so the drawing and the photo of your plan finally line up.
-- 💡 **Lights toggle on click** out of the box; wall-switch markers can control
-  whole groups of lights (works for dumb switches and stateless remotes too).
-- 🌒 **“Light sources” fill** — a dark house where every lit lamp lights exactly
-  the floor it can see: through doorways and open boundaries, stopped by walls,
-  columns and partitions, which cast real shadows.
-- ☀️ **The sun on the plan** — set the compass and the backdrop lives with
-  the day (white noon → golden hour → deep night), while windows on exterior
-  walls cast real wedges of sunlight into the rooms; optional cloud cover
-  from a weather entity.
-- 🪟 **Curtains and blinds open on a tap** — one action opens, closes or
-  stops a cover, and the icon itself morphs between open and closed while a
-  soft ring pulses as it travels.
-- 🌡 **Room cards** with temperature, humidity, Zigbee LQI and light count;
-  comfort-range temperature fills, per-room signal heatmap.
-- 🚪 **Doors, windows and locks** with contact sensors — unlocking is always an
-  explicit button, never an accidental tap.
-- 📺 **Kiosk mode** for wall tablets and TVs: fullscreen, swipe between floors,
-  auto-carousel, per-screen icon sizes.
-- 🤖 **Live robot vacuums** — the dock marker stays put while a round puck
-  drives the plan in real time, pouring its path out from under itself;
-  current and previous cleanup runs are recorded server-side. Calibration is
-  one click (rooms matched by name) or a drag-and-stretch overlay. A diagnostic
-  source picker also covers registry-less map cameras without silently
-  rebinding broken sources. Works with Xiaomi Cloud Map Extractor, Tasshack
-  dreame-vacuum and Valetudo.
-- 🔔 New devices appear automatically with a red “new” dot; the layout is stored
-  **server-side** — one shared plan for every user and screen, synced live.
+> **Edit on a desktop computer.** View and kiosk are fully supported on phones
+> and tablets. The editors are designed primarily for a mouse and keyboard;
+> individual touch editing operations may be awkward or unavailable. See the
+> exact [touch support contract](docs/TOUCH-SUPPORT.md).
 
----
+<!-- docs-section: features -->
 
-## What it is and why
+## What House Plan provides
 
-House Plan shows your smart home the way it actually looks — on a floor plan. Instead of long lists of entities, you see rooms and devices in their real places: where the leak is, what the temperature is in the kids' room, whether the light is on in the hallway, whether the gate is open.
+- **Live state and safe actions.** Lights and other safe devices can toggle from
+  the plan; a lock cannot be opened by an accidental plan tap.
+- **Three built-in editors.** Plan creates rooms, walls and openings; Device
+  places and configures markers; Background adds lines, labels and furniture.
+- **Area-aware rooms.** New devices appear automatically, while room cards can
+  show temperature, humidity, light state and average LQI.
+- **Light and environment.** Room fills, lamp Glow, wall shadows, a day-cycle
+  backdrop and sunlight through windows.
+- **Doors, windows, gates and vacuums.** Openings follow real contacts and locks;
+  a robot can show its position, dock and travelled path.
+- **Several floors and screens.** Space tabs, swipe navigation, local viewport,
+  and a separate initial floor for each card.
+- **Wall-display kiosk.** A plan-only view with fullscreen navigation and icon
+  sizes saved for that display.
 
-This is convenient when:
+![The same synthetic home in touch View mode](docs/images/02-view-touch.png)
 
-- you have many devices and lists are awkward to use;
-- you need to grasp the state of the house "at a glance";
-- you want to give access to family members — anyone can figure out a picture;
-- you want a beautiful overview screen for a wall-mounted tablet.
+<!-- docs-section: first-run -->
 
-The integration consists of two parts that are installed together:
+## Your first working room
 
-- **the Lovelace card** `houseplan-card` — the interactive plan itself;
-- **the server-side component** — stores the room markup and icon positions in Home Assistant, so the plan is identical in all browsers and on all devices.
+1. Install the integration and add the card to a dashboard.
+2. Create the first **space**: upload SVG/PNG/JPG/WebP, reuse an uploaded image,
+   or choose no image and draw the plan by hand.
+3. In Plan, select **Room outline**, place vertices, and click the first point to
+   close the outline.
+4. Name the room and bind it to a Home Assistant area. Use “No area” for a room
+   that has no devices.
+5. Open Device: devices from the bound area are already placed; drag their
+   markers to the correct positions.
+6. Optionally use Background for lines, text and furniture.
+7. Return to View. The plan now displays live state and accepts safe actions.
 
----
+![Creating the first space](docs/images/03-space-create.png)
 
-## How it differs from alternatives
+![Closing a room outline on its first point](docs/images/04-room-contour-close.png)
 
-A house plan in Home Assistant is usually built with `picture-elements`,
-`ha-floorplan`, or newer GUI cards that draw walls and furniture in the
-dashboard. Those either lock you into YAML/SVG, or store the plan in the
-Lovelace card config. House Plan is a **shared live map** backed by a Home
-Assistant integration:
+![A selected partition and the Plan context tray](docs/images/05-plan-context-tray.png)
 
-| | House Plan | picture-elements / ha-floorplan | GUI draw cards (e.g. easy-floorplan) |
-|---|---|---|---|
-| **Setup** | Entirely through the UI, with the mouse | Manual YAML / Inkscape SVG | In-card drawing of walls & furniture |
-| **Adding devices** | Automatic, by HA **area** | You type every entity by hand | Place entities by hand on the drawing |
-| **Icon coordinates** | Drag with the mouse | Count pixels into YAML | Drag on the canvas |
-| **Room markup** | Built-in outline editor bound to areas | External SVG editor | Draw walls yourself (furniture CAD) |
-| **Storage** | On the HA server (`.storage`, shared, multi-client) | In the dashboard YAML | In the card / dashboard YAML |
-| **Overlays** | Glow, climate, LQI, sun, vacuums, kiosk | Whatever you script in SVG/CSS | Varies by card |
-| **Zoom** | Smooth vector zoom | Usually a fixed image | SVG / virtual canvas |
+![Device settings with binding provenance and the exact action result](docs/images/06-device-editor.png)
 
-**One sentence:** House Plan is the shared, area-aware live map of your home —
-not a general-purpose CAD package. Its Background editor covers practical
-decor, labels and furniture; if you need unrestricted architectural drafting,
-a draw-centric tool may fit better. With a plan and HA areas, House Plan keeps
-every tablet on the same live layout.
+![Live presentation preview for the same device](docs/images/06-device-display-preview.png)
 
-Key advantages in short:
+Every workflow and edge case is in the [full user guide](docs/USER-GUIDE.md).
+The [Background editor contract](docs/DECOR-EDITOR.md) and
+[vacuum guide](docs/VACUUM.md) are the authorities for those subsystems.
 
-- **No code at all.** Everything — spaces, rooms, devices — is configured with clicks.
-- **Automatic device placement.** Outline a room and bind it to a Home Assistant area — the devices of that area appear on the plan by themselves.
-- **Manual additions of your own.** Any device, group or even a "virtual" point can be placed on the plan manually, with a name, icon, model, link and an attached PDF manual.
-- **Live states.** Temperature, Zigbee signal strength, on/off, open/closed — everything updates in real time.
-  Icon colors follow one principle — **yellow means the device is doing its main job right now**:
-  a light is shining, a socket is powering, a fan is spinning, a vacuum is
-  cleaning, a radiator valve is actually heating (not merely enabled). For climate integrations,
-  a reported work action is authoritative; when an integration exposes only its enabled HVAC mode,
-  that mode is the best available fallback. Orange = open / unlocked.
-  A pulsing red ring = an emergency (leak, smoke, gas). An RGB bulb's colour lives in its glow
-  spot (glow fill), where the spot itself is the on/off indicator and the badge stays standard.
-  A translucent icon = unavailable. Dark = idle.
-- **A coherent visual Background editor.** Draw lines/shapes, place labels and
-  furniture, edit physical styles and transform every object with the same
-  selection model. The plan image has its own move/resize/rotate tool, numeric
-  properties and shared Undo/Redo.
-- **Crisp zoom.** Zooming in does not "blur" the picture: the plan, labels and icons remain vector-sharp at any scale.
-
----
-
-## Wall tablet / TV (kiosk mode)
-
-Add the card to a dedicated dashboard with a **panel view** and set `kiosk: true`
-(or tick "Wall device (kiosk) mode" in the card editor):
-
-```yaml
-type: custom:houseplan-card
-kiosk: true
-cycle: 0   # seconds between auto space switches, 0 = off (nice for TVs)
-```
-
-No header, no editors — just the live plan. Swipe to change floors (at 1:1),
-pinch to zoom, double-tap to reset. Long-press an empty spot for 3 seconds to
-tune icon and text sizes for THIS screen (saved per device). To hide Home
-Assistant's own header use the companion app's kiosk settings or the
-[kiosk-mode](https://github.com/NemesisRE/kiosk-mode) plugin.
+<!-- docs-section: installation -->
 
 ## Installation
 
-One click if you already run HACS:
+### HACS
 
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Matysh&repository=houseplan-card&category=integration)
+[![Open the repository in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Matysh&repository=houseplan-card&category=integration)
 
+1. In HACS open **⋮ → Custom repositories**.
+2. Add `https://github.com/Matysh/houseplan-card` as an **Integration**.
+3. Install House Plan and restart Home Assistant.
+4. Open **Settings → Devices & services → Add integration → House Plan**.
 
-### Via HACS (recommended)
+The card is registered automatically. If you manage Lovelace resources
+manually, use the URL served by the integration:
 
-1. Open **HACS → menu (⋮) → Custom repositories**.
-2. Paste the URL of this repository, set the category to **Integration**, and click **Add**.
-3. Find **House Plan** in the list, install it and **restart Home Assistant**.
-4. Go to **Settings → Devices & Services → Add integration** and select **House Plan**.
+```yaml
+resources:
+  - url: /houseplan_files/houseplan-card.js
+    type: module
+```
 
-The card is registered automatically — no need to add a Lovelace resource manually.
+Do not use the on-disk path inside `custom_components`; Home Assistant does not
+serve that path as a JavaScript module.
 
-> **Card doesn't load (`Custom element doesn't exist: houseplan-card`) or you manage Lovelace
-> resources in YAML?** Add the resource manually pointing at the URL the integration *serves*:
->
-> ```yaml
-> resources:
->   - url: /houseplan_files/houseplan-card.js
->     type: module
-> ```
->
-> Do **not** use `/custom_components/houseplan/frontend/houseplan-card.js` — that is the file
-> on disk, which Home Assistant does not serve over HTTP (you'll get a `text/plain` MIME error
-> and the element never registers). The correct, integration-served URL is
-> `/houseplan_files/houseplan-card.js`. Both cards (`houseplan-card` and
-> `houseplan-space-card`) ship in that one file — no separate resource is needed.
+### Manual installation
 
-### Manually
+Copy `custom_components/houseplan` to `config/custom_components`, restart Home
+Assistant, and add the House Plan integration.
 
-1. Copy the `custom_components/houseplan` folder into the `config/custom_components` directory of your Home Assistant.
-2. Restart Home Assistant.
-3. Add the integration: **Settings → Devices & Services → Add integration → House Plan**.
+### Add the card
 
-### Adding a plan screen
-
-Create a new dashboard tab (a "Panel" view works best) and add the card:
+Create a dashboard view (Panel works best) and add the card in the UI or as:
 
 ```yaml
 type: custom:houseplan-card
 title: House plan
 ```
 
-Nothing else needs to be specified — everything else is configured right on the screen.
+Different screens may start on different spaces:
 
----
+```yaml
+type: custom:houseplan-card
+default_floor: ground
+```
 
-## How to use
+All cards share server-side rooms and coordinates. Current mode, viewport and
+selected space remain local to the screen. Revision checks and live sync cover
+concurrent clients, but avoid editing the same object in two browsers at once.
 
-### Step 1. Add a space (floor)
+## Detailed documentation
 
-On first open the plan is still empty — House Plan immediately offers to create the first space.
-If your Home Assistant already has **floors** configured, a wizard offers to create a space
-for each floor (names prefilled, a plan image is asked for one by one; any floor can be skipped).
+- [Full user guide](docs/USER-GUIDE.md)
+- [Mouse/touch/keyboard matrix](docs/USER-GUIDE.md#6-navigation-zoom-and-input)
+- [Plan tools](docs/USER-GUIDE.md#plan-tools-at-a-glance)
+- [Background editor](docs/DECOR-EDITOR.md)
+- [Robot vacuums](docs/VACUUM.md)
+- [Touch support](docs/TOUCH-SUPPORT.md)
 
-![Empty plan — prompt to add a space](docs/images/02-onboarding-empty.png)
+<!-- docs-section: support -->
 
-In the dialog, set a **name** (for example, "1st floor") and pick the background: **upload** a floor-plan image (SVG, PNG, JPG, WebP), **choose one already uploaded** to the server earlier, or select **"no background, I'll draw the rooms"** for a hand-drawn space. The canvas is infinite; an image keeps its own proportions by default and can be moved, resized or rotated at any time in the Background editor.
+## Support and feedback
 
-![Space creation dialog](docs/images/03-space-dialog.png)
+- Questions and plan examples: [Telegram @ha_houseplan](https://t.me/ha_houseplan).
+- Bugs and proposals: [GitHub Issues](https://github.com/Matysh/houseplan-card/issues).
+- Before reporting, update House Plan, restart HA and hard-refresh the page.
+  Include the version, browser, logs and reproduction steps; private entity IDs
+  may be replaced with fictional ones.
 
-> 💡 You can draw the background in any floor planner (for example, REMPLANNER) or photograph a paper plan. SVG works best — it stays crisp when zoomed in.
+Documentation screenshots are produced by the reproducible
+`npm run docs:capture` command using synthetic data only. Scenario version,
+source fingerprint and every image hash are recorded in the
+[screenshot manifest](docs/images/manifest.json).
 
-Later you can add as many spaces as you like (floors, yard, garage) with the **＋** button next to the tabs.
-
-### Step 2. Outline the rooms
-
-After the first space is added, the card switches to the **Plan** tab by itself. The card has three mode tabs in the header — **View** (default: display and device control only, nothing can be moved or edited), **Plan** (rooms, openings, labels, space settings) and **Devices** (placing and configuring markers); the edit tabs are shown to administrators. In Plan, click grid points, connecting them with lines, and close the room outline by clicking the first point.
-
-As soon as the outline is closed, the room-save dialog appears. Here you need to **bind the room to a Home Assistant area** — this is exactly what enables the automation. For utility rooms with no devices (hall, sauna) there is a **"No area"** button.
-
-![Marking up a room and saving it](docs/images/05-room-dialog.png)
-
-While drawing, a ruler follows the cursor showing the current segment's real length (metres, or feet + inches on an imperial Home Assistant). The scale is set per space — the **"Scale (grid cell size)"** field in the space dialog says how many centimetres one grid cell represents (default 5 cm).
-
-Rooms may not overlap: a click strictly inside an existing room, or an outline that would swallow one, is refused. Two more tools help you reshape the plan later:
-
-- **Merge** — click a room, then a neighbour that shares a wall; they fuse into one. A dialog picks which name and area survive.
-- **Split** — click a room, then two points on its walls; the chord cuts it in two. The bigger part stays the room it was (name, area, devices); the smaller one asks for a new name and area.
-
-
-### Doors, windows, gates and locks
-
-In markup mode the **"Opening"** tool places doors, windows and gates: click next to a wall and the
-opening snaps onto it. Pick the type, the **length in real centimetres** (defaults: door 90 cm,
-window 120 cm, gate 300 cm), an open/close sensor and — for doors and gates — a **lock entity**.
-
-With a sensor bound, the plan comes alive: the door leaf swings on its hinge and the swing arc
-draws itself in as the real door opens; a window opens its two casements. While open, the moving
-parts take an accent colour. A gate keeps a 3–4 m opening compact on the plan: two half-width
-leaves open only 10° outwards, without a full-width swing arc, while contact, lock and light
-passage work exactly like a door. A door or gate with a lock shows a padlock badge next to it — green when
-locked, orange when unlocked. For safety the lock can **not** be toggled from the plan; a click
-on the opening shows a status card with both states instead.
-
-Openings are easy to adjust later: hovering one highlights it, you can **drag it along the
-walls** (it slides around corners too), and a **double click opens its properties**.
-
-### Step 3. Devices appear by themselves
-
-As soon as you save a room bound to an area, **the devices of that area are automatically laid out inside the outline**. These are the same devices shown on the **Settings → Devices → (filtered by the room)** page — only the meaningful ones, without service records, bridges and duplicates.
-
-By default only meaningful devices make it onto the plan: non-physical ones (service records, bridges, scenes, individual lamps folded into a light group) arrive with the **"Hide device from plan"** checkbox already ticked. The checkbox is yours from then on — every device dialog has it, virtual devices included. To see and un-hide them, open the device editor and press **"Hidden and disabled"**: user-hidden devices appear as translucent blue ghosts, a click opens the dialog. Hidden devices still count toward the room's Zigbee signal, but cast no light. A device disabled in Home Assistant appears there as a labelled grey service ghost and is excluded from all plan data/actions until it is enabled in HA again.
-
-From here on you can just use the plan: clicking an icon opens the device card with the model, link and a button to jump into Home Assistant.
-
-![Device card on click](docs/images/08-info.png)
-
-### Step 4. Zoom
-
-The mouse wheel or the **－ / ⊹ / ＋** buttons zoom the plan in and out; on a touch screen the two-finger pinch works. Zoomed out you see the whole plan, zoomed in you see the details, and everything stays crisp. The zoom level is remembered separately for each space.
-
-![Zoomed-in plan — everything stays crisp](docs/images/09-zoom.png)
-
-### Step 5. Put the icons in their places
-
-Switch to the **Devices** tab to arrange icons: drag them with the mouse, click one to open its editor. In **View** mode nothing can be moved — panning the map never displaces a sensor (a top user request). Positions are saved on the server and are identical in all browsers and devices. The **↺** button restores the automatic layout.
-
-![Dragging icons — available at all times](docs/images/06-edit.png)
-
-### Tap actions: control devices from the plan
-
-By default a tap on an icon opens its info card. A device can instead use the
-universal **Toggle state** action. Its editor shows the exact entity or configured
-group, the current state and what the next tap will do; when nothing can be toggled,
-it says so and the tap is a quiet no-op rather than an unexpected info-card fallback.
-Lights keep their convenient toggle default. Covers and valves use open/close/stop
-semantics automatically, while locks, alarm panels and secure garage/door/gate covers
-remain blocked. An exact entity binding never falls through to a sibling switch, and
-temporarily unavailable group members are skipped without erasing the configuration.
-A **long press** still opens the info card and right-click still opens HA more-info.
-
-### Icon rules
-
-Which MDI icon a device gets is decided by **icon rules** — editable right in the card
-(the ⬡ button in the header): an ordered list of “name pattern → icon” regexes with a
-live test field, bilingual defaults (EN/RU) and a one-click reset. When no rule
-matches, the entity *device class* decides (thermometer for temperature sensors, etc.).
-
-### Step 6. Adding your own devices manually
-
-You can also place a **single entity** (not just a whole device): start typing in the binding search and individual entities appear next to devices — handy when one device exposes several values (e.g. temperature and humidity) and you want each as its own icon.
-
-
-Not everything has to be left to the automation. With the **＋** button in the header you can place any device, group or a **virtual point** on the plan (for example, an "Inlet valve" that does not exist as a device). Set a name, icon, model, link, description and, if you wish, attach a **PDF manual**.
-
-To represent a dumb physical lamp controlled by a smart relay, place a virtual
-point where the lamp really is and set **Light source → Always**. Manual colour,
-brightness and radius stay available even though the point has no HA entity.
-Then open the relay and add that plan source under **Controls other light
-sources**. The relay continues to show the aggregate working state, while Glow,
-room fill and statistics belong to the lamp's position. An unlinked passive
-Always source is deliberately constant-on. With several own `light.*`/`switch.*`
-entities, Always also offers a leading-entity selector; a missing saved choice
-is warned about and retained while a deterministic fallback is used.
-
-To make that virtual lamp manually switchable without creating a Home
-Assistant helper, also choose **Tap action → Toggle state** on the lamp itself.
-This exact combination — virtual binding, **Light source → Always**, and
-**Toggle state** — stores a shared on/off state in the House Plan integration.
-It survives page reloads and Home Assistant restarts and updates Glow, room
-fill/statistics, full cards and `houseplan-space-card` together. Any signed-in
-dashboard viewer may toggle it. While this manual mode is active, saved
-**Controls other light sources** remain intact but are not called; changing the
-role, binding or tap action restores their normal behaviour. This operational
-state is deliberately not part of plan exports or Home Assistant entities.
-
-The same dialog controls how the device looks on the plan. **Display** switches between the
-icon badge, an animated **presence ripple** (pulsing rings while the entity is active, a faint
-dot when idle — great for motion sensors) or both, with a per-device ring colour and size. The
-**icon size** (×0.5–3) and **rotation** are also per-device, so a wall valve can be small and
-turned the way it is mounted.
-
-![Adding a device manually](docs/images/07-marker-dialog.png)
-
-### Styling the plan with card-mod (advanced, unsupported)
-
-The card ships finished and has no CSS field of its own — but if you already run [card-mod](https://github.com/thomasloven/lovelace-card-mod), every object on the plan now carries a stable hook you can aim at: `data-hp="device"` (plus `data-entity`, `data-area`), `data-hp="room"`, `data-hp="opening"`, `data-hp="decor"`, `data-hp="room-label"`, `data-hp="space-tab"`. We promise not to rename them; we do not ship card-mod, do not support it, and are not responsible for what your CSS does to the card. The full table, the examples and the limits are in **[docs/STYLING-HOOKS.md](docs/STYLING-HOOKS.md)**.
-
----
-
-## Uninstalling
-
-1. Remove the card (or the tab with the plan) from the dashboard.
-2. **Settings → Devices & Services → House Plan → Delete** the integration entry.
-3. Remove the integration from **HACS** (or delete the `custom_components/houseplan` folder if installed manually) and restart Home Assistant.
-4. Optionally delete the saved plan data: the `config/houseplan/` files (backgrounds and attachments) and the `houseplan.config` / `houseplan.layout` entries in the `config/.storage` directory.
-
----
-
-## Getting help & sharing your plan
-
-- 💬 **[Telegram chat — @ha_houseplan](https://t.me/ha_houseplan)** — questions,
-  setup help, feature ideas, and screenshots of your plans. The fastest way to
-  reach the author and other users.
-- 🐞 [GitHub issues](https://github.com/Matysh/houseplan-card/issues) — bug
-  reports and feature requests (please attach your House Plan version).
-- 💡 [GitHub discussions](https://github.com/Matysh/houseplan-card/discussions) —
-  longer-form ideas.
-- 📜 [Changelog](docs/CHANGELOG.md) — what changed in every version
-  ([на русском](docs/CHANGELOG.ru.md)).
-
-When reporting a problem, the version number helps a lot: it is shown in the
-browser console on load (`HOUSEPLAN-CARD vX.Y.Z`) and in **Settings → Devices &
-Services → House Plan**.
-
----
-
-## Frequently asked questions
-
-**Do I need to write anything in YAML?** No. The only line is adding the card to the dashboard; everything else is done with the mouse.
-
-**My devices did not appear on the plan.** A device appears only if its Home Assistant area is bound to a drawn room. Check that the device has a room assigned (Settings → Devices) and that the room is outlined and bound to that area. Open the device editor and press **"Hidden and disabled"**: a blue ghost is user-hidden and can be shown; a grey disabled ghost must first be enabled in Home Assistant.
-
-**Can I hide an unwanted device or rename it?** Yes — click the device on the plan and press "Edit" in its card: there you can change the name, icon, model or hide the icon.
-
-**Is the data stored in the cloud?** No. Everything is stored locally in your Home Assistant.
-
----
-
-<p align="center"><sub>Screenshots were taken on a real Home Assistant configuration.</sub></p>
+License: [MIT](LICENSE).
