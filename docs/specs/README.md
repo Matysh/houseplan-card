@@ -1,6 +1,6 @@
 # Спецификации задач P1 и P2
 
-Актуально на 2026-08-14.
+Актуально на 2026-08-16.
 
 GitHub Issues и GitHub Projects (v2) остаются единственным каноническим backlog проекта. Этот каталог содержит развёрнутые ТЗ: каждое ТЗ ссылается на issue, а issue — на соответствующий файл. Статус, приоритет и факт завершения меняются только в GitHub.
 
@@ -49,6 +49,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#138](https://github.com/Matysh/houseplan-card/issues/138) Автозамыкание комнаты по существующей стене | [138-adjacent-room-autoclose.md](138-adjacent-room-autoclose.md) |
 | [#146](https://github.com/Matysh/houseplan-card/issues/146) Четырёхфазный фон «Следует за Солнцем» | [146-four-phase-sun-background.md](146-four-phase-sun-background.md) |
 | [#156](https://github.com/Matysh/houseplan-card/issues/156) Регрессии Full Performance перед v1.64.0 stable | [156-full-performance-regressions.md](156-full-performance-regressions.md) |
+| [#166](https://github.com/Matysh/houseplan-card/issues/166) Солнечные лучи зеркально учитывают направление севера | [166-sun-north-rotation.md](166-sun-north-rotation.md) |
 
 ## P2
 
