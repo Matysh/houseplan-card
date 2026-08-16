@@ -39,7 +39,7 @@ test('hook mode requires the executable index bit', () => {
   );
 });
 
-test('validation range uses ancestry for PRs, normal pushes and new branches', () => {
+test('validation range uses PR ancestry, push before and dev for a new issue branch', () => {
   const calls = [];
   const runner = (args) => {
     calls.push(args);
@@ -50,11 +50,13 @@ test('validation range uses ancestry for PRs, normal pushes and new branches', (
   }, runner), 'common-base..head');
   assert.deepEqual(calls.at(-1), ['merge-base', 'base', 'head']);
   assert.equal(resolveValidationRange({
-    eventName: 'push', beforeSha: '000000', headSha: 'head', defaultBranch: 'main',
+    // GitHub's default branch is main, but House Plan issue branches start at
+    // dev. The all-zero first-push SHA must therefore compare with origin/dev.
+    eventName: 'push', beforeSha: '000000', headSha: 'head',
   }, runner), 'common-base..head');
-  assert.deepEqual(calls.at(-1), ['merge-base', 'refs/remotes/origin/main', 'head']);
+  assert.deepEqual(calls.at(-1), ['merge-base', 'refs/remotes/origin/dev', 'head']);
   assert.equal(resolveValidationRange({
-    eventName: 'push', beforeSha: 'before', headSha: 'head', defaultBranch: 'main',
+    eventName: 'push', beforeSha: 'before', headSha: 'head', developmentBranch: 'dev',
   }, runner), 'common-base..head');
   assert.deepEqual(calls.at(-1), ['merge-base', 'before', 'head']);
 });
