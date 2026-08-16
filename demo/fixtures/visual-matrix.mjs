@@ -145,7 +145,7 @@ const applianceSpace = {
   decor: [],
 };
 
-const runtime = () => {
+const runtime = (includeAppliance = false) => {
   const devices = {};
   const entities = {};
   const states = {
@@ -159,7 +159,7 @@ const runtime = () => {
   // The production projection must preserve them.
   const layout = {};
   const areas = Object.fromEntries(
-    [...geometryRooms, ...lightingRooms, ...applianceRooms]
+    [...geometryRooms, ...lightingRooms, ...(includeAppliance ? applianceRooms : [])]
       .map((room) => [room.area, { area_id: room.area, name: room.name }]),
   );
   const add = (id, domain, area, x, y, state, attributes = {}) => {
@@ -196,57 +196,59 @@ const runtime = () => {
     unit_of_measurement: 'lqi',
   });
 
-  const washerId = 'golden-washer';
-  devices[washerId] = {
-    id: washerId,
-    name: 'Golden washing machine',
-    model: 'GOLDEN-WASHER-COMPOSITE',
-    area_id: 'golden_appliance',
-    identifiers: [['houseplan_golden', washerId]],
-    config_entries: ['golden_entry'],
-    entry_type: null,
-    via_device_id: null,
-    disabled_by: null,
-  };
-  const addWasherEntity = (entityId, state, attributes = {}, registry = {}) => {
-    entities[entityId] = {
-      entity_id: entityId,
-      device_id: washerId,
-      platform: 'houseplan_golden',
-      config_entry_id: 'golden_entry',
+  if (includeAppliance) {
+    const washerId = 'golden-washer';
+    devices[washerId] = {
+      id: washerId,
+      name: 'Golden washing machine',
+      model: 'GOLDEN-WASHER-COMPOSITE',
+      area_id: 'golden_appliance',
+      identifiers: [['houseplan_golden', washerId]],
+      config_entries: ['golden_entry'],
+      entry_type: null,
+      via_device_id: null,
       disabled_by: null,
-      ...registry,
     };
-    states[entityId] = {
-      entity_id: entityId,
-      state,
-      attributes: { friendly_name: registry.original_name || entityId, ...attributes },
+    const addWasherEntity = (entityId, state, attributes = {}, registry = {}) => {
+      entities[entityId] = {
+        entity_id: entityId,
+        device_id: washerId,
+        platform: 'houseplan_golden',
+        config_entry_id: 'golden_entry',
+        disabled_by: null,
+        ...registry,
+      };
+      states[entityId] = {
+        entity_id: entityId,
+        state,
+        attributes: { friendly_name: registry.original_name || entityId, ...attributes },
+      };
     };
-  };
-  addWasherEntity('switch.golden_washer_power', 'on', {}, { original_name: 'Power' });
-  addWasherEntity('switch.golden_washer_child_lock', 'off', {}, { original_name: 'Child lock' });
-  addWasherEntity('sensor.golden_washer_status', 'done', {}, {
-    original_name: 'Status', translation_key: 'status',
-  });
-  addWasherEntity('sensor.golden_washer_stage', 'Rinse', {}, { original_name: 'Stage' });
-  addWasherEntity('sensor.golden_washer_program', 'mixed_wash', {}, { original_name: 'Program' });
-  layout[washerId] = { s: 'golden-appliance', x: 0.5, y: 0.5 };
+    addWasherEntity('switch.golden_washer_power', 'on', {}, { original_name: 'Power' });
+    addWasherEntity('switch.golden_washer_child_lock', 'off', {}, { original_name: 'Child lock' });
+    addWasherEntity('sensor.golden_washer_status', 'done', {}, {
+      original_name: 'Status', translation_key: 'status',
+    });
+    addWasherEntity('sensor.golden_washer_stage', 'Rinse', {}, { original_name: 'Stage' });
+    addWasherEntity('sensor.golden_washer_program', 'mixed_wash', {}, { original_name: 'Program' });
+    layout[washerId] = { s: 'golden-appliance', x: 0.5, y: 0.5 };
+  }
   return { devices, entities, states, layout, areas };
 };
 
 export const VISUAL_MATRIX_COUNTS = Object.freeze({
-  spaces: 3,
-  rooms: geometryRooms.length + lightingRooms.length + applianceRooms.length,
+  spaces: 2,
+  rooms: geometryRooms.length + lightingRooms.length,
   openings: geometrySpace.openings.length + lightingSpace.openings.length,
   partitions: geometrySpace.partitions.length + lightingSpace.partitions.length,
   columns: geometrySpace.wall_columns.length + lightingSpace.wall_columns.length,
 });
 
-export const makeVisualMatrixFixture = () => ({
+export const makeVisualMatrixFixture = ({ applianceLifecycle = false } = {}) => ({
   config: {
     spaces: [
       structuredClone(geometrySpace), structuredClone(lightingSpace),
-      structuredClone(applianceSpace),
+      ...(applianceLifecycle ? [structuredClone(applianceSpace)] : []),
     ],
     // A persisted marker is part of the fixture contract for scenarios that
     // override per-source Glow controls. The device/layout alone are not a
@@ -264,6 +266,10 @@ export const makeVisualMatrixFixture = () => ({
       },
     },
   },
-  ...runtime(),
-  counts: VISUAL_MATRIX_COUNTS,
+  ...runtime(applianceLifecycle),
+  counts: applianceLifecycle ? {
+    ...VISUAL_MATRIX_COUNTS,
+    spaces: VISUAL_MATRIX_COUNTS.spaces + 1,
+    rooms: VISUAL_MATRIX_COUNTS.rooms + applianceRooms.length,
+  } : VISUAL_MATRIX_COUNTS,
 });

@@ -101,6 +101,8 @@ test('washer lifecycle goldens pair active and idle snapshots of one composite f
   assert.ok(idle);
   assert.equal(active.space, 'golden-appliance');
   assert.equal(idle.space, active.space);
+  assert.equal(active.applianceLifecycle, true);
+  assert.equal(idle.applianceLifecycle, true);
   assert.equal(active.stateOverrides['sensor.golden_washer_status'].state, 'start');
   assert.equal(idle.stateOverrides['sensor.golden_washer_status'].state, 'done');
   for (const scenario of [active, idle]) {
