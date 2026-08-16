@@ -12,7 +12,7 @@ import {
 } from './devices';
 import {
   combineVisualSamples, entityVisualSample, entityVisualSamplesForDevice,
-  isDevicePowerSwitch,
+  isApplianceLifecycleEntity, isDevicePowerSwitch,
   type DeviceActivity, type DeviceVisualState, type EntityVisualSample,
 } from './device-visual';
 import {
@@ -30,7 +30,8 @@ export type PresentationSourceKind =
   | 'cover' | 'light' | 'controls' | 'device_role' | 'primary' | 'none';
 
 export type PresentationSourceRole =
-  | 'cover' | 'light' | 'control' | 'forced_light' | 'device_role' | 'primary' | 'critical';
+  | 'cover' | 'light' | 'control' | 'forced_light' | 'device_role'
+  | 'lifecycle' | 'power_gate' | 'primary' | 'critical';
 
 export type ValueFallbackReason =
   | 'value_no_state' | 'value_ambiguous_sources' | 'value_non_scalar' | 'value_virtual';
@@ -315,8 +316,20 @@ export function resolvePresentationSources(
       : d.entities.filter((eid) => !!hass?.states?.[eid]);
     if (ids.length) {
       sourceKind = 'device_role';
-      const samples = entityVisualSamplesForDevice(hass, ids, d.entities);
-      visualSources = ids.map((eid, index) => sourceOf(hass, eid, 'device_role', samples[index]));
+      // Registry metadata chooses the role, while the live hass snapshot owns
+      // its state. Keep those authorities together for composite lifecycle
+      // classification even during a frozen/partial registry projection.
+      const visualHass = registryHass === hass
+        ? hass : { ...registryHass, states: hass?.states || {} };
+      const samples = entityVisualSamplesForDevice(visualHass, ids, d.entities);
+      const hasLifecycle = ids.some((eid) => isApplianceLifecycleEntity(registryHass, eid));
+      visualSources = samples.map((sample) => {
+        const role: PresentationSourceRole = hasLifecycle
+          ? isDevicePowerSwitch(registryHass, sample.eid) ? 'power_gate'
+            : isApplianceLifecycleEntity(registryHass, sample.eid) ? 'lifecycle' : 'device_role'
+          : 'device_role';
+        return sourceOf(hass, sample.eid, role, sample);
+      });
     } else if (d.primary) {
       sourceKind = 'primary';
       visualSources = [sourceOf(hass, d.primary, 'primary')];
@@ -418,6 +431,11 @@ function resolveValue(
   // `hass.states['marker:*']` or turning a sensor into an empty value.
   const realVisualSources = sources.visualSources.filter((source) => !source.eid.startsWith('marker:'));
   let valueEids = realVisualSources.map((source) => source.eid);
+  const powerGate = realVisualSources.find((source) => source.role === 'power_gate');
+  // Before #164 a composite appliance value face displayed its selected Power
+  // entity. The added lifecycle source must not turn that existing value into
+  // an ambiguous fallback.
+  if (powerGate) valueEids = [powerGate.eid];
   if (!valueEids.length && sources.visualSources.some((source) => source.eid.startsWith('marker:'))) {
     valueEids = resolvedDeviceStateEntities(hass, d.entities);
     if (!valueEids.length && d.primary && hass?.states?.[d.primary]) valueEids = [d.primary];
@@ -634,8 +652,9 @@ export function resolveDevicePresentation(
   const notices: PresentationReason[] = [];
   if (options.designPreview && userHidden) notices.push('hidden_design_preview');
   if (!staticIcon && d.marker?.vacuum?.live === true) notices.push('vacuum_live_plan_only');
-  const powerSource = sources.visualSources.length === 1 && !!realVisualSource
-    && isDevicePowerSwitch(hass, realVisualSource.eid);
+  const powerSource = sources.visualSources.some((source) =>
+    source.role === 'power_gate' || isDevicePowerSwitch(hass, source.eid),
+  );
   const uncategorisedSwitches = d.entities.filter((eid) =>
     eid.startsWith('switch.') && !hass?.entities?.[eid]?.entity_category,
   ).length;

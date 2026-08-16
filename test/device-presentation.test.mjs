@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   activitySourceSignature,
   presentationSourceSignature,
@@ -45,6 +46,60 @@ const options = {
   showTemperature: true,
   showSignal: true,
 };
+
+test('shares one lifecycle presentation between full and space cards', () => {
+  const h = hass({
+    'sensor.washer_status': state('sensor.washer_status', 'start'),
+    'switch.washer_power': state('switch.washer_power', 'on'),
+    'switch.washer_child_lock': state('switch.washer_child_lock', 'off'),
+  }, {
+    'sensor.washer_status': {
+      entity_id: 'sensor.washer_status', device_id: 'd1', platform: 'demo',
+      translation_key: 'status',
+    },
+    'switch.washer_power': {
+      entity_id: 'switch.washer_power', device_id: 'd1', platform: 'demo',
+      original_name: 'Power',
+    },
+    'switch.washer_child_lock': {
+      entity_id: 'switch.washer_child_lock', device_id: 'd1', platform: 'demo',
+    },
+  });
+  const washer = device({
+    name: 'Washer',
+    icon: 'mdi:washing-machine',
+    entities: ['switch.washer_child_lock', 'sensor.washer_status', 'switch.washer_power'],
+    allEntities: ['switch.washer_child_lock', 'sensor.washer_status', 'switch.washer_power'],
+    primary: 'switch.washer_power',
+    marker: { id: 'd1', binding: 'device:d1', display: 'value' },
+  });
+  const full = resolveDevicePresentation(h, washer, options);
+  const space = resolveDevicePresentation(h, washer, { ...options });
+  const projection = (value) => ({
+    sources: value.visualSources.map((source) => [source.eid, source.role]),
+    visual: value.visual,
+    reason: value.explanation.reason,
+    valueText: value.valueText,
+  });
+  assert.deepEqual(projection(full), projection(space));
+  assert.deepEqual(full.visualSources.map((source) => [source.eid, source.role]), [
+    ['sensor.washer_status', 'lifecycle'],
+    ['switch.washer_power', 'power_gate'],
+  ]);
+  assert.equal(full.visual.status, 'working');
+  assert.equal(full.explanation.reason, 'working');
+  assert.equal(full.valueText, 'On', 'the historical Power value remains unambiguous');
+
+  const deviceVisual = readFileSync(new URL('../src/device-visual.ts', import.meta.url), 'utf8');
+  const presentation = readFileSync(new URL('../src/device-presentation.ts', import.meta.url), 'utf8');
+  const fullCard = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  const spaceCard = readFileSync(new URL('../src/space-card.ts', import.meta.url), 'utf8');
+  assert.match(deviceVisual, /const LIFECYCLE_WORKING_STATES/);
+  assert.doesNotMatch(presentation, /const LIFECYCLE_WORKING_STATES/);
+  assert.doesNotMatch(spaceCard, /const LIFECYCLE_WORKING_STATES/);
+  assert.match(fullCard, /resolveDevicePresentation\(/);
+  assert.match(spaceCard, /resolveDevicePresentation\(/);
+});
 
 test('passive source and its controller share the plan-wide derived state', () => {
   const h = hass({

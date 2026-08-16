@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 22;
+export const GOLDEN_MATRIX_VERSION = 23;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -35,6 +35,12 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'geometry-view-light-fit', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'washer-active-cycle-dark', fixture: 'visual', space: 'golden-appliance', mode: 'view',
+    stateOverrides: { 'sensor.golden_washer_status': { state: 'start' } },
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'washer-idle-cycle-dark', fixture: 'visual', space: 'golden-appliance', mode: 'view',
+    stateOverrides: { 'sensor.golden_washer_status': { state: 'done' } },
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'day-cycle-dawn-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     bgMode: 'daynight', dayCycle: { phase: 'dawn', top: '#aabdd1' },
     stateOverrides: { 'sun.sun': { attributes: { azimuth: 95, elevation: -2, rising: true } } },

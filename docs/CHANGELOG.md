@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Composite appliances such as washing machines now use an explicit Home
+  Assistant Status/Run state/Job state to show the yellow working marker during
+  an active cycle. Power-on alone remains neutral, Power-off still fades stale
+  activity, and ordinary lone relays keep their existing behaviour
+  ([#164](https://github.com/Matysh/houseplan-card/issues/164)).
+
 ## v1.64.0-beta.3 — 2026-08-14
 
 - Large plans no longer recompute an unused physical-wall union on every floor

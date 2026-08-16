@@ -4,7 +4,9 @@
  */
 import { iconFor, iconFromDeviceClasses, DOMAIN_PRIORITY, FALLBACK_ICON, type CompiledIconRule, EXCLUDED_DOMAINS } from './rules';
 import { averageLqi, isControllable } from './logic';
-import { isDevicePowerSwitch, isSemanticBinaryEntity } from './device-visual';
+import {
+  applianceLifecycleRoleRank, isDevicePowerSwitch, isSemanticBinaryEntity,
+} from './device-visual';
 import type { DevItem, Marker, ServerConfig } from './types';
 import {
   isManualVirtualLightMarker,
@@ -108,9 +110,10 @@ const visibleFirst = (items: DeviceEntityCandidate[]): DeviceEntityCandidate[] =
  *   1) uncategorised HA entities (all entities only as a fallback);
  *   2) a whole-device state domain, if present;
  *   3) semantic binary signals (presence/contact/motion/safety/running);
- *   4) one representative switch when the device has no stronger
- *      state-bearing role;
- *   5) passive entities together, so one unavailable sensor does not make the
+ *   4) for a recognised composite Power topology, a strict appliance
+ *      lifecycle entity plus the Power availability gate;
+ *   5) one representative switch when the device has no stronger role;
+ *   6) passive entities together, so one unavailable sensor does not make the
  *      whole marker unavailable while another reading is alive.
  */
 export function resolvedDeviceStateEntities(hass: any, entIds: readonly string[]): string[] {
@@ -140,7 +143,26 @@ export function resolvedDeviceStateEntities(hass: any, entIds: readonly string[]
     // use the same single representative that primaryEntity/actions use.
     // Entity-bound markers remain exact because their list has one member.
     const ordered = visibleFirst(switches);
-    return [(ordered.find((item) => isDevicePowerSwitch(hass, item.eid)) || ordered[0]).eid];
+    const power = ordered.find((item) => isDevicePowerSwitch(hass, item.eid));
+    if (switches.length > 1 && power) {
+      // Lifecycle metadata is allowed to take over only inside the same
+      // composite-Power topology that already neutralises Power=on. This keeps
+      // a lone relay authoritative even when it has a diagnostic Status peer.
+      const eligible = all.filter((item) =>
+        item.eid !== power.eid
+        && item.reg?.entity_category !== 'config'
+        && applianceLifecycleRoleRank(hass, item.eid) != null,
+      );
+      const uncategorised = eligible.filter((item) => !item.reg?.entity_category);
+      const lifecyclePool = uncategorised.length ? uncategorised : eligible;
+      for (const rank of [0, 1, 2]) {
+        const role = visibleFirst(lifecyclePool.filter(
+          (item) => applianceLifecycleRoleRank(hass, item.eid) === rank,
+        ));
+        if (role.length) return [role[0].eid, power.eid];
+      }
+    }
+    return [(power || ordered[0]).eid];
   }
 
   // Passive/fallback entities are all useful for aggregate availability. Keep
@@ -172,7 +194,11 @@ export function primaryEntity(hass: any, entIds: string[], icon: string): string
       if (t) return t.eid;
     }
   }
-  return resolvedDeviceStateEntities(hass, entIds)[0];
+  const role = resolvedDeviceStateEntities(hass, entIds);
+  // A composite appliance exposes [lifecycle, Power gate]. Keep the
+  // controllable Power entity as the historical primary/action/value target;
+  // presentation still consumes the complete resolved role.
+  return role.find(isControllable) || role[0];
 }
 
 /** Minimal device shape accepted by the shared light-source resolver. */
