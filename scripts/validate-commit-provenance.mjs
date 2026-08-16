@@ -79,7 +79,7 @@ function gitObjectExists(revision, runner = git) {
 }
 
 export function resolveValidationRange({
-  eventName, beforeSha, baseSha, headSha, defaultBranch,
+  eventName, beforeSha, baseSha, headSha, developmentBranch = 'dev',
 }, runner = git) {
   if (!headSha) throw new Error('HEAD_SHA is required');
   if (eventName === 'pull_request') {
@@ -90,7 +90,11 @@ export function resolveValidationRange({
     && gitObjectExists(beforeSha, runner);
   const comparison = hasBefore
     ? beforeSha
-    : `refs/remotes/origin/${defaultBranch || 'main'}`;
+    // A first push has an all-zero `before`. Issue branches are cut from the
+    // integration branch, not GitHub's default branch (`main`), so comparing
+    // with main would pull already-landed dev commits into the validation
+    // range and judge unrelated/closed issues again (#165).
+    : `refs/remotes/origin/${developmentBranch || 'dev'}`;
   return `${runner(['merge-base', comparison, headSha])}..${headSha}`;
 }
 
@@ -129,7 +133,7 @@ function main(argv) {
           beforeSha: process.env.BEFORE_SHA,
           baseSha: process.env.BASE_SHA,
           headSha: process.env.HEAD_SHA,
-          defaultBranch: process.env.DEFAULT_BRANCH,
+          developmentBranch: process.env.DEVELOPMENT_BRANCH,
         })
       : argv[rangeAt + 1];
     if (!range) throw new Error('--range requires a git revision range');
