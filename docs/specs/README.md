@@ -1,6 +1,6 @@
 # Спецификации задач P1 и P2
 
-Актуально на 2026-08-16.
+Актуально на 2026-08-17.
 
 GitHub Issues и GitHub Projects (v2) остаются единственным каноническим backlog проекта. Этот каталог содержит развёрнутые ТЗ: каждое ТЗ ссылается на issue, а issue — на соответствующий файл. Статус, приоритет и факт завершения меняются только в GitHub.
 
@@ -51,6 +51,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#156](https://github.com/Matysh/houseplan-card/issues/156) Регрессии Full Performance перед v1.64.0 stable | [156-full-performance-regressions.md](156-full-performance-regressions.md) |
 | [#164](https://github.com/Matysh/houseplan-card/issues/164) Активный цикл стиральной машины должен быть жёлтым | [164-washer-active-cycle.md](164-washer-active-cycle.md) |
 | [#166](https://github.com/Matysh/houseplan-card/issues/166) Солнечные лучи зеркально учитывают направление севера | [166-sun-north-rotation.md](166-sun-north-rotation.md) |
+| [#167](https://github.com/Matysh/houseplan-card/issues/167) Экспорт «только планировка» | [167-plan-only-export.md](167-plan-only-export.md) |
 
 ## P2
 

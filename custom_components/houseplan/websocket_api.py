@@ -263,6 +263,7 @@ async def _commit_import_pair(
         vol.Required("type"): "houseplan/export/create",
         vol.Required("kind"): vol.In(["full", "space"]),
         vol.Optional("space_id"): str,
+        vol.Optional("plan_only", default=False): bool,
         vol.Optional("card_version", default=""): str,
     }
 )
@@ -287,6 +288,7 @@ async def ws_export_create(hass: HomeAssistant, connection, msg: dict[str, Any])
                     layout_data,
                     kind=msg["kind"],
                     space_id=msg.get("space_id"),
+                    plan_only=msg.get("plan_only", False),
                     card_version=msg.get("card_version", ""),
                     config_root=Path(hass.config.path("")),
                 )

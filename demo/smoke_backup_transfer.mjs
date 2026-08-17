@@ -19,6 +19,40 @@ const result = await page.evaluate(async () => {
   await card.updateComplete;
   const exportRadios = root().querySelectorAll('input[name="backup-kind"]').length;
   const exportWarning = !!root().querySelector('.backupwarn');
+  const planOnlyHiddenForFull = !root().querySelector('.backupplanonly');
+  root().querySelector('input[name="backup-kind"][value="space"]')?.click();
+  await card.updateComplete;
+  const planOnly = root().querySelector('.backupplanonly input[type="checkbox"]');
+  planOnly?.click();
+  await card.updateComplete;
+  const planOnlySpace = {
+    visible: !!planOnly,
+    checked: card._backupExportDialog?.planOnly === true,
+    labelled: root().querySelector('.backupplanonly')?.textContent
+      .includes(card._t('backup.plan_only')) === true,
+  };
+  root().querySelector('input[name="backup-kind"][value="full"]')?.click();
+  await card.updateComplete;
+  const planOnlyResetForFull = card._backupExportDialog?.planOnly === false
+    && !root().querySelector('.backupplanonly');
+
+  let sentExport = null;
+  card.hass = {
+    ...card.hass,
+    callWS: async (message) => {
+      sentExport = message;
+      return { document: { smoke: true }, filename: 'plan-only-smoke.json' };
+    },
+  };
+  card._backupExportDialog = {
+    kind: 'space', planOnly: true, busy: false, error: '',
+  };
+  await card._runBackupExport();
+  const planOnlyRequest = {
+    kind: sentExport?.kind,
+    planOnly: sentExport?.plan_only,
+    space: sentExport?.space_id,
+  };
 
   card._backupExportDialog = null;
   card._backupImportDialog = {
@@ -40,7 +74,31 @@ const result = await page.evaluate(async () => {
     noHorizontalOverflow: root().querySelector('hp-dialog').scrollWidth
       <= root().querySelector('hp-dialog').clientWidth,
   };
-  return { group, actions, keyboardImport, exportRadios, exportWarning, importSafe };
+  card._backupImportDialog = {
+    filename: 'houseplan-space-plan-only.json', size: 2048, token: 'plan-only',
+    preview: {
+      kind: 'space', plan_only: true, source: 'same',
+      created_at: '2026-08-17T00:00:00Z', space_title: 'Ground (2)',
+      counts: { spaces: 1, rooms: 2, markers: 0, layout: 2 },
+      bindings: { device: 0, entity: 0, virtual: 0, active: 0, disabled: 0, missing: 0 },
+      duplicates: 0, confirmation_required: false, content: [],
+    },
+    expectedConfigRev: 1, expectedLayoutRev: 2, duplicatePolicy: 'skip',
+    confirmMissing: false, busy: false, error: '',
+  };
+  await card.updateComplete;
+  const planOnlyPreview = {
+    visible: root().querySelector('.backupplanonlystatus')?.textContent
+      === card._t('backup.plan_only_preview'),
+    noDuplicatePolicy: !root().querySelector('.backupchoices'),
+    noHorizontalOverflow: root().querySelector('hp-dialog').scrollWidth
+      <= root().querySelector('hp-dialog').clientWidth,
+  };
+  return {
+    group, actions, keyboardImport, exportRadios, exportWarning,
+    planOnlyHiddenForFull, planOnlySpace, planOnlyResetForFull, planOnlyRequest,
+    importSafe, planOnlyPreview,
+  };
 });
 
 checkAll(result, {
@@ -49,6 +107,11 @@ checkAll(result, {
   keyboardImport: true,
   exportRadios: 2,
   exportWarning: true,
+  planOnlyHiddenForFull: true,
+  planOnlySpace: { visible: true, checked: true, labelled: true },
+  planOnlyResetForFull: true,
+  planOnlyRequest: { kind: 'space', planOnly: true, space: 'f1' },
   importSafe: { danger: true, disabledUntilConfirmed: true, noHorizontalOverflow: true },
+  planOnlyPreview: { visible: true, noDuplicatePolicy: true, noHorizontalOverflow: true },
 });
 await finish(browser, result);

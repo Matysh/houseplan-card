@@ -507,6 +507,20 @@ assigns new internal IDs and adds the copy without replacing global settings.
 Internal uploaded files are not embedded in JSON; an import to another HA
 instance must explicitly detach those links.
 
+For **Current space**, enable **Plan only** to transfer the architectural
+template without devices or Home Assistant bindings. It keeps rooms, walls,
+openings, decor, backdrop transforms and manually positioned room labels at
+their chosen scale, but removes real and virtual markers, device positions,
+Area assignments,
+temperature/humidity sources and opening contacts/locks. Live values in text
+labels become `—`; surrounding static text stays intact. The import preview
+marks this file as plan-only and adds it through the normal space-import flow.
+
+Plan-only is not full anonymisation: space and room names, static text, file
+names, exact coordinates and external URLs remain in the JSON. Internal plan
+files are still referenced rather than embedded and may need to be detached on
+another Home Assistant instance.
+
 ### Storage locations
 
 | Data | Location |

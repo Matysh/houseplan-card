@@ -561,6 +561,13 @@ export async function prepareGoldenScenario(page, scenario) {
         await dialog?.updateComplete;
         dialog?.renderRoot?.querySelector('.close')?.focus();
       }
+    } else if (scenario.dialog === 'backup-export-plan-only') {
+      card._openBackupExport();
+      card._backupExportDialog = {
+        ...card._backupExportDialog, kind: 'space', planOnly: true,
+      };
+      card.requestUpdate();
+      await card.updateComplete;
     } else if (scenario.dialog === 'backup-full' || scenario.dialog === 'backup-space') {
       const full = scenario.dialog === 'backup-full';
       card._backupImportDialog = {
@@ -568,10 +575,11 @@ export async function prepareGoldenScenario(page, scenario) {
         size: 12345,
         token: 'golden-token',
         preview: {
-          kind: full ? 'full' : 'space', source: full ? 'foreign' : 'same',
+          kind: full ? 'full' : 'space', plan_only: !full,
+          source: full ? 'foreign' : 'same',
           created_at: '2026-08-11T10:00:00Z', space_title: 'Ground (2)',
-          counts: { spaces: 1, rooms: 4, markers: 12, layout: 15 },
-          duplicates: full ? 0 : 2,
+          counts: { spaces: 1, rooms: 4, markers: full ? 12 : 0, layout: full ? 15 : 4 },
+          duplicates: 0,
           confirmation_required: full,
           content: full
             ? [{ url: '/api/houseplan/content/plans/_/ground.svg', state: 'detach_required' }]

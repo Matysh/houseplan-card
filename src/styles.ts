@@ -2867,6 +2867,10 @@ export const cardStyles = css`
     .backupupload > .btn { width: 100%; justify-content: center; }
     .backupupload input { display: none; }
     .backupbody { min-width: 0; }
+    .backupplanonly { margin-inline-start: var(--sp-4) !important; align-items: flex-start !important; }
+    .backupplanonly > span:first-of-type { display: grid; gap: 2px; white-space: normal; }
+    .backupplanonly small { color: var(--secondary-text-color); line-height: 1.35; }
+    .backupplanonlystatus { color: var(--hp-accent) !important; font-weight: 700; }
     .backupfile, .backupsummary, .backupcontent {
       display: flex;
       flex-direction: column;
