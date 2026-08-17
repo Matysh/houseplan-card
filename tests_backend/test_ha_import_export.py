@@ -438,7 +438,9 @@ def test_ordinary_space_export_is_unchanged_when_plan_only_is_false(tmp_path: Pa
     assert implicit == explicit
     assert "plan_only" not in implicit["transfer"]
     assert implicit["payload"]["config"]["markers"]
-    assert set(implicit["payload"]["layout"]) == set(layout)
+    assert set(implicit["payload"]["layout"]) == {
+        key for key, pos in layout.items() if pos.get("s") == "ground"
+    }
 
 
 @pytest.mark.parametrize(
