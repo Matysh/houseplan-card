@@ -317,6 +317,15 @@ export async function prepareGoldenScenario(page, scenario) {
       const card = document.createElement('houseplan-card');
       card.setConfig(cardConfig);
       host.replaceChildren(card);
+      if (scenario.testOnlyLabsSnapshot) {
+        if (!scenario.labs?.length || typeof card._onLabsSnapshot !== 'function') {
+          throw new Error(`invalid test-only Labs contract: ${scenario.id}`);
+        }
+        // connectedCallback has already received the real (expired) registry
+        // snapshot. Inject only the renderer fixture before hass/model boot so
+        // fit and warm-remount follow the former live-Labs lifecycle exactly.
+        card._onLabsSnapshot({ active: Object.freeze([...scenario.labs]), space: '' });
+      }
       card.hass = hassFor();
       await until(() => card._loadOk && card._model?.length === fixture.config.spaces.length);
       await card.updateComplete;
@@ -342,14 +351,6 @@ export async function prepareGoldenScenario(page, scenario) {
       card._setMode(scenario.mode);
       await card.updateComplete;
       await settleMode(card);
-    }
-    if (scenario.testOnlyLabsSnapshot) {
-      if (!scenario.labs?.length || typeof card._onLabsSnapshot !== 'function') {
-        throw new Error(`invalid test-only Labs contract: ${scenario.id}`);
-      }
-      card._onLabsSnapshot({ active: Object.freeze([...scenario.labs]), space: '' });
-      await card.updateComplete;
-      await frame();
     }
     if (scenario.projection === 'iso' && typeof card._setProjection === 'function') {
       card._setProjection('iso');
