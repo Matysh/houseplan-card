@@ -431,6 +431,12 @@ day through golden hour to night and can fall back to browser time. Window rays
 require `sun.sun`, a configured north direction and suitable exterior windows.
 Weather cloud cover may reduce ray intensity.
 
+For window rays, point the compass N arrow toward the place where true north
+actually lies on the drawing. The value is the literal clockwise direction
+from canvas-up to north, not an opposite correction for a rotated plan. If you
+previously mirrored the compass to compensate for the old ray-direction bug,
+return it to the real north after updating.
+
 Rays remain visual only: they do not change Home Assistant state. Walls and
 physical obstacles clip them; changing north or window geometry recalculates
 the result.

@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 22;
+export const GOLDEN_MATRIX_VERSION = 23;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -161,8 +161,8 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     // The golden screenshot is backed by a second, sun-layer-hidden capture.
     // A real painted ray must account for enough changed pixels; DOM-only
     // presence or an accidentally accepted empty baseline is not sufficient.
-    glowEnabled: false, allLightsOff: true,
-    stateOverrides: { 'sun.sun': { attributes: { azimuth: 0, elevation: 24 } } },
+    glowEnabled: false, allLightsOff: true, northDeg: 90,
+    stateOverrides: { 'sun.sun': { attributes: { azimuth: 270, elevation: 24 } } },
     sunRayPixels: { minPixels: 500, minChannelDelta: 4 },
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...sunWindow },
   { id: 'lighting-fill-light-axis-split-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',

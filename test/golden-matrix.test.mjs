@@ -33,6 +33,10 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
         && scenario.sunRayPixels.minChannelDelta > 0
         && scenario.sunRayPixels.minChannelDelta <= 32, true, scenario.id);
     }
+    if (typeof scenario.northDeg === 'number') {
+      assert.equal(Number.isInteger(scenario.northDeg)
+        && scenario.northDeg >= 0 && scenario.northDeg < 360, true, scenario.id);
+    }
     if (scenario.openingPreviewPixels) {
       assert.ok(scenario.openingPreview, scenario.id);
       assert.equal(Number.isInteger(scenario.openingPreviewPixels.minPixels)
@@ -168,7 +172,13 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
+  assert.equal(GOLDEN_MATRIX_VERSION, 23);
   assert.equal(space.settings.sun_rays, true);
+  assert.equal(scenario.northDeg, 90,
+    'the sign-sensitive golden must keep a non-zero north direction');
+  assert.equal(space.settings.north_deg, 90);
+  assert.equal(fixture.states['sun.sun']?.attributes?.azimuth, 270,
+    'north=90 plus azimuth=270 points to the top window; subtraction would point down');
   assert.equal(space.openings.some((opening) => opening.type === 'window'), true);
   assert.equal(fixture.states['sun.sun']?.state, 'above_horizon');
   assert.equal(fixture.entities['sun.sun'], undefined,

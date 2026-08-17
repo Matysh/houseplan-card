@@ -120,7 +120,8 @@ export function prepareGoldenFixture(scenario) {
     fixture.devices[scenario.deviceId].name = scenario.deviceName;
   }
   if (scenario.fillMode || scenario.bgMode || typeof scenario.glowEnabled === 'boolean'
-      || typeof scenario.sunRays === 'boolean' || typeof scenario.showBorders === 'boolean') {
+      || typeof scenario.sunRays === 'boolean' || typeof scenario.showBorders === 'boolean'
+      || typeof scenario.northDeg === 'number') {
     const space = requireSpace();
     space.settings = {
       ...(space.settings || {}),
@@ -129,6 +130,7 @@ export function prepareGoldenFixture(scenario) {
       ...(typeof scenario.glowEnabled === 'boolean' ? { glow_enabled: scenario.glowEnabled } : {}),
       ...(typeof scenario.sunRays === 'boolean' ? { sun_rays: scenario.sunRays } : {}),
       ...(typeof scenario.showBorders === 'boolean' ? { show_borders: scenario.showBorders } : {}),
+      ...(typeof scenario.northDeg === 'number' ? { north_deg: scenario.northDeg } : {}),
       ...(scenario.customFill ? { custom_fill: scenario.customFill } : {}),
     };
   }

@@ -130,6 +130,41 @@ export const MUTANTS = [
       replace: "{ id: 'openings-filled-tunnel-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',\n    fillMode: 'none', customFill: { c: '#66717c', a: 0.55 }, glowEnabled: false,",
     }],
   },
+  {
+    id: 'sun-north-subtraction-restored',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="planSunAngle" test/sun.test.mjs',
+    because: 'возврат старого azimuth - northDeg снова зеркалит направление при '
+      + 'ненулевом севере; табличный AC-01 обязан покраснеть на 90+90 и wrap-кейсах',
+    patches: [{
+      file: 'src/sun.ts',
+      find: 'return norm360(azimuth + northDeg);',
+      replace: 'return norm360(azimuth - northDeg);',
+    }],
+  },
+  {
+    id: 'sun-to-sun-vector-inverted',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="north right plus east sun" test/sun.test.mjs',
+    because: 'формула угла остаётся правильной, но инверсия toSun выбирает окно с '
+      + 'противоположной стороны; направленный AC-03 обязан отличить окно от направления луча',
+    patches: [{
+      file: 'src/sun.ts',
+      find: '  const toSun = sunDirOnPlan(azimuth, northDeg);\n  const away: [number, number] = [-toSun[0], -toSun[1]];',
+      replace: '  const direction = sunDirOnPlan(azimuth, northDeg);\n  const toSun: [number, number] = [-direction[0], -direction[1]];\n  const away: [number, number] = [-toSun[0], -toSun[1]];',
+    }],
+  },
+  {
+    id: 'sun-golden-north-neutralized',
+    guard: 'node --test --test-name-pattern="sun-ray golden" test/golden-matrix.test.mjs',
+    because: 'нулевой north_deg снова делает golden нечувствительным к знаку композиции; '
+      + 'структурный тест обязан требовать ненулевой север и асимметричный азимут',
+    patches: [{
+      file: 'demo/golden/matrix.mjs',
+      find: '    glowEnabled: false, allLightsOff: true, northDeg: 90,',
+      replace: '    glowEnabled: false, allLightsOff: true, northDeg: 0,',
+    }],
+  },
 ];
 
 // --- механика ---------------------------------------------------------------
