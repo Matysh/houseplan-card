@@ -187,6 +187,18 @@ test('prerelease CLI reports malformed arguments without a raw stack trace', () 
   assert.doesNotMatch(result.stderr, /\n\s+at\s/);
 });
 
+test('prerelease CLI can buffer the committed release bundle', () => {
+  const orchestrator = readFileSync(
+    new URL('../scripts/release-prerelease.mjs', import.meta.url), 'utf8',
+  );
+  assert.match(orchestrator, /SUBPROCESS_MAX_BUFFER = 64 \* 1024 \* 1024/);
+  assert.equal(
+    [...orchestrator.matchAll(/maxBuffer: SUBPROCESS_MAX_BUFFER/g)].length,
+    2,
+    'both text and byte subprocess readers must override the Node default buffer',
+  );
+});
+
 test('manual publish workflow is draft-first, exact-SHA gated and self-contained', () => {
   const workflow = readFileSync(new URL('../.github/workflows/publish-prerelease.yml', import.meta.url), 'utf8');
   for (const required of [

@@ -15,6 +15,7 @@ import { assertReleaseContract } from './release-contract.mjs';
 import { classifyValidateRuns } from './release-gate.mjs';
 
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
+const SUBPROCESS_MAX_BUFFER = 64 * 1024 * 1024;
 
 class ReleaseAssetContentError extends Error {}
 
@@ -192,6 +193,7 @@ if (invokedDirectly) {
     const result = spawnSync(command, commandArgs, {
       cwd,
       encoding: 'utf8',
+      maxBuffer: SUBPROCESS_MAX_BUFFER,
       stdio: inherit ? 'inherit' : ['ignore', 'pipe', 'pipe'],
     });
     if (result.error) throw result.error;
@@ -209,6 +211,7 @@ if (invokedDirectly) {
   const runBytes = (command, commandArgs, { cwd = root } = {}) => {
     const result = spawnSync(command, commandArgs, {
       cwd,
+      maxBuffer: SUBPROCESS_MAX_BUFFER,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     if (result.error) throw result.error;
