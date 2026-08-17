@@ -84,13 +84,34 @@ test('golden matrix covers required geometry, rendering and adaptive surfaces', 
     'backup-full', 'backup-space', 'value-badge-positions', 'isometric-geometry',
     'isometric-live-layers', 'isometric-no-borders', 'isometric-touch-kiosk',
     'isometric-large-warm-remount', 'split-corner-wall', 'plan-snap-endpoint',
-    'plan-snap-line-gaps', 'wall-junctions', 'isometric-wall-junctions'])
+    'plan-snap-line-gaps', 'wall-junctions', 'isometric-wall-junctions',
+    'washer-active-cycle', 'washer-idle-cycle'])
     assert.equal(ids.includes(token), true, token);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.mode)).has('plan'), true);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.mode)).has('devices'), true);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.mode)).has('decor'), true);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.theme)).has('light'), true);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.theme)).has('dark'), true);
+});
+
+test('washer lifecycle goldens pair active and idle snapshots of one composite fixture', () => {
+  const active = GOLDEN_SCENARIOS.find((scenario) => scenario.id === 'washer-active-cycle-dark');
+  const idle = GOLDEN_SCENARIOS.find((scenario) => scenario.id === 'washer-idle-cycle-dark');
+  assert.ok(active);
+  assert.ok(idle);
+  assert.equal(active.space, 'golden-appliance');
+  assert.equal(idle.space, active.space);
+  assert.equal(active.applianceLifecycle, true);
+  assert.equal(idle.applianceLifecycle, true);
+  assert.equal(active.stateOverrides['sensor.golden_washer_status'].state, 'start');
+  assert.equal(idle.stateOverrides['sensor.golden_washer_status'].state, 'done');
+  for (const scenario of [active, idle]) {
+    const fixture = prepareGoldenFixture(scenario);
+    assert.equal(fixture.states['switch.golden_washer_power'].state, 'on');
+    assert.equal(fixture.states['switch.golden_washer_child_lock'].state, 'off');
+    assert.equal(fixture.entities['sensor.golden_washer_status'].translation_key, 'status');
+    assert.equal(fixture.layout['golden-washer'].s, 'golden-appliance');
+  }
 });
 
 test('wall junction goldens cover live L/T previews plus saved flat and isometric bodies', () => {

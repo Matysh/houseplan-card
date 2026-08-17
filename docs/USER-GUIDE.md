@@ -369,6 +369,15 @@ neutral**.
 | Faded | Data unavailable | All relevant entities unknown, unavailable or absent |
 | Neutral | No alarm, work or open condition | Off, closed, idle, standby, docked |
 
+For a composite appliance with a dedicated Power switch, Power=`on` alone
+remains neutral. If Home Assistant also exposes a strict lifecycle entity such
+as Status/Run state/Job state, active values (`start`, `running`, `washing`,
+`rinse`, and similar work states) make the marker yellow; idle, paused and
+terminal values remove it. Power=`off` or unavailable still fades the marker
+even if the lifecycle value is stale. Mode, Program, Stage and remaining time
+are not treated as independent proof of work, and an ordinary lone relay keeps
+its existing yellow-on behaviour.
+
 Activity may be a finite three-wave event, persistent presence, a travelling
 transition, or persistent work. `prefers-reduced-motion` replaces ordinary
 motion with a compact indicator while the alarm remains clear.

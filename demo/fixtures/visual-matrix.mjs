@@ -57,6 +57,11 @@ const lightingRooms = [
     poly: [[0.50, 0.10], [0.93, 0.10], [0.93, 0.88], [0.50, 0.88]] },
 ];
 
+const applianceRooms = [
+  { id: 'appliance-room', name: 'Laundry', area: 'golden_appliance',
+    poly: [[0.08, 0.10], [0.92, 0.10], [0.92, 0.90], [0.08, 0.90]] },
+];
+
 const geometrySpace = {
   id: 'golden-geometry',
   title: 'Geometry matrix',
@@ -122,7 +127,25 @@ const lightingSpace = {
   decor: [],
 };
 
-const runtime = () => {
+const applianceSpace = {
+  id: 'golden-appliance',
+  title: 'Appliance lifecycle',
+  plan_url: null,
+  view_box: [0, 0, 1, 1],
+  cell_cm: 5,
+  settings: {
+    fill_mode: 'none', glow_enabled: false, show_borders: true, show_names: true,
+    sun_rays: false, bg_mode: 'static',
+  },
+  rooms: applianceRooms,
+  walls: wallsFor('appliance', applianceRooms, 15),
+  openings: [],
+  partitions: [],
+  wall_columns: [],
+  decor: [],
+};
+
+const runtime = (includeAppliance = false) => {
   const devices = {};
   const entities = {};
   const states = {
@@ -136,7 +159,8 @@ const runtime = () => {
   // The production projection must preserve them.
   const layout = {};
   const areas = Object.fromEntries(
-    [...geometryRooms, ...lightingRooms].map((room) => [room.area, { area_id: room.area, name: room.name }]),
+    [...geometryRooms, ...lightingRooms, ...(includeAppliance ? applianceRooms : [])]
+      .map((room) => [room.area, { area_id: room.area, name: room.name }]),
   );
   const add = (id, domain, area, x, y, state, attributes = {}) => {
     const entityId = `${domain}.${id.replaceAll('-', '_')}`;
@@ -171,6 +195,44 @@ const runtime = () => {
   add('golden-right-linkquality', 'sensor', 'golden_light_right', 0.66, 0.70, '190', {
     unit_of_measurement: 'lqi',
   });
+
+  if (includeAppliance) {
+    const washerId = 'golden-washer';
+    devices[washerId] = {
+      id: washerId,
+      name: 'Golden washing machine',
+      model: 'GOLDEN-WASHER-COMPOSITE',
+      area_id: 'golden_appliance',
+      identifiers: [['houseplan_golden', washerId]],
+      config_entries: ['golden_entry'],
+      entry_type: null,
+      via_device_id: null,
+      disabled_by: null,
+    };
+    const addWasherEntity = (entityId, state, attributes = {}, registry = {}) => {
+      entities[entityId] = {
+        entity_id: entityId,
+        device_id: washerId,
+        platform: 'houseplan_golden',
+        config_entry_id: 'golden_entry',
+        disabled_by: null,
+        ...registry,
+      };
+      states[entityId] = {
+        entity_id: entityId,
+        state,
+        attributes: { friendly_name: registry.original_name || entityId, ...attributes },
+      };
+    };
+    addWasherEntity('switch.golden_washer_power', 'on', {}, { original_name: 'Power' });
+    addWasherEntity('switch.golden_washer_child_lock', 'off', {}, { original_name: 'Child lock' });
+    addWasherEntity('sensor.golden_washer_status', 'done', {}, {
+      original_name: 'Status', translation_key: 'status',
+    });
+    addWasherEntity('sensor.golden_washer_stage', 'Rinse', {}, { original_name: 'Stage' });
+    addWasherEntity('sensor.golden_washer_program', 'mixed_wash', {}, { original_name: 'Program' });
+    layout[washerId] = { s: 'golden-appliance', x: 0.5, y: 0.5 };
+  }
   return { devices, entities, states, layout, areas };
 };
 
@@ -182,9 +244,12 @@ export const VISUAL_MATRIX_COUNTS = Object.freeze({
   columns: geometrySpace.wall_columns.length + lightingSpace.wall_columns.length,
 });
 
-export const makeVisualMatrixFixture = () => ({
+export const makeVisualMatrixFixture = ({ applianceLifecycle = false } = {}) => ({
   config: {
-    spaces: [structuredClone(geometrySpace), structuredClone(lightingSpace)],
+    spaces: [
+      structuredClone(geometrySpace), structuredClone(lightingSpace),
+      ...(applianceLifecycle ? [structuredClone(applianceSpace)] : []),
+    ],
     // A persisted marker is part of the fixture contract for scenarios that
     // override per-source Glow controls. The device/layout alone are not a
     // saved marker configuration and must not be silently treated as one.
@@ -201,6 +266,10 @@ export const makeVisualMatrixFixture = () => ({
       },
     },
   },
-  ...runtime(),
-  counts: VISUAL_MATRIX_COUNTS,
+  ...runtime(applianceLifecycle),
+  counts: applianceLifecycle ? {
+    ...VISUAL_MATRIX_COUNTS,
+    spaces: VISUAL_MATRIX_COUNTS.spaces + 1,
+    rooms: VISUAL_MATRIX_COUNTS.rooms + applianceRooms.length,
+  } : VISUAL_MATRIX_COUNTS,
 });

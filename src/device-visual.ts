@@ -67,9 +67,19 @@ const WORKING_STATES = new Set([
   'irrigating', 'humidifying', 'dehumidifying', 'fan', 'preheating', 'defrosting',
 ]);
 
+/** Extra active verbs are safe only after the device resolver has selected a
+ * strict appliance lifecycle role. Keeping them out of WORKING_STATES prevents
+ * generic sensors such as a dry leak sensor or an active mesh node from
+ * turning an unrelated marker yellow. */
+const LIFECYCLE_WORKING_STATES = new Set([
+  ...WORKING_STATES,
+  'start', 'started', 'run', 'active', 'in_progress',
+  'wash', 'rinse', 'spin', 'dry',
+]);
+
 const IDLE_STATES = new Set([
   'off', 'idle', 'paused', 'standby', 'docked', 'finished', 'complete',
-  'completed', 'stopped', 'ready', 'sleeping',
+  'completed', 'stopped', 'ready', 'sleeping', 'stop', 'end', 'done', 'inactive',
 ]);
 
 /** Standard HA HVAC modes which mean the climate entity is enabled. The
@@ -83,6 +93,46 @@ const unavailable = (state: string): boolean =>
   state === '' || state === 'unknown' || state === 'unavailable' || state === '__missing__';
 
 const lower = (v: unknown): string => String(v ?? '').trim().toLowerCase();
+
+const lifecycleToken = (v: unknown): string => lower(v)
+  .replace(/[\s-]+/g, '_')
+  .replace(/_+/g, '_')
+  .replace(/^_|_$/g, '');
+
+const LIFECYCLE_ROLE_RANK = new Map<string, number>([
+  ['run_state', 0], ['job_state', 0], ['operation_state', 0], ['activity_state', 0],
+  ['machine_state', 1], ['running_state', 1],
+  ['status', 2], ['device_status', 2], ['machine_status', 2],
+]);
+const LIFECYCLE_CONNECTIVITY_SEGMENTS = new Set(['wifi', 'connection', 'signal', 'battery']);
+
+/** Rank a strict appliance lifecycle entity from generic HA metadata.
+ * Russian/localised display text is deliberately not authority in #164. */
+export function applianceLifecycleRoleRank(hass: any, eid: string): number | null {
+  const reg = hass?.entities?.[eid] || {};
+  if (reg.entity_category === 'config') return null;
+  const objectId = String(eid || '').split('.').slice(1).join('.');
+  const registryEvidence = [reg.translation_key, reg.original_name, reg.name];
+  const evidence = [...registryEvidence, objectId];
+  if (!registryEvidence.some((value) => lower(value))) {
+    evidence.push(hass?.states?.[eid]?.attributes?.friendly_name);
+  }
+  const normalized = evidence.map(lifecycleToken).filter(Boolean);
+  if (normalized.some((value) => value.split('_').some(
+    (segment) => LIFECYCLE_CONNECTIVITY_SEGMENTS.has(segment),
+  ))) return null;
+  let best: number | null = null;
+  for (const value of normalized) {
+    for (const [role, rank] of LIFECYCLE_ROLE_RANK) {
+      if (value !== role && !value.endsWith(`_${role}`)) continue;
+      best = best == null ? rank : Math.min(best, rank);
+    }
+  }
+  return best;
+}
+
+export const isApplianceLifecycleEntity = (hass: any, eid: string): boolean =>
+  applianceLifecycleRoleRank(hass, eid) != null;
 
 /**
  * A dedicated whole-device power switch, as opposed to a relay whose `on`
@@ -113,6 +163,25 @@ function workAction(attrs: any): string {
     if (WORKING_STATES.has(v) || IDLE_STATES.has(v)) return v;
   }
   return '';
+}
+
+/** Classify the state of an already-selected appliance lifecycle role. The
+ * generic classifier intentionally never sees the extra lifecycle verbs. */
+function applianceLifecycleVisualSample(hass: any, eid: string): EntityVisualSample {
+  const st = hass?.states?.[eid];
+  const state = st ? lower(st.state) : '__missing__';
+  const base: EntityVisualSample = {
+    eid, state,
+    availability: unavailable(state) ? 'unavailable' : 'available',
+    status: 'neutral', activity: 'none', edge: 'none',
+  };
+  if (base.availability === 'unavailable') return base;
+  const action = workAction(st?.attributes);
+  if (WORKING_STATES.has(action)
+      || (LIFECYCLE_WORKING_STATES.has(state) && !IDLE_STATES.has(state))) {
+    return { ...base, status: 'working', activity: 'running' };
+  }
+  return base;
 }
 
 /** Classify one entity without looking at previous state. */
@@ -249,19 +318,33 @@ export function entityVisualSamplesForDevice(
   resolvedEids: readonly string[],
   allEids: readonly string[],
 ): EntityVisualSample[] {
-  const samples = resolvedEids.map((eid) => entityVisualSample(hass, eid));
   const uncategorisedSwitches = allEids.filter((eid) =>
     eid.startsWith('switch.') && !hass?.entities?.[eid]?.entity_category,
   );
-  const lifecycle = resolvedEids.length === 1
-    && uncategorisedSwitches.length > 1
-    && isDevicePowerSwitch(hass, resolvedEids[0]);
-  if (!lifecycle) return samples;
-  return samples.map((sample) => {
-    if (sample.availability === 'unavailable') return sample;
-    return sample.state === 'off'
-      ? { ...sample, availability: 'unavailable', status: 'neutral', activity: 'none', edge: 'none' }
-      : { ...sample, status: 'neutral', activity: 'none', edge: 'none' };
+  const powerEid = resolvedEids.find((eid) => isDevicePowerSwitch(hass, eid));
+  const compositePower = uncategorisedSwitches.length > 1 && !!powerEid;
+  if (!compositePower) return resolvedEids.map((eid) => entityVisualSample(hass, eid));
+
+  const lifecycleEid = resolvedEids.find((eid) =>
+    eid !== powerEid && isApplianceLifecycleEntity(hass, eid),
+  );
+  const powerSample = entityVisualSample(hass, powerEid);
+  const powerUnavailable = powerSample.availability === 'unavailable' || powerSample.state === 'off';
+  if (powerUnavailable) {
+    return resolvedEids.map((eid) => ({
+      eid,
+      state: hass?.states?.[eid] ? lower(hass.states[eid].state) : '__missing__',
+      availability: 'unavailable',
+      status: 'neutral',
+      activity: 'none',
+      edge: 'none',
+    }));
+  }
+
+  return resolvedEids.map((eid) => {
+    if (eid === lifecycleEid) return applianceLifecycleVisualSample(hass, eid);
+    const sample = eid === powerEid ? powerSample : entityVisualSample(hass, eid);
+    return { ...sample, status: 'neutral', activity: 'none', edge: 'none' };
   });
 }
 

@@ -108,6 +108,104 @@ test('a composite Power switch is a neutral lifecycle, while a lone relay still 
   );
 });
 
+test('keeps lifecycle-only active tokens neutral outside lifecycle role', () => {
+  const h = hass({
+    'sensor.leak_dry': { state: 'dry' },
+    'sensor.zone_active': { state: 'active' },
+    'sensor.mesh_start': { state: 'start' },
+  });
+  for (const eid of Object.keys(h.states)) {
+    assert.deepEqual(
+      (({ status, activity }) => ({ status, activity }))(entityVisualSample(h, eid)),
+      { status: 'neutral', activity: 'none' },
+      eid,
+    );
+  }
+});
+
+test('composite appliance lifecycle classifies scoped active and terminal states', () => {
+  const h = {
+    ...hass({
+      'sensor.washer_status': { state: 'start' },
+      'switch.washer_power': { state: 'on' },
+      'switch.washer_child_lock': { state: 'off' },
+    }),
+    entities: {
+      'sensor.washer_status': { translation_key: 'status' },
+      'switch.washer_power': { original_name: 'Power' },
+      'switch.washer_child_lock': {},
+    },
+  };
+  const role = ['sensor.washer_status', 'switch.washer_power'];
+  const all = [...role, 'switch.washer_child_lock'];
+  for (const active of ['start', 'started', 'run', 'active', 'in_progress', 'wash', 'rinse', 'spin', 'dry', 'washing']) {
+    h.states['sensor.washer_status'].state = ` ${active.toUpperCase()} `;
+    assert.deepEqual(
+      combineVisualSamples(entityVisualSamplesForDevice(h, role, all)),
+      { availability: 'available', status: 'working', activity: 'running' },
+      active,
+    );
+  }
+  for (const idle of ['idle', 'paused', 'stop', 'end', 'done', 'inactive', 'finished']) {
+    h.states['sensor.washer_status'].state = idle;
+    assert.deepEqual(
+      combineVisualSamples(entityVisualSamplesForDevice(h, role, all)),
+      { availability: 'available', status: 'neutral', activity: 'none' },
+      idle,
+    );
+  }
+});
+
+test('suppresses stale active lifecycle when composite Power is off', () => {
+  const h = {
+    ...hass({
+      'sensor.washer_status': { state: 'start' },
+      'switch.washer_power': { state: 'off' },
+      'switch.washer_child_lock': { state: 'on' },
+    }),
+    entities: {
+      'sensor.washer_status': { translation_key: 'status' },
+      'switch.washer_power': {},
+      'switch.washer_child_lock': {},
+    },
+  };
+  const role = ['sensor.washer_status', 'switch.washer_power'];
+  const all = [...role, 'switch.washer_child_lock'];
+  for (const power of ['off', 'unknown', 'unavailable']) {
+    h.states['switch.washer_power'].state = power;
+    assert.deepEqual(
+      combineVisualSamples(entityVisualSamplesForDevice(h, role, all)),
+      { availability: 'unavailable', status: 'neutral', activity: 'none' },
+      power,
+    );
+  }
+  h.states['switch.washer_power'].state = 'on';
+  h.states['sensor.washer_status'].state = 'unavailable';
+  assert.deepEqual(
+    combineVisualSamples(entityVisualSamplesForDevice(h, role, all)),
+    { availability: 'available', status: 'neutral', activity: 'none' },
+  );
+});
+
+test('lone relay stays working beside a neutral lifecycle-like sensor', () => {
+  const h = {
+    ...hass({
+      'switch.coffee': { state: 'on' },
+      'sensor.coffee_status': { state: 'connected' },
+    }),
+    entities: {
+      'switch.coffee': {},
+      'sensor.coffee_status': { translation_key: 'status' },
+    },
+  };
+  assert.deepEqual(
+    combineVisualSamples(entityVisualSamplesForDevice(
+      h, ['switch.coffee'], ['switch.coffee', 'sensor.coffee_status'],
+    )),
+    { availability: 'available', status: 'working', activity: 'running' },
+  );
+});
+
 test('off media sources share unavailable styling without hiding an active peer', () => {
   const off = entityVisualSample(hass({ 'media_player.one': { state: 'off' } }), 'media_player.one');
   const on = entityVisualSample(hass({ 'media_player.two': { state: 'on' } }), 'media_player.two');

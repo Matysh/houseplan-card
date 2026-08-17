@@ -388,6 +388,124 @@ test('switch-only resolver prefers a dedicated Power entity over registry order'
   );
 });
 
+test('keeps lifecycle role identity stable while live state is unavailable', () => {
+  const hass = mkHass({
+    entities: {
+      'switch.washer_child_lock': { entity_id: 'switch.washer_child_lock' },
+      'sensor.washer_job_state': {
+        entity_id: 'sensor.washer_job_state', entity_category: 'diagnostic',
+        translation_key: 'job_state',
+      },
+      'sensor.washer_status': {
+        entity_id: 'sensor.washer_status', translation_key: 'status',
+      },
+      'switch.washer_power': {
+        entity_id: 'switch.washer_power', original_name: 'Power',
+      },
+      'sensor.washer_stage': { entity_id: 'sensor.washer_stage', original_name: 'Stage' },
+    },
+    states: {
+      'switch.washer_child_lock': { state: 'off', attributes: {} },
+      'sensor.washer_job_state': { state: 'idle', attributes: {} },
+      'sensor.washer_status': { state: 'start', attributes: { friendly_name: 'Статус' } },
+      'switch.washer_power': { state: 'on', attributes: { friendly_name: 'Питание' } },
+      'sensor.washer_stage': { state: 'Rinse', attributes: {} },
+    },
+  });
+  const entities = [
+    'switch.washer_child_lock',
+    'sensor.washer_job_state',
+    'sensor.washer_status',
+    'switch.washer_power',
+    'sensor.washer_stage',
+  ];
+  assert.deepEqual(
+    resolvedDeviceStateEntities(hass, entities),
+    ['sensor.washer_status', 'switch.washer_power'],
+    'an uncategorised Status must beat a diagnostic job_state',
+  );
+  assert.equal(primaryEntity(hass, entities, 'mdi:washing-machine'), 'switch.washer_power');
+
+  hass.states['sensor.washer_status'].state = 'unavailable';
+  assert.deepEqual(
+    resolvedDeviceStateEntities(hass, [...entities].reverse()),
+    ['sensor.washer_status', 'switch.washer_power'],
+    'live state and registry order must not retarget the selected lifecycle role',
+  );
+});
+
+test('resolvedDeviceStateEntities: lifecycle matching rejects connectivity and localised-name guesses', () => {
+  const hass = mkHass({
+    entities: {
+      'switch.washer_power': { entity_id: 'switch.washer_power' },
+      'switch.washer_child_lock': { entity_id: 'switch.washer_child_lock' },
+      'sensor.washer_wifi_status': {
+        entity_id: 'sensor.washer_wifi_status', original_name: 'WiFi Status',
+      },
+      'sensor.washer_localised': { entity_id: 'sensor.washer_localised' },
+      'sensor.washer_run_state': {
+        entity_id: 'sensor.washer_run_state', entity_category: 'config',
+        translation_key: 'run_state',
+      },
+      'sensor.washer_stage': { entity_id: 'sensor.washer_stage', original_name: 'Stage' },
+      'select.washer_program': { entity_id: 'select.washer_program', original_name: 'Program' },
+      'sensor.washer_remaining_time': {
+        entity_id: 'sensor.washer_remaining_time', original_name: 'Remaining time',
+      },
+    },
+    states: {
+      'switch.washer_power': { state: 'on', attributes: {} },
+      'switch.washer_child_lock': { state: 'off', attributes: {} },
+      'sensor.washer_wifi_status': { state: 'connected', attributes: {} },
+      'sensor.washer_localised': { state: 'start', attributes: { friendly_name: 'Статус' } },
+      'sensor.washer_run_state': { state: 'start', attributes: {} },
+      'sensor.washer_stage': { state: 'Rinse', attributes: {} },
+      'select.washer_program': { state: 'mixed_wash', attributes: {} },
+      'sensor.washer_remaining_time': { state: '17', attributes: { unit_of_measurement: 'min' } },
+    },
+  });
+  assert.deepEqual(
+    resolvedDeviceStateEntities(hass, Object.keys(hass.entities)),
+    ['switch.washer_power'],
+  );
+});
+
+test('keeps semantic binary ahead of appliance lifecycle and preserves lone relay', () => {
+  const semantic = mkHass({
+    entities: {
+      'switch.washer_power': { entity_id: 'switch.washer_power' },
+      'switch.washer_child_lock': { entity_id: 'switch.washer_child_lock' },
+      'sensor.washer_status': { entity_id: 'sensor.washer_status', translation_key: 'status' },
+      'binary_sensor.washer_running': { entity_id: 'binary_sensor.washer_running' },
+    },
+    states: {
+      'switch.washer_power': { state: 'on', attributes: {} },
+      'switch.washer_child_lock': { state: 'off', attributes: {} },
+      'sensor.washer_status': { state: 'idle', attributes: {} },
+      'binary_sensor.washer_running': { state: 'on', attributes: { device_class: 'running' } },
+    },
+  });
+  assert.deepEqual(
+    resolvedDeviceStateEntities(semantic, Object.keys(semantic.entities)),
+    ['binary_sensor.washer_running'],
+  );
+
+  const lone = mkHass({
+    entities: {
+      'switch.coffee': { entity_id: 'switch.coffee' },
+      'sensor.coffee_status': { entity_id: 'sensor.coffee_status', translation_key: 'status' },
+    },
+    states: {
+      'switch.coffee': { state: 'on', attributes: {} },
+      'sensor.coffee_status': { state: 'connected', attributes: {} },
+    },
+  });
+  assert.deepEqual(
+    resolvedDeviceStateEntities(lone, Object.keys(lone.entities)),
+    ['switch.coffee'],
+  );
+});
+
 test('resolvedDeviceStateEntities: passive readings aggregate availability instead of picking the first', () => {
   const hass = mkHass({
     entities: {

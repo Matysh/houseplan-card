@@ -1,7 +1,9 @@
 import { makeLargeHouseFixture } from '../fixtures/large-house.mjs';
 import { fixtureWallKey, makeVisualMatrixFixture } from '../fixtures/visual-matrix.mjs';
 
-const fixtureFor = (name) => name === 'large' ? makeLargeHouseFixture() : makeVisualMatrixFixture();
+const fixtureFor = (scenario) => scenario.fixture === 'large'
+  ? makeLargeHouseFixture()
+  : makeVisualMatrixFixture({ applianceLifecycle: !!scenario.applianceLifecycle });
 
 const themeVars = {
   dark: {
@@ -50,7 +52,7 @@ async function stableEnvironment(page, scenario) {
 
 /** Apply every data-only scenario override before the fixture crosses into the browser. */
 export function prepareGoldenFixture(scenario) {
-  const fixture = fixtureFor(scenario.fixture);
+  const fixture = fixtureFor(scenario);
   if (scenario.cornerSplitWall) {
     const stage = scenario.cornerSplitWall;
     if (!['before', 'thin', 'thick'].includes(stage))
