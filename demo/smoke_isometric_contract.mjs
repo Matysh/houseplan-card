@@ -13,6 +13,12 @@ const out = await page.evaluate(async () => {
   const enable = async () => {
     history.replaceState(null, '', '#space=f1&hp-labs=iso');
     dispatchEvent(new HashChangeEvent('hashchange'));
+    if (typeof card._onLabsSnapshot !== 'function') throw new Error('missing Labs fixture hook');
+    const active = Object.freeze(['iso']);
+    // The product flag expires at 1.65.0. Keep this renderer/lifecycle smoke
+    // explicit without extending the public Labs registry contract.
+    card._onLabsSnapshot({ active, space: '' });
+    window.__hpLabs = active;
     await card.updateComplete;
     await frame();
   };

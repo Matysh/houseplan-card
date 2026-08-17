@@ -11,6 +11,12 @@ const out = await page.evaluate(async () => {
   const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
   history.replaceState(null, '', '?hp-labs=iso#space=f1');
   dispatchEvent(new HashChangeEvent('hashchange'));
+  if (typeof original._onLabsSnapshot !== 'function') throw new Error('missing Labs fixture hook');
+  const testOnlyIso = Object.freeze(['iso']);
+  // The product registry remains expired; this direct snapshot exercises the
+  // dormant Stage 2 renderer and is removed by the real -iso path below.
+  original._onLabsSnapshot({ active: testOnlyIso, space: '' });
+  window.__hpLabs = testOnlyIso;
   await original.updateComplete;
   const configSpace = original._serverCfg.spaces.find((space) => space.id === 'f1');
   configSpace.settings = {
@@ -293,6 +299,7 @@ const out = await page.evaluate(async () => {
     const card = document.createElement('houseplan-card');
     card.setConfig({ type: 'custom:houseplan-card', kiosk });
     host.replaceChildren(card);
+    card._onLabsSnapshot({ active: Object.freeze(['iso']), space: '' });
     card.hass = window.__mkHass();
     const started = performance.now();
     while ((!card._loadOk || card._booting) && performance.now() - started < 9000) await wait(30);

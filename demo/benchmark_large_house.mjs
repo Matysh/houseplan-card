@@ -175,6 +175,13 @@ try {
       const loadLongTasks = startLongTaskWindow();
       const loadStarted = performance.now();
       host.replaceChildren(card);
+      if (requiresIsometric) {
+        if (typeof card._onLabsSnapshot !== 'function')
+          throw new Error('large-house-isometric-v1 candidate has no Labs fixture hook');
+        // The product flag expires at 1.65.0. Performance keeps exercising
+        // the dormant renderer without changing the public registry contract.
+        card._onLabsSnapshot({ active: Object.freeze(['iso']), space: '' });
+      }
       card.hass = hassFor(fixture.states);
       window.__hpAssertCardContract(card, cardContract);
       if (requiresIsometric && (typeof card._setProjection !== 'function'

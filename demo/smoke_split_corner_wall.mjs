@@ -112,6 +112,8 @@ const res = await page.evaluate(async () => {
 
   history.replaceState(null, '', `?hp-labs=iso#space=${encodeURIComponent(c._space)}`);
   dispatchEvent(new HashChangeEvent('hashchange'));
+  if (typeof c._onLabsSnapshot !== 'function') throw new Error('missing Labs fixture hook');
+  c._onLabsSnapshot({ active: Object.freeze(['iso']), space: '' });
   await c.updateComplete;
   c._setProjection('iso');
   await update();

@@ -120,6 +120,8 @@ const out = await page.evaluate(async () => {
 
   history.replaceState(null, '', '?hp-labs=iso#space=junctions');
   dispatchEvent(new HashChangeEvent('hashchange'));
+  if (typeof card._onLabsSnapshot !== 'function') throw new Error('missing Labs fixture hook');
+  card._onLabsSnapshot({ active: Object.freeze(['iso']), space: '' });
   await card.updateComplete;
   card._setProjection('iso');
   await update();
