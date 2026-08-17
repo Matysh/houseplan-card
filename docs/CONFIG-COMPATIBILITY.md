@@ -69,6 +69,23 @@ that fallback:
 Import preview and apply therefore operate on the same normalized candidate.
 Explicit `static` and `daynight` survive same-instance and foreign transfer.
 
+## Additive plan-only space transfer (#167)
+
+`houseplan/export/create` accepts `plan_only: true` only for a one-space
+export. The resulting version-1 envelope adds `transfer.plan_only: true`,
+contains no markers and retains only canonical `rl_<room_id>` room-label
+layout. Normal full/space exports never write `plan_only: false`, so their
+existing document shape and lossless compatibility remain unchanged; an
+absent field still means an ordinary export.
+
+Plan-only data is a fail-closed allowlist projection of supported geometry,
+presentation and content references. Known Area, temperature/humidity,
+opening and decor bindings are removed and recognized live-text references are
+frozen as `—`. Import rejects a true flag on a full export, non-boolean values,
+or any document whose projected config, layout, placement or content owner no
+longer satisfies that privacy contract. There is no persisted config/layout
+migration: the new field exists only in the portable envelope.
+
 ## Legacy device tap action
 
 The historical marker token `tap_action: cover` remains accepted indefinitely.

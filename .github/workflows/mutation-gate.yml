@@ -27,8 +27,8 @@ concurrency:
 jobs:
   mutants:
     runs-on: ubuntu-latest
-    # Шесть мутантов × (сборка + браузерный смок) — это десятки минут, и это
-    # нормально: гейт предрелизный. Час — потолок против зависшего Chromium.
+    # Все мутанты × (сборка + свой guard) — это десятки минут, и это нормально:
+    # гейт предрелизный. Час — потолок против зависшего Chromium.
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
@@ -42,6 +42,13 @@ jobs:
           cache: npm
 
       - run: npm ci
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+
+      - name: Установить backend test dependencies
+        run: pip install pytest voluptuous pytest-homeassistant-custom-component home-assistant-frontend
 
       - name: Кэш браузеров Playwright
         id: pw

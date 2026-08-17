@@ -53,6 +53,34 @@ from .validation import (
 FORMAT = "houseplan-export"
 _PROTO_KEYS = {"__proto__", "prototype", "constructor"}
 _SAFE_FILE = re.compile(r"[^A-Za-z0-9._-]+")
+_LIVE_TEXT_TOKEN = re.compile(r"\{([^{}\r\n]+)\}")
+_LIVE_TEXT_ENTITY = re.compile(r"^[a-z0-9_]+\.[a-z0-9_]+$")
+_LIVE_TEXT_ATTRIBUTE = re.compile(r"^[a-zA-Z0-9_.-]+$")
+_PLAN_ONLY_DASH = "—"
+
+_SPACE_PLAN_FIELDS = (
+    "id", "title", "cell_cm", "plan_url", "plan_aspect", "plan_x", "plan_y",
+    "plan_scale", "plan_scale_x", "plan_scale_y", "plan_angle", "view_box",
+)
+_SPACE_DISPLAY_FIELDS = (
+    "show_borders", "show_names", "room_color", "bg_color", "room_opacity",
+    "fill_mode", "custom_fill", "glow_enabled", "temp_min", "temp_max",
+    "show_lqi", "hide_decor", "hide_openings", "label_temp", "label_hum",
+    "label_lqi", "label_light", "card_font_scale", "north_deg", "bg_mode",
+    "sun_rays",
+)
+_ROOM_PLAN_FIELDS = ("id", "name", "open_to", "x", "y", "w", "h", "poly")
+_ROOM_DISPLAY_FIELDS = (
+    "fill_mode", "custom_fill", "glow", "name_scale", "label_scale",
+)
+_DECOR_COMMON_FIELDS = ("id", "kind", "color", "opacity", "width_cm", "width")
+_DECOR_KIND_FIELDS = {
+    "line": ("x1", "y1", "x2", "y2", "line_style"),
+    "rect": ("x", "y", "w", "h", "angle", "fill", "fill_color", "fill_opacity"),
+    "ellipse": ("x", "y", "w", "h", "angle", "fill", "fill_color", "fill_opacity"),
+    "text": ("x", "y", "text", "size", "size_cm", "scale", "angle"),
+    "furniture": ("symbol", "x", "y", "w", "h", "angle"),
+}
 
 
 class ImportFailure(Exception):
@@ -136,6 +164,126 @@ def live_layout(config: dict[str, Any], layout: dict[str, Any]) -> dict[str, Any
         for key, pos in layout.items()
         if key not in removed
         and (not key.startswith("v_") or key in explicit)
+    }
+
+
+def _pick_fields(source: dict[str, Any], fields: tuple[str, ...]) -> dict[str, Any]:
+    """Copy only fields explicitly classified as portable plan data."""
+    return {key: _json_copy(source[key]) for key in fields if key in source}
+
+
+def _is_live_text_reference(raw: str) -> bool:
+    """Mirror ``liveTextReference`` without evaluating Home Assistant state."""
+    ref = raw.strip()
+    if not ref:
+        return False
+    entity = ref
+    attribute = ""
+    colon = ref.find(":")
+    if colon >= 0:
+        entity = ref[:colon].strip()
+        attribute = ref[colon + 1:].strip()
+    else:
+        parts = ref.split(".")
+        if len(parts) > 2:
+            entity = ".".join(parts[:2])
+            attribute = ".".join(parts[2:])
+    if _LIVE_TEXT_ENTITY.fullmatch(entity) is None:
+        return False
+    if colon >= 0 and not attribute:
+        return False
+    return not attribute or _LIVE_TEXT_ATTRIBUTE.fullmatch(attribute) is not None
+
+
+def _plan_only_text(value: str) -> str:
+    """Freeze every recognized live reference while preserving authored copy."""
+    replaced = _LIVE_TEXT_TOKEN.sub(
+        lambda match: _PLAN_ONLY_DASH
+        if _is_live_text_reference(match.group(1)) else match.group(0),
+        value,
+    )
+    return replaced.replace("{}", _PLAN_ONLY_DASH)
+
+
+def _project_plan_only_room(room: dict[str, Any]) -> dict[str, Any]:
+    projected = _pick_fields(room, _ROOM_PLAN_FIELDS)
+    if "settings" in room:
+        settings = room.get("settings")
+        projected["settings"] = (
+            _pick_fields(settings, _ROOM_DISPLAY_FIELDS)
+            if isinstance(settings, dict) else None
+        )
+    return projected
+
+
+def _project_plan_only_decor(shape: dict[str, Any]) -> dict[str, Any]:
+    kind = str(shape.get("kind", ""))
+    projected = _pick_fields(
+        shape, _DECOR_COMMON_FIELDS + _DECOR_KIND_FIELDS.get(kind, ()),
+    )
+    if kind == "text" and isinstance(projected.get("text"), str):
+        projected["text"] = _plan_only_text(projected["text"])
+    return projected
+
+
+def _project_plan_only_space(space: dict[str, Any]) -> dict[str, Any]:
+    """Build the fail-closed geometry/presentation projection for #167."""
+    projected = _pick_fields(space, _SPACE_PLAN_FIELDS)
+    if "settings" in space:
+        projected["settings"] = _pick_fields(
+            space.get("settings") or {}, _SPACE_DISPLAY_FIELDS,
+        )
+    projected["rooms"] = [
+        _project_plan_only_room(room) for room in space.get("rooms") or []
+    ]
+    collections: tuple[tuple[str, tuple[str, ...]], ...] = (
+        ("walls", ("key", "cm", "a", "b")),
+        ("room_drafts", ("id", "points", "segments")),
+        ("partitions", ("id", "a", "b", "cm")),
+        ("wall_columns", ("id", "shape", "center", "cm", "angle")),
+        ("open_spans", ("a", "b")),
+    )
+    for name, fields in collections:
+        if name not in space:
+            continue
+        values = []
+        for item in space.get(name) or []:
+            selected = _pick_fields(item, fields)
+            if name == "room_drafts" and "segments" in selected:
+                selected["segments"] = [
+                    _pick_fields(segment, ("cm",))
+                    for segment in selected.get("segments") or []
+                ]
+            values.append(selected)
+        projected[name] = values
+    if "openings" in space:
+        projected["openings"] = [
+            _pick_fields(
+                opening,
+                ("id", "type", "x", "y", "angle", "length", "flip_h", "flip_v"),
+            )
+            for opening in space.get("openings") or []
+        ]
+    if "decor" in space:
+        projected["decor"] = [
+            _project_plan_only_decor(shape) for shape in space.get("decor") or []
+        ]
+    return projected
+
+
+def _plan_only_room_label_layout(
+    layout: dict[str, Any], space: dict[str, Any],
+) -> dict[str, Any]:
+    space_id = str(space.get("id", ""))
+    room_ids = {str(room.get("id", "")) for room in space.get("rooms") or []}
+    return {
+        key: _pick_fields(pos, ("x", "y", "s"))
+        for key, pos in layout.items()
+        if isinstance(key, str)
+        and key.startswith("rl_")
+        and key[3:] in room_ids
+        and isinstance(pos, dict)
+        and str(pos.get("s", "")) == space_id
     }
 
 
@@ -254,9 +402,12 @@ def create_export(
     *,
     kind: str,
     space_id: str | None,
+    plan_only: bool = False,
     card_version: str,
     config_root: Path,
 ) -> tuple[dict[str, Any], str]:
+    if not isinstance(plan_only, bool) or plan_only and kind != "space":
+        raise ImportFailure("invalid_format", "Plan-only export requires one space")
     raw_config = _json_copy(
         config_data.get("config") or {"spaces": [], "markers": [], "settings": {}}
     )
@@ -283,36 +434,41 @@ def create_export(
             key: pos for key, pos in layout.items()
             if isinstance(pos, dict) and str(pos.get("s")) == str(space_id)
         }
-        selected_markers = [
-            m for m in config.get("markers") or []
-            if m.get("removed") is not True and _marker_owned(m, space, selected_layout)
-        ]
-        selected_ids = {str(marker.get("id")) for marker in selected_markers}
-        for marker in selected_markers:
-            controls = marker.get("controls")
-            if isinstance(controls, list):
-                kept = []
-                for ref in controls:
-                    if isinstance(ref, str) and ref.startswith("marker:") \
-                            and ref[len("marker:"):] not in selected_ids:
-                        dropped_marker_links += 1
-                        continue
-                    kept.append(ref)
-                marker["controls"] = kept or None
-            badge = marker.get("value_badge")
-            source = badge.get("source") if isinstance(badge, dict) else None
-            ref = source.get("ref") if isinstance(source, dict) \
-                and source.get("kind") == "derived_marker_state" else None
-            if isinstance(ref, str) and ref.startswith("marker:") \
-                    and ref[len("marker:"):] not in selected_ids:
-                badge["enabled"] = False
-                badge["source"] = None
-                dropped_marker_links += 1
-        config = {
-            "spaces": [_json_copy(space)],
-            "markers": _json_copy(selected_markers),
-        }
-        layout = selected_layout
+        if plan_only:
+            projected_space = _project_plan_only_space(space)
+            config = {"spaces": [projected_space], "markers": []}
+            layout = _plan_only_room_label_layout(selected_layout, projected_space)
+        else:
+            selected_markers = [
+                m for m in config.get("markers") or []
+                if m.get("removed") is not True and _marker_owned(m, space, selected_layout)
+            ]
+            selected_ids = {str(marker.get("id")) for marker in selected_markers}
+            for marker in selected_markers:
+                controls = marker.get("controls")
+                if isinstance(controls, list):
+                    kept = []
+                    for ref in controls:
+                        if isinstance(ref, str) and ref.startswith("marker:") \
+                                and ref[len("marker:"):] not in selected_ids:
+                            dropped_marker_links += 1
+                            continue
+                        kept.append(ref)
+                    marker["controls"] = kept or None
+                badge = marker.get("value_badge")
+                source = badge.get("source") if isinstance(badge, dict) else None
+                ref = source.get("ref") if isinstance(source, dict) \
+                    and source.get("kind") == "derived_marker_state" else None
+                if isinstance(ref, str) and ref.startswith("marker:") \
+                        and ref[len("marker:"):] not in selected_ids:
+                    badge["enabled"] = False
+                    badge["source"] = None
+                    dropped_marker_links += 1
+            config = {
+                "spaces": [_json_copy(space)],
+                "markers": _json_copy(selected_markers),
+            }
+            layout = selected_layout
     elif kind != "full":
         raise ImportFailure("invalid_format", "Unknown export kind")
     document = {
@@ -327,7 +483,10 @@ def create_export(
         "payload": {"config": config, "layout": layout},
         "placement_manifest": placement_manifest(config, layout),
         "content_manifest": content_manifest(config, config_root),
-        "transfer": {"dropped_marker_links": dropped_marker_links},
+        "transfer": {
+            "dropped_marker_links": dropped_marker_links,
+            **({"plan_only": True} if plan_only else {}),
+        },
     }
     if len(json.dumps(
         document, ensure_ascii=False, separators=(",", ":"), allow_nan=False
@@ -416,10 +575,13 @@ def parse_document(raw: bytes) -> dict[str, Any]:
     if document["kind"] == "space" and placement_ids != set(layout):
         raise ImportFailure("invalid_format", "Placement manifest does not match layout")
     dropped_marker_links = _transfer_dropped_marker_links(document)
+    plan_only = _transfer_plan_only(document)
     document["transfer"] = {
         **(document.get("transfer") or {}),
         "dropped_marker_links": dropped_marker_links,
     }
+    if plan_only:
+        _validate_plan_only_document(document, config, layout, placement)
     if len(json.dumps(
         config, ensure_ascii=False, separators=(",", ":"), allow_nan=False
     ).encode("utf-8")) > MAX_CONFIG_BYTES:
@@ -488,6 +650,51 @@ def _transfer_dropped_marker_links(document: dict[str, Any]) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= maximum:
         raise ImportFailure("invalid_format", "Invalid dropped marker link count")
     return value
+
+
+def _transfer_plan_only(document: dict[str, Any]) -> bool:
+    """Read strict additive plan-only metadata without widening old exports."""
+    transfer = document.get("transfer")
+    if transfer is None:
+        return False
+    if not isinstance(transfer, dict):
+        raise ImportFailure("invalid_format", "Transfer metadata must be an object")
+    value = transfer.get("plan_only", False)
+    if not isinstance(value, bool):
+        raise ImportFailure("invalid_format", "Plan-only metadata must be a boolean")
+    if value and document.get("kind") != "space":
+        raise ImportFailure("invalid_format", "Plan-only metadata requires one space")
+    return value
+
+
+def _validate_plan_only_document(
+    document: dict[str, Any],
+    config: dict[str, Any],
+    layout: dict[str, Any],
+    placement: list[Any],
+) -> None:
+    """Reject forged plan-only flags unless every privacy invariant is true."""
+    spaces = config.get("spaces") or []
+    if len(spaces) != 1 or config.get("markers") != []:
+        raise ImportFailure("invalid_format", "Plan-only export has invalid owners")
+    expected_config = CONFIG_SCHEMA({
+        "spaces": [_project_plan_only_space(spaces[0])],
+        "markers": [],
+    })
+    if config != expected_config:
+        raise ImportFailure("invalid_format", "Plan-only export contains private fields")
+    expected_layout = _plan_only_room_label_layout(layout, spaces[0])
+    if layout != expected_layout:
+        raise ImportFailure("invalid_format", "Plan-only export contains device layout")
+    expected_placement = placement_manifest(config, layout)
+    if placement != expected_placement:
+        raise ImportFailure("invalid_format", "Plan-only placement manifest is not canonical")
+    content = document.get("content_manifest")
+    if not isinstance(content, list) or any(
+        not isinstance(item, dict) or item.get("owner") != "space"
+        for item in content
+    ):
+        raise ImportFailure("invalid_format", "Plan-only export contains private content")
 
 
 def _drop_invalid_import_marker_links(
@@ -964,6 +1171,7 @@ def create_preview(
     runtime.import_previews[token] = candidate
     preview = {
         "kind": document["kind"],
+        "plan_only": _transfer_plan_only(document),
         "created_at": document.get("created_at"),
         "card_version": document.get("card_version"),
         "integration_version": document.get("integration_version"),
@@ -1043,6 +1251,7 @@ def revalidate_candidate(
     return {
         "preview": {
             "kind": document["kind"],
+            "plan_only": _transfer_plan_only(document),
             "counts": _counts(incoming["config"], incoming["layout"]),
             "current_counts": _counts(current_config, current_layout),
             "source": "same" if candidate.get("same_source") else "foreign",

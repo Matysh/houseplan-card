@@ -539,7 +539,7 @@ spans are clipped per atomic body.
 | `houseplan/files/migrate` | `from_id`, `to_id` | `{mapping}` — COPY, never move |
 | `houseplan/files/cleanup` | `marker_id`, `keep?` | replacement-only collection |
 | `houseplan/content/sign` | `paths[]` | `{urls}` — authSig for `<image>`/`<a>` fetches |
-| `houseplan/export/create` | `kind`, `space_id?`, `card_version` | consistent versioned JSON document + safe filename |
+| `houseplan/export/create` | `kind`, `space_id?`, `plan_only?`, `card_version` | consistent versioned JSON document + safe filename; plan-only is valid only for one space |
 | `houseplan/import/revalidate` | preview `token`, `duplicate_policy?` | refreshed bounded preview and current expected revisions |
 | `houseplan/import/apply` | token, both expected revisions, content confirmation | crash-resumable paired config/layout commit; full import gets one-deep undo |
 
@@ -570,6 +570,14 @@ versions, and retains the parsed candidate only in memory for ten minutes. Its
 opaque token is bound to the HA user, normalized-candidate digest and the exact
 config/layout revisions. Parsed candidates are capped globally as well as per
 user.
+
+Plan-only export is a server-owned, fail-closed projection rather than a
+client-side scrub. It removes every marker and all device layout, preserves
+only canonical room-label placements, and copies one space through explicit
+geometry/presentation allowlists. The parser recomputes that projection and
+its placement manifest before showing a plan-only preview, so manually adding
+a private field while keeping `transfer.plan_only: true` is rejected.
+
 The browser never parses imported configuration. Full import and maintenance
 share the `optimize_pending` crash-recovery intent and the one-deep backup slot;
 the backup carries `kind: optimize|import`, while every layout-store writer

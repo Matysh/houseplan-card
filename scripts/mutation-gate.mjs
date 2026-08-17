@@ -165,6 +165,72 @@ export const MUTANTS = [
       replace: '    glowEnabled: false, allLightsOff: true, northDeg: 0,',
     }],
   },
+  {
+    id: 'plan-only-room-area-restored',
+    guard: 'node scripts/backend-test-guard.mjs plan_only_export_projects',
+    because: 'возврат room.area нарушает основное обещание чистого шаблона; '
+      + 'projection/roundtrip тест обязан увидеть HA Area даже при нулевых markers',
+    patches: [{
+      file: 'custom_components/houseplan/import_export.py',
+      find: '_ROOM_PLAN_FIELDS = ("id", "name", "open_to", "x", "y", "w", "h", "poly")',
+      replace: '_ROOM_PLAN_FIELDS = ("id", "name", "area", "open_to", "x", "y", "w", "h", "poly")',
+    }],
+  },
+  {
+    id: 'plan-only-projector-bypassed',
+    guard: 'node scripts/backend-test-guard.mjs plan_only_export_projects',
+    because: 'игнорирование request-флага возвращает markers и device layout; '
+      + 'полный representative export обязан доказать, что true включает lossy projector',
+    patches: [{
+      file: 'custom_components/houseplan/import_export.py',
+      find: '        if plan_only:\n            projected_space = _project_plan_only_space(space)',
+      replace: '        if False and plan_only:\n            projected_space = _project_plan_only_space(space)',
+    }],
+  },
+  {
+    id: 'ordinary-export-plan-only-false-emitted',
+    guard: 'node scripts/backend-test-guard.mjs ordinary_space_export_is_unchanged',
+    because: 'аддитивное поле не должно менять обычный space export даже значением false; '
+      + 'fixed regression обязан сохранить прежнюю структуру документа',
+    patches: [{
+      file: 'custom_components/houseplan/import_export.py',
+      find: '**({"plan_only": True} if plan_only else {}),',
+      replace: '**({"plan_only": plan_only}),',
+    }],
+  },
+  {
+    id: 'plan-only-revalidate-flag-dropped',
+    guard: 'node scripts/backend-test-guard.mjs plan_only_export_projects',
+    because: 'revalidate не имеет права превращать plan-only preview в обычный space preview; '
+      + 'roundtrip test проверяет сохранение флага после обновления revisions',
+    patches: [{
+      file: 'custom_components/houseplan/import_export.py',
+      find: '            "plan_only": _transfer_plan_only(document),\n            "counts":',
+      replace: '            "plan_only": False,\n            "counts":',
+    }],
+  },
+  {
+    id: 'plan-only-forged-file-trusted',
+    guard: 'node scripts/backend-test-guard.mjs forged_plan_only_privacy_claim',
+    because: 'флаг файла не является доказательством приватности; negative parser matrix '
+      + 'обязана покраснеть, если schema-aware проверка больше не вызывается',
+    patches: [{
+      file: 'custom_components/houseplan/import_export.py',
+      find: '    if plan_only:\n        _validate_plan_only_document(document, config, layout, placement)',
+      replace: '    if False and plan_only:\n        _validate_plan_only_document(document, config, layout, placement)',
+    }],
+  },
+  {
+    id: 'plan-only-preview-label-hidden',
+    guard: 'node demo/smoke_backup_transfer.mjs',
+    because: 'валидный plan-only файл без явной строки в preview выглядит обычной копией; '
+      + 'browser smoke обязан проверять пользовательский статус, а не только backend-флаг',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "${p.plan_only ? html`<span class=\"backupplanonlystatus\">${this._t('backup.plan_only_preview')}</span>` : nothing}",
+      replace: "${false ? html`<span class=\"backupplanonlystatus\">${this._t('backup.plan_only_preview')}</span>` : nothing}",
+    }],
+  },
 ];
 
 // --- механика ---------------------------------------------------------------

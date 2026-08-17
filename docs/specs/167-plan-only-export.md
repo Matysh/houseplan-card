@@ -37,14 +37,15 @@ Issue: [#167](https://github.com/Matysh/houseplan-card/issues/167)
 
 ## 2. Что человек увидит до и после
 
-**До:** экспорт текущего пространства всегда содержит его маркеры, layout и
+**До:** экспорт текущего пространства всегда содержит его маркеры, device layout и
 HA-привязки. Для чистого переноса пользователь должен вручную редактировать
 JSON, рискуя повредить структуру или случайно оставить идентификаторы.
 
 **После:** рядом с выбором текущего пространства доступен выключенный по
 умолчанию флажок «Plan only». В этом режиме файл сохраняет переносимую
-планировку, но не содержит маркеров, layout и известных структурных
-HA-привязок. Preview импорта явно сообщает, что файл содержит только
+планировку и вручную расставленные подписи комнат, но не содержит маркеров,
+device layout и известных структурных HA-привязок. Preview импорта явно
+сообщает, что файл содержит только
 планировку; импорт добавляет новое несвязанное пространство существующим
 безопасным механизмом #50.
 
@@ -72,7 +73,9 @@ HA-привязок. Preview импорта явно сообщает, что ф
 
 1. опция «Plan only» только для экспорта текущего пространства;
 2. schema-aware проекция переносимой геометрии и визуальных настроек;
-3. полное удаление маркеров, marker layout и структурных HA-привязок;
+3. полное удаление реальных и виртуальных маркеров, marker/auto-device/light-
+   group layout и структурных HA-привязок при сохранении безопасных позиций
+   подписей комнат `rl_<room_id>`;
 4. статическая нейтрализация live-text токенов по решению владельца;
 5. аддитивный признак `transfer.plan_only: true` в JSON;
 6. строгая проверка plan-only инварианта при чтении файла;
@@ -96,6 +99,9 @@ HA-привязок. Preview импорта явно сообщает, что ф
 - сопоставление Area, устройств и сущностей при импорте;
 - перенос marker icon, actions, vacuum paths, runtime states, histories,
   trails, known/new-device bookkeeping;
+- сохранение виртуальных маркеров вроде пользовательских заметок «Котёл»:
+  `binding: virtual` не делает marker частью архитектурной геометрии, поэтому
+  он удаляется вместе со всеми остальными маркерами;
 - создание PDF/изображения чистого плана — это сценарий #53;
 - дополнительное privacy-предупреждение специально для plan-only;
 - изменение редакторов, View, kiosk или touch-жестов;
@@ -129,7 +135,8 @@ HA-привязок. Preview импорта явно сообщает, что ф
 Для plan-only файла preview:
 
 - явно показывает информационную строку «Файл содержит только планировку»;
-- показывает `markers = 0`, `layout = 0`, device/entity/virtual bindings = 0;
+- показывает `markers = 0`, device/entity/virtual bindings = 0, а `layout`
+  считает только сохранённые позиции подписей комнат;
 - не показывает duplicate policy, поскольку дубликатов устройств нет;
 - не показывает missing Area, поскольку `room.area` очищен;
 - показывает обычные counts комнат, стен, проёмов, декора и content;
@@ -154,9 +161,21 @@ HA-привязок. Preview импорта явно сообщает, что ф
   },
   "payload": {
     "config": { "spaces": ["…"], "markers": [] },
-    "layout": {}
+    "layout": {
+      "rl_room-kitchen": { "x": 0.42, "y": 0.31, "s": "floor-1" }
+    }
   },
-  "placement_manifest": [],
+  "placement_manifest": [
+    {
+      "layout_id": "rl_room-kitchen",
+      "space_id": "floor-1",
+      "owner": "room_label",
+      "owner_id": "room-kitchen",
+      "binding": null,
+      "label": null,
+      "icon": null
+    }
+  ],
   "content_manifest": ["…"]
 }
 ```
@@ -196,8 +215,8 @@ HA-привязок. Preview импорта явно сообщает, что ф
 | Источник | Результат plan-only |
 |---|---|
 | `config.markers` | `[]`; marker config целиком отсутствует |
-| `payload.layout` | `{}`; удаляются все позиции, включая room labels |
-| `placement_manifest` | `[]` |
+| `payload.layout` | только `rl_<room_id>` для комнаты экспортируемого пространства; marker, `v_*`, `lg_*`, auto-device и неизвестные позиции удаляются |
+| `placement_manifest` | только canonical `room_label` entries, точно соответствующие сохранённым `rl_*` ключам |
 | marker attachment/content entries | отсутствуют |
 | `room.area` | отсутствует или canonical unbound value |
 | `room.settings.temp_source` | отсутствует |
@@ -207,6 +226,9 @@ HA-привязок. Preview импорта явно сообщает, что ф
 | decor legacy `entity` / `attr` / `unit` | отсутствуют |
 | valid live tokens и legacy `{}` в `decor.text` | заменены на `—` |
 | `known_devices` / `new_device_ids` | не переносятся |
+
+Реальные и виртуальные markers удаляются одинаково: `binding: virtual`, имя или
+статичная иконка не переводят marker в архитектурный decor.
 
 `flip_h`, `flip_v` и другие геометрические параметры проёма не являются
 HA-binding behavior и сохраняются.
@@ -264,7 +286,12 @@ presentation, user content или HA binding. Это fail-closed защита о
 `kind == "space" && transfer.plan_only == true` он дополнительно проверяет:
 
 - ровно одно пространство;
-- `markers == []`, `layout == {}`, `placement_manifest == []`;
+- `markers == []`;
+- каждый layout key строго равен `rl_<room_id>` существующей комнаты
+  экспортируемого пространства, а `pos.s` равен id этого пространства;
+- каждый placement entry canonical: `owner == "room_label"`, `owner_id`
+  совпадает с room id, `binding|label|icon == null`, и set записей точно
+  совпадает с layout;
 - отсутствие marker-owned content;
 - отсутствие Area/temp/hum/opening/decor legacy bindings;
 - отсутствие валидных live-text токенов и legacy `{}`;
@@ -282,7 +309,8 @@ presentation, user content или HA binding. Это fail-closed защита о
   title и не меняет global settings.
 - Content availability/detach повторно проверяется перед apply под действующим
   lock по контракту #50.
-- Apply не добавляет маркеры и layout, а комнаты остаются unbound.
+- Apply не добавляет маркеры; существующий remap переносит только room-label
+  layout на новые room/space ids, а комнаты остаются unbound.
 - Events, revision conflict, token ownership/expiry и capacity limits не
   меняются.
 
@@ -323,8 +351,9 @@ first по `TOUCH-SUPPORT`, но диалог не должен переполн
 
 1. При Current space пользователь видит выключенный «Plan only»; при Full
    backup опции нет, а request не содержит true.
-2. Plan-only export содержит одно пространство, `markers: []`, `layout: {}`,
-   empty placement manifest и `transfer.plan_only: true`.
+2. Plan-only export содержит одно пространство, `markers: []`, только валидные
+   `rl_<room_id>` layout/room-label placement entries и
+   `transfer.plan_only: true`.
 3. Геометрия rooms/walls/drafts/partitions/columns/openings/open spans,
    decor/backdrop и переносимые визуальные настройки сохраняются по allowlist.
 4. Area, temperature/humidity source, opening contact/lock/invert, marker data,
@@ -334,11 +363,12 @@ first по `TOUCH-SUPPORT`, но диалог не должен переполн
 6. Названия, статический текст, filenames и external URLs сохраняются; UX не
    обещает полную анонимизацию и не добавляет отдельного предупреждения.
 7. Импорт plan-only файла на чистый целевой instance создаёт новое пространство
-   с той же планировкой, нулём устройств/позиций/привязок и unbound rooms.
+   с той же планировкой, нулём устройств/HA-привязок, remap-нутыми позициями
+   подписей комнат и unbound rooms.
 8. Preview и revalidate явно сохраняют `plan_only: true`, показывают нулевые
    binding counts и не предлагают duplicate policy.
-9. File с true, но с маркером, layout или известной HA-привязкой отклоняется
-   как `invalid_format` до preview.
+9. File с true, но с маркером, не-room-label layout, несогласованным placement
+   или известной HA-привязкой отклоняется как `invalid_format` до preview.
 10. Обычные full/space export и import проходят неизменённые regression
     fixtures; normal space document не получает `plan_only: false`.
 11. RU/EN тексты синхронны, checkbox доступен с клавиатуры и диалог проходит
@@ -361,11 +391,13 @@ first по `TOUCH-SUPPORT`, но диалог не должен переполн
 - export normal space с фиксированным временем — прежний fixture без нового
   поля;
 - plan-only projection полного representative space со всеми типами geometry,
-  marker/layout, room/opening bindings, modern и legacy live text;
+  real/virtual marker layout, safe room-label layout, room/opening bindings,
+  modern и legacy live text;
 - preserve static names/text/URLs/content owner и drop marker attachments;
 - reject `plan_only=true` для full;
 - reject non-boolean plan_only;
-- reject forged plan-only files по одному для marker, layout, room area,
+- reject forged plan-only files по одному для marker, чужого/невалидного
+  room-label layout/placement, room area,
   temp/hum, opening refs, legacy decor refs и inline token;
 - preview/revalidate/apply happy path на same и foreign instance;
 - missing internal backdrop + detach confirmation по действующему контракту;
@@ -383,7 +415,8 @@ first по `TOUCH-SUPPORT`, но диалог не должен переполн
 - import smoke: `plan_only` line есть, duplicate controls отсутствуют;
 - RU/EN i18n parity;
 - добавить/обновить deterministic golden scenarios для export dialog с
-  включённой опцией и import preview, поднять версию golden matrix;
+  включённой опцией и import preview; после слитого #166 поднять жёстко
+  проверяемый `GOLDEN_MATRIX_VERSION` с 23 до 24;
 - review actual/expected/diff до принятия baseline.
 
 В implementation loop выполняются только действующие быстрые gates:
@@ -396,8 +429,8 @@ guard, получить non-zero и восстановить файл:
 
 1. оставить один inline live token либо `room.area` в проекции — backend
    plan-only privacy test падает;
-2. проигнорировать `plan_only` и вернуть marker/layout — projection/roundtrip
-   test падает;
+2. проигнорировать `plan_only` и вернуть marker либо не-room-label layout —
+   projection/roundtrip test падает;
 3. прогнать normal space export через lossy projection или записать
    `plan_only: false` — fixed ordinary-export regression падает;
 4. не перенести `plan_only` через preview/revalidate или не показать строку —
@@ -461,11 +494,14 @@ Push ветки выполняется после задачи; issue не за�
 
 1. `plan_only` — optional additive metadata внутри существующего export
    version, а не новый kind или новая версия формата.
-2. Геометрический `flip_h|flip_v` сохраняется, contact-specific `invert`
+2. Безопасные ручные позиции подписей комнат `rl_<room_id>` сохраняются и
+   remap-ятся; весь остальной layout удаляется.
+3. Реальные и виртуальные markers удаляются одинаково.
+4. Геометрический `flip_h|flip_v` сохраняется, contact-specific `invert`
    удаляется вместе с binding.
-3. Неизвестные поля в plan-only проекцию автоматически не попадают; обычный
+5. Неизвестные поля в plan-only проекцию автоматически не попадают; обычный
    export остаётся lossless.
-4. Privacy invariant относится к структурным HA-полям и валидным live tokens,
+6. Privacy invariant относится к структурным HA-полям и валидным live tokens,
    но не к произвольным пользовательским строкам.
-5. Новый informational label/hint допустим; отдельное предупреждение или новое
+7. Новый informational label/hint допустим; отдельное предупреждение или новое
    подтверждение по решению владельца запрещено.

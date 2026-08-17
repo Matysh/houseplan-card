@@ -1396,7 +1396,7 @@ class HouseplanCard extends LitElement {
     busy: boolean;
   } | null = null;
   private _backupExportDialog: {
-    kind: 'full' | 'space'; busy: boolean; error: string;
+    kind: 'full' | 'space'; planOnly: boolean; busy: boolean; error: string;
   } | null = null;
   private _backupImportDialog: {
     filename: string; size: number; token: string; preview: any;
@@ -13088,7 +13088,7 @@ class HouseplanCard extends LitElement {
 
   private _openBackupExport = (): void => {
     this._settingsDialog = null;
-    this._backupExportDialog = { kind: 'full', busy: false, error: '' };
+    this._backupExportDialog = { kind: 'full', planOnly: false, busy: false, error: '' };
   };
 
   private async _runBackupExport(): Promise<void> {
@@ -13100,6 +13100,7 @@ class HouseplanCard extends LitElement {
         type: 'houseplan/export/create',
         kind: d.kind,
         space_id: d.kind === 'space' ? this._space : undefined,
+        ...(d.kind === 'space' && d.planOnly ? { plan_only: true } : {}),
         card_version: CARD_VERSION,
       });
       const blob = new Blob([JSON.stringify(response.document, null, 2) + '\n'], {
@@ -13285,7 +13286,8 @@ class HouseplanCard extends LitElement {
       <div class="body backupbody">
         <div class="rhint">${this._t('backup.export_hint')}</div>
         <label class="srcrow"><input type="radio" name="backup-kind" value="full"
-          .checked=${d.kind === 'full'} @change=${() => (this._backupExportDialog = { ...d, kind: 'full' })} />
+          .checked=${d.kind === 'full'}
+          @change=${() => (this._backupExportDialog = { ...d, kind: 'full', planOnly: false })} />
           <span>${this._t('backup.full')}</span></label>
         <label class="srcrow"><input type="radio" name="backup-kind" value="space"
           .checked=${d.kind === 'space'} ?disabled=${!currentSpace}
@@ -13293,6 +13295,13 @@ class HouseplanCard extends LitElement {
           <span>${currentSpace
             ? this._t('backup.current_space_title', { title: currentSpace.title || currentSpace.id })
             : this._t('backup.no_current_space')}</span></label>
+        ${d.kind === 'space' && currentSpace ? html`<label class="srcrow backupplanonly">
+          <input type="checkbox" .checked=${d.planOnly}
+            @change=${(event: Event) => (this._backupExportDialog = {
+              ...d, planOnly: (event.target as HTMLInputElement).checked,
+            })} />
+          <span><b>${this._t('backup.plan_only')}</b><small>${this._t('backup.plan_only_hint')}</small></span>
+        </label>` : nothing}
         <div class="backupwarn">${this._t('backup.privacy_warning')}</div>
         ${d.error ? html`<div class="backuperror" role="alert">${d.error}</div>` : nothing}
       </div>
@@ -13320,6 +13329,7 @@ class HouseplanCard extends LitElement {
         ${p ? html`
           <div class="backupsummary">
             <b>${this._t(p.kind === 'full' ? 'backup.full' : 'backup.current_space')}</b>
+            ${p.plan_only ? html`<span class="backupplanonlystatus">${this._t('backup.plan_only_preview')}</span>` : nothing}
             <span>${this._t(p.source === 'same' ? 'backup.same_source' : 'backup.foreign_source')}</span>
             <span>${this._t('backup.created', { value: p.created_at || '—' })}</span>
             <span>${this._t('backup.versions', {

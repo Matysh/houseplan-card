@@ -270,6 +270,249 @@ def test_full_export_has_versioned_envelope_and_live_layout(tmp_path: Path) -> N
     assert filename.startswith("houseplan-full-") and filename.endswith(".json")
 
 
+def _plan_only_source() -> tuple[dict[str, Any], dict[str, Any]]:
+    config = _config()
+    space = config["spaces"][0]
+    space.update({
+        "cell_cm": 5,
+        "plan_url": "https://example.invalid/floor.svg",
+        "plan_x": 0.1,
+        "plan_y": -0.2,
+        "plan_scale_x": 1.2,
+        "plan_scale_y": 0.8,
+        "plan_angle": 15,
+        "settings": {
+            "show_names": True, "north_deg": 90, "sun_rays": True,
+            "future_binding": "sensor.secret",
+        },
+        "future_space": {"entity": "sensor.secret"},
+        "openings": [{
+            "id": "window", "type": "window", "x": 0.5, "y": 0,
+            "angle": 0, "length": 0.2, "contact": "binary_sensor.window",
+            "lock": "lock.window", "invert": True, "flip_h": True,
+            "future_opening": "sensor.secret",
+        }],
+        "walls": [{"key": "wall-1", "cm": 20, "future_wall": "sensor.secret"}],
+        "room_drafts": [{
+            "id": "draft", "points": [[0, 0], [0.2, 0]],
+            "segments": [{"cm": 10, "future_segment": "sensor.secret"}],
+        }],
+        "partitions": [{"id": "partition", "a": [0, 0.5], "b": [1, 0.5], "cm": 12}],
+        "wall_columns": [{"id": "column", "shape": "circle", "center": [0.2, 0.2], "cm": 30}],
+        "open_spans": [{"a": [0.4, 0], "b": [0.6, 0], "future_span": "sensor.secret"}],
+        "decor": [
+            {
+                "id": "modern", "kind": "text", "x": 0.2, "y": 0.2,
+                "text": "Temp {sensor.kitchen} / {climate.hall.current_temperature} °C",
+                "future_decor": "sensor.secret",
+            },
+            {
+                "id": "legacy", "kind": "text", "x": 0.3, "y": 0.3,
+                "text": "Tank {} / {}", "entity": "sensor.tank",
+                "attr": "level", "unit": "%",
+            },
+            {
+                "id": "static", "kind": "text", "x": 0.4, "y": 0.4,
+                "text": "Literal {not a reference} and sensor.user_text",
+            },
+            {
+                "id": "furniture", "kind": "furniture", "symbol": "sofa",
+                "x": 0.5, "y": 0.5, "w": 0.2, "h": 0.1, "angle": 10,
+            },
+        ],
+    })
+    room = space["rooms"][0]
+    room.update({
+        "area": "living-area",
+        "settings": {
+            "fill_mode": "custom", "custom_fill": {"c": "#123456", "a": 0.4},
+            "temp_source": "sensor.room_temp", "hum_source": "sensor.room_humidity",
+            "future_room_binding": "sensor.secret",
+        },
+        "future_room": "sensor.secret",
+    })
+    config["markers"].append({
+        "id": "note", "binding": "virtual", "space": "ground",
+        "room_id": "living", "name": "Boiler", "icon": "mdi:fire",
+    })
+    layout = {
+        "lamp": {"x": 0.4, "y": 0.5, "s": "ground"},
+        "note": {"x": 0.2, "y": 0.3, "s": "ground"},
+        "lg_light.group": {"x": 0.1, "y": 0.1, "s": "ground"},
+        "auto-device": {"x": 0.8, "y": 0.8, "s": "ground"},
+        "rl_living": {"x": 0.45, "y": 0.55, "s": "ground", "future": "drop"},
+        "rl_other": {"x": 0.1, "y": 0.1, "s": "other"},
+    }
+    return config, layout
+
+
+def test_plan_only_export_projects_geometry_and_round_trips_room_labels(tmp_path: Path) -> None:
+    config, layout = _plan_only_source()
+    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    document, _ = create_export(
+        runtime, {"config": config}, {"layout": layout}, kind="space",
+        space_id="ground", plan_only=True, card_version="review", config_root=tmp_path,
+    )
+    payload = document["payload"]
+    exported = payload["config"]["spaces"][0]
+    assert document["transfer"] == {"dropped_marker_links": 0, "plan_only": True}
+    assert payload["config"]["markers"] == []
+    assert payload["layout"] == {
+        "rl_living": {"x": 0.45, "y": 0.55, "s": "ground"},
+    }
+    assert document["placement_manifest"] == [{
+        "layout_id": "rl_living", "space_id": "ground", "owner": "room_label",
+        "owner_id": "living", "binding": None, "label": None, "icon": None,
+    }]
+    assert document["content_manifest"][0]["url"] == "https://example.invalid/floor.svg"
+    assert all(item.get("owner") != "marker" for item in document["content_manifest"])
+
+    assert "future_space" not in exported
+    assert exported["settings"] == {
+        "show_names": True, "north_deg": 90, "sun_rays": True, "bg_mode": "static",
+    }
+    room = exported["rooms"][0]
+    assert "area" not in room and "future_room" not in room
+    assert room["settings"] == {
+        "fill_mode": "custom", "custom_fill": {"c": "#123456", "a": 0.4},
+    }
+    opening = exported["openings"][0]
+    assert opening["flip_h"] is True
+    assert not {"contact", "lock", "invert", "future_opening"} & set(opening)
+    by_id = {item["id"]: item for item in exported["decor"]}
+    assert by_id["modern"]["text"] == "Temp — / — °C"
+    assert by_id["legacy"]["text"] == "Tank — / —"
+    assert not {"entity", "attr", "unit"} & set(by_id["legacy"])
+    assert by_id["static"]["text"] == "Literal {not a reference} and sensor.user_text"
+    assert by_id["furniture"]["symbol"] == "sofa"
+
+    parsed = parse_document(json.dumps(document).encode())
+    preview = create_preview(
+        runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
+        current_config_data={"config": {"spaces": [], "markers": []}, "rev": 0},
+        current_layout_data={"layout": {}, "rev": 0}, config_root=tmp_path,
+        registry_snapshot={"areas": set()},
+    )
+    assert preview["preview"]["plan_only"] is True
+    assert preview["preview"]["counts"]["markers"] == 0
+    assert preview["preview"]["counts"]["layout"] == 1
+    assert preview["preview"]["duplicates"] == 0
+    assert preview["preview"]["missing_areas"] == []
+    assert preview["preview"]["bindings"] == {
+        "device": 0, "entity": 0, "virtual": 0,
+        "active": 0, "disabled": 0, "missing": 0,
+    }
+    candidate = get_candidate(runtime, preview["token"], "alice")
+    refreshed = revalidate_candidate(
+        candidate, {"config": {"spaces": [], "markers": []}, "rev": 2},
+        {"layout": {}, "rev": 3}, duplicate_policy="skip", config_root=tmp_path,
+    )
+    assert refreshed["preview"]["plan_only"] is True
+    merged, merged_layout, details = prepare_apply(
+        candidate, {"spaces": [], "markers": []}, {}, confirm_missing_content=False,
+    )
+    assert merged["markers"] == []
+    imported_room = merged["spaces"][0]["rooms"][0]
+    assert imported_room.get("area") is None
+    assert merged_layout == {
+        "rl_" + imported_room["id"]: {
+            "x": 0.45, "y": 0.55, "s": details["space_id"],
+        },
+    }
+    assert parsed["transfer"]["plan_only"] is True
+
+
+def test_ordinary_space_export_is_unchanged_when_plan_only_is_false(tmp_path: Path) -> None:
+    config, layout = _plan_only_source()
+    runtime = SimpleNamespace(instance_id="instance-a")
+    implicit, _implicit_name = create_export(
+        runtime, {"config": config}, {"layout": layout}, kind="space",
+        space_id="ground", card_version="review", config_root=tmp_path,
+    )
+    explicit, _explicit_name = create_export(
+        runtime, {"config": config}, {"layout": layout}, kind="space",
+        space_id="ground", plan_only=False, card_version="review", config_root=tmp_path,
+    )
+    for value in (implicit, explicit):
+        value.pop("created_at")
+    assert implicit == explicit
+    assert "plan_only" not in implicit["transfer"]
+    assert implicit["payload"]["config"]["markers"]
+    assert set(implicit["payload"]["layout"]) == set(layout)
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "marker", "layout", "area", "temperature", "opening", "legacy_decor",
+        "live_token", "unknown", "placement", "marker_content", "invalid_content",
+    ],
+)
+def test_parser_rejects_forged_plan_only_privacy_claim(
+    tmp_path: Path, mutation: str,
+) -> None:
+    config, layout = _plan_only_source()
+    document, _ = create_export(
+        SimpleNamespace(instance_id="instance-a"), {"config": config}, {"layout": layout},
+        kind="space", space_id="ground", plan_only=True,
+        card_version="review", config_root=tmp_path,
+    )
+    space = document["payload"]["config"]["spaces"][0]
+    if mutation == "marker":
+        document["payload"]["config"]["markers"].append({
+            "id": "forged", "binding": "virtual", "name": "Forged",
+        })
+    elif mutation == "layout":
+        document["payload"]["layout"]["sensor.secret"] = {
+            "x": 0.1, "y": 0.2, "s": "ground",
+        }
+        document["placement_manifest"].append({
+            "layout_id": "sensor.secret", "space_id": "ground",
+            "owner": "auto_device", "owner_id": "sensor.secret",
+            "binding": "device:sensor.secret", "label": None, "icon": None,
+        })
+    elif mutation == "area":
+        space["rooms"][0]["area"] = "secret-area"
+    elif mutation == "temperature":
+        space["rooms"][0].setdefault("settings", {})["temp_source"] = "sensor.secret"
+    elif mutation == "opening":
+        space["openings"][0]["contact"] = "binary_sensor.secret"
+    elif mutation == "legacy_decor":
+        space["decor"][0]["entity"] = "sensor.secret"
+    elif mutation == "live_token":
+        space["decor"][0]["text"] = "Leaked {sensor.secret}"
+    elif mutation == "unknown":
+        space["future_binding"] = "sensor.secret"
+    elif mutation == "placement":
+        document["placement_manifest"][0]["owner"] = "auto_device"
+    elif mutation == "marker_content":
+        document["content_manifest"].append({"owner": "marker"})
+    elif mutation == "invalid_content":
+        document["content_manifest"].append("sensor.secret")
+    with pytest.raises(ImportFailure) as invalid:
+        parse_document(json.dumps(document).encode())
+    assert invalid.value.code == "invalid_format"
+
+
+@pytest.mark.parametrize("value", [1, "true", None, {}, []])
+def test_parser_requires_strict_plan_only_boolean(tmp_path: Path, value: Any) -> None:
+    document = _document(tmp_path, "space")
+    document["transfer"]["plan_only"] = value
+    with pytest.raises(ImportFailure) as invalid:
+        parse_document(json.dumps(document).encode())
+    assert invalid.value.code == "invalid_format"
+
+
+def test_plan_only_cannot_be_requested_for_full_export(tmp_path: Path) -> None:
+    with pytest.raises(ImportFailure) as invalid:
+        create_export(
+            SimpleNamespace(instance_id="instance-a"), {"config": _config()}, {"layout": {}},
+            kind="full", space_id=None, plan_only=True,
+            card_version="review", config_root=tmp_path,
+        )
+    assert invalid.value.code == "invalid_format"
+
+
 def test_full_export_import_round_trip_restores_model_version(tmp_path: Path) -> None:
     """The portable envelope version must return to the persisted config."""
     document = _document(tmp_path)
@@ -829,6 +1072,17 @@ async def test_export_and_revalidate_ws_endpoints_use_server_owned_state(
     document = exported.result["document"]
     assert document["model_version"] == PLAN_MODEL_VERSION
     assert "model_version" not in document["payload"]["config"]
+
+    plan_exported = _Connection()
+    await wsapi.ws_export_create.__wrapped__(hass, plan_exported, {
+        "id": 44, "type": "houseplan/export/create", "kind": "space",
+        "space_id": "ground", "plan_only": True, "card_version": "review",
+    })
+    assert plan_exported.error is None and plan_exported.result
+    plan_document = plan_exported.result["document"]
+    assert plan_document["transfer"]["plan_only"] is True
+    assert plan_document["payload"]["config"]["markers"] == []
+    assert plan_document["payload"]["layout"] == {}
 
     refreshed = _Connection()
     await wsapi.ws_import_revalidate.__wrapped__(hass, refreshed, {
