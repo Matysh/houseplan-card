@@ -49,6 +49,10 @@ export function openingVisibleMetrics(spec: OpeningVisibleSpec): OpeningVisibleM
  * preview. Interaction hitboxes, live bindings and data identity stay with the
  * caller so a preview can never behave like a saved object. */
 export function renderOpeningVisibleGeometry(spec: OpeningVisibleSpec): TemplateResult {
+  // An open passage is physical negative space. Selection/hover metrics stay
+  // with the caller, but the architectural layer must contain no jamb, leaf,
+  // arc, gate panel or standalone frame.
+  if (spec.type === 'passage') return svg``;
   const amount = Math.max(0, Math.min(1, spec.amount));
   const { half, jambHalf } = openingVisibleMetrics(spec);
   const sx = spec.flipH ? -1 : 1;

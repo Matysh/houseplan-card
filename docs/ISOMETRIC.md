@@ -153,8 +153,10 @@ does not enter the structural fallback latch.
 
 `src/iso-openings.ts` mirrors the existing opening-symbol transform algebra:
 door has one jamb-hinged leaf, gate has two leaves with the established
-0–10° exterior-face turn, and window has two light neutral casements. Heights
-are fixed presentation ratios of `ISO_WALL_HEIGHT`; there is no schema field.
+0–10° exterior-face turn, and window has two light neutral casements. A saved
+`passage` keeps the same full-height masonry cut but has zero leaves/panels and
+therefore no panel or leaf shadow. Heights are fixed presentation ratios of
+`ISO_WALL_HEIGHT`; there is no schema field.
 Panels/shadows are pointer- and ARIA-inert. Existing lock badges/cards and HA
 actions remain the only interactive opening surface.
 

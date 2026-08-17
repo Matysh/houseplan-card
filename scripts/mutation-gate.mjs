@@ -231,6 +231,65 @@ export const MUTANTS = [
       replace: "${false ? html`<span class=\"backupplanonlystatus\">${this._t('backup.plan_only_preview')}</span>` : nothing}",
     }],
   },
+  {
+    id: 'passage-visible-geometry-door-fallback',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/opening-symbol.test.mjs',
+    because: 'если явную пустую ветку passage убрать, общий fallback рисует дверную створку; '
+      + 'renderer test обязан требовать буквально пустую видимую геометрию',
+    patches: [{
+      file: 'src/render/opening-symbol.ts',
+      find: "  if (spec.type === 'passage') return svg``;",
+      replace: "  if (false && spec.type === 'passage') return svg``;",
+    }],
+  },
+  {
+    id: 'passage-light-classifier-removed',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/light-visibility.test.mjs',
+    because: 'потеря passage из явного allowlist снова делает внутренний открытый проём '
+      + 'непрозрачным; тест одновременно сохраняет fail-dark для неизвестных типов',
+    patches: [{
+      file: 'src/logic.ts',
+      find: "  return type === 'door' || type === 'gate' || type === 'passage';",
+      replace: "  return type === 'door' || type === 'gate';",
+    }],
+  },
+  {
+    id: 'passage-import-validator-bypassed',
+    guard: 'node scripts/backend-test-guard.mjs invalid_passage_import',
+    because: 'импорт является недоверенным новым content и не имеет broken-read исключения; '
+      + 'forged contact/lock обязан быть отклонён до создания preview',
+    patches: [{
+      file: 'custom_components/houseplan/import_export.py',
+      find: '        validate_opening_passages(incoming_config, validate_all=True)',
+      replace: '        if False:\n            validate_opening_passages(incoming_config, validate_all=True)',
+    }],
+  },
+  {
+    id: 'passage-static-door-cut-leak',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/space-geometry.test.mjs',
+    because: 'Static обязан менять masonry только для нового passage; добавление обычной двери '
+      + 'в cuts сломает сохранённую совместимость старых планов',
+    patches: [{
+      file: 'src/space-geometry.ts',
+      find: "    if (opening?.type !== 'passage') continue;",
+      replace: "    if (opening?.type !== 'passage' && opening?.type !== 'door') continue;",
+    }],
+  },
+  {
+    id: 'passage-iso-door-fallback',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/iso-openings.test.mjs',
+    because: 'без zero-leaf branch скрытая изометрия превращает passage в дверь; '
+      + 'basis test обязан ловить любое появление панели независимо от live state',
+    patches: [{
+      file: 'src/iso-openings.ts',
+      find: "  if (input.type === 'passage') {",
+      replace: "  if (false && input.type === 'passage') {",
+    }],
+  },
 ];
 
 // --- механика ---------------------------------------------------------------

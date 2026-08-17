@@ -3,7 +3,7 @@ import {
   type IsoCamera, type PlanPoint, type ScenePoint,
 } from './iso-projection';
 
-export type IsoOpeningType = 'door' | 'window' | 'gate';
+export type IsoOpeningType = 'door' | 'window' | 'gate' | 'passage';
 
 export interface IsoOpeningFace {
   ox: number;
@@ -106,7 +106,9 @@ export function buildIsoOpeningBasis(
   }
   const half = input.length / 2;
   let leaves: IsoOpeningLeafBasis[];
-  if (input.type === 'gate') {
+  if (input.type === 'passage') {
+    leaves = [];
+  } else if (input.type === 'gate') {
     const sy = input.flipV ? -1 : 1;
     const turn = input.face.side * sy * 10;
     leaves = [

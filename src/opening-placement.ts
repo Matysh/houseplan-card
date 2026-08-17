@@ -1,6 +1,6 @@
 import type { WallInterval } from './wall-thickness';
 
-export type OpeningPlacementType = 'window' | 'door' | 'gate';
+export type OpeningPlacementType = 'window' | 'door' | 'passage' | 'gate';
 
 export interface OpeningPlacementPreset {
   type: OpeningPlacementType;
@@ -56,6 +56,7 @@ export interface ResolveOpeningPlacementInput {
 const DEFAULTS: Record<OpeningPlacementType, number> = {
   window: 120,
   door: 90,
+  passage: 90,
   gate: 300,
 };
 

@@ -242,6 +242,51 @@ async def test_plan_optimize_rejects_new_marker_light_cycle(
     assert stored["rev"] == 1 and stored["config"] == base
 
 
+@pytest.mark.parametrize("endpoint,field,value", [
+    ("houseplan/config/set", "lock", "lock.private"),
+    ("houseplan/plan/optimize", "flip_h", False),
+])
+async def test_config_writers_reject_invalid_passage_atomically(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+    endpoint: str, field: str, value: object,
+) -> None:
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    base = {"spaces": [], "markers": [], "settings": {}}
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": base, "expected_rev": 0,
+    })
+    assert (await client.receive_json())["success"]
+
+    passage = {
+        "id": "passage", "type": "passage", "x": 0.5, "y": 0.5,
+        "angle": 0, "length": 0.09, field: value,
+    }
+    invalid = {"spaces": [{
+        "id": "ground", "title": "Ground", "view_box": [0, 0, 1, 1],
+        "rooms": [], "openings": [passage],
+    }], "markers": [], "settings": {}}
+    message = {"type": endpoint, "config": invalid}
+    if endpoint == "houseplan/config/set":
+        message["expected_rev"] = 1
+    else:
+        message.update({
+            "layout": {}, "expected_config_rev": 1, "expected_layout_rev": 0,
+        })
+    await client.send_json_auto_id(message)
+    response = await client.receive_json()
+    assert not response["success"]
+    assert response["error"]["code"] == "invalid_passage_fields"
+    assert "lock.private" not in response["error"]["message"]
+
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    stored = (await client.receive_json())["result"]
+    assert stored["rev"] == 1 and stored["config"] == base
+    await client.send_json_auto_id({"type": "houseplan/layout/get"})
+    layout = (await client.receive_json())["result"]
+    assert layout["rev"] == 0 and layout["layout"] == {}
+
+
 async def test_plan_optimize_pair_and_one_deep_undo_survives_geometry_repair(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator
 ) -> None:

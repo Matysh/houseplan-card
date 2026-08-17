@@ -3,8 +3,17 @@ import assert from 'node:assert/strict';
 import {
   polygonSegments, splitAtIntersections, visibilityPolygon,
 } from '../test-build/light-visibility.js';
+import { isInteriorLightOpeningType } from '../test-build/logic.js';
 
 const RAD = 100;
+
+test('interior light crosses only the explicit physical opening allowlist', () => {
+  assert.equal(isInteriorLightOpeningType('door'), true);
+  assert.equal(isInteriorLightOpeningType('gate'), true);
+  assert.equal(isInteriorLightOpeningType('passage'), true);
+  assert.equal(isInteriorLightOpeningType('window'), false);
+  assert.equal(isInteriorLightOpeningType('future-opening'), false);
+});
 /** Distance the lamp actually reaches at `angleDeg`, per the returned ring. */
 const reachAt = (ring, source, angleDeg) => {
   const wanted = (angleDeg * Math.PI) / 180;

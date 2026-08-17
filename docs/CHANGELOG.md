@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Plan editor now supports **Open passage**, a 90 cm architectural opening
+  with no leaf, arc or Home Assistant binding. It cuts masonry and continues
+  the room floor in Full and Static views, passes interior light, and remains
+  a full-height zero-panel cut in the hidden isometric experiment
+  ([#157](https://github.com/Matysh/houseplan-card/issues/157)).
+
 ## v1.65.0-beta.1 — 2026-08-17
 
 - Current-space export can now create a **Plan only** JSON template with rooms,

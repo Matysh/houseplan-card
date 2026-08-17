@@ -1,6 +1,6 @@
 # House Plan architecture
 
-Updated: 2026-08-11 (v1.61.0-beta.6 light-transport rewrite). The repository = a HACS integration (category **Integration**)
+Updated: 2026-08-17 (#157 open-passage model). The repository = a HACS integration (category **Integration**)
 that contains both the backend (`custom_components/houseplan`) and the Lovelace card (`src/` → `dist/`).
 
 ## Layout
@@ -92,7 +92,13 @@ the same profiler available between stable promotions.
    commit actions use two explicit wrapping groups: destructive actions stay
    left, while Cancel/Save move together to a right-aligned second line when
    translated labels do not fit.
-6. **One transient-surface contract.** `hp-dialog` owns a scoped LIFO registry
+6. **Open passages are negative architecture.** `OpeningCfg.type=passage`
+   shares placement, wall-cut and tunnel geometry with other openings but has
+   no visible leaf, state binding or isometric panel. Backend semantic
+   validation is change-aware: existing broken records remain readable, while
+   new writes/imports are canonical. Static wall fingerprints include passage
+   cuts only, preserving the historical output of doors/windows/gates.
+7. **One transient-surface contract.** `hp-dialog` owns a scoped LIFO registry
    for explanatory/help and colour-picker surfaces. Escape and toast close the
    upper transient surface before the dialog, and a new transient surface
    replaces the previous one only inside the same dialog. `hp-help` and
@@ -104,7 +110,7 @@ the same profiler available between stable promotions.
    affordance exists only when both its localized body and complete accessible
    label are non-empty; the card factory and `hp-help` enforce this independently,
    so incomplete content cannot leave a dead focus target or a layout gap.
-7. **One four-phase environment resolver.** `resolveDayCycle()` in `src/sun.ts`
+8. **One four-phase environment resolver.** `resolveDayCycle()` in `src/sun.ts`
    atomically chooses a strict real `sun.sun` sample or browser-local clock
    fallback and returns only phase/source/light tokens. `src/day-cycle-render.ts`
    owns the constant four-layer DOM and exact palette used by full View, kiosk,

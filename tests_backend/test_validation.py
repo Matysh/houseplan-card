@@ -641,6 +641,66 @@ def test_gate_is_a_valid_opening_type():
             {**space["openings"][0], "type": "garage"}]}]})
 
 
+def _passage_config(**opening_fields):
+    opening = {
+        "id": "p1", "type": "passage", "x": 0.5, "y": 0.1,
+        "angle": 0, "length": 0.09, **opening_fields,
+    }
+    return {"spaces": [{
+        "id": "ground", "title": "Ground", "view_box": [0, 0, 1, 1],
+        "rooms": [], "openings": [opening],
+    }]}
+
+
+def test_passage_schema_and_canonical_semantics():
+    config = v.CONFIG_SCHEMA(_passage_config(extension={"future": True}))
+    passage = config["spaces"][0]["openings"][0]
+    assert passage["type"] == "passage"
+    assert passage["extension"] == {"future": True}
+    v.validate_opening_passages(config, validate_all=True)
+
+
+@pytest.mark.parametrize("field,value", [
+    ("contact", None), ("lock", "lock.front"), ("invert", False),
+    ("flip_h", False), ("flip_v", True),
+])
+def test_passage_validate_all_rejects_presence_of_every_forbidden_key(field, value):
+    with pytest.raises(v.OpeningPassageError) as caught:
+        v.validate_opening_passages(_passage_config(**{field: value}), validate_all=True)
+    assert caught.value.code == "invalid_passage_fields"
+    assert caught.value.fields == (field,)
+
+
+def test_passage_broken_read_is_change_aware_and_sorted():
+    previous = _passage_config(
+        contact="binary_sensor.private", flip_h=False, extension={"kept": 1},
+    )
+    unchanged = _passage_config(
+        contact="binary_sensor.private", flip_h=False, extension={"kept": 2},
+    )
+    unchanged["spaces"][0]["openings"][0]["x"] = 0.6
+    v.validate_opening_passages(unchanged, previous)
+
+    repaired = _passage_config(extension={"kept": 2})
+    v.validate_opening_passages(repaired, previous)
+
+    changed = _passage_config(contact="binary_sensor.other", flip_h=True)
+    with pytest.raises(v.OpeningPassageError) as caught:
+        v.validate_opening_passages(changed, previous)
+    assert caught.value.fields == ("contact", "flip_h")
+    assert "binary_sensor" not in str(caught.value)
+    assert str(caught.value) == "space=ground; opening=p1; fields=contact,flip_h"
+
+
+def test_changing_a_door_with_stale_fields_to_passage_requires_canonicalisation():
+    previous = _passage_config(contact="binary_sensor.front")
+    previous["spaces"][0]["openings"][0]["type"] = "door"
+    with pytest.raises(v.OpeningPassageError):
+        v.validate_opening_passages(
+            _passage_config(contact="binary_sensor.front"), previous,
+        )
+
+
 # ---------- plan-file collection (review R3-1) ----------
 
 

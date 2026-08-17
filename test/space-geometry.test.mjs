@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   NORM_W, spaceModels, roomBounds, roomCenter, defaultPositions, markerPos, labelPos, fitInSquare, contentBounds,
+  staticPassageOpenings,
 } from '../test-build/space-geometry.js';
 
 const cfg = {
@@ -97,6 +98,19 @@ test('defaultPositions: several devices in one room are spread (declumped, disti
 });
 
 test('NORM_W is 1000', () => assert.equal(NORM_W, 1000));
+
+test('static passage geometry includes only passage cuts', () => {
+  assert.deepEqual(staticPassageOpenings([
+    { id: 'p1', type: 'passage', x: 0.25, y: 0.4, angle: 45, length: 0.09 },
+    { id: 'd1', type: 'door', x: 0.3, y: 0.4, angle: 0, length: 0.09 },
+    { id: 'w1', type: 'window', x: 0.4, y: 0.4, angle: 0, length: 0.12 },
+    { id: 'g1', type: 'gate', x: 0.5, y: 0.4, angle: 0, length: 0.3 },
+    { id: 'bad', type: 'passage', x: 0.5, y: 0.4, angle: 0, length: 0 },
+  ], 1000), [{
+    id: 'p1', type: 'passage', x: 0.25, y: 0.4, angle: 45, length: 0.09,
+    rx: 250, ry: 400, rlen: 90,
+  }]);
+});
 
 test('contentBounds: fits what is drawn, with a 5% margin', () => {
   const one = spaceModels({ spaces: [{

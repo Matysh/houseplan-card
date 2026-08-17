@@ -162,10 +162,10 @@ export interface Marker {
   use_climate_temp?: boolean | null;
 }
 
-/** A door, window or gate: plan geometry (normalized coords), optionally live via entities. */
+/** A door, window, gate or open passage: plan geometry (normalized coords). */
 export interface OpeningCfg {
   id: string;
-  type: 'door' | 'window' | 'gate';
+  type: 'door' | 'window' | 'gate' | 'passage';
   x: number;       // center, normalized by plan width
   y: number;       // center, normalized by plan height
   angle: number;   // wall angle, degrees

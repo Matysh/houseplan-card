@@ -11,7 +11,7 @@ import { buildSpaceDevices, renderSpaceStatic, spaceModels } from './space-rende
 import { getConfig, onConfigChange, cachedSnapshot, type HpConfigSnapshot } from './config-store';
 import { t, langOf, type Lang } from './i18n';
 import { ContentSigner } from './signing';
-import { normalizeDeviceDisplay, referencedContentUrls } from './logic';
+import { normalizeDeviceDisplay, openingEntityReferences, referencedContentUrls } from './logic';
 import { acquireHaRegistries, activeRegistryHass, haRegistrySnapshot } from './ha-binding-status';
 import { resolvedLightSources } from './devices';
 import {
@@ -437,8 +437,7 @@ class HouseplanSpaceCard extends LitElement {
     }
     const rawSpace = this._snap?.config?.spaces?.find((space: any) => space.id === this._config?.space);
     for (const opening of rawSpace?.openings || []) {
-      if (opening.contact) entityIds.add(opening.contact);
-      if (opening.lock) entityIds.add(opening.lock);
+      for (const entityId of openingEntityReferences(opening)) entityIds.add(entityId);
     }
     const planLightSources = resolvedLightSources(
       planHass, this._devices, null, this._snap?.virtualLights,

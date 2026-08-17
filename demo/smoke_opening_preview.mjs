@@ -51,7 +51,7 @@ const res = await page.evaluate(async () => {
   const epochBeforeMenu = card._cfgEpoch;
   launcher().click();
   await settle();
-  out.menuHasThreeTypes = root().querySelectorAll('.editor-group-item').length === 3;
+  out.menuHasFourTypes = root().querySelectorAll('.editor-group-item').length === 4;
   out.launcherStillDoesNotArm = card._tool !== 'opening' && card._openingPreset == null;
   out.menuDoesNotResizeStage = Math.abs(
     root().querySelector('.stage').getBoundingClientRect().height - stageHeightBeforeMenu,
@@ -64,6 +64,9 @@ const res = await page.evaluate(async () => {
     && card._openingPreset?.type === 'window' && card._openingPreset?.lengthCm === 120;
   out.doorChoice = await choose('door');
   out.doorDefault = card._openingPreset?.type === 'door' && card._openingPreset?.lengthCm === 90;
+  out.passageChoice = await choose('passage');
+  out.passageDefault = card._openingPreset?.type === 'passage'
+    && card._openingPreset?.lengthCm === 90;
   out.launcherReflectsActivePreset = launcher()?.getAttribute('aria-pressed') === 'true';
   out.gateChoice = await choose('gate');
   out.gateDefault = card._openingPreset?.type === 'gate' && card._openingPreset?.lengthCm === 300;
@@ -84,6 +87,12 @@ const res = await page.evaluate(async () => {
   const windowPreview = root().querySelector('.opening-preview[data-kind="window"]');
   out.windowPreviewGeometry = windowPreview?.querySelectorAll('.op-leaf').length === 2
     && windowPreview?.querySelectorAll('.op-arc').length === 2;
+  await choose('passage');
+  card._cursorPt = wallMid;
+  await settle();
+  const passagePreview = root().querySelector('.opening-preview[data-kind="passage"]');
+  out.passagePreviewHasNoSymbol = !!passagePreview
+    && passagePreview.querySelectorAll('.op-leaf,.op-arc,.op-glass,line').length === 0;
   await choose('gate');
   card._cursorPt = wallMid;
   await settle();

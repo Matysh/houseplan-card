@@ -32,6 +32,60 @@ class MarkerControlError(ValueError):
         self.code = code
 
 
+class OpeningPassageError(ValueError):
+    """Semantic open-passage error with a stable public code and payload."""
+
+    code = "invalid_passage_fields"
+
+    def __init__(self, space_id: str, opening_id: str, fields: list[str]) -> None:
+        self.space_id = space_id
+        self.opening_id = opening_id
+        self.fields = tuple(sorted(fields))
+        super().__init__(
+            f"space={space_id}; opening={opening_id}; fields={','.join(self.fields)}"
+        )
+
+
+PASSAGE_FORBIDDEN_FIELDS = {"contact", "lock", "invert", "flip_h", "flip_v"}
+
+
+def validate_opening_passages(
+    config: dict, previous: dict | None = None, *, validate_all: bool = False
+) -> None:
+    """Reject new/changed inapplicable fields while preserving dormant bad data.
+
+    A passage read from an older/future writer may already contain door-only
+    keys. Unrelated writes must remain possible, but imports and any write that
+    introduces or changes such a key are fail-closed.
+    """
+    old_spaces = {
+        str(space.get("id")): space for space in (previous or {}).get("spaces") or []
+    }
+    for space in config.get("spaces") or []:
+        space_id = str(space.get("id", ""))
+        old_space = None if validate_all else old_spaces.get(space_id)
+        old_openings = {
+            str(opening.get("id")): opening
+            for opening in (old_space or {}).get("openings") or []
+        }
+        for opening in space.get("openings") or []:
+            if opening.get("type") != "passage":
+                continue
+            opening_id = str(opening.get("id", ""))
+            present = sorted(PASSAGE_FORBIDDEN_FIELDS & set(opening))
+            if not present:
+                continue
+            old_opening = None if validate_all else old_openings.get(opening_id)
+            if not old_opening or old_opening.get("type") != "passage":
+                raise OpeningPassageError(space_id, opening_id, present)
+            changed = [
+                field for field in present
+                if field not in old_opening or opening[field] != old_opening[field]
+            ]
+            if changed:
+                raise OpeningPassageError(space_id, opening_id, changed)
+
+
 VALUE_BADGE_ATTRIBUTES = {
     "current_temperature", "temperature", "current_humidity", "humidity",
     "current_position", "percentage", "brightness", "volume_level",
@@ -773,7 +827,7 @@ SPACE_SCHEMA = vol.All(vol.Schema(
             vol.Schema(
                 {
                     vol.Required("id"): str,
-                    vol.Required("type"): vol.Any("door", "window", "gate"),
+                    vol.Required("type"): vol.Any("door", "window", "gate", "passage"),
                     vol.Required("x"): _GEOM,
                     vol.Required("y"): _GEOM,
                     vol.Required("angle"): vol.All(_finite, vol.Range(min=-360.0, max=360.0)),

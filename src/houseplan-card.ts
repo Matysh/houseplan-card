@@ -23,6 +23,7 @@ import {
   segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointStrictlyInside, roomsOverlap,
   pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, distToSegment, outlineWithout, cutSegments, alignGuides, segmentAngle, is45, type AlignGuide, swipeTarget, clampScale, migratePdfUrls, roomFillModeOf, roomGlowOf, contentUrl,
   snapToWall, snapPointAlongPoly, openingAmount, openingShoulders, interiorPoint,
+  isInteriorLightOpeningType, openingEntityReferences,
   poleOfInaccessibility, subst,
   averageLqi, fitView, declump, safeUrl, floorsOf, type FloorInfo,
   stateIcon, lightColorOf, parseRoomRef, diffNewDevices, resolveGlowValues, resolveGlowAppearance,
@@ -1262,7 +1263,7 @@ class HouseplanCard extends LitElement {
   private _openingHoverCandidate: OpeningPlacementCandidate | null = null;
   private _openingDialog: {
     id?: string;                 // editing an existing opening
-    type: 'door' | 'window' | 'gate';
+    type: 'door' | 'window' | 'gate' | 'passage';
     lengthCm: number;
     contact: string;
     lock: string;
@@ -3592,8 +3593,7 @@ class HouseplanCard extends LitElement {
       addSource(room.settings?.hum_source);
     }
     for (const rawSpace of this._serverCfg?.spaces || []) for (const opening of rawSpace.openings || []) {
-      if (opening.contact) entityIds.add(opening.contact);
-      if (opening.lock) entityIds.add(opening.lock);
+      for (const entityId of openingEntityReferences(opening)) entityIds.add(entityId);
     }
     // Inline HA variables on the decorative layer are part of the painted
     // frame too. Capture both the current token format and the legacy
@@ -8969,6 +8969,10 @@ class HouseplanCard extends LitElement {
           role: 'tool', invoke: () => this._activateOpeningPlacement('door'),
         },
         {
+          id: 'passage', label: this._t('opening.passage'), icon: 'mdi:arch',
+          role: 'tool', invoke: () => this._activateOpeningPlacement('passage'),
+        },
+        {
           id: 'gate', label: this._t('opening.gate'), icon: 'mdi:gate',
           role: 'tool', invoke: () => this._activateOpeningPlacement('gate'),
         },
@@ -10979,19 +10983,32 @@ class HouseplanCard extends LitElement {
     if (!d || !sp) return;
     const before = this._geometrySnapshot();
     const H = this._spaceH;
+    const previous = (sp.openings || []).find((item: OpeningCfg) => item.id === d.id);
     const o: OpeningCfg = {
+      ...(previous || {}),
       id: d.id || 'o' + Date.now().toString(36),
       type: d.type,
       x: d.x / NORM_W,
       y: d.y / H,
       angle: d.angle,
       length: this._cmToUnits(Math.max(20, d.lengthCm)) / NORM_W,
-      contact: d.contact || null,
-      lock: d.type !== 'window' ? d.lock || null : null,
-      invert: d.invert || undefined,
-      flip_h: d.type !== 'gate' && d.flipH || undefined,
-      flip_v: d.flipV || undefined,
     };
+    if (d.type === 'passage') {
+      // The canonical passage record contains geometry only. Delete keys
+      // instead of writing null/false so imports and old broken records have
+      // one unambiguous representation after an explicit edit.
+      delete o.contact;
+      delete o.lock;
+      delete o.invert;
+      delete o.flip_h;
+      delete o.flip_v;
+    } else {
+      o.contact = d.contact || null;
+      o.lock = d.type === 'door' || d.type === 'gate' ? d.lock || null : null;
+      o.invert = d.invert || undefined;
+      o.flip_h = d.type !== 'gate' && d.flipH || undefined;
+      o.flip_v = d.flipV || undefined;
+    }
     sp.openings = sp.openings || [];
     const i = sp.openings.findIndex((x: OpeningCfg) => x.id === o.id);
     if (i >= 0) sp.openings[i] = o;
@@ -11764,6 +11781,23 @@ class HouseplanCard extends LitElement {
   private _errText(e: any): string {
     if (!e) return this._t('err.unknown');
     if (typeof e === 'string') return e;
+    if (e.code === 'invalid_passage_fields') {
+      const match = String(e.message || e.error || '').match(
+        /space=([^;]*);\s*opening=([^;]*);\s*fields=([^;]*)/,
+      );
+      if (match) {
+        const space = this._serverCfg?.spaces?.find((item: any) => String(item.id) === match[1]);
+        const labels: Record<string, I18nKey> = {
+          contact: 'opening.contact_label', lock: 'opening.lock_label', invert: 'opening.invert',
+          flip_h: 'opening.flip_h', flip_v: 'opening.flip_v',
+        };
+        const fields = match[3].split(',').filter(Boolean)
+          .map((field) => labels[field] ? this._t(labels[field]) : field).join(', ');
+        return this._t('opening.invalid_passage_fields', {
+          room: space?.title || match[1], fields,
+        });
+      }
+    }
     if (e.message) return e.message;
     if (e.error) return e.error;
     if (e.code != null) return this._t('err.code', { code: e.code });
@@ -13637,7 +13671,7 @@ class HouseplanCard extends LitElement {
     const onFloor = (point: number[]): boolean =>
       polys.some((x) => this._pointInRoom(point, x.r));
     const passages = this._openingsR.filter((o) => {
-      if (o.type === 'window') return false;
+      if (!isInteriorLightOpeningType(String(o.type))) return false;
       const rad = (o.angle * Math.PI) / 180;
       const nx = -Math.sin(rad);
       const ny = Math.cos(rad);
@@ -16295,9 +16329,9 @@ class HouseplanCard extends LitElement {
   }
 
   /**
-   * Doors, windows and gates, drawn in plan (SVG) coordinates so they scale and
-   * pan with the plan. Doors/windows follow the easy-floorplan (MIT) symbol
-   * language; a gate is a compact pair of leaves opening only 10° outwards.
+   * Architectural openings, drawn in plan (SVG) coordinates so they scale and
+   * pan with the plan. A passage deliberately contributes no visible symbol;
+   * its editor hitbox is still supplied by the shared metrics below.
    */
   private _renderOpeningPlacementPreview(): TemplateResult {
     const candidate = this._openingPreview;
@@ -16379,7 +16413,8 @@ class HouseplanCard extends LitElement {
   /** Padlock badges for door-like openings with a lock entity. */
   private _renderOpeningLocks(view: { x: number; y: number; w: number; h: number }): TemplateResult {
     const items = this._openingsR.filter(
-      (o) => o.type !== 'window' && o.lock && this._renderOpeningEntityAvailable(o.lock),
+      (o) => (o.type === 'door' || o.type === 'gate')
+        && o.lock && this._renderOpeningEntityAvailable(o.lock),
     );
     if (!items.length) return html``;
     const openCuts = this._openPairs().flatMap((pair) => pair.segs);
@@ -16435,15 +16470,21 @@ class HouseplanCard extends LitElement {
 
   private _renderOpeningInfoCard(): TemplateResult {
     const o = this._openingInfo!;
-    const contact = o.contact && this._openingEntityAvailable(o.contact) ? o.contact : null;
-    const lock = o.lock && this._openingEntityAvailable(o.lock) ? o.lock : null;
+    // A legacy/future writer may have left door bindings on a passage. They
+    // remain readable for lossless round-trip, but are inert on every surface.
+    const contact = o.type !== 'passage' && o.contact
+      && this._openingEntityAvailable(o.contact) ? o.contact : null;
+    const lock = (o.type === 'door' || o.type === 'gate') && o.lock
+      && this._openingEntityAvailable(o.lock) ? o.lock : null;
     const cSt = contact ? this.hass.states[contact]?.state : null;
     const amt = this._openingAmt(o);
     const lSt = lock ? this.hass.states[lock]?.state : null;
     const titleKey = o.type === 'door' ? 'opening.door'
-      : o.type === 'gate' ? 'opening.gate' : 'opening.window';
+      : o.type === 'gate' ? 'opening.gate'
+        : o.type === 'passage' ? 'opening.passage' : 'opening.window';
     const openingIcon = o.type === 'door' ? 'mdi:door'
-      : o.type === 'gate' ? 'mdi:gate' : 'mdi:window-closed-variant';
+      : o.type === 'gate' ? 'mdi:gate'
+        : o.type === 'passage' ? 'mdi:arch' : 'mdi:window-closed-variant';
     const contactIcon = o.type === 'gate'
       ? (amt > 0 ? 'mdi:gate-open' : 'mdi:gate')
       : (amt > 0 ? 'mdi:door-open' : 'mdi:door-closed');
@@ -16493,7 +16534,8 @@ class HouseplanCard extends LitElement {
   private _renderOpeningDialog(): TemplateResult {
     const d = this._openingDialog!;
     const icon = d.type === 'gate' ? 'mdi:gate'
-      : d.type === 'window' ? 'mdi:window-closed-variant' : 'mdi:door';
+      : d.type === 'window' ? 'mdi:window-closed-variant'
+        : d.type === 'passage' ? 'mdi:arch' : 'mdi:door';
     const opt = (list: { value: string; label: string }[], cur: string, set: (v: string) => void) =>
       html`<select class="areasel" @change=${(e: Event) => set((e.target as HTMLSelectElement).value)}>
         <option value="" ?selected=${!cur}>${this._t('opening.none')}</option>
@@ -16504,16 +16546,21 @@ class HouseplanCard extends LitElement {
       @hp-close=${() => (this._openingDialog = null)}>
         <div class="body">
           <label>${this._t('opening.type_label')}</label>
-          <label class="srcrow"><input type="radio" name="optype" .checked=${d.type === 'door'}
-            @change=${() => (this._openingDialog = {
-              ...d, type: 'door', lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('door'),
-            })} />
-            <span>${this._t('opening.door')}</span></label>
           <label class="srcrow"><input type="radio" name="optype" .checked=${d.type === 'window'}
             @change=${() => (this._openingDialog = {
               ...d, type: 'window', lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('window'),
             })} />
             <span>${this._t('opening.window')}</span></label>
+          <label class="srcrow"><input type="radio" name="optype" .checked=${d.type === 'door'}
+            @change=${() => (this._openingDialog = {
+              ...d, type: 'door', lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('door'),
+            })} />
+            <span>${this._t('opening.door')}</span></label>
+          <label class="srcrow"><input type="radio" name="optype" .checked=${d.type === 'passage'}
+            @change=${() => (this._openingDialog = {
+              ...d, type: 'passage', lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('passage'),
+            })} />
+            <span>${this._t('opening.passage')}</span></label>
           <label class="srcrow"><input type="radio" name="optype" .checked=${d.type === 'gate'}
             @change=${() => (this._openingDialog = {
               ...d, type: 'gate',
@@ -16528,24 +16575,35 @@ class HouseplanCard extends LitElement {
               if (n != null) this._openingDialog = { ...d, lengthCm: n };
             }} />
 
-          <label>${this._t('opening.contact_label')}</label>
-          ${opt(this._contactCandidates(), d.contact, (v) => (this._openingDialog = { ...d, contact: v }))}
-          ${d.contact
-            ? html`<label class="srcrow">${this._boolInput(d.invert, (v) => (this._openingDialog = { ...d, invert: v }))}
-                <span>${this._t('opening.invert')}</span></label>`
+          ${d.type === 'passage' && (d.contact || d.lock)
+            ? html`<div class="habindingbanner" role="status" aria-live="polite">
+                <ha-icon icon="mdi:alert-outline"></ha-icon>
+                <span>${this._t('opening.passage_binding_warning')}</span>
+              </div>`
             : nothing}
 
-          ${d.type !== 'window'
+          ${d.type !== 'passage'
+            ? html`<label>${this._t('opening.contact_label')}</label>
+                ${opt(this._contactCandidates(), d.contact, (v) => (this._openingDialog = { ...d, contact: v }))}
+                ${d.contact
+                  ? html`<label class="srcrow">${this._boolInput(d.invert, (v) => (this._openingDialog = { ...d, invert: v }))}
+                      <span>${this._t('opening.invert')}</span></label>`
+                  : nothing}`
+            : nothing}
+
+          ${d.type === 'door' || d.type === 'gate'
             ? html`<label>${this._t('opening.lock_label')}</label>
                 ${opt(this._lockCandidates(), d.lock, (v) => (this._openingDialog = { ...d, lock: v }))}`
             : nothing}
 
-          ${d.type !== 'gate'
+          ${d.type !== 'gate' && d.type !== 'passage'
             ? html`<label class="srcrow">${this._boolInput(d.flipH, (v) => (this._openingDialog = { ...d, flipH: v }))}
                 <span>${this._t('opening.flip_h')}</span></label>`
             : nothing}
-          <label class="srcrow">${this._boolInput(d.flipV, (v) => (this._openingDialog = { ...d, flipV: v }))}
-            <span>${this._t('opening.flip_v')}</span></label>
+          ${d.type !== 'passage'
+            ? html`<label class="srcrow">${this._boolInput(d.flipV, (v) => (this._openingDialog = { ...d, flipV: v }))}
+                <span>${this._t('opening.flip_v')}</span></label>`
+            : nothing}
         </div>
         <div class="row dialog-action-footer" slot="footer">
           ${d.id

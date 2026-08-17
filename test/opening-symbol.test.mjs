@@ -47,6 +47,14 @@ test('shared renderer emits the expected visible symbol for every opening type',
   assert.ok(openingVisibleMetrics(spec({ type: 'gate' })).gateDepth > 0);
 });
 
+test('an open passage emits no visible symbol at all', () => {
+  const passageText = templateText(renderOpeningVisibleGeometry(spec({
+    type: 'passage', amount: 1, flipH: true, flipV: true,
+    face: { ox: 0, oy: 20, cm: 20, side: 1 },
+  })));
+  assert.equal(passageText, '');
+});
+
 test('shared renderer preserves flips, wall-face offset and animated geometry', () => {
   const text = templateText(renderOpeningVisibleGeometry(spec({
     type: 'window', amount: 0.5, flipH: true, flipV: true,

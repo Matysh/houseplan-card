@@ -48,6 +48,27 @@ Unknown future fields remain outside this report and continue to follow the
 backend's forward-compatibility policy. Absence from the report is therefore
 not permission to delete a field.
 
+## Open-passage opening type (#157)
+
+`space.openings[].type` additionally accepts the literal `passage`. Its
+canonical record contains only `id`, `type`, `x`, `y`, `angle`, `length` and
+unknown extension siblings. The door-only keys `contact`, `lock`, `invert`,
+`flip_h` and `flip_v` are inapplicable; their presence is invalid even when the
+value is `null` or `false`.
+
+New/changed records and every full/space import are validated fail-closed with
+`invalid_passage_fields`. An already stored broken passage may survive an
+unrelated write unchanged so legacy data cannot lock the whole plan; removing
+bad keys is allowed, while adding or changing one is rejected. An explicit UI
+save of a passage deletes all five known keys and preserves unknown siblings.
+Stale binding values remain inert at runtime and create no entity subscription.
+
+Older v1.64.x frontends do not know the literal. Downgrade is read-only
+best-effort: do not edit an open passage with an old frontend, because its
+fallback may show or rewrite it as a door. Before a permanent rollback, convert
+saved passages deliberately in a current version; automatic conversion is not
+performed because it would invent a leaf and binding semantics.
+
 ## Four-phase background default and transfer (#146)
 
 The schema remains `settings.bg_mode: static | daynight` globally and per

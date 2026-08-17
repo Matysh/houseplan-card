@@ -33,6 +33,26 @@
 понедельникам. Дешёвая половина идёт с юнитами: `test/mutation-gate.test.mjs`.
 
 
+## Open passage (#157)
+
+- [ ] Подменю и диалог показывают четвёртый тип в порядке Окно / Дверь /
+      Открытый проём / Ворота; новый проём имеет ширину 90 см. [auto: open-passage-contract, opening-placement]
+- [ ] В Plan/View у passage отсутствуют створка, дуга, рамка и пунктир, но
+      сохраняются hitbox, wall cut и room-coloured tunnel. [auto: opening-symbol, smoke_open_passage]
+- [ ] Static вырезает и заполняет тоннель только для passage, не меняя старые
+      door/window/gate. [auto: space-geometry, smoke_open_passage]
+- [ ] Внутренний passage пропускает Glow, внешний и неизвестный будущий тип
+      остаются fail-dark. [auto: light-visibility, smoke_open_passage]
+- [ ] Passage в скрытой изометрии имеет full-height cut и zero leaves.
+      [auto: iso-openings, golden]
+- [ ] Смена типа предупреждает о датчике/замке; Save удаляет пять
+      неприменимых ключей, Cancel не меняет config. [auto: open-passage-contract, smoke_open_passage]
+- [ ] Full/space import отвергает forged binding до preview, а старое битое
+      значение можно прочитать и очистить. [auto: test_validation, test_ha_import_export]
+- [ ] Пять passage-мутантов из `scripts/mutation-gate.mjs` пойманы своими
+      guards до передачи в review. [auto: mutation-gate]
+
+
 ## Device value badge (#90)
 
 - [ ] An untouched legacy thermometer/humidity marker remains pixel-identical;

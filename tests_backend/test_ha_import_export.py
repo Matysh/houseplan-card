@@ -231,6 +231,65 @@ def test_full_preview_still_rejects_self_and_cycle(kind: str, tmp_path: Path) ->
     assert invalid.value.code == expected
 
 
+@pytest.mark.parametrize("kind", ["full", "space"])
+def test_invalid_passage_import_is_rejected_before_preview(kind: str, tmp_path: Path) -> None:
+    document = _document(tmp_path, kind)
+    document["payload"]["config"]["spaces"][0]["openings"] = [{
+        "id": "forged-passage", "type": "passage", "x": 0.5, "y": 0.5,
+        "angle": 0, "length": 0.09, "lock": "lock.private",
+    }]
+    with pytest.raises(ImportFailure) as invalid:
+        create_preview(
+            SimpleNamespace(instance_id="instance-a", import_previews={}),
+            json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
+            current_config_data={"config": _config(), "rev": 1},
+            current_layout_data={"layout": {}, "rev": 1}, config_root=tmp_path,
+        )
+    assert invalid.value.code == "invalid_passage_fields"
+    assert "lock.private" not in str(invalid.value)
+
+
+def test_canonical_passage_import_survives_space_id_remap(tmp_path: Path) -> None:
+    document = _document(tmp_path, "space")
+    document["payload"]["config"]["spaces"][0]["openings"] = [{
+        "id": "passage", "type": "passage", "x": 0.5, "y": 0.5,
+        "angle": 0, "length": 0.09, "future": {"kept": True},
+    }]
+    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    response = create_preview(
+        runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
+        current_config_data={"config": _config(), "rev": 1},
+        current_layout_data={"layout": {}, "rev": 1}, config_root=tmp_path,
+    )
+    candidate = get_candidate(runtime, response["token"], "alice")
+    merged, _layout, _details = build_space_merge(
+        candidate["document"], _config(), {}, "skip", same_source=True,
+    )
+    passage = merged["spaces"][-1]["openings"][0]
+    assert passage["type"] == "passage"
+    assert passage["id"] != "passage"
+    assert passage["future"] == {"kept": True}
+
+
+def test_canonical_passage_full_preview_preserves_geometry_and_extensions(tmp_path: Path) -> None:
+    document = _document(tmp_path, "full")
+    document["payload"]["config"]["spaces"][0]["openings"] = [{
+        "id": "passage", "type": "passage", "x": 0.4, "y": 0.6,
+        "angle": 90, "length": 0.12, "future": {"kept": True},
+    }]
+    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    response = create_preview(
+        runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
+        current_config_data={"config": _config(), "rev": 1},
+        current_layout_data={"layout": {}, "rev": 1}, config_root=tmp_path,
+    )
+    candidate = get_candidate(runtime, response["token"], "alice")
+    assert candidate["document"]["payload"]["config"]["spaces"][0]["openings"] == [{
+        "id": "passage", "type": "passage", "x": 0.4, "y": 0.6,
+        "angle": 90, "length": 0.12, "future": {"kept": True},
+    }]
+
+
 def test_layout_writer_preserves_unrelated_metadata_and_removes_only_named_keys() -> None:
     stored = {
         "layout": {"old": {"x": 0, "y": 0}}, "rev": 4,

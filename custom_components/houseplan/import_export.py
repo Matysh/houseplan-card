@@ -48,7 +48,9 @@ from .validation import (
     validate_marker_controls,
     validate_marker_light_entities,
     validate_marker_value_badges,
+    validate_opening_passages,
     MarkerControlError,
+    OpeningPassageError,
 )
 
 FORMAT = "houseplan-export"
@@ -261,7 +263,8 @@ def _project_plan_only_space(space: dict[str, Any]) -> dict[str, Any]:
         projected["openings"] = [
             _pick_fields(
                 opening,
-                ("id", "type", "x", "y", "angle", "length", "flip_h", "flip_v"),
+                ("id", "type", "x", "y", "angle", "length")
+                + (() if opening.get("type") == "passage" else ("flip_h", "flip_v")),
             )
             for opening in space.get("openings") or []
         ]
@@ -976,7 +979,8 @@ def build_space_merge(
         validate_marker_controls(merged_config, current_config)
         validate_marker_light_entities(merged_config, current_config)
         validate_marker_value_badges(merged_config, current_config)
-    except MarkerControlError as err:
+        validate_opening_passages(merged_config, current_config)
+    except (MarkerControlError, OpeningPassageError) as err:
         raise ImportFailure(err.code, str(err)) from err
     try:
         merged_layout = LAYOUT_SCHEMA(merged_layout)
@@ -1135,6 +1139,13 @@ def create_preview(
     current_config = current_config_data.get("config") or {"spaces": [], "markers": [], "settings": {}}
     current_layout = current_layout_data.get("layout") or {}
     details: dict[str, Any] = {}
+    try:
+        # Every imported opening is new to this installation. A forged full or
+        # one-space file must not use the broken-read exception reserved for an
+        # already stored legacy passage.
+        validate_opening_passages(incoming_config, validate_all=True)
+    except OpeningPassageError as err:
+        raise ImportFailure(err.code, str(err)) from err
     if document["kind"] == "space":
         _merged_config, _merged_layout, details = build_space_merge(
             document, current_config, current_layout, duplicate_policy,

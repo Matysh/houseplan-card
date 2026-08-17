@@ -36,6 +36,14 @@ test('window and gate retain two leaves, fixed height bounds and gate 10 degree 
   assert.equal(projectIsoOpening(gateBasis, 1).length, 2);
 });
 
+test('passage keeps the wall cut but never creates an isometric panel', () => {
+  const passageBasis = buildIsoOpeningBasis(opening({ type: 'passage' }));
+  assert.deepEqual(passageBasis.leaves, []);
+  assert.deepEqual(projectIsoOpening(passageBasis, 0), []);
+  assert.deepEqual(projectIsoOpening(passageBasis, 1), []);
+  assert.equal(isoOpeningBounds([passageBasis]), null);
+});
+
 test('state-independent opening bounds contain closed and open leaf tips', () => {
   const basis = buildIsoOpeningBasis(opening());
   const bounds = isoOpeningBounds([basis]);

@@ -34,16 +34,20 @@ plan geometry and shares it between every lamp in the space.
 
 **Transparent**
 
-- doorways and gates — cut through the masonry, so an opening is a real
+- doorways, gates and saved `passage` openings — cut through the masonry, so an opening is a real
   gap between two jamb faces and a thick wall's returns narrow the beam;
 - virtual (open) boundaries, which are not walls to begin with.
 
 **Deliberately opaque, although the plan draws an opening there**
 
 - windows: an indoor lamp must not wash the street;
-- a door with no floor behind it. An opening is transparent only where BOTH
+- a door, gate or `passage` with no floor behind it. An opening is transparent only where BOTH
   sides are floor; otherwise a front door glows halfway — up to the centreline,
   where the room polygon ends — and the plan shows a lit doorway to nowhere.
+
+The classifier is an explicit `door | gate | passage` allowlist. Any unknown
+future opening type remains opaque until its physical semantics are reviewed;
+it never inherits transparency merely by not being a window.
 
 So the light's masonry is cut by passages only and differs on purpose from the
 drawn one.
@@ -51,7 +55,7 @@ drawn one.
 Source placement follows the same geometry, fail-dark. If the source centre is
 inside an opaque wall body, a window tunnel, or an exterior door/gate opening,
 the source produces no Glow at all. It does not light the indoor half of the
-opening. An interior door/gate passage remains a real hole and is therefore a
+opening. An interior door/gate/saved-passage opening remains a real hole and is therefore a
 valid source position. This is an intentional placement rule, not a temporary
 availability state: move the source marker onto the clean room floor to make it
 emit Glow again ([#92](https://github.com/Matysh/houseplan-card/issues/92)).

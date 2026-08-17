@@ -11,8 +11,11 @@ import { buildDevices, areaLqi, areaTemp, resolvedLightSources, resolvedLightSta
 import {
   spaceDisplayOf, fillColorsOf, roomFillModeOf, roomGlowOf,
   roomCustomFillOf, resolveEffectiveRoomFill, stageBgOf, paperRoomShapes,
+  type ResolvedRoomFill,
 } from './logic';
-import { wallBodiesUnionPath, wallBodyNeedsSolid, type WallEntry } from './wall-thickness';
+import {
+  openingTunnelGeometries, wallBodiesUnionPath, wallBodyNeedsSolid, type WallEntry,
+} from './wall-thickness';
 import { DEFAULT_ICON_RULES, compileIconRules, EXCLUDED_DOMAINS } from './rules';
 import { t, type Lang } from './i18n';
 import { bgModeOf, resolveDayCycle } from './sun';
@@ -28,9 +31,10 @@ import { deviceFaceStyle, renderDeviceFace } from './device-face';
 import { valueBadgeTitle } from './device-value-badge';
 import { contentFingerprint } from './visual-continuity';
 import type { VirtualLightSnapshot } from './virtual-light-state';
+import { renderOpeningTunnelFills } from './render/opening-tunnels';
 import {
   spaceModels, roomCenter, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, NORM_W,
-  GRID_STEP_N, GRID_PITCH,
+  GRID_STEP_N, GRID_PITCH, staticPassageOpenings,
   type Layout, type ContentItem,
 } from './space-geometry';
 
@@ -234,6 +238,13 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       roomCustomFillOf(disp.customFill, room),
     )] as const;
   }));
+  const roomFillsById = new Map<string, ResolvedRoomFill | null>();
+  for (const room of space.rooms) if (room.id) {
+    roomFillsById.set(room.id, resolvedRoomFills.get(room) || null);
+  }
+  // Static intentionally keeps the historical door/window/gate wall output.
+  // Only the new negative-space type participates in its masonry fingerprint.
+  const staticPassages = staticPassageOpenings(spCfg.openings, NORM_W);
 
   const roomShapes = space.rooms
     .filter((r) => r.area || disp.showBorders || roomFillModeOf(disp.fill, r) !== 'none')
@@ -285,6 +296,13 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
           x=${room.x} y=${room.y} width=${room.w} height=${room.h}
           rx=${Math.min(room.w!, room.h!) * 0.03}
           fill=${colors.glow_base.c} fill-opacity=${colors.glow_base.a}></rect>`);
+  const glowBaseFillsById = new Map<string, ResolvedRoomFill | null>();
+  for (const room of space.rooms) if (room.id) {
+    const fill = resolvedRoomFills.get(room) || null;
+    glowBaseFillsById.set(room.id, roomGlowOf(disp.glow, room) && (!fill || fill.opacity <= 0)
+      ? { color: colors.glow_base.c, opacity: colors.glow_base.a, mode: 'glow' }
+      : null);
+  }
   const staticSvgLabels = !space.bg && !disp.showNames
     ? space.rooms.map((room) => {
         const center = roomCenter(room);
@@ -360,13 +378,48 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
 
   const needsCanonicalWallGeometry = !!(walls.length || (extras.length && disp.showBorders));
   const wallGeometryFingerprint = needsCanonicalWallGeometry
-    ? contentFingerprint({ rooms: space.rooms, walls, extras, cellCm })
+    ? contentFingerprint(staticPassages.length
+      ? { rooms: space.rooms, walls, extras, cellCm, passages: staticPassages.map((opening) => ({
+          x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen,
+        })) }
+      : { rooms: space.rooms, walls, extras, cellCm })
     : '';
   const canonicalWallGeometry = needsCanonicalWallGeometry
     ? cachedStaticWallGeometry(o.cfg, space.id, wallGeometryFingerprint, () => wallBodiesUnionPath(
-      space.rooms, walls, [], [], GRID_STEP_N, cellCm, GRID_PITCH, NORM_W, extras,
+      space.rooms, walls, [], staticPassages.map((opening) => ({
+        x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen,
+      })), GRID_STEP_N, cellCm, GRID_PITCH, NORM_W, extras,
     ))
     : null;
+  const passageTunnelGeometry = staticPassages.length && walls.length
+    ? openingTunnelGeometries(
+      space.rooms,
+      staticPassages.map((opening) => ({
+        x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen,
+      })),
+      walls, [], GRID_STEP_N, cellCm, GRID_PITCH, NORM_W,
+    )
+    : staticPassages.map(() => null);
+  const passageDataTunnels = staticPassages.length
+    ? renderOpeningTunnelFills({
+      openings: staticPassages,
+      geometries: passageTunnelGeometry,
+      fillsByRoomId: roomFillsById,
+      idPrefix: `${space.id}-static-data`,
+      groupClass: 'opening-tunnels static-opening-tunnels',
+      dataLayer: 'data',
+    })
+    : nothing;
+  const passageGlowTunnels = staticPassages.length
+    ? renderOpeningTunnelFills({
+      openings: staticPassages,
+      geometries: passageTunnelGeometry,
+      fillsByRoomId: glowBaseFillsById,
+      idPrefix: `${space.id}-static-glow`,
+      groupClass: 'opening-tunnels glow-base-tunnels static-opening-tunnels',
+      dataLayer: 'glow-base',
+    })
+    : nothing;
   const paperShapes = walls.length && canonicalWallGeometry?.paperD
     ? [{ path: canonicalWallGeometry.paperD }]
     : paperRoomShapes(space.rooms);
@@ -403,9 +456,11 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
               preserveAspectRatio="none" />`
           : nothing}
         ${roomShapes}
+        ${passageDataTunnels}
         ${glowBaseShapes.length
           ? svg`<g class="glow-base-layer" aria-hidden="true" pointer-events="none">${glowBaseShapes}</g>`
           : nothing}
+        ${passageGlowTunnels}
         <g class="room-svg-labels" pointer-events="none">${staticSvgLabels}</g>
         ${wallUnion
           ? svg`<g class="wallbodies" style="--room-stroke:${wallStroke}">

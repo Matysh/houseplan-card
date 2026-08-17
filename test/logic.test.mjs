@@ -16,7 +16,7 @@ import {
   contentUrl, chunk, referencedContentUrls, MAX_SIGN_PATHS,
   interiorPoint,
   segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointOnBoundary, pointStrictlyInside, roomsOverlap,
-  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, openingShoulders, fillColorsOf, lerpColor, roomFillStyle, resolveEffectiveRoomFill, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, poleOfInaccessibility, runServiceFor, coverMoving,
+  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, openingShoulders, openingEntityReferences, fillColorsOf, lerpColor, roomFillStyle, resolveEffectiveRoomFill, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, poleOfInaccessibility, runServiceFor, coverMoving,
   normalizeDeviceDisplay, isAlarmCapable,
   liveText, liveTextValue, liveTextReference, liveTextToken,
   hassValue, valueWithUnit, decorTextScale, decorTextLines,
@@ -487,6 +487,18 @@ test('openingAmount: door-like openings default open, windows closed; outages fr
   assert.equal(openingAmount('door', 'off', true), 1);
   assert.equal(openingAmount('gate', 'off', true), 1);
   assert.equal(openingAmount('door', 'unavailable', true), 1);
+  for (const state of [null, 'on', 'off', 'unknown', 'unavailable']) {
+    assert.equal(openingAmount('passage', state, true), 1, `passage is fixed open for ${state}`);
+  }
+});
+
+test('stale passage bindings stay inert while ordinary opening bindings remain live', () => {
+  const stale = { type: 'passage', contact: 'binary_sensor.door', lock: 'lock.front' };
+  assert.deepEqual(openingEntityReferences(stale), []);
+  assert.deepEqual(openingEntityReferences({ ...stale, type: 'door' }), [
+    'binary_sensor.door', 'lock.front',
+  ]);
+  assert.deepEqual(openingEntityReferences({ type: 'window', contact: '', lock: null }), []);
 });
 
 test('snapToWall: the angle is normalized to [-90, 90) so opposite edge directions cannot flip a dragged opening', () => {

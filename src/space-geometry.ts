@@ -4,11 +4,38 @@
  * mirror the full card's private math.
  */
 import { declump, contentUrl } from './logic';
-import type { ServerConfig, SpaceModel, RoomCfg, DevItem } from './types';
+import type { ServerConfig, SpaceModel, RoomCfg, DevItem, OpeningCfg } from './types';
 import { boxCorners, normalizeAngle } from './editors/decor/geometry';
 import { canonicalColumnAngle } from './physical-geometry';
 
 export const NORM_W = 1000; // side of the render space — the canvas is square
+
+export type StaticPassageOpening = OpeningCfg & {
+  type: 'passage'; rx: number; ry: number; rlen: number;
+};
+
+/** Static keeps the legacy wall output of doors/windows/gates. Only a passage
+ * is negative architectural space on this surface. */
+export function staticPassageOpenings(
+  openings: readonly any[] | null | undefined,
+  coordScale = NORM_W,
+): StaticPassageOpening[] {
+  const result: StaticPassageOpening[] = [];
+  for (const [index, opening] of (openings || []).entries()) {
+    if (opening?.type !== 'passage') continue;
+    const projected: StaticPassageOpening = {
+      ...opening,
+      id: String(opening.id || `passage-${index}`),
+      type: 'passage',
+      rx: Number(opening.x) * coordScale,
+      ry: Number(opening.y) * coordScale,
+      rlen: Number(opening.length) * coordScale,
+    };
+    if ([projected.rx, projected.ry, projected.rlen, projected.angle]
+      .every(Number.isFinite) && projected.rlen > 0) result.push(projected);
+  }
+  return result;
+}
 
 /**
  * Where a plan image sits inside the square canvas (v1.48.0).

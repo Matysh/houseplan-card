@@ -36,6 +36,9 @@ test('Opening presets use the agreed type-specific defaults', () => {
     type: 'window', lengthCm: 120, flipH: false, flipV: false, revision: 1,
   });
   assert.equal(openingPlacementPreset('door', 2).lengthCm, 90);
+  assert.deepEqual(openingPlacementPreset('passage', 3), {
+    type: 'passage', lengthCm: 90, flipH: false, flipV: false, revision: 3,
+  });
   assert.equal(openingPlacementPreset('gate', 3).lengthCm, 300);
 });
 

@@ -314,12 +314,29 @@ export function openingShoulders(
  * `unavailable`/`unknown` freeze the default too: an outage must not fake motion.
  */
 export function openingAmount(
-  type: 'door' | 'window' | 'gate', state: string | null | undefined, invert = false,
+  type: 'door' | 'window' | 'gate' | 'passage', state: string | null | undefined, invert = false,
 ): number {
+  if (type === 'passage') return 1;
   if (state == null || state === 'unavailable' || state === 'unknown')
     return type === 'window' ? 0 : 1;
   const open = isActiveState(state) !== !!invert;
   return open ? 1 : 0;
+}
+
+/** Explicit light allowlist. Unknown future opening types stay fail-dark until
+ * their physical semantics are deliberately added and tested. */
+export function isInteriorLightOpeningType(type: string): type is 'door' | 'gate' | 'passage' {
+  return type === 'door' || type === 'gate' || type === 'passage';
+}
+
+/** Entity bindings that may affect a rendered opening. A passage is purely
+ * architectural, so stale legacy fields must never create HA subscriptions. */
+export function openingEntityReferences(opening: {
+  type?: string; contact?: string | null; lock?: string | null;
+}): string[] {
+  if (opening.type === 'passage') return [];
+  return [opening.contact, opening.lock]
+    .filter((entityId): entityId is string => typeof entityId === 'string' && entityId.length > 0);
 }
 
 /**
