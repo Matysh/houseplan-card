@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "matrixVersion": 22,
-  "acceptedAt": "2026-08-14T16:03:22.017Z",
-  "sourceFingerprint": "24117bcfb4c94d5421e0304612089743615233eab3911f065e8cfa003f48fa7d",
+  "matrixVersion": 24,
+  "acceptedAt": "2026-08-17T10:51:28.998Z",
+  "sourceFingerprint": "b73e5020215967d2d13e2a08ce303916e2bdbcbd45c94c40c6e56336a8097656",
   "chromium": "151.0.7922.34",
   "scenarios": {
     "split-corner-wall-before-dark": "3176dc67f54d5309f87c94e1077b4f69eb1db9f660469fbf97953038323430f3",
@@ -16,6 +16,8 @@
     "isometric-large-warm-remount-dark": "0afc1069d334f10be2d0ed135ee0eb52e9272a1a1ad1224e00f05753b8789d0c",
     "geometry-view-dark-fit": "3df272f6c3c3d20e9e375ea037f3dbb885657b94b0b29d0067505f4a73741237",
     "geometry-view-light-fit": "a7f2c9667d9872dd84a37d5318fd238c9eabcc0f413017eb19e02204587b4e1a",
+    "washer-active-cycle-dark": "7597ffad91165f2f3cc9647e5081c03d4ffd722313bf74f8dcf5fe6dc52d1dcf",
+    "washer-idle-cycle-dark": "6b1de9786f4852659d2d453fa39340626a7944417f88c5a37355b62c458b6ac1",
     "day-cycle-dawn-dark": "a573083c4ee21993cf2e482b60418a30e388a14117d056a2b0ea559a0c928039",
     "day-cycle-day-dark": "6f24cd1d8669c9f3451c06ca5a5fd499d8f1ae2698a34f4a63ffee2e9e6b4330",
     "day-cycle-dusk-dark": "80029577c25f8759090ee2550fe530a35c189806dd6fa26e887da4f5d1cf54a3",
@@ -64,6 +66,7 @@
     "device-help-popover-light-ru": "f1bf21d62a5dd349aa57b746069c5aef58d7a26b0b9d9e0c233fde0c1d56d7eb",
     "decor-color-popover-mobile-ru": "46d4c2e4dd20c3a38e90efe3db59b3e878bdbcf273fbc1aa23de4b230723fa6e",
     "backup-full-preview-desktop-en": "cc42a621f55f043b272014b9c32127823ca3573520e502966c71642027f7fdaf",
-    "backup-space-preview-mobile-ru": "16d06859ea6aac6cbed586f0d6918da972e9c95206fffd771fe43b6084f79877"
+    "backup-plan-only-export-desktop-en": "2833ee45acac2936e76546e9ff5d0031932c02fbf66fe904c1be94dc3e33dc05",
+    "backup-space-preview-mobile-ru": "a4719cbe29b378ef7baa63bb7ff23e201b2943025008d939f2c08cee63bb9038"
   }
 }
