@@ -3,8 +3,10 @@
 - Issue: [#157](https://github.com/Matysh/houseplan-card/issues/157)
 - Приоритет: P2
 - Ветка: `issue/157-open-passage`
-- Статус документа: полное ТЗ подготовлено; issue остаётся в `S3-spec`, review не запущено по прямому указанию владельца
-- Основание: issue владельца от 2026-08-14 и аналитика от 2026-08-15
+- Статус документа: замечания первого раунда review учтены; issue остаётся в
+  `S3-spec` по прямому указанию владельца
+- Основание: issue владельца от 2026-08-14, аналитика от 2026-08-15 и review от
+  2026-08-17
 
 ## 1. Пользовательская проблема и результат
 
@@ -73,6 +75,9 @@
 10. Для света `passage` прозрачен только когда проба по обе стороны стены
     попадает на пол комнаты. Внешний либо неопределённый край остаётся
     fail-dark.
+    Любой неизвестный будущий тип проёма также считается непрозрачным: переход
+    от прежнего неявного `type !== 'window'` к явному allowlist — осознанное
+    ужесточение forward-совместимости ради защиты от утечки света.
 11. `passage` отличается от open span наличием кладки по сторонам и физических
     откосов. Open span по-прежнему означает отсутствие кладки на всём участке и
     показывается пунктиром только в Plan.
@@ -227,9 +232,14 @@ validate_opening_passages(
 новой семантикой и проверяется полностью, даже когда значение binding-поля
 текстово не изменилось.
 
-Стабильный public error code: `invalid_passage_fields`. Сообщение содержит id
-пространства, id проёма и отсортированный список запрещённых полей, но не
-значения entity ids.
+Стабильный public error code: `invalid_passage_fields`. Технический payload
+содержит id пространства, id проёма и отсортированный список запрещённых
+полей, но не значения entity ids. Frontend локализует ошибку человекочитаемо:
+`У открытого проёма в комнате «<название>» есть недопустимые параметры: …` /
+`The open passage in room “<name>” has unsupported settings: …`. Если название
+комнаты отсутствует, используется id пространства; id проёма остаётся в
+технических деталях, а не является единственным ориентиром в пользовательском
+сообщении.
 
 ### 7.3 Точки подключения
 
@@ -248,7 +258,7 @@ write запрещён.
 
 ### 8.1 Палитра и размещение
 
-В submenu «Проём» после двери добавляется пункт:
+В submenu «Проём» добавляется пункт:
 
 - label: `Открытый проём` / `Open passage`;
 - icon: `mdi:arch`;
@@ -360,6 +370,8 @@ hit-targets или entity subscriptions для passage Static не создаё�
 
 - `door`, `gate`, `passage` — кандидаты interior passage;
 - `window` — не passage;
+- любой неизвестный тип — opaque/fail-dark и не попадает в cuts, пока новый
+  literal не будет явно классифицирован и покрыт тестом;
 - каждый кандидат проходит одинаковую проверку пола по обе стороны;
 - только прошедшие кандидаты вычитаются из light masonry и добавляются в cuts;
 - `passage` не зависит от HA state, `contact` и `invert`, даже если эти поля
@@ -407,8 +419,10 @@ best-effort downgrade для frontend v1.64.0:
   конфигурации, содержащей `passage`.
 
 Эти ограничения явно записываются в `docs/CONFIG-COMPATIBILITY.md`. Реализация
-должна подтвердить отсутствие runtime crash source-аудитом/fixture-тестом
-pre-feature поведения; поддержка редактирования на старой версии не требуется.
+обязана исполнением загрузить fixture с `passage` в собранный из git tag
+`v1.64.0` bundle через demo harness и подтвердить отсутствие необработанного
+исключения в консоли. Source-аудит не считается достаточным доказательством;
+поддержка редактирования на старой версии не требуется.
 
 ## 12. I18n, accessibility и touch
 
@@ -458,8 +472,8 @@ pre-feature поведения; поддержка редактирования 
    opening types сохраняют прежний Static output.
 7. Скрытая изометрия показывает полноразмерный cut и откосы, без leaf/panel
    shadow и без crash.
-8. Внутренний passage пропускает light/Glow независимо от state; наружный или
-   неопределённый passage остаётся fail-dark.
+8. Внутренний passage пропускает light/Glow независимо от state; наружный,
+   неопределённый passage и неизвестный будущий тип остаются fail-dark.
 9. Backend принимает канонический passage и отклоняет новую/изменённую запись с
    любым из пяти запрещённых ключей кодом `invalid_passage_fields`.
 10. Неизменённый legacy-broken passage проходит несвязанное сохранение; его
@@ -468,9 +482,12 @@ pre-feature поведения; поддержка редактирования 
     write при ошибке отсутствует.
 12. Конфиги с door/window/gate не мигрируют и проходят regression suite без
     изменений.
-13. Старый frontend v1.64.0 на passage не падает; точный fallback и ограничение
-    старого backend задокументированы.
-14. RU/EN parity, unit/backend tests, build, smoke и новые golden evidence
+13. Demo harness с реально собранным bundle `v1.64.0` загружает fixture с
+    passage без необработанного исключения в консоли; точный fallback и
+    ограничение старого backend задокументированы.
+14. В `scripts/mutation-gate.mjs` зарегистрированы и проходят пять обязательных
+    executable mutants из §15.6; `--check` подтверждает уникальность их якорей.
+15. RU/EN parity, unit/backend tests, build, smoke и новые golden evidence
     проходят в предусмотренный процессом момент.
 
 ## 15. Тест-план
@@ -486,7 +503,8 @@ pre-feature поведения; поддержка редактирования 
 - full renderer не создаёт lock badge/info/binding subscription для stale
   passage fields;
 - light: две комнаты пропускают, внешний край не пропускает, footprint равен
-  door при одинаковой geometry;
+  door при одинаковой geometry; искусственный тип `xyz` не проходит explicit
+  allowlist и остаётся opaque;
 - Static fingerprint/output меняется для passage и не меняется для старых типов;
 - iso basis passage имеет zero leaves, projection/bounds безопасны;
 - RU/EN parity.
@@ -519,7 +537,9 @@ pre-feature поведения; поддержка редактирования 
 7. включить Glow: внутренний проход светится насквозь, наружный — нет;
 8. проверить скрытую изометрию;
 9. full и space export/import;
-10. загрузить downgrade fixture старым frontend и подтвердить отсутствие crash.
+10. checkout tag `v1.64.0`, собрать его bundle, загрузить fixture с `passage`
+    через demo harness и автоматически подтвердить отсутствие `pageerror` и
+    необработанных console errors; приложить команду и лог к evidence.
 
 ### 15.4 Golden
 
@@ -550,6 +570,37 @@ Golden, browser smoke и performance выполняются перед бето�
 runbook. Полный HA harness канонически выполняется в Linux CI; невозможность
 локального Windows `fcntl` не считается заменой CI.
 
+### 15.6 Исполняемый мутационный гейт
+
+Реализация добавляет в `scripts/mutation-gate.mjs` пять реальных entries. Каждый
+entry содержит стабильный id, патч `find`/`replace` на 2–5 строк с ровно одним
+якорем, указанный guard и причину ожидаемого падения. Это не список для ручной
+проверки: runner обязан применить патч в отдельном worktree, собрать bundle,
+получить non-zero от guard и восстановить чистое состояние.
+
+| Mutant id | Обязательный патч | Guard |
+|---|---|---|
+| `passage-visible-geometry-door-fallback` | удалить/обойти явную `passage`-ветку в `renderOpeningVisibleGeometry()`, чтобы снова сработал дверной fallback | `node --test test/opening-symbol.test.mjs` — отрицательный passage-case обязан обнаружить leaf/arc/gate path |
+| `passage-light-classifier-removed` | исключить `passage` из явного allowlist interior passages | `node --test test/light-visibility.test.mjs` — внутренний passage перестаёт пропускать свет |
+| `passage-import-validator-bypassed` | отключить вызов `validate_opening_passages` на import-пути | `node scripts/backend-test-guard.mjs invalid_passage_import` — forged full/space import с запрещённым полем обязан быть отклонён |
+| `passage-static-door-cut-leak` | расширить passage-only Static cuts/fingerprint до `door`, вернув изменение старого плана | `node --test test/space-geometry.test.mjs` — fixed план без passage обязан сохранить прежние geometry и fingerprint |
+| `passage-iso-door-fallback` | вернуть `passage` в дверную fallback-ветку `buildIsoOpeningBasis()` | `node --test test/iso-openings.test.mjs` — passage basis обязан иметь zero leaves |
+
+Обязательные команды перед передачей реализации в code review:
+
+```text
+node scripts/mutation-gate.mjs --check
+node scripts/mutation-gate.mjs --id=passage-visible-geometry-door-fallback
+node scripts/mutation-gate.mjs --id=passage-light-classifier-removed
+node scripts/mutation-gate.mjs --id=passage-import-validator-bypassed
+node scripts/mutation-gate.mjs --id=passage-static-door-cut-leak
+node scripts/mutation-gate.mjs --id=passage-iso-door-fallback
+```
+
+Каждый чистый guard сначала должен быть зелёным, а лог мутанта — содержать его
+id, guard и ожидаемый non-zero. Ручное редактирование без runner или только
+`--list`/`--check` acceptance criterion не выполняет.
+
 ## 16. План реализации
 
 1. Расширить types/schema и добавить чистый semantic validator со всеми call
@@ -560,8 +611,9 @@ runbook. Полный HA harness канонически выполняется �
 4. Подключить passage cut/tunnel к Static без изменения output старых типов.
 5. Сделать light classifier явным и покрыть interior/exterior cases.
 6. Добавить zero-leaf passage basis в скрытой изометрии.
-7. Покрыть import/export и downgrade fixture.
-8. Обновить документацию и release artifacts, пройти implementation gates.
+7. Покрыть import/export и исполняемый downgrade fixture на bundle `v1.64.0`.
+8. Зарегистрировать и исполнить пять mutation entries из §15.6.
+9. Обновить документацию и release artifacts, пройти implementation gates.
 
 ## 17. Release-артефакты
 
@@ -569,7 +621,9 @@ runbook. Полный HA harness канонически выполняется �
 
 - `docs/CHANGELOG.md`;
 - `docs/CHANGELOG.ru.md`;
-- `docs/USER-GUIDE.ru.md` — таблица passage/open span и поток редактора;
+- `docs/USER-GUIDE.ru.md` — таблица passage/open span, поток редактора и явное
+  пояснение принятой асимметрии Static: passage разрывает стену, а старые
+  door/window/gate в рамках #157 сохраняют прежний Static-визуал;
 - `docs/LIGHT.md` — explicit interior-passage rule;
 - `docs/ISOMETRIC.md` — zero-leaf/full-height-cut поведение скрытого режима;
 - `docs/CONFIG-COMPATIBILITY.md` — enum, broken-read validator и downgrade;
@@ -594,6 +648,7 @@ User-Visible: yes
 | Import обходит правило | подключить validator к обоим import flows и optimize |
 | Static меняет старые планы | fingerprint/cuts только для passage, regression snapshots без passage |
 | Свет утекает наружу | сохранить двусторонний floor probe и exterior test |
+| Новый неизвестный opening type неявно пропускает свет | explicit allowlist, fail-dark contract и unit с типом `xyz` |
 | Iso создаёт дверное полотно | zero-leaf basis и golden |
 | Старый frontend портит новый тип | документировать downgrade как read-only best effort |
 
@@ -611,9 +666,11 @@ backend read support для `passage`, отключив только созда�
 Следующие мелкие решения приняты без дополнительного продуктового вопроса и
 могут быть изменены при реализации, если не нарушаются acceptance criteria:
 
-- `mdi:arch` — рабочая icon; при отсутствии в поставляемой версии MDI допустим
-  локализованно нейтральный `mdi:door-open` без изменения persisted contract;
-- passage расположен между door и gate в submenu;
+- `mdi:arch` не поставляется самим card и разрешается runtime-набором MDI в HA;
+  до реализации его наличие проверяется в поддерживаемой минимальной версии HA
+  через demo/browser fixture. Если glyph отсутствует, нормативный fallback —
+  широко поддерживаемый `mdi:door-open`, без изменения persisted contract;
+- порядок passage в submenu нормативно задан единожды в §8.1;
 - inline warning достаточен, отдельный confirm modal не нужен;
 - draft временно хранит скрытые bindings, чтобы смена radio до Save была
   обратимой;
