@@ -425,7 +425,7 @@ function main(argv) {
       beforeSha: process.env.BEFORE_SHA,
       baseSha: process.env.BASE_SHA,
       headSha: process.env.HEAD_SHA,
-      defaultBranch: process.env.DEFAULT_BRANCH,
+      developmentBranch: process.env.DEVELOPMENT_BRANCH,
     }, (args) => git(args, repo).trim());
   }
   if (!range) {
