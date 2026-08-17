@@ -31,10 +31,15 @@ soft wedges from exterior windows. Neither creates entities nor calls services.
   ONLY when (azimuth, elevation) or the config change — never on every
   `hass` tick. The wedge layer memoises on
   `(azimuth, elevation, config rev, space id)`.
-- Angle on the plan: `plan_angle = azimuth − north_deg` (normalised to
-  0–360). With `north_deg = 0` the top of the canvas is north; the
+- Angle on the plan: `plan_angle = north_deg + azimuth` (normalised to
+  0–360). Both bearings increase clockwise: `north_deg` is the literal
+  direction of true north on the canvas, and `azimuth` is the clockwise
+  bearing from that north. With `north_deg = 0` the top of the canvas is north; the
   direction TOWARD the sun on the canvas is
   `(sin(plan_angle), −cos(plan_angle))` (y grows downward).
+- `planSunAngle()` is the only source of the sun direction on the plan.
+  Rendering and contrast consumers must not repeat the composition or add a
+  second mirror/sign correction.
 
 ## Compass — `settings.north_deg`
 
@@ -42,6 +47,9 @@ soft wedges from exterior windows. Neither creates entities nor calls services.
   north. Lives in the GENERAL settings (⚙) as a circular dial: drag
   the «N» arrow around the ring, 1° steps, 15° with Shift held; a
   plain number input sits next to it for accessibility and precision.
+- The arrow is literal: point N toward the place where true north lies on the
+  drawing. It is not an instruction to enter how far the plan was rotated in
+  the opposite direction.
 - Per-space override in the space settings (empty = inherit), the same
   pattern as `show_lqi` / `fill_mode`.
 - While `north_deg` is null at BOTH levels window rays are inert and the

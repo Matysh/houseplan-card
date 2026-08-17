@@ -23,7 +23,7 @@ export function norm360(deg: number): number {
  * `north_deg` is how far true north is rotated clockwise from "canvas up".
  */
 export function planSunAngle(azimuth: number, northDeg: number): number {
-  return norm360(azimuth - northDeg);
+  return norm360(azimuth + northDeg);
 }
 
 /** Unit vector TOWARD the sun on the canvas (x right, y down). */
