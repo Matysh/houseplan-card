@@ -25,6 +25,7 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
       assert.deepEqual(scenario.labs, ['iso'], scenario.id);
       assert.equal(scenario.projection, 'iso', scenario.id);
       assert.equal(scenario.mode, 'view', scenario.id);
+      assert.equal(scenario.testOnlyLabsSnapshot, true, scenario.id);
     }
     if (scenario.sunRayPixels) {
       assert.equal(Number.isInteger(scenario.sunRayPixels.minPixels)

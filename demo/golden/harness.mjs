@@ -343,10 +343,19 @@ export async function prepareGoldenScenario(page, scenario) {
       await card.updateComplete;
       await settleMode(card);
     }
+    if (scenario.testOnlyLabsSnapshot) {
+      if (!scenario.labs?.length || typeof card._onLabsSnapshot !== 'function') {
+        throw new Error(`invalid test-only Labs contract: ${scenario.id}`);
+      }
+      card._onLabsSnapshot({ active: Object.freeze([...scenario.labs]), space: '' });
+      await card.updateComplete;
+      await frame();
+    }
     if (scenario.projection === 'iso' && typeof card._setProjection === 'function') {
       card._setProjection('iso');
       await card.updateComplete;
       await frame();
+      await until(() => card._renderProjection === 'iso');
     }
     if (Number.isFinite(scenario.zoom)) {
       card._applyView(scenario.zoom, 500, 500);
