@@ -49,6 +49,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#138](https://github.com/Matysh/houseplan-card/issues/138) Автозамыкание комнаты по существующей стене | [138-adjacent-room-autoclose.md](138-adjacent-room-autoclose.md) |
 | [#146](https://github.com/Matysh/houseplan-card/issues/146) Четырёхфазный фон «Следует за Солнцем» | [146-four-phase-sun-background.md](146-four-phase-sun-background.md) |
 | [#156](https://github.com/Matysh/houseplan-card/issues/156) Регрессии Full Performance перед v1.64.0 stable | [156-full-performance-regressions.md](156-full-performance-regressions.md) |
+| [#158](https://github.com/Matysh/houseplan-card/issues/158) Обновление внешнего вида маркеров устройств | [158-device-icons-redesign.md](158-device-icons-redesign.md) |
 | [#164](https://github.com/Matysh/houseplan-card/issues/164) Активный цикл стиральной машины должен быть жёлтым | [164-washer-active-cycle.md](164-washer-active-cycle.md) |
 | [#166](https://github.com/Matysh/houseplan-card/issues/166) Солнечные лучи зеркально учитывают направление севера | [166-sun-north-rotation.md](166-sun-north-rotation.md) |
 | [#167](https://github.com/Matysh/houseplan-card/issues/167) Экспорт «только планировка» | [167-plan-only-export.md](167-plan-only-export.md) |

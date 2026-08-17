@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>#158 · Сравнение состояний маркеров устройств</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #f4f6f9;
+      --panel: rgb(255 255 255 / 92%);
+      --panel-solid: #fff;
+      --text: #1c2430;
+      --muted: #657183;
+      --line: #d8dee8;
+      --sample-a: #edf2f6;
+      --sample-b: #f8fafc;
+      --old-bg: #fff;
+      --old-line: #cbd3df;
+      --old-text: #1d2733;
+      --glass: rgb(255 255 255 / 54%);
+      --glass-solid: #f8fafc;
+      --core: #fff;
+      --core-text: #050608;
+      --shadow-small: 0 2px 3px rgb(37 40 45 / 12%);
+      --shadow-large: 0 8px 14px -2px rgb(37 40 45 / 18%);
+      --accent: #0c82f0;
+      --working: #f0a00c;
+      --open: #1dc21d;
+      --alarm: #f0410c;
+      --selection: #f3a000;
+      --focus: #0c82f0;
+      --s: 56px;
+      --ripple-scale: 2.8;
+    }
+
+    body[data-theme="dark"] {
+      color-scheme: dark;
+      --page: #10141b;
+      --panel: rgb(28 33 42 / 94%);
+      --panel-solid: #1c212a;
+      --text: #f1f4f8;
+      --muted: #a5afbd;
+      --line: #3a4351;
+      --sample-a: #151c26;
+      --sample-b: #202936;
+      --old-bg: #16212e;
+      --old-line: #34485c;
+      --old-text: #e6edf3;
+      --glass: rgb(38 43 52 / 62%);
+      --glass-solid: #2b313b;
+      --core: #2a3039;
+      --core-text: #f8fafc;
+    }
+
+    * { box-sizing: border-box; }
+    html { background: var(--page); }
+    body {
+      margin: 0;
+      min-width: 320px;
+      background: var(--page);
+      color: var(--text);
+      font-family: Inter, Roboto, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      transition: background .2s, color .2s;
+    }
+    button, select, input { font: inherit; }
+    code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+
+    .page {
+      width: min(1520px, calc(100% - 32px));
+      margin: 28px auto 60px;
+    }
+    .hero, .controls, .matrix-wrap, .decision {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 18px 45px rgb(15 23 42 / 8%);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    .hero {
+      padding: 26px 28px;
+      border-radius: 22px 22px 0 0;
+    }
+    .eyebrow {
+      margin: 0 0 7px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 0; font-size: clamp(25px, 3vw, 42px); line-height: 1.08; }
+    .lede { max-width: 980px; margin: 13px 0 0; color: var(--muted); line-height: 1.55; }
+    .prototype {
+      display: inline-flex;
+      margin-top: 14px;
+      padding: 6px 10px;
+      border: 1px solid color-mix(in srgb, var(--working) 55%, var(--line));
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--working) 11%, transparent);
+      color: color-mix(in srgb, var(--working) 70%, var(--text));
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .decision {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1px;
+      margin-top: 12px;
+      overflow: hidden;
+      border-radius: 15px;
+      background: var(--line);
+    }
+    .decision > div { padding: 15px 17px; background: var(--panel-solid); }
+    .decision b { display: block; margin-bottom: 4px; font-size: 13px; }
+    .decision span { color: var(--muted); font-size: 12px; line-height: 1.4; }
+
+    .controls {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: end;
+      gap: 12px;
+      margin-top: 12px;
+      padding: 13px 16px;
+      border-radius: 15px;
+    }
+    .control { display: grid; gap: 5px; }
+    .control > span { color: var(--muted); font-size: 11px; font-weight: 750; }
+    select, .segmented, .check {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel-solid);
+      color: var(--text);
+    }
+    select { padding: 0 34px 0 11px; }
+    .segmented { display: inline-flex; padding: 3px; }
+    .segmented button {
+      min-width: 48px;
+      padding: 5px 10px;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .segmented button.active { background: var(--accent); color: #fff; }
+    .check { display: inline-flex; align-items: center; gap: 8px; padding: 0 11px; cursor: pointer; }
+    .check input { accent-color: var(--accent); }
+    .count { margin-left: auto; align-self: center; color: var(--muted); font-size: 12px; }
+
+    .matrix-wrap {
+      margin-top: 12px;
+      overflow: auto;
+      border-radius: 17px;
+    }
+    table {
+      width: 100%;
+      min-width: max(1180px, calc(880px + var(--s) * 10));
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+    thead th {
+      position: sticky;
+      top: 65px;
+      z-index: 20;
+      padding: 13px 15px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel-solid);
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: .03em;
+      text-align: left;
+      text-transform: uppercase;
+    }
+    thead th:nth-child(1) { width: 18%; }
+    thead th:nth-child(2), thead th:nth-child(3) { width: 29%; text-align: center; }
+    thead th:nth-child(4) { width: 24%; }
+    tbody td {
+      padding: 12px 15px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: middle;
+    }
+    tbody tr:last-child td { border-bottom: 0; }
+    .group-row th {
+      padding: 11px 15px;
+      border-bottom: 1px solid var(--line);
+      background: color-mix(in srgb, var(--accent) 9%, var(--panel-solid));
+      color: var(--accent);
+      font-size: 12px;
+      letter-spacing: .06em;
+      text-align: left;
+      text-transform: uppercase;
+    }
+    .state-title { font-weight: 780; line-height: 1.25; }
+    .state-code { display: block; margin-top: 5px; color: var(--muted); font-size: 11px; }
+    .contract { color: var(--muted); font-size: 12px; line-height: 1.48; }
+    .sample {
+      position: relative;
+      display: grid;
+      min-height: clamp(156px, calc(var(--s) * 3.15), 310px);
+      place-items: center;
+      overflow: hidden;
+      border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+      border-radius: 13px;
+      background: linear-gradient(135deg, var(--sample-a), var(--sample-b));
+      isolation: isolate;
+    }
+    body[data-background="color"] .sample {
+      background:
+        radial-gradient(circle at 19% 28%, rgb(240 160 12 / 28%), transparent 31%),
+        radial-gradient(circle at 83% 19%, rgb(12 130 240 / 30%), transparent 34%),
+        linear-gradient(145deg, #315b65 0%, #84725f 49%, #503d68 100%);
+    }
+
+    /* One normalized marker tree, two visual implementations. */
+    .marker {
+      --state: var(--core);
+      --state-text: var(--core-text);
+      --state-ring: rgb(255 255 255 / 75%);
+      --state-ring-width: 1.5px;
+      position: relative;
+      display: inline-grid;
+      place-items: center;
+      color: var(--state-text);
+      line-height: 1;
+      transform: translateZ(0);
+    }
+    .assembly { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+    .face-wrap { position: relative; display: grid; place-items: center; flex: 0 0 auto; }
+    .face {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      width: var(--s);
+      height: var(--s);
+      place-items: center;
+      color: var(--state-text);
+    }
+    .core { display: grid; place-items: center; }
+    .glyph { width: 62%; height: 62%; overflow: visible; fill: currentColor; }
+    .old .face {
+      border: 1px solid var(--old-line);
+      border-radius: 22%;
+      background: var(--old-bg);
+      box-shadow: 0 3px 9px rgb(15 23 42 / 18%);
+    }
+    .old .core { width: 100%; height: 100%; border-radius: inherit; }
+    .old.working .face { border-color: #ffd45c; background: #ffd45c; color: #503c00; }
+    .old.open .face { border-color: #ff9f43; background: #ff9f43; color: #4a2800; }
+    .old.locked .face { color: var(--old-text); }
+    .old.hover .face { border-color: var(--accent); background: var(--accent); color: #fff; }
+    .old.alarm .face, .old.alarm.hover .face {
+      border-color: #f25a4a; background: #6f2325; color: #fff;
+      box-shadow: 0 0 10px rgb(242 90 74 / 65%);
+    }
+
+    .new .face {
+      border: var(--state-ring-width) solid var(--state-ring);
+      border-radius: 50%;
+      background: var(--glass);
+      box-shadow: var(--shadow-small), var(--shadow-large), inset 0 1px 1px rgb(255 255 255 / 70%);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+    .new .core {
+      width: 76.923%;
+      height: 76.923%;
+      border-radius: 50%;
+      background: var(--state);
+      color: var(--state-text);
+      box-shadow: 0 4px 12px rgb(15 23 42 / 12%);
+    }
+    .new .glyph { width: 50%; height: 50%; }
+    .new.working { --state: var(--working); --state-text: #fff; --state-ring: var(--working); --state-ring-width: 3px; }
+    .new.open { --state: var(--open); --state-text: #fff; --state-ring: var(--open); --state-ring-width: 2px; }
+    .new.locked { --state: #07090c; --state-text: #fff; --state-ring: #07090c; --state-ring-width: 2px; }
+    .new.hover { --state: var(--accent); --state-text: #fff; }
+    .new.alarm, .new.alarm.hover { --state: var(--alarm); --state-text: #fff; --state-ring: var(--alarm); --state-ring-width: 2px; }
+
+    .unavailable { opacity: .35; }
+    .virtual .face { border-style: dashed; }
+    .ghost { opacity: .6; }
+    .ghost .face {
+      border-style: dashed;
+      border-color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 25%, var(--old-bg));
+      color: var(--accent);
+      box-shadow: none;
+    }
+    .new.ghost .core { background: color-mix(in srgb, var(--accent) 18%, var(--core)); color: var(--accent); }
+    .ha-disabled { opacity: .62; }
+    .ha-disabled .face { border-color: #9aa0aa; color: #9aa0aa; }
+    .ha-disabled .core { background: color-mix(in srgb, #9aa0aa 24%, var(--core)); color: #9aa0aa; }
+    .ha-badge, .new-dot {
+      position: absolute;
+      z-index: 8;
+      display: grid;
+      width: 32%;
+      height: 32%;
+      min-width: 12px;
+      min-height: 12px;
+      place-items: center;
+      border: 1px solid currentColor;
+      border-radius: 50%;
+      background: var(--panel-solid);
+      font-size: calc(var(--s) * .15);
+    }
+    .ha-badge { right: -10%; bottom: -10%; }
+    .new-dot { top: -9%; right: -9%; border: 2px solid var(--panel-solid); background: #f0301f; color: #fff; }
+
+    .selected .face-wrap::after, .focused .face-wrap::before {
+      position: absolute;
+      z-index: 6;
+      width: calc(var(--s) + 10px);
+      height: calc(var(--s) + 10px);
+      border-radius: 50%;
+      content: "";
+      pointer-events: none;
+    }
+    .old.selected .face-wrap::after {
+      width: calc(var(--s) + 6px); height: calc(var(--s) + 6px); border-radius: 26%;
+      box-shadow: 0 0 0 3px rgb(255 193 77 / 35%);
+    }
+    .new.selected .face-wrap::after { border: 2.5px solid var(--selection); box-shadow: 0 0 9px rgb(243 160 0 / 36%); }
+    .focused .face-wrap::before {
+      width: calc(var(--s) + 18px); height: calc(var(--s) + 18px);
+      border: 2.5px solid var(--focus); box-shadow: 0 0 8px rgb(12 130 240 / 26%);
+    }
+    .old.focused .face-wrap::before { border-radius: 30%; }
+
+    /* Text mode. */
+    .text .face { width: auto; min-width: var(--s); max-width: calc(var(--s) * 4); padding: 0 calc(var(--s) * .16); }
+    .text .value-text {
+      min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      font-size: calc(var(--s) * .42);
+    }
+    .old.text .value-text { font-weight: 700; }
+    .new.text .face { border-radius: calc(var(--s) / 2); }
+    .new.text .core { width: auto; min-width: calc(var(--s) * .78); height: 76.923%; padding: 0 calc(var(--s) * .22); border-radius: calc(var(--s) / 2); }
+    .new.text .value-text { font-weight: 400; }
+
+    /* Value badge: detached today, joined Double after #158. */
+    .double .assembly { --gap: calc(var(--s) * .1); gap: var(--gap); }
+    .pos-left .assembly { flex-direction: row-reverse; }
+    .pos-top .assembly { flex-direction: column-reverse; }
+    .pos-bottom .assembly { flex-direction: column; }
+    .value-badge {
+      position: relative;
+      z-index: 3;
+      display: grid;
+      min-width: calc(var(--s) * 1.25);
+      max-width: calc(var(--s) * 4);
+      min-height: calc(var(--s) * .68);
+      padding: 0 calc(var(--s) * .16);
+      place-items: center;
+      overflow: hidden;
+      border: 1px solid var(--accent);
+      border-radius: calc(var(--s) * .18);
+      background: var(--old-bg);
+      color: var(--old-text);
+      font-size: calc(var(--s) * .38);
+      font-weight: 700;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      box-shadow: 0 3px 9px rgb(15 23 42 / 14%);
+    }
+    .new.double .assembly {
+      --gap: 2px;
+      padding: 3px;
+      border: var(--state-ring-width) solid var(--state-ring);
+      border-radius: calc(var(--s) * .58);
+      background: var(--glass);
+      box-shadow: var(--shadow-small), var(--shadow-large), inset 0 1px 1px rgb(255 255 255 / 70%);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+    .new.double .face { border: 0; background: transparent; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
+    .new.double .value-badge {
+      min-height: calc(var(--s) * .77);
+      border: 0;
+      border-radius: calc(var(--s) * .42);
+      background: var(--core);
+      color: var(--core-text);
+      font-weight: 400;
+      box-shadow: 0 4px 12px rgb(15 23 42 / 12%);
+    }
+    .new.double.pos-top .assembly, .new.double.pos-bottom .assembly { border-radius: calc(var(--s) * .5); }
+    .long .value-badge { width: calc(var(--s) * 3.25); }
+    .missing-value .value-badge { opacity: .66; }
+
+    .lqi {
+      position: absolute;
+      z-index: 9;
+      top: calc(100% + 4px);
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--lqi, #65cc73);
+      font-size: calc(var(--s) * .3);
+      font-weight: 700;
+      line-height: 1;
+      text-shadow: 0 0 3px #000, 0 0 2px #000;
+      white-space: nowrap;
+    }
+    .pos-bottom .lqi { top: calc(100% + var(--s) * .76); }
+    .legacy-secondary {
+      position: absolute;
+      top: calc(50% + var(--s) * .78);
+      left: calc(100% + var(--s) * .1);
+      min-width: 0;
+    }
+
+    /* Motion layers are centred on the face, never the Double assembly. */
+    .pulse {
+      position: absolute;
+      z-index: 0;
+      left: 50%; top: 50%;
+      width: calc(var(--s) * var(--ripple-scale));
+      height: calc(var(--s) * var(--ripple-scale));
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .pulse i, .pulse b {
+      position: absolute; inset: 0; border: 2px solid var(--pulse-color, var(--accent));
+      border-radius: 50%; opacity: 0;
+    }
+    .old.motion-continuous .pulse i:first-child { animation: old-continuous 2.4s ease-in-out infinite; }
+    .old.motion-short .pulse i { animation: short-wave 1.1s ease-out 1 both; }
+    .old.motion-short .pulse i:nth-child(2) { animation-delay: 1.1s; }
+    .old.motion-short .pulse i:nth-child(3) { animation-delay: 2.2s; }
+    .old.motion-alarm .pulse i:first-child { border-color: #f25a4a; animation: old-alarm 1s ease-out infinite; }
+    .new.motion-continuous .pulse i:first-child { animation: future-continuous 3.6s cubic-bezier(.45,.05,.55,.95) infinite; }
+    .new.motion-continuous .pulse b {
+      inset: 31%; border: 0; background: var(--pulse-color, var(--accent)); filter: blur(10px);
+      animation: future-aura 3.6s cubic-bezier(.45,.05,.55,.95) infinite;
+    }
+    .new.motion-continuous .core { animation: future-core 3.6s cubic-bezier(.45,.05,.55,.95) infinite; }
+    .new.motion-short .pulse i { animation: short-wave 1.1s cubic-bezier(.22,.61,.36,1) 1 both; }
+    .new.motion-short .pulse i:nth-child(2) { animation-delay: 1.1s; }
+    .new.motion-short .pulse i:nth-child(3) { animation-delay: 2.2s; }
+    .new.motion-alarm .pulse i { border-width: 3px; border-color: var(--alarm); animation: future-alarm 2.4s cubic-bezier(.22,.61,.36,1) infinite; }
+    .new.motion-alarm .pulse i:nth-child(2) { animation-delay: 1.2s; }
+    .new.motion-alarm .pulse b { inset: 25%; border: 0; background: var(--alarm); filter: blur(9px); animation: future-alarm-wave 2.4s cubic-bezier(.22,.61,.36,1) infinite; }
+    .new.motion-alarm .core { animation: alarm-core 2.4s ease-in-out infinite; }
+    .activity-dot {
+      position: absolute; z-index: 8; right: 8%; bottom: 8%; display: none;
+      width: 18%; height: 18%; min-width: 4px; min-height: 4px;
+      border: 1px solid var(--panel-solid); border-radius: 50%; background: var(--pulse-color, var(--accent));
+    }
+    @keyframes old-continuous { from { transform: scale(.26); opacity: .5; } 65% { opacity: .18; } to { transform: scale(1); opacity: 0; } }
+    @keyframes old-alarm { from { transform: scale(.3); opacity: .95; } to { transform: scale(1); opacity: 0; } }
+    @keyframes short-wave { from { transform: scale(.18); opacity: .7; } 70% { opacity: .22; } to { transform: scale(1); opacity: 0; } }
+    @keyframes future-continuous { 0% { transform: scale(.35); opacity: 0; } 16% { opacity: .34; } 78%,100% { transform: scale(1); opacity: 0; } }
+    @keyframes future-aura { 0%,100% { transform: scale(.96); opacity: .14; } 50% { transform: scale(1.16); opacity: .34; } }
+    @keyframes future-core { 0%,100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+    @keyframes future-alarm { 0% { transform: scale(.34); opacity: 0; } 10% { opacity: .82; } 58% { opacity: .38; } 100% { transform: scale(1); opacity: 0; } }
+    @keyframes future-alarm-wave { 0% { transform: scale(.4); opacity: .08; } 26% { opacity: .26; } 72% { opacity: .09; } 100% { transform: scale(1); opacity: 0; } }
+    @keyframes alarm-core { 0%,100% { transform: scale(1); } 48% { transform: scale(1.055); } }
+
+    body.reduced .pulse i, body.reduced .pulse b, body.reduced .core { animation: none !important; }
+    body.reduced .pulse i, body.reduced .pulse b { display: none; }
+    body.reduced .old.motion-continuous .activity-dot,
+    body.reduced .old.motion-short .activity-dot,
+    body.reduced .new.motion-short .activity-dot { display: block; }
+    body.reduced .new.motion-continuous .pulse b,
+    body.reduced .new.motion-alarm .pulse b {
+      display: block; inset: 31%; opacity: .22; transform: scale(1.04);
+    }
+    body.paused *, body.paused *::before, body.paused *::after { animation-play-state: paused !important; }
+
+    /* Rows that demonstrate reduced motion stay reduced even when the global toggle is off. */
+    .force-reduced .pulse i { display: none !important; animation: none !important; }
+    .force-reduced .old.motion-continuous .activity-dot,
+    .force-reduced .old.motion-short .activity-dot,
+    .force-reduced .new.motion-short .activity-dot { display: block; }
+    .force-reduced .new.motion-continuous .pulse b,
+    .force-reduced .new.motion-alarm .pulse b { display: block; inset: 31%; opacity: .22; transform: scale(1.04); animation: none; }
+    .force-reduced .core { animation: none !important; }
+
+    .lqi-set { display: flex; align-items: center; justify-content: center; gap: calc(var(--s) * .55); }
+    .lqi-set .marker { transform: scale(.9); }
+    footer { margin-top: 18px; color: var(--muted); font-size: 12px; line-height: 1.5; text-align: center; }
+
+    @media (max-width: 780px) {
+      .page { width: min(100% - 16px, 1520px); margin-top: 8px; }
+      .hero { padding: 20px; }
+      .decision { grid-template-columns: 1fr; }
+      .controls { position: static; }
+      thead th { top: 0; }
+      .count { width: 100%; margin-left: 0; }
+    }
+    @media (forced-colors: active) {
+      .face, .value-badge, .new.double .assembly { border: 2px solid CanvasText !important; background: Canvas !important; color: CanvasText !important; }
+      .core { background: Canvas !important; color: CanvasText !important; }
+      .selected .face-wrap::after { border-color: Highlight !important; }
+    }
+  </style>
+</head>
+<body data-theme="light" data-background="plain">
+  <svg width="0" height="0" aria-hidden="true" style="position:absolute">
+    <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 21h6v-1H9v1m3-19a7 7 0 0 0-4 12.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26A7 7 0 0 0 12 2m2.85 11.1-.85.65V16h-4v-2.25l-.85-.65A5 5 0 1 1 14.85 13.1Z"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><path d="M12 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4m6-9a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2h1V6a5 5 0 0 1 10 0v2h1m-6-5a3 3 0 0 0-3 3v2h6V6a3 3 0 0 0-3-3Z"/></symbol>
+    <symbol id="i-unlock" viewBox="0 0 24 24"><path d="M18 8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2h9V6a3 3 0 0 0-5.83-1H7.1A5 5 0 0 1 17 6v2h1m-6 9a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M13 14h-2V9h2v5m0 4h-2v-2h2v2m-1-16A10 10 0 1 0 22 12 10 10 0 0 0 12 2Z"/></symbol>
+    <symbol id="i-fan" viewBox="0 0 24 24"><path d="M12 11a1 1 0 1 0 0 2 1 1 0 0 0 0-2m.33-9c2.25 0 3.35 2.7 1.76 4.29l-1.11 1.1c-.32.32-.54.72-.64 1.16A3.5 3.5 0 0 0 10 8.78V7.21C10 4.34 10.87 2 12.33 2M4.19 7.5c1.13-1.95 4.02-1.55 4.78.62l.52 1.48c.15.43.42.8.78 1.08a3.5 3.5 0 0 0-.95 2.16l-1.36-.79C5.48 10.62 3.46 8.77 4.19 7.5m1.49 10.78c-1.13-1.95.66-4.25 2.99-3.81l1.54.29c.45.08.91.04 1.33-.13a3.5 3.5 0 0 0 1.39 1.93l-1.36.79c-2.49 1.43-5.16 2.2-5.89.93m12.65.22c-2.25 0-3.35-2.7-1.76-4.29l1.11-1.1c.32-.32.54-.72.64-1.16a3.5 3.5 0 0 0 2.34-.23v1.57c0 2.87-.87 5.21-2.33 5.21Z"/></symbol>
+  </svg>
+
+  <main class="page">
+    <header class="hero">
+      <p class="eyebrow">Issue #158 · S3 specification artifact</p>
+      <h1>Все состояния устройств: сейчас → после реализации</h1>
+      <p class="lede">Обе колонки строятся из одной state-матрицы. Левая воспроизводит текущий квадратный marker, правая — принятый круглый glass Device Face. Переключатели ниже меняют все строки одновременно.</p>
+      <span class="prototype">Это визуальный прототип ТЗ, а не production renderer</span>
+    </header>
+
+    <section class="decision" aria-label="Принятые решения владельца">
+      <div><b>Continuous Working</b><span>SVG нормативен: 3,6 с, halo/aura + лёгкий breathing core; пользовательские color/size сохраняются.</span></div>
+      <div><b>Double Open</b><span>Геометрия Active во всех четырёх положениях, semantic green <code>#1DC21D</code>, neutral value.</span></div>
+      <div><b>Явно не внедряем</b><span>Virtual Active, новый Unavailable и новый LQI из архива. Действуют решения владельца.</span></div>
+    </section>
+
+    <section class="controls" aria-label="Параметры проверки">
+      <label class="control"><span>Тема</span><select id="theme"><option value="light">Светлая</option><option value="dark">Тёмная</option></select></label>
+      <label class="control"><span>Фон плана</span><select id="background"><option value="plain">Нейтральный</option><option value="color">Цветной</option></select></label>
+      <div class="control"><span>Размер marker</span><div class="segmented" id="sizes"><button data-size="32">32</button><button class="active" data-size="56">56</button><button data-size="96">96</button></div></div>
+      <label class="check"><input id="reduced" type="checkbox"> Reduced motion</label>
+      <label class="check"><input id="paused" type="checkbox"> Пауза анимаций</label>
+      <span class="count" id="count"></span>
+    </section>
+
+    <section class="matrix-wrap">
+      <table>
+        <thead><tr><th>Состояние</th><th>Сейчас</th><th>После #158</th><th>Контракт</th></tr></thead>
+        <tbody id="matrix"></tbody>
+      </table>
+    </section>
+
+    <footer>Страница автономна: внешние шрифты, изображения, сеть и Home Assistant не используются. Реальная приёмка выполняется на production bundle через unit, smoke, golden и performance gates.</footer>
+  </main>
+
+  <script>
+    const icon = (name = 'bulb') => `<svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-${name}"></use></svg>`;
+    const pulse = (kind) => kind ? `<span class="pulse" aria-hidden="true"><i></i><i></i><i></i><b></b></span><span class="activity-dot" aria-hidden="true"></span>` : '';
+
+    function marker(version, options = {}) {
+      const {
+        state = '', iconName = 'bulb', text = '', value = '', position = 'right',
+        pulseKind = '', virtual = false, unavailable = false, selected = false,
+        focused = false, ghost = false, disabled = false, newDevice = false,
+        lqi = '', lqiColor = '', long = false, missingValue = false,
+        secondary = '', forceReduced = false,
+      } = options;
+      const classes = [
+        'marker', version, state, text ? 'text' : '', value ? 'double' : '',
+        value ? `pos-${position}` : '', pulseKind ? `motion-${pulseKind}` : '',
+        virtual ? 'virtual' : '', unavailable ? 'unavailable' : '',
+        selected ? 'selected' : '', focused ? 'focused' : '', ghost ? 'ghost' : '',
+        disabled ? 'ha-disabled' : '', long ? 'long' : '', missingValue ? 'missing-value' : '',
+        forceReduced ? 'force-reduced' : '',
+      ].filter(Boolean).join(' ');
+      const pulseColor = state === 'working' ? 'var(--working)' : state === 'open' ? 'var(--open)' : state === 'alarm' ? 'var(--alarm)' : 'var(--accent)';
+      const content = text
+        ? `<span class="value-text" title="${text}">${text}</span>`
+        : icon(iconName);
+      const badge = value ? `<span class="value-badge" title="${value}">${value}</span>` : '';
+      const legacy = secondary ? `<span class="value-badge legacy-secondary">${secondary}</span>` : '';
+      return `<div class="${classes}" style="--pulse-color:${pulseColor};${lqiColor ? `--lqi:${lqiColor}` : ''}">
+        <span class="assembly">
+          <span class="face-wrap">
+            ${pulse(pulseKind)}
+            <span class="face"><span class="core">${content}</span></span>
+            ${disabled ? '<span class="ha-badge">×</span>' : ''}
+            ${newDevice ? '<span class="new-dot"></span>' : ''}
+            ${lqi ? `<span class="lqi">${lqi}</span>` : ''}
+            ${legacy}
+          </span>
+          ${badge}
+        </span>
+      </div>`;
+    }
+
+    function lqiSet(version) {
+      return `<div class="lqi-set">
+        ${marker(version, { lqi: '40', lqiColor: '#f0410c' })}
+        ${marker(version, { lqi: '100', lqiColor: '#f0a00c' })}
+        ${marker(version, { lqi: '180', lqiColor: '#1dc21d' })}
+      </div>`;
+    }
+
+    const rows = [
+      { group: 'Базовый Device Face' },
+      { title: 'Default / neutral', code: 'available + neutral', options: {}, note: 'Новый круглый glass shell и внутренний core. MDI и anchor не меняются.' },
+      { title: 'Hover', code: 'neutral + fine pointer hover', options: { state: 'hover' }, note: 'Blue core #0C82F0. Touch/pen не должны фиксировать hover.' },
+      { title: 'Working / Active', code: 'status=working', options: { state: 'working', iconName: 'fan' }, note: 'Жёлтый #F0A00C и 3 px semantic ring.' },
+      { title: 'Open / Unlocked', code: 'status=open', options: { state: 'open', iconName: 'unlock' }, note: 'Зелёный #1DC21D; generic open сохраняет собственный MDI.' },
+      { title: 'Locked', code: 'lock=locked', options: { state: 'locked', iconName: 'lock' }, note: 'Парный Lock reference: чёрный core/ring, белый glyph.' },
+      { title: 'Alarm / Alert', code: 'status=alarm', options: { state: 'alarm', iconName: 'alert' }, note: 'Красный #F0410C имеет максимальный semantic priority.' },
+      { title: 'Alarm + hover', code: 'alarm + pointer hover', options: { state: 'alarm hover', iconName: 'alert' }, note: 'Hover не превращает тревогу в синюю.' },
+
+      { group: 'Availability и virtual' },
+      { title: 'Unavailable', code: 'availability=unavailable', options: { unavailable: true }, note: 'Оба варианта используют прежнюю общую opacity 0.35; отдельный новый asset не внедряется.' },
+      { title: 'Virtual idle', code: 'binding=virtual', options: { virtual: true }, note: 'Default face + постоянный dashed outer shell.' },
+      { title: 'Virtual hover', code: 'virtual + fine pointer hover', options: { virtual: true, state: 'hover' }, note: 'Blue hover core, dashed shell остаётся. Pulse невозможен.' },
+      { title: 'Static icon', code: 'display=static_icon', options: {}, note: 'Всегда neutral: без live state, value, LQI и pulse.' },
+
+      { group: 'Редактор и accessibility overlays' },
+      { title: 'Selected', code: 'editor selection', options: { selected: true }, note: 'Amber overlay не подменяет face.' },
+      { title: 'Selected + hover', code: 'selected + pointer hover', options: { selected: true, state: 'hover' }, note: 'Hover core и selection ring видны одновременно.' },
+      { title: 'Selected + Working', code: 'selected + working', options: { selected: true, state: 'working', iconName: 'fan' }, note: 'Working остаётся жёлтым под amber overlay.' },
+      { title: 'Selected + Open', code: 'selected + open', options: { selected: true, state: 'open', iconName: 'unlock' }, note: 'Open остаётся зелёным под amber overlay.' },
+      { title: 'Selected + Alarm', code: 'selected + alarm', options: { selected: true, state: 'alarm', iconName: 'alert' }, note: 'Alarm остаётся красным.' },
+      { title: 'Keyboard focus', code: ':focus-visible', options: { focused: true }, note: 'Новый отдельный синий focus ring; pointer focus его не показывает.' },
+      { title: 'Selected + Focus + Alarm', code: 'all overlays', options: { selected: true, focused: true, state: 'alarm', iconName: 'alert' }, note: 'Оба overlays различимы, focus снаружи, face остаётся красным.' },
+      { title: 'Hidden ghost', code: 'editor ghost', options: { ghost: true }, note: 'Существующий editor chrome сохраняется поверх новой геометрии.' },
+      { title: 'HA-disabled ghost', code: 'ghost + ha-disabled', options: { ghost: true, disabled: true }, note: 'Neutral grey и plug-off diagnostic badge не меняют смысл.' },
+      { title: 'New device dot', code: 'new inbox marker', options: { newDevice: true }, note: 'Красная точка остаётся отдельным badge.' },
+
+      { group: 'Text и Double' },
+      { title: 'Text Default', code: 'display=value', options: { text: '43%' }, note: 'Regular 400, круглая Text pill, максимум 4× marker.' },
+      { title: 'Text Hover', code: 'value + hover', options: { text: '43%', state: 'hover' }, note: 'Blue semantic surface и полный accessible text.' },
+      { title: 'Text Working', code: 'value + working', options: { text: '43%', state: 'working' }, note: 'Value-only не теряет live-state semantics.' },
+      { title: 'Text Open', code: 'value + open', options: { text: '43%', state: 'open' }, note: 'Green variant строится общими semantic tokens.' },
+      { title: 'Text Locked', code: 'value + authoritative lock=locked', options: { text: 'locked', state: 'locked' }, note: 'Black Lock token приходит из transient lock facet, не из текста или MDI.' },
+      { title: 'Text Alarm', code: 'value + alarm', options: { text: '43%', state: 'alarm' }, note: 'Alarm остаётся красным и без MDI.' },
+      { title: 'Text long value', code: 'max-width + ellipsis', options: { text: 'very long unavailable value', long: true }, note: 'В production полный текст остаётся в title/aria-label.' },
+      { title: 'Double Right', code: 'value_badge.position=right', options: { value: '23.5 °C', position: 'right' }, note: 'Сегодня badge отделён; target — одна композиция.' },
+      { title: 'Double Left + Hover', code: 'position=left + hover', options: { value: '23.5 °C', position: 'left', state: 'hover', iconName: 'fan' }, note: 'Value section theme-neutral и текст горизонтален.' },
+      { title: 'Double Up + Working', code: 'position=top + working', options: { value: '23.5 °C', position: 'top', state: 'working', iconName: 'fan' }, note: 'Исправленный vertical layout из итогового пакета.' },
+      { title: 'Double Down + Open', code: 'position=bottom + open', options: { value: '100 %', position: 'bottom', state: 'open', iconName: 'unlock' }, note: 'Принятый default: Active geometry + green #1DC21D.' },
+      { title: 'Double Left + Locked', code: 'position=left + lock=locked', options: { value: '100 %', position: 'left', state: 'locked', iconName: 'lock' }, note: 'Black Lock token; neutral value section; glyph сам не является resolver evidence.' },
+      { title: 'Double Right + Alarm', code: 'position=right + alarm', options: { value: '23 %', position: 'right', state: 'alarm', iconName: 'alert' }, note: 'Value neutral; icon section и outer ring красные.' },
+      { title: 'Double long value', code: 'right + max-width', options: { value: 'very long unavailable value', position: 'right', long: true, missingValue: true }, note: 'Ellipsis и существующая unavailable opacity badge.' },
+      { title: 'Legacy secondary metric', code: 'legacy temp + humidity', options: { value: '23 °C', position: 'right', secondary: '43 %' }, note: 'Вторая legacy metric остаётся satellite и не создаёт тройную pill.' },
+
+      { group: 'Motion' },
+      { title: 'Continuous Default', code: 'running + neutral', options: { pulseKind: 'continuous' }, note: 'Сейчас 2,4 с; target SVG — 3,6 с, ring + aura + breathing core.' },
+      { title: 'Continuous Working', code: 'running + working', options: { pulseKind: 'continuous', state: 'working', iconName: 'fan' }, note: 'Default color наследует yellow; ripple_color может переопределить.' },
+      { title: 'Continuous Open', code: 'running + open', options: { pulseKind: 'continuous', state: 'open', iconName: 'unlock' }, note: 'Green motion variant; hover не перезапускает цикл.' },
+      { title: 'Short Activity', code: 'event/transition edge', options: { pulseKind: 'short' }, note: 'Три кольца 1,1 с, total 3,3 с; retrigger сохраняется.' },
+      { title: 'Alarm pulse', code: 'alarm dynamic display', options: { pulseKind: 'alarm', state: 'alarm', iconName: 'alert' }, note: 'Сейчас одна волна 1 с; target — две волны 2,4 с + red aura/core.' },
+      { title: 'Reduced Continuous', code: 'prefers-reduced-motion', options: { pulseKind: 'continuous', state: 'working', forceReduced: true }, note: 'Target: static halo без transform; обычная activity не мигает.' },
+      { title: 'Reduced Short', code: 'short + reduced motion', options: { pulseKind: 'short', forceReduced: true }, note: 'Сохраняется существующая semantic dot.' },
+
+      { group: 'Намеренно без редизайна' },
+      { title: 'Zigbee LQI Low / Mid / High', code: '40 / 100 / 180', special: 'lqi', note: 'Значения, градиент, шрифт, позиция и thresholds пиксельно не меняются.' },
+      { title: 'Bottom Double + system LQI', code: 'badge bottom stacks LQI', options: { value: '23.5 °C', position: 'bottom', lqi: '180', lqiColor: '#1dc21d' }, note: 'LQI сдвигается ниже полной Double composition, источник не меняется.' },
+      { title: 'Unavailable value source', code: 'badge availability=unavailable', options: { value: '—', missingValue: true }, note: 'Локальная opacity 0.66 сохраняется; wrapper unavailable при необходимости умножается отдельно.' },
+    ];
+
+    const tbody = document.querySelector('#matrix');
+    let count = 0;
+    tbody.innerHTML = rows.map((row) => {
+      if (row.group) return `<tr class="group-row"><th colspan="4">${row.group}</th></tr>`;
+      count += 1;
+      const before = row.special === 'lqi' ? lqiSet('old') : marker('old', row.options);
+      const after = row.special === 'lqi' ? lqiSet('new') : marker('new', row.options);
+      return `<tr data-state="${row.title}">
+        <td><span class="state-title">${row.title}</span><code class="state-code">${row.code}</code></td>
+        <td><div class="sample">${before}</div></td>
+        <td><div class="sample">${after}</div></td>
+        <td class="contract">${row.note}</td>
+      </tr>`;
+    }).join('');
+    document.querySelector('#count').textContent = `${count} проверяемых строк`;
+
+    document.querySelector('#theme').addEventListener('change', (event) => { document.body.dataset.theme = event.target.value; });
+    document.querySelector('#background').addEventListener('change', (event) => { document.body.dataset.background = event.target.value; });
+    document.querySelector('#reduced').addEventListener('change', (event) => { document.body.classList.toggle('reduced', event.target.checked); });
+    document.querySelector('#paused').addEventListener('change', (event) => { document.body.classList.toggle('paused', event.target.checked); });
+    document.querySelector('#sizes').addEventListener('click', (event) => {
+      const button = event.target.closest('button[data-size]');
+      if (!button) return;
+      document.documentElement.style.setProperty('--s', `${button.dataset.size}px`);
+      document.querySelectorAll('#sizes button').forEach((item) => item.classList.toggle('active', item === button));
+    });
+  </script>
+</body>
+</html>
