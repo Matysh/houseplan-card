@@ -165,6 +165,9 @@
       border-collapse: separate;
       border-spacing: 0;
     }
+    body[data-variants="both"] table {
+      min-width: max(2200px, calc(1500px + var(--s) * 20));
+    }
     thead th {
       position: sticky;
       top: 65px;
@@ -203,20 +206,80 @@
     .sample {
       position: relative;
       display: grid;
-      min-height: clamp(156px, calc(var(--s) * 3.15), 310px);
-      place-items: center;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      padding: 8px;
       overflow: hidden;
       border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
       border-radius: 13px;
+      background: color-mix(in srgb, var(--panel-solid) 80%, var(--line));
+      isolation: isolate;
+    }
+    .theme-variant {
+      position: relative;
+      display: grid;
+      min-width: 0;
+      min-height: clamp(156px, calc(var(--s) * 3.15), 310px);
+      place-items: center;
+      overflow: hidden;
+      border: 1px solid color-mix(in srgb, var(--line) 62%, transparent);
+      border-radius: 9px;
       background: linear-gradient(135deg, var(--sample-a), var(--sample-b));
       isolation: isolate;
     }
-    body[data-background="color"] .sample {
+    .theme-light {
+      color-scheme: light;
+      --sample-a: #edf2f6;
+      --sample-b: #f8fafc;
+      --old-bg: #fff;
+      --old-line: #cbd3df;
+      --old-text: #1d2733;
+      --glass: rgb(255 255 255 / 54%);
+      --glass-solid: #f8fafc;
+      --core: #fff;
+      --core-text: #050608;
+      --panel-solid: #fff;
+      color: #1c2430;
+    }
+    .theme-dark {
+      color-scheme: dark;
+      --sample-a: #151c26;
+      --sample-b: #202936;
+      --old-bg: #16212e;
+      --old-line: #34485c;
+      --old-text: #e6edf3;
+      --glass: rgb(38 43 52 / 62%);
+      --glass-solid: #2b313b;
+      --core: #2a3039;
+      --core-text: #f8fafc;
+      --panel-solid: #1c212a;
+      color: #f1f4f8;
+    }
+    .theme-label {
+      position: absolute;
+      top: 7px;
+      left: 7px;
+      z-index: 10;
+      padding: 3px 6px;
+      border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--panel-solid) 84%, transparent);
+      color: inherit;
+      font-size: 10px;
+      font-weight: 750;
+      line-height: 1;
+      pointer-events: none;
+    }
+    body[data-background="color"] .theme-variant {
       background:
         radial-gradient(circle at 19% 28%, rgb(240 160 12 / 28%), transparent 31%),
         radial-gradient(circle at 83% 19%, rgb(12 130 240 / 30%), transparent 34%),
         linear-gradient(145deg, #315b65 0%, #84725f 49%, #503d68 100%);
     }
+    body[data-variants="light"] .theme-dark,
+    body[data-variants="dark"] .theme-light { display: none; }
+    body[data-variants="light"] .sample,
+    body[data-variants="dark"] .sample { grid-template-columns: minmax(0, 1fr); }
 
     /* One normalized marker tree, two visual implementations. */
     .marker {
@@ -502,7 +565,7 @@
     }
   </style>
 </head>
-<body data-theme="light" data-background="plain">
+<body data-theme="light" data-variants="both" data-background="plain">
   <svg width="0" height="0" aria-hidden="true" style="position:absolute">
     <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 21h6v-1H9v1m3-19a7 7 0 0 0-4 12.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26A7 7 0 0 0 12 2m2.85 11.1-.85.65V16h-4v-2.25l-.85-.65A5 5 0 1 1 14.85 13.1Z"/></symbol>
     <symbol id="i-lock" viewBox="0 0 24 24"><path d="M12 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4m6-9a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2h1V6a5 5 0 0 1 10 0v2h1m-6-5a3 3 0 0 0-3 3v2h6V6a3 3 0 0 0-3-3Z"/></symbol>
@@ -515,7 +578,7 @@
     <header class="hero">
       <p class="eyebrow">Issue #158 · S3 specification artifact</p>
       <h1>Все состояния устройств: сейчас → после реализации</h1>
-      <p class="lede">Обе колонки строятся из одной state-матрицы. Левая воспроизводит текущий квадратный marker, правая — принятый круглый glass Device Face. Переключатели ниже меняют все строки одновременно.</p>
+      <p class="lede">Обе колонки строятся из одной state-матрицы. Левая воспроизводит текущий квадратный marker, правая — принятый круглый glass Device Face. По умолчанию каждое состояние одновременно показано в светлой и тёмной теме; переключатели ниже меняют все строки.</p>
       <span class="prototype">Это визуальный прототип ТЗ, а не production renderer</span>
     </header>
 
@@ -526,7 +589,7 @@
     </section>
 
     <section class="controls" aria-label="Параметры проверки">
-      <label class="control"><span>Тема</span><select id="theme"><option value="light">Светлая</option><option value="dark">Тёмная</option></select></label>
+      <label class="control"><span>Темы в таблице</span><select id="theme"><option value="both">Обе</option><option value="light">Только светлая</option><option value="dark">Только тёмная</option></select></label>
       <label class="control"><span>Фон плана</span><select id="background"><option value="plain">Нейтральный</option><option value="color">Цветной</option></select></label>
       <div class="control"><span>Размер marker</span><div class="segmented" id="sizes"><button data-size="32">32</button><button class="active" data-size="56">56</button><button data-size="96">96</button></div></div>
       <label class="check"><input id="reduced" type="checkbox"> Reduced motion</label>
@@ -654,6 +717,10 @@
     ];
 
     const tbody = document.querySelector('#matrix');
+    const themedSamples = (content) => `<div class="sample">
+      <div class="theme-variant theme-light"><span class="theme-label">Светлая</span>${content}</div>
+      <div class="theme-variant theme-dark"><span class="theme-label">Тёмная</span>${content}</div>
+    </div>`;
     let count = 0;
     tbody.innerHTML = rows.map((row) => {
       if (row.group) return `<tr class="group-row"><th colspan="4">${row.group}</th></tr>`;
@@ -662,14 +729,18 @@
       const after = row.special === 'lqi' ? lqiSet('new') : marker('new', row.options);
       return `<tr data-state="${row.title}">
         <td><span class="state-title">${row.title}</span><code class="state-code">${row.code}</code></td>
-        <td><div class="sample">${before}</div></td>
-        <td><div class="sample">${after}</div></td>
+        <td>${themedSamples(before)}</td>
+        <td>${themedSamples(after)}</td>
         <td class="contract">${row.note}</td>
       </tr>`;
     }).join('');
     document.querySelector('#count').textContent = `${count} проверяемых строк`;
 
-    document.querySelector('#theme').addEventListener('change', (event) => { document.body.dataset.theme = event.target.value; });
+    document.querySelector('#theme').addEventListener('change', (event) => {
+      const mode = event.target.value;
+      document.body.dataset.variants = mode;
+      document.body.dataset.theme = mode === 'dark' ? 'dark' : 'light';
+    });
     document.querySelector('#background').addEventListener('change', (event) => { document.body.dataset.background = event.target.value; });
     document.querySelector('#reduced').addEventListener('change', (event) => { document.body.classList.toggle('reduced', event.target.checked); });
     document.querySelector('#paused').addEventListener('change', (event) => { document.body.classList.toggle('paused', event.target.checked); });

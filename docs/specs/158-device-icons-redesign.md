@@ -446,8 +446,9 @@ It must:
 - render columns «Сейчас» and «После #158» from one row matrix;
 - cover every row in §7–§9 plus Text, four Double positions, LQI unchanged,
   ghost/disabled and static icon;
-- offer light/dark, plain/colored background, 32/56/96 px and reduced-motion
-  controls;
+- show light and dark variants side by side in every «Сейчас»/«После #158» cell,
+  with a control to filter the matrix to either theme;
+- offer plain/colored background, 32/56/96 px and reduced-motion controls;
 - require no build, server, HA session, font or network request;
 - show the accepted owner overrides prominently;
 - never be imported by production code or included as a runtime asset contract.
