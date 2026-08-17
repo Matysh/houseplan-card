@@ -104,7 +104,11 @@ const LIFECYCLE_ROLE_RANK = new Map<string, number>([
   ['machine_state', 1], ['running_state', 1],
   ['status', 2], ['device_status', 2], ['machine_status', 2],
 ]);
-const LIFECYCLE_CONNECTIVITY_SEGMENTS = new Set(['wifi', 'connection', 'signal', 'battery']);
+// `error` sits here for the same reason as connectivity telemetry: an
+// `error_status` sensor describes a fault channel, not the appliance
+// lifecycle, and its `active` value must not paint the marker as working —
+// nor may registry order let it outrank a real `status` peer (review #164 M1).
+const LIFECYCLE_CONNECTIVITY_SEGMENTS = new Set(['wifi', 'connection', 'signal', 'battery', 'error']);
 
 /** Rank a strict appliance lifecycle entity from generic HA metadata.
  * Russian/localised display text is deliberately not authority in #164. */

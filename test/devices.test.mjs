@@ -442,6 +442,9 @@ test('resolvedDeviceStateEntities: lifecycle matching rejects connectivity and l
       'sensor.washer_wifi_status': {
         entity_id: 'sensor.washer_wifi_status', original_name: 'WiFi Status',
       },
+      'sensor.washer_error_status': {
+        entity_id: 'sensor.washer_error_status', translation_key: 'error_status',
+      },
       'sensor.washer_localised': { entity_id: 'sensor.washer_localised' },
       'sensor.washer_run_state': {
         entity_id: 'sensor.washer_run_state', entity_category: 'config',
@@ -457,6 +460,8 @@ test('resolvedDeviceStateEntities: lifecycle matching rejects connectivity and l
       'switch.washer_power': { state: 'on', attributes: {} },
       'switch.washer_child_lock': { state: 'off', attributes: {} },
       'sensor.washer_wifi_status': { state: 'connected', attributes: {} },
+      // a fault channel reporting `active` must not become the working signal
+      'sensor.washer_error_status': { state: 'active', attributes: {} },
       'sensor.washer_localised': { state: 'start', attributes: { friendly_name: 'Статус' } },
       'sensor.washer_run_state': { state: 'start', attributes: {} },
       'sensor.washer_stage': { state: 'Rinse', attributes: {} },
