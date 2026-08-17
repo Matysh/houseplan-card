@@ -13,6 +13,11 @@ name: Mutation gate
 
 on:
   workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref whose mutation guards must be proved
+        required: false
+        default: dev
   schedule:
     # Понедельник, 05:20 UTC — до начала рабочего дня владельца.
     - cron: '20 5 * * 1'
@@ -33,7 +38,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: dev
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || 'dev' }}
           fetch-depth: 0
 
       - uses: actions/setup-node@v7

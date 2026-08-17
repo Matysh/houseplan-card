@@ -340,7 +340,10 @@ def _plan_only_source() -> tuple[dict[str, Any], dict[str, Any]]:
         "note": {"x": 0.2, "y": 0.3, "s": "ground"},
         "lg_light.group": {"x": 0.1, "y": 0.1, "s": "ground"},
         "auto-device": {"x": 0.8, "y": 0.8, "s": "ground"},
-        "rl_living": {"x": 0.45, "y": 0.55, "s": "ground", "future": "drop"},
+        "rl_living": {
+            "x": 0.45, "y": 0.55, "s": "ground", "k": 1.4,
+            "future": "drop",
+        },
         "rl_other": {"x": 0.1, "y": 0.1, "s": "other"},
     }
     return config, layout
@@ -358,7 +361,7 @@ def test_plan_only_export_projects_geometry_and_round_trips_room_labels(tmp_path
     assert document["transfer"] == {"dropped_marker_links": 0, "plan_only": True}
     assert payload["config"]["markers"] == []
     assert payload["layout"] == {
-        "rl_living": {"x": 0.45, "y": 0.55, "s": "ground"},
+        "rl_living": {"x": 0.45, "y": 0.55, "s": "ground", "k": 1.4},
     }
     assert document["placement_manifest"] == [{
         "layout_id": "rl_living", "space_id": "ground", "owner": "room_label",
@@ -416,7 +419,7 @@ def test_plan_only_export_projects_geometry_and_round_trips_room_labels(tmp_path
     assert imported_room.get("area") is None
     assert merged_layout == {
         "rl_" + imported_room["id"]: {
-            "x": 0.45, "y": 0.55, "s": details["space_id"],
+            "x": 0.45, "y": 0.55, "s": details["space_id"], "k": 1.4,
         },
     }
     assert parsed["transfer"]["plan_only"] is True
@@ -447,7 +450,8 @@ def test_ordinary_space_export_is_unchanged_when_plan_only_is_false(tmp_path: Pa
     "mutation",
     [
         "marker", "layout", "area", "temperature", "opening", "legacy_decor",
-        "live_token", "unknown", "placement", "marker_content", "invalid_content",
+        "live_token", "unknown", "placement", "layout_scale",
+        "marker_content", "invalid_content",
     ],
 )
 def test_parser_rejects_forged_plan_only_privacy_claim(
@@ -487,6 +491,8 @@ def test_parser_rejects_forged_plan_only_privacy_claim(
         space["future_binding"] = "sensor.secret"
     elif mutation == "placement":
         document["placement_manifest"][0]["owner"] = "auto_device"
+    elif mutation == "layout_scale":
+        document["payload"]["layout"]["rl_living"]["k"] = "sensor.secret"
     elif mutation == "marker_content":
         document["content_manifest"].append({"owner": "marker"})
     elif mutation == "invalid_content":

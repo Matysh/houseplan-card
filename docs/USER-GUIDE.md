@@ -509,8 +509,9 @@ instance must explicitly detach those links.
 
 For **Current space**, enable **Plan only** to transfer the architectural
 template without devices or Home Assistant bindings. It keeps rooms, walls,
-openings, decor, backdrop transforms and manually positioned room labels, but
-removes real and virtual markers, device positions, Area assignments,
+openings, decor, backdrop transforms and manually positioned room labels at
+their chosen scale, but removes real and virtual markers, device positions,
+Area assignments,
 temperature/humidity sources and opening contacts/locks. Live values in text
 labels become `—`; surrounding static text stays intact. The import preview
 marks this file as plan-only and adds it through the normal space-import flow.

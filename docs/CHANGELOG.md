@@ -3,8 +3,8 @@
 ## Unreleased
 
 - Current-space export can now create a **Plan only** JSON template with rooms,
-  walls, openings, decor, backdrop and room-label positions, while removing
-  devices and structural Home Assistant bindings. Import preview identifies
+  walls, openings, decor, backdrop, room-label positions and scale, while
+  removing devices and structural Home Assistant bindings. Import preview identifies
   the template before adding it as a new space
   ([#167](https://github.com/Matysh/houseplan-card/issues/167)).
 - Composite appliances such as washing machines now use an explicit Home

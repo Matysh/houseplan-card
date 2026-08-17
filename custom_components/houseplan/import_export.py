@@ -9,6 +9,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import math
 import re
 import secrets
 import time
@@ -276,15 +277,23 @@ def _plan_only_room_label_layout(
 ) -> dict[str, Any]:
     space_id = str(space.get("id", ""))
     room_ids = {str(room.get("id", "")) for room in space.get("rooms") or []}
-    return {
-        key: _pick_fields(pos, ("x", "y", "s"))
-        for key, pos in layout.items()
-        if isinstance(key, str)
-        and key.startswith("rl_")
-        and key[3:] in room_ids
-        and isinstance(pos, dict)
-        and str(pos.get("s", "")) == space_id
-    }
+    projected: dict[str, Any] = {}
+    for key, pos in layout.items():
+        if not (
+            isinstance(key, str)
+            and key.startswith("rl_")
+            and key[3:] in room_ids
+            and isinstance(pos, dict)
+            and str(pos.get("s", "")) == space_id
+        ):
+            continue
+        value = _pick_fields(pos, ("x", "y", "s"))
+        scale = pos.get("k")
+        if isinstance(scale, (int, float)) and not isinstance(scale, bool) \
+                and math.isfinite(scale) and 0.5 <= scale <= 3:
+            value["k"] = scale
+        projected[key] = value
+    return projected
 
 
 def _marker_owned(marker: dict[str, Any], space: dict[str, Any], layout: dict[str, Any]) -> bool:

@@ -162,7 +162,7 @@ device layout и известных структурных HA-привязок. 
   "payload": {
     "config": { "spaces": ["…"], "markers": [] },
     "layout": {
-      "rl_room-kitchen": { "x": 0.42, "y": 0.31, "s": "floor-1" }
+      "rl_room-kitchen": { "x": 0.42, "y": 0.31, "s": "floor-1", "k": 1.4 }
     }
   },
   "placement_manifest": [
@@ -215,7 +215,7 @@ device layout и известных структурных HA-привязок. 
 | Источник | Результат plan-only |
 |---|---|
 | `config.markers` | `[]`; marker config целиком отсутствует |
-| `payload.layout` | только `rl_<room_id>` для комнаты экспортируемого пространства; marker, `v_*`, `lg_*`, auto-device и неизвестные позиции удаляются |
+| `payload.layout` | только `rl_<room_id>` для комнаты экспортируемого пространства: обязательные `x/y/s` и опциональный конечный масштаб карточки `k` в диапазоне `0.5..3`; marker, `v_*`, `lg_*`, auto-device, неизвестные поля и невалидный `k` удаляются |
 | `placement_manifest` | только canonical `room_label` entries, точно соответствующие сохранённым `rl_*` ключам |
 | marker attachment/content entries | отсутствуют |
 | `room.area` | отсутствует или canonical unbound value |
@@ -288,7 +288,8 @@ presentation, user content или HA binding. Это fail-closed защита о
 - ровно одно пространство;
 - `markers == []`;
 - каждый layout key строго равен `rl_<room_id>` существующей комнаты
-  экспортируемого пространства, а `pos.s` равен id этого пространства;
+  экспортируемого пространства, `pos.s` равен id этого пространства, а запись
+  содержит только `x/y/s` и опциональный конечный `k` в диапазоне `0.5..3`;
 - каждый placement entry canonical: `owner == "room_label"`, `owner_id`
   совпадает с room id, `binding|label|icon == null`, и set записей точно
   совпадает с layout;
@@ -363,8 +364,8 @@ first по `TOUCH-SUPPORT`, но диалог не должен переполн
 6. Названия, статический текст, filenames и external URLs сохраняются; UX не
    обещает полную анонимизацию и не добавляет отдельного предупреждения.
 7. Импорт plan-only файла на чистый целевой instance создаёт новое пространство
-   с той же планировкой, нулём устройств/HA-привязок, remap-нутыми позициями
-   подписей комнат и unbound rooms.
+   с той же планировкой, нулём устройств/HA-привязок, remap-нутыми позициями и
+   масштабом подписей комнат и unbound rooms.
 8. Preview и revalidate явно сохраняют `plan_only: true`, показывают нулевые
    binding counts и не предлагают duplicate policy.
 9. File с true, но с маркером, не-room-label layout, несогласованным placement
@@ -397,7 +398,7 @@ first по `TOUCH-SUPPORT`, но диалог не должен переполн
 - reject `plan_only=true` для full;
 - reject non-boolean plan_only;
 - reject forged plan-only files по одному для marker, чужого/невалидного
-  room-label layout/placement, room area,
+  room-label layout/placement/scale, room area,
   temp/hum, opening refs, legacy decor refs и inline token;
 - preview/revalidate/apply happy path на same и foreign instance;
 - missing internal backdrop + detach confirmation по действующему контракту;
@@ -494,8 +495,8 @@ Push ветки выполняется после задачи; issue не за�
 
 1. `plan_only` — optional additive metadata внутри существующего export
    version, а не новый kind или новая версия формата.
-2. Безопасные ручные позиции подписей комнат `rl_<room_id>` сохраняются и
-   remap-ятся; весь остальной layout удаляется.
+2. Безопасные ручные позиции и конечный масштаб `k` подписей комнат
+   `rl_<room_id>` сохраняются и remap-ятся; весь остальной layout удаляется.
 3. Реальные и виртуальные markers удаляются одинаково.
 4. Геометрический `flip_h|flip_v` сохраняется, contact-specific `invert`
    удаляется вместе с binding.

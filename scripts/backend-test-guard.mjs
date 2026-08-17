@@ -7,7 +7,8 @@ if (!pattern) {
   process.exit(2);
 }
 
-const result = spawnSync(process.env.PYTHON || 'python', [
+const python = process.env.PYTHON || (process.platform === 'win32' ? 'python' : 'python3');
+const result = spawnSync(python, [
   '-m', 'pytest', 'tests_backend/test_ha_import_export.py', '-q', '-k', pattern,
 ], { stdio: 'inherit' });
 process.exit(result.status ?? 2);
