@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.65.0-beta.1 — 2026-08-17
+
 - Current-space export can now create a **Plan only** JSON template with rooms,
   walls, openings, decor, backdrop, room-label positions and scale, while
   removing devices and structural Home Assistant bindings. Import preview identifies
@@ -17,6 +19,7 @@
   physically correct side of the plan. Users who mirrored the compass to work
   around the previous bug should point it back to the real north
   ([#166](https://github.com/Matysh/houseplan-card/issues/166)).
+- Small fixes and improvements.
 
 ## v1.64.0-beta.3 — 2026-08-14
 
