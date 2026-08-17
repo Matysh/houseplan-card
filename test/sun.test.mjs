@@ -32,11 +32,17 @@ const WIN = {
 };
 const ALL = Object.values(WIN);
 
-test('planSunAngle: plain subtraction, wraps around the circle (359→0)', () => {
-  assert.equal(planSunAngle(180, 0), 180);
-  assert.equal(planSunAngle(0, 1), 359);
-  assert.equal(planSunAngle(359, 359), 0);
-  assert.equal(planSunAngle(10, 350), 20);
+test('planSunAngle: clockwise north and azimuth compose by addition', () => {
+  const cases = [
+    { north: 0, azimuth: 90, expected: 90 },
+    { north: 90, azimuth: 0, expected: 90 },
+    { north: 90, azimuth: 90, expected: 180 },
+    { north: 270, azimuth: 90, expected: 0 },
+    { north: 350, azimuth: 20, expected: 10 },
+  ];
+  for (const { north, azimuth, expected } of cases) {
+    assert.equal(planSunAngle(azimuth, north), expected, `north=${north}, azimuth=${azimuth}`);
+  }
   assert.equal(norm360(-90), 270);
   assert.equal(norm360(720), 0);
 });
@@ -52,9 +58,9 @@ test('sunDirOnPlan: compass points map to canvas vectors (y grows down)', () => 
     const d = sunDirOnPlan(az, 0);
     assert.ok(near(d[0], x, 1e-12) && near(d[1], y, 1e-12), `az ${az}`);
   }
-  // rotating the compass rotates the whole sky: east sun, north_deg=90 → up
+  // The arrow points to true north on the plan. If north is right, east is down.
   const d = sunDirOnPlan(90, 90);
-  assert.ok(near(d[0], 0, 1e-12) && near(d[1], -1, 1e-12));
+  assert.ok(near(d[0], 0, 1e-12) && near(d[1], 1, 1e-12));
 });
 
 test('dayPhase: night is dark and dim, noon is white, sunrise is warm', () => {
@@ -525,11 +531,12 @@ test('computeSunRays: night → nothing at all', () => {
   assert.deepEqual(computeSunRays(ROOMS, ALL, 90, -10, 0), []);
 });
 
-test('computeSunRays: rotating the compass swings the light to another window', () => {
-  // the same morning east sun, but the plan is rotated 90°: what the canvas
-  // shows as "up" is now east → the NORTH-drawn window faces the sun
+test('computeSunRays: north right plus east sun selects the south window and shines inward', () => {
+  // The N arrow points right. East is therefore down on the canvas, so the
+  // lower window faces the sun and its light travels upward into the room.
   const rays = computeSunRays(ROOMS, ALL, 90, 5, 90);
-  assert.deepEqual(rays.map((r) => r.openingId), ['wN']);
+  assert.deepEqual(rays.map((r) => r.openingId), ['wS']);
+  assert.ok(near(rays[0].dir[0], 0, 1e-12) && near(rays[0].dir[1], -1, 1e-12));
   // and the interior window still never lights up whatever the compass says
   for (const nd of [0, 45, 90, 180, 270]) {
     for (const az of [0, 90, 180, 270]) {

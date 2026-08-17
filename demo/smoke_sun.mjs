@@ -82,11 +82,12 @@ const res = await page.evaluate(async () => {
   await setSun(90, -10);
   out.nightEmpty = domPolys().length === 0;
 
-  // 6) rotated compass: the same morning east sun now lights the NORTH window
+  // 6) N points right: the same morning east sun is down on the canvas and
+  // therefore lights the SOUTH window
   cfg().settings.north_deg = 90;
   touchCfg();
   await setSun(90, 5);
-  out.rotatedCompass = JSON.stringify(litIds()) === '["wN"]';
+  out.rotatedCompass = JSON.stringify(litIds()) === '["wS"]';
   cfg().settings.north_deg = 0;
   touchCfg();
 
@@ -127,7 +128,7 @@ const res = await page.evaluate(async () => {
   sp.settings.north_deg = 90;
   touchCfg();
   await setSun(90, 5);
-  out.spaceNorthOverride = JSON.stringify(litIds()) === '["wN"]';
+  out.spaceNorthOverride = JSON.stringify(litIds()) === '["wS"]';
   delete sp.settings.north_deg;
   touchCfg();
 
