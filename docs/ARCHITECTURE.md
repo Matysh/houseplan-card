@@ -365,6 +365,13 @@ physical interval when an acute child ring cannot be subtracted. Paper and
 masonry paths are emitted by that same geometry pass. Computed independent
 junction patches enter as extras only after room opening cuts, so an opening
 cannot cut a coincident partition and room exterior authority remains intact.
+Before the exterior offset is built, each saved atomic endpoint splits its
+containing collinear union edge. Offset changes are explicit butt steps at that
+endpoint, including nonzero-to-zero transitions. The topology tolerance starts
+in render units and is divided by the current edge length before it is compared
+with or used to de-duplicate normalized `t` fractions; this keeps the result
+scale-independent and prevents one interval's depth from leaking into its
+neighbour.
 The full card retains the
 pair in `_wallUnionCache`; static cards retain it in a weak server-snapshot
 cache guarded by a structural geometry fingerprint. This is computed render

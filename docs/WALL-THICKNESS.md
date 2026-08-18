@@ -53,6 +53,15 @@ paper and masonry paths come from one cached structural pass in flat renderers;
 live HA state ticks do not repeat the boolean topology. Saved room and wall data
 is not migrated or rewritten.
 
+Every endpoint of an exterior atomic interval is materialised on a collinear
+boolean-union edge before offsetting. Unequal neighbouring half-depths form a
+hard butt step at that exact endpoint on both the inner and outer faces; the
+larger depth is never tapered or extended over the smaller/zero interval.
+Geometry tolerances are render-space distances and are converted to a local
+dimensionless edge fraction before breakpoint comparison or de-duplication.
+This preserves the same `0 ↔ h` and `h1 ↔ h2` transition at normalized and
+production (`coordScale = 1000`) scales.
+
 ## 3. Body render
 
 Production body is the **ring** `outset(poly, half) − inset(poly, half)` per
@@ -153,7 +162,9 @@ room; nested-room tie; partially out-of-span legacy opening; overlapping
 opening de-duplication; shared symbol/cut/tunnel rejection; thick-door tunnel
 clipping and room-side colour ownership; whole and
 atomic rekey after edge/scale; corner Split exterior equality across
-0/1/15/100 cm, unequal arms, both windings and convex/concave endpoints.
+0/1/15/100 cm, unequal arms, both windings and convex/concave endpoints;
+production-scale `0 ↔ 10`, `10 ↔ 20` and `1 ↔ 100` collinear transitions at
+their exact endpoint.
 Browser: seamless frame; fill not in hatch; m² drops with thickness; a partial
 virtual stretch, its solid thick remainders and Undo move as one real resize;
 the virtual rubber band paints above the real body; sun starts at the room-side
@@ -162,7 +173,9 @@ solid-only in both full and static cards while a 20 cm body keeps its hatch;
 door/window/gate tunnels repeat outer/shared room fills without an axis seam
 (`demo/smoke_opening_tunnel_fill.mjs`); corner Split keeps the same facade in
 Plan/View/kiosk/static/isometric surfaces and the light barrier
-(`demo/smoke_split_corner_wall.mjs`).
+(`demo/smoke_split_corner_wall.mjs`); a Split followed by all-room thickness
+keeps the neighbouring zero facade clear across Plan, View, static, hidden Iso
+and light masonry (`demo/smoke_wall_thickness_transition.mjs`).
 
 ## 9. Independent partitions, drafts and columns
 

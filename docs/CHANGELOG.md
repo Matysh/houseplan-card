@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Collinear exterior walls now change thickness exactly at their saved
+  breakpoint. After splitting a room, a 10 cm wall therefore keeps its full
+  depth up to the divider without leaking onto an adjacent zero-thickness
+  facade; Plan, View, static, hidden isometric and light geometry share the
+  corrected outline ([#150](https://github.com/Matysh/houseplan-card/issues/150)).
 - Home Assistant devices and individual entities manually assigned to a room
   without an HA Area now stay in that exact room instead of returning to their
   registry Area. Existing saved assignments recover automatically, and

@@ -1981,6 +1981,12 @@ require hands on real hardware — they remain for the human pass.
       path appears; room-card and tooltip m² both decrease to the same inner-
       contour area
       [auto: smoke_wall_thickness]
+- [ ] **Exact thickness transition after Split**: split one zero-thickness room,
+      apply 10 cm to every wall of one child and keep the other child at zero.
+      Both halves of the 10 cm facade end at the divider endpoint; no hatch,
+      paper or light masonry continues along the zero side. Plan, View, static
+      and hidden Iso consume the same stepped geometry
+      [auto: smoke_wall_thickness_transition + test/wall-thickness.test.mjs]
 - [ ] **Openings cut the slab**: a door/window/gate on a thick wall leaves a gap in
       the body; the door swing is offset toward the inner face and gate leaves
       toward the exterior face; with

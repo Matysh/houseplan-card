@@ -19,7 +19,7 @@ import {
 import { polygonArea, paperRoomShapes, splitRoomPath, sharedBoundary } from '../test-build/logic.js';
 import { GRID_PITCH } from '../test-build/space-geometry.js';
 import { geometryArea } from '../test-build/physical-geometry.js';
-import { difference, union } from 'polyclip-ts';
+import { difference, intersection, union } from 'polyclip-ts';
 
 const closeTo = (got, want, tol = 1e-6) =>
   assert.ok(Math.abs(got - want) <= tol, `expected ${want}, got ${got}`);
@@ -55,6 +55,22 @@ test('Stage floor footprint excludes detached independent physical bodies', () =
 
 const geometryDifferenceArea = (a, b) => geometryArea(difference(a, b));
 
+const geometryProbeCoverage = (geom, [x, y], radius = 0.05) => {
+  const probe = closedGeometry([
+    [x - radius, y - radius],
+    [x + radius, y - radius],
+    [x + radius, y + radius],
+    [x - radius, y + radius],
+  ]);
+  return geometryArea(intersection(geom, probe)) / ((radius * 2) ** 2);
+};
+
+const assertProbeInside = (geom, point, message) =>
+  assert.ok(geometryProbeCoverage(geom, point) > 0.99, message || `missing body at ${point}`);
+
+const assertProbeOutside = (geom, point, message) =>
+  assert.ok(geometryProbeCoverage(geom, point) < 1e-7, message || `unexpected body at ${point}`);
+
 function cornerSplitFixture({
   poly = [[100, 100], [900, 100], [900, 700], [100, 700]],
   path = [[100, 100], [900, 500]],
@@ -89,6 +105,20 @@ function cornerSplitFixture({
   const after = wallBodiesGeometry(rooms, walls, [], [], pitch, cellCm, GRID_PITCH);
   assert.ok(after, `wall geometry missing for outer=${outerCm}, divider=${dividerCm}`);
   return { original, rooms, walls, before, after };
+}
+
+function splitThicknessTransitionFixture() {
+  const scale = 1000;
+  const rooms = [
+    { id: 'left', poly: [[100, 100], [500, 100], [500, 900], [100, 900]] },
+    { id: 'right', poly: [[500, 100], [900, 100], [900, 900], [500, 900]] },
+  ];
+  const walls = setWallThicknessForRoom([], rooms, 'left', 10, pitch, [], scale);
+  const geometry = wallBodiesGeometry(
+    rooms, walls, [], [], pitch, cellCm, GRID_PITCH, scale,
+  );
+  assert.ok(geometry, 'production-scale split fixture must produce wall geometry');
+  return { scale, rooms, walls, geometry };
 }
 
 // ------------------------------- key ----------------------------------------
@@ -753,6 +783,146 @@ test('wallBodiesUnionPath: a parent floor never erases a nested room wall', () =
   // The old `(union outsets) - (union insets)` formula returned only two
   // subpaths here because the parent floor swallowed the nested wall entirely.
   assert.ok((united.d.match(/M/g) || []).length >= 4, united.d);
+});
+
+test('production-scale Split keeps the 10 → 0 facade transition at the divider', () => {
+  const { scale, rooms, walls, geometry } = splitThicknessTransitionFixture();
+  const intervals = wallIntervals(
+    rooms, walls, [], pitch, cellCm, GRID_PITCH, scale,
+  );
+  const top = intervals.filter((iv) =>
+    iv.kind === 'outer' && Math.abs(iv.a[1] - 100) < 1e-7
+      && Math.abs(iv.b[1] - 100) < 1e-7);
+  assert.deepEqual(top.map((iv) => [iv.roomId, iv.cm]), [['left', 10], ['right', 0]]);
+  const divider = intervals.filter((iv) =>
+    iv.kind === 'shared' && Math.abs(iv.a[0] - 500) < 1e-7
+      && Math.abs(iv.b[0] - 500) < 1e-7);
+  assert.equal(divider.length, 2);
+  assert.ok(divider.every((iv) => iv.cm === 10), 'one physical divider keeps 10 cm');
+
+  const half = wallCmToUnits(10, cellCm, GRID_PITCH) / 2;
+  assertProbeInside(geometry.geom, [300, 100 - half * 0.75], 'outer half is missing');
+  assertProbeInside(geometry.geom, [300, 100 + half * 0.75], 'inner half is missing');
+  assertProbeOutside(geometry.geom, [300, 100 - half - 0.2], 'wall exceeds 10 cm');
+  assertProbeOutside(geometry.geom, [300, 100 + half + 0.2], 'wall exceeds 10 cm');
+  assertProbeOutside(geometry.geom, [700, 96], '10 cm leaked along the zero facade');
+  assertProbeOutside(geometry.geom, [700, 104], 'zero facade gained an inward half-wall');
+  assertProbeOutside(geometry.paperGeom, [700, 96], 'paper leaked past the zero facade');
+
+  assertProbeInside(geometry.geom, [500 - half * 0.5, 300], 'left divider half is missing');
+  assertProbeInside(geometry.geom, [500 + half * 0.5, 300], 'right divider half is missing');
+  assertProbeOutside(geometry.geom, [500 + half * 0.5, 96], 'divider protrudes outside');
+
+  const points = geometry.geom.flat(2);
+  assert.ok(points.some(([x, y]) =>
+    Math.abs(x - 500) < 1e-7 && Math.abs(y - (100 - half)) < 1e-7),
+  'the outer transition face must start at the exact divider endpoint');
+
+  const leftFloor = innerContourForRoom(
+    rooms, 'left', walls, [], pitch, cellCm, GRID_PITCH, scale,
+  );
+  const rightFloor = innerContourForRoom(
+    rooms, 'right', walls, [], pitch, cellCm, GRID_PITCH, scale,
+  );
+  assert.ok(leftFloor && rightFloor);
+  assertProbeOutside(closedGeometry(leftFloor), [300, 102], 'left floor covers its wall');
+  assertProbeInside(closedGeometry(leftFloor), [300, 106], 'left clean floor starts too late');
+  assertProbeInside(closedGeometry(rightFloor), [700, 102], 'zero side lost clean floor');
+
+  const before = JSON.stringify({ rooms, walls });
+  assert.ok(wallBodiesGeometry(rooms, walls, [], [], pitch, cellCm, GRID_PITCH, scale));
+  assert.equal(JSON.stringify({ rooms, walls }), before, 'rendering must not migrate saved config');
+});
+
+test('production-scale collinear transitions keep both local depths in either direction', () => {
+  const scale = 1000;
+  const room = { id: 'room', poly: [[100, 100], [900, 100], [900, 900], [100, 900]] };
+  const make = (firstCm, secondCm, poly = room.poly) => {
+    let walls = [];
+    if (firstCm > 0)
+      walls = setWallThickness(walls, [100, 100], [500, 100], firstCm, pitch, scale);
+    if (secondCm > 0)
+      walls = setWallThickness(walls, [500, 100], [900, 100], secondCm, pitch, scale);
+    const geometry = wallBodiesGeometry(
+      [{ id: 'room', poly }], walls, [], [], pitch, cellCm, GRID_PITCH, scale,
+    );
+    assert.ok(geometry, `missing geometry for ${firstCm} → ${secondCm}`);
+    return { geometry, walls };
+  };
+  const assertLocalDepth = (geometry, x, cm, label) => {
+    if (cm === 0) {
+      assertProbeOutside(geometry.geom, [x, 99], `${label}: zero outer side is solid`);
+      assertProbeOutside(geometry.geom, [x, 101], `${label}: zero inner side is solid`);
+      return;
+    }
+    const half = wallCmToUnits(cm, cellCm, GRID_PITCH) / 2;
+    assertProbeInside(geometry.geom, [x, 100 - half * 0.75], `${label}: outer half missing`);
+    assertProbeInside(geometry.geom, [x, 100 + half * 0.75], `${label}: inner half missing`);
+    assertProbeOutside(geometry.geom, [x, 100 - half - 0.2], `${label}: outer depth too large`);
+    assertProbeOutside(geometry.geom, [x, 100 + half + 0.2], `${label}: inner depth too large`);
+  };
+
+  for (const [firstCm, secondCm] of [
+    [0, 10], [10, 0], [10, 20], [20, 10], [1, 100], [100, 1], [10, 10],
+  ]) {
+    const { geometry } = make(firstCm, secondCm);
+    assertLocalDepth(geometry, 300, firstCm, `${firstCm} → ${secondCm}, first`);
+    assertLocalDepth(geometry, 700, secondCm, `${firstCm} → ${secondCm}, second`);
+    if (firstCm !== secondCm) {
+      const points = geometry.geom.flat(2);
+      for (const cm of new Set([firstCm, secondCm])) {
+        if (!(cm > 0)) continue;
+        const half = wallCmToUnits(cm, cellCm, GRID_PITCH) / 2;
+        for (const y of [100 - half, 100 + half])
+          assert.ok(points.some(([x0, y0]) =>
+            Math.abs(x0 - 500) < 1e-7 && Math.abs(y0 - y) < 1e-7),
+          `${firstCm} → ${secondCm}: missing exact transition vertex at 500,${y}`);
+      }
+    }
+  }
+
+  const splitEqual = make(10, 10).geometry;
+  let wholeWalls = setWallThickness([], [100, 100], [900, 100], 10, pitch, scale);
+  const whole = wallBodiesGeometry(
+    [room], wholeWalls, [], [], pitch, cellCm, GRID_PITCH, scale,
+  );
+  assert.ok(whole);
+  closeTo(geometryDifferenceArea(splitEqual.geom, whole.geom), 0, 1e-7);
+  closeTo(geometryDifferenceArea(whole.geom, splitEqual.geom), 0, 1e-7);
+
+  const ordered = make(10, 20).geometry;
+  const reversed = make(10, 20, [...room.poly].reverse()).geometry;
+  closeTo(geometryDifferenceArea(ordered.geom, reversed.geom), 0, 1e-7);
+  closeTo(geometryDifferenceArea(reversed.geom, ordered.geom), 0, 1e-7);
+});
+
+test('production-scale 45° facade keeps an exact unequal-thickness breakpoint', () => {
+  const scale = 1000;
+  const room = {
+    id: 'diagonal',
+    poly: [[200, 100], [800, 700], [600, 900], [0, 300]],
+  };
+  const transition = [500, 400];
+  let walls = setWallThickness([], room.poly[0], transition, 10, pitch, scale);
+  walls = setWallThickness(walls, transition, room.poly[1], 20, pitch, scale);
+  const geometry = wallBodiesGeometry(
+    [room], walls, [], [], pitch, cellCm, GRID_PITCH, scale,
+  );
+  assert.ok(geometry);
+  const normal = inwardNormal(room.poly, 0);
+  const points = geometry.geom.flat(2);
+  for (const cm of [10, 20]) {
+    const half = wallCmToUnits(cm, cellCm, GRID_PITCH) / 2;
+    for (const side of [-1, 1]) {
+      const expected = [
+        transition[0] + normal[0] * half * side,
+        transition[1] + normal[1] * half * side,
+      ];
+      assert.ok(points.some(([x, y]) =>
+        Math.hypot(x - expected[0], y - expected[1]) < 1e-7),
+      `missing 45° transition vertex ${expected}`);
+    }
+  }
 });
 
 test('corner Split keeps the original exterior wall body and paper', () => {

@@ -1384,7 +1384,8 @@ function pointOnSegment(p: number[], a: number[], b: number[], eps: number): boo
   const dx = b[0] - a[0], dy = b[1] - a[1];
   const dot = (p[0] - a[0]) * dx + (p[1] - a[1]) * dy;
   const len2 = dx * dx + dy * dy;
-  return dot >= -eps && dot <= len2 + eps;
+  const projectedEps = eps * Math.sqrt(len2);
+  return dot >= -projectedEps && dot <= len2 + projectedEps;
 }
 
 /**
@@ -1404,16 +1405,23 @@ function exteriorBoundaryProfile(
     const dx = b[0] - a[0], dy = b[1] - a[1];
     const len2 = dx * dx + dy * dy;
     if (!(len2 > eps * eps)) continue;
+    // `t` below is a dimensionless fraction of this edge, while `eps` is a
+    // render-space distance. Comparing them directly drops every interior cut
+    // on production-scale plans (for example eps ~= 0.67 at coordScale=1000).
+    // Convert the shared geometry tolerance to the edge's local 0..1 domain.
+    const tEps = eps / Math.sqrt(len2);
     const cuts = [0, 1];
     for (const iv of outer) {
       for (const p of [iv.a, iv.b]) {
         if (!pointOnSegment(p, a, b, eps)) continue;
         const t = ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / len2;
-        if (t > eps && t < 1 - eps) cuts.push(t);
+        if (t > tEps && t < 1 - tEps) cuts.push(t);
       }
     }
     cuts.sort((x, y) => x - y);
-    const unique = cuts.filter((t, at) => at === 0 || Math.abs(t - cuts[at - 1]) > eps);
+    const unique = cuts.filter(
+      (t, at) => at === 0 || Math.abs(t - cuts[at - 1]) > tEps,
+    );
     for (let at = 0; at < unique.length - 1; at++) {
       const t0 = unique[at], t1 = unique[at + 1];
       const p = [a[0] + dx * t0, a[1] + dy * t0];
