@@ -519,8 +519,11 @@ double click → properties dialog. In markup mode the "Opening" tool handles cl
 Contact and lock are exact HA references owned by the opening, not aliases of
 standalone markers. Their candidate/action path follows HA binding status while
 their render path follows the frozen active-registry projection; neither path
-consults marker tombstones. Plan-level consumers keep the tombstone policy
-described above.
+consults marker tombstones. For that projection, the presence of an exact state
+is sufficient: registry-less YAML entities have no row, while explicit
+disabled/orphan rows have already been stripped together with their states.
+The render helper must never receive raw live hass. Plan-level consumers keep
+the tombstone policy described above.
 
 For a wall with thickness, one `OpeningWallIndex` resolves the atomic wall
 interval and adjacent room on each side of the centreline. Opening symbols,

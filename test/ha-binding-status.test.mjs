@@ -247,19 +247,59 @@ test('opening entity availability ignores marker lifecycle and follows exact HA 
   assert.equal(openingEntityAvailable(hass, null, snapshot), false);
 });
 
-test('opening render availability requires one frozen registry-backed frame', () => {
-  const frame = {
-    entities: {
-      'binary_sensor.door': { entity_id: 'binary_sensor.door' },
-      'lock.no_state': { entity_id: 'lock.no_state' },
+test('opening render availability trusts one frozen active projection', () => {
+  const devices = {
+    active: { id: 'active', disabled_by: null },
+    disabled: { id: 'disabled', disabled_by: 'user' },
+  };
+  const entities = {
+    'binary_sensor.door': {
+      entity_id: 'binary_sensor.door', device_id: 'active', disabled_by: null,
     },
-    states: {
-      'binary_sensor.door': { state: 'unknown' },
-      'binary_sensor.yaml_only': { state: 'on' },
+    'lock.no_state': { entity_id: 'lock.no_state', device_id: 'active', disabled_by: null },
+    'lock.disabled_entity': {
+      entity_id: 'lock.disabled_entity', device_id: 'active', disabled_by: 'user',
+    },
+    'lock.disabled_parent': {
+      entity_id: 'lock.disabled_parent', device_id: 'disabled', disabled_by: null,
+    },
+    'lock.orphan': {
+      entity_id: 'lock.orphan', device_id: 'missing-device', disabled_by: null,
     },
   };
+  const states = {
+    'binary_sensor.door': { entity_id: 'binary_sensor.door', state: 'unknown' },
+    'binary_sensor.yaml_only': { entity_id: 'binary_sensor.yaml_only', state: 'on' },
+    'lock.yaml_unknown': { entity_id: 'lock.yaml_unknown', state: 'unavailable' },
+    'lock.disabled_entity': { entity_id: 'lock.disabled_entity', state: 'locked' },
+    'lock.disabled_parent': { entity_id: 'lock.disabled_parent', state: 'locked' },
+    'lock.orphan': { entity_id: 'lock.orphan', state: 'locked' },
+  };
+  const frame = activeRegistryHass({ devices, entities, states }, full(devices, entities));
+
   assert.equal(renderOpeningEntityAvailable(frame, 'binary_sensor.door'), true);
   assert.equal(renderOpeningEntityAvailable(frame, 'lock.no_state'), false);
-  assert.equal(renderOpeningEntityAvailable(frame, 'binary_sensor.yaml_only'), false, '#117 owns YAML parity');
+  assert.equal(renderOpeningEntityAvailable(frame, 'binary_sensor.yaml_only'), true);
+  assert.equal(renderOpeningEntityAvailable(frame, 'lock.yaml_unknown'), true,
+    'unknown/unavailable remains an existing exact reference, not an open state');
+  assert.equal(renderOpeningEntityAvailable(frame, 'lock.disabled_entity'), false);
+  assert.equal(renderOpeningEntityAvailable(frame, 'lock.disabled_parent'), false);
+  assert.equal(renderOpeningEntityAvailable(frame, 'lock.orphan'), false);
+  assert.equal(renderOpeningEntityAvailable(frame, 'lock.missing'), false);
   assert.equal(renderOpeningEntityAvailable(frame, ''), false);
+
+  const limitedFrame = activeRegistryHass({
+    devices: {}, entities: {},
+    states: { 'binary_sensor.limited_yaml': { state: 'off' } },
+  }, limited({}, {}));
+  assert.equal(renderOpeningEntityAvailable(limitedFrame, 'binary_sensor.limited_yaml'), true);
+
+  const markerTombstoneIsNotAnInput = {
+    ...frame,
+    markers: [{ binding: 'entity:binary_sensor.yaml_only', removed: true }],
+  };
+  assert.equal(
+    renderOpeningEntityAvailable(markerTombstoneIsNotAnInput, 'binary_sensor.yaml_only'),
+    true,
+  );
 });

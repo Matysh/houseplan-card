@@ -63,6 +63,18 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'registryless-opening-requires-registry-row',
+    guard: 'node demo/smoke_registryless_opening.mjs',
+    because: 'возврат требования Entity Registry row снова делает выбранную YAML-сущность '
+      + 'невидимой в painted frame; smoke обязан доказать contact, lock и frozen-snapshot parity',
+    patches: [{
+      file: 'src/ha-binding-status.ts',
+      find: '  return !!entityId\n    && !!projectedHass?.states?.[entityId];',
+      replace: '  return !!entityId\n    && !!projectedHass?.entities?.[entityId]\n'
+        + '    && !!projectedHass?.states?.[entityId];',
+    }],
+  },
+  {
     id: 'column-shadow-removed',
     guard: 'node demo/smoke_glow.mjs',
     because: 'физические тела выпали из окклюдеров — колонна перестаёт отбрасывать '

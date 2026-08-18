@@ -69,6 +69,12 @@
   ([#166](https://github.com/Matysh/houseplan-card/issues/166)).
 - Small fixes and improvements.
 
+- Door, window and gate contacts and locks now keep working when they are live
+  YAML entities without a `unique_id` and therefore have no Entity Registry
+  row. The picker, View animation, lock badge and opening info card now follow
+  the same exact reference, while disabled, orphaned and missing entities
+  remain unavailable ([#117](https://github.com/Matysh/houseplan-card/issues/117)).
+
 ## v1.64.0-beta.3 — 2026-08-14
 
 - Large plans no longer recompute an unused physical-wall union on every floor

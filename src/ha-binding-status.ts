@@ -532,15 +532,17 @@ export function openingEntityAvailable(
 
 /**
  * Frame-local counterpart of `openingEntityAvailable`. The caller supplies an
- * immutable active-registry projection, so both the registry row and state
- * must belong to the same painted frame. Registry-less render parity is #117.
+ * immutable active-registry projection. State presence in that projection is
+ * sufficient evidence for an exact opening reference: YAML entities without
+ * unique_id have no registry row, while explicit disabled/orphan rows have
+ * already had their states removed by `activeRegistryHass`. Never call this
+ * helper with raw live hass; every read must belong to one painted frame.
  */
 export function renderOpeningEntityAvailable(
   projectedHass: any,
   entityId: string | null | undefined,
 ): boolean {
   return !!entityId
-    && !!projectedHass?.entities?.[entityId]
     && !!projectedHass?.states?.[entityId];
 }
 

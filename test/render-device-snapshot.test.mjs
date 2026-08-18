@@ -114,6 +114,14 @@ test('opening references use their own availability policy without weakening pla
   assert.match(renderAvailability, /isRemovedPlanEntity/);
   assert.doesNotMatch(planAvailability, /openingEntityAvailable/);
   assert.doesNotMatch(renderAvailability, /renderOpeningEntityAvailable/);
+
+  const openingRenderAvailability = methodBody(source, '_renderOpeningEntityAvailable');
+  assert.match(
+    openingRenderAvailability,
+    /renderOpeningEntityAvailable\(this\._renderPlanHass, eid\)/,
+    'opening render availability receives only the immutable painted-frame projection',
+  );
+  assert.doesNotMatch(openingRenderAvailability, /this\.hass\b/);
 });
 
 test('lock actuation remains guarded inside the one sanctioned opening-card method', () => {

@@ -1095,6 +1095,13 @@ separately promised workflows:
       locked / Lock when unlocked; button calls the lock service; disabled while
       locking/unlocking; hidden when unavailable; plan-icon tap still never
       toggles a lock [auto: smoke_gear_tabs / smoke_gs_always]
+- [ ] Registry-less opening binding (#117): a live YAML contact/lock without
+      `unique_id` is offered by the picker and drives the frozen View frame,
+      badge and info card; marker tombstones do not block it, an HA tick swaps
+      the frame without rebuilding geometry/config, and explicit disabled rows
+      with stale states remain hidden. Only the confirmed info-card lock action
+      may call a service [auto: ha-binding-status, render-device-snapshot,
+      smoke_registryless_opening, mutation-gate]
 - [ ] New-device flag (v1.29.0): a device added to HA after install gets a big red
       dot top-right of its icon (all clients); opening its editor clears it
       everywhere; upgrade/first-run seeds the baseline silently — no dot flood [auto: smoke_new_device]
