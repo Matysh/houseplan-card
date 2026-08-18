@@ -333,9 +333,101 @@ RU и EN получают полный паритет для:
 - при необходимости `docs/ARCHITECTURE.md` — раздел action resolution;
 - `docs/CHANGELOG.md` и `docs/CHANGELOG.ru.md` в пользовательском commit.
 
-## 14. Тестовый контракт
+## 14. Touch и accessibility
 
-### 14.1 Unit
+**Touch editor: supported.** Функция доступна в существующем диалоге устройства
+одинаково на desktop и touch: используется native `<select>` с обычным tap,
+связанным `<label>` и без hover-only affordance. Селектор не добавляет жестов
+на плане, drag/pinch/pan, long-press либо собственную touch-геометрию.
+
+На узкой ширине label, option text, help и stale-warning не должны выходить за
+границы диалога или перекрывать footer. Длинный friendly name может быть
+обрезан нативным control, но полный entity id остаётся в option и warning.
+Keyboard focus, screen-reader label, `aria-live` текущей подсказки и
+`role="status"` warning проверяются существующим accessibility-паттерном
+диалога.
+
+## 15. Производительность, security и риски
+
+### 15.1 Производительность
+
+Нового per-frame, pointermove, SVG либо room-aggregate вычисления нет.
+Candidate set строится только при открытом/изменяемом диалоге и при Toggle
+resolution линейно по числу сущностей одного устройства; group resolution
+остаётся линейным по числу `controls`. Обязательный performance contract:
+
+- отсутствие нового global registry scan на каждый render View;
+- отсутствие сетевого запроса при смене select;
+- preview использует существующие memo/revision boundaries;
+- отдельный benchmark и новый budget не требуются, потому что hot render path
+  не меняется; prerelease performance suite не должен показать регрессию.
+
+### 15.2 Security
+
+Поле не расширяет набор разрешённых доменов и services. Backend принимает для
+новой/изменённой записи только `light.*`/`switch.*`; runtime передаёт exact id в
+существующий capability-aware resolver и вызывает только уже разрешённые
+`turn_on`/`turn_off`/`toggle` paths. `lock.*`, secure domains, шаблоны, service
+names и произвольные payload из поля невозможны. Новых permissions, endpoints
+и секретов нет.
+
+### 15.3 Риски и меры
+
+| Риск | Последствие | Мера и доказательство |
+|---|---|---|
+| Новый шаг случайно меняет config без поля | массовая смена tap targets после обновления | отдельные legacy single/group regression units и отсутствие миграции |
+| Explicit own entity ошибочно добавляется в каждую controls-group | старые marker начинают переключать собственное питание | group membership меняется только при active explicit value; mutation unit §18.1 |
+| Stale literal стирается при unrelated save | выбор не восстанавливается после возврата entity | touched/write-fields unit + dialog smoke reopen |
+| Selected unavailable entity silent-retarget-ится | тап действует на неожиданное sibling-реле | exact-target unavailable/missing/secure units |
+| Frontend/backend разных версий расходятся | старый клиент игнорирует или стирает unknown field при rebuild marker | optional/lossless delta contract и явная downgrade-записка в compatibility docs |
+| Длинные имена ломают mobile dialog | selector/warning нечитаемы | mobile RU/dark golden и native select contract |
+
+Остаточный риск — **низкий/средний**: service path существующий, но ошибка в
+границе explicit/legacy способна переключить физически другое безопасное
+`light`/`switch` устройство. Поэтому exact target и legacy group mutation floor
+блокируют перевод в code review.
+
+## 16. Откат
+
+Функция откатывается обычным revert user-visible implementation commit без
+data migration:
+
+1. UI перестаёт предлагать selector;
+2. runtime игнорирует `toggle_entity` и возвращается к legacy resolution;
+3. backend validation/import additions удаляются вместе с feature;
+4. уже сохранённый optional literal не требует преобразования для чтения
+   старой конфигурации; старый frontend/backend может его игнорировать и, как
+   любой неизвестный marker field, стереть только при реконструкции marker.
+
+Если откат нужен только из-за UI, допускается временно скрыть selector и
+оставить read/runtime поддержку поля: это сохраняет пользовательский выбор и
+не требует config rewrite. Автоматически переписывать `toggle_entity` в
+`light_entity`, `tap_target` либо `controls` при любом варианте отката
+запрещено.
+
+После rollback обязательны legacy unit suite, typecheck/build и smoke обычного
+Toggle; новый golden удаляется/возвращается в том же reviewed revert.
+
+## 17. Release-артефакты
+
+User-visible implementation commit одновременно включает:
+
+- записи в `docs/CHANGELOG.md` и `docs/CHANGELOG.ru.md`;
+- обновления `docs/USER-GUIDE.md`, `docs/USER-GUIDE.ru.md` и
+  `docs/CONFIG-COMPATIBILITY.md`;
+- при изменении action architecture — синхронную правку
+  `docs/ARCHITECTURE.md`;
+- новый named production-bundle smoke и unit/backend coverage;
+- golden matrix entries и semantic prerequisites.
+
+Reviewed PNG baselines принимаются только из Linux CI artifact по обычному
+prerelease-процессу. Новый performance budget и security report не создаются:
+hot path, permissions и API surface не расширяются; доказательством служат
+§15, общий prerelease performance gate и code review.
+
+## 18. Тестовый контракт
+
+### 18.1 Unit
 
 Обязательны тесты:
 
@@ -358,7 +450,7 @@ RU и EN получают полный паритет для:
     сохраняет literal;
 14. RU/EN key parity и native-select contract включают новый control.
 
-### 14.2 Production-bundle smoke
+### 18.2 Production-bundle smoke
 
 Новый `demo/smoke_toggle_entity.mjs` либо эквивалентный именованный smoke
 запускается против `dist/houseplan-card.js` и проверяет:
@@ -377,7 +469,7 @@ Mutation floor:
 - ошибочное добавление own entity в legacy external-only group обязано сломать
   compatibility unit.
 
-### 14.3 Golden
+### 18.3 Golden
 
 Golden matrix получает два reviewed сценария одного composite fixture:
 
@@ -389,7 +481,7 @@ Golden matrix получает два reviewed сценария одного com
 artifact по общему release-процессу; локальный Windows capture не является
 основанием для `golden:accept`.
 
-### 14.4 Gates
+### 18.4 Gates
 
 В цикле реализации:
 
@@ -400,30 +492,41 @@ npm run build
 ```
 
 Перед `S7-code-review` дополнительно запускается именованный production-bundle
-smoke §14.2. Golden, полный smoke set и performance остаются prerelease gates.
+smoke §18.2. Golden, полный smoke set и performance остаются prerelease gates.
 Полный HA harness канонически запускается в Linux CI.
 
-## 15. Acceptance criteria
+## 19. Acceptance criteria
 
 1. При effective Toggle и двух собственных `light.*`/`switch.*` виден новый
-   selector с friendly name и entity id.
+   selector с friendly name и entity id. **Доказательство:** smoke §18.2.1,
+   desktop golden §18.3.
 2. Выбор сущности немедленно меняет preview hint и после Save — exact service
-   target.
-3. При одной кандидатке selector скрыт и поведение прежнее.
+   target. **Доказательство:** unit §18.1.1 и smoke §18.2.2–3.
+3. При одной кандидатке selector скрыт и поведение прежнее. **Доказательство:**
+   unit §18.1.6 и smoke §18.2.5.
 4. Config без `toggle_entity` даёт бит-в-бит прежние single и group targets.
+   **Доказательство:** unit §18.1.3, §18.1.8 и mutation floor §18.2.
 5. Stale значение не стирается, предупреждается и временно использует legacy
-   fallback.
+   fallback. **Доказательство:** unit §18.1.4/11, smoke §18.2.4 и mobile golden
+   §18.3.
 6. Active, но transient unavailable selected entity не заменяется sibling.
+   **Доказательство:** unit §18.1.5/9.
 7. Explicit selected own entity входит в controls-group; без explicit поля
-   group остаётся external-only.
+   group остаётся external-only. **Доказательство:** unit §18.1.7–9.
 8. `light_entity`, `tap_target`, cover и virtual paths независимы и не изменены.
+   **Доказательство:** unit §18.1.3/10 и code review diff.
 9. Full/space transfer сохраняет id буквально; virtualize policy удаляет поле.
-10. Backend применяет lossless delta-validation.
-11. RU/EN, accessibility, unit, named smoke и golden contracts выполнены.
+   **Доказательство:** backend/import unit §18.1.13.
+10. Backend применяет lossless delta-validation. **Доказательство:** backend
+    unit §18.1.12 и full-import fixture.
+11. RU/EN, accessibility, touch, unit, named smoke и golden contracts выполнены.
+    **Доказательство:** i18n/native-select unit §18.1.14, smoke §18.2 и reviewed
+    Linux golden §18.3.
 12. Оба changelog и пользовательские документы обновлены в том же
-    user-visible commit.
+    user-visible commit. **Доказательство:** commit trailers/process gate и
+    code-review artifact inventory.
 
-## 16. Принятые технические предположения
+## 20. Принятые технические предположения
 
 1. Для списка переиспользуется/обобщается pure candidate helper на основе
    `ownControllableEntities()`; отдельная registry traversal в UI не создаётся.
