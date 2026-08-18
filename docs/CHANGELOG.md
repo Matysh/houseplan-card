@@ -16,7 +16,9 @@
   and Partition tools. An open chain becomes ordinary walls when the tool,
   editor or floor changes; closing endpoint/T/X geometry offers every newly
   formed room in stable area order, with clean room splits and atomic
-  Create/Keep/Cancel decisions ([#173](https://github.com/Matysh/houseplan-card/issues/173)).
+  Create/Keep/Cancel decisions. Ctrl/Cmd+click no longer adds an extra point
+  while the chain is still too short to close
+  ([#173](https://github.com/Matysh/houseplan-card/issues/173)).
 - Collinear exterior walls now change thickness exactly at their saved
   breakpoint. After splitting a room, a 10 cm wall therefore keeps its full
   depth up to the divider without leaking onto an adjacent zero-thickness

@@ -6657,10 +6657,14 @@ class HouseplanCard extends LitElement {
     // Walls: every completed segment is crash-safe in room_drafts until an
     // explicit finish converts the chain or a confirmed face batch consumes it.
     let pt = this._resolvePlanDrawPoint(raw, ev.shiftKey).point;
-    if ((ev.ctrlKey || ev.metaKey) && this._path.length >= 3) {
+    if (ev.ctrlKey || ev.metaKey) {
+      // The closure shortcut owns the gesture even before the chain has the
+      // two existing edges required to form a room. Falling through here
+      // would turn a refused Ctrl/Cmd+click into an ordinary drawing click.
+      ev.preventDefault();
+      if (this._path.length < 3) return;
       // Preserve the established shortcut, but commit its closing wall through
       // the same graph/draft path as an ordinary click on the first node.
-      ev.preventDefault();
       pt = [...this._path[0]];
     }
     // Island rooms (v1.34.0): drawing INSIDE an existing room is legal — the
