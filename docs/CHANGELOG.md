@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Composite Home Assistant devices with several light/switch entities now let
+  you choose the exact entity operated by **Toggle state**. The dialog previews
+  the selected target immediately, preserves missing choices with a warning,
+  and can include the selected own entity in an explicitly configured group
+  without changing existing plans ([#178](https://github.com/Matysh/houseplan-card/issues/178)).
 - A virtual Always-light linked to a real relay now follows that relay instead
   of keeping an independent manual state. Tapping either marker operates the
   real Home Assistant device, while Glow, Light fill, room counts and both

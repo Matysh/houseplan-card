@@ -1829,6 +1829,36 @@ def test_light_entity_is_domain_bounded_only_when_new_or_changed():
         v.validate_marker_light_entities(old, validate_all=True)
 
 
+def test_toggle_entity_is_domain_bounded_only_when_new_or_changed():
+    cfg = v.CONFIG_SCHEMA({"spaces": [], "markers": [
+        {"id": "washer", "binding": "device:washer",
+         "toggle_entity": "switch.child_lock"},
+    ]})
+    assert cfg["markers"][0]["toggle_entity"] == "switch.child_lock"
+
+    old = {"markers": [
+        {"id": "washer", "binding": "device:washer", "toggle_entity": "sensor.future"},
+    ]}
+    v.validate_marker_light_entities(old, old)
+
+    with pytest.raises(v.MarkerControlError) as changed:
+        v.validate_marker_light_entities({"markers": [
+            {"id": "washer", "binding": "device:washer", "toggle_entity": "sensor.changed"},
+        ]}, old)
+    assert changed.value.code == "invalid_toggle_entity"
+
+    for invalid in ("light.UPPER", "switch.bad-id", "marker:other", 7):
+        with pytest.raises(v.MarkerControlError) as imported:
+            v.validate_marker_light_entities({"markers": [
+                {"id": "washer", "binding": "device:washer", "toggle_entity": invalid},
+            ]}, validate_all=True)
+        assert imported.value.code == "invalid_toggle_entity"
+
+    with pytest.raises(v.MarkerControlError) as full_import:
+        v.validate_marker_light_entities(old, validate_all=True)
+    assert full_import.value.code == "invalid_toggle_entity"
+
+
 def test_issue_90_value_badge_validation_is_strict_only_when_changed():
     valid = {
         "enabled": True,

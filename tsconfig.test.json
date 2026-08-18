@@ -9,7 +9,7 @@
   },
   "include": [
     "src/color.ts", "src/logic.ts", "src/glow-blend.ts", "src/device-visual.ts", "src/device-pulse.ts", "src/device-presentation.ts",
-    "src/device-face.ts", "src/device-toggle.ts", "src/activity-runtime.ts",
+    "src/device-face.ts", "src/device-toggle.ts", "src/marker-toggle-entity.ts", "src/activity-runtime.ts",
     "src/ha-binding-status.ts",
     "src/integration-provider.ts", "src/vacuum.ts",
     "src/sun.ts",

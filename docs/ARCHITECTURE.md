@@ -957,6 +957,11 @@ hash falls back to the default.
   service catalog is a second fail-closed guard. A click resolves the current
   marker by id rather than using a retained #73 visual snapshot; the snapshot
   remains valid only for read-only presentation.
+  Optional `marker.toggle_entity` is an exact own `light.*`/`switch.*` override
+  layered before the legacy own-role resolver. Its absence leaves legacy
+  single/group membership unchanged; an active explicit choice also joins an
+  explicit controls group, while stale values fall back without being erased.
+  It is deliberately independent from visual `marker.light_entity`.
 - **Resolved device state** (2026-08-06): HA provides states per entity, not
   one state per device. `resolvedDeviceStateEntities` therefore starts from
   uncategorised registry entities, resolves one functional role (whole-device

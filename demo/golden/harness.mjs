@@ -580,6 +580,25 @@ export async function prepareGoldenScenario(page, scenario) {
         if (visibleRole.top < visibleBody.top - 1 || visibleRadius.bottom > visibleBody.bottom + 1)
           throw new Error('golden viewport does not show the complete device light-source controls');
       }
+      if (scenario.deviceToggleEntity) {
+        const dialog = card.renderRoot.querySelector('hp-dialog');
+        const body = dialog?.querySelector('.body');
+        const select = dialog?.querySelector('#marker-toggle-entity');
+        const warning = dialog?.querySelector('.markertoggleentity [role="status"]');
+        const childLock = 'switch.golden_washer_child_lock';
+        if (!body || !select || select.options.length !== 3)
+          throw new Error('golden toggle-entity selector is incomplete');
+        if (scenario.deviceToggleEntity === 'selected'
+            && (select.value !== childLock || warning))
+          throw new Error('golden selected toggle entity is not projected');
+        if (scenario.deviceToggleEntity === 'stale'
+            && (select.value !== '' || !warning?.textContent?.includes('switch.golden_washer_removed')))
+          throw new Error('golden stale toggle entity warning is missing');
+        const bodyRect = body.getBoundingClientRect();
+        const selectRect = select.getBoundingClientRect();
+        body.scrollTop += selectRect.top - bodyRect.top - 12;
+        await frame();
+      }
       if (scenario.openHelp) {
         const help = card.renderRoot.querySelector(`hp-help[data-help-key="${scenario.openHelp}"]`);
         await help?.updateComplete;

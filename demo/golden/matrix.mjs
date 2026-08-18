@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 25;
+export const GOLDEN_MATRIX_VERSION = 26;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -247,6 +247,20 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'device-dialog-mobile-ru', fixture: 'visual', space: 'golden-lighting',
     dialog: 'device', deviceId: 'golden-light-two', deviceLightControls: true,
     deviceName: 'Контроллер освещения гостиной с намеренно очень длинным названием',
+    language: 'ru', theme: 'dark', viewport: { width: 390, height: 1000 }, ...page },
+  { id: 'toggle-entity-dialog-desktop-en', fixture: 'visual', applianceLifecycle: true,
+    space: 'golden-appliance', dialog: 'device', deviceId: 'golden-washer',
+    deviceToggleEntity: 'selected', markerOverrides: [{
+      id: 'golden-washer', binding: 'device:golden-washer', tap_action: 'toggle',
+      toggle_entity: 'switch.golden_washer_child_lock',
+    }],
+    language: 'en', theme: 'light', viewport: { width: 1180, height: 1100 }, ...page },
+  { id: 'toggle-entity-dialog-mobile-ru', fixture: 'visual', applianceLifecycle: true,
+    space: 'golden-appliance', dialog: 'device', deviceId: 'golden-washer',
+    deviceToggleEntity: 'stale', markerOverrides: [{
+      id: 'golden-washer', binding: 'device:golden-washer', tap_action: 'toggle',
+      toggle_entity: 'switch.golden_washer_removed',
+    }],
     language: 'ru', theme: 'dark', viewport: { width: 390, height: 1000 }, ...page },
   { id: 'device-help-popover-light-ru', fixture: 'visual', space: 'golden-lighting',
     dialog: 'device', deviceId: 'golden-light-two', deviceLightControls: true,

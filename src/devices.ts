@@ -216,6 +216,7 @@ export interface LightSourceDevice {
     room_id?: string | null;
     is_light?: boolean | null;
     light_entity?: string | null;
+    toggle_entity?: string | null;
     controls?: string[] | null;
     glow_radius_cm?: number | null;
     glow_color?: { c: string; bri?: number | null } | null;

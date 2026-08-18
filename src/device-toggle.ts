@@ -7,6 +7,7 @@
  */
 import {
   forcedLightEntityOf,
+  ownControllableEntities,
   incomingLightControls,
   persistedExternalControls,
   resolvedDeviceStateEntities,
@@ -391,6 +392,23 @@ function ownRoleCandidates(device: DevItem, registryHass: any): string[] {
   ].filter((eid): eid is string => !!eid))];
 }
 
+/** Own light/switch choices exposed by the Toggle selector. An entity binding
+ * is already an exact user choice and must not silently expand to registry
+ * siblings; a device binding keeps the established deterministic order. */
+export function toggleEntityCandidates(device: DevItem): string[] {
+  if (device.bindingKind === 'entity') {
+    return device.bindingRef && isControllable(device.bindingRef) ? [device.bindingRef] : [];
+  }
+  if (device.bindingKind === 'virtual') return [];
+  return ownControllableEntities(device);
+}
+
+/** A stale explicit choice remains persisted but is never sent to a service. */
+function selectedToggleEntity(device: DevItem): string | null {
+  const selected = device.marker?.toggle_entity;
+  return selected && toggleEntityCandidates(device).includes(selected) ? selected : null;
+}
+
 /**
  * Resolve the first supported member of the already-selected functional role.
  * Missing/unavailable/secure members remain the explained target and never
@@ -570,7 +588,9 @@ function resolveIncomingControllers(
   );
 }
 
-function resolveControls(options: ResolveToggleOptions): ResolvedToggleIntent {
+function resolveControls(
+  options: ResolveToggleOptions, selectedOwnEntity: string | null = null,
+): ResolvedToggleIntent {
   const { hass, device, devices } = options;
   const registryHass = options.registryHass || hass;
   const refs = persistedExternalControls(
@@ -593,6 +613,14 @@ function resolveControls(options: ResolveToggleOptions): ResolvedToggleIntent {
   }
   const entries: GroupEntityRef[] = [];
   const skippedTargets: SkippedToggleTarget[] = [];
+
+  if (selectedOwnEntity) {
+    entries.push({
+      entityId: selectedOwnEntity,
+      via: device.bindingKind === 'entity' ? 'binding' : 'device-role',
+      ref: selectedOwnEntity,
+    });
+  }
 
   for (const ref of refs) {
     if (!ref.startsWith('marker:')) {
@@ -683,7 +711,7 @@ export function resolveToggleIntent(options: ResolveToggleOptions): ResolvedTogg
     const refs = persistedExternalControls(
       device.marker?.binding, device.marker?.controls ?? device.controls, device.entities,
     );
-    if (refs.length) return resolveControls(options);
+    if (refs.length) return resolveControls(options, selectedToggleEntity(device));
   }
 
   if (origin === 'legacy-cover') {
@@ -698,7 +726,15 @@ export function resolveToggleIntent(options: ResolveToggleOptions): ResolvedTogg
       : emptyIntent(origin, 'no-actionable-entity');
   }
 
-  const own = resolveOwnEntity(hass, registryHass, device);
+  const selected = selectedToggleEntity(device);
+  const own = selected
+    ? resolveEntity(
+        hass,
+        registryHass,
+        selected,
+        device.bindingKind === 'entity' ? 'binding' : 'device-role',
+      )
+    : resolveOwnEntity(hass, registryHass, device);
   if (!own) {
     return emptyIntent(origin, device.virtual || device.bindingKind === 'virtual'
       ? 'no-actionable-entity' : 'no-binding');

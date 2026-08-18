@@ -181,6 +181,18 @@ and temporarily fall back to the normal deterministic selection; merely
 opening or saving another field does not erase them. Older frontends ignore the
 unknown field and may erase it only if they reconstruct that marker.
 
+`marker.toggle_entity` optionally stores the exact own `light.*`/`switch.*`
+operated by Toggle. Absence/null keeps the historical single-target resolver
+and external-only controls groups bit-for-bit. A present active choice is exact:
+temporary missing/unavailable/secure state never retargets it to a sibling. A
+choice no longer belonging to the marker remains stored, warns in the dialog
+and temporarily uses the historical fallback. New/changed values are
+domain-bounded by lossless delta validation; an untouched future literal can
+round-trip. Full and space transfer copy the entity id literally, while a
+duplicate marker virtualised during space import drops the HA-dependent field.
+Older frontends ignore it and may erase it if they reconstruct the marker.
+`light_entity`, `toggle_entity` and `tap_target` are independent.
+
 `marker.controls[]` additionally accepts `marker:<marker_id>` links to forced
 plan sources. Runtime and old frontends continue to filter those strings out of
 HA service calls. New writes validate target existence, forced-source role,

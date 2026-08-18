@@ -685,8 +685,23 @@ def test_export_rejects_boolean_stored_model_before_schema_coercion(tmp_path: Pa
     assert invalid.value.code == "invalid_config"
 
 
+@pytest.mark.parametrize("kind", ["full", "space"])
+def test_export_copies_toggle_entity_literal(tmp_path: Path, kind: str) -> None:
+    config = _config()
+    config["markers"][0]["toggle_entity"] = "switch.channel_2"
+    document, _ = create_export(
+        SimpleNamespace(instance_id="instance-a"),
+        {"config": config}, {"layout": {}}, kind=kind,
+        space_id="ground" if kind == "space" else None,
+        card_version="1.65.0", config_root=tmp_path,
+    )
+    marker = document["payload"]["config"]["markers"][0]
+    assert marker["toggle_entity"] == "switch.channel_2"
+
+
 def test_space_import_remaps_owned_ids_and_duplicate_policy(tmp_path: Path) -> None:
     document = _document(tmp_path, "space")
+    document["payload"]["config"]["markers"][0]["toggle_entity"] = "switch.channel_2"
     current = _config()
     current["spaces"][0]["id"] = "existing"
     current["spaces"][0]["title"] = "Ground"
@@ -704,7 +719,9 @@ def test_space_import_remaps_owned_ids_and_duplicate_policy(tmp_path: Path) -> N
     copied = virtual["markers"][-1]
     assert copied["binding"] == "virtual"
     assert copied["display"] == "static_icon"
-    assert "controls" not in copied and vdetails["virtualized"] == 1
+    assert "controls" not in copied
+    assert "toggle_entity" not in copied
+    assert vdetails["virtualized"] == 1
 
 
 def test_preview_is_owner_bound_and_foreign_full_drops_discovery_lists(tmp_path: Path) -> None:

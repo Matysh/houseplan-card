@@ -894,7 +894,7 @@ def build_space_merge(
             for field in (
                 "area", "controls", "tap_action", "tap_target", "tap_confirm",
                 "vacuum", "is_light", "use_climate_temp", "glow_color",
-                "glow_radius_cm", "light_entity", "hidden", "removed",
+                "glow_radius_cm", "light_entity", "toggle_entity", "hidden", "removed",
                 "value_badge",
             ):
                 marker.pop(field, None)

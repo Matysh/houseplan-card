@@ -339,6 +339,9 @@ RU и EN получают полный паритет для:
 одинаково на desktop и touch: используется native `<select>` с обычным tap,
 связанным `<label>` и без hover-only affordance. Селектор не добавляет жестов
 на плане, drag/pinch/pan, long-press либо собственную touch-геометрию.
+Runtime-эффект сохранённого выбора одинаков для pointer и touch: тап по marker
+в обычном View/kiosk проходит через один `resolveToggleIntent()` и не имеет
+отдельной ветки по типу устройства ввода.
 
 На узкой ширине label, option text, help и stale-warning не должны выходить за
 границы диалога или перекрывать footer. Длинный friendly name может быть

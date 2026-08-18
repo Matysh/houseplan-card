@@ -352,6 +352,15 @@ A light defaults to Toggle; other devices default to the House Plan card. An
 unsupported Toggle remains a visible no-op and is never changed into another
 action behind the user's back.
 
+When a device-bound marker has two or more own `light.*`/`switch.*` entities,
+**Entity to toggle** appears below Toggle. It selects the exact own channel and
+updates the target hint before Save. **Automatic** keeps the previous binding /
+functional-role rules. A missing saved entity stays configured, shows a
+warning and temporarily falls back; returning the same entity restores the
+choice. This setting is independent from **Leading light entity**. With an
+explicit external controls group, an explicitly selected own entity joins the
+group; without a selection existing groups remain external-only.
+
 ![House Plan device card with state and safe actions](images/09-device-info.png)
 
 <!-- docs-section: visual-states -->

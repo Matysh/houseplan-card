@@ -36,7 +36,7 @@ test('persisted dynamic marker selects project their selected option explicitly'
     block.match(/\bid="([^"]+)"/)?.[1] || '', block,
   ]));
   for (const id of [
-    'marker-room', 'marker-tap-action', 'marker-light-entity', 'marker-display',
+    'marker-room', 'marker-tap-action', 'marker-toggle-entity', 'marker-light-entity', 'marker-display',
     'marker-value-badge-source', 'marker-value-badge-position',
   ]) {
     const block = byId.get(id);

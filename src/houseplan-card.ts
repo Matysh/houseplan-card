@@ -109,9 +109,11 @@ import {
 import {
   formatToggleIntent, projectedTapAction, resolveToggleIntent,
   sameToggleOperationTargets, toggleCoverEntity, toggleIntentName, toggleOperation,
+  toggleEntityCandidates,
   type ResolvedToggleIntent, type ToggleNextEffect, type ToggleNoneReason,
   type ToggleSkipReason,
 } from './device-toggle';
+import { toggleEntityWriteFields } from './marker-toggle-entity';
 import {
   adoptVirtualLightServerSnapshot,
   applyVirtualLightEvent,
@@ -1485,6 +1487,10 @@ class HouseplanCard extends LitElement {
     originalTapAction: string | null | undefined;
     /** Snapshot announced only after a user edit; live HA ticks do not rewrite it. */
     tapHintAnnouncement: string;
+    toggleEntity: string;
+    toggleEntityTouched: boolean;
+    originalHasToggleEntity: boolean;
+    originalToggleEntity: string | null | undefined;
     tapTarget: string;    // 'run': automation./script./scene. entity id
     tapConfirm: boolean;  // ask before toggle/run
     runFilter: string;
@@ -11925,6 +11931,7 @@ class HouseplanCard extends LitElement {
       const hasGlowColor = Object.prototype.hasOwnProperty.call(marker || {}, 'glow_color');
       const hasValueBadge = Object.prototype.hasOwnProperty.call(marker || {}, 'value_badge');
       const hasTapAction = Object.prototype.hasOwnProperty.call(marker || {}, 'tap_action');
+      const hasToggleEntity = Object.prototype.hasOwnProperty.call(marker || {}, 'toggle_entity');
       const glowOverride = normalizeGlowColorOverride(marker?.glow_color);
       const currentBadge = this._devicePresentation(d, true).valueBadge;
       const badgeCandidates = valueBadgeCandidates(this._planHass, d, this._devices);
@@ -11950,6 +11957,10 @@ class HouseplanCard extends LitElement {
         originalHasTapAction: hasTapAction,
         originalTapAction: d.marker?.tap_action,
         tapHintAnnouncement: '',
+        toggleEntity: marker?.toggle_entity || '',
+        toggleEntityTouched: false,
+        originalHasToggleEntity: hasToggleEntity,
+        originalToggleEntity: marker?.toggle_entity,
         tapTarget: d.marker?.tap_target || '',
         tapConfirm: d.marker?.tap_confirm === true,
         runFilter: '',
@@ -12003,6 +12014,8 @@ class HouseplanCard extends LitElement {
         display: 'badge', rippleColor: '', rippleSize: 3, size: 1, angle: 0,
         tapAction: 'info', tapActionTouched: false,
         originalHasTapAction: false, originalTapAction: undefined, tapHintAnnouncement: '',
+        toggleEntity: '', toggleEntityTouched: false,
+        originalHasToggleEntity: false, originalToggleEntity: undefined,
         tapTarget: '', tapConfirm: false, runFilter: '',
         controls: [], controlsFilter: '',
         lightRole: 'auto', lightRoleTouched: false,
@@ -12382,6 +12395,18 @@ class HouseplanCard extends LitElement {
     return { tap_action: d.tapAction || null };
   }
 
+  /** Preserve absence and stale/future literals until this exact selector is edited. */
+  private _markerToggleEntityFields(
+    d: NonNullable<HouseplanCard['_markerDialog']>,
+  ): Pick<Marker, 'toggle_entity'> | Record<string, never> {
+    return toggleEntityWriteFields({
+      touched: d.toggleEntityTouched,
+      originalHas: d.originalHasToggleEntity,
+      original: d.originalToggleEntity,
+      value: d.toggleEntity,
+    });
+  }
+
   private async _saveMarker(): Promise<void> {
     const dlg = this._markerDialog;
     if (!dlg || dlg.busy) return;
@@ -12456,6 +12481,7 @@ class HouseplanCard extends LitElement {
         size: dlg.size !== 1 ? dlg.size : null,
         angle: dlg.angle ? dlg.angle : null,
         ...this._markerTapActionFields(dlg),
+        ...this._markerToggleEntityFields(dlg),
         tap_target: effectiveTapAction === 'run' ? dlg.tapTarget || null : null,
         tap_confirm: dlg.tapConfirm ? true : null,
         controls: controls.length ? controls : null,
@@ -17752,6 +17778,7 @@ class HouseplanCard extends LitElement {
       size: d.size !== 1 ? d.size : null,
       angle: d.angle || null,
       ...this._markerTapActionFields(d),
+      ...this._markerToggleEntityFields(d),
       tap_target: effectiveTapAction === 'run' ? d.tapTarget || null : null,
       tap_confirm: d.tapConfirm ? true : null,
       controls: controls.length ? controls : null,
@@ -18168,6 +18195,17 @@ class HouseplanCard extends LitElement {
     // registry order used for the remaining candidates.
     const effectiveLeading = previewDevice ? forcedLightEntityOf(previewDevice) || '' : '';
     const staleLeading = !!d.lightEntity && !leadingEntities.includes(d.lightEntity);
+    const toggleEntities = previewDevice ? toggleEntityCandidates(previewDevice) : [];
+    const staleToggleEntity = !!d.toggleEntity && !toggleEntities.includes(d.toggleEntity);
+    const automaticToggleIntent = effectiveTapAction === 'toggle'
+      ? this._toggleIntentForDialog({ ...d, toggleEntity: '', toggleEntityTouched: true })
+      : null;
+    const automaticToggleTarget = automaticToggleIntent
+      ? [...automaticToggleIntent.targets, ...automaticToggleIntent.skippedTargets]
+        .map((target) => target.entityId || ('ref' in target ? target.ref : ''))
+        .filter(Boolean)
+        .join(', ')
+      : '';
     const curLabel = (() => {
       if (isVirtual) return null;
       const found = cands.find((c) => c.value === d.binding);
@@ -18302,6 +18340,42 @@ class HouseplanCard extends LitElement {
               </option>`,
             )}
           </select>
+          ${effectiveTapAction === 'toggle'
+            && (toggleEntities.length > 1 || staleToggleEntity)
+            ? html`<div class="markerhelpfield markertoggleentity">
+                <div class="markerhelplabel">
+                  <label for="marker-toggle-entity">${this._t('marker.toggle_entity_label')}</label>
+                  ${this._help('marker.toggle_entity.help')}
+                </div>
+                <select id="marker-toggle-entity" class="areasel"
+                  @change=${(e: Event) => {
+                    const next = {
+                      ...d,
+                      toggleEntity: (e.target as HTMLSelectElement).value,
+                      toggleEntityTouched: true,
+                    };
+                    this._markerDialog = this._announceToggleDraft(next);
+                  }}>
+                  <option value="" ?selected=${staleToggleEntity || !d.toggleEntity}>
+                    ${this._t('marker.toggle_entity_auto', {
+                      entity: automaticToggleTarget || this._t('marker.toggle_entity_none'),
+                    })}
+                  </option>
+                  ${toggleEntities.map((eid) => html`<option value=${eid}
+                    ?selected=${!staleToggleEntity && eid === d.toggleEntity}>
+                    ${this.hass.states[eid]?.attributes?.friendly_name
+                      || this._fullRegistryHass.entities[eid]?.name || eid} · ${eid}
+                  </option>`)}
+                </select>
+                ${staleToggleEntity ? html`<p class="muted markerlightwarning" role="status">
+                  <ha-icon icon="mdi:alert-outline"></ha-icon>
+                  ${this._t('marker.toggle_entity_missing', {
+                    entity: d.toggleEntity,
+                    fallback: automaticToggleTarget || this._t('marker.toggle_entity_none'),
+                  })}
+                </p>` : nothing}
+              </div>`
+            : nothing}
           ${effectiveTapAction === 'toggle'
             ? html`<div id="marker-toggle-hint" class="rhint togglehint">
                 ${toggleHintLines.map((line) => html`<div>${line}</div>`)}

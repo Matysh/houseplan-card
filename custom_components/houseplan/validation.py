@@ -189,7 +189,7 @@ def validate_marker_value_badges(
 def validate_marker_light_entities(
     config: dict, previous: dict | None = None, *, validate_all: bool = False
 ) -> None:
-    """Validate new/changed leading-light choices without rejecting dormant data.
+    """Validate new/changed light/switch choices without rejecting dormant data.
 
     The top-level schema must stay lossless: an old or future literal that the
     current frontend cannot edit may round-trip unchanged. Imports validate the
@@ -206,16 +206,26 @@ def validate_marker_light_entities(
             marker, marker_id, old_by_id, old_markers, new_ids,
             consumed_old_ids, validate_all,
         )
-        value = marker.get("light_entity")
-        old_value = None if validate_all else (old_marker or {}).get("light_entity")
-        if not validate_all and value == old_value:
-            continue
-        if value is None:
-            continue
-        if not isinstance(value, str) or not _LIGHT_ENTITY_RE.fullmatch(value):
-            raise MarkerControlError(
-                "invalid_light_entity", "Leading light entity must be light.* or switch.*"
-            )
+        for field, code, message in (
+            (
+                "light_entity",
+                "invalid_light_entity",
+                "Leading light entity must be light.* or switch.*",
+            ),
+            (
+                "toggle_entity",
+                "invalid_toggle_entity",
+                "Toggle entity must be light.* or switch.*",
+            ),
+        ):
+            value = marker.get(field)
+            old_value = None if validate_all else (old_marker or {}).get(field)
+            if not validate_all and value == old_value:
+                continue
+            if value is None:
+                continue
+            if not isinstance(value, str) or not _LIGHT_ENTITY_RE.fullmatch(value):
+                raise MarkerControlError(code, message)
 
 
 def validate_marker_controls(
@@ -939,6 +949,9 @@ MARKER_SCHEMA = vol.Schema(
         # Semantic delta validation below the schema preserves unknown/future
         # literals until that exact field is edited (lossless config doctrine).
         vol.Optional("light_entity"): object,
+        # Exact own entity selected for Toggle. Delta validation preserves an
+        # untouched future literal while bounding every new/changed value.
+        vol.Optional("toggle_entity"): object,
         vol.Optional("value_badge"): vol.Any(
             None,
             vol.Schema(

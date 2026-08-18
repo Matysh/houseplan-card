@@ -474,6 +474,120 @@ test('explicit leading light entity drives the same entity used by the presentat
   assert.deepEqual(toggleCommandEntityIds(intent.command), ['switch.power']);
 });
 
+test('issue 178: an explicit toggle entity selects one exact composite-device channel', () => {
+  const h = hass({
+    'switch.power': state('switch.power', 'on'),
+    'switch.child_lock': state('switch.child_lock', 'off'),
+  });
+  const base = device({
+    bindingKind: 'device', bindingRef: 'washer', primary: 'switch.power',
+    entities: ['switch.power', 'switch.child_lock'],
+    marker: { id: 'marker', binding: 'device:washer', tap_action: 'toggle' },
+  });
+  const childLock = {
+    ...base, marker: { ...base.marker, toggle_entity: 'switch.child_lock' },
+  };
+  assert.deepEqual(toggleCommandEntityIds(resolveToggleIntent({
+    hass: h, devices: [childLock], device: childLock,
+  }).command), ['switch.child_lock']);
+
+  const power = { ...base, marker: { ...base.marker, toggle_entity: 'switch.power' } };
+  assert.deepEqual(toggleCommandEntityIds(resolveToggleIntent({
+    hass: h, devices: [power], device: power,
+  }).command), ['switch.power']);
+});
+
+test('issue 178: stale selection falls back while an active missing target never retargets', () => {
+  const h = hass({ 'switch.power': state('switch.power', 'off') });
+  h.entities['switch.child_lock'] = {
+    entity_id: 'switch.child_lock', platform: 'test', disabled_by: null,
+  };
+  const base = device({
+    bindingKind: 'device', bindingRef: 'washer', primary: 'switch.power',
+    entities: ['switch.power', 'switch.child_lock'],
+    marker: { id: 'marker', binding: 'device:washer', tap_action: 'toggle' },
+  });
+  const activeMissing = {
+    ...base, marker: { ...base.marker, toggle_entity: 'switch.child_lock' },
+  };
+  const exact = resolveToggleIntent({ hass: h, devices: [activeMissing], device: activeMissing });
+  assert.equal(exact.command, null);
+  assert.equal(exact.noneReason, 'unavailable');
+  assert.equal(exact.skippedTargets[0].entityId, 'switch.child_lock');
+
+  const stale = {
+    ...base, marker: { ...base.marker, toggle_entity: 'switch.removed' },
+  };
+  const fallback = resolveToggleIntent({ hass: h, devices: [stale], device: stale });
+  assert.deepEqual(toggleCommandEntityIds(fallback.command), ['switch.power']);
+});
+
+test('issue 178: an entity binding stays exact even with a sibling toggle selection', () => {
+  const h = hass({
+    'switch.bound': state('switch.bound', 'off'),
+    'switch.sibling': state('switch.sibling', 'on'),
+  });
+  const d = device({
+    bindingKind: 'entity', bindingRef: 'switch.bound', primary: 'switch.bound',
+    entities: ['switch.bound', 'switch.sibling'],
+    marker: {
+      id: 'marker', binding: 'entity:switch.bound', tap_action: 'toggle',
+      toggle_entity: 'switch.sibling',
+    },
+  });
+  assert.deepEqual(toggleCommandEntityIds(resolveToggleIntent({
+    hass: h, devices: [d], device: d,
+  }).command), ['switch.bound']);
+});
+
+test('issue 178: explicit own selection joins controls without changing legacy groups', () => {
+  const h = hass({
+    'switch.power': state('switch.power', 'off'),
+    'switch.child_lock': state('switch.child_lock', 'on'),
+    'light.external': state('light.external', 'off'),
+  });
+  const base = device({
+    bindingKind: 'device', bindingRef: 'washer', primary: 'switch.power',
+    entities: ['switch.power', 'switch.child_lock'], controls: ['light.external'],
+    marker: {
+      id: 'marker', binding: 'device:washer', tap_action: 'toggle',
+      controls: ['light.external'],
+    },
+  });
+  const legacy = resolveToggleIntent({ hass: h, devices: [base], device: base });
+  assert.deepEqual(toggleCommandEntityIds(legacy.command), ['light.external']);
+  assert.equal(legacy.command.service, 'turn_on');
+
+  const selected = {
+    ...base, marker: { ...base.marker, toggle_entity: 'switch.child_lock' },
+  };
+  const group = resolveToggleIntent({ hass: h, devices: [selected], device: selected });
+  assert.deepEqual(toggleCommandEntityIds(group.command), ['light.external', 'switch.child_lock']);
+  assert.equal(group.command.service, 'turn_off');
+});
+
+test('issue 178: unavailable selected own group member is skipped without replacing it', () => {
+  const h = hass({
+    'switch.power': state('switch.power', 'on'),
+    'switch.child_lock': state('switch.child_lock', 'unavailable'),
+    'light.external': state('light.external', 'off'),
+  });
+  const d = device({
+    bindingKind: 'device', bindingRef: 'washer', primary: 'switch.power',
+    entities: ['switch.power', 'switch.child_lock'], controls: ['light.external'],
+    marker: {
+      id: 'marker', binding: 'device:washer', tap_action: 'toggle',
+      toggle_entity: 'switch.child_lock', controls: ['light.external'],
+    },
+  });
+  const intent = resolveToggleIntent({ hass: h, devices: [d], device: d });
+  assert.deepEqual(toggleCommandEntityIds(intent.command), ['light.external']);
+  assert.equal(intent.command.service, 'turn_on');
+  assert.deepEqual(intent.skippedTargets.map((target) => [target.entityId, target.reason]), [
+    ['switch.child_lock', 'unavailable'],
+  ]);
+});
+
 test('group domain remains a universal power target', () => {
   const entityId = 'group.downstairs';
   const h = hass({ [entityId]: state(entityId, 'on') });

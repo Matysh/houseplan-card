@@ -150,6 +150,9 @@ export interface Marker {
   /** Explicit leading controllable entity for an Always source. Missing keeps
    * the compatibility fallback (entity binding -> primary -> first control). */
   light_entity?: string | null;
+  /** Exact own light/switch selected for Toggle. Missing/null keeps the
+   * historical action resolver and external-only controls groups. */
+  toggle_entity?: string | null;
   /** Optional, user-controlled value satellite around the device face.
    * Missing keeps the legacy temperature/humidity compatibility heuristic. */
   value_badge?: MarkerValueBadge | null;
