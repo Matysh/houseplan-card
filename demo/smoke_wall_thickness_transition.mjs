@@ -52,6 +52,7 @@ const result = await page.evaluate(async () => {
   delete space.partitions;
   delete space.room_drafts;
   delete space.wall_columns;
+  space.settings = { ...(space.settings || {}), show_borders: true };
   card._cfgEpoch++;
   card._regSignature = '';
   card._setMode('plan');
