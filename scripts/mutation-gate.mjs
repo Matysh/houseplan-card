@@ -41,6 +41,17 @@ import { fileURLToPath } from 'node:url';
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 export const MUTANTS = [
   {
+    id: 'empty-space-cleanup-disabled',
+    guard: 'node demo/smoke_optional_space_model.mjs',
+    because: 'удаление последнего пространства обязано завершать жесты, редакторы и отложенную запись; '
+      + 'смок дважды переводит живую карточку в пустой план и проверяет реальный lifecycle cleanup',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: 'if (this._emptySpaceStateActive) return;',
+      replace: 'if (empty) return;',
+    }],
+  },
+  {
     id: 'continuity-long-resume-noop',
     guard: 'node demo/smoke_visual_continuity.mjs',
     because: 'смок обязан доказывать, что long-resume СРАБОТАЛ (токен ушёл вперёд), '

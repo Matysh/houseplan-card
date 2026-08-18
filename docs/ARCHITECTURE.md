@@ -1,6 +1,6 @@
 # House Plan architecture
 
-Updated: 2026-08-17 (#157 open-passage model). The repository = a HACS integration (category **Integration**)
+Updated: 2026-08-19 (#113 optional space-model lifecycle). The repository = a HACS integration (category **Integration**)
 that contains both the backend (`custom_components/houseplan`) and the Lovelace card (`src/` → `dist/`).
 
 ## Layout
@@ -15,6 +15,7 @@ houseplan-card/
 │  ├─ floating-surface-controller.ts # shared Popover/fallback portal DOM lifecycle
 │  ├─ editor-secondary.ts        # context tray model, groups, focus/dismiss lifecycle and stable template
 │  ├─ editor-secondary.styles.ts # styles owned by the context tray/submenu surface
+│  ├─ space-model-selection.ts   # active-or-first and exact optional space selectors
 │  ├─ render/opening-tunnels.ts  # immutable SVG projection of resolved tunnel geometry/fills
 │  ├─ editor.ts                  # GUI config editor (ha-form + selectors)
 │  ├─ rules.ts                   # icon rules (iconFor), filtering, groups, fallback order
@@ -136,6 +137,23 @@ the same profiler available between stable promotions.
   "dark line" along the profile + manual fine-tuning against overlay renders).
 
 ## Card data model (runtime)
+
+`SpaceModel` is absent when the authoritative configuration has no spaces.
+`_spaceModel()` therefore returns `SpaceModel | undefined`: it preserves the
+legacy active-or-first selection for rendering and current navigation, but it
+never invents a dummy space. Commands carrying a persisted or otherwise stable
+space id use the exact `_spaceModelById()` selector; a stale id aborts before
+config, layout, file or service side effects instead of mutating the first
+space.
+
+The first update that observes an authoritative empty `spaces` array runs one
+space-bound lifecycle cleanup. It releases tracked pointer capture, cancels
+pan/pinch/drag/resize/vacuum and geometry gestures, clears draft/history and
+space dialogs, cancels the debounced config write and returns the card to View.
+The global empty-state Create/import flows remain available. Recreating a space
+re-arms cleanup so a later WS transition back to empty is handled identically.
+Pure render/geometry helpers may return an empty result while the model is
+absent; mutation entry points must guard explicitly.
 
 `DevItem`: id (device_id), name, model, area, floor, icon, entities[], primary
 (the first resolved state entity for actions requiring one target), temp,

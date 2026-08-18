@@ -82,6 +82,7 @@ import { ContentSigner } from './signing';
 import {
   resolveInitialSpace, settleBestEffort, type InitialSpaceSelection,
 } from './initial-load';
+import { selectActiveSpaceModel, selectSpaceModelById } from './space-model-selection';
 import { mdiHomeCityOutline } from '@mdi/js';
 import {
   Affine, applyAffine, readVacTelemetry,
@@ -606,6 +607,7 @@ const navigate = (path: string) => {
 interface Debounced<T extends (...a: any[]) => void> {
   (...a: Parameters<T>): void;
   flush(): void;
+  cancel(): void;
   pending(): boolean;
 }
 
@@ -629,6 +631,11 @@ const debounce = <T extends (...a: any[]) => void>(fn: T, ms: number): Debounced
     const args = last;
     last = null;
     if (args) fn(...args);
+  };
+  wrapped.cancel = () => {
+    clearTimeout(t);
+    t = undefined;
+    last = null;
   };
   wrapped.pending = () => t !== undefined;
   return wrapped;
@@ -949,7 +956,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _targetPaperColor(mode: HouseplanMode): string {
-    if (mode !== 'view' || !this._spaceModel().bg) return 'rgb(255, 255, 255)';
+    if (mode !== 'view' || !this._spaceModel()?.bg) return 'rgb(255, 255, 255)';
     return this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', 'rgb(17, 17, 17)');
   }
 
@@ -2349,7 +2356,7 @@ class HouseplanCard extends LitElement {
       return;
     }
     const draft = activeId
-      ? this._spaceModel().room_drafts.find((item) => item.id === activeId)
+      ? this._spaceModel()?.room_drafts.find((item) => item.id === activeId)
       : null;
     if (draft) {
       this._activeDraftId = draft.id;
@@ -3027,6 +3034,7 @@ class HouseplanCard extends LitElement {
   /** Bumped by every config mutation — the model/geometry cache key (audit L1). */
   private _cfgEpoch = 0;
   private _modelCache: { key: string; model: SpaceModel[] } | null = null;
+  private _emptySpaceStateActive = false;
   private _decorSnapCache: {
     epoch: number; space: string; height: number; exclude: string; geometry: SnapGeometry;
   } | null = null;
@@ -3092,9 +3100,64 @@ class HouseplanCard extends LitElement {
     });
   }
 
-  private _spaceModel(id?: string): SpaceModel {
-    const m = this._model;
-    return m.find((s) => s.id === (id ?? this._space)) || m[0];
+  private _spaceModel(): SpaceModel | undefined {
+    return selectActiveSpaceModel(this._model, this._space);
+  }
+
+  private _spaceModelById(id: string | null | undefined): SpaceModel | undefined {
+    return selectSpaceModelById(this._model, id);
+  }
+
+  /** Abort every space-bound transaction once the authoritative plan is empty. */
+  private _syncEmptySpaceState(): void {
+    const empty = !!this._serverCfg && this._serverCfg.spaces.length === 0;
+    if (!empty) {
+      this._emptySpaceStateActive = false;
+      return;
+    }
+    if (this._emptySpaceStateActive) return;
+    this._emptySpaceStateActive = true;
+
+    for (const pointerId of this._pointers.keys()) {
+      for (const node of this.renderRoot.querySelectorAll<HTMLElement>('*')) {
+        try {
+          if (node.hasPointerCapture?.(pointerId)) node.releasePointerCapture(pointerId);
+        } catch {
+          // A pointer may already have ended between the registry tick and cleanup.
+        }
+      }
+    }
+    this._pointers.clear();
+    this._panStart = null;
+    this._panLock = null;
+    this._pinchStart = null;
+    this._swipeStart = null;
+    this._drag = null;
+    this._rlResize = null;
+    this._vacFit = null;
+    this._compassDrag = false;
+    this._cancelModeTransition(false);
+    this._mode = 'view';
+    this._clearGeometryGesture();
+    this._geometryHistory.clear();
+    this._resumeDraftBySpace = {};
+    this._tip = null;
+    this._hoverRoom = null;
+    this._openingInfo = null;
+    this._closeInfoCard();
+    this._markerDialog = null;
+    this._physicalDialog = null;
+    this._backdropDialog = null;
+    this._decorShapeDialog = null;
+    this._decorTextDialog = null;
+    this._roomDialog = false;
+    if (this._spaceDialog?.mode === 'edit') this._spaceDialog = null;
+    this._editorSecondary.closeForNavigation();
+    this._saveConfigDebounced.cancel();
+    this._frame = null;
+    this._planSnapGeometryCache = null;
+    this._decorSnapCache = null;
+    this._space = '';
   }
 
   private get _areaToSpace(): Record<string, { space: string; room: RoomCfg }> {
@@ -3202,6 +3265,7 @@ class HouseplanCard extends LitElement {
     // invariant local to that reactive assignment so imports, reconnects and
     // demo harnesses cannot accidentally reuse an older config object's data.
     if (changed.has('_serverCfg')) this._cfgEpoch++;
+    this._syncEmptySpaceState();
     if (changed.has('hass') && this.hass) {
       this._hassSequence++;
       this._renderSnapshotAt = Date.now();
@@ -4241,7 +4305,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _livePos(d: DevItem): { x: number; y: number } {
-    const s = this._spaceModel(d.space);
+    const s = this._spaceModelById(d.space);
     const saved = this._layout[d.id];
     if (saved) {
       if (this._norm) {
@@ -4253,6 +4317,7 @@ class HouseplanCard extends LitElement {
       }
     }
     if (this._defPos[d.id]) return this._defPos[d.id];
+    if (!s) return { x: NORM_W / 2, y: NORM_W / 2 };
     // the middle of what IS drawn, not of a canvas that has no edges any more
     return snapPt(spaceCenter(s));
   }
@@ -4643,6 +4708,11 @@ class HouseplanCard extends LitElement {
 
   private _frameOf(): { rect: Rect; all: Rect; outliers: number } {
     const m = this._spaceModel();
+    if (!m) {
+      this._frame = null;
+      const fallback = { x: 0, y: 0, w: NORM_W, h: NORM_W };
+      return { rect: fallback, all: fallback, outliers: 0 };
+    }
     // Memo by IDENTITY, not by an epoch counter: `_model`, `_layout` and
     // `_devices` are all replaced (never mutated in place) whenever their
     // content changes, so this catches a marker drag and a server push alike —
@@ -4685,8 +4755,9 @@ class HouseplanCard extends LitElement {
     walls: any;
     floor: any;
     openings: readonly IsoOpeningBasis[];
-  } } {
+  } } | null {
     const space = this._spaceModel();
+    if (!space) return null;
     const walls = this._spaceWalls;
     const openCuts = this._openPairs().flatMap((pair) => pair.segs);
     const openings = this._openingsR.map((opening, sourceIndex) => ({
@@ -4755,7 +4826,7 @@ class HouseplanCard extends LitElement {
 
   private _isoSceneKey(): string | null {
     if (!this._labsIso || this._mode !== 'view') return null;
-    try { return this._isoSource().key; } catch { return `${this._space}|invalid`; }
+    try { return this._isoSource()?.key ?? null; } catch { return `${this._space}|invalid`; }
   }
 
   private _isoScene(): {
@@ -4764,8 +4835,9 @@ class HouseplanCard extends LitElement {
     floor: IsoFloorGeometry;
     openings: readonly IsoOpeningBasis[];
     frame: Rect;
-  } {
+  } | null {
     const source = this._isoSource();
+    if (!source) return null;
     const cached = this._isoGeometryCache.get(source.key);
     if (cached) return { key: source.key, ...cached };
     const flat = this._frameOf().rect;
@@ -4791,6 +4863,7 @@ class HouseplanCard extends LitElement {
     if (this._isoFallback.has(key)) return 'flat';
     try {
       const scene = this._isoScene();
+      if (!scene) return 'flat';
       return isoEffectiveView('iso', scene.key, this._isoFallback);
     } catch (error) {
       if (!this._isoFallback.has(key)) {
@@ -4823,7 +4896,7 @@ class HouseplanCard extends LitElement {
         const frame = projectedFrame({ rect: flat, wallHeight: ISO_WALL_HEIGHT });
         return [frame.x, frame.y, frame.w, frame.h];
       }
-      const frame = this._isoScene().frame;
+      const frame = this._isoScene()?.frame ?? this._frameOf().rect;
       return [frame.x, frame.y, frame.w, frame.h];
     }
     const r = this._frameOf().rect;
@@ -5807,6 +5880,12 @@ class HouseplanCard extends LitElement {
     // cancel the deferred editor in one press, not let the server response
     // reopen it and force a second press (#95).
     this._pendingNavMode = null;
+    const space = this._spaceModel();
+    if (!space) {
+      this._cancelModeTransition(false);
+      this._mode = 'view';
+      return;
+    }
     if (this._kiosk && mode !== 'view') return; // wall devices never edit
     if (this._mode === mode) {
       if (!animate && mode === 'view' && this._modeTransitionBusy) {
@@ -5842,7 +5921,7 @@ class HouseplanCard extends LitElement {
     // restore it, not merely forget its pointer record after the config has
     // already been mutated by move/resize.
     if (this._decorMove || this._dtDrag || this._bdDrag) this._cancelDecorGesture();
-    const baseChanges = !this._spaceModel().bg && (mode === 'view') !== (previousMode === 'view');
+    const baseChanges = !space.bg && (mode === 'view') !== (previousMode === 'view');
     // A running/preparing transition has not committed its target to `_zoom`
     // yet. Retarget from the painted frame, but preserve the latest camera
     // intent; otherwise rapid View -> editor A -> editor B resurrects the old
@@ -6156,6 +6235,9 @@ class HouseplanCard extends LitElement {
   /** Static presentation axes shared by the overlay and its hit resolver. */
   private _planSnapGeometrySnapshot(): { key: string; value: PlanSnapGeometry } {
     const space = this._spaceModel();
+    if (!space) {
+      return { key: `${this._space}|empty`, value: { segments: [], endpoints: [] } };
+    }
     const key = [
       this._space, this._cfgEpoch, this._activeDraftId || '',
       space.rooms.length, space.room_drafts.length, space.partitions.length,
@@ -6180,6 +6262,9 @@ class HouseplanCard extends LitElement {
    */
   private _planStructuralGeometrySnapshot(): { key: string; value: PlanSnapGeometry } {
     const space = this._spaceModel();
+    if (!space) {
+      return { key: `${this._space}|structural-empty`, value: { segments: [], endpoints: [] } };
+    }
     const key = [
       'structural', this._space, this._cfgEpoch, this._activeDraftId || '',
       space.rooms.length, space.room_drafts.length, space.partitions.length,
@@ -6580,7 +6665,7 @@ class HouseplanCard extends LitElement {
    * rooms share walls, so new vertices legitimately land on existing outlines.
    */
   private _roomAt(p: number[]): RoomCfg | undefined {
-    return this._spaceModel().rooms.find((r) => {
+    return this._spaceModel()?.rooms.find((r) => {
       const poly = roomPoly(r);
       return !!poly && pointStrictlyInside(p, poly);
     });
@@ -6588,7 +6673,7 @@ class HouseplanCard extends LitElement {
 
   /** The first existing room the outline would overlap (rooms must not overlap). */
   private _overlapRoom(verts: number[][]): RoomCfg | undefined {
-    return this._spaceModel().rooms.find((r) => {
+    return this._spaceModel()?.rooms.find((r) => {
       const poly = roomPoly(r);
       return !!poly && roomsOverlap(verts, poly);
     });
@@ -6646,6 +6731,11 @@ class HouseplanCard extends LitElement {
   private _markupClick(ev: MouseEvent): void {
     if (this._vacFit) return; // the fit overlay owns all pointer input
     if (!this._markup) return;
+    const space = this._spaceModel();
+    if (!space) {
+      this._clearGeometryGesture();
+      return;
+    }
     // a pan or pinch just happened — the synthesized click is not a draw
     if (this._suppressClick) return;
     // Room cards swallow markup clicks: dragging, resizing or just clicking a
@@ -6667,7 +6757,7 @@ class HouseplanCard extends LitElement {
     if (this._tool === 'resize') {
       // a click picks the room for the scale frame; handle drags never get here
       if (this._rszDrag || path.some((n) => n?.classList?.contains?.('rszhandle'))) return;
-      const room = [...this._spaceModel().rooms].reverse().find((r) => this._pointInRoom(raw, r));
+      const room = [...space.rooms].reverse().find((r) => this._pointInRoom(raw, r));
       this._rszSel = room?.id || null;
       return;
     }
@@ -6763,10 +6853,12 @@ class HouseplanCard extends LitElement {
   private _draftEndAt(
     pt: number[], excludeId?: string,
   ): { draft: RoomDraftCfg; reverse: boolean } | null {
+    const space = this._spaceModel();
+    if (!space) return null;
     const view = this._viewOr(this._baseVb());
     const eps = Math.max(this._gridPitch * 0.15,
       this._stageEl?.clientWidth ? (view.w / this._stageEl.clientWidth) * 12 : 0);
-    for (const draft of this._spaceModel().room_drafts || []) {
+    for (const draft of space.room_drafts || []) {
       if (draft.id === excludeId) continue;
       if (draft.points.length < 2) continue;
       const first = draft.points[0], last = draft.points[draft.points.length - 1];
@@ -6934,6 +7026,8 @@ class HouseplanCard extends LitElement {
     beforeGraphSources?: WallGraphSourceSegment[],
   ): void {
     if (this._path.length < 2 || this._wallFaceBatch || this._roomDialog) return;
+    const space = this._spaceModel();
+    if (!space) return;
     const addedSourceKey = this._activeWallSourceKey(addedSegmentIndex);
     const epsilon = this._gridPitch * 0.0002;
     let faces: WallGraphFace[];
@@ -6953,7 +7047,7 @@ class HouseplanCard extends LitElement {
 
     // A clean wall-to-wall cut is one product decision about the smaller part,
     // even though the planar delta contains both resulting faces.
-    for (const room of this._spaceModel().rooms) {
+    for (const room of space.rooms) {
       const poly = roomPoly(room);
       if (!room.id || !poly) continue;
       const parts = splitRoomPath(poly, this._path, this._gridPitch * 0.02);
@@ -7028,10 +7122,12 @@ class HouseplanCard extends LitElement {
     const cm = this._drawWallCm;
     if (cm == null) { this._showPhysicalRange(COLUMN_MAX_CM); return; }
     if (!this._curSpaceCfg || this._limitReached('column')) return;
+    const model = this._spaceModel();
+    if (!model) return;
     const candidate: WallColumnCfg = {
       id: 'column-' + Date.now().toString(36), shape: 'square', center, cm: clampColumnCm(cm), angle: 0,
     };
-    const duplicate = (this._spaceModel().wall_columns || []).find((c) =>
+    const duplicate = (model.wall_columns || []).find((c) =>
       sameColumnPlacement(c, candidate, this._gridPitch * 0.02));
     if (duplicate) {
       clearTimeout(this._duplicateColumnTimer);
@@ -7054,6 +7150,7 @@ class HouseplanCard extends LitElement {
     kind: 'partition' | 'column' | 'draft', id: string, segment?: number,
   ): void {
     const model = this._spaceModel();
+    if (!model) return;
     if (kind === 'partition') {
       const p = model.partitions.find((x) => x.id === id);
       if (p) this._physicalDialog = {
@@ -7078,7 +7175,8 @@ class HouseplanCard extends LitElement {
   private _savePhysicalDialog = (): void => {
     const d = this._physicalDialog;
     const sp = this._curSpaceCfg as any;
-    if (!d || !sp) return;
+    const model = this._spaceModel();
+    if (!d || !sp || !model) return;
     const raw = strictNumber(d.cm);
     if (raw == null) {
       this._showPhysicalRange(d.kind === 'column' ? COLUMN_MAX_CM : 100);
@@ -7091,7 +7189,7 @@ class HouseplanCard extends LitElement {
       return;
     }
     if (d.kind === 'column') {
-      const current = this._spaceModel().wall_columns.find((x) => x.id === d.id);
+      const current = model.wall_columns.find((x) => x.id === d.id);
       if (!current) return;
       const rawAngle = strictNumber(d.angle || '0');
       if (d.shape !== 'circle'
@@ -7103,7 +7201,7 @@ class HouseplanCard extends LitElement {
         ? { id: d.id, shape: 'circle', center: current.center, cm: cmRaw }
         : { id: d.id, shape: 'square', center: current.center, cm: cmRaw,
             angle: rawAngle! };
-      if (this._spaceModel().wall_columns.some((c) => c.id !== d.id
+      if (model.wall_columns.some((c) => c.id !== d.id
           && sameColumnPlacement(c, candidate, this._gridPitch * 0.02))) {
         this._showToast(this._t('toast.column_duplicate'));
         return;
@@ -7228,9 +7326,10 @@ class HouseplanCard extends LitElement {
   };
 
   private _physicalDown(ev: PointerEvent, kind: 'partition' | 'column', id: string): void {
+    const model = this._spaceModel();
+    if (!model) return;
     ev.stopPropagation();
     capturePointer(ev);
-    const model = this._spaceModel();
     const point = this._svgPoint(ev);
     const candidates: Array<{ kind: 'partition' | 'column'; id: string }> = [];
     for (const c of [...model.wall_columns].reverse()) {
@@ -7311,7 +7410,8 @@ class HouseplanCard extends LitElement {
       this._registerPhysicalTap(drag.kind, drag.id);
       return;
     }
-    if (!this._curSpaceCfg) return;
+    const model = this._spaceModel();
+    if (!this._curSpaceCfg || !model) return;
     const sp = this._curSpaceCfg as any;
     if (drag.kind === 'partition') {
       const p = (sp.partitions || []).find((x: any) => x.id === drag.id);
@@ -7341,7 +7441,7 @@ class HouseplanCard extends LitElement {
         ...base,
         center: [base.center[0] + drag.delta[0], base.center[1] + drag.delta[1]],
       } as WallColumnCfg;
-      if (this._spaceModel().wall_columns.some((x) => x.id !== drag.id
+      if (model.wall_columns.some((x) => x.id !== drag.id
           && sameColumnPlacement(x, candidate, this._gridPitch * 0.02))) {
         this._showToast(this._t('toast.column_duplicate'));
         return;
@@ -7377,7 +7477,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _physicalRotateDown(ev: PointerEvent, c: WallColumnCfg): void {
-    if (c.shape !== 'square') return;
+    if (c.shape !== 'square' || !this._spaceModel()) return;
     ev.preventDefault();
     ev.stopPropagation();
     capturePointer(ev);
@@ -7409,11 +7509,12 @@ class HouseplanCard extends LitElement {
     ev.preventDefault();
     ev.stopPropagation();
     this._physicalRotate = null;
-    if (!drag.moved || !this._curSpaceCfg) return;
-    const current = this._spaceModel().wall_columns.find((c) => c.id === drag.id);
+    const model = this._spaceModel();
+    if (!drag.moved || !this._curSpaceCfg || !model) return;
+    const current = model.wall_columns.find((c) => c.id === drag.id);
     if (!current || current.shape !== 'square') return;
     const candidate: WallColumnCfg = { ...current, angle: drag.angle };
-    if (this._spaceModel().wall_columns.some((c) => c.id !== drag.id
+    if (model.wall_columns.some((c) => c.id !== drag.id
         && sameColumnPlacement(c, candidate, this._gridPitch * 0.02))) {
       this._showToast(this._t('toast.column_duplicate'));
       return;
@@ -7431,7 +7532,9 @@ class HouseplanCard extends LitElement {
   /** Rooms of the current space as render-unit polygons (legacy rects converted). */
   private _rszRooms(): { id: string; poly: number[][] }[] {
     const out: { id: string; poly: number[][] }[] = [];
-    for (const r of this._spaceModel().rooms) {
+    const space = this._spaceModel();
+    if (!space) return out;
+    for (const r of space.rooms) {
       const poly = r.id ? roomPoly(r) : null;
       if (poly) out.push({ id: r.id!, poly });
     }
@@ -7782,6 +7885,7 @@ class HouseplanCard extends LitElement {
     const sp = this._curSpaceCfg;
     const H = this._spaceH;
     const space = this._spaceModel();
+    if (!space) return [];
     return (sp?.openings || []).flatMap((o: OpeningCfg) => {
       const fallback: RenderOpening = {
         ...o, rx: o.x * NORM_W, ry: o.y * H, rlen: o.length * NORM_W,
@@ -7812,9 +7916,10 @@ class HouseplanCard extends LitElement {
   }
 
   private _partitionOpeningCuts(
-    space = this._spaceModel(),
+    space: SpaceModel | undefined = this._spaceModel(),
     accept: (opening: OpeningCfg) => boolean = () => true,
   ): PartitionOpeningCut[] {
+    if (!space) return [];
     const raw = this._curSpaceCfg?.id === space.id ? this._curSpaceCfg?.openings || [] : [];
     const cuts: PartitionOpeningCut[] = [];
     for (const opening of raw) {
@@ -7833,8 +7938,9 @@ class HouseplanCard extends LitElement {
    */
   private _roomWallOpeningInputs(
     openings: readonly RenderOpening[] = this._openingsR,
-    space = this._spaceModel(),
+    space: SpaceModel | undefined = this._spaceModel(),
   ): Array<{ x: number; y: number; angle: number; length: number }> {
+    if (!space) return [];
     const openCuts = this._openPairs().flatMap((pair) => pair.segs);
     const intervals = wallIntervals(
       space.rooms, this._spaceWalls, openCuts,
@@ -7950,6 +8056,8 @@ class HouseplanCard extends LitElement {
 
   /** Magnet candidates are intentionally limited to decor and room contours. */
   private _decorSnapGeometry(excludeId?: string): SnapGeometry {
+    const space = this._spaceModel();
+    if (!space) return { points: [], segments: [] };
     const cacheKey = excludeId || '';
     const cached = this._decorSnapCache;
     if (cached && cached.epoch === this._cfgEpoch && cached.space === this._space
@@ -7973,7 +8081,7 @@ class HouseplanCard extends LitElement {
         if (box) parts.push(boxAnchors(box));
       }
     }
-    for (const room of this._spaceModel().rooms) {
+    for (const room of space.rooms) {
       const poly = roomPoly(room);
       if (!poly?.length) continue;
       parts.push({
@@ -9882,6 +9990,7 @@ class HouseplanCard extends LitElement {
   /** Independent masonry owns its hit zone and blocks a room boundary below. */
   private _boundaryBlocked(raw: number[], hit: number): boolean {
     const space = this._spaceModel();
+    if (!space) return false;
     const nearBody = (body: number[][]): boolean => pointInPhysicalBody(raw, body)
       || body.some((a, i) => {
         const b = body[(i + 1) % body.length];
@@ -9906,8 +10015,10 @@ class HouseplanCard extends LitElement {
 
   private _solidBoundaryPull(seg: number[], cuts = this._openCuts()): number {
     const tol = this._boundaryTolerances();
+    const space = this._spaceModel();
+    if (!space) return tol.hit;
     const cm = intervalCmAt(
-      this._spaceModel().rooms, this._spaceWalls, cuts, seg,
+      space.rooms, this._spaceWalls, cuts, seg,
       this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
     );
     return Math.max(
@@ -9927,7 +10038,9 @@ class HouseplanCard extends LitElement {
     if (this._boundaryTargetMemo?.key === key) return this._boundaryTargetMemo.value;
     const tol = this._boundaryTolerances();
     const cuts = this._openCuts();
-    let value: BoundaryUiTarget = resolveBoundaryTarget(raw, this._spaceModel().rooms, cuts, {
+    const space = this._spaceModel();
+    if (!space) return { kind: 'none' };
+    let value: BoundaryUiTarget = resolveBoundaryTarget(raw, space.rooms, cuts, {
       openPull: tol.hit,
       openEndCap: tol.cap,
       ambiguity: tol.ambiguity,
@@ -10078,8 +10191,10 @@ class HouseplanCard extends LitElement {
   /** Open cuts in render units (from open_spans or legacy open_to). */
   private _openCuts(): number[][] {
     const sp = this._curSpaceCfg;
+    const space = this._spaceModel();
+    if (!space) return [];
     return resolveOpenCuts(
-      this._spaceModel().rooms,
+      space.rooms,
       (sp as any)?.open_spans as OpenSpanEntry[] | undefined,
       NORM_W,
       this._gridPitch * 0.02,
@@ -10090,7 +10205,7 @@ class HouseplanCard extends LitElement {
   private _openPairs(): { a: RoomCfg; b: RoomCfg; segs: number[][] }[] {
     const cuts = this._openCuts();
     if (!cuts.length) return [];
-    const rooms = this._spaceModel().rooms.filter((r) => r.id);
+    const rooms = (this._spaceModel()?.rooms || []).filter((r) => r.id);
     const eps = this._gridPitch * 0.02;
     const res: { a: RoomCfg; b: RoomCfg; segs: number[][] }[] = [];
     for (let i = 0; i < rooms.length; i++) {
@@ -10121,10 +10236,11 @@ class HouseplanCard extends LitElement {
     rekey?: { old: [number[], number[]][]; next: [number[], number[]][] },
   ): void {
     const sp = this._curSpaceCfg;
-    if (!sp) return;
+    const space = this._spaceModel();
+    if (!sp || !space) return;
     const eps = this._gridPitch * 0.02;
     this._cfgEpoch++; // the room set changed under the model memo
-    const rooms = this._spaceModel().rooms;
+    const rooms = space.rooms;
     let spans = sanitizeOpenSpans((sp as any).open_spans);
     if (spans.length && rekey?.old.length) {
       spans = rekeyOpenSpansAfterMove(spans, rekey.old, rekey.next, NORM_W);
@@ -10141,21 +10257,23 @@ class HouseplanCard extends LitElement {
   /** Write cuts into space.open_spans and sync open_to. */
   private _persistOpenCuts(cuts: number[][]): void {
     const sp = this._curSpaceCfg;
-    if (!sp) return;
+    const space = this._spaceModel();
+    if (!sp || !space) return;
     const eps = this._gridPitch * 0.02;
     const entries = clipOpenSpansToShared(
-      cutsToSpanEntries(cuts, NORM_W), this._spaceModel().rooms, NORM_W, eps,
+      cutsToSpanEntries(cuts, NORM_W), space.rooms, NORM_W, eps,
     );
     const canonicalCuts = entries.map((e) => entryToSeg(e, NORM_W));
     if (entries.length) (sp as any).open_spans = entries;
     else delete (sp as any).open_spans;
-    syncOpenToFromCuts(sp.rooms || [], this._spaceModel().rooms, canonicalCuts, eps);
+    syncOpenToFromCuts(sp.rooms || [], space.rooms, canonicalCuts, eps);
   }
 
   /** Pure close plan shared by the body preview and the actual mutation. */
   private _planClosedOpenSpan(sg: number[]): { cuts: number[][]; walls: WallEntry[]; cm: number } | null {
     const sp = this._curSpaceCfg;
-    if (!sp) return null;
+    const space = this._spaceModel();
+    if (!sp || !space) return null;
     const eps = this._gridPitch * 0.02;
     const oldCuts = this._openCuts();
     // Materialise exact endpoints of every real remainder before removing the
@@ -10163,7 +10281,7 @@ class HouseplanCard extends LitElement {
     // the sole record of the boundary between (for example) 20 and 30 cm.
     let seededWalls = Array.isArray(sp.walls) ? sp.walls.slice() : [];
     for (const iv of wallIntervals(
-      this._spaceModel().rooms, seededWalls, oldCuts,
+      space.rooms, seededWalls, oldCuts,
       this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
     )) {
       if (iv.open || !(iv.cm > 0)) continue;
@@ -10178,13 +10296,13 @@ class HouseplanCard extends LitElement {
     // takes the default (owner 2026-08-05).
     let walls = this._normalizeWalls(seededWalls, cuts);
     let cm = intervalCmAt(
-      this._spaceModel().rooms, walls, cuts, sg,
+      space.rooms, walls, cuts, sg,
       this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
     );
     if (!(cm > 0)) {
       const solid: number[][] = [];
       for (const iv of wallIntervals(
-        this._spaceModel().rooms, walls, cuts,
+        space.rooms, walls, cuts,
         this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
       )) {
         if (iv.open) continue;
@@ -10195,7 +10313,7 @@ class HouseplanCard extends LitElement {
       );
       walls = this._normalizeWalls(walls, cuts);
       cm = intervalCmAt(
-        this._spaceModel().rooms, walls, cuts, sg,
+        space.rooms, walls, cuts, sg,
         this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
       );
     }
@@ -10310,7 +10428,9 @@ class HouseplanCard extends LitElement {
 
   /** Delete tool: only the explicitly clicked room, never wall semantics. */
   private _deleteRoomClick(raw: number[]): void {
-    const room = [...this._spaceModel().rooms].reverse().find((r) => this._pointInRoom(raw, r));
+    const space = this._spaceModel();
+    if (!space) return;
+    const room = [...space.rooms].reverse().find((r) => this._pointInRoom(raw, r));
     if (!room) {
       this._showToast(this._t('toast.delete_room_pick'));
       return;
@@ -10355,16 +10475,20 @@ class HouseplanCard extends LitElement {
 
   /** Thickness of the atomic stretch under a segment (docs/WALL-THICKNESS.md). */
   private _intervalCm(seg: number[]): number {
+    const space = this._spaceModel();
+    if (!space) return 0;
     return intervalCmAt(
-      this._spaceModel().rooms, this._spaceWalls, this._openCuts(), seg,
+      space.rooms, this._spaceWalls, this._openCuts(), seg,
       this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
     );
   }
 
   /** Rewrite thickness keys onto the current atomic intervals and drop dead ones. */
   private _normalizeWalls(walls: WallEntry[] | null | undefined, cuts: number[][]): WallEntry[] {
+    const space = this._spaceModel();
+    if (!space) return [];
     const next = normalizeWallIntervals(
-      this._spaceModel().rooms, walls, cuts,
+      space.rooms, walls, cuts,
       this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
     );
     return degradeWalls(next, this._curSpaceCfg?.rooms || [], GRID_STEP_N, 1,
@@ -10385,17 +10509,19 @@ class HouseplanCard extends LitElement {
 
   /** Canonical paper + masonry geometry, cached by structural config epoch. */
   private _wallUnionGeometry(): ReturnType<typeof wallBodiesUnionPath> {
+    const space = this._spaceModel();
+    if (!space) return null;
     const walls = this._spaceWalls;
     const extras = this._physicalBodiesR();
     if (!walls.length && !extras.length) return null;
     const openCuts = this._openPairs().flatMap((p) => p.segs);
     const openings = this._roomWallOpeningInputs();
-    const unionKey = `${this._space}|${this._cfgEpoch}|${this._spaceModel().rooms.length}`;
+    const unionKey = `${this._space}|${this._cfgEpoch}|${space.rooms.length}`;
     if (!this._wallUnionCache || this._wallUnionCache.key !== unionKey) {
       this._wallUnionCache = {
         key: unionKey,
         value: wallBodiesUnionPath(
-          this._spaceModel().rooms, walls, openCuts, openings,
+          space.rooms, walls, openCuts, openings,
           this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, extras,
         ),
       };
@@ -10405,11 +10531,13 @@ class HouseplanCard extends LitElement {
 
   /** Thick-wall spans in render units — suppress centreline stroke under bodies. */
   private _thickWallCuts(): number[][] {
+    const space = this._spaceModel();
+    if (!space) return [];
     const walls = this._spaceWalls;
     if (!walls.length) return [];
     const openCuts = this._openPairs().flatMap((p) => p.segs);
     return wallEdgeBodies(
-      this._spaceModel().rooms, walls, openCuts,
+      space.rooms, walls, openCuts,
       this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
     ).map((b) => [b.a[0], b.a[1], b.b[0], b.b[1]]);
   }
@@ -10425,11 +10553,13 @@ class HouseplanCard extends LitElement {
   private _wallThickHit(raw: number[]): {
     a: number[]; b: number[]; roomId: string; segs: number[][]; open: boolean; cm: number;
   } | null {
+    const space = this._spaceModel();
+    if (!space) return null;
     const pull = this._gridPitch * 6;
     const cuts = this._openCuts();
     let best: { iv: ReturnType<typeof wallIntervals>[number]; d: number } | null = null;
     for (const iv of wallIntervals(
-      this._spaceModel().rooms, this._spaceWalls, cuts,
+      space.rooms, this._spaceWalls, cuts,
       this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
     )) {
       const d = distToSegment(raw, [iv.a[0], iv.a[1], iv.b[0], iv.b[1]]);
@@ -10490,7 +10620,8 @@ class HouseplanCard extends LitElement {
     const d = this._wallDialog;
     if (!d) return;
     const sp = this._curSpaceCfg;
-    if (!sp) return;
+    const space = this._spaceModel();
+    if (!sp || !space) return;
     const text = d.value.trim();
     const raw = text ? strictNumber(text) : 0;
     if (raw == null) { this._showPhysicalRange(100); return; }
@@ -10506,7 +10637,7 @@ class HouseplanCard extends LitElement {
     let next: WallEntry[];
     if (allRoom && d.roomId) {
       next = setWallThicknessForRoom(
-        sp.walls, this._spaceModel().rooms, d.roomId, cm, this._wallKeyPitch, openCuts, NORM_W,
+        sp.walls, space.rooms, d.roomId, cm, this._wallKeyPitch, openCuts, NORM_W,
       );
     } else {
       next = setWallThickness(sp.walls, d.a, d.b, cm, this._wallKeyPitch, NORM_W);
@@ -10798,6 +10929,7 @@ class HouseplanCard extends LitElement {
   private _isoOpeningPanels(layers: IsoDecorationLayers): IsoOpeningPanel[] {
     if (!layers.panels) return [];
     const scene = this._isoScene();
+    if (!scene) return [];
     const panels = scene.openings.flatMap((basis) => {
       const opening = this._openingsR[basis.sourceIndex];
       return opening ? projectIsoOpening(basis, this._openingAmt(opening)) : [];
@@ -10834,7 +10966,8 @@ class HouseplanCard extends LitElement {
 
   private _renderIsoUnderlay(layers: IsoDecorationLayers): TemplateResult {
     if (!layers.structural) return svg`` as unknown as TemplateResult;
-    const floor = this._isoScene().floor;
+    const floor = this._isoScene()?.floor;
+    if (!floor) return svg`` as unknown as TemplateResult;
     return svg`<g class="iso-underlay" data-hp="iso-underlay" aria-hidden="true" pointer-events="none">
       ${this._renderIsoDefs(layers, 'underlay')}
       ${layers.shadows && floor.footprintPath
@@ -10851,7 +10984,8 @@ class HouseplanCard extends LitElement {
     panels: readonly IsoOpeningPanel[],
   ): TemplateResult {
     if (!layers.shadows) return svg`` as unknown as TemplateResult;
-    const geometry = this._isoScene().geometry;
+    const geometry = this._isoScene()?.geometry;
+    if (!geometry) return svg`` as unknown as TemplateResult;
     return svg`<g class="iso-shadows" data-hp="iso-shadows" aria-hidden="true" pointer-events="none">
       ${this._renderIsoDefs(layers, 'shadows')}
       <path class="iso-contact-shadow" d=${geometry.contactPath}></path>
@@ -10868,6 +11002,7 @@ class HouseplanCard extends LitElement {
     if (this._renderProjection !== 'iso') return svg`` as unknown as TemplateResult;
     if (!layers.structural) return svg`` as unknown as TemplateResult;
     const scene = this._isoScene();
+    if (!scene) return svg`` as unknown as TemplateResult;
     return svg`<g class="iso-walls" data-hp="iso-walls" data-fingerprint=${scene.key}>
       ${this._renderIsoDefs(layers, 'walls')}
       <g class="iso-wall-sides">${scene.geometry.sides.map((face) =>
@@ -11070,8 +11205,10 @@ class HouseplanCard extends LitElement {
       return [{ o, localY: -dx * Math.sin(rad) + dy * Math.cos(rad) }];
     });
     if (!roughHits.length) return null;
+    const space = this._spaceModel();
+    if (!space) return null;
     const openCuts = this._openPairs().flatMap((pair) => pair.segs);
-    const wallIndex = this._openingWallIndexFor(this._spaceModel(), openCuts).value;
+    const wallIndex = this._openingWallIndexFor(space, openCuts).value;
     return roughHits.find(({ o, localY }) => {
       const faceFlipV = o.type === 'gate' ? !o.flip_v : o.flip_v;
       const face = o.partitionHost || this._spaceWalls.length || o.type === 'gate'
@@ -11100,6 +11237,7 @@ class HouseplanCard extends LitElement {
     const preset = this._openingPreset;
     if (this._tool !== 'opening' || !preset) return null;
     const space = this._spaceModel();
+    if (!space) return null;
     const openCuts = this._openCuts();
     const wallIndex = this._openingWallIndexFor(space, openCuts);
     const placementKey = `${wallIndex.key}|partitions:${this._cfgEpoch}`;
@@ -11185,6 +11323,8 @@ class HouseplanCard extends LitElement {
 
   /** Opening tool: click an existing opening to edit it, or a wall to place one. */
   private _openingClick(raw: number[]): void {
+    const space = this._spaceModel();
+    if (!space) return;
     // Rebind is an explicit one-shot placement: the orphan's stale fallback
     // position must not win hit testing when the replacement wall crosses it.
     const hit = this._openingRebindId ? null : this._openingAt(raw);
@@ -11200,7 +11340,7 @@ class HouseplanCard extends LitElement {
     ) ? cached : this._resolveOpeningPlacement(raw);
     if (!place) {
       const eps = this._gridPitch * 1.5;
-      const snap = snapToWall(raw, this._spaceModel().rooms, eps);
+      const snap = snapToWall(raw, space.rooms, eps);
       if (snap && pointOnOpenCut(snap.x, snap.y, snap.angle, this._openCuts(), eps)) {
         this._showToast(this._t('toast.opening_on_virtual'));
         return;
@@ -11249,7 +11389,7 @@ class HouseplanCard extends LitElement {
 
   /** Drag an opening along the walls (view mode): it re-snaps continuously. */
   private _opPointerDown(ev: PointerEvent, o: OpeningCfg): void {
-    if (this._mode !== 'plan') return;
+    if (this._mode !== 'plan' || !this._spaceModel()) return;
     // HP-1550-04: in the resize tool the wall handles own the geometry — a door
     // in the middle of a wall must neither swallow the handle nor start its own
     // drag (it travels with the wall through the resize pipeline instead)
@@ -11274,12 +11414,14 @@ class HouseplanCard extends LitElement {
     // opened and an unchanged config was written (which then broadcast the
     // event behind the L2 data loss).
     if (Math.abs(ev.clientX - this._opDrag.sx) + Math.abs(ev.clientY - this._opDrag.sy) <= 3) return;
+    const space = this._spaceModel();
+    if (!space) return;
     const raw = this._svgPoint(ev);
     const sp = this._curSpaceCfg;
     const cfg = sp?.openings?.find((x: OpeningCfg) => x.id === o.id);
     if (!cfg) return;
     if (cfg.host?.kind === 'partition') {
-      const partition = this._spaceModel().partitions.find((item) => item.id === cfg.host!.id);
+      const partition = space.partitions.find((item) => item.id === cfg.host!.id);
       if (!partition) return;
       const dx = partition.b[0] - partition.a[0], dy = partition.b[1] - partition.a[1];
       const length = Math.hypot(dx, dy);
@@ -11310,7 +11452,7 @@ class HouseplanCard extends LitElement {
       this.requestUpdate();
       return;
     }
-    const snap = snapToWall(raw, this._spaceModel().rooms, this._gridPitch * 4);
+    const snap = snapToWall(raw, space.rooms, this._gridPitch * 4);
     if (!snap) return; // too far from any wall: the opening stays where it was
     this._opDrag.moved = true;
     // ruler badges on both shoulders + soft magnet to the wall's center
@@ -11343,7 +11485,7 @@ class HouseplanCard extends LitElement {
     snap: { x: number; y: number; angle: number },
     rlen: number,
   ): { x: number; y: number; angle: number; measure: OpMeasure | null } {
-    const rooms = this._spaceModel().rooms;
+    const rooms = this._spaceModel()?.rooms || [];
     const tol = this._gridPitch / 2;
     let cx = snap.x, cy = snap.y;
     let sh = openingShoulders([cx, cy], snap.angle, rlen, rooms, tol);
@@ -11414,7 +11556,8 @@ class HouseplanCard extends LitElement {
   private _saveOpening(): void {
     const d = this._openingDialog;
     const sp = this._curSpaceCfg;
-    if (!d || !sp) return;
+    const model = this._spaceModel();
+    if (!d || !sp || !model) return;
     const before = this._geometrySnapshot();
     const H = this._spaceH;
     const previous = (sp.openings || []).find((item: OpeningCfg) => item.id === d.id);
@@ -11430,7 +11573,7 @@ class HouseplanCard extends LitElement {
     };
     if (o.host) {
       const resolution = resolvePartitionOpening(
-        o, this._spaceModel().partitions, NORM_W, this._cellCm, this._gridPitch,
+        o, model.partitions, NORM_W, this._cellCm, this._gridPitch,
       );
       if (!resolution.resolved) {
         this._showToast(this._t('opening.partition_orphan'));
@@ -11439,7 +11582,7 @@ class HouseplanCard extends LitElement {
       const siblings = (sp.openings || []).flatMap((item: OpeningCfg) => {
         if (!item.host || item.id === o.id) return [];
         const sibling = resolvePartitionOpening(
-          item, this._spaceModel().partitions, NORM_W, this._cellCm, this._gridPitch,
+          item, model.partitions, NORM_W, this._cellCm, this._gridPitch,
         ).resolved;
         return sibling ? [sibling] : [];
       });
@@ -11537,7 +11680,9 @@ class HouseplanCard extends LitElement {
 
   /** Merge: first click picks a room, second picks the room to merge it with. */
   private _mergeClick(raw: number[]): void {
-    const rooms = this._spaceModel().rooms;
+    const space = this._spaceModel();
+    if (!space) return;
+    const rooms = space.rooms;
     const hit = [...rooms].reverse().find((r) => this._pointInRoom(raw, r));
     if (!hit?.id) return;
     const hitId = hit.id;
@@ -11562,7 +11707,7 @@ class HouseplanCard extends LitElement {
   private _commitMerge(): void {
     const d = this._mergeDialog;
     const sp = this._curSpaceCfg;
-    if (!d || !sp) return;
+    if (!d || !sp || !this._spaceModel()) return;
     const before = this._geometrySnapshot();
     const H = this._spaceH;
     const keepId = d.pick === 'a' ? d.aId : d.bId;
@@ -11587,7 +11732,9 @@ class HouseplanCard extends LitElement {
 
   /** Split: click the room, then two points on its walls. */
   private _splitClick(raw: number[]): void {
-    const rooms = this._spaceModel().rooms;
+    const space = this._spaceModel();
+    if (!space) return;
+    const rooms = space.rooms;
     if (!this._splitSel) {
       const hit = [...rooms].reverse().find((r) => this._pointInRoom(raw, r));
       if (!hit?.id) return;
@@ -11766,6 +11913,7 @@ class HouseplanCard extends LitElement {
       typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null;
     const epsilon = this._gridPitch * 0.02;
     const model = this._spaceModel();
+    if (!model) return DRAW_WALL_DEFAULT_CM;
     // Already-saved independent masonry is authoritative when the new chain
     // traces it. Room-owned walls are preserved by the canonical wall helpers.
     for (const segment of this._planSnapGeometrySnapshot().value.segments) {
@@ -11794,14 +11942,15 @@ class HouseplanCard extends LitElement {
   private _applyWallFaceBatch(): void {
     const batch = this._wallFaceBatch;
     const sp = this._curSpaceCfg as any;
-    if (!batch || !sp) return;
+    const model = this._spaceModel();
+    if (!batch || !sp || !model) return;
     const abort = (message: string, vars?: Record<string, string | number>): void => {
       this._showToast(this._t(message as any, vars));
       this._roomDialogCancel();
     };
     const accepted = batch.decisions.filter((decision) => decision.create);
     const acceptedRings = accepted.map((decision) => decision.candidate.ring);
-    const existingRooms = this._spaceModel().rooms;
+    const existingRooms = model.rooms;
     for (let i = 0; i < acceptedRings.length; i++) {
       if (this._contourSelfIntersects(acceptedRings[i]) || polygonArea(acceptedRings[i]) <= 1e-6) {
         abort('toast.contour_cannot_close');
@@ -11858,7 +12007,7 @@ class HouseplanCard extends LitElement {
     const hasSplit = accepted.some((decision) => !!decision.candidate.split);
     const splitWalls = hasSplit
       ? materializeWallIntervals(
-          this._spaceModel().rooms, sp.walls, this._openCuts(),
+          model.rooms, sp.walls, this._openCuts(),
           this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
         )
       : null;
@@ -11917,6 +12066,8 @@ class HouseplanCard extends LitElement {
       // key intervals. This is still inside the one history/save transaction.
       this._cfgEpoch++;
       const openCuts = this._openCuts();
+      const updatedModel = this._spaceModel();
+      if (!updatedModel) return;
       let walls = sp.walls;
       for (const { room, decision } of newRooms) {
         const ring = decision.candidate.ring;
@@ -11924,11 +12075,11 @@ class HouseplanCard extends LitElement {
           ring[0], batch.activePath, batch.activeCms,
         );
         walls = applyWallThicknessToNewRoom(
-          walls, this._spaceModel().rooms, room.id, fallback,
+          walls, updatedModel.rooms, room.id, fallback,
           this._wallKeyPitch, openCuts, NORM_W,
         );
         for (const interval of wallIntervals(
-          this._spaceModel().rooms, walls, openCuts,
+          updatedModel.rooms, walls, openCuts,
           this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
         )) {
           if (interval.roomId !== room.id || interval.kind !== 'outer') continue;
@@ -11989,7 +12140,8 @@ class HouseplanCard extends LitElement {
 
   private _commitRoom(): void {
     const sp = this._curSpaceCfg;
-    if (!sp) return;
+    const space = this._spaceModel();
+    if (!sp || !space) return;
     const before = this._geometrySnapshot();
     const H = this._spaceH;
     const wasSplit = !!this._pendingSplit;
@@ -11999,7 +12151,7 @@ class HouseplanCard extends LitElement {
     // information is irrecoverable and one child would normalise to 0 cm.
     const splitWalls = wasSplit
       ? materializeWallIntervals(
-          this._spaceModel().rooms, sp.walls, this._openCuts(),
+          space.rooms, sp.walls, this._openCuts(),
           this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
         )
       : null;
@@ -12055,15 +12207,17 @@ class HouseplanCard extends LitElement {
       if (cm != null) {
         this._cfgEpoch++; // the new room must be in the model before keying
         const openCuts = this._openCuts();
+        const updatedSpace = this._spaceModel();
+        if (!updatedSpace) return;
         let next = applyWallThicknessToNewRoom(
-          sp.walls, this._spaceModel().rooms, newRoom.id, cm,
+          sp.walls, updatedSpace.rooms, newRoom.id, cm,
           this._wallKeyPitch, openCuts, NORM_W,
         );
         // The room may have been drawn while the toolbar thickness changed.
         // Shared stretches keep the already-existing physical wall; every
         // outer atomic stretch receives the value of its source draft edge.
         for (const iv of wallIntervals(
-          this._spaceModel().rooms, next, openCuts,
+          updatedSpace.rooms, next, openCuts,
           this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
         )) {
           if (iv.roomId !== newRoom.id || iv.kind !== 'outer') continue;
@@ -12147,7 +12301,7 @@ class HouseplanCard extends LitElement {
   private _resumeLastDraft(): void {
     const id = this._resumeDraftBySpace[this._space];
     if (!id) return;
-    const draft = this._spaceModel().room_drafts.find((d) => d.id === id);
+    const draft = this._spaceModel()?.room_drafts.find((d) => d.id === id);
     if (!draft) { delete this._resumeDraftBySpace[this._space]; return; }
     this._activeDraftId = id;
     this._path = draft.points.map((p) => [...p]);
@@ -12450,7 +12604,8 @@ class HouseplanCard extends LitElement {
 
   /** All independent physical bodies in render units. Physics intentionally
    * does not depend on show_borders. */
-  private _physicalBodiesR(space = this._spaceModel()): number[][][] {
+  private _physicalBodiesR(space: SpaceModel | undefined = this._spaceModel()): number[][][] {
+    if (!space) return [];
     const key = `${space.id}|${this._cfgEpoch}|${this._cellCm}|${this._gridPitch}`;
     if (this._physicalBodiesCache?.key === key) return this._physicalBodiesCache.all;
     const frame = physicalBodyParts(
@@ -12462,7 +12617,8 @@ class HouseplanCard extends LitElement {
   }
 
   /** Per-record bodies remain the editor/furniture identity surface. */
-  private _rawPhysicalBodiesR(space = this._spaceModel()): number[][][] {
+  private _rawPhysicalBodiesR(space: SpaceModel | undefined = this._spaceModel()): number[][][] {
+    if (!space) return [];
     this._physicalBodiesR(space);
     const frame = this._physicalBodiesCache;
     return frame ? [...frame.drafts, ...frame.partitions, ...frame.columns] : [];
@@ -12471,8 +12627,14 @@ class HouseplanCard extends LitElement {
   /** Cached clean floor. A cheap bbox pass is the spatial index needed for
    * rooms which touch only a small subset of independent bodies. */
   private _cleanFloor(
-    room: RoomCfg, floor: number[][], space = this._spaceModel(),
+    room: RoomCfg, floor: number[][], space: SpaceModel | undefined = this._spaceModel(),
   ): { floor: number[][]; geom: any; path: string; area: number } {
+    if (!space) {
+      return {
+        floor, geom: null, path: '',
+        area: geometryArea([[[...floor, floor[0]]]]),
+      };
+    }
     const roomKey = room.id || `#${space.rooms.indexOf(room)}`;
     const key = `${space.id}|${this._cfgEpoch}|${roomKey}`;
     if (!this._rszPreview) {
@@ -12728,23 +12890,28 @@ class HouseplanCard extends LitElement {
         return;
       }
     }
+    const cfg = this._serverCfg;
+    if (!cfg) return;
+    const markers = cfg.markers || [];
+    const roomRef = parseRoomRef(dlg.room);
+    let space: string | null = roomRef?.space || null;
+    const area: string | null = roomRef?.area || null;
+    const roomId: string | null = roomRef?.roomId || null;
+    const id = markerIdForBinding(dlg.binding, dlg.devId, () => 'v_' + Date.now().toString(36));
+    const oldId = dlg.devId;
+    const prevDev = oldId ? this._devices.find((x) => x.id === oldId) : null;
+    const explicitSpaceId = roomRef?.space || prevDev?.space || null;
+    const targetSpaceModel = explicitSpaceId
+      ? this._spaceModelById(explicitSpaceId)
+      : this._spaceModel();
+    if (!targetSpaceModel) return;
+    const targetSpaceId = targetSpaceModel.id;
+    if (dlg.binding === 'virtual' && !space) space = targetSpaceId;
     this._markerDialog = { ...dlg, busy: true };
     try {
-      const cfg = this._serverCfg!;
-      cfg.markers = cfg.markers || [];
-      // determine the marker id
-      let id: string;
-      // a manually chosen room overrides the space/area for any icon
-      const roomRef = parseRoomRef(dlg.room);
-      let space: string | null = roomRef?.space || null;
-      let area: string | null = roomRef?.area || null;
-      const roomId: string | null = roomRef?.roomId || null;
-      if (dlg.binding === 'virtual' && !space) space = this._space;
-      id = markerIdForBinding(dlg.binding, dlg.devId, () => 'v_' + Date.now().toString(36));
-      const oldId = dlg.devId;
       const replacedRemovedIds = dlg.binding === 'virtual'
         ? []
-        : cfg.markers
+        : markers
           .filter((m) => m.removed && m.binding === dlg.binding)
           .map((m) => m.id);
       const replacingRemoved = replacedRemovedIds.length > 0;
@@ -12753,7 +12920,7 @@ class HouseplanCard extends LitElement {
       );
       // the vacuum block is edited live outside the dialog transaction —
       // the rebuild below must carry it over, not erase it
-      const prevVac = cfg.markers.find((m0: Marker) => m0.id === id || m0.id === oldId)?.vacuum || null;
+      const prevVac = markers.find((m0: Marker) => m0.id === id || m0.id === oldId)?.vacuum || null;
       const marker: Marker = {
         id,
         vacuum: prevVac,
@@ -12795,7 +12962,6 @@ class HouseplanCard extends LitElement {
         marker.room_id = roomId;
       }
       // the room changed → move the icon to its center
-      const prevDev = oldId ? this._devices.find((x) => x.id === oldId) : null;
       const prevRoomId = prevDev?.marker?.room_id ?? null;
       const roomChanged = !!dlg.room && prevDev != null
         && (prevDev.space !== space || prevDev.area !== area || prevRoomId !== roomId);
@@ -12822,6 +12988,7 @@ class HouseplanCard extends LitElement {
       }
       // Rebinding changes source identity. Rewrite every marker:* edge in the
       // same config transaction before replacing the marker itself.
+      cfg.markers = markers;
       if (oldId && oldId !== id) cfg.markers = rewriteMarkerControlReferences(cfg.markers, oldId, id);
       if (oldId && oldId !== id && marker.value_badge?.source?.kind === 'derived_marker_state'
           && marker.value_badge.source.ref === `marker:${oldId}`) {
@@ -12842,30 +13009,28 @@ class HouseplanCard extends LitElement {
       // Write POINT-WISE (layout/update), not the whole layout — a full layout/set
       // overwrites positions changed in other windows (the v1.4.4 incident).
       let newPos: { s: string; x: number; y: number } | null = null;
-      const targetSpace = space || prevDev?.space || this._space;
       const prevRec = oldId ? this._layout[oldId] : null;
       const prevPos = prevRec
         ? { s: prevRec.s || prevDev?.space || this._space, x: prevRec.x, y: prevRec.y }
         : oldId && prevDev && this._defPos[oldId]
           ? this._normPos(prevDev.space, this._defPos[oldId].x, this._defPos[oldId].y)
           : null;
-      if (!replacingRemoved && prevPos && prevPos.s === targetSpace) {
+      if (!replacingRemoved && prevPos && prevPos.s === targetSpaceId) {
         // stays in place; pin it under the (possibly new) id
         if (id !== oldId || !this._layout[id] || roomChanged) {
           newPos = { s: prevPos.s, x: prevPos.x, y: prevPos.y };
           this._layout = { ...this._layout, [id]: newPos };
         }
       } else if (replacingRemoved || !this._layout[id] || roomChanged) {
-        const spm = this._spaceModel(space || undefined);
-        let cx = spm.vb[0] + spm.vb[2] / 2;
-        let cy = spm.vb[1] + spm.vb[3] / 2;
+        let cx = targetSpaceModel.vb[0] + targetSpaceModel.vb[2] / 2;
+        let cy = targetSpaceModel.vb[1] + targetSpaceModel.vb[3] / 2;
         const room = roomId
-          ? spm.rooms.find((r) => r.id === roomId)
+          ? targetSpaceModel.rooms.find((r) => r.id === roomId)
           : area
-            ? spm.rooms.find((r) => r.area === area)
+            ? targetSpaceModel.rooms.find((r) => r.area === area)
             : undefined;
         if (room) [cx, cy] = this._roomCenter(room);
-        newPos = this._normPos(space || this._space, cx, cy);
+        newPos = this._normPos(targetSpaceId, cx, cy);
         this._layout = { ...this._layout, [id]: newPos };
       }
       await this._saveConfigNow();
@@ -15156,6 +15321,7 @@ class HouseplanCard extends LitElement {
       </ha-card>`;
     }
     const space = this._spaceModel();
+    if (!space) return nothing;
     const vb = space.vb;
     const projection = this._effectiveProjection();
     this._renderProjection = projection;
@@ -16145,7 +16311,7 @@ class HouseplanCard extends LitElement {
   private _vacPlanRoomAnchors(spaceId: string | null | undefined): Array<{
     name: string; cx: number; cy: number;
   }> {
-    return (this._spaceModel(spaceId || undefined)?.rooms || [])
+    return (this._spaceModelById(spaceId)?.rooms || [])
       // HP-1540-04: legacy rectangle rooms (x/y/w/h) are still first-class;
       // roomPoly() gives the same outline the renderer uses for them.
       .map((room: any) => ({ room, poly: roomPoly(room) }))
@@ -16219,8 +16385,9 @@ class HouseplanCard extends LitElement {
     }
     const mapId = this._vacMapId(d, tele);
     const existing = d.marker?.vacuum?.calibration?.[mapId] as Affine | undefined;
-    const sp = this._spaceModel(d.space);
-    const vb = (sp?.vb || [0, 0, NORM_W, NORM_W]) as [number, number, number, number];
+    const sp = this._spaceModelById(d.space);
+    if (!sp) return;
+    const vb = sp.vb as [number, number, number, number];
     const p = (existing && existing.length === 6 && fitFromMatrix(existing))
       || initialFit(tele.rooms, vb);
     this._markerDialog = null;
@@ -16535,10 +16702,12 @@ class HouseplanCard extends LitElement {
   private _roomArea(r: RoomCfg): string | null {
     const poly = roomPoly(r);
     if (!poly) return null;
+    const space = this._spaceModel();
+    if (!space) return null;
     const walls = this._spaceWalls;
     const floor = walls.length && r.id
       ? (innerContourForRoom(
-          this._spaceModel().rooms, r.id, walls,
+          space.rooms, r.id, walls,
           this._openPairs().flatMap((p) => p.segs),
           this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
         ) || poly)
@@ -16740,7 +16909,9 @@ class HouseplanCard extends LitElement {
     if (!this._drag || this._drag.id !== id) return;
     const stage = this._stageEl;
     if (!stage) return;
-    const vb = this._spaceModel(spaceId).vb;
+    const space = this._spaceModelById(spaceId);
+    if (!space) return;
+    const vb = space.vb;
     const rect = stage.getBoundingClientRect();
     const v = this._viewOr(vb);
     const dx = ((ev.clientX - this._drag.sx) / rect.width) * v.w;
@@ -16792,7 +16963,8 @@ class HouseplanCard extends LitElement {
     if (!rec) {
       // the card was never dragged: pin its current default position first
       const roomId = rs.id.slice(3);
-      const sp = this._spaceModel(rs.space);
+      const sp = this._spaceModelById(rs.space);
+      if (!sp) return;
       const room = sp.rooms.find((x) => x.id === roomId);
       if (!room) return;
       const p = this._labelPos(room, rs.space);
@@ -16993,7 +17165,7 @@ class HouseplanCard extends LitElement {
         return this._cursorPt;
       if (this._drag?.id.startsWith('rl_') && this._drag.moved) {
         const roomId = this._drag.id.slice(3);
-        const room = this._spaceModel().rooms.find((r) => r.id === roomId);
+        const room = this._spaceModel()?.rooms.find((r) => r.id === roomId);
         return room ? (() => { const p = this._labelPos(room, this._space); return [p.x, p.y]; })() : null;
       }
       return null;
@@ -17021,6 +17193,7 @@ class HouseplanCard extends LitElement {
     const out: number[][] = [];
     const spm = this._spaceModel();
     if (this._markup) {
+      if (!spm) return out;
       if (this._drag?.id.startsWith('rl_')) {
         // room-card drag: centers of the OTHER room cards
         const dragged = this._drag.id.slice(3);
@@ -17163,10 +17336,12 @@ class HouseplanCard extends LitElement {
   private _renderOpenings(disp: SpaceDisplay): TemplateResult {
     const items = this._openingsR;
     if (!items.length) return svg``;
+    const space = this._spaceModel();
+    if (!space) return svg``;
     const base = disp.color;
     const walls = this._spaceWalls;
     const openCuts = this._openPairs().flatMap((pair) => pair.segs);
-    const openingWallIndex = this._openingWallIndexFor(this._spaceModel(), openCuts).value;
+    const openingWallIndex = this._openingWallIndexFor(space, openCuts).value;
     return svg`${items.map((o) => {
       if (o.orphanReason) return svg`<g class="opening orphan" data-hp="opening-orphan"
         data-id=${o.id} role="button" tabindex="0"
@@ -17224,8 +17399,10 @@ class HouseplanCard extends LitElement {
         && o.lock && this._renderOpeningEntityAvailable(o.lock),
     );
     if (!items.length) return html``;
+    const space = this._spaceModel();
+    if (!space) return html``;
     const openCuts = this._openPairs().flatMap((pair) => pair.segs);
-    const openingWallIndex = this._openingWallIndexFor(this._spaceModel(), openCuts).value;
+    const openingWallIndex = this._openingWallIndexFor(space, openCuts).value;
     return html`${items.map((o) => {
       const st = this._renderPlanHass.states[o.lock!]?.state;
       const locked = st === 'locked';
@@ -17337,12 +17514,13 @@ class HouseplanCard extends LitElement {
 
   private _renderOpeningDialog(): TemplateResult {
     const d = this._openingDialog!;
+    const partitions = this._spaceModel()?.partitions || [];
     const hostResolution = d.host ? resolvePartitionOpening({
       id: d.id || 'preview', type: d.type,
       x: d.x / NORM_W, y: d.y / this._spaceH,
       angle: d.angle, length: this._cmToUnits(Math.max(20, d.lengthCm)) / NORM_W,
       host: d.host,
-    }, this._spaceModel().partitions, NORM_W, this._cellCm, this._gridPitch) : null;
+    }, partitions, NORM_W, this._cellCm, this._gridPitch) : null;
     const orphan = !!d.host && !hostResolution?.resolved;
     const icon = d.type === 'gate' ? 'mdi:gate'
       : d.type === 'window' ? 'mdi:window-closed-variant'
@@ -17484,6 +17662,7 @@ class HouseplanCard extends LitElement {
 
   private _renderPhysicalEditorLayer(): TemplateResult {
     const space = this._spaceModel();
+    if (!space) return svg`` as unknown as TemplateResult;
     const g = this._gridPitch;
     const view = this._viewOr(this._baseVb());
     const stage = this._stageEl;
@@ -17649,6 +17828,7 @@ class HouseplanCard extends LitElement {
   private _planSnapPhysicalSegment(segment: PlanSnapSegment): LinearWallSegment | null {
     let cm = 0;
     const space = this._spaceModel();
+    if (!space) return null;
     if (segment.sourceKind === 'partition') {
       cm = Number(space.partitions.find((item) => item.id === segment.sourceId)?.cm) || 0;
     } else if (segment.sourceKind === 'draft') {
@@ -19378,7 +19558,7 @@ class HouseplanCard extends LitElement {
 
   private _renderMergeDialog(): TemplateResult {
     const d = this._mergeDialog!;
-    const rooms = this._spaceModel().rooms;
+    const rooms = this._spaceModel()?.rooms || [];
     const opt = (id: string, key: 'a' | 'b') => {
       const r = rooms.find((x) => x.id === id);
       const area = r?.area ? this.hass.areas[r.area]?.name : null;

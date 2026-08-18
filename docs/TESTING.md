@@ -32,6 +32,23 @@
 полный прогон — workflow `mutation-gate.yml`, перед стабильным релизом и по
 понедельникам. Дешёвая половина идёт с юнитами: `test/mutation-gate.test.mjs`.
 
+## Empty-space lifecycle (#113)
+
+- [ ] Active selection keeps active-or-first compatibility, while an empty
+      model returns `undefined`; exact lookup of a stale saved id never falls
+      back to another space [unit: `space-model-selection.test.mjs`].
+- [ ] There are no unguarded `_spaceModel().…` dereferences, explicit-id calls
+      use `_spaceModelById()`, and marker persistence validates its target
+      before config/file/WS side effects
+      [unit: `optional-space-model-contract.test.mjs`].
+- [ ] Delete the last space while an editor gesture and debounced write are
+      active: the empty card renders, View is restored, pointer/draft/dialog
+      state is cleared, the pending write is cancelled and Add space still
+      opens Create. Recreate a plan, then receive an empty WS config and repeat
+      under a theme/resize/read-only tick [auto: `smoke_optional_space_model`].
+- [ ] Removing the authoritative empty-state cleanup makes that smoke red
+      [mutation: `empty-space-cleanup-disabled`].
+
 
 ## Open passage (#157)
 
@@ -345,6 +362,7 @@ separately promised workflows:
 - [ ] After the last wizard space (or first manual space) → markup mode auto-opens with a toast
 - [ ] Empty config, no floors → classic "New space" dialog auto-opens once per session
 - [ ] All floors skipped, nothing created → empty state with "Add space" button remains usable
+      [auto: smoke_optional_space_model]
 
 ## Spaces ★
 
@@ -354,6 +372,9 @@ separately promised workflows:
 - [ ] Draw-space (no background) renders a WHITE canvas (paper-like), markup works on it; room borders/names stay legible on white [manual]
 - [ ] Edit: rename; replace image; **switch image→draw detaches the plan** [manual]
 - [ ] Delete space with rooms/devices → tab disappears, layout of other spaces untouched
+- [ ] Delete the last space → empty state without console errors; active editor
+      gestures and drafts are aborted, and creating the first space remains available
+      [auto: smoke_optional_space_model]
 - [ ] Display settings: borders toggle, names toggle, color picker + opacity slider live-preview after save, fill selector [manual]
 - [ ] Fill "zigbee": rooms tint red→green by average LQI; rooms without zigbee stay unfilled [manual]
 - [ ] Fill "lights": yellow when any light on, grey when all off, unfilled when the room has no lights [manual]; toggling a light from the plan recolors the room
