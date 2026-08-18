@@ -52,6 +52,29 @@
 - [ ] Пять passage-мутантов из `scripts/mutation-gate.mjs` пойманы своими
       guards до передачи в review. [auto: mutation-gate]
 
+## Independent-wall openings and structural axes (#132, #185)
+
+- [ ] Door/window/gate/passage placement on a finished independent wall stores
+      `host.kind/id/t`; a coincident room wall chooses that explicit host, while
+      crossing or duplicate-host ties are rejected. [auto: opening-placement,
+      partition-openings]
+- [ ] Every hosted type cuts only its host full-depth in Plan/View/Static/Iso;
+      exact composite room masonry is also cut, nearby bodies remain intact,
+      and malformed hosts fail dark. [auto: physical-geometry,
+      smoke_partition_openings]
+- [ ] Rigid host drag preserves `t` and updates projections atomically; delete
+      lists hosted openings, Cancel changes nothing, Confirm cascades in one
+      Undo/Redo command. [auto: partition-openings, smoke_partition_openings]
+- [ ] Contact/lock actions keep existing security rules; passage stays inert;
+      windows and exterior passages stay opaque to Glow, and partition windows
+      produce no sun wedge. [auto: runtime contracts, smoke_glow]
+- [ ] Door/window/gate/passage presentation gaps do not split the structural
+      axis used by the Walls face graph; real `open_spans` still do. [auto:
+      plan-snap-overlay, smoke_room_autoclose, smoke_partition_openings]
+- [ ] Backend rejects missing host references, out-of-range `t`, non-fitting or
+      overlapping hosted openings and stale host stripping; exports round-trip
+      the host. [auto: test_validation, test_ha_import_export]
+
 
 ## Device value badge (#90)
 

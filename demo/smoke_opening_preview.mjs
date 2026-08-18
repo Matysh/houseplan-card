@@ -205,8 +205,7 @@ const res = await page.evaluate(async () => {
   await settle();
   out.noPreviewAwayFromWalls = !root().querySelector('.opening-preview');
 
-  // Real independent bodies are occluders, not room-owned wall intervals.
-  // They must never become accidental opening-placement targets.
+  // #132: saved independent wall segments are first-class opening hosts.
   const bodyCentre = card._roomCenter(room);
   const bodyX = bodyCentre[0] / 1000;
   const bodyY = bodyCentre[1] / card._spaceH;
@@ -217,8 +216,10 @@ const res = await page.evaluate(async () => {
   card._openingPlacementIntervalsCache = null;
   card._cursorPt = bodyCentre;
   await settle();
-  out.partitionIsNotOpeningTarget = !root().querySelector('.opening-preview')
-    && card._resolveOpeningPlacement(bodyCentre) == null;
+  const partitionCandidate = card._resolveOpeningPlacement(bodyCentre);
+  out.partitionIsOpeningTarget = !!root().querySelector('.opening-preview')
+    && partitionCandidate?.host?.kind === 'partition'
+    && partitionCandidate.host.id === 'opening-smoke-partition';
   card._curSpaceCfg.partitions = [];
   card._curSpaceCfg.wall_columns = [{
     id: 'opening-smoke-column', shape: 'square', cm: 30, center: [bodyX, bodyY], angle: 0,

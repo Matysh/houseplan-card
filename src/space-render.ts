@@ -11,17 +11,26 @@ import { buildDevices, areaLqi, areaTemp, resolvedLightSources, resolvedLightSta
 import {
   spaceDisplayOf, fillColorsOf, roomFillModeOf, roomGlowOf,
   roomCustomFillOf, resolveEffectiveRoomFill, stageBgOf, paperRoomShapes,
+  openingAmount,
   type ResolvedRoomFill,
 } from './logic';
 import {
-  openingTunnelGeometries, wallBodiesUnionPath, wallBodyNeedsSolid, type WallEntry,
+  openingTunnelGeometries, wallBodiesUnionPath, wallBodyNeedsSolid, wallIntervals,
+  type WallEntry,
 } from './wall-thickness';
 import { DEFAULT_ICON_RULES, compileIconRules, EXCLUDED_DOMAINS } from './rules';
 import { t, type Lang } from './i18n';
 import { bgModeOf, resolveDayCycle } from './sun';
 import { dayCycleStageVars, renderDayCycleEnvironment } from './day-cycle-render';
-import type { DevItem, ServerConfig } from './types';
-import { physicalBodies } from './physical-geometry';
+import type { DevItem, OpeningCfg, ServerConfig } from './types';
+import { physicalBodyParts } from './physical-geometry';
+import {
+  materializePartitionOpening, partitionOpeningCut,
+  partitionOpeningFace, partitionOpeningHasCompositeRoomWall, resolvePartitionOpening,
+} from './partition-openings';
+import {
+  renderOpeningVisibleGeometry, type OpeningVisibleSpec,
+} from './render/opening-symbol';
 import { activeRegistryHass, fullRegistryHass, type HaRegistrySnapshot } from './ha-binding-status';
 import {
   resolveDevicePresentation, type PresentationActivityRuntime, type ResolvedDevicePresentation,
@@ -200,15 +209,29 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const spCfg: any = o.cfg.spaces.find((s: any) => s.id === o.spaceId) || {};
   const walls: WallEntry[] = Array.isArray(spCfg.walls) ? spCfg.walls : [];
   const cellCm = Number(spCfg.cell_cm) > 0 ? Number(spCfg.cell_cm) : 5;
+  const resolvedHosted = (spCfg.openings || []).flatMap((opening: OpeningCfg) => {
+    if (!opening.host) return [];
+    const resolved = resolvePartitionOpening(
+      opening, space.partitions, NORM_W, cellCm, GRID_PITCH,
+    ).resolved;
+    return resolved ? [resolved] : [];
+  });
   const physicalFingerprint = contentFingerprint({
     partitions: space.partitions,
     roomDrafts: space.room_drafts,
     columns: space.wall_columns,
     cellCm,
+    hostedOpenings: resolvedHosted.map((resolved) => ({
+      id: resolved.opening.id, host: resolved.host,
+      length: resolved.length, type: resolved.opening.type,
+    })),
   });
   const extras = cachedStaticPhysicalBodies(
     o.cfg, space.id, physicalFingerprint,
-    () => physicalBodies(space, cellCm, GRID_PITCH),
+    () => physicalBodyParts(
+      space, cellCm, GRID_PITCH, GRID_PITCH * 0.0002,
+      resolvedHosted.map(partitionOpeningCut),
+    ).all,
   );
   for (const body of extras) {
     const xs = body.map((p) => p[0]), ys = body.map((p) => p[1]);
@@ -244,7 +267,23 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   }
   // Static intentionally keeps the historical door/window/gate wall output.
   // Only the new negative-space type participates in its masonry fingerprint.
-  const staticPassages = staticPassageOpenings(spCfg.openings, NORM_W);
+  const resolvedRawOpenings = (spCfg.openings || []).flatMap((opening: OpeningCfg) => {
+    if (!opening.host) return [opening];
+    const resolved = resolvedHosted.find((item) => item.opening.id === opening.id);
+    return resolved ? [materializePartitionOpening(opening, resolved, NORM_W)] : [];
+  });
+  const staticPassages = staticPassageOpenings(resolvedRawOpenings, NORM_W);
+  const roomIntervals = wallIntervals(
+    space.rooms, walls, [], GRID_STEP_N, cellCm, GRID_PITCH, NORM_W,
+  );
+  const hostedCompositeOpenings = resolvedHosted
+    .filter((resolved) => partitionOpeningHasCompositeRoomWall(
+      resolved, roomIntervals, GRID_PITCH * 0.0002,
+    ))
+    .map((resolved) => ({
+      x: resolved.center[0], y: resolved.center[1],
+      angle: resolved.angle, length: resolved.length,
+    }));
 
   const roomShapes = space.rooms
     .filter((r) => r.area || disp.showBorders || roomFillModeOf(disp.fill, r) !== 'none')
@@ -381,14 +420,17 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     ? contentFingerprint(staticPassages.length
       ? { rooms: space.rooms, walls, extras, cellCm, passages: staticPassages.map((opening) => ({
           x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen,
-        })) }
+        })), hostedCompositeOpenings }
       : { rooms: space.rooms, walls, extras, cellCm })
     : '';
   const canonicalWallGeometry = needsCanonicalWallGeometry
     ? cachedStaticWallGeometry(o.cfg, space.id, wallGeometryFingerprint, () => wallBodiesUnionPath(
-      space.rooms, walls, [], staticPassages.map((opening) => ({
-        x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen,
-      })), GRID_STEP_N, cellCm, GRID_PITCH, NORM_W, extras,
+      space.rooms, walls, [], [
+        ...staticPassages.filter((opening) => !opening.host).map((opening) => ({
+          x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen,
+        })),
+        ...hostedCompositeOpenings,
+      ], GRID_STEP_N, cellCm, GRID_PITCH, NORM_W, extras,
     ))
     : null;
   const passageTunnelGeometry = staticPassages.length && walls.length
@@ -427,6 +469,32 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const pxPerUnit = o.stageWidth && vb[2] ? o.stageWidth / vb[2] : 1;
   const solidWall = !!wallUnion && wallBodyNeedsSolid(wallUnion.depthUnits, pxPerUnit);
   const wallStroke = disp.color || '#607d8b';
+  const hostedOpeningSymbols = disp.hideOpenings ? [] : resolvedHosted.map((resolved) => {
+    const opening = resolved.opening;
+    const state = opening.type === 'passage' || !opening.contact
+      ? null : planHass.states?.[opening.contact]?.state;
+    const amount = openingAmount(opening.type, state, !!opening.invert);
+    const active = amount > 0 && !!opening.contact;
+    const faceFlipV = opening.type === 'gate' ? !opening.flip_v : !!opening.flip_v;
+    const spec: OpeningVisibleSpec = {
+      type: opening.type,
+      length: resolved.length,
+      angle: resolved.angle,
+      amount,
+      flipH: !!opening.flip_h,
+      flipV: !!opening.flip_v,
+      base: wallStroke,
+      tone: active ? 'var(--hp-open)' : wallStroke,
+      cellCm,
+      gridPitch: GRID_PITCH,
+      face: partitionOpeningFace(resolved, faceFlipV),
+    };
+    return svg`<g class="opening static-opening" data-hp="opening"
+      data-id=${opening.id} data-kind=${opening.type} pointer-events="none"
+      transform="translate(${resolved.center[0]} ${resolved.center[1]}) rotate(${resolved.angle})">
+      ${renderOpeningVisibleGeometry(spec)}
+    </g>`;
+  });
 
   return html`
     <div class="hp-static-stage${dayCycle ? ` daycycle phase-${dayCycle.phase}` : ''}"
@@ -472,6 +540,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
                 stroke="${wallStroke}" stroke-width="0.6" pointer-events="none"></path>
             </g>`
           : nothing}
+        ${hostedOpeningSymbols}
       </svg>
       ${''/* docs/CANVAS.md §6: the same expression as the full card. The
              static card has no zoom, but its frame is the CONTENT now, so a

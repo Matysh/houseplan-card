@@ -179,7 +179,8 @@ Boolean, global + per-space (null = inherit), default OFF.
 For every opening of type «window» sitting on an EXTERIOR wall — a
 wall stretch with no other room on its outer side, decided by probing
 the existing room geometry just off both sides of the window; windows
-on interior walls do not participate, and open (virtual) boundaries
+on interior walls do not participate, windows explicitly hosted by independent
+partitions do not participate, and open (virtual) boundaries
 never qualify because both sides are rooms — the card draws a wedge
 when BOTH hold:
 

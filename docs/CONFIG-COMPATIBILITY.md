@@ -69,6 +69,23 @@ fallback may show or rewrite it as a door. Before a permanent rollback, convert
 saved passages deliberately in a current version; automatic conversion is not
 performed because it would invent a leaf and binding semantics.
 
+## Independent-wall opening host (#132)
+
+`space.openings[].host` is an optional discriminated object
+`{kind:'partition', id:string, t:number}`. Its absence preserves the historical
+room-wall association. When present, the referenced partition in the same
+space and normalized `t` are authoritative; the legacy `x/y/angle` siblings
+remain a materialized compatibility projection for older readers. Full export,
+plan-only export, merge and optimization preserve the host object.
+
+Current writes validate the reference, fit and non-overlap. They also reject a
+stale writer that keeps an existing opening but silently drops its host; this
+prevents a downgrade from converting it into a nearby room-wall opening. Old
+frontends may display only the materialized projection, so opening or editing a
+hosted opening with an old bundle is unsupported. A missing/invalid host is not
+re-associated automatically: current renderers fail dark and Plan offers an
+explicit rebind.
+
 ## Four-phase background default and transfer (#146)
 
 The schema remains `settings.bg_mode: static | daynight` globally and per

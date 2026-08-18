@@ -240,7 +240,20 @@ export function alignAllToGrid(
       const b = [snapN(p.b[0]), snapN(p.b[1])];
       let d = Math.max(dist(p.a[0], p.a[1], a[0], a[1]),
         dist(p.b[0], p.b[1], b[0], b[1]));
-      if (dist(a[0], a[1], b[0], b[1]) > EPS) { p.a = a; p.b = b; }
+      const snappedLength = dist(a[0], a[1], b[0], b[1]);
+      const hostedFit = (sp.openings || [])
+        .filter((opening: any) => opening.host?.kind === 'partition'
+          && opening.host.id === p.id)
+        .every((opening: any) => {
+          const length = Number(opening.length);
+          const t = Number(opening.host.t);
+          const along = t * snappedLength;
+          return Number.isFinite(length) && length > 0
+            && Number.isFinite(t) && t >= 0 && t <= 1
+            && along - length / 2 >= -EPS
+            && along + length / 2 <= snappedLength + EPS;
+        });
+      if (snappedLength > EPS && hostedFit) { p.a = a; p.b = b; }
       else d = 0;
       note(d, cell, sid);
     }
@@ -281,6 +294,27 @@ export function alignAllToGrid(
     // exactly where it is rather than teleported across the plan.
     for (const o of sp.openings || []) {
       total++;
+      if (o.host?.kind === 'partition') {
+        const partition = (sp.partitions || []).find((item: any) => item.id === o.host.id);
+        const t = Number(o.host.t);
+        if (!partition || !Number.isFinite(t) || t < 0 || t > 1) continue;
+        const dx = partition.b[0] - partition.a[0];
+        const dy = partition.b[1] - partition.a[1];
+        if (Math.hypot(dx, dy) <= EPS) continue;
+        const nx = partition.a[0] + dx * t;
+        const ny = partition.a[1] + dy * t;
+        let angle = Math.atan2(dy, dx) * 180 / Math.PI;
+        if (angle >= 90) angle -= 180;
+        else if (angle < -90) angle += 180;
+        const raw = Number(o.angle);
+        const turned = !(Number.isFinite(raw) && raw === angle);
+        const d = openingShift(o.x, o.y, Number.isFinite(raw) ? raw : angle,
+          Number(o.length) || 0, nx, ny, angle);
+        o.x = nx; o.y = ny; o.angle = angle;
+        if (turned) rotated++;
+        note(d, cell, sid, turned);
+        continue;
+      }
       const q = snapToWall([o.x, o.y], sp.rooms || [], WALL_TOL,
         { step: GRID_STEP_N, length: Number(o.length) || 0 });
       if (!q) continue;

@@ -346,9 +346,10 @@ def _plan_only_source() -> tuple[dict[str, Any], dict[str, Any]]:
         },
         "future_space": {"entity": "sensor.secret"},
         "openings": [{
-            "id": "window", "type": "window", "x": 0.5, "y": 0,
+            "id": "window", "type": "window", "x": 0.5, "y": 0.5,
             "angle": 0, "length": 0.2, "contact": "binary_sensor.window",
             "lock": "lock.window", "invert": True, "flip_h": True,
+            "host": {"kind": "partition", "id": "partition", "t": 0.5},
             "future_opening": "sensor.secret",
         }],
         "walls": [{"key": "wall-1", "cm": 20, "future_wall": "sensor.secret"}],
@@ -440,6 +441,7 @@ def test_plan_only_export_projects_geometry_and_round_trips_room_labels(tmp_path
     }
     opening = exported["openings"][0]
     assert opening["flip_h"] is True
+    assert opening["host"] == {"kind": "partition", "id": "partition", "t": 0.5}
     assert not {"contact", "lock", "invert", "future_opening"} & set(opening)
     by_id = {item["id"]: item for item in exported["decor"]}
     assert by_id["modern"]["text"] == "Temp — / — °C"

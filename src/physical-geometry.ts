@@ -105,6 +105,49 @@ export interface PhysicalBodySet extends PhysicalBodyParts {
   geometry: any | null;
 }
 
+export interface PartitionOpeningCut {
+  hostId: string;
+  a: [number, number];
+  b: [number, number];
+  depth: number;
+}
+
+/**
+ * Cut only the explicitly hosted independent-wall body. Boolean failure keeps
+ * the original body opaque (fail-dark) instead of manufacturing a light leak.
+ */
+export function cutPartitionBody(
+  body: number[][], cuts: readonly PartitionOpeningCut[], epsilon = 1e-9,
+): number[][][] {
+  if (!cuts.length) return [body];
+  let geometry: any = [closedRing(body)];
+  try {
+    for (const cut of cuts) {
+      const dx = cut.b[0] - cut.a[0], dy = cut.b[1] - cut.a[1];
+      const length = Math.hypot(dx, dy);
+      if (!(length > epsilon)) continue;
+      const ux = dx / length, uy = dy / length;
+      const nx = -uy, ny = ux;
+      const pad = Math.max(Number(cut.depth) || 0, epsilon * 4) * 1.25;
+      const longitudinalPad = Math.max(epsilon * 2, length * 1e-9);
+      const slot = [
+        [cut.a[0] - ux * longitudinalPad - nx * pad,
+          cut.a[1] - uy * longitudinalPad - ny * pad],
+        [cut.b[0] + ux * longitudinalPad - nx * pad,
+          cut.b[1] + uy * longitudinalPad - ny * pad],
+        [cut.b[0] + ux * longitudinalPad + nx * pad,
+          cut.b[1] + uy * longitudinalPad + ny * pad],
+        [cut.a[0] - ux * longitudinalPad + nx * pad,
+          cut.a[1] - uy * longitudinalPad + ny * pad],
+      ];
+      geometry = difference(geometry, closedRing(slot) as any);
+    }
+    return geometryOuterRings(geometry);
+  } catch {
+    return [body];
+  }
+}
+
 /**
  * Raw editable bodies plus their computed, order-independent junction volumes.
  * Most runtime consumers need these polygons directly and must not pay for an
@@ -115,11 +158,19 @@ export function physicalBodyParts(
   cellCm: number,
   gridPitch: number,
   epsilon = Math.max(gridPitch * 0.0002, 1e-9),
+  partitionCuts: readonly PartitionOpeningCut[] = [],
 ): PhysicalBodyParts {
   const draftSegments: LinearWallSegment[] = [];
   const partitionSegments: LinearWallSegment[] = [];
+  const cutsByPartition = new Map<string, PartitionOpeningCut[]>();
+  for (const cut of partitionCuts) {
+    const list = cutsByPartition.get(cut.hostId) || [];
+    list.push(cut);
+    cutsByPartition.set(cut.hostId, list);
+  }
   const drafts: number[][][] = [];
   const partitions: number[][][] = [];
+  const presentedPartitions: number[][][] = [];
   for (const draft of space.room_drafts || []) {
     for (let i = 0; i + 1 < draft.points.length; i++) {
       const halfDepth = wallCmToUnits(
@@ -142,13 +193,20 @@ export function physicalBodyParts(
     if (!body) continue;
     partitionSegments.push(segment);
     partitions.push(body);
+    presentedPartitions.push(...cutPartitionBody(
+      body, cutsByPartition.get(partition.id) || [], epsilon,
+    ));
   }
   const columns = (space.wall_columns || []).map((column) =>
     columnBody(column, cellCm, gridPitch));
+  // Join volumes are presentation masonry too. Leaving them uncut can bridge
+  // an opening placed close to a T/endpoint even though its raw host body was
+  // correctly split. Other crossing walls remain opaque through their own raw
+  // bodies; only the extra shared mitre/bevel volume is trimmed here.
   const patches = linearWallJoinPatches(
     [...draftSegments, ...partitionSegments], epsilon,
-  );
-  const all = [...drafts, ...partitions, ...patches, ...columns];
+  ).flatMap((body) => cutPartitionBody(body, partitionCuts, epsilon));
+  const all = [...drafts, ...presentedPartitions, ...patches, ...columns];
   return { drafts, partitions, columns, patches, all };
 }
 

@@ -333,8 +333,8 @@ contribute. Three explicitly typed exceptions are stored per space:
 independent wall segments and `wall_columns` for square/circular columns.
 They do not create a room or HA area and never split a room implicitly. Their
 physical bodies are unioned with room walls for rendering and light occlusion,
-and subtracted from clean room floor area. Openings (doors, windows and gates)
-still belong only to derived room walls and never cut an independent object.
+and subtracted from clean room floor area. A finished partition may explicitly
+host a door, window, gate or passage; unfinished drafts and columns may not.
 
 Independent linear objects have two deliberate projections. Raw flat-capped
 quads preserve source identity for hit/selection/drag/properties/delete/history
@@ -363,8 +363,11 @@ vertex cannot contribute a child-room mitre to the facade. Per-room rings remain
 an interior join/nested-room representation, and atomic quads provide a safe
 physical interval when an acute child ring cannot be subtracted. Paper and
 masonry paths are emitted by that same geometry pass. Computed independent
-junction patches enter as extras only after room opening cuts, so an opening
-cannot cut a coincident partition and room exterior authority remains intact.
+junction patches enter through the same physical union. A partition-hosted
+opening is subtracted from its explicit raw body before that union. It also
+cuts a derived room wall only when the wall is exactly collinear and covers
+the complete hosted interval; crossing or nearby bodies remain opaque and room
+exterior authority remains intact.
 Before the exterior offset is built, each saved atomic endpoint splits its
 containing collinear union edge. Offset changes are explicit butt steps at that
 endpoint, including nonzero-to-zero transitions. The topology tolerance starts
@@ -489,16 +492,17 @@ navigation, focus restoration and outside-dismiss consumption), but no current
 tools are grouped without a separate product decision. The change is UI-only:
 plan/config models and geometry commands are unchanged.
 
-## Doors, windows & gates (v1.23.0+)
+## Doors, windows, gates & passages (v1.23.0+)
 
-`space.openings[]` — plan geometry, **not** markers: an opening needs an angle, a length and a
-wall, while markers are free points whose positions live in the layout store. Model:
-`{id, type: door|window|gate, x, y, angle, length, contact?, lock?, invert?, flip_h?, flip_v?}`
-(normalized coords; `length` normalized by plan width). Placement snaps onto the nearest
-**derived** wall via `snapToWall` (logic.ts) — the angle is normalized to [-90, 90) because two
-rooms share a wall with opposite edge directions, and without that a drag across segment
-boundaries flips the hinge. The opening then keeps **absolute coordinates**, so editing, merging
-or deleting rooms never breaks it.
+`space.openings[]` — plan geometry, **not** markers: an opening needs an angle,
+a length and one wall, while markers are free points whose positions live in
+the layout store. Model:
+`{id, type: door|window|gate|passage, x, y, angle, length, host?, contact?, lock?, invert?, flip_h?, flip_v?}`.
+Room-wall openings omit `host` and retain the absolute-coordinate association.
+An independent-wall opening stores
+`host:{kind:'partition',id,t}`; the stable id and normalized position `t` are
+authoritative, while `x/y/angle` are an atomically refreshed compatibility
+projection. No explicit host ever falls back to a nearest wall.
 
 Rendering (after easy-floorplan, MIT): SVG symbol at the origin (jambs + hinged leaf + a
 quarter-circle arc revealed via `stroke-dashoffset`), translated/rotated onto the wall; windows
@@ -535,6 +539,15 @@ same frame-local effective fill as the room shape. Outer openings give the one
 room both halves; shared openings use a local-coordinate hard stop at `y=0`.
 Virtual spans, unfinished drafts and zero-thickness walls are ignored; legacy
 spans are clipped per atomic body.
+
+The same resolved host drives placement, symbol face, full-depth partition cut,
+static/hidden-isometric rendering, Glow and edit operations. Rigid host drag
+keeps `t` and updates every materialized projection in one history command.
+Deleting a host with openings requires an explicit cascade dialog; an invalid
+host fails dark and is visible only as a rebind diagnostic in Plan. Structural
+room-face topology deliberately keeps every valid wall axis continuous through
+all opening types (#185); only `open_spans` and absent walls are connectivity
+gaps.
 
 ## Integration WS API
 

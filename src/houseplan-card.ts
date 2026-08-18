@@ -124,7 +124,7 @@ import {
   type VirtualLightSnapshot,
 } from './virtual-light-state';
 import type {
-  OpeningCfg,
+  OpeningCfg, PartitionOpeningHost,
   RoomCfg, RoomDraftCfg, PartitionCfg, WallColumnCfg,
   SpaceModel, PdfRef, Marker, ServerConfig, DevItem, CardConfig,
   MarkerValueBadge, ValueBadgePosition, ValueBadgeSource,
@@ -134,8 +134,15 @@ import {
   directionalOccluders, floorMinusBodies, geometryArea, geometryOuterRings,
   geometryAllRings, intersectionPaths, partitionBody, polyclipPathD,
   pointInOpaquePlanBody, pointInPhysicalBody, sameColumnPlacement,
-  physicalBodies, physicalBodyParts,
+  physicalBodyParts,
+  type PartitionOpeningCut,
 } from './physical-geometry';
+import {
+  hostedOpeningIntervalsOverlap, materializePartitionOpening,
+  partitionOpeningCut, partitionOpeningFace, partitionOpeningHasCompositeRoomWall,
+  partitionPlacementIntervals, resolvePartitionOpening,
+  type PartitionOpeningOrphanReason, type ResolvedPartitionOpening,
+} from './partition-openings';
 import {
   buildPlanSnapGeometry, resolvePlanSnap,
   type PlanSnapCandidate, type PlanSnapGeometry, type PlanSnapSegment,
@@ -654,6 +661,12 @@ interface OpMeasure {
 type OpeningPlacementCandidate = Omit<OpeningPlacementCore, 'measure'> & {
   face: OpeningFaceOffset;
   measure: OpMeasure;
+};
+
+type RenderOpening = OpeningCfg & {
+  rx: number; ry: number; rlen: number;
+  partitionHost?: ResolvedPartitionOpening;
+  orphanReason?: PartitionOpeningOrphanReason;
 };
 
 class HouseplanCard extends LitElement {
@@ -1196,6 +1209,7 @@ class HouseplanCard extends LitElement {
     kind: 'partition' | 'column' | 'draft'; id: string; cm: string;
     segment?: number; shape?: 'square' | 'circle'; angle?: string; length?: string;
   } | null = null;
+  private _partitionDeleteDialog: { id: string; openings: OpeningCfg[] } | null = null;
   /** Drag preview is render-only; config is committed once on pointerup. */
   private _physicalDrag: {
     pid: number; kind: 'partition' | 'column'; id: string;
@@ -1237,6 +1251,9 @@ class HouseplanCard extends LitElement {
     key: string; drafts: number[][][]; partitions: number[][][];
     columns: number[][][]; patches: number[][][]; all: number[][][];
   } | null = null;
+  /** Light cuts are type/floor-specific and differ from drawn masonry, but HA
+   * state ticks must not rebuild independent-wall topology. */
+  private _lightPhysicalBodiesCache: { key: string; all: number[][][] } | null = null;
   private _cleanFloorCache = new Map<string, {
     floor: number[][]; geom: any; path: string; area: number;
   }>();
@@ -1290,6 +1307,8 @@ class HouseplanCard extends LitElement {
   private _mergeSel: string | null = null;
   /** Session-only explicit type/width chosen in the Opening sub-panel. */
   private _openingPreset: OpeningPlacementPreset | null = null;
+  /** Existing orphan whose next valid placement replaces only its host. */
+  private _openingRebindId: string | null = null;
   private _openingPresetRevision = 0;
   /** Last painted hover candidate. Click may reuse it only for the same input epoch. */
   private _openingHoverCandidate: OpeningPlacementCandidate | null = null;
@@ -1302,6 +1321,7 @@ class HouseplanCard extends LitElement {
     invert: boolean;
     flipH: boolean;
     flipV: boolean;
+    host?: PartitionOpeningHost;
     x: number; y: number; angle: number; // render units (from the wall snap)
   } | null = null;
   private _openingInfo: OpeningCfg | null = null;
@@ -1811,6 +1831,7 @@ class HouseplanCard extends LitElement {
     _activeDraftId: { state: true },
     _physicalSel: { state: true },
     _physicalDialog: { state: true },
+    _partitionDeleteDialog: { state: true },
     _physicalDrag: { state: true },
     _physicalRotate: { state: true },
     _duplicateColumnId: { state: true },
@@ -4688,10 +4709,14 @@ class HouseplanCard extends LitElement {
     return {
       key,
       build: () => {
-        const extras = physicalBodies(space, this._cellCm, this._gridPitch);
+        const extras = physicalBodyParts(
+          space, this._cellCm, this._gridPitch, this._gridPitch * 0.0002,
+          this._partitionOpeningCuts(space),
+        ).all;
+        const roomOpenings = this._roomWallOpeningInputs(this._openingsR, space);
         const united = walls.length || extras.length
           ? wallBodiesGeometry(
-              space.rooms, walls, openCuts, openings,
+              space.rooms, walls, openCuts, roomOpenings,
               this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, extras,
             )
           : null;
@@ -4707,15 +4732,18 @@ class HouseplanCard extends LitElement {
           this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
         );
         const openingBases = openings.map((opening) => {
+          const rendered = this._openingsR[opening.sourceIndex];
           const faceFlipV = opening.type === 'gate' ? !opening.flipV : opening.flipV;
-          const face = walls.length || opening.type === 'gate'
-            ? openingInnerFaceOffsetFromIndex(openingIndex, {
-                x: opening.x,
-                y: opening.y,
-                angle: opening.angle,
-                length: opening.length,
-                flip_v: faceFlipV,
-              })
+          const face = rendered?.partitionHost
+            ? partitionOpeningFace(rendered.partitionHost, faceFlipV)
+            : walls.length || opening.type === 'gate'
+              ? openingInnerFaceOffsetFromIndex(openingIndex, {
+                  x: opening.x,
+                  y: opening.y,
+                  angle: opening.angle,
+                  length: opening.length,
+                  flip_v: faceFlipV,
+                })
             : { ox: 0, oy: 0, cm: 0, side: -1 as -1 | 1 };
           return buildIsoOpeningBasis({ ...opening, face });
         });
@@ -6108,28 +6136,11 @@ class HouseplanCard extends LitElement {
     return this._snap(candidate);
   }
 
-  /** Canonical physical opening slots on room-wall centrelines. */
-  private _planSnapOpeningCuts(space: SpaceModel, openCuts: number[][]): number[][] {
-    if (!this._openingsR.length) return [];
-    const index = this._openingWallIndexFor(space, openCuts).value;
-    const cuts: number[][] = [];
-    for (const opening of this._openingsR) {
-      const input = {
-        x: opening.rx, y: opening.ry,
-        angle: Number(opening.angle) || 0,
-        length: opening.rlen,
-      };
-      const association = resolveOpeningWallAssociation(index, input);
-      if (!association.negative && !association.positive) continue;
-      const rad = input.angle * Math.PI / 180;
-      const dx = Math.cos(rad) * input.length / 2;
-      const dy = Math.sin(rad) * input.length / 2;
-      cuts.push([input.x - dx, input.y - dy, input.x + dx, input.y + dy]);
-    }
-    return cuts;
-  }
-
-  /** Static architectural axes are rebuilt only when structural editor state changes. */
+  /**
+   * Static structural axes are rebuilt only when wall state changes. Openings
+   * cut masonry, not room-face connectivity (#185); only real open_spans cut
+   * this graph.
+   */
   private _planSnapGeometrySnapshot(): { key: string; value: PlanSnapGeometry } {
     const space = this._spaceModel();
     const key = [
@@ -6141,7 +6152,7 @@ class HouseplanCard extends LitElement {
     const value = buildPlanSnapGeometry({
       space,
       activeDraftId: this._activeDraftId,
-      roomCuts: [...openCuts, ...this._planSnapOpeningCuts(space, openCuts)],
+      roomCuts: openCuts,
       epsilon: this._gridPitch * 0.0002,
     });
     this._planSnapGeometryCache = { key, value };
@@ -7086,11 +7097,42 @@ class HouseplanCard extends LitElement {
     if (!sel || !sp) return;
     if (sel.kind === 'draft') { this._deleteDraftWhole(); return; }
     const before = this._geometrySnapshot();
+    if (sel.kind === 'partition') {
+      const hosted = (sp.openings || [])
+        .filter((opening: OpeningCfg) => opening.host?.kind === 'partition'
+          && opening.host.id === sel.id)
+        .sort((a: OpeningCfg, b: OpeningCfg) => (a.host?.t || 0) - (b.host?.t || 0));
+      if (hosted.length) {
+        this._partitionDeleteDialog = {
+          id: sel.id,
+          openings: hosted.map((opening: OpeningCfg) => JSON.parse(JSON.stringify(opening))),
+        };
+        return;
+      }
+    }
     const key = sel.kind === 'partition' ? 'partitions'
       : sel.kind === 'column' ? 'wall_columns' : 'room_drafts';
     sp[key] = (sp[key] || []).filter((x: any) => x.id !== sel.id);
     if (!sp[key].length) delete sp[key];
     if (this._activeDraftId === sel.id) this._cancelPath();
+    this._physicalSel = null;
+    this._physicalDialog = null;
+    this._recordGeometry(this._t('history.physical_delete'), before);
+    this._saveConfig();
+  };
+
+  private _confirmPartitionDelete = (): void => {
+    const dialog = this._partitionDeleteDialog;
+    const sp = this._curSpaceCfg as any;
+    if (!dialog || !sp) return;
+    const before = this._geometrySnapshot();
+    sp.partitions = (sp.partitions || []).filter((partition: PartitionCfg) =>
+      partition.id !== dialog.id);
+    if (!sp.partitions.length) delete sp.partitions;
+    sp.openings = (sp.openings || []).filter((opening: OpeningCfg) =>
+      opening.host?.kind !== 'partition' || opening.host.id !== dialog.id);
+    if (!sp.openings.length) delete sp.openings;
+    this._partitionDeleteDialog = null;
     this._physicalSel = null;
     this._physicalDialog = null;
     this._recordGeometry(this._t('history.physical_delete'), before);
@@ -7236,8 +7278,22 @@ class HouseplanCard extends LitElement {
       const p = (sp.partitions || []).find((x: any) => x.id === drag.id);
       const base = drag.base as PartitionCfg;
       if (p) {
-        p.a = [(base.a[0] + drag.delta[0]) / NORM_W, (base.a[1] + drag.delta[1]) / NORM_W];
-        p.b = [(base.b[0] + drag.delta[0]) / NORM_W, (base.b[1] + drag.delta[1]) / NORM_W];
+        const moved: PartitionCfg = {
+          ...base,
+          a: [base.a[0] + drag.delta[0], base.a[1] + drag.delta[1]],
+          b: [base.b[0] + drag.delta[0], base.b[1] + drag.delta[1]],
+        };
+        p.a = [moved.a[0] / NORM_W, moved.a[1] / NORM_W];
+        p.b = [moved.b[0] / NORM_W, moved.b[1] / NORM_W];
+        for (const opening of sp.openings || []) {
+          if (opening.host?.kind !== 'partition' || opening.host.id !== drag.id) continue;
+          const resolved = resolvePartitionOpening(
+            opening, [moved], NORM_W, this._cellCm, this._gridPitch,
+          ).resolved;
+          if (resolved) Object.assign(
+            opening, materializePartitionOpening(opening, resolved, NORM_W),
+          );
+        }
       }
     } else {
       const c = (sp.wall_columns || []).find((x: any) => x.id === drag.id);
@@ -7683,12 +7739,91 @@ class HouseplanCard extends LitElement {
   }
 
   /** Openings of the current space in render units. */
-  private get _openingsR(): (OpeningCfg & { rx: number; ry: number; rlen: number })[] {
+  private get _openingsR(): RenderOpening[] {
     const sp = this._curSpaceCfg;
     const H = this._spaceH;
-    return (sp?.openings || []).map((o: OpeningCfg) => ({
-      ...o, rx: o.x * NORM_W, ry: o.y * H, rlen: o.length * NORM_W,
-    }));
+    const space = this._spaceModel();
+    return (sp?.openings || []).flatMap((o: OpeningCfg) => {
+      const fallback: RenderOpening = {
+        ...o, rx: o.x * NORM_W, ry: o.y * H, rlen: o.length * NORM_W,
+      };
+      if (!o.host) return [fallback];
+      const resolution = resolvePartitionOpening(
+        o, space.partitions, NORM_W, this._cellCm, this._gridPitch,
+      );
+      if (!resolution.resolved) {
+        return this._mode === 'plan'
+          ? [{ ...fallback, orphanReason: resolution.reason || 'invalid-host' }]
+          : [];
+      }
+      let [rx, ry] = resolution.resolved.center;
+      const drag = this._physicalDrag;
+      if (drag?.moved && drag.kind === 'partition' && drag.id === o.host.id) {
+        rx += drag.delta[0];
+        ry += drag.delta[1];
+      }
+      return [{
+        ...o,
+        rx, ry,
+        rlen: resolution.resolved.length,
+        angle: resolution.resolved.angle,
+        partitionHost: resolution.resolved,
+      }];
+    });
+  }
+
+  private _partitionOpeningCuts(
+    space = this._spaceModel(),
+    accept: (opening: OpeningCfg) => boolean = () => true,
+  ): PartitionOpeningCut[] {
+    const raw = this._curSpaceCfg?.id === space.id ? this._curSpaceCfg?.openings || [] : [];
+    const cuts: PartitionOpeningCut[] = [];
+    for (const opening of raw) {
+      if (!opening.host || !accept(opening)) continue;
+      const resolution = resolvePartitionOpening(
+        opening, space.partitions, NORM_W, this._cellCm, this._gridPitch,
+      );
+      if (resolution.resolved) cuts.push(partitionOpeningCut(resolution.resolved));
+    }
+    return cuts;
+  }
+
+  /**
+   * Room masonry may be cut by a hosted opening only for an exact collinear
+   * composite. Nearby/crossing walls never inherit the partition's cut.
+   */
+  private _roomWallOpeningInputs(
+    openings: readonly RenderOpening[] = this._openingsR,
+    space = this._spaceModel(),
+  ): Array<{ x: number; y: number; angle: number; length: number }> {
+    const openCuts = this._openPairs().flatMap((pair) => pair.segs);
+    const intervals = wallIntervals(
+      space.rooms, this._spaceWalls, openCuts,
+      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+    );
+    return openings.flatMap((opening) => {
+      const input = {
+        x: opening.rx, y: opening.ry,
+        angle: Number(opening.angle) || 0,
+        length: opening.rlen,
+      };
+      if (!opening.host) return [input];
+      if (!opening.partitionHost) return [];
+      return partitionOpeningHasCompositeRoomWall(
+        opening.partitionHost, intervals, this._gridPitch * 0.0002,
+      ) ? [input] : [];
+    });
+  }
+
+  private _openingFace(
+    opening: RenderOpening, index: OpeningWallIndex, flipV: boolean,
+  ): OpeningFaceOffset {
+    return opening.partitionHost
+      ? partitionOpeningFace(opening.partitionHost, flipV)
+      : openingInnerFaceOffsetFromIndex(index, {
+          x: opening.rx, y: opening.ry,
+          angle: opening.angle, length: opening.rlen, flip_v: flipV,
+        });
   }
 
   /** cm → render units via the space scale (cm per grid cell). */
@@ -10215,11 +10350,7 @@ class HouseplanCard extends LitElement {
     const extras = this._physicalBodiesR();
     if (!walls.length && !extras.length) return null;
     const openCuts = this._openPairs().flatMap((p) => p.segs);
-    const openings = (this._curSpaceCfg?.openings || []).map((o: any) => ({
-      x: Number(o.x) * NORM_W, y: Number(o.y) * NORM_W,
-      angle: Number(o.angle) || 0,
-      length: (Number(o.length) > 0 ? Number(o.length) : 0.9) * NORM_W,
-    }));
+    const openings = this._roomWallOpeningInputs();
     const unionKey = `${this._space}|${this._cfgEpoch}|${this._spaceModel().rooms.length}`;
     if (!this._wallUnionCache || this._wallUnionCache.key !== unionKey) {
       this._wallUnionCache = {
@@ -10763,11 +10894,11 @@ class HouseplanCard extends LitElement {
     }
     // A hidden opening symbol is still a physical opening: never bridge a
     // doorway/window with the hover stroke merely because its symbol is off.
-    const openingCuts = this._openingsR.map((o) => {
+    const openingCuts = this._roomWallOpeningInputs(this._openingsR, space).map((o) => {
       const rad = (o.angle * Math.PI) / 180;
-      const dx = (Math.cos(rad) * o.rlen) / 2;
-      const dy = (Math.sin(rad) * o.rlen) / 2;
-      return [o.rx - dx, o.ry - dy, o.rx + dx, o.ry + dy];
+      const dx = (Math.cos(rad) * o.length) / 2;
+      const dy = (Math.sin(rad) * o.length) / 2;
+      return [o.x - dx, o.y - dy, o.x + dx, o.y + dy];
     });
     const eps = this._gridPitch * 0.02;
 
@@ -10890,7 +11021,7 @@ class HouseplanCard extends LitElement {
   }
 
 
-  private _openingAt(raw: readonly number[]): (OpeningCfg & { rx: number; ry: number; rlen: number }) | null {
+  private _openingAt(raw: readonly number[]): RenderOpening | null {
     if (!this._openingsR.length) return null;
     const roughHits = this._openingsR.flatMap((o) => {
       const rad = o.angle * Math.PI / 180;
@@ -10904,11 +11035,8 @@ class HouseplanCard extends LitElement {
     const wallIndex = this._openingWallIndexFor(this._spaceModel(), openCuts).value;
     return roughHits.find(({ o, localY }) => {
       const faceFlipV = o.type === 'gate' ? !o.flip_v : o.flip_v;
-      const face = this._spaceWalls.length || o.type === 'gate'
-        ? openingInnerFaceOffsetFromIndex(
-            wallIndex,
-            { x: o.rx, y: o.ry, angle: o.angle, length: o.rlen, flip_v: faceFlipV },
-          )
+      const face = o.partitionHost || this._spaceWalls.length || o.type === 'gate'
+        ? this._openingFace(o, wallIndex, !!faceFlipV)
         : { ox: 0, oy: 0, cm: 0, side: -1 as -1 | 1 };
       const metrics = openingVisibleMetrics({
         type: o.type,
@@ -10935,14 +11063,18 @@ class HouseplanCard extends LitElement {
     const space = this._spaceModel();
     const openCuts = this._openCuts();
     const wallIndex = this._openingWallIndexFor(space, openCuts);
+    const placementKey = `${wallIndex.key}|partitions:${this._cfgEpoch}`;
     if (!this._openingPlacementIntervalsCache
-        || this._openingPlacementIntervalsCache.key !== wallIndex.key) {
+        || this._openingPlacementIntervalsCache.key !== placementKey) {
       this._openingPlacementIntervalsCache = {
-        key: wallIndex.key,
-        value: wallIntervals(
-          space.rooms, this._spaceWalls, openCuts,
-          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-        ),
+        key: placementKey,
+        value: [
+          ...wallIntervals(
+            space.rooms, this._spaceWalls, openCuts,
+            this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+          ),
+          ...partitionPlacementIntervals(space.partitions, this._cellCm, this._gridPitch),
+        ],
       };
     }
     const core = resolveOpeningPlacement({
@@ -10957,10 +11089,23 @@ class HouseplanCard extends LitElement {
     });
     if (!core) return null;
     const faceFlipV = core.type === 'gate' ? !core.flipV : core.flipV;
-    const face = openingInnerFaceOffsetFromIndex(
-      wallIndex.value,
-      { x: core.x, y: core.y, angle: core.angle, length: core.renderedLength, flip_v: faceFlipV },
-    );
+    let face: OpeningFaceOffset;
+    if (core.host) {
+      const hosted = resolvePartitionOpening({
+        id: 'preview', type: core.type,
+        x: core.x / NORM_W, y: core.y / NORM_W,
+        angle: core.angle, length: core.renderedLength / NORM_W,
+        host: core.host,
+      }, space.partitions, NORM_W, this._cellCm, this._gridPitch).resolved;
+      face = hosted
+        ? partitionOpeningFace(hosted, faceFlipV)
+        : { ox: 0, oy: 0, cm: 0, side: -1 };
+    } else {
+      face = openingInnerFaceOffsetFromIndex(
+        wallIndex.value,
+        { x: core.x, y: core.y, angle: core.angle, length: core.renderedLength, flip_v: faceFlipV },
+      );
+    }
     const imperial = this.hass?.config?.unit_system?.length === 'mi';
     // Placement validity and magnetism belong to the selected atomic physical
     // interval. Ruler copy keeps the established UX contract, however: it
@@ -10993,12 +11138,17 @@ class HouseplanCard extends LitElement {
 
   private _clearOpeningPlacement(clearPreset: boolean): void {
     this._openingHoverCandidate = null;
-    if (clearPreset) this._openingPreset = null;
+    if (clearPreset) {
+      this._openingPreset = null;
+      this._openingRebindId = null;
+    }
   }
 
   /** Opening tool: click an existing opening to edit it, or a wall to place one. */
   private _openingClick(raw: number[]): void {
-    const hit = this._openingAt(raw);
+    // Rebind is an explicit one-shot placement: the orphan's stale fallback
+    // position must not win hit testing when the replacement wall crosses it.
+    const hit = this._openingRebindId ? null : this._openingAt(raw);
     if (hit) {
       this._editOpening(hit);
       return;
@@ -11019,18 +11169,31 @@ class HouseplanCard extends LitElement {
       this._showToast(this._t('toast.opening_no_wall'));
       return;
     }
+    const rebound = this._openingRebindId
+      ? this._curSpaceCfg?.openings?.find((item: OpeningCfg) => item.id === this._openingRebindId)
+      : null;
     this._openingDialog = {
-      type: place.type, lengthCm: place.lengthCm, contact: '', lock: '',
-      invert: false, flipH: place.flipH, flipV: place.flipV,
+      ...(rebound ? {
+        id: rebound.id,
+        type: rebound.type,
+        lengthCm: Math.round((rebound.length * NORM_W / this._gridPitch) * this._cellCm),
+        contact: rebound.contact || '', lock: rebound.lock || '',
+        invert: !!rebound.invert, flipH: !!rebound.flip_h, flipV: !!rebound.flip_v,
+      } : {
+        type: place.type, lengthCm: place.lengthCm, contact: '', lock: '',
+        invert: false, flipH: place.flipH, flipV: place.flipV,
+      }),
+      ...(place.host ? { host: place.host } : {}),
       x: place.x, y: place.y, angle: place.angle,
     };
+    this._openingRebindId = null;
     // rulers, tick and ghost live only through the placement gesture
     this._openingHoverCandidate = null;
     this._cursorPt = null;
   }
 
   /** Open the properties dialog for an existing opening. */
-  private _editOpening(o: OpeningCfg & { rx: number; ry: number; rlen: number }): void {
+  private _editOpening(o: RenderOpening): void {
     this._openingDialog = {
       id: o.id,
       type: o.type,
@@ -11040,6 +11203,7 @@ class HouseplanCard extends LitElement {
       invert: !!o.invert,
       flipH: !!o.flip_h,
       flipV: !!o.flip_v,
+      ...(o.host ? { host: { ...o.host } } : {}),
       x: o.rx, y: o.ry, angle: o.angle,
     };
   }
@@ -11072,12 +11236,44 @@ class HouseplanCard extends LitElement {
     // event behind the L2 data loss).
     if (Math.abs(ev.clientX - this._opDrag.sx) + Math.abs(ev.clientY - this._opDrag.sy) <= 3) return;
     const raw = this._svgPoint(ev);
-    const snap = snapToWall(raw, this._spaceModel().rooms, this._gridPitch * 4);
-    if (!snap) return; // too far from any wall: the opening stays where it was
-    this._opDrag.moved = true;
     const sp = this._curSpaceCfg;
     const cfg = sp?.openings?.find((x: OpeningCfg) => x.id === o.id);
     if (!cfg) return;
+    if (cfg.host?.kind === 'partition') {
+      const partition = this._spaceModel().partitions.find((item) => item.id === cfg.host!.id);
+      if (!partition) return;
+      const dx = partition.b[0] - partition.a[0], dy = partition.b[1] - partition.a[1];
+      const length = Math.hypot(dx, dy);
+      if (!(length > 1e-9)) return;
+      const ux = dx / length, uy = dy / length;
+      const perpendicular = Math.abs(
+        (raw[0] - partition.a[0]) * uy - (raw[1] - partition.a[1]) * ux,
+      );
+      if (perpendicular > this._gridPitch * 4) return;
+      const half = cfg.length * NORM_W / 2;
+      let along = (raw[0] - partition.a[0]) * ux + (raw[1] - partition.a[1]) * uy;
+      along = Math.round(along / this._gridPitch) * this._gridPitch;
+      along = Math.max(half, Math.min(length - half, along));
+      if (length < half * 2) return;
+      const t = along / length;
+      const nx = (partition.a[0] + ux * along) / NORM_W;
+      const ny = (partition.a[1] + uy * along) / this._spaceH;
+      let angle = Math.atan2(dy, dx) * 180 / Math.PI;
+      if (angle >= 90) angle -= 180;
+      else if (angle < -90) angle += 180;
+      const changed = cfg.host.t !== t || cfg.x !== nx || cfg.y !== ny || cfg.angle !== angle;
+      this._opDrag.moved = true;
+      if (changed) this._opDrag.dirty = true;
+      cfg.host = { ...cfg.host, t };
+      cfg.x = nx; cfg.y = ny; cfg.angle = angle;
+      this._opMeasure = null;
+      if (changed) this._cfgEpoch++;
+      this.requestUpdate();
+      return;
+    }
+    const snap = snapToWall(raw, this._spaceModel().rooms, this._gridPitch * 4);
+    if (!snap) return; // too far from any wall: the opening stays where it was
+    this._opDrag.moved = true;
     // ruler badges on both shoulders + soft magnet to the wall's center
     // (owner 2026-08-03) — the very same helper the PLACEMENT preview uses
     const r = this._opRuler(snap, cfg.length * NORM_W);
@@ -11165,7 +11361,7 @@ class HouseplanCard extends LitElement {
   }
 
   /** Click: the status card (delayed so a double click can cancel it). */
-  private _opClick(ev: MouseEvent, o: OpeningCfg & { rx: number; ry: number; rlen: number }): void {
+  private _opClick(ev: MouseEvent, o: RenderOpening): void {
     // HP-1550-04: in the resize tool a click over an opening falls through to
     // the stage (room picking) instead of opening the editor dialog
     if (this._mode === 'plan' && this._tool === 'resize') return;
@@ -11191,7 +11387,31 @@ class HouseplanCard extends LitElement {
       y: d.y / H,
       angle: d.angle,
       length: this._cmToUnits(Math.max(20, d.lengthCm)) / NORM_W,
+      ...(d.host ? { host: { ...d.host } } : {}),
     };
+    if (o.host) {
+      const resolution = resolvePartitionOpening(
+        o, this._spaceModel().partitions, NORM_W, this._cellCm, this._gridPitch,
+      );
+      if (!resolution.resolved) {
+        this._showToast(this._t('opening.partition_orphan'));
+        return;
+      }
+      const siblings = (sp.openings || []).flatMap((item: OpeningCfg) => {
+        if (!item.host || item.id === o.id) return [];
+        const sibling = resolvePartitionOpening(
+          item, this._spaceModel().partitions, NORM_W, this._cellCm, this._gridPitch,
+        ).resolved;
+        return sibling ? [sibling] : [];
+      });
+      if (hostedOpeningIntervalsOverlap(resolution.resolved, siblings)) {
+        this._showToast(this._t('toast.opening_no_wall'));
+        return;
+      }
+      Object.assign(o, materializePartitionOpening(o, resolution.resolved, NORM_W));
+    } else {
+      delete o.host;
+    }
     if (d.type === 'passage') {
       // The canonical passage record contains geometry only. Delete keys
       // instead of writing null/false so imports and old broken records have
@@ -11229,6 +11449,27 @@ class HouseplanCard extends LitElement {
     this._openingDialog = null;
     this.requestUpdate();
   }
+
+  private _rebindPartitionOpening = (): void => {
+    const d = this._openingDialog;
+    if (!d?.id) return;
+    const openingId = d.id;
+    this._activateMarkupTool('opening');
+    if (this._tool !== 'opening') return;
+    // Tool activation clears every stale placement session. Publish the
+    // rebind identity only after that gate so the next click cannot degrade
+    // into creating a second opening.
+    this._openingRebindId = openingId;
+    this._openingPreset = {
+      type: d.type,
+      lengthCm: d.lengthCm,
+      flipH: d.flipH,
+      flipV: d.flipV,
+      revision: ++this._openingPresetRevision,
+    };
+    this._openingDialog = null;
+    this._openingHoverCandidate = null;
+  };
 
   /** Contact-sensor candidates: door/window/gate-like classes first, then the rest. */
   private _contactCandidates(): { value: string; label: string }[] {
@@ -12175,6 +12416,7 @@ class HouseplanCard extends LitElement {
     if (this._physicalBodiesCache?.key === key) return this._physicalBodiesCache.all;
     const frame = physicalBodyParts(
       space, this._cellCm, this._gridPitch, this._gridPitch * 0.0002,
+      this._partitionOpeningCuts(space),
     );
     this._physicalBodiesCache = { key, ...frame };
     return frame.all;
@@ -13300,7 +13542,8 @@ class HouseplanCard extends LitElement {
         .map((r) => ({ id: r.id || '', poly: roomPoly(r) }))
         .filter((r): r is { id: string; poly: number[][] } => !!r.id && !!r.poly);
       const windows = this._openingsR
-        .filter((o) => o.type === 'window')
+        // An independent-wall window is not an exterior sun source (#132).
+        .filter((o) => o.type === 'window' && !o.host)
         .map((o) => ({ id: o.id, x: o.rx, y: o.ry, angle: o.angle, length: o.rlen }));
       const walls = this._spaceWalls;
       const openCuts = this._openPairs().flatMap((p) => p.segs);
@@ -14179,15 +14422,33 @@ class HouseplanCard extends LitElement {
       return onFloor([o.rx + nx * probe, o.ry + ny * probe])
         && onFloor([o.rx - nx * probe, o.ry - ny * probe]);
     });
+    const roomPassages = this._roomWallOpeningInputs(passages, space);
     // Openings omitted from `passages` remain part of light's opaque masonry.
     // Consequently a source centred in an exterior door/gate or any window is
     // rejected below exactly like a source centred inside the wall itself.
-    for (const o of passages) {
-      const rad = (o.angle * Math.PI) / 180;
-      const dx = (Math.cos(rad) * o.rlen) / 2;
-      const dy = (Math.sin(rad) * o.rlen) / 2;
-      cuts.push([o.rx - dx, o.ry - dy, o.rx + dx, o.ry + dy]);
+    for (const opening of roomPassages) {
+      const rad = (opening.angle * Math.PI) / 180;
+      const dx = (Math.cos(rad) * opening.length) / 2;
+      const dy = (Math.sin(rad) * opening.length) / 2;
+      cuts.push([opening.x - dx, opening.y - dy, opening.x + dx, opening.y + dy]);
     }
+    const transparentHostedIds = new Set(
+      passages.filter((opening) => opening.partitionHost).map((opening) => opening.id),
+    );
+    const lightPhysicalKey = [
+      space.id, this._cfgEpoch, this._cellCm, this._gridPitch,
+      [...transparentHostedIds].sort().join(','),
+    ].join('|');
+    if (this._lightPhysicalBodiesCache?.key !== lightPhysicalKey) {
+      this._lightPhysicalBodiesCache = {
+        key: lightPhysicalKey,
+        all: physicalBodyParts(
+          space, this._cellCm, this._gridPitch, this._gridPitch * 0.0002,
+          this._partitionOpeningCuts(space, (opening) => transparentHostedIds.has(opening.id)),
+        ).all,
+      };
+    }
+    const lightPhysical = this._lightPhysicalBodiesCache.all;
     // Keyed by what it is made of, never by `_cfgEpoch`: geometry edited in
     // place leaves the epoch behind, and a stale barrier set is invisible —
     // the plan simply keeps lighting through a wall that now exists.
@@ -14202,7 +14463,7 @@ class HouseplanCard extends LitElement {
     mix(this._wallKeyPitch);
     for (const { poly } of polys) { mix(poly.length); for (const p of poly) { mix(p[0]); mix(p[1]); } }
     for (const cut of cuts) for (const value of cut) mix(value);
-    for (const body of physical) {
+    for (const body of lightPhysical) {
       mix(body.length);
       for (const point of body) { mix(point[0]); mix(point[1]); }
     }
@@ -14220,11 +14481,11 @@ class HouseplanCard extends LitElement {
     // jamb faces. Treating a wall as its centreline let light bleed half a wall
     // deep (a bright bar at every opening) and started every shadow half a wall
     // away from the corner that casts it.
-    const masonry = walls.length || physical.length
+    const masonry = walls.length || lightPhysical.length
       ? wallBodiesGeometry(
         space.rooms, walls, openCuts,
-        passages.map((o) => ({ x: o.rx, y: o.ry, angle: o.angle, length: o.rlen })),
-        this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, physical,
+        roomPassages,
+        this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, lightPhysical,
       )
       : null;
     if (masonry) {
@@ -14232,7 +14493,7 @@ class HouseplanCard extends LitElement {
     } else {
       // Malformed legacy geometry must remain opaque even when the canonical
       // boolean pass cannot produce a joined result.
-      for (const body of physical) occluders.push(...polygonSegments(body));
+      for (const body of lightPhysical) occluders.push(...polygonSegments(body));
     }
     // Edges without any thickness are still walls; so is a room outline when
     // the boolean pass above could not run at all.
@@ -15326,6 +15587,7 @@ class HouseplanCard extends LitElement {
         ${this._mergeDialog ? this._renderMergeDialog() : nothing}
         ${this._openingDialog ? this._renderOpeningDialog() : nothing}
         ${this._physicalDialog ? this._renderPhysicalDialog() : nothing}
+        ${this._partitionDeleteDialog ? this._renderPartitionDeleteDialog() : nothing}
         ${this._openingInfo ? this._renderOpeningInfoCard() : nothing}
         ${this._decorTextDialog ? this._renderDecorTextDialog() : nothing}
         ${this._decorShapeDialog ? this._renderDecorShapeDialog() : nothing}
@@ -16867,6 +17129,14 @@ class HouseplanCard extends LitElement {
     const openCuts = this._openPairs().flatMap((pair) => pair.segs);
     const openingWallIndex = this._openingWallIndexFor(this._spaceModel(), openCuts).value;
     return svg`${items.map((o) => {
+      if (o.orphanReason) return svg`<g class="opening orphan" data-hp="opening-orphan"
+        data-id=${o.id} role="button" tabindex="0"
+        aria-label=${this._t('opening.partition_orphan')}
+        transform="translate(${o.rx} ${o.ry})"
+        @click=${(event: MouseEvent) => { event.stopPropagation(); this._editOpening(o); }}>
+        <circle r=${this._gridPitch * 0.55}></circle>
+        <text text-anchor="middle" dominant-baseline="central">!</text>
+      </g>`;
       const amt = this._openingAmt(o);
       const active = amt > 0 && !!o.contact && this._renderOpeningEntityAvailable(o.contact);
       const tone = active ? 'var(--hp-open)' : base;
@@ -16877,11 +17147,8 @@ class HouseplanCard extends LitElement {
       const faceFlipV = o.type === 'gate' ? !o.flip_v : o.flip_v;
       // Resolve the side even with zero-thickness walls for gates, while
       // preserving the cheap classic path for ordinary line-plan openings.
-      const face = walls.length || o.type === 'gate'
-        ? openingInnerFaceOffsetFromIndex(
-            openingWallIndex,
-            { x: o.rx, y: o.ry, angle: o.angle, length: o.rlen, flip_v: faceFlipV },
-          )
+      const face = o.partitionHost || walls.length || o.type === 'gate'
+        ? this._openingFace(o, openingWallIndex, !!faceFlipV)
         : { ox: 0, oy: 0, cm: 0, side: -1 as -1 | 1 };
       const visibleSpec: OpeningVisibleSpec = {
         type: o.type,
@@ -16914,7 +17181,7 @@ class HouseplanCard extends LitElement {
   /** Padlock badges for door-like openings with a lock entity. */
   private _renderOpeningLocks(view: { x: number; y: number; w: number; h: number }): TemplateResult {
     const items = this._openingsR.filter(
-      (o) => (o.type === 'door' || o.type === 'gate')
+      (o) => !o.orphanReason && (o.type === 'door' || o.type === 'gate')
         && o.lock && this._renderOpeningEntityAvailable(o.lock),
     );
     if (!items.length) return html``;
@@ -16929,10 +17196,7 @@ class HouseplanCard extends LitElement {
       // angle, so resolve that face explicitly.
       const rad = ((o.angle + 90) * Math.PI) / 180;
       const gateFace = o.type === 'gate'
-        ? openingInnerFaceOffsetFromIndex(
-            openingWallIndex,
-            { x: o.rx, y: o.ry, angle: o.angle, length: o.rlen, flip_v: !o.flip_v },
-          )
+        ? this._openingFace(o, openingWallIndex, !o.flip_v)
         : null;
       const off = gateFace ? -16 * gateFace.side : 16 * (o.flip_v ? -1 : 1);
       const px = o.rx + Math.cos(rad) * off;
@@ -17034,6 +17298,13 @@ class HouseplanCard extends LitElement {
 
   private _renderOpeningDialog(): TemplateResult {
     const d = this._openingDialog!;
+    const hostResolution = d.host ? resolvePartitionOpening({
+      id: d.id || 'preview', type: d.type,
+      x: d.x / NORM_W, y: d.y / this._spaceH,
+      angle: d.angle, length: this._cmToUnits(Math.max(20, d.lengthCm)) / NORM_W,
+      host: d.host,
+    }, this._spaceModel().partitions, NORM_W, this._cellCm, this._gridPitch) : null;
+    const orphan = !!d.host && !hostResolution?.resolved;
     const icon = d.type === 'gate' ? 'mdi:gate'
       : d.type === 'window' ? 'mdi:window-closed-variant'
         : d.type === 'passage' ? 'mdi:arch' : 'mdi:door';
@@ -17046,6 +17317,13 @@ class HouseplanCard extends LitElement {
       .title=${d.id ? this._t('opening.edit') : this._t('opening.new')} icon=${icon}
       @hp-close=${() => (this._openingDialog = null)}>
         <div class="body">
+          ${d.host ? html`<label>${this._t('opening.host_partition')}</label>
+            <div class=${orphan ? 'habindingbanner' : 'rhint'} role=${orphan ? 'status' : nothing}>
+              ${orphan ? html`<ha-icon icon="mdi:alert-outline"></ha-icon>` : nothing}
+              <span>${orphan
+                ? this._t('opening.partition_orphan')
+                : this._t('opening.host_partition')}</span>
+            </div>` : nothing}
           <label>${this._t('opening.type_label')}</label>
           <label class="srcrow"><input type="radio" name="optype" .checked=${d.type === 'window'}
             @change=${() => (this._openingDialog = {
@@ -17113,6 +17391,11 @@ class HouseplanCard extends LitElement {
                   <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.delete')}
                 </button>
               </div>`
+            : nothing}
+          ${orphan
+            ? html`<button class="btn ghost" @click=${this._rebindPartitionOpening}>
+                ${this._t('opening.rebind_partition')}
+              </button>`
             : nothing}
           <div class="dialog-action-group dialog-action-commit">
             <button class="btn ghost" @click=${() => (this._openingDialog = null)}>${this._t('btn.cancel')}</button>
@@ -17453,6 +17736,41 @@ class HouseplanCard extends LitElement {
               : nothing}`
         : nothing}
     `;
+  }
+
+  private _renderPartitionDeleteDialog(): TemplateResult {
+    const dialog = this._partitionDeleteDialog!;
+    const imperial = this.hass?.config?.unit_system?.length === 'mi';
+    return html`<hp-dialog .hass=${this.hass}
+      .title=${this._t('confirm.delete_partition_openings_title')}
+      icon="mdi:wall" dismiss-on-scrim
+      @hp-close=${() => (this._partitionDeleteDialog = null)}>
+      <div class="body">
+        <p>${this._t('confirm.delete_partition_openings_body', {
+          count: dialog.openings.length,
+        })}</p>
+        <ul aria-label=${this._t('confirm.delete_partition_openings_title')}>
+          ${dialog.openings.map((opening) => html`<li>${this._t(
+            'confirm.delete_partition_openings_item', {
+              type: this._t(`opening.${opening.type}` as I18nKey),
+              length: formatLength(
+                (opening.length * NORM_W / this._gridPitch) * this._cellCm,
+                imperial,
+              ),
+            },
+          )}</li>`)}
+        </ul>
+      </div>
+      <div class="row" slot="footer">
+        <button class="btn ghost" @click=${() => (this._partitionDeleteDialog = null)}>
+          ${this._t('btn.cancel')}
+        </button>
+        <span class="spacer"></span>
+        <button class="btn danger" @click=${this._confirmPartitionDelete}>
+          <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.delete')}
+        </button>
+      </div>
+    </hp-dialog>`;
   }
 
   private _renderPhysicalDialog(): TemplateResult {

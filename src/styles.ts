@@ -721,6 +721,22 @@ export const cardStyles = css`
     .stage.markup .op-hit:active {
       cursor: grabbing;
     }
+    .stage.markup .opening.orphan {
+      pointer-events: auto;
+      cursor: pointer;
+      color: var(--error-color, #db4437);
+    }
+    .stage.markup .opening.orphan circle {
+      fill: var(--hp-bg);
+      stroke: currentColor;
+      stroke-width: 2;
+    }
+    .stage.markup .opening.orphan text {
+      fill: currentColor;
+      font-weight: 800;
+      font-size: 12px;
+      pointer-events: none;
+    }
     /* HP-1550-04: in the resize tool the wall handles own the hit test — the
        transparent .op-hit of a door at the midpoint of a wall used to sit ON
        TOP of the handle and made that wall ungrabbable for both rooms.

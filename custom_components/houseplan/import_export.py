@@ -48,9 +48,10 @@ from .validation import (
     validate_marker_controls,
     validate_marker_light_entities,
     validate_marker_value_badges,
-    validate_opening_passages,
+    validate_opening_passages, validate_partition_opening_hosts,
     MarkerControlError,
     OpeningPassageError,
+    PartitionOpeningHostError,
 )
 
 FORMAT = "houseplan-export"
@@ -264,7 +265,8 @@ def _project_plan_only_space(space: dict[str, Any]) -> dict[str, Any]:
             _pick_fields(
                 opening,
                 ("id", "type", "x", "y", "angle", "length")
-                + (() if opening.get("type") == "passage" else ("flip_h", "flip_v")),
+                + (() if opening.get("type") == "passage" else ("flip_h", "flip_v"))
+                + (("host",) if opening.get("host") else ()),
             )
             for opening in space.get("openings") or []
         ]
@@ -980,7 +982,8 @@ def build_space_merge(
         validate_marker_light_entities(merged_config, current_config)
         validate_marker_value_badges(merged_config, current_config)
         validate_opening_passages(merged_config, current_config)
-    except (MarkerControlError, OpeningPassageError) as err:
+        validate_partition_opening_hosts(merged_config, current_config)
+    except (MarkerControlError, OpeningPassageError, PartitionOpeningHostError) as err:
         raise ImportFailure(err.code, str(err)) from err
     try:
         merged_layout = LAYOUT_SCHEMA(merged_layout)

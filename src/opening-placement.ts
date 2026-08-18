@@ -16,6 +16,10 @@ export interface OpeningPlacementTarget {
   b: [number, number];
   physicalHalfWidth: number;
   sourceOrder: number;
+  /** Explicit independent-wall owner; room-wall targets leave it absent. */
+  partitionHost?: { kind: 'partition'; id: string };
+  /** More than one coincident independent wall cannot be selected safely. */
+  ambiguousPartitionHost?: boolean;
 }
 
 export interface OpeningPlacementMeasureGeometry {
@@ -39,6 +43,7 @@ export interface OpeningPlacementCore {
   angle: number;
   renderedLength: number;
   target: OpeningPlacementTarget;
+  host?: { kind: 'partition'; id: string; t: number };
   measure: OpeningPlacementMeasureGeometry;
 }
 
@@ -102,7 +107,9 @@ function atomicSegmentKey(a: readonly number[], b: readonly number[]): string {
  * into OpeningCfg, whose compatibility contract remains absolute x/y/angle.
  */
 export function openingPlacementTargets(
-  intervals: readonly WallInterval[],
+  intervals: readonly (WallInterval & {
+    partitionHost?: { kind: 'partition'; id: string };
+  })[],
 ): OpeningPlacementTarget[] {
   const targets = new Map<string, OpeningPlacementTarget>();
   intervals.forEach((interval, sourceOrder) => {
@@ -114,6 +121,11 @@ export function openingPlacementTargets(
     if (previous) {
       previous.physicalHalfWidth = Math.max(previous.physicalHalfWidth, interval.half || 0);
       previous.sourceOrder = Math.min(previous.sourceOrder, sourceOrder);
+      if (interval.partitionHost) {
+        if (previous.partitionHost && previous.partitionHost.id !== interval.partitionHost.id)
+          previous.ambiguousPartitionHost = true;
+        else previous.partitionHost = interval.partitionHost;
+      }
       return;
     }
     targets.set(segmentKey, {
@@ -122,6 +134,7 @@ export function openingPlacementTargets(
       b: ends.b,
       physicalHalfWidth: Math.max(0, interval.half || 0),
       sourceOrder,
+      ...(interval.partitionHost ? { partitionHost: interval.partitionHost } : {}),
     });
   });
   return [...targets.values()];
@@ -218,6 +231,10 @@ export function resolveOpeningPlacement(
     );
     return { target, ...p, envelope };
   }).filter((item) => item.distance <= item.envelope + 1e-9)
+    // Room-wall compatibility keeps its historical wide-gate behaviour, but
+    // an explicit partition host must be able to own the complete interval.
+    .filter((item) => !item.target.partitionHost
+      || input.renderedLength <= item.length + 1e-9)
     .filter((item) => !pointerInsideCollinearOpenSpan(
       input.pointer,
       item.target,
@@ -226,8 +243,41 @@ export function resolveOpeningPlacement(
       Math.max(1e-9, Math.min(input.baseTolerance, input.gridStep * 0.04)),
     ))
     .sort(targetCompare);
-  const picked = eligible[0];
+  let picked = eligible[0];
   if (!picked) return null;
+
+  // A room wall and an independently persisted wall may cover the same axis
+  // without sharing identical endpoints. In that composite case the stable
+  // partition id is the only useful persisted owner. A genuinely crossing
+  // partition tie is not a composite and must not be resolved by lexical key.
+  const tied = eligible.filter((item) =>
+    Math.abs(item.distance - picked.distance) <= 1e-9
+    && Math.abs(item.perpendicular - picked.perpendicular) <= 1e-9);
+  const hosted = tied.filter((item) => item.target.partitionHost);
+  if (hosted.length) {
+    const hostIds = new Set(hosted.map((item) => item.target.partitionHost!.id));
+    if (hostIds.size !== 1 || hosted.some((item) => item.target.ambiguousPartitionHost)) return null;
+    const hostPick = hosted[0];
+    const hx = hostPick.target.b[0] - hostPick.target.a[0];
+    const hy = hostPick.target.b[1] - hostPick.target.a[1];
+    const hLength = Math.hypot(hx, hy);
+    const hux = hx / hLength, huy = hy / hLength;
+    const composite = tied.every((item) => {
+      const tx = item.target.b[0] - item.target.a[0];
+      const ty = item.target.b[1] - item.target.a[1];
+      const tLength = Math.hypot(tx, ty);
+      const tux = tx / tLength, tuy = ty / tLength;
+      const parallel = Math.abs(hux * tuy - huy * tux) <= 1e-6;
+      const offset = Math.abs(
+        (item.target.a[0] - hostPick.target.a[0]) * huy
+        - (item.target.a[1] - hostPick.target.a[1]) * hux,
+      );
+      return parallel && offset <= 1e-9;
+    });
+    if (!composite) return null;
+    picked = hostPick;
+  }
+  if (picked.target.ambiguousPartitionHost) return null;
 
   const { target, length } = picked;
   const dx = target.b[0] - target.a[0], dy = target.b[1] - target.a[1];
@@ -273,6 +323,9 @@ export function resolveOpeningPlacement(
     angle,
     renderedLength: input.renderedLength,
     target,
+    ...(target.partitionHost ? {
+      host: { ...target.partitionHost, t: length > 0 ? along / length : 0 },
+    } : {}),
     measure: {
       labels: [
         { distance: sideA, midpoint: midpointA },

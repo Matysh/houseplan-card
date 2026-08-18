@@ -214,8 +214,9 @@ function pointOnSnapSegment(
 
 /**
  * Return the stable completed-room solid interval that contains both points.
- * Because room openings and open spans are cut while the snapshot is built,
- * points on opposite sides of a gap can never share a returned segment.
+ * Real open spans are cut while the snapshot is built, so points across one
+ * cannot share a segment. Door/window/gate/passage openings remain structural
+ * axes for room-face topology (#185) even though masonry is cut elsewhere.
  */
 export function findSharedRoomSnapSegment(
   geometry: PlanSnapGeometry,

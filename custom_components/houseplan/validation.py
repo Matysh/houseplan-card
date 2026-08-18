@@ -46,6 +46,39 @@ class OpeningPassageError(ValueError):
         )
 
 
+class PartitionOpeningHostError(ValueError):
+    """A write tried to strip explicit host identity from a surviving opening."""
+
+    code = "invalid_partition_opening_host"
+
+
+def validate_partition_opening_hosts(
+    config: dict, previous: dict | None = None
+) -> None:
+    """Prevent an older writer from silently downgrading hosted openings.
+
+    Deleting the opening together with its partition remains valid. Only a
+    surviving record that previously had an explicit host must keep one.
+    """
+    old_spaces = {
+        str(space.get("id")): space for space in (previous or {}).get("spaces") or []
+    }
+    for space in config.get("spaces") or []:
+        old_space = old_spaces.get(str(space.get("id", "")))
+        if not old_space:
+            continue
+        old_openings = {
+            str(opening.get("id")): opening
+            for opening in old_space.get("openings") or []
+        }
+        for opening in space.get("openings") or []:
+            old = old_openings.get(str(opening.get("id", "")))
+            if old and old.get("host") is not None and opening.get("host") is None:
+                raise PartitionOpeningHostError(
+                    f"space={space.get('id', '')}; opening={opening.get('id', '')}; host removed"
+                )
+
+
 PASSAGE_FORBIDDEN_FIELDS = {"contact", "lock", "invert", "flip_h", "flip_v"}
 
 
@@ -767,6 +800,15 @@ WALL_COLUMN_SCHEMA = vol.All(
     _strict_wall_column,
 )
 
+PARTITION_OPENING_HOST_SCHEMA = vol.Schema(
+    {
+        vol.Required("kind"): vol.Equal("partition"),
+        vol.Required("id"): vol.All(str, vol.Length(min=1, max=64)),
+        vol.Required("t"): vol.All(_finite, vol.Range(min=0, max=1)),
+    },
+    extra=vol.PREVENT_EXTRA,
+)
+
 
 def _space_geometry_invariants(value: dict) -> dict:
     """All stored geometry shares ids; draft segments also have a space cap."""
@@ -784,6 +826,29 @@ def _space_geometry_invariants(value: dict) -> dict:
     )
     if draft_segments > MAX_DRAFT_SEGMENTS:
         raise vol.Invalid("too many saved room-draft segments")
+    partitions = {
+        item.get("id"): item for item in value.get("partitions", []) if item.get("id")
+    }
+    hosted_intervals: dict[str, list[tuple[float, float]]] = {}
+    for opening in value.get("openings", []):
+        host = opening.get("host")
+        if host is None:
+            continue
+        partition = partitions.get(host["id"])
+        if partition is None:
+            raise vol.Invalid("partition opening host must exist in the same space")
+        ax, ay = partition["a"]
+        bx, by = partition["b"]
+        span = ((bx - ax) ** 2 + (by - ay) ** 2) ** 0.5
+        length = float(opening["length"])
+        along = float(host["t"]) * span
+        if length > span or along - length / 2 < -1e-9 or along + length / 2 > span + 1e-9:
+            raise vol.Invalid("partition opening must fit inside its host")
+        lo, hi = along - length / 2, along + length / 2
+        occupied = hosted_intervals.setdefault(host["id"], [])
+        if any(max(lo, old_lo) < min(hi, old_hi) - 1e-9 for old_lo, old_hi in occupied):
+            raise vol.Invalid("partition openings must not overlap")
+        occupied.append((lo, hi))
     return value
 
 
@@ -849,6 +914,7 @@ SPACE_SCHEMA = vol.All(vol.Schema(
                     vol.Optional("invert"): bool,
                     vol.Optional("flip_h"): bool,
                     vol.Optional("flip_v"): bool,
+                    vol.Optional("host"): PARTITION_OPENING_HOST_SCHEMA,
                 },
                 extra=vol.ALLOW_EXTRA,
             )

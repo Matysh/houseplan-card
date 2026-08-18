@@ -98,6 +98,10 @@ Header in View: space tabs, device count, zoom cluster. Nothing else.
   partitions. Closing one or more planar faces opens the room queue; its
   decisions are buffered and applied as one Undo/Redo transaction. Re-selecting
   Walls, Reset, pan, pinch and pointer cancellation are not finish actions.
+- Opening places every existing opening type on a room wall or a finished
+  independent Walls segment. A hosted opening moves with that segment; deleting
+  the segment requires an explicit cascade confirmation. Its physical gap does
+  not break the structural wall axis used to recognize closed rooms (#185).
 - Boundary is contextual: two points on one solid shared wall make the selected
   stretch virtual; one click on an existing dashed stretch restores it whole.
   Outer walls and room boundaries hidden under independent masonry are not
@@ -175,6 +179,9 @@ layer you cannot see is a layer you cannot edit.
   places a square column whose side is the current Thickness value. Neither an
   independent wall nor a column creates a room or HA area by itself. A closed
   independent-wall ring subtracts only its wall body from room floor.
+- Door, window, gate and passage may be hosted by one finished independent wall
+  segment. Drafts and columns are never opening targets. Missing hosts fail
+  dark and expose a rebind action only in Plan.
 - **Select** is the only mode in which these objects intercept input. It offers
   rigid grid-bound drag, double-click/tap properties, Delete, and a rotate
   handle for square columns (5° steps; Shift is free). Draft Delete removes the

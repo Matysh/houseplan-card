@@ -44,7 +44,7 @@ test('passage bindings cannot reach subscriptions, locks or the info card', () =
 });
 
 test('static passage cuts and tunnels are passage-only additions', () => {
-  assert.match(staticRender, /staticPassageOpenings\(spCfg\.openings, NORM_W\)/);
+  assert.match(staticRender, /staticPassageOpenings\(resolvedRawOpenings, NORM_W\)/);
   assert.match(staticRender, /passages: staticPassages\.map/);
   assert.match(staticRender, /renderOpeningTunnelFills/);
   assert.match(staticRender, /passageDataTunnels/);

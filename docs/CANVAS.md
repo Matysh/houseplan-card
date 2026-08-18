@@ -549,9 +549,9 @@ When **Walls** is active in the Plan editor, a derived
 pointer-transparent SVG layer exposes the centre axes of completed room walls,
 saved inactive outlines and independent partitions. It is painted after their
 physical wall bodies, but before interactive editor chrome. Columns, decor,
-devices, the active wall chain and its live preview are not candidates. Door,
-window, gate and intentionally open-span intervals are cut from room axes; a
-cut boundary does not become a new endpoint.
+devices, the active wall chain and its live preview are not candidates.
+Opening intervals remain part of the structural axes (#185); only intentionally
+open spans are cut, and a cut boundary does not become a new endpoint.
 
 The layer and hit resolver share one immutable geometry snapshot. Original
 segment endpoints are deduplicated and drawn at a physical radius of 5 cm.
@@ -573,7 +573,7 @@ single active candidate and never writes config, layout or storage.
 
 Every completed Walls segment is first persisted in the active `room_drafts`
 chain. On the click path only, an immutable planar graph is built from solid
-room edges after opening cuts, independent partitions, inactive drafts and the
+room edges without presentation opening cuts, independent partitions, inactive drafts and the
 active chain both before and after the latest segment. Endpoint, T, X and
 collinear-overlap junctions atomize that computed graph without rewriting any
 saved wall. A deterministic half-edge walk extracts bounded faces; canonical
@@ -582,7 +582,8 @@ identity ignores winding, cyclic start and derived collinear subdivision.
 Only faces added by the latest segment and containing one of its atoms are
 offered. They are ordered by area and then canonical key. Existing exact or
 partially overlapping rooms are excluded, nested rooms remain legal, and any
-physical gap — including an opening cut — remains a gap. A clean divider across
+physical gap created by an `open_span` or absent wall remains a gap. A door,
+window, gate or passage is a property of a wall and preserves connectivity. A clean divider across
 one room reuses the Split contract: the larger side keeps the room identity,
 metadata and device binding, and only the smaller side is offered.
 

@@ -74,6 +74,39 @@ test('an opening stays ON its wall — it is wall-bound, not node-bound', () => 
   assert.ok(t > 0 && t < 1, 'opening slid off the end of its wall');
 });
 
+test('a hosted opening follows aligned partition identity and t', () => {
+  const spaces = [{
+    id: 'f1', cell_cm: 5, rooms: [],
+    partitions: [{ id: 'p1', a: [0.203, 0.2], b: [0.603, 0.2], cm: 15 }],
+    openings: [{
+      id: 'o1', type: 'door', x: 9, y: 9, angle: 77, length: 0.1,
+      host: { kind: 'partition', id: 'p1', t: 0.25 },
+    }],
+  }];
+  const { spaces: aligned } = alignAllToGrid(spaces, {});
+  const partition = aligned[0].partitions[0];
+  const opening = aligned[0].openings[0];
+  assert.deepEqual(opening.host, { kind: 'partition', id: 'p1', t: 0.25 });
+  assert.equal(opening.x, partition.a[0] + (partition.b[0] - partition.a[0]) * 0.25);
+  assert.equal(opening.y, partition.a[1] + (partition.b[1] - partition.a[1]) * 0.25);
+  assert.equal(opening.angle, 0);
+});
+
+test('alignment never shortens a host past its opening interval', () => {
+  const spaces = [{
+    id: 'f1', cell_cm: 5, rooms: [],
+    partitions: [{ id: 'p1', a: [0.0022, 0], b: [0.101, 0], cm: 15 }],
+    openings: [{
+      id: 'o1', type: 'door', x: 0.0516, y: 0, angle: 0, length: 0.098,
+      host: { kind: 'partition', id: 'p1', t: 0.5 },
+    }],
+  }];
+  const { spaces: aligned } = alignAllToGrid(spaces, {});
+  assert.deepEqual(aligned[0].partitions[0].a, [0.0022, 0]);
+  assert.deepEqual(aligned[0].partitions[0].b, [0.101, 0]);
+  assert.ok(Math.abs(aligned[0].openings[0].x - 0.0516) < 1e-12);
+});
+
 test('idempotent: a second run moves nothing and changes nothing', () => {
   const first = alignAllToGrid(detuned().spaces, detunedLayout());
   const second = alignAllToGrid(first.spaces, first.layout);

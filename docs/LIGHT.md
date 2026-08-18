@@ -52,6 +52,13 @@ it never inherits transparency merely by not being a window.
 So the light's masonry is cut by passages only and differs on purpose from the
 drawn one.
 
+The rule is identical for a passage hosted by a finished independent wall.
+Only its explicit partition body (plus an exactly collinear covering room wall)
+is cut. Windows remain opaque to indoor Glow, one-sided door/gate/passage cuts
+remain opaque, and an invalid host fails dark. A window hosted by an independent
+wall never becomes a sunlight source; sunlight still belongs to exterior room
+windows.
+
 Source placement follows the same geometry, fail-dark. If the source centre is
 inside an opaque wall body, a window tunnel, or an exterior door/gate opening,
 the source produces no Glow at all. It does not light the indoor half of the

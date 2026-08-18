@@ -1675,6 +1675,48 @@ def test_space_independent_physical_objects():
             for i in range(v.MAX_PARTITIONS + 1)]})
 
 
+def test_partition_opening_host_schema_fit_overlap_and_downgrade_guard():
+    base = {
+        "id": "s1", "title": "S", "view_box": [0, 0, 1, 1], "rooms": [],
+        "partitions": [{"id": "wall", "a": [0, 0], "b": [1, 0], "cm": 15}],
+    }
+    opening = {
+        "id": "door", "type": "door", "x": 0.5, "y": 0,
+        "angle": 0, "length": 0.2,
+        "host": {"kind": "partition", "id": "wall", "t": 0.5},
+    }
+    out = v.SPACE_SCHEMA({**base, "openings": [opening]})
+    assert out["openings"][0]["host"] == opening["host"]
+
+    for bad_host in (
+        {"kind": "room", "id": "wall", "t": 0.5},
+        {"kind": "partition", "id": "missing", "t": 0.5},
+        {"kind": "partition", "id": "wall", "t": 2},
+        {"kind": "partition", "id": "wall", "t": 0.5, "extra": True},
+    ):
+        with pytest.raises(vol.Invalid):
+            v.SPACE_SCHEMA({**base, "openings": [{**opening, "host": bad_host}]})
+
+    with pytest.raises(vol.Invalid):
+        v.SPACE_SCHEMA({**base, "openings": [{
+            **opening, "length": 0.4,
+            "host": {"kind": "partition", "id": "wall", "t": 0.1},
+        }]})
+    with pytest.raises(vol.Invalid):
+        v.SPACE_SCHEMA({**base, "openings": [opening, {
+            **opening, "id": "window", "type": "window",
+            "host": {"kind": "partition", "id": "wall", "t": 0.55},
+        }]})
+
+    previous = {"spaces": [{**base, "openings": [opening]}]}
+    current = {"spaces": [{**base, "openings": [{
+        key: value for key, value in opening.items() if key != "host"
+    }]}]}
+    with pytest.raises(v.PartitionOpeningHostError):
+        v.validate_partition_opening_hosts(current, previous)
+    v.validate_partition_opening_hosts({"spaces": [{**base, "openings": []}]}, previous)
+
+
 def test_space_open_spans():
     """AUD-159B6-03: `open_spans` used to ride on extra=ALLOW_EXTRA, so any
     shape reached the card and one malformed entry blanked the plan for every

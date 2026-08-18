@@ -53,6 +53,46 @@ test('Shared room-owned copies collapse to one physical target', () => {
   assert.equal(targets[0].physicalHalfWidth, 10);
 });
 
+test('a coincident room wall and one partition choose the explicit partition host', () => {
+  const candidate = resolve({
+    intervals: [
+      interval({ roomId: 'room' }),
+      interval({ roomId: '', key: 'partition:p1', partitionHost: { kind: 'partition', id: 'p1' } }),
+    ],
+  });
+  assert.deepEqual(candidate.host, { kind: 'partition', id: 'p1', t: 0.5 });
+});
+
+test('a collinear composite chooses its partition host when endpoints differ', () => {
+  const candidate = resolve({
+    pointer: [50, 0],
+    intervals: [
+      interval({ roomId: 'room', a: [0, 0], b: [100, 0] }),
+      interval({ roomId: '', a: [20, 0], b: [80, 0], key: 'partition:p1',
+        partitionHost: { kind: 'partition', id: 'p1' } }),
+    ],
+  });
+  assert.deepEqual(candidate.host, { kind: 'partition', id: 'p1', t: 0.5 });
+});
+
+test('a crossing partition tie is rejected instead of choosing by key', () => {
+  assert.equal(resolve({
+    pointer: [50, 0],
+    intervals: [
+      interval({ roomId: 'room', a: [0, 0], b: [100, 0] }),
+      interval({ roomId: '', a: [50, -50], b: [50, 50], key: 'partition:p1',
+        partitionHost: { kind: 'partition', id: 'p1' } }),
+    ],
+  }), null);
+});
+
+test('two coincident independent hosts are rejected as ambiguous', () => {
+  assert.equal(resolve({ intervals: [
+    interval({ partitionHost: { kind: 'partition', id: 'p1' } }),
+    interval({ partitionHost: { kind: 'partition', id: 'p2' } }),
+  ] }), null);
+});
+
 test('Different concentric spans never alias through the legacy wall key', () => {
   const targets = openingPlacementTargets([
     interval({ a: [0, 0], b: [100, 0], key: 'same-midpoint-and-angle' }),

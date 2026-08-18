@@ -166,6 +166,14 @@ export interface Marker {
 }
 
 /** A door, window, gate or open passage: plan geometry (normalized coords). */
+export interface PartitionOpeningHost {
+  kind: 'partition';
+  /** Stable id of one saved independent wall segment in the same space. */
+  id: string;
+  /** Centre position along the directed partition a -> b. */
+  t: number;
+}
+
 export interface OpeningCfg {
   id: string;
   type: 'door' | 'window' | 'gate' | 'passage';
@@ -178,6 +186,8 @@ export interface OpeningCfg {
   invert?: boolean;
   flip_h?: boolean; // hinge on the other jamb
   flip_v?: boolean; // opens to the other side of the wall
+  /** Explicit owner for an opening cut into an independent wall. */
+  host?: PartitionOpeningHost;
 }
 
 export interface ServerConfig {

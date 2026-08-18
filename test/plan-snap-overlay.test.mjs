@@ -94,7 +94,7 @@ test('shared-room interval respects cuts and rejects draft or partition-only axe
   });
   assert.ok(findSharedRoomSnapSegment(cut, [0, 0], [30, 0]));
   assert.equal(findSharedRoomSnapSegment(cut, [0, 0], [100, 0]), null,
-    'opening or open-span cuts split eligibility');
+    'a real open-span cut splits structural eligibility');
 
   const independent = buildPlanSnapGeometry({
     space: space({

@@ -200,6 +200,14 @@ fully occluded instead of leaking around its own masonry. The same fail-dark
 placement rule applies to window tunnels and exterior door/gate openings;
 interior passages remain valid source positions (#92).
 
+An opening with explicit `host:{kind:'partition',id,t}` is resolved from that
+partition alone and subtracted full-depth from its raw body before the joined
+presentation union. A precisely collinear room wall covering the same interval
+is cut as a composite; a crossing/nearby body is not. Host move keeps `t`,
+delete requires cascade confirmation, and malformed/orphan hosts remain opaque.
+Opening cuts change physical masonry, not the structural wall axes used for
+room-face detection (#185).
+
 `physicalBodySet()` separates raw draft/partition/column bodies from computed
 junction patches and their joined geometry. Raw bodies remain authoritative for
 hit testing, selection, drag, properties, deletion, history and furniture

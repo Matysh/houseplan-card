@@ -58,8 +58,8 @@ export const MUTANTS = [
       + 'проходить через дверь; смок обязан это увидеть по освещённому полу за проёмом',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: 'cuts.push([o.rx - dx, o.ry - dy, o.rx + dx, o.ry + dy]);',
-      replace: 'cuts.push([o.rx, o.ry, o.rx, o.ry]);',
+      find: 'cuts.push([opening.x - dx, opening.y - dy, opening.x + dx, opening.y + dy]);',
+      replace: 'cuts.push([opening.x, opening.y, opening.x, opening.y]);',
     }],
   },
   {
@@ -71,7 +71,7 @@ export const MUTANTS = [
       file: 'src/houseplan-card.ts',
       // Physical bodies now enter the canonical masonry union. Mutating only
       // its legacy fallback is a no-op on every valid thick-wall fixture.
-      find: 'this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, physical,',
+      find: 'this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, lightPhysical,',
       replace: 'this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, [],',
     }],
   },

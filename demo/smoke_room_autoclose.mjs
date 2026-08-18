@@ -33,6 +33,7 @@ const out = await page.evaluate(async () => {
     card._draftSegmentCms = [];
     card._closingWallCm = null;
     card._roomDialog = false;
+    card._wallFaceBatch = null;
     card._roomEditId = null;
     card._pendingSplit = null;
     card._toast = '';
@@ -120,7 +121,7 @@ const out = await page.evaluate(async () => {
   result.sharedWallKeepsNeighbourThickness = !!sharedWall
     && (card._curSpaceCfg.walls || []).filter((wall) => wall.cm === 15).length >= 3;
 
-  // A canonical cut splits the room wall, so the same endpoint pair no longer closes.
+  // #185: an architectural opening cuts masonry, not the structural wall axis.
   await reset({ openings: [{
     id: 'door', type: 'door', x: 0.5, y: 0.3, angle: 90, length: 0.1,
   }] });
@@ -128,7 +129,8 @@ const out = await page.evaluate(async () => {
   await click(800, 100);
   await click(800, 500);
   await click(500, 500);
-  result.openingCutPreventsAutoClose = !card._roomDialog
+  result.openingKeepsStructuralAutoClose = card._roomDialog
+    && card._wallFaceBatch?.candidates.length === 1
     && card._path.length === 4
     && currentDraft()?.points.length === 4;
 

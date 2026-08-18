@@ -19,6 +19,14 @@
   Create/Keep/Cancel decisions. Ctrl/Cmd+click no longer adds an extra point
   while the chain is still too short to close
   ([#173](https://github.com/Matysh/houseplan-card/issues/173)).
+- Doors, windows, gates and open passages can now be placed in finished
+  independent Walls segments. They cut the full wall depth, move with their
+  host, keep the same Home Assistant state/actions as room-wall openings and
+  are removed only through an explicit cascade confirmation. Openings no
+  longer break the structural wall axis, so drawing a closed contour still
+  offers the room even when one of its walls already contains an opening
+  ([#132](https://github.com/Matysh/houseplan-card/issues/132),
+  [#185](https://github.com/Matysh/houseplan-card/issues/185)).
 - Collinear exterior walls now change thickness exactly at their saved
   breakpoint. After splitting a room, a 10 cm wall therefore keeps its full
   depth up to the divider without leaking onto an adjacent zero-thickness
