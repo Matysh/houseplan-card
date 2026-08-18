@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { prepareGoldenFixture } from '../demo/golden/harness.mjs';
 import { GOLDEN_MATRIX_VERSION, GOLDEN_SCENARIOS } from '../demo/golden/matrix.mjs';
+import { fixtureWallKey } from '../demo/fixtures/visual-matrix.mjs';
 
 test('golden matrix has stable unique ids and bounded comparison thresholds', () => {
   assert.equal(Number.isInteger(GOLDEN_MATRIX_VERSION) && GOLDEN_MATRIX_VERSION > 0, true);
@@ -138,12 +139,26 @@ test('wall junction goldens cover live L/T previews plus saved flat and isometri
 
 test('corner Split golden captures before, thin and thick facade states', () => {
   const scenarios = GOLDEN_SCENARIOS.filter((scenario) => scenario.cornerSplitWall);
-  assert.deepEqual(scenarios.map((scenario) => scenario.cornerSplitWall), ['before', 'thin', 'thick']);
+  assert.deepEqual(
+    scenarios.map((scenario) => scenario.cornerSplitWall),
+    ['before', 'thin', 'thick', 'zero-taper'],
+  );
   for (const scenario of scenarios) {
     const fixture = prepareGoldenFixture(scenario);
     const space = fixture.config.spaces.find((item) => item.id === scenario.space);
     assert.ok(space);
     assert.equal(space.settings.show_borders, true);
+    if (scenario.cornerSplitWall === 'zero-taper') {
+      assert.equal(space.rooms.length, 2);
+      assert.equal(space.rooms[0].poly.some((point) => point[1] === 0.405), true);
+      assert.equal(
+        space.walls.some((wall) => (
+          wall.key === fixtureWallKey([0.60, 0.40], [0.90, 0.405])
+        )),
+        false,
+      );
+      continue;
+    }
     assert.equal(space.rooms.length, scenario.cornerSplitWall === 'before' ? 1 : 2);
     if (scenario.cornerSplitWall !== 'before') {
       const divider = space.walls.find((wall) => (
@@ -194,7 +209,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 24);
+  assert.equal(GOLDEN_MATRIX_VERSION, 25);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');

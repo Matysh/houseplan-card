@@ -55,8 +55,36 @@ export function prepareGoldenFixture(scenario) {
   const fixture = fixtureFor(scenario);
   if (scenario.cornerSplitWall) {
     const stage = scenario.cornerSplitWall;
-    if (!['before', 'thin', 'thick'].includes(stage))
+    if (!['before', 'thin', 'thick', 'zero-taper'].includes(stage))
       throw new Error(`unknown cornerSplitWall stage: ${stage}`);
+    if (stage === 'zero-taper') {
+      const a = [0.10, 0.10], tr = [0.90, 0.10], split = [0.90, 0.405];
+      const br = [0.90, 0.80], notchBottom = [0.60, 0.80];
+      const notch = [0.60, 0.40], bl = [0.10, 0.40];
+      const entry = (from, to, cm) => ({
+        key: fixtureWallKey(from, to), a: [...from], b: [...to], cm,
+      });
+      fixture.config.spaces.push({
+        id: scenario.space,
+        name: 'Zero-depth angled Split',
+        rooms: [
+          { id: 'zero-divider-main', name: 'Main room', area: null,
+            poly: [a, tr, split, notch, bl] },
+          { id: 'zero-divider-child', name: 'New room', area: null,
+            poly: [split, br, notchBottom, notch] },
+        ],
+        walls: [
+          entry(a, tr, 15), entry(tr, split, 15), entry(split, br, 15),
+          entry(br, notchBottom, 15), entry(notchBottom, notch, 15),
+          entry(notch, bl, 15), entry(bl, a, 15),
+        ],
+        settings: {
+          show_borders: true, show_names: false,
+          fill_mode: 'custom', custom_fill: { c: '#536b82', a: 0.42 },
+        },
+      });
+      return fixture;
+    }
     const a = [0.10, 0.10], tr = [0.90, 0.10], split = [0.90, 0.50];
     const br = [0.90, 0.90], bl = [0.10, 0.90];
     const entry = (from, to, cm) => ({

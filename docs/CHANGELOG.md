@@ -7,6 +7,11 @@
   depth up to the divider without leaking onto an adjacent zero-thickness
   facade; Plan, View, static, hidden isometric and light geometry share the
   corrected outline ([#150](https://github.com/Matysh/houseplan-card/issues/150)).
+- A zero-thickness Split divider no longer borrows a triangular wedge from an
+  adjoining thick wall when the cut is slightly angled. The divider stays
+  visually open along its full length while the real wall ends in a local cap,
+  with the same geometry in Plan, View, Static, hidden isometric and lighting
+  ([#172](https://github.com/Matysh/houseplan-card/issues/172)).
 - Home Assistant devices and individual entities manually assigned to a room
   without an HA Area now stay in that exact room instead of returning to their
   registry Area. Existing saved assignments recover automatically, and

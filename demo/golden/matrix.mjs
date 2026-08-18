@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 24;
+export const GOLDEN_MATRIX_VERSION = 25;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -18,6 +18,8 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     cornerSplitWall: 'thin', mode: 'view', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'split-corner-wall-thick-dark', fixture: 'visual', space: 'golden-corner-split',
     cornerSplitWall: 'thick', mode: 'view', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'split-zero-divider-taper-dark', fixture: 'visual', space: 'golden-zero-divider',
+    cornerSplitWall: 'zero-taper', mode: 'view', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'isometric-geometry-view-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     // Stage 2 material/floor-edge plus door, window, gate and nested-room coverage.
     labs: ['iso'], projection: 'iso', ...expiredIsoFixture,
