@@ -915,6 +915,14 @@ separately promised workflows:
       locks/other domains are filtered out of controls. Glow is spatial: the
       controller casts no pool and the real lamp marker owns it even when the
       controller is encountered first [auto: smoke_controls; unit: devices.test.mjs]
+- [ ] Linked manual virtual light (#174): an exact #107 virtual Always-light
+      with an incoming controller follows the real HA driver despite a saved
+      manual off-bit. Clicking either marker operates the real relay and one HA
+      state tick updates both presentations, Glow, Light fill and room count;
+      source touch tap calls once, while long-press/pan/pinch/pointercancel call
+      nothing. Removing the final link restores the preserved manual state and
+      operational toggle [auto: smoke_linked_virtual_light; unit: devices,
+      device-toggle, device-presentation].
 - [ ] Marker controls are lossless across Open → Save: their stored order,
       duplicates and temporarily unknown/vendor targets survive unchanged;
       only the marker's own bound/device entities are removed, while runtime

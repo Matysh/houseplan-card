@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- A virtual Always-light linked to a real relay now follows that relay instead
+  of keeping an independent manual state. Tapping either marker operates the
+  real Home Assistant device, while Glow, Light fill, room counts and both
+  markers update together; removing the final link restores the preserved
+  manual state ([#174](https://github.com/Matysh/houseplan-card/issues/174)).
 - Collinear exterior walls now change thickness exactly at their saved
   breakpoint. After splitting a room, a 10 cm wall therefore keeps its full
   depth up to the divider without leaking onto an adjacent zero-thickness

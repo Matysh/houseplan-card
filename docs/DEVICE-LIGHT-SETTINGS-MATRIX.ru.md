@@ -87,7 +87,9 @@
 | `marker:<id>` stateful | Состояние ведущей сущности цели | Ведущая сущность цели, с дедупликацией | Позиция, комната, цвет и радиус принадлежат marker-цели |
 | `marker:<id>` passive, один controller | Его реальные targets, иначе собственная ведущая entity | Сам `marker:*` никогда не отправляется в HA | Пассивная лампа следует controller и светит в своей позиции |
 | Passive, несколько controllers | OR всех активных driver entities | По каждому действию — только его реальные targets | Один источник и один голос комнаты, без дублей |
-| Passive без сохранённых links | Всегда `on` | Нет собственного вызова | Постоянный Glow и `1 из 1` |
+| Exact `virtual` + «Всегда» + Toggle, есть links | OR всех активных driver entities; ручной bit временно не участвует | Клик controller — его группа; клик лампы — deduplicated union всех её drivers | HA state едино управляет Glow, заливкой, статистикой и обоими marker |
+| Exact `virtual` + «Всегда» + Toggle, links отсутствуют | Operational Store #107; отсутствие записи = `on` | Клик лампы меняет только operational state, без HA service | Ручное состояние общее для full/static и сохраняется после restart |
+| Passive без сохранённых links, не exact-режим #107 | Всегда `on` | Нет собственного вызова | Постоянный Glow и `1 из 1` |
 | Links есть, но все drivers скрыты/disabled/удалены | `off` / dormant | Нет вызова по битой цели | Ссылка сохраняется, пятна нет |
 | Прямая entity + `marker:` на тот же stateful source | Одно effective состояние | Один service target | Один источник и один голос |
 | Target переведён из «Всегда» в «Авто без источника»/«Никогда» | Dormant | Нет marker-service | Link сохраняется и оживает при возврате «Всегда» |

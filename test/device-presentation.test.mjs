@@ -180,6 +180,47 @@ test('issue 107 manual virtual source owns its face despite saved outgoing contr
   assert.ok(on.classes.includes('on'));
 });
 
+test('issue 174 linked manual source and controller presentation follow the real relay', () => {
+  const h = hass({ 'switch.wall': state('switch.wall', 'on') });
+  const controller = device({
+    id: 'controller', name: 'Wall relay', entities: ['switch.wall'], primary: 'switch.wall',
+    bindingRef: 'switch.wall',
+    marker: {
+      id: 'controller', binding: 'entity:switch.wall', controls: ['marker:lamp'],
+    },
+  });
+  const lamp = device({
+    id: 'lamp', name: 'Dumb lamp', entities: [], primary: null,
+    bindingKind: 'virtual', bindingRef: 'lamp',
+    marker: {
+      id: 'lamp', binding: 'virtual', is_light: true, tap_action: 'toggle', controls: [],
+    },
+  });
+  const devices = [controller, lamp];
+  const manualOff = { rev: 7, configRev: 2, off: new Set(['lamp']) };
+
+  let graph = resolvedLightSources(h, devices, null, manualOff);
+  let target = resolveDevicePresentation(h, lamp, {
+    ...options, lightDevices: devices, lightSources: graph,
+  });
+  let control = resolveDevicePresentation(h, controller, {
+    ...options, lightDevices: devices, lightSources: graph,
+  });
+  assert.equal(target.visual.status, 'working');
+  assert.equal(control.visual.status, 'working');
+
+  h.states['switch.wall'].state = 'off';
+  graph = resolvedLightSources(h, devices, null, manualOff);
+  target = resolveDevicePresentation(h, lamp, {
+    ...options, lightDevices: devices, lightSources: graph,
+  });
+  control = resolveDevicePresentation(h, controller, {
+    ...options, lightDevices: devices, lightSources: graph,
+  });
+  assert.equal(target.visual.status, 'neutral');
+  assert.equal(control.visual.status, 'neutral');
+});
+
 test('passive sensor source keeps its normal scalar value and never probes marker ids', () => {
   const hits = [];
   const h = hass(new Proxy({

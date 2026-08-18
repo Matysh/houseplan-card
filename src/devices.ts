@@ -244,6 +244,21 @@ export interface ResolvedLightSource<D extends LightSourceDevice = LightSourceDe
   on: boolean;
 }
 
+/** One controller's real HA drivers for an incoming `marker:*` link. */
+export interface IncomingLightController<D extends LightSourceDevice = LightSourceDevice> {
+  device: D;
+  /** Real entity ids only. The linked marker id is never a service target. */
+  driverEids: string[];
+}
+
+/** Plan-wide reverse edge for one forced source marker. */
+export interface IncomingLightControl<D extends LightSourceDevice = LightSourceDevice> {
+  markerId: string;
+  controllers: IncomingLightController<D>[];
+  /** Deterministic union of every controller's driver entities. */
+  driverEids: string[];
+}
+
 /**
  * Controls are OTHER light targets operated by this marker. A marker already
  * operates its own bound entity/device through the normal tap action; storing
@@ -347,6 +362,7 @@ interface CachedLightGraph<D extends LightSourceDevice> {
   visible: D[];
   markerById: Map<string, D>;
   persistedByDevice: Map<D, string[]>;
+  incomingByMarker: Map<string, IncomingLightControl<D>>;
 }
 
 const LIGHT_GRAPH_CACHE = new WeakMap<object, CachedLightGraph<any>>();
@@ -402,9 +418,47 @@ function lightGraphOf<D extends LightSourceDevice>(devices: readonly D[]): Cache
       ? device.marker?.id || device.id : null;
     if (id) markerById.set(String(id), device);
   }
-  const value = { fingerprint, visible, markerById, persistedByDevice };
+  const incomingByMarker = new Map<string, IncomingLightControl<D>>();
+  for (const controller of devices) {
+    const persisted = persistedByDevice.get(controller) || [];
+    const activeEntityTargets = new Set(
+      (controller.controls === undefined
+        ? persisted.filter(isControllable)
+        : controller.controls.filter(isControllable)),
+    );
+    const ownDriver = forcedLightEntityOf(controller);
+    const driverEids = activeEntityTargets.size
+      ? [...activeEntityTargets]
+      : ownDriver ? [ownDriver] : [];
+    for (const ref of persisted) {
+      if (!ref.startsWith('marker:')) continue;
+      const markerId = ref.slice('marker:'.length);
+      if (!markerId || markerId === String(controller.marker?.id || controller.id || '')) continue;
+      if (!markerById.has(markerId)) continue;
+      const previous = incomingByMarker.get(markerId) || {
+        markerId,
+        controllers: [],
+        driverEids: [],
+      };
+      previous.controllers.push({ device: controller, driverEids: [...driverEids] });
+      previous.driverEids = [...new Set([...previous.driverEids, ...driverEids])];
+      incomingByMarker.set(markerId, previous);
+    }
+  }
+  const value = { fingerprint, visible, markerById, persistedByDevice, incomingByMarker };
   LIGHT_GRAPH_CACHE.set(devices as object, value);
   return value;
+}
+
+/**
+ * Canonical reverse projection for #84/#174. State resolution and Toggle must
+ * consume this same cached graph so a linked lamp cannot display one relay
+ * while an action operates another.
+ */
+export function incomingLightControls<D extends LightSourceDevice>(
+  devices: readonly D[],
+): ReadonlyMap<string, IncomingLightControl<D>> {
+  return lightGraphOf(devices).incomingByMarker;
 }
 
 /** Whether the marker currently has a real, position-bearing source of its own. */
@@ -504,7 +558,7 @@ export function resolvedLightSources<D extends LightSourceDevice>(
       && cached.registry === hass?.entities) return cached.sources;
 
   type Candidate = ResolvedLightSource<D>;
-  const { visible, markerById, persistedByDevice } = lightGraphOf(devices);
+  const { visible, markerById, persistedByDevice, incomingByMarker } = lightGraphOf(devices);
   // Room consumers need sources owned by that room, not a full resolution of
   // every marker followed by a final filter. Controllers outside the room are
   // still scanned below because they may drive a source whose owner is inside.
@@ -533,7 +587,6 @@ export function resolvedLightSources<D extends LightSourceDevice>(
     }
   }
 
-  const incoming = new Map<string, { linked: boolean; drivers: Set<string> }>();
   const activeEntityTargetsByDevice = new Map<D, Set<string>>();
   for (const controller of devices) {
     const persisted = persistedByDevice.get(controller) || [];
@@ -543,31 +596,20 @@ export function resolvedLightSources<D extends LightSourceDevice>(
       controller.controls === undefined ? persisted.filter(isControllable) : controller.controls,
     );
     activeEntityTargetsByDevice.set(controller, activeEntityTargets);
-    const ownDriver = forcedLightEntityOf(controller);
-    for (const ref of persisted) {
-      if (ref.startsWith('marker:')) {
-        const targetId = ref.slice('marker:'.length);
-        if (targetId === String(controller.marker?.id || controller.id || '')) continue;
-        const target = markerById.get(targetId);
-        if (!target || !ownByDevice.has(target)) continue;
-        const state = incoming.get(targetId) || { linked: false, drivers: new Set<string>() };
-        state.linked = true;
-        const drivers = activeEntityTargets.size ? activeEntityTargets : new Set(ownDriver ? [ownDriver] : []);
-        for (const eid of drivers) state.drivers.add(eid);
-        incoming.set(targetId, state);
-      }
-    }
   }
 
   for (const sources of ownByDevice.values()) {
     for (const source of sources) {
       if (!source.passive) continue;
       const markerId = source.key.slice('marker:'.length);
-      const control = incoming.get(markerId);
-      source.on = !control?.linked || [...control.drivers].some((eid) => hass.states?.[eid]?.state === 'on');
-      // Manual persistent state overrides incoming controller links only while
-      // the exact virtual + light + toggle eligibility triple remains active.
-      if (isManualVirtualLightMarker(source.device.marker)) {
+      const control = incomingByMarker.get(markerId);
+      source.on = control
+        ? control.driverEids.some((eid) => hass.states?.[eid]?.state === 'on')
+        : true;
+      // #174: real controller state is authoritative whenever a saved,
+      // runtime-valid incoming link exists. The manual #107 state remains a
+      // lossless fallback and becomes visible again after the last link goes.
+      if (!control && isManualVirtualLightMarker(source.device.marker)) {
         source.on = virtualLightIsOn(source.device.marker, virtualLights);
       }
     }
