@@ -135,6 +135,26 @@ jobs:
         with:
           fetch-depth: 0
           ref: dev
+          # Иначе в конфиге git остаётся креденшел GITHUB_TOKEN, и push с
+          # мёртвым PAT молча уходит от github-actions[bot] — 403 при
+          # contents: read. Отказ обязан быть громким и правильным.
+          persist-credentials: false
+
+      # Живость PAT проверяется ДО ревью. На #150 истёкший токен обнаружился
+      # только на публикации документа — после сорока минут работы ревьюера.
+      - name: Секрет HP_PROCESS_TOKEN жив
+        env:
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::HP_PROCESS_TOKEN пуст — секрет удалён или недоступен"
+            exit 1
+          fi
+          if ! login=$(gh api user -q .login 2>/dev/null); then
+            echo "::error::HP_PROCESS_TOKEN не аутентифицируется — истёк или отозван. Обновить: Settings -> Secrets and variables -> Actions -> HP_PROCESS_TOKEN"
+            exit 1
+          fi
+          echo "токен жив, действует от: $login"
 
       # Окружение готовит workflow, а не модель своими ходами. Раньше промпт
       # велел ревьюеру самому выполнить `npm ci`: минуты уходили на установку без
@@ -154,8 +174,15 @@ jobs:
         env:
           NUM: ${{ github.event.issue.number }}
         run: |
-          branch=$(git ls-remote --heads origin "issue/${NUM}-*" \
-            | head -1 | sed 's|.*refs/heads/||')
+          # Свежая по последнему коммиту, а не первая по алфавиту: на #150 рядом
+          # жили ветка ТЗ и ветка реализации, и head -1 выбрал устаревшую.
+          git fetch -q origin "+refs/heads/issue/${NUM}-*:refs/remotes/origin/issue/${NUM}-*" || true
+          branches=$(git for-each-ref --sort=-committerdate \
+            --format='%(refname:lstrip=3)' "refs/remotes/origin/issue/${NUM}-*")
+          branch=$(printf '%s\n' "$branches" | head -1)
+          if [ "$(printf '%s\n' "$branches" | grep -c .)" -gt 1 ]; then
+            echo "::warning::веток issue/${NUM}-* несколько ($(echo $branches | tr '\n' ' ')) — выбрана свежая по коммиту: $branch. Устаревшую следует удалить."
+          fi
           if [ -n "$branch" ]; then
             git checkout -q "origin/$branch"
             echo "материал ревью: ветка $branch, $(git rev-parse --short HEAD)"
