@@ -208,7 +208,12 @@ jobs:
 
       - name: Установить Chromium
         if: steps.pw.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium
+        # Без --with-deps: системные библиотеки Chromium предустановлены в
+        # образе ubuntu-latest, а apt при промахе кэша съедал минуты из бюджета
+        # ревью и подолгу перебирал недоступное azure-зеркало (#175). Если
+        # библиотека когда-нибудь пропадёт из образа, Chromium не запустится с
+        # внятной ошибкой — тогда флаг вернуть.
+        run: npx playwright install chromium
 
       - name: Review
         id: review
