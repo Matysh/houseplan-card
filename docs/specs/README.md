@@ -52,6 +52,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#164](https://github.com/Matysh/houseplan-card/issues/164) Активный цикл стиральной машины должен быть жёлтым | [164-washer-active-cycle.md](164-washer-active-cycle.md) |
 | [#166](https://github.com/Matysh/houseplan-card/issues/166) Солнечные лучи зеркально учитывают направление севера | [166-sun-north-rotation.md](166-sun-north-rotation.md) |
 | [#167](https://github.com/Matysh/houseplan-card/issues/167) Экспорт «только планировка» | [167-plan-only-export.md](167-plan-only-export.md) |
+| [#170](https://github.com/Matysh/houseplan-card/issues/170) HA-устройство не привязывается к комнате без HA-зоны | [170-room-without-area.md](170-room-without-area.md) |
 
 ## P2
 
