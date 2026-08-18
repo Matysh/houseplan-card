@@ -93,6 +93,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#157](https://github.com/Matysh/houseplan-card/issues/157) Тип проёма «Открытый проём» | [157-open-passage.md](157-open-passage.md) |
 | [#150](https://github.com/Matysh/houseplan-card/issues/150) Точная геометрия коллинеарного перепада толщины | [150-wall-thickness-transition.md](150-wall-thickness-transition.md) |
 | [#172](https://github.com/Matysh/houseplan-card/issues/172) Нулевой Split-разделитель не получает ложную толщину | [172-zero-divider-taper.md](172-zero-divider-taper.md) |
+| [#174](https://github.com/Matysh/houseplan-card/issues/174) Связанный виртуальный источник следует реальному контроллеру | [174-linked-virtual-light-controller.md](174-linked-virtual-light-controller.md) |
 
 ## Правило актуализации
 
