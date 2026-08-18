@@ -71,7 +71,9 @@ HA Area снова определяет и `DevItem.area`, и `DevItem.space`.
 - новый UI, новый способ создания комнат или изменение терминологии;
 - автоматическое создание/изменение HA Floors и Areas;
 - изменение схемы `markers[]`, версия конфигурации или миграция хранилища;
-- новая обработка удалённого/несуществующего `room_id`;
+- новая очистка, автопереназначение или persisted rewrite удалённого/
+  несуществующего `room_id`; безопасный placeholder селектора из §6.3 остаётся
+  обязательным fail-safe;
 - изменение автоматического размещения устройств без ручной комнаты;
 - изменение поведения виртуальных маркеров и комнат с HA Area;
 - новые room aggregates, источники температуры/влажности, LQI или правила Glow;
@@ -115,6 +117,10 @@ Registry Area устройства, сущности или её родител�
   выбранном пространстве без наследования registry Area.
 - После сохранения и повторного открытия поле «Комната» восстанавливает точное
   значение `<space>#@<room_id>`.
+- Если во время реконструкции редактора всё же получена несовпадающая пара
+  `<space>#@<room_id>` (такой комнаты нет в указанном пространстве), диалог не
+  падает, selector остаётся на существующем placeholder и не переписывает
+  persisted marker без явного Save.
 - При смене комнаты внутри того же пространства существующая позиция маркера
   не меняется.
 - При переносе в другое пространство действует существующее центрирование по
@@ -158,10 +164,11 @@ targets редактора не меняются. `docs/TOUCH-SUPPORT.md` ост
 | AC2 | То же правило работает для `entity:*`, даже если Area приходит от entity registry или родительского device. | Targeted unit с обоими registry-path. |
 | AC3 | Старый HA-маркер без `room_id`, ручная комната с HA Area, автоустройство и `virtual` сохраняют текущее размещение. | Негативные/regression unit cases. |
 | AC4 | Уже сохранённый маркер комнаты без HA Area корректно читается без resave или migration. | Unit-fixture существующей persisted-записи. |
-| AC5 | Сохранение реального HA-binding в комнату без Area переносит runtime-маркер в целевое пространство, а повторное открытие редактора восстанавливает точный выбор. | Расширенный `demo/smoke_subarea.mjs`. |
+| AC5 | Сохранение реального HA-binding в комнату без Area переносит runtime-маркер в целевое пространство, а повторное открытие редактора восстанавливает точный выбор. Несовпадающая пара `space#@room_id` не вызывает ошибку и оставляет selector на placeholder без неявной записи. | Расширенный `demo/smoke_subarea.mjs`: happy path и negative mismatched-pair case. |
 | AC6 | Перенос между пространствами использует существующее центрирование, а выбор другой комнаты в том же пространстве не двигает расставленный маркер. | Browser-smoke с обеими ветками позиции. |
 | AC7 | Полный и статический планы используют единую исправленную проекцию без второго resolver. | Unit общего `buildDevices` и code review shared call sites. |
-| AC8 | Изменение проходит рабочие implementation-gates. | `npm run typecheck`, `npm run test:unit`, `npm run build`; targeted browser smoke до code review. |
+| AC8 | Изменение проходит рабочие implementation-gates. | `npm run typecheck`, `npm test`, `npm run build`; targeted browser smoke до code review. |
+| AC9 | Пять регрессий §10.3 зарегистрированы в штатном mutation runner и каждый чистый guard доказан чувствительным к своей поломке. | `node scripts/mutation-gate.mjs --check` и пять отдельных `--id=...`; в evidence сохранены id, guard и ожидаемый non-zero. |
 
 ## 10. План автотестов
 
@@ -188,21 +195,50 @@ targets редактора не меняются. `docs/TOUCH-SUPPORT.md` ост
 3. проверить persisted `space/area/room_id` и runtime `space/area`;
 4. повторно открыть редактор и проверить точное значение выбора;
 5. доказать центрирование при межпространственном переносе;
-6. доказать сохранение позиции при смене комнаты внутри пространства.
+6. доказать сохранение позиции при смене комнаты внутри пространства;
+7. передать редактору несовпадающую пару `space#@room_id`, проверить отсутствие
+   `pageerror`/необработанного console error, placeholder селектора и отсутствие
+   неявного изменения persisted marker.
 
 Golden/screenshot не нужен: пиксельный контракт не меняется. Полный smoke,
 golden и performance остаются общими пред-бета gates по runbook.
 
 ### 10.3. Executable mutation gate
 
-Тесты обязаны падать хотя бы при следующих намеренных мутациях:
+Реализация обязана зарегистрировать в `scripts/mutation-gate.mjs` пять реальных
+entries. Каждый entry содержит стабильный `id`, объяснение `because`, один или
+несколько патчей `file/find/replace` с уникальным якорем и указанный guard.
+Runner применяет патч в отдельном worktree, собирает bundle, получает ожидаемый
+non-zero от guard и оставляет рабочее дерево чистым.
 
-- возврат `marker.area || registryArea` в device-ветке;
-- исправление только `device:*`, без `entity:*`;
-- применение area-less-семантики ко всем `area:null`, без проверки `room_id`;
-- построение reopened room через registry-derived space;
-- центрирование уже расставленного маркера при смене комнаты в том же
-  пространстве.
+| Mutant id | Обязательный патч | Guard |
+|---|---|---|
+| `manual-room-device-area-fallback` | В `src/devices.ts` заменить room-aware resolution device-ветки двумя прежними строками `const area = m.area \|\| dev?.area_id \|\| '';` и `const space = (area && areaToSpace[area]) \|\| m.space \|\| firstSpaceId;`, снова дав registry Area приоритет над ручной area-less комнатой. | `npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test --test-name-pattern="manual room without area.*device" test/devices.test.mjs` — AC1 обязан увидеть registry `area/space` вместо сохранённых значений. |
+| `manual-room-entity-branch-skipped` | В entity-ветке вернуть прежний `m.area \|\| reg?.area_id \|\| parentDeviceArea` resolution, оставив device-ветку исправленной. | `npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test --test-name-pattern="manual room without area.*entity" test/devices.test.mjs` — AC2 обязан поймать обе ветки registry Area. |
+| `area-null-without-room-id-hijacked` | В предикате area-less manual room убрать требование непустого `room_id`, то есть считать любое `area:null` ручной комнатой. | `npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test --test-name-pattern="area null without room_id" test/devices.test.mjs` — negative AC3 обязан сохранить registry fallback старого marker. |
+| `reopened-room-from-registry-space` | В `src/houseplan-card.ts` при сборке room value заменить effective `d.space + '#@' + d.marker.room_id` на текущее/source пространство редактора, вновь создавая несовпадающую пару. | `node demo/smoke_subarea.mjs` — AC5 обязан отличить точный reopened selection и одновременно доказать безопасный placeholder для invalid pair. |
+| `same-space-room-change-recenters` | В ветке сохранения позиции исключить `roomChanged` из same-space preserve path, например добавить `&& !roomChanged` к проверке `prevPos.s === targetSpace`, чтобы изменение комнаты снова ушло в центрирование. | `node demo/smoke_subarea.mjs` — AC6 обязан увидеть изменение ранее закреплённых координат. |
+
+Имена targeted unit tests в guard должны совпасть с фактически добавленными
+именами. Если реализация меняет форму исходного кода, допустимо скорректировать
+`find/replace`, но семантика каждого мутанта и его guard неизменны; якорь обязан
+встречаться ровно один раз и проходить `--check`.
+
+Обязательные команды перед передачей кода на review:
+
+```text
+node scripts/mutation-gate.mjs --check
+node scripts/mutation-gate.mjs --id=manual-room-device-area-fallback
+node scripts/mutation-gate.mjs --id=manual-room-entity-branch-skipped
+node scripts/mutation-gate.mjs --id=area-null-without-room-id-hijacked
+node scripts/mutation-gate.mjs --id=reopened-room-from-registry-space
+node scripts/mutation-gate.mjs --id=same-space-room-change-recenters
+```
+
+Перед каждым mutant-run его чистый guard должен быть зелёным. Evidence каждого
+запуска обязано содержать id, точную guard-команду и ожидаемый non-zero. Ручное
+редактирование без runner, а также только `--list` или `--check`, AC9 не
+выполняет.
 
 ## 11. Риски и меры
 
