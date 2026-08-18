@@ -330,6 +330,8 @@ jobs:
           TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           BRANCH: ${{ steps.branch.outputs.name }}
           NUM: ${{ github.event.issue.number }}
+          STAGE: ${{ needs.guard.outputs.stage }}
+          CYCLE: ${{ needs.guard.outputs.cycle }}
         run: |
           # Ветки задачи может не быть: у задач, размеченных до появления
           # конвейера, ТЗ лежит прямо в dev. Раньше шаг в этом случае молча
@@ -340,12 +342,28 @@ jobs:
           if [ -z "$BRANCH" ]; then
             echo "::warning::ветки задачи нет — документ ревью ляжет в dev"
           fi
+          marker=CODE-REVIEW
+          if [ "$STAGE" = "spec" ]; then marker=SPEC-REVIEW; fi
+          doc="docs/reviews/${marker}-${NUM}-r${CYCLE}.md"
           git checkout -- . 2>/dev/null || true
           git clean -fd -e docs/reviews -e node_modules >/dev/null 2>&1 || true
           git add docs/reviews 2>/dev/null || true
           if git diff --cached --quiet; then
-            echo "::warning::документ ревью не создан"
-            exit 0
+            # Пустая рабочая копия — ещё не провал: ревьюер иногда коммитит
+            # документ сам, своим app-токеном мимо этого шага (CODE-REVIEW-150-r1,
+            # коммиттер GitHub). Провал — когда файла нет и на ветке.
+            git fetch -q origin "$target"
+            if git cat-file -e "origin/$target:$doc" 2>/dev/null; then
+              echo "документ уже опубликован ревьюером: $doc"
+              exit 0
+            fi
+            # Ревью без артефакта запрещено (PROCESS.md §2.4/§10.4/§12). Раньше
+            # здесь стоял warning с exit 0: на #150 оба вердикта ревью ТЗ
+            # остались только комментариями, метки переставились, и пропажу
+            # заметило лишь следующее ревью — issue #171. Падение ДО шага с
+            # меткой сохраняет инвариант «метка не сменилась = прогон упал».
+            echo "::error::вердикт есть, а документа $doc нет ни в рабочей копии, ни в $target — ревью без артефакта (#171)"
+            exit 1
           fi
           git -c user.name="claude[bot]" \
               -c user.email="209825114+claude[bot]@users.noreply.github.com" \
@@ -365,13 +383,22 @@ jobs:
                      -c user.email="209825114+claude[bot]@users.noreply.github.com" \
                      rebase "origin/$target"; then
               git rebase --abort || true
-              echo "::error::документ ревью не удалось опубликовать в $target: конфликт"
-              exit 0
+              # Тоже вердикт без артефакта: раньше exit 0 переставил бы метку.
+              echo "::error::документ ревью не удалось опубликовать в $target: конфликт (#171)"
+              exit 1
             fi
             git push -q "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" \
               "HEAD:$target"
           fi
-          echo "документ опубликован в $target"
+          # Постусловие: до ветки дошёл именно ожидаемый файл. Коммит с
+          # документом, названным не по формату, — тот же вердикт без
+          # артефакта, только дороже в обнаружении.
+          git fetch -q origin "$target"
+          if ! git cat-file -e "origin/$target:$doc" 2>/dev/null; then
+            echo "::error::коммит в $target опубликован, но ожидаемого $doc в нём нет — файл назван не по формату (#171)"
+            exit 1
+          fi
+          echo "документ опубликован в $target: $doc"
 
       - name: Решение по вердикту
         id: decide
