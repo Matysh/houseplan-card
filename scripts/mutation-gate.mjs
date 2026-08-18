@@ -290,6 +290,72 @@ export const MUTANTS = [
       replace: "  if (false && input.type === 'passage') {",
     }],
   },
+  {
+    id: 'manual-room-device-area-fallback',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="manual room without area.*device" test/devices.test.mjs',
+    because: 'возврат старого device fallback снова даёт registry Area приоритет над явно '
+      + 'сохранённой комнатой без HA Area; AC1 обязан увидеть неверные area и space',
+    patches: [{
+      file: 'src/devices.ts',
+      find: '      const { area, space } = resolveExplicitMarkerPlacement(\n'
+        + '        m, dev?.area_id, areaToSpace, firstSpaceId,\n'
+        + '      );',
+      replace: "      const area = m.area || dev?.area_id || '';\n"
+        + '      const space = (area && areaToSpace[area]) || m.space || firstSpaceId;',
+    }],
+  },
+  {
+    id: 'manual-room-entity-branch-skipped',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="manual room without area.*entity" test/devices.test.mjs',
+    because: 'исправление только device-ветки оставляет entity Area и Area родительского '
+      + 'устройства способными увести маркер из ручной комнаты; AC2 покрывает оба пути',
+    patches: [{
+      file: 'src/devices.ts',
+      find: '      const { area, space } = resolveExplicitMarkerPlacement(\n'
+        + '        m, registryArea, areaToSpace, firstSpaceId,\n'
+        + '      );',
+      replace: "      const area = m.area || registryArea || '';\n"
+        + '      const space = (area && areaToSpace[area]) || m.space || firstSpaceId;',
+    }],
+  },
+  {
+    id: 'area-null-without-room-id-hijacked',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="area null without room_id" test/devices.test.mjs',
+    because: 'одно area:null не доказывает ручную комнату: расширенный предикат угоняет '
+      + 'legacy marker без room_id из registry Area; негативный AC3 обязан это поймать',
+    patches: [{
+      file: 'src/devices.ts',
+      find: "  const manualRoomWithoutArea = typeof marker.room_id === 'string'\n"
+        + '    && marker.room_id.length > 0\n'
+        + '    && marker.area === null;',
+      replace: '  const manualRoomWithoutArea = marker.area === null;',
+    }],
+  },
+  {
+    id: 'reopened-room-from-registry-space',
+    guard: 'node demo/smoke_subarea.mjs',
+    because: 'room_id без правильного effective space создаёт отсутствующую option при '
+      + 'повторном открытии; browser smoke обязан восстановить точный garden#@room id',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "          ? d.space + '#@' + d.marker.room_id",
+      replace: "          ? this._space + '#@' + d.marker.room_id",
+    }],
+  },
+  {
+    id: 'same-space-room-change-recenters',
+    guard: 'node demo/smoke_subarea.mjs',
+    because: 'редактирование комнаты внутри одного пространства не должно двигать уже '
+      + 'расставленный маркер; smoke сравнивает закреплённые координаты до и после Save',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '      if (!replacingRemoved && prevPos && prevPos.s === targetSpace) {',
+      replace: '      if (!replacingRemoved && prevPos && prevPos.s === targetSpace && !roomChanged) {',
+    }],
+  },
 ];
 
 // --- механика ---------------------------------------------------------------

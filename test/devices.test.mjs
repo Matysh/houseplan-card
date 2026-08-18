@@ -118,6 +118,81 @@ test('buildDevices: claimed device is replaced by its marker (metadata applied)'
   assert.equal(it.bindingKind, 'device');
 });
 
+test('buildDevices: manual room without area overrides registry area for device binding', () => {
+  const h = mkHass({ devices: { washer: dev('washer', 'Washer', 'WM-1', 'living') } });
+  const [item] = buildDevices(baseCtx(h, {
+    areaToSpace: { living: 'f1' },
+    markers: [{
+      id: 'washer', binding: 'device:washer', space: 'garden', area: null, room_id: 'shed',
+    }],
+  }));
+  assert.equal(item.space, 'garden');
+  assert.equal(item.area, '');
+  assert.equal(item.marker.room_id, 'shed');
+});
+
+test('buildDevices: manual room without area overrides registry area for entity binding', () => {
+  const h = mkHass({
+    devices: { hub: dev('hub', 'Parent', 'Hub', 'living') },
+    entities: {
+      'sensor.direct': { entity_id: 'sensor.direct', area_id: 'kitchen', platform: 'demo' },
+      'sensor.parent': { entity_id: 'sensor.parent', device_id: 'hub', platform: 'demo' },
+    },
+    states: {
+      'sensor.direct': { state: '1', attributes: { friendly_name: 'Direct' } },
+      'sensor.parent': { state: '2', attributes: { friendly_name: 'Parent child' } },
+    },
+  });
+  const result = buildDevices(baseCtx(h, {
+    areaToSpace: { living: 'f1', kitchen: 'f2' },
+    markers: [
+      { id: 'direct', binding: 'entity:sensor.direct', space: 'garden', area: null, room_id: 'shed-a' },
+      { id: 'parent-entity', binding: 'entity:sensor.parent', space: 'garden', area: null, room_id: 'shed-b' },
+    ],
+  }));
+  assert.deepEqual(
+    result.filter((item) => item.bindingKind === 'entity')
+      .map((item) => ({ id: item.id, space: item.space, area: item.area, room: item.marker.room_id })),
+    [
+      { id: 'direct', space: 'garden', area: '', room: 'shed-a' },
+      { id: 'parent-entity', space: 'garden', area: '', room: 'shed-b' },
+    ],
+  );
+});
+
+test('buildDevices: area null without room_id preserves registry area fallback', () => {
+  const h = mkHass({ devices: {
+    legacy: dev('legacy', 'Legacy', 'Plug', 'living'),
+    room: dev('room', 'Kitchen device', 'Plug', 'living'),
+    auto: dev('auto', 'Automatic', 'Plug', 'living'),
+  } });
+  const result = buildDevices(baseCtx(h, {
+    areaToSpace: { living: 'f1', kitchen: 'f2' },
+    markers: [
+      { id: 'legacy', binding: 'device:legacy', space: 'garden', area: null },
+      { id: 'room', binding: 'device:room', space: 'f2', area: 'kitchen', room_id: 'kitchen-room' },
+      { id: 'virtual', binding: 'virtual', space: 'garden', area: null, room_id: 'shed' },
+    ],
+  }));
+  const byId = Object.fromEntries(result.map((item) => [item.id, item]));
+  assert.deepEqual(
+    { space: byId.legacy.space, area: byId.legacy.area },
+    { space: 'f1', area: 'living' },
+  );
+  assert.deepEqual(
+    { space: byId.room.space, area: byId.room.area, room: byId.room.marker.room_id },
+    { space: 'f2', area: 'kitchen', room: 'kitchen-room' },
+  );
+  assert.deepEqual(
+    { space: byId.auto.space, area: byId.auto.area },
+    { space: 'f1', area: 'living' },
+  );
+  assert.deepEqual(
+    { space: byId.virtual.space, area: byId.virtual.area, room: byId.virtual.marker.room_id },
+    { space: 'garden', area: '', room: 'shed' },
+  );
+});
+
 test('buildDevices: hidden marker removes the device entirely', () => {
   const h = mkHass({ devices: { a: dev('a', 'Noisy', 'x', 'living') } });
   const res = buildDevices(baseCtx(h, { markers: [{ id: 'a', binding: 'device:a', hidden: true }] }));

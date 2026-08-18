@@ -6,6 +6,11 @@ const res = await page.evaluate(async () => {
   // комната без зоны на f1
   c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== 'f1' ? s : ({
     ...s, rooms: [...s.rooms, { id: 'rc', name: 'Cupboard', area: null, poly: [[0.05,0.62],[0.2,0.62],[0.2,0.9],[0.05,0.9]] }],
+  })).map((s) => s.id !== 'garden' ? s : ({
+    ...s, rooms: [...s.rooms,
+      { id: 'garden-shed-a', name: 'Shed A', area: null, poly: [[0.60,0.55],[0.80,0.55],[0.80,0.75],[0.60,0.75]] },
+      { id: 'garden-shed-b', name: 'Shed B', area: null, poly: [[0.25,0.55],[0.45,0.55],[0.45,0.75],[0.25,0.75]] },
+    ],
   })) };
   c._regSignature = ''; c._maybeRebuildDevices(); await c.updateComplete;
   // список комнат в диалоге содержит подзону
@@ -29,6 +34,50 @@ const res = await page.evaluate(async () => {
   c._openMarkerDialog(dev); 
   out.reopenRoom = c._markerDialog?.room;
   c._markerDialog = null;
+
+  // Реальное HA-устройство с registry Area вручную переносится в комнату без
+  // Area другого пространства. Registry metadata не должна вернуть его в f1.
+  const source = c._devices.find((d) => d.id === 'd_light1');
+  c._openMarkerDialog(source); await c.updateComplete;
+  c._markerDialog = { ...c._markerDialog, room: 'garden#@garden-shed-a' };
+  await c._saveMarker(); await c.updateComplete;
+  const haMarker = c._serverCfg.markers.find((x) => x.binding === 'device:d_light1');
+  const moved = c._devices.find((d) => d.id === haMarker?.id);
+  const crossPos = c._layout[haMarker?.id];
+  out.haMarkerSaved = !!haMarker
+    && haMarker.space === 'garden' && haMarker.area === null && haMarker.room_id === 'garden-shed-a';
+  out.haRuntimePlacement = !!moved
+    && moved.space === 'garden' && moved.area === '' && moved.marker?.room_id === 'garden-shed-a';
+  out.crossSpaceCentered = !!crossPos && crossPos.s === 'garden'
+    && Math.abs(crossPos.x - 0.70) < 0.03 && Math.abs(crossPos.y - 0.65) < 0.03;
+
+  c._openMarkerDialog(moved); await c.updateComplete;
+  out.haReopenRoom = c._markerDialog?.room === 'garden#@garden-shed-a';
+  c._markerDialog = null;
+
+  // Защитный негативный кейс: transient runtime-пара с room_id из другого
+  // пространства не роняет диалог и не переписывает сохранённый marker.
+  const persistedBeforeInvalidOpen = JSON.stringify(haMarker);
+  c._openMarkerDialog({ ...moved, space: 'f1' }); await c.updateComplete;
+  const invalidSelect = c.shadowRoot?.querySelector('#marker-room');
+  out.invalidPairPlaceholder = invalidSelect?.value === '';
+  out.invalidPairReadOnly = JSON.stringify(
+    c._serverCfg.markers.find((x) => x.binding === 'device:d_light1'),
+  ) === persistedBeforeInvalidOpen;
+  c._markerDialog = null; await c.updateComplete;
+
+  // Смена комнаты внутри того же пространства сохраняет уже закреплённую
+  // позицию, хотя room_id меняется.
+  c._openMarkerDialog(moved); await c.updateComplete;
+  c._markerDialog = { ...c._markerDialog, room: 'garden#@garden-shed-b' };
+  await c._saveMarker(); await c.updateComplete;
+  const sameSpaceMarker = c._serverCfg.markers.find((x) => x.binding === 'device:d_light1');
+  const sameSpacePos = c._layout[sameSpaceMarker?.id];
+  const sameSpaceDevice = c._devices.find((d) => d.id === sameSpaceMarker?.id);
+  out.sameSpaceRoomSaved = sameSpaceMarker?.room_id === 'garden-shed-b'
+    && sameSpaceDevice?.space === 'garden' && sameSpaceDevice?.area === '';
+  out.sameSpacePositionKept = !!sameSpacePos
+    && sameSpacePos.s === crossPos.s && sameSpacePos.x === crossPos.x && sameSpacePos.y === crossPos.y;
   return out;
 });
 // значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)

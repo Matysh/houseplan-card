@@ -948,6 +948,28 @@ export function seedHiddenBindings(ctx: Omit<BuildCtx, 'showAll' | 'loc'>): stri
   return out;
 }
 
+function resolveExplicitMarkerPlacement(
+  marker: Marker,
+  registryArea: string | null | undefined,
+  areaToSpace: Record<string, string>,
+  firstSpaceId: string,
+): { area: string; space: string } {
+  // A room id plus an explicit null Area is the persisted contract for a
+  // manual room which has no HA Area. The registry still describes the HA
+  // device, but must not move that marker back to its source room.
+  const manualRoomWithoutArea = typeof marker.room_id === 'string'
+    && marker.room_id.length > 0
+    && marker.area === null;
+  if (manualRoomWithoutArea) {
+    return { area: '', space: marker.space || firstSpaceId };
+  }
+  const area = marker.area || registryArea || '';
+  return {
+    area,
+    space: (area && areaToSpace[area]) || marker.space || firstSpaceId,
+  };
+}
+
 /** Filtering + light groups + markers (metadata/rebinding) + virtual ones. A hybrid. */
 export function buildDevices(ctx: BuildCtx): DevItem[] {
   const baseHass = ctx.hass;
@@ -1059,8 +1081,9 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
       const bindingStatus = markerBindingStatus!;
       if (bindingStatus.kind === 'unverified') continue;
       const dev = fullHass.devices[ref];
-      const area = m.area || dev?.area_id || '';
-      const space = (area && areaToSpace[area]) || m.space || firstSpaceId;
+      const { area, space } = resolveExplicitMarkerPlacement(
+        m, dev?.area_id, areaToSpace, firstSpaceId,
+      );
       const entIds = bindingStatus.kind === 'active' ? bindingStatus.enabledEntityIds : [];
       let icon = dev
         ? resolveIcon(h, dev.name_by_user || dev.name || '', dev.model, entIds, iconRules)
@@ -1090,8 +1113,12 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
       const bindingStatus = markerBindingStatus!;
       if (bindingStatus.kind === 'unverified') continue;
       const reg = fullHass.entities[ref];
-      const area = m.area || reg?.area_id || (reg?.device_id && fullHass.devices[reg.device_id]?.area_id) || '';
-      const space = (area && areaToSpace[area]) || m.space || firstSpaceId;
+      const registryArea = reg?.area_id
+        || (reg?.device_id && fullHass.devices[reg.device_id]?.area_id)
+        || '';
+      const { area, space } = resolveExplicitMarkerPlacement(
+        m, registryArea, areaToSpace, firstSpaceId,
+      );
       const st = h.states[ref];
       const nm = reg?.name || st?.attributes?.friendly_name || ref;
       let icon = resolveIcon(h, nm, '', [ref], iconRules);

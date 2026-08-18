@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Home Assistant devices and individual entities manually assigned to a room
+  without an HA Area now stay in that exact room instead of returning to their
+  registry Area. Existing saved assignments recover automatically, and
+  editing a room within the same space keeps the marker position
+  ([#170](https://github.com/Matysh/houseplan-card/issues/170)).
 - Plan editor now supports **Open passage**, a 90 cm architectural opening
   with no leaf, arc or Home Assistant binding. It cuts masonry and continues
   the room floor in Full and Static views, passes interior light, and remains
