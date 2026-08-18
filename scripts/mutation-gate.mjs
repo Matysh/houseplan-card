@@ -375,8 +375,8 @@ export const MUTANTS = [
       + 'расставленный маркер; smoke сравнивает закреплённые координаты до и после Save',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '      if (!replacingRemoved && prevPos && prevPos.s === targetSpace) {',
-      replace: '      if (!replacingRemoved && prevPos && prevPos.s === targetSpace && !roomChanged) {',
+      find: '      if (!replacingRemoved && prevPos && prevPos.s === targetSpaceId) {',
+      replace: '      if (!replacingRemoved && prevPos && prevPos.s === targetSpaceId && !roomChanged) {',
     }],
   },
 ];
