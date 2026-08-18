@@ -1247,6 +1247,7 @@ class HouseplanCard extends LitElement {
   private _openingWallIndexCache = new Map<string, OpeningWallIndex>();
   private _openingPlacementIntervalsCache: { key: string; value: WallInterval[] } | null = null;
   private _planSnapGeometryCache: { key: string; value: PlanSnapGeometry } | null = null;
+  private _planStructuralGeometryCache: { key: string; value: PlanSnapGeometry } | null = null;
   private _physicalBodiesCache: {
     key: string; drafts: number[][][]; partitions: number[][][];
     columns: number[][][]; patches: number[][][]; all: number[][][];
@@ -6136,11 +6137,23 @@ class HouseplanCard extends LitElement {
     return this._snap(candidate);
   }
 
-  /**
-   * Static structural axes are rebuilt only when wall state changes. Openings
-   * cut masonry, not room-face connectivity (#185); only real open_spans cut
-   * this graph.
-   */
+  /** Canonical physical opening slots on room-wall centrelines. */
+  private _planSnapOpeningCuts(space: SpaceModel, openCuts: number[][]): number[][] {
+    if (!this._openingsR.length) return [];
+    const index = this._openingWallIndexFor(space, openCuts).value;
+    const cuts: number[][] = [];
+    for (const input of this._roomWallOpeningInputs(this._openingsR, space)) {
+      const association = resolveOpeningWallAssociation(index, input);
+      if (!association.negative && !association.positive) continue;
+      const rad = input.angle * Math.PI / 180;
+      const dx = Math.cos(rad) * input.length / 2;
+      const dy = Math.sin(rad) * input.length / 2;
+      cuts.push([input.x - dx, input.y - dy, input.x + dx, input.y + dy]);
+    }
+    return cuts;
+  }
+
+  /** Static presentation axes shared by the overlay and its hit resolver. */
   private _planSnapGeometrySnapshot(): { key: string; value: PlanSnapGeometry } {
     const space = this._spaceModel();
     const key = [
@@ -6152,11 +6165,36 @@ class HouseplanCard extends LitElement {
     const value = buildPlanSnapGeometry({
       space,
       activeDraftId: this._activeDraftId,
-      roomCuts: openCuts,
+      roomCuts: [...openCuts, ...this._planSnapOpeningCuts(space, openCuts)],
       epsilon: this._gridPitch * 0.0002,
     });
     this._planSnapGeometryCache = { key, value };
     return this._planSnapGeometryCache;
+  }
+
+  /**
+   * Room-face topology deliberately ignores door/window/gate/passage slots:
+   * an opening cuts masonry but does not remove the owning wall from a room
+   * contour (#185). Real open_spans remain structural gaps. Keeping this
+   * snapshot separate preserves the established overlay/snap presentation.
+   */
+  private _planStructuralGeometrySnapshot(): { key: string; value: PlanSnapGeometry } {
+    const space = this._spaceModel();
+    const key = [
+      'structural', this._space, this._cfgEpoch, this._activeDraftId || '',
+      space.rooms.length, space.room_drafts.length, space.partitions.length,
+    ].join('|');
+    if (this._planStructuralGeometryCache?.key === key) {
+      return this._planStructuralGeometryCache;
+    }
+    const value = buildPlanSnapGeometry({
+      space,
+      activeDraftId: this._activeDraftId,
+      roomCuts: this._openCuts(),
+      epsilon: this._gridPitch * 0.0002,
+    });
+    this._planStructuralGeometryCache = { key, value };
+    return this._planStructuralGeometryCache;
   }
 
   private _planSnapContextKey(geometryKey: string): string {
@@ -6860,7 +6898,7 @@ class HouseplanCard extends LitElement {
 
   /** Canonical solid axes plus one immutable projection of the active chain. */
   private _wallGraphSources(path: readonly (readonly number[])[]): WallGraphSourceSegment[] {
-    const staticGeometry = this._planSnapGeometrySnapshot().value;
+    const staticGeometry = this._planStructuralGeometrySnapshot().value;
     const sources: WallGraphSourceSegment[] = staticGeometry.segments.map((segment) => ({
       a: segment.a, b: segment.b, key: `static:${segment.key}`,
     }));
@@ -6873,8 +6911,9 @@ class HouseplanCard extends LitElement {
   private _wallFaceGraph(
     sources: readonly WallGraphSourceSegment[], epsilon: number,
   ): WallFaceGraph {
-    // Exact JSON identity avoids stale topology. Source keys already include
-    // opening cuts/provenance; space and epsilon complete the structural key.
+    // Exact JSON identity avoids stale topology. Source keys include real
+    // open-span cuts/provenance; presentation opening cuts are intentionally
+    // absent from the structural graph (#185).
     const key = `${this._space}|${epsilon}|${JSON.stringify(sources)}`;
     const cachedIndex = this._wallFaceGraphCache.findIndex((entry) => entry.key === key);
     if (cachedIndex >= 0) {

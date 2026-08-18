@@ -549,9 +549,9 @@ When **Walls** is active in the Plan editor, a derived
 pointer-transparent SVG layer exposes the centre axes of completed room walls,
 saved inactive outlines and independent partitions. It is painted after their
 physical wall bodies, but before interactive editor chrome. Columns, decor,
-devices, the active wall chain and its live preview are not candidates.
-Opening intervals remain part of the structural axes (#185); only intentionally
-open spans are cut, and a cut boundary does not become a new endpoint.
+devices, the active wall chain and its live preview are not candidates. Door,
+window, gate and intentionally open-span intervals are cut from presentation
+axes; a cut boundary does not become a new endpoint.
 
 The layer and hit resolver share one immutable geometry snapshot. Original
 segment endpoints are deduplicated and drawn at a physical radius of 5 cm.
@@ -572,9 +572,11 @@ single active candidate and never writes config, layout or storage.
 ## Planar wall faces
 
 Every completed Walls segment is first persisted in the active `room_drafts`
-chain. On the click path only, an immutable planar graph is built from solid
-room edges without presentation opening cuts, independent partitions, inactive drafts and the
-active chain both before and after the latest segment. Endpoint, T, X and
+chain. On the click path only, an immutable planar graph is built from structural
+room edges, independent partitions, inactive drafts and the active chain both
+before and after the latest segment. Unlike the presentation/snap snapshot, this
+face graph ignores door/window/gate/passage cuts but still applies `open_spans`.
+Endpoint, T, X and
 collinear-overlap junctions atomize that computed graph without rewriting any
 saved wall. A deterministic half-edge walk extracts bounded faces; canonical
 identity ignores winding, cyclic start and derived collinear subdivision.

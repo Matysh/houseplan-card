@@ -24,7 +24,9 @@
   host, keep the same Home Assistant state/actions as room-wall openings and
   are removed only through an explicit cascade confirmation. Openings no
   longer break the structural wall axis, so drawing a closed contour still
-  offers the room even when one of its walls already contains an opening
+  offers the room even when one of its walls already contains an opening.
+  Space backups preserve the opening-to-wall binding when imported, while the
+  editor's visual snap guide keeps its physical gap across the opening
   ([#132](https://github.com/Matysh/houseplan-card/issues/132),
   [#185](https://github.com/Matysh/houseplan-card/issues/185)).
 - Collinear exterior walls now change thickness exactly at their saved

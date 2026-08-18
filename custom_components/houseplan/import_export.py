@@ -842,6 +842,16 @@ def build_space_merge(
     for room in space.get("rooms") or []:
         if room.get("open_to"):
             room["open_to"] = [old_room_ids.get(str(value), str(value)) for value in room["open_to"]]
+    # Opening ownership is part of the same space-local id graph. Remap the
+    # nested reference together with the partition itself; otherwise the
+    # invariant validator correctly rejects a copied space whose host.id still
+    # names the source partition.
+    for opening in space.get("openings") or []:
+        host = opening.get("host") if isinstance(opening, dict) else None
+        if isinstance(host, dict) and host.get("kind") == "partition":
+            old_host_id = str(host.get("id"))
+            if old_host_id in id_map:
+                host["id"] = id_map[old_host_id]
     space["id"] = new_space_id
     space["title"] = _unique_title(
         str(space.get("title") or old_space_id), current_config.get("spaces") or []

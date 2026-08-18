@@ -882,7 +882,11 @@ def test_space_merge_remaps_every_space_owned_id_and_room_link(tmp_path: Path) -
         {"id": "kitchen", "name": "Kitchen", "poly": [[0, 0.5], [1, 0.5], [1, 1]]},
     ]
     space["openings"] = [
-        {"id": "op1", "type": "door", "x": 0.5, "y": 0.5, "angle": 0, "length": 0.1},
+        {
+            "id": "op1", "type": "door", "x": 0.5, "y": 0.25,
+            "angle": 0, "length": 0.1,
+            "host": {"kind": "partition", "id": "part1", "t": 0.5},
+        },
     ]
     space["decor"] = [
         {"id": "dec1", "kind": "line", "x1": 0, "y1": 0, "x2": 1, "y2": 1,
@@ -907,6 +911,10 @@ def test_space_merge_remaps_every_space_owned_id_and_room_link(tmp_path: Path) -
     assert not old_ids & imported_ids
     room_ids = {room["id"] for room in imported["rooms"]}
     assert set(imported["rooms"][0]["open_to"]) <= room_ids
+    imported_partition = imported["partitions"][0]["id"]
+    assert imported["openings"][0]["host"] == {
+        "kind": "partition", "id": imported_partition, "t": 0.5,
+    }
 
 
 def test_space_merge_remaps_internal_marker_light_links(tmp_path: Path) -> None:

@@ -133,7 +133,7 @@ const out = await page.evaluate(async () => {
   }];
   card._saveConfig();
   await update();
-  const structural = card._planSnapGeometrySnapshot().value;
+  const structural = card._planStructuralGeometrySnapshot().value;
   result.openingKeepsRoomFaceAxisContinuous = structural.segments.some((segment) =>
     segment.sourceKind === 'room'
     && Math.min(segment.a[0], segment.b[0]) <= 100 + 1e-6
