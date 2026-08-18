@@ -7,10 +7,12 @@
  */
 import {
   forcedLightEntityOf,
+  incomingLightControls,
   persistedExternalControls,
   resolvedDeviceStateEntities,
   resolvedLightSources,
   type ResolvedLightSource,
+  type IncomingLightControl,
 } from './devices';
 import { COVER_GUARDED_CLASSES, isControllable } from './logic';
 import type { DevItem } from './types';
@@ -389,17 +391,6 @@ function ownRoleCandidates(device: DevItem, registryHass: any): string[] {
   ].filter((eid): eid is string => !!eid))];
 }
 
-function ownControllableCandidate(
-  device: DevItem, registryHass: any,
-): { entityId: string; via: ToggleTargetVia } | null {
-  const role = ownRoleCandidates(device, registryHass);
-  const entityId = role.find(isControllable) || null;
-  return entityId ? {
-    entityId,
-    via: device.bindingKind === 'entity' ? 'binding' : 'device-role',
-  } : null;
-}
-
 /**
  * Resolve the first supported member of the already-selected functional role.
  * Missing/unavailable/secure members remain the explained target and never
@@ -487,27 +478,18 @@ function singleIntent(
   };
 }
 
-function resolveControls(options: ResolveToggleOptions): ResolvedToggleIntent {
-  const { hass, device, devices } = options;
-  const registryHass = options.registryHass || hass;
-  const refs = persistedExternalControls(
-    device.marker?.binding, device.marker?.controls ?? device.controls, device.entities,
-  );
-  const sources = options.lightSources
-    || resolvedLightSources(hass, devices, null, options.virtualLights);
-  const markerSources = new Map<string, ResolvedLightSource<DevItem>[]>();
-  for (const source of sources) {
-    if (!source.key.startsWith('marker:')) continue;
-    const list = markerSources.get(source.key) || [];
-    list.push(source);
-    markerSources.set(source.key, list);
-  }
-  const own = ownControllableCandidate(device, registryHass);
-  const markerDevices = new Map<string, DevItem>();
-  for (const item of devices) {
-    const markerId = String(item.marker?.id || item.id || '');
-    if (markerId) markerDevices.set(markerId, item);
-  }
+interface GroupEntityRef {
+  entityId: string;
+  via: ToggleTargetVia;
+  ref: string;
+}
+
+function resolveGroupEntities(
+  hass: any,
+  registryHass: any,
+  entries: readonly GroupEntityRef[],
+  initialSkipped: readonly SkippedToggleTarget[] = [],
+): ResolvedToggleIntent {
   const byEntity = new Map<string, ResolvedToggleTarget>();
   const skippedTargets: SkippedToggleTarget[] = [];
   const skippedKeys = new Set<string>();
@@ -517,46 +499,12 @@ function resolveControls(options: ResolveToggleOptions): ResolvedToggleIntent {
     skippedKeys.add(key);
     skippedTargets.push(target);
   };
-  const addEntity = (entityId: string, via: ToggleTargetVia, ref: string): void => {
-    const result = resolveEntity(hass, registryHass, entityId, via, ref);
-    if (result.target) byEntity.set(entityId, byEntity.get(entityId) || result.target);
-    else if (result.skipped) addSkipped(result.skipped);
-  };
-
-  for (const ref of refs) {
-    if (!ref.startsWith('marker:')) {
-      if (!isControllable(ref)) {
-        addSkipped(skipped(hass, registryHass, ref, ref.includes('.') ? ref : null, 'unsupported'));
-      } else addEntity(ref, 'control-entity', ref);
-      continue;
-    }
-    const linked = markerSources.get(ref) || [];
-    if (!linked.length) {
-      const target = markerDevices.get(ref.slice('marker:'.length));
-      if (target?.bindingStatus?.kind === 'ha_disabled') {
-        const entityId = target.bindingStatus.allEntityIds[0] || null;
-        addSkipped({
-          ref,
-          entityId,
-          name: target.name || (entityId ? entityName(hass, registryHass, entityId) : null),
-          reason: 'ha-disabled',
-        });
-      } else {
-        addSkipped(skipped(hass, registryHass, ref, null, 'missing'));
-      }
-      continue;
-    }
-    const serviceEntities = [...new Set(linked.flatMap((source) => source.serviceEids))];
-    if (serviceEntities.length) {
-      for (const entityId of serviceEntities) addEntity(entityId, 'control-entity', ref);
-      continue;
-    }
-    const passive = linked.some((source) => source.passive);
-    if (passive && own && isControllable(own.entityId)) {
-      addEntity(own.entityId, 'control-marker-driver', ref);
-    } else {
-      addSkipped(skipped(hass, registryHass, ref, null, passive ? 'missing' : 'unsupported'));
-    }
+  for (const target of initialSkipped) addSkipped(target);
+  for (const entry of entries) {
+    const result = resolveEntity(hass, registryHass, entry.entityId, entry.via, entry.ref);
+    if (result.target) {
+      byEntity.set(entry.entityId, byEntity.get(entry.entityId) || result.target);
+    } else if (result.skipped) addSkipped(result.skipped);
   }
 
   const targets = [...byEntity.values()];
@@ -580,7 +528,9 @@ function resolveControls(options: ResolveToggleOptions): ResolvedToggleIntent {
       origin: 'explicit-toggle', kind: 'group', semantics: 'group-power', targets: [],
       skippedTargets: [
         ...skippedTargets,
-        ...targets.map((target) => skipped(hass, registryHass, target.entityId, target.entityId, 'unsupported')),
+        ...targets.map((target) => skipped(
+          hass, registryHass, target.entityId, target.entityId, 'unsupported',
+        )),
       ],
       noneReason: 'unsupported', nextEffect: null, command: null,
     };
@@ -600,6 +550,101 @@ function resolveControls(options: ResolveToggleOptions): ResolvedToggleIntent {
   };
 }
 
+function stableDeviceId(device: DevItem): string {
+  return String(device.marker?.id || device.id || '');
+}
+
+function resolveIncomingControllers(
+  options: ResolveToggleOptions,
+  incoming: IncomingLightControl<DevItem>,
+): ResolvedToggleIntent {
+  const registryHass = options.registryHass || options.hass;
+  return resolveGroupEntities(
+    options.hass,
+    registryHass,
+    incoming.driverEids.map((entityId) => ({
+      entityId,
+      via: 'control-marker-driver' as const,
+      ref: `marker:${incoming.markerId}`,
+    })),
+  );
+}
+
+function resolveControls(options: ResolveToggleOptions): ResolvedToggleIntent {
+  const { hass, device, devices } = options;
+  const registryHass = options.registryHass || hass;
+  const refs = persistedExternalControls(
+    device.marker?.binding, device.marker?.controls ?? device.controls, device.entities,
+  );
+  const sources = options.lightSources
+    || resolvedLightSources(hass, devices, null, options.virtualLights);
+  const markerSources = new Map<string, ResolvedLightSource<DevItem>[]>();
+  for (const source of sources) {
+    if (!source.key.startsWith('marker:')) continue;
+    const list = markerSources.get(source.key) || [];
+    list.push(source);
+    markerSources.set(source.key, list);
+  }
+  const incomingByMarker = incomingLightControls(devices);
+  const markerDevices = new Map<string, DevItem>();
+  for (const item of devices) {
+    const markerId = String(item.marker?.id || item.id || '');
+    if (markerId) markerDevices.set(markerId, item);
+  }
+  const entries: GroupEntityRef[] = [];
+  const skippedTargets: SkippedToggleTarget[] = [];
+
+  for (const ref of refs) {
+    if (!ref.startsWith('marker:')) {
+      if (!isControllable(ref)) {
+        skippedTargets.push(skipped(
+          hass, registryHass, ref, ref.includes('.') ? ref : null, 'unsupported',
+        ));
+      } else entries.push({ entityId: ref, via: 'control-entity', ref });
+      continue;
+    }
+    const linked = markerSources.get(ref) || [];
+    if (!linked.length) {
+      const target = markerDevices.get(ref.slice('marker:'.length));
+      if (target?.bindingStatus?.kind === 'ha_disabled') {
+        const entityId = target.bindingStatus.allEntityIds[0] || null;
+        skippedTargets.push({
+          ref,
+          entityId,
+          name: target.name || (entityId ? entityName(hass, registryHass, entityId) : null),
+          reason: 'ha-disabled',
+        });
+      } else {
+        skippedTargets.push(skipped(hass, registryHass, ref, null, 'missing'));
+      }
+      continue;
+    }
+    const serviceEntities = [...new Set(linked.flatMap((source) => source.serviceEids))];
+    if (serviceEntities.length) {
+      for (const entityId of serviceEntities) {
+        entries.push({ entityId, via: 'control-entity', ref });
+      }
+      continue;
+    }
+    const passive = linked.some((source) => source.passive);
+    const targetId = ref.slice('marker:'.length);
+    const controllerId = stableDeviceId(device);
+    const controller = incomingByMarker.get(targetId)?.controllers.find(
+      (candidate) => stableDeviceId(candidate.device) === controllerId,
+    );
+    if (passive && controller?.driverEids.length) {
+      for (const entityId of controller.driverEids) {
+        entries.push({ entityId, via: 'control-marker-driver', ref });
+      }
+    } else {
+      skippedTargets.push(skipped(
+        hass, registryHass, ref, null, passive ? 'missing' : 'unsupported',
+      ));
+    }
+  }
+  return resolveGroupEntities(hass, registryHass, entries, skippedTargets);
+}
+
 /** Resolve the current exact target and command for one toggle-origin marker. */
 export function resolveToggleIntent(options: ResolveToggleOptions): ResolvedToggleIntent | null {
   const { hass, device } = options;
@@ -612,6 +657,9 @@ export function resolveToggleIntent(options: ResolveToggleOptions): ResolvedTogg
   // changes the marker's own server state and never calls an HA service.
   const marker = device.marker;
   if (origin === 'explicit-toggle' && isManualVirtualLightMarker(marker)) {
+    const markerId = String(marker?.id || device.id || '');
+    const incoming = incomingLightControls(options.devices).get(markerId);
+    if (incoming) return resolveIncomingControllers(options, incoming);
     const on = virtualLightIsOn(marker, options.virtualLights);
     return {
       origin,

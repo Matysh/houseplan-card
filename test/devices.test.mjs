@@ -9,6 +9,7 @@ import {
   hasOwnStatefulLightSource, ownControllableEntities, forcedLightEntityOf,
   removeMarkerControlReferences,
   rewriteMarkerControlReferences, markerControlWouldCycle, resolveDeviceLightSettings,
+  incomingLightControls,
 } from '../test-build/devices.js';
 import { compileIconRules, iconFor } from '../test-build/rules.js';
 
@@ -1306,7 +1307,7 @@ test('issue 84: Always without an own entity is a constant passive source', () =
   assert.deepEqual(resolvedLightStats([source]), { on: 1, total: 1 });
 });
 
-test('issue 107: manual virtual state is canonical and invalidates the light cache', () => {
+test('issue 174: linked manual virtual source follows controller state, not its stored fallback', () => {
   const target = {
     id: 'dumb', area: 'bedroom', entities: [],
     marker: {
@@ -1327,13 +1328,56 @@ test('issue 107: manual virtual state is canonical and invalidates the light cac
   const first = resolvedLightSources(hass, devices, { id: 'bed', area: null }, onSnapshot);
   assert.equal(first[0].on, true);
   const second = resolvedLightSources(hass, devices, { id: 'bed', area: null }, offSnapshot);
-  assert.equal(second[0].on, false, 'manual off overrides an incoming on controller');
+  assert.equal(second[0].on, true, 'incoming controller overrides the dormant manual off fallback');
   assert.notEqual(second, first, 'operational revision participates in resolver caching');
+
+  hass.states['switch.wall'].state = 'off';
+  const driverOff = resolvedLightSources(hass, devices, { id: 'bed', area: null }, offSnapshot);
+  assert.equal(driverOff[0].on, false, 'external HA state is authoritative without a card action');
+  const manualOnDriverOff = resolvedLightSources(
+    hass, devices, { id: 'bed', area: null }, onSnapshot,
+  );
+  assert.equal(manualOnDriverOff[0].on, false, 'manual on cannot revive a linked driver-off lamp');
+
+  const unlinked = resolvedLightSources(hass, [target], { id: 'bed', area: null }, offSnapshot);
+  assert.equal(unlinked[0].on, false, 'removing the final link restores the exact manual fallback');
 
   const legacy = resolvedLightSources(hass, [{
     ...target, marker: { ...target.marker, tap_action: 'info' },
   }, controller], { id: 'bed', area: null }, offSnapshot);
-  assert.equal(legacy[0].on, true, 'leaving the exact triple restores issue #84 semantics');
+  assert.equal(legacy[0].on, false, 'leaving the exact triple keeps issue #84 controller semantics');
+});
+
+test('issue 174: one cached reverse graph owns linked state and all controller drivers', () => {
+  const target = {
+    id: 'dumb', area: 'bedroom', entities: [],
+    marker: {
+      id: 'dumb', binding: 'virtual', is_light: true, tap_action: 'toggle', room_id: 'bed',
+    },
+  };
+  const controllerA = {
+    id: 'a', area: 'hall', primary: 'switch.a', entities: ['switch.a'],
+    marker: { id: 'a', binding: 'entity:switch.a', controls: ['marker:dumb'] },
+  };
+  const controllerB = {
+    id: 'b', area: 'yard', entities: [], controls: ['light.external'],
+    marker: { id: 'b', binding: 'virtual', controls: ['light.external', 'marker:dumb'] },
+  };
+  const devices = [controllerA, controllerB, target];
+  const relation = incomingLightControls(devices).get('dumb');
+  assert.deepEqual(relation.driverEids, ['switch.a', 'light.external']);
+  assert.deepEqual(
+    relation.controllers.map((entry) => [entry.device.id, entry.driverEids]),
+    [['a', ['switch.a']], ['b', ['light.external']]],
+  );
+
+  const hass = { states: {
+    'switch.a': { state: 'off' }, 'light.external': { state: 'on' },
+  } };
+  const snapshot = { rev: 9, configRev: 3, off: new Set(['dumb']) };
+  assert.equal(resolvedLightSources(hass, devices, null, snapshot)[0].on, true);
+  hass.states['light.external'].state = 'off';
+  assert.equal(resolvedLightSources(hass, devices, null, snapshot)[0].on, false);
 });
 
 test('issue 84: passive target state is OR of controller drivers and remains target-owned', () => {

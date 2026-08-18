@@ -105,6 +105,121 @@ test('issue 107: exact manual virtual light wins over saved HA controls', () => 
   assert.equal(toggleOperation(resumed).kind, 'ha-service', 'saved controls resume outside the triple');
 });
 
+test('issue 174: linked manual lamp redirects its toggle to the real controller driver', () => {
+  const lamp = device({
+    id: 'lamp', name: 'Dumb lamp',
+    marker: { id: 'lamp', binding: 'virtual', is_light: true, tap_action: 'toggle', controls: [] },
+  });
+  const controller = device({
+    id: 'wall', name: 'Wall relay', bindingKind: 'entity', bindingRef: 'switch.wall',
+    primary: 'switch.wall', entities: ['switch.wall'],
+    marker: {
+      id: 'wall', binding: 'entity:switch.wall', tap_action: 'toggle', controls: ['marker:lamp'],
+    },
+    controls: [],
+  });
+  const devices = [controller, lamp];
+  const h = hass({ 'switch.wall': state('switch.wall', 'on') });
+  const manualOff = { rev: 5, configRev: 9, off: new Set(['lamp']) };
+
+  const on = resolveToggleIntent({ hass: h, devices, device: lamp, virtualLights: manualOff });
+  assert.equal(toggleOperation(on).kind, 'ha-service');
+  assert.deepEqual(toggleCommandEntityIds(on.command), ['switch.wall']);
+  assert.equal(on.command.service, 'turn_off');
+  assert.equal(on.targets[0].via, 'control-marker-driver');
+
+  h.states['switch.wall'].state = 'off';
+  const off = resolveToggleIntent({ hass: h, devices, device: lamp, virtualLights: manualOff });
+  assert.equal(off.command.service, 'turn_on');
+  assert.equal(sameToggleOperationTargets(on, off), true, 'direction changes but the relay does not');
+
+  const unlinked = resolveToggleIntent({ hass: h, devices: [lamp], device: lamp, virtualLights: manualOff });
+  assert.deepEqual(toggleOperation(unlinked), { kind: 'virtual-light', markerId: 'lamp' });
+  assert.equal(unlinked.targets[0].state, 'off', 'unlink restores the stored manual state');
+  assert.equal(sameToggleOperationTargets(on, unlinked), false, 'confirmation cannot cross modes');
+});
+
+test('issue 174: source unions all drivers while each controller toggles only its own group', () => {
+  const lamp = device({
+    id: 'lamp', name: 'Dumb lamp',
+    marker: { id: 'lamp', binding: 'virtual', is_light: true, tap_action: 'toggle', controls: [] },
+  });
+  const relayA = device({
+    id: 'relay-a', primary: 'switch.a', entities: ['switch.a'],
+    bindingKind: 'entity', bindingRef: 'switch.a', controls: [],
+    marker: {
+      id: 'relay-a', binding: 'entity:switch.a', tap_action: 'toggle', controls: ['marker:lamp'],
+    },
+  });
+  const relayB = device({
+    id: 'relay-b', bindingKind: 'virtual', bindingRef: 'relay-b',
+    controls: ['switch.b'],
+    marker: {
+      id: 'relay-b', binding: 'virtual', tap_action: 'toggle',
+      controls: ['switch.b', 'marker:lamp'],
+    },
+  });
+  const devices = [relayA, relayB, lamp];
+  const h = hass({
+    'switch.a': state('switch.a', 'on'),
+    'switch.b': state('switch.b', 'off'),
+  });
+
+  const source = resolveToggleIntent({ hass: h, devices, device: lamp });
+  assert.deepEqual(toggleCommandEntityIds(source.command), ['switch.a', 'switch.b']);
+  assert.equal(source.command.service, 'turn_off', 'any-on applies to the union');
+
+  const first = resolveToggleIntent({ hass: h, devices, device: relayA });
+  assert.deepEqual(toggleCommandEntityIds(first.command), ['switch.a']);
+  const second = resolveToggleIntent({ hass: h, devices, device: relayB });
+  assert.deepEqual(toggleCommandEntityIds(second.command), ['switch.b']);
+});
+
+test('issue 174: linked source keeps partial availability and never falls back to manual state', () => {
+  const lamp = device({
+    id: 'lamp', name: 'Dumb lamp',
+    marker: { id: 'lamp', binding: 'virtual', is_light: true, tap_action: 'toggle', controls: [] },
+  });
+  const partial = device({
+    id: 'partial', bindingKind: 'virtual', bindingRef: 'partial',
+    controls: ['switch.missing', 'switch.unavailable', 'switch.disabled', 'switch.ok'],
+    marker: {
+      id: 'partial', binding: 'virtual',
+      controls: [
+        'switch.missing', 'switch.unavailable', 'switch.disabled', 'switch.ok', 'marker:lamp',
+      ],
+    },
+  });
+  const h = hass({
+    'switch.unavailable': state('switch.unavailable', 'unavailable'),
+    'switch.disabled': state('switch.disabled', 'off'),
+    'switch.ok': state('switch.ok', 'off'),
+  }, {
+    'switch.disabled': { entity_id: 'switch.disabled', platform: 'test', disabled_by: 'user' },
+  });
+  const manualOff = { rev: 3, configRev: 4, off: new Set(['lamp']) };
+  const intent = resolveToggleIntent({ hass: h, devices: [partial, lamp], device: lamp, virtualLights: manualOff });
+  assert.deepEqual(toggleCommandEntityIds(intent.command), ['switch.ok']);
+  assert.equal(intent.command.service, 'turn_on');
+  assert.deepEqual(intent.skippedTargets.map((target) => [target.entityId, target.reason]), [
+    ['switch.missing', 'missing'],
+    ['switch.unavailable', 'unavailable'],
+    ['switch.disabled', 'ha-disabled'],
+  ]);
+
+  const dormant = device({
+    id: 'dormant', bindingKind: 'virtual', bindingRef: 'dormant', controls: [],
+    marker: { id: 'dormant', binding: 'virtual', controls: ['marker:lamp'] },
+  });
+  const none = resolveToggleIntent({
+    hass: h, devices: [dormant, lamp], device: lamp, virtualLights: manualOff,
+  });
+  assert.equal(none.kind, 'group');
+  assert.equal(none.command, null);
+  assert.equal(none.noneReason, 'configured-targets-missing');
+  assert.equal(toggleOperation(none), null, 'linked zero-driver state does not use virtual-light');
+});
+
 test('exact entity binding never retargets to a controllable sibling', () => {
   const h = hass({
     'sensor.room': state('sensor.room', '21'),

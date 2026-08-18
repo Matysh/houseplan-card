@@ -146,17 +146,23 @@ source even when the marker has no controllable HA entity. That last case is a
 - its position, room, colour, brightness and radius belong to the target lamp,
   not to the switch which drives it.
 
-There is one explicit manual-authority exception. An active marker with a
-`virtual` binding, `is_light: true` (Always) and `tap_action: toggle` reads its
-on/off value from the integration's revisioned operational store. Absence is
-`on`. While the triple remains active, that value overrides incoming controller
-OR for the marker source and therefore reaches every consumer of
-`resolvedLightSources()` — Glow, room fill/counts, device presentation, preview
-and both card types. Saved controls remain lossless but a tap on this exact
-marker performs the operational toggle, never an HA service call. Leaving the
-triple restores the normal controller rules and clears any stored off bit;
-hiding alone does neither. The operational revision is part of the resolver
-cache key, so an event changes the projection without an HA state tick.
+There is one explicit manual mode. An active marker with a `virtual` binding,
+`is_light: true` (Always) and `tap_action: toggle` reads its on/off value from
+the integration's revisioned operational store only while it has no valid
+incoming controller link. Absence is `on`; a tap performs the operational
+toggle, never an HA service call. Saved outgoing controls remain lossless and
+do not override that unlinked manual state.
+
+With one or more incoming links, the same exact marker enters linked mode.
+Incoming controller drivers become the sole state authority for every consumer
+of `resolvedLightSources()` — Glow, room fill/counts, device presentation,
+preview and both card types. Tapping the source sends one ordinary HA group
+operation to the deduplicated union of all incoming drivers; tapping a
+controller still operates only that controller's effective driver group. No
+operational toggle or optimistic visual flip occurs. Adding a link preserves
+the stored manual bit, and removing the final link exposes that exact value
+again. The operational revision remains part of the resolver cache key, but it
+cannot change a linked source without a driver-state change.
 
 The controller picker can therefore link a smart relay to a virtual marker for
 a dumb physical lamp. Multiple controllers use OR. A direct entity reference
