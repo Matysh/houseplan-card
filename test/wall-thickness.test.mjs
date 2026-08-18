@@ -6,7 +6,7 @@ import {
   setWallThickness, setWallThicknessForRoom, applyWallThicknessToNewRoom,
   drawWallPreviewD, linearWallBody, linearWallJoinPatches,
   DRAW_WALL_DEFAULT_CM, clampWallCm, cmToField, fieldToCm,
-  wallCmToUnits, insetContour, inwardNormal, edgeKinds, wallEdgeBodies,
+  wallCmToUnits, insetContour, outsetContour, inwardNormal, edgeKinds, wallEdgeBodies,
   wallBodyRings, wallBodiesGeometry, wallBodiesUnionPath, floorFootprintGeometry,
   innerContourForRoom,
   paperRoomShapesWithWalls, WALL_MIN_CM, WALL_MAX_CM, MITRE_LIMIT,
@@ -104,7 +104,7 @@ function cornerSplitFixture({
   walls = normalizeWallIntervals(rooms, walls, [], pitch, cellCm, GRID_PITCH);
   const after = wallBodiesGeometry(rooms, walls, [], [], pitch, cellCm, GRID_PITCH);
   assert.ok(after, `wall geometry missing for outer=${outerCm}, divider=${dividerCm}`);
-  return { original, rooms, walls, before, after };
+  return { original, rooms, walls, divider, before, after };
 }
 
 function splitThicknessTransitionFixture() {
@@ -421,6 +421,36 @@ test('insetContour: acute corner falls back to a bevel (no infinite spike)', () 
     const dist = Math.hypot(p[0], p[1]);
     // no vertex may fly farther than MITRE_LIMIT × thickness from origin-ish
     assert.ok(dist < 10 + MITRE_LIMIT * 1 + 1, `spike at ${p}`);
+  }
+});
+
+test('variable-offset contours keep a local cap at angled positive-to-zero joins', () => {
+  const poly = [[0, 0], [10, 0], [20, 0.1], [20, 10], [0, 10]];
+  const vertex = poly[1];
+  const hasPoint = (contour, point) => contour.some((candidate) => (
+    Math.hypot(candidate[0] - point[0], candidate[1] - point[1]) <= 1e-9
+  ));
+
+  for (const offsets of [[2, 0, 0, 0, 0], [0, 2, 0, 0, 0]]) {
+    const inset = insetContour(poly, offsets);
+    const outset = outsetContour(poly, offsets);
+    assert.ok(inset && outset);
+    assert.ok(hasPoint(inset, vertex), `inset lost the zero-edge vertex: ${JSON.stringify(offsets)}`);
+    assert.ok(hasPoint(outset, vertex), `outset lost the zero-edge vertex: ${JSON.stringify(offsets)}`);
+    assert.ok(
+      inset.some((point) => {
+        const distance = Math.hypot(point[0] - vertex[0], point[1] - vertex[1]);
+        return distance > 1 && distance < 3;
+      }),
+      'inset must also retain the physical edge offset point',
+    );
+    assert.ok(
+      outset.some((point) => {
+        const distance = Math.hypot(point[0] - vertex[0], point[1] - vertex[1]);
+        return distance > 1 && distance < 3;
+      }),
+      'outset must also retain the physical edge offset point',
+    );
   }
 });
 
@@ -974,6 +1004,59 @@ test('corner Split preserves the facade for thin and thick outer/divider matrice
       closeTo(geometryDifferenceArea(afterExterior, beforeExterior), 0, 1e-7);
     }
   }
+});
+
+test('near-collinear zero-depth Split divider never grows a masonry taper', () => {
+  const poly = [[100, 100], [900, 100], [900, 800], [600, 800], [600, 400], [100, 400]];
+  const dividerStrip = (segment, halfWidth) => {
+    const [x0, y0, x1, y1] = segment;
+    const dx = x1 - x0, dy = y1 - y0;
+    const length = Math.hypot(dx, dy);
+    const nx = -dy / length, ny = dx / length;
+    const at = (t, side) => [
+      x0 + dx * t + nx * halfWidth * side,
+      y0 + dy * t + ny * halfWidth * side,
+    ];
+    // Endpoint caps are physical. Inspect only the divider interior, far past
+    // the maximum 100 cm half-depth used by this matrix.
+    return [at(0.2, -1), at(0.8, -1), at(0.8, 1), at(0.2, 1)];
+  };
+
+  let reference = null;
+  for (const outerCm of [1, 15, 100]) {
+    for (const deltaY of [-5, -2.5, 2.5, 5]) {
+      const fixture = cornerSplitFixture({
+        poly,
+        path: [[600, 400], [900, 400 + deltaY]],
+        outerCm,
+        dividerCm: 0,
+      });
+      const shared = wallIntervals(
+        fixture.rooms, fixture.walls, [], pitch, cellCm, GRID_PITCH,
+      ).filter((interval) => interval.kind === 'shared');
+      assert.equal(shared.length, 2, `shared interval count at ${outerCm} cm / ${deltaY}`);
+      assert.ok(shared.every((interval) => interval.cm === 0));
+
+      const segment = fixture.divider[0];
+      const halfDepth = wallCmToUnits(outerCm, cellCm, GRID_PITCH) / 2;
+      const strip = dividerStrip(segment, Math.max(0.25, halfDepth * 0.75));
+      const overlap = geometryArea(intersection(fixture.after.geom, closedGeometry(strip)));
+      closeTo(overlap, 0, 1e-7);
+
+      if (outerCm === 15 && deltaY === 2.5) reference = fixture;
+    }
+  }
+
+  assert.ok(reference);
+  const permutedRooms = reference.rooms
+    .map((room, index) => ({ id: `zero-divider-${index}`, poly: [...room.poly].reverse() }))
+    .reverse();
+  const permuted = wallBodiesGeometry(
+    permutedRooms, reference.walls, [], [], pitch, cellCm, GRID_PITCH,
+  );
+  assert.ok(permuted);
+  closeTo(geometryDifferenceArea(reference.after.geom, permuted.geom), 0, 1e-7);
+  closeTo(geometryDifferenceArea(permuted.geom, reference.after.geom), 0, 1e-7);
 });
 
 test('corner Split keeps unequal exterior arms and is order/id/winding independent', () => {

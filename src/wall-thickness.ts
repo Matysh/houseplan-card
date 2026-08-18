@@ -801,6 +801,21 @@ export function insetContour(poly: number[][], offsets: number[]): number[][] | 
       continue;
     }
 
+    // #172: a physical edge meeting a zero-depth divider owns a square cap,
+    // not a mitre into the divider.  Keep both sides of that cap explicitly:
+    // the offset point of the physical edge and the untouched vertex of the
+    // zero edge.  Letting the generic mitre/bevel path handle a near-collinear
+    // join drops the untouched vertex and stretches the cap along the complete
+    // divider as a triangular wall body.
+    if ((oA > 0) !== (oB > 0)) {
+      const v = poly[i];
+      const pa = oA > 0 ? [v[0] + nAx * oA, v[1] + nAy * oA] : [v[0], v[1]];
+      const pb = oB > 0 ? [v[0] + nBx * oB, v[1] + nBy * oB] : [v[0], v[1]];
+      out.push(pa);
+      if (Math.hypot(pb[0] - pa[0], pb[1] - pa[1]) > 1e-9) out.push(pb);
+      continue;
+    }
+
     // AUD-159B6-01: atomic intervals put COLLINEAR neighbours in one outline.
     // Two parallel offset lines never intersect, so the mitre branch below would
     // fall through to a bevel that skips the zero side and slants the wall face.
@@ -1948,6 +1963,16 @@ export function outsetContour(poly: number[][], offsets: number[]): number[][] |
     const pB = [b0[0] - nBx * oB, b0[1] - nBy * oB];
     if (!(oA > 0) && !(oB > 0)) {
       out.push([poly[i][0], poly[i][1]]);
+      continue;
+    }
+    // Mirror the inset contract above: one physical edge plus one zero-depth
+    // edge is a local cap with both endpoints present in traversal order.
+    if ((oA > 0) !== (oB > 0)) {
+      const v = poly[i];
+      const pa = oA > 0 ? [v[0] - nAx * oA, v[1] - nAy * oA] : [v[0], v[1]];
+      const pb = oB > 0 ? [v[0] - nBx * oB, v[1] - nBy * oB] : [v[0], v[1]];
+      out.push(pa);
+      if (Math.hypot(pb[0] - pa[0], pb[1] - pa[1]) > 1e-9) out.push(pb);
       continue;
     }
     if (collinearJoint(uA, uB)) {

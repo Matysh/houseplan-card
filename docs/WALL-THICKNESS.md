@@ -74,6 +74,14 @@ thinner than 3 CSS px on screen, the shared full/static render policy suppresses
 only the hatch so it does not collapse into noise; the solid fill remains. Mitre
 joins; bevel when the mitre spike exceeds `MITRE_LIMIT × thickness`.
 
+A variable-offset join where exactly one adjacent edge has zero depth is a
+local flat cap, not a mitre. Both `inset` and `outset` retain the physical
+edge's offset point followed by the untouched zero-edge vertex (or the reverse
+order when entering the physical edge). This keeps a zero-depth Split free of
+masonry even when it meets a thick wall at a slightly non-collinear angle;
+the cap cannot stretch into a taper along the divider. Joins between two
+positive depths keep the bounded mitre/bevel contract above.
+
 Independent draft/partition segments keep flat raw quads for editor identity,
 but exact endpoint↔endpoint and endpoint↔line nodes add computed join patches
 before the presentation union. Each incident ray keeps its own half-depth;
