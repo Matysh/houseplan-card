@@ -81,7 +81,8 @@
     "wallUnion": 1,
     "openingTunnel": 1,
     "openingWallIndex": 1,
-    "planSnapGeometry": 1
+    "planSnapGeometry": 1,
+    "wallFaceGraph": 4
   },
   "cacheGrowth": {
     "cleanFloor": 0,
@@ -89,7 +90,8 @@
     "wallUnion": 0,
     "openingTunnel": 0,
     "openingWallIndex": 0,
-    "planSnapGeometry": 0
+    "planSnapGeometry": 0,
+    "wallFaceGraph": 0
   },
   "renderedDevices": 200
 }

@@ -135,9 +135,14 @@ import {
   physicalBodies, physicalBodyParts,
 } from './physical-geometry';
 import {
-  buildPlanSnapGeometry, findSharedRoomSnapSegment, resolvePlanSnap,
+  buildPlanSnapGeometry, resolvePlanSnap,
   type PlanSnapCandidate, type PlanSnapGeometry, type PlanSnapSegment,
 } from './plan-snap-overlay';
+import {
+  atomizeWallSegments, buildWallFaceGraph, findNewWallFacesInGraphs,
+  normalizeUnifiedWallTool, wallChainSegments,
+  type WallFaceGraph, type WallGraphFace, type WallGraphSourceSegment,
+} from './wall-face-graph';
 import {
   LightSegment, polygonSegments, splitAtIntersections, visibilityPolygon,
 } from './light-visibility';
@@ -499,6 +504,25 @@ type RoomFillFrame = {
   byRoom: Map<RoomCfg, ResolvedRoomFill | null>;
   byId: Map<string, ResolvedRoomFill | null>;
 };
+type WallFaceCandidate = WallGraphFace & {
+  split?: { roomId: string; mainPoly: number[][]; newPoly: number[][] };
+  consumeAllActive?: boolean;
+};
+type WallFaceDecision = {
+  candidate: WallFaceCandidate;
+  create: boolean;
+  name?: string;
+  area?: string | null;
+  settings?: RoomCfg['settings'];
+};
+type WallFaceBatch = {
+  candidates: WallFaceCandidate[];
+  index: number;
+  decisions: WallFaceDecision[];
+  activePath: number[][];
+  activeCms: number[];
+  activeDraftId: string | null;
+};
 /**
  * The floor a source can see, and nothing else. One region means one clip:
  * a beam through a doorway, the room it lands in and the shadow of a column
@@ -512,6 +536,9 @@ const MARKUP_TOOLS = new Set<MarkupTool>([
 /** Warm viewport is page-memory, so it may contain a tool name from the old bundle. */
 const normalizeMarkupTool = (value: unknown): MarkupTool => {
   if (value === 'openwall' || value === 'closewall') return 'boundary';
+  // #173 replaces the public one-shot Partition tool with one Walls chain.
+  // A warm page may still carry the old session token; reading it is inert.
+  value = normalizeUnifiedWallTool(value);
   // Opening placement is valid only together with its explicit session-only
   // type preset. Warm viewport state does not persist that preset.
   if (value === 'opening') return 'draw';
@@ -529,6 +556,7 @@ const MAX_ROOM_DRAFTS = 200;
 const MAX_DRAFT_POINTS = 500;
 const MAX_DRAFT_SEGMENTS = 2000;
 const MAX_PARTITIONS = 2000;
+const MAX_ROOMS = 400;
 const MAX_WALL_COLUMNS = 500;
 /** Everything whose topology or wall association changes in the plan editor. */
 interface SpaceGeometryState {
@@ -1077,6 +1105,8 @@ class HouseplanCard extends LitElement {
   /** Change the space with the usual sideways transition. */
   private _slideTo(id: string, dir: 'left' | 'right'): void {
     if (id === this._space) return;
+    if (this._wallFaceBatch) this._roomDialogCancel();
+    if (this._mode === 'plan' && this._tool === 'draw' && !this._finishWallChain()) return;
     this._cancelModeTransition(true);
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
     if (this._activeDraftId) this._resumeDraftBySpace[this._space] = this._activeDraftId;
@@ -1290,6 +1320,10 @@ class HouseplanCard extends LitElement {
   private _splitSel: { roomId: string; pts: number[][] } | null = null; // room being cut + the cut path so far
   // a split is applied only when the new room's dialog is confirmed — cancel leaves the room intact
   private _pendingSplit: { roomId: string; mainPoly: number[][]; newPoly: number[][] } | null = null;
+  /** Pending #173 face decisions. Config remains untouched until the last one. */
+  private _wallFaceBatch: WallFaceBatch | null = null;
+  /** Four exact structural entries; never keyed by HA state, hover or theme. */
+  private _wallFaceGraphCache: Array<{ key: string; value: WallFaceGraph }> = [];
   private _areaSel = '';
   private _nameSel = '';
   private _roomDialog = false;
@@ -1722,6 +1756,8 @@ class HouseplanCard extends LitElement {
   private _onHashChange = (): void => {
     const id = this._hashSpace();
     if (id && this._model.find((sp) => sp.id === id) && id !== this._space) {
+      if (this._wallFaceBatch) this._roomDialogCancel();
+      if (this._mode === 'plan' && this._tool === 'draw' && !this._finishWallChain()) return;
       if (this._activeDraftId) this._resumeDraftBySpace[this._space] = this._activeDraftId;
       this._space = id;
       this._selId = null;
@@ -2138,10 +2174,18 @@ class HouseplanCard extends LitElement {
         this._rszCancelDrag();
         return;
       }
-      // Draft points are not committed commands. Walk them back before the
-      // shared stack, just like an unfinished word before document Undo.
+      if (this._wallFaceBatch) {
+        // The queue has not committed anything. Restore its terminal draft,
+        // then make Ctrl/Cmd+Z visibly remove that last accepted point.
+        this._roomDialogCancel();
+        if (this._activeDraftId && this._path.length > 1) this._undoActiveDraftPoint();
+        else this._undoPoint();
+        return;
+      }
+      // A crash-safe segment is a real geometry command, but Undo keeps the
+      // surviving draft active so the visible contract remains “one point back”.
       if ((this._tool === 'draw' || this._tool === 'partition') && this._path.length) {
-        if (this._activeDraftId && this._path.length > 1) this._undoGeometry();
+        if (this._activeDraftId && this._path.length > 1) this._undoActiveDraftPoint();
         else this._undoPoint();
         return;
       }
@@ -2261,6 +2305,38 @@ class HouseplanCard extends LitElement {
       return;
     }
     this._path = this._path.slice(0, -1);
+  }
+
+  /** Undo the persisted segment command while keeping its surviving draft active. */
+  private _undoActiveDraftPoint(): void {
+    const activeId = this._activeDraftId;
+    const start = this._path[0] ? [...this._path[0]] : null;
+    const command = this._geometryHistory.undo();
+    if (!command) {
+      this._undoPoint();
+      return;
+    }
+    if (!this._applyGeometryState(command.before)) {
+      this._geometryHistory.clear();
+      return;
+    }
+    const draft = activeId
+      ? this._spaceModel().room_drafts.find((item) => item.id === activeId)
+      : null;
+    if (draft) {
+      this._activeDraftId = draft.id;
+      this._path = draft.points.map((point) => [...point]);
+      this._draftSegmentCms = draft.segments.map((segment) => segment.cm);
+      this._resumeDraftBySpace[this._space] = draft.id;
+    } else {
+      this._activeDraftId = null;
+      this._path = start ? [start] : [];
+      this._draftSegmentCms = [];
+      if (activeId && this._resumeDraftBySpace[this._space] === activeId)
+        delete this._resumeDraftBySpace[this._space];
+    }
+    this._clearPlanSnapHover();
+    this._showToast(this._t('history.undone', { name: command.name }));
   }
 
   public static getConfigElement() {
@@ -2624,7 +2700,8 @@ class HouseplanCard extends LitElement {
         humSrc: this._roomHumSrc, srcOpen: this._roomSrcOpen, srcFilter: this._roomSrcFilter,
         nameScale: this._roomNameScale, labelScale: this._roomLabelScale,
         areaSel: this._areaSel, nameSel: this._nameSel,
-        pendingSplit: this._pendingSplit, path: this._path,
+        pendingSplit: this._pendingSplit, wallFaceBatch: this._wallFaceBatch,
+        path: this._path,
       });
     }
     if (this._spaceDialog) return this._spaceDialog.busy ? null : at('space', this._spaceDialog);
@@ -2696,7 +2773,12 @@ class HouseplanCard extends LitElement {
         this._roomHumSrc = r.humSrc; this._roomSrcOpen = r.srcOpen; this._roomSrcFilter = r.srcFilter;
         this._roomNameScale = r.nameScale; this._roomLabelScale = r.labelScale;
         this._areaSel = r.areaSel; this._nameSel = r.nameSel;
-        this._pendingSplit = r.pendingSplit; this._path = r.path;
+        this._pendingSplit = r.pendingSplit; this._wallFaceBatch = r.wallFaceBatch || null;
+        this._path = r.path;
+        if (this._wallFaceBatch) {
+          this._activeDraftId = this._wallFaceBatch.activeDraftId;
+          this._draftSegmentCms = [...this._wallFaceBatch.activeCms];
+        }
         this._roomDialog = true;
         break;
       }
@@ -5707,6 +5789,8 @@ class HouseplanCard extends LitElement {
       this._showToast(this._t('toast.markup_needs_server'));
       return;
     }
+    if (this._wallFaceBatch) this._roomDialogCancel();
+    if (this._mode === 'plan' && this._tool === 'draw' && !this._finishWallChain()) return;
     const previousMode = this._mode;
     const previousProjection = this._effectiveProjection();
     const capturedVisual = this._currentModeVisual(previousMode);
@@ -5914,6 +5998,69 @@ class HouseplanCard extends LitElement {
     return (sp?.room_drafts || []).reduce(
       (sum: number, d: any) => sum + (Array.isArray(d.segments) ? d.segments.length : 0), 0,
     );
+  }
+
+  /**
+   * Finish the active Walls chain because the user changed tool/mode/space.
+   * A saved draft is crash safety only; once explicitly finished, its segments
+   * become ordinary selectable partitions and can never auto-resume.
+   */
+  private _finishWallChain(): boolean {
+    if (this._tool !== 'draw' || this._wallFaceBatch || this._roomDialog) return true;
+    const sp = this._curSpaceCfg as any;
+    if (!sp || this._path.length < 2) {
+      this._path = [];
+      this._activeDraftId = null;
+      this._draftSegmentCms = [];
+      this._closingWallCm = null;
+      this._clearPlanSnapHover();
+      return true;
+    }
+    const segments = wallChainSegments(
+      this._path, this._draftSegmentCms, DRAW_WALL_DEFAULT_CM,
+    );
+    const segmentCount = segments.length;
+    if ((sp.partitions || []).length + segmentCount > MAX_PARTITIONS) {
+      this._showToast(this._t('toast.physical_limit'));
+      return false;
+    }
+    const before = this._geometrySnapshot();
+    sp.partitions ||= [];
+    const seed = Date.now().toString(36);
+    for (let i = 0; i < segmentCount; i++) {
+      const segment = segments[i];
+      sp.partitions.push({
+        id: `partition-${seed}-${i}`,
+        a: [segment.a[0] / NORM_W, segment.a[1] / NORM_W],
+        b: [segment.b[0] / NORM_W, segment.b[1] / NORM_W],
+        cm: segment.cm,
+      });
+    }
+    if (this._activeDraftId && Array.isArray(sp.room_drafts)) {
+      sp.room_drafts = sp.room_drafts.filter((draft: any) => draft.id !== this._activeDraftId);
+      if (!sp.room_drafts.length) delete sp.room_drafts;
+    }
+    this._recordGeometry(this._t('history.wall_chain_finish'), before);
+    this._saveConfig();
+    delete this._resumeDraftBySpace[this._space];
+    this._path = [];
+    this._activeDraftId = null;
+    this._draftSegmentCms = [];
+    this._closingWallCm = null;
+    this._clearPlanSnapHover();
+    return true;
+  }
+
+  /** One transition gate for Plan toolbar tools. */
+  private _activateMarkupTool(tool: MarkupTool): void {
+    if (tool === this._tool) return;
+    if (this._wallFaceBatch) this._roomDialogCancel();
+    if (this._tool === 'draw' && !this._finishWallChain()) return;
+    else this._cancelPath();
+    this._tool = tool;
+    if (tool === 'draw') this._resumeLastDraft();
+    if (tool === 'resize') this._rszSel = null;
+    if (tool === 'boundary' || tool === 'wallthick') this._wallDialog = null;
   }
 
   private _limitReached(kind: 'draft' | 'partition' | 'column'): boolean {
@@ -6211,6 +6358,7 @@ class HouseplanCard extends LitElement {
     this._mergeDialog = null;
     this._splitSel = null;
     this._pendingSplit = null;
+    this._wallFaceBatch = null;
     this._openWallAnchor = null;
     this._boundaryRestoreGuard = null;
     this._wallDialog = null;
@@ -6420,48 +6568,6 @@ class HouseplanCard extends LitElement {
     return false;
   }
 
-  /** Validate one prospective room ring without mutating the live draft. */
-  private _validateRoomContour(
-    path: number[][], showMinimumError = false,
-  ): { closingCm: number } | null {
-    // Three placed vertices mean two existing edges; the closing edge becomes
-    // the third one. Anything shorter cannot enclose a room.
-    if (path.length < 3) {
-      if (showMinimumError) this._showToast(this._t('toast.contour_min_edges'));
-      return null;
-    }
-    const closingCm = this._drawWallCm;
-    if (closingCm == null) { this._showPhysicalRange(100); return null; }
-    if (this._contourSelfIntersects(path) || polygonArea(path) <= 1e-6) {
-      this._showToast(this._t('toast.contour_cannot_close'));
-      return null; // keep the draft editable
-    }
-    // A contour can enclose an existing room without any vertex inside it.
-    const clash = this._overlapRoom(path);
-    if (clash) {
-      this._showToast(this._t('toast.room_overlap', { name: clash.name || '' }));
-      return null;
-    }
-    return { closingCm };
-  }
-
-  private _openRoomContourDialog(path: number[][], closingCm: number): void {
-    this._path = [...path, [...path[0]]];
-    this._closingWallCm = closingCm;
-    this._clearPlanSnapHover();
-    this._nameSel = '';
-    this._areaSel = '';
-    this._resetRoomDialogFields();
-    this._roomDialog = true;
-  }
-
-  /** Validate and close the draft without using the closing click as a vertex. */
-  private _closeRoomContour(showMinimumError = false): void {
-    const valid = this._validateRoomContour(this._path, showMinimumError);
-    if (!valid) return;
-    this._openRoomContourDialog(this._path, valid.closingCm);
-  }
-
   /** The same append limits guard both an ordinary point and an auto-close terminal point. */
   private _canAppendRoomDraftPoint(): boolean {
     if (this._drawWallCm == null) { this._showPhysicalRange(100); return false; }
@@ -6472,32 +6578,13 @@ class HouseplanCard extends LitElement {
     const spCfg = this._curSpaceCfg as any;
     const newDraft = !this._activeDraftId;
     if ((newDraft && (spCfg?.room_drafts || []).length >= MAX_ROOM_DRAFTS)
-        || this._draftSegmentCount(spCfg) >= MAX_DRAFT_SEGMENTS) {
+        || this._draftSegmentCount(spCfg) >= MAX_DRAFT_SEGMENTS
+        // Every accepted segment must be finishable later without trapping
+        // the user at the partition limit.
+        || (spCfg?.partitions || []).length + this._path.length > MAX_PARTITIONS) {
       this._showToast(this._t('toast.physical_limit'));
       return false;
     }
-    return true;
-  }
-
-  /** Consume a qualifying click whether it closes successfully or reports a validation error. */
-  private _tryAutoCloseRoomContour(pt: number[]): boolean {
-    // One existing point plus B is only a line. Preserve the ordinary second
-    // click, symmetrically with the existing first-point closure gate.
-    if (this._path.length < 2) return false;
-    const shared = findSharedRoomSnapSegment(
-      this._planSnapGeometrySnapshot().value,
-      this._path[0],
-      pt,
-      this._gridPitch * 0.0002,
-    );
-    if (!shared) return false;
-    if (!this._canAppendRoomDraftPoint()) return true;
-    const prospective = [...this._path, pt];
-    const valid = this._validateRoomContour(prospective);
-    if (!valid) return true;
-    this._path = prospective;
-    this._persistActiveDraftSegment();
-    this._openRoomContourDialog(this._path, valid.closingCm);
     return true;
   }
 
@@ -6561,15 +6648,15 @@ class HouseplanCard extends LitElement {
       this._columnClick(raw);
       return;
     }
-    // draw: clicks on grid points build the outline. Nothing is written to the config
-    // until the contour closes — an abandoned outline leaves no lines behind.
-    const pt = this._resolvePlanDrawPoint(raw, ev.shiftKey).point;
-    if (ev.ctrlKey || ev.metaKey) {
+    // Walls: every completed segment is crash-safe in room_drafts until an
+    // explicit finish converts the chain or a confirmed face batch consumes it.
+    let pt = this._resolvePlanDrawPoint(raw, ev.shiftKey).point;
+    if ((ev.ctrlKey || ev.metaKey) && this._path.length >= 3) {
+      // Preserve the established shortcut, but commit its closing wall through
+      // the same graph/draft path as an ordinary click on the first node.
       ev.preventDefault();
-      this._closeRoomContour(true);
-      return;
+      pt = [...this._path[0]];
     }
-    const closing = this._path.length >= 3 && this._samePt(pt, this._path[0]);
     // Island rooms (v1.34.0): drawing INSIDE an existing room is legal — the
     // contour may become a nested room (a column, an inner room). Partial
     // overlaps are still rejected, but only at closing time, when the whole
@@ -6599,19 +6686,16 @@ class HouseplanCard extends LitElement {
     // A saved outline may be continued into another saved outline, but only
     // endpoint-to-endpoint. The two records become one atomic history step;
     // mid-segment branching remains deliberately unsupported.
-    if (closing) {
-      this._closeRoomContour();
-      return;
-    }
-    if (this._tryAutoCloseRoomContour(pt)) return;
     const join = this._draftEndAt(pt, this._activeDraftId || undefined);
     if (join) {
       this._mergeDraftEndpoint(join);
       return;
     }
     if (!this._canAppendRoomDraftPoint()) return;
+    const beforePath = this._path.map((point) => [...point]);
     this._path = [...this._path, pt];
     this._persistActiveDraftSegment();
+    this._offerWallFaces(beforePath);
   }
 
   private _draftSegmentCms: number[] = [];
@@ -6638,6 +6722,10 @@ class HouseplanCard extends LitElement {
   ): void {
     const sp = this._curSpaceCfg as any;
     if (!sp || !this._path.length) return;
+    const beforePath = this._path.map((point) => [...point]);
+    // Capture topology before the records are merged: the other draft is a
+    // static pre-existing source, not geometry introduced by this click.
+    const beforeGraphSources = this._wallGraphSources(beforePath);
     const drafts = Array.isArray(sp.room_drafts) ? sp.room_drafts : [];
     const activeRaw = this._activeDraftId
       ? drafts.find((d: any) => d.id === this._activeDraftId) : null;
@@ -6671,8 +6759,8 @@ class HouseplanCard extends LitElement {
     ];
     const closed = mergedPoints.length >= 4
       && this._samePt(mergedPoints[0], mergedPoints[mergedPoints.length - 1]);
-    const persistedPoints = closed ? mergedPoints.slice(0, -1) : mergedPoints;
-    const persistedSegments = closed ? mergedSegments.slice(0, -1) : mergedSegments;
+    const persistedPoints = mergedPoints;
+    const persistedSegments = mergedSegments;
     if (persistedPoints.length > MAX_DRAFT_POINTS) {
       this._showToast(this._t('toast.physical_limit'));
       return;
@@ -6683,11 +6771,12 @@ class HouseplanCard extends LitElement {
       return;
     }
     if (closed) {
-      if (this._contourSelfIntersects(persistedPoints) || polygonArea(persistedPoints) <= 1e-6) {
+      const ring = persistedPoints.slice(0, -1);
+      if (this._contourSelfIntersects(ring) || polygonArea(ring) <= 1e-6) {
         this._showToast(this._t('toast.contour_cannot_close'));
         return;
       }
-      const clash = this._overlapRoom(persistedPoints);
+      const clash = this._overlapRoom(ring);
       if (clash) {
         this._showToast(this._t('toast.room_overlap', { name: clash.name || '' }));
         return;
@@ -6713,15 +6802,8 @@ class HouseplanCard extends LitElement {
     this._recordGeometry(this._t('history.draft_merge'), before);
     this._saveConfig();
 
-    if (closed) {
-      this._closingWallCm = Number(mergedSegments[mergedSegments.length - 1]?.cm)
-        || DRAW_WALL_DEFAULT_CM;
-      this._path = [...persistedPoints, [...persistedPoints[0]]];
-      this._clearPlanSnapHover();
-      this._nameSel = '';
-      this._areaSel = '';
-      this._resetRoomDialogFields();
-      this._roomDialog = true;
+    if (connectorCm != null) {
+      this._offerWallFaces(beforePath, beforePath.length - 1, beforeGraphSources);
     }
   }
 
@@ -6749,6 +6831,113 @@ class HouseplanCard extends LitElement {
     else sp.room_drafts.push(saved);
     this._recordGeometry(this._t('history.draft_segment'), before);
     this._saveConfig();
+  }
+
+  private _activeWallSourceKey(index: number): string {
+    return `active:${this._activeDraftId || 'session'}:${index}`;
+  }
+
+  /** Canonical solid axes plus one immutable projection of the active chain. */
+  private _wallGraphSources(path: readonly (readonly number[])[]): WallGraphSourceSegment[] {
+    const staticGeometry = this._planSnapGeometrySnapshot().value;
+    const sources: WallGraphSourceSegment[] = staticGeometry.segments.map((segment) => ({
+      a: segment.a, b: segment.b, key: `static:${segment.key}`,
+    }));
+    for (let i = 0; i + 1 < path.length; i++) {
+      sources.push({ a: path[i], b: path[i + 1], key: this._activeWallSourceKey(i) });
+    }
+    return sources;
+  }
+
+  private _wallFaceGraph(
+    sources: readonly WallGraphSourceSegment[], epsilon: number,
+  ): WallFaceGraph {
+    // Exact JSON identity avoids stale topology. Source keys already include
+    // opening cuts/provenance; space and epsilon complete the structural key.
+    const key = `${this._space}|${epsilon}|${JSON.stringify(sources)}`;
+    const cachedIndex = this._wallFaceGraphCache.findIndex((entry) => entry.key === key);
+    if (cachedIndex >= 0) {
+      const [cached] = this._wallFaceGraphCache.splice(cachedIndex, 1);
+      this._wallFaceGraphCache.push(cached);
+      return cached.value;
+    }
+    const value = buildWallFaceGraph(sources, epsilon);
+    this._wallFaceGraphCache.push({ key, value });
+    if (this._wallFaceGraphCache.length > 4) this._wallFaceGraphCache.shift();
+    return value;
+  }
+
+  /** Detect click-induced faces and open a mutation-free decision queue. */
+  private _offerWallFaces(
+    beforePath: number[][],
+    addedSegmentIndex = this._path.length - 2,
+    beforeGraphSources?: WallGraphSourceSegment[],
+  ): void {
+    if (this._path.length < 2 || this._wallFaceBatch || this._roomDialog) return;
+    const addedSourceKey = this._activeWallSourceKey(addedSegmentIndex);
+    const epsilon = this._gridPitch * 0.0002;
+    let faces: WallGraphFace[];
+    try {
+      const before = beforeGraphSources || this._wallGraphSources(beforePath);
+      const after = this._wallGraphSources(this._path);
+      faces = findNewWallFacesInGraphs(
+        this._wallFaceGraph(before, epsilon), this._wallFaceGraph(after, epsilon),
+        addedSourceKey,
+      );
+    } catch {
+      // Topology is advisory. The just-persisted draft remains the source of
+      // truth and drawing can continue when malformed legacy geometry exists.
+      return;
+    }
+    if (!faces.length) return;
+
+    // A clean wall-to-wall cut is one product decision about the smaller part,
+    // even though the planar delta contains both resulting faces.
+    for (const room of this._spaceModel().rooms) {
+      const poly = roomPoly(room);
+      if (!room.id || !poly) continue;
+      const parts = splitRoomPath(poly, this._path, this._gridPitch * 0.02);
+      if (!parts) continue;
+      const [p1, p2] = parts;
+      const main = polygonArea(p1) >= polygonArea(p2) ? p1 : p2;
+      const fresh = main === p1 ? p2 : p1;
+      const matched = [...faces].sort((left, right) =>
+        Math.abs(left.area - polygonArea(fresh)) - Math.abs(right.area - polygonArea(fresh))
+        || left.key.localeCompare(right.key))[0];
+      if (!matched) return;
+      this._beginWallFaceBatch([{
+        ...matched,
+        ring: fresh.map((point) => [point[0], point[1]] as [number, number]),
+        split: { roomId: room.id, mainPoly: main, newPoly: fresh },
+        consumeAllActive: true,
+      }]);
+      return;
+    }
+
+    const eligible = faces.filter((face) => {
+      if (face.ring.length < 3 || this._contourSelfIntersects(face.ring)) return false;
+      // roomsOverlap rejects exact duplicates and partial overlap, while full
+      // nesting in either direction deliberately remains eligible.
+      return !this._overlapRoom(face.ring);
+    });
+    if (eligible.length) this._beginWallFaceBatch(eligible);
+  }
+
+  private _beginWallFaceBatch(candidates: WallFaceCandidate[]): void {
+    this._wallFaceBatch = {
+      candidates: [...candidates].sort((left, right) =>
+        left.area - right.area || left.key.localeCompare(right.key)),
+      index: 0,
+      decisions: [],
+      activePath: this._path.map((point) => [...point]),
+      activeCms: [...this._draftSegmentCms],
+      activeDraftId: this._activeDraftId,
+    };
+    this._clearPlanSnapHover();
+    this._nameSel = '';
+    this._areaSel = '';
+    this._resetRoomDialogFields();
+    this._roomDialog = true;
   }
 
   private _partitionClick(raw: number[], lock45: boolean): void {
@@ -10785,11 +10974,11 @@ class HouseplanCard extends LitElement {
   }
 
   private _activateOpeningPlacement(type: OpeningPlacementType): void {
-    this._cancelPath();
+    this._activateMarkupTool('opening');
+    if (this._tool !== 'opening') return;
     this._openingPreset = openingPlacementPreset(type, ++this._openingPresetRevision);
     this._openingHoverCandidate = null;
     this._cursorPt = null;
-    this._tool = 'opening';
   }
 
   private _clearOpeningPlacement(clearPreset: boolean): void {
@@ -11175,7 +11364,12 @@ class HouseplanCard extends LitElement {
   }
 
   private get _contourClosed(): boolean {
-    return this._path.length >= 4 && this._samePt(this._path[0], this._path[this._path.length - 1]);
+    // Legacy/split dialog closure appends a render-only edge and records its
+    // thickness separately. #173 graph closure persists the terminal segment
+    // in the draft, so it must stay editable after Cancel.
+    return this._path.length >= 4
+      && this._samePt(this._path[0], this._path[this._path.length - 1])
+      && (this._closingWallCm != null || !this._activeDraftId);
   }
 
   private _markupMove(ev: MouseEvent): void {
@@ -11241,7 +11435,266 @@ class HouseplanCard extends LitElement {
    *  An area supplies the fallback name; a room without one needs a name. */
   private _saveRoom(): void {
     if (!this._areaSel && !this._nameSel.trim()) return;
+    if (this._wallFaceBatch) {
+      this._decideWallFace(true);
+      return;
+    }
     this._commitRoom();
+  }
+
+  private _decideWallFace(create: boolean): void {
+    const batch = this._wallFaceBatch;
+    if (!batch) return;
+    const candidate = batch.candidates[batch.index];
+    if (!candidate) return;
+    const decision: WallFaceDecision = create ? {
+      candidate,
+      create: true,
+      name: this._nameSel.trim(),
+      area: this._areaSel || null,
+      settings: this._roomSettingsFromDialog()
+        ? JSON.parse(JSON.stringify(this._roomSettingsFromDialog())) : null,
+    } : { candidate, create: false };
+    const decisions = [...batch.decisions, decision];
+    const nextIndex = batch.index + 1;
+    if (nextIndex < batch.candidates.length) {
+      this._wallFaceBatch = { ...batch, decisions, index: nextIndex };
+      this._nameSel = '';
+      this._areaSel = '';
+      this._resetRoomDialogFields();
+      this.requestUpdate();
+      return;
+    }
+    this._wallFaceBatch = { ...batch, decisions };
+    this._applyWallFaceBatch();
+  }
+
+  private _wallSourceCmAt(
+    point: number[], activePath: number[][], activeCms: number[],
+  ): number {
+    const validCm = (value: unknown): number | null =>
+      typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null;
+    const epsilon = this._gridPitch * 0.02;
+    const model = this._spaceModel();
+    // Already-saved independent masonry is authoritative when the new chain
+    // traces it. Room-owned walls are preserved by the canonical wall helpers.
+    for (const segment of this._planSnapGeometrySnapshot().value.segments) {
+      if (segment.sourceKind === 'room'
+          || distToSegment(point, [segment.a[0], segment.a[1], segment.b[0], segment.b[1]]) > epsilon) continue;
+      if (segment.sourceKind === 'partition') {
+        return validCm(model.partitions.find((item) => item.id === segment.sourceId)?.cm)
+          ?? DRAW_WALL_DEFAULT_CM;
+      }
+      const separator = segment.sourceId.lastIndexOf(':');
+      const draftId = separator >= 0 ? segment.sourceId.slice(0, separator) : segment.sourceId;
+      const index = separator >= 0 ? Number(segment.sourceId.slice(separator + 1)) : -1;
+      return validCm(model.room_drafts.find((item) => item.id === draftId)?.segments[index]?.cm)
+        ?? DRAW_WALL_DEFAULT_CM;
+    }
+    for (let i = 0; i + 1 < activePath.length; i++) {
+      const a = activePath[i], b = activePath[i + 1];
+      if (distToSegment(point, [a[0], a[1], b[0], b[1]]) <= epsilon) {
+        return validCm(activeCms[i]) ?? DRAW_WALL_DEFAULT_CM;
+      }
+    }
+    return DRAW_WALL_DEFAULT_CM;
+  }
+
+  /** Revalidate and apply every queued answer as one geometry transaction. */
+  private _applyWallFaceBatch(): void {
+    const batch = this._wallFaceBatch;
+    const sp = this._curSpaceCfg as any;
+    if (!batch || !sp) return;
+    const abort = (message: string, vars?: Record<string, string | number>): void => {
+      this._showToast(this._t(message as any, vars));
+      this._roomDialogCancel();
+    };
+    const accepted = batch.decisions.filter((decision) => decision.create);
+    const acceptedRings = accepted.map((decision) => decision.candidate.ring);
+    const existingRooms = this._spaceModel().rooms;
+    for (let i = 0; i < acceptedRings.length; i++) {
+      if (this._contourSelfIntersects(acceptedRings[i]) || polygonArea(acceptedRings[i]) <= 1e-6) {
+        abort('toast.contour_cannot_close');
+        return;
+      }
+      for (let j = i + 1; j < acceptedRings.length; j++) {
+        if (roomsOverlap(acceptedRings[i], acceptedRings[j])) {
+          abort('toast.contour_cannot_close');
+          return;
+        }
+      }
+      const ownSplit = accepted[i].candidate.split?.roomId;
+      const clash = existingRooms.find((room) => room.id !== ownSplit
+        && !!roomPoly(room) && roomsOverlap(acceptedRings[i], roomPoly(room)!));
+      if (clash) {
+        abort('toast.room_overlap', { name: clash.name || '' });
+        return;
+      }
+    }
+    if ((sp.rooms || []).length + accepted.length > MAX_ROOMS) {
+      abort('toast.physical_limit');
+      return;
+    }
+    if (accepted.some((decision) => decision.candidate.split
+        && !sp.rooms.some((room: any) => room.id === decision.candidate.split!.roomId))) {
+      abort('toast.contour_cannot_close');
+      return;
+    }
+
+    const epsilon = this._gridPitch * 0.0002;
+    const activeSourceCms = new Map<string, number>();
+    for (let i = 0; i < batch.activeCms.length; i++)
+      activeSourceCms.set(this._activeWallSourceKey(i), batch.activeCms[i]);
+    const partitions: Array<{ a: number[]; b: number[]; cm: number }> = [];
+    if (!accepted.length) {
+      partitions.push(...wallChainSegments(
+        batch.activePath, batch.activeCms, DRAW_WALL_DEFAULT_CM,
+      ));
+    } else {
+      const consumed = new Set(accepted.flatMap((decision) => decision.candidate.atomKeys));
+      const consumeAll = accepted.some((decision) => decision.candidate.consumeAllActive);
+      for (const atom of atomizeWallSegments(this._wallGraphSources(batch.activePath), epsilon)) {
+        const activeKey = atom.sourceKeys.find((key) => activeSourceCms.has(key));
+        if (!activeKey || consumeAll || consumed.has(atom.key)) continue;
+        partitions.push({ a: atom.a, b: atom.b, cm: activeSourceCms.get(activeKey)! });
+      }
+    }
+    if ((sp.partitions || []).length + partitions.length > MAX_PARTITIONS) {
+      abort('toast.physical_limit');
+      return;
+    }
+
+    const before = this._geometrySnapshot();
+    const hasSplit = accepted.some((decision) => !!decision.candidate.split);
+    const splitWalls = hasSplit
+      ? materializeWallIntervals(
+          this._spaceModel().rooms, sp.walls, this._openCuts(),
+          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+        )
+      : null;
+    const wallsBeforeSplit = hasSplit && Array.isArray(sp.walls) ? sp.walls : null;
+    for (const decision of accepted) {
+      const split = decision.candidate.split;
+      if (!split) continue;
+      const main = sp.rooms.find((room: any) => room.id === split.roomId);
+      if (!main) {
+        abort('toast.contour_cannot_close');
+        return;
+      }
+      main.poly = split.mainPoly.map((point) => [point[0] / NORM_W, point[1] / this._spaceH]);
+      delete main.x; delete main.y; delete main.w; delete main.h;
+    }
+
+    const seed = Date.now().toString(36);
+    const newRooms: Array<{ room: any; decision: WallFaceDecision }> = [];
+    accepted.forEach((decision, index) => {
+      const areaName = decision.area ? this.hass.areas[decision.area]?.name : '';
+      const room = {
+        id: `r${seed}-${index}`,
+        name: decision.name || areaName || this._t('room.default_name'),
+        area: decision.area || null,
+        poly: decision.candidate.ring.map((point) =>
+          [point[0] / NORM_W, point[1] / this._spaceH]),
+        ...(decision.settings ? { settings: JSON.parse(JSON.stringify(decision.settings)) } : {}),
+      };
+      sp.rooms.push(room);
+      newRooms.push({ room, decision });
+    });
+
+    if (batch.activeDraftId && Array.isArray(sp.room_drafts)) {
+      sp.room_drafts = sp.room_drafts.filter((draft: any) => draft.id !== batch.activeDraftId);
+      if (!sp.room_drafts.length) delete sp.room_drafts;
+    }
+    if (partitions.length) {
+      sp.partitions ||= [];
+      partitions.forEach((partition, index) => sp.partitions.push({
+        id: `partition-${seed}-${index}`,
+        a: [partition.a[0] / NORM_W, partition.a[1] / NORM_W],
+        b: [partition.b[0] / NORM_W, partition.b[1] / NORM_W],
+        cm: partition.cm,
+      }));
+    }
+
+    if (hasSplit) {
+      this._commitOpenSpans();
+      const next = this._normalizeWalls(splitWalls, this._openCuts());
+      if (next.length) sp.walls = next;
+      else if (!wallsBeforeSplit?.length) delete sp.walls;
+      else sp.walls = wallsBeforeSplit;
+    }
+    if (newRooms.length) {
+      // Make the new model visible to the canonical wall helpers before they
+      // key intervals. This is still inside the one history/save transaction.
+      this._cfgEpoch++;
+      const openCuts = this._openCuts();
+      let walls = sp.walls;
+      for (const { room, decision } of newRooms) {
+        const ring = decision.candidate.ring;
+        const fallback = this._wallSourceCmAt(
+          ring[0], batch.activePath, batch.activeCms,
+        );
+        walls = applyWallThicknessToNewRoom(
+          walls, this._spaceModel().rooms, room.id, fallback,
+          this._wallKeyPitch, openCuts, NORM_W,
+        );
+        for (const interval of wallIntervals(
+          this._spaceModel().rooms, walls, openCuts,
+          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+        )) {
+          if (interval.roomId !== room.id || interval.kind !== 'outer') continue;
+          const midpoint = [
+            (interval.a[0] + interval.b[0]) / 2,
+            (interval.a[1] + interval.b[1]) / 2,
+          ];
+          walls = setWallThickness(
+            walls, interval.a, interval.b,
+            this._wallSourceCmAt(midpoint, batch.activePath, batch.activeCms),
+            this._wallKeyPitch, NORM_W,
+          );
+        }
+      }
+      const normalized = this._normalizeWalls(walls, openCuts);
+      if (normalized.length) sp.walls = normalized;
+      else delete sp.walls;
+    }
+
+    this._recordGeometry(this._t('history.wall_face_batch'), before);
+    this._saveConfig();
+    delete this._resumeDraftBySpace[this._space];
+    this._path = [];
+    this._activeDraftId = null;
+    this._draftSegmentCms = [];
+    this._closingWallCm = null;
+    this._wallFaceBatch = null;
+    this._roomDialog = false;
+    this._nameSel = '';
+    this._areaSel = '';
+    this._regSignature = '';
+    this._maybeRebuildDevices();
+    // Match the ordinary room-save contract: newly area-bound devices are
+    // auto-added and their initial positions are pinned immediately, while a
+    // clean split leaves the surviving parent's existing layout untouched.
+    const boundAreas = new Set(accepted
+      .map((decision) => decision.area)
+      .filter((area): area is string => !!area));
+    if (boundAreas.size) {
+      const next = { ...this._layout };
+      for (const device of this._devices) {
+        if (!boundAreas.has(device.area || '') || device.space !== this._space) continue;
+        if (this._layout[device.id]) continue;
+        const position = this._defPos[device.id];
+        if (!position) continue;
+        next[device.id] = {
+          s: this._space, x: position.x / NORM_W, y: position.y / NORM_W,
+        };
+        this._dirtyPos.add(device.id);
+      }
+      this._layout = next;
+      this._persistLayout();
+    }
+    this._showToast(this._t(accepted.length ? 'toast.wall_rooms_saved' : 'toast.wall_chain_saved', {
+      n: accepted.length,
+    }));
   }
 
   private _commitRoom(): void {
@@ -11389,6 +11842,7 @@ class HouseplanCard extends LitElement {
     this._clearPlanSnapHover();
     this._roomDialog = false;
     this._pendingSplit = null;
+    this._wallFaceBatch = null;
     this._splitSel = null;
     this._mergeSel = null;
     this._mergeDialog = null;
@@ -11411,13 +11865,24 @@ class HouseplanCard extends LitElement {
     this._clearPlanSnapHover();
   }
 
-  /** Cancel in the dialog: the outline is open again (the closing point is removed). */
+  /** Cancel a room flow without applying geometry; graph batches keep their terminal draft. */
   private _roomDialogCancel(): void {
     this._roomDialog = false;
     if (this._roomEditId) {
       this._roomEditId = null;
       this._nameSel = '';
       this._areaSel = '';
+      return;
+    }
+    if (this._wallFaceBatch) {
+      const batch = this._wallFaceBatch;
+      this._wallFaceBatch = null;
+      this._path = batch.activePath.map((point) => [...point]);
+      this._draftSegmentCms = [...batch.activeCms];
+      this._activeDraftId = batch.activeDraftId;
+      this._nameSel = '';
+      this._areaSel = '';
+      this.requestUpdate();
       return;
     }
     if (this._pendingSplit) {
@@ -11434,6 +11899,8 @@ class HouseplanCard extends LitElement {
     const used = new Set<string>();
     for (const sp of this._serverCfg?.spaces || [])
       for (const r of sp.rooms || []) if (r.area) used.add(r.area);
+    for (const decision of this._wallFaceBatch?.decisions || [])
+      if (decision.create && decision.area) used.add(decision.area);
     return Object.values<any>(this.hass?.areas || {})
       .filter((a) => !used.has(a.area_id))
       .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
@@ -11645,6 +12112,10 @@ class HouseplanCard extends LitElement {
 
   /** A closed outline may intentionally remain a set of independent walls. */
   private _keepClosedAsPartitions = (): void => {
+    if (this._wallFaceBatch) {
+      this._decideWallFace(false);
+      return;
+    }
     if (!this._contourClosed || this._pendingSplit || !this._curSpaceCfg) return;
     const sp = this._curSpaceCfg as any;
     const verts = this._path.slice(0, -1);
@@ -17032,57 +17503,51 @@ class HouseplanCard extends LitElement {
         <ha-icon icon="mdi:vector-square-edit" class="warn"></ha-icon>
         <span class="wallsgroup">
         <button class="btn ${this._tool === 'select' ? 'on' : ''}"
-          @click=${() => { this._cancelPath(); this._tool = 'select'; }}
+          @click=${() => this._activateMarkupTool('select')}
           title=${this._t('title.markup_select')}>
           <ha-icon icon="mdi:cursor-default-outline"></ha-icon>${this._t('markup.select')}
         </button>
         <button class="btn ${this._tool === 'draw' ? 'on' : ''}"
-          @click=${() => { if (this._tool !== 'draw') {
-            this._cancelPath(); this._tool = 'draw'; this._resumeLastDraft();
-          } }}
+          aria-pressed=${this._tool === 'draw' ? 'true' : 'false'}
+          @click=${() => this._activateMarkupTool('draw')}
           title=${this._t('title.markup_add')}>
           <ha-icon icon="mdi:vector-polyline-plus"></ha-icon>${this._t('markup.add')}
         </button>
-        <button class="btn ${this._tool === 'partition' ? 'on' : ''}"
-          @click=${() => { this._cancelPath(); this._tool = 'partition'; }}
-          title=${this._t('title.markup_partition')}>
-          <ha-icon icon="mdi:wall"></ha-icon>${this._t('markup.partition')}
-        </button>
         <button class="btn ${this._tool === 'column' ? 'on' : ''}"
-          @click=${() => { this._cancelPath(); this._tool = 'column'; }}
+          @click=${() => this._activateMarkupTool('column')}
           title=${this._t('title.markup_column')}>
           <ha-icon icon="mdi:vector-square"></ha-icon>${this._t('markup.column')}
         </button>
       </span>
       <button class="btn ${this._tool === 'merge' ? 'on' : ''}"
-        @click=${() => { this._tool = 'merge'; this._cancelPath(); this._tool = 'merge'; }}
+        @click=${() => this._activateMarkupTool('merge')}
         title=${this._t('title.markup_merge')}>
         <ha-icon icon="mdi:vector-union"></ha-icon>${this._t('markup.merge')}
       </button>
       <button class="btn ${this._tool === 'split' ? 'on' : ''}"
-        @click=${() => { this._tool = 'split'; this._cancelPath(); this._tool = 'split'; }}
+        @click=${() => this._activateMarkupTool('split')}
         title=${this._t('title.markup_split')}>
         <ha-icon icon="mdi:vector-polyline-remove"></ha-icon>${this._t('markup.split')}
       </button>
       <button class="btn ${this._tool === 'resize' ? 'on' : ''}"
-        @click=${() => { this._cancelPath(); this._tool = 'resize'; this._rszSel = null; }}
+        @click=${() => this._activateMarkupTool('resize')}
         title=${this._t('title.markup_resize')}>
         <ha-icon icon="mdi:arrow-expand-all"></ha-icon>${this._t('markup.resize')}
       </button>
       ${this._editorToolbarGroups.map((group) => this._renderEditorGroupLauncher(group))}
       <button class="btn ${this._tool === 'boundary' ? 'on' : ''}"
-        @click=${() => { this._cancelPath(); this._tool = 'boundary'; this._wallDialog = null; }}
+        @click=${() => this._activateMarkupTool('boundary')}
         aria-pressed=${this._tool === 'boundary' ? 'true' : 'false'}
         title=${this._t('title.markup_boundary')}>
         <ha-icon icon="mdi:border-style"></ha-icon>${this._t('markup.boundary')}
       </button>
       <button class="btn ${this._tool === 'wallthick' ? 'on' : ''}"
-        @click=${() => { this._cancelPath(); this._tool = 'wallthick'; this._wallDialog = null; }}
+        @click=${() => this._activateMarkupTool('wallthick')}
         title=${this._t('title.markup_wallthick')}>
         <ha-icon icon="mdi:wall"></ha-icon>${this._t('markup.wallthick')}
       </button>
       <button class="btn ${this._tool === 'delroom' ? 'on' : ''}"
-        @click=${() => { this._cancelPath(); this._tool = 'delroom'; }}
+        @click=${() => this._activateMarkupTool('delroom')}
         title=${this._t('title.markup_delroom')}>
         <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('markup.delete_room')}
       </button>
@@ -18569,6 +19034,12 @@ class HouseplanCard extends LitElement {
 
   private _renderRoomDialog(): TemplateResult {
     const edit = !!this._roomEditId;
+    const faceBatch = !edit ? this._wallFaceBatch : null;
+    const batchProgress = faceBatch && faceBatch.candidates.length > 1
+      ? this._t('room.queue_progress', {
+          current: faceBatch.index + 1, total: faceBatch.candidates.length,
+        })
+      : '';
     const canSaveNew = !!this._areaSel || !!this._nameSel.trim();
     const spaceDisplay = spaceDisplayOf(this._curSpaceCfg);
     const effectiveFill = this._roomFill || spaceDisplay.fill;
@@ -18580,9 +19051,13 @@ class HouseplanCard extends LitElement {
       if (cur) areas.unshift(cur);
     }
     return html`<hp-dialog class="roomdialog" .hass=${this.hass} wide
-      .title=${edit ? this._t('room.settings_title') : this._t('room.new')}
+      .title=${edit ? this._t('room.settings_title')
+        : batchProgress || this._t('room.new')}
       icon=${edit ? 'mdi:cog-outline' : 'mdi:floor-plan'} @hp-close=${this._roomDialogCancel}>
         <div class="body">
+          ${batchProgress ? html`<p class="muted" role="status" aria-live="polite">
+            ${batchProgress}
+          </p>` : nothing}
           <label>${this._t('room.name_label')}</label>
           <input class="namein" type="text" placeholder=${this._t('room.name_ph')}
             .value=${this._nameSel}

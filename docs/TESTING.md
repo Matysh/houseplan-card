@@ -357,11 +357,19 @@ separately promised workflows:
 
 ## Room markup editor ★
 
-- [ ] Grid appears; dots snap; the outline draws pair-by-pair; shared walls reused
+- [ ] The toolbar has one **Walls** tool and no separate Room outline or
+      Partition drawing button; Split remains available [auto:
+      smoke_unified_wall_tool]
+- [ ] Grid appears; dots snap; the wall chain draws pair-by-pair; shared walls reused
 - [ ] Ruler: while drawing, the length of the current segment follows the cursor
       (metres, or feet+inches on an imperial HA); scale = space "cm per cell" (default 5)
-- [ ] A line cannot exist on its own: start an outline, do NOT close it, leave markup —
-      no lines are left behind (nothing was written to the config)
+- [ ] Every completed segment is crash-safe in `room_drafts`. Changing tool,
+      editor or floor finishes an open chain as ordinary partitions in one
+      history/config transaction; the finished chain is not resumed as a draft
+      [auto: smoke_unified_wall_tool]
+- [ ] Re-selecting Walls, Reset, pan, pinch, a second pointer, `pointercancel`
+      and a suppressed synthetic click never finish a chain or save an extra
+      segment [auto: smoke_unified_wall_tool]
 - [ ] Deleting a room removes its walls, EXCEPT those shared with a neighbouring room
       (the neighbour still yields them); deleting the neighbour too removes them as well
 - [ ] There is no "Erase" tool in the markup toolbar (removed in v1.19.0)
@@ -377,31 +385,27 @@ separately promised workflows:
       (imported/legacy polygons), not only on rooms drawn on the current grid [manual]
 - [ ] Split: a click far from any wall (middle of the room) is a miss with a toast —
       the wall-snap pull is capped, accidental clicks do not pick a wall [manual]
-- [ ] Esc / Ctrl+Z removes the last dot (and its line); Reset clears the path
-- [ ] Closing the contour (click the first dot, ≥4 points) opens the room dialog
-- [ ] Ctrl/Cmd+click closes the current endpoint back to the first point without
-      adding another vertex. It requires at least two existing edges and refuses
-      degenerate or self-intersecting closure [auto: smoke_editor_tabs]
-- [ ] Adjacent-room auto-close: after two drawn edges, ending on the same
-      uninterrupted solid existing-room wall interval as the first point adds
-      the terminal segment and opens the normal room dialog. Endpoints and
-      wall-interior snap points both work; Save creates one room without an
-      independent partition and preserves the shared wall thickness. Cancel
-      restores the open draft ending at that point [auto: smoke_room_autoclose;
-      unit: plan-snap-overlay.test.mjs]
-- [ ] Adjacent-room auto-close safety: a second point alone stays open; different
-      room edges, draft/partition-only axes and points separated by an opening
-      or open-span cut do not trigger it. An eligible self-intersecting contour
-      shows the existing error and writes neither the terminal point nor segment
-      [auto: smoke_room_autoclose; unit: plan-snap-overlay.test.mjs]
+- [ ] Esc / Ctrl+Z removes the last dot (and its line); Reset clears the active path
+- [ ] A latest segment that creates bounded endpoint, T or X faces opens the
+      room queue in area/key order. Existing exact/partial rooms and physical
+      gaps, including opening cuts, are excluded; nested rooms remain eligible
+      [unit: wall-face-graph; auto: smoke_unified_wall_tool +
+      smoke_room_autoclose]
+- [ ] Create and Keep as walls answers are buffered. The last answer applies all
+      rooms and unconsumed wall atoms as one Undo/Redo transaction; Cancel/Esc
+      restores the terminal draft without partial rooms [auto:
+      smoke_unified_wall_tool]
+- [ ] A clean divider across one existing room offers only the smaller child;
+      the larger child keeps the original room id, name, area binding, settings
+      and device placement [auto: smoke_unified_wall_tool]
 - [ ] Room dialog: area list shows only unassigned areas; picking an area prefills the name
 - [ ] Room dialog uses the medium width and its body has no horizontal overflow;
       long options stay inside it at desktop and narrow widths [auto:
       smoke_editor_tabs; manual: narrow viewport]
 - [ ] "No area" room (decorative) requires a name; saves with `area: null`
-- [ ] Cancel in the dialog reopens the contour (last point undone)
+- [ ] Cancel in a Walls face queue restores the persisted terminal draft
 - [ ] Saving a room with an area: area devices appear with icons; positions are fixed into the layout [manual]
-- [ ] Erase tool removes exactly the clicked line; Delete-room removes the polygon after confirm
+- [ ] Delete-room removes the polygon after confirm; there is no Erase tool
 - [ ] Device icons hidden during markup; visible again on exit
 
 ## Devices on the plan ★

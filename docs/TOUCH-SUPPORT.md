@@ -77,6 +77,12 @@ only to dismiss an explicit group/palette is consumed instead of falling
 through to the plan. Pinch/pan outside the tray remains scene-owned. This is a
 safety guarantee, not a promise of full touch parity for editor precision work.
 
+The Plan editor's Walls chain follows the same floor. One clean tap may append
+one segment; pan, pinch, a second pointer, `pointercancel` and a suppressed
+synthetic click never append, finish or convert the chain. Only an explicit
+tool/editor/floor change finishes an open chain as ordinary walls. Junction
+hover is best effort on coarse pointers; click resolution remains authoritative.
+
 During a View/editor visual transition the moving stage is inert while the
 header tabs remain available. A pinch, cancelled pointer or synthetic click
 cannot operate stale geometry; leaving the editor is always a single safe

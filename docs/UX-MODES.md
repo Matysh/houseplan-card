@@ -80,9 +80,9 @@ Header in View: space tabs, device count, zoom cluster. Nothing else.
 
 ## Plan — geometry and appearance of the space
 
-- Toolbar tools: **Walls** / room outline (with its session wall-thickness field
-  immediately on the right, default 15 cm — docs/WALL-THICKNESS.md §6), Delete
-  room, Merge, Split, Resize, Partition, Column,
+- Toolbar tools: **Walls** (one continuous chain with its session wall-thickness
+  field, default 15 cm — docs/WALL-THICKNESS.md §6), Delete room, Merge, Split,
+  Resize, Column,
   Opening (place / drag along walls / properties), Boundary, Thickness
   (docs/WALL-THICKNESS.md — click a wall, set cm/inches from HA's unit system;
   empty/0 clears), Room labels (drag positions — labels are part of the plan).
@@ -94,6 +94,10 @@ Header in View: space tabs, device count, zoom cluster. Nothing else.
 - Independent partitions and columns are masonry for hit testing as well as
   area/light: room hover stops at their physical bodies just as it stops at a
   thick room wall. This does not split the room or change its HA area.
+- Changing Plan tool, editor or floor finishes an open Walls chain as ordinary
+  partitions. Closing one or more planar faces opens the room queue; its
+  decisions are buffered and applied as one Undo/Redo transaction. Re-selecting
+  Walls, Reset, pan, pinch and pointer cancellation are not finish actions.
 - Boundary is contextual: two points on one solid shared wall make the selected
   stretch virtual; one click on an existing dashed stretch restores it whole.
   Outer walls and room boundaries hidden under independent masonry are not
@@ -163,14 +167,14 @@ layer you cannot see is a layer you cannot edit.
 
 ## Plan — independent physical objects
 
-- **Walls** still draws room contours. An unfinished contour is saved after
-  every completed segment and can be resumed from either free endpoint. A
-  click on the endpoint of another saved outline joins both records; branching
-  from the middle of a segment is intentionally not supported.
-- **Partition** draws one physical wall segment; **Column** places a square
-  column whose side is the current Thickness value. Neither object creates a
-  room or HA area. A closed partition ring subtracts only its wall body from
-  the original room floor.
+- **Walls** draws one continuous crash-safe chain. Newly closed planar faces
+  may become rooms; changing tool/editor/floor finishes an open chain as
+  independent wall objects. A click on another saved draft endpoint may join
+  it, while branching from the middle of a saved draft is unsupported.
+- Finished independent walls remain selectable physical objects. **Column**
+  places a square column whose side is the current Thickness value. Neither an
+  independent wall nor a column creates a room or HA area by itself. A closed
+  independent-wall ring subtracts only its wall body from room floor.
 - **Select** is the only mode in which these objects intercept input. It offers
   rigid grid-bound drag, double-click/tap properties, Delete, and a rotate
   handle for square columns (5° steps; Shift is free). Draft Delete removes the

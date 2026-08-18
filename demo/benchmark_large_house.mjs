@@ -20,6 +20,7 @@ const isometric = profile === 'large-house-isometric-v1';
 const planSnap = profile === 'large-house-plan-snap-v1';
 const requiresIsometric = isometric && existsSync(resolve(targetRoot, 'src/iso-projection.ts'));
 const requiresPlanSnap = planSnap && existsSync(resolve(targetRoot, 'src/plan-snap-overlay.ts'));
+const requiresWallFace = planSnap && existsSync(resolve(targetRoot, 'src/wall-face-graph.ts'));
 const fixture = makeLargeHouseFixture();
 if (planSnap) {
   for (const [floor, space] of fixture.config.spaces.entries()) {
@@ -65,6 +66,7 @@ try {
     const measuredSample = iteration - warmups;
     const row = await page.evaluate(async ({
       fixture, sample, cardContract, isometric, requiresIsometric, planSnap, requiresPlanSnap,
+      requiresWallFace,
     }) => {
       const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
       const until = async (predicate, timeout = 10000) => {
@@ -122,6 +124,7 @@ try {
         openingWallIndex: card._openingWallIndexCache ? 1 : 0,
         isoGeometry: card._isoGeometryCache?.size ?? 0,
         planSnapGeometry: card._planSnapGeometryCache ? 1 : 0,
+        wallFaceGraph: card._wallFaceGraphCache?.length ?? 0,
       });
 
       window.__card?.remove?.();
@@ -239,6 +242,7 @@ try {
         const cacheValue = card._planSnapGeometryCache?.value ?? null;
         const configBefore = JSON.stringify(card._serverCfg);
         const callsBefore = wsCalls;
+        const wallFaceCacheBeforePointer = card._wallFaceGraphCache?.length ?? 0;
         const view = card._viewOr(card._baseVb());
         const rect = stage.getBoundingClientRect();
         const fromPlan = (x, y) => ({
@@ -291,13 +295,39 @@ try {
               === staticNodes,
           configStable: JSON.stringify(card._serverCfg) === configBefore,
           wsWrites: wsCalls - callsBefore,
+          wallFaceCacheStableOnPointer:
+            (card._wallFaceGraphCache?.length ?? 0) === wallFaceCacheBeforePointer,
         };
         if (requiresPlanSnap && (
           staticLines < fixture.counts.rooms || staticNodes < fixture.counts.rooms
           || !planSnapDiagnostics.cacheStable || !planSnapDiagnostics.domStable
           || !planSnapDiagnostics.configStable || planSnapDiagnostics.wsWrites !== 0
+          || !planSnapDiagnostics.wallFaceCacheStableOnPointer
           || !seenKinds.has('endpoint') || !seenKinds.has('line')
         )) throw new Error(`plan-snap structural contract failed: ${JSON.stringify(planSnapDiagnostics)}`);
+        if (requiresWallFace) {
+          const oldPath = card._path;
+          const oldDraftId = card._activeDraftId;
+          const oldCms = card._draftSegmentCms;
+          const beforePath = [[10, 10]];
+          card._path = [[10, 10], [20, 10]];
+          card._activeDraftId = 'perf-face-draft';
+          card._draftSegmentCms = [15];
+          const acceptedStarted = performance.now();
+          card._offerWallFaces(beforePath);
+          planSnapDiagnostics.wallFaceAcceptedClickMs = performance.now() - acceptedStarted;
+          planSnapDiagnostics.wallFaceCacheEntries = card._wallFaceGraphCache?.length ?? 0;
+          card._wallFaceBatch = null;
+          card._roomDialog = false;
+          card._path = oldPath;
+          card._activeDraftId = oldDraftId;
+          card._draftSegmentCms = oldCms;
+          if (planSnapDiagnostics.wallFaceAcceptedClickMs > 1000
+              || planSnapDiagnostics.wallFaceCacheEntries < 1
+              || planSnapDiagnostics.wallFaceCacheEntries > 4) {
+            throw new Error(`wall-face accepted-click contract failed: ${JSON.stringify(planSnapDiagnostics)}`);
+          }
+        }
         card._setMode('view');
         await card.updateComplete;
       }) : null;
@@ -417,7 +447,7 @@ try {
       return result;
     }, {
       fixture, sample: measuredSample, cardContract: LARGE_HOUSE_CARD_CONTRACT,
-      isometric, requiresIsometric, planSnap, requiresPlanSnap,
+      isometric, requiresIsometric, planSnap, requiresPlanSnap, requiresWallFace,
     });
     if (measuredSample >= 0) rows.push(row);
   }

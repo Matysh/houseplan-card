@@ -329,8 +329,8 @@ quotas, nothing is ever deleted for being old (docs/SCOPE.md).
 Room-boundary walls remain *derived* from room outlines (`roomEdges`, deduped by
 `segKey`), so deleting a room keeps the boundaries its neighbours still
 contribute. Three explicitly typed exceptions are stored per space:
-`room_drafts` for persisted unfinished room outlines, `partitions` for
-one-segment independent walls and `wall_columns` for square/circular columns.
+`room_drafts` for crash-safe unfinished Walls chains, `partitions` for finished
+independent wall segments and `wall_columns` for square/circular columns.
 They do not create a room or HA area and never split a room implicitly. Their
 physical bodies are unioned with room walls for rendering and light occlusion,
 and subtracted from clean room floor area. Openings (doors, windows and gates)
@@ -405,7 +405,7 @@ uses the Stage 1 latched Flat fallback. Details and fixed ratios are recorded in
 
 ## Markup editor (v1.4.0+)
 
-State inside the card: `_markup` (mode), `_tool` (draw/partition/column/merge/split/resize/opening/
+State inside the card: `_markup` (mode), `_tool` (draw/column/merge/split/resize/opening/
 boundary/wallthick/delroom), `_path` (the current outline,
 vertices on the GRID_N=240 grid). Clicks on the stage → `_svgPoint`→`_snap`. The outline is closed
 = a click on the first vertex → area select (hass.areas) + name → room {poly}. Polygon rooms and
@@ -428,26 +428,32 @@ viewBox, so zoom never changes the effective target. The first point is a
 transient gesture only: Esc, Undo/Redo, navigation, external config adoption,
 pointer cancellation and multi-touch discard it without touching history.
 
-Every completed segment of an unfinished room contour is persisted in
-`room_drafts`, including the thickness selected when that segment was placed.
-Switching tools keeps it; the same editing session resumes automatically, and
-after reload either endpoint can be selected to continue. Closing converts the
-draft into a room, while the room dialog's secondary action converts its edges
-to independent partitions. `partition` creates exactly one wall per gesture;
-`column` creates a square object whose size comes from the current Thickness
-field. Double click edits physical-object properties, pointer drag moves the
-whole object on the grid, and Delete removes only the selected object. The
-legacy root `space.segments` array is still stripped on every save.
+Every completed Walls segment is persisted in `room_drafts`, including the
+thickness selected when that segment was placed. Changing Plan tool, editor or
+floor explicitly finishes an open chain by converting it to ordinary
+`partitions` in one history/save transaction; re-selecting Walls is a no-op.
+Pan, pinch, pointer cancellation and suppressed clicks never finish a chain or
+append a segment. A finished open chain is ordinary masonry and is not resumed
+as a draft. Reload recovery may resume only a still-active persisted draft.
 
-Adjacent-room auto-close reuses the immutable architectural snap snapshot and
-requires the first and prospective terminal points to belong to one completed
-room's same solid segment after opening/open-span cuts. It runs only after the
-draft has two edges and after explicit first-point/Ctrl closure handling. The
-prospective polygon is checked for range, self-intersection and room overlap
-before `_path` or `room_drafts` changes; success persists the terminal segment
-and then opens the ordinary room dialog. Cancel therefore returns to the open
-draft at that terminal point, while Save lets the normal room/wall
-normalization preserve an existing shared wall's thickness.
+`src/wall-face-graph.ts` derives an immutable planar graph from solid room edges
+after opening cuts, partitions, inactive drafts and the active chain. A sweep
+broadphase atomizes endpoint, T, X and collinear intersections; deterministic
+half-edge traversal extracts bounded canonical faces. The click handler diffs
+the graph before/after the latest segment and offers only newly created faces
+that contain an atom of that segment, ordered by area and canonical key. Exact
+or partial overlap with a room is rejected while legal nesting is preserved.
+A clean single-room divider reuses `splitRoomPath`, offering only the smaller
+child while the larger child retains the original room identity and metadata.
+
+Room answers are buffered in `_wallFaceBatch`. Create/Keep-as-walls advance the
+queue without mutating geometry; Cancel/Esc restores the terminal draft. The
+last answer revalidates every face and capacity limit, then commits all accepted
+rooms, the split result and every unconsumed active atom in one Undo/Redo and
+config transaction. Existing saved source geometry is never atomized or
+rewritten merely because it participated in a face. `column` still creates a
+physical object whose size comes from the current Thickness field. The legacy
+root `space.segments` array is stripped on every save.
 
 While drawing, the length of the current segment follows the cursor (`_fmtLen` → `segmentCm`/
 `formatLength`): metres, or feet+inches when `hass.config.unit_system` is imperial. The scale is

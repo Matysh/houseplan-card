@@ -143,8 +143,8 @@ Use this order for a first working room:
 2. Upload SVG/PNG/JPG/WebP, reuse an uploaded plan, or choose no image.
 3. Set the real size of a grid cell. It controls wall, opening, furniture and
    area measurements.
-4. In Plan choose **Room outline**, click the vertices, then click the first
-   point to close the outline.
+4. In Plan choose **Walls**, draw the boundary, then click its first point to
+   close the first room face.
 5. Name the room and bind it to an HA area, or use **No area**.
 6. Add wall thickness and openings if needed.
 7. In Device, position auto-discovered markers and choose their actions.
@@ -153,7 +153,7 @@ Use this order for a first working room:
 
 ![Creating the first space with synthetic data](images/03-space-create.png)
 
-![Closing a new room outline on its first point](images/04-room-contour-close.png)
+![Closing a new wall chain on its first point](images/04-room-contour-close.png)
 
 Do all plan creation on desktop. Phone, tablet and wall-panel View remain full
 product surfaces after setup.
@@ -237,10 +237,12 @@ enabled for that space.
 
 ### Create a room
 
-Select **Room outline** and click grid nodes. The current segment shows its real
-length. Clicking the first point closes the outline and opens the room dialog.
-Rooms may share boundaries but may not overlap. A closed room has area; an open
-wall path does not.
+Select **Walls** and draw one continuous chain. Every completed segment is
+crash-safe. Changing tool, editor or floor finishes an open chain as ordinary
+independent walls. When the latest segment creates bounded endpoint/T/X faces,
+House Plan offers them from smallest to largest. Save creates that room, Keep
+as walls rejects only that candidate, and Cancel restores the whole draft with
+no partial rooms.
 
 Existing segment endpoints and lines appear above walls while drawing. An
 endpoint grows when the next click will join it. A point on a line shows where
@@ -250,8 +252,7 @@ the click will create a valid junction.
 
 | Tool | Result | Room area | Light and shadow | Main limit |
 |---|---|---|---|---|
-| Room outline | Closed room or persisted open wall segments | Only a closed saved outline has area | Physical segments block light; openings pass it | Rooms cannot overlap; close on the first point |
-| Partition | Independent wall segment | Does not split or change area | Blocks light and casts a wall shadow | Does not create a room or HA-area binding |
+| Walls | Continuous wall chain; offers rooms when it closes faces and finishes open chains as independent walls | Only a confirmed room has area | Physical segments block light; openings pass it | Partial room overlap is rejected; there is no separate Partition drawing tool |
 | Column | Square or circular support | Does not change area | Blocks light inside its shape | One shape/size/rotation; not a wall or room |
 | Boundary | Virtual span of a shared wall | Geometry and area stay unchanged | Light passes; no physical wall is painted | Only a shared boundary between adjacent rooms |
 | Opening | Door, window or gate | Does not change area | Door/gate passage follows state; window may cast sun | Must fit completely on a suitable wall segment |

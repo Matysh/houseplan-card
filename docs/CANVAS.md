@@ -545,11 +545,11 @@ pixels, therefore selection remains usable at every zoom.
 
 ## Architectural connection overlay
 
-When **Room outline** or **Partition** is active in the Plan editor, a derived
+When **Walls** is active in the Plan editor, a derived
 pointer-transparent SVG layer exposes the centre axes of completed room walls,
 saved inactive outlines and independent partitions. It is painted after their
 physical wall bodies, but before interactive editor chrome. Columns, decor,
-devices, the active outline and its live preview are not candidates. Door,
+devices, the active wall chain and its live preview are not candidates. Door,
 window, gate and intentionally open-span intervals are cut from room axes; a
 cut boundary does not become a new endpoint.
 
@@ -565,17 +565,30 @@ runs again on click, so hover is only a preview and never authoritative.
 Endpoint and line candidates override the normal grid and Shift/45° result.
 Outside the hit zone, §9.3–9.4 remain unchanged. A line connection adds only the
 new segment endpoint; it does not split or rewrite the existing wall. The
-current anchor is excluded to prevent zero-length segments, while the first
-point of a valid room outline remains an explicit closure target. The static
-geometry is cached by structural editor state; pointer movement changes at
-most the single active candidate and never writes config, layout or storage.
+current anchor is excluded to prevent zero-length segments. The static geometry
+is cached by structural editor state; pointer movement changes at most the
+single active candidate and never writes config, layout or storage.
 
-For **Room outline**, the same completed-room provenance also enables adjacent
-auto-close. Once the draft already has two edges, a click that places its next
-point on the same uninterrupted solid room-wall segment as the first point is
-validated as the prospective polygon before any mutation. A valid click
-persists that terminal draft segment and opens the standard room dialog with
-the existing wall as the closing edge. A cut, a different edge, a saved draft
-or an independent partition is ineligible; an eligible but invalid polygon is
-reported without appending a point or segment. Explicit first-point and
-Ctrl/Cmd closure retain priority.
+## Planar wall faces
+
+Every completed Walls segment is first persisted in the active `room_drafts`
+chain. On the click path only, an immutable planar graph is built from solid
+room edges after opening cuts, independent partitions, inactive drafts and the
+active chain both before and after the latest segment. Endpoint, T, X and
+collinear-overlap junctions atomize that computed graph without rewriting any
+saved wall. A deterministic half-edge walk extracts bounded faces; canonical
+identity ignores winding, cyclic start and derived collinear subdivision.
+
+Only faces added by the latest segment and containing one of its atoms are
+offered. They are ordered by area and then canonical key. Existing exact or
+partially overlapping rooms are excluded, nested rooms remain legal, and any
+physical gap — including an opening cut — remains a gap. A clean divider across
+one room reuses the Split contract: the larger side keeps the room identity,
+metadata and device binding, and only the smaller side is offered.
+
+The active draft remains persisted while the resulting room dialogs are open.
+Create/Keep-as-walls answers are buffered; Cancel/Esc discards all answers and
+restores the terminal draft. The final answer revalidates the whole batch and
+applies accepted rooms plus every unconsumed active atom as one history/config
+transaction. Graph construction never runs on pointermove, Home Assistant state
+updates or ordinary rendering.

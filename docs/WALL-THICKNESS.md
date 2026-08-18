@@ -152,11 +152,13 @@ clears; apply-to-room. Hooks: `data-hp="wall"`. i18n en/ru.
 
 **Draw with thickness.** The Plan toolbar's **Walls** button carries its session
 thickness field immediately on the right (default **15 cm**, or inches when HA
-is imperial). Closing a new room outline
-writes that cm onto every new edge that does not already have one; shared
-stretches that already carry a neighbour's thickness are left alone. Empty / 0
-leaves the room thin. Live thick preview follows the rubber-band while drawing.
-Split does not use this field. The Thickness tool remains for later edits.
+is imperial). Every persisted draft segment remembers the value used when it
+was placed. Finishing an open chain transfers those values to the resulting
+independent walls. If a segment creates rooms, consumed boundary atoms receive
+their source value and unconsumed atoms become independent walls with the same
+value; existing shared masonry remains authoritative. Empty / 0 leaves the new
+wall thin. Live thick preview follows the rubber-band while drawing. Split does
+not use this field. The Thickness tool remains for later edits.
 
 ## 7. Out of scope
 

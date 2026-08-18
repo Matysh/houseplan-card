@@ -42,7 +42,7 @@ House Plan предлагает создать комнаты; отказ ост
 
 Никакой отдельной кнопки «Завершить» и клавиши Enter не появляется.
 
-## 3. Подтверждённое текущее состояние
+## 3. Проблема и подтверждённое текущее состояние
 
 1. `MarkupTool` содержит разные `draw` и `partition`; toolbar показывает две
    кнопки, а warm viewport способен восстановить оба значения.
@@ -519,7 +519,7 @@ RU/EN обязательно обновляют:
 - **AC16 (`smoke` + code review; разработчик/ревьюер):** touch safety floor и
   View/kiosk не регрессируют; no-hover tap может выполнить тот же commit, но
   hover parity редактора не обещается.
-- **AC17 (`typecheck` + `unit` + `build` + documentation review`; разработчик):**
+- **AC17 (`typecheck` + `unit` + `build` + documentation review; разработчик):**
   implementation-loop gates зелёные, три bundle-копии побайтно одинаковы, RU/EN
   i18n, оба changelog и перечисленные документы обновлены в одном
   user-visible implementation commit.

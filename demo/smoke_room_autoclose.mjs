@@ -79,9 +79,10 @@ const out = await page.evaluate(async () => {
   await click(500, 500);
   const successfulDraft = clone(currentDraft());
   result.endpointAutoCloseOpensDialog = card._roomDialog
-    && card._path.length === 5
-    && close(card._path[0][0], card._path.at(-1)[0])
-    && close(card._path[0][1], card._path.at(-1)[1]);
+    && card._wallFaceBatch?.candidates.length === 1
+    && card._path.length === 4
+    && close(card._path.at(-1)[0], 500)
+    && close(card._path.at(-1)[1], 500);
   result.terminalSegmentPersistsBeforeDialog = successfulDraft?.points.length === 4
     && successfulDraft?.segments.length === 3
     && close(successfulDraft.points.at(-1)[0], 0.5)
@@ -131,17 +132,18 @@ const out = await page.evaluate(async () => {
     && card._path.length === 4
     && currentDraft()?.points.length === 4;
 
-  // An eligible but self-intersecting prospective ring is consumed without partial write.
+  // #173: a proper X is a derived graph node. The two bounded faces are
+  // offered, while the terminal draft remains the only persisted mutation.
   await reset();
   await click(500, 100);
   await click(400, 300);
   await click(700, 300);
-  const invalidDraftBefore = clone(currentDraft());
   await click(500, 500);
-  result.invalidCloseHasNoPartialWrite = !card._roomDialog
-    && card._path.length === 3
-    && JSON.stringify(currentDraft()) === JSON.stringify(invalidDraftBefore)
-    && card._toast === card._t('toast.contour_cannot_close');
+  result.xIntersectionOffersFacesWithoutPartialRooms = card._roomDialog
+    && card._wallFaceBatch?.candidates.length === 2
+    && card._path.length === 4
+    && currentDraft()?.segments.length === 3
+    && card._curSpaceCfg.rooms.length === 1;
 
   return result;
 });

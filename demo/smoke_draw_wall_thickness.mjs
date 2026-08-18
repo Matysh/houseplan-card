@@ -22,7 +22,7 @@ const res = await page.evaluate(async () => {
   out.fieldTrayIsStageOverlay = field?.closest('.editor-secondary-host')?.closest('.stage')
     === sr().querySelector('.stage');
   const wallsButton = sr().querySelector('.editbar button.on');
-  out.drawButtonNamedRoomOutline = ['Room outline', 'Контур комнаты']
+  out.drawButtonNamedWalls = ['Walls', 'Стены']
     .includes((wallsButton?.textContent || '').trim());
 
   // draw a small room away from existing rooms (garden/demo f1 may have rooms)

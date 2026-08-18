@@ -169,7 +169,15 @@ test('release ZIP inspection is portable and does not depend on tar', () => {
     const entries = readZipEntries(zip, ['manifest.json', 'frontend/houseplan-card.js']);
     assert.equal(typeof JSON.parse(entries.get('manifest.json').toString('utf8')).version, 'string');
     assert.ok(entries.get('frontend/houseplan-card.js').length > 1_000);
-    const committed = spawnSync('git', ['show', 'HEAD:dist/houseplan-card.js'], { cwd: root }).stdout;
+    const committedResult = spawnSync('git', ['show', 'HEAD:dist/houseplan-card.js'], {
+      cwd: root,
+      // The production bundle is larger than Node's spawnSync default buffer.
+      // A truncated stdout can still be non-empty and produce a misleading
+      // hash mismatch, especially while the test runner executes in parallel.
+      maxBuffer: 64 * 1024 * 1024,
+    });
+    assert.equal(committedResult.status, 0, committedResult.error?.message);
+    const committed = committedResult.stdout;
     const hash = (contents) => createHash('sha256').update(contents).digest('hex');
     assert.equal(hash(entries.get('frontend/houseplan-card.js')), hash(committed));
   } finally {
