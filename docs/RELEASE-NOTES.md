@@ -1,18 +1,16 @@
-<!-- release: v1.65.0-beta.1 -->
+<!-- release: v1.65.0-beta.2 -->
 
 ## Основное
 
-- Экспорт пространства получил режим «Только планировка»: геометрия, декор, подложка и подписи переносятся без устройств и привязок Home Assistant.
-- Составная техника, включая стиральные машины, получает жёлтый статус во время подтверждённого активного цикла.
-- Оконные солнечные лучи теперь правильно учитывают реальное направление стрелки севера на плане.
+- Редактор Плана получил единый инструмент «Стены», открытые проёмы и исправленную геометрию стыков и переходов толщины.
+- Управление составными устройствами стало точнее: выбор сущности для переключения, связанные виртуальные источники и назначения комнат без HA-зон работают согласованно.
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- Space export now has a Plan only mode that transfers geometry, decor, backdrop and labels without devices or Home Assistant bindings.
-- Composite appliances, including washing machines, now show the yellow working state during a confirmed active cycle.
-- Window sunlight now correctly follows the real direction of the plan's north arrow.
+- The Plan editor now has one Walls tool, open passages and corrected junction and thickness-transition geometry.
+- Composite-device control is more precise: exact toggle targets, linked virtual sources and room assignments without HA Areas now stay consistent.
 - Small fixes and improvements.
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.65.0-beta.1/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.65.0-beta.1/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.65.0-beta.2/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.65.0-beta.2/docs/CHANGELOG.md)

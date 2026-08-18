@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v1.65.0-beta.2 — 2026-08-18
 
 - Composite Home Assistant devices with several light/switch entities now let
   you choose the exact entity operated by **Toggle state**. The dialog previews
