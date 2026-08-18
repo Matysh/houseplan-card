@@ -18,10 +18,10 @@ stateful-типов — тот же live state и действия в View/kiosk
 ## 2. Что человек увидит до и после
 
 До изменения завершённая независимая стена остаётся сплошной и не принимает
-проём; после изменения выбранный door/window/gate/passage вырезает её тело,
-следует за конкретным host-сегментом и ведёт себя как тот же тип проёма в обычной
-стене. При этом стена с проёмом по #185 остаётся полноценным ребром для
-распознавания замкнутой комнаты.
+проём; после изменения выбранные дверь, окно, ворота или открытый проём вырезают
+её тело, перемещаются вместе с выбранным отрезком стены и ведут себя как тот же
+тип проёма в обычной стене. При этом стена с проёмом по #185 остаётся полноценным
+ребром для распознавания замкнутой комнаты.
 
 ## 3. Проблема и связь со scope
 
@@ -331,15 +331,27 @@ Schema migration существующих данных не нужна: capabili
 
 Новые en/ru strings:
 
-- «Стена или перегородка» в placement guidance/error;
-- host kind «Перегородка» в properties/diagnostic;
-- confirmation title/body и строки списка hosted openings;
-- orphan reason/rebind action, если affordance нужен по §17.
+- `toast.opening_no_wall` — обновлённая guidance/error «стена или независимая
+  стена»;
+- `opening.host_partition` — host kind «Независимая стена» в
+  properties/diagnostic;
+- `confirm.delete_partition_openings_title`,
+  `confirm.delete_partition_openings_body` и
+  `confirm.delete_partition_openings_item` — confirmation и строки списка с
+  параметрами `{count}`, `{type}`, `{length}`;
+- `opening.partition_orphan` и `opening.rebind_partition` — orphan reason и
+  доступное действие перепривязки по §17.
 
 Opening dialog, list и confirmation используют существующий `hp-dialog`, focus
 trap, Escape и restore focus. List доступен screen reader; confirmation сообщает
 точное количество. Canvas preview не является единственным объяснением host:
 properties/diagnostic имеет текстовое accessible name.
+
+**Touch editor: best effort / intentionally degraded.** Desktop остаётся
+reference surface. На touch обязательны только safety floor: tap повторно решает
+candidate на commit, а pinch/second pointer/pointercancel не создают opening, не
+удаляют host и не завершают Walls chain. Hover parity не обещается; View и kiosk
+не получают новых interactions.
 
 ## 20. Acceptance criteria
 
