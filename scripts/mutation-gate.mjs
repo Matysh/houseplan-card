@@ -523,7 +523,7 @@ export const MUTANTS = [
     patches: [{
       file: 'src/styles.ts',
       find: '.dev:not(.unavail):hover {',
-      replace: '.dev:hover {',
+      replace: '.dev.unavail:hover {',
     }],
   },
   {
