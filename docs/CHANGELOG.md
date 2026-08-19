@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.65.0-beta.7 — 2026-08-20
+
 - A card instance can now be pinned to one space with `floor`: use a stable
   space ID (recommended) or a zero-based numeric YAML index. A pinned card
   ignores shared last-space navigation, URL floor links, other floor tabs and

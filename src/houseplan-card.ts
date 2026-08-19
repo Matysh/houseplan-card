@@ -260,7 +260,7 @@ import {
 } from './opening-placement';
 import { safeStoredColor } from './color';
 
-const CARD_VERSION = '1.65.0-beta.6';
+const CARD_VERSION = '1.65.0-beta.7';
 const DISPLAY_LABEL_KEYS: Record<DeviceDisplayMode, I18nKey> = {
   badge: 'display.badge',
   icon_ripple: 'display.icon_ripple',
