@@ -3,7 +3,7 @@
 // НАХОДЯТСЯ через querySelector — ровно так, как их будет искать чужой CSS.
 //   1) устройство: data-hp="device" + data-id + data-entity + data-area;
 //   2) комната: data-hp="room" + data-id + data-area;
-//   3) подпись комнаты: data-hp="room-label" + data-id (и в SVG, и в HTML-карточке);
+//   3) видимая подпись комнаты: data-hp="room-label" + data-id на HTML-карточке;
 //   4) проём: data-hp="opening" + data-id + data-kind (door/window/gate);
 //   5) декор: data-hp="decor" + data-id + data-kind (line/rect/ellipse/text);
 //   6) вкладка пространства: data-hp="space-tab" + data-id;
@@ -50,8 +50,8 @@ const res = await page.evaluate(async () => {
   out.roomIsAnSvgShape = !!kitchen && ['polygon', 'rect', 'path'].includes(kitchen.tagName.toLowerCase());
 
   // ============ 3. подписи комнат ============
-  // одно имя — две разные реализации: <text> в SVG на плане без подложки и
-  // HTML-карточка, когда включены «имена на плане». Хук на обеих один и тот же.
+  // #203: false означает отсутствие подписи, а не вторую SVG-реализацию.
+  // При true единственный публичный hook живёт на HTML-карточке.
   const disp = c._curSpaceCfg.settings || (c._curSpaceCfg.settings = {});
   const wasNames = disp.show_names;
   const planUrl = c._curSpaceCfg.plan_url;
@@ -60,11 +60,8 @@ const res = await page.evaluate(async () => {
     await c.updateComplete; await sleep(60); await c.updateComplete;
   };
   delete c._curSpaceCfg.plan_url; disp.show_names = false; await redraw();
-  const svgLabels = qa('text.rlabel[data-hp="room-label"]');
-  out.svgRoomLabelHooked = svgLabels.length > 0
-    && svgLabels.every((e) => !!e.getAttribute('data-id'));
-  out.svgRoomLabelFoundById = !!q('text[data-hp="room-label"][data-id="r1"]');
-  out.svgRoomLabelHasArea = q('text[data-hp="room-label"][data-id="r1"]')?.getAttribute('data-area') === 'living_room';
+  out.hiddenRoomLabelsAreAbsent = qa('[data-hp="room-label"]').length === 0
+    && qa('text.rlabel').length === 0;
   c._curSpaceCfg.plan_url = planUrl; disp.show_names = true; await redraw();
   const htmlLabel = q('div.roomlabel[data-hp="room-label"][data-id="r2"]');
   out.htmlRoomLabelHooked = !!htmlLabel;

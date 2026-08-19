@@ -2,6 +2,13 @@
 
 ## v1.65.0-beta.4 — 2026-08-19
 
+- Turning off **Show names** now removes room names completely in View, kiosk,
+  the static card and hidden isometric mode, while Plan still exposes the
+  existing draggable card for positioning. Re-enabling names restores its
+  saved layout. **Breaking styling-hook change:** the fallback SVG
+  `text.rlabel` / `.rlabel` public hook has been removed; enabled room names
+  use `[data-hp="room-label"].roomlabel`
+  ([#203](https://github.com/Matysh/houseplan-card/issues/203)).
 - Closing a virtual room boundary now inherits the real thickness of an
   adjacent wall even when another room splits that saved wall into smaller
   atomic stretches. A 20/22 cm wall therefore no longer receives an accidental

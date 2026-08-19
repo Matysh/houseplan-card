@@ -42,7 +42,7 @@ import { contentFingerprint } from './visual-continuity';
 import type { VirtualLightSnapshot } from './virtual-light-state';
 import { renderOpeningTunnelFills } from './render/opening-tunnels';
 import {
-  spaceModels, roomCenter, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, NORM_W,
+  spaceModels, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, NORM_W,
   GRID_STEP_N, GRID_PITCH, staticPassageOpenings,
   type Layout, type ContentItem,
 } from './space-geometry';
@@ -342,15 +342,6 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       ? { color: colors.glow_base.c, opacity: colors.glow_base.a, mode: 'glow' }
       : null);
   }
-  const staticSvgLabels = !space.bg && !disp.showNames
-    ? space.rooms.map((room) => {
-        const center = roomCenter(room);
-        return svg`<text class="rlabel" data-hp="room-label"
-          data-id=${room.id || nothing} data-area=${room.area || nothing}
-          x=${center[0]} y=${center[1]}>${room.name}</text>`;
-      })
-    : [];
-
   const planLightSources = resolvedLightSources(planHass, devs, null, o.virtualLights);
   const markers = devs.map((d) => {
     const p = markerPos(d, o.layout, o.cfg, defPos, space);
@@ -529,7 +520,6 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
           ? svg`<g class="glow-base-layer" aria-hidden="true" pointer-events="none">${glowBaseShapes}</g>`
           : nothing}
         ${passageGlowTunnels}
-        <g class="room-svg-labels" pointer-events="none">${staticSvgLabels}</g>
         ${wallUnion
           ? svg`<g class="wallbodies" style="--room-stroke:${wallStroke}">
               <path class="wallbody-fill" d="${wallUnion.d}"

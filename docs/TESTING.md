@@ -2081,7 +2081,7 @@ require hands on real hardware — they remain for the human pass.
       carries `data-hp="device"`, `data-id`, `data-entity` and `data-area`; a
       room `data-hp="room"` + `data-id` + `data-area`; a door/window/gate
       `data-hp="opening"` + `data-kind`; a decor shape `data-hp="decor"` +
-      `data-kind`; a room caption `data-hp="room-label"`; a floor tab
+      `data-kind`; a visible room card `data-hp="room-label"`; a floor tab
       `data-hp="space-tab"`. The ids are the ones in your config, not DOM
       positions — they survive a reload [auto: smoke_styling_hooks]
 - [ ] **Absent is absent**: a virtual marker has NO `data-entity` at all, and a
@@ -2092,7 +2092,7 @@ require hands on real hardware — they remain for the human pass.
       signal badges disappear and nothing else moves. Then target one marker by
       `[data-entity="…"]` and confirm it is the only one affected [manual]
 - [ ] **The static card carries the same hooks**: a `houseplan-space-card`
-      has `data-hp` on its rooms, room labels and markers (it draws no openings
+      has `data-hp` on its rooms, visible room labels and markers (it draws no openings
       and no decor, so those are simply absent), and it needs its OWN card-mod
       block — it is a different card with its own shadow root
       [auto: smoke_styling_hooks]
@@ -2359,6 +2359,20 @@ require hands on real hardware — they remain for the human pass.
 
 ## Hiding layers: decor, openings, virtual walls (docs/UX-MODES.md, dev, unreleased)
 
+- [ ] **Room names have one literal off state (#203)**: disable «Показывать
+      названия» in the live space dialog, save and reopen it. Full View, kiosk,
+      hidden isometric and `houseplan-space-card` contain no
+      `[data-hp="room-label"]` and no legacy `text.rlabel`. Plan temporarily
+      shows the same draggable HTML card and gear; returning to View hides it.
+      Cancel restores the previous setting, while re-enabling names restores
+      the saved card position and area icon
+      [auto: `smoke_hide_room_names`, `smoke_styling_hooks`].
+- [ ] **Each renderer can fail independently**: restoring the old full-card SVG
+      fallback, compact-card SVG fallback or hidden-isometric override makes
+      the dedicated smoke red
+      [mutation: `hidden-room-names-full-svg-fallback`,
+      `hidden-room-names-compact-svg-fallback`,
+      `hidden-room-names-iso-override`].
 - [ ] **«Скрыть декоративный слой»** (owner 2026-08-05): a space with lines,
       labels or furniture on it → space settings → Display → tick the box, save.
       The plan loses all of it, in View, in the Plan editor and in the Device

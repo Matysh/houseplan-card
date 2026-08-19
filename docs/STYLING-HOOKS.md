@@ -92,7 +92,6 @@ Everything in this table is **public API**.
 | --- | --- | --- | --- | --- |
 | Device marker | `div` (HTML, marker layer) | `device` | `data-id` = marker/device id, `data-entity` = primary entity id, `data-area` = area id, `data-binding-status` = `active` \| `ha-disabled` \| `orphaned` \| `unverified`, `data-disabled-reason` = `device` \| `entity` \| `all-entities` when applicable | `.dev` |
 | Room shape | `polygon` / `rect` / `path` (SVG) | `room` | `data-id` = room id, `data-area` = area id | `.room` |
-| Room name (no metrics) | `text` (SVG) | `room-label` | `data-id` = room id, `data-area` | `.rlabel` |
 | Room card (name + metrics) | `div` (HTML, marker layer) | `room-label` | `data-id` = room id, `data-area` | `.roomlabel` |
 | Door / window / gate | `g` (SVG) | `opening` | `data-id` = opening id, `data-kind` = `door` \| `window` \| `gate` | `.opening` |
 | Coloured tunnel inside a thick opening | `path` / `g` (SVG) | `opening-tunnel` | `data-id` = opening id, `data-kind` = `door` \| `window` \| `gate` | `.opening-tunnel` |
@@ -131,6 +130,13 @@ usually wants:
 
 Inside a room card: `.rlname` (the name) and `.rlmetrics` / `.rlm` (the
 metric row and one metric in it).
+
+**Breaking hook change in #203.** The former SVG fallback
+`text.rlabel[data-hp="room-label"]` has been removed. A space with
+`show_names: false` now emits no permanent room-label element at all, as the
+setting promises. Target the HTML room-card hook
+`[data-hp="room-label"].roomlabel` when room names are enabled. Plan editor
+temporarily renders the same HTML card so it can still be positioned.
 
 ### 3.2 Public state classes
 

@@ -405,6 +405,56 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'hidden-room-names-full-svg-fallback',
+    guard: 'node demo/smoke_hide_room_names.mjs',
+    because: 'show_names:false must remove every permanent label from the full flat renderer; '
+      + 'the smoke must reject the legacy centred SVG substitute independently of compact and iso',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "            ${this._renderOpeningTunnelFills(space, glowBase, 'glow-base')}\n"
+        + '            ${glowLayerVisible ? this._renderGlowLayer(space, disp) : nothing}',
+      replace: "            ${this._renderOpeningTunnelFills(space, glowBase, 'glow-base')}\n"
+        + '            ${!space.bg && !disp.showNames && !this._markup ? svg`<g class="room-svg-labels" pointer-events="none">${space.rooms.map((room) => {\n'
+        + '              const center = this._roomCenter(room);\n'
+        + '              return svg`<text class="rlabel" data-hp="room-label" data-id=${room.id || nothing}\n'
+        + '                data-area=${room.area || nothing} x=${center[0]} y=${center[1]}>${room.name}</text>`;\n'
+        + '            })}</g>` : nothing}\n'
+        + '            ${glowLayerVisible ? this._renderGlowLayer(space, disp) : nothing}',
+    }],
+  },
+  {
+    id: 'hidden-room-names-compact-svg-fallback',
+    guard: 'node demo/smoke_hide_room_names.mjs',
+    because: 'the compact card is an independent renderer and must not replace a disabled HTML '
+      + 'room card with the old SVG name even when the full card is correct',
+    patches: [{
+      file: 'src/space-render.ts',
+      find: '  spaceModels, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, NORM_W,',
+      replace: '  spaceModels, roomCenter, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, NORM_W,',
+    }, {
+      file: 'src/space-render.ts',
+      find: '        ${passageGlowTunnels}\n        ${wallUnion',
+      replace: '        ${passageGlowTunnels}\n'
+        + '        ${!space.bg && !disp.showNames ? svg`<g class="room-svg-labels" pointer-events="none">${space.rooms.map((room) => {\n'
+        + '          const center = roomCenter(room);\n'
+        + '          return svg`<text class="rlabel" data-hp="room-label" data-id=${room.id || nothing}\n'
+        + '            data-area=${room.area || nothing} x=${center[0]} y=${center[1]}>${room.name}</text>`;\n'
+        + '        })}</g>` : nothing}\n'
+        + '        ${wallUnion',
+    }],
+  },
+  {
+    id: 'hidden-room-names-iso-override',
+    guard: 'node demo/smoke_hide_room_names.mjs',
+    because: 'hidden isometric View must obey the same show_names:false contract instead of '
+      + 'forcing an HTML room card solely because the space has no backdrop',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '            ${disp.showNames || this._markup\n',
+      replace: '            ${disp.showNames || (iso && !space.bg) || this._markup\n',
+    }],
+  },
+  {
     id: 'plan-room-area-icon-hidden',
     guard: 'node demo/smoke_room_link.mjs',
     because: 'Plan обязан сохранять тот же состав name-row, что и View; возврат прежнего '

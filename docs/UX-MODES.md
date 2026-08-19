@@ -111,7 +111,7 @@ Header in View: space tabs, device count, zoom cluster. Nothing else.
 
 ### What a space may choose not to draw (2026-08-05)
 
-Three switches in the space's Display section decide how much of the plan is
+Four switches in the space's Display section decide how much of the plan is
 inked. All of them are **display only** — nothing is deleted, nothing changes
 meaning, and each layer stays visible in the editor that owns it, because a
 layer you cannot see is a layer you cannot edit.
@@ -119,6 +119,7 @@ layer you cannot see is a layer you cannot edit.
 | Setting | Off (default) | On | Always drawn in |
 |---|---|---|---|
 | `show_borders` — «Всегда отображать границы комнат» | in View, borders and dashed **virtual walls** are hidden | both are drawn | room borders: Plan; virtual walls: all editors |
+| `show_names` — «Показывать названия» | no room name/card is drawn in View, kiosk or the static card | the HTML room card is drawn | Plan, for positioning only |
 | `hide_decor` — «Скрыть декоративный слой» | decor is drawn | lines, shapes, labels and furniture are hidden | the Background editor |
 | `hide_openings` — «Скрыть проёмы» | doors, windows and gates are drawn | their symbols are hidden | the Plan editor |
 
@@ -127,6 +128,11 @@ layer you cannot see is a layer you cannot edit.
   only walls were a few floating dashed stretches. Every editor deliberately
   shows them regardless of the switch: hiding geometry while editing a plan,
   device placement or its underlay makes those modes visually ambiguous.
+- **`show_names: false` means no permanent fallback label.** View, kiosk,
+  hidden isometric and `houseplan-space-card` all omit the room name. Plan may
+  show the same HTML card temporarily so its saved position remains editable;
+  returning to View hides it again. Re-enabling names restores the saved
+  layout rather than creating a new one.
 - **Their geometry and their presentation are separate.** Every virtual span
   still ends on the real wall centreline. In View the thick wall body is
   painted over the dash ends, so they visually stop at its faces; editors paint
@@ -135,9 +141,10 @@ layer you cannot see is a layer you cannot edit.
   through it, the sun still enters at a window, a contact sensor still opens
   it, and the resize tool still anchors to it. Anything else would be a second
   meaning for one setting.
-- Both new switches store **nothing when off** (the key is omitted, as
+- Both hide switches store **nothing when off** (the key is omitted, as
   `bg_color` is), so a plan written before this reads back byte-for-byte.
-  Backend: `hide_decor` / `hide_openings`, strictly `bool`, both optional.
+  Backend: `show_names`, `hide_decor` and `hide_openings` are strictly `bool`
+  and optional.
 
 ## Devices — placement and marker configuration
 

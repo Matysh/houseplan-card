@@ -1328,7 +1328,6 @@ export const cardStyles = css`
     .stage .room,
     .stage .devlayer,
     .stage .opening,
-    .stage .rlabel,
     .stage .room-outline,
     .stage .wallbodies,
     .stage .opening-tunnels,
@@ -1394,13 +1393,6 @@ export const cardStyles = css`
     .opening-preview-dot {
       fill: var(--hp-open, #ff9800);
       pointer-events: none;
-    }
-    .rlabel {
-      fill: var(--hp-muted);
-      font-size: 15px;
-      font-weight: 600;
-      pointer-events: none;
-      text-anchor: middle;
     }
     .stage.edit .room {
       pointer-events: none;

@@ -10907,17 +10907,6 @@ class HouseplanCard extends LitElement {
     return svg`<g class="glow-base-layer" aria-hidden="true" pointer-events="none">${shapes}</g>` as unknown as TemplateResult;
   }
 
-  private _renderSvgRoomLabels(space: SpaceModel, disp: SpaceDisplay): TemplateResult {
-    if (this._renderProjection === 'iso' || space.bg || disp.showNames || this._markup)
-      return svg`` as unknown as TemplateResult;
-    return svg`<g class="room-svg-labels" pointer-events="none">${space.rooms.map((room) => {
-      const center = this._roomCenter(room);
-      return svg`<text class="rlabel" data-hp="room-label"
-        data-id=${room.id || nothing} data-area=${room.area || nothing}
-        x=${center[0]} y=${center[1]}>${room.name}</text>`;
-    })}</g>` as unknown as TemplateResult;
-  }
-
   private _renderWallBodies(disp: SpaceDisplay): TemplateResult {
     if (this._renderProjection === 'iso') return svg`` as unknown as TemplateResult;
     if (disp && !disp.showBorders && (this._mode === 'view' || this._mode === 'devices'))
@@ -15754,7 +15743,6 @@ class HouseplanCard extends LitElement {
             ${this._renderOpeningTunnelFills(space, roomFills)}
             ${this._renderGlowBaseRooms(space, glowBase)}
             ${this._renderOpeningTunnelFills(space, glowBase, 'glow-base')}
-            ${this._renderSvgRoomLabels(space, disp)}
             ${glowLayerVisible ? this._renderGlowLayer(space, disp) : nothing}
             ${this._renderSunRays(space)}
             ${this._editing ? svg`<g class="hp-editor-only-layer"
@@ -15822,7 +15810,7 @@ class HouseplanCard extends LitElement {
             ${this._renderVacuums(devs, view)}
             ${this._renderVacFit(view)}
             ${this._renderOpeningLocks(view)}
-            ${disp.showNames || (iso && !space.bg) || this._markup
+            ${disp.showNames || this._markup
               ? space.rooms.map((r) => this._renderRoomLabel(r, space, view, disp))
               : nothing}
             ${this._markup ? space.rooms.map((r) => this._renderRoomGear(r, space, view)) : nothing}
