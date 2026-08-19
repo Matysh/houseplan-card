@@ -391,6 +391,28 @@ export const MUTANTS = [
       replace: '      if (!replacingRemoved && prevPos && prevPos.s === targetSpaceId && !roomChanged) {',
     }],
   },
+  {
+    id: 'plan-room-area-icon-hidden',
+    guard: 'node demo/smoke_room_link.mjs',
+    because: 'Plan обязан сохранять тот же состав name-row, что и View; возврат прежнего '
+      + 'условия снова убирает Area icon и сдвигает подпись относительно anchor',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    const showAreaLink = !!r.area;',
+      replace: '    const showAreaLink = !this._markup && !!r.area;',
+    }],
+  },
+  {
+    id: 'plan-room-area-icon-navigates',
+    guard: 'node demo/smoke_room_link.mjs',
+    because: 'Area icon в Plan является частью drag-зоны, а не ссылкой; включение View-handlers '
+      + 'обязано одновременно проявиться навигацией и невозможностью начать drag с иконки',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    const areaLinkInteractive = !this._markup;',
+      replace: '    const areaLinkInteractive = true;',
+    }],
+  },
 ];
 
 // --- механика ---------------------------------------------------------------

@@ -873,7 +873,7 @@ export const cardStyles = css`
       pointer-events: none; /* draggable only in plan mode (rule below) */
       position: absolute;
       transform: translate(-50%, -50%);
-      font-size: calc(var(--icon-size, 2.5cqw) * 0.5 * var(--rl-scale, 1) * var(--rl-font, 1) * var(--rl-space, 1));
+      font-size: calc(var(--rl-icon-size, var(--icon-size, 2.5cqw)) * 0.5 * var(--rl-scale, 1) * var(--rl-font, 1) * var(--rl-space, 1));
       font-weight: 700;
       letter-spacing: 0.04em;
       white-space: nowrap;

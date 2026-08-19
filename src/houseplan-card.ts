@@ -5002,6 +5002,24 @@ class HouseplanCard extends LitElement {
     return this._view && this._view.w ? this._view : fitView(vb, this._stageAspect());
   }
 
+  /**
+   * Room labels must keep their View screen geometry while the Plan toolbar
+   * borrows height from the stage. Devices continue to scale with the active
+   * editor viewport; only the label core uses the hypothetical View viewport
+   * at the same zoom and total card height (#200).
+   */
+  private _roomLabelReferenceViewWidth(view: { w: number }): number {
+    if (!this._markup) return view.w;
+    const stage = this._stageEl;
+    const chrome = this.renderRoot.querySelector('.editorchrome') as HTMLElement | null;
+    if (!stage || stage.clientWidth <= 0 || stage.clientHeight <= 0) return view.w;
+    const totalHeight = stage.clientHeight + (chrome?.getBoundingClientRect().height || 0);
+    if (totalHeight <= 0) return view.w;
+    return this._viewForModeTarget(
+      this._zoom, undefined, undefined, stage.clientWidth, totalHeight,
+    ).w;
+  }
+
   /** Screen (sx,sy relative to the scene, px) → vb coordinates per the current view. */
   private _screenToVb(sx: number, sy: number): number[] {
     const s = this._stageEl;
@@ -15799,7 +15817,7 @@ class HouseplanCard extends LitElement {
                  every marker to a dot. Same expression as the static
                  space-card, so the two renderers agree. The per-device
                  multiplier and the kiosk scales still feed --dev-size. */}
-          <div class="devlayer" style="--icon-size:${iconCqw(iconPct, space, view.w, this._kiosk ? this._kioskScale.icon : 1).toFixed(3)}cqw;--rl-font:${this._kiosk ? this._kioskScale.font : 1}">
+          <div class="devlayer" style="--icon-size:${iconCqw(iconPct, space, view.w, this._kiosk ? this._kioskScale.icon : 1).toFixed(3)}cqw;--rl-icon-size:${iconCqw(iconPct, space, this._roomLabelReferenceViewWidth(view), this._kiosk ? this._kioskScale.icon : 1).toFixed(3)}cqw;--rl-font:${this._kiosk ? this._kioskScale.font : 1}">
             ${devs.map((d) => this._renderDevice(d, view, showLqi))}
             ${this._renderVacuums(devs, view)}
             ${this._renderVacFit(view)}
@@ -17134,6 +17152,10 @@ class HouseplanCard extends LitElement {
         }
       }
     }
+    // Plan keeps the same name-row geometry as the other modes, but the Area
+    // icon remains part of the draggable label instead of becoming a link.
+    const showAreaLink = !!r.area;
+    const areaLinkInteractive = !this._markup;
     return html`<div class="roomlabel ${rows.length ? 'card' : ''}"
       data-hp="room-label" data-id=${r.id || nothing} data-area=${r.area || nothing}
       style="left:${left}%;top:${top}%;color:${disp.color};opacity:${op};--rl-scale:${k};--rl-space:${disp.cardFontScale};--rl-name:${clampScale(r.settings?.name_scale)};--rl-meta:${clampScale(r.settings?.label_scale)}"
@@ -17141,11 +17163,15 @@ class HouseplanCard extends LitElement {
       @pointermove=${(e: PointerEvent) => this._labelMove(e, r, space.id)}
       @pointerup=${() => this._labelUp(r)}
       @pointercancel=${() => this._labelUp(r)}
-    ><span class="rlname">${r.name || (this._markup ? this._t('room.unnamed') : '')}${!this._markup && r.area
+    ><span class="rlname">${r.name || (this._markup ? this._t('room.unnamed') : '')}${showAreaLink
         ? html`<ha-icon class="rlgo" icon="mdi:open-in-new"
-            title=${this._t('room.open_area')}
-            @click=${(e: Event) => { e.stopPropagation(); this._clickRoom(r); }}
-            @pointerdown=${(e: Event) => e.stopPropagation()}></ha-icon>`
+            title=${areaLinkInteractive ? this._t('room.open_area') : nothing}
+            @click=${areaLinkInteractive
+              ? (e: Event) => { e.stopPropagation(); this._clickRoom(r); }
+              : nothing}
+            @pointerdown=${areaLinkInteractive
+              ? (e: Event) => e.stopPropagation()
+              : nothing}></ha-icon>`
         : nothing}</span>
       ${rows.length ? html`<span class="rlmetrics">${rows}</span>` : nothing}
       ${this._mode === 'plan'

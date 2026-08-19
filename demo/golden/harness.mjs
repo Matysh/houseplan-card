@@ -163,6 +163,24 @@ export function prepareGoldenFixture(scenario) {
     if (!space) throw new Error(`golden override references missing space: ${scenario.space}`);
     return space;
   };
+  if (scenario.roomLabelParity) {
+    const space = requireSpace();
+    if (space.id !== 'golden-lighting' || space.rooms.length !== 2)
+      throw new Error(`golden roomLabelParity requires the two-room lighting fixture: ${space.id}`);
+    space.settings = {
+      ...(space.settings || {}),
+      show_names: true,
+      label_temp: true,
+      label_hum: true,
+      label_lqi: true,
+      label_light: true,
+    };
+    fixture.layout = {
+      ...(fixture.layout || {}),
+      'rl_light-left': { s: space.id, x: 0.28, y: 0.24 },
+      'rl_light-right': { s: space.id, x: 0.72, y: 0.24 },
+    };
+  }
   if (scenario.deviceName) {
     if (!scenario.deviceId || !fixture.devices?.[scenario.deviceId])
       throw new Error(`golden deviceName references missing device: ${scenario.deviceId || '<empty>'}`);
@@ -398,6 +416,14 @@ export async function prepareGoldenScenario(page, scenario) {
       card._setMode(scenario.mode);
       await card.updateComplete;
       await settleMode(card);
+    }
+    if (scenario.roomLabelParity) {
+      const labels = [...card.renderRoot.querySelectorAll('.roomlabel')];
+      if (labels.length !== 2
+          || labels.some((label) => !label.querySelector('.rlgo') || !label.querySelector('.rlmetrics'))
+          || labels.some((label) => !label.querySelector('.rlmetrics')?.textContent?.trim())) {
+        throw new Error(`golden room-label parity core is incomplete: ${scenario.id}`);
+      }
     }
     if (scenario.projection === 'iso' && typeof card._setProjection === 'function') {
       card._setProjection('iso');

@@ -929,10 +929,13 @@ separately promised workflows:
       popover (icon ×0.5–3, room-card font; localStorage per device);
       cycle: N auto-advances spaces with a 60 s pause after any touch;
       manual: walk the real wall tablet [auto+manual]
-- [ ] Room link icon (v1.40.1): clicking empty room space in View does
-      nothing (default cursor); an open-in-new icon after the room name (rooms
-      with an HA area, View only) navigates to the area; no icon in editors or
-      on area-less rooms [auto: smoke_room_link]
+- [ ] Room link icon (v1.40.1, #200 parity): clicking empty room space in View
+      does nothing (default cursor); an open-in-new icon after the room name
+      appears for rooms with an HA area in View and Plan. In View it navigates
+      to the area; in Plan it has no separate action/title and remains part of
+      the draggable room label. Its name/metrics geometry relative to the
+      saved label anchor matches View within 0.5 CSS px at DPR 1/2 in light and
+      dark themes. Area-less rooms have no icon [auto: smoke_room_link]
 - [ ] Smart guides (v1.40.0): while drawing (outline, cut, decor shapes) or
       dragging (icons, room cards, decor) dashed accent guides appear from the
       nearest object sharing the X and/or Y (max two, with a dot at the

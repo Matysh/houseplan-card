@@ -2,6 +2,11 @@
 
 ## v1.65.0-beta.4 — 2026-08-19
 
+- Room labels in the Plan editor now keep the same name, Home Assistant Area
+  icon and state-row geometry as View, so switching modes no longer shifts a
+  carefully positioned label. The icon still opens the Area only in View; in
+  Plan it remains part of the label's drag surface
+  ([#200](https://github.com/Matysh/houseplan-card/issues/200)).
 - New and directly edited openings in independent walls now keep a physical
   jamb at each wall end equal to half that wall's thickness. Placement, drag,
   rebind and length edits share the same limit and explain a rejected edit,

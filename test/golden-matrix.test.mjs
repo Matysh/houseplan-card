@@ -74,6 +74,11 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
       assert.equal(scenario.mode, 'plan', scenario.id);
       assert.equal(scenario.capture, 'page', scenario.id);
     }
+    if (scenario.roomLabelParity) {
+      assert.equal(scenario.space, 'golden-lighting', scenario.id);
+      assert.equal(['view', 'plan'].includes(scenario.mode), true, scenario.id);
+      assert.equal(scenario.capture, 'page', scenario.id);
+    }
     if (scenario.wallJunctionPreview) {
       assert.equal(scenario.wallJunctions, true, scenario.id);
       assert.equal(scenario.mode, 'plan', scenario.id);
@@ -100,6 +105,24 @@ test('golden matrix covers required geometry, rendering and adaptive surfaces', 
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.mode)).has('decor'), true);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.theme)).has('light'), true);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.theme)).has('dark'), true);
+});
+
+test('room-label parity goldens pair View and Plan in light and dark themes', () => {
+  const scenarios = GOLDEN_SCENARIOS.filter((scenario) => scenario.roomLabelParity);
+  assert.deepEqual(scenarios.map(({ mode, theme }) => `${mode}-${theme}`).sort(), [
+    'plan-dark', 'plan-light', 'view-dark', 'view-light',
+  ]);
+  for (const scenario of scenarios) {
+    const fixture = prepareGoldenFixture(scenario);
+    const space = fixture.config.spaces.find((item) => item.id === scenario.space);
+    assert.equal(space.settings.show_names, true);
+    assert.equal(space.settings.label_temp, true);
+    assert.equal(space.settings.label_lqi, true);
+    assert.equal(space.settings.label_light, true);
+    assert.deepEqual(Object.keys(fixture.layout).filter((id) => id.startsWith('rl_')).sort(), [
+      'rl_light-left', 'rl_light-right',
+    ]);
+  }
 });
 
 test('washer lifecycle goldens pair active and idle snapshots of one composite fixture', () => {
@@ -211,7 +234,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 30);
+  assert.equal(GOLDEN_MATRIX_VERSION, 31);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
