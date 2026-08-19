@@ -48,3 +48,18 @@ test('the shared component keeps its API and contains no nested native color pic
   assert.equal((card.match(/<hp-color-opacity/g) || []).length, 8);
   assert.equal((card.match(/\.pickerLabels=\$\{this\._colorPickerLabels\}/g) || []).length, 8);
 });
+
+test('the hue range exposes one cyclic spectrum without restyling other ranges', () => {
+  const component = readFileSync(new URL('../src/hp-color-opacity.ts', import.meta.url), 'utf8');
+  const spectrum = component.match(/\.hue-range\s*\{[\s\S]*?\n\s*\}/)?.[0] || '';
+  assert.match(spectrum, /--hp-picker-hue-track:\s*linear-gradient\(to right/);
+  for (const stop of ['#f00 0%', '#ff0 16.667%', '#0f0 33.333%', '#0ff 50%',
+    '#00f 66.667%', '#f0f 83.333%', '#f00 100%']) assert.ok(spectrum.includes(stop), stop);
+  assert.match(component, /\.hue-range::\-webkit-slider-runnable-track\s*\{[\s\S]*?height:\s*10px;[\s\S]*?background:\s*var\(--hp-picker-hue-track\);/);
+  assert.match(component, /\.hue-range::\-moz-range-track\s*\{[\s\S]*?height:\s*10px;[\s\S]*?background:\s*var\(--hp-picker-hue-track\);/);
+  assert.match(component, /\.hue-range::\-moz-range-progress\s*\{[\s\S]*?background:\s*transparent;/);
+  assert.match(component, /@media \(forced-colors:\s*active\)[\s\S]*?background:\s*Canvas;/);
+  assert.match(component, /class="hue-range" type="range" min="0" max="359" step="1"/);
+  const commonRange = component.match(/input\[type='range'\]\s*\{[\s\S]*?\n\s*\}/)?.[0] || '';
+  assert.doesNotMatch(commonRange, /linear-gradient|hp-picker-hue-track/);
+});

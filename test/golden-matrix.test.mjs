@@ -209,7 +209,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 26);
+  assert.equal(GOLDEN_MATRIX_VERSION, 27);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -225,6 +225,16 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.equal(scenario.allLightsOff, true);
   assert.equal(scenario.sunRayPixels.minPixels >= 500, true);
   assert.equal(scenario.sunRayPixels.minChannelDelta >= 4, true);
+});
+
+test('the open color picker golden covers dark mobile and light desktop themes', () => {
+  const scenarios = GOLDEN_SCENARIOS.filter((item) => item.dialog === 'decor-color');
+  assert.deepEqual(scenarios.map(({ id, language, theme, viewport }) => ({
+    id, language, theme, width: viewport.width,
+  })), [
+    { id: 'decor-color-popover-mobile-ru', language: 'ru', theme: 'dark', width: 390 },
+    { id: 'decor-color-popover-desktop-en', language: 'en', theme: 'light', width: 760 },
+  ]);
 });
 
 test('value badge golden covers four positions and bottom badge with separate LQI', () => {

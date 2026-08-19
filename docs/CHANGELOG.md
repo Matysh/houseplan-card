@@ -2,6 +2,10 @@
 
 ## v1.65.0-beta.3 — 2026-08-19
 
+- The House Plan color picker now draws the full spectrum directly on the Hue
+  track, so the target colour family is visible before moving the slider. Mouse,
+  touch and keyboard values remain unchanged
+  ([#192](https://github.com/Matysh/houseplan-card/issues/192)).
 - Editor color controls now open a single House Plan picker with saturation,
   brightness, hue, exact HEX and opacity together. The nested browser color
   dialog is gone, while existing room, space, decor and Glow values keep their
