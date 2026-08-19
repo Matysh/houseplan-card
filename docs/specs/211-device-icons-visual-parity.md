@@ -40,8 +40,10 @@ golden, поэтому golden оказался зелёным, не доказы
 
 1. `.device-core` использует `border-radius: 28%`, тогда как core каждого
    нормативного Icon-состояния — круг `80 × 80`, `rx=40`.
-2. `ha-icon` получает viewport `0.62 × core`; пакет использует `40 × 40` внутри
-   core `80 × 80`, то есть `0.5 × core` до внутренних отступов самого glyph.
+2. `ha-icon` получает viewport `0.62 × core`, из-за чего общий reference glyph
+   заметно крупнее SVG. Архив не задаёт универсальный viewport для всех MDI:
+   измеренный painted bounding box общего glyph равен примерно `0.417 × core`,
+   а Lock/Unlock — `0.333…0.4375 × core`.
 3. value-section высотой `0.7875 × core` имеет радиус лишь `0.18 × core`, а
    нормативный badge — pill с радиусом, равным половине его высоты.
 4. shell всегда имеет светлый stroke `#BCBCBC`; Dark Default No Blur требует
@@ -59,8 +61,8 @@ golden, поэтому golden оказался зелёным, не доказы
 Порядок приоритета:
 
 1. решения владельца, уже записанные в #179;
-2. `SPECIFICATION.md`, `DEVELOPER_HANDOFF.md`, `ACTIVE_ANIMATION_SPEC.md` и
-   `COMPARISON_NOTES.md` архива #179;
+2. `SPECIFICATION.md`, `DEVELOPER_HANDOFF.md` и
+   `ACTIVE_ANIMATION_SPEC.md` архива #179;
 3. соответствующий SVG архива для темы, состояния и layout;
 4. `docs/specs/179-device-icons-redesign.md`;
 5. текущая реализация — только для поведения, которое источники выше не меняют.
@@ -120,13 +122,15 @@ golden, поэтому golden оказался зелёным, не доказы
 |---|---|
 | Icon core | круг; width = height = `1.0`; radius = `0.5` |
 | Icon shell | круг; diameter `101.5 / 80 = 1.26875`; core и shell концентричны |
-| MDI viewport | width = height = `0.5`; path сохраняет собственные внутренние отступы |
+| MDI glyph | painted bounding box того же reference glyph совпадает с соответствующим SVG; единого ratio для разных MDI нет |
 | Text core | pill высотой `1.0`; radius = `0.5`; ширина зависит от полного текста |
 | Double value core | pill высотой `0.7875`; radius = `0.39375`; ширина по полному значению и padding SVG |
 | Selected/Focus ring | отдельный круглый слой; не заменяет внешний shell и не превращает core в rounded-square |
 | Hit area | минимум 44×44 CSS px, центрирована по icon core и не меняет визуальные bounds |
 
 Допуск для измеримых width/height/radius на 32/56/96 px — не более 0.5 CSS px.
+Для glyph сравнивается painted path одного и того же MDI/reference glyph, а не
+bounding box элемента `ha-icon`; anti-aliasing оценивается side-by-side.
 Сохранённая координата остаётся центром icon core при любом layout и стороне
 value badge.
 
@@ -182,9 +186,9 @@ subscription, ResizeObserver или per-frame JS.
 
 Это исправление внешнего вида, а не взаимодействия. View и киоск остаются
 touch-first: click/tap, pan/pinch, long press, keyboard Enter/Space, secure
-confirmation и dialog focus return должны пройти без регрессий. Device editor
-остаётся desktop-first / touch best effort. Static card и preview не получают
-интерактивность или tab-stop.
+confirmation и dialog focus return должны пройти без регрессий.
+**Touch editor: best effort / intentionally degraded.** Device editor остаётся
+desktop-first. Static card и preview не получают интерактивность или tab-stop.
 
 Форма/decoration не меняют pointer bounds. Unavailable остаётся кликабельным,
 несмотря на отсутствие визуального hover.
@@ -238,9 +242,9 @@ Code review обязан посмотреть side-by-side результат г
 
 ## 12. Acceptance criteria
 
-- [ ] **AC1 — круглая геометрия.** Icon core круглый, MDI viewport равен
-      `0.5 × core`, shell/core ratio `1.26875`, value section является pill;
-      32/56/96 укладываются в допуск §7.1.
+- [ ] **AC1 — круглая геометрия.** Icon core круглый, painted bounding box
+      reference glyph совпадает с прямым SVG, shell/core ratio `1.26875`, value
+      section является pill; 32/56/96 укладываются в допуск §7.1.
       **Доказательство:** computed-style browser smoke + side-by-side golden.
 - [ ] **AC2 — theme parity.** Light/Dark Default используют точные core/glyph,
       shell stroke/opacity и package shadows; ни один marker не создаёт
@@ -267,8 +271,8 @@ Code review обязан посмотреть side-by-side результат г
       pulse, activity, actions, Glow и vacuum semantics не изменены.
       **Доказательство:** unit suite + diff inspection.
 - [ ] **AC9 — failing-before-fix guard.** Новые geometry/state assertions
-      доказанно падают на `v1.65.0-beta.6` как минимум из-за `28%`, `0.62`,
-      value radius и Dark shell.
+      доказанно падают на `v1.65.0-beta.6` как минимум из-за `28%`,
+      переразмеренного reference glyph при `0.62`, value radius и Dark shell.
       **Доказательство:** запись mutation/before-fix результата в handoff.
 - [ ] **AC10 — release artifacts.** Оба changelog описывают исправление #211;
       screenshots/visual matrix актуальны, а golden принимаются только по
@@ -351,3 +355,7 @@ Golden baseline меняется отдельным допустимым ком�
 5. Существующие ошибочные baselines не удаляются до появления полного нового
    reviewed Linux artefact; локальный actual используется для ревью, не для
    принятия эталона.
+6. `0.5 × core` — стартовый технический размер viewport для common MDI, потому
+   что он воспроизводит painted bbox около `0.417 × core` у reference glyph.
+   Это не нормативная константа архива: реализация и код-ревью вправе
+   скорректировать viewport по прямому SVG/runtime сравнению, не меняя ТЗ.
