@@ -137,6 +137,7 @@ const res = await page.evaluate(async () => {
   c._markerDialog = { ...c._markerDialog, name: 'Passive lamp', bindingMode: 'virtual',
     binding: 'virtual', lightRole: 'always', lightRoleTouched: true };
   await c.updateComplete;
+  c._setMarkerGlowMode('fixed'); await c.updateComplete;
   const glowRadios = [...sr().querySelectorAll('hp-dialog input[name="marker-glow-mode"]')];
   out.passiveLiveModeDisabled = glowRadios.find((radio) => radio.value === 'auto')?.disabled === true;
   out.passiveManualModesEnabled = glowRadios.filter((radio) => radio.value !== 'auto')
@@ -151,14 +152,18 @@ const res = await page.evaluate(async () => {
     && passiveFields.glow_color?.bri === 0.42;
   c._markerDialog = null; await c.updateComplete;
 
-  // --- 9) general settings: opacity sliders take the ha branch too -------
+  // --- 9) #180: general colour opacity now belongs to the shared picker ---
   c._openSettingsDialog(); await c.updateComplete;
-  out.gsHaSliders = sr().querySelectorAll('hp-dialog ha-slider').length >= 9;
-  const gsl = sr().querySelector('hp-dialog ha-slider');
-  gsl.value = 55;
-  gsl.dispatchEvent(new Event('input', { bubbles: true }));
+  const generalPickers = [...sr().querySelectorAll('hp-dialog hp-color-opacity')];
+  out.gsUnifiedPickers = generalPickers.length === 12
+    && generalPickers.filter((picker) => picker.showOpacity).length === 11;
+  out.gsNoLegacyHaOpacitySliders = sr().querySelectorAll('hp-dialog ha-slider').length === 0;
+  generalPickers[0].dispatchEvent(new CustomEvent('hp-color-opacity-change', {
+    detail: { color: '#123456', opacity: 0.55 }, bubbles: true, composed: true,
+  }));
   await c.updateComplete;
-  out.gsUpstream = Math.round((Object.values(c._settingsDialog.colors)[0].a) * 100) === 55;
+  out.gsUpstream = Object.values(c._settingsDialog.colors)
+    .some((value) => value.c === '#123456' && Math.round(value.a * 100) === 55);
   c._settingsDialog = null; await c.updateComplete;
   return out;
 });

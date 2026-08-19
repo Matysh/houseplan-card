@@ -10,6 +10,15 @@ const res = await page.evaluate(async () => {
     while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
     return active;
   };
+  const composedContains = (root, target) => {
+    let node = target;
+    while (node) {
+      if (node === root) return true;
+      const tree = node.getRootNode?.();
+      node = node.parentNode || (tree instanceof ShadowRoot ? tree.host : null);
+    }
+    return false;
+  };
 
   // A11Y-02: the shared native fallback carries the same modal/focus contract
   // that ha-dialog supplies in Home Assistant.
@@ -26,7 +35,9 @@ const res = await page.evaluate(async () => {
     && native?.getAttribute('aria-modal') === 'true'
     && !!titleId && !!hp.shadowRoot.getElementById(titleId)?.textContent.trim();
   let active = deepActive();
-  out.initialFocus = !!active && (hp.contains(active) || hp.shadowRoot.contains(active));
+  // Unified colour controls put the first focus target in their own shadow
+  // root. Test composed ownership, not only light-DOM containment.
+  out.initialFocus = !!active && composedContains(hp, active);
   const focusable = [...hp.querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled])')];
   const last = focusable.at(-1);
   last?.focus();
