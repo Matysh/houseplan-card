@@ -1272,7 +1272,7 @@ class HouseplanCard extends LitElement {
     key: string;
     value: {
       occluders: LightSegment[]; floor: number[][][]; fingerprint: string;
-      masonryGeometry: any;
+      masonryGeometry: any; opaqueBodies: number[][][];
     };
   } | null = null;
   /** Freeze the SVG blur while a pinch/pan emits animation frames, then adopt
@@ -14628,10 +14628,10 @@ class HouseplanCard extends LitElement {
    * The result depends only on the plan, so it is shared by every lamp.
    */
   private _lightBarriers(
-    space: SpaceModel, polys: { r: RoomCfg; poly: number[][] }[], physical: number[][][],
+    space: SpaceModel, polys: { r: RoomCfg; poly: number[][] }[],
   ): {
     occluders: LightSegment[]; floor: number[][][]; fingerprint: string;
-    masonryGeometry: any;
+    masonryGeometry: any; opaqueBodies: number[][][];
   } {
     // Gates are door-like: their different symbol must not change how light
     // crosses the clear opening.
@@ -14737,6 +14737,11 @@ class HouseplanCard extends LitElement {
       floor: polys.map((x) => x.poly),
       fingerprint,
       masonryGeometry: masonry?.geom || [],
+      // The source guard must fail dark against the same type/floor-filtered
+      // bodies used to build the light masonry. The ordinary render bodies are
+      // cut by every hosted opening, including opaque windows and exterior
+      // doors, and therefore cannot be used when the boolean geometry is empty.
+      opaqueBodies: lightPhysical,
     };
     this._lightBarrierCache = { key: cacheKey, value };
     return value;
@@ -14754,10 +14759,9 @@ class HouseplanCard extends LitElement {
       this._forgetGlowSpace(space.id);
       return svg`` as unknown as TemplateResult;
     }
-    const physical = this._physicalBodiesR(space);
     const {
-      occluders, floor, fingerprint, masonryGeometry,
-    } = this._lightBarriers(space, polys, physical);
+      occluders, floor, fingerprint, masonryGeometry, opaqueBodies,
+    } = this._lightBarriers(space, polys);
     // Resolve against the whole plan: a controller and its passive lamp may
     // legitimately live in different spaces. Ownership is filtered afterwards.
     const resolvedSources = resolvedLightSources(
@@ -14812,7 +14816,7 @@ class HouseplanCard extends LitElement {
       // Exterior opening tunnels deliberately remain in `masonryGeometry`,
       // so placing the source there suppresses the entire pool rather than
       // lighting only the indoor half of the tunnel.
-      if (pointInOpaquePlanBody(sourcePoint, masonryGeometry, physical)) {
+      if (pointInOpaquePlanBody(sourcePoint, masonryGeometry, opaqueBodies)) {
         // This placement cannot produce a valid previous-frame fade: the old
         // clip belongs to a different position. Remove its transition state as
         // well, rather than leaving a timer for a DOM node no longer rendered.

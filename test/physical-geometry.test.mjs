@@ -177,6 +177,24 @@ test('the source guard combines wall masonry with partitions and columns', () =>
   assert.equal(pointInOpaquePlanBody([20, 5], masonry, [partition]), false, 'clear floor');
 });
 
+test('empty boolean masonry falls back to light-policy partition bodies', () => {
+  const space = {
+    room_drafts: [], wall_columns: [],
+    partitions: [{ id: 'host', a: [0, 0], b: [10, 0], cm: 10 }],
+  };
+  const hostedSlot = { hostId: 'host', a: [4, 0], b: [6, 0], depth: 2 };
+  const drawnBodies = physicalBodyParts(space, 5, 1, 1e-6, [hostedSlot]).all;
+  const opaqueWindowBodies = physicalBodyParts(space, 5, 1, 1e-6, []).all;
+  const source = [5, 0];
+
+  assert.equal(pointInOpaquePlanBody(source, [], drawnBodies), false,
+    'the presentation body has a slot for every hosted opening');
+  assert.equal(pointInOpaquePlanBody(source, [], opaqueWindowBodies), true,
+    'a window/exterior opening stays opaque when boolean masonry is unavailable');
+  assert.equal(pointInOpaquePlanBody(source, [], drawnBodies), false,
+    'an interior passage remains a valid transparent source position');
+});
+
 test('exact column overlays are rejected but rotated square bodies remain distinct', () => {
   const square = { id: 'a', shape: 'square', center: [1, 1], cm: 30, angle: 0 };
   assert.equal(sameColumnPlacement(square, { ...square, id: 'b', angle: 90 }, 1e-9), true);

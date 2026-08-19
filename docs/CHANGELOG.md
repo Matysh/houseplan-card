@@ -38,6 +38,10 @@
   editor's visual snap guide keeps its physical gap across the opening
   ([#132](https://github.com/Matysh/houseplan-card/issues/132),
   [#185](https://github.com/Matysh/houseplan-card/issues/185)).
+- Glow now remains fail-dark if wall boolean geometry cannot be built: a light
+  source inside a partition-hosted window or exterior opening stays suppressed,
+  while valid interior passages remain transparent
+  ([#187](https://github.com/Matysh/houseplan-card/issues/187)).
 - Collinear exterior walls now change thickness exactly at their saved
   breakpoint. After splitting a room, a 10 cm wall therefore keeps its full
   depth up to the divider without leaking onto an adjacent zero-thickness
