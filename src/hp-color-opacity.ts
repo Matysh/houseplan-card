@@ -233,6 +233,29 @@ export class HpColorOpacity extends LitElement {
     }
     .hue-range {
       accent-color: var(--hp-picker-hue, #f00);
+      --hp-picker-hue-track: linear-gradient(to right,
+        #f00 0%, #ff0 16.667%, #0f0 33.333%, #0ff 50%,
+        #00f 66.667%, #f0f 83.333%, #f00 100%);
+    }
+    .hue-range::-webkit-slider-runnable-track {
+      height: 10px;
+      box-sizing: border-box;
+      border: 1px solid var(--divider-color, #666);
+      border-radius: 999px;
+      background: var(--hp-picker-hue-track);
+    }
+    .hue-range::-moz-range-track {
+      height: 10px;
+      box-sizing: border-box;
+      border: 1px solid var(--divider-color, #666);
+      border-radius: 999px;
+      background: var(--hp-picker-hue-track);
+    }
+    .hue-range::-moz-range-progress {
+      height: 10px;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
     }
     input[type='text'],
     input[type='number'] {
@@ -275,6 +298,16 @@ export class HpColorOpacity extends LitElement {
     }
     @media (prefers-reduced-motion: reduce) {
       .picker { transition: none !important; }
+    }
+    @media (forced-colors: active) {
+      .hue-range::-webkit-slider-runnable-track {
+        border-color: ButtonText;
+        background: Canvas;
+      }
+      .hue-range::-moz-range-track {
+        border-color: ButtonText;
+        background: Canvas;
+      }
     }
   `;
 

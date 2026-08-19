@@ -85,9 +85,14 @@
 - [ ] The color-only Glow consumer keeps the same picker without an opacity row,
       and native/fallback floating surfaces remain mutually exclusive with help
       [auto: `smoke_help_affordance.mjs`].
-- [ ] The existing dark mobile decor color golden is reviewed from the complete
-      Linux artifact before a beta; baseline acceptance is not part of the
-      implementation loop [golden: `decor-color-popover-mobile-ru`].
+- [ ] The Hue range keeps `0…359`, step 1 and its existing input events while its
+      WebKit/Blink and Gecko tracks expose the same cyclic spectrum; forced-colors
+      falls back to a system track [unit: `color-picker.test.mjs`, auto:
+      `smoke_color_picker.mjs`].
+- [ ] The dark mobile and light desktop open-picker goldens are reviewed from the
+      complete Linux artifact before a beta; baseline acceptance is not part of
+      the implementation loop [golden: `decor-color-popover-mobile-ru`,
+      `decor-color-popover-desktop-en`].
 
 
 ## Open passage (#157)

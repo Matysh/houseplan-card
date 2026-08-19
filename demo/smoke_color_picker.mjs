@@ -48,6 +48,11 @@ const result = await page.evaluate(async () => {
     && surface().scrollWidth <= surface().clientWidth;
 
   const hue = ranges()[0];
+  const hueStyle = getComputedStyle(hue);
+  out.hueTrackContract = hue?.classList.contains('hue-range')
+    && hue.min === '0' && hue.max === '359' && hue.step === '1'
+    && hueStyle.getPropertyValue('--hp-picker-hue-track').includes('linear-gradient')
+    && hue.getBoundingClientRect().height >= 40;
   ranges()[1].value = '100';
   ranges()[1].dispatchEvent(new Event('input', { bubbles: true, composed: true }));
   ranges()[2].value = '100';
