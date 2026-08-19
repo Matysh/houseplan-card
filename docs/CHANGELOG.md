@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.65.0-beta.5 — 2026-08-19
+## v1.65.0-beta.6 — 2026-08-19
 
 - Device markers now use the designer-supplied shared shell/core system in
   light and dark themes, with distinct focus, selected, locked, unlocked,
@@ -28,6 +28,9 @@
   fragments, real topology boundaries and ambiguous thickness changes remain
   lossless; Preview, Apply and server Undo keep their existing flow
   ([#198](https://github.com/Matysh/houseplan-card/issues/198)).
+
+## v1.65.0-beta.5 — 2026-08-19
+
 - Turning off **Show names** now removes room names completely in View, kiosk,
   the static card and hidden isometric mode, while Plan still exposes the
   existing draggable card for positioning. Re-enabling names restores its
