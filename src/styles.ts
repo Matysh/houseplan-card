@@ -1859,13 +1859,26 @@ export const cardStyles = css`
       position: absolute;
       /* per-device multiplier on top of the card-wide icon size */
       --dev-size: calc(var(--icon-size, 2.5cqw) * var(--dev-scale, 1));
-      /* 101.5/80 shell/core ratio includes the 1 px stroke on both sides. */
-      --device-shell-pad: max(0px, calc(var(--dev-size) * 0.134375 - 1px));
+      /* 101.5/80 is the package shell/core ratio, including its stroke. */
       --device-shell-size: calc(var(--dev-size) * 1.26875);
+      --device-shell-stroke-ratio: 0.01875;
+      --device-shell-border-width: max(1px, calc(var(--dev-size) * var(--device-shell-stroke-ratio)));
+      --device-shell-pad: max(0px, calc(var(--dev-size) * 0.134375 - var(--device-shell-border-width)));
       --device-core-bg: var(--card-background-color, #fff);
       --device-core-fg: var(--primary-text-color, #252525);
       --device-core-bg: light-dark(#fff, #252525);
       --device-core-fg: light-dark(#252525, #fff);
+      --device-face-bg: var(--device-core-bg);
+      --device-face-fg: var(--device-core-fg);
+      --device-shell-base-stroke: light-dark(#BCBCBC, rgb(37 37 37 / 75%));
+      --device-shell-stroke: var(--device-shell-base-stroke);
+      --device-shell-shadow:
+        0 calc(var(--dev-size) * .025) calc(var(--dev-size) * .05) rgb(37 40 45 / 12%),
+        0 calc(var(--dev-size) * .1) calc(var(--dev-size) * .175)
+          calc(var(--dev-size) * -.025) rgb(37 40 45 / 18%);
+      --device-core-inset-shadow: 0 0 0 0 transparent;
+      --device-ring-color: transparent;
+      --device-ring-width: 0px;
       /* The saved point is the exact centre of the icon core. */
       width: var(--dev-size);
       height: var(--dev-size);
@@ -1883,11 +1896,26 @@ export const cardStyles = css`
     }
     .dev.theme-light {
       --device-core-bg: #fff;
-      --device-core-fg: #252525;
+      --device-core-fg: #000;
+      --device-shell-base-stroke: #BCBCBC;
+      --device-shell-stroke: var(--device-shell-base-stroke);
+      --device-shell-shadow:
+        0 calc(var(--dev-size) * .025) calc(var(--dev-size) * .05) rgb(37 40 45 / 12%),
+        0 calc(var(--dev-size) * .1) calc(var(--dev-size) * .175)
+          calc(var(--dev-size) * -.025) rgb(37 40 45 / 18%);
+      --device-core-inset-shadow: 0 0 0 0 transparent;
     }
     .dev.theme-dark {
       --device-core-bg: #252525;
       --device-core-fg: #fff;
+      --device-shell-base-stroke: rgb(37 37 37 / 75%);
+      --device-shell-stroke: var(--device-shell-base-stroke);
+      --device-shell-shadow:
+        0 calc(var(--dev-size) * .025) calc(var(--dev-size) * .0375) rgb(37 40 45 / 12%),
+        0 calc(var(--dev-size) * .1) calc(var(--dev-size) * .175)
+          calc(var(--dev-size) * -.025) rgb(37 40 45 / 18%);
+      --device-core-inset-shadow:
+        inset 0 calc(var(--dev-size) * 0.0125) calc(var(--dev-size) * 0.0125) rgb(255 255 255 / 70%);
     }
     .dev::before {
       content: '';
@@ -1909,12 +1937,10 @@ export const cardStyles = css`
       padding: var(--device-shell-pad);
       min-width: var(--device-shell-size);
       min-height: var(--device-shell-size);
-      border: 1px solid #BCBCBC;
+      border: var(--device-shell-border-width) solid var(--device-shell-stroke);
       border-radius: calc(var(--device-shell-size) / 2);
       background: transparent;
-      box-shadow:
-        0 1px 2px rgb(37 40 45 / 12%),
-        0 4px 8px -1.07px rgb(37 40 45 / 18%);
+      box-shadow: var(--device-shell-shadow);
       transition: border-color .15s, box-shadow .15s, opacity .2s;
       pointer-events: none;
       /* Normative production fallback: never add a per-marker backdrop blur. */
@@ -1958,11 +1984,14 @@ export const cardStyles = css`
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 28%;
-      background: var(--device-core-bg);
-      color: var(--device-core-fg);
+      border-radius: 50%;
+      background: var(--device-face-bg);
+      color: var(--device-face-fg);
+      box-shadow:
+        var(--device-core-inset-shadow),
+        0 0 0 var(--device-ring-width) var(--device-ring-color);
       line-height: 0;
-      transition: background .15s, color .15s, opacity .2s;
+      transition: background .15s, color .15s, box-shadow .15s, opacity .2s;
     }
     .device-sections {
       display: flex;
@@ -1981,7 +2010,7 @@ export const cardStyles = css`
          scale the GLYPH with its badge. Pinned to the base size, "make this
          icon bigger" grew an empty box around a default-size glyph (user
          report via the owner, 2026-07-29). */
-      --mdc-icon-size: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.62);
+      --mdc-icon-size: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.5);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1989,38 +2018,59 @@ export const cardStyles = css`
     }
     .stage.mode-devices .dev { cursor: grab; }
     .stage.mode-devices .dev:active { cursor: grabbing; }
-    .dev.on .device-core {
-      background: #F0A00C;
-      color: #503c00;
+    .dev.on {
+      --device-face-bg: #F0A00C;
+      --device-face-fg: light-dark(#fff, #252525);
+      --device-shell-stroke: #F0A00C;
     }
-    .dev.open .device-core {
-      background: var(--hp-open);
-      color: #4a2800;
+    .dev.theme-light.on { --device-face-fg: #fff; }
+    .dev.theme-dark.on {
+      --device-face-fg: #252525;
+      --device-shell-stroke-ratio: .0375;
     }
-    .dev.lock-locked .device-core {
-      background: var(--device-core-bg);
-      color: #000;
+    .dev.open {
+      --device-face-bg: var(--hp-open);
+      --device-face-fg: #4a2800;
     }
-    .dev.lock-unlocked .device-core {
-      background: #F0A00C;
-      color: #4a2800;
+    .dev.lock-locked {
+      --device-face-bg: light-dark(#000, #252525);
+      --device-face-fg: #fff;
+      --device-shell-stroke: light-dark(#000, #252525);
+    }
+    .dev.theme-light.lock-locked {
+      --device-face-bg: #000;
+      --device-shell-stroke: #000;
+    }
+    .dev.theme-dark.lock-locked {
+      --device-face-bg: #252525;
+      --device-shell-stroke: #252525;
+      --device-shell-stroke-ratio: .025;
+    }
+    .dev.lock-unlocked {
+      --device-face-bg: #F0A00C;
+      --device-face-fg: light-dark(#fff, #252525);
+      --device-shell-stroke: #F0A00C;
+    }
+    .dev.theme-light.lock-unlocked { --device-face-fg: #fff; }
+    .dev.theme-dark.lock-unlocked {
+      --device-face-fg: #252525;
+      --device-shell-stroke-ratio: .025;
     }
     /* Interaction wins ordinary state colours. Alarm keeps priority through
        the more-specific rule below. Unavailable has no visual hover. */
-    .dev:not(.unavail):hover .device-core {
-      background: #0C82F0;
-      color: var(--text-primary-color, #fff);
+    .dev:not(.unavail):hover {
+      --device-face-bg: #0C82F0;
+      --device-face-fg: light-dark(#fff, #252525);
+      --device-shell-stroke: var(--device-shell-base-stroke);
     }
+    .dev.theme-light:not(.unavail):hover { --device-face-fg: #fff; }
+    .dev.theme-dark:not(.unavail):hover { --device-face-fg: #252525; }
     .dev:hover,
     .dev:focus-visible { z-index: 5; }
-    .dev:not(.unavail):hover .device-shell {
-      border-color: #0C82F0;
-    }
     .dev.unavail {
       opacity: 0.35;
-    }
-    .dev.unavail .device-core {
-      background: #B5BAC1;
+      --device-face-bg: #B5BAC1;
+      --device-shell-stroke: var(--device-shell-base-stroke);
     }
     .physical-hit {
       fill: transparent;
@@ -2143,33 +2193,29 @@ export const cardStyles = css`
       background: color-mix(in srgb, var(--secondary-text-color, #9aa0aa) 10%, transparent);
     }
     .habindingbanner.limited > ha-icon { color: var(--secondary-text-color, #9aa0aa); }
-    .dev.sel .device-shell {
-      border-color: #0C82F0;
-      box-shadow:
-        0 0 0 2px var(--card-background-color, #fff),
-        0 0 0 4px rgb(12 130 240 / 65%),
-        0 4px 8px -1.07px rgb(37 40 45 / 18%);
+    .dev.sel {
+      --device-ring-color: #F0A00C;
+      --device-ring-width: calc(var(--dev-size) * 0.0375);
     }
-    .dev:focus-visible .device-shell {
-      border-color: #0C82F0;
-      box-shadow:
-        0 0 0 3px rgb(12 130 240 / 42%),
-        0 0 0 6px rgb(12 130 240 / 18%),
-        0 4px 8px -1.07px rgb(37 40 45 / 18%);
+    .dev:focus-visible {
+      --device-ring-color: #0C82F0;
+      --device-ring-width: calc(var(--dev-size) * 0.0375);
+    }
+    .dev:not(.on):not(.open):not(.alarm):not(.lock-locked):not(.lock-unlocked):not(.unavail):focus-visible {
+      --device-face-fg: #0C82F0;
     }
     /* Alert stays above focus, selection, hover and ordinary semantic paint. */
-    .dev.alarm .device-core,
-    .dev.alarm:hover .device-core,
-    .dev.alarm:focus-visible .device-core {
-      background: #F0410C;
-      color: #fff;
+    .dev.alarm,
+    .dev.alarm:hover,
+    .dev.alarm:focus-visible {
+      --device-face-bg: #F0410C;
+      --device-face-fg: light-dark(#fff, #252525);
+      --device-shell-stroke: #F0410C;
     }
-    .dev.alarm .device-shell,
-    .dev.alarm:hover .device-shell,
-    .dev.alarm:focus-visible .device-shell {
-      border-color: #F0410C;
-      box-shadow: 0 0 0 3px rgb(240 65 12 / 24%),
-        0 4px 8px -1.07px rgb(37 40 45 / 18%);
+    .dev.theme-light.alarm { --device-face-fg: #fff; }
+    .dev.theme-dark.alarm {
+      --device-face-fg: #252525;
+      --device-shell-stroke-ratio: .025;
     }
 
     .dev .value-badge {
@@ -2185,7 +2231,7 @@ export const cardStyles = css`
       overflow: visible;
       background: var(--device-core-bg);
       border: 0;
-      border-radius: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.18);
+      border-radius: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.39375);
       padding: 0 calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.14);
       font-size: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * var(--value-font-scale, .45));
       font-weight: 600;

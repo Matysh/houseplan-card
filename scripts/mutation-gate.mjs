@@ -522,12 +522,8 @@ export const MUTANTS = [
       + 'which makes an offline device look live',
     patches: [{
       file: 'src/styles.ts',
-      find: '.dev:not(.unavail):hover .device-core {',
-      replace: '.dev.unavail:hover .device-core {',
-    }, {
-      file: 'src/styles.ts',
-      find: '.dev:not(.unavail):hover .device-shell {',
-      replace: '.dev.unavail:hover .device-shell {',
+      find: '.dev:not(.unavail):hover {',
+      replace: '.dev:hover {',
     }],
   },
   {

@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- Device markers now match the source artwork from the designer package instead
+  of the oversized rounded-square projection shipped in `v1.65.0-beta.6`.
+  Icon cores are circular, MDI glyphs and adjacent value pills use the package
+  proportions, and light/dark hover, active, lock, unlock, alert, selected,
+  focus, virtual and unavailable layers retain the correct shell, stroke and
+  shadow. The same renderer remains shared by the plan, kiosk, editor preview
+  and static space card ([#211](https://github.com/Matysh/houseplan-card/issues/211)).
+
 ## v1.65.0-beta.6 — 2026-08-19
 
 - Device markers now use the designer-supplied shared shell/core system in

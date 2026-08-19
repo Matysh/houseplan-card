@@ -316,6 +316,25 @@ public binding-status hook.
       `48%`), while a direct entity value continues to use HA localization and
       units.
 
+## Device icon package parity (#211)
+
+The independent reference subset under
+`demo/srv/reference/device-icons/` comes directly from designer package 1.1.1;
+it is not generated from production CSS. The package archive hash and the
+owner's amber Dark Unlock override are recorded in that directory's README.
+
+- [ ] `node demo/smoke_device_icon_design.mjs` reads the SVG colors and stroke
+      widths, then compares them with fresh computed styles. It also measures
+      circular core/shell geometry, the real `mdi:lightbulb-spot` painted path,
+      value-pill radius and 44×44 hit area at 32/56/96 px.
+- [ ] `node demo/capture_device_icon_reference.mjs` writes a two-column
+      **Reference SVG / Runtime** matrix for both themes to
+      `artifacts/device-icon-reference/`. Code review must inspect this artifact
+      visually; a green historical golden is not proof of package parity.
+- [ ] Preview/static parity and unavailable keyboard/tap behavior remain
+      covered by `smoke_device_preview_parity`, `smoke_static_icon` and
+      `smoke_disabled_device` after a fresh production build.
+
 ## Touch support and release gates
 
 The product contract is defined in `docs/TOUCH-SUPPORT.md`:
