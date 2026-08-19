@@ -26,7 +26,7 @@ import type { DevItem, OpeningCfg, ServerConfig } from './types';
 import { physicalBodyParts } from './physical-geometry';
 import {
   materializePartitionOpening, partitionOpeningCut,
-  partitionOpeningFace, partitionOpeningHasCompositeRoomWall, resolvePartitionOpening,
+  partitionOpeningFace, partitionOpeningHasCompositeRoomWall, resolvePartitionOpeningCompat,
 } from './partition-openings';
 import {
   renderOpeningVisibleGeometry, type OpeningVisibleSpec,
@@ -211,7 +211,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const cellCm = Number(spCfg.cell_cm) > 0 ? Number(spCfg.cell_cm) : 5;
   const resolvedHosted = (spCfg.openings || []).flatMap((opening: OpeningCfg) => {
     if (!opening.host) return [];
-    const resolved = resolvePartitionOpening(
+    const resolved = resolvePartitionOpeningCompat(
       opening, space.partitions, NORM_W, cellCm, GRID_PITCH,
     ).resolved;
     return resolved ? [resolved] : [];

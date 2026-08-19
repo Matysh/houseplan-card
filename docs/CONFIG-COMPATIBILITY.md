@@ -86,6 +86,15 @@ hosted opening with an old bundle is unsupported. A missing/invalid host is not
 re-associated automatically: current renderers fail dark and Plan offers an
 explicit rebind.
 
+New hosted openings and direct changes to `host.id`, `host.t`, `length`, host
+span or host thickness reserve a jamb at both endpoints equal to half the
+actual partition thickness. This is semantic delta validation, not a schema or
+migration: an unchanged legacy near-end opening, an unrelated edit and a rigid
+translation of its host remain valid and are never silently clamped. Full
+backup restore intentionally uses the structural zero-margin fit boundary even
+without a trusted previous config, so older backups remain restorable; the next
+direct geometry edit must satisfy the current jamb rule.
+
 ## Four-phase background default and transfer (#146)
 
 The schema remains `settings.bg_mode: static | daynight` globally and per

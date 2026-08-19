@@ -573,6 +573,13 @@ spans are clipped per atomic body.
 The same resolved host drives placement, symbol face, full-depth partition cut,
 static/hidden-isometric rendering, Glow and edit operations. Rigid host drag
 keeps `t` and updates every materialized projection in one history command.
+Hosted openings have two deliberate validation policies: render/read consumers
+use the historical zero-margin resolver, while creation and direct geometry
+edits use a strict resolver that reserves `wallCmToUnits(partition.cm) / 2` at
+each endpoint. The backend repeats that physical boundary as semantic delta
+validation; rigid partition translation and unrelated writes therefore keep a
+legacy near-end opening losslessly, while host/position/length/span/thickness
+changes opt it into the strict rule.
 Deleting a host with openings requires an explicit cascade dialog; an invalid
 host fails dark and is visible only as a rebind diagnostic in Plan. Structural
 room-face topology deliberately keeps every valid wall axis continuous through

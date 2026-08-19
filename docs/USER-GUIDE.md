@@ -302,6 +302,12 @@ symbol. An open passage instead shows the exact future wall cut as a translucent
 wall-coloured segment with an orange boundary mark at each end. Its depth follows
 the real wall thickness; after saving it has no standalone symbol.
 
+On a finished independent wall, a new or directly edited opening must leave a
+jamb at each endpoint equal to at least half that wall's real thickness. The
+same limit applies to placement, drag, rebind and length edits. Existing
+near-end openings remain visible and are not moved until their geometry is
+edited.
+
 An opening may bind a contact; doors and gates may also bind a lock. View paints
 the moving leaf and state. A lock badge is green when locked and orange when
 unlocked. A plan tap never toggles a lock. The opening card provides a labelled

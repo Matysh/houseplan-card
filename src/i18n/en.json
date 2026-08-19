@@ -140,6 +140,7 @@
   "toast.opening_no_wall": "Click next to a room wall or independent wall",
   "opening.host_partition": "Independent wall",
   "opening.partition_orphan": "The independent wall for this opening no longer exists",
+  "opening.partition_jamb_margin": "Leave at least {distance} between the opening and the end of the wall",
   "opening.rebind_partition": "Attach to another independent wall",
   "confirm.delete_partition_openings_title": "Delete wall and openings?",
   "confirm.delete_partition_openings_body": "This wall contains {count} opening(s). They will be deleted together.",

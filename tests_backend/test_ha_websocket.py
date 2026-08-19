@@ -287,6 +287,54 @@ async def test_config_writers_reject_invalid_passage_atomically(
     assert layout["rev"] == 0 and layout["layout"] == {}
 
 
+@pytest.mark.parametrize("endpoint", [
+    "houseplan/config/set",
+    "houseplan/plan/optimize",
+])
+async def test_config_writers_reject_partition_opening_without_jamb_atomically(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, endpoint: str,
+) -> None:
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    base = {"spaces": [], "markers": [], "settings": {}}
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": base, "expected_rev": 0,
+    })
+    assert (await client.receive_json())["success"]
+
+    invalid = {"spaces": [{
+        "id": "ground", "title": "Ground", "view_box": [0, 0, 1, 1],
+        "rooms": [],
+        "partitions": [{"id": "wall", "a": [0, 0], "b": [1, 0], "cm": 15}],
+        "openings": [{
+            "id": "door", "type": "door", "x": 0.1, "y": 0,
+            "angle": 0, "length": 0.2,
+            "host": {"kind": "partition", "id": "wall", "t": 0.1},
+        }],
+    }], "markers": [], "settings": {}}
+    message = {"type": endpoint, "config": invalid}
+    if endpoint == "houseplan/config/set":
+        message["expected_rev"] = 1
+    else:
+        message.update({
+            "layout": {}, "expected_config_rev": 1, "expected_layout_rev": 0,
+        })
+    await client.send_json_auto_id(message)
+    response = await client.receive_json()
+    assert not response["success"]
+    assert response["error"]["code"] == "invalid_partition_opening_jamb_margin"
+    assert "space=ground" in response["error"]["message"]
+    assert "opening=door" in response["error"]["message"]
+    assert "margin_cm=7.5" in response["error"]["message"]
+
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    stored = (await client.receive_json())["result"]
+    assert stored["rev"] == 1 and stored["config"] == base
+    await client.send_json_auto_id({"type": "houseplan/layout/get"})
+    layout = (await client.receive_json())["result"]
+    assert layout["rev"] == 0 and layout["layout"] == {}
+
+
 async def test_plan_optimize_pair_and_one_deep_undo_survives_geometry_repair(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator
 ) -> None:

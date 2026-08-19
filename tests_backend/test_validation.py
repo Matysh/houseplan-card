@@ -1717,6 +1717,90 @@ def test_partition_opening_host_schema_fit_overlap_and_downgrade_guard():
     v.validate_partition_opening_hosts({"spaces": [{**base, "openings": []}]}, previous)
 
 
+@pytest.mark.parametrize("cm,cell_cm", [(1, 5), (15, 5), (100, 2.5)])
+@pytest.mark.parametrize("reverse", [False, True])
+@pytest.mark.parametrize("opening_type", ["door", "window", "gate", "passage"])
+def test_partition_opening_jamb_margin_exact_boundary_and_epsilon(
+    cm, cell_cm, reverse, opening_type
+):
+    a, b = ([1, 1], [0, 0]) if reverse else ([0, 0], [1, 1])
+    span = 2 ** 0.5
+    margin = cm / cell_cm / v.NORMALIZED_CANVAS_CELLS / 2
+    length = 0.2
+    exact_t = (length / 2 + margin) / span
+    partition = {"id": "wall", "a": a, "b": b, "cm": cm}
+    opening = {
+        "id": "door", "type": opening_type, "x": 0.1, "y": 0.1,
+        "angle": 45, "length": length,
+        "host": {"kind": "partition", "id": "wall", "t": exact_t},
+    }
+    config = {"spaces": [{
+        "id": "s1", "title": "S", "cell_cm": cell_cm,
+        "view_box": [0, 0, 1, 1], "rooms": [],
+        "partitions": [partition], "openings": [opening],
+    }]}
+    v.validate_partition_opening_hosts(config, {"spaces": []})
+    bad = json.loads(json.dumps(config))
+    bad["spaces"][0]["openings"][0]["host"]["t"] = exact_t - 1e-6
+    with pytest.raises(v.PartitionOpeningJambMarginError) as raised:
+        v.validate_partition_opening_hosts(bad, {"spaces": []})
+    assert raised.value.code == "invalid_partition_opening_jamb_margin"
+    assert raised.value.margin == pytest.approx(margin)
+    assert raised.value.margin_cm == pytest.approx(cm / 2)
+
+
+def test_partition_opening_jamb_delta_preserves_legacy_and_checks_direct_geometry():
+    partition = {"id": "wall", "a": [0, 0], "b": [1, 0], "cm": 15}
+    opening = {
+        "id": "door", "type": "door", "x": 0.1, "y": 0,
+        "angle": 0, "length": 0.2,
+        "host": {"kind": "partition", "id": "wall", "t": 0.1},
+    }
+    space = {
+        "id": "s1", "title": "S", "view_box": [0, 0, 1, 1], "rooms": [],
+        "partitions": [partition], "openings": [opening],
+    }
+    previous = {"spaces": [space]}
+
+    unrelated = json.loads(json.dumps(previous))
+    unrelated["spaces"][0]["title"] = "Renamed"
+    v.validate_partition_opening_hosts(unrelated, previous)
+
+    type_only = json.loads(json.dumps(previous))
+    type_only["spaces"][0]["openings"][0]["type"] = "window"
+    v.validate_partition_opening_hosts(type_only, previous)
+
+    translated = json.loads(json.dumps(previous))
+    translated["spaces"][0]["partitions"][0]["a"] = [2, 3]
+    translated["spaces"][0]["partitions"][0]["b"] = [3, 3]
+    v.validate_partition_opening_hosts(translated, previous)
+
+    for mutate in (
+        lambda cfg: cfg["spaces"][0]["openings"][0]["host"].update(t=0.105),
+        lambda cfg: cfg["spaces"][0]["openings"][0].update(length=0.19),
+        lambda cfg: cfg["spaces"][0]["partitions"][0].update(cm=20),
+        lambda cfg: cfg["spaces"][0]["partitions"][0].update(b=[0.9, 0]),
+    ):
+        changed = json.loads(json.dumps(previous))
+        mutate(changed)
+        with pytest.raises(v.PartitionOpeningJambMarginError):
+            v.validate_partition_opening_hosts(changed, previous)
+
+
+def test_partition_opening_structural_schema_keeps_full_restore_legacy_compatible():
+    legacy = {
+        "id": "s1", "title": "S", "view_box": [0, 0, 1, 1], "rooms": [],
+        "partitions": [{"id": "wall", "a": [0, 0], "b": [1, 0], "cm": 100}],
+        "openings": [{
+            "id": "door", "type": "door", "x": 0.1, "y": 0,
+            "angle": 0, "length": 0.2,
+            "host": {"kind": "partition", "id": "wall", "t": 0.1},
+        }],
+    }
+    restored = v.CONFIG_SCHEMA({"spaces": [legacy]})
+    assert restored["spaces"][0]["openings"][0]["host"]["t"] == 0.1
+
+
 def test_space_open_spans():
     """AUD-159B6-03: `open_spans` used to ride on extra=ALLOW_EXTRA, so any
     shape reached the card and one malformed entry blanked the plan for every

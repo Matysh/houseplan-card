@@ -1,4 +1,4 @@
-/** Issues #132/#185: independent-wall host lifecycle and structural wall continuity. */
+/** Issues #132/#185/#186: hosted-opening lifecycle, continuity and jamb margin. */
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 960, height: 820 }, 1);
@@ -35,7 +35,9 @@ const out = await page.evaluate(async () => {
   card._space = 'partition-openings';
   card._modelCache = null;
   card._cfgEpoch++;
+  let writes = 0;
   card._saveConfig = () => {
+    writes++;
     card._cfgEpoch++;
     card._modelCache = null;
     card._physicalBodiesCache = null;
@@ -60,6 +62,67 @@ const out = await page.evaluate(async () => {
     && Math.abs(saved.x - 0.5) < 1e-9
     && Math.abs(saved.y - 0.5) < 1e-9
     && !!root().querySelector(`[data-hp="opening"][data-id="${saved.id}"]`);
+
+  const endpointCandidate = card._resolveOpeningPlacement([250, 500]);
+  const endpointJamb = endpointCandidate?.target?.physicalHalfWidth || 0;
+  const endpointX = 250 + (endpointCandidate?.renderedLength || 0) / 2 + endpointJamb;
+  result.placementClampsToHalfThicknessJamb = !!endpointCandidate
+    && Math.abs(endpointCandidate.x - endpointX) < 1e-6
+    && Math.abs(endpointCandidate.host.t - (endpointX - 250) / 500) < 1e-9
+    && !!endpointCandidate.measure.labels[0].text;
+
+  const originalSvgPoint = card._svgPoint;
+  card._opDrag = {
+    id: saved.id, moved: false, sx: 0, sy: 0, dirty: false,
+    before: card._geometrySnapshot(),
+  };
+  card._svgPoint = () => [250, 500];
+  card._opPointerMove(new PointerEvent('pointermove', {
+    pointerId: 186, clientX: 20, clientY: 0, bubbles: true,
+  }), saved);
+  card._svgPoint = originalSvgPoint;
+  card._opPointerUp(new PointerEvent('pointerup', { pointerId: 186, bubbles: true }), saved);
+  await update();
+  result.directDragStopsAtSameJambBoundary = Math.abs(saved.host.t - (endpointX - 250) / 500) < 1e-9
+    && Math.abs(saved.x - endpointX / 1000) < 1e-9;
+
+  card._editOpening(card._openingsR.find((opening) => opening.id === saved.id));
+  card._openingDialog = { ...card._openingDialog, lengthCm: 600, lengthTouched: true };
+  const beforeRejectedDialog = JSON.stringify(space.openings);
+  const writesBeforeRejectedDialog = writes;
+  const historyBeforeRejectedDialog = card._geometryHistory.size;
+  await update();
+  const dialogGuidance = root().querySelector('.habindingbanner')?.textContent || '';
+  result.dialogShowsJambSpecificGuidance = dialogGuidance.includes('Leave at least')
+    || dialogGuidance.includes('Оставьте');
+  card._saveOpening();
+  result.invalidLengthWritesNeitherConfigNorHistory = JSON.stringify(space.openings)
+      === beforeRejectedDialog
+    && writes === writesBeforeRejectedDialog
+    && card._geometryHistory.size === historyBeforeRejectedDialog;
+  card._openingDialog = null;
+
+  saved.host.t = 0.5;
+  saved.x = 0.5;
+  saved.y = 0.5;
+  card._saveConfig();
+  space.partitions.push({ id: 'short', a: [0.2, 0.7], b: [0.27, 0.7], cm: 15 });
+  card._cfgEpoch++;
+  card._modelCache = null;
+  card._openingPlacementIntervalsCache = null;
+  const previousToast = card._showToast;
+  let jambToast = '';
+  card._showToast = (message) => { jambToast = message; };
+  const shortPoint = [235, 700];
+  const shortCandidate = card._resolveOpeningPlacement(shortPoint);
+  card._openingClick(shortPoint);
+  card._showToast = previousToast;
+  result.tooShortPartitionHasNoPreviewAndExplainsWhy = shortCandidate === null
+    && (jambToast.includes('Leave at least') || jambToast.includes('Оставьте'));
+  space.partitions = space.partitions.filter((partition) => partition.id !== 'short');
+  card._cfgEpoch++;
+  card._modelCache = null;
+  card._openingPlacementIntervalsCache = null;
 
   card._physicalBodiesCache = null;
   const bodies = card._physicalBodiesR();

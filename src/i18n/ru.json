@@ -140,6 +140,7 @@
   "toast.opening_no_wall": "Кликните рядом со стеной комнаты или независимой стеной",
   "opening.host_partition": "Независимая стена",
   "opening.partition_orphan": "Независимая стена этого проёма больше не существует",
+  "opening.partition_jamb_margin": "Оставьте от края проёма до торца стены минимум {distance}",
   "opening.rebind_partition": "Привязать к другой независимой стене",
   "confirm.delete_partition_openings_title": "Удалить стену и проёмы?",
   "confirm.delete_partition_openings_body": "В стене есть проёмы: {count}. Они будут удалены вместе со стеной.",

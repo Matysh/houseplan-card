@@ -5,6 +5,7 @@ import {
   openingPlacementTargets,
   passagePlacementPreviewGeometry,
   resolveOpeningPlacement,
+  resolveOpeningPlacementResult,
   sameOpeningPlacementInput,
 } from '../test-build/opening-placement.js';
 
@@ -41,6 +42,46 @@ test('Opening presets use the agreed type-specific defaults', () => {
     type: 'passage', lengthCm: 90, flipH: false, flipV: false, revision: 3,
   });
   assert.equal(openingPlacementPreset('gate', 3).lengthCm, 300);
+});
+
+test('partition placement reserves its physical half-width at both endpoints', () => {
+  const hosted = interval({
+    partitionHost: { kind: 'partition', id: 'p1' },
+    half: 10,
+  });
+  const left = resolve({ pointer: [0, 0], intervals: [hosted] });
+  const right = resolve({ pointer: [100, 0], intervals: [hosted] });
+  assert.equal(left.x, 25);
+  assert.equal(left.host.t, 0.25);
+  assert.equal(left.measure.labels[0].distance, 10);
+  assert.equal(right.x, 75);
+  assert.equal(right.host.t, 0.75);
+  assert.equal(right.measure.labels[1].distance, 10);
+});
+
+test('a partition shorter than opening plus both jambs reports a typed block', () => {
+  const result = resolveOpeningPlacementResult({
+    pointer: [24.5, 0],
+    preset: openingPlacementPreset('door', 1),
+    geometryRevision: 7,
+    renderedLength: 30,
+    intervals: [interval({
+      b: [49, 0], half: 10,
+      partitionHost: { kind: 'partition', id: 'short' },
+    })],
+    baseTolerance: 4,
+    bodyPointerPadding: 2,
+    gridStep: 10,
+  });
+  assert.equal(result.candidate, null);
+  assert.equal(result.jambBlockedTarget.partitionHost.id, 'short');
+  assert.equal(result.jambBlockedTarget.physicalHalfWidth, 10);
+});
+
+test('room-wall placement keeps its zero-jamb endpoint contract', () => {
+  const candidate = resolve({ pointer: [0, 0], intervals: [interval({ half: 10 })] });
+  assert.equal(candidate.x, 15);
+  assert.equal(candidate.measure.labels[0].distance, 0);
 });
 
 test('passage preview geometry follows the resolved length and standard wall depth', () => {

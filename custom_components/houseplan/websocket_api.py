@@ -58,7 +58,7 @@ from .registry_snapshot import import_registry_snapshot
 from .validation import (
     CONFIG_SCHEMA, LAYOUT_SCHEMA, MAX_CONFIG_BYTES, MAX_PLAN_BYTES,
     PLAN_EXTENSIONS, POS_SCHEMA, MarkerControlError, OpeningPassageError,
-    PartitionOpeningHostError, sanitize_filename,
+    PartitionOpeningHostError, PartitionOpeningJambMarginError, sanitize_filename,
     validate_opening_passages, validate_partition_opening_hosts,
     validate_marker_controls, validate_marker_light_entities,
     validate_marker_value_badges, valid_space_id,
@@ -1258,7 +1258,10 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             validate_marker_value_badges(msg["config"], data.get("config"))
             validate_opening_passages(msg["config"], data.get("config"))
             validate_partition_opening_hosts(msg["config"], data.get("config"))
-        except (MarkerControlError, OpeningPassageError, PartitionOpeningHostError) as err:
+        except (
+            MarkerControlError, OpeningPassageError, PartitionOpeningHostError,
+            PartitionOpeningJambMarginError,
+        ) as err:
             connection.send_error(msg["id"], err.code, str(err))
             return
         # An internal plan url must name a file that exists. The card can pick a
@@ -1370,7 +1373,10 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
             validate_marker_value_badges(msg["config"], config_data.get("config"))
             validate_opening_passages(msg["config"], config_data.get("config"))
             validate_partition_opening_hosts(msg["config"], config_data.get("config"))
-        except (MarkerControlError, OpeningPassageError, PartitionOpeningHostError) as err:
+        except (
+            MarkerControlError, OpeningPassageError, PartitionOpeningHostError,
+            PartitionOpeningJambMarginError,
+        ) as err:
             connection.send_error(msg["id"], err.code, str(err))
             return
 

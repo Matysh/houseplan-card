@@ -9,7 +9,8 @@ export type PartitionOpeningOrphanReason =
   | 'missing-partition'
   | 'invalid-position'
   | 'invalid-length'
-  | 'does-not-fit';
+  | 'does-not-fit'
+  | 'does-not-fit-jamb';
 
 export interface ResolvedPartitionOpening {
   opening: OpeningCfg;
@@ -30,6 +31,13 @@ export interface PartitionOpeningResolution {
 
 const finitePoint = (point: readonly number[] | null | undefined): point is readonly [number, number] =>
   !!point && point.length >= 2 && Number.isFinite(point[0]) && Number.isFinite(point[1]);
+
+/** Physical jamb reserve at either endpoint of one independent wall. */
+export function partitionOpeningJambMargin(
+  partition: PartitionCfg, cellCm = 5, gridPitch = 5,
+): number {
+  return wallCmToUnits(partition.cm, cellCm, gridPitch) / 2;
+}
 
 /** Resolve explicit host identity. There is intentionally no nearest-wall fallback. */
 export function resolvePartitionOpening(
@@ -79,6 +87,54 @@ export function resolvePartitionOpening(
       },
     },
   };
+}
+
+/** Explicit zero-margin policy for render, hit-test and legacy round-trip. */
+export function resolvePartitionOpeningCompat(
+  opening: OpeningCfg,
+  partitions: readonly PartitionCfg[],
+  lengthScale = 1,
+  cellCm = 5,
+  gridPitch = 5,
+): PartitionOpeningResolution {
+  return resolvePartitionOpening(opening, partitions, lengthScale, cellCm, gridPitch, 0);
+}
+
+/** Strict write policy. Compat/read callers intentionally keep using the
+ * zero-margin resolver above so an existing near-end opening never disappears. */
+export function resolvePartitionOpeningStrict(
+  opening: OpeningCfg,
+  partitions: readonly PartitionCfg[],
+  lengthScale = 1,
+  cellCm = 5,
+  gridPitch = 5,
+): PartitionOpeningResolution {
+  const host = opening.host;
+  const partition = host?.kind === 'partition'
+    ? partitions.find((item) => item.id === host.id)
+    : undefined;
+  if (!partition) return resolvePartitionOpeningCompat(
+    opening, partitions, lengthScale, cellCm, gridPitch,
+  );
+  const result = resolvePartitionOpening(
+    opening, partitions, lengthScale, cellCm, gridPitch,
+    partitionOpeningJambMargin(partition, cellCm, gridPitch),
+  );
+  return result.reason === 'does-not-fit'
+    ? { resolved: null, reason: 'does-not-fit-jamb' }
+    : result;
+}
+
+/** Only direct geometry edits opt a legacy record into the strict policy. */
+export function partitionOpeningNeedsStrictValidation(
+  previous: OpeningCfg | null | undefined,
+  candidate: OpeningCfg,
+): boolean {
+  if (!previous) return true;
+  return previous.length !== candidate.length
+    || previous.host?.kind !== candidate.host?.kind
+    || previous.host?.id !== candidate.host?.id
+    || previous.host?.t !== candidate.host?.t;
 }
 
 export function partitionOpeningCut(resolved: ResolvedPartitionOpening): {

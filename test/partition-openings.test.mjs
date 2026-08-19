@@ -6,7 +6,10 @@ import {
   partitionOpeningCut,
   partitionOpeningFace,
   partitionOpeningHasCompositeRoomWall,
+  partitionOpeningJambMargin,
+  partitionOpeningNeedsStrictValidation,
   resolvePartitionOpening,
+  resolvePartitionOpeningStrict,
 } from '../test-build/partition-openings.js';
 import { cutPartitionBody, partitionBody } from '../test-build/physical-geometry.js';
 import { physicalBodyParts } from '../test-build/physical-geometry.js';
@@ -47,6 +50,55 @@ test('missing, out-of-range and too-short hosts fail dark', () => {
   }), [partition], 100).reason, 'invalid-position');
   assert.equal(resolvePartitionOpening(opening({ length: 1.1 }), [partition], 100).reason,
     'does-not-fit');
+});
+
+test('strict writes reserve half the real wall depth while compat reads remain visible', () => {
+  assert.equal(partitionOpeningJambMargin(partition, 5, 5), 7.5);
+  for (const type of ['door', 'window', 'gate', 'passage']) {
+    const atBoundary = opening({ type, host: { kind: 'partition', id: 'p1', t: 0.225 } });
+    const insideJamb = opening({ type, host: { kind: 'partition', id: 'p1', t: 0.224 } });
+    assert.ok(resolvePartitionOpeningStrict(atBoundary, [partition], 100, 5, 5).resolved);
+    assert.equal(
+      resolvePartitionOpeningStrict(insideJamb, [partition], 100, 5, 5).reason,
+      'does-not-fit-jamb',
+    );
+    assert.ok(resolvePartitionOpening(insideJamb, [partition], 100, 5, 5).resolved,
+      `compat/read policy must not orphan a stored near-end ${type}`);
+  }
+});
+
+test('strict jamb policy follows thickness, scale and host direction', () => {
+  for (const cm of [1, 15, 100]) {
+    for (const [cellCm, gridPitch] of [[5, 5], [2.5, 8]]) {
+      for (const [a, b] of [[[0, 0], [1000, 0]], [[1000, 1000], [0, 0]]]) {
+        const host = { id: 'p1', a, b, cm };
+        const span = Math.hypot(b[0] - a[0], b[1] - a[1]);
+        const margin = partitionOpeningJambMargin(host, cellCm, gridPitch);
+        const length = 200;
+        const exactT = (length / 2 + margin) / span;
+        const candidate = opening({
+          length: length / 100,
+          host: { kind: 'partition', id: 'p1', t: exactT },
+        });
+        assert.ok(resolvePartitionOpeningStrict(
+          candidate, [host], 100, cellCm, gridPitch,
+        ).resolved, `${cm}/${cellCm}/${gridPitch} exact boundary`);
+        assert.equal(resolvePartitionOpeningStrict({
+          ...candidate, host: { ...candidate.host, t: exactT - 1e-5 },
+        }, [host], 100, cellCm, gridPitch).reason, 'does-not-fit-jamb');
+      }
+    }
+  }
+});
+
+test('only direct hosted geometry changes opt an existing opening into strict validation', () => {
+  const original = opening();
+  assert.equal(partitionOpeningNeedsStrictValidation(original, { ...original, type: 'window' }), false);
+  assert.equal(partitionOpeningNeedsStrictValidation(original, {
+    ...original, host: { ...original.host, t: 0.4 },
+  }), true);
+  assert.equal(partitionOpeningNeedsStrictValidation(original, { ...original, length: 0.4 }), true);
+  assert.equal(partitionOpeningNeedsStrictValidation(null, original), true);
 });
 
 test('partition body is split by its own full-depth slot only', () => {

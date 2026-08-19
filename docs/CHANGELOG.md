@@ -2,6 +2,11 @@
 
 ## v1.65.0-beta.4 — 2026-08-19
 
+- New and directly edited openings in independent walls now keep a physical
+  jamb at each wall end equal to half that wall's thickness. Placement, drag,
+  rebind and length edits share the same limit and explain a rejected edit,
+  while existing near-end openings and full backups remain unchanged
+  ([#186](https://github.com/Matysh/houseplan-card/issues/186)).
 - Room hover tooltips now show average humidity next to temperature. The value
   follows the room's configured humidity source or its Home Assistant area
   average, and is omitted when no valid reading is available

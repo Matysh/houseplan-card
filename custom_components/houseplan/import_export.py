@@ -52,6 +52,7 @@ from .validation import (
     MarkerControlError,
     OpeningPassageError,
     PartitionOpeningHostError,
+    PartitionOpeningJambMarginError,
 )
 
 FORMAT = "houseplan-export"
@@ -993,7 +994,10 @@ def build_space_merge(
         validate_marker_value_badges(merged_config, current_config)
         validate_opening_passages(merged_config, current_config)
         validate_partition_opening_hosts(merged_config, current_config)
-    except (MarkerControlError, OpeningPassageError, PartitionOpeningHostError) as err:
+    except (
+        MarkerControlError, OpeningPassageError, PartitionOpeningHostError,
+        PartitionOpeningJambMarginError,
+    ) as err:
         raise ImportFailure(err.code, str(err)) from err
     try:
         merged_layout = LAYOUT_SCHEMA(merged_layout)

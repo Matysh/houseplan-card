@@ -162,6 +162,20 @@
       overlapping hosted openings and stale host stripping; exports round-trip
       the host. [auto: test_validation, test_ha_import_export]
 
+## Independent-wall opening jamb margin (#186)
+
+- [ ] Strict resolver and placement reserve half the host depth for
+      door/window/gate/passage at both endpoints, including exact-boundary,
+      diagonal, reversed, thickness and scale matrices; room-wall placement
+      keeps its zero-jamb rule. [auto: partition-openings, opening-placement]
+- [ ] Direct drag, dialog length edits and rebind share the same formatted
+      RU/EN guidance; a rejected edit writes neither config nor history.
+      [auto: smoke_partition_openings]
+- [ ] Backend config/set and optimize reject a new/direct invalid geometry with
+      `invalid_partition_opening_jamb_margin`, while unrelated writes, rigid
+      translation and full backup restore preserve a legacy near-end record.
+      [auto: test_validation, test_ha_websocket, test_ha_import_export]
+
 
 ## Device value badge (#90)
 

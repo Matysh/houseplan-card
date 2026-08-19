@@ -142,8 +142,9 @@ import {
 } from './physical-geometry';
 import {
   hostedOpeningIntervalsOverlap, materializePartitionOpening,
+  partitionOpeningJambMargin, partitionOpeningNeedsStrictValidation,
   partitionOpeningCut, partitionOpeningFace, partitionOpeningHasCompositeRoomWall,
-  partitionPlacementIntervals, resolvePartitionOpening,
+  partitionPlacementIntervals, resolvePartitionOpeningCompat, resolvePartitionOpeningStrict,
   type PartitionOpeningOrphanReason, type ResolvedPartitionOpening,
 } from './partition-openings';
 import {
@@ -250,7 +251,7 @@ import {
 } from './render/opening-symbol';
 import {
   openingDefaultLengthCm, openingPlacementPreset, passagePlacementPreviewGeometry,
-  resolveOpeningPlacement, sameOpeningPlacementInput,
+  resolveOpeningPlacementResult, sameOpeningPlacementInput,
   type OpeningPlacementCore, type OpeningPlacementPreset, type OpeningPlacementType,
 } from './opening-placement';
 import { safeStoredColor } from './color';
@@ -1331,10 +1332,14 @@ class HouseplanCard extends LitElement {
   private _openingPresetRevision = 0;
   /** Last painted hover candidate. Click may reuse it only for the same input epoch. */
   private _openingHoverCandidate: OpeningPlacementCandidate | null = null;
+  /** Last pointer target rejected only because its independent-wall jamb was too small. */
+  private _openingJambBlockCm: number | null = null;
   private _openingDialog: {
     id?: string;                 // editing an existing opening
     type: 'door' | 'window' | 'gate' | 'passage';
     lengthCm: number;
+    /** Avoid opting a rounded legacy length into strict geometry on a binding-only edit. */
+    lengthTouched?: boolean;
     contact: string;
     lock: string;
     invert: boolean;
@@ -7467,7 +7472,7 @@ class HouseplanCard extends LitElement {
         p.b = [moved.b[0] / NORM_W, moved.b[1] / NORM_W];
         for (const opening of sp.openings || []) {
           if (opening.host?.kind !== 'partition' || opening.host.id !== drag.id) continue;
-          const resolved = resolvePartitionOpening(
+          const resolved = resolvePartitionOpeningCompat(
             opening, [moved], NORM_W, this._cellCm, this._gridPitch,
           ).resolved;
           if (resolved) Object.assign(
@@ -7932,7 +7937,7 @@ class HouseplanCard extends LitElement {
         ...o, rx: o.x * NORM_W, ry: o.y * H, rlen: o.length * NORM_W,
       };
       if (!o.host) return [fallback];
-      const resolution = resolvePartitionOpening(
+      const resolution = resolvePartitionOpeningCompat(
         o, space.partitions, NORM_W, this._cellCm, this._gridPitch,
       );
       if (!resolution.resolved) {
@@ -7965,7 +7970,7 @@ class HouseplanCard extends LitElement {
     const cuts: PartitionOpeningCut[] = [];
     for (const opening of raw) {
       if (!opening.host || !accept(opening)) continue;
-      const resolution = resolvePartitionOpening(
+      const resolution = resolvePartitionOpeningCompat(
         opening, space.partitions, NORM_W, this._cellCm, this._gridPitch,
       );
       if (resolution.resolved) cuts.push(partitionOpeningCut(resolution.resolved));
@@ -11298,7 +11303,7 @@ class HouseplanCard extends LitElement {
         ],
       };
     }
-    const core = resolveOpeningPlacement({
+    const resolution = resolveOpeningPlacementResult({
       pointer: [raw[0], raw[1]],
       preset,
       geometryRevision: this._cfgEpoch,
@@ -11308,11 +11313,15 @@ class HouseplanCard extends LitElement {
       bodyPointerPadding: this._cssPxToRender(this._boundaryCoarse ? 10 : 6),
       gridStep: this._gridPitch,
     });
+    this._openingJambBlockCm = resolution.jambBlockedTarget
+      ? (resolution.jambBlockedTarget.physicalHalfWidth / this._gridPitch) * this._cellCm
+      : null;
+    const core = resolution.candidate;
     if (!core) return null;
     const faceFlipV = core.type === 'gate' ? !core.flipV : core.flipV;
     let face: OpeningFaceOffset;
     if (core.host) {
-      const hosted = resolvePartitionOpening({
+      const hosted = resolvePartitionOpeningCompat({
         id: 'preview', type: core.type,
         x: core.x / NORM_W, y: core.y / NORM_W,
         angle: core.angle, length: core.renderedLength / NORM_W,
@@ -11359,6 +11368,7 @@ class HouseplanCard extends LitElement {
 
   private _clearOpeningPlacement(clearPreset: boolean): void {
     this._openingHoverCandidate = null;
+    this._openingJambBlockCm = null;
     if (clearPreset) {
       this._openingPreset = null;
       this._openingRebindId = null;
@@ -11383,6 +11393,12 @@ class HouseplanCard extends LitElement {
       cached, [raw[0], raw[1]], preset.revision, this._cfgEpoch,
     ) ? cached : this._resolveOpeningPlacement(raw);
     if (!place) {
+      if (this._openingJambBlockCm != null) {
+        this._showToast(this._t('opening.partition_jamb_margin', {
+          distance: formatLength(this._openingJambBlockCm, this._imperial),
+        }));
+        return;
+      }
       const eps = this._gridPitch * 1.5;
       const snap = snapToWall(raw, space.rooms, eps);
       if (snap && pointOnOpenCut(snap.x, snap.y, snap.angle, this._openCuts(), eps)) {
@@ -11400,6 +11416,7 @@ class HouseplanCard extends LitElement {
         id: rebound.id,
         type: rebound.type,
         lengthCm: Math.round((rebound.length * NORM_W / this._gridPitch) * this._cellCm),
+        lengthTouched: false,
         contact: rebound.contact || '', lock: rebound.lock || '',
         invert: !!rebound.invert, flipH: !!rebound.flip_h, flipV: !!rebound.flip_v,
       } : {
@@ -11421,6 +11438,7 @@ class HouseplanCard extends LitElement {
       id: o.id,
       type: o.type,
       lengthCm: Math.round((o.rlen / this._gridPitch) * this._cellCm),
+      lengthTouched: false,
       contact: o.contact || '',
       lock: o.lock || '',
       invert: !!o.invert,
@@ -11476,10 +11494,12 @@ class HouseplanCard extends LitElement {
       );
       if (perpendicular > this._gridPitch * 4) return;
       const half = cfg.length * NORM_W / 2;
+      const jamb = partitionOpeningJambMargin(partition, this._cellCm, this._gridPitch);
+      const shoulder = half + jamb;
       let along = (raw[0] - partition.a[0]) * ux + (raw[1] - partition.a[1]) * uy;
       along = Math.round(along / this._gridPitch) * this._gridPitch;
-      along = Math.max(half, Math.min(length - half, along));
-      if (length < half * 2) return;
+      along = Math.max(shoulder, Math.min(length - shoulder, along));
+      if (length < shoulder * 2 - 1e-9) return;
       const t = along / length;
       const nx = (partition.a[0] + ux * along) / NORM_W;
       const ny = (partition.a[1] + uy * along) / this._spaceH;
@@ -11612,20 +11632,39 @@ class HouseplanCard extends LitElement {
       x: d.x / NORM_W,
       y: d.y / H,
       angle: d.angle,
-      length: this._cmToUnits(Math.max(20, d.lengthCm)) / NORM_W,
+      length: previous && !d.lengthTouched
+        ? previous.length
+        : this._cmToUnits(Math.max(20, d.lengthCm)) / NORM_W,
       ...(d.host ? { host: { ...d.host } } : {}),
     };
     if (o.host) {
-      const resolution = resolvePartitionOpening(
-        o, model.partitions, NORM_W, this._cellCm, this._gridPitch,
-      );
+      const strict = partitionOpeningNeedsStrictValidation(previous, o);
+      const resolution = strict
+        ? resolvePartitionOpeningStrict(
+            o, model.partitions, NORM_W, this._cellCm, this._gridPitch,
+          )
+        : resolvePartitionOpeningCompat(
+            o, model.partitions, NORM_W, this._cellCm, this._gridPitch,
+          );
       if (!resolution.resolved) {
-        this._showToast(this._t('opening.partition_orphan'));
+        const partition = model.partitions.find((item) => item.id === o.host!.id);
+        if (resolution.reason === 'does-not-fit-jamb' && partition) {
+          const margin = partitionOpeningJambMargin(
+            partition, this._cellCm, this._gridPitch,
+          );
+          this._showToast(this._t('opening.partition_jamb_margin', {
+            distance: formatLength(
+              (margin / this._gridPitch) * this._cellCm, this._imperial,
+            ),
+          }));
+        } else {
+          this._showToast(this._t('opening.partition_orphan'));
+        }
         return;
       }
       const siblings = (sp.openings || []).flatMap((item: OpeningCfg) => {
         if (!item.host || item.id === o.id) return [];
-        const sibling = resolvePartitionOpening(
+        const sibling = resolvePartitionOpeningCompat(
           item, model.partitions, NORM_W, this._cellCm, this._gridPitch,
         ).resolved;
         return sibling ? [sibling] : [];
@@ -12770,6 +12809,15 @@ class HouseplanCard extends LitElement {
           .map((field) => labels[field] ? this._t(labels[field]) : field).join(', ');
         return this._t('opening.invalid_passage_fields', {
           room: space?.title || match[1], fields,
+        });
+      }
+    }
+    if (e.code === 'invalid_partition_opening_jamb_margin') {
+      const match = String(e.message || e.error || '').match(/margin_cm=([^;]*)/);
+      const marginCm = match ? Number(match[1]) : NaN;
+      if (Number.isFinite(marginCm)) {
+        return this._t('opening.partition_jamb_margin', {
+          distance: formatLength(marginCm, this._imperial),
         });
       }
     }
@@ -17590,13 +17638,36 @@ class HouseplanCard extends LitElement {
   private _renderOpeningDialog(): TemplateResult {
     const d = this._openingDialog!;
     const partitions = this._spaceModel()?.partitions || [];
-    const hostResolution = d.host ? resolvePartitionOpening({
+    const previous = d.id
+      ? this._curSpaceCfg?.openings?.find((item: OpeningCfg) => item.id === d.id)
+      : null;
+    const dialogOpening: OpeningCfg = {
       id: d.id || 'preview', type: d.type,
       x: d.x / NORM_W, y: d.y / this._spaceH,
-      angle: d.angle, length: this._cmToUnits(Math.max(20, d.lengthCm)) / NORM_W,
-      host: d.host,
-    }, partitions, NORM_W, this._cellCm, this._gridPitch) : null;
-    const orphan = !!d.host && !hostResolution?.resolved;
+      angle: d.angle,
+      length: previous && !d.lengthTouched
+        ? previous.length
+        : this._cmToUnits(Math.max(20, d.lengthCm)) / NORM_W,
+      ...(d.host ? { host: d.host } : {}),
+    };
+    const strict = partitionOpeningNeedsStrictValidation(previous, dialogOpening);
+    const hostResolution = d.host
+      ? strict
+        ? resolvePartitionOpeningStrict(
+            dialogOpening, partitions, NORM_W, this._cellCm, this._gridPitch,
+          )
+        : resolvePartitionOpeningCompat(
+            dialogOpening, partitions, NORM_W, this._cellCm, this._gridPitch,
+          )
+      : null;
+    const jambInvalid = hostResolution?.reason === 'does-not-fit-jamb';
+    const hostPartition = d.host
+      ? partitions.find((partition) => partition.id === d.host!.id)
+      : null;
+    const jambDistance = hostPartition
+      ? formatLength(hostPartition.cm / 2, this._imperial)
+      : '';
+    const orphan = !!d.host && !hostResolution?.resolved && !jambInvalid;
     const icon = d.type === 'gate' ? 'mdi:gate'
       : d.type === 'window' ? 'mdi:window-closed-variant'
         : d.type === 'passage' ? 'mdi:arch' : 'mdi:door';
@@ -17610,11 +17681,14 @@ class HouseplanCard extends LitElement {
       @hp-close=${() => (this._openingDialog = null)}>
         <div class="body">
           ${d.host ? html`<label>${this._t('opening.host_partition')}</label>
-            <div class=${orphan ? 'habindingbanner' : 'rhint'} role=${orphan ? 'status' : nothing}>
-              ${orphan ? html`<ha-icon icon="mdi:alert-outline"></ha-icon>` : nothing}
+            <div class=${orphan || jambInvalid ? 'habindingbanner' : 'rhint'}
+              role=${orphan || jambInvalid ? 'status' : nothing}>
+              ${orphan || jambInvalid ? html`<ha-icon icon="mdi:alert-outline"></ha-icon>` : nothing}
               <span>${orphan
                 ? this._t('opening.partition_orphan')
-                : this._t('opening.host_partition')}</span>
+                : jambInvalid
+                  ? this._t('opening.partition_jamb_margin', { distance: jambDistance })
+                  : this._t('opening.host_partition')}</span>
             </div>` : nothing}
           <label>${this._t('opening.type_label')}</label>
           <label class="srcrow"><input type="radio" name="optype" .checked=${d.type === 'window'}
@@ -17643,7 +17717,7 @@ class HouseplanCard extends LitElement {
           <input class="namein tempin" type="number" min="20" max="600" step="5" .value=${String(d.lengthCm)}
             @input=${(e: Event) => {
               const n = strictNumber((e.target as HTMLInputElement).value);
-              if (n != null) this._openingDialog = { ...d, lengthCm: n };
+              if (n != null) this._openingDialog = { ...d, lengthCm: n, lengthTouched: true };
             }} />
 
           ${d.type === 'passage' && (d.contact || d.lock)

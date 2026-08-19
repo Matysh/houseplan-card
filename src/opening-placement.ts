@@ -47,6 +47,12 @@ export interface OpeningPlacementCore {
   measure: OpeningPlacementMeasureGeometry;
 }
 
+export interface OpeningPlacementResolution {
+  candidate: OpeningPlacementCore | null;
+  /** Closest independent wall rejected specifically by its jamb reserve. */
+  jambBlockedTarget: OpeningPlacementTarget | null;
+}
+
 export interface PassagePlacementPreviewGeometry {
   rect: { x: number; y: number; width: number; height: number };
   boundaries: readonly [
@@ -250,11 +256,11 @@ function targetCompare(
 /** Pure hover/click resolver. It selects one bounded physical wall interval,
  * projects to its canonical axis and applies the established along-wall grid
  * plus centre magnet. No config, history or renderer cache is mutated. */
-export function resolveOpeningPlacement(
+export function resolveOpeningPlacementResult(
   input: ResolveOpeningPlacementInput,
-): OpeningPlacementCore | null {
+): OpeningPlacementResolution {
   const targets = openingPlacementTargets(input.intervals);
-  const eligible = targets.map((target) => {
+  const pointerEligible = targets.map((target) => {
     const p = projection(input.pointer, target);
     const envelope = Math.max(
       input.baseTolerance,
@@ -262,20 +268,25 @@ export function resolveOpeningPlacement(
     );
     return { target, ...p, envelope };
   }).filter((item) => item.distance <= item.envelope + 1e-9)
-    // Room-wall compatibility keeps its historical wide-gate behaviour, but
-    // an explicit partition host must be able to own the complete interval.
-    .filter((item) => !item.target.partitionHost
-      || input.renderedLength <= item.length + 1e-9)
     .filter((item) => !pointerInsideCollinearOpenSpan(
       input.pointer,
       item.target,
       input.intervals,
       item.envelope,
       Math.max(1e-9, Math.min(input.baseTolerance, input.gridStep * 0.04)),
-    ))
+    ));
+  const jambBlocked = pointerEligible
+    .filter((item) => !!item.target.partitionHost
+      && input.renderedLength + 2 * item.target.physicalHalfWidth > item.length + 1e-9)
+    .sort(targetCompare);
+  const eligible = pointerEligible
+    // Room-wall compatibility keeps its historical wide-gate behaviour. An
+    // explicit partition host also reserves half its physical depth per end.
+    .filter((item) => !item.target.partitionHost
+      || input.renderedLength + 2 * item.target.physicalHalfWidth <= item.length + 1e-9)
     .sort(targetCompare);
   let picked = eligible[0];
-  if (!picked) return null;
+  if (!picked) return { candidate: null, jambBlockedTarget: jambBlocked[0]?.target || null };
 
   // A room wall and an independently persisted wall may cover the same axis
   // without sharing identical endpoints. In that composite case the stable
@@ -287,7 +298,8 @@ export function resolveOpeningPlacement(
   const hosted = tied.filter((item) => item.target.partitionHost);
   if (hosted.length) {
     const hostIds = new Set(hosted.map((item) => item.target.partitionHost!.id));
-    if (hostIds.size !== 1 || hosted.some((item) => item.target.ambiguousPartitionHost)) return null;
+    if (hostIds.size !== 1 || hosted.some((item) => item.target.ambiguousPartitionHost))
+      return { candidate: null, jambBlockedTarget: null };
     const hostPick = hosted[0];
     const hx = hostPick.target.b[0] - hostPick.target.a[0];
     const hy = hostPick.target.b[1] - hostPick.target.a[1];
@@ -305,15 +317,19 @@ export function resolveOpeningPlacement(
       );
       return parallel && offset <= 1e-9;
     });
-    if (!composite) return null;
+    if (!composite) return { candidate: null, jambBlockedTarget: null };
     picked = hostPick;
   }
-  if (picked.target.ambiguousPartitionHost) return null;
+  if (picked.target.ambiguousPartitionHost) return { candidate: null, jambBlockedTarget: null };
 
   const { target, length } = picked;
   const dx = target.b[0] - target.a[0], dy = target.b[1] - target.a[1];
   const ux = dx / length, uy = dy / length;
-  const half = Math.min(Math.max(0, input.renderedLength) / 2, length / 2);
+  const jambMargin = target.partitionHost ? target.physicalHalfWidth : 0;
+  const half = Math.min(
+    Math.max(0, input.renderedLength) / 2 + jambMargin,
+    length / 2,
+  );
   let along = picked.along;
   const grid = Math.max(input.gridStep, 1e-9);
   const wallCenter = length / 2;
@@ -341,7 +357,7 @@ export function resolveOpeningPlacement(
   else if (angle < -90) angle += 180;
   const isCentered = Math.abs(along - wallCenter) <= 1e-9;
 
-  return {
+  return { candidate: {
     presetRevision: input.preset.revision,
     geometryRevision: input.geometryRevision,
     pointer: [input.pointer[0], input.pointer[1]],
@@ -364,7 +380,13 @@ export function resolveOpeningPlacement(
       ],
       guide: isCentered ? { x, y, angle } : null,
     },
-  };
+  }, jambBlockedTarget: null };
+}
+
+export function resolveOpeningPlacement(
+  input: ResolveOpeningPlacementInput,
+): OpeningPlacementCore | null {
+  return resolveOpeningPlacementResult(input).candidate;
 }
 
 export function sameOpeningPlacementInput(

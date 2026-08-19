@@ -52,30 +52,103 @@ class PartitionOpeningHostError(ValueError):
     code = "invalid_partition_opening_host"
 
 
+class PartitionOpeningJambMarginError(ValueError):
+    """A direct geometry write leaves no physical jamb at a wall endpoint."""
+
+    code = "invalid_partition_opening_jamb_margin"
+
+    def __init__(
+        self, space_id: str, opening_id: str, margin: float, margin_cm: float
+    ) -> None:
+        self.space_id = space_id
+        self.opening_id = opening_id
+        self.margin = margin
+        self.margin_cm = margin_cm
+        super().__init__(
+            f"space={space_id}; opening={opening_id}; "
+            f"margin={margin:.12g}; margin_cm={margin_cm:.12g}"
+        )
+
+
+# One normalized canvas width contains this many physical grid cells. Keep in
+# sync with GRID_STEP_N/NORM_W in the frontend; it is a geometry scale, not a
+# user setting.
+NORMALIZED_CANVAS_CELLS = 240.0
+
+
 def validate_partition_opening_hosts(
     config: dict, previous: dict | None = None
 ) -> None:
-    """Prevent an older writer from silently downgrading hosted openings.
+    """Validate hosted-opening write deltas without rejecting legacy reads.
 
-    Deleting the opening together with its partition remains valid. Only a
-    surviving record that previously had an explicit host must keep one.
+    Deleting the opening together with its partition remains valid. Surviving
+    records keep their host, while new/direct geometry changes reserve half the
+    actual wall depth at both endpoints. Rigid host translation and unrelated
+    edits round-trip existing near-end records unchanged.
     """
     old_spaces = {
         str(space.get("id")): space for space in (previous or {}).get("spaces") or []
     }
     for space in config.get("spaces") or []:
-        old_space = old_spaces.get(str(space.get("id", "")))
-        if not old_space:
-            continue
+        space_id = str(space.get("id", ""))
+        old_space = old_spaces.get(space_id)
         old_openings = {
             str(opening.get("id")): opening
-            for opening in old_space.get("openings") or []
+            for opening in (old_space or {}).get("openings") or []
+        }
+        partitions = {
+            str(partition.get("id")): partition
+            for partition in space.get("partitions") or []
+        }
+        old_partitions = {
+            str(partition.get("id")): partition
+            for partition in (old_space or {}).get("partitions") or []
         }
         for opening in space.get("openings") or []:
-            old = old_openings.get(str(opening.get("id", "")))
+            opening_id = str(opening.get("id", ""))
+            old = old_openings.get(opening_id)
             if old and old.get("host") is not None and opening.get("host") is None:
                 raise PartitionOpeningHostError(
-                    f"space={space.get('id', '')}; opening={opening.get('id', '')}; host removed"
+                    f"space={space_id}; opening={opening_id}; host removed"
+                )
+            host = opening.get("host")
+            if host is None:
+                continue
+            partition = partitions.get(str(host.get("id", "")))
+            if partition is None:
+                # SPACE_SCHEMA owns missing-host diagnostics.
+                continue
+            old_host = (old or {}).get("host")
+            old_partition = old_partitions.get(str((old_host or {}).get("id", "")))
+            ax, ay = partition["a"]
+            bx, by = partition["b"]
+            span = ((bx - ax) ** 2 + (by - ay) ** 2) ** 0.5
+            old_span = None
+            if old_partition is not None:
+                old_ax, old_ay = old_partition["a"]
+                old_bx, old_by = old_partition["b"]
+                old_span = ((old_bx - old_ax) ** 2 + (old_by - old_ay) ** 2) ** 0.5
+            strict = (
+                old is None
+                or old_host is None
+                or old_host.get("id") != host.get("id")
+                or old_host.get("t") != host.get("t")
+                or old.get("length") != opening.get("length")
+                or old_partition is None
+                or old_partition.get("cm") != partition.get("cm")
+                or abs(old_span - span) > 1e-9
+            )
+            if not strict:
+                continue
+            cell_cm = float(space.get("cell_cm", 5))
+            margin_cm = float(partition["cm"]) / 2
+            margin = margin_cm / cell_cm / NORMALIZED_CANVAS_CELLS
+            along = float(host["t"]) * span
+            half = float(opening["length"]) / 2
+            if (along - half < margin - 1e-9
+                    or along + half > span - margin + 1e-9):
+                raise PartitionOpeningJambMarginError(
+                    space_id, opening_id, margin, margin_cm
                 )
 
 

@@ -290,6 +290,35 @@ def test_canonical_passage_full_preview_preserves_geometry_and_extensions(tmp_pa
     }]
 
 
+@pytest.mark.parametrize("current_kind", ["empty", "other"])
+def test_full_preview_preserves_legacy_near_end_partition_opening(
+    tmp_path: Path, current_kind: str,
+) -> None:
+    document = _document(tmp_path, "full")
+    space = document["payload"]["config"]["spaces"][0]
+    space["partitions"] = [{
+        "id": "wall", "a": [0, 0], "b": [1, 0], "cm": 100,
+    }]
+    space["openings"] = [{
+        "id": "legacy-door", "type": "door", "x": 0.1, "y": 0,
+        "angle": 0, "length": 0.2,
+        "host": {"kind": "partition", "id": "wall", "t": 0.1},
+    }]
+    current = (
+        {"spaces": [], "markers": [], "settings": {}}
+        if current_kind == "empty" else _config()
+    )
+    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    response = create_preview(
+        runtime, json.dumps(document).encode(), owner_id="alice",
+        duplicate_policy="skip", current_config_data={"config": current, "rev": 1},
+        current_layout_data={"layout": {}, "rev": 1}, config_root=tmp_path,
+    )
+    candidate = get_candidate(runtime, response["token"], "alice")
+    restored = candidate["document"]["payload"]["config"]["spaces"][0]
+    assert restored["openings"][0]["host"]["t"] == 0.1
+
+
 def test_layout_writer_preserves_unrelated_metadata_and_removes_only_named_keys() -> None:
     stored = {
         "layout": {"old": {"x": 0, "y": 0}}, "rev": 4,
