@@ -124,6 +124,41 @@ test('micro-interval cleanup preserves ambiguous and topological boundaries', ()
   );
 });
 
+test('micro-interval cleanup is endpoint, input-order and room-order invariant without mutation', () => {
+  const fixture = microIntervalFixture();
+  const detached = {
+    id: 'r2', poly: [[0.85, 0.85], [0.95, 0.85], [0.95, 0.95], [0.85, 0.95]],
+  };
+  const semantic = (walls) => walls.map((wall) => {
+    const ends = [wall.a, wall.b]
+      .map((point) => point.map((value) => Number(value.toFixed(12))).join(','))
+      .sort();
+    return `${ends[0]}|${ends[1]}|${wall.cm}`;
+  }).sort();
+
+  const baseline = collapseIsolatedWallThicknessIslands(
+    [fixture.rooms[0], detached], fixture.walls, [], S, 5, S,
+  );
+  const reversedMiddle = {
+    ...fixture.walls[1],
+    a: [...fixture.walls[1].b],
+    b: [...fixture.walls[1].a],
+  };
+  const rooms = [detached, {
+    ...fixture.rooms[0], poly: [...fixture.rooms[0].poly].reverse().map((point) => [...point]),
+  }];
+  const walls = [fixture.walls[2], reversedMiddle, fixture.walls[0]]
+    .map((wall) => ({ ...wall, a: [...wall.a], b: [...wall.b] }));
+  const beforeRooms = structuredClone(rooms);
+  const beforeWalls = structuredClone(walls);
+
+  const result = collapseIsolatedWallThicknessIslands(rooms, walls, [], S, 5, S);
+  assert.deepEqual(rooms, beforeRooms, 'helper must not mutate rooms or their winding');
+  assert.deepEqual(walls, beforeWalls, 'helper must not mutate the walls array or entries');
+  assert.deepEqual(semantic(result), semantic(baseline));
+  assert.equal(result.find((wall) => wall.a?.[0] === 0.5 || wall.b?.[0] === 0.5)?.cm, 22);
+});
+
 test('optimizePlans migrates, aligns and canonicalises idempotently', () => {
   const config = {
     spaces: [{

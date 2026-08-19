@@ -365,6 +365,27 @@ test('different solid thicknesses remain separate atomic keys', () => {
   assert.ok(!next.some((w) => w.key === wallKey([5, 0], [5, 10], pitch)));
 });
 
+test('lossless wall helpers preserve an isolated sub-half-step thickness island outside Optimize', () => {
+  const y = 0.2, split = 0.5, length = pitch / 3;
+  const rooms = [{ id: 'r1', poly: [[0.2, y], [0.8, y], [0.8, 0.8], [0.2, 0.8]] }];
+  const walls = [
+    { key: wallKey([0.2, y], [split, y], pitch), a: [0.2, y], b: [split, y], cm: 22 },
+    { key: wallKey([split, y], [split + length, y], pitch),
+      a: [split, y], b: [split + length, y], cm: 15 },
+    { key: wallKey([split + length, y], [0.8, y], pitch),
+      a: [split + length, y], b: [0.8, y], cm: 22 },
+  ];
+  const before = structuredClone(walls);
+  const byKey = (entries) => structuredClone(entries)
+    .sort((left, right) => left.key.localeCompare(right.key));
+
+  const normalized = normalizeWallIntervals(rooms, walls, [], pitch, cellCm, GRID_PITCH);
+  const degraded = degradeWalls(walls, rooms, pitch);
+  assert.deepEqual(byKey(normalized), byKey(before), 'runtime/editor normalization remains lossless');
+  assert.deepEqual(byKey(degraded), byKey(before), 'runtime/editor degradation must not infer island removal');
+  assert.deepEqual(walls, before, 'direct lossless helpers must not mutate persisted input');
+});
+
 test('closing the sole geometric split preserves different thicknesses', () => {
   const rooms = [
     { id: 'a', poly: [[0, 0], [5, 0], [5, 10], [0, 10]] },
