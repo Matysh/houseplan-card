@@ -99,6 +99,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#173](https://github.com/Matysh/houseplan-card/issues/173) Единый инструмент рисования стен и предложение комнаты по замыканию | [173-unified-wall-tool.md](173-unified-wall-tool.md) |
 | [#174](https://github.com/Matysh/houseplan-card/issues/174) Связанный виртуальный источник следует реальному контроллеру | [174-linked-virtual-light-controller.md](174-linked-virtual-light-controller.md) |
 | [#178](https://github.com/Matysh/houseplan-card/issues/178) Выбор сущности для действия «Переключить состояние» | [178-toggle-entity.md](178-toggle-entity.md) |
+| [#197](https://github.com/Matysh/houseplan-card/issues/197) Один junction-патч не гасит кладку всего плана | [197-junction-patch-fail-dark.md](197-junction-patch-fail-dark.md) |
 
 ## P3
 
