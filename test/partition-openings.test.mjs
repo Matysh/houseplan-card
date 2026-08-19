@@ -73,13 +73,17 @@ test('full-depth cut is stable for 1/15/100 cm and diagonal hosts', () => {
 });
 
 test('computed junction patches cannot bridge a hosted slot', () => {
-  const resolved = resolvePartitionOpening(opening({
-    length: 0.1, host: { kind: 'partition', id: 'p1', t: 0.95 },
-  }), [partition], 100, 5, 5).resolved;
-  const parts = physicalBodyParts({
-    partitions: [partition, { id: 'branch', a: [100, 0], b: [100, 60], cm: 15 }],
+  // Ветка упирается в СЕРЕДИНУ пролёта p1: оба узловых патча T-стыка лежат в
+  // полосе перегородки (x∈[42.5,57.5], y∈[-7.5,0]) и целиком накрываются
+  // слотом проёма по умолчанию (t=0.5, длина 30 → x∈[35,65]). Прежняя
+  // фикстура вела ветку в конец p1 — её патч жил вне хоста (x>100), контрольная
+  // точка [92,0] была вне патча при любом поведении кода, и тест не умел
+  // падать (#188).
+  const space = {
+    partitions: [partition, { id: 'branch', a: [50, 0], b: [50, 60], cm: 15 }],
     room_drafts: [], wall_columns: [],
-  }, 5, 5, 0.001, [partitionOpeningCut(resolved)]);
+  };
+  const resolved = resolvePartitionOpening(opening(), [partition], 100, 5, 5).resolved;
   const pointIn = (point, body) => {
     let inside = false;
     for (let i = 0, j = body.length - 1; i < body.length; j = i++) {
@@ -90,7 +94,22 @@ test('computed junction patches cannot bridge a hosted slot', () => {
     }
     return inside;
   };
-  assert.equal(parts.patches.some((body) => pointIn([92, 0], body)), false);
+  const probes = [[47, -3], [53, -3]];
+
+  // Контроль фальсифицируемости: без разреза те же патчи обязаны мостить
+  // слот. Если геометрия фикстуры перестанет их порождать, краснеет этот
+  // контроль, а не молча обесценивается проверка ниже.
+  const uncut = physicalBodyParts(space, 5, 5, 0.001);
+  for (const probe of probes) {
+    assert.equal(uncut.patches.some((body) => pointIn(probe, body)), true,
+      `uncut junction patch must cover ${JSON.stringify(probe)}`);
+  }
+
+  const cut = physicalBodyParts(space, 5, 5, 0.001, [partitionOpeningCut(resolved)]);
+  for (const probe of probes) {
+    assert.equal(cut.patches.some((body) => pointIn(probe, body)), false,
+      `cut junction patch must not bridge the slot at ${JSON.stringify(probe)}`);
+  }
 });
 
 test('composite cut requires exact collinearity and full interval coverage', () => {
