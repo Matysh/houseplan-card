@@ -116,6 +116,98 @@ jobs:
             echo "integration=$(has '^(custom_components/houseplan/manifest\.json$|hacs\.json$|custom_components/.*\.py$|custom_components/.*/translations/)')"
           } >> "$GITHUB_OUTPUT"
 
+  # Переиспользование результата тяжёлой job (#208). Ключ = входы поведения
+  # (sourceFingerprint: src/**, demo/fixtures, demo/golden/*.mjs, манифесты
+  # сборки) ПЛЮС оснастка именно этой job. Маркер в кэше пишет только успешный
+  # прогон с тем же ключом, поэтому попадание доказывает: job с побайтово теми
+  # же входами уже завершилась успешно.
+  #
+  # Это НЕ фильтр путей из job `changes` (на dev они отключены намеренно): там
+  # объём прогона угадывается по путям и «зелёный» начинает значить разное,
+  # здесь эквивалентность входов доказана хешем.
+  #
+  # Свойство, снимающее главный риск: релизный кандидат бампает версию, а
+  # CARD_VERSION и package.json входят в фингерпринт, поэтому ключи кандидата
+  # заведомо новые и полный набор гейтов перед бетой и релизом идёт всегда.
+  reuse:
+    runs-on: ubuntu-latest
+    outputs:
+      smoke: ${{ steps.probe.outputs.smoke }}
+      golden: ${{ steps.probe.outputs.golden }}
+      performance_smoke: ${{ steps.probe.outputs.performance_smoke }}
+      backend: ${{ steps.probe.outputs.backend }}
+      smoke_key: ${{ steps.keys.outputs.smoke }}
+      golden_key: ${{ steps.keys.outputs.golden }}
+      performance_smoke_key: ${{ steps.keys.outputs.performance_smoke }}
+      backend_key: ${{ steps.keys.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: 22 }
+      - name: Ключи переиспользования
+        id: keys
+        run: |
+          for job in smoke golden performance_smoke backend; do
+            key=$(node scripts/gate-reuse.mjs --job="$job")
+            echo "$job=$key" >> "$GITHUB_OUTPUT"
+            echo "$job: $key"
+          done
+      # lookup-only: маркер только проверяется, но не восстанавливается —
+      # сохранять его в этой job нечего, она ничего не прогоняла.
+      - name: Маркер smoke
+        id: m_smoke
+        uses: actions/cache/restore@v6
+        with:
+          path: .reuse-marker
+          key: reuse-smoke-${{ steps.keys.outputs.smoke }}
+          lookup-only: true
+      - name: Маркер golden
+        id: m_golden
+        uses: actions/cache/restore@v6
+        with:
+          path: .reuse-marker
+          key: reuse-golden-${{ steps.keys.outputs.golden }}
+          lookup-only: true
+      - name: Маркер performance_smoke
+        id: m_perf
+        uses: actions/cache/restore@v6
+        with:
+          path: .reuse-marker
+          key: reuse-performance_smoke-${{ steps.keys.outputs.performance_smoke }}
+          lookup-only: true
+      - name: Маркер backend
+        id: m_backend
+        uses: actions/cache/restore@v6
+        with:
+          path: .reuse-marker
+          key: reuse-backend-${{ steps.keys.outputs.backend }}
+          lookup-only: true
+      - name: Что переиспользуем
+        id: probe
+        env:
+          SMOKE: ${{ steps.m_smoke.outputs.cache-hit }}
+          GOLDEN: ${{ steps.m_golden.outputs.cache-hit }}
+          PERF: ${{ steps.m_perf.outputs.cache-hit }}
+          BACKEND: ${{ steps.m_backend.outputs.cache-hit }}
+        run: |
+          # Пропуск обязан быть громким: молчаливый skip — тот самый тихий
+          # успех, который уже дважды стоил нам дня (#171, #207).
+          waive() {
+            if [ "$2" = "true" ]; then
+              echo "$1=true" >> "$GITHUB_OUTPUT"
+              echo "::notice::$1 не прогоняется: входы побайтово те же, что в предыдущем успешном прогоне (#208)"
+              echo "- **$1** переиспользована: входы не менялись" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "$1=false" >> "$GITHUB_OUTPUT"
+              echo "- $1: прогоняется" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          }
+          echo "### Переиспользование гейтов (#208)" >> "$GITHUB_STEP_SUMMARY"
+          waive smoke "$SMOKE"
+          waive golden "$GOLDEN"
+          waive performance_smoke "$PERF"
+          waive backend "$BACKEND"
+
   hacs:
     needs: changes
     if: needs.changes.outputs.integration == 'true'
@@ -160,7 +252,8 @@ jobs:
 
   smoke:
     # Gated on `frontend` so a typecheck failure does not burn browser minutes.
-    needs: frontend
+    needs: [frontend, reuse]
+    if: needs.reuse.outputs.smoke != 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -206,11 +299,28 @@ jobs:
         with:
           name: smoke-logs
           path: /tmp/smoke-logs
+      # Маркер пишется последним шагом: он существует только если всё выше
+      # прошло. Кэш сохраняется post-шагом, то есть тоже лишь при успехе job.
+      - name: Записать маркер успеха
+        run: |
+          printf '%s\n' "smoke прогнана успешно" \
+            "SHA: ${{ github.sha }}" \
+            "прогон: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            > .reuse-marker
+      - uses: actions/cache/save@v6
+        # Гонка двух прогонов с одинаковым ключом даёт «Cache already exists».
+        # Это не отказ гейта: работа выполнена, маркер уже записал сосед — job
+        # краснеть из-за этого не должна.
+        continue-on-error: true
+        with:
+          path: .reuse-marker
+          key: reuse-smoke-${{ needs.reuse.outputs.smoke_key }}
 
   golden:
     # Deterministic visual correctness stays in every prerelease gate: it is
     # inexpensive and catches a different class of regressions than timings.
-    needs: frontend
+    needs: [frontend, reuse]
+    if: needs.reuse.outputs.golden != 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -251,11 +361,28 @@ jobs:
         with:
           name: golden-images
           path: artifacts/golden
+      # Маркер пишется последним шагом: он существует только если всё выше
+      # прошло. Кэш сохраняется post-шагом, то есть тоже лишь при успехе job.
+      - name: Записать маркер успеха
+        run: |
+          printf '%s\n' "golden прогнана успешно" \
+            "SHA: ${{ github.sha }}" \
+            "прогон: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            > .reuse-marker
+      - uses: actions/cache/save@v6
+        # Гонка двух прогонов с одинаковым ключом даёт «Cache already exists».
+        # Это не отказ гейта: работа выполнена, маркер уже записал сосед — job
+        # краснеть из-за этого не должна.
+        continue-on-error: true
+        with:
+          path: .reuse-marker
+          key: reuse-golden-${{ needs.reuse.outputs.golden_key }}
 
   performance_smoke:
     # Candidate-only catastrophic-regression guard for ordinary pushes and
     # prereleases. The expensive same-runner comparison lives in performance.yml.
-    needs: frontend
+    needs: [frontend, reuse]
+    if: needs.reuse.outputs.performance_smoke != 'true'
     runs-on: ubuntu-latest
     # 15 минут не хватало, когда установка браузера шла через apt: замер
     # начинался на исходе окна (#206). Запас на холодный кэш — при попадании
@@ -296,10 +423,26 @@ jobs:
         with:
           name: performance-smoke
           path: artifacts/performance-smoke
+      # Маркер пишется последним шагом: он существует только если всё выше
+      # прошло. Кэш сохраняется post-шагом, то есть тоже лишь при успехе job.
+      - name: Записать маркер успеха
+        run: |
+          printf '%s\n' "performance_smoke прогнана успешно" \
+            "SHA: ${{ github.sha }}" \
+            "прогон: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            > .reuse-marker
+      - uses: actions/cache/save@v6
+        # Гонка двух прогонов с одинаковым ключом даёт «Cache already exists».
+        # Это не отказ гейта: работа выполнена, маркер уже записал сосед — job
+        # краснеть из-за этого не должна.
+        continue-on-error: true
+        with:
+          path: .reuse-marker
+          key: reuse-performance_smoke-${{ needs.reuse.outputs.performance_smoke_key }}
 
   backend:
-    needs: changes
-    if: needs.changes.outputs.backend == 'true'
+    needs: [changes, reuse]
+    if: needs.changes.outputs.backend == 'true' && needs.reuse.outputs.backend != 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -312,3 +455,19 @@ jobs:
       - run: pip install pytest voluptuous pytest-homeassistant-custom-component home-assistant-frontend
       - name: Backend unit tests (pure + HA harness)
         run: python -m pytest tests_backend/ -q
+      # Маркер пишется последним шагом: он существует только если всё выше
+      # прошло. Кэш сохраняется post-шагом, то есть тоже лишь при успехе job.
+      - name: Записать маркер успеха
+        run: |
+          printf '%s\n' "backend прогнана успешно" \
+            "SHA: ${{ github.sha }}" \
+            "прогон: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            > .reuse-marker
+      - uses: actions/cache/save@v6
+        # Гонка двух прогонов с одинаковым ключом даёт «Cache already exists».
+        # Это не отказ гейта: работа выполнена, маркер уже записал сосед — job
+        # краснеть из-за этого не должна.
+        continue-on-error: true
+        with:
+          path: .reuse-marker
+          key: reuse-backend-${{ needs.reuse.outputs.backend_key }}
