@@ -115,6 +115,15 @@ The virtual segment itself remains centreline-based. View paints it before the
 wall body, which masks the part inside each adjoining thick jamb; editors paint
 it after the body so its full stored extent and live preview stay visible.
 
+Computed virtual-wall junction patches cross the polygon-boolean boundary only
+after scale-relative sub-epsilon coordinate stabilisation. They are optional
+local additions: each patch union is transactional, so an invalid, zero-area or
+numerically rejected patch keeps the last valid body and does not prevent later
+patches. This fallback never rounds persisted rooms, walls or open spans to the
+grid and never turns a failure of the mandatory exterior/body/opening passes
+into a successful result. One noisy junction therefore cannot remove otherwise
+valid masonry, paper, floor faces or light barriers for the whole space (#197).
+
 ## 4. Floor, fills, light, area
 
 - **Inner contour** = `inset(poly, half[])`.
@@ -174,7 +183,9 @@ clipping and room-side colour ownership; whole and
 atomic rekey after edge/scale; corner Split exterior equality across
 0/1/15/100 cm, unequal arms, both windings and convex/concave endpoints;
 production-scale `0 ↔ 10`, `10 ↔ 20` and `1 ↔ 100` collinear transitions at
-their exact endpoint.
+their exact endpoint; full 8-room/25-wall/3-cut virtual-junction resilience,
+ULP-equivalent patch vertices, per-patch failure isolation and record-order
+invariance (#197).
 Browser: seamless frame; fill not in hatch; m² drops with thickness; a partial
 virtual stretch, its solid thick remainders and Undo move as one real resize;
 the virtual rubber band paints above the real body; sun starts at the room-side
@@ -185,7 +196,11 @@ door/window/gate tunnels repeat outer/shared room fills without an axis seam
 Plan/View/kiosk/static/isometric surfaces and the light barrier
 (`demo/smoke_split_corner_wall.mjs`); a Split followed by all-room thickness
 keeps the neighbouring zero facade clear across Plan, View, static, hidden Iso
-and light masonry (`demo/smoke_wall_thickness_transition.mjs`).
+and light masonry (`demo/smoke_wall_thickness_transition.mjs`); the complete
+#197 fixture keeps the same non-empty canonical path across Plan, View, kiosk,
+static, hidden Iso, paper/clean-floor and light/sun consumers while theme and HA
+state ticks reuse the structural geometry
+(`demo/smoke_junction_patch_resilience.mjs`).
 
 ## 9. Independent partitions, drafts and columns
 

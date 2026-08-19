@@ -1327,7 +1327,8 @@ whose hashes no longer match the reviewed manifest. `golden:accept --
 error-free report captured from the current source fingerprint; the entire set
 is validated before any reference is copied.
 
-The matrix covers thick wall junctions, virtual/physical boundaries,
+The matrix covers thick wall junctions, the full #197 multi-room
+virtual-junction resilience fixture in Plan and View, virtual/physical boundaries,
 partitions/columns, axis-aligned and 45° door/window/gate tunnels, hidden
 opening symbols, Glow and sun, live/manual Glow overlap and light through a doorway,
 light/temperature/LQI fill splits on a wall axis, hover over Glow and nested rooms, all three editors, dark/light themes,
@@ -2127,6 +2128,16 @@ require hands on real hardware — they remain for the human pass.
       paper or light masonry continues along the zero side. Plan, View, static
       and hidden Iso consume the same stepped geometry
       [auto: smoke_wall_thickness_transition + test/wall-thickness.test.mjs]
+- [ ] **One virtual-junction patch cannot blank the plan (#197)**: load the
+      complete 8-room, 25-wall, 3-cut regression fixture. Its ULP-noisy patch
+      is stabilised below geometry tolerance; a forced failure of one optional
+      patch retains the previous body and later patches still run. Plan, View,
+      kiosk, static and hidden Iso keep one non-empty canonical masonry path;
+      paper, clean-floor and light/sun consumers stay non-empty, and theme/HA
+      ticks neither rebuild topology nor write configuration
+      [auto: test/wall-thickness.test.mjs +
+      smoke_junction_patch_resilience + junction-patch-resilience golden
+      scenarios].
 - [ ] **Openings cut the slab**: a door/window/gate on a thick wall leaves a gap in
       the body; the door swing is offset toward the inner face and gate leaves
       toward the exterior face; with

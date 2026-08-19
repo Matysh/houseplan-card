@@ -211,7 +211,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 29);
+  assert.equal(GOLDEN_MATRIX_VERSION, 30);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -227,6 +227,23 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.equal(scenario.allLightsOff, true);
   assert.equal(scenario.sunRayPixels.minPixels >= 500, true);
   assert.equal(scenario.sunRayPixels.minChannelDelta >= 4, true);
+});
+
+test('issue #197 golden keeps the complete junction fixture in Plan and View', () => {
+  const scenarios = GOLDEN_SCENARIOS.filter((item) =>
+    item.id.startsWith('junction-patch-resilience-'));
+  assert.deepEqual(scenarios.map((item) => item.mode).sort(), ['plan', 'view']);
+  for (const scenario of scenarios) {
+    assert.equal(scenario.theme, 'dark');
+    assert.equal(scenario.junctionPatchResilience, true);
+    const fixture = prepareGoldenFixture(scenario);
+    const space = fixture.config.spaces.find((item) => item.id === scenario.space);
+    assert.ok(space);
+    assert.deepEqual(
+      [space.rooms.length, space.walls.length, space.open_spans.length],
+      [8, 25, 3],
+    );
+  }
 });
 
 test('the open color picker golden covers dark mobile and light desktop themes', () => {

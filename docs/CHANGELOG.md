@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- A numerically degenerate virtual-wall junction can no longer erase every
+  thick wall after **Optimize plans**. Computed junction patches are stabilised
+  at sub-geometry precision and isolated individually, while the canonical
+  masonry, floor, paper and light barriers remain available in Plan, View,
+  kiosk, the static card and the hidden isometric experiment
+  ([#197](https://github.com/Matysh/houseplan-card/issues/197)).
 - Every remaining colour control now uses the same House Plan picker, including
   the global light/temperature/LQI/Glow/wall palettes, plan and space
   backgrounds, room colour and device activity ripple. Existing opacity appears

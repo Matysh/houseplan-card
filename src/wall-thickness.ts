@@ -1373,6 +1373,61 @@ function closedRing(poly: number[][]): number[][][] {
   return [ring];
 }
 
+/**
+ * Collapse arithmetic noise on computed junction vertices before polyclip sees
+ * them. The quantum is relative to the caller coordinate scale and remains
+ * many orders of magnitude below the geometry epsilon: it must never snap a
+ * physical half-depth or mitre to the drawing grid.
+ */
+export function stableJunctionPatch(
+  patch: number[][],
+  coordScale = 1,
+): number[][] | null {
+  if (!Array.isArray(patch) || patch.length < 3) return null;
+  const scale = Number.isFinite(coordScale) && coordScale > 0 ? coordScale : 1;
+  const quantum = Math.max(1, scale) * 1e-12;
+  const stable: number[][] = [];
+  for (const point of patch) {
+    if (!Array.isArray(point) || point.length < 2) return null;
+    const x = Number(point[0]), y = Number(point[1]);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+    const sx = Math.round(x / quantum) * quantum;
+    const sy = Math.round(y / quantum) * quantum;
+    if (!Number.isFinite(sx) || !Number.isFinite(sy)) return null;
+    stable.push([Object.is(sx, -0) ? 0 : sx, Object.is(sy, -0) ? 0 : sy]);
+  }
+  return Math.abs(signedArea(stable)) > quantum * quantum ? stable : null;
+}
+
+type JunctionUnion = (subject: any, clipping: any) => any;
+
+/**
+ * Add optional virtual-junction patches transactionally. A single rejected
+ * patch may retain the local pre-patch contour, but it must not discard the
+ * already valid masonry for the entire space or prevent later patches.
+ */
+export function unionJunctionPatches(
+  body: any,
+  patches: number[][][],
+  coordScale = 1,
+  unionFn: JunctionUnion = union,
+): any {
+  let current = body;
+  for (const raw of patches || []) {
+    const patch = stableJunctionPatch(raw, coordScale);
+    if (!patch) continue;
+    try {
+      const piece = closedRing(patch) as any;
+      const next = current ? unionFn(current, piece) : piece;
+      current = next;
+    } catch {
+      // Keep the last valid body and continue. Returning null here would erase
+      // every unrelated wall, floor/light barrier and successful later patch.
+    }
+  }
+  return current;
+}
+
 interface ExteriorEnvelopeGeometry {
   /** Union of room centrelines. Shared Split edges disappear from this shape. */
   centre: any;
@@ -1546,7 +1601,7 @@ function polyclipToPathD(geom: any): string {
  * restricted to open-span endpoints, so ordinary corners keep the existing
  * contour/mitre/bevel implementation unchanged.
  */
-function virtualJunctionPatches(
+export function virtualJunctionPatches(
   rooms: any[],
   walls: WallEntry[] | null | undefined,
   openCuts: number[][],
@@ -1757,8 +1812,7 @@ export function wallBodiesGeometry(
     // The room-ring subtraction above cannot infer a mitre between real arms
     // owned by different contours at a virtual T. Add only those missing
     // junction pieces, then let physical openings cut through them as usual.
-    for (const patch of junctions)
-      body = body ? union(body, closedRing(patch) as any) : closedRing(patch);
+    body = unionJunctionPatches(body, junctions, coordScale);
     if (body && exterior) body = intersection(body, exterior.centre);
     if (exterior?.shell?.length)
       body = body ? union(body, exterior.shell) : exterior.shell;

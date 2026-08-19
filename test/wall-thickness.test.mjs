@@ -1,6 +1,7 @@
 // Wall thickness pure geometry (docs/WALL-THICKNESS.md §10).
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   wallKey, lookupWall, thicknessCmAt, degradeWalls, rekeyWallsAfterMove,
   setWallThickness, setWallThicknessForRoom, applyWallThicknessToNewRoom,
@@ -8,6 +9,7 @@ import {
   DRAW_WALL_DEFAULT_CM, clampWallCm, cmToField, fieldToCm,
   wallCmToUnits, insetContour, outsetContour, inwardNormal, edgeKinds, wallEdgeBodies,
   wallBodyRings, wallBodiesGeometry, wallBodiesUnionPath, floorFootprintGeometry,
+  virtualJunctionPatches, stableJunctionPatch, unionJunctionPatches,
   innerContourForRoom,
   paperRoomShapesWithWalls, WALL_MIN_CM, WALL_MAX_CM, MITRE_LIMIT,
   atomicPolyForRoom, insetOffsetsForRoom, wallIntervals, materializeWallIntervals,
@@ -17,7 +19,8 @@ import {
   WALL_HATCH_MIN_PX,
 } from '../test-build/wall-thickness.js';
 import { polygonArea, paperRoomShapes, splitRoomPath, sharedBoundary } from '../test-build/logic.js';
-import { GRID_PITCH } from '../test-build/space-geometry.js';
+import { resolveOpenCuts } from '../test-build/open-spans.js';
+import { GRID_PITCH, NORM_W } from '../test-build/space-geometry.js';
 import { geometryArea } from '../test-build/physical-geometry.js';
 import { difference, intersection, union } from 'polyclip-ts';
 
@@ -786,6 +789,116 @@ test('wallBodiesUnionPath mitres real arms owned by different rooms at a virtual
       && Math.abs(p[1] - (500 - half)) < 1e-6),
     `missing outer mitre corner in ${united.d}`,
   );
+});
+
+test('issue #197 keeps the full masonry when one virtual-junction patch has ULP noise', () => {
+  const fixture = JSON.parse(readFileSync(
+    new URL('./fixtures/197-junction-patch.json', import.meta.url), 'utf8',
+  ));
+  const rooms = fixture.rooms.map((room) => ({
+    ...room,
+    poly: room.poly.map(([x, y]) => [x * NORM_W, y * NORM_W]),
+  }));
+  const walls = structuredClone(fixture.walls);
+  const cuts = resolveOpenCuts(rooms, fixture.open_spans, NORM_W, GRID_PITCH * 0.02);
+  const openings = [];
+  const extraBodies = [];
+  const before = JSON.stringify({ rooms, walls, cuts, openings, extraBodies });
+
+  assert.deepEqual([rooms.length, walls.length, cuts.length], [8, 25, 3]);
+  const intervals = wallIntervals(
+    rooms, walls, cuts, pitch, fixture.cell_cm, GRID_PITCH, NORM_W,
+  );
+  const nodeCms = intervals
+    .filter((iv) => Math.abs(iv.a[1] - 550) < 1e-6
+      && Math.abs(iv.b[1] - 550) < 1e-6)
+    .map((iv) => iv.cm);
+  assert.ok(nodeCms.includes(20), `junction lost its 20 cm arm: ${nodeCms}`);
+
+  const patches = virtualJunctionPatches(
+    rooms, walls, cuts, pitch, fixture.cell_cm, GRID_PITCH, NORM_W,
+  );
+  assert.deepEqual(patches, [[
+    [620.8333333333334, 550],
+    [612.5, 550],
+    [612.5000000000001, 541.6666666666665],
+    [620.8333333333334, 541.6666666666666],
+  ]]);
+  const stable = stableJunctionPatch(patches[0], NORM_W);
+  assert.ok(stable);
+  assert.equal(stable[1][0], stable[2][0], 'equivalent mitre x coordinates stay forked');
+  assert.equal(stable[2][1], stable[3][1], 'equivalent mitre y coordinates stay forked');
+  const normalizedStable = stableJunctionPatch(
+    patches[0].map(([x, y]) => [x / NORM_W, y / NORM_W]), 1,
+  );
+  assert.ok(normalizedStable);
+  assert.equal(normalizedStable[1][0], normalizedStable[2][0]);
+  assert.equal(normalizedStable[2][1], normalizedStable[3][1]);
+  const bounds = (poly) => [
+    Math.min(...poly.map((point) => point[0])), Math.min(...poly.map((point) => point[1])),
+    Math.max(...poly.map((point) => point[0])), Math.max(...poly.map((point) => point[1])),
+  ];
+  bounds(stable).forEach((value, index) => closeTo(
+    value, bounds(patches[0])[index], 1e-9,
+  ));
+
+  const geometry = wallBodiesGeometry(
+    rooms, walls, cuts, openings, pitch, fixture.cell_cm, GRID_PITCH, NORM_W, extraBodies,
+  );
+  assert.ok(geometry, 'one rejected junction patch must not erase the whole plan');
+  assert.ok(geometry.geom.length > 0);
+  assert.ok(geometry.paperGeom.length > 0);
+  closeTo(geometryArea(geometry.geom), 124991.31944444453, 1e-6);
+  closeTo(geometryArea(geometry.paperGeom), 727303.8194444444, 1e-6);
+  assert.equal(
+    JSON.stringify({ rooms, walls, cuts, openings, extraBodies }), before,
+    'rendering mutated persisted input',
+  );
+
+  const permuted = wallBodiesGeometry(
+    [...rooms].reverse(), [...walls].reverse(), cuts, openings, pitch,
+    fixture.cell_cm, GRID_PITCH, NORM_W, extraBodies,
+  );
+  assert.ok(permuted);
+  closeTo(geometryDifferenceArea(geometry.geom, permuted.geom), 0, 1e-7);
+  closeTo(geometryDifferenceArea(permuted.geom, geometry.geom), 0, 1e-7);
+
+  const reversedAndRepeated = wallBodiesGeometry(
+    rooms, walls.map((wall) => ({ ...wall, a: [...wall.b], b: [...wall.a] })),
+    cuts, openings, pitch, fixture.cell_cm, GRID_PITCH, NORM_W, extraBodies,
+  );
+  assert.ok(reversedAndRepeated);
+  closeTo(geometryDifferenceArea(geometry.geom, reversedAndRepeated.geom), 0, 1e-7);
+  closeTo(geometryDifferenceArea(reversedAndRepeated.geom, geometry.geom), 0, 1e-7);
+  const repeated = wallBodiesGeometry(
+    rooms, walls, cuts, openings, pitch, fixture.cell_cm, GRID_PITCH, NORM_W, extraBodies,
+  );
+  assert.ok(repeated);
+  closeTo(geometryDifferenceArea(geometry.geom, repeated.geom), 0, 1e-7);
+  closeTo(geometryDifferenceArea(repeated.geom, geometry.geom), 0, 1e-7);
+});
+
+test('junction patch union isolates one failure and continues with later patches', () => {
+  const patches = [
+    [[0, 0], [2, 0], [2, 2], [0, 2]],
+    [[3, 0], [5, 0], [5, 2], [3, 2]],
+  ];
+  const calls = [];
+  const result = unionJunctionPatches('initial-body', patches, 1, (body, piece) => {
+    calls.push({ body, piece });
+    if (calls.length === 1) throw new Error('controlled first-patch failure');
+    return 'body-with-second-patch';
+  });
+  assert.equal(result, 'body-with-second-patch');
+  assert.equal(calls.length, 2, 'a failed patch suppressed the following patch');
+  assert.equal(calls[1].body, 'initial-body', 'failure replaced the last valid body');
+
+  let invalidCalls = 0;
+  assert.equal(unionJunctionPatches('opaque', [
+    [[0, 0], [Infinity, 0], [0, 1]],
+    [[0, 0], [1, 0], [2, 0]],
+  ], 1, () => { invalidCalls++; }), 'opaque');
+  assert.equal(invalidCalls, 0, 'invalid or zero-area patches reached the boolean engine');
 });
 
 test('wallBodiesUnionPath: single fully-thick room keeps a floor hole', () => {

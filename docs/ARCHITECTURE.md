@@ -386,6 +386,15 @@ opening is subtracted from its explicit raw body before that union. It also
 cuts a derived room wall only when the wall is exactly collinear and covers
 the complete hosted interval; crossing or nearby bodies remain opaque and room
 exterior authority remains intact.
+Virtual-wall junction patches are computed, scale-relatively normalised below
+the geometry epsilon, and unioned one at a time. Each such union is an optional
+transaction: a malformed/degenerate patch retains the previous canonical body
+and later patches still run. The surrounding structural pass is deliberately
+outside that fallback boundary: an exception escaping the existing
+exterior/body/opening/authoritative-extra passes still returns `null` and
+activates the established fail-dark consumer behaviour. This distinction
+prevents one cosmetic junction repair from blanking a whole plan without
+masking a real structural failure (#197).
 Before the exterior offset is built, each saved atomic endpoint splits its
 containing collinear union edge. Offset changes are explicit butt steps at that
 endpoint, including nonzero-to-zero transitions. The topology tolerance starts

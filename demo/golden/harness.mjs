@@ -1,5 +1,10 @@
 import { makeLargeHouseFixture } from '../fixtures/large-house.mjs';
 import { fixtureWallKey, makeVisualMatrixFixture } from '../fixtures/visual-matrix.mjs';
+import { readFileSync } from 'node:fs';
+
+const junctionPatchFixture = JSON.parse(readFileSync(
+  new URL('../../test/fixtures/197-junction-patch.json', import.meta.url), 'utf8',
+));
 
 const fixtureFor = (scenario) => scenario.fixture === 'large'
   ? makeLargeHouseFixture()
@@ -137,6 +142,20 @@ export function prepareGoldenFixture(scenario) {
         segments: [{ cm: 12 }, { cm: 20 }],
       }],
       wall_columns: [],
+    });
+  }
+  if (scenario.junctionPatchResilience) {
+    fixture.config.spaces.push({
+      ...structuredClone(junctionPatchFixture),
+      id: scenario.space,
+      title: 'Junction patch resilience',
+      view_box: [0, 0, 1, 1],
+      settings: {
+        ...(junctionPatchFixture.settings || {}),
+        fill_mode: 'none',
+        show_borders: true,
+        show_names: false,
+      },
     });
   }
   const requireSpace = () => {
