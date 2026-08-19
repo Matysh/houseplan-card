@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.65.0-beta.2 — 2026-08-18
+## v1.65.0-beta.3 — 2026-08-19
 
 - Editor color controls now open a single House Plan picker with saturation,
   brightness, hue, exact HEX and opacity together. The nested browser color
@@ -11,6 +11,33 @@
   unavailable targets separately, while confirmation still re-resolves the
   live state and cancels if the target set changed
   ([#103](https://github.com/Matysh/houseplan-card/issues/103)).
+- Doors, windows, gates and open passages can now be placed in finished
+  independent Walls segments. They cut the full wall depth, move with their
+  host, keep the same Home Assistant state/actions as room-wall openings and
+  are removed only through an explicit cascade confirmation. Openings no
+  longer break the structural wall axis, so drawing a closed contour still
+  offers the room even when one of its walls already contains an opening.
+  Space backups preserve the opening-to-wall binding when imported, while the
+  editor's visual snap guide keeps its physical gap across the opening
+  ([#132](https://github.com/Matysh/houseplan-card/issues/132),
+  [#185](https://github.com/Matysh/houseplan-card/issues/185)).
+- Door, window and gate contacts and locks now keep working when they are live
+  YAML entities without a `unique_id` and therefore have no Entity Registry
+  row. The picker, View animation, lock badge and opening info card now follow
+  the same exact reference, while disabled, orphaned and missing entities
+  remain unavailable ([#117](https://github.com/Matysh/houseplan-card/issues/117)).
+- Glow now remains fail-dark if wall boolean geometry cannot be built: a light
+  source inside a partition-hosted window or exterior opening stays suppressed,
+  while valid interior passages remain transparent
+  ([#187](https://github.com/Matysh/houseplan-card/issues/187)).
+- The Plan editor's snap guide now leaves a real gap across openings hosted by
+  independent Walls segments, so hover and clicks inside a door, window, gate
+  or passage no longer snap to wall material that is not there
+  ([#189](https://github.com/Matysh/houseplan-card/issues/189)).
+- Small fixes and improvements.
+
+## v1.65.0-beta.2 — 2026-08-18
+
 - Composite Home Assistant devices with several light/switch entities now let
   you choose the exact entity operated by **Toggle state**. The dialog previews
   the selected target immediately, preserves missing choices with a warning,
@@ -28,24 +55,6 @@
   Create/Keep/Cancel decisions. Ctrl/Cmd+click no longer adds an extra point
   while the chain is still too short to close
   ([#173](https://github.com/Matysh/houseplan-card/issues/173)).
-- Doors, windows, gates and open passages can now be placed in finished
-  independent Walls segments. They cut the full wall depth, move with their
-  host, keep the same Home Assistant state/actions as room-wall openings and
-  are removed only through an explicit cascade confirmation. Openings no
-  longer break the structural wall axis, so drawing a closed contour still
-  offers the room even when one of its walls already contains an opening.
-  Space backups preserve the opening-to-wall binding when imported, while the
-  editor's visual snap guide keeps its physical gap across the opening
-  ([#132](https://github.com/Matysh/houseplan-card/issues/132),
-  [#185](https://github.com/Matysh/houseplan-card/issues/185)).
-- Glow now remains fail-dark if wall boolean geometry cannot be built: a light
-  source inside a partition-hosted window or exterior opening stays suppressed,
-  while valid interior passages remain transparent
-  ([#187](https://github.com/Matysh/houseplan-card/issues/187)).
-- The Plan editor's snap guide now leaves a real gap across openings hosted by
-  independent Walls segments, so hover and clicks inside a door, window, gate
-  or passage no longer snap to wall material that is not there
-  ([#189](https://github.com/Matysh/houseplan-card/issues/189)).
 - Collinear exterior walls now change thickness exactly at their saved
   breakpoint. After splitting a room, a 10 cm wall therefore keeps its full
   depth up to the divider without leaking onto an adjacent zero-thickness
@@ -85,12 +94,6 @@
   around the previous bug should point it back to the real north
   ([#166](https://github.com/Matysh/houseplan-card/issues/166)).
 - Small fixes and improvements.
-
-- Door, window and gate contacts and locks now keep working when they are live
-  YAML entities without a `unique_id` and therefore have no Entity Registry
-  row. The picker, View animation, lock badge and opening info card now follow
-  the same exact reference, while disabled, orphaned and missing entities
-  remain unavailable ([#117](https://github.com/Matysh/houseplan-card/issues/117)).
 
 ## v1.64.0-beta.3 — 2026-08-14
 
