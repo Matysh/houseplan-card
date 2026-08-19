@@ -1,15 +1,42 @@
 # Issue #197 — один junction-патч не гасит кладку всего плана
 
 - **Issue:** https://github.com/Matysh/houseplan-card/issues/197
-- **Редакция:** первая редакция для независимого ревью; статус определяется только метками issue
+- **Редакция:** r2 после `docs/reviews/SPEC-REVIEW-197-r1.md`; статус
+  определяется только метками issue
 - **Тип / приоритет:** bug / P2
 - **Оценка:** пользовательская ценность 9/10; ценность для разработки 9/10;
   сложность 6/10; риск 8/10
 - **Область:** каноническая геометрия стен, Plan, View/киоск, static card,
   hidden Iso, clean floor/paper, Glow и солнце
 - **Модель данных:** без изменений и миграции
-- **Связано:** #141, #150, #198, #199, `docs/WALL-THICKNESS.md`,
+- **Связано:** #141, #150, #198, #199, #201, `docs/WALL-THICKNESS.md`,
   `docs/ARCHITECTURE.md`, `docs/TOUCH-SUPPORT.md`
+
+## 0. Ответ на ревью r1
+
+High-1 принят в части воспроизводимости: первая редакция не проговорила
+критически важный контракт координат `WallEntry.a/b`, поэтому независимый
+повтор оказался не тем production-вызовом, который выполнял автор.
+
+В коде ревью комнаты, cuts **и `walls[].a/b`** были заранее умножены на 1000.
+Это двойное масштабирование wall endpoints: `WallEntry.a/b` являются
+persisted config coordinates, а `entrySpan(w, coordScale)` в
+`src/wall-thickness.ts:124–129` сам умножает их на `coordScale`. Production
+renderer масштабирует room polygons и open cuts, но передаёт `space.walls`
+неизменными. При корректном вызове исходный fixture по-прежнему даёт один patch
+и `wallBodiesGeometry() === null` на `19e92e0`.
+
+R2 закрывает High не возражением на словах, а:
+
+1. фиксирует координатный контракт явно;
+2. добавляет ниже полный исполняемый reproducer, который сам извлекает fixture
+   из issue и не допускает ручного преобразования walls;
+3. уточняет AC1/AC2 так, чтобы unit сначала доказывал правильную подготовку
+   fixture и наличие patch, а затем красный `null` исходного кода;
+4. отделяет #201: прямой exact-key helper `thicknessCmAt()` действительно даёт
+   `0` на новом atomic child, но canonical `wallIntervals()`/`intervalCmAt()` на
+   production input дают `20 см`; поэтому #201 не подавляет patch и остаётся
+   отдельной задачей для собственной аналитики вызовов.
 
 ## 1. Сценарий и персона
 
@@ -44,11 +71,65 @@ desktop-first, но не может создавать или показыват
 issue и production-параметрами:
 
 - 8 комнат, 25 wall-записей, 3 `open_spans`;
-- комнаты переведены в render coordinates через `NORM_W = 1000`;
+- только `rooms[].poly` и `open_spans` переведены в render coordinates через
+  `NORM_W = 1000`; `walls[].a/b` оставлены в persisted config coordinates;
 - `pitch = GRID_STEP_N`, `cell_cm = 5`, `gridPitch = GRID_PITCH`,
   `coordScale = 1000`;
 - `wallIntervals()` успешно разрешает значения `15/20/22/28/29/33 см`;
 - `wallBodiesGeometry(...)` возвращает `null`.
+
+`walls[].a/b` нельзя предварительно умножать на `NORM_W`: `entrySpan()` делает
+это внутри по переданному `coordScale`. Следующий reproducer является
+каноническим для проверки r2 после обычной сборки `test-build`:
+
+```js
+import { execFileSync } from 'node:child_process';
+import { wallBodiesGeometry, wallIntervals } from './test-build/wall-thickness.js';
+import { resolveOpenCuts } from './test-build/open-spans.js';
+import { GRID_PITCH, GRID_STEP_N, NORM_W } from './test-build/space-geometry.js';
+
+const issue = JSON.parse(execFileSync('gh', [
+  'issue', 'view', '197', '--repo', 'Matysh/houseplan-card', '--json', 'body',
+], { encoding: 'utf8' }));
+const raw = issue.body.match(/```json\s*([\s\S]*?)```/)[1];
+const fixture = JSON.parse(raw);
+const rooms = fixture.rooms.map((room) => ({
+  ...room,
+  poly: room.poly.map(([x, y]) => [x * NORM_W, y * NORM_W]),
+}));
+const walls = structuredClone(fixture.walls); // config coords: НЕ умножать
+const openCuts = resolveOpenCuts(
+  rooms, fixture.open_spans, NORM_W, GRID_PITCH * 0.02,
+);
+const intervals = wallIntervals(
+  rooms, walls, openCuts, GRID_STEP_N, fixture.cell_cm, GRID_PITCH, NORM_W,
+);
+const geometry = wallBodiesGeometry(
+  rooms, walls, openCuts, [], GRID_STEP_N, fixture.cell_cm, GRID_PITCH,
+  NORM_W, [],
+);
+console.log({
+  counts: [rooms.length, walls.length, openCuts.length], // [8, 25, 3]
+  nodeCm: intervals
+    .filter((iv) => Math.abs(iv.a[1] - 550) < 1e-6
+      && Math.abs(iv.b[1] - 550) < 1e-6)
+    .map((iv) => iv.cm), // содержит 20
+  failed: geometry === null, // true на 19e92e0
+});
+```
+
+Для прямого контроля patch-list автор исполнил ту же compiled module с временно
+экспортированной без изменения тела `virtualJunctionPatches()`; результат — один
+patch:
+
+```json
+[[[620.8333333333334,550],[612.5,550],
+  [612.5000000000001,541.6666666666665],
+  [620.8333333333334,541.6666666666666]]]
+```
+
+В реализации test seam должен сделать этот pre-union результат проверяемым без
+source rewriting; точная публичность helper не является продуктовым контрактом.
 
 Причинная цепочка:
 
@@ -73,6 +154,14 @@ issue и production-параметрами:
   `10⁻¹²` render unit даёт валидную geometry; итоговая площадь после canonical
   clipping совпадает с вариантом, где единственный отказавший patch локально
   пропущен.
+
+Проверка замечания r1 о толщине также выполнена на корректном production input:
+`wallIntervals()` и `intervalCmAt()` возвращают `20 см` на обоих atomic children
+горизонтальной стены узла. `thicknessCmAt()` — более узкий direct-key helper —
+не наследует parent entry для child key и возвращает `0`, однако
+`virtualJunctionPatches()` его не вызывает: она получает уже разрешённые
+`wallIntervals()`. Поэтому Medium #201 не является причиной нулевого patch-list
+в корректном воспроизведении #197.
 
 Это не дефект #150: atomic thickness profile и exterior transition исправны.
 Короткий вне-сеточный интервал — отдельная находка #198. Общая проверка результата
@@ -243,12 +332,14 @@ path на двух темах.
 
 ## 11. Критерии приёмки
 
-- **AC1 (`unit`):** полный анонимизированный fixture из issue при production
-  scale возвращает ненулевой объект, непустые `geom` и `paperGeom`; тест красный
-  на исходном `dev`, где результат равен `null`.
-- **AC2 (`unit`):** fixture создаёт ровно один ожидаемый virtual-junction patch;
-  варианты координат `x`, `x ± ulp` и стабилизированный эквивалент дают одно
-  geometric set в пределах numeric tolerance и не меняют bounded envelope.
+- **AC1 (`unit`):** полный анонимизированный fixture из issue готовится ровно по
+  reproducer §3: room/cut coordinates масштабированы, persisted `walls[].a/b`
+  остаются нормализованными; получаются 8 rooms, 25 walls, 3 cuts и 20-см
+  horizontal atomic intervals. На исходном `dev` этот вызов даёт `null`, после
+  исправления — ненулевой объект с непустыми `geom` и `paperGeom`.
+- **AC2 (`unit`):** test seam подтверждает ровно один pre-union patch с четырьмя
+  вершинами из §3; варианты `x`, `x ± ulp` и стабилизированный эквивалент дают
+  одно geometric set в пределах numeric tolerance и не меняют bounded envelope.
 - **AC3 (`unit`):** принудительный throw на первом из нескольких patch unions
   сохраняет последнюю успешную body, позволяет обработать следующий patch и не
   меняет `paperGeom`; основной обязательный boolean throw по-прежнему даёт
