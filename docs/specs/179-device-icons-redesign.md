@@ -1,6 +1,6 @@
 # Issue #179 — новый визуальный язык маркеров устройств
 
-- **Статус:** готово к ревью ТЗ
+- **Статус:** ревизия 2 после жёлтого ревью r1; готово к повторному ревью ТЗ
 - **Issue:** https://github.com/Matysh/houseplan-card/issues/179
 - **Приоритет:** P1
 - **Тип:** feature / polish / accessibility
@@ -119,12 +119,16 @@ px на QA-размерах 32, 56 и 96 px. Координата сохранё
 
 Light shell: stroke `#BCBCBC`; core по умолчанию white. У light-варианта
 запрещены backdrop blur и inner shadows. Внешние shadows масштабируются от
-референса 56 px: `0 1px 2px rgb(0 0 0 / 12%)` и
-`0 4px 8px -1.07px rgb(0 0 0 / 18%)`.
+референса 56 px: `0 1px 2px rgb(37 40 45 / 12%)` и
+`0 4px 8px -1.07px rgb(37 40 45 / 18%)`.
 
-Dark использует неизменённую dark-ревизию пакета, включая core `#252525` и её
-эталонные эффекты. Тема берётся из актуальных HA theme tokens; переключение
-темы не требует remount и не меняет semantic state.
+Dark использует core `#252525`, stroke и внешние shadows неизменённой
+dark-ревизии пакета, но production renderer нормативно следует поставленному
+варианту `Dark/Icon Default No Blur.svg`: `backdrop-filter: blur(20px)` на
+каждом маркере запрещён. Это сохраняет дизайн-пакетный fallback и исключает
+дорогой отдельный backdrop-composite layer для 20–200 устройств в View/kiosk.
+Тема берётся из актуальных HA theme tokens; переключение темы не требует
+remount и не меняет semantic state.
 
 ### 7.2. Цвета
 
@@ -137,7 +141,7 @@ Dark использует неизменённую dark-ревизию паке�
 | alert / low LQI | `#F0410C` |
 | unavailable core | `#B5BAC1` |
 | locked glyph | black |
-| high LQI | `#1DC21D` |
+| presence activity / high LQI | `#1DC21D` |
 
 Тема не подменяет semantic colors. Контраст glyph/core и читаемость текста
 проверяются в light/dark и на светлом, тёмном и насыщенном фоне плана.
@@ -172,7 +176,7 @@ domain-specific HA rules сохраняются. Для lock presentation доп
 
 `display: static_icon` получает новую theme-default shell/core геометрию, но
 остаётся нереактивным к HA state, values и pulse. На интерактивной поверхности
-он сохраняет разрешённые hover/focus/click; unavailable hover запрещён.
+он сохраняет разрешённые hover/focus/click.
 
 ## 8. Text, Double и дополнительные секции
 
@@ -227,13 +231,17 @@ HSL-gradient комнатной LQI-заливки остаётся неизме
 - duration `3.6s`, infinite;
 - easing `cubic-bezier(.45,.05,.55,.95)`;
 - scale `1 → 1.5`, opacity `.55 → 0`;
-- цвет соответствует resolved ordinary activity.
+- цвет соответствует resolved ordinary activity: `presence` — green;
+  running/working/open/unlocked — amber; neutral transition — blue. Явный
+  пользовательский либо валидный live-light color сохраняет приоритет по
+  §10.4.
 
 ### 10.2. Short
 
 - три кольца;
 - каждое длится `1.1s`;
 - delays `0`, `1.1s`, `2.2s`;
+- easing `cubic-bezier(.22,.61,.36,1)`;
 - общий цикл `3.3s`;
 - новое событие перезапускает цикл через существующий generation/runtime.
 
@@ -243,6 +251,7 @@ HSL-gradient комнатной LQI-заливки остаётся неизме
 - wave stroke 3 reference units;
 - scale до `1.5`;
 - два wave-starts с интервалом `1.2s`, цикл `2.4s`;
+- easing `cubic-bezier(.22,.61,.36,1)`;
 - alert имеет приоритет над ordinary short/continuous.
 
 ### 10.4. Пользовательские настройки и fallback
@@ -253,8 +262,9 @@ HSL-gradient комнатной LQI-заливки остаётся неизме
 
 1. валидный live RGB контролируемого light, если он уже является текущим
    источником pulse color;
-2. semantic amber для working/open/unlocked;
-3. package blue для neutral activity.
+2. semantic green для presence;
+3. semantic amber для running/working/open/unlocked;
+4. package blue для neutral transition/activity.
 
 UI-default размера меняется на `1.5`, но Open → Save не материализует поле и
 не переписывает существующее явно сохранённое значение. Backend допустимый
@@ -291,6 +301,11 @@ surface/card host.
 Secure lock/cover/valve actions продолжают проходить через текущий action
 resolver и confirmation policy. Новый DOM-shell и keyboard handler не имеют
 отдельного пути обхода подтверждения.
+
+**Touch editor: best effort / intentionally degraded.** Device editor
+сохраняет текущие touch drag/tap/pointer-cancel guarantees и увеличенную hit
+area, но его полный editor workflow остаётся desktop-first. View/kiosk touch —
+блокирующий и полностью поддерживаемый контракт.
 
 ## 12. Совместимость и данные
 
@@ -380,7 +395,8 @@ frame. Pulse использует transform/opacity и не меняет layout.
       границах, а room fill сохраняет continuous gradient.
       **Доказательство:** boundary unit tests + room-fill regression test.
 - [ ] **AC8 — motion.** Continuous/short/alert timings, ring counts, retrigger,
-      scale и colors соответствуют §10; explicit color/size сохраняются.
+      easing, reason→color mapping, scale и colors соответствуют §10; explicit
+      color/size сохраняются.
       **Доказательство:** pure resolver tests + DOM/style smoke.
 - [ ] **AC9 — reduced motion.** Rings отсутствуют, ordinary point и static red
       alert остаются; одна subscription на host.
@@ -397,7 +413,8 @@ frame. Pulse использует transform/opacity и не меняет layout.
       **Доказательство:** frontend/backend config tests.
 - [ ] **AC13 — производительность.** Нет per-frame JS, per-marker media query,
       ResizeObserver/layout loop или SVG example assets в production bundle;
-      transform/opacity motion не вызывает layout.
+      transform/opacity motion не вызывает layout; ни Light, ни Dark marker не
+      создаёт per-marker `backdrop-filter`/backdrop-composite layer.
       **Доказательство:** code assertion + `performance_smoke.mjs` перед beta.
 - [ ] **AC14 — release artifacts.** ru/en copy, guides, architecture/testing
       docs, changelogs, targeted smokes и golden review актуальны.
@@ -452,6 +469,10 @@ reduced motion.
 Golden matrix: desktop/mobile, light/dark, neutral/hover/focus/selected,
 active/lock/unlock/alert/virtual/unavailable, Text, четыре Double, third section,
 LQI low/mid/high, reduced motion, sizes 32/56/96 и цветной фон.
+Комбинации `Selected + Hover/Working/Green/Alert` и `Focus + Alert` проверяются
+в обеих темах: Light сверяется с прямыми SVG-эталонами, Dark — с тем же
+нормативным приоритетом слоёв, поскольку отдельных Dark combo-assets в архиве
+нет.
 
 Golden принимается только по Linux CI artifact согласно HP-QA-01. Перед beta
 запускаются полный golden, smoke и performance наборы по release runbook;
@@ -463,7 +484,8 @@ Windows не является каноном полного HA harness из-за
 
 - рост shell у длинных значений может чаще пересекаться с соседями;
 - old explicit ripple size 3+ визуально заметно больше package default;
-- dark package намеренно отличается от light по blur/shadow;
+- Dark No-Blur отличается от основного Dark example отсутствием
+  backdrop-filter, но сохраняет core/stroke/shadow geometry пакета;
 - новый focus/tab order увеличивает число клавиатурных остановок на больших
   планах;
 - ошибочная привязка общего `lqiColor()` изменит комнатную заливку;
@@ -476,6 +498,7 @@ Windows не является каноном полного HA harness из-за
 - marker-only LQI helper отделён и покрыт regression test;
 - интерактивность добавляется только существующим actionable surfaces;
 - один renderer и одна token table исключают drift;
+- No-Blur Dark не создаёт 20–200 дорогих backdrop-composite layers;
 - targeted golden содержит контрастные backgrounds и dense layout.
 
 ### Откат
@@ -532,3 +555,9 @@ Release note: единая новая визуальная система уст
 7. Marker LQI меняет только цвет подписи; room LQI fill остаётся непрерывным.
 8. Preview и static card показывают новый дизайн, но не получают ложную
    интерактивность либо tab stop.
+9. Green continuous variant нормативно означает `presence`; amber означает
+   running/working/open/unlocked, blue — neutral transition. Это явный mapping
+   трёх package assets, который архив сам не задаёт.
+10. Production Dark использует поставленный `Icon Default No Blur` fallback:
+    визуально дорогой `backdrop-filter: blur(20px)` на каждом marker запрещён
+    ради блокирующих View/kiosk поверхностей с 20–200 устройствами.
