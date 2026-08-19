@@ -359,8 +359,12 @@ fingerprint is a hard failure, not a warning.
 
 **CI is pinned to an exact SHA.** The release gate accepts only a `completed
 success` run for the candidate's SHA, not "the last green one"; a new push cancels
-an unfinished Validate for the same branch. Jobs: `provenance`, `hacs`, `hassfest`,
-`frontend`, `smoke`, `golden`, `performance_smoke`, `backend`.
+an unfinished Validate for the same branch. Gate jobs, matching the actual
+`validate.yml` (#191): `docs`, `provenance`, `process-gate`, `hacs`, `hassfest`,
+`frontend`, `smoke`, `golden`, `performance_smoke`, `backend`. The `changes` job
+is a service path-filter, not a gate. `docs` is a real blocker: it checks the
+screenshots `sourceFingerprint` against current `src/**`, which is exactly what
+went red after the #113 merge.
 
 **"Verified" without a named command and its result is not evidence.**
 
