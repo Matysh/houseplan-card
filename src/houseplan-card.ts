@@ -6271,6 +6271,7 @@ class HouseplanCard extends LitElement {
       space,
       activeDraftId: this._activeDraftId,
       roomCuts: [...openCuts, ...this._planSnapOpeningCuts(space, openCuts)],
+      partitionCuts: this._partitionOpeningCuts(space),
       epsilon: this._gridPitch * 0.0002,
     });
     this._planSnapGeometryCache = { key, value };

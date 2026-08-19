@@ -26,6 +26,12 @@ export interface PlanSnapExtraEndpoint {
   key: string;
 }
 
+export interface PlanSnapPartitionCut {
+  hostId: string;
+  a: readonly number[];
+  b: readonly number[];
+}
+
 export type PlanSnapCandidate =
   | {
       kind: 'endpoint';
@@ -45,6 +51,7 @@ export interface BuildPlanSnapGeometryOptions {
   space: Pick<SpaceModel, 'rooms' | 'room_drafts' | 'partitions'>;
   activeDraftId?: string | null;
   roomCuts?: readonly number[][];
+  partitionCuts?: readonly PlanSnapPartitionCut[];
   epsilon?: number;
 }
 
@@ -112,12 +119,21 @@ function touches(point: readonly number[], segment: readonly number[], epsilon: 
 
 /**
  * Build the immutable architectural axes used by both the overlay and snap resolver.
- * Opening/open-span cuts apply only to room-owned walls; saved drafts and independent
- * partitions keep their own complete axes. Cut boundaries never become static nodes.
+ * Opening/open-span cuts apply to room-owned walls, while hosted opening cuts apply
+ * only to their explicit partition source. Saved drafts keep complete axes. Cut
+ * boundaries never become static nodes.
  */
 export function buildPlanSnapGeometry(options: BuildPlanSnapGeometryOptions): PlanSnapGeometry {
   const epsilon = options.epsilon ?? DEFAULT_EPSILON;
   const roomCuts = options.roomCuts || [];
+  const partitionCuts = new Map<string, number[][]>();
+  for (const cut of options.partitionCuts || []) {
+    if (typeof cut.hostId !== 'string' || !cut.hostId
+        || !finitePoint(cut.a) || !finitePoint(cut.b)) continue;
+    const cuts = partitionCuts.get(cut.hostId) || [];
+    cuts.push([cut.a[0], cut.a[1], cut.b[0], cut.b[1]]);
+    partitionCuts.set(cut.hostId, cuts);
+  }
   const sources: SourceSegment[] = [];
 
   for (const [index, segment] of roomEdges(options.space.rooms).entries()) {
@@ -151,7 +167,7 @@ export function buildPlanSnapGeometry(options: BuildPlanSnapGeometryOptions): Pl
       b: [partition.b[0], partition.b[1]],
       kind: 'partition',
       id: partition.id,
-      cuts: [],
+      cuts: partitionCuts.get(partition.id) || [],
     });
   }
 

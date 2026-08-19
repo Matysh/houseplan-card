@@ -42,6 +42,10 @@
   source inside a partition-hosted window or exterior opening stays suppressed,
   while valid interior passages remain transparent
   ([#187](https://github.com/Matysh/houseplan-card/issues/187)).
+- The Plan editor's snap guide now leaves a real gap across openings hosted by
+  independent Walls segments, so hover and clicks inside a door, window, gate
+  or passage no longer snap to wall material that is not there
+  ([#189](https://github.com/Matysh/houseplan-card/issues/189)).
 - Collinear exterior walls now change thickness exactly at their saved
   breakpoint. After splitting a room, a 10 cm wall therefore keeps its full
   depth up to the divider without leaking onto an adjacent zero-thickness

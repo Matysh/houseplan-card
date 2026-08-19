@@ -17,7 +17,11 @@ const out = await page.evaluate(async () => {
         { id: 'right', name: 'Right', area: null,
           poly: [[0.5, 0.1], [0.9, 0.1], [0.9, 0.5], [0.5, 0.5]] },
       ],
-      openings: [{ id: 'door', type: 'door', x: 0.3, y: 0.1, angle: 0, length: 0.1 }],
+      openings: [
+        { id: 'door', type: 'door', x: 0.3, y: 0.1, angle: 0, length: 0.1 },
+        { id: 'partition-door', type: 'door', x: 0.84, y: 0.6, angle: 0, length: 0.05,
+          host: { kind: 'partition', id: 'base-partition', t: 0.8 } },
+      ],
       open_spans: [{ a: [0.5, 0.2], b: [0.5, 0.3] }],
       room_drafts: [{ id: 'saved', points: [[0.1, 0.6], [0.3, 0.6], [0.3, 0.7]],
         segments: [{ cm: 15 }, { cm: 15 }] }],
@@ -63,7 +67,7 @@ const out = await page.evaluate(async () => {
   const wallBodies = root().querySelector('.wallbodies');
   result.overlayAfterWallBodies = !!wallBodies && !!overlay()
     && !!(wallBodies.compareDocumentPosition(overlay()) & Node.DOCUMENT_POSITION_FOLLOWING);
-  result.oneLinePerSolidInterval = overlay()?.querySelectorAll('.plan-snap-line').length === 12;
+  result.oneLinePerSolidInterval = overlay()?.querySelectorAll('.plan-snap-line').length === 13;
   result.uniqueSourceEndpointsOnly = overlay()?.querySelectorAll('.plan-snap-node[data-kind="endpoint"]').length === 11;
   result.columnIsNotACandidate = ![...overlay().querySelectorAll('.plan-snap-node')].some((node) =>
     close(+node.getAttribute('cx'), 800) && close(+node.getAttribute('cy'), 350));
@@ -81,6 +85,7 @@ const out = await page.evaluate(async () => {
     +line.getAttribute('x2'), +line.getAttribute('y2'),
   ]);
   result.openingGapHasNoLine = !lines().some((line) => crosses(...line, 300, 100));
+  result.partitionOpeningGapHasNoLine = !lines().some((line) => crosses(...line, 840, 600));
   result.openSpanHasNoLine = !lines().some((line) => crosses(...line, 500, 250));
   result.cutBoundariesAreNotEndpoints = ![...overlay().querySelectorAll('[data-kind="endpoint"]')].some((node) => {
     const x = +node.getAttribute('cx'), y = +node.getAttribute('cy');
@@ -148,6 +153,9 @@ const out = await page.evaluate(async () => {
   stage.dispatchEvent(eventAt(300, 100));
   await card.updateComplete;
   result.openingGapDoesNotActivateSnap = !active();
+  stage.dispatchEvent(eventAt(840, 600));
+  await card.updateComplete;
+  result.partitionOpeningGapDoesNotActivateSnap = !active();
   stage.dispatchEvent(new PointerEvent('pointerleave', { bubbles: true, pointerId: 41 }));
   await card.updateComplete;
   result.pointerLeaveClearsActiveNode = !active();

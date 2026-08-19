@@ -72,6 +72,41 @@ test('room cuts leave solid intervals but do not create cut-boundary endpoints',
     'an original endpoint remains when another solid wall still meets it');
 });
 
+test('a hosted opening cuts only its presentation partition axis without boundary nodes', () => {
+  const geometry = buildPlanSnapGeometry({
+    space: space({
+      partitions: [
+        { id: 'host', a: [0, 0], b: [100, 0], cm: 10 },
+        { id: 'nearby', a: [0, 20], b: [100, 20], cm: 10 },
+        { id: 'crossing', a: [50, -50], b: [50, 50], cm: 10 },
+      ],
+    }),
+    partitionCuts: [{ hostId: 'host', a: [40, 0], b: [60, 0] }],
+  });
+  const host = geometry.segments.filter((segment) => segment.sourceId === 'host');
+  assert.deepEqual(host.map((segment) => [segment.a, segment.b]), [
+    [[0, 0], [40, 0]],
+    [[60, 0], [100, 0]],
+  ]);
+  assert.ok(!geometry.endpoints.some((entry) => entry.point[0] === 40 && entry.point[1] === 0));
+  assert.ok(!geometry.endpoints.some((entry) => entry.point[0] === 60 && entry.point[1] === 0));
+  assert.ok(geometry.segments.some((segment) => segment.sourceId === 'nearby'
+    && segment.a[0] === 0 && segment.b[0] === 100));
+  assert.ok(geometry.segments.some((segment) => segment.sourceId === 'crossing'
+    && segment.a[1] === -50 && segment.b[1] === 50));
+  assert.equal(resolvePlanSnap(geometry, [55, 3], { tolerance: 4, gridStep: 10 }), null);
+});
+
+test('partition axes remain continuous when hosted cuts are omitted from a structural snapshot', () => {
+  const geometry = buildPlanSnapGeometry({
+    space: space({ partitions: [{ id: 'host', a: [0, 0], b: [100, 0], cm: 10 }] }),
+  });
+  assert.deepEqual(geometry.segments.map((segment) => [segment.a, segment.b]), [
+    [[0, 0], [100, 0]],
+  ]);
+  assert.equal(resolvePlanSnap(geometry, [50, 4], { tolerance: 5, gridStep: 10 })?.kind, 'line');
+});
+
 test('shared-room interval contains endpoints and interior wall-bound points only on one edge', () => {
   const geometry = buildPlanSnapGeometry({
     space: space({ rooms: [{ id: 'room', x: 0, y: 0, w: 100, h: 100 }] }),
