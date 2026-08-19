@@ -21,7 +21,8 @@ import {
   GRID_PITCH, GRID_STEP_N, NORM_W, PLAN_SCALE_MAX, PLAN_SCALE_MIN, spaceModels,
 } from './space-geometry';
 import {
-  degradeWalls, normalizeWallIntervals, rekeyWallsAfterMove,
+  degradeWalls, normalizeWallIntervals, rekeyWallsAfterMove, roomWallProfile,
+  setWallThickness, type WallEntry,
 } from './wall-thickness';
 
 /** Bump when a new lossless maintenance pass is added. */
@@ -67,6 +68,127 @@ const clamp = (value: number, min: number, max: number): number => (
 const modelOf = (space: any): any => (
   spaceModels({ spaces: [space], markers: [], settings: {} } as any)[0]
 );
+
+/** Canonical physical identity for a segment, independent of endpoint order. */
+const optimizerSpanKey = (a: number[], b: number[], coordScale: number): string => {
+  const scale = coordScale > 0 ? coordScale : 1;
+  const point = (p: number[]) => `${(p[0] / scale).toFixed(12)},${(p[1] / scale).toFixed(12)}`;
+  const ka = point(a), kb = point(b);
+  return ka < kb ? `${ka}|${kb}` : `${kb}|${ka}`;
+};
+
+/**
+ * Explicit-Optimize-only lossy cleanup for one otherwise inaccessible wall
+ * artefact. Runtime/editor normalisation deliberately remains lossless.
+ *
+ * A positive interval shorter than half a grid step may inherit its two equal
+ * neighbours only when all three pieces belong to one original straight room
+ * edge and neither endpoint is a room/opening topology node. Candidates are
+ * collected from the untouched effective profile first, so replacements never
+ * cascade and input order cannot change the result.
+ */
+export function collapseIsolatedWallThicknessIslands(
+  rooms: any[],
+  walls: WallEntry[] | null | undefined,
+  openCuts: number[][],
+  pitch: number,
+  cellCm: number,
+  gridPitch: number,
+  coordScale = 1,
+): WallEntry[] {
+  if (!walls?.length) return [];
+  const scale = coordScale > 0 ? coordScale : 1;
+  const eps = Math.max(pitch * scale * 0.02, 1e-9);
+  const nodes: number[][] = [];
+  for (const room of rooms || []) {
+    for (const point of roomPoly(room) || []) nodes.push([point[0], point[1]]);
+  }
+  for (const cut of openCuts || []) {
+    if (Array.isArray(cut) && cut.length >= 4 && cut.slice(0, 4).every(Number.isFinite)) {
+      nodes.push([cut[0], cut[1]], [cut[2], cut[3]]);
+    }
+  }
+  const isTopologyNode = (point: number[]): boolean => nodes.some((node) => (
+    Math.hypot(point[0] - node[0], point[1] - node[1]) <= eps * 2
+  ));
+
+  interface Candidate {
+    a: number[];
+    b: number[];
+    targets: Set<number>;
+  }
+  const candidates = new Map<string, Candidate>();
+  for (const room of rooms || []) {
+    if (!room?.id) continue;
+    const profile = roomWallProfile(
+      rooms, room.id, walls, openCuts, pitch, cellCm, gridPitch, scale,
+    );
+    if (!profile) continue;
+    for (let parent = 0; parent < profile.orig.length; parent++) {
+      const children: number[] = [];
+      for (let index = 0; index < profile.parent.length; index++) {
+        if (profile.parent[index] === parent) children.push(index);
+      }
+      for (let at = 1; at + 1 < children.length; at++) {
+        const left = children[at - 1], centre = children[at], right = children[at + 1];
+        if (profile.kinds[left] === null || profile.kinds[centre] === null
+            || profile.kinds[right] === null) continue;
+        const leftCm = profile.cms[left], centreCm = profile.cms[centre];
+        const rightCm = profile.cms[right];
+        if (!(leftCm > 0) || !(centreCm > 0) || leftCm !== rightCm || centreCm === leftCm) continue;
+        const a = profile.poly[centre], b = profile.poly[(centre + 1) % profile.poly.length];
+        const length = Math.hypot(b[0] - a[0], b[1] - a[1]);
+        // The product boundary is strict. A mathematically exact half-step can
+        // arrive a few ulps short after endpoint subtraction, so keep a tiny
+        // scale-relative numeric guard instead of accidentally deleting it.
+        const halfStep = gridPitch * 0.5;
+        if (!(length > eps) || !(length < halfStep - gridPitch * 1e-9)) continue;
+        if (isTopologyNode(a) || isTopologyNode(b)) continue;
+        const key = optimizerSpanKey(a, b, scale);
+        const found = candidates.get(key);
+        if (found) found.targets.add(leftCm);
+        else candidates.set(key, {
+          a: [a[0], a[1]], b: [b[0], b[1]], targets: new Set([leftCm]),
+        });
+      }
+    }
+  }
+
+  let out = walls.slice();
+  const samePoint = (x: number[], y: number[]): boolean => (
+    Math.hypot(x[0] - y[0], x[1] - y[1]) <= eps * 2
+  );
+  const exactMatches = (wall: WallEntry, candidate: Candidate): boolean => {
+    if (!Array.isArray(wall.a) || !Array.isArray(wall.b)
+        || wall.a.length < 2 || wall.b.length < 2) return false;
+    const a = [Number(wall.a[0]) * scale, Number(wall.a[1]) * scale];
+    const b = [Number(wall.b[0]) * scale, Number(wall.b[1]) * scale];
+    if (![...a, ...b].every(Number.isFinite)) return false;
+    return (samePoint(a, candidate.a) && samePoint(b, candidate.b))
+      || (samePoint(a, candidate.b) && samePoint(b, candidate.a));
+  };
+  for (const candidate of [...candidates.values()]
+    .filter((item) => item.targets.size === 1)
+    .sort((x, y) => optimizerSpanKey(x.a, x.b, scale)
+      .localeCompare(optimizerSpanKey(y.a, y.b, scale)))) {
+    const target = [...candidate.targets][0];
+    const owners = out.filter((wall) => exactMatches(wall, candidate));
+    if (new Set(owners.map((wall) => wall.cm)).size > 1) continue;
+    let exactMatch = false;
+    out = out.map((wall) => {
+      if (!exactMatches(wall, candidate)) return wall;
+      exactMatch = true;
+      return wall.cm === target ? wall : { ...wall, cm: target };
+    });
+    // An effective breakpoint can originate from a legacy-compatible key. If
+    // no exact row owns it, materialise only this proven interval; the normal
+    // lossless canonicaliser immediately following this helper does the merge.
+    if (!exactMatch) {
+      out = setWallThickness(out, candidate.a, candidate.b, target, pitch, scale);
+    }
+  }
+  return out;
+}
 
 /** Parallel per-room edges; unlike deduped roomEdges(), indices remain stable
  * while vertices are rounded, which lets exact wall fragments follow a move. */
@@ -352,6 +474,11 @@ export function optimizePlans(configIn: any, layoutIn: Record<string, any>): Opt
     const wallParts = Array.isArray(before.walls) ? before.walls.length : 0;
     let walls = rekeyWallsAfterMove(
       before.walls, oldEdges, nextEdges, GRID_STEP_N, NORM_W,
+    );
+    walls = collapseIsolatedWallThicknessIslands(
+      nextModel.rooms, walls, cuts, GRID_STEP_N,
+      Number(space.cell_cm) > 0 ? Number(space.cell_cm) : DEFAULT_CELL_CM,
+      GRID_PITCH, NORM_W,
     );
     walls = normalizeWallIntervals(
       nextModel.rooms, walls, cuts, GRID_STEP_N,

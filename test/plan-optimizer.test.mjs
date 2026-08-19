@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { optimizePlans, PLAN_MODEL_VERSION } from '../test-build/plan-optimizer.js';
-import { GRID_STEP_N as S } from '../test-build/space-geometry.js';
+import {
+  collapseIsolatedWallThicknessIslands, optimizePlans, PLAN_MODEL_VERSION,
+} from '../test-build/plan-optimizer.js';
+import { GRID_PITCH, GRID_STEP_N as S, NORM_W } from '../test-build/space-geometry.js';
 import { wallKey } from '../test-build/wall-thickness.js';
 
 const room = (id, x0, x1, openTo) => ({
@@ -11,6 +13,115 @@ const room = (id, x0, x1, openTo) => ({
   area: null,
   poly: [[x0, 0], [x1, 0], [x1, 1], [x0, 1]],
   ...(openTo ? { open_to: [openTo] } : {}),
+});
+
+const exactWall = (a, b, cm) => ({ key: wallKey(a, b, S), a, b, cm });
+
+const microIntervalFixture = (length = S / 3, middleCm = 15, rightCm = 22) => {
+  const x0 = 0.2, split = 0.5, x1 = 0.8, y = 0.2;
+  return {
+    rooms: [{ id: 'r1', poly: [[x0, y], [x1, y], [x1, 0.8], [x0, 0.8]] }],
+    walls: [
+      exactWall([x0, y], [split, y], 22),
+      exactWall([split, y], [split + length, y], middleCm),
+      exactWall([split + length, y], [x1, y], rightCm),
+    ],
+  };
+};
+
+test('Optimize collapses one isolated thickness micro-interval and is idempotent', () => {
+  const fixture = microIntervalFixture();
+  const config = {
+    model_version: PLAN_MODEL_VERSION,
+    spaces: [{
+      id: 'micro', title: 'Micro', view_box: [0, 0, 1, 1], cell_cm: 5,
+      rooms: fixture.rooms, walls: fixture.walls,
+    }],
+    markers: [], settings: {},
+  };
+  const before = JSON.parse(JSON.stringify(config));
+  const first = optimizePlans(config, {});
+  assert.deepEqual(config, before, 'preview must not mutate its input');
+  assert.equal(first.changed, true);
+  assert.equal(first.report.canonicalized, 1);
+  assert.equal(first.report.wallsMerged, 2);
+  assert.equal(first.config.spaces[0].walls.length, 1);
+  assert.equal(first.config.spaces[0].walls[0].cm, 22);
+  assert.deepEqual(first.config.spaces[0].walls[0].a, [0.2, 0.2]);
+  assert.deepEqual(first.config.spaces[0].walls[0].b, [0.8, 0.2]);
+
+  const second = optimizePlans(first.config, first.layout);
+  assert.equal(second.changed, false);
+  assert.equal(second.report.canonicalized, 0);
+  assert.equal(second.report.wallsMerged, 0);
+  assert.deepEqual(second.config, first.config);
+});
+
+test('micro-interval cleanup has a strict half-step boundary at both coordinate scales', () => {
+  for (const length of [S / 3, S / 2, S / 2 + S / 100]) {
+    const fixture = microIntervalFixture(length);
+    const normalized = collapseIsolatedWallThicknessIslands(
+      fixture.rooms, fixture.walls, [], S, 5, S, 1,
+    );
+    const normalizedMiddle = normalized.find((wall) => wall.a?.[0] === 0.5);
+    assert.equal(normalizedMiddle?.cm, length < S / 2 ? 22 : 15, `normalized length=${length}`);
+
+    const renderRooms = fixture.rooms.map((item) => ({
+      ...item, poly: item.poly.map(([x, y]) => [x * NORM_W, y * NORM_W]),
+    }));
+    const rendered = collapseIsolatedWallThicknessIslands(
+      renderRooms, fixture.walls, [], S, 5, GRID_PITCH, NORM_W,
+    );
+    const renderMiddle = rendered.find((wall) => wall.a?.[0] === 0.5);
+    assert.equal(renderMiddle?.cm, length < S / 2 ? 22 : 15, `render length=${length}`);
+  }
+});
+
+test('micro-interval cleanup preserves ambiguous and topological boundaries', () => {
+  const unequal = microIntervalFixture(S / 3, 15, 20);
+  assert.deepEqual(
+    collapseIsolatedWallThicknessIslands(unequal.rooms, unequal.walls, [], S, 5, S),
+    unequal.walls,
+    'different neighbour thicknesses have no unambiguous replacement',
+  );
+
+  const overlapping = microIntervalFixture();
+  overlapping.walls.splice(2, 0, { ...overlapping.walls[1], cm: 18 });
+  assert.deepEqual(
+    collapseIsolatedWallThicknessIslands(overlapping.rooms, overlapping.walls, [], S, 5, S),
+    overlapping.walls,
+    'conflicting exact owners of the same micro-interval are ambiguous',
+  );
+
+  const atVertex = microIntervalFixture();
+  atVertex.rooms[0].poly.splice(1, 0, [0.5, 0.2]);
+  assert.deepEqual(
+    collapseIsolatedWallThicknessIslands(atVertex.rooms, atVertex.walls, [], S, 5, S),
+    atVertex.walls,
+    'a room vertex at the island endpoint is a topology boundary',
+  );
+
+  const atOpening = microIntervalFixture();
+  const cut = [[0.45, 0.2, 0.5, 0.2]];
+  assert.deepEqual(
+    collapseIsolatedWallThicknessIslands(atOpening.rooms, atOpening.walls, cut, S, 5, S),
+    atOpening.walls,
+    'an open-cut endpoint at the island boundary blocks cleanup',
+  );
+
+  const chain = microIntervalFixture(S / 3, 15, 22);
+  const y = 0.2, firstEnd = 0.5 + S / 3, secondEnd = firstEnd + S / 3;
+  chain.walls = [
+    exactWall([0.2, y], [0.5, y], 22),
+    exactWall([0.5, y], [firstEnd, y], 15),
+    exactWall([firstEnd, y], [secondEnd, y], 16),
+    exactWall([secondEnd, y], [0.8, y], 22),
+  ];
+  assert.deepEqual(
+    collapseIsolatedWallThicknessIslands(chain.rooms, chain.walls, [], S, 5, S),
+    chain.walls,
+    'a chain of different micro-intervals must not collapse cumulatively',
+  );
 });
 
 test('optimizePlans migrates, aligns and canonicalises idempotently', () => {

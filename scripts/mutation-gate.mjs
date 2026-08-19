@@ -41,6 +41,22 @@ import { fileURLToPath } from 'node:url';
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 export const MUTANTS = [
   {
+    id: 'optimizer-micro-interval-cleanup-disabled',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="isolated thickness micro-interval" '
+      + 'test/plan-optimizer.test.mjs',
+    because: 'explicit Optimize must remove only the proven sub-half-step 22→15→22 '
+      + 'artefact instead of continuing to call the lossy plan canonical',
+    patches: [{
+      file: 'src/plan-optimizer.ts',
+      find: '  if (!walls?.length) return [];\n  const scale = coordScale > 0 ? coordScale : 1;\n'
+        + '  const eps = Math.max(pitch * scale * 0.02, 1e-9);',
+      replace: '  if (!walls?.length) return [];\n  return walls.slice();\n'
+        + '  const scale = coordScale > 0 ? coordScale : 1;\n'
+        + '  const eps = Math.max(pitch * scale * 0.02, 1e-9);',
+    }],
+  },
+  {
     id: 'atomic-child-thickness-parent-fallback',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="exact parent|atomic solid children" '

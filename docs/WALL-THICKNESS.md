@@ -124,6 +124,16 @@ grid and never turns a failure of the mandatory exterior/body/opening passes
 into a successful result. One noisy junction therefore cannot remove otherwise
 valid masonry, paper, floor faces or light barriers for the whole space (#197).
 
+Runtime normalisation remains lossless for every positive exact thickness
+interval, regardless of its length. The explicit **Optimize plans** maintenance
+action has one deliberately lossy exception (#198): an isolated interval
+strictly shorter than half a grid step inherits two equal collinear neighbours
+when neither endpoint is a room vertex or resolved opening endpoint. End
+fragments, unequal neighbours, chains of short changes and exact half-step
+intervals remain untouched. Candidates come from one pre-change effective
+profile, so cleanup cannot cascade; ordinary rendering and editor Save never
+invoke it.
+
 ## 4. Floor, fills, light, area
 
 - **Inner contour** = `inset(poly, half[])`.
@@ -185,7 +195,9 @@ atomic rekey after edge/scale; corner Split exterior equality across
 production-scale `0 ↔ 10`, `10 ↔ 20` and `1 ↔ 100` collinear transitions at
 their exact endpoint; full 8-room/25-wall/3-cut virtual-junction resilience,
 ULP-equivalent patch vertices, per-patch failure isolation and record-order
-invariance (#197); exact parent-run thickness inherited by atomic children when
+invariance (#197); explicit Optimize-only collapse of a sub-half-step isolated
+thickness island with strict threshold, topology and ambiguity guards (#198);
+exact parent-run thickness inherited by atomic children when
 closing a virtual neighbour, without partial-span leakage (#201).
 Browser: seamless frame; fill not in hatch; m² drops with thickness; a partial
 virtual stretch, its solid thick remainders and Undo move as one real resize;
@@ -201,7 +213,9 @@ and light masonry (`demo/smoke_wall_thickness_transition.mjs`); the complete
 #197 fixture keeps the same non-empty canonical path across Plan, View, kiosk,
 static, hidden Iso, paper/clean-floor and light/sun consumers while theme and HA
 state ticks reuse the structural geometry
-(`demo/smoke_junction_patch_resilience.mjs`).
+(`demo/smoke_junction_patch_resilience.mjs`); Optimize Preview/Cancel/Apply/
+server Undo for guarded micro-interval cleanup
+(`demo/smoke_optimize_micro_interval.mjs`).
 
 ## 9. Independent partitions, drafts and columns
 

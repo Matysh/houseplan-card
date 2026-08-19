@@ -2254,6 +2254,15 @@ require hands on real hardware — they remain for the human pass.
       onto a longer query, and scale/direction/row order do not change the
       resolver [auto: test/wall-thickness.test.mjs + test/open-spans.test.mjs +
       smoke_resize_virtual_thick + mutation-gate].
+- [ ] **Explicit Optimize cleans only an isolated micro-interval (#198)**:
+      `22 → 15 → 22` with a centre shorter than half a grid step and no
+      room/opening node becomes one 22 cm run in Preview and Apply; Cancel
+      writes nothing and server Undo restores the three exact entries. Exact
+      half-step, end, unequal-neighbour, chained and topological cases remain
+      lossless at normalized/render scales; a second Optimize is idempotent
+      [unit: test/plan-optimizer.test.mjs; auto:
+      smoke_optimize_micro_interval; mutation:
+      `optimizer-micro-interval-cleanup-disabled`].
 - [ ] **Unit + backend**: inset/mitre/bevel, key from either end, degrade,
       rekey, cm↔inches; `walls` schema bounds
       [auto: test/wall-thickness.test.mjs + tests_backend/test_validation.py]

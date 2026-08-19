@@ -12,6 +12,12 @@
   within 30 minutes. Earlier points therefore survive mop washing and similar
   station visits; a map change or a longer stop still starts a new run
   ([#205](https://github.com/Matysh/houseplan-card/issues/205)).
+- **Optimize plans** now removes an isolated wall-thickness fragment shorter
+  than half a grid step when it sits strictly between two collinear fragments
+  of the same thickness and has no room/opening node at either end. End
+  fragments, real topology boundaries and ambiguous thickness changes remain
+  lossless; Preview, Apply and server Undo keep their existing flow
+  ([#198](https://github.com/Matysh/houseplan-card/issues/198)).
 - Turning off **Show names** now removes room names completely in View, kiosk,
   the static card and hidden isometric mode, while Plan still exposes the
   existing draggable card for positioning. Re-enabling names restores its
