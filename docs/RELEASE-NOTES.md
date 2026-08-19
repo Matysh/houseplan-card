@@ -1,18 +1,18 @@
-<!-- release: v1.65.0-beta.4 -->
+<!-- release: v1.65.0-beta.5 -->
 
 ## Основное
 
-- Все настройки цвета и прозрачности теперь используют единую палитру House Plan с наглядной радужной шкалой оттенка.
-- Открытый проём показывает точное полупрозрачное превью будущего разрыва стены и его границы до размещения.
-- Один вырожденный стык виртуальных стен больше не может скрыть всю кладку, пол и световые барьеры плана.
+- Проёмы в независимых стенах теперь сохраняют безопасные откосы при размещении и редактировании.
+- Подписи комнат больше не сдвигаются между Просмотром и Планом и полностью скрываются при выключении названий.
+- Толщина стен сохраняется на сложных стыках и частично разделённых участках.
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- Every color and opacity setting now uses one House Plan picker with a clear rainbow hue track.
-- Open passages show an exact translucent preview of the future wall cut and its boundaries before placement.
-- One degenerate virtual-wall junction can no longer hide all masonry, flooring and light barriers in the plan.
+- Independent-wall openings now keep safe jambs during placement and editing.
+- Room labels no longer shift between View and Plan and disappear completely when names are disabled.
+- Wall thickness stays correct at complex junctions and partially split stretches.
 - Small fixes and improvements.
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.65.0-beta.4/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.65.0-beta.4/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.65.0-beta.5/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.65.0-beta.5/docs/CHANGELOG.md)

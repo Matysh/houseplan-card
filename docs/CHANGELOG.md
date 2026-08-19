@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.65.0-beta.4 — 2026-08-19
+## v1.65.0-beta.5 — 2026-08-19
 
 - Turning off **Show names** now removes room names completely in View, kiosk,
   the static card and hidden isometric mode, while Plan still exposes the
@@ -28,6 +28,9 @@
   target while keeping the same compact glyph and header layout. Near-misses no
   longer fall through to the active tab's intentional no-op
   ([#195](https://github.com/Matysh/houseplan-card/issues/195)).
+
+## v1.65.0-beta.4 — 2026-08-19
+
 - Room hover tooltips now show average humidity next to temperature. The value
   follows the room's configured humidity source or its Home Assistant area
   average, and is omitted when no valid reading is available
