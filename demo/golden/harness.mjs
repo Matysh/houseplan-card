@@ -667,6 +667,52 @@ export async function prepareGoldenScenario(page, scenario) {
       if (!trigger) throw new Error('golden decor color trigger missing');
       trigger.click();
       await picker.updateComplete;
+    } else if (scenario.dialog === 'general-color') {
+      card._openSettingsDialog();
+      await card.updateComplete;
+      const dialog = card.renderRoot.querySelector('hp-dialog');
+      const picker = [...(dialog?.querySelectorAll('hp-color-opacity') || [])]
+        .find((item) => item.label === card._t('gs.light_on'));
+      await picker?.updateComplete;
+      const trigger = picker?.renderRoot?.querySelector('.trigger');
+      if (!trigger) throw new Error('golden general-settings color trigger missing');
+      trigger.scrollIntoView({ block: 'center' });
+      await frame();
+      trigger.click();
+      await picker.updateComplete;
+    } else if (scenario.dialog === 'device-ripple-color') {
+      card._setMode('devices');
+      await card.updateComplete;
+      await settleMode(card);
+      const device = card._devices.find((item) => item.id === scenario.deviceId);
+      if (!device) throw new Error(`golden ripple device missing: ${scenario.deviceId}`);
+      card._openMarkerDialog(device);
+      card._markerDialog = { ...card._markerDialog, display: 'icon_ripple' };
+      card.requestUpdate();
+      await card.updateComplete;
+      const dialog = card.renderRoot.querySelector('hp-dialog');
+      const picker = [...(dialog?.querySelectorAll('hp-color-opacity') || [])]
+        .find((item) => item.label === card._t('marker.activity_color'));
+      await picker?.updateComplete;
+      const trigger = picker?.renderRoot?.querySelector('.trigger');
+      if (!trigger) throw new Error('golden ripple color trigger missing');
+      trigger.scrollIntoView({ block: 'center' });
+      await frame();
+      trigger.click();
+      await picker.updateComplete;
+    } else if (scenario.dialog === 'space-room-color') {
+      card._openSpaceDialog('edit', scenario.space);
+      await card.updateComplete;
+      const dialog = card.renderRoot.querySelector('hp-dialog');
+      const picker = [...(dialog?.querySelectorAll('hp-color-opacity') || [])]
+        .find((item) => item.label === card._t('space.room_color'));
+      await picker?.updateComplete;
+      const trigger = picker?.renderRoot?.querySelector('.trigger');
+      if (!trigger) throw new Error('golden space room-color trigger missing');
+      trigger.scrollIntoView({ block: 'center' });
+      await frame();
+      trigger.click();
+      await picker.updateComplete;
     }
     if (scenario.dayCycle) {
       const environment = card.renderRoot.querySelector('.hp-day-cycle-env');

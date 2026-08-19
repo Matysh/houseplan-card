@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import test from 'node:test';
 import {
   hexToRgb, hsvToHex, hsvToRgb, normalizeHexColor, normalizeHue, rgbToHex, rgbToHsv,
@@ -40,13 +40,24 @@ test('HSV helpers wrap hue, clamp finite dimensions and keep grayscale achromati
 test('the shared component keeps its API and contains no nested native color picker', () => {
   const component = readFileSync(new URL('../src/hp-color-opacity.ts', import.meta.url), 'utf8');
   const card = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
-  assert.doesNotMatch(component, /type=["']color["']/);
+  const sourceFiles = (directory) => readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const target = new URL(entry.name + (entry.isDirectory() ? '/' : ''), directory);
+    return entry.isDirectory() ? sourceFiles(target) : entry.name.endsWith('.ts') ? [target] : [];
+  });
+  for (const source of sourceFiles(new URL('../src/', import.meta.url))) {
+    assert.doesNotMatch(readFileSync(source, 'utf8'), /type\s*=\s*["']color["']/,
+      `native color input remains in ${source.pathname}`);
+  }
   for (const token of [
     'public color', 'public opacity', 'public disabled', 'public showOpacity',
     'hp-color-opacity-change', 'detail: { color: normalized, opacity: clamped }',
   ]) assert.match(component, new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
-  assert.equal((card.match(/<hp-color-opacity/g) || []).length, 8);
-  assert.equal((card.match(/\.pickerLabels=\$\{this\._colorPickerLabels\}/g) || []).length, 8);
+  assert.equal((card.match(/<hp-color-opacity/g) || []).length, 13);
+  assert.equal((card.match(/\.pickerLabels=\$\{this\._colorPickerLabels\}/g) || []).length, 13);
+  assert.equal((card.match(/\.showOpacity=\$\{false\}/g) || []).length, 4,
+    'Glow, ripple and both background pickers stay color-only');
+  assert.equal((card.match(/\.showOpacity=\$\{true\}/g) || []).length, 2,
+    'general fill rows and room color explicitly keep their existing opacity');
 });
 
 test('the hue range exposes one cyclic spectrum without restyling other ranges', () => {

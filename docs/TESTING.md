@@ -95,6 +95,28 @@
       the implementation loop [golden: `decor-color-popover-mobile-ru`,
       `decor-color-popover-desktop-en`].
 
+## Unified picker coverage for every color field (#180)
+
+- [ ] A recursive source contract rejects every native `input[type=color]` in
+      product TypeScript and fixes the complete shared-component inventory at
+      13 template instances [unit: `color-picker.test.mjs`].
+- [ ] The 11 general light/temperature/LQI/Glow/wall palettes and the space room
+      colour move their existing opacity into the unified picker; color and
+      alpha update one parent draft atomically [unit: `color-picker.test.mjs`,
+      auto: `smoke_color_picker_consumers.mjs`].
+- [ ] Global background, space background and activity ripple are color-only;
+      opening/closing does not materialize an inherited/default value, and
+      Default/Inherit restore `null` without adding alpha
+      [auto: `smoke_color_picker_consumers.mjs`].
+- [ ] General settings keep one exclusive picker open among 12 swatches; marker
+      ripple size remains independent, and cancelling the space dialog writes
+      no color draft [auto: `smoke_color_picker_consumers.mjs`].
+- [ ] The three new dialog families are reviewed from the complete Linux
+      artifact before a beta; implementation does not accept their baselines
+      [golden: `general-color-popover-desktop-en`,
+      `device-ripple-color-popover-mobile-ru`,
+      `space-room-color-popover-desktop-ru`].
+
 
 ## Open passage (#157)
 

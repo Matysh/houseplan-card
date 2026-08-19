@@ -184,6 +184,13 @@ dialog. The Hue track shows the full colour spectrum at a glance, with a
 contrasting ring keeping its slider visible. Changes remain a draft until the
 owning properties dialog is saved.
 
+This is the same control everywhere: decor and custom fills, the global
+light/temperature/LQI/Glow/wall palettes, global and per-space backgrounds,
+room colour, marker Glow and the device activity ripple. Settings that already
+have opacity show it in the picker; colour-only settings do not acquire one.
+**Default** and **Inherited** background actions remain beside the colour
+sample and do not save the displayed fallback unless a colour is changed.
+
 <!-- docs-section: input -->
 
 ## 6. Navigation, zoom and input

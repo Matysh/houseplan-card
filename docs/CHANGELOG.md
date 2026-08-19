@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Every remaining colour control now uses the same House Plan picker, including
+  the global light/temperature/LQI/Glow/wall palettes, plan and space
+  backgrounds, room colour and device activity ripple. Existing opacity appears
+  inside the same surface, while colour-only fields and Default/Inherited
+  behaviour keep their previous data model
+  ([#180](https://github.com/Matysh/houseplan-card/issues/180)).
+
 ## v1.65.0-beta.3 — 2026-08-19
 
 - Open-passage placement now previews the exact future wall cut before the

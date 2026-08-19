@@ -211,7 +211,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 28);
+  assert.equal(GOLDEN_MATRIX_VERSION, 29);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -236,6 +236,19 @@ test('the open color picker golden covers dark mobile and light desktop themes',
   })), [
     { id: 'decor-color-popover-mobile-ru', language: 'ru', theme: 'dark', width: 390 },
     { id: 'decor-color-popover-desktop-en', language: 'en', theme: 'light', width: 760 },
+  ]);
+});
+
+test('all newly unified color-picker dialog families have reviewed-golden candidates', () => {
+  const scenarios = GOLDEN_SCENARIOS.filter((item) => [
+    'general-color', 'device-ripple-color', 'space-room-color',
+  ].includes(item.dialog));
+  assert.deepEqual(scenarios.map(({ id, dialog, theme, viewport }) => ({
+    id, dialog, theme, width: viewport.width,
+  })), [
+    { id: 'general-color-popover-desktop-en', dialog: 'general-color', theme: 'light', width: 900 },
+    { id: 'device-ripple-color-popover-mobile-ru', dialog: 'device-ripple-color', theme: 'dark', width: 390 },
+    { id: 'space-room-color-popover-desktop-ru', dialog: 'space-room-color', theme: 'dark', width: 900 },
   ]);
 });
 

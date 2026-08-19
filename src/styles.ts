@@ -2159,14 +2159,9 @@ export const cardStyles = css`
       align-items: center;
       gap: var(--sp-4);
     }
-    .colorrow input[type='color'] {
-      width: 42px;
-      height: 28px;
-      border: 1px solid var(--hp-line);
-      border-radius: var(--rad-s);
-      background: transparent;
-      padding: 1px;
-      cursor: pointer;
+    .gsrow > hp-color-opacity {
+      min-width: min(100%, 210px);
+      justify-content: space-between;
     }
     .colorrow input[type='range'] { flex: 1; }
     .colorrow .tempin { width: 70px; flex: none; }

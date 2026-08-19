@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 28;
+export const GOLDEN_MATRIX_VERSION = 29;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -280,6 +280,15 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'decor-color-popover-desktop-en', fixture: 'visual', space: 'golden-geometry',
     dialog: 'decor-color', language: 'en', theme: 'light',
     viewport: { width: 760, height: 820 }, ...page },
+  { id: 'general-color-popover-desktop-en', fixture: 'visual', space: 'golden-geometry',
+    dialog: 'general-color', language: 'en', theme: 'light',
+    viewport: { width: 900, height: 900 }, ...page },
+  { id: 'device-ripple-color-popover-mobile-ru', fixture: 'visual', space: 'golden-lighting',
+    dialog: 'device-ripple-color', deviceId: 'golden-light-two',
+    language: 'ru', theme: 'dark', viewport: { width: 390, height: 1000 }, ...page },
+  { id: 'space-room-color-popover-desktop-ru', fixture: 'visual', space: 'golden-geometry',
+    dialog: 'space-room-color', language: 'ru', theme: 'dark',
+    viewport: { width: 900, height: 1000 }, ...page },
   { id: 'backup-full-preview-desktop-en', fixture: 'visual', space: 'golden-geometry',
     dialog: 'backup-full', language: 'en', theme: 'dark',
     viewport: { width: 1000, height: 900 }, ...page },

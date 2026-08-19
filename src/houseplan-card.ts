@@ -14499,11 +14499,13 @@ class HouseplanCard extends LitElement {
     const d = this._settingsDialog!;
     const v = d.colors[key];
     return html`<div class="colorrow gsrow">
-      <span class="gsl">${this._t(labelKey as any)}</span>
-      <input type="color" .value=${v.c}
-        @input=${(e: Event) => this._setFillColor(key, { c: (e.target as HTMLInputElement).value })} />
-      ${this._rangeInput(0, 100, 1, Math.round(v.a * 100), (n) => this._setFillColor(key, { a: n / 100 }))}
-      <span class="opv">${Math.round(v.a * 100)}%</span>
+      <hp-color-opacity .label=${this._t(labelKey as any)}
+        .opacityLabel=${this._t('space.opacity')}
+        .pickerLabels=${this._colorPickerLabels}
+        .color=${v.c} .opacity=${v.a} .showOpacity=${true}
+        @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) => {
+          this._setFillColor(key, { c: e.detail.color, a: e.detail.opacity });
+        }}></hp-color-opacity>
     </div>`;
   }
 
@@ -15081,10 +15083,13 @@ class HouseplanCard extends LitElement {
           </div>
           ${this._settingsDialog!.bgMode === 'static'
             ? html`<div class="colorrow gsrow">
-                <span class="gsl">${this._t('gs.bg_color')}</span>
-                <input type="color" .value=${this._settingsDialog!.bgColor || this._stageBgHex()}
-                  @input=${(e: Event) =>
-                    (this._settingsDialog = { ...this._settingsDialog!, bgColor: (e.target as HTMLInputElement).value })} />
+                <hp-color-opacity .label=${this._t('gs.bg_color')}
+                  .pickerLabels=${this._colorPickerLabels}
+                  .color=${this._settingsDialog!.bgColor || this._stageBgHex()}
+                  .opacity=${1} .showOpacity=${false}
+                  @hp-color-opacity-change=${(e: CustomEvent<{ color: string }>) => {
+                    this._settingsDialog = { ...this._settingsDialog!, bgColor: e.detail.color };
+                  }}></hp-color-opacity>
                 ${this._settingsDialog!.bgColor
                   ? html`<button class="btn ghost" @click=${() =>
                       (this._settingsDialog = { ...this._settingsDialog!, bgColor: null })}>${this._t('gs.bg_default')}</button>`
@@ -19328,9 +19333,12 @@ class HouseplanCard extends LitElement {
               </div>`}
           ${d.display === 'icon_ripple'
             ? html`<div class="colorrow">
-                <span class="opl">${this._t('marker.activity_color')}</span>
-                <input type="color" .value=${d.rippleColor || '#3ea6ff'}
-                  @input=${(e: Event) => (this._markerDialog = { ...d, rippleColor: (e.target as HTMLInputElement).value })} />
+                <hp-color-opacity .label=${this._t('marker.activity_color')}
+                  .pickerLabels=${this._colorPickerLabels}
+                  .color=${d.rippleColor || '#3ea6ff'} .opacity=${1} .showOpacity=${false}
+                  @hp-color-opacity-change=${(e: CustomEvent<{ color: string }>) => {
+                    this._markerDialog = { ...d, rippleColor: e.detail.color };
+                  }}></hp-color-opacity>
                 <span class="opl">${this._t('marker.ripple_size')}</span>
                 ${this._rangeInput(2, 8, 0.5, d.rippleSize, (n) => (this._markerDialog = { ...d, rippleSize: n }))}
                 <span class="opv">×${d.rippleSize}</span>
@@ -19524,13 +19532,16 @@ class HouseplanCard extends LitElement {
             <span class="opv">${Math.round(d.cardFontScale * 100)}%</span>
           </div>
           ${this._renderCardPreview(d.cardFontScale, 1, 1)}
-          <label>${this._t('space.room_color')}</label>
           <div class="colorrow">
-            <input type="color" .value=${d.roomColor}
-              @input=${(e: Event) => (this._spaceDialog = { ...d, roomColor: (e.target as HTMLInputElement).value })} />
-            <span class="opl">${this._t('space.opacity')}</span>
-            ${this._rangeInput(0, 100, 1, Math.round(d.roomOpacity * 100), (n) => (this._spaceDialog = { ...d, roomOpacity: n / 100 }))}
-            <span class="opv">${Math.round(d.roomOpacity * 100)}%</span>
+            <hp-color-opacity .label=${this._t('space.room_color')}
+              .opacityLabel=${this._t('space.opacity')}
+              .pickerLabels=${this._colorPickerLabels}
+              .color=${d.roomColor} .opacity=${d.roomOpacity} .showOpacity=${true}
+              @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) => {
+                this._spaceDialog = {
+                  ...d, roomColor: e.detail.color, roomOpacity: e.detail.opacity,
+                };
+              }}></hp-color-opacity>
           </div>
           <label>${this._t('space.bg_mode')}</label>
           <select class="areasel"
@@ -19543,10 +19554,14 @@ class HouseplanCard extends LitElement {
             <option value="daynight" ?selected=${d.bgMode === 'daynight'}>${this._t('gs.bg_daynight')}</option>
           </select>
           ${(d.bgMode ?? bgModeOf(this._settings, {})) === 'static'
-            ? html`<label>${this._t('space.bg_color')}</label>
-              <div class="colorrow">
-                <input type="color" .value=${d.bgColor || stageBgOf(this._settings, { bgColor: null }) || this._stageBgHex()}
-                  @input=${(e: Event) => (this._spaceDialog = { ...d, bgColor: (e.target as HTMLInputElement).value })} />
+            ? html`<div class="colorrow">
+                <hp-color-opacity .label=${this._t('space.bg_color')}
+                  .pickerLabels=${this._colorPickerLabels}
+                  .color=${d.bgColor || stageBgOf(this._settings, { bgColor: null }) || this._stageBgHex()}
+                  .opacity=${1} .showOpacity=${false}
+                  @hp-color-opacity-change=${(e: CustomEvent<{ color: string }>) => {
+                    this._spaceDialog = { ...d, bgColor: e.detail.color };
+                  }}></hp-color-opacity>
                 ${d.bgColor
                   ? html`<button class="btn ghost" @click=${() => (this._spaceDialog = { ...d, bgColor: null })}>
                       ${this._t('space.bg_inherit')}</button>`
