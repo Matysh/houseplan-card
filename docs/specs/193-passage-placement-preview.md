@@ -122,6 +122,10 @@ editor-геометрия:
 - публичность скрытой изометрии;
 - расширение touch-гарантий Plan editor.
 
+**Touch editor:** best effort / intentionally degraded. Preview наследует
+существующий статус Plan editor: это presentation-only hover-эффект, который не
+расширяет touch-гарантии.
+
 ## 7. Контракт поведения
 
 ### 7.1 Появление
