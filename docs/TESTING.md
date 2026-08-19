@@ -2011,6 +2011,25 @@ require hands on real hardware — they remain for the human pass.
 - [ ] **A non-admin never sees it**: the button follows the same rule as the
       per-space gear (`_canEdit`) [manual, needs a non-admin HA user]
 
+## Honest new-space display defaults (#204, dev, unreleased)
+
+- [ ] **The dialog and Save agree**: open a new space. File begins with room
+      borders/names `false/false`; before either control is touched, switching
+      to Draw shows `true/true` and switching back restores `false/false`.
+      Saving either source and reopening it yields the exact visible pair
+      [auto: `space-dialog.test`, `smoke_space_create_display_defaults`,
+      `smoke_space_settings`].
+- [ ] **One touch protects both choices**: on Draw change either display
+      switch, including the mixed `true/false` and `false/true` cases. Further
+      File ↔ Draw switches change only the source; Save never silently restores
+      `true/true` [auto: `space-dialog.test`,
+      `smoke_space_create_display_defaults`; mutation:
+      `space-create-hidden-display-override`].
+- [ ] **Draft state does not leak**: Cancel and a fresh Create return to File
+      `false/false`. In Floors/Areas onboarding every next floor also starts
+      clean and cannot inherit the preceding floor's touched state
+      [auto: `smoke_space_create_display_defaults`].
+
 ## Coming back to the tab (docs/WARM-REMOUNT.md, dev, unreleased)
 
 - [ ] **A quick return does not flash**: leave the browser tab or minimise the

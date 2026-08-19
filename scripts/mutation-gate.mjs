@@ -476,6 +476,18 @@ export const MUTANTS = [
       replace: '    const areaLinkInteractive = true;',
     }],
   },
+  {
+    id: 'space-create-hidden-display-override',
+    guard: 'node demo/smoke_space_create_display_defaults.mjs',
+    because: 'Save must persist the two booleans visibly chosen for a new hand-drawn space; '
+      + 'the production smoke saves and reopens a mixed pair so the old hidden true/true override cannot return',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '        show_borders: d.showBorders,\n        show_names: d.showNames,',
+      replace: "        show_borders: d.source === 'draw' && d.mode === 'create' ? true : d.showBorders,\n"
+        + "        show_names: d.source === 'draw' && d.mode === 'create' ? true : d.showNames,",
+    }],
+  },
 ];
 
 // --- механика ---------------------------------------------------------------
