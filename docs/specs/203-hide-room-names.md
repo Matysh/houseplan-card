@@ -148,7 +148,7 @@ Touch/keyboard policy и события Plan editor не меняются. Пр�
 |---|---|---|
 | AC1 | На нарисованном пространстве без `bg`, при `show_names:false`, в flat View нет ни `.roomlabel`, ни `.room-svg-labels text`, ни `[data-hp="room-label"]`. | Targeted Playwright smoke через реальный space setting. |
 | AC2 | AC1 выполняется в компактной карточке пространства. | Тот же smoke на `houseplan-space-card`. |
-| AC3 | Hidden iso при `show_names:false` не форсирует подписи; при `true` сохраняет существующую projected HTML-карточку. | Расширенный isometric contract/live smoke. |
+| AC3 | Hidden iso при `show_names:false` не форсирует подписи; при `true` сохраняет существующую projected HTML-карточку. | Расширенный isometric contract/live smoke + отдельный iso mutant. |
 | AC4 | Plan editor показывает редактируемую подпись при `show_names:false`; после выхода View снова пуст. | Browser mode-transition smoke с DOM assertions. |
 | AC5 | При `true` HTML-карточки, метрики, HA Area icon, сохранённая позиция/scale и текущие события не меняются. | Существующие room-card/link/parity smokes + focused regression. |
 | AC6 | Toggle в edit-диалоге даёт live-preview, Save переживает повторное открытие, Cancel не пишет config. | Расширенный `smoke_space_settings.mjs` либо отдельный targeted smoke. |
@@ -193,11 +193,18 @@ smokes прогоняются до code review.
 содержит существующие HTML-карточки. Общий `golden:verify` и полный smoke идут
 перед бетой, но затронутые focused кадры обязательны при реализации.
 
-Mutation entry `hidden-room-names-svg-fallback` возвращает хотя бы одну
-ошибочную full/compact fallback-ветку. Targeted guard обязан быть зелёным на
-чистом коде и non-zero на мутанте. Если full и compact исправляются разными
-необщими ветками, нужны два mutants, чтобы каждый renderer умел независимо
-покраснеть.
+Mutation gate обязан независимо защищать все три места исходного дефекта:
+
+| Mutant id | Обязательная поломка | Guard |
+|---|---|---|
+| `hidden-room-names-full-svg-fallback` | Вернуть SVG-fallback `_renderSvgRoomLabels()` полного flat renderer при `show_names:false`. | Targeted full-card smoke из AC1 обязан завершиться non-zero. |
+| `hidden-room-names-compact-svg-fallback` | Вернуть `staticSvgLabels` компактной карточки при `show_names:false`. | Targeted compact-card smoke из AC2 обязан завершиться non-zero. |
+| `hidden-room-names-iso-override` | Вернуть независимый `iso && !space.bg` override, который форсирует HTML `.roomlabel` вопреки `show_names:false`. | Isometric contract/live smoke из AC3 обязан завершиться non-zero. |
+
+Все три entries регистрируются в `scripts/mutation-gate.mjs`; каждый якорь
+встречается ровно один раз. На чистом коде все guards зелёные, на каждом мутанте
+соответствующий guard красный. Объединять full/compact/iso в один мутант нельзя:
+иначе исправленная ветка может маскировать непроверенную соседнюю.
 
 ## 11. Риски и меры
 
