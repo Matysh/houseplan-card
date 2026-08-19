@@ -190,6 +190,7 @@ const res = await page.evaluate(async () => {
       + parseFloat(style.marginLeft) + parseFloat(style.marginRight);
     const verticalFootprint = rect.height
       + parseFloat(style.marginTop) + parseFloat(style.marginBottom);
+    const glyphStays13 = style.getPropertyValue('--mdc-icon-size').trim() === '13px';
     hit?.dispatchEvent(new MouseEvent('click', {
       bubbles: true,
       composed: true,
@@ -199,7 +200,8 @@ const res = await page.evaluate(async () => {
     await settleMode();
     tabCrossChecks.push({
       target: rect.width >= 24 && rect.height >= 24,
-      glyph: style.getPropertyValue('--mdc-icon-size').trim() === '13px',
+      // Capture computed style before the click removes the active X from DOM.
+      glyph: glyphStays13,
       footprint: Math.abs(horizontalFootprint - 15) <= 0.1
         && Math.abs(verticalFootprint - 13) <= 0.1,
       edgeHit: hit === cross,
