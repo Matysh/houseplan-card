@@ -51,6 +51,15 @@ test('stable space ids use exact lookup and abort before side effects', () => {
   const configMutationAt = saveMarker.indexOf('cfg.markers = markers');
   assert.ok(exactAt >= 0 && exactAt < guardAt && guardAt < busyAt
     && busyAt < migrateAt && migrateAt < configMutationAt);
+
+  const savePos = methodBody('_savePos');
+  const positionExactAt = savePos.indexOf('_spaceModelById(d.space)');
+  const layoutMutationAt = savePos.indexOf('this._layout =');
+  const dirtyAt = savePos.indexOf('_dirtyPos.add');
+  const persistAt = savePos.indexOf('_persistLayout()');
+  assert.ok(positionExactAt >= 0 && positionExactAt < layoutMutationAt
+    && layoutMutationAt < dirtyAt && dirtyAt < persistAt,
+  'stale position writes abort before layout, dirty and persistence side effects');
 });
 
 test('empty render keeps create/import affordances without spatial layers', () => {

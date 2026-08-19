@@ -38,7 +38,7 @@
       model returns `undefined`; exact lookup of a stale saved id never falls
       back to another space [unit: `space-model-selection.test.mjs`].
 - [ ] There are no unguarded `_spaceModel().…` dereferences, explicit-id calls
-      use `_spaceModelById()`, and marker persistence validates its target
+      use `_spaceModelById()`, and marker/position persistence validates its target
       before config/file/WS side effects
       [unit: `optional-space-model-contract.test.mjs`].
 - [ ] Delete the last space while an editor gesture and debounced write are

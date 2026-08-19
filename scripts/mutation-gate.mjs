@@ -41,6 +41,18 @@ import { fileURLToPath } from 'node:url';
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 export const MUTANTS = [
   {
+    id: 'stale-space-position-guard-removed',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="stable space ids" test/optional-space-model-contract.test.mjs',
+    because: 'position persistence with a stable space id must fail closed before layout, dirty-set '
+      + 'and websocket side effects when that space has been deleted or renamed',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    if (!this._spaceModelById(d.space)) return;\n    if (this._norm) {',
+      replace: '    if (this._norm) {',
+    }],
+  },
+  {
     id: 'empty-space-cleanup-disabled',
     guard: 'node demo/smoke_optional_space_model.mjs',
     because: 'удаление последнего пространства обязано завершать жесты, редакторы и отложенную запись; '

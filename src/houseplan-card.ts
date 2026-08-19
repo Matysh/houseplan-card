@@ -4328,6 +4328,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _savePos(d: DevItem, x: number, y: number): void {
+    if (!this._spaceModelById(d.space)) return;
     if (this._norm) {
       // The icon center snaps to the nodes of the same grid as the room markup
       // (docs/CANVAS.md §9). UX-05 has no free-position escape hatch.
