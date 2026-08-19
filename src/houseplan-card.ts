@@ -84,6 +84,9 @@ import {
   resolveInitialSpace, settleBestEffort, type InitialSpaceSelection,
 } from './initial-load';
 import { selectActiveSpaceModel, selectSpaceModelById } from './space-model-selection';
+import {
+  initialSpaceDisplayDraft, switchSpacePlanSource, touchSpaceDisplay,
+} from './space-dialog';
 import { mdiHomeCityOutline } from '@mdi/js';
 import {
   Affine, applyAffine, readVacTelemetry,
@@ -1593,6 +1596,8 @@ class HouseplanCard extends LitElement {
     source: 'file' | 'draw';       // draw = no background image, hand-drawn rooms
     showBorders: boolean;
     showNames: boolean;
+    /** Create-only source-default guard; never persisted. Edit starts touched. */
+    displayTouched: boolean;
     hideDecor: boolean;            // the decorative layer is not drawn outside its editor
     hideOpenings: boolean;         // opening symbols are not drawn outside the plan editor
     roomColor: string;
@@ -13210,6 +13215,7 @@ class HouseplanCard extends LitElement {
         mode, spaceId, title: sp.title, planUrl: sp.plan_url || null, planFile: null,
         source: sp.plan_url ? 'file' : 'draw',
         showBorders: disp.showBorders, showNames: disp.showNames,
+        displayTouched: true,
         hideDecor: disp.hideDecor, hideOpenings: disp.hideOpenings,
         roomColor: disp.color, roomOpacity: disp.opacity,
         // `none` is a legacy space token. The current editor represents its
@@ -13232,8 +13238,7 @@ class HouseplanCard extends LitElement {
     } else {
       this._spaceDialog = {
         mode, title: '', planUrl: null, planFile: null,
-        source: 'file',
-        showBorders: false, showNames: false,
+        ...initialSpaceDisplayDraft(),
         hideDecor: false, hideOpenings: false,
         roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'custom',
         // `custom` replaces the old `none` choice in the editor, but creating
@@ -13469,12 +13474,12 @@ class HouseplanCard extends LitElement {
         delete sp.plan_x; delete sp.plan_y; delete sp.plan_scale;
         delete sp.plan_scale_x; delete sp.plan_scale_y; delete sp.plan_angle;
       }
-      // per-space display settings; hand-drawn spaces get borders+names on by default
-      const draw = d.source === 'draw';
+      // Persist exactly what the dialog showed. Source defaults are projected
+      // visibly while editing the create state, never hidden here at Save.
       sp.settings = {
         ...(sp.settings || {}),
-        show_borders: draw && d.mode === 'create' ? true : d.showBorders,
-        show_names: draw && d.mode === 'create' ? true : d.showNames,
+        show_borders: d.showBorders,
+        show_names: d.showNames,
         // written only when ON: a plan that never hid anything stores nothing
         hide_decor: d.hideDecor || undefined,
         hide_openings: d.hideOpenings || undefined,
@@ -13607,8 +13612,7 @@ class HouseplanCard extends LitElement {
     if (title === undefined) return;
     this._spaceDialog = {
       mode: 'create', title, planUrl: null, planFile: null,
-      source: 'file',
-      showBorders: false, showNames: false,
+      ...initialSpaceDisplayDraft(),
       hideDecor: false, hideOpenings: false,
       roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'custom',
       customFill: null,
@@ -19518,7 +19522,7 @@ class HouseplanCard extends LitElement {
           <label>${this._t('space.plan_label')}</label>
           <label class="srcrow">
             <input type="radio" name="plansrc" .checked=${d.source === 'file'}
-              @change=${() => (this._spaceDialog = { ...d, source: 'file' })} />
+              @change=${() => (this._spaceDialog = switchSpacePlanSource(d, 'file'))} />
             <span>${this._t('space.source_file')}</span>
           </label>
           ${d.source === 'file'
@@ -19545,7 +19549,7 @@ class HouseplanCard extends LitElement {
             : nothing}
           <label class="srcrow">
             <input type="radio" name="plansrc" .checked=${d.source === 'draw'}
-              @change=${() => (this._spaceDialog = { ...d, source: 'draw' })} />
+              @change=${() => (this._spaceDialog = switchSpacePlanSource(d, 'draw'))} />
             <span>${this._t('space.source_draw')}</span>
           </label>
 
@@ -19565,11 +19569,11 @@ class HouseplanCard extends LitElement {
 
           <label class="dispsection">${this._t('space.display_section')}</label>
           <label class="srcrow">
-            ${this._boolInput(d.showBorders, (v) => (this._spaceDialog = { ...d, showBorders: v }))}
+            ${this._boolInput(d.showBorders, (v) => (this._spaceDialog = touchSpaceDisplay(d, 'showBorders', v)))}
             <span>${this._t('space.show_borders')}</span>
           </label>
           <label class="srcrow">
-            ${this._boolInput(d.showNames, (v) => (this._spaceDialog = { ...d, showNames: v }))}
+            ${this._boolInput(d.showNames, (v) => (this._spaceDialog = touchSpaceDisplay(d, 'showNames', v)))}
             <span>${this._t('space.show_names')}</span>
           </label>
           <label class="srcrow">

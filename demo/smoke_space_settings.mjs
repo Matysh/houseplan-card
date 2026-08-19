@@ -62,7 +62,9 @@ const res = await page.evaluate(async () => {
   out.labelSaved = !!c._layout['rl_r1'];
   // 6) диалог: create + draw
   c._openSpaceDialog('create'); await c.updateComplete;
-  c._spaceDialog = { ...c._spaceDialog, title: 'Attic', source: 'draw', orientation: 'square' };
+  [...sr().querySelectorAll('input[name="plansrc"]')][1].click();
+  await c.updateComplete;
+  c._spaceDialog = { ...c._spaceDialog, title: 'Attic', orientation: 'square' };
   await c.updateComplete;
   out.saveEnabled = !sr().querySelector('hp-dialog .btn.on[disabled]');
   await c._saveSpaceDialog(); await c.updateComplete;

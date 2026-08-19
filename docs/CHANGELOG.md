@@ -2,6 +2,11 @@
 
 ## v1.65.0-beta.5 — 2026-08-19
 
+- The new-space dialog now shows the defaults it will actually save: image
+  spaces start with borders and names off, while switching to a hand-drawn
+  plan visibly turns both on. After either switch is edited, changing the plan
+  source preserves the complete user-selected pair; the Floors/Areas wizard
+  follows the same rule ([#204](https://github.com/Matysh/houseplan-card/issues/204)).
 - Turning off **Show names** now removes room names completely in View, kiosk,
   the static card and hidden isometric mode, while Plan still exposes the
   existing draggable card for positioning. Re-enabling names restores its
