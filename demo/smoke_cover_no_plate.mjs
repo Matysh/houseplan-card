@@ -173,7 +173,7 @@ const out = await page.evaluate(async () => {
     && getComputedStyle(lockEl.querySelector('.device-core')).backgroundColor === AMBER;
   o.openWindowKeepsTheFrame = !!winEl && winEl.classList.contains('open')
     && getComputedStyle(winEl.querySelector('.device-core')).backgroundColor === ORANGE;
-  // …and a locked lock is neutral again, so the frame still MEANS something
+  // …and a locked lock keeps the distinct package face: dark core + white glyph.
   c.hass = { ...c.hass, states: { ...c.hass.states,
     'lock.front_door': { entity_id: 'lock.front_door', state: 'locked', attributes: { friendly_name: 'Front door' } } } };
   c.requestUpdate();
@@ -181,9 +181,12 @@ const out = await page.evaluate(async () => {
   await new Promise((r) => setTimeout(r, 300));
   const lockedEl = elOf(dev('d_lock'));
   const lockedCore = lockedEl?.querySelector('.device-core');
-  o.lockedLockIsNeutral = !!lockedEl?.classList.contains('lock-locked')
-    && getComputedStyle(lockedCore).backgroundColor === NEUTRAL
-    && getComputedStyle(lockedCore).color === 'rgb(0, 0, 0)';
+  const lockedFace = lockedEl?.classList.contains('theme-dark')
+    ? 'rgb(37, 37, 37)'
+    : 'rgb(0, 0, 0)';
+  o.lockedLockKeepsPackageFace = !!lockedEl?.classList.contains('lock-locked')
+    && getComputedStyle(lockedCore).backgroundColor === lockedFace
+    && getComputedStyle(lockedCore).color === 'rgb(255, 255, 255)';
 
   // a VALVE keeps the frame too: nothing morphs its icon, so the frame is the
   // only thing it has to say «открыт» with (deliberately left alone)
