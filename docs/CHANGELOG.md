@@ -2,6 +2,11 @@
 
 ## v1.65.0-beta.2 — 2026-08-18
 
+- **Toggle state** confirmation now shows the current state and the exact
+  expected result before acting. Groups show their active/total count and
+  unavailable targets separately, while confirmation still re-resolves the
+  live state and cancels if the target set changed
+  ([#103](https://github.com/Matysh/houseplan-card/issues/103)).
 - Composite Home Assistant devices with several light/switch entities now let
   you choose the exact entity operated by **Toggle state**. The dialog previews
   the selected target immediately, preserves missing choices with a warning,

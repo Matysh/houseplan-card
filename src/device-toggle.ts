@@ -766,6 +766,58 @@ export function toggleOperation(intent: ResolvedToggleIntent | null): ToggleOper
   return intent.command ? { kind: 'ha-service', command: intent.command } : null;
 }
 
+export interface ToggleConfirmationFormatter {
+  /** Localized/formatted current state for one executable target. */
+  state: (target: ResolvedToggleTarget) => string;
+  current: (state: string) => string;
+  expected: (state: string) => string;
+  groupCurrent: (on: number, total: number) => string;
+  groupAllOn: () => string;
+  groupAllOff: () => string;
+  unavailable: (count: number) => string;
+  effect: (effect: Exclude<ToggleNextEffect, 'toggle'>) => string;
+  expectedByHa: () => string;
+}
+
+/**
+ * Accessible current/expected/skipped copy for an executable confirmation.
+ * Direction is read exclusively from `nextEffect`; this formatter never
+ * derives a command from a domain or from the current-state label.
+ */
+export function formatToggleConfirmation(
+  intent: ResolvedToggleIntent,
+  formatter: ToggleConfirmationFormatter,
+): string[] {
+  if (!toggleOperation(intent) || !intent.nextEffect || !intent.targets.length) return [];
+
+  const isGroup = intent.kind === 'group';
+  const on = isGroup
+    ? intent.targets.filter((target) => target.state === 'on').length
+    : 0;
+  const currentState = isGroup
+    ? (on === 0 ? formatter.groupAllOff() : formatter.groupCurrent(on, intent.targets.length))
+    : formatter.state(intent.targets[0]);
+
+  let expectedState: string;
+  if (intent.nextEffect === 'toggle') {
+    expectedState = formatter.expectedByHa();
+  } else if (isGroup && intent.nextEffect === 'turn-on') {
+    expectedState = formatter.groupAllOn();
+  } else if (isGroup && intent.nextEffect === 'turn-off') {
+    expectedState = formatter.groupAllOff();
+  } else {
+    expectedState = formatter.effect(intent.nextEffect);
+  }
+
+  return [
+    formatter.current(currentState),
+    formatter.expected(expectedState),
+    ...(intent.skippedTargets.length
+      ? [formatter.unavailable(intent.skippedTargets.length)]
+      : []),
+  ];
+}
+
 /** Stable confirmation identity; direction is deliberately re-resolved later. */
 export function sameToggleOperationTargets(
   a: ResolvedToggleIntent | null,

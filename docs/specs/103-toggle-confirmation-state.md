@@ -1,7 +1,7 @@
 # Issue #103 — текущее и ожидаемое состояние в Toggle confirmation
 
 - **Issue:** https://github.com/Matysh/houseplan-card/issues/103
-- **Статус документа:** готово к будущей реализации; issue остаётся на `S3-spec`
+- **Статус документа:** принято ревью ТЗ; реализация разрешена из `S5-ready`
 - **Приоритет:** P3
 - **Тип:** feature/polish, обычный трек
 - **Пользовательское изменение:** да
@@ -12,6 +12,10 @@
 confirmation guard и фактической service call. При `tap_confirm` текущий диалог
 показывает только имя цели. Пользователь не видит исходное состояние и
 направление команды, особенно у cover/valve и смешанных групп.
+
+Это изменение встречает любую персону House Plan в View на desktop, companion
+app или wall panel в момент короткого нажатия на маркер с включённым
+`tap_confirm`; поверхность относится к fully-supported safe device actions.
 
 #103 расширяет только содержимое существующего confirmation. Resolver, target
 selection, кнопки и safety re-resolve остаются прежними.
@@ -75,9 +79,9 @@ State label берётся через HA formatter, когда state object до
 | --- | --- | --- |
 | power `off` + `turn-on` | Выключено | Включено |
 | active power + `turn-off` | HA-formatted current | Выключено |
-| cover `closed/closing` + `open` | Закрыто/Закрывается | Открыто |
-| cover `open/opening` + `close` | Открыто/Открывается | Закрыто |
-| cover + `stop` | HA-formatted current | Остановлено |
+| cover `closed` + `open` | Закрыто | Открыто |
+| cover `open` + `close` | Открыто | Закрыто |
+| cover `opening/closing` + `stop` | Открывается/Закрывается | Остановлено |
 | valve + `open/close` | Закрыто/Открыто | Открыто/Закрыто |
 | group, все off | Все выключены | Все включены |
 | group, есть active | Включено N из M | Все выключены |
@@ -154,16 +158,16 @@ interface TapToggleConfirmation {
 
 ## 10. Acceptance criteria
 
-1. Toggle confirmation для operation показывает current и expected lines.
-2. Expected line строго соответствует `nextEffect`.
-3. Power, cover, valve, virtual light и group имеют локализованные формулировки.
-4. Partial group явно показывает skipped count и не обещает их изменение.
-5. `toggle` сообщает, что результат определит HA.
-6. No-operation intent не открывает confirmation.
-7. Confirm выполняет заново разрешённый current intent.
-8. Изменившийся target set отменяет actuation и показывает прежний toast.
-9. Desktop/mobile layout, keyboard и screen-reader order не регрессируют.
-10. Run и другие confirmations сохраняют прежнее содержимое.
+1. Toggle confirmation для operation показывает current и expected lines — **unit + browser smoke**.
+2. Expected line строго соответствует `nextEffect` — **unit**.
+3. Power, cover, valve, virtual light и group имеют локализованные формулировки — **unit + RU/EN browser smoke**.
+4. Partial group явно показывает skipped count и не обещает их изменение — **unit**.
+5. `toggle` сообщает, что результат определит HA — **unit**.
+6. No-operation intent не открывает confirmation — **unit + browser smoke**.
+7. Confirm выполняет заново разрешённый current intent — **browser smoke**.
+8. Изменившийся target set отменяет actuation и показывает прежний toast — **browser smoke**.
+9. Desktop/mobile layout, keyboard и screen-reader order не регрессируют — **narrow browser smoke + code review**.
+10. Run и другие confirmations сохраняют прежнее содержимое — **existing run smoke + code review**.
 
 ## 11. План тестирования
 

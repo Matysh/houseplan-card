@@ -348,6 +348,14 @@ aggregates until the same ID becomes active again.
 | Toggle state | Toggles the exact binding, supported device function or configured light-source group | Locks, alarm panels and protective garage/door/gate targets are no-op; confirmation is optional |
 | Run | Runs an automation, script or scene | Explicit target; confirmation is optional |
 
+When confirmation is enabled for **Toggle state**, the dialog shows the current
+state and the exact expected result (`On`, `Off`, `Open`, `Closed` or `Stopped`).
+A group shows the active/total count and lists unavailable targets separately;
+the result describes only the targets that will receive the command. The text
+is a snapshot, but Confirm re-resolves the live state and direction. If the
+target set changed while the dialog was open, House Plan cancels the action and
+asks you to try again.
+
 A light defaults to Toggle; other devices default to the House Plan card. An
 unsupported Toggle remains a visible no-op and is never changed into another
 action behind the user's back.

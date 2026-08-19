@@ -49,6 +49,26 @@
 - [ ] Removing the authoritative empty-state cleanup makes that smoke red
       [mutation: `empty-space-cleanup-disabled`].
 
+## Toggle confirmation state (#103)
+
+- [ ] Every executable `ToggleNextEffect` formats current and expected lines
+      without deriving direction from the state label; `toggle` names Home
+      Assistant as the authority and a no-operation intent produces no lines
+      [unit: `device-toggle.test.mjs`].
+- [ ] All-off/mixed/partial groups use only executable targets for their
+      active/total count and show skipped targets as a separate line
+      [unit: `device-toggle.test.mjs`].
+- [ ] EN/RU confirmation renders prompt → current → expected → skipped before
+      the buttons, wraps a long name at 390 px and has no horizontal scroll
+      [auto: `smoke_toggle_confirmation.mjs`].
+- [ ] A state race with the same target executes the newly resolved direction;
+      a changed target set makes zero service calls and shows the existing
+      retry toast [auto: `smoke_toggle_confirmation.mjs`].
+- [ ] Cover, virtual-light, HA-control and Run confirmations keep their
+      existing actuation/cancel contracts [auto: `smoke_cover_tap`,
+      `smoke_virtual_light_toggle`, `smoke_ha_controls`, `smoke_controls`,
+      `smoke_tap_run`].
+
 
 ## Open passage (#157)
 

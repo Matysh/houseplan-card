@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  formatToggleConfirmation,
   projectedTapAction,
   resolveToggleIntent,
   sameToggleCommandTargets,
@@ -10,6 +11,30 @@ import {
   toggleCoverEntity,
   toggleOriginOf,
 } from '../test-build/device-toggle.js';
+
+const confirmationFormatter = {
+  state: (target) => `state:${target.state}`,
+  current: (value) => `current:${value}`,
+  expected: (value) => `expected:${value}`,
+  groupCurrent: (on, total) => `group:${on}/${total}`,
+  groupAllOn: () => 'all-on',
+  groupAllOff: () => 'all-off',
+  unavailable: (count) => `unavailable:${count}`,
+  effect: (effect) => `effect:${effect}`,
+  expectedByHa: () => 'by-ha',
+};
+
+const confirmationIntent = (overrides = {}) => ({
+  origin: 'explicit-toggle',
+  kind: 'single',
+  semantics: 'power',
+  targets: [{ entityId: 'switch.sample', name: 'Sample', state: 'off', via: 'binding' }],
+  skippedTargets: [],
+  noneReason: null,
+  nextEffect: 'turn-on',
+  command: { domain: 'switch', service: 'turn_on', data: { entity_id: 'switch.sample' } },
+  ...overrides,
+});
 
 const services = {
   homeassistant: { turn_on: {}, turn_off: {}, toggle: {} },
@@ -846,4 +871,68 @@ test('confirmation target comparison ignores order but detects target-set change
   const c = { domain: 'homeassistant', service: 'turn_on', data: { entity_id: ['light.a'] } };
   assert.equal(sameToggleCommandTargets(a, b), true);
   assert.equal(sameToggleCommandTargets(a, c), false);
+});
+
+test('toggle confirmation formats every next effect without deriving direction from state', () => {
+  for (const effect of ['turn-on', 'turn-off', 'open', 'close', 'stop']) {
+    const lines = formatToggleConfirmation(
+      confirmationIntent({ nextEffect: effect }), confirmationFormatter,
+    );
+    assert.deepEqual(lines, ['current:state:off', `expected:effect:${effect}`], effect);
+  }
+  assert.deepEqual(
+    formatToggleConfirmation(
+      confirmationIntent({ nextEffect: 'toggle' }), confirmationFormatter,
+    ),
+    ['current:state:off', 'expected:by-ha'],
+  );
+});
+
+test('toggle confirmation describes executable group targets and skipped targets separately', () => {
+  const targets = [
+    { entityId: 'switch.one', name: 'One', state: 'on', via: 'control-entity' },
+    { entityId: 'light.two', name: 'Two', state: 'off', via: 'control-entity' },
+  ];
+  const partial = confirmationIntent({
+    kind: 'group', semantics: 'group-power', targets,
+    skippedTargets: [{
+      ref: 'switch.missing', entityId: 'switch.missing', name: 'Missing', reason: 'unavailable',
+    }],
+    nextEffect: 'turn-off',
+    command: {
+      domain: 'homeassistant', service: 'turn_off',
+      data: { entity_id: targets.map((target) => target.entityId) },
+    },
+  });
+  assert.deepEqual(formatToggleConfirmation(partial, confirmationFormatter), [
+    'current:group:1/2', 'expected:all-off', 'unavailable:1',
+  ]);
+
+  const allOff = {
+    ...partial,
+    targets: targets.map((target) => ({ ...target, state: 'off' })),
+    skippedTargets: [],
+    nextEffect: 'turn-on',
+    command: { ...partial.command, service: 'turn_on' },
+  };
+  assert.deepEqual(formatToggleConfirmation(allOff, confirmationFormatter), [
+    'current:all-off', 'expected:all-on',
+  ]);
+});
+
+test('toggle confirmation covers virtual lights and refuses non-executable intents', () => {
+  const virtual = confirmationIntent({
+    targets: [{ entityId: '', name: 'Virtual lamp', state: 'on', via: 'virtual-light' }],
+    nextEffect: 'turn-off',
+    command: null,
+    operation: { kind: 'virtual-light', markerId: 'virtual-lamp' },
+  });
+  assert.deepEqual(formatToggleConfirmation(virtual, confirmationFormatter), [
+    'current:state:on', 'expected:effect:turn-off',
+  ]);
+
+  assert.deepEqual(formatToggleConfirmation(confirmationIntent({
+    kind: 'none', targets: [], nextEffect: null, command: null,
+    noneReason: 'no-actionable-entity',
+  }), confirmationFormatter), []);
 });

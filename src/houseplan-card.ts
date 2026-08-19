@@ -108,10 +108,11 @@ import {
   type AreaClimate,
 } from './devices';
 import {
-  formatToggleIntent, projectedTapAction, resolveToggleIntent,
+  formatToggleConfirmation, formatToggleIntent, projectedTapAction, resolveToggleIntent,
   sameToggleOperationTargets, toggleCoverEntity, toggleIntentName, toggleOperation,
   toggleEntityCandidates,
-  type ResolvedToggleIntent, type ToggleNextEffect, type ToggleNoneReason,
+  type ResolvedToggleIntent, type ResolvedToggleTarget,
+  type ToggleNextEffect, type ToggleNoneReason,
   type ToggleSkipReason,
 } from './device-toggle';
 import { toggleEntityWriteFields } from './marker-toggle-entity';
@@ -1439,7 +1440,10 @@ class HouseplanCard extends LitElement {
   private _bootSoft = false; // post-reveal grace: late chrome shifts glide, not jump
   private _bootSoftTimer?: number;
   /** The accidental-tap guard: pending confirmation for a toggle/run tap. */
-  private _tapConfirm: { text: string; exec: () => void } | null = null;
+  private _tapConfirm: {
+    kind: 'toggle'; text: string; lines: string[];
+    initialIntent: ResolvedToggleIntent; deviceId: string; exec: () => void;
+  } | { kind: 'run'; text: string; exec: () => void } | null = null;
   private _onboardingShown = false; // the auto space dialog is shown once per session
 
   private _rulesDialog: { rules: IconRule[]; test: string; busy: boolean } | null = null;
@@ -4529,7 +4533,7 @@ class HouseplanCard extends LitElement {
     // action — toggle or run — may ask first. The dialog is ours, not the
     // browser confirm(), so it works and looks right on a wall tablet.
     const guarded = (text: string, exec: () => void): void => {
-      if (actionDevice.marker?.tap_confirm) this._tapConfirm = { text, exec };
+      if (actionDevice.marker?.tap_confirm) this._tapConfirm = { kind: 'run', text, exec };
       else exec();
     };
     if (action === 'toggle') {
@@ -4560,8 +4564,14 @@ class HouseplanCard extends LitElement {
       };
       const name = toggleIntentName(initial) || actionDevice.name;
       if (actionDevice.marker?.tap_confirm) {
+        const lines = this._toggleConfirmationLines(initial);
+        if (!lines.length) return;
         this._tapConfirm = {
+          kind: 'toggle',
           text: this._t('confirm.tap_toggle', { name }),
+          lines,
+          initialIntent: initial,
+          deviceId: actionDevice.id,
           exec: () => {
             const currentDevice = this._devices.find((item) => item.id === actionDevice.id);
             const current = currentDevice ? this._toggleIntent(currentDevice) : null;
@@ -15848,9 +15858,16 @@ class HouseplanCard extends LitElement {
           <button class="btn ghostbtn" @click=${() => { this._vacFit = null; }}>${this._t('btn.cancel')}</button>
         </div>` : nothing}
         ${this._tapConfirm
-          ? html`<hp-dialog .hass=${this.hass} .title=${this._t('btn.run')} icon="mdi:alert-outline"
+          ? html`<hp-dialog .hass=${this.hass}
+              .title=${this._tapConfirm.kind === 'toggle' ? this._tapConfirm.text : this._t('btn.run')}
+              icon="mdi:alert-outline"
               dismiss-on-scrim @hp-close=${() => (this._tapConfirm = null)}>
-                <div class="body"><p>${this._tapConfirm.text}</p></div>
+                <div class="body ${this._tapConfirm.kind === 'toggle' ? 'tapconfirm-body' : ''}">
+                  ${this._tapConfirm.kind === 'run'
+                    ? html`<p>${this._tapConfirm.text}</p>`
+                    : this._tapConfirm.lines.map((line, index) => html`
+                        <p class="tapconfirm-line" data-line=${index}>${line}</p>`)}
+                </div>
                 <div class="row" slot="footer">
                   <span class="spacer"></span>
                   <button class="btn ghost" @click=${() => (this._tapConfirm = null)}>${this._t('btn.cancel')}</button>
@@ -18410,6 +18427,49 @@ class HouseplanCard extends LitElement {
     } catch {
       return fallback;
     }
+  }
+
+  /** Current-state copy is localized without teaching the dialog command semantics. */
+  private _toggleConfirmationStateText(target: ResolvedToggleTarget): string {
+    const raw = String(target.state || 'unknown');
+    const formatted = target.entityId ? this._toggleStateText(target.entityId, raw) : raw;
+    if (formatted.trim().toLocaleLowerCase() !== raw.trim().toLocaleLowerCase()) return formatted;
+    const known: Partial<Record<string, I18nKey>> = {
+      on: 'confirm.state_on',
+      off: 'confirm.state_off',
+      open: 'confirm.state_open',
+      closed: 'confirm.state_closed',
+      opening: 'confirm.state_opening',
+      closing: 'confirm.state_closing',
+      unknown: 'confirm.state_unknown',
+    };
+    const key = known[raw];
+    if (key) return this._t(key);
+    // A future integration-specific token stays honest and readable even in a
+    // harness without HA's formatter; underscores are never exposed as UI.
+    return raw.replaceAll('_', ' ').replaceAll('-', ' ');
+  }
+
+  /** Snapshot lines shown by Toggle confirmation; execution still re-resolves later. */
+  private _toggleConfirmationLines(intent: ResolvedToggleIntent): string[] {
+    const effectKeys: Record<Exclude<ToggleNextEffect, 'toggle'>, I18nKey> = {
+      'turn-on': 'confirm.state_on',
+      'turn-off': 'confirm.state_off',
+      open: 'confirm.state_open',
+      close: 'confirm.state_closed',
+      stop: 'confirm.state_stopped',
+    };
+    return formatToggleConfirmation(intent, {
+      state: (target) => this._toggleConfirmationStateText(target),
+      current: (state) => this._t('confirm.current_state', { state }),
+      expected: (state) => this._t('confirm.expected_state', { state }),
+      groupCurrent: (on, total) => this._t('confirm.group_current', { on, total }),
+      groupAllOn: () => this._t('confirm.group_all_on'),
+      groupAllOff: () => this._t('confirm.group_all_off'),
+      unavailable: (count) => this._t('confirm.unavailable_targets', { count }),
+      effect: (effect) => this._t(effectKeys[effect]),
+      expectedByHa: () => this._t('confirm.expected_by_ha'),
+    });
   }
 
   private _toggleHintLines(intent: ResolvedToggleIntent | null): string[] {

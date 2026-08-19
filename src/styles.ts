@@ -2956,6 +2956,20 @@ export const cardStyles = css`
       flex-direction: column;
       gap: var(--sp-3);
     }
+    hp-dialog .tapconfirm-body {
+      min-width: 0;
+      overflow-x: hidden;
+    }
+    hp-dialog .tapconfirm-body p {
+      max-width: 100%;
+      min-width: 0;
+      margin: 0;
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+    hp-dialog .tapconfirm-line {
+      color: var(--hp-muted);
+    }
     hp-dialog .body label {
       font-size: var(--fs-s);
       color: var(--hp-muted);
