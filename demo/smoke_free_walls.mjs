@@ -52,12 +52,28 @@ const out = await page.evaluate(async () => {
   // Keep the smoke local: editor transactions still mutate the real config,
   // invalidate derived models and history, but do not need a websocket write.
   c._saveConfig = () => { c._cfgEpoch++; c._modelCache = null; c.requestUpdate(); };
+  c.requestUpdate();
   await c.updateComplete;
 
-  c._tool = 'partition';
-  c._drawWallField = '15';
-  c._partitionClick([100, 100], false);
-  c._partitionClick([300, 100], false);
+  const stage = (c.shadowRoot || c.renderRoot).querySelector('.stage');
+  const clickAt = (x, y) => {
+    const rect = stage.getBoundingClientRect();
+    const view = c._viewOr(c._baseVb());
+    return new MouseEvent('click', {
+      clientX: rect.left + ((x - view.x) / view.w) * rect.width,
+      clientY: rect.top + ((y - view.y) / view.h) * rect.height,
+      bubbles: true,
+    });
+  };
+  const drawAndFinish = (a, b, cm) => {
+    c._activateMarkupTool('draw');
+    c._drawWallField = String(cm);
+    c._markupClick(clickAt(...a));
+    c._markupClick(clickAt(...b));
+    c._activateMarkupTool('select');
+  };
+
+  drawAndFinish([100, 100], [300, 100], 15);
   let sp = c._serverCfg.spaces[0];
   o.partitionCreated = sp.partitions?.length === 1 && sp.partitions[0].cm === 15;
 
@@ -174,10 +190,7 @@ const out = await page.evaluate(async () => {
   c._deletePhysicalSelection();
   o.deleteOnDraftRemovesWholeOutline = !c._serverCfg.spaces[0].room_drafts;
 
-  c._tool = 'partition';
-  c._drawWallField = '120';
-  c._partitionClick([400, 100], false);
-  c._partitionClick([500, 100], false);
+  drawAndFinish([400, 100], [500, 100], 120);
   o.invalidThicknessCreatesNothing = !c._serverCfg.spaces[0].partitions;
 
   return o;

@@ -487,14 +487,19 @@ separately promised workflows:
 
 - [ ] The toolbar has one **Walls** tool and no separate Room outline or
       Partition drawing button; Split remains available [auto:
-      smoke_unified_wall_tool]
+      smoke_unified_wall_tool + unified-wall-tool-source.test]
 - [ ] Grid appears; dots snap; the wall chain draws pair-by-pair; shared walls reused
 - [ ] Ruler: while drawing, the length of the current segment follows the cursor
       (metres, or feet+inches on an imperial HA); scale = space "cm per cell" (default 5)
 - [ ] Every completed segment is crash-safe in `room_drafts`. Changing tool,
       editor or floor finishes an open chain as ordinary partitions in one
       history/config transaction; the finished chain is not resumed as a draft
-      [auto: smoke_unified_wall_tool]
+      [auto: smoke_unified_wall_tool + smoke_free_walls +
+      smoke_plan_snap_overlay]
+- [ ] A legacy warm-viewport token `partition` still opens the unified Walls
+      tool, but `partition` is not a runtime tool-state, dispatch branch or
+      golden-matrix option [auto: wall-face-graph.test +
+      unified-wall-tool-source.test + golden-matrix.test]
 - [ ] Re-selecting Walls, Reset, pan, pinch, a second pointer, `pointercancel`
       and a suppressed synthetic click never finish a chain or save an extra
       segment [auto: smoke_unified_wall_tool]

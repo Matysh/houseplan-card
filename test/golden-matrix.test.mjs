@@ -69,7 +69,7 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
       assert.equal(scenario.openHelp, scenario.helpTextRegion.key, scenario.id);
     }
     if (scenario.planSnap) {
-      assert.equal(['draw', 'partition'].includes(scenario.planSnap.tool), true, scenario.id);
+      assert.equal(scenario.planSnap.tool, 'draw', scenario.id);
       assert.equal(['endpoint', 'line'].includes(scenario.planSnap.expectedKind), true, scenario.id);
       assert.equal(scenario.mode, 'plan', scenario.id);
       assert.equal(scenario.capture, 'page', scenario.id);

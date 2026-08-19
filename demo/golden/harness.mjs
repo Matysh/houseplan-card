@@ -435,7 +435,7 @@ export async function prepareGoldenScenario(page, scenario) {
       const { tool, anchor, pointer, expectedKind } = scenario.planSnap;
       const validPoint = (point) => Array.isArray(point) && point.length === 2
         && point.every(Number.isFinite);
-      if (!['draw', 'partition'].includes(tool) || !validPoint(pointer)
+      if (tool !== 'draw' || !validPoint(pointer)
           || (anchor != null && !validPoint(anchor))
           || !['endpoint', 'line'].includes(expectedKind)) {
         throw new Error(`invalid golden planSnap contract: ${scenario.id}`);

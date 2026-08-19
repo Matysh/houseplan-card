@@ -513,7 +513,7 @@ const unionRect = (a: Rect, b: Rect): Rect => {
   return { x, y, w: Math.max(a.x + a.w, b.x + b.w) - x, h: Math.max(a.y + a.h, b.y + b.h) - y };
 };
 
-type MarkupTool = 'select' | 'draw' | 'partition' | 'column' | 'merge' | 'split' | 'resize' | 'opening' | 'boundary' | 'wallthick' | 'delroom';
+type MarkupTool = 'select' | 'draw' | 'column' | 'merge' | 'split' | 'resize' | 'opening' | 'boundary' | 'wallthick' | 'delroom';
 type RoomFillFrame = {
   byRoom: Map<RoomCfg, ResolvedRoomFill | null>;
   byId: Map<string, ResolvedRoomFill | null>;
@@ -544,7 +544,7 @@ type WallFaceBatch = {
  */
 type GlowClipGeometry = { lit: string[] };
 const MARKUP_TOOLS = new Set<MarkupTool>([
-  'select', 'draw', 'partition', 'column', 'merge', 'split', 'resize',
+  'select', 'draw', 'column', 'merge', 'split', 'resize',
   'opening', 'boundary', 'wallthick', 'delroom',
 ]);
 /** Warm viewport is page-memory, so it may contain a tool name from the old bundle. */
@@ -2238,7 +2238,7 @@ class HouseplanCard extends LitElement {
       }
       // A crash-safe segment is a real geometry command, but Undo keeps the
       // surviving draft active so the visible contract remains “one point back”.
-      if ((this._tool === 'draw' || this._tool === 'partition') && this._path.length) {
+      if (this._tool === 'draw' && this._path.length) {
         if (this._activeDraftId && this._path.length > 1) this._undoActiveDraftPoint();
         else this._undoPoint();
         return;
@@ -2263,11 +2263,6 @@ class HouseplanCard extends LitElement {
       return;
     }
     if (this._tool === 'draw' && this._path.length) {
-      e.preventDefault();
-      this._undoPoint();
-      return;
-    }
-    if (this._tool === 'partition' && this._path.length) {
       e.preventDefault();
       this._undoPoint();
       return;
@@ -2320,7 +2315,7 @@ class HouseplanCard extends LitElement {
       return;
     }
     if (this._tool === 'opening' || this._tool === 'wallthick' || this._tool === 'delroom'
-        || this._tool === 'partition' || this._tool === 'column') {
+        || this._tool === 'column') {
       e.preventDefault();
       if (this._tool === 'opening') this._clearOpeningPlacement(true);
       this._tool = 'draw';
@@ -5359,7 +5354,7 @@ class HouseplanCard extends LitElement {
       if (this._tool === 'opening') {
         this._cursorPt = null;
         this._clearOpeningPlacement(false);
-      } else if (this._tool === 'draw' || this._tool === 'partition') {
+      } else if (this._tool === 'draw') {
         this._clearPlanSnapHover();
       }
       const pts = [...this._pointers.values()];
@@ -5426,7 +5421,7 @@ class HouseplanCard extends LitElement {
       if (this._tool === 'opening') {
         this._cursorPt = null;
         this._clearOpeningPlacement(false);
-      } else if (this._tool === 'draw' || this._tool === 'partition') {
+      } else if (this._tool === 'draw') {
         this._clearPlanSnapHover();
       }
       const pts = [...this._pointers.values()];
@@ -5447,7 +5442,7 @@ class HouseplanCard extends LitElement {
         if (this._tool === 'opening') {
           this._cursorPt = null;
           this._clearOpeningPlacement(false);
-        } else if (this._tool === 'draw' || this._tool === 'partition') {
+        } else if (this._tool === 'draw') {
           this._clearPlanSnapHover();
         }
       }
@@ -5484,7 +5479,7 @@ class HouseplanCard extends LitElement {
     if (this._tool === 'opening') {
       this._cursorPt = null;
       this._clearOpeningPlacement(false);
-    } else if (this._tool === 'draw' || this._tool === 'partition') {
+    } else if (this._tool === 'draw') {
       this._clearPlanSnapHover();
     }
   }
@@ -6361,7 +6356,7 @@ class HouseplanCard extends LitElement {
   }
 
   private get _activePlanSnapCandidate(): PlanSnapCandidate | null {
-    if (!this._markup || (this._tool !== 'draw' && this._tool !== 'partition')) return null;
+    if (!this._markup || this._tool !== 'draw') return null;
     const hover = this._planSnapHover;
     if (!hover) return null;
     const snapshot = this._planSnapGeometrySnapshot();
@@ -6598,7 +6593,7 @@ class HouseplanCard extends LitElement {
     if (this._tool === 'opening') {
       this._cursorPt = null;
       this._clearOpeningPlacement(false);
-    } else if (this._tool === 'draw' || this._tool === 'partition') {
+    } else if (this._tool === 'draw') {
       this._clearPlanSnapHover();
     }
     const viewportGestureEnded = !!this._pinchStart || !!this._panStart;
@@ -6829,10 +6824,6 @@ class HouseplanCard extends LitElement {
     }
     if (this._tool === 'split') {
       this._splitClick(raw);
-      return;
-    }
-    if (this._tool === 'partition') {
-      this._partitionClick(raw, ev.shiftKey);
       return;
     }
     if (this._tool === 'column') {
@@ -7138,29 +7129,6 @@ class HouseplanCard extends LitElement {
     this._areaSel = '';
     this._resetRoomDialogFields();
     this._roomDialog = true;
-  }
-
-  private _partitionClick(raw: number[], lock45: boolean): void {
-    const pt = this._resolvePlanDrawPoint(raw, lock45).point;
-    if (!this._path.length) { this._path = [pt]; return; }
-    const a = this._path[0];
-    if (this._samePt(a, pt)) return;
-    const cm = this._drawWallCm;
-    if (cm == null) { this._showPhysicalRange(100); return; }
-    if (!this._curSpaceCfg || this._limitReached('partition')) return;
-    const before = this._geometrySnapshot();
-    const sp = this._curSpaceCfg as any;
-    sp.partitions ||= [];
-    const id = 'partition-' + Date.now().toString(36);
-    sp.partitions.push({ id, a: [a[0] / NORM_W, a[1] / NORM_W],
-      b: [pt[0] / NORM_W, pt[1] / NORM_W], cm });
-    this._path = [];
-    this._activeDraftId = null;
-    this._draftSegmentCms = [];
-    this._closingWallCm = null;
-    this._clearPlanSnapHover();
-    this._recordGeometry(this._t('history.partition_add'), before);
-    this._saveConfig();
   }
 
   private _columnClick(raw: number[]): void {
@@ -9556,7 +9524,6 @@ class HouseplanCard extends LitElement {
           this._drawWallField = (e.target as HTMLInputElement).value;
         }}
         title=${this._t(this._tool === 'draw' ? 'markup.draw_wall_title'
-          : this._tool === 'partition' ? 'physical.partition_size_title'
           : 'physical.column_size_title')} />
       <span class="opl">${this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span>
       <span class="rangehint">${this._t('physical.allowed_range', {
@@ -9594,9 +9561,8 @@ class HouseplanCard extends LitElement {
       };
     }
 
-    const hasThickness = this._tool === 'draw' || this._tool === 'partition' || this._tool === 'column';
-    const hintKey = this._tool === 'partition' ? 'markup.hint_partition'
-      : this._tool === 'column' ? 'markup.hint_column'
+    const hasThickness = this._tool === 'draw' || this._tool === 'column';
+    const hintKey = this._tool === 'column' ? 'markup.hint_column'
       : this._tool === 'resize' ? 'markup.hint_resize'
       : this._tool === 'wallthick' ? 'markup.hint_wallthick'
       : this._tool === 'boundary' ? this._boundaryHintKey
@@ -9613,7 +9579,6 @@ class HouseplanCard extends LitElement {
       kind: operation ? 'operation' : 'tool',
       ariaLabel: this._t('editor.tool_options', {
         tool: this._t((this._tool === 'draw' ? 'markup.add'
-          : this._tool === 'partition' ? 'markup.partition'
           : this._tool === 'column' ? 'markup.column'
           : this._tool === 'resize' ? 'markup.resize'
           : this._tool === 'wallthick' ? 'markup.wallthick'
@@ -11905,8 +11870,7 @@ class HouseplanCard extends LitElement {
       this._cursorPt = this._svgPoint(ev);
       return;
     }
-    const architectural = (this._tool === 'draw' || this._tool === 'partition')
-      && !this._contourClosed;
+    const architectural = this._tool === 'draw' && !this._contourClosed;
     const cutting = this._tool === 'split' && !!this._splitSel?.pts?.length;
     if (!architectural && !cutting) return;
     const raw = this._svgPoint(ev);
@@ -17199,8 +17163,7 @@ class HouseplanCard extends LitElement {
   /** Where the live measurement starts: the last outline point, or the first split point. */
   private get _measureAnchor(): number[] | null {
     if (!this._markup || !this._cursorPt) return null;
-    if ((this._tool === 'draw' || this._tool === 'partition')
-        && this._path.length && !this._contourClosed)
+    if (this._tool === 'draw' && this._path.length && !this._contourClosed)
       return this._path[this._path.length - 1];
     if (this._tool === 'split' && this._splitSel?.pts?.length)
       return this._splitSel.pts[this._splitSel.pts.length - 1];
@@ -17920,7 +17883,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _renderPlanSnapOverlay(): TemplateResult {
-    if (!this._markup || (this._tool !== 'draw' && this._tool !== 'partition')) {
+    if (!this._markup || this._tool !== 'draw') {
       return svg`` as unknown as TemplateResult;
     }
     const geometry = this._planSnapGeometrySnapshot().value;
@@ -18036,9 +17999,9 @@ class HouseplanCard extends LitElement {
     const path = this._path;
     const g = this._gridPitch;
     const view = this._viewOr(this._baseVb());
-    const drawCm = this._tool === 'draw' || this._tool === 'partition' ? this._drawWallCm : null;
+    const drawCm = this._tool === 'draw' ? this._drawWallCm : null;
     const previewPts = (() => {
-      if ((this._tool !== 'draw' && this._tool !== 'partition') || !path.length || !(drawCm != null && drawCm > 0)) return null;
+      if (this._tool !== 'draw' || !path.length || !(drawCm != null && drawCm > 0)) return null;
       if (this._contourClosed) return path;
       if (this._cursorPt) return [...path, this._cursorPt];
       return path.length >= 2 ? path : null;
@@ -18088,7 +18051,7 @@ class HouseplanCard extends LitElement {
       ${path.length > 1
         ? svg`<polyline class="pathline" points="${path.map((p) => p.join(',')).join(' ')}"></polyline>`
         : nothing}
-      ${path.length && this._cursorPt && (this._tool === 'draw' || this._tool === 'partition') && !this._contourClosed
+      ${path.length && this._cursorPt && this._tool === 'draw' && !this._contourClosed
         ? svg`<line class="preview" x1="${path[path.length - 1][0]}" y1="${path[path.length - 1][1]}"
             x2="${this._cursorPt[0]}" y2="${this._cursorPt[1]}"></line>`
         : nothing}

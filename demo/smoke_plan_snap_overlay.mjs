@@ -182,9 +182,11 @@ const out = await page.evaluate(async () => {
   await card.updateComplete;
   result.currentAnchorDoesNotCreateZeroSegment = !active();
   card._cancelPath();
-  card._tool = 'partition';
+  card._activateMarkupTool('draw');
   await update();
-  card._markupClick(eventAt(735, 606, 'click'));
+  // Use a fresh point on the same physical line: the earlier assertion left
+  // 735,600 as a saved-draft endpoint, and public Walls correctly resumes it.
+  card._markupClick(eventAt(775, 606, 'click'));
   await card.updateComplete;
   result.tapWithoutHoverSnapsFirstPoint = card._path.length === 1
     && close(card._path[0][1], 600)
@@ -192,7 +194,9 @@ const out = await page.evaluate(async () => {
       Math.round((card._path[0][0] - 600) / card._gridPitch));
   card._markupClick(eventAt(896, 496, 'click'));
   await card.updateComplete;
-  result.secondPartitionClickSnapsEndpoint = card._path.length === 0
+  card._activateMarkupTool('select');
+  await update();
+  result.secondWallsClickFinishesSnappedPartition = card._path.length === 0
     && card._curSpaceCfg.partitions.length === 2
     && close(card._curSpaceCfg.partitions[1].b[0] * 1000, 900)
     && close(card._curSpaceCfg.partitions[1].b[1] * 1000, 500);
@@ -202,6 +206,8 @@ const out = await page.evaluate(async () => {
     drafts: card._curSpaceCfg.room_drafts,
     partitions: card._curSpaceCfg.partitions,
   });
+  card._activateMarkupTool('draw');
+  await update();
   card._suppressClick = true;
   card._markupClick(eventAt(700, 600, 'click'));
   result.suppressedClickDoesNotCommit = card._path.length === 0;
@@ -222,7 +228,7 @@ const out = await page.evaluate(async () => {
       partitions: card._curSpaceCfg.partitions,
     }) === gestureGeometry;
 
-  card._tool = 'select';
+  card._activateMarkupTool('select');
   await update();
   result.otherPlanToolsHaveNoOverlay = !overlay();
   card._setMode('view');
