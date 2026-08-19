@@ -63,7 +63,11 @@ const res = await page.evaluate(async () => {
   };
   c._openSettingsDialog();
   await c.updateComplete;
-  out.dialogHasBgRow = !!sr().querySelector('hp-dialog .colorrow input[type=color]');
+  const settingsDialog = sr().querySelector('hp-dialog');
+  const bgPicker = [...settingsDialog.querySelectorAll('hp-color-opacity')]
+    .find((picker) => picker.label === c._t('gs.bg_color'));
+  out.dialogHasBgRow = !!bgPicker && bgPicker.showOpacity === false
+    && !settingsDialog.querySelector('input[type=color]');
   c._settingsDialog = { ...c._settingsDialog, bgColor: '#0a2a4a' };
   out.dialogPreviews = (await stageBg()) === rgb('#0a2a4a');
   await c._saveSettingsDialog();

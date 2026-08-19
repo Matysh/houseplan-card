@@ -19332,13 +19332,15 @@ class HouseplanCard extends LitElement {
                 <span>${this._t('marker.preview.select_source')}</span>
               </div>`}
           ${d.display === 'icon_ripple'
-            ? html`<div class="colorrow">
+            ? html`<div class="colorrow ripple-colorrow">
                 <hp-color-opacity .label=${this._t('marker.activity_color')}
                   .pickerLabels=${this._colorPickerLabels}
                   .color=${d.rippleColor || '#3ea6ff'} .opacity=${1} .showOpacity=${false}
                   @hp-color-opacity-change=${(e: CustomEvent<{ color: string }>) => {
                     this._markerDialog = { ...d, rippleColor: e.detail.color };
                   }}></hp-color-opacity>
+              </div>
+              <div class="colorrow ripple-sizerow">
                 <span class="opl">${this._t('marker.ripple_size')}</span>
                 ${this._rangeInput(2, 8, 0.5, d.rippleSize, (n) => (this._markerDialog = { ...d, rippleSize: n }))}
                 <span class="opv">×${d.rippleSize}</span>

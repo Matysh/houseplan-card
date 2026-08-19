@@ -6,7 +6,8 @@
   the global light/temperature/LQI/Glow/wall palettes, plan and space
   backgrounds, room colour and device activity ripple. Existing opacity appears
   inside the same surface, while colour-only fields and Default/Inherited
-  behaviour keep their previous data model
+  behaviour keep their previous data model. On narrow screens, activity colour
+  and ripple size use separate rows so both labels remain readable
   ([#180](https://github.com/Matysh/houseplan-card/issues/180)).
 
 ## v1.65.0-beta.3 — 2026-08-19

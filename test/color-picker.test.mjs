@@ -77,3 +77,17 @@ test('the hue range exposes one cyclic spectrum without restyling other ranges',
   const commonRange = component.match(/input\[type='range'\]\s*\{[\s\S]*?\n\s*\}/)?.[0] || '';
   assert.doesNotMatch(commonRange, /linear-gradient|hp-picker-hue-track/);
 });
+
+test('activity color and ripple size keep independent readable rows', () => {
+  const card = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  const styles = readFileSync(new URL('../src/styles.ts', import.meta.url), 'utf8');
+  const start = card.indexOf("d.display === 'icon_ripple'");
+  const end = card.indexOf("marker.activity_alarm_note", start);
+  const ripple = card.slice(start, end);
+  assert.ok(start >= 0 && end > start);
+  assert.match(ripple, /class="colorrow ripple-colorrow"/);
+  assert.match(ripple, /class="colorrow ripple-sizerow"/);
+  assert.ok(ripple.indexOf('marker.activity_color') < ripple.indexOf('ripple-sizerow'));
+  assert.ok(ripple.indexOf('ripple-sizerow') < ripple.indexOf('marker.ripple_size'));
+  assert.match(styles, /\.ripple-colorrow > hp-color-opacity\s*\{[^}]*width:\s*100%/s);
+});

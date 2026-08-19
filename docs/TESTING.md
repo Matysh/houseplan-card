@@ -109,8 +109,10 @@
       Default/Inherit restore `null` without adding alpha
       [auto: `smoke_color_picker_consumers.mjs`].
 - [ ] General settings keep one exclusive picker open among 12 swatches; marker
+      activity colour and ripple size use separate, non-overlapping mobile rows,
       ripple size remains independent, and cancelling the space dialog writes
-      no color draft [auto: `smoke_color_picker_consumers.mjs`].
+      no color draft [unit: `color-picker.test.mjs`, auto:
+      `smoke_color_picker_consumers.mjs`].
 - [ ] The three new dialog families are reviewed from the complete Linux
       artifact before a beta; implementation does not accept their baselines
       [golden: `general-color-popover-desktop-en`,

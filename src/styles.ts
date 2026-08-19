@@ -2163,6 +2163,13 @@ export const cardStyles = css`
       min-width: min(100%, 210px);
       justify-content: space-between;
     }
+    .ripple-colorrow > hp-color-opacity {
+      width: 100%;
+      justify-content: space-between;
+    }
+    .ripple-sizerow > .opl {
+      min-width: 0;
+    }
     .colorrow input[type='range'] { flex: 1; }
     .colorrow .tempin { width: 70px; flex: none; }
     .temprange {

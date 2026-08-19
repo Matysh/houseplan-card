@@ -1,6 +1,6 @@
 import { launch, checkAll, finish } from './serve.mjs';
 
-const { page, browser } = await launch({ width: 760, height: 920 });
+const { page, browser } = await launch({ width: 390, height: 1000 });
 
 const result = await page.evaluate(async () => {
   const out = {};
@@ -74,6 +74,10 @@ const result = await page.evaluate(async () => {
   const ripple = pickerByLabel(dialog, card._t('marker.activity_color'));
   out.rippleUsesColorOnlyPicker = !!ripple && ripple.showOpacity === false
     && ripple.color === '#3ea6ff' && nativeColors() === 0;
+  const rippleLabelBox = ripple?.renderRoot.querySelector('.label')?.getBoundingClientRect();
+  const rippleSizeBox = dialog.querySelector('.ripple-sizerow .opl')?.getBoundingClientRect();
+  out.rippleLabelsDoNotOverlapOnMobile = !!rippleLabelBox && !!rippleSizeBox
+    && (rippleLabelBox.bottom <= rippleSizeBox.top || rippleLabelBox.right <= rippleSizeBox.left);
   const rippleSize = card._markerDialog.rippleSize;
   change(ripple, { color: '#abcdef', opacity: 0.05 });
   await card.updateComplete;
