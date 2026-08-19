@@ -82,6 +82,17 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'fixed-floor-transition-guard-bypassed',
+    guard: 'node demo/smoke_fixed_floor.mjs',
+    because: 'a fixed card must reject tabs and every internal active-space mutation instead of '
+      + 'showing another floor after the initial resolver selected the configured one',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    if (authority || !this._hasFixedFloor) return true;',
+      replace: '    if (authority || this._hasFixedFloor) return true;',
+    }],
+  },
+  {
     id: 'empty-space-cleanup-disabled',
     guard: 'node demo/smoke_optional_space_model.mjs',
     because: 'удаление последнего пространства обязано завершать жесты, редакторы и отложенную запись; '

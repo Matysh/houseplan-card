@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- A card instance can now be pinned to one space with `floor`: use a stable
+  space ID (recommended) or a zero-based numeric YAML index. A pinned card
+  ignores shared last-space navigation, URL floor links, other floor tabs and
+  kiosk swipe/cycling; an invalid value now shows a visible configuration
+  error instead of silently opening another space. `default_floor` keeps its
+  existing initial/fallback behaviour for unpinned cards
+  ([#210](https://github.com/Matysh/houseplan-card/issues/210)).
 - Device markers now match the source artwork from the designer package instead
   of the oversized rounded-square projection shipped in `v1.65.0-beta.6`.
   Icon cores are circular, MDI glyphs and adjacent value pills use the package

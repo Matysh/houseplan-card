@@ -78,6 +78,26 @@
 - [ ] Removing the authoritative empty-state cleanup makes that smoke red
       [mutation: `empty-space-cleanup-disabled`].
 
+## Fixed card space (#210)
+
+- [ ] `floor` resolves exact stable IDs and zero-based finite integer indexes;
+      quoted numeric strings stay IDs, and explicit empty, unknown, fractional,
+      negative or out-of-range values fail closed [unit: `initial-load.test.mjs`].
+- [ ] Three coexisting instances (fixed ID, fixed index and unpinned) keep
+      independent authority while sharing the legacy navigation key. Fixed
+      cards ignore hash, tabs, guarded internal transitions, warm remount,
+      kiosk swipe/cycle/dots and never read or write saved navigation. Invalid
+      config renders an accessible error without a spatial stage, while the
+      unpinned card still restores legacy navigation
+      [auto: `smoke_fixed_floor.mjs`, `smoke_nav_persist.mjs`, `smoke_kiosk.mjs`].
+- [ ] The GUI offers stable IDs only, preserves an existing numeric YAML value
+      during unrelated edits and deletes the `floor` property when cleared
+      [unit: `fixed-floor-contract.test.mjs`; auto: `smoke_fixed_floor.mjs`].
+- [ ] Bypassing the shared transition guard makes the focused browser scenario
+      red; before-fix evidence also records that `origin/dev` has no fixed
+      resolver or guarded transition
+      [mutation: `fixed-floor-transition-guard-bypassed`].
+
 ## Toggle confirmation state (#103)
 
 - [ ] Every executable `ToggleNextEffect` formats current and expected lines

@@ -827,13 +827,22 @@ snapshot and does not schedule a full-load retry solely for that rejection.
 Missing channels get another attempt on the next normal load or reconnect.
 
 `src/initial-load.ts` is the shared authority for the exact space used by a
-cached snapshot, a live snapshot and its protected-backdrop candidate. A cold
-load considers only valid ids in this order: URL hash, saved navigation,
-`default_floor`, first live space. Once an initial URL hash has been consumed,
-a valid same-route current selection is preserved instead of repeatedly
-snapping back to that hash. The legacy field initializer is never a cold-start
-choice by itself. A plan with no spaces keeps `null` authority and does not
-invent an id.
+cached snapshot, a live snapshot and its protected-backdrop candidate. When the
+card config owns a `floor` property, `resolveFixedFloor()` has absolute
+authority: a string is an exact stable id and a finite non-negative integer is
+a zero-based server-model index. A valid fixed value beats URL hash, warm/current
+state, saved navigation, `default_floor` and first space. Invalid explicit
+values fail closed instead of falling back; numeric indexes wait for the fresh
+server model before the first spatial frame. A fixed instance never reads or
+writes `houseplan_card_nav_v1`, and every accepted `_space` transition passes
+through the same fixed-authority guard.
+
+With no own `floor` property, the legacy cold load considers only valid ids in
+this order: URL hash, saved navigation, `default_floor`, first live space. Once
+an initial URL hash has been consumed, a valid same-route current selection is
+preserved instead of repeatedly snapping back to that hash. The legacy field
+initializer is never a cold-start choice by itself. A plan with no spaces keeps
+`null` authority and does not invent an id.
 
 **Room climate is one pass per hass snapshot** (review R2-3). `areaClimateMap()`
 classifies the whole registry once and returns `Map<area, {temp, hum}>`; the
@@ -876,9 +885,10 @@ Shared, framework-light modules keep the two views from diverging:
 footer button lives outside it and stays clickable.
 
 **Deep-link contract:** the footer button calls `navigate(button_target + "#space=<id>")`
-(default target `/plan-doma`). The full card reads `#space=<id>` on load (a valid id wins over
-`default_floor`) and on `hashchange`, without blocking manual space switching; an invalid/absent
-hash falls back to the default.
+(default target `/plan-doma`). An unpinned full card reads `#space=<id>` on load (a valid id wins
+over `default_floor`) and on `hashchange`, without blocking manual space switching; an
+invalid/absent hash falls back to the default. A card with `floor` ignores the hash and remains on
+its configured space.
 
 
 ## Additions v1.28–v1.41 (2026-07-24)
@@ -1064,11 +1074,13 @@ hash falls back to the default.
 - **Kiosk mode** (v1.41): a card-config flag, not a mode — `_setMode` is
   hard-blocked, header hidden, swipe/carousel handled in the stage pointer
   pipeline (`swipeTarget`), per-screen multipliers in `LS_KIOSK`.
-- **Nav persistence** (#93): `LS_NAV` stores `{space}` only; hash deep-link >
-  saved > `default_floor`, with stale-cache retry after the live load. Editor
-  mode is transient: cold load, reload and return from another HA route start
-  in View. The warm memo may carry an editor only across a technical remount
-  on the same route.
+- **Nav persistence** (#93, #210): `LS_NAV` stores `{space}` only for unpinned
+  cards; hash deep-link > saved > `default_floor`, with stale-cache retry after
+  the live load. A card with `floor` neither reads nor writes `LS_NAV`, and its
+  resolved stable id or server-order index remains authoritative across hash,
+  warm remount and kiosk inputs. Editor mode is transient: cold load, reload
+  and return from another HA route start in View. The warm memo may carry an
+  editor only across a technical remount on the same route.
 
 ## View/editor transition ownership (#101)
 

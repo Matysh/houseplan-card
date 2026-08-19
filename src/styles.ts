@@ -58,6 +58,20 @@ export const cardStyles = css`
     .empty .btn {
       margin-top: var(--sp-4);
     }
+    .fixedfloor-loading {
+      animation: fixedfloor-spin 1.1s linear infinite;
+    }
+    .fixedfloor-error p {
+      max-width: 42rem;
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+    @keyframes fixedfloor-spin {
+      to { transform: rotate(360deg); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .fixedfloor-loading { animation: none; }
+    }
     .hdr {
       position: sticky;
       top: var(--header-height, 56px);

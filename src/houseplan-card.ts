@@ -81,7 +81,8 @@ import {
 } from './open-spans';
 import { ContentSigner } from './signing';
 import {
-  resolveInitialSpace, settleBestEffort, type InitialSpaceSelection,
+  resolveFixedFloor, resolveInitialSpace, settleBestEffort,
+  type FixedFloorSelection, type InitialSpaceSelection,
 } from './initial-load';
 import { selectActiveSpaceModel, selectSpaceModelById } from './space-model-selection';
 import {
@@ -683,6 +684,8 @@ type RenderOpening = OpeningCfg & {
   orphanReason?: PartitionOpeningOrphanReason;
 };
 
+type FixedFloorState = FixedFloorSelection | { kind: 'pending'; value: unknown };
+
 class HouseplanCard extends LitElement {
   public hass?: any;
   private _config?: CardConfig;
@@ -1139,15 +1142,59 @@ class HouseplanCard extends LitElement {
     });
   }
 
+  /** An own `floor` property is deliberate, including invalid/null YAML. */
+  private get _hasFixedFloor(): boolean {
+    return !!this._config && Object.prototype.hasOwnProperty.call(this._config, 'floor');
+  }
+
+  /**
+   * Resolve fixed-floor authority against one model snapshot. Cache may safely
+   * prove an exact stable id, but it may not reject a missing id or resolve a
+   * positional index until the integration has answered authoritatively.
+   */
+  private _fixedFloorState(models = this._model, authoritative = this._loadOk): FixedFloorState {
+    const value = this._config?.floor;
+    const selection = resolveFixedFloor({
+      spaceIds: models.map((space) => space.id),
+      hasFloor: this._hasFixedFloor,
+      floor: value,
+    });
+    if (!this._hasFixedFloor || authoritative) return selection;
+    if (typeof value === 'number') {
+      if (selection.kind === 'valid'
+          || selection.kind === 'invalid' && selection.reason === 'out-of-range-index') {
+        return { kind: 'pending', value };
+      }
+      return selection;
+    }
+    if (selection.kind === 'valid') return selection;
+    if (selection.kind === 'invalid' && selection.reason !== 'unknown-id') return selection;
+    return { kind: 'pending', value };
+  }
+
+  /** One boundary for every mutation of the active space. */
+  private _canCommitSpace(id: string, authority = false): boolean {
+    if (authority || !this._hasFixedFloor) return true;
+    const fixed = this._fixedFloorState();
+    return fixed.kind === 'valid' && fixed.id === id;
+  }
+
+  private _commitSpace(id: string, authority = false): boolean {
+    if (!this._canCommitSpace(id, authority)) return false;
+    this._space = id;
+    return true;
+  }
+
   /** Change the space with the usual sideways transition. */
-  private _slideTo(id: string, dir: 'left' | 'right'): void {
-    if (id === this._space) return;
+  private _slideTo(id: string, dir: 'left' | 'right'): boolean {
+    if (id === this._space) return true;
+    if (!this._canCommitSpace(id)) return false;
     if (this._wallFaceBatch) this._roomDialogCancel();
-    if (this._mode === 'plan' && this._tool === 'draw' && !this._finishWallChain()) return;
+    if (this._mode === 'plan' && this._tool === 'draw' && !this._finishWallChain()) return false;
     this._cancelModeTransition(true);
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
     if (this._activeDraftId) this._resumeDraftBySpace[this._space] = this._activeDraftId;
-    this._space = id;
+    this._commitSpace(id);
     this._path = [];
     this._clearPlanSnapHover();
     this._clearOpeningPlacement(true);
@@ -1164,7 +1211,7 @@ class HouseplanCard extends LitElement {
     this._physicalDrag = null;
     if (this._mode === 'plan' && this._tool === 'draw') this._resumeLastDraft();
     this._restoreZoom();
-    if (reduce) return;
+    if (reduce) return true;
     this._slide = dir;
     clearTimeout(this._slideTimer);
     this._slideTimer = window.setTimeout(() => {
@@ -1173,6 +1220,7 @@ class HouseplanCard extends LitElement {
       this.requestUpdate();
     }, 190);
     this.requestUpdate();
+    return true;
   }
 
   /** Direct space tabs use the same motion as swipe/carousel navigation. */
@@ -1184,18 +1232,27 @@ class HouseplanCard extends LitElement {
     this._navApplied = true;
     this._showFar = false; // the hint is per space (docs/CANVAS.md §4.1)
     this._frame = null;
-    this._slideTo(id, from >= 0 && to < from ? 'right' : 'left');
-    this._saveNav();
+    if (this._slideTo(id, from >= 0 && to < from ? 'right' : 'left')) this._saveNav();
   }
 
   private _cycleTick(): void {
-    if (!this._kiosk || !(Number(this._config?.cycle) > 0)) return;
+    if (this._hasFixedFloor || !this._kiosk || !(Number(this._config?.cycle) > 0)) return;
     if (Date.now() >= this._cyclePausedUntil && this._model.length > 1 && this._zoom <= 1.001) {
       const ids = this._model.map((m) => m.id);
       const i = ids.indexOf(this._space);
       this._slideTo(ids[(i + 1) % ids.length], 'left');
       this._showKioskDots();
     }
+  }
+
+  private _syncCycleTimer(): void {
+    clearInterval(this._cycleTimer);
+    this._cycleTimer = undefined;
+    if (!this.isConnected || this._hasFixedFloor
+        || !this._config?.kiosk || !(Number(this._config.cycle) > 0)) return;
+    this._cycleTimer = window.setInterval(
+      () => this._cycleTick(), Number(this._config.cycle) * 1000,
+    );
   }
 
   /** Any edit mode is active (plan / devices / decor). */
@@ -1812,12 +1869,13 @@ class HouseplanCard extends LitElement {
     return hashSpace(window.location.hash || '');
   }
   private _onHashChange = (): void => {
+    if (this._hasFixedFloor) return;
     const id = this._hashSpace();
     if (id && this._model.find((sp) => sp.id === id) && id !== this._space) {
       if (this._wallFaceBatch) this._roomDialogCancel();
       if (this._mode === 'plan' && this._tool === 'draw' && !this._finishWallChain()) return;
       if (this._activeDraftId) this._resumeDraftBySpace[this._space] = this._activeDraftId;
-      this._space = id;
+      this._commitSpace(id);
       this._selId = null;
       this._path = [];
       this._clearPlanSnapHover();
@@ -1948,10 +2006,7 @@ class HouseplanCard extends LitElement {
     window.addEventListener('keydown', this._keyHandler);
     // signatures expire (24 h); refresh well before that on long-lived screens
     this._signer.start(() => this.hass, () => referencedContentUrls(this._serverCfg));
-    if (this._config?.kiosk && Number(this._config?.cycle) > 0) {
-      clearInterval(this._cycleTimer);
-      this._cycleTimer = window.setInterval(() => this._cycleTick(), Number(this._config.cycle) * 1000);
-    }
+    this._syncCycleTimer();
     window.addEventListener('hashchange', this._onHashChange);
     this._labsUnsub?.();
     this._labsUnsub = subscribeLabs(CARD_VERSION, this._onLabsSnapshot);
@@ -2425,9 +2480,19 @@ class HouseplanCard extends LitElement {
   }
 
   public setConfig(config: CardConfig): void {
+    const previousConfig = this._config;
+    const previousFixed = !!previousConfig
+      && Object.prototype.hasOwnProperty.call(previousConfig, 'floor');
     this._config = { icon_size: 2.5, show_temperature: true, live_states: true, show_signal: true, ...config };
+    const fixedChanged = previousFixed !== this._hasFixedFloor
+      || previousConfig?.floor !== this._config.floor;
+    if (fixedChanged) {
+      this._hashApplied = false;
+      this._navApplied = false;
+      this._warmVpArmed = false;
+    }
     if (this._config.kiosk) { this._booting = false; this._bootFading = false; } // kiosk: 100dvh, nothing to settle
-    if (config.default_floor) this._space = config.default_floor;
+    if (!this._hasFixedFloor && config.default_floor) this._commitSpace(config.default_floor, true);
     try {
       this._zoomBySpace = JSON.parse(localStorage.getItem(LS_ZOOM) || '{}') || {};
     } catch {
@@ -2461,11 +2526,11 @@ class HouseplanCard extends LitElement {
         this._layoutContentFingerprint = c.layout_fingerprint || contentFingerprint(this._layout);
         this._virtualLights = virtualLightSnapshot(c.virtual_lights, this._cfgRev);
         this._serverStorage = true;
-        this._adoptInitialSpace(this._model);
       }
     } catch {
       /* ignore */
     }
+    this._adoptInitialSpace(this._model, this._loadOk);
     // HP-1551: the saved per-space zoom used to be applied only by
     // _restoreZoom()'s rAF after the server round-trip, so the cached config
     // painted its first frames at the default fit and the plan visibly
@@ -2479,6 +2544,7 @@ class HouseplanCard extends LitElement {
     // A setConfig on a card that is already attached (the editor's live
     // preview) re-claims right here, because the config is part of the key.
     if (this.isConnected) {
+      this._syncCycleTimer();
       this._warmAdopt();
       if (this._warmLongReturn) this._beginResumeSettle();
       this._warmLongReturn = false;
@@ -2628,11 +2694,14 @@ class HouseplanCard extends LitElement {
       this._warmVp = null;
       return;
     }
-    if (this._hashApplied || !this._model.find((sp) => sp.id === vp.space)) {
+    const fixed = this._fixedFloorState();
+    if (this._hashApplied || !this._model.find((sp) => sp.id === vp.space)
+        || fixed.kind === 'valid' && fixed.id !== vp.space
+        || this._hasFixedFloor && fixed.kind !== 'valid') {
       this._warmVp = null; // another space is on screen — the memo is not about it
       return;
     }
-    this._space = vp.space;
+    this._commitSpace(vp.space, true);
     this._navApplied = true;
     // the editor comes back only where an editor is allowed at all
     this._adoptMode(vp.mode !== 'view' && this._canEdit && !config.kiosk ? vp.mode : 'view');
@@ -2906,7 +2975,12 @@ class HouseplanCard extends LitElement {
     return !space?.bg?.href || this._signer.isReady(this.hass, space.bg.href);
   }
 
-  private _initialSpaceSelection(models: SpaceModel[]): InitialSpaceSelection {
+  private _initialSpaceSelection(
+    models: SpaceModel[], authoritative = this._loadOk,
+  ): InitialSpaceSelection {
+    const fixed = this._fixedFloorState(models, authoritative);
+    if (fixed.kind === 'valid') return { id: fixed.id, source: 'fixed' };
+    if (this._hasFixedFloor) return { id: null, source: 'none' };
     return resolveInitialSpace({
       spaceIds: models.map((space) => space.id),
       hashSpace: this._hashSpace(),
@@ -2919,10 +2993,12 @@ class HouseplanCard extends LitElement {
   }
 
   /** Install one exact raw-space authority before any spatial candidate paints. */
-  private _adoptInitialSpace(models: SpaceModel[]): InitialSpaceSelection {
-    const selection = this._initialSpaceSelection(models);
+  private _adoptInitialSpace(
+    models: SpaceModel[], authoritative = this._loadOk,
+  ): InitialSpaceSelection {
+    const selection = this._initialSpaceSelection(models, authoritative);
     if (!selection.id) return selection;
-    this._space = selection.id;
+    this._commitSpace(selection.id, true);
     if (selection.source === 'hash') this._hashApplied = true;
     if (selection.source === 'saved') this._navApplied = true;
     return selection;
@@ -2930,7 +3006,9 @@ class HouseplanCard extends LitElement {
 
   private _candidateBackdrop(config: ServerConfig | null, spaceId = this._space): string {
     const models = spaceModels(config);
-    const preferred = this._initialSpaceSelection(models).id
+    const fixed = this._fixedFloorState(models, true);
+    if (this._hasFixedFloor && fixed.kind !== 'valid') return '';
+    const preferred = this._initialSpaceSelection(models, true).id
       || (models.some((space) => space.id === spaceId) ? spaceId : models[0]?.id);
     return models.find((space) => space.id === preferred)?.bg?.href || '';
   }
@@ -3120,7 +3198,9 @@ class HouseplanCard extends LitElement {
   }
 
   private _spaceModel(): SpaceModel | undefined {
-    return selectActiveSpaceModel(this._model, this._space);
+    return this._hasFixedFloor
+      ? selectSpaceModelById(this._model, this._space)
+      : selectActiveSpaceModel(this._model, this._space);
   }
 
   private _spaceModelById(id: string | null | undefined): SpaceModel | undefined {
@@ -3176,7 +3256,7 @@ class HouseplanCard extends LitElement {
     this._frame = null;
     this._planSnapGeometryCache = null;
     this._decorSnapCache = null;
-    this._space = '';
+    this._commitSpace('', true);
   }
 
   private get _areaToSpace(): Record<string, { space: string; room: RoomCfg }> {
@@ -3486,7 +3566,7 @@ class HouseplanCard extends LitElement {
       if (typeof cfgResp?.can_write === 'boolean') this._serverCanWrite = cfgResp.can_write;
       this._canOptimizeUndo = !!(cfgResp?.can_optimize_undo || layResp?.can_optimize_undo);
       this._adoptStructuralResponses(cfgResp, layResp);
-      this._adoptInitialSpace(this._model);
+      this._adoptInitialSpace(this._model, true);
       this._resumePendingNavMode();
       this._cacheSnapshot();
       // DEV-B703-03: a warm re-mount already holds the exact viewport of the
@@ -3662,7 +3742,7 @@ class HouseplanCard extends LitElement {
       }
       const visibleSpace = this._space;
       this._adoptStructuralResponses(resp);
-      this._adoptInitialSpace(this._model);
+      this._adoptInitialSpace(this._model, true);
       this._resumePendingNavMode();
       this._cacheSnapshot();
       if (this._space !== visibleSpace) this._restoreZoom();
@@ -5402,7 +5482,7 @@ class HouseplanCard extends LitElement {
    * competes with panning.
    */
   private get _swipeZone(): boolean {
-    return this._kiosk && this._zoom <= 1.001 && this._model.length > 1;
+    return !this._hasFixedFloor && this._kiosk && this._zoom <= 1.001 && this._model.length > 1;
   }
 
   private _stagePointerMove(ev: PointerEvent): void {
@@ -5544,11 +5624,12 @@ class HouseplanCard extends LitElement {
         if (target) {
           // the plan follows the finger: swiping left brings the next one in
           // from the right, so the current one leaves to the left
-          this._slideTo(target, dx < 0 ? 'left' : 'right');
-          this._saveNav();
-          this._suppressClick = true;
-          setTimeout(() => (this._suppressClick = false), 0);
-          this._showKioskDots();
+          if (this._slideTo(target, dx < 0 ? 'left' : 'right')) {
+            this._saveNav();
+            this._suppressClick = true;
+            setTimeout(() => (this._suppressClick = false), 0);
+            this._showKioskDots();
+          }
         }
       }
     }
@@ -5864,6 +5945,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _savedNav(): { space?: string } | null {
+    if (this._hasFixedFloor) return null;
     try {
       return JSON.parse(localStorage.getItem(LS_NAV) || 'null');
     } catch {
@@ -5872,6 +5954,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _saveNav(): void {
+    if (this._hasFixedFloor) return;
     try {
       // Writing on every mode/space change also migrates legacy
       // `{ space, mode }` records by dropping their obsolete editor field.
@@ -6637,6 +6720,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _applyGeometryState(state: SpaceGeometryState): boolean {
+    if (!this._canCommitSpace(state.spaceId)) return false;
     const sp = this._serverCfg?.spaces.find((s: any) => s.id === state.spaceId);
     if (!sp) return false;
     const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
@@ -6660,7 +6744,7 @@ class HouseplanCard extends LitElement {
     Object.assign(sp, copy(state.plan_transform || {}));
     this._clearGeometryGesture();
     if (this._space !== state.spaceId) {
-      this._space = state.spaceId;
+      this._commitSpace(state.spaceId);
       this._saveNav();
       this._restoreZoom();
     }
@@ -13519,7 +13603,7 @@ class HouseplanCard extends LitElement {
       // against another client's commit and deleted its freshly saved plan.
       await this._saveConfigNow();
       this._spaceDialog = null;
-      if (d.mode === 'create') this._space = sp.id;
+      if (d.mode === 'create') this._commitSpace(sp.id);
       this._regSignature = '';
       this._maybeRebuildDevices();
       if (this._importQueue.length) {
@@ -13528,7 +13612,7 @@ class HouseplanCard extends LitElement {
       } else if (wasFirst || this._importTotal > 0) {
         // guide the user onward: straight into room markup mode
         this._importTotal = 0;
-        this._space = this._serverCfg!.spaces[0]?.id || this._space;
+        this._commitSpace(this._serverCfg!.spaces[0]?.id || this._space);
         this._setMode('plan');
         this._tool = 'draw';
         this._path = [];
@@ -13570,7 +13654,7 @@ class HouseplanCard extends LitElement {
     try {
       await this._saveConfigNow();
       this._spaceDialog = null;
-      if (this._space === d.spaceId) this._space = this._serverCfg!.spaces[0]?.id || '';
+      if (this._space === d.spaceId) this._commitSpace(this._serverCfg!.spaces[0]?.id || '');
       this._regSignature = '';
       this._maybeRebuildDevices();
       this._showToast(this._t('toast.space_deleted'));
@@ -13641,7 +13725,7 @@ class HouseplanCard extends LitElement {
     if (this._importQueue.length) this._openNextImport();
     else if (this._importTotal > 0 && this._model.length) {
       this._importTotal = 0;
-      this._space = this._serverCfg!.spaces[0]?.id || this._space;
+      this._commitSpace(this._serverCfg!.spaces[0]?.id || this._space);
       this._setMode('plan');
       this._showToast(this._t('import.done'));
     }
@@ -14294,10 +14378,12 @@ class HouseplanCard extends LitElement {
       this._resign();
       this._maybeRebuildDevices();
       const spaces = this._serverCfg?.spaces || [];
-      this._space = result.kind === 'space' && result.space_id
+      const nextSpace = result.kind === 'space' && result.space_id
         ? result.space_id
         : spaces.some((space: any) => space.id === previousSpace)
           ? previousSpace : spaces[0]?.id || this._space;
+      if (this._hasFixedFloor) this._adoptInitialSpace(this._model, true);
+      else this._commitSpace(nextSpace);
       this._backupImportDialog = null;
       this._cacheSnapshot();
       this.requestUpdate();
@@ -15371,10 +15457,46 @@ class HouseplanCard extends LitElement {
 
   // ================= render =================
 
+  private _fixedFloorValue(value: unknown): string {
+    if (typeof value === 'string') return value || "''";
+    try {
+      const encoded = JSON.stringify(value);
+      return (encoded === undefined ? String(value) : encoded).slice(0, 160);
+    } catch {
+      return String(value).slice(0, 160);
+    }
+  }
+
   protected render(): TemplateResult | typeof nothing {
     if (!this._config || !this.hass) return nothing;
     const model = this._model;
     const diagnostics = this.houseplanDiagnostics();
+    const fixed = this._fixedFloorState(model);
+    if (fixed.kind === 'pending') {
+      return html`<ha-card data-fixed-floor-state="pending">
+        <div class="head">
+          <div class="title"><ha-icon icon="mdi:home-city"></ha-icon>${this._config.title || this._t('card.title')}</div>
+        </div>
+        <div class="empty" role="status" aria-live="polite">
+          <ha-icon icon="mdi:loading" class="big fixedfloor-loading"></ha-icon>
+          <p>${this._t('fixed_floor.loading')}</p>
+        </div>
+      </ha-card>`;
+    }
+    if (fixed.kind === 'invalid') {
+      return html`<ha-card
+        data-fixed-floor-state="invalid"
+        data-fixed-floor-reason=${fixed.reason}>
+        <div class="head">
+          <div class="title"><ha-icon icon="mdi:home-city"></ha-icon>${this._config.title || this._t('card.title')}</div>
+        </div>
+        <div class="empty fixedfloor-error" role="alert" aria-live="assertive">
+          <ha-icon icon="mdi:alert-circle-outline" class="big"></ha-icon>
+          <p><b>${this._t('fixed_floor.invalid_title')}</b></p>
+          <p>${this._t('fixed_floor.invalid_body', { value: this._fixedFloorValue(fixed.value) })}</p>
+        </div>
+      </ha-card>`;
+    }
     if (!model.length) {
       return html`<ha-card
         data-continuity-state=${this._continuity.state}
@@ -15405,6 +15527,7 @@ class HouseplanCard extends LitElement {
     }
     const space = this._spaceModel();
     if (!space) return nothing;
+    const navigationSpaces = fixed.kind === 'valid' ? [space] : model;
     const vb = space.vb;
     const projection = this._effectiveProjection();
     this._renderProjection = projection;
@@ -15474,7 +15597,7 @@ class HouseplanCard extends LitElement {
             ${this._config.title || this._t('card.title')}
           </div>
           <div class="tabs">
-            ${model.map(
+            ${navigationSpaces.map(
               (s) => html`<button
                 data-hp="space-tab" data-id="${s.id}"
                 class="tab ${this._space === s.id ? 'active' : ''}"
@@ -15495,7 +15618,7 @@ class HouseplanCard extends LitElement {
                    mode, exactly where the per-space gear does. Kiosk is a shop
                    window — the whole .hdr is display:none there, but the button is
                    also not RENDERED, so nothing invisible is clickable. */}
-            ${this._canEdit && !this._kiosk
+            ${this._canEdit && !this._kiosk && !this._hasFixedFloor
               ? html`<button class="tab tabadd" title=${this._t('title.add_space')}
                   @click=${() => this._openSpaceDialog('create')}>
                   <ha-icon icon="mdi:plus"></ha-icon>
@@ -15920,7 +16043,7 @@ class HouseplanCard extends LitElement {
                 : nothing}
             </div>`
           : nothing}
-        ${this._kiosk && this._kioskDots && this._model.length > 1
+        ${this._kiosk && !this._hasFixedFloor && this._kioskDots && this._model.length > 1
           ? html`<div class="kioskdots">
               ${this._model.map((m) => html`<span class="kdot ${m.id === this._space ? 'on' : ''}"></span>`)}
             </div>`
@@ -16456,7 +16579,7 @@ class HouseplanCard extends LitElement {
       const fit = fitFromMatrix(proposal.matrix);
       if (!dev || !fit) return;
       this._markerDialog = null;
-      if (dev.space !== this._space) this._space = dev.space;
+      if (dev.space !== this._space && !this._commitSpace(dev.space)) return;
       this._vacFit = {
         markerId: proposal.markerId, source: proposal.source,
         mapId: proposal.mapId, p: fit, drag: null,
@@ -16484,7 +16607,7 @@ class HouseplanCard extends LitElement {
     const p = (existing && existing.length === 6 && fitFromMatrix(existing))
       || initialFit(tele.rooms, vb);
     this._markerDialog = null;
-    if (d.space !== this._space) this._space = d.space;
+    if (d.space !== this._space && !this._commitSpace(d.space)) return;
     this._vacFit = { markerId: d.id, source: src, mapId, p, drag: null };
   }
 

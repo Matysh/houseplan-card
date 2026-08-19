@@ -239,6 +239,7 @@ export interface DevItem {
 export interface CardConfig {
   type: string;
   title?: string;
+  floor?: string | number;
   default_floor?: string;
   icon_size?: number;
   show_temperature?: boolean;

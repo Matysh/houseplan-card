@@ -1,7 +1,44 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { resolveInitialSpace, settleBestEffort } from '../test-build/initial-load.js';
+import {
+  resolveFixedFloor, resolveInitialSpace, settleBestEffort,
+} from '../test-build/initial-load.js';
+
+test('fixed floor distinguishes absence, stable ids and zero-based indexes', () => {
+  const spaceIds = ['ground', 'upstairs'];
+  assert.deepEqual(resolveFixedFloor({ spaceIds, hasFloor: false }), { kind: 'absent' });
+  assert.deepEqual(resolveFixedFloor({ spaceIds, hasFloor: true, floor: 'upstairs' }), {
+    kind: 'valid', id: 'upstairs', source: 'id',
+  });
+  assert.deepEqual(resolveFixedFloor({ spaceIds, hasFloor: true, floor: 0 }), {
+    kind: 'valid', id: 'ground', source: 'index',
+  });
+  assert.deepEqual(resolveFixedFloor({ spaceIds: ['1', 'other'], hasFloor: true, floor: '1' }), {
+    kind: 'valid', id: '1', source: 'id',
+  });
+});
+
+test('fixed floor rejects invalid values without coercion or fallback', () => {
+  const spaceIds = ['ground', 'upstairs'];
+  const cases = [
+    ['', 'empty-id'],
+    ['missing', 'unknown-id'],
+    [Number.NaN, 'non-finite-index'],
+    [Number.POSITIVE_INFINITY, 'non-finite-index'],
+    [1.5, 'fractional-index'],
+    [-1, 'negative-index'],
+    [2, 'out-of-range-index'],
+    [null, 'invalid-type'],
+    [true, 'invalid-type'],
+    [{ id: 'ground' }, 'invalid-type'],
+  ];
+  for (const [floor, reason] of cases) {
+    const result = resolveFixedFloor({ spaceIds, hasFloor: true, floor });
+    assert.equal(result.kind, 'invalid');
+    assert.equal(result.reason, reason);
+  }
+});
 
 test('initial space follows hash, saved, default and first live precedence', () => {
   const base = { spaceIds: ['home', 'upstairs'] };

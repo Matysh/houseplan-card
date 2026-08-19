@@ -122,7 +122,8 @@ title: House plan
 | Field | Default | Purpose |
 |---|---:|---|
 | `title` | empty | Card title |
-| `default_floor` | first/last opened | Initial space for this card |
+| `default_floor` | first/last opened | Initial/fallback space for an unpinned card |
+| `floor` | not pinned | Keep this card on one stable space ID or zero-based YAML index |
 | `language` | HA language | `auto`, `ru` or `en` |
 | `icon_size` | `2.5` | Base marker size, 1–6% of plan width |
 | `show_temperature` | `true` | Compact temperature and humidity values |
@@ -590,12 +591,33 @@ another Home Assistant instance.
 
 ### Several cards and clients
 
-Several `custom:houseplan-card` instances may use different `default_floor`
-values. This is the supported way to start one wall display on the ground floor
-and another on a garage or upper floor.
+Use `floor` when separate card instances must stay on separate spaces. A stable
+space ID is recommended:
+
+```yaml
+type: custom:houseplan-card
+floor: ground
+kiosk: true
+cycle: 0
+```
+
+YAML also accepts an unquoted zero-based numeric index such as `floor: 1`.
+Indexes follow the current server space order, so reordering spaces may change
+which one is shown. A quoted value such as `floor: "1"` is a literal space ID.
+
+A pinned card shows only its assigned space. It ignores the browser's shared
+last-space record, `#space=` links, other floor tabs, swipe and kiosk cycling,
+and it does not overwrite the shared last-space record. If the configured ID
+or index is invalid, the card shows a configuration error instead of choosing
+another space. Remove `floor` to restore normal navigation.
+
+Unpinned `custom:houseplan-card` instances may still use different
+`default_floor` values. That option is only the initial/fallback choice; the
+last selected space, a valid `#space=` link or normal navigation may replace it.
 
 - configuration, rooms, Background and device layout are shared server data;
-- `default_floor` is an initial choice for that card;
+- `floor` is a permanent per-card navigation authority, while `default_floor`
+  is only an initial/fallback choice for an unpinned card;
 - current mode, selected space, zoom/pan and kiosk sizing are local;
 - WebSocket broadcasts saved changes and revision checks reject a stale write;
 - avoid editing the same object in two browsers: the second save may need a

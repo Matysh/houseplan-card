@@ -1,4 +1,4 @@
-export type InitialSpaceSource = 'hash' | 'current' | 'saved' | 'default' | 'first' | 'none';
+export type InitialSpaceSource = 'fixed' | 'hash' | 'current' | 'saved' | 'default' | 'first' | 'none';
 
 export interface InitialSpaceSelectionInput {
   spaceIds: readonly string[];
@@ -13,6 +13,49 @@ export interface InitialSpaceSelectionInput {
 export interface InitialSpaceSelection {
   id: string | null;
   source: InitialSpaceSource;
+}
+
+export type FixedFloorInvalidReason =
+  | 'empty-id'
+  | 'unknown-id'
+  | 'non-finite-index'
+  | 'fractional-index'
+  | 'negative-index'
+  | 'out-of-range-index'
+  | 'invalid-type';
+
+export type FixedFloorSelection =
+  | { kind: 'absent' }
+  | { kind: 'valid'; id: string; source: 'id' | 'index' }
+  | { kind: 'invalid'; reason: FixedFloorInvalidReason; value: unknown };
+
+export interface FixedFloorSelectionInput {
+  spaceIds: readonly string[];
+  /** Presence is semantic: an explicit empty/null value is invalid, not absent. */
+  hasFloor: boolean;
+  floor?: unknown;
+}
+
+/** Resolve the public fixed-floor card option without JavaScript coercion. */
+export function resolveFixedFloor(input: FixedFloorSelectionInput): FixedFloorSelection {
+  if (!input.hasFloor) return { kind: 'absent' };
+  const value = input.floor;
+  if (typeof value === 'string') {
+    if (!value.length) return { kind: 'invalid', reason: 'empty-id', value };
+    return input.spaceIds.includes(value)
+      ? { kind: 'valid', id: value, source: 'id' }
+      : { kind: 'invalid', reason: 'unknown-id', value };
+  }
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) return { kind: 'invalid', reason: 'non-finite-index', value };
+    if (!Number.isInteger(value)) return { kind: 'invalid', reason: 'fractional-index', value };
+    if (value < 0) return { kind: 'invalid', reason: 'negative-index', value };
+    const id = input.spaceIds[value];
+    return id === undefined
+      ? { kind: 'invalid', reason: 'out-of-range-index', value }
+      : { kind: 'valid', id, source: 'index' };
+  }
+  return { kind: 'invalid', reason: 'invalid-type', value };
 }
 
 /**

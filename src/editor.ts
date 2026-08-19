@@ -39,11 +39,43 @@ class HouseplanCardEditor extends LitElement {
     return langOf(this.hass, this._config?.language);
   }
 
+  private get _floorToken(): string | null {
+    const value = this._config?.floor;
+    return typeof value === 'number' ? `__houseplan_yaml_floor_index__:${String(value)}` : null;
+  }
+
+  private get _formData(): any {
+    const data = { ...this._config };
+    const token = this._floorToken;
+    if (token) data.floor = token;
+    else if (!Object.prototype.hasOwnProperty.call(data, 'floor')) data.floor = '';
+    return data;
+  }
+
   private get _schema(): any[] {
     const spaces = this._spaces || [];
     const L = this._lang;
+    const floorOptions: { value: string; label: string }[] = [
+      { value: '', label: t(L, 'editor.floor_none') },
+    ];
+    const token = this._floorToken;
+    if (token) {
+      floorOptions.push({
+        value: token,
+        label: t(L, 'editor.floor_index', { index: String(this._config?.floor) }),
+      });
+    }
+    const currentFloor = typeof this._config?.floor === 'string' ? this._config.floor : '';
+    if (currentFloor && !spaces.some((space) => space.value === currentFloor)) {
+      floorOptions.push({ value: currentFloor, label: currentFloor });
+    }
+    floorOptions.push(...spaces);
     return [
       { name: 'title', selector: { text: {} } },
+      {
+        name: 'floor',
+        selector: { select: { mode: 'dropdown', options: floorOptions } },
+      },
       spaces.length
         ? {
             name: 'default_floor',
@@ -78,6 +110,7 @@ class HouseplanCardEditor extends LitElement {
     const L = this._lang;
     const labels: Record<string, string> = {
       title: t(L, 'editor.title'),
+      floor: t(L, 'editor.floor'),
       default_floor: t(L, 'editor.default_floor'),
       language: t(L, 'editor.language'),
       icon_size: t(L, 'editor.icon_size'),
@@ -89,7 +122,7 @@ class HouseplanCardEditor extends LitElement {
     };
     return html`<ha-form
       .hass=${this.hass}
-      .data=${this._config}
+      .data=${this._formData}
       .schema=${this._schema}
       .computeLabel=${(s: any) => labels[s.name] || s.name}
       @value-changed=${this._valueChanged}
@@ -98,6 +131,8 @@ class HouseplanCardEditor extends LitElement {
 
   private _valueChanged(ev: CustomEvent): void {
     const config = { ...this._config, ...ev.detail.value };
+    if (config.floor === '') delete config.floor;
+    else if (config.floor === this._floorToken) config.floor = this._config?.floor;
     const e = new Event('config-changed', { bubbles: true, composed: true }) as any;
     e.detail = { config };
     this.dispatchEvent(e);

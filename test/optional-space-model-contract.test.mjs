@@ -29,7 +29,7 @@ test('authoritative empty-space cleanup aborts every space-bound transaction', (
     'releasePointerCapture', '_pointers.clear()', '_cancelModeTransition(false)',
     "_mode = 'view'", '_clearGeometryGesture()', '_geometryHistory.clear()',
     '_resumeDraftBySpace = {}', '_drag = null', '_vacFit = null',
-    '_markerDialog = null', '_saveConfigDebounced.cancel()', "_space = ''",
+    '_markerDialog = null', '_saveConfigDebounced.cancel()', "_commitSpace('', true)",
   ]) assert.ok(cleanup.includes(fragment), fragment);
 
   const willUpdate = methodBody('willUpdate');
