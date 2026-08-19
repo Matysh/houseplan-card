@@ -125,6 +125,7 @@ test('micro-interval cleanup preserves ambiguous and topological boundaries', ()
 });
 
 test('micro-interval cleanup is endpoint, input-order and room-order invariant without mutation', () => {
+  const baselineFixture = microIntervalFixture();
   const fixture = microIntervalFixture();
   const detached = {
     id: 'r2', poly: [[0.85, 0.85], [0.95, 0.85], [0.95, 0.95], [0.85, 0.95]],
@@ -137,7 +138,7 @@ test('micro-interval cleanup is endpoint, input-order and room-order invariant w
   }).sort();
 
   const baseline = collapseIsolatedWallThicknessIslands(
-    [fixture.rooms[0], detached], fixture.walls, [], S, 5, S,
+    [baselineFixture.rooms[0], structuredClone(detached)], baselineFixture.walls, [], S, 5, S,
   );
   const reversedMiddle = {
     ...fixture.walls[1],
