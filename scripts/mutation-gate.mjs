@@ -523,7 +523,11 @@ export const MUTANTS = [
     patches: [{
       file: 'src/styles.ts',
       find: '.dev:not(.unavail):hover .device-core {',
-      replace: '.dev:hover .device-core {',
+      replace: '.dev.unavail:hover .device-core {',
+    }, {
+      file: 'src/styles.ts',
+      find: '.dev:not(.unavail):hover .device-shell {',
+      replace: '.dev.unavail:hover .device-shell {',
     }],
   },
   {
