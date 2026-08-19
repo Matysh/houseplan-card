@@ -12,7 +12,7 @@ const res = await page.evaluate(async () => {
     const semantic = ['on', 'open', 'alarm', 'unavail', 'valonly', 'activity-running', 'activity-event', 'activity-presence', 'activity-transition'];
     return {
       classes: semantic.filter((name) => node.classList.contains(name)),
-      icon: node.querySelector(':scope > ha-icon')?.getAttribute('icon') || '',
+      icon: node.querySelector('.device-core > ha-icon')?.getAttribute('icon') || '',
       value: node.querySelector('.valtext')?.textContent?.trim() || '',
       badge: node.querySelector('.value-badge')?.textContent?.trim() || '',
       badgePosition: [...(node.querySelector('.value-badge')?.classList || [])]

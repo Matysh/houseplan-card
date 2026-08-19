@@ -31,8 +31,24 @@ export interface ResolveDevicePulseOptions {
   diameterScale?: number;
 }
 
-const ALARM_COLOR = '#f25a4a';
-const ALARM_DIAMETER_SCALE = 3;
+export const DEVICE_ACTIVITY_BLUE = '#0C82F0';
+export const DEVICE_ACTIVITY_AMBER = '#F0A00C';
+export const DEVICE_ACTIVITY_GREEN = '#1DC21D';
+export const DEVICE_ALERT_RED = '#F0410C';
+export const DEVICE_PULSE_DEFAULT_SCALE = 1.5;
+
+const ALARM_DIAMETER_SCALE = DEVICE_PULSE_DEFAULT_SCALE;
+
+function semanticPulseColor(
+  visual: DeviceVisualState,
+  semanticActivity: DeviceActivity,
+): string {
+  if (semanticActivity === 'presence') return DEVICE_ACTIVITY_GREEN;
+  if (semanticActivity === 'running' || visual.status === 'working' || visual.status === 'open') {
+    return DEVICE_ACTIVITY_AMBER;
+  }
+  return DEVICE_ACTIVITY_BLUE;
+}
 
 function noPulse(
   generation: number,
@@ -60,8 +76,8 @@ export function resolveDevicePulse(options: ResolveDevicePulseOptions): Resolved
   } = options;
   const generation = Math.max(1, Math.trunc(options.shortGeneration || 1));
   const diameterScale = Number.isFinite(options.diameterScale)
-    ? Math.max(1, Number(options.diameterScale)) : 3;
-  const color = options.color || null;
+    ? Math.max(1, Number(options.diameterScale)) : DEVICE_PULSE_DEFAULT_SCALE;
+  const color = options.color || semanticPulseColor(visual, semanticActivity);
   if (effectiveHidden || bindingUnavailable || visual.availability === 'unavailable'
       || display === 'static_icon') {
     return noPulse(generation, color, diameterScale);
@@ -72,7 +88,7 @@ export function resolveDevicePulse(options: ResolveDevicePulseOptions): Resolved
   if (visual.status === 'alarm') {
     return {
       kind: 'alarm', reason: 'alarm', generation, expiresAt: null,
-      color: ALARM_COLOR, diameterScale: ALARM_DIAMETER_SCALE, animated: !reducedMotion,
+      color: DEVICE_ALERT_RED, diameterScale: ALARM_DIAMETER_SCALE, animated: !reducedMotion,
       reducedMotionIndicator: 'none',
     };
   }
@@ -83,7 +99,7 @@ export function resolveDevicePulse(options: ResolveDevicePulseOptions): Resolved
   if (options.shortReason && expiresAt != null && expiresAt > now) {
     return {
       kind: 'short', reason: options.shortReason, generation, expiresAt,
-      color: reducedMotion ? null : color,
+      color,
       diameterScale: reducedMotion ? 1 : diameterScale,
       animated: !reducedMotion,
       reducedMotionIndicator: reducedMotion ? 'dot' : 'none',
@@ -95,7 +111,7 @@ export function resolveDevicePulse(options: ResolveDevicePulseOptions): Resolved
       || semanticActivity === 'running') {
     return {
       kind: 'continuous', reason: semanticActivity, generation, expiresAt: null,
-      color: reducedMotion ? null : color,
+      color,
       diameterScale: reducedMotion ? 1 : diameterScale,
       animated: !reducedMotion,
       reducedMotionIndicator: reducedMotion ? 'dot' : 'none',
@@ -117,7 +133,7 @@ export function withDemoPulse(
     reason: kind === 'short' ? 'event' : 'running',
     generation: Math.max(1, Math.trunc(generation)),
     expiresAt: kind === 'short' ? expiresAt : null,
-    color: reducedMotion ? null : source.color,
+    color: source.color,
     diameterScale: reducedMotion ? 1 : source.diameterScale,
     animated: !reducedMotion,
     reducedMotionIndicator: reducedMotion ? 'dot' : 'none',

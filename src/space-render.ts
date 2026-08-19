@@ -33,10 +33,11 @@ import {
 } from './render/opening-symbol';
 import { activeRegistryHass, fullRegistryHass, type HaRegistrySnapshot } from './ha-binding-status';
 import {
-  resolveDevicePresentation, type PresentationActivityRuntime, type ResolvedDevicePresentation,
+  deviceA11yState, resolveDevicePresentation,
+  type PresentationActivityRuntime, type ResolvedDevicePresentation,
 } from './device-presentation';
 import { presentationSnapshotKey } from './render-device-snapshot';
-import { deviceFaceStyle, renderDeviceFace } from './device-face';
+import { deviceFaceStyle, deviceThemeClass, renderDeviceFace } from './device-face';
 import { valueBadgeTitle } from './device-value-badge';
 import { contentFingerprint } from './visual-continuity';
 import type { VirtualLightSnapshot } from './virtual-light-state';
@@ -361,15 +362,24 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       reducedMotion: o.reducedMotion,
     });
     const st = [`left:${left}%`, `top:${top}%`, ...deviceFaceStyle(presentation)];
+    const a11yState = deviceA11yState(presentation);
     const deviceAriaLabel = [
       d.name,
+      t(o.lang, (`marker.state_a11y_${a11yState}`) as any),
       presentation.pulse.kind !== 'none'
         ? t(o.lang, (`marker.pulse_a11y_${presentation.pulse.reason}`) as any) : '',
+      presentation.valueFullText || presentation.valueText || '',
       valueBadgeTitle(presentation.valueBadge),
+      presentation.lqiText != null && presentation.lqiBand
+        ? t(o.lang, (`marker.lqi_a11y_${presentation.lqiBand}`) as any, {
+            value: presentation.lqiText,
+          }) : '',
     ].filter(Boolean).join(', ');
-    return html`<div class="dev ${presentation.classes.join(' ')} ${d.virtual ? 'virtual' : ''} ${presentation.valueText != null ? 'valonly' : ''}"
+    return html`<div class="dev ${deviceThemeClass(planHass)} ${presentation.classes.join(' ')} ${d.virtual ? 'virtual' : ''} ${presentation.valueText != null ? 'valonly' : ''}"
       data-hp="device" data-id="${d.id}" data-entity=${d.primary || nothing} data-area=${d.area || nothing}
-      aria-label=${deviceAriaLabel}
+      role="img" aria-label=${deviceAriaLabel}
+      data-state=${a11yState}
+      data-lqi-band=${presentation.lqiText != null ? presentation.lqiBand || nothing : nothing}
       data-binding-status=${d.bindingStatus?.kind === 'ha_disabled' ? 'ha-disabled' : d.bindingStatus?.kind || 'active'}
       data-disabled-reason=${presentation.disabledReason ? presentation.disabledReason.replace('_', '-') : nothing}
       style="${st.join(';')}">

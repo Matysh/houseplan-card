@@ -129,7 +129,7 @@ export interface Marker {
   /** `ripple` is legacy read compatibility; UI maps it to icon_ripple. */
   display?: 'badge' | 'ripple' | 'icon_ripple' | 'value' | 'static_icon' | null; // how the device is drawn
   ripple_color?: string | null;
-  ripple_size?: number | null; // max ring diameter, in icon diameters (default 3)
+  ripple_size?: number | null; // max ring diameter, in icon diameters (default 1.5)
   size?: number | null;        // icon size multiplier (default 1)
   angle?: number | null;       // icon rotation, degrees
   /** Entities this icon toggles as a group (wall switch → its lights). */

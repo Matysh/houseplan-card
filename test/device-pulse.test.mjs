@@ -45,7 +45,7 @@ test('reduced motion replaces ordinary waves with a dot and keeps alarm semantic
   });
   assert.equal(ordinary.animated, false);
   assert.equal(ordinary.reducedMotionIndicator, 'dot');
-  assert.equal(ordinary.color, null);
+  assert.equal(ordinary.color, '#123456');
   assert.equal(ordinary.diameterScale, 1);
   const short = resolve({
     shortReason: 'event', shortExpiresAt: 2_000, reducedMotion: true,
@@ -61,8 +61,21 @@ test('reduced motion replaces ordinary waves with a dot and keeps alarm semantic
   assert.equal(alarm.kind, 'alarm');
   assert.equal(alarm.animated, false);
   assert.equal(alarm.reducedMotionIndicator, 'none');
-  assert.equal(alarm.color, '#f25a4a');
-  assert.equal(alarm.diameterScale, 3);
+  assert.equal(alarm.color, '#F0410C');
+  assert.equal(alarm.diameterScale, 1.5);
+});
+
+test('package defaults map presence, running and neutral transition to distinct colors', () => {
+  const presence = resolve({ semanticActivity: 'presence' });
+  assert.equal(presence.color, '#1DC21D');
+  assert.equal(presence.diameterScale, 1.5);
+  assert.equal(resolve({ semanticActivity: 'running' }).color, '#F0A00C');
+  assert.equal(resolve({
+    semanticActivity: 'transition', visual: visual('neutral', 'transition'),
+  }).color, '#0C82F0');
+  assert.equal(resolve({
+    semanticActivity: 'presence', color: '#123456', diameterScale: 4,
+  }).color, '#123456');
 });
 
 test('expired finite runtime never leaves a static ring', () => {

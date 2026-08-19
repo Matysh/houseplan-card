@@ -399,15 +399,16 @@ group; without a selection existing groups remain external-only.
 
 ## 12. Device visual states
 
-Presentation has three independent layers: stable marker background, icon or
-value, and optional activity pulse. Priority is **alarm → working → open →
-neutral**.
+Presentation uses one shared outer shell around three independent layers:
+stable core, icon or value, and optional activity pulse. Visual priority is
+**alarm → keyboard focus → selected → hover → semantic state → neutral**.
 
 | State | Meaning | Examples |
 |---|---|---|
 | Red alarm | Critical condition, even with live states disabled | Smoke, gas, CO, leak, tamper/problem/safety, triggered alarm |
-| Yellow | Device is doing its main job | Light/switch/fan on, active climate, vacuum cleaning, known appliance work |
-| Orange | Physically open or unlocked | Door/window contact, unlocked lock, opening valve |
+| Yellow | Device is doing its main job or a lock is unlocked | Light/switch/fan on, active climate, vacuum cleaning, known appliance work, unlocked lock |
+| Black lock glyph | Lock is secured | Locked lock |
+| Orange | Physically open | Door/window contact, opening valve |
 | Faded | Data unavailable | All relevant entities unknown, unavailable or absent |
 | Neutral | No alarm, work or open condition | Off, closed, idle, standby, docked |
 
@@ -421,17 +422,30 @@ are not treated as independent proof of work, and an ordinary lone relay keeps
 its existing yellow-on behaviour.
 
 Activity may be a finite three-wave event, persistent presence, a travelling
-transition, or persistent work. `prefers-reduced-motion` replaces ordinary
-motion with a compact indicator while the alarm remains clear.
+transition, or persistent work. Continuous motion uses a 3.6 s cycle (green
+presence, amber work, blue neutral transition), a short event lasts 3.3 s, and
+the two-wave red alarm cycles in 2.4 s. Explicit saved pulse color/size remains
+authoritative; the package size default is 1.5 diameters. `prefers-reduced-motion`
+replaces ordinary motion with a compact colored indicator while the static red
+alarm remains clear.
 
 The four display choices are icon + state; icon + state + activity; value +
 state; and always-static icon. A separate value badge can show an entity state,
 useful attribute, average LQI or linked light state on any side of the marker.
+Text and adjacent values are sections of the same shell. They shrink to a
+readable floor and then expand the shell; they are never ellipsized.
 
 Virtual devices use the ordinary neutral/hover background with a dashed outer
-circle. They cannot have active state or pulse. Unavailable keeps the ordinary
-presentation with the standard icon opacity reduction. Zigbee LQI remains a
-separate badge.
+circle. An HA-less virtual device does not invent unavailable or activity;
+a linked virtual light may still follow its real controller. Unavailable keeps the ordinary
+presentation with the standard icon opacity reduction, no visual hover and no
+motion; its existing click/tap still opens information or settings. Marker LQI
+is red at 0–40, amber at 41–179 and green at 180+, without changing the room
+fill gradient.
+
+Interactive View/kiosk and Device-editor markers have at least a 44×44 CSS px
+target. Enter and Space reuse the exact current click and confirmation path;
+Plan, Background, preview and the read-only static card add no tab stop.
 
 ## 13. Room fills and light
 

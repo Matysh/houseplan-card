@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  deviceFaceStyle, legacySupplementalMetrics, lqiClassName, renderDeviceFace,
+  deviceFaceStyle, deviceTextScale, deviceThemeClass,
+  legacySupplementalMetrics, lqiClassName, renderDeviceFace,
   valueBadgeClassName,
 } from '../test-build/device-face.js';
 
@@ -23,6 +24,12 @@ test('device face never emits an arbitrary persisted ripple declaration', () => 
   const hostile = deviceFaceStyle(face('red;position:fixed;inset:0'));
   assert.deepEqual(hostile, ['--ripple-scale:3']);
   assert.ok(!hostile.join(';').includes('position'));
+});
+
+test('HA darkMode selects an exact package theme and otherwise leaves CSS fallback in charge', () => {
+  assert.equal(deviceThemeClass({ themes: { darkMode: true } }), 'theme-dark');
+  assert.equal(deviceThemeClass({ themes: { darkMode: false } }), 'theme-light');
+  assert.equal(deviceThemeClass({}), '');
 });
 
 test('untouched legacy temperature and humidity keep the second satellite', () => {
@@ -65,11 +72,37 @@ test('rendered pulse retains the documented activity-ring compatibility hook', (
   const presentation = {
     ...face('#ff9800'), classes: [], icon: 'mdi:lightbulb', angle: 0,
     valueText: null, valueFullText: null, valueBadge: null,
-    lqiText: null, lqiColor: null, haDisabled: false,
+    lqiText: null, lqiColor: null, lqiBand: null, haDisabled: false,
     tempText: null, humText: null,
   };
   const root = renderDeviceFace(presentation, { surface: 'preview' });
   const nested = root.values.find((value) => value?.strings);
   assert.ok(nested);
   assert.match(nested.strings.join(''), /device-pulse activity-ring/);
+});
+
+test('Text and Double use one shared shell and deterministic full-text fitting', () => {
+  assert.equal(deviceTextScale('42 °C'), 0.45);
+  assert.equal(deviceTextScale('A very long localized device value'), 0.25);
+
+  const presentation = {
+    ...face('#ff9800'), classes: [], icon: 'mdi:lightbulb', angle: 0,
+    valueText: null, valueFullText: null,
+    valueBadge: {
+      configured: true,
+      position: 'left', availability: 'available', tone: 'default',
+      text: '12345678901234567890 W', fullText: '12345678901234567890 W',
+    },
+    lqiText: '180', lqiColor: '#1DC21D', lqiBand: 'high', haDisabled: false,
+    tempText: null, humText: null,
+  };
+  const root = renderDeviceFace(presentation, { surface: 'preview' });
+  const flatten = (value) => value?.strings
+    ? value.strings.join('') + value.values.map(flatten).join('')
+    : Array.isArray(value) ? value.map(flatten).join('') : String(value ?? '');
+  const markup = flatten(root);
+  assert.match(markup, /device-shell/);
+  assert.match(markup, /device-core/);
+  assert.match(markup, /device-sections/);
+  assert.match(markup, /band-/);
 });

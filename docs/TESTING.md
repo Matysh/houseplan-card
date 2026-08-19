@@ -32,6 +32,35 @@
 полный прогон — workflow `mutation-gate.yml`, перед стабильным релизом и по
 понедельникам. Дешёвая половина идёт с юнитами: `test/mutation-gate.test.mjs`.
 
+## Device icon design package (#179)
+
+- [ ] Pure presentation tests cover lock/unlock, exact marker-only LQI bands
+      `0/40/41/179/180`, unchanged room gradient, package pulse defaults,
+      semantic colors and reduced motion
+      [unit: `device-presentation.test.mjs`, `device-pulse.test.mjs`].
+- [ ] Shared face tests cover shell/core DOM, four Double positions, a third
+      legacy section, deterministic font fitting, full text and safe CSS color
+      variables [unit: `device-face.test.mjs`].
+- [ ] The browser renders the exact shell ratio and shadow color, Light/Dark
+      cores without backdrop blur, state/LQI colors, 3.6 s presence pulse,
+      unavailable no-hover, full Text/Double values, 44×44 target, View and
+      Device-editor keyboard paths, and no Plan tab stop
+      [auto: `smoke_device_icon_design.mjs`].
+- [ ] Full plan, preview and static card preserve the same face after the DOM
+      redesign; static mode, state/value and disabled-device contracts stay
+      green [auto: `smoke_device_preview_parity.mjs`, `smoke_static_icon.mjs`,
+      `smoke_state_value.mjs`, `smoke_disabled_device.mjs`].
+- [ ] Restoring unavailable hover, shifting the LQI boundary, restoring value
+      ellipsis or bypassing `_clickDevice()` makes its guard red
+      [mutation: `device-unavailable-hover-restored`,
+      `device-marker-lqi-low-boundary-shifted`,
+      `device-long-value-ellipsis-restored`,
+      `device-keyboard-bypasses-click-path`].
+- [ ] Pre-beta golden reviews desktop/mobile Light/Dark states, combo states,
+      Text, four Double positions, long and legacy values, LQI, reduced motion,
+      sizes 32/56/96 and colored backgrounds. Full smoke/golden/performance
+      remains a Linux release gate.
+
 ## Empty-space lifecycle (#113)
 
 - [ ] Active selection keeps active-or-first compatibility, while an empty

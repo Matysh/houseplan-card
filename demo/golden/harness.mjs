@@ -315,7 +315,7 @@ export async function prepareGoldenScenario(page, scenario) {
   await stableEnvironment(page, scenario);
   const fixture = prepareGoldenFixture(scenario);
 
-  return page.evaluate(async ({ fixture, scenario }) => {
+  const result = await page.evaluate(async ({ fixture, scenario }) => {
     const wait = (ms) => new Promise((done) => setTimeout(done, ms));
     const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
     const until = async (predicate, timeout = 10000) => {
@@ -759,6 +759,22 @@ export async function prepareGoldenScenario(page, scenario) {
       trigger.click();
       await picker.updateComplete;
     }
+    if (scenario.deviceClassOverrides) {
+      for (const [id, classes] of Object.entries(scenario.deviceClassOverrides)) {
+        const marker = card.renderRoot.querySelector(`[data-hp="device"][data-id="${CSS.escape(id)}"]`);
+        if (!marker || !Array.isArray(classes) || !classes.length) {
+          throw new Error(`invalid golden device class override: ${scenario.id}/${id}`);
+        }
+        marker.classList.add(...classes);
+      }
+    }
+    if (scenario.focusDevice) {
+      const marker = card.renderRoot.querySelector(
+        `[data-hp="device"][data-id="${CSS.escape(scenario.focusDevice)}"]`,
+      );
+      if (!marker) throw new Error(`golden focus device missing: ${scenario.focusDevice}`);
+      marker.focus({ focusVisible: true });
+    }
     if (scenario.dayCycle) {
       const environment = card.renderRoot.querySelector('.hp-day-cycle-env');
       const active = card.renderRoot.querySelector('.hp-day-cycle-bg.active');
@@ -792,6 +808,27 @@ export async function prepareGoldenScenario(page, scenario) {
       } } : {}),
     };
   }, { fixture, scenario });
+  if (scenario.hoverDevice) {
+    const point = await page.evaluate((id) => {
+      const marker = window.__goldenCard?.renderRoot?.querySelector(
+        `[data-hp="device"][data-id="${CSS.escape(id)}"]`,
+      );
+      if (!marker) return null;
+      const rect = marker.getBoundingClientRect();
+      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    }, scenario.hoverDevice);
+    if (!point) throw new Error(`golden hover device missing: ${scenario.hoverDevice}`);
+    await page.mouse.move(point.x, point.y);
+    if (scenario.hideHoverTooltip) {
+      await page.evaluate(async () => {
+        const card = window.__goldenCard;
+        card._tip = null;
+        card.requestUpdate();
+        await card.updateComplete;
+      });
+    }
+  }
+  return result;
 }
 
 export async function goldenClip(page, capture) {

@@ -1,7 +1,7 @@
 /** Live, read-only device display preview used by the marker editor. */
 import { LitElement, css, html, nothing, type PropertyValues, type TemplateResult } from 'lit';
 import { cardStyles } from './styles';
-import { deviceFaceStyle, renderDeviceFace } from './device-face';
+import { deviceFaceStyle, deviceThemeClass, renderDeviceFace } from './device-face';
 import {
   type PresentationReason,
   type ResolvedDevicePresentation,
@@ -231,7 +231,7 @@ class HpDevicePreview extends LitElement {
       fit < 1 ? `transform:scale(${fit})` : '',
     ].filter(Boolean).join(';');
     const rootClasses = [
-      'dev', ...shown.classes,
+      'dev', deviceThemeClass(this.hass), ...shown.classes,
       shown.binding === 'virtual' ? 'virtual' : '',
       shown.haDisabled ? 'ghost ha-disabled' : '',
       shown.valueText != null ? 'valonly' : '',
@@ -248,6 +248,9 @@ class HpDevicePreview extends LitElement {
       result,
       actual.valueFullText || '',
       valueBadgeTitle(actual.valueBadge),
+      actual.lqiText != null && actual.lqiBand
+        ? this._t((`marker.lqi_a11y_${actual.lqiBand}`) as any, { value: actual.lqiText })
+        : '',
     ].filter(Boolean).join('. ');
 
     return html`<section class="devicepreview">

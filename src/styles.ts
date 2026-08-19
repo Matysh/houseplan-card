@@ -806,8 +806,8 @@ export const cardStyles = css`
       position: absolute;
       left: 50%;
       top: 50%;
-      width: calc(var(--dev-size) * var(--ripple-scale, 3));
-      height: calc(var(--dev-size) * var(--ripple-scale, 3));
+      width: var(--dev-size);
+      height: var(--dev-size);
       transform: translate(-50%, -50%);
       pointer-events: none;
       z-index: 0;
@@ -821,39 +821,41 @@ export const cardStyles = css`
     }
     /* A witnessed edge: exactly three waves over the 3.3 s runtime window. */
     .device-pulse.short i {
-      animation: hp-pulse-short 1.1s ease-out 1 forwards;
+      animation: hp-pulse-short 1.1s cubic-bezier(.22,.61,.36,1) 1 forwards;
     }
     .device-pulse.short i:nth-child(2) { animation-delay: 1.1s; }
     .device-pulse.short i:nth-child(3) { animation-delay: 2.2s; }
     .device-pulse.short.gen2 i { animation-name: hp-pulse-short-b; }
     .device-pulse.continuous i:nth-child(n + 2),
-    .device-pulse.alarm i:nth-child(n + 2) { display: none; }
+    .device-pulse.alarm i:nth-child(n + 3) { display: none; }
     .device-pulse.continuous i:first-child {
-      animation: hp-pulse-continuous 2.4s ease-in-out infinite;
+      animation: hp-pulse-continuous 3.6s cubic-bezier(.45,.05,.55,.95) infinite;
     }
-    .device-pulse.alarm i:first-child {
-      border-color: #f25a4a;
-      animation: hp-pulse-alarm 1s ease-out infinite;
+    .device-pulse.alarm i {
+      border-width: 3px;
+      border-color: #F0410C;
+      animation: hp-pulse-alarm 2.4s cubic-bezier(.22,.61,.36,1) infinite;
     }
+    .device-pulse.alarm i:nth-child(2) { animation-delay: 1.2s; }
     @keyframes hp-pulse-short {
-      0% { transform: scale(0.18); opacity: 0.7; }
+      0% { transform: scale(1); opacity: 0.55; }
       70% { opacity: 0.22; }
-      100% { transform: scale(1); opacity: 0; }
+      100% { transform: scale(var(--ripple-scale, 1.5)); opacity: 0; }
     }
     /* Alternate identity: a rapid retrigger restarts the browser timeline. */
     @keyframes hp-pulse-short-b {
-      0% { transform: scale(0.18); opacity: 0.7; }
+      0% { transform: scale(1); opacity: 0.55; }
       70% { opacity: 0.22; }
-      100% { transform: scale(1); opacity: 0; }
+      100% { transform: scale(var(--ripple-scale, 1.5)); opacity: 0; }
     }
     @keyframes hp-pulse-continuous {
-      0% { transform: scale(0.26); opacity: 0.5; }
+      0% { transform: scale(1); opacity: 0.55; }
       65% { opacity: 0.18; }
-      100% { transform: scale(1); opacity: 0; }
+      100% { transform: scale(var(--ripple-scale, 1.5)); opacity: 0; }
     }
     @keyframes hp-pulse-alarm {
-      0% { transform: scale(0.3); opacity: 0.95; }
-      100% { transform: scale(1); opacity: 0; }
+      0% { transform: scale(1); opacity: 0.72; }
+      100% { transform: scale(1.5); opacity: 0; }
     }
     .activity-dot {
       position: absolute;
@@ -1789,23 +1791,19 @@ export const cardStyles = css`
       width: 130px;
     }
     .dev.valonly {
-      /* all satellite metrics from --dev-size, not --icon-size: the per-device
-         size multiplier must scale the value plate with its marker — same bug
-         class as the v1.51.3 glyph fix (pinned to base size, the multiplier
-         grew nothing). */
-      width: auto;
-      min-width: var(--dev-size, var(--icon-size, 2.5cqw));
-      max-width: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 4);
-      box-sizing: border-box;
-      padding: 0 calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.16);
+      /* Saved coordinates remain the centre of a Text shell. The shell may
+         expand, while the invisible anchor stays one core diameter wide. */
+      width: var(--dev-size, var(--icon-size, 2.5cqw));
     }
-    .dev.valonly .valtext {
-      min-width: 0;
-      max-width: 100%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      font-size: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.45);
-      font-weight: 700;
+    .dev.valonly .device-core {
+      width: max-content;
+      min-width: var(--dev-size, var(--icon-size, 2.5cqw));
+      padding-inline: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.16);
+    }
+    .dev .valtext {
+      overflow: visible;
+      font-size: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * var(--value-font-scale, .45));
+      font-weight: 600;
       white-space: nowrap;
     }
     /* RGB lights: the bulb takes the light's actual color */
@@ -1836,14 +1834,6 @@ export const cardStyles = css`
       .sunlayer, .sunlayer.out { animation: none; }
       .sunlayer.out { opacity: 0; }
     }
-    /* alarms pulse red over everything */
-    .dev.alarm,
-    .dev.alarm:hover {
-      background: #6f2325;
-      border-color: #f25a4a;
-      color: #fff;
-      box-shadow: 0 0 10px rgba(242, 90, 74, 0.65);
-    }
     @media (prefers-reduced-motion: reduce) {
       .device-pulse { display: none; }
     }
@@ -1869,22 +1859,122 @@ export const cardStyles = css`
       position: absolute;
       /* per-device multiplier on top of the card-wide icon size */
       --dev-size: calc(var(--icon-size, 2.5cqw) * var(--dev-scale, 1));
-      /* центр квадрата (включая рамку 1px) точно на точке привязки: -(size/2 + border) */
+      /* 101.5/80 shell/core ratio includes the 1 px stroke on both sides. */
+      --device-shell-pad: max(0px, calc(var(--dev-size) * 0.134375 - 1px));
+      --device-shell-size: calc(var(--dev-size) * 1.26875);
+      --device-core-bg: var(--card-background-color, #fff);
+      --device-core-fg: var(--primary-text-color, #252525);
+      --device-core-bg: light-dark(#fff, #252525);
+      --device-core-fg: light-dark(#252525, #fff);
+      /* The saved point is the exact centre of the icon core. */
       width: var(--dev-size);
       height: var(--dev-size);
-      margin: calc(var(--dev-size) / -2 - 1px) 0 0 calc(var(--dev-size) / -2 - 1px);
-      border-radius: 22%;
-      background: var(--hp-bg);
-      border: 1px solid var(--hp-line);
+      margin: calc(var(--dev-size) / -2) 0 0 calc(var(--dev-size) / -2);
+      border: 0;
+      background: transparent;
+      display: block;
+      color: var(--device-core-fg);
+      cursor: pointer;
+      pointer-events: auto;
+      transition: opacity 0.2s;
+      box-shadow: none;
+      outline: none;
+      z-index: 2;
+    }
+    .dev.theme-light {
+      --device-core-bg: #fff;
+      --device-core-fg: #252525;
+    }
+    .dev.theme-dark {
+      --device-core-bg: #252525;
+      --device-core-fg: #fff;
+    }
+    .dev::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: max(44px, var(--device-shell-size));
+      height: max(44px, var(--device-shell-size));
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      pointer-events: auto;
+    }
+    .device-shell {
+      position: absolute;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      gap: calc(var(--dev-size) * 0.1);
+      padding: var(--device-shell-pad);
+      min-width: var(--device-shell-size);
+      min-height: var(--device-shell-size);
+      border: 1px solid #BCBCBC;
+      border-radius: calc(var(--device-shell-size) / 2);
+      background: transparent;
+      box-shadow:
+        0 1px 2px rgb(37 40 45 / 12%),
+        0 4px 8px -1.07px rgb(37 40 45 / 18%);
+      transition: border-color .15s, box-shadow .15s, opacity .2s;
+      pointer-events: none;
+      /* Normative production fallback: never add a per-marker backdrop blur. */
+      backdrop-filter: none;
+    }
+    .device-shell:not(.with-values) {
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .device-shell.with-values.pos-right {
+      left: calc(50% - var(--device-shell-size) / 2);
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    .device-shell.with-values.pos-left {
+      right: calc(50% - var(--device-shell-size) / 2);
+      top: 50%;
+      transform: translateY(-50%);
+      flex-direction: row-reverse;
+    }
+    .device-shell.with-values.pos-bottom {
+      left: 50%;
+      top: calc(50% - var(--device-shell-size) / 2);
+      transform: translateX(-50%);
+      flex-direction: column;
+    }
+    .device-shell.with-values.pos-top {
+      left: 50%;
+      bottom: calc(50% - var(--device-shell-size) / 2);
+      transform: translateX(-50%);
+      flex-direction: column-reverse;
+    }
+    .device-core {
+      position: relative;
+      z-index: 1;
+      box-sizing: border-box;
+      flex: 0 0 auto;
+      width: var(--dev-size);
+      height: var(--dev-size);
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--hp-txt);
-      cursor: pointer;
-      pointer-events: auto;
-      transition: background 0.15s, border-color 0.15s, opacity 0.2s;
-      box-shadow: var(--shadow-1);
-      z-index: 2;
+      border-radius: 28%;
+      background: var(--device-core-bg);
+      color: var(--device-core-fg);
+      line-height: 0;
+      transition: background .15s, color .15s, opacity .2s;
+    }
+    .device-sections {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: center;
+      gap: calc(var(--dev-size) * .08);
+      min-width: 0;
+    }
+    .device-shell.pos-top .device-sections,
+    .device-shell.pos-bottom .device-sections {
+      flex-direction: row;
     }
     .dev ha-icon {
       /* from --dev-size, NOT --icon-size: the per-device size multiplier must
@@ -1899,25 +1989,38 @@ export const cardStyles = css`
     }
     .stage.mode-devices .dev { cursor: grab; }
     .stage.mode-devices .dev:active { cursor: grabbing; }
-    .dev.on {
-      background: var(--hp-on);
-      border-color: var(--hp-on);
+    .dev.on .device-core {
+      background: #F0A00C;
       color: #503c00;
     }
-    .dev.open {
+    .dev.open .device-core {
       background: var(--hp-open);
-      border-color: var(--hp-open);
+      color: #4a2800;
+    }
+    .dev.lock-locked .device-core {
+      background: var(--device-core-bg);
+      color: #000;
+    }
+    .dev.lock-unlocked .device-core {
+      background: #F0A00C;
       color: #4a2800;
     }
     /* Interaction wins ordinary state colours. Alarm keeps priority through
-       the more-specific .dev.alarm:hover rule above. */
-    .dev:hover {
-      background: var(--hp-accent);
+       the more-specific rule below. Unavailable has no visual hover. */
+    .dev:not(.unavail):hover .device-core {
+      background: #0C82F0;
       color: var(--text-primary-color, #fff);
-      z-index: 5;
+    }
+    .dev:hover,
+    .dev:focus-visible { z-index: 5; }
+    .dev:not(.unavail):hover .device-shell {
+      border-color: #0C82F0;
     }
     .dev.unavail {
       opacity: 0.35;
+    }
+    .dev.unavail .device-core {
+      background: #B5BAC1;
     }
     .physical-hit {
       fill: transparent;
@@ -1971,7 +2074,7 @@ export const cardStyles = css`
     .drawwall.invalid .rangehint { color: var(--error-color, #db4437); opacity: 1; }
     .stage.markup.tool-partition,
     .stage.markup.tool-column { cursor: crosshair; }
-    .dev.virtual {
+    .dev.virtual .device-shell {
       border-style: dashed;
     }
     /* "hide from plan" flag, shown only in the device editor with the
@@ -1981,18 +2084,28 @@ export const cardStyles = css`
        (owner's request). */
     .dev.ghost {
       opacity: 0.6;
+      color: var(--hp-accent);
+    }
+    .dev.ghost .device-shell {
       border-style: dashed;
       border-color: var(--hp-accent);
+      box-shadow: none;
+    }
+    .dev.ghost .device-core {
       background: rgba(62, 166, 255, 0.22); /* fallback for old WebViews */
       background: color-mix(in srgb, var(--hp-accent) 30%, var(--card-background-color, #1c2530));
       color: var(--hp-accent);
-      box-shadow: none;
     }
     /* HA-disabled is not a user hide: neutral grey + a power-off badge keeps
        the two ghosts distinguishable without relying on colour alone. */
     .dev.ghost.ha-disabled {
       opacity: 0.62;
+      color: var(--secondary-text-color, #9aa0aa);
+    }
+    .dev.ghost.ha-disabled .device-shell {
       border-color: var(--secondary-text-color, #9aa0aa);
+    }
+    .dev.ghost.ha-disabled .device-core {
       background: rgba(120, 124, 134, 0.2);
       background: color-mix(in srgb, var(--secondary-text-color, #9aa0aa) 24%, var(--card-background-color, #1c2530));
       color: var(--secondary-text-color, #9aa0aa);
@@ -2030,74 +2143,74 @@ export const cardStyles = css`
       background: color-mix(in srgb, var(--secondary-text-color, #9aa0aa) 10%, transparent);
     }
     .habindingbanner.limited > ha-icon { color: var(--secondary-text-color, #9aa0aa); }
-    .dev.sel {
-      border-color: #ffc14d;
-      box-shadow: 0 0 0 3px rgba(255, 193, 77, 0.35);
+    .dev.sel .device-shell {
+      border-color: #0C82F0;
+      box-shadow:
+        0 0 0 2px var(--card-background-color, #fff),
+        0 0 0 4px rgb(12 130 240 / 65%),
+        0 4px 8px -1.07px rgb(37 40 45 / 18%);
+    }
+    .dev:focus-visible .device-shell {
+      border-color: #0C82F0;
+      box-shadow:
+        0 0 0 3px rgb(12 130 240 / 42%),
+        0 0 0 6px rgb(12 130 240 / 18%),
+        0 4px 8px -1.07px rgb(37 40 45 / 18%);
+    }
+    /* Alert stays above focus, selection, hover and ordinary semantic paint. */
+    .dev.alarm .device-core,
+    .dev.alarm:hover .device-core,
+    .dev.alarm:focus-visible .device-core {
+      background: #F0410C;
+      color: #fff;
+    }
+    .dev.alarm .device-shell,
+    .dev.alarm:hover .device-shell,
+    .dev.alarm:focus-visible .device-shell {
+      border-color: #F0410C;
+      box-shadow: 0 0 0 3px rgb(240 65 12 / 24%),
+        0 4px 8px -1.07px rgb(37 40 45 / 18%);
     }
 
     .dev .value-badge {
-      position: absolute;
+      position: relative;
       z-index: 2;
       box-sizing: border-box;
-      max-width: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 4);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      background: var(--card-background-color, var(--hp-bg));
-      border: 1px solid var(--hp-accent, #ff9800);
+      width: max-content;
+      min-width: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * .7875);
+      height: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * .7875);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: visible;
+      background: var(--device-core-bg);
+      border: 0;
       border-radius: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.18);
       padding: 0 calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.14);
-      font-size: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.45);
-      font-weight: 700;
-      line-height: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.68);
-      color: var(--hp-txt);
+      font-size: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * var(--value-font-scale, .45));
+      font-weight: 600;
+      line-height: 1;
+      color: var(--device-core-fg);
       white-space: nowrap;
       pointer-events: none;
     }
-    .dev .value-badge.tone-humidity { border-color: #4fc3f7; }
     .dev .value-badge.unavailable,
     .dev .value-badge.missing { opacity: 0.66; }
-    .dev .value-badge.pos-right {
-      left: 100%;
-      top: 50%;
-      transform: translateY(-50%);
-      margin-left: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.1);
-    }
-    .dev .value-badge.legacy-secondary.pos-right {
-      top: calc(50% + var(--dev-size, var(--icon-size, 2.5cqw)) * 0.78);
-    }
-    .dev .value-badge.pos-left {
-      right: 100%;
-      top: 50%;
-      transform: translateY(-50%);
-      margin-right: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.1);
-    }
-    .dev .value-badge.pos-top {
-      left: 50%;
-      bottom: 100%;
-      transform: translateX(-50%);
-      margin-bottom: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.1);
-    }
-    .dev .value-badge.pos-bottom {
-      left: 50%;
-      top: 100%;
-      transform: translateX(-50%);
-      margin-top: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.1);
-    }
     .dev .lqi {
       position: absolute;
-      top: 100%;
+      top: calc(50% + var(--device-shell-size) / 2 + var(--dev-size) * .05);
       left: 50%;
       transform: translateX(-50%);
       margin-top: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.05);
       font-size: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.38);
-      font-weight: 700;
+      font-weight: 600;
       line-height: 1;
       text-shadow: 0 0 3px rgba(0, 0, 0, 0.9), 0 0 2px rgba(0, 0, 0, 0.9);
       white-space: nowrap;
       pointer-events: none;
     }
     .dev .lqi.below-value-badge {
-      margin-top: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.88);
+      margin-top: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.8875);
     }
     .editbar {
       display: grid;

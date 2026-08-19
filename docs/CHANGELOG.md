@@ -2,6 +2,15 @@
 
 ## v1.65.0-beta.5 — 2026-08-19
 
+- Device markers now use the designer-supplied shared shell/core system in
+  light and dark themes, with distinct focus, selected, locked, unlocked,
+  active, alarm, virtual and unavailable states. Text and adjacent values live
+  in one shell and are no longer ellipsized; marker LQI uses red at 0–40,
+  amber at 41–179 and green at 180+. Activity motion follows the new package
+  timings and colors, while saved custom pulse settings remain authoritative.
+  Interactive markers also have a 44×44 px target and reuse their existing
+  click/confirmation path from Enter or Space
+  ([#179](https://github.com/Matysh/houseplan-card/issues/179)).
 - The new-space dialog now shows the defaults it will actually save: image
   spaces start with borders and names off, while switching to a hand-drawn
   plan visibly turns both on. After either switch is edited, changing the plan

@@ -234,7 +234,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 31);
+  assert.equal(GOLDEN_MATRIX_VERSION, 32);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -308,6 +308,32 @@ test('value badge golden covers four positions and bottom badge with separate LQ
     fixture.config.markers.find((marker) => marker.id === 'golden-climate').value_badge.position,
     'bottom',
   );
+});
+
+test('device icon state-table goldens cover both themes and design facets', () => {
+  const scenarios = GOLDEN_SCENARIOS.filter((item) => item.id.startsWith('device-icon-state-table-'));
+  assert.deepEqual(new Set(scenarios.map((scenario) => scenario.theme)), new Set(['light', 'dark']));
+  for (const scenario of scenarios) {
+    assert.equal(scenario.focusDevice, 'golden-climate');
+    assert.equal(scenario.hoverDevice, 'golden-presence');
+    assert.equal(scenario.hideHoverTooltip, true);
+    assert.deepEqual(scenario.deviceClassOverrides['golden-climate'], ['alarm', 'sel']);
+    assert.deepEqual(scenario.deviceClassOverrides['golden-presence'], ['virtual']);
+    assert.deepEqual(scenario.deviceClassOverrides['golden-light-two'], ['lock-locked']);
+    assert.deepEqual(scenario.deviceClassOverrides['golden-light-three'], ['lock-unlocked']);
+    const fixture = prepareGoldenFixture(scenario);
+    assert.equal(fixture.states['light.golden_light_one'].attributes.lqi, 40);
+    assert.equal(fixture.states['light.golden_light_two'].attributes.lqi, 41);
+    assert.equal(fixture.states['light.golden_light_three'].attributes.lqi, 180);
+    assert.equal(
+      fixture.config.markers.find((marker) => marker.id === 'golden-left-temperature').display,
+      'value',
+    );
+    assert.equal(
+      fixture.config.markers.find((marker) => marker.id === 'golden-right-temperature').display,
+      'static_icon',
+    );
+  }
 });
 
 test('opening placement golden requires browser-painted preview pixels', () => {

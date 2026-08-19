@@ -196,7 +196,7 @@ import {
   type DeviceActivity, type DeviceVisualState, type EntityVisualSample,
 } from './device-visual';
 import {
-  activitySourceSignature, presentationClasses, resolveDevicePresentation,
+  activitySourceSignature, deviceA11yState, presentationClasses, resolveDevicePresentation,
   resolvePresentationSources, type ResolvedDevicePresentation,
 } from './device-presentation';
 import {
@@ -211,7 +211,7 @@ import {
   createRenderDeviceSnapshot, presentationSnapshotKey, renderDeviceSnapshotPositions,
   type RenderDeviceSnapshot,
 } from './render-device-snapshot';
-import { deviceFaceStyle, renderDeviceFace } from './device-face';
+import { deviceFaceStyle, deviceThemeClass, renderDeviceFace } from './device-face';
 import {
   ModeTransitionController, viewportFromViewBox,
   type HouseplanMode, type ModeTransitionState, type ModeVisualState, type ModeViewBox,
@@ -1527,7 +1527,7 @@ class HouseplanCard extends LitElement {
     autoIcon: string;    // the icon the rules would give — picker placeholder
     display: DeviceDisplayMode;
     rippleColor: string; // '' = accent
-    rippleSize: number;  // in icon diameters
+    rippleSize: number;  // in icon diameters; package default 1.5
     size: number;        // icon size multiplier
     angle: number;       // icon rotation, degrees
     /** UI projection. A legacy persisted `cover` is shown as `toggle`. */
@@ -4528,7 +4528,7 @@ class HouseplanCard extends LitElement {
     else this._infoCard = d;
   }
 
-  private _clickDevice(ev: MouseEvent, d: DevItem): void {
+  private _clickDevice(ev: Event, d: DevItem): void {
     ev.stopPropagation();
     if (this._drag?.moved || this._suppressClick || this._holdFired) return;
     if (this._mode === 'plan') return;
@@ -4642,6 +4642,13 @@ class HouseplanCard extends LitElement {
       return;
     }
     this._infoCard = actionDevice;
+  }
+
+  private _keyDevice(ev: KeyboardEvent, d: DevItem): void {
+    if (ev.key !== 'Enter' && ev.key !== ' ') return;
+    if (this._mode !== 'view' && this._mode !== 'devices') return;
+    ev.preventDefault();
+    this._clickDevice(ev, d);
   }
 
   /** Translate a key in the card's current language. */
@@ -12446,7 +12453,7 @@ class HouseplanCard extends LitElement {
         autoIcon: d.icon || '',
         display: normalizeDeviceDisplay(d.marker?.display),
         rippleColor: safeStoredColor(d.marker?.ripple_color, ''),
-        rippleSize: Number(d.marker?.ripple_size) > 0 ? Number(d.marker!.ripple_size) : 3,
+        rippleSize: Number(d.marker?.ripple_size) > 0 ? Number(d.marker!.ripple_size) : 1.5,
         size: Number(d.marker?.size) > 0 ? Number(d.marker!.size) : 1,
         angle: Number(d.marker?.angle) || 0,
         tapAction: projectedTapAction(d.marker?.tap_action, d.primary?.split('.')[0]),
@@ -12508,7 +12515,7 @@ class HouseplanCard extends LitElement {
       this._markerDialog = {
         name: '', binding: 'virtual', bindingMode: 'virtual', bindingOpen: false,
         showEntities: false, bindingFilter: '', icon: '', autoIcon: '',
-        display: 'badge', rippleColor: '', rippleSize: 3, size: 1, angle: 0,
+        display: 'badge', rippleColor: '', rippleSize: 1.5, size: 1, angle: 0,
         tapAction: 'info', tapActionTouched: false,
         originalHasTapAction: false, originalTapAction: undefined, tapHintAnnouncement: '',
         toggleEntity: '', toggleEntityTouched: false,
@@ -12997,7 +13004,7 @@ class HouseplanCard extends LitElement {
         icon: dlg.icon || null,
         display: dlg.display !== 'badge' ? dlg.display : null,
         ripple_color: dlg.display === 'icon_ripple' && dlg.rippleColor ? dlg.rippleColor : null,
-        ripple_size: dlg.display === 'icon_ripple' && dlg.rippleSize !== 3 ? dlg.rippleSize : null,
+        ripple_size: dlg.display === 'icon_ripple' && dlg.rippleSize !== 1.5 ? dlg.rippleSize : null,
         size: dlg.size !== 1 ? dlg.size : null,
         angle: dlg.angle ? dlg.angle : null,
         ...this._markerTapActionFields(dlg),
@@ -16740,11 +16747,20 @@ class HouseplanCard extends LitElement {
     const ghostLabel = presentation.haDisabled
       ? this._t((`marker.ha_disabled_${disabledReason}`) as any)
       : d.userHidden ? this._t('marker.hidden_ghost') : d.name;
+    const a11yState = deviceA11yState(presentation);
+    const interactive = this._mode === 'view' || this._mode === 'devices';
     const deviceAriaLabel = [
       ghostLabel,
+      !presentation.haDisabled
+        ? this._t((`marker.state_a11y_${a11yState}`) as I18nKey) : '',
       presentation.pulse.kind !== 'none'
         ? this._t((`marker.pulse_a11y_${presentation.pulse.reason}`) as I18nKey) : '',
+      presentation.valueFullText || presentation.valueText || '',
       valueBadgeTitle(presentation.valueBadge),
+      presentation.lqiText != null && presentation.lqiBand
+        ? this._t((`marker.lqi_a11y_${presentation.lqiBand}`) as I18nKey, {
+            value: presentation.lqiText,
+          }) : '',
     ].filter(Boolean).join(', ');
     const metrics = [
       d.model,
@@ -16762,10 +16778,15 @@ class HouseplanCard extends LitElement {
       data-area=${d.area || nothing}
       data-binding-status=${presentation.haDisabled ? 'ha-disabled' : d.bindingStatus?.kind || 'active'}
       data-disabled-reason=${disabledReason ? disabledReason.replace('_', '-') : nothing}
+      data-state=${a11yState}
+      data-lqi-band=${presentation.lqiText != null ? presentation.lqiBand || nothing : nothing}
+      role=${interactive ? 'button' : nothing}
+      tabindex=${interactive ? '0' : nothing}
       aria-label=${deviceAriaLabel}
-      class="dev ${presentation.classes.join(' ')} ${this._selId === d.id ? 'sel' : ''} ${d.virtual ? 'virtual' : ''} ${d.hidden ? 'ghost' : ''} ${presentation.haDisabled ? 'ha-disabled' : ''} ${presentation.valueText != null ? 'valonly' : ''}"
+      class="dev ${deviceThemeClass(this._renderPlanHass)} ${presentation.classes.join(' ')} ${this._selId === d.id ? 'sel' : ''} ${d.virtual ? 'virtual' : ''} ${d.hidden ? 'ghost' : ''} ${presentation.haDisabled ? 'ha-disabled' : ''} ${presentation.valueText != null ? 'valonly' : ''}"
       style="${st.join(';')}"
       @click=${(e: MouseEvent) => this._clickDevice(e, d)}
+      @keydown=${(e: KeyboardEvent) => this._keyDevice(e, d)}
       @contextmenu=${(e: MouseEvent) => this._ctxDevice(e, d)}
       @mousemove=${(e: MouseEvent) =>
         this._showTip(e, d.name, presentation.haDisabled ? ghostLabel : metrics)}
@@ -18445,7 +18466,7 @@ class HouseplanCard extends LitElement {
       icon: d.icon || null,
       display: d.display !== 'badge' ? d.display : null,
       ripple_color: d.display === 'icon_ripple' && d.rippleColor ? d.rippleColor : null,
-      ripple_size: d.display === 'icon_ripple' && d.rippleSize !== 3 ? d.rippleSize : null,
+      ripple_size: d.display === 'icon_ripple' && d.rippleSize !== 1.5 ? d.rippleSize : null,
       size: d.size !== 1 ? d.size : null,
       angle: d.angle || null,
       ...this._markerTapActionFields(d),
@@ -19416,7 +19437,7 @@ class HouseplanCard extends LitElement {
               </div>
               <div class="colorrow ripple-sizerow">
                 <span class="opl">${this._t('marker.ripple_size')}</span>
-                ${this._rangeInput(2, 8, 0.5, d.rippleSize, (n) => (this._markerDialog = { ...d, rippleSize: n }))}
+                ${this._rangeInput(1, 8, 0.5, d.rippleSize, (n) => (this._markerDialog = { ...d, rippleSize: n }))}
                 <span class="opv">×${d.rippleSize}</span>
               </div>
               <p class="muted" role="note">${this._t('marker.activity_alarm_note')}</p>`

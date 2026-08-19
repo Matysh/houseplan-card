@@ -3,10 +3,14 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   activitySourceSignature,
+  deviceA11yState,
+  markerLqiBand,
+  markerLqiColor,
   presentationSourceSignature,
   resolveDevicePresentation,
   resolvePresentationSources,
 } from '../test-build/device-presentation.js';
+import { lqiColor } from '../test-build/logic.js';
 import {
   resolveBindingProviders,
   resolveEntityProvider,
@@ -46,6 +50,37 @@ const options = {
   showTemperature: true,
   showSignal: true,
 };
+
+test('marker LQI is categorical without changing the room-fill gradient', () => {
+  assert.deepEqual([0, 40, 41, 179, 180].map(markerLqiBand), [
+    'low', 'low', 'mid', 'mid', 'high',
+  ]);
+  assert.deepEqual([40, 41, 179, 180].map(markerLqiColor), [
+    '#F0410C', '#F0A00C', '#F0A00C', '#1DC21D',
+  ]);
+  assert.equal(lqiColor(110), 'hsl(60, 85%, 55%)');
+});
+
+test('lock presentation distinguishes locked and unlocked without changing generic open', () => {
+  const h = hass({
+    'lock.front': state('lock.front', 'locked'),
+  }, {
+    'lock.front': { entity_id: 'lock.front', device_id: 'd1', platform: 'demo' },
+  });
+  const lock = device({
+    icon: 'mdi:lock', entities: ['lock.front'], primary: 'lock.front',
+  });
+  const locked = resolveDevicePresentation(h, lock, options);
+  assert.equal(locked.lockState, 'locked');
+  assert.ok(locked.classes.includes('lock-locked'));
+  assert.equal(deviceA11yState(locked), 'locked');
+
+  h.states['lock.front'].state = 'unlocked';
+  const unlocked = resolveDevicePresentation(h, lock, options);
+  assert.equal(unlocked.lockState, 'unlocked');
+  assert.ok(unlocked.classes.includes('lock-unlocked'));
+  assert.equal(deviceA11yState(unlocked), 'unlocked');
+});
 
 test('shares one lifecycle presentation between full and space cards', () => {
   const h = hass({

@@ -174,7 +174,7 @@ const out = await page.evaluate(async () => {
   o.onlyTheCoverOnThePlan = sr().querySelectorAll('.dev').length === 1;
   o.pulseWhileOpening = sr().querySelectorAll('.dev.activity-transition').length === 1;
   const a1 = afterAnim();
-  o.pulseIsBreathingRing = a1?.name === 'hp-pulse-continuous' && a1?.dur === '2.4s';
+  o.pulseUsesPackageContinuousRing = a1?.name === 'hp-pulse-continuous' && a1?.dur === '3.6s';
   // the plate stays NEUTRAL while travelling: yellow is reserved for «включено»
   o.movingPlateNotYellow = getComputedStyle(devEl()).backgroundColor !== YELLOW;
 

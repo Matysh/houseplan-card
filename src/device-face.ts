@@ -18,6 +18,13 @@ export interface LegacySupplementalMetric {
   suffix: string;
 }
 
+/** HA theme state is authoritative when available; CSS color-scheme remains the fallback. */
+export function deviceThemeClass(hass: any): string {
+  return typeof hass?.themes?.darkMode === 'boolean'
+    ? hass.themes.darkMode ? 'theme-dark' : 'theme-light'
+    : '';
+}
+
 /**
  * Issue #90 replaced the automatic temperature/humidity satellites with one
  * configurable value badge. Untouched legacy markers, however, could show
@@ -62,6 +69,16 @@ export function lqiClassName(badge: ResolvedValueBadge | null | undefined): stri
   return `lqi${badge?.position === 'bottom' ? ' below-value-badge' : ''}`;
 }
 
+/** Deterministic fit without DOM measurement or a per-marker ResizeObserver. */
+export function deviceTextScale(text: string): number {
+  const units = [...String(text)].reduce((sum, char) => {
+    if (/\s/.test(char)) return sum + 0.35;
+    return sum + (char.codePointAt(0)! > 0xff ? 1 : 0.62);
+  }, 0);
+  if (units <= 8) return 0.45;
+  return Math.max(0.25, Math.round((0.45 * 8 / units) * 1000) / 1000);
+}
+
 /**
  * Render only the face contents. The owning surface keeps coordinates,
  * pointer handlers, tooltip and selection semantics; this fragment is shared.
@@ -73,6 +90,15 @@ export function renderDeviceFace(
   const pulse = presentation.pulse;
   const gen2 = pulse.generation % 2 === 0;
   const legacyMetrics = legacySupplementalMetrics(presentation);
+  const badge = presentation.valueBadge;
+  const shellPosition = badge?.position || 'right';
+  const hasSections = !!badge || legacyMetrics.length > 0;
+  const shellClasses = [
+    'device-shell',
+    presentation.valueText != null ? 'text-shell' : '',
+    hasSections ? `with-values pos-${shellPosition}` : '',
+    legacyMetrics.length ? 'with-legacy' : '',
+  ].filter(Boolean).join(' ');
   return html`
     ${pulse.kind !== 'none' && pulse.reducedMotionIndicator !== 'dot'
       ? html`<span class="device-pulse activity-ring ${pulse.kind} ${pulse.reason} reason-${pulse.reason} ${gen2 ? 'gen2' : ''}"
@@ -87,25 +113,32 @@ export function renderDeviceFace(
     ${presentation.haDisabled
       ? html`<span class="habadge" title=${options.disabledTitle || ''} aria-hidden="true"><ha-icon icon="mdi:power-plug-off-outline"></ha-icon></span>`
       : nothing}
-    ${presentation.valueText != null
-      ? html`<span class="valtext" title=${presentation.valueFullText || presentation.valueText}
-          aria-label=${presentation.valueFullText || presentation.valueText}>${presentation.valueText}</span>`
-      : html`<ha-icon icon=${presentation.icon}
-          style=${presentation.angle ? `transform:rotate(${presentation.angle}deg)` : nothing}></ha-icon>`}
-    ${presentation.valueBadge
-      ? html`<span
-          class=${valueBadgeClassName(presentation.valueBadge)}
-          title=${valueBadgeTitle(presentation.valueBadge)}
-          aria-hidden="true"
-        >${presentation.valueBadge.text}</span>`
-      : nothing}
-    ${legacyMetrics.map((metric) => html`<span
-      class="value-badge legacy-secondary pos-right available tone-${metric.kind}"
-      title=${metric.text + metric.suffix}
-      aria-hidden="true"
-    >${metric.text}${metric.suffix}</span>`)}
+    <span class=${shellClasses} aria-hidden="true">
+      <span class="device-core">
+        ${presentation.valueText != null
+          ? html`<span class="valtext" title=${presentation.valueFullText || presentation.valueText}
+              style=${`--value-font-scale:${deviceTextScale(presentation.valueFullText || presentation.valueText)}`}
+            >${presentation.valueText}</span>`
+          : html`<ha-icon icon=${presentation.icon}
+              style=${presentation.angle ? `transform:rotate(${presentation.angle}deg)` : nothing}></ha-icon>`}
+      </span>
+      ${hasSections ? html`<span class="device-sections">
+        ${badge
+          ? html`<span
+              class=${valueBadgeClassName(badge)}
+              title=${valueBadgeTitle(badge)}
+              style=${`--value-font-scale:${deviceTextScale(badge.fullText || badge.text)}`}
+            >${badge.text}</span>`
+          : nothing}
+        ${legacyMetrics.map((metric) => html`<span
+          class="value-badge legacy-secondary available tone-${metric.kind}"
+          title=${metric.text + metric.suffix}
+          style=${`--value-font-scale:${deviceTextScale(metric.text + metric.suffix)}`}
+        >${metric.text}${metric.suffix}</span>`)}
+      </span>` : nothing}
+    </span>
     ${presentation.lqiText != null
-      ? html`<span class=${lqiClassName(presentation.valueBadge)}
+      ? html`<span class="${lqiClassName(presentation.valueBadge)}${presentation.lqiBand ? ` band-${presentation.lqiBand}` : ''}"
           style=${presentation.lqiColor ? `color:${presentation.lqiColor}` : nothing}>${presentation.lqiText}</span>`
       : nothing}
   `;

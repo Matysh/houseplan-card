@@ -235,31 +235,42 @@ Per-marker appearance: `display: badge|icon_ripple|value|static_icon`. Entity se
 projection (sources, value, icon, classes, metrics and explanation),
 `src/device-pulse.ts` is the single pure projection from semantic activity to
 `none|alarm|short|continuous`, and
-`src/device-face.ts` renders that projection on the full plan, device preview and static
-space card. `badge`
-shows the icon/morph and status plate; `icon_ripple` additionally shows three finite
+`src/device-face.ts` renders one package-derived shell/core DOM on the full plan,
+device preview and static space card. The saved coordinate remains the icon-core
+centre; Text is shell-centred, while a Double shell extends around the anchored
+core. The 101.5/80 shell/core ratio, Light/Dark context, full-text fitting and
+44×44 interactive hit area are renderer facts rather than surface-specific DOM.
+`badge` shows the icon/morph and semantic core; `icon_ripple` additionally shows three finite
 event waves or one continuous wave for presence, mechanical transition and actual work;
 `value` replaces the icon
 with the HA-formatted numeric or text value. Ambiguous/missing/unavailable sources fall
 back to the icon instead of selecting an arbitrary registry row. A critical alarm is red
 in every dynamic presentation. `static_icon` deliberately keeps the configured/automatic
-base icon on one neutral dark plate: state morphing, work/open/alarm/unavailable paint,
+base icon on one neutral theme-aware core: state morphing, work/open/alarm/unavailable paint,
 activity, RGB, value, temperature/humidity/LQI badges and live vacuum overlays are all
 suppressed. Hover/focus, taps, controls and light aggregation keep their normal behaviour.
-An optional `marker.value_badge` adds one independent boxed state/attribute,
-derived LQI or canonical `marker:<id>` light state at right/bottom/left/top.
+An optional `marker.value_badge` adds a state/attribute, derived LQI or canonical
+`marker:<id>` light-state section at right/bottom/left/top inside that shell.
 Explicit settings override the global legacy temperature gate; explicit off
 suppresses legacy output. Bottom badges stack above system LQI, and a derived
 LQI badge de-duplicates that system row. `hp-device-preview` fits and centres
 the complete face bounding box rather than allowing satellites to clip.
 `normalizeDeviceDisplay()` is the mandatory compatibility gate for every consumer and maps
-legacy `ripple` to `icon_ripple`. The marker dialog builds its unsaved draft through `buildDevices`,
+legacy `ripple` to `icon_ripple`. `markerLqiBand()` / `markerLqiColor()` are
+deliberately marker-only (`<=40` red, `41…179` amber, `>=180` green); room fill
+keeps the continuous `logic.ts::lqiColor()` gradient. The marker dialog builds
+its unsaved draft through `buildDevices`,
 then `hp-device-preview` shows the actual projection, integration provenance from
 registry/config-entry metadata and isolated short/continuous activity demonstrations.
 Runtime baselines are seeded as soon as a rebuilt registry becomes authoritative, before
 the next HA snapshot is classified; source-key changes reset any finite effect immediately.
 The backend accepts legacy `display: ripple` only for compatibility. `ripple_color` and `ripple_size` remain the
 stored names used by every unified pulse kind (alarm keeps its safety-red colour).
+Absent pulse size resolves to 1.5; explicit persisted color/size wins, followed
+by live RGB and the presence-green/work-amber/transition-blue fallback.
+Continuous/short/alarm durations are 3.6/3.3/2.4 seconds. Enter/Space on an
+interactive marker calls the same `_clickDevice()` path as pointer activation,
+so secure confirmation and Device-editor routing cannot drift.
 `size` (icon multiplier via the
 `--dev-size` CSS var — value badges scale along) and `angle` rotate/scale a single icon.
 Room drawing shows a live **ruler** (`segmentCm` +

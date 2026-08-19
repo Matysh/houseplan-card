@@ -515,6 +515,52 @@ export const MUTANTS = [
       replace: '        resumed = False',
     }],
   },
+  {
+    id: 'device-unavailable-hover-restored',
+    guard: 'node demo/smoke_device_icon_design.mjs',
+    because: 'unavailable keeps click/keyboard access but must never regain the blue visual hover '
+      + 'which makes an offline device look live',
+    patches: [{
+      file: 'src/styles.ts',
+      find: '.dev:not(.unavail):hover .device-core {',
+      replace: '.dev:hover .device-core {',
+    }],
+  },
+  {
+    id: 'device-marker-lqi-low-boundary-shifted',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="marker LQI is categorical" '
+      + 'test/device-presentation.test.mjs',
+    because: 'marker LQI must keep the owner-approved inclusive <=40 red boundary without '
+      + 'changing the separate room-fill gradient',
+    patches: [{
+      file: 'src/device-presentation.ts',
+      find: '  if (lqi <= 40) return \'low\';',
+      replace: '  if (lqi < 40) return \'low\';',
+    }],
+  },
+  {
+    id: 'device-long-value-ellipsis-restored',
+    guard: 'node demo/smoke_device_icon_design.mjs',
+    because: 'Text and Double must expose the complete dynamic value; the new shared shell '
+      + 'must not regress to the old clipped satellite',
+    patches: [{
+      file: 'src/styles.ts',
+      find: '    .dev .valtext {\n      overflow: visible;',
+      replace: '    .dev .valtext {\n      overflow: hidden;\n      text-overflow: ellipsis;',
+    }],
+  },
+  {
+    id: 'device-keyboard-bypasses-click-path',
+    guard: 'node demo/smoke_device_icon_design.mjs',
+    because: 'Enter and Space must reuse the current surface click path so Device editor opens '
+      + 'settings and secure View actions keep their existing confirmation policy',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    this._clickDevice(ev, d);',
+      replace: '    if (d.primary) this._openMoreInfo(d.primary);',
+    }],
+  },
 ];
 
 // --- механика ---------------------------------------------------------------

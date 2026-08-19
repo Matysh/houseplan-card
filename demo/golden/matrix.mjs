@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 31;
+export const GOLDEN_MATRIX_VERSION = 32;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -197,6 +197,57 @@ export const GOLDEN_SCENARIOS = Object.freeze([
       'golden-climate': { s: 'golden-lighting', x: 0.80, y: 0.28 },
     },
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  ...['light', 'dark'].map((theme) => ({
+    id: `device-icon-state-table-${theme}`, fixture: 'visual', space: 'golden-lighting', mode: 'view',
+    glowEnabled: false, sunRays: false,
+    markerOverrides: [
+      { id: 'golden-light-one', binding: 'device:golden-light-one' },
+      { id: 'golden-light-two', binding: 'device:golden-light-two' },
+      { id: 'golden-light-three', binding: 'device:golden-light-three' },
+      { id: 'golden-presence', binding: 'device:golden-presence' },
+      { id: 'golden-climate', binding: 'device:golden-climate' },
+      { id: 'golden-left-temperature', binding: 'device:golden-left-temperature', display: 'value' },
+      { id: 'golden-right-temperature', binding: 'device:golden-right-temperature', display: 'static_icon' },
+      { id: 'golden-left-linkquality', binding: 'device:golden-left-linkquality', value_badge: {
+        enabled: true,
+        source: { kind: 'entity_state', entity_id: 'sensor.golden_left_linkquality' },
+        position: 'right',
+      } },
+      { id: 'golden-right-linkquality', binding: 'device:golden-right-linkquality', value_badge: {
+        enabled: true,
+        source: { kind: 'entity_state', entity_id: 'sensor.golden_right_linkquality' },
+        position: 'bottom',
+      } },
+    ],
+    stateOverrides: {
+      'light.golden_light_one': { attributes: { lqi: 40 } },
+      'light.golden_light_two': { attributes: { lqi: 41 } },
+      'light.golden_light_three': { attributes: { lqi: 180 } },
+      'sensor.golden_left_temperature': { state: 'Complete long localized state' },
+      'sensor.golden_right_temperature': { state: 'unavailable' },
+    },
+    layoutOverrides: {
+      'golden-light-one': { s: 'golden-lighting', x: 0.16, y: 0.25 },
+      'golden-light-two': { s: 'golden-lighting', x: 0.34, y: 0.25 },
+      'golden-light-three': { s: 'golden-lighting', x: 0.66, y: 0.25 },
+      'golden-presence': { s: 'golden-lighting', x: 0.84, y: 0.25 },
+      'golden-climate': { s: 'golden-lighting', x: 0.16, y: 0.72 },
+      'golden-left-temperature': { s: 'golden-lighting', x: 0.34, y: 0.72 },
+      'golden-right-temperature': { s: 'golden-lighting', x: 0.66, y: 0.72 },
+      'golden-left-linkquality': { s: 'golden-lighting', x: 0.77, y: 0.55 },
+      'golden-right-linkquality': { s: 'golden-lighting', x: 0.84, y: 0.72 },
+    },
+    deviceClassOverrides: {
+      'golden-light-two': ['lock-locked'],
+      'golden-light-three': ['lock-unlocked'],
+      'golden-presence': ['virtual'],
+      'golden-climate': ['alarm', 'sel'],
+    },
+    focusDevice: 'golden-climate',
+    hoverDevice: 'golden-presence',
+    hideHoverTooltip: true,
+    theme, viewport: { width: 1000, height: 900 }, ...stage,
+  })),
   { id: 'lighting-sun-window-state-only-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
     // The golden screenshot is backed by a second, sun-layer-hidden capture.
     // A real painted ray must account for enough changed pixels; DOM-only

@@ -18,10 +18,10 @@ const out = await page.evaluate(async () => {
       'static-icon', 'on', 'open', 'alarm', 'unavail', 'valonly',
       'activity-running', 'activity-event', 'activity-presence', 'activity-transition',
     ].includes(name)),
-    icon: node.querySelector(':scope > ha-icon')?.getAttribute('icon') || '',
+    icon: node.querySelector('.device-core > ha-icon')?.getAttribute('icon') || '',
     satellites: node.querySelectorAll('.tval,.hval,.lqi,.valtext').length,
     scale: node.style.getPropertyValue('--dev-scale'),
-    angle: node.querySelector(':scope > ha-icon')?.style.transform || '',
+    angle: node.querySelector('.device-core > ha-icon')?.style.transform || '',
   });
   const show = (device, states) => {
     const visibleSnapshot = card._visibleDeviceSnapshot;

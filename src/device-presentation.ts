@@ -16,14 +16,16 @@ import {
   type DeviceActivity, type DeviceVisualState, type EntityVisualSample,
 } from './device-visual';
 import {
-  hassValue, lightColorOf, lqiColor, normalizeDeviceDisplay, stateIcon, valueWithUnit,
+  hassValue, lightColorOf, normalizeDeviceDisplay, stateIcon, valueWithUnit,
   type DeviceDisplayMode,
 } from './logic';
 import { resolveToggleIntent, toggleCoverEntity } from './device-toggle';
 import type { DevItem } from './types';
 import { safeStoredColor } from './color';
 import { resolveDeviceValueBadge, type ResolvedValueBadge } from './device-value-badge';
-import { resolveDevicePulse, type ResolvedDevicePulse } from './device-pulse';
+import {
+  DEVICE_PULSE_DEFAULT_SCALE, resolveDevicePulse, type ResolvedDevicePulse,
+} from './device-pulse';
 import { isManualVirtualLightMarker } from './virtual-light-state';
 
 export type PresentationSourceKind =
@@ -35,6 +37,35 @@ export type PresentationSourceRole =
 
 export type ValueFallbackReason =
   | 'value_no_state' | 'value_ambiguous_sources' | 'value_non_scalar' | 'value_virtual';
+
+export type DeviceLockState = 'locked' | 'unlocked' | null;
+export type DeviceLqiBand = 'low' | 'mid' | 'high';
+export type DeviceA11yState =
+  | 'neutral' | 'working' | 'open' | 'locked' | 'unlocked' | 'alarm' | 'unavailable';
+
+export function markerLqiBand(lqi: number): DeviceLqiBand {
+  if (lqi <= 40) return 'low';
+  if (lqi < 180) return 'mid';
+  return 'high';
+}
+
+/** Marker numbers are categorical. Room fill deliberately keeps logic.ts's gradient. */
+export function markerLqiColor(lqi: number): string {
+  const band = markerLqiBand(lqi);
+  return band === 'low' ? '#F0410C' : band === 'mid' ? '#F0A00C' : '#1DC21D';
+}
+
+export function deviceA11yState(presentation: Pick<
+  ResolvedDevicePresentation, 'visual' | 'lockState' | 'display'
+>): DeviceA11yState {
+  if (presentation.display === 'static_icon') return 'neutral';
+  if (presentation.visual.status === 'alarm') return 'alarm';
+  if (presentation.visual.availability === 'unavailable') return 'unavailable';
+  if (presentation.lockState) return presentation.lockState;
+  if (presentation.visual.status === 'working') return 'working';
+  if (presentation.visual.status === 'open') return 'open';
+  return 'neutral';
+}
 
 export type PresentationReason =
   | 'neutral'
@@ -123,6 +154,7 @@ export interface ResolvedDevicePresentation {
   sourceSignature: string;
 
   visual: DeviceVisualState;
+  lockState: DeviceLockState;
   display: DeviceDisplayMode;
   icon: string;
   valueText: string | null;
@@ -138,6 +170,7 @@ export interface ResolvedDevicePresentation {
   valueBadge: ResolvedValueBadge | null;
   lqiText: string | null;
   lqiColor: string | null;
+  lqiBand: DeviceLqiBand | null;
   lightColor: string | null;
   scale: number;
   angle: number;
@@ -522,7 +555,7 @@ function explanationReason(
 
 export function presentationClasses(presentation: Pick<
   ResolvedDevicePresentation,
-  'visual' | 'activity' | 'display' | 'effectiveHidden' | 'activityGeneration' | 'pulse'
+  'visual' | 'lockState' | 'activity' | 'display' | 'effectiveHidden' | 'activityGeneration' | 'pulse'
 >): string[] {
   if (presentation.effectiveHidden) return [];
   if (presentation.display === 'static_icon') return ['static-icon'];
@@ -532,6 +565,7 @@ export function presentationClasses(presentation: Pick<
   else if (visual.availability === 'unavailable') classes.push('unavail');
   else if (visual.status === 'working') classes.push('on');
   else if (visual.status === 'open') classes.push('open');
+  if (presentation.lockState) classes.push(`lock-${presentation.lockState}`);
   // Keep the semantic class names as styling/debug hooks during the beta;
   // they no longer select a separate renderer or animation implementation.
   if (presentation.pulse.reason !== 'none' && presentation.pulse.reason !== 'alarm') {
@@ -563,6 +597,12 @@ export function resolveDevicePresentation(
   const userHidden = d.userHidden === true || d.marker?.hidden === true;
   const effectiveHidden = haDisabled || (userHidden && !options.designPreview);
   const combined = combineVisualSamples(sources.samples);
+  const lockSource = sources.visualSources.find((source) => source.eid.startsWith('lock.'));
+  const lockState: DeviceLockState = lockSource
+    ? ['unlocked', 'open'].includes(lockSource.state.toLowerCase())
+      ? 'unlocked'
+      : lockSource.state.toLowerCase() === 'locked' ? 'locked' : null
+    : null;
   let visual = combined;
   if (effectiveHidden) visual = { availability: 'available', status: 'neutral', activity: 'none' };
   else if (staticIcon) visual = { availability: 'available', status: 'neutral', activity: 'none' };
@@ -626,7 +666,8 @@ export function resolveDevicePresentation(
     : null;
   const scale = Number(d.marker?.size) > 0 ? Number(d.marker!.size) : 1;
   const angle = Number(d.marker?.angle) || 0;
-  const rippleScale = Number(d.marker?.ripple_size) > 0 ? Number(d.marker!.ripple_size) : 3;
+  const rippleScale = Number(d.marker?.ripple_size) > 0
+    ? Number(d.marker!.ripple_size) : DEVICE_PULSE_DEFAULT_SCALE;
   const configuredRippleColor = safeStoredColor(d.marker?.ripple_color, null);
   const rippleColor = staticIcon ? null : configuredRippleColor || lightColor || null;
   const pulse = resolveDevicePulse({
@@ -673,6 +714,7 @@ export function resolveDevicePresentation(
     valueSource: value.source,
     sourceSignature,
     visual,
+    lockState,
     display,
     icon,
     valueText,
@@ -686,7 +728,8 @@ export function resolveDevicePresentation(
     humText: hum == null ? null : String(hum),
     valueBadge,
     lqiText: lqi == null || valueBadge?.isLqi ? null : String(lqi),
-    lqiColor: lqi == null ? null : lqiColor(lqi),
+    lqiColor: lqi == null ? null : markerLqiColor(lqi),
+    lqiBand: lqi == null ? null : markerLqiBand(lqi),
     lightColor,
     scale,
     angle,
