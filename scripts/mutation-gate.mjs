@@ -41,6 +41,19 @@ import { fileURLToPath } from 'node:url';
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 export const MUTANTS = [
   {
+    id: 'atomic-child-thickness-parent-fallback',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="exact parent|atomic solid children" '
+      + 'test/wall-thickness.test.mjs test/open-spans.test.mjs',
+    because: 'closing a fully virtual stretch beside an atomised exact parent run must inherit '
+      + 'the real neighbouring thickness instead of silently writing the 15 cm default',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '  const exact = exactCoveringWall(walls, a, b, pitch, coordScale);',
+      replace: '  const exact = false ? exactCoveringWall(walls, a, b, pitch, coordScale) : null;',
+    }],
+  },
+  {
     id: 'stale-space-position-guard-removed',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="stable space ids" test/optional-space-model-contract.test.mjs',

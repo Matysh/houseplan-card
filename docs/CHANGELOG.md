@@ -2,6 +2,11 @@
 
 ## v1.65.0-beta.4 — 2026-08-19
 
+- Closing a virtual room boundary now inherits the real thickness of an
+  adjacent wall even when another room splits that saved wall into smaller
+  atomic stretches. A 20/22 cm wall therefore no longer receives an accidental
+  15 cm step, while partial thickness spans remain isolated
+  ([#201](https://github.com/Matysh/houseplan-card/issues/201)).
 - Room labels in the Plan editor now keep the same name, Home Assistant Area
   icon and state-row geometry as View, so switching modes no longer shifts a
   carefully positioned label. The icon still opens the Area only in View; in

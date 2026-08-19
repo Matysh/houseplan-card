@@ -215,7 +215,52 @@ export function thicknessCmAt(
   coordScale = 1,
 ): number {
   const e = lookupWall(walls, a, b, pitch, coordScale);
-  return e && e.cm > 0 ? clampWallCm(e.cm) : 0;
+  if (e && e.cm > 0) return clampWallCm(e.cm);
+  const exact = exactCoveringWall(walls, a, b, pitch, coordScale);
+  return exact ? clampWallCm(exact.cm) : 0;
+}
+
+/**
+ * Lossless parent-run fallback for an atomic child query.
+ *
+ * `lookupWall` intentionally keeps the narrow "one key = one stretch"
+ * contract (AUD-159B6-01).  Closing a virtual span, however, asks about the
+ * atomic solid children around it while persisted exact endpoints may describe
+ * their longer parent run.  Exact endpoints can prove containment without
+ * broadening the ambiguous legacy key-only fallback.
+ */
+function exactCoveringWall(
+  walls: WallEntry[] | null | undefined,
+  a: number[], b: number[],
+  pitch: number,
+  coordScale: number,
+): WallEntry | null {
+  if (!walls?.length) return null;
+  const scale = coordScale > 0 ? coordScale : 1;
+  const queryLen = Math.hypot(b[0] - a[0], b[1] - a[1]);
+  if (queryLen < 1e-12) return null;
+  const queryAngle = segAngle(a, b);
+  const tol = Math.max(pitch * 0.5, 1e-9) * scale;
+  let best: { wall: WallEntry; extra: number; stable: string } | null = null;
+  for (const wall of walls) {
+    if (!(wall.cm > 0)) continue;
+    const span = entrySpan(wall, scale);
+    if (!span) continue;
+    const spanLen = Math.hypot(span[1][0] - span[0][0], span[1][1] - span[0][1]);
+    if (spanLen < 1e-12 || !angleClose(segAngle(span[0], span[1]), queryAngle)) continue;
+    if (distToSeg(a[0], a[1], span[0][0], span[0][1], span[1][0], span[1][1]) > tol
+        || distToSeg(b[0], b[1], span[0][0], span[0][1], span[1][0], span[1][1]) > tol) continue;
+    // A shorter span may sit within endpoint tolerance but cannot prove that
+    // it covers the query.  Keep that tolerance scale-relative, like lookup.
+    if (spanLen + tol < queryLen) continue;
+    const extra = Math.max(0, spanLen - queryLen);
+    const stable = `${wall.key}|${clampWallCm(wall.cm)}|${span.flat().join(',')}`;
+    if (!best || extra < best.extra - 1e-12
+        || (Math.abs(extra - best.extra) <= 1e-12 && stable < best.stable)) {
+      best = { wall, extra, stable };
+    }
+  }
+  return best?.wall || null;
 }
 
 /**

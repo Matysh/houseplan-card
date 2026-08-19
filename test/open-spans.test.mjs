@@ -95,6 +95,16 @@ describe('open-spans', () => {
     assert.equal(def, DRAW_WALL_DEFAULT_CM);
   });
 
+  it('thicknessOnClose inherits an exact parent run through atomic solid children', () => {
+    const walls = setWallThickness([], [5, 0], [5, 10], 22, pitch);
+    const cm = thicknessOnClose(
+      walls, [5, 4, 5, 6],
+      [[5, 0, 5, 4], [5, 6, 5, 10]],
+      pitch, 1, DRAW_WALL_DEFAULT_CM,
+    );
+    assert.equal(cm, 22);
+  });
+
   it('purgeOpeningsOnSpan removes openings on the stretch', () => {
     const openings = [
       { id: '1', x: 0.005, y: 0.002, angle: 90 }, // on x=5 if scale=1000 → wait normalised

@@ -2217,6 +2217,14 @@ require hands on real hardware — they remain for the human pass.
       across a Split boundary: spans owned by different room pairs must stay separate
       [auto: test/open-spans.test.mjs + test/wall-thickness.test.mjs +
       smoke_resize_virtual_thick]
+- [ ] **Atomic child inherits its exact parent on Close (#201)**: let a third
+      room split a non-default exact wall run into atomic solid children, then
+      close a fully virtual collinear neighbour. Preview and persisted masonry
+      inherit the nearest parent's real thickness instead of the 15 cm draw
+      default; Undo restores the virtual span. A partial exact span never leaks
+      onto a longer query, and scale/direction/row order do not change the
+      resolver [auto: test/wall-thickness.test.mjs + test/open-spans.test.mjs +
+      smoke_resize_virtual_thick + mutation-gate].
 - [ ] **Unit + backend**: inset/mitre/bevel, key from either end, degrade,
       rekey, cm↔inches; `walls` schema bounds
       [auto: test/wall-thickness.test.mjs + tests_backend/test_validation.py]

@@ -195,6 +195,40 @@ const res = await page.evaluate(async () => {
   out.virtualTJunctionMitred = values.some((x, i) => i % 2 === 0
     && Math.abs(x - (500 + half)) < 1e-6
     && Math.abs(values[i + 1] - (500 - half)) < 1e-6);
+
+  // #201: a fully virtual stretch has no own cm to restore.  Its nearest
+  // solid continuation is one exact 22 cm parent run, atomised at x=600 by a
+  // third room.  Close must read the parent through either child instead of
+  // falling back to the 15 cm draw default.
+  sp().rooms = [
+    { id: 'parent', name: 'Parent', poly: [[0.1, 0.1], [0.9, 0.1], [0.9, 0.5], [0.1, 0.5]], open_to: ['left'] },
+    { id: 'left', name: 'Left', poly: [[0.1, 0.5], [0.3, 0.5], [0.3, 0.9], [0.1, 0.9]], open_to: ['parent'] },
+    { id: 'middle', name: 'Middle', poly: [[0.3, 0.5], [0.6, 0.5], [0.6, 0.9], [0.3, 0.9]] },
+    { id: 'right', name: 'Right', poly: [[0.6, 0.5], [0.9, 0.5], [0.9, 0.9], [0.6, 0.9]] },
+  ];
+  sp().walls = [{
+    key: '0.600000,0.500000@0.0000', cm: 22,
+    a: [0.3, 0.5], b: [0.9, 0.5],
+  }];
+  sp().open_spans = [{ a: [0.1, 0.5], b: [0.3, 0.5] }];
+  delete sp().openings;
+  c._tool = 'boundary';
+  await upd();
+  const atomicParentBefore = JSON.stringify({
+    rooms: sp().rooms, walls: sp().walls, open_spans: sp().open_spans,
+  });
+  const atomicParentCut = c._openCuts()[0];
+  const atomicParentPlan = atomicParentCut && c._planClosedOpenSpan(atomicParentCut);
+  out.atomicParentClosePreviewInherits = atomicParentPlan?.cm === 22;
+  if (atomicParentCut) c._closeOpenSpan(atomicParentCut);
+  await upd();
+  out.atomicParentClosePersistsNeighbourCm = !sp().open_spans
+    && c._intervalCm([100, 500, 300, 500]) === 22;
+  c._undoGeometry();
+  await upd();
+  out.atomicParentCloseUndo = JSON.stringify({
+    rooms: sp().rooms, walls: sp().walls, open_spans: sp().open_spans,
+  }) === atomicParentBefore;
   return out;
 });
 

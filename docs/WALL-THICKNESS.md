@@ -185,7 +185,8 @@ atomic rekey after edge/scale; corner Split exterior equality across
 production-scale `0 ↔ 10`, `10 ↔ 20` and `1 ↔ 100` collinear transitions at
 their exact endpoint; full 8-room/25-wall/3-cut virtual-junction resilience,
 ULP-equivalent patch vertices, per-patch failure isolation and record-order
-invariance (#197).
+invariance (#197); exact parent-run thickness inherited by atomic children when
+closing a virtual neighbour, without partial-span leakage (#201).
 Browser: seamless frame; fill not in hatch; m² drops with thickness; a partial
 virtual stretch, its solid thick remainders and Undo move as one real resize;
 the virtual rubber band paints above the real body; sun starts at the room-side

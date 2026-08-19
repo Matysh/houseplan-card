@@ -146,6 +146,35 @@ test('lookupWall finds an entry and thicknessCmAt reads it', () => {
   assert.equal(thicknessCmAt(walls, [0, 0], [1, 1], pitch), 0);
 });
 
+test('thicknessCmAt inherits the narrowest exact parent that covers an atomic child', () => {
+  const parent = setWallThickness([], [0, 0], [10, 0], 20, pitch);
+  assert.equal(thicknessCmAt(parent, [0, 0], [4, 0], pitch), 20);
+  assert.equal(thicknessCmAt(parent, [10, 0], [4, 0], pitch), 20);
+
+  const production = setWallThickness([], [0, 0], [10000, 0], 20, pitch, 1000);
+  assert.equal(thicknessCmAt(production, [0, 0], [4000, 0], pitch, 1000), 20);
+  assert.equal(thicknessCmAt(production, [10000, 0], [4000, 0], pitch, 1000), 20);
+
+  const nested = [
+    ...parent,
+    ...setWallThickness([], [4, 0], [6, 0], 30, pitch),
+  ];
+  for (const walls of [nested, [...nested].reverse()]) {
+    assert.equal(thicknessCmAt(walls, [4, 0], [5, 0], pitch), 30);
+  }
+});
+
+test('thicknessCmAt exact-parent fallback does not leak from partial or unrelated spans', () => {
+  const partial = setWallThickness([], [0, 0], [4, 0], 20, pitch);
+  assert.equal(thicknessCmAt(partial, [0, 0], [10, 0], pitch), 0);
+  assert.equal(thicknessCmAt(partial, [0, 1], [4, 1], pitch), 0);
+  assert.equal(thicknessCmAt(partial, [0, 0], [0, 4], pitch), 0);
+  assert.equal(thicknessCmAt([
+    { key: wallKey([0, 0], [4, 0], pitch), cm: 20, a: ['bad', 0], b: [4, 0] },
+    { key: 'broken', cm: 20, a: [0, 0], b: [0, 0] },
+  ], [0, 0], [2, 0], pitch), 0);
+});
+
 // ------------------------------- units --------------------------------------
 
 test('cm ↔ field: metric stays cm, imperial is inches', () => {
