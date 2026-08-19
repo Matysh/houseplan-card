@@ -132,9 +132,17 @@ jobs:
       - name: Install candidate and baseline dependencies
         run: npm ci --prefix candidate && npm ci --prefix baseline
 
+      # То же, что в validate.yml: кэш браузеров, apt не трогаем (#206).
+      - name: Кэш браузеров Playwright
+        id: pw
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('candidate/package-lock.json') }}
       - name: Install pinned Chromium
+        if: steps.pw.outputs.cache-hit != 'true'
         working-directory: candidate
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       - name: Build both exact source trees
         run: |

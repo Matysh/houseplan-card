@@ -169,8 +169,20 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Install Chromium for Playwright
-        run: npx playwright install --with-deps chromium
+      # Браузеры кэшируются, а apt не запускается вовсе: на GitHub-раннере
+      # системные библиотеки Chromium уже в образе, а --with-deps тратил минуты
+      # и подолгу перебирал недоступное azure-зеркало (#175, #206). Если
+      # библиотека когда-нибудь исчезнет из образа, Chromium не запустится с
+      # внятной ошибкой — тогда флаг вернуть.
+      - name: Кэш браузеров Playwright
+        id: pw
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - name: Install pinned Chromium
+        if: steps.pw.outputs.cache-hit != 'true'
+        run: npx playwright install chromium
       - name: Build a fresh bundle for the smokes
         run: npm run build && cp dist/houseplan-card.js demo/srv/assets/houseplan-card.js
       - name: Smoke suite
@@ -207,8 +219,20 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Браузеры кэшируются, а apt не запускается вовсе: на GitHub-раннере
+      # системные библиотеки Chromium уже в образе, а --with-deps тратил минуты
+      # и подолгу перебирал недоступное azure-зеркало (#175, #206). Если
+      # библиотека когда-нибудь исчезнет из образа, Chromium не запустится с
+      # внятной ошибкой — тогда флаг вернуть.
+      - name: Кэш браузеров Playwright
+        id: pw
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - name: Install pinned Chromium
-        run: npx playwright install --with-deps chromium
+        if: steps.pw.outputs.cache-hit != 'true'
+        run: npx playwright install chromium
       - name: Build the exact source under review
         run: npm run build && cp dist/houseplan-card.js demo/srv/assets/houseplan-card.js
       - name: Capture or verify golden matrix
@@ -233,7 +257,10 @@ jobs:
     # prereleases. The expensive same-runner comparison lives in performance.yml.
     needs: frontend
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # 15 минут не хватало, когда установка браузера шла через apt: замер
+    # начинался на исходе окна (#206). Запас на холодный кэш — при попадании
+    # job укладывается в те же минуты, что и раньше.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -241,8 +268,20 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Браузеры кэшируются, а apt не запускается вовсе: на GitHub-раннере
+      # системные библиотеки Chromium уже в образе, а --with-deps тратил минуты
+      # и подолгу перебирал недоступное azure-зеркало (#175, #206). Если
+      # библиотека когда-нибудь исчезнет из образа, Chromium не запустится с
+      # внятной ошибкой — тогда флаг вернуть.
+      - name: Кэш браузеров Playwright
+        id: pw
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - name: Install pinned Chromium
-        run: npx playwright install --with-deps chromium
+        if: steps.pw.outputs.cache-hit != 'true'
+        run: npx playwright install chromium
       - name: Build the exact candidate source
         run: npm run build && cp dist/houseplan-card.js demo/srv/assets/houseplan-card.js
       - name: Capture the heaviest Glow state
