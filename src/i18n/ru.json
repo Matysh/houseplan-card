@@ -372,6 +372,7 @@
   "space.temp_min": "Комфорт от",
   "space.temp_max": "до",
   "tip.temp_avg": "средняя температура:",
+  "tip.hum_avg": "средняя влажность:",
   "space_card.button": "Перейти к пространству",
   "space_card.not_found": "Пространство «{id}» не найдено",
   "space_card.loading": "Загрузка…",

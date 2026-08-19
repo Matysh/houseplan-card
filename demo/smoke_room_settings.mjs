@@ -16,22 +16,48 @@ const res = await page.evaluate(async () => {
   await c.updateComplete;
   out.dialogOpens = c._roomDialog === true && !!c._roomEditId;
   out.namePrefilled = c._nameSel.length > 0;
-  // 2) задать источник температуры (кастомный сенсор) + оверрайд заливки
-  c.hass = { ...c.hass, states: { ...c.hass.states, 'sensor.custom_room_temp': { state: '30.2', attributes: {} } },
-    entities: { ...c.hass.entities, 'sensor.custom_room_temp': {} } };
+  // 2) задать источники температуры/влажности + оверрайд заливки
+  c.hass = { ...c.hass, states: {
+    ...c.hass.states,
+    'sensor.custom_room_temp': { state: '30.2', attributes: {} },
+    'sensor.custom_room_hum': { state: '47.4', attributes: {} },
+  }, entities: {
+    ...c.hass.entities,
+    'sensor.custom_room_temp': {},
+    'sensor.custom_room_hum': {},
+  } };
   await c.updateComplete;
   const editedId = c._roomEditId;
   c._roomFill = 'none';
   c._roomTempSrc = 'entity:sensor.custom_room_temp';
+  c._roomHumSrc = 'entity:sensor.custom_room_hum';
   c._saveRoomEdit(); await c.updateComplete;
   const room = c._curSpaceCfg.rooms.find((r) => r.id === editedId);
-  out.saved = room.settings?.fill_mode === 'none' && room.settings?.temp_source === 'entity:sensor.custom_room_temp';
-  // 3) в Просмотре: температура комнаты из источника (карточка комнаты)
+  out.saved = room.settings?.fill_mode === 'none'
+    && room.settings?.temp_source === 'entity:sensor.custom_room_temp'
+    && room.settings?.hum_source === 'entity:sensor.custom_room_hum';
+  // 3) в Просмотре: источники работают и для комнаты без HA area
   c._setMode('view'); c.requestUpdate(); await c.updateComplete;
   const model = c._spaceModel().rooms.find((r) => r.id === editedId);
+  model.area = undefined;
   out.tempFromSource = c._roomTemp(model) === 30.2;
+  out.humFromSourceAreaLess = c._roomHum(model) === 47;
   const lbl = [...sr().querySelectorAll('.roomlabel')].find((l) => l.textContent.includes(model.name));
   out.cardShowsSource = lbl ? lbl.textContent.includes('30.2°') : false;
+  const modelIndex = c._spaceModel().rooms.findIndex((r) => r.id === editedId);
+  [...sr().querySelectorAll('.room')][modelIndex].dispatchEvent(new MouseEvent('mousemove', {
+    bubbles: true, composed: true, clientX: 200, clientY: 200,
+  }));
+  await c.updateComplete;
+  out.tooltipShowsHumiditySource = c._tip?.hum === 47
+    && (sr().querySelector('.tip')?.textContent || '').includes(`${c._t('tip.hum_avg')} 47%`);
+  model.settings = { ...model.settings, hum_source: 'entity:sensor.missing_room_hum' };
+  [...sr().querySelectorAll('.room')][modelIndex].dispatchEvent(new MouseEvent('mousemove', {
+    bubbles: true, composed: true, clientX: 210, clientY: 210,
+  }));
+  await c.updateComplete;
+  out.invalidHumiditySourceIsOmitted = c._tip?.hum == null
+    && !(sr().querySelector('.tip')?.textContent || '').includes(c._t('tip.hum_avg'));
   // 4) оверрайд 'none': комната без заливки при temp-пространстве
   const roomEl = [...sr().querySelectorAll('.room')];
   // найдём стиль конкретной комнаты по названию через данные модели невозможно напрямую — проверим логикой:

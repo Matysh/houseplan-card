@@ -710,7 +710,15 @@ class HouseplanCard extends LitElement {
   private _regSignature = '';
   private _defPos: Record<string, { x: number; y: number }> = {};
   private _newSyncKey = '';
-  private _tip: { x: number; y: number; title: string; meta: string; lqi?: number | null; temp?: number | null } | null = null;
+  private _tip: {
+    x: number;
+    y: number;
+    title: string;
+    meta: string;
+    lqi?: number | null;
+    temp?: number | null;
+    hum?: number | null;
+  } | null = null;
   /** Room whose physical perimeter is highlighted in View. The explicit
    *  overlay is needed because thick wall bodies paint above room shapes. */
   private _hoverRoom: { space: string; room: RoomCfg } | null = null;
@@ -5755,10 +5763,17 @@ class HouseplanCard extends LitElement {
     if (this._touchContacts.size === 0) this._touchSequenceMultitouch = false;
   }
 
-  private _showTip(ev: MouseEvent, title: string, meta: string, lqi?: number | null, temp?: number | null): void {
+  private _showTip(
+    ev: MouseEvent,
+    title: string,
+    meta: string,
+    lqi?: number | null,
+    temp?: number | null,
+    hum?: number | null,
+  ): void {
     if (this._noHover) return;
     if (this._drag) return;
-    this._tip = { x: ev.clientX, y: ev.clientY, title, meta, lqi, temp };
+    this._tip = { x: ev.clientX, y: ev.clientY, title, meta, lqi, temp, hum };
   }
 
   // ================= ROOM MARKUP EDITOR =================
@@ -15630,6 +15645,7 @@ class HouseplanCard extends LitElement {
                   areaText ? this._t('tip.area', { value: areaText }) : '',
                   showLqi ? this._roomLqi(r.area) : null,
                   this._roomTemp(r),
+                  this._roomHum(r),
                 );
               };
               // open boundaries: this room's solid stroke must not run beneath
@@ -15865,6 +15881,9 @@ class HouseplanCard extends LitElement {
               <b>${this._tip.title}</b>${this._tip.meta ? html`<span class="m">${this._tip.meta}</span>` : nothing}
               ${this._tip.temp != null
                 ? html`<span class="m">${this._t('tip.temp_avg')} <b>${this._tip.temp}°</b></span>`
+                : nothing}
+              ${this._tip.hum != null
+                ? html`<span class="m">${this._t('tip.hum_avg')} <b>${this._tip.hum}%</b></span>`
                 : nothing}
               ${this._tip.lqi != null
                 ? html`<span class="m">${this._t('tip.lqi')}

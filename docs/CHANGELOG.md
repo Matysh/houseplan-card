@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Room hover tooltips now show average humidity next to temperature. The value
+  follows the room's configured humidity source or its Home Assistant area
+  average, and is omitted when no valid reading is available
+  ([#196](https://github.com/Matysh/houseplan-card/issues/196)).
 - A numerically degenerate virtual-wall junction can no longer erase every
   thick wall after **Optimize plans**. Computed junction patches are stabilised
   at sub-geometry precision and isolated individually, while the canonical

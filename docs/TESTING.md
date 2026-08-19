@@ -452,7 +452,7 @@ separately promised workflows:
 - [ ] Fill mode is a radio group (no dropdown); labels carry no color legend
 - [ ] Room hover adds a subtle accent wash and double contour without changing
       the underlying room fill or Glow brightness
-- [ ] Room tooltip shows the average room temperature when any thermometer reports [manual]
+- [ ] Room tooltip shows average room temperature and humidity after the area line and before LQI; missing values are omitted [auto: smoke_ux_fixes]
 - [ ] Average room temperature counts ONLY thermometer/air-monitor devices — fridges, TRV heads,
       smart-plug chip temperatures (`*_device_temperature`) and diagnostic-category temps are excluded [manual]
 - [ ] Space dialog is 500 px wide; the comfort-bounds inputs are compact (56 px)
@@ -898,7 +898,7 @@ separately promised workflows:
       override, temp/hum source); the creation dialog has the same section;
       fill override repaints only that room (incl. opting OUT of the glow
       darkness); a temp/hum source (device or entity) feeds the room card,
-      tooltip and temperature fill — works for rooms without an HA area;
+      room tooltip and temperature fill — works for rooms without an HA area;
       renaming/rebinding an existing room now possible [auto: smoke_room_settings]
 - [ ] PDF survival on rebinding (v1.41.2): rebind a marker with attached
       PDFs to another device — the server moves /files/<oldId>/ to the new id

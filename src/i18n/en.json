@@ -372,6 +372,7 @@
   "space.temp_min": "Comfort from",
   "space.temp_max": "to",
   "tip.temp_avg": "average temperature:",
+  "tip.hum_avg": "average humidity:",
   "space_card.button": "Open the space plan",
   "space_card.not_found": "Space “{id}” not found",
   "space_card.loading": "Loading…",
