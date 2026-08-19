@@ -77,6 +77,10 @@ const beforeUnavailable = await page.$eval(selector('d_kettle'), (node) => ({
   shell: getComputedStyle(node.querySelector('.device-shell')).borderColor,
 }));
 await page.hover(selector('d_kettle'));
+// The production core/shell hover transition is 150 ms. Sampling in the same
+// frame only proves the starting color and lets a restored unavailable hover
+// escape the mutation guard.
+await page.waitForTimeout(220);
 const afterUnavailable = await page.$eval(selector('d_kettle'), (node) => ({
   core: getComputedStyle(node.querySelector('.device-core')).backgroundColor,
   shell: getComputedStyle(node.querySelector('.device-shell')).borderColor,
