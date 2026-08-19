@@ -50,7 +50,12 @@ const res = await page.evaluate(async () => {
   // 3) повторный клик по активной вкладке — ничего
   tabs()[0].click(); await c.updateComplete;
   out.reclickNoop = c._mode === 'plan';
+  const enteringTabCross = tabs()[0].querySelector('.closex');
+  out.tabCrossCloseStartsDuringEnter = c._modeTransitionBusy;
+  enteringTabCross.click();
   await settleMode();
+  out.tabCrossCloseDuringEnterWorks = c._mode === 'view';
+  tabs()[0].click(); await settleMode();
   // HP-UX-11: transient tool controls live in a stage overlay. Opening the
   // thickness controls must not resize/refit the stage or move pinned Close.
   const stageBeforeContext = sr().querySelector('.stage').getBoundingClientRect();
@@ -171,10 +176,73 @@ const res = await page.evaluate(async () => {
   out.barCloseWorks = c._mode === 'view'
     && getComputedStyle(chrome).visibility === 'hidden'
     && chrome.getBoundingClientRect().height < 1;
-  // 7) крестик в самой вкладке → Просмотр (и не переключает режим)
-  tabs()[1].click(); await settleMode();
-  tabs()[1].querySelector('.closex').click(); await settleMode();
-  out.tabCrossWorks = c._mode === 'view';
+  // 7) X in every active tab keeps its 13 px glyph/layout footprint, but its
+  // real hit target is at least 24 px. Exercise the newly covered edge rather
+  // than calling the element's centre programmatically.
+  const tabCrossChecks = [];
+  for (let index = 0; index < tabs().length; index++) {
+    tabs()[index].click(); await settleMode();
+    const cross = tabs()[index].querySelector('.closex');
+    const rect = cross.getBoundingClientRect();
+    const style = getComputedStyle(cross);
+    const hit = sr().elementFromPoint(rect.left + 1, rect.top + rect.height / 2);
+    const horizontalFootprint = rect.width
+      + parseFloat(style.marginLeft) + parseFloat(style.marginRight);
+    const verticalFootprint = rect.height
+      + parseFloat(style.marginTop) + parseFloat(style.marginBottom);
+    hit?.dispatchEvent(new MouseEvent('click', {
+      bubbles: true,
+      composed: true,
+      clientX: rect.left + 1,
+      clientY: rect.top + rect.height / 2,
+    }));
+    await settleMode();
+    tabCrossChecks.push({
+      target: rect.width >= 24 && rect.height >= 24,
+      glyph: style.getPropertyValue('--mdc-icon-size').trim() === '13px',
+      footprint: Math.abs(horizontalFootprint - 15) <= 0.1
+        && Math.abs(verticalFootprint - 13) <= 0.1,
+      edgeHit: hit === cross,
+      closed: c._mode === 'view',
+    });
+  }
+  out.tabCrossTargetsAtLeast24 = tabCrossChecks.every((check) => check.target);
+  out.tabCrossGlyphStays13 = tabCrossChecks.every((check) => check.glyph);
+  out.tabCrossKeepsLayoutFootprint = tabCrossChecks.every((check) => check.footprint);
+  out.tabCrossExpandedEdgeWorks = tabCrossChecks.every((check) => check.edgeHit && check.closed);
+  out.tabCrossWorks = tabCrossChecks.every((check) => check.closed);
+
+  // Existing navigation contracts are not rewritten by the CSS fix: an open
+  // Walls chain finishes on the same click, while the hard geometry limit
+  // keeps the draft and gives explicit feedback.
+  tabs()[0].click(); await settleMode();
+  const chainSpace = c._curSpaceCfg;
+  const savedPartitions = chainSpace.partitions ? [...chainSpace.partitions] : undefined;
+  const savedSaveConfig = c._saveConfig;
+  c._saveConfig = () => {};
+  const partitionCount = (chainSpace.partitions || []).length;
+  c._tool = 'draw';
+  c._path = [[100, 100], [200, 100], [250, 150]];
+  c._draftSegmentCms = [15, 15];
+  tabs()[0].querySelector('.closex').click(); await settleMode();
+  out.tabCrossFinishesWallChain = c._mode === 'view'
+    && (chainSpace.partitions || []).length === partitionCount + 2
+    && c._path.length === 0;
+  chainSpace.partitions = savedPartitions;
+  tabs()[0].click(); await settleMode();
+  c._tool = 'draw';
+  c._path = [[100, 100], [200, 100]];
+  c._draftSegmentCms = [15];
+  chainSpace.partitions = new Array(2000);
+  tabs()[0].querySelector('.closex').click();
+  out.tabCrossLimitKeepsDraftWithFeedback = c._mode === 'plan'
+    && c._path.length === 2
+    && c._toast === c._t('toast.physical_limit');
+  chainSpace.partitions = savedPartitions;
+  c._path = [];
+  c._draftSegmentCms = [];
+  c._saveConfig = savedSaveConfig;
+  c._setMode('view', false); await c.updateComplete;
 
   // Layout-independent editor history: physical KeyZ works when `key` is the
   // Russian «я», while an input keeps its native browser history.

@@ -32,7 +32,9 @@ inert everywhere outside its editor).
   background and editor-specific layers move on one short timeline, so opening
   an editor never flashes a default scale or a mixed dark/white frame. A rapid
   second choice retargets from the visible intermediate frame. Reduced-motion
-  preferences apply the same final state immediately.
+  preferences apply the same final state immediately. The header X keeps its
+  compact 13 px glyph but owns a hit target of at least 24 × 24 px without
+  changing the tab's layout footprint.
 - An editor's primary toolbar contains only persistent tools. Close is pinned
   in its own end cap. Selection actions, active-tool parameters, operation
   hints and palettes appear in one translucent context tray over the top of the

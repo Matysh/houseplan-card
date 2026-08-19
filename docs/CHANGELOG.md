@@ -7,6 +7,10 @@
   rebind and length edits share the same limit and explain a rejected edit,
   while existing near-end openings and full backups remain unchanged
   ([#186](https://github.com/Matysh/houseplan-card/issues/186)).
+- The close icon in an active editor tab now has a forgiving 24 × 24 px click
+  target while keeping the same compact glyph and header layout. Near-misses no
+  longer fall through to the active tab's intentional no-op
+  ([#195](https://github.com/Matysh/houseplan-card/issues/195)).
 - Room hover tooltips now show average humidity next to temperature. The value
   follows the room's configured humidity source or its Home Assistant area
   average, and is omitted when no valid reading is available

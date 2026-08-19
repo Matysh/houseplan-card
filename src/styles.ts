@@ -1613,9 +1613,18 @@ export const cardStyles = css`
     .modetab ha-icon { --mdc-icon-size: 15px; }
     .modetab .closex {
       --mdc-icon-size: 13px;
+      box-sizing: border-box;
       display: inline-flex;
       align-items: center;
-      margin-left: 2px;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      min-width: 24px;
+      min-height: 24px;
+      /* Keep the old 13 × 13 flex footprint (+2 px left margin) while the
+         pointer target grows around it. Header width, height and wrapping do
+         not move; only near-misses that used to hit the active tab reach X. */
+      margin: -5.5px -5.5px -5.5px -3.5px;
       opacity: 0.75;
       cursor: pointer;
       border-radius: var(--rad-s);

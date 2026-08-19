@@ -1186,7 +1186,11 @@ separately promised workflows:
       "Background editor" (no View button; View is the default state); clicking a tab opens its
       bottom toolbar (Devices got its own bar with add/show-all/reset/rules);
       the bar and the active tab both show an X that returns to View; re-click
-      on the active tab does nothing; Plan↔Devices switches directly [auto: smoke_editor_tabs]
+      on the active tab does nothing; the header X keeps a 13 px glyph inside a
+      ≥24 × 24 px hit target and closes from its expanded edge, during an active
+      transition and after finishing a Walls chain; a geometry-limit blocker
+      keeps the draft with an explicit toast; Plan↔Devices switches directly
+      [auto: smoke_editor_tabs]
 - [ ] Stable editor chrome (HP-UX-11): selection, tool parameters, operation
       hints and furniture palette use the single stage-owned context tray;
       opening/closing it leaves stage top/height, `_hdrH`, zoom/pan and the
