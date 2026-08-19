@@ -2,6 +2,10 @@
 
 ## v1.65.0-beta.2 — 2026-08-18
 
+- Editor color controls now open a single House Plan picker with saturation,
+  brightness, hue, exact HEX and opacity together. The nested browser color
+  dialog is gone, while existing room, space, decor and Glow values keep their
+  saved format ([#57](https://github.com/Matysh/houseplan-card/issues/57)).
 - **Toggle state** confirmation now shows the current state and the exact
   expected result before acting. Groups show their active/total count and
   unavailable targets separately, while confirmation still re-resolves the

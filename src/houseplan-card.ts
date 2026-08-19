@@ -12,6 +12,7 @@ import { repeat } from 'lit/directives/repeat.js';
 import './hp-dialog';
 import type { HpDialog } from './hp-dialog';
 import './hp-color-opacity';
+import type { ColorPickerLabels } from './hp-color-opacity';
 import './hp-help';
 import './hp-device-preview';
 import {
@@ -4631,6 +4632,18 @@ class HouseplanCard extends LitElement {
   /** Translate a key in the card's current language. */
   private _t(key: I18nKey, vars?: Record<string, string | number>): string {
     return t(langOf(this.hass, this._config?.language), key, vars);
+  }
+
+  /** Per-card copy keeps presentation-only pickers independent across languages. */
+  private get _colorPickerLabels(): ColorPickerLabels {
+    return {
+      title: this._t('color_picker.title'),
+      hue: this._t('color_picker.hue'),
+      saturation: this._t('color_picker.saturation'),
+      value: this._t('color_picker.value'),
+      hex: this._t('color_picker.hex'),
+      invalidHex: this._t('color_picker.invalid_hex'),
+    };
   }
 
   /** Localize both parts of a help affordance while hp-help stays presentation-only. */
@@ -9646,6 +9659,7 @@ class HouseplanCard extends LitElement {
         ${draws ? html`
           <hp-color-opacity .label=${this._t('decor.color')} .color=${this._decorStyle.color}
             .opacity=${this._decorStyle.opacity} .opacityLabel=${this._t('space.opacity')}
+            .pickerLabels=${this._colorPickerLabels}
             @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
               (this._decorStyle = { ...this._decorStyle, ...e.detail })}></hp-color-opacity>
           <label class="drawwall">${this._t('decor.width')}
@@ -9661,6 +9675,7 @@ class HouseplanCard extends LitElement {
                 fill: (e.target as HTMLInputElement).checked })} />${this._t('decor.fill')}</label>
             <hp-color-opacity .label=${this._t('decor.fill_color')} .color=${this._decorStyle.fillColor}
               .opacity=${this._decorStyle.fillOpacity} .opacityLabel=${this._t('space.opacity')}
+              .pickerLabels=${this._colorPickerLabels}
               .disabled=${!this._decorStyle.fill}
               @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
                 (this._decorStyle = { ...this._decorStyle,
@@ -9818,7 +9833,7 @@ class HouseplanCard extends LitElement {
               if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) this._decorSaveText();
             }}></textarea>
           <hp-color-opacity .label=${this._t('decor.color')} .color=${d.color} .opacity=${d.opacity}
-            .opacityLabel=${this._t('space.opacity')}
+            .opacityLabel=${this._t('space.opacity')} .pickerLabels=${this._colorPickerLabels}
             @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
               (this._decorTextDialog = { ...d, ...e.detail })}></hp-color-opacity>
           <label>${this._t('decor.text_size')}</label>
@@ -9888,7 +9903,7 @@ class HouseplanCard extends LitElement {
               </optgroup>`)}
             </select>` : nothing}
           <hp-color-opacity .label=${this._t('decor.color')} .color=${d.color} .opacity=${d.opacity}
-            .opacityLabel=${this._t('space.opacity')}
+            .opacityLabel=${this._t('space.opacity')} .pickerLabels=${this._colorPickerLabels}
             @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
               (this._decorShapeDialog = { ...d, ...e.detail })}></hp-color-opacity>
           <label>${this._t('decor.width')}</label>
@@ -9936,7 +9951,8 @@ class HouseplanCard extends LitElement {
             })} />${this._t('decor.fill')}</label>
             <hp-color-opacity .label=${this._t('decor.fill_color')}
               .color=${d.fillColor || d.color} .opacity=${d.fillOpacity ?? 0.25}
-              .opacityLabel=${this._t('space.opacity')} .disabled=${!d.fill}
+              .opacityLabel=${this._t('space.opacity')} .pickerLabels=${this._colorPickerLabels}
+              .disabled=${!d.fill}
               @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
                 (this._decorShapeDialog = { ...d,
                   fillColor: e.detail.color, fillOpacity: e.detail.opacity })}></hp-color-opacity>` : nothing}
@@ -19124,6 +19140,7 @@ class HouseplanCard extends LitElement {
             ${displayedGlowMode !== 'auto' ? html`<div class="colorrow markerglowvalue">
               <hp-color-opacity .label=${this._t('marker.glow_color')}
                 .color=${d.glowColor} .opacity=${1} .showOpacity=${false}
+                .pickerLabels=${this._colorPickerLabels}
                 .disabled=${glowSourceDisabled}
                 @hp-color-opacity-change=${(e: CustomEvent<{ color: string }>) => {
                   this._markerDialog = {
@@ -19573,6 +19590,7 @@ class HouseplanCard extends LitElement {
                     <hp-color-opacity
                       .label=${this._t('space.custom_fill')}
                       .opacityLabel=${this._t('space.opacity')}
+                      .pickerLabels=${this._colorPickerLabels}
                       .color=${(d.customFill || DEFAULT_CUSTOM_FILL).c}
                       .opacity=${(d.customFill || DEFAULT_CUSTOM_FILL).a}
                       @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) => {
@@ -19768,6 +19786,7 @@ class HouseplanCard extends LitElement {
                   .label=${this._roomCustomFill
                     ? this._t('room.custom_fill_own') : this._t('room.custom_fill_space')}
                   .opacityLabel=${this._t('space.opacity')}
+                  .pickerLabels=${this._colorPickerLabels}
                   .color=${customFill.c}
                   .opacity=${customFill.a}
                   @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) => {

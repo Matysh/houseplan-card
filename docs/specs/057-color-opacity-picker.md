@@ -1,7 +1,7 @@
 # Issue #57 — единый выбор цвета и прозрачности за один клик
 
 - **Issue:** https://github.com/Matysh/houseplan-card/issues/57
-- **Статус документа:** готово к будущей реализации; issue остаётся на `S3-spec`
+- **Статус документа:** принято ревью r1; реализация в `S6-in-progress`
 - **Приоритет:** P3
 - **Тип:** polish/tech-debt, обычный трек
 - **Пользовательское изменение:** да
@@ -52,6 +52,8 @@ House Plan → системный picker → возврат к отдельно�
 - изменение формата сохраняемого цвета/opacity;
 - массовый redesign диалогов и editor touch parity;
 - добавление alpha в consumers, где `showOpacity=false` имеет предметный смысл.
+- параллельные native color inputs для ripple и палитры «Общих настроек» —
+  вынесены ревьюером в [#180](https://github.com/Matysh/houseplan-card/issues/180).
 
 ## 6. Технический выбор
 
@@ -135,6 +137,9 @@ fallback, flip/shift, visual viewport, resize/orientation и focus traversal
 
 Сам picker получает явную touch-поддержку. Остальные операции редакторов остаются
 best effort согласно `docs/TOUCH-SUPPORT.md`.
+
+**Touch editor: supported для самого picker;** остальные операции родительских
+редакторов остаются best effort по `docs/TOUCH-SUPPORT.md`.
 
 ## 10. Keyboard и accessibility
 

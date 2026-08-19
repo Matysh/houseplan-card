@@ -158,6 +158,9 @@ const res = await page.evaluate(async () => {
   const pickerButton = picker?.shadowRoot?.querySelector('.trigger');
   pickerButton?.click();
   await frame();
+  const colorOnlySurface = picker?.shadowRoot?.querySelector('.picker');
+  out.glowColorOnlyHasNoAlpha = colorOnlySurface?.querySelectorAll('input[type="range"]').length === 3
+    && !colorOnlySurface?.querySelector('input[type="number"]');
   const glowHelpButton = helpButton('marker.glow_mode.help');
   const focusables = root().querySelector('hp-dialog')?._focusableElements?.() || [];
   out.shadowFocusables = focusables.includes(glowHelpButton) && focusables.includes(pickerButton);

@@ -1,0 +1,50 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import test from 'node:test';
+import {
+  hexToRgb, hsvToHex, hsvToRgb, normalizeHexColor, normalizeHue, rgbToHex, rgbToHsv,
+} from '../test-build/color-picker.js';
+
+test('hex drafts accept only three or six digits and normalize on commit', () => {
+  assert.equal(normalizeHexColor('#AbC'), '#aabbcc');
+  assert.equal(normalizeHexColor('12ef90'), '#12ef90');
+  assert.deepEqual(hexToRgb('#0a10ff'), { r: 10, g: 16, b: 255 });
+  for (const value of ['', '#12', '#1234', '#12345', '#1234567', 'red', '#12xx90', null]) {
+    assert.equal(normalizeHexColor(value), null, String(value));
+  }
+});
+
+test('RGB and HSV round-trip within one channel across the colour cube', () => {
+  const channels = [0, 1, 17, 63, 127, 191, 254, 255];
+  for (const r of channels) for (const g of channels) for (const b of channels) {
+    const source = { r, g, b };
+    const roundTrip = hsvToRgb(rgbToHsv(source));
+    assert.ok(Math.abs(roundTrip.r - r) <= 1, `${r},${g},${b}: red`);
+    assert.ok(Math.abs(roundTrip.g - g) <= 1, `${r},${g},${b}: green`);
+    assert.ok(Math.abs(roundTrip.b - b) <= 1, `${r},${g},${b}: blue`);
+    assert.equal(hsvToHex(rgbToHsv(source)), rgbToHex(source));
+  }
+});
+
+test('HSV helpers wrap hue, clamp finite dimensions and keep grayscale achromatic', () => {
+  assert.equal(normalizeHue(-30), 330);
+  assert.equal(normalizeHue(390), 30);
+  assert.equal(normalizeHue(Number.NaN), 0);
+  assert.deepEqual(hsvToRgb({ h: 120, s: 100, v: 100 }), { r: 0, g: 255, b: 0 });
+  assert.equal(hsvToHex({ h: 999, s: -5, v: 150 }), '#ffffff');
+  const gray = rgbToHsv({ r: 128, g: 128, b: 128 });
+  assert.equal(gray.s, 0);
+  assert.ok(Math.abs(gray.v - (128 / 255) * 100) < 1e-9);
+});
+
+test('the shared component keeps its API and contains no nested native color picker', () => {
+  const component = readFileSync(new URL('../src/hp-color-opacity.ts', import.meta.url), 'utf8');
+  const card = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  assert.doesNotMatch(component, /type=["']color["']/);
+  for (const token of [
+    'public color', 'public opacity', 'public disabled', 'public showOpacity',
+    'hp-color-opacity-change', 'detail: { color: normalized, opacity: clamped }',
+  ]) assert.match(component, new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  assert.equal((card.match(/<hp-color-opacity/g) || []).length, 8);
+  assert.equal((card.match(/\.pickerLabels=\$\{this\._colorPickerLabels\}/g) || []).length, 8);
+});

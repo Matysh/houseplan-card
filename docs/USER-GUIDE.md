@@ -177,6 +177,11 @@ Each editor has a stable primary toolbar. Tool parameters and selected-object
 actions appear in a context tray over the top of the canvas. On a narrow screen
 the tray scrolls horizontally instead of shrinking the plan.
 
+Where an editor offers a color sample, one click opens the House Plan color
+picker. Hue, saturation, brightness, an exact HEX value and opacity (when the
+setting supports it) are available together; there is no second browser color
+dialog. Changes remain a draft until the owning properties dialog is saved.
+
 <!-- docs-section: input -->
 
 ## 6. Navigation, zoom and input

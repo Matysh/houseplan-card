@@ -69,6 +69,26 @@
       `smoke_virtual_light_toggle`, `smoke_ha_controls`, `smoke_controls`,
       `smoke_tap_run`].
 
+## Unified color and opacity picker (#57)
+
+- [ ] RGB↔HSV round trips stay within one RGB channel; 3/6-digit HEX input is
+      normalized and invalid drafts never become persisted colors
+      [unit: `color-picker.test.mjs`].
+- [ ] Every existing `hp-color-opacity` consumer receives per-card localized
+      labels through the unchanged color/opacity event contract, and the shared
+      component contains no native `input[type=color]`
+      [unit: `color-picker.test.mjs`].
+- [ ] At 390 px the one surface exposes hue, saturation, brightness, HEX and
+      opacity without horizontal overflow; keyboard Shift+Arrow, touch pointer
+      cancellation, invalid HEX recovery, Escape focus return and disabled mode
+      remain safe [auto: `smoke_color_picker.mjs`].
+- [ ] The color-only Glow consumer keeps the same picker without an opacity row,
+      and native/fallback floating surfaces remain mutually exclusive with help
+      [auto: `smoke_help_affordance.mjs`].
+- [ ] The existing dark mobile decor color golden is reviewed from the complete
+      Linux artifact before a beta; baseline acceptance is not part of the
+      implementation loop [golden: `decor-color-popover-mobile-ru`].
+
 
 ## Open passage (#157)
 
