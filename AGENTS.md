@@ -255,10 +255,15 @@ The exchange happens in **issue comments** — there is no local message bus. Ve
 format:
 
 ```text
-Verdict: green/yellow/red · cycle r<N>/4 · High: N · Medium: N → #… · Document: …
+Verdict: green/yellow/red · cycle r<N>/4 · High: N · Medium: N → in-task | #… · Document: …
 ```
 
-High blocks. Medium must become its own issue. Low is fixed or waived with a note
+High blocks. A Medium finding INSIDE the task's scope is fixed within the task:
+with no High findings the verdict is yellow, the author fixes it and the fix
+passes another review cycle — no separate issue (owner's decision 2026-08-19,
+#202: filing and servicing an issue costs far more than fixing in place). Only
+a Medium finding OUTSIDE the scope becomes its own issue — foreign scope is
+never patched from this branch. Low is fixed or waived with a note
 in the review document. A yellow verdict is legitimate even when every acceptance
 criterion passes, if the change does not solve the stated scenario or degrades a
 neighbouring one.
