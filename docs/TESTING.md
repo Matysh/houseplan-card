@@ -1534,6 +1534,16 @@ require hands on real hardware — they remain for the human pass.
   runs kept per marker, survives reloads, shared by every screen) and never
   outruns the icon: drawn segments lag one point, and the last segment is a
   rAF-driven tip glued to the puck centre every frame.
+- Same-map `cleaning → docked/paused/error → cleaning` resumes the ended
+  current through exactly 30:00 and retains every point plus any older
+  previous run; 30:00 + epsilon or a map change rotates as before. Repeated
+  stop samples do not extend the window; malformed timestamps and clock
+  rollback fail closed [backend: `test_trails.py`, `test_trail_recorder.py`].
+- `unavailable`, `unknown` and a missing vacuum state are neutral. While
+  stopped, default mode hides the ended current; after backend resume the
+  production card paints the complete reopened current, while `always` keeps
+  its current/previous styling [auto: `smoke_vacuum`; mutation:
+  `vacuum-trail-resume-disabled`].
 - Calling trail delete for a marker with no stored run is a true no-op: its
   source/vacuum pair stays subscribed. A successful delete removes only that
   marker's pairs and immediately rebuilds the subscription

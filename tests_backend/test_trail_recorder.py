@@ -195,6 +195,49 @@ def test_unavailable_vacuum_is_no_verdict():
     assert rec.book.data["m1"]["current"]["ended"] is None
 
 
+def test_short_available_stops_resume_one_run_and_neutral_states_do_not_shift_window():
+    rec, _hass, states = _rec()
+    assert rec._sample("camera.map", 100.0)
+    states["vacuum.x50"] = S("docked", {})
+    assert rec._sample("camera.map", 200.0)
+    ended = rec.book.data["m1"]["current"]["ended"]
+    assert ended == 200.0
+    assert not rec._sample("camera.map", 300.0)  # repeated stop is idempotent
+    assert rec.book.data["m1"]["current"]["ended"] == ended
+    states["vacuum.x50"] = S("unknown", {})
+    assert not rec._sample("camera.map", 400.0)
+    del states["vacuum.x50"]
+    assert not rec._sample("camera.map", 500.0)
+    assert rec.book.data["m1"]["current"]["ended"] == ended
+
+    states["vacuum.x50"] = S("cleaning", {"selected_map": "Первый этаж"})
+    states["camera.map"] = S(
+        "idle", {"vacuum_position": {"x": 1100, "y": -450}, "map_index": 1}
+    )
+    assert rec._sample("camera.map", 800.0)
+    run = rec.book.data["m1"]["current"]
+    assert run["ended"] is None
+    assert run["points"] == [[1000.0, -500.0], [1100.0, -450.0]]
+    assert "previous" not in rec.book.data["m1"]
+
+
+def test_any_available_nonmoving_state_uses_the_same_grace_contract():
+    for stopped in ("paused", "idle", "error", "washing", "docked"):
+        rec, _hass, states = _rec()
+        assert rec._sample("camera.map", 1.0)
+        states["vacuum.x50"] = S(stopped, {})
+        assert rec._sample("camera.map", 2.0), stopped
+        states["vacuum.x50"] = S("cleaning", {})
+        states["camera.map"] = S(
+            "idle", {"vacuum_position": {"x": 1200, "y": -400}, "map_index": 1}
+        )
+        assert rec._sample("camera.map", 3.0), stopped
+        assert rec.book.data["m1"]["current"]["points"] == [
+            [1000.0, -500.0], [1200.0, -400.0],
+        ]
+        assert "previous" not in rec.book.data["m1"]
+
+
 # ---------------- v1.54.0 audit regressions ----------------
 
 def _run_isolated(coro):

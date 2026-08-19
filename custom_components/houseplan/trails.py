@@ -10,6 +10,7 @@ want to see where the cleanup has already been).
 from __future__ import annotations
 
 import asyncio
+import math
 import time
 from typing import Any
 
@@ -24,9 +25,31 @@ import logging
 _LOGGER = logging.getLogger(__name__)
 
 TRAIL_CAP = 2000          # raw points per run before decimation
+TRAIL_RESUME_GRACE_S = 30 * 60  # same-map stop/pause belongs to one cleanup
 SAVE_DELAY_S = 10         # debounce store writes — flash wear over precision
 FIRE_THROTTLE_S = 2.0     # event-bus updates for live cards
 MOVING_STATES = {"cleaning", "returning", "on"}
+
+
+def can_resume_trail_run(run: Any, map_id: str, now: float) -> bool:
+    """Whether an ended current run may be reopened for this point.
+
+    Store timestamps are untrusted persisted data. Only finite JSON-number
+    timestamps and a non-negative inclusive grace interval are accepted;
+    malformed values and wall-clock rollback fail closed into a new run.
+    """
+    if not isinstance(run, dict) or run.get("map_id") != map_id:
+        return False
+    ended = run.get("ended")
+    if (
+        isinstance(ended, bool)
+        or not isinstance(ended, (int, float))
+        or isinstance(now, bool)
+        or not isinstance(now, (int, float))
+    ):
+        return False
+    elapsed = now - ended
+    return math.isfinite(elapsed) and 0 <= elapsed <= TRAIL_RESUME_GRACE_S
 
 
 def resolve_map_id(src_attrs: Any, vac_attrs: Any) -> str:
@@ -64,7 +87,10 @@ class TrailBook:
     def on_point(self, marker: str, map_id: str, x: float, y: float, now: float) -> bool:
         rec = self.data.setdefault(marker, {})
         cur = rec.get("current")
-        if not cur or cur.get("ended") or cur.get("map_id") != map_id:
+        resumed = bool(cur and can_resume_trail_run(cur, map_id, now))
+        if resumed:
+            cur["ended"] = None
+        if not cur or cur.get("ended") is not None or cur.get("map_id") != map_id:
             # a new run begins: the old one becomes "previous" (and the one
             # before it is forgotten — we keep exactly two, per the owner)
             if cur:
@@ -73,7 +99,9 @@ class TrailBook:
             rec["current"] = cur
         pts: list[list[float]] = cur["points"]
         if pts and pts[-1][0] == x and pts[-1][1] == y:
-            return False
+            # Clearing ended is observable state even if the source repeats
+            # the dock point: it must still reach Store and live cards.
+            return resumed
         pts.append([x, y])
         if len(pts) > TRAIL_CAP:
             # decimate by two but never lose the freshest point
@@ -85,7 +113,7 @@ class TrailBook:
 
     def end_run(self, marker: str, now: float) -> bool:
         cur = (self.data.get(marker) or {}).get("current")
-        if cur and not cur.get("ended"):
+        if cur and cur.get("ended") is None:
             cur["ended"] = now
             return True
         return False

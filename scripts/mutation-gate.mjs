@@ -488,6 +488,17 @@ export const MUTANTS = [
         + "        show_names: d.source === 'draw' && d.mode === 'create' ? true : d.showNames,",
     }],
   },
+  {
+    id: 'vacuum-trail-resume-disabled',
+    guard: 'node scripts/trail-resume-test-guard.mjs',
+    because: 'an ended same-map run inside the accepted 30-minute window must reopen instead '
+      + 'of rotating into previous; focused pure and recorder sequences must reject the old unconditional split',
+    patches: [{
+      file: 'custom_components/houseplan/trails.py',
+      find: '        resumed = bool(cur and can_resume_trail_run(cur, map_id, now))',
+      replace: '        resumed = False',
+    }],
+  },
 ];
 
 // --- механика ---------------------------------------------------------------

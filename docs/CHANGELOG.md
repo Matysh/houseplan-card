@@ -7,6 +7,11 @@
   plan visibly turns both on. After either switch is edited, changing the plan
   source preserves the complete user-selected pair; the Floors/Areas wizard
   follows the same rule ([#204](https://github.com/Matysh/houseplan-card/issues/204)).
+- A robot that docks, pauses or briefly enters another available non-moving
+  state now resumes the same server trail when it moves again on the same map
+  within 30 minutes. Earlier points therefore survive mop washing and similar
+  station visits; a map change or a longer stop still starts a new run
+  ([#205](https://github.com/Matysh/houseplan-card/issues/205)).
 - Turning off **Show names** now removes room names completely in View, kiosk,
   the static card and hidden isometric mode, while Plan still exposes the
   existing draggable card for positioning. Re-enabling names restores its

@@ -109,6 +109,31 @@ const out = await page.evaluate(async () => {
   c._regSignature = ''; c.requestUpdate(); await c.updateComplete;
   o.unknownMapNoPuck = !sr().querySelector('.vacpuck');
 
+  // ---- resumed server run: dock hides it, same current returns whole ----
+  // Backend owns the 30-minute decision. The card must neither paint an ended
+  // current in default mode nor lose its pre-dock points after ended is cleared.
+  c._vacSrvTrails = { e_vacuum_robo: {
+    current: { map_id: 'm1', started: 10, ended: 20,
+      points: [[700, 500], [900, 500], [1100, 640], [950, 1150]] },
+  } };
+  c.hass = { ...c.hass, states: { ...c.hass.states,
+    'vacuum.robo': { state: 'docked', attributes: { friendly_name: 'Робот' } },
+    'camera.robo_map': { state: 'idle', attributes: mkAttrs(950, 1150) } } };
+  c._regSignature = ''; c.requestUpdate(); await c.updateComplete;
+  o.srvEndedCurrentHiddenDefault = !sr().querySelector('.vactrail path, .vactrail polyline');
+
+  c._vacSrvTrails = { e_vacuum_robo: {
+    current: { map_id: 'm1', started: 10, ended: null,
+      points: [[700, 500], [900, 500], [1100, 640], [950, 1150], [1200, 1200]] },
+  } };
+  c.hass = { ...c.hass, states: { ...c.hass.states,
+    'vacuum.robo': { state: 'cleaning', attributes: { friendly_name: 'Робот' } },
+    'camera.robo_map': { state: 'idle', attributes: mkAttrs(1200, 1200) } } };
+  c._regSignature = ''; c.requestUpdate(); await c.updateComplete;
+  c.hass = { ...c.hass, states: { ...c.hass.states } }; await c.updateComplete;
+  const resumedD = sr().querySelector('.vactrail > path.case')?.getAttribute('d') || '';
+  o.srvResumedCurrentKeepsEarlierPoints = (resumedD.match(/[ML]/g) || []).length === 4;
+
   // ---- server-side runs: current + one previous (owner 2026-07-31) ----
   cfg.markers.find((m) => m.id === 'e_vacuum_robo').vacuum.trail_mode = 'always';
   c._vacSrvTrails = { e_vacuum_robo: {
@@ -247,6 +272,7 @@ checkAll(out, {
   trailCasing: true, trailToggleOff: true,
   puckGoneWhenDocked: true, trailHiddenAfterDock: true, hiddenNoPuck: true,
   unknownMapNoPuck: true,
+  srvEndedCurrentHiddenDefault: true, srvResumedCurrentKeepsEarlierPoints: true,
   srvPrevRunShown: true, srvCurTrimmed: true, srvPrevFaded: true,
   multiSubpathNoBridge: true, integrationPathAlwaysAtRest: true,
   tipExists: true, tipGluedToPuck: true, neverHidesAll: true,

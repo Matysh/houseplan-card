@@ -114,7 +114,16 @@ subpath survive deterministic proportional thinning.
 
 Server trails are recorded by `custom_components/houseplan/trails.py`, even
 with no card open. It stores current and one previous run in raw robot
-coordinates. Server recording is independent of the display mode. The source
+coordinates. An available non-moving state ends the visible current run
+immediately, but a new point on the same map within an inclusive 30-minute
+grace reopens that same run and keeps all earlier points. The first stop fixes
+the timestamp: repeated dock/pause samples do not extend the window. A map
+change, a longer stop, malformed persisted time or wall-clock rollback starts a
+new run. `unavailable`, `unknown` and a missing state remain neutral. Without a
+vendor task id, two genuinely separate same-map cleanups started inside the
+grace may therefore appear as one run.
+
+Server recording is independent of the display mode. The source
 health monitor checks saved marker/source pairs on config refresh and restart:
 one warning is emitted for a missing/disabled incident, reason changes are
 deduplicated, and another warning is possible only after proven recovery.
