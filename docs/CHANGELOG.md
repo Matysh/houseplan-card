@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v1.65.0-beta.4 — 2026-08-19
 
 - Room hover tooltips now show average humidity next to temperature. The value
   follows the room's configured humidity source or its Home Assistant area
@@ -20,8 +20,6 @@
   and ripple size use separate rows so both labels remain readable
   ([#180](https://github.com/Matysh/houseplan-card/issues/180)).
 
-## v1.65.0-beta.3 — 2026-08-19
-
 - Open-passage placement now previews the exact future wall cut before the
   click: a translucent wall-coloured segment shows its real length and depth,
   with two orange boundary marks at its ends. The saved passage remains a
@@ -31,6 +29,9 @@
   touch and keyboard values remain unchanged, and a contrasting ring keeps the
   slider visible over every hue
   ([#192](https://github.com/Matysh/houseplan-card/issues/192)).
+
+## v1.65.0-beta.3 — 2026-08-19
+
 - Editor color controls now open a single House Plan picker with saturation,
   brightness, hue, exact HEX and opacity together. The nested browser color
   dialog is gone, while existing room, space, decor and Glow values keep their
